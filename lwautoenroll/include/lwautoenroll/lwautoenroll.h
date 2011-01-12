@@ -8,12 +8,16 @@
 
 typedef struct _LW_AUTOENROLL_TEMPLATE
 {
-        PWSTR                   name;
-        PWSTR                   csp;
-        DWORD                   keyUsage;
-        EXTENDED_KEY_USAGE      *extendedKeyUsage;
-        STACK_OF(ASN1_OBJECT)   *criticalExtensions;
-        unsigned int            minimumKeyBits;
+        PCSTR                       name;
+        PCSTR                       displayName;
+        PCSTR                       csp;
+        unsigned int                keySize;
+        DWORD                       keyUsage;
+        DWORD                       enrollmentFlags;
+        EXTENDED_KEY_USAGE          *extendedKeyUsage;
+        STACK_OF(ASN1_OBJECT)       *criticalExtensions;
+	STACK_OF(X509_ATTRIBUTE)    *attributes;
+        STACK_OF(X509_EXTENSION)    *extensions;
 } LW_AUTOENROLL_TEMPLATE, *PLW_AUTOENROLL_TEMPLATE;
 
 LW_BEGIN_EXTERN_C

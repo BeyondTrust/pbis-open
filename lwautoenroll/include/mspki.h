@@ -1,0 +1,7 @@
+#ifndef MSPKI_H
+#define MSPKI_H
+
+#define CT_FLAG_INCLUDE_SYMMETRIC_ALGORITHMS    0x00000001
+#define CT_FLAG_AUTO_ENROLLMENT                 0x00000020
+
+#endif /* MSPKI_H */

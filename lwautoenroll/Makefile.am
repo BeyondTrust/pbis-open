@@ -22,6 +22,14 @@ lib_liblwautoenroll_la_SOURCES = \
 	lib/template.c \
 	lib/request.c \
 	lib/ssl.c
+lib_liblwautoenroll_la_LIBADD = -llsaclient -llwadvapi -lcrypto -lldap
+
+# tests
+
+noinst_PROGRAMS = test/request
+
+test_request_SOURCES = test/request.c
+test_request_LDADD = lib/liblwautoenroll.la
 
 # documentation
 

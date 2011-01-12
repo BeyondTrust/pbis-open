@@ -17,11 +17,11 @@
 #define _BAIL_ON_LW_ERROR(_error, _format, ...) \
     do { \
         if ((_error) != 0) { \
-            char _errorString[256]; \
-            LwGetErrorString(_error, _errorString, sizeof(_errorString)); \
+            char _LWerrorString[256]; \
+            LwGetErrorString(_error, _LWerrorString, sizeof(_LWerrorString)); \
             BAIL("Error code: %d (symbol: %s/%s)" _format, _error, \
                     LW_SAFE_LOG_STRING(LwWin32ErrorToName(_error)), \
-                    _errorString , ## __VA_ARGS__); \
+                    _LWerrorString , ## __VA_ARGS__); \
         } \
     } while (0)
 
@@ -36,12 +36,12 @@
 #define BAIL_WITH_LW_ERROR(_error) \
     _BAIL_WITH_LW_ERROR(_error, "")
 
-#define BAIL_ON_LDAP_ERROR(_ldap_error) \
+#define BAIL_ON_LDAP_ERROR(_ldapError) \
     do { \
         if ((_ldapError) != 0) \
         { \
             _BAIL_WITH_LW_ERROR(LwMapLdapErrorToLwError(_ldapError), \
-                    ": LDAP error %d", _ldap_error); \
+                    ": LDAP error %d", _ldapError); \
         } \
     } while (0)
 
@@ -49,18 +49,20 @@ extern DWORD LwSSLErrorToLwError(
                 unsigned long ssl_error
                 );
 
-#define BAIL_WITH_SSL_ERROR(_ssl_error) \
+#define BAIL_WITH_SSL_ERROR(_sslError) \
     do { \
-        char _errorString[256]; \
-        ERR_error_string_n(_ssl_error, _errorString, sizeof(_errorString)); \
-        _BAIL_WITH_LW_ERROR(LwSSLErrorToLwError(_ssl_error), \
-                ": OpenSSL error %x (%s)", _ssl_error, _errorString); \
+        char _SSLerrorString[256]; \
+        ERR_error_string_n(_sslError, _SSLerrorString, \
+                sizeof(_SSLerrorString)); \
+        _BAIL_WITH_LW_ERROR(LwSSLErrorToLwError(_sslError), \
+                ": OpenSSL error %lx (%s)", _sslError, _SSLerrorString); \
     } while(0)
 
 #define BAIL_ON_SSL_ERROR(_expr) \
     do { \
         if (_expr) { \
-            BAIL_WITH_SSL_ERROR(ERR_get_error()); \
+            unsigned long _sslError = ERR_get_error(); \
+            BAIL_WITH_SSL_ERROR(_sslError); \
         } \
     } while(0)
 

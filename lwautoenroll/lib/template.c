@@ -1,5 +1,7 @@
-#include <bail.h>
 #include <lwautoenroll/lwautoenroll.h>
+
+#include <bail.h>
+#include <mspki.h>
 
 #include <lsa/lsa.h>
 
@@ -9,6 +11,8 @@
 #include <lwerror.h>
 #include <lwmem.h>
 #include <lwstr.h>
+
+#include <string.h>
 
 #define LDAP_QUERY  "(objectClass=pKICertificateTemplate)"
 #define LDAP_BASE   "cn=Public Key Services,cn=Services,cn=Configuration"
@@ -28,10 +32,19 @@ LwAutoEnrollGetTemplateList(
     PSTR searchDN = NULL;
     PLW_AUTOENROLL_TEMPLATE pTemplateList = NULL;
     DWORD numTemplates = 0;
+    struct berval **ppValues = NULL;
+    PSTR name = NULL;
+    PSTR displayName = NULL;
+    PSTR csp = NULL;
+    LDAP *pLdap = NULL;
+    LDAPMessage *pLdapResult = NULL;
+    EXTENDED_KEY_USAGE *extendedKeyUsage = NULL;
+    STACK_OF(ASN1_OBJECT) *criticalExtensions = NULL;
     DWORD error = LW_ERROR_SUCCESS;
     static PSTR attributeList[] =
     {
         "name",
+        "displayName",
         "pKIKeyUsage",
         "pKIExtendedKeyUsage",
         "pKICriticalExtensions",
@@ -71,11 +84,7 @@ LwAutoEnrollGetTemplateList(
                             pProviderStatus->pszDomain))
                 {
                     PLSA_DC_INFO pDCInfo = pDomainInfo->pDCInfo;
-                    LDAP *pLdap;
-                    LDAPMessage *pLdapResult;
                     DWORD template = 0;
-                    PWSTR name = NULL;
-                    EXTENDED_KEY_USAGE *extendedKeyUsage = NULL;
 
                     LW_LOG_DEBUG(
                         "Getting certificate templates for domain %s via DC %s",
@@ -137,46 +146,146 @@ LwAutoEnrollGetTemplateList(
                                             pLdapResult)
                         )
                     {
-                        struct berval **ppValues;
                         int value;
                         int numValues;
+                        DWORD enrollmentFlags;
+                        DWORD keyUsage;
+                        DWORD keySize;
 
-                        LW_SAFE_FREE_MEMORY(name);
+                        LW_SAFE_FREE_STRING(name);
+                        LW_SAFE_FREE_STRING(displayName);
+                        LW_SAFE_FREE_STRING(csp);
 
                         if (extendedKeyUsage)
                         {
-                            sk_ASN1_OBJECT_free(extendedKeyUsage);
+                            EXTENDED_KEY_USAGE_free(extendedKeyUsage);
                             extendedKeyUsage = NULL;
+                        }
+
+                        if (criticalExtensions)
+                        {
+                            sk_ASN1_OBJECT_free(criticalExtensions);
+                            criticalExtensions = NULL;
+                        }
+
+                        if (ppValues)
+                        {
+                            ldap_value_free_len(ppValues);
                         }
 
                         ppValues = ldap_get_values_len(
                                         pLdap,
                                         pLdapResult,
-                                        "pKIKeyUsage");
-                        if (ppValues == NULL ||
-                                ldap_count_values_len(ppValues) != 1)
+                                        "msPKI-Enrollment-Flag");
+                        if (ppValues == NULL)
                         {
                             continue;
                         }
 
-                        pTemplateList[template].keyUsage =
-                            *((uint16_t *) (ppValues[0]->bv_val));
+                        if (ldap_count_values_len(ppValues) != 1)
+                        {
+                            ldap_value_free_len(ppValues);
+                            ppValues = NULL;
+                            continue;
+                        }
 
+                        enrollmentFlags = strtoul(
+                                            ppValues[0]->bv_val,
+                                            NULL,
+                                            16);
+                        if (!(enrollmentFlags & CT_FLAG_AUTO_ENROLLMENT))
+                        {
+                            ldap_value_free_len(ppValues);
+                            ppValues = NULL;
+                            continue;
+                        }
+
+                        ldap_value_free_len(ppValues);
                         ppValues = ldap_get_values_len(
                                         pLdap,
                                         pLdapResult,
                                         "name");
-                        if (ppValues == NULL ||
-                                ldap_count_values_len(ppValues) != 1)
+                        if (ppValues == NULL)
                         {
                             continue;
                         }
 
-                        error = LwAllocateWc16String(
-                                    &name,
-                                    (PCWSTR) ppValues[0]->bv_val);
+                        if (ldap_count_values_len(ppValues) != 1)
+                        {
+                            ldap_value_free_len(ppValues);
+                            ppValues = NULL;
+                            continue;
+                        }
+
+                        error = LwAllocateString(
+                                    (PCSTR) ppValues[0]->bv_val,
+                                    &name);
                         BAIL_ON_LW_ERROR(error);
 
+                        ldap_value_free_len(ppValues);
+                        ppValues = ldap_get_values_len(
+                                        pLdap,
+                                        pLdapResult,
+                                        "displayName");
+                        if (ppValues == NULL)
+                        {
+                            continue;
+                        }
+
+                        if (ldap_count_values_len(ppValues) != 1)
+                        {
+                            ldap_value_free_len(ppValues);
+                            ppValues = NULL;
+                            continue;
+                        }
+
+                        error = LwAllocateString(
+                                    (PCSTR) ppValues[0]->bv_val,
+                                    &displayName);
+                        BAIL_ON_LW_ERROR(error);
+
+                        ldap_value_free_len(ppValues);
+                        ppValues = ldap_get_values_len(
+                                        pLdap,
+                                        pLdapResult,
+                                        "pKIKeyUsage");
+                        if (ppValues == NULL)
+                        {
+                            continue;
+                        }
+
+                        if (ldap_count_values_len(ppValues) != 1)
+                        {
+                            ldap_value_free_len(ppValues);
+                            ppValues = NULL;
+                            continue;
+                        }
+
+                        keyUsage = *((PWORD) (ppValues[0]->bv_val));
+
+                        ldap_value_free_len(ppValues);
+                        ppValues = ldap_get_values_len(
+                                        pLdap,
+                                        pLdapResult,
+                                        "displayName");
+                        if (ppValues == NULL)
+                        {
+                            continue;
+                        }
+
+                        if (ldap_count_values_len(ppValues) != 1)
+                        {
+                            ldap_value_free_len(ppValues);
+                            ppValues = NULL;
+                            continue;
+                        }
+
+                        error = LwAllocateString(
+                                    (PCSTR) ppValues[0]->bv_val,
+                                    &displayName);
+                        BAIL_ON_LW_ERROR(error);
+
+                        ldap_value_free_len(ppValues);
                         ppValues = ldap_get_values_len(
                                         pLdap,
                                         pLdapResult,
@@ -186,7 +295,7 @@ LwAutoEnrollGetTemplateList(
                             continue;
                         }
 
-                        extendedKeyUsage = sk_ASN1_OBJECT_new_null();
+                        extendedKeyUsage = EXTENDED_KEY_USAGE_new();
                         numValues = ldap_count_values_len(ppValues);
 
                         for (value = 0; value < numValues; ++value)
@@ -195,8 +304,9 @@ LwAutoEnrollGetTemplateList(
                             const unsigned char *data;
 
                             data = (unsigned char *) (ppValues[value]->bv_val);
-                            obj = c2i_ASN1_OBJECT(NULL, &data,
-                                    ppValues[value]->bv_len);
+                            obj = OBJ_txt2obj(
+                                        ppValues[value]->bv_val,
+                                        ppValues[value]->bv_len);
                             if (obj != NULL)
                             {
                                 sk_ASN1_OBJECT_push(
@@ -207,23 +317,111 @@ LwAutoEnrollGetTemplateList(
                             }
                         }
 
-                        // TODO Handle pKIDefaultCSPs and pKICriticalExtensions.
+                        ldap_value_free_len(ppValues);
+                        ppValues = ldap_get_values_len(
+                                        pLdap,
+                                        pLdapResult,
+                                        "pKICriticalExtensions");
+                        if (ppValues == NULL)
+                        {
+                            continue;
+                        }
+
+                        criticalExtensions = sk_ASN1_OBJECT_new_null();
+                        numValues = ldap_count_values_len(ppValues);
+
+                        for (value = 0; value < numValues; ++value)
+                        {
+                            ASN1_OBJECT *obj = NULL;
+                            const unsigned char *data;
+
+                            data = (unsigned char *) (ppValues[value]->bv_val);
+                            obj = OBJ_txt2obj(
+                                        ppValues[value]->bv_val,
+                                        ppValues[value]->bv_len);
+                            if (obj != NULL)
+                            {
+                                sk_ASN1_OBJECT_push(
+                                        criticalExtensions,
+                                        obj);
+                                obj = NULL;
+                                continue;
+                            }
+                        }
+
+                        ldap_value_free_len(ppValues);
+                        ppValues = ldap_get_values_len(
+                                        pLdap,
+                                        pLdapResult,
+                                        "msPKI-Minimal-Key-Size");
+                        if (ppValues == NULL)
+                        {
+                            continue;
+                        }
+
+                        if (ldap_count_values_len(ppValues) != 1)
+                        {
+                            ldap_value_free_len(ppValues);
+                            ppValues = NULL;
+                            continue;
+                        }
+
+                        keySize = strtoul(ppValues[0]->bv_val,
+                                            NULL,
+                                            0);
+
+                        ldap_value_free_len(ppValues);
+                        ppValues = ldap_get_values_len(
+                                        pLdap,
+                                        pLdapResult,
+                                        "pKIDefaultCSPs");
+                        if (ppValues == NULL)
+                        {
+                            continue;
+                        }
+
+                        numValues = ldap_count_values_len(ppValues);
+
+                        for (value = 0; value < numValues; ++value)
+                        {
+                            if (ppValues[value]->bv_val[0] != '1')
+                            {
+                                continue;
+                            }
+
+                            error = LwAllocateMemory(
+                                        ppValues[value]->bv_len + 1,
+                                        (PVOID*) &csp);
+                            BAIL_ON_LW_ERROR(error);
+                            strncpy(
+                                csp,
+                                ppValues[value]->bv_val,
+                                ppValues[value]->bv_len);
+                            csp[ppValues[value]->bv_len] = '\0';
+                            fprintf(stderr, "CSP: %s\n", csp); /* DeBuG */
+
+                            break;
+                        }
+
                         pTemplateList[template].name = name;
+                        pTemplateList[template].displayName = displayName;
+                        pTemplateList[template].csp = csp;
+                        pTemplateList[template].keyUsage = keyUsage;
+                        pTemplateList[template].keySize = keySize;
+                        pTemplateList[template].enrollmentFlags =
+                            enrollmentFlags;
                         pTemplateList[template].extendedKeyUsage =
                             extendedKeyUsage;
+                        pTemplateList[template].criticalExtensions =
+                            criticalExtensions;
+
                         name = NULL;
+                        displayName = NULL;
                         extendedKeyUsage = NULL;
+                        criticalExtensions = NULL;
+                        csp = NULL;
                         ++template;
                     }
-
-                    if (pLdapResults)
-                    {
-                        ldap_msgfree(pLdapResults);
-                        pLdapResults = NULL;
-                    }
-
-                    LwLdapCloseDirectory(ldapConnection);
-                    ldapConnection = (HANDLE) NULL;
                 }
             }
         }
@@ -242,6 +440,41 @@ cleanup:
 
     LW_SAFE_FREE_STRING(domainDN);
     LW_SAFE_FREE_STRING(searchDN);
+    LW_SAFE_FREE_STRING(name);
+    LW_SAFE_FREE_STRING(displayName);
+
+    if (lsaConnection)
+    {
+        LsaCloseServer(lsaConnection);
+    }
+
+    if (ldapConnection)
+    {
+        LwLdapCloseDirectory(ldapConnection);
+    }
+
+    if (pLdapResults)
+    {
+        ldap_msgfree(pLdapResults);
+        pLdapResults = NULL;
+    }
+
+    if (extendedKeyUsage)
+    {
+        EXTENDED_KEY_USAGE_free(extendedKeyUsage);
+        extendedKeyUsage = NULL;
+    }
+
+    if (criticalExtensions)
+    {
+        sk_ASN1_OBJECT_free(criticalExtensions);
+        criticalExtensions = NULL;
+    }
+
+    if (ppValues)
+    {
+        ldap_value_free_len(ppValues);
+    }
 
     *ppTemplateList = pTemplateList;
     *pNumTemplates = numTemplates;
@@ -259,19 +492,41 @@ LwAutoEnrollFreeTemplateList(
 
     for (template = 0; template < NumTemplates; ++template)
     {
-        LW_SAFE_FREE_MEMORY(pTemplateList[template].name);
-        LW_SAFE_FREE_MEMORY(pTemplateList[template].csp);
+        if (pTemplateList[template].name)
+        {
+            LwFreeString((PSTR) pTemplateList[template].name);
+        }
+
+        if (pTemplateList[template].displayName)
+        {
+            LwFreeString((PSTR) pTemplateList[template].displayName);
+        }
+
+        if (pTemplateList[template].csp)
+        {
+            LwFreeString((PSTR) pTemplateList[template].csp);
+        }
 
         if (pTemplateList[template].extendedKeyUsage)
         {
-            sk_ASN1_OBJECT_free(pTemplateList[template].extendedKeyUsage);
+            EXTENDED_KEY_USAGE_free(pTemplateList[template].extendedKeyUsage);
         }
 
         if (pTemplateList[template].criticalExtensions)
         {
             sk_ASN1_OBJECT_free(pTemplateList[template].criticalExtensions);
         }
+
+        if (pTemplateList[template].extensions)
+        {
+            sk_X509_EXTENSION_free(pTemplateList[template].extensions);
+        }
+
+        if (pTemplateList[template].attributes)
+        {
+            sk_X509_ATTRIBUTE_free(pTemplateList[template].attributes);
+        }
     }
 
-    LwFreeMemory(pTemplateList);
+    LW_SAFE_FREE_MEMORY(pTemplateList);
 }
