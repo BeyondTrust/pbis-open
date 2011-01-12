@@ -742,6 +742,9 @@
 #define LW_ERROR_DOMAINJOIN_WARNING                        42507
 #define LW_ERROR_FAILED_ADMIN_PRIVS                        42508
 
+// Range 42600 - 42560 is reserved for autoenroll
+#define LW_ERROR_AUTOENROLL_FAILED                         42600
+
 //
 // 49900-49999 reserved for internal PAM error code mapping
 //
