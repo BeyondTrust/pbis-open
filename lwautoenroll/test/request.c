@@ -1,6 +1,6 @@
 #include <lwautoenroll/lwautoenroll.h>
 #include <bail.h>
-#include <ssl.h>
+#include <ssl_util.h>
 
 #include <openssl/err.h>
 #include <openssl/pem.h>

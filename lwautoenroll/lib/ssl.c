@@ -1,5 +1,5 @@
 #include <bail.h>
-#include <ssl.h>
+#include <ssl_util.h>
 
 #include <openssl/conf.h>
 #include <openssl/evp.h>

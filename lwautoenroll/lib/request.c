@@ -4,7 +4,7 @@
 #include <ldap_util.h>
 #include <mspki.h>
 #include <soap_util.h>
-#include <ssl.h>
+#include <ssl_util.h>
 #include <x509_util.h>
 
 #include <krb5/krb5.h>
