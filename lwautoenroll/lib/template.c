@@ -96,7 +96,7 @@ LwAutoEnrollGetTemplateList(
                 lsaConnection,
                 NULL,
                 0,
-                LSA_OBJECT_TYPE_UNDEFINED,
+                LSA_OBJECT_TYPE_USER,
                 LSA_QUERY_TYPE_BY_UPN,
                 1,
                 QueryList,
