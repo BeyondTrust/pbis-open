@@ -95,11 +95,10 @@ LwAutoEnrollGetUrl(
 
         for (value = 0; value < numValues; ++value)
         {
-            if (pTemplate->name[ppValues[value]->bv_len] == '\0' &&
-                    !strncmp(
-                        pTemplate->name,
-                        ppValues[value]->bv_val,
-                        ppValues[value]->bv_len))
+            if (!strncmp(
+                    pTemplate->name,
+                    ppValues[value]->bv_val,
+                    ppValues[value]->bv_len))
             {
                 ldap_value_free_len(ppValues);
                 ppValues = ldap_get_values_len(
@@ -108,7 +107,7 @@ LwAutoEnrollGetUrl(
                                 "msPKI-Enrollment-Servers");
                 if (ppValues != NULL)
                 {
-                    PSTR serverInfo = ppValues[value]->bv_val;
+                    PSTR serverInfo = ppValues[0]->bv_val;
                     int priority;
                     int authType;
                     int renewOnly;
@@ -165,6 +164,11 @@ cleanup:
     if (error)
     {
         LW_SAFE_FREE_STRING(enrollmentUrl);
+    }
+
+    if (pLdapResults)
+    {
+        ldap_msgfree(pLdapResults);
     }
 
     if (ldapConnection)
