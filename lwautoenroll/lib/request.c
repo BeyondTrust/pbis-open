@@ -682,6 +682,7 @@ LwAutoEnrollGetRequestStatus(
     }
 
     error = GenerateSoapStatusRequest(
+                url,
                 requestId,
                 &pSoapRequest);
     BAIL_ON_LW_ERROR(error);

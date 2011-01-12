@@ -37,6 +37,7 @@ GenerateSoapRequest(
 
 DWORD
 GenerateSoapStatusRequest(
+        IN const char *url,
         IN int requestId,
         OUT OpenSOAPEnvelopePtr *ppSoapRequest
         );

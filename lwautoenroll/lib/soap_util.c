@@ -497,6 +497,7 @@ cleanup:
 
 DWORD
 GenerateSoapStatusRequest(
+        IN const char *url,
         IN int requestId,
         OUT OpenSOAPEnvelopePtr *ppSoapRequest
         )
@@ -591,6 +592,22 @@ GenerateSoapStatusRequest(
     error = LwOpenSOAPXMLElmSetValueCString(
                 pSoapElement,
                 "http://www.w3.org/2005/08/addressing/anonymous");
+    BAIL_ON_LW_ERROR(error);
+
+    soapResult = OpenSOAPEnvelopeAddHeaderBlockMB(
+                    pSoapRequest,
+                    "a:To",
+                    &pSoapBlock);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    error = LwOpenSOAPBlockAddAttributeCString(
+                pSoapBlock,
+                "s:mustUnderstand",
+                "1",
+                NULL);
+    BAIL_ON_LW_ERROR(error);
+
+    error = LwOpenSOAPBlockSetValueCString(pSoapBlock, url);
     BAIL_ON_LW_ERROR(error);
 
     soapResult = OpenSOAPEnvelopeAddBodyBlockMB(
