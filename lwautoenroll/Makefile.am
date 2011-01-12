@@ -19,10 +19,18 @@ lwautoenroll_include_HEADERS = include/lwautoenroll/lwautoenroll.h
 lib_LTLIBRARIES = lib/liblwautoenroll.la
 
 lib_liblwautoenroll_la_SOURCES = \
-	lib/template.c \
 	lib/request.c \
-	lib/ssl.c
-lib_liblwautoenroll_la_LIBADD = -llsaclient -llwadvapi -lcrypto -lldap
+	lib/ssl.c \
+	lib/template.c \
+	lib/x509_util.c
+lib_liblwautoenroll_la_LIBADD = \
+	-llsaclient \
+	-llwnetclientapi \
+	-llwadvapi \
+	-lcrypto \
+	-lldap \
+	-lcurl \
+	-lOpenSOAPClient
 
 # tests
 
