@@ -248,7 +248,7 @@ LwpsConvertAccountTypeToSchannel(
 
 DWORD
 LwpsConvertFillMachinePasswordInfoW(
-    IN PLWPS_PASSWORD_INFO pLegacyPasswordInfo,
+    IN PLWPS_LEGACY_PASSWORD_INFO pLegacyPasswordInfo,
     OUT PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
     )
 {
@@ -327,12 +327,12 @@ cleanup:
 DWORD
 LwpsConvertAllocateFromMachinePasswordInfoW(
     IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo,
-    OUT PLWPS_PASSWORD_INFO* ppLegacyPasswordInfo
+    OUT PLWPS_LEGACY_PASSWORD_INFO* ppLegacyPasswordInfo
     )
 {
     DWORD dwError = 0;
     int EE = 0;
-    PLWPS_PASSWORD_INFO pLegacyPasswordInfo = NULL;
+    PLWPS_LEGACY_PASSWORD_INFO pLegacyPasswordInfo = NULL;
     PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo = &pPasswordInfo->Account;
 
     dwError = LwAllocateMemory(sizeof(*pLegacyPasswordInfo), OUT_PPVOID(&pLegacyPasswordInfo));

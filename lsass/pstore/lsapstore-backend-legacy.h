@@ -50,9 +50,18 @@
 #include <lw/attrs.h>
 
 #include <lsa/lsapstore-types.h>
-// Just for legacy password info type:
-#include <lwps/lwps.h>
 
+typedef struct _LWPS_LEGACY_PASSWORD_INFO {
+    PWSTR pwszDomainName;
+    PWSTR pwszDnsDomainName;
+    PWSTR pwszSID;
+    PWSTR pwszHostname;
+    PWSTR pwszHostDnsDomain;
+    PWSTR pwszMachineAccount;
+    PWSTR pwszMachinePassword;
+    time_t last_change_time;
+    DWORD dwSchannelType;
+} LWPS_LEGACY_PASSWORD_INFO, *PLWPS_LEGACY_PASSWORD_INFO;
 
 //
 // From lsapstore-backend-legacy-internal.c
@@ -74,13 +83,13 @@ DWORD
 LwpsLegacyReadPassword(
     IN PLWPS_LEGACY_STATE pContext,
     IN OPTIONAL PCSTR pszQueryDomainName,
-    OUT PLWPS_PASSWORD_INFO* ppInfo
+    OUT PLWPS_LEGACY_PASSWORD_INFO* ppInfo
     );
 
 DWORD
 LwpsLegacyWritePassword(
     IN PLWPS_LEGACY_STATE pContext,
-    IN PLWPS_PASSWORD_INFO pInfo
+    IN PLWPS_LEGACY_PASSWORD_INFO pInfo
     );
 
 DWORD
@@ -104,7 +113,7 @@ LwpsLegacyGetJoinedDomains(
 
 VOID
 LwpsLegacyFreePassword(
-    IN PLWPS_PASSWORD_INFO pInfo
+    IN PLWPS_LEGACY_PASSWORD_INFO pInfo
     );
 
 VOID
@@ -119,7 +128,7 @@ LwpsLegacyFreeStringArray(
 
 DWORD
 LwpsConvertFillMachinePasswordInfoW(
-    IN PLWPS_PASSWORD_INFO pLegacyPasswordInfo,
+    IN PLWPS_LEGACY_PASSWORD_INFO pLegacyPasswordInfo,
     OUT PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
     );
 ///<
@@ -140,7 +149,7 @@ LwpsConvertFillMachinePasswordInfoW(
 DWORD
 LwpsConvertAllocateFromMachinePasswordInfoW(
     IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo,
-    OUT PLWPS_PASSWORD_INFO* ppLegacyPasswordInfo
+    OUT PLWPS_LEGACY_PASSWORD_INFO* ppLegacyPasswordInfo
     );
 ///<
 /// Conver LSA pstore machine password info into legacy pstore password info.

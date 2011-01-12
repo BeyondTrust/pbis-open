@@ -177,12 +177,12 @@ DWORD
 LwpsLegacyReadPassword(
     IN PLWPS_LEGACY_STATE pContext,
     IN OPTIONAL PCSTR pszQueryDomainName,
-    OUT PLWPS_PASSWORD_INFO* ppInfo
+    OUT PLWPS_LEGACY_PASSWORD_INFO* ppInfo
     )
 {
     DWORD dwError = 0;
     int EE = 0;
-    PLWPS_PASSWORD_INFO pInfo = NULL;
+    PLWPS_LEGACY_PASSWORD_INFO pInfo = NULL;
     PSTR pszRegistryPath = NULL;
     PSTR pszDefaultDomain = NULL;
     PSTR pszDomainDnsName = NULL;
@@ -250,7 +250,7 @@ LwpsLegacyReadPassword(
     }
 
     dwError = LwAllocateMemory(
-                  sizeof(LWPS_PASSWORD_INFO),
+                  sizeof(LWPS_LEGACY_PASSWORD_INFO),
                   (PVOID*)&pInfo);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
@@ -428,7 +428,7 @@ cleanup:
 DWORD
 LwpsLegacyWritePassword(
     IN PLWPS_LEGACY_STATE pContext,
-    IN PLWPS_PASSWORD_INFO pInfo
+    IN PLWPS_LEGACY_PASSWORD_INFO pInfo
     )
 {
     DWORD dwError = 0;
@@ -852,7 +852,7 @@ LwpsLegacyGetJoinedDomains(
     DWORD dwSubKeysLen = 0;
     DWORD dwIndexKeys = 0;
     DWORD dwIndexDomains = 0;
-    PLWPS_PASSWORD_INFO pPasswordInfo = NULL;
+    PLWPS_LEGACY_PASSWORD_INFO pPasswordInfo = NULL;
     DWORD dwDomainCount = 0;
 
     dwError = RegUtilIsValidKey(
@@ -960,7 +960,7 @@ cleanup:
 
 VOID
 LwpsLegacyFreePassword(
-    IN PLWPS_PASSWORD_INFO pInfo
+    IN PLWPS_LEGACY_PASSWORD_INFO pInfo
     )
 {
     if (pInfo)

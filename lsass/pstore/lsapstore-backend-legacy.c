@@ -101,7 +101,7 @@ LsaPstorepBackendGetPasswordInfoW(
     DWORD dwError = 0;
     int EE = 0;
     PSTR dnsDomainName = NULL;
-    PLWPS_PASSWORD_INFO legacyPasswordInfo = NULL;
+    PLWPS_LEGACY_PASSWORD_INFO legacyPasswordInfo = NULL;
     PLSA_MACHINE_PASSWORD_INFO_W passwordInfo = NULL;
 
     if (DnsDomainName)
@@ -152,7 +152,7 @@ LsaPstorepBackendSetPasswordInfoW(
 {
     DWORD dwError = 0;
     int EE = 0;
-    PLWPS_PASSWORD_INFO legacyPasswordInfo = NULL;
+    PLWPS_LEGACY_PASSWORD_INFO legacyPasswordInfo = NULL;
     PWSTR defaultDnsDomainName = NULL;
     BOOLEAN isDefaultDomain = FALSE;
 
@@ -259,7 +259,7 @@ LsaPstorepBackendGetDefaultDomainW(
     DWORD dwError = 0;
     int EE = 0;
     PWSTR dnsDomainName = NULL;
-    PLWPS_PASSWORD_INFO legacyPasswordInfo = NULL;
+    PLWPS_LEGACY_PASSWORD_INFO legacyPasswordInfo = NULL;
 
     dwError = LwpsLegacyReadPassword(
                     LsaPstoreBackendState.OldStoreHandle,
