@@ -9,11 +9,17 @@
 
 #include <OpenSOAP/Envelope.h>
 
-#define BAIL_ON_SOAP_ERROR(_soapError) \
+#define BAIL_WITH_SOAP_ERROR(_soapError, ...) \
+    do { \
+        BAIL_WITH_LW_ERROR(LwSoapErrorToLwError(_soapError), \
+            _BAIL_FORMAT_STRING(__VA_ARGS__) ": OpenSOAP error %08x", \
+            _BAIL_FORMAT_ARGS(__VA_ARGS__), _soapError); \
+    } while (0)
+
+#define BAIL_ON_SOAP_ERROR(_soapError, ...) \
     do { \
         if (_soapError != OPENSOAP_NO_ERROR) { \
-            _BAIL_WITH_LW_ERROR(LwSoapErrorToLwError(_soapError), \
-                    ": OpenSOAP error %08x", _soapError); \
+            BAIL_WITH_SOAP_ERROR(_soapError , ## __VA_ARGS__); \
         } \
     } while (0)
 

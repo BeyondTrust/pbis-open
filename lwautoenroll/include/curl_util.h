@@ -7,17 +7,18 @@
 
 #include <OpenSOAP/Envelope.h>
 
-#define BAIL_WITH_CURL_ERROR(_curlError) \
+#define BAIL_WITH_CURL_ERROR(_curlError, ...) \
     do { \
-        _BAIL_WITH_LW_ERROR(LwCurlErrorToLwError(_curlError), \
-                ": cURL error %d (%s)", _curlError, \
-                curl_easy_strerror(_curlError)); \
+        BAIL_WITH_LW_ERROR(LwCurlErrorToLwError(_curlError), \
+            _BAIL_FORMAT_STRING(__VA_ARGS__) ": cURL error %d (%s)", \
+            _BAIL_FORMAT_ARGS(__VA_ARGS__), _curlError, \
+            curl_easy_strerror(_curlError)); \
     } while(0)
 
-#define BAIL_ON_CURL_ERROR(_curlError) \
+#define BAIL_ON_CURL_ERROR(_curlError, ...) \
     do { \
         if (_curlError != CURLE_OK) { \
-            BAIL_WITH_CURL_ERROR(_curlError); \
+            BAIL_WITH_CURL_ERROR(_curlError , ## __VA_ARGS__); \
         } \
     } while(0)
 

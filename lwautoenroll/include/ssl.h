@@ -8,27 +8,29 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 
-#define BAIL_WITH_SSL_ERROR(_sslError) \
+#define BAIL_WITH_SSL_ERROR(_sslError, ...) \
     do { \
         char _SSLerrorString[256]; \
         ERR_error_string_n(_sslError, _SSLerrorString, \
-                sizeof(_SSLerrorString)); \
-        _BAIL_WITH_LW_ERROR(LwSSLErrorToLwError(_sslError), \
-                ": OpenSSL error %lx (%s)", _sslError, _SSLerrorString); \
+            sizeof(_SSLerrorString)); \
+        BAIL_WITH_LW_ERROR(LwSSLErrorToLwError(_sslError), \
+            _BAIL_FORMAT_STRING(__VA_ARGS__) ": OpenSSL error %lx (%s)", \
+            _BAIL_FORMAT_ARGS(__VA_ARGS__), _sslError, _SSLerrorString); \
     } while(0)
 
-#define BAIL_ON_SSL_ERROR(_expr) \
+#define BAIL_ON_SSL_ERROR(_expr, ...) \
     do { \
         if (_expr) { \
             unsigned long _sslError = ERR_get_error(); \
-            BAIL_WITH_SSL_ERROR(_sslError); \
+            BAIL_WITH_SSL_ERROR(_sslError , ## __VA_ARGS__); \
         } \
     } while(0)
 
-#define BAIL_ON_SSL_CTX_ERROR(_expr, _ctx) \
+#define BAIL_ON_SSL_CTX_ERROR(_expr, _ctx, ...) \
     do { \
         if (_expr) { \
-            BAIL_WITH_SSL_ERROR(X509_STORE_CTX_get_error(_ctx)); \
+            BAIL_WITH_SSL_ERROR(X509_STORE_CTX_get_error(_ctx) , \
+                ## __VA_ARGS__); \
         } \
     } while(0)
 

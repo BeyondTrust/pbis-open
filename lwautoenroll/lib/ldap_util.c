@@ -107,7 +107,7 @@ LwAutoEnrollLdapConnect(
                 pLdapConnection);
     BAIL_ON_LW_ERROR(
             error,
-            "Could not connect to DC %s [%s] for domain %s",
+            ": Could not connect to DC %s [%s] for domain %s",
             pDcInfo->pszDomainControllerName,
             pDcInfo->pszDomainControllerAddress,
             domainDnsName);
