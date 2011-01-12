@@ -69,21 +69,14 @@ AD_IoctlGetMachineAccount(
     DWORD dwError = 0;
     PVOID pOutputBuffer = NULL;
     size_t outputBufferSize = 0;
-    PAD_PROVIDER_CONTEXT pProviderContext = (PAD_PROVIDER_CONTEXT)hProvider;
     LWMsgContext* pContext = NULL;
     LWMsgDataContext* pDataContext = NULL;
     PSTR pszDnsDomainName = NULL;
     PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
 
     //
-    // Do access check
+    // Everyone can call this, so no access check.
     //
-
-    if (pProviderContext->uid)
-    {
-        dwError = LW_ERROR_ACCESS_DENIED;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
 
     //
     // Do request
