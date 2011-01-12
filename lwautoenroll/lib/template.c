@@ -40,7 +40,6 @@ LwAutoEnrollGetTemplateList(
     LDAP *pLdap = NULL;
     LDAPMessage *pLdapResults = NULL;
     LDAPMessage *pLdapResult = NULL;
-    int template;
     PCSTR domainDn = NULL;
     PLW_AUTOENROLL_TEMPLATE pTemplateList = NULL;
     DWORD numTemplates = 0;
@@ -141,6 +140,8 @@ LwAutoEnrollGetTemplateList(
 
     pLdap = LwLdapGetSession(ldapConnection);
 
+    numTemplates = 0;
+
     for (pLdapResult = LwLdapFirstEntry(
                             ldapConnection,
                             pLdapResults);
@@ -150,11 +151,11 @@ LwAutoEnrollGetTemplateList(
                             pLdapResult)
         )
     {
-        int value;
-        int numValues;
-        DWORD enrollmentFlags;
-        DWORD keyUsage;
-        DWORD keySize;
+        int value = 0;
+        int numValues = 0;
+        DWORD enrollmentFlags = 0;
+        DWORD keyUsage = 0;
+        DWORD keySize = 0;
 
         LW_SAFE_FREE_STRING(name);
         LW_SAFE_FREE_STRING(displayName);
@@ -175,6 +176,7 @@ LwAutoEnrollGetTemplateList(
         if (ppValues)
         {
             ldap_value_free_len(ppValues);
+            ppValues = NULL;
         }
 
         ppValues = ldap_get_values_len(
@@ -230,28 +232,6 @@ LwAutoEnrollGetTemplateList(
         ppValues = ldap_get_values_len(
                         pLdap,
                         pLdapResult,
-                        "displayName");
-        if (ppValues == NULL)
-        {
-            continue;
-        }
-
-        if (ldap_count_values_len(ppValues) != 1)
-        {
-            ldap_value_free_len(ppValues);
-            ppValues = NULL;
-            continue;
-        }
-
-        error = LwAllocateString(
-                    (PCSTR) ppValues[0]->bv_val,
-                    &displayName);
-        BAIL_ON_LW_ERROR(error);
-
-        ldap_value_free_len(ppValues);
-        ppValues = ldap_get_values_len(
-                        pLdap,
-                        pLdapResult,
                         "pKIKeyUsage");
         if (ppValues == NULL)
         {
@@ -271,129 +251,168 @@ LwAutoEnrollGetTemplateList(
         ppValues = ldap_get_values_len(
                         pLdap,
                         pLdapResult,
-                        "pKIExtendedKeyUsage");
+                        "displayName");
         if (ppValues == NULL)
         {
-            continue;
+            error = LwAllocateString(
+                        name,
+                        &displayName);
+            BAIL_ON_LW_ERROR(error);
         }
-
-        extendedKeyUsage = EXTENDED_KEY_USAGE_new();
-        numValues = ldap_count_values_len(ppValues);
-
-        for (value = 0; value < numValues; ++value)
+        else
         {
-            ASN1_OBJECT *obj = NULL;
-            const unsigned char *data;
-
-            data = (unsigned char *) (ppValues[value]->bv_val);
-            obj = OBJ_txt2obj(
-                        ppValues[value]->bv_val,
-                        ppValues[value]->bv_len);
-            if (obj != NULL)
+            if (ldap_count_values_len(ppValues) != 1)
             {
-                sk_ASN1_OBJECT_push(
-                        extendedKeyUsage,
-                        obj);
-                obj = NULL;
+                ldap_value_free_len(ppValues);
+                ppValues = NULL;
                 continue;
             }
+
+            error = LwAllocateString(
+                        (PCSTR) ppValues[0]->bv_val,
+                        &displayName);
+            BAIL_ON_LW_ERROR(error);
+
+            ldap_value_free_len(ppValues);
+            ppValues = NULL;
         }
 
-        ldap_value_free_len(ppValues);
+        ppValues = ldap_get_values_len(
+                        pLdap,
+                        pLdapResult,
+                        "pKIExtendedKeyUsage");
+        if (ppValues != NULL)
+        {
+            extendedKeyUsage = EXTENDED_KEY_USAGE_new();
+            numValues = ldap_count_values_len(ppValues);
+
+            for (value = 0; value < numValues; ++value)
+            {
+                ASN1_OBJECT *obj = NULL;
+                const unsigned char *data;
+
+                data = (unsigned char *) (ppValues[value]->bv_val);
+                obj = OBJ_txt2obj(
+                            ppValues[value]->bv_val,
+                            ppValues[value]->bv_len);
+                if (obj != NULL)
+                {
+                    sk_ASN1_OBJECT_push(
+                            extendedKeyUsage,
+                            obj);
+                    obj = NULL;
+                    continue;
+                }
+            }
+
+            ldap_value_free_len(ppValues);
+            ppValues = NULL;
+        }
+
         ppValues = ldap_get_values_len(
                         pLdap,
                         pLdapResult,
                         "pKICriticalExtensions");
-        if (ppValues == NULL)
+        if (ppValues != NULL)
         {
-            continue;
-        }
+            criticalExtensions = sk_ASN1_OBJECT_new_null();
+            numValues = ldap_count_values_len(ppValues);
 
-        criticalExtensions = sk_ASN1_OBJECT_new_null();
-        numValues = ldap_count_values_len(ppValues);
-
-        for (value = 0; value < numValues; ++value)
-        {
-            ASN1_OBJECT *obj = NULL;
-            const unsigned char *data;
-
-            data = (unsigned char *) (ppValues[value]->bv_val);
-            obj = OBJ_txt2obj(
-                        ppValues[value]->bv_val,
-                        ppValues[value]->bv_len);
-            if (obj != NULL)
+            for (value = 0; value < numValues; ++value)
             {
-                sk_ASN1_OBJECT_push(
-                        criticalExtensions,
-                        obj);
-                obj = NULL;
-                continue;
+                ASN1_OBJECT *obj = NULL;
+                const unsigned char *data;
+
+                data = (unsigned char *) (ppValues[value]->bv_val);
+                obj = OBJ_txt2obj(
+                            ppValues[value]->bv_val,
+                            ppValues[value]->bv_len);
+                if (obj != NULL)
+                {
+                    sk_ASN1_OBJECT_push(
+                            criticalExtensions,
+                            obj);
+                    obj = NULL;
+                    continue;
+                }
             }
+
+            ldap_value_free_len(ppValues);
+            ppValues = NULL;
         }
 
-        ldap_value_free_len(ppValues);
         ppValues = ldap_get_values_len(
                         pLdap,
                         pLdapResult,
                         "msPKI-Minimal-Key-Size");
-        if (ppValues == NULL)
+        if (ppValues != NULL)
         {
-            continue;
-        }
+            if (ldap_count_values_len(ppValues) != 1)
+            {
+                ldap_value_free_len(ppValues);
+                ppValues = NULL;
+                continue;
+            }
 
-        if (ldap_count_values_len(ppValues) != 1)
-        {
+            keySize = strtoul(ppValues[0]->bv_val,
+                                NULL,
+                                0);
+
             ldap_value_free_len(ppValues);
             ppValues = NULL;
-            continue;
         }
 
-        keySize = strtoul(ppValues[0]->bv_val,
-                            NULL,
-                            0);
-
-        ldap_value_free_len(ppValues);
         ppValues = ldap_get_values_len(
                         pLdap,
                         pLdapResult,
                         "pKIDefaultCSPs");
         if (ppValues == NULL)
         {
-            continue;
+            // The CA will accept any CSP; supply a reasonable default.
+            error = LwAllocateString(
+                        "1,Microsoft Enhanced Cryptographic Provider v1.0",
+                        &csp);
+            BAIL_ON_LW_ERROR(error);
         }
-
-        numValues = ldap_count_values_len(ppValues);
-
-        for (value = 0; value < numValues; ++value)
+        else
         {
-            if (ppValues[value]->bv_val[0] != '1')
+            // Pick the preferred CSP from the list.
+            numValues = ldap_count_values_len(ppValues);
+
+            for (value = 0; value < numValues; ++value)
             {
-                continue;
+                if (ppValues[value]->bv_val[0] != '1')
+                {
+                    continue;
+                }
+
+                error = LwAllocateMemory(
+                            ppValues[value]->bv_len + 1,
+                            (PVOID*) &csp);
+                BAIL_ON_LW_ERROR(error);
+                strncpy(
+                    csp,
+                    ppValues[value]->bv_val,
+                    ppValues[value]->bv_len);
+                csp[ppValues[value]->bv_len] = '\0';
+
+                break;
             }
 
-            error = LwAllocateMemory(
-                        ppValues[value]->bv_len + 1,
-                        (PVOID*) &csp);
-            BAIL_ON_LW_ERROR(error);
-            strncpy(
-                csp,
-                ppValues[value]->bv_val,
-                ppValues[value]->bv_len);
-            csp[ppValues[value]->bv_len] = '\0';
-
-            break;
+            ldap_value_free_len(ppValues);
+            ppValues = NULL;
         }
 
-        pTemplateList[template].name = name;
-        pTemplateList[template].displayName = displayName;
-        pTemplateList[template].csp = csp;
-        pTemplateList[template].keyUsage = keyUsage;
-        pTemplateList[template].keySize = keySize;
-        pTemplateList[template].enrollmentFlags =
+        pTemplateList[numTemplates].name = name;
+        pTemplateList[numTemplates].displayName = displayName;
+        pTemplateList[numTemplates].csp = csp;
+        pTemplateList[numTemplates].keyUsage = keyUsage;
+        pTemplateList[numTemplates].keySize = keySize;
+        pTemplateList[numTemplates].enrollmentFlags =
             enrollmentFlags;
-        pTemplateList[template].extendedKeyUsage =
+        pTemplateList[numTemplates].extendedKeyUsage =
             extendedKeyUsage;
-        pTemplateList[template].criticalExtensions =
+        pTemplateList[numTemplates].criticalExtensions =
             criticalExtensions;
 
         name = NULL;
@@ -401,7 +420,7 @@ LwAutoEnrollGetTemplateList(
         extendedKeyUsage = NULL;
         criticalExtensions = NULL;
         csp = NULL;
-        ++template;
+        ++numTemplates;
     }
 
 cleanup:
