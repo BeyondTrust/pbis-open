@@ -67,13 +67,11 @@ ParseSubjectName(
     int sslResult = 0;
     DWORD error = LW_ERROR_SUCCESS;
 
-    fprintf(stderr, "ParseSubjectName(%s)\n", nameString); /* DeBuG */
     pSubjectName = X509_NAME_new();
     BAIL_ON_SSL_ERROR(pSubjectName == NULL);
 
     while ((type = strtok_r(nameString, "=", &savePtr)) != NULL)
     {
-        fprintf(stderr, "type = '%s' (%p), remainder='%s' (%p)\n", type, type, savePtr, savePtr); /* DeBuG */
         nameString = NULL; // For next call to strtok();
         nid = OBJ_txt2nid(type);
         BAIL_ON_SSL_ERROR(
@@ -87,7 +85,6 @@ ParseSubjectName(
             value = savePtr + 1;
             if (*value == '\0')
             {
-                fprintf(stderr, "savePtr now %p\n", savePtr); /* DeBuG */
                 BAIL_WITH_MY_ERROR(
                     MY_ERROR_INVALID_SUBJECT_NAME,
                     ": No value specified for DN component '%s'",
@@ -95,7 +92,6 @@ ParseSubjectName(
             }
         }
 
-        fprintf(stderr, "%s=%s\n", type, value); /* DeBuG */
         sslResult = X509_NAME_add_entry_by_NID(
                         pSubjectName,
                         nid,
@@ -166,8 +162,6 @@ GetCertificate(
          * A pending status usually means human intervention is
          * required at the CA, so don't poll too frequently.
          */
-        sleep(10); /* DeBuG */
-        if (0) /* DeBuG */
         sleep(300);
         error = LwAutoEnrollGetRequestStatus(
                     url,
