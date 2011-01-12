@@ -46,6 +46,7 @@
 #include "wbclient.h"
 #include "lsawbclient_p.h"
 #include "lwnet.h"
+#include <lsa/ad.h>
 
 struct _wbc_err_string {
     wbcErr wbc_err;
@@ -136,19 +137,23 @@ wbcErr wbcInterfaceDetails(struct wbcInterfaceDetails **details)
 {
     DWORD dwErr = LW_ERROR_INTERNAL;
     wbcErr wbc_status = WBC_ERR_UNKNOWN_FAILURE;
-    PSTR pszMyDnsDomain = NULL;
+    HANDLE hLsa = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
     PLWNET_DC_INFO pDcInfo = NULL;
 
     BAIL_ON_NULL_PTR_PARAM(details, dwErr);
 
     /* Find our domain */
 
-    dwErr = LWNetGetCurrentDomain(&pszMyDnsDomain);
-    BAIL_ON_NETLOGON_ERR(dwErr);
+    dwErr = LsaOpenServer(&hLsa);
+    BAIL_ON_LSA_ERR(dwErr);
+
+    dwErr = LsaAdGetMachineAccountInfo(hLsa, NULL, &pAccountInfo);
+    BAIL_ON_LSA_ERR(dwErr);
 
     /* Find DC to get the the short domain name */
 
-    dwErr = LWNetGetDCName(NULL, pszMyDnsDomain, NULL, 0, &pDcInfo);
+    dwErr = LWNetGetDCName(NULL, pAccountInfo->DnsDomainName, NULL, 0, &pDcInfo);
     BAIL_ON_NETLOGON_ERR(dwErr);
 
     /* extra check until API is complete */
@@ -174,10 +179,17 @@ wbcErr wbcInterfaceDetails(struct wbcInterfaceDetails **details)
     BAIL_ON_NULL_PTR((*details)->dns_domain, dwErr);
 
 cleanup:
-    if (pszMyDnsDomain)
-        LWNetFreeString(pszMyDnsDomain);
-
     LWNET_SAFE_FREE_DC_INFO(pDcInfo);
+
+    if (pAccountInfo)
+    {
+        LsaAdFreeMachineAccountInfo(pAccountInfo);
+    }
+
+    if (hLsa)
+    {
+        LsaCloseServer(hLsa);
+    }
 
     wbc_status = map_error_to_wbc_status(dwErr);
 
