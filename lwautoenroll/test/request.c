@@ -11,15 +11,33 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MY_ERROR_NO_TEMPLATE_FOUND  30001
+#define MY_ERROR_BASE               30000
+#define MY_ERROR_NO_TEMPLATE_FOUND  MY_ERROR_BASE+0
+#define MY_ERROR_MAX                MY_ERROR_BASE+1
 
-static BOOL
-MyTemplateCheck(
-    PLW_AUTOENROLL_TEMPLATE pTemplate
-    )
+static const char *MyErrorNames[] = {
+    "Template not found",
+};
+
+static const char *
+MyErrorToName(DWORD error)
 {
-    return (strcmp(pTemplate->name, "UserSignature") == 0);
+    if (error >= MY_ERROR_BASE && error < MY_ERROR_MAX)
+    {
+        return MyErrorNames[error - MY_ERROR_BASE];
+    }
+    else
+    {
+        return "Unknown Error";
+    }
 }
+
+#define BAIL_WITH_MY_ERROR(_error, ...) \
+    do { \
+        error = _error; \
+        BAIL(" Error code: %d (%s)" _BAIL_FORMAT_STRING(__VA_ARGS__), \
+            _error, MyErrorToName(_error), _BAIL_FORMAT_ARGS(__VA_ARGS__)); \
+    } while(0)
 
 static VOID
 LogFunc(LwLogLevel level, PVOID pUserData, PCSTR pszMessage)
@@ -36,6 +54,7 @@ LogInit(void)
 static DWORD
 GetCertificate(
         IN OUT EVP_PKEY **ppKeyPair,
+        IN PCSTR templateName,
         OUT X509 **ppCertificate
     )
 {
@@ -51,7 +70,7 @@ GetCertificate(
 
     for (template = 0; template < numTemplates; ++template)
     {
-        if (MyTemplateCheck(&pTemplates[template]))
+        if (!strcmp(pTemplates[template].name, templateName))
         {
             break;
         }
@@ -59,7 +78,7 @@ GetCertificate(
 
     if (template == numTemplates)
     {
-        BAIL_WITH_LW_ERROR(MY_ERROR_NO_TEMPLATE_FOUND);
+        BAIL_WITH_MY_ERROR(MY_ERROR_NO_TEMPLATE_FOUND);
     }
 
     error = LwAutoEnrollRequestCertificate(
@@ -97,7 +116,7 @@ cleanup:
 }
 
 int
-main()
+main(int argc, char * const *argv)
 {
     EVP_PKEY *pKeyPair = NULL;
     BIO *pStdoutBio = NULL;
@@ -105,10 +124,16 @@ main()
     int sslResult = 0;
     DWORD error = LW_ERROR_SUCCESS;
 
+    if (argc != 2)
+    {
+        fprintf(stderr, "Usage: %s template\n", argv[0]);
+        exit(1);
+    }
+
     LogInit();
     ERR_load_crypto_strings();
 
-    error = GetCertificate(&pKeyPair, &pCertificate);
+    error = GetCertificate(&pKeyPair, argv[1], &pCertificate);
     BAIL_ON_LW_ERROR(error);
 
     pStdoutBio = BIO_new(BIO_s_file());
