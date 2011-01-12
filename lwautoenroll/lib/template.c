@@ -449,7 +449,6 @@ LwAutoEnrollGetTemplateList(
                                 ppValues[value]->bv_val,
                                 ppValues[value]->bv_len);
                             csp[ppValues[value]->bv_len] = '\0';
-                            fprintf(stderr, "CSP: %s\n", csp); /* DeBuG */
 
                             break;
                         }

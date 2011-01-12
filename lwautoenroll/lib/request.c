@@ -47,7 +47,6 @@ Asn1GeneratePrintfV(
                 args);
     BAIL_ON_LW_ERROR(error);
 
-    fprintf(stderr, "Asn1GeneratePrintfV(%s)\n", asn1String); /* DeBuG */
     pAsn1Type = ASN1_generate_nconf(asn1String, NULL);
     BAIL_ON_SSL_ERROR(pAsn1Type == NULL);
 
@@ -366,7 +365,6 @@ AddExtensionString(
     PSTR criticalValue = NULL;
     DWORD error = LW_ERROR_SUCCESS;
 
-    fprintf(stderr, "AddExtension: %s = '%s'\n", name, value); /* DeBuG */
     extension = X509V3_EXT_nconf(
                     NULL,
                     pExtensionContext,
