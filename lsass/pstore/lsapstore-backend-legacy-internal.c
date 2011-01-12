@@ -47,7 +47,7 @@
  *          Danilo Almeida (dalmeida@likewise.com)
  */
 
-#include "lsapstore-backend-legacy-internal.h"
+#include "lsapstore-backend-legacy.h"
 
 #include <reg/reg.h>
 #include <reg/regutil.h>

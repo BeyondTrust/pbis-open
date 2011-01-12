@@ -32,25 +32,31 @@
  *  
  * Module Name:
  *
- *     lsapstore-backend-legacy-internal.h
+ *     lsapstore-backend-legacy.h
  *
  * Abstract:
  *
  *     LSASS Password Store API Implementation
  *
- *     Legacy Backend Internals API
+ *     Legacy Backend Common Includes
  *
  * Authors: Danilo Almeida (dalmeida@likewise.com)
  */
 
-#ifndef __LSA_PSTORE_BACKEND_LEGACY_INTERNAL__
-#define __LSA_PSTORE_BACKEND_LEGACY_INTERNAL__
-
-// Just for legacy password info type:
-#include <lwps/lwps.h>
+#ifndef __LSA_PSTORE_BACKEND_LEGACY__
+#define __LSA_PSTORE_BACKEND_LEGACY__
 
 #include <lw/types.h>
 #include <lw/attrs.h>
+
+#include <lsa/lsapstore-types.h>
+// Just for legacy password info type:
+#include <lwps/lwps.h>
+
+
+//
+// From lsapstore-backend-legacy-internal.c
+//
 
 typedef struct _LWPS_LEGACY_STATE *PLWPS_LEGACY_STATE;
 
@@ -106,5 +112,46 @@ LwpsLegacyFreeStringArray(
     IN PSTR* ppszDomainList,
     IN DWORD dwCount
     );
+
+//
+// From lsapstore-backend-legacy-convert.c
+//
+
+DWORD
+LwpsConvertFillMachinePasswordInfoW(
+    IN PLWPS_PASSWORD_INFO pLegacyPasswordInfo,
+    OUT PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
+    );
+///<
+/// Fill LSA pstore machine password info from legacy pstore password info.
+///
+/// This also handles any conversions or "cons"-ing up of values that
+/// are not stored in the old legacy format.
+///
+/// @param[in] pLegacyPasswordInfo - Legacy password information.
+/// @param[out] pPasswordInfo - Returns machine account information.
+///     This is freed with LsaPstoreFreePasswordInfoW().
+///
+/// @return Windows error code
+/// @retval ERROR_SUCCESS on success
+/// @retval !ERROR_SUCCESS on failure
+///
+
+DWORD
+LwpsConvertAllocateFromMachinePasswordInfoW(
+    IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo,
+    OUT PLWPS_PASSWORD_INFO* ppLegacyPasswordInfo
+    );
+///<
+/// Conver LSA pstore machine password info into legacy pstore password info.
+///
+/// @param[in] pPasswordInfo - Machine password information.
+/// @param[in] pLegacyPasswordInfo - Returns legacy password information.
+///     This is freed with LwpsLegacyFreePasswordInfo().
+///
+/// @return Windows error code
+/// @retval ERROR_SUCCESS on success
+/// @retval !ERROR_SUCCESS on failure
+///
 
 #endif

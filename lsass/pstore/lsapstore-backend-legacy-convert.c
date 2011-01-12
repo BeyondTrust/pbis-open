@@ -43,8 +43,7 @@
  * Authors: Danilo Almeida (dalmeida@likewise.com)
  */
 
-#include "lsapstore-backend-legacy-convert.h"
-#include "lsapstore-backend-legacy-internal.h"
+#include "lsapstore-backend-legacy.h"
 #include "lsapstore-includes.h"
 #include <lwstr.h>
 #include <lwmem.h>
