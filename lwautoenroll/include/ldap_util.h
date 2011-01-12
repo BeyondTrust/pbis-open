@@ -29,7 +29,7 @@ LwAutoEnrollFindDomainDn(
 DWORD
 LwAutoEnrollLdapSearch(
         IN HANDLE ldapConnection,
-        IN PCSTR domainDnsName,
+        IN PCSTR domainDn,
         IN PCSTR searchBase,
         IN int scope,
         IN PCSTR queryString,

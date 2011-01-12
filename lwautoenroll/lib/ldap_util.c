@@ -43,7 +43,7 @@ cleanup:
 DWORD
 LwAutoEnrollLdapSearch(
         IN HANDLE ldapConnection,
-        IN PCSTR domainName,
+        IN PCSTR domainDn,
         IN PCSTR searchBase,
         IN int scope,
         IN PCSTR queryString,
@@ -51,15 +51,9 @@ LwAutoEnrollLdapSearch(
         OUT LDAPMessage **ppLdapResults
         )
 {
-    PSTR domainDn = NULL;
     PSTR searchDn = NULL;
     LDAPMessage *pLdapResults = NULL;
     DWORD error = LW_ERROR_SUCCESS;
-
-    error = LwLdapConvertDomainToDN(
-                domainName,
-                &domainDn);
-    BAIL_ON_LW_ERROR(error);
 
     error = LwAllocateStringPrintf(&searchDn, "%s,%s", searchBase, domainDn);
     BAIL_ON_LW_ERROR(error);
@@ -83,7 +77,6 @@ cleanup:
         }
     }
 
-    LW_SAFE_FREE_STRING(domainDn);
     LW_SAFE_FREE_STRING(searchDn);
 
     *ppLdapResults = pLdapResults;
