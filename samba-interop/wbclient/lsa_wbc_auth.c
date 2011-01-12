@@ -496,8 +496,8 @@ MapLsaErrorToNtStatus(
     return ntStatus;    
 }
 
-static DWORD
-FillErrorInfo(
+DWORD
+wbcFillErrorInfo(
     DWORD dwError,
     struct wbcAuthErrorInfo **ppWbcError
     )
@@ -605,7 +605,7 @@ wbcAuthenticateUserEx(
     /* Copy OUT params */
     *info = pWbcUserInfo;
 
-    FillErrorInfo(dwErr, error);
+    wbcFillErrorInfo(dwErr, error);
 
 
 cleanup:
@@ -732,6 +732,15 @@ wbcCredentialCache(
     {
         *error = NULL;
     }
+    return LW_ERROR_NOT_IMPLEMENTED;
+}
+
+wbcErr
+wbcCredentialSave(
+    const char *user,
+    const char *password
+    )
+{
     return LW_ERROR_NOT_IMPLEMENTED;
 }
 

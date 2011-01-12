@@ -121,6 +121,12 @@
 /* local private functions */
 
 DWORD
+wbcFillErrorInfo(
+    DWORD dwError,
+    struct wbcAuthErrorInfo **ppWbcError
+    );
+
+DWORD
 map_wbc_to_lsa_error(
     wbcErr
     );

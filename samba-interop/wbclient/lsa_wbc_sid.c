@@ -107,6 +107,38 @@ cleanup:
     return dwErr;
 }
 
+const char*
+wbcSidTypeString(
+    enum wbcSidType type
+    )
+{
+    switch (type)
+    {
+        case WBC_SID_NAME_USE_NONE:
+            return "None";
+        case WBC_SID_NAME_USER:
+            return "User";
+        case WBC_SID_NAME_DOM_GRP:
+            return "Domain Group";
+        case WBC_SID_NAME_DOMAIN:
+            return "Domain";
+        case WBC_SID_NAME_ALIAS:
+            return "Alias";
+        case WBC_SID_NAME_WKN_GRP:
+            return "Workstation Group";
+        case WBC_SID_NAME_DELETED:
+            return "Deleted Name";
+        case WBC_SID_NAME_INVALID:
+            return "Invalid Name";
+        case WBC_SID_NAME_UNKNOWN:
+            return "Unknown";
+        case WBC_SID_NAME_COMPUTER:
+            return "Computer";
+        default:
+            return "Unknown";
+    }
+}
+
 wbcErr wbcSidToString(
     const struct wbcDomainSid *sid,
     char **sid_string

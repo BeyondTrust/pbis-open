@@ -362,7 +362,10 @@ CheckSambaVersion(
     if (!strncmp(pVersionString, "3.2.", sizeof("3.2.") - 1))
     {
     }
-    if (!strncmp(pVersionString, "3.4.", sizeof("3.4.") - 1))
+    else if (!strncmp(pVersionString, "3.4.", sizeof("3.4.") - 1))
+    {
+    }
+    else if (!strncmp(pVersionString, "3.5.", sizeof("3.5.") - 1))
     {
     }
     else if (!strncmp(pVersionString, "3.0.", sizeof("3.0.") - 1))

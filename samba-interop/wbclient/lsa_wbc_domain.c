@@ -263,6 +263,14 @@ wbcCheckTrustCredentials(
     return WBC_ERR_NOT_IMPLEMENTED;
 }
 
+wbcErr
+wbcChangeTrustCredentials(
+    IN const char *domain,
+    OUT struct wbcAuthErrorInfo **error
+    )
+{
+    return WBC_ERR_NOT_IMPLEMENTED;
+}
 
 /*****************************************************************************
  ****************************************************************************/
@@ -582,6 +590,25 @@ cleanup:
         *dc_info = NULL;
         _WBC_FREE(pResult);
     }
+    return map_error_to_wbc_status(error);
+}
+
+wbcErr
+wbcPingDc(
+    const char *domain,
+    struct wbcAuthErrorInfo **ppError
+    )
+{
+    DWORD error;
+    LWNET_UNIX_TIME_T dCTime = 0;
+
+    error = LWNetGetDCTime(
+            domain,
+            &dCTime);
+    BAIL_ON_LSA_ERR(error);
+
+cleanup:
+    wbcFillErrorInfo(map_error_to_wbc_status(error), ppError);
     return map_error_to_wbc_status(error);
 }
 

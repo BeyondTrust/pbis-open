@@ -4,6 +4,7 @@
    Winbind client API
 
    Copyright (C) Gerald (Jerry) Carter 2007
+   Copyright (C) Volker Lendecke 2009
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -83,9 +84,11 @@ const char *wbcErrorString(wbcErr error);
  *       Added wbcRemoveGidMapping()
  *  0.3: Added wbcGetpwsid()
  *	 Added wbcGetSidAliases()
+ *  0.4: Added wbcSidTypeString()
+ *  0.5: Added wbcChangeTrustCredentials()
  **/
 #define WBCLIENT_MAJOR_VERSION 0
-#define WBCLIENT_MINOR_VERSION 3
+#define WBCLIENT_MINOR_VERSION 5
 #define WBCLIENT_VENDOR_VERSION "Samba libwbclient"
 struct wbcLibraryDetails {
 	uint16_t major_version;
@@ -526,6 +529,15 @@ void wbcFreeMemory(void*);
 /*
  * Utility functions for dealing with SIDs
  */
+
+/**
+ * @brief Get a string representation of the SID type
+ *
+ * @param type		type of the SID
+ *
+ * @return string representation of the SID type
+ */
+const char* wbcSidTypeString(enum wbcSidType type);
 
 /**
  * @brief Convert a binary SID to a character string
@@ -1162,6 +1174,16 @@ wbcErr wbcCredentialCache(struct wbcCredentialCacheParams *params,
                           struct wbcCredentialCacheInfo **info,
                           struct wbcAuthErrorInfo **error);
 
+/**
+ * @brief Save a password with winbind for doing wbcCredentialCache() later
+ *
+ * @param *user	     Username
+ * @param *password  Password
+ *
+ * @return #wbcErr
+ **/
+wbcErr wbcCredentialSave(const char *user, const char *password);
+
 /**********************************************************
  * Resolve functions
  **********************************************************/
@@ -1194,6 +1216,29 @@ wbcErr wbcResolveWinsByIP(const char *ip, char **name);
 /**
  * @brief Trigger a verification of the trust credentials of a specific domain
  *
+ * @param *domain      The name of the domain.
+ * @param error        Output details on WBC_ERR_AUTH_ERROR
+ *
+ * @return #wbcErr
+ **/
+wbcErr wbcCheckTrustCredentials(const char *domain,
+				struct wbcAuthErrorInfo **error);
+
+/**
+ * @brief Trigger a change of the trust credentials for a specific domain
+ *
+ * @param *domain      The name of the domain.
+ * @param error        Output details on WBC_ERR_AUTH_ERROR
+ *
+ * @return #wbcErr
+ **/
+wbcErr wbcChangeTrustCredentials(const char *domain,
+				 struct wbcAuthErrorInfo **error);
+
+/**
+ * @brief Trigger a no-op call through the NETLOGON pipe. Low-cost
+ *        version of wbcCheckTrustCredentials
+ *
  * @param *domain      The name of the domain, only NULL for the default domain is
  *                     supported yet. Other values than NULL will result in
  *                     WBC_ERR_NOT_IMPLEMENTED.
@@ -1201,8 +1246,7 @@ wbcErr wbcResolveWinsByIP(const char *ip, char **name);
  *
  * @return #wbcErr
  **/
-wbcErr wbcCheckTrustCredentials(const char *domain,
-				struct wbcAuthErrorInfo **error);
+wbcErr wbcPingDc(const char *domain, struct wbcAuthErrorInfo **error);
 
 /**********************************************************
  * Helper functions
