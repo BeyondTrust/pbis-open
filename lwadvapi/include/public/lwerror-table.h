@@ -393,6 +393,7 @@ S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_GID_TOO_LOW, -1, "The specified group 
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_GID_TOO_HIGH, -1, "The specified group ID too high" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_AUTOENROLL_FAILED, -1, "Certificate auto-enrollment failed with a general SOAP fault" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_AUTOENROLL_HTTP_REQUEST_FAILED, -1, "Certificate auto-enrollment HTTP request failed" )
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_AUTOENROLL_SUBJECT_NAME_REQUIRED, -1, "A subject name must be provided for the specified certificate template" )
 
 #include "lwerror-table-krb5.h"
 
