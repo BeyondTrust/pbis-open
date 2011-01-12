@@ -5,8 +5,7 @@ lsadomainjoin_test_SOURCES = \
 
 lsadomainjoin_test_LDADD = \
     $(AM_LDFLAGS) \
-    @top_builddir@/client/liblsaclient.la \
-    -llwnetclientapi
+    @top_builddir@/client/liblsaclient.la
 
 lsadomainjoin_test_CPPFLAGS = \
     $(AM_CPPFLAGS)

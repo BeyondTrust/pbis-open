@@ -66,6 +66,48 @@ void printError(PSTR msg, DWORD dwError)
     printf("%s (%u) %s\n", msg ? msg : "", dwError, pszError);
 }
 
+static
+DWORD
+LwDjGetCurrentDomain(
+    OUT PSTR* ppszDnsDomainName
+    )
+{
+    DWORD dwError = 0;
+    HANDLE hLsa = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
+    PSTR pszDnsDomainName = NULL;
+
+    dwError = LsaOpenServer(&hLsa);
+    BAIL_ON_DJ_ERROR(dwError);
+
+    dwError = LsaAdGetMachineAccountInfo(hLsa, NULL, &pAccountInfo);
+    BAIL_ON_DJ_ERROR(dwError);
+
+    dwError = LwRtlCStringDuplicate(
+                    &pszDnsDomainName,
+                    pAccountInfo->DnsDomainName);
+    BAIL_ON_DJ_ERROR(dwError);
+
+error:
+    if (dwError)
+    {
+        LWDJ_SAFE_FREE_STRING(pszDnsDomainName);
+    }
+
+    if (hLsa)
+    {
+        LsaCloseServer(hLsa);
+    }
+
+    if (pAccountInfo)
+    {
+        LsaAdFreeMachineAccountInfo(pAccountInfo);
+    }
+
+    *ppszDnsDomainName = pszDnsDomainName;
+
+    return dwError;
+}
 
 DWORD
 LwDjJoinDomain(
@@ -245,7 +287,7 @@ LwDjParseArgs(int argc, char *argv[], BOOLEAN bIsRoot, PLwDjArgs pDjArgs)
     }
     else
     {
-        dwError = LWNetGetCurrentDomain(&pDjArgs->pszDcDomain);
+        dwError = LwDjGetCurrentDomain(&pDjArgs->pszDcDomain);
         BAIL_ON_DJ_ERROR(dwError);
     }
 
@@ -358,7 +400,7 @@ int main(int argc, char *argv[])
                           djArgs.pszVersion);
             BAIL_ON_DJ_ERROR(dwError);
 
-            dwError = LWNetGetCurrentDomain(&pszCurrentDomain);
+            dwError = LwDjGetCurrentDomain(&pszCurrentDomain);
             BAIL_ON_DJ_ERROR(dwError);
 
             printf("SUCCESS!\nYour computer is now joined to '%s'\n",
@@ -367,7 +409,7 @@ int main(int argc, char *argv[])
             break;
 
         case DJ_LEAVE:
-            dwError = LWNetGetCurrentDomain(&pszCurrentDomain);
+            dwError = LwDjGetCurrentDomain(&pszCurrentDomain);
             BAIL_ON_DJ_ERROR(dwError);
 
             printf("Leaving AD Domain: %s\n", pszCurrentDomain);

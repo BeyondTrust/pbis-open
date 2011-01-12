@@ -5,6 +5,6 @@ make()
         INSTALLDIR="$LW_TOOL_DIR" \
         SOURCES="join.c" \
 	INCLUDEDIRS="../../include" \
-        HEADERDEPS="lw/types.h lw/rtlstring.h lwnet.h lsa/ad.h" \
-        LIBDEPS="lsaclient lwnetclientapi lwbase_nothr"
+        HEADERDEPS="lw/types.h lw/rtlstring.h lsa/ad.h" \
+        LIBDEPS="lsaclient lwbase_nothr"
 }
