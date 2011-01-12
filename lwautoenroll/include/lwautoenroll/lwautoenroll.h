@@ -37,13 +37,6 @@ LwAutoEnrollFreeTemplateList(
         );
 
 DWORD
-LwAutoEnrollGetUrl(
-        IN PCSTR domainDnsName,
-        IN const PLW_AUTOENROLL_TEMPLATE pTemplate,
-        OUT PSTR* pUrl
-        );
-
-DWORD
 LwAutoEnrollRequestCertificate(
         IN OPTIONAL PCSTR credentialsCache,
         IN const PLW_AUTOENROLL_TEMPLATE pTemplate,

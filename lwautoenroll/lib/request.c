@@ -28,7 +28,7 @@
 #define LDAP_QUERY  "(objectClass=pKIEnrollmentService)"
 #define LDAP_BASE   "cn=Public Key Services,cn=Services,cn=Configuration"
 
-DWORD
+static DWORD
 LwAutoEnrollGetUrl(
         IN PCSTR domainDnsName,
         IN const PLW_AUTOENROLL_TEMPLATE pTemplate,
