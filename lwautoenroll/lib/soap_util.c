@@ -219,6 +219,25 @@ cleanup:
     return error;
 }
 
+static DWORD
+LwOpenSOAPXMLElmSetValueInt(
+        IN OpenSOAPXMLElmPtr pSoapElement,
+        int value
+        )
+{
+    int soapResult = OPENSOAP_NO_ERROR;
+    DWORD error = LW_ERROR_SUCCESS;
+
+    soapResult = OpenSOAPXMLElmSetValueMB(
+                    pSoapElement,
+                    "int",
+                    &value);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+cleanup:
+    return error;
+}
+
 DWORD
 GenerateSoapRequest(
         IN const char *url,
@@ -228,7 +247,6 @@ GenerateSoapRequest(
 {
     OpenSOAPEnvelopePtr pSoapRequest = NULL;
     OpenSOAPBlockPtr pSoapBlock = NULL;
-    OpenSOAPStringPtr pSoapString = NULL;
     OpenSOAPXMLElmPtr pSoapElement = NULL;
     BIO *pRequestBio = NULL;
     BUF_MEM *pRequestBuf = NULL;
@@ -254,7 +272,8 @@ GenerateSoapRequest(
     x509RequestStr = strchr(pRequestBuf->data, '\n');
     if (x509RequestStr == NULL)
     {
-        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_PARAMETER,
+        BAIL_WITH_LW_ERROR(
+            LW_ERROR_INVALID_PARAMETER,
             "Invalid certificate request");
     }
     x509RequestLen = pRequestBuf->length - (x509RequestStr - pRequestBuf->data);
@@ -472,10 +491,173 @@ cleanup:
         BIO_free_all(pRequestBio); 
     }
 
-    if (pSoapString)
+    *ppSoapRequest = pSoapRequest;
+    return error;
+}
+
+DWORD
+GenerateSoapStatusRequest(
+        IN int requestId,
+        OUT OpenSOAPEnvelopePtr *ppSoapRequest
+        )
+{
+    OpenSOAPEnvelopePtr pSoapRequest = NULL;
+    OpenSOAPBlockPtr pSoapBlock = NULL;
+    OpenSOAPXMLElmPtr pSoapElement = NULL;
+    uuid_t uuid = { 0 };
+    char uuidString[37];
+    PSTR uuidAttribute = NULL;
+    int soapResult = OPENSOAP_NO_ERROR;
+    DWORD error = LW_ERROR_SUCCESS;
+
+    soapResult = OpenSOAPInitialize(NULL);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPEnvelopeCreateMB("1.2", "s", &pSoapRequest);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPEnvelopeDefineNamespaceMB(
+                    pSoapRequest,
+                    "http://www.w3.org/2005/08/addressing",
+                    "a",
+                    NULL);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPEnvelopeDefineNamespaceMB(
+                    pSoapRequest,
+                    "http://www.w3.org/2001/XMLSchema-instance",
+                    "xsi",
+                    NULL);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPEnvelopeDefineNamespaceMB(
+                    pSoapRequest,
+                    "http://www.w3.org/2001/XMLSchema",
+                    "xsd",
+                    NULL);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPEnvelopeAddHeaderBlockMB(
+                    pSoapRequest,
+                    "a:Action",
+                    &pSoapBlock);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    error = LwOpenSOAPBlockAddAttributeCString(
+                pSoapBlock,
+                "s:mustUnderstand",
+                "1",
+                NULL);
+    BAIL_ON_LW_ERROR(error);
+
+    error = LwOpenSOAPBlockSetValueCString(
+                pSoapBlock,
+                "http://schemas.microsoft.com/windows/pki/2009/01/enrollment/RST/wstep");
+    BAIL_ON_LW_ERROR(error);
+
+    soapResult = OpenSOAPEnvelopeAddHeaderBlockMB(
+                    pSoapRequest,
+                    "a:MessageID",
+                    &pSoapBlock);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    uuid_generate(uuid);
+    uuid_unparse(uuid, uuidString);
+
+    error = LwAllocateStringPrintf(
+                &uuidAttribute,
+                "urn:uuid:%s",
+                uuidString);
+    BAIL_ON_LW_ERROR(error);
+
+    error = LwOpenSOAPBlockSetValueCString(
+                pSoapBlock,
+                uuidAttribute);
+    BAIL_ON_LW_ERROR(error);
+
+    soapResult = OpenSOAPEnvelopeAddHeaderBlockMB(
+                    pSoapRequest,
+                    "a:ReplyTo",
+                    &pSoapBlock);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    pSoapElement = NULL;
+    soapResult = OpenSOAPBlockAddChildMB(
+                    pSoapBlock,
+                    "a:Address",
+                    &pSoapElement);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    error = LwOpenSOAPXMLElmSetValueCString(
+                pSoapElement,
+                "http://www.w3.org/2005/08/addressing/anonymous");
+    BAIL_ON_LW_ERROR(error);
+
+    soapResult = OpenSOAPEnvelopeAddBodyBlockMB(
+                    pSoapRequest,
+                    "RequestSecurityToken",
+                    &pSoapBlock);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPBlockSetNamespaceMB(
+                    pSoapBlock,
+                    "http://docs.oasis-open.org/ws-sx/ws-trust/200512",
+                    NULL);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    pSoapElement = NULL;
+    soapResult = OpenSOAPBlockAddChildMB(
+                    pSoapBlock,
+                    "TokenType",
+                    &pSoapElement);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    error = LwOpenSOAPXMLElmSetValueCString(
+                pSoapElement,
+                "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3");
+    BAIL_ON_LW_ERROR(error);
+
+    pSoapElement = NULL;
+    soapResult = OpenSOAPBlockAddChildMB(
+                    pSoapBlock,
+                    "RequestType",
+                    &pSoapElement);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    error = LwOpenSOAPXMLElmSetValueCString(
+                pSoapElement,
+                "http://schemas.microsoft.com/windows/pki/2009/01/enrollment/QueryTokenStatus");
+    BAIL_ON_LW_ERROR(error);
+
+    pSoapElement = NULL;
+    soapResult = OpenSOAPBlockAddChildMB(
+                    pSoapBlock,
+                    "RequestID",
+                    &pSoapElement);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    error = LwOpenSOAPXMLElmSetValueInt(
+                pSoapElement,
+                requestId);
+    BAIL_ON_LW_ERROR(error);
+
+    soapResult = OpenSOAPXMLElmSetNamespaceMB(
+                    pSoapElement,
+                    "http://schemas.microsoft.com/windows/pki/2009/01/enrollment",
+                    NULL);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+cleanup:
+    if (error)
     {
-        OpenSOAPStringRelease(pSoapString);
+        if (pSoapRequest)
+        {
+            OpenSOAPEnvelopeRelease(pSoapRequest);
+            pSoapRequest = NULL;
+        }
     }
+
+    LW_SAFE_FREE_STRING(uuidAttribute);
 
     *ppSoapRequest = pSoapRequest;
     return error;

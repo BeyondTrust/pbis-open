@@ -17,6 +17,8 @@
 #include <lwmem.h>
 #include <lwstr.h>
 
+#include <OpenSOAP/String.h>
+
 #include <sys/param.h>
 
 #include <ctype.h>
@@ -35,6 +37,7 @@ LwAutoEnrollGetUrl(
         OUT PSTR* pUrl
         )
 {
+    PSTR domainDn = NULL;
     HANDLE ldapConnection = (HANDLE) NULL;
     static PSTR attributeList[] =
     {
@@ -52,6 +55,11 @@ LwAutoEnrollGetUrl(
     int enrollmentServerPriority = INT_MAX;
     DWORD error = LW_ERROR_SUCCESS;
 
+    error = LwLdapConvertDomainToDN(
+                domainDnsName,
+                &domainDn);
+    BAIL_ON_LW_ERROR(error);
+
     error = LwAutoEnrollLdapConnect(
                 domainDnsName,
                 &ldapConnection);
@@ -59,7 +67,7 @@ LwAutoEnrollGetUrl(
 
     error = LwAutoEnrollLdapSearch(
                 ldapConnection,
-                domainDnsName,
+                domainDn,
                 LDAP_BASE,
                 LDAP_SCOPE_SUBTREE,
                 LDAP_QUERY,
@@ -169,7 +177,287 @@ cleanup:
         ldap_value_free_len(ppValues);
     }
 
+    LW_SAFE_FREE_STRING(domainDn);
+
     *pUrl = enrollmentUrl;
+    return error;
+}
+
+static DWORD
+CheckSoapFault(
+        IN OpenSOAPEnvelopePtr pSoapReply
+        )
+{
+    OpenSOAPBlockPtr pFaultBlock = NULL;
+    OpenSOAPXMLElmPtr pFaultReason = NULL;
+    OpenSOAPXMLElmPtr pFaultReasonText = NULL;
+    OpenSOAPStringPtr pFaultReasonString = NULL;
+    OpenSOAPByteArrayPtr pFaultReasonBuffer = NULL;
+    const unsigned char *faultReasonStr = NULL;
+    size_t faultReasonSize = 0;
+    int soapResult = 0;
+    DWORD error = LW_ERROR_SUCCESS;
+
+    soapResult = OpenSOAPEnvelopeGetBodyBlockMB(
+                    pSoapReply,
+                    "Fault",
+                    &pFaultBlock);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    if (pFaultBlock != NULL)
+    {
+        soapResult = OpenSOAPBlockGetChildMB(
+                        pFaultBlock,
+                        "Reason",
+                        &pFaultReason);
+        BAIL_ON_SOAP_ERROR(soapResult);
+
+        soapResult = OpenSOAPXMLElmGetChildMB(
+                        pFaultReason,
+                        "Text",
+                        &pFaultReasonText);
+        BAIL_ON_SOAP_ERROR(soapResult);
+
+        soapResult = OpenSOAPStringCreate(&pFaultReasonString);
+        BAIL_ON_SOAP_ERROR(soapResult);
+
+        soapResult = OpenSOAPXMLElmGetValueMB(
+                        pFaultReasonText,
+                        "string",
+                        &pFaultReasonString);
+        BAIL_ON_SOAP_ERROR(soapResult);
+
+        soapResult = OpenSOAPByteArrayCreate(&pFaultReasonBuffer);
+        BAIL_ON_SOAP_ERROR(soapResult);
+
+        soapResult = OpenSOAPStringGetStringUSASCII(
+                        pFaultReasonString,
+                        pFaultReasonBuffer);
+        BAIL_ON_SOAP_ERROR(soapResult);
+
+        soapResult = OpenSOAPByteArrayGetBeginSizeConst(
+                        pFaultReasonBuffer,
+                        &faultReasonStr,
+                        &faultReasonSize);
+        BAIL_ON_SOAP_ERROR(soapResult);
+
+        BAIL_WITH_LW_ERROR(
+            LW_ERROR_AUTOENROLL_FAILED,
+            ": SOAP Fault: %.*s",
+            faultReasonSize,
+            faultReasonStr);
+    }
+
+cleanup:
+    if (pFaultReasonString)
+    {
+        OpenSOAPStringRelease(pFaultReasonString);
+    }
+
+    if (pFaultReasonBuffer)
+    {
+        OpenSOAPByteArrayRelease(pFaultReasonBuffer);
+    }
+
+    return error;
+}
+
+static DWORD
+GetSecurityTokenResponse(
+        IN OpenSOAPEnvelopePtr pSoapReply,
+        OUT OpenSOAPXMLElmPtr *ppSecurityTokenResponse
+        )
+{
+    OpenSOAPBlockPtr pResponseCollection = NULL;
+    OpenSOAPXMLElmPtr pSecurityTokenResponse = NULL;
+    int soapResult = OPENSOAP_NO_ERROR;
+    DWORD error = LW_ERROR_SUCCESS;
+
+    soapResult = OpenSOAPEnvelopeGetBodyBlockMB(
+                    pSoapReply,
+                    "RequestSecurityTokenResponseCollection",
+                    &pResponseCollection);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    if (pResponseCollection == NULL)
+    {
+        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+    }
+
+    soapResult = OpenSOAPBlockGetChildMB(
+                    pResponseCollection,
+                    "RequestSecurityTokenResponse",
+                    &pSecurityTokenResponse);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    if (pSecurityTokenResponse == NULL)
+    {
+        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+    }
+
+cleanup:
+    if (error)
+    {
+        pSecurityTokenResponse = NULL;
+    }
+
+    *ppSecurityTokenResponse = pSecurityTokenResponse;
+    return error;
+}
+
+static DWORD
+CheckResponseDisposition(
+        IN OpenSOAPXMLElmPtr pSecurityTokenResponse
+        )
+{
+    OpenSOAPXMLElmPtr pDispositionMessage = NULL;
+    OpenSOAPStringPtr pDispositionMessageString = NULL;
+    OpenSOAPByteArrayPtr pDispositionMessageBuffer = NULL;
+    const unsigned char *dispositionMessageStr = NULL;
+    size_t dispositionMessageSize = 0;
+    int soapResult = OPENSOAP_NO_ERROR;
+    DWORD error = LW_ERROR_SUCCESS;
+
+    soapResult = OpenSOAPXMLElmGetChildMB(
+                    pSecurityTokenResponse,
+                    "DispositionMessage",
+                    &pDispositionMessage);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    if (pDispositionMessage == NULL)
+    {
+        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+    }
+
+    soapResult = OpenSOAPStringCreate(&pDispositionMessageString);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPXMLElmGetValueMB(
+                    pDispositionMessage,
+                    "string",
+                    &pDispositionMessageString);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPByteArrayCreate(&pDispositionMessageBuffer);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPStringGetStringUSASCII(
+                    pDispositionMessageString,
+                    pDispositionMessageBuffer);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPByteArrayGetBeginSizeConst(
+                    pDispositionMessageBuffer,
+                    &dispositionMessageStr,
+                    &dispositionMessageSize);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    if (strcasecmp((PCSTR) dispositionMessageStr, "Pending") == 0)
+    {
+        BAIL_WITH_LW_ERROR(ERROR_CONTINUE);
+    }
+
+    if (strcasecmp((PCSTR) dispositionMessageStr, "Issued") != 0)
+    {
+        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+    }
+
+cleanup:
+    if (pDispositionMessageString)
+    {
+        OpenSOAPStringRelease(pDispositionMessageString);
+    }
+
+    if (pDispositionMessageBuffer)
+    {
+        OpenSOAPByteArrayRelease(pDispositionMessageBuffer);
+    }
+
+    return error;
+}
+
+static DWORD
+GetResponseCertificate(
+        IN OpenSOAPXMLElmPtr pSecurityTokenResponse,
+        OUT X509 **ppCertificate
+        )
+{
+    OpenSOAPXMLElmPtr pRequestedSecurityToken = NULL;
+    OpenSOAPXMLElmPtr pBinarySecurityToken = NULL;
+    OpenSOAPByteArrayPtr pCertificateBuffer = NULL;
+    const unsigned char *certificateStr = NULL;
+    size_t certificateSize = 0;
+    BIO *pCertificateBio = NULL;
+    X509* pCertificate = NULL;
+    int soapResult = OPENSOAP_NO_ERROR;
+    DWORD error = LW_ERROR_SUCCESS;
+
+    soapResult = OpenSOAPXMLElmGetChildMB(
+                    pSecurityTokenResponse,
+                    "RequestedSecurityToken",
+                    &pRequestedSecurityToken);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    if (pRequestedSecurityToken == NULL)
+    {
+        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+    }
+
+    soapResult = OpenSOAPXMLElmGetChildMB(
+                    pRequestedSecurityToken,
+                    "BinarySecurityToken",
+                    &pBinarySecurityToken);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    if (pBinarySecurityToken == NULL)
+    {
+        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+    }
+
+    soapResult = OpenSOAPByteArrayCreate(&pCertificateBuffer);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPXMLElmGetValueMB(
+                    pBinarySecurityToken,
+                    "base64Binary",
+                    &pCertificateBuffer);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPByteArrayGetBeginSizeConst(
+                    pCertificateBuffer,
+                    &certificateStr,
+                    &certificateSize);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    pCertificateBio = BIO_new_mem_buf(
+                        (char *) certificateStr,
+                        certificateSize);
+    BAIL_ON_SSL_ERROR(pCertificateBio == NULL);
+
+    pCertificate = d2i_X509_bio(pCertificateBio, NULL);
+    BAIL_ON_SSL_ERROR(pCertificate == NULL);
+
+cleanup:
+    if (error)
+    {
+        if (pCertificate)
+        {
+            X509_free(pCertificate);
+            pCertificate = NULL;
+        }
+    }
+
+    if (pCertificateBuffer)
+    {
+        OpenSOAPByteArrayRelease(pCertificateBuffer);
+    }
+
+    if (pCertificateBio)
+    {
+        BIO_free_all(pCertificateBio);
+    }
+
+    *ppCertificate = pCertificate;
     return error;
 }
 
@@ -195,18 +483,8 @@ LwAutoEnrollRequestCertificate(
     X509_REQ *pX509Request = NULL;
     OpenSOAPEnvelopePtr pSoapRequest = NULL;
     OpenSOAPEnvelopePtr pSoapReply = NULL;
-    OpenSOAPBlockPtr pReplyBody = NULL;
-    OpenSOAPByteArrayPtr pSoapFaultBuffer = NULL;
-    const unsigned char *soapFaultStr = NULL;
-    size_t soapFaultSize = 0;
     OpenSOAPXMLElmPtr pSecurityTokenResponse = NULL;
     OpenSOAPXMLElmPtr pRequestIdElement = NULL;
-    OpenSOAPXMLElmPtr pRequestedSecurityToken = NULL;
-    OpenSOAPXMLElmPtr pBinarySecurityToken = NULL;
-    OpenSOAPByteArrayPtr pCertificateBuffer = NULL;
-    const unsigned char *certificateStr = NULL;
-    size_t certificateSize = 0;
-    BIO *pCertificateBio = NULL;
     DWORD requestId = 0;
     X509* pCertificate = NULL;
     krb5_error_code krbResult = 0;
@@ -291,54 +569,11 @@ LwAutoEnrollRequestCertificate(
                 &pSoapReply);
     BAIL_ON_LW_ERROR(error);
 
-    soapResult = OpenSOAPEnvelopeGetBodyBlockMB(
-                    pSoapReply,
-                    "Fault",
-                    &pReplyBody);
-    BAIL_ON_SOAP_ERROR(soapResult);
+    error = CheckSoapFault(pSoapReply);
+    BAIL_ON_LW_ERROR(error);
 
-    if (pReplyBody != NULL)
-    {
-        soapResult = OpenSOAPByteArrayCreate(&pSoapFaultBuffer);
-        BAIL_ON_SOAP_ERROR(soapResult);
-
-        soapResult = OpenSOAPBlockGetCharEncodingString(
-                        pReplyBody,
-                        NULL,
-                        pSoapFaultBuffer);
-        BAIL_ON_SOAP_ERROR(soapResult);
-
-        soapResult = OpenSOAPByteArrayGetBeginSizeConst(
-                        pSoapFaultBuffer,
-                        &soapFaultStr,
-                        &soapFaultSize);
-        BAIL_ON_SOAP_ERROR(soapResult);
-
-        LW_LOG_ERROR("SOAP Fault: %.*s", soapFaultSize, soapFaultStr);
-        BAIL_WITH_LW_ERROR(LW_ERROR_AUTOENROLL_FAILED);
-    }
-
-    soapResult = OpenSOAPEnvelopeGetBodyBlockMB(
-                    pSoapReply,
-                    "RequestSecurityTokenResponseCollection",
-                    &pReplyBody);
-    BAIL_ON_SOAP_ERROR(soapResult);
-
-    if (pReplyBody == NULL)
-    {
-        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
-    }
-
-    soapResult = OpenSOAPBlockGetChildMB(
-                    pReplyBody,
-                    "RequestSecurityTokenResponse",
-                    &pSecurityTokenResponse);
-    BAIL_ON_SOAP_ERROR(soapResult);
-
-    if (pSecurityTokenResponse == NULL)
-    {
-        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
-    }
+    error = GetSecurityTokenResponse(pSoapReply, &pSecurityTokenResponse);
+    BAIL_ON_LW_ERROR(error);
 
     soapResult = OpenSOAPXMLElmGetChildMB(
                     pSecurityTokenResponse,
@@ -357,50 +592,11 @@ LwAutoEnrollRequestCertificate(
                     &requestId);
     BAIL_ON_SOAP_ERROR(soapResult);
 
-    soapResult = OpenSOAPXMLElmGetChildMB(
-                    pSecurityTokenResponse,
-                    "RequestedSecurityToken",
-                    &pRequestedSecurityToken);
-    BAIL_ON_SOAP_ERROR(soapResult);
+    error = CheckResponseDisposition(pSecurityTokenResponse);
+    BAIL_ON_LW_ERROR(error);
 
-    if (pRequestedSecurityToken == NULL)
-    {
-        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
-    }
-
-    soapResult = OpenSOAPXMLElmGetChildMB(
-                    pRequestedSecurityToken,
-                    "BinarySecurityToken",
-                    &pBinarySecurityToken);
-    BAIL_ON_SOAP_ERROR(soapResult);
-
-    if (pBinarySecurityToken == NULL)
-    {
-        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
-    }
-
-    soapResult = OpenSOAPByteArrayCreate(&pCertificateBuffer);
-    BAIL_ON_SOAP_ERROR(soapResult);
-
-    soapResult = OpenSOAPXMLElmGetValueMB(
-                    pBinarySecurityToken,
-                    "base64Binary",
-                    &pCertificateBuffer);
-    BAIL_ON_SOAP_ERROR(soapResult);
-
-    soapResult = OpenSOAPByteArrayGetBeginSizeConst(
-                    pCertificateBuffer,
-                    &certificateStr,
-                    &certificateSize);
-    BAIL_ON_SOAP_ERROR(soapResult);
-
-    pCertificateBio = BIO_new_mem_buf(
-                        (char *) certificateStr,
-                        certificateSize);
-    BAIL_ON_SSL_ERROR(pCertificateBio == NULL);
-
-    pCertificate = d2i_X509_bio(pCertificateBio, NULL);
-    BAIL_ON_SSL_ERROR(pCertificate == NULL);
+    error = GetResponseCertificate(pSecurityTokenResponse, &pCertificate);
+    BAIL_ON_LW_ERROR(error);
 
 cleanup:
     if (error)
@@ -459,21 +655,6 @@ cleanup:
         OpenSOAPEnvelopeRelease(pSoapReply);
     }
 
-    if (pSoapFaultBuffer)
-    {
-        OpenSOAPByteArrayRelease(pSoapFaultBuffer);
-    }
-
-    if (pCertificateBuffer)
-    {
-        OpenSOAPByteArrayRelease(pSoapFaultBuffer);
-    }
-
-    if (pCertificateBio)
-    {
-        BIO_free_all(pCertificateBio);
-    }
-
     *ppCertificate = pCertificate;
     *pRequestId = requestId;
 
@@ -484,9 +665,66 @@ DWORD
 LwAutoEnrollGetRequestStatus(
         IN OPTIONAL PCSTR credentialsCache,
         IN PCSTR url,
-        IN DWORD RequestId,
+        IN DWORD requestId,
         OUT X509 **ppCertificate
         )
 {
-    return 0;
+    OpenSOAPEnvelopePtr pSoapRequest = NULL;
+    OpenSOAPEnvelopePtr pSoapReply = NULL;
+    OpenSOAPXMLElmPtr pSecurityTokenResponse = NULL;
+    X509* pCertificate = NULL;
+    DWORD error = LW_ERROR_SUCCESS;
+
+    if (credentialsCache)
+    {
+        error = LwKrb5SetDefaultCachePath(credentialsCache, NULL);
+        BAIL_ON_LW_ERROR(error);
+    }
+
+    error = GenerateSoapStatusRequest(
+                requestId,
+                &pSoapRequest);
+    BAIL_ON_LW_ERROR(error);
+
+    error = LwAutoEnrollCurlSoapRequest(
+                url,
+                pSoapRequest,
+                &pSoapReply);
+    BAIL_ON_LW_ERROR(error);
+
+    error = CheckSoapFault(pSoapReply);
+    BAIL_ON_LW_ERROR(error);
+
+    error = GetSecurityTokenResponse(pSoapReply, &pSecurityTokenResponse);
+    BAIL_ON_LW_ERROR(error);
+
+    error = CheckResponseDisposition(pSecurityTokenResponse);
+    BAIL_ON_LW_ERROR(error);
+
+    error = GetResponseCertificate(pSecurityTokenResponse, &pCertificate);
+    BAIL_ON_LW_ERROR(error);
+
+cleanup:
+    if (error)
+    {
+        if (pCertificate)
+        {
+            X509_free(pCertificate);
+            pCertificate = NULL;
+        }
+    }
+
+    if (pSoapRequest)
+    {
+        OpenSOAPEnvelopeRelease(pSoapRequest);
+    }
+
+    if (pSoapReply)
+    {
+        OpenSOAPEnvelopeRelease(pSoapReply);
+    }
+
+    *ppCertificate = pCertificate;
+
+    return error;
 }

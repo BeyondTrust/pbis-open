@@ -50,7 +50,7 @@ DWORD
 LwAutoEnrollGetRequestStatus(
         IN OPTIONAL PCSTR credentialsCache,
         IN PCSTR url,
-        IN DWORD RequestID,
+        IN DWORD requestId,
         OUT X509 **ppCertificate
         );
 

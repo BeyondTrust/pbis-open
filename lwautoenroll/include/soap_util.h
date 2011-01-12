@@ -29,4 +29,10 @@ GenerateSoapRequest(
         OUT OpenSOAPEnvelopePtr *ppSoapRequest
         );
 
+DWORD
+GenerateSoapStatusRequest(
+        IN int requestId,
+        OUT OpenSOAPEnvelopePtr *ppSoapRequest
+        );
+
 #endif /* LWAUTOENROLL_SOAP_H */
