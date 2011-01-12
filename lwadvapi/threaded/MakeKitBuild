@@ -8,8 +8,7 @@ make()
             lwkrb5.c \
             lwldap.c   \
             lwsecurityidentifier.c \
-            lwtime.c \
-            lwpwdinfo.c" \
+            lwtime.c" \
         INCLUDEDIRS=". ../include ../include/public" \
         HEADERDEPS="krb5.h ldap.h lwps/lwps.h lwmsg/lwmsg.h sasl/sasl.h" \
         LIBDEPS="krb5 gssapi_krb5 k5crypto ldap_r lwpsapi"

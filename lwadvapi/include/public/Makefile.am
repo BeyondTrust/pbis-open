@@ -6,7 +6,6 @@ include_HEADERS = \
 	lwkrb5.h \
 	lwldap.h \
 	lwmem.h \
-	lwpwdinfo.h \
 	lwsecurityidentifier.h \
 	lwstr.h \
 	lwtime.h \

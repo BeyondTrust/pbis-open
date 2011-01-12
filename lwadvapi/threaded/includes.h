@@ -76,7 +76,6 @@
 #include "lwldap_p.h"
 #include "lwkrb5_p.h"
 #include "lwtime.h"
-#include "lwpwdinfo.h"
 #include "lwsecurityidentifier.h"
 
 #if !defined(HAVE_STRTOLL) && defined(HAVE___STRTOLL)

@@ -6,9 +6,7 @@ liblwadvapi_threaded_la_SOURCES = \
        lwkrb5.c \
        lwldap.c   \
        lwsecurityidentifier.c   \
-       lwtime.c \
-       lwpwdinfo.c
-
+       lwtime.c
 
 liblwadvapi_threaded_la_CPPFLAGS =              \
         -DLW_ENABLE_THREADS=1         \
