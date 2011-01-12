@@ -358,7 +358,7 @@ CheckResponseDisposition(
                     &dispositionMessageSize);
     BAIL_ON_SOAP_ERROR(soapResult);
 
-    if (dispositionMessageSize == 22 &&
+    if (dispositionMessageSize >= 22 &&
             strncasecmp(
                 (PCSTR) dispositionMessageStr,
                 "Taken Under Submission",
