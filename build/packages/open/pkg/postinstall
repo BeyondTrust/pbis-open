@@ -99,13 +99,8 @@ import_service_configurations_or_init_d_symlinks()
 {
     if type svccfg >/dev/null 2>&1; then
         log "Importing service configurations"
-        import_service_configuration dcerpcd
-        import_service_configuration eventlogd
-        import_service_configuration lsassd
-        import_service_configuration lwiod
-        import_service_configuration lwregd
         import_service_configuration lwsmd
-        import_service_configuration netlogond
+        import_service_configuration likewise
     else
     # On older Solaris systems, in order for a deamon to start in 
     # multi-user mode a start symlink must be put in /etc/rc2.d, and a stop
@@ -303,11 +298,19 @@ postinstall()
 
     fix_60_registry
 
-    exec_log_exit "/etc/init.d/lwsmd stop"
+    if type svccfg >/dev/null 2>&1; then
+        exec_logfile "svcadm disable lwsmd"
+        exec_logfile "svccfg delete lwsmd"
+        exec_logfile "pkill -z `zonename` -x lwsmd"
+    else
+        exec_log "/etc/init.d/lwsmd stop"
+    fi
 
     import_service_configurations_or_init_d_symlinks
 
     exec_log_exit "/etc/init.d/lwsmd start"
+
+    exec_log_exit "/etc/init.d/likewise start"
 
     exec_log "/opt/likewise/bin/domainjoin-cli configure --enable pam"
 
