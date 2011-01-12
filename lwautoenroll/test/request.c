@@ -6,6 +6,7 @@
 #include <openssl/pem.h>
 
 #include <lwerror.h>
+#include <lwstr.h>
 
 #include <string.h>
 #include <unistd.h>
@@ -77,6 +78,7 @@ GetCertificate(
         sleep(300);
         error = LwAutoEnrollGetRequestStatus(
                     NULL,
+                    url,
                     requestId,
                     ppCertificate);
     }
