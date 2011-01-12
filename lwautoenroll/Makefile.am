@@ -20,7 +20,9 @@ lib_LTLIBRARIES = lib/liblwautoenroll.la
 
 lib_liblwautoenroll_la_SOURCES = \
 	lib/curl_util.c \
+	lib/daemon_util.c \
 	lib/ldap_util.c \
+	lib/log_util.c \
 	lib/request.c \
 	lib/soap_util.c \
 	lib/ssl_util.c \
@@ -34,6 +36,21 @@ lib_liblwautoenroll_la_LIBADD = \
 	-lldap \
 	-lcurl \
 	-lOpenSOAPClient
+
+# programs
+
+sbin_PROGRAMS = lwcertd/lwcertd
+
+lwcertd_lwcertd_SOURCES = \
+	lwcertd/cert.c \
+	lwcertd/main.c
+lwcertd_lwcertd_LDADD = \
+	lib/liblwautoenroll.la \
+	-lpopt
+
+# registry files
+registry_DATA = config/lwcertd.reg
+registrydir="${datadir}/config"
 
 # tests
 

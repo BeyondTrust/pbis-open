@@ -1,0 +1,9 @@
+[HKEY_THIS_MACHINE\Services]
+
+[HKEY_THIS_MACHINE\Services\lwcert]
+"Description"="Likewise Certificate Services"
+"Path"="@SBINDIR@/lwcertd"
+"Arguments"="@SBINDIR@/lwcertd --syslog --poll-interval=3600"
+"Environment"=""
+"Dependencies"="lsass netlogon"
+"Type"=dword:00000001
