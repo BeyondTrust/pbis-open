@@ -54,9 +54,6 @@
 #include <sys/socket.h>
 
 typedef struct sockaddr_in SOCKADDR_IN, *PSOCKADDR_IN;
-
-#define ERROR_INVALID_PARAMETER EINVAL
-#define ERROR_OUTOFMEMORY       ENOMEM
 #endif
 
 #define LWDNS_ERROR_SUCCESS             0
@@ -88,7 +85,8 @@ typedef struct sockaddr_in SOCKADDR_IN, *PSOCKADDR_IN;
 #define LWDNS_ERROR_NO_INTERFACES       0xE019 // 57369
 #define LWDNS_ERROR_INVALID_IP_ADDRESS  0xE01A // 57370
 #define LWDNS_ERROR_STRING_CONV_FAILED  0xE01B // 57371
-#define LWDNS_ERROR_SENTINEL            0xE01C // 57372
+#define LWDNS_ERROR_INVALID_PARAMETER   0xE01C // 57372
+#define LWDNS_ERROR_SENTINEL            0xE01D // 57373
 
 #define LWDNS_ERROR_MASK(_e_)           (_e_ & 0xE000)
 

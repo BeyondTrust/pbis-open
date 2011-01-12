@@ -229,14 +229,6 @@ extern PFN_LWDNS_LOG_MESSAGE gpfnLWDNSLogger;
            }                        \
         } while(0);
 
-#define BAIL_ON_INVALID_STRING(str)            \
-    do {                                       \
-        if (IsNullOrEmptyString(str)) {        \
-            dwError = ERROR_INVALID_PARAMETER; \
-            BAIL_ON_LWDNS_ERROR(dwError);      \
-        }                                      \
-    } while(0)
-
 /* DNS Class Types */
 
 #define DNS_CLASS_IN        1

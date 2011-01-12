@@ -614,7 +614,7 @@ DNSGetToken(
                 dwToken = TOKEN_LABEL;
                 dwState = STATE_FINISH;
             }else if (dwState == 0) {
-                dwError = ERROR_INVALID_PARAMETER;
+                dwError = LWDNS_ERROR_INVALID_PARAMETER;
                 dwState = STATE_FINISH;
             }
         }
