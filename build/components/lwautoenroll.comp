@@ -67,5 +67,13 @@ function component_populate
     mkdir -p ${POPULATE_ROOT_DIR}
     rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
 
+    # Handle init scripts
+    local script=lwcertd
+    x_mkinit \
+	"${BUILD_ROOT}/src/linux/config/${script}" \
+	${script} \
+	01 01 \
+	likewise.lwcertd 17 09
+
     libtool_rewrite_populate
 }
