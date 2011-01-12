@@ -25,10 +25,11 @@
 
 #define BAIL_WITH_LW_ERROR(_error, ...) \
     do { \
+        PCSTR _desc = LwWin32ExtErrorToDescription(_error); \
         error = _error; \
-        BAIL(" Error code: %d (%s/%s)" _BAIL_FORMAT_STRING(__VA_ARGS__), \
+        BAIL(" Error code: %d (%s%s%s)" _BAIL_FORMAT_STRING(__VA_ARGS__), \
             _error, LW_SAFE_LOG_STRING(LwWin32ExtErrorToName(_error)), \
-            LW_SAFE_LOG_STRING(LwWin32ExtErrorToDescription(_error)) , \
+            (_desc && *_desc != '\0') ? "/" : "", LW_SAFE_LOG_STRING(_desc) , \
             _BAIL_FORMAT_ARGS(__VA_ARGS__)); \
     } while(0)
 
