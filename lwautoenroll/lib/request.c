@@ -16,30 +16,30 @@ LwAutoEnrollRequestCertificate(
         OUT PDWORD pRequestID
         )
 {
+    RSA *pRsaKey = NULL;
+    EVP_PKEY *pKeyPair = NULL;
     X509_REQ *pRequest = NULL;
     X509* pCertificate = NULL;
     DWORD requestID = 0;
-    RSA *pRsaKey = NULL;
-    int sslResult;
+    int sslResult = 0;
     DWORD error = LW_ERROR_SUCCESS;
 
     if (*ppKeyPair == NULL)
     {
-        *ppKeyPair = EVP_PKEY_new();
-
-        if (*ppKeyPair == NULL)
-        {
-            BAIL_WITH_LW_ERROR(LW_ERROR_OUT_OF_MEMORY);
-        }
-
         pRsaKey = RSA_generate_key(pTemplate->minimumKeyBits,
                                 65537,
                                 NULL,
                                 NULL);
         BAIL_ON_SSL_ERROR(pRsaKey == NULL);
 
-        sslResult = EVP_PKEY_assign_RSA(*ppKeyPair, pRsaKey);
+        pKeyPair = EVP_PKEY_new();
+        BAIL_ON_SSL_ERROR(pKeyPair == NULL);
+
+        sslResult = EVP_PKEY_assign_RSA(pKeyPair, pRsaKey);
         BAIL_ON_SSL_ERROR(!sslResult);
+
+        *ppKeyPair = pKeyPair;
+        pKeyPair = NULL;
     }
 
     pRequest = X509_REQ_new();
@@ -57,6 +57,12 @@ LwAutoEnrollRequestCertificate(
 cleanup:
     if (error)
     {
+        if (pKeyPair)
+        {
+            EVP_PKEY_free(pKeyPair);
+            pKeyPair = NULL;
+        }
+
         if (pRequest)
         {
             X509_REQ_free(pRequest);
