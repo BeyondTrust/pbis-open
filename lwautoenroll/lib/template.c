@@ -199,12 +199,6 @@ LwAutoEnrollGetTemplateList(
                             ppValues[0]->bv_val,
                             NULL,
                             16);
-        if (!(enrollmentFlags & CT_FLAG_AUTO_ENROLLMENT))
-        {
-            ldap_value_free_len(ppValues);
-            ppValues = NULL;
-            continue;
-        }
 
         ldap_value_free_len(ppValues);
         ppValues = ldap_get_values_len(
