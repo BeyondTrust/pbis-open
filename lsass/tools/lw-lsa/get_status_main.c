@@ -168,7 +168,7 @@ get_status_main(
                 dwError = LwAllocateStringPrintf(
                               &pszProviderInstance,
                               "%s:%s",
-                              LSA_AD_TAG_PROVIDER,
+                              LSA_PROVIDER_TAG_AD,
                               ppszDomains[dwIndex]);
                 BAIL_ON_LSA_ERROR(dwError);
 
@@ -190,7 +190,7 @@ get_status_main(
         {
             dwError = LsaGetStatus2(
                           hLsaConnection,
-                          LSA_AD_TAG_PROVIDER,
+                          LSA_PROVIDER_TAG_AD,
                           &pLsaStatus);
             BAIL_ON_LSA_ERROR(dwError);
 
@@ -204,7 +204,7 @@ get_status_main(
 
         dwError = LsaGetStatus2(
                       hLsaConnection,
-                      LSA_LOCAL_TAG_PROVIDER,
+                      LSA_PROVIDER_TAG_LOCAL,
                       &pLsaStatus);
         BAIL_ON_LSA_ERROR(dwError);
     
@@ -217,7 +217,7 @@ get_status_main(
             dwError = LwAllocateStringPrintf(
                           &pszProviderInstance,
                           "%s:%s",
-                          LSA_AD_TAG_PROVIDER,
+                          LSA_PROVIDER_TAG_AD,
                           pszDomainName);
             BAIL_ON_LSA_ERROR(dwError);
         }

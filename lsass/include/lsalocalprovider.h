@@ -47,8 +47,6 @@
 
 #include "lsautils.h"
 
-#define LSA_LOCAL_TAG_PROVIDER "lsa-local-provider"
-
 #define LSA_LOCAL_IO_SETDOMAINNAME   1
 #define LSA_LOCAL_IO_SETDOMAINSID    2
 

@@ -160,7 +160,7 @@ NetrSrvJoinDomain2(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaSrvProviderIoControl(hServer,
-                                      LSA_AD_TAG_PROVIDER,
+                                      LSA_PROVIDER_TAG_AD,
                                       LSA_AD_IO_JOINDOMAIN,
                                       sInputBlobSize,
                                       pInputBlob,

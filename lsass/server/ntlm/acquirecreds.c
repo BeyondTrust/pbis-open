@@ -205,7 +205,7 @@ NtlmGetNameInformation(
     PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
 
     dwError = LsaSrvProviderGetMachineAccountInfoA(
-                  LSA_AD_TAG_PROVIDER,
+                  LSA_PROVIDER_TAG_AD,
                   pszJoinedDomain,
                   &pAccountInfo);
     if (dwError == LW_ERROR_SUCCESS)

@@ -2012,6 +2012,13 @@ LsaGetSmartCardUserObject(
     LW_OUT LW_PSTR* ppszSmartCardReader
     );
 
+//
+// Provider Tags
+//
+
+#define LSA_PROVIDER_TAG_LOCAL "lsa-local-provider"
+#define LSA_PROVIDER_TAG_AD "lsa-activedirectory-provider"
+
 #endif /* __LSA_H__ */
 
 

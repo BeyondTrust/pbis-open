@@ -102,7 +102,7 @@ wbcDomainInfo(
     for (i=0; i<pLsaStatus->dwCount; i++)
     {
         if (strcmp(pLsaStatus->pAuthProviderStatusList[i].pszId,
-                   "lsa-activedirectory-provider") == 0)
+                   LSA_PROVIDER_TAG_AD) == 0)
         {
             pADProvStatus = &pLsaStatus->pAuthProviderStatusList[i];
             break;
@@ -204,7 +204,7 @@ wbcListTrusts(
     for (i=0; i<pLsaStatus->dwCount; i++)
     {
         if (strcmp(pLsaStatus->pAuthProviderStatusList[i].pszId,
-                   "lsa-activedirectory-provider") == 0)
+                   LSA_PROVIDER_TAG_AD) == 0)
         {
             pADProvStatus = &pLsaStatus->pAuthProviderStatusList[i];
             break;

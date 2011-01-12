@@ -117,7 +117,7 @@ LsaSetMachineSid(
     }
 
     dwError = LsaProviderIoControl(hLsaConnection,
-                                   LSA_LOCAL_TAG_PROVIDER,
+                                   LSA_PROVIDER_TAG_LOCAL,
                                    LSA_LOCAL_IO_SETDOMAINSID,
                                    (DWORD)(sSidLen + 1),
                                    (PVOID)pszSid,
@@ -149,7 +149,7 @@ LsaSetMachineName(
     }
 
     dwError = LsaProviderIoControl(hLsaConnection,
-                                   LSA_LOCAL_TAG_PROVIDER,
+                                   LSA_PROVIDER_TAG_LOCAL,
                                    LSA_LOCAL_IO_SETDOMAINNAME,
                                    (DWORD)(sNameLen + 1),
                                    (PVOID)pszMachineName,

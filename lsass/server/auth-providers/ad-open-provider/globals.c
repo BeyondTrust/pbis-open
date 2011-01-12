@@ -52,7 +52,7 @@ pthread_rwlock_t gADGlobalDataLock;
 
 pthread_mutex_t gADDefaultDomainLock;
 
-PCSTR gpszADProviderName = "lsa-activedirectory-provider";
+PCSTR gpszADProviderName = LSA_PROVIDER_TAG_AD;
 
 LSA_PROVIDER_FUNCTION_TABLE gADProviderAPITable =
 {

@@ -50,7 +50,7 @@
 
 #include "includes.h"
 
-PCSTR gpszLocalProviderName = LOCAL_CFG_TAG_LOCAL_PROVIDER;
+PCSTR gpszLocalProviderName = LSA_PROVIDER_TAG_LOCAL;
 
 LSA_PROVIDER_FUNCTION_TABLE gLocalProviderAPITable =
 {

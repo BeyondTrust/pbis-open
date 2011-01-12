@@ -47,9 +47,6 @@
 #ifndef __LPDEFS_H__
 #define __LPDEFS_H__
 
-#define LOCAL_CFG_TAG_LOCAL_PROVIDER "lsa-local-provider"
-#define LOCAL_CFG_TAG_AUTH_PROVIDER  "auth provider"
-
 #define LOCAL_CFG_DEFAULT_LOGIN_SHELL             "/bin/sh"
 #define LOCAL_CFG_DEFAULT_HOMEDIR_PREFIX          "@default_homedir_prefix@"
 #define LOCAL_CFG_DEFAULT_HOMEDIR_TEMPLATE        "%H/%U"

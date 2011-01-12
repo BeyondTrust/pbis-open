@@ -167,7 +167,7 @@ LsaQueryDomainInfo(
     PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo = NULL;
 
     dwError = LsaSrvProviderGetMachineAccountInfoW(
-                  LSA_AD_TAG_PROVIDER,
+                  LSA_PROVIDER_TAG_AD,
                   NULL,
                   &pAccountInfo);
     if (dwError == LW_ERROR_INVALID_ACCOUNT)
@@ -254,7 +254,7 @@ LsaQueryDnsDomainInfo(
 
 
     dwError = LsaSrvProviderGetMachineAccountInfoW(
-                  LSA_AD_TAG_PROVIDER,
+                  LSA_PROVIDER_TAG_AD,
                   NULL,
                   &pAccountInfo);
     if (dwError == LW_ERROR_INVALID_ACCOUNT)

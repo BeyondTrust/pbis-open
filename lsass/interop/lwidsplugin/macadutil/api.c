@@ -153,7 +153,7 @@ GetUserPrincipalNames(
     {
         for (i = 0; i < pLsaStatus->dwCount; i++)
         {
-            if (!strcmp(pLsaStatus->pAuthProviderStatusList[i].pszId, "lsa-activedirectory-provider"))
+            if (!strcmp(pLsaStatus->pAuthProviderStatusList[i].pszId, LSA_PROVIDER_TAG_AD))
             {
                 for (j = 0; j < pLsaStatus->pAuthProviderStatusList[i].dwNumTrustedDomains; j++)
                 {

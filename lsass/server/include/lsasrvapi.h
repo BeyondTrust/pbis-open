@@ -382,7 +382,5 @@ LsaSrvFreePamConfig(
     IN PLSA_PAM_CONFIG pConfig
     );
 
-#define LSA_PROVIDER_TAG_LOCAL "lsa-local-provider"
-
 #endif /* __LSASRVAPI_H__ */
 

@@ -67,14 +67,14 @@ LsaAdEmptyCache(
         dwError = LwAllocateStringPrintf(
                       &pszTargetProvider,
                       "%s:%s",
-                      LSA_AD_TAG_PROVIDER,
+                      LSA_PROVIDER_TAG_AD,
                       pszDomainName);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
     dwError = LsaProviderIoControl(
                   hLsaConnection,
-                  pszTargetProvider ? pszTargetProvider : LSA_AD_TAG_PROVIDER,
+                  pszTargetProvider ? pszTargetProvider : LSA_PROVIDER_TAG_AD,
                   LSA_AD_IO_EMPTYCACHE,
                   0,
                   NULL,

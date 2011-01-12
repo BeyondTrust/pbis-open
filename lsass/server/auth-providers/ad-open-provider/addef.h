@@ -48,11 +48,6 @@
 #ifndef __AD_DEF_H__
 #define __AD_DEF_H__
 
-#define AD_CFG_TAG_AD_PROVIDER    "lsa-activedirectory-provider"
-#define AD_CFG_TAG_AUTH_PROVIDER  "auth provider:"
-
-#define AD_BUILTIN_GROUP_SID_PREFIX "S-1-5-32-"
-
 #define AD_DEFAULT_SHELL            "/bin/sh"
 
 #define AD_DEFAULT_UMASK            022
@@ -66,8 +61,6 @@
 #define AD_MACHINE_PASSWORD_SYNC_MINIMUM_SECS LSA_SECONDS_IN_HOUR
 #define AD_MACHINE_PASSWORD_SYNC_DEFAULT_SECS (30 * LSA_SECONDS_IN_DAY)
 #define AD_MACHINE_PASSWORD_SYNC_MAXIMUM_SECS (60 * LSA_SECONDS_IN_DAY)
-
-#define AD_SPACE_REPLACEMENT_DEFAULT         '^'
 
 #define AD_MAX_ALLOWED_CLOCK_DRIFT_SECONDS 60
 

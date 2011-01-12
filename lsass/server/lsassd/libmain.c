@@ -67,10 +67,10 @@ extern DWORD LsaInitializeProvider_Local(PCSTR*, PLSA_PROVIDER_FUNCTION_TABLE_2*
 static LSA_STATIC_PROVIDER gStaticProviders[] =
 {
 #ifdef ENABLE_AD
-    { "lsa-activedirectory-provider", LsaInitializeProvider_ActiveDirectory },
+    { LSA_PROVIDER_TAG_AD, LsaInitializeProvider_ActiveDirectory },
 #endif
 #ifdef ENABLE_LOCAL
-    { "lsa-local-provider", LsaInitializeProvider_Local },
+    { LSA_PROVIDER_TAG_LOCAL, LsaInitializeProvider_Local },
 #endif
     { 0 }
 };

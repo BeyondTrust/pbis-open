@@ -51,8 +51,6 @@
 #include "lsautils.h"
 #include <lsa/ad-types.h>
 
-#define LSA_AD_TAG_PROVIDER "lsa-activedirectory-provider"
-
 #define LSA_AD_IO_EMPTYCACHE             1
 #define LSA_AD_IO_REMOVEUSERBYNAMECACHE  2
 #define LSA_AD_IO_REMOVEUSERBYIDCACHE    3

@@ -248,7 +248,7 @@ WkssSrvGetSystemCreds(
     PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
 
     dwError = LsaSrvProviderGetMachineAccountInfoA(
-                  LSA_AD_TAG_PROVIDER,
+                  LSA_PROVIDER_TAG_AD,
                   NULL,
                   &pAccountInfo);
     BAIL_ON_LSA_ERROR(dwError);

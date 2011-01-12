@@ -86,7 +86,7 @@ LsaAdJoinDomain(
 
     dwError = LsaProviderIoControl(
         hLsaConnection,
-        LSA_AD_TAG_PROVIDER,
+        LSA_PROVIDER_TAG_AD,
         LSA_AD_IO_JOINDOMAIN,
         (DWORD) blobSize,
         pBlob,
@@ -158,7 +158,7 @@ LsaAdLeaveDomain2(
 
     dwError = LsaProviderIoControl(
         hLsaConnection,
-        LSA_AD_TAG_PROVIDER,
+        LSA_PROVIDER_TAG_AD,
         LSA_AD_IO_LEAVEDOMAIN,
         (DWORD) blobSize,
         pBlob,
@@ -198,7 +198,7 @@ LsaAdSetDefaultDomain(
 
     dwError = LsaProviderIoControl(
                   hLsaConnection,
-                  LSA_AD_TAG_PROVIDER,
+                  LSA_PROVIDER_TAG_AD,
                   LSA_AD_IO_SETDEFAULTDOMAIN,
                   strlen(pszDomain) + 1,
                   (PVOID)pszDomain,
@@ -227,7 +227,7 @@ LsaAdGetJoinedDomains(
 
     dwError = LsaProviderIoControl(
                   hLsaConnection,
-                  LSA_AD_TAG_PROVIDER,
+                  LSA_PROVIDER_TAG_AD,
                   LSA_AD_IO_GETJOINEDDOMAINS,
                   0,
                   NULL,
@@ -336,7 +336,7 @@ LsaAdGetMachineAccountInfo(
 
     dwError = LsaProviderIoControl(
                   hLsaConnection,
-                  LSA_AD_TAG_PROVIDER,
+                  LSA_PROVIDER_TAG_AD,
                   LSA_AD_IO_GET_MACHINE_ACCOUNT,
                   inputBufferSize,
                   pInputBuffer,
@@ -433,7 +433,7 @@ LsaAdGetMachinePasswordInfo(
 
     dwError = LsaProviderIoControl(
                   hLsaConnection,
-                  LSA_AD_TAG_PROVIDER,
+                  LSA_PROVIDER_TAG_AD,
                   LSA_AD_IO_GET_MACHINE_PASSWORD,
                   inputBufferSize,
                   pInputBuffer,
@@ -531,7 +531,7 @@ LsaAdGetComputerDn(
 
     dwError = LsaProviderIoControl(
                     hLsaConnection,
-                    LSA_AD_TAG_PROVIDER,
+                    LSA_PROVIDER_TAG_AD,
                     LSA_AD_IO_GET_COMPUTER_DN,
                     inputBufferSize,
                     pInputBuffer,

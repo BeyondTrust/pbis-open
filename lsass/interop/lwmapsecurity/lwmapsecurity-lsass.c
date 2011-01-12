@@ -1732,7 +1732,7 @@ LsaMapSecurityGetGuestAuthUserInfo(
 
     dwError = LsaFindObjects(
                   hLsaConnection,
-                  LSA_LOCAL_TAG_PROVIDER,
+                  LSA_PROVIDER_TAG_LOCAL,
                   0,
                   LSA_OBJECT_TYPE_USER,
                   LSA_QUERY_TYPE_BY_NAME,
@@ -1752,7 +1752,7 @@ LsaMapSecurityGetGuestAuthUserInfo(
     // need for NTLM logon
     dwError = LsaQueryMemberOf(
                     hLsaConnection,
-                    LSA_LOCAL_TAG_PROVIDER,
+                    LSA_PROVIDER_TAG_LOCAL,
                     0,
                     1,
                     &ppObjects[0]->pszObjectSid,

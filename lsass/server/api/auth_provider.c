@@ -375,8 +375,8 @@ LsaSrvAuthProviderAllocateProviderList(
         LSA_LOG_ERROR("Problem accessing provider configuration in registry. Trying compiled defaults [ActiveDirectory, Local].");
 
         dwError = LsaSrvAllocateProvider(
-                    "lsa-activedirectory-provider",
-                    LSA_PROVIDER_AD_PATH,
+                    LSA_PROVIDER_TAG_AD,
+                    LSA_PROVIDER_PATH_AD,
                     &pProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -387,8 +387,8 @@ LsaSrvAuthProviderAllocateProviderList(
         }
 
         dwError = LsaSrvAllocateProvider(
-                    "lsa-local-provider",
-                    LSA_PROVIDER_LOCAL_PATH,
+                    LSA_PROVIDER_TAG_LOCAL,
+                    LSA_PROVIDER_PATH_LOCAL,
                     &pProvider);
         BAIL_ON_LSA_ERROR(dwError);
 

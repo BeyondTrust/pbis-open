@@ -238,7 +238,7 @@ LsaSrvOpenPolicy2(
         }
 
         dwError = LsaSrvProviderGetMachineAccountInfoW(
-                      LSA_AD_TAG_PROVIDER,
+                      LSA_PROVIDER_TAG_AD,
                       NULL,
                       &pAccountInfo);
         BAIL_ON_LSA_ERROR(dwError);
