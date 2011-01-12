@@ -281,7 +281,9 @@ GetSecurityTokenResponse(
 
     if (pResponseCollection == NULL)
     {
-        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+        BAIL_WITH_LW_ERROR(
+            LW_ERROR_INVALID_MESSAGE,
+            ": No RequestSecurityTokenResponseCollection element in response");
     }
 
     soapResult = OpenSOAPBlockGetChildMB(
@@ -292,7 +294,9 @@ GetSecurityTokenResponse(
 
     if (pSecurityTokenResponse == NULL)
     {
-        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+        BAIL_WITH_LW_ERROR(
+            LW_ERROR_INVALID_MESSAGE,
+            ": No RequestSecurityTokenResponse element in response");
     }
 
 cleanup:
@@ -326,7 +330,9 @@ CheckResponseDisposition(
 
     if (pDispositionMessage == NULL)
     {
-        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+        BAIL_WITH_LW_ERROR(
+            LW_ERROR_INVALID_MESSAGE,
+            ": No DispositionMessage element in response");
     }
 
     soapResult = OpenSOAPStringCreate(&pDispositionMessageString);
@@ -359,7 +365,11 @@ CheckResponseDisposition(
 
     if (strcasecmp((PCSTR) dispositionMessageStr, "Issued") != 0)
     {
-        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+        BAIL_WITH_LW_ERROR(
+            LW_ERROR_INVALID_MESSAGE,
+            ": Unsupported disposition messsage value '%.*s'",
+            dispositionMessageSize,
+            dispositionMessageStr);
     }
 
 cleanup:
@@ -400,7 +410,9 @@ GetResponseCertificate(
 
     if (pRequestedSecurityToken == NULL)
     {
-        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+        BAIL_WITH_LW_ERROR(
+            LW_ERROR_INVALID_MESSAGE,
+            ": No RequestedSecurityToken element in response");
     }
 
     soapResult = OpenSOAPXMLElmGetChildMB(
@@ -411,7 +423,9 @@ GetResponseCertificate(
 
     if (pBinarySecurityToken == NULL)
     {
-        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+        BAIL_WITH_LW_ERROR(
+            LW_ERROR_INVALID_MESSAGE,
+            ": No BinarySecurityToken element in response");
     }
 
     soapResult = OpenSOAPByteArrayCreate(&pCertificateBuffer);
@@ -583,7 +597,9 @@ LwAutoEnrollRequestCertificate(
 
     if (pRequestIdElement == NULL)
     {
-        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+        BAIL_WITH_LW_ERROR(
+            LW_ERROR_INVALID_MESSAGE,
+            ": No RequestID element in response");
     }
 
     soapResult = OpenSOAPXMLElmGetValueMB(
