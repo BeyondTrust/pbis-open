@@ -33,6 +33,7 @@ LwAutoEnrollFreeTemplateList(
 DWORD
 LwAutoEnrollRequestCertificate(
         IN const PLW_AUTOENROLL_TEMPLATE pTemplate,
+        IN OUT EVP_PKEY **ppKeyPair,
         OUT X509 **ppCertificate,
         OUT PDWORD pRequestID
         );
