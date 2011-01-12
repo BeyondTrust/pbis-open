@@ -37,17 +37,26 @@ LwAutoEnrollFreeTemplateList(
         );
 
 DWORD
+LwAutoEnrollGetUrl(
+        IN PCSTR domainDnsName,
+        IN const PLW_AUTOENROLL_TEMPLATE pTemplate,
+        OUT PSTR* pUrl
+        );
+
+DWORD
 LwAutoEnrollRequestCertificate(
         IN OPTIONAL PCSTR credentialsCache,
         IN const PLW_AUTOENROLL_TEMPLATE pTemplate,
-        IN OUT EVP_PKEY **ppKeyPair,
+        IN OUT OPTIONAL PSTR *pUrl,
+        IN OUT OPTIONAL EVP_PKEY **ppKeyPair,
         OUT X509 **ppCertificate,
-        OUT PDWORD pRequestID
+        OUT PDWORD pRequestId
         );
 
 DWORD
 LwAutoEnrollGetRequestStatus(
         IN OPTIONAL PCSTR credentialsCache,
+        IN PCSTR url,
         IN DWORD RequestID,
         OUT X509 **ppCertificate
         );

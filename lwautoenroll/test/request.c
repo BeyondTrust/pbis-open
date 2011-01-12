@@ -1,7 +1,9 @@
 #include <lwautoenroll/lwautoenroll.h>
 #include <bail.h>
+#include <ssl.h>
 
 #include <openssl/err.h>
+#include <openssl/pem.h>
 
 #include <lwerror.h>
 
@@ -39,7 +41,8 @@ GetCertificate(
     PLW_AUTOENROLL_TEMPLATE pTemplates = 0;
     DWORD numTemplates;
     DWORD template;
-    DWORD requestID;
+    PSTR url = NULL;
+    DWORD requestId;
     DWORD error = LW_ERROR_SUCCESS;
 
     error = LwAutoEnrollGetTemplateList(NULL, &pTemplates, &numTemplates);
@@ -61,9 +64,10 @@ GetCertificate(
     error = LwAutoEnrollRequestCertificate(
                 NULL,
                 &pTemplates[template],
+                &url,
                 ppKeyPair,
                 ppCertificate,
-                &requestID);
+                &requestId);
     while (error == ERROR_CONTINUE)
     {
         /*
@@ -73,7 +77,7 @@ GetCertificate(
         sleep(300);
         error = LwAutoEnrollGetRequestStatus(
                     NULL,
-                    requestID,
+                    requestId,
                     ppCertificate);
     }
 
@@ -85,6 +89,8 @@ cleanup:
         LwAutoEnrollFreeTemplateList(pTemplates, numTemplates);
     }
 
+    LW_SAFE_FREE_STRING(url);
+
     return error;
 }
 
@@ -92,14 +98,27 @@ int
 main()
 {
     EVP_PKEY *pKeyPair = NULL;
+    BIO *pStdoutBio = NULL;
     X509 *pCertificate = NULL;
+    int sslResult = 0;
     DWORD error = LW_ERROR_SUCCESS;
 
     LogInit();
     ERR_load_crypto_strings();
 
     error = GetCertificate(&pKeyPair, &pCertificate);
+    BAIL_ON_LW_ERROR(error);
 
+    pStdoutBio = BIO_new(BIO_s_file());
+    BAIL_ON_SSL_ERROR(pStdoutBio == NULL);
+
+    sslResult = BIO_set_fp(pStdoutBio, stdout, BIO_NOCLOSE);
+    BAIL_ON_SSL_ERROR(sslResult == 0);
+
+    sslResult = PEM_write_bio_X509(pStdoutBio, pCertificate);
+    BAIL_ON_SSL_ERROR(sslResult == 0);
+
+cleanup:
     if (pKeyPair)
     {
         EVP_PKEY_free(pKeyPair);
@@ -108,6 +127,11 @@ main()
     if (pCertificate)
     {
         X509_free(pCertificate);
+    }
+
+    if (pStdoutBio)
+    {
+        BIO_free_all(pStdoutBio);
     }
 
     ERR_free_strings();

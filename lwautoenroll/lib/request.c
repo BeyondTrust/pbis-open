@@ -1,8 +1,11 @@
 #include <lwautoenroll/lwautoenroll.h>
 #include <bail.h>
+#include <curl_util.h>
+#include <ldap_util.h>
 #include <mspki.h>
+#include <soap_util.h>
 #include <ssl.h>
-#include <openssl/pem.h> /* DeBuG */
+#include <x509_util.h>
 
 #include <krb5/krb5.h>
 
@@ -10,60 +13,205 @@
 
 #include <lwerror.h>
 #include <lwkrb5.h>
+#include <lwldap.h>
 #include <lwmem.h>
 #include <lwstr.h>
 
 #include <sys/param.h>
 
-#include <errno.h>
 #include <ctype.h>
-#include <stdarg.h>
-#include <string.h>
+#include <ldap.h>
+#include <limits.h>
+#include <stdlib.h>
 #include <unistd.h>
 
-#define OID_MS_ENROLLMENT_CSP_PROVIDER      "1.3.6.1.4.1.311.13.2.2"
-#define OID_MS_OS_VERSION                   "1.3.6.1.4.1.311.13.2.3"
-#define OID_MS_ENROLL_CERTTYPE_EXTENSION    "1.3.6.1.4.1.311.20.2"
-#define OID_MS_REQUEST_CLIENT_INFO          "1.3.6.1.4.1.311.21.20"
+#define LDAP_QUERY  "(objectClass=pKIEnrollmentService)"
+#define LDAP_BASE   "cn=Public Key Services,cn=Services,cn=Configuration"
+
+DWORD
+LwAutoEnrollGetUrl(
+        IN PCSTR domainDnsName,
+        IN const PLW_AUTOENROLL_TEMPLATE pTemplate,
+        OUT PSTR* pUrl
+        )
+{
+    HANDLE ldapConnection = (HANDLE) NULL;
+    static PSTR attributeList[] =
+    {
+        "certificateTemplates",
+        "msPKI-Enrollment-Servers",
+        NULL
+    };
+    LDAP *pLdap = NULL;
+    LDAPMessage *pLdapResults = NULL;
+    LDAPMessage *pLdapResult = NULL;
+    struct berval **ppValues = NULL;
+    int numValues = 0;
+    int value = 0;
+    PSTR enrollmentUrl = NULL;
+    int enrollmentServerPriority = INT_MAX;
+    DWORD error = LW_ERROR_SUCCESS;
+
+    error = LwAutoEnrollLdapConnect(
+                domainDnsName,
+                &ldapConnection);
+    BAIL_ON_LW_ERROR(error);
+
+    error = LwAutoEnrollLdapSearch(
+                ldapConnection,
+                domainDnsName,
+                LDAP_BASE,
+                LDAP_SCOPE_SUBTREE,
+                LDAP_QUERY,
+                attributeList,
+                &pLdapResults);
+    BAIL_ON_LW_ERROR(error);
+
+    pLdap = LwLdapGetSession(ldapConnection);
+
+    for (pLdapResult = LwLdapFirstEntry(
+                            ldapConnection,
+                            pLdapResults);
+            pLdapResult != NULL;
+            pLdapResult = LwLdapNextEntry(
+                            ldapConnection,
+                            pLdapResult)
+        )
+    {
+        ldap_value_free_len(ppValues);
+        ppValues = ldap_get_values_len(
+                        pLdap,
+                        pLdapResult,
+                        "certificateTemplates");
+        numValues = ldap_count_values_len(ppValues);
+
+        for (value = 0; value < numValues; ++value)
+        {
+            if (pTemplate->name[ppValues[value]->bv_len] == '\0' &&
+                    !strncmp(
+                        pTemplate->name,
+                        ppValues[value]->bv_val,
+                        ppValues[value]->bv_len))
+            {
+                ldap_value_free_len(ppValues);
+                ppValues = ldap_get_values_len(
+                                pLdap,
+                                pLdapResult,
+                                "msPKI-Enrollment-Servers");
+                if (ppValues != NULL)
+                {
+                    PSTR serverInfo = ppValues[value]->bv_val;
+                    int priority;
+                    int authType;
+                    int renewOnly;
+
+                    priority = strtoul(serverInfo, &serverInfo, 10);
+                    if (*serverInfo != '\n')
+                    {
+                        break;
+                    }
+
+                    if (priority > enrollmentServerPriority)
+                    {
+                        break;
+                    }
+
+                    ++serverInfo;
+                    authType = strtoul(serverInfo, &serverInfo, 10);
+                    if (*serverInfo != '\n')
+                    {
+                        break;
+                    }
+
+                    if (authType != 2) // kerberos
+                    {
+                        break;
+                    }
+
+                    ++serverInfo;
+                    renewOnly = strtoul(serverInfo, &serverInfo, 10);
+                    if (*serverInfo != '\n')
+                    {
+                        break;
+                    }
+
+                    ++serverInfo;
+                    error = LwAllocateString(serverInfo, &enrollmentUrl);
+                    BAIL_ON_LW_ERROR(error);
+                }
+
+                break;
+            }
+        }
+    }
+
+    if (enrollmentUrl == NULL)
+    {
+        BAIL_WITH_LW_ERROR(
+            LW_ERROR_INVALID_PARAMETER,
+            ": No enrollment server found for template '%s'",
+            pTemplate->name);
+    }
+
+cleanup:
+    if (error)
+    {
+        LW_SAFE_FREE_STRING(enrollmentUrl);
+    }
+
+    if (ldapConnection)
+    {
+        LwLdapCloseDirectory(ldapConnection);
+    }
+
+    if (ppValues)
+    {
+        ldap_value_free_len(ppValues);
+    }
+
+    *pUrl = enrollmentUrl;
+    return error;
+}
 
 DWORD
 LwAutoEnrollRequestCertificate(
         IN OPTIONAL PCSTR credentialsCache,
         IN const PLW_AUTOENROLL_TEMPLATE pTemplate,
+        IN OUT PSTR *pUrl,
         IN OUT EVP_PKEY **ppKeyPair,
         OUT X509 **ppCertificate,
-        OUT PDWORD pRequestID
+        OUT PDWORD pRequestId
         )
 {
     HANDLE lsaConnection = (HANDLE) NULL;
-    RSA *pRsaKey = NULL;
-    EVP_PKEY *pKeyPair = NULL;
-    X509_REQ *pRequest = NULL;
-    X509* pCertificate = NULL;
-    BUF_MEM *buf = NULL;
-    DWORD requestID = 0;
-    X509V3_CTX extensionContext = { 0 };
-    STACK_OF(ASN1_TYPE) *pAsn1Stack = NULL;
-    STACK_OF(ASN1_TYPE) *pAsn1SubStack = NULL;
-    ASN1_TYPE *pAsn1Value = NULL;
-    STACK_OF(X509_EXTENSION) *extensions = NULL;
-    int index = 0;
-    int providerID = 0;
     krb5_context krbContext = NULL;
     krb5_ccache krbCache = NULL;
     krb5_principal krbPrincipal = NULL;
-    PLSA_SECURITY_OBJECT* ppObjects = NULL;
-    LSA_QUERY_LIST QueryList = { 0 };
-    char hostName[MAXHOSTNAMELEN];
-    PSTR end = NULL;
     PSTR krbUpn = NULL;
-    int sslResult = 0;
+    LSA_QUERY_LIST QueryList = { 0 };
+    PLSA_SECURITY_OBJECT* ppObjects = NULL;
+    PCSTR domainDn = NULL;
+    PSTR domainDnsName = NULL;
+    X509_REQ *pX509Request = NULL;
+    OpenSOAPEnvelopePtr pSoapRequest = NULL;
+    OpenSOAPEnvelopePtr pSoapReply = NULL;
+    OpenSOAPBlockPtr pReplyBody = NULL;
+    OpenSOAPByteArrayPtr pSoapFaultBuffer = NULL;
+    const unsigned char *soapFaultStr = NULL;
+    size_t soapFaultSize = 0;
+    OpenSOAPXMLElmPtr pSecurityTokenResponse = NULL;
+    OpenSOAPXMLElmPtr pRequestIdElement = NULL;
+    OpenSOAPXMLElmPtr pRequestedSecurityToken = NULL;
+    OpenSOAPXMLElmPtr pBinarySecurityToken = NULL;
+    OpenSOAPByteArrayPtr pCertificateBuffer = NULL;
+    const unsigned char *certificateStr = NULL;
+    size_t certificateSize = 0;
+    BIO *pCertificateBio = NULL;
+    DWORD requestId = 0;
+    X509* pCertificate = NULL;
     krb5_error_code krbResult = 0;
-    int unixResult = 0;
+    int soapResult = OPENSOAP_NO_ERROR;
     DWORD error = LW_ERROR_SUCCESS;
-
-    unixResult = gethostname(hostName, sizeof(hostName));
-    BAIL_ON_UNIX_ERROR(unixResult == -1);
 
     krbResult = krb5_init_context(&krbContext);
     BAIL_ON_KRB_ERROR(krbResult, krbContext);
@@ -104,354 +252,159 @@ LwAutoEnrollRequestCertificate(
                 &ppObjects);
     BAIL_ON_LW_ERROR(error);
 
-    if (*ppKeyPair == NULL)
+    error = GenerateX509Request(
+                pTemplate,
+                ppKeyPair,
+                ppObjects[0]->pszNetbiosDomainName,
+                ppObjects[0]->pszSamAccountName,
+                &pX509Request);
+    BAIL_ON_LW_ERROR(error);
+
+    if (*pUrl == NULL)
     {
-        pRsaKey = RSA_generate_key(pTemplate->keySize,
-                                65537,
-                                NULL,
-                                NULL);
-        BAIL_ON_SSL_ERROR(pRsaKey == NULL);
-
-        pKeyPair = EVP_PKEY_new();
-        BAIL_ON_SSL_ERROR(pKeyPair == NULL);
-
-        sslResult = EVP_PKEY_assign_RSA(pKeyPair, pRsaKey);
-        BAIL_ON_SSL_ERROR(sslResult == 0);
-
-        *ppKeyPair = pKeyPair;
-        pKeyPair = NULL;
-        pRsaKey = NULL;
-    }
-
-    pRequest = X509_REQ_new();
-    BAIL_ON_SSL_ERROR(pRequest == NULL);
-
-    sslResult = X509_REQ_set_version(pRequest, 0L);
-    BAIL_ON_SSL_ERROR(sslResult == 0);
-
-    sslResult = X509_REQ_set_pubkey(pRequest, *ppKeyPair);
-    BAIL_ON_SSL_ERROR(sslResult == 0);
-
-    for (index = 0;
-            index < sk_X509_ATTRIBUTE_num(pTemplate->attributes);
-            ++index)
-    {
-        sslResult = X509_REQ_add1_attr(
-                        pRequest,
-                        sk_X509_ATTRIBUTE_value(
-                            pTemplate->attributes,
-                            index));
-        BAIL_ON_SSL_ERROR(sslResult == 0);
-    }
-
-    // Add the Microsoft OS Version attribute.
-    pAsn1Value = ASN1_generate_nconf("IA5STRING:6.1.7053.2", NULL);
-    BAIL_ON_SSL_ERROR(pAsn1Value == NULL);
-
-    sslResult = X509_REQ_add1_attr_by_txt(
-                    pRequest,
-                    OID_MS_OS_VERSION,
-                    pAsn1Value->type,
-                    (unsigned char *) pAsn1Value->value.ptr,
-                    -1);
-    BAIL_ON_SSL_ERROR(sslResult == 0);
-
-    ASN1_TYPE_free(pAsn1Value);
-    pAsn1Value = NULL;
-
-    // Add the Microsoft Request Client Info attribute.
-    error = Asn1StackAppendPrintf(
-        &pAsn1Stack,
-        "INTEGER:%d",
-        getpid());
-    BAIL_ON_LW_ERROR(error);
-
-    error = Asn1StackAppendPrintf(
-        &pAsn1Stack,
-        "UTF8String:%s",
-        hostName);
-    BAIL_ON_LW_ERROR(error);
-
-    error = Asn1StackAppendPrintf(
-        &pAsn1Stack,
-        "UTF8String:%s\\%s",
-        ppObjects[0]->pszNetbiosDomainName,
-        ppObjects[0]->pszSamAccountName);
-    BAIL_ON_LW_ERROR(error);
-
-    error = Asn1StackAppendPrintf(
-        &pAsn1Stack,
-        "UTF8String:lwautoenroll");
-    BAIL_ON_LW_ERROR(error);
-
-    error = Asn1StackToSequence(
-        pAsn1Stack,
-        &pAsn1Value,
-        V_ASN1_SEQUENCE);
-    BAIL_ON_LW_ERROR(error);
-
-    sslResult = X509_REQ_add1_attr_by_txt(
-                    pRequest,
-                    OID_MS_REQUEST_CLIENT_INFO,
-                    pAsn1Value->type,
-                    (unsigned char *) pAsn1Value->value.ptr,
-                    -1);
-    BAIL_ON_SSL_ERROR(sslResult == 0);
-
-    sk_ASN1_TYPE_pop_free(pAsn1Stack, ASN1_TYPE_free);
-    pAsn1Stack = NULL;
-    ASN1_TYPE_free(pAsn1Value);
-    pAsn1Value = NULL;
-
-    // Add the Microsoft Enrollment CSP Info attribute.
-    if (pTemplate->csp && isdigit(pTemplate->csp[0]))
-    {
-        providerID = strtoul(pTemplate->csp, &end, 0);
-
-        error = Asn1StackAppendPrintf(
-            &pAsn1Stack,
-            "INTEGER:%d",
-            providerID);
+        error = LwAutoEnrollFindDomainDn(
+                    ppObjects[0]->pszDN,
+                    &domainDn);
         BAIL_ON_LW_ERROR(error);
 
-        error = Asn1StackAppendPrintf(
-            &pAsn1Stack,
-            "BMPSTRING:%s",
-            end + 1);
+        error = LwLdapConvertDNToDomain(
+                    domainDn,
+                    &domainDnsName);
         BAIL_ON_LW_ERROR(error);
-    }
-    else
-    {
-        error = Asn1StackAppendPrintf(
-            &pAsn1Stack,
-            "BMPSTRING:%s",
-            pTemplate->csp);
+
+        error = LwAutoEnrollGetUrl(
+                    domainDnsName,
+                    pTemplate,
+                    pUrl);
         BAIL_ON_LW_ERROR(error);
     }
 
-    //
-    // This is at the end of the example from Microsoft; I'm not sure if
-    // it's actually necessary.
-    //
-    error = Asn1StackAppendPrintf(
-        &pAsn1Stack,
-        "EXPLICIT:3U,BOOLEAN:FALSE");
+    error = GenerateSoapRequest(
+                *pUrl,
+                pX509Request,
+                &pSoapRequest);
     BAIL_ON_LW_ERROR(error);
 
-    error = Asn1StackToSequence(
-        pAsn1Stack,
-        &pAsn1Value,
-        V_ASN1_SEQUENCE);
+    error = LwAutoEnrollCurlSoapRequest(
+                *pUrl,
+                pSoapRequest,
+                &pSoapReply);
     BAIL_ON_LW_ERROR(error);
 
-    sslResult = X509_REQ_add1_attr_by_txt(
-                    pRequest,
-                    OID_MS_ENROLLMENT_CSP_PROVIDER,
-                    pAsn1Value->type,
-                    (unsigned char *) pAsn1Value->value.ptr,
-                    -1);
-    BAIL_ON_SSL_ERROR(sslResult == 0);
+    soapResult = OpenSOAPEnvelopeGetBodyBlockMB(
+                    pSoapReply,
+                    "Fault",
+                    &pReplyBody);
+    BAIL_ON_SOAP_ERROR(soapResult);
 
-    sk_ASN1_TYPE_pop_free(pAsn1Stack, ASN1_TYPE_free);
-    pAsn1Stack = NULL;
-    ASN1_TYPE_free(pAsn1Value);
-    pAsn1Value = NULL;
-
-    // Add extensions.
-    X509V3_set_ctx(&extensionContext, NULL, NULL, pRequest, NULL, 0);
-
-    if (pTemplate->extensions)
+    if (pReplyBody != NULL)
     {
-        extensions = sk_X509_EXTENSION_dup(pTemplate->extensions);
+        soapResult = OpenSOAPByteArrayCreate(&pSoapFaultBuffer);
+        BAIL_ON_SOAP_ERROR(soapResult);
+
+        soapResult = OpenSOAPBlockGetCharEncodingString(
+                        pReplyBody,
+                        NULL,
+                        pSoapFaultBuffer);
+        BAIL_ON_SOAP_ERROR(soapResult);
+
+        soapResult = OpenSOAPByteArrayGetBeginSizeConst(
+                        pSoapFaultBuffer,
+                        &soapFaultStr,
+                        &soapFaultSize);
+        BAIL_ON_SOAP_ERROR(soapResult);
+
+        LW_LOG_ERROR("SOAP Fault: %.*s", soapFaultSize, soapFaultStr);
+        BAIL_WITH_LW_ERROR(LW_ERROR_AUTOENROLL_FAILED);
     }
 
-    error = AddExtensionPrintf(
-                &extensions,
-                &extensionContext,
-                pTemplate->criticalExtensions,
-                "keyUsage",
-                "ASN1:EXPLICIT:3U,INTEGER:%d",
-                pTemplate->keyUsage);
-    BAIL_ON_LW_ERROR(error);
+    soapResult = OpenSOAPEnvelopeGetBodyBlockMB(
+                    pSoapReply,
+                    "RequestSecurityTokenResponseCollection",
+                    &pReplyBody);
+    BAIL_ON_SOAP_ERROR(soapResult);
 
-    error = AddExtensionString(
-                &extensions,
-                &extensionContext,
-                pTemplate->criticalExtensions,
-                "subjectKeyIdentifier",
-                "hash");
-    BAIL_ON_LW_ERROR(error);
-
-    error = AddExtensionPrintf(
-                &extensions,
-                &extensionContext,
-                pTemplate->criticalExtensions,
-                OID_MS_ENROLL_CERTTYPE_EXTENSION,
-                "ASN1:BMPSTRING:%s",
-                pTemplate->name);
-    BAIL_ON_LW_ERROR(error);
-
-    if (pTemplate->extendedKeyUsage)
+    if (pReplyBody == NULL)
     {
-        buf = BUF_MEM_new();
-        BAIL_ON_SSL_ERROR(buf == NULL);
-
-        for (index = 0;
-                index < sk_ASN1_OBJECT_num(pTemplate->extendedKeyUsage);
-                ++index)
-        {
-            if (buf->length)
-            {
-                error = BufAppend(buf, ", ", 2);
-                BAIL_ON_LW_ERROR(error);
-            }
-
-            error = BufAppend(
-                        buf,
-                        OBJ_nid2sn(OBJ_obj2nid(
-                            sk_ASN1_OBJECT_value(
-                                pTemplate->extendedKeyUsage,
-                                index))),
-                        -1);
-            BAIL_ON_LW_ERROR(error);
-        }
-
-        error = AddExtensionString(
-                    &extensions,
-                    &extensionContext,
-                    pTemplate->criticalExtensions,
-                    "extendedKeyUsage",
-                    buf->data);
-        BAIL_ON_LW_ERROR(error);
+        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
     }
 
-    if (pTemplate->enrollmentFlags & CT_FLAG_INCLUDE_SYMMETRIC_ALGORITHMS)
+    soapResult = OpenSOAPBlockGetChildMB(
+                    pReplyBody,
+                    "RequestSecurityTokenResponse",
+                    &pSecurityTokenResponse);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    if (pSecurityTokenResponse == NULL)
     {
-        // Add the SMIME Capabilities extension.
-        error = Asn1StackAppendPrintf(
-            &pAsn1SubStack,
-            "OBJECT:RC2-CBC");
-        BAIL_ON_LW_ERROR(error);
-
-        error = Asn1StackAppendPrintf(
-            &pAsn1SubStack,
-            "INTEGER:0x0080");
-        BAIL_ON_LW_ERROR(error);
-
-        error = Asn1StackToSequence(
-            pAsn1SubStack,
-            &pAsn1Value,
-            V_ASN1_SEQUENCE);
-        BAIL_ON_LW_ERROR(error);
-
-        error = Asn1StackAppendValue(
-            &pAsn1Stack,
-            pAsn1Value);
-        BAIL_ON_LW_ERROR(error);
-
-        pAsn1SubStack = NULL;
-        pAsn1Value = NULL;
-
-        error = Asn1StackAppendPrintf(
-            &pAsn1SubStack,
-            "OBJECT:RC4");
-        BAIL_ON_LW_ERROR(error);
-
-        error = Asn1StackAppendPrintf(
-            &pAsn1SubStack,
-            "INTEGER:0x0080");
-        BAIL_ON_LW_ERROR(error);
-
-        error = Asn1StackToSequence(
-            pAsn1SubStack,
-            &pAsn1Value,
-            V_ASN1_SEQUENCE);
-        BAIL_ON_LW_ERROR(error);
-
-        error = Asn1StackAppendValue(
-            &pAsn1Stack,
-            pAsn1Value);
-        BAIL_ON_LW_ERROR(error);
-
-        pAsn1SubStack = NULL;
-        pAsn1Value = NULL;
-
-        error = Asn1StackAppendPrintf(
-            &pAsn1SubStack,
-            "OBJECT:DES-CBC");
-        BAIL_ON_LW_ERROR(error);
-
-        error = Asn1StackToSequence(
-            pAsn1SubStack,
-            &pAsn1Value,
-            V_ASN1_SEQUENCE);
-        BAIL_ON_LW_ERROR(error);
-
-        error = Asn1StackAppendValue(
-            &pAsn1Stack,
-            pAsn1Value);
-        BAIL_ON_LW_ERROR(error);
-
-        pAsn1SubStack = NULL;
-        pAsn1Value = NULL;
-
-        error = Asn1StackAppendPrintf(
-            &pAsn1SubStack,
-            "OBJECT:DES-EDE3-CBC");
-        BAIL_ON_LW_ERROR(error);
-
-        error = Asn1StackToSequence(
-            pAsn1SubStack,
-            &pAsn1Value,
-            V_ASN1_SEQUENCE);
-        BAIL_ON_LW_ERROR(error);
-
-        error = Asn1StackAppendValue(
-            &pAsn1Stack,
-            pAsn1Value);
-        BAIL_ON_LW_ERROR(error);
-
-        pAsn1SubStack = NULL;
-        pAsn1Value = NULL;
-
-        error = Asn1StackToSequence(
-            pAsn1Stack,
-            &pAsn1Value,
-            V_ASN1_SEQUENCE);
-        BAIL_ON_LW_ERROR(error);
-
-        error = AddExtensionAsn1Value(
-                &extensions,
-                pTemplate->criticalExtensions,
-                "SMIME-CAPS",
-                pAsn1Value);
-        BAIL_ON_LW_ERROR(error);
-
-        sk_ASN1_TYPE_pop_free(pAsn1Stack, ASN1_TYPE_free);
-        pAsn1Stack = NULL;
-        ASN1_TYPE_free(pAsn1Value);
-        pAsn1Value = NULL;
+        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
     }
 
-    sslResult = X509_REQ_add_extensions(pRequest, extensions);
-    BAIL_ON_SSL_ERROR(sslResult == 0);
+    soapResult = OpenSOAPXMLElmGetChildMB(
+                    pSecurityTokenResponse,
+                    "RequestID",
+                    &pRequestIdElement);
+    BAIL_ON_SOAP_ERROR(soapResult);
 
-    sslResult = X509_REQ_sign(pRequest, *ppKeyPair, EVP_sha1());
-    BAIL_ON_SSL_ERROR(sslResult == 0);
+    if (pRequestIdElement == NULL)
+    {
+        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+    }
 
-    BIO *out = BIO_new(BIO_s_file()); /* DeBuG */
-    BIO_set_fp(out, stdout, BIO_NOCLOSE); /* DeBuG */
-    PEM_write_bio_X509_REQ(out, pRequest); /* DeBuG */
-    BIO_free_all(out); /* DeBuG */
+    soapResult = OpenSOAPXMLElmGetValueMB(
+                    pRequestIdElement,
+                    "int",
+                    &requestId);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPXMLElmGetChildMB(
+                    pSecurityTokenResponse,
+                    "RequestedSecurityToken",
+                    &pRequestedSecurityToken);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    if (pRequestedSecurityToken == NULL)
+    {
+        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+    }
+
+    soapResult = OpenSOAPXMLElmGetChildMB(
+                    pRequestedSecurityToken,
+                    "BinarySecurityToken",
+                    &pBinarySecurityToken);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    if (pBinarySecurityToken == NULL)
+    {
+        BAIL_WITH_LW_ERROR(LW_ERROR_INVALID_MESSAGE);
+    }
+
+    soapResult = OpenSOAPByteArrayCreate(&pCertificateBuffer);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPXMLElmGetValueMB(
+                    pBinarySecurityToken,
+                    "base64Binary",
+                    &pCertificateBuffer);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    soapResult = OpenSOAPByteArrayGetBeginSizeConst(
+                    pCertificateBuffer,
+                    &certificateStr,
+                    &certificateSize);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    pCertificateBio = BIO_new_mem_buf(
+                        (char *) certificateStr,
+                        certificateSize);
+    BAIL_ON_SSL_ERROR(pCertificateBio == NULL);
+
+    pCertificate = d2i_X509_bio(pCertificateBio, NULL);
+    BAIL_ON_SSL_ERROR(pCertificate == NULL);
+
 cleanup:
     if (error)
     {
-        if (pKeyPair)
-        {
-            EVP_PKEY_free(pKeyPair);
-            pKeyPair = NULL;
-        }
-
         if (pCertificate)
         {
             X509_free(pCertificate);
@@ -479,6 +432,8 @@ cleanup:
         krb5_free_context(krbContext);
     }
 
+    LW_SAFE_FREE_STRING(domainDnsName);
+
     if (lsaConnection)
     {
         LsaCloseServer(lsaConnection);
@@ -489,44 +444,38 @@ cleanup:
         LsaFreeSecurityObjectList(1, ppObjects);
     }
 
-    if (pRequest)
+    if (pX509Request)
     {
-        X509_REQ_free(pRequest);
-        pRequest = NULL;
+        X509_REQ_free(pX509Request);
     }
 
-    if (extensions)
+    if (pSoapRequest)
     {
-        sk_X509_EXTENSION_pop_free(extensions, X509_EXTENSION_free);
+        OpenSOAPEnvelopeRelease(pSoapRequest);
     }
 
-    if (pRsaKey)
+    if (pSoapReply)
     {
-        RSA_free(pRsaKey);
+        OpenSOAPEnvelopeRelease(pSoapReply);
     }
 
-    if (buf)
+    if (pSoapFaultBuffer)
     {
-        BUF_MEM_free(buf);
+        OpenSOAPByteArrayRelease(pSoapFaultBuffer);
     }
 
-    if (pAsn1Stack)
+    if (pCertificateBuffer)
     {
-        sk_ASN1_TYPE_pop_free(pAsn1Stack, ASN1_TYPE_free);
+        OpenSOAPByteArrayRelease(pSoapFaultBuffer);
     }
 
-    if (pAsn1SubStack)
+    if (pCertificateBio)
     {
-        sk_ASN1_TYPE_pop_free(pAsn1SubStack, ASN1_TYPE_free);
-    }
-
-    if (pAsn1Value)
-    {
-        ASN1_TYPE_free(pAsn1Value);
+        BIO_free_all(pCertificateBio);
     }
 
     *ppCertificate = pCertificate;
-    *pRequestID = requestID;
+    *pRequestId = requestId;
 
     return error;
 }
@@ -534,7 +483,8 @@ cleanup:
 DWORD
 LwAutoEnrollGetRequestStatus(
         IN OPTIONAL PCSTR credentialsCache,
-        IN DWORD RequestID,
+        IN PCSTR url,
+        IN DWORD RequestId,
         OUT X509 **ppCertificate
         )
 {
