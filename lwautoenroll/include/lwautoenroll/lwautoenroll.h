@@ -15,6 +15,7 @@ typedef struct _LW_AUTOENROLL_TEMPLATE
         unsigned int                keySize;
         DWORD                       keyUsage;
         DWORD                       enrollmentFlags;
+        DWORD                       nameFlags;
         EXTENDED_KEY_USAGE          *extendedKeyUsage;
         STACK_OF(ASN1_OBJECT)       *criticalExtensions;
 	STACK_OF(X509_ATTRIBUTE)    *attributes;
@@ -38,19 +39,20 @@ LwAutoEnrollFreeTemplateList(
 
 DWORD
 LwAutoEnrollRequestCertificate(
-        IN OPTIONAL PCSTR credentialsCache,
         IN const PLW_AUTOENROLL_TEMPLATE pTemplate,
-        IN OUT OPTIONAL PSTR *pUrl,
-        IN OUT OPTIONAL EVP_PKEY **ppKeyPair,
+        IN OPTIONAL X509_NAME *pSubjectName,
+        IN OPTIONAL PCSTR credentialsCache,
+        IN OUT PSTR *pUrl,
+        IN OUT EVP_PKEY **ppKeyPair,
         OUT X509 **ppCertificate,
         OUT PDWORD pRequestId
         );
 
 DWORD
 LwAutoEnrollGetRequestStatus(
-        IN OPTIONAL PCSTR credentialsCache,
         IN PCSTR url,
         IN DWORD requestId,
+        IN OPTIONAL PCSTR credentialsCache,
         OUT X509 **ppCertificate
         );
 

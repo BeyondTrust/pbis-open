@@ -11,12 +11,14 @@
 #include <string.h>
 #include <unistd.h>
 
-#define MY_ERROR_BASE               30000
-#define MY_ERROR_NO_TEMPLATE_FOUND  MY_ERROR_BASE+0
-#define MY_ERROR_MAX                MY_ERROR_BASE+1
+#define MY_ERROR_BASE                   30000
+#define MY_ERROR_NO_TEMPLATE_FOUND      MY_ERROR_BASE+0
+#define MY_ERROR_INVALID_SUBJECT_NAME   MY_ERROR_BASE+1
+#define MY_ERROR_MAX                    MY_ERROR_BASE+2
 
 static const char *MyErrorNames[] = {
     "Template not found",
+    "Invalid subject name",
 };
 
 static const char *
@@ -52,9 +54,78 @@ LogInit(void)
 }
 
 static DWORD
+ParseSubjectName(
+        IN PSTR nameString,
+        OUT X509_NAME **ppSubjectName
+        )
+{
+    PSTR type = NULL;
+    PSTR value = NULL;
+    PSTR savePtr = NULL;
+    X509_NAME *pSubjectName = NULL;
+    int nid;
+    int sslResult = 0;
+    DWORD error = LW_ERROR_SUCCESS;
+
+    fprintf(stderr, "ParseSubjectName(%s)\n", nameString); /* DeBuG */
+    pSubjectName = X509_NAME_new();
+    BAIL_ON_SSL_ERROR(pSubjectName == NULL);
+
+    while ((type = strtok_r(nameString, "=", &savePtr)) != NULL)
+    {
+        fprintf(stderr, "type = '%s' (%p), remainder='%s' (%p)\n", type, type, savePtr, savePtr); /* DeBuG */
+        nameString = NULL; // For next call to strtok();
+        nid = OBJ_txt2nid(type);
+        BAIL_ON_SSL_ERROR(
+            nid == NID_undef,
+            ": DN component type '%s' not found",
+            type);
+
+        value = strtok_r(NULL, ",", &savePtr);
+        if (value == NULL)
+        {
+            value = savePtr + 1;
+            if (*value == '\0')
+            {
+                fprintf(stderr, "savePtr now %p\n", savePtr); /* DeBuG */
+                BAIL_WITH_MY_ERROR(
+                    MY_ERROR_INVALID_SUBJECT_NAME,
+                    ": No value specified for DN component '%s'",
+                    type);
+            }
+        }
+
+        fprintf(stderr, "%s=%s\n", type, value); /* DeBuG */
+        sslResult = X509_NAME_add_entry_by_NID(
+                        pSubjectName,
+                        nid,
+                        MBSTRING_ASC,
+                        (unsigned char *) value,
+                        -1,
+                        -1,
+                        0);
+        BAIL_ON_SSL_ERROR(sslResult == 0);
+    }
+
+cleanup:
+    if (error)
+    {
+        if (pSubjectName)
+        {
+            X509_NAME_free(pSubjectName);
+            pSubjectName = NULL;
+        }
+    }
+
+    *ppSubjectName = pSubjectName;
+    return error;
+}
+
+static DWORD
 GetCertificate(
-        IN OUT EVP_PKEY **ppKeyPair,
         IN PCSTR templateName,
+        IN OPTIONAL X509_NAME *pSubjectName,
+        IN OUT EVP_PKEY **ppKeyPair,
         OUT X509 **ppCertificate
     )
 {
@@ -82,8 +153,9 @@ GetCertificate(
     }
 
     error = LwAutoEnrollRequestCertificate(
-                NULL,
                 &pTemplates[template],
+                pSubjectName,
+                NULL,
                 &url,
                 ppKeyPair,
                 ppCertificate,
@@ -94,11 +166,13 @@ GetCertificate(
          * A pending status usually means human intervention is
          * required at the CA, so don't poll too frequently.
          */
+        sleep(10); /* DeBuG */
+        if (0) /* DeBuG */
         sleep(300);
         error = LwAutoEnrollGetRequestStatus(
-                    NULL,
                     url,
                     requestId,
+                    NULL,
                     ppCertificate);
     }
 
@@ -120,20 +194,27 @@ main(int argc, char * const *argv)
 {
     EVP_PKEY *pKeyPair = NULL;
     BIO *pStdoutBio = NULL;
+    X509_NAME *pSubjectName = NULL;
     X509 *pCertificate = NULL;
     int sslResult = 0;
     DWORD error = LW_ERROR_SUCCESS;
 
-    if (argc != 2)
+    if (argc != 2 && argc != 3)
     {
-        fprintf(stderr, "Usage: %s template\n", argv[0]);
+        fprintf(stderr, "Usage: %s template [subject_name]\n", argv[0]);
         exit(1);
     }
 
     LogInit();
     ERR_load_crypto_strings();
 
-    error = GetCertificate(&pKeyPair, argv[1], &pCertificate);
+    if (argc == 3)
+    {
+        error = ParseSubjectName(argv[2], &pSubjectName);
+        BAIL_ON_LW_ERROR(error);
+    }
+
+    error = GetCertificate(argv[1], pSubjectName, &pKeyPair, &pCertificate);
     BAIL_ON_LW_ERROR(error);
 
     pStdoutBio = BIO_new(BIO_s_file());

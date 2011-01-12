@@ -484,8 +484,9 @@ cleanup:
 
 DWORD
 LwAutoEnrollRequestCertificate(
-        IN OPTIONAL PCSTR credentialsCache,
         IN const PLW_AUTOENROLL_TEMPLATE pTemplate,
+        IN OPTIONAL X509_NAME *pSubjectName,
+        IN OPTIONAL PCSTR credentialsCache,
         IN OUT PSTR *pUrl,
         IN OUT EVP_PKEY **ppKeyPair,
         OUT X509 **ppCertificate,
@@ -511,6 +512,12 @@ LwAutoEnrollRequestCertificate(
     krb5_error_code krbResult = 0;
     int soapResult = OPENSOAP_NO_ERROR;
     DWORD error = LW_ERROR_SUCCESS;
+
+    if (pSubjectName == NULL &&
+            (pTemplate->nameFlags & CT_FLAG_ENROLLEE_SUPPLIES_SUBJECT))
+    {
+        BAIL_WITH_LW_ERROR(LW_ERROR_AUTOENROLL_SUBJECT_NAME_REQUIRED);
+    }
 
     krbResult = krb5_init_context(&krbContext);
     BAIL_ON_KRB_ERROR(krbResult, krbContext);
@@ -553,9 +560,10 @@ LwAutoEnrollRequestCertificate(
 
     error = GenerateX509Request(
                 pTemplate,
-                ppKeyPair,
                 ppObjects[0]->pszNetbiosDomainName,
                 ppObjects[0]->pszSamAccountName,
+                pSubjectName,
+                ppKeyPair,
                 &pX509Request);
     BAIL_ON_LW_ERROR(error);
 
@@ -686,9 +694,9 @@ cleanup:
 
 DWORD
 LwAutoEnrollGetRequestStatus(
-        IN OPTIONAL PCSTR credentialsCache,
         IN PCSTR url,
         IN DWORD requestId,
+        IN OPTIONAL PCSTR credentialsCache,
         OUT X509 **ppCertificate
         )
 {

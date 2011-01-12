@@ -59,6 +59,7 @@ LwAutoEnrollGetTemplateList(
         "pKICriticalExtensions",
         "pKIDefaultCSPs",
         "msPKI-Enrollment-Flag",
+        "msPKI-Certificate-Name-Flag",
         "msPKI-Minimal-Key-Size",
         NULL
     };
@@ -154,6 +155,7 @@ LwAutoEnrollGetTemplateList(
         int value = 0;
         int numValues = 0;
         DWORD enrollmentFlags = 0;
+        DWORD nameFlags = 0;
         DWORD keyUsage = 0;
         DWORD keySize = 0;
 
@@ -359,6 +361,27 @@ LwAutoEnrollGetTemplateList(
         ppValues = ldap_get_values_len(
                         pLdap,
                         pLdapResult,
+                        "msPKI-Certificate-Name-Flag");
+        if (ppValues != NULL)
+        {
+            if (ldap_count_values_len(ppValues) != 1)
+            {
+                ldap_value_free_len(ppValues);
+                ppValues = NULL;
+                continue;
+            }
+
+            nameFlags = strtoul(ppValues[0]->bv_val,
+                                NULL,
+                                0);
+
+            ldap_value_free_len(ppValues);
+            ppValues = NULL;
+        }
+
+        ppValues = ldap_get_values_len(
+                        pLdap,
+                        pLdapResult,
                         "pKIDefaultCSPs");
         if (ppValues == NULL)
         {
@@ -402,12 +425,10 @@ LwAutoEnrollGetTemplateList(
         pTemplateList[numTemplates].csp = csp;
         pTemplateList[numTemplates].keyUsage = keyUsage;
         pTemplateList[numTemplates].keySize = keySize;
-        pTemplateList[numTemplates].enrollmentFlags =
-            enrollmentFlags;
-        pTemplateList[numTemplates].extendedKeyUsage =
-            extendedKeyUsage;
-        pTemplateList[numTemplates].criticalExtensions =
-            criticalExtensions;
+        pTemplateList[numTemplates].enrollmentFlags = enrollmentFlags;
+        pTemplateList[numTemplates].nameFlags = nameFlags;
+        pTemplateList[numTemplates].extendedKeyUsage = extendedKeyUsage;
+        pTemplateList[numTemplates].criticalExtensions = criticalExtensions;
 
         name = NULL;
         displayName = NULL;
