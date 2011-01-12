@@ -392,7 +392,7 @@ cleanup:
 
 error:
     *ppszRecordName = NULL;
-    LWDNS_SAFE_FREE_STRING(pszRecordName);
+    LwRtlCStringFree(&pszRecordName);
 
     goto cleanup;
 }
