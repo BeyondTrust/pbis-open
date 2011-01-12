@@ -142,6 +142,16 @@ main(int argc, char * const *argv)
     sslResult = BIO_set_fp(pStdoutBio, stdout, BIO_NOCLOSE);
     BAIL_ON_SSL_ERROR(sslResult == 0);
 
+    sslResult = PEM_write_bio_PrivateKey(
+                    pStdoutBio,
+                    pKeyPair,
+                    NULL,
+                    NULL,
+                    0,
+                    NULL,
+                    NULL);
+    BAIL_ON_SSL_ERROR(sslResult == 0);
+
     sslResult = PEM_write_bio_X509(pStdoutBio, pCertificate);
     BAIL_ON_SSL_ERROR(sslResult == 0);
 
