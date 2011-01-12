@@ -2,12 +2,18 @@ make()
 {
     mk_headers \
 	MASTER="lsa/lsa.h" \
-        lsa/lsapstore-types.h \
-        lsa/lsapstore-api.h \
-        lsa/lsapstore-plugin.h \
-        lsa/ad.h \
-        lsa/ad-types.h \
+        HEADERDEPS="lwerror.h" \
         lsa/provider.h
+
+    mk_headers \
+        MASTER="lsa/lsapstore-api.h" \
+        lsa/lsapstore-types.h \
+        lsa/lsapstore-plugin.h
+
+    mk_headers \
+        MASTER="lsa/ad.h" \
+        HEADERDEPS="lsa/lsa.h lsa/lsapstore-types.h" \
+        lsa/ad-types.h
 
     mk_headers \
 	lw/rpc/common.h          \
