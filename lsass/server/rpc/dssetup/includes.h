@@ -55,6 +55,7 @@
 #include <lsa/lsa.h>
 #include <lsarpcsrv.h>
 #include <lsasrvutils.h>
+#include <lsasrvapi.h>
 #include <rpcctl-register.h>
 #include <directory.h>
 

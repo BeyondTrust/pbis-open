@@ -172,7 +172,7 @@ DsrSrvRoleGetPDCInfoBasic(
 
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = 0;
-    PSTR pszDomainFqdn = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
     PWSTR pwszProtSeq = NULL;
     PSTR pszLsaLpcSocketPath = NULL;
     PWSTR pwszLsaLpcSocketPath = NULL;
@@ -189,10 +189,13 @@ DsrSrvRoleGetPDCInfoBasic(
 
     memset(szHostname, 0, sizeof(szHostname));
 
-    dwError = LWNetGetCurrentDomain(&pszDomainFqdn);
+    dwError = LsaSrvProviderGetMachineAccountInfoA(
+                    LSA_PROVIDER_TAG_AD,
+                    NULL,
+                    &pAccountInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LWNetGetDomainController(pszDomainFqdn,
+    dwError = LWNetGetDomainController(pAccountInfo->DnsDomainName,
                                        &pszDcName);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -268,9 +271,9 @@ cleanup:
         LsaRpcFreeMemory(pPolInfo);
     }
 
-    if (pszDomainFqdn)
+    if (pAccountInfo)
     {
-        LWNetFreeString(pszDomainFqdn);
+        LsaSrvFreeMachineAccountInfoA(pAccountInfo);
     }
 
     if (pszDcName)

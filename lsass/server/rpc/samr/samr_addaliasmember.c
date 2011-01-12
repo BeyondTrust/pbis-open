@@ -79,7 +79,7 @@ SamrSrvAddAliasMember(
     PWSTR pwszFilter = NULL;
     PDIRECTORY_ENTRY pEntry = NULL;
     DWORD dwEntriesNum = 0;
-    PSTR pszDomainFqdn = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
     PSTR pszDcName = NULL;
     PWSTR pwszDcName = NULL;
     LW_PIO_CREDS pCreds = NULL;
@@ -266,10 +266,13 @@ SamrSrvAddAliasMember(
     }
     else if (dwEntriesNum == 0)
     {
-        dwError = LWNetGetCurrentDomain(&pszDomainFqdn);
+        dwError = LsaSrvProviderGetMachineAccountInfoA(
+                        LSA_PROVIDER_TAG_AD,
+                        NULL,
+                        &pAccountInfo);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LWNetGetDomainController(pszDomainFqdn,
+        dwError = LWNetGetDomainController(pAccountInfo->DnsDomainName,
                                            &pszDcName);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -408,9 +411,9 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszFilter);
     RTL_FREE(&pwszSid);
 
-    if (pszDomainFqdn)
+    if (pAccountInfo)
     {
-        LWNetFreeString(pszDomainFqdn);
+        LsaSrvFreeMachineAccountInfoA(pAccountInfo);
     }
 
     if (pszDcName)

@@ -86,9 +86,8 @@ LsaSrvOpenPolicy2(
     DWORD dwSidLength = 0;
     PSID pDomainSid = NULL;
     DOMAIN_HANDLE hDomain = (DOMAIN_HANDLE)NULL;
-    PSTR pszDomainFqdn = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
     PSTR pszDcFqdn = NULL;
-    PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo = NULL;
 
     dwError = LwAllocateMemory(sizeof(*pPolCtx),
                                OUT_PPVOID(&pPolCtx));
@@ -210,14 +209,17 @@ LsaSrvOpenPolicy2(
         }
     }
 
-    dwError = LWNetGetCurrentDomain(&pszDomainFqdn);
+    dwError = LsaSrvProviderGetMachineAccountInfoA(
+                    LSA_PROVIDER_TAG_AD,
+                    NULL,
+                    &pAccountInfo);
     if (dwError == ERROR_SUCCESS)
     {
         /*
          * LSASS is a domain member so get some basic information
          * about the domain
          */
-        dwError = LWNetGetDomainController(pszDomainFqdn,
+        dwError = LWNetGetDomainController(pAccountInfo->DnsDomainName,
                                            &pszDcFqdn);
         if (dwError == DNS_ERROR_BAD_PACKET)
         {
@@ -237,24 +239,15 @@ LsaSrvOpenPolicy2(
             BAIL_ON_LSA_ERROR(dwError);
         }
 
-        dwError = LsaSrvProviderGetMachineAccountInfoW(
-                      LSA_PROVIDER_TAG_AD,
-                      NULL,
-                      &pAccountInfo);
+        dwError = LwMbsToWc16s(pAccountInfo->NetbiosDomainName,
+                               &pPolCtx->pwszDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
-        if (pAccountInfo)
-        {
-            dwError = LwAllocateWc16String(&pPolCtx->pwszDomainName,
-                                           pAccountInfo->NetbiosDomainName);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            ntStatus = RtlAllocateSidFromWC16String(&pPolCtx->pDomainSid,
-                                                    pAccountInfo->DomainSid);
-            BAIL_ON_NTSTATUS_ERROR(ntStatus);
-        }
+        ntStatus = RtlAllocateSidFromCString(&pPolCtx->pDomainSid,
+                                             pAccountInfo->DomainSid);
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);
     }
-    else if (dwError == ERROR_NOT_JOINED)
+    else if (dwError == NERR_SetupNotJoined)
     {
         /*
          * LSASS is a standalone server
@@ -291,12 +284,7 @@ cleanup:
         LWNetFreeString(pszDcFqdn);
     }
 
-    if (pszDomainFqdn)
-    {
-        LWNetFreeString(pszDomainFqdn);
-    }
-
-    LsaSrvFreeMachineAccountInfoW(pAccountInfo);
+    LsaSrvFreeMachineAccountInfoA(pAccountInfo);
 
     LW_SAFE_FREE_MEMORY(pwszSystemName);
     LW_SAFE_FREE_MEMORY(pszSamrLpcSocketPath);
