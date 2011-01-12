@@ -53,10 +53,6 @@
         } \
     } while (0)
 
-extern DWORD LwSSLErrorToLwError(
-                unsigned long ssl_error
-                );
-
 #define BAIL_WITH_SSL_ERROR(_sslError) \
     do { \
         char _SSLerrorString[256]; \
