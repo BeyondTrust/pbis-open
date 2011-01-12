@@ -103,6 +103,7 @@ LwAutoEnrollCurlSoapRequest(
     OpenSOAPEnvelopePtr pSoapReply = NULL;
     CURL *curlHandle;
     struct curl_slist *pHeaderList = NULL;
+    long responseCode = 0;
     CURLcode curlResult = CURLE_OK;
     int soapResult = OPENSOAP_NO_ERROR;
     DWORD error = LW_ERROR_SUCCESS;
@@ -189,6 +190,24 @@ LwAutoEnrollCurlSoapRequest(
 
     curlResult = curl_easy_perform(curlHandle);
     BAIL_ON_CURL_ERROR(curlResult);
+
+    curlResult = curl_easy_getinfo(
+                    curlHandle,
+                    CURLINFO_RESPONSE_CODE,
+                    &responseCode);
+    BAIL_ON_CURL_ERROR(curlResult);
+
+    if (responseCode != 200)
+    {
+        //
+        // cURL doesn't make the information from the rest of the 
+        // error available, unfortunately.
+        //
+        BAIL_WITH_LW_ERROR(
+            LW_ERROR_AUTOENROLL_HTTP_REQUEST_FAILED,
+            "HTTP Request failed with code %d",
+            responseCode);
+    }
 
     soapResult = OpenSOAPEnvelopeCreateCharEncoding(
                     NULL,
