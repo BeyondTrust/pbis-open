@@ -358,13 +358,18 @@ CheckResponseDisposition(
                     &dispositionMessageSize);
     BAIL_ON_SOAP_ERROR(soapResult);
 
-    if (dispositionMessageSize == 7 &&
-            strncasecmp((PCSTR) dispositionMessageStr, "Pending", 7) == 0)
+    if (dispositionMessageSize == 22 &&
+            strncasecmp(
+                (PCSTR) dispositionMessageStr,
+                "Taken Under Submission",
+                22) == 0)
     {
-        BAIL_WITH_LW_ERROR(ERROR_CONTINUE);
+        BAIL_WITH_LW_ERROR(
+            ERROR_CONTINUE,
+            ": Certificate request is waiting for approval");
     }
 
-    if (dispositionMessageSize != 6 ||
+    if (dispositionMessageSize < 6 ||
             strncasecmp((PCSTR) dispositionMessageStr, "Issued", 6) != 0)
     {
         BAIL_WITH_LW_ERROR(
