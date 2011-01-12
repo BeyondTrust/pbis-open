@@ -65,16 +65,6 @@ LsaSrvStartupPreCheck(
     );
 
 DWORD
-LsaSrvVerifyNetLogonStatus(
-    VOID
-    );
-
-DWORD
-LsaSrvVerifyLwIoStatus(
-    VOID
-    );
-
-DWORD
 LsaSrvRaiseMaxFiles(
     DWORD dwMaxFiles
     );

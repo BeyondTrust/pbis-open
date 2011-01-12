@@ -303,63 +303,6 @@ error:
 }
 
 DWORD
-LsaSrvVerifyNetLogonStatus(
-    VOID
-    )
-{
-    DWORD dwError = 0;
-    PSTR pszDomain = NULL;
-
-    dwError = LWNetGetCurrentDomain(&pszDomain);
-    LSA_LOG_INFO("LsaSrvVerifyNetLogonStatus call to LWNet API returned %u", dwError);
-    BAIL_ON_LSA_ERROR(dwError);
-
-cleanup:
-
-    if (pszDomain)
-    {
-        LWNetFreeString(pszDomain);
-    }
-
-    return dwError;
-
-error:
-
-    if (dwError == ERROR_NOT_JOINED)
-    {
-        dwError = 0;
-    }
-
-    goto cleanup;
-}
-
-DWORD
-LsaSrvVerifyLwIoStatus(
-    VOID
-    )
-{
-    DWORD dwError = 0;
-    PLWIO_LOG_INFO pLogInfo = NULL;
-
-    dwError = LwIoGetLogInfo(&pLogInfo);
-    LSA_LOG_INFO("LsaSrvVerifyLwIoStatus call to LwIo API returned %u", dwError);
-    BAIL_ON_LSA_ERROR(dwError);
-
-cleanup:
-
-    if (pLogInfo)
-    {
-        LwIoFreeLogInfo(pLogInfo);
-    }
-
-    return dwError;
-
-error:
-
-    goto cleanup;
-}
-
-DWORD
 LsaSrvRaiseMaxFiles(
     DWORD dwMaxFiles
     )
