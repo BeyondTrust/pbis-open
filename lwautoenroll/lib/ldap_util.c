@@ -117,7 +117,7 @@ LwAutoEnrollLdapConnect(
             "Could not connect to DC %s [%s] for domain %s",
             pDcInfo->pszDomainControllerName,
             pDcInfo->pszDomainControllerAddress,
-            dnsDomainName);
+            domainDnsName);
 
 cleanup:
     LWNET_SAFE_FREE_DC_INFO(pDcInfo);
