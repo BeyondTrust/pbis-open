@@ -106,11 +106,6 @@ LWNetSrvGetDomainController(
     OUT PSTR* ppszDomainControllerFQDN
     );
 
-DWORD
-LWNetSrvGetCurrentDomain(
-    PSTR* ppszDomain
-    );
-
 
 // Netlogon service event types
 #define SERVICE_EVENT_CATEGORY      "Service"

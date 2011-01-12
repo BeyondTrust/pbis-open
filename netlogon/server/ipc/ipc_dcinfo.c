@@ -404,55 +404,6 @@ error:
     goto cleanup;
 }
 
-DWORD
-LWNetSrvIpcGetCurrentDomain(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    void* data
-    )
-{
-    DWORD dwError = 0;
-    PLWNET_IPC_STRING pRes = NULL;
-    PLWNET_IPC_ERROR pError = NULL;
-
-    dwError = LWNetAllocateMemory(sizeof(*pRes), (void**) (void*) &pRes);
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    dwError = LWNetSrvGetCurrentDomain(
-        &pRes->pszString
-        );
-
-    if (!dwError)
-    {
-        pOut->tag = LWNET_R_GET_CURRENT_DOMAIN;
-        pOut->data = pRes;
-    }
-    else
-    {
-        dwError = LWNetSrvIpcCreateError(dwError, NULL, &pError);
-        BAIL_ON_LWNET_ERROR(dwError);
-
-        pOut->tag = LWNET_R_ERROR;
-        pOut->data = pError;
-    }
-
-cleanup:
-
-    if (pRes && pError)
-    {
-        LWNetFreeMemory(pRes);
-    }
-
-    return MAP_LWNET_ERROR(dwError);
-
-error:
-
-    LWNET_SAFE_FREE_MEMORY(pRes);
-
-    goto cleanup;
-}
-
 static DWORD
 LWNetSrvIpcResolveNetBiosName(
     PSTR pszHostName,

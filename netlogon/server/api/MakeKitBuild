@@ -6,7 +6,6 @@ make()
        lwnet-krb5.c       \
        lwnet-cachedb.c    \
        lwnet-netbios.c    \
-       lwnet-pstore.c     \
        lwnet-plugin.c     \
        dcinfo.c           \
        event.c            \
@@ -17,6 +16,6 @@ make()
         GROUP=api \
         SOURCES="$API_SOURCES" \
         INCLUDEDIRS=". ../include ../../include" \
-        HEADERDEPS="reg/lwreg.h reg/regutil.h lwmsg/lwmsg.h lwadvapi.h lwps/lwps.h" \
-        LIBDEPS="regclient rsutils lwmsg lwadvapi lwpsapi ldap_r $LIB_PTHREAD $LIB_DL"
+        HEADERDEPS="reg/lwreg.h reg/regutil.h lwmsg/lwmsg.h lwadvapi.h" \
+        LIBDEPS="regclient rsutils lwmsg lwadvapi ldap_r $LIB_PTHREAD $LIB_DL"
 }

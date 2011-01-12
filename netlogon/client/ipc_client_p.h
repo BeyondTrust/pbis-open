@@ -112,12 +112,6 @@ LWNetTransactGetDomainController(
     );
 
 DWORD
-LWNetTransactGetCurrentDomain(
-    HANDLE hConnection,
-    PSTR* ppszDomainFQDN
-    );
-
-DWORD
 LWNetTransactSetLogLevel(
     IN HANDLE hConnection,
     IN LWNET_LOG_LEVEL LogLevel

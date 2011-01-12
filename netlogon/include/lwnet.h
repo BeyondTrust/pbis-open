@@ -278,12 +278,6 @@ LWNetGetDCTime(
 
 LWNET_API
 LW_DWORD
-LWNetGetCurrentDomain(
-    LW_OUT LW_PSTR* ppszDomainFQDN
-    );
-
-LWNET_API
-LW_DWORD
 LWNetExtendEnvironmentForKrb5Affinity(
     LW_IN LW_BOOLEAN bNoDefault
     );

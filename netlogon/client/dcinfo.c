@@ -340,44 +340,6 @@ error:
 }
 
 LWNET_API
-DWORD
-LWNetGetCurrentDomain(
-    PSTR* ppszDomainFQDN
-    )
-{
-    DWORD dwError = 0;
-    HANDLE hServer = 0;
-    
-    dwError = LWNetOpenServer(
-                &hServer);
-    BAIL_ON_LWNET_ERROR(dwError);
-    
-    dwError = LWNetTransactGetCurrentDomain(
-        hServer,
-        ppszDomainFQDN
-        );
-    BAIL_ON_LWNET_ERROR(dwError);
-                
-cleanup:
-
-    if (hServer)
-    {
-        DWORD dwErrorLocal = 0;
-        dwErrorLocal = LWNetCloseServer(hServer);
-        if(!dwError)
-        {
-            dwError = dwErrorLocal;
-        }
-    }
-
-    return dwError;
-    
-error:
-
-    goto cleanup;
-}
-
-LWNET_API
 LW_DWORD
 LWNetSetLogLevel(
     LW_IN LWNET_LOG_LEVEL LogLevel

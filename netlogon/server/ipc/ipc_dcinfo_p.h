@@ -96,14 +96,6 @@ LWNetSrvIpcGetDomainController(
     );
 
 DWORD
-LWNetSrvIpcGetCurrentDomain(
-    LWMsgCall* pCall,
-    const LWMsgParams* pRequest,
-    LWMsgParams* pResponse,
-    void* data
-    );
-
-DWORD
 LWNetSrvIpcResolveName(
     LWMsgCall* pCall,
     const LWMsgParams* pIn,

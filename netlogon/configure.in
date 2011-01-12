@@ -173,31 +173,6 @@ AC_SUBST(LWADVAPI_LDFLAGS)
 AC_SUBST(LWADVAPI_LIBS)
 AC_SUBST(LWADVAPI_NOTHR_LIBS)
 
-# pstore
-
-AC_ARG_WITH([pstore],
-        [AC_HELP_STRING([--with-pstore=<dir>], [use pstore located in prefix <dir>])],
-        [
-		PSTORE_INCLUDES="-I$withval/include"
-        PSTORE_LDFLAGS="-L$withval/lib"
-        ])
-
-AC_ARG_WITH([pstore-includes],
-        [AC_HELP_STRING([--with-pstore-includes=<dir>], [use pstore includes located in <dir>])],
-        [
-		PSTORE_INCLUDES="-I$withval"
-        ])
-
-AC_ARG_WITH([pstore-libs],
-        [AC_HELP_STRING([--with-pstore-libs=<dir>], [use pstore libs located in <dir>])],
-        [
-		PSTORE_LDFLAGS="-L$withval"
-        ])
-
-AC_SUBST(PSTORE_INCLUDES)
-AC_SUBST(PSTORE_LDFLAGS)
-AC_SUBST(PSTORE_LIBS)
-
 # lwmsg
 
 AC_ARG_WITH([lwmsg],
@@ -341,8 +316,6 @@ AC_CHECK_TYPES([wchar16_t], [], [], [AC_INCLUDES_DEFAULT
 ])
 
 # Check for external libraries
-AC_CHECK_LIB([lwpsapi], [LwpsOpenPasswordStore], [PSTORE_LIBS="-llwpsapi"], AC_MSG_ERROR([Could not find liblwpsapi; please use --with-pstore]), [$PSTORE_LDFLAGS])
-AC_CHECK_LIB([tdb], [tdb_open], [TDB_LIBS="-ltdb"], [ENABLE_TDB=false], [$TDB_LDFLAGS])
 AC_CHECK_LIB([pthread], [pthread_self], [PTHREAD_LIBS="-lpthread"], [])
 
 AC_SUBST(PTHREAD_LIBS)

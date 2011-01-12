@@ -455,61 +455,6 @@ error:
 }
 
 DWORD
-LWNetTransactGetCurrentDomain(
-    HANDLE hConnection,
-    PSTR* ppszDomainFQDN
-    )
-{
-    DWORD dwError = 0;
-    PLWNET_IPC_ERROR pError = NULL;
-    PLWNET_IPC_STRING pCurRes = NULL;
-
-    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
-    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
-    LWMsgCall* pCall = NULL;
-
-    dwError = LWNetAcquireCall(hConnection, &pCall);
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    in.tag = LWNET_Q_GET_CURRENT_DOMAIN;
-    in.data = NULL;
-
-    dwError = MAP_LWMSG_ERROR(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
-    BAIL_ON_LWNET_ERROR(dwError);
-    
-    switch (out.tag)
-    {
-    case LWNET_R_GET_CURRENT_DOMAIN:
-        pCurRes = out.data;
-        *ppszDomainFQDN = pCurRes->pszString;
-        pCurRes->pszString = NULL;
-        break;
-    case LWNET_R_ERROR:
-        pError = (PLWNET_IPC_ERROR) out.data;
-        dwError = pError->dwError;
-        BAIL_ON_LWNET_ERROR(dwError);
-        break;
-    default:
-        dwError = LW_ERROR_INTERNAL;
-        BAIL_ON_LWNET_ERROR(dwError);
-    }
-
-cleanup:
-
-    if (pCall)
-    {
-        lwmsg_call_destroy_params(pCall, &out);
-        lwmsg_call_release(pCall);
-    }
-
-    return dwError;
-
-error:
-
-    goto cleanup;
-}
-
-DWORD
 LWNetTransactSetLogLevel(
     IN HANDLE hConnection,
     IN LWNET_LOG_LEVEL LogLevel
