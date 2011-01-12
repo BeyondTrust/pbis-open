@@ -626,6 +626,130 @@ cleanup:
     return wbc_status;
 }
 
+wbcErr
+wbcLogonUser(
+    const struct wbcLogonUserParams *params,
+    struct wbcLogonUserInfo **info,
+    struct wbcAuthErrorInfo **error,
+    struct wbcUserPasswordPolicyInfo **policy
+)
+{
+    // This function is only used by pam_winbind. The user should use pam_lsass instead
+
+    if (info != NULL)
+    {
+        *info = NULL;
+    }
+    if (error != NULL)
+    {
+        *error = NULL;
+    }
+    if (policy != NULL)
+    {
+        *policy = NULL;
+    }
+    return LW_ERROR_NOT_IMPLEMENTED;
+}
+
+wbcErr
+wbcLogoffUser(
+    const char *username,
+    uid_t uid,
+    const char *ccfilename
+    )
+{
+    // This function is only used by pam_winbind. The user should use pam_lsass instead
+
+    return LW_ERROR_NOT_IMPLEMENTED;
+}
+
+wbcErr
+wbcLogoffUserEx(
+    const struct wbcLogoffUserParams *params,
+    struct wbcAuthErrorInfo **error
+    )
+{
+    // This function is only used by pam_winbind. The user should use pam_lsass instead
+
+    if (error != NULL)
+    {
+        *error = NULL;
+    }
+    return LW_ERROR_NOT_IMPLEMENTED;
+}
+
+wbcErr
+wbcChangeUserPassword(
+    const char *username,
+    const char *old_password,
+    const char *new_password
+    )
+{
+    // Nothing calls this function
+
+    return LW_ERROR_NOT_IMPLEMENTED;
+}
+
+wbcErr
+wbcChangeUserPasswordEx(
+    const struct wbcChangePasswordParams *params,
+    struct wbcAuthErrorInfo **error,
+    enum wbcPasswordChangeRejectReason *reject_reason,
+    struct wbcUserPasswordPolicyInfo **policy
+    )
+{
+    // This function is only used by pam_winbind. The user should use pam_lsass instead
+
+    if (error != NULL)
+    {
+        *error = NULL;
+    }
+    if (reject_reason != NULL)
+    {
+        *reject_reason = 0;
+    }
+    if (policy != NULL)
+    {
+        *policy = NULL;
+    }
+    return LW_ERROR_NOT_IMPLEMENTED;
+}
+
+wbcErr
+wbcCredentialCache(
+    struct wbcCredentialCacheParams *params,
+    struct wbcCredentialCacheInfo **info,
+    struct wbcAuthErrorInfo **error
+    )
+{
+    // Nothing calls this function
+
+    if (info != NULL)
+    {
+        *info = NULL;
+    }
+    if (error != NULL)
+    {
+        *error = NULL;
+    }
+    return LW_ERROR_NOT_IMPLEMENTED;
+}
+
+wbcErr
+wbcAddNamedBlob(
+    size_t *num_blobs,
+    struct wbcNamedBlob **blobs,
+    const char *name,
+    uint32_t flags,
+    uint8_t *data,
+    size_t length
+    )
+{
+    // This function is only used by pam_winbind. The user should use pam_lsass instead
+
+    return LW_ERROR_NOT_IMPLEMENTED;
+}
+
 /*
 local variables:
 mode: c

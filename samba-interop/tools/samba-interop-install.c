@@ -362,6 +362,9 @@ CheckSambaVersion(
     if (!strncmp(pVersionString, "3.2.", sizeof("3.2.") - 1))
     {
     }
+    if (!strncmp(pVersionString, "3.4.", sizeof("3.4.") - 1))
+    {
+    }
     else if (!strncmp(pVersionString, "3.0.", sizeof("3.0.") - 1))
     {
         int build = 0;
@@ -484,7 +487,7 @@ GetIdmapDir(
 
     error = LwAllocateStringPrintf(
             &pCommandLine,
-            "%s -b | grep LIBDIR:",
+            "%s -b | grep MODULESDIR:",
             pSmbdPath
             );
     BAIL_ON_LSA_ERROR(error);
@@ -496,6 +499,27 @@ GetIdmapDir(
                 ppArgs,
                 &pSambaLibdir,
                 NULL);
+    if (error == ERROR_BAD_COMMAND)
+    {
+        // This version of smbd is older than 3.4. Try looking for the LIBDIR
+        // instead.
+        LW_SAFE_FREE_STRING(pCommandLine);
+
+        error = LwAllocateStringPrintf(
+                &pCommandLine,
+                "%s -b | grep LIBDIR:",
+                pSmbdPath
+                );
+        BAIL_ON_LSA_ERROR(error);
+
+        ppArgs[2] = pCommandLine;
+
+        error = CaptureOutputWithStderr(
+                    "/bin/sh",
+                    ppArgs,
+                    &pSambaLibdir,
+                    NULL);
+    }
     BAIL_ON_LSA_ERROR(error);
 
     LwStripWhitespace(
@@ -503,12 +527,13 @@ GetIdmapDir(
             TRUE,
             TRUE);
 
-    if (!strncmp(pSambaLibdir, "LIBDIR: ", sizeof("LIBDIR: ") -1))
+    if (strstr(pSambaLibdir, ": "))
     {
+        char *pValueStart = strstr(pSambaLibdir, ": ") + 2;
         memmove(
                 pSambaLibdir,
-                pSambaLibdir + (sizeof("LIBDIR: ") - 1),
-                strlen(pSambaLibdir) - (sizeof("LIBDIR: ") - 1) + 1);
+                pValueStart,
+                strlen(pSambaLibdir) - (pValueStart - pSambaLibdir) + 1);
     }
 
     error = LwAllocateStringPrintf(
@@ -848,7 +873,7 @@ main(
     PSTR pFoundSmbdPath = NULL;
     DWORD error = 0;
     DWORD argIndex = 0;
-    DWORD logLevel = 0;
+    DWORD logLevel = LW_LOG_LEVEL_ERROR;
     PCSTR pErrorSymbol = NULL;
 
     for (argIndex = 1; argIndex < argc; argIndex++)
