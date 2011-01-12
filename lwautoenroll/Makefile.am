@@ -21,6 +21,7 @@ lib_LTLIBRARIES = lib/liblwautoenroll.la
 lib_liblwautoenroll_la_SOURCES = \
 	lib/ldap_util.c \
 	lib/request.c \
+	lib/soap_util.c \
 	lib/ssl.c \
 	lib/template.c \
 	lib/x509_util.c
