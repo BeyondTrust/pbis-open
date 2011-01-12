@@ -12,7 +12,7 @@
 #define BAIL_WITH_SOAP_ERROR(_soapError, ...) \
     do { \
         BAIL_WITH_LW_ERROR(LwSoapErrorToLwError(_soapError), \
-            _BAIL_FORMAT_STRING(__VA_ARGS__) ": OpenSOAP error %08x", \
+            _BAIL_FORMAT_STRING(__VA_ARGS__) ": OpenSOAP error 0x%08x", \
             _BAIL_FORMAT_ARGS(__VA_ARGS__), _soapError); \
     } while (0)
 
