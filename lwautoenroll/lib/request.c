@@ -1,5 +1,6 @@
 #include <lwautoenroll/lwautoenroll.h>
 #include <bail.h>
+#include <mspki.h>
 
 #include <openssl/bn.h>
 #include <openssl/conf.h>
@@ -721,110 +722,113 @@ LwAutoEnrollRequestCertificate(
         BAIL_ON_LW_ERROR(error);
     }
 
-    // Add the SMIME Capabilities extension.
-    error = Asn1StackAppendPrintf(
-        &pAsn1SubStack,
-        "OBJECT:RC2-CBC");
-    BAIL_ON_LW_ERROR(error);
+    if (pTemplate->enrollmentFlags & CT_FLAG_INCLUDE_SYMMETRIC_ALGORITHMS)
+    {
+        // Add the SMIME Capabilities extension.
+        error = Asn1StackAppendPrintf(
+            &pAsn1SubStack,
+            "OBJECT:RC2-CBC");
+        BAIL_ON_LW_ERROR(error);
 
-    error = Asn1StackAppendPrintf(
-        &pAsn1SubStack,
-        "INTEGER:0x0080");
-    BAIL_ON_LW_ERROR(error);
+        error = Asn1StackAppendPrintf(
+            &pAsn1SubStack,
+            "INTEGER:0x0080");
+        BAIL_ON_LW_ERROR(error);
 
-    error = Asn1StackToSequence(
-        pAsn1SubStack,
-        &pAsn1Value,
-        V_ASN1_SEQUENCE);
-    BAIL_ON_LW_ERROR(error);
+        error = Asn1StackToSequence(
+            pAsn1SubStack,
+            &pAsn1Value,
+            V_ASN1_SEQUENCE);
+        BAIL_ON_LW_ERROR(error);
 
-    error = Asn1StackAppendValue(
-        &pAsn1Stack,
-        pAsn1Value);
-    BAIL_ON_LW_ERROR(error);
-
-    pAsn1SubStack = NULL;
-    pAsn1Value = NULL;
-
-    error = Asn1StackAppendPrintf(
-        &pAsn1SubStack,
-        "OBJECT:RC4");
-    BAIL_ON_LW_ERROR(error);
-
-    error = Asn1StackAppendPrintf(
-        &pAsn1SubStack,
-        "INTEGER:0x0080");
-    BAIL_ON_LW_ERROR(error);
-
-    error = Asn1StackToSequence(
-        pAsn1SubStack,
-        &pAsn1Value,
-        V_ASN1_SEQUENCE);
-    BAIL_ON_LW_ERROR(error);
-
-    error = Asn1StackAppendValue(
-        &pAsn1Stack,
-        pAsn1Value);
-    BAIL_ON_LW_ERROR(error);
-
-    pAsn1SubStack = NULL;
-    pAsn1Value = NULL;
-
-    error = Asn1StackAppendPrintf(
-        &pAsn1SubStack,
-        "OBJECT:DES-CBC");
-    BAIL_ON_LW_ERROR(error);
-
-    error = Asn1StackToSequence(
-        pAsn1SubStack,
-        &pAsn1Value,
-        V_ASN1_SEQUENCE);
-    BAIL_ON_LW_ERROR(error);
-
-    error = Asn1StackAppendValue(
-        &pAsn1Stack,
-        pAsn1Value);
-    BAIL_ON_LW_ERROR(error);
-
-    pAsn1SubStack = NULL;
-    pAsn1Value = NULL;
-
-    error = Asn1StackAppendPrintf(
-        &pAsn1SubStack,
-        "OBJECT:DES-EDE3-CBC");
-    BAIL_ON_LW_ERROR(error);
-
-    error = Asn1StackToSequence(
-        pAsn1SubStack,
-        &pAsn1Value,
-        V_ASN1_SEQUENCE);
-    BAIL_ON_LW_ERROR(error);
-
-    error = Asn1StackAppendValue(
-        &pAsn1Stack,
-        pAsn1Value);
-    BAIL_ON_LW_ERROR(error);
-
-    pAsn1SubStack = NULL;
-    pAsn1Value = NULL;
-
-    error = Asn1StackToSequence(
-        pAsn1Stack,
-        &pAsn1Value,
-        V_ASN1_SEQUENCE);
-    BAIL_ON_LW_ERROR(error);
-
-    error = AddExtensionAsn1Value(
-            &extensions,
-            pTemplate->criticalExtensions,
-            "SMIME-CAPS",
+        error = Asn1StackAppendValue(
+            &pAsn1Stack,
             pAsn1Value);
-    BAIL_ON_LW_ERROR(error);
+        BAIL_ON_LW_ERROR(error);
 
-    sk_ASN1_TYPE_pop_free(pAsn1Stack, ASN1_TYPE_free);
-    pAsn1Stack = NULL;
-    ASN1_TYPE_free(pAsn1Value);
-    pAsn1Value = NULL;
+        pAsn1SubStack = NULL;
+        pAsn1Value = NULL;
+
+        error = Asn1StackAppendPrintf(
+            &pAsn1SubStack,
+            "OBJECT:RC4");
+        BAIL_ON_LW_ERROR(error);
+
+        error = Asn1StackAppendPrintf(
+            &pAsn1SubStack,
+            "INTEGER:0x0080");
+        BAIL_ON_LW_ERROR(error);
+
+        error = Asn1StackToSequence(
+            pAsn1SubStack,
+            &pAsn1Value,
+            V_ASN1_SEQUENCE);
+        BAIL_ON_LW_ERROR(error);
+
+        error = Asn1StackAppendValue(
+            &pAsn1Stack,
+            pAsn1Value);
+        BAIL_ON_LW_ERROR(error);
+
+        pAsn1SubStack = NULL;
+        pAsn1Value = NULL;
+
+        error = Asn1StackAppendPrintf(
+            &pAsn1SubStack,
+            "OBJECT:DES-CBC");
+        BAIL_ON_LW_ERROR(error);
+
+        error = Asn1StackToSequence(
+            pAsn1SubStack,
+            &pAsn1Value,
+            V_ASN1_SEQUENCE);
+        BAIL_ON_LW_ERROR(error);
+
+        error = Asn1StackAppendValue(
+            &pAsn1Stack,
+            pAsn1Value);
+        BAIL_ON_LW_ERROR(error);
+
+        pAsn1SubStack = NULL;
+        pAsn1Value = NULL;
+
+        error = Asn1StackAppendPrintf(
+            &pAsn1SubStack,
+            "OBJECT:DES-EDE3-CBC");
+        BAIL_ON_LW_ERROR(error);
+
+        error = Asn1StackToSequence(
+            pAsn1SubStack,
+            &pAsn1Value,
+            V_ASN1_SEQUENCE);
+        BAIL_ON_LW_ERROR(error);
+
+        error = Asn1StackAppendValue(
+            &pAsn1Stack,
+            pAsn1Value);
+        BAIL_ON_LW_ERROR(error);
+
+        pAsn1SubStack = NULL;
+        pAsn1Value = NULL;
+
+        error = Asn1StackToSequence(
+            pAsn1Stack,
+            &pAsn1Value,
+            V_ASN1_SEQUENCE);
+        BAIL_ON_LW_ERROR(error);
+
+        error = AddExtensionAsn1Value(
+                &extensions,
+                pTemplate->criticalExtensions,
+                "SMIME-CAPS",
+                pAsn1Value);
+        BAIL_ON_LW_ERROR(error);
+
+        sk_ASN1_TYPE_pop_free(pAsn1Stack, ASN1_TYPE_free);
+        pAsn1Stack = NULL;
+        ASN1_TYPE_free(pAsn1Value);
+        pAsn1Value = NULL;
+    }
 
     sslResult = X509_REQ_add_extensions(pRequest, extensions);
     BAIL_ON_SSL_ERROR(sslResult == 0);
