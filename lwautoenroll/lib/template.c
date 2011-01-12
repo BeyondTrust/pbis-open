@@ -36,6 +36,7 @@ LwAutoEnrollGetTemplateList(
     PSTR krbUpn = NULL;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     LSA_QUERY_LIST QueryList = { 0 };
+    PSTR domainDnsName = NULL;
     LDAP *pLdap = NULL;
     LDAPMessage *pLdapResults = NULL;
     LDAPMessage *pLdapResult = NULL;
@@ -107,8 +108,13 @@ LwAutoEnrollGetTemplateList(
                 &domainDn);
     BAIL_ON_LW_ERROR(error);
 
-    error = LwAutoEnrollLdapConnect(
+    error = LwLdapConvertDNToDomain(
                 domainDn,
+                &domainDnsName);
+    BAIL_ON_LW_ERROR(error);
+
+    error = LwAutoEnrollLdapConnect(
+                domainDnsName,
                 &ldapConnection);
     BAIL_ON_LW_ERROR(error);
 
@@ -466,6 +472,8 @@ cleanup:
     {
         ldap_value_free_len(ppValues);
     }
+
+    LW_SAFE_FREE_STRING(domainDnsName);
 
     *ppTemplateList = pTemplateList;
     *pNumTemplates = numTemplates;
