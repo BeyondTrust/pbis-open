@@ -6,6 +6,7 @@
 #include <ldap.h>
 #include <lwldap.h>
 
+#include <lwerror.h>
 #include <lwmem.h>
 #include <lwstr.h>
 
@@ -23,16 +24,20 @@ LwAutoEnrollGetTemplateList(
     PLSASTATUS pLsaStatus = NULL;
     LDAPMessage *pLdapResults = NULL;
     int provider;
-    PSTR domainDN;
-    PSTR searchDN;
+    PSTR domainDN = NULL;
+    PSTR searchDN = NULL;
     PLW_AUTOENROLL_TEMPLATE pTemplateList = NULL;
     DWORD numTemplates = 0;
-    DWORD error;
+    DWORD error = LW_ERROR_SUCCESS;
     static PSTR attributeList[] =
     {
         "name",
         "pKIKeyUsage",
         "pKIExtendedKeyUsage",
+        "pKICriticalExtensions",
+        "pKIDefaultCSPs",
+        "msPKI-Enrollment-Flag",
+        "msPKI-Minimal-Key-Size",
         NULL
     };
 
@@ -69,7 +74,7 @@ LwAutoEnrollGetTemplateList(
                     LDAP *pLdap;
                     LDAPMessage *pLdapResult;
                     DWORD template = 0;
-                    PSTR name = NULL;
+                    PWSTR name = NULL;
                     EXTENDED_KEY_USAGE *extendedKeyUsage = NULL;
 
                     LW_LOG_DEBUG(
@@ -112,7 +117,6 @@ LwAutoEnrollGetTemplateList(
                             &pLdapResults);
                     BAIL_ON_LW_ERROR(error);
 
-                    LW_SAFE_FREE_STRING(searchDN);
                     error = LwLdapCountEntries(
                                 ldapConnection,
                                 pLdapResults,
@@ -137,7 +141,7 @@ LwAutoEnrollGetTemplateList(
                         int value;
                         int numValues;
 
-                        LW_SAFE_FREE_STRING(name);
+                        LW_SAFE_FREE_MEMORY(name);
 
                         if (extendedKeyUsage)
                         {
@@ -168,9 +172,9 @@ LwAutoEnrollGetTemplateList(
                             continue;
                         }
 
-                        error = LwAllocateString(
-                                    ppValues[0]->bv_val,
-                                    &name);
+                        error = LwAllocateWc16String(
+                                    &name,
+                                    (PCWSTR) ppValues[0]->bv_val);
                         BAIL_ON_LW_ERROR(error);
 
                         ppValues = ldap_get_values_len(
@@ -203,6 +207,7 @@ LwAutoEnrollGetTemplateList(
                             }
                         }
 
+                        // TODO Handle pKIDefaultCSPs and pKICriticalExtensions.
                         pTemplateList[template].name = name;
                         pTemplateList[template].extendedKeyUsage =
                             extendedKeyUsage;
@@ -235,6 +240,9 @@ cleanup:
         }
     }
 
+    LW_SAFE_FREE_STRING(domainDN);
+    LW_SAFE_FREE_STRING(searchDN);
+
     *ppTemplateList = pTemplateList;
     *pNumTemplates = numTemplates;
 
@@ -251,11 +259,17 @@ LwAutoEnrollFreeTemplateList(
 
     for (template = 0; template < NumTemplates; ++template)
     {
-        LW_SAFE_FREE_STRING(pTemplateList[template].name);
+        LW_SAFE_FREE_MEMORY(pTemplateList[template].name);
+        LW_SAFE_FREE_MEMORY(pTemplateList[template].csp);
 
         if (pTemplateList[template].extendedKeyUsage)
         {
             sk_ASN1_OBJECT_free(pTemplateList[template].extendedKeyUsage);
+        }
+
+        if (pTemplateList[template].criticalExtensions)
+        {
+            sk_ASN1_OBJECT_free(pTemplateList[template].criticalExtensions);
         }
     }
 
