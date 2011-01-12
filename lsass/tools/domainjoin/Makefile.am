@@ -1,13 +1,12 @@
-bin_PROGRAMS = domainjoin2-cli
+noinst_PROGRAMS = lsadomainjoin-test
 
-domainjoin2_cli_SOURCES = \
-  join.c
+lsadomainjoin_test_SOURCES = \
+    join.c
 
-domainjoin2_cli_join.o: join.c
-domainjoin2_cli_LDADD = \
+lsadomainjoin_test_LDADD = \
     $(AM_LDFLAGS) \
-    @LSACLIENT_LIBS@ \
-    @LWNET_CLIENT_LIBS@
+    @top_builddir@/client/liblsaclient.la \
+    -llwnetclientapi
 
-domainjoin2_cli_CPPFLAGS =
+lsadomainjoin_test_CPPFLAGS = \
     $(AM_CPPFLAGS)

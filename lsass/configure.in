@@ -1077,6 +1077,7 @@ AC_CONFIG_FILES([Makefile
                  interop/auth/common/Makefile
                  interop/auth/pam/Makefile
                  tools/Makefile
+                 tools/domainjoin/Makefile
                  tools/lw-lsa/Makefile
                  etc/Makefile
                  etc/lsassd.reg

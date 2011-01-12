@@ -1,2 +1,3 @@
 SUBDIRS = \
-	lw-lsa
+	lw-lsa \
+	domainjoin
