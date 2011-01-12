@@ -358,12 +358,14 @@ CheckResponseDisposition(
                     &dispositionMessageSize);
     BAIL_ON_SOAP_ERROR(soapResult);
 
-    if (strcasecmp((PCSTR) dispositionMessageStr, "Pending") == 0)
+    if (dispositionMessageSize == 7 &&
+            strncasecmp((PCSTR) dispositionMessageStr, "Pending", 7) == 0)
     {
         BAIL_WITH_LW_ERROR(ERROR_CONTINUE);
     }
 
-    if (strcasecmp((PCSTR) dispositionMessageStr, "Issued") != 0)
+    if (dispositionMessageSize != 6 ||
+            strncasecmp((PCSTR) dispositionMessageStr, "Issued", 6) != 0)
     {
         BAIL_WITH_LW_ERROR(
             LW_ERROR_INVALID_MESSAGE,
