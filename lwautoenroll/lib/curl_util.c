@@ -197,23 +197,42 @@ LwAutoEnrollCurlSoapRequest(
                     &responseCode);
     BAIL_ON_CURL_ERROR(curlResult);
 
-    if (responseCode != 200)
-    {
-        //
-        // cURL doesn't make the information from the rest of the 
-        // error available, unfortunately.
-        //
-        BAIL_WITH_LW_ERROR(
-            LW_ERROR_AUTOENROLL_HTTP_REQUEST_FAILED,
-            "HTTP Request failed with code %d",
-            responseCode);
-    }
-
+    //
+    // Parse the reply even if the HTTP request failed; SOAP faults
+    // return a 500 error but have more information in the body
+    // of the response.
+    //
     soapResult = OpenSOAPEnvelopeCreateCharEncoding(
                     NULL,
                     pSoapReplyBuffer,
                     &pSoapReply);
-    BAIL_ON_SOAP_ERROR(soapResult);
+
+    //
+    // A 500 response with a valid SOAP parse is a SOAP fault; we
+    // want to return 0 in that case, so the first error logged
+    // will be from the layer above that extracts the reason
+    // from the fault response.  Otherwise, we want to check
+    // the HTTP response code before the SOAP result, since that's
+    // the first (and therefore most meaningful) error.
+    //
+    if (soapResult != 0 || responseCode != 500)
+    {
+        if (responseCode != 200)
+        {
+            //
+            // cURL doesn't make the information from the rest of the 
+            // error available, unfortunately.
+            //
+            BAIL_WITH_LW_ERROR(
+                LW_ERROR_AUTOENROLL_HTTP_REQUEST_FAILED,
+                "HTTP Request failed with code %d",
+                responseCode);
+        }
+        else
+        {
+            BAIL_ON_SOAP_ERROR(soapResult);
+        }
+    }
 
 cleanup:
     if (error)
