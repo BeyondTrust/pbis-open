@@ -1,10 +1,36 @@
 #ifndef LWAUTOENROLL_SSL_H
 #define LWAUTOENROLL_SSL_H
 
+#include <bail.h>
+
 #include <openssl/asn1.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
+
+#define BAIL_WITH_SSL_ERROR(_sslError) \
+    do { \
+        char _SSLerrorString[256]; \
+        ERR_error_string_n(_sslError, _SSLerrorString, \
+                sizeof(_SSLerrorString)); \
+        _BAIL_WITH_LW_ERROR(LwSSLErrorToLwError(_sslError), \
+                ": OpenSSL error %lx (%s)", _sslError, _SSLerrorString); \
+    } while(0)
+
+#define BAIL_ON_SSL_ERROR(_expr) \
+    do { \
+        if (_expr) { \
+            unsigned long _sslError = ERR_get_error(); \
+            BAIL_WITH_SSL_ERROR(_sslError); \
+        } \
+    } while(0)
+
+#define BAIL_ON_SSL_CTX_ERROR(_expr, _ctx) \
+    do { \
+        if (_expr) { \
+            BAIL_WITH_SSL_ERROR(X509_STORE_CTX_get_error(_ctx)); \
+        } \
+    } while(0)
 
 DWORD
 LwSSLErrorToLwError(
@@ -88,7 +114,7 @@ AddExtensionPrintf(
 DWORD
 BufAppend(
         BUF_MEM *buf,
-        PCSTR value,
+        PCSTR data,
         int length
         );
 
