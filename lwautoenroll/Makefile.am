@@ -20,7 +20,8 @@ lib_LTLIBRARIES = lib/liblwautoenroll.la
 
 lib_liblwautoenroll_la_SOURCES = \
 	lib/template.c \
-	lib/request.c
+	lib/request.c \
+	lib/ssl.c
 
 # documentation
 
