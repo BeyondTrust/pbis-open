@@ -19,6 +19,7 @@ lwautoenroll_include_HEADERS = include/lwautoenroll/lwautoenroll.h
 lib_LTLIBRARIES = lib/liblwautoenroll.la
 
 lib_liblwautoenroll_la_SOURCES = \
+	lib/ldap_util.c \
 	lib/request.c \
 	lib/ssl.c \
 	lib/template.c \
