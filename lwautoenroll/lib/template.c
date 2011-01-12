@@ -518,12 +518,12 @@ cleanup:
 VOID
 LwAutoEnrollFreeTemplateList(
         IN PLW_AUTOENROLL_TEMPLATE pTemplateList,
-        IN DWORD NumTemplates
+        IN DWORD numTemplates
         )
 {
     DWORD template;
 
-    for (template = 0; template < NumTemplates; ++template)
+    for (template = 0; template < numTemplates; ++template)
     {
         if (pTemplateList[template].name)
         {
