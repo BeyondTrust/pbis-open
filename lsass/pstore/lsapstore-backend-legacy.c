@@ -47,7 +47,6 @@
 #include "machinepwdinfo-impl.h"
 #include "lsapstore-backend-legacy-internal.h"
 #include "lsapstore-backend-legacy-convert.h"
-#include <lwpwdinfo.h>
 
 typedef struct _LSA_PSTORE_BACKEND_STATE {
     PLWPS_LEGACY_STATE OldStoreHandle;
