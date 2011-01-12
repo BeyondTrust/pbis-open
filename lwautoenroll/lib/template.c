@@ -82,9 +82,6 @@ LwAutoEnrollGetTemplateList(
         BAIL_ON_LW_ERROR(error);
     }
 
-    error = LsaOpenServer(&lsaConnection);
-    BAIL_ON_LW_ERROR(error);
-
     krbResult = krb5_cc_get_principal(krbContext, krbCache, &krbPrincipal);
     BAIL_ON_KRB_ERROR(krbResult, krbContext);
 
@@ -318,28 +315,6 @@ LwAutoEnrollGetTemplateList(
                         ppValues = ldap_get_values_len(
                                         pLdap,
                                         pLdapResult,
-                                        "displayName");
-                        if (ppValues == NULL)
-                        {
-                            continue;
-                        }
-
-                        if (ldap_count_values_len(ppValues) != 1)
-                        {
-                            ldap_value_free_len(ppValues);
-                            ppValues = NULL;
-                            continue;
-                        }
-
-                        error = LwAllocateString(
-                                    (PCSTR) ppValues[0]->bv_val,
-                                    &displayName);
-                        BAIL_ON_LW_ERROR(error);
-
-                        ldap_value_free_len(ppValues);
-                        ppValues = ldap_get_values_len(
-                                        pLdap,
-                                        pLdapResult,
                                         "pKIExtendedKeyUsage");
                         if (ppValues == NULL)
                         {
@@ -500,6 +475,11 @@ cleanup:
             krb5_free_unparsed_name(krbContext, krbUpn);
         }
 
+        if (krbPrincipal)
+        {
+            krb5_free_principal(krbContext, krbPrincipal);
+        }
+
         if (krbCache)
         {
             krb5_cc_close(krbContext, krbCache);
@@ -579,7 +559,9 @@ LwAutoEnrollFreeTemplateList(
 
         if (pTemplateList[template].criticalExtensions)
         {
-            sk_ASN1_OBJECT_free(pTemplateList[template].criticalExtensions);
+            sk_ASN1_OBJECT_pop_free(
+                    pTemplateList[template].criticalExtensions,
+                    ASN1_OBJECT_free);
         }
 
         if (pTemplateList[template].extensions)

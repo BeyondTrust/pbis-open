@@ -466,6 +466,11 @@ cleanup:
             krb5_free_unparsed_name(krbContext, krbUpn);
         }
 
+        if (krbPrincipal)
+        {
+            krb5_free_principal(krbContext, krbPrincipal);
+        }
+
         if (krbCache)
         {
             krb5_cc_close(krbContext, krbCache);
