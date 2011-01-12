@@ -24,6 +24,7 @@ LW_BEGIN_EXTERN_C
 
 DWORD
 LwAutoEnrollGetTemplateList(
+        IN OPTIONAL PCSTR credentialsCache,
         OUT PLW_AUTOENROLL_TEMPLATE *ppTemplateList,
         OUT PDWORD pNumTemplates
         );
@@ -36,6 +37,7 @@ LwAutoEnrollFreeTemplateList(
 
 DWORD
 LwAutoEnrollRequestCertificate(
+        IN OPTIONAL PCSTR credentialsCache,
         IN const PLW_AUTOENROLL_TEMPLATE pTemplate,
         IN OUT EVP_PKEY **ppKeyPair,
         OUT X509 **ppCertificate,
@@ -44,6 +46,7 @@ LwAutoEnrollRequestCertificate(
 
 DWORD
 LwAutoEnrollGetRequestStatus(
+        IN OPTIONAL PCSTR credentialsCache,
         IN DWORD RequestID,
         OUT X509 **ppCertificate
         );

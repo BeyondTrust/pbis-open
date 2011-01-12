@@ -42,7 +42,7 @@ GetCertificate(
     DWORD requestID;
     DWORD error = LW_ERROR_SUCCESS;
 
-    error = LwAutoEnrollGetTemplateList(&pTemplates, &numTemplates);
+    error = LwAutoEnrollGetTemplateList(NULL, &pTemplates, &numTemplates);
     BAIL_ON_LW_ERROR(error);
 
     for (template = 0; template < numTemplates; ++template)
@@ -59,6 +59,7 @@ GetCertificate(
     }
 
     error = LwAutoEnrollRequestCertificate(
+                NULL,
                 &pTemplates[template],
                 ppKeyPair,
                 ppCertificate,
@@ -71,6 +72,7 @@ GetCertificate(
          */
         sleep(300);
         error = LwAutoEnrollGetRequestStatus(
+                    NULL,
                     requestID,
                     ppCertificate);
     }

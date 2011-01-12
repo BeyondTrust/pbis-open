@@ -3,12 +3,15 @@
 #include <bail.h>
 #include <mspki.h>
 
+#include <krb5/krb5.h>
+
 #include <lsa/lsa.h>
 
 #include <ldap.h>
 #include <lwldap.h>
 
 #include <lwerror.h>
+#include <lwkrb5.h>
 #include <lwmem.h>
 #include <lwstr.h>
 
@@ -19,12 +22,20 @@
 
 DWORD
 LwAutoEnrollGetTemplateList(
+        IN OPTIONAL PCSTR credentialsCache,
         OUT PLW_AUTOENROLL_TEMPLATE *ppTemplateList,
         OUT PDWORD pNumTemplates
         )
 {
     HANDLE lsaConnection = (HANDLE) NULL;
     HANDLE ldapConnection = (HANDLE) NULL;
+    krb5_error_code krbResult = 0;
+    krb5_context krbContext = NULL;
+    krb5_ccache krbCache = NULL;
+    krb5_principal krbPrincipal = NULL;
+    PSTR krbUpn = NULL;
+    PLSA_SECURITY_OBJECT* ppObjects = NULL;
+    LSA_QUERY_LIST QueryList = { 0 };
     PLSASTATUS pLsaStatus = NULL;
     LDAPMessage *pLdapResults = NULL;
     int provider;
@@ -54,8 +65,48 @@ LwAutoEnrollGetTemplateList(
         NULL
     };
 
+    krbResult = krb5_init_context(&krbContext);
+    BAIL_ON_KRB_ERROR(krbResult, krbContext);
+
+    if (credentialsCache == NULL)
+    {
+        krbResult = krb5_cc_default(krbContext, &krbCache);
+        BAIL_ON_KRB_ERROR(krbResult, krbContext);
+    }
+    else
+    {
+        krbResult = krb5_cc_resolve(krbContext, credentialsCache, &krbCache);
+        BAIL_ON_KRB_ERROR(krbResult, krbContext);
+
+        error = LwKrb5SetDefaultCachePath(credentialsCache, NULL);
+        BAIL_ON_LW_ERROR(error);
+    }
+
     error = LsaOpenServer(&lsaConnection);
     BAIL_ON_LW_ERROR(error);
+
+    krbResult = krb5_cc_get_principal(krbContext, krbCache, &krbPrincipal);
+    BAIL_ON_KRB_ERROR(krbResult, krbContext);
+
+    krbResult = krb5_unparse_name(krbContext, krbPrincipal, &krbUpn);
+    BAIL_ON_KRB_ERROR(krbResult, krbContext);
+
+    error = LsaOpenServer(&lsaConnection);
+    BAIL_ON_LW_ERROR(error);
+
+    QueryList.ppszStrings = (PCSTR*) &krbUpn;
+
+    error = LsaFindObjects(
+                lsaConnection,
+                NULL,
+                0,
+                LSA_OBJECT_TYPE_UNDEFINED,
+                LSA_QUERY_TYPE_BY_UPN,
+                1,
+                QueryList,
+                &ppObjects);
+    BAIL_ON_LW_ERROR(error);
+
     error = LsaGetStatus(lsaConnection, &pLsaStatus);
     BAIL_ON_LW_ERROR(error);
 
@@ -80,8 +131,8 @@ LwAutoEnrollGetTemplateList(
                     &pProviderStatus->pTrustedDomainInfoArray[domain];
 
                 if (pDomainInfo->pDCInfo &&
-                        !strcasecmp(pDomainInfo->pszDnsDomain,
-                            pProviderStatus->pszDomain))
+                        !strcasecmp(pDomainInfo->pszNetbiosDomain,
+                            ppObjects[0]->pszNetbiosDomainName))
                 {
                     PLSA_DC_INFO pDCInfo = pDomainInfo->pDCInfo;
                     DWORD template = 0;
@@ -442,6 +493,21 @@ cleanup:
     LW_SAFE_FREE_STRING(searchDN);
     LW_SAFE_FREE_STRING(name);
     LW_SAFE_FREE_STRING(displayName);
+
+    if (krbContext)
+    {
+        if (krbUpn)
+        {
+            krb5_free_unparsed_name(krbContext, krbUpn);
+        }
+
+        if (krbCache)
+        {
+            krb5_cc_close(krbContext, krbCache);
+        }
+
+        krb5_free_context(krbContext);
+    }
 
     if (lsaConnection)
     {

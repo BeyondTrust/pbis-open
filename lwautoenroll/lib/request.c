@@ -9,13 +9,21 @@
 #include <openssl/rsa.h>
 #include <openssl/pem.h> /* DeBuG */
 
+#include <krb5/krb5.h>
+
+#include <lsa/lsa.h>
+
 #include <lwerror.h>
+#include <lwkrb5.h>
 #include <lwmem.h>
 #include <lwstr.h>
+
+#include <sys/param.h>
 
 #include <ctype.h>
 #include <stdarg.h>
 #include <string.h>
+#include <unistd.h>
 
 #define OID_MS_ENROLLMENT_CSP_PROVIDER      "1.3.6.1.4.1.311.13.2.2"
 #define OID_MS_OS_VERSION                   "1.3.6.1.4.1.311.13.2.3"
@@ -418,12 +426,14 @@ cleanup:
 
 DWORD
 LwAutoEnrollRequestCertificate(
+        IN OPTIONAL PCSTR credentialsCache,
         IN const PLW_AUTOENROLL_TEMPLATE pTemplate,
         IN OUT EVP_PKEY **ppKeyPair,
         OUT X509 **ppCertificate,
         OUT PDWORD pRequestID
         )
 {
+    HANDLE lsaConnection = (HANDLE) NULL;
     RSA *pRsaKey = NULL;
     EVP_PKEY *pKeyPair = NULL;
     X509_REQ *pRequest = NULL;
@@ -437,10 +447,59 @@ LwAutoEnrollRequestCertificate(
     STACK_OF(X509_EXTENSION) *extensions = NULL;
     int index = 0;
     int providerID = 0;
+    krb5_context krbContext = NULL;
+    krb5_ccache krbCache = NULL;
+    krb5_principal krbPrincipal = NULL;
+    PLSA_SECURITY_OBJECT* ppObjects = NULL;
+    LSA_QUERY_LIST QueryList = { 0 };
+    char hostName[MAXHOSTNAMELEN];
     PSTR end = NULL;
+    PSTR krbUpn = NULL;
     int sslResult = 0;
+    krb5_error_code krbResult = 0;
+    int unixResult = 0;
     DWORD error = LW_ERROR_SUCCESS;
 
+    unixResult = gethostname(hostName, sizeof(hostName));
+    BAIL_ON_UNIX_ERROR(unixResult == -1);
+
+    krbResult = krb5_init_context(&krbContext);
+    BAIL_ON_KRB_ERROR(krbResult, krbContext);
+
+    if (credentialsCache == NULL)
+    {
+        krbResult = krb5_cc_default(krbContext, &krbCache);
+        BAIL_ON_KRB_ERROR(krbResult, krbContext);
+    }
+    else
+    {
+        krbResult = krb5_cc_resolve(krbContext, credentialsCache, &krbCache);
+        BAIL_ON_KRB_ERROR(krbResult, krbContext);
+
+        error = LwKrb5SetDefaultCachePath(credentialsCache, NULL);
+        BAIL_ON_LW_ERROR(error);
+    }
+
+    krbResult = krb5_cc_get_principal(krbContext, krbCache, &krbPrincipal);
+    BAIL_ON_KRB_ERROR(krbResult, krbContext);
+
+    krbResult = krb5_unparse_name(krbContext, krbPrincipal, &krbUpn);
+    BAIL_ON_KRB_ERROR(krbResult, krbContext);
+
+    error = LsaOpenServer(&lsaConnection);
+    BAIL_ON_LW_ERROR(error);
+
+    QueryList.ppszStrings = (PCSTR*) &krbUpn;
+
+    error = LsaFindObjects(
+                lsaConnection,
+                NULL,
+                0,
+                LSA_OBJECT_TYPE_UNDEFINED,
+                LSA_QUERY_TYPE_BY_UPN,
+                1,
+                QueryList,
+                &ppObjects);
     BAIL_ON_LW_ERROR(error);
 
     if (*ppKeyPair == NULL)
@@ -501,17 +560,21 @@ LwAutoEnrollRequestCertificate(
     // Add the Microsoft Request Client Info attribute.
     error = Asn1StackAppendPrintf(
         &pAsn1Stack,
-        "INTEGER:42"); // XXX
+        "INTEGER:%d",
+        getpid());
     BAIL_ON_LW_ERROR(error);
 
     error = Asn1StackAppendPrintf(
         &pAsn1Stack,
-        "UTF8String:keithr-centos53.keithr.test"); // XXX
+        "UTF8String:%s",
+        hostName);
     BAIL_ON_LW_ERROR(error);
 
     error = Asn1StackAppendPrintf(
         &pAsn1Stack,
-        "UTF8String:KEITHR\\Administrator"); // XXX
+        "UTF8String:%s\\%s",
+        ppObjects[0]->pszNetbiosDomainName,
+        ppObjects[0]->pszSamAccountName);
     BAIL_ON_LW_ERROR(error);
 
     error = Asn1StackAppendPrintf(
@@ -791,6 +854,31 @@ cleanup:
         }
     }
 
+    if (krbContext)
+    {
+        if (krbUpn)
+        {
+            krb5_free_unparsed_name(krbContext, krbUpn);
+        }
+
+        if (krbCache)
+        {
+            krb5_cc_close(krbContext, krbCache);
+        }
+
+        krb5_free_context(krbContext);
+    }
+
+    if (lsaConnection)
+    {
+        LsaCloseServer(lsaConnection);
+    }
+
+    if (ppObjects)
+    {
+        LsaFreeSecurityObjectList(1, ppObjects);
+    }
+
     if (pRequest)
     {
         X509_REQ_free(pRequest);
@@ -835,6 +923,7 @@ cleanup:
 
 DWORD
 LwAutoEnrollGetRequestStatus(
+        IN OPTIONAL PCSTR credentialsCache,
         IN DWORD RequestID,
         OUT X509 **ppCertificate
         )

@@ -36,6 +36,14 @@
 #define BAIL_WITH_LW_ERROR(_error) \
     _BAIL_WITH_LW_ERROR(_error, "")
 
+#define BAIL_ON_UNIX_ERROR(_expr) \
+    do { \
+        if (_expr) { \
+            _BAIL_WITH_LW_ERROR(LwMapErrnoToLwError(errno), \
+                    ": UNIX Error %d (%s)", errno, strerror(errno)); \
+        } \
+    } while(0)
+
 #define BAIL_ON_LDAP_ERROR(_ldapError) \
     do { \
         if ((_ldapError) != 0) \
@@ -72,5 +80,13 @@ extern DWORD LwSSLErrorToLwError(
             BAIL_WITH_SSL_ERROR(X509_STORE_CTX_get_error(_ctx)); \
         } \
     } while(0)
+
+#define BAIL_ON_KRB_ERROR(_krbError, _ctx) \
+    do { \
+        if (_krbError) { \
+            BAIL_WITH_LW_ERROR(LwTranslateKrb5Error(_ctx, _krbError, \
+                        __FUNCTION__, __FILE__, __LINE__)); \
+        } \
+    } while (0)
 
 #endif /* __LWAUTOENROLL_BAIL_H__ */
