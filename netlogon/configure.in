@@ -442,7 +442,6 @@ AC_CONFIG_FILES([Makefile
                  tools/get_dc_info/Makefile
                  tools/get_dc_list/Makefile
                  tools/get_dc_time/Makefile
-                 tools/get_current_domain/Makefile
                  tools/export_dc_cache/Makefile
                  tools/set_log_level/Makefile
                  tools/get_log_info/Makefile

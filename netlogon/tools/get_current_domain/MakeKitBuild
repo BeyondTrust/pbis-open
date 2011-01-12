@@ -1,9 +1,0 @@
-make()
-{
-    mk_program \
-        PROGRAM=lw-get-current-domain \
-        SOURCES="main.c" \
-        INCLUDEDIRS=". ../../include" \
-        HEADERDEPS="reg/lwreg.h lwadvapi.h" \
-        LIBDEPS="lwnetclientapi lwnetcommon lwadvapi lwadvapi_nothr"
-}
