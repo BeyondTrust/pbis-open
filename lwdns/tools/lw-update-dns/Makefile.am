@@ -9,16 +9,14 @@ lw_update_dns_SOURCES = \
 
 lw_update_dns_CPPFLAGS = \
     $(AM_CPPFLAGS) \
-    @NETLOGON_INCLUDES@  \
-    @PSTORE_INCLUDES@
+    @NETLOGON_INCLUDES@
 
 lw_update_dns_LDADD = \
     @top_builddir@/lwdns/liblwdns.la \
     @NETLOGON_LIBS@   \
-    @PSTORE_LIBS@ \
     @KRB5_LIBS@ \
-    -llwbase_nothr
+    -llwbase_nothr \
+    -llsaclient
 
 lw_update_dns_LDFLAGS = \
-	@NETLOGON_LDFLAGS@ \
-	@PSTORE_LDFLAGS@
+	@NETLOGON_LDFLAGS@

@@ -29,6 +29,7 @@
  */
 
 #include "includes.h"
+#include <lsa/ad.h>
 
 typedef struct _ARGS {
     BOOLEAN bShowArguments;
@@ -729,41 +730,6 @@ error:
 
 static
 DWORD
-AllocateStringFromWC16String(
-    OUT PSTR* ppszOutputString,
-    IN PCWSTR pwszInputString
-    )
-{
-    DWORD dwError = 0;
-    PSTR pszResult = NULL;
-
-    pszResult = awc16stombs(pwszInputString);
-    if (!pszResult)
-    {
-        dwError = LWDNS_ERROR_STRING_CONV_FAILED;
-    }
-
-    *ppszOutputString = pszResult;
-
-    return dwError;
-}
-
-static
-VOID
-FreeStringFromWC16String(
-    IN OUT PSTR* ppszAllocatedString
-    )
-{
-    PSTR pszString = *ppszAllocatedString;
-    if (pszString)
-    {
-        free(pszString);
-        *ppszAllocatedString = NULL;
-    }
-}
-
-static
-DWORD
 SetupCredentials(
     IN PCSTR pszHostname,
     OUT PSTR* ppszHostDnsSuffix
@@ -771,39 +737,39 @@ SetupCredentials(
 {
     DWORD dwError = 0;
     PSTR pszHostDnsSuffixResult = NULL;
-    PSTR pszHostDnsSuffix = NULL;
-    PSTR pszMachineAccountName = NULL;
-    PSTR pszDnsDomainName = NULL;
-    HANDLE hPasswordStore = NULL;
-    PLWPS_PASSWORD_INFO pPasswordInfo = NULL;
+    PCSTR pszHostDnsSuffix = NULL;
+    HANDLE hLsaConnection = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
 
-    dwError = LwpsOpenPasswordStore(
-                  LWPS_PASSWORD_STORE_DEFAULT,
-                  &hPasswordStore);
+    dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LWDNS_ERROR(dwError);
 
-    dwError = LwpsGetPasswordByHostName(
-                  hPasswordStore,
-                  pszHostname,
-                  &pPasswordInfo);
+    dwError = LsaAdGetMachinePasswordInfo(
+                    hLsaConnection,
+                    NULL,
+                    &pPasswordInfo);
     BAIL_ON_LWDNS_ERROR(dwError);
 
-    dwError = AllocateStringFromWC16String(
-                    &pszHostDnsSuffix,
-                    pPasswordInfo->pwszHostDnsDomain);
-    BAIL_ON_LWDNS_ERROR(dwError);
+    for (pszHostDnsSuffix = pPasswordInfo->Account.Fqdn;
+         *pszHostDnsSuffix;
+         pszHostDnsSuffix++)
+    {
+        if (*pszHostDnsSuffix == '.')
+        {
+            pszHostDnsSuffix++;
+            break;
+        }
+    }
 
-    dwError = AllocateStringFromWC16String(
-                    &pszMachineAccountName,
-                    pPasswordInfo->pwszMachineAccount);
-    BAIL_ON_LWDNS_ERROR(dwError);
+    if (!*pszHostDnsSuffix)
+    {
+        dwError = LWDNS_ERROR_UNEXPECTED;
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
 
-    dwError = AllocateStringFromWC16String(
-                    &pszDnsDomainName,
-                    pPasswordInfo->pwszDnsDomainName);
-    BAIL_ON_LWDNS_ERROR(dwError);
-
-    dwError = DNSKrb5Init(pszMachineAccountName, pszDnsDomainName);
+    dwError = DNSKrb5Init(
+                    pPasswordInfo->Account.SamAccountName,
+                    pPasswordInfo->Account.DnsDomainName);
     BAIL_ON_LWDNS_ERROR(dwError);
 
     dwError = DNSAllocateString(
@@ -812,18 +778,14 @@ SetupCredentials(
     BAIL_ON_LWDNS_ERROR(dwError);
 
 cleanup:
-    FreeStringFromWC16String(&pszHostDnsSuffix);
-    FreeStringFromWC16String(&pszMachineAccountName);
-    FreeStringFromWC16String(&pszDnsDomainName);
-
     if (pPasswordInfo)
     {
-        LwpsFreePasswordInfo(hPasswordStore, pPasswordInfo);
+        LsaAdFreeMachinePasswordInfo(pPasswordInfo);
     }
 
-    if (hPasswordStore)
+    if (hLsaConnection)
     {
-        LwpsClosePasswordStore(hPasswordStore);
+        LsaCloseServer(hLsaConnection);
     }
 
     *ppszHostDnsSuffix = pszHostDnsSuffixResult;

@@ -14,11 +14,11 @@ configure()
 
     # Required headers
     mk_check_headers FAIL=yes \
-        lwnet.h krb5.h lwps/lwps.h lw/base.h \
+        lwnet.h krb5.h lw/base.h \
         
     # Required libraries
     mk_check_libraries FAIL=yes \
-        lwnetclientapi krb5 lwpsapi lwbase
+        lwnetclientapi krb5 lsaclient lwbase
 
     # Optional headers
     mk_check_headers \

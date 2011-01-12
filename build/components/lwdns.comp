@@ -1,7 +1,7 @@
 #!/bin/sh
 
 COMP_INCREMENTAL=1
-COMP_DEPENDENCIES="autoconf automake libtool krb5 libuuid netlogon lwbase pstore"
+COMP_DEPENDENCIES="autoconf automake libtool krb5 libuuid netlogon lwbase lsass"
 COMP_SOURCES=${BUILD_ROOT}/src/linux/lwdns
 
 function component_bootstrap
