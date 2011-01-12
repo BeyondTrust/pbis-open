@@ -1,6 +1,7 @@
 #ifndef __LWAUTOENROLL_H__
 #define __LWAUTOENROLL_H__
 
+#include <openssl/evp.h>
 #include <openssl/x509v3.h>
 
 #include <lw/attrs.h>
