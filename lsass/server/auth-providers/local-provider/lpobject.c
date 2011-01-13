@@ -306,6 +306,7 @@ LocalDirFindObjectsInternal(
     DWORD dwIndex = 0;
     PLSA_LOGIN_NAME_INFO pLoginInfo = NULL;
     BOOLEAN bLocked = FALSE;
+    BOOLEAN bFoundInvalidObject = FALSE;
 
     /* FIXME: support generic queries */
     switch (ObjectType)
@@ -368,6 +369,8 @@ LocalDirFindObjectsInternal(
 
     for (dwIndex = 0; dwIndex < dwCount; dwIndex++)
     {
+        bFoundInvalidObject = FALSE;
+
         switch (QueryType)
         {
         case LSA_QUERY_TYPE_BY_ALIAS:
@@ -450,14 +453,28 @@ LocalDirFindObjectsInternal(
             dwError = LocalMarshalEntryToSecurityObject(
                 pEntry,
                 &ppObjects[dwIndex]);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            dwError = LocalDirResolveUserObjectPrimaryGroupSid(
-                hProvider,
-                ppObjects[dwIndex]);
-            BAIL_ON_LSA_ERROR(dwError);
+            if (dwError)
+            {
+                if (dwError == LW_ERROR_NO_SUCH_OBJECT)
+                {
+                    bFoundInvalidObject = TRUE;
+                    dwError = 0;
+                }
+                else
+                {
+                    BAIL_ON_LSA_ERROR(dwError);
+                }
+            }
+            else
+            {
+                dwError = LocalDirResolveUserObjectPrimaryGroupSid(
+                    hProvider,
+                    ppObjects[dwIndex]);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
         }
-        else if (dwNumEntries == 0 && QueryType == LSA_QUERY_TYPE_BY_UPN)
+
+        if ((dwNumEntries == 0 || bFoundInvalidObject) && QueryType == LSA_QUERY_TYPE_BY_UPN)
         {
             /* UPN lookup might fail because the UPN is generated, so try
                again as an NT4 lookup */
