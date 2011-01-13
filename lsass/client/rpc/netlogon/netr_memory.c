@@ -919,6 +919,7 @@ NetrAllocateSidAttr(
     
     LWBUF_ALLOC_PSID(pBuffer, pIn->sid);
     LWBUF_ALLOC_DWORD(pBuffer, pIn->attribute);
+    LWBUF_ALIGN(pdwOffset, pdwSize, pdwSpaceLeft);
 
 cleanup:
     if (ntStatus == STATUS_SUCCESS &&
