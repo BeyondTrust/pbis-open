@@ -16,6 +16,11 @@ make()
         lsa/ad-types.h
 
     mk_headers \
+        HEADERDEPS="gssapi.h" \
+        ntlm/gssntlm.h \
+        ntlm/sspintlm.h
+
+    mk_headers \
 	lw/rpc/common.h          \
 	lw/rpc/lsa.h             \
 	lw/rpc/samr.h            \
