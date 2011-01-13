@@ -805,6 +805,9 @@ NetAllocBufferLogonHours(
     /* Logon hours is a 21-byte bit string */
     dwSize += sizeof(UINT8) * 21;
 
+    /* Align the size */
+    dwSize += sizeof(PVOID) - dwSize % sizeof(PVOID);
+
     if (pCursor)
     {
         if (dwSize > dwSpaceLeft)

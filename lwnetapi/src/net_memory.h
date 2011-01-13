@@ -54,7 +54,7 @@
         DWORD dwFieldOffset = ((size_t)(&(((type*)(0))->field)));    \
         DWORD dwFieldSize   = sizeof((((type*)(0))->field));         \
         DWORD dwAlign = (dwFieldOffset + dwFieldSize)                \
-                         % sizeof(long int);                         \
+                         % sizeof(PVOID);                         \
         if (cursor)                                                  \
         {                                                            \
             (cursor) += dwAlign;                                     \
