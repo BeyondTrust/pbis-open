@@ -18,8 +18,8 @@
 #LWI_STARTUP_TYPE_SUSE### END INIT INFO
 
 ## For FreeBSD
-# Provide: likewise
-# Require: NETWORKING lwsm
+# PROVIDE: likewise
+# REQUIRE: NETWORKING lwsmd
 # BEFORE: LOGIN
 
 PREFIX="PREFIX_DIR"
