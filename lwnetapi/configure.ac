@@ -236,7 +236,7 @@ AC_ARG_WITH([lsass-libs],
         LSASS_LDFLAGS="-L$withval"
         ])
 
-LSASS_LIBS=-llsarpc
+LSASS_LIBS="-llsarpc -llsaclient"
 
 AC_SUBST(LSASS_INCLUDES)
 AC_SUBST(LSASS_LDFLAGS)
