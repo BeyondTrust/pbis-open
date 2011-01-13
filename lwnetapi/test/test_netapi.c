@@ -3449,16 +3449,17 @@ TestNetJoinDomain(
     const int def_create = 1;
     const int def_deferspn = 0;
 
-    NTSTATUS status = STATUS_SUCCESS;
     NET_API_STATUS err = ERROR_SUCCESS;
     enum param_err perr = perr_success;
-    wchar16_t *username, *password, *accountou;
-    wchar16_t *domain_name, *machine_account, *machine_password;
+    PWSTR username = NULL;
+    PWSTR password = NULL;
+    PWSTR domain_name = NULL;
+    PWSTR accountou = NULL;
+    PWSTR joined_domain_name = NULL;
+    PWSTR machine_account = NULL;
+    PWSTR machine_password = NULL;
     int rejoin, create, deferspn;
     int opts;
-    HANDLE store = (HANDLE)NULL;
-    LWPS_PASSWORD_INFO *pi = NULL;
-    char host[128] = {0};
 
     TESTINFO(pTest, pwszHostname);
 
@@ -3491,7 +3492,8 @@ TestNetJoinDomain(
 
     PARAM_INFO("username", pt_w16string, username);
     PARAM_INFO("password", pt_w16string, password);
-    PARAM_INFO("accountout", pt_w16string, accountou);
+    PARAM_INFO("domainname", pt_w16string, domain_name);
+    PARAM_INFO("accountou", pt_w16string, accountou);
     PARAM_INFO("rejoin", pt_int32, &rejoin);
     PARAM_INFO("create", pt_int32, &create);
     PARAM_INFO("deferspn", pt_int32, &deferspn);
@@ -3505,34 +3507,26 @@ TestNetJoinDomain(
                                    username, password, opts));
     if (err != 0) netapi_fail(err);
 
-    status = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT, &store);
-    if (status != STATUS_SUCCESS) return false;
+    err = GetMachinePassword(&joined_domain_name,
+                             &machine_account,
+                             &machine_password,
+                             NULL);
+    if (err != 0) netapi_fail(err);
 
-    //    host = awc16stombs(hostname);
-    //    if (host == NULL) return false;
-    gethostname(host, sizeof(host));
-
-    status = LwpsGetPasswordByHostName(store, host, &pi);
-    if (status != STATUS_SUCCESS) return false;
-
-    domain_name       = pi->pwszDomainName;
-    machine_account   = pi->pwszMachineAccount;
-    machine_password  = pi->pwszMachinePassword;
-    RESULT_WSTR(domain_name);
+    RESULT_WSTR(joined_domain_name);
     RESULT_WSTR(machine_account);
     RESULT_WSTR(machine_password);
 
 done:
-    status = LwpsClosePasswordStore(store);
-    if (status != STATUS_SUCCESS) return false;
-
-    LW_SAFE_FREE_MEMORY(domain_name);
     LW_SAFE_FREE_MEMORY(username);
-    LW_SAFE_FREE_MEMORY(password);
+    LW_SECURE_FREE_WSTRING(password);
+    LW_SAFE_FREE_MEMORY(domain_name);
     LW_SAFE_FREE_MEMORY(accountou);
+    LW_SAFE_FREE_MEMORY(joined_domain_name);
+    LW_SAFE_FREE_MEMORY(machine_account);
+    LW_SECURE_FREE_WSTRING(machine_password);
 
-    return (err == ERROR_SUCCESS &&
-            status == STATUS_SUCCESS);
+    return (err == ERROR_SUCCESS);
 }
 
 

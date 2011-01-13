@@ -17,6 +17,7 @@ netapitest_CPPFLAGS =          \
     $(AM_CPPFLAGS)             \
     $(LWBASE_INCLUDES)         \
     $(LWADVAPI_INCLUDES)       \
+    $(LASSS_INCLUDES)          \
     -I$(top_srcdir)/include
 
 netapitest_CFLAGS =            \
@@ -27,9 +28,11 @@ netapitest_CFLAGS =            \
 netapitest_LDFLAGS =           \
     $(AM_LDFLAGS)              \
     $(LWBASE_LDFLAGS)          \
-    $(LWADVAPI_LDFLAGS)
+    $(LWADVAPI_LDFLAGS)        \
+    $(LASSS_INCLUDES)
 
 netapitest_LDADD =                            \
     $(LWBASE_LIBS)                            \
     $(LWADVAPI_LIBS)                          \
+    $(LSASS_LIBS)                             \
     $(netapi_builddir)/liblwnetapi.la

@@ -29,6 +29,7 @@
  */
 
 #include "includes.h"
+#include <lsa/ad.h>
 
 
 BOOLEAN
@@ -358,6 +359,100 @@ FreeRpcBinding(
     *phBinding = NULL;
 }
 
+
+DWORD
+GetMachinePassword(
+    OUT OPTIONAL PWSTR* ppwszDnsDomainName,
+    OUT OPTIONAL PWSTR* ppwszMachineSamAccountName,
+    OUT OPTIONAL PWSTR* ppwszMachinePassword,
+    OUT OPTIONAL PWSTR* ppwszComputerName
+    )
+{
+    DWORD dwError = 0;
+    PWSTR pwszDnsDomainName = NULL;
+    PWSTR pwszMachineSamAccountName = NULL;
+    PWSTR pwszMachinePassword = NULL;
+    PWSTR pwszComputerName = NULL;
+    HANDLE hLsaConnection = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
+
+    dwError = LsaOpenServer(&hLsaConnection);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    dwError = LsaAdGetMachinePasswordInfo(hLsaConnection,
+                                          NULL,
+                                          &pPasswordInfo);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    if (ppwszDnsDomainName)
+    {
+        dwError = LwMbsToWc16s(pPasswordInfo->Account.DnsDomainName,
+                               &pwszDnsDomainName);
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+
+    if (ppwszMachineSamAccountName)
+    {
+        dwError = LwMbsToWc16s(pPasswordInfo->Account.SamAccountName,
+                               &pwszMachineSamAccountName);
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+
+    if (ppwszMachinePassword)
+    {
+        dwError = LwMbsToWc16s(pPasswordInfo->Password,
+                               &pwszMachinePassword);
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+
+    if (ppwszComputerName)
+    {
+        dwError = LwMbsToWc16s(pPasswordInfo->Account.SamAccountName,
+                               &pwszComputerName);
+        BAIL_ON_WIN_ERROR(dwError);
+
+        // Remove $ from account name
+        pwszComputerName[wc16slen(pwszComputerName) - 1] = 0;
+    }
+
+error:
+    if (dwError)
+    {
+        LW_SAFE_FREE_MEMORY(pwszDnsDomainName);
+        LW_SAFE_FREE_MEMORY(pwszMachineSamAccountName);
+        LW_SECURE_FREE_WSTRING(pwszMachinePassword);
+        LW_SAFE_FREE_MEMORY(pwszComputerName);
+    }
+
+    if (hLsaConnection)
+    {
+        LsaCloseServer(hLsaConnection);
+    }
+
+    if (pPasswordInfo)
+    {
+        LsaAdFreeMachinePasswordInfo(pPasswordInfo);
+    }
+
+    if (ppwszDnsDomainName)
+    {
+        *ppwszDnsDomainName = pwszDnsDomainName;
+    }
+    if (ppwszMachineSamAccountName)
+    {
+        *ppwszMachineSamAccountName = pwszMachineSamAccountName;
+    }
+    if (ppwszMachinePassword)
+    {
+        *ppwszMachinePassword = pwszMachinePassword;
+    }
+    if (ppwszComputerName)
+    {
+        *ppwszComputerName = pwszComputerName;
+    }
+
+    return dwError;
+}
 
 /*
 local variables:

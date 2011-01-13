@@ -23,7 +23,6 @@
 #include <lwsid.h>
 #include <lwio/lwio.h>
 #include <lwio/lmsession.h>
-#include <lwps/lwps.h>
 #include <lwnet.h>
 #include <openssl/rc4.h>
 #include <openssl/md5.h>

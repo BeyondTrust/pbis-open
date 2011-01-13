@@ -380,8 +380,6 @@ TestNetlogonSamLogonInteractive(
     PWSTR pwszPassword = NULL;
     DWORD dwLogonLevel = 0;
     DWORD dwValidationLevel = 0;
-    HANDLE hStore = (HANDLE)NULL;
-    LWPS_PASSWORD_INFO *pPassInfo = NULL;
     DWORD pdwLevels[] = { 2, 3, 6 };
     DWORD dwNumLevels = sizeof(pdwLevels)/sizeof(pdwLevels[0]);
     DWORD iLevel = 0;
@@ -432,22 +430,10 @@ TestNetlogonSamLogonInteractive(
         LW_SAFE_FREE_MEMORY(pwszComputer);
         LW_SAFE_FREE_MEMORY(pwszMachpass);
 
-        dwError = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT, &hStore);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwpsGetPasswordByCurrentHostName(hStore, &pPassInfo);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwAllocateWc16String(&pwszMachAcct,
-                                       pPassInfo->pwszMachineAccount);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwAllocateWc16String(&pwszMachpass,
-                                       pPassInfo->pwszMachinePassword);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwAllocateWc16String(&pwszComputer,
-                                       pPassInfo->pwszHostname);
+        dwError = GetMachinePassword(NULL,
+                                     &pwszMachAcct,
+                                     &pwszMachpass,
+                                     &pwszComputer);
         BAIL_ON_WIN_ERROR(dwError);
     }
 
@@ -507,12 +493,10 @@ error:
         }
     }
 
-    LwpsFreePasswordInfo(hStore, pPassInfo);
-    LwpsClosePasswordStore(hStore);
-
     NetrFreeBinding(&hNetr);
 
     LW_SAFE_FREE_MEMORY(pwszMachAcct);
+    LW_SECURE_FREE_WSTRING(pwszMachpass);
     LW_SAFE_FREE_MEMORY(pwszComputer);
     LW_SAFE_FREE_MEMORY(pwszServer);
     LW_SAFE_FREE_MEMORY(pwszDomain);
@@ -568,8 +552,6 @@ TestNetlogonSamLogon(
     NetrValidationInfo *pValidationInfo = NULL;
     NetrValidationInfo **ppValidationInfo = NULL;
     BYTE Authoritative = 0;
-    HANDLE hStore = (HANDLE)NULL;
-    LWPS_PASSWORD_INFO *pPassInfo = NULL;
     NetrDomainQuery Query = {0};
     NetrDomainQuery1 Query1;
     NetrDomainInfo *pInfo = NULL;
@@ -622,22 +604,10 @@ TestNetlogonSamLogon(
         LW_SAFE_FREE_MEMORY(pwszComputer);
         LW_SAFE_FREE_MEMORY(pwszMachpass);
 
-        dwError = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT, &hStore);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwpsGetPasswordByCurrentHostName(hStore, &pPassInfo);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwAllocateWc16String(&pwszMachAcct,
-                                       pPassInfo->pwszMachineAccount);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwAllocateWc16String(&pwszMachpass,
-                                       pPassInfo->pwszMachinePassword);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwAllocateWc16String(&pwszComputer,
-                                       pPassInfo->pwszHostname);
+        dwError = GetMachinePassword(NULL,
+                                     &pwszMachAcct,
+                                     &pwszMachpass,
+                                     &pwszComputer);
         BAIL_ON_WIN_ERROR(dwError);
     }
 
@@ -727,9 +697,6 @@ error:
 
     NetrFreeBinding(&hNetr);
 
-    LwpsFreePasswordInfo(hStore, pPassInfo);
-    LwpsClosePasswordStore(hStore);
-
     if (pInfo)
     {
         NetrFreeMemory(pInfo);
@@ -741,6 +708,7 @@ error:
     }
 
     LW_SAFE_FREE_MEMORY(pwszMachAcct);
+    LW_SECURE_FREE_WSTRING(pwszMachpass);
     LW_SAFE_FREE_MEMORY(pwszComputer);
     LW_SAFE_FREE_MEMORY(pwszServer);
     LW_SAFE_FREE_MEMORY(pwszDomain);
@@ -797,8 +765,6 @@ TestNetlogonSamLogoff(
     DWORD dwLogonLevel = 0;
     DWORD dwValidationLevel = 0;
     NetrCredentials Creds = {0};
-    HANDLE hStore = (HANDLE)NULL;
-    LWPS_PASSWORD_INFO *pPassInfo = NULL;
 
     TESTINFO(pTest, pwszHostname);
 
@@ -846,22 +812,10 @@ TestNetlogonSamLogoff(
         LW_SAFE_FREE_MEMORY(pwszComputer);
         LW_SAFE_FREE_MEMORY(pwszMachpass);
 
-        dwError = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT, &hStore);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwpsGetPasswordByCurrentHostName(hStore, &pPassInfo);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwAllocateWc16String(&pwszMachAcct,
-                                       pPassInfo->pwszMachineAccount);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwAllocateWc16String(&pwszMachpass,
-                                       pPassInfo->pwszMachinePassword);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwAllocateWc16String(&pwszComputer,
-                                       pPassInfo->pwszHostname);
+        dwError = GetMachinePassword(NULL,
+                                     &pwszMachAcct,
+                                     &pwszMachpass,
+                                     &pwszComputer);
         BAIL_ON_WIN_ERROR(dwError);
     }
 
@@ -898,10 +852,8 @@ error:
 
     NetrFreeBinding(&hNetr);
 
-    LwpsFreePasswordInfo(hStore, pPassInfo);
-    LwpsClosePasswordStore(hStore);
-
     LW_SAFE_FREE_MEMORY(pwszMachAcct);
+    LW_SECURE_FREE_WSTRING(pwszMachpass);
     LW_SAFE_FREE_MEMORY(pwszComputer);
     LW_SAFE_FREE_MEMORY(pwszServer);
     LW_SAFE_FREE_MEMORY(pwszUsername);
@@ -957,8 +909,6 @@ TestNetlogonSamLogonEx(
     NetrCredentials Creds = {0};
     NetrValidationInfo *pValidationInfo = NULL;
     BYTE Authoritative = 0;
-    HANDLE hStore = (HANDLE)NULL;
-    LWPS_PASSWORD_INFO *pPassInfo = NULL;
 
     TESTINFO(pTest, pwszHostname);
 
@@ -1006,22 +956,10 @@ TestNetlogonSamLogonEx(
         LW_SAFE_FREE_MEMORY(pwszComputer);
         LW_SAFE_FREE_MEMORY(pwszMachpass);
 
-        dwError = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT, &hStore);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwpsGetPasswordByCurrentHostName(hStore, &pPassInfo);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwAllocateWc16String(&pwszMachAcct,
-                                       pPassInfo->pwszMachineAccount);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwAllocateWc16String(&pwszMachpass,
-                                       pPassInfo->pwszMachinePassword);
-        BAIL_ON_WIN_ERROR(dwError);
-
-        dwError = LwAllocateWc16String(&pwszComputer,
-                                       pPassInfo->pwszHostname);
+        dwError = GetMachinePassword(NULL,
+                                     &pwszMachAcct,
+                                     &pwszMachpass,
+                                     &pwszComputer);
         BAIL_ON_WIN_ERROR(dwError);
     }
 
@@ -1073,15 +1011,13 @@ error:
 
     NetrFreeBinding(&hNetr);
 
-    LwpsFreePasswordInfo(hStore, pPassInfo);
-    LwpsClosePasswordStore(hStore);
-
     if (pValidationInfo)
     {
         NetrFreeMemory(pValidationInfo);
     }
 
     LW_SAFE_FREE_MEMORY(pwszMachAcct);
+    LW_SECURE_FREE_WSTRING(pwszMachpass);
     LW_SAFE_FREE_MEMORY(pwszComputer);
     LW_SAFE_FREE_MEMORY(pwszServer);
     LW_SAFE_FREE_MEMORY(pwszDomain);

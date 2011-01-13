@@ -58,6 +58,14 @@ FreeRpcBinding(
     );
 
 
+DWORD
+GetMachinePassword(
+    OUT OPTIONAL PWSTR* ppwszDnsDomainName,
+    OUT OPTIONAL PWSTR* ppwszMachineSamAccountName,
+    OUT OPTIONAL PWSTR* ppwszMachinePassword,
+    OUT OPTIONAL PWSTR* ppwszComputerName
+    );
+
 #endif /* _TEST_COMMON_H_ */
 
 
