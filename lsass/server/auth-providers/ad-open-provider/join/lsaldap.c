@@ -160,24 +160,25 @@ LsaLdapOpenDirectoryWithReaffinity(
         {
             break;
         }
+
         LSA_LOG_DEBUG("Ldap open failed for %s '%s' (dwError = %u (symbol: %s))",
                       bNeedGc ? "forest" : "domain",
                       pszDnsDomainOrForestName,
                       dwError,
                       LwWin32ExtErrorToName(dwError));
 
-        if (dwBlackListCount < MAX_SERVERS_TO_TRY)
+        if ((dwBlackListCount >= MAX_SERVERS_TO_TRY) ||
+            (dwError == SEC_E_NO_CREDENTIALS))
         {
-            dwError = LwAllocateString(
-                            pDCInfo->pszDomainControllerAddress,
-                            &ppszBlackList[dwBlackListCount]);
-            BAIL_ON_LSA_ERROR(dwError);
-            dwBlackListCount++;
-        }
-        else
-        {
+            LSA_ASSERT(dwError);
             BAIL_ON_LSA_ERROR(dwError);
         }
+
+        dwError = LwAllocateString(
+                        pDCInfo->pszDomainControllerAddress,
+                        &ppszBlackList[dwBlackListCount]);
+        BAIL_ON_LSA_ERROR(dwError);
+        dwBlackListCount++;
     }
 
     *phDirectory = hDirectory;

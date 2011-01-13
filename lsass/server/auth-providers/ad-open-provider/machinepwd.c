@@ -342,10 +342,7 @@ ADSyncMachinePasswordThreadRoutine(
 
         if (bRefreshTGT)
         {
-            dwError = LwKrb5RefreshMachineTGTByDomain(
-                          pState->pszDomainName,
-                          pState->MachineCreds.pszCachePath,
-                          &dwGoodUntilTime);
+            dwError = ADRefreshMachineTGT(pState, &dwGoodUntilTime);
             if (dwError)
             {
                 if (AD_EventlogEnabled(pState))
@@ -510,6 +507,48 @@ ADShutdownMachinePasswordSync(
         LwFreeMemory(pMachinePwdState);
         *phMachinePwdState = NULL;
     }
+}
+
+DWORD
+ADRefreshMachineTGT(
+    IN PLSA_AD_PROVIDER_STATE pState,
+    OUT OPTIONAL PDWORD pdwGoodUntilTime
+    )
+{
+    DWORD dwError = 0;
+    DWORD dwGoodUntilTime = 0;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
+
+    LSA_LOG_VERBOSE("Refreshing machine TGT");
+
+    dwError = LsaPcacheGetMachinePasswordInfoA(
+                    pState->pPcache,
+                    &pPasswordInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwSetupMachineSessionWithCache(
+                    pPasswordInfo->Account.SamAccountName,
+                    pPasswordInfo->Password,
+                    pPasswordInfo->Account.DnsDomainName,
+                    NULL,
+                    pState->MachineCreds.pszCachePath,
+                    &dwGoodUntilTime);
+    BAIL_ON_LSA_ERROR(dwError);
+    
+error:
+    if (dwError)
+    {
+        dwGoodUntilTime = 0;
+    }
+
+    LsaPcacheReleaseMachinePasswordInfoA(pPasswordInfo);
+
+    if (pdwGoodUntilTime)
+    {
+        *pdwGoodUntilTime = dwGoodUntilTime;
+    }
+
+    return dwError;
 }
 
 static

@@ -3718,12 +3718,10 @@ LsaDmConnectDomain(
                                 pActualDcInfo,
                                 pContext,
                                 &bIsNetworkError);
-    if (dwError == LW_ERROR_KRB5KDC_ERR_TGT_REVOKED)
+    if ((dwError == LW_ERROR_KRB5KDC_ERR_TGT_REVOKED) ||
+        (dwError == SEC_E_NO_CREDENTIALS))
     {
-        dwError = LwKrb5RefreshMachineTGTByDomain(
-                      pProviderState->pszDomainName,
-                      pProviderState->MachineCreds.pszCachePath,
-                      NULL);
+        dwError = ADRefreshMachineTGT(pProviderState, NULL);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = pfConnectCallback(pszDnsDomainOrForestName,
@@ -3785,12 +3783,10 @@ LsaDmConnectDomain(
                                 pActualDcInfo,
                                 pContext,
                                 &bIsNetworkError);
-    if (dwError == LW_ERROR_KRB5KDC_ERR_TGT_REVOKED)
+    if ((dwError == LW_ERROR_KRB5KDC_ERR_TGT_REVOKED) ||
+        (dwError == SEC_E_NO_CREDENTIALS))
     {
-        dwError = LwKrb5RefreshMachineTGTByDomain(
-                      pProviderState->pszDomainName,
-                      pProviderState->MachineCreds.pszCachePath,
-                      NULL);
+        dwError = ADRefreshMachineTGT(pProviderState, NULL);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = pfConnectCallback(pszDnsDomainOrForestName,

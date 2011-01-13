@@ -69,6 +69,12 @@ ADShutdownMachinePasswordSync(
     IN OUT LSA_MACHINEPWD_STATE_HANDLE* phMachinePwdState
     );
 
+DWORD
+ADRefreshMachineTGT(
+    IN PLSA_AD_PROVIDER_STATE pState,
+    OUT OPTIONAL PDWORD pdwGoodUntilTime
+    );
+
 VOID
 ADSetMachineTGTExpiry(
     IN LSA_MACHINEPWD_STATE_HANDLE hMachinePwdState,
