@@ -24,12 +24,12 @@
 
 #include <lwerror.h>
 #include <lwldap.h>
-#include <lwnet.h>
 #include <lwkrb5.h>
 #include <lwstr.h>
 
 #include <lwhash.h>
 
+#include <lsa/ad.h>
 #include <lsa/lsa.h>
 
 #define LDAP_QUERY "(objectClass=certificationAuthority)"
@@ -63,8 +63,9 @@ GetTrustedCertificates(
         void
         )
 {
+    HANDLE lsaConnection = (HANDLE) NULL;
     HANDLE ldapConnection = (HANDLE) NULL;
-    PSTR domainDnsName = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
     PSTR domainDn = NULL;
     LDAP *pLdap = NULL;
     LDAPMessage *pLdapResults = NULL;
@@ -118,14 +119,17 @@ GetTrustedCertificates(
         LwHashSetValue(pCertFiles, strdup(pDirEntry->d_name), &notfound);
     }
 
-    error = LWNetGetCurrentDomain(&domainDnsName);
+    error = LsaOpenServer(&lsaConnection);
     BAIL_ON_LW_ERROR(error);
 
-    error = LwLdapConvertDomainToDN(domainDnsName, &domainDn);
+    error = LsaAdGetMachineAccountInfo(lsaConnection, NULL, &pAccountInfo);
+    BAIL_ON_LW_ERROR(error);
+
+    error = LwLdapConvertDomainToDN(pAccountInfo->DnsDomainName, &domainDn);
     BAIL_ON_LW_ERROR(error);
 
     error = LwAutoEnrollLdapConnect(
-                domainDnsName,
+                pAccountInfo->DnsDomainName,
                 &ldapConnection);
     BAIL_ON_LW_ERROR(error);
 
@@ -331,6 +335,16 @@ GetTrustedCertificates(
     }
 
 cleanup:
+    if (lsaConnection)
+    {
+        LsaCloseServer(lsaConnection);
+    }
+
+    if (pAccountInfo)
+    {
+        LsaAdFreeMachineAccountInfo(pAccountInfo);
+    }
+
     if (ldapConnection != (HANDLE) NULL)
     {
         LwLdapCloseDirectory(ldapConnection);
@@ -362,7 +376,6 @@ cleanup:
     }
 
     LW_SAFE_FREE_STRING(domainDn);
-    LW_SAFE_FREE_STRING(domainDnsName);
 
     return error;
 }
