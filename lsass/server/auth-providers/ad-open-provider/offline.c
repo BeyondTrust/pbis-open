@@ -145,7 +145,6 @@ AD_OfflineAuthenticateUserPam(
     *ppPamAuthInfo = pPamAuthInfo;
 
 cleanup:
-
     ADCacheSafeFreeObject(&pUserInfo);
     LSA_DB_SAFE_FREE_PASSWORD_VERIFIER(pVerifier);
     LW_SECURE_FREE_STRING(pszEnteredPasswordVerifier);
@@ -156,6 +155,7 @@ cleanup:
 
 error:
     *ppPamAuthInfo = NULL;
+
     if (pPamAuthInfo)
     {
         LsaFreeAuthUserPamInfo(pPamAuthInfo);
