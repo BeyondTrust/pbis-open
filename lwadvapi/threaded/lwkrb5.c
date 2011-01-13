@@ -890,11 +890,7 @@ LwKrb5MoveCCacheToUserPath(
     /* Let the user read and write to their cache file (before this, only
      * root was allowed to read and write the file).
      */
-    dwError = LwChangeOwnerAndPermissions(
-                pszCachePathReal,
-                uid,
-                gid,
-                S_IRWXU);
+    dwError = LwChangeOwner(pszCachePathReal, uid, gid);
     BAIL_ON_LW_ERROR(dwError);
 
 cleanup:
