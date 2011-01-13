@@ -16,6 +16,5 @@ conf2reg_LDADD = \
     $(top_builddir)/tools/conf2reg/agents/testparse/libconftestparse.la \
     $(top_builddir)/tools/conf2reg/agents/testsambaparse/libconftestsambaparse.la \
     $(top_builddir)/utils/libupgradeutils.la \
-    $(SQLITE_LIBS)
-
-
+    $(SQLITE_LIBS) \
+    $(PSTORE_LIBS)
