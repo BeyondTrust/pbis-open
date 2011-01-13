@@ -538,7 +538,7 @@ AD_ResolveProviderState(
         LsaAdProviderStateAcquireRead(pContext->pState);
         bLocked = TRUE;
 
-        dwError = LwKrb5SetDefaultCachePath(
+        dwError = LwKrb5SetThreadDefaultCachePath(
                       pContext->pState->MachineCreds.pszCachePath,
                       NULL);
         BAIL_ON_LSA_ERROR(dwError);
@@ -5102,7 +5102,7 @@ AD_MachineCredentialsCacheClear(
 
     if (pState->MachineCreds.bIsInitialized)
     {
-        dwError = LwKrb5CleanupMachineSession();
+        dwError = LwKrb5DestroyCache(pState->MachineCreds.pszCachePath);
         BAIL_ON_LSA_ERROR(dwError);
         pState->MachineCreds.bIsInitialized = FALSE;
     }
@@ -5171,13 +5171,7 @@ AD_MachineCredentialsCacheInitialize(
 
     ADSyncTimeToDC(pState, pState->pszDomainName);
 
-    dwError = LwSetupMachineSessionWithCache(
-                    pPasswordInfo->Account.SamAccountName,
-                    pPasswordInfo->Password,
-                    pPasswordInfo->Account.DnsDomainName,
-                    NULL,
-                    pState->MachineCreds.pszCachePath,
-                    &dwGoodUntilTime);
+    dwError = ADRefreshMachineTGT(pState, NULL);
     if (dwError)
     {
         if (dwError == LW_ERROR_DOMAIN_IS_OFFLINE)

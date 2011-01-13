@@ -122,7 +122,7 @@ error:
 
 DWORD
 LsaSetSMBCreds(
-    IN PCSTR pszUsername,
+    IN PCSTR pszUserPrincipalName,
     IN PCSTR pszPassword,
     IN BOOLEAN bSetDefaultCachePath,
     OUT PLSA_CREDS_FREE_INFO* ppFreeInfo
@@ -142,7 +142,7 @@ LsaSetSMBCreds(
     BOOLEAN bSwitchedPath = FALSE;
 
     BAIL_ON_INVALID_POINTER(ppFreeInfo);
-    BAIL_ON_INVALID_STRING(pszUsername);
+    BAIL_ON_INVALID_STRING(pszUserPrincipalName);
 
     ret = krb5_init_context(&ctx);
     BAIL_ON_KRB_ERROR(ctx, ret);
@@ -163,7 +163,7 @@ LsaSetSMBCreds(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwKrb5GetTgt(
-                pszUsername,
+                pszUserPrincipalName,
                 pszPassword,
                 pszNewCachePath,
                 NULL);
@@ -172,7 +172,7 @@ LsaSetSMBCreds(
     if (bSetDefaultCachePath)
     {
         LSA_LOG_DEBUG("Switching default credentials path for new access token"); 
-        dwError = LwKrb5SetDefaultCachePath(
+        dwError = LwKrb5SetThreadDefaultCachePath(
                   pszNewCachePath,
                   &pszOldCachePath);
         BAIL_ON_LSA_ERROR(dwError);
@@ -180,7 +180,7 @@ LsaSetSMBCreds(
     }
 
     dwError = LwIoCreateKrb5CredsA(
-        pszUsername,
+        pszUserPrincipalName,
         pszNewCachePath,
         &pNewCreds);
     BAIL_ON_LSA_ERROR(dwError);
@@ -233,7 +233,7 @@ error:
     }
     if (bSwitchedPath)
     {
-        LwKrb5SetDefaultCachePath(
+        LwKrb5SetThreadDefaultCachePath(
                   pszOldCachePath,
                   NULL);
         LW_SAFE_FREE_STRING(pszOldCachePath);
@@ -262,7 +262,7 @@ LsaFreeSMBCreds(
     
     if (pFreeInfo->bKrbCreds)
     {
-        LwKrb5SetDefaultCachePath(
+        LwKrb5SetThreadDefaultCachePath(
                       pFreeInfo->pszRestoreCache,
                       NULL);
         LW_SAFE_FREE_STRING(pFreeInfo->pszRestoreCache);

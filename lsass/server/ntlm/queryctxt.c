@@ -513,7 +513,7 @@ NtlmServerMarshalUserInfoToEncodedPac(
     if (EncodePacLogonInfo(
             &pac,
             pdwEncodedPacSize,
-            ppEncodedPac) != 0)
+            OUT_PPVOID(ppEncodedPac)) != 0)
     {
             dwError = LW_ERROR_INTERNAL;
             BAIL_ON_LSA_ERROR(dwError);

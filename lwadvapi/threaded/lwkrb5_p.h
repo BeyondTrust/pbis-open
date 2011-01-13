@@ -110,8 +110,8 @@ LwKrb5FindPac(
     krb5_context ctx,
     const krb5_ticket *pTgsTicket,
     const krb5_keyblock *serviceKey,
-    char** ppchLogonInfo,
-    size_t* psLogonInfo
+    OUT PVOID* ppchLogonInfo,
+    OUT size_t* psLogonInfo
     );
 
 #endif /* __LWKRB5_P_H__ */

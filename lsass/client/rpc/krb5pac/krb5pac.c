@@ -195,9 +195,9 @@ FreePacLogonInfo(
 
 NTSTATUS
 DecodePacLogonInfo(
-    const char *pchBuffer,
-    size_t sBufferLen,
-    PAC_LOGON_INFO **ppLogonInfo
+    IN PVOID pBuffer,
+    IN size_t sBufferLen,
+    OUT PAC_LOGON_INFO** ppLogonInfo
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -207,7 +207,7 @@ DecodePacLogonInfo(
     PPAC_LOGON_INFO pLogonInfo = NULL;
 
     idl_es_decode_buffer(
-            (unsigned char *)pchBuffer,
+            (unsigned char *)pBuffer,
             sBufferLen,
             &decodingHandle,
             &status);
@@ -250,9 +250,9 @@ error:
 
 NTSTATUS
 EncodePacLogonInfo(
-    PPAC_LOGON_INFO  pLogonInfo,
-    PDWORD           pdwEncodedSize,
-    PBYTE*           ppEncodedBuffer
+    IN PAC_LOGON_INFO* pLogonInfo,
+    OUT PDWORD pdwEncodedSize,
+    OUT PVOID* ppEncodedBuffer
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;

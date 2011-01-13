@@ -256,7 +256,7 @@ ADSyncMachinePasswordThreadRoutine(
 
     pthread_mutex_lock(pMachinePwdState->pThreadLock);
 
-    dwError = LwKrb5SetDefaultCachePath(
+    dwError = LwKrb5SetThreadDefaultCachePath(
                   pState->MachineCreds.pszCachePath,
                   NULL);
     BAIL_ON_LSA_ERROR(dwError);
@@ -518,6 +518,7 @@ ADRefreshMachineTGT(
     DWORD dwError = 0;
     DWORD dwGoodUntilTime = 0;
     PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
+    PSTR pszUserPrincipalName = NULL;
 
     LSA_LOG_VERBOSE("Refreshing machine TGT");
 
@@ -526,21 +527,27 @@ ADRefreshMachineTGT(
                     &pPasswordInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwSetupMachineSessionWithCache(
+    dwError = LwAllocateStringPrintf(
+                    &pszUserPrincipalName,
+                    "%s@%s",
                     pPasswordInfo->Account.SamAccountName,
+                    pPasswordInfo->Account.DnsDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwKrb5InitializeCredentials(
+                    pszUserPrincipalName,
                     pPasswordInfo->Password,
-                    pPasswordInfo->Account.DnsDomainName,
-                    NULL,
                     pState->MachineCreds.pszCachePath,
                     &dwGoodUntilTime);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
 error:
     if (dwError)
     {
         dwGoodUntilTime = 0;
     }
 
+    LW_SAFE_FREE_STRING(pszUserPrincipalName);
     LsaPcacheReleaseMachinePasswordInfoA(pPasswordInfo);
 
     if (pdwGoodUntilTime)

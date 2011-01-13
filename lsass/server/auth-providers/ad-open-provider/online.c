@@ -272,7 +272,7 @@ AD_OnlineInitializeOperatingMode(
     PLSA_DM_LDAP_CONNECTION pConn = NULL;
     AD_CELL_SUPPORT adCellSupport = AD_CELL_SUPPORT_FULL;
 
-    dwError = LwKrb5SetDefaultCachePath(pState->MachineCreds.pszCachePath, NULL);
+    dwError = LwKrb5SetThreadDefaultCachePath(pState->MachineCreds.pszCachePath, NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateMemory(sizeof(*pProviderData), (PVOID*)&pProviderData);
@@ -1659,7 +1659,7 @@ AD_OnlineCheckUserPassword(
     PSTR pszUserDnsDomainName = NULL;
     PSTR pszFreeUpn = NULL;
     PSTR pszUserRealm = NULL;
-    char* pchNdrEncodedPac = NULL;
+    PVOID pNdrEncodedPac = NULL;
     size_t sNdrEncodedPac = 0;
     PAC_LOGON_INFO *pPac = NULL;
     LSA_TRUST_DIRECTION dwTrustDirection = LSA_TRUST_DIRECTION_UNKNOWN;
@@ -1731,20 +1731,19 @@ AD_OnlineCheckUserPassword(
         dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
-    dwError = LwSetupUserLoginSession(
-                    pUserInfo->userInfo.uid,
-                    pUserInfo->userInfo.gid,
+
+    dwError = LwKrb5InitializeUserLoginCredentials(
                     pszUpn,
                     pszPassword,
-                    KRB5_File_Cache,
+                    pUserInfo->userInfo.uid,
+                    pUserInfo->userInfo.gid,
+                    LW_KRB5_LOGIN_FLAG_UPDATE_CACHE,
                     pszServicePrincipal,
                     pPasswordInfo->Account.DnsDomainName,
                     pPasswordInfo->Password,
-                    &pchNdrEncodedPac,
+                    &pNdrEncodedPac,
                     &sNdrEncodedPac,
-                    pdwGoodUntilTime,
-                    0);
+                    pdwGoodUntilTime);
     if (dwError == LW_ERROR_KRB5_S_PRINCIPAL_UNKNOWN)
     {
         // Perhaps the host has no SPN.  Try again
@@ -1759,19 +1758,18 @@ AD_OnlineCheckUserPassword(
                       pPasswordInfo->Account.DnsDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LwSetupUserLoginSession(
-                      pUserInfo->userInfo.uid,
-                      pUserInfo->userInfo.gid,
-                      pszUpn,
-                      pszPassword,
-                      KRB5_File_Cache,
-                      pszServicePrincipal,
-                      pPasswordInfo->Account.DnsDomainName,
-                      pPasswordInfo->Password,
-                      &pchNdrEncodedPac,
-                      &sNdrEncodedPac,
-                      pdwGoodUntilTime,
-                      0);
+        dwError = LwKrb5InitializeUserLoginCredentials(
+                        pszUpn,
+                        pszPassword,
+                        pUserInfo->userInfo.uid,
+                        pUserInfo->userInfo.gid,
+                        LW_KRB5_LOGIN_FLAG_UPDATE_CACHE,
+                        pszServicePrincipal,
+                        pPasswordInfo->Account.DnsDomainName,
+                        pPasswordInfo->Password,
+                        &pNdrEncodedPac,
+                        &sNdrEncodedPac,
+                        pdwGoodUntilTime);
     }
     
     if (dwError == LW_ERROR_DOMAIN_IS_OFFLINE)
@@ -1788,7 +1786,7 @@ AD_OnlineCheckUserPassword(
     {
         // This function will abort if it is passed a zero sized PAC.
         ntStatus = DecodePacLogonInfo(
-            pchNdrEncodedPac,
+            pNdrEncodedPac,
             sNdrEncodedPac,
             &pPac);
         BAIL_ON_NT_STATUS(ntStatus);
@@ -1827,7 +1825,7 @@ cleanup:
     LW_SAFE_FREE_STRING(pszServicePrincipal);
     LW_SAFE_FREE_STRING(pszUserDnsDomainName);
     LW_SAFE_FREE_STRING(pszFreeUpn);
-    LW_SAFE_FREE_MEMORY(pchNdrEncodedPac);
+    LW_SAFE_FREE_MEMORY(pNdrEncodedPac);
 
     LsaPcacheReleaseMachinePasswordInfoA(pPasswordInfo);
 

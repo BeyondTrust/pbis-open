@@ -536,7 +536,7 @@ LsaUmpThreadRoutine(
 
     LSA_LOG_VERBOSE("Started user manager credentials refresh thread");
 
-    dwError = LwKrb5SetDefaultCachePath(
+    dwError = LwKrb5SetThreadDefaultCachePath(
                   pState->pProviderState->MachineCreds.pszCachePath,
                   NULL);
     BAIL_ON_LSA_ERROR(dwError);

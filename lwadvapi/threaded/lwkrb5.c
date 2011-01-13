@@ -295,8 +295,8 @@ error:
 
 
 DWORD
-LwKrb5GetSystemCachePath(
-    PSTR*         ppszCachePath
+LwKrb5GetDefaultCachePath(
+    OUT PSTR* ppszCachePath
     )
 {
     DWORD dwError = 0;
@@ -388,9 +388,9 @@ error:
 
 
 DWORD
-LwKrb5SetDefaultCachePath(
-    PCSTR pszCachePath,
-    PSTR* ppszOrigCachePath
+LwKrb5SetThreadDefaultCachePath(
+    IN PCSTR pszCachePath,
+    OUT PSTR* ppszPreviousCachePath
     )
 {
     DWORD dwError       = 0;
@@ -402,19 +402,19 @@ LwKrb5SetDefaultCachePath(
     dwMajorStatus = gss_krb5_ccache_name(
                             (OM_uint32 *)&dwMinorStatus,
                             pszCachePath,
-                            (ppszOrigCachePath) ? (const char**)&pszOrigCachePath : NULL);
+                            (ppszPreviousCachePath) ? (const char**)&pszOrigCachePath : NULL);
     BAIL_ON_GSS_ERROR(dwError, dwMajorStatus, dwMinorStatus);
 
     LW_LOG_DEBUG("Switched gss krb5 credentials path from %s to %s",
             LW_SAFE_LOG_STRING(pszOrigCachePath),
             LW_SAFE_LOG_STRING(pszCachePath));
     
-    if (ppszOrigCachePath) {
+    if (ppszPreviousCachePath) {
         if (!LW_IS_NULL_OR_EMPTY_STR(pszOrigCachePath)) {
-            dwError = LwAllocateString(pszOrigCachePath, ppszOrigCachePath);
+            dwError = LwAllocateString(pszOrigCachePath, ppszPreviousCachePath);
             BAIL_ON_LW_ERROR(dwError);
         } else {
-            *ppszOrigCachePath = NULL;
+            *ppszPreviousCachePath = NULL;
         }
     }
     
@@ -424,52 +424,10 @@ cleanup:
     
 error:
 
-    if (ppszOrigCachePath) {
-        *ppszOrigCachePath = NULL;
+    if (ppszPreviousCachePath) {
+        *ppszPreviousCachePath = NULL;
     }
 
-    goto cleanup;
-}
-
-
-DWORD
-LwKrb5GetSystemKeytabPath(
-    PSTR* ppszKeytabPath
-    )
-{
-    DWORD dwError = LW_ERROR_SUCCESS;
-    krb5_error_code ret = 0;
-    krb5_context ctx = NULL;
-    PSTR pszPath = NULL;
-    size_t size = 64;
-
-    ret = krb5_init_context(&ctx);
-    BAIL_ON_KRB_ERROR(ctx, ret);
-
-    do {
-        LW_SAFE_FREE_STRING(pszPath);
-
-        size *= 2;
-        dwError = LwAllocateMemory(size, OUT_PPVOID(&pszPath));
-        BAIL_ON_LW_ERROR(dwError);
-
-        ret = krb5_kt_default_name(ctx, pszPath, size);
-    } while (ret == KRB5_CONFIG_NOTENUFSPACE);
-    
-    BAIL_ON_KRB_ERROR(ctx, ret);
-    *ppszKeytabPath = pszPath;
-
-cleanup:
-    if (ctx) {
-        krb5_free_context(ctx);
-    }
-
-    return dwError;
-
-error:
-    LW_SAFE_FREE_STRING(pszPath);
-    *ppszKeytabPath = NULL;
-    
     goto cleanup;
 }
 
@@ -522,157 +480,58 @@ error:
 }
 
 DWORD
-LwSetupMachineSession(
-    PCSTR  pszSamAccountName,
-    PCSTR  pszPassword,
-    PCSTR  pszRealm,
-    PCSTR  pszIgnoredDomain,
-    PDWORD pdwGoodUntilTime
-    )
-{
-    return LwSetupMachineSessionWithCache(
-               pszSamAccountName,
-               pszPassword,
-               pszRealm,
-               pszIgnoredDomain,
-               NULL,
-               pdwGoodUntilTime);
-}
-
-DWORD
-LwSetupMachineSessionWithCache(
-    PCSTR  pszSamAccountName,
-    PCSTR  pszPassword,
-    PCSTR  pszRealm,
-    PCSTR  pszIgnoredDomain,
-    PCSTR  pszCachePath,
-    PDWORD pdwGoodUntilTime
+LwKrb5InitializeCredentials(
+    IN PCSTR pszUserPrincipalName,
+    IN PCSTR pszPassword,
+    IN PCSTR pszCachePath,
+    OUT OPTIONAL PDWORD pdwGoodUntilTime
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
-    PSTR pszHostKeytabFile = NULL;
-    PSTR pszKrb5SystemCcPath = NULL;
-    // Do not free
-    PCSTR pszKrb5CcPath = NULL;
-    PSTR pszKrb5CcPathNew = NULL;
-    PSTR pszMachPrincipal = NULL;
     DWORD dwGoodUntilTime = 0;
+    PSTR pszTempCachePath = NULL;
 
-    dwError = LwKrb5GetSystemKeytabPath(&pszHostKeytabFile);
-    BAIL_ON_LW_ERROR(dwError);
-
-    if (pszCachePath)
+    if (!pszCachePath)
     {
-        pszKrb5CcPath = pszCachePath;
-    }
-    else
-    {
-        dwError = LwKrb5GetSystemCachePath(&pszKrb5SystemCcPath);
-        BAIL_ON_LW_ERROR(dwError);
-
-        pszKrb5CcPath = pszKrb5SystemCcPath;
-    }
-
-    if (!strncmp(pszKrb5CcPath, "FILE:", sizeof("FILE:") - 1))
-    {
-        dwError = LwAllocateStringPrintf(&pszKrb5CcPathNew, "%s.new",
-                                         pszKrb5CcPath);
+        dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_LW_ERROR(dwError);
     }
 
-    dwError = LwAllocateStringPrintf(&pszMachPrincipal, "%s@%s",
-                                      pszSamAccountName, pszRealm);
-    BAIL_ON_LW_ERROR(dwError);
+    if (!strncmp(pszCachePath, "FILE:", sizeof("FILE:") - 1))
+    {
+        dwError = LwAllocateStringPrintf(&pszTempCachePath, "%s.new",
+                                         pszCachePath);
+        BAIL_ON_LW_ERROR(dwError);
+    }
 
     dwError = LwKrb5GetTgt(
-                  pszMachPrincipal,
-                  pszPassword,
-                  pszKrb5CcPathNew ? pszKrb5CcPathNew : pszKrb5CcPath,
-                  &dwGoodUntilTime);
+                    pszUserPrincipalName,
+                    pszPassword,
+                    pszTempCachePath ? pszTempCachePath : pszCachePath,
+                    &dwGoodUntilTime);
     BAIL_ON_LW_ERROR(dwError);
 
-    if (pszKrb5CcPathNew)
+    if (pszTempCachePath)
     {
-        dwError = LwMoveFile(pszKrb5CcPathNew + sizeof("FILE:") - 1,
-                        pszKrb5CcPath + sizeof("FILE:") - 1);
+        dwError = LwMoveFile(pszTempCachePath + sizeof("FILE:") - 1,
+                             pszCachePath + sizeof("FILE:") - 1);
         BAIL_ON_LW_ERROR(dwError);
     }
+
+error:
+    if (dwError)
+    {
+        dwGoodUntilTime = 0;
+    }
+
+    LW_SAFE_FREE_STRING(pszTempCachePath);
 
     if (pdwGoodUntilTime)
     {
         *pdwGoodUntilTime = dwGoodUntilTime;
     }
 
-cleanup:
-
-    LW_SAFE_FREE_STRING(pszMachPrincipal);
-    LW_SAFE_FREE_STRING(pszKrb5SystemCcPath);
-    LW_SAFE_FREE_STRING(pszHostKeytabFile);
-    LW_SAFE_FREE_STRING(pszKrb5CcPathNew);
-    
-    return (dwError);
-    
-error:
-
-    if (pdwGoodUntilTime)
-    {
-        *pdwGoodUntilTime = 0;
-    }
-
-    goto cleanup;
-}
-
-DWORD
-LwKrb5CleanupMachineSession(
-    VOID
-    )
-{
-    DWORD dwError = LW_ERROR_SUCCESS;
-    PSTR pszKrb5CcPath = NULL;
-    krb5_error_code ret = 0;
-    krb5_context ctx = NULL;
-    krb5_ccache cc = NULL;
-
-    dwError = LwKrb5GetSystemCachePath(&pszKrb5CcPath);
-    BAIL_ON_LW_ERROR(dwError);
-
-    ret = krb5_init_context(&ctx);
-    BAIL_ON_KRB_ERROR(ctx, ret);
-
-    ret = krb5_cc_resolve(ctx, pszKrb5CcPath, &cc);
-    if (KRB5_FCC_NOFILE == ret)
-    {
-        goto cleanup;
-    }
-    BAIL_ON_KRB_ERROR(ctx, ret);
-
-    ret = krb5_cc_destroy(ctx, cc);
-    // This always frees the cc reference, even on error.
-    cc = NULL;
-    if (KRB5_FCC_NOFILE == ret)
-    {
-        goto cleanup;
-    }
-    BAIL_ON_KRB_ERROR(ctx, ret);
-
-cleanup:
-    LW_SAFE_FREE_STRING(pszKrb5CcPath);
-
-    if (cc)
-    {
-        // ctx must be valid.
-        krb5_cc_close(ctx, cc);
-    }
-
-    if (ctx)
-    {
-        krb5_free_context(ctx);
-    }
-
     return dwError;
-
-error:
-    goto cleanup;
 }
 
 DWORD
@@ -1260,8 +1119,8 @@ LwKrb5FindPac(
     krb5_context ctx,
     const krb5_ticket *pTgsTicket,
     const krb5_keyblock *serviceKey,
-    char** ppchLogonInfo,
-    size_t* psLogonInfo
+    OUT PVOID* ppchLogonInfo,
+    OUT size_t* psLogonInfo
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
@@ -1377,19 +1236,18 @@ error:
 }
 
 DWORD
-LwSetupUserLoginSession(
-    uid_t uid,
-    gid_t gid,
-    PCSTR pszUsername,
-    PCSTR pszPassword,
-    BOOLEAN bUpdateUserCache,
-    PCSTR pszServicePrincipal,
-    PCSTR pszServiceRealm,
-    PCSTR pszServicePassword,
-    char** ppchLogonInfo,
-    size_t* psLogonInfo,
-    PDWORD pdwGoodUntilTime,
-    DWORD dwFlags
+LwKrb5InitializeUserLoginCredentials(
+    IN PCSTR pszUserPrincipalName,
+    IN PCSTR pszPassword,
+    IN uid_t uid,
+    IN gid_t gid,
+    IN LW_KRB5_LOGIN_FLAGS Flags,
+    IN PCSTR pszServicePrincipal,
+    IN PCSTR pszServiceRealm,
+    IN PCSTR pszServicePassword,
+    OUT PVOID* ppNdrPacInfo,
+    OUT size_t* pNdrPacInfoSize,
+    OUT PDWORD pdwGoodUntilTime
     )
 {
     DWORD dwError = 0;
@@ -1412,8 +1270,9 @@ LwSetupUserLoginSession(
     BOOLEAN bInLock = FALSE;
     PCSTR pszTempCacheName = NULL;
     PSTR pszTempCachePath = NULL;
-    char* pchLogonInfo = NULL;
-    size_t sLogonInfo = 0;
+    PVOID pNdrPacInfo = NULL;
+    size_t ndrPacInfoSize = 0;
+    DWORD dwGoodUntilTime = 0;
 
     ret = krb5_init_context(&ctx);
     BAIL_ON_KRB_ERROR(ctx, ret);
@@ -1429,23 +1288,21 @@ LwSetupUserLoginSession(
     BAIL_ON_KRB_ERROR(ctx, ret);
 
 
-    if (dwFlags & LW_USER_LOGIN_SESSION_FLAG_SMART_CARD)
+    if (Flags & LW_KRB5_LOGIN_FLAG_SMART_CARD)
     {
         dwError = LwKrb5GetTgtWithSmartCard(
-                pszUsername,
+                pszUserPrincipalName,
                 pszPassword,
                 krb5_cc_get_name(ctx, cc),
-                pdwGoodUntilTime
-                );
+                &dwGoodUntilTime);
     }
     else
     {
         dwError = LwKrb5GetTgt(
-                pszUsername,
+                pszUserPrincipalName,
                 pszPassword,
                 krb5_cc_get_name(ctx, cc),
-                pdwGoodUntilTime
-                );
+                &dwGoodUntilTime);
     }
 
     BAIL_ON_LW_ERROR(dwError);
@@ -1515,7 +1372,7 @@ LwSetupUserLoginSession(
     ret = krb5_c_string_to_key(
             ctx,
             pTgsTicket->enc_part.enctype,
-	    &machinePassword,
+            &machinePassword,
             &salt,
             &serviceKey);
     BAIL_ON_KRB_ERROR(ctx, ret);
@@ -1572,18 +1429,18 @@ LwSetupUserLoginSession(
             pTgsCreds->server,
             NULL, /* we're not using the keytab */
             &flags,
-	    &pDecryptedTgs);
+            &pDecryptedTgs);
     BAIL_ON_KRB_ERROR(ctx, ret);
 
     dwError = LwKrb5FindPac(
         ctx,
         pDecryptedTgs,
         &serviceKey,
-        &pchLogonInfo,
-        &sLogonInfo);
+        &pNdrPacInfo,
+        &ndrPacInfoSize);
     BAIL_ON_LW_ERROR(dwError);
 
-    if (bUpdateUserCache)
+    if (Flags & LW_KRB5_LOGIN_FLAG_UPDATE_CACHE)
     {
         /* 1. Copy old credentials from the existing user creds cache to
          *      the temporary cache.
@@ -1634,10 +1491,14 @@ LwSetupUserLoginSession(
         }
     }
 
-    *ppchLogonInfo = pchLogonInfo;
-    *psLogonInfo = sLogonInfo;
-    
-cleanup:
+error:
+    if (dwError)
+    {
+        LW_SAFE_FREE_MEMORY(pNdrPacInfo);
+        ndrPacInfoSize = 0;
+        dwGoodUntilTime = 0;
+    }
+
     if (ctx)
     {
         // This function skips fields which are NULL
@@ -1679,14 +1540,11 @@ cleanup:
     }
     LW_SAFE_FREE_STRING(pszTempCachePath);
 
-    return dwError;
-    
-error:
+    *ppNdrPacInfo = pNdrPacInfo;
+    *pNdrPacInfoSize = ndrPacInfoSize;
+    *pdwGoodUntilTime = dwGoodUntilTime;
 
-    LW_SAFE_FREE_MEMORY(pchLogonInfo);
-    *ppchLogonInfo = NULL;
-    
-    goto cleanup;
+    return dwError;
 }
 
 DWORD

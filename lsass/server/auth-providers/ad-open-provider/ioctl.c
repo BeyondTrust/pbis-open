@@ -335,7 +335,7 @@ AD_GetComputerDn(
     DWORD dwError = 0;
     PSTR pszComputerDn = NULL;
     PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
-    PSTR pszUsername = NULL;
+    PSTR pszUserPrincipalName = NULL;
     PCSTR pszKrb5CachePath = "MEMORY:lsass_get_computer_dn";
     PSTR pszPreviousKrb5CachePath = NULL;
     HANDLE hDirectory = NULL;
@@ -357,7 +357,7 @@ AD_GetComputerDn(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateStringPrintf(
-                    &pszUsername,
+                    &pszUserPrincipalName,
                     "%s@%s",
                     pPasswordInfo->Account.SamAccountName,
                     pPasswordInfo->Account.DnsDomainName);
@@ -367,15 +367,15 @@ AD_GetComputerDn(
     BAIL_ON_LSA_ERROR(dwError);
     isLocked = TRUE;
 
-    dwError = LwKrb5GetTgt(
-                    pszUsername,
+    dwError = LwKrb5InitializeCredentials(
+                    pszUserPrincipalName,
                     pPasswordInfo->Password,
                     pszKrb5CachePath,
                     NULL);
     BAIL_ON_LSA_ERROR(dwError);
     needDestroyCache = TRUE;
 
-    dwError = LwKrb5SetDefaultCachePath(pszKrb5CachePath, &pszPreviousKrb5CachePath);
+    dwError = LwKrb5SetThreadDefaultCachePath(pszKrb5CachePath, &pszPreviousKrb5CachePath);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaLdapOpenDirectoryDomain(
@@ -405,9 +405,7 @@ error:
 
     if (pszPreviousKrb5CachePath)
     {
-        LwKrb5SetDefaultCachePath(
-                  pszPreviousKrb5CachePath,
-                  NULL);
+        LwKrb5SetThreadDefaultCachePath(pszPreviousKrb5CachePath, NULL);
     }
 
     if (isLocked)
@@ -417,7 +415,7 @@ error:
     }
 
     LsaSrvFreeMachinePasswordInfoA(pPasswordInfo);
-    LW_SAFE_FREE_STRING(pszUsername);
+    LW_SAFE_FREE_STRING(pszUserPrincipalName);
     LW_SAFE_FREE_STRING(pszPreviousKrb5CachePath);
 
     if (hDirectory)

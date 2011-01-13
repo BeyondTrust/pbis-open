@@ -91,6 +91,9 @@ LsaLeaveDomain2(
     if (!LW_IS_NULL_OR_EMPTY_STR(pszUsername) &&
         !LW_IS_NULL_OR_EMPTY_STR(pszPassword))
     {
+        // TODO-2011/01/13-dalmeida -- Ensure we use UPN.
+        // Otherwise, whether this works depends on krb5.conf.
+        // Can cons up UPN if needed since we have domain.
         dwError = LsaSetSMBCreds(
                     pszUsername,
                     pszPassword,

@@ -302,6 +302,9 @@ LsaJoinDomain(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    // TODO-2011/01/13-dalmeida -- Ensure we use UPN.
+    // Otherwise, whether this works depends on krb5.conf.
+    // Can cons up UPN if needed since we have domain.
     dwError = LsaSetSMBCreds(
                 pszUsername,
                 pszPassword,

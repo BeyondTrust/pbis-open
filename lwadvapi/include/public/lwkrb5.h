@@ -48,22 +48,17 @@
 #ifndef __LWKRB5_H__
 #define __LWKRB5_H__
 
-// TODO: find out if these includes are necessary
-//#include <uuid/uuid.h>
-//#include <lwrpc/krb5pac.h>
-//#include <lwio/lwio.h>
-#include <krb5.h>
+#include <lw/types.h>
+#include <lw/attrs.h>
 
-#include <lwdef.h>
+// Needed for krb5_context/krb5_error_code for LwTranslateKrb5Error().
+#include <krb5.h>
 
 typedef enum
 {
     KRB5_InMemory_Cache,
     KRB5_File_Cache
 } Krb5CacheType;
-
-typedef BOOLEAN (*LW_KRB5_REALM_IS_OFFLINE_CALLBACK)(IN PCSTR pszRealmName);
-typedef VOID (*LW_KRB5_REALM_TRANSITION_OFFLINE_CALLBACK)(IN PCSTR pszRealmName);
 
 
 LW_BEGIN_EXTERN_C
@@ -74,8 +69,8 @@ LwKrb5GetDefaultRealm(
     );
 
 DWORD
-LwKrb5GetSystemCachePath(
-    PSTR*         ppszCachePath
+LwKrb5GetDefaultCachePath(
+    OUT PSTR* ppszCachePath
     );
 
 DWORD
@@ -86,9 +81,9 @@ LwKrb5GetUserCachePath(
     );
 
 DWORD
-LwKrb5SetDefaultCachePath(
-    PCSTR pszCachePath,
-    PSTR* ppszOriginalCachePath
+LwKrb5SetThreadDefaultCachePath(
+    IN PCSTR pszCachePath,
+    OUT OPTIONAL PSTR* ppszPreviousCachePath
     );
 
 DWORD
@@ -97,27 +92,11 @@ LwKrb5SetProcessDefaultCachePath(
     );
 
 DWORD
-LwSetupMachineSession(
-    PCSTR  pszSamAccountName,
-    PCSTR  pszPassword,
-    PCSTR  pszRealm,
-    PCSTR  pszIgnoredDomain,
-    PDWORD pdwGoodUntilTime
-    );
-
-DWORD
-LwSetupMachineSessionWithCache(
-    PCSTR  pszSamAccountName,
-    PCSTR  pszPassword,
-    PCSTR  pszRealm,
-    PCSTR  pszIgnoredDomain,
-    PCSTR  pszCachePath,
-    PDWORD pdwGoodUntilTime
-    );
-
-DWORD
-LwKrb5CleanupMachineSession(
-    VOID
+LwKrb5InitializeCredentials(
+    IN PCSTR pszUserPrincipalName,
+    IN PCSTR pszPassword,
+    IN PCSTR pszCachePath,
+    OUT OPTIONAL PDWORD pdwGoodUntilTime
     );
 
 DWORD
@@ -141,14 +120,10 @@ LwKrb5DestroyCache(
     IN PCSTR pszCcPath
     );
 
-DWORD
-LwKrb5GetServiceTicketForUser(
-    uid_t         uid,
-    PCSTR         pszUserPrincipal,
-    PCSTR         pszServername,
-    PCSTR         pszDomain,
-    Krb5CacheType cacheType
-    );
+#define LW_KRB5_ERROR_TO_LW_ERROR(Error, Context) \
+    ((Error) ? \
+     LwTranslateKrb5Error(Context, Error, __FUNCTION__, __FILE__, __LINE__) : \
+     0)
 
 DWORD
 LwTranslateKrb5Error(
@@ -159,23 +134,25 @@ LwTranslateKrb5Error(
     DWORD dwLine
     );
 
-DWORD
-LwSetupUserLoginSession(
-    uid_t uid,
-    gid_t gid,
-    PCSTR pszUsername,
-    PCSTR pszPassword,
-    BOOLEAN bUpdateUserCache,
-    PCSTR pszServicePrincipal,
-    PCSTR pszServiceRealm,
-    PCSTR pszServicePassword,
-    char** ppchLogonInfo,
-    size_t* psLogonInfo,
-    PDWORD pdwGoodUntilTime,
-    DWORD dwFlags
-    );
+typedef DWORD LW_KRB5_LOGIN_FLAGS, *PLW_KRB5_LOGIN_FLAGS;
 
-#define LW_USER_LOGIN_SESSION_FLAG_SMART_CARD   0x00000001
+#define LW_KRB5_LOGIN_FLAG_SMART_CARD      0x00000001
+#define LW_KRB5_LOGIN_FLAG_UPDATE_CACHE    0x00000002
+
+DWORD
+LwKrb5InitializeUserLoginCredentials(
+    IN PCSTR pszUserPrincipalName,
+    IN PCSTR pszPassword,
+    IN uid_t uid,
+    IN gid_t gid,
+    IN LW_KRB5_LOGIN_FLAGS Flags,
+    IN PCSTR pszServicePrincipal,
+    IN PCSTR pszServiceRealm,
+    IN PCSTR pszServicePassword,
+    OUT PVOID* ppNdrPacInfo,
+    OUT size_t* pNdrPacInfoSize,
+    OUT PDWORD pdwGoodUntilTime
+    );
 
 DWORD
 LwKrb5CheckInitiatorCreds(

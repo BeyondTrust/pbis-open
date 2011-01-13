@@ -59,17 +59,17 @@ typedef struct _PAC_LOGON_INFO
 
 NTSTATUS
 DecodePacLogonInfo(
-    const char *pchBuffer,
-    size_t sBufferLen,
-    PAC_LOGON_INFO **ppLogonInfo
+    IN PVOID pBuffer,
+    IN size_t sBufferLen,
+    OUT PAC_LOGON_INFO** ppLogonInfo
     );
 
 
 NTSTATUS
 EncodePacLogonInfo(
-    PAC_LOGON_INFO* pLogonInfo,
-    PDWORD pdwEncodedSize,
-    PBYTE* ppEncodedBuffer
+    IN PAC_LOGON_INFO* pLogonInfo,
+    OUT PDWORD pdwEncodedSize,
+    OUT PVOID* ppEncodedBuffer
     );
 
 
