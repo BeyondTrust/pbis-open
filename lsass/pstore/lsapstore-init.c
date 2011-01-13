@@ -285,20 +285,40 @@ LsaPstorepEnsureInitialized(
 
 DWORD
 LsaPstorepCallPluginSetPasswordInfo(
-    IN PLSA_MACHINE_PASSWORD_INFO_W PasswordInfo
+    IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
     )
 {
     DWORD dwError = 0;
+    int EE = 0;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfoA = NULL;
 
-    if (LsaPstoreState.Plugin.Dispatch &&
-        LsaPstoreState.Plugin.Dispatch->SetPasswordInfo)
+    if (LsaPstoreState.Plugin.Dispatch)
     {
-        dwError = LsaPstoreState.Plugin.Dispatch->SetPasswordInfo(
-                        LsaPstoreState.Plugin.Context,
-                        PasswordInfo);
+        if (LsaPstoreState.Plugin.Dispatch->SetPasswordInfoW)
+        {
+            dwError = LsaPstoreState.Plugin.Dispatch->SetPasswordInfoW(
+                            LsaPstoreState.Plugin.Context,
+                            pPasswordInfo);
+            GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+        }
+        else if (LsaPstoreState.Plugin.Dispatch->SetPasswordInfoA)
+        {
+            dwError = LsaPstorepConvertWideToAnsiPasswordInfo(
+                            pPasswordInfo,
+                            &pPasswordInfoA);
+            GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+            dwError = LsaPstoreState.Plugin.Dispatch->SetPasswordInfoA(
+                            LsaPstoreState.Plugin.Context,
+                            pPasswordInfoA);
+            GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+        }
     }
 
-    LSA_PSTORE_LOG_LEAVE_ERROR(dwError);
+cleanup:
+    LSA_PSTORE_FREE_PASSWORD_INFO_A(&pPasswordInfoA);
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }
 

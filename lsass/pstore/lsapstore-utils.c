@@ -156,7 +156,7 @@ LsaPstorepConvertAnsiToWidePasswordInfo(
 {
     DWORD dwError = 0;
     int EE = 0;
-    PLSA_MACHINE_PASSWORD_INFO_W  passwordInfo = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_W passwordInfo = NULL;
 
     dwError = LSA_PSTORE_ALLOCATE_AUTO(&passwordInfo);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
@@ -199,6 +199,65 @@ cleanup:
     if (dwError)
     {
         LSA_PSTORE_FREE_PASSWORD_INFO_W(&passwordInfo);
+    }
+
+    *ppPasswordInfo = passwordInfo;
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+DWORD
+LsaPstorepConvertWideToAnsiPasswordInfo(
+    IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo,
+    OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PLSA_MACHINE_PASSWORD_INFO_A passwordInfo = NULL;
+
+    dwError = LSA_PSTORE_ALLOCATE_AUTO(&passwordInfo);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                    &passwordInfo->Account.DnsDomainName,
+                    pPasswordInfo->Account.DnsDomainName));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                    &passwordInfo->Account.NetbiosDomainName,
+                    pPasswordInfo->Account.NetbiosDomainName));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                    &passwordInfo->Account.DomainSid,
+                    pPasswordInfo->Account.DomainSid));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                    &passwordInfo->Account.SamAccountName,
+                    pPasswordInfo->Account.SamAccountName));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                    &passwordInfo->Account.Fqdn,
+                    pPasswordInfo->Account.Fqdn));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    passwordInfo->Account.Type = pPasswordInfo->Account.Type;
+    passwordInfo->Account.KeyVersionNumber = pPasswordInfo->Account.KeyVersionNumber;
+    passwordInfo->Account.LastChangeTime = pPasswordInfo->Account.LastChangeTime;
+
+    dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                    &passwordInfo->Password,
+                    pPasswordInfo->Password));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+cleanup:
+    if (dwError)
+    {
+        LSA_PSTORE_FREE_PASSWORD_INFO_A(&passwordInfo);
     }
 
     *ppPasswordInfo = passwordInfo;

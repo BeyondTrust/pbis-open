@@ -106,6 +106,12 @@ LsaPstorepConvertAnsiToWidePasswordInfo(
     OUT PLSA_MACHINE_PASSWORD_INFO_W* ppPasswordInfo
     );
 
+DWORD
+LsaPstorepConvertWideToAnsiPasswordInfo(
+    IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo,
+    OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
+    );
+
 PSTR
 LsaPstorepCStringDowncase(
     IN OUT PSTR String
