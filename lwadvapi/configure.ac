@@ -116,33 +116,6 @@ AC_SUBST(LWBASE_LDFLAGS)
 AC_SUBST(LWBASE_LIBS)
 AC_SUBST(LWBASE_NOTHR_LIBS)
 
-# pstore
-
-AC_ARG_WITH([pstore],
-        [AC_HELP_STRING([--with-pstore=<dir>], [use pstore located in prefix <dir>])],
-        [
-		PSTORE_INCLUDES="-I$withval/include"
-                PSTORE_LDFLAGS="-L$withval/lib"
-        ])
-
-AC_ARG_WITH([pstore-includes],
-        [AC_HELP_STRING([--with-pstore-includes=<dir>], [use pstore includes located in <dir>])],
-        [
-		PSTORE_INCLUDES="-I$withval"
-        ])
-
-AC_ARG_WITH([pstore-libs],
-        [AC_HELP_STRING([--with-pstore-libs=<dir>], [use pstore libs located in <dir>])],
-        [
-		PSTORE_LDFLAGS="-L$withval"
-        ])
-
-PSTORE_LIBS="-llwpsapi"
-
-AC_SUBST(PSTORE_INCLUDES)
-AC_SUBST(PSTORE_LDFLAGS)
-AC_SUBST(PSTORE_LIBS)
-
 # openldap
 
 AC_ARG_WITH([openldap],

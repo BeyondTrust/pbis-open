@@ -53,7 +53,6 @@
 #include <sys/time.h>
 #include <sasl/sasl.h>
 
-#include <lwps/lwps.h>
 #include <lw/rtlmemory.h>
 #include <lw/security-types.h>
 #include <lw/security-api.h>

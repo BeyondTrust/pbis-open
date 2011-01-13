@@ -469,20 +469,7 @@ LwLdapBindDirectory(
 
     if (bNeedCredentials)
     {
-        // ISSUE-2010/11/19-dalmeida -- Code assumes machine creds.
-        // This will not behave as expected if using any creds other
-        // than machine credentials.  It also needs to be fixed for
-        // upcoming pstore work.  The proper fix is to remove the
-        // checking of initiator credentials from the LDAP code
-        // and have any higher layers that care do the check and
-        // DTRT wrt the "refreshing" the credentials..
-
-        /* The kerberos ticket expired or is about to expire (The
-         * machine password sync thread didn't do its job).
-         */
-        LW_LOG_INFO("Renewing machine tgt outside of password sync thread");
-
-        dwError = LwKrb5RefreshMachineTGT(NULL);
+        dwError = SEC_E_NO_CREDENTIALS;
         BAIL_ON_LW_ERROR(dwError);
     }
 

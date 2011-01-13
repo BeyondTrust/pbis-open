@@ -151,18 +151,6 @@ LwKrb5GetServiceTicketForUser(
     );
 
 DWORD
-LwKrb5RefreshMachineTGT(
-    OUT OPTIONAL PDWORD pdwGoodUntilTime
-    );
-
-DWORD
-LwKrb5RefreshMachineTGTByDomain(
-    IN OPTIONAL PCSTR pszDomainName,
-    IN OPTIONAL PCSTR pszCachePath,
-    OUT OPTIONAL PDWORD pdwGoodUntilTime
-    );
-
-DWORD
 LwTranslateKrb5Error(
     krb5_context ctx,
     krb5_error_code krbError,

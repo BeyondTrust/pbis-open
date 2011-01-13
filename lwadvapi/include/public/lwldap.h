@@ -89,6 +89,19 @@ LwLdapOpenDirectoryServer(
     IN DWORD dwFlags,
     OUT PHANDLE phDirectory
     );
+///<
+/// Open a connection to an LDAP server.
+///
+/// @param[in] pszServerAddress - Server's address.
+/// @param[in] pszServerName - Server's name (used for authentication).
+/// @param[in] dwFlags - LW_LDAP_OPT_* flags.
+/// @param[out] phDirectory - Returns handle to LDAP connection.
+///
+/// @return Windows error code
+/// @retval ERROR_SUCCESS on success
+/// @retval SEC_E_NO_CREDENTIALS if no usable credentials
+/// @retval !ERROR_SUCCESS on failure
+///
 
 DWORD
 LwLdapConvertDomainToDN(
