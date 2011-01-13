@@ -334,6 +334,7 @@ TEST_NET_USER_SET_INFO LocalUserSetInfoValidationTest[] = {
 };
 
 
+static
 DWORD
 TestGetNetUserAddTestSet(
     PCSTR                pszTestSetName,
@@ -365,6 +366,7 @@ error:
 }
 
 
+static
 DWORD
 TestGetNetUserDelTestSet(
     PCSTR                pszTestSetName,
@@ -396,6 +398,7 @@ error:
 }
 
 
+static
 DWORD
 TestGetNetUserSetInfoTestSet(
     PCSTR                    pszTestSetName,
@@ -533,6 +536,8 @@ EnsureLocalGroup(
 }
 
 
+#ifdef UNUSED
+static
 int GetUserLocalGroups(const wchar16_t *hostname, wchar16_t *username,
                        LOCALGROUP_USERS_INFO_0 *grpinfo, UINT32 *entries)
 {
@@ -606,6 +611,7 @@ int GetUserLocalGroups(const wchar16_t *hostname, wchar16_t *username,
 }
 
 
+static
 int GetLocalGroupMembers(const wchar16_t *hostname, const wchar16_t *aliasname,
                          LOCALGROUP_MEMBERS_INFO_3* info, UINT32 *entries)
 {
@@ -675,6 +681,7 @@ int GetLocalGroupMembers(const wchar16_t *hostname, const wchar16_t *aliasname,
 }
 
 
+static
 int AddUser(const wchar16_t *hostname, const wchar16_t *username)
 {
     const char *comment = "sample comment";
@@ -726,12 +733,14 @@ int AddUser(const wchar16_t *hostname, const wchar16_t *username)
 }
 
 
+static
 int DelUser(const wchar16_t *hostname, const wchar16_t *username)
 {
     return NetUserDel(hostname, username);
 }
 
 
+static
 int AddLocalGroup(const wchar16_t *hostname, const wchar16_t *aliasname)
 {
     const char *testcomment = "Sample comment";
@@ -765,14 +774,18 @@ int AddLocalGroup(const wchar16_t *hostname, const wchar16_t *aliasname)
 
     return err;
 }
+#endif // UNUSED
 
 
+static
 int DelLocalGroup(const wchar16_t *hostname, const wchar16_t *aliasname)
 {
     return NetLocalGroupDel(hostname, aliasname);
 }
 
 
+#ifdef UNUSED
+static
 void DoCleanup(const wchar16_t *hostname, const wchar16_t *aliasname,
                const wchar16_t *username)
 {
@@ -781,6 +794,7 @@ void DoCleanup(const wchar16_t *hostname, const wchar16_t *aliasname,
 }
 
 
+static
 int AddLocalGroupMember(const wchar16_t *hostname, const wchar16_t *aliasname,
                         const wchar16_t *domname, const wchar16_t *member)
 {
@@ -804,6 +818,7 @@ int AddLocalGroupMember(const wchar16_t *hostname, const wchar16_t *aliasname,
 }
 
 
+static
 int DelLocalGroupMember(const wchar16_t *hostname,
                         const wchar16_t *domname,
                         const wchar16_t *aliasname,
@@ -829,6 +844,7 @@ int DelLocalGroupMember(const wchar16_t *hostname,
 }
 
 
+static
 void DumpNetUserInfo1(const char *prefix, USER_INFO_1 *info)
 {
     wchar16_t *usri1_name = info->usri1_name;
@@ -837,6 +853,7 @@ void DumpNetUserInfo1(const char *prefix, USER_INFO_1 *info)
     DUMP_WSTR(prefix, usri1_name);
     DUMP_WSTR(prefix, usri1_password);
 }
+#endif // UNUSED
 
 
 static
@@ -2721,6 +2738,7 @@ done:
 }
 
 
+static
 DWORD
 TestNetUserEnum(
     PTEST         pTest,
@@ -2822,6 +2840,7 @@ CallNetUserDel(
 }
 
 
+static
 DWORD
 TestNetUserAdd(
     PTEST         pTest,
@@ -2975,6 +2994,7 @@ done:
 }
 
 
+static
 DWORD
 TestNetUserDel(
     PTEST         pTest,
@@ -3055,6 +3075,7 @@ done:
 }
 
 
+static
 DWORD
 TestNetUserGetInfo(
     PTEST         pTest,
@@ -3137,6 +3158,7 @@ done:
 }
 
 
+static
 DWORD
 TestNetUserSetInfo(
     PTEST         pTest,
@@ -3332,6 +3354,7 @@ done:
 }
 
 
+static
 DWORD
 TestNetUserGetLocalGroups(
     PTEST         pTest,
@@ -3410,8 +3433,7 @@ done:
 }
 
 
-
-
+static
 DWORD
 TestNetJoinDomain(
     PTEST         pTest,
@@ -3514,6 +3536,7 @@ done:
 }
 
 
+static
 DWORD
 TestNetUnjoinDomain(
     PTEST         pTest,
@@ -3565,6 +3588,7 @@ done:
 }
 
 
+static
 DWORD
 TestNetUserChangePassword(
     PTEST         pTest,
@@ -3624,6 +3648,7 @@ done:
 }
 
 
+static
 DWORD
 TestNetLocalGroupEnum(
     PTEST         pTest,
@@ -3677,6 +3702,7 @@ TestNetLocalGroupEnum(
 }
 
 
+static
 DWORD
 TestNetLocalGroupAdd(
     PTEST         pTest,
@@ -3759,8 +3785,9 @@ done:
 }
 
 
+static
 DWORD
-TestDelLocalGroup(
+TestNetLocalGroupDel(
     PTEST         pTest,
     PCWSTR        pwszHostname,
     PCWSTR        pwszBindingString,
@@ -3795,6 +3822,7 @@ done:
 }
 
 
+static
 DWORD
 TestNetLocalGroupGetInfo(
     PTEST         pTest,
@@ -3873,6 +3901,7 @@ done:
 }
 
 
+static
 DWORD
 TestNetLocalGroupSetInfo(
     PTEST         pTest,
@@ -3992,6 +4021,7 @@ done:
 }
 
 
+static
 DWORD
 TestNetLocalGroupGetMembers(
     PTEST         pTest,
@@ -4055,7 +4085,7 @@ TestNetLocalGroupGetMembers(
 }
 
 
-
+static
 DWORD
 TestNetGetDomainName(
     PTEST         pTest,
@@ -4085,6 +4115,7 @@ done:
 }
 
 
+static
 DWORD
 TestNetQueryDisplayInformation(
     PTEST         pTest,
@@ -4138,6 +4169,7 @@ TestNetQueryDisplayInformation(
 }
 
 
+static
 DWORD
 TestNetWkstaUserEnum(
     PTEST         pTest,
@@ -4191,6 +4223,7 @@ TestNetWkstaUserEnum(
 }
 
 
+static
 DWORD
 TestNetSessionEnum(
     PTEST         pTest,
@@ -4281,6 +4314,7 @@ error:
 }
 
 
+static
 DWORD
 TestNetServerEnum(
     PTEST         pTest,
@@ -4377,6 +4411,7 @@ SetupNetApiTests(PTEST t)
     AddTest(t, "NETAPI-GET-DOMAIN-NAME", TestNetGetDomainName);
     AddTest(t, "NETAPI-LOCAL-GROUP-ENUM", TestNetLocalGroupEnum);
     AddTest(t, "NETAPI-LOCAL-GROUP-ADD", TestNetLocalGroupAdd);
+    AddTest(t, "NETAPI-LOCAL-GROUP-DEL", TestNetLocalGroupDel);
     AddTest(t, "NETAPI-LOCAL-GROUP-GETINFO", TestNetLocalGroupGetInfo);
     AddTest(t, "NETAPI-LOCAL-GROUP-SETINFO", TestNetLocalGroupSetInfo);
     AddTest(t, "NETAPI-LOCAL-GROUP-MEMBERS", TestNetLocalGroupGetMembers);

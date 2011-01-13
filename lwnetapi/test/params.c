@@ -32,6 +32,7 @@
 
 
 #if !defined(HAVE_STRNDUP)
+static
 char* strndup(const char *s, size_t maxlen)
 {
     char *ret;
@@ -154,6 +155,7 @@ free_string_list(
 /*
  * Returns array of strings for multi-value parameters
  */
+static
 char** get_value_list(const char *list)
 {
     const char start_list = '[';
@@ -285,6 +287,7 @@ PCSTR find_value(
 /*
  * Converts array of strings to array of 2-byte unicode strings
  */
+static
 wchar16_t **create_wc16str_list(char **strlist)
 {
     int list_len = 0;
@@ -324,6 +327,7 @@ wchar16_t **create_wc16str_list(char **strlist)
 /*
  * Converts array of sid strings to array of sids
  */
+static
 PSID* create_sid_list(char **strlist)
 {
     int list_len = 0;
