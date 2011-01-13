@@ -43,6 +43,23 @@ function component_configure
         extra_flags="$extra_flags --enable-debug"
     fi
 
+    #
+    # Avoid some annoying run-time checks in cURL's configuration.
+    #
+    extra_flags="$extra_flags cross_compiling=yes"
+
+    # 
+    # However, cURL's configure script still tries to check
+    # for /dev/urandom, even though the autoconf macro it uses
+    # complains and fails if cross_compiling == yes.
+    # 
+    if [ -e "/dev/urandom" ]
+    then
+        extra_flags="$extra_flags --with-random=/dev/urandom"
+    else
+        extra_flags="$extra_flags --with-random=no"
+    fi
+
     "${COMP_SOURCES}/configure"        \
 	--prefix=${PREFIX_DIR}         \
         --libdir=${PREFIX_DIR}/${_lib} \
