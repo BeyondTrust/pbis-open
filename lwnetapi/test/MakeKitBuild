@@ -6,6 +6,7 @@ make()
         params.c                      \
         test_lsa.c                    \
         test_samr.c                   \
+        test_netapi.c                 \
         test_netlogon.c               \
         test_dssetup.c                \
         test_wkssvc.c"                \
