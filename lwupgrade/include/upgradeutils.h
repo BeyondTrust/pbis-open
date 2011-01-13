@@ -30,7 +30,7 @@
 
 #include <lwerror.h>
 
-#include <lwps/lwps.h>
+#include <lsa/lsapstore-types.h>
 
 typedef DWORD (*UpParseConfigSectionHandler)(
     BOOLEAN bStartOfSection,
@@ -154,20 +154,15 @@ UpParseDateString(
     PDWORD pdwTimeInterval
     );
 
-VOID
-UpFreeMachineInformationContentsA(
-    PLWPS_PASSWORD_INFOA pInfo
+LSA_MACHINE_ACCOUNT_TYPE
+UpConvertSchannelTypeToMachineAccountType(
+    IN DWORD SchannelType
     );
 
 DWORD
-UpAllocateMachineInformationContentsW(
-    PLWPS_PASSWORD_INFOA pInfo,
-    PLWPS_PASSWORD_INFO pPasswordInfo
-    );
-
-VOID
-UpFreeMachineInformationContentsW(
-    PLWPS_PASSWORD_INFO pInfo
+UpConvertTimeUnixToWindows(
+    IN time_t UnixTime,
+    OUT PLONG64 pWindowsTime
     );
 
 #if !defined(HAVE_STRTOLL)

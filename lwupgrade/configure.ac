@@ -156,35 +156,6 @@ AC_SUBST(SQLITE_INCLUDES)
 AC_SUBST(SQLITE_LDFLAGS)
 AC_SUBST(SQLITE_LIBS)
 
-# pstore
-
-AC_ARG_WITH([pstore],
-        [AC_HELP_STRING([--with-pstore=<dir>], [use pstore located in prefix <dir>])],
-        [
-        PSTORE_INCLUDES="-I$withval/include"
-        PSTORE_LDFLAGS="-L$withval/lib"
-        ])
-
-AC_ARG_WITH([pstore-includes],
-        [AC_HELP_STRING([--with-pstore-includes=<dir>], [use pstore includes located in <dir>])],
-        [
-        PSTORE_INCLUDES="-I$withval"
-        ])
-
-AC_ARG_WITH([pstore-libs],
-        [AC_HELP_STRING([--with-pstore-libs=<dir>], [use pstore libs located in <dir>])],
-        [
-        PSTORE_LDFLAGS="-L$withval"
-        ])
-
-PSTORE_LIBS="-llwpsapi"
-
-AC_SUBST(PSTORE_INCLUDES)
-AC_SUBST(PSTORE_LDFLAGS)
-AC_SUBST(PSTORE_LIBS)
-
-
-
 # lwreg
 
 AC_ARG_WITH([lwreg],
@@ -220,6 +191,9 @@ AC_CHECK_FUNCS([strndup strncasecmp strtoul strtoll __strtoll])
 
 # Checks for header files.
 AC_CHECK_HEADERS([string.h strings.h sys/types.h sys/socket.h sys/varargs.h pthread.h])
+
+# Checks for sizes.
+AC_CHECK_SIZEOF([time_t], [#include <time.h>])
 
 CPPFLAGS="$CPPFLAGS -D_REENTRANT -D_GNU_SOURCE"
 

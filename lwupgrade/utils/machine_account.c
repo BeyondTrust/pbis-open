@@ -35,111 +35,70 @@
  */
 #include "includes.h"
 
-VOID
-UpFreeMachineInformationContentsA(
-    PLWPS_PASSWORD_INFOA pInfo
+LSA_MACHINE_ACCOUNT_TYPE
+UpConvertSchannelTypeToMachineAccountType(
+    IN DWORD SchannelType
     )
 {
-    if (pInfo)
+    LSA_MACHINE_ACCOUNT_TYPE accountType = 0;
+
+    switch (SchannelType)
     {
-        LW_SAFE_FREE_STRING(pInfo->pszDomainName);
-        LW_SAFE_FREE_STRING(pInfo->pszDnsDomainName);
-        LW_SAFE_FREE_STRING(pInfo->pszSid);
-        LW_SAFE_FREE_STRING(pInfo->pszHostname);
-        LW_SAFE_FREE_STRING(pInfo->pszHostDnsDomain);
-        LW_SAFE_FREE_STRING(pInfo->pszMachineAccount);
-        LW_SAFE_FREE_STRING(pInfo->pszMachinePassword);
+        case 2: // SCHANNEL_WKSTA
+            accountType = LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION;
+            break;
+        case 4: // SCHANNEL_DOMAIN
+            accountType = LSA_MACHINE_ACCOUNT_TYPE_DC;
+            break;
+        case 6: // SCHANNEL_BDC
+            accountType = LSA_MACHINE_ACCOUNT_TYPE_BDC;
+            break;
+        default:
+            // Default to workstation
+            accountType = LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION;
+            break;
     }
+
+    return accountType;
 }
 
 DWORD
-UpAllocateMachineInformationContentsW(
-    PLWPS_PASSWORD_INFOA pInfo,
-    PLWPS_PASSWORD_INFO pPasswordInfo
+UpConvertTimeUnixToWindows(
+    IN time_t UnixTime,
+    OUT PLONG64 pWindowsTime
     )
 {
     DWORD dwError = 0;
+    LONG64 windowsTime = 0;
 
-    PWSTR pwszMachineAccount = NULL;
-    PWSTR pwszMachinePassword = NULL;
-    PWSTR pwszSid = NULL;
-    PWSTR pwszHostname = NULL;
-    PWSTR pwszHostDnsDomain = NULL;
-    PWSTR pwszDomainName = NULL;
-    PWSTR pwszDnsDomainName = NULL;
+#if SIZEOF_TIME_T > 4
+    if ((LONG64) UnixTime < - 11644473600LL)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_UP_ERROR(dwError);
+    }
+#endif
 
-    dwError = LwMbsToWc16s(pInfo->pszMachineAccount, &pwszMachineAccount);
-    BAIL_ON_UP_ERROR(dwError);
-
-    dwError = LwMbsToWc16s(
-                pInfo->pszMachinePassword,
-                &pwszMachinePassword);
-    BAIL_ON_UP_ERROR(dwError);
-
-    dwError = LwMbsToWc16s(
-                pInfo->pszSid,
-                &pwszSid);
-    BAIL_ON_UP_ERROR(dwError);
-
-    dwError = LwMbsToWc16s(
-                pInfo->pszDomainName,
-                &pwszDomainName);
-    BAIL_ON_UP_ERROR(dwError);
-
-    dwError = LwMbsToWc16s(
-                pInfo->pszDnsDomainName,
-                &pwszDnsDomainName);
-    BAIL_ON_UP_ERROR(dwError);
-
-    dwError = LwMbsToWc16s(
-                pInfo->pszHostname,
-                &pwszHostname);
-    BAIL_ON_UP_ERROR(dwError);
-
-    dwError = LwMbsToWc16s(
-                pInfo->pszHostDnsDomain,
-                &pwszHostDnsDomain);
-    BAIL_ON_UP_ERROR(dwError);
-
-    pPasswordInfo->pwszDomainName = pwszDomainName;
-    pPasswordInfo->pwszDnsDomainName = pwszDnsDomainName;
-    pPasswordInfo->pwszSID = pwszSid;
-    pPasswordInfo->pwszHostname = pwszHostname;
-    pPasswordInfo->pwszHostDnsDomain = pwszHostDnsDomain;
-    pPasswordInfo->pwszMachineAccount = pwszMachineAccount;
-    pPasswordInfo->pwszMachinePassword = pwszMachinePassword;
-    pPasswordInfo->last_change_time = pInfo->last_change_time;
-    pPasswordInfo->dwSchannelType = pInfo->dwSchannelType;
-
-cleanup:
-
-    return dwError;
+    windowsTime = (LONG64) UnixTime + 11644473600LL;
+    if (windowsTime < 0)
+    {
+        dwError = ERROR_ARITHMETIC_OVERFLOW;
+        BAIL_ON_UP_ERROR(dwError);
+    }
+    windowsTime *= 10000000LL;
+    if (windowsTime < 0)
+    {
+        dwError = ERROR_ARITHMETIC_OVERFLOW;
+        BAIL_ON_UP_ERROR(dwError);
+    }
 
 error:
-    LW_SAFE_FREE_MEMORY(pwszMachineAccount);
-    LW_SAFE_FREE_MEMORY(pwszMachinePassword);
-    LW_SAFE_FREE_MEMORY(pwszSid);
-    LW_SAFE_FREE_MEMORY(pwszDomainName);
-    LW_SAFE_FREE_MEMORY(pwszDnsDomainName);
-    LW_SAFE_FREE_MEMORY(pwszHostname);
-    LW_SAFE_FREE_MEMORY(pwszHostDnsDomain);
-    goto cleanup;
-}
-
-VOID
-UpFreeMachineInformationContentsW(
-    PLWPS_PASSWORD_INFO pInfo
-    )
-{
-    if (pInfo)
+    if (dwError)
     {
-        LW_SAFE_FREE_MEMORY(pInfo->pwszDomainName);
-        LW_SAFE_FREE_MEMORY(pInfo->pwszDnsDomainName);
-        LW_SAFE_FREE_MEMORY(pInfo->pwszSID);
-        LW_SAFE_FREE_MEMORY(pInfo->pwszHostname);
-        LW_SAFE_FREE_MEMORY(pInfo->pwszHostDnsDomain);
-        LW_SAFE_FREE_MEMORY(pInfo->pwszMachineAccount);
-        LW_SAFE_FREE_MEMORY(pInfo->pwszMachinePassword);
+        windowsTime = 0;
     }
-}
 
+    *pWindowsTime = windowsTime;
+
+    return 0;
+}

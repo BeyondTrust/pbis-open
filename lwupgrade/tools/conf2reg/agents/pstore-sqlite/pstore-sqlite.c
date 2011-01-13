@@ -36,6 +36,7 @@
 
 #include "includes.h"
 #include "sqlite3.h"
+#include <lsa/lsapstore-api.h>
 
 #define DB_QUERY_GET_MACHINEPWD_BY_HOST_NAME_V1                  \
     "SELECT DomainSID,                                           \
@@ -81,9 +82,9 @@ SqliteMachineAccountToPstore(
     PCSTR pszValue = NULL;
     PSTR pszEndPtr = NULL;
     int i;
-
-    LWPS_PASSWORD_INFOA InfoA = { 0 };
-    LWPS_PASSWORD_INFO InfoW = { 0 } ;
+    LSA_MACHINE_PASSWORD_INFO_A passwordInfo = { { 0 } };
+    PSTR pszFqdnHostname = NULL;
+    PSTR pszFqdnSuffix = NULL;
 
     if ( gethostname(szHostname, sizeof(szHostname)-1) != 0)
     {
@@ -164,28 +165,28 @@ SqliteMachineAccountToPstore(
     pszValue = ppszResults[i++];
     if(!LW_IS_NULL_OR_EMPTY_STR(pszValue))
     {
-        dwError = LwAllocateString(pszValue, &InfoA.pszSid);
+        dwError = LwAllocateString(pszValue, &passwordInfo.Account.DomainSid);
         BAIL_ON_UP_ERROR(dwError);
     }
 
     pszValue = ppszResults[i++];
     if(!LW_IS_NULL_OR_EMPTY_STR(pszValue))
     {
-        dwError = LwAllocateString(pszValue, &InfoA.pszDomainName);
+        dwError = LwAllocateString(pszValue, &passwordInfo.Account.NetbiosDomainName);
         BAIL_ON_UP_ERROR(dwError);
     }
 
     pszValue = ppszResults[i++];
     if(!LW_IS_NULL_OR_EMPTY_STR(pszValue))
     {
-        dwError = LwAllocateString(pszValue, &InfoA.pszDnsDomainName);
+        dwError = LwAllocateString(pszValue, &passwordInfo.Account.DnsDomainName);
         BAIL_ON_UP_ERROR(dwError);
     }
 
     pszValue = ppszResults[i++];
     if(!LW_IS_NULL_OR_EMPTY_STR(pszValue))
     {
-        dwError = LwAllocateString(pszValue, &InfoA.pszHostname);
+        dwError = LwAllocateString(pszValue, &pszFqdnHostname);
         BAIL_ON_UP_ERROR(dwError);
     }
 
@@ -194,7 +195,7 @@ SqliteMachineAccountToPstore(
         pszValue = ppszResults[i++];
         if(!LW_IS_NULL_OR_EMPTY_STR(pszValue))
         {
-            dwError = LwAllocateString(pszValue, &InfoA.pszHostDnsDomain);
+            dwError = LwAllocateString(pszValue, &pszFqdnSuffix);
             BAIL_ON_UP_ERROR(dwError);
         }
     }
@@ -202,14 +203,14 @@ SqliteMachineAccountToPstore(
     pszValue = ppszResults[i++];
     if(!LW_IS_NULL_OR_EMPTY_STR(pszValue))
     {
-        dwError = LwAllocateString(pszValue, &InfoA.pszMachineAccount);
+        dwError = LwAllocateString(pszValue, &passwordInfo.Account.SamAccountName);
         BAIL_ON_UP_ERROR(dwError);
     }
 
     pszValue = ppszResults[i++];
     if(!LW_IS_NULL_OR_EMPTY_STR(pszValue))
     {
-        dwError = LwAllocateString(pszValue, &InfoA.pszMachinePassword);
+        dwError = LwAllocateString(pszValue, &passwordInfo.Password);
         BAIL_ON_UP_ERROR(dwError);
     }
 
@@ -220,37 +221,47 @@ SqliteMachineAccountToPstore(
     pszValue = ppszResults[i++];
     if(!LW_IS_NULL_OR_EMPTY_STR(pszValue))
     {
-        InfoA.last_change_time = (time_t) strtoll(pszValue, &pszEndPtr, 10);
+        time_t unixTime = (time_t) strtoll(pszValue, &pszEndPtr, 10);
         if (!pszEndPtr || (pszEndPtr == pszValue) || *pszEndPtr)
         {
             dwError = LW_ERROR_DATA_ERROR;
             BAIL_ON_UP_ERROR(dwError);
         }
+
+        dwError = UpConvertTimeUnixToWindows(unixTime, &passwordInfo.Account.LastChangeTime);
+        BAIL_ON_UP_ERROR(dwError);
     }
 
     pszValue = ppszResults[i++];
     if(!LW_IS_NULL_OR_EMPTY_STR(pszValue))
     {
-        InfoA.dwSchannelType = (UINT32)atol(pszValue);
+        DWORD dwSchannelType = (UINT32)atol(pszValue);
+        passwordInfo.Account.Type = UpConvertSchannelTypeToMachineAccountType(dwSchannelType);
     }
 
-    if (InfoA.pszHostDnsDomain == NULL)
+    // Done reading database.  Now do data fixups.
+
+    if (!pszFqdnSuffix && passwordInfo.Account.DnsDomainName)
     {
-        if(!LW_IS_NULL_OR_EMPTY_STR(InfoA.pszDnsDomainName))
-        {
-            dwError = LwAllocateString(
-                        InfoA.pszDnsDomainName,
-                        &InfoA.pszHostDnsDomain);
-            BAIL_ON_UP_ERROR(dwError);
-        }
+        dwError = LwAllocateString(passwordInfo.Account.DnsDomainName, &pszFqdnSuffix);
+        BAIL_ON_UP_ERROR(dwError);
     }
 
-    UpAllocateMachineInformationContentsW(
-            &InfoA,
-            &InfoW);
+    dwError = LwAllocateStringPrintf(
+                    &passwordInfo.Account.Fqdn,
+                    "%s.%s",
+                    pszFqdnHostname ? pszFqdnHostname : "",
+                    pszFqdnSuffix ? pszFqdnSuffix : "");
     BAIL_ON_UP_ERROR(dwError);
 
-    dwError = LwpsWritePasswordToAllStores(&InfoW);
+    LwStrToUpper(passwordInfo.Account.DnsDomainName);
+    LwStrToUpper(passwordInfo.Account.NetbiosDomainName);
+    LwStrToUpper(passwordInfo.Account.DomainSid);
+    LwStrToUpper(passwordInfo.Account.SamAccountName);
+    passwordInfo.Account.KeyVersionNumber = 0;
+    LwStrToLower(passwordInfo.Account.Fqdn);
+
+    dwError = LsaPstoreSetPasswordInfoA(&passwordInfo);
     BAIL_ON_UP_ERROR(dwError);
 
 cleanup:
@@ -273,8 +284,15 @@ cleanup:
         pDbHandle = NULL;
     }
 
-    UpFreeMachineInformationContentsA(&InfoA);
-    UpFreeMachineInformationContentsW(&InfoW);
+    LW_SAFE_FREE_STRING(pszFqdnHostname);
+    LW_SAFE_FREE_STRING(pszFqdnSuffix);
+
+    LW_SAFE_FREE_STRING(passwordInfo.Account.DnsDomainName);
+    LW_SAFE_FREE_STRING(passwordInfo.Account.NetbiosDomainName);
+    LW_SAFE_FREE_STRING(passwordInfo.Account.DomainSid);
+    LW_SAFE_FREE_STRING(passwordInfo.Account.SamAccountName);
+    LW_SAFE_FREE_STRING(passwordInfo.Account.Fqdn);
+    LW_SECURE_FREE_STRING(passwordInfo.Password);
 
     return dwError;
 

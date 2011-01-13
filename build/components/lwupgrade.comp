@@ -1,6 +1,6 @@
 #!/bin/sh
 
-COMP_DEPENDENCIES="autoconf automake libtool lwbase lwadvapi lwreg pstore sqlite"
+COMP_DEPENDENCIES="autoconf automake libtool lwbase lwadvapi lwreg lsass sqlite"
 COMP_SOURCES="${BUILD_ROOT}/src/linux/lwupgrade"
 COMP_INCREMENTAL=1
 
