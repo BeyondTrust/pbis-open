@@ -1934,7 +1934,6 @@ AD_OnlineAuthenticateUserPam(
     *ppPamAuthInfo = pPamAuthInfo;
 
 cleanup:
-
     LW_SAFE_FREE_STRING(pszNT4UserName);
 
     ADCacheSafeFreeObject(&pUserInfo);
@@ -1943,6 +1942,7 @@ cleanup:
 
 error:
     *ppPamAuthInfo = NULL;
+
     if (pPamAuthInfo)
     {
         LsaFreeAuthUserPamInfo(pPamAuthInfo);
