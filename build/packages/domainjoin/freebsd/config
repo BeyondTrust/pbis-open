@@ -1,2 +1,2 @@
 DESCRIPTION="Likewise domain join application"
-DEPENDS="likewise-base likewise-pstore"
+DEPENDS="likewise-base likewise-lsass"

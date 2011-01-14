@@ -23,6 +23,7 @@ URL: 		http://www.likewise.com/
 BuildRoot: 	%{buildRootDir}/%{name}-%{version}
 
 Requires: likewise-rpc, likewise-krb5, likewise-openldap
+Obsoletes: likewise-pstore
 
 AutoReq: no
 %if %{AIX}

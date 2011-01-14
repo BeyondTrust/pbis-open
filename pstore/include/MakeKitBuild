@@ -1,5 +1,0 @@
-make()
-{
-    mk_headers \
-        MASTER=lwps/lwps.h
-}

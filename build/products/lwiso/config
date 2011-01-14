@@ -9,7 +9,7 @@ UNAME_RELEASE=`(uname -r) 2>/dev/null` || UNAME_RELEASE=unknown
 
 PACKAGES="\
     krb5 openldap libxml2 sqlite base lwreg\
-    pstore netlogon lwio rpc eventlog lsass \
+    netlogon lwio rpc eventlog lsass \
     srvsvc domainjoin reskit lwupgrade \
     lwnetapi lwtools lwconfig samba-interop \
     "
@@ -20,7 +20,7 @@ DAEMONS="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
 OBSOLETE_DAEMONS="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd centeris.com-gpagentd"
 # lwregd is started elsewhere since it must be started first.
 AUTOSTART=""
-REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg lwiod.reg dcerpcd.reg srvsvcd.reg pstore.reg nfs.reg"
+REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg lwiod.reg dcerpcd.reg srvsvcd.reg nfs.reg"
 
 case "${BUILD_OS_TYPE}" in
     linux)

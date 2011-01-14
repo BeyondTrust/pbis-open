@@ -128,7 +128,6 @@ import_registry_configurations()
     exec_log_exit "$REGUPGRADE /opt/likewise/share/config/lwiod.reg"
     exec_log_exit "$REGUPGRADE /opt/likewise/share/config/lwreg.reg"
     exec_log_exit "$REGUPGRADE /opt/likewise/share/config/netlogond.reg"
-    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/pstore.reg"
 }
 
 import_5_0123_file()
@@ -269,7 +268,6 @@ fix_60_registry()
     exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/lwiod.reg"
     exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/lwreg.reg"
     exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/netlogond.reg"
-    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/pstore.reg"
 }
 
 switch_to_open_provider()

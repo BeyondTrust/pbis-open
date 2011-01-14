@@ -5,7 +5,7 @@ SCRIPT="../install.sh"
 
 PACKAGES="\
     krb5 openldap libxml2 sqlite base \
-    pstore netlogon rpc lsass eventlog \
+    netlogon rpc lsass eventlog \
     domainjoin passwd lwio srvsvc \
     "
 

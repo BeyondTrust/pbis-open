@@ -1,5 +1,5 @@
 PKG_DESC="Likewise Open"
-PKG_COMPONENTS="lwbase lwadvapi centutils openssl libiconv libuuid lwmsg lwsm popt curl lsass lwdns krb5 cyrus-sasl openldap sqlite libxml2 libschannel dcerpc lwreg lwsm eventlog netlogon lwio pstore lwnetapi domainjoin lwtools lwupgrade lwconfig"
+PKG_COMPONENTS="lwbase lwadvapi centutils openssl libiconv libuuid lwmsg lwsm popt curl lsass lwdns krb5 cyrus-sasl openldap sqlite libxml2 libschannel dcerpc lwreg lwsm eventlog netlogon lwio lwnetapi domainjoin lwtools lwupgrade lwconfig"
 
 case "${BUILD_OS_TYPE}" in
     aix)

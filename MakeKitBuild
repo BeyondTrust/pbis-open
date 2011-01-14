@@ -3,7 +3,7 @@ MODULES="core compiler autotools moonunit pkg-config likewise dceidl fortune"
 LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv popt \
                 libuuid sqlite openssl curl libxml2 fuse"
 SUBDIRS="$LW_ALL_BUNDLED \
-         lwbase lwmsg lwreg pstore lwadvapi netlogon \
+         lwbase lwmsg lwreg lwadvapi netlogon \
          lwio libschannel dcerpc centutils lwsm eventlog lsass lwdns \
          srvsvc lwnetapi lwtools domainjoin config package"
 

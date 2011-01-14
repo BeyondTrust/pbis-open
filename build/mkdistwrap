@@ -5,7 +5,7 @@
 #
 
 PACKAGES="base krb5 openldap libxml2 sqlite"
-PACKAGES="$PACKAGES rpc eventlog pstore netlogon lsass"
+PACKAGES="$PACKAGES rpc eventlog netlogon lsass"
 PACKAGES="$PACKAGES domainjoin domainjoin-gui"
 
 if [ $# -lt 4 ]; then
