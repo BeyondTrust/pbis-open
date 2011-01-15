@@ -150,12 +150,6 @@
 
 #endif
 
-#if defined(HAVE_SOCKLEN_T) && defined(GETSOCKNAME_TAKES_SOCKLEN_T)
-#    define SOCKLEN_T socklen_t
-#else
-#    define SOCKLEN_T int
-#endif
-
 #define LWNET_MODE_BITS_URWX_GRX_ORX (S_IRWXU | S_IRGRP | S_IXGRP |S_IROTH | S_IXOTH)
 #define LWNET_MODE_BITS_URW_GR_OR    (S_IRUSR | S_IWUSR | S_IRGRP |S_IROTH)
 

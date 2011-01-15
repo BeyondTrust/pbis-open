@@ -74,12 +74,6 @@
 #define PATH_SEPARATOR_STR "\\"
 #endif
 
-#if defined(HAVE_SOCKLEN_T) && defined(GETSOCKNAME_TAKES_SOCKLEN_T)
-#    define SOCKLEN_T socklen_t
-#else
-#    define SOCKLEN_T int
-#endif
-
 typedef int             SOCKET;
 
 #define LW_ASSERT(x)   assert( (x) )
