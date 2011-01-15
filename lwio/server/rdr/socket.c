@@ -871,7 +871,7 @@ RdrSocketTaskConnect(
         struct sockaddr_in v4;
         struct sockaddr_in6 v6;
     } addr;
-    SOCKLEN_T len = 0;
+    SOCKLEN_TYPE len = 0;
     int pf = 0;
     int err = 0;
 

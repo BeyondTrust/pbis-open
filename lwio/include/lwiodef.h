@@ -71,9 +71,9 @@
 #endif
 
 #if defined(HAVE_SOCKLEN_T) && defined(GETSOCKNAME_TAKES_SOCKLEN_T)
-#    define SOCKLEN_T socklen_t
+#    define SOCKLEN_TYPE socklen_t
 #else
-#    define SOCKLEN_T int
+#    define SOCKLEN_TYPE int
 #endif
 
 #define LW_ASSERT(x)   assert( (x) )
