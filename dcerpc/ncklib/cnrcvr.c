@@ -142,10 +142,10 @@ INTERNAL void receive_packet _DCE_PROTOTYPE_ ((
     rpc__cn_call_reject ((rpc_call_rep_p_t) call_r, st);\
     binding_r = (rpc_binding_rep_t *) (call_r)->binding_rep; \
     RPC_CN_UNLOCK (); \
-    rpc__cn_call_end ((rpc_call_rep_p_t *) &(call_r), &st); \
+    rpc__cn_call_end ((rpc_call_rep_p_t *) &(call_r), (unsigned32*)&st); \
     RPC_CN_LOCK (); \
     RPC_BINDING_RELEASE (&binding_r, \
-                         &st); \
+                         (unsigned32*)&st); \
 }
 
 
@@ -509,10 +509,10 @@ INTERNAL void receive_dispatch
 rpc_cn_assoc_p_t        assoc;
 #endif
 {
-    rpc_cn_fragbuf_p_t          fragbuf_p;
-    rpc_cn_fragbuf_p_t          ovf_fragbuf_p;
+    volatile rpc_cn_fragbuf_p_t          fragbuf_p;
+    volatile rpc_cn_fragbuf_p_t          ovf_fragbuf_p;
     rpc_cn_call_rep_p_t         call_r;
-    unsigned32                  st;
+    volatile unsigned32                  st;
     rpc_cn_packet_p_t           pktp;
     unsigned8                   ptype;
     volatile boolean                     unpack_ints = false;
@@ -555,7 +555,10 @@ rpc_cn_assoc_p_t        assoc;
          */
         DCETHREAD_TRY
         {
-            receive_packet (assoc, &fragbuf_p, &ovf_fragbuf_p, &st);
+            receive_packet (assoc,
+                            (rpc_cn_fragbuf_p_t*)&fragbuf_p,
+                            (rpc_cn_fragbuf_p_t*)&ovf_fragbuf_p,
+                            (unsigned32*)&st);
         }
         DCETHREAD_CATCH(dcethread_interrupt_e)
         {
@@ -925,7 +928,7 @@ rpc_cn_assoc_p_t        assoc;
                  * Place the new call rep in the association for
                  * use in cancel processing.
                  */
-                rpc__cn_assoc_push_call (assoc, call_r, &st); 
+                rpc__cn_assoc_push_call (assoc, call_r, (unsigned32*)&st); 
                 if (st != rpc_s_ok)
                 {
                     rpc__list_element_free (&rpc_g_cn_call_lookaside_list,
@@ -978,7 +981,7 @@ rpc_cn_assoc_p_t        assoc;
                                         &RPC_CN_PKT_OBJECT (pktp), 
                                         RPC_C_PROTOCOL_ID_NCACN, 
                                         NULL, 
-                                        &st); 
+                                        (unsigned32*)&st); 
                 } 
                 else 
                 { 
@@ -987,7 +990,7 @@ rpc_cn_assoc_p_t        assoc;
                                         &uuid_g_nil_uuid, 
                                         RPC_C_PROTOCOL_ID_NCACN, 
                                         NULL, 
-                                        &st); 
+                                        (unsigned32*)&st); 
                 } 
 
                 /*
@@ -1070,7 +1073,7 @@ rpc_cn_assoc_p_t        assoc;
                 rpc__cn_assoc_syntax_lkup_by_id (assoc,
                                                  RPC_CN_PKT_PRES_CONT_ID (pktp),
                                                  &pres_context,
-                                                 &st);
+                                                 (unsigned32*)&st);
                 if (st != rpc_s_ok)
                 {
                     RPC_CN_SEND_FAULT (call_r, st);
@@ -1095,7 +1098,7 @@ rpc_cn_assoc_p_t        assoc;
                                           (unsigned32) call_r->opnum,
                                           rpc__cn_call_executor,
                                           (pointer_t) call_r,
-                                          &st);
+                                          (unsigned32*)&st);
                 
                 /*
                  * Check whether the call was queued. If it was, just
