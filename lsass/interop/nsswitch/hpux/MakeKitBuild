@@ -13,6 +13,7 @@ make()
             SOURCES="$NSS_SOURCES" \
             GROUPS="../common/common" \
             INCLUDEDIRS="../include ../../auth/include ../../../include" \
+            HEADERDEPS="lwadvapi.h" \
             LIBDEPS="lsaclient sec"
     mk_multiarch_done
 }

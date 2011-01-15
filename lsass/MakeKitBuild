@@ -50,6 +50,14 @@ configure()
                 NSSDIR="/usr/lib/pa20_64"
                 PAMDIR="/usr/lib/security/pa20_64"
                 ;;
+            hpux:ia64_32)
+                NSSDIR="/usr/lib/hpux32"
+                PAMDIR="/usr/lib/security/hpux32"
+                ;;
+            hpux:ia64_64)
+                NSSDIR="/usr/lib/hpux64"
+                PAMDIR="/usr/lib/security/hpux64"
+                ;;
         esac
 
         mk_define LIBDIR "\"$MK_LIBDIR\""

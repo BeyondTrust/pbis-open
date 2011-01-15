@@ -74,6 +74,9 @@ lw_define_feature_macros()
             mk_define __LWI_HP_UX__
             mk_define _HPUX_SOURCE 1
             mk_define _REENTRANT
+            mk_define _XOPEN_SOURCE_EXTENDED 1
+            # HACK HACK HACK
+            mk_write_config_header "union mpinfou {};"
             ;;
     esac
 }

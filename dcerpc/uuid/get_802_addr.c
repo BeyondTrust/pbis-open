@@ -36,7 +36,7 @@
 /* Bizarre hack for HP-UX ia64 where a system header
  * makes reference to a kernel-only data structure
  */
-#if defined(__hpux) && defined(__ia64)
+#if defined(__hpux) && defined(__ia64) && !defined(_DEFINED_MPINFOU)
 union mpinfou {};
 #endif
 #include <net/if.h>

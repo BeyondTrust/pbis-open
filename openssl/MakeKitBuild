@@ -163,6 +163,12 @@ configure_openssl()
         aix-ppc32)
             host_string="aix-gcc"
             ;;
+        hpux-ia64_32)
+            host_string="hpux-ia64-gcc"
+            ;;
+        hpux-ia64_64)
+            host_string="hpux64-ia64-gcc"
+            ;;
         *)
             host_string=""
             ;;

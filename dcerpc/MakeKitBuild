@@ -105,6 +105,9 @@ configure()
             ;;
         hpux)
             target_os="hpux11.11"
+            # HACK HACK HACK
+            mk_define_always _DEFINED_MPINFOU
+            mk_write_config_header "union mpinfou {};"
             ;;
         *)
             mk_fail "unsupported os: $MK_HOST_OS"
@@ -129,6 +132,9 @@ configure()
             ;;
         hppa32)
             target_cpu="hppa2.0"
+            ;;
+        ia64_32)
+            target_cpu="ia64"
             ;;
     esac
 

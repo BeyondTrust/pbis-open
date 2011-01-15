@@ -26,6 +26,7 @@ make()
         --enable-gss_mutexes \
         --disable-static \
         --enable-shared \
+        --enable-fast-install \
         BUILD_CC="$BUILD_CC" \
         BUILD_CFLAGS="$BUILD_CFLAGS"
 }

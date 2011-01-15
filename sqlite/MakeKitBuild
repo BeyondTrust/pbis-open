@@ -4,5 +4,10 @@ make()
         HEADERS='sqlite3.h' \
         LIBS='sqlite3' \
         CPPFLAGS="-D_REENTRANT" \
-        CFLAGS="-fPIC -fno-strict-aliasing"
+        CFLAGS="-fPIC -fno-strict-aliasing" \
+        --disable-readline \
+        --disable-tcl \
+        --disable-static \
+        --enable-shared \
+        --enable-threadsafe
 }
