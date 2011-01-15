@@ -87,6 +87,19 @@
    #include <stdbool.h>
 #endif
 
+/* HP-UX hack for broken system header*/
+#if defined(__hpux) && defined(__hppa) && defined(_XOPEN_SOURCE_EXTENDED)
+#undef _XOPEN_SOURCE_EXTENDED
+#ifdef _NETINET_IN6_H
+#error included netinet/in6.h too late
+#endif
+#include <netinet/in6.h>
+#define _XOPEN_SOURCE_EXTENDED 1
+#else
+#include <netinet/in6.h>
+#endif
+#include <netinet/in.h>
+
 #include <stdarg.h>
 /* pthread.h must be included before errno so that a thread-safe errno is
    used if available.
@@ -108,7 +121,6 @@
 #include <regex.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
-#include <netinet/in.h>
 #include <locale.h>
 
 #include <semaphore.h>

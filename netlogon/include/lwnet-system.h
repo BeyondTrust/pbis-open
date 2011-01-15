@@ -48,64 +48,63 @@
       #undef UNICODE
 #endif
 
-
-#ifdef WIN32
-
-   #include <windows.h>
-   #include <rpc.h>
-   #define SECURITY_WIN32
-   #include <security.h>
-   #include <ntsecapi.h>
+/* HP-UX hack for broken system header*/
+#if defined(__hpux) && defined(__hppa) && defined(_XOPEN_SOURCE_EXTENDED)
+#undef _XOPEN_SOURCE_EXTENDED
+#ifdef _NETINET_IN6_H
+#error included netinet/in6.h too late
 #endif
+#include <netinet/in6.h>
+#define _XOPEN_SOURCE_EXTENDED 1
+#else
+#include <netinet/in6.h>
+#endif
+#include <netinet/in.h>
 
-   #include <stdio.h>
-   #include <stdlib.h>
-   #include <fcntl.h>
-   #include <sys/time.h>
-   #include <time.h>
-   #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/time.h>
+#include <time.h>
+#include <string.h>
 
 #ifdef HAVE_STDBOOL_H
    #include <stdbool.h>
 #endif
 
-#ifndef WIN32
-  #include <stdarg.h>
-  #include <errno.h>	
-  #include <netdb.h>
+#include <stdarg.h>
+#include <errno.h>	
+#include <netdb.h>
 #ifdef HAVE_INTTYPES_H
-  #include <inttypes.h>
+#include <inttypes.h>
 #endif
-  #include <ctype.h>
-  #include <wctype.h>
-  #include <sys/types.h>
-  #include <pthread.h>
-  #include <syslog.h>
-  #include <signal.h>
-  #include <limits.h>
-  #include <unistd.h>
-  #include <sys/stat.h>
-  #include <dirent.h>
-  #include <pwd.h>
-  #include <grp.h>
-  #include <regex.h>
-  #include <sys/un.h>
-  #include <dlfcn.h>
-  #include <arpa/inet.h>
-  #include <arpa/nameser.h>
-  #include <netinet/in.h>
-  #include <resolv.h>
-  #include <locale.h>
-  #include <poll.h>
+#include <ctype.h>
+#include <wctype.h>
+#include <sys/types.h>
+#include <pthread.h>
+#include <syslog.h>
+#include <signal.h>
+#include <limits.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <pwd.h>
+#include <grp.h>
+#include <regex.h>
+#include <sys/un.h>
+#include <dlfcn.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
+#include <locale.h>
+#include <poll.h>
 
 #ifdef HAVE_SOCKET_H
-  #include <socket.h>
+#include <socket.h>
 #endif
 
 #ifdef HAVE_SYS_SOCKET_H
-  #include <sys/socket.h>
-#endif
-
+#include <sys/socket.h>
 #endif
 
 #if HAVE_WC16STR_H
