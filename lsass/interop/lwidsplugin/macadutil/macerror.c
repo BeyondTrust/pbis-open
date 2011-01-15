@@ -353,10 +353,6 @@ LWGetMacError(
             macError = eDSOperationFailed;
             break;
 
-        case LW_ERROR_INVALID_ACCOUNT:
-            macError = eDSAuthUnknownUser;
-            break;
-
         case LW_ERROR_INVALID_PASSWORD:
             macError = eDSAuthBadPassword;
             break;
@@ -365,7 +361,6 @@ LWGetMacError(
         case LW_ERROR_NO_SUCH_OBJECT:
         case LW_ERROR_DUPLICATE_USER_OR_GROUP:
         case LW_ERROR_INVALID_KRB5_CACHE_TYPE:
-        case LW_ERROR_NOT_JOINED_TO_AD:
         case LW_ERROR_FAILED_TO_SET_TIME:
         case LW_ERROR_NO_NETBIOS_NAME:
         case LW_ERROR_INVALID_NETLOGON_RESPONSE:

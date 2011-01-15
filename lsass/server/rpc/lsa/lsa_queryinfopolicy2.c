@@ -170,7 +170,7 @@ LsaQueryDomainInfo(
                   LSA_PROVIDER_TAG_AD,
                   NULL,
                   &pAccountInfo);
-    if (dwError == LW_ERROR_INVALID_ACCOUNT)
+    if (dwError == NERR_SetupNotJoined)
     {
         /* No password info means we're not joined */
         ntStatus = STATUS_INVALID_INFO_CLASS;
@@ -257,7 +257,7 @@ LsaQueryDnsDomainInfo(
                   LSA_PROVIDER_TAG_AD,
                   NULL,
                   &pAccountInfo);
-    if (dwError == LW_ERROR_INVALID_ACCOUNT)
+    if (dwError == NERR_SetupNotJoined)
     {
         ntStatus = STATUS_INVALID_INFO_CLASS;
         BAIL_ON_NT_STATUS(ntStatus);

@@ -75,7 +75,7 @@ AD_GetMachineAccountInfoA(
             dwError = LsaPcacheGetMachineAccountInfoA(
                             pState->pPcache,
                             &pCachedAccountInfo);
-            if (dwError == LW_ERROR_INVALID_ACCOUNT)
+            if (dwError == NERR_SetupNotJoined)
             {
                 dwError = 0;
             }
@@ -160,7 +160,7 @@ AD_GetMachineAccountInfoW(
             dwError = LsaPcacheGetMachineAccountInfoW(
                             pState->pPcache,
                             &pCachedAccountInfo);
-            if (dwError == LW_ERROR_INVALID_ACCOUNT)
+            if (dwError == NERR_SetupNotJoined)
             {
                 dwError = 0;
             }
@@ -249,7 +249,7 @@ AD_GetMachinePasswordInfoA(
             dwError = LsaPcacheGetMachinePasswordInfoA(
                             pState->pPcache,
                             &pCachedPasswordInfo);
-            if (dwError == LW_ERROR_INVALID_ACCOUNT)
+            if (dwError == NERR_SetupNotJoined)
             {
                 dwError = 0;
             }
@@ -334,7 +334,7 @@ AD_GetMachinePasswordInfoW(
             dwError = LsaPcacheGetMachinePasswordInfoW(
                             pState->pPcache,
                             &pCachedPasswordInfo);
-            if (dwError == LW_ERROR_INVALID_ACCOUNT)
+            if (dwError == NERR_SetupNotJoined)
             {
                 dwError = 0;
             }

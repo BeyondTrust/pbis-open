@@ -148,7 +148,7 @@ SqliteMachineAccountToPstore(
         numRows == 0 ||
         LW_IS_NULL_OR_EMPTY_STR(ppszResults[1]))
     {
-        dwError = LW_ERROR_INVALID_ACCOUNT;
+        dwError = NERR_SetupNotJoined;
     }
     else if (numRows != 1)
     {

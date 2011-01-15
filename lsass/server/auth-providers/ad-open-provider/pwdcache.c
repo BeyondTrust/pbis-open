@@ -202,7 +202,7 @@ LsaPcachepEnsurePasswordInfoAndLock(
 
     if (!pPcache)
     {
-        dwError = LW_ERROR_INVALID_ACCOUNT; 
+        dwError = NERR_SetupNotJoined;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -259,19 +259,11 @@ LsaPcachepLoadPasswordInfoInLock(
     dwError = LsaPstoreGetPasswordInfoA(
                     pPcache->pszDomainName,
                     &pPasswordInfoA);
-    if (dwError == NERR_SetupNotJoined)
-    {
-        dwError = LW_ERROR_INVALID_ACCOUNT;
-    }
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaPstoreGetPasswordInfoW(
                     pPcache->pwszDomainName,
                     &pPasswordInfoW);
-    if (dwError == NERR_SetupNotJoined)
-    {
-        dwError = LW_ERROR_INVALID_ACCOUNT;
-    }
     BAIL_ON_LSA_ERROR(dwError);
 
     LSA_ASSERT(pPasswordInfoA->Account.KeyVersionNumber == pPasswordInfoW->Account.KeyVersionNumber);
