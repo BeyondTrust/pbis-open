@@ -1744,7 +1744,7 @@ AD_OnlineCheckUserPassword(
                     &pNdrEncodedPac,
                     &sNdrEncodedPac,
                     pdwGoodUntilTime);
-    if (dwError == LW_ERROR_KRB5_S_PRINCIPAL_UNKNOWN)
+    if (dwError == LW_ERROR_KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN)
     {
         // Perhaps the host has no SPN.  Try again
         // using the UPN (sAMAccountName@REALM).

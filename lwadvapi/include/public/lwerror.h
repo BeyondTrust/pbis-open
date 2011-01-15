@@ -193,7 +193,7 @@
 #define LW_ERROR_NO_ATTRIBUTE_VALUE                        40151
 #define LW_ERROR_MEMBER_IN_LOCAL_GROUP                     40152
 #define LW_ERROR_MEMBER_NOT_IN_LOCAL_GROUP                 40153
-#define LW_ERROR_KRB5_S_PRINCIPAL_UNKNOWN                  40154
+// Obsolete LW_ERROR_KRB5_S_PRINCIPAL_UNKNOWN              40154
 #define LW_ERROR_INVALID_GROUP                             40155
 #define LW_WARNING_CONTINUE_NEEDED                         40157
 #define LW_ERROR_ACCESS_DENIED                             40158
@@ -453,6 +453,8 @@
 #define LW_ERROR_KRB5KDC_ERR_BAD_PVNO                      41734
 #define LW_ERROR_KRB5KDC_ERR_C_OLD_MAST_KVNO               41735
 #define LW_ERROR_KRB5KDC_ERR_S_OLD_MAST_KVNO               41736
+#define LW_ERROR_KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN           41737
+#define LW_ERROR_KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN           41738
 #define LW_ERROR_KRB5KDC_ERR_PRINCIPAL_NOT_UNIQUE          41739
 #define LW_ERROR_KRB5KDC_ERR_NULL_KEY                      41740
 #define LW_ERROR_KRB5KDC_ERR_CANNOT_POSTDATE               41741
