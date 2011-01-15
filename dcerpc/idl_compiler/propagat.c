@@ -63,12 +63,6 @@ static void         **cmd_val;  /* Array of command option values */
     ||  (type_p)->kind == AST_pointer_k )
 
 /*
- * Macro to return the larger of two numbers
- */
-#define MAX(a,b) ((a) > (b))?(a):(b)
-
-
-/*
  * Macro to set the first argument to the larger of the two numbers
  */
 #define COPY_IF_LARGER(a,b) {if ((b) > (a)) (a) = (b);}
