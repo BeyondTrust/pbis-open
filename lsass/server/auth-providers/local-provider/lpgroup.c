@@ -605,7 +605,7 @@ LocalDirModifyGroup(
             else if (dwNumEntries == 0 &&
                      !bForeignSid)
             {
-                dwError = LW_ERROR_INVALID_ACCOUNT;
+                dwError = LW_ERROR_NO_SUCH_OBJECT;
                 BAIL_ON_LSA_ERROR(dwError);
             }
             else if (dwNumEntries > 1)
