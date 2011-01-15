@@ -54,10 +54,10 @@
  * license@likewisesoftware.com
  */
 
-#include "lw/types.h"
 #ifdef HAVE_CONFIG_H
 #    include <config.h>
 #endif
+#include "lw/types.h"
 #undef malloc
 #undef realloc
 
