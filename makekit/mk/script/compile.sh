@@ -66,7 +66,8 @@ if [ -z "$DISABLE_DEPGEN" ]
 then
     mk_mkdir ".MakeKitDeps"
     _mk_slashless_name "${_object%.o}"
-    DEP_FLAGS="-MMD -MP -MF .MakeKitDeps/${result}.dep"
+    mk_quote ".MakeKitDeps/$result.dep"
+    DEP_FLAGS="-MMD -MP -MF $result"
 fi
 
 if [ "$PIC" = "yes" ]
@@ -74,12 +75,20 @@ then
     EXTRA_FLAGS="$EXTRA_FLAGS -fPIC"
 fi
 
+case "$MK_OS" in
+    darwin)
+        EXTRA_FLAGS="$EXTRA_FLAGS -fno-common"
+        ;;
+esac
+
 mk_msg "${_source#${MK_SOURCE_DIR}/} ($MK_CANONICAL_SYSTEM)"
 
 mk_mkdir "`dirname "$_object"`"
+
+mk_unquote_list "$DEP_FLAGS"
 mk_run_or_fail ${CPROG} \
     ${INCLUDE_CPPFLAGS} ${MK_CPPFLAGS} ${CPPFLAGS} ${EXTRA_CPPFLAGS} \
     ${MK_FLAGS} ${FLAGS} ${EXTRA_FLAGS} \
-    ${DEP_FLAGS} \
+    "$@" \
     -o "$_object" \
     -c "$_source"

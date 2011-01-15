@@ -296,7 +296,7 @@ _mk_rule()
 
     if [ -n "$__command" ]
     then
-        _mk_emitf '\n%s: %s\n\t@$(MK_CONTEXT) "%s"; mk_system "%s"; \\\n\t%s\n' "$__lhs" "${*# }" "$MK_SUBDIR" "$MK_SYSTEM" "${__command# }"
+        _mk_emitf '\n%s: %s\n\t@$(MK_CONTEXT) "%s"; mk_system "%s"; \\\n\t%s\n' "$__lhs" "${*# }" "$MK_SUBDIR" "$SYSTEM" "${__command# }"
     else
         _mk_emitf '\n%s: %s\n' "$__lhs" "${*# }"
     fi
@@ -340,14 +340,13 @@ _mk_build_command()
 
 _mk_build_command_expand()
 {
-    
     mk_unquote_list "$1"
     _mk_build_command "$@"
 }
 
 mk_target()
 {
-    mk_push_vars TARGET DEPS
+    mk_push_vars TARGET DEPS SYSTEM="$MK_SYSTEM"
     mk_parse_params
 
     __resolved=""
@@ -435,6 +434,11 @@ mk_symlink()
     [ -z "$LINK" ] && LINK="$2"
 
     case "$TARGET" in
+        @*)
+            mk_quote "$TARGET"
+            DEPS="$DEPS $result"
+            TARGET="${TARGET#@}"
+            ;;
         /*)
             mk_quote "$TARGET"
             DEPS="$DEPS $result"
@@ -463,13 +467,13 @@ mk_stage()
     if [ -n "$SOURCE" -a -n "$DEST" ]
     then
         mk_quote "$SOURCE"
+        SOURCE="$result"
+        mk_quote "$DEST"
         mk_target \
             TARGET="$DEST" \
-            DEPS="$result $DEPS" \
-            _mk_core_stage "&$DEST" "&$SOURCE" "$MODE"
-        _result="$result"
+            DEPS="$SOURCE $DEPS" \
+            _mk_core_stage "&$result" "&$SOURCE" "$MODE"
         mk_add_all_target "$result"
-        result="$_result"
     elif [ -n "$SOURCE" -a -n "$DESTDIR" ]
     then
         mk_stage \
@@ -533,7 +537,7 @@ mk_output_file()
     # Now overwrites its contents
     # We don't use mk_run_or_fail because it can log
     # output if MK_VERBOSE is set
-    awk -f ".awk.$$" < "$_input" > "${_output}.new" || mk_fail "could not run awk"
+    ${AWK} -f ".awk.$$" < "$_input" > "${_output}.new" || mk_fail "could not run awk"
     mk_run_or_fail rm -f ".awk.$$"
 
     if [ -f "${_output}" ] && diff "${_output}" "${_output}.new" >/dev/null 2>&1
@@ -564,6 +568,14 @@ mk_add_scrub_target()
     mk_push_vars result
     mk_quote "${1#@}"
     MK_SCRUB_TARGETS="$MK_SCRUB_TARGETS $result"
+    mk_pop_vars
+}
+
+mk_add_nuke_target()
+{
+    mk_push_vars result
+    mk_quote "${1#@}"
+    MK_NUKE_TARGETS="$MK_NUKE_TARGETS $result"
     mk_pop_vars
 }
 
@@ -695,14 +707,17 @@ option()
 
 configure()
 {
+    # Check for best possible awk
+    mk_check_program VAR=AWK FAIL=yes gawk awk
+
     # Default clean targets
-    MK_CLEAN_TARGETS="${MK_RUN_DIR}"
+    MK_CLEAN_TARGETS="@${MK_RUN_DIR}"
 
     # Default scrub targets
     MK_SCRUB_TARGETS="${MK_STAGE_DIR}"
 
     # Default nuke targets (scrub targets implicitly included)
-    MK_NUKE_TARGETS="${MK_OBJECT_DIR} ${MK_RUN_DIR} Makefile config.log .MakeKitCache .MakeKitBuild .MakeKitExports .MakeKitDeps"
+    MK_NUKE_TARGETS="${MK_OBJECT_DIR} ${MK_RUN_DIR} Makefile config.log .MakeKitCache .MakeKitBuild .MakeKitExports .MakeKitDeps .MakeKitClean"
 
     # Add a post-make() hook to write out a rule
     # to build all relevant targets in that subdirectory
@@ -731,9 +746,15 @@ make()
 
     mk_add_phony_target "$result"
 
+    mk_unquote_list "$MK_CLEAN_TARGETS"
+    for _clean
+    do
+        echo "${_clean#@}"
+    done > .MakeKitClean || mk_fail "could not write .MakeKitClean"
+
     mk_target \
         TARGET="@clean" \
-        mk_run_script clean '$(SUBDIR)' "*$MK_CLEAN_TARGETS"
+        mk_run_script clean '$(SUBDIR)'
 
     mk_add_phony_target "$result"
 

@@ -132,7 +132,6 @@ _mk_process_build_module()
 _mk_process_build_configure()
 {
     unset -f option configure make
-    unset SUBDIRS
 
     MK_CURRENT_FILE="${MK_SOURCE_DIR}$1/MakeKitBuild"
     MK_BUILD_FILES="$MK_BUILD_FILES $MK_CURRENT_FILE"

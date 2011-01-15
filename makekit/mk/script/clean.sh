@@ -37,7 +37,7 @@ do_clean()
                 if [ -e "$_target" ]
                 then
                     mk_msg "${_target#${MK_OBJECT_DIR}/}"
-                        mk_safe_rm "$_target"
+                    mk_safe_rm "$_target"
                 fi
                 ;;
         esac
@@ -45,4 +45,10 @@ do_clean()
 }
 
 subdir="${1:+$MK_OBJECT_DIR/$1}"
+
+_IFS="$IFS"
+IFS='
+'
+set -- `cat .MakeKitClean` || mk_fail "could not read .MakeKitClean"
+IFS="$_IFS"
 do_clean "$@"

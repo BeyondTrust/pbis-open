@@ -39,49 +39,61 @@
 
 mk_check_program()
 {
-    mk_push_vars PROGRAM FAIL
+    mk_push_vars VAR PROGRAM FAIL
     mk_parse_params
     
     if [ -z "$PROGRAM" ]
     then
         PROGRAM="$1"
+        shift
     fi
+
+    if [ -z "$VAR" ]
+    then
+        _mk_define_name "$PROGRAM"
+        VAR="$result"
+    fi
+
+    set -- "$PROGRAM" "$@"
+
+    mk_get "$VAR"
+    [ -n "$result" ] && set -- "$result" "$@"
     
-    _mk_define_name "$PROGRAM"
-    _def="$result"
     _res=""
-    
-    if _mk_contains "$PROGRAM" "$MK_INTERNAL_PROGRAMS"
-    then
-        _res="${MK_RUN_BINDIR}/${PROGRAM}"
-    else
-        _IFS="$IFS"
-        IFS=":"
-        for __dir in ${MK_PATH} ${PATH}
-        do
-            if [ -x "${__dir}/${PROGRAM}" ]
-            then
-                _res="${__dir}/${PROGRAM}"
-                break;
-            fi
-        done
-        IFS="$_IFS"
-    fi
-    
-    mk_export "$_def=$_res"
-    
-    if [ -z "$_res" ]
-    then
-        mk_msg "program $PROGRAM: not found"
-        if [ "$FAIL" = "yes" ]
+
+    for _cand
+    do
+        mk_msg_checking "program $_cand"
+        if _mk_contains "$_cand" "$MK_INTERNAL_PROGRAMS"
         then
-            mk_fail "could not find program: $PROGRAM"
+            mk_msg_result "(internal)"
+            _res="${MK_RUN_BINDIR}/${_cand}"
+            break
+        else
+            _IFS="$IFS"
+            IFS=":"
+            for __dir in ${MK_PATH} ${PATH}
+            do
+                if [ -x "${__dir}/${_cand}" ]
+                then
+                    _res="${__dir}/${_cand}"
+                    mk_msg_result "$_res"
+                    break;
+                fi
+            done
+            IFS="$_IFS"
         fi
-        mk_pop_vars
-        return 1
-    else
-        mk_msg "program $PROGRAM: $_res"
-        mk_pop_vars
-        return 0
+        [ -n "$_res" ] && break
+        mk_msg_result "no"
+    done
+
+    if [ -z "$_res" -a "$FAIL" = "yes" ]
+    then
+        mk_fail "could not find program: $PROGRAM"
     fi
+   
+    mk_export "$VAR=$_res"
+    
+    mk_pop_vars
+    [ -n "$_res" ]
 }

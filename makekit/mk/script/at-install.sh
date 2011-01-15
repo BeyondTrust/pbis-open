@@ -26,7 +26,7 @@
 # THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-MK_MSG_DOMAIN="build"
+mk_msg_domain "stage"
 
 if [ -n "$SOURCEDIR" ]
 then
@@ -42,8 +42,8 @@ __msg="$dirname ($MK_CANONICAL_SYSTEM)"
 mk_msg "begin ${__msg}"
 
 _stamp="$1"
-mk_mkdir "${MK_STAGE_DIR}"
-_stage_dir="`cd "${MK_STAGE_DIR}" && pwd`"
+mk_mkdir "${DESTDIR}"
+_stage_dir="`cd "${DESTDIR}" && pwd`"
 
 if [ -d "$MK_RUN_BINDIR" ]
 then
@@ -63,7 +63,62 @@ case "$MK_OS:$MK_ISA" in
 esac
 
 cd "${MK_OBJECT_DIR}${MK_SUBDIR}/$BUILDDIR" || mk_fail "could not change directory"
-mk_run_quiet_or_fail ${MAKE} ${MFLAGS} ${MAKE_BUILD_TARGET}
+if [ "${MK_SYSTEM%/*}" = "build" ]
+then
+    if [ -n "$INSTALL_PRE" ]
+    then
+        ${INSTALL_PRE} "${MK_ROOT_DIR}/${MK_RUN_DIR}"
+    fi
+    mk_run_quiet_or_fail ${MAKE} ${MFLAGS} ${MAKE_INSTALL_TARGET}
+    if [ -n "$INSTALL_POST" ]
+    then
+        ${INSTALL_POST} "${MK_ROOT_DIR}/${MK_RUN_DIR}"
+    fi
+elif [ -n "$SELECT" ]
+then
+    # We have to install to a temporary location, then copy selected files
+    rm -rf ".install"
+    if [ -n "$INSTALL_PRE" ]
+    then
+        ${INSTALL_PRE} "${PWD}/.install"
+    fi
+    mk_run_quiet_or_fail ${MAKE} ${MFLAGS} DESTDIR="${PWD}/.install" ${MAKE_INSTALL_TARGET}
+    if [ -n "$INSTALL_POST" ]
+    then
+        ${INSTALL_POST} "${PWD}/.install"
+    fi
+    mk_expand_absolute_pathnames "$SELECT" ".install"
+    mk_unquote_list "$result"
+    for _file in "$@"
+    do
+        if [ -e ".install${_file}" ]
+        then
+            _dest="${_stage_dir}${_file}"
+            mk_mkdir "${_dest%/*}"
+            cp -pr ".install${_file}" "$_dest" || mk_fail "failed to copy file: $_file"
+        else
+            mk_fail "could not select file: $_file"
+        fi
+    done
+    rm -rf ".install"
+else
+    if [ -n "$INSTALL_PRE" ]
+    then
+        ${INSTALL_PRE} "${_stage_dir}"
+    fi
+    mk_run_quiet_or_fail ${MAKE} ${MFLAGS} DESTDIR="${_stage_dir}" ${MAKE_INSTALL_TARGET}
+    if [ -n "$INSTALL_POST" ]
+    then
+        ${INSTALL_POST} "${_stage_dir}"
+    fi
+fi
+
 cd "${MK_ROOT_DIR}"
+
+if [ -n "$INSTALL_POST" ]
+then
+    ${INSTALL_POST}
+fi
+
 mk_run_or_fail touch "$_stamp"
 mk_msg "end ${__msg}"

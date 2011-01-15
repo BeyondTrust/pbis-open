@@ -34,9 +34,9 @@
 
 ### section common
 
-alias mk_multiarch_do='for __isa in ${MK_HOST_ISAS}; do mk_system "host/$__isa"'
+alias mk_multiarch_do='for __sys in ${_MK_MULTIARCH_SYS}; do mk_system "$__sys"'
 alias mk_multiarch_done='done; mk_system "host"'
-alias mk_compat_do='for __isa in ${MK_HOST_ISAS#$MK_HOST_PRIMARY_ISA}; do mk_system "host/$__isa"'
+alias mk_compat_do='for __sys in ${_MK_COMPAT_SYS}; do mk_system "$__sys"'
 alias mk_compat_done='done; mk_system "host"'
 
 mk_get_system_var()
@@ -195,12 +195,36 @@ option()
         FreeBSD)
             _default_MK_BUILD_OS="freebsd"
             ;;
+        Darwin)
+            _default_MK_BUILD_OS="darwin"
+            ;;
+        AIX)
+            _default_MK_BUILD_OS="aix"
+            ;;
+        HP-UX)
+            _default_MK_BUILD_OS="hpux"
+            ;;
         *)
             _default_MK_BUILD_OS="unknown"
             ;;
     esac
 
     case "$_default_MK_BUILD_OS" in
+        darwin)
+            case `uname -m` in
+                i386)
+                    if [ "`sysctl -n hw.optional.x86_64 2>/dev/null`" = "1" ]
+                    then
+                        _default_MK_BUILD_ARCH="x86_64"
+                    else
+                        _default_MK_BUILD_ARCH="x86"
+                    fi
+                    ;;
+                *)
+                    mk_fail "unknown architecture: `uname -m`"
+                    ;;
+            esac
+            ;;
         solaris)
             _isainfo="`isainfo`"
             case "$_isainfo" in
@@ -221,6 +245,38 @@ option()
                     ;;
             esac
             ;;
+        aix)
+            # AIX only supports POWER, making this easy
+            _default_MK_BUILD_ARCH="powerpc"
+            ;;
+        hpux)
+            if hp-pa 2>&1 >/dev/null
+            then
+                case `/usr/bin/getconf SC_CPU_VERSION 2>/dev/null` in
+                    523)
+                        _default_MK_BUILD_ARCH="hppa1.0"
+                        ;;
+                    528)
+                        _default_MK_BUILD_ARCH="hppa1.1"
+                        ;;
+                    532)
+                        _default_MK_BUILD_ARCH="hppa2.0"
+                        ;;
+                    *)
+                        _default_MK_BUILD_ARCH="unknown"
+                        ;;
+                esac
+            else
+                case `uname -m` in
+                    ia64)
+                        _default_MK_BUILD_ARCH="ia64"
+                        ;;
+                    *)
+                        mk_fail "unknown architecture: `uname -m`"
+                        ;;
+                esac
+            fi
+            ;;
         *)
             case `uname -m` in
                 i?86|i86pc)
@@ -240,7 +296,7 @@ option()
         *"-x86")
             _default_MK_BUILD_ISAS="x86_32"
             ;;
-        "linux-x86_64")
+        "linux-x86_64"|"darwin-x86_64")
             _default_MK_BUILD_ISAS="x86_64 x86_32"
             ;;
         "solaris-x86_64")
@@ -251,6 +307,18 @@ option()
             ;;
         *"-sparc")
             _default_MK_BUILD_ISAS="sparc_32"
+            ;;
+        *"-powerpc")
+            _default_MK_BUILD_ISAS="ppc32 ppc64"
+            ;;
+        *"-hppa1."*)
+            _default_MK_BUILD_ISAS="hppa32"
+            ;;
+        *"-hppa2.0")
+            _default_MK_BUILD_ISAS="hppa32 hppa64"
+            ;;
+        "hpux-ia64")
+            _default_MK_BUILD_ISAS="ia64_32 ia64_64"
             ;;
         *)
             _default_MK_BUILD_ISAS="$_default_MK_BUILD_ARCH"
@@ -292,21 +360,49 @@ option()
             else
                 _default_MK_BUILD_DISTRO="unknown"
                 _default_MK_BUILD_DISTRO_VERSION="unknown"
-            fi                
+            fi
+            _default_MK_BUILD_MULTIARCH="separate"
             ;;
         freebsd)
             __release="`uname -r`"
             _default_MK_BUILD_DISTRO="`uname -s | tr 'A-Z' 'a-z'`"
             _default_MK_BUILD_DISTRO_VERSION="${__release%-*}"
+            _default_MK_BUILD_MULTIARCH="separate"
             ;;
         solaris)
             __release="`uname -r`"
             _default_MK_BUILD_DISTRO="solaris"
             _default_MK_BUILD_DISTRO_VERSION="${__release#*.}"
+            _default_MK_BUILD_MULTIARCH="separate"
+            ;;
+        darwin)
+            case "`sw_vers -productName 2>/dev/null`" in
+                "Mac OS X")
+                    _default_MK_BUILD_DISTRO="macosx"
+                    _default_MK_BUILD_DISTRO_VERSION="`sw_vers -productVersion`"
+                    ;;
+                *)
+                    _default_MK_BUILD_DISTRO="unknown"
+                    _default_MK_BUILD_DISTRO_VERSION="unknown"
+                    ;;
+            esac
+            _default_MK_BUILD_MULTIARCH="combine"
+            ;;
+        aix)
+            _default_MK_BUILD_DISTRO="aix"
+            _default_MK_BUILD_DISTRO_VERSION="`uname -v`.`uname -r`"
+            _default_MK_BUILD_MULTIARCH="separate"
+            ;;
+        hpux)
+            _default_MK_BUILD_DISTRO="hpux"
+            __release="`uname -r`"
+            _default_MK_BUILD_DISTRO_VERSION="${__release#B.}"
+            _default_MK_BUILD_MULTIARCH="separate"
             ;;
         *)
             _default_MK_BUILD_DISTRO="unknown"
             _default_MK_BUILD_DISTRO_VERSION="unknown"
+            _default_MK_BUILD_MULTIARCH="none"
             ;;
     esac
 
@@ -327,6 +423,12 @@ option()
         VAR=MK_BUILD_ISAS \
         DEFAULT="$_default_MK_BUILD_ISAS" \
         HELP="Build instruction set architectures"
+
+    mk_option \
+        OPTION=build-multiarch \
+        VAR=MK_BUILD_MULTIARCH \
+        DEFAULT="$_default_MK_BUILD_MULTIARCH" \
+        HELP="Build multiarchitecture binary style"
 
     mk_option \
         OPTION=build-distro \
@@ -380,6 +482,12 @@ option()
         HELP="Host instruction set architectures"
 
     mk_option \
+        OPTION=host-multiarch \
+        VAR=MK_HOST_MULTIARCH \
+        DEFAULT="$MK_BUILD_MULTIARCH" \
+        HELP="Host multiarchitecture binary style"
+
+    mk_option \
         OPTION=host-distro \
         VAR=MK_HOST_DISTRO \
         DEFAULT="$MK_BUILD_DISTRO" \
@@ -424,11 +532,11 @@ configure()
         MK_BUILD_PRIMARY_ISA MK_HOST_OS MK_HOST_DISTRO \
         MK_HOST_DISTRO_VERSION MK_HOST_DISTRO_ARCHETYPE \
         MK_HOST_ARCH MK_HOST_ISAS MK_HOST_PRIMARY_ISA \
-        MK_SYSTEM_VARS
+        MK_SYSTEM_VARS MK_HOST_MULTIARCH MK_BUILD_MULTIARCH
 
     mk_declare_system_var \
         MK_OS MK_DISTRO MK_DISTRO_VERSION MK_DISTRO_ARCHETYPE \
-        MK_ARCH MK_ISAS MK_ISA MK_DLO_EXT MK_LIB_EXT
+        MK_ARCH MK_ISAS MK_MULTIARCH MK_ISA MK_DLO_EXT MK_LIB_EXT
 
     for _isa in ${MK_BUILD_ISAS}
     do
@@ -438,6 +546,7 @@ configure()
         mk_set_system_var SYSTEM="build/$_isa" MK_DISTRO_ARCHETYPE "$MK_BUILD_DISTRO_ARCHETYPE"
         mk_set_system_var SYSTEM="build/$_isa" MK_ARCH "$MK_BUILD_ARCH"
         mk_set_system_var SYSTEM="build/$_isa" MK_ISAS "$MK_BUILD_ISAS"
+        mk_set_system_var SYSTEM="build/$_isa" MK_MULTIARCH "$MK_BUILD_MULTIARCH"
         mk_set_system_var SYSTEM="build/$_isa" MK_ISA "$_isa"
     done
 
@@ -448,6 +557,7 @@ configure()
         mk_set_system_var SYSTEM="host/$_isa" MK_DISTRO_VERSION "$MK_HOST_DISTRO_VERSION"
         mk_set_system_var SYSTEM="host/$_isa" MK_DISTRO_ARCHETYPE "$MK_HOST_DISTRO_ARCHETYPE"
         mk_set_system_var SYSTEM="host/$_isa" MK_ARCH "$MK_HOST_ARCH"
+        mk_set_system_var SYSTEM="host/$_isa" MK_MULTIARCH "$MK_HOST_MULTIARCH"
         mk_set_system_var SYSTEM="host/$_isa" MK_ISAS "$MK_HOST_ISAS"
         mk_set_system_var SYSTEM="host/$_isa" MK_ISA "$_isa"
     done
@@ -459,7 +569,15 @@ configure()
         for _isa in $MK_ISAS
         do
             case "$MK_OS-$_isa" in
-                linux-*|solaris-*|freebsd-*)
+                darwin-*)
+                    mk_set_system_var SYSTEM="$_sys/$_isa" MK_LIB_EXT ".dylib"
+                    mk_set_system_var SYSTEM="$_sys/$_isa" MK_DLO_EXT ".so"
+                    ;;
+                hpux-hppa*)
+                    mk_set_system_var SYSTEM="$_sys/$_isa" MK_LIB_EXT ".sl"
+                    mk_set_system_var SYSTEM="$_sys/$_isa" MK_DLO_EXT ".sl"
+                    ;;
+                *)
                     mk_set_system_var SYSTEM="$_sys/$_isa" MK_LIB_EXT ".so"
                     mk_set_system_var SYSTEM="$_sys/$_isa" MK_DLO_EXT ".so"
                     ;;
@@ -471,6 +589,7 @@ configure()
         mk_msg "$_sys distribution version: $MK_DISTRO_VERSION"
         mk_msg "$_sys processor architecture: $MK_ARCH"
         mk_msg "$_sys instruction set architectures: $MK_ISAS"
+        mk_msg "$_sys multiarchitecture binary style: $MK_MULTIARCH"
     done
 
     if [ "$MK_BUILD_OS:$MK_BUILD_ARCH" != "$MK_HOST_OS:$MK_HOST_ARCH" ]
@@ -479,6 +598,37 @@ configure()
     else
         MK_CROSS_COMPILING="no"
     fi
+
+    _MK_MULTIARCH_SYS_CONFIGURE=
+    _MK_MULTIARCH_SYS_MAKE=
+
+    case "$MK_HOST_MULTIARCH" in
+        separate)
+            for _isa in ${MK_HOST_ISAS}
+            do
+                _MK_MULTIARCH_SYS_CONFIGURE="$_MK_MULTIARCH_SYS_CONFIGURE host/$_isa"
+                _MK_MULTIARCH_SYS_MAKE="$_MK_MULTIARCH_SYS_MAKE host/$_isa"
+            done
+            ;;
+        combine)
+            for _isa in ${MK_HOST_ISAS}
+            do
+                _MK_MULTIARCH_SYS_CONFIGURE="$_MK_MULTIARCH_SYS_CONFIGURE host/$_isa"
+            done
+
+            _MK_MULTIARCH_SYS_MAKE="host"
+            ;;
+        none)
+            _MK_MULTIARCH_SYS_CONFIGURE="host"
+            _MK_MULTIARCH_SYS_MAKE="host"
+            ;;
+    esac
+
+    set -- ${_MK_MULTIARCH_SYS_CONFIGURE}; shift
+    _MK_MULTIARCH_COMPAT_CONFIGURE="$*"
+
+    set -- ${_MK_MULTIARCH_SYS_MAKE}; shift
+    _MK_MULTIARCH_COMPAT_MAKE="$*"
 
     mk_export MK_CROSS_COMPILING
 
@@ -489,6 +639,11 @@ configure()
     # all configure() and make() functions
     mk_add_configure_prehook _mk_platform_restore_system_vars
     mk_add_make_prehook _mk_platform_restore_system_vars
+
+    # Register hooks to set up mk_multiarch_do/mk_compat_do
+    # at the beginning of configure and make stages
+    mk_add_configure_prehook _mk_platform_configure_multiarch
+    mk_add_make_prehook _mk_platform_make_multiarch
 
     # Register hooks that commit all system variables
     # at the end of all configure() and make() functions so that they
@@ -523,4 +678,16 @@ _mk_platform_commit_system_vars()
             eval "${___var}_${result}=\"\$$___var\""
         done
     fi
+}
+
+_mk_platform_configure_multiarch()
+{
+    _MK_MULTIARCH_SYS="${_MK_MULTIARCH_SYS_CONFIGURE}"
+    _MK_COMPAT_SYS="${_MK_MULTIARCH_COMPAT_CONFIGURE}"
+}
+
+_mk_platform_make_multiarch()
+{
+    _MK_MULTIARCH_SYS="${_MK_MULTIARCH_SYS_MAKE}"
+    _MK_COMPAT_SYS="${_MK_MULTIARCH_COMPAT_MAKE}"
 }

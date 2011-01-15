@@ -45,13 +45,6 @@ option()
         DEFAULT='/usr/local' \
         HELP="Architecture-independent installation prefix"
 
-    mk_option \
-        OPTION=exec-prefix \
-        VAR=MK_EPREFIX \
-        PARAM="path" \
-        DEFAULT="$MK_PREFIX" \
-        HELP="Architecture-dependent installation prefix"
-    
     if [ "${MK_PREFIX}" = "/usr" ]
     then
         _default_sysconfdir="/etc"
@@ -61,44 +54,13 @@ option()
         _default_localstatedir="$MK_PREFIX/var"
     fi
 
-    for _isa in ${MK_HOST_ISAS}
-    do
-        _mk_define_name "host/$_isa"
-        _var="MK_LIBDIR_$result"
-        
-        case "${MK_HOST_OS}-${MK_HOST_DISTRO_ARCHETYPE}-${MK_HOST_ARCH}-${_isa}" in
-            linux-redhat-x86_64-x86_64|linux-suse-x86_64-x86_64)
-                _default_libdir="${MK_EPREFIX}/lib64"
-                ;;
-            linux-debian-x86_64-x86_32)
-                _default_libdir="${MK_EPREFIX}/lib32"
-                ;;
-            solaris-*-sparc*-sparc_64)
-                _default_libdir="${MK_EPREFIX}/lib/sparcv9"
-                ;;
-            solaris-*-x86_64-x86_64)
-                _default_libdir="${MK_EPREFIX}/lib/64"
-                ;;
-            *)
-                _default_libdir="${MK_EPREFIX}/lib"
-                ;;
-        esac
-
-        if [ "$_isa" = "${MK_HOST_ISAS% *}" ]
-        then
-            _option="libdir"
-        else
-            _option="libdir-$(echo $_isa | tr '_' '-')"
-        fi
-
-        mk_option \
-            OPTION="$_option" \
-            VAR="$_var"  \
-            PARAM="path" \
-            DEFAULT="$_default_libdir" \
-            HELP="Library directory ($_isa)"
-    done
-
+    mk_option \
+        OPTION=exec-prefix \
+        VAR=MK_EPREFIX \
+        PARAM="path" \
+        DEFAULT="$MK_PREFIX" \
+        HELP="Architecture-dependent installation prefix"
+    
     mk_option \
         VAR=MK_INCLUDEDIR \
         OPTION=includedir \
@@ -126,6 +88,58 @@ option()
         PARAM="path" \
         DEFAULT="${MK_EPREFIX}/libexec" \
         HELP="Program executable directory"
+
+    mk_option \
+        VAR=MK_BASELIBDIR \
+        OPTION=libdir \
+        PARAM="path" \
+        DEFAULT="${MK_EPREFIX}/lib" \
+        HELP="Library directory (base)"
+
+    if [ "$MK_HOST_MULTIARCH" = "separate" ]
+    then
+        for _isa in ${MK_HOST_ISAS}
+        do
+            _mk_define_name "host/$_isa"
+            _var="MK_LIBDIR_$result"
+            
+            case "${MK_HOST_OS}-${MK_HOST_DISTRO_ARCHETYPE}-${MK_HOST_ARCH}-${_isa}" in
+                linux-redhat-x86_64-x86_64|linux-suse-x86_64-x86_64|aix-*-powerpc-ppc64)
+                    _default_libdir="${MK_BASELIBDIR}64"
+                    ;;
+                linux-debian-x86_64-x86_32)
+                    _default_libdir="${MK_BASELIBDIR}32"
+                    ;;
+                solaris-*-sparc*-sparc_64)
+                    _default_libdir="${MK_BASELIBDIR}/sparcv9"
+                    ;;
+                solaris-*-x86_64-x86_64)
+                    _default_libdir="${MK_BASELIBDIR}/64"
+                    ;;
+                hpux-*-hppa2.0-hppa64)
+                    _default_libdir="${MK_BASELIBDIR}/pa20_64"
+                    ;;
+                hpux-*-ia64-ia64_32)
+                    _default_libdir="${MK_BASELIBDIR}/hpux32"
+                    ;;
+                hpux-*-ia64-ia64_64)
+                    _default_libdir="${MK_BASELIBDIR}/hpux64"
+                    ;;
+                *)
+                    _default_libdir="${MK_BASELIBDIR}"
+                    ;;
+            esac
+            
+            _option="libdir-$(echo $_isa | tr '_' '-')"
+            
+            mk_option \
+                OPTION="$_option" \
+                VAR="$_var"  \
+                PARAM="path" \
+                DEFAULT="$_default_libdir" \
+                HELP="Library directory ($_isa)"
+        done
+    fi
 
     mk_option \
         VAR=MK_SYSCONFDIR \
@@ -179,21 +193,27 @@ option()
 
 configure()
 {
-    mk_declare_system_var MK_LIBDIR
-
     mk_msg "prefix: $MK_PREFIX"
     mk_msg "exec prefix: $MK_EPREFIX"
 
-    for _isa in ${MK_HOST_ISAS}
-    do
-        _mk_define_name "host/$_isa"
-        _var="MK_LIBDIR_$result"
-        _vars="$_vars $_var"
-        mk_get "$_var"
-        mk_msg "library dir ($_isa): $result"
-        mk_set_system_var SYSTEM="host/$_isa" MK_LIBDIR "$result"
-    done
-    
+    if [ "$MK_HOST_MULTIARCH" = "separate" ]
+    then
+        mk_declare_system_var MK_LIBDIR
+
+        for _isa in ${MK_HOST_ISAS}
+        do
+            _mk_define_name "host/$_isa"
+            _var="MK_LIBDIR_$result"
+            _vars="$_vars $_var"
+            mk_get "$_var"
+            mk_msg "library dir ($_isa): $result"
+            mk_set_system_var SYSTEM="host/$_isa" MK_LIBDIR "$result"
+        done
+    else
+        mk_msg "library dir: $MK_BASELIBDIR"
+        mk_export MK_LIBDIR="$MK_BASELIBDIR"
+    fi
+
     mk_msg "include dir: $MK_INCLUDEDIR"
     mk_msg "binary dir: $MK_BINDIR"
     mk_msg "system binary dir: $MK_SBINDIR"
@@ -206,7 +226,7 @@ configure()
     mk_msg "manpage dir: $MK_MANDIR"
 
     mk_export \
-        MK_PREFIX MK_EPREFIX MK_LIBDIR MK_INCLUDEDIR MK_BINDIR \
+        MK_PREFIX MK_EPREFIX MK_INCLUDEDIR MK_BINDIR \
         MK_SBINDIR MK_LIBEXECDIR MK_SYSCONFDIR MK_LOCALSTATEDIR \
         MK_DATAROOTDIR MK_DATADIR MK_DOCDIR MK_HTMLDIR \
         MK_MANDIR

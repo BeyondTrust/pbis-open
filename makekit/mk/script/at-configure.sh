@@ -26,6 +26,23 @@
 # THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+hack_libtool()
+{
+    case "$MK_OS:$MK_ARCH" in
+        hpux:ia64)
+            if [ -x libtool ]
+            then
+                sed \
+                    -e 's/^hardcode_direct=no/hardcode_direct=yes/' \
+                    -e 's/^hardcode_direct_absolute=no/hardcode_direct_absolute=yes/' \
+                    < libtool > libtool.new
+                mv -f libtool.new libtool
+                chmod +x libtool
+            fi
+            ;;
+    esac
+}
+
 _stamp="$1"
 shift
 
@@ -33,7 +50,7 @@ MK_MSG_DOMAIN="configure"
 
 if [ -n "$SOURCEDIR" ]
 then
-    dirname="${MK_SUBDIR#/}/$SOURCEDIR"
+    dirname="${MK_SUBDIR:+${MK_SUBDIR#/}/}$SOURCEDIR"
 elif [ -n "$MK_SUBDIR" ]
 then
     dirname="${MK_SUBDIR#/}"
@@ -67,7 +84,8 @@ else
     _localstatedir="$MK_LOCALSTATEDIR"
 fi
 
-_src_dir="`cd ${MK_SOURCE_DIR}${MK_SUBDIR}/${SOURCEDIR} && pwd`"
+mk_resolve_file "$SOURCEDIR"
+_src_dir="`cd $result && pwd`"
 _stage_dir="`cd ${MK_STAGE_DIR} && pwd`"
 _include_dir="${_stage_dir}${_includedir}"
 _lib_dir="${_stage_dir}${_libdir}"
@@ -77,7 +95,7 @@ _libpath=""
 case "$MK_OS" in
     linux|freebsd)
         _ldflags="-L${_lib_dir} -Wl,-rpath-link -Wl,${_lib_dir}"
-        if [ "$MK_CROSS_COMPILING" = "no" ]
+        if [ "$MK_CROSS_COMPILING" = "no" -a "$SET_LIBRARY_PATH" = "yes" ]
         then
             LD_LIBRARY_PATH="$_lib_dir:$LD_LIBRARY_PATH"
             export LD_LIBRARY_PATH
@@ -85,16 +103,38 @@ case "$MK_OS" in
         ;;
     solaris)
         _ldflags="-L${_lib_dir}"
-        if [ "$MK_CROSS_COMPILING" = "no" ]
+        if [ "$MK_CROSS_COMPILING" = "no" -a "$SET_LIBRARY_PATH" = "yes" ]
         then
             LD_LIBRARY_PATH="$_lib_dir:$LD_LIBRARY_PATH"
             export LD_LIBRARY_PATH
+        fi
+        ;;
+    aix)
+        _ldflags="-L${_lib_dir} -Wl,-brtl"
+        if [ "$MK_CROSS_COMPILING" = "no" -a "$SET_LIBRARY_PATH" = "yes" ]
+        then
+            LIBPATH="$_lib_dir:$LD_LIBRARY_PATH"
+            export LIBPATH
+        fi
+        ;;
+    hpux)
+        _ldflags="-L${_lib_dir}"
+        if [ "$MK_CROSS_COMPILING" = "no" -a "$SET_LIBRARY_PATH" = "yes" ]
+        then
+            SHLIB_PATH="$_lib_dir:$SHLIB_PATH"
+            export SHLIB_PATH
         fi
         ;;
     *)
         _ldflags="-L${_lib_dir}"
         ;;
 esac
+
+if [ -d "$MK_RUN_BINDIR" ]
+then
+    PATH="`cd $MK_RUN_BINDIR && pwd`:$PATH"
+    export PATH
+fi
 
 cd "${MK_OBJECT_DIR}${MK_SUBDIR}/$BUILDDIR" && \
 mk_run_quiet_or_fail "${_src_dir}/configure" \
@@ -112,6 +152,11 @@ mk_run_quiet_or_fail "${_src_dir}/configure" \
     --sbindir="${_sbindir}" \
     --sysconfdir="${_sysconfdir}" \
     --localstatedir="${_localstatedir}" \
+    --enable-fast-install \
     "$@"
+
+# Does what it says
+hack_libtool
+
 cd "${MK_ROOT_DIR}" && mk_run_quiet_or_fail touch "$_stamp"
 mk_msg "end ${__msg}"

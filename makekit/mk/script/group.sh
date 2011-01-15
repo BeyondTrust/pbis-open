@@ -37,7 +37,7 @@ _ALL_LDFLAGS="$LDFLAGS"
 MK_MSG_DOMAIN="group"
 
 # Group suffix
-_gsuffix="-${MK_CANONICAL_SYSTEM%/*}-${MK_CANONICAL_SYSTEM#*/}.og"
+_gsuffix=".${MK_CANONICAL_SYSTEM%/*}.${MK_CANONICAL_SYSTEM#*/}.og"
 _name="${object#${MK_OBJECT_DIR}/}"
 _name="${_name%$_gsuffix}"
 
