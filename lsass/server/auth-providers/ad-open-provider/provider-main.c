@@ -5140,19 +5140,12 @@ AD_MachineCredentialsCacheInitialize(
     DWORD dwError = 0;
     BOOLEAN bIsAcquired = FALSE;
     DWORD dwGoodUntilTime = 0;
-    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
 
     // Check before doing any work.
     if (AD_MachineCredentialsCacheIsInitialized(pState))
     {
         goto cleanup;
     }
-
-    // Read password info before acquiring the lock.
-    dwError = LsaPcacheGetMachinePasswordInfoA(
-                  pState->pPcache,
-                  &pPasswordInfo);
-    BAIL_ON_LSA_ERROR(dwError);
 
     if (LsaDmIsDomainOffline(pState->hDmState, pState->pszDomainName))
     {
@@ -5195,8 +5188,6 @@ cleanup:
     {
         pthread_mutex_unlock(pState->MachineCreds.pMutex);
     }
-
-    LsaPcacheReleaseMachinePasswordInfoA(pPasswordInfo);
 
     return dwError;
 
