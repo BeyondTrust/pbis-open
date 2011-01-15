@@ -112,6 +112,10 @@ configure()
         HEADERDEPS="procfs.h sys/procfs.h" \
         "struct psinfo"
 
+    mk_check_sizeofs \
+        HEADERDEPS="time.h" \
+        time_t
+
     mk_check_libraries \
 	FAIL=yes \
 	lwbase_nothr lwbase lwadvapi_nothr lwadvapi \
