@@ -23,7 +23,7 @@ PUBLIC_HEADERS="\
         lw/threadpool.h \
         lw/affinity.h \
         lw/mapsecurity.h \
-	    lw/mapsecurity-types.h \
+        lw/mapsecurity-types.h \
         lw/mapsecurity-plugin.h"
 
 make()
