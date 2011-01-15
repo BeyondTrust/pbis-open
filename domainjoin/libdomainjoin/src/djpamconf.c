@@ -1481,6 +1481,10 @@ static BOOLEAN PamModuleChecksCaller( const char * phase, const char * module)
         return TRUE;
     if(!strcmp(buffer, "pam_sunray_admingui"))
         return TRUE;
+    if (!strcmp(buffer, "pam_passwd_auth"))
+    {
+        return TRUE;
+    }
 
     return FALSE;
 }
@@ -1519,8 +1523,21 @@ static BOOLEAN PamModulePrompts( const char * phase, const char * module)
         return TRUE;
     if(!strcmp(buffer, "pam_aix"))
         return TRUE;
-    if(!strcmp(buffer, "pam_passwd_auth"))
-        return TRUE;
+    if (!strcmp(buffer, "pam_passwd_auth"))
+    {
+        /* This module appears on Solaris in the auth phase only for password
+         * changes.
+         *      For root, it will not prompt for the current password.
+         *      For domain accounts, it will not prompt for the current
+         *          password.
+         *      For local accounts, it will prompt only if the username is the
+         *          same as the one running the command.
+         *
+         * Unfortunately, if pam_passwd_auth detects that a password is stored
+         * in the pam handle, it always return success.
+         */
+        return FALSE;
+    }
     if(!strcmp(buffer, "pam_securityserver"))
         return TRUE;
     if(!strcmp(buffer, "pam_serialnumber"))
@@ -1734,6 +1751,14 @@ static BOOLEAN PamModuleAlwaysDeniesDomainLogins( const char * phase, const char
         }
     }
 
+    /* This module is listed as non-prompting because it does not prompt for
+     * domain users, but it does deny domain users.
+     */
+    if (!strcmp(buffer, "pam_passwd_auth"))
+    {
+        return TRUE;
+    }
+
     /* Assume that if it prompts for a password, it will complain about a
      * domain user
      */
@@ -1843,6 +1868,10 @@ struct ConfigurePamModuleState
 
     /* Whether a line like "sufficient pam_rhosts.so" has been encountered */
     BOOLEAN sawCallerSufficientLine;
+
+    /* Whether a line like "sufficient pam_passwd_auth.so.1 has been
+     * encountered */
+    BOOLEAN sawSufficientPasswordChange;
 
     int includeLevel;
 };
@@ -2352,13 +2381,15 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
             lineObj = &conf->lines[line];
             CT_SAFE_FREE_STRING(lineObj->control->value);
             LW_CLEANUP_CTERR(exc, CTStrdup("sufficient", &lineObj->control->value));
+            GetModuleControl(lineObj, &module, &control);
         }
 
         if(!strcmp(module, "pam_lwidentity_set_repo"))
             state->hasSetDefaultRepository = TRUE;
 
-        if(distro->os == OS_SUNOS && !state->hasSetDefaultRepository &&
-                !strcmp(phase, "auth") && PamModulePrompts(phase, module))
+        if (distro->os == OS_SUNOS && !state->hasSetDefaultRepository &&
+                !strcmp(phase, "auth") && (PamModulePrompts(phase, module) ||
+                    !strcmp(module, "pam_passwd_auth.so.1")))
         {
             int newLine = -1;
             LW_CLEANUP_CTERR(exc, CopyLineAndUpdateSkips(conf, line, &newLine));
@@ -2372,6 +2403,12 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
             GetModuleControl(lineObj, &module, &control);
 
             state->hasSetDefaultRepository = TRUE;
+        }
+
+        if (!strcmp(control, "sufficient") &&
+            !strcmp(module, "pam_passwd_auth.so.1"))
+        {
+            state->sawSufficientPasswordChange = TRUE;
         }
 
         if(!strcmp(module, "pam_lwidentity_smartcard_prompt"))
@@ -2679,6 +2716,7 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
             NormalizeModuleName( buffer, module, sizeof(buffer));
 
             if( (!state->sawSufficientPromptingCheck || !strcmp(service, "runuser")) &&
+                    !state->sawSufficientPasswordChange &&
                     (!PamModuleGrants(phase, module) || PamModuleChecksCaller(phase, module)) &&
                     (!strcmp(control, "required") ||
                     !strcmp(control, "binding") ||
