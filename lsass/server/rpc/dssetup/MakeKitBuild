@@ -33,5 +33,6 @@ make()
 	GROUPS="dssetup_stub" \
 	INCLUDEDIRS=". ../../include ../../api ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwadvapi.h" \
+	LIBDEPS="lsaserverapi lwnetclientapi lwioclient lwadvapi" \
 	DEPS="dssetup_h.h"
 }

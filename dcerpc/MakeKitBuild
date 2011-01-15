@@ -70,6 +70,10 @@ rpc_feature_flags()
             _feature_flags="-D_SOCKADDR_LEN -D_BSD -D_REENTRANT"
             IDL_CFLAGS="$IDL_CFLAGS -D_SOCKADDR_LEN"
             ;;
+        aix)
+            _feature_flags="-D_XOPEN_SOURCE=500 -D_ALL_SOURCE=1 -D_REENTRANT"
+            IDL_CFLAGS="$IDL_CFLAGS -D_SOCKADDR_LEN"
+            ;;
     esac
 
     MK_CPPFLAGS="$MK_CPPFLAGS $_feature_flags"
@@ -92,6 +96,9 @@ configure()
         darwin)
             target_os="darwin6.0"
             ;;
+        aix)
+            target_os="aix5.2.0.0"
+            ;;
         *)
             mk_fail "unsupported os: $MK_HOST_OS"
             ;;
@@ -106,6 +113,12 @@ configure()
             ;;
         sparc_32)
             target_cpu="sparc"
+            ;;
+        ppc32)
+            target_cpu="powerpc"
+            ;;
+        ppc64)
+            target_cpu="powerpc64"
             ;;
     esac
 
@@ -158,8 +171,17 @@ configure()
         HEADERDEPS="sys/types.h sys/socket.h" \
         features.h sys/cdefs.h dlfcn.h sys/time.h \
         getopt.h sys/sockio.h sys/un.h nl_types.h \
-        net/if_dl.h execinfo.h sys/fd_set.h string.h \
+        net/if.h net/if_dl.h execinfo.h sys/fd_set.h \
+        sys/select.h string.h
+
+    mk_check_headers \
+        HEADERDEPS="sys/types.h sys/socket.h sys/time.h net/if.h" \
         net/if_arp.h
+
+    # Optional types
+    mk_check_types \
+        HEADERDEPS="inttypes.h" \
+        uint8 uint16 uint32 uint64 int8 int16 int32 int64
 
     # Required libraries
     mk_check_libraries \

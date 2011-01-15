@@ -15,7 +15,6 @@ configure()
     mk_multiarch_do
         case "$MK_OS:$MK_ISA" in
             linux:*)
-                mk_define _GNU_SOURCE
                 PAMDIR="/${MK_LIBDIR##*/}/security"
                 NSSDIR="/${MK_LIBDIR##*/}"
                 ;;
@@ -34,6 +33,14 @@ configure()
             solaris:sparc_64)
                 NSSDIR="/usr/lib/sparcv9"
                 PAMDIR="/usr/lib/security/sparcv9"
+                ;;
+            aix:ppc32)
+                NSSDIR="/usr/lib/security"
+                PAMDIR="/usr/lib/security"
+                ;;
+            aix:ppc64)
+                NSSDIR="/usr/lib/security"
+                PAMDIR="/usr/lib/security/64"
                 ;;
         esac
 

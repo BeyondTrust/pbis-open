@@ -16,6 +16,11 @@ configure()
     mk_check_headers \
         inttypes.h arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdint.h stdlib.h stdbool.h string.h strings.h sys/socket.h syslog.h unistd.h sys/types.h fcntl.h iconv.h sys/stat.h time.h sys/time.h pthread.h
 
+    # Optional types
+    mk_check_types \
+        HEADERDEPS="inttypes.h" \
+        uint8 uint16 uint32 uint64 int8 int16 int32 int64
+
     # Necessary libraries
     mk_check_libraries FAIL=yes \
         crypto

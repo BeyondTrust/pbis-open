@@ -191,7 +191,7 @@ make()
             SOURCES="$PARSER_SOURCES" \
             INCLUDEDIRS=". ../include" \
             CPPFLAGS="-DMIA -DDEFAULT_IDIR=\"${MK_INCLUDEDIR}\" -DCATALOG_DIR=\"${MK_DATADIR}/dcerpc\"" \
-            CFLAGS="-Wall -Werror -Wno-unused-function -Wno-unused-label" \
+            CFLAGS="-Wall -Werror -Wno-unused-function -Wno-unused-label -Wno-uninitialized" \
             DEPS="default_msg.h acf_y.h nidl_y.h $IDL_DEPS"
 
         mk_program \

@@ -160,6 +160,9 @@ configure_openssl()
         solaris-x86_32)
             host_string="solaris-x86-gcc"
             ;;
+        aix-ppc32)
+            host_string="aix-gcc"
+            ;;
         *)
             host_string=""
             ;;
@@ -212,16 +215,24 @@ build_openssl()
     unset MAKE MFLAGS MAKEFLAGS
     export MAKE MFLAGS MAKEFLAGS
     
-    if [ "$MK_HOST_OS" = "linux" ]
-    then
-        # Ensure executable stack bit is not set in resulting library
-        CC="$MK_CC -Wa,--noexecstack"
-    else
-        CC="$MK_CC"
-    fi
+    case "$MK_HOST_OS" in
+        linux)
+            # Ensure executable stack bit is not set in resulting library
+            CC="$MK_CC -Wa,--noexecstack"
+            SHARED_LDFLAGS="-shared"
+            ;;
+        aix)
+            CC="$MK_CC"
+            SHARED_LDFLAGS="-shared -Wl,-brtl -Wl,-bnoentry"
+            ;;
+        *)
+            CC="$MK_CC"
+            SHARED_LDFLAGS="-shared"
+            ;;
+    esac
 
     # Build it
-    mk_run_quiet_or_fail ${3} MAKE="$3" CC="${CC}"
+    mk_run_quiet_or_fail ${3} MAKE="$3" CC="${CC}" SHARED_LDFLAGS="$SHARED_LDFLAGS"
 
     # Touch stamp file
     mk_cd_or_fail "$old_pwd"
@@ -277,7 +288,6 @@ la_openssl()
     if ! [ -f "$1" ]
     then
         mk_run_script link \
-            MODE=la \
-            "$1"
+            MODE=la EXT="${MK_LIB_EXT}" "$1"
     fi
 }

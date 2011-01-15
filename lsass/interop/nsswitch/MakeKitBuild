@@ -1,4 +1,4 @@
-SUBDIRS="common linux freebsd solaris"
+SUBDIRS="common linux freebsd solaris aix"
 
 configure()
 {

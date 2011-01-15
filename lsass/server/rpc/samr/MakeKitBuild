@@ -75,6 +75,6 @@ make()
 	GROUPS="samr_stub" \
 	INCLUDEDIRS=". ../../include ../../api ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwnet.h lwadvapi.h openssl/md4.h" \
-	DEPS="samr_h.h" \
-	LIBDEPS="dsapi"
+	LIBDEPS="dsapi lsaserverapi lwnetclientapi lwadvapi crypto" \
+	DEPS="samr_h.h"
 }

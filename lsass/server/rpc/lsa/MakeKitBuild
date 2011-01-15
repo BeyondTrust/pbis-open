@@ -42,6 +42,7 @@ make()
 	SOURCES="$LSA_SOURCES" \
 	GROUPS="lsa_stub" \
 	INCLUDEDIRS=". ../samr ../../include ../../api ../../../include" \
-	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwadvapi.h" \
+	HEADERDEPS="dce/rpc.h lw/base.h lwnet.h lwio/lwio.h lwadvapi.h" \
+	LIBDEPS="lsaserverapi lwnetclientapi lwadvapi lwioclient" \
 	DEPS="lsa_h.h"
 }

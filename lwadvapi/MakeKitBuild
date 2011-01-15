@@ -24,7 +24,7 @@ configure()
     mk_check_types \
         HEADERDEPS="sys/types.h sys/socket.h" \
         socklen_t
-        
+
     mk_check_libraries \
         socket nsl pthread rt
 
@@ -38,11 +38,13 @@ configure()
         PROTOTYPE="int getsockname(int,__SOCKADDR_ARG,socklen_t*)" # Hack for clang on linux
     then
         mk_define GETSOCKNAME_TAKES_SOCKLEN_T 1
-    elif ! mk_check_function \
+    elif mk_check_function \
         HEADERDEPS="sys/socket.h" \
         LIBDEPS="$LIB_SOCKET $LIB_NSL" \
         PROTOTYPE="int getsockname(int,struct sockaddr*,int*)"
     then
+        mk_define GETSOCKNAME_TAKES_SOCKLEN_T 0
+    else
         mk_fail "could not find usable getsockname()"
     fi
 

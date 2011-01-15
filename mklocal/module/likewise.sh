@@ -66,6 +66,10 @@ lw_define_feature_macros()
         darwin)
             mk_define __LWI_DARWIN__
             ;;
+        aix)
+            mk_define __LWI_AIX__
+            mk_define _THREAD_SAFE
+            ;;
     esac
 }
 

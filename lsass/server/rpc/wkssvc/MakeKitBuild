@@ -37,5 +37,6 @@ make()
 	GROUPS="wkssvc_stub" \
 	INCLUDEDIRS=". ../../include ../../api ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwadvapi.h openssl/md5.h" \
+        LIBDEPS="lsaserverapi" \
 	DEPS="wkssvc_h.h"
 }

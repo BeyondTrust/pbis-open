@@ -6,7 +6,7 @@ make()
 	SOURCES="gssntlm.c" \
 	INCLUDEDIRS=". ../../include" \
 	HEADERDEPS="gssapi.h lwadvapi.h" \
-	LIBDEPS="lsacommon lsaclient_ntlm krb5"
+	LIBDEPS="lsacommon lsaclient_ntlm krb5 gssapi_krb5"
 
     mk_install_file \
         FILE=mech \
