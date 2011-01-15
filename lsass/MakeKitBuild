@@ -42,6 +42,14 @@ configure()
                 NSSDIR="/usr/lib/security"
                 PAMDIR="/usr/lib/security/64"
                 ;;
+            hpux:hppa32)
+                NSSDIR="/usr/lib"
+                PAMDIR="/usr/lib/security"
+                ;;
+            hpux:hppa64)
+                NSSDIR="/usr/lib/pa20_64"
+                PAMDIR="/usr/lib/security/pa20_64"
+                ;;
         esac
 
         mk_define LIBDIR "\"$MK_LIBDIR\""
@@ -78,7 +86,7 @@ configure()
     mk_check_headers \
 	stdlib.h sys/varargs.h time.h strings.h stdbool.h \
 	unistd.h sys/systeminfo.h sys/utsname.h sys/socket.h \
-	wc16str.h wc16printf.h sys/pstate.h procfs.h sys/procfs.h \
+	wc16str.h wc16printf.h sys/pstat.h procfs.h sys/procfs.h \
 	kvm.h sys/param.h sys/sysctl.h sys/user.h libgen.h execinfo.h \
 	sys/regset.h sys/resource.h security/pam_appl.h pam/pam_appl.h \
         nss_common.h nss_dbdefs.h nss.h
@@ -107,7 +115,7 @@ configure()
 
     mk_check_functions \
 	HEADERDEPS="stdlib.h" \
-	strtol strtoll strtoul strtoull
+	strtol strtoll __strtoll strtoul strtoull __strtoull
 
     mk_check_functions \
 	HEADERDEPS="inttypes.h" \
@@ -148,12 +156,16 @@ configure()
     fi
 
     mk_check_libraries \
-        proc kvm
+        proc kvm sec
 
     mk_check_functions \
         HEADERDEPS="kvm.h sys/param.h sys/sysctl.h sys/user.h" \
         LIBDEPS="$LIB_KVM" \
         kvm_getprocs
+
+    mk_check_functions \
+        HEADERDEPS="sys/pstat.h" \
+        pstat_getproc
 
     mk_msg_checking "pthread_mutex_lock in libc"
 

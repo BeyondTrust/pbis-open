@@ -72,7 +72,7 @@ configure()
 
     mk_check_functions \
 	HEADERDEPS="stdlib.h" \
-	strtol strtoll strtoul strtoull
+	strtol strtoll __strtoll strtoul strtoull __strtoull
 
     mk_output_file "etc/eventlogd.reg"
 }

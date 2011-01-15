@@ -70,6 +70,11 @@ lw_define_feature_macros()
             mk_define __LWI_AIX__
             mk_define _THREAD_SAFE
             ;;
+        hpux)
+            mk_define __LWI_HP_UX__
+            mk_define _HPUX_SOURCE 1
+            mk_define _REENTRANT
+            ;;
     esac
 }
 

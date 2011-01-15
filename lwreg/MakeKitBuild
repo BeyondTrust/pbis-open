@@ -28,14 +28,15 @@ configure()
         procfs.h \
         sys/procfs.h \
         sys/param.h \
+        inttypes.h
 
     mk_check_headers \
         HEADERDEPS="sys/types.h" \
         sys/sysctl.h sys/user.h
 
     mk_check_functions \
-        HEADERDEPS='ctype.h stdlib.h' \
-        isblank strtoll strtoull
+        HEADERDEPS='ctype.h stdlib.h inttypes.h' \
+        isblank strtoll __strtoll strtoull __strtoull
 
     if [ "$HAVE_ISBLANK" = "yes" ]
     then

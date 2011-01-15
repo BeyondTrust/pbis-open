@@ -48,6 +48,7 @@
       #undef UNICODE
 #endif
 
+#ifdef HAVE_NETINET_IN6_H
 /* HP-UX hack for broken system header*/
 #if defined(__hpux) && defined(__hppa) && defined(_XOPEN_SOURCE_EXTENDED)
 #undef _XOPEN_SOURCE_EXTENDED
@@ -58,6 +59,7 @@
 #define _XOPEN_SOURCE_EXTENDED 1
 #else
 #include <netinet/in6.h>
+#endif
 #endif
 #include <netinet/in.h>
 

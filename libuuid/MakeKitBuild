@@ -4,7 +4,12 @@ configure()
 {
     mk_config_header 'include/config.h'
   
-    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+    lw_define_feature_macros
+
+    mk_multiarch_do
+        MK_CPPFLAGS="$MK_CPPFLAGS -U_XOPEN_SOURCE_EXTENDED"
+        MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+    mk_multiarch_done
 
     mk_check_headers \
         HEADERDEPS="sys/types.h" \

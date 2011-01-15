@@ -36,6 +36,7 @@ configure()
 
     mk_define UNICODE 1
 
+    # Hack around buggy system header on HP-UX 11.11
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
 
     mk_check_types \
@@ -99,7 +100,11 @@ configure()
 
     mk_check_functions \
         HEADERDEPS="stdlib.h" \
-        strtoll strtoull
+        strtoll __strtoll strtoull __strtoull
+
+    mk_check_functions \
+        HEADERDEPS="sys/pstat.h" \
+        pstat_getproc
 
     if mk_check_function \
         HEADERDEPS="ctype.h" \

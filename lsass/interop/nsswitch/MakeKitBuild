@@ -1,4 +1,4 @@
-SUBDIRS="common linux freebsd solaris aix"
+SUBDIRS="common linux freebsd solaris aix hpux"
 
 configure()
 {

@@ -51,7 +51,7 @@ configure()
     mk_check_functions \
         HEADERDEPS='stdlib.h time.h sys/time.h' \
         LIBDEPS="$LIB_RT" \
-        strtoll strtoull clock_settime settimeofday gettimeofday
+        strtoll __strtoll strtoull __strtoull clock_settime settimeofday gettimeofday
 
     if mk_check_function \
         FUNCTION='isblank' \

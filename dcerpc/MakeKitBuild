@@ -74,6 +74,10 @@ rpc_feature_flags()
             _feature_flags="-D_XOPEN_SOURCE=500 -D_ALL_SOURCE=1 -D_REENTRANT"
             IDL_CFLAGS="$IDL_CFLAGS -D_SOCKADDR_LEN"
             ;;
+        hpux)
+            DCERPCD_SERVICE_TYPE="dword:00000004"
+            _feature_flags="-D_XOPEN_SOURCE=500 -D__EXTENSIONS__ -D_POSIX_PTHREAD_SEMANTICS -D_ALL_SOURCE=1 -D_REENTRANT -D_BSD"
+            ;;
     esac
 
     MK_CPPFLAGS="$MK_CPPFLAGS $_feature_flags"
@@ -99,6 +103,9 @@ configure()
         aix)
             target_os="aix5.2.0.0"
             ;;
+        hpux)
+            target_os="hpux11.11"
+            ;;
         *)
             mk_fail "unsupported os: $MK_HOST_OS"
             ;;
@@ -120,7 +127,12 @@ configure()
         ppc64)
             target_cpu="powerpc64"
             ;;
+        hppa32)
+            target_cpu="hppa2.0"
+            ;;
     esac
+
+    mk_export DCERPCD_SERVICE_TYPE="dword:00000001"
 
     mk_multiarch_do
         rpc_feature_flags
@@ -129,7 +141,7 @@ configure()
     mk_export MK_CFLAGS="$MK_CFLAGS -Wall"
 
     mk_export SBINDIR="$MK_SBINDIR"
-    mk_export DCERPCD_SERVICE_TYPE="dword:00000001"
+    
 
     # FIXME: need test
     mk_export OBJEXT="o"
