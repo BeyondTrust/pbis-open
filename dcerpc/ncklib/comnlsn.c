@@ -51,8 +51,14 @@
 **
 */
 
+#include "config.h"
+
 #ifdef HAVE_SYS_FD_SET_H
 #include <sys/fd_set.h>
+#endif
+
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
 #endif
 
 #include <commonp.h>

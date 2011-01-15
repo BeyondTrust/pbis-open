@@ -303,7 +303,7 @@ Porting Message:  You must provide definitions for the files suffixes to
 /*
 ** Define macros for NLS entry points used only in message.c
 */
-#if defined(_AIX)
+#if defined(_AIX) && 0
 #       define NL_SPRINTF NLsprintf
 #       define NL_VFPRINTF NLvfprintf
 #else
