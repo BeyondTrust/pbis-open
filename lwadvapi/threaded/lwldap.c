@@ -121,7 +121,11 @@ LwLdapPingTcp(
     struct timeval timeout;
     fd_set fds;
     int socketError;
-    SOCKLEN_T socketErrorLength = 0;
+#ifdef GETSOCKNAME_TAKES_SOCKLEN_T
+    socklen_t socketErrorLength = 0;
+#else
+    int socketErrorLength = 0;
+#endif
 
     addr.s_addr = inet_addr(pszHostAddress);
     if (addr.s_addr == INADDR_NONE)

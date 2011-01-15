@@ -46,12 +46,6 @@
 #ifndef __LWDEF_H__
 #define __LWDEF_H__
 
-#if defined(HAVE_SOCKLEN_T) && defined(GETSOCKNAME_TAKES_SOCKLEN_T)
-#    define SOCKLEN_T socklen_t
-#else
-#    define SOCKLEN_T int
-#endif
-
 #ifndef LW_ENDIAN_SWAP16
 
 #define LW_ENDIAN_SWAP16(wX)                     \
