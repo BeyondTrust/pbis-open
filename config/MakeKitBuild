@@ -25,6 +25,12 @@ make()
     do
 	lw_init_script "$i"
     done
+
+    if [ "$MK_HOST_OS" = "darwin" ]
+    then
+        mk_stage DEST="${MK_BINDIR}/lw-local-user-migrate.sh" SOURCE="lw-local-user-migrate.sh.in"
+        mk_stage DEST="${MK_BINDIR}/macuninstall.sh" SOURCE="macuninstall.sh"
+    fi
 }
 
 lw_init_script()

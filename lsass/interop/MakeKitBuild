@@ -1,1 +1,6 @@
-SUBDIRS="auth lwmapsecurity nsswitch gssntlm access"
+SUBDIRS="auth lwmapsecurity nsswitch gssntlm access lwidsplugin"
+
+configure()
+{
+    [ "$MK_HOST_OS" = "darwin" ] || mk_skip_subdir lwidsplugin
+}

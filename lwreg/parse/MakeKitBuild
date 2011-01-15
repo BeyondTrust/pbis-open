@@ -10,6 +10,6 @@ make()
         GROUP=regparse \
         SOURCES="$PARSE_SOURCES" \
         INCLUDEDIRS=". ../include" \
-        LIBDEPS="regcommon lwbase lwbase_nothr" \
+        LIBDEPS="regcommon lwbase lwbase_nothr $LIB_ICONV" \
         HEADERDEPS="lwmsg/lwmsg.h lw/base.h iconv.h"
 }

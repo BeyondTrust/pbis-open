@@ -1,5 +1,10 @@
 make()
 {
+    mk_get_system_var SYSTEM="build/$MK_BUILD_PRIMARY_ISA" "MK_CC"
+    BUILD_CC="$result"
+    mk_get_system_var SYSTEM="build/$MK_BUILD_PRIMARY_ISA" "MK_CFLAGS"
+    BUILD_CFLAGS="$result"
+
     mk_autotools \
         HEADERS='sasl/sasl.h' \
         LIBS='sasl2' \
@@ -20,5 +25,7 @@ make()
         --disable-anon \
         --enable-gss_mutexes \
         --disable-static \
-        --enable-shared
+        --enable-shared \
+        BUILD_CC="$BUILD_CC" \
+        BUILD_CFLAGS="$BUILD_CFLAGS"
 }

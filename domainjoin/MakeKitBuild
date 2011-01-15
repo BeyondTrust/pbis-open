@@ -29,23 +29,26 @@ configure()
 	VARPREFIX=GTK \
 	glib-2.0 gthread-2.0 gtk+-2.0 libglade-2.0
     then
-	mk_msg "GTK+ interface enabled"
-        DJ_GUI_ENABLED=yes
-    else
-	mk_msg "GTK+ interface disabled"
-	mk_skip_subdir domainjoin-gui
-        DJ_GUI_ENABLED=no
-    fi
-    
-    mk_check_functions \
-        HEADERDEPS="gtk/gtk.h" \
-        CPPFLAGS="$GTK_CPPFLAGS" \
-        CFLAGS="$GTK_CFLAGS" \
-        LDFLAGS="$GTK_LDFLAGS" \
-        LIBDEPS="$GTK_LIBS" \
-        gtk_file_chooser_dialog_new
+        DJ_GUI_INTERFACE="gtk"       
 
-    mk_export DJ_GUI_ENABLED
+        mk_check_functions \
+            HEADERDEPS="gtk/gtk.h" \
+            CPPFLAGS="$GTK_CPPFLAGS" \
+            CFLAGS="$GTK_CFLAGS" \
+            LDFLAGS="$GTK_LDFLAGS" \
+            LIBDEPS="$GTK_LIBS" \
+            gtk_file_chooser_dialog_new
+    elif [ "$MK_HOST_OS" = "darwin" ]
+    then
+        DJ_GUI_INTERFACE="carbon"
+    else
+        DJ_GUI_INTERFACE="no"
+	mk_skip_subdir domainjoin-gui
+    fi
+
+    mk_msg "GUI interface: $DJ_GUI_INTERFACE"
+    
+    mk_export DJ_GUI_INTERFACE
 
     mk_check_headers \
 	signal.h

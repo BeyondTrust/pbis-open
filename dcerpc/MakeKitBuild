@@ -51,6 +51,30 @@ option()
         HELP="Enable NTLMSSP RPC authentication support"
 }
 
+rpc_feature_flags()
+{
+    _feature_flags=""
+
+    case "$MK_OS" in
+        linux)
+            _feature_flags="-D_GNU_SOURCE -D_BSD -D_XOPEN_SOURCE=500 -D__EXTENSIONS__ -D_POSIX_PTHREAD_SEMANTICS -D_ALL_SOURCE=1 -D_REENTRANT"
+            ;;
+        freebsd)
+            _feature_flags="-D_SOCKADDR_LEN -D__EXTENSIONS__ -D_REENTRANT -D_BSD"
+            IDL_CFLAGS="$IDL_CFLAGS -D_SOCKADDR_LEN"
+            ;;
+        solaris)
+            _feature_flags="-D_XOPEN_SOURCE=500 -D_BSD -D__EXTENSIONS__ -D_POSIX_PTHREAD_SEMANTICS -D_ALL_SOURCE=1 -D_REENTRANT"
+            ;;
+        darwin)
+            _feature_flags="-D_SOCKADDR_LEN -D_BSD -D_REENTRANT"
+            IDL_CFLAGS="$IDL_CFLAGS -D_SOCKADDR_LEN"
+            ;;
+    esac
+
+    MK_CPPFLAGS="$MK_CPPFLAGS $_feature_flags"
+}
+
 configure()
 {
     mk_config_header "include/config.h"
@@ -64,6 +88,12 @@ configure()
             ;;
         freebsd)
             target_os="freebsd6.0"
+            ;;
+        darwin)
+            target_os="darwin6.0"
+            ;;
+        *)
+            mk_fail "unsupported os: $MK_HOST_OS"
             ;;
     esac
 
@@ -79,25 +109,9 @@ configure()
             ;;
     esac
 
-    for _sys in build host
-    do
-        mk_system "$_sys"
-
-        case "$MK_OS" in
-            linux)
-                _feature_flags="-D_GNU_SOURCE -D_BSD -D_XOPEN_SOURCE=500 -D__EXTENSIONS__ -D_POSIX_PTHREAD_SEMANTICS -D_ALL_SOURCE=1 -D_REENTRANT"
-                ;;
-            freebsd)
-                _feature_flags="-D_SOCKADDR_LEN -D__EXTENSIONS__ -D_REENTRANT -D_BSD"
-                IDL_CFLAGS="$IDL_CFLAGS -D_SOCKADDR_LEN"
-                ;;
-            solaris)
-                _feature_flags="-D_XOPEN_SOURCE=500 -D_BSD -D__EXTENSIONS__ -D_POSIX_PTHREAD_SEMANTICS -D_ALL_SOURCE=1 -D_REENTRANT"
-                ;;
-        esac
-
-        MK_CPPFLAGS="$MK_CPPFLAGS $_feature_flags"
-    done
+    mk_multiarch_do
+        rpc_feature_flags
+    mk_multiarch_done
     
     mk_export MK_CFLAGS="$MK_CFLAGS -Wall"
 
@@ -129,8 +143,10 @@ configure()
     [ "$ENABLE_NTLMSSP" = "yes" ] && mk_define ENABLE_AUTH_NTLMSSP 1
 
     # Check for CPU architecture characteristics
-    mk_check_sizeofs "long" "long int" "long long int"
-    mk_check_endian
+    mk_multiarch_do
+        mk_check_sizeofs "long" "long int" "long long int"
+        mk_check_endian
+    mk_multiarch_done
 
     # Required headers
     mk_check_headers \
@@ -190,7 +206,11 @@ configure()
         LIBDEPS="$LIB_NSL"
     then
         mk_define GETHOSTBYNAME_R_ARGS 5
-    else
+    elif mk_check_function \
+        PROTOTYPE="int gethostbyname_r(const char*,struct hostent*,struct hostent_data*)" \
+        HEADERDEPS="netdb.h" \
+        LIBDEPS="$LIB_NSL"
+    then
         mk_define GETHOSTBYNAME_R_ARGS 3
     fi
 
@@ -204,7 +224,8 @@ configure()
 
     # Check for stuff for build system (needed by idl compiler)
     mk_system build
-    mk_check_headers nl_types.h
+        rpc_feature_flags
+        mk_check_headers nl_types.h
     mk_system host
 
     # Programs

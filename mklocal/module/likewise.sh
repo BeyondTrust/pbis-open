@@ -63,6 +63,9 @@ lw_define_feature_macros()
         freebsd)
             mk_define __LWI_FREEBSD__
             ;;
+        darwin)
+            mk_define __LWI_DARWIN__
+            ;;
     esac
 }
 

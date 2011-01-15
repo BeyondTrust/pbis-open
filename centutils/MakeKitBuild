@@ -9,7 +9,6 @@ configure()
     mk_export MOD_EXT="${MK_DLO_EXT}"
     mk_define MOD_EXT "\"${MK_DLO_EXT}"\"
     
-    MK_CPPFLAGS="$MK_CPPFLAGS -D_REENTRANT -D_GNU_SOURCE"
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
     
     mk_export CONFIGDIR="${MK_SYSCONFDIR}"
@@ -46,7 +45,7 @@ configure()
         proc kvm rt
 
     mk_check_functions \
-        HEADERDEPS="signal.h stdlib.h kvm.h" \
+        HEADERDEPS="signal.h stdlib.h kvm.h unistd.h" \
         sigtimedwait bzero localtime_r memset \
         select socket strchr strerror vsyslog \
         rpl_malloc rpl_realloc mkdtemp _NSGetEnviron \

@@ -11,6 +11,9 @@ configure()
         freebsd)
             mk_define HAVE_DECL_KERN_PROC_PATHNAME 1 # FIXME
             ;;
+        darwin)
+            mk_define HAVE_DECL_KERN_PROCARGS 1 # FIXME
+            ;;
     esac
 
     mk_check_endian

@@ -38,7 +38,15 @@ configure()
         mk_define MOD_EXT "\"$MK_DLO_EXT\""
         mk_define LIBDIR "\"$MK_LIBDIR\""
         MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+
+        if [ "$MK_HOST_OS" = "darwin" ]
+        then
+            DS_FRAMEWORK_LDFLAGS="-framework DirectoryService"
+            MK_CFLAGS="$MK_CFLAGS -Wno-deprecated-declarations"
+        fi
     mk_multiarch_done
+
+    mk_export DS_FRAMEWORK_LDFLAGS
 
     mk_check_libraries \
         xnet \
@@ -65,7 +73,8 @@ configure()
         string.h \
         strings.h \
         pthread_np.h \
-        signal.h
+        signal.h \
+        stdarg.h
         
     mk_check_headers \
         HEADERDEPS="sys/param.h" \

@@ -1,0 +1,53 @@
+make()
+{
+    BUNDLE_DIR="${MK_LIBDIR}/LWIDSPlugin.dsplug"
+    CONTENTS_DIR="${BUNDLE_DIR}/Contents"
+    MACOS_DIR="${CONTENTS_DIR}/MacOS"
+
+    LWIDS_SOURCES="\
+	LWIAttrLookup.cpp \
+	LWIAttrValDataQuery.cpp \
+	LWIBitVector.cpp \
+	LWICRC.cpp \
+	LWIDirNodeQuery.cpp \
+	LWIGroup.cpp \
+	LWIQuery.cpp \
+	LWIRecTypeLookup.cpp \
+	LWIRecordListQuery.cpp \
+	LWIRecordQuery.cpp \
+	LWIUser.cpp \
+	PlugInShell.cpp \
+	ServerModule.c \
+	ServerModuleLib.c \
+	Utilities.cpp \
+        macadutil/api.c \
+        macadutil/aduserinfo.c \
+        macadutil/adukrb5.c \
+        macadutil/cfgparser.c \
+        macadutil/credcontext.c \
+        macadutil/directory.c \
+        macadutil/gss.c \
+        macadutil/macerror.c"
+
+    LWIDS_CFLAGS="-Wno-unknown-pragmas -fpascal-strings -Wno-four-char-constants"
+
+    mk_dlo \
+        DLO="LWIDSPlugIn" \
+        EXT="" \
+        INSTALLDIR="${MACOS_DIR}" \
+        SOURCES="$LWIDS_SOURCES" \
+        INCLUDEDIRS=". ../../include" \
+        CFLAGS="$LWIDS_CFLAGS" \
+        CXXFLAGS="$LWIDS_CFLAGS -Wno-deprecated -fvisibility-inlines-hidden" \
+        HEADERDEPS="lwio/lwio.h lwnet.h lwadvapi.h ldap.h krb5.h" \
+        LIBDEPS="lwnetclientapi lwioclient lwadvapi ldap_r krb5 lsacommon lsaclient" \
+        LDFLAGS="-framework CoreFoundation"
+
+    mk_target \
+        TARGET="${CONTENTS_DIR}/Info.plist" \
+        DEPS="Info.plist.in process-info-plist.pl" \
+        mk_mkdir "&'${CONTENTS_DIR}'" '%;' \
+        "&process-info-plist.pl" -v "$LW_VERSION" -o '$@' '&Info.plist.in'
+
+    mk_add_all_target "$result"
+}

@@ -65,5 +65,7 @@ make()
         SOURCEDIR="libedit" \
         LIBS="edit" \
         HEADERS="editline/readline.h histedit.h" \
+        HEADERDEPS="ncurses/ncurses.h" \
+        LIBDEPS="ncurses" \
         CFLAGS="-Wno-error"
 }

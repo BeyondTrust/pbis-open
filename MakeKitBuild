@@ -109,8 +109,15 @@ lw_print_features()
 {
     printf -- "\n---\nConfiguration summary\n---\n\n"
 
-    lw_print_feature "Host OS" "$MK_HOST_OS"
-    lw_print_feature "Host ISAs" "$MK_HOST_ISAS"
+    set -- ${MK_HOST_ISAS}
+    
+    if [ "$#" -gt 1 -a "$MK_HOST_MULTIARCH" != "none" ]
+    then
+        lw_print_feature "Host system" "$MK_HOST_OS ($MK_HOST_MULTIARCH $MK_HOST_ISAS)"
+    else
+        lw_print_feature "Host system" "$MK_HOST_OS ($MK_HOST_ISAS)"
+    fi
+
     lw_print_feature "Bundled libraries" "$LW_BUNDLED"
 
     mk_get_export lwbase THREADPOOL_BACKEND
@@ -127,7 +134,7 @@ lw_print_features()
     [ "$result" != "no" ] && result=yes
     lw_print_feature "EA support" "$result"
 
-    mk_get_export domainjoin DJ_GUI_ENABLED
+    mk_get_export domainjoin DJ_GUI_INTERFACE
     lw_print_feature "Domain join GUI" "$result"
 
     types=""

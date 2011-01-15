@@ -39,7 +39,8 @@ make()
             SOURCES="$BASE_NOTHR_SOURCES" \
             INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
             HEADERDEPS="$BASE_HEADER_DEPS" \
-            LIBDEPS="uuid $LIB_ICONV $LIB_XNET"
+            LIBDEPS="uuid $LIB_ICONV $LIB_XNET" \
+            LDFLAGS="$DS_FRAMEWORK_LDFLAGS"
     mk_multiarch_done
 
     case "$THREADPOOL_BACKEND" in
