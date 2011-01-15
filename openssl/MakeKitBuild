@@ -74,7 +74,7 @@ lw_openssl()
         mk_target \
             TARGET=".stage_${MK_CANONICAL_SYSTEM%/*}_${MK_CANONICAL_SYSTEM#*/}" \
             DEPS="$result" \
-            stage_openssl '$@' "@$MK_STAGE_DIR" "&${BUILDDIR}" '$(MAKE)'
+            stage_openssl '$@' "@$MK_STAGE_DIR" "&${BUILDDIR}" '$(MAKE)' "$LIBS"
         stamp="$result"
     fi
 
@@ -108,8 +108,9 @@ lw_openssl()
     for item in "$@"
     do
         mk_target \
-            TARGET="${MK_LIBDIR}/lib${item}${MK_LIB_EXT}" \
-            DEPS="$stamp"
+            TARGET="${MK_LIBDIR}/lib${item}.la" \
+            DEPS="$stamp" \
+            la_openssl '$@'
         
         mk_declare_internal_library "$item"
     done
@@ -235,6 +236,7 @@ stage_openssl()
     # $2 = install directory
     # $3 = build directory
     # $4 = make command
+    # $5 = LIBS
 
     MK_MSG_DOMAIN="stage"
 
@@ -268,4 +270,14 @@ stage_openssl()
     mk_run_or_fail touch "$1"
 
     mk_msg "end openssl ($MK_CANONICAL_SYSTEM)"
+}
+
+la_openssl()
+{
+    if ! [ -f "$1" ]
+    then
+        mk_run_script link \
+            MODE=la \
+            "$1"
+    fi
 }
