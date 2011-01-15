@@ -156,6 +156,9 @@ configure_openssl()
         solaris-sparc_32)
             host_string="solaris-sparcv9-gcc"
             ;;
+        solaris-x86_32)
+            host_string="solaris-x86-gcc"
+            ;;
         *)
             host_string=""
             ;;
