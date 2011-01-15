@@ -1898,7 +1898,7 @@ AD_NetlogonAuthenticationUserEx(
         dwError = LW_ERROR_INVALID_PASSWORD;
         break;
     case STATUS_INVALID_ACCOUNT_NAME:
-        dwError = LW_ERROR_INVALID_ACCOUNT;
+        dwError = ERROR_INVALID_ACCOUNT_NAME;
         break;
     case STATUS_ACCOUNT_RESTRICTION:
     case STATUS_LOGON_FAILURE:
