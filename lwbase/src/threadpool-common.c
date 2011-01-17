@@ -58,6 +58,18 @@ static const int SignalBlacklist[] =
 #ifdef SIGTRAP
     SIGTRAP,
 #endif
+#ifdef SIGSYS
+    SIGSYS,
+#endif
+#ifdef SIGTSTP
+    SIGTSTP,
+#endif
+#ifdef SIGALRM1
+    SIGALRM1,
+#endif
+#ifdef SIGWAITING
+    SIGWAITING,
+#endif
     0
 };
 
@@ -987,6 +999,7 @@ LwRtlMain(
     siginfo_t info = {0};
     struct sigaction action;
     int ret = 0;
+    int i = 0;
 
     memset(&action, 0, sizeof(action));
 
@@ -995,7 +1008,13 @@ LwRtlMain(
     sigfillset(&waitSet);
     sigfillset(&intSet);
     sigdelset(&intSet, SIGINT);
-    
+
+    for (i = 0; SignalBlacklist[i]; i++)
+    {
+        sigdelset(&waitSet, SignalBlacklist[i]);
+        sigdelset(&intSet, SignalBlacklist[i]);
+    }    
+
     /* Set a special handler for SIGINT */
     action.sa_handler = InterruptHandler;
     action.sa_flags = 0;
