@@ -58,9 +58,6 @@
 #    include <config.h>
 #endif
 #include "lw/types.h"
-#undef malloc
-#undef realloc
-
 #include "ctbase.h"
 #include <syslog.h>
 #include "ctsysfuncs.h"
@@ -87,29 +84,6 @@ sys_vsyslog(
     CT_SAFE_FREE_STRING(buffer);
 #endif /* ! HAVE_VSYSLOG */
 }
-
-#if !defined(HAVE_RPL_MALLOC)
-
-//See http://wiki.buici.com/wiki/Autoconf_and_RPL_MALLOC
-void*
-rpl_malloc(size_t n)
-{
-    if (n == 0)
-        n = 1;
-    return malloc(n);
-}
-
-#endif /* ! HAVE_RPL_MALLOC */
-
-#if !defined(HAVE_RPL_REALLOC)
-
-void*
-rpl_realloc(void* buf, size_t n)
-{
-    return realloc(buf, n);
-}
-
-#endif /* ! HAVE_RPL_REALLOC */
 
 BOOLEAN
 IsRoot()

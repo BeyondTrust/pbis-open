@@ -96,6 +96,9 @@ CTReallocMemory(
     DWORD ceError = ERROR_SUCCESS;
     PVOID pNewMemory = NULL;
 
+    if (dwSize == 0)
+        dwSize = 1;
+
     if (pMemory == NULL) {
         pNewMemory = malloc(dwSize);
         memset(pNewMemory, 0, dwSize);

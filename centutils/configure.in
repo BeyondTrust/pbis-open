@@ -151,8 +151,6 @@ AC_CHECK_SIZEOF([long int])
 
 # Checks for library functions.
 AC_FUNC_FORK
-AC_FUNC_MALLOC
-AC_FUNC_REALLOC
 AC_FUNC_SELECT_ARGTYPES
 AC_TYPE_SIGNAL
 AC_FUNC_STRFTIME
@@ -160,7 +158,7 @@ AC_FUNC_VPRINTF
 AC_FUNC_STRERROR_R
 old_LDFLAGS="$LDFLAGS"
 LDFLAGS="$LDFLAGS $RT_LIBS"
-AC_CHECK_FUNCS([atexit bzero localtime_r memset select socket strchr strerror vsyslog rpl_malloc rpl_realloc mkdtemp _NSGetEnviron kvm_open kvm_getprocs])
+AC_CHECK_FUNCS([atexit bzero localtime_r memset select socket strchr strerror vsyslog mkdtemp _NSGetEnviron kvm_open kvm_getprocs])
 
 # Checks for library functions.
 case `uname -s` in
