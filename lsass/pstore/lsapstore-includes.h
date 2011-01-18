@@ -114,7 +114,7 @@
     do { \
         if ((dwError) || (EE)) \
         { \
-            LW_RTL_LOG_DEBUG(Format " -> %u (%s) (EE = %d)", dwError, LW_RTL_LOG_SAFE_STRING(LwWin32ExtErrorToName(dwError)), EE); \
+            LW_RTL_LOG_DEBUG(Format " -> %u (%s) (EE = %d)", ## __VA_ARGS__, dwError, LW_RTL_LOG_SAFE_STRING(LwWin32ExtErrorToName(dwError)), EE); \
         } \
     } while (0)
 
