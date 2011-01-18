@@ -276,6 +276,16 @@ LsaPstoreFreeStringArrayW(
 /// @return N/A
 ///
 
+#define LSA_PSTORE_FREE_STRING_ARRAY_A(pStringArray, pCount) \
+    do { \
+        if (*(pStringArray)) \
+        { \
+            LsaPstoreFreeStringArrayA(*(pStringArray), *(pCount)); \
+            *(pStringArray) = NULL; \
+            *(pCount) = 0; \
+        } \
+    } while (0)
+
 #define LSA_PSTORE_FREE_STRING_ARRAY_W(pStringArray, pCount) \
     do { \
         if (*(pStringArray)) \
