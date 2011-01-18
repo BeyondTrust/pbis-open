@@ -856,7 +856,11 @@ LWNetDnsBuildSRVRecordList(
                                          &pSRVRecord);
         if (dwError)
         {
-            LWNET_LOG_ERROR("Failed to build SRV record information");
+            // Already logged on ERROR_NOT_FOUND
+            if (dwError != ERROR_NOT_FOUND)
+            {
+                LWNET_LOG_ERROR("Failed to build SRV record information");
+            }
             // Skip
             dwError = 0;
         }
@@ -994,6 +998,7 @@ LWNetDnsGetAddressForServer(
 
     if (IsNullOrEmptyString(pszAddress))
     {
+        LWNET_LOG_ERROR("Unable to get IP address for '%s'", pszHostname);
         dwError = ERROR_NOT_FOUND;
         BAIL_ON_LWNET_ERROR(dwError);
     }
