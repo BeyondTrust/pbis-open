@@ -33,13 +33,11 @@
  *
  *  Module Name:
  *
- *     provider-main.c
+ *     util_str.c
  *
  *  Abstract:
  *
- *        Likewise Password Storage (LWPS)
- *
- *        API to support TDB Password Storage
+ *        Utility String functions
  *
  *  Authors: Gerald Carter <gcarter@likewisesoftware.com>
  *

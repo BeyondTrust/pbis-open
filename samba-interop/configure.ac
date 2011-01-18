@@ -99,6 +99,7 @@ AC_DEFINE_UNQUOTED(LIBDIR, "$LIBDIR", [Library directory])
 AC_CONFIG_FILES([Makefile
                  lwicompat/Makefile
                  wbclient/Makefile
+		 pstore-plugin/Makefile
 		 tools/Makefile])
 
 AC_OUTPUT

@@ -4,4 +4,5 @@ SUBDIRS = \
 	  libtdb \
 	  wbclient \
 	  lwicompat \
+	  pstore-plugin \
 	  tools

@@ -23,11 +23,10 @@
 #include <lwlogging.h>
 #include <lwsecurityidentifier.h>
 #include <lwtime.h>
+#include <lsa/lsapstore-plugin.h>
+#include <reg/regutil.h>
 
-#include <lw/swab.h>
-
-#include <signal.h>
-#include <tdb.h>
+#include "samba-pstore-plugin.h"
 
 #define WBCLIENT_FILENAME   "libwbclient.so.0"
 #define LWICOMPAT_FILENAME  "lwicompat_v4.so"
@@ -660,55 +659,6 @@ cleanup:
 }
 
 DWORD
-TdbStore(
-    TDB_CONTEXT *pTdb,
-    PCSTR pKeyStart,
-    PCSTR pKeyEnd,
-    PVOID pData,
-    DWORD DataLen
-    )
-{
-    DWORD error = 0;
-    int ret = 0;
-    TDB_DATA tdbKey = { 0 };
-    TDB_DATA tdbData = { 0 };
-    PSTR pKey = NULL;
-
-    error = LwAllocateStringPrintf(
-                    &pKey,
-                    "%s/%s",
-                    pKeyStart,
-                    pKeyEnd);
-    BAIL_ON_LSA_ERROR(error);
-
-    tdbKey.dptr = pKey;
-    tdbKey.dsize = strlen(pKey);
-
-    tdbData.dptr = pData;
-    tdbData.dsize = DataLen;
-
-    if ((ret = tdb_transaction_start(pTdb)) != 0) {
-        error = ERROR_INTERNAL_DB_ERROR;
-        BAIL_ON_LSA_ERROR(error);
-    }
-
-    if ((ret = tdb_store(pTdb, tdbKey, tdbData, TDB_REPLACE)) != 0) {
-        tdb_transaction_cancel(pTdb);
-        error = ERROR_INTERNAL_DB_ERROR;
-        BAIL_ON_LSA_ERROR(error);
-    }
-
-    if ((ret = tdb_transaction_commit(pTdb)) != 0) {
-        error = ERROR_INTERNAL_DB_ERROR;
-        BAIL_ON_LSA_ERROR(error);
-    }
-
-cleanup:
-    LW_SAFE_FREE_STRING(pKey);
-    return error;
-}
-
-DWORD
 SynchronizePassword(
     PCSTR pSmbdPath
     )
@@ -717,28 +667,31 @@ SynchronizePassword(
     PSTR pSecretsPath = NULL;
     LW_HANDLE hLsa = NULL;
     PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
-    PLW_SECURITY_IDENTIFIER pSid = NULL;
-    TDB_CONTEXT *pTdb = NULL;
-    DWORD schannelType = 0;
-    DWORD LCT = 0;
-    BYTE sambaSid[68] = { 0 };
+    PLSA_PSTORE_PLUGIN_DISPATCH pDispatch = NULL;
+    PLSA_PSTORE_PLUGIN_CONTEXT pContext = NULL;
 
     error = GetSecretsPath(
         pSmbdPath,
         &pSecretsPath);
     BAIL_ON_LSA_ERROR(error);
 
-    pTdb = tdb_open(
-                    pSecretsPath,
-                    0,
-                    TDB_DEFAULT,
-                    O_RDWR|O_CREAT,
-                    0600);
-    if (pTdb == NULL)
-    {
-        error = ERROR_INTERNAL_DB_ERROR;
-        BAIL_ON_LSA_ERROR(error);
-    }
+    error = RegUtilAddKey(
+                NULL,
+                HKEY_THIS_MACHINE,
+                NULL,
+                "Services\\lsass\\Parameters\\Providers\\ActiveDirectory\\Pstore\\Plugins\\Samba");
+    BAIL_ON_LSA_ERROR(error);
+
+    error = RegUtilSetValue(
+                NULL,
+                HKEY_THIS_MACHINE,
+                NULL,
+                "Services\\lsass\\Parameters\\Providers\\ActiveDirectory\\Pstore\\Plugins\\Samba",
+                "SecretsPath",
+                REG_SZ,
+                pSecretsPath,
+                strlen(pSecretsPath));
+    BAIL_ON_LSA_ERROR(error);
 
     error = LsaOpenServer(
         &hLsa);
@@ -750,78 +703,16 @@ SynchronizePassword(
         &pPasswordInfo);
     BAIL_ON_LSA_ERROR(error);
 
-    /* Machine Password */
-    // The terminating null must be stored with the password
-    error = TdbStore(
-                    pTdb,
-                    "SECRETS/MACHINE_PASSWORD",
-                    pPasswordInfo->Account.NetbiosDomainName,
-                    pPasswordInfo->Password,
-                    strlen(pPasswordInfo->Password) + 1);
+    error = LsaPstorePluginInitializeContext(
+                LSA_PSTORE_PLUGIN_VERSION,
+                &pDispatch,
+                &pContext);
     BAIL_ON_LSA_ERROR(error);
 
-    /* Domain SID */
-
-    error = LwAllocSecurityIdentifierFromString(
-                    pPasswordInfo->Account.DomainSid,
-                    &pSid);
+    error = pDispatch->SetPasswordInfoA(
+                pContext,
+                pPasswordInfo);
     BAIL_ON_LSA_ERROR(error);
-
-    // Samba wants the sid to be null padded and exactly 68 bytes long.
-    memcpy(
-            sambaSid,
-            pSid->pucSidBytes,
-            LW_MIN(pSid->dwByteLength, sizeof(sambaSid)));
-    error = TdbStore(
-                    pTdb,
-                    "SECRETS/SID",
-                    pPasswordInfo->Account.NetbiosDomainName,
-                    sambaSid,
-                    sizeof(sambaSid));
-    BAIL_ON_LSA_ERROR(error);
-
-    /* Schannel Type */
-
-    switch(pPasswordInfo->Account.Type)
-    {
-        case LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION:
-            schannelType = LW_HTOL32(2);
-            break;
-        case LSA_MACHINE_ACCOUNT_TYPE_DC:
-            schannelType = LW_HTOL32(4);
-            break;
-        case LSA_MACHINE_ACCOUNT_TYPE_BDC:
-            schannelType = LW_HTOL32(6);
-            break;
-        default:
-            error = ERROR_INVALID_LOGON_TYPE;
-            BAIL_ON_LSA_ERROR(error);
-            break;
-    }
-
-    error = TdbStore(
-                    pTdb,
-                    "SECRETS/MACHINE_SEC_CHANNEL_TYPE",
-                    pPasswordInfo->Account.NetbiosDomainName,
-                    &schannelType,
-                    sizeof(DWORD));
-    BAIL_ON_LSA_ERROR(error);
-
-    /* Last Change Time */
-
-    LCT = LW_HTOL32(LwNtTimeToWinTime(
-                pPasswordInfo->Account.LastChangeTime));
-
-    error = TdbStore(
-                    pTdb,
-                    "SECRETS/MACHINE_LAST_CHANGE_TIME",
-                    pPasswordInfo->Account.NetbiosDomainName,
-                    &LCT,
-                    sizeof(DWORD));
-    BAIL_ON_LSA_ERROR(error);
-
-    LW_LOG_INFO("Wrote machine password for domain %s",
-            pPasswordInfo->Account.NetbiosDomainName);
 
 cleanup:
     LW_SAFE_FREE_STRING(pSecretsPath);
@@ -833,13 +724,9 @@ cleanup:
     {
         LsaAdFreeMachinePasswordInfo(pPasswordInfo);
     }
-    if (pSid != NULL)
+    if (pContext)
     {
-        LwFreeSecurityIdentifier(pSid);
-    }
-    if (pTdb)
-    {
-        tdb_close(pTdb);
+        pDispatch->Cleanup(pContext);
     }
     return error;
 }
