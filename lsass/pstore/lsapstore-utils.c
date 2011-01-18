@@ -430,19 +430,7 @@ LsaPstorepRegGetStringA(
                     NULL,
                     NULL,
                     &size);
-    if (0 == dwError)
-    {
-        // This should have failed because no buffer got
-        // passed in.  So either we should not find the item,
-        // or we should get an insufficient buffer error.
-        assert(FALSE);
-        dwError = ERROR_ASSERTION_FAILURE;
-        GOTO_CLEANUP_EE(EE);
-    }
-    else if (ERROR_INSUFFICIENT_BUFFER != dwError)
-    {
-        GOTO_CLEANUP_EE(EE);
-    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
     assert(size > 0);
 
@@ -456,7 +444,7 @@ LsaPstorepRegGetStringA(
                     ValueName,
                     RRF_RT_REG_SZ,
                     NULL,
-                    &valueData,
+                    valueData,
                     &size);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
