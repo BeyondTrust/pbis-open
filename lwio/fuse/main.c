@@ -80,9 +80,11 @@ main(int argc,
     FILE* ttyIn = stdin;
     FILE* ttyOut = stdout;
     char szPassword[256] = {0};
+#if 0
     IO_FILE_HANDLE handle = NULL;
     IO_FILE_NAME filename = {0};
     IO_STATUS_BLOCK ioStatus = {0};
+#endif
 
     status = RTL_ALLOCATE(&pFuseContext, IO_FUSE_CONTEXT, sizeof(*pFuseContext));
     BAIL_ON_NT_STATUS(status);
@@ -147,6 +149,7 @@ main(int argc,
         BAIL_ON_NT_STATUS(status);
     }
   
+#if 0
     /* Perform a test open of / to catch any obvious problems now rather than
      * when servicing a syscall */
     status = LwIoFuseGetNtFilename(
@@ -180,6 +183,7 @@ main(int argc,
     handle = NULL;
     BAIL_ON_NT_STATUS(status);
     RTL_FREE(&filename.FileName);
+#endif
 
     return fuse_main(args.argc, args.argv, LwIoFuseGetOperationsTable(), pFuseContext);
 
@@ -187,12 +191,14 @@ error:
 
     fprintf(stderr, "Error: %s (0x%x)\n", LwNtStatusToName(status), (unsigned int) status);
 
+#if 0
     if (handle)
     {
         LwNtCloseFile(handle);
     }
 
     RTL_FREE(&filename.FileName);
+#endif
 
     return 1;
 }
