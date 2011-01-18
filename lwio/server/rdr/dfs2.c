@@ -127,6 +127,7 @@ RdrQueryDfsReferral2Complete(
     switch (status)
     {
     case STATUS_NO_SUCH_FILE:
+    case STATUS_NOT_FOUND:
         /* Referral failed -- insert negative cache entry */
         pOutput = NULL;
         ulOutputSize = 0;
