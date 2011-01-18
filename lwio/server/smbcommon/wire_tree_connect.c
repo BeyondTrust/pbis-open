@@ -330,9 +330,7 @@ UnmarshallTreeConnectResponse(
     const uint8_t    *pBuffer,
     uint32_t          bufferLen,
     uint8_t           messageAlignment,
-    TREE_CONNECT_RESPONSE_HEADER **ppHeader,
-    PSTR *ppszService,
-    PWSTR *ppwszNativeFilesystem
+    TREE_CONNECT_RESPONSE_HEADER **ppHeader
     )
 {
     PTREE_CONNECT_RESPONSE_HEADER pHeader = NULL;
@@ -346,29 +344,6 @@ UnmarshallTreeConnectResponse(
     SMB_HTOL32_INPLACE(pHeader->maximalShareAccessMask);
     SMB_HTOL32_INPLACE(pHeader->guestMaximalShareAccessMask);
     *ppHeader = pHeader;
-
-    *ppszService = (PSTR) pBuffer + bufferUsed;
-    bufferUsed += strnlen((char *) *ppszService, bufferLen - bufferUsed) +
-        sizeof(NUL);
-    if (bufferUsed > bufferLen)
-    {
-        return STATUS_INVALID_NETWORK_RESPONSE;
-    }
-
-    /* Align string */
-    bufferUsed += (bufferUsed + messageAlignment) % 2;
-    if (bufferUsed > bufferLen)
-    {
-        return STATUS_INVALID_NETWORK_RESPONSE;
-    }
-
-    *ppwszNativeFilesystem = (wchar16_t *) (pBuffer + bufferUsed);
-    bufferUsed += sizeof(wchar16_t) * wc16snlen(*ppwszNativeFilesystem,
-        (bufferLen - bufferUsed) / sizeof(wchar16_t)) + sizeof(WNUL);
-    if (bufferUsed > bufferLen)
-    {
-        return STATUS_INVALID_NETWORK_RESPONSE;
-    }
 
     return 0;
 }

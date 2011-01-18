@@ -118,8 +118,6 @@ RdrFinishTreeConnect(
     PSMB_PACKET pResponsePacket = pParam;
     BOOLEAN bTreeLocked = FALSE;
     PTREE_CONNECT_RESPONSE_HEADER pHeader = NULL;
-    PSTR pszService = NULL;
-    PWSTR pwszNativeFilesystem = NULL;
 
     LWIO_LOCK_MUTEX(bTreeLocked, &pTree->mutex);
 
@@ -135,9 +133,7 @@ RdrFinishTreeConnect(
         pResponsePacket->pParams,
         pResponsePacket->bufferUsed - (pResponsePacket->pParams - pResponsePacket->pRawBuffer),
         pResponsePacket->pParams - pResponsePacket->pRawBuffer,
-        &pHeader,
-        &pszService,
-        &pwszNativeFilesystem);
+        &pHeader);
     BAIL_ON_NT_STATUS(status);
 
     pTree->usSupportFlags = pHeader->optionalSupport;
