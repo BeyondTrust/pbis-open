@@ -10,6 +10,7 @@ liblwbase_nothr_la_SOURCES = \
 	ntstatus.c \
 	dscache.c \
 	rpcstatus.c \
+        rtllog.c \
         rtlmemory.c \
         rtlstring.c \
         rtlstring_cstring.c \

@@ -9,6 +9,7 @@ lwinclude_HEADERS = \
 	types.h \
 	attrs.h \
 	atomic.h \
+	rtllog.h \
 	rtlmemory.h \
 	rtlstring.h \
 	base.h \

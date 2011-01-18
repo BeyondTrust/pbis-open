@@ -12,6 +12,7 @@ PUBLIC_HEADERS="\
         lw/attrs.h \
         lw/atomic.h \
         lw/hash.h \
+        lw/rtllog.h \
         lw/rtlmemory.h \
         lw/rtlstring.h \
         lw/rtlgoto.h \

@@ -8,6 +8,7 @@ make()
         ntstatus.c \
         dscache.c \
         rpcstatus.c \
+        rtllog.c \
         rtlmemory.c \
         rtlstring.c \
         rtlstring_cstring.c \
