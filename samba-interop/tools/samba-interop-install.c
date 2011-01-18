@@ -446,16 +446,111 @@ InstallWbclient(
             );
     BAIL_ON_LSA_ERROR(error);
 
-    if (rename(pWbClient, pWbClientOriginal) < 0)
+    if (!strcmp(pBuffer, pWbClientOriginal))
     {
-        if (errno != ENOENT)
+        if (unlink(pWbClient) < 0)
         {
             error = LwMapErrnoToLwError(errno);
             BAIL_ON_LSA_ERROR(error);   
         }
     }
+    else
+    {
+        if (rename(pWbClient, pWbClientOriginal) < 0)
+        {
+            if (errno != ENOENT)
+            {
+                error = LwMapErrnoToLwError(errno);
+                BAIL_ON_LSA_ERROR(error);   
+            }
+        }
+    }
 
     if (symlink(pLikewiseWbClient, pWbClient) < 0)
+    {
+        error = LwMapErrnoToLwError(errno);
+        BAIL_ON_LSA_ERROR(error);   
+    }
+
+    LW_LOG_INFO("Linked %s to %s", pWbClient, pLikewiseWbClient);
+
+cleanup:
+    LW_SAFE_FREE_STRING(pSambaDir);
+    LW_SAFE_FREE_STRING(pWbClient);
+    LW_SAFE_FREE_STRING(pWbClientOriginal);
+    return error;
+}
+
+DWORD
+UninstallWbclient(
+    PCSTR pSmbdPath
+    )
+{
+    DWORD error = 0;
+    PSTR pSambaDir = NULL;
+    PSTR pWbClient = NULL;
+    PSTR pWbClientOriginal = NULL;
+    PCSTR pLikewiseWbClient = LIBDIR "/" WBCLIENT_FILENAME;
+    char pBuffer[1024] = { 0 };
+    struct stat statBuf = { 0 };
+
+    error = GetWbclientDir(
+                &pSambaDir);
+    BAIL_ON_LSA_ERROR(error);
+
+    error = LwAllocateStringPrintf(
+            &pWbClient,
+            "%s/%s",
+            pSambaDir,
+            WBCLIENT_FILENAME
+            );
+    BAIL_ON_LSA_ERROR(error);
+
+    if (readlink(pWbClient, pBuffer, sizeof(pBuffer)) < 0)
+    {
+        switch(errno)
+        {
+            // File does not exist
+            case ENOENT:
+            // Not a symbolic link
+            case EINVAL:
+                pBuffer[0] = 0;
+                break;
+            default:
+                error = LwMapErrnoToLwError(errno);
+                BAIL_ON_LSA_ERROR(error);
+        }
+    }
+    pBuffer[sizeof(pBuffer) - 1] = 0;
+
+    if (strcmp(pBuffer, pLikewiseWbClient))
+    {
+        LW_LOG_INFO("Path %s is not a symbolic link or does not point to %s", pWbClient, pLikewiseWbClient);
+        // Already configured
+        goto cleanup;
+    }
+
+    error = LwAllocateStringPrintf(
+            &pWbClientOriginal,
+            "%s.lwidentity.orig",
+            pWbClient
+            );
+    BAIL_ON_LSA_ERROR(error);
+
+    if (stat(pWbClientOriginal, &statBuf) < 0)
+    {
+        LW_LOG_ERROR("Cannot find original wbclient library at %s", pWbClientOriginal);
+        error = LwMapErrnoToLwError(errno);
+        BAIL_ON_LSA_ERROR(error);   
+    }
+
+    if (unlink(pWbClient) < 0)
+    {
+        error = LwMapErrnoToLwError(errno);
+        BAIL_ON_LSA_ERROR(error);   
+    }
+
+    if (symlink(pWbClientOriginal, pWbClient) < 0)
     {
         error = LwMapErrnoToLwError(errno);
         BAIL_ON_LSA_ERROR(error);   
@@ -659,6 +754,45 @@ cleanup:
 }
 
 DWORD
+UninstallLwiCompat(
+    PCSTR pSmbdPath
+    )
+{
+    DWORD error = 0;
+    PSTR pSambaDir = NULL;
+    PSTR pLwiCompat = NULL;
+
+    error = GetIdmapDir(
+                pSmbdPath,
+                &pSambaDir);
+    BAIL_ON_LSA_ERROR(error);
+
+    error = LwAllocateStringPrintf(
+            &pLwiCompat,
+            "%s/%s",
+            pSambaDir,
+            LWICOMPAT_FILENAME
+            );
+    BAIL_ON_LSA_ERROR(error);
+
+    if (unlink(pLwiCompat) < 0)
+    {
+        if (errno != ENOENT)
+        {
+            error = LwMapErrnoToLwError(errno);
+            BAIL_ON_LSA_ERROR(error);   
+        }
+    }
+
+    LW_LOG_INFO("Unlinked idmapper %s", pLwiCompat);
+
+cleanup:
+    LW_SAFE_FREE_STRING(pSambaDir);
+    LW_SAFE_FREE_STRING(pLwiCompat);
+    return error;
+}
+
+DWORD
 SynchronizePassword(
     PCSTR pSmbdPath
     )
@@ -695,6 +829,10 @@ SynchronizePassword(
 
     error = LsaOpenServer(
         &hLsa);
+    if (error)
+    {
+        LW_LOG_ERROR("Unable to contact lsassd");
+    }
     BAIL_ON_LSA_ERROR(error);
 
     error = LsaAdGetMachinePasswordInfo(
@@ -724,6 +862,60 @@ cleanup:
     {
         LsaAdFreeMachinePasswordInfo(pPasswordInfo);
     }
+    if (pContext)
+    {
+        pDispatch->Cleanup(pContext);
+    }
+    return error;
+}
+
+DWORD
+DeletePassword(
+    PCSTR pSmbdPath
+    )
+{
+    DWORD error = 0;
+    PLSA_PSTORE_PLUGIN_DISPATCH pDispatch = NULL;
+    PLSA_PSTORE_PLUGIN_CONTEXT pContext = NULL;
+    PSTR pSecretsPath = NULL;
+
+    // Even though this was set during the install process, we'll try setting
+    // it again. This way if the user calls uninstall without calling install
+    // first, they won't get an error.
+    error = GetSecretsPath(
+        pSmbdPath,
+        &pSecretsPath);
+    BAIL_ON_LSA_ERROR(error);
+
+    error = RegUtilAddKey(
+                NULL,
+                HKEY_THIS_MACHINE,
+                NULL,
+                "Services\\lsass\\Parameters\\Providers\\ActiveDirectory\\Pstore\\Plugins\\Samba");
+    BAIL_ON_LSA_ERROR(error);
+
+    error = RegUtilSetValue(
+                NULL,
+                HKEY_THIS_MACHINE,
+                NULL,
+                "Services\\lsass\\Parameters\\Providers\\ActiveDirectory\\Pstore\\Plugins\\Samba",
+                "SecretsPath",
+                REG_SZ,
+                pSecretsPath,
+                strlen(pSecretsPath));
+    BAIL_ON_LSA_ERROR(error);
+
+    error = LsaPstorePluginInitializeContext(
+                LSA_PSTORE_PLUGIN_VERSION,
+                &pDispatch,
+                &pContext);
+    BAIL_ON_LSA_ERROR(error);
+
+    error = pDispatch->DeletePasswordInfo(
+                pContext);
+    BAIL_ON_LSA_ERROR(error);
+
+cleanup:
     if (pContext)
     {
         pDispatch->Cleanup(pContext);
@@ -883,6 +1075,20 @@ main(
         BAIL_ON_LSA_ERROR(error);
 
         fprintf(stderr, "Install successful\n");
+    }
+    else if (mode == UNINSTALL)
+    {
+        error = UninstallWbclient(pSmbdPath);
+        BAIL_ON_LSA_ERROR(error);
+
+        error = UninstallLwiCompat(pSmbdPath);
+        BAIL_ON_LSA_ERROR(error);
+
+        error = DeletePassword(
+                    pSmbdPath);
+        BAIL_ON_LSA_ERROR(error);
+
+        fprintf(stderr, "Uninstall successful\n");
     }
     else
     {

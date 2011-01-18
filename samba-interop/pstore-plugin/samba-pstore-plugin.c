@@ -117,6 +117,61 @@ cleanup:
     return error;
 }
 
+static
+DWORD
+TdbDelete(
+    TDB_CONTEXT *pTdb,
+    PCSTR pKeyStart
+    )
+{
+    DWORD error = 0;
+    int ret = 0;
+    TDB_DATA pos = { 0 };
+    TDB_DATA deleteKey = { 0 };
+    size_t keyStartLen = strlen(pKeyStart);
+
+    if ((ret = tdb_transaction_start(pTdb)) != 0) {
+        error = ERROR_INTERNAL_DB_ERROR;
+        BAIL_ON_LSA_ERROR(error);
+    }
+
+    pos = tdb_firstkey(pTdb);
+    while (pos.dsize)
+    {
+        // See if the key is exactly the key start, or it is the key start
+        // followed by a slash.
+        if ((pos.dsize == keyStartLen &&
+            !strcmp(pos.dptr, pKeyStart)) ||
+            (pos.dsize > keyStartLen &&
+            !strncmp(pos.dptr, pKeyStart, keyStartLen) &&
+            pos.dptr[keyStartLen] == '/'))
+        {
+            deleteKey = pos;
+        }
+
+        pos = tdb_nextkey(pTdb, pos);
+
+        if (deleteKey.dsize)
+        {
+            if ((ret = tdb_delete(pTdb, deleteKey)) != 0)
+            {
+                tdb_transaction_cancel(pTdb);
+                error = ERROR_INTERNAL_DB_ERROR;
+                BAIL_ON_LSA_ERROR(error);
+            }
+            deleteKey.dsize = 0;
+        }
+    }
+
+    if ((ret = tdb_transaction_commit(pTdb)) != 0) {
+        error = ERROR_INTERNAL_DB_ERROR;
+        BAIL_ON_LSA_ERROR(error);
+    }
+
+cleanup:
+    return error;
+}
+
 DWORD
 LsaPstorePluginInitializeContext(
     IN ULONG Version,
@@ -311,8 +366,41 @@ cleanup:
 static
 DWORD
 DeletePassword(
-    IN PLSA_PSTORE_PLUGIN_CONTEXT Context
+    IN PLSA_PSTORE_PLUGIN_CONTEXT pContext
     )
 {
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD error = 0;
+
+    /* Machine Password */
+    // The terminating null must be stored with the password
+    error = TdbDelete(
+                    pContext->pTdb,
+                    "SECRETS/MACHINE_PASSWORD");
+    BAIL_ON_LSA_ERROR(error);
+
+    error = TdbDelete(
+                    pContext->pTdb,
+                    "SECRETS/MACHINE_PASSWORD.PREV");
+    BAIL_ON_LSA_ERROR(error);
+
+    error = TdbDelete(
+                    pContext->pTdb,
+                    "SECRETS/SID");
+    BAIL_ON_LSA_ERROR(error);
+
+
+    error = TdbDelete(
+                    pContext->pTdb,
+                    "SECRETS/MACHINE_SEC_CHANNEL_TYPE");
+    BAIL_ON_LSA_ERROR(error);
+
+    error = TdbDelete(
+                    pContext->pTdb,
+                    "SECRETS/MACHINE_LAST_CHANGE_TIME");
+    BAIL_ON_LSA_ERROR(error);
+
+    LW_LOG_INFO("Deleted machine password secrets.tdb");
+
+cleanup:
+    return error;
 }
