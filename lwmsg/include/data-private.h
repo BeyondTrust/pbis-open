@@ -187,13 +187,6 @@ lwmsg_data_free_graph_internal(
     unsigned char* object
     );
 
-void
-lwmsg_data_free_graph_cleanup(
-    const LWMsgContext* context,
-    LWMsgTypeSpec* type,
-    void* root
-    );
-
 /**
  * @brief Print textual representation of a data graph
  *

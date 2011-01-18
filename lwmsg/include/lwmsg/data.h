@@ -250,6 +250,50 @@ lwmsg_data_destroy_graph(
     );
 
 /**
+ * @brief Free in-memory data graph (guaranteed success)
+ *
+ * Like #lwmsg_data_free_graph(), but guarantees success:
+ *
+ * - Does not require an #LWMsgDataContext to be allocated
+ *   (which could itself fail).  Instead, an optional #LWMsgContext
+ *   can be passed in to specify the memory manager.
+ * - Does not return an error
+ *
+ * @warning This function has undefined behavior if the passed
+ * data graph is malformed.
+ *
+ * @param[in] context an optional context
+ * @param[in] type the type of the root node of the graph
+ * @param[in,out] root the root of the graph
+ */
+void
+lwmsg_data_free_graph_cleanup(
+    const LWMsgContext* context,
+    LWMsgTypeSpec* type,
+    void* root
+    );
+
+/**
+ * @brief Destroy in-memory data graph (guaranteed success)
+ *
+ * Like #lwmsg_data_destroy_graph(), but guarantees success
+ * in the same way as #lwmsg_data_free_graph_cleanup().
+ *
+ * @warning This function has undefined behavior if the passed
+ * data graph is malformed.
+ *
+ * @param[in] context an optional context
+ * @param[in] type the type of the root node of the graph
+ * @param[in,out] root the root of the graph
+ */
+void
+lwmsg_data_destroy_graph_cleanup(
+    const LWMsgContext* context,
+    LWMsgTypeSpec* type,
+    void* root
+    );
+
+/**
  * @brief Marshal a data structure
  *
  * Converts a data structure of the specified type to a flat, serialized form, storing

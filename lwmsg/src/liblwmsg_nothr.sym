@@ -73,6 +73,7 @@ lwmsg_data_unmarshal_flat
 lwmsg_data_free_graph
 lwmsg_data_free_graph_cleanup
 lwmsg_data_destroy_graph
+lwmsg_data_destroy_graph_cleanup
 lwmsg_data_print_graph
 lwmsg_data_print_graph_alloc
 lwmsg_data_alloc_memory
