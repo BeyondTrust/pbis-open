@@ -71,7 +71,7 @@ LsaPstoreInitializeLibrary(
     VOID
     );
 ///<
-/// Initalize password store library.
+/// Initialize password store library.
 ///
 /// Initialize the library.
 ///
