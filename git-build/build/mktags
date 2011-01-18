@@ -19,7 +19,6 @@ DIRLIST=" \
     lwtools \
     netlogon \
     openldap \
-    pstore \
     sqlite \
     srvsvc \
 "
