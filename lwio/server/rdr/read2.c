@@ -94,6 +94,7 @@ RdrRead2(
     if (pIrp->Args.ReadWrite.ByteOffset)
     {
         llOffset = *pIrp->Args.ReadWrite.ByteOffset;
+        pFile->llOffset = llOffset;
     }
     else
     {
@@ -251,7 +252,7 @@ RdrFinishRead2(
     PVOID pParam
     )
 {
-    PRDR_CCB pFile = IoFileGetContext(pContexts[0].pIrp->FileHandle);
+    PRDR_CCB2 pFile = IoFileGetContext(pContexts[0].pIrp->FileHandle);
     USHORT usIndex = 0;
     BOOLEAN bExpectEof = FALSE;
     ULONG ulTotalLength = 0;
@@ -295,6 +296,8 @@ RdrFinishRead2(
         status = STATUS_END_OF_FILE;
         BAIL_ON_NT_STATUS(status);
     }
+
+    pFile->llOffset += (LONG64) ulTotalLength;
     pContexts[0].pIrp->IoStatusBlock.BytesTransferred = ulTotalLength;
 
 cleanup:
@@ -302,7 +305,6 @@ cleanup:
     if (status != STATUS_PENDING)
     {
         pContexts->pIrp->IoStatusBlock.Status = status;
-
 
         IoIrpComplete(pContexts->pIrp);
         RdrFreeContextArray(pContexts, pContexts->State.Read2.usOpCount);

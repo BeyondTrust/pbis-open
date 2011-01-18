@@ -96,6 +96,7 @@ RdrWrite2(
     if (pIrp->Args.ReadWrite.ByteOffset)
     {
         llOffset = *pIrp->Args.ReadWrite.ByteOffset;
+        pFile->llOffset = llOffset;
     }
     else
     {
@@ -263,16 +264,6 @@ RdrFinishWrite2(
     PRDR_CCB2 pFile = IoFileGetContext(pContexts[0].pIrp->FileHandle);
     USHORT usIndex = 0;
     ULONG ulTotalLength = 0;
-    LONG64 llOffset;
-
-    if (pContexts->pIrp->Args.ReadWrite.ByteOffset)
-    {
-        llOffset = *pContexts->pIrp->Args.ReadWrite.ByteOffset;
-    }
-    else
-    {
-        llOffset = pFile->llOffset;
-    }
 
     BAIL_ON_NT_STATUS(status);
 
@@ -295,7 +286,7 @@ RdrFinishWrite2(
     }
 
     pContexts[0].pIrp->IoStatusBlock.BytesTransferred = ulTotalLength;
-    pFile->llOffset = llOffset + ulTotalLength;
+    pFile->llOffset += ulTotalLength;
 
 cleanup:
 

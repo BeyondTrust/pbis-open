@@ -103,6 +103,7 @@ RdrRead(
     if (pIrp->Args.ReadWrite.ByteOffset)
     {
         pContext->State.Read.llByteOffset = *pIrp->Args.ReadWrite.ByteOffset;
+        pFile->llOffset = pContext->State.Read.llByteOffset;
     }
     else
     {
@@ -309,6 +310,7 @@ cleanup:
 
         if (status == STATUS_SUCCESS)
         {
+            pFile->llOffset += pContext->State.Read.llTotalBytesRead;
             pContext->pIrp->IoStatusBlock.BytesTransferred = pContext->State.Read.llTotalBytesRead;
         }
 
