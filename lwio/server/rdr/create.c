@@ -93,12 +93,13 @@ RdrCancelCreate(
 static
 BOOLEAN
 RdrCreateIsDeferred(
-    ACCESS_MASK DesiredAccess
+    ACCESS_MASK DesiredAccess,
+    FILE_CREATE_OPTIONS CreateOptions
     )
 {
     return (
         DesiredAccess == DELETE ||
-        DesiredAccess == FILE_LIST_DIRECTORY
+        (DesiredAccess == FILE_LIST_DIRECTORY && (CreateOptions & FILE_DIRECTORY_FILE))
     );
 }
 
@@ -163,7 +164,7 @@ RdrCreateTreeConnectComplete(
 
     pContext->State.Create.pFile = pFile;
 
-    if (RdrCreateIsDeferred(DesiredAccess))
+    if (RdrCreateIsDeferred(DesiredAccess, CreateOptions))
     {
         /*
          * The operation we are requesting access for is path-based, so there
