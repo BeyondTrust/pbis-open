@@ -200,6 +200,10 @@ LsaPstorepInitializeLibraryInternal(
                                &pState->Plugin.Context);
         GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
     }
+    else
+    {
+        LW_RTL_LOG_VERBOSE("No LSA pstore plugin defined.");
+    }
 
     dwError = LsaPstorepBackendInitialize();
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);

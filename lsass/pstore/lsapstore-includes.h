@@ -47,9 +47,11 @@
 #include <lw/rtlmemory.h>
 #include <lw/atomic.h>
 #include <lw/rtlstring.h>
-
 #include <reg/lwreg.h>
 #include <pthread.h>
+#include <lw/rtllog.h>
+#include <lwerror.h>
+
 
 #if defined(sun) || defined(_AIX)
 #define ONCE_INIT {PTHREAD_ONCE_INIT}
@@ -88,10 +90,33 @@
 #define LSA_PSTORE_FREE_SECURE_WC16STRING(pMemory) \
     LW_RTL_MAKE_CUSTOM_FREE_SECURE_STRING(LsaPstoreFreeMemory, pMemory, WCHAR)
 
-// TODO-Implement logging
-#define LSA_PSTORE_LOG_LEAVE_ERROR(dwError)
-#define LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE)
-#define LSA_PSTORE_LOG_LEAVE_ERROR_EE_FMT(dwError, EE, Format, ...)
+//
+// Logging
+//
+
+#define LSA_PSTORE_LOG_LEAVE_ERROR(dwError) \
+    do { \
+        if (dwError) \
+        { \
+            LW_RTL_LOG_DEBUG("-> %u (%s)", dwError, LW_RTL_LOG_SAFE_STRING(LwWin32ExtErrorToName(dwError))); \
+        } \
+    } while (0)
+
+#define LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE) \
+    do { \
+        if ((dwError) || (EE)) \
+        { \
+            LW_RTL_LOG_DEBUG("-> %u (%s) (EE = %d)", dwError, LW_RTL_LOG_SAFE_STRING(LwWin32ExtErrorToName(dwError)), EE); \
+        } \
+    } while (0)
+
+#define LSA_PSTORE_LOG_LEAVE_ERROR_EE_FMT(dwError, EE, Format, ...) \
+    do { \
+        if ((dwError) || (EE)) \
+        { \
+            LW_RTL_LOG_DEBUG(Format " -> %u (%s) (EE = %d)", dwError, LW_RTL_LOG_SAFE_STRING(LwWin32ExtErrorToName(dwError)), EE); \
+        } \
+    } while (0)
 
 // lsapstore-utils.c
 

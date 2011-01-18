@@ -523,7 +523,9 @@ cleanup:
     *Handle = handle;
     *InitFunction = initFunction;
 
-    LSA_PSTORE_LOG_LEAVE_ERROR_EE_FMT(dwError, EE, "dlerror = '%s'", errorMessage);
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE_FMT(dwError, EE, "dlerror = '%s' loading '%s'",
+            LW_RTL_LOG_SAFE_STRING(errorMessage),
+            LW_RTL_LOG_SAFE_STRING(Path));
     return dwError;
 }
 

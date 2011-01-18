@@ -14,7 +14,7 @@ make()
            lsapstore-utils.c \
            " \
         INCLUDEDIRS=". ../include" \
-        LIBDEPS="$LIB_DL $LIB_PTHREAD rsutils lsacommon" \
+        LIBDEPS="$LIB_DL $LIB_PTHREAD rsutils lsacommon lwbase_nothr" \
         HEADERDEPS="reg/regutil.h lwadvapi.h" \
         SYMFILE="lsapstore.sym"
 }

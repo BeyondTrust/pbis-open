@@ -17,6 +17,7 @@ liblsapstore_la_LIBADD = \
         $(DL_LIBS) \
         $(PTHREAD_LIBS) \
         $(LWREG_LIBS) \
+        $(LWBASE_NOTHR_LIBS) \
         @top_builddir@/common/liblsacommon.la
 
 liblsapstore_la_LDFLAGS = \
