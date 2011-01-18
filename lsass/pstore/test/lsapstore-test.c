@@ -451,7 +451,7 @@ ShowUsage(
     PCSTR pszUseProgramName = Basename(pszProgramName);
     printf("Usage: %s get-password-info [DNS-DOMAIN-NAME]\n"
            "       %s set-password-info <ARGS...>\n"
-           "       %s delete-pasword-info [DNS-DOMAIN-NAME]\n"
+           "       %s delete-password-info [DNS-DOMAIN-NAME]\n"
            "       %s get-default-domain\n"
            "       %s set-default-domain DNS-DOMAIN-NAME\n"
            "       %s get-joined-domains\n"
