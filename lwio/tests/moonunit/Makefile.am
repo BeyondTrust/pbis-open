@@ -1,4 +1,4 @@
-TEST_SOURCES = test-zct.c
+TEST_SOURCES = test-zct.c test-util.c
 
 lib_LTLIBRARIES =
 
@@ -13,6 +13,7 @@ lwio_mu_la_SOURCES = \
 lwio_mu_la_CPPFLAGS =               \
     $(AM_CPPFLAGS)                  \
     -I$(top_srcdir)/include         \
+    -I$(top_builddir)/include       \
     -I$(top_srcdir)/server/include
 
 lwio_mu_la_LIBADD = \
