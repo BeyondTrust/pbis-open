@@ -47,6 +47,7 @@
  *
  */
 #include "includes.h"
+#include <lw/rtllog.h>
 
 static
 VOID
@@ -62,6 +63,127 @@ LsaLwLogMessage(
         _LSA_LOG_WITH_THREAD(level, "%s", pszMessage);
     }
     LSA_UNLOCK_LOGGER;
+}
+
+static
+inline
+LsaLogLevel
+LsaRtlToLsaLogLevel(
+    IN LW_RTL_LOG_LEVEL Level,
+    IN LsaLogLevel DefaultLevel
+    )
+{
+    switch (Level)
+    {
+        case LW_RTL_LOG_LEVEL_ALWAYS:
+            return LSA_LOG_LEVEL_ALWAYS;
+        case LW_RTL_LOG_LEVEL_ERROR:
+            return LSA_LOG_LEVEL_ERROR;
+        case LW_RTL_LOG_LEVEL_WARNING:
+            return LSA_LOG_LEVEL_WARNING;
+        case LW_RTL_LOG_LEVEL_INFO:
+            return LSA_LOG_LEVEL_INFO;
+        case LW_RTL_LOG_LEVEL_VERBOSE:
+            return LSA_LOG_LEVEL_VERBOSE;
+        case LW_RTL_LOG_LEVEL_DEBUG:
+            return LSA_LOG_LEVEL_DEBUG;
+        case LW_RTL_LOG_LEVEL_TRACE:
+            return LSA_LOG_LEVEL_TRACE;
+        default:
+            return DefaultLevel;
+    }
+}
+
+static
+inline
+LW_RTL_LOG_LEVEL
+LsaLsaToRtlLogLevel(
+    IN LsaLogLevel Level,
+    IN LW_RTL_LOG_LEVEL DefaultLevel
+    )
+{
+    switch (Level)
+    {
+        case LSA_LOG_LEVEL_ALWAYS:
+            return LW_RTL_LOG_LEVEL_ALWAYS;
+        case LSA_LOG_LEVEL_ERROR:
+            return LW_RTL_LOG_LEVEL_ERROR;
+        case LSA_LOG_LEVEL_WARNING:
+            return LW_RTL_LOG_LEVEL_WARNING;
+        case LSA_LOG_LEVEL_INFO:
+            return LW_RTL_LOG_LEVEL_INFO;
+        case LSA_LOG_LEVEL_VERBOSE:
+            return LW_RTL_LOG_LEVEL_VERBOSE;
+        case LSA_LOG_LEVEL_DEBUG:
+            return LW_RTL_LOG_LEVEL_DEBUG;
+        case LSA_LOG_LEVEL_TRACE:
+            return LW_RTL_LOG_LEVEL_TRACE;
+        default:
+            return DefaultLevel;
+    }
+}
+
+static
+VOID
+LsaRtlLogCallback(
+    IN OPTIONAL LW_PVOID Context,
+    IN LW_RTL_LOG_LEVEL Level,
+    IN OPTIONAL PCSTR ComponentName,
+    IN PCSTR FunctionName,
+    IN PCSTR FileName,
+    IN ULONG LineNumber,
+    IN PCSTR Format,
+    IN ...
+    )
+{
+    DWORD dwError = 0;
+    PSTR formattedMessage = NULL;
+    LW_RTL_LOG_LEVEL maxLevel = LwRtlLogGetLevel();
+    LsaLogLevel lsaLevel = LsaRtlToLsaLogLevel(Level, LSA_LOG_LEVEL_DEBUG);
+
+    LSA_LOCK_LOGGER;
+
+    if (gpfnLogger)
+    {
+        va_list argList;
+        va_start(argList, Format);
+        dwError = LwAllocateStringPrintfV(&formattedMessage, Format, argList);
+        va_end(argList);
+        if (dwError)
+        {
+            goto error;
+        }
+        else
+        {
+            if (maxLevel >= LW_RTL_LOG_LEVEL_DEBUG)
+            {
+                _LSA_LOG_MESSAGE(lsaLevel,
+                                 "0x%lx:[%s() %s:%d] %s",
+                                 (unsigned long)pthread_self(),
+                                 FunctionName,
+                                 FileName,
+                                 LineNumber,
+                                 formattedMessage);
+            }
+            else
+            {
+                _LSA_LOG_MESSAGE(lsaLevel,
+                                 "0x%lx:%s",
+                                 (unsigned long)pthread_self(),
+                                 formattedMessage);
+            }
+        }
+    }
+
+error:
+    LSA_UNLOCK_LOGGER;
+
+    if (dwError)
+    {
+        LSA_LOG_ERROR("Failed to format log message");
+    }
+
+    LW_SAFE_FREE_STRING(formattedMessage);
 }
 
 DWORD
@@ -83,6 +205,9 @@ LsaInitLogging_r(
                     pszPath);
 
     LwSetLogFunction(LW_LOG_LEVEL_DEBUG, LsaLwLogMessage, NULL);
+
+    LwRtlLogSetCallback(LsaRtlLogCallback, NULL);
+    LwRtlLogSetLevel(LsaLsaToRtlLogLevel(maxAllowedLogLevel, LW_RTL_LOG_LEVEL_TRACE));
 
     LSA_UNLOCK_LOGGER;
 
@@ -115,6 +240,7 @@ LsaLogSetInfo_r(
     LSA_LOCK_LOGGER;
 
     dwError = LsaLogSetInfo(pLogInfo);
+    LwRtlLogSetLevel(LsaLsaToRtlLogLevel(pLogInfo->maxAllowedLogLevel, LW_RTL_LOG_LEVEL_TRACE));
 
     LSA_UNLOCK_LOGGER;
 

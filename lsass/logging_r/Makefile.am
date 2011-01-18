@@ -13,6 +13,7 @@ liblsalog_r_la_CPPFLAGS = \
 
 liblsalog_r_la_LIBADD = \
 	$(top_builddir)/common/liblsacommon.la \
+	$(LWBASE_NOTHR_LIBS) \
 	$(PTHREAD_LIBS)
 
 liblsalog_r_la_LDFLAGS = \

@@ -6,5 +6,5 @@ make()
 	CPPFLAGS="-DLW_ENABLE_THREADS=1" \
 	INCLUDEDIRS="../include" \
 	HEADERDEPS="lwadvapi.h" \
-	LIBDEPS="lsacommon lwadvapi $LIB_PTHREAD"
+	LIBDEPS="lsacommon lwadvapi lwbase_nothr $LIB_PTHREAD"
 }
