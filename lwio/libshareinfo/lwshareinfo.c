@@ -510,6 +510,21 @@ error:
     goto cleanup;
 }
 
+VOID
+LwShareInfoFree(
+    ULONG Level,
+    ULONG Count,
+    PVOID pInfo
+    )
+{
+    SHARE_INFO_ENUM_PARAMS params = {0};
+
+    params.dwInfoLevel = Level;
+    params.dwNumEntries = Count;
+    params.info.p0 = pInfo;
+
+    lwmsg_data_destroy_graph_cleanup(NULL, gShareInfoEnumParamsSpec, &params);
+}
 
 LW_NTSTATUS
 LwShareInfoMarshalSetParameters(

@@ -10,6 +10,7 @@ make()
         logging.c              \
         ntfileapictx.c         \
         smbfileapictx.c        \
+        srvshareapi.c          \
         thread.c               \
         win32.c"
 
@@ -18,5 +19,5 @@ make()
         SOURCES="$CLIENT_SOURCES" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="lwmsg/lwmsg.h lw/base.h krb5.h" \
-        LIBDEPS="lwiocommon krb5"
+        LIBDEPS="lwiocommon lwioshareinfo krb5"
 }

@@ -49,6 +49,8 @@
 #ifndef _LWSHAREINFO_H_
 #define _LWSHAREINFO_H_
 
+#include <lwio/lmshare.h>
+
 typedef union _SHARE_INFO_UNION
 {
     PSHARE_INFO_0     p0;
@@ -175,6 +177,12 @@ LwShareInfoUnmarshalGetParameters(
     PSHARE_INFO_GETINFO_PARAMS* ppParams
     );
 
+VOID
+LwShareInfoFree(
+    ULONG Level,
+    ULONG Count,
+    PVOID pInfo
+    );
 
 #endif /* _LWSHAREINFO_H_ */
 

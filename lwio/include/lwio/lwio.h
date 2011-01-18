@@ -265,5 +265,6 @@ LwIoUncPathToInternalPath(
 
 #include <lwio/ntfileapi.h>
 #include <lwio/smbfileapi.h>
+#include <lwio/srvshareapi.h>
 
 #endif /* __LWIO_H__ */
