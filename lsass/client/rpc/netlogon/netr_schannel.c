@@ -152,6 +152,9 @@ NetrOpenSchannel(
                               &rpcStatus);
     BAIL_ON_RPC_STATUS(rpcStatus);
 
+    rpc_mgmt_set_com_timeout(hSchannelBinding, 5, &rpcStatus);
+    BAIL_ON_RPC_STATUS(rpcStatus);
+
     *phSchannelBinding = hSchannelBinding;
 
 cleanup:

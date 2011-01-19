@@ -309,7 +309,7 @@ NetrInitBindingFullA(
         hInfo = NULL;
     }
 
-    rpc_mgmt_set_com_timeout(hBinding, 6, &rpcStatus);
+    rpc_mgmt_set_com_timeout(hBinding, 5, &rpcStatus);
     BAIL_ON_RPC_STATUS(rpcStatus);
 
     *phBinding = (NETR_BINDING)hBinding;
