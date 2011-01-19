@@ -610,6 +610,13 @@ IopCompleteZctReadWriteFile(
 cleanup:
     IopIrpDereference(&pIrp);
 
+    // ZCT read completion on an already run-down file is ok
+    if ((STATUS_CANCELLED == status) && !bIsWrite)
+    {
+        status = STATUS_SUCCESS;
+        ioStatusBlock.Status = status;
+    }
+
     if (STATUS_PENDING != status)
     {
         *IoStatusBlock = ioStatusBlock;
