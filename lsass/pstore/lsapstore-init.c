@@ -199,6 +199,8 @@ LsaPstorepInitializeLibraryInternal(
                                &pState->Plugin.Dispatch,
                                &pState->Plugin.Context);
         GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+        LW_RTL_LOG_VERBOSE("Loaded LSA pstore plugin at %s", pState->Plugin.Path);
     }
     else
     {
