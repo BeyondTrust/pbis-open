@@ -1052,6 +1052,7 @@ AC_CONFIG_FILES([Makefile
                  interop/lwmapsecurity/Makefile
                  interop/lwidsplugin/Makefile
                  pstore/Makefile
+                 pstore/plugin/Makefile
                  pstore/test/Makefile
                  server/Makefile
                  server/api/Makefile

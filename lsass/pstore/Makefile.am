@@ -1,4 +1,4 @@
-SUBDIRS = . test
+SUBDIRS = . test plugin
 
 AM_CPPFLAGS += -I$(top_srcdir)/include
 
