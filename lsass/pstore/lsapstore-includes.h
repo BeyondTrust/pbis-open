@@ -120,9 +120,17 @@
 
 // lsapstore-utils.c
 
+#define LSA_PSTOREP_FREE_ACCOUNT_INFO_A(ppAccountInfo) \
+    LW_RTL_MAKE_CUSTOM_FREE(LsaPstorepFreeAccountInfoA, ppAccountInfo)
+
 VOID
 LsaPstorepFreePasswordInfoContentsW(
     IN OUT PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
+    );
+
+VOID
+LsaPstorepFreeAccountInfoA(
+    IN PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
     );
 
 DWORD
@@ -135,6 +143,12 @@ DWORD
 LsaPstorepConvertWideToAnsiPasswordInfo(
     IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo,
     OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
+    );
+
+DWORD
+LsaPstorepConvertWideToAnsiAccountInfo(
+    IN PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo,
+    OUT PLSA_MACHINE_ACCOUNT_INFO_A* ppAccountInfo
     );
 
 PSTR
@@ -208,7 +222,7 @@ LsaPstorepCallPluginSetPasswordInfo(
 
 DWORD
 LsaPstorepCallPluginDeletePasswordInfo(
-    VOID
+    IN OPTIONAL PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo
     );
 
 // lsapstore-backend.c

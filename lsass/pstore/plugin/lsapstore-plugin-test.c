@@ -47,6 +47,7 @@
 #include <lw/errno.h>
 #include <lwerror.h>
 #include <lwmem.h>
+#include <lwstr.h>
 #include <unistd.h>
 #include <assert.h>
 
@@ -69,12 +70,10 @@ PluginCleanup(
     IN PLSA_PSTORE_PLUGIN_CONTEXT pContext
     )
 {
-    if (pContext)
-    {
-        LW_RTL_LOG_DEBUG("hostname = %s", pContext->HostName);
+    assert(pContext);
 
-        LwFreeMemory(pContext);
-    }
+    LW_RTL_LOG_DEBUG("CLEANUP: (at hostname = %s)", pContext->HostName);
+    LwFreeMemory(pContext);
 }
             
 static
@@ -86,10 +85,22 @@ PluginSetPasswordInfoW(
 {
     DWORD dwError = 0;
     int EE = 0;
+    PSTR dnsDomainName = NULL;
 
     assert(pContext);
 
-    LW_RTL_LOG_DEBUG("hostname = %s", pContext->HostName);
+    if (pPasswordInfo->Account.DnsDomainName)
+    {
+        dwError = LwWc16sToMbs(pPasswordInfo->Account.DnsDomainName, &dnsDomainName);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
+
+    LW_RTL_LOG_DEBUG("SET: DnsDomainName = %s (at hostname = %s)",
+            LW_RTL_LOG_SAFE_STRING(dnsDomainName),
+            pContext->HostName);
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(dnsDomainName);
 
     PLUGIN_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
@@ -104,10 +115,13 @@ PluginSetPasswordInfoA(
 {
     DWORD dwError = 0;
     int EE = 0;
+    PCSTR dnsDomainName = pPasswordInfo->Account.DnsDomainName;
 
     assert(pContext);
 
-    LW_RTL_LOG_DEBUG("hostname = %s", pContext->HostName);
+    LW_RTL_LOG_DEBUG("SET: DnsDomainName = %s (at hostname = %s)",
+            LW_RTL_LOG_SAFE_STRING(dnsDomainName),
+            pContext->HostName);
 
     PLUGIN_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
@@ -115,16 +129,50 @@ PluginSetPasswordInfoA(
 
 static
 DWORD
-PluginDeletePasswordInfo(
-    IN PLSA_PSTORE_PLUGIN_CONTEXT pContext
+PluginDeletePasswordInfoW(
+    IN PLSA_PSTORE_PLUGIN_CONTEXT pContext,
+    IN OPTIONAL PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo
     )
 {
     DWORD dwError = 0;
     int EE = 0;
+    PSTR dnsDomainName = NULL;
 
     assert(pContext);
 
-    LW_RTL_LOG_DEBUG("hostname = %s", pContext->HostName);
+    if (pAccountInfo && pAccountInfo->DnsDomainName)
+    {
+        dwError = LwWc16sToMbs(pAccountInfo->DnsDomainName, &dnsDomainName);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
+
+    LW_RTL_LOG_DEBUG("DELETE: DnsDomainName = %s (at hostname = %s)",
+            LW_RTL_LOG_SAFE_STRING(dnsDomainName),
+            pContext->HostName);
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(dnsDomainName);
+
+    PLUGIN_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+static
+DWORD
+PluginDeletePasswordInfoA(
+    IN PLSA_PSTORE_PLUGIN_CONTEXT pContext,
+    IN OPTIONAL PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PCSTR dnsDomainName = pAccountInfo ? pAccountInfo->DnsDomainName : NULL;
+
+    assert(pContext);
+
+    LW_RTL_LOG_DEBUG("DELETE: DnsDomainName = %s (at hostname = %s)",
+            LW_RTL_LOG_SAFE_STRING(dnsDomainName),
+            pContext->HostName);
 
     PLUGIN_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
@@ -143,7 +191,8 @@ LsaPstorePluginInitializeContext(
         .Cleanup = PluginCleanup,
         .SetPasswordInfoW = PluginSetPasswordInfoW,
         .SetPasswordInfoA = PluginSetPasswordInfoA,
-        .DeletePasswordInfo = PluginDeletePasswordInfo
+        .DeletePasswordInfoW = PluginDeletePasswordInfoW,
+        .DeletePasswordInfoA = PluginDeletePasswordInfoA
     };
     PLSA_PSTORE_PLUGIN_DISPATCH dispatch = &globalDispatch;
     PLSA_PSTORE_PLUGIN_CONTEXT context = NULL;

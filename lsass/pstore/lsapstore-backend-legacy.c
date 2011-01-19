@@ -205,6 +205,7 @@ LsaPstorepBackendDeletePasswordInfoW(
     PSTR dnsDomainName = NULL;
     PWSTR defaultDnsDomainName = NULL;
     BOOLEAN isDefaultDomain = FALSE;
+    PLSA_MACHINE_PASSWORD_INFO_W passwordInfo = NULL;
 
     if (DnsDomainName)
     {
@@ -229,8 +230,15 @@ LsaPstorepBackendDeletePasswordInfoW(
         isDefaultDomain = TRUE;
     }
 
-    dwError = LsaPstoreGetDefaultDomainW(&defaultDnsDomainName);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    if (!defaultDnsDomainName)
+    {
+        dwError = LsaPstoreGetDefaultDomainW(&defaultDnsDomainName);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
+
+    dwError = LsaPstoreGetPasswordInfoW(DnsDomainName, &passwordInfo);
+    // Ignore any error
+    dwError = 0;
 
     dwError = LwpsLegacyDeletePassword(
                     LsaPstoreBackendState.OldStoreHandle,
@@ -239,13 +247,15 @@ LsaPstorepBackendDeletePasswordInfoW(
 
     if (isDefaultDomain)
     {
-        dwError = LsaPstorepCallPluginDeletePasswordInfo();
+        dwError = LsaPstorepCallPluginDeletePasswordInfo(
+                        passwordInfo ? &passwordInfo->Account : NULL);
         GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
     }
 
 cleanup:
     LwRtlCStringFree(&dnsDomainName);
     LwRtlWC16StringFree(&defaultDnsDomainName);
+    LSA_PSTORE_FREE_PASSWORD_INFO_W(&passwordInfo);
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;

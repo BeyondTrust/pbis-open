@@ -330,16 +330,40 @@ cleanup:
 
 DWORD
 LsaPstorepCallPluginDeletePasswordInfo(
-    VOID
+    IN OPTIONAL PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo
     )
 {
     DWORD dwError = 0;
+    int EE = 0;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfoA = NULL;
 
-    if (LsaPstoreState.Plugin.Dispatch &&
-        LsaPstoreState.Plugin.Dispatch->DeletePasswordInfo)
+    if (LsaPstoreState.Plugin.Dispatch)
     {
-        dwError = LsaPstoreState.Plugin.Dispatch->DeletePasswordInfo(
-                        LsaPstoreState.Plugin.Context);
+        if (LsaPstoreState.Plugin.Dispatch->DeletePasswordInfoW)
+        {
+            dwError = LsaPstoreState.Plugin.Dispatch->DeletePasswordInfoW(
+                            LsaPstoreState.Plugin.Context,
+                            pAccountInfo);
+            GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+        }
+        else if (LsaPstoreState.Plugin.Dispatch->SetPasswordInfoA)
+        {
+            dwError = LsaPstorepConvertWideToAnsiAccountInfo(
+                            pAccountInfo,
+                            &pAccountInfoA);
+            GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+            dwError = LsaPstoreState.Plugin.Dispatch->DeletePasswordInfoA(
+                            LsaPstoreState.Plugin.Context,
+                            pAccountInfoA);
+            GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+        }
+    }
+
+cleanup:
+    if (pAccountInfoA)
+    {
+        LSA_PSTOREP_FREE_ACCOUNT_INFO_A(&pAccountInfoA);
     }
 
     LSA_PSTORE_LOG_LEAVE_ERROR(dwError);

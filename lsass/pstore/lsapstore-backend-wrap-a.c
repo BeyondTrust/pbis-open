@@ -75,7 +75,7 @@ LsaPstorepBackendGetPasswordInfoA(
                     &internalPasswordInfo);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = LsaImplConvertMachinePasswordInfoWideToMultiByte(
+    dwError = LsaPstorepConvertWideToAnsiPasswordInfo(
                     internalPasswordInfo,
                     &passwordInfo);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
@@ -83,7 +83,6 @@ LsaPstorepBackendGetPasswordInfoA(
 cleanup:
     if (dwError)
     {
-        // TODO - Mem alloc/free mismatch?
         LSA_PSTORE_FREE_PASSWORD_INFO_A(&passwordInfo);
     }
 
@@ -105,7 +104,7 @@ LsaPstorepBackendSetPasswordInfoA(
     int EE = 0;
     PLSA_MACHINE_PASSWORD_INFO_W internalPasswordInfo = NULL;
 
-    dwError = LsaImplConvertMachinePasswordInfoMultiByteToWide(
+    dwError = LsaPstorepConvertAnsiToWidePasswordInfo(
                     PasswordInfo,
                     &internalPasswordInfo);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
@@ -114,7 +113,6 @@ LsaPstorepBackendSetPasswordInfoA(
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
-    // TODO - Mem alloc/free mismatch?
     LSA_PSTORE_FREE_PASSWORD_INFO_W(&internalPasswordInfo);
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);

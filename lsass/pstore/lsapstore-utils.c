@@ -99,15 +99,37 @@ LsaPstoreFreeStringArrayW(
 
 static
 VOID
+LsaPstorepFreeAccountInfoContentsA(
+    IN OUT PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
+    )
+{
+    LSA_PSTORE_FREE(&pAccountInfo->DnsDomainName);
+    LSA_PSTORE_FREE(&pAccountInfo->NetbiosDomainName);
+    LSA_PSTORE_FREE(&pAccountInfo->DomainSid);
+    LSA_PSTORE_FREE(&pAccountInfo->SamAccountName);
+    LSA_PSTORE_FREE(&pAccountInfo->Fqdn);
+}
+
+static
+VOID
+LsaPstorepFreeAccountInfoContentsW(
+    IN OUT PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo
+    )
+{
+    LSA_PSTORE_FREE(&pAccountInfo->DnsDomainName);
+    LSA_PSTORE_FREE(&pAccountInfo->NetbiosDomainName);
+    LSA_PSTORE_FREE(&pAccountInfo->DomainSid);
+    LSA_PSTORE_FREE(&pAccountInfo->SamAccountName);
+    LSA_PSTORE_FREE(&pAccountInfo->Fqdn);
+}
+
+static
+VOID
 LsaPstorepFreePasswordInfoContentsA(
     IN OUT PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
     )
 {
-    LSA_PSTORE_FREE(&pPasswordInfo->Account.DnsDomainName);
-    LSA_PSTORE_FREE(&pPasswordInfo->Account.NetbiosDomainName);
-    LSA_PSTORE_FREE(&pPasswordInfo->Account.DomainSid);
-    LSA_PSTORE_FREE(&pPasswordInfo->Account.SamAccountName);
-    LSA_PSTORE_FREE(&pPasswordInfo->Account.Fqdn);
+    LsaPstorepFreeAccountInfoContentsA(&pPasswordInfo->Account);
     LSA_PSTORE_FREE_SECURE_CSTRING(&pPasswordInfo->Password);
 }
 
@@ -116,12 +138,20 @@ LsaPstorepFreePasswordInfoContentsW(
     IN OUT PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
     )
 {
-    LSA_PSTORE_FREE(&pPasswordInfo->Account.DnsDomainName);
-    LSA_PSTORE_FREE(&pPasswordInfo->Account.NetbiosDomainName);
-    LSA_PSTORE_FREE(&pPasswordInfo->Account.DomainSid);
-    LSA_PSTORE_FREE(&pPasswordInfo->Account.SamAccountName);
-    LSA_PSTORE_FREE(&pPasswordInfo->Account.Fqdn);
+    LsaPstorepFreeAccountInfoContentsW(&pPasswordInfo->Account);
     LSA_PSTORE_FREE_SECURE_WC16STRING(&pPasswordInfo->Password);
+}
+
+VOID
+LsaPstorepFreeAccountInfoA(
+    IN PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
+    )
+{
+    if (pAccountInfo)
+    {
+        LsaPstorepFreeAccountInfoContentsA(pAccountInfo);
+        LsaPstoreFreeMemory(pAccountInfo);
+    }
 }
 
 VOID
@@ -261,6 +291,60 @@ cleanup:
     }
 
     *ppPasswordInfo = passwordInfo;
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+DWORD
+LsaPstorepConvertWideToAnsiAccountInfo(
+    IN PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo,
+    OUT PLSA_MACHINE_ACCOUNT_INFO_A* ppAccountInfo
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PLSA_MACHINE_ACCOUNT_INFO_A accountInfo = NULL;
+
+    dwError = LSA_PSTORE_ALLOCATE_AUTO(&accountInfo);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                    &accountInfo->DnsDomainName,
+                    pAccountInfo->DnsDomainName));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                    &accountInfo->NetbiosDomainName,
+                    pAccountInfo->NetbiosDomainName));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                    &accountInfo->DomainSid,
+                    pAccountInfo->DomainSid));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                    &accountInfo->SamAccountName,
+                    pAccountInfo->SamAccountName));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                    &accountInfo->Fqdn,
+                    pAccountInfo->Fqdn));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    accountInfo->Type = pAccountInfo->Type;
+    accountInfo->KeyVersionNumber = pAccountInfo->KeyVersionNumber;
+    accountInfo->LastChangeTime = pAccountInfo->LastChangeTime;
+
+cleanup:
+    if (dwError)
+    {
+        LSA_PSTOREP_FREE_ACCOUNT_INFO_A(&accountInfo);
+    }
+
+    *ppAccountInfo = accountInfo;
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
