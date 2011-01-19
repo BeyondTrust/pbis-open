@@ -400,10 +400,29 @@ LWNetSrvPingCLdapPoll(
 {
     DWORD dwError = 0;
     int sret = 0;
+    LWNET_UNIX_MS_TIME_T CurrentTime = 0;
+    LWNET_UNIX_MS_TIME_T StopTime = 0;
+    DWORD dwRemainder = 0;
+
+    dwError = LWNetGetSystemTimeInMs(&StopTime);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    StopTime += dwTimeoutMilliseconds;
 
     do
     {
-        sret = poll(Readfds, dwFdCount, dwTimeoutMilliseconds);
+        dwError = LWNetGetSystemTimeInMs(&CurrentTime);
+        BAIL_ON_LWNET_ERROR(dwError);
+
+        if (CurrentTime < StopTime)
+        {
+            dwRemainder = StopTime - CurrentTime;
+            sret = poll(Readfds, dwFdCount, dwRemainder);
+        }
+        else
+        {
+            sret = 0;
+        }
     } while (sret < 0 && errno == EINTR);
 
     if (sret < 0)
