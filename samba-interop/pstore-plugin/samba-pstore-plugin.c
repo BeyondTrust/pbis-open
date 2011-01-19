@@ -64,7 +64,8 @@ SetPassword(
 static
 DWORD
 DeletePassword(
-    IN PLSA_PSTORE_PLUGIN_CONTEXT Context
+    IN PLSA_PSTORE_PLUGIN_CONTEXT pContext,
+    IN OPTIONAL PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
     );
 
 static
@@ -121,46 +122,34 @@ static
 DWORD
 TdbDelete(
     TDB_CONTEXT *pTdb,
-    PCSTR pKeyStart
+    PCSTR pKeyStart,
+    PCSTR pKeyEnd
     )
 {
     DWORD error = 0;
     int ret = 0;
-    TDB_DATA pos = { 0 };
-    TDB_DATA deleteKey = { 0 };
-    size_t keyStartLen = strlen(pKeyStart);
+    TDB_DATA tdbKey = { 0 };
+    PSTR pKey = NULL;
+
+    error = LwAllocateStringPrintf(
+                    &pKey,
+                    "%s/%s",
+                    pKeyStart,
+                    pKeyEnd);
+    BAIL_ON_LSA_ERROR(error);
+
+    tdbKey.dptr = pKey;
+    tdbKey.dsize = strlen(pKey);
 
     if ((ret = tdb_transaction_start(pTdb)) != 0) {
         error = ERROR_INTERNAL_DB_ERROR;
         BAIL_ON_LSA_ERROR(error);
     }
 
-    pos = tdb_firstkey(pTdb);
-    while (pos.dsize)
-    {
-        // See if the key is exactly the key start, or it is the key start
-        // followed by a slash.
-        if ((pos.dsize == keyStartLen &&
-            !strcmp(pos.dptr, pKeyStart)) ||
-            (pos.dsize > keyStartLen &&
-            !strncmp(pos.dptr, pKeyStart, keyStartLen) &&
-            pos.dptr[keyStartLen] == '/'))
-        {
-            deleteKey = pos;
-        }
-
-        pos = tdb_nextkey(pTdb, pos);
-
-        if (deleteKey.dsize)
-        {
-            if ((ret = tdb_delete(pTdb, deleteKey)) != 0)
-            {
-                tdb_transaction_cancel(pTdb);
-                error = ERROR_INTERNAL_DB_ERROR;
-                BAIL_ON_LSA_ERROR(error);
-            }
-            deleteKey.dsize = 0;
-        }
+    if ((ret = tdb_delete(pTdb, tdbKey)) != 0) {
+        tdb_transaction_cancel(pTdb);
+        error = ERROR_INTERNAL_DB_ERROR;
+        BAIL_ON_LSA_ERROR(error);
     }
 
     if ((ret = tdb_transaction_commit(pTdb)) != 0) {
@@ -169,6 +158,7 @@ TdbDelete(
     }
 
 cleanup:
+    LW_SAFE_FREE_STRING(pKey);
     return error;
 }
 
@@ -187,7 +177,7 @@ LsaPstorePluginInitializeContext(
     static LSA_PSTORE_PLUGIN_DISPATCH dispatch = {
         .Cleanup = CleanupContext,
         .SetPasswordInfoA = SetPassword,
-        .DeletePasswordInfo = DeletePassword
+        .DeletePasswordInfoA = DeletePassword
     };
 
     if (Version != LSA_PSTORE_PLUGIN_VERSION)
@@ -366,40 +356,49 @@ cleanup:
 static
 DWORD
 DeletePassword(
-    IN PLSA_PSTORE_PLUGIN_CONTEXT pContext
+    IN PLSA_PSTORE_PLUGIN_CONTEXT pContext,
+    IN OPTIONAL PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
     )
 {
     DWORD error = 0;
 
-    /* Machine Password */
-    // The terminating null must be stored with the password
+    if (!pAccountInfo || !pAccountInfo->NetbiosDomainName)
+    {
+        goto cleanup;
+    }
+
     error = TdbDelete(
                     pContext->pTdb,
-                    "SECRETS/MACHINE_PASSWORD");
+                    "SECRETS/MACHINE_PASSWORD",
+                    pAccountInfo->NetbiosDomainName);
     BAIL_ON_LSA_ERROR(error);
 
     error = TdbDelete(
                     pContext->pTdb,
-                    "SECRETS/MACHINE_PASSWORD.PREV");
+                    "SECRETS/MACHINE_PASSWORD.PREV",
+                    pAccountInfo->NetbiosDomainName);
     BAIL_ON_LSA_ERROR(error);
 
     error = TdbDelete(
                     pContext->pTdb,
-                    "SECRETS/SID");
+                    "SECRETS/SID",
+                    pAccountInfo->NetbiosDomainName);
     BAIL_ON_LSA_ERROR(error);
 
 
     error = TdbDelete(
                     pContext->pTdb,
-                    "SECRETS/MACHINE_SEC_CHANNEL_TYPE");
+                    "SECRETS/MACHINE_SEC_CHANNEL_TYPE",
+                    pAccountInfo->NetbiosDomainName);
     BAIL_ON_LSA_ERROR(error);
 
     error = TdbDelete(
                     pContext->pTdb,
-                    "SECRETS/MACHINE_LAST_CHANGE_TIME");
+                    "SECRETS/MACHINE_LAST_CHANGE_TIME",
+                    pAccountInfo->NetbiosDomainName);
     BAIL_ON_LSA_ERROR(error);
 
-    LW_LOG_INFO("Deleted machine password secrets.tdb");
+    LW_LOG_INFO("Deleted machine password for domain %s in secrets.tdb", pAccountInfo->NetbiosDomainName);
 
 cleanup:
     return error;

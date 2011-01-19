@@ -878,6 +878,8 @@ DeletePassword(
     PLSA_PSTORE_PLUGIN_DISPATCH pDispatch = NULL;
     PLSA_PSTORE_PLUGIN_CONTEXT pContext = NULL;
     PSTR pSecretsPath = NULL;
+    LW_HANDLE hLsa = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
 
     // Even though this was set during the install process, we'll try setting
     // it again. This way if the user calls uninstall without calling install
@@ -885,6 +887,20 @@ DeletePassword(
     error = GetSecretsPath(
         pSmbdPath,
         &pSecretsPath);
+    BAIL_ON_LSA_ERROR(error);
+
+    error = LsaOpenServer(
+        &hLsa);
+    if (error)
+    {
+        LW_LOG_ERROR("Unable to contact lsassd");
+    }
+    BAIL_ON_LSA_ERROR(error);
+
+    error = LsaAdGetMachineAccountInfo(
+        hLsa,
+        NULL,
+        &pAccountInfo);
     BAIL_ON_LSA_ERROR(error);
 
     error = RegUtilAddKey(
@@ -911,14 +927,23 @@ DeletePassword(
                 &pContext);
     BAIL_ON_LSA_ERROR(error);
 
-    error = pDispatch->DeletePasswordInfo(
-                pContext);
+    error = pDispatch->DeletePasswordInfoA(
+                pContext,
+                pAccountInfo);
     BAIL_ON_LSA_ERROR(error);
 
 cleanup:
     if (pContext)
     {
         pDispatch->Cleanup(pContext);
+    }
+    if (hLsa != NULL)
+    {
+        LsaCloseServer(hLsa);
+    }
+    if (pAccountInfo != NULL)
+    {
+        LsaAdFreeMachineAccountInfo(pAccountInfo);
     }
     return error;
 }
