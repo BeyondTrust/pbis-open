@@ -437,10 +437,19 @@ RdrDecodeFileBothDirectoryInformation(
         SMB_LTOHWSTR(pBothInfo->ShortName, pBothInfoPacked->ShortName, sizeof(pBothInfo->ShortName) / sizeof(WCHAR) - 1);
         SMB_LTOHWSTR(pBothInfo->FileName, pBothInfoPacked->FileName, ulFileNameLength / sizeof(WCHAR));
 
-        if (pBothInfoPacked->NextEntryOffset)
+        if (SMB_LTOH32(pBothInfoPacked->NextEntryOffset) != 0)
         {
-            status = AdvanceTo(ppCursor, pulRemaining, (PBYTE) pBothInfoPacked + pBothInfoPacked->NextEntryOffset);
+            status = AdvanceTo(ppCursor, pulRemaining,
+                (PBYTE) pBothInfoPacked + SMB_LTOH32(pBothInfoPacked->NextEntryOffset));
             BAIL_ON_NT_STATUS(status);
+        }
+        else
+        {
+            /* No more entries in this block -- consume any padding bytes so the outer
+             * loop knows to exit
+             */
+            status = Advance(ppCursor, pulRemaining, *pulRemaining);
+            LWIO_ASSERT(status == STATUS_SUCCESS);
         }
 
         ulLengthUsed = ulFileNameLength + 1 + sizeof(*pBothInfo);
