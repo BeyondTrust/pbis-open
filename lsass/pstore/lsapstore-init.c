@@ -45,6 +45,14 @@
 
 #include "lsapstore-includes.h"
 
+typedef struct _LSA_PSTORE_PLUGIN_INFO {
+    PSTR Name;
+    PSTR Path;
+    PVOID LibraryHandle;
+    PLSA_PSTORE_PLUGIN_DISPATCH Dispatch;
+    PLSA_PSTORE_PLUGIN_CONTEXT Context;
+} LSA_PSTORE_PLUGIN_INFO, *PLSA_PSTORE_PLUGIN_INFO;
+
 typedef struct _LSA_PSTORE_STATE {
     struct {
         pthread_once_t OnceControl;
@@ -53,13 +61,11 @@ typedef struct _LSA_PSTORE_STATE {
     } Init;
 
     LONG RefCount;
-    
+
     struct {
-        PSTR Path;
-        PVOID Handle;
-        PLSA_PSTORE_PLUGIN_DISPATCH Dispatch;
-        PLSA_PSTORE_PLUGIN_CONTEXT Context;
-    } Plugin;
+        DWORD Count;
+        PLSA_PSTORE_PLUGIN_INFO PluginInfo;
+    } Plugins;
 
     BOOLEAN NeedClose;
 
@@ -104,15 +110,17 @@ LsaPstoreCleanupLibrary(
 
 static
 DWORD
-LsaPstorepGetPluginPath(
-    OUT PSTR* ppszPath
+LsaPstorepGetPluginList(
+    OUT PSTR** PluginList,
+    OUT PDWORD PluginCount
     )
 {
     DWORD dwError = 0;
     int EE = 0;
     HANDLE registryConnection = NULL;
     HKEY keyHandle = NULL;
-    PSTR pszPath = NULL;
+    PSTR* loadOrder = NULL;
+    DWORD loadOrderCount = 0;
 
     dwError = LwRegOpenServer(&registryConnection);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
@@ -120,13 +128,77 @@ LsaPstorepGetPluginPath(
     dwError = LwRegOpenKeyExA(
                     registryConnection,
                     NULL,
-                    LSA_PSTORE_CONFIG_KEY_PATH,
+                    LSA_PSTORE_CONFIG_KEY_PATH_PLUGIN,
                     0,
                     GENERIC_READ,
                     &keyHandle);
     if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
         dwError = 0;
+        GOTO_CLEANUP_EE(EE);
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LsaPstorepRegGetMultiStringA(
+                    registryConnection,
+                    keyHandle,
+                    LSA_PSTORE_CONFIG_VALUE_PLUGIN_LOAD_ORDER,
+                    &loadOrder,
+                    &loadOrderCount);
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        dwError = 0;
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+cleanup:
+    if (dwError)
+    {
+        LSA_PSTORE_FREE_STRING_ARRAY_A(&loadOrder, &loadOrderCount);
+    }
+
+    *PluginList = loadOrder;
+    *PluginCount = loadOrderCount;
+
+    return dwError;
+}
+
+static
+DWORD
+LsaPstorepGetPluginPath(
+    IN PCSTR pszName,
+    OUT PSTR* ppszPath
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    HANDLE registryConnection = NULL;
+    HKEY keyHandle = NULL;
+    PSTR pszKeyPath = NULL;
+    PSTR pszPath = NULL;
+
+    dwError = LwNtStatusToWin32Error(LwRtlCStringAllocatePrintf(
+                    &pszKeyPath,
+                    "%s\\%s",
+                    LSA_PSTORE_CONFIG_KEY_PATH_PLUGIN,
+                    pszName));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwRegOpenServer(&registryConnection);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwRegOpenKeyExA(
+                    registryConnection,
+                    NULL,
+                    pszKeyPath,
+                    0,
+                    GENERIC_READ,
+                    &keyHandle);
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        LW_RTL_LOG_ERROR("LSA pstore plugin '%s' is missing its configuration registry key '%s'",
+                pszName, pszKeyPath);
+        dwError = ERROR_DLL_INIT_FAILED;
         GOTO_CLEANUP_EE(EE);
     }
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
@@ -138,7 +210,10 @@ LsaPstorepGetPluginPath(
                     &pszPath);
     if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
-        dwError = 0;
+        LW_RTL_LOG_ERROR("LSA pstore plugin '%s' is missing the '%s' configuration value from its configuration registry key '%s'",
+                pszName, LSA_PSTORE_CONFIG_VALUE_PLUGIN_PATH, pszKeyPath);
+        dwError = ERROR_DLL_INIT_FAILED;
+        GOTO_CLEANUP_EE(EE);
     }
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
@@ -158,7 +233,152 @@ cleanup:
         LwRegCloseServer(registryConnection);
     }
 
+    LSA_PSTORE_FREE(&pszKeyPath);
+
     *ppszPath = pszPath;
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+static
+VOID
+LsaPstorepCleanupPlugin(
+    IN PLSA_PSTORE_PLUGIN_INFO PluginInfo
+    )
+{
+    if (PluginInfo->Dispatch && PluginInfo->Dispatch->Cleanup)
+    {
+        PluginInfo->Dispatch->Cleanup(PluginInfo->Context);
+    }
+
+    PluginInfo->Dispatch = NULL;
+    PluginInfo->Context = NULL;
+    
+    if (PluginInfo->LibraryHandle)
+    {
+        LsaPstorepClosePlugin(PluginInfo->LibraryHandle);
+        PluginInfo->LibraryHandle = NULL;
+    }
+
+    LSA_PSTORE_FREE(&PluginInfo->Name);
+    LSA_PSTORE_FREE(&PluginInfo->Path);
+}
+
+static
+DWORD
+LsaPstorepInitializePlugin(
+    OUT PLSA_PSTORE_PLUGIN_INFO PluginInfo,
+    IN PCSTR PluginName
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    LSA_PSTORE_PLUGIN_INITIALIZE_FUNCTION initFunction = NULL;
+
+    dwError = LwNtStatusToWin32Error(LwRtlCStringDuplicate(&PluginInfo->Name, PluginName));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LsaPstorepGetPluginPath(PluginInfo->Name, &PluginInfo->Path);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    
+    dwError = LsaPstorepOpenPlugin(
+                    PluginInfo->Path,
+                    LSA_PSTORE_PLUGIN_INITIALIZE_FUNCTION_NAME,
+                    &PluginInfo->LibraryHandle,
+                    OUT_PPVOID(&initFunction));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = initFunction(LSA_PSTORE_PLUGIN_VERSION,
+                           PluginInfo->Name,
+                           &PluginInfo->Dispatch,
+                           &PluginInfo->Context);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    if (!PluginInfo->Dispatch)
+    {
+        LW_RTL_LOG_ERROR("LSA pstore plugin %s is missing a dispatch table",
+                         PluginInfo->Name);
+        dwError = ERROR_DLL_INIT_FAILED;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    if (!PluginInfo->Dispatch->Cleanup)
+    {
+        LW_RTL_LOG_ERROR("LSA pstore plugin %s is missing the Cleanup function",
+                         PluginInfo->Name);
+        dwError = ERROR_DLL_INIT_FAILED;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    LW_RTL_LOG_VERBOSE("Loaded LSA pstore plugin %s from %s",
+                       PluginInfo->Name, PluginInfo->Path);
+
+cleanup:
+    if (dwError)
+    {
+        LsaPstorepCleanupPlugin(PluginInfo);
+    }
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+static
+VOID
+LsaPstorepDestroyPluginList(
+    IN PLSA_PSTORE_PLUGIN_INFO PluginList,
+    IN DWORD Count
+    )
+{
+    if (PluginList)
+    {
+        DWORD i = 0;
+        for (i = 0; i < Count; i++)
+        {
+            LsaPstorepCleanupPlugin(&PluginList[i]);
+        }
+        LSA_PSTORE_FREE(&PluginList);
+    }
+}
+
+static
+DWORD
+LsaPstorepCreatePluginList(
+    OUT PLSA_PSTORE_PLUGIN_INFO* PluginList,
+    IN PSTR* PluginNames,
+    IN DWORD PluginNamesCount
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PLSA_PSTORE_PLUGIN_INFO pluginList = NULL;
+    DWORD count = 0;
+
+    dwError = LSA_PSTORE_ALLOCATE(
+                    OUT_PPVOID(&pluginList),
+                    PluginNamesCount * sizeof(*pluginList));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    for (count = 0;
+         count < PluginNamesCount;
+         count++)
+    {
+        dwError = LsaPstorepInitializePlugin(
+                        &pluginList[count],
+                        PluginNames[count]);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
+
+cleanup:
+    if (dwError)
+    {
+        LsaPstorepDestroyPluginList(pluginList, count);
+        pluginList = NULL;
+        count = 0;
+    }
+
+    *PluginList = pluginList;
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
@@ -173,38 +393,33 @@ LsaPstorepInitializeLibraryInternal(
     DWORD dwError = 0;
     int EE = 0;
     PLSA_PSTORE_STATE pState = &LsaPstoreState;
-    LSA_PSTORE_PLUGIN_INITIALIZE_FUNCTION initFunction = NULL;
+    PSTR* pluginList = NULL;
+    DWORD pluginCount = 0;
 
     if (pState->Init.Done)
     {
-        LwInterlockedIncrement(&LsaPstoreState.RefCount);
+        LwInterlockedIncrement(&pState->RefCount);
 
         dwError = pState->Init.Error;
         GOTO_CLEANUP_EE(EE);
     }
 
-    dwError = LsaPstorepGetPluginPath(&pState->Plugin.Path);
+    dwError = LsaPstorepGetPluginList(&pluginList, &pluginCount);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    if (!LwRtlCStringIsNullOrEmpty(pState->Plugin.Path))
+    if (pluginCount)
     {
-        dwError = LsaPstorepOpenPlugin(
-                        pState->Plugin.Path,
-                        LSA_PSTORE_PLUGIN_INITIALIZE_FUNCTION_NAME,
-                        &pState->Plugin.Handle,
-                        OUT_PPVOID(&initFunction));
+        dwError = LsaPstorepCreatePluginList(
+                        &pState->Plugins.PluginInfo,
+                        pluginList,
+                        pluginCount);
         GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-        dwError = initFunction(LSA_PSTORE_PLUGIN_VERSION,
-                               &pState->Plugin.Dispatch,
-                               &pState->Plugin.Context);
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-        LW_RTL_LOG_VERBOSE("Loaded LSA pstore plugin at %s", pState->Plugin.Path);
+        pState->Plugins.Count = pluginCount;
     }
     else
     {
-        LW_RTL_LOG_VERBOSE("No LSA pstore plugin defined.");
+        LW_RTL_LOG_VERBOSE("No LSA pstore plugins are configured.");
     }
 
     dwError = LsaPstorepBackendInitialize();
@@ -217,6 +432,8 @@ cleanup:
     {
         LsaPstorepCleanupLibraryInternal();
     }
+
+    LSA_PSTORE_FREE_STRING_ARRAY_A(&pluginList, &pluginCount);
 
     pState->Init.Error = dwError;
     pState->Init.Done = TRUE;
@@ -240,19 +457,11 @@ LsaPstorepCleanupLibraryInternal(
         pState->NeedClose = FALSE;
     }
 
-    if (pState->Plugin.Dispatch)
-    {
-        pState->Plugin.Dispatch->Cleanup(pState->Plugin.Context);
-        pState->Plugin.Dispatch = NULL;
-    }
-
-    pState->Plugin.Context = NULL;
-
-    if (pState->Plugin.Handle)
-    {
-        LsaPstorepClosePlugin(pState->Plugin.Handle);
-        pState->Plugin.Handle = NULL;
-    }
+    LsaPstorepDestroyPluginList(
+            pState->Plugins.PluginInfo,
+            pState->Plugins.Count);
+    pState->Plugins.PluginInfo = NULL;
+    pState->Plugins.Count = 0;
 
     pState->Init.OnceControl = onceControl;
     pState->Init.Error = 0;
@@ -274,11 +483,12 @@ LsaPstorepEnsureInitialized(
     )
 {
     DWORD dwError = 0;
+    PLSA_PSTORE_STATE pState = &LsaPstoreState;
 
-    if (LsaPstoreState.RefCount)
+    if (pState->RefCount)
     {
-        pthread_once(&LsaPstoreState.Init.OnceControl, LsaPstoreInitializeLibraryOnce);
-        dwError = LsaPstoreState.Init.Error;
+        pthread_once(&pState->Init.OnceControl, LsaPstoreInitializeLibraryOnce);
+        dwError = pState->Init.Error;
     }
     else
     {
@@ -296,26 +506,30 @@ LsaPstorepCallPluginSetPasswordInfo(
 {
     DWORD dwError = 0;
     int EE = 0;
+    PLSA_PSTORE_STATE pState = &LsaPstoreState;
+    DWORD i = 0;
     PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfoA = NULL;
 
-    if (LsaPstoreState.Plugin.Dispatch)
+    for (i = 0; i < pState->Plugins.Count; i++)
     {
-        if (LsaPstoreState.Plugin.Dispatch->SetPasswordInfoW)
+        PLSA_PSTORE_PLUGIN_INFO pluginInfo = &pState->Plugins.PluginInfo[i];
+
+        if (pluginInfo->Dispatch->SetPasswordInfoW)
         {
-            dwError = LsaPstoreState.Plugin.Dispatch->SetPasswordInfoW(
-                            LsaPstoreState.Plugin.Context,
+            dwError = pluginInfo->Dispatch->SetPasswordInfoW(
+                            pluginInfo->Context,
                             pPasswordInfo);
             GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
         }
-        else if (LsaPstoreState.Plugin.Dispatch->SetPasswordInfoA)
+        else if (pluginInfo->Dispatch->SetPasswordInfoA)
         {
             dwError = LsaPstorepConvertWideToAnsiPasswordInfo(
                             pPasswordInfo,
                             &pPasswordInfoA);
             GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-            dwError = LsaPstoreState.Plugin.Dispatch->SetPasswordInfoA(
-                            LsaPstoreState.Plugin.Context,
+            dwError = pluginInfo->Dispatch->SetPasswordInfoA(
+                            pluginInfo->Context,
                             pPasswordInfoA);
             GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
         }
@@ -335,18 +549,22 @@ LsaPstorepCallPluginDeletePasswordInfo(
 {
     DWORD dwError = 0;
     int EE = 0;
+    PLSA_PSTORE_STATE pState = &LsaPstoreState;
+    DWORD i = 0;
     PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfoA = NULL;
 
-    if (LsaPstoreState.Plugin.Dispatch)
+    for (i = 0; i < pState->Plugins.Count; i++)
     {
-        if (LsaPstoreState.Plugin.Dispatch->DeletePasswordInfoW)
+        PLSA_PSTORE_PLUGIN_INFO pluginInfo = &pState->Plugins.PluginInfo[i];
+
+        if (pluginInfo->Dispatch->DeletePasswordInfoW)
         {
-            dwError = LsaPstoreState.Plugin.Dispatch->DeletePasswordInfoW(
-                            LsaPstoreState.Plugin.Context,
+            dwError = pluginInfo->Dispatch->DeletePasswordInfoW(
+                            pluginInfo->Context,
                             pAccountInfo);
             GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
         }
-        else if (LsaPstoreState.Plugin.Dispatch->SetPasswordInfoA)
+        else if (pluginInfo->Dispatch->SetPasswordInfoA)
         {
             if (pAccountInfo)
             {
@@ -356,8 +574,8 @@ LsaPstorepCallPluginDeletePasswordInfo(
                 GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
             }
 
-            dwError = LsaPstoreState.Plugin.Dispatch->DeletePasswordInfoA(
-                            LsaPstoreState.Plugin.Context,
+            dwError = pluginInfo->Dispatch->DeletePasswordInfoA(
+                            pluginInfo->Context,
                             pAccountInfoA);
             GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
         }

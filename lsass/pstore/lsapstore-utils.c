@@ -49,6 +49,15 @@
 #include <assert.h>
 #include <dlfcn.h>
 
+static
+DWORD
+LsaPstorepConvertMultiStringDataToArrayA(
+    IN PBYTE ValueData,
+    IN DWORD Size,
+    OUT PSTR** StringArray,
+    OUT PDWORD Count
+    );
+
 VOID
 LsaPstoreFreeMemory(
     IN PVOID Pointer
@@ -544,6 +553,137 @@ cleanup:
     return dwError;
 }
 
+DWORD
+LsaPstorepRegGetMultiStringA(
+    IN HANDLE RegistryConnection,
+    IN HKEY KeyHandle,
+    IN PCSTR ValueName,
+    OUT PSTR** StringArray,
+    OUT PDWORD Count
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    DWORD size = 0;
+    PBYTE valueData = NULL;
+    PSTR* stringArray = NULL;
+    DWORD count = 0;
+
+    dwError = LwRegGetValueA(
+                    RegistryConnection,
+                    KeyHandle,
+                    NULL,
+                    ValueName,
+                    RRF_RT_REG_MULTI_SZ,
+                    NULL,
+                    NULL,
+                    &size);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    assert(size > 0);
+
+    dwError = LSA_PSTORE_ALLOCATE(&valueData, size);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwRegGetValueA(
+                    RegistryConnection,
+                    KeyHandle,
+                    NULL,
+                    ValueName,
+                    RRF_RT_REG_MULTI_SZ,
+                    NULL,
+                    valueData,
+                    &size);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LsaPstorepConvertMultiStringDataToArrayA(
+                    valueData,
+                    size,
+                    &stringArray,
+                    &count);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+cleanup:
+    if (dwError)
+    {
+        LSA_PSTORE_FREE_STRING_ARRAY_A(&stringArray, &count);
+    }
+
+    LSA_PSTORE_FREE(&valueData);
+
+    *StringArray = stringArray;
+    *Count = count;
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+static
+DWORD
+LsaPstorepConvertMultiStringDataToArrayA(
+    IN PBYTE ValueData,
+    IN DWORD Size,
+    OUT PSTR** StringArray,
+    OUT PDWORD Count
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PSTR* stringArray = NULL;
+    DWORD count = 0;
+    DWORD savedCount = 0;
+    PSTR item = NULL;
+    size_t itemLength = 0;
+
+    for (item = (PSTR) ValueData;
+         (itemLength = strlen(item));
+         item += itemLength + 1)
+    {
+        count++;
+    }
+
+    if (!count)
+    {
+        dwError = ERROR_SUCCESS;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    dwError = LSA_PSTORE_ALLOCATE(
+                    OUT_PPVOID(&stringArray),
+                    count * sizeof(*stringArray));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    savedCount = count;
+    count = 0;
+
+    for (item = (PSTR) ValueData;
+         (itemLength = strlen(item));
+         item += itemLength + 1)
+    {
+        assert(count < savedCount);
+
+        dwError = LwNtStatusToWin32Error(LwRtlCStringDuplicate(
+                        &stringArray[count],
+                        item));
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+        count++;
+    }
+
+    assert(count == savedCount);
+
+cleanup:
+    if (dwError)
+    {
+        LSA_PSTORE_FREE_STRING_ARRAY_A(&stringArray, &count);
+    }
+
+    *StringArray = stringArray;
+    *Count = count;
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
 
 DWORD
 LsaPstorepOpenPlugin(

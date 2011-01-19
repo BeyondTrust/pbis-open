@@ -51,6 +51,12 @@
 #include <unistd.h>
 #include <assert.h>
 
+#define _PLUGIN_LOG_RAW(Name, Format, ...) \
+    LW_RTL_LOG_DEBUG("PLUGIN(%s) - " Format, Name, ## __VA_ARGS__)
+    
+#define PLUGIN_LOG(Context, Format, ...) \
+    _PLUGIN_LOG_RAW((Context)->Name, Format, ## __VA_ARGS__)
+
 #define PLUGIN_LOG_LEAVE_ERROR_EE(dwError, EE) \
     do { \
         if ((dwError) || (EE)) \
@@ -61,7 +67,7 @@
 
 // The dummy plugin will log the hostname on each call.
 typedef struct _LSA_PSTORE_PLUGIN_CONTEXT {
-    CHAR HostName[256];
+    PSTR Name;
 } LSA_PSTORE_PLUGIN_CONTEXT;
 
 static
@@ -72,7 +78,10 @@ PluginCleanup(
 {
     assert(pContext);
 
-    LW_RTL_LOG_DEBUG("CLEANUP: (at hostname = %s)", pContext->HostName);
+    PLUGIN_LOG(pContext, "CLEANUP");
+
+    LW_SAFE_FREE_STRING(pContext->Name);
+
     LwFreeMemory(pContext);
 }
             
@@ -95,9 +104,8 @@ PluginSetPasswordInfoW(
         GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
     }
 
-    LW_RTL_LOG_DEBUG("SET: DnsDomainName = %s (at hostname = %s)",
-            LW_RTL_LOG_SAFE_STRING(dnsDomainName),
-            pContext->HostName);
+    PLUGIN_LOG(pContext, "SET_W: DnsDomainName = %s",
+            LW_RTL_LOG_SAFE_STRING(dnsDomainName));
 
 cleanup:
     LW_SAFE_FREE_MEMORY(dnsDomainName);
@@ -119,9 +127,8 @@ PluginSetPasswordInfoA(
 
     assert(pContext);
 
-    LW_RTL_LOG_DEBUG("SET: DnsDomainName = %s (at hostname = %s)",
-            LW_RTL_LOG_SAFE_STRING(dnsDomainName),
-            pContext->HostName);
+    PLUGIN_LOG(pContext, "SET_A: DnsDomainName = %s",
+            LW_RTL_LOG_SAFE_STRING(dnsDomainName));
 
     PLUGIN_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
@@ -146,9 +153,8 @@ PluginDeletePasswordInfoW(
         GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
     }
 
-    LW_RTL_LOG_DEBUG("DELETE: DnsDomainName = %s (at hostname = %s)",
-            LW_RTL_LOG_SAFE_STRING(dnsDomainName),
-            pContext->HostName);
+    PLUGIN_LOG(pContext, "DELETE_W: DnsDomainName = %s",
+            LW_RTL_LOG_SAFE_STRING(dnsDomainName));
 
 cleanup:
     LW_SAFE_FREE_MEMORY(dnsDomainName);
@@ -170,9 +176,8 @@ PluginDeletePasswordInfoA(
 
     assert(pContext);
 
-    LW_RTL_LOG_DEBUG("DELETE: DnsDomainName = %s (at hostname = %s)",
-            LW_RTL_LOG_SAFE_STRING(dnsDomainName),
-            pContext->HostName);
+    PLUGIN_LOG(pContext, "DELETE_A: DnsDomainName = %s",
+            LW_RTL_LOG_SAFE_STRING(dnsDomainName));
 
     PLUGIN_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
@@ -181,12 +186,15 @@ PluginDeletePasswordInfoA(
 DWORD
 LsaPstorePluginInitializeContext(
     IN ULONG Version,
-    OUT PLSA_PSTORE_PLUGIN_DISPATCH* pDispatch,
-    OUT PLSA_PSTORE_PLUGIN_CONTEXT* pContext
+    IN PCSTR pName,
+    OUT PLSA_PSTORE_PLUGIN_DISPATCH* ppDispatch,
+    OUT PLSA_PSTORE_PLUGIN_CONTEXT* ppContext
     )
 {
     DWORD dwError = 0;
     int EE = 0;
+    // compiler type check for this function
+    LSA_PSTORE_PLUGIN_INITIALIZE_FUNCTION unused = LsaPstorePluginInitializeContext;
     static LSA_PSTORE_PLUGIN_DISPATCH globalDispatch = {
         .Cleanup = PluginCleanup,
         .SetPasswordInfoW = PluginSetPasswordInfoW,
@@ -197,6 +205,8 @@ LsaPstorePluginInitializeContext(
     PLSA_PSTORE_PLUGIN_DISPATCH dispatch = &globalDispatch;
     PLSA_PSTORE_PLUGIN_CONTEXT context = NULL;
 
+    assert(unused);
+
     if (Version != LSA_PSTORE_PLUGIN_VERSION)
     {
         dwError = ERROR_INVALID_PARAMETER;
@@ -206,22 +216,24 @@ LsaPstorePluginInitializeContext(
     dwError = LwAllocateMemory(sizeof(*context), OUT_PPVOID(&context));
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    if (gethostname(context->HostName, sizeof(context->HostName)))
-    {
-        dwError = LwErrnoToWin32Error(errno);
-        assert(dwError);
-        GOTO_CLEANUP_EE(EE);
-    }
+    dwError = LwAllocateString(pName, &context->Name);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    PLUGIN_LOG(context, "INITIALIZE");
 
 cleanup:
     if (dwError)
     {
+        if (context)
+        {
+            PluginCleanup(context);
+        }
         dispatch = NULL;
-        LW_SAFE_FREE_MEMORY(context);
+        context = NULL;
     }
 
-    *pDispatch = dispatch;
-    *pContext = context;
+    *ppDispatch = dispatch;
+    *ppContext = context;
 
     return dwError;
 }

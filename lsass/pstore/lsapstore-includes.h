@@ -59,16 +59,34 @@
 #define ONCE_INIT PTHREAD_ONCE_INIT
 #endif
 
+//
+// Memory Helpers
+//
+
 #define LSA_PSTORE_ALLOCATE(ppMemory, Size) \
     LwNtStatusToWin32Error(LW_RTL_ALLOCATE(OUT_PPVOID(ppMemory), VOID, Size))
 
 #define LSA_PSTORE_ALLOCATE_AUTO(ppMemory) \
     LwNtStatusToWin32Error(LW_RTL_ALLOCATE_AUTO(ppMemory))
 
-#define LSA_PSTORE_CONFIG_KEY_PATH \
+#define LSA_PSTORE_FREE_SECURE_CSTRING(pMemory) \
+    LW_RTL_MAKE_CUSTOM_FREE_SECURE_STRING(LsaPstoreFreeMemory, pMemory, CHAR)
+
+#define LSA_PSTORE_FREE_SECURE_WC16STRING(pMemory) \
+    LW_RTL_MAKE_CUSTOM_FREE_SECURE_STRING(LsaPstoreFreeMemory, pMemory, WCHAR)
+
+//
+// Registry Key/Value Paths/Names
+//
+
+#define LSA_PSTORE_CONFIG_KEY_PATH_ROOT \
     HKEY_THIS_MACHINE "\\Services\\lsass\\Parameters\\Providers\\ActiveDirectory\\Pstore"
 
-#define LSA_PSTORE_CONFIG_VALUE_PLUGIN_PATH "PluginPath"
+#define LSA_PSTORE_CONFIG_KEY_PATH_PLUGIN \
+    LSA_PSTORE_CONFIG_KEY_PATH_ROOT "\\Plugin"
+
+#define LSA_PSTORE_CONFIG_VALUE_PLUGIN_LOAD_ORDER "LoadOrder"
+#define LSA_PSTORE_CONFIG_VALUE_PLUGIN_PATH "Path"
 
 #define _LSA_PSTORE_MAKE_FREE_SECURE_STRING(PointerToPointer, CharType) \
     do { \
@@ -83,12 +101,6 @@
             *(PointerToPointer) = NULL; \
         } \
     } while (0)
-
-#define LSA_PSTORE_FREE_SECURE_CSTRING(pMemory) \
-    LW_RTL_MAKE_CUSTOM_FREE_SECURE_STRING(LsaPstoreFreeMemory, pMemory, CHAR)
-
-#define LSA_PSTORE_FREE_SECURE_WC16STRING(pMemory) \
-    LW_RTL_MAKE_CUSTOM_FREE_SECURE_STRING(LsaPstoreFreeMemory, pMemory, WCHAR)
 
 //
 // Logging
@@ -193,6 +205,15 @@ LsaPstorepRegGetStringA(
     IN HKEY KeyHandle,
     IN PCSTR ValueName,
     OUT PSTR* ValueData
+    );
+
+DWORD
+LsaPstorepRegGetMultiStringA(
+    IN HANDLE RegistryConnection,
+    IN HKEY KeyHandle,
+    IN PCSTR ValueName,
+    OUT PSTR** StringArray,
+    OUT PDWORD Count
     );
 
 DWORD
