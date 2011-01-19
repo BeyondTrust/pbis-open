@@ -348,10 +348,13 @@ LsaPstorepCallPluginDeletePasswordInfo(
         }
         else if (LsaPstoreState.Plugin.Dispatch->SetPasswordInfoA)
         {
-            dwError = LsaPstorepConvertWideToAnsiAccountInfo(
-                            pAccountInfo,
-                            &pAccountInfoA);
-            GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+            if (pAccountInfo)
+            {
+                dwError = LsaPstorepConvertWideToAnsiAccountInfo(
+                                pAccountInfo,
+                                &pAccountInfoA);
+                GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+            }
 
             dwError = LsaPstoreState.Plugin.Dispatch->DeletePasswordInfoA(
                             LsaPstoreState.Plugin.Context,
