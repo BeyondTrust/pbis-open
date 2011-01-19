@@ -845,7 +845,6 @@ VOID *LWNetSrvStartNetBiosThreadRoutine(VOID *ctx)
 
     pthread_mutex_lock(&pNbCtx->mutex);
     pNbCtx->sock = sock;
-    gpNbCtx = pNbCtx;
     pthread_mutex_unlock(&pNbCtx->mutex);
 
     do
@@ -918,12 +917,16 @@ error:
 
 
 DWORD
-LWNetSrvStartNetBiosThread(
-    VOID)
+LWNetSrvNetBiosInit(VOID)
 {
+    struct {
+        unsigned mutexInit : 1;
+        unsigned mutexAckInit : 1;
+        unsigned cvInit : 1;
+        unsigned cvAckInit : 1;
+    } initialized = {0};
+
     DWORD dwError = 0;
-    pthread_t thread;
-    pthread_attr_t attrib;
     PLWNET_SRV_NETBIOS_CONTEXT pNbCtx = NULL;
 
     dwError = LWNetAllocateMemory(
@@ -931,36 +934,92 @@ LWNetSrvStartNetBiosThread(
                   (PVOID*) &pNbCtx);
     BAIL_ON_LWNET_ERROR(dwError);
 
+    dwError = LwErrnoToWin32Error(pthread_mutex_init(&pNbCtx->mutex, NULL));
+    BAIL_ON_LWNET_ERROR(dwError);
+    initialized.mutexInit = TRUE;
+
+    dwError = LwErrnoToWin32Error(pthread_cond_init(&pNbCtx->cv, NULL));
+    BAIL_ON_LWNET_ERROR(dwError);
+    initialized.cvInit = TRUE;
+
+    dwError = LwErrnoToWin32Error(pthread_mutex_init(&pNbCtx->mutexAck, NULL));
+    BAIL_ON_LWNET_ERROR(dwError);
+    initialized.mutexAckInit = TRUE;
+
+    dwError = LwErrnoToWin32Error(pthread_cond_init(&pNbCtx->cvAck, NULL));
+    BAIL_ON_LWNET_ERROR(dwError);
+    initialized.cvAckInit = TRUE;
+
+    dwError = LwErrnoToWin32Error(pthread_mutex_init(
+                  &pNbCtx->mutexTransactionId, NULL));
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    gpNbCtx = pNbCtx;
+
+cleanup:
+    return dwError;
+
+error:
+    if (initialized.mutexInit)
+    {
+        pthread_mutex_destroy(&pNbCtx->mutex);
+    }
+    if (initialized.mutexAckInit)
+    {
+        pthread_mutex_destroy(&pNbCtx->mutexAck);
+    }
+    if (initialized.cvInit)
+    {
+        pthread_cond_destroy(&pNbCtx->cv);
+    }
+    if (initialized.cvAckInit)
+    {
+        pthread_cond_destroy(&pNbCtx->cvAck);
+    }
+    LWNET_SAFE_FREE_MEMORY(pNbCtx);
+    goto cleanup;
+}
+
+
+VOID
+LWNetSrvNetBiosCleanup(
+    VOID
+    )
+{
+    if (!gpNbCtx)
+    {
+        return;
+    }
+    pthread_mutex_destroy(&gpNbCtx->mutex);
+    pthread_mutex_destroy(&gpNbCtx->mutexAck);
+    pthread_cond_destroy(&gpNbCtx->cv);
+    pthread_cond_destroy(&gpNbCtx->cvAck);
+    LWNET_SAFE_FREE_MEMORY(gpNbCtx);
+}
+
+
+DWORD
+LWNetSrvStartNetBiosThread(
+    VOID)
+{
+    DWORD dwError = 0;
+    pthread_t thread;
+    pthread_attr_t attrib;
+
+    gpNbCtx->udpTimeout = LWNetConfigIsNetBiosUdpTimeout();
+
     dwError = LwErrnoToWin32Error(pthread_attr_init(&attrib));
     BAIL_ON_LWNET_ERROR(dwError);
 
     dwError = LwErrnoToWin32Error(pthread_attr_setdetachstate(
                   &attrib, PTHREAD_CREATE_DETACHED));
     BAIL_ON_LWNET_ERROR(dwError);
-
-    dwError = LwErrnoToWin32Error(pthread_mutex_init(&pNbCtx->mutex, NULL));
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    dwError = LwErrnoToWin32Error(pthread_cond_init(&pNbCtx->cv, NULL));
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    dwError = LwErrnoToWin32Error(pthread_mutex_init(&pNbCtx->mutexAck, NULL));
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    dwError = LwErrnoToWin32Error(pthread_cond_init(&pNbCtx->cvAck, NULL));
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    dwError = LwErrnoToWin32Error(pthread_mutex_init(
-                  &pNbCtx->mutexTransactionId, NULL));
-    BAIL_ON_LWNET_ERROR(dwError);
-
     dwError = LwErrnoToWin32Error(pthread_create(&thread,
                          &attrib,
                          LWNetSrvStartNetBiosThreadRoutine,
-                         (void *) pNbCtx));
+                         (void *) gpNbCtx));
     BAIL_ON_LWNET_ERROR(dwError);
 
-    pNbCtx->udpTimeout = LWNetConfigIsNetBiosUdpTimeout();
 cleanup:
     return dwError;
 error:
@@ -976,14 +1035,21 @@ LWNetSrvStartNetBios(
 
     if (LWNetConfigIsNetBiosEnabled())
     {
+        dwError = LWNetSrvNetBiosInit();
+        BAIL_ON_LWNET_ERROR(dwError);
+
         dwError = LWNetSrvStartNetBiosThread();
-        if (dwError)
-        {
-            LWNET_LOG_ERROR("Failed initializing NetBIOS listener thread %s",
-                            LwErrnoToName(dwError));
-        }
+        BAIL_ON_LWNET_ERROR(dwError);
     }
+
+cleanup:
     return dwError;
+
+error:
+    LWNetSrvNetBiosCleanup();
+    LWNET_LOG_ERROR("Failed initializing NetBIOS listener thread %s",
+                    LwErrnoToName(dwError));
+    goto cleanup;
 }
 
 
@@ -999,4 +1065,5 @@ LWNetStopNetBios(
     gpNbCtx->bShutdown = TRUE;
     pthread_mutex_unlock(&gpNbCtx->mutexAck);
     shutdown(gpNbCtx->sock, 0);  // 0 = SHUT_RD; more portable?
+    LWNetSrvNetBiosCleanup();
 }

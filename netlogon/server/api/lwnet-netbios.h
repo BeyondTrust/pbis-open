@@ -75,4 +75,14 @@ LWNetNbStrToNbName2(
     OUT PBYTE *retNbNameL2,
     OUT PDWORD retNbNameL2Len);
 
+DWORD
+LWNetSrvNetBiosInit(
+    VOID
+    );
+
+VOID
+LWNetSrvNetBiosCleanup(
+    VOID
+    );
+
 #endif

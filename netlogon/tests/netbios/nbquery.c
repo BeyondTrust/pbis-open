@@ -103,6 +103,7 @@ int main(int argc, char *argv[])
 
     NetBiosHost = argv[1];
 
+    LWNetSrvNetBiosInit();
 
     dwError = LWNetNbConstructNameQuery(
               NetBiosHost,
@@ -212,6 +213,7 @@ int main(int argc, char *argv[])
     printf("\n");
                 
 cleanup:
+    LWNetSrvNetBiosCleanup();
     return dwError;
 
 
