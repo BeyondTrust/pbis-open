@@ -44,6 +44,7 @@
 #define __LSA_PSTORE_PLUGIN_H__
 
 #include <lsa/lsapstore-types.h>
+#include <lw/attrs.h>
 
 //
 // The plugin is only called when the machine password information
@@ -75,7 +76,7 @@ DWORD
 typedef
 DWORD
 (*LSA_PSTORE_PLUGIN_DELETE_PASSWORD_INFO_FUNCTION)(
-    IN PLSA_PSTORE_PLUGIN_CONTEXT Context
+    IN PLSA_PSTORE_PLUGIN_CONTEXT pContext
     );
 
 //
