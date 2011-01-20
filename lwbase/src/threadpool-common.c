@@ -494,6 +494,7 @@ WorkLoop(
         RingDequeue(&pThreads->WorkItems, &pRing);
         pThreads->ulQueued--;
         pThreads->ulAvailable--;
+        pThreads->ulRunning++;
 
         UNLOCK_THREADS(pThreads);
 
@@ -514,6 +515,8 @@ WorkLoop(
         }
 
         LOCK_THREADS(pThreads);
+
+        pThreads->ulRunning--;
 
         if (pItemThreads->bWaiting && pItemThreads->ulQueued == 0)
         {
@@ -708,7 +711,7 @@ WaitWorkItems(
 
     pThreads->bWaiting = TRUE;
 
-    while (pThreads->ulQueued && pThreads->ulDelegated)
+    while (pThreads->ulQueued && pThreads->ulDelegated && pThreads->ulRunning)
     {
         pthread_cond_wait(&pThreads->Event, &pThreads->Lock);
     }

@@ -90,6 +90,8 @@ typedef struct _LW_WORK_THREADS
     ULONG ulWorkThreadTimeout;
     /* Number of started threads */
     ULONG volatile ulStarted;
+    /* Number of items being run */
+    ULONG volatile ulRunning;
     /* Number of queued items */
     ULONG volatile ulQueued;
     /* Number of threads available to process an item */
