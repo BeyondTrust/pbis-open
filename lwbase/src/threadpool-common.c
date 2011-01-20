@@ -711,7 +711,7 @@ WaitWorkItems(
 
     pThreads->bWaiting = TRUE;
 
-    while (pThreads->ulQueued && pThreads->ulDelegated && pThreads->ulRunning)
+    while (pThreads->ulQueued || pThreads->ulDelegated || pThreads->ulRunning)
     {
         pthread_cond_wait(&pThreads->Event, &pThreads->Lock);
     }
