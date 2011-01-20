@@ -11,6 +11,8 @@ lwio_tool_CPPFLAGS =  \
 lwio_tool_LDADD = \
     @top_builddir@/client/liblwioclient.la \
     @top_builddir@/common/liblwiocommon.la \
+    @top_builddir@/libshareinfo/liblwioshareinfo.la \
     -llwbase_nothr
 
-lwio_tool_LDFLAGS = -L$(top_builddir)/common/.libs
+lwio_tool_LDFLAGS = -L$(top_builddir)/common/.libs \
+                    -L$(top_builddir)/libshareinfo/.libs
