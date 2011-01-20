@@ -128,7 +128,7 @@ LsaPstorepGetPluginList(
     dwError = LwRegOpenKeyExA(
                     registryConnection,
                     NULL,
-                    LSA_PSTORE_CONFIG_KEY_PATH_PLUGIN,
+                    LSA_PSTORE_REG_KEY_PATH_PLUGINS,
                     0,
                     GENERIC_READ,
                     &keyHandle);
@@ -142,7 +142,7 @@ LsaPstorepGetPluginList(
     dwError = LsaPstorepRegGetMultiStringA(
                     registryConnection,
                     keyHandle,
-                    LSA_PSTORE_CONFIG_VALUE_PLUGIN_LOAD_ORDER,
+                    LSA_PSTORE_REG_VALUE_NAME_PLUGINS_LOAD_ORDER,
                     &loadOrder,
                     &loadOrderCount);
     if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
@@ -180,7 +180,7 @@ LsaPstorepGetPluginPath(
     dwError = LwNtStatusToWin32Error(LwRtlCStringAllocatePrintf(
                     &pszKeyPath,
                     "%s\\%s",
-                    LSA_PSTORE_CONFIG_KEY_PATH_PLUGIN,
+                    LSA_PSTORE_REG_KEY_PATH_PLUGINS,
                     pszName));
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
@@ -206,12 +206,12 @@ LsaPstorepGetPluginPath(
     dwError = LsaPstorepRegGetStringA(
                     registryConnection,
                     keyHandle,
-                    LSA_PSTORE_CONFIG_VALUE_PLUGIN_PATH,
+                    LSA_PSTORE_REG_VALUE_NAME_PLUGINS_PATH,
                     &pszPath);
     if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
         LW_RTL_LOG_ERROR("LSA pstore plugin '%s' is missing the '%s' configuration value from its configuration registry key '%s'",
-                pszName, LSA_PSTORE_CONFIG_VALUE_PLUGIN_PATH, pszKeyPath);
+                pszName, LSA_PSTORE_REG_VALUE_NAME_PLUGINS_PATH, pszKeyPath);
         dwError = ERROR_DLL_INIT_FAILED;
         GOTO_CLEANUP_EE(EE);
     }

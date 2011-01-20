@@ -76,33 +76,6 @@
     LW_RTL_MAKE_CUSTOM_FREE_SECURE_STRING(LsaPstoreFreeMemory, pMemory, WCHAR)
 
 //
-// Registry Key/Value Paths/Names
-//
-
-#define LSA_PSTORE_CONFIG_KEY_PATH_ROOT \
-    HKEY_THIS_MACHINE "\\Services\\lsass\\Parameters\\Providers\\ActiveDirectory\\Pstore"
-
-#define LSA_PSTORE_CONFIG_KEY_PATH_PLUGIN \
-    LSA_PSTORE_CONFIG_KEY_PATH_ROOT "\\Plugin"
-
-#define LSA_PSTORE_CONFIG_VALUE_PLUGIN_LOAD_ORDER "LoadOrder"
-#define LSA_PSTORE_CONFIG_VALUE_PLUGIN_PATH "Path"
-
-#define _LSA_PSTORE_MAKE_FREE_SECURE_STRING(PointerToPointer, CharType) \
-    do { \
-        if (*(PointerToPointer)) \
-        { \
-            CharType* pSet; \
-            for (pSet = *(PointerToPointer); *pSet; pSet++) \
-            { \
-                *pSet = 0; \
-            } \
-            LsaPstoreFreeMemory(*(PointerToPointer)); \
-            *(PointerToPointer) = NULL; \
-        } \
-    } while (0)
-
-//
 // Logging
 //
 

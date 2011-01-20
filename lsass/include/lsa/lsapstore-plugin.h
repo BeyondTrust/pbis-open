@@ -133,4 +133,33 @@ DWORD
     OUT PLSA_PSTORE_PLUGIN_CONTEXT* ppContext
     );
 
+//
+// These registry paths are used to add plugins.
+//
+// The plugins to be loaded are listed under the registry key
+// LSA_PSTORE_REG_KEY_PATH_PLUGINS as the multi-string value
+// LSA_PSTORE_REG_VALUE_NAME_PLUGINS_LOAD_ORDER.
+//
+// The key LSA_PSTORE_REG_KEY_PATH_PLUGINS\<PLUGIN-NAME> contains a value
+// LSA_PSTORE_REG_VALUE_NAME_PLUGINS_PATH that contains the path to the
+// module implementing LsaPstorePluginInitializeContext.
+//
+
+#define _LSA_PSTORE_REG_KEY_HIVE_RELATIVE_PATH \
+    "Services\\lsass\\Parameters\\Providers\\ActiveDirectory\\Pstore"
+
+// Definitions for use with regutils APIs
+#define LSA_PSTORE_REG_ROOT_KEY_PATH \
+    HKEY_THIS_MACHINE
+
+#define LSA_PSTORE_REG_ROOT_KEY_RELATIVE_PATH_PLUGINS \
+    _LSA_PSTORE_REG_KEY_HIVE_RELATIVE_PATH "\\Plugins"
+
+// Definitions for use with normal registry APIs
+#define LSA_PSTORE_REG_KEY_PATH_PLUGINS \
+    LSA_PSTORE_REG_ROOT_KEY_PATH "\\" LSA_PSTORE_REG_ROOT_KEY_RELATIVE_PATH_PLUGINS
+
+#define LSA_PSTORE_REG_VALUE_NAME_PLUGINS_LOAD_ORDER "LoadOrder"
+#define LSA_PSTORE_REG_VALUE_NAME_PLUGINS_PATH "Path"
+
 #endif
