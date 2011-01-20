@@ -188,9 +188,9 @@ LsaPstorePluginInitializeContext(
 
     error = RegUtilGetValue(
                 NULL,
-                HKEY_THIS_MACHINE,
+                LSA_PSTORE_REG_ROOT_KEY_PATH,
                 NULL,
-                "Services\\lsass\\Parameters\\Providers\\ActiveDirectory\\Pstore\\Plugins\\Samba",
+                LSA_PSTORE_REG_ROOT_KEY_RELATIVE_PATH_PLUGINS "\\Samba",
                 "SecretsPath",
                 &regType,
                 (PVOID*)&pSecretsPath,
