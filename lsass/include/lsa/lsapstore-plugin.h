@@ -108,6 +108,22 @@ typedef struct _LSA_PSTORE_PLUGIN_DISPATCH {
 #define LSA_PSTORE_PLUGIN_INITIALIZE_FUNCTION_NAME \
     "LsaPstorePluginInitializeContext"
 
+//
+// When implementing LsaPstorePluginInitializeContext, please include the
+// following in the function implementation:
+//
+// LSA_PSTORE_PLUGIN_INITIALIZE_FUNCTION unused = LsaPstorePluginInitializeContext;
+//
+// The above guarantees that the function implementation fails to build
+// if the plugin initialization function signature changes.
+//
+// To prevent unused variable warnings from the compiler, either use the
+// variable (e.g., in an assert -- as in assert(unused)), or mark it with
+// __attribute__((unused)) if your compilter supports that (e.g.,
+// LSA_PSTORE_PLUGIN_INITIALIZE_FUNCTION unused __attribute__((unused))
+// = LsaPstorePluginInitializeContext;).
+//
+
 typedef
 DWORD
 (*LSA_PSTORE_PLUGIN_INITIALIZE_FUNCTION)(
