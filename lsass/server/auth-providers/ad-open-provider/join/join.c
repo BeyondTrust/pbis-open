@@ -722,6 +722,8 @@ LsaJoinDomainInternal(
         dwError = LsaDirectoryDisconnect(pLdap);
         pLdap = NULL;
         BAIL_ON_LSA_ERROR(dwError);
+
+        LW_SAFE_FREE_MEMORY(pwszBaseDn);
     }
 
     dwError = LsaGenerateMachinePassword(
@@ -2565,6 +2567,16 @@ LsaMachAcctCreate(
 cleanup:
     LW_SAFE_FREE_MEMORY(dn_context_name);
     LW_SAFE_FREE_MEMORY(dn_name);
+
+    if (res)
+    {
+        LdapMessageFree(res);
+    }
+
+    if (machacct)
+    {
+        LdapMessageFree(machacct);
+    }
 
     if (dn_context_val) {
         LdapAttributeValueFree(dn_context_val);
