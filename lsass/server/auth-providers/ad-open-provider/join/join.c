@@ -2018,27 +2018,6 @@ LsaSaveMachinePassword(
     BAIL_ON_LSA_ERROR(dwError);
 
     /*
-     * Store the machine password first
-     */
-
-    passwordInfo.Account.DnsDomainName = pwszAdDnsDomainNameLc;
-    passwordInfo.Account.NetbiosDomainName = pwszDomain;
-    passwordInfo.Account.DomainSid = pwszSid;
-    passwordInfo.Account.SamAccountName = pwszAccount;
-    passwordInfo.Account.Type = LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION;
-    // TODO-2010/01/10-dalmeida -- Use correct kvno
-    passwordInfo.Account.KeyVersionNumber = 0;
-    passwordInfo.Account.Fqdn = pwszFqdn;
-    passwordInfo.Account.LastChangeTime = 0;
-    passwordInfo.Password = pwszPass;
-
-    dwError = LsaPstoreSetPasswordInfoW(&passwordInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwWc16sLen(pwszPass, &sPassLen);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    /*
      * Find the current key version number for machine account
      */
 
@@ -2068,6 +2047,26 @@ LsaSaveMachinePassword(
     {
         BAIL_ON_LSA_ERROR(dwError);
     }
+
+    /*
+     * Store the machine password
+     */
+
+    passwordInfo.Account.DnsDomainName = pwszAdDnsDomainNameLc;
+    passwordInfo.Account.NetbiosDomainName = pwszDomain;
+    passwordInfo.Account.DomainSid = pwszSid;
+    passwordInfo.Account.SamAccountName = pwszAccount;
+    passwordInfo.Account.Type = LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION;
+    passwordInfo.Account.KeyVersionNumber = dwKvno;
+    passwordInfo.Account.Fqdn = pwszFqdn;
+    passwordInfo.Account.LastChangeTime = 0;
+    passwordInfo.Password = pwszPass;
+
+    dwError = LsaPstoreSetPasswordInfoW(&passwordInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwWc16sLen(pwszPass, &sPassLen);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = KtKrb5GetSaltingPrincipalW(pwszMachineName,
                                          pwszAccount,
