@@ -144,7 +144,11 @@ char *dlerror()
 }
 
 #endif /* HAVE_DLFCN_H */
+#ifdef __LWI_HP_UX_IA64__
+#define SO_SUFFIX	".so"
+#else
 #define SO_SUFFIX	".sl"
+#endif
 #else /* __hpux */
 #define SO_SUFFIX	".so"
 #endif /* __hpux */

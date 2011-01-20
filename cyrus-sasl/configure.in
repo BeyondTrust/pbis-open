@@ -955,6 +955,13 @@ if test "$with_rc4" != no; then
     AC_DEFINE(WITH_RC4,[],[Use internal RC4 implementation?])
 fi
 
+case "$host_os:$host_cpu" in
+    hpux*:ia64*)
+        AC_DEFINE([__LWI_HP_UX_IA64__], [], [Define if OS is HP-UX-IA64])
+        ;;
+esac
+
+
 building_for_macosx=no
 case "$host_os" in
         darwin*)
