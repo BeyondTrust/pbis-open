@@ -181,6 +181,7 @@ LwSmTableReconstructEntry(
     )
 {
     DWORD dwError = 0;
+    PWSTR pwszLoaderName = NULL;
 
     if (pEntry->object.pData)
     {
@@ -188,12 +189,20 @@ LwSmTableReconstructEntry(
         pEntry->object.pData = NULL;
     }
 
+    dwError = LwMbsToWc16s(gLoaderTable[pEntry->pInfo->type], &pwszLoaderName);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmLoaderGetVtbl(pwszLoaderName, &pEntry->pVtbl);
+    BAIL_ON_ERROR(dwError);
+
     dwError = pEntry->pVtbl->pfnConstruct(&pEntry->object, pEntry->pInfo, &pEntry->object.pData);
     BAIL_ON_ERROR(dwError);
 
     pEntry->bDirty = FALSE;
 
 error:
+
+    LW_SAFE_FREE_MEMORY(pwszLoaderName);
 
     return dwError;
 }
@@ -207,7 +216,6 @@ LwSmTableAddEntry(
     DWORD dwError = 0;
     BOOL bLocked = TRUE;
     PSM_TABLE_ENTRY pEntry = NULL;
-    PWSTR pwszLoaderName = NULL;
 
     dwError = LwAllocateMemory(sizeof(*pEntry), OUT_PPVOID(&pEntry));
     BAIL_ON_ERROR(dwError);
@@ -227,12 +235,6 @@ LwSmTableAddEntry(
     BAIL_ON_ERROR(dwError);
     pEntry->pEvent = &pEntry->event;
 
-    dwError = LwMbsToWc16s(gLoaderTable[pEntry->pInfo->type], &pwszLoaderName);
-    BAIL_ON_ERROR(dwError);
-
-    dwError = LwSmLoaderGetVtbl(pwszLoaderName, &pEntry->pVtbl);
-    BAIL_ON_ERROR(dwError);
-
     dwError = LwSmTableReconstructEntry(pEntry);
     BAIL_ON_ERROR(dwError);
 
@@ -247,8 +249,6 @@ LwSmTableAddEntry(
     *ppEntry = pEntry;
 
 cleanup:
-
-    LW_SAFE_FREE_MEMORY(pwszLoaderName);
 
     return dwError;
 
