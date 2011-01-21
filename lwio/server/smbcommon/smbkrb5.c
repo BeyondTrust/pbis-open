@@ -48,20 +48,6 @@ typedef struct _SEC_WINNT_AUTH_IDENTITY
 #define GSS_MECH_NTLM_LEN   10
 
 static
-DWORD
-SMBGetServerCanonicalName(
-    PCSTR pszServerName,
-    PSTR* ppszNormal
-    );
-
-static
-DWORD
-SMBGetServerDomain(
-    PCSTR pszServerName,
-    PSTR* ppszDomain
-    );
-
-static
 void
 smb_display_status(
     PCSTR     pszId,
@@ -169,7 +155,6 @@ SMBGSSContextBuild(
     PSMB_GSS_SEC_CONTEXT pContext = NULL;
     PSTR pszTargetName = NULL;
     PSTR pszServerName = NULL;
-    PSTR pszDomainName = NULL;
     PSTR pszUsername = NULL;
     PSTR pszDomain = NULL;
     PSTR pszPassword = NULL;
@@ -214,11 +199,6 @@ SMBGSSContextBuild(
             BAIL_ON_LWIO_ERROR(dwError);
             break;
         case IO_CREDS_TYPE_KRB5_TGT:
-            dwError = SMBGetServerDomain(pszServerName, &pszDomainName);
-            BAIL_ON_LWIO_ERROR(dwError);
-            
-            SMBStrToUpper(pszDomainName);
-
             sCopyServerChars = strlen(pszServerName);
             if (sCopyServerChars > 0 &&
                     pszServerName[sCopyServerChars - 1] == '.')
@@ -235,10 +215,9 @@ SMBGSSContextBuild(
 
             dwError = SMBAllocateStringPrintf(
                             &pszTargetName,
-                            "cifs/%.*s@%s",
+                            "cifs/%.*s@",
                             (int)sCopyServerChars,
-                            pszServerName,
-                            pszDomainName);
+                            pszServerName);
             BAIL_ON_LWIO_ERROR(dwError);
 
             inputNameBuffer.value = pszTargetName;
@@ -382,7 +361,6 @@ cleanup:
     }
 
     LWIO_SAFE_FREE_STRING(pszTargetName);
-    LWIO_SAFE_FREE_STRING(pszDomainName);
     LWIO_SAFE_FREE_STRING(pszServerName);
     LWIO_SAFE_FREE_STRING(pszUsername);
     LWIO_SAFE_FREE_STRING(pszDomain);
@@ -643,95 +621,6 @@ SMBGSSContextFree(
 
         LwIoFreeMemory(pContext);
     }
-}
-
-static
-DWORD
-SMBGetServerCanonicalName(
-    PCSTR pszServerName,
-    PSTR* ppszNormal
-    )
-{
-    DWORD dwError = 0;
-    struct addrinfo hints;
-    struct addrinfo* pAddrInfo = NULL;
-
-    memset(&hints, 0, sizeof(hints));
-
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = 0;
-    hints.ai_protocol = 0;
-    hints.ai_flags = AI_CANONNAME;
-
-    if (getaddrinfo(pszServerName, NULL, &hints, &pAddrInfo))
-    {
-        dwError = LWIO_ERROR_HOST_NOT_FOUND;
-        BAIL_ON_LWIO_ERROR(dwError);
-    }
-
-    dwError = SMBAllocateString(pAddrInfo->ai_canonname, ppszNormal);
-    BAIL_ON_LWIO_ERROR(dwError);
-
-error:
-
-    if (pAddrInfo)
-    {
-        freeaddrinfo(pAddrInfo);
-    }
-
-    return dwError;
-}
-
-static
-DWORD
-SMBGetServerDomain(
-    PCSTR pszServerName,
-    PSTR* ppszDomain
-    )
-{
-    DWORD dwError = 0;
-    char* pDot = NULL;
-    PSTR pszDomain = NULL;
-    PSTR pszNormal = NULL;
-    size_t sDomain = 0;
-
-    pDot = strchr(pszServerName, '.');
-
-    if (pDot)
-    {
-        dwError = SMBAllocateString(pszServerName, &pszNormal);
-        BAIL_ON_LWIO_ERROR(dwError);
-    }
-    else
-    {
-        dwError = SMBGetServerCanonicalName(pszServerName, &pszNormal);
-        BAIL_ON_LWIO_ERROR(dwError);
-    }
-
-    dwError = SMBAllocateString(strchr(pszNormal, '.') + 1, &pszDomain);
-    BAIL_ON_LWIO_ERROR(dwError);
-
-    sDomain = strlen(pszDomain);
-    if (sDomain > 0 && pszDomain[sDomain - 1] == '.')
-    {
-        // Strip the trailing dot off
-        pszDomain[sDomain - 1] = 0;
-    }
-
-    *ppszDomain = pszDomain;
-
-cleanup:
-
-    LWIO_SAFE_FREE_MEMORY(pszNormal);
-
-    return dwError;
-
-error:
-
-    *ppszDomain = NULL;
-    LWIO_SAFE_FREE_MEMORY(pszDomain);
-
-    goto cleanup;
 }
 
 NTSTATUS
