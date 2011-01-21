@@ -133,6 +133,12 @@ SMBSrvInterruptHandler(
 
 static
 VOID
+SMBSrvInterruptDummyHandler(
+    int sig
+    );
+
+static
+VOID
 SMBSrvBlockSignals(
     VOID
     );
@@ -1041,6 +1047,26 @@ SMBHandleSignals(
         BAIL_ON_LWIO_ERROR(dwError);
     }
 
+    // Register dummy handlers for the rest of the signals
+    // caught by sigwait();
+    memset(&action, 0, sizeof(action));
+    action.sa_handler = SMBSrvInterruptDummyHandler;
+    if (sigaction(SIGTERM, &action, NULL) != 0)
+    {
+        dwError = errno;
+        BAIL_ON_LWIO_ERROR(dwError);
+    }
+    if (sigaction(SIGPIPE, &action, NULL) != 0)
+    {
+        dwError = errno;
+        BAIL_ON_LWIO_ERROR(dwError);
+    }
+    if (sigaction(SIGHUP, &action, NULL) != 0)
+    {
+        dwError = errno;
+        BAIL_ON_LWIO_ERROR(dwError);
+    }
+
     // Unblock SIGINT
     sigemptyset(&catch_signal_mask);
     sigaddset(&catch_signal_mask, SIGINT);
@@ -1095,6 +1121,17 @@ SMBSrvInterruptHandler(
         raise(SIGTERM);
     }
 }
+
+
+static
+VOID
+SMBSrvInterruptDummyHandler(
+    int sig
+    )
+{
+    return;
+}
+
 
 static
 VOID
