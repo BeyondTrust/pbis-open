@@ -1,0 +1,100 @@
+#!/bin/bash
+
+set -e
+
+ORIG_PWD="${PWD}"
+CLEAN=""
+JOBS="4"
+
+get()
+{
+    eval "result=\$$1"
+}
+
+fail()
+{
+    echo "$*" >&2
+    exit 1
+}
+
+show()
+{
+    echo "+ $*"
+    if [ -z "$SHOW" ]
+    then
+        "$@"
+    fi
+}
+
+if type gmake >/dev/null 2>&1
+then
+    MAKE=gmake
+else
+    MAKE=make
+fi
+
+if type gtar >/dev/null 2>&1
+then
+    TAR=gtar
+else
+    TAR=tar
+fi
+
+check_params()
+{
+    for param
+    do
+        get "$param"
+        [ -n "$result" ] || mk_fail "$param not specified"
+    done
+}
+
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+        --show) SHOW="1"; shift;;
+        --jobs) JOBS="$2"; shift 2;;
+        --source) SOURCE_DIR="$2"; shift 2;;
+        --build) BUILD_DIR="$2"; shift 2;;
+        --dist) DIST_DIR="$2"; shift 2;;
+        --revision) REVISION="$2"; shift 2;;
+        --id) ID="$2"; shift 2;;
+        --config) CONFIG="$2"; shift 2;;
+        --clean) CLEAN="1"; shift;;
+        --) shift; break;;
+        *) break;;
+    esac
+done
+
+check_params SOURCE_DIR BUILD_DIR DIST_DIR
+
+[ -n "$CONFIG" ] && CONFIG_PARAM="@$SOURCE_DIR/build/mk-config/$CONFIG"
+[ -n "$REVISION" ] && REVISION_PARAM="--build-revision=$REVISION"
+[ -n "$ID" ] && ID_PARAM="--build-id=$ID"
+
+if [ -n "$CLEAN" -a -d "$BUILD_DIR" ]
+then
+    show rm -rf "$BUILD_DIR"
+fi
+
+show mkdir -p "${BUILD_DIR}"
+show cd "$BUILD_DIR"
+
+if [ ! -f "${BUILD_DIR}/Makefile" -o -n "$CLEAN" ]
+then
+    show "${SOURCE_DIR}/configure" ${CONFIG_PARAM} ${REVISION_PARAM} ${ID_PARAM}
+fi
+
+show ${MAKE} -j"$JOBS" "$@"
+
+if [ -d "$DIST_DIR/package" ]
+then
+    show rm -rf "$DIST_DIR/package"
+fi
+
+show mkdir -p "$DIST_DIR"
+show cp -f "config.log" "$DIST_DIR/config.log"
+show cp -r "package" "$DIST_DIR/package"
+
+show cd "stage"
+show tar czfv "$DIST_DIR/stage-${ID}-${REVISION}.tar.gz" .
