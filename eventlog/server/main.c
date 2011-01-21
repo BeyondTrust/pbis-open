@@ -61,6 +61,7 @@ EVTSERVERINFO gServerInfo =
     0,                          /* Remove records older than*/
     0,                          /* Purge records at interval*/
     0,                          /* Enable/disable Remove records a boolean value TRUE or FALSE*/
+    TRUE,                       /* Register TCP/IP RPC endpoints*/
     NULL,
 };
 
@@ -82,6 +83,12 @@ static
 DWORD
 EVTGetProcessExitCode(
     PDWORD pdwExitCode
+    );
+
+static
+DWORD
+EVTGetRegisterTcpIp(
+    PBOOLEAN pbRegisterTcpIp
     );
 
 static
@@ -399,6 +406,23 @@ EVTGetRemoveAsNeeded(
     EVT_LOCK_SERVERINFO;
 
     *pbRemoveAsNeeded = gServerInfo.bRemoveAsNeeded;
+
+    EVT_UNLOCK_SERVERINFO;
+
+    return (dwError);
+}
+
+static
+DWORD
+EVTGetRegisterTcpIp(
+    PBOOLEAN pbRegisterTcpIp
+    )
+{
+    DWORD dwError = 0;
+
+    EVT_LOCK_SERVERINFO;
+
+    *pbRegisterTcpIp = gServerInfo.bRegisterTcpIp;
 
     EVT_UNLOCK_SERVERINFO;
 
@@ -931,6 +955,15 @@ static EVT_CONFIG_TABLE gConfigDescription[] =
         &(gServerInfo.bRemoveAsNeeded)
     },
     {
+        "RegisterTcpIp",
+        TRUE,
+        EVTTypeBoolean,
+        0,
+        -1,
+        NULL,
+        &(gServerInfo.bRegisterTcpIp)
+    },
+    {
         "AllowReadTo",
         TRUE,
         EVTTypeString,
@@ -970,17 +1003,19 @@ EVTLogConfigReload(
     dwError = EVTAllocateStringPrintf(
                  &pszDescription,
                  "     Current config settings are...\r\n" \
-                 "     Max Disk Usage :           %d\r\n" \
-                 "     Max Number Of Events:      %d\r\n" \
-                 "     Max Event Lifespan:        %d\r\n" \
-                 "     Remove Events As Needed:   %s\r\n" \
-                 "     Allow Read   To :          %s\r\n" \
-                 "     Allow Write  To :          %s\r\n" \
-                 "     Allow Delete To :          %s\r\n",
+                 "     Max Disk Usage :                 %d\r\n" \
+                 "     Max Number Of Events:            %d\r\n" \
+                 "     Max Event Lifespan:              %d\r\n" \
+                 "     Remove Events As Needed:         %s\r\n" \
+                 "     Register TCP/IP RPC endpoints:   %s\r\n" \
+                 "     Allow Read   To :                %s\r\n" \
+                 "     Allow Write  To :                %s\r\n" \
+                 "     Allow Delete To :                %s\r\n",
                  gServerInfo.dwMaxLogSize,
                  gServerInfo.dwMaxRecords,
                  gServerInfo.dwMaxAge,
                  gServerInfo.bRemoveAsNeeded? "true" : "false",
+                 gServerInfo.bRegisterTcpIp ? "true" : "false",
                  gServerInfo.pszAllowReadTo ?
                     gServerInfo.pszAllowReadTo: "",
                  gServerInfo.pszAllowWriteTo ?
@@ -1714,6 +1749,7 @@ main(
         {NULL, NULL}
     };
     BOOLEAN bExitNow = FALSE;
+    BOOLEAN bRegisterTcpIp = TRUE;
 
     dwError = EVTSetServerDefaults();
     BAIL_ON_EVT_ERROR(dwError);
@@ -1761,6 +1797,9 @@ main(
         dwError = 0;
     }
 
+    dwError = EVTGetRegisterTcpIp(&bRegisterTcpIp);
+    BAIL_ON_EVT_ERROR(dwError);
+
     dwError = SrvInitEventDatabase();
     BAIL_ON_EVT_ERROR(dwError);
 
@@ -1794,12 +1833,15 @@ main(
                                       NULL));
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwError = LwMapErrnoToLwError(dcethread_create(
+    if (bRegisterTcpIp)
+    {
+        dwError = LwMapErrnoToLwError(dcethread_create(
                                       &networkThread,
                                       NULL,
                                       EVTNetworkThread,
                                       &bExitNow));
-    BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_EVT_ERROR(dwError);
+    }
 
     while (!EVTIsListening())
     {
@@ -1833,18 +1875,24 @@ main(
 
     dwError = EVTUnregisterAllEndpoints();
     BAIL_ON_EVT_ERROR(dwError);
-    
+
     dwError = EVTStopListen();
     BAIL_ON_EVT_ERROR(dwError);
     
-    dwError = LwMapErrnoToLwError(dcethread_interrupt(networkThread));
-    BAIL_ON_EVT_ERROR(dwError);
+    if (bRegisterTcpIp)
+    {
+        dwError = LwMapErrnoToLwError(dcethread_interrupt(networkThread));
+        BAIL_ON_EVT_ERROR(dwError);
+    }
 
     dwError = LwMapErrnoToLwError(dcethread_join(listenThread, NULL));
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwError = LwMapErrnoToLwError(dcethread_join(networkThread, NULL));
-    BAIL_ON_EVT_ERROR(dwError);
+    if (bRegisterTcpIp)
+    {
+        dwError = LwMapErrnoToLwError(dcethread_join(networkThread, NULL));
+        BAIL_ON_EVT_ERROR(dwError);
+    }
 
  cleanup:
 

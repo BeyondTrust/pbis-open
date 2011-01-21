@@ -59,3 +59,8 @@
     default = dword:00000001 
     doc = "" 
 }
+"RegisterTcpIp" = { 
+    default = dword:00000001 
+    doc = ""
+    range = boolean
+}
