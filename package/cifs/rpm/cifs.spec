@@ -3,7 +3,7 @@
 Name: 		@PKG_RPM_NAME@
 Summary: 	Likewise CIFS Server
 Version: 	@PKG_RPM_VERSION@
-Release: 	1
+Release: 	@PKG_RPM_RELEASE@
 License: 	HP
 URL: 		http://www.likewise.com/
 Group: 		Development/Libraries

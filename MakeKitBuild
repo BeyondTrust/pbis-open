@@ -54,13 +54,27 @@ option()
                 ;;
         esac
     done
+
+    mk_option \
+        OPTION="build-revision" \
+        PARAM="rev" \
+        VAR="LW_BUILD_REVISION" \
+        DEFAULT="" \
+        HELP="Official build revision"
+
+    mk_option \
+        OPTION="build-id" \
+        PARAM="id" \
+        VAR="LW_BUILD_ID" \
+        DEFAULT="" \
+        HELP="Official build id"
 }
 
 configure()
 {
-    mk_export LW_VENDOR="likewise"
-    mk_export LW_PRODUCT="platform"
-    mk_export LW_VERSION="6.1.0"
+    LW_VENDOR="likewise"
+    LW_PRODUCT="platform"
+    LW_VERSION="6.1.${LW_BUILD_ID:-0}"
     mk_export LW_BUNDLED
     
     mk_msg "configuring $LW_VENDOR $LW_PRODUCT $LW_VERSION"

@@ -5,7 +5,7 @@ configure()
     if mk_deb_enabled
     then
         mk_export PKG_DEB_NAME="${LW_VENDOR}-${LW_PRODUCT}-cifs"
-        mk_export PKG_DEB_VERSION="${LW_VERSION}-1"
+        mk_export PKG_DEB_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
         mk_export PKG_DEB_DATE="`date -R`"
     fi
 
@@ -13,6 +13,7 @@ configure()
     then
         mk_export PKG_RPM_NAME="${LW_VENDOR}-${LW_PRODUCT}-cifs"
         mk_export PKG_RPM_VERSION="${LW_VERSION}"
+        mk_export PKG_RPM_RELEASE="${LW_BUILD_REVISION:-0}"
 
         PKG_RPM_COMPAT="0"
 
