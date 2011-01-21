@@ -1581,7 +1581,7 @@ MemCacheClearExistingObjectKeys(
 
     if (pObject->enabled && pObject->type == LSA_OBJECT_TYPE_USER)
     {
-        dwError = LsaHashGetValue(
+        dwError = LwHashGetValue(
                         pConn->pUIDToSecurityObject,
                         (PVOID)(size_t)pObject->userInfo.uid,
                         (PVOID*)&pListEntry);
@@ -1646,7 +1646,7 @@ MemCacheClearExistingObjectKeys(
     }
     else if (pObject->enabled && pObject->type == LSA_OBJECT_TYPE_GROUP)
     {
-        dwError = LsaHashGetValue(
+        dwError = LwHashGetValue(
                         pConn->pGIDToSecurityObject,
                         (PVOID)(size_t)pObject->groupInfo.gid,
                         (PVOID*)&pListEntry);
