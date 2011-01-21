@@ -1549,6 +1549,7 @@ MemCacheClearExistingObjectKeys(
 {
     DWORD dwError = 0;
     PSTR pszKey = NULL;
+    PDLINKEDLIST pListEntry = NULL;
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pObject->pszDN))
     {
@@ -1580,6 +1581,51 @@ MemCacheClearExistingObjectKeys(
 
     if (pObject->enabled && pObject->type == LSA_OBJECT_TYPE_USER)
     {
+        dwError = LsaHashGetValue(
+                        pConn->pUIDToSecurityObject,
+                        (PVOID)(size_t)pObject->userInfo.uid,
+                        (PVOID*)&pListEntry);
+        if (dwError == ERROR_NOT_FOUND)
+        {
+            // The key does not exist
+            dwError = 0;
+        }
+        else
+        {
+            char oldTimeBuf[128] = { 0 };
+            char newTimeBuf[128] = { 0 };
+            struct tm oldTmBuf = { 0 };
+            struct tm newTmBuf = { 0 };
+            PLSA_SECURITY_OBJECT pDuplicateObject = NULL;
+
+            BAIL_ON_LSA_ERROR(dwError);
+
+            pDuplicateObject = (PLSA_SECURITY_OBJECT)pListEntry->pItem;
+            localtime_r(&pDuplicateObject->version.tLastUpdated, &oldTmBuf);
+            localtime_r(&pObject->version.tLastUpdated, &newTmBuf);
+            strftime(
+                    oldTimeBuf,
+                    sizeof(oldTimeBuf),
+                    "%Y/%m/%d %H:%M:%S",
+                    &oldTmBuf);
+            strftime(
+                    newTimeBuf,
+                    sizeof(newTimeBuf),
+                    "%Y/%m/%d %H:%M:%S",
+                    &newTmBuf);
+
+            LSA_LOG_ERROR("Conflict discovered for UID %d. User %s\\%s had this UID at time %s, but now (%s) user %s\\%s has the UID. Please check that these users are not currently conflicting in Active Directory. This could also happen (safely) if the UIDs were swapped between these users.",
+                        (int)pObject->userInfo.uid,
+                        LSA_SAFE_LOG_STRING(
+                            pDuplicateObject->pszNetbiosDomainName),
+                        LSA_SAFE_LOG_STRING(
+                            pDuplicateObject->pszSamAccountName),
+                        oldTimeBuf,
+                        newTimeBuf,
+                        LSA_SAFE_LOG_STRING(pObject->pszNetbiosDomainName),
+                        LSA_SAFE_LOG_STRING(pObject->pszSamAccountName));
+        }
+
         dwError = MemCacheRemoveObjectByHashKey(
                         pConn,
                         pConn->pUIDToSecurityObject,
@@ -1600,6 +1646,50 @@ MemCacheClearExistingObjectKeys(
     }
     else if (pObject->enabled && pObject->type == LSA_OBJECT_TYPE_GROUP)
     {
+        dwError = LsaHashGetValue(
+                        pConn->pGIDToSecurityObject,
+                        (PVOID)(size_t)pObject->groupInfo.gid,
+                        (PVOID*)&pListEntry);
+        if (dwError == ERROR_NOT_FOUND)
+        {
+            // The key does not exist
+            dwError = 0;
+        }
+        else
+        {
+            char oldTimeBuf[128] = { 0 };
+            char newTimeBuf[128] = { 0 };
+            struct tm oldTmBuf = { 0 };
+            struct tm newTmBuf = { 0 };
+            PLSA_SECURITY_OBJECT pDuplicateObject = NULL;
+
+            BAIL_ON_LSA_ERROR(dwError);
+
+            pDuplicateObject = (PLSA_SECURITY_OBJECT)pListEntry->pItem;
+            localtime_r(&pDuplicateObject->version.tLastUpdated, &oldTmBuf);
+            localtime_r(&pObject->version.tLastUpdated, &newTmBuf);
+            strftime(
+                    oldTimeBuf,
+                    sizeof(oldTimeBuf),
+                    "%Y/%m/%d %H:%M:%S",
+                    &oldTmBuf);
+            strftime(
+                    newTimeBuf,
+                    sizeof(newTimeBuf),
+                    "%Y/%m/%d %H:%M:%S",
+                    &newTmBuf);
+
+            LSA_LOG_ERROR("Conflict discovered for GID %d. Group %s\\%s had this GID at time %s, but now (%s) group %s\\%s has the GID. Please check that these groups are not currently conflicting in Active Directory. This could also happen (safely) if the GIDs were swapped between these groups.",
+                        (int)pObject->groupInfo.gid,
+                        LSA_SAFE_LOG_STRING(
+                            pDuplicateObject->pszNetbiosDomainName),
+                        LSA_SAFE_LOG_STRING(
+                            pDuplicateObject->pszSamAccountName),
+                        oldTimeBuf,
+                        newTimeBuf,
+                        LSA_SAFE_LOG_STRING(pObject->pszNetbiosDomainName),
+                        LSA_SAFE_LOG_STRING(pObject->pszSamAccountName));
+        }
         dwError = MemCacheRemoveObjectByHashKey(
                         pConn,
                         pConn->pGIDToSecurityObject,
