@@ -879,7 +879,7 @@ AddSambaLoadPath(
         "LoadOrder",
         0,
         REG_MULTI_SZ,
-        pNewLoadOrder,
+        (const BYTE*)pNewLoadOrder,
         newLoadOrderSize);
     BAIL_ON_LSA_ERROR(error);
 
@@ -980,7 +980,7 @@ RemoveSambaLoadPath(
             "LoadOrder",
             0,
             REG_MULTI_SZ,
-            pLoadOrder,
+            (const BYTE*)pLoadOrder,
             loadOrderSize);
         BAIL_ON_LSA_ERROR(error);
     }
