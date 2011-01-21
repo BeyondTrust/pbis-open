@@ -38,6 +38,8 @@
         goto cleanup;                                                     \
     }
 
+#define PLUGIN_PATH (LIBDIR "/libsamba-pstore-plugin" MOD_EXT)
+
 static
 VOID
 LogLwMessageFunc(
@@ -356,7 +358,7 @@ CheckSambaVersion(
             TRUE,
             TRUE);
 
-    LW_LOG_INFO("Found smbd version %s", pVersionString);
+    LW_LOG_ERROR("Found smbd version %s", pVersionString);
 
     if (!strncmp(pVersionString, "3.2.", sizeof("3.2.") - 1))
     {
@@ -792,6 +794,209 @@ cleanup:
     return error;
 }
 
+static
+DWORD
+AddSambaLoadPath(
+    IN HANDLE hReg
+    )
+{
+    DWORD type = 0;
+    HKEY hKey = NULL;
+    DWORD error = 0;
+    DWORD loadOrderSize = 0;
+    PSTR pLoadOrder = NULL;
+    DWORD newLoadOrderSize = 0;
+    PSTR pNewLoadOrder = NULL;
+    PCSTR pPos = NULL;
+
+    error = LwRegOpenKeyExA(
+                hReg,
+                NULL,
+                LSA_PSTORE_REG_KEY_PATH_PLUGINS,
+                0,
+                KEY_WRITE,
+                &hKey);
+    BAIL_ON_LSA_ERROR(error);
+
+    error = LwRegGetValueA(
+                hReg,
+                hKey,
+                NULL,
+                "LoadOrder",
+                RRF_RT_REG_MULTI_SZ,
+                &type,
+                NULL,
+                &loadOrderSize);
+    if (error == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        loadOrderSize = 1;
+        error = LwAllocateMemory(loadOrderSize, (PVOID*) &pLoadOrder);
+        BAIL_ON_LSA_ERROR(error);
+        // pLoadOrder is already memset to 0
+
+        error = 0;
+    }
+    else
+    {
+        BAIL_ON_LSA_ERROR(error);
+
+        error = LwAllocateMemory(loadOrderSize, (PVOID*) &pLoadOrder);
+        BAIL_ON_LSA_ERROR(error);
+
+        error = LwRegGetValueA(
+                    hReg,
+                    hKey,
+                    NULL,
+                    "LoadOrder",
+                    RRF_RT_REG_MULTI_SZ,
+                    &type,
+                    pLoadOrder,
+                    &loadOrderSize);
+        BAIL_ON_LSA_ERROR(error);
+    }
+
+    pPos = pLoadOrder;
+    while (pPos[0])
+    {
+        if (!strcmp(pPos, PLUGIN_NAME))
+        {
+            LW_LOG_INFO("Samba is already in the load order");
+            goto cleanup;
+        }
+        pPos += strlen(pPos) + 1;
+    }
+
+    newLoadOrderSize = loadOrderSize + strlen(PLUGIN_NAME) + 1;
+    error = LwAllocateMemory(newLoadOrderSize, (PVOID*) &pNewLoadOrder);
+    BAIL_ON_LSA_ERROR(error);
+
+    memcpy(pNewLoadOrder, PLUGIN_NAME, strlen(PLUGIN_NAME) + 1);
+    memcpy(pNewLoadOrder + strlen(PLUGIN_NAME) + 1, pLoadOrder, loadOrderSize);
+
+    error = LwRegSetValueExA(
+        hReg,
+        hKey,
+        "LoadOrder",
+        0,
+        REG_MULTI_SZ,
+        pNewLoadOrder,
+        newLoadOrderSize);
+    BAIL_ON_LSA_ERROR(error);
+
+cleanup:
+    if (hKey != NULL)
+    {
+        LwRegCloseKey(
+                hReg,
+                hKey);
+    }
+    LW_SAFE_FREE_STRING(pLoadOrder);
+    LW_SAFE_FREE_STRING(pNewLoadOrder);
+
+    return error;
+}
+
+static
+DWORD
+RemoveSambaLoadPath(
+    IN HANDLE hReg
+    )
+{
+    DWORD type = 0;
+    HKEY hKey = NULL;
+    DWORD error = 0;
+    DWORD loadOrderSize = 0;
+    PSTR pLoadOrder = NULL;
+    // Do not free
+    PSTR pPos = NULL;
+    BOOLEAN removedSamba = FALSE;
+
+    error = LwRegOpenKeyExA(
+                hReg,
+                NULL,
+                LSA_PSTORE_REG_KEY_PATH_PLUGINS,
+                0,
+                KEY_WRITE,
+                &hKey);
+    BAIL_ON_LSA_ERROR(error);
+
+    error = LwRegGetValueA(
+                hReg,
+                hKey,
+                NULL,
+                "LoadOrder",
+                RRF_RT_REG_MULTI_SZ,
+                &type,
+                NULL,
+                &loadOrderSize);
+    if (error == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        LW_LOG_INFO("LoadOrder key not present");
+        error = 0;
+        goto cleanup;
+    }
+    BAIL_ON_LSA_ERROR(error);
+
+    error = LwAllocateMemory(loadOrderSize, (PVOID*) &pLoadOrder);
+    BAIL_ON_LSA_ERROR(error);
+
+    error = LwRegGetValueA(
+                hReg,
+                hKey,
+                NULL,
+                "LoadOrder",
+                RRF_RT_REG_MULTI_SZ,
+                &type,
+                pLoadOrder,
+                &loadOrderSize);
+    BAIL_ON_LSA_ERROR(error);
+
+    pPos = pLoadOrder;
+    while (pPos[0])
+    {
+        DWORD valueLen = strlen(pPos) + 1;
+
+        if (!strcmp(pPos, PLUGIN_NAME))
+        {
+            loadOrderSize -= valueLen;
+            memmove(
+                    pPos,
+                    pPos + valueLen,
+                    valueLen);
+            removedSamba = TRUE;
+        }
+        else
+        {
+            pPos += valueLen;
+        }
+    }
+
+    if (removedSamba)
+    {
+        LW_LOG_INFO("Removed Samba from load order");
+        error = LwRegSetValueExA(
+            hReg,
+            hKey,
+            "LoadOrder",
+            0,
+            REG_MULTI_SZ,
+            pLoadOrder,
+            loadOrderSize);
+        BAIL_ON_LSA_ERROR(error);
+    }
+
+cleanup:
+    if (hKey != NULL)
+    {
+        LwRegCloseKey(
+                hReg,
+                hKey);
+    }
+    LW_SAFE_FREE_STRING(pLoadOrder);
+
+    return error;
+}
+
 DWORD
 SynchronizePassword(
     PCSTR pSmbdPath
@@ -803,6 +1008,10 @@ SynchronizePassword(
     PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
     PLSA_PSTORE_PLUGIN_DISPATCH pDispatch = NULL;
     PLSA_PSTORE_PLUGIN_CONTEXT pContext = NULL;
+    HANDLE hReg = NULL;
+
+    error = LwRegOpenServer(&hReg);
+    BAIL_ON_LSA_ERROR(error);
 
     error = GetSecretsPath(
         pSmbdPath,
@@ -810,21 +1019,35 @@ SynchronizePassword(
     BAIL_ON_LSA_ERROR(error);
 
     error = RegUtilAddKey(
-                NULL,
+                hReg,
                 LSA_PSTORE_REG_ROOT_KEY_PATH,
                 NULL,
-                LSA_PSTORE_REG_ROOT_KEY_RELATIVE_PATH_PLUGINS "\\Samba");
+                LSA_PSTORE_REG_ROOT_KEY_RELATIVE_PATH_PLUGINS "\\" PLUGIN_NAME);
     BAIL_ON_LSA_ERROR(error);
 
     error = RegUtilSetValue(
-                NULL,
+                hReg,
                 LSA_PSTORE_REG_ROOT_KEY_PATH,
                 NULL,
-                LSA_PSTORE_REG_ROOT_KEY_RELATIVE_PATH_PLUGINS "\\Samba",
+                LSA_PSTORE_REG_ROOT_KEY_RELATIVE_PATH_PLUGINS "\\" PLUGIN_NAME,
                 "SecretsPath",
                 REG_SZ,
                 pSecretsPath,
                 strlen(pSecretsPath));
+    BAIL_ON_LSA_ERROR(error);
+
+    error = RegUtilSetValue(
+                hReg,
+                HKEY_THIS_MACHINE,
+                NULL,
+                LSA_PSTORE_REG_ROOT_KEY_RELATIVE_PATH_PLUGINS "\\" PLUGIN_NAME,
+                "Path",
+                REG_SZ,
+                PLUGIN_PATH,
+                strlen(PLUGIN_PATH));
+    BAIL_ON_LSA_ERROR(error);
+
+    error = AddSambaLoadPath(hReg);
     BAIL_ON_LSA_ERROR(error);
 
     error = LsaOpenServer(
@@ -839,24 +1062,37 @@ SynchronizePassword(
         hLsa,
         NULL,
         &pPasswordInfo);
-    BAIL_ON_LSA_ERROR(error);
+    if (error == NERR_SetupNotJoined)
+    {
+        LW_LOG_ERROR("Unable to write machine password in secrets.tdb because Likewise is not joined. The password will be written to secrets.tdb on the next successful join attempt");
+        error = 0;
+    }
+    else
+    {
+        BAIL_ON_LSA_ERROR(error);
 
-    error = LsaPstorePluginInitializeContext(
-                LSA_PSTORE_PLUGIN_VERSION,
-                &pDispatch,
-                &pContext);
-    BAIL_ON_LSA_ERROR(error);
+        error = LsaPstorePluginInitializeContext(
+                    LSA_PSTORE_PLUGIN_VERSION,
+                    PLUGIN_NAME,
+                    &pDispatch,
+                    &pContext);
+        BAIL_ON_LSA_ERROR(error);
 
-    error = pDispatch->SetPasswordInfoA(
-                pContext,
-                pPasswordInfo);
-    BAIL_ON_LSA_ERROR(error);
+        error = pDispatch->SetPasswordInfoA(
+                    pContext,
+                    pPasswordInfo);
+        BAIL_ON_LSA_ERROR(error);
+    }
 
 cleanup:
     LW_SAFE_FREE_STRING(pSecretsPath);
     if (hLsa != NULL)
     {
         LsaCloseServer(hLsa);
+    }
+    if (hReg != NULL)
+    {
+        LwRegCloseServer(hReg);
     }
     if (pPasswordInfo != NULL)
     {
@@ -880,6 +1116,10 @@ DeletePassword(
     PSTR pSecretsPath = NULL;
     LW_HANDLE hLsa = NULL;
     PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
+    HANDLE hReg = NULL;
+
+    error = LwRegOpenServer(&hReg);
+    BAIL_ON_LSA_ERROR(error);
 
     // Even though this was set during the install process, we'll try setting
     // it again. This way if the user calls uninstall without calling install
@@ -904,25 +1144,29 @@ DeletePassword(
     BAIL_ON_LSA_ERROR(error);
 
     error = RegUtilAddKey(
-                NULL,
+                hReg,
                 LSA_PSTORE_REG_ROOT_KEY_PATH,
                 NULL,
-                LSA_PSTORE_REG_ROOT_KEY_RELATIVE_PATH_PLUGINS "\\Samba");
+                LSA_PSTORE_REG_ROOT_KEY_RELATIVE_PATH_PLUGINS "\\" PLUGIN_NAME);
     BAIL_ON_LSA_ERROR(error);
 
     error = RegUtilSetValue(
-                NULL,
+                hReg,
                 LSA_PSTORE_REG_ROOT_KEY_PATH,
                 NULL,
-                LSA_PSTORE_REG_ROOT_KEY_RELATIVE_PATH_PLUGINS "\\Samba",
+                LSA_PSTORE_REG_ROOT_KEY_RELATIVE_PATH_PLUGINS "\\" PLUGIN_NAME,
                 "SecretsPath",
                 REG_SZ,
                 pSecretsPath,
                 strlen(pSecretsPath));
     BAIL_ON_LSA_ERROR(error);
 
+    error = RemoveSambaLoadPath(hReg);
+    BAIL_ON_LSA_ERROR(error);
+
     error = LsaPstorePluginInitializeContext(
                 LSA_PSTORE_PLUGIN_VERSION,
+                PLUGIN_NAME,
                 &pDispatch,
                 &pContext);
     BAIL_ON_LSA_ERROR(error);
@@ -936,6 +1180,10 @@ cleanup:
     if (pContext)
     {
         pDispatch->Cleanup(pContext);
+    }
+    if (hReg != NULL)
+    {
+        LwRegCloseServer(hReg);
     }
     if (hLsa != NULL)
     {

@@ -49,9 +49,12 @@
 
 #include <lsa/lsapstore-plugin.h>
 
+#define PLUGIN_NAME "Samba"
+
 DWORD
 LsaPstorePluginInitializeContext(
     IN ULONG Version,
+    IN PCSTR pName,
     OUT PLSA_PSTORE_PLUGIN_DISPATCH* ppDispatch,
     OUT PLSA_PSTORE_PLUGIN_CONTEXT* ppContext
     );

@@ -4,15 +4,6 @@
 
 #include "config.h"
 
-#if 0
-#include <stdlib.h>
-
-#include <lsa/lsa.h>
-#include <lsa/ad.h>
-#include <lwfile.h>
-
-
-#endif
 #include <string.h>
 #include <signal.h>
 #include <sys/types.h>
@@ -146,10 +137,14 @@ TdbDelete(
         BAIL_ON_LSA_ERROR(error);
     }
 
-    if ((ret = tdb_delete(pTdb, tdbKey)) != 0) {
-        tdb_transaction_cancel(pTdb);
-        error = ERROR_INTERNAL_DB_ERROR;
-        BAIL_ON_LSA_ERROR(error);
+    if (tdb_exists(pTdb, tdbKey))
+    {
+        if ((ret = tdb_delete(pTdb, tdbKey)) != 0)
+        {
+            tdb_transaction_cancel(pTdb);
+            error = ERROR_INTERNAL_DB_ERROR;
+            BAIL_ON_LSA_ERROR(error);
+        }
     }
 
     if ((ret = tdb_transaction_commit(pTdb)) != 0) {
@@ -165,6 +160,7 @@ cleanup:
 DWORD
 LsaPstorePluginInitializeContext(
     IN ULONG Version,
+    IN PCSTR pName,
     OUT PLSA_PSTORE_PLUGIN_DISPATCH* ppDispatch,
     OUT PLSA_PSTORE_PLUGIN_CONTEXT* ppContext
     )
@@ -190,7 +186,7 @@ LsaPstorePluginInitializeContext(
                 NULL,
                 LSA_PSTORE_REG_ROOT_KEY_PATH,
                 NULL,
-                LSA_PSTORE_REG_ROOT_KEY_RELATIVE_PATH_PLUGINS "\\Samba",
+                LSA_PSTORE_REG_ROOT_KEY_RELATIVE_PATH_PLUGINS "\\" PLUGIN_NAME,
                 "SecretsPath",
                 &regType,
                 (PVOID*)&pSecretsPath,

@@ -15,11 +15,14 @@ AM_LDFLAGS=""
 
 AC_USE_SYSTEM_EXTENSIONS
 
+MOD_EXT=".so"
+
 case "$host_os:$host_cpu" in
         solaris*:i?86|solaris*:sparc*)
                 AC_DEFINE([_XOPEN_SOURCE], [500], [Define to desired XOPEN compliance level])
                 ;;
         hpux*:hppa*)
+                MOD_EXT=".sl"
 		AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [Define on HP-UX])
                 ;;
         hpux*:ia64*)
@@ -29,6 +32,12 @@ case "$host_os:$host_cpu" in
                 AC_DEFINE([_LINUX_SOURCE_COMPAT], [], [Enable Linux source compatibility on AIX])
                 ;;
 esac
+
+AS_AC_EXPAND(LIBDIR, $libdir)
+AC_DEFINE_UNQUOTED(LIBDIR, "$LIBDIR", [Library directory])
+
+AC_SUBST(MOD_EXT)
+AC_DEFINE_UNQUOTED([MOD_EXT], ["$MOD_EXT"], [Extension of shared modules])
 
 # debugging
 
