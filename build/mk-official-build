@@ -4,6 +4,7 @@ set -e
 
 ORIG_PWD="${PWD}"
 CLEAN=""
+BOOTSTRAP=""
 JOBS="4"
 
 get()
@@ -61,6 +62,7 @@ do
         --id) ID="$2"; shift 2;;
         --config) CONFIG="$2"; shift 2;;
         --clean) CLEAN="1"; shift;;
+        --bootstrap) BOOTSTRAP="1"; CLEAN="1"; shift;;
         --) shift; break;;
         *) break;;
     esac
@@ -83,6 +85,11 @@ show cd "$BUILD_DIR"
 if [ ! -f "${BUILD_DIR}/Makefile" -o -n "$CLEAN" ]
 then
     show "${SOURCE_DIR}/configure" ${CONFIG_PARAM} ${REVISION_PARAM} ${ID_PARAM}
+fi
+
+if [ -n "$BOOTSTRAP" ]
+then
+    exit 0
 fi
 
 show ${MAKE} -j"$JOBS" "$@"
