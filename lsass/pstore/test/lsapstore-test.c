@@ -43,6 +43,7 @@
 
 #include <lsa/lsapstore-api.h>
 #include "lwargvcursor.h"
+#include <lw/rtllog.h>
 #include <lwerror.h>
 #include <lwstr.h>
 #include <lwmem.h>
@@ -148,6 +149,10 @@ PopNextOption(
         else if (strncmp("-", option, 1))
         {
             option = NULL;
+        }
+        else
+        {
+            LwArgvCursorPop(Cursor);
         }
     }
 
@@ -394,6 +399,85 @@ error:
 }
 
 static
+VOID
+LogCallback(
+    IN OPTIONAL LW_PVOID Context,
+    IN LW_RTL_LOG_LEVEL Level,
+    IN OPTIONAL PCSTR ComponentName,
+    IN PCSTR FunctionName,
+    IN PCSTR FileName,
+    IN ULONG LineNumber,
+    IN PCSTR Format,
+    IN ...
+    )
+{
+    DWORD dwError = 0;
+    PSTR formattedMessage = NULL;
+    va_list argList;
+    PCSTR levelString = NULL;
+    size_t messageLength = 0;
+    PCSTR optionalNewLine = NULL;
+
+    va_start(argList, Format);
+    dwError = LwAllocateStringPrintfV(&formattedMessage, Format, argList);
+    va_end(argList);
+    if (dwError)
+    {
+        goto error;
+    }
+
+    switch (Level)
+    {
+        case LW_RTL_LOG_LEVEL_ALWAYS:
+            levelString = "ALWAYS";
+            break;
+        case LW_RTL_LOG_LEVEL_ERROR:
+            levelString = "ERROR";
+            break;
+        case LW_RTL_LOG_LEVEL_WARNING:
+            levelString = "WARNING";
+            break;
+        case LW_RTL_LOG_LEVEL_INFO:
+            levelString = "INFO";
+            break;
+        case LW_RTL_LOG_LEVEL_VERBOSE:
+            levelString = "VERBOSE";
+            break;
+        case LW_RTL_LOG_LEVEL_DEBUG:
+            levelString = "DEBUG";
+            break;
+        case LW_RTL_LOG_LEVEL_TRACE:
+            levelString = "TRACE";
+            break;
+        default:
+            levelString = NULL;
+            break;
+    }
+
+    messageLength = strlen(formattedMessage);
+    if (!messageLength || formattedMessage[messageLength-1] != '\n')
+    {
+        optionalNewLine = "\n";
+    }
+
+    printf("%s: [%s() %s:%d] %s%s",
+           LW_RTL_LOG_SAFE_STRING(levelString),
+           FunctionName,
+           FileName,
+           LineNumber,
+           formattedMessage,
+           optionalNewLine);
+
+error:
+    if (dwError)
+    {
+        printf("WARNING: Failed to format log message");
+    }
+
+    LW_SAFE_FREE_STRING(formattedMessage);
+}
+
+static
 DWORD
 ParseLONG64(
     IN PCSTR pszString,
@@ -449,12 +533,16 @@ ShowUsage(
     )
 {
     PCSTR pszUseProgramName = Basename(pszProgramName);
-    printf("Usage: %s get-password-info [DNS-DOMAIN-NAME]\n"
-           "       %s set-password-info <ARGS...>\n"
-           "       %s delete-password-info [DNS-DOMAIN-NAME]\n"
-           "       %s get-default-domain\n"
-           "       %s set-default-domain DNS-DOMAIN-NAME\n"
-           "       %s get-joined-domains\n"
+    printf("Usage: %s [OPTIONS] get-password-info [DNS-DOMAIN-NAME]\n"
+           "       %s [OPTIONS] set-password-info <ARGS...>\n"
+           "       %s [OPTIONS] delete-password-info [DNS-DOMAIN-NAME]\n"
+           "       %s [OPTIONS] get-default-domain\n"
+           "       %s [OPTIONS] set-default-domain DNS-DOMAIN-NAME\n"
+           "       %s [OPTIONS] get-joined-domains\n"
+           "\n"
+           "  where OPTIONS are:\n"
+           "\n"
+           "    -d    -- enable debug output\n"
            "\n"
            "  where ARGS for set-password-info are:\n"
            "\n"
@@ -493,6 +581,7 @@ main(
     PCSTR option = NULL;
     PCSTR command = NULL;
     LW_ARGV_CURSOR cursor;
+    BOOLEAN enableDebug = FALSE;
 
     LwArgvCursorInit(&cursor, argc, argv);
     programName = LwArgvCursorPop(&cursor);
@@ -510,11 +599,21 @@ main(
         {
             ShowUsageHelp(programName);
         }
+        else if (!strcmp(option, "-d"))
+        {
+            enableDebug = TRUE;
+        }
         else
         {
             fprintf(stderr, "Unrecognized option: %s\n", option);
             ShowUsageError(programName);
         }
+    }
+
+    if (enableDebug)
+    {
+        LwRtlLogSetLevel(LW_RTL_LOG_LEVEL_DEBUG);
+        LwRtlLogSetCallback(LogCallback, NULL);
     }
 
     // Process Command:
