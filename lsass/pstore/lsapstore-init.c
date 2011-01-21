@@ -53,22 +53,20 @@ typedef struct _LSA_PSTORE_PLUGIN_INFO {
     PLSA_PSTORE_PLUGIN_CONTEXT Context;
 } LSA_PSTORE_PLUGIN_INFO, *PLSA_PSTORE_PLUGIN_INFO;
 
+typedef struct _LSA_PSTORE_PLUGIN_LIST {
+    DWORD Count;
+    LSA_PSTORE_PLUGIN_INFO PluginInfo[1];
+} LSA_PSTORE_PLUGIN_LIST, *PLSA_PSTORE_PLUGIN_LIST;
+
 typedef struct _LSA_PSTORE_STATE {
     struct {
         pthread_once_t OnceControl;
         DWORD Error;
         BOOLEAN Done;
     } Init;
-
     LONG RefCount;
-
-    struct {
-        DWORD Count;
-        PLSA_PSTORE_PLUGIN_INFO PluginInfo;
-    } Plugins;
-
+    PLSA_PSTORE_PLUGIN_LIST Plugins;
     BOOLEAN NeedClose;
-
 } LSA_PSTORE_STATE, *PLSA_PSTORE_STATE;
 
 static LSA_PSTORE_STATE LsaPstoreState = { { ONCE_INIT } };
@@ -110,9 +108,9 @@ LsaPstoreCleanupLibrary(
 
 static
 DWORD
-LsaPstorepGetPluginList(
-    OUT PSTR** PluginList,
-    OUT PDWORD PluginCount
+LsaPstorepGetPluginNames(
+    OUT PSTR** Names,
+    OUT PDWORD Count
     )
 {
     DWORD dwError = 0;
@@ -157,8 +155,8 @@ cleanup:
         LSA_PSTORE_FREE_STRING_ARRAY_A(&loadOrder, &loadOrderCount);
     }
 
-    *PluginList = loadOrder;
-    *PluginCount = loadOrderCount;
+    *Names = loadOrder;
+    *Count = loadOrderCount;
 
     return dwError;
 }
@@ -327,16 +325,15 @@ cleanup:
 static
 VOID
 LsaPstorepDestroyPluginList(
-    IN PLSA_PSTORE_PLUGIN_INFO PluginList,
-    IN DWORD Count
+    IN PLSA_PSTORE_PLUGIN_LIST PluginList
     )
 {
     if (PluginList)
     {
         DWORD i = 0;
-        for (i = 0; i < Count; i++)
+        for (i = 0; i < PluginList->Count; i++)
         {
-            LsaPstorepCleanupPlugin(&PluginList[i]);
+            LsaPstorepCleanupPlugin(&PluginList->PluginInfo[i]);
         }
         LSA_PSTORE_FREE(&PluginList);
     }
@@ -345,38 +342,84 @@ LsaPstorepDestroyPluginList(
 static
 DWORD
 LsaPstorepCreatePluginList(
-    OUT PLSA_PSTORE_PLUGIN_INFO* PluginList,
-    IN PSTR* PluginNames,
-    IN DWORD PluginNamesCount
+    OUT PLSA_PSTORE_PLUGIN_LIST* PluginList,
+    IN PSTR* Names,
+    IN DWORD Count
     )
 {
     DWORD dwError = 0;
     int EE = 0;
-    PLSA_PSTORE_PLUGIN_INFO pluginList = NULL;
-    DWORD count = 0;
+    PLSA_PSTORE_PLUGIN_LIST pluginList = NULL;
+    DWORD i = 0;
 
     dwError = LSA_PSTORE_ALLOCATE(
                     OUT_PPVOID(&pluginList),
-                    PluginNamesCount * sizeof(*pluginList));
+                    (LW_FIELD_OFFSET(LSA_PSTORE_PLUGIN_LIST, PluginInfo) +
+                     (Count * sizeof(*pluginList))));
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    for (count = 0;
-         count < PluginNamesCount;
-         count++)
+    for (i = 0; i < Count; i++)
     {
         dwError = LsaPstorepInitializePlugin(
-                        &pluginList[count],
-                        PluginNames[count]);
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+                        &pluginList->PluginInfo[pluginList->Count],
+                        Names[i]);
+        if (dwError)
+        {
+            LW_RTL_LOG_ERROR("Failed to load plugin %s with error = %u (%s)",
+                    Names[i], dwError,
+                    LW_RTL_LOG_SAFE_STRING(LwWin32ExtErrorToName(dwError)));
+            dwError = 0;
+        }
+
+        pluginList->Count++;
     }
 
 cleanup:
     if (dwError)
     {
-        LsaPstorepDestroyPluginList(pluginList, count);
+        LsaPstorepDestroyPluginList(pluginList);
         pluginList = NULL;
-        count = 0;
     }
+
+    *PluginList = pluginList;
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+static
+DWORD
+LsaPstorepLoadPlugins(
+    OUT PLSA_PSTORE_PLUGIN_LIST* PluginList
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PLSA_PSTORE_PLUGIN_LIST pluginList = NULL;
+    PSTR* names = NULL;
+    DWORD count = 0;
+
+    dwError = LsaPstorepGetPluginNames(&names, &count);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    if (count)
+    {
+        dwError = LsaPstorepCreatePluginList(&pluginList, names, count);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
+    else
+    {
+        LW_RTL_LOG_DEBUG("No LSA pstore plugins are configured.");
+    }
+
+cleanup:
+    if (dwError)
+    {
+        LsaPstorepDestroyPluginList(pluginList);
+        pluginList = NULL;
+    }
+
+    LSA_PSTORE_FREE_STRING_ARRAY_A(&names, &count);
 
     *PluginList = pluginList;
 
@@ -393,8 +436,6 @@ LsaPstorepInitializeLibraryInternal(
     DWORD dwError = 0;
     int EE = 0;
     PLSA_PSTORE_STATE pState = &LsaPstoreState;
-    PSTR* pluginList = NULL;
-    DWORD pluginCount = 0;
 
     if (pState->Init.Done)
     {
@@ -404,23 +445,8 @@ LsaPstorepInitializeLibraryInternal(
         GOTO_CLEANUP_EE(EE);
     }
 
-    dwError = LsaPstorepGetPluginList(&pluginList, &pluginCount);
+    dwError = LsaPstorepLoadPlugins(&pState->Plugins);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    if (pluginCount)
-    {
-        dwError = LsaPstorepCreatePluginList(
-                        &pState->Plugins.PluginInfo,
-                        pluginList,
-                        pluginCount);
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-        pState->Plugins.Count = pluginCount;
-    }
-    else
-    {
-        LW_RTL_LOG_VERBOSE("No LSA pstore plugins are configured.");
-    }
 
     dwError = LsaPstorepBackendInitialize();
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
@@ -432,8 +458,6 @@ cleanup:
     {
         LsaPstorepCleanupLibraryInternal();
     }
-
-    LSA_PSTORE_FREE_STRING_ARRAY_A(&pluginList, &pluginCount);
 
     pState->Init.Error = dwError;
     pState->Init.Done = TRUE;
@@ -457,11 +481,8 @@ LsaPstorepCleanupLibraryInternal(
         pState->NeedClose = FALSE;
     }
 
-    LsaPstorepDestroyPluginList(
-            pState->Plugins.PluginInfo,
-            pState->Plugins.Count);
-    pState->Plugins.PluginInfo = NULL;
-    pState->Plugins.Count = 0;
+    LsaPstorepDestroyPluginList(pState->Plugins),
+    pState->Plugins = NULL;
 
     pState->Init.OnceControl = onceControl;
     pState->Init.Error = 0;
@@ -508,11 +529,14 @@ LsaPstorepCallPluginSetPasswordInfo(
     int EE = 0;
     PLSA_PSTORE_STATE pState = &LsaPstoreState;
     DWORD i = 0;
+    DWORD count = 0;
     PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfoA = NULL;
 
-    for (i = 0; i < pState->Plugins.Count; i++)
+    count = pState->Plugins ? pState->Plugins->Count : 0;
+
+    for (i = 0; i < count; i++)
     {
-        PLSA_PSTORE_PLUGIN_INFO pluginInfo = &pState->Plugins.PluginInfo[i];
+        PLSA_PSTORE_PLUGIN_INFO pluginInfo = &pState->Plugins->PluginInfo[i];
 
         if (pluginInfo->Dispatch->SetPasswordInfoW)
         {
@@ -551,11 +575,14 @@ LsaPstorepCallPluginDeletePasswordInfo(
     int EE = 0;
     PLSA_PSTORE_STATE pState = &LsaPstoreState;
     DWORD i = 0;
+    DWORD count = 0;
     PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfoA = NULL;
 
-    for (i = 0; i < pState->Plugins.Count; i++)
+    count = pState->Plugins ? pState->Plugins->Count : 0;
+
+    for (i = 0; i < count; i++)
     {
-        PLSA_PSTORE_PLUGIN_INFO pluginInfo = &pState->Plugins.PluginInfo[i];
+        PLSA_PSTORE_PLUGIN_INFO pluginInfo = &pState->Plugins->PluginInfo[i];
 
         if (pluginInfo->Dispatch->DeletePasswordInfoW)
         {
