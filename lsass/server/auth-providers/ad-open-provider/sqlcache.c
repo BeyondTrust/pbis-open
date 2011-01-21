@@ -1368,6 +1368,10 @@ LsaDbUnpackGroupInfo(
         piColumnPos,
         "Gid",
         (DWORD*)&pResult->groupInfo.gid);
+    if (dwError == LW_ERROR_INVALID_PARAMETER)
+    {
+        dwError = LW_ERROR_DATA_ERROR;
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaSqliteReadString(
@@ -2818,6 +2822,14 @@ LsaDbQueryObject(
         dwError = LsaDbUnpackGroupInfo(pstQuery,
                 &iColumnPos,
                 pObject);
+        if (dwError == LW_ERROR_DATA_ERROR)
+        {
+            LSA_LOG_ERROR("The group attributes in the cache data for '%s\\%s' are invalid. The cache database or group data in Active Directory could be corrupt.",
+                LSA_SAFE_LOG_STRING(pObject->pszNetbiosDomainName),
+                LSA_SAFE_LOG_STRING(pObject->pszSamAccountName));
+            // Pretend like the whole object is not in the database.
+            dwError = LW_ERROR_NOT_HANDLED;
+        }
         BAIL_ON_LSA_ERROR(dwError);
     }
 
