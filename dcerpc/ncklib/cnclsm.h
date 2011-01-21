@@ -265,7 +265,7 @@ PRIVATE unsigned32     rpc__cn_call_sm_protocol_error _DCE_PROTOTYPE_ ((
 
 #define RPC_CN_POST_FIRST_CALL_SM_EVENT(crep, assoc, event_id, fragbuf, st) \
 { \
-    rpc__cn_assoc_alloc ((assoc), &(st));\
+    rpc__cn_assoc_alloc ((assoc), (unsigned32*)&(st));\
     if (st == rpc_s_ok)\
     {\
         RPC_CN_CALL_SM_TRC (crep, event_id, (RPC_CN_PKT_CALL_ID (RPC_CN_FRAGBUF_PKT_HDR (fragbuf))));\
