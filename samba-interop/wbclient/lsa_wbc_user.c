@@ -187,12 +187,12 @@ static DWORD AddUsersToList(char ***pppUserList, uint32_t *pUserSize,
     nUsers = *pUserSize;
 
     if (!ppUsers) {
-        ppUsers = _wbc_malloc((userInfoSize+1) * sizeof(char*),
+        ppUsers = _wbc_malloc((userInfoSize + nUsers + 1) * sizeof(char*),
                        _wbc_free_string_array);
         BAIL_ON_NULL_PTR(ppUsers, dwErr);
     } else {
         ppUsers = _wbc_realloc(*pppUserList,
-                    (userInfoSize+1) * sizeof(char*));
+                    (userInfoSize + nUsers + 1) * sizeof(char*));
         BAIL_ON_NULL_PTR(ppUsers, dwErr);
     }
 
