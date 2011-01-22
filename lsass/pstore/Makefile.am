@@ -11,6 +11,7 @@ liblsapstore_la_SOURCES =  \
         lsapstore-backend-wrap-a.c \
         lsapstore-init.c \
         lsapstore-main.c \
+        lsapstore-plugin.c \
         lsapstore-utils.c
 
 liblsapstore_la_LIBADD = \

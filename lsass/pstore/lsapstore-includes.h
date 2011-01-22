@@ -209,6 +209,8 @@ LsaPstorepEnsureInitialized(
     VOID
     );
 
+// lsapstore-plugin.c
+
 DWORD
 LsaPstorepCallPluginSetPasswordInfo(
     IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo

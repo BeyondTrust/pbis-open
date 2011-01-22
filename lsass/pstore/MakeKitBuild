@@ -11,6 +11,7 @@ make()
            lsapstore-backend-wrap-a.c \
            lsapstore-init.c \
            lsapstore-main.c \
+           lsapstore-plugin.c \
            lsapstore-utils.c \
            " \
         INCLUDEDIRS=". ../include" \
