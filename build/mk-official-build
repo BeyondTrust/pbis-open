@@ -82,17 +82,17 @@ fi
 show mkdir -p "${BUILD_DIR}"
 show cd "$BUILD_DIR"
 
-if [ ! -f "${BUILD_DIR}/Makefile" -o -n "$CLEAN" ]
-then
-    show "${SOURCE_DIR}/configure" ${CONFIG_PARAM} ${REVISION_PARAM} ${ID_PARAM}
-fi
+show "${SOURCE_DIR}/configure" ${CONFIG_PARAM} ${REVISION_PARAM} ${ID_PARAM}
 
 if [ -n "$BOOTSTRAP" ]
 then
     exit 0
 fi
 
-show ${MAKE} -j"$JOBS" "$@"
+for target
+do
+    show ${MAKE} -j"$JOBS" "$target"
+done
 
 if [ -d "$DIST_DIR/package" ]
 then
