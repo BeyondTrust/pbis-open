@@ -76,6 +76,10 @@ PopNextOption(
         {
             option = NULL;
         }
+        else
+        {
+            LwArgvCursorPop(Cursor);
+        }
     }
 
     return option;
