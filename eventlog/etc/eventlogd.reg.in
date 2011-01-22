@@ -17,3 +17,4 @@
 "MaxEventLifespan"=dword:0000005A
 "MaxNumEvents"=dword:000186A0
 "EventDbPurgeInterval"=dword:00000001
+"RegisterTcpIp"=dword:00000001
