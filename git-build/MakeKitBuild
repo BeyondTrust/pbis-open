@@ -32,9 +32,11 @@ option()
     mk_option \
         OPTION=lw-bundled-libs \
         PARAM='...' \
-        VAR=_LW_BUNDLED \
+        VAR=LW_BUNDLED \
         DEFAULT="$default_bundled" \
         HELP="Use bundled libraries"
+
+    _LW_BUNDLED="$LW_BUNDLED"
 
     unset LW_BUNDLED
     
@@ -87,6 +89,21 @@ make()
 
     lw_print_features
 }
+
+lw_filter_bundled()
+{
+    __needle="$1"
+    set -- ${LW_BUNDLED}
+    unset LW_BUNDLED
+    for i
+    do
+        if [ "$i" != "$__needle" ]
+        then
+            LW_BUNDLED="${LW_BUNDLED:+$LW_BUNDLED }${i}"
+        fi
+    done
+}
+
 
 lw_use_bundled()
 {
