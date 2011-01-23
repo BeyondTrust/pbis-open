@@ -875,10 +875,10 @@ LsaSrvLookupBuiltinNames(
                                          wszBuiltinDomainName);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    dwError = LwCreateWellKnownSid(WinBuiltinDomainSid,
-                                   NULL,
-                                   &pBuiltinDomainSid,
-                                   NULL);
+    dwError = LwAllocateWellKnownSid(WinBuiltinDomainSid,
+                                     NULL,
+                                     &pBuiltinDomainSid,
+                                     NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     ntStatus = LsaSrvDuplicateSid(&pBuiltinDomainInfo->sid,
