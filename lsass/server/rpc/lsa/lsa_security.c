@@ -85,7 +85,7 @@ LsaSrvInitServerSecurityDescriptor(
                                     SECURITY_DESCRIPTOR_REVISION);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    dwError = LwCreateWellKnownSid(WinLocalSystemSid,
+    dwError = LwAllocateWellKnownSid(WinLocalSystemSid,
                                    NULL,
                                    &pOwnerSid,
                                    NULL);
@@ -97,7 +97,7 @@ LsaSrvInitServerSecurityDescriptor(
                                     FALSE);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pGroupSid,
                                    NULL);
@@ -219,28 +219,28 @@ LsaSrvCreateServerDacl(
     };
 
     /* create local system sid */
-    dwError = LwCreateWellKnownSid(WinLocalSystemSid,
+    dwError = LwAllocateWellKnownSid(WinLocalSystemSid,
                                    NULL,
                                    &pSystemSid,
                                    &dwSystemSidLen);
     BAIL_ON_LSA_ERROR(dwError);
 
     /* create administrators sid */
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pBuiltinAdminsSid,
                                    &dwBuiltinAdminsSidLen);
     BAIL_ON_LSA_ERROR(dwError);
 
     /* create authenticated users sid */
-    dwError = LwCreateWellKnownSid(WinAuthenticatedUserSid,
+    dwError = LwAllocateWellKnownSid(WinAuthenticatedUserSid,
                                    NULL,
                                    &pAuthenticatedSid,
                                    &dwAuthenticatedSidLen);
     BAIL_ON_LSA_ERROR(dwError);
 
     /* create world (everyone) sid */
-    dwError = LwCreateWellKnownSid(WinWorldSid,
+    dwError = LwAllocateWellKnownSid(WinWorldSid,
                                    NULL,
                                    &pWorldSid,
                                    &dwWorldSidLen);

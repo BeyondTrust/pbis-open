@@ -871,10 +871,10 @@ LsaSrvLookupBuiltinSids(
     dwBuiltinDomIndex  = pDomains->count;
     pBuiltinDomainInfo = &(pDomains->domains[dwBuiltinDomIndex]);
 
-    dwError = LwCreateWellKnownSid(WinBuiltinDomainSid,
-                                   NULL,
-                                   &pBuiltinDomainSid,
-                                   NULL);
+    dwError = LwAllocateWellKnownSid(WinBuiltinDomainSid,
+                                     NULL,
+                                     &pBuiltinDomainSid,
+                                     NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     ntStatus = LsaSrvInitUnicodeStringEx(&pBuiltinDomainInfo->name,

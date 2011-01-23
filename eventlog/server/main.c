@@ -1315,14 +1315,14 @@ EVTCreateAccessDescriptor(
     PSID pAdministrators = NULL;
     BOOLEAN bFullyResolved = TRUE;
 
-    dwError = LwCreateWellKnownSid(
+    dwError = LwAllocateWellKnownSid(
                     WinLocalSystemSid,
                     NULL,
                     &pLocalSystem,
                     NULL);
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(
+    dwError = LwAllocateWellKnownSid(
                     WinBuiltinAdministratorsSid,
                     NULL,
                     &pAdministrators,

@@ -53,7 +53,7 @@
 LW_BEGIN_EXTERN_C
 
 DWORD
-LwCreateWellKnownSid(
+LwAllocateWellKnownSid(
     IN  WELL_KNOWN_SID_TYPE  WellKnownSidType,
     IN  OPTIONAL PSID        pDomainOrComputerSid,
     OUT PSID                *ppSid,

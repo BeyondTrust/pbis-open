@@ -413,10 +413,10 @@ LsaSrvSelectAccountsByDomainSid(
 
     memset(BuiltinAccounts.pdwIndices, -1, sizeof(DWORD) * dwNumSids);
 
-    dwError = LwCreateWellKnownSid(WinBuiltinDomainSid,
-                                   NULL,
-                                   &pBuiltinDomainSid,
-                                   NULL);
+    dwError = LwAllocateWellKnownSid(WinBuiltinDomainSid,
+                                     NULL,
+                                     &pBuiltinDomainSid,
+                                     NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     for (i = 0; i < dwNumSids; i++)

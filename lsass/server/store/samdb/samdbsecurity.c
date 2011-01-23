@@ -143,7 +143,7 @@ SamDbCreateLocalDomainSecDesc(
     /*
      * Set owner to SYSTEM
      */
-    dwError = LwCreateWellKnownSid(WinLocalSystemSid,
+    dwError = LwAllocateWellKnownSid(WinLocalSystemSid,
                                    NULL,
                                    &pOwnerSid,
                                    NULL);
@@ -158,7 +158,7 @@ SamDbCreateLocalDomainSecDesc(
     /*
      * Set group to BUILTIN\Administrators
      */
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pGroupSid,
                                    NULL);
@@ -255,7 +255,7 @@ SamDbCreateBuiltinDomainSecDesc(
     /*
      * Set owner to LOCAL_SYSTEM
      */
-    dwError = LwCreateWellKnownSid(WinLocalSystemSid,
+    dwError = LwAllocateWellKnownSid(WinLocalSystemSid,
                                    NULL,
                                    &pOwnerSid,
                                    NULL);
@@ -270,7 +270,7 @@ SamDbCreateBuiltinDomainSecDesc(
     /*
      * Set group to BUILTIN\Administrators
      */
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pGroupSid,
                                    NULL);
@@ -367,7 +367,7 @@ SamDbCreateLocalUserSecDesc(
     /*
      * Set owner (BUITLIN\Administrators)
      */
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pOwnerSid,
                                    NULL);
@@ -381,7 +381,7 @@ SamDbCreateLocalUserSecDesc(
     /*
      * Set group (BUILTIN\Administrators)
      */
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pGroupSid,
                                    NULL);
@@ -477,7 +477,7 @@ SamDbCreateLocalGroupSecDesc(
     /*
      * Set owner (BUILTIN\Administrators)
      */
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pOwnerSid,
                                    NULL);
@@ -491,7 +491,7 @@ SamDbCreateLocalGroupSecDesc(
     /*
      * Set group (BUILTIN\Administrators)
      */
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pGroupSid,
                                    NULL);
@@ -587,7 +587,7 @@ SamDbCreateBuiltinGroupSecDesc(
     /*
      * Set owner (BUILTIN\Administrators)
      */
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pOwnerSid,
                                    NULL);
@@ -601,7 +601,7 @@ SamDbCreateBuiltinGroupSecDesc(
     /*
      * Set group (BUILTIN\Administrators)
      */
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pGroupSid,
                                    NULL);
@@ -697,7 +697,7 @@ SamDbCreateNewLocalAccountSecDesc(
     /*
      * Set owner (BUILTIN\Administrators)
      */
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pOwnerSid,
                                    NULL);
@@ -711,7 +711,7 @@ SamDbCreateNewLocalAccountSecDesc(
     /*
      * Set group (BUILTIN\Administrators)
      */
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pGroupSid,
                                    NULL);
@@ -856,13 +856,13 @@ SamDbCreateLocalDomainDacl(
                                pLocalAdminSid,
                                DOMAIN_USER_RID_ADMIN);
 
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pBuiltinAdminsSid,
                                    NULL);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(WinWorldSid,
+    dwError = LwAllocateWellKnownSid(WinWorldSid,
                                    NULL,
                                    &pWorldSid,
                                    NULL);
@@ -945,13 +945,13 @@ SamDbCreateBuiltinDomainDacl(
         }
     };
 
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pBuiltinAdminsSid,
                                    NULL);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(WinWorldSid,
+    dwError = LwAllocateWellKnownSid(WinWorldSid,
                                    NULL,
                                    &pWorldSid,
                                    NULL);
@@ -1047,13 +1047,13 @@ SamDbCreateLocalUserDacl(
         }
     };
 
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pBuiltinAdminsSid,
                                    NULL);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(WinWorldSid,
+    dwError = LwAllocateWellKnownSid(WinWorldSid,
                                    NULL,
                                    &pWorldSid,
                                    NULL);
@@ -1148,13 +1148,13 @@ SamDbCreateLocalGroupDacl(
                                pLocalAdminSid,
                                DOMAIN_USER_RID_ADMIN);
 
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pBuiltinAdminsSid,
                                    NULL);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(WinWorldSid,
+    dwError = LwAllocateWellKnownSid(WinWorldSid,
                                    NULL,
                                    &pWorldSid,
                                    NULL);
@@ -1228,13 +1228,13 @@ SamDbCreateBuiltinGroupDacl(
         }
     };
 
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pBuiltinAdminsSid,
                                    NULL);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(WinWorldSid,
+    dwError = LwAllocateWellKnownSid(WinWorldSid,
                                    NULL,
                                    &pWorldSid,
                                    NULL);
@@ -1324,13 +1324,13 @@ SamDbCreateNewLocalAccountDacl(
         }
     };
 
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pBuiltinAdminsSid,
                                    NULL);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(WinWorldSid,
+    dwError = LwAllocateWellKnownSid(WinWorldSid,
                                    NULL,
                                    &pWorldSid,
                                    NULL);

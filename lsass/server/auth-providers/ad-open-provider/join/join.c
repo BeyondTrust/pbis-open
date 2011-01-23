@@ -1476,7 +1476,7 @@ LsaCreateMachineAccount(
         BAIL_ON_NT_STATUS(ntStatus);
     }
 
-    dwError = LwCreateWellKnownSid(WinBuiltinDomainSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinDomainSid,
                                    NULL,
                                    &pBuiltinSid,
                                    NULL);
@@ -2859,13 +2859,13 @@ LsaChangeDomainGroupMembership(
                    pszDomainSID);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    dwError = LwCreateWellKnownSid(WinAccountDomainAdminsSid,
+    dwError = LwAllocateWellKnownSid(WinAccountDomainAdminsSid,
                                    pDomainSid,
                                    &pDomainAdminsSid,
                                    NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(WinAccountDomainUsersSid,
+    dwError = LwAllocateWellKnownSid(WinAccountDomainUsersSid,
                                    pDomainSid,
                                    &pDomainUsersSid,
                                    NULL);
@@ -2892,7 +2892,7 @@ LsaChangeDomainGroupMembership(
                             &hSamrConn);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    dwError = LwCreateWellKnownSid(WinBuiltinDomainSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinDomainSid,
                                    NULL,
                                    &pBuiltinDomainSid,
                                    NULL);

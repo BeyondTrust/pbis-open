@@ -105,7 +105,7 @@ SamrSrvInitServerSecurityDescriptor(
                                     SECURITY_DESCRIPTOR_REVISION);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    dwError = LwCreateWellKnownSid(WinLocalSystemSid,
+    dwError = LwAllocateWellKnownSid(WinLocalSystemSid,
                                    NULL,
                                    &pOwnerSid,
                                    NULL);
@@ -117,7 +117,7 @@ SamrSrvInitServerSecurityDescriptor(
                                     FALSE);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pGroupSid,
                                    NULL);
@@ -225,28 +225,28 @@ SamrSrvCreateServerDacl(
     };
 
     /* create local system sid */
-    dwError = LwCreateWellKnownSid(WinLocalSystemSid,
+    dwError = LwAllocateWellKnownSid(WinLocalSystemSid,
                                    NULL,
                                    &pSystemSid,
                                    &dwSystemSidLen);
     BAIL_ON_LSA_ERROR(dwError);
 
     /* create administrators sid */
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pBuiltinAdminsSid,
                                    &dwBuiltinAdminsSidLen);
     BAIL_ON_LSA_ERROR(dwError);
 
     /* create authenticated users sid */
-    dwError = LwCreateWellKnownSid(WinAuthenticatedUserSid,
+    dwError = LwAllocateWellKnownSid(WinAuthenticatedUserSid,
                                    NULL,
                                    &pAuthenticatedSid,
                                    &dwAuthenticatedSidLen);
     BAIL_ON_LSA_ERROR(dwError);
 
     /* create world (everyone) sid */
-    dwError = LwCreateWellKnownSid(WinWorldSid,
+    dwError = LwAllocateWellKnownSid(WinWorldSid,
                                    NULL,
                                    &pWorldSid,
                                    &dwWorldSidLen);
@@ -398,7 +398,7 @@ SamrSrvCreateNewAccountSecurityDescriptor(
     /*
      * Set owner (Administrator)
      */
-    dwError = LwCreateWellKnownSid(WinAccountAdministratorSid,
+    dwError = LwAllocateWellKnownSid(WinAccountAdministratorSid,
                                    pDomainSid,
                                    &pAdminSid,
                                    &dwAdminSidSize);
@@ -412,7 +412,7 @@ SamrSrvCreateNewAccountSecurityDescriptor(
     /*
      * Set group (BUILTIN\Administrators)
      */
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pBuiltinAdminsSid,
                                    &dwBuiltinAdminsSidSize);
@@ -544,13 +544,13 @@ SamrSrvCreateLocalUserDacl(
         }
     };
 
-    dwError = LwCreateWellKnownSid(WinAccountAdministratorSid,
+    dwError = LwAllocateWellKnownSid(WinAccountAdministratorSid,
                                    pDomainSid,
                                    &pAdminSid,
                                    NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pBuiltinAdminsSid,
                                    NULL);
@@ -572,7 +572,7 @@ SamrSrvCreateLocalUserDacl(
                                dwRid);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    dwError = LwCreateWellKnownSid(WinWorldSid,
+    dwError = LwAllocateWellKnownSid(WinWorldSid,
                                    NULL,
                                    &pWorldSid,
                                    NULL);
@@ -657,19 +657,19 @@ SamrSrvCreateLocalGroupDacl(
         }
     };
 
-    dwError = LwCreateWellKnownSid(WinAccountAdministratorSid,
+    dwError = LwAllocateWellKnownSid(WinAccountAdministratorSid,
                                    pDomainSid,
                                    &pAdminSid,
                                    NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
                                    NULL,
                                    &pBuiltinAdminsSid,
                                    NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(WinWorldSid,
+    dwError = LwAllocateWellKnownSid(WinWorldSid,
                                    NULL,
                                    &pWorldSid,
                                    NULL);

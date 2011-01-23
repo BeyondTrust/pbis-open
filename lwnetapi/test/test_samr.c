@@ -2015,28 +2015,28 @@ CallSamrGetAliasMemberships(
                                OUT_PPVOID(&ppWellKnownSids));
     BAIL_ON_WIN_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(WinBuiltinUsersSid,
-                                   NULL,
-                                   &(ppWellKnownSids[iSid++]),
-                                   NULL);
+    dwError = LwAllocateWellKnownSid(WinBuiltinUsersSid,
+                                     NULL,
+                                     &(ppWellKnownSids[iSid++]),
+                                     NULL);
     BAIL_ON_WIN_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
-                                   NULL,
-                                   &(ppWellKnownSids[iSid++]),
-                                   NULL);
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
+                                     NULL,
+                                     &(ppWellKnownSids[iSid++]),
+                                     NULL);
     BAIL_ON_WIN_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(WinAccountDomainUsersSid,
-                                   pDomainSid,
-                                   &(ppWellKnownSids[iSid++]),
-                                   NULL);
+    dwError = LwAllocateWellKnownSid(WinAccountDomainUsersSid,
+                                     pDomainSid,
+                                     &(ppWellKnownSids[iSid++]),
+                                     NULL);
     BAIL_ON_WIN_ERROR(dwError);
 
-    dwError = LwCreateWellKnownSid(WinAccountDomainAdminsSid,
-                                   pDomainSid,
-                                   &(ppWellKnownSids[iSid++]),
-                                   NULL);
+    dwError = LwAllocateWellKnownSid(WinAccountDomainAdminsSid,
+                                     pDomainSid,
+                                     &(ppWellKnownSids[iSid++]),
+                                     NULL);
     BAIL_ON_WIN_ERROR(dwError);
 
     CALL_MSRPC(ntStatus, SamrGetAliasMembership(hBinding,
