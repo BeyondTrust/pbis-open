@@ -35,6 +35,7 @@ configure()
     mk_define LW_USE_SHARE_REPOSITORY_REGISTRY 1
 
     mk_define UNICODE 1
+    mk_define _FILE_OFFSET_BITS 64
 
     # Hack around buggy system header on HP-UX 11.11
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
@@ -59,7 +60,6 @@ configure()
         procfs.h sys/procfs.h sys/vfs.h netinet/in.h netinet/in6.h
 
     mk_check_headers \
-        CPPFLAGS="-D_FILE_OFFSET_BITS=64" \
         fuse.h
 
     mk_check_headers \
