@@ -23,7 +23,7 @@ show()
     echo "+ $*"
     if [ -z "$SHOW" ]
     then
-        "$@"
+        time -p "$@"
     fi
 }
 
