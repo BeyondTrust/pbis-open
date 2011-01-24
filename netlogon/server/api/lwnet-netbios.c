@@ -419,12 +419,16 @@ LWNetNbResolveNameUdp(
                 if ((gpNbCtx->addrsLen + resAddrsLen) > resAddrsAllocLen)
                 {
                     resAddrsAllocLen = resAddrsAllocLen * 2 + gpNbCtx->addrsLen;
-                    tmpResAddrs = LwRtlMemoryRealloc(resAddrs, resAddrsAllocLen);
+                    tmpResAddrs = LwRtlMemoryRealloc(
+                                      resAddrs,
+                                      resAddrsAllocLen);
                     if (!tmpResAddrs)
                     {
                         dwError = ERROR_NOT_ENOUGH_MEMORY;
                         BAIL_ON_LWNET_ERROR(dwError);
                     }
+                    resAddrs = tmpResAddrs;
+                    tmpResAddrs = NULL;
                 }
                 for (i=0; i<gpNbCtx->addrsLen; i++)
                 {
