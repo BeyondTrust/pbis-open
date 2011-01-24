@@ -828,7 +828,8 @@ VOID *LWNetSrvStartNetBiosThreadRoutine(VOID *ctx)
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1)
     {
-        return NULL;
+        dwError = ERROR_INVALID_HANDLE;
+        BAIL_ON_LWNET_ERROR(dwError);
     }
 
     sts = setsockopt(sock,
@@ -836,7 +837,7 @@ VOID *LWNetSrvStartNetBiosThreadRoutine(VOID *ctx)
               SO_BROADCAST,
               &allowBroadcast,
               sizeof(allowBroadcast));
-    if (sock == -1)
+    if (sts == -1)
     {
         dwError = ERROR_INVALID_HANDLE;
         BAIL_ON_LWNET_ERROR(dwError);
