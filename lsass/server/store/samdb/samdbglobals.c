@@ -117,11 +117,23 @@ SAM_DB_ATTRIBUTE_MAP gAttrMaps[] =
 
 SAM_GLOBALS gSamGlobals =
     {
-        PTHREAD_MUTEX_INITIALIZER,
-        &gObjectClassMaps[0],
-        sizeof(gObjectClassMaps)/sizeof(gObjectClassMaps[0]),
-        &gAttrMaps[0],
-        sizeof(gAttrMaps)/sizeof(gAttrMaps[0])
+        .mutex                     = PTHREAD_MUTEX_INITIALIZER,
+
+        .pObjectClassAttrMaps      = &gObjectClassMaps[0],
+        .dwNumObjectClassAttrMaps  = (sizeof(gObjectClassMaps)/
+                                     sizeof(gObjectClassMaps[0])),
+
+        .pAttrMaps                 = &gAttrMaps[0],
+        .dwNumMaps                 = (sizeof(gAttrMaps)/sizeof(gAttrMaps[0])),
+        .attrLookup                = {NULL},
+
+        .pszProviderName           = NULL,
+
+        .providerFunctionTable     = {NULL},
+
+        .pDbContextList            = NULL,
+        .dwNumDbContexts           = 0,
+        .dwNumMaxDbContexts        = 0
     };
 
 
