@@ -453,8 +453,6 @@ LWNetNbResolveNameUdp(
     bLocked = FALSE;
     pthread_mutex_unlock(&gpNbCtx->mutex);
 
-    gpNbCtx->bAck = FALSE;
-
     if (resAddrsLen == 0)
     {
         dwError = ERROR_BAD_NET_NAME;
@@ -893,8 +891,6 @@ VOID *LWNetSrvStartNetBiosThreadRoutine(VOID *ctx)
                 pthread_cond_broadcast(&pNbCtx->cv);
 
                 // Wait for LWNetNbResolveName ack address received
-                pNbCtx->bAck = FALSE;
-
                 do
                 {
                     gettimeofday(&tp, NULL);
@@ -906,6 +902,7 @@ VOID *LWNetSrvStartNetBiosThreadRoutine(VOID *ctx)
                               &pNbCtx->mutexAck,
                               &cvTimeout);
                 } while (!pNbCtx->bAck && sts != ETIMEDOUT);
+                pNbCtx->bAck = FALSE;
                 pthread_mutex_unlock(&pNbCtx->mutexAck);
             }
         }
