@@ -371,6 +371,10 @@
     default = "@CACHEDIR@/rpc/lsass"
     doc = ""
 }
+"RegisterTcpIp" = {
+    default = dword:00000000
+    doc = ""
+}
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\wkssvc]
 "Path" = {
@@ -379,5 +383,9 @@
 }
 "LpcSocketPath" = {
     default = "@CACHEDIR@/rpc/lsass"
+    doc = ""
+}
+"RegisterTcpIp" = {
+    default = dword:00000000
     doc = ""
 }
