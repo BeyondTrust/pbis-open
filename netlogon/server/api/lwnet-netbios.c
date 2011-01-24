@@ -223,6 +223,8 @@ LWNetNbStrToNbName2(
     {
         *p++ = '\0';
     }
+
+    /* Store length of NetBIOS name component before that name */
     *up++ = (UINT8) LWNB_NETBIOS_ENCNAME_LEN;
     LWNetNbStrToNbName(Fqdn, suffix, up);
     up += LWNB_NETBIOS_ENCNAME_LEN;
@@ -236,7 +238,7 @@ LWNetNbStrToNbName2(
     {
         len = strlen(p);
         *up++ = (UINT8) len;
-        strcat((char *) up, p);
+        strncat((char *) up, p, sizeof(CHAR)*len - (up-retName));
         up += len;
         p = strtok_r(NULL, ".", &tokenPtr);
     }
