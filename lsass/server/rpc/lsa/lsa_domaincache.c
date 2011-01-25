@@ -838,6 +838,16 @@ cleanup:
     return ntStatus;
 
 error:
+    if (pDomEntry)
+    {
+        LsaSrvDomainEntryFree(&pDomEntry);
+    }
+
+    if (ppDomEntry)
+    {
+        *ppDomEntry = NULL;
+    }
+
     goto cleanup;
 }
 
