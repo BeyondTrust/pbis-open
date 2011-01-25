@@ -13,7 +13,8 @@ full_subdirs= \
 	$(compat_subdirs) \
 	gssntlm \
 	lwmapsecurity \
-	access
+	access \
+        gsswrap
 
 if ENABLE_COMPAT
 SUBDIRS = $(compat_subdirs)

@@ -1042,6 +1042,7 @@ AC_CONFIG_FILES([Makefile
                  interop/Makefile
                  interop/gssntlm/Makefile
                  interop/gssntlm/mech
+                 interop/gsswrap/Makefile
                  interop/nsswitch/Makefile
                  interop/nsswitch/common/Makefile
                  interop/nsswitch/linux/Makefile
