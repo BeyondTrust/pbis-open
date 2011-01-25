@@ -1302,34 +1302,37 @@ static BOOLEAN NormalizeModuleName( char *destName, const char *srcName, size_t 
 {
     size_t trimEnd = 0;
     size_t copyLen;
+    PSTR ppPrefixes[] = {
+        "/usr/lib/security/$ISA/",
+        "/usr/lib/security/",
+        "/lib64/security/",
+        "/usr/lib64/security/",
+        "/lib/security/hpux32/",
+        "/lib/security/hpux64/",
+        "/lib/security/$ISA/",
+        "/lib/security/",
+        "/usr/lib/vmware/lib/libpam.so.0/security/",
+        "/usr/lib/pam/",
+        "/usr/lib/security/sparcv9/",
+        "/usr/lib/security/amd64/",
+        "/usr/local/lib/",
+        "/opt/SUNWut/lib/",
+        "/opt/SUNWkio/lib/",
+        NULL
+    };
+    DWORD index = 0;
+
     if(bufferSize < 1)
         return FALSE;
-    if(CTStrStartsWith(srcName, "/usr/lib/security/$ISA/"))
-        srcName += strlen("/usr/lib/security/$ISA/");
-    else if(CTStrStartsWith(srcName, "/usr/lib/security/"))
-        srcName += strlen("/usr/lib/security/");
-    else if(CTStrStartsWith(srcName, "/lib64/security/"))
-        srcName += strlen("/lib64/security/");
-    else if(CTStrStartsWith(srcName, "/usr/lib64/security/"))
-        srcName += strlen("/usr/lib64/security/");
-    else if(CTStrStartsWith(srcName, "/lib/security/hpux32/"))
-        srcName += strlen("/lib/security/hpux32/");
-    else if(CTStrStartsWith(srcName, "/lib/security/hpux64/"))
-        srcName += strlen("/lib/security/hpux64/");
-    else if(CTStrStartsWith(srcName, "/lib/security/$ISA/"))
-        srcName += strlen("/lib/security/$ISA/");
-    else if(CTStrStartsWith(srcName, "/lib/security/"))
-        srcName += strlen("/lib/security/");
-    else if(CTStrStartsWith(srcName, "/usr/lib/vmware/lib/libpam.so.0/security/"))
-        srcName += strlen("/usr/lib/vmware/lib/libpam.so.0/security/");
-    else if(CTStrStartsWith(srcName, "/usr/lib/pam/"))
-        srcName += strlen("/usr/lib/pam/");
-    else if(CTStrStartsWith(srcName, "/usr/lib/security/sparcv9/"))
-        srcName += strlen("/usr/lib/security/sparcv9/");
-    else if(CTStrStartsWith(srcName, "/usr/lib/security/amd64/"))
-        srcName += strlen("/usr/lib/security/amd64/");
-    else if(CTStrStartsWith(srcName, "/usr/local/lib/"))
-        srcName += strlen("/usr/local/lib/");
+
+    for (index = 0; ppPrefixes[index] != NULL; index++)
+    {
+        if (CTStrStartsWith(srcName, ppPrefixes[index]))
+        {
+            srcName += strlen(ppPrefixes[index]);
+            break;
+        }
+    }
 
     /* Remove any "lib" prefix so that libpam_foo == pam_foo.  HP-UX has a bunch
      * of libpam_foo.  If we need to distinguish libpam_foo vs pam_foo in the future,
@@ -1481,7 +1484,15 @@ static BOOLEAN PamModuleChecksCaller( const char * phase, const char * module)
         return TRUE;
     if(!strcmp(buffer, "pam_sunray_admingui"))
         return TRUE;
+    if (!strcmp(buffer, "pam_sunray"))
+    {
+        return TRUE;
+    }
     if (!strcmp(buffer, "pam_passwd_auth"))
+    {
+        return TRUE;
+    }
+    if (!strcmp(buffer, "pam_sunray_amgh"))
     {
         return TRUE;
     }
@@ -2696,11 +2707,15 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
              */
             if (!strcmp(normalizedService, "crond"))
                 goto cleanup;
+            if (!strcmp(normalizedService, "utadmingui"))
+            {
+                goto cleanup;
+            }
 
             DJ_LOG_ERROR("Nothing seems to be protecting logins for service %s", service);
             if(!strcmp(control, "sufficient"))
             {
-                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown pam module", "The likewise PAM module cannot be configured for the %s service. This services uses the '%s' module, which is not in this program's list of known modules. Please email Likewise technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service, module);
+                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown pam module", "The likewise PAM module cannot be configured for the %s service. This service uses the '%s' module, which is not in this program's list of known modules. Please email Likewise technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service, module);
             }
             //It is somewhat normal to not require a password in an included
             //pam file. It is up to the top-most parent to require the password.
