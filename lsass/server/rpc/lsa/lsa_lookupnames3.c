@@ -323,7 +323,6 @@ LsaSrvLookupDomainNames(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    DWORD dwError = ERROR_SUCCESS;
     PDOMAIN_ENTRY pDomEntry = NULL;
     handle_t hLsaBinding = NULL;
     POLICY_HANDLE hDcPolicy = NULL;
@@ -460,12 +459,6 @@ cleanup:
     if (pSids)
     {
         LsaRpcFreeMemory(pSids);
-    }
-
-    if (ntStatus == STATUS_SUCCESS &&
-        dwError != ERROR_SUCCESS)
-    {
-        ntStatus = LwWin32ErrorToNtStatus(dwError);
     }
 
     return ntStatus;
