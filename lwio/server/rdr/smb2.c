@@ -732,7 +732,7 @@ RdrSmb2EncodeCreateRequest(
     ULONG ulPathLength = 0;
     PBYTE pFilename = NULL;
 
-    if (pwszPath[0] == '\\')
+    while (pwszPath[0] == '\\')
     {
         pwszPath++;
     }
