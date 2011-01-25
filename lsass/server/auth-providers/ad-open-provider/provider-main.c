@@ -2189,6 +2189,9 @@ AD_JoinDomain(
     PLSA_AD_PROVIDER_STATE pStateMinimal = NULL;
     PLSA_AD_PROVIDER_STATE pState = NULL;
     BOOLEAN bRemoveFromList = FALSE;
+    PSTR pszCanonicalDnsDomainName = NULL;
+    PSTR pszCanonicalHostname = NULL;
+    PSTR pszCanonicalHostDnsDomain = NULL;
 
     if (peerUID != 0)
     {
@@ -2215,7 +2218,23 @@ AD_JoinDomain(
     BAIL_ON_LSA_ERROR(dwError);
 
     LSA_LOG_TRACE("Domain join request: %s", pszMessage);
-    LSA_LOG_DEBUG("Joining domain %s", LW_SAFE_LOG_STRING(pRequest->pszDomain));
+
+    // Note that IPC spec disallows NULL strings for all but OU.
+    
+    dwError = LwAllocateString(pRequest->pszDomain, &pszCanonicalDnsDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateString(pRequest->pszHostname, &pszCanonicalHostname);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateString(pRequest->pszHostDnsDomain, &pszCanonicalHostDnsDomain);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LwStrToUpper(pszCanonicalDnsDomainName);
+    LwStrToLower(pszCanonicalHostname);
+    LwStrToLower(pszCanonicalHostDnsDomain);
+
+    LSA_LOG_DEBUG("Joining domain %s", LW_SAFE_LOG_STRING(pszCanonicalDnsDomainName));
 
     if (pRequest->dwFlags & LSA_NET_JOIN_DOMAIN_MULTIPLE &&
         !gbMultiTenancyEnabled)
@@ -2226,21 +2245,21 @@ AD_JoinDomain(
     }
 
     dwError = LWNetGetDomainController(
-                    pRequest->pszDomain,
+                    pszCanonicalDnsDomainName,
                     &pszDC);
     if (dwError)
     {
-        LSA_LOG_VERBOSE("Failed to find DC for domain %s", LSA_SAFE_LOG_STRING(pRequest->pszDomain));
+        LSA_LOG_VERBOSE("Failed to find DC for domain %s", LSA_SAFE_LOG_STRING(pszCanonicalDnsDomainName));
         BAIL_ON_LSA_ERROR(dwError);
     }
     LSA_LOG_VERBOSE("Affinitized to DC '%s' for join request to domain '%s'",
             LSA_SAFE_LOG_STRING(pszDC),
-            LSA_SAFE_LOG_STRING(pRequest->pszDomain));
+            LSA_SAFE_LOG_STRING(pszCanonicalDnsDomainName));
 
     dwError = AD_PreJoinDomain(
                   hProvider,
                   pRequest->dwFlags & LSA_NET_JOIN_DOMAIN_MULTIPLE ?
-                      pRequest->pszDomain :
+                      pszCanonicalDnsDomainName :
                       NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2265,7 +2284,7 @@ AD_JoinDomain(
     // information directly from pstore.
 
     dwError = LsaAdProviderStateCreateMinimal(
-                  pRequest->pszDomain,
+                  pszCanonicalDnsDomainName,
                   FALSE,
                   &pStateMinimal);
     BAIL_ON_LSA_ERROR(dwError);
@@ -2276,13 +2295,13 @@ AD_JoinDomain(
     BAIL_ON_LSA_ERROR(dwError);
     bRemoveFromList = TRUE;
 
-    dwError = LsaPstoreDeletePasswordInfoA(pRequest->pszDomain);
+    dwError = LsaPstoreDeletePasswordInfoA(pszCanonicalDnsDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaJoinDomain(
-        pRequest->pszHostname,
-        pRequest->pszHostDnsDomain,
-        pRequest->pszDomain,
+        pszCanonicalHostname,
+        pszCanonicalHostDnsDomain,
+        pszCanonicalDnsDomainName,
         pRequest->pszOU,
         pRequest->pszUsername,
         pRequest->pszPassword,
@@ -2310,6 +2329,9 @@ cleanup:
         AD_RemoveStateFromList(pStateMinimal);
     }
 
+    LW_SAFE_FREE_MEMORY(pszCanonicalDnsDomainName);
+    LW_SAFE_FREE_MEMORY(pszCanonicalHostname);
+    LW_SAFE_FREE_MEMORY(pszCanonicalHostDnsDomain);
     LW_SAFE_FREE_MEMORY(pszMessage);
 
     AD_DereferenceProviderState(pStateMinimal);

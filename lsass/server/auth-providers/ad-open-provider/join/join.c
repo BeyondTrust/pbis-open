@@ -2052,7 +2052,7 @@ LsaSaveMachinePassword(
      * Store the machine password
      */
 
-    passwordInfo.Account.DnsDomainName = pwszAdDnsDomainNameLc;
+    passwordInfo.Account.DnsDomainName = pwszAdDnsDomainNameUc;
     passwordInfo.Account.NetbiosDomainName = pwszDomain;
     passwordInfo.Account.DomainSid = pwszSid;
     passwordInfo.Account.SamAccountName = pwszAccount;
