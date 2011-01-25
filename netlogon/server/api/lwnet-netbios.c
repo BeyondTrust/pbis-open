@@ -307,6 +307,14 @@ cleanup:
     return dwError;
 
 error:
+    if (NBNameParts)
+    {
+        for (i=0; NBNameParts[i]; i++)
+        {
+            LWNET_SAFE_FREE_MEMORY(NBNameParts[i]);
+        }
+        LWNET_SAFE_FREE_MEMORY(NBNameParts);
+    }
     goto cleanup;
 }
 
