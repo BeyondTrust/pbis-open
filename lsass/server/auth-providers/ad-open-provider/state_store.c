@@ -311,11 +311,9 @@ ADState_ReadFromRegistry(
                       &pRegCellList);
         BAIL_ON_LSA_ERROR(dwError);
 
-        if (pRegProviderData)
-        {
-            pRegProviderData->pCellList = pRegCellList;
-            pRegCellList = NULL;
-        }
+        pRegProviderData->pCellList = pRegCellList;
+        pRegCellList = NULL;
+
         *ppProviderData = pRegProviderData;
         pRegProviderData = NULL;
     }
@@ -745,6 +743,14 @@ ADState_ReadRegProviderData(
     DWORD dwError = 0;
     DWORD dwValueLen = 0;
     HANDLE hReg = NULL;
+    PSTR pszFullRegistryPath = NULL;
+
+    dwError = LwAllocateStringPrintf(
+                  &pszFullRegistryPath,
+                  "%s\\%s",
+                  pszRegistryPath,
+                  AD_PROVIDER_DATA_REGKEY);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = RegOpenServer(&hReg);
     BAIL_ON_LSA_ERROR(dwError);
@@ -752,12 +758,8 @@ ADState_ReadRegProviderData(
     dwError = RegUtilIsValidKey(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_DOMAINJOIN_REGKEY "\\" AD_PROVIDER_DATA_REGKEY);
-    if (dwError)
-    {
-        dwError = 0;
-        goto cleanup;
-    }
+                  pszFullRegistryPath);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateMemory(sizeof(*pProviderData), (PVOID) &pProviderData);
     BAIL_ON_LSA_ERROR(dwError);
@@ -825,6 +827,7 @@ ADState_ReadRegProviderData(
 cleanup:
      
     RegCloseServer(hReg);
+    LW_SAFE_FREE_MEMORY(pszFullRegistryPath);
 
     *ppProviderData = pProviderData;
 
