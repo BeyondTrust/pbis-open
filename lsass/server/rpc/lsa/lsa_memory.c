@@ -248,70 +248,114 @@ error:
 
 NTSTATUS
 LsaSrvInitUnicodeString(
-    UNICODE_STRING *pOut,
+    PUNICODE_STRING pOut,
     PCWSTR pwszIn
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    DWORD dwLen = 0;
-    DWORD dwSize = 0;
+    DWORD dwError = ERROR_SUCCESS;
+    size_t sLen = 0;
+    size_t sSize = 0;
 
-    dwLen  = (pwszIn) ? wc16slen(pwszIn) : 0;
-    dwSize = dwLen * sizeof(WCHAR);
+    BAIL_ON_INVALID_POINTER(pOut);
 
-    ntStatus = LsaSrvAllocateMemory((void**)&(pOut->Buffer),
-                                  dwSize);
-    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+    if (pwszIn)
+    {
+        dwError = LwWc16sLen(pwszIn, &sLen);
+        BAIL_ON_LSA_ERROR(dwError);
 
-    memcpy(pOut->Buffer, pwszIn, dwSize);
-    pOut->MaximumLength = dwSize;
-    pOut->Length  = dwSize;
+        sSize = sLen * sizeof(WCHAR);
+
+        ntStatus = LsaSrvAllocateMemory(OUT_PPVOID(&pOut->Buffer),
+                                        sSize);
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);
+
+        memcpy(pOut->Buffer, pwszIn, sLen * sizeof(WCHAR));
+    }
+    else
+    {
+        pOut->Buffer = NULL;
+    }
+
+    pOut->MaximumLength = sSize;
+    pOut->Length        = sLen * sizeof(WCHAR);
 
 cleanup:
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
+
     return ntStatus;
 
 error:
-    if (pOut->Buffer) {
+    if (pOut->Buffer)
+    {
         LsaSrvFreeMemory(pOut->Buffer);
+        pOut->Buffer = NULL;
     }
 
     pOut->MaximumLength = 0;
-    pOut->Length  = 0;
+    pOut->Length        = 0;
+
     goto cleanup;
 }
 
 
 NTSTATUS
 LsaSrvInitUnicodeStringEx(
-    UNICODE_STRING *pOut,
+    PUNICODE_STRING pOut,
     PCWSTR pwszIn
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    DWORD dwLen = 0;
-    DWORD dwSize = 0;
+    DWORD dwError = ERROR_SUCCESS;
+    size_t sLen = 0;
+    size_t sSize = 0;
 
-    dwLen  = (pwszIn) ? wc16slen(pwszIn) : 0;
-    dwSize = (dwLen + 1) * sizeof(WCHAR);
+    BAIL_ON_INVALID_POINTER(pOut);
 
-    ntStatus = LsaSrvAllocateMemory((void**)&(pOut->Buffer),
-                                    dwSize);
-    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+    if (pwszIn)
+    {
+        dwError = LwWc16sLen(pwszIn, &sLen);
+        BAIL_ON_LSA_ERROR(dwError);
 
-    memcpy(pOut->Buffer, pwszIn, dwSize - sizeof(WCHAR));
-    pOut->MaximumLength = dwSize;
-    pOut->Length  = dwSize - sizeof(WCHAR);
+        sSize = (sLen + 1) * sizeof(WCHAR);
+
+        ntStatus = LsaSrvAllocateMemory(OUT_PPVOID(&pOut->Buffer),
+                                        sSize);
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);
+
+        memcpy(pOut->Buffer, pwszIn, sLen * sizeof(WCHAR));
+    }
+    else
+    {
+        pOut->Buffer = NULL;
+    }
+
+    pOut->MaximumLength = sSize;
+    pOut->Length        = sLen * sizeof(WCHAR);
 
 cleanup:
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
+
     return ntStatus;
 
 error:
-    if (pOut->Buffer) {
+    if (pOut->Buffer)
+    {
         LsaSrvFreeMemory(pOut->Buffer);
+        pOut->Buffer = NULL;
     }
 
     pOut->MaximumLength = 0;
     pOut->Length        = 0;
+
     goto cleanup;
 }
 
