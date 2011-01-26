@@ -268,7 +268,7 @@ LWNetKrb5WriteAffinityFile(
             continue;
         }
 
-        dwError = LWNetKrb5PrintfFile(newFile, pszLine);
+        dwError = LWNetKrb5PrintfFile(newFile, "%s", pszLine);
         BAIL_ON_LWNET_ERROR(dwError);
     }
 
