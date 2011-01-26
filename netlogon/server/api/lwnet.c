@@ -604,7 +604,7 @@ LWNetSrvPingCLdapArray(
 
     StopTime = CurrentTime + (dwActualTimeoutSeconds * 1000);
 
-    while (!pDcInfo)
+    for (;;)
     {
         LWNetSrvPingCLdapNewConnections(
             pszDnsDomainName,
@@ -688,12 +688,6 @@ LWNetSrvPingCLdapArray(
                                 dwActualConnCount,
                                 pConnections,
                                 Readfds);
-    }
-
-    if (!pDcInfo)
-    {
-        dwError = NERR_DCNotFound;
-        BAIL_ON_LWNET_ERROR(dwError);
     }
 
 error:
