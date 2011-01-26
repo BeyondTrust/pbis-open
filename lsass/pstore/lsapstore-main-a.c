@@ -32,26 +32,21 @@
  *  
  * Module Name:
  *
- *     lsapstore-backend-wrap-a.c
+ *     lsapstore-main-a.c
  *
  * Abstract:
  *
  *     LSASS Password Store API Implementation
  *
- *     Backend wrapper to automatically provide A functions on top of W.
+ *     A wrappers for main API code
  *
  *  Authors: Danilo Almeida (dalmeida@likewise.com)
  */
 
 #include "lsapstore-includes.h"
-#include "machinepwdinfo-impl.h"
-
-//
-// Functions
-//
 
 DWORD
-LsaPstorepBackendGetPasswordInfoA(
+LsaPstoreGetPasswordInfoA(
     IN OPTIONAL PCSTR DnsDomainName,
     OUT PLSA_MACHINE_PASSWORD_INFO_A* PasswordInfo
     )
@@ -59,7 +54,7 @@ LsaPstorepBackendGetPasswordInfoA(
     DWORD dwError = 0;
     int EE = 0;
     PWSTR dnsDomainName = NULL;
-    PLSA_MACHINE_PASSWORD_INFO_W internalPasswordInfo = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_W passwordInfoW = NULL;
     PLSA_MACHINE_PASSWORD_INFO_A passwordInfo = NULL;
 
     if (DnsDomainName)
@@ -70,13 +65,13 @@ LsaPstorepBackendGetPasswordInfoA(
         GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
     }
 
-    dwError = LsaPstorepBackendGetPasswordInfoW(
+    dwError = LsaPstoreGetPasswordInfoW(
                     dnsDomainName,
-                    &internalPasswordInfo);
+                    &passwordInfoW);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
     dwError = LsaPstorepConvertWideToAnsiPasswordInfo(
-                    internalPasswordInfo,
+                    passwordInfoW,
                     &passwordInfo);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
@@ -86,8 +81,8 @@ cleanup:
         LSA_PSTORE_FREE_PASSWORD_INFO_A(&passwordInfo);
     }
 
-    LSA_PSTORE_FREE_PASSWORD_INFO_W(&internalPasswordInfo);
-    LwRtlWC16StringFree(&dnsDomainName);
+    LSA_PSTORE_FREE_PASSWORD_INFO_W(&passwordInfoW);
+    LW_RTL_FREE(&dnsDomainName);
 
     *PasswordInfo = passwordInfo;
 
@@ -96,81 +91,81 @@ cleanup:
 }
 
 DWORD
-LsaPstorepBackendSetPasswordInfoA(
+LsaPstoreSetPasswordInfoA(
     IN PLSA_MACHINE_PASSWORD_INFO_A PasswordInfo
     )
 {
     DWORD dwError = 0;
     int EE = 0;
-    PLSA_MACHINE_PASSWORD_INFO_W internalPasswordInfo = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_W passwordInfoW = NULL;
 
     dwError = LsaPstorepConvertAnsiToWidePasswordInfo(
                     PasswordInfo,
-                    &internalPasswordInfo);
+                    &passwordInfoW);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = LsaPstorepBackendSetPasswordInfoW(internalPasswordInfo);
+    dwError = LsaPstoreSetPasswordInfoW(passwordInfoW);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
-    LSA_PSTORE_FREE_PASSWORD_INFO_W(&internalPasswordInfo);
+    LSA_PSTORE_FREE_PASSWORD_INFO_W(&passwordInfoW);
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }
 
 DWORD
-LsaPstorepBackendDeletePasswordInfoA(
+LsaPstoreDeletePasswordInfoA(
     IN OPTIONAL PCSTR DnsDomainName
     )
 {
     DWORD dwError = 0;
     int EE = 0;
-    PWSTR dnsDomainName = NULL;
+    PWSTR dnsDomainNameW = NULL;
 
     if (DnsDomainName)
     {
         dwError = LwNtStatusToWin32Error(LwRtlWC16StringAllocateFromCString(
-                        &dnsDomainName,
+                        &dnsDomainNameW,
                         DnsDomainName));
         GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
     }
 
-    dwError = LsaPstorepBackendDeletePasswordInfoW(dnsDomainName);
+    dwError = LsaPstoreDeletePasswordInfoW(dnsDomainNameW);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
-    LwRtlWC16StringFree(&dnsDomainName);
+    LW_RTL_FREE(&dnsDomainNameW);
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }
 
 DWORD
-LsaPstorepBackendGetDefaultDomainA(
+LsaPstoreGetDefaultDomainA(
     OUT PSTR* DnsDomainName
     )
 {
     DWORD dwError = 0;
     int EE = 0;
-    PWSTR internalDnsDomainName = NULL;
+    PWSTR dnsDomainNameW = NULL;
     PSTR dnsDomainName = NULL;
 
-    dwError = LsaPstorepBackendGetDefaultDomainW(&internalDnsDomainName);
+    dwError = LsaPstoreGetDefaultDomainW(&dnsDomainNameW);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
     dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
                     &dnsDomainName,
-                    internalDnsDomainName));
+                    dnsDomainNameW));
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
     if (dwError)
     {
-        LwRtlCStringFree(&dnsDomainName);
+        LW_RTL_FREE(&dnsDomainName);
     }
 
-    LSA_PSTORE_FREE(&internalDnsDomainName);
+    LSA_PSTORE_FREE(&dnsDomainNameW);
 
     *DnsDomainName = dnsDomainName;
 
@@ -179,34 +174,34 @@ cleanup:
 }
 
 DWORD
-LsaPstorepBackendSetDefaultDomainA(
+LsaPstoreSetDefaultDomainA(
     IN OPTIONAL PCSTR DnsDomainName
     )
 {
     DWORD dwError = 0;
     int EE = 0;
-    PWSTR dnsDomainName = NULL;
+    PWSTR dnsDomainNameW = NULL;
 
     if (DnsDomainName)
     {
         dwError = LwNtStatusToWin32Error(LwRtlWC16StringAllocateFromCString(
-                        &dnsDomainName,
+                        &dnsDomainNameW,
                         DnsDomainName));
         GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
     }
 
-    dwError = LsaPstorepBackendSetDefaultDomainW(dnsDomainName);
+    dwError = LsaPstoreSetDefaultDomainW(dnsDomainNameW);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
-    LwRtlWC16StringFree(&dnsDomainName);
+    LW_RTL_FREE(&dnsDomainNameW);
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }
 
 DWORD
-LsaPstorepBackendGetJoinedDomainsA(
+LsaPstoreGetJoinedDomainsA(
     OUT PSTR** DnsDomainNames,
     OUT PDWORD Count
     )
@@ -215,15 +210,15 @@ LsaPstorepBackendGetJoinedDomainsA(
     int EE = 0;
     PSTR* dnsDomainNames = NULL;
     DWORD count = 0;
-    PWSTR* internalDnsDomainNames = NULL;
-    DWORD internalCount = 0;
+    PWSTR* dnsDomainNamesW = NULL;
+    DWORD countW = 0;
 
-    dwError = LsaPstorepBackendGetJoinedDomainsW(
-                    &internalDnsDomainNames,
-                    &internalCount);
+    dwError = LsaPstoreGetJoinedDomainsW(
+                    &dnsDomainNamesW,
+                    &countW);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    if (!internalCount)
+    if (!countW)
     {
         GOTO_CLEANUP_EE(EE);
     }
@@ -231,32 +226,24 @@ LsaPstorepBackendGetJoinedDomainsA(
     dwError = LwNtStatusToWin32Error(LW_RTL_ALLOCATE(
                     &dnsDomainNames,
                     VOID,
-                    internalCount * sizeof(dnsDomainNames[0])));
+                    countW * sizeof(dnsDomainNames[0])));
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    for (count = 0; count < internalCount; count++)
+    for (count = 0; count < countW; count++)
     {
         dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
                         &dnsDomainNames[count],
-                        internalDnsDomainNames[count]));
+                        dnsDomainNamesW[count]));
         GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
     }
 
 cleanup:
     if (dwError)
     {
-        if (dnsDomainNames)
-        {
-            LsaPstoreFreeStringArrayA(dnsDomainNames, count);
-            dnsDomainNames = NULL;
-        }
-        count = 0;
+        LSA_PSTORE_FREE_STRING_ARRAY_A(&dnsDomainNames, &count);
     }
 
-    if (internalDnsDomainNames)
-    {
-        LsaPstoreFreeStringArrayW(internalDnsDomainNames, internalCount);
-    }
+    LSA_PSTORE_FREE_STRING_ARRAY_W(&dnsDomainNamesW, &countW);
 
     *DnsDomainNames = dnsDomainNames;
     *Count = count;

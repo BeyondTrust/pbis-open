@@ -44,26 +44,7 @@
  */
 
 #include "lsapstore-includes.h"
-
-DWORD
-LsaPstoreGetPasswordInfoA(
-    IN OPTIONAL PCSTR DnsDomainName,
-    OUT PLSA_MACHINE_PASSWORD_INFO_A* PasswordInfo
-    )
-{
-    DWORD dwError = 0;
-    int EE = 0;
-
-    dwError = LsaPstorepEnsureInitialized();
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = LsaPstorepBackendGetPasswordInfoA(DnsDomainName, PasswordInfo);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-cleanup:
-    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
-    return dwError;
-}
+#include "lsapstore-backend.h"
 
 DWORD
 LsaPstoreGetPasswordInfoW(
@@ -73,33 +54,51 @@ LsaPstoreGetPasswordInfoW(
 {
     DWORD dwError = 0;
     int EE = 0;
+    PLSA_PSTORE_BACKEND_STATE backendState = NULL;
+    PWSTR defaultDnsDomainName = NULL;
+    PCWSTR actualDnsDomainName = DnsDomainName;
+    PLSA_MACHINE_PASSWORD_INFO_W passwordInfo = NULL;
 
-    dwError = LsaPstorepEnsureInitialized();
+    if (DnsDomainName && !LsaPstorepWC16StringIsUpcase(DnsDomainName))
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    dwError = LsaPstorepEnsureInitialized(&backendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = LsaPstorepBackendGetPasswordInfoW(DnsDomainName, PasswordInfo);
+    if (!DnsDomainName)
+    {
+        // Returns NULL if no default is found.
+        dwError = LsaPstoreGetDefaultDomainW(&defaultDnsDomainName);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+        actualDnsDomainName = defaultDnsDomainName;
+    }
+
+    if (!actualDnsDomainName)
+    {
+        dwError = NERR_SetupNotJoined;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    dwError = LsaPstorepBackendGetPasswordInfoW(
+                    backendState,
+                    actualDnsDomainName,
+                    &passwordInfo);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
-    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
-    return dwError;
-}
+    if (dwError)
+    {
+        LSA_PSTORE_FREE_PASSWORD_INFO_W(&passwordInfo);
+    }
 
-DWORD
-LsaPstoreSetPasswordInfoA(
-    IN PLSA_MACHINE_PASSWORD_INFO_A PasswordInfo
-    )
-{
-    DWORD dwError = 0;
-    int EE = 0;
+    LW_RTL_FREE(&defaultDnsDomainName);
 
-    dwError = LsaPstorepEnsureInitialized();
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    *PasswordInfo = passwordInfo;
 
-    dwError = LsaPstorepBackendSetPasswordInfoA(PasswordInfo);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-cleanup:
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }
@@ -111,33 +110,48 @@ LsaPstoreSetPasswordInfoW(
 {
     DWORD dwError = 0;
     int EE = 0;
+    PLSA_PSTORE_BACKEND_STATE backendState = NULL;
+    PWSTR defaultDnsDomainName = NULL;
+    BOOLEAN isDefaultDomain = FALSE;
 
-    dwError = LsaPstorepEnsureInitialized();
+    dwError = LsaPstorepCheckPasswordInfoW(PasswordInfo);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = LsaPstorepBackendSetPasswordInfoW(PasswordInfo);
+    dwError = LsaPstorepEnsureInitialized(&backendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    // Returns NULL if no default is set.
+    dwError = LsaPstoreGetDefaultDomainW(&defaultDnsDomainName);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LsaPstorepBackendSetPasswordInfoW(backendState, PasswordInfo);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    if (!defaultDnsDomainName)
+    {
+        // TODO-Perhaps ignore error here?
+        dwError = LsaPstoreSetDefaultDomainW(PasswordInfo->Account.DnsDomainName);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+        isDefaultDomain = TRUE;
+    }
+    else
+    {
+        isDefaultDomain = LwRtlWC16StringIsEqual(
+                                defaultDnsDomainName,
+                                PasswordInfo->Account.DnsDomainName,
+                                TRUE);
+    }
+
+    if (isDefaultDomain)
+    {
+        dwError = LsaPstorepCallPluginSetPasswordInfo(PasswordInfo);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
 
 cleanup:
-    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
-    return dwError;
-}
+    LSA_PSTORE_FREE(&defaultDnsDomainName);
 
-DWORD
-LsaPstoreDeletePasswordInfoA(
-    IN OPTIONAL PCSTR DnsDomainName
-    )
-{
-    DWORD dwError = 0;
-    int EE = 0;
-
-    dwError = LsaPstorepEnsureInitialized();
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = LsaPstorepBackendDeletePasswordInfoA(DnsDomainName);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-cleanup:
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }
@@ -149,33 +163,76 @@ LsaPstoreDeletePasswordInfoW(
 {
     DWORD dwError = 0;
     int EE = 0;
+    PLSA_PSTORE_BACKEND_STATE backendState = NULL;
+    PWSTR defaultDnsDomainName = NULL;
+    BOOLEAN isDefaultDomain = FALSE;
+    PLSA_MACHINE_PASSWORD_INFO_W passwordInfo = NULL;
+    PCWSTR actualDnsDomainName = NULL;
 
-    dwError = LsaPstorepEnsureInitialized();
+    if (DnsDomainName && !LsaPstorepWC16StringIsUpcase(DnsDomainName))
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    dwError = LsaPstorepEnsureInitialized(&backendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = LsaPstorepBackendDeletePasswordInfoW(DnsDomainName);
+    // Returns NULL if no default is found.
+    dwError = LsaPstoreGetDefaultDomainW(&defaultDnsDomainName);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    actualDnsDomainName = DnsDomainName ? DnsDomainName : defaultDnsDomainName;
+
+    if (defaultDnsDomainName)
+    {
+        if (DnsDomainName)
+        {
+            isDefaultDomain = LwRtlWC16StringIsEqual(
+                                    defaultDnsDomainName,
+                                    DnsDomainName,
+                                    TRUE);
+        }
+        else
+        {
+            isDefaultDomain = TRUE;
+        }
+    }
+
+    if (isDefaultDomain)
+    {
+        // Get information for plugin, but ignore error since best effort.
+        dwError = LsaPstorepBackendGetPasswordInfoW(
+                        backendState,
+                        defaultDnsDomainName,
+                        &passwordInfo);
+        dwError = 0;
+    }
+
+    if (actualDnsDomainName)
+    {
+        dwError = LsaPstorepBackendDeletePasswordInfoW(
+                        backendState,
+                        actualDnsDomainName);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
+
+    if (isDefaultDomain)
+    {
+        // Ignore error as LSASS can recover
+        dwError = LsaPstoreSetDefaultDomainW(NULL);
+        dwError = 0;
+
+        // TODO-Use defaultDnsDomainName if no passwordInfo available.
+        dwError = LsaPstorepCallPluginDeletePasswordInfo(
+                        passwordInfo ? &passwordInfo->Account : NULL);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
 
 cleanup:
-    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
-    return dwError;
-}
+    LW_RTL_FREE(&defaultDnsDomainName);
+    LSA_PSTORE_FREE_PASSWORD_INFO_W(&passwordInfo);
 
-DWORD
-LsaPstoreGetDefaultDomainA(
-    OUT PSTR* DnsDomainName
-    )
-{
-    DWORD dwError = 0;
-    int EE = 0;
-
-    dwError = LsaPstorepEnsureInitialized();
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = LsaPstorepBackendGetDefaultDomainA(DnsDomainName);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-cleanup:
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }
@@ -187,33 +244,25 @@ LsaPstoreGetDefaultDomainW(
 {
     DWORD dwError = 0;
     int EE = 0;
+    PLSA_PSTORE_BACKEND_STATE backendState = NULL;
+    PWSTR dnsDomainName = NULL;
 
-    dwError = LsaPstorepEnsureInitialized();
+    dwError = LsaPstorepEnsureInitialized(&backendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = LsaPstorepBackendGetDefaultDomainW(DnsDomainName);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-cleanup:
-    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
-    return dwError;
-}
-
-DWORD
-LsaPstoreSetDefaultDomainA(
-    IN OPTIONAL PCSTR DnsDomainName
-    )
-{
-    DWORD dwError = 0;
-    int EE = 0;
-
-    dwError = LsaPstorepEnsureInitialized();
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = LsaPstorepBackendSetDefaultDomainA(DnsDomainName);
+    dwError = LsaPstorepBackendGetDefaultDomainW(
+                    backendState,
+                    &dnsDomainName);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
+    if (dwError)
+    {
+        LSA_PSTORE_FREE(&dnsDomainName);
+    }
+
+    *DnsDomainName = dnsDomainName;
+
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }
@@ -225,31 +274,18 @@ LsaPstoreSetDefaultDomainW(
 {
     DWORD dwError = 0;
     int EE = 0;
+    PLSA_PSTORE_BACKEND_STATE backendState = NULL;
 
-    dwError = LsaPstorepEnsureInitialized();
+    if (DnsDomainName && !LsaPstorepWC16StringIsUpcase(DnsDomainName))
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    dwError = LsaPstorepEnsureInitialized(&backendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = LsaPstorepBackendSetDefaultDomainW(DnsDomainName);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-cleanup:
-    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
-    return dwError;
-}
-
-DWORD
-LsaPstoreGetJoinedDomainsA(
-    OUT PSTR** DnsDomainNames,
-    OUT PDWORD Count
-    )
-{
-    DWORD dwError = 0;
-    int EE = 0;
-
-    dwError = LsaPstorepEnsureInitialized();
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = LsaPstorepBackendGetJoinedDomainsA(DnsDomainNames, Count);
+    dwError = LsaPstorepBackendSetDefaultDomainW(backendState, DnsDomainName);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
@@ -265,12 +301,18 @@ LsaPstoreGetJoinedDomainsW(
 {
     DWORD dwError = 0;
     int EE = 0;
+    PLSA_PSTORE_BACKEND_STATE backendState = NULL;
 
-    dwError = LsaPstorepEnsureInitialized();
+    dwError = LsaPstorepEnsureInitialized(&backendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = LsaPstorepBackendGetJoinedDomainsW(DnsDomainNames, Count);
+    dwError = LsaPstorepBackendGetJoinedDomainsW(
+                    backendState,
+                    DnsDomainNames,
+                    Count);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    // VALIDATE...
 
 cleanup:
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);

@@ -44,13 +44,12 @@
  */
 
 #include "lsapstore-includes.h"
+#include "lsapstore-backend.h"
 #include "lsapstore-backend-legacy.h"
 
 typedef struct _LSA_PSTORE_BACKEND_STATE {
     PLWPS_LEGACY_STATE OldStoreHandle;
-} LSA_PSTORE_BACKEND_STATE, *PLSA_PSTORE_BACKEND_STATE;
-
-static LSA_PSTORE_BACKEND_STATE LsaPstoreBackendState = { 0 };
+} LSA_PSTORE_BACKEND_STATE;
 
 //
 // Functions
@@ -58,21 +57,27 @@ static LSA_PSTORE_BACKEND_STATE LsaPstoreBackendState = { 0 };
 
 DWORD
 LsaPstorepBackendInitialize(
-    VOID
+    OUT PLSA_PSTORE_BACKEND_STATE* State
     )
 {
     DWORD dwError = 0;
     int EE = 0;
-    PLSA_PSTORE_BACKEND_STATE pState = &LsaPstoreBackendState;
+    PLSA_PSTORE_BACKEND_STATE state = NULL;
 
-    dwError = LwpsLegacyOpenProvider(&pState->OldStoreHandle);
+    dwError = LSA_PSTORE_ALLOCATE_AUTO(&state);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwpsLegacyOpenProvider(&state->OldStoreHandle);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
     if (dwError)
     {
-        LsaPstorepBackendCleanup();
+        LsaPstorepBackendCleanup(state);
+        state = NULL;
     }
+
+    *State = state;
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
@@ -80,50 +85,47 @@ cleanup:
 
 VOID
 LsaPstorepBackendCleanup(
-    VOID
+    IN PLSA_PSTORE_BACKEND_STATE State
     )
 {
-    PLSA_PSTORE_BACKEND_STATE pState = &LsaPstoreBackendState;
-
-    if (pState->OldStoreHandle)
+    if (State)
     {
-        LwpsLegacyCloseProvider(pState->OldStoreHandle);
-        pState->OldStoreHandle = NULL;
+        if (State->OldStoreHandle)
+        {
+            LwpsLegacyCloseProvider(State->OldStoreHandle);
+            State->OldStoreHandle = NULL;
+        }
+        LSA_PSTORE_FREE(&State);
     }
 }
 
 DWORD
 LsaPstorepBackendGetPasswordInfoW(
-    IN OPTIONAL PCWSTR DnsDomainName,
-    OUT PLSA_MACHINE_PASSWORD_INFO_W* PasswordInfo
+    IN PLSA_PSTORE_BACKEND_STATE State,
+    IN PCWSTR DnsDomainName,
+    OUT OPTIONAL PLSA_MACHINE_PASSWORD_INFO_W* PasswordInfo
     )
 {
     DWORD dwError = 0;
     int EE = 0;
-    PSTR dnsDomainName = NULL;
-    PLWPS_LEGACY_PASSWORD_INFO legacyPasswordInfo = NULL;
+    PSTR dnsDomainNameA = NULL;
     PLSA_MACHINE_PASSWORD_INFO_W passwordInfo = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_A passwordInfoA = NULL;
 
-    if (DnsDomainName)
-    {
-        dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
-                        &dnsDomainName,
-                        DnsDomainName));
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
+    dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                    &dnsDomainNameA,
+                    DnsDomainName));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
     dwError = LwpsLegacyReadPassword(
-                    LsaPstoreBackendState.OldStoreHandle,
-                    dnsDomainName,
-                    &legacyPasswordInfo);
+                    State->OldStoreHandle,
+                    dnsDomainNameA,
+                    &passwordInfoA);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = LSA_PSTORE_ALLOCATE_AUTO(&passwordInfo);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = LwpsConvertFillMachinePasswordInfoW(
-                    legacyPasswordInfo,
-                    passwordInfo);
+    dwError = LsaPstorepConvertAnsiToWidePasswordInfo(
+                    passwordInfoA,
+                    &passwordInfo);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
@@ -132,14 +134,17 @@ cleanup:
         LSA_PSTORE_FREE_PASSWORD_INFO_W(&passwordInfo);
     }
 
-    if (legacyPasswordInfo)
+    LSA_PSTORE_FREE_PASSWORD_INFO_A(&passwordInfoA);
+    LW_RTL_FREE(&dnsDomainNameA);
+
+    if (PasswordInfo)
     {
-        LwpsLegacyFreePassword(legacyPasswordInfo);
+        *PasswordInfo = passwordInfo;
     }
-
-    LwRtlCStringFree(&dnsDomainName);
-
-    *PasswordInfo = passwordInfo;
+    else
+    {
+        LSA_PSTORE_FREE_PASSWORD_INFO_W(&passwordInfo);
+    }
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
@@ -147,49 +152,26 @@ cleanup:
 
 DWORD
 LsaPstorepBackendSetPasswordInfoW(
+    IN PLSA_PSTORE_BACKEND_STATE State,
     IN PLSA_MACHINE_PASSWORD_INFO_W PasswordInfo
     )
 {
     DWORD dwError = 0;
     int EE = 0;
-    PLWPS_LEGACY_PASSWORD_INFO legacyPasswordInfo = NULL;
-    PWSTR defaultDnsDomainName = NULL;
-    BOOLEAN isDefaultDomain = FALSE;
+    PLSA_MACHINE_PASSWORD_INFO_A passwordInfoA = NULL;
 
-    dwError = LwpsConvertAllocateFromMachinePasswordInfoW(
+    dwError = LsaPstorepConvertWideToAnsiPasswordInfo(
                     PasswordInfo,
-                    &legacyPasswordInfo);
+                    &passwordInfoA);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
     dwError = LwpsLegacyWritePassword(
-                    LsaPstoreBackendState.OldStoreHandle,
-                    legacyPasswordInfo);
+                    State->OldStoreHandle,
+                    passwordInfoA);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = LsaPstoreGetDefaultDomainW(&defaultDnsDomainName);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    if (defaultDnsDomainName)
-    {
-        isDefaultDomain = LwRtlWC16StringIsEqual(
-                                defaultDnsDomainName,
-                                PasswordInfo->Account.DnsDomainName,
-                                FALSE);
-    }
-
-    if (isDefaultDomain)
-    {
-        dwError = LsaPstorepCallPluginSetPasswordInfo(PasswordInfo);
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
 
 cleanup:
-    if (legacyPasswordInfo)
-    {
-        LwpsLegacyFreePassword(legacyPasswordInfo);
-    }
-
-    LwRtlWC16StringFree(&defaultDnsDomainName);
+    LSA_PSTORE_FREE_PASSWORD_INFO_A(&passwordInfoA);
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
@@ -197,65 +179,26 @@ cleanup:
 
 DWORD
 LsaPstorepBackendDeletePasswordInfoW(
-    IN OPTIONAL PCWSTR DnsDomainName
+    IN PLSA_PSTORE_BACKEND_STATE State,
+    IN PCWSTR DnsDomainName
     )
 {
     DWORD dwError = 0;
     int EE = 0;
-    PSTR dnsDomainName = NULL;
-    PWSTR defaultDnsDomainName = NULL;
-    BOOLEAN isDefaultDomain = FALSE;
-    PLSA_MACHINE_PASSWORD_INFO_W passwordInfo = NULL;
+    PSTR dnsDomainNameA = NULL;
 
-    if (DnsDomainName)
-    {
-        dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
-                        &dnsDomainName,
-                        DnsDomainName));
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-        dwError = LsaPstoreGetDefaultDomainW(&defaultDnsDomainName);
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-        if (defaultDnsDomainName)
-        {
-            isDefaultDomain = LwRtlWC16StringIsEqual(
-                                    defaultDnsDomainName,
-                                    DnsDomainName,
-                                    FALSE);
-        }
-    }
-    else
-    {
-        isDefaultDomain = TRUE;
-    }
-
-    if (!defaultDnsDomainName)
-    {
-        dwError = LsaPstoreGetDefaultDomainW(&defaultDnsDomainName);
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
-
-    dwError = LsaPstoreGetPasswordInfoW(DnsDomainName, &passwordInfo);
-    // Ignore any error
-    dwError = 0;
-
-    dwError = LwpsLegacyDeletePassword(
-                    LsaPstoreBackendState.OldStoreHandle,
-                    dnsDomainName);
+    dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
+                    &dnsDomainNameA,
+                    DnsDomainName));
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    if (isDefaultDomain)
-    {
-        dwError = LsaPstorepCallPluginDeletePasswordInfo(
-                        passwordInfo ? &passwordInfo->Account : NULL);
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
+    dwError = LwpsLegacyDeletePassword(
+                    State->OldStoreHandle,
+                    dnsDomainNameA);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
-    LwRtlCStringFree(&dnsDomainName);
-    LwRtlWC16StringFree(&defaultDnsDomainName);
-    LSA_PSTORE_FREE_PASSWORD_INFO_W(&passwordInfo);
+    LW_RTL_FREE(&dnsDomainNameA);
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
@@ -263,42 +206,32 @@ cleanup:
 
 DWORD
 LsaPstorepBackendGetDefaultDomainW(
+    IN PLSA_PSTORE_BACKEND_STATE State,
     OUT PWSTR* DnsDomainName
     )
 {
     DWORD dwError = 0;
     int EE = 0;
+    PSTR dnsDomainNameA = NULL;
     PWSTR dnsDomainName = NULL;
-    PLWPS_LEGACY_PASSWORD_INFO legacyPasswordInfo = NULL;
 
-    dwError = LwpsLegacyReadPassword(
-                    LsaPstoreBackendState.OldStoreHandle,
-                    NULL,
-                    &legacyPasswordInfo);
-    if (dwError == NERR_SetupNotJoined)
-    {
-        // TODO - Is this the desired API behavior?
-        // no default domain
-        dwError = 0;
-        GOTO_CLEANUP_EE(EE);
-    }
+    dwError = LwpsLegacyGetDefaultJoinedDomain(
+                    State->OldStoreHandle,
+                    &dnsDomainNameA);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = LwNtStatusToWin32Error(LwRtlWC16StringDuplicate(
+    dwError = LwNtStatusToWin32Error(LwRtlWC16StringAllocateFromCString(
                     &dnsDomainName,
-                    legacyPasswordInfo->pwszDnsDomainName));
+                    dnsDomainNameA));
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
     if (dwError)
     {
-        LwRtlWC16StringFree(&dnsDomainName);
+        LW_RTL_FREE(&dnsDomainName);
     }
 
-    if (legacyPasswordInfo)
-    {
-        LwpsLegacyFreePassword(legacyPasswordInfo);
-    }
+    LW_RTL_FREE(&dnsDomainNameA);
 
     *DnsDomainName = dnsDomainName;
 
@@ -308,28 +241,29 @@ cleanup:
 
 DWORD
 LsaPstorepBackendSetDefaultDomainW(
+    IN PLSA_PSTORE_BACKEND_STATE State,
     IN OPTIONAL PCWSTR DnsDomainName
     )
 {
     DWORD dwError = 0;
     int EE = 0;
-    PSTR dnsDomainName = NULL;
+    PSTR dnsDomainNameA = NULL;
 
     if (DnsDomainName)
     {
         dwError = LwNtStatusToWin32Error(LwRtlCStringAllocateFromWC16String(
-                        &dnsDomainName,
+                        &dnsDomainNameA,
                         DnsDomainName));
         GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
     }
 
     dwError = LwpsLegacySetDefaultJoinedDomain(
-                    LsaPstoreBackendState.OldStoreHandle,
-                    dnsDomainName);
+                    State->OldStoreHandle,
+                    dnsDomainNameA);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
-    LwRtlCStringFree(&dnsDomainName);
+    LW_RTL_FREE(&dnsDomainNameA);
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
@@ -337,6 +271,7 @@ cleanup:
 
 DWORD
 LsaPstorepBackendGetJoinedDomainsW(
+    IN PLSA_PSTORE_BACKEND_STATE State,
     OUT PWSTR** DnsDomainNames,
     OUT PDWORD Count
     )
@@ -349,7 +284,7 @@ LsaPstorepBackendGetJoinedDomainsW(
     DWORD internalCount = 0;
 
     dwError = LwpsLegacyGetJoinedDomains(
-                    LsaPstoreBackendState.OldStoreHandle,
+                    State->OldStoreHandle,
                     &internalDnsDomainNames,
                     &internalCount);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);

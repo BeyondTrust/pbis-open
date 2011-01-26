@@ -44,6 +44,7 @@
  */
 
 #include "lsapstore-includes.h"
+#include <lw/security-api.h>
 #include <wc16str.h>
 #include <ctype.h>
 #include <assert.h>
@@ -359,6 +360,103 @@ cleanup:
     return dwError;
 }
 
+DWORD
+LsaPstorepCheckPasswordInfoW(
+    IN PLSA_MACHINE_PASSWORD_INFO_W PasswordInfo
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    PSID sid = NULL;
+    UNICODE_STRING samAccountName = { 0 };
+
+    if (!PasswordInfo)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    if (!PasswordInfo->Account.DnsDomainName ||
+        !LsaPstorepWC16StringIsUpcase(PasswordInfo->Account.DnsDomainName))
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    if (!PasswordInfo->Account.NetbiosDomainName ||
+        !LsaPstorepWC16StringIsUpcase(PasswordInfo->Account.NetbiosDomainName))
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    if (!PasswordInfo->Account.DomainSid ||
+        !LsaPstorepWC16StringIsUpcase(PasswordInfo->Account.DomainSid))
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    dwError = LwNtStatusToWin32Error(RtlAllocateSidFromWC16String(
+                    &sid,
+                    PasswordInfo->Account.DomainSid));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    if (!PasswordInfo->Account.SamAccountName ||
+        !LsaPstorepWC16StringIsUpcase(PasswordInfo->Account.SamAccountName))
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    dwError = LwNtStatusToWin32Error(LwRtlUnicodeStringInitEx(
+                    &samAccountName,
+                    PasswordInfo->Account.SamAccountName));
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    if (LW_RTL_STRING_LAST_CHAR(&samAccountName) != '$')
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    switch (PasswordInfo->Account.Type)
+    {
+        case LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION:
+        case LSA_MACHINE_ACCOUNT_TYPE_DC:
+        case LSA_MACHINE_ACCOUNT_TYPE_BDC:
+            break;
+        default:
+            dwError = ERROR_INVALID_PARAMETER;
+            GOTO_CLEANUP_EE(EE);
+    }
+
+    if (!PasswordInfo->Account.Fqdn ||
+        !LsaPstorepWC16StringIsDowncase(PasswordInfo->Account.Fqdn))
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    if (PasswordInfo->Account.Fqdn < 0)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    if (!PasswordInfo->Password)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+cleanup:
+    LW_RTL_FREE(&sid);
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
 PSTR
 LsaPstorepCStringDowncase(
     IN OUT PSTR String
@@ -417,6 +515,56 @@ LsaPstorepWC16StringUpcase(
     }
 
     return String;
+}
+
+BOOLEAN
+LsaPstorepWC16StringIsDowncase(
+    IN PCWSTR String
+    )
+{
+    BOOLEAN isValid = TRUE;
+
+    // This is best effort.
+    if (String)
+    {
+        PCWSTR current = &String[0];
+        while (*current)
+        {
+            if ((*current >= 'A') && (*current <= 'Z'))
+            {
+                isValid = FALSE;
+                break;
+            }
+            current++;
+        }
+    }
+
+    return isValid;
+}
+
+BOOLEAN
+LsaPstorepWC16StringIsUpcase(
+    IN PCWSTR String
+    )
+{
+    BOOLEAN isValid = TRUE;
+
+    // This is best effort.
+    if (String)
+    {
+        PCWSTR current = &String[0];
+        while (*current)
+        {
+            if ((*current >= 'a') && (*current <= 'z'))
+            {
+                isValid = FALSE;
+                break;
+            }
+            current++;
+        }
+    }
+
+    return isValid;
 }
 
 DWORD
@@ -614,6 +762,70 @@ cleanup:
     *StringArray = stringArray;
     *Count = count;
 
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+DWORD
+LsaPstorepRegSetDword(
+    IN HANDLE RegistryConnection,
+    IN HKEY KeyHandle,
+    IN PCSTR ValueName,
+    IN DWORD ValueData
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    DWORD size = 0;
+
+    size = sizeof(ValueData);
+
+    dwError = LwRegSetValueExA(
+                    RegistryConnection,
+                    KeyHandle,
+                    ValueName,
+                    0,
+                    REG_DWORD,
+                    (PBYTE) &ValueData,
+                    size);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+cleanup:
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+DWORD
+LsaPstorepRegSetStringA(
+    IN HANDLE RegistryConnection,
+    IN HKEY KeyHandle,
+    IN PCSTR ValueName,
+    IN PCSTR ValueData
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    DWORD size = 0;
+
+    if (!ValueData)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
+
+    size = strlen(ValueData) + 1;
+
+    dwError = LwRegSetValueExA(
+                    RegistryConnection,
+                    KeyHandle,
+                    ValueName,
+                    0,
+                    REG_SZ,
+                    (PBYTE) ValueData,
+                    size);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+cleanup:
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }

@@ -42,6 +42,8 @@
 #include <lsa/lsapstore-api.h>
 #include <lsa/lsapstore-plugin.h>
 
+#include "lsapstore-backend-types.h"
+
 #include <lw/winerror.h>
 #include <lw/rtlgoto.h>
 #include <lw/rtlmemory.h>
@@ -136,6 +138,11 @@ LsaPstorepConvertWideToAnsiAccountInfo(
     OUT PLSA_MACHINE_ACCOUNT_INFO_A* ppAccountInfo
     );
 
+DWORD
+LsaPstorepCheckPasswordInfoW(
+    IN PLSA_MACHINE_PASSWORD_INFO_W PasswordInfo
+    );
+
 PSTR
 LsaPstorepCStringDowncase(
     IN OUT PSTR String
@@ -154,6 +161,16 @@ LsaPstorepWC16StringDowncase(
 PWSTR
 LsaPstorepWC16StringUpcase(
     IN OUT PWSTR String
+    );
+
+BOOLEAN
+LsaPstorepWC16StringIsDowncase(
+    IN PCWSTR String
+    );
+
+BOOLEAN
+LsaPstorepWC16StringIsUpcase(
+    IN PCWSTR String
     );
 
 DWORD
@@ -190,6 +207,22 @@ LsaPstorepRegGetMultiStringA(
     );
 
 DWORD
+LsaPstorepRegSetDword(
+    IN HANDLE RegistryConnection,
+    IN HKEY KeyHandle,
+    IN PCSTR ValueName,
+    IN DWORD ValueData
+    );
+
+DWORD
+LsaPstorepRegSetStringA(
+    IN HANDLE RegistryConnection,
+    IN HKEY KeyHandle,
+    IN PCSTR ValueName,
+    IN PCSTR ValueData
+    );
+
+DWORD
 LsaPstorepOpenPlugin(
     IN PCSTR Path,
     IN PCSTR InitFunctionName,
@@ -206,7 +239,7 @@ LsaPstorepClosePlugin(
 
 DWORD
 LsaPstorepEnsureInitialized(
-    VOID
+    OUT PLSA_PSTORE_BACKEND_STATE* Backend
     );
 
 // lsapstore-plugin.c
@@ -219,81 +252,5 @@ LsaPstorepCallPluginSetPasswordInfo(
 DWORD
 LsaPstorepCallPluginDeletePasswordInfo(
     IN OPTIONAL PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo
-    );
-
-// lsapstore-backend.c
-
-DWORD
-LsaPstorepBackendInitialize(
-    VOID
-    );
-
-VOID
-LsaPstorepBackendCleanup(
-    VOID
-    );
-
-DWORD
-LsaPstorepBackendGetPasswordInfoA(
-    IN OPTIONAL PCSTR DnsDomainName,
-    OUT PLSA_MACHINE_PASSWORD_INFO_A* PasswordInfo
-    );
-
-DWORD
-LsaPstorepBackendGetPasswordInfoW(
-    IN OPTIONAL PCWSTR DnsDomainName,
-    OUT PLSA_MACHINE_PASSWORD_INFO_W* PasswordInfo
-    );
-
-DWORD
-LsaPstorepBackendSetPasswordInfoA(
-    IN PLSA_MACHINE_PASSWORD_INFO_A PasswordInfo
-    );
-
-DWORD
-LsaPstorepBackendSetPasswordInfoW(
-    IN PLSA_MACHINE_PASSWORD_INFO_W PasswordInfo
-    );
-
-DWORD
-LsaPstorepBackendDeletePasswordInfoA(
-    IN OPTIONAL PCSTR DnsDomainName
-    );
-
-DWORD
-LsaPstorepBackendDeletePasswordInfoW(
-    IN OPTIONAL PCWSTR DnsDomainName
-    );
-
-DWORD
-LsaPstorepBackendGetDefaultDomainA(
-    OUT PSTR* DnsDomainName
-    );
-
-DWORD
-LsaPstorepBackendGetDefaultDomainW(
-    OUT PWSTR* DnsDomainName
-    );
-
-DWORD
-LsaPstorepBackendSetDefaultDomainA(
-    IN OPTIONAL PCSTR DnsDomainName
-    );
-
-DWORD
-LsaPstorepBackendSetDefaultDomainW(
-    IN OPTIONAL PCWSTR DnsDomainName
-    );
-
-DWORD
-LsaPstorepBackendGetJoinedDomainsA(
-    OUT PSTR** DnsDomainNames,
-    OUT PDWORD Count
-    );
-
-DWORD
-LsaPstorepBackendGetJoinedDomainsW(
-    OUT PWSTR** DnsDomainNames,
-    OUT PDWORD Count
     );
 

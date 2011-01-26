@@ -44,6 +44,7 @@
  */
 
 #include "lsapstore-includes.h"
+#include "lsapstore-backend.h"
 
 typedef struct _LSA_PSTORE_STATE {
     struct {
@@ -52,7 +53,7 @@ typedef struct _LSA_PSTORE_STATE {
         BOOLEAN Done;
     } Init;
     LONG RefCount;
-    BOOLEAN NeedClose;
+    PLSA_PSTORE_BACKEND_STATE BackendState;
 } LSA_PSTORE_STATE, *PLSA_PSTORE_STATE;
 
 static LSA_PSTORE_STATE LsaPstoreState = { { ONCE_INIT } };
@@ -110,10 +111,8 @@ LsaPstorepInitializeLibraryInternal(
         GOTO_CLEANUP_EE(EE);
     }
 
-    dwError = LsaPstorepBackendInitialize();
+    dwError = LsaPstorepBackendInitialize(&pState->BackendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    pState->NeedClose = TRUE;
 
 cleanup:
     if (dwError)
@@ -137,10 +136,10 @@ LsaPstorepCleanupLibraryInternal(
     PLSA_PSTORE_STATE pState = &LsaPstoreState;
     pthread_once_t onceControl = ONCE_INIT;
 
-    if (pState->NeedClose)
+    if (pState->BackendState)
     {
-        LsaPstorepBackendCleanup();
-        pState->NeedClose = FALSE;
+        LsaPstorepBackendCleanup(pState->BackendState);
+        pState->BackendState = NULL;
     }
 
     pState->Init.OnceControl = onceControl;
@@ -159,21 +158,35 @@ LsaPstoreInitializeLibraryOnce(
 
 DWORD
 LsaPstorepEnsureInitialized(
-    VOID
+    OUT PLSA_PSTORE_BACKEND_STATE* BackendState
     )
 {
     DWORD dwError = 0;
+    int EE = 0;
     PLSA_PSTORE_STATE pState = &LsaPstoreState;
+    PLSA_PSTORE_BACKEND_STATE backendState = NULL;
 
     if (pState->RefCount)
     {
         pthread_once(&pState->Init.OnceControl, LsaPstoreInitializeLibraryOnce);
         dwError = pState->Init.Error;
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
     }
     else
     {
         dwError = ERROR_DLL_INIT_FAILED;
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
     }
+
+    backendState = pState->BackendState;
+
+cleanup:
+    if (dwError)
+    {
+        backendState = NULL;
+    }
+
+    *BackendState = backendState;
 
     LSA_PSTORE_LOG_LEAVE_ERROR(dwError);
     return dwError;

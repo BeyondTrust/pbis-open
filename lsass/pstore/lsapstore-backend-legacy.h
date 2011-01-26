@@ -51,18 +51,6 @@
 
 #include <lsa/lsapstore-types.h>
 
-typedef struct _LWPS_LEGACY_PASSWORD_INFO {
-    PWSTR pwszDomainName;
-    PWSTR pwszDnsDomainName;
-    PWSTR pwszSID;
-    PWSTR pwszHostname;
-    PWSTR pwszHostDnsDomain;
-    PWSTR pwszMachineAccount;
-    PWSTR pwszMachinePassword;
-    time_t last_change_time;
-    DWORD dwSchannelType;
-} LWPS_LEGACY_PASSWORD_INFO, *PLWPS_LEGACY_PASSWORD_INFO;
-
 //
 // From lsapstore-backend-legacy-internal.c
 //
@@ -82,20 +70,26 @@ LwpsLegacyCloseProvider(
 DWORD
 LwpsLegacyReadPassword(
     IN PLWPS_LEGACY_STATE pContext,
-    IN OPTIONAL PCSTR pszQueryDomainName,
-    OUT PLWPS_LEGACY_PASSWORD_INFO* ppInfo
+    IN PCSTR pszDnsDomainName,
+    OUT OPTIONAL PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
     );
 
 DWORD
 LwpsLegacyWritePassword(
     IN PLWPS_LEGACY_STATE pContext,
-    IN PLWPS_LEGACY_PASSWORD_INFO pInfo
+    IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
     );
 
 DWORD
 LwpsLegacyDeletePassword(
     IN PLWPS_LEGACY_STATE pContext,
-    IN OPTIONAL PCSTR pszDomainName
+    IN PCSTR pszDomainName
+    );
+
+DWORD
+LwpsLegacyGetDefaultJoinedDomain(
+    IN PLWPS_LEGACY_STATE pContext,
+    OUT PSTR* ppszDomainName
     );
 
 DWORD
@@ -112,55 +106,9 @@ LwpsLegacyGetJoinedDomains(
     );
 
 VOID
-LwpsLegacyFreePassword(
-    IN PLWPS_LEGACY_PASSWORD_INFO pInfo
-    );
-
-VOID
 LwpsLegacyFreeStringArray(
     IN PSTR* ppszDomainList,
     IN DWORD dwCount
     );
-
-//
-// From lsapstore-backend-legacy-convert.c
-//
-
-DWORD
-LwpsConvertFillMachinePasswordInfoW(
-    IN PLWPS_LEGACY_PASSWORD_INFO pLegacyPasswordInfo,
-    OUT PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
-    );
-///<
-/// Fill LSA pstore machine password info from legacy pstore password info.
-///
-/// This also handles any conversions or "cons"-ing up of values that
-/// are not stored in the old legacy format.
-///
-/// @param[in] pLegacyPasswordInfo - Legacy password information.
-/// @param[out] pPasswordInfo - Returns machine account information.
-///     This is freed with LsaPstoreFreePasswordInfoW().
-///
-/// @return Windows error code
-/// @retval ERROR_SUCCESS on success
-/// @retval !ERROR_SUCCESS on failure
-///
-
-DWORD
-LwpsConvertAllocateFromMachinePasswordInfoW(
-    IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo,
-    OUT PLWPS_LEGACY_PASSWORD_INFO* ppLegacyPasswordInfo
-    );
-///<
-/// Conver LSA pstore machine password info into legacy pstore password info.
-///
-/// @param[in] pPasswordInfo - Machine password information.
-/// @param[in] pLegacyPasswordInfo - Returns legacy password information.
-///     This is freed with LwpsLegacyFreePasswordInfo().
-///
-/// @return Windows error code
-/// @retval ERROR_SUCCESS on success
-/// @retval !ERROR_SUCCESS on failure
-///
 
 #endif

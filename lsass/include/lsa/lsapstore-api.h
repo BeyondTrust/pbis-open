@@ -183,14 +183,11 @@ LsaPstoreGetDefaultDomainW(
 ///<
 /// Get default joined domain name.
 ///
-/// TODO-Resolve inconsistency wrt returning NULL vs NERR_SetupNotJoined
-///
 /// @param[out] DnsDomainName - Returns the default domain join DNS domain
-///     name, or NULL if none.  Free with LwFreeMemory().
+///     name, or NULL if none.  Free with LsaPstoreFreeMemory().
 ///
 /// @return Windows error code
 /// @retval ERROR_SUCCESS on success
-/// @retval NERR_SetupNotJoined if no default domain join is set.
 /// @retval !ERROR_SUCCESS on other failure
 ///
 
@@ -231,7 +228,7 @@ LsaPstoreGetJoinedDomainsW(
 ///
 /// @param[out] DnsDomainNames - Returns DNS domain names for which there
 ///     is join information.  Returns NULL if not joined to any domains.
-///     Free with LwFreeStringArray().
+///     Free with LsaPstoreFreeStringArrayW().
 ///
 /// @param[out] Count - Returns count of domains for which there is password
 ///     info.  Returns 0 if not joined to any domains.
@@ -282,8 +279,8 @@ LsaPstoreFreeStringArrayW(
         { \
             LsaPstoreFreeStringArrayA(*(pStringArray), *(pCount)); \
             *(pStringArray) = NULL; \
-            *(pCount) = 0; \
         } \
+        *(pCount) = 0; \
     } while (0)
 
 #define LSA_PSTORE_FREE_STRING_ARRAY_W(pStringArray, pCount) \
@@ -292,8 +289,8 @@ LsaPstoreFreeStringArrayW(
         { \
             LsaPstoreFreeStringArrayW(*(pStringArray), *(pCount)); \
             *(pStringArray) = NULL; \
-            *(pCount) = 0; \
         } \
+        *(pCount) = 0; \
     } while (0)
 
 VOID

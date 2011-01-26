@@ -57,26 +57,30 @@
 // Work around bug in lwstr.h:
 #include <wc16str.h>
 #include "lsapstore-includes.h"
+#include <assert.h>
 
 #define PSTOREDB_REGISTRY_AD_KEY \
     "Services\\lsass\\Parameters\\Providers\\ActiveDirectory\\DomainJoin"
 #define PSTOREDB_REGISTRY_PSTORE_SUBKEY \
     "Pstore"
-#define PSTOREDB_REGISTRY_MACHINE_PWD_SUBKEY \
-    "MachinePassword"
+#define PSTOREDB_REGISTRY_PASSWORD_INFO_SUBKEY \
+    "PasswordInfo"
 #define PSTOREDB_REGISTRY_DEFAULT_VALUE \
     "Default"
 
-#define LWPS_REG_HOSTNAME           "HostName"
-#define LWPS_REG_DOMAIN_SID         "DomainSID"
-#define LWPS_REG_DOMAIN_NAME        "DomainName"
-#define LWPS_REG_DOMAIN_DNS_NAME    "DomainDnsName"
-#define LWPS_REG_HOST_DNS_DOMAIN    "HostDnsDomain"
-#define LWPS_REG_MACHINE_ACCOUNT    "MachineAccount"
-#define LWPS_REG_MACHINE_PWD        "MachinePassword"
-#define LWPS_REG_MODIFY_TIMESTAMP   "ClientModifyTimestamp"
-#define LWPS_REG_CREATION_TIMESTAMP "CreationTimestamp"
-#define LWPS_REG_SCHANNEL_TYPE      "SchannelType"
+
+// Under PSTOREDB_REGISTRY_PSTORE_SUBKEY:
+#define LWPS_REG_DNS_DOMAIN_NAME        "DnsDomainName"
+#define LWPS_REG_NETBIOS_DOMAIN_NAME    "NetbiosDomainName"
+#define LWPS_REG_DOMAIN_SID             "DomainSid"
+#define LWPS_REG_SAM_ACCOUNT_NAME       "SamAccountName"
+#define LWPS_REG_TYPE                   "Type"
+#define LWPS_REG_KEY_VERSION_NUMBER     "KeyVersionNumber"
+#define LWPS_REG_FQDN                   "Fqdn"
+#define LWPS_REG_UNIX_LAST_CHANGE_TIME  "UnixLastChangeTime"
+// Under PSTOREDB_REGISTRY_PASSWORD_INFO_SUBKEY:
+#define LWPS_REG_PASSWORD               "Password"
+
 
 struct _LWPS_LEGACY_STATE {
     HANDLE hReg;
@@ -87,16 +91,6 @@ struct _LWPS_LEGACY_STATE {
 //
 // Prototypes
 //
-
-// This is only needed internally as the higher layer
-// needs to use the read password call to ensure that
-// the default joined domain has data.
-static
-DWORD
-LwpsLegacyGetDefaultJoinedDomain(
-    IN PLWPS_LEGACY_STATE pContext,
-    OUT PSTR* ppszDomainName
-    );
 
 static
 DWORD
@@ -109,6 +103,20 @@ static
 VOID
 LwpsLegacyFreeSecurityDescriptor(
     IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecurityDescriptor
+    );
+
+static
+DWORD
+LwpsConvertTimeWindowsToUnix(
+    IN LONG64 WindowsTime,
+    OUT time_t* pUnixTime
+    );
+
+static
+DWORD
+LwpsConvertTimeUnixToWindows(
+    IN time_t UnixTime,
+    OUT PLONG64 pWindowsTime
     );
 
 //
@@ -176,326 +184,23 @@ LwpsLegacyCloseProvider(
 DWORD
 LwpsLegacyReadPassword(
     IN PLWPS_LEGACY_STATE pContext,
-    IN OPTIONAL PCSTR pszQueryDomainName,
-    OUT PLWPS_LEGACY_PASSWORD_INFO* ppInfo
+    IN PCSTR pszDnsDomainName,
+    OUT OPTIONAL PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
     )
 {
     DWORD dwError = 0;
     int EE = 0;
-    PLWPS_LEGACY_PASSWORD_INFO pInfo = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
+    HKEY rootKeyHandle = NULL;
+    HKEY accountKeyHandle = NULL;
+    HKEY passwordKeyHandle = NULL;
     PSTR pszRegistryPath = NULL;
     PSTR pszDefaultDomain = NULL;
-    PSTR pszDomainDnsName = NULL;
-    PSTR pszDomainName = NULL;
-    PSTR pszDomainSID = NULL;
-    PSTR pszHostDnsDomain = NULL;
-    PSTR pszHostNameValue = NULL;
-    PSTR pszMachineAccountName = NULL;
-    PSTR pszMachineAccountPassword = NULL;
-    DWORD dwClientModifyTimestamp = 0;
-    DWORD dwSchannelType = 0;
-    DWORD dwValueLen = 0;
+    DWORD unixLastChangeTime = 0;
 
-    if (pszQueryDomainName)
-    {
-        dwError = LwAllocateStringPrintf(
-                      &pszRegistryPath,
-                      "%s\\%s\\%s",
-                      PSTOREDB_REGISTRY_AD_KEY,
-                      pszQueryDomainName,
-                      PSTOREDB_REGISTRY_PSTORE_SUBKEY);
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
-    else
-    {
-        dwError = RegUtilGetValue(
-                      pContext->hReg,
-                      HKEY_THIS_MACHINE,
-                      PSTOREDB_REGISTRY_AD_KEY,
-                      NULL,
-                      PSTOREDB_REGISTRY_DEFAULT_VALUE,
-                      NULL,
-                      (PVOID) &pszDefaultDomain,
-                      &dwValueLen);
-        if (dwError)
-        {
-            /* This will fail when computer has never joined to a domain */
-            dwError = NERR_SetupNotJoined;
-        }
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-        dwError = LwAllocateStringPrintf(
-                      &pszRegistryPath,
-                      "%s\\%s\\%s",
-                      PSTOREDB_REGISTRY_AD_KEY,
-                      pszDefaultDomain,
-                      PSTOREDB_REGISTRY_PSTORE_SUBKEY);
-        if (dwError)
-        {
-            /* This will fail when computer has never joined to a domain */
-            dwError = NERR_SetupNotJoined;
-        }
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
-
-    dwError = RegUtilIsValidKey(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath);
-    if (dwError)
-    {
-        /* This will fail when computer has never joined to a domain */
-        dwError = NERR_SetupNotJoined;
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
-
-    dwError = LwAllocateMemory(
-                  sizeof(LWPS_LEGACY_PASSWORD_INFO),
-                  (PVOID*)&pInfo);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = RegUtilGetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_DOMAIN_DNS_NAME,
-                  NULL,
-                  (PVOID) &pszDomainDnsName,
-                  NULL);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = RegUtilGetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_DOMAIN_NAME,
-                  NULL,
-                  (PVOID) &pszDomainName,
-                  NULL);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    
-    dwError = RegUtilGetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_DOMAIN_SID,
-                  NULL,
-                  (PVOID) &pszDomainSID,
-                  NULL);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = RegUtilGetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_HOST_DNS_DOMAIN,
-                  NULL,
-                  (PVOID) &pszHostDnsDomain,
-                  NULL);
-    if (dwError != LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
-    {
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
-
-    dwError = RegUtilGetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_HOSTNAME,
-                  NULL,
-                  (PVOID) &pszHostNameValue,
-                  NULL);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = RegUtilGetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_MACHINE_ACCOUNT,
-                  NULL,
-                  (PVOID) &pszMachineAccountName,
-                  NULL);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = RegUtilGetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  PSTOREDB_REGISTRY_MACHINE_PWD_SUBKEY,
-                  LWPS_REG_MACHINE_PWD,
-                  NULL,
-                  (PVOID) &pszMachineAccountPassword,
-                  NULL);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = RegUtilGetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_MODIFY_TIMESTAMP,
-                  NULL,
-                  (PVOID) &dwClientModifyTimestamp,
-                  NULL);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = RegUtilGetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_SCHANNEL_TYPE,
-                  NULL,
-                  (PVOID) &dwSchannelType,
-                  NULL);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = LwMbsToWc16s(pszDomainDnsName, &pInfo->pwszDnsDomainName);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    LwWc16sToUpper(pInfo->pwszDnsDomainName);
-
-    dwError = LwMbsToWc16s(pszDomainName, &pInfo->pwszDomainName);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    LwWc16sToUpper(pInfo->pwszDomainName);
-
-    dwError = LwMbsToWc16s(pszDomainSID, &pInfo->pwszSID);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    if (LW_IS_NULL_OR_EMPTY_STR(pszHostDnsDomain))
-    {
-        dwError = LwMbsToWc16s(pszDomainDnsName, &pInfo->pwszHostDnsDomain);
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
-    else
-    {
-        dwError = LwMbsToWc16s(pszHostDnsDomain, &pInfo->pwszHostDnsDomain);
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
-
-    dwError = LwMbsToWc16s(pszHostNameValue, &pInfo->pwszHostname);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    LwWc16sToUpper(pInfo->pwszHostname);
-
-    dwError = LwMbsToWc16s(pszMachineAccountName,
-                             &pInfo->pwszMachineAccount);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    LwWc16sToUpper(pInfo->pwszMachineAccount);
-
-    dwError = LwMbsToWc16s(pszMachineAccountPassword,
-                             &pInfo->pwszMachinePassword);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    pInfo->last_change_time = dwClientModifyTimestamp;
-    pInfo->dwSchannelType = dwSchannelType;
-
-cleanup:
-    if (dwError)
-    {
-        if (pInfo)
-        {
-           LwpsLegacyFreePassword(pInfo);
-           pInfo = NULL;
-        }
-    }
-
-    LW_SAFE_FREE_MEMORY(pszRegistryPath);
-    LW_SAFE_FREE_MEMORY(pszDefaultDomain);
-    LW_SAFE_FREE_MEMORY(pszDomainDnsName);
-    LW_SAFE_FREE_MEMORY(pszDomainName);
-    LW_SAFE_FREE_MEMORY(pszDomainSID);
-    LW_SAFE_FREE_MEMORY(pszHostDnsDomain);
-    LW_SAFE_FREE_MEMORY(pszHostNameValue);
-    LW_SAFE_FREE_MEMORY(pszMachineAccountName);
-    LW_SECURE_FREE_STRING(pszMachineAccountPassword);
-    LW_SAFE_FREE_MEMORY(pszMachineAccountPassword);
-
-    *ppInfo = pInfo;
-
-    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
-    return dwError;
-}
-
-DWORD
-LwpsLegacyWritePassword(
-    IN PLWPS_LEGACY_STATE pContext,
-    IN PLWPS_LEGACY_PASSWORD_INFO pInfo
-    )
-{
-    DWORD dwError = 0;
-    int EE = 0;
-    PSTR pszRegistryPath = NULL;
-    PSTR pszDefaultDomain = NULL;
-    PSTR pszDomainSID = NULL;
-    PSTR pszDomainName = NULL;
-    PSTR pszDnsDomainName = NULL;
-    PSTR pszHostname = NULL;
-    PSTR pszHostDnsDomain = NULL;
-    PSTR pszMachineAccount = NULL;
-    PSTR pszMachinePassword = NULL;
-    DWORD dwClientModifyTimestamp = 0;
-    time_t tCreationTimestamp = 0;
-    DWORD dwSchannelType = 0;
-
-    /* This is all the values to be written to the registry. */
-    dwError = LwWc16sToMbs(pInfo->pwszSID, &pszDomainSID);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    dwError = LwWc16sToMbs(pInfo->pwszDomainName, &pszDomainName);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    LwStrToUpper(pszDomainName);
-
-    dwError = LwWc16sToMbs(pInfo->pwszDnsDomainName, &pszDnsDomainName);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    LwStrToUpper(pszDnsDomainName);
-
-    dwError = LwWc16sToMbs(pInfo->pwszHostname, &pszHostname);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    LwStrToUpper(pszHostname);
-
-    if (pInfo->pwszHostDnsDomain)
-    {
-        dwError = LwWc16sToMbs(pInfo->pwszHostDnsDomain, &pszHostDnsDomain);
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
-    else
-    {
-        dwError = LwWc16sToMbs(pInfo->pwszDnsDomainName, &pszHostDnsDomain);
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
-
-    dwError = LwWc16sToMbs(pInfo->pwszMachineAccount, &pszMachineAccount);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    LwStrToUpper(pszMachineAccount);
-
-    dwError = LwWc16sToMbs(pInfo->pwszMachinePassword, &pszMachinePassword);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-
-    time(&tCreationTimestamp);
-
-    if ((pInfo->last_change_time < 0) ||
-        (pInfo->last_change_time > MAXDWORD))
-    {
-        // This backend cannot currently deal with this.
-        dwError = ERROR_ARITHMETIC_OVERFLOW;
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
-
-    dwClientModifyTimestamp = pInfo->last_change_time;
-    dwSchannelType = pInfo->dwSchannelType;
+    //
+    // Compute registry path
+    //
 
     dwError = LwAllocateStringPrintf(
                   &pszRegistryPath,
@@ -505,7 +210,256 @@ LwpsLegacyWritePassword(
                   PSTOREDB_REGISTRY_PSTORE_SUBKEY);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    /* Add top-level pstore registry key */
+    //
+    // Open keys
+    //
+
+    dwError = LwRegOpenKeyExA(
+                    pContext->hReg,
+                    NULL,
+                    HKEY_THIS_MACHINE,
+                    0,
+                    KEY_READ,
+                    &rootKeyHandle);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwRegOpenKeyExA(
+                    pContext->hReg,
+                    rootKeyHandle,
+                    pszRegistryPath,
+                    0,
+                    KEY_READ,
+                    &accountKeyHandle);
+    if (LWREG_ERROR_NO_SUCH_KEY_OR_VALUE == dwError)
+    {
+        dwError = NERR_SetupNotJoined;
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwRegOpenKeyExA(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    PSTOREDB_REGISTRY_PASSWORD_INFO_SUBKEY,
+                    0,
+                    KEY_READ,
+                    &passwordKeyHandle);
+    if (LWREG_ERROR_NO_SUCH_KEY_OR_VALUE == dwError)
+    {
+        dwError = NERR_SetupNotJoined;
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    //
+    // Allocate info structure
+    //
+
+    dwError = LSA_PSTORE_ALLOCATE_AUTO(&pPasswordInfo);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    //
+    // Read account portion
+    //
+
+    dwError = LsaPstorepRegGetStringA(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_DNS_DOMAIN_NAME,
+                    &pPasswordInfo->Account.DnsDomainName);
+    if (LWREG_ERROR_NO_SUCH_KEY_OR_VALUE == dwError)
+    {
+        dwError = NERR_SetupNotJoined;
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LsaPstorepRegGetStringA(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_NETBIOS_DOMAIN_NAME,
+                    &pPasswordInfo->Account.NetbiosDomainName);
+    if (LWREG_ERROR_NO_SUCH_KEY_OR_VALUE == dwError)
+    {
+        dwError = NERR_SetupNotJoined;
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LsaPstorepRegGetStringA(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_DOMAIN_SID,
+                    &pPasswordInfo->Account.DomainSid);
+    if (LWREG_ERROR_NO_SUCH_KEY_OR_VALUE == dwError)
+    {
+        dwError = NERR_SetupNotJoined;
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LsaPstorepRegGetStringA(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_SAM_ACCOUNT_NAME,
+                    &pPasswordInfo->Account.SamAccountName);
+    if (LWREG_ERROR_NO_SUCH_KEY_OR_VALUE == dwError)
+    {
+        dwError = NERR_SetupNotJoined;
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LsaPstorepRegGetDword(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_TYPE,
+                    &pPasswordInfo->Account.Type);
+    if (LWREG_ERROR_NO_SUCH_KEY_OR_VALUE == dwError)
+    {
+        dwError = NERR_SetupNotJoined;
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LsaPstorepRegGetDword(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_KEY_VERSION_NUMBER,
+                    &pPasswordInfo->Account.KeyVersionNumber);
+    if (LWREG_ERROR_NO_SUCH_KEY_OR_VALUE == dwError)
+    {
+        dwError = NERR_SetupNotJoined;
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LsaPstorepRegGetStringA(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_FQDN,
+                    &pPasswordInfo->Account.Fqdn);
+    if (LWREG_ERROR_NO_SUCH_KEY_OR_VALUE == dwError)
+    {
+        dwError = NERR_SetupNotJoined;
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LsaPstorepRegGetDword(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_UNIX_LAST_CHANGE_TIME,
+                    &unixLastChangeTime);
+    if (LWREG_ERROR_NO_SUCH_KEY_OR_VALUE == dwError)
+    {
+        dwError = NERR_SetupNotJoined;
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwpsConvertTimeUnixToWindows(
+                    (time_t) unixLastChangeTime,
+                    &pPasswordInfo->Account.LastChangeTime);
+    if (LWREG_ERROR_NO_SUCH_KEY_OR_VALUE == dwError)
+    {
+        dwError = NERR_SetupNotJoined;
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    //
+    // Read password portion
+    //
+
+    dwError = LsaPstorepRegGetStringA(
+                    pContext->hReg,
+                    passwordKeyHandle,
+                    LWPS_REG_PASSWORD,
+                    &pPasswordInfo->Password);
+    if (LWREG_ERROR_NO_SUCH_KEY_OR_VALUE == dwError)
+    {
+        dwError = NERR_SetupNotJoined;
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+cleanup:
+    if (dwError)
+    {
+        LSA_PSTORE_FREE_PASSWORD_INFO_A(&pPasswordInfo);
+    }
+
+    if (passwordKeyHandle)
+    {
+        LwRegCloseKey(pContext->hReg, passwordKeyHandle);
+    }
+    if (accountKeyHandle)
+    {
+        LwRegCloseKey(pContext->hReg, accountKeyHandle);
+    }
+    if (rootKeyHandle)
+    {
+        LwRegCloseKey(pContext->hReg, rootKeyHandle);
+    }
+
+    LW_SAFE_FREE_MEMORY(pszRegistryPath);
+    LW_SAFE_FREE_MEMORY(pszDefaultDomain);
+
+    if (ppPasswordInfo)
+    {
+        *ppPasswordInfo = pPasswordInfo;
+    }
+    else
+    {
+        LSA_PSTORE_FREE_PASSWORD_INFO_A(&pPasswordInfo);
+    }
+
+    LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
+    return dwError;
+}
+
+DWORD
+LwpsLegacyWritePassword(
+    IN PLWPS_LEGACY_STATE pContext,
+    IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
+    )
+{
+    DWORD dwError = 0;
+    int EE = 0;
+    HKEY rootKeyHandle = NULL;
+    HKEY accountKeyHandle = NULL;
+    HKEY passwordKeyHandle = NULL;
+    PSTR pszRegistryPath = NULL;
+    PSTR pszDefaultDomain = NULL;
+    time_t unixLastChangeTime = 0;
+
+    //
+    // Convert data
+    //
+
+    if (0 == pPasswordInfo->Account.LastChangeTime)
+    {
+        // Treat 0 as "now".
+        unixLastChangeTime = time(NULL);
+    }
+    else
+    {
+        dwError = LwpsConvertTimeWindowsToUnix(
+                        pPasswordInfo->Account.LastChangeTime,
+                        &unixLastChangeTime);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
+
+    if ((unixLastChangeTime < 0) || (unixLastChangeTime > MAXDWORD))
+    {
+        dwError = ERROR_ARITHMETIC_OVERFLOW;
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
+
+    //
+    // Compute registry paths
+    //
+
+    dwError = LwAllocateStringPrintf(
+                  &pszRegistryPath,
+                  "%s\\%s\\%s",
+                  PSTOREDB_REGISTRY_AD_KEY,
+                  pPasswordInfo->Account.DnsDomainName,
+                  PSTOREDB_REGISTRY_PSTORE_SUBKEY);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    //
+    // Create keys
+    //
 
     dwError = RegUtilAddKeySecDesc(
                   pContext->hReg,
@@ -516,152 +470,133 @@ LwpsLegacyWritePassword(
                   pContext->pAccountSecurityDescriptor);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    /* 
-     * Add "MachinePassword" registry key, needed to apply ACL restrictions
-     * to restrict read access to value names (the machine password)
-     * stored under this key.
-     */
     dwError = RegUtilAddKeySecDesc(
                   pContext->hReg,
                   NULL,
                   pszRegistryPath,
-                  PSTOREDB_REGISTRY_MACHINE_PWD_SUBKEY,
+                  PSTOREDB_REGISTRY_PASSWORD_INFO_SUBKEY,
                   KEY_ALL_ACCESS,
                   pContext->pPasswordSecurityDescriptor);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    /* Write the data to the registry */
-    dwError = RegUtilSetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_DOMAIN_SID,
-                  REG_SZ,
-                  pszDomainSID,
-                  strlen(pszDomainSID));
+    //
+    // Open keys
+    //
+
+    dwError = LwRegOpenKeyExA(
+                    pContext->hReg,
+                    NULL,
+                    HKEY_THIS_MACHINE,
+                    0,
+                    KEY_READ,
+                    &rootKeyHandle);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = RegUtilSetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_DOMAIN_NAME,
-                  REG_SZ,
-                  pszDomainName,
-                  strlen(pszDomainName));
+    dwError = LwRegOpenKeyExA(
+                    pContext->hReg,
+                    rootKeyHandle,
+                    pszRegistryPath,
+                    0,
+                    KEY_WRITE,
+                    &accountKeyHandle);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = RegUtilSetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_DOMAIN_DNS_NAME,
-                  REG_SZ,
-                  pszDnsDomainName,
-                  strlen(pszDnsDomainName));
+    dwError = LwRegOpenKeyExA(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    PSTOREDB_REGISTRY_PASSWORD_INFO_SUBKEY,
+                    0,
+                    KEY_WRITE,
+                    &passwordKeyHandle);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = RegUtilSetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_HOSTNAME,
-                  REG_SZ,
-                  pszHostname,
-                  strlen(pszHostname));
+    //
+    // Write account portion
+    //
+
+    dwError = LsaPstorepRegSetStringA(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_DNS_DOMAIN_NAME,
+                    pPasswordInfo->Account.DnsDomainName);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = RegUtilSetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_HOST_DNS_DOMAIN,
-                  REG_SZ,
-                  pszHostDnsDomain,
-                  strlen(pszHostDnsDomain));
+    dwError = LsaPstorepRegSetStringA(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_NETBIOS_DOMAIN_NAME,
+                    pPasswordInfo->Account.NetbiosDomainName);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = RegUtilSetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_MACHINE_ACCOUNT,
-                  REG_SZ,
-                  pszMachineAccount,
-                  strlen(pszMachineAccount));
+    dwError = LsaPstorepRegSetStringA(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_DOMAIN_SID,
+                    pPasswordInfo->Account.DomainSid);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = RegUtilSetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  PSTOREDB_REGISTRY_MACHINE_PWD_SUBKEY,
-                  LWPS_REG_MACHINE_PWD,
-                  REG_SZ,
-                  pszMachinePassword,
-                  strlen(pszMachinePassword));
+    dwError = LsaPstorepRegSetStringA(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_SAM_ACCOUNT_NAME,
+                    pPasswordInfo->Account.SamAccountName);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = RegUtilSetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_MODIFY_TIMESTAMP,
-                  REG_DWORD,
-                  &dwClientModifyTimestamp,
-                  sizeof(dwClientModifyTimestamp));
+    dwError = LsaPstorepRegSetDword(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_TYPE,
+                    pPasswordInfo->Account.Type);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = RegUtilSetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_CREATION_TIMESTAMP,
-                  REG_DWORD,
-                  &tCreationTimestamp,
-                  sizeof(dwClientModifyTimestamp));
+    dwError = LsaPstorepRegSetDword(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_KEY_VERSION_NUMBER,
+                    pPasswordInfo->Account.KeyVersionNumber);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = RegUtilSetValue(
-                  pContext->hReg,
-                  NULL,
-                  pszRegistryPath,
-                  NULL,
-                  LWPS_REG_SCHANNEL_TYPE,
-                  REG_DWORD,
-                  &dwSchannelType,
-                  sizeof(dwSchannelType));
+    dwError = LsaPstorepRegSetStringA(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_FQDN,
+                    pPasswordInfo->Account.Fqdn);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = LwpsLegacyGetDefaultJoinedDomain(
-                    pContext,
-                    &pszDefaultDomain);
-    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
-    {
-        dwError = LwpsLegacySetDefaultJoinedDomain(
-                        pContext,
-                        pszDnsDomainName);
-    }
+    dwError = LsaPstorepRegSetDword(
+                    pContext->hReg,
+                    accountKeyHandle,
+                    LWPS_REG_UNIX_LAST_CHANGE_TIME,
+                    (DWORD) unixLastChangeTime);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    //
+    // Write password portion
+    //
+
+    dwError = LsaPstorepRegSetStringA(
+                    pContext->hReg,
+                    passwordKeyHandle,
+                    LWPS_REG_PASSWORD,
+                    pPasswordInfo->Password);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
+    if (passwordKeyHandle)
+    {
+        LwRegCloseKey(pContext->hReg, passwordKeyHandle);
+    }
+    if (accountKeyHandle)
+    {
+        LwRegCloseKey(pContext->hReg, accountKeyHandle);
+    }
+    if (rootKeyHandle)
+    {
+        LwRegCloseKey(pContext->hReg, rootKeyHandle);
+    }
+
     LW_SAFE_FREE_MEMORY(pszRegistryPath);
     LW_SAFE_FREE_MEMORY(pszDefaultDomain);
-    LW_SAFE_FREE_MEMORY(pszDomainSID);
-    LW_SAFE_FREE_MEMORY(pszDomainName);
-    LW_SAFE_FREE_MEMORY(pszDnsDomainName);
-    LW_SAFE_FREE_MEMORY(pszHostname);
-    LW_SAFE_FREE_MEMORY(pszHostDnsDomain);
-    LW_SAFE_FREE_MEMORY(pszMachineAccount);
-    LW_SECURE_FREE_STRING(pszMachinePassword);
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
@@ -670,50 +605,21 @@ cleanup:
 DWORD
 LwpsLegacyDeletePassword(
     IN PLWPS_LEGACY_STATE pContext,
-    IN OPTIONAL PCSTR pszDomainName
+    IN PCSTR pszDomainName
     )
 {
     DWORD dwError = 0;
     int EE = 0;
     PSTR pszRegistryPath = NULL;
-    PSTR pszDefaultDomain = NULL;
     DWORD dwSubKeysCount = 0;
     DWORD dwValuesCount = 0;
 
-    LwpsLegacyGetDefaultJoinedDomain(pContext, &pszDefaultDomain);
-
-    if (!pszDomainName && !pszDefaultDomain)
-    {
-        GOTO_CLEANUP_EE(EE);
-    }
-
-    if (pszDomainName)
-    {
-        dwError = LwAllocateStringPrintf(
-                      &pszRegistryPath,
-                      "%s\\%s",
-                      PSTOREDB_REGISTRY_AD_KEY,
-                      pszDomainName);
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
-    else
-    {
-        dwError = LwAllocateStringPrintf(
-                      &pszRegistryPath,
-                      "%s\\%s",
-                      PSTOREDB_REGISTRY_AD_KEY,
-                      pszDefaultDomain);
-        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
-    }
-
-    if (!pszDomainName || !pszDefaultDomain ||
-        strcmp(pszDomainName, pszDefaultDomain) == 0)
-    {
-        LwpsLegacySetDefaultJoinedDomain(
-                pContext,
-                NULL);
-        // TODO-What if there is an error?
-    }
+    dwError = LwAllocateStringPrintf(
+                  &pszRegistryPath,
+                  "%s\\%s",
+                  PSTOREDB_REGISTRY_AD_KEY,
+                  pszDomainName);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
     RegUtilDeleteTree(
         pContext->hReg,
@@ -746,13 +652,11 @@ LwpsLegacyDeletePassword(
 
 cleanup:
     LW_SAFE_FREE_MEMORY(pszRegistryPath);
-    LW_SAFE_FREE_MEMORY(pszDefaultDomain);
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }
 
-static
 DWORD
 LwpsLegacyGetDefaultJoinedDomain(
     IN PLWPS_LEGACY_STATE pContext,
@@ -773,6 +677,25 @@ LwpsLegacyGetDefaultJoinedDomain(
                   NULL,
                   (PVOID) &pszDomainName,
                   &dwValueLen);
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        // Treat as no default domain set
+        dwError = 0;
+        assert(!pszDomainName);
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    dwError = LwpsLegacyReadPassword(
+                    pContext,
+                    pszDomainName,
+                    NULL);
+    if (dwError == NERR_SetupNotJoined)
+    {
+        // TODO-INCONSISTENT-FREE-FUNCTION!!!
+        LW_SAFE_FREE_MEMORY(pszDomainName);
+        dwError = 0;
+        GOTO_CLEANUP_EE(EE);
+    }
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
@@ -800,7 +723,11 @@ LwpsLegacySetDefaultJoinedDomain(
 
     if (pszDomainName)
     {
-        // TODO-Verify that actually joined to specified domain.
+        dwError = LwpsLegacyReadPassword(
+                        pContext,
+                        pszDomainName,
+                        NULL);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
         dwError = RegUtilAddKey(
                       pContext->hReg,
@@ -852,7 +779,6 @@ LwpsLegacyGetJoinedDomains(
     DWORD dwSubKeysLen = 0;
     DWORD dwIndexKeys = 0;
     DWORD dwIndexDomains = 0;
-    PLWPS_LEGACY_PASSWORD_INFO pPasswordInfo = NULL;
     DWORD dwDomainCount = 0;
 
     dwError = RegUtilIsValidKey(
@@ -902,16 +828,10 @@ LwpsLegacyGetJoinedDomains(
                 pszSubKey = NULL;
             }
 
-            if (pPasswordInfo)
-            {
-                LwpsLegacyFreePassword(pPasswordInfo);
-                pPasswordInfo = NULL;
-            }
-
             dwError = LwpsLegacyReadPassword(
                             pContext,
                             ppszDomainList[dwIndexDomains],
-                            &pPasswordInfo);
+                            NULL);
             if (dwError == NERR_SetupNotJoined)
             {
                 // The domain is not joined.
@@ -938,11 +858,6 @@ cleanup:
         dwDomainCount = 0;
     }
 
-    if (pPasswordInfo)
-    {
-        LwpsLegacyFreePassword(pPasswordInfo);
-    }
-
     for (dwIndexKeys = 0; dwIndexKeys < dwSubKeysLen; dwIndexKeys++)
     {
         LW_SAFE_FREE_MEMORY(ppwszSubKeys[dwIndexKeys]);
@@ -956,24 +871,6 @@ cleanup:
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
-}
-
-VOID
-LwpsLegacyFreePassword(
-    IN PLWPS_LEGACY_PASSWORD_INFO pInfo
-    )
-{
-    if (pInfo)
-    {
-        LW_SAFE_FREE_MEMORY(pInfo->pwszDomainName);
-        LW_SAFE_FREE_MEMORY(pInfo->pwszDnsDomainName);
-        LW_SAFE_FREE_MEMORY(pInfo->pwszSID);
-        LW_SAFE_FREE_MEMORY(pInfo->pwszHostname);
-        LW_SAFE_FREE_MEMORY(pInfo->pwszHostDnsDomain);
-        LW_SAFE_FREE_MEMORY(pInfo->pwszMachineAccount);
-        LW_SECURE_FREE_WSTRING(pInfo->pwszMachinePassword);
-        LwFreeMemory(pInfo);
-    }
 }
 
 VOID
@@ -1194,3 +1091,82 @@ LwpsLegacyFreeSecurityDescriptor(
         *ppSecurityDescriptor = NULL;
     }
 }
+
+static
+DWORD
+LwpsConvertTimeWindowsToUnix(
+    IN LONG64 WindowsTime,
+    OUT time_t* pUnixTime
+    )
+{
+    DWORD dwError = 0;
+    LONG64 unixTime = 0;
+
+    if (WindowsTime < 0)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_ON_WINERROR(dwError);
+    }
+
+    unixTime = WindowsTime/10000000LL - 11644473600LL;
+
+    // Ensure the range is within time_t.
+    if (unixTime != (time_t) unixTime)
+    {
+        dwError = ERROR_ARITHMETIC_OVERFLOW;
+        GOTO_CLEANUP_ON_WINERROR(dwError);
+    }
+
+cleanup:
+    if (dwError)
+    {
+        unixTime = 0;
+    }
+
+    *pUnixTime = (time_t) unixTime;
+
+    return 0;
+}
+
+static
+DWORD
+LwpsConvertTimeUnixToWindows(
+    IN time_t UnixTime,
+    OUT PLONG64 pWindowsTime
+    )
+{
+    DWORD dwError = 0;
+    LONG64 windowsTime = 0;
+
+#if SIZEOF_TIME_T > 4
+    if ((LONG64) UnixTime < - 11644473600LL)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_ON_WINERROR(dwError);
+    }
+#endif
+
+    windowsTime = (LONG64) UnixTime + 11644473600LL;
+    if (windowsTime < 0)
+    {
+        dwError = ERROR_ARITHMETIC_OVERFLOW;
+        GOTO_CLEANUP_ON_WINERROR(dwError);
+    }
+    windowsTime *= 10000000LL;
+    if (windowsTime < 0)
+    {
+        dwError = ERROR_ARITHMETIC_OVERFLOW;
+        GOTO_CLEANUP_ON_WINERROR(dwError);
+    }
+
+cleanup:
+    if (dwError)
+    {
+        windowsTime = 0;
+    }
+
+    *pWindowsTime = windowsTime;
+
+    return 0;
+}
+
