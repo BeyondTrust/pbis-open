@@ -38,6 +38,12 @@
 
 #include "includes.h"
 
+typedef struct
+{
+    BOOLEAN WasStarted;
+    PWSTR pName;
+} DRIVER_STATE, *PDRIVER_STATE;
+
 static
 DWORD
 LwSmDriverStart(
@@ -45,10 +51,12 @@ LwSmDriverStart(
     )
 {
     DWORD dwError = 0;
-    PWSTR pwszName = LwSmGetServiceObjectData(pObject);
+    PDRIVER_STATE pState = LwSmGetServiceObjectData(pObject);
 
-    dwError = LwNtStatusToWin32Error(LwIoLoadDriver(pwszName));
+    dwError = LwNtStatusToWin32Error(LwIoLoadDriver(pState->pName));
     BAIL_ON_ERROR(dwError);
+
+    pState->WasStarted = TRUE;
 
     LwSmNotifyServiceObjectStateChange(pObject, LW_SERVICE_STATE_RUNNING);
 
@@ -68,10 +76,12 @@ LwSmDriverStop(
     )
 {
     DWORD dwError = 0;
-    PWSTR pwszName = LwSmGetServiceObjectData(pObject);
+    PDRIVER_STATE pState = LwSmGetServiceObjectData(pObject);
 
-    dwError = LwNtStatusToWin32Error(LwIoUnloadDriver(pwszName));
+    dwError = LwNtStatusToWin32Error(LwIoUnloadDriver(pState->pName));
     BAIL_ON_ERROR(dwError);
+
+    pState->WasStarted = FALSE;
 
     LwSmNotifyServiceObjectStateChange(pObject, LW_SERVICE_STATE_STOPPED);
 
@@ -93,7 +103,7 @@ LwSmDriverGetStatus(
 {
     DWORD dwError = 0;
     LWIO_DRIVER_STATE driverState = 0;
-    PWSTR pwszName = LwSmGetServiceObjectData(pObject);
+    PDRIVER_STATE pState = LwSmGetServiceObjectData(pObject);
 
     pStatus->home = LW_SERVICE_HOME_IO_MANAGER;
 
@@ -101,14 +111,22 @@ LwSmDriverGetStatus(
     
     if (!dwError)
     {
-        dwError = LwNtStatusToWin32Error(LwIoQueryStateDriver(
-                                             pwszName,
-                                             &driverState));
+        dwError = LwNtStatusToWin32Error(
+            LwIoQueryStateDriver(
+                pState->pName,
+                &driverState));
     }
 
     if (dwError)
     {
-        pStatus->state = LW_SERVICE_STATE_STOPPED;
+        if (pState->WasStarted)
+        {
+            pStatus->state = LW_SERVICE_STATE_DEAD;
+        }
+        else
+        {
+            pStatus->state = LW_SERVICE_STATE_STOPPED;
+        }
         dwError = 0;
     }
     else switch(driverState)
@@ -117,7 +135,14 @@ LwSmDriverGetStatus(
         pStatus->state = LW_SERVICE_STATE_RUNNING;
         break;
     case LWIO_DRIVER_STATE_UNLOADED:
-        pStatus->state = LW_SERVICE_STATE_STOPPED;
+        if (pState->WasStarted)
+        {
+            pStatus->state = LW_SERVICE_STATE_DEAD;
+        }
+        else
+        {
+            pStatus->state = LW_SERVICE_STATE_STOPPED;
+        }
         break;
     default:
         dwError = LW_ERROR_INTERNAL;
@@ -154,12 +179,15 @@ LwSmDriverConstruct(
     )
 {
     DWORD dwError = 0;
-    PWSTR pwszName = NULL;
+    PDRIVER_STATE pState = NULL;
 
-    dwError = LwSmCopyString(pInfo->pwszName, &pwszName);
+    dwError = LwAllocateMemory(sizeof(*pState), OUT_PPVOID(&pState));
     BAIL_ON_ERROR(dwError);
 
-    *ppData = pwszName;
+    dwError = LwSmCopyString(pInfo->pwszName, &pState->pName);
+    BAIL_ON_ERROR(dwError);
+
+    *ppData = pState;
 
 error:
 
@@ -172,7 +200,10 @@ LwSmDriverDestruct(
     PLW_SERVICE_OBJECT pObject
     )
 {
-    LwFreeMemory(LwSmGetServiceObjectData(pObject));
+    PDRIVER_STATE pState = LwSmGetServiceObjectData(pObject);
+
+    LW_SAFE_FREE_MEMORY(pState->pName);
+    LW_SAFE_FREE_MEMORY(pState);
 
     return;
 }
