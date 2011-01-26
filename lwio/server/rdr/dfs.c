@@ -471,6 +471,11 @@ RdrDfsConnectAttempt(
 
     do
     {
+        RTL_FREE(&pwszServer);
+        RTL_FREE(&pwszShare);
+        RTL_FREE(pContext->State.DfsConnect.ppwszFilePath);
+        RTL_FREE(pContext->State.DfsConnect.ppwszCanonicalPath);
+
         status = RdrConvertPath(
             pContext->State.DfsConnect.pwszPath,
             &pwszServer,
@@ -544,6 +549,11 @@ RdrDfsConnectAttempt(
             pContext->State.DfsConnect.Uid,
             bStopOnDfs,
             pContext);
+        if (!NT_SUCCESS(status) && status != STATUS_PENDING
+            && !pContext->State.DfsConnect.OrigStatus)
+        {
+            pContext->State.DfsConnect.OrigStatus = status;
+        }
     } while (RdrDfsStatusIsRetriable(status));
     BAIL_ON_NT_STATUS(status);
 
