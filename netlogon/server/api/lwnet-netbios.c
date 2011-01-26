@@ -690,13 +690,16 @@ LWNetNbName2ToStr(
                     addrsLen - nbNameOffset);
             nbNameOffset += strlen(NbNameParts2[i]);
         }     
-        LWNET_SAFE_FREE_MEMORY(NbNameParts2[i]);
     }
-    LWNET_SAFE_FREE_MEMORY(NbNameParts2);
     *ppNbName = NbName;
     *dwBytesConsumed = addrsLen;
 
 cleanup:
+    for (i=0; NbNameParts2[i]; i++)
+    {
+        LWNET_SAFE_FREE_MEMORY(NbNameParts2[i]);
+    }
+    LWNET_SAFE_FREE_MEMORY(NbNameParts2);
     return dwError;
 
 error:
