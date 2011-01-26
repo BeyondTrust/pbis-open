@@ -38,6 +38,9 @@
 
 #include "includes.h"
 
+#define RESTART_PERIOD 30
+#define RESTART_LIMIT 2
+
 static
 DWORD
 LwSmTablePollEntry(
@@ -62,6 +65,8 @@ VOID
 LwSmTableFreeEntry(
     PSM_TABLE_ENTRY pEntry
     );
+
+static PLW_THREAD_POOL gpPool = NULL;
 
 static SM_TABLE gServiceTable = 
 {
@@ -843,6 +848,105 @@ error:
     goto cleanup;
 }
 
+static
+DWORD
+LwSmTableStartRecursive(
+    PSM_TABLE_ENTRY pEntry
+    )
+{
+    DWORD error = 0;
+    PSM_TABLE_ENTRY pOtherEntry = NULL;
+    PWSTR* ppServices = NULL;
+    DWORD index = 0;
+
+    /* Start all dependencies */
+    error = LwSmTableGetEntryDependencyClosure(pEntry, &ppServices);
+    BAIL_ON_ERROR(error);
+
+    for (index = 0; ppServices[index]; index++)
+    {
+        error = LwSmTableGetEntry(ppServices[index], &pOtherEntry);
+        BAIL_ON_ERROR(error);
+
+        error = LwSmTableStartEntry(pOtherEntry);
+        BAIL_ON_ERROR(error);
+
+        LwSmTableReleaseEntry(pOtherEntry);
+        pOtherEntry = NULL;
+    }
+
+    error = LwSmTableStartEntry(pEntry);
+    BAIL_ON_ERROR(error);
+
+error:
+
+    if (ppServices)
+    {
+        LwSmFreeStringList(ppServices);
+    }
+
+    if (pOtherEntry)
+    {
+        LwSmTableReleaseEntry(pOtherEntry);
+    }
+
+    return error;
+}
+
+static
+VOID
+LwSmTableWatchdog(
+    PVOID pContext
+    )
+{
+    DWORD error = 0;
+    PSM_TABLE_ENTRY pEntry = pContext;
+    PSM_TABLE_ENTRY pOtherEntry = NULL;
+    LW_SERVICE_STATUS status = {0};
+    PWSTR* ppServices = NULL;
+    DWORD index = 0;
+
+    error = LwSmTableStartRecursive(pEntry);
+    BAIL_ON_ERROR(error);
+
+    /* See if any reverse dependencies changed state without announcing it */
+    error = LwSmTableGetEntryReverseDependencyClosure(pEntry, &ppServices);
+    BAIL_ON_ERROR(error);
+
+    for (index = 0; ppServices[index]; index++)
+    {
+        error = LwSmTableGetEntry(ppServices[index], &pOtherEntry);
+        BAIL_ON_ERROR(error);
+
+        error = LwSmTableGetEntryStatus(pOtherEntry, &status);
+        BAIL_ON_ERROR(error);
+
+        if (status.state == LW_SERVICE_STATE_DEAD)
+        {
+            (void) LwSmTableStartRecursive(pOtherEntry);
+        }
+
+        LwSmTableReleaseEntry(pOtherEntry);
+        pOtherEntry = NULL;
+    }
+
+error:
+
+    if (ppServices)
+    {
+        LwSmFreeStringList(ppServices);
+    }
+
+    if (pOtherEntry)
+    {
+        LwSmTableReleaseEntry(pOtherEntry);
+    }
+
+    LwSmTableReleaseEntry(pEntry);
+
+    return;
+}
+
 VOID
 LwSmTableNotifyEntryStateChanged(
     PSM_TABLE_ENTRY pEntry,
@@ -853,6 +957,7 @@ LwSmTableNotifyEntryStateChanged(
     PSM_LINK pLink = NULL;
     PSM_LINK pNext = NULL;
     PSM_ENTRY_NOTIFY pNotify = NULL;
+    time_t now = 0;
     
     LOCK(bLocked, pEntry->pLock);
 
@@ -871,6 +976,25 @@ LwSmTableNotifyEntryStateChanged(
     }
 
     pthread_cond_broadcast(pEntry->pEvent);
+
+    if (state == LW_SERVICE_STATE_DEAD && (now = time(NULL)) != -1)
+    {
+        if ((now - pEntry->LastRestartPeriod) > RESTART_PERIOD)
+        {
+            pEntry->RestartAttempts = 0;
+            pEntry->LastRestartPeriod = now;
+        }
+
+        if (pEntry->RestartAttempts < RESTART_LIMIT)
+        {
+            pEntry->RestartAttempts++;
+            pEntry->dwRefCount++;
+            if (LwRtlQueueWorkItem(gpPool, LwSmTableWatchdog, pEntry, 0) != STATUS_SUCCESS)
+            {
+                pEntry->dwRefCount--;
+            }
+        }
+    }
 
     UNLOCK(bLocked, pEntry->pLock);
 }
@@ -1252,6 +1376,20 @@ LwSmTableNotifyServiceObjectStateChange(
     return LwSmTableNotifyEntryStateChanged(pEntry, newState);
 }
 
+DWORD
+LwSmTableInit(
+    VOID
+    )
+{
+    DWORD error = ERROR_SUCCESS;
+
+    error = LwNtStatusToWin32Error(LwRtlCreateThreadPool(&gpPool, NULL));
+    BAIL_ON_ERROR(error);
+
+error:
+
+    return error;
+}
 
 VOID
 LwSmTableShutdown(
@@ -1277,6 +1415,7 @@ LwSmTableShutdown(
 
     UNLOCK(bLocked, gServiceTable.pLock);
     pthread_mutex_destroy(gServiceTable.pLock);
+    LwRtlFreeThreadPool(&gpPool);
 }
 
 SM_LOADER_CALLS gTableCalls =

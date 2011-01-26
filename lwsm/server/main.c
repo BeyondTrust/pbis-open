@@ -149,6 +149,10 @@ main(
     dwError = LwSmLoaderInitialize(&gTableCalls);
     BAIL_ON_ERROR(dwError);
 
+    /* Initialize the service table subsystem */
+    dwError = LwSmTableInit();
+    BAIL_ON_ERROR(dwError);
+
     /* Enter main loop */
     dwError = LwSmMain();
     BAIL_ON_ERROR(dwError);

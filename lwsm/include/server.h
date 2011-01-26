@@ -42,6 +42,7 @@
 #include "common.h"
 
 #include <pthread.h>
+#include <time.h>
 
 struct _LW_SERVICE_OBJECT
 {
@@ -74,6 +75,10 @@ typedef struct _SM_TABLE_ENTRY
     BOOL volatile bDepsMarked;
     /* Has pInfo been changed since the service was last constructed? */
     BOOL volatile bDirty;
+    /* How many automatic restarts have we attempted? */
+    DWORD RestartAttempts;
+    /* When did we begin the last restart period? */
+    time_t LastRestartPeriod;
     /* Lock controlling access to entry */
     pthread_mutex_t lock;
     pthread_mutex_t* pLock;
@@ -295,6 +300,11 @@ DWORD
 LwSmTableGetEntryReverseDependencyClosure(
     PSM_TABLE_ENTRY pEntry,
     PWSTR** pppwszServiceList
+    );
+
+DWORD
+LwSmTableInit(
+    VOID
     );
 
 VOID
