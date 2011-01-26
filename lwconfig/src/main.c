@@ -25,6 +25,7 @@
 
 #include "includes.h"
 
+static
 DWORD
 SetOperation(
     xmlDocPtr doc,
@@ -33,6 +34,7 @@ SetOperation(
     BOOLEAN bVerbose
     );
 
+static
 DWORD
 ShowOperation(
     xmlDocPtr doc,
@@ -65,6 +67,7 @@ PrintUsage()
     ,stderr);
 }
 
+static
 DWORD
 ListCapabilities(
     xmlDocPtr doc
@@ -138,6 +141,7 @@ error:
     goto cleanup;
 }
 
+static
 DWORD
 SetOperation(
     xmlDocPtr doc,
@@ -166,6 +170,7 @@ error:
     goto cleanup;
 }
 
+static
 DWORD
 ShowOperation(
     xmlDocPtr doc,
@@ -190,6 +195,7 @@ error:
     goto cleanup;
 }
 
+static
 DWORD
 DumpOperation(
     xmlDocPtr doc,
