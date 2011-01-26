@@ -473,6 +473,7 @@ RdrDfsConnectAttempt(
     {
         RTL_FREE(&pwszServer);
         RTL_FREE(&pwszShare);
+        RTL_FREE(&pwszResolved);
         RTL_FREE(pContext->State.DfsConnect.ppwszFilePath);
         RTL_FREE(pContext->State.DfsConnect.ppwszCanonicalPath);
 
