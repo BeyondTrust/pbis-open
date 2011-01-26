@@ -58,7 +58,6 @@ typedef struct lsa_generic_context
 {
     enum LsaContextType  Type;
     LONG                 refcount;
-    BOOLEAN              bCleanClose;
 
 } LSA_GENERIC_CONTEXT, *PLSA_GENERIC_CONTEXT;
 
