@@ -751,7 +751,7 @@ DJTestJoin(
     dwError = LsaOpenServer(&hLsaConnection);
     LW_CLEANUP_LSERR(exc, dwError);
 
-    dwError = LsaAdGetMachineAccountInfo(hLsaConnection, NULL, &pAccountInfo);
+    dwError = LsaAdGetMachineAccountInfo(hLsaConnection, pszDomainName, &pAccountInfo);
     switch (dwError)
     {
         case NERR_SetupNotJoined:
