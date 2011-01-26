@@ -52,6 +52,11 @@ LwAllocateMemory(
     DWORD dwError = 0;
     PVOID pMemory = NULL;
 
+    if (dwSize == 0)
+    {
+        dwSize = 1;
+    }
+
     pMemory = calloc(1, dwSize);
     if (!pMemory)
     {
