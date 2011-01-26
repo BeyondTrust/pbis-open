@@ -25,7 +25,8 @@ PUBLIC_HEADERS="\
         lw/affinity.h \
         lw/mapsecurity.h \
         lw/mapsecurity-types.h \
-        lw/mapsecurity-plugin.h"
+        lw/mapsecurity-plugin.h \
+        lw/svcm.h"
 
 make()
 {

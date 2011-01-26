@@ -55,6 +55,7 @@
 #include <stdio.h>
 #include <syslog.h>
 #include <lw/winerror.h>
+#include <lw/svcm.h>
 #include <lwerror.h>
 #include <lwmem.h>
 #include <lwstr.h>

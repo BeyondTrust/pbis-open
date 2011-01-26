@@ -41,6 +41,9 @@ fi
 AS_AC_EXPAND(CACHEDIR, $cachedir)
 AC_DEFINE_UNQUOTED(CACHEDIR, "$CACHEDIR", [Cache directory])
 
+AS_AC_EXPAND(LIBDIR, $libdir)
+AC_DEFINE_UNQUOTED(LIBDIR, "$LIBDIR", [Library directory])
+
 loaderdir="$libdir/lwsm-loader"
 AS_AC_EXPAND(LOADERDIR, $loaderdir)
 AC_DEFINE_UNQUOTED(LOADERDIR, "$LOADERDIR", [Loader directory])

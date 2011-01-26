@@ -1,6 +1,6 @@
 make()
 {
-    COMMON_HEADERDEPS="reg/lwreg.h lwadvapi.h lwmsg/lwmsg.h lwio/lwio.h"
+    COMMON_HEADERDEPS="reg/lwreg.h lwadvapi.h lwmsg/lwmsg.h lwio/lwio.h lw/base.h"
     
     mk_library \
         LIB=lwsmloader \
@@ -24,6 +24,14 @@ make()
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="$COMMON_HEADERDEPS" \
         LIBDEPS="lwsmloader lwioclient" \
+        INSTALLDIR="${MK_LIBDIR}/lwsm-loader"
+
+    mk_dlo \
+        DLO="svcm" \
+        SOURCES="svcm.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="$COMMON_HEADERDEPS" \
+        LIBDEPS="lwsmloader lwbase lwbase_nothr" \
         INSTALLDIR="${MK_LIBDIR}/lwsm-loader"
 
     mk_dlo \

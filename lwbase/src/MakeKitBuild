@@ -27,6 +27,7 @@ make()
 
     BASE_SOURCES="\
         atomic.c \
+        svcm.c \
         security-token.c \
         security-sd-inherit.c \
         threadpool-common.c \
@@ -60,4 +61,11 @@ make()
         INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
         HEADERDEPS="$BASE_HEADER_DEPS" \
         LIBDEPS="lwbase_nothr $LIB_PTHREAD $LIB_DL $LIB_RT"
+
+    mk_program \
+        PROGRAM="lw-svcm-wrap" \
+        SOURCES="svcm-wrap.c" \
+        INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
+        HEADERDEPS="$BASE_HEADER_DEPS" \
+        LIBDEPS="lwbase_nothr lwbase"
 }

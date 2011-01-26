@@ -57,5 +57,6 @@
 #include <lw/mapsecurity.h>
 #include <lw/safeint.h>
 #include <lw/hash.h>
+#include <lw/svcm.h>
 
 #endif

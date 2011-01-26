@@ -37,7 +37,8 @@ liblwbase_la_SOURCES = \
     security-token.c \
     security-sd-inherit.c \
 	threadpool-common.c \
-	mapsecurity.c
+	mapsecurity.c \
+	svcm.c
 
 liblwbase_la_LIBADD = \
     @LIB_PTHREAD@ \

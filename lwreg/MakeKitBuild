@@ -4,6 +4,8 @@ configure()
 {
     mk_config_header 'include/config.h'
 
+    mk_export MOD_EXT="${MK_DLO_EXT}"
+    mk_export LIBDIR="${MK_LIBDIR}"
     mk_export BINDIR="${MK_BINDIR}"
     mk_export SBINDIR="${MK_SBINDIR}"
 
@@ -56,7 +58,13 @@ configure()
 	FAIL=yes \
 	sqlite3
 
-    mk_output_file server/lwregd/lwreg.reg
+    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
+    then
+        mk_output_file OUTPUT=server/lwregd/lwreg.reg INPUT=server/lwregd/lwreg.reg.svcm.in
+    else
+        mk_output_file server/lwregd/lwreg.reg
+    fi
+
     mk_output_file shell/lw-edit-reg.sh
 }
 

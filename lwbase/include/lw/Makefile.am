@@ -24,4 +24,5 @@ lwinclude_HEADERS = \
 	mapsecurity.h \
 	mapsecurity-plugin.h \
 	mapsecurity-types.h \
-	affinity.h
+	affinity.h \
+	svcm.h
