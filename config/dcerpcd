@@ -11,7 +11,7 @@
 #LWI_STARTUP_TYPE_REDHAT#
 #LWI_STARTUP_TYPE_SUSE### BEGIN INIT INFO
 #LWI_STARTUP_TYPE_SUSE# Provides: rpcd
-#LWI_STARTUP_TYPE_SUSE# Required-Start: $network
+#LWI_STARTUP_TYPE_SUSE# Required-Start: $network lwsmd
 #LWI_STARTUP_TYPE_SUSE# Required-Stop: $network
 #LWI_STARTUP_TYPE_SUSE# Default-Start: 3 5
 #LWI_STARTUP_TYPE_SUSE# Default-Stop: 0 1 2 6
