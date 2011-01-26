@@ -145,6 +145,7 @@ LWNetNbStrToNbName(
         count++;
     }
 
+    /* Pad the rest of the NetBIOS name with encoded space sequences */
     while (count < 15)
     {
         nbBuf[i]   = 'C';
@@ -166,7 +167,8 @@ LWNetNbStrToNbName(
 void 
 LWNetNbNameToStr(
     PBYTE nbBuf, 
-    PSTR pszHost)
+    PSTR pszHost,
+    PUINT8 pQueryType)
 {
     UINT8 nibble1;
     UINT8 nibble2;
@@ -177,10 +179,23 @@ LWNetNbNameToStr(
         nibble1 = nbBuf[i]   - 'A';
         nibble2 = nbBuf[i+1] - 'A';
         *pszHost = (nibble1 << 4) | nibble2;
+        if (*pszHost == ' ' && i<LWNB_NETBIOS_ENCNAME_LEN-2)
+        {
+            /*
+             * NULL terminate at space, as this is illegal in NetBIOS 
+             * names. However, preserve the last value, which is the
+             * query type, which could happen to be 0x20 (' ').
+             */
+            *pszHost = '\0';
+        }
         pszHost++;
         i += 2;
     }
-    *pszHost = '\0';
+    if (pQueryType)
+    {
+        *pQueryType = (UINT8) pszHost[-1];
+    }
+    pszHost[-1] = '\0';
 }
     
 
@@ -222,6 +237,7 @@ LWNetNbStrToNbName2(
     if (p)
     {
         *p++ = '\0';
+        Fqdn = token;
     }
 
     /* Store length of NetBIOS name component before that name */
@@ -626,6 +642,69 @@ error:
 }
 
 
+/* Convert NetBIOS level 2 encoded name to a string */
+DWORD
+LWNetNbName2ToStr(
+    IN PBYTE buf,
+    OUT PSTR *ppNbName,
+    OUT PUINT8 pSuffix,
+    OUT PDWORD dwBytesConsumed)
+{
+    DWORD dwError = 0;
+    PSTR *NbNameParts2 = NULL;
+    PSTR NbName = NULL;
+    CHAR netBiosName[LWNB_NAME_MAX_LENGTH] = {0};
+    DWORD addrsLen = 0;
+    DWORD nbNameOffset = 0;
+    DWORD i = 0;
+
+    dwError = LWNetNbName2ToParts(&buf[i], &NbNameParts2, &addrsLen);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    dwError = LWNetAllocateMemory(
+                  addrsLen * sizeof(char),
+                  (PVOID*) &NbName);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    nbNameOffset = 0;
+    for (i=0; NbNameParts2[i]; i++)
+    {
+        if (i==0)
+        {
+            /* 
+             * Convert first part of name, which is in NetBIOS layer 1 encoding
+             * to a null-terminated string.
+             */
+            LWNetNbNameToStr((UINT8 *) NbNameParts2[i], netBiosName, pSuffix);
+            strncat(NbName, netBiosName, addrsLen - nbNameOffset);
+            nbNameOffset += strlen(netBiosName);
+        }
+        else
+        {
+            /* The rest of the name is just text, so copy it */
+            strncat(NbName, ".", addrsLen - nbNameOffset);
+            nbNameOffset++;
+
+            strncat(NbName,
+                    NbNameParts2[i],
+                    addrsLen - nbNameOffset);
+            nbNameOffset += strlen(NbNameParts2[i]);
+        }     
+        LWNET_SAFE_FREE_MEMORY(NbNameParts2[i]);
+    }
+    LWNET_SAFE_FREE_MEMORY(NbNameParts2);
+    *ppNbName = NbName;
+    *dwBytesConsumed = addrsLen;
+
+cleanup:
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(NbName);
+    goto cleanup;
+}
+
+
 DWORD 
 LWNetNbParseNameQueryResponse(
     IN PBYTE buf,
@@ -654,12 +733,11 @@ LWNetNbParseNameQueryResponse(
     UINT16 nbNB_Flags = 0;
     UINT32 IpAddress = 0;
     UINT16 RDLength = 0;
-    PSTR *NbNameParts2 = NULL;
+    UINT8 queryType = 0;
+    PSTR NetBiosName = NULL;
     PSTR NbName = NULL;
-    CHAR NetBiosName[17] = {0};
-    DWORD nbNameOffset = 0;
     DWORD numAddrs = 0;
-    DWORD addrsLen = 0;
+    DWORD nbNameLen = 0;
     struct in_addr *addrs = NULL;
 
     memcpy(&parseTransactionId, &buf[i], sizeof(parseTransactionId));
@@ -714,32 +792,13 @@ LWNetNbParseNameQueryResponse(
     i += sizeof(nbARCount);
     nbARCount = ntohs(nbARCount);
 
-    dwError = LWNetNbName2ToParts(&buf[i], &NbNameParts2, &addrsLen);
-    if (dwError == 0)
-    {
-        dwError = LWNetAllocateMemory(
-                      addrsLen * sizeof(char),
-                      (PVOID*) &NbName);
-        BAIL_ON_LWNET_ERROR(dwError);
-
-        i += addrsLen;
-        nbNameOffset = 0;
-        for (j=0; NbNameParts2[j]; j++)
-        {
-            if (j==0)
-            {
-                LWNetNbNameToStr((UINT8 *) NbNameParts2[j], NetBiosName);
-                memcpy(&NbName[nbNameOffset], NetBiosName, LWNB_NAME_MAX_LENGTH);
-                if (NbNameParts2[j+1])
-                {
-                    nbNameOffset += sprintf(&NbName[nbNameOffset], ".");
-                }
-                LWNET_SAFE_FREE_MEMORY(NbNameParts2[j]);
-            }
-        }
-        LWNET_SAFE_FREE_MEMORY(NbNameParts2);
-        *retNbName = NbName;
-    }
+    dwError = LWNetNbName2ToStr(
+                 &buf[i],
+                 &NetBiosName,
+                 &queryType,
+                 &nbNameLen);
+    BAIL_ON_LWNET_ERROR(dwError);
+    i += nbNameLen;
 
     memcpy(&nbNB, &buf[i], sizeof(nbNB));
     i += sizeof(nbNB);
@@ -788,6 +847,7 @@ LWNetNbParseNameQueryResponse(
         RDLength -= sizeof(nbNB_Flags) + sizeof(IpAddress);
     }
     while (RDLength > 0);
+    *retNbName = NetBiosName;
     *retAddrs = addrs;
     *retAddrsLen = j;
 
@@ -795,6 +855,7 @@ cleanup:
     return dwError;
 
 error:
+    LWNET_SAFE_FREE_MEMORY(NetBiosName);
     LWNET_SAFE_FREE_MEMORY(NbName);
     LWNET_SAFE_FREE_MEMORY(addrs);
     goto cleanup;

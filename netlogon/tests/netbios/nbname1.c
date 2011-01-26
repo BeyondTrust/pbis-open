@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     LWNetNbStrToNbName(str, 0, nbBuf);
     printf("NBName= '%s'\n", nbBuf);
 
-    LWNetNbNameToStr(nbBuf, tmpbuf);
+    LWNetNbNameToStr(nbBuf, tmpbuf, NULL);
     printf("InName= '%s'\n", tmpbuf);
 
     return 0;

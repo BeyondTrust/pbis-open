@@ -60,7 +60,8 @@ LWNetNbStrToNbName(
 void 
 LWNetNbNameToStr(
     IN PBYTE nbBuf, 
-    OUT PSTR pszHost);
+    OUT PSTR pszHost,
+    OUT OPTIONAL PUINT8 pSuffix);
 
 DWORD
 LWNetNbName2ToParts(
@@ -74,6 +75,13 @@ LWNetNbStrToNbName2(
     IN UINT8 suffix,
     OUT PBYTE *retNbNameL2,
     OUT PDWORD retNbNameL2Len);
+
+DWORD
+LWNetNbName2ToStr(
+    IN PBYTE buf,
+    OUT PSTR *ppNbName,
+    OUT PUINT8 pSuffix,
+    OUT PDWORD dwBytesConsumed);
 
 DWORD
 LWNetSrvNetBiosInit(

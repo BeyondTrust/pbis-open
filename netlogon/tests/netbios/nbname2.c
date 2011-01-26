@@ -13,13 +13,15 @@ int main(int argc, char *argv[])
 {
     int i = 0;
     PSTR str = NULL;
-    unsigned char *ptr = NULL;
+    PSTR fromNbName2ToString = NULL;
     PBYTE nbName2 = NULL;
     DWORD nbName2Len = 0;
     char **nbNameParts = NULL;
     DWORD nbNamePartsLen = 0;
-    char nbName1[33] = {0};
     int sts = 0;
+    UINT8 searchType = 0;
+    UINT8 queryType = 0;
+    DWORD nbNameBufSize = 0;
 
     if (argc == 1)
     {
@@ -27,10 +29,14 @@ int main(int argc, char *argv[])
         return 1;
     }
     str = argv[1];
+    if (argc > 2)
+    {
+        queryType = strtol(argv[2], NULL, 0);
+    }
 
     sts = LWNetNbStrToNbName2(
               str,
-              0,
+              queryType,
               &nbName2,
               &nbName2Len);
     if (sts)
@@ -39,20 +45,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    ptr = nbName2;
-    i = (int) *ptr++;
-
-    LWNetNbNameToStr(ptr, nbName1);
-    printf("%.*s <%s>\n", i, ptr, nbName1);
-
-    ptr += i;
-    while (*ptr)
-    {
-        i = (int) *ptr++;
-        printf("%.*s\n", i, ptr);
-        ptr += i;
-    }
-    
     sts = LWNetNbName2ToParts(
               nbName2,
               &nbNameParts,
@@ -62,7 +54,30 @@ int main(int argc, char *argv[])
         for (i=0; nbNameParts[i]; i++)
         {
             printf("nbNamePart[%d] = '%s'\n", i, nbNameParts[i]);
+            free(nbNameParts[i]);
         }
+        free(nbNameParts);
+    }
+
+    sts = LWNetNbName2ToStr(
+              nbName2,
+              &fromNbName2ToString,
+              &searchType,
+              &nbNameBufSize);
+    if (sts == 0)
+    {
+        printf("NetBIOS name = '%s'\n", fromNbName2ToString);
+        printf("NetBIOS search = '0x%02x'\n", (unsigned int) searchType);
+        printf("NetBIOS buflen = '%d'\n", nbNameBufSize);
+    }
+
+    if (fromNbName2ToString)
+    {
+        free(fromNbName2ToString);
+    }
+    if (nbName2)
+    {
+        free(nbName2);
     }
 
     return 0;
