@@ -981,7 +981,10 @@ VOID *LWNetSrvStartNetBiosThreadRoutine(VOID *ctx)
 cleanup:
     LWNET_SAFE_FREE_MEMORY(NetBiosReply);
     LWNET_SAFE_FREE_STRING(NbName);
-    close(sock);
+    if (sock != -1)
+    {
+        close(sock);
+    }
     return NULL;
 
 error:
