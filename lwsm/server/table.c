@@ -953,10 +953,12 @@ LwSmTableNotifyEntryStateChanged(
     LW_SERVICE_STATE state
     )
 {
+    DWORD error = ERROR_SUCCESS;
     BOOLEAN bLocked = FALSE;
     PSM_LINK pLink = NULL;
     PSM_LINK pNext = NULL;
     PSM_ENTRY_NOTIFY pNotify = NULL;
+    PSTR pServiceName = NULL;
     time_t now = 0;
     
     LOCK(bLocked, pEntry->pLock);
@@ -977,8 +979,18 @@ LwSmTableNotifyEntryStateChanged(
 
     pthread_cond_broadcast(pEntry->pEvent);
 
-    if (state == LW_SERVICE_STATE_DEAD && (now = time(NULL)) != -1)
+    if (state == LW_SERVICE_STATE_DEAD)
     {
+        now = time(NULL);
+        if (now == (time_t) -1)
+        {
+            error = LwErrnoToWin32Error(errno);
+            BAIL_ON_ERROR(error);
+        }
+
+        error = LwWc16sToMbs(pEntry->pInfo->pwszName, &pServiceName);
+        BAIL_ON_ERROR(error);
+
         if ((now - pEntry->LastRestartPeriod) > RESTART_PERIOD)
         {
             pEntry->RestartAttempts = 0;
@@ -989,14 +1001,36 @@ LwSmTableNotifyEntryStateChanged(
         {
             pEntry->RestartAttempts++;
             pEntry->dwRefCount++;
-            if (LwRtlQueueWorkItem(gpPool, LwSmTableWatchdog, pEntry, 0) != STATUS_SUCCESS)
+
+            SM_LOG_WARNING(
+                "Restarting dead service: %s (attempt %u/%u)",
+                pServiceName,
+                (unsigned int) pEntry->RestartAttempts,
+                (unsigned int) RESTART_LIMIT);
+
+
+            error = LwNtStatusToWin32Error(LwRtlQueueWorkItem(gpPool, LwSmTableWatchdog, pEntry, 0));
+            if (error)
             {
                 pEntry->dwRefCount--;
             }
+            BAIL_ON_ERROR(error);
+        }
+        else
+        {
+            SM_LOG_ERROR(
+                "Service died: %s (restarted %u times in %lu seconds)",
+                pServiceName,
+                (unsigned int) pEntry->RestartAttempts,
+                (unsigned long) (now - pEntry->LastRestartPeriod));
         }
     }
 
+error:
+
     UNLOCK(bLocked, pEntry->pLock);
+
+    LW_SAFE_FREE_MEMORY(pServiceName);
 }
 
 DWORD
