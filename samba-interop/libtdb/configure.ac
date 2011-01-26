@@ -23,7 +23,7 @@ AC_CHECK_HEADERS([getopt.h sys/select.h sys/time.h])
 AC_CHECK_DECLS([pread pwrite], , , [#include <unistd.h>])
 
 AC_CHECK_HEADERS([standards.h stdint.h inttypes.h string.h strings.h sys/types.h dlfcn.h limits.h stdbool.h sys/param.h sys/wait.h setjmp.h sys/ipc.h sys/shm.h sys/mman.h fcntl.h sys/fcntl.h])
-AC_CHECK_FUNCS([strerror mktime strdup memmove mktime timegm strlcpy strlcat strndup strnlen setenv unsetenv seteuid setegid setlinebuf strcasestr ½strtok_r strtoll strtoull ftruncate initgroups bzero memset dlerror dlopen dlsym dlclose socketpair vasprintf snprintf vsnprintf asprintf vsyslog va_copy __va_copy strptime mkdtemp])
+AC_CHECK_FUNCS([strerror mktime strdup memmove mktime timegm strlcpy strlcat strndup strnlen setenv unsetenv seteuid setegid setlinebuf strcasestr strtok_r strtoll strtoull ftruncate initgroups bzero memset dlerror dlopen dlsym dlclose socketpair vasprintf snprintf vsnprintf asprintf vsyslog va_copy __va_copy strptime mkdtemp])
 AC_CHECK_TYPES([comparison_fn_t, bool, Bool, sig_atomic_t], , , [
 #if HAVE_STDBOOL_H
 #include <stdbool.h>
