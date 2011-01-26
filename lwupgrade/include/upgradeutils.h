@@ -154,8 +154,8 @@ UpParseDateString(
     PDWORD pdwTimeInterval
     );
 
-LSA_MACHINE_ACCOUNT_TYPE
-UpConvertSchannelTypeToMachineAccountType(
+LSA_MACHINE_ACCOUNT_FLAGS
+UpConvertSchannelTypeToMachineAccountFlags(
     IN DWORD SchannelType
     );
 

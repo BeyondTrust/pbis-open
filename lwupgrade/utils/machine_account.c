@@ -35,31 +35,35 @@
  */
 #include "includes.h"
 
-LSA_MACHINE_ACCOUNT_TYPE
-UpConvertSchannelTypeToMachineAccountType(
+#define SCHANNEL_WKSTA     2
+#define SCHANNEL_DOMAIN    4
+#define SCHANNEL_BDC       6
+
+LSA_MACHINE_ACCOUNT_FLAGS
+UpConvertSchannelTypeToMachineAccountFlags(
     IN DWORD SchannelType
     )
 {
-    LSA_MACHINE_ACCOUNT_TYPE accountType = 0;
+    LSA_MACHINE_ACCOUNT_FLAGS accountFlags = 0;
 
     switch (SchannelType)
     {
-        case 2: // SCHANNEL_WKSTA
-            accountType = LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION;
+        case SCHANNEL_WKSTA:
+            accountFlags = LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION;
             break;
-        case 4: // SCHANNEL_DOMAIN
-            accountType = LSA_MACHINE_ACCOUNT_TYPE_DC;
+        case SCHANNEL_DOMAIN:
+            accountFlags = LSA_MACHINE_ACCOUNT_TYPE_DC;
             break;
-        case 6: // SCHANNEL_BDC
-            accountType = LSA_MACHINE_ACCOUNT_TYPE_BDC;
+        case SCHANNEL_BDC:
+            accountFlags = LSA_MACHINE_ACCOUNT_TYPE_BDC;
             break;
         default:
             // Default to workstation
-            accountType = LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION;
+            accountFlags = LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION;
             break;
     }
 
-    return accountType;
+    return accountFlags;
 }
 
 DWORD

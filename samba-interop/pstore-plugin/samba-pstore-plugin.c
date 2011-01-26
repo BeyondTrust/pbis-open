@@ -300,7 +300,7 @@ SetPassword(
 
     /* Schannel Type */
 
-    switch(pPasswordInfo->Account.Type)
+    switch(LSA_GET_MACHINE_ACCOUNT_TYPE(pPasswordInfo->Account.AccountFlags))
     {
         case LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION:
             schannelType = LW_HTOL32(2);

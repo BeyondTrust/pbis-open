@@ -226,7 +226,7 @@ LsaPstorepConvertAnsiToWidePasswordInfo(
                     pPasswordInfo->Account.Fqdn));
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    passwordInfo->Account.Type = pPasswordInfo->Account.Type;
+    passwordInfo->Account.AccountFlags = pPasswordInfo->Account.AccountFlags;
     passwordInfo->Account.KeyVersionNumber = pPasswordInfo->Account.KeyVersionNumber;
     passwordInfo->Account.LastChangeTime = pPasswordInfo->Account.LastChangeTime;
 
@@ -285,7 +285,7 @@ LsaPstorepConvertWideToAnsiPasswordInfo(
                     pPasswordInfo->Account.Fqdn));
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    passwordInfo->Account.Type = pPasswordInfo->Account.Type;
+    passwordInfo->Account.AccountFlags = pPasswordInfo->Account.AccountFlags;
     passwordInfo->Account.KeyVersionNumber = pPasswordInfo->Account.KeyVersionNumber;
     passwordInfo->Account.LastChangeTime = pPasswordInfo->Account.LastChangeTime;
 
@@ -344,7 +344,7 @@ LsaPstorepConvertWideToAnsiAccountInfo(
                     pAccountInfo->Fqdn));
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    accountInfo->Type = pAccountInfo->Type;
+    accountInfo->AccountFlags = pAccountInfo->AccountFlags;
     accountInfo->KeyVersionNumber = pAccountInfo->KeyVersionNumber;
     accountInfo->LastChangeTime = pAccountInfo->LastChangeTime;
 
@@ -420,15 +420,10 @@ LsaPstorepCheckPasswordInfoW(
         GOTO_CLEANUP_EE(EE);
     }
 
-    switch (PasswordInfo->Account.Type)
+    if (!LSA_IS_VALID_MACHINE_ACCOUNT_FLAGS(PasswordInfo->Account.AccountFlags))
     {
-        case LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION:
-        case LSA_MACHINE_ACCOUNT_TYPE_DC:
-        case LSA_MACHINE_ACCOUNT_TYPE_BDC:
-            break;
-        default:
-            dwError = ERROR_INVALID_PARAMETER;
-            GOTO_CLEANUP_EE(EE);
+        dwError = ERROR_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
     }
 
     if (!PasswordInfo->Account.Fqdn ||

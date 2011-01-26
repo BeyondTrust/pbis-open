@@ -74,7 +74,7 @@
 #define LWPS_REG_NETBIOS_DOMAIN_NAME    "NetbiosDomainName"
 #define LWPS_REG_DOMAIN_SID             "DomainSid"
 #define LWPS_REG_SAM_ACCOUNT_NAME       "SamAccountName"
-#define LWPS_REG_TYPE                   "Type"
+#define LWPS_REG_ACCOUNT_FLAGS          "AccountFlags"
 #define LWPS_REG_KEY_VERSION_NUMBER     "KeyVersionNumber"
 #define LWPS_REG_FQDN                   "Fqdn"
 #define LWPS_REG_UNIX_LAST_CHANGE_TIME  "UnixLastChangeTime"
@@ -307,8 +307,8 @@ LwpsLegacyReadPassword(
     dwError = LsaPstorepRegGetDword(
                     pContext->hReg,
                     accountKeyHandle,
-                    LWPS_REG_TYPE,
-                    &pPasswordInfo->Account.Type);
+                    LWPS_REG_ACCOUNT_FLAGS,
+                    &pPasswordInfo->Account.AccountFlags);
     if (LWREG_ERROR_NO_SUCH_KEY_OR_VALUE == dwError)
     {
         dwError = NERR_SetupNotJoined;
@@ -545,8 +545,8 @@ LwpsLegacyWritePassword(
     dwError = LsaPstorepRegSetDword(
                     pContext->hReg,
                     accountKeyHandle,
-                    LWPS_REG_TYPE,
-                    pPasswordInfo->Account.Type);
+                    LWPS_REG_ACCOUNT_FLAGS,
+                    pPasswordInfo->Account.AccountFlags);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
     dwError = LsaPstorepRegSetDword(

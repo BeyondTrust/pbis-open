@@ -152,7 +152,7 @@ PrintAccountInfo(
            "  Domain SID: %s\n"
            "  SAM Account Name: %s\n"
            "  FQDN: %s\n"
-           "  Join Type: %u\n"
+           "  Account Flags: 0x%08x (%u)\n"
            "  Key Version: %u\n"
            "  Last Change Time: %lld\n"
            "",
@@ -161,7 +161,7 @@ PrintAccountInfo(
            LW_PRINTF_STRING(pAccountInfo->DomainSid),
            LW_PRINTF_STRING(pAccountInfo->SamAccountName),
            LW_PRINTF_STRING(pAccountInfo->Fqdn),
-           pAccountInfo->Type,
+           pAccountInfo->AccountFlags, pAccountInfo->AccountFlags,
            pAccountInfo->KeyVersionNumber,
            (long long int)pAccountInfo->LastChangeTime);
 }

@@ -817,8 +817,8 @@ LsaUmpCreateKeys(
             pAccountInfo->SamAccountName,
             strlen(pAccountInfo->SamAccountName));
         RAND_seed(
-            &pAccountInfo->Type,
-            sizeof(pAccountInfo->Type));
+            &pAccountInfo->AccountFlags,
+            sizeof(pAccountInfo->AccountFlags));
         RAND_seed(
             &pAccountInfo->KeyVersionNumber,
             sizeof(pAccountInfo->KeyVersionNumber));

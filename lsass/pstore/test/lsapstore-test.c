@@ -225,7 +225,7 @@ PrintAccountInfo(
            "  NetBIOS Domain Name: %s\n"
            "  Domain SID: %s\n"
            "  SAM Account Name: %s\n"
-           "  Join Type: %u\n"
+           "  Account Flags: 0x%08x (%u)\n"
            "  Key Version: %u\n"
            "  FQDN: %s\n"
            "  Last Change Time: %lld\n"
@@ -234,7 +234,7 @@ PrintAccountInfo(
            LW_PRINTF_STRING(pAccountInfo->NetbiosDomainName),
            LW_PRINTF_STRING(pAccountInfo->DomainSid),
            LW_PRINTF_STRING(pAccountInfo->SamAccountName),
-           pAccountInfo->Type,
+           pAccountInfo->AccountFlags, pAccountInfo->AccountFlags,
            pAccountInfo->KeyVersionNumber,
            LW_PRINTF_STRING(pAccountInfo->Fqdn),
            (long long int) pAccountInfo->LastChangeTime);
@@ -282,7 +282,7 @@ DoSetPasswordInfo(
     IN PCSTR NetbiosDomainName,
     IN PCSTR DomainSid,
     IN PCSTR SamAccountName,
-    IN LSA_MACHINE_ACCOUNT_TYPE Type,
+    IN LSA_MACHINE_ACCOUNT_FLAGS AccountFlags,
     IN DWORD KeyVersionNumber,
     IN PCSTR Fqdn,
     IN LONG64 LastChangeTime,
@@ -296,7 +296,7 @@ DoSetPasswordInfo(
     passwordInfo.Account.NetbiosDomainName = (PSTR) NetbiosDomainName;
     passwordInfo.Account.DomainSid = (PSTR) DomainSid;
     passwordInfo.Account.SamAccountName = (PSTR) SamAccountName;
-    passwordInfo.Account.Type = Type;
+    passwordInfo.Account.AccountFlags = AccountFlags;
     passwordInfo.Account.KeyVersionNumber = KeyVersionNumber;
     passwordInfo.Account.Fqdn = (PSTR) Fqdn;
     passwordInfo.Account.LastChangeTime = LastChangeTime;
@@ -550,7 +550,7 @@ ShowUsage(
            "    NETBIOS-DOMAIN-NAME\n"
            "    DOMAIN-SID\n"
            "    SAM-ACCOUNT-NAME (e.g., COMPUTER$)\n"
-           "    JOIN-TYPE (1 for regular workstation join)\n"
+           "    ACCOUNT-FLAGS (1 for regular workstation join)\n"
            "    KEY-VERSION-NUMBER (e.g., 1)\n"
            "    FQDN (e.g., computer.ad.example.com)\n"
            "    LAST-CHANGE-TIME\n"
@@ -645,8 +645,8 @@ main(
         PCSTR netbiosDomainName = LwArgvCursorPop(&cursor);
         PCSTR domainSid = LwArgvCursorPop(&cursor);
         PCSTR samAccountName = LwArgvCursorPop(&cursor);
-        PCSTR joinTypeString = LwArgvCursorPop(&cursor);
-        LSA_MACHINE_ACCOUNT_TYPE joinType = 0;
+        PCSTR accountFlagsString = LwArgvCursorPop(&cursor);
+        LSA_MACHINE_ACCOUNT_FLAGS accountFlags = 0;
         PCSTR keyVersionNumberString = LwArgvCursorPop(&cursor);
         DWORD keyVersionNumber = 0;
         PCSTR fqdn = LwArgvCursorPop(&cursor);
@@ -674,14 +674,14 @@ main(
             fprintf(stderr, "Missing SAM-ACCOUNT-NAME argument.\n");
             ShowUsageError(programName);
         }
-        if (!joinTypeString)
+        if (!accountFlagsString)
         {
-            fprintf(stderr, "Missing JOIN-TYPE argument.\n");
+            fprintf(stderr, "Missing ACCOUNT-FLAGS argument.\n");
             ShowUsageError(programName);
         }
-        if (ParseULONG(joinTypeString, &joinType))
+        if (ParseULONG(accountFlagsString, &accountFlags))
         {
-            fprintf(stderr, "JOIN-TYPE must be a valid ULONG instead of %s.\n", joinTypeString);
+            fprintf(stderr, "ACCOUNT-FLAGS must be a valid ULONG instead of %s.\n", accountFlagsString);
             ShowUsageError(programName);
         }
         if (!keyVersionNumberString)
@@ -726,7 +726,7 @@ main(
                         netbiosDomainName,
                         domainSid,
                         samAccountName,
-                        joinType,
+                        accountFlags,
                         keyVersionNumber,
                         fqdn,
                         lastChangeTime,

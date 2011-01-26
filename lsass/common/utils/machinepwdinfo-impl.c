@@ -193,7 +193,7 @@ LsaImplFillMachineAccountInfoA(
                     &pTargetAccountInfo->SamAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    pTargetAccountInfo->Type = pSourceAccountInfo->Type;
+    pTargetAccountInfo->AccountFlags = pSourceAccountInfo->AccountFlags;
     pTargetAccountInfo->KeyVersionNumber = pSourceAccountInfo->KeyVersionNumber;
 
     dwError = LwStrDupOrNull(
@@ -241,7 +241,7 @@ LsaImplFillMachineAccountInfoW(
                     &pTargetAccountInfo->SamAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    pTargetAccountInfo->Type = pSourceAccountInfo->Type;
+    pTargetAccountInfo->AccountFlags = pSourceAccountInfo->AccountFlags;
     pTargetAccountInfo->KeyVersionNumber = pSourceAccountInfo->KeyVersionNumber;
 
     dwError = LocalWc16StrDupOrNull(
@@ -511,7 +511,7 @@ LsaImplFillMachineAccountInfoMultiByteToWide(
                     &pTargetAccountInfo->SamAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    pTargetAccountInfo->Type = pSourceAccountInfo->Type;
+    pTargetAccountInfo->AccountFlags = pSourceAccountInfo->AccountFlags;
     pTargetAccountInfo->KeyVersionNumber = pSourceAccountInfo->KeyVersionNumber;
 
     dwError = LocalMbsToWc16sOrNull(
@@ -559,7 +559,7 @@ LsaImplFillMachineAccountInfoWideToMultiByte(
                     &pTargetAccountInfo->SamAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    pTargetAccountInfo->Type = pSourceAccountInfo->Type;
+    pTargetAccountInfo->AccountFlags = pSourceAccountInfo->AccountFlags;
     pTargetAccountInfo->KeyVersionNumber = pSourceAccountInfo->KeyVersionNumber;
 
     dwError = LocalWc16sToMbsOrNull(

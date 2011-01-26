@@ -312,7 +312,7 @@ LsaPstorepReadData(
                     RegistryConnection,
                     AccountKeyHandle,
                     LSA_PSTORE_VALUE_NAME_TYPE,
-                    &pPasswordInfoA->Account.Type);
+                    &pPasswordInfoA->Account.AccountFlags);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
     dwError = LsaPstorepRegGetDword(

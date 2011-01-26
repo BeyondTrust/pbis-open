@@ -2056,7 +2056,7 @@ LsaSaveMachinePassword(
     passwordInfo.Account.NetbiosDomainName = pwszDomain;
     passwordInfo.Account.DomainSid = pwszSid;
     passwordInfo.Account.SamAccountName = pwszAccount;
-    passwordInfo.Account.Type = LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION;
+    passwordInfo.Account.AccountFlags = LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION;
     passwordInfo.Account.KeyVersionNumber = dwKvno;
     passwordInfo.Account.Fqdn = pwszFqdn;
     passwordInfo.Account.LastChangeTime = 0;

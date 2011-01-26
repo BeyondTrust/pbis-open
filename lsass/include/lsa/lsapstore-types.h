@@ -45,11 +45,41 @@
 
 #include <lw/types.h>
 
-typedef LW_DWORD LSA_MACHINE_ACCOUNT_TYPE, *PLSA_MACHINE_ACCOUNT_TYPE;
+typedef LW_DWORD LSA_MACHINE_ACCOUNT_FLAGS, *PLSA_MACHINE_ACCOUNT_FLAGS;
 
 #define LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION 1 // Schannel Type 2
 #define LSA_MACHINE_ACCOUNT_TYPE_DC          2 // Schannel Type 4
 #define LSA_MACHINE_ACCOUNT_TYPE_BDC         3 // Schannel Type 6
+
+// Reserve extra bits for potential future expansion
+#define _LSA_MACHINE_ACCOUNT_TYPE_MASK  ((LSA_MACHINE_ACCOUNT_FLAGS)0xFF)
+
+#define LSA_GET_MACHINE_ACCOUNT_TYPE(Flags) \
+    ((Flags) & _LSA_MACHINE_ACCOUNT_TYPE_MASK)
+
+static
+inline
+LW_BOOLEAN
+LSA_IS_VALID_MACHINE_ACCOUNT_FLAGS(
+    LSA_MACHINE_ACCOUNT_FLAGS AccountFlags
+    )
+{
+    switch (LSA_GET_MACHINE_ACCOUNT_TYPE(AccountFlags))
+    {
+        case LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION:
+        case LSA_MACHINE_ACCOUNT_TYPE_DC:
+        case LSA_MACHINE_ACCOUNT_TYPE_BDC:
+            break;
+        default:
+            return LW_FALSE;
+    }
+    // No non-type flags currently defined
+    if (AccountFlags & ~_LSA_MACHINE_ACCOUNT_TYPE_MASK)
+    {
+        return LW_FALSE;
+    }
+    return LW_TRUE;
+}
 
 typedef struct _LSA_MACHINE_ACCOUNT_INFO_W {
     // Basic Information
@@ -57,7 +87,7 @@ typedef struct _LSA_MACHINE_ACCOUNT_INFO_W {
     LW_PWSTR NetbiosDomainName;
     LW_PWSTR DomainSid;
     LW_PWSTR SamAccountName;
-    LSA_MACHINE_ACCOUNT_TYPE Type;
+    LSA_MACHINE_ACCOUNT_FLAGS AccountFlags;
     LW_DWORD KeyVersionNumber;
     LW_PWSTR Fqdn;
     // Windows Time Format
@@ -75,7 +105,7 @@ typedef struct _LSA_MACHINE_ACCOUNT_INFO_A {
     LW_PSTR NetbiosDomainName;
     LW_PSTR DomainSid;
     LW_PSTR SamAccountName;
-    LSA_MACHINE_ACCOUNT_TYPE Type;
+    LSA_MACHINE_ACCOUNT_FLAGS AccountFlags;
     LW_DWORD KeyVersionNumber;
     LW_PSTR Fqdn;
     // Windows Time Format

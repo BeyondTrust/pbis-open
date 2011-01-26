@@ -236,7 +236,7 @@ SqliteMachineAccountToPstore(
     if(!LW_IS_NULL_OR_EMPTY_STR(pszValue))
     {
         DWORD dwSchannelType = (UINT32)atol(pszValue);
-        passwordInfo.Account.Type = UpConvertSchannelTypeToMachineAccountType(dwSchannelType);
+        passwordInfo.Account.AccountFlags = UpConvertSchannelTypeToMachineAccountFlags(dwSchannelType);
     }
 
     // Done reading database.  Now do data fixups.
