@@ -59,12 +59,6 @@ LsaPstoreGetPasswordInfoW(
     PCWSTR actualDnsDomainName = DnsDomainName;
     PLSA_MACHINE_PASSWORD_INFO_W passwordInfo = NULL;
 
-    if (DnsDomainName && !LsaPstorepWC16StringIsUpcase(DnsDomainName))
-    {
-        dwError = ERROR_INVALID_PARAMETER;
-        GOTO_CLEANUP_EE(EE);
-    }
-
     dwError = LsaPstorepEnsureInitialized(&backendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
@@ -168,12 +162,6 @@ LsaPstoreDeletePasswordInfoW(
     BOOLEAN isDefaultDomain = FALSE;
     PLSA_MACHINE_PASSWORD_INFO_W passwordInfo = NULL;
     PCWSTR actualDnsDomainName = NULL;
-
-    if (DnsDomainName && !LsaPstorepWC16StringIsUpcase(DnsDomainName))
-    {
-        dwError = ERROR_INVALID_PARAMETER;
-        GOTO_CLEANUP_EE(EE);
-    }
 
     dwError = LsaPstorepEnsureInitialized(&backendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
