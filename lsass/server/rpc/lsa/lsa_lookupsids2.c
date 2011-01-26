@@ -633,6 +633,11 @@ LsaSrvLookupForeignDomainSids(
         }
         Sids.dwNumSids = 0;
 
+        if (pDomEntry)
+        {
+            LsaSrvDomainEntryFree(&pDomEntry);
+        }
+
         if (pForeignDomains)
         {
             LsaRpcFreeMemory(pForeignDomains);
@@ -679,6 +684,11 @@ cleanup:
     LW_SAFE_FREE_MEMORY(ForeignSids.ppSids);
     LW_SAFE_FREE_MEMORY(ForeignSids.pdwIndices);
     LW_SAFE_FREE_MEMORY(Sids.pSids);
+
+    if (pDomEntry)
+    {
+        LsaSrvDomainEntryFree(&pDomEntry);
+    }
 
     if (pForeignDomains)
     {
