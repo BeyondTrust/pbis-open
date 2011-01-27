@@ -20,6 +20,7 @@ configure()
     
     mk_export MOD_EXT="$MK_DLO_EXT"
     mk_export SBINDIR="$MK_SBINDIR"
+    mk_export LIBDIR="$MK_LIBDIR"
     mk_export providerdir="$MK_LIBDIR"
 
     mk_define MOD_EXT "\"$MK_DLO_EXT\""
@@ -123,5 +124,12 @@ configure()
         mk_skip_subdir fuse
     fi
 
-    mk_output_file "etc/lwiod.reg"
+    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
+    then
+        mk_output_file \
+            INPUT="etc/lwiod.reg.svcm.in" \
+            OUTPUT="etc/lwiod.reg"
+    else
+        mk_output_file "etc/lwiod.reg"
+    fi
 }
