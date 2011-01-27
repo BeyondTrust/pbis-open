@@ -744,6 +744,10 @@ InstallLwiCompat(
     if (symlink(pLikewiseLwiCompat, pLwiCompat) < 0)
     {
         error = LwMapErrnoToLwError(errno);
+        if (error == ERROR_FILE_NOT_FOUND)
+        {
+            LW_LOG_ERROR("Cannot access idmap directory %s. Please ensure you have winbind installed", pSambaDir);
+        }
         BAIL_ON_LSA_ERROR(error);   
     }
 
