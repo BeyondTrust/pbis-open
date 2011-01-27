@@ -138,6 +138,10 @@ LwRtlSvcmLoad(
             dlerror());
 
         status = LwErrnoToNtStatus(errno);
+        if (!status)
+        {
+            status = STATUS_BAD_DLL_ENTRYPOINT;
+        }
         GCOS(status);
     }
 
