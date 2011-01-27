@@ -42,9 +42,9 @@
 #include <lwsecurityidentifier.h>
 #include <lwtools.h>
 
-#include <lw/lm.h>
 #include <lwio/lmfile.h>
 #include <lwio/io-types.h>
+#include <lw/lm.h>
 #include <lsa/lsa.h>
 
 #include <lwnetutils.h>

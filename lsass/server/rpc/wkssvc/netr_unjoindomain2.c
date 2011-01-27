@@ -110,6 +110,11 @@ NetrSrvUnjoinDomain2(
     Request.pszUsername  = pszUsername;
     Request.pszPassword  = pszPassword;
 
+    if (dwUnjoinFlags & NETSETUP_ACCT_DELETE)
+    {
+        Request.dwFlags |= LSA_NET_LEAVE_DOMAIN_ACCT_DELETE;
+    }
+
     dwError = MAP_LWMSG_ERROR(lwmsg_data_context_new(NULL, &pDataCtx));
     BAIL_ON_LSA_ERROR(dwError);
 

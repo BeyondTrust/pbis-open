@@ -31,19 +31,7 @@
 #ifndef _LM_JOIN_H_
 #define _LM_JOIN_H_
 
-
-/*
- * Join domain flags
- */
-#define NETSETUP_JOIN_DOMAIN                (0x00000001)
-#define NETSETUP_ACCT_CREATE                (0x00000002)
-#define NETSETUP_ACCT_DELETE                (0x00000004)
-#define NETSETUP_WIN9X_UPGRADE              (0x00000010)
-#define NETSETUP_DOMAIN_JOIN_IF_JOINED      (0x00000020)
-#define NETSETUP_JOIN_UNSECURE              (0x00000040)
-#define NETSETUP_MACHINE_PWD_PASSED         (0x00000080)
-#define NETSETUP_DEFER_SPN_SET              (0x00000100)
-
+#include <lw/rpc/wkssvc.h>
 
 NET_API_STATUS
 NetJoinDomain(

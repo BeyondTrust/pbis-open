@@ -140,7 +140,27 @@ NetrSrvJoinDomain2(
     Request.pszOSName          = pszOSName;
     Request.pszOSVersion       = pszOSVersion;
     Request.pszOSServicePack   = pszOSServicePack;
-    Request.dwFlags            = dwJoinFlags;
+
+    if (dwJoinFlags & NETSETUP_ACCT_CREATE)
+    {
+        Request.dwFlags |= LSA_NET_JOIN_DOMAIN_ACCT_CREATE;
+    }
+    if (dwJoinFlags & NETSETUP_DOMAIN_JOIN_IF_JOINED)
+    {
+        Request.dwFlags |= LSA_NET_JOIN_DOMAIN_JOIN_IF_JOINED;
+    }
+    if (dwJoinFlags & NETSETUP_JOIN_UNSECURE)
+    {
+        Request.dwFlags |= LSA_NET_JOIN_DOMAIN_JOIN_UNSECURE;
+    }
+    if (dwJoinFlags & NETSETUP_MACHINE_PWD_PASSED)
+    {
+        Request.dwFlags |= LSA_NET_JOIN_DOMAIN_MACHINE_PWD_PASSED;
+    }
+    if (dwJoinFlags & NETSETUP_DEFER_SPN_SET)
+    {
+        Request.dwFlags |= LSA_NET_JOIN_DOMAIN_DEFER_SPN_SET;
+    }
 
     dwError = MAP_LWMSG_ERROR(lwmsg_data_context_new(NULL, &pDataCtx));
     BAIL_ON_LSA_ERROR(dwError);
