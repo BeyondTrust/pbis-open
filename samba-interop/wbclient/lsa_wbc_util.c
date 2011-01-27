@@ -47,6 +47,7 @@
 #include "lsawbclient_p.h"
 #include "lwnet.h"
 #include <lsa/ad.h>
+#include <string.h>
 
 struct _wbc_err_string {
     wbcErr wbc_err;
@@ -139,7 +140,7 @@ wbcErr wbcInterfaceDetails(struct wbcInterfaceDetails **details)
     wbcErr wbc_status = WBC_ERR_UNKNOWN_FAILURE;
     HANDLE hLsa = NULL;
     PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
-    PLWNET_DC_INFO pDcInfo = NULL;
+    size_t hostnameLen = 0;
 
     BAIL_ON_NULL_PTR_PARAM(details, dwErr);
 
@@ -151,15 +152,6 @@ wbcErr wbcInterfaceDetails(struct wbcInterfaceDetails **details)
     dwErr = LsaAdGetMachineAccountInfo(hLsa, NULL, &pAccountInfo);
     BAIL_ON_LSA_ERR(dwErr);
 
-    /* Find DC to get the the short domain name */
-
-    dwErr = LWNetGetDCName(NULL, pAccountInfo->DnsDomainName, NULL, 0, &pDcInfo);
-    BAIL_ON_NETLOGON_ERR(dwErr);
-
-    /* extra check until API is complete */
-
-    BAIL_ON_NULL_PTR(pDcInfo, dwErr);
-
     *details = _wbc_malloc(sizeof(struct wbcInterfaceDetails),
                    FreeInterfaceDetails);
     BAIL_ON_NULL_PTR(*details, dwErr);
@@ -168,19 +160,23 @@ wbcErr wbcInterfaceDetails(struct wbcInterfaceDetails **details)
     (*details)->winbind_version   = LSA_WBC_WINBIND_VERSION;
     (*details)->winbind_separator = '\\';
 
-    /* FIXME!  need to fill in real valid strings here */
+    (*details)->netbios_name = _wbc_strdup(pAccountInfo->SamAccountName);
+    BAIL_ON_NULL_PTR((*details)->netbios_name, dwErr);
 
-    (*details)->netbios_name = "";
+    // Strip off the trailing dollar sign
+    hostnameLen = strlen((*details)->netbios_name);
+    if (hostnameLen > 0 && (*details)->netbios_name[hostnameLen - 1] == '$')
+    {
+        ((char *)(*details)->netbios_name)[hostnameLen - 1] = 0;
+    }
 
-    (*details)->netbios_domain = _wbc_strdup(pDcInfo->pszNetBIOSDomainName);
+    (*details)->netbios_domain = _wbc_strdup(pAccountInfo->NetbiosDomainName);
     BAIL_ON_NULL_PTR((*details)->netbios_domain, dwErr);
 
-    (*details)->dns_domain = _wbc_strdup(pDcInfo->pszFullyQualifiedDomainName);
+    (*details)->dns_domain = _wbc_strdup(pAccountInfo->DnsDomainName);
     BAIL_ON_NULL_PTR((*details)->dns_domain, dwErr);
 
 cleanup:
-    LWNET_SAFE_FREE_DC_INFO(pDcInfo);
-
     if (pAccountInfo)
     {
         LsaAdFreeMachineAccountInfo(pAccountInfo);
