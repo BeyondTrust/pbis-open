@@ -22,6 +22,7 @@ make()
         security-sd.c \
         security-sddl.c \
         security-sddlmapping.c \
+        security-privileges.c \
         wc16str.c \
         wc16printf.c"
 

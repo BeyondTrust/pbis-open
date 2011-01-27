@@ -24,6 +24,7 @@ liblwbase_nothr_la_SOURCES = \
         security-sddl.c \
         security-acl.c \
         security-sd.c \
+        security-privileges.c \
 	wc16str.c \
 	wc16printf.c
 

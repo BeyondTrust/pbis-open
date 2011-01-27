@@ -186,6 +186,109 @@ RtlConvertSidToLittleEndian(
     );
 
 //
+// LUID Functions
+//
+
+LUID
+RtlConvertLongToLuid(
+    IN LONG Long
+    );
+///<
+/// Convert LONG type to LUID.
+///
+/// Assign long integer value to LowPart of the LUID.
+///
+/// @param[in] Long - long integer value
+///
+/// @return LUID
+///
+
+LUID
+RtlConvertUlongToLuid(
+    IN ULONG Ulong
+    );
+///<
+/// Convert ULONG type to LUID.
+///
+/// Assign unsigned long integer value to LowPart of the LUID.
+///
+/// @param[in] Ulong - unsigned long integer value
+///
+/// @return LUID
+///
+
+BOOLEAN
+RtlEqualLuid(
+    IN PLUID Luid1,
+    IN PLUID Luid2
+    );
+///<
+/// Compare two LUIDs.
+///
+/// Returns TRUE if both LUIDs represent the same value.
+///
+/// @param[in] Luid1 - pointer to LUID variable
+/// @param[in] Luid2 - pointer to LUID variable
+///
+/// @return BOOLEAN
+///
+
+
+//
+// PRIVILEGE_SET Functions
+//
+
+ULONG
+RtlLengthRequiredPrivilegeSet(
+    IN ULONG PrivilegeCount
+    );
+///<
+/// Get length required for a PRIVILEGE_SET.
+///
+/// Get number of bytes required to store a PRIVILEGE_SET with
+/// the specified number of privileges.
+///
+/// @param[in] PrivilegeCount - Number of privileges
+///
+/// @return Number of bytes required to store the PRIVILEGE_SET.
+///
+
+ULONG
+RtlLengthPrivilegeSet(
+    IN PPRIVILEGE_SET PrivilegeSet
+    );
+///<
+/// Get length of a PRIVILEGE_SET.
+///
+/// Get number of bytes required to store the specified PRIVILEGE_SET.
+///
+/// @param[in] PrivilegeSet - A privilege set
+///
+/// @return Number of bytes required to store the PRIVILEGE_SET.
+///
+
+NTSTATUS
+RtlCopyPrivilegeSet(
+    IN ULONG DestinationPrivilegeSetLength,
+    OUT PPRIVILEGE_SET DestinationPrivilegeSet,
+    IN PPRIVILEGE_SET SourcePrivilegeSet
+    );
+///<
+/// Copy a privilege set.
+///
+/// Copy a privilege set to allocated buffer of specified length.
+///
+/// @param[in] DestinationPrivilegeSetLength - Length of the destination PRIVILEGE_SET
+/// @param[out] DestinationPrivilegeSet - The PRIVILEGE_SET to copy to
+/// @param[in] SourcePrivilegeSet - The PRIVILEGE_SET to copy from
+///
+/// @return NTSTATUS
+///   @arg STATUS_SUCCESS on success
+///   @arg STATUS_BUFFER_TOO_SMALL if the destination buffer length is too small
+///
+
+
+//
 // ACL Functions
 //
 
