@@ -129,12 +129,6 @@ typedef union _SecPkgCred
     PSecPkgCred_DomainName pDomainName;
 } SecPkgCred, *PSecPkgCred;
 
-typedef struct _LUID
-{
-    DWORD LowPart;
-    INT HighPart;
-} LUID, *PLUID;
-
 typedef struct _SEC_WINNT_AUTH_IDENTITY
 {
     PCHAR User;

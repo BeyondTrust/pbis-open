@@ -1090,6 +1090,46 @@ typedef ULONG SECURITY_INFORMATION, *PSECURITY_INFORMATION;
 #define SEF_AVOID_OWNER_RESTRICTION             0x00001000
 
 //
+// Privileges
+//
+
+typedef struct _LUID_AND_ATTRIBUTES {
+    LUID Luid;
+    ULONG Attributes;
+} LUID_AND_ATTRIBUTES, *PLUID_AND_ATTRIBUTES;
+
+#define SE_PRIVILEGE_ENABLED_BY_DEFAULT   0x00000001
+#define SE_PRIVILEGE_ENABLED              0x00000002
+#define SE_PRIVILEGE_REMOVED              0x00000004
+
+#define _PRIVILEGE_SET_MAX_PRIVILEGE_COUNT 1000
+
+#define PRIVILEGE_SET_ALL_NECESSARY       0x00000001
+
+typedef struct _PRIVILEGE_SET {
+#ifdef _DCE_IDL_
+    [range(0,_PRIVILEGE_SET_MAX_PRIVILEGE_COUNT)]
+#endif
+    ULONG PrivilegeCount;
+    ULONG Control;
+#ifdef _DCE_IDL_
+    [size_is(PrivilegeCount)]
+#endif
+    LUID_AND_ATTRIBUTES Privilege[];
+} PRIVILEGE_SET, *PPRIVILEGE_SET;
+
+#define PRIVILEGE_SET_MIN_SIZE \
+    (LW_FIELD_OFFSET(PRIVILEGE_SET, Privilege))
+
+#define _PRIVILEGE_SET_GET_SIZE_REQUIRED(PrivilegeCount) \
+    (PRIVILEGE_SET_MIN_SIZE + \
+     (LW_FIELD_SIZE(PRIVILEGE_SET, Privilege[0]) * (PrivilegeCount)))
+
+#define _PRIVILEGE_SET_MAX_SIZE \
+    _SID_GET_SIZE_REQUIRED(_PRIVILEGE_SET_MAX_PRIVILEGE_COUNT)
+
+
+//
 // Access Token
 //
 // The underlying (non-handle) type for an access token is PACCESS_TOKEN.

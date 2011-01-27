@@ -34,6 +34,7 @@
  *
  * Authors: Brian Koropoff (bkoropoff@likewise.com)
  *          Danilo Almeida (dalmeida@likewise.com)
+ *          Rafal Szczesniak (rafal@likewise.com)
  *
  */
 
@@ -166,6 +167,16 @@ typedef struct _LW_GUID {
     LW_BYTE Data4[8];
 #endif
 } LW_GUID, *LW_PGUID;
+
+
+//
+// Locally unique identifier (LUID).
+//
+
+typedef struct _LW_LUID {
+    LW_ULONG LowPart;
+    LW_LONG HighPart;
+} LW_LUID, *LW_PLUID;
 
 #define LW_TRUE  1
 #define LW_FALSE 0
@@ -325,6 +336,8 @@ typedef LW_TCHAR    TCHAR;
 
 typedef LW_GUID     GUID;
 typedef LW_PGUID    PGUID;
+typedef LW_LUID     LUID;
+typedef LW_PLUID    PLUID;
 
 #ifndef TRUE
 #define TRUE LW_TRUE
