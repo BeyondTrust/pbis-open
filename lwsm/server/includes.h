@@ -59,6 +59,7 @@
 #include <lwerror.h>
 #include <lwmem.h>
 #include <lwstr.h>
+#include <lwdscache.h>
 #include <reg/lwreg.h>
 #include <lwmsg/lwmsg.h>
 #include <lwio/lwio.h>

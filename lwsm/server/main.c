@@ -141,6 +141,10 @@ main(
         BAIL_ON_ERROR(dwError);
     }
 
+    /* Mac OS X - avoid potential circular calls into directory services */
+    dwError = LwDsCacheAddPidException(getpid());
+    BAIL_ON_ERROR(dwError);
+
     /* Set up logging */
     dwError = LwSmConfigureLogging(ppszArgv[0]);
     BAIL_ON_ERROR(dwError);
