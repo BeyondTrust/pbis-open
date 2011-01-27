@@ -4,7 +4,8 @@ compat_subdirs = \
 
 if PLATFORM_MAC
 mac_full_subdirs= \
-        lwidsplugin
+        lwidsplugin \
+	lwauthplugin
 else
 mac_full_subdirs=
 endif
