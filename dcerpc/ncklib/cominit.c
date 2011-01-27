@@ -317,7 +317,12 @@ INTERNAL void init_once(void)
 	/*
 	 * Register our fork handler, if such a service is supported.
 	 */
-#ifdef ATFORK_SUPPORTED
+
+     /*
+      * LIKEWISE -- we don't support arbitrary forking anyway,
+      * so this has little benefit and is prone to error.  Disable it.
+      */
+#if 0
 	ATFORK((void *)rpc__fork_handler);
 #endif
 
