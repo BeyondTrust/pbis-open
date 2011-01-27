@@ -150,6 +150,14 @@ NetUserAdd(
                             dwUserAccess,
                             &hUser,
                             &dwRid);
+    if (status == STATUS_USER_EXISTS)
+    {
+        err = NERR_UserExists;
+    }
+    else if (status == STATUS_ALIAS_EXISTS)
+    {
+        err = NERR_GroupExists;
+    }
     BAIL_ON_NT_STATUS(status);
 
     /*

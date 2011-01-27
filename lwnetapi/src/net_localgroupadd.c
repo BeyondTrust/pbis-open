@@ -121,6 +121,14 @@ NetLocalGroupAdd(
                                 dwAliasAccessRights,
                                 &hAlias,
                                 &dwRid);
+    if (status == STATUS_ALIAS_EXISTS)
+    {
+        err = NERR_GroupExists;
+    }
+    else if (status == STATUS_USER_EXISTS)
+    {
+        err = NERR_UserExists;
+    }
     BAIL_ON_NT_STATUS(status);
 
     if (pwszComment)
