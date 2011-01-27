@@ -37,6 +37,12 @@
  */
 #include "includes.h"
 
+DWORD
+TestSambaParseConfFileToRegFile(
+    PCSTR pszConfFile,
+    PCSTR pszRegFile
+    );
+
 static
 DWORD
 TestSambaParseConfigSectionHandler(

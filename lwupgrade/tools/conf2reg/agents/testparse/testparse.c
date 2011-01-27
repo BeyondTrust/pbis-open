@@ -37,6 +37,12 @@
  */
 #include "includes.h"
 
+DWORD
+TestParseConfFileToRegFile(
+    PCSTR pszConfFile,
+    PCSTR pszRegFile
+    );
+
 static
 DWORD
 TestParseConfigSectionHandler(

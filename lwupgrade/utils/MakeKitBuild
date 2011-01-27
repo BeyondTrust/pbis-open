@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+        GROUP=upgradeutils \
+        SOURCES="convert.c format.c machine_account.c parser.c print.c time.c" \
+        INCLUDEDIRS="../include" \
+        HEADERDEPS="" \
+        LIBDEPS=""
+}

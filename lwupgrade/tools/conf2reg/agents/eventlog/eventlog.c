@@ -25,6 +25,12 @@
 
 #include "includes.h"
 
+DWORD
+EventlogConfFileToRegFile(
+    PCSTR pszConfFile,
+    PCSTR pszRegFile
+    );
+
 static
 DWORD
 EVTParseDiskUsage(
@@ -85,6 +91,7 @@ EVTConfigFreeContents(
 }
 
 /* call back functions to get the values from config file */
+static
 DWORD
 EVTConfigSectionHandler(
     BOOLEAN bSectionStart,
@@ -100,6 +107,7 @@ EVTConfigSectionHandler(
     return dwError;
 }
 
+static
 DWORD
 EVTConfigNameValuePair(
     PCSTR pszSectionName,

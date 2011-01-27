@@ -26,6 +26,12 @@
 
 #include "includes.h"
 
+DWORD
+LsassConfFileToRegFile(
+    PCSTR pszConfFile,
+    PCSTR pszRegFile
+    );
+
 static
 DWORD
 LsassSectionHandler(

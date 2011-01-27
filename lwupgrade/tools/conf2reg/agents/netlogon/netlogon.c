@@ -47,6 +47,11 @@
  */
 #include "includes.h"
 
+DWORD
+NetlogonConfFileToRegFile(
+    PCSTR pszConfFile,
+    PCSTR pszRegFile
+    );
 
 static
 DWORD

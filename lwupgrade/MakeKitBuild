@@ -1,0 +1,25 @@
+SUBDIRS="utils tools"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -Wmissing-prototypes -fno-strict-aliasing"
+
+    mk_check_headers \
+        FAIL=yes \
+        lwadvapi.h \
+        reg/lwreg.h \
+        reg/regutil.h
+
+    mk_check_headers \
+        stdlib.h sys\varargs.h strings.h unistd.h
+
+    mk_check_functions \
+        HEADERDEPS="stdlib.h" \
+        strtol strtoll __strtoll
+
+    mk_check_functions \
+        HEADERDEPS="inttypes.h" \
+        __strtoll __strtoull
+}

@@ -38,6 +38,11 @@
 #include "sqlite3.h"
 #include <lsa/lsapstore-api.h>
 
+DWORD
+SqliteMachineAccountToPstore(
+    PCSTR pszMachinePwdDb
+    );
+
 #define DB_QUERY_GET_MACHINEPWD_BY_HOST_NAME_V1                  \
     "SELECT DomainSID,                                           \
             upper(DomainName),                                   \

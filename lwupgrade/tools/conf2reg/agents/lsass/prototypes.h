@@ -67,6 +67,11 @@ LsaPamInitializeConfig(
     );
 
 VOID
+LsaPamFreeConfig(
+    PLSA_PAM_CONFIG pConfig
+    );
+
+VOID
 LsaPamFreeConfigContents(
     PLSA_PAM_CONFIG pConfig
     );
