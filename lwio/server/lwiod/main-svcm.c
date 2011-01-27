@@ -221,13 +221,22 @@ LwIoSvcmStop(
     return STATUS_SUCCESS;
 }
 
+NTSTATUS
+LwIoSvcmRefresh(
+    PLW_SVCM_INSTANCE pInstance
+    )
+{
+    return LwioSrvRefreshConfig(&gLwioServerConfig);
+}
+
 static LW_SVCM_MODULE gService =
 {
     .Size = sizeof(gService),
     .Init = LwIoSvcmInit,
     .Destroy = LwIoSvcmDestroy,
     .Start = LwIoSvcmStart,
-    .Stop = LwIoSvcmStop
+    .Stop = LwIoSvcmStop,
+    .Refresh = LwIoSvcmRefresh
 };
 
 PLW_SVCM_MODULE
