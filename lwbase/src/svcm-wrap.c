@@ -219,7 +219,7 @@ MainTask(
                 *pWaitMask = LW_TASK_EVENT_COMPLETE;
                 goto cleanup;
             case SIGHUP:
-                status = LwRtlSvcmRefresh(gState.pService);
+                status = LwRtlSvcmRefresh(gState.pService, NULL, NULL);
                 GCOS(status);
                 break;
             default:

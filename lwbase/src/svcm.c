@@ -235,7 +235,10 @@ StartWorkItem(
         pState->FdCount,
         pState->pFds);
 
-    pState->Notify(pState->pInstance, status, pState->pNotifyContext);
+    if (pState->Notify)
+    {
+        pState->Notify(pState->pInstance, status, pState->pNotifyContext);
+    }
 
     RTL_FREE(&pState);
     LwRtlFreeWorkItem(&pItem);
@@ -249,15 +252,40 @@ StopWorkItem(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    PSVCM_STOP_STATE pState = pContext;
+    PSVCM_COMMAND_STATE pState = pContext;
 
     status = pState->pInstance->pTable->Stop(pState->pInstance);
 
-    pState->Notify(pState->pInstance, status, pState->pNotifyContext);
+    if (pState->Notify)
+    {
+        pState->Notify(pState->pInstance, status, pState->pNotifyContext);
+    }
 
     RTL_FREE(&pState);
     LwRtlFreeWorkItem(&pItem);
 }
+
+static
+VOID
+RefreshWorkItem(
+    PLW_WORK_ITEM pItem,
+    PVOID pContext
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PSVCM_COMMAND_STATE pState = pContext;
+
+    status = pState->pInstance->pTable->Refresh(pState->pInstance);
+
+    if (pState->Notify)
+    {
+        pState->Notify(pState->pInstance, status, pState->pNotifyContext);
+    }
+
+    RTL_FREE(&pState);
+    LwRtlFreeWorkItem(&pItem);
+}
+
 
 LW_NTSTATUS
 LwRtlSvcmStart(
@@ -359,10 +387,14 @@ cleanup:
 
 LW_NTSTATUS
 LwRtlSvcmRefresh(
-    LW_IN PLW_SVCM_INSTANCE pInstance
+    LW_IN PLW_SVCM_INSTANCE pInstance,
+    LW_IN LW_SVCM_NOTIFY_FUNCTION Notify,
+    LW_IN LW_PVOID pContext
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
+    PSVCM_COMMAND_STATE pRefreshState = NULL;
+    PLW_WORK_ITEM pRefreshItem = NULL;
 
     if (!pInstance)
     {
@@ -370,18 +402,30 @@ LwRtlSvcmRefresh(
         GCOS(status);
     }
 
-    if (!pInstance->pTable->Refresh)
-    {
-        status = STATUS_NOT_SUPPORTED;
-        GCOS(status);
-    }
-
-    status = pInstance->pTable->Refresh(pInstance);
+    status = LW_RTL_ALLOCATE_AUTO(&pRefreshState);
     GCOS(status);
+
+    status = LwRtlCreateWorkItem(
+        gSvcmState.pPool,
+        &pRefreshItem,
+        RefreshWorkItem,
+        pRefreshState);
+    GCOS(status);
+
+    pRefreshState->pInstance = pInstance;
+    pRefreshState->Notify = Notify;
+    pRefreshState->pNotifyContext = pContext;
+
+    LwRtlScheduleWorkItem(pRefreshItem, 0);
+    pRefreshItem = NULL;
+    pRefreshState = NULL;
 
 cleanup:
 
-    return status;
+     LwRtlFreeWorkItem(&pRefreshItem);
+     RTL_FREE(&pRefreshState);
+
+     return status;
 }
 
 static

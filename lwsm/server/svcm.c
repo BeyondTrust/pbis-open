@@ -180,8 +180,9 @@ LwSmSvcmRefresh(
 
     dwError = LwNtStatusToWin32Error(
         LwRtlSvcmRefresh(
-            pState->pInstance
-            ));
+            pState->pInstance,
+            NULL,
+            NULL));
     BAIL_ON_ERROR(dwError);
 
 cleanup:

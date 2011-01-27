@@ -284,8 +284,8 @@ LwRtlSvcmStart(
     LW_IN LW_PWSTR* ppArgs,
     LW_IN LW_ULONG FdCount,
     LW_IN int* pFds,
-    LW_IN LW_SVCM_NOTIFY_FUNCTION Notify,
-    LW_IN LW_PVOID pContext
+    LW_IN LW_OPTIONAL LW_SVCM_NOTIFY_FUNCTION Notify,
+    LW_IN LW_OPTIONAL LW_PVOID pContext
     );
 
 /**
@@ -304,8 +304,8 @@ LwRtlSvcmStart(
 LW_NTSTATUS
 LwRtlSvcmStop(
     LW_IN PLW_SVCM_INSTANCE pInstance,
-    LW_IN LW_SVCM_NOTIFY_FUNCTION Notify,
-    LW_IN LW_PVOID pContext
+    LW_IN LW_OPTIONAL LW_SVCM_NOTIFY_FUNCTION Notify,
+    LW_IN LW_OPTIONAL LW_PVOID pContext
     );
 
 /**
@@ -321,7 +321,9 @@ LwRtlSvcmStop(
  */
 LW_NTSTATUS
 LwRtlSvcmRefresh(
-    LW_IN PLW_SVCM_INSTANCE pInstance
+    LW_IN PLW_SVCM_INSTANCE pInstance,
+    LW_IN LW_OPTIONAL LW_SVCM_NOTIFY_FUNCTION Notify,
+    LW_IN LW_OPTIONAL LW_PVOID pContext
     );
 
 /**

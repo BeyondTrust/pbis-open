@@ -60,19 +60,19 @@ typedef struct _SVCM_START_STATE
     PVOID pNotifyContext;
 } SVCM_START_STATE, *PSVCM_START_STATE;
 
-typedef struct _SVCM_STOP_STATE
+typedef struct _SVCM_COMMAND_STATE
 {
     PLW_SVCM_INSTANCE pInstance;
     LW_SVCM_NOTIFY_FUNCTION Notify;
     PVOID pNotifyContext;
-} SVCM_STOP_STATE, *PSVCM_STOP_STATE;
+} SVCM_COMMAND_STATE, *PSVCM_COMMAND_STATE;
 
 struct _LW_SVCM_INSTANCE
 {
     PVOID pDlHandle;
     PLW_SVCM_MODULE pTable;
     PLW_WORK_ITEM pStopItem;
-    PSVCM_STOP_STATE pStopState;
+    PSVCM_COMMAND_STATE pStopState;
     PVOID pServiceData;
 };
 
