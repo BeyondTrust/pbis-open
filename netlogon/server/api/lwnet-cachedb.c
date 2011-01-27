@@ -653,6 +653,7 @@ LWNetCacheDbRegistryReadValues(
     }
 
 cleanup:
+    LWNET_SAFE_FREE_MEMORY(valueArray);
     return dwError;
 
 error:
