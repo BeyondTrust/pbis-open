@@ -76,13 +76,4 @@ LwIoSetRdrDomainHints(
     ULONG ulCount
     );
 
-#ifndef LW_STRICT_NAMESPACE
-
-#define IoGetSessionKey LwIoGetSessionKey
-#define IoGetPeerPrincipalName LwIoGetPeerPrincipalName
-#define IoGetPeerAddress LwIoGetPeerAddress
-#define IoCreateNamedPipe LwIoCreateNamedPipe
-
-#endif /* !LW_STRICT_NAMESPACE */
-
 #endif /* !__LW_IO_SMBFILEAPI_H__ */
