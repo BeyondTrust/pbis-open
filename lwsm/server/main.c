@@ -709,25 +709,25 @@ LwSmStartIpcServer(
                                    LwSmIpcGetProtocolSpec()));
     BAIL_ON_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_server_new(
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_new(
                                    gState.pIpcContext,
                                    gState.pIpcProtocol,
                                    &gState.pIpcServer));
     BAIL_ON_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_server_add_dispatch_spec(
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_dispatch_spec(
                                    gState.pIpcServer,
                                    LwSmGetDispatchSpec()));
     BAIL_ON_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_server_set_endpoint(
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_listen_endpoint(
                                    gState.pIpcServer,
                                    LWMSG_CONNECTION_MODE_LOCAL,
                                    SM_ENDPOINT,
                                    0666));
     BAIL_ON_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_server_start(gState.pIpcServer));
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_start_listen(gState.pIpcServer));
     BAIL_ON_ERROR(dwError);
 
 cleanup:
