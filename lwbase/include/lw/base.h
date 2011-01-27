@@ -58,5 +58,6 @@
 #include <lw/safeint.h>
 #include <lw/hash.h>
 #include <lw/svcm.h>
+#include <lw/rtllog.h>
 
 #endif
