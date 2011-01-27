@@ -234,9 +234,12 @@ LwSmSvcmDestruct(
 {
     PSVCM_STATE pState = LwSmGetServiceObjectData(pObject);
 
-    LwRtlSvcmUnload(pState->pInstance);
-    LwSmFreeStringList(pState->ppArgs);
-    LwFreeMemory(pState);
+    if (pState)
+    {
+        LwRtlSvcmUnload(pState->pInstance);
+        LwSmFreeStringList(pState->ppArgs);
+        LwFreeMemory(pState);
+    }
 
     return;
 }
