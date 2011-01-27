@@ -80,7 +80,7 @@ server_lwsmd_SOURCES = \
 server_lwsmd_LDADD = \
 	$(top_builddir)/common/liblwsmcommon.la \
 	$(top_builddir)/server/liblwsmloader.la \
-	-llwmsg -llwmsg_nothr \
+	-llwmsg -llwmsg_nothr -llwnetclientapi \
 	-lregclient -llwadvapi -llwadvapi_nothr -llwbase -llwbase_nothr \
 	@LIB_PTHREAD@
 

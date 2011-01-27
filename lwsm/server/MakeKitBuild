@@ -1,6 +1,6 @@
 make()
 {
-    COMMON_HEADERDEPS="reg/lwreg.h lwadvapi.h lwmsg/lwmsg.h lwio/lwio.h lw/base.h"
+    COMMON_HEADERDEPS="reg/lwreg.h lwadvapi.h lwmsg/lwmsg.h lwio/lwio.h lw/base.h lwnet.h"
     
     mk_library \
         LIB=lwsmloader \
@@ -56,6 +56,6 @@ make()
         HEADERDEPS="$COMMON_HEADERDEPS" \
         LIBDEPS="\
             lwsmcommon lwsmloader lwmsg lwmsg_nothr \
-            regclient lwadvapi lwadvapi_nothr lwbase lwbase_nothr $LIB_PTHREAD" \
+            lwnetclientapi regclient lwadvapi lwadvapi_nothr lwbase lwbase_nothr $LIB_PTHREAD" \
         INSTALLDIR="${MK_SBINDIR}"
 }

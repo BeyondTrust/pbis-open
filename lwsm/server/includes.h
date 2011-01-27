@@ -63,6 +63,7 @@
 #include <reg/lwreg.h>
 #include <lwmsg/lwmsg.h>
 #include <lwio/lwio.h>
+#include <lwnet.h>
 #include <wc16printf.h>
 #ifdef HAVE_STRINGS_H
    #include <strings.h>

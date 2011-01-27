@@ -141,6 +141,9 @@ main(
         BAIL_ON_ERROR(dwError);
     }
 
+    dwError = LWNetExtendEnvironmentForKrb5Affinity(FALSE);
+    BAIL_ON_ERROR(dwError);
+
     /* Mac OS X - avoid potential circular calls into directory services */
     dwError = LwDsCacheAddPidException(getpid());
     BAIL_ON_ERROR(dwError);
@@ -178,8 +181,10 @@ error:
     LwSmLoaderShutdown();
 
     /* Shut down logging */
-    dwError = LwSmSetLogger(NULL, NULL);
-    BAIL_ON_ERROR(dwError);
+    LwSmSetLogger(NULL, NULL);
+
+    /* Remove DS cache exception */
+    LwDsCacheRemovePidException(getpid());
 
     return dwError ? 1 : 0;
 }
