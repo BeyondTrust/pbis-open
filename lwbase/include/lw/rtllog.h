@@ -157,6 +157,21 @@ LwRtlLogSetLevel(
 #define LW_RTL_LOG_TRACE(Format, ...) \
     _LW_RTL_LOG_IF(LW_RTL_LOG_LEVEL_TRACE, Format, ## __VA_ARGS__)
 
+#define LW_RTL_LOG_AT_LEVEL(LogLevel, Component, Format, ...) \
+    do { \
+        if ((_LwRtlLogControl.Level >= (LogLevel)) && _LwRtlLogControl.Callback) \
+        { \
+            _LwRtlLogControl.Callback( \
+                    _LwRtlLogControl.Context, \
+                    LogLevel, \
+                    Component, \
+                    __FUNCTION__, \
+                    __FILE__, \
+                    __LINE__, \
+                    Format, \
+                    ## __VA_ARGS__); \
+        } \
+    } while (0)
 
 #define LW_RTL_LOG_SAFE_STRING(x) \
     ( (x) ? (x) : "<null>" )
@@ -170,20 +185,7 @@ LwRtlLogSetLevel(
 //
 
 #define _LW_RTL_LOG_IF(LogLevel, Format, ...) \
-    do { \
-        if ((_LwRtlLogControl.Level >= (LogLevel)) && _LwRtlLogControl.Callback) \
-        { \
-            _LwRtlLogControl.Callback( \
-                    _LwRtlLogControl.Context, \
-                    LogLevel, \
-                    LW_RTL_LOG_COMPONENT, \
-                    __FUNCTION__, \
-                    __FILE__, \
-                    __LINE__, \
-                    Format, \
-                    ## __VA_ARGS__); \
-        } \
-    } while (0)
+    LW_RTL_LOG_AT_LEVEL(LogLevel, LW_RTL_LOG_COMPONENT, Format, ## __VA_ARGS__)
 
 static
 inline
