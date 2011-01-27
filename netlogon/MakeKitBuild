@@ -8,6 +8,7 @@ configure()
 
     mk_export MOD_EXT="$MK_DLO_EXT"
     mk_export SBINDIR="$MK_SBINDIR"
+    mk_export LIBDIR="$MK_LIBDIR"
 
     mk_define MOD_EXT "\"$MK_DLO_EXT\""
     mk_define PREFIXDIR "\"$MK_PREFIX\""
@@ -16,7 +17,14 @@ configure()
 
     mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
    
-    mk_output_file "etc/netlogond.reg"
+    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
+    then
+        mk_output_file \
+            INPUT="etc/netlogond.reg.svcm.in" \
+            OUTPUT="etc/netlogond.reg"
+    else
+        mk_output_file "etc/netlogond.reg"
+    fi
 
     mk_check_headers \
         FAIL=yes \
