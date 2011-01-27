@@ -44,6 +44,41 @@ static PVOID gpLoggerData = NULL;
 static LW_SM_LOG_LEVEL gMaxLevel = LW_SM_LOG_LEVEL_ALWAYS;
 
 static
+VOID
+LwSmRtlLogCallback(
+    LW_IN LW_OPTIONAL LW_PVOID Context,
+    LW_IN LW_RTL_LOG_LEVEL Level,
+    LW_IN LW_OPTIONAL LW_PCSTR ComponentName,
+    LW_IN LW_PCSTR FunctionName,
+    LW_IN LW_PCSTR FileName,
+    LW_IN LW_ULONG LineNumber,
+    LW_IN LW_PCSTR Format,
+    LW_IN ...
+    )
+{
+    va_list ap;
+
+    va_start(ap, Format);
+    (void) LwSmLogPrintfv(
+        Level,
+        ComponentName,
+        FunctionName,
+        FileName,
+        LineNumber,
+        Format,
+        ap);
+    va_end(ap);
+}
+
+VOID
+LwSmLogInit(
+    VOID
+    )
+{
+    LwRtlLogSetCallback(LwSmRtlLogCallback, NULL);
+}
+
+static
 PCSTR
 LwSmLogLevelToString(
     LW_SM_LOG_LEVEL level
@@ -139,6 +174,7 @@ static
 DWORD
 LwSmLogMessageInLock(
     LW_SM_LOG_LEVEL level,
+    PCSTR pszFacility,
     PCSTR pszFunctionName,
     PCSTR pszSourceFile,
     DWORD dwLineNumber,
@@ -151,12 +187,12 @@ LwSmLogMessageInLock(
     {
         dwError = gpLogger->pfnLog(
             level,
+            pszFacility,
             pszFunctionName,
             pszSourceFile,
             dwLineNumber,
             pszMessage,
-            gpLoggerData
-            );
+            gpLoggerData);
         BAIL_ON_ERROR(dwError);
     }
 
@@ -172,6 +208,7 @@ error:
 DWORD
 LwSmLogMessage(
     LW_SM_LOG_LEVEL level,
+    PCSTR pszFacility,
     PCSTR pszFunctionName,
     PCSTR pszSourceFile,
     DWORD dwLineNumber,
@@ -187,6 +224,7 @@ LwSmLogMessage(
     {
         dwError = LwSmLogMessageInLock(
             level,
+            pszFacility,
             pszFunctionName,
             pszSourceFile,
             dwLineNumber,
@@ -222,6 +260,7 @@ LwSmSetLogger(
         {
             LwSmLogMessageInLock(
                 LW_SM_LOG_LEVEL_ALWAYS,
+                NULL,
                 __FUNCTION__,
                 __FILE__,
                 __LINE__,
@@ -231,6 +270,7 @@ LwSmSetLogger(
         {
             LwSmLogMessageInLock(
                 LW_SM_LOG_LEVEL_ALWAYS,
+                NULL,
                 __FUNCTION__,
                 __FILE__,
                 __LINE__,
@@ -251,6 +291,7 @@ LwSmSetLogger(
 
         LwSmLogMessageInLock(
             LW_SM_LOG_LEVEL_ALWAYS,
+            NULL,
             __FUNCTION__,
             __FILE__,
             __LINE__,
@@ -269,8 +310,46 @@ error:
 }
 
 DWORD
+LwSmLogPrintfv(
+    LW_SM_LOG_LEVEL level,
+    PCSTR pszFacility,
+    PCSTR pszFunctionName,
+    PCSTR pszSourceFile,
+    DWORD dwLineNumber,
+    PCSTR pszFormat,
+    va_list ap
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR pszMessage = NULL;
+
+    dwError = LwAllocateStringPrintfV(
+        &pszMessage,
+        pszFormat,
+        ap);
+    va_end(ap);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmLogMessageInLock(
+        level,
+        pszFacility,
+        pszFunctionName,
+        pszSourceFile,
+        dwLineNumber,
+        pszMessage);
+    BAIL_ON_ERROR(dwError);
+
+error:
+
+    LW_SAFE_FREE_MEMORY(pszMessage);
+
+    return dwError;
+}
+
+DWORD
 LwSmLogPrintf(
     LW_SM_LOG_LEVEL level,
+    PCSTR pszFacility,
     PCSTR pszFunctionName,
     PCSTR pszSourceFile,
     DWORD dwLineNumber,
@@ -280,7 +359,6 @@ LwSmLogPrintf(
 {
     DWORD dwError = 0;
     BOOLEAN bLocked = FALSE;
-    PSTR pszMessage = NULL;
     va_list ap;
 
     LOCK(bLocked, &gLogLock);
@@ -288,27 +366,21 @@ LwSmLogPrintf(
     if (level <= gMaxLevel)
     {
         va_start(ap, pszFormat);
-        dwError = LwAllocateStringPrintfV(
-            &pszMessage,
+        dwError = LwSmLogPrintfv(
+            level,
+            pszFacility,
+            pszFunctionName,
+            pszSourceFile,
+            dwLineNumber,
             pszFormat,
             ap);
         va_end(ap);
         BAIL_ON_ERROR(dwError);
-
-        dwError = LwSmLogMessageInLock(
-            level,
-            pszFunctionName,
-            pszSourceFile,
-            dwLineNumber,
-            pszMessage);
-        BAIL_ON_ERROR(dwError);
     }
-
-    UNLOCK(bLocked, &gLogLock);
 
 cleanup:
 
-    LW_SAFE_FREE_MEMORY(pszMessage);
+    UNLOCK(bLocked, &gLogLock);
 
     return dwError;
 
@@ -329,6 +401,8 @@ LwSmSetMaxLogLevel(
     gMaxLevel = level;
 
     UNLOCK(bLocked, &gLogLock);
+
+    LwRtlLogSetLevel(level);
 
     SM_LOG_ALWAYS("Log level changed to %s", LwSmLogLevelToString(level));
 }
@@ -400,6 +474,7 @@ static
 DWORD
 LwSmLogFileLog (
     LW_SM_LOG_LEVEL level,
+    PCSTR pszFacility,
     PCSTR pszFunctionName,
     PCSTR pszSourceFile,
     DWORD dwLineNumber,
@@ -423,24 +498,53 @@ LwSmLogFileLog (
     case LW_SM_LOG_LEVEL_WARNING:
     case LW_SM_LOG_LEVEL_INFO:
     case LW_SM_LOG_LEVEL_VERBOSE:
-        fprintf(
-            pContext->file,
-            "%s:%s: %s\n",
-            timeBuf,
-            LwSmLogLevelToString(level),
-            pszMessage);
+        if (pszFacility)
+        {
+            fprintf(
+                pContext->file,
+                "%s:%s:%s: %s\n",
+                timeBuf,
+                LwSmLogLevelToString(level),
+                pszFacility,
+                pszMessage);
+        }
+        else
+        {
+            fprintf(
+                pContext->file,
+                "%s:%s: %s\n",
+                timeBuf,
+                LwSmLogLevelToString(level),
+                pszMessage);
+        }
         break;
     case LW_SM_LOG_LEVEL_DEBUG:
     case LW_SM_LOG_LEVEL_TRACE:
-        fprintf(
-            pContext->file,
-            "%s:%s:%s():%s:%i: %s\n",
-            timeBuf,
-            LwSmLogLevelToString(level),
-            pszFunctionName,
-            LwSmBasename(pszSourceFile),
-            (int) dwLineNumber,
-            pszMessage);
+        if (pszFacility)
+        {
+            fprintf(
+                pContext->file,
+                "%s:%s:%s:%s():%s:%i: %s\n",
+                timeBuf,
+                LwSmLogLevelToString(level),
+                pszFacility,
+                pszFunctionName,
+                LwSmBasename(pszSourceFile),
+                (int) dwLineNumber,
+                pszMessage);
+        }
+        else
+        {
+            fprintf(
+                pContext->file,
+                "%s:%s:%s():%s:%i: %s\n",
+                timeBuf,
+                LwSmLogLevelToString(level),
+                pszFunctionName,
+                LwSmBasename(pszSourceFile),
+                (int) dwLineNumber,
+                pszMessage);
+        }
     }
 
     fflush(pContext->file);
@@ -559,6 +663,7 @@ static
 DWORD
 LwSmSyslogLog (
     LW_SM_LOG_LEVEL level,
+    PCSTR pszFacility,
     PCSTR pszFunctionName,
     PCSTR pszSourceFile,
     DWORD dwLineNumber,
@@ -575,20 +680,45 @@ LwSmSyslogLog (
     case LW_SM_LOG_LEVEL_WARNING:
     case LW_SM_LOG_LEVEL_INFO:
     case LW_SM_LOG_LEVEL_VERBOSE:
-        syslog(
-            LwSmLogLevelToPriority(level) | LOG_DAEMON,
-            "%s\n",
-            pszMessage);
+        if (pszFacility)
+        {
+            syslog(
+                LwSmLogLevelToPriority(level) | LOG_DAEMON,
+                "[%s] %s\n",
+                pszFacility,
+                pszMessage);
+        }
+        else
+        {
+            syslog(
+                LwSmLogLevelToPriority(level) | LOG_DAEMON,
+                "%s\n",
+                pszMessage);
+        }
         break;
     case LW_SM_LOG_LEVEL_DEBUG:
     case LW_SM_LOG_LEVEL_TRACE:
-        syslog(
-            LwSmLogLevelToPriority(level) | LOG_DAEMON,
-            "%s():%s:%i: %s\n",
-            pszFunctionName,
-            LwSmBasename(pszSourceFile),
-            (int) dwLineNumber,
-            pszMessage);
+        if (pszFacility)
+        {
+            syslog(
+                LwSmLogLevelToPriority(level) | LOG_DAEMON,
+                "[%s] %s():%s:%i: %s\n",
+                pszFacility,
+                pszFunctionName,
+                LwSmBasename(pszSourceFile),
+                (int) dwLineNumber,
+                pszMessage);
+        }
+        else
+        {
+            syslog(
+                LwSmLogLevelToPriority(level) | LOG_DAEMON,
+                "%s():%s:%i: %s\n",
+                pszFunctionName,
+                LwSmBasename(pszSourceFile),
+                (int) dwLineNumber,
+                pszMessage);
+        }
     }
    
     return dwError;

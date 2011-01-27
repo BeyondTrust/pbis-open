@@ -148,6 +148,9 @@ main(
     dwError = LwDsCacheAddPidException(getpid());
     BAIL_ON_ERROR(dwError);
 
+    /* Initialize logging subsystem */
+    LwSmLogInit();
+
     /* Set up logging */
     dwError = LwSmConfigureLogging(ppszArgv[0]);
     BAIL_ON_ERROR(dwError);
@@ -673,6 +676,7 @@ LwSmLogIpc (
         {
             LwSmLogMessage(
                 smLevel,
+                "lwsm-ipc",
                 pszFunction,
                 pszFilename,
                 line,

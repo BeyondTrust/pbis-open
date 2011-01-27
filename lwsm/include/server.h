@@ -147,6 +147,7 @@ typedef struct _SM_LOGGER
     DWORD
     (*pfnLog) (
         LW_SM_LOG_LEVEL level,
+        PCSTR pszFacility,
         PCSTR pszFunctionName,
         PCSTR pszSourceFile,
         DWORD dwLineNumber,
@@ -352,9 +353,15 @@ LwSmLoaderGetVtbl(
     PLW_SERVICE_LOADER_VTBL* ppVtbl
     );
 
+VOID
+LwSmLogInit(
+    VOID
+    );
+
 DWORD
 LwSmLogMessage(
     LW_SM_LOG_LEVEL level,
+    PCSTR pszFacility,
     PCSTR pszFunctionName,
     PCSTR pszSourceFile,
     DWORD dwLineNumber,
@@ -362,8 +369,20 @@ LwSmLogMessage(
     );
 
 DWORD
+LwSmLogPrintfv(
+    LW_SM_LOG_LEVEL level,
+    PCSTR pszFacility,
+    PCSTR pszFunctionName,
+    PCSTR pszSourceFile,
+    DWORD dwLineNumber,
+    PCSTR pszFormat,
+    va_list ap
+    );
+
+DWORD
 LwSmLogPrintf(
     LW_SM_LOG_LEVEL level,
+    PCSTR pszFacility,
     PCSTR pszFunctionName,
     PCSTR pszSourceFile,
     DWORD dwLineNumber,
@@ -414,7 +433,7 @@ LwSmSrvGetLogInfo(
     PSTR* ppszTargetName
     );
 
-#define SM_LOG(level, ...) LwSmLogPrintf((level), __func__, __FILE__, __LINE__, __VA_ARGS__)
+#define SM_LOG(level, ...) LwSmLogPrintf((level), NULL, __func__, __FILE__, __LINE__, __VA_ARGS__)
 #define SM_LOG_ALWAYS(...) SM_LOG(LW_SM_LOG_LEVEL_ALWAYS, __VA_ARGS__)
 #define SM_LOG_ERROR(...) SM_LOG(LW_SM_LOG_LEVEL_ERROR, __VA_ARGS__)
 #define SM_LOG_WARNING(...) SM_LOG(LW_SM_LOG_LEVEL_WARNING, __VA_ARGS__)
