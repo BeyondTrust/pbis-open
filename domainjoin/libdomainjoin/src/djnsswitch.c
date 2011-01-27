@@ -580,20 +580,6 @@ cleanup:
     return ceError;
 }
 
-static DWORD UsingLsass(BOOLEAN *using)
-{
-    DWORD ceError = ERROR_SUCCESS;
-    ceError = CTFindFileInPath("lsassd", BINDIR ":" SBINDIR, NULL);
-    if(ceError == ERROR_FILE_NOT_FOUND)
-    {
-        *using = FALSE;
-        ceError = ERROR_SUCCESS;
-    }
-    else if(!ceError)
-        *using = TRUE;
-    return ceError;
-}
-
 static QueryResult RemoveCompat(NsswitchConf *conf, PSTR *description, LWException **exc)
 {
     DistroInfo distro;
@@ -742,22 +728,10 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
     DistroInfo distro;
     int line;
     int lwiIndex;
-    BOOLEAN usingLsass;
-    PCSTR preferredModule;
-    PCSTR oldModule;
+    static const char* moduleName = "lsass";
+    static const char* oldModule = "lwidentity";
 
     GCE(ceError = DJGetDistroInfo(NULL, &distro));
-    GCE(ceError = UsingLsass(&usingLsass));
-    if(usingLsass)
-    {
-        preferredModule = "lsass";
-        oldModule = "lwidentity";
-    }
-    else
-    {
-        preferredModule = "lwidentity";
-        oldModule = "lsass";
-    }
 
     line = FindEntry(conf, 0, "passwd");
     if(enable && line == -1)
@@ -766,10 +740,10 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
         GCE(ceError = AddEntry(conf, &distro, &line, "passwd"));
         GCE(ceError = InsertModule(conf, &distro, line, -1, "files"));
     }
-    lwiIndex = FindModuleOnLine(conf, line, preferredModule);
+    lwiIndex = FindModuleOnLine(conf, line, moduleName);
     if(enable && lwiIndex == -1)
     {
-        GCE(ceError = InsertModule(conf, &distro, line, -1, preferredModule));
+        GCE(ceError = InsertModule(conf, &distro, line, -1, moduleName));
     }
     if(!enable && lwiIndex != -1)
     {
@@ -808,10 +782,10 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
         GCE(ceError = AddEntry(conf, &distro, &line, groupName));
         GCE(ceError = InsertModule(conf, &distro, line, -1, "files"));
     }
-    lwiIndex = FindModuleOnLine(conf, line, preferredModule);
+    lwiIndex = FindModuleOnLine(conf, line, moduleName);
     if(enable && lwiIndex == -1)
     {
-        GCE(ceError = InsertModule(conf, &distro, line, -1, preferredModule));
+        GCE(ceError = InsertModule(conf, &distro, line, -1, moduleName));
     }
     if(!enable && lwiIndex != -1)
     {
