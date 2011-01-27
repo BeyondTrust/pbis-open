@@ -36,6 +36,8 @@
  *
  */
 
+#define LW_RTL_LOG_COMPONENT "svcm"
+
 #include "config.h"
 #include "svcm-internal.h"
 
@@ -112,6 +114,8 @@ LwRtlSvcmLoad(
 
     status = LW_RTL_ALLOCATE_AUTO(&pInstance);
     GCOS(status);
+
+    LW_RTL_LOG_DEBUG("Loading service module: %s", pModulePathA);
 
     (void) dlerror();
     pInstance->pDlHandle = dlopen(pModulePathA, RTLD_LOCAL | RTLD_NOW);
