@@ -88,6 +88,44 @@
 #define _LWMSG_MEMBER_IO_FILE_HANDLE_OUT(Type, Field) \
     _LWMSG_MEMBER_HANDLE_OUT(Type, Field, IO_FILE_HANDLE)
 
+#define _LWMSG_MEMBER_NTSTATUS(Type, Field) \
+    LWMSG_MEMBER_CUSTOM(Type, Field, &gNtStatusClass, NULL)
+
+LWMsgStatus
+NtIpcPrintNtStatus(
+    LWMsgDataContext* pContext,
+    LWMsgType* pType,
+    void* pObject,
+    void* pData,
+    LWMsgBuffer* pBuffer
+    )
+{
+    NTSTATUS status = *(NTSTATUS*)pObject;
+    PCSTR pName = LwNtStatusToName(status);
+
+    if (!strcmp(pName, "UNKNOWN"))
+    {
+        return lwmsg_buffer_print(pBuffer, "0x%.8x", (unsigned int) status);
+    }
+    else
+    {
+        return lwmsg_buffer_print(pBuffer, "%s (0x%.8x)", pName, (unsigned int) status);
+    }
+}
+
+static
+LWMsgTypeSpec gNtStatusSpec[] =
+{
+    LWMSG_UINT32(NTSTATUS),
+    LWMSG_TYPE_END
+};
+
+static LWMsgTypeClass gNtStatusClass =
+{
+    .transmit_type = gNtStatusSpec,
+    .print = NtIpcPrintNtStatus
+};
+
 static
 LWMsgTypeSpec gNtIpcTypeSpecBoolean[] =
 {
@@ -149,7 +187,7 @@ static
 LWMsgTypeSpec gNtIpcTypeSpecMessageGenericFileIoResult[] =
 {
     LWMSG_STRUCT_BEGIN(NT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT),
-    LWMSG_MEMBER_UINT32(NT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT, Status),
+    _LWMSG_MEMBER_NTSTATUS(NT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT, Status),
     LWMSG_MEMBER_UINT32(NT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT, BytesTransferred),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
@@ -159,7 +197,7 @@ static
 LWMsgTypeSpec gNtIpcTypeSpecMessageGenericFileBufferResult[] =
 {
     LWMSG_STRUCT_BEGIN(NT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT),
-    LWMSG_MEMBER_UINT32(NT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT, Status),
+    _LWMSG_MEMBER_NTSTATUS(NT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT, Status),
     LWMSG_MEMBER_UINT32(NT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT, BytesTransferred),
     _LWMSG_MEMBER_BUFFER(NT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT, Buffer, BytesTransferred),
     LWMSG_STRUCT_END,
@@ -194,7 +232,7 @@ LWMsgTypeSpec gNtIpcTypeSpecMessageCreateFileResult[] =
 {
     LWMSG_STRUCT_BEGIN(NT_IPC_MESSAGE_CREATE_FILE_RESULT),
     _LWMSG_MEMBER_IO_FILE_HANDLE_OUT(NT_IPC_MESSAGE_CREATE_FILE_RESULT, FileHandle),
-    LWMSG_MEMBER_UINT32(NT_IPC_MESSAGE_CREATE_FILE_RESULT, Status),
+    _LWMSG_MEMBER_NTSTATUS(NT_IPC_MESSAGE_CREATE_FILE_RESULT, Status),
     LWMSG_MEMBER_UINT32(NT_IPC_MESSAGE_CREATE_FILE_RESULT, CreateResult),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
