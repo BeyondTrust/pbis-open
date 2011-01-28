@@ -89,10 +89,10 @@ LWNetSrvLogIpc (
         break;
     }
 
-    result = gLwnetLogInfo.dwLogLevel >= dwLevel;
+    result = LwRtlLogGetLevel() >= dwLevel;
     if (pszMessage && result)
     {
-        lwnet_log_message(dwLevel, "[IPC] %s", pszMessage);
+        LW_RTL_LOG_AT_LEVEL(dwLevel, "netlogon-ipc", "%s", pszMessage);
     }
 
     return result;

@@ -416,6 +416,8 @@ lwnet_set_log_level(
     LWNET_LOCK_LOGGER(bInLock);
     gLwnetLogInfo.dwLogLevel = dwLogLevel;
 
+    LwRtlLogSetLevel(dwLogLevel);
+
 error:
     LWNET_UNLOCK_LOGGER(bInLock);
 

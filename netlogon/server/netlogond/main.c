@@ -48,6 +48,12 @@
 
 #include "includes.h"
 
+static
+VOID
+LWNetInitRtlLogging(
+    VOID
+    );
+
 int
 main(
     int argc,
@@ -65,6 +71,8 @@ main(
 
     dwError = LWNetSrvParseArgs(argc, argv, &gServerInfo);
     BAIL_ON_LWNET_ERROR(dwError);
+
+    LWNetInitRtlLogging();
 
     dwError = LWNetSrvInitLogging(LWNetGetProgramName(argv[0]));
     BAIL_ON_LWNET_ERROR(dwError);
@@ -163,6 +171,65 @@ main(
     LWNetSrvLogProcessFailureEvent(dwError);
 
     goto cleanup;
+}
+
+static
+VOID
+LWNetLogCallback(
+    LW_IN LW_OPTIONAL LW_PVOID Context,
+    LW_IN LW_RTL_LOG_LEVEL Level,
+    LW_IN LW_OPTIONAL LW_PCSTR ComponentName,
+    LW_IN LW_PCSTR FunctionName,
+    LW_IN LW_PCSTR FileName,
+    LW_IN LW_ULONG LineNumber,
+    LW_IN LW_PCSTR Format,
+    LW_IN ...
+    )
+{
+    DWORD dwError = 0;
+    va_list ap;
+    PSTR pMessage = NULL;
+
+    va_start(ap, Format);
+    dwError = LwNtStatusToWin32Error(
+        LwRtlCStringAllocatePrintfV(&pMessage, Format, ap));
+    va_end(ap);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    if (gLwnetLogInfo.dwLogLevel >= LWNET_LOG_LEVEL_DEBUG)
+    {
+        lwnet_log_message(
+            Level,
+            "0x%lx: [%s %s:%d] %s",
+            (unsigned long) pthread_self(),
+            FunctionName,
+            FileName,
+            LineNumber,
+            pMessage);
+    }
+    else
+    {
+        lwnet_log_message(
+            Level,
+            "0x%lx: %s",
+            (unsigned long) pthread_self(),
+            pMessage);
+    }
+
+error:
+
+    RTL_FREE(&pMessage);
+
+    return;
+}
+
+static
+VOID
+LWNetInitRtlLogging(
+    VOID
+    )
+{
+    LwRtlLogSetCallback(LWNetLogCallback, NULL);
 }
 
 DWORD

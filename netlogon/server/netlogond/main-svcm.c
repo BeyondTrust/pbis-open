@@ -90,11 +90,6 @@ LWNetSvcmStart(
     dwError = LWNetSvcmParseArgs(ArgCount, ppArgs, &gServerInfo);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    dwError = LWNetSrvInitLogging("netlogon");
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    LWNET_LOG_VERBOSE("Logging started");
-
     dwError = LWNetSrvInitialize();
     BAIL_ON_LWNET_ERROR(dwError);
 
@@ -128,8 +123,6 @@ LWNetSvcmStop(
     LWNetSrvApiShutdown();
 
     LWNET_LOG_INFO("LWNET Service exiting...");
-
-    lwnet_close_log();
 
     return STATUS_SUCCESS;
 }

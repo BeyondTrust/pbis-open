@@ -48,6 +48,7 @@
 #define __LWNET_UTILS_H__
 
 #include <reg/lwreg.h>
+#include <lw/rtllog.h>
 
 typedef struct __DLINKEDLIST
 {
@@ -164,37 +165,18 @@ typedef struct _LOGINFO {
 
 extern LOGINFO gLwnetLogInfo;
 
-#define _LWNET_LOG_ALWAYS(Level, Format, ...) \
-    lwnet_log_message((Level), "[%s() %s:%d] " Format, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__)
-
-#define _LWNET_LOG_IF(Level, Format, ...) \
-    do { \
-        if (gLwnetLogInfo.dwLogLevel >= (Level)) \
-        { \
-            _LWNET_LOG_ALWAYS(Level, Format, ## __VA_ARGS__); \
-        } \
-    } while (0)
+#define _LWNET_LOG_AT(Level, ...) LW_RTL_LOG_AT_LEVEL(Level, "netlogon", __VA_ARGS__)
+#define LWNET_LOG_ALWAYS(...) _LWNET_LOG_AT(LW_RTL_LOG_LEVEL_ALWAYS, __VA_ARGS__)
+#define LWNET_LOG_ERROR(...) _LWNET_LOG_AT(LW_RTL_LOG_LEVEL_ERROR, __VA_ARGS__)
+#define LWNET_LOG_WARNING(...) _LWNET_LOG_AT(LW_RTL_LOG_LEVEL_WARNING, __VA_ARGS__)
+#define LWNET_LOG_INFO(...) _LWNET_LOG_AT(LW_RTL_LOG_LEVEL_INFO, __VA_ARGS__)
+#define LWNET_LOG_VERBOSE(...) _LWNET_LOG_AT(LW_RTL_LOG_LEVEL_VERBOSE, __VA_ARGS__)
+#define LWNET_LOG_DEBUG(...) _LWNET_LOG_AT(LW_RTL_LOG_LEVEL_DEBUG, __VA_ARGS__)
+#define LWNET_LOG_TRACE(...) _LWNET_LOG_AT(LW_RTL_LOG_LEVEL_TRACE, __VA_ARGS__)
 
 #define LWNET_SAFE_LOG_STRING(x) \
     ( (x) ? (x) : "<null>" )
 
-#define LWNET_LOG_ALWAYS(szFmt, ...) \
-    _LWNET_LOG_ALWAYS(LWNET_LOG_LEVEL_ALWAYS, szFmt, ## __VA_ARGS__)
-
-#define LWNET_LOG_ERROR(szFmt, ...) \
-    _LWNET_LOG_IF(LWNET_LOG_LEVEL_ERROR, szFmt, ## __VA_ARGS__)
-
-#define LWNET_LOG_WARNING(szFmt, ...) \
-    _LWNET_LOG_IF(LWNET_LOG_LEVEL_WARNING, szFmt, ## __VA_ARGS__)
-
-#define LWNET_LOG_INFO(szFmt, ...) \
-    _LWNET_LOG_IF(LWNET_LOG_LEVEL_INFO, szFmt, ## __VA_ARGS__)
-
-#define LWNET_LOG_VERBOSE(szFmt, ...) \
-    _LWNET_LOG_IF(LWNET_LOG_LEVEL_VERBOSE, szFmt, ## __VA_ARGS__)
-
-#define LWNET_LOG_DEBUG(szFmt, ...) \
-    _LWNET_LOG_IF(LWNET_LOG_LEVEL_DEBUG, szFmt, ## __VA_ARGS__)
 
 
 //
