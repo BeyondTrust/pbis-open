@@ -48,7 +48,14 @@
  */
 
 /**
- * @ingroup marshal
+ * @defgroup buffer Data buffers
+ * @ingroup public
+ * @brief Semi-abstract buffer interface
+ */
+
+/*@{*/
+
+/**
  * @brief Generic buffer
  *
  * This structure comprises a generic buffer used as
@@ -102,5 +109,28 @@ typedef struct LWMsgBuffer
     /** @brief User data pointer */
     void* data;
 } LWMsgBuffer;
+
+/**
+ * @brief Print into buffer
+ *
+ * Prints into an #LWMsgBuffer according to the specified format string and
+ * parameters, calling the buffer's wrap function as needed.
+ *
+ * @param[in,out] buffer the buffer to print into
+ * @param[in] fmt the format string
+ * @lwmsg_status
+ * @lwmsg_success
+ * @lwmsg_memory
+ * @lwmsg_code{EOF, end of buffer reached}
+ * @lwmsg_endstatus
+ */
+LWMsgStatus
+lwmsg_buffer_print(
+    LWMsgBuffer* buffer,
+    const char* fmt,
+    ...
+    );
+
+/*@}*/
 
 #endif

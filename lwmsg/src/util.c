@@ -39,6 +39,7 @@
 #include <config.h>
 #include "util-private.h"
 #include "xnet-private.h"
+#include "buffer-private.h"
 
 #ifdef HAVE_SYS_SELECT_H
 #  include <sys/select.h>
@@ -1013,4 +1014,38 @@ lwmsg_hash_destroy(
         free(table->buckets);
         table->buckets = NULL;
     }
+}
+
+/* FIXME: create a buffer.c for this stuff */
+
+LWMsgStatus
+lwmsg_buffer_print(
+    LWMsgBuffer* buffer,
+    const char* fmt,
+    ...
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    va_list ap;
+    char* text = NULL;
+
+    va_start(ap, fmt);
+    text = lwmsg_formatv(fmt, ap);
+    va_end(ap);
+
+    if (!text)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MEMORY);
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_buffer_write(buffer, (unsigned char*) text, strlen(text)));
+
+error:
+
+    if (text)
+    {
+        free(text);
+    }
+
+    return status;
 }
