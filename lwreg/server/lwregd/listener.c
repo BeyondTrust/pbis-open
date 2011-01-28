@@ -44,6 +44,7 @@
  *          Danilo Almeida (dalmeida@likewisesoftware.com)
  *          Marc Guy (mguy@likewisesoftware.com)
  */
+
 #include "registryd.h"
 
 #define MAX_DISPATCH 8
@@ -93,12 +94,11 @@ RegSrvLogIpc (
         break;
     }
 
-    REG_LOCK_LOGGER;
     if (pszMessage)
     {
-        if (gRegMaxLogLevel >= regLevel)
+        if (LwRtlLogGetLevel() >= regLevel)
         {
-            RegLogMessage(gpfnRegLogger, ghRegLog, regLevel, "[IPC] %s", pszMessage);
+            LW_RTL_LOG_AT_LEVEL(regLevel, "lwreg-ipc", "%s", pszMessage);
             result = LWMSG_TRUE;
         }
         else
@@ -108,7 +108,7 @@ RegSrvLogIpc (
     }
     else
     {
-        result = (gRegMaxLogLevel >= regLevel);
+        result = (LwRtlLogGetLevel() >= regLevel);
     }
     REG_UNLOCK_LOGGER;
 

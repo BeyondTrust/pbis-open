@@ -49,10 +49,8 @@
 
 #include "includes.h"
 
-#if defined(LW_ENABLE_THREADS)
 pthread_mutex_t gLogLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t gTraceLock = PTHREAD_MUTEX_INITIALIZER;
-#endif
 
 
 

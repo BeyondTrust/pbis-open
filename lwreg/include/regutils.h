@@ -227,13 +227,13 @@ typedef struct __REG_HASH_ITERATOR
 
 typedef enum
 {
-    REG_LOG_LEVEL_ALWAYS = 0,
-    REG_LOG_LEVEL_ERROR,
-    REG_LOG_LEVEL_WARNING,
-    REG_LOG_LEVEL_INFO,
-    REG_LOG_LEVEL_VERBOSE,
-    REG_LOG_LEVEL_DEBUG,
-    REG_LOG_LEVEL_TRACE
+    REG_LOG_LEVEL_ALWAYS = LW_RTL_LOG_LEVEL_ALWAYS,
+    REG_LOG_LEVEL_ERROR = LW_RTL_LOG_LEVEL_ERROR,
+    REG_LOG_LEVEL_WARNING = LW_RTL_LOG_LEVEL_WARNING,
+    REG_LOG_LEVEL_INFO = LW_RTL_LOG_LEVEL_INFO,
+    REG_LOG_LEVEL_VERBOSE = LW_RTL_LOG_LEVEL_VERBOSE,
+    REG_LOG_LEVEL_DEBUG = LW_RTL_LOG_LEVEL_DEBUG,
+    REG_LOG_LEVEL_TRACE = LW_RTL_LOG_LEVEL_TRACE
 } RegLogLevel;
 
 typedef enum
@@ -253,101 +253,34 @@ typedef struct __REG_LOG_INFO {
 typedef VOID (*PFN_REG_LOG_MESSAGE)(
                     HANDLE      hLog,
                     RegLogLevel logLevel,
-                    PCSTR       pszFormat,
+                    PCSTR       pszMessage,
                     va_list     msgList
                     );
-
-#if defined(LW_ENABLE_THREADS)
 
 extern pthread_mutex_t gLogLock;
 
 #define REG_LOCK_LOGGER   pthread_mutex_lock(&gLogLock)
 #define REG_UNLOCK_LOGGER pthread_mutex_unlock(&gLogLock)
 
-#define _REG_LOG_WITH_THREAD(Level, Format, ...)   \
-    _REG_LOG_MESSAGE(Level,                        \
-                     "0x%lx:" Format,              \
-                     (unsigned long)pthread_self(),\
-                     ## __VA_ARGS__)
-
-#else
-
-#define REG_LOCK_LOGGER
-#define REG_UNLOCK_LOGGER
-
-#define _REG_LOG_WITH_THREAD(Level, Format, ...) \
-    _REG_LOG_MESSAGE(Level,                      \
-                     Format,                     \
-                     ## __VA_ARGS__)
-
-#endif
-
-#define _REG_LOG_WITH_DEBUG(Level, Format, ...)  \
-    _REG_LOG_WITH_THREAD(Level,                  \
-                         "[%s() %s:%d] " Format, \
-                         __FUNCTION__,           \
-                         __FILE__,               \
-                         __LINE__,               \
-                         ## __VA_ARGS__)
-
 extern HANDLE              ghRegLog;
 extern RegLogLevel         gRegMaxLogLevel;
 extern PFN_REG_LOG_MESSAGE gpfnRegLogger;
 
-#define _REG_LOG_MESSAGE(Level, Format, ...)                        \
-    RegLogMessage(gpfnRegLogger, ghRegLog, Level, Format, ## __VA_ARGS__)
+#define REG_SAFE_LOG_STRING(x) ( (x) ? (x) : "<null>" )
 
-#define _REG_LOG_IF(Level, Format, ...)                              \
-    do {                                                             \
-        REG_LOCK_LOGGER;                                             \
-        if (gpfnRegLogger && (gRegMaxLogLevel >= (Level)))              \
-        {                                                            \
-            if (gRegMaxLogLevel >= REG_LOG_LEVEL_DEBUG)              \
-            {                                                        \
-                _REG_LOG_WITH_DEBUG(Level, Format, ## __VA_ARGS__);  \
-            }                                                        \
-            else                                                     \
-            {                                                        \
-                _REG_LOG_WITH_THREAD(Level, Format, ## __VA_ARGS__); \
-            }                                                        \
-        }                                                            \
-        REG_UNLOCK_LOGGER;                                           \
-    } while (0)
-
-#define REG_SAFE_LOG_STRING(x) \
-    ( (x) ? (x) : "<null>" )
-
-#define REG_LOG_ALWAYS(szFmt, ...)                           \
-    _REG_LOG_IF(REG_LOG_LEVEL_ALWAYS, szFmt, ## __VA_ARGS__)
-
-#define REG_LOG_ERROR(szFmt, ...)                           \
-    _REG_LOG_IF(REG_LOG_LEVEL_ERROR, szFmt, ## __VA_ARGS__)
-
-#define REG_LOG_WARNING(szFmt, ...)                           \
-    _REG_LOG_IF(REG_LOG_LEVEL_WARNING, szFmt, ## __VA_ARGS__)
-
-#define REG_LOG_INFO(szFmt, ...)                           \
-    _REG_LOG_IF(REG_LOG_LEVEL_INFO, szFmt, ## __VA_ARGS__)
-
-#define REG_LOG_VERBOSE(szFmt, ...)                           \
-    _REG_LOG_IF(REG_LOG_LEVEL_VERBOSE, szFmt, ## __VA_ARGS__)
-
-#define REG_LOG_DEBUG(szFmt, ...)                           \
-    _REG_LOG_IF(REG_LOG_LEVEL_DEBUG, szFmt, ## __VA_ARGS__)
-
-#if defined(LW_ENABLE_THREADS)
+#define _REG_LOG_AT(Level, ...) LW_RTL_LOG_AT_LEVEL(Level, "lwreg", __VA_ARGS__)
+#define REG_LOG_ALWAYS(...) _REG_LOG_AT(LW_RTL_LOG_LEVEL_ALWAYS, __VA_ARGS__)
+#define REG_LOG_ERROR(...) _REG_LOG_AT(LW_RTL_LOG_LEVEL_ERROR, __VA_ARGS__)
+#define REG_LOG_WARNING(...) _REG_LOG_AT(LW_RTL_LOG_LEVEL_WARNING, __VA_ARGS__)
+#define REG_LOG_INFO(...) _REG_LOG_AT(LW_RTL_LOG_LEVEL_INFO, __VA_ARGS__)
+#define REG_LOG_VERBOSE(...) _REG_LOG_AT(LW_RTL_LOG_LEVEL_VERBOSE, __VA_ARGS__)
+#define REG_LOG_DEBUG(...) _REG_LOG_AT(LW_RTL_LOG_LEVEL_DEBUG, __VA_ARGS__)
+#define REG_LOG_TRACE(...) _REG_LOG_AT(LW_RTL_LOG_LEVEL_TRACE, __VA_ARGS__)
 
 extern pthread_mutex_t gTraceLock;
 
 #define REG_LOCK_TRACER   pthread_mutex_lock(&gTraceLock)
 #define REG_UNLOCK_TRACER pthread_mutex_unlock(&gTraceLock)
-
-#else
-
-#define REG_LOCK_TRACER
-#define REG_UNLOCK_TRACER
-
-#endif
 
 #define IsNullOrEmptyString(str) (!(str) || !(*(str)))
 

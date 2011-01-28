@@ -96,15 +96,6 @@ RegSvcmStart(
         &gServerInfo);
     BAIL_ON_REG_ERROR(dwError);
 
-    dwError = RegInitLogging_r(
-        "lwreg",
-        gServerInfo.logTarget,
-        gServerInfo.maxAllowedLogLevel,
-        gServerInfo.szLogFilePath);
-    BAIL_ON_REG_ERROR(dwError);
-
-    REG_LOG_VERBOSE("Logging started");
-
     dwError = RegSrvInitialize();
     BAIL_ON_REG_ERROR(dwError);
 
@@ -134,8 +125,6 @@ RegSvcmStop(
     RegSrvApiShutdown();
 
     REG_LOG_INFO("REG Service exiting...");
-
-    RegShutdownLogging_r();
 
     return STATUS_SUCCESS;
 }

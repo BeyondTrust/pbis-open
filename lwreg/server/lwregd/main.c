@@ -49,6 +49,12 @@
  */
 #include "registryd.h"
 
+static
+VOID
+RegInitRtlLogging(
+    VOID
+    );
+
 int
 main(
     int argc,
@@ -70,11 +76,15 @@ main(
 
     BAIL_ON_REG_ERROR(dwError);
 
+    RegInitRtlLogging();
+
     dwError = RegInitLogging_r(
         RegGetProgramName(argv[0]),
         gServerInfo.logTarget,
         gServerInfo.maxAllowedLogLevel,
         gServerInfo.szLogFilePath);
+
+    LwRtlLogSetLevel(gServerInfo.maxAllowedLogLevel);
 
     BAIL_ON_REG_ERROR(dwError);
 
@@ -153,6 +163,75 @@ error:
     //RegSrvLogProcessFailureEvent(dwError);
 
     goto cleanup;
+}
+
+static
+VOID
+RegLogCallback(
+    LW_IN LW_OPTIONAL LW_PVOID Context,
+    LW_IN LW_RTL_LOG_LEVEL Level,
+    LW_IN LW_OPTIONAL LW_PCSTR ComponentName,
+    LW_IN LW_PCSTR FunctionName,
+    LW_IN LW_PCSTR FileName,
+    LW_IN LW_ULONG LineNumber,
+    LW_IN LW_PCSTR Format,
+    LW_IN ...
+    )
+{
+    DWORD dwError = 0;
+    va_list ap;
+    PSTR pMessage = NULL;
+
+    REG_LOCK_LOGGER;
+    if (gpfnRegLogger && (gRegMaxLogLevel >= (Level)))
+    {
+        va_start(ap, Format);
+        dwError = LwNtStatusToWin32Error(
+            LwRtlCStringAllocatePrintfV(&pMessage, Format, ap));
+        va_end(ap);
+        BAIL_ON_REG_ERROR(dwError);
+
+        if (gRegMaxLogLevel >= REG_LOG_LEVEL_DEBUG)
+        {
+            RegLogMessage(
+                gpfnRegLogger,
+                ghRegLog,
+                Level,
+                "0x%lx: [%s %s:%d] %s",
+                (unsigned long) pthread_self(),
+                FunctionName,
+                FileName,
+                LineNumber,
+                pMessage);
+        }
+        else
+        {
+            RegLogMessage(
+                gpfnRegLogger,
+                ghRegLog,
+                Level,
+                "0x%lx: %s",
+                (unsigned long) pthread_self(),
+                pMessage);
+        }
+    }
+
+error:
+
+    REG_UNLOCK_LOGGER;
+
+    RTL_FREE(&pMessage);
+
+    return;
+}
+
+static
+VOID
+RegInitRtlLogging(
+    VOID
+    )
+{
+    LwRtlLogSetCallback(RegLogCallback, NULL);
 }
 
 DWORD
