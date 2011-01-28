@@ -301,7 +301,7 @@ typedef void (*LWMsgTypeDestroyTransmittedFunction) (
  * @brief Custom print function
  *
  * A callback function type which prints the representation of a custom type,
- * using the provided type printing callback.
+ * writing to the provided buffer.
  *
  * @param context the data context
  * @param object the address of the object to print
