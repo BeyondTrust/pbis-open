@@ -86,8 +86,6 @@ RegOpenSyslog(
 
     pSyslog->bOpened = TRUE;
 
-    RegSetSyslogMask(maxAllowedLogLevel);
-
     dwError = RegSetupLogging(
                     (HANDLE)pSyslog,
                     maxAllowedLogLevel,
@@ -113,48 +111,6 @@ error:
     }
 
     goto cleanup;
-}
-
-VOID
-RegSetSyslogMask(
-    RegLogLevel logLevel
-    )
-{
-    DWORD dwSysLogLevel;
-
-    switch (logLevel)
-    {
-        case REG_LOG_LEVEL_ALWAYS:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_INFO);
-            break;
-        }
-        case REG_LOG_LEVEL_ERROR:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_ERR);
-            break;
-        }
-
-        case REG_LOG_LEVEL_WARNING:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_WARNING);
-            break;
-        }
-
-        case REG_LOG_LEVEL_INFO:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_INFO);
-            break;
-        }
-
-        default:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_INFO);
-            break;
-        }
-    }
-
-    setlogmask(dwSysLogLevel);
 }
 
 VOID
