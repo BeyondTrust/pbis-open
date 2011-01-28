@@ -259,7 +259,7 @@ extern LWMsgTypeClass lwmsg_fd_type_class;
  * or -1 (indicating that no descriptor should be transmitted).
  * @hideinitializer
  */
-#define LWMSG_FD LWMSG_CUSTOM(&lwmsg_fd_type_class, NULL)
+#define LWMSG_FD LWMSG_CUSTOM(int, &lwmsg_fd_type_class, NULL)
 
 /**
  * @brief Define a file descriptor as a member
