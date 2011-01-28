@@ -239,24 +239,37 @@ lwmsg_data_unmarshal_custom(
 
     lwmsg_type_iterate(typeclass->transmit_type, &transmit_iter);
 
-    /* Allocate memory for transmitted object */
-    BAIL_ON_ERROR(status = lwmsg_data_alloc_memory(context, transmit_iter.size, &transmit_object));
+    if (typeclass->unmarshal)
+    {
+        /* Allocate memory for transmitted object */
+        BAIL_ON_ERROR(status = lwmsg_data_alloc_memory(context, transmit_iter.size, &transmit_object));
 
-    /* Unmarshal transmitted object */
-    BAIL_ON_ERROR(status = lwmsg_data_unmarshal_internal(
-                      context,
-                      &my_state,
-                      &transmit_iter,
-                      buffer,
-                      transmit_object));
-                      
-    /* Convert transmitted object into presented object */
-    BAIL_ON_ERROR(status = iter->info.kind_custom.typeclass->unmarshal(
-                      context,
-                      &iter->attrs,
-                      transmit_object,
-                      object,
-                      iter->info.kind_custom.typedata));
+        /* Unmarshal transmitted object */
+        BAIL_ON_ERROR(status = lwmsg_data_unmarshal_internal(
+            context,
+            &my_state,
+            &transmit_iter,
+            buffer,
+            transmit_object));
+
+        /* Convert transmitted object into presented object */
+        BAIL_ON_ERROR(status = iter->info.kind_custom.typeclass->unmarshal(
+            context,
+            &iter->attrs,
+            transmit_object,
+            object,
+            iter->info.kind_custom.typedata));
+    }
+    else
+    {
+        /* Just unmarshal the transmitted type */
+        BAIL_ON_ERROR(status = lwmsg_data_unmarshal_internal(
+            context,
+            state,
+            &transmit_iter,
+            buffer,
+            object));
+    }
 
 error:
 

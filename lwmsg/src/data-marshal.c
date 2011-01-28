@@ -342,24 +342,37 @@ lwmsg_data_marshal_custom(
 
     lwmsg_type_iterate(typeclass->transmit_type, &transmit_iter);
 
-    /* Allocate space for the transmitted object */
-    BAIL_ON_ERROR(status = lwmsg_data_alloc_memory(context, transmit_iter.size, &transmit_object));
+    if (typeclass->marshal)
+    {
+        /* Allocate space for the transmitted object */
+        BAIL_ON_ERROR(status = lwmsg_data_alloc_memory(context, transmit_iter.size, &transmit_object));
 
-    /* Convert presented object into transmitted object */
-    BAIL_ON_ERROR(status = iter->info.kind_custom.typeclass->marshal(
-                      context,
-                      &iter->attrs,
-                      object,
-                      transmit_object,
-                      iter->info.kind_custom.typedata));
+        /* Convert presented object into transmitted object */
+        BAIL_ON_ERROR(status = typeclass->marshal(
+            context,
+            &iter->attrs,
+            object,
+            transmit_object,
+            iter->info.kind_custom.typedata));
 
-    /* Marshal transmitted object */
-    BAIL_ON_ERROR(status = lwmsg_data_marshal_internal(
-                      context,
-                      &my_state,
-                      &transmit_iter,
-                      transmit_object,
-                      buffer));
+        /* Marshal transmitted object */
+        BAIL_ON_ERROR(status = lwmsg_data_marshal_internal(
+            context,
+            &my_state,
+            &transmit_iter,
+            transmit_object,
+            buffer));
+    }
+    else
+    {
+        /* Just marshal the object as the transmitted type */
+        BAIL_ON_ERROR(status = lwmsg_data_marshal_internal(
+                  context,
+                  state,
+                  &transmit_iter,
+                  object,
+                  buffer));
+    }
                       
 
 error:
