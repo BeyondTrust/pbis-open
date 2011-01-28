@@ -668,7 +668,7 @@ GetSecretsPath(
 
     error = LwAllocateStringPrintf(
             &pCommandLine,
-            "%s -b | grep PRIVATE_DIR:",
+            "%s -b | grep STATEDIR:",
             pSmbdPath
             );
     BAIL_ON_LSA_ERROR(error);
@@ -681,18 +681,41 @@ GetSecretsPath(
                 &pSambaPrivateDir,
                 NULL);
     BAIL_ON_LSA_ERROR(error);
+    if (error == ERROR_BAD_COMMAND)
+    {
+        // This version of smbd is older than 3.5. Try looking for the
+        // PRIVATE_DIR instead.
+        LW_SAFE_FREE_STRING(pCommandLine);
+
+        error = LwAllocateStringPrintf(
+                &pCommandLine,
+                "%s -b | grep PRIVATE_DIR:",
+                pSmbdPath
+                );
+        BAIL_ON_LSA_ERROR(error);
+
+        ppArgs[2] = pCommandLine;
+
+        error = CaptureOutputWithStderr(
+                    "/bin/sh",
+                    ppArgs,
+                    &pSambaPrivateDir,
+                    NULL);
+    }
+    BAIL_ON_LSA_ERROR(error);
 
     LwStripWhitespace(
             pSambaPrivateDir,
             TRUE,
             TRUE);
 
-    if (!strncmp(pSambaPrivateDir, "PRIVATE_DIR: ", sizeof("PRIVATE_DIR: ") -1))
+    if (strstr(pSambaPrivateDir, ": "))
     {
+        char *pValueStart = strstr(pSambaPrivateDir, ": ") + 2;
         memmove(
                 pSambaPrivateDir,
-                pSambaPrivateDir + (sizeof("PRIVATE_DIR: ") - 1),
-                strlen(pSambaPrivateDir) - (sizeof("PRIVATE_DIR: ") - 1) + 1);
+                pValueStart,
+                strlen(pSambaPrivateDir) - (pValueStart - pSambaPrivateDir) + 1);
     }
 
     error = LwAllocateStringPrintf(
