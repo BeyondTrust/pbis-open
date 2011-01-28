@@ -659,7 +659,7 @@ solaris_zones()
         return 0
     fi
 
-    for zone in `zoneadm list`; do
+    for zone in `/usr/sbin/zoneadm list`; do
         if [ $zone = "global" ]; then
             continue
         fi
@@ -684,7 +684,7 @@ solaris_deconfigure_zones()
     fi
 
     domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
-    for zone in `zoneadm list`; do
+    for zone in `/usr/sbin/zoneadm list`; do
         if [ $zone = "global" ]; then
             continue
         fi
@@ -908,6 +908,7 @@ kill_process()
 
 kill_likewise_daemons()
 {
+    kill_process lwsmd
     kill_process srvsvcd
     kill_process lsassd
     kill_process lwiod
@@ -915,7 +916,6 @@ kill_likewise_daemons()
     kill_process eventlogd
     kill_process dcerpcd
     kill_process netlogond
-    kill_process lwsmd
     kill_process lwregd
 }
 
@@ -1310,19 +1310,20 @@ do_postinstall()
     fix_60_registry
 
     # Stop service manager for registry import *** WILL RESTART NORMALLY
-    stop_daemon lwsmd
-    solaris_zones $INIT_SCRIPT_PREFIX_DIR/lwsmd stop
-    solaris_zones svccfg delete lwsmd
+    `get_prefix_dir`/bin/lwsm shutdown
+    solaris_zones `get_prefix_dir`/bin/lwsm shutdown
 
     # Start service manager for normal usage
-    start_daemon lwsmd
-    solaris_zones $INIT_SCRIPT_PREFIX_DIR/lwsmd start
-    solaris_zones svccfg delete lwmsd
-    solaris_zones svccfg import /etc/likewise/svcs-solaris/lwsmd.xml
+    ## Make sure service stuff is set up right on Solaris
+    if type svccfg >/dev/null 2>&1; then
+        ssvccfg delete lwmsd > /dev/null 2>&1
+        svccfg import /etc/likewise/svcs-solaris/lwsmd.xml
+        solaris_zones svccfg delete lwmsd
+        solaris_zones svccfg import /etc/likewise/svcs-solaris/lwsmd.xml
+    fi
 
-    # Tell service manager to re-read service list
-    reload_daemon lwsmd
-    solaris_zones $INIT_SCRIPT_PREFIX_DIR/lwsmd restart
+    $INIT_SCRIPT_PREFIX_DIR/lwsmd start
+    solaris_zones $INIT_SCRIPT_PREFIX_DIR/lwsmd start
 
     # Restore the daemon state
     restore_daemons
