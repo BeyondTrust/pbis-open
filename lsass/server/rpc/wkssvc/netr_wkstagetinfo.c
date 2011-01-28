@@ -77,7 +77,7 @@ NetrSrvWkstaGetInfo(
     POLICY_HANDLE hLocalPolicy = NULL;
     LsaPolicyInformation *pPolInfo = NULL;
     PWSTR pwszHostname = NULL;
-    PWSTR pwszDnsDomain = NULL;
+    PWSTR pwszDomain = NULL;
 
     if (dwLevel != 100)
     {
@@ -142,13 +142,8 @@ NetrSrvWkstaGetInfo(
     if (ntStatus == STATUS_SUCCESS)
     {
         dwError = WkssSrvAllocateWC16StringFromUnicodeStringEx(
-                                    &pwszDnsDomain,
+                                    &pwszDomain,
                                     &pPolInfo->dns.dns_domain);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = WkssSrvAllocateWC16StringFromUnicodeStringEx(
-                                    &pwszHostname,
-                                    &pPolInfo->dns.name);
         BAIL_ON_LSA_ERROR(dwError);
     }
     else if (ntStatus == STATUS_INVALID_INFO_CLASS)
@@ -160,11 +155,8 @@ NetrSrvWkstaGetInfo(
          * what Windows XP does over the wire.
          */
 
-        pwszHostname = pwszLocalHost;
-        pwszLocalHost = NULL;
-
         dwError = WkssSrvAllocateWC16StringFromCString(
-                                    &pwszDnsDomain,
+                                    &pwszDomain,
                                     "WORKGROUP"
                                     );
         BAIL_ON_LSA_ERROR(dwError);
@@ -174,7 +166,12 @@ NetrSrvWkstaGetInfo(
         BAIL_ON_NT_STATUS(ntStatus);
     }
 
-    pInfo100->wksta100_domain        = pwszDnsDomain;
+    dwError = WkssSrvAllocateWC16StringFromCString(
+                                &pwszHostname,
+                                szHostname);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pInfo100->wksta100_domain        = pwszDomain;
     pInfo100->wksta100_name          = pwszHostname;
     pInfo100->wksta100_version_major = 5;
     pInfo100->wksta100_version_minor = 1;
@@ -182,8 +179,8 @@ NetrSrvWkstaGetInfo(
 
     pInfo->pInfo100 = pInfo100;
 
-    pwszDnsDomain = NULL;
-    pwszHostname  = NULL;
+    pwszDomain   = NULL;
+    pwszHostname = NULL;
 
 cleanup:
     if (hLsaBinding && hLocalPolicy)
