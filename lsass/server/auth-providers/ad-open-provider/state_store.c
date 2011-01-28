@@ -410,12 +410,12 @@ ADState_WriteToRegistry(
                   pszDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = RegOpenServer(&hReg);
+    BAIL_ON_LSA_ERROR(dwError);
+        
     /* Handle the ADState_EmptyDb case */
     if (!pProviderData && !ppDomainInfo && !pDomainInfoAppend)
     {
-        dwError = RegOpenServer(&hReg);
-        BAIL_ON_LSA_ERROR(dwError);
-        
         /* Don't care if these fail, these keys may not exist */
         RegUtilDeleteTree(
                       hReg,
