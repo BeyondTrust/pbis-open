@@ -48,14 +48,6 @@
 
 #include "includes.h"
 
-static
-DWORD
-LWNetSvcmParseArgs(
-    ULONG ArgCount,
-    PWSTR* ppArgs,
-    PLWNETSERVERINFO pLWNetServerInfo
-    );
-
 NTSTATUS
 LWNetSvcmInit(
     PCWSTR pServiceName,
@@ -85,9 +77,6 @@ LWNetSvcmStart(
     DWORD dwError = 0;
 
     dwError = LWNetSrvSetDefaults();
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    dwError = LWNetSvcmParseArgs(ArgCount, ppArgs, &gServerInfo);
     BAIL_ON_LWNET_ERROR(dwError);
 
     dwError = LWNetSrvInitialize();
@@ -162,99 +151,6 @@ LWNetSrvSetDefaults(
     setlocale(LC_ALL, "");
 
     return (dwError);
-}
-
-static
-DWORD
-LWNetSvcmParseArgs(
-    ULONG ArgCount,
-    PWSTR* ppArgs,
-    PLWNETSERVERINFO pLWNetServerInfo
-    )
-{
-    DWORD dwError = ERROR_SUCCESS;
-    int iArg = 0;
-    static const WCHAR paramLogFile[] = {'-','-','l','o','g','f','i','l','e','\0'};
-    static const WCHAR paramLogLevel[] = {'-','-','l','o','g','l','e','v','e','l','\0'};
-    static const WCHAR paramSyslog[] = {'-','-','s','y','s','l','o','g','\0'};
-    static const WCHAR paramError[] = {'e','r','r','o','r','\0'};
-    static const WCHAR paramWarning[] = {'w','a','r','n','i','n','g','\0'};
-    static const WCHAR paramInfo[] = {'i','n','f','o','\0'};
-    static const WCHAR paramVerbose[] = {'v','e','r','b','o','s','e','\0'};
-    static const WCHAR paramDebug[] = {'d','e','b','u','g','\0'};
-    static const WCHAR paramTrace[] = {'t','r','a','c','e','\0'};
-    PSTR pConverted = NULL;
-
-    for (iArg = 0; iArg < ArgCount; iArg++)
-    {
-        PWSTR pArg = ppArgs[iArg];
-
-        if (LwRtlWC16StringIsEqual(pArg, paramLogFile, TRUE))
-        {
-            if (iArg + 1 >= ArgCount)
-            {
-                dwError = ERROR_INVALID_PARAMETER;
-                BAIL_ON_LWNET_ERROR(dwError);
-            }
-            pArg = ppArgs[++iArg];
-            dwError = LwWc16sToMbs(pArg, &pConverted);
-            strcpy(pLWNetServerInfo->szLogFilePath, pConverted);
-            LW_SAFE_FREE_STRING(pConverted);
-        }
-        else if (LwRtlWC16StringIsEqual(pArg, paramSyslog, TRUE))
-        {
-            pLWNetServerInfo->bLogToSyslog = TRUE;
-        }
-        else if (LwRtlWC16StringIsEqual(pArg, paramLogLevel, TRUE))
-        {
-            if (iArg + 1 >= ArgCount)
-            {
-                dwError = ERROR_INVALID_PARAMETER;
-                BAIL_ON_LWNET_ERROR(dwError);
-            }
-            pArg = ppArgs[++iArg];
-            if (LwRtlWC16StringIsEqual(pArg, paramError, TRUE))
-            {
-                pLWNetServerInfo->dwLogLevel = LWNET_LOG_LEVEL_ERROR;
-            }
-            else if (LwRtlWC16StringIsEqual(pArg, paramWarning, TRUE))
-            {
-                pLWNetServerInfo->dwLogLevel = LWNET_LOG_LEVEL_WARNING;
-            }
-            else if (LwRtlWC16StringIsEqual(pArg, paramInfo, TRUE))
-            {
-                pLWNetServerInfo->dwLogLevel = LWNET_LOG_LEVEL_INFO;
-            }
-            else if (LwRtlWC16StringIsEqual(pArg, paramVerbose, TRUE))
-            {
-                pLWNetServerInfo->dwLogLevel = LWNET_LOG_LEVEL_VERBOSE;
-            }
-            else if (LwRtlWC16StringIsEqual(pArg, paramDebug, TRUE))
-            {
-                pLWNetServerInfo->dwLogLevel = LWNET_LOG_LEVEL_DEBUG;
-            }
-            else if (LwRtlWC16StringIsEqual(pArg, paramTrace, TRUE))
-            {
-                pLWNetServerInfo->dwLogLevel = LWNET_LOG_LEVEL_TRACE;
-            }
-            else
-            {
-                dwError = ERROR_INVALID_PARAMETER;
-                BAIL_ON_LWNET_ERROR(dwError);
-            }
-        }
-        else
-        {
-            dwError = ERROR_INVALID_PARAMETER;
-            BAIL_ON_LWNET_ERROR(dwError);
-        }
-    }
-
-error:
-
-    LW_SAFE_FREE_STRING(pConverted);
-
-    return dwError;
 }
 
 DWORD
