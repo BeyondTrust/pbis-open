@@ -50,29 +50,25 @@
 
 #include "ipc.h"
 
-#if defined(WORDS_BIGENDIAN)
-    #define UCS2_NATIVE "UCS-2BE"
-#else
-    #define UCS2_NATIVE "UCS-2LE"
-#endif
-
 #define LWMSG_MEMBER_PBYTE(_type, _field)           \
     LWMSG_MEMBER_POINTER_BEGIN(_type, _field),      \
     LWMSG_UINT8(BYTE),                              \
-    LWMSG_POINTER_END
+    LWMSG_POINTER_END,                              \
+    LWMSG_ATTR_ENCODING("hex+ascii")
 
 #define LWMSG_MEMBER_PWSTR(_type, _field)           \
     LWMSG_MEMBER_POINTER_BEGIN(_type, _field),      \
     LWMSG_UINT16(WCHAR),                        \
     LWMSG_POINTER_END,                              \
     LWMSG_ATTR_ZERO_TERMINATED,                     \
-    LWMSG_ATTR_ENCODING(UCS2_NATIVE)
+    LWMSG_ATTR_ENCODING("utf-16")
 
-#define LWMSG_PWSTR       \
+#define LWMSG_PWSTR \
     LWMSG_POINTER_BEGIN, \
-    LWMSG_UINT16(WCHAR),  \
-    LWMSG_POINTER_END,   \
-    LWMSG_ATTR_STRING
+    LWMSG_UINT16(WCHAR), \
+    LWMSG_POINTER_END, \
+    LWMSG_ATTR_ZERO_TERMINATED, \
+    LWMSG_ATTR_ENCODING("utf-16")
 
 /******************************************************************************/
 
