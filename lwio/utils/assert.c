@@ -43,12 +43,6 @@
 
 #include "includes.h"
 
-#define _LWIO_LOG_PREFIX_ASSERT_FAILED(Expression, Function, File, Line) \
-    _LWIO_LOG_PREFIX_LOCATION("ASSERTION FAILED: Expression = (%s)", Function, File, Line), (Expression)
-
-#define _LWIO_LOG_PREFIX_ASSERT_MSG_FAILED(Expression, Message, Function, File, Line) \
-    _LWIO_LOG_PREFIX_LOCATION("ASSERTION FAILED: Expression = (%s), Message = '%s'", Function, File, Line), (Expression), (Message)
-
 VOID
 LwIoAssertionFailed(
     IN PCSTR Expression,
@@ -60,22 +54,35 @@ LwIoAssertionFailed(
 {
     if (Message)
     {
-        _LWIO_LOG_MESSAGE(
+        LW_RTL_LOG_RAW(
             LWIO_LOG_LEVEL_ERROR,
-           _LWIO_LOG_PREFIX_ASSERT_MSG_FAILED(Expression, Message, Function, File, Line));
+            "lwio",
+            Function,
+            File,
+            Line,
+            "ASSERION FAILED: Expression = (%s), Message = '%s'",
+            Expression,
+            Message);
         fprintf(
             stderr,
-            _LWIO_LOG_PREFIX_ASSERT_MSG_FAILED(Expression, Message, Function, File, Line));
+            "ASSERION FAILED: Expression = (%s), Message = '%s'",
+            Expression,
+            Message);
     }
     else
     {
-        _LWIO_LOG_MESSAGE(
+        LW_RTL_LOG_RAW(
             LWIO_LOG_LEVEL_ERROR,
-           _LWIO_LOG_PREFIX_ASSERT_FAILED(Expression, Function, File, Line),
-           Expression);
+            "lwio",
+            Function,
+            File,
+            Line,
+            "ASSERION FAILED: Expression = (%s)",
+            Expression);
         fprintf(
             stderr,
-            _LWIO_LOG_PREFIX_ASSERT_FAILED(Expression, Function, File, Line));
+            "ASSERION FAILED: Expression = (%s)",
+            Expression);
     }
     fprintf(stderr, "\n");
     abort();
