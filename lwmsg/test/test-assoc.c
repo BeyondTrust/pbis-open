@@ -934,6 +934,15 @@ static struct
     {-1, NULL}
 };
 
+typedef
+LWMsgStatus
+(*DispatchFunction)(
+    LWMsgAssoc*,
+    const LWMsgMessage*,
+    LWMsgMessage*,
+    void*
+    );
+
 static void*
 handle_receiver(void* _assoc)
 {
@@ -956,7 +965,7 @@ handle_receiver(void* _assoc)
             }
         }
 
-        status = ((LWMsgAssocDispatchFunction) handle_dispatch[i].data)(
+        status = ((DispatchFunction) handle_dispatch[i].data)(
             assoc,
             &recv_message,
             &send_message,

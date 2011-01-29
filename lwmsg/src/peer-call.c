@@ -78,58 +78,30 @@ lwmsg_peer_call_worker(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerCall* call = (PeerCall*) data;
-    LWMsgMessage incoming_message = LWMSG_MESSAGE_INITIALIZER;
-    LWMsgMessage outgoing_message = LWMSG_MESSAGE_INITIALIZER;
 
-    switch (call->params.incoming.spec->type)
+    status = ((LWMsgPeerCallFunction) call->params.incoming.spec->data) (
+        LWMSG_CALL(call),
+        &call->params.incoming.in,
+        &call->params.incoming.out,
+        call->params.incoming.dispatch_data);
+
+    pthread_mutex_lock(&call->task->call_lock);
+    call->state |= PEER_CALL_DISPATCHED;
+
+    if (call->state & PEER_CALL_COMPLETED)
     {
-    case LWMSG_DISPATCH_TYPE_OLD:
-        incoming_message.tag = call->params.incoming.in.tag;
-        incoming_message.data = call->params.incoming.in.data;
-        status = ((LWMsgAssocDispatchFunction) call->params.incoming.spec->data) (
-            call->task->assoc,
-            &incoming_message,
-            &outgoing_message,
-            call->params.incoming.dispatch_data);
-        call->params.incoming.out.tag = outgoing_message.tag;
-        call->params.incoming.out.data = outgoing_message.data;
-
-        pthread_mutex_lock(&call->task->call_lock);
-        call->state |= PEER_CALL_DISPATCHED | PEER_CALL_COMPLETED;
+        /* The call was already completed */
         lwmsg_peer_call_activate_incoming(call);
         lwmsg_task_wake(call->task->event_task); 
-        pthread_mutex_unlock(&call->task->call_lock);
-        break;
-    case LWMSG_DISPATCH_TYPE_BLOCK:
-    case LWMSG_DISPATCH_TYPE_NONBLOCK:
-        status = ((LWMsgPeerCallFunction) call->params.incoming.spec->data) (
-            LWMSG_CALL(call),
-            &call->params.incoming.in,
-            &call->params.incoming.out,
-            call->params.incoming.dispatch_data);
-
-        pthread_mutex_lock(&call->task->call_lock);
-        call->state |= PEER_CALL_DISPATCHED;
-        
-        if (call->state & PEER_CALL_COMPLETED)
-        {
-            /* The call was already completed */
-            lwmsg_peer_call_activate_incoming(call);
-            lwmsg_task_wake(call->task->event_task); 
-        }
-        else if ((call->state & PEER_CALL_CANCELLED) &&
-                 (call->state & PEER_CALL_PENDED))
-        {
-            /* The call was already cancelled */
-            call->params.incoming.cancel(LWMSG_CALL(call), call->params.incoming.cancel_data);
-        }
-
-        pthread_mutex_unlock(&call->task->call_lock);
-        break;
-    default:
-        status = LWMSG_STATUS_INTERNAL;
-        break;
     }
+    else if ((call->state & PEER_CALL_CANCELLED) &&
+        (call->state & PEER_CALL_PENDED))
+    {
+        /* The call was already cancelled */
+        call->params.incoming.cancel(LWMSG_CALL(call), call->params.incoming.cancel_data);
+    }
+
+    pthread_mutex_unlock(&call->task->call_lock);
 
     switch (status)
     {
@@ -163,75 +135,59 @@ lwmsg_peer_call_dispatch_incoming(
         BAIL_ON_ERROR(status = LWMSG_STATUS_UNIMPLEMENTED);
     }
     
-    switch (call->params.incoming.spec->type)
+    call->params.incoming.in.tag = incoming_message->tag;
+    call->params.incoming.in.data = incoming_message->data;
+    call->params.incoming.out.tag = LWMSG_TAG_INVALID;
+    call->params.incoming.out.data = NULL;
+
+    lwmsg_message_init(incoming_message);
+
+    if (call->task->peer->trace_begin)
     {
-    case LWMSG_DISPATCH_TYPE_OLD:
+        call->task->peer->trace_begin(
+            LWMSG_CALL(call),
+            &call->params.incoming.in,
+            call->task->peer->trace_data);
+    }
+
+    if (call->params.incoming.spec->type == LWMSG_DISPATCH_TYPE_BLOCK)
+    {
         BAIL_ON_ERROR(status = lwmsg_task_dispatch_work_item(
-                          call->task->peer->task_manager,
-                          lwmsg_peer_call_worker,
-                          call));
+            call->task->peer->task_manager,
+            lwmsg_peer_call_worker,
+            call));
         status = LWMSG_STATUS_PENDING;
-        break;
-    case LWMSG_DISPATCH_TYPE_BLOCK:
-    case LWMSG_DISPATCH_TYPE_NONBLOCK:
-        call->params.incoming.in.tag = incoming_message->tag;
-        call->params.incoming.in.data = incoming_message->data;
-        call->params.incoming.out.tag = LWMSG_TAG_INVALID;
-        call->params.incoming.out.data = NULL;
+    }
+    else
+    {
+        /* Drop lock for duration of call */
+        pthread_mutex_unlock(&call->task->call_lock);
+        status = ((LWMsgPeerCallFunction) call->params.incoming.spec->data) (
+            LWMSG_CALL(call),
+            &call->params.incoming.in,
+            &call->params.incoming.out,
+            call->params.incoming.dispatch_data);
+        pthread_mutex_lock(&call->task->call_lock);
 
-        lwmsg_message_init(incoming_message);
+        call->state |= PEER_CALL_DISPATCHED;
 
-        if (call->task->peer->trace_begin)
+        switch (status)
         {
-            call->task->peer->trace_begin(
-                LWMSG_CALL(call),
-                &call->params.incoming.in,
-                call->task->peer->trace_data);
-        }
-
-        if (call->params.incoming.spec->type == LWMSG_DISPATCH_TYPE_BLOCK)
-        {
-            BAIL_ON_ERROR(status = lwmsg_task_dispatch_work_item(
-                              call->task->peer->task_manager,
-                              lwmsg_peer_call_worker,
-                              call));
-            status = LWMSG_STATUS_PENDING;
-        }
-        else
-        {
-            /* Drop lock for duration of call */
-            pthread_mutex_unlock(&call->task->call_lock);
-            status = ((LWMsgPeerCallFunction) call->params.incoming.spec->data) (
-                LWMSG_CALL(call),
-                &call->params.incoming.in,
-                &call->params.incoming.out,
-                call->params.incoming.dispatch_data);
-            pthread_mutex_lock(&call->task->call_lock);
-
-            call->state |= PEER_CALL_DISPATCHED;
-
-            switch (status)
+        case LWMSG_STATUS_PENDING:
+            if (call->state & PEER_CALL_COMPLETED)
             {
-            case LWMSG_STATUS_PENDING:
-                if (call->state & PEER_CALL_COMPLETED)
-                {
-                    /* The call was completed before we even returned from
+                /* The call was completed before we even returned from
                        the dispatch function */
-                    status = call->status;
-                    lwmsg_peer_call_activate_incoming(call);
-                }
-                break;
-            default:
-                call->status = status;
-                call->state |= PEER_CALL_COMPLETED;
+                status = call->status;
                 lwmsg_peer_call_activate_incoming(call);
-                break;
             }
+            break;
+        default:
+            call->status = status;
+            call->state |= PEER_CALL_COMPLETED;
+            lwmsg_peer_call_activate_incoming(call);
+            break;
         }
-        break;
-    default:
-        status = LWMSG_STATUS_INTERNAL;
-        break;
     }
     
 error:

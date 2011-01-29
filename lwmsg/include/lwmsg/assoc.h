@@ -137,28 +137,6 @@ typedef enum LWMsgTimeout
 
 /**
  * @ingroup assoc
- * @brief Dispatch callback
- *
- * A callback which handles a particular type of message in
- * a receive transaction.
- *
- * @param[in] assoc the association
- * @param[in] in the received message
- * @param[out] out the reply
- * @param[in] user data pointer
- * @lwmsg_status
- * @lwmsg_success
- * @lwmsg_etc{callback-specific failure}
- * @lwmsg_endstatus
- */
-typedef LWMsgStatus (*LWMsgAssocDispatchFunction) (
-    LWMsgAssoc* assoc,
-    const LWMsgMessage* in,
-    LWMsgMessage* out,
-    void* data);
-
-/**
- * @ingroup assoc
  * @brief Delete an association
  *
  * Deletes an association, releasing all allocated resources
@@ -248,110 +226,6 @@ lwmsg_assoc_send_message_transact(
     LWMsgMessage* send_message,
     LWMsgMessage* recv_message
     );
-
-/**
- * @ingroup assoc
- * @brief Receive a message and send a reply
- *
- * This function receives a message and sends a reply in a single operation.
- * The received message is passed into the specified dispatch function,
- * which must provide a suitable reply.
- *
- * @param[in] assoc the association
- * @param[in] dispatch the dispatch function
- * @param[in] data user data pointer to pass to dispatch function
- * @lwmsg_status
- * @lwmsg_success
- * @lwmsg_code{TIMEOUT, operation timed out}
- * @lwmsg_etc{implementation-specific failure}
- * @lwmsg_endstatus
- */
-LWMsgStatus
-lwmsg_assoc_recv_message_transact(
-    LWMsgAssoc* assoc,
-    LWMsgAssocDispatchFunction dispatch,
-    void* data
-    );
-
-#ifndef LWMSG_DISABLE_DEPRECATED
-/**
- * @ingroup assoc
- * @brief Send a message (simple) <b>[DEPRECATED]</b>
- *
- * This function sends a message without the complexity of constructing an LWMsgMessage
- * structure.
- *
- * @param[in] assoc the association
- * @param[in] type the type of the message to send
- * @param[in] object the message payload
- * @lwmsg_status
- * @lwmsg_success
- * @lwmsg_code{TIMEOUT, operation timed out}
- * @lwmsg_etc{implementation-specific failure}
- * @lwmsg_endstatus
- *
- * @deprecated Use #lwmsg_assoc_send_message()
- */
-LWMsgStatus
-lwmsg_assoc_send(
-    LWMsgAssoc* assoc,
-    LWMsgTag type,
-    void* object
-    );
-
-/**
- * @ingroup assoc
- * @brief Receive a message (simple) <b>[DEPRECATED]</b>
- *
- * This function receives a message without the complexity of using an LWMsgMessage structure.
- *
- * @param[in] assoc the association
- * @param[out] type the type of the received message
- * @param[out] object the received message payload
- * @lwmsg_status
- * @lwmsg_success
- * @lwmsg_code{TIMEOUT, operation timed out}
- * @lwmsg_etc{implementation-specific failure}
- * @lwmsg_endstatus
- *
- * @deprecated Use #lwmsg_assoc_recv_message()
- */
-LWMsgStatus
-lwmsg_assoc_recv(
-    LWMsgAssoc* assoc,
-    LWMsgTag* type,
-    void** object
-    );
-
-/**
- * @ingroup assoc
- * @brief Send a message and receive a reply (simple) <b>[DEPRECATED]</b>
- *
- * This function sends a message and receives a reply without the
- * complexity of using LWMsgMessage structures.
- *
- * @param[in] assoc the association
- * @param[in] in_type the type of the message to send
- * @param[in] in_object the payload of the message to send
- * @param[out] out_type the type of the received message
- * @param[out] out_object the payload of the received message
- * @lwmsg_status
- * @lwmsg_success
- * @lwmsg_code{TIMEOUT, operation timed out}
- * @lwmsg_etc{implementation-specific failure}
- * @lwmsg_endstatus
- *
- * @deprecated Use #lwmsg_assoc_send_message_transact()
- */
-LWMsgStatus
-lwmsg_assoc_send_transact(
-    LWMsgAssoc* assoc,
-    LWMsgTag in_type,
-    void* in_object,
-    LWMsgTag* out_type,
-    void** out_object
-    );
-#endif
 
 /**
  * @ingroup assoc

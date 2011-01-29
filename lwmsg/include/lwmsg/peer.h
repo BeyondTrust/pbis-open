@@ -91,10 +91,9 @@
 #ifndef DOXYGEN
 typedef enum LWMsgDispatchType
 {
-    LWMSG_DISPATCH_TYPE_END,
-    LWMSG_DISPATCH_TYPE_OLD,
-    LWMSG_DISPATCH_TYPE_BLOCK,
-    LWMSG_DISPATCH_TYPE_NONBLOCK
+    LWMSG_DISPATCH_TYPE_END = 0,
+    LWMSG_DISPATCH_TYPE_BLOCK = 2,
+    LWMSG_DISPATCH_TYPE_NONBLOCK = 3
 } LWMsgDispatchType;
 #endif
 
@@ -115,21 +114,6 @@ typedef struct LWMsgDispatchSpec
 }
 #endif
 const LWMsgDispatchSpec;
-
-#ifndef LWMSG_DISABLE_DEPRECATED
-/**
- * @brief Define message handler in a dispatch table <b>(DEPRECATED)</b>
- *
- * This macro is used in dispatch table construction to
- * define the handler for a particular message type.
- * @param tag the message tag
- * @param func the callback to handle the specified message type
- * @hideinitializer
- * @deprecated use LWMSG_DISPATCH_BLOCK() or LWMSG_DISPATCH_NONBLOCK() instead
- */
-#define LWMSG_DISPATCH(tag, func) \
-    {LWMSG_DISPATCH_TYPE_OLD, (tag), (void*) (LWMsgAssocDispatchFunction) (func)}
-#endif
 
 /**
  * @brief Define blocking message handler

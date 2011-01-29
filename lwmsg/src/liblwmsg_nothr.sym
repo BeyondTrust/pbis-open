@@ -5,9 +5,6 @@ lwmsg_assoc_send_message
 lwmsg_assoc_recv_message
 lwmsg_assoc_send_message_transact
 lwmsg_assoc_recv_message_transact
-lwmsg_assoc_send
-lwmsg_assoc_recv
-lwmsg_assoc_send_transact
 lwmsg_assoc_close
 lwmsg_assoc_reset
 lwmsg_assoc_destroy_message
