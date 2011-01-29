@@ -94,27 +94,15 @@ RegSrvLogIpc (
         break;
     }
 
-    if (pszMessage)
+    result = (LwRtlLogGetLevel() >= regLevel);
+
+    if (pszMessage && result)
     {
-        if (LwRtlLogGetLevel() >= regLevel)
-        {
-            LW_RTL_LOG_AT_LEVEL(regLevel, "lwreg-ipc", "%s", pszMessage);
-            result = LWMSG_TRUE;
-        }
-        else
-        {
-            result = LWMSG_FALSE;
-        }
+        LW_RTL_LOG_RAW(regLevel, "lwreg-ipc", pszFunction, pszFilename, line, "%s", pszMessage);
     }
-    else
-    {
-        result = (LwRtlLogGetLevel() >= regLevel);
-    }
-    REG_UNLOCK_LOGGER;
 
     return result;
 }
-
 
 DWORD
 RegSrvStartListenThread(

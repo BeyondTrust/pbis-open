@@ -92,7 +92,7 @@ LWNetSrvLogIpc (
     result = LwRtlLogGetLevel() >= dwLevel;
     if (pszMessage && result)
     {
-        LW_RTL_LOG_AT_LEVEL(dwLevel, "netlogon-ipc", "%s", pszMessage);
+        LW_RTL_LOG_RAW(dwLevel, "netlogon-ipc", pszFunction, pszFilename, line, "%s", pszMessage);
     }
 
     return result;
