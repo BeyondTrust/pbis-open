@@ -1455,12 +1455,8 @@ lwmsg_peer_task_dispatch_incoming_message(
     switch (status)
     {
     case LWMSG_STATUS_SUCCESS:
-        /* Message data is now owned by the call parameters */
-        lwmsg_message_init(&task->incoming_message);
         break;
     case LWMSG_STATUS_PENDING:
-        /* Message data is now owned by the call parameters */
-        lwmsg_message_init(&task->incoming_message);
         status = LWMSG_STATUS_SUCCESS;
         break;
     default:

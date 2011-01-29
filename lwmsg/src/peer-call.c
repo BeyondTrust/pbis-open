@@ -179,6 +179,8 @@ lwmsg_peer_call_dispatch_incoming(
         call->params.incoming.out.tag = LWMSG_TAG_INVALID;
         call->params.incoming.out.data = NULL;
 
+        lwmsg_message_init(incoming_message);
+
         if (call->task->peer->trace_begin)
         {
             call->task->peer->trace_begin(
