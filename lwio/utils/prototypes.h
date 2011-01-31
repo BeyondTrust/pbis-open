@@ -168,11 +168,6 @@ LwioOpenSyslog(
     );
 
 VOID
-LwioSetSyslogMask(
-    LWIO_LOG_LEVEL maxLogLevel
-    );
-
-VOID
 SMBLogToSyslog(
     HANDLE      hLog,
     LWIO_LOG_LEVEL dwLogLevel,
