@@ -1,7 +1,11 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
+
 /*
  * Likewise Identity shim idmap plugin
  *
- * Copyright (C) Gerald (Jerry) Carter      2007
+ * Copyright (C) Gerald (Jerry) Carter
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
