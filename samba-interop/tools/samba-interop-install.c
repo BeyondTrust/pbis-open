@@ -580,26 +580,37 @@ UninstallWbclient(
             );
     BAIL_ON_LSA_ERROR(error);
 
-    if (stat(pWbClientOriginal, &statBuf) < 0)
-    {
-        LW_LOG_ERROR("Cannot find original wbclient library at %s", pWbClientOriginal);
-        error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error);   
-    }
-
     if (unlink(pWbClient) < 0)
     {
         error = LwMapErrnoToLwError(errno);
         BAIL_ON_LSA_ERROR(error);   
     }
 
-    if (symlink(pWbClientOriginal, pWbClient) < 0)
+    if (stat(pWbClientOriginal, &statBuf) < 0)
     {
-        error = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(error);   
+        if (errno == ENOENT)
+        {
+            // This is probably Samba 3.0.x, and it did not have an original
+            // libwbclient.so.
+        }
+        else
+        {
+            LW_LOG_ERROR("Cannot find original wbclient library at %s",
+                    pWbClientOriginal);
+            error = LwMapErrnoToLwError(errno);
+            BAIL_ON_LSA_ERROR(error);   
+        }
     }
+    else
+    {
+        if (symlink(pWbClientOriginal, pWbClient) < 0)
+        {
+            error = LwMapErrnoToLwError(errno);
+            BAIL_ON_LSA_ERROR(error);   
+        }
 
-    LW_LOG_INFO("Linked %s to %s", pWbClient, pLikewiseWbClient);
+        LW_LOG_INFO("Linked %s to %s", pWbClient, pLikewiseWbClient);
+    }
 
 cleanup:
     LW_SAFE_FREE_STRING(pSambaDir);
