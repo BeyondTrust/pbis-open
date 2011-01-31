@@ -49,7 +49,9 @@
 
 #include "includes.h"
 
+#if defined(LW_ENABLE_THREADS)
 pthread_mutex_t gLwioLogLock = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 
 

@@ -252,7 +252,18 @@ LwioLogSetInfo(
     
     gLwioMaxLogLevel = pLogInfo->maxAllowedLogLevel;
     
-    LwRtlLogSetLevel(gLwioMaxLogLevel);
+    switch (gLWIO_LOG_TARGET)
+    {
+        case LWIO_LOG_TARGET_SYSLOG:
+            
+            LwioSetSyslogMask(LWIO_LOG_LEVEL_DEBUG);
+            
+            break;
+            
+        default:
+            
+            break;
+    }
     
 cleanup:
 

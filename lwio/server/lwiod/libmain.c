@@ -191,12 +191,6 @@ static IO_STATIC_DRIVER gStaticDrivers[] =
 
 #endif
 
-static
-VOID
-LwIoInitRtlLogging(
-    VOID
-    );
-
 int
 lwiod_main(
     int argc,
@@ -217,8 +211,6 @@ lwiod_main(
                               argv,
                               &gServerInfo);
     BAIL_ON_LWIO_ERROR(dwError);
-
-    LwIoInitRtlLogging();
 
     dwError = LwioInitLogging_r(
                     SMBGetProgramName(argv[0]),
@@ -289,68 +281,6 @@ error:
     LWIO_LOG_ERROR("LWIO Process exiting due to error [Code:%d]", dwError);
 
     goto cleanup;
-}
-
-static
-VOID
-LwIoLogCallback(
-    LW_IN LW_OPTIONAL LW_PVOID Context,
-    LW_IN LW_RTL_LOG_LEVEL Level,
-    LW_IN LW_OPTIONAL LW_PCSTR ComponentName,
-    LW_IN LW_PCSTR FunctionName,
-    LW_IN LW_PCSTR FileName,
-    LW_IN LW_ULONG LineNumber,
-    LW_IN LW_PCSTR Format,
-    LW_IN ...
-    )
-{
-    NTSTATUS status = STATUS_SUCCESS;
-    va_list ap;
-    PSTR pMessage = NULL;
-
-    va_start(ap, Format);
-    status = LwRtlCStringAllocatePrintfV(&pMessage, Format, ap);
-    va_end(ap);
-    BAIL_ON_NT_STATUS(status);
-
-    if (gLwioMaxLogLevel >= LWNET_LOG_LEVEL_DEBUG)
-    {
-        LwioLogMessage(
-            gpfnLwioLogger,
-            ghLwioLog,
-            Level,
-            "0x%lx: [%s %s:%d] %s",
-            (unsigned long) pthread_self(),
-            FunctionName,
-            FileName,
-            LineNumber,
-            pMessage);
-    }
-    else
-    {
-        LwioLogMessage(
-            gpfnLwioLogger,
-            ghLwioLog,
-            Level,
-            "0x%lx: %s",
-            (unsigned long) pthread_self(),
-            pMessage);
-    }
-
-error:
-
-    RTL_FREE(&pMessage);
-
-    return;
-}
-
-static
-VOID
-LwIoInitRtlLogging(
-    VOID
-    )
-{
-    LwRtlLogSetCallback(LwIoLogCallback, NULL);
 }
 
 static
@@ -949,11 +879,26 @@ LwIoDaemonLogIpc (
         break;
     }
     
-    result = LwRtlLogGetLevel() >= ioLevel;
-
-    if (pszMessage && result)
+    if (pszMessage)
     {
-        LW_RTL_LOG_RAW(ioLevel, "lwio-ipc", pszFunction, pszFilename, line, "%s", pszMessage);
+        if (gLwioMaxLogLevel >= ioLevel)
+        {
+            LWIO_LOCK_LOGGER;
+            if (gLwioMaxLogLevel >= ioLevel)
+            {
+                LwioLogMessage(gpfnLwioLogger, ghLwioLog, ioLevel, "[IPC] %s", pszMessage);
+                result = LWMSG_TRUE;
+            }
+            LWIO_UNLOCK_LOGGER;
+        }
+        else
+        {
+            result = LWMSG_FALSE;
+        }
+    }
+    else
+    {
+        result = (gLwioMaxLogLevel >= ioLevel);
     }
 
     return result;

@@ -10,7 +10,7 @@
     doc = "" 
 }
 "Arguments" = { 
-    default = "" 
+    default = "--syslog" 
     doc = "" 
 }
 "Environment" = { 

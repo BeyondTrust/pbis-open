@@ -87,6 +87,8 @@ LwioOpenSyslog(
     
     pSyslog->bOpened = TRUE;
 
+    LwioSetSyslogMask(LWIO_LOG_LEVEL_DEBUG);
+    
     dwError = LwioSetupLogging(
                     (HANDLE)pSyslog,
                     maxAllowedLogLevel,
@@ -112,6 +114,16 @@ error:
     }
 
     goto cleanup;
+}
+    
+VOID
+LwioSetSyslogMask(
+    LWIO_LOG_LEVEL maxLogLevel
+    )
+{
+    // This always need to be the max log level
+    // with which this module can call syslog.
+    setlogmask(LOG_UPTO(LWIO_SYSLOG_MAX_LEVEL));
 }
 
 VOID

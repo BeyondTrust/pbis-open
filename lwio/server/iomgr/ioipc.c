@@ -815,14 +815,6 @@ IopIpcSetInformationFile(
     pOut->tag = replyType;
     pOut->data = pReply;
 
-    if (pMessage->FileInformationClass == FileRenameInformation &&
-        ((pMessage->Length < sizeof(FILE_RENAME_INFORMATION) ||
-            ((PFILE_RENAME_INFORMATION) pMessage->FileInformation)->RootDirectory)))
-    {
-        status = STATUS_INVALID_PARAMETER;
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
-    }
-
     pReply->Status = IoSetInformationFile(
                             pMessage->FileHandle,
                             NULL,

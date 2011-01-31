@@ -51,6 +51,14 @@
 
 static
 NTSTATUS
+LwIoSvcmParseArgs(
+    ULONG ArgCount,
+    PWSTR* ppArgs,
+    PSMBSERVERINFO pSMBServerInfo
+    );
+
+static
+NTSTATUS
 LwioSrvSetDefaults(
     PLWIO_CONFIG pConfig
     );
@@ -141,6 +149,18 @@ LwIoSvcmStart(
     pthread_mutex_init(&gServerInfo.lock, NULL);
     gServerInfo.pLock = &gServerInfo.lock;
 
+    ntStatus = LwIoSvcmParseArgs(ArgCount, ppArgs, &gServerInfo);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    ntStatus = LwioInitLogging_r(
+        "lwio",
+        gServerInfo.logTarget,
+        gServerInfo.maxAllowedLogLevel,
+        gServerInfo.szLogFilePath);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    LWIO_LOG_VERBOSE("Logging started");
+
     ntStatus = LwioSrvRefreshConfig(&gLwioServerConfig);
     BAIL_ON_NT_STATUS(ntStatus);
 
@@ -189,6 +209,8 @@ LwIoSvcmStop(
     }
 
     LWIO_LOG_INFO("LWIO Service exiting...");
+
+    LwioShutdownLogging_r();
 
     if (gServerInfo.pLock)
     {
@@ -313,6 +335,142 @@ error:
 }
 
 static
+NTSTATUS
+LwIoSvcmParseArgs(
+    ULONG ArgCount,
+    PWSTR* ppArgs,
+    PSMBSERVERINFO pSMBServerInfo
+    )
+{
+    typedef enum {
+        PARSE_MODE_OPEN = 0,
+        PARSE_MODE_LOGFILE,
+        PARSE_MODE_LOGLEVEL
+    } ParseMode;
+    NTSTATUS status = STATUS_SUCCESS;
+    ParseMode parseMode = PARSE_MODE_OPEN;
+    int iArg = 1;
+    PWSTR pArg = NULL;
+    BOOLEAN bLogTargetSet = FALSE;
+    PSTR pConverted = NULL;
+    static const WCHAR paramLogFile[] = {'-','-','l','o','g','f','i','l','e','\0'};
+    static const WCHAR paramLogLevel[] = {'-','-','l','o','g','l','e','v','e','l','\0'};
+    static const WCHAR paramSyslog[] = {'-','-','s','y','s','l','o','g','\0'};
+    static const WCHAR paramError[] = {'e','r','r','o','r','\0'};
+    static const WCHAR paramWarning[] = {'w','a','r','n','i','n','g','\0'};
+    static const WCHAR paramInfo[] = {'i','n','f','o','\0'};
+    static const WCHAR paramVerbose[] = {'v','e','r','b','o','s','e','\0'};
+    static const WCHAR paramDebug[] = {'d','e','b','u','g','\0'};
+    static const WCHAR paramTrace[] = {'t','r','a','c','e','\0'};
+
+    do
+    {
+        pArg = ppArgs[iArg++];
+        if (pArg == NULL || *pArg == '\0')
+        {
+            break;
+        }
+
+        switch(parseMode)
+        {
+        case PARSE_MODE_OPEN:
+            if (LwRtlWC16StringIsEqual(pArg, paramLogFile, TRUE))
+            {
+                parseMode = PARSE_MODE_LOGFILE;
+            }
+            else if (LwRtlWC16StringIsEqual(pArg, paramLogLevel, TRUE))
+            {
+                parseMode = PARSE_MODE_LOGLEVEL;
+            }
+            else if (LwRtlWC16StringIsEqual(pArg, paramSyslog, TRUE))
+            {
+                pSMBServerInfo->logTarget = LWIO_LOG_TARGET_SYSLOG;
+                bLogTargetSet = TRUE;
+            }
+            else
+            {
+                status = STATUS_INVALID_PARAMETER;
+                BAIL_ON_NT_STATUS(status);
+            }
+            break;
+
+        case PARSE_MODE_LOGFILE:
+
+        {
+            status = LwRtlCStringAllocateFromWC16String(&pConverted, pArg);
+            BAIL_ON_NT_STATUS(status);
+
+            strncpy(pSMBServerInfo->szLogFilePath, pConverted, PATH_MAX);
+            pSMBServerInfo->szLogFilePath[PATH_MAX] = '\0';
+
+            SMBStripWhitespace(pSMBServerInfo->szLogFilePath, TRUE, TRUE);
+
+            if (!strcmp(pSMBServerInfo->szLogFilePath, "."))
+            {
+                pSMBServerInfo->logTarget = LWIO_LOG_TARGET_CONSOLE;
+            }
+            else
+            {
+                pSMBServerInfo->logTarget = LWIO_LOG_TARGET_FILE;
+            }
+
+            bLogTargetSet = TRUE;
+
+            parseMode = PARSE_MODE_OPEN;
+
+            break;
+        }
+
+        case PARSE_MODE_LOGLEVEL:
+            if (LwRtlWC16StringIsEqual(pArg, paramError, TRUE))
+            {
+                pSMBServerInfo->maxAllowedLogLevel = LWIO_LOG_LEVEL_ERROR;
+            }
+            else if (LwRtlWC16StringIsEqual(pArg, paramWarning, TRUE))
+            {
+                pSMBServerInfo->maxAllowedLogLevel = LWIO_LOG_LEVEL_WARNING;
+            }
+            else if (LwRtlWC16StringIsEqual(pArg, paramInfo, TRUE))
+            {
+                pSMBServerInfo->maxAllowedLogLevel = LWIO_LOG_LEVEL_INFO;
+            }
+            else if (LwRtlWC16StringIsEqual(pArg, paramVerbose, TRUE))
+            {
+                pSMBServerInfo->maxAllowedLogLevel = LWIO_LOG_LEVEL_VERBOSE;
+            }
+            else if (LwRtlWC16StringIsEqual(pArg, paramDebug, TRUE))
+            {
+                pSMBServerInfo->maxAllowedLogLevel = LWIO_LOG_LEVEL_DEBUG;
+            }
+            else if (LwRtlWC16StringIsEqual(pArg, paramTrace, TRUE))
+            {
+                pSMBServerInfo->maxAllowedLogLevel = LWIO_LOG_LEVEL_TRACE;
+            }
+            else
+            {
+                status = STATUS_INVALID_PARAMETER;
+                BAIL_ON_NT_STATUS(status);
+            }
+
+            parseMode = PARSE_MODE_OPEN;
+            break;
+        }
+
+    } while (iArg < ArgCount);
+
+    if (!bLogTargetSet)
+    {
+        pSMBServerInfo->logTarget = LWIO_LOG_TARGET_CONSOLE;
+    }
+
+error:
+
+    RTL_FREE(&pConverted);
+
+    return status;
+}
+
+static
 DWORD
 SMBSrvInitialize(
     VOID
@@ -399,11 +557,26 @@ LwIoDaemonLogIpc (
         break;
     }
     
-    result = LwRtlLogGetLevel() >= ioLevel;
-
-    if (pszMessage && result)
+    if (pszMessage)
     {
-        LW_RTL_LOG_RAW(ioLevel, "lwio-ipc", pszFunction, pszFilename, line, "%s", pszMessage);
+        if (gLwioMaxLogLevel >= ioLevel)
+        {
+            LWIO_LOCK_LOGGER;
+            if (gLwioMaxLogLevel >= ioLevel)
+            {
+                LwioLogMessage(gpfnLwioLogger, ghLwioLog, ioLevel, "[IPC] %s", pszMessage);
+                result = LWMSG_TRUE;
+            }
+            LWIO_UNLOCK_LOGGER;
+        }
+        else
+        {
+            result = LWMSG_FALSE;
+        }
+    }
+    else
+    {
+        result = (gLwioMaxLogLevel >= ioLevel);
     }
 
     return result;
