@@ -99,24 +99,12 @@ LsaSrvLogIpc (
         break;
     }
 
-    LSA_LOCK_LOGGER;
-    if (pszMessage)
+    result = lsaLevel <= LwRtlLogGetLevel();
+
+    if (result && pszMessage)
     {
-        if (gLsaMaxLogLevel >= lsaLevel)
-        {
-            LsaLogMessage(gpfnLogger, ghLog, lsaLevel, "[IPC] %s", pszMessage);
-            result = LWMSG_TRUE;
-        }
-        else
-        {
-            result = LWMSG_FALSE;
-        }
+        LW_RTL_LOG_RAW(lsaLevel, "lsass-ipc", pszFunction, pszFilename, line, "%s", pszMessage);
     }
-    else
-    {
-        result = (gLsaMaxLogLevel >= lsaLevel);
-    }
-    LSA_UNLOCK_LOGGER;
 
     return result;
 }

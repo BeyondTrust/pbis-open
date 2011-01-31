@@ -60,7 +60,7 @@ LsaLwLogMessage(
     LSA_LOCK_LOGGER;
     if (gpfnLogger && ((int)gLsaMaxLogLevel >= (int)level))
     {
-        _LSA_LOG_WITH_THREAD(level, "%s", pszMessage);
+        LW_RTL_LOG_AT_LEVEL(level, "%s", pszMessage);
     }
     LSA_UNLOCK_LOGGER;
 }
@@ -157,20 +157,26 @@ LsaRtlLogCallback(
         {
             if (maxLevel >= LW_RTL_LOG_LEVEL_DEBUG)
             {
-                _LSA_LOG_MESSAGE(lsaLevel,
-                                 "0x%lx:[%s() %s:%d] %s",
-                                 (unsigned long)pthread_self(),
-                                 FunctionName,
-                                 FileName,
-                                 LineNumber,
-                                 formattedMessage);
+                LsaLogMessage(
+                    gpfnLogger,
+                    ghLog,
+                    lsaLevel,
+                    "0x%lx:[%s() %s:%d] %s",
+                    (unsigned long)pthread_self(),
+                    FunctionName,
+                    FileName,
+                    LineNumber,
+                    formattedMessage);
             }
             else
             {
-                _LSA_LOG_MESSAGE(lsaLevel,
-                                 "0x%lx:%s",
-                                 (unsigned long)pthread_self(),
-                                 formattedMessage);
+                LsaLogMessage(
+                    gpfnLogger,
+                    ghLog,
+                    lsaLevel,
+                    "0x%lx:%s",
+                    (unsigned long)pthread_self(),
+                    formattedMessage);
             }
         }
     }

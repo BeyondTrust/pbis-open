@@ -76,14 +76,6 @@ static LSA_STATIC_PROVIDER gStaticProviders[] =
 };
 #endif // ENABLE_STATIC_PROVIDERS
 
-static
-DWORD
-LsaSvcmParseArgs(
-    ULONG ArgCount,
-    PWSTR* ppArgs,
-    PLSASERVERINFO pLsaServerInfo
-    );
-
 NTSTATUS
 LsaSvcmInit(
     PCWSTR pServiceName,
@@ -115,18 +107,6 @@ LsaSvcmStart(
 
     dwError = LsaSrvSetDefaults();
     BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaSvcmParseArgs(ArgCount, ppArgs, &gServerInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaInitLogging_r(
-                    "lsass",
-                    gServerInfo.logTarget,
-                    gServerInfo.maxAllowedLogLevel,
-                    gServerInfo.szLogFilePath);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LSA_LOG_VERBOSE("Logging started");
 
     dwError = LsaInitTracing_r();
     BAIL_ON_LSA_ERROR(dwError);
@@ -174,7 +154,6 @@ LsaSvcmStop(
     NtlmClientIpcShutdown();
     LSA_LOG_INFO("LSA Service exiting...");
     LsaSrvStopEventLoggingThread();
-    LsaShutdownLogging_r();
     LsaShutdownTracing_r();
 
     return STATUS_SUCCESS;
@@ -354,141 +333,6 @@ LsaSrvSetDefaults(
     return (dwError);
 }
 
-static
-DWORD
-LsaSvcmParseArgs(
-    ULONG ArgCount,
-    PWSTR* ppArgs,
-    PLSASERVERINFO pLsaServerInfo
-    )
-{
-    typedef enum {
-        PARSE_MODE_OPEN = 0,
-            PARSE_MODE_LOGFILE,
-            PARSE_MODE_LOGLEVEL
-    } ParseMode;
-    DWORD dwError = 0;
-    ParseMode parseMode = PARSE_MODE_OPEN;
-    int iArg = 1;
-    PWSTR pArg = NULL;
-    BOOLEAN bLogTargetSet = FALSE;
-    PSTR pConverted = NULL;
-    static const WCHAR paramLogFile[] = {'-','-','l','o','g','f','i','l','e','\0'};
-    static const WCHAR paramLogLevel[] = {'-','-','l','o','g','l','e','v','e','l','\0'};
-    static const WCHAR paramSyslog[] = {'-','-','s','y','s','l','o','g','\0'};
-    static const WCHAR paramError[] = {'e','r','r','o','r','\0'};
-    static const WCHAR paramWarning[] = {'w','a','r','n','i','n','g','\0'};
-    static const WCHAR paramInfo[] = {'i','n','f','o','\0'};
-    static const WCHAR paramVerbose[] = {'v','e','r','b','o','s','e','\0'};
-    static const WCHAR paramDebug[] = {'d','e','b','u','g','\0'};
-    static const WCHAR paramTrace[] = {'t','r','a','c','e','\0'};
-
-    do
-    {
-        pArg = ppArgs[iArg++];
-        if (pArg == NULL || *pArg == '\0')
-        {
-            break;
-        }
-
-        switch(parseMode)
-        {
-        case PARSE_MODE_OPEN:
-            if (LwRtlWC16StringIsEqual(pArg, paramLogFile, TRUE))
-            {
-                parseMode = PARSE_MODE_LOGFILE;
-            }
-            else if (LwRtlWC16StringIsEqual(pArg, paramLogLevel, TRUE))
-            {
-                parseMode = PARSE_MODE_LOGLEVEL;
-            }
-            else if (LwRtlWC16StringIsEqual(pArg, paramSyslog, TRUE))
-            {
-                pLsaServerInfo->logTarget = LSA_LOG_TARGET_SYSLOG;
-                bLogTargetSet = TRUE;
-            }
-            else
-            {
-                dwError = STATUS_INVALID_PARAMETER;
-                BAIL_ON_LSA_ERROR(dwError);
-            }
-            break;
-
-        case PARSE_MODE_LOGFILE:
-
-        {
-            dwError = LwRtlCStringAllocateFromWC16String(&pConverted, pArg);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            strncpy(pLsaServerInfo->szLogFilePath, pConverted, PATH_MAX);
-            pLsaServerInfo->szLogFilePath[PATH_MAX] = '\0';
-
-            LwStripWhitespace(pLsaServerInfo->szLogFilePath, TRUE, TRUE);
-
-            if (!strcmp(pLsaServerInfo->szLogFilePath, "."))
-            {
-                pLsaServerInfo->logTarget = LSA_LOG_TARGET_CONSOLE;
-            }
-            else
-            {
-                pLsaServerInfo->logTarget = LSA_LOG_TARGET_FILE;
-            }
-
-            bLogTargetSet = TRUE;
-
-            parseMode = PARSE_MODE_OPEN;
-
-            break;
-        }
-
-        case PARSE_MODE_LOGLEVEL:
-            if (LwRtlWC16StringIsEqual(pArg, paramError, TRUE))
-            {
-                pLsaServerInfo->maxAllowedLogLevel = LSA_LOG_LEVEL_ERROR;
-            }
-            else if (LwRtlWC16StringIsEqual(pArg, paramWarning, TRUE))
-            {
-                pLsaServerInfo->maxAllowedLogLevel = LSA_LOG_LEVEL_WARNING;
-            }
-            else if (LwRtlWC16StringIsEqual(pArg, paramInfo, TRUE))
-            {
-                pLsaServerInfo->maxAllowedLogLevel = LSA_LOG_LEVEL_INFO;
-            }
-            else if (LwRtlWC16StringIsEqual(pArg, paramVerbose, TRUE))
-            {
-                pLsaServerInfo->maxAllowedLogLevel = LSA_LOG_LEVEL_VERBOSE;
-            }
-            else if (LwRtlWC16StringIsEqual(pArg, paramDebug, TRUE))
-            {
-                pLsaServerInfo->maxAllowedLogLevel = LSA_LOG_LEVEL_DEBUG;
-            }
-            else if (LwRtlWC16StringIsEqual(pArg, paramTrace, TRUE))
-            {
-                pLsaServerInfo->maxAllowedLogLevel = LSA_LOG_LEVEL_TRACE;
-            }
-            else
-            {
-                dwError = STATUS_INVALID_PARAMETER;
-                BAIL_ON_LSA_ERROR(dwError);
-            }
-
-            parseMode = PARSE_MODE_OPEN;
-            break;
-        }
-
-    } while (iArg < ArgCount);
-
-    if (!bLogTargetSet)
-    {
-        pLsaServerInfo->logTarget = LSA_LOG_TARGET_CONSOLE;
-    }
-
-error:
-
-    LW_SAFE_FREE_MEMORY(pConverted);
-
-    return dwError;
-}
 DWORD
 LsaSrvInitialize(
     VOID

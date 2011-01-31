@@ -124,86 +124,26 @@ typedef LW_VOID (*PFN_LSA_LOG_MESSAGE)(
     va_list msgList
     );
 
-#if defined(LW_ENABLE_THREADS)
-
 extern pthread_mutex_t gLogLock;
 
 #define LSA_LOCK_LOGGER   pthread_mutex_lock(&gLogLock)
 #define LSA_UNLOCK_LOGGER pthread_mutex_unlock(&gLogLock)
 
-#define _LSA_LOG_WITH_THREAD(Level, Format, ...) \
-    _LSA_LOG_MESSAGE(Level, \
-                     "0x%lx:" Format, \
-                     (unsigned long)pthread_self(), \
-                     ## __VA_ARGS__)
-
-#else
-
-#define LSA_LOCK_LOGGER
-#define LSA_UNLOCK_LOGGER
-
-#define _LSA_LOG_WITH_THREAD(Level, Format, ...) \
-    _LSA_LOG_MESSAGE(Level, \
-                     Format, \
-                     ## __VA_ARGS__)
-
-#endif
-
-#define _LSA_LOG_WITH_DEBUG(Level, Format, ...) \
-    _LSA_LOG_WITH_THREAD(Level, \
-                         "[%s() %s:%d] " Format, \
-                         __FUNCTION__, \
-                         __FILE__, \
-                         __LINE__, \
-                         ## __VA_ARGS__)
-
 extern HANDLE              ghLog;
 extern LsaLogLevel         gLsaMaxLogLevel;
 extern PFN_LSA_LOG_MESSAGE gpfnLogger;
 
-#define _LSA_LOG_MESSAGE(Level, Format, ...) \
-    LsaLogMessage(gpfnLogger, ghLog, Level, Format, ## __VA_ARGS__)
-
-#define _LSA_LOG_IF(Level, Format, ...)                     \
-    do {                                                    \
-        LSA_LOCK_LOGGER;                                    \
-        if (gpfnLogger && (gLsaMaxLogLevel >= (Level)))     \
-        {                                                   \
-            if (gLsaMaxLogLevel >= LSA_LOG_LEVEL_DEBUG)     \
-            {                                               \
-                _LSA_LOG_WITH_DEBUG(Level, Format, ## __VA_ARGS__); \
-            }                                               \
-            else                                            \
-            {                                               \
-                _LSA_LOG_WITH_THREAD(Level, Format, ## __VA_ARGS__); \
-            }                                               \
-        }                                                   \
-        LSA_UNLOCK_LOGGER;                                  \
-    } while (0)
-
 #define LSA_SAFE_LOG_STRING(x) \
     ( (x) ? (x) : "<null>" )
 
-#define LSA_LOG_ALWAYS(szFmt, ...) \
-    _LSA_LOG_IF(LSA_LOG_LEVEL_ALWAYS, szFmt, ## __VA_ARGS__)
-
-#define LSA_LOG_ERROR(szFmt, ...) \
-    _LSA_LOG_IF(LSA_LOG_LEVEL_ERROR, szFmt, ## __VA_ARGS__)
-
-#define LSA_LOG_WARNING(szFmt, ...) \
-    _LSA_LOG_IF(LSA_LOG_LEVEL_WARNING, szFmt, ## __VA_ARGS__)
-
-#define LSA_LOG_INFO(szFmt, ...) \
-    _LSA_LOG_IF(LSA_LOG_LEVEL_INFO, szFmt, ## __VA_ARGS__)
-
-#define LSA_LOG_VERBOSE(szFmt, ...) \
-    _LSA_LOG_IF(LSA_LOG_LEVEL_VERBOSE, szFmt, ## __VA_ARGS__)
-
-#define LSA_LOG_DEBUG(szFmt, ...) \
-    _LSA_LOG_IF(LSA_LOG_LEVEL_DEBUG, szFmt, ## __VA_ARGS__)
-
-#define LSA_LOG_TRACE(szFmt, ...) \
-    _LSA_LOG_IF(LSA_LOG_LEVEL_TRACE, szFmt, ## __VA_ARGS__)
+#define _LSA_LOG_AT(Level, ...) LW_RTL_LOG_AT_LEVEL(Level, "lsass", __VA_ARGS__)
+#define LSA_LOG_ALWAYS(...) _LSA_LOG_AT(LW_RTL_LOG_LEVEL_ALWAYS, __VA_ARGS__)
+#define LSA_LOG_ERROR(...) _LSA_LOG_AT(LW_RTL_LOG_LEVEL_ERROR, __VA_ARGS__)
+#define LSA_LOG_WARNING(...) _LSA_LOG_AT(LW_RTL_LOG_LEVEL_WARNING, __VA_ARGS__)
+#define LSA_LOG_INFO(...) _LSA_LOG_AT(LW_RTL_LOG_LEVEL_INFO, __VA_ARGS__)
+#define LSA_LOG_VERBOSE(...) _LSA_LOG_AT(LW_RTL_LOG_LEVEL_VERBOSE, __VA_ARGS__)
+#define LSA_LOG_DEBUG(...) _LSA_LOG_AT(LW_RTL_LOG_LEVEL_DEBUG, __VA_ARGS__)
+#define LSA_LOG_TRACE(...) _LSA_LOG_AT(LW_RTL_LOG_LEVEL_TRACE, __VA_ARGS__)
 
 #define LSA_LOG_ERROR_API_FAILED(hServer, dwError, szFmt, ...) \
     LSA_LOG_ERROR("Failed to " szFmt " -> error = %u, symbol = %s, client pid = %ld", \

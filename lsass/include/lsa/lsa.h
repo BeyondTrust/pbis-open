@@ -86,6 +86,7 @@
 #include <inttypes.h>
 #include <lw/types.h>
 #include <lw/attrs.h>
+#include <lw/rtllog.h>
 
 #include <lwerror.h>
 
@@ -239,13 +240,13 @@ typedef struct __LSA_TRACE_INFO_LIST
  */
 typedef enum
 {
-    LSA_LOG_LEVEL_ALWAYS = 0,
-    LSA_LOG_LEVEL_ERROR,
-    LSA_LOG_LEVEL_WARNING,
-    LSA_LOG_LEVEL_INFO,
-    LSA_LOG_LEVEL_VERBOSE,
-    LSA_LOG_LEVEL_DEBUG,
-    LSA_LOG_LEVEL_TRACE
+    LSA_LOG_LEVEL_ALWAYS = LW_RTL_LOG_LEVEL_ALWAYS,
+    LSA_LOG_LEVEL_ERROR = LW_RTL_LOG_LEVEL_ERROR,
+    LSA_LOG_LEVEL_WARNING = LW_RTL_LOG_LEVEL_WARNING,
+    LSA_LOG_LEVEL_INFO = LW_RTL_LOG_LEVEL_INFO,
+    LSA_LOG_LEVEL_VERBOSE = LW_RTL_LOG_LEVEL_VERBOSE,
+    LSA_LOG_LEVEL_DEBUG = LW_RTL_LOG_LEVEL_DEBUG,
+    LSA_LOG_LEVEL_TRACE = LW_RTL_LOG_LEVEL_TRACE
 } LsaLogLevel;
 
 typedef enum
