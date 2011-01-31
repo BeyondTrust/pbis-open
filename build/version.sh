@@ -8,7 +8,7 @@ fi
 source "${BUILD_ROOT}/src/linux/build/lib/vc-helper.sh"
 
 MAIN_NAME=likewise
-MAIN_VERSION=6.1.0
+MAIN_VERSION=6.2.0
 MAIN_RELEASE=1
 
 MAIN_PREFIX_DIR="${BUILD_PREFIX}"
