@@ -83,7 +83,7 @@ configure()
 {
     LW_VENDOR="likewise"
     LW_PRODUCT="platform"
-    LW_VERSION="6.1.${LW_BUILD_ID:-0}"
+    LW_VERSION="6.2.${LW_BUILD_ID:-0}"
     mk_export LW_BUNDLED
     
     mk_msg "configuring $LW_VENDOR $LW_PRODUCT $LW_VERSION"
