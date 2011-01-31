@@ -273,7 +273,7 @@ main()
 
     $RUN rm -rfv /opt/likewise /etc/likewise /var/log/likewise /var/lib/likewise /var/cache/likewise
 
-    for file in /etc/pam.d/* /etc/krb5.conf /etc/hosts /etc/sshd_config /etc/ssh_config ; do
+    for file in /etc/* /etc/pam.d/* /etc/krb5.conf /etc/hosts /etc/sshd_config /etc/ssh_config ; do
         orig="$file.lwidentity.orig"
         bak="$file.lwidentity.bak"
         if [ -f "$orig" ]; then
