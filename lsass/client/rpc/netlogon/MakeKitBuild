@@ -41,6 +41,6 @@ make()
 	GROUPDEPS="netlogon_cstub" \
 	INCLUDEDIRS=". ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h openssl/rand.h" \
-	LIBDEPS="lwbase dcerpc" \
+	LIBDEPS="lwbase dcerpc crypto" \
 	DEPS="netlogon_h.h"
 }
