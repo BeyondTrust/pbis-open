@@ -516,9 +516,9 @@ rpc__smb_socket_destroy(
             free(sock->accept_backlog.queue);
         }
 
-        if (sock->filename.FileName)
+        if (sock->filename.Name.Buffer)
         {
-            RtlMemoryFree(sock->filename.FileName);
+            LwRtlUnicodeStringFree(&sock->filename.Name);
         }
 
         if (sock->close_context)
@@ -752,8 +752,8 @@ rpc__smb_socket_connect(
     }
     
     serr = NtStatusToErrno(
-        LwRtlWC16StringAllocateFromCString(
-            &smb->filename.FileName,
+        LwRtlUnicodeStringAllocateFromCString(
+            &smb->filename.Name,
             smbpath));
     if (serr)
     {
@@ -1233,8 +1233,8 @@ rpc__smb_socket_listen(
     GE(serr);
     
     serr = NtStatusToErrno(
-        LwRtlWC16StringAllocateFromCString(
-            &smb->filename.FileName,
+        LwRtlUnicodeStringAllocateFromCString(
+            &smb->filename.Name,
             smbpath));
     GE(serr);
 
