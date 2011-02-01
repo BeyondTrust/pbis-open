@@ -149,7 +149,7 @@ error:
         LwNtCloseFile(handle);
     }
 
-    RTL_FREE(&filename.FileName);
+    RTL_UNICODE_STRING_FREE(&filename.Name);
     RTL_FREE(&pUserSid);
     RTL_FREE(&pGroupSid);
     RTL_FREE(&pRelative);

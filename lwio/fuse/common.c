@@ -146,20 +146,20 @@ LwIoFuseGetNtFilename(
 
     memset(pFilename, 0, sizeof(*pFilename));
 
-    status = LwRtlWC16StringAllocatePrintfW(
-        &pFilename->FileName,
+    status = LwRtlUnicodeStringAllocatePrintfW(
+        &pFilename->Name,
         L"%ws/%s",
         pFuseContext->pwszInternalPath,
         pszPath);
     BAIL_ON_NT_STATUS(status);
-
+    
 cleanup:
 
     return status;
 
 error:
 
-    RTL_FREE(&pFilename->FileName);
+    RTL_UNICODE_STRING_FREE(&pFilename->Name);
  
     memset(pFilename, 0, sizeof(*pFilename));
 

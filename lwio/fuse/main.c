@@ -75,7 +75,8 @@ main(int argc,
     PIO_FUSE_CONTEXT pFuseContext = NULL;
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
     PWSTR pwszUncPath = NULL;
-    const static WCHAR wszCredPrefix[] = {'/', 'r', 'd', 'r', '/'};
+    static WCHAR wszCredPrefix[] = {'/', 'r', 'd', 'r', '/', 0};
+    UNICODE_STRING credPrefix = LW_RTL_CONSTANT_STRING(wszCredPrefix);
     struct termios oldFlags, newFlags;
     FILE* ttyIn = stdin;
     FILE* ttyOut = stdout;
@@ -145,7 +146,7 @@ main(int argc,
             &pFuseContext->pCreds);
         BAIL_ON_NT_STATUS(status);
 
-        status = LwIoSetPathCreds(wszCredPrefix, pFuseContext->pCreds);
+        status = LwIoSetPathCreds(&credPrefix, pFuseContext->pCreds);
         BAIL_ON_NT_STATUS(status);
     }
   

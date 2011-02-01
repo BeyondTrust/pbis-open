@@ -301,7 +301,7 @@ error:
         LwNtCloseFile(handle);
     }
 
-    RTL_FREE(&filename.FileName);
+    RTL_UNICODE_STRING_FREE(&filename.Name);
     RTL_FREE(&pDacl);
     RTL_FREE(&pRelative);
     RTL_FREE(&pAbsolute);

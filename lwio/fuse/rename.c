@@ -110,7 +110,7 @@ cleanup:
         LwNtCloseFile(handle);
     }
 
-    RTL_FREE(&filename.FileName);
+    RTL_UNICODE_STRING_FREE(&filename.Name);
     RTL_FREE(&pwszNewPath);
     RTL_FREE(&pRenameInfo);
 

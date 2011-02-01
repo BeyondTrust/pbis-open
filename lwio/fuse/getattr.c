@@ -125,7 +125,7 @@ cleanup:
         LwNtCloseFile(handle);
     }
 
-    RTL_FREE(&filename.FileName);
+    RTL_UNICODE_STRING_FREE(&filename.Name);
 
     return status;
 
