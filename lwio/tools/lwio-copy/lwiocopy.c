@@ -630,7 +630,7 @@ cleanup:
     RTL_FREE(&pszLocalPath);
     RTL_FREE(&pszRemotePath);
     RTL_FREE(&pszEntryFilename);
-    RTL_FREE(&filename.FileName);
+    RTL_UNICODE_STRING_FREE(&filename.Name);
 
     return status;
 
@@ -756,7 +756,7 @@ cleanup:
     RTL_FREE(&pszLocalPath);
     RTL_FREE(&pszRemotePath);
     RTL_FREE(&pszEntryFilename);
-    RTL_FREE(&filename.FileName);
+    RTL_UNICODE_STRING_FREE(&filename.Name);
 
     return status;
 

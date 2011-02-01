@@ -56,7 +56,7 @@ ItLibTestRundown(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     IO_FILE_NAME fileName = { 0 };
 
-    status = RtlWC16StringAllocateFromCString(&fileName.FileName, "/iotest");
+    status = RtlUnicodeStringAllocateFromCString(&fileName.Name, "/iotest");
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = LwNtCreateFile(
@@ -91,7 +91,7 @@ ItLibTestRundown(
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
 cleanup:
-    RtlWC16StringFree(&fileName.FileName);
+    RTL_UNICODE_STRING_FREE(&fileName.Name);
 
     if (fileHandle)
     {

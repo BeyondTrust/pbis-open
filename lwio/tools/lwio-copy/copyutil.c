@@ -672,8 +672,8 @@ LwioRemoteOpenFile(
                     !strncmp(pszFileName, "//", sizeof("//")-1) ? pszFileName+1 : pszFileName);
     BAIL_ON_NT_STATUS(status);
 
-    status = LwRtlWC16StringAllocateFromCString(
-        &filename.FileName,
+    status = LwRtlUnicodeStringAllocateFromCString(
+        &filename.Name,
         pszRemoteFileName);
     BAIL_ON_NT_STATUS(status);
 

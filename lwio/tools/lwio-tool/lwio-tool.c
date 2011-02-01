@@ -73,7 +73,7 @@ DoTestFileApiCreateFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    status = RtlWC16StringAllocateFromCString(&fileName.FileName, pszPath);
+    status = RtlUnicodeStringAllocateFromCString(&fileName.Name, pszPath);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = NtCreateFile(
@@ -99,7 +99,7 @@ DoTestFileApiCreateFile(
     LWIO_LOG_ALWAYS("Opened file '%s'", pszPath);
 
 cleanup:
-    RtlWC16StringFree(&fileName.FileName);
+    RTL_UNICODE_STRING_FREE(&fileName.Name);
 
     if (fileHandle)
     {
@@ -141,7 +141,7 @@ DoTestFileApiCreateNamedPipeFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    status = RtlWC16StringAllocateFromCString(&fileName.FileName, pszPath);
+    status = RtlUnicodeStringAllocateFromCString(&fileName.Name, pszPath);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = NtCreateNamedPipeFile(
@@ -167,7 +167,7 @@ DoTestFileApiCreateNamedPipeFile(
     LWIO_LOG_ALWAYS("Opened named pipe '%s'", pszPath);
 
 cleanup:
-    RtlWC16StringFree(&fileName.FileName);
+    RTL_UNICODE_STRING_FREE(&fileName.Name);
 
     if (fileHandle)
     {

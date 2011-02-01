@@ -58,11 +58,11 @@ ProcessServerStats(
 {
     DWORD                   dwError   = 0;
     NTSTATUS                ntStatus  = STATUS_SUCCESS;
-    wchar16_t               wszName[] = {'\\','s','r','v',0};
+    WCHAR                   wszName[] = {'\\','s','r','v',0};
     IO_FILE_NAME            fileName  =
                                 {
                                         .RootFileHandle = NULL,
-                                        .FileName       = &wszName[0],
+                                        .Name = LW_RTL_CONSTANT_STRING(wszName),
                                         .IoNameOptions  = 0
                                 };
     IO_FILE_HANDLE          hDevice       = NULL;
