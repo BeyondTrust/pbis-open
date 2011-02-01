@@ -420,7 +420,7 @@ LwMapErrnoToLwError(
         case ECANCELED:
             return LW_ERROR_ERRNO_ECANCELED;
         default:
-            LW_LOG_ERROR("Unable to map errno %d", dwErrno);
+            LW_RTL_LOG_ERROR("Unable to map errno %d", dwErrno);
             return LW_ERROR_UNKNOWN;
     }
 }
@@ -446,7 +446,7 @@ LwMapHErrnoToLwError(
         case TRY_AGAIN:
             return WSATRY_AGAIN;
         default:
-            LW_LOG_ERROR("Unable to map h_errno %d", dwHErrno);
+            LW_RTL_LOG_ERROR("Unable to map h_errno %d", dwHErrno);
             return LW_ERROR_UNKNOWN;
     }
 }
@@ -598,7 +598,7 @@ LwMapLdapErrorToLwError(
         case LDAP_ASSERTION_FAILED:
             return LW_ERROR_LDAP_ASSERTION_FAILED;
         default:
-            LW_LOG_ERROR("Unable to map ldap error %d", dwErr);
+            LW_RTL_LOG_ERROR("Unable to map ldap error %d", dwErr);
             return LW_ERROR_UNKNOWN;
     }
 }
@@ -648,7 +648,7 @@ LwMapLwmsgStatusToLwError(
         case LWMSG_STATUS_INVALID_HANDLE:
             return ERROR_INVALID_HANDLE;
         default:
-            LW_LOG_ERROR("Unable to map lwmsg status %d", status);
+            LW_RTL_LOG_ERROR("Unable to map lwmsg status %d", status);
             return LW_ERROR_INTERNAL;
     }
 }

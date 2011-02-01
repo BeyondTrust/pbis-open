@@ -89,7 +89,7 @@ LwAutoenrollDaemonStart(
         close(devNull);
     }
 
-    LW_LOG_INFO("starting");
+    LW_RTL_LOG_INFO("starting");
 
     if ((pszSmNotify = getenv("LIKEWISE_SM_NOTIFY")) != NULL)
     {

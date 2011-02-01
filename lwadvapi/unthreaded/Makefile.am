@@ -1,4 +1,4 @@
-SUBDIRS = error lwunistr memory file dscache time logging
+SUBDIRS = error lwunistr memory file dscache time
 
 lib_LTLIBRARIES = liblwadvapi_nothr.la
 
@@ -8,7 +8,6 @@ liblwadvapi_nothr_la_LIBADD = \
 	dscache/liblwadvapi_dscache.la \
 	memory/liblwadvapi_memory.la \
 	lwunistr/liblwadvapi_lwunistr.la \
-	time/liblwadvapi_time.la \
-	logging/liblwadvapi_logging.la
+	time/liblwadvapi_time.la
 
 liblwadvapi_nothr_la_SOURCES = 

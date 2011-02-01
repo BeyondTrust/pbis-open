@@ -1,6 +1,5 @@
 #include <lwdef.h>
 #include <lwerror.h>
-#include <lwlogging.h>
 #include <lwfile.h>
 #include <lwkrb5.h>
 #include <lwldap.h>

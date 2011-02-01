@@ -172,11 +172,11 @@ LwSetSystemTime(
     {
         if (clock_settime(CLOCK_REALTIME, &systemspec) == -1)
         {
-            LW_LOG_VERBOSE("Setting time with clock_settime failed %d", errno);
+            LW_RTL_LOG_VERBOSE("Setting time with clock_settime failed %d", errno);
         }
         else
         {
-            LW_LOG_VERBOSE("Setting time with clock_settime worked");
+            LW_RTL_LOG_VERBOSE("Setting time with clock_settime worked");
             bTimeset = TRUE;
         }
     }
@@ -187,11 +187,11 @@ LwSetSystemTime(
     {
         if (settimeofday(&systemval, NULL) == -1)
         {
-            LW_LOG_VERBOSE("Setting time with settimeofday failed %d", errno);
+            LW_RTL_LOG_VERBOSE("Setting time with settimeofday failed %d", errno);
         }
         else
         {
-            LW_LOG_VERBOSE("Setting time with settimeofday worked");
+            LW_RTL_LOG_VERBOSE("Setting time with settimeofday worked");
             bTimeset = TRUE;
         }
     }
@@ -229,7 +229,7 @@ LwSetSystemTime(
     //Make sure the time is now within 5 seconds of what we set
     if (labs(readTime - ttCurTime) > 5)
     {
-        LW_LOG_ERROR("Attempted to set time to %ld, but it is now %lld.", ttCurTime, readTime);
+        LW_RTL_LOG_ERROR("Attempted to set time to %ld, but it is now %lld.", ttCurTime, readTime);
         dwError = LW_ERROR_FAILED_TO_SET_TIME;
         BAIL_ON_LW_ERROR(dwError);
     }
@@ -242,7 +242,7 @@ LwSetSystemTime(
 
         if (labs(readTime - ttCurTime) > 5)
         {
-            LW_LOG_DEBUG("Time is slow to update...waiting");
+            LW_RTL_LOG_DEBUG("Time is slow to update...waiting");
             sleep(1);
         }
         else

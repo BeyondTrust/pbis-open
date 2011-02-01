@@ -44,16 +44,33 @@ MyErrorToName(DWORD error)
             _error, MyErrorToName(_error), _BAIL_FORMAT_ARGS(__VA_ARGS__)); \
     } while(0)
 
-static VOID
-LogFunc(LwLogLevel level, PVOID pUserData, PCSTR pszMessage)
+static
+VOID
+LogFunc(
+    LW_IN LW_OPTIONAL LW_PVOID Context,
+    LW_IN LW_RTL_LOG_LEVEL Level,
+    LW_IN LW_OPTIONAL LW_PCSTR ComponentName,
+    LW_IN LW_PCSTR FunctionName,
+    LW_IN LW_PCSTR FileName,
+    LW_IN LW_ULONG LineNumber,
+    LW_IN LW_PCSTR Format,
+    LW_IN ...
+    )
 {
-    fprintf(stderr, "%s\n", pszMessage);
+    va_list args;
+
+    va_start(args, Format);
+    vfprintf(stderr, Format, args);
+    fprintf(stderr, "\n");
+    va_end(args);
 }
 
 static DWORD
 LogInit(void)
 {
-    return LwSetLogFunction(LW_LOG_LEVEL_DEBUG, LogFunc, NULL);
+    LwRtlLogSetLevel(LW_RTL_LOG_LEVEL_DEBUG);
+    LwRtlLogSetCallback(LogFunc, NULL);
+    return 0;
 }
 
 static DWORD

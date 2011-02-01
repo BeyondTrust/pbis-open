@@ -12,15 +12,47 @@
 #include <log_util.h>
 
 #include <lwerror.h>
+#include <lwstr.h>
 
-static void LogToSyslog(LwLogLevel level, PVOID pUserData,
+static void LogToSyslog(LW_RTL_LOG_LEVEL level, PVOID pUserData,
         PCSTR message);
-static void LogToFile(LwLogLevel level, PVOID pUserData,
+static void LogToFile(LW_RTL_LOG_LEVEL level, PVOID pUserData,
         PCSTR message);
 
-static LwLogLevel       gMaxLogLevel = LW_LOG_LEVEL_ERROR;
-static PLWLOG_CALLBACK  gpLogCallback = LogToFile;
+typedef VOID (*PLW_AUTO_ENROLL_LOG_CALLBACK)(LW_RTL_LOG_LEVEL level, PVOID pUserData, PCSTR pszMessage);
+
+static LW_RTL_LOG_LEVEL gMaxLogLevel = LW_RTL_LOG_LEVEL_ERROR;
+static PLW_AUTO_ENROLL_LOG_CALLBACK gpLogCallback = LogToFile;
 static PVOID            gpLogCallbackData = NULL;
+
+static
+VOID
+LwAutoenroolLogCallback(
+    LW_IN LW_OPTIONAL LW_PVOID Context,
+    LW_IN LW_RTL_LOG_LEVEL Level,
+    LW_IN LW_OPTIONAL LW_PCSTR ComponentName,
+    LW_IN LW_PCSTR FunctionName,
+    LW_IN LW_PCSTR FileName,
+    LW_IN LW_ULONG LineNumber,
+    LW_IN LW_PCSTR Format,
+    LW_IN ...
+    )
+{
+    DWORD dwError = 0;
+    PSTR formattedMessage = NULL;
+
+    va_list argList;
+    va_start(argList, Format);
+    dwError = LwAllocateStringPrintfV(&formattedMessage, Format, argList);
+    va_end(argList);
+
+    if (!dwError)
+    {
+        gpLogCallback(Level, Context, formattedMessage);
+    }
+
+    LW_SAFE_FREE_STRING(formattedMessage);
+}
 
 static struct
 {
@@ -33,14 +65,14 @@ gLogStatus;
 
 static struct LwAutoenrollLogLevel {
     PCSTR       name;
-    LwLogLevel  lwLogLevel;
+    LW_RTL_LOG_LEVEL lwLogLevel;
     int         iSyslogLevel;
 } LwAutoenrollLogLevels[] = {
-    { "error",          LW_LOG_LEVEL_ERROR,   LOG_ERR, },
-    { "warning",        LW_LOG_LEVEL_WARNING, LOG_WARNING, },
-    { "info",           LW_LOG_LEVEL_INFO,    LOG_INFO, },
-    { "verbose",        LW_LOG_LEVEL_VERBOSE, LOG_INFO, },
-    { "debug",          LW_LOG_LEVEL_DEBUG,   LOG_INFO, },
+    { "error",          LW_RTL_LOG_LEVEL_ERROR,   LOG_ERR, },
+    { "warning",        LW_RTL_LOG_LEVEL_WARNING, LOG_WARNING, },
+    { "info",           LW_RTL_LOG_LEVEL_INFO,    LOG_INFO, },
+    { "verbose",        LW_RTL_LOG_LEVEL_VERBOSE, LOG_INFO, },
+    { "debug",          LW_RTL_LOG_LEVEL_DEBUG,   LOG_INFO, },
     { NULL,             0,                    0, }
 };
 
@@ -100,13 +132,13 @@ struct poptOption LwAutoenrollLogOptions[] = {
 };
 
 static void
-LogToSyslog(LwLogLevel level, PVOID pUserData, PCSTR message)
+LogToSyslog(LW_RTL_LOG_LEVEL level, PVOID pUserData, PCSTR message)
 {
     syslog(LwAutoenrollLogLevels[level - 1].iSyslogLevel, "%s", message);
 }
 
 static void
-LogToFile(LwLogLevel level, PVOID pUserData, PCSTR message)
+LogToFile(LW_RTL_LOG_LEVEL level, PVOID pUserData, PCSTR message)
 {
     FILE *fpLog = pUserData;
 
@@ -125,8 +157,8 @@ LwAutoenrollLogInit(void)
     /* Don't set up logging until all options are processed. */
     if (!gLogStatus.bProcessingOptions)
     {
-        return LwSetLogFunction(gMaxLogLevel, gpLogCallback,
-                gpLogCallbackData);
+        LwRtlLogSetLevel(gMaxLogLevel);
+        LwRtlLogSetCallback(LwAutoenroolLogCallback, gpLogCallbackData);
     }
 
     return LW_ERROR_SUCCESS;
@@ -208,14 +240,14 @@ cleanup:
     return error;
 }
 
-LwLogLevel
+LW_RTL_LOG_LEVEL
 LwAutoenrollLogGetLevel(void)
 {
     return gMaxLogLevel;
 }
 
 DWORD
-LwAutoenrollLogSetLevel(LwLogLevel level, LW_BOOL force)
+LwAutoenrollLogSetLevel(LW_RTL_LOG_LEVEL level, LW_BOOL force)
 {
     DWORD error;
 

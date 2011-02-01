@@ -130,7 +130,7 @@ LwLdapPingTcp(
     addr.s_addr = inet_addr(pszHostAddress);
     if (addr.s_addr == INADDR_NONE)
     {
-        LW_LOG_ERROR("Could not convert address'%s' to in_addr", pszHostAddress);
+        LW_RTL_LOG_ERROR("Could not convert address'%s' to in_addr", pszHostAddress);
         dwError = LW_ERROR_DNS_RESOLUTION_FAILED;
         BAIL_ON_LW_ERROR(dwError);
     }
@@ -178,7 +178,7 @@ LwLdapPingTcp(
     {
         case 0:
             // We timed out
-            LW_LOG_DEBUG("Timed out connecting to '%s'", pszHostAddress);
+            LW_RTL_LOG_DEBUG("Timed out connecting to '%s'", pszHostAddress);
             // ISSUE-2008/09/16-dalmeida -- Technically, not a "domain"...
             dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
             BAIL_ON_LW_ERROR(dwError);
@@ -188,7 +188,7 @@ LwLdapPingTcp(
             break;
         default:
             // This should never happen.
-            LW_LOG_DEBUG("Unexpected number of file descriptors returned (%d)", sysRet);
+            LW_RTL_LOG_DEBUG("Unexpected number of file descriptors returned (%d)", sysRet);
             dwError = LW_ERROR_INVALID_PARAMETER;
             BAIL_ON_LW_ERROR(dwError);
             break;
@@ -264,9 +264,9 @@ LwLdapOpenDirectoryServerSingleAttempt(
     ld = (LDAP *)ldap_init(pszServerAddress, dwPort);
     if (!ld) {
         dwError = LwMapErrnoToLwError(errno);
-        LW_LOG_ERROR("Failed to open LDAP connection to domain controller");
+        LW_RTL_LOG_ERROR("Failed to open LDAP connection to domain controller");
         BAIL_ON_LW_ERROR(dwError);
-        LW_LOG_ERROR("Failed to get errno for failed open LDAP connection");
+        LW_RTL_LOG_ERROR("Failed to get errno for failed open LDAP connection");
         dwError = LW_ERROR_LDAP_ERROR;
         BAIL_ON_LW_ERROR(dwError);
     }
@@ -276,20 +276,20 @@ LwLdapOpenDirectoryServerSingleAttempt(
 
     dwError = ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &rc);
     if (dwError) {
-        LW_LOG_ERROR("Failed to set LDAP option protocol version");
+        LW_RTL_LOG_ERROR("Failed to set LDAP option protocol version");
         BAIL_ON_LDAP_ERROR(dwError);
     }
 
     dwError = ldap_set_option( ld, LDAP_OPT_REFERRALS, (void *)LDAP_OPT_OFF);
     if (dwError) {
-        LW_LOG_ERROR("Failed to set LDAP option to not follow referrals");
+        LW_RTL_LOG_ERROR("Failed to set LDAP option to not follow referrals");
         BAIL_ON_LDAP_ERROR(dwError);
     }
 
     /* This tells ldap to retry when select returns with EINTR */
     dwError = ldap_set_option( ld, LDAP_OPT_RESTART, (void *)LDAP_OPT_ON);
     if (dwError) {
-        LW_LOG_ERROR("Failed to set LDAP option to auto retry ");
+        LW_RTL_LOG_ERROR("Failed to set LDAP option to auto retry ");
         BAIL_ON_LDAP_ERROR(dwError);
     }
 
@@ -377,7 +377,7 @@ LwLdapOpenDirectoryServer(
         if (dwError == ETIMEDOUT)
         {
             LW_ASSERT(pDirectory == NULL);
-            LW_LOG_ERROR("The ldap connection to %s was disconnected. This was attempt #%d",
+            LW_RTL_LOG_ERROR("The ldap connection to %s was disconnected. This was attempt #%d",
                     pszServerAddress,
                     dwAttempt);
             dwTimeoutSec /= 2;
@@ -441,7 +441,7 @@ cleanup:
 
 error:
 
-    LW_LOG_ERROR("Failed on LDAP simple bind (Error code: %u)", dwError);
+    LW_RTL_LOG_ERROR("Failed on LDAP simple bind (Error code: %u)", dwError);
 
     if(pDirectory->ld != NULL)
     {
@@ -570,7 +570,7 @@ LwLdapBindDirectorySasl(
                   LwLdapGssSpnegoInteract,
                   (void *)pszServerName);
     if (dwError != 0) {
-        LW_LOG_ERROR("ldap_sasl_interactive_bind_s failed with error code %d", dwError);
+        LW_RTL_LOG_ERROR("ldap_sasl_interactive_bind_s failed with error code %d", dwError);
         BAIL_ON_LDAP_ERROR(dwError);
     }
 
@@ -661,22 +661,22 @@ LwLdapDirectorySearch(
                              &pMessage);
     if (dwError) {
         if (dwError == LDAP_NO_SUCH_OBJECT) {
-            LW_LOG_VERBOSE("Caught LDAP_NO_SUCH_OBJECT Error on ldap search");
+            LW_RTL_LOG_VERBOSE("Caught LDAP_NO_SUCH_OBJECT Error on ldap search");
             BAIL_ON_LDAP_ERROR(dwError);
         }
         if (dwError == LDAP_REFERRAL) {
-            LW_LOG_ERROR("Caught LDAP_REFERRAL Error on ldap search");
-            LW_LOG_ERROR("LDAP Search Info: DN: [%s]", LW_IS_NULL_OR_EMPTY_STR(pszObjectDN) ? "<null>" : pszObjectDN);
-            LW_LOG_ERROR("LDAP Search Info: scope: [%d]", scope);
-            LW_LOG_ERROR("LDAP Search Info: query: [%s]", LW_IS_NULL_OR_EMPTY_STR(pszQuery) ? "<null>" : pszQuery);
+            LW_RTL_LOG_ERROR("Caught LDAP_REFERRAL Error on ldap search");
+            LW_RTL_LOG_ERROR("LDAP Search Info: DN: [%s]", LW_IS_NULL_OR_EMPTY_STR(pszObjectDN) ? "<null>" : pszObjectDN);
+            LW_RTL_LOG_ERROR("LDAP Search Info: scope: [%d]", scope);
+            LW_RTL_LOG_ERROR("LDAP Search Info: query: [%s]", LW_IS_NULL_OR_EMPTY_STR(pszQuery) ? "<null>" : pszQuery);
             if (ppszAttributeList) {
                 size_t i;
                 for (i = 0; ppszAttributeList[i] != NULL; i++) {
-                    LW_LOG_ERROR("LDAP Search Info: attribute: [%s]", ppszAttributeList[i]);
+                    LW_RTL_LOG_ERROR("LDAP Search Info: attribute: [%s]", ppszAttributeList[i]);
                 }
             }
             else {
-                LW_LOG_ERROR("Error: LDAP Search Info: no attributes were specified");
+                LW_RTL_LOG_ERROR("Error: LDAP Search Info: no attributes were specified");
             }
         }
         BAIL_ON_LDAP_ERROR(dwError);
@@ -736,22 +736,22 @@ LwLdapDirectorySearchEx(
                     &pMessage);
     if (dwError) {
         if (dwError == LDAP_NO_SUCH_OBJECT) {
-            LW_LOG_VERBOSE("Caught LDAP_NO_SUCH_OBJECT Error on ldap search");
+            LW_RTL_LOG_VERBOSE("Caught LDAP_NO_SUCH_OBJECT Error on ldap search");
             BAIL_ON_LDAP_ERROR(dwError);
         }
         if (dwError == LDAP_REFERRAL) {
-            LW_LOG_ERROR("Caught LDAP_REFERRAL Error on ldap search");
-            LW_LOG_ERROR("LDAP Search Info: DN: [%s]", LW_IS_NULL_OR_EMPTY_STR(pszObjectDN) ? "<null>" : pszObjectDN);
-            LW_LOG_ERROR("LDAP Search Info: scope: [%d]", scope);
-            LW_LOG_ERROR("LDAP Search Info: query: [%s]", LW_IS_NULL_OR_EMPTY_STR(pszQuery) ? "<null>" : pszQuery);
+            LW_RTL_LOG_ERROR("Caught LDAP_REFERRAL Error on ldap search");
+            LW_RTL_LOG_ERROR("LDAP Search Info: DN: [%s]", LW_IS_NULL_OR_EMPTY_STR(pszObjectDN) ? "<null>" : pszObjectDN);
+            LW_RTL_LOG_ERROR("LDAP Search Info: scope: [%d]", scope);
+            LW_RTL_LOG_ERROR("LDAP Search Info: query: [%s]", LW_IS_NULL_OR_EMPTY_STR(pszQuery) ? "<null>" : pszQuery);
             if (ppszAttributeList) {
                 size_t i;
                 for (i = 0; ppszAttributeList[i] != NULL; i++) {
-                    LW_LOG_ERROR("LDAP Search Info: attribute: [%s]", ppszAttributeList[i]);
+                    LW_RTL_LOG_ERROR("LDAP Search Info: attribute: [%s]", ppszAttributeList[i]);
                 }
             }
             else {
-                LW_LOG_ERROR("Error: LDAP Search Info: no attributes were specified");
+                LW_RTL_LOG_ERROR("Error: LDAP Search Info: no attributes were specified");
             }
         }
         BAIL_ON_LDAP_ERROR(dwError);
@@ -926,7 +926,7 @@ LwLdapDirectoryOnePagedSearch(
 cleanup:
   /*  dwError_disable = ADDisablePageControlOption(hDirectory);
     if (dwError_disable)
-        LW_LOG_ERROR("Error: LDAP Disable PageControl Info: failed");*/
+        LW_RTL_LOG_ERROR("Error: LDAP Disable PageControl Info: failed");*/
 
     if (ppReturnedControls) {
         ldap_controls_free(ppReturnedControls);
@@ -1443,7 +1443,7 @@ LwLdapParseExtendedDNResult(
     if (strncasecmp(pszCurrExtDnResult, "<GUID=", sizeof("<GUID=")-1))
     {
         dwError = LW_ERROR_LDAP_ERROR;
-        LW_LOG_ERROR("Failed to find extended DN entry '%s' GUID part. [error code:%d]",
+        LW_RTL_LOG_ERROR("Failed to find extended DN entry '%s' GUID part. [error code:%d]",
                        pszExtDnResult, dwError);
         BAIL_ON_LW_ERROR(dwError);
     }
@@ -1461,7 +1461,7 @@ LwLdapParseExtendedDNResult(
 
     if (strncasecmp(pszCurrExtDnResult, "<SID=", sizeof("<SID=")-1))
     {
-        LW_LOG_DEBUG("The extended DN entry '%s' has no SID part.", pszExtDnResult);
+        LW_RTL_LOG_DEBUG("The extended DN entry '%s' has no SID part.", pszExtDnResult);
         goto cleanup;
     }
 

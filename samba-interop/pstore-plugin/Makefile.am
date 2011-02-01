@@ -5,6 +5,6 @@ lib_LTLIBRARIES = libsamba-pstore-plugin.la
 libsamba_pstore_plugin_la_SOURCES = \
 	samba-pstore-plugin.c
 
-libsamba_pstore_plugin_la_LIBADD = $(top_builddir)/libtdb/libtdb.la -llwadvapi -lrsutils
+libsamba_pstore_plugin_la_LIBADD = $(top_builddir)/libtdb/libtdb.la -llwadvapi -lrsutils -llwbase_nothr
 
 noinst_HEADERS = samba-pstore-plugin.h

@@ -56,7 +56,6 @@
 
 #include "lwmem.h"
 #include "lwstr.h"
-#include <lwlogging.h>
 
 #include "lsautils.h"
 

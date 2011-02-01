@@ -61,7 +61,7 @@
 #include <lwmem.h>
 #include <lwfile.h>
 #include <lwdef.h>
-#include <lwlogging.h>
+#include <lw/rtllog.h>
 #include <lwsecurityidentifier.h>
 #include <lwtime.h>
 #include <lsa/lsapstore-plugin.h>
@@ -74,8 +74,7 @@
 
 #define BAIL_ON_LSA_ERROR(error)                                      \
     if (error) {                                                      \
-        LW_LOG_DEBUG("Error in %s at %s:%d. Error code [%d]",          \
-                      __FUNCTION__, __FILE__, __LINE__, error);       \
+        LW_RTL_LOG_DEBUG("Error code %d", error); \
         goto cleanup;                                                     \
     }
 
@@ -83,13 +82,56 @@
 
 static
 VOID
-LogLwMessageFunc(
-    LwLogLevel level,
-    PVOID pUserData,
-    PCSTR pszMessage
+LogCallback(
+    IN OPTIONAL PVOID Context,
+    IN LW_RTL_LOG_LEVEL Level,
+    IN OPTIONAL PCSTR ComponentName,
+    IN PCSTR FunctionName,
+    IN PCSTR FileName,
+    IN ULONG LineNumber,
+    IN PCSTR Format,
+    IN ...
     )
 {
-    printf("%s\n", pszMessage);
+    DWORD dwError = 0;
+    PSTR formattedMessage = NULL;
+    LW_RTL_LOG_LEVEL maxLevel = LwRtlLogGetLevel();
+    va_list argList;
+
+    va_start(argList, Format);
+    dwError = LwAllocateStringPrintfV(&formattedMessage, Format, argList);
+    va_end(argList);
+
+    if (!dwError)
+    {
+        size_t length = strlen(formattedMessage);
+        if ((length > 0) && (Format[length-1] != '\n'))
+        {
+            if (maxLevel >= LW_RTL_LOG_LEVEL_DEBUG)
+            {
+                printf("[%s() %s:%d] %s\n", FunctionName, FileName, LineNumber,
+                       formattedMessage);
+            }
+            else
+            {
+                printf("%s\n", formattedMessage);
+            }
+        }
+        else
+        {
+            if (maxLevel >= LW_RTL_LOG_LEVEL_DEBUG)
+            {
+                printf("[%s() %s:%d] %s", FunctionName, FileName, LineNumber,
+                       formattedMessage);
+            }
+            else
+            {
+                printf("%s", formattedMessage);
+            }
+        }
+    }
+
+    LW_SAFE_FREE_STRING(formattedMessage);
 }
 
 DWORD
@@ -399,7 +441,7 @@ CheckSambaVersion(
             TRUE,
             TRUE);
 
-    LW_LOG_ERROR("Found smbd version %s", pVersionString);
+    LW_RTL_LOG_ERROR("Found smbd version %s", pVersionString);
 
     if (!strncmp(pVersionString, "3.2.", sizeof("3.2.") - 1))
     {
@@ -417,14 +459,14 @@ CheckSambaVersion(
 
         if (build < 25)
         {
-            LW_LOG_ERROR("Unsupported smbd version %s", pVersionString);
+            LW_RTL_LOG_ERROR("Unsupported smbd version %s", pVersionString);
             error = ERROR_PRODUCT_VERSION;
             BAIL_ON_LSA_ERROR(error);
         }
     }
     else
     {
-        LW_LOG_ERROR("Unsupported smbd version %s", pVersionString);
+        LW_RTL_LOG_ERROR("Unsupported smbd version %s", pVersionString);
         error = ERROR_PRODUCT_VERSION;
         BAIL_ON_LSA_ERROR(error);
     }
@@ -477,7 +519,7 @@ InstallWbclient(
 
     if (!strcmp(pBuffer, pLikewiseWbClient))
     {
-        LW_LOG_INFO("Link %s already points to %s", pWbClient, pBuffer);
+        LW_RTL_LOG_INFO("Link %s already points to %s", pWbClient, pBuffer);
         // Already configured
         goto cleanup;
     }
@@ -515,7 +557,7 @@ InstallWbclient(
         BAIL_ON_LSA_ERROR(error);   
     }
 
-    LW_LOG_INFO("Linked %s to %s", pWbClient, pLikewiseWbClient);
+    LW_RTL_LOG_INFO("Linked %s to %s", pWbClient, pLikewiseWbClient);
 
 cleanup:
     LW_SAFE_FREE_STRING(pSambaDir);
@@ -568,7 +610,7 @@ UninstallWbclient(
 
     if (strcmp(pBuffer, pLikewiseWbClient))
     {
-        LW_LOG_INFO("Path %s is not a symbolic link or does not point to %s", pWbClient, pLikewiseWbClient);
+        LW_RTL_LOG_INFO("Path %s is not a symbolic link or does not point to %s", pWbClient, pLikewiseWbClient);
         // Already configured
         goto cleanup;
     }
@@ -595,7 +637,7 @@ UninstallWbclient(
         }
         else
         {
-            LW_LOG_ERROR("Cannot find original wbclient library at %s",
+            LW_RTL_LOG_ERROR("Cannot find original wbclient library at %s",
                     pWbClientOriginal);
             error = LwMapErrnoToLwError(errno);
             BAIL_ON_LSA_ERROR(error);   
@@ -609,7 +651,7 @@ UninstallWbclient(
             BAIL_ON_LSA_ERROR(error);   
         }
 
-        LW_LOG_INFO("Linked %s to %s", pWbClient, pLikewiseWbClient);
+        LW_RTL_LOG_INFO("Linked %s to %s", pWbClient, pLikewiseWbClient);
     }
 
 cleanup:
@@ -821,12 +863,12 @@ InstallLwiCompat(
         error = LwMapErrnoToLwError(errno);
         if (error == ERROR_FILE_NOT_FOUND)
         {
-            LW_LOG_ERROR("Cannot access idmap directory %s. Please ensure you have winbind installed", pSambaDir);
+            LW_RTL_LOG_ERROR("Cannot access idmap directory %s. Please ensure you have winbind installed", pSambaDir);
         }
         BAIL_ON_LSA_ERROR(error);   
     }
 
-    LW_LOG_INFO("Linked idmapper %s to %s", pLwiCompat, pLikewiseLwiCompat);
+    LW_RTL_LOG_INFO("Linked idmapper %s to %s", pLwiCompat, pLikewiseLwiCompat);
 
 cleanup:
     LW_SAFE_FREE_STRING(pSambaDir);
@@ -865,7 +907,7 @@ UninstallLwiCompat(
         }
     }
 
-    LW_LOG_INFO("Unlinked idmapper %s", pLwiCompat);
+    LW_RTL_LOG_INFO("Unlinked idmapper %s", pLwiCompat);
 
 cleanup:
     LW_SAFE_FREE_STRING(pSambaDir);
@@ -939,7 +981,7 @@ AddSambaLoadPath(
     {
         if (!strcmp(pPos, PLUGIN_NAME))
         {
-            LW_LOG_INFO("Samba is already in the load order");
+            LW_RTL_LOG_INFO("Samba is already in the load order");
             goto cleanup;
         }
         pPos += strlen(pPos) + 1;
@@ -1010,7 +1052,7 @@ RemoveSambaLoadPath(
                 &loadOrderSize);
     if (error == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
-        LW_LOG_INFO("LoadOrder key not present");
+        LW_RTL_LOG_INFO("LoadOrder key not present");
         error = 0;
         goto cleanup;
     }
@@ -1052,7 +1094,7 @@ RemoveSambaLoadPath(
 
     if (removedSamba)
     {
-        LW_LOG_INFO("Removed Samba from load order");
+        LW_RTL_LOG_INFO("Removed Samba from load order");
         error = LwRegSetValueExA(
             hReg,
             hKey,
@@ -1133,7 +1175,7 @@ SynchronizePassword(
         &hLsa);
     if (error)
     {
-        LW_LOG_ERROR("Unable to contact lsassd");
+        LW_RTL_LOG_ERROR("Unable to contact lsassd");
     }
     BAIL_ON_LSA_ERROR(error);
 
@@ -1143,7 +1185,7 @@ SynchronizePassword(
         &pPasswordInfo);
     if (error == NERR_SetupNotJoined)
     {
-        LW_LOG_ERROR("Unable to write machine password in secrets.tdb because Likewise is not joined. The password will be written to secrets.tdb on the next successful join attempt");
+        LW_RTL_LOG_ERROR("Unable to write machine password in secrets.tdb because Likewise is not joined. The password will be written to secrets.tdb on the next successful join attempt");
         error = 0;
     }
     else
@@ -1212,7 +1254,7 @@ DeletePassword(
         &hLsa);
     if (error)
     {
-        LW_LOG_ERROR("Unable to contact lsassd");
+        LW_RTL_LOG_ERROR("Unable to contact lsassd");
     }
     BAIL_ON_LSA_ERROR(error);
 
@@ -1308,7 +1350,7 @@ main(
     PSTR pFoundSmbdPath = NULL;
     DWORD error = 0;
     DWORD argIndex = 0;
-    DWORD logLevel = LW_LOG_LEVEL_ERROR;
+    LW_RTL_LOG_LEVEL logLevel = LW_RTL_LOG_LEVEL_ERROR;
     PCSTR pErrorSymbol = NULL;
 
     for (argIndex = 1; argIndex < argc; argIndex++)
@@ -1356,23 +1398,23 @@ main(
             }
             if (!strcmp(argv[argIndex], "error"))
             {
-                logLevel = LW_LOG_LEVEL_ERROR;
+                logLevel = LW_RTL_LOG_LEVEL_ERROR;
             }
             else if (!strcmp(argv[argIndex], "warning"))
             {
-                logLevel = LW_LOG_LEVEL_WARNING;
+                logLevel = LW_RTL_LOG_LEVEL_WARNING;
             }
             else if (!strcmp(argv[argIndex], "info"))
             {
-                logLevel = LW_LOG_LEVEL_INFO;
+                logLevel = LW_RTL_LOG_LEVEL_INFO;
             }
             else if (!strcmp(argv[argIndex], "verbose"))
             {
-                logLevel = LW_LOG_LEVEL_VERBOSE;
+                logLevel = LW_RTL_LOG_LEVEL_VERBOSE;
             }
             else if (!strcmp(argv[argIndex], "debug"))
             {
-                logLevel = LW_LOG_LEVEL_DEBUG;
+                logLevel = LW_RTL_LOG_LEVEL_DEBUG;
             }
             else
             {
@@ -1396,7 +1438,8 @@ main(
         goto cleanup;
     }
 
-    LwSetLogFunction(logLevel, LogLwMessageFunc, NULL);
+    LwRtlLogSetCallback(LogCallback, NULL);
+    LwRtlLogSetLevel(logLevel);
 
     if (pSmbdPath == NULL)
     {

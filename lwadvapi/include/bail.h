@@ -30,11 +30,13 @@
 #ifndef __BAIL_H__
 #define __BAIL_H__
 
+#include <lw/rtllog.h>
+
 #define BAIL_ON_LW_ERROR(dwError) \
     do { \
         if (dwError) \
         { \
-            LW_LOG_DEBUG("[%s() %s:%d] Error code: %d (symbol: %s)", __FUNCTION__, __FILE__, __LINE__, dwError, LW_SAFE_LOG_STRING(LwWin32ErrorToName(dwError))); \
+            LW_RTL_LOG_DEBUG("[%s() %s:%d] Error code: %d (symbol: %s)", __FUNCTION__, __FILE__, __LINE__, dwError, LW_SAFE_LOG_STRING(LwWin32ErrorToName(dwError))); \
             goto error; \
         } \
     } while (0)
@@ -44,7 +46,7 @@
         if (dwError) \
         { \
             dwError = LwMapLdapErrorToLwError(dwError); \
-            LW_LOG_DEBUG("[%s() %s:%d] Ldap error code: %d", __FUNCTION__, __FILE__, __LINE__, dwError); \
+            LW_RTL_LOG_DEBUG("[%s() %s:%d] Ldap error code: %d", __FUNCTION__, __FILE__, __LINE__, dwError); \
             goto error; \
         } \
     } while (0)

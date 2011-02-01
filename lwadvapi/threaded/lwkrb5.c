@@ -59,11 +59,11 @@
         DWORD dwLocalError = LwGssGetErrorMessage(&pszLocalErrorMessage, GssFunctionName, MajorStatus, MinorStatus); \
         if (dwLocalError) \
         { \
-            LW_LOG_ERROR(LW_GSS_LOG_CALL_FORMAT, GssFunctionName, MajorStatus, MinorStatus); \
+            LW_RTL_LOG_ERROR(LW_GSS_LOG_CALL_FORMAT, GssFunctionName, MajorStatus, MinorStatus); \
         } \
         else \
         { \
-            LW_LOG_ERROR("%s", pszLocalErrorMessage); \
+            LW_RTL_LOG_ERROR("%s", pszLocalErrorMessage); \
             LwFreeString(pszLocalErrorMessage); \
         } \
     } while (0)
@@ -74,11 +74,11 @@
         DWORD dwLocalError = LwGssGetErrorMessage(&pszLocalErrorMessage, GssFunctionName, MajorStatus, MinorStatus); \
         if (dwLocalError) \
         { \
-            LW_LOG_DEBUG(LW_GSS_LOG_CALL_FORMAT, GssFunctionName, MajorStatus, MinorStatus); \
+            LW_RTL_LOG_DEBUG(LW_GSS_LOG_CALL_FORMAT, GssFunctionName, MajorStatus, MinorStatus); \
         } \
         else \
         { \
-            LW_LOG_DEBUG("%s", pszLocalErrorMessage); \
+            LW_RTL_LOG_DEBUG("%s", pszLocalErrorMessage); \
             LwFreeString(pszLocalErrorMessage); \
         } \
     } while (0)
@@ -114,7 +114,7 @@
         if (((MajorStatus) != GSS_S_COMPLETE) && \
             ((MajorStatus) != GSS_S_CONTINUE_NEEDED)) \
         { \
-            LW_LOG_DEBUG("[%s() %s:%d] GSS API error: majorStatus = 0x%08x, minorStatus = 0x%08x", \
+            LW_RTL_LOG_DEBUG("[%s() %s:%d] GSS API error: majorStatus = 0x%08x, minorStatus = 0x%08x", \
                          __FUNCTION__, \
                          __FILE__, \
                          __LINE__, \
@@ -161,7 +161,7 @@ LwGssGetSingleErrorMessage(
                             &message);
         if (majorStatus != GSS_S_COMPLETE)
         {
-            LW_LOG_ERROR("Call to gss_display_status() failed with "
+            LW_RTL_LOG_ERROR("Call to gss_display_status() failed with "
                          "majorStatus = 0x%08x, minorStatus = 0x%08x",
                          majorStatus, minorStatus);
 
@@ -405,7 +405,7 @@ LwKrb5SetThreadDefaultCachePath(
                             (ppszPreviousCachePath) ? (const char**)&pszOrigCachePath : NULL);
     BAIL_ON_GSS_ERROR(dwError, dwMajorStatus, dwMinorStatus);
 
-    LW_LOG_DEBUG("Switched gss krb5 credentials path from %s to %s",
+    LW_RTL_LOG_DEBUG("Switched gss krb5 credentials path from %s to %s",
             LW_SAFE_LOG_STRING(pszOrigCachePath),
             LW_SAFE_LOG_STRING(pszCachePath));
     
@@ -804,7 +804,7 @@ LwTranslateKrb5Error(
     }
     if (pszKrb5Error)
     {
-        LW_LOG_WARNING("[%s %s:%d] KRB5 Error code: %d (Message: %s)",
+        LW_RTL_LOG_WARNING("[%s %s:%d] KRB5 Error code: %d (Message: %s)",
                 pszFunction,
                 pszFile,
                 dwLine,
@@ -813,7 +813,7 @@ LwTranslateKrb5Error(
     }
     else
     {
-        LW_LOG_WARNING("[%s %s:%d] KRB5 Error code: %d",
+        LW_RTL_LOG_WARNING("[%s %s:%d] KRB5 Error code: %d",
                 pszFunction,
                 pszFile,
                 dwLine,
@@ -1485,7 +1485,7 @@ LwKrb5InitializeUserLoginCredentials(
              * 3. Someone created a ccache in the small window after we delete
              *    the old one and before we move in the new one.
              */
-            LW_LOG_WARNING("Unable to set up credentials cache with tgt for uid %ld", (long)uid);
+            LW_RTL_LOG_WARNING("Unable to set up credentials cache with tgt for uid %ld", (long)uid);
             dwError = LwRemoveFile(pszTempCachePath);
             BAIL_ON_LW_ERROR(dwError);
         }

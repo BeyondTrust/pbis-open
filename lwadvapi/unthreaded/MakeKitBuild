@@ -1,4 +1,4 @@
-SUBDIRS='error lwunistr memory file dscache time logging'
+SUBDIRS='error lwunistr memory file dscache time'
 
 make()
 {
@@ -11,7 +11,6 @@ make()
                     dscache/dscache \
                     memory/memory \
                     lwunistr/lwunistr \
-                    time/time \
-                    logging/logging"
+                    time/time"
 	mk_multiarch_done
 }

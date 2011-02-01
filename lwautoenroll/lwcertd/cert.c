@@ -208,7 +208,7 @@ GetTrustedCertificates(
                 fp = fopen(path, "r");
                 if (fp == NULL)
                 {
-                    LW_LOG_ERROR("fopen(%s) failed: %s",
+                    LW_RTL_LOG_ERROR("fopen(%s) failed: %s",
                             path, strerror(errno));
                     continue;
                 }
@@ -264,7 +264,7 @@ GetTrustedCertificates(
                 fp = fopen(path, "w");
                 if (fp == NULL)
                 {
-                    LW_LOG_ERROR("Cannot create %s", path);
+                    LW_RTL_LOG_ERROR("Cannot create %s", path);
                 }
                 else
                 {
@@ -281,7 +281,7 @@ GetTrustedCertificates(
                          * Write failed - don't leave a
                          * bogus file around.
                          */
-                        LW_LOG_ERROR(
+                        LW_RTL_LOG_ERROR(
                             "PEM_write_X509 Write failed to %s",
                             path);
                         unlink(path);
@@ -318,14 +318,14 @@ GetTrustedCertificates(
                         (const char *) pCertFile->pKey)
                     >= sizeof(path))
                 {
-                    LW_LOG_ERROR(
+                    LW_RTL_LOG_ERROR(
                         "path %s/%s too long",
                         TRUSTED_CERT_DIR,
                         (const char *) pCertFile->pKey);
                 }
                 else if (unlink(path) == -1)
                 {
-                    LW_LOG_ERROR(
+                    LW_RTL_LOG_ERROR(
                         "Could not unlink %s: %s",
                         path,
                         strerror(errno));

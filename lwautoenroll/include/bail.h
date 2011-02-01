@@ -7,8 +7,7 @@
 #include <lw/attrs.h>
 #include <lw/types.h>
 
-#include <lwdef.h>
-#include <lwlogging.h>
+#include <lw/rtllog.h>
 
 #include <errno.h>
 #include <string.h>
@@ -21,7 +20,7 @@
 
 #define BAIL(_format, ...) \
     do { \
-        LW_LOG_DEBUG("[%s() %s:%d]" _format, __FUNCTION__, \
+        LW_RTL_LOG_DEBUG("[%s() %s:%d]" _format, __FUNCTION__, \
             __FILE__, __LINE__ , ## __VA_ARGS__); \
         goto cleanup; \
     } while (0)
@@ -31,8 +30,8 @@
         PCSTR _desc = LwWin32ExtErrorToDescription(_error); \
         error = _error; \
         BAIL(" Error code: %d (%s%s%s)" _BAIL_FORMAT_STRING(__VA_ARGS__), \
-            _error, LW_SAFE_LOG_STRING(LwWin32ExtErrorToName(_error)), \
-            (_desc && *_desc != '\0') ? "/" : "", LW_SAFE_LOG_STRING(_desc) , \
+            _error, LW_RTL_LOG_SAFE_STRING(LwWin32ExtErrorToName(_error)), \
+            (_desc && *_desc != '\0') ? "/" : "", LW_RTL_LOG_SAFE_STRING(_desc) , \
             _BAIL_FORMAT_ARGS(__VA_ARGS__)); \
     } while(0)
 

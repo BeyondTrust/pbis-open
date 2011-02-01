@@ -57,8 +57,7 @@
 
 #include <lwmem.h>
 #include <lwstr.h>
-#include <lwlogging.h>
-#include <lwdef.h>
+#include <lw/rtllog.h>
 #include <lwtime.h>
 #include <lwsecurityidentifier.h>
 
@@ -69,8 +68,7 @@
 
 #define BAIL_ON_LSA_ERROR(error)                                      \
     if (error) {                                                      \
-        LW_LOG_DEBUG("Error in %s at %s:%d. Error code [%d]",          \
-                      __FUNCTION__, __FILE__, __LINE__, error);       \
+        LW_RTL_LOG_DEBUG("Error code %d", error); \
         goto cleanup;                                                     \
     }
 
@@ -378,7 +376,7 @@ SetPassword(
                     sizeof(DWORD));
     BAIL_ON_LSA_ERROR(error);
 
-    LW_LOG_INFO("Wrote machine password for domain %s in secrets.tdb",
+    LW_RTL_LOG_INFO("Wrote machine password for domain %s in secrets.tdb",
             pPasswordInfo->Account.NetbiosDomainName);
 
 cleanup:
@@ -434,7 +432,7 @@ DeletePassword(
                     pAccountInfo->NetbiosDomainName);
     BAIL_ON_LSA_ERROR(error);
 
-    LW_LOG_INFO("Deleted machine password for domain %s in secrets.tdb", pAccountInfo->NetbiosDomainName);
+    LW_RTL_LOG_INFO("Deleted machine password for domain %s in secrets.tdb", pAccountInfo->NetbiosDomainName);
 
 cleanup:
     return error;

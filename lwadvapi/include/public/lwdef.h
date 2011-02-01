@@ -77,25 +77,4 @@
 #define LW_SAFE_LOG_STRING(x) \
     ( (x) ? (x) : "<null>" )
 
-#define LW_LOG_ALWAYS(szFmt, ...) \
-    LwLogMessage(LW_LOG_LEVEL_ALWAYS, szFmt, ## __VA_ARGS__)
-
-#define LW_LOG_ERROR(szFmt, ...) \
-    LwLogMessage(LW_LOG_LEVEL_ERROR, szFmt, ## __VA_ARGS__)
-
-#define LW_LOG_WARNING(szFmt, ...) \
-    LwLogMessage(LW_LOG_LEVEL_WARNING, szFmt, ## __VA_ARGS__)
-
-#define LW_LOG_INFO(szFmt, ...) \
-    LwLogMessage(LW_LOG_LEVEL_INFO, szFmt, ## __VA_ARGS__)
-
-#define LW_LOG_VERBOSE(szFmt, ...) \
-    LwLogMessage(LW_LOG_LEVEL_VERBOSE, szFmt, ## __VA_ARGS__)
-
-#define LW_LOG_DEBUG(szFmt, ...) \
-    LwLogMessage(LW_LOG_LEVEL_DEBUG, szFmt, ## __VA_ARGS__)
-
-#define LW_LOG_TRACE(szFmt, ...) \
-    LwLogMessage(LW_LOG_LEVEL_TRACE, szFmt, ## __VA_ARGS__)
-
 #endif /* __LWDEF_H__ */

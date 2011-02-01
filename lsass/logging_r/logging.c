@@ -51,22 +51,6 @@
 
 static
 VOID
-LsaLwLogMessage(
-    LwLogLevel level,
-    PVOID pUserData,
-    PCSTR pszMessage
-    )
-{
-    LSA_LOCK_LOGGER;
-    if (gpfnLogger)
-    {
-        LW_RTL_LOG_AT_LEVEL(level, "%s", pszMessage);
-    }
-    LSA_UNLOCK_LOGGER;
-}
-
-static
-VOID
 LsaRtlLogCallback(
     IN OPTIONAL LW_PVOID Context,
     IN LW_RTL_LOG_LEVEL Level,
@@ -150,8 +134,6 @@ LsaInitLogging_r(
                     logTarget,
                     maxAllowedLogLevel,
                     pszPath);
-
-    LwSetLogFunction(LW_LOG_LEVEL_DEBUG, LsaLwLogMessage, NULL);
 
     LwRtlLogSetCallback(LsaRtlLogCallback, NULL);
     LwRtlLogSetLevel(maxAllowedLogLevel);

@@ -344,18 +344,18 @@ cbKrb5Prompter(
 
         if (num_prompts != 1)
         {
-                LW_LOG_ERROR("cbKrb5Prompter: num_prompts invalid (%d != 1)",
+                LW_RTL_LOG_ERROR("cbKrb5Prompter: num_prompts invalid (%d != 1)",
                         num_prompts);
                 ret = KRB5KRB_ERR_GENERIC;
                 goto error;
         }
 
-        LW_LOG_ERROR("cbKrb5Prompter(%s, %s): %s", name, banner,
+        LW_RTL_LOG_ERROR("cbKrb5Prompter(%s, %s): %s", name, banner,
                 prompts[0].prompt);
 
         if (!strncmp(prompts[0].prompt, "Password for ", 13))
         {
-                LW_LOG_DEBUG("cbKrb5Prompter: prompted for password rather than PIN");
+                LW_RTL_LOG_DEBUG("cbKrb5Prompter: prompted for password rather than PIN");
                 goto error;
         }
 
@@ -366,19 +366,19 @@ cbKrb5Prompter(
                  * means the preauth attempt failed (bad PIN, bad
                  * card, etc).
                  */
-                LW_LOG_DEBUG("cbKrb5Prompter: no saved PIN");
+                LW_RTL_LOG_DEBUG("cbKrb5Prompter: no saved PIN");
                 goto error;
         }
 
         cb = strlen(*ppszPIN);
         if (cb > prompts[0].reply->length)
         {
-                LW_LOG_ERROR("cbKrb5Prompter: No room for PIN in reply buffer (%ld < %ld)",
+                LW_RTL_LOG_ERROR("cbKrb5Prompter: No room for PIN in reply buffer (%ld < %ld)",
                         (long) prompts[0].reply->length, (long) cb);
                 goto error;
         }
 
-        LW_LOG_DEBUG("cbKrb5Prompter: returning PIN");
+        LW_RTL_LOG_DEBUG("cbKrb5Prompter: returning PIN");
         memcpy(prompts[0].reply->data, *ppszPIN, cb+1);
         prompts[0].reply->length = cb;
         *ppszPIN = NULL;

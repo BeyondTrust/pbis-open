@@ -58,7 +58,6 @@
 #include "lwstr.h"
 #include "lwerror.h"
 #include "krb5error-table.h"
-#include "lwlogging.h"
 #include "bail.h"
 
 #define LW_PRINTF_STRING(x) ((x) ? (x) : "<null>")

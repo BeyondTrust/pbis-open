@@ -8,7 +8,7 @@
 
 #include <lw/attrs.h>
 #include <lw/types.h>
-#include <lwlogging.h>
+#include <lw/rtllog.h>
 
 extern struct poptOption LwAutoenrollLogOptions[];
 
@@ -18,8 +18,8 @@ DWORD LwAutoenrollLogInit(void);
 DWORD LwAutoenrollLogToSyslog(LW_BOOL force);
 DWORD LwAutoenrollLogToFile(PCSTR path, LW_BOOL force);
 
-LwLogLevel LwAutoenrollLogGetLevel(void);
-DWORD LwAutoenrollLogSetLevel(LwLogLevel level, LW_BOOL force);
+LW_RTL_LOG_LEVEL LwAutoenrollLogGetLevel(void);
+DWORD LwAutoenrollLogSetLevel(LW_RTL_LOG_LEVEL level, LW_BOOL force);
 DWORD LwAutoenrollLogSetLevelFromString(PCSTR level, LW_BOOL force);
 
 LW_END_EXTERN_C
