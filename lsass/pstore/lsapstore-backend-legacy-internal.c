@@ -680,8 +680,9 @@ LwpsLegacyGetDefaultJoinedDomain(
     if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
         // Treat as no default domain set
-        dwError = 0;
         assert(!pszDomainName);
+        dwError = 0;
+        GOTO_CLEANUP_EE(EE);
     }
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
