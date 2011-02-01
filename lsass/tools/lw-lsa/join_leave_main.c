@@ -28,7 +28,30 @@
  * license@likewisesoftware.com
  */
 
-#include "includes.h"
+#include <lw/rtlstring.h>
+#include <lsa/ad.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/utsname.h>
+
+#define BAIL_ON_DJ_ERROR(err) \
+    do { \
+        if ((err) != STATUS_SUCCESS) { \
+            goto error; \
+        } \
+    } while (0);
+
+#define LWDJ_SAFE_FREE_STRING(str) \
+        do {                         \
+           if (str) {                \
+              LwRtlCStringFree(&str); \
+              (str) = NULL;          \
+           }                         \
+        } while(0);
+
 
 typedef enum DJ_ACTIONS
 {
@@ -177,46 +200,33 @@ error:
     goto cleanup;
 }
 
-
 void
 LwDjUsage(
-    PSTR pszProgName,
-    PSTR pszMessage)
+    PSTR pszMessage
+    )
 {
     if (pszMessage)
     {
         fprintf(stderr, "       ERROR: %s\n", pszMessage);
     }
-    fprintf(stderr, "Usage: %s join [--ou OU] DOMAIN User [passwd] |\n"
-            "       %s leave User [passwd]\n",
-            pszProgName, pszProgName);
+    fprintf(stderr,
+            "Usage: join [--ou OU] DOMAIN User [passwd] |\n"
+            "       leave User [passwd]\n");
     exit(1);
 }
 
-
 DWORD
-LwDjParseArgs(int argc, char *argv[], BOOLEAN bIsRoot, PLwDjArgs pDjArgs)
+LwDjParseArgs(int argc, char *argv[], PLwDjArgs pDjArgs)
 {
     DWORD dwError = 0;
-    DWORD dwArgIndx = 1;
-    PSTR pszArgv0 = NULL;
+    DWORD dwArgIndx = 0;
     PSTR pszPwdPrompt = NULL;
     int i = 0;
     struct utsname utsbuf;
 
-    pszArgv0 = strrchr(argv[0], '/');
-    if (pszArgv0)
+    if (argc < 1)
     {
-        pszArgv0 = strdup(pszArgv0 + 1);
-    }
-    else
-    {
-        pszArgv0 = strdup(argv[0]);
-    }
-
-    if (argc < 2)
-    {
-        LwDjUsage(pszArgv0, NULL);
+        LwDjUsage(NULL);
     }
 
     /*
@@ -230,17 +240,18 @@ LwDjParseArgs(int argc, char *argv[], BOOLEAN bIsRoot, PLwDjArgs pDjArgs)
     {
         pDjArgs->eAction = DJ_LEAVE;
     }
-    else if (dwArgIndx<argc && 
-             (!strcasecmp(argv[dwArgIndx], "--help") ||
-              !strcasecmp(argv[dwArgIndx], "-h")))
-    {
-        LwDjUsage(pszArgv0, NULL);
-    }
     else
     {
-        LwDjUsage(pszArgv0, "Action must be 'join' or 'leave'");
+        LwDjUsage("Action must be 'join' or 'leave'");
     }
     dwArgIndx++;
+
+    if (dwArgIndx<argc && 
+        (!strcasecmp(argv[dwArgIndx], "--help") ||
+         !strcasecmp(argv[dwArgIndx], "-h")))
+    {
+        LwDjUsage(NULL);
+    }
                       
     if (pDjArgs->eAction == DJ_JOIN)
     {
@@ -253,7 +264,7 @@ LwDjParseArgs(int argc, char *argv[], BOOLEAN bIsRoot, PLwDjArgs pDjArgs)
             }
             else
             {
-                LwDjUsage(pszArgv0, "--ou requires an argument");
+                LwDjUsage("--ou requires an argument");
             }
         }
 
@@ -281,8 +292,7 @@ LwDjParseArgs(int argc, char *argv[], BOOLEAN bIsRoot, PLwDjArgs pDjArgs)
         }
         else
         {
-            LwDjUsage(pszArgv0,
-                      "Name of Windows Domain to join must be specified");
+            LwDjUsage("Name of Windows Domain to join must be specified");
         }
     }
     else
@@ -305,8 +315,7 @@ LwDjParseArgs(int argc, char *argv[], BOOLEAN bIsRoot, PLwDjArgs pDjArgs)
     }
     else
     {
-        LwDjUsage(pszArgv0,
-                  "Domain administrator username must be specified");
+        LwDjUsage("Domain administrator username must be specified");
     }
 
     /*
@@ -320,7 +329,7 @@ LwDjParseArgs(int argc, char *argv[], BOOLEAN bIsRoot, PLwDjArgs pDjArgs)
                       argv[dwArgIndx++]);
         BAIL_ON_DJ_ERROR(dwError);
     }
-    else if (bIsRoot)
+    else
     {
         dwError = LwRtlCStringAllocatePrintf(
                       &pszPwdPrompt,
@@ -357,27 +366,16 @@ error:
     goto cleanup;
 }
 
-
-int main(int argc, char *argv[])
+int
+JoinLeaveMain(int argc, char** argv)
 {
     DWORD dwError = 0;
     PSTR pszCurrentDomain = NULL;
     LwDjArgs djArgs = {0};
     int rsts = 0;
-    BOOLEAN bIsRoot = FALSE;
 
-    if (getuid() == 0)
-    {
-        bIsRoot = TRUE;
-    }
-    dwError = LwDjParseArgs(argc, argv, bIsRoot, &djArgs);
+    dwError = LwDjParseArgs(argc, argv, &djArgs);
     BAIL_ON_DJ_ERROR(dwError);
-
-    if (!bIsRoot)
-    {
-        fprintf(stderr, "%s: Must be run as root\n", argv[0]);
-        return 1;
-    }
 
     switch (djArgs.eAction)
     {

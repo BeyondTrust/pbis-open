@@ -68,6 +68,7 @@ lw_lsa_SOURCES = \
 	enum_objects.c \
 	enum_members.c \
 	query_member_of.c \
+        join_leave_main.c \
 	common.c \
 	main.c
 

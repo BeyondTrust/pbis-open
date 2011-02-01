@@ -201,3 +201,9 @@ QueryMemberOfMain(
     int argc,
     char** ppszArgv
     );
+
+int
+JoinLeaveMain(
+    int argc,
+    char** argv
+    );

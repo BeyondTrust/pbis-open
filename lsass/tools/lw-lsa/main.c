@@ -47,6 +47,8 @@ static main_entry entry_list[] =
     {"enum-objects", EnumObjectsMain},
     {"enum-members", EnumMembersMain},
     {"query-member-of", QueryMemberOfMain},
+    {"join", JoinLeaveMain},
+    {"leave", JoinLeaveMain},
     {NULL, NULL}
 };
 
