@@ -47,6 +47,8 @@
 #include <lw/types.h>
 #include <lw/attrs.h>
 
+LW_BEGIN_EXTERN_C
+
 //
 // The component can optionally define LW_RTL_LOG_COMPONENT to the component
 // name that it wants to log before including this header.
@@ -209,5 +211,7 @@ typedef struct _LW_RTL_LOG_CONTROL {
 } LW_RTL_LOG_CONTROL, *PLW_RTL_LOG_CONTROL;
 
 extern LW_RTL_LOG_CONTROL _LwRtlLogControl;
+
+LW_END_EXTERN_C
 
 #endif /* __RTL_LOG_H__ */
