@@ -85,8 +85,8 @@ LoadThread(
     {
         pFile = &pFiles[ulFile];
 
-        status = LwRtlWC16StringAllocatePrintfW(
-            &pFile->Filename.FileName,
+        status = LwRtlUnicodeStringAllocatePrintfW(
+            &pFile->Filename.Name,
             L"/rdr/%s@%u/%s/test-load-%s-%u.txt",
             gState.pszServer,
             pThread->ulNumber * gState.ulThreadCount + ulFile,

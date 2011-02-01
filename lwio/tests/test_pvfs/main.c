@@ -209,7 +209,7 @@ CopyFileToPvfs(
     pszSrcPath = argv[0];
     pszDstPath = argv[1];
 
-    ntError = RtlWC16StringAllocateFromCString(&DstFilename.FileName, pszDstPath);
+    ntError = RtlUnicodeStringAllocateFromCString(&DstFilename.Name, pszDstPath);
     BAIL_ON_NT_STATUS(ntError);
 
     /* Open the remote Destination file */
@@ -272,6 +272,8 @@ CopyFileToPvfs(
     BAIL_ON_NT_STATUS(ntError);
 
 cleanup:
+    RTL_UNICODE_STRING_FREE(&DstFilename.Name);
+
     return ntError;
 
 error:
@@ -314,7 +316,7 @@ CopyFileFromPvfs(
     pszSrcPath = argv[0];
     pszDstPath = argv[1];
 
-    ntError = RtlWC16StringAllocateFromCString(&SrcFilename.FileName, pszSrcPath);
+    ntError = RtlUnicodeStringAllocateFromCString(&SrcFilename.Name, pszSrcPath);
     BAIL_ON_NT_STATUS(ntError);
 
     /* Open the remote source file */
@@ -378,6 +380,8 @@ CopyFileFromPvfs(
     BAIL_ON_NT_STATUS(ntError);
 
 cleanup:
+    RTL_UNICODE_STRING_FREE(&SrcFilename.Name);
+
     return ntError;
 
 error:
@@ -408,7 +412,7 @@ CatFileFromPvfs(
     int fd = -1;
     BYTE pBuffer[1024];
 
-    ntError = RtlWC16StringAllocateFromCString(&SrcFilename.FileName, pszFilename);
+    ntError = RtlUnicodeStringAllocateFromCString(&SrcFilename.Name, pszFilename);
     BAIL_ON_NT_STATUS(ntError);
 
     /* Open the remote source file */
@@ -464,6 +468,8 @@ CatFileFromPvfs(
     BAIL_ON_NT_STATUS(ntError);
 
 cleanup:
+    RTL_UNICODE_STRING_FREE(&SrcFilename.Name);
+
     return ntError;
 
 error:
@@ -494,7 +500,7 @@ StatRemoteFile(
     IO_FILE_HANDLE hFile = NULL;
     IO_STATUS_BLOCK StatusBlock = {0};
 
-    ntError = RtlWC16StringAllocateFromCString(&Filename.FileName,
+    ntError = RtlUnicodeStringAllocateFromCString(&Filename.Name,
                                                pszFilename);
     BAIL_ON_NT_STATUS(ntError);
 
@@ -560,9 +566,9 @@ StatRemoteFile(
 
     printf("\n");
 
-
-
 cleanup:
+    RTL_UNICODE_STRING_FREE(&Filename.Name);
+
     return ntError;
 
 error:
@@ -629,7 +635,7 @@ ListDirectory(
     DWORD dwBufLen = 0;
     IO_MATCH_FILE_SPEC FileSpec = { 0 };
 
-    ntError = RtlWC16StringAllocateFromCString(&Dirname.FileName,
+    ntError = RtlUnicodeStringAllocateFromCString(&Dirname.Name,
                                                pszDirectory);
     BAIL_ON_NT_STATUS(ntError);
 
@@ -695,9 +701,7 @@ ListDirectory(
     BAIL_ON_NT_STATUS(ntError);
 
 cleanup:
-    if (Dirname.FileName) {
-        RtlMemoryFree(Dirname.FileName);
-    }
+    RTL_UNICODE_STRING_FREE(&Dirname.Name);
 
     return ntError;
 
@@ -759,7 +763,7 @@ SetEndOfFile(
     pszFilename = argv[0];
     EndOfFile   = strtol(argv[1], &p, 10);    
 
-    ntError = RtlWC16StringAllocateFromCString(&Filename.FileName,
+    ntError = RtlUnicodeStringAllocateFromCString(&Filename.Name,
                                                pszFilename);
     BAIL_ON_NT_STATUS(ntError);
 
@@ -857,7 +861,7 @@ LockTest(
     IO_FILE_HANDLE hFile = NULL;
     IO_STATUS_BLOCK StatusBlock = {0};
 
-    ntError = RtlWC16StringAllocateFromCString(&Filename.FileName,
+    ntError = RtlUnicodeStringAllocateFromCString(&Filename.Name,
                                                pszPath);
     BAIL_ON_NT_STATUS(ntError);
 
@@ -936,7 +940,7 @@ RequestOplock(
 
     pszFilename = argv[0];
 
-    ntError = RtlWC16StringAllocateFromCString(&Filename.FileName, pszFilename);
+    ntError = RtlUnicodeStringAllocateFromCString(&Filename.Name, pszFilename);
     BAIL_ON_NT_STATUS(ntError);
 
     /* Open the remote source file */
@@ -995,7 +999,7 @@ RequestOplock(
     printf("awake\n");
 
 cleanup:
-    RtlWC16StringFree(&Filename.FileName);
+    RTL_UNICODE_STRING_FREE(&Filename.Name);
 
     if (hFile) {
         NtCloseFile(hFile);
@@ -1049,8 +1053,8 @@ ListOpenFiles(
         }
     }
 
-    ntError = LwRtlWC16StringAllocateFromCString(
-                  &FileName.FileName,
+    ntError = LwRtlUnicodeStringAllocateFromCString(
+                  &FileName.Name,
                   "\\pvfs");
     BAIL_ON_NT_STATUS(ntError);
 
@@ -1121,6 +1125,7 @@ cleanup:
         hDevice = (IO_FILE_HANDLE)NULL;
     }
 
+    LW_RTL_UNICODE_STRING_FREE(&FileName.Name);
     LW_RTL_FREE(&pOutputBuffer);
 
     return ntError;
@@ -1247,7 +1252,7 @@ TestReadDirectoryChange(
     PFILE_NOTIFY_INFORMATION pChange = NULL;
     PSTR pszNotifyFilename = NULL;
 
-    ntError = RtlWC16StringAllocateFromCString(&SrcFilename.FileName, pszFilename);
+    ntError = LwRtlUnicodeStringAllocateFromCString(&SrcFilename.Name, pszFilename);
     BAIL_ON_NT_STATUS(ntError);
 
     /* Open the remote source file */
@@ -1292,6 +1297,7 @@ TestReadDirectoryChange(
     BAIL_ON_NT_STATUS(ntError);
 
 cleanup:
+    LW_RTL_UNICODE_STRING_FREE(&SrcFilename.Name);
     LwRtlCStringFree(&pszNotifyFilename);
 
     return ntError;
@@ -1321,10 +1327,9 @@ PrintMaxOpenFiles(
     IO_FILE_NAME SrcFilename = {0};
     int i = 0;
     NTSTATUS savedStatus = STATUS_SUCCESS;
-    
 
-    ntError = LwRtlWC16StringAllocateFromCString(
-                  &SrcFilename.FileName, 
+    ntError = LwRtlUnicodeStringAllocateFromCString(
+                  &SrcFilename.Name, 
                   "/pvfs/tmp/max_open_file_test");
     BAIL_ON_NT_STATUS(ntError);
 
@@ -1360,11 +1365,11 @@ PrintMaxOpenFiles(
         NtCloseFile(hFileArray[i]);
     }
 
-    RtlWC16StringFree(&SrcFilename.FileName);
-
     ntError = savedStatus;
 
 cleanup:
+    LW_RTL_UNICODE_STRING_FREE(&SrcFilename.Name);
+
     return ntError;
 
 error:
@@ -1387,8 +1392,7 @@ GetFileSecurity(
                                        DACL_SECURITY_INFORMATION |
                                        SACL_SECURITY_INFORMATION);
 
-
-    ntError = RtlWC16StringAllocateFromCString(&Filename.FileName, pszFilename);
+    ntError = RtlUnicodeStringAllocateFromCString(&Filename.Name, pszFilename);
     BAIL_ON_NT_STATUS(ntError);
 
     /* Open the remote source file */
@@ -1435,7 +1439,7 @@ GetFileSecurity(
 
 cleanup:
     LwRtlCStringFree(&pszStringSecurityDescriptor);
-    RtlWC16StringFree(&Filename.FileName);
+    RTL_UNICODE_STRING_FREE(&Filename.Name);
 
     return ntError;
 
@@ -1481,7 +1485,7 @@ SetFileSecurity(
     pszSddl = argv[0];
     pszFilePath = argv[1];
 
-    ntError = RtlWC16StringAllocateFromCString(&Filename.FileName, pszFilePath);
+    ntError = RtlUnicodeStringAllocateFromCString(&Filename.Name, pszFilePath);
     BAIL_ON_NT_STATUS(ntError);
 
     /* Open the remote Destination file */
@@ -1546,7 +1550,7 @@ SetFileSecurity(
     BAIL_ON_NT_STATUS(ntError);
 
 cleanup:
-    RtlWC16StringFree(&Filename.FileName);
+    RTL_UNICODE_STRING_FREE(&Filename.Name);
     RTL_FREE(&pSecurityDescriptor);
 
     return ntError;
