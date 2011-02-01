@@ -387,3 +387,55 @@ cleanup:
 
     return status;
 }
+
+LW_NTSTATUS
+LwRtlUnicodeStringAllocatePrintfWV(
+    LW_OUT LW_PUNICODE_STRING pString,
+    LW_IN const wchar_t* pszFormat,
+    LW_IN va_list Args
+    )
+{
+    NTSTATUS status = 0;
+    PWSTR pszOutputString = NULL;
+    UNICODE_STRING newString = { 0 };
+
+    status = LwRtlWC16StringAllocatePrintfWV(
+                    &pszOutputString,
+                    pszFormat,
+                    Args);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = LwRtlUnicodeStringInitEx(&newString, pszOutputString);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    pszOutputString = NULL;
+
+cleanup:
+    if (status)
+    {
+        RTL_UNICODE_STRING_FREE(&newString);
+    }
+
+    RTL_FREE(&pszOutputString);
+
+    *pString = newString;
+
+    return status;
+}
+
+LW_NTSTATUS
+LwRtlUnicodeStringAllocatePrintfW(
+    LW_OUT LW_PUNICODE_STRING pString,
+    LW_IN const wchar_t* pszFormat,
+    LW_IN ...
+    )
+{
+    NTSTATUS status = 0;
+    va_list args;
+
+    va_start(args, pszFormat);
+    status = LwRtlUnicodeStringAllocatePrintfWV(pString, pszFormat, args);
+    va_end(args);
+
+    return status;
+}

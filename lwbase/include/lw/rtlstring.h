@@ -233,6 +233,20 @@ LwRtlUnicodeStringParseULONG(
     LW_OUT LW_PUNICODE_STRING pRemainingString
     );
 
+LW_NTSTATUS
+LwRtlUnicodeStringAllocatePrintfWV(
+    LW_OUT LW_PUNICODE_STRING pString,
+    LW_IN const wchar_t* pszFormat,
+    LW_IN va_list Args
+    );
+
+LW_NTSTATUS
+LwRtlUnicodeStringAllocatePrintfW(
+    LW_OUT LW_PUNICODE_STRING pString,
+    LW_IN const wchar_t* pszFormat,
+    LW_IN ...
+    );
+
 // ANSI strings
 
 // TODO: Deprecate in favor of Ex version
