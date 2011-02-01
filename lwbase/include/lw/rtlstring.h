@@ -300,6 +300,24 @@ LwRtlAnsiStringParseULONG(
     LW_OUT LW_PANSI_STRING pRemainingString
     );
 
+// Free helpers
+
+#define LW_RTL_UNICODE_STRING_FREE(String) \
+    do { \
+        if ((String)->Buffer) \
+        { \
+            LwRtlUnicodeStringFree(String); \
+        } \
+    } while (0)
+
+#define LW_RTL_ANSI_STRING_FREE(String) \
+    do { \
+        if ((String)->Buffer) \
+        { \
+            LwRtlAnsiStringFree(String); \
+        } \
+    } while (0)
+
 #ifndef LW_STRICT_NAMESPACE
 
 #define RtlCStringNumChars(String) \
@@ -373,6 +391,11 @@ LwRtlAnsiStringParseULONG(
     LwRtlAnsiStringIsPrefix(Prefix, String, IsCaseSensitive)
 #define RtlAnsiStringParseULONG(Result, String, RemainingString) \
     LwRtlAnsiStringParseULONG(Result, String, RemainingString)
+
+#define RTL_UNICODE_STRING_FREE(String) \
+    LW_RTL_UNICODE_STRING_FREE(String)
+#define RTL_ANSI_STRING_FREE(String) \
+    LW_RTL_ANSI_STRING_FREE(String)
 
 #endif /* LW_STRICT_NAMESPAE */
 
