@@ -516,6 +516,11 @@ rpc__smb_socket_destroy(
             free(sock->accept_backlog.queue);
         }
 
+        if (sock->filename.FileName)
+        {
+            RtlMemoryFree(sock->filename.FileName);
+        }
+
         if (sock->close_context)
         {
             sock->close_context->io_async.Callback = rpc__smb_close_file_complete;
@@ -708,7 +713,6 @@ rpc__smb_socket_connect(
     PSTR smbpath = NULL;
     PBYTE sesskey = NULL;
     USHORT sesskeylen = 0;
-    IO_FILE_NAME filename = { 0 };
     IO_STATUS_BLOCK io_status = { 0 };
     static const ACCESS_MASK pipeAccess = 
         READ_CONTROL | FILE_WRITE_ATTRIBUTES | FILE_READ_ATTRIBUTES |
@@ -749,7 +753,7 @@ rpc__smb_socket_connect(
     
     serr = NtStatusToErrno(
         LwRtlWC16StringAllocateFromCString(
-            &filename.FileName,
+            &smb->filename.FileName,
             smbpath));
     if (serr)
     {
@@ -761,7 +765,7 @@ rpc__smb_socket_connect(
             &smb->np,                                /* Created handle */
             NULL,                                    /* Async control block */
             &io_status,                              /* Status block */
-            &filename,                               /* Filename */
+            &smb->filename,                          /* Filename */
             NULL,                                    /* Security descriptor */
             NULL,                                    /* Security QOS */
             pipeAccess,                              /* Access mode */
@@ -809,11 +813,6 @@ done:
     if (sesskey)
     {
         RtlMemoryFree(sesskey);
-    }
-
-    if (filename.FileName)
-    {
-        RtlMemoryFree(filename.FileName);
     }
 
     if (smbpath)
