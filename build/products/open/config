@@ -15,9 +15,9 @@ PACKAGES="open"
 case "${BUILD_OS_TYPE}" in
     aix)
         PACKAGES="open open-upgrade"
-        INSTALL_UPGRADE_PACKAGE="LikewiseOpen.Upgrade"
+        INSTALL_UPGRADE_PACKAGE="likewise.open.upgrade"
         INSTALL_OBSOLETE_PACKAGES="Likewise.Base Likewise.Domainjoin Likewise.Eventlog Likewise.Krb5 Likewise.Lac Likewise.Libxml2 Likewise.Lsass Likewise.Lwadutil Likewise.Lwconfig Likewise.Lwio Likewise.Lwmgmt Likewise.Lwnetapi Likewise.Lwreg Likewise.Lwtools Likewise.Lwupgrade Likewise.ModAuthKerb Likewise.Netlogon Likewise.Netlogon Likewise.Openldap Likewise.Passwd Likewise.Pstore Likewise.Reskit Likewise.Rpc Likewise.Sqlite Likewise.Srvsvc LikewiseOpen.Upgrade LikewiseOpen.LikewiseOpen"
-        INSTALL_BASE_PACKAGES="LikewiseOpen.Likewise"
+        INSTALL_BASE_PACKAGES="likewise.open"
         INSTALL_OPTIONAL_PACKAGES=""
         ;;
     darwin)
