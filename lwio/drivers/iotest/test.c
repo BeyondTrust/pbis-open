@@ -55,16 +55,16 @@ ItTestStartup(
     IO_FILE_HANDLE fileHandle = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     IO_FILE_NAME fileName = { 0 };
-    PWSTR filePath = NULL;
+    UNICODE_STRING filePath = { 0 };
     PIO_CREATE_SECURITY_CONTEXT securityContext = NULL;
 
     status = IoSecurityCreateSecurityContextFromUidGid(&securityContext, 0, 0, NULL);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    status = RtlWC16StringAllocateFromCString(&filePath, pszPath);
+    status = RtlUnicodeStringAllocateFromCString(&filePath, pszPath);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    fileName.FileName = filePath;
+    fileName.Name = filePath;
 
     status = IoCreateFile(&fileHandle,
                           NULL,
@@ -85,7 +85,7 @@ ItTestStartup(
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
 cleanup:
-    RtlWC16StringFree(&filePath);
+    LW_RTL_UNICODE_STRING_FREE(&filePath);
 
     if (fileHandle)
     {
@@ -112,7 +112,7 @@ ItTestSyncCreate(
 
     IO_LOG_ENTER("");
 
-    status = RtlWC16StringAllocateFromCString(&filename.FileName, IOTEST_PATH_ALLOW);
+    status = RtlUnicodeStringAllocateFromCString(&filename.Name, IOTEST_PATH_ALLOW);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IoSecurityCreateSecurityContextFromUidGid(&securityContext, 0, 0, NULL);
@@ -142,10 +142,7 @@ cleanup:
     {
         IoCloseFile(fileHandle);
     }
-    if (filename.FileName)
-    {
-        RTL_FREE(&filename.FileName);
-    }
+    LW_RTL_UNICODE_STRING_FREE(&filename.Name);
     IoSecurityDereferenceSecurityContext(&securityContext);
 
     IO_LOG_LEAVE_STATUS_EE(status, EE);
@@ -174,7 +171,7 @@ ItTestAsyncCreate(
     status = LwRtlInitializeEvent(&event);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    status = RtlWC16StringAllocateFromCString(&filename.FileName, IOTEST_PATH_ASYNC);
+    status = RtlUnicodeStringAllocateFromCString(&filename.Name, IOTEST_PATH_ASYNC);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IoSecurityCreateSecurityContextFromUidGid(&securityContext, 0, 0, NULL);
@@ -240,10 +237,7 @@ cleanup:
         NTSTATUS localStatus = IoCloseFile(fileHandle);
         LWIO_ASSERT(!localStatus);
     }
-    if (filename.FileName)
-    {
-        RTL_FREE(&filename.FileName);
-    }
+    LW_RTL_UNICODE_STRING_FREE(&filename.Name);
     IoSecurityDereferenceSecurityContext(&securityContext);
     LwRtlCleanupEvent(&event);
 
@@ -271,7 +265,7 @@ ItTestRundown(
     status = LwRtlInitializeEvent(&event);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    status = RtlWC16StringAllocateFromCString(&filename.FileName, IOTEST_PATH_ALLOW);
+    status = RtlUnicodeStringAllocateFromCString(&filename.Name, IOTEST_PATH_ALLOW);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IoSecurityCreateSecurityContextFromUidGid(&securityContext, 0, 0, NULL);
@@ -334,10 +328,7 @@ cleanup:
         NTSTATUS localStatus = IoCloseFile(fileHandle);
         LWIO_ASSERT(NT_SUCCESS(localStatus));
     }
-    if (filename.FileName)
-    {
-        RTL_FREE(&filename.FileName);
-    }
+    LW_RTL_UNICODE_STRING_FREE(&filename.Name);
     IoSecurityDereferenceSecurityContext(&securityContext);
 
     IO_LOG_LEAVE_STATUS_EE(status, EE);

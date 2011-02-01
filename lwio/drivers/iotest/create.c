@@ -54,10 +54,8 @@ ItCreateInternal(
 {
     NTSTATUS status = STATUS_SUCCESS;
     int EE = 0;
-    UNICODE_STRING path = { 0 };
+    UNICODE_STRING path = pIrp->Args.Create.FileName.Name;
     PIT_CCB pCcb = NULL;
-
-    RtlUnicodeStringInit(&path, pIrp->Args.Create.FileName.FileName);
 
     status = ItpCreateCcb(&pCcb, &path);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -91,13 +89,11 @@ ItDispatchCreate(
 {
     NTSTATUS status = STATUS_NOT_IMPLEMENTED;
     int EE = 0;
-    UNICODE_STRING path = { 0 };
+    UNICODE_STRING path = pIrp->Args.Create.FileName.Name;
     UNICODE_STRING allowPath = { 0 };
     UNICODE_STRING asyncPath = { 0 };
     UNICODE_STRING testSyncPath = { 0 };
     UNICODE_STRING testAsyncPath = { 0 };
-
-    RtlUnicodeStringInit(&path, pIrp->Args.Create.FileName.FileName);
 
     status = RtlUnicodeStringAllocateFromCString(&allowPath, IOTEST_INTERNAL_PATH_ALLOW);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);

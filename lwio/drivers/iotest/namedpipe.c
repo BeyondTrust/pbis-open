@@ -51,7 +51,7 @@ ItDispatchCreateNamedPipe(
 {
     NTSTATUS status = STATUS_NOT_IMPLEMENTED;
     int EE = 0;
-    UNICODE_STRING path = { 0 };
+    UNICODE_STRING path = pIrp->Args.Create.FileName.Name;
     UNICODE_STRING prefixPath = { 0 };
     UNICODE_STRING allowPrefix = { 0 };
     PIT_CCB pCcb = NULL;
@@ -80,8 +80,6 @@ ItDispatchCreateNamedPipe(
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
     }
-
-    RtlUnicodeStringInit(&path, pIrp->Args.Create.FileName.FileName);
 
     status = RtlUnicodeStringAllocateFromCString(&allowPrefix, IOTEST_INTERNAL_PATH_NAMED_PIPE);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
