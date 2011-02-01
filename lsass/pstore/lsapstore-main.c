@@ -215,6 +215,14 @@ LsaPstoreDeletePasswordInfoW(
                         backendState,
                         defaultDnsDomainName,
                         &passwordInfo);
+        if (passwordInfo)
+        {
+            dwError = LsaPstorepCheckPasswordInfoW(passwordInfo);
+            if (dwError)
+            {
+                LSA_PSTORE_FREE_PASSWORD_INFO_W(&passwordInfo);
+            }
+        }
         dwError = 0;
     }
 
