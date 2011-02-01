@@ -86,6 +86,14 @@ LsaPstoreGetPasswordInfoW(
                     &passwordInfo);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
+    dwError = LsaPstorepCheckPasswordInfoW(passwordInfo);
+    if (dwError == ERROR_INVALID_PARAMETER)
+    {
+        LW_RTL_LOG_ERROR("Pstore backend returned invalid information");
+        dwError = ERROR_INVALID_DATA;
+    }
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
 cleanup:
     LSA_PSTOREP_UNLOCK(&isLocked);
 
