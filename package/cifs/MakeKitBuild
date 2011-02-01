@@ -138,6 +138,7 @@ common_files_compat()
     mk_compat_do
         mk_package_files \
             "${MK_LIBDIR}/*${MK_LIB_EXT}" \
+            "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
             "/${MK_LIBDIR##*/}/security/pam_lsass${MK_DLO_EXT}" \
             "/${MK_LIBDIR##*/}/libnss_lsass${MK_DLO_EXT}.*"
 
