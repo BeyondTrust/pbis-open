@@ -1,4 +1,4 @@
-SUBDIRS="include utils ipc logging_r common libshareinfo client server tools fuse etc tests"
+SUBDIRS="include utils ipc logging_r common libshareinfo client server drivers tools fuse etc tests"
 
 configure()
 {
