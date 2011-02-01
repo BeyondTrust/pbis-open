@@ -1282,7 +1282,8 @@ ShowUsage(
 {
     fprintf(stderr, "Usage: %s --help | --check-version | --install | \n",
             pProgramName);
-    fprintf(stderr, "         --uninstall [smbd path]\n");
+    fprintf(stderr, "         --uninstall [smbd path] [--loglevel <error | warning | info |\n");
+    fprintf(stderr, "             verbose | debug>]\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Installs the Likewise-Samba interop libraries into the\n"
             "directories used by Samba, and copies over the machine password\n"
