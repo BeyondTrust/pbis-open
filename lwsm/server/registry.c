@@ -70,7 +70,7 @@ LwSmRegistryReadStringList(
 
 static
 size_t
-LwSmCountSpaces(
+LwSmCountTokens(
     PWSTR pwszString
     );
 
@@ -411,7 +411,7 @@ LwSmRegistryReadStringList(
 
     if (*pwszValuesString)
     {
-        count = LwSmCountSpaces(pwszValuesString) + 1;
+        count = LwSmCountTokens(pwszValuesString);
     }
     else
     {
@@ -430,7 +430,7 @@ LwSmRegistryReadStringList(
         dwError = LwAllocateWc16String(&ppwszValues[i], pwszCursor);
         BAIL_ON_ERROR(dwError);
 
-        pwszCursor = pwszSpace + 1;
+        for (pwszCursor = pwszSpace + 1; *pwszCursor == ' '; pwszCursor++);
     }
 
     *pppwszValues = ppwszValues;
@@ -455,18 +455,27 @@ error:
 
 static
 size_t
-LwSmCountSpaces(
+LwSmCountTokens(
     PWSTR pwszString
     )
 {
     PWSTR pwszCursor = NULL;
     size_t count = 0;
+    BOOLEAN inSpace = TRUE;
 
     for (pwszCursor = pwszString; *pwszCursor; pwszCursor++)
     {
         if (*pwszCursor == (WCHAR) ' ')
         {
-            count++;
+            inSpace = TRUE;
+        }
+        else
+        {
+            if (inSpace)
+            {
+                count++;
+            }
+            inSpace = FALSE;
         }
     }
 
