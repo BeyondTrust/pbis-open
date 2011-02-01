@@ -183,7 +183,7 @@ RegLogCallback(
     PSTR pMessage = NULL;
 
     REG_LOCK_LOGGER;
-    if (gpfnRegLogger && (gRegMaxLogLevel >= (Level)))
+    if (gpfnRegLogger)
     {
         va_start(ap, Format);
         dwError = LwNtStatusToWin32Error(
@@ -191,7 +191,7 @@ RegLogCallback(
         va_end(ap);
         BAIL_ON_REG_ERROR(dwError);
 
-        if (gRegMaxLogLevel >= REG_LOG_LEVEL_DEBUG)
+        if (LwRtlLogGetLevel() >= REG_LOG_LEVEL_DEBUG)
         {
             RegLogMessage(
                 gpfnRegLogger,

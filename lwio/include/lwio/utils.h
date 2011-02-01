@@ -55,7 +55,6 @@
 #define _LWIO_LOG_TIME_STAMP_PREFIX_SIZE 128
 
 extern HANDLE               ghLwioLog;
-extern LWIO_LOG_LEVEL       gLwioMaxLogLevel;
 extern PFN_LWIO_LOG_MESSAGE gpfnLwioLogger;
 extern BOOLEAN              gbLwioLogDoNanoSecondTime;
 extern CHAR                 gszLwioLogTimeStampPrefix[_LWIO_LOG_TIME_STAMP_PREFIX_SIZE];

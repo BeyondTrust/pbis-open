@@ -263,7 +263,6 @@ extern pthread_mutex_t gLogLock;
 #define REG_UNLOCK_LOGGER pthread_mutex_unlock(&gLogLock)
 
 extern HANDLE              ghRegLog;
-extern RegLogLevel         gRegMaxLogLevel;
 extern PFN_REG_LOG_MESSAGE gpfnRegLogger;
 
 #define REG_SAFE_LOG_STRING(x) ( (x) ? (x) : "<null>" )

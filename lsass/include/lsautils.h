@@ -130,7 +130,6 @@ extern pthread_mutex_t gLogLock;
 #define LSA_UNLOCK_LOGGER pthread_mutex_unlock(&gLogLock)
 
 extern HANDLE              ghLog;
-extern LsaLogLevel         gLsaMaxLogLevel;
 extern PFN_LSA_LOG_MESSAGE gpfnLogger;
 
 #define LSA_SAFE_LOG_STRING(x) \

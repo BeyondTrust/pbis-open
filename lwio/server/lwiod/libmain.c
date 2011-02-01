@@ -313,7 +313,7 @@ LwIoLogCallback(
     va_end(ap);
     BAIL_ON_NT_STATUS(status);
 
-    if (gLwioMaxLogLevel >= LWNET_LOG_LEVEL_DEBUG)
+    if (LwRtlLogGetLevel() >= LWIO_LOG_LEVEL_DEBUG)
     {
         LwioLogMessage(
             gpfnLwioLogger,

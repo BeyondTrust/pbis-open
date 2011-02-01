@@ -137,7 +137,7 @@ RegGetFileLogInfo(
     BAIL_ON_REG_ERROR(dwError);
 
     pLogInfo->logTarget = REG_LOG_TARGET_FILE;
-    pLogInfo->maxAllowedLogLevel = gRegMaxLogLevel;
+    pLogInfo->maxAllowedLogLevel = LwRtlLogGetLevel();
 
     dwError = RegCStringDuplicate(
                     &pLogInfo->pszPath,

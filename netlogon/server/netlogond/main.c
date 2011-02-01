@@ -196,7 +196,7 @@ LWNetLogCallback(
     va_end(ap);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    if (gLwnetLogInfo.dwLogLevel >= LWNET_LOG_LEVEL_DEBUG)
+    if (LwRtlLogGetLevel() >= LWNET_LOG_LEVEL_DEBUG)
     {
         lwnet_log_message(
             Level,

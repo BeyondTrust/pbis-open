@@ -110,8 +110,9 @@ LwioInitLogging(
     }
     
     gLWIO_LOG_TARGET = logTarget;
-    gLwioMaxLogLevel = maxAllowedLogLevel;
     ghLwioLog = hLog;
+
+    LwRtlLogSetLevel(maxAllowedLogLevel);
 
 #ifdef LW_SUPPORT_NANOSECOND_TIMESTAMP
 
@@ -201,7 +202,7 @@ LwioLogGetInfo(
             BAIL_ON_LWIO_ERROR(dwError);
             
             pLogInfo->logTarget = gLWIO_LOG_TARGET;
-            pLogInfo->maxAllowedLogLevel = gLwioMaxLogLevel;
+            pLogInfo->maxAllowedLogLevel = LwRtlLogGetLevel();
             
             break;
             
@@ -249,10 +250,7 @@ LwioLogSetInfo(
     // The only information that is allowed
     // to be set after the log is initialized
     // is the log level
-    
-    gLwioMaxLogLevel = pLogInfo->maxAllowedLogLevel;
-    
-    LwRtlLogSetLevel(gLwioMaxLogLevel);
+    LwRtlLogSetLevel(pLogInfo->maxAllowedLogLevel);
     
 cleanup:
 
@@ -311,9 +309,10 @@ LwioSetupLogging(
 	}
 	
 	ghLwioLog = hLog;
-	gLwioMaxLogLevel = maxAllowedLogLevel;
 	gpfnLwioLogger = pfnLogger;
 	
+	LwRtlLogSetLevel(maxAllowedLogLevel);
+
 error:
 
 	return dwError;
@@ -324,9 +323,9 @@ LwioResetLogging(
     VOID
     )
 {
-	gLwioMaxLogLevel = LWIO_LOG_LEVEL_ERROR;
-	gpfnLwioLogger = NULL;
+    gpfnLwioLogger = NULL;
 	ghLwioLog = (HANDLE)NULL;
+	LwRtlLogSetLevel(LWIO_LOG_LEVEL_ERROR);
 }
 
 VOID

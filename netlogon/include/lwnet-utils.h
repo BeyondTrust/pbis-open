@@ -154,7 +154,6 @@ typedef struct _SYSLOGINFO {
 
 typedef struct _LOGINFO {
     pthread_mutex_t lock;
-    DWORD           dwLogLevel;
     DWORD           logTarget;
     LOGFILEINFO     logfile;
     SYSLOGINFO      syslog;

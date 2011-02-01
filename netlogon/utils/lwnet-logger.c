@@ -138,10 +138,9 @@ lwnet_init_logging_to_syslog(
 
     openlog(pszIdentifier, dwOption, dwFacility);
 
-    lwnet_set_syslogmask(dwLogLevel);
-    gLwnetLogInfo.dwLogLevel = dwLogLevel;
-
     gLwnetLogInfo.bLoggingInitiated = 1;
+
+    LwRtlLogSetLevel(dwLogLevel);
 
 error:
     LWNET_UNLOCK_LOGGER(bInLock);
@@ -196,9 +195,8 @@ lwnet_init_logging_to_file(
     }
 
 
-    gLwnetLogInfo.dwLogLevel = dwLogLevel;
-
     gLwnetLogInfo.bLoggingInitiated = 1;
+    LwRtlLogSetLevel(dwLogLevel);
 
 cleanup:
     LWNET_UNLOCK_LOGGER(bInLock);
@@ -375,11 +373,6 @@ lwnet_log_message(
         goto cleanup;
     }
 
-    if (gLwnetLogInfo.dwLogLevel < dwLogLevel)
-    {
-        goto cleanup;
-    }
-
     va_start(argp, pszFormat);
 
     switch (gLwnetLogInfo.logTarget)
@@ -408,18 +401,13 @@ lwnet_set_log_level(
     )
 {
     DWORD dwError = 0;
-    BOOLEAN bInLock = FALSE;
 
     dwError = lwnet_validate_log_level(dwLogLevel);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    LWNET_LOCK_LOGGER(bInLock);
-    gLwnetLogInfo.dwLogLevel = dwLogLevel;
-
     LwRtlLogSetLevel(dwLogLevel);
 
 error:
-    LWNET_UNLOCK_LOGGER(bInLock);
 
     return dwError;
 }
@@ -439,7 +427,7 @@ lwnet_get_log_info(
 
     LWNET_LOCK_LOGGER(bInLock);
 
-    dwLogLevel = gLwnetLogInfo.dwLogLevel;
+    dwLogLevel = LwRtlLogGetLevel();
     dwLogTarget = gLwnetLogInfo.logTarget;
 
     if (LWNET_LOG_TARGET_FILE == dwLogTarget)

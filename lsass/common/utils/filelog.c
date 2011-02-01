@@ -140,7 +140,7 @@ LsaGetFileLogInfo(
     BAIL_ON_LSA_ERROR(dwError);
     
     pLogInfo->logTarget = LSA_LOG_TARGET_FILE;
-    pLogInfo->maxAllowedLogLevel = gLsaMaxLogLevel;
+    pLogInfo->maxAllowedLogLevel = LwRtlLogGetLevel();
     
     dwError = LwAllocateString(
                     pFileLog->pszFilePath,

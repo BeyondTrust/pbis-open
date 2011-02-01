@@ -106,8 +106,8 @@ LsaInitLogging(
     }
 
     gLogTarget = logTarget;
-    gLsaMaxLogLevel = maxAllowedLogLevel;
     ghLog = hLog;
+    LwRtlLogSetLevel(maxAllowedLogLevel);
 
  cleanup:
 
@@ -141,7 +141,7 @@ LsaLogGetInfo(
             BAIL_ON_LSA_ERROR(dwError);
 
             pLogInfo->logTarget = gLogTarget;
-            pLogInfo->maxAllowedLogLevel = gLsaMaxLogLevel;
+            pLogInfo->maxAllowedLogLevel = LwRtlLogGetLevel();
 
             break;
 
@@ -190,7 +190,7 @@ LsaLogSetInfo(
     // to be set after the log is initialized
     // is the log level
 
-    gLsaMaxLogLevel = pLogInfo->maxAllowedLogLevel;
+    LwRtlLogSetLevel(pLogInfo->maxAllowedLogLevel);
 
 cleanup:
 
@@ -249,8 +249,8 @@ LsaSetupLogging(
 	}
 
 	ghLog = hLog;
-	gLsaMaxLogLevel = maxAllowedLogLevel;
 	gpfnLogger = pfnLogger;
+	LwRtlLogSetLevel(maxAllowedLogLevel);
 
 error:
 
@@ -262,9 +262,9 @@ LsaResetLogging(
     VOID
     )
 {
-	gLsaMaxLogLevel = LSA_LOG_LEVEL_ERROR;
-	gpfnLogger = NULL;
+    gpfnLogger = NULL;
 	ghLog = (HANDLE)NULL;
+	LwRtlLogSetLevel(LSA_LOG_LEVEL_ERROR);
 }
 
 VOID

@@ -50,7 +50,6 @@
 LOGINFO gLwnetLogInfo =
 {
     PTHREAD_MUTEX_INITIALIZER,
-    LWNET_LOG_LEVEL_ERROR,
     LWNET_LOG_TARGET_DISABLED,
     {"", NULL},
     {"netlogond", LOG_PID, LOG_DAEMON},

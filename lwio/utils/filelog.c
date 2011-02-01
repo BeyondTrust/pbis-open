@@ -140,7 +140,7 @@ LwioGetFileLogInfo(
     BAIL_ON_LWIO_ERROR(dwError);
     
     pLogInfo->logTarget = LWIO_LOG_TARGET_FILE;
-    pLogInfo->maxAllowedLogLevel = gLwioMaxLogLevel;
+    pLogInfo->maxAllowedLogLevel = LwRtlLogGetLevel();
     
     dwError = SMBAllocateString(
                     pFileLog->pszFilePath,

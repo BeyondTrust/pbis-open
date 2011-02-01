@@ -108,8 +108,8 @@ RegInitLogging(
     }
 
     gRegLogTarget = logTarget;
-    gRegMaxLogLevel = maxAllowedLogLevel;
     ghRegLog = hLog;
+    LwRtlLogSetLevel(maxAllowedLogLevel);
 
  cleanup:
 
@@ -141,7 +141,7 @@ RegLogGetInfo(
             BAIL_ON_REG_ERROR(dwError);
 
             pLogInfo->logTarget = gRegLogTarget;
-            pLogInfo->maxAllowedLogLevel = gRegMaxLogLevel;
+            pLogInfo->maxAllowedLogLevel = LwRtlLogGetLevel();
 
             break;
 
@@ -225,8 +225,8 @@ RegSetupLogging(
 	}
 
 	ghRegLog = hLog;
-	gRegMaxLogLevel = maxAllowedLogLevel;
 	gpfnRegLogger = pfnLogger;
+	LwRtlLogSetLevel(maxAllowedLogLevel);
 
 error:
 
@@ -238,9 +238,9 @@ RegResetLogging(
     VOID
     )
 {
-	gRegMaxLogLevel = REG_LOG_LEVEL_ERROR;
-	gpfnRegLogger = NULL;
+    gpfnRegLogger = NULL;
 	ghRegLog = (HANDLE)NULL;
+	LwRtlLogSetLevel(REG_LOG_LEVEL_ERROR);
 }
 
 VOID
