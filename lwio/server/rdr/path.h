@@ -43,6 +43,14 @@
 #define __RDR_PATH_H__
 
 NTSTATUS
+RdrConvertUnicodeStringPath(
+    PUNICODE_STRING pIoPath,
+    PWSTR* ppwszHost,
+    PWSTR* ppwszShare,
+    PWSTR* ppwszFile
+    );
+
+NTSTATUS
 RdrConvertPath(
     PCWSTR pwszIoPath,
     PWSTR* ppwszHost,

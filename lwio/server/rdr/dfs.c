@@ -477,8 +477,8 @@ RdrDfsConnectAttempt(
         RTL_FREE(pContext->State.DfsConnect.ppwszFilePath);
         RTL_FREE(pContext->State.DfsConnect.ppwszCanonicalPath);
 
-        status = RdrConvertPath(
-            pContext->State.DfsConnect.pwszPath,
+        status = RdrConvertUnicodeStringPath(
+            pContext->State.DfsConnect.pPath,
             &pwszServer,
             &pwszShare,
             pContext->State.DfsConnect.ppwszFilePath);
@@ -640,8 +640,8 @@ RdrDfsChaseReferral(
     }
     else
     {
-        status = RdrConvertPath(
-            pContext->State.DfsConnect.pwszPath,
+        status = RdrConvertUnicodeStringPath(
+            pContext->State.DfsConnect.pPath,
             &pwszServer,
             NULL,
             NULL);
@@ -720,7 +720,7 @@ error:
 NTSTATUS
 RdrDfsConnect(
     IN OPTIONAL PRDR_SOCKET pSocket,
-    IN PCWSTR pwszPath,
+    IN PUNICODE_STRING pPath,
     IN PIO_CREDS pCreds,
     IN uid_t Uid,
     IN NTSTATUS lastError,
@@ -738,7 +738,7 @@ RdrDfsConnect(
 
     pContext->State.DfsConnect.pCreds = pCreds;
     pContext->State.DfsConnect.Uid = Uid;
-    pContext->State.DfsConnect.pwszPath = pwszPath;
+    pContext->State.DfsConnect.pPath = pPath;
     pContext->State.DfsConnect.ppwszFilePath = ppwszFilePath;
     pContext->State.DfsConnect.ppwszCanonicalPath = ppwszCanonicalPath;
     pContext->State.DfsConnect.pusTry = pusTry;

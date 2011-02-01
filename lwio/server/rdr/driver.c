@@ -261,7 +261,11 @@ RdrDriverDispatch(
     switch (pIrp->Type)
     {
     case IRP_TYPE_CREATE:
-        if (pIrp->Args.Create.FileName.FileName[0] == '\0')
+    {
+        UNICODE_STRING remainingPath = { 0 };
+
+        IoRtlPathDissect(&pIrp->Args.Create.FileName.Name, NULL, &remainingPath);
+        if (!remainingPath.Length)
         {
             ntStatus = RdrCreateRoot(DeviceHandle, pIrp);
         }
@@ -270,6 +274,7 @@ RdrDriverDispatch(
             ntStatus = RdrCreate(DeviceHandle, pIrp);
         }
         break;
+    }
     default:
         ntStatus = STATUS_INTERNAL_ERROR;
     }

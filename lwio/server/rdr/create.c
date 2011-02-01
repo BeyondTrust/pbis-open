@@ -223,7 +223,7 @@ RdrCreateTreeConnectComplete(
 
             status = RdrDfsConnect(
                 pFile->pTree->pSession->pSocket,
-                pIrp->Args.Create.FileName.FileName,
+                &pIrp->Args.Create.FileName.Name,
                 pCreds,
                 pProcessInfo->Uid,
                 status,
@@ -300,7 +300,7 @@ RdrCreateQueryInfoPathComplete(
 
         status = RdrDfsConnect(
             pFile->pTree->pSession->pSocket,
-            pIrp->Args.Create.FileName.FileName,
+            &pIrp->Args.Create.FileName.Name,
             pCreds,
             pProcessInfo->Uid,
             status,
@@ -370,7 +370,7 @@ RdrFinishCreate(
 
         status = RdrDfsConnect(
             pFile->pTree->pSession->pSocket,
-            pIrp->Args.Create.FileName.FileName,
+            &pIrp->Args.Create.FileName.Name,
             pCreds,
             pProcessInfo->Uid,
             status,
@@ -447,7 +447,7 @@ RdrCreate(
     pContext->Continue = RdrCreateTreeConnectComplete;
     status = RdrDfsConnect(
         NULL,
-        pIrp->Args.Create.FileName.FileName,
+        &pIrp->Args.Create.FileName.Name,
         pCreds,
         pProcessInfo->Uid,
         status,

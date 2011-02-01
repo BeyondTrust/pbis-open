@@ -44,6 +44,69 @@
 #define IS_SEPARATOR(c) ((c) == '\\' || (c) == '/')
 
 NTSTATUS
+RdrConvertUnicodeStringPath(
+    PUNICODE_STRING pIoPath,
+    PWSTR* ppwszHost,
+    PWSTR* ppwszShare,
+    PWSTR* ppwszFile
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PCWSTR pwszIoPath = NULL;
+    PWSTR pwszFreeIoPath = NULL;
+    PWSTR pwszHost = NULL;
+    PWSTR pwszShare = NULL;
+    PWSTR pwszFile = NULL;
+
+    if (RTL_STRING_IS_NULL_TERMINATED(pIoPath))
+    {
+        pwszIoPath = pIoPath->Buffer;
+    }
+    else
+    {
+        status = LwRtlWC16StringAllocateFromUnicodeString(
+                        &pwszFreeIoPath, pIoPath);
+        BAIL_ON_NT_STATUS(status);
+
+        pwszIoPath = pwszFreeIoPath;
+    }
+
+    status = RdrConvertPath(
+                    pwszIoPath,
+                    ppwszHost ? &pwszHost : NULL,
+                    ppwszShare ? &pwszShare : NULL,
+                    ppwszFile ? &pwszFile : NULL);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+
+    RTL_FREE(&pwszFreeIoPath);
+
+    if (ppwszHost)
+    {
+        *ppwszHost = pwszHost;
+    }
+    if (ppwszShare)
+    {
+        *ppwszShare = pwszShare;
+    }
+    if (ppwszFile)
+    {
+        *ppwszFile = pwszFile;
+    }
+
+    return status;
+
+error:
+
+    RTL_FREE(&pwszHost);
+    RTL_FREE(&pwszShare);
+    RTL_FREE(&pwszFile);
+
+    goto cleanup;
+}
+
+NTSTATUS
 RdrConvertPath(
     PCWSTR pwszIoPath,
     PWSTR* ppwszHost,

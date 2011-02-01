@@ -137,7 +137,7 @@ typedef struct _RDR_OP_CONTEXT
             PIO_CREDS pCreds;
             uid_t Uid;
             IO_CREDS AnonCreds;
-            PCWSTR pwszPath;
+            PUNICODE_STRING pPath;
             PWSTR* ppwszFilePath;
             PWSTR* ppwszCanonicalPath;
             PWSTR pwszNamespace;

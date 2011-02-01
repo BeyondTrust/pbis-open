@@ -127,7 +127,7 @@ RdrCreateTreeConnect2Complete(
 
         status = RdrDfsConnect(
             pFile->pTree->pSession->pSocket,
-            pIrp->Args.Create.FileName.FileName,
+            &pIrp->Args.Create.FileName.Name,
             pCreds,
             pProcessInfo->Uid,
             status,
@@ -270,7 +270,7 @@ RdrFinishCreate2(
 
         status = RdrDfsConnect(
             pFile->pTree->pSession->pSocket,
-            pIrp->Args.Create.FileName.FileName,
+            &pIrp->Args.Create.FileName.Name,
             pCreds,
             pProcessInfo->Uid,
             status,

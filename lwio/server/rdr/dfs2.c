@@ -55,8 +55,8 @@ RdrDfsChaseReferral2(
     if (pContext->State.DfsConnect.OrigStatus == STATUS_PATH_NOT_COVERED)
     {
         /* Look up complete canonical path */
-        status = RdrConvertPath(
-            pContext->State.DfsConnect.pwszPath,
+        status = RdrConvertUnicodeStringPath(
+            pContext->State.DfsConnect.pPath,
             NULL,
             &pwszShare,
             &pwszFilePath);
@@ -71,8 +71,8 @@ RdrDfsChaseReferral2(
     else
     {
         /* Look up only the share */
-        status = RdrConvertPath(
-            pContext->State.DfsConnect.pwszPath,
+        status = RdrConvertUnicodeStringPath(
+            pContext->State.DfsConnect.pPath,
             NULL,
             &pContext->State.DfsConnect.pwszNamespace,
             NULL);
