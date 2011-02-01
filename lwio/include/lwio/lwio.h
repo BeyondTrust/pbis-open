@@ -247,14 +247,14 @@ LwIoGetThreadCreds(
 
 LW_NTSTATUS
 LwIoSetPathCreds(
-    LW_PCWSTR pwszPathPrefix,
-    LW_PIO_CREDS pCreds
+    IN LW_PUNICODE_STRING PathPrefix,
+    IN OPTIONAL LW_PIO_CREDS pCreds
     );
 
 LW_NTSTATUS
 LwIoGetActiveCreds(
-    LW_PCWSTR pwszPathPrefix,
-    LW_PIO_CREDS* ppToken
+    IN OPTIONAL LW_PUNICODE_STRING PathPrefix,
+    OUT LW_PIO_CREDS* ppToken
     );
 
 LW_NTSTATUS

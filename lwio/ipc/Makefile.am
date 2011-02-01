@@ -5,7 +5,8 @@ noinst_LTLIBRARIES = liblwioipc.la
 liblwioipc_la_SOURCES = \
     globals.c \
     libmain.c \
-    ntipc.c
+    ntipc.c \
+    ntipc-unicode_string.c
 
 liblwioipc_la_CPPFLAGS = \
     -I@top_srcdir@/include  \

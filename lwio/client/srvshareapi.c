@@ -43,7 +43,7 @@ static WCHAR gSrvDriverName[] = { '\\', 's', 'r', 'v', 0 };
 static IO_FILE_NAME gSrvDriverFilename =
 {
     .RootFileHandle = NULL,
-    .FileName = gSrvDriverName,
+    .Name = LW_RTL_CONSTANT_STRING(gSrvDriverName),
     .IoNameOptions = 0
 };
 

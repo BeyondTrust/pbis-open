@@ -205,8 +205,9 @@ struct _IO_FILE_OBJECT {
 
 NTSTATUS
 IopParse(
-    IN OUT PIO_FILE_NAME pFileName,
-    OUT PIO_DEVICE_OBJECT* ppDevice
+    IN PIO_FILE_NAME pFileName,
+    OUT PIO_DEVICE_OBJECT* ppDevice,
+    OUT PUNICODE_STRING pRemainingPath
     );
 
 NTSTATUS
@@ -284,8 +285,9 @@ IopRootRemoveDevice(
 NTSTATUS
 IopRootParse(
     IN PIOP_ROOT_STATE pRoot,
-    IN OUT PIO_FILE_NAME pFileName,
-    OUT PIO_DEVICE_OBJECT* ppDevice
+    IN PIO_FILE_NAME pFileName,
+    OUT PIO_DEVICE_OBJECT* ppDevice,
+    OUT PUNICODE_STRING pRemainingPath
     );
 
 NTSTATUS

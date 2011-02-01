@@ -118,6 +118,19 @@ IoRtlPathIsSeparator(
     IN WCHAR Character
     );
 
+VOID
+IoRtlPathDissect(
+    IN PUNICODE_STRING Path,
+    OUT OPTIONAL PUNICODE_STRING FirstComponent,
+    OUT OPTIONAL PUNICODE_STRING RemainingPath
+    );
+
+VOID
+IoRtlPathSkipSeparators(
+    IN PUNICODE_STRING Path,
+    OUT PUNICODE_STRING NewPath
+    );
+
 NTSTATUS
 IoRtlPathUncToInternal(
     PCWSTR pwszUncPath,

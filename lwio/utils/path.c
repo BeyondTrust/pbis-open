@@ -45,6 +45,7 @@
 
 #include "includes.h"
 #include "lwio/iortl.h"
+#include <lw/rtlgoto.h>
 
 BOOLEAN
 IoRtlPathIsSeparator(
@@ -52,6 +53,80 @@ IoRtlPathIsSeparator(
     )
 {
     return (('/' == Character) || ('\\' == Character)) ? TRUE : FALSE;
+}
+
+VOID
+IoRtlPathDissect(
+    IN PUNICODE_STRING Path,
+    OUT OPTIONAL PUNICODE_STRING FirstComponent,
+    OUT OPTIONAL PUNICODE_STRING RemainingPath
+    )
+{
+    ULONG i = 0;
+    ULONG count = RTL_STRING_NUM_CHARS(Path);
+    UNICODE_STRING firstComponent = { 0 };
+    UNICODE_STRING remainingPath = { 0 };
+
+    // Skip any initial separators
+    while ((i < count) && IoRtlPathIsSeparator(Path->Buffer[i]))
+    {
+        i++;
+    }
+
+    // Stop if no characters remaining
+    if ((count - i) < 1)
+    {
+        GOTO_CLEANUP();
+    }
+
+    firstComponent.Buffer = &Path->Buffer[i];
+
+    // Find next separator, if any
+    while ((i < count) && !IoRtlPathIsSeparator(Path->Buffer[i]))
+    {
+        i++;
+    }
+
+    remainingPath.Buffer = &Path->Buffer[i];
+
+    firstComponent.Length = LwRtlPointerToOffset(firstComponent.Buffer, remainingPath.Buffer);
+    firstComponent.MaximumLength = firstComponent.Length;
+
+    remainingPath.Length = LwRtlPointerToOffset(remainingPath.Buffer, &Path->Buffer[count]);
+    remainingPath.MaximumLength = remainingPath.Length + (Path->MaximumLength - Path->Length);
+
+cleanup:
+    if (FirstComponent)
+    {
+        *FirstComponent = firstComponent;
+    }
+    if (RemainingPath)
+    {
+        *RemainingPath = remainingPath;
+    }
+}
+
+VOID
+IoRtlPathSkipSeparators(
+    IN PUNICODE_STRING Path,
+    OUT PUNICODE_STRING NewPath
+    )
+{
+    ULONG i = 0;
+    ULONG count = RTL_STRING_NUM_CHARS(Path);
+    USHORT skipLength = 0;
+
+    // Skip any initial separators
+    while ((i < count) && IoRtlPathIsSeparator(Path->Buffer[i]))
+    {
+        i++;
+    }
+
+    skipLength = LwRtlPointerToOffset(Path->Buffer, &Path->Buffer[i]);
+
+    NewPath->Buffer = &Path->Buffer[i];
+    NewPath->Length = Path->Length - skipLength;
+    NewPath->MaximumLength = Path->MaximumLength - skipLength;
 }
 
 NTSTATUS

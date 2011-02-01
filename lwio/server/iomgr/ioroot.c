@@ -479,22 +479,30 @@ IopRootRemoveDevice(
 NTSTATUS
 IopRootParse(
     IN PIOP_ROOT_STATE pRoot,
-    IN OUT PIO_FILE_NAME pFileName,
-    OUT PIO_DEVICE_OBJECT* ppDevice
+    IN PIO_FILE_NAME pFileName,
+    OUT PIO_DEVICE_OBJECT* ppDevice,
+    OUT PUNICODE_STRING pRemainingPath
     )
 {
     NTSTATUS status = 0;
     int EE = 0;
-    PWSTR pszCurrent = NULL;
     UNICODE_STRING deviceName = { 0 };
+    UNICODE_STRING remainingPath = { 0 };
     PIO_DEVICE_OBJECT pDevice = NULL;
 
     if (pFileName->RootFileHandle)
     {
         // Relative path
+        //
+        // Allowed cases:
+        //
+        // 1) Open self - no relative name
+        // 2) Subpath - does not start with separator
+        // 3) Open by ID - higher layer will convert this to (1)
+        //
 
-        if (pFileName->FileName &&
-            (!pFileName->FileName[0] || IoRtlPathIsSeparator(pFileName->FileName[0])))
+        if ((pFileName->Name.Length > 0) &&
+            IoRtlPathIsSeparator(pFileName->Name.Buffer[0]))
         {
             status = STATUS_INVALID_PARAMETER;
             GOTO_CLEANUP_EE(EE);
@@ -509,27 +517,19 @@ IopRootParse(
 
     // Absolute path.
 
-    if (!pFileName->FileName)
+    if (!pFileName->Name.Length)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
     }
 
-    if (!IoRtlPathIsSeparator(pFileName->FileName[0]))
+    if (!IoRtlPathIsSeparator(pFileName->Name.Buffer[0]))
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
     }
 
-    pszCurrent = pFileName->FileName + 1;
-    while (pszCurrent[0] && !IoRtlPathIsSeparator(pszCurrent[0]))
-    {
-        pszCurrent++;
-    }
-
-    deviceName.Buffer = (PWSTR) pFileName->FileName + 1;
-    deviceName.Length = (pszCurrent - deviceName.Buffer) * sizeof(deviceName.Buffer[0]);
-    deviceName.MaximumLength = deviceName.Length;
+    IoRtlPathDissect(&pFileName->Name, &deviceName, &remainingPath);
 
     pDevice = IopRootFindDevice(pRoot, &deviceName);
     if (!pDevice)
@@ -538,15 +538,15 @@ IopRootParse(
         GOTO_CLEANUP_EE(EE);
     }
 
-    pFileName->FileName = pszCurrent;
-
 cleanup:
     if (status)
     {
         IopDeviceDereference(&pDevice);
+        LwRtlZeroMemory(&remainingPath, sizeof(remainingPath));
     }
 
     *ppDevice = pDevice;
+    *pRemainingPath = remainingPath;
 
     IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
     return status;

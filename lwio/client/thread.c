@@ -41,96 +41,93 @@ static BOOLEAN gbStateKeyInit = FALSE;
 static
 NTSTATUS
 LwIoNormalizePath(
-    PCWSTR pwszPath,
-    PWSTR* ppwszNormal
+    IN PUNICODE_STRING Path,
+    OUT PUNICODE_STRING NormalPath
     )
 {
-    NTSTATUS Status = STATUS_SUCCESS;
-    PWSTR pwszIn = NULL;
-    PWSTR pwszOut = NULL;
-    PWSTR pwszNormal = NULL;
+    NTSTATUS status = STATUS_SUCCESS;
+    UNICODE_STRING normalPath = { 0 };
+    ULONG inputIndex = 0;
+    ULONG outputIndex = 0;
+    ULONG count = 0;
 
-    Status = LwRtlWC16StringDuplicate(&pwszNormal, pwszPath);
-    BAIL_ON_NT_STATUS(Status);
+    status = LwRtlUnicodeStringDuplicate(&normalPath, Path);
+    GOTO_CLEANUP_ON_STATUS(status);
 
-    for (pwszIn = pwszOut = pwszNormal; *pwszIn; pwszIn++)
+    count = LW_RTL_STRING_NUM_CHARS(&normalPath);
+    for (inputIndex = outputIndex = 0; inputIndex < count; inputIndex++)
     {
-        switch (*pwszIn)
+        switch (normalPath.Buffer[inputIndex])
         {
         case '\\':
         case '/':
-            *(pwszOut++) = '/';
-            while (pwszIn[1] == '\\' ||
-                   pwszIn[1] == '/')
+            normalPath.Buffer[outputIndex++] = '/';
+            while (((inputIndex + 1) < count) &&
+                   IoRtlPathIsSeparator(normalPath.Buffer[inputIndex+1]))
             {
-                pwszIn++;
+                inputIndex++;
             }
             break;
         default:
-            *(pwszOut++) = *pwszIn;
+            normalPath.Buffer[outputIndex++] = normalPath.Buffer[inputIndex];
             break;
         }
     }
 
-    *pwszOut = '\0';
+    normalPath.Length = LwRtlPointerToOffset(normalPath.Buffer, &normalPath.Buffer[outputIndex]);
+    normalPath.MaximumLength = normalPath.Length;
 
-    *ppwszNormal = pwszNormal;
+cleanup:
+    if (status)
+    {
+        LwRtlUnicodeStringFree(&normalPath);
+    }
 
-error:
+    *NormalPath = normalPath;
 
-    return Status;
+    return status;
 }
 
 
 static
 NTSTATUS
 LwIoFindPathCreds(
-    PCWSTR pwszPath,
-    BOOL bPrecise,
-    PIO_PATH_CREDS* ppCreds
+    IN PUNICODE_STRING Path,
+    IN BOOLEAN bPrecise,
+    OUT PIO_PATH_CREDS* ppCreds
     )
 {
-    NTSTATUS Status = STATUS_SUCCESS;
-    PWSTR pwszNormal = NULL;
-    size_t pathLength = 0;
-    size_t prefixLength = 0;
-    PIO_PATH_CREDS pCreds = NULL;
+    NTSTATUS status = STATUS_SUCCESS;
+    UNICODE_STRING normalPath = { 0 };
+    PIO_PATH_CREDS pFoundCreds = NULL;
     PLW_LIST_LINKS pLink = NULL;  
 
-    Status = LwIoNormalizePath(pwszPath, &pwszNormal);
-    BAIL_ON_NT_STATUS(Status);
-
-    pathLength = LwRtlWC16StringNumChars(pwszNormal);
+    status = LwIoNormalizePath(Path, &normalPath);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     while ((pLink = LwListTraverse(&gPathCreds, pLink)))
     {
-        pCreds = LW_STRUCT_FROM_FIELD(pLink, IO_PATH_CREDS, link);
-        
-        prefixLength = LwRtlWC16StringNumChars(pCreds->pwszPathPrefix);
+        PIO_PATH_CREDS pCreds = LW_STRUCT_FROM_FIELD(pLink, IO_PATH_CREDS, link);
 
-        if ((bPrecise && LwRtlWC16StringIsEqual(pwszNormal, pCreds->pwszPathPrefix, TRUE)) ||
-            (!bPrecise && !memcmp(
-                pwszNormal,
-                pCreds->pwszPathPrefix,
-                prefixLength < pathLength ? prefixLength : pathLength)))
+        if ((bPrecise && LwRtlUnicodeStringIsEqual(&normalPath, &pCreds->PathPrefix, TRUE)) ||
+            (!bPrecise && LwRtlUnicodeStringIsPrefix(&pCreds->PathPrefix, &normalPath, TRUE)))
         {
-            goto cleanup;
+            pFoundCreds = pCreds;
+            break;
         }
     }
 
-    pCreds = NULL;
-
 cleanup:
+    if (status)
+    {
+        pFoundCreds = NULL;
+    }
 
-    *ppCreds = pCreds;
+    LwRtlUnicodeStringFree(&normalPath);
 
-    RTL_FREE(&pwszNormal);
+    *ppCreds = pFoundCreds;
 
-    return Status;
-
-error:
-
-    goto cleanup;
+    return status;
 }
 
 static
@@ -141,7 +138,7 @@ LwIoDeletePathCreds(
 {
     if (pPathCreds)
     {
-        RTL_FREE(&pPathCreds->pwszPathPrefix);
+        LwRtlUnicodeStringFree(&pPathCreds->PathPrefix);
 
         if (pPathCreds->pCreds)
         {
@@ -431,8 +428,8 @@ error:
 
 LW_NTSTATUS
 LwIoSetPathCreds(
-    LW_PCWSTR pwszPathPrefix,
-    LW_PIO_CREDS pCreds
+    IN LW_PUNICODE_STRING PathPrefix,
+    IN OPTIONAL LW_PIO_CREDS pCreds
     )
 {
     LW_NTSTATUS Status = STATUS_SUCCESS;
@@ -441,8 +438,8 @@ LwIoSetPathCreds(
     BOOL bInLock = FALSE;
     
     LWIO_LOCK_MUTEX(bInLock, &gLock);
-    
-    Status = LwIoFindPathCreds(pwszPathPrefix, TRUE, &pPathCreds);
+
+    Status = LwIoFindPathCreds(PathPrefix, TRUE, &pPathCreds);
     BAIL_ON_NT_STATUS(Status);
 
     if (pPathCreds)
@@ -466,7 +463,7 @@ LwIoSetPathCreds(
         
         LwListInit(&pPathCreds->link);
         
-        Status = LwIoNormalizePath(pwszPathPrefix, &pPathCreds->pwszPathPrefix);
+        Status = LwIoNormalizePath(PathPrefix, &pPathCreds->PathPrefix);
         BAIL_ON_NT_STATUS(Status);
         
         Status = LwIoCopyCreds(pCreds, &pPathCreds->pCreds);
@@ -499,8 +496,8 @@ error:
 
 LW_NTSTATUS
 LwIoGetActiveCreds(
-    LW_PCWSTR pwszPath,
-    LW_PIO_CREDS* ppToken
+    IN OPTIONAL LW_PUNICODE_STRING PathPrefix,
+    OUT LW_PIO_CREDS* ppToken
     )
 {
     NTSTATUS Status = STATUS_SUCCESS;
@@ -511,11 +508,11 @@ LwIoGetActiveCreds(
     Status = LwIoGetThreadCreds(&pCreds);
     BAIL_ON_NT_STATUS(Status);
 
-    if (!pCreds && pwszPath)
+    if (!pCreds && PathPrefix)
     {
         LWIO_LOCK_MUTEX(bInLock, &gLock);
 
-        Status = LwIoFindPathCreds(pwszPath, FALSE, &pPathCreds);
+        Status = LwIoFindPathCreds(PathPrefix, FALSE, &pPathCreds);
         BAIL_ON_NT_STATUS(Status);
 
         if (pPathCreds)

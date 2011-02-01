@@ -243,7 +243,7 @@ IopIrpFree(
             case IRP_TYPE_CREATE:
             case IRP_TYPE_CREATE_NAMED_PIPE:
                 IoSecurityDereferenceSecurityContext(&pIrp->Args.Create.SecurityContext);
-                RtlWC16StringFree(&pIrp->Args.Create.FileName.FileName);
+                RtlUnicodeStringFree(&pIrp->Args.Create.FileName.Name);
                 break;
             case IRP_TYPE_QUERY_DIRECTORY:
                 if (pIrp->Args.QueryDirectory.FileSpec)

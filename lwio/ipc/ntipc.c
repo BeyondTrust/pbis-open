@@ -46,6 +46,7 @@
 #include "ntipcmsg.h"
 #include "goto.h"
 #include "ntlogmacros.h"
+#include "ntipc-unicode_string.h"
 
 #define _LWMSG_MEMBER_BOOLEAN(Type, Field) \
     LWMSG_MEMBER_TYPESPEC(Type, Field, gNtIpcTypeSpecBoolean)
@@ -141,7 +142,7 @@ LWMsgTypeSpec gNtIpcTypeSpecIoFileName[] =
 {
     LWMSG_STRUCT_BEGIN(IO_FILE_NAME),
     _LWMSG_MEMBER_IO_FILE_HANDLE_IN_OPTIONAL(IO_FILE_NAME, RootFileHandle),
-    LWMSG_MEMBER_PWSTR(IO_FILE_NAME, FileName),
+    _LWMSG_MEMBER_UNICODE_STRING(IO_FILE_NAME, Name),
     LWMSG_MEMBER_UINT32(IO_FILE_NAME, IoNameOptions),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END

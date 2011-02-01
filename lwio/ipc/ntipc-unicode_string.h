@@ -1,10 +1,9 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
- * Copyright Likewise Software
- * All rights reserved.
+ * Copyright (c) Likewise Software.  All rights Reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by
@@ -12,7 +11,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -25,45 +24,35 @@
  * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
  * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
  * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * license@likewise.com
  */
 
-#ifndef __STRUCTS_H__
-#define __STRUCTS_H__
+/*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *     ntipc-unicode_string.c
+ *
+ * Abstract:
+ *
+ *     UNICODE_STRING Custom Type Implementation for lwmsg
+ *
+ * Authors: Danilo Almeida (dalmeida@likewise.com)
+ */
 
-typedef struct __LW_IO_CONNECTION
-{
-    LWMsgPeer* pClient;
-    LWMsgSession* pSession;
-} IO_CONNECTION, *PIO_CONNECTION;
+#ifndef __NTIPC_UNICODE_STRING_H__
+#define __NTIPC_UNICODE_STRING_H__
 
-typedef struct __LW_IO_THREAD_STATE
-{
-    PIO_CREDS pCreds;
-} IO_THREAD_STATE, *PIO_THREAD_STATE;
+#include <lwmsg/lwmsg.h>
+#include <lw/types.h>
 
-typedef struct IO_PATH_CREDS
-{
-    UNICODE_STRING PathPrefix;
-    PIO_CREDS pCreds;
-    LW_LIST_LINKS link;
-} IO_PATH_CREDS, *PIO_PATH_CREDS;
+extern LWMsgTypeClass gNtIpcTypeClassUnicodeString;
 
-typedef VOID
-(*IO_CLIENT_ASYNC_COMPLETE_FUNCTION) (
-    struct _IO_ASYNC_CANCEL_CONTEXT* pContext,
-    NTSTATUS status
-    );
-    
-typedef struct _IO_ASYNC_CANCEL_CONTEXT
-{
-    LONG volatile lRefcount;
-    LWMsgCall* pCall;
-    LWMsgParams in;
-    LWMsgParams out;
-    LWMsgTag responseType;
-    IO_CLIENT_ASYNC_COMPLETE_FUNCTION pfnComplete;
-    PIO_ASYNC_CONTROL_BLOCK pControl;
-} IO_CLIENT_ASYNC_CONTEXT, *PIO_CLIENT_ASYNC_CONTEXT;
+#define _LWMSG_UNICODE_STRING \
+    LWMSG_CUSTOM(UNICODE_STRING, &gNtIpcTypeClassUnicodeString, NULL)
 
-#endif /* __STRUCTS_H__ */
+#define _LWMSG_MEMBER_UNICODE_STRING(Type, Field) \
+    LWMSG_MEMBER_CUSTOM(Type, Field, &gNtIpcTypeClassUnicodeString, NULL)
+
+#endif /* __NTIPC_UNICODE_STRING_H__ */

@@ -227,6 +227,7 @@ LwIoSetRdrDomainHints(
     NTSTATUS status = STATUS_SUCCESS;
     IO_STATUS_BLOCK ioStatus = {0};
     WCHAR wszRdrPath[] = {'\\', 'r', 'd', 'r', '\0'};
+    UNICODE_STRING rdrPath = LW_RTL_CONSTANT_STRING(wszRdrPath);
     IO_FILE_NAME fileName = {0};
     IO_FILE_HANDLE hFile = NULL;
     PWSTR pwszBuffer = NULL;
@@ -251,7 +252,7 @@ LwIoSetRdrDomainHints(
         ulOffset += ulStrLen;
     }
 
-    fileName.FileName = wszRdrPath;
+    fileName.Name = rdrPath;
 
     status = LwNtCreateFile(
         &hFile,

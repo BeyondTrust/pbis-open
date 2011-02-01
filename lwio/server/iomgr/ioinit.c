@@ -123,11 +123,12 @@ IoMgrRefreshConfig(
 
 NTSTATUS
 IopParse(
-    IN OUT PIO_FILE_NAME pFileName,
-    OUT PIO_DEVICE_OBJECT* ppDevice
+    IN PIO_FILE_NAME pFileName,
+    OUT PIO_DEVICE_OBJECT* ppDevice,
+    OUT PUNICODE_STRING pRemainingPath
     )
 {
-    return IopRootParse(gpIoRoot, pFileName, ppDevice);
+    return IopRootParse(gpIoRoot, pFileName, ppDevice, pRemainingPath);
 }
 
 NTSTATUS

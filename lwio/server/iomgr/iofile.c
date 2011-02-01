@@ -109,13 +109,10 @@ IopFileObjectAllocate(
         SetFlag(pFileObject->Flags, FILE_OBJECT_FLAG_RELATIVE);
     }
 
-    if (!LwRtlCStringIsNullOrEmpty(FileName->FileName))
-    {
-        status = LwRtlUnicodeStringAllocateFromWC16String(
-                        &pFileObject->FileName,
-                        FileName->FileName);
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
-    }
+    status = LwRtlUnicodeStringDuplicate(
+                    &pFileObject->FileName,
+                    &FileName->Name);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = LwRtlInitializeMutex(&pFileObject->Mutex, TRUE);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);

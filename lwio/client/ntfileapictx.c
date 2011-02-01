@@ -492,7 +492,7 @@ LwNtCreateFile(
 
     if (!pCreds)
     {
-        status = LwIoGetActiveCreds(FileName->FileName, &pActiveCreds);
+        status = LwIoGetActiveCreds(&FileName->Name, &pActiveCreds);
         GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
         pCreds = pActiveCreds;

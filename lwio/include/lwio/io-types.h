@@ -325,7 +325,7 @@ typedef ULONG IO_NAME_OPTIONS;
 // to "Options".
 typedef struct _IO_FILE_NAME {
     OPTIONAL IO_FILE_HANDLE RootFileHandle;
-    PWSTR FileName;
+    UNICODE_STRING Name;
     IO_NAME_OPTIONS IoNameOptions;
 } IO_FILE_NAME, *PIO_FILE_NAME;
 

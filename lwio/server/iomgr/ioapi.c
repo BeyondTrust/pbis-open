@@ -105,9 +105,9 @@ IoCreateFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    IO_FILE_NAME fileName = *FileName;
+    IO_FILE_NAME fileName = { 0 };
     PIO_DEVICE_OBJECT pDevice = NULL;
-    PWSTR pszFileName = NULL;
+    UNICODE_STRING remainingPath = { 0 };
     PIRP pIrp = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     PIO_FILE_OBJECT pFileObject = NULL;
@@ -126,14 +126,13 @@ IoCreateFile(
 
     // TODO -- Add basic param validation...
 
-    status = IopParse(&fileName, &pDevice);
+    status = IopParse(FileName, &pDevice, &remainingPath);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    if (fileName.FileName)
-    {
-        status = RtlWC16StringDuplicate(&pszFileName, fileName.FileName);
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
-    }
+    fileName.RootFileHandle = FileName->RootFileHandle;
+    fileName.IoNameOptions = FileName->IoNameOptions;
+    status = LwRtlUnicodeStringDuplicate(&fileName.Name, &remainingPath);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IopFileObjectAllocate(&pFileObject, pDevice, &fileName);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -167,9 +166,7 @@ IoCreateFile(
     IopSecurityReferenceSecurityContext(SecurityContext);
 
     pIrp->Args.Create.FileName = fileName;
-    // Handled by IopIrpFree():
-    pIrp->Args.Create.FileName.FileName = pszFileName;
-    pszFileName = NULL;
+    LwRtlZeroMemory(&fileName, sizeof(fileName));
 
     pIrp->Args.Create.DesiredAccess = DesiredAccess;
     pIrp->Args.Create.AllocationSize = AllocationSize;
@@ -200,7 +197,7 @@ IoCreateFile(
     }
 
 cleanup:
-    RtlWC16StringFree(&pszFileName);
+    LwRtlUnicodeStringFree(&fileName.Name);
     IopIrpDereference(&pIrp);
     IopFileObjectDereference(&pFileObject);
     IopDeviceDereference(&pDevice);
