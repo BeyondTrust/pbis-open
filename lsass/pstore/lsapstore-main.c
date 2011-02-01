@@ -55,12 +55,15 @@ LsaPstoreGetPasswordInfoW(
     DWORD dwError = 0;
     int EE = 0;
     PLSA_PSTORE_BACKEND_STATE backendState = NULL;
+    BOOLEAN isLocked = FALSE;
     PWSTR defaultDnsDomainName = NULL;
     PCWSTR actualDnsDomainName = DnsDomainName;
     PLSA_MACHINE_PASSWORD_INFO_W passwordInfo = NULL;
 
     dwError = LsaPstorepEnsureInitialized(&backendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    LSA_PSTOREP_LOCK(&isLocked);
 
     if (!DnsDomainName)
     {
@@ -84,6 +87,8 @@ LsaPstoreGetPasswordInfoW(
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
+    LSA_PSTOREP_UNLOCK(&isLocked);
+
     if (dwError)
     {
         LSA_PSTORE_FREE_PASSWORD_INFO_W(&passwordInfo);
@@ -105,6 +110,7 @@ LsaPstoreSetPasswordInfoW(
     DWORD dwError = 0;
     int EE = 0;
     PLSA_PSTORE_BACKEND_STATE backendState = NULL;
+    BOOLEAN isLocked = FALSE;
     PWSTR defaultDnsDomainName = NULL;
     BOOLEAN isDefaultDomain = FALSE;
 
@@ -113,6 +119,8 @@ LsaPstoreSetPasswordInfoW(
 
     dwError = LsaPstorepEnsureInitialized(&backendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    LSA_PSTOREP_LOCK(&isLocked);
 
     // Returns NULL if no default is set.
     dwError = LsaPstoreGetDefaultDomainW(&defaultDnsDomainName);
@@ -144,6 +152,8 @@ LsaPstoreSetPasswordInfoW(
     }
 
 cleanup:
+    LSA_PSTOREP_UNLOCK(&isLocked);
+
     LSA_PSTORE_FREE(&defaultDnsDomainName);
 
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
@@ -158,6 +168,7 @@ LsaPstoreDeletePasswordInfoW(
     DWORD dwError = 0;
     int EE = 0;
     PLSA_PSTORE_BACKEND_STATE backendState = NULL;
+    BOOLEAN isLocked = FALSE;
     PWSTR defaultDnsDomainName = NULL;
     BOOLEAN isDefaultDomain = FALSE;
     PLSA_MACHINE_PASSWORD_INFO_W passwordInfo = NULL;
@@ -165,6 +176,8 @@ LsaPstoreDeletePasswordInfoW(
 
     dwError = LsaPstorepEnsureInitialized(&backendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    LSA_PSTOREP_LOCK(&isLocked);
 
     // Returns NULL if no default is found.
     dwError = LsaPstoreGetDefaultDomainW(&defaultDnsDomainName);
@@ -218,6 +231,8 @@ LsaPstoreDeletePasswordInfoW(
     }
 
 cleanup:
+    LSA_PSTOREP_UNLOCK(&isLocked);
+
     LW_RTL_FREE(&defaultDnsDomainName);
     LSA_PSTORE_FREE_PASSWORD_INFO_W(&passwordInfo);
 
@@ -233,10 +248,13 @@ LsaPstoreGetDefaultDomainW(
     DWORD dwError = 0;
     int EE = 0;
     PLSA_PSTORE_BACKEND_STATE backendState = NULL;
+    BOOLEAN isLocked = FALSE;
     PWSTR dnsDomainName = NULL;
 
     dwError = LsaPstorepEnsureInitialized(&backendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    LSA_PSTOREP_LOCK(&isLocked);
 
     dwError = LsaPstorepBackendGetDefaultDomainW(
                     backendState,
@@ -244,6 +262,8 @@ LsaPstoreGetDefaultDomainW(
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
+    LSA_PSTOREP_UNLOCK(&isLocked);
+
     if (dwError)
     {
         LSA_PSTORE_FREE(&dnsDomainName);
@@ -263,6 +283,7 @@ LsaPstoreSetDefaultDomainW(
     DWORD dwError = 0;
     int EE = 0;
     PLSA_PSTORE_BACKEND_STATE backendState = NULL;
+    BOOLEAN isLocked = FALSE;
 
     if (DnsDomainName && !LsaPstorepWC16StringIsUpcase(DnsDomainName))
     {
@@ -273,10 +294,14 @@ LsaPstoreSetDefaultDomainW(
     dwError = LsaPstorepEnsureInitialized(&backendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
+    LSA_PSTOREP_LOCK(&isLocked);
+
     dwError = LsaPstorepBackendSetDefaultDomainW(backendState, DnsDomainName);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
 cleanup:
+    LSA_PSTOREP_UNLOCK(&isLocked);
+
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }
@@ -290,9 +315,12 @@ LsaPstoreGetJoinedDomainsW(
     DWORD dwError = 0;
     int EE = 0;
     PLSA_PSTORE_BACKEND_STATE backendState = NULL;
+    BOOLEAN isLocked = FALSE;
 
     dwError = LsaPstorepEnsureInitialized(&backendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    LSA_PSTOREP_LOCK(&isLocked);
 
     dwError = LsaPstorepBackendGetJoinedDomainsW(
                     backendState,
@@ -300,9 +328,9 @@ LsaPstoreGetJoinedDomainsW(
                     Count);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    // VALIDATE...
-
 cleanup:
+    LSA_PSTOREP_UNLOCK(&isLocked);
+
     LSA_PSTORE_LOG_LEAVE_ERROR_EE(dwError, EE);
     return dwError;
 }

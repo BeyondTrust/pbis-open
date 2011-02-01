@@ -39,6 +39,8 @@
  * Authors: Danilo Almeida (dalmeida@likewise.com)
  */
 
+#include "config.h"
+
 #include <lsa/lsapstore-api.h>
 #include <lsa/lsapstore-plugin.h>
 
@@ -50,16 +52,33 @@
 #include <lw/atomic.h>
 #include <lw/rtlstring.h>
 #include <reg/lwreg.h>
-#include <pthread.h>
 #include <lw/rtllog.h>
 #include <lwerror.h>
 
+#include <pthread.h>
+#include <assert.h>
 
 #if defined(sun) || defined(_AIX)
 #define ONCE_INIT {PTHREAD_ONCE_INIT}
 #else
 #define ONCE_INIT PTHREAD_ONCE_INIT
 #endif
+
+#define LSA_PSTOREP_LOCK(pIsLocked) \
+    do { \
+        assert(!*(pIsLocked)); \
+        LsaPstorepLock(); \
+        *(pIsLocked) = TRUE; \
+    } while (0)
+
+#define LSA_PSTOREP_UNLOCK(pIsLocked) \
+    do { \
+        if (*(pIsLocked)) \
+        { \
+            LsaPstorepUnlock(); \
+            *(pIsLocked) = FALSE; \
+        } \
+    } while (0)
 
 //
 // Memory Helpers
@@ -240,6 +259,16 @@ LsaPstorepClosePlugin(
 DWORD
 LsaPstorepEnsureInitialized(
     OUT PLSA_PSTORE_BACKEND_STATE* Backend
+    );
+
+VOID
+LsaPstorepLock(
+    VOID
+    );
+
+VOID
+LsaPstorepUnlock(
+    VOID
     );
 
 // lsapstore-plugin.c

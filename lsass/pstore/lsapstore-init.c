@@ -45,6 +45,7 @@
 
 #include "lsapstore-includes.h"
 #include "lsapstore-backend.h"
+#include <lw/errno.h>
 
 typedef struct _LSA_PSTORE_STATE {
     struct {
@@ -52,6 +53,8 @@ typedef struct _LSA_PSTORE_STATE {
         DWORD Error;
         BOOLEAN Done;
     } Init;
+    pthread_mutex_t Mutex;
+    pthread_mutex_t* pMutex;
     LONG RefCount;
     PLSA_PSTORE_BACKEND_STATE BackendState;
 } LSA_PSTORE_STATE, *PLSA_PSTORE_STATE;
@@ -102,6 +105,9 @@ LsaPstorepInitializeLibraryInternal(
     DWORD dwError = 0;
     int EE = 0;
     PLSA_PSTORE_STATE pState = &LsaPstoreState;
+    int error = 0;
+    pthread_mutexattr_t mutexAttributes;
+    pthread_mutexattr_t* pMutexAttributes = NULL;
 
     if (pState->Init.Done)
     {
@@ -111,6 +117,22 @@ LsaPstorepInitializeLibraryInternal(
         GOTO_CLEANUP_EE(EE);
     }
 
+    error = pthread_mutexattr_init(&mutexAttributes);
+    dwError = LwErrnoToWin32Error(error);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    pMutexAttributes = &mutexAttributes;
+
+    error = pthread_mutexattr_settype(pMutexAttributes, PTHREAD_MUTEX_RECURSIVE);
+    dwError = LwErrnoToWin32Error(error);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    error = pthread_mutex_init(&pState->Mutex, pMutexAttributes);
+    dwError = LwErrnoToWin32Error(error);
+    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+
+    pState->pMutex = &pState->Mutex;
+
     dwError = LsaPstorepBackendInitialize(&pState->BackendState);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
@@ -118,6 +140,11 @@ cleanup:
     if (dwError)
     {
         LsaPstorepCleanupLibraryInternal();
+    }
+
+    if (pMutexAttributes)
+    {
+        pthread_mutexattr_destroy(pMutexAttributes);
     }
 
     pState->Init.Error = dwError;
@@ -140,6 +167,12 @@ LsaPstorepCleanupLibraryInternal(
     {
         LsaPstorepBackendCleanup(pState->BackendState);
         pState->BackendState = NULL;
+    }
+
+    if (pState->pMutex)
+    {
+        pthread_mutex_destroy(pState->pMutex);
+        pState->pMutex = NULL;
     }
 
     pState->Init.OnceControl = onceControl;
@@ -190,4 +223,38 @@ cleanup:
 
     LSA_PSTORE_LOG_LEAVE_ERROR(dwError);
     return dwError;
+}
+
+VOID
+LsaPstorepLock(
+    VOID
+    )
+{
+    int error = 0;
+    PLSA_PSTORE_STATE pState = &LsaPstoreState;
+
+    error = pthread_mutex_lock(pState->pMutex);
+    if (error)
+    {
+        LW_RTL_LOG_ERROR("Failed to lock mutex with errno = %d (%s)",
+                         error, LwErrnoToName(error));
+        assert(!error);
+    }
+}
+
+VOID
+LsaPstorepUnlock(
+    VOID
+    )
+{
+    int error = 0;
+    PLSA_PSTORE_STATE pState = &LsaPstoreState;
+
+    error = pthread_mutex_unlock(pState->pMutex);
+    if (error)
+    {
+        LW_RTL_LOG_ERROR("Failed to unlock mutex with errno = %d (%s)",
+                         error, LwErrnoToName(error));
+        assert(!error);
+    }
 }
