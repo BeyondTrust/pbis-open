@@ -13,7 +13,6 @@ make()
 	find-group-by-name \
 	find-user-by-id \
 	find-user-by-name \
-	get-log-info \
 	get-metrics \
 	get-status \
 	list-groups-for-user \
@@ -21,9 +20,7 @@ make()
 	ypmatch \
 	mod-group \
 	mod-user \
-	refresh-configuration \
 	set-default-domain \
-	set-log-level \
 	set-machine-sid \
 	set-machine-name \
 	find-objects \
@@ -48,7 +45,6 @@ make()
 	find_group_by_name_main.c \
 	find_user_by_id_main.c \
 	find_user_by_name_main.c \
-	get_log_info_main.c \
 	get_metrics_main.c \
 	get_status_main.c \
 	list_groups_for_user_main.c \
@@ -56,9 +52,7 @@ make()
 	lw_ypmatch_main.c \
 	mod_group_main.c \
 	mod_user_main.c \
-	refresh_configuration_main.c \
 	set_default_domain_main.c \
-	set_log_level_main.c \
 	set_machine_sid_main.c \
 	set_machine_name_main.c \
 	trace_info_main.c \
@@ -69,6 +63,22 @@ make()
         join_leave_main.c \
 	common.c \
 	main.c"
+
+    STANDALONE_COMMANDS="\
+	get-log-info \
+	set-log-level \
+	refresh-configuration"
+    
+    LSA_STANDALONE_SOURCES="\
+	refresh_configuration_main.c \
+	set_log_level_main.c \
+	get_log_info_main.c"
+
+    if [ "$LW_USE_SERVICE_CONTAINERS" = "no" ]
+    then
+        COMMAND_NAMES="${COMMAND_NAMES} ${STANDALONE_COMMANDS}"
+        LSA_SOURCES="${LSA_SOURCES} ${LSA_STANDALONE_SOURCES}"
+    fi
 
     mk_program \
 	PROGRAM=lw-lsa \

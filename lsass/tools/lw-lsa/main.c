@@ -29,7 +29,6 @@ static main_entry entry_list[] =
     {"find-group-by-name", find_group_by_name_main},
     {"find-user-by-id", find_user_by_id_main},
     {"find-user-by-name", find_user_by_name_main},
-    {"get-log-info", get_log_info_main},
     {"get-metrics", get_metrics_main},
     {"get-status", get_status_main},
     {"list-groups-for-user", list_groups_for_user_main},
@@ -37,9 +36,7 @@ static main_entry entry_list[] =
     {"ypmatch", lw_ypmatch_main},
     {"mod-group", mod_group_main},
     {"mod-user", mod_user_main},
-    {"refresh-configuration", refresh_configuration_main},
     {"set-default-domain", set_default_domain_main},
-    {"set-log-level", set_log_level_main},
     {"set-machine-sid", set_machine_sid_main},
     {"set-machine-name", set_machine_name_main},
     {"trace-info", trace_info_main},
@@ -49,6 +46,11 @@ static main_entry entry_list[] =
     {"query-member-of", QueryMemberOfMain},
     {"join", JoinLeaveMain},
     {"leave", JoinLeaveMain},
+#ifndef LW_SERVICE_CONTAINERS
+    {"refresh-configuration", refresh_configuration_main},
+    {"get-log-info", get_log_info_main},
+    {"set-log-level", set_log_level_main},
+#endif
     {NULL, NULL}
 };
 
