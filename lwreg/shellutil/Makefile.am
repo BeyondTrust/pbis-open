@@ -10,4 +10,5 @@ librsutils_la_CPPFLAGS = \
     @LWMSG_INCLUDES@
 
 librsutils_la_LIBADD = \
-    $(top_builddir)/client/libregclient.la
+    $(top_builddir)/client/libregclient.la \
+    -llwbase_nothr
