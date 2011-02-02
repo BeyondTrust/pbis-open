@@ -13,6 +13,13 @@ configure()
 
     lw_define_feature_macros
 
+    mk_check_endian
+
+    case "$ENDIANNESS" in
+        big) mk_define LW_BIG_ENDIAN;;
+        little) mk_define LW_LITTLE_ENDIAN;;
+    esac
+
     mk_define REG_USE_SQLITE
 
     mk_check_headers \
