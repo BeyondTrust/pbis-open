@@ -48,7 +48,7 @@
 
 static LWMsgContext* gpContext = NULL;
 static LWMsgProtocol* gpProtocol = NULL;
-static LWMsgServer* gpServer = NULL;
+static LWMsgPeer* gpServer = NULL;
 
 static
 LWMsgBool
@@ -145,22 +145,22 @@ LWNetSrvStartListenThread(
     BAIL_ON_LWNET_ERROR(dwError);
 
     /* Set up IPC server object */
-    dwError = MAP_LWMSG_ERROR(lwmsg_server_new(gpContext, gpProtocol, &gpServer));
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_new(gpContext, gpProtocol, &gpServer));
     BAIL_ON_LWNET_ERROR(dwError);
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_server_add_dispatch_spec(
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_add_dispatch_spec(
                                   gpServer,
                                   LWNetSrvGetDispatchSpec()));
     BAIL_ON_LWNET_ERROR(dwError);
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_server_set_endpoint(
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_add_listen_endpoint(
                                   gpServer,
                                   LWMSG_CONNECTION_MODE_LOCAL,
                                   pszCommPath,
                                   0666));
     BAIL_ON_LWNET_ERROR(dwError);
     
-    dwError = MAP_LWMSG_ERROR(lwmsg_server_start(gpServer));
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_start_listen(gpServer));
 
 error:
 
@@ -171,8 +171,8 @@ error:
     {
         if (gpServer)
         {
-            lwmsg_server_stop(gpServer);
-            lwmsg_server_delete(gpServer);
+            lwmsg_peer_stop_listen(gpServer);
+            lwmsg_peer_delete(gpServer);
             gpServer = NULL;
         }
     }
@@ -189,7 +189,7 @@ LWNetSrvStopListenThread(
 
     if (gpServer)
     {
-        dwError = MAP_LWMSG_ERROR(lwmsg_server_stop(gpServer));
+        dwError = MAP_LWMSG_ERROR(lwmsg_peer_stop_listen(gpServer));
         BAIL_ON_LWNET_ERROR(dwError);
     }
 
@@ -197,7 +197,7 @@ error:
 
     if (gpServer)
     {
-        lwmsg_server_delete(gpServer);
+        lwmsg_peer_delete(gpServer);
         gpServer = NULL;
     }
 
