@@ -1,1 +1,11 @@
 SUBDIRS="lwio-driver lwio-cli lwio-copy lwio-refresh lwio-get-log-info lwio-set-log-level lwio-tool"
+
+configure()
+{
+    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
+    then
+        mk_skip_subdir lwio-get-log-info
+        mk_skip_subdir lwio-set-log-level
+        mk_skip_subdir lwio-refresh
+    fi
+}
