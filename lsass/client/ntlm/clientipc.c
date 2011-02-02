@@ -47,7 +47,7 @@
 #include "client.h"
 
 
-static LWMsgClient* gpClient = NULL;
+static LWMsgPeer* gpClient = NULL;
 static LWMsgProtocol* gpProtocol = NULL;
 static LWMsgSession* gpSession = NULL;
 static pthread_mutex_t gLock = PTHREAD_MUTEX_INITIALIZER;
@@ -75,11 +75,11 @@ NtlmInitialize(
     if (!gpClient)
     {
         dwError = LwMapLwmsgStatusToLwError(
-            lwmsg_client_new(NULL, gpProtocol, &gpClient));
+            lwmsg_peer_new(NULL, gpProtocol, &gpClient));
         BAIL_ON_LSA_ERROR(dwError);
         
         dwError = LwMapLwmsgStatusToLwError(
-            lwmsg_client_set_endpoint(
+            lwmsg_peer_add_connect_endpoint(
                 gpClient,
                 LWMSG_CONNECTION_MODE_LOCAL,
                 CACHEDIR "/" NTLM_SERVER_FILENAME));
@@ -112,7 +112,7 @@ NtlmIpcAcquireCall(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwMapLwmsgStatusToLwError(
-        lwmsg_client_acquire_call(
+        lwmsg_peer_acquire_call(
             gpClient,
             ppCall));
     BAIL_ON_LSA_ERROR(dwError);
@@ -1327,7 +1327,7 @@ NtlmClientIpcShutdown()
     }
     if (gpClient)
     {
-        lwmsg_client_delete(gpClient);
+        lwmsg_peer_delete(gpClient);
         gpClient = NULL;
     }
 }
