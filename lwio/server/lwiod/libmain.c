@@ -968,7 +968,7 @@ SMBSrvExecute(
     DWORD dwError = 0;
     LWMsgContext* pContext = NULL;
     LWMsgProtocol* pProtocol = NULL;
-    LWMsgServer* pServer = NULL;
+    LWMsgPeer* pServer = NULL;
     LWMsgTime timeout = { 30, 0 }; /* 30 seconds */
     PCSTR pszSmNotify = NULL;
     int notifyFd = -1;
@@ -989,7 +989,7 @@ SMBSrvExecute(
     dwError = IoIpcAddProtocolSpec(pProtocol);
     BAIL_ON_LWIO_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_server_new(pContext, pProtocol, &pServer));
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_new(pContext, pProtocol, &pServer));
     BAIL_ON_LWIO_ERROR(dwError);
 
     dwError = LwIoDaemonIpcAddDispatch(pServer);
@@ -998,30 +998,25 @@ SMBSrvExecute(
     dwError = IoIpcAddDispatch(pServer);
     BAIL_ON_LWIO_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_server_set_endpoint(
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_listen_endpoint(
                     pServer,
-                    LWMSG_SERVER_MODE_LOCAL,
+                    LWMSG_ENDPOINT_LOCAL,
                     LWIO_SERVER_FILENAME,
                     (S_IRWXU | S_IRWXG | S_IRWXO)));
     BAIL_ON_LWIO_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_server_set_max_clients(
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_set_max_listen_clients(
                     pServer,
                     512));
     BAIL_ON_LWIO_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_server_set_max_dispatch(
-                    pServer,
-                    10));
-    BAIL_ON_LWIO_ERROR(dwError);
-
-    dwError = MAP_LWMSG_STATUS(lwmsg_server_set_timeout(
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_set_timeout(
                     pServer,
                     LWMSG_TIMEOUT_IDLE,
                     &timeout));
     BAIL_ON_LWIO_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_server_start(pServer));
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_start_listen(pServer));
     BAIL_ON_LWIO_ERROR(dwError);
 
     if ((pszSmNotify = getenv("LIKEWISE_SM_NOTIFY")) != NULL)
@@ -1052,14 +1047,14 @@ cleanup:
 
     if (pServer)
     {
-        LWMsgStatus status2 = lwmsg_server_stop(pServer);
+        LWMsgStatus status2 = lwmsg_peer_stop_listen(pServer);
 
         if (status2)
         {
             LWIO_LOG_ERROR("Error stopping server. [Error code:%d]", status2);
         }
 
-        lwmsg_server_delete(pServer);
+        lwmsg_peer_delete(pServer);
     }
 
     if (pContext)

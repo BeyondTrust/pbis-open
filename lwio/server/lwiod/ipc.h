@@ -35,7 +35,7 @@ VOID XFoo(VOID);
 
 NTSTATUS
 LwIoDaemonIpcAddDispatch(
-    IN OUT LWMsgServer* pServer
+    IN OUT LWMsgPeer* pServer
     );
 
 #endif /* __IPC_H__ */
