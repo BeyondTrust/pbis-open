@@ -5,3 +5,12 @@ SUBDIRS="\
         export_dc_cache \
         set_log_level \
         get_log_info"
+
+configure()
+{
+    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
+    then
+        mk_skip_subdir set_log_level
+        mk_skip_subdir get_log_info
+    fi
+}
