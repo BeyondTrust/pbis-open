@@ -84,7 +84,7 @@ GetTrustedCertificates(
         int ret;
 
         /* Use lsass' kerberos credentials cache (machine credentials). */
-        error = LwKrb5SetDefaultCachePath(LSASS_CREDS_CACHE, NULL);
+        error = LwKrb5SetProcessDefaultCachePath(LSASS_CREDS_CACHE);
         BAIL_ON_LW_ERROR(error);
 
         /* Make sure the trusted certificate directory exists. */

@@ -80,7 +80,7 @@ LwAutoEnrollGetTemplateList(
         krbResult = krb5_cc_resolve(krbContext, credentialsCache, &krbCache);
         BAIL_ON_KRB_ERROR(krbResult, krbContext);
 
-        error = LwKrb5SetDefaultCachePath(credentialsCache, NULL);
+        error = LwKrb5SetThreadDefaultCachePath(credentialsCache, NULL);
         BAIL_ON_LW_ERROR(error);
     }
 
