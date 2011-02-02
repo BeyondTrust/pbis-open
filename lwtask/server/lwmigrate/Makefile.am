@@ -23,4 +23,4 @@ liblwmigrate_la_LIBADD = \
     @LWREG_LIBS@ \
     @KRB5_LIBS@
     
-liblwmigrate_la_LDFLAGS = -static
+liblwmigrate_la_LDFLAGS =

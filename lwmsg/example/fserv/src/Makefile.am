@@ -4,7 +4,7 @@ bin_PROGRAMS = fcat fsink
 
 AM_CPPFLAGS = @FSERV_CPPFLAGS@
 AM_CFLAGS = @FSERV_CFLAGS@ -Wall -Werror
-AM_LDFLAGS = @FSERV_LDFLAGS@ -static
+AM_LDFLAGS = @FSERV_LDFLAGS@
 
 libfservcommon_la_SOURCES = protocol.c
 libfservcommon_la_CPPFLAGS = $(AM_CPPFLAGS) $(LWMSG_CPPFLAGS)

@@ -15,4 +15,4 @@ libtaskrepository_la_CPPFLAGS = \
 libtaskrepository_la_LIBADD = \
     @SQLITE_LIBS@
     
-libtaskrepository_la_LDFLAGS = -static
+libtaskrepository_la_LDFLAGS =

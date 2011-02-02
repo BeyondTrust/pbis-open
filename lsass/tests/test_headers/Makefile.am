@@ -11,5 +11,5 @@ test_headers_SOURCES = \
     after.c \
     main.c
 
-test_headers_LDFLAGS = -static
+test_headers_LDFLAGS = 
 test_headers_LDADD = @top_builddir@/client/liblsaclient.la
