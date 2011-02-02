@@ -132,4 +132,10 @@ configure()
     else
         mk_output_file "etc/lwiod.reg"
     fi
+
+    mk_output_file etc/rdr.reg
+    mk_output_file etc/npfs.reg
+    mk_output_file etc/srv.reg
+    mk_output_file etc/pvfs.reg
+    mk_output_file etc/dfs.reg
 }

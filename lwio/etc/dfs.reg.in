@@ -1,0 +1,31 @@
+[HKEY_THIS_MACHINE\Services\dfs]
+"Description" = { 
+    default = "Likewise Distributed Filesystem" 
+    doc = "" 
+}
+"Path" = { 
+    default = "@providerdir@/libdfs.sys@MOD_EXT@" 
+    doc = "" 
+}
+"Arguments" = { 
+    default = "dfs" 
+    doc = "" 
+}
+"Environment" = { 
+    default = "" 
+    doc = "" 
+}
+"Dependencies" = { 
+    default = "lwio" 
+    doc = "" 
+}
+"Type" = { 
+    default = dword:00000003 
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\dfs]
+"Path" = { 
+    default = "@providerdir@/libdfs.sys@MOD_EXT@" 
+    doc = "" 
+}

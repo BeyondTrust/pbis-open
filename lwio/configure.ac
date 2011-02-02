@@ -830,6 +830,11 @@ AC_CONFIG_FILES([Makefile
         include/Makefile
         etc/Makefile
         etc/lwiod.reg
+        etc/rdr.reg
+        etc/npfs.reg
+        etc/srv.reg
+        etc/pvfs.reg
+        etc/dfs.reg
         utils/Makefile
 	common/Makefile
         logging_r/Makefile
