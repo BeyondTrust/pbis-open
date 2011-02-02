@@ -18,7 +18,7 @@
     doc = ""
 }
 "Dependencies" = {
-    default = "netlogon lwio lwreg rdr npfs"
+    default = "netlogon lwio lwreg rdr @EXTRA_SERVICE_DEPS@"
     doc = ""
 }
 "Type" = {

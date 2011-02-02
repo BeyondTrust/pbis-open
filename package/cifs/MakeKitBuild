@@ -2,6 +2,24 @@ MODULES="package-deb package-rpm"
 
 configure()
 {
+    case "$LW_FEATURE_LEVEL" in
+        auth)
+            mk_export PRIMARY_SERVICE=lsass
+            ;;
+        full)
+            mk_export PRIMARY_SERVICE=srvsvc
+            ;;
+    esac
+
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            mk_export IS_EMBEDDED="yes"
+            ;;
+        *)
+            mk_export IS_EMBEDDED="no"
+            ;;
+    esac
+
     if mk_deb_enabled
     then
         mk_export PKG_DEB_NAME="${LW_VENDOR}-${LW_PRODUCT}-cifs"

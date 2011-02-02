@@ -1,5 +1,42 @@
 SUBDIRS="include common pstore logging_r client interop server tools etc"
 
+option()
+{
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            _default_BUILTIN="yes"
+            _default_PROVIDERS="ad"
+            _default_RPC="no"
+            ;;
+        *)
+            _default_BUILTIN="no"
+            _default_PROVIDERS="ad local"
+            _default_RPC="yes"
+            ;;
+    esac
+
+    mk_option \
+        OPTION=lsa-builtin-providers \
+        VAR=LSA_BUILTIN_PROVIDERS \
+        PARAM="yes|no" \
+        DEFAULT="$_default_BUILTIN" \
+        HELP="Build providers directly into service"
+
+    mk_option \
+        OPTION=lsa-providers \
+        VAR=LSA_PROVIDERS \
+        PARAM="..." \
+        DEFAULT="$_default_PROVIDERS" \
+        HELP="Enabled providers (ad, local)"
+
+    mk_option \
+        OPTION=lsa-rpc-servers \
+        VAR=LSA_RPC_SERVERS \
+        PARAM="yes|no" \
+        DEFAULT="$_default_RPC" \
+        HELP="Enable RPC servers"
+}
+
 configure()
 {
     mk_config_header "include/config.h"
@@ -93,6 +130,29 @@ configure()
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
     mk_define CONFIGDIR "\"$MK_SYSCONFDIR\""
 
+    if [ "$LSA_BUILTIN_PROVIDERS" = "yes" ]
+    then
+        mk_define ENABLE_STATIC_PROVIDERS
+        for _prov in ${LSA_PROVIDERS}
+        do
+            case "$_prov" in
+                "ad") mk_define ENABLE_AD;;
+                "local") mk_define ENABLE_LOCAL;;
+            esac
+        done
+    fi
+
+    EXTRA_SERVICE_DEPS=""
+
+    if [ "$LSA_RPC_SERVERS" = "no" ]
+    then
+        mk_define DISABLE_RPC_SERVERS
+    else
+        EXTRA_SERVICE_DEPS="$EXTRA_SERVICE_DEPS npfs"
+    fi
+
+    mk_export EXTRA_SERVICE_DEPS
+
     # FIXME
     mk_define COMPONENT_VERSION "\"5.0.0.0\""
     mk_define __LW_MOTD_FILE__ "\"/etc/motd\""
@@ -117,6 +177,9 @@ configure()
 	gssapi.h ldap.h lw/base.h lwadvapi.h openssl/md4.h \
         openssl/rc4.h
 
+    mk_check_headers \
+        eventlog.h
+
     mk_check_types \
         HEADERDEPS="procfs.h sys/procfs.h" \
         "struct psinfo"
@@ -129,6 +192,9 @@ configure()
 	FAIL=yes \
 	lwbase_nothr lwbase lwadvapi_nothr lwadvapi \
 	lwmsg_nothr lwmsg pam sqlite3
+
+    mk_check_libraries \
+        eventlog
 
     mk_check_functions \
 	HEADERDEPS="ctype.h" \
@@ -198,6 +264,11 @@ configure()
         mk_define HAVE_NONLIBPTHREAD_MUTEX_LOCK
     else
         mk_msg_result "no"
+    fi
+
+    if [ "$HAVE_LIB_EVENTLOG" != "no" -a "$HAVE_EVENTLOG_H" != "no" ]
+    then
+        mk_define ENABLE_EVENTLOG
     fi
 
     mk_output_file include/lsaregdef.h

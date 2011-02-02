@@ -42,12 +42,24 @@ make()
        pwdcache.c                \
        ioctl.c"
 
-    mk_dlo \
-	DLO=liblsass_auth_provider_ad_open \
-	SOURCES="$AD_SOURCES" \
-	CPPFLAGS="-DLW_ENABLE_THREADS=1" \
-	INCLUDEDIRS="join/include ../../include ../../../include" \
-	HEADERDEPS="lw/base.h lwadvapi.h lwnet.h uuid/uuid.h openssl/rc4.h reg/regutil.h" \
-	LIBDEPS="lsacommon lsapstore lsaserverapi sqlite3" \
-	GROUPS="join/lsajoin"
+    if [ "$LSA_BUILTIN_PROVIDERS" = "yes" ]
+    then
+        mk_group \
+            GROUP="ad" \
+	    SOURCES="$AD_SOURCES" \
+	    CPPFLAGS="-DLW_ENABLE_THREADS=1" \
+	    INCLUDEDIRS="join/include ../../include ../../../include" \
+	    HEADERDEPS="lw/base.h lwadvapi.h lwnet.h uuid/uuid.h openssl/rc4.h reg/regutil.h" \
+	    LIBDEPS="lsacommon lsapstore lsaserverapi sqlite3" \
+	    GROUPDEPS="join/lsajoin"
+    else
+        mk_dlo \
+	    DLO=liblsass_auth_provider_ad_open \
+	    SOURCES="$AD_SOURCES" \
+	    CPPFLAGS="-DLW_ENABLE_THREADS=1" \
+	    INCLUDEDIRS="join/include ../../include ../../../include" \
+	    HEADERDEPS="lw/base.h lwadvapi.h lwnet.h uuid/uuid.h openssl/rc4.h reg/regutil.h" \
+	    LIBDEPS="lsacommon lsapstore lsaserverapi sqlite3" \
+	    GROUPS="join/lsajoin"
+    fi
 }

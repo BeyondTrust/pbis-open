@@ -7,13 +7,11 @@ make()
        auth_provider.c \
        config.c        \
        credentials.c   \
-       event.c         \
        globals.c       \
        ipc_dispatch.c  \
        ipc_error.c     \
        ipc_state.c     \
        lsacfg_reg.c    \
-       lsaevent.c      \
        lsatime.c       \
        loginfo.c       \
        machinepwdinfo.c \
@@ -31,6 +29,11 @@ make()
        parse_name.c    \
        svc_listen.c"
 
+    if [ "$HAVE_LIB_EVENTLOG" != "no" -a "$HAVE_EVENTLOG_H" != "no" ]
+    then
+        API_SOURCES="$API_SOURCES event.c lsaevent.c"
+    fi
+
     mk_library \
 	LIB=lsaserverapi \
 	SOURCES="$API_SOURCES" \
@@ -38,5 +41,5 @@ make()
 	CPPFLAGS="-DLW_ENABLE_THREADS" \
 	INCLUDEDIRS=". ../include ../../include" \
 	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h dce/rpc.h" \
-	LIBDEPS="uuid eventlog $LIB_PTHREAD $LIB_RT"
+	LIBDEPS="uuid $LIB_EVENTLOG $LIB_PTHREAD $LIB_RT"
 }

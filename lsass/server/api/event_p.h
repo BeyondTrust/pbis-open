@@ -47,6 +47,7 @@
 #ifndef __EVENT_P_H__
 #define __EVENT_P_H__
 
+#ifdef ENABLE_EVENTLOG
 typedef struct _EVENT_LOG_RECORD_QUEUE
 {
     size_t sCapacity;
@@ -132,5 +133,68 @@ DWORD
 LsaSrvQueueEvent(
     PEVENT_LOG_RECORD pEvent
     );
+#else
+
+static inline
+VOID
+LsaSrvWriteLoginSuccessEvent(  
+    HANDLE hServer,
+    PCSTR  pszProvider,
+    PCSTR  pszLoginId,
+    PCSTR  pszPamSource,
+    DWORD  dwFlags,
+    DWORD  dwLoginPhase,
+    DWORD  dwErrCode
+    )
+{
+}
+
+static inline
+VOID
+LsaSrvWriteLoginFailedEvent(
+    HANDLE hServer,
+    PCSTR  pszProvider,
+    PCSTR  pszLoginId,
+    PCSTR  pszPamSource,
+    DWORD  dwFlags,
+    DWORD  dwLoginPhase,
+    DWORD  dwErrCode
+    )
+{
+}
+
+static inline
+VOID
+LsaSrvWriteLogoutSuccessEvent(
+    HANDLE hServer,
+    PCSTR  pszProvider,
+    DWORD  dwLoginPhase,
+    PCSTR  pszLoginId
+    )
+{
+}
+
+static inline
+VOID
+LsaSrvWriteUserPWChangeSuccessEvent(
+    HANDLE hServer,
+    PCSTR  pszProvider,
+    PCSTR  pszLoginId
+    )
+{
+}
+
+static inline
+VOID
+LsaSrvWriteUserPWChangeFailureEvent(
+    HANDLE hServer,
+    PCSTR  pszProvider,
+    PCSTR  pszLoginId,
+    DWORD  dwErrCode
+    )
+{
+}
+
+#endif
 
 #endif /* __EVENT_P_H__ */

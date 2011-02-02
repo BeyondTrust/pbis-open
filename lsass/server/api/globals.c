@@ -65,8 +65,10 @@ LSA_SRV_API_CONFIG gAPIConfig = {0};
 PLW_MAP_SECURITY_CONTEXT gpLsaSecCtx;
 
 // Do not directly access this. Use gEventLogState
+#ifdef ENABLE_EVENTLOG
 EVENT_LOG_RECORD_QUEUE gEventLogQueues[2] = { {0}, {0} };
 EVENTLOG_THREAD_STATE gEventLogState = { (pthread_t)(size_t)-1, PTHREAD_COND_INITIALIZER, 0, PTHREAD_MUTEX_INITIALIZER, &gEventLogQueues[0] };
+#endif
 
 DWORD
 LsaSrvApiInit(
@@ -115,9 +117,10 @@ LsaSrvApiInit(
     dwError = LsaSrvInitAuthProviders(pStaticProviders);
     BAIL_ON_LSA_ERROR(dwError);
 
+#ifndef DISABLE_RPC_SERVERS
     dwError = LsaSrvInitRpcServers();
     BAIL_ON_LSA_ERROR(dwError);
-
+#endif
 
 cleanup:
 

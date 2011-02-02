@@ -56,7 +56,9 @@
 #include <lw/base.h>
 #include <reg/reg.h>
 
+#ifdef HAVE_EVENTLOG_H
 #include <eventlog.h>
+#endif
 
 #include "lsadef.h"
 #include "lwmem.h"

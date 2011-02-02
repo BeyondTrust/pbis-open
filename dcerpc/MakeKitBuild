@@ -2,52 +2,64 @@ SUBDIRS=". libdcethread idl_compiler include uuid idl_lib ncklib dcelib rpcd"
 
 option()
 {
+    case "$LW_FEATURE_LEVEL" in
+        full)
+            _default_FULL=yes
+            _default_AUTH=yes
+            ;;
+        auth)
+            _default_FULL=no
+            _default_AUTH=yes
+            ;;
+    esac
+        
+
     mk_option \
         OPTION=rpc-ncacn \
         VAR=ENABLE_NCACN \
-        DEFAULT="yes" \
+        DEFAULT="$_default_AUTH" \
         HELP="Enable ncacn RPC protocol sequences"
 
     mk_option \
         OPTION=rpc-ncadg \
         VAR=ENABLE_NCADG \
-        DEFAULT="yes" \
+        DEFAULT="$_default_FULL" \
         HELP="Enable ncadg RPC protocol sequences"
 
     mk_option \
         OPTION=rpc-ip \
         VAR=ENABLE_IP \
-        DEFAULT="yes" \
+        DEFAULT="$_default_FULL" \
         HELP="Enable TCP/IP RPC support"
     
     mk_option \
         OPTION=rpc-np \
         VAR=ENABLE_NP \
-        DEFAULT="yes" \
+        DEFAULT="$_default_AUTH" \
         HELP="Enable SMB named pipe RPC support"
 
     mk_option \
         OPTION=rpc-http \
         VAR=ENABLE_HTTP \
-        DEFAULT="yes" \
+        DEFAULT="$_default_FULL" \
         HELP="Enable RPCHTTP support"
     
     mk_option \
         OPTION=rpc-gss \
         VAR=ENABLE_GSS \
-        DEFAULT="yes" \
+        DEFAULT="$_default_FULL" \
         HELP="Enable GSS RPC authentication support"
     
     mk_option \
         OPTION=rpc-schannel \
         VAR=ENABLE_SCHANNEL \
-        DEFAULT="yes" \
+        DEFAULT="$_default_FULL" \
         HELP="Enable schannel RPC authentication support"
 
     mk_option \
         OPTION=rpc-ntlmssp \
         VAR=ENABLE_NTLMSSP \
-        DEFAULT="yes" \
+        DEFAULT="$_default_FULL" \
         HELP="Enable NTLMSSP RPC authentication support"
 }
 
@@ -204,7 +216,13 @@ configure()
     # Required libraries
     mk_check_libraries \
         FAIL=yes \
-        lwioclient schannel curl
+        lwioclient
+
+    # Schannel
+    if [ "$ENABLE_SCHANNEL" = "yes" ]
+    then
+        mk_check_libraries FAIL=yes schannel
+    fi
 
     # Curl
     if [ "$ENABLE_HTTP" = "yes" ]
@@ -293,6 +311,11 @@ configure()
     mk_output_file include/dce/marshall.h
     mk_output_file idl_compiler/sysdep.h
     mk_output_file rpcd/dcerpcd.reg
+
+    if [ "$LW_DEVICE_PROFILE" = "embedded" ]
+    then
+        mk_skip_subdir rpcd
+    fi
 }
 
 make()
@@ -300,7 +323,7 @@ make()
     mk_system "build"
 
     mk_autotools \
-            SOURCEDIR=flex-2.5.4 \
+        SOURCEDIR=flex-2.5.4 \
         TARGETS="flex-2.5.4_build_${MK_BUILD_PRIMARY_ISA}/flex" \
         INSTALL=no
 }

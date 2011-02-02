@@ -40,8 +40,11 @@ This package provides files for developing against the Likewise APIs
 case "$1" in
     1)
     ## New install
-    %{_bindir}/domainjoin-cli configure --enable pam
-    %{_bindir}/domainjoin-cli configure --enable nsswitch
+    if [ "@IS_EMBEDDED@" = "no" ]
+    then
+        %{_bindir}/domainjoin-cli configure --enable pam
+        %{_bindir}/domainjoin-cli configure --enable nsswitch
+    fi
 
     ## chkconfig behaves differently on various updates of RHEL and SUSE
     ## So, we massage the init script according to the release, for now.
@@ -138,7 +141,7 @@ case "$1" in
     /etc/init.d/lwsmd reload
     sleep 2
     %{_bindir}/lwsm stop lwreg
-    %{_bindir}/lwsm start srvsvc
+    %{_bindir}/lwsm start @PRIMARY_SERVICE@
     ;;
 
 esac
@@ -146,9 +149,11 @@ esac
 %preun
 if [ "$1" = 0 ]; then
     ## Be paranoid about cleaning up
-    %{_bindir}/domainjoin-cli leave
-    %{_bindir}/domainjoin-cli configure --disable pam
-    %{_bindir}/domainjoin-cli configure --disable nsswitch
+    if [ "@IS_EMBEDDED@" = "no" ]
+    then
+        %{_bindir}/domainjoin-cli configure --disable pam
+        %{_bindir}/domainjoin-cli configure --disable nsswitch
+    fi
 
     %{_bindir}/lwsm stop lwreg
     /etc/init.d/lwsmd stop

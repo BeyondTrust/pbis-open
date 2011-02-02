@@ -260,6 +260,7 @@ LsaSrvLogDuplicateObjectFoundEvent(
     DWORD dwErrCode
     );
 
+#ifdef ENABLE_EVENTLOG
 DWORD
 LsaSrvStartEventLoggingThread(
     VOID
@@ -338,6 +339,56 @@ LsaSrvLogFailureAuditEvent(
     PCSTR  pszDescription,
     PCSTR  pszData
     );
+#else
+
+static inline
+VOID
+LsaSrvLogServiceSuccessEvent(
+    DWORD dwEventID,
+    PCSTR pszEventCategory,
+    PCSTR pszDescription,
+    PCSTR pszData
+    )
+{
+}
+
+static inline
+VOID
+LsaSrvLogServiceFailureEvent(
+    DWORD dwEventID,
+    PCSTR pszEventCategory,
+    PCSTR pszDescription,
+    PCSTR pszData
+    )
+{
+}
+
+static inline
+DWORD
+LsaSrvLogWarningEvent(
+    DWORD  dwEventID,
+    PCSTR  pszUser,
+    PCSTR  pszCategory,
+    PCSTR  pszDescription,
+    PCSTR  pszData
+    )
+{
+    return 0;
+}
+
+static inline
+VOID
+LsaSrvLogServiceWarningEvent(
+    DWORD dwEventID,
+    PCSTR pszEventCategory,
+    PCSTR pszDescription,
+    PCSTR pszData
+    )
+{
+}
+
+
+#endif
 
 DWORD
 LsaSrvFlushSystemCache(

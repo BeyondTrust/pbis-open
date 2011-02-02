@@ -59,7 +59,6 @@
 #include <openssl/des.h>
 #include <sqlite3.h>
 #include <uuid/uuid.h>
-#include <eventlog.h>
 #include <lwnet.h>
 #include <lwio/lwio.h>
 #include <reg/lwreg.h>

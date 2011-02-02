@@ -54,10 +54,10 @@
 #include <reg/lwntreg.h>
 #include <lwmsg/lwmsg.h>
 
-#include <lwnet.h>
 #include <lwerror.h>
 #include <lwdscache.h>
 #include <lw/base.h>
+#include <lwnet.h>
 
 #include "lwiodef.h"
 #include "lwioutils.h"

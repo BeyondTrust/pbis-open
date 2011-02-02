@@ -207,6 +207,11 @@ AC_SUBST(ENABLE_NSS_ENUM_DEFAULT_DWORD)
 AC_DEFINE_UNQUOTED([MOD_EXT], ["$MOD_EXT"], [Extension of shared modules])
 AC_DEFINE_UNQUOTED([ENABLE_NSS_ENUM_DEFAULT], ["$ENABLE_NSS_ENUM_DEFAULT"], [Default value for nss enumeration option])
 
+EXTRA_SERVICE_DEPS="npfs"
+AC_SUBST(EXTRA_SERVICE_DEPS)
+
+AC_DEFINE_UNQUOTED([ENABLE_EVENTLOG], [], [Enable eventlog])
+
 # Package version
 
 AC_ARG_WITH([version],
@@ -806,6 +811,7 @@ AC_CHECK_HEADERS([security/pam_appl.h], ,
     [AC_CHECK_HEADERS([pam/pam_appl.h], ,
         [AC_MSG_ERROR([No PAM header files found])])])
 AC_CHECK_HEADERS([execinfo.h sys/regset.h])
+AC_CHECK_HEADERS([eventlog.h])
 
 AC_PATH_PROG([IDL], [dceidl], [no], [$PATH:$DCERPC_PATH])
 

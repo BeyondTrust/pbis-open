@@ -1,5 +1,49 @@
 SUBDIRS="include utils ipc logging_r common libshareinfo client server drivers tools fuse etc tests"
 
+option()
+{
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            _default_BUILTIN_DRIVERS="yes"
+            ;;
+        *)
+            _default_BUILTIN_DRIVERS="no"
+            ;;
+    esac
+
+    case "$LW_FEATURE_LEVEL" in
+        auth)
+            _default_DRIVERS="rdr"
+            _default_FUSE="no"
+            ;;
+        *)
+            _default_DRIVERS="rdr npfs pvfs srv"
+            _default_FUSE="yes"
+            ;;
+    esac  
+
+    mk_option \
+        OPTION=lwio-fuse \
+        VAR=LWIO_FUSE \
+        PARAM="yes|no" \
+        DEFAULT="$_default_FUSE" \
+        HELP="Enable building fuse module"
+
+    mk_option \
+        OPTION=lwio-drivers \
+        VAR=LWIO_DRIVERS \
+        PARAM=... \
+        DEFAULT="$_default_DRIVERS" \
+        HELP="Enabled drivers"
+
+    mk_option \
+        OPTION=lwio-builtin-drivers \
+        VAR=LWIO_BUILTIN_DRIVERS \
+        PARAM="yes|no" \
+        DEFAULT="$_default_BUILTIN_DRIVERS" \
+        HELP="Build drivers directly into service"
+}
+
 configure()
 {
     mk_config_header \
@@ -27,6 +71,16 @@ configure()
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
     mk_define LIBDIR "\"${MK_LIBDIR}\""
     mk_define PREFIXDIR "\"${MK_PREFIX}\""
+
+    if [ "$LWIO_BUILTIN_DRIVERS" = "yes" ]
+    then
+        mk_define ENABLE_STATIC_DRIVERS
+        
+        for _driver in ${LWIO_DRIVERS}
+        do
+            mk_define "ENABLE_`echo $_driver | tr 'a-z' 'A-Z'`"
+        done
+    fi
 
     # FIXME: do a real configure test here
     mk_define HAVE_SOCKLEN_T 1
@@ -116,7 +170,7 @@ configure()
 
     lw_check_pthread_once_init
 
-    if [ "$HAVE_FUSE_H" != "no" -a "$HAVE_LIB_FUSE" != "no" ]
+    if [ "$HAVE_FUSE_H" != "no" -a "$HAVE_LIB_FUSE" != "no" -a "$LWIO_FUSE" = "yes" ]
     then
         mk_msg "build FUSE module: yes"
     else

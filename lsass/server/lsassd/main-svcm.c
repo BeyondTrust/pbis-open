@@ -50,18 +50,14 @@
 #include "lwnet.h"
 #include "lw/base.h"
 #include "lwdscache.h"
-#include "eventlog.h"
 #include "lsasrvutils.h"
-
-/* Needed for dcethread_fork() */
-#include <dce/dcethread.h>
 
 #ifdef ENABLE_STATIC_PROVIDERS
 #ifdef ENABLE_AD
-extern DWORD LsaInitializeProvider_ActiveDirectory(PCSTR*, PLSA_PROVIDER_FUNCTION_TABLE_2*);
+extern DWORD LsaInitializeProvider_ActiveDirectory(PCSTR*, PLSA_PROVIDER_FUNCTION_TABLE*);
 #endif
 #ifdef ENABLE_LOCAL
-extern DWORD LsaInitializeProvider_Local(PCSTR*, PLSA_PROVIDER_FUNCTION_TABLE_2*);
+extern DWORD LsaInitializeProvider_Local(PCSTR*, PLSA_PROVIDER_FUNCTION_TABLE*);
 #endif
 
 static LSA_STATIC_PROVIDER gStaticProviders[] =
@@ -118,8 +114,10 @@ LsaSvcmStart(
     dwError = LsaSrvStartupPreCheck();
     BAIL_ON_LSA_ERROR(dwError);
 
+#ifdef ENABLE_EVENTLOG
     dwError = LsaSrvStartEventLoggingThread();
     BAIL_ON_LSA_ERROR(dwError);
+#endif
 
     /* Start NTLM IPC server before we initialize providers
        because the providers might end up attempting to use
@@ -153,7 +151,9 @@ LsaSvcmStop(
     LsaSrvApiShutdown();
     NtlmClientIpcShutdown();
     LSA_LOG_INFO("LSA Service exiting...");
+#ifdef ENABLE_EVENTLOG
     LsaSrvStopEventLoggingThread();
+#endif
     LsaShutdownTracing_r();
 
     return STATUS_SUCCESS;

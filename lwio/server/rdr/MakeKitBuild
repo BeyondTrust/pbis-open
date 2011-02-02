@@ -38,11 +38,21 @@ make()
         dfs2.c                \
         path.c"
     
-    mk_dlo \
-        DLO=librdr.sys \
-        SOURCES="$RDR_SOURCES" \
-        INCLUDEDIRS=". ../include ../../include" \
-        HEADERDEPS="openssl/md5.h lw/base.h lwnet.h" \
-        LIBDEPS="lwiosmbcommon iomgr lwnetclientapi" \
-        SYMFILE="rdr.sym"
+    if [ "$LWIO_BUILTIN_DRIVERS" = "yes" ]
+    then
+        mk_group \
+            GROUP="rdr" \
+            SOURCES="$RDR_SOURCES" \
+            INCLUDEDIRS=". ../include ../../include" \
+            HEADERDEPS="openssl/md5.h lw/base.h lwnet.h" \
+            LIBDEPS="lwiosmbcommon iomgr lwnetclientapi"
+    else
+        mk_dlo \
+            DLO=librdr.sys \
+            SOURCES="$RDR_SOURCES" \
+            INCLUDEDIRS=". ../include ../../include" \
+            HEADERDEPS="openssl/md5.h lw/base.h lwnet.h" \
+            LIBDEPS="lwiosmbcommon iomgr lwnetclientapi" \
+            SYMFILE="rdr.sym"
+    fi
 }

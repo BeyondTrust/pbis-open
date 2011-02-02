@@ -2146,6 +2146,7 @@ AD_PostJoinDomain(
                   &pState);
     BAIL_ON_LSA_ERROR(dwError);
 
+#ifndef DISABLE_RPC_SERVERS
     if (pState->bIsDefault)
     {
         dwError = LsaEnableDomainGroupMembership(
@@ -2153,6 +2154,7 @@ AD_PostJoinDomain(
                       pState->pszDomainSID);
         BAIL_ON_LSA_ERROR(dwError);
     }
+#endif
 
 error:
 
@@ -2400,6 +2402,7 @@ AD_PreLeaveDomain(
     }
     BAIL_ON_LSA_ERROR(dwError);
 
+#ifndef DISABLE_RPC_SERVERS
     if (pState->bIsDefault)
     {
         dwError = LsaDisableDomainGroupMembership(
@@ -2407,6 +2410,7 @@ AD_PreLeaveDomain(
                       pState->pszDomainSID);
         BAIL_ON_LSA_ERROR(dwError);
     }
+#endif
 
 error:
 
@@ -2714,10 +2718,12 @@ AD_SetDefaultDomain(
         bInLockState = FALSE;
     }
 
+#ifndef DISABLE_RPC_SERVERS
     dwError = LsaEnableDomainGroupMembership(
                   pState->pszDomainName,
                   pState->pszDomainSID);
     BAIL_ON_LSA_ERROR(dwError);
+#endif
 
 cleanup:
 

@@ -50,7 +50,6 @@
 #include "lwnet.h"
 #include "lw/base.h"
 #include "lwdscache.h"
-#include "eventlog.h"
 #include "lsasrvutils.h"
 
 /* Needed for dcethread_fork() */
@@ -157,8 +156,10 @@ lsassd_main(
     dwError = LsaSrvStartupPreCheck();
     BAIL_ON_LSA_ERROR(dwError);
 
+#ifdef ENABLE_EVENTLOG
     dwError = LsaSrvStartEventLoggingThread();
     BAIL_ON_LSA_ERROR(dwError);
+#endif
 
 #ifdef ENABLE_PIDFILE
     LsaSrvCreatePIDFile();
@@ -229,7 +230,9 @@ cleanup:
 
     LSA_LOG_INFO("LSA Service exiting...");
 
+#ifdef ENABLE_EVENTLOG
     dwError = LsaSrvStopEventLoggingThread();
+#endif
 
     LsaSrvSetProcessExitCode(dwError);
 

@@ -29,6 +29,20 @@ option()
         VAR=LW_CONFIGDIR \
         DEFAULT="${_default_configdir}" \
         HELP="Location of registry files"
+
+    mk_option \
+        OPTION=lw-device-profile \
+        VAR=LW_DEVICE_PROFILE \
+        PARAM="profile" \
+        DEFAULT="default" \
+        HELP="Device profile (default, embedded)"
+
+    mk_option \
+        OPTION=lw-feature-level \
+        VAR=LW_FEATURE_LEVEL \
+        PARAM="level" \
+        DEFAULT="full" \
+        HELP="Feature level (full, auth)"
 }
 
 configure()

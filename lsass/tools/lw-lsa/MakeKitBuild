@@ -87,10 +87,13 @@ make()
 	HEADERDEPS="lwadvapi.h" \
 	LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr"
 
-    for COMMAND in ${COMMAND_NAMES}
-    do
-        mk_symlink \
-            LINK="${MK_BINDIR}/lw-${COMMAND}" \
-            TARGET="lw-lsa"
-    done
+    if [ "$LW_DEVICE_PROFILE" != "embedded" ]
+    then
+        for COMMAND in ${COMMAND_NAMES}
+        do
+            mk_symlink \
+                LINK="${MK_BINDIR}/lw-${COMMAND}" \
+                TARGET="lw-lsa"
+        done
+    fi
 }
