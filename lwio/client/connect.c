@@ -42,7 +42,7 @@ LwIoConnectionAcquireCall(
     BAIL_ON_NT_STATUS(status);
 
     status = NtIpcLWMsgStatusToNtStatus(
-        lwmsg_client_acquire_call(
+        lwmsg_peer_acquire_call(
             connection.pClient,
             ppCall));
     BAIL_ON_NT_STATUS(status);

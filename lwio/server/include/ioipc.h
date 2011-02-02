@@ -52,7 +52,7 @@ IoIpcAddProtocolSpec(
 
 NTSTATUS
 IoIpcAddDispatch(
-    IN OUT LWMsgServer* pServer
+    IN OUT LWMsgPeer* pServer
     );
 
 #endif /* __IO_IPC_H__ */

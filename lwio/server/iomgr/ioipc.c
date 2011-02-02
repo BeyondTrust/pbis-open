@@ -1174,13 +1174,13 @@ IoIpcAddProtocolSpec(
 
 NTSTATUS
 IoIpcAddDispatch(
-    IN OUT LWMsgServer* pServer
+    IN OUT LWMsgPeer* pServer
     )
 {
     NTSTATUS status = 0;
     int EE = 0;
 
-    status = NtIpcLWMsgStatusToNtStatus(lwmsg_server_add_dispatch_spec(
+    status = NtIpcLWMsgStatusToNtStatus(lwmsg_peer_add_dispatch_spec(
                     pServer,
                     gIopIpcDispatchSpec));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);

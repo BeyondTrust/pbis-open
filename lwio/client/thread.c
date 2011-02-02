@@ -30,7 +30,7 @@
 
 #include "includes.h"
 
-static LWMsgClient* gpClient = NULL;
+static LWMsgPeer* gpClient = NULL;
 static LWMsgSession* gpSession = NULL;
 static PIO_CREDS gpProcessCreds = NULL;
 static pthread_mutex_t gLock = PTHREAD_MUTEX_INITIALIZER;
