@@ -1132,6 +1132,11 @@ LsaAdBatchResolveObjectsForDomainList(
         dwObjectsCount += pEntry->dwBatchItemCount;
     }
 
+    if (!dwObjectsCount)
+    {
+        goto error;
+    }
+
     dwError = LwAllocateMemory(
                 dwObjectsCount * sizeof(*ppObjects),
                 (PVOID*)&ppObjects);
@@ -1167,33 +1172,41 @@ LsaAdBatchResolveObjectsForDomainList(
     LSA_ASSERT(dwCurrentIndex <= dwObjectsCount);
 
     // Compress the output
-    if (dwCurrentIndex < dwObjectsCount)
+    if (dwCurrentIndex == 0)
     {
-        PLSA_SECURITY_OBJECT* ppTempObjects = NULL;
+        ADCacheSafeFreeObjectList(dwObjectsCount, &ppObjects);
+        dwObjectsCount = 0;
+    }
+    else
+    {
+        if (dwCurrentIndex < dwObjectsCount)
+        {
+            PLSA_SECURITY_OBJECT* ppTempObjects = NULL;
 
-        dwError = LwAllocateMemory(
-                    dwCurrentIndex * sizeof(*ppTempObjects),
-                    (PVOID*)&ppTempObjects);
-        BAIL_ON_LSA_ERROR(dwError);
+            dwError = LwAllocateMemory(
+                        dwCurrentIndex * sizeof(*ppTempObjects),
+                        (PVOID*)&ppTempObjects);
+            BAIL_ON_LSA_ERROR(dwError);
 
-        memcpy(ppTempObjects, ppObjects, sizeof(*ppObjects) * dwCurrentIndex);
-        LwFreeMemory(ppObjects);
-        ppObjects = ppTempObjects;
-        dwObjectsCount = dwCurrentIndex;
+            memcpy(ppTempObjects, ppObjects, sizeof(*ppObjects) * dwCurrentIndex);
+            LwFreeMemory(ppObjects);
+            ppObjects = ppTempObjects;
+            dwObjectsCount = dwCurrentIndex;
+        }
+    }
+
+error:
+
+    if (dwError)
+    {
+        ADCacheSafeFreeObjectList(dwObjectsCount, &ppObjects);
+        dwObjectsCount = 0;
     }
 
     *pdwObjectsCount = dwObjectsCount;
     *pppObjects = ppObjects;
 
-cleanup:
     return dwError;
-
-error:
-    *pdwObjectsCount = 0;
-    *pppObjects = NULL;
-
-    ADCacheSafeFreeObjectList(dwObjectsCount, &ppObjects);
-    goto cleanup;
 }
 
 static
