@@ -2,10 +2,28 @@ MODULES="package-deb package-rpm"
 
 configure()
 {
+    case "$LW_FEATURE_LEVEL" in
+        auth)
+            mk_export PRIMARY_SERVICE=lsass
+            ;;
+        full)
+            mk_export PRIMARY_SERVICE=srvsvc
+            ;;
+    esac
+
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            mk_export IS_EMBEDDED="yes"
+            ;;
+        *)
+            mk_export IS_EMBEDDED="no"
+            ;;
+    esac
+
     if mk_deb_enabled
     then
         mk_export PKG_DEB_NAME="likewise-open-cifs"
-        mk_export PKG_DEB_VERSION="${LW_VERSION}-1"
+        mk_export PKG_DEB_VERSION="${LW_VERSION}-0"
         mk_export PKG_DEB_DATE="`date -R`"
     fi
 
@@ -13,6 +31,7 @@ configure()
     then
         mk_export PKG_RPM_NAME="likewise-open-cifs"
         mk_export PKG_RPM_VERSION="${LW_VERSION}"
+        mk_export PKG_RPM_RELEASE="0"
 
         PKG_RPM_COMPAT="0"
 
@@ -93,10 +112,14 @@ common_files()
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lwsm-loader/*${MK_DLO_EXT}" \
         "/etc/init.d/*" \
-        "/etc/krb5.conf.default" \
         "${MK_SYSCONFDIR}/*" \
         "/${MK_LIBDIR##*/}/security/pam_lsass${MK_DLO_EXT}" \
         "/${MK_LIBDIR##*/}/libnss_lsass${MK_DLO_EXT}.*"
+
+    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
+    then
+        mk_package_files "${MK_LIBDIR}/lw-svcm/*${MK_DLO_EXT}"
+    fi
 
     if [ "$MK_DLO_EXT" != "$MK_LIB_EXT" ]
     then
@@ -130,6 +153,7 @@ common_files_compat()
     mk_compat_do
         mk_package_files \
             "${MK_LIBDIR}/*${MK_LIB_EXT}" \
+            "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
             "/${MK_LIBDIR##*/}/security/pam_lsass${MK_DLO_EXT}" \
             "/${MK_LIBDIR##*/}/libnss_lsass${MK_DLO_EXT}.*"
 

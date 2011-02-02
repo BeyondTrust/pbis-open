@@ -4,10 +4,12 @@ export PATH=$PATH:@MK_BINDIR@
 
 case "$1" in
     remove)
-    ## Be paranoid about cleaning up
-	domainjoin-cli leave
-	domainjoin-cli configure --disable pam
-	domainjoin-cli configure --disable nsswitch
+        ## Be paranoid about cleaning up
+        if [ "@IS_EMBEDDED@" = "no" ]
+        then
+	    domainjoin-cli configure --disable pam
+	    domainjoin-cli configure --disable nsswitch
+        fi
 	
 	/etc/init.d/lwsmd stop
 	;;

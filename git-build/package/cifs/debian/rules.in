@@ -77,7 +77,7 @@ binary-arch: build install
 #	dh_installinfo
 	dh_installman
 	dh_link
-	dh_strip
+	if [ "@MK_DEBUG@" = "no" ]; then dh_strip; fi
 	dh_compress
 	dh_fixperms
 	dh_perl

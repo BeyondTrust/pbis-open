@@ -10,8 +10,11 @@ case "$1" in
 	;;
     
     configure)
-	domainjoin-cli configure --enable pam >/dev/null
-	domainjoin-cli configure --enable nsswitch >/dev/null
+        if [ "@IS_EMBEDDED@" = "no" ]
+        then
+	    domainjoin-cli configure --enable pam >/dev/null
+	    domainjoin-cli configure --enable nsswitch >/dev/null
+        fi
 	
 	if [ -z "`pidof lwsmd`" ]; then
             /etc/init.d/lwsmd start
@@ -23,11 +26,11 @@ case "$1" in
 	lwsm start lwreg
 	for file in "@LW_CONFIGDIR@/"*.reg; do
 	    echo "Importing $file..."
-            lwregshell upgrade $file >/dev/null
+            lwregshell import $file >/dev/null
 	done
 	/etc/init.d/lwsmd reload
         sleep 2
-	lwsm start srvsvc
+        lwsm start @PRIMARY_SERVICE@
 	;;
 esac
 
