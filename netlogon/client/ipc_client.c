@@ -80,11 +80,10 @@ LWNetOpenServerOnce(
     dwError = MAP_LWMSG_ERROR(lwmsg_peer_new(NULL, gContext.pProtocol, &gContext.pClient));
     BAIL_ON_LWNET_ERROR(dwError);
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_peer_add_listen_endpoint(
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_add_connect_endpoint(
                                   gContext.pClient, 
                                   LWMSG_CONNECTION_MODE_LOCAL,
-                                  LWNET_CACHE_DIR "/" LWNET_SERVER_FILENAME,
-                                  0666));
+                                  LWNET_CACHE_DIR "/" LWNET_SERVER_FILENAME));
 
     BAIL_ON_LWNET_ERROR(dwError);
 
