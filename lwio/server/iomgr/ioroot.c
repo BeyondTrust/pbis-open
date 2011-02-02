@@ -511,6 +511,8 @@ IopRootParse(
         pDevice = pFileName->RootFileHandle->pDevice;
         IopDeviceReference(pDevice);
 
+        remainingPath = pFileName->Name;
+
         status = STATUS_SUCCESS;
         GOTO_CLEANUP_EE(EE);
     }
