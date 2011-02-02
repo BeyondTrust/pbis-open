@@ -252,6 +252,7 @@ function main
             RUN=echo
             RUNSUFFIX="&&"
             OPT_PRODUCT="$OPT_PRODUCT --show"
+            OPT_PRODUCT_EXPERIMENTAL="$OPT_PRODUCT_EXPERIMENTAL --show"
             shift
             ;;
         *)
@@ -282,7 +283,6 @@ function main
             mkproduct ${OPT_PRODUCT} --type "${PKG_TYPE_LIST}" ${products}
             exit_on_error $?
 
-            echo "Building Experimental Start"
             if [ -n "${BUILD_PRODUCTS_EXPERIMENTAL}" ]
             then
                 if [ -z "${OPTIONS_PRODUCT_EXPERIMENTAL_SKIP}" ]
@@ -290,12 +290,10 @@ function main
                     mkproduct ${OPT_PRODUCT_EXPERIMENTAL} --type "${PKG_TYPE_LIST}" ${BUILD_PRODUCTS_EXPERIMENTAL}
                 fi
             fi
-            echo "Building Experimental End"
         else
             mkproduct ${OPT_PRODUCT} ${products}
             exit_on_error $?
 
-            echo "Building Experimental Start"
             if [ -n "${BUILD_PRODUCTS_EXPERIMENTAL}" ]
             then
                 if [ -z "${OPTIONS_PRODUCT_EXPERIMENTAL_SKIP}" ]
@@ -303,7 +301,6 @@ function main
                     mkproduct ${OPT_PRODUCT_EXPERIMENTAL} ${BUILD_PRODUCTS_EXPERIMENTAL}
                 fi
             fi
-            echo "Building Experimental End"
         fi
         if ! [ -n "${OPT_NOTEST}" ]
         then
