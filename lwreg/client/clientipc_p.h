@@ -55,7 +55,7 @@
 typedef struct __REG_CLIENT_CONNECTION_CONTEXT
 {
     LWMsgProtocol* pProtocol;
-    LWMsgClient* pClient;
+    LWMsgPeer* pClient;
     LWMsgSession* pSession;
 } REG_CLIENT_CONNECTION_CONTEXT, *PREG_CLIENT_CONNECTION_CONTEXT;
 

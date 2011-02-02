@@ -52,7 +52,7 @@
 
 static LWMsgContext* gpContext = NULL;
 static LWMsgProtocol* gpProtocol = NULL;
-static LWMsgServer* gpServer = NULL;
+static LWMsgPeer* gpServer = NULL;
 
 static
 LWMsgBool
@@ -150,50 +150,45 @@ RegSrvStartListenThread(
     BAIL_ON_REG_ERROR(dwError);
 
     /* Set up IPC server object */
-    dwError = MAP_LWMSG_ERROR(lwmsg_server_new(gpContext, gpProtocol, &gpServer));
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_new(gpContext, gpProtocol, &gpServer));
     BAIL_ON_REG_ERROR(dwError);
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_server_add_dispatch_spec(
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_add_dispatch_spec(
                               gpServer,
                               RegSrvGetDispatchSpec()));
     BAIL_ON_REG_ERROR(dwError);
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_server_set_endpoint(
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_add_listen_endpoint(
                               gpServer,
                               LWMSG_CONNECTION_MODE_LOCAL,
                               pszCommPath,
                               0666));
     BAIL_ON_REG_ERROR(dwError);
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_server_set_max_dispatch(
-                                  gpServer,
-                                  MAX_DISPATCH));
-    BAIL_ON_REG_ERROR(dwError);
-
-    dwError = MAP_LWMSG_ERROR(lwmsg_server_set_max_clients(
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_set_max_listen_clients(
                                   gpServer,
                                   MAX_CLIENTS));
     BAIL_ON_REG_ERROR(dwError);
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_server_set_max_backlog(
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_set_max_listen_backlog(
                                   gpServer,
                                   REG_MAX(5, MAX_CLIENTS / 4)));
     BAIL_ON_REG_ERROR(dwError);
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_server_set_timeout(
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_set_timeout(
                                   gpServer,
                                   LWMSG_TIMEOUT_IDLE,
                                   &idleTimeout));
     BAIL_ON_REG_ERROR(dwError);
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_server_set_session_functions(
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_set_listen_session_functions(
                                   gpServer,
                                   RegSrvIpcConstructSession,
                                   RegSrvIpcDestructSession,
                                   NULL));
     BAIL_ON_REG_ERROR(dwError);
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_server_start(gpServer));
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_start_listen(gpServer));
 
 error:
 
@@ -204,8 +199,8 @@ error:
     {
         if (gpServer)
         {
-            lwmsg_server_stop(gpServer);
-            lwmsg_server_delete(gpServer);
+            lwmsg_peer_stop_listen(gpServer);
+            lwmsg_peer_delete(gpServer);
             gpServer = NULL;
         }
     }
@@ -223,7 +218,7 @@ RegSrvStopListenThread(
 
     if (gpServer)
     {
-        dwError = MAP_LWMSG_ERROR(lwmsg_server_stop(gpServer));
+        dwError = MAP_LWMSG_ERROR(lwmsg_peer_stop_listen(gpServer));
         BAIL_ON_REG_ERROR(dwError);
     }
 
@@ -231,7 +226,7 @@ error:
 
     if (gpServer)
     {
-        lwmsg_server_delete(gpServer);
+        lwmsg_peer_delete(gpServer);
         gpServer = NULL;
     }
 

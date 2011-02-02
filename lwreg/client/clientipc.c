@@ -213,7 +213,7 @@ RegIpcAcquireCall(
     NTSTATUS status = 0;
     PREG_CLIENT_CONNECTION_CONTEXT pContext = hConnection;
 
-    status = MAP_LWMSG_ERROR(lwmsg_client_acquire_call(pContext->pClient, ppCall));
+    status = MAP_LWMSG_ERROR(lwmsg_peer_acquire_call(pContext->pClient, ppCall));
     BAIL_ON_NT_STATUS(status);
 
 error:
