@@ -1205,11 +1205,6 @@ LsaUmpModifyUser(
 
     LSA_LOG_DEBUG("LSA User Manager - requesting user modify %u", uUid);
 
-    dwError = LwAllocateMemory(
-                  sizeof(*pRequest),
-                  (PVOID*)&pRequest);
-    BAIL_ON_LSA_ERROR(dwError);
-
     // We're going to update our credential now instead of waiting on the
     // thread.  We have the new uid and/or password... get the username by
     // finding the current (now old) credential.
@@ -1228,6 +1223,11 @@ LsaUmpModifyUser(
             &NewCredHandle);
         BAIL_ON_LSA_ERROR(dwError);
 
+        dwError = LwAllocateMemory(
+                      sizeof(*pRequest),
+                      (PVOID*)&pRequest);
+        BAIL_ON_LSA_ERROR(dwError);
+
         pRequest->CredHandle = NewCredHandle;
         NewCredHandle = NULL;
 
@@ -1240,6 +1240,8 @@ LsaUmpModifyUser(
             Handle,
             pRequest);
         BAIL_ON_LSA_ERROR(dwError);
+
+        pRequest = NULL;
     }
     else
     {
@@ -1251,14 +1253,15 @@ cleanup:
     LsaReleaseCredential(&OldCredHandle);
 
     LsaReleaseCredential(&NewCredHandle);
-    return dwError;
-
-error:
 
     if ( pRequest )
     {
         LsaUmpFreeRequest(pRequest);
     }
+
+    return dwError;
+
+error:
 
     goto cleanup;
 }
