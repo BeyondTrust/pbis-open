@@ -20,7 +20,10 @@ defaults()
 
 option()
 {
-    case "${MK_HOST_OS}" in
+    case "${MK_HOST_OS}-${LW_FEATURE_LEVEL}" in
+        *-auth)
+            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl popt"
+            ;;
         linux)
             default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl"
             ;;
@@ -56,20 +59,51 @@ option()
                 ;;
         esac
     done
+
+    mk_option \
+        OPTION="use-service-containers" \
+        PARAM="yes|no" \
+        VAR="LW_USE_SERVICE_CONTAINERS" \
+        DEFAULT="$_default_USE_SERVICE_CONTAINERS" \
+        HELP="Use service containers"
 }
 
 configure()
 {
-    mk_export LW_VERSION="6.1.0"
+    mk_export LW_VERSION="6.2.0"
     mk_export LW_BUNDLED
     
     mk_msg "configuring Likewise Open $LW_VERSION"
     mk_msg "using bundled libraries: $LW_BUNDLED"
 
+    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
+    then
+        mk_multiarch_do
+            MK_CPPFLAGS="$MK_CPPFLAGS -DLW_SERVICE_CONTAINERS"
+        mk_multiarch_done
+    fi
+
     for comp in ${LW_ALL_BUNDLED}
     do
         lw_use_bundled "$comp" || mk_skip_subdir "$comp"
     done
+
+    case "$LW_FEATURE_LEVEL" in
+        auth)
+            mk_skip_subdir libschannel
+            mk_skip_subdir srvsvc
+            mk_skip_subdir lwnetapi
+            mk_skip_subdir lwtools
+            ;;
+    esac
+
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            mk_skip_subdir eventlog
+            mk_skip_subdir domainjoin
+            mk_skip_subdir centutils
+            ;;
+    esac
 }
 
 make()
@@ -133,6 +167,8 @@ lw_print_features()
         lw_print_feature "Host system" "$MK_HOST_OS ($MK_HOST_ISAS)"
     fi
 
+    lw_print_feature "Device profile" "$LW_DEVICE_PROFILE"
+    lw_print_feature "Feature level" "$LW_FEATURE_LEVEL"
     lw_print_feature "Bundled libraries" "$LW_BUNDLED"
 
     mk_get_export lwbase THREADPOOL_BACKEND
@@ -141,16 +177,19 @@ lw_print_features()
     mk_get_export lwbase HAVE_PTHREAD_ATTR_SETAFFINITY_NP
     lw_print_feature "Threadpool CPU affinity" "$result"
 
-    mk_get_export lwio HAVE_LIB_FUSE
-    [ "$result" != "no" ] && result=yes
-    lw_print_feature "FUSE support" "$result"
+    if [ "$LW_FEATURE_LEVEL" != "auth" ]
+    then
+        mk_get_export lwio HAVE_LIB_FUSE
+        [ "$result" != "no" ] && result=yes
+        lw_print_feature "FUSE support" "$result"
+        
+        mk_get_export lwio HAVE_LIB_ATTR
+        [ "$result" != "no" ] && result=yes
+        lw_print_feature "EA support" "$result"
 
-    mk_get_export lwio HAVE_LIB_ATTR
-    [ "$result" != "no" ] && result=yes
-    lw_print_feature "EA support" "$result"
-
-    mk_get_export domainjoin DJ_GUI_INTERFACE
-    lw_print_feature "Domain join GUI" "$result"
+        mk_get_export domainjoin DJ_GUI_INTERFACE
+        lw_print_feature "Domain join GUI" "$result"
+    fi
 
     types=""
 
