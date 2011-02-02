@@ -39,7 +39,7 @@
 #include "includes.h"
 
 static LWMsgProtocol* gpProtocol = NULL;
-static LWMsgClient* gpClient = NULL;
+static LWMsgPeer* gpClient = NULL;
 static pthread_once_t gOnce = ONCE_INIT;
 static DWORD gOnceError = 0;
 
@@ -59,10 +59,10 @@ __LwSmIpcCallInit(
                                    LwSmIpcGetProtocolSpec()));
     BAIL_ON_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_client_new(NULL, gpProtocol, &gpClient));
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_new(NULL, gpProtocol, &gpClient));
     BAIL_ON_ERROR(dwError);
     
-    dwError = MAP_LWMSG_STATUS(lwmsg_client_set_endpoint(
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_connect_endpoint(
                                    gpClient, 
                                    LWMSG_CONNECTION_MODE_LOCAL,
                                    SM_ENDPOINT));
@@ -78,7 +78,7 @@ error:
     
     if (gpClient)
     {
-        lwmsg_client_delete(gpClient);
+        lwmsg_peer_delete(gpClient);
     }
     
     if (gpProtocol)
@@ -110,7 +110,7 @@ LwSmIpcAcquireCall(
     dwError = LwSmIpcCallInit();
     BAIL_ON_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_client_acquire_call(gpClient, ppCall));
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_acquire_call(gpClient, ppCall));
     BAIL_ON_ERROR(dwError);
 
 error:

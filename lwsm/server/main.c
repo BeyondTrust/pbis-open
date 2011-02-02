@@ -43,7 +43,7 @@ static struct
     PLW_THREAD_POOL pPool;
     LWMsgContext* pIpcContext;
     LWMsgProtocol* pIpcProtocol;
-    LWMsgServer* pIpcServer;
+    LWMsgPeer* pIpcServer;
     BOOLEAN bStartAsDaemon;
     BOOLEAN bNotified;
     int notifyPipe[2];
@@ -758,7 +758,7 @@ LwSmStopIpcServer(
 
     if (gState.pIpcServer)
     {
-        dwError = MAP_LWMSG_STATUS(lwmsg_server_stop(gState.pIpcServer));
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_stop_listen(gState.pIpcServer));
         BAIL_ON_ERROR(dwError);
     }
 
@@ -766,7 +766,7 @@ cleanup:
 
     if (gState.pIpcServer)
     {
-        lwmsg_server_delete(gState.pIpcServer);
+        lwmsg_peer_delete(gState.pIpcServer);
     }
 
     if (gState.pIpcProtocol)
