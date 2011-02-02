@@ -16,8 +16,6 @@ make()
         lwmsg/security.h \
         lwmsg/common.h \
         lwmsg/session.h \
-        lwmsg/client.h \
-        lwmsg/server.h \
         lwmsg/archive.h"
 
     mk_headers HEADERS="$LWMSG_HEADERS" MASTER="lwmsg/lwmsg.h"

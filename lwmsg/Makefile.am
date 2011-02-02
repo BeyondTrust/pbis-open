@@ -52,8 +52,6 @@ lwmsg_include_HEADERS = \
 	include/lwmsg/security.h \
 	include/lwmsg/common.h \
 	include/lwmsg/session.h \
-	include/lwmsg/client.h \
-	include/lwmsg/server.h \
 	include/lwmsg/archive.h
 
 # src

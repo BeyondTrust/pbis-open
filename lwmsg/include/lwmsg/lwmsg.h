@@ -60,10 +60,6 @@
 
 #ifndef LWMSG_NO_THREADS
 #include <lwmsg/peer.h>
-#ifndef LWMSG_DISABLE_DEPRECATED
-#include <lwmsg/server.h>
-#include <lwmsg/client.h>
-#endif
 #endif
 
 #undef __LWMSG_INCLUDE_ENABLE__
