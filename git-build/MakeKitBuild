@@ -24,7 +24,7 @@ option()
         *-auth)
             default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl popt"
             ;;
-        linux)
+        linux-*)
             default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl"
             ;;
         *)
