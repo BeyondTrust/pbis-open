@@ -206,7 +206,7 @@ lwmsg_assoc_recv_message(
 
 /**
  * @ingroup assoc
- * @brief Send a message and receive a reply
+ * @brief Send a message and receive a reply [deprecated]
  *
  * This function sends a message and receives a reply in a single
  * operation.
@@ -219,6 +219,7 @@ lwmsg_assoc_recv_message(
  * @lwmsg_code{TIMEOUT, operation timed out}
  * @lwmsg_etc{implementation-specific failure}
  * @lwmsg_endstatus
+ * @deprecated use #lwmsg_assoc_send_message followed by #lwmsg_assoc_recv_message, or the call interface
  */
 LWMsgStatus
 lwmsg_assoc_send_message_transact(

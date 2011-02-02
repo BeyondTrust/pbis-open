@@ -75,7 +75,8 @@ empty_sender(void* _assoc)
     request_msg.tag = EMPTY_REQUEST;
     request_msg.data = NULL;
 
-    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message_transact(assoc, &request_msg, &reply_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message(assoc, &request_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &reply_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, reply_msg.tag, EMPTY_REPLY);
     MU_ASSERT_EQUAL(MU_TYPE_POINTER, reply_msg.data, NULL);
 
@@ -226,7 +227,8 @@ foo_sender(void* _assoc)
     request_msg.tag = FOO_REQUEST;
     request_msg.data = &request;
 
-    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message_transact(assoc, &request_msg, &reply_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message(assoc, &request_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &reply_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, reply_msg.tag, FOO_REPLY);
 
     reply = reply_msg.data;
@@ -541,7 +543,8 @@ auth_sender(void* _assoc)
 
     MU_TRY_ASSOC(assoc, lwmsg_assoc_connect(assoc, NULL));
 
-    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message_transact(assoc, &request_msg, &reply_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message(assoc, &request_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &reply_msg));
 
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, reply_msg.tag, AUTH_REPLY);
 
@@ -792,7 +795,8 @@ handle_sender(void* _assoc)
     MU_TRY_ASSOC(assoc, lwmsg_assoc_connect(assoc, NULL));
     MU_TRY_ASSOC(assoc, lwmsg_assoc_get_session(assoc, &session));
 
-    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message_transact(assoc, &request_msg, &reply_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message(assoc, &request_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &reply_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, reply_msg.tag, HANDLE_CREATE_REPLY);
 
     handle = reply_msg.data;
@@ -802,7 +806,8 @@ handle_sender(void* _assoc)
     request_msg.tag = HANDLE_GET_REQUEST;
     request_msg.data = &get_request;
 
-    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message_transact(assoc, &request_msg, &reply_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message(assoc, &request_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &reply_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, reply_msg.tag, HANDLE_GET_REPLY);
     
     get_reply = reply_msg.data;
@@ -816,7 +821,8 @@ handle_sender(void* _assoc)
     request_msg.tag = HANDLE_GET_REQUEST;
     request_msg.data = &get_request;
 
-    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message_transact(assoc, &request_msg, &reply_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message(assoc, &request_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &reply_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, reply_msg.tag, HANDLE_GET_REPLY);
     
     get_reply = reply_msg.data;
@@ -827,7 +833,8 @@ handle_sender(void* _assoc)
     request_msg.tag = HANDLE_DESTROY_REQUEST;
     request_msg.data = handle;
     
-    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message_transact(assoc, &request_msg, &reply_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message(assoc, &request_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &reply_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, reply_msg.tag, HANDLE_DESTROY_REPLY);
     destroy_reply = reply_msg.data;
     
@@ -1110,7 +1117,8 @@ fd_sender(void* _assoc)
     request_msg.tag = FD_REQUEST;
     request_msg.data = &request;
 
-    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message_transact(assoc, &request_msg, &reply_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message(assoc, &request_msg));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &reply_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, reply_msg.tag, FD_REPLY);
 
     reply = reply_msg.data;

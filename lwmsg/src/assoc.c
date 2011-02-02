@@ -46,33 +46,6 @@
 #include "data-private.h"
 #include "buffer-private.h"
 
-#ifdef LWMSG_DISABLE_DEPRECATED
-
-LWMsgStatus
-lwmsg_assoc_send(
-    LWMsgAssoc* assoc,
-    LWMsgTag type,
-    void* object
-    );
-
-LWMsgStatus
-lwmsg_assoc_recv(
-    LWMsgAssoc* assoc,
-    LWMsgTag* type,
-    void** object
-    );
-
-LWMsgStatus
-lwmsg_assoc_send_transact(
-    LWMsgAssoc* assoc,
-    LWMsgTag in_type,
-    void* in_object,
-    LWMsgTag* out_type,
-    void** out_object
-    );
-
-#endif
-
 static LWMsgStatus
 lwmsg_assoc_context_get_data(
     const char* key,

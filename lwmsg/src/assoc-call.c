@@ -78,7 +78,11 @@ lwmsg_assoc_call_dispatch(
     
     do
     {
-        status = lwmsg_assoc_send_message_transact(assoc, &request, &response);
+        status = lwmsg_assoc_send_message(assoc, &request);
+        if (status == LWMSG_STATUS_SUCCESS)
+        {
+            status = lwmsg_assoc_recv_message(assoc, &response);
+        }
 
         if (!retry && 
             (status == LWMSG_STATUS_PEER_RESET ||

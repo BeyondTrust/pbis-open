@@ -130,7 +130,8 @@ trivial_sender(void* _assocs)
     request_msg.tag = TRIVIAL_OPEN;
     request_msg.data = &request;
 
-    MU_TRY_ASSOC(assocs[0], lwmsg_assoc_send_message_transact(assocs[0], &request_msg, &reply_msg));
+    MU_TRY_ASSOC(assocs[0], lwmsg_assoc_send_message(assocs[0], &request_msg));
+    MU_TRY_ASSOC(assocs[0], lwmsg_assoc_recv_message(assocs[0], &reply_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, reply_msg.tag, TRIVIAL_OPEN_SUCCESS);
 
     handle = reply_msg.data;
@@ -146,7 +147,8 @@ trivial_sender(void* _assocs)
     request_msg.tag = TRIVIAL_CLOSE;
     request_msg.data = handle;
 
-    MU_TRY_ASSOC(assocs[1], lwmsg_assoc_send_message_transact(assocs[1], &request_msg, &reply_msg));
+    MU_TRY_ASSOC(assocs[1], lwmsg_assoc_send_message(assocs[1], &request_msg));
+    MU_TRY_ASSOC(assocs[1], lwmsg_assoc_recv_message(assocs[1], &reply_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, reply_msg.tag, TRIVIAL_CLOSE_SUCCESS);
 
     MU_TRY_ASSOC(assocs[0], lwmsg_assoc_close(assocs[0]));
