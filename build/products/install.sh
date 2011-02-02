@@ -1316,7 +1316,7 @@ do_postinstall()
     # Start service manager for normal usage
     ## Make sure service stuff is set up right on Solaris
     if type svccfg >/dev/null 2>&1; then
-        ssvccfg delete lwmsd > /dev/null 2>&1
+        svccfg delete lwmsd > /dev/null 2>&1
         svccfg import /etc/likewise/svcs-solaris/lwsmd.xml
         solaris_zones svccfg delete lwmsd
         solaris_zones svccfg import /etc/likewise/svcs-solaris/lwsmd.xml
