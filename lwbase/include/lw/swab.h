@@ -63,6 +63,19 @@
     (((LW_ULONG64)(_LW_SWAB32(((LW_ULONG64)(Value) & 0xFFFFFFFF00000000LL) >> 32))) | \
      (((LW_ULONG64)_LW_SWAB32(((LW_ULONG64)(Value) & 0x00000000FFFFFFFFLL))) << 32))
 
+#if defined(__LWI_SWAB_BE__)
+#ifndef WORDS_BIGENDIAN
+#define WORDS_BIGENDIAN
+#endif
+#elif defined(__LWI_SWAB_LE__)
+#undef WORDS_BIGENDIAN
+#else
+#error "ERROR: Unable to determine system byte order; forgot to include config.h?"
+#endif
+#if defined(__LWI_SWAB_LE__) && defined(__LWI_SWAB_BE__) 
+#error "ERROR: Impossible to be both big and little endian"
+#endif
+
 #if defined(WORDS_BIGENDIAN)
 #define LW_HTOL16(x) _LW_SWAB16(x)
 #define LW_HTOL32(x) _LW_SWAB32(x)

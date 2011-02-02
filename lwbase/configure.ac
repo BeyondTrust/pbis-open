@@ -147,6 +147,14 @@ AC_CHECK_HEADERS([sys/cpuset.h],,,[
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_BIGENDIAN
+if test "x$ac_cv_c_bigendian" = "xyes"; then
+    CPPFLAGS="$CPPFLAGS -DBYTE_ORDER=BIG_ENDIAN"
+    AC_DEFINE([__LWI_SWAB_BE__], [], [Define standard macro for Big Endian systems])
+else
+    AC_DEFINE([__LWI_SWAB_LE__], [], [Define standard macro for Little Endian systems])
+fi
+
+
 AC_CHECK_SIZEOF(wchar_t)
 
 # Check for cpu set type
