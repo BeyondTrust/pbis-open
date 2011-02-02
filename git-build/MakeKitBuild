@@ -111,6 +111,8 @@ configure()
             mk_skip_subdir eventlog
             mk_skip_subdir domainjoin
             mk_skip_subdir centutils
+            mk_skip_subdir lwconfig
+            mk_skip_subdir lwupgrade
             ;;
     esac
 }
