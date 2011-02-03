@@ -65,7 +65,7 @@ usage()
     --revision REV  -- source control revision (package name friendly form)
     --id ID         -- build number
     --config FILE   -- configuration file for MakeKit
-    --path PATH     -- prepend to PATH (DIR[:DIR2[:...]])
+    --tools PATH    -- build tools prefix
     --clean         -- clean the build output first
     --bootstrap     -- just do bootstrapping (do not build)
 "
@@ -83,7 +83,7 @@ do
         --revision) REVISION="$2"; shift 2;;
         --id) ID="$2"; shift 2;;
         --config) CONFIG="$2"; shift 2;;
-        --path) PATH="$2:$PATH"; shift 2;;
+        --tools) TOOLS="$2"; shift 2;;
         --clean) CLEAN="1"; shift;;
         --bootstrap) BOOTSTRAP="1"; CLEAN="1"; shift;;
         --help) usage;;
@@ -94,7 +94,16 @@ done
 
 check_params SOURCE_DIR BUILD_DIR DIST_DIR
 
-show export PATH="$PATH"
+if [ -n "$TOOLS" ]
+then
+    PATH="${TOOLS}/bin:$PATH"
+    EXTRA_CPPFLAGS="-I${TOOLS}/include"
+    EXTRA_LDFLAGS="-L${TOOLS}/lib"
+fi
+  
+export PATH
+
+echo "+ PATH=$PATH"
 
 [ -n "$CONFIG" ] && CONFIG_PARAM="@$SOURCE_DIR/build/mk-config/$CONFIG"
 [ -n "$REVISION" ] && REVISION_PARAM="--build-revision=$REVISION"
@@ -108,7 +117,9 @@ fi
 show mkdir -p "${BUILD_DIR}"
 show cd "$BUILD_DIR"
 
-show "${SOURCE_DIR}/configure" ${CONFIG_PARAM} ${REVISION_PARAM} ${ID_PARAM}
+show "${SOURCE_DIR}/configure" \
+    ${CONFIG_PARAM} ${REVISION_PARAM} ${ID_PARAM} \
+    CPPFLAGS="$EXTRA_CPPFLAGS" LDFLAGS="$EXTRA_LDFLAGS"
 
 if [ -n "$BOOTSTRAP" ]
 then
