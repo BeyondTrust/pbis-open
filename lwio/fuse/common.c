@@ -684,6 +684,7 @@ LwIoFuseCreateAccessTokenForOwner(
     TOKEN_USER user = {{0}};
     TOKEN_OWNER owner = {0};
     TOKEN_GROUPS groups = {0};
+    TOKEN_PRIVILEGES privileges = {0};
     TOKEN_PRIMARY_GROUP primaryGroup = {0};
     TOKEN_DEFAULT_DACL dacl = {0};
 
@@ -693,6 +694,7 @@ LwIoFuseCreateAccessTokenForOwner(
         &pOwnerToken,
         &user,
         &groups,
+	&privileges,
         &owner,
         &primaryGroup,
         &dacl,
@@ -729,6 +731,7 @@ LwIoFuseCreateAccessTokenForGroup(
     TOKEN_USER user = {{0}};
     TOKEN_OWNER owner = {0};
     TOKEN_GROUPS groups = {0};
+    TOKEN_PRIVILEGES privileges = {0};
     TOKEN_PRIMARY_GROUP primaryGroup = {0};
     TOKEN_DEFAULT_DACL dacl = {0};
 
@@ -738,6 +741,7 @@ LwIoFuseCreateAccessTokenForGroup(
         &pGroupToken,
         &user,
         &groups,
+	&privileges,
         &owner,
         &primaryGroup,
         &dacl,
@@ -773,6 +777,7 @@ LwIoFuseCreateAccessTokenForOther(
     TOKEN_USER user = {{0}};
     TOKEN_OWNER owner = {0};
     TOKEN_GROUPS groups = {0};
+    TOKEN_PRIVILEGES privileges = {0};
     TOKEN_PRIMARY_GROUP primaryGroup = {0};
     TOKEN_DEFAULT_DACL dacl = {0};
 
@@ -785,6 +790,7 @@ LwIoFuseCreateAccessTokenForOther(
         &pOtherToken,
         &user,
         &groups,
+	&privileges,
         &owner,
         &primaryGroup,
         &dacl,
