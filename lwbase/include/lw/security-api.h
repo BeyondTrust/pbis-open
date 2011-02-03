@@ -1,3 +1,7 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
+
 /*
  * Copyright (c) Likewise Software.  All rights Reserved.
  *
@@ -278,13 +282,15 @@ RtlCopyPrivilegeSet(
 ///
 /// Copy a privilege set to allocated buffer of specified length.
 ///
-/// @param[in] DestinationPrivilegeSetLength - Length of the destination PRIVILEGE_SET
+/// @param[in] DestinationPrivilegeSetLength - Length of the destination
+/// PRIVILEGE_SET
 /// @param[out] DestinationPrivilegeSet - The PRIVILEGE_SET to copy to
 /// @param[in] SourcePrivilegeSet - The PRIVILEGE_SET to copy from
 ///
 /// @return NTSTATUS
 ///   @arg STATUS_SUCCESS on success
-///   @arg STATUS_BUFFER_TOO_SMALL if the destination buffer length is too small
+///   @arg STATUS_BUFFER_TOO_SMALL if the destination buffer length is
+///   too small
 ///
 
 
@@ -584,9 +590,7 @@ RtlCreateAccessToken(
     OUT PACCESS_TOKEN* AccessToken,
     IN PTOKEN_USER User,
     IN PTOKEN_GROUPS Groups,
-#if 0
-    IN PTOKEN_PRIVILEGES Privileges
-#endif
+    IN PTOKEN_PRIVILEGES Privileges,
     IN PTOKEN_OWNER Owner,
     IN PTOKEN_PRIMARY_GROUP PrimaryGroup,
     IN PTOKEN_DEFAULT_DACL DefaultDacl,
@@ -666,6 +670,28 @@ RtlSelfRelativeAccessTokenToAccessToken(
     ULONG ulRelativeSize,
     PACCESS_TOKEN* ppToken
     );
+
+BOOLEAN
+RtlPrivilegeCheck(
+   IN OUT PPRIVILEGE_SET RequiredPrivileges,
+   IN PACCESS_TOKEN AccessToken
+   );
+///<
+/// Check required privileges.
+///
+/// Check if RequiredPrivileges are available in AccessToken. If a privilege
+/// is in access token and is enabled (SE_PRIVILEGE_ENABLED) it gets
+/// SE_PRIVILEGE_USED_FOR_ACCESS flag set in Attributes field.
+///
+/// @param[in,out] RequiredPrivileges - The required set of privileges to be
+/// checked
+/// @param[in] AccessToken - An access token checked for the required privileges
+///
+/// @return BOOLEAN result of the privilege check.
+///    @arg TRUE if required privileges are enabled in AccessToken
+///    @arg FALSE otherwise
+///
+
 
 //
 // SID <-> String Conversion Functions
@@ -769,15 +795,3 @@ RtlGetSecurityInformationFromSddlCString(
 LW_END_EXTERN_C
 
 #endif /* __LWBASE_SECURITY_API_H__ */
-
-
-
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
-

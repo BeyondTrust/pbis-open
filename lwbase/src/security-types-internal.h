@@ -1,3 +1,7 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
+
 /*
  * Copyright (c) Likewise Software.  All rights Reserved.
  *
@@ -109,9 +113,9 @@ typedef struct _ACCESS_TOKEN {
     // TOKEN_GROUPS:
     ULONG GroupCount;
     PSID_AND_ATTRIBUTES Groups;
-#if 0
-    TOKEN_PRIVILEGES Privileges;
-#endif
+    // TOKEN_PRIVILEGES:
+    ULONG PrivilegeCount;
+    PLUID_AND_ATTRIBUTES Privileges;
     // TOKEN_OWNER:
     PSID Owner;
     // TOKEN_PRIMARY_GROUP:
@@ -140,9 +144,9 @@ typedef struct _ACCESS_TOKEN_SELF_RELATIVE {
     // TOKEN_GROUPS:
     ULONG GroupCount;
     ULONG GroupsOffset;
-#if 0
-    TOKEN_PRIVILEGES Privileges;
-#endif
+    // TOKEN_PRIVILEGES:
+    ULONG PrivilegeCount;
+    ULONG PrivilegesOffset;
     // TOKEN_OWNER:
     ULONG OwnerOffset;
     // TOKEN_PRIMARY_GROUP:

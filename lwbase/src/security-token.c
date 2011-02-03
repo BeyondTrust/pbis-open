@@ -1,3 +1,7 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
+
 /*
  * Copyright (c) Likewise Software.  All rights Reserved.
  *
@@ -93,6 +97,7 @@ RtlCreateAccessToken(
     OUT PACCESS_TOKEN* AccessToken,
     IN PTOKEN_USER User,
     IN PTOKEN_GROUPS Groups,
+    IN PTOKEN_PRIVILEGES Privileges,
     IN PTOKEN_OWNER Owner,
     IN PTOKEN_PRIMARY_GROUP PrimaryGroup,
     IN PTOKEN_DEFAULT_DACL DefaultDacl,
@@ -195,7 +200,17 @@ RtlCreateAccessToken(
         status = RtlSafeAddULONG(&requiredSize, requiredSize, size);
         GOTO_CLEANUP_ON_STATUS(status);
     }
-    
+
+#if 0
+    status = RtlSafeMultiplyULONG(&size,
+                                  sizeof(Privileges->Privileges[0]),
+                                  Privileges->PrivilegeCount);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = RtlSafeAddULONG(&requiredSize, requiredSize, size);
+    GOTO_CLEANUP_ON_STATUS(status);
+#endif
+
     status = RTL_ALLOCATE(&token, ACCESS_TOKEN, requiredSize);
     GOTO_CLEANUP_ON_STATUS(status);
 
@@ -223,6 +238,17 @@ RtlCreateAccessToken(
                                   Groups->Groups[i].Sid,
                                   RtlLengthSid(Groups->Groups[i].Sid));
     }
+
+#if 0
+    token->PrivilegeCount = Privileges->PrivilegeCount;
+    token->Privileges = (PLUID_AND_ATTRIBUTES) location;
+    location = LwRtlOffsetToPointer(
+                location,
+                sizeof(Privileges->Privileges[0]) * Privileges->PrivilegeCount);
+    memcpy(token->Privileges,
+           Privileges->Privileges,
+           sizeof(token->Privileges[0]) * token->PrivilegeCount);
+#endif
 
     if (Owner->Owner)
     {
@@ -356,6 +382,16 @@ RtlQueryAccessTokenInformation(
                 GOTO_CLEANUP_ON_STATUS(status);
             }
             break;
+        case TokenPrivileges:
+            status = RtlSafeMultiplyULONG(
+                            &requiredSize,
+                            sizeof(AccessToken->Privileges[0]),
+                            AccessToken->PrivilegeCount);
+            GOTO_CLEANUP_ON_STATUS(status);
+
+            status = RtlSafeAddULONG(&requiredSize, requiredSize, sizeof(TOKEN_PRIVILEGES));
+            GOTO_CLEANUP_ON_STATUS(status);
+            break;
         case TokenOwner:
             status = RtlSafeAddULONG(
                             &requiredSize,
@@ -424,6 +460,21 @@ RtlQueryAccessTokenInformation(
                 location = RtlpAppendData(location,
                                           AccessToken->Groups[i].Sid,
                                           RtlLengthSid(AccessToken->Groups[i].Sid));
+            }
+            break;
+        }
+        case TokenPrivileges:
+        {
+            PTOKEN_PRIVILEGES tokenInfo = (PTOKEN_PRIVILEGES) TokenInformation;
+            location = LW_PTR_ADD(TokenInformation,
+                                  (sizeof(TOKEN_PRIVILEGES) +
+                                   (sizeof(AccessToken->Privileges[0]) * AccessToken->PrivilegeCount)));
+            tokenInfo->PrivilegeCount = AccessToken->PrivilegeCount;
+            if (AccessToken->PrivilegeCount)
+            {
+                memcpy(tokenInfo->Privileges,
+                       AccessToken->Privileges,
+                       sizeof(tokenInfo->Privileges[0]) * tokenInfo->PrivilegeCount);
             }
             break;
         }
@@ -884,6 +935,12 @@ RtlAccessTokenRelativeSize(
         }
     }
 
+    if (pToken->Privileges)
+    {
+        ulRelativeSize += sizeof(pToken->Privileges[0]) * pToken->PrivilegeCount;
+        Align32(&ulRelativeSize);
+    }
+
     if (pToken->Owner)
     {
         ulRelativeSize += RtlLengthSid(pToken->Owner);
@@ -932,6 +989,7 @@ RtlAccessTokenToSelfRelativeAccessToken(
         pRelative->Flags = pToken->Flags;
         pRelative->User.Attributes = pToken->User.Attributes;
         pRelative->GroupCount = pToken->GroupCount;
+        pRelative->PrivilegeCount = pToken->PrivilegeCount;
         pRelative->Uid = pToken->Uid;
         pRelative->Gid = pToken->Gid;
         pRelative->Umask = pToken->Umask;
@@ -965,6 +1023,20 @@ RtlAccessTokenToSelfRelativeAccessToken(
             pRelative->GroupsOffset = 0;
         }
         
+        if (pToken->Privileges)
+        {
+            pRelative->PrivilegesOffset = ulOffset;
+            memcpy(pBuffer + ulOffset,
+                   pToken->Privileges,
+                   sizeof(pToken->Privileges[0]) * pToken->PrivilegeCount);
+            ulOffset += sizeof(pToken->Privileges[0]) * pToken->PrivilegeCount;
+            Align32(&ulOffset);
+        }
+        else
+        {
+            pRelative->PrivilegesOffset = 0;
+        }
+
         if (pToken->Owner)
         {
             pRelative->OwnerOffset = ulOffset;
@@ -1053,6 +1125,7 @@ RtlSelfRelativeAccessTokenToAccessToken(
     TOKEN_PRIMARY_GROUP PrimaryGroup = {0};
     TOKEN_UNIX Unix = {0};
     PTOKEN_GROUPS pTokenGroups = NULL;
+    PTOKEN_PRIVILEGES pTokenPrivileges = NULL;
     TOKEN_DEFAULT_DACL DefaultDacl = {0};
 
     status = CheckOffset(0, sizeof(*pRelative), ulRelativeSize);
@@ -1117,6 +1190,40 @@ RtlSelfRelativeAccessTokenToAccessToken(
         }
     }
 
+    ulOffset = pRelative->PrivilegesOffset;
+    if (ulOffset)
+    {
+        status = LwRtlSafeMultiplyULONG(
+            &ulSize,
+            sizeof(LUID_AND_ATTRIBUTES),
+            pRelative->PrivilegeCount);
+        GOTO_CLEANUP_ON_STATUS(status);
+
+        status = LwRtlSafeMultiplyULONG(
+            &ulRealSize,
+            sizeof(LUID_AND_ATTRIBUTES),
+            pRelative->PrivilegeCount);
+        GOTO_CLEANUP_ON_STATUS(status);
+
+        status = LwRtlSafeAddULONG(
+            &ulRealSize,
+            ulRealSize,
+            sizeof(TOKEN_PRIVILEGES));
+        GOTO_CLEANUP_ON_STATUS(status);
+
+        status = CheckOffset(ulOffset, ulSize, ulRelativeSize);
+        GOTO_CLEANUP_ON_STATUS(status);
+
+        status = RTL_ALLOCATE(&pTokenPrivileges, TOKEN_PRIVILEGES, ulRealSize);
+        GOTO_CLEANUP_ON_STATUS(status);
+
+        pTokenPrivileges->PrivilegeCount = pRelative->PrivilegeCount;
+        memcpy(pTokenPrivileges->Privileges,
+               pBuffer + ulOffset,
+               sizeof(LUID_AND_ATTRIBUTES) * pTokenPrivileges->PrivilegeCount);
+        
+    }
+
     ulOffset = pRelative->OwnerOffset;
     if (ulOffset)
     {
@@ -1141,6 +1248,7 @@ RtlSelfRelativeAccessTokenToAccessToken(
         ppToken,
         &User,
         pTokenGroups,
+        pTokenPrivileges,
         &Owner,
         &PrimaryGroup,
         &DefaultDacl,
@@ -1161,11 +1269,62 @@ cleanup:
 
 
 
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
+BOOLEAN
+RtlPrivilegeCheck(
+   IN OUT PPRIVILEGE_SET RequiredPrivileges,
+   IN PACCESS_TOKEN AccessToken
+   )
+{
+    PLUID_AND_ATTRIBUTES pPrivileges = AccessToken->Privileges;
+    ULONG privilegesNeeded = 0;
+    ULONG iAssigned = 0;
+    ULONG iRequired = 0;
+
+    privilegesNeeded = RequiredPrivileges->PrivilegeCount;
+    
+    for (iRequired = 0;
+         iRequired < RequiredPrivileges->PrivilegeCount;
+         iRequired++)
+    {
+        for (iAssigned = 0;
+             iAssigned < AccessToken->PrivilegeCount;
+             iAssigned++)
+        {
+            if (RtlEqualLuid(&RequiredPrivileges->Privilege[iRequired].Luid,
+                             &pPrivileges[iAssigned].Luid))
+            {
+                if (pPrivileges[iAssigned].Attributes & SE_PRIVILEGE_ENABLED)
+                {
+                    if (privilegesNeeded > 0)
+                    {
+                        privilegesNeeded--;
+                    }
+
+                    if (!(RequiredPrivileges->Control &
+                          PRIVILEGE_SET_ALL_NECESSARY))
+                    {
+                        // Turn off counting the privileges needed to grant
+                        // access. It's no longer necessary as at least one
+                        // of them has to be enabled and it's just been
+                        // found.
+                        privilegesNeeded = 0;
+                    }
+
+                    RequiredPrivileges->Privilege[iRequired].Attributes
+                        |= SE_PRIVILEGE_USED_FOR_ACCESS;
+                }
+                else if (RequiredPrivileges->Control &
+                         PRIVILEGE_SET_ALL_NECESSARY)
+                {
+                    // Further privilege check is pointless since all of
+                    // the privileges are required and one of them turns
+                    // out disabled.
+                    GOTO_CLEANUP();
+                }
+            }
+        }
+    }
+
+cleanup:
+    return (privilegesNeeded == 0);
+}

@@ -326,6 +326,7 @@ MU_TEST(Security, 0003_AccessCheck)
             SID_AND_ATTRIBUTES Groups[10];
         };
     } tokenGroupsUnion = { .tokenGroups = { 0 } };
+    TOKEN_PRIVILEGES tokenPrivileges = { 0 };
     TOKEN_OWNER tokenOwner = { 0 };
     TOKEN_PRIMARY_GROUP tokenPrimaryGroup = { 0 };
     TOKEN_DEFAULT_DACL tokenDefaultDacl = { 0 };
@@ -384,6 +385,7 @@ MU_TEST(Security, 0003_AccessCheck)
                     &token,
                     &tokenUser,
                     &tokenGroupsUnion.tokenGroups,
+                    &tokenPrivileges,
                     &tokenOwner,
                     &tokenPrimaryGroup,
                     &tokenDefaultDacl,
@@ -488,6 +490,7 @@ MU_TEST(Security, 0004_AccessMarshal)
             SID_AND_ATTRIBUTES Groups[10];
         };
     } tokenGroupsUnion = { .tokenGroups = { 0 } };
+    TOKEN_PRIVILEGES tokenPrivileges = { 0 };
     TOKEN_OWNER tokenOwner = { 0 };
     TOKEN_PRIMARY_GROUP tokenPrimaryGroup = { 0 };
     TOKEN_DEFAULT_DACL tokenDefaultDacl = { 0 };
@@ -530,6 +533,7 @@ MU_TEST(Security, 0004_AccessMarshal)
                     &token,
                     &tokenUser,
                     &tokenGroupsUnion.tokenGroups,
+                    &tokenPrivileges,
                     &tokenOwner,
                     &tokenPrimaryGroup,
                     &tokenDefaultDacl,

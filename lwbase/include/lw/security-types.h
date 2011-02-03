@@ -1,3 +1,7 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
+
 /*
  * Copyright (c) Likewise Software.  All rights Reserved.
  *
@@ -33,6 +37,7 @@
  *        Base Security Types
  *
  * Authors: Danilo Almeida (dalmeida@likewise.com)
+ *          Rafal Szczesniak (rafal@likewise.com)
  *
  */
 
@@ -1101,6 +1106,7 @@ typedef struct _LUID_AND_ATTRIBUTES {
 #define SE_PRIVILEGE_ENABLED_BY_DEFAULT   0x00000001
 #define SE_PRIVILEGE_ENABLED              0x00000002
 #define SE_PRIVILEGE_REMOVED              0x00000004
+#define SE_PRIVILEGE_USED_FOR_ACCESS      0x80000000
 
 #define _PRIVILEGE_SET_MAX_PRIVILEGE_COUNT 1000
 
@@ -1149,7 +1155,7 @@ typedef ULONG TOKEN_INFORMATION_CLASS, *PTOKEN_INFORMATION_CLASS;
 #define TokenNone           0 // sentinel
 #define TokenUser           1
 #define TokenGroups         2
-#define TokenPrivileges     3 // not implemented
+#define TokenPrivileges     3
 #define TokenOwner          4
 #define TokenPrimaryGroup   5
 #define TokenDefaultDacl    6
@@ -1160,7 +1166,7 @@ typedef ULONG TOKEN_INFORMATION_CLASS, *PTOKEN_INFORMATION_CLASS;
 #define TOKEN_INFORMATION_CLASS_NONE            0 // sentinel
 #define TOKEN_INFORMATION_CLASS_User            1
 #define TOKEN_INFORMATION_CLASS_Groups          2
-#define TOKEN_INFORMATION_CLASS_Privileges      3 // not implemented
+#define TOKEN_INFORMATION_CLASS_Privileges      3
 #define TOKEN_INFORMATION_CLASS_Owner           4
 #define TOKEN_INFORMATION_CLASS_PrimaryGroup    5
 #define TOKEN_INFORMATION_CLASS_DefaultDacl     6
@@ -1178,7 +1184,11 @@ typedef struct _TOKEN_GROUPS {
     SID_AND_ATTRIBUTES Groups[];
 } TOKEN_GROUPS, *PTOKEN_GROUPS;
 
-// TODO-TOKEN_PRIVILEGES?
+// Privileges for the user
+typedef struct _TOKEN_PRIVILEGES {
+    ULONG PrivilegeCount;
+    LUID_AND_ATTRIBUTES Privileges[];
+} TOKEN_PRIVILEGES, *PTOKEN_PRIVILEGES;
 
 // Default owner for created objects.
 typedef struct _TOKEN_OWNER {
@@ -1457,14 +1467,3 @@ cpp_quote("#endif")
 #endif
 
 #endif /* __LWBASE_SECURITY_TYPES_H__ */
-
-
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
-

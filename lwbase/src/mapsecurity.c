@@ -731,6 +731,7 @@ LwMapSecurityCreateExtendedAccessToken(
     OUT PACCESS_TOKEN* AccessToken,
     IN PTOKEN_USER User,
     IN PTOKEN_GROUPS Groups,
+    IN PTOKEN_PRIVILEGES Privileges,
     IN PTOKEN_OWNER Owner,
     IN PTOKEN_PRIMARY_GROUP PrimaryGroup,
     IN PTOKEN_DEFAULT_DACL DefaultDacl,
@@ -792,6 +793,7 @@ LwMapSecurityCreateExtendedAccessToken(
                     &accessToken,
                     User,
                     extendedGroups,
+                    Privileges,
                     Owner,
                     PrimaryGroup,
                     DefaultDacl,
@@ -839,6 +841,7 @@ LwMapSecurityCreateAccessTokenFromUidGid(
                 SID_AND_ATTRIBUTES Groups[1];
             };
         } tokenGroupsUnion = { .tokenGroups = { 0 } };
+        TOKEN_PRIVILEGES tokenPrivileges = { 0 };
         TOKEN_OWNER tokenOwner = { 0 };
         TOKEN_PRIMARY_GROUP tokenPrimaryGroup = { 0 };
         TOKEN_DEFAULT_DACL tokenDefaultDacl = { 0 };
@@ -898,6 +901,7 @@ LwMapSecurityCreateAccessTokenFromUidGid(
                         &accessToken,
                         &tokenUser,
                         &tokenGroupsUnion.tokenGroups,
+                        &tokenPrivileges,
                         &tokenOwner,
                         &tokenPrimaryGroup,
                         &tokenDefaultDacl,
@@ -917,6 +921,7 @@ LwMapSecurityCreateAccessTokenFromUidGid(
                         &accessToken,
                         createInformation->User,
                         createInformation->Groups,
+                        createInformation->Privileges,
                         createInformation->Owner,
                         createInformation->PrimaryGroup,
                         createInformation->DefaultDacl,
@@ -964,6 +969,7 @@ LwMapSecurityCreateAccessTokenFromUnicodeStringUsername(
                     &accessToken,
                     createInformation->User,
                     createInformation->Groups,
+                    createInformation->Privileges,
                     createInformation->Owner,
                     createInformation->PrimaryGroup,
                     createInformation->DefaultDacl,
@@ -1007,6 +1013,7 @@ LwMapSecurityCreateAccessTokenFromGssContext(
                     &accessToken,
                     createInformation->User,
                     createInformation->Groups,
+                    createInformation->Privileges,
                     createInformation->Owner,
                     createInformation->PrimaryGroup,
                     createInformation->DefaultDacl,
@@ -1167,6 +1174,7 @@ LwMapSecurityCreateAccessTokenFromNtlmLogon(
                     &pAccessToken,
                     pCreateInformation->User,
                     pCreateInformation->Groups,
+                    pCreateInformation->Privileges,
                     pCreateInformation->Owner,
                     pCreateInformation->PrimaryGroup,
                     pCreateInformation->DefaultDacl,

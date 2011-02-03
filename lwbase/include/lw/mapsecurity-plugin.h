@@ -42,9 +42,7 @@ LwMapSecurityInitializeSidFromUnmappedId(
 typedef struct _ACCESS_TOKEN_CREATE_INFORMATION {
     PTOKEN_USER User;
     PTOKEN_GROUPS Groups;
-#if 0
-    TOKEN_PRIVILEGES Privileges;
-#endif
+    PTOKEN_PRIVILEGES Privileges;
     PTOKEN_OWNER Owner;
     PTOKEN_PRIMARY_GROUP PrimaryGroup;
     PTOKEN_DEFAULT_DACL DefaultDacl;
