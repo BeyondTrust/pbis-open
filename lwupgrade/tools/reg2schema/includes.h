@@ -28,12 +28,8 @@
  *
  */
 
-#include <lwerror.h>
-#include <lwstr.h>
-#include <lwmem.h>
-#include <lw/base.h>
-#include <reg/reg.h>
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include <lw/types.h>

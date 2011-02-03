@@ -4,6 +4,6 @@ make()
         GROUP=conftestsambaparse \
         SOURCES="testsambaparse.c" \
         INCLUDEDIRS="../../../../include" \
-        HEADERDEPS="" \
+        HEADERDEPS="lwerror.h lwstr.h lwmem.h" \
         LIBDEPS=""
 }

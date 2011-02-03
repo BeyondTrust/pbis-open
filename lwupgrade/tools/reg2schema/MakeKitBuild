@@ -3,8 +3,8 @@ make()
     mk_program \
         PROGRAM=psupgrade \
         SOURCES="psupgrade.c" \
-        HEADERDEPS="" \
-        LIBDEPS="lwadvapi_nothr"
+        HEADERDEPS="lw/types.h" \
+        LIBDEPS=""
 
     mk_install_file \
         FILE="regupgr61.sh" \

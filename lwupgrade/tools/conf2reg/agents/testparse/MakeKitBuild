@@ -4,6 +4,6 @@ make()
         GROUP=conftestparse \
         SOURCES="testparse.c" \
         INCLUDEDIRS="../../../../include" \
-        HEADERDEPS="" \
+        HEADERDEPS="lwerror.h" \
         LIBDEPS=""
 }
