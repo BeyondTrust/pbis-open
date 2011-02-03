@@ -42,6 +42,8 @@
 #include <lwstr.h>
 #include <lwmem.h>
 
+#include <errno.h>
+
 #include "defs.h"
 #include "addef.h"
 #include "lpdefs.h"

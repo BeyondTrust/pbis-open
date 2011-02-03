@@ -42,5 +42,7 @@
 #include <lwstr.h>
 #include <lwmem.h>
 
+#include <errno.h>
+
 #include "defs.h"
 #include "structs.h"
