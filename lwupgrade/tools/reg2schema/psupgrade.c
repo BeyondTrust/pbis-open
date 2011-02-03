@@ -143,7 +143,11 @@ ParsePstoreSections(
                 }
             }
         }
-        LW_SAFE_FREE_STRING(pszNewHkey);
+        if (pszNewHkey)
+        {
+            free(pszNewHkey);
+            pszNewHkey = NULL;
+        }
     }
     return 0;
 }
@@ -224,7 +228,11 @@ int main(int argc, char *argv[])
     rewind(fp);
 
     ParsePstoreSections(fp, pszDomainDnsName);
-    LW_SAFE_FREE_STRING(pszDomainDnsName);
+    if (pszDomainDnsName)
+    {
+        free(pszDomainDnsName);
+        pszDomainDnsName = NULL;
+    }
     
     fclose(fp);
     return 0;
