@@ -106,18 +106,7 @@ function _get_base_cflags
     local flags="${BUILD_CFLAGS}"
 
     if [ -n "${BUILD_DEBUG}" ]; then
-        case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
-	    darwin-x86_64|solaris-i386)
-		# When OS X 10.6 uses dwarf-2 (what the format -ggdb uses on
-		# Mac), most of the debug information is left in the .o files.
-		# Uses stabs+ format forces gcc to put the debug information in
-		# the binaries.
-		flags="$flags -O0 -g -gstabs+"
-		;;
-	    *)
-		flags="$flags -O0 -g -ggdb"
-		;;
-	esac
+	flags="$flags -O0 -g -ggdb"
     elif [ -n "${BUILD_MINIMAL}" -o "${BUILD_OS_TYPE}" = solaris ]; then
 	flags="$flags -Os -g"
     else

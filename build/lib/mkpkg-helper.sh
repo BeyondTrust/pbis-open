@@ -372,7 +372,7 @@ function _is_strippable
     if ! test -x "$file"; then return 1; fi
     if test -h "$file"; then return 1; fi
     local info=`file "$file"`
-    if _matches "$info" "not stripped" "ELF" "object file" "shared library" "shared executable"
+    if _matches "$info" "not stripped" "ELF" "object file" "shared library" "shared executable" "Mach-O"
     then
         if _matches "$info" "stripped" && ! _matches "$info" "not stripped"
         then
@@ -389,10 +389,14 @@ function _x_strip
 {
     local STRIP
     local OBJCOPY=""
+    local DSYMUTIL=""
 
     case "${BUILD_OS_TYPE}" in
         darwin)
             STRIP="strip -S -x"
+            if dsymutil -f >/dev/null 2>&1; then
+                DSYMUTIL="dsymutil"
+            fi
             ;;
         aix)
             if [ -n "${IS_COMPAT}" ]; then
@@ -401,18 +405,16 @@ function _x_strip
                 STRIP="strip"
             fi
             ;;
+        linux)
+            STRIP="strip"
+            OBJCOPY="objcopy"
+            ;;
         *)
             STRIP="strip"
             ;;
     esac
 
-    case "${BUILD_OS_TYPE}" in
-	linux)
-	    OBJCOPY="objcopy"
-	    ;;
-    esac
-
-    if ! [ -n "${BUILD_DEBUG}" ]
+    if [ -z "${BUILD_DEBUG}" -o -n "${DSYMUTIL}" ]
     then
         local file
         for file in "$@"
@@ -438,7 +440,17 @@ function _x_strip
                     debugname=`basename "$file"`.dbg
                     ${OBJCOPY} --only-keep-debug "$file" "${debugdir}/${debugname}"
                 fi
-                ${STRIP} "$file"
+                if [ -n "${DSYMUTIL}" -a -n "${POPULATE_DEBUG_DIR}" ] ; then
+                    debugdir=`dirname "$file"`
+                    debugdir=`echo ${debugdir} | sed -e "s:${POPULATE_ROOT_DIR}::"`
+                    debugdir="${POPULATE_DEBUG_DIR}/${debugdir}"
+                    mkdir -p "${debugdir}"
+                    debugname=`basename "$file"`.dSYM
+                    ${DSYMUTIL} "$file" -o "${debugdir}/${debugname}"
+                fi
+                if [ -z "${BUILD_DEBUG}" ]; then
+                    ${STRIP} "$file"
+                fi
                 if [ -n "${OBJCOPY}" -a -n "${POPULATE_DEBUG_DIR}" ] ; then
                     (cd "${debugdir}" && ${OBJCOPY} --add-gnu-debuglink="${debugname}" "$file" )
                 fi
