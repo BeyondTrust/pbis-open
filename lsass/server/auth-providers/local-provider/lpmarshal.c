@@ -772,7 +772,6 @@ LocalMarshalEntryToSecurityObject(
 
     switch (dwObjectClass)
     {
-    case LOCAL_OBJECT_CLASS_GROUP_MEMBER:
     case LOCAL_OBJECT_CLASS_USER:
         pObject->type = LSA_OBJECT_TYPE_USER;
 
@@ -796,10 +795,6 @@ LocalMarshalEntryToSecurityObject(
             pEntry,
             wszAttrNameSamAccountName,
             &pObject->pszSamAccountName);
-        if (dwError == LW_ERROR_NO_ATTRIBUTE_VALUE)
-        {
-            dwError = LW_ERROR_NO_SUCH_OBJECT;
-        }
         BAIL_ON_LSA_ERROR(dwError);
         
         dwError = LocalMarshalAttrToANSIFromUnicodeString(
