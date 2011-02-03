@@ -99,6 +99,12 @@ then
     PATH="${TOOLS}/bin:$PATH"
     EXTRA_CPPFLAGS="-I${TOOLS}/include"
     EXTRA_LDFLAGS="-L${TOOLS}/lib"
+
+    if [ -x "${TOOLS}/bin/dash" ]
+    then
+        MK_SHELL="${TOOLS}/bin/dash"
+        export MK_SHELL
+    fi
 fi
   
 export PATH
