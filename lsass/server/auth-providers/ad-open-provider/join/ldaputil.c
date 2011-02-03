@@ -418,7 +418,6 @@ wchar16_t *LdapAttrValSvcPrincipalName(const wchar16_t *name)
 int
 LdapMachAcctCreate(
     LDAP *ld,
-    const wchar16_t *machname,
     const wchar16_t *machacct_name,
     const wchar16_t *ou
     )
@@ -426,7 +425,8 @@ LdapMachAcctCreate(
     int lderr = LDAP_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
     wchar16_t *cn_name = NULL;
-    wchar16_t *machname_lc = NULL;
+    wchar16_t *machname = NULL;
+    size_t machname_len = 0;
     wchar16_t *dname = NULL;
     char *dn = NULL;
     wchar16_t *objclass[5] = {0};
@@ -438,19 +438,25 @@ LdapMachAcctCreate(
     LDAPMod *attrs[5];
 
     BAIL_ON_INVALID_POINTER(ld);
-    BAIL_ON_INVALID_POINTER(machname);
     BAIL_ON_INVALID_POINTER(machacct_name);
     BAIL_ON_INVALID_POINTER(ou);
 
-    dwError = LwAllocateWc16String(&machname_lc,
-                                   machname);
+    dwError = LwAllocateWc16String(&machname,
+                                   machacct_name);
     BAIL_ON_LSA_ERROR(dwError);
-    wc16slower(machname_lc);
+
+    dwError = LwWc16sLen(machname, &machname_len);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (machname_len)
+    {
+        machname[--machname_len] = 0;
+    }
 
     dwError = LwMbsToWc16s("cn", &cn_name);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dname = LdapAttrValDn(cn_name, machname_lc, ou);
+    dname = LdapAttrValDn(cn_name, machname, ou);
     if (!dname)
     {
         dwError = ERROR_OUTOFMEMORY;
@@ -468,7 +474,7 @@ LdapMachAcctCreate(
 
     flags = LSAJOIN_ACCOUNTDISABLE | LSAJOIN_WORKSTATION_TRUST_ACCOUNT;
 
-    LdapModAddStrValue(&name_m, "name", machname_lc);
+    LdapModAddStrValue(&name_m, "name", machname);
     LdapModAddStrValue(&samacct_m, "sAMAccountName", machacct_name);
     LdapModAddStrValue(&objectclass_m, "objectClass", objclass[0]);
     LdapModAddStrValue(&objectclass_m, "objectClass", objclass[1]);
@@ -491,7 +497,7 @@ error:
     LdapModFree(&objectclass_m);
     LdapModFree(&acctflags_m);
 
-    LW_SAFE_FREE_MEMORY(machname_lc);
+    LW_SAFE_FREE_MEMORY(machname);
     LW_SAFE_FREE_MEMORY(dname);
     LW_SAFE_FREE_MEMORY(dn);
     LW_SAFE_FREE_MEMORY(cn_name);
