@@ -46,6 +46,130 @@
 
 #include "includes.h"
 
+static
+DWORD
+SamrSrvCreateForeignPrincipalDN(
+    IN HANDLE hDirectory,
+    IN PWSTR pwszSID,
+    OUT PWSTR *ppwszDN
+    )
+{
+    DWORD dwError = 0;
+    PWSTR pwszBase = NULL;
+    ULONG ulScope = 0;
+    wchar_t wszFilterFmt[] = L"%ws=%u";
+    DWORD filterLen = 0;
+    PWSTR pwszFilter = NULL;
+    WCHAR wszAttrObjectClass[] = DS_ATTR_OBJECT_CLASS;
+    WCHAR wszAttrObjectDomain[] = DS_ATTR_DOMAIN;
+    DWORD domainObjectClass = DS_OBJECT_CLASS_DOMAIN;
+    PDIRECTORY_ENTRY pEntries = NULL;
+    PDIRECTORY_ENTRY pEntry = NULL;
+    DWORD numEntries = 0;
+    PWSTR pwszDomainName = NULL;
+    wchar_t wszForeignDnFmt[] = L"CN=%ws,"
+                                L"CN=ForeignSecurityPrincipals,"
+                                L"DC=%ws";
+    size_t sidStrLen = 0;
+    size_t domainNameLen = 0;
+    DWORD dwForeignDnLen = 0;
+    PWSTR pwszDn = NULL;
+
+    PWSTR wszAttributes[] = {
+        wszAttrObjectClass,
+        wszAttrObjectDomain,
+        NULL
+    };
+
+    filterLen = ((sizeof(wszAttrObjectClass)/sizeof(WCHAR)) - 1) +
+                  10 +
+                  (sizeof(wszFilterFmt)/sizeof(wszFilterFmt[0]));
+
+    dwError = LwAllocateMemory(sizeof(WCHAR) * filterLen,
+                               OUT_PPVOID(&pwszFilter));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (sw16printfw(pwszFilter, filterLen, wszFilterFmt,
+                wszAttrObjectClass,
+                domainObjectClass) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = DirectorySearch(hDirectory,
+                              pwszBase,
+                              ulScope,
+                              pwszFilter,
+                              wszAttributes,
+                              FALSE,
+                              &pEntries,
+                              &numEntries);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (numEntries == 0 ||
+        numEntries > 1)
+    {
+        dwError = LW_ERROR_SAM_DATABASE_ERROR;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    pEntry = &(pEntries[0]);
+
+    dwError = DirectoryGetEntryAttrValueByName(
+                              pEntry,
+                              wszAttrObjectDomain,
+                              DIRECTORY_ATTR_TYPE_UNICODE_STRING,
+                              (PVOID)&pwszDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwWc16sLen(pwszSID, &sidStrLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (sidStrLen == 0)
+    {
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LwWc16sLen(pwszDomainName, &domainNameLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwForeignDnLen = (DWORD) sidStrLen +
+                     (DWORD) domainNameLen +
+                     (sizeof(wszForeignDnFmt)/sizeof(wszForeignDnFmt[0]));
+
+    dwError = LwAllocateMemory(sizeof(WCHAR) * dwForeignDnLen,
+                               OUT_PPVOID(&pwszDn));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (sw16printfw(pwszDn, dwForeignDnLen, wszForeignDnFmt,
+                    pwszSID,
+                    pwszDomainName) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    *ppwszDN = pwszDn;
+
+cleanup:
+    if (pEntries)
+    {
+        DirectoryFreeEntries(pEntries, numEntries);
+    }
+
+    LW_SAFE_FREE_MEMORY(pwszFilter);
+
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pwszDn);
+
+    *ppwszDN = NULL;
+
+    goto cleanup;
+}
 
 NTSTATUS
 SamrSrvAddAliasMember(
@@ -56,7 +180,6 @@ SamrSrvAddAliasMember(
 {
     const DWORD dwPolicyAccessMask = LSA_ACCESS_LOOKUP_NAMES_SIDS;
     const wchar_t wszFilterFmt[] = L"%ws='%ws'";
-    const wchar_t wszMemberDnFmt[] = L"CN=%ws,DC=%ws";
 
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
@@ -71,9 +194,6 @@ SamrSrvAddAliasMember(
     WCHAR wszAttrDn[] = DS_ATTR_DISTINGUISHED_NAME;
     WCHAR wszAttrObjectClass[] = DS_ATTR_OBJECT_CLASS;
     WCHAR wszAttrObjectSid[] = DS_ATTR_OBJECT_SID;
-    WCHAR wszAttrDomain[] = DS_ATTR_DOMAIN;
-    WCHAR wszAttrNetBIOSName[] = DS_ATTR_NETBIOS_NAME;
-    WCHAR wszAttrSamAccountName[] = DS_ATTR_SAM_ACCOUNT_NAME;
     DWORD dwScope = 0;
     DWORD dwFilterLen = 0;
     PWSTR pwszFilter = NULL;
@@ -91,13 +211,8 @@ SamrSrvAddAliasMember(
     DWORD i = 0;
     DWORD dwLookupLevel = 0;
     DWORD dwRemoteNamesCount = 0;
-    PWSTR pwszName = NULL;
-    size_t sNameLen = 0;
     DWORD dwObjectClass = DS_OBJECT_CLASS_UNKNOWN;
-    PWSTR pwszDomain = NULL;
-    size_t sDomainLen = 0;
     PWSTR pwszMemberDn = NULL;
-    DWORD dwMemberDnLen = 0;
 
     PWSTR wszAttributes[] = {
         wszAttrDn,
@@ -109,9 +224,6 @@ SamrSrvAddAliasMember(
         ATTR_IDX_DN,
         ATTR_IDX_OBJECT_CLASS,
         ATTR_IDX_OBJECT_SID,
-        ATTR_IDX_DOMAIN,
-        ATTR_IDX_NETBIOS_NAME,
-        ATTR_IDX_SAM_ACCOUNT_NAME,
         ATTR_IDX_SENTINEL
     };
 
@@ -123,18 +235,6 @@ SamrSrvAddAliasMember(
         {
             .Type = DIRECTORY_ATTR_TYPE_INTEGER,
             .data.ulValue = 0
-        },
-        {
-            .Type = DIRECTORY_ATTR_TYPE_UNICODE_STRING,
-            .data.pwszStringValue = NULL
-        },
-        {
-            .Type = DIRECTORY_ATTR_TYPE_UNICODE_STRING,
-            .data.pwszStringValue = NULL
-        },
-        {
-            .Type = DIRECTORY_ATTR_TYPE_UNICODE_STRING,
-            .data.pwszStringValue = NULL
         },
         {
             .Type = DIRECTORY_ATTR_TYPE_UNICODE_STRING,
@@ -161,27 +261,6 @@ SamrSrvAddAliasMember(
         .pwszAttrName     = wszAttrObjectSid,
         .ulNumValues      = 1,
         .pAttrValues      = &AttrValues[ATTR_IDX_OBJECT_SID]
-    };
-
-    DIRECTORY_MOD ModDomain = {
-        .ulOperationFlags = DIR_MOD_FLAGS_ADD,
-        .pwszAttrName     = wszAttrDomain,
-        .ulNumValues      = 1,
-        .pAttrValues      = &AttrValues[ATTR_IDX_DOMAIN]
-    };
-
-    DIRECTORY_MOD ModNetBIOSName = {
-        .ulOperationFlags = DIR_MOD_FLAGS_ADD,
-        .pwszAttrName     = wszAttrNetBIOSName,
-        .ulNumValues      = 1,
-        .pAttrValues      = &AttrValues[ATTR_IDX_NETBIOS_NAME]
-    };
-
-    DIRECTORY_MOD ModSamAccountName = {
-        .ulOperationFlags = DIR_MOD_FLAGS_ADD,
-        .pwszAttrName     = wszAttrSamAccountName,
-        .ulNumValues      = 1,
-        .pAttrValues      = &AttrValues[ATTR_IDX_SAM_ACCOUNT_NAME]
     };
 
     DIRECTORY_MOD Mods[ATTR_IDX_SENTINEL + 1];
@@ -329,47 +408,21 @@ SamrSrvAddAliasMember(
             BAIL_ON_NTSTATUS_ERROR(ntStatus);
         }
 
-        ntStatus = SamrSrvGetFromUnicodeString(&pwszName,
-                                               &pRemoteNames[0].name);
-        BAIL_ON_NTSTATUS_ERROR(ntStatus);
-
-        dwError = LwWc16sLen(pwszName, &sNameLen);
+        dwError = SamrSrvCreateForeignPrincipalDN(
+                      hDirectory,
+                      pwszSid,
+                      &pwszMemberDn);
         BAIL_ON_LSA_ERROR(dwError);
-
-        i = pRemoteNames[0].sid_index;
-        ntStatus = SamrSrvGetFromUnicodeStringEx(
-                                        &pwszDomain,
-                                        &pRemoteDomains->domains[i].name);
-        BAIL_ON_NTSTATUS_ERROR(ntStatus);
-
-        dwError = LwWc16sLen(pwszDomain, &sDomainLen);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwMemberDnLen = sNameLen + sDomainLen +
-                        (sizeof(wszMemberDnFmt)/sizeof(wszMemberDnFmt[0]));
-
-        dwError = LwAllocateMemory(sizeof(WCHAR) * dwMemberDnLen,
-                                   OUT_PPVOID(&pwszMemberDn));
-        BAIL_ON_LSA_ERROR(dwError);
-
-        sw16printfw(pwszMemberDn, dwMemberDnLen, wszMemberDnFmt,
-                    pwszName, pwszDomain);
 
         AttrValues[ATTR_IDX_OBJECT_CLASS].data.ulValue
             = DS_OBJECT_CLASS_LOCALGRP_MEMBER;
         AttrValues[ATTR_IDX_DN].data.pwszStringValue             = pwszMemberDn;
         AttrValues[ATTR_IDX_OBJECT_SID].data.pwszStringValue       = pwszSid;
-        AttrValues[ATTR_IDX_DOMAIN].data.pwszStringValue           = pwszDomain;
-        AttrValues[ATTR_IDX_NETBIOS_NAME].data.pwszStringValue     = pwszDomain;
-        AttrValues[ATTR_IDX_SAM_ACCOUNT_NAME].data.pwszStringValue = pwszName;
 
         i = 0;
         Mods[i++] = ModDn;
         Mods[i++] = ModObjectClass;
         Mods[i++] = ModObjectSid;
-        Mods[i++] = ModDomain;
-        Mods[i++] = ModNetBIOSName;
-        Mods[i++] = ModSamAccountName;
 
         dwError = DirectoryAddObject(hDirectory,
                                      pwszMemberDn,
@@ -432,16 +485,6 @@ cleanup:
     if (pRemoteNames)
     {
         LsaRpcFreeMemory(pRemoteNames);
-    }
-
-    if (pwszName)
-    {
-        SamrSrvFreeMemory(pwszName);
-    }
-
-    if (pwszDomain)
-    {
-        SamrSrvFreeMemory(pwszDomain);
     }
 
     LW_SAFE_FREE_MEMORY(pwszMemberDn);
