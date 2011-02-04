@@ -50,6 +50,7 @@ _mk_invoke_moonunit_stub()
     mk_msg "${__output#${MK_OBJECT_DIR}/}"
 
     if ! ${MOONUNIT_STUB} \
+        CPP="$MK_CC -E" CXXCPP="$MK_CXX -E" \
         CPPFLAGS="$MK_CPPFLAGS $CPPFLAGS -I${MK_STAGE_DIR}${MK_INCLUDEDIR}" \
         -o "$__output" \
         "$@"
@@ -94,7 +95,7 @@ mk_moonunit()
     mk_target \
         TARGET="$_stub" \
         DEPS="$SOURCES $_deps" \
-        _mk_invoke_moonunit_stub CPP="$MK_CC -E" CXXCPP="$MK_CXX -E" CPPFLAGS="$_CPPFLAGS $CPPFLAGS $MK_CPPFLAGS" '$@' "&$SOURCES"
+        _mk_invoke_moonunit_stub CPPFLAGS="$_CPPFLAGS $CPPFLAGS $MK_CPPFLAGS" '$@' "&$SOURCES"
     
     SOURCES="$SOURCES $_stub"
 
