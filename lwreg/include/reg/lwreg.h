@@ -651,7 +651,7 @@ LwRegDeleteValueAttributesW(
     LwRegByteArrayToMultiStrsA(pInBuf, bufLen, pppszOutMultiSz)
 
 #define LwRegQueryInfoKey(hRegConnection, hKey, pClass, pcClass, pReserved, pcSubKeys, pcMaxSubKeyLen, pcMaxClassLen, pcValues, pcMaxValueNameLen, pcMaxValueLen, pcbSecurityDescriptor, pftLastWriteTime) \
-    LwRegQueryInfoKeyA(hRegConnection, hKey, pszClass, pcClass, pReserved, pcSubKeys, pcMaxSubKeyLen, pcMaxClassLen, pcValues, pcMaxValueNameLen, pcMaxValueLen, pcbSecurityDescriptor, pftLastWriteTime)
+    LwRegQueryInfoKeyA(hRegConnection, hKey, pClass, pcClass, pReserved, pcSubKeys, pcMaxSubKeyLen, pcMaxClassLen, pcValues, pcMaxValueNameLen, pcMaxValueLen, pcbSecurityDescriptor, pftLastWriteTime)
 
 #define LwRegDeleteKey(hRegConnection, hKey, pszSubKey) \
     LwRegDeleteKeyA(hRegConnection, hKey, pszSubKey)
