@@ -1634,7 +1634,8 @@ CapabilityShow(
     else
     {
         fprintf(stdout, "Name: %s\n", pCapability->pszName);
-        fprintf(stdout, "Description: %s\n", pCapability->pszDescription);
+        fprintf(stdout, "Description: %s\n",
+                pCapability->pszDescription ? pCapability->pszDescription : "");
         if (!bRegistryValueFound)
         {
             fprintf(stdout, "Type (Missing From Registry): %s\n",
