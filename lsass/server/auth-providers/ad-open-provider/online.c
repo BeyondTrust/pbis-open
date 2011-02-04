@@ -4658,6 +4658,12 @@ AD_OnlineEnumObjects(
     
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = MemCacheStoreObjectEntries(
+        pContext->pState->hCacheConnection,
+        *pdwObjectsCount,
+        *pppObjects);
+    BAIL_ON_LSA_ERROR(dwError);
+
 cleanup:
 
     return dwError;
