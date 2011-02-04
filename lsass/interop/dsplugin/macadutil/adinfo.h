@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,73 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __ADINFO_H__
+#define __ADINFO_H__
+
 
 DWORD
-DJConfigureDSPlugin();
+ADUParseAndGetGPTVersion(
+    PSTR   pszFilePath,
+    PDWORD pdwGPTVersion
+    );
 
 DWORD
-DJUnconfigureDSPlugin();
+ADUParseAndSetGPTVersion(
+    PSTR  pszFilePath,
+    DWORD dwGPTVersion
+    );
 
 DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
+ADUGetGPTFileAndVersionNumber(
+    PSTR   pszgPCFileSysPath,
+    PSTR * ppszGPTFilePath,
+    PDWORD pdwGPTVersion
+    );
 
-extern const JoinModule DJDSPlugin;
+DWORD
+ADUSetGPTVersionNumber(
+    PSTR  pszgPCFileSysPath,
+    DWORD dwFileVersion
+    );
 
-#endif /* __DJCONFIG_MAC_H__ */
+VOID
+ADUGetComputerAndUserVersionNumbers(
+    DWORD dwVersion,
+    PWORD pwUserVersion,
+    PWORD pwComputerVersion
+    );
 
+DWORD
+ADUGetVersionFromUserAndComputer(
+    WORD wUser,
+    WORD wComputer
+    );
+
+DWORD
+ADUGetAllMCXPolicies(
+    HANDLE hDirectory,
+    PCSTR  pszDN,
+    PGROUP_POLICY_OBJECT * ppGroupPolicyObjects
+    );
+
+DWORD
+ADUGetMCXPolicy(
+    HANDLE hDirectory,
+    PCSTR  pszDN,
+    PCSTR  pszGPOName,
+    PGROUP_POLICY_OBJECT * ppGroupPolicyObjects
+    );
+
+DWORD
+ADUGetPolicyInformation(
+    HANDLE hDirectory,
+    PCSTR  pszPolicyDN,
+    PGROUP_POLICY_OBJECT pGroupPolicyObject
+    );
+
+DWORD
+ADUSetPolicyVersionInAD(
+    PGROUP_POLICY_OBJECT pGPO,
+    DWORD dwVersion);
+
+#endif /* __ADINFO_H__ */

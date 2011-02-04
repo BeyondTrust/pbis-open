@@ -47,6 +47,7 @@ case "${BUILD_OS_TYPE}" in
         PACKAGES="$PACKAGES passwd mod-auth-kerb"
         ;;
     darwin)
+        REGFILES="$REGFILES dsplugin.reg"
         case "$UNAME_RELEASE" in
             8.*)
                 PACKAGES="$PACKAGES domainjoin-gui mod-auth-kerb"

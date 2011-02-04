@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,55 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __LWICRC_H__
+#define __LWICRC_H__
 
-DWORD
-DJConfigureDSPlugin();
+#include <assert.h>
 
-DWORD
-DJUnconfigureDSPlugin();
+class LWICRC
+{
+    public:
+    
+        static void Initialize();
+        static void Cleanup();
+        
+        static unsigned long GetCRC(char* pByteArray, int length);
+        
+    protected:
+            
+        LWICRC();
+        LWICRC (unsigned long key);
+        ~LWICRC() {}
+        
+        LWICRC(const LWICRC& other);
+        LWICRC& operator=(const LWICRC& other);
+    
+    protected:
+        
+        inline void SetKey(unsigned long key)
+        {
+            _key = key;
+            InitTable();
+        }
+        
+        inline unsigned long GetKey() const
+        {
+            return _key;
+        }
+        
+        unsigned long CalculateCRC(char* pByteArray, int length) const;
+        
+    private:
+       
+       void InitTable();
+        
+    private:
+    
+        unsigned long _key;	// really 33-bit key, counting implicit 1 top-bit
+        unsigned long _table[256];
+        
+        static LWICRC* _instance;
+};
 
-DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
-
-extern const JoinModule DJDSPlugin;
-
-#endif /* __DJCONFIG_MAC_H__ */
+#endif /* __LWICRC_H__ */
 

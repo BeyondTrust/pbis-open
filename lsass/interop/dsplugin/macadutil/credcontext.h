@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,30 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __CREDCONTEXT_H__
+#define __CREDCONTEXT_H__
 
 DWORD
-DJConfigureDSPlugin();
+ADUBuildCredContext(
+    PCSTR              pszDomain,
+    PCSTR              pszUserUPN,
+    BOOLEAN            bOnline,
+    PADU_CRED_CONTEXT* ppCredContext
+    );
 
 DWORD
-DJUnconfigureDSPlugin();
+ADUActivateCredContext(
+    PADU_CRED_CONTEXT pCredContext
+    );
 
 DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
+ADUDeactivateCredContext(
+    PADU_CRED_CONTEXT pCredContext
+    );
 
-extern const JoinModule DJDSPlugin;
+VOID
+ADUFreeCredContext(
+    PADU_CRED_CONTEXT pCredContext
+    );
 
-#endif /* __DJCONFIG_MAC_H__ */
-
+#endif /* __CREDCONTEXT_H__ */

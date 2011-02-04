@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,49 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __ADUKRB5_H__
+#define __ADUKRB5_H__
 
 DWORD
-DJConfigureDSPlugin();
+ADUInitKrb5(
+    PCSTR pszDomainName
+    );
 
 DWORD
-DJUnconfigureDSPlugin();
+ADUKerb5DestroyCache(
+    PSTR pszCachePath
+    );
 
 DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
+ADUKrb5GetSystemCachePath(
+    PSTR* ppszCachePath
+    );
 
-extern const JoinModule DJDSPlugin;
+DWORD
+ADUKrb5GetUserCachePathAndSID(
+    PCSTR pszUserUPN,
+    PSTR* ppszCachePath,
+    PSTR* ppszHomeDirPath,
+    PSTR* ppszSID,
+    uid_t* pUid
+    );
 
-#endif /* __DJCONFIG_MAC_H__ */
+DWORD
+ADUKrb5SetDefaultCachePath(
+    PSTR  pszCachePath,
+    PSTR* ppszOrigCachePath
+    );
+
+DWORD
+ADUKrb5GetDefaultCachePath(
+    PSTR* ppszPath
+    );
+
+DWORD
+ADUKrb5GetPrincipalName(
+    PCSTR pszCachePath,
+    PSTR* ppszPrincipalName
+    );
+
+#endif /* __ADUKRB5_H__ */
 

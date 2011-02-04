@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,42 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __LWIMUTEXLOCK_H__
+#define __LWIMUTEXLOCK_H__
 
-DWORD
-DJConfigureDSPlugin();
+#include "LWIPlugIn.h"
 
-DWORD
-DJUnconfigureDSPlugin();
+class LWIMutexLock
+{
+public:
+    LWIMutexLock()
+    {
+        pthread_mutex_init(&_lock, NULL);
+    }
 
-DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
+    ~LWIMutexLock()
+    {
+    }
 
-extern const JoinModule DJDSPlugin;
+protected:
+    LWIMutexLock(const LWIMutexLock& other);
+    LWIMutexLock& operator=(const LWIMutexLock& other);
 
-#endif /* __DJCONFIG_MAC_H__ */
+public:
 
+    inline void acquire()
+    {
+        pthread_mutex_lock(&_lock);
+    }
+
+    inline void release()
+    {
+        pthread_mutex_unlock(&_lock);
+    }
+
+private:
+
+    pthread_mutex_t _lock;
+};
+
+#endif /* __LWIMUTEXLOCK_H__ */

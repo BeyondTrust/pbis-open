@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,31 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __GPAXFER_H__
+#define __GPAXFER_H__
+
+#define LWDS_ADMIN_CACHE_DIR "/var/lib/likewise/lwedsplugin"
+#define LWDS_GPO_CACHE_DIR   "/var/lib/likewise/grouppolicy"
+#define LWDSKRB5CC           "/var/lib/likewise/lwedsplugin/krb5cc_lwedsplugin"
+
 
 DWORD
-DJConfigureDSPlugin();
+ADUGetPolicyFiles(
+    DWORD   dwPolicyType,
+    PSTR    pszgGpSysVolPath,
+    PSTR    pszgCseIdentifier,
+    PSTR    pszDestFolderRootPath,
+    PSTR    *ppszDestFolder,
+    BOOLEAN *pbPolicyExists
+    );
 
 DWORD
-DJUnconfigureDSPlugin();
+ADUPutPolicyFiles(
+    PSTR    pszSourceFolderRootPath,
+    BOOLEAN fReplace,
+    DWORD   dwPolicyType,
+    PSTR    pszgGpSysVolPath,
+    PSTR    pszgCseIdentifier
+    );
 
-DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
-
-extern const JoinModule DJDSPlugin;
-
-#endif /* __DJCONFIG_MAC_H__ */
-
+#endif /* __GPAXFER_H__ */

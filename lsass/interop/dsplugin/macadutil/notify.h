@@ -28,19 +28,17 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __NOTIFY_H__
+#define __NOTIFY_H__
 
 DWORD
-DJConfigureDSPlugin();
+NotifyUserLogon(
+    PSTR pszLoginId
+    );
 
 DWORD
-DJUnconfigureDSPlugin();
+NotifyUserLogoff(
+    PSTR pszLoginId
+    );
 
-DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
-
-extern const JoinModule DJDSPlugin;
-
-#endif /* __DJCONFIG_MAC_H__ */
-
+#endif /* __NOTIFY_H__ */

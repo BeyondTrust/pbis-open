@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,53 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __ADUFILEXFER_H__
+#define __ADUFILEXFER_H__
 
 DWORD
-DJConfigureDSPlugin();
+ADUCrackFileSysPath(
+    PCSTR  pszFileSysPath,
+    PSTR * ppszDomainName,
+    PSTR * ppszSourcePath,
+    PSTR * ppszPolicyIdentifier
+    );
 
 DWORD
-DJUnconfigureDSPlugin();
+ADUSMBGetFile(
+    PSTR  pszDomainName,
+    PSTR  pszSourcePath,
+    PSTR  pszDestPath
+    );
 
 DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
+ADUSMBPutFile(
+    PSTR  pszDomainName,
+    PSTR  pszSourceFolder,
+    PSTR  pszFileName,
+    PSTR  pszDestFolder
+    );
 
-extern const JoinModule DJDSPlugin;
+DWORD
+ADUSMBCopyFolder(
+    PSTR  pszDomainName,
+    PSTR  pszSourceFolder,
+    PSTR  pszDestFolder
+    );
 
-#endif /* __DJCONFIG_MAC_H__ */
+DWORD
+ADUSMBGetFolder(
+    PSTR  pszDomainName,
+    PSTR  pszSourceFolder,
+    PSTR  pszDestFolder
+    ); 
 
+DWORD
+ADUSMBPutFolder(
+    PSTR    pszDomainName,
+    PSTR    pszSourceFolderParent,
+    PSTR    pszFolderName,
+    PSTR    pszDestFolder,
+    BOOLEAN fReplace
+    );
+
+#endif /* __ADUFILEXFER_H__ */

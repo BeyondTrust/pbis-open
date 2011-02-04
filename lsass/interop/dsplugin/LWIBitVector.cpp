@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,52 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#include "LWIBitVector.h"
 
-DWORD
-DJConfigureDSPlugin();
+long
+LWIMakeBitVector(
+    int nBits,
+    PLWIBITVECTOR* ppBitVector
+    )
+{
+    long macError = eDSNoErr;
+    PLWIBITVECTOR pBitVector = NULL;
 
-DWORD
-DJUnconfigureDSPlugin();
+    if (nBits <= 0)
+    {
+        macError = eParameterError;
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
 
-DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
+    macError = LwAllocateMemory(sizeof(LWIBITVECTOR), (PVOID*)&pBitVector);
+    GOTO_CLEANUP_ON_MACERROR(macError);
 
-extern const JoinModule DJDSPlugin;
+    macError = LwAllocateMemory((((nBits-1)/8)+1)*sizeof(uint8_t),
+                                 (PVOID*)&pBitVector->data);
+    GOTO_CLEANUP_ON_MACERROR(macError);
 
-#endif /* __DJCONFIG_MAC_H__ */
+    pBitVector->nBits = nBits;
+
+    *ppBitVector = pBitVector;
+    pBitVector = NULL;
+
+cleanup:
+
+    if (pBitVector)
+        LWIFreeBitVector(pBitVector);
+
+    return macError;
+}
+
+void
+LWIFreeBitVector(
+    PLWIBITVECTOR pBitVector
+    )
+
+{
+    if (pBitVector->data)
+        LwFreeMemory(pBitVector->data);
+
+    LwFreeMemory(pBitVector);
+}
 

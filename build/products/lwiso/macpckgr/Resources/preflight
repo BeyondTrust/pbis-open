@@ -52,8 +52,8 @@ stop_and_disable_daemon()
 save_daemon()
 {
     SERVICE=$1
-    SERVICE_PATH=/opt/likewise/sbin/$SERVICE
-    SERVICE_NAME=com.likewisesoftware.$SERVICE
+    SERVICE_PATH=/opt/likewise/sbin/$(SERVICE)d
+    SERVICE_NAME=com.likewisesoftware.$(SERVICE)d
     SERVICE_DAEMON=/Library/LaunchDaemons/$SERVICE_NAME.plist
 
     if [ -f $SERVICE_DAEMON ]; then
@@ -80,13 +80,11 @@ stop_obsolete_daemons()
 
 save_daemons()
 {
-    save_daemon lsassd
-    save_daemon netlogond
-    save_daemon eventlogd
-    save_daemon lwiod
-    save_daemon dcerpcd
-    save_daemon lwregd
-    save_daemon lwsmd
+    save_daemon lsass
+    save_daemon netlogon
+    save_daemon eventlog
+    save_daemon lwio
+    save_daemon dcerpc
 
     log_info "All Likewise services now have their running status saved"
 }
@@ -94,12 +92,22 @@ save_daemons()
 disable_plugin()
 {
     PLUGIN_DIR_OPEN=LWIDSPlugin.dsplug
+    PLUGIN_DIR_ENT=LWEDSPlugin.dsplug
+    PLUGIN_DIR=DSPlugin.dsplug
     SRC_DIR=/opt/likewise/lib
     FRAMEWORK_DIR="/System/Library/Frameworks/DirectoryService.framework/Resources/Plugins"
 
-    log_info "Disable Likewise DS plugin"
+    log_info "Disable any former Likewise DS plugin links"
     if [ -h $FRAMEWORK_DIR/$PLUGIN_DIR_OPEN ]; then
        /bin/rm -f $FRAMEWORK_DIR/$PLUGIN_DIR_OPEN
+    fi
+    if [ -h $FRAMEWORK_DIR/$PLUGIN_DIR_ENT ]; then
+       /bin/rm -f $FRAMEWORK_DIR/$PLUGIN_DIR_ENT
+    fi
+
+    log_info "Disable prior Likewise DS plugin link"
+    if [ -h $FRAMEWORK_DIR/$PLUGIN_DIR ]; then
+       /bin/rm -f $FRAMEWORK_DIR/$PLUGIN_DIR
     fi
 }
 

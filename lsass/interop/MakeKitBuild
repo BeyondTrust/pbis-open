@@ -1,4 +1,4 @@
-SUBDIRS="auth lwmapsecurity nsswitch gssntlm access lwidsplugin gsswrap"
+SUBDIRS="auth lwmapsecurity nsswitch gssntlm access dsplugin gsswrap"
 
 configure()
 {

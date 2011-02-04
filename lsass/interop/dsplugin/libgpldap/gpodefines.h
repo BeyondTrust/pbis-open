@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,23 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __GPODEFINES_H__
+#define __GPODEFINES_H__
 
-DWORD
-DJConfigureDSPlugin();
+#define GPO_FLAG_DISABLE	0x01		
+#define GPO_FLAG_FORCE		0x02
 
-DWORD
-DJUnconfigureDSPlugin();
+#define GPO_TRUE  1
+#define GPO_FALSE 0
 
-DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
+#ifndef WIN32
 
-extern const JoinModule DJDSPlugin;
+#define PATH_SEPARATOR_STR "/"
 
-#endif /* __DJCONFIG_MAC_H__ */
+#else
 
+#define PATH_SEPARATOR_STR "\\"
+
+#endif
+
+#endif /* __GPODEFINES_H__ */

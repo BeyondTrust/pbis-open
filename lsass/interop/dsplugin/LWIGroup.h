@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,36 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __LWIGROUP_H__
+#define __LWIGROUP_H__
 
-DWORD
-DJConfigureDSPlugin();
+#include "LWIPlugIn.h"
 
-DWORD
-DJUnconfigureDSPlugin();
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
 
-extern const JoinModule DJDSPlugin;
+long
+CreateLWIGroup(
+    PCSTR          pszName,
+    PCSTR          pszPassword,
+    PCSTR          pszShortname,
+    PCSTR          pszComment,
+    PLWIMEMBERLIST pMemberList,
+    PCSTR          pszGeneratedUID,
+    gid_t          gid,
+    PMCXVALUE      pMCXValues,
+    PLWIGROUP* ppLWIGroup
+    );
+    
+void
+FreeLWIGroup(
+    PLWIGROUP pLWIGroup
+    );
 
-#endif /* __DJCONFIG_MAC_H__ */
+#ifdef __cplusplus
+}
+#endif
 
+#endif /* __LWIGROUP_H__ */

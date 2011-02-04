@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,25 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __LWIPLUGIN_H__
+#define __LWIPLUGIN_H__
 
-DWORD
-DJConfigureDSPlugin();
+// Project headers
+#include "includes.h"
+#include "PlugInShell.h"
+#include "ServerModuleLib.h"
+#include "PluginData.h"
 
-DWORD
-DJUnconfigureDSPlugin();
+#include "LWIStruct.h"
+#include "Utilities.h"
+#include "LWIException.h"
+#include "LWIBitVector.h"
+#include "LWIAttrLookup.h"
+#include "LWIRecTypeLookup.h"
+#include "LWIPlugInInitException.h"
+#include "LWIQuery.h"
 
-DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
+#define PLUGIN_ROOT_PATH      "/Likewise - Active Directory"
 
-extern const JoinModule DJDSPlugin;
-
-#endif /* __DJCONFIG_MAC_H__ */
+#endif /* __LWIPLUGIN_H__ */
 

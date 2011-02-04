@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,39 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef GPAPOLICYUTILS_H_
+#define GPAPOLICYUTILS_H_
 
-DWORD
-DJConfigureDSPlugin();
+void
+GPAFreeGPOList(
+    PGROUP_POLICY_OBJECT pGPOObject
+    );
 
-DWORD
-DJUnconfigureDSPlugin();
+#define GPA_SAFE_FREE_GPO_LIST(pGPOList)  \
+	if (pGPOList) {                   \
+		GPAFreeGPOList(pGPOList); \
+		pGPOList = NULL;          \
+	}
+	
+BOOLEAN
+GPAFindMatch(
+    PGROUP_POLICY_OBJECT pGPOObject,
+    PGROUP_POLICY_OBJECT pGPOObjectList,
+    PGROUP_POLICY_OBJECT *ppGPOMatchedObject,
+    BOOLEAN * pfNewVersion
+    );
 
-DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
+long	
+GPAComputeDeletedList(
+    PGROUP_POLICY_OBJECT pGPOCurrentList,
+    PGROUP_POLICY_OBJECT pGPOExistingList,
+    PGROUP_POLICY_OBJECT * ppGPODeletedList
+    );
 
-extern const JoinModule DJDSPlugin;
+long
+GPACopyGPOObject(
+    PGROUP_POLICY_OBJECT pGPOObject,
+    PGROUP_POLICY_OBJECT *ppGPOCopyObject
+    );
 
-#endif /* __DJCONFIG_MAC_H__ */
-
+#endif /*GPAPOLICYUTILS_H_*/

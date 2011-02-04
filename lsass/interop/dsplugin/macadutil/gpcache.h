@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,25 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __GPCACHE_H__
+#define __GPCACHE_H__
 
 DWORD
-DJConfigureDSPlugin();
+GetCachedPolicyFiles(
+    DWORD    dwPolicyType,
+    PCSTR    pszgGpSysVolPath,
+    PCSTR    pszgCseIdentifier,
+    PCSTR    pszDestFolderRootPath,
+    PSTR *   ppszDestFolder,
+    PBOOLEAN pbPolicyExists
+    );
 
 DWORD
-DJUnconfigureDSPlugin();
+IsCacheDataCurrentForGPO(
+    PGROUP_POLICY_OBJECT pGPO,
+    PDWORD   pdwVersion,
+    PDWORD   pdwFileVersion,
+    PBOOLEAN pbCurrent
+    );
 
-DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
-
-extern const JoinModule DJDSPlugin;
-
-#endif /* __DJCONFIG_MAC_H__ */
-
+#endif /* __GPCACHE_H__ */

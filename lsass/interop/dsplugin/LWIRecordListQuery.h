@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,31 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __LWIRECORDLISTQUERY_H__
+#define __LWIRECORDLISTQUERY_H__
 
-DWORD
-DJConfigureDSPlugin();
+#include "LWIQuery.h"
 
-DWORD
-DJUnconfigureDSPlugin();
+class LWIRecordListQuery : public LWIQuery
+{
+private:
+    LWIRecordListQuery();
+    ~LWIRecordListQuery();
+    LWIRecordListQuery(const LWIRecordListQuery& other);
+    LWIRecordListQuery& operator=(const LWIRecordListQuery& other);
 
-DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
+public:
+    static long Run(IN OUT sGetRecordList* pGetRecordList, LWE_DS_FLAGS Flags, PNETADAPTERINFO pNetAdapterList);
+    static long ReleaseContinueData(IN OUT sReleaseContinueData* pReleaseContinueData);
+    static long GetRecordEntry(sGetRecordEntry* pGetRecordEntry);
+    static long Test(IN const char* DsPath, IN sGetRecordList* pGetRecordList);
 
-extern const JoinModule DJDSPlugin;
+protected:
+    static long Test(IN const char* DsPath, IN tDataListPtr RecNameList, IN tDirPatternMatch PatternMatch,
+                     IN tDataListPtr RecTypeList, IN tDataListPtr AttribTypeList, IN dsBool AttribInfoOnly,
+                     IN unsigned long Size);
+};
 
-#endif /* __DJCONFIG_MAC_H__ */
+#endif /* __LWIRECORDLISTQUERY_H__ */
+
 

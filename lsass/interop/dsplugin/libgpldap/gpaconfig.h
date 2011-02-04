@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,19 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __GPACONFIG_H__
+#define __GPACONFIG_H__
 
-DWORD
-DJConfigureDSPlugin();
+#define CFG_EXTN_NAME                   "Name"
+#define CFG_EXTN_DLLNAME                "DllName"
+#define CFG_EXTN_ENABLE_ASYNC           "EnableAsynchronousProcessing"
+#define CFG_EXTN_NOBACKGROUNDPOLICY     "NoBackgroundPolicy"
+#define CFG_EXTN_NOGPOLISTCHANGES       "NoGPOListChanges"
+#define CFG_EXTN_NOMACHINEPOLICY        "NoMachinePolicy"
+#define CFG_EXTN_NOSLOWLINK             "NoSlowLink"
+#define CFG_EXTN_NOUSERPOLICY           "NoUserPolicy"
+#define CFG_EXTN_PERUSERLOCALSETTINGS   "PerUserLocalSettings"
+#define CFG_EXTN_PROCESSPOLICYFUNCTION  "ProcessGroupPolicy"
+#define CFG_EXTN_RESETPOLICYFUNCTION    "ResetGroupPolicy"
 
-DWORD
-DJUnconfigureDSPlugin();
-
-DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
-
-extern const JoinModule DJDSPlugin;
-
-#endif /* __DJCONFIG_MAC_H__ */
-
+#endif /* __GPACONFIG_H__ */

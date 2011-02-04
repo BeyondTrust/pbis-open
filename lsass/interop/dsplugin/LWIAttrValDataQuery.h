@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,31 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+#ifndef __LWIATTRVALDATAQUERY_H__
+#define __LWIATTRVALDATAQUERY_H__
 
-DWORD
-DJConfigureDSPlugin();
+#include "LWIQuery.h"
 
-DWORD
-DJUnconfigureDSPlugin();
+class LWIAttrValDataQuery : public LWIQuery
+{
+private:
+    LWIAttrValDataQuery();
+    virtual ~LWIAttrValDataQuery();
+    LWIAttrValDataQuery(const LWIAttrValDataQuery& other);
+    LWIAttrValDataQuery& operator=(const LWIAttrValDataQuery& other);
 
-DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
+public:
+    static long Run(sDoAttrValueSearchWithData* pAttrValueSearchWithData, LWE_DS_FLAGS Flags, PNETADAPTERINFO pNetAdapterList);
+    static long Run(sDoMultiAttrValueSearchWithData* pMultiAttrValueSearchWithData, LWE_DS_FLAGS Flags, PNETADAPTERINFO pNetAdapterList);
+    
+private:
+    static long QueryUserInformation(LWIQuery* pQuery, char* pszAttribute, char* pszPattern);
+    static long QueryGroupInformation(LWIQuery* pQuery, char* pszAttribute, char* pszPattern);
+    static long QueryComputerListInformation(LWIQuery* pQuery, char* pszAttribute, char* pszPattern);
+    static long QueryComputerGroupInformation(LWIQuery* pQuery, char* pszAttribute, char* pszPattern);
+    static long QueryComputerInformation(LWIQuery* pQuery, char* pszAttribute, char* pszPattern);
+};
 
-extern const JoinModule DJDSPlugin;
+#endif /* __LWIATTRVALDATAQUERY_H__ */
 
-#endif /* __DJCONFIG_MAC_H__ */
 

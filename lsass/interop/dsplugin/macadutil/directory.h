@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,19 +28,92 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __DJCONFIG_MAC_H__
-#define __DJCONFIG_MAC_H__
+DWORD
+ADUOpenDirectory(
+    PCSTR   szDomain,
+    PHANDLE phDirectory
+    );
+
+VOID
+ADUCloseDirectory(
+    HANDLE hDirectory
+    );
 
 DWORD
-DJConfigureDSPlugin();
+ADUReadObject(
+    HANDLE hDirectory,
+    PSTR szObjectDN,
+    PCSTR* szAttributeList,
+    LDAPMessage **res
+    );
 
 DWORD
-DJUnconfigureDSPlugin();
+ADUAllocateGPObject(
+    PSTR szPolicyDN,
+    PGROUP_POLICY_OBJECT*  ppGPOObject
+    );
+
+VOID
+ADUFreeGPOList(
+    PGROUP_POLICY_OBJECT pGPOObjectList
+    );
 
 DWORD
-DJIsAppleADPluginInUse(BOOLEAN* pExists);
+ADUDirectorySearch(
+    HANDLE hDirectory,
+    PCSTR szObjectDN,
+    int scope,
+    PSTR szQuery,
+    PCSTR* szAttributeList,
+    LDAPMessage **res
+    );
 
-extern const JoinModule DJDSPlugin;
+LDAPMessage*
+ADUFirstLDAPEntry(
+    HANDLE hDirectory,
+    LDAPMessage *res
+    );
 
-#endif /* __DJCONFIG_MAC_H__ */
+LDAPMessage*
+ADUNextLDAPEntry(
+    HANDLE hDirectory,
+    LDAPMessage *res
+    );
+
+LDAP *
+ADUGetLDAPSession(
+    HANDLE hDirectory
+    );
+
+DWORD
+ADUGetLDAPString(
+    HANDLE hDirectory,
+    LDAPMessage* pMessage,
+    PCSTR pszFieldName,
+    PSTR* ppszValue
+    );
+
+DWORD
+ADUPutLDAPString(
+    HANDLE hDirectory,
+    PCSTR  pszDN,
+    PCSTR  pszFieldName,
+    PSTR   pszValue
+    );
+    
+DWORD
+ADUGetLDAPUInt32(
+    HANDLE hDirectory,
+    LDAPMessage* pMessage,
+    PCSTR  pszFieldName,
+    PDWORD pdwValue
+    );
+
+DWORD
+ADUPutLDAPUInt32(
+    HANDLE hDirectory,
+    PCSTR  pszDN,
+    PCSTR  pszFieldName,
+    DWORD  dwValue
+    );
 

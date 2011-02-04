@@ -714,6 +714,8 @@ AC_DEFINE_UNQUOTED(CONFIGDIR, "$CONFIGDIR", [Config directory])
 lsassregdir="$datadir/config"
 AC_SUBST(lsassregdir)
 
+dspluginregdir="$datadir/config"
+AC_SUBST(dspluginregdir)
 
 if test x"$localstatedir" = x"/var"; then
     lsasscachedir="$localstatedir/lib/likewise"
@@ -1062,7 +1064,8 @@ AC_CONFIG_FILES([Makefile
                  interop/nsswitch/hpux/Makefile
                  interop/nsswitch/solaris/Makefile
                  interop/lwmapsecurity/Makefile
-                 interop/lwidsplugin/Makefile
+                 interop/dsplugin/Makefile
+                 interop/dsplugin/etc/Makefile
                  interop/lwauthplugin/Makefile
                  pstore/Makefile
                  pstore/plugin/Makefile
