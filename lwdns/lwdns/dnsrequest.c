@@ -731,16 +731,6 @@ DNSMarshallRData(
 
     if (pDNSRecord->pRDataDomain)
     {
-        union
-        {
-            PBYTE pBuffer;
-            WORD  wData;
-        }
-        data =
-        {
-            .pBuffer = &pDNSContext->pSendBuffer[dwSizeOffset]
-        };
-
         dwError = DNSMarshallDomainName(
                     hSendBuffer,
                     pDNSRecord->pRDataDomain);
@@ -748,7 +738,9 @@ DNSMarshallRData(
 
         // Fix up the length
         wnRDataSize = htons(pDNSContext->dwBufferOffset - dwDataStartOffset);
-        data.wData = wnRDataSize;
+        memcpy(&pDNSContext->pSendBuffer[dwSizeOffset],
+               &wnRDataSize,
+               sizeof(wnRDataSize));
     }
     else
     {

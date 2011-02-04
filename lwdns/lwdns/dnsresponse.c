@@ -83,6 +83,14 @@ DNSStdAllocateResponse(
     PDNS_RESPONSE * ppDNSResponse
     );
 
+static
+DWORD
+DNSUnmarshallDomainNameAtOffset(
+    HANDLE hRecvBuffer,
+    WORD wOffset,
+    PDNS_DOMAIN_LABEL * ppDomainLabel
+    );
+
 DWORD
 DNSStdReceiveStdResponse(
     HANDLE         hDNSHandle,
@@ -708,99 +716,112 @@ DNSUnmarshallDomainName(
 {
     DWORD dwError = 0;
     PDNS_DOMAIN_LABEL pLabel = NULL;
-    PDNS_DOMAIN_LABEL pLabelList = NULL;
     PDNS_DOMAIN_NAME pDomainName = NULL;
-    PSTR pszLabel = NULL;
     BYTE uLen = 0;
     DWORD dwRead = 0;
     BYTE uLen1, uLen2 = 0;
-    WORD wnOffset, wOffset = 0;
+    WORD wOffset = 0;
+    BOOLEAN bDone = FALSE;
     
-    dwError = DNSUnmarshallBuffer(
-                hRecvBuffer, 
-                &uLen1, 
-                sizeof(char),
-                &dwRead);
+    dwError = DNSAllocateMemory(
+                sizeof(DNS_DOMAIN_NAME),
+                (PVOID *)&pDomainName);
     BAIL_ON_LWDNS_ERROR(dwError);
-    
-    if (uLen1 & 0xC0) {
 
-        uLen1 |= 0x3F;
-        
+    do
+    {
         dwError = DNSUnmarshallBuffer(
                     hRecvBuffer,
-                    &uLen2,
+                    &uLen1,
                     sizeof(char),
                     &dwRead);
         BAIL_ON_LWDNS_ERROR(dwError);
 
-        memcpy((PBYTE)&wnOffset, &uLen1, sizeof(char));
-        memcpy((PBYTE)&wnOffset+1, &uLen2, sizeof(char));
-        wOffset = ntohs(wnOffset);
-
-        dwError = DNSUnmarshallDomainNameAtOffset(
-                    hRecvBuffer,
-                    wOffset,
-                    &pDomainName);
-        BAIL_ON_LWDNS_ERROR(dwError);
-
-    }
-    else
-    {
-        dwError = DNSReceiveBufferMoveBackIndex(hRecvBuffer, 1);
-        BAIL_ON_LWDNS_ERROR(dwError);
-
-        while(1)
+        switch (uLen1 & 0xC0)
         {
-            CHAR szLabel[65];
-            
-            dwError = DNSUnmarshallBuffer(
-                        hRecvBuffer,
-                        &uLen,
-                        sizeof(char),
-                        &dwRead);
-            BAIL_ON_LWDNS_ERROR(dwError);
-            
-            if(uLen == 0) {
+            case 0xC0: /* pointer to string */
+
+                dwError = DNSUnmarshallBuffer(
+                            hRecvBuffer,
+                            &uLen2,
+                            sizeof(char),
+                            &dwRead);
+                BAIL_ON_LWDNS_ERROR(dwError);
+
+                wOffset = ntohs((((WORD)(uLen1) << 8)|uLen2) & 0x3FFF);
+
+                dwError = DNSUnmarshallDomainNameAtOffset(
+                            hRecvBuffer,
+                            wOffset,
+                            &pLabel);
+                BAIL_ON_LWDNS_ERROR(dwError);
+
+                dwError = DNSAppendLabel(
+                                pDomainName->pLabelList,
+                                pLabel,
+                                &pDomainName->pLabelList);
+                BAIL_ON_LWDNS_ERROR(dwError);
+                pLabel = NULL;
+
                 break;
-            }
 
-            memset(szLabel, 0, sizeof(szLabel));
-            
-            dwError = DNSUnmarshallBuffer(
-                        hRecvBuffer,
-                        (PBYTE)szLabel,
-                        uLen,
-                        &dwRead);
-            BAIL_ON_LWDNS_ERROR(dwError);
-            
-            dwError = DNSAllocateString(szLabel, &pszLabel);
-            BAIL_ON_LWDNS_ERROR(dwError);
+            case 0x00: /* string component */
 
-            dwError = DNSAllocateMemory(
-                        sizeof(DNS_DOMAIN_LABEL),
-                        (PVOID *)&pLabel);
-            BAIL_ON_LWDNS_ERROR(dwError);
+                {
+                    CHAR szLabel[65];
 
-            pLabel->pszLabel = pszLabel;
-            pszLabel = NULL;
-            
-            dwError = DNSAppendLabel(
-                        pLabelList,
-                        pLabel,
-                        &pLabelList);
-            BAIL_ON_LWDNS_ERROR(dwError);
-            
-            pLabel = NULL;
+                    dwError = DNSReceiveBufferMoveBackIndex(hRecvBuffer, 1);
+                    BAIL_ON_LWDNS_ERROR(dwError);
+
+                    dwError = DNSUnmarshallBuffer(
+                                hRecvBuffer,
+                                &uLen,
+                                sizeof(char),
+                                &dwRead);
+                    BAIL_ON_LWDNS_ERROR(dwError);
+
+                    if (uLen == 0)
+                    {
+                        bDone = TRUE;
+                        break;
+                    }
+
+                    memset(szLabel, 0, sizeof(szLabel));
+
+                    dwError = DNSUnmarshallBuffer(
+                                hRecvBuffer,
+                                (PBYTE)szLabel,
+                                uLen,
+                                &dwRead);
+                    BAIL_ON_LWDNS_ERROR(dwError);
+
+                    dwError = DNSAllocateMemory(
+                                sizeof(DNS_DOMAIN_LABEL),
+                                (PVOID *)&pLabel);
+                    BAIL_ON_LWDNS_ERROR(dwError);
+
+                    dwError = DNSAllocateString(szLabel, &pLabel->pszLabel);
+                    BAIL_ON_LWDNS_ERROR(dwError);
+
+                    dwError = DNSAppendLabel(
+                                pDomainName->pLabelList,
+                                pLabel,
+                                &pDomainName->pLabelList);
+                    BAIL_ON_LWDNS_ERROR(dwError);
+
+                    pLabel = NULL;
+                }
+
+                break;
+
+            default:   /* unexpected */
+
+                dwError = LWDNS_ERROR_BAD_RESPONSE;
+                BAIL_ON_LWDNS_ERROR(dwError);
+
+                break;
         }
-
-        dwError = DNSAllocateMemory(
-                    sizeof(DNS_DOMAIN_NAME),
-                    (PVOID *)&pDomainName);
-        BAIL_ON_LWDNS_ERROR(dwError);
-        
-        pDomainName->pLabelList = pLabelList;
-    }
+    } while (!bDone);
 
     *ppDomainName = pDomainName;
     
@@ -815,20 +836,82 @@ error:
         DNSFreeDomainName(pDomainName);
     }
     
-    if (pLabelList)
-    {
-        DNSFreeLabelList(pLabelList);
-    }
-    
     if (pLabel)
     {
         DNSFreeLabel(pLabel);
     }
     
-    LWDNS_SAFE_FREE_STRING(pszLabel);
-    
     *ppDomainName = NULL;
     
+    goto cleanup;
+}
+
+/*
+ * Note: This function reads the string without updating the index
+ */
+static
+DWORD
+DNSUnmarshallDomainNameAtOffset(
+    HANDLE hRecvBuffer,
+    WORD wOffset,
+    PDNS_DOMAIN_LABEL * ppDomainLabel
+    )
+{
+    DWORD dwError = 0;
+    PDNS_DOMAIN_LABEL pLabel = NULL;
+    BYTE  uLen = 0;
+    DWORD dwCurrent = 0;
+    PDNS_RECEIVEBUFFER_CONTEXT pRecvContext = NULL;
+    CHAR szLabel[65];
+
+    pRecvContext = (PDNS_RECEIVEBUFFER_CONTEXT)hRecvBuffer;
+    dwCurrent = wOffset;
+
+    memcpy(&uLen, pRecvContext->pRecvBuffer+dwCurrent, sizeof(char));
+
+    switch (uLen & 0xC0)
+    {
+        case 0x00:
+
+            dwCurrent++;
+
+            memset(szLabel, 0, sizeof(szLabel));
+            memcpy(szLabel, pRecvContext->pRecvBuffer+dwCurrent, uLen);
+            dwCurrent += uLen;
+
+            dwError = DNSAllocateMemory(
+                            sizeof(DNS_DOMAIN_LABEL),
+                            (PVOID *)&pLabel);
+            BAIL_ON_LWDNS_ERROR(dwError);
+
+            dwError = DNSAllocateString(szLabel, &pLabel->pszLabel);
+            BAIL_ON_LWDNS_ERROR(dwError);
+
+            break;
+
+        default:
+
+            dwError = LWDNS_ERROR_BAD_RESPONSE;
+            BAIL_ON_LWDNS_ERROR(dwError);
+
+            break;
+    }
+
+    *ppDomainLabel = pLabel;
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    *ppDomainLabel = NULL;
+
+    if (pLabel)
+    {
+        DNSFreeLabel(pLabel);
+    }
+
     goto cleanup;
 }
 
