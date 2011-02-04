@@ -1186,7 +1186,7 @@ LocalEnumPrivilegesSids(
     PLSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_REQ pRequest = NULL;
     LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_RESP response = {0};
     PVOID pOutputBuffer = NULL;
-    DWORD dwOutputBufferSize = 0;
+    size_t outputBufferSize = 0;
 
     // TODO: Should this be root-only call ?
 
@@ -1216,10 +1216,10 @@ LocalEnumPrivilegesSids(
                           LsaLocalIpcGetEnumPrivilegesSidsRespSpec(),
                           &response,
                           &pOutputBuffer,
-                          &dwOutputBufferSize));
+                          &outputBufferSize));
     BAIL_ON_LSA_ERROR(err);
 
-    *pdwOutputBufferSize = dwOutputBufferSize;
+    *pdwOutputBufferSize = (DWORD) outputBufferSize;
     *ppOutputBuffer      = pOutputBuffer;
 
 error:
