@@ -94,7 +94,7 @@ mk_moonunit()
     mk_target \
         TARGET="$_stub" \
         DEPS="$SOURCES $_deps" \
-        _mk_invoke_moonunit_stub CPPFLAGS="$_CPPFLAGS $CPPFLAGS $MK_CPPFLAGS" '$@' "&$SOURCES"
+        _mk_invoke_moonunit_stub CPP="$MK_CC -E" CXXCPP="$MK_CXX -E" CPPFLAGS="$_CPPFLAGS $CPPFLAGS $MK_CPPFLAGS" '$@' "&$SOURCES"
     
     SOURCES="$SOURCES $_stub"
 
