@@ -27,60 +27,89 @@
  * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
  * license@likewisesoftware.com
  */
+
 /*
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
  *
- *        lsalocalprovider.h
+ *        ipc_protocol.c
  *
  * Abstract:
  *
- *        Likewise Security and Authentication Subsystem (LSASS) Client API
+ *        Likewise Security and Authentication Subsystem (LSASS)
+ *
+ *        Local Provider Inter-process communication API
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  *
  */
 
-#ifndef __LSALOCALPROVIDER_H__
-#define __LSALOCALPROVIDER_H__
-
-#include "lsautils.h"
-
-#define LSA_LOCAL_IO_SETDOMAINNAME        1
-#define LSA_LOCAL_IO_SETDOMAINSID         2
-#define LSA_LOCAL_IO_GETDOMAINNAME        3
-#define LSA_LOCAL_IO_GETDOMAINSID         4
-#define LSA_LOCAL_IO_ENUMPRIVSIDS         5
+#include "ipc.h"
 
 
-typedef struct _LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_REQ {
-    DWORD NumSids;
-    PCSTR *ppszSids;
-} LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_REQ,
-*PLSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_REQ;
+static LWMsgTypeSpec gLsaLuidAndAttributesSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(LUID_AND_ATTRIBUTES),
+    LWMSG_MEMBER_STRUCT_BEGIN(LUID_AND_ATTRIBUTES, Luid),
+    LWMSG_MEMBER_UINT32(LUID, LowPart),
+    LWMSG_MEMBER_UINT32(LUID, HighPart),
+    LWMSG_STRUCT_END,
+    LWMSG_MEMBER_UINT32(LUID_AND_ATTRIBUTES, Attributes),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
 
+static LWMsgTypeSpec gLsaPrivilegeSetSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(PRIVILEGE_SET),
+    LWMSG_MEMBER_UINT32(PRIVILEGE_SET, PrivilegeCount),
+    LWMSG_MEMBER_UINT32(PRIVILEGE_SET, Control),
+    LWMSG_MEMBER_POINTER_BEGIN(PRIVILEGE_SET, Privilege),
+    LWMSG_TYPESPEC(gLsaLuidAndAttributesSpec),
+    LWMSG_POINTER_END,
+    LWMSG_ATTR_LENGTH_MEMBER(PRIVILEGE_SET, PrivilegeCount),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
 
-typedef struct _LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_RESP {
-    PLUID_AND_ATTRIBUTES pPrivileges;
-    DWORD NumPrivileges;
-} LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_RESP,
-*PLSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_RESP;
+static LWMsgTypeSpec gLsaLocalIPCEnumPrivilegesSidsReqSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_REQ),
+    LWMSG_MEMBER_UINT32(LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_REQ, NumSids),
+    LWMSG_MEMBER_POINTER_BEGIN(LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_REQ, ppszSids),
+    LWMSG_PSTR,
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_POINTER_END,
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_ATTR_LENGTH_MEMBER(LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_REQ, NumSids),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
 
+static LWMsgTypeSpec gLsaLocalIPCEnumPrivilegesSidsRespSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_RESP),
+    LWMSG_TYPESPEC(gLsaPrivilegeSetSpec),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
 
 LWMsgTypeSpec*
 LsaLocalIpcGetEnumPrivilegesSidsReqSpec(
     VOID
-    );
-
+    )
+{
+    return gLsaLocalIPCEnumPrivilegesSidsReqSpec;
+}
 
 LWMsgTypeSpec*
 LsaLocalIpcGetEnumPrivilegesSidsRespSpec(
     VOID
-    );
-
-
-#endif /* __LSALOCALPROVIDER_H__ */
+    )
+{
+    return gLsaLocalIPCEnumPrivilegesSidsRespSpec;
+}
 
 
 /*

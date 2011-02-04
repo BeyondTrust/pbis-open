@@ -25,7 +25,8 @@ liblsass_auth_provider_local_la_SOURCES = \
     lpmisc.c      \
     lpobject.c    \
     lpuser.c      \
-    lpsecurity.c
+    lpsecurity.c  \
+    lpprivilege.c
 
 liblsass_auth_provider_local_la_CPPFLAGS = \
     $(AM_CPPFLAGS) \

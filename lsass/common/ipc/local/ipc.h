@@ -27,67 +27,37 @@
  * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
  * license@likewisesoftware.com
  */
+
 /*
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
  *
- *        lsalocalprovider.h
+ *        ipc.h
  *
  * Abstract:
  *
- *        Likewise Security and Authentication Subsystem (LSASS) Client API
+ *        Likewise Security and Authentication Subsystem (LSASS)
+ *
+ *        Interprocess Communication (Private Include)
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  *
  */
+#include <config.h>
 
-#ifndef __LSALOCALPROVIDER_H__
-#define __LSALOCALPROVIDER_H__
+#include <lsasystem.h>
 
-#include "lsautils.h"
+#include <lsadef.h>
+#include <lsa/lsa.h>
 
-#define LSA_LOCAL_IO_SETDOMAINNAME        1
-#define LSA_LOCAL_IO_SETDOMAINSID         2
-#define LSA_LOCAL_IO_GETDOMAINNAME        3
-#define LSA_LOCAL_IO_GETDOMAINSID         4
-#define LSA_LOCAL_IO_ENUMPRIVSIDS         5
+#include <lwmsg/lwmsg.h>
+#include <lwmem.h>
+#include <lwstr.h>
 
+#include <lwsecurityidentifier.h>
+#include <lsautils.h>
 
-typedef struct _LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_REQ {
-    DWORD NumSids;
-    PCSTR *ppszSids;
-} LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_REQ,
-*PLSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_REQ;
-
-
-typedef struct _LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_RESP {
-    PLUID_AND_ATTRIBUTES pPrivileges;
-    DWORD NumPrivileges;
-} LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_RESP,
-*PLSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_RESP;
-
-
-LWMsgTypeSpec*
-LsaLocalIpcGetEnumPrivilegesSidsReqSpec(
-    VOID
-    );
-
-
-LWMsgTypeSpec*
-LsaLocalIpcGetEnumPrivilegesSidsRespSpec(
-    VOID
-    );
-
-
-#endif /* __LSALOCALPROVIDER_H__ */
-
-
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
+#include "lsaipc.h"
+#include "lsalocalprovider.h"
+#include <lsa/lsapstore-types.h>

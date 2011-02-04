@@ -14,7 +14,8 @@ make()
 	lpmisc.c      \
 	lpobject.c    \
 	lpuser.c      \
-        lpsecurity.c"
+        lpsecurity.c  \
+        lpprivilege.c"
 
     mk_dlo \
 	DLO=liblsass_auth_provider_local \

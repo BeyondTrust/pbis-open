@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    2004-2011
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,69 +33,39 @@
  *
  * Module Name:
  *
- *        localprovider.h
+ *        lpprivilege.c
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        Local Authentication Provider (Private include)
+ *        Local Authentication Provider
  *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
- *          Gerald Carter <gcarter@likewise.com>
+ *        Privilege Management API
+ *
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#include <config.h>
-#include <lsasystem.h>
-#include <lsadef.h>
-#include <lsa/lsa.h>
-#include <reg/reg.h>
+#include "includes.h"
 
-#include <lwio/lwio.h>
-#include <lw/rpc/samr.h>
-#include <lw/rpc/netlogon.h>
-#include <lw/rpc/samr.h>
 
-#include <openssl/evp.h>
-#include <openssl/md4.h>
-#include <openssl/hmac.h>
+DWORD
+LocalDirEnumPrivilegesSids(
+    IN HANDLE hProvider,
+    IN PCSTR *ppszSids,
+    IN DWORD NumSids,
+    OUT PLUID_AND_ATTRIBUTES *ppPrivileges,
+    OUT PDWORD pNumPrivileges
+    )
+{
+    DWORD err = ERROR_SUCCESS;
 
-#include <eventlog.h>
+    *ppPrivileges   = NULL;
+    *pNumPrivileges = 0;
 
-#include "lwmem.h"
-#include "lwstr.h"
-#include "lwtime.h"
-#include "lwsecurityidentifier.h"
-#include "lwsid.h"
-#include <lwhash.h>
+    return err;
+}
 
-#include "lsautils.h"
-#include "lsasrvutils.h"
-#include "lsalocalprovider.h"
-
-#include <lsa/provider.h>
-#include "lsasrvapi.h"
-#include "directory.h"
-
-#include "lpdefs.h"
-#include "lpstructs.h"
-#include "lpenumstate.h"
-#include "lpcfg.h"
-#include "lpmain.h"
-#include "lpauthex.h"
-#include "lpuser.h"
-#include "lpgroup.h"
-#include "lpevent.h"
-#include "lpdomain.h"
-#include "lpaccess.h"
-#include "lpmisc.h"
-#include "lpmarshal.h"
-#include "lpobject.h"
-#include "lpsecurity.h"
-#include "lpprivilege.h"
-
-#include "externs.h"
 
 /*
 local variables:

@@ -1,10 +1,10 @@
-SUBDIRS="api ad ntlm"
+SUBDIRS="api ad local ntlm"
 
 make()
 {
     mk_multiarch_do
         mk_group \
 	    GROUP=ipc \
-	    GROUPDEPS="api/api ad/ad ntlm/ntlm"
+	    GROUPDEPS="api/api ad/ad local/local ntlm/ntlm"
     mk_multiarch_done
 }
