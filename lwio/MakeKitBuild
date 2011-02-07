@@ -134,7 +134,7 @@ configure()
         "socklen_t"
 
     mk_check_libraries \
-        attr pthread nsl socket fuse
+        attr pthread nsl socket fuse dl
 
     mk_check_functions \
         HEADERDEPS="stdlib.h attr/xattr.h" \

@@ -23,6 +23,8 @@ configure()
     mk_check_libraries FAIL=yes \
         popt
 
+    mk_check_libraries pthread dl
+
     # libxml2 puts headers in non-standard locations
     # Figure out if we build it ourselves
     XML_INCDIR="${MK_INCLUDEDIR}/libxml2"

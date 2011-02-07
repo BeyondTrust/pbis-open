@@ -42,7 +42,7 @@ configure()
 	resolv.h
 
     mk_check_libraries \
-        rt pthread resolv
+        rt pthread resolv dl
 
     mk_check_functions \
         HEADERDEPS="time.h sys/time.h" \

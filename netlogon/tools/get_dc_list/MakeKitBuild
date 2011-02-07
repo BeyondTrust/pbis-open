@@ -5,5 +5,5 @@ make()
         SOURCES="main.c" \
         INCLUDEDIRS=". ../../include" \
         HEADERDEPS="reg/lwreg.h lwadvapi.h" \
-        LIBDEPS="lwnetclientapi lwnetcommon lwadvapi lwadvapi_nothr"
+        LIBDEPS="lwnetclientapi lwnetcommon lwadvapi lwadvapi_nothr lwbase_nothr"
 }

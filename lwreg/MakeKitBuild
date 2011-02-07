@@ -60,10 +60,11 @@ configure()
 	FAIL=yes \
 	sqlite3.h
     
-
     mk_check_libraries \
 	FAIL=yes \
 	sqlite3
+
+    mk_check_libraries pthread
 
     if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
     then

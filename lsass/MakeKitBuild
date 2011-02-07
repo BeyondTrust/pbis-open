@@ -243,7 +243,7 @@ configure()
     fi
 
     mk_check_libraries \
-        proc kvm sec
+        proc kvm sec pthread
 
     mk_check_functions \
         HEADERDEPS="kvm.h sys/param.h sys/sysctl.h sys/user.h" \

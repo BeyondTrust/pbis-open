@@ -11,5 +11,5 @@ make()
 	INCLUDEDIRS=". ../include" \
 	HEADERDEPS="dce/rpc.h lwrpcrt/lwrpcrt.h" \
 	DEPS="eventlog_h.h" \
-	LIBDEPS="dcerpc eventlogutils"
+	LIBDEPS="dcerpc eventlogutils lwbase_nothr"
 }
