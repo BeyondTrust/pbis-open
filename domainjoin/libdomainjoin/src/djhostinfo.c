@@ -325,6 +325,7 @@ WriteHostnameToSunFiles(
     PSTR pTempNodename = NULL;
     PSTR pOldEscapedShortHostname = NULL;
     PSTR pOldEscapedFqdnHostname = NULL;
+    PSTR pOldSedExpression = NULL;
     PSTR pSedExpression = NULL;
     BOOLEAN isSame = FALSE;
 
@@ -378,19 +379,31 @@ WriteHostnameToSunFiles(
                 &pOldEscapedShortHostname);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    ceError = SedEscapeLiteral(
-                pOldFqdnHostname,
-                &pOldEscapedFqdnHostname);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
     ceError = LwAllocateStringPrintf(
                 &pSedExpression,
-                "s/^%s\\([ ].*\\)\\{0,1\\}$/%s\\1/;s/^%s\\([ ].*\\)\\{0,1\\}$/%s\\1/",
+                "s/^%s\\([ ].*\\)\\{0,1\\}$/%s\\1/",
                 pOldEscapedShortHostname,
-                pNewShortHostname,
-                pOldEscapedFqdnHostname,
-                pNewFqdnHostname);
+                pNewShortHostname);
     BAIL_ON_CENTERIS_ERROR(ceError);
+
+    if (pOldFqdnHostname != NULL)
+    {
+        ceError = SedEscapeLiteral(
+                    pOldFqdnHostname,
+                    &pOldEscapedFqdnHostname);
+        BAIL_ON_CENTERIS_ERROR(ceError);
+
+        pOldSedExpression = pSedExpression;
+        pSedExpression = NULL;
+
+        ceError = LwAllocateStringPrintf(
+                    &pSedExpression,
+                    "%s;s/^%s\\([ ].*\\)\\{0,1\\}$/%s\\1/",
+                    pOldSedExpression,
+                    pOldEscapedFqdnHostname,
+                    pNewFqdnHostname);
+        BAIL_ON_CENTERIS_ERROR(ceError);
+    }
 
     for (iPath = 0; iPath < nPaths; iPath++)
     {
@@ -415,6 +428,7 @@ error:
     CT_SAFE_FREE_STRING(pTempNodename);
     CT_SAFE_FREE_STRING(pOldEscapedShortHostname);
     CT_SAFE_FREE_STRING(pOldEscapedFqdnHostname);
+    CT_SAFE_FREE_STRING(pOldSedExpression);
     CT_SAFE_FREE_STRING(pSedExpression);
 
     return ceError;
