@@ -772,6 +772,7 @@ DNSUnmarshallDomainName(
                         (PBYTE)szLabel,
                         uLen,
                         &dwRead);
+            BAIL_ON_LWDNS_ERROR(dwError);
             
             dwError = DNSAllocateString(szLabel, &pszLabel);
             BAIL_ON_LWDNS_ERROR(dwError);
