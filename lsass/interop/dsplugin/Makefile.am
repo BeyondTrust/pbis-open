@@ -62,6 +62,7 @@ DSPlugIn_la_LDFLAGS= \
      -module -shrext '' -avoid-version -bundle_loader \
      /usr/sbin/DirectoryService \
      -framework CoreFoundation \
+     @top_builddir@/client/liblsaclient.la \
      -llwnetclientapi \
      -llwioclient \
      -llwadvapi \
