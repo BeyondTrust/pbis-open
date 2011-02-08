@@ -38,10 +38,6 @@ typedef enum
     NSPSearchPath
 } SearchPolicyType;
 
-#define LWIDSPLUGIN_SYMLINK_PATH "/System/Library/Frameworks/DirectoryService.framework/Versions/Current/Resources/Plugins/LWIDSPlugin.dsplug"
-#define LWEDSPLUGIN_SYMLINK_PATH "/System/Library/Frameworks/DirectoryService.framework/Versions/Current/Resources/Plugins/LWEDSPlugin.dsplug"
-#define LWIDSPLUGIN_INSTALL_PATH LIBDIR "/LWIDSPlugin.dsplug"
-#define LWEDSPLUGIN_INSTALL_PATH LIBDIR "/LWEDSPlugin.dsplug"
 #define LWDSPLUGIN_NAME         "/Likewise - Active Directory"
 #define APPLEADDSPLUGIN_NAME    "^Active Directory"
 #define PID_FILE_CONTENTS_SIZE   ((9 * 2) + 2)
@@ -178,10 +174,10 @@ error:
     return ceError;
 }
 
-/* Use dscl to place the LWIDSPlugin in the authenticator list */
+/* Use dscl to place the DSPlugin in the authenticator list */
 static
 DWORD
-DJRegisterLWIDSPlugin()
+DJRegisterDSPlugin()
 {
     DWORD ceError = ERROR_SUCCESS;
     PPROCINFO pProcInfo = NULL;
@@ -190,7 +186,7 @@ DJRegisterLWIDSPlugin()
     LONG status = 0;
     DWORD retryCount = 3;
 
-    DJ_LOG_INFO("Registering LWIDSPlugin for Macintosh Directory Services Authentication");
+    DJ_LOG_INFO("Registering DSPlugin for Macintosh Directory Services Authentication");
 
     ceError = DJSetSearchPath(CSPSearchPath);
     BAIL_ON_CENTERIS_ERROR(ceError);
@@ -258,10 +254,10 @@ error:
     return ceError;
 }
 
-/* Remove LWIDSPlugin from the authenticator list */
+/* Remove DSPlugin from the authenticator list */
 static
 DWORD
-DJUnregisterLWIDSPlugin()
+DJUnregisterDSPlugin()
 {
     DWORD ceError = ERROR_SUCCESS;
     PPROCINFO pProcInfo = NULL;
@@ -269,7 +265,7 @@ DJUnregisterLWIDSPlugin()
     DWORD nArgs = 7;
     LONG status = 0;
 
-    DJ_LOG_INFO("Unregistering LWIDSPlugin from Open Directory Authentication");
+    DJ_LOG_INFO("Unregistering DSPlugin from Open Directory Authentication");
 
     ceError = CTAllocateMemory(sizeof(PSTR)*nArgs, (PVOID*)(PVOID)&ppszArgs);
     BAIL_ON_CENTERIS_ERROR(ceError);
@@ -322,114 +318,6 @@ error:
     return ceError;
 }
 
-/*
-   The LWIDSPlugin is saved to /opt/likewise/lib/LWIDSPlugin.dsplug upon installation
-
-   In order to participate in Open Directory Services, we need to create a symbolic link
-
-   from
-
-   /System/Library/Frameworks/DirectoryService.framework/Versions/Current/Resources/Plugins/LWIDSPlugin.dsplug
-
-   to
-
-   /opt/likewise/lib/LWIDSPlugin.dsplug
-*/
-#if 0
-static
-DWORD
-DJEngageLWIDSPlugin()
-{
-    DWORD ceError = ERROR_SUCCESS;
-    BOOLEAN bDirExists = FALSE;
-    BOOLEAN bLinkExists = FALSE;
-    BOOLEAN bCreateSymlink = TRUE;
-    PSTR    pszTargetPath = NULL;
-
-    ceError = CTCheckDirectoryExists(LWIDSPLUGIN_INSTALL_PATH, &bDirExists);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    if (!bDirExists)
-    {
-       DJ_LOG_ERROR("LWIDSPlugin folder [%s] does not exist", LWIDSPLUGIN_INSTALL_PATH);
-       BAIL_ON_CENTERIS_ERROR(ceError);
-    }
-
-    ceError = CTCheckLinkExists(LWIDSPLUGIN_SYMLINK_PATH, &bLinkExists);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    if (bLinkExists)
-    {
-       ceError = CTGetSymLinkTarget(LWIDSPLUGIN_SYMLINK_PATH, &pszTargetPath);
-       BAIL_ON_CENTERIS_ERROR(ceError);
-
-       if (strcmp(pszTargetPath, LWIDSPLUGIN_INSTALL_PATH))
-       {
-          DJ_LOG_INFO("Removing symbolic link at [%s]", LWIDSPLUGIN_SYMLINK_PATH);
-          ceError = CTRemoveFile(LWIDSPLUGIN_SYMLINK_PATH);
-          BAIL_ON_CENTERIS_ERROR(ceError);
-       }
-       else
-       {
-          bCreateSymlink = FALSE;
-       }
-    }
-
-    if (bCreateSymlink)
-    {
-       ceError = CTCreateSymLink(LWIDSPLUGIN_SYMLINK_PATH, LWIDSPLUGIN_INSTALL_PATH);
-       BAIL_ON_CENTERIS_ERROR(ceError);
-    }
-
-error:
-
-    if (pszTargetPath)
-    {
-       CTFreeString(pszTargetPath);
-    }
-
-    return ceError;
-}
-
-static
-DWORD
-DJDisengageLWIDSPlugin()
-{
-    DWORD ceError = ERROR_SUCCESS;
-    BOOLEAN bLinkExists = FALSE;
-    BOOLEAN bDirExists = FALSE;
-
-    ceError = CTCheckLinkExists(LWIDSPLUGIN_SYMLINK_PATH, &bLinkExists);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    if (bLinkExists)
-    {
-       DJ_LOG_INFO("Removing symbolic link at [%s]", LWIDSPLUGIN_SYMLINK_PATH);
-
-       ceError = CTRemoveFile(LWIDSPLUGIN_SYMLINK_PATH);
-       BAIL_ON_CENTERIS_ERROR(ceError);
-
-       goto done;
-    }
-
-    /* If a directory exists in the place of the symlink, remove that instead */
-    ceError = CTCheckDirectoryExists(LWIDSPLUGIN_SYMLINK_PATH, &bDirExists);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    if (bDirExists)
-    {
-       ceError = CTRemoveDirectory(LWIDSPLUGIN_SYMLINK_PATH);
-       BAIL_ON_CENTERIS_ERROR(ceError);
-    }
-
-done:
-error:
-
-    return ceError;
-}
-#endif
-
-
 static
 DWORD
 DJFlushCache(
@@ -478,11 +366,11 @@ error:
 
 
 DWORD
-DJConfigureLWIDSPlugin()
+DJConfigureDSPlugin()
 {
     DWORD ceError = ERROR_SUCCESS;
 
-    ceError = DJRegisterLWIDSPlugin();
+    ceError = DJRegisterDSPlugin();
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     ceError = DJFlushCache();
@@ -494,11 +382,11 @@ error:
 }
 
 DWORD
-DJUnconfigureLWIDSPlugin()
+DJUnconfigureDSPlugin()
 {
     DWORD ceError = ERROR_SUCCESS;
 
-    ceError = DJUnregisterLWIDSPlugin();
+    ceError = DJUnregisterDSPlugin();
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     ceError = DJFlushCache();
@@ -654,9 +542,9 @@ cleanup:
 static void DoDSPlugin(JoinProcessOptions *options, LWException **exc)
 {
     if(options->joiningDomain)
-        LW_CLEANUP_CTERR(exc, DJConfigureLWIDSPlugin());
+        LW_CLEANUP_CTERR(exc, DJConfigureDSPlugin());
     else
-        LW_CLEANUP_CTERR(exc, DJUnconfigureLWIDSPlugin());
+        LW_CLEANUP_CTERR(exc, DJUnconfigureDSPlugin());
 cleanup:
     ;
 }

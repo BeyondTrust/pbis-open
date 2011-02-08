@@ -32,10 +32,10 @@
 #define __DJCONFIG_MAC_H__
 
 DWORD
-DJConfigureLWIDSPlugin();
+DJConfigureDSPlugin();
 
 DWORD
-DJUnconfigureLWIDSPlugin();
+DJUnconfigureDSPlugin();
 
 DWORD
 DJIsAppleADPluginInUse(BOOLEAN* pExists);
