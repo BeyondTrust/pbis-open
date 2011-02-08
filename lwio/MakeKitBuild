@@ -126,10 +126,6 @@ configure()
         sys/sysctl.h sys/user.h
 
     mk_check_types \
-        HEADERDEPS="procfs.h sys/procfs.h" \
-        "struct psinfo"
-
-    mk_check_types \
         HEADERDEPS="sys/types.h sys/socket.h" \
         "socklen_t"
 
