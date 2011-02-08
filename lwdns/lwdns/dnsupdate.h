@@ -126,7 +126,19 @@ DNSBuildMessageBuffer(
     );
 
 DWORD
+DNSGetPtrDomainForAddr(
+    PSTR*        ppszDomainName,
+    PSOCKADDR_IN pAddr
+    );
+
+DWORD
 DNSGetPtrNameForAddr(
     PSTR* ppszRecordName,
+    PSOCKADDR_IN pAddr
+    );
+
+DWORD
+DNSGetPtrZoneForAddr(
+    PSTR* ppszZoneName,
     PSOCKADDR_IN pAddr
     );

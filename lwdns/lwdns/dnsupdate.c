@@ -374,10 +374,10 @@ DNSGetPtrNameForAddr(
     dwError = LwRtlCStringAllocatePrintf(
                     &pszRecordName,
                     "%d.%d.%d.%d.in-addr.arpa",
-                    (pAddr->sin_addr.s_addr >> 24) & 255,
-                    (pAddr->sin_addr.s_addr >> 16) & 255,
+                    (pAddr->sin_addr.s_addr >>  0) & 255,
                     (pAddr->sin_addr.s_addr >>  8) & 255,
-                    (pAddr->sin_addr.s_addr >>  0) & 255
+                    (pAddr->sin_addr.s_addr >> 16) & 255,
+                    (pAddr->sin_addr.s_addr >> 24) & 255
                 );
     if (dwError)
     {
@@ -398,6 +398,46 @@ error:
 }
 
 DWORD
+DNSGetPtrZoneForAddr(
+    PSTR* ppszZoneName,
+    PSOCKADDR_IN pAddr
+    )
+{
+    DWORD dwError = 0;
+    PSTR pszZoneName = NULL;
+
+    if (pAddr->sin_family != AF_INET)
+    {
+        dwError = LWDNS_ERROR_INVALID_IP_ADDRESS;
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
+
+    dwError = LwRtlCStringAllocatePrintf(
+                    &pszZoneName,
+                    "%d.%d.%d.in-addr.arpa",
+                    (pAddr->sin_addr.s_addr >>  8) & 255,
+                    (pAddr->sin_addr.s_addr >> 16) & 255,
+                    (pAddr->sin_addr.s_addr >> 24) & 255
+                );
+    if (dwError)
+    {
+        dwError = ENOMEM;
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
+
+    *ppszZoneName = pszZoneName;
+
+cleanup:
+    return dwError;
+
+error:
+    *ppszZoneName = NULL;
+    LwRtlCStringFree(&pszZoneName);
+
+    goto cleanup;
+}
+
+DWORD
 DNSUpdatePtrSecure(
     PSOCKADDR_IN pAddr,
     PCSTR  pszHostnameFQDN
@@ -409,17 +449,19 @@ DNSUpdatePtrSecure(
     DWORD   dwNumNSInfos = 0;
     BOOLEAN bDNSUpdated = FALSE;
     PSTR pszRecordName = NULL;
+    PSTR pszPtrZone = NULL;
     DWORD   iNS = 0;
     HANDLE hDNSServer = (HANDLE)NULL;
     PCSTR pszAddress = NULL;
 
-    dwError = DNSGetPtrNameForAddr(
-                    &pszRecordName,
-                    pAddr);
+    dwError = DNSGetPtrZoneForAddr(&pszPtrZone, pAddr);
+    BAIL_ON_LWDNS_ERROR(dwError);
+
+    dwError = DNSGetPtrNameForAddr(&pszRecordName, pAddr);
     BAIL_ON_LWDNS_ERROR(dwError);
 
     dwError = DNSGetNameServers(
-                    pszRecordName,
+                    pszPtrZone,
                     &pszZone,
                     &pNameServerInfos,
                     &dwNumNSInfos);
@@ -484,6 +526,7 @@ DNSUpdatePtrSecure(
 
 cleanup:
     LWDNS_SAFE_FREE_STRING(pszZone);
+    LWDNS_SAFE_FREE_STRING(pszPtrZone);
     if (pNameServerInfos)
     {
         DNSFreeNameServerInfoArray(

@@ -177,13 +177,6 @@ DNSUnmarshallBuffer(
 	);
 
 DWORD
-DNSUnmarshallDomainNameAtOffset(
-	HANDLE hRecvBuffer,
-	WORD wOffset,
-	PDNS_DOMAIN_NAME * ppDomainName
-	);
-
-DWORD
 DNSReceiveBufferMoveBackIndex(
 	HANDLE hRecvBuffer,
 	WORD wOffset
