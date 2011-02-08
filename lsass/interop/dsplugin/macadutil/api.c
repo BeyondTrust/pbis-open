@@ -1978,7 +1978,7 @@ ReadConfigDword(
     dwError = RegGetValueA(
                 hConnection,
                 hKey,
-                LWEDSPLUGIN_POLICIES,
+                DSPLUGIN_POLICIES,
                 pszName,
                 RRF_RT_REG_DWORD,
                 &dwType,
@@ -1995,7 +1995,7 @@ ReadConfigDword(
         dwError = RegGetValueA(
                     hConnection,
                     hKey,
-                    LWEDSPLUGIN_SETTINGS,
+                    DSPLUGIN_SETTINGS,
                     pszName,
                     RRF_RT_REG_DWORD,
                     &dwType,
@@ -2041,7 +2041,7 @@ ReadConfigString(
     dwError = RegGetValueA(
                  hConnection,
                  hKey,
-                 LWEDSPLUGIN_POLICIES,
+                 DSPLUGIN_POLICIES,
                  pszName,
                  RRF_RT_REG_SZ,
                  &dwType,
@@ -2057,7 +2057,7 @@ ReadConfigString(
         dwError = RegGetValueA(
                     hConnection,
                     hKey,
-                    LWEDSPLUGIN_SETTINGS,
+                    DSPLUGIN_SETTINGS,
                     pszName,
                     RRF_RT_REG_SZ,
                     &dwType,
