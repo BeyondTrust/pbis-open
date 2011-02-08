@@ -69,22 +69,12 @@
 #include "cfg.h"
 #include "servermain.h"
 #include "ipc.h"
-#include "proc.h"
 #include "ioinit.h"
 
 #include "externs.h"
 
 #if HAVE_SYS_PARAM_H
 #include <sys/param.h>
-#endif
-#if HAVE_SYS_PSTAT_H
-#include <sys/pstat.h>
-#endif
-#if HAVE_PROCFS_H
-#include <procfs.h>
-#endif
-#if HAVE_SYS_PROCFS_H
-#include <sys/procfs.h>
 #endif
 #if HAVE_SYS_SYSCTL_H
 #include <sys/sysctl.h>

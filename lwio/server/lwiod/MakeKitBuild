@@ -1,7 +1,7 @@
 make()
 {
     COMMON_SOURCES="globals.c cfg.c ipc.c"
-    LWIOD_SOURCES="$COMMON_SOURCES libmain.c proc.c main.c"
+    LWIOD_SOURCES="$COMMON_SOURCES libmain.c main.c"
     LWIO_SOURCES="$COMMON_SOURCES main-svcm.c"
     DRIVER_GROUPS=""
 

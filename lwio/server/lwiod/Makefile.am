@@ -43,8 +43,7 @@ liblwiomain_la_SOURCES = \
     globals.c   \
     libmain.c   \
     cfg.c    \
-    ipc.c       \
-    proc.c
+    ipc.c
 
 liblwiomain_la_CPPFLAGS = $(MAIN_CPPFLAGS)
 
