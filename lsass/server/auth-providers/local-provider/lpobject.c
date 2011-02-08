@@ -298,6 +298,9 @@ LocalDirFindObjectsInternal(
     PCSTR pszFilterTemplateString = "%s = \"%s\"%s";
     PCSTR pszFilterTemplateDword = "%s = %u%s";
     PCSTR pszFilterTemplateType = " AND " LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %u";
+    PCSTR pszFilterTemplateUserOrGroup = " AND (" \
+            LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %u OR " \
+            LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %u)";
     PCSTR pszFilterBy = NULL;
     PSTR pszFilterType = NULL;
     PSTR  pszFilter = NULL;
@@ -354,17 +357,22 @@ LocalDirFindObjectsInternal(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (dwObjectClass != LOCAL_OBJECT_CLASS_UNKNOWN)
+    if (dwObjectClass == LOCAL_OBJECT_CLASS_UNKNOWN)
+    {
+        dwError = LwAllocateStringPrintf(
+            &pszFilterType,
+            pszFilterTemplateUserOrGroup,
+            LOCAL_OBJECT_CLASS_USER,
+            LOCAL_OBJECT_CLASS_GROUP);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
     {
         dwError = LwAllocateStringPrintf(
             &pszFilterType,
             pszFilterTemplateType,
             dwObjectClass);
         BAIL_ON_LSA_ERROR(dwError);
-    }
-    else
-    {
-        pszFilterType = NULL;
     }
 
     for (dwIndex = 0; dwIndex < dwCount; dwIndex++)
