@@ -361,7 +361,7 @@ restore_6_0_configuration()
 
 import_registry()
 {
-    REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg lwiod.reg dcerpcd.reg"
+    REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg lwiod.reg rdr.reg npfs.reg srv.reg pvfs.reg dcerpcd.reg srvsvcd.reg nfs.reg"
     REGFILES_IMPORT="lsassd-import.reg"
     REGUPGRADE="/opt/likewise/bin/lwregshell upgrade"
     REGIMPORT="/opt/likewise/bin/lwregshell import"
