@@ -26,14 +26,12 @@ While the code is portable among a variety of *nix based platforms
 (Linux, Solaris, AIX, HP-UX, and OS X), this build system is 
 primarily intended for Linux & FreeBSD platforms.
 
-The tool chain no longer relies on libtool and autoconf.  We recommend
-any recent gcc 4.x release to compile.
-
 Before you begin, please read over this list of prerequisite development
 packages (depending on your Linux distro):
 
-  * RedHat/Fedora - gcc, glibc-devel, libuuid-devel, pam-devel, ncurses-devel,
-    flex, bison, rpm-build, rpm-devel, openssl-devel, popt-devel, libxml2-devel
+  * RedHat/Fedora - gcc, glibc-devel, pam-devel, ncurses-devel,
+    flex, bison, rpm-build, rpm-devel, popt-devel, libxml2-devel,
+    autoconf, automake, libtool
 
     Optional packages: 
        o libglade2-devel - To build domainjoin-gui GTK application
@@ -45,8 +43,8 @@ packages (depending on your Linux distro):
            pam-devel.i686
 
   * Ubuntu - build-essential, fakeroot, devscripts, debhelper,
-    autoconf, automake, libtool, libncurses5-dev, uuid-dev,
-    flex, bison, libpam0g-dev, libssl-dev, libxml2-dev, libpopt-dev
+    autoconf, automake, libtool, libncurses5-dev,
+    flex, bison, libpam0g-dev, libxml2-dev, libpopt-dev
 
     Optional packages: 
        o libglade2-dev - To build domainjoin-gui GTK application
@@ -66,22 +64,27 @@ The easiest way to begin a build is to run:
 This will build the necessary binaries and libraries and package them up into
 DEBs or RPMs in the likewise-open/debug/package/ directory.
 
+If you do not want to install using packages, you can do the following
+instead, but be sure to read the note below:
+
+  $ make -jXX
+  $ sudo make install
+
 You may view the complete set of configure options by running 
 
   $ ../configure --help
 
-If you are working directory from the likewise-open git tree, the
-"'build/mkdist" script can be used to generate a release tarball file.
-
+To generate a release tarball, run "build/mkdist" with likewise-open
+as your working directory.
 
 Note: When not installing using the local package managers (DEB or RPM),
-it is necessary to manually import all the service registry files after
-installing the binaries.
+you will need to start lwsmd and import registry files manually:
 
-  $ sudo bash -c 'for file in /opt/likewise/share/config/*reg; do \
+  $ sudo /etc/init.d/lwsmd start
+  $ sudo bash -c 'for file in /opt/likewise/share/config/*.reg; do \
       /opt/likewise/bin/regshell import $file; \
     done'
-
+  $ sudo /etc/init.d/lwmsd reload
 
 Likewise Registry Service
 =========================
@@ -150,12 +153,12 @@ utility.
   Arguments: 'lsassd' '--syslog'
   Dependencies: netlogon lwio lwreg rdr
 
-  $ lwsm stop-all lsass
+  $ lwsm stop lsass
   Stopping service reverse dependency: srvsvc
   Stopping service reverse dependency: srv
   Stopping service: lsass
 
-  $ lwsm start-all srvsvc
+  $ lwsm start srvsvc
   Starting service dependency: lsass
   Starting service dependency: srv
   Starting service: srvsvc
