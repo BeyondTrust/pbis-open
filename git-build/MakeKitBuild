@@ -22,7 +22,7 @@ option()
 {
     case "${MK_HOST_OS}-${LW_FEATURE_LEVEL}" in
         *-auth)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl popt"
+            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl"
             ;;
         linux-*)
             default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl"
