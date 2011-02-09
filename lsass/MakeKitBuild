@@ -185,9 +185,11 @@ configure()
         HEADERDEPS="procfs.h sys/procfs.h" \
         "struct psinfo"
 
-    mk_check_sizeofs \
-        HEADERDEPS="time.h" \
-        time_t
+    mk_multiarch_do
+        mk_check_sizeofs \
+            HEADERDEPS="time.h" \
+            time_t
+    mk_multiarch_done
 
     mk_check_libraries \
 	FAIL=yes \
