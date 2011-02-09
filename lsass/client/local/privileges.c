@@ -186,9 +186,9 @@ LsaLocalLookupPrivilegeValue(
 {
     DWORD dwError = ERROR_SUCCESS;
     size_t privilegeNameLen = 0;
-    size_t requestSize = 0;
+    DWORD requestSize = 0;
     PVOID pRequestBlob = NULL;
-    size_t responseSize = 0;
+    DWORD responseSize = 0;
     PVOID pResponseBlob = NULL;
 
     dwError = LwWc16sLen(pwszPrivilegeName,
@@ -237,9 +237,9 @@ LsaLocalLookupPrivilegeName(
     )
 {
     DWORD dwError = ERROR_SUCCESS;
-    size_t requestSize = 0;
+    DWORD requestSize = 0;
     PVOID pRequestBlob = NULL;
-    size_t responseSize = 0;
+    DWORD responseSize = 0;
     PVOID pResponseBlob = NULL;
 
     requestSize  = sizeof(*pPrivilegeValue);
@@ -280,9 +280,9 @@ LsaLocalEnumAccountRights(
     LWMsgDataContext* pDataContext = NULL;
     PSTR pszAccountSid = NULL;
     PLSA_LOCAL_IPC_ENUM_ACCOUNT_RIGHTS_RESP pResponse = NULL;
-    size_t requestSize = 0;
+    DWORD requestSize = 0;
     PVOID pRequestBlob = NULL;
-    size_t responseSize = 0;
+    DWORD responseSize = 0;
     PVOID pResponseBlob = NULL;
 
     dwError = MAP_LWMSG_ERROR(lwmsg_context_new(NULL, &context));
