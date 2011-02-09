@@ -139,7 +139,7 @@ done
 
 show mkdir -p "$DIST_DIR/package"
 show cp -f "config.log" "$DIST_DIR/config.log"
-show cp -r "package/*" "$DIST_DIR/package"
+show cp -r "package/"* "$DIST_DIR/package"
 
 show cd "stage"
 show tar czfv "$DIST_DIR/stage-${ID}-${REVISION}.tar.gz" .
