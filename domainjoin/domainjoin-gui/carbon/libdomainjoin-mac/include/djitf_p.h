@@ -37,6 +37,8 @@ DJItfJoinDomain(
     const char*         pszOU,
     const char*         pszUsername,
     const char*         pszPassword,
+    const char*         pszUserDomainPrefix,
+    short               bAssumeDefaultDomain,
     short               bNoHosts,
     PDOMAIN_JOIN_ERROR* ppError
     );
