@@ -16,6 +16,10 @@ make()
         lsa/ad-types.h
 
     mk_headers \
+        MASTER="lsa/local.h" \
+        HEADERDEPS="lsa/lsa.h"
+
+    mk_headers \
         HEADERDEPS="gssapi.h" \
         ntlm/gssntlm.h \
         ntlm/sspintlm.h

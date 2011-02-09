@@ -5,6 +5,7 @@ lsainclude_HEADERS = \
     lsa/lsapstore-api.h \
     lsa/lsapstore-plugin.h \
     lsa/ad.h \
+    lsa/local.h \
     lsa/ad-types.h \
     lsa/provider.h
 
