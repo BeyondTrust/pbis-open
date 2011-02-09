@@ -72,17 +72,35 @@ typedef struct _LW_SERVICE_HANDLE *LW_SERVICE_HANDLE, **PLW_SERVICE_HANDLE;
  */
 typedef enum _LW_SERVICE_STATE
 {
-    /** @brief Service is running */
+    /**
+     * @brief Service is running
+     * @hideinitializer
+     */
     LW_SERVICE_STATE_RUNNING = 0,
-    /** @brief Service is stopped */
+    /** 
+     * @brief Service is stopped
+     * @hideinitializer
+     */
     LW_SERVICE_STATE_STOPPED = 1,
-    /** @brief Service is starting */
+    /** 
+     * @brief Service is starting
+     * @hideinitializer
+     */
     LW_SERVICE_STATE_STARTING = 2,
-    /** @brief Service is stopping */
+    /** 
+     * @brief Service is stopping
+     * @hideinitializer
+     */
     LW_SERVICE_STATE_STOPPING = 3,
-    /** @brief Service is paused */
+    /** 
+     * @brief Service is paused
+     * @hideinitializer
+     */
     LW_SERVICE_STATE_PAUSED = 4,
-    /** @brief Service is pining for the fjords */
+    /**
+     * @brief Service is pining for the fjords
+     * @hideinitializer 
+     */
     LW_SERVICE_STATE_DEAD = 5
 } LW_SERVICE_STATE, *PLW_SERVICE_STATE;
 
@@ -93,15 +111,30 @@ typedef enum _LW_SERVICE_STATE
  */
 typedef enum _LW_SERVICE_TYPE
 {
-    /** Service is a legacy executable */
+    /** 
+     * @brief Service is a legacy executable
+     * @hideinitializer
+     */
     LW_SERVICE_TYPE_LEGACY_EXECUTABLE = 0,
-    /** Service is an executable that communicates with the service manager */
+    /** 
+     * @brief Service is an lwsm-aware executable 
+     * @hideinitializer
+     */
     LW_SERVICE_TYPE_EXECUTABLE = 1,
-    /** Service is a module for a container */
+    /** 
+     * @brief Service is a module for a container
+     * @hideinitializer
+     */
     LW_SERVICE_TYPE_MODULE = 2,
-    /** Service is a driver */
+    /** 
+     * @brief Service is a driver
+     * @hideinitializer
+     */
     LW_SERVICE_TYPE_DRIVER = 3,
-    /** Service is a dummy stub */
+    /** 
+     * @brief Service is a dummy stub
+     * @hideinitializer
+     */
     LW_SERVICE_TYPE_STUB = 4
 } LW_SERVICE_TYPE, *PLW_SERVICE_TYPE;
 
@@ -112,13 +145,25 @@ typedef enum _LW_SERVICE_TYPE
  */
 typedef enum _LW_SERVICE_HOME
 {
-    /** @brief Service is running in a standalone process */
+    /** 
+     * @brief Service is running in a standalone process
+     * @hideinitializer
+     */
     LW_SERVICE_HOME_STANDALONE,
-    /** @brief Service is running in a service container */
+    /**
+     * @brief Service is running in a service container
+     * @hideinitializer
+     */
     LW_SERVICE_HOME_CONTAINER,
-    /** @brief Service is running in the IO manager */
+    /**
+     * @brief Service is running in the IO manager
+     * @hideinitializer
+     */
     LW_SERVICE_HOME_IO_MANAGER,
-    /** @brief Service is running directly in the service manager */
+    /**
+     * @brief Service is running directly in the service manager
+     * @hideinitializer
+     */
     LW_SERVICE_HOME_SERVICE_MANAGER
 } LW_SERVICE_HOME, *PLW_SERVICE_HOME;
 
