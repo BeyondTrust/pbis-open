@@ -2000,6 +2000,8 @@ RegDbFixAcls(
     ULONG ulSecDescAbsLen = 0;
     PSECURITY_DESCRIPTOR_RELATIVE pSecDescRelNew = NULL;
     ULONG ulSecDescRelNewLen = 1024;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecDescRelWrite = NULL;
+    ULONG ulSecDescRelWriteLen = 1024;
     PACL pDacl = NULL;
     ULONG ulDaclLen = 0;
     PACL pSacl = NULL;
@@ -2010,6 +2012,7 @@ RegDbFixAcls(
     ULONG ulGroupLen = 0;
     PSID pRegGroup = NULL;
     BOOLEAN bIsGroupDefaulted = FALSE;
+    BOOLEAN bSdSwapped = FALSE;
     PSID pGroupSid = NULL;
 
 
@@ -2037,13 +2040,33 @@ RegDbFixAcls(
                                                  &ulSecDescRelLen);
         BAIL_ON_NT_STATUS(status);
 
+
         // Get sizes
         status = RtlSelfRelativeToAbsoluteSD(pSecDescRel,
-                                             pSecDescAbs, &ulSecDescAbsLen,
-                                             pDacl, &ulDaclLen,
-                                             pSacl, &ulSaclLen,
-                                             pOwner, &ulOwnerLen,
-                                             pGroup, &ulGroupLen);
+                                             NULL, &ulSecDescAbsLen,
+                                             NULL, &ulDaclLen,
+                                             NULL, &ulSaclLen,
+                                             NULL, &ulOwnerLen,
+                                             NULL, &ulGroupLen);
+        if (status == STATUS_ASSERTION_FAILURE)
+        {
+            // Assume byte order problem, so call swap bytes utility
+            // which will fix fields on BE systems known to be wrong.
+            status = RtlAbsoluteToSelfRelativeSDSwab(
+                          pSecDescRel,
+                          ulSecDescRelLen);
+            BAIL_ON_NT_STATUS(status);
+            bSdSwapped = TRUE;
+            pSecDescRelWrite = pSecDescRel;
+            ulSecDescRelWriteLen = ulSecDescRelLen;
+
+            status = RtlSelfRelativeToAbsoluteSD(pSecDescRel,
+                                                 NULL, &ulSecDescAbsLen,
+                                                 NULL, &ulDaclLen,
+                                                 NULL, &ulSaclLen,
+                                                 NULL, &ulOwnerLen,
+                                                 NULL, &ulGroupLen);
+        }
         if (status == STATUS_BUFFER_TOO_SMALL)
         {
             status = STATUS_SUCCESS;
@@ -2128,14 +2151,19 @@ RegDbFixAcls(
             while((status != STATUS_SUCCESS) &&
                   (ulSecDescRelNewLen <= SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE));
 
+            pSecDescRelWrite = pSecDescRelNew;
+            ulSecDescRelWriteLen = ulSecDescRelNewLen;
+        }
+
+        if (!pGroup || bSdSwapped)
+        {
             // Write the fixed ACL back to registry
             status = RegDbUpdateKeyAclContent_inlock(hDb,
                                                      qwCacheId,
-                                                     pSecDescRelNew,
-                                                     ulSecDescRelNewLen);
+                                                     pSecDescRelWrite,
+                                                     ulSecDescRelWriteLen);
             BAIL_ON_NT_STATUS(status);
         }
-        BAIL_ON_NT_STATUS(status);
 
         LWREG_SAFE_FREE_MEMORY(pSecDescRel);
         ulSecDescRelLen = 0;
@@ -2143,6 +2171,17 @@ RegDbFixAcls(
         ulSecDescRelNewLen = 1024;
         RegSrvFreeAbsoluteSecurityDescriptor(&pSecDescAbs);
         ulSecDescAbsLen = 0;
+
+        // Above RegSrvFreeAbsoluteSecurityDescriptor doesn't NULL out 
+        // these pointers, so they are referencing unallocated memory. 
+        pDacl = NULL;
+        pSacl = NULL;
+        pOwner = NULL;
+        pGroup = NULL;
+        ulDaclLen = 0;
+        ulSaclLen = 0;
+        ulOwnerLen = 0;
+        ulGroupLen = 0;
     }
 
     status = sqlite3_exec(
