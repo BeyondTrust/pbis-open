@@ -6,5 +6,11 @@ function package_populate
 {
     populate_components
 
+    if [ "${BUILD_OS_TYPE}" = "darwin" ]
+    then
+        mkdir -p "${POPULATE_PREFIX_DIR}/bin"
+        rsync -a --exclude=.svn "${BUILD_ROOT}/src/linux/config/Likewise Logon Message.app" "${POPULATE_PREFIX_DIR}/bin"
+    fi
+
     strip_common
 }

@@ -104,10 +104,5 @@ function component_populate
 	x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/lwregd.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
     fi
 
-    if [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
-	mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons
-	x_cp 0755 ${BUILD_ROOT}/src/linux/config/com.likewisesoftware.lwregd.plist ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons/.
-    fi
-
     libtool_rewrite_populate
 }
