@@ -230,7 +230,7 @@ restore_daemons()
 
 enable_plugin()
 {
-    PLUGIN_DIR=DSPlugin.dsplug
+    PLUGIN_DIR=LWDSPlugin.dsplug
     PLUGIN_DIR_OPEN=LWIDSPlugin.dsplug
     PLUGIN_DIR_ENT=LWEDSPlugin.dsplug
     SRC_DIR=/opt/likewise/lib
