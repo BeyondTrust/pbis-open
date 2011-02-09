@@ -48,6 +48,7 @@
 #include <eventlog.h>
 #include <lwps/lwps.h>
 #include <lwstr.h>
+#include <lwsm/lwsm.h>
 
 #define DOMAINJOIN_EVENT_CATEGORY   "Domain join"
 
@@ -964,6 +965,23 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
                     &firstStop,
                     &stopLaterOffset));
 
+        if (bEnableDcerpcd == FALSE)
+        {
+	    DJ_LOG_VERBOSE("Disable eventlog dependency on dcerpc service");
+            LW_TRY(exc, SetStringRegistryValue("Services\\eventlog",
+                                               "Dependencies",
+                                               ""));
+
+	    DJ_LOG_VERBOSE("Disable dcerpc service from starting at reboot");
+            LW_TRY(exc, SetBooleanRegistryValue("Services\\dcerpc",
+                                                "Autostart",
+                                                FALSE));
+
+            LW_TRY(exc, LwSmRefresh());
+
+	    DJ_LOG_VERBOSE("Stop running instance of dcerpc service");
+            LW_TRY(exc, DJStopService("dcerpc"));
+        }
 
         LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists("/usr/sbin/svcadm", &exists));
 
