@@ -27,5 +27,5 @@ Likewise_la_LDFLAGS = \
 Likewise_la_LIBADD = @top_builddir@/common/liblsacommon.la
 
 Info.plist: Info.plist.in
-	$(srcdir)/../lwidsplugin/process-info-plist.pl -v $(MAIN_VERSION) \
+	$(srcdir)/../dsplugin/process-info-plist.pl -v $(MAIN_VERSION) \
 	    -o "$@" $(srcdir)/Info.plist.in

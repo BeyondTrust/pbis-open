@@ -2,5 +2,5 @@ SUBDIRS="auth lwmapsecurity nsswitch gssntlm access dsplugin gsswrap"
 
 configure()
 {
-    [ "$MK_HOST_OS" = "darwin" ] || mk_skip_subdir lwidsplugin
+    [ "$MK_HOST_OS" = "darwin" ] || mk_skip_subdir dsplugin
 }
