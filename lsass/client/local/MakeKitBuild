@@ -1,0 +1,14 @@
+make()
+{
+    LOCAL_SOURCES="\
+        privileges.c"
+
+    mk_multiarch_do
+        mk_group \
+	    GROUP="local" \
+	    SOURCES="$LOCAL_SOURCES" \
+	    INCLUDEDIRS="../../include" \
+	    HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
+	    LIBDEPS="lwmsg_nothr lsacommon"
+    mk_multiarch_done
+}
