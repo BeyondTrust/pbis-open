@@ -94,5 +94,6 @@
 #include "lpobject.h"
 #include "lpsecurity.h"
 #include "lpprivilege.h"
+#include "lpaccount.h"
 
 #include "externs.h"
