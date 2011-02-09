@@ -1,44 +1,58 @@
 make()
 {
-    BUNDLE_DIR="${MK_LIBDIR}/LWIDSPlugin.dsplug"
+    BUNDLE_DIR="${MK_LIBDIR}/LWDSPlugin.dsplug"
     CONTENTS_DIR="${BUNDLE_DIR}/Contents"
     MACOS_DIR="${CONTENTS_DIR}/MacOS"
 
-    LWIDS_SOURCES="\
-	LWIAttrLookup.cpp \
-	LWIAttrValDataQuery.cpp \
-	LWIBitVector.cpp \
-	LWICRC.cpp \
-	LWIDirNodeQuery.cpp \
-	LWIGroup.cpp \
-	LWIQuery.cpp \
-	LWIRecTypeLookup.cpp \
-	LWIRecordListQuery.cpp \
-	LWIRecordQuery.cpp \
-	LWIUser.cpp \
-	PlugInShell.cpp \
-	ServerModule.c \
-	ServerModuleLib.c \
-	Utilities.cpp \
+    LWDS_SOURCES="\
+        ServerModuleLib.c \
+        ServerModule.c \
+        LWIDirNodeQuery.cpp \
+        LWIComputerList.cpp \
+        LWIRecordQuery.cpp \
+        LWIQuery.cpp \
+        LWIAttrValDataQuery.cpp \
+        LWIRecordListQuery.cpp \
+        Utilities.cpp \
+        LWIAttrLookup.cpp \
+        LWICRC.cpp \
+        LWIComputerGroup.cpp \
+        LWIBitVector.cpp \
+        LWIGroup.cpp \
+        PlugInShell.cpp \
+        LWIComputer.cpp \
+        LWIUser.cpp \
+        LWIRecTypeLookup.cpp \
+        libgpldap/gpapolicyutils.c \
+        libgpldap/gpadnshlp.c \
         macadutil/api.c \
+        macadutil/adinfo.c \
         macadutil/aduserinfo.c \
         macadutil/adukrb5.c \
+        macadutil/aducopy.c \
         macadutil/cfgparser.c \
         macadutil/credcontext.c \
         macadutil/directory.c \
+        macadutil/filexfer.c \
+        macadutil/gpcache.c \
         macadutil/gss.c \
-        macadutil/macerror.c"
+        macadutil/macerror.c \
+        macadutil/mcxutil.c \
+        macadutil/notify.c \
+        macadutil/netinfo.c \
+        macadutil/policyutils.c \
+        macadutil/xfer.c"
 
-    LWIDS_CFLAGS="-Wno-unknown-pragmas -fpascal-strings -Wno-four-char-constants"
+    LWDS_CFLAGS="-Wno-unknown-pragmas -fpascal-strings -Wno-four-char-constants"
 
     mk_dlo \
-        DLO="LWIDSPlugIn" \
+        DLO="LWDSPlugIn" \
         EXT="" \
         INSTALLDIR="${MACOS_DIR}" \
-        SOURCES="$LWIDS_SOURCES" \
+        SOURCES="$LWDS_SOURCES" \
         INCLUDEDIRS=". ../../include" \
-        CFLAGS="$LWIDS_CFLAGS" \
-        CXXFLAGS="$LWIDS_CFLAGS -Wno-deprecated -fvisibility-inlines-hidden" \
+        CFLAGS="$LWDS_CFLAGS" \
+        CXXFLAGS="$LWDS_CFLAGS -Wno-deprecated -Wno-deprecated-declarations -fvisibility-inlines-hidden" \
         HEADERDEPS="lwio/lwio.h lwnet.h lwadvapi.h ldap.h krb5.h" \
         LIBDEPS="lwnetclientapi lwioclient lwadvapi ldap_r krb5 lsacommon lsaclient" \
         LDFLAGS="-framework CoreFoundation"
