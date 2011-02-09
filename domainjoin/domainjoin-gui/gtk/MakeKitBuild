@@ -12,7 +12,7 @@ make()
 	CFLAGS="$GTK_CFLAGS" \
 	LDFLAGS="$GTK_LDFLAGS" \
 	HEADERDEPS="ctbase.h" \
-	LIBDEPS="centutils domainjoin lwadvapi lwadvapi_nothr $GTK_LIBS"
+	LIBDEPS="centutils domainjoin lwadvapi lwadvapi_nothr lwsm $GTK_LIBS"
 
     mk_install_files \
 	FILES="domainjoin-gtk.glade likewise-logo.png domainjoin-logo.png" \
