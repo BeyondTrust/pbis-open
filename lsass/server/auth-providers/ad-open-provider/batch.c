@@ -3547,9 +3547,8 @@ LsaAdBatchProcessRpcObject(
         PCSTR pszType = LsaAdBatchGetQueryTypeAsString(QueryType);
         LSA_LOG_DEBUG("Did not find batch item for message for %s '%s'",
                       pszType, pszCompare);
-        LSA_ASSERT(FALSE);
-        dwError = LW_ERROR_INTERNAL;
-        BAIL_ON_LSA_ERROR(dwError);
+        dwError = 0;
+        goto cleanup;
     }
 
     dwError = LsaAdBatchGatherRpcObject(
@@ -3612,12 +3611,12 @@ LsaAdBatchProcessRealObject(
         (objectType != desiredObjectType))
     {
         PCSTR pszType = LsaAdBatchGetQueryTypeAsString(QueryType);
-        LSA_LOG_DEBUG("Object type mismatch for %s '%s' - got %u instead of %u",
+        LSA_LOG_ERROR("Object type mismatch for %s '%s' - got %u instead of %u",
                       pszType, pszCompare, objectType, desiredObjectType);
         // This cannot happen because we restrict the type we search on.
-        LSA_ASSERT(FALSE);
-        dwError = LW_ERROR_INTERNAL;
-        BAIL_ON_LSA_ERROR(dwError);
+        // (Otherwise, the domain controller is behaving badly.)
+        dwError = 0;
+        goto cleanup;
     }
 
     // Search of corresponding batch item
@@ -3643,9 +3642,8 @@ LsaAdBatchProcessRealObject(
         PCSTR pszType = LsaAdBatchGetQueryTypeAsString(QueryType);
         LSA_LOG_DEBUG("Did not find batch item for message for %s '%s'",
                       pszType, pszCompare);
-        LSA_ASSERT(FALSE);
-        dwError = LW_ERROR_INTERNAL;
-        BAIL_ON_LSA_ERROR(dwError);
+        dwError = 0;
+        goto cleanup;
     }
 
     dwError = LsaAdBatchGatherRealObject(
@@ -3751,12 +3749,12 @@ LsaAdBatchProcessPseudoObject(
         (objectType != desiredObjectType))
     {
         PCSTR pszType = LsaAdBatchGetQueryTypeAsString(QueryType);
-        LSA_LOG_DEBUG("Object type mismatch for %s '%s' - got %u instead of %u",
+        LSA_LOG_ERROR("Object type mismatch for %s '%s' - got %u instead of %u",
                       pszType, pszCompare, objectType, desiredObjectType);
         // This cannot happen because we restrict the type we search on.
-        LSA_ASSERT(FALSE);
-        dwError = LW_ERROR_INTERNAL;
-        BAIL_ON_LSA_ERROR(dwError);
+        // (Otherwise, the domain controller is behaving badly.)
+        dwError = 0;
+        goto cleanup;
     }
 
     // Search of corresponding batch item
@@ -3794,9 +3792,8 @@ LsaAdBatchProcessPseudoObject(
         PCSTR pszType = LsaAdBatchGetQueryTypeAsString(QueryType);
         LSA_LOG_DEBUG("Did not find batch item for message for %s '%s'",
                       pszType, pszCompare);
-        LSA_ASSERT(FALSE);
-        dwError = LW_ERROR_INTERNAL;
-        BAIL_ON_LSA_ERROR(dwError);
+        dwError = 0;
+        goto cleanup;
     }
 
     if (bIsGcSearch)
@@ -3874,12 +3871,12 @@ LsaAdBatchProcessPseudoObjectDefaultSchema(
         (objectType != desiredObjectType))
     {
         PCSTR pszType = LsaAdBatchGetQueryTypeAsString(QueryType);
-        LSA_LOG_DEBUG("Object type mismatch for %s '%s' - got %u instead of %u",
+        LSA_LOG_ERROR("Object type mismatch for %s '%s' - got %u instead of %u",
                       pszType, pszCompare, objectType, desiredObjectType);
         // This cannot happen because we restrict the type we search on.
-        LSA_ASSERT(FALSE);
-        dwError = LW_ERROR_INTERNAL;
-        BAIL_ON_LSA_ERROR(dwError);
+        // (Otherwise, the domain controller is behaving badly.)
+        dwError = 0;
+        goto cleanup;
     }
 
     // Search of corresponding batch item
@@ -3918,9 +3915,8 @@ LsaAdBatchProcessPseudoObjectDefaultSchema(
         PCSTR pszType = LsaAdBatchGetQueryTypeAsString(QueryType);
         LSA_LOG_DEBUG("Did not find batch item for message for %s '%s'",
                       pszType, pszCompare);
-        LSA_ASSERT(FALSE);
-        dwError = LW_ERROR_INTERNAL;
-        BAIL_ON_LSA_ERROR(dwError);
+        dwError = 0;
+        goto cleanup;
     }
 
     dwError = LsaAdBatchGatherPseudoObjectDefaultSchema(
