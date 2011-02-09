@@ -332,7 +332,8 @@ ResolveMembers(
 
     dwError = LsaFindObjects(
         hLsa,
-        NULL, //gState.pszTargetProvider,
+        gState.pszTargetProvider ? strchr(gState.pszTargetProvider, ':') :
+                                   NULL,
         gState.FindFlags,
         LSA_OBJECT_TYPE_UNDEFINED,
         LSA_QUERY_TYPE_BY_SID,
