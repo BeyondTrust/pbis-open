@@ -994,6 +994,190 @@ cleanup:
     return status;
 }
 
+
+/* 
+ * Byte swap a UINT32 that is not guaranteed to be word-boundary aligned.
+ * Advance cursor by the number of bytes swapped afterwards.
+ */
+static VOID
+RtlHTOL32Stream(
+    IN OUT PUINT8 *ppCursor,
+    OUT PUINT32 pValue
+    )
+{
+    PUINT8 cursor = *ppCursor;
+    UINT32 i32 = 0;
+
+    /* Control */
+    memcpy(&i32, cursor, sizeof(i32));
+    if (pValue)
+    {
+        *pValue = i32;
+    }
+    i32 = LW_HTOL32(i32);
+    memcpy(cursor, &i32, sizeof(i32));
+    cursor += sizeof(i32);
+    *ppCursor = cursor;
+}
+
+
+/* Byte swap a Sid that is not guaranteed to be word-boundary aligned */
+static VOID
+RtlEncodeLittleEndianSidSwab(
+    IN PUINT8 cursor,
+    OUT PDWORD pLen
+    )
+{
+    DWORD i = 0;
+    UINT8 subAuthorityCount = 0;
+    DWORD sidSize = 0;
+
+    /* SID List for Owner; Revision and SubAuthorityCount are both 1 bytes */
+    cursor++; // Revision
+
+    subAuthorityCount = *cursor;
+    cursor++; // SubAuthorityCount
+
+    cursor += 6; //IdentifierAuthority
+
+    sidSize = _SID_GET_SIZE_REQUIRED(subAuthorityCount);
+    for (i=0; i<subAuthorityCount; i++)
+    {
+        RtlHTOL32Stream(&cursor, NULL);
+    }
+    if (pLen)
+    {
+        *pLen = sidSize;
+    }
+}
+
+
+static VOID
+RtlpEncodeLittleEndianAclSwab(
+    IN PUINT8 cursor,
+    OUT PDWORD pLen
+    )
+{
+    UINT16 aceCount = 0;
+    DWORD i = 0;
+    PACL littleEndianAcl = (PACL) cursor;
+    PUINT8 startCursor = cursor;
+
+    // This value is in host byte order, so get before swapping.
+    aceCount = littleEndianAcl->AceCount;
+
+    littleEndianAcl->AclSize = LW_HTOL16(littleEndianAcl->AclSize);
+    littleEndianAcl->AceCount = LW_HTOL16(littleEndianAcl->AceCount);
+    littleEndianAcl->Sbz2 = LW_HTOL16(littleEndianAcl->Sbz2);
+
+    cursor += sizeof(ACL);
+    for (i=0; i<aceCount; i++)
+    {
+        PACE_HEADER aceHeader = (PACE_HEADER) cursor;
+        PACCESS_ALLOWED_ACE ace = (PACCESS_ALLOWED_ACE) cursor;
+        UINT16 aceSize = 0;
+
+        aceSize = aceHeader->AceSize;
+        aceHeader->AceSize = LW_HTOL16(aceHeader->AceSize);
+        ace->Mask = LW_HTOL32(ace->Mask);
+
+        RtlEncodeLittleEndianSidSwab((PUINT8) &ace->SidStart, NULL);
+        cursor += aceSize;
+    }
+
+    *pLen = cursor - startCursor;
+}
+
+
+/*
+ * 6.0 -> 6.1 conversion routine to fix byte swapping problem
+ * on big endian systems. The data is supposed to be stored in
+ * little endian, but a bug in lwbase affecting BE systems
+ * effectively disabled all swapping functions, so the data is 
+ * stored in native byte order.
+ * Since this bug is fixed in 6.1, the byte order is wrong, and needs
+ * to be adjusted, which is the purpose of this function.
+ */
+NTSTATUS
+RtlAbsoluteToSelfRelativeSDSwab(
+    IN OUT PSECURITY_DESCRIPTOR_RELATIVE SelfRelativeSecurityDescriptor,
+    IN ULONG BufferLength
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PUINT8 cursor = NULL;
+    ULONG itemLen = 0;
+    DWORD offset = 0;
+    PSECURITY_DESCRIPTOR_RELATIVE selfRelativeSD = NULL;
+
+    if (!SelfRelativeSecurityDescriptor || BufferLength == 0)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GOTO_CLEANUP();
+    }
+
+    selfRelativeSD = SelfRelativeSecurityDescriptor;
+    selfRelativeSD->Control = LW_HTOL16(selfRelativeSD->Control);
+
+    /* Offset SID list for Owner */
+    offset = SECURITY_DESCRIPTOR_RELATIVE_MIN_SIZE;
+    cursor = ((PUINT8) SelfRelativeSecurityDescriptor) + offset;
+
+    /* SID List for Owner */
+    itemLen = 0;
+    if (offset < BufferLength)
+    {
+        RtlEncodeLittleEndianSidSwab(cursor, &itemLen);
+    }
+    if (itemLen > 0)
+    {
+        selfRelativeSD->Owner = LW_HTOL32(offset);
+    }
+    offset += itemLen;
+    cursor += itemLen;
+
+    /* SID List for Group; Group may not be present */
+    itemLen = 0;
+    if (offset < BufferLength && selfRelativeSD->Group)
+    {
+        RtlEncodeLittleEndianSidSwab(cursor, &itemLen);
+    }
+    if (itemLen > 0)
+    {
+        selfRelativeSD->Group = LW_HTOL32(offset);
+    }
+    offset += itemLen;
+    cursor += itemLen;
+
+    /* Dacl list */
+    itemLen = 0;
+    if (offset < BufferLength)
+    {
+        RtlpEncodeLittleEndianAclSwab(cursor, &itemLen);
+    }
+    if (itemLen > 0)
+    {
+        selfRelativeSD->Dacl = LW_HTOL32(offset);
+    }
+    offset += itemLen;
+    cursor += itemLen;
+
+    /* Sacl list */
+    itemLen = 0;
+    if (offset < BufferLength)
+    {
+        RtlpEncodeLittleEndianAclSwab(cursor, &itemLen);
+    }
+    if (itemLen > 0)
+    {
+        selfRelativeSD->Sacl = LW_HTOL32(offset);
+    }
+
+    /* ...and Bob's your uncle */
+cleanup:
+    return status;
+}
+
 NTSTATUS
 RtlSelfRelativeToAbsoluteSD(
     IN PSECURITY_DESCRIPTOR_RELATIVE SelfRelativeSecurityDescriptor,

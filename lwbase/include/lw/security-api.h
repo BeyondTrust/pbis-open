@@ -512,6 +512,12 @@ RtlAbsoluteToSelfRelativeSD(
     );
 
 NTSTATUS
+RtlAbsoluteToSelfRelativeSDSwab(
+    IN OUT PSECURITY_DESCRIPTOR_RELATIVE SelfRelativeSecurityDescriptor,
+    IN ULONG BufferLength
+    );
+
+NTSTATUS
 RtlSelfRelativeToAbsoluteSD(
     IN PSECURITY_DESCRIPTOR_RELATIVE SelfRelativeSecurityDescriptor,
     OUT OPTIONAL PSECURITY_DESCRIPTOR_ABSOLUTE AbsoluteSecurityDescriptor,
