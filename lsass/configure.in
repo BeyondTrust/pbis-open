@@ -1043,6 +1043,7 @@ AC_CONFIG_FILES([Makefile
                  client/Makefile
                  client/api/Makefile
                  client/ad/Makefile
+                 client/local/Makefile
                  client/ntlm/Makefile
                  client/rpc/Makefile
                  client/rpc/common/Makefile

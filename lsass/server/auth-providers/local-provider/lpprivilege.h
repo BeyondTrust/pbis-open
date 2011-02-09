@@ -51,12 +51,18 @@
 
 
 DWORD
-LocalDirEnumPrivilegesSids(
+LocalDirLookupPrivilegeValue(
     IN HANDLE hProvider,
-    IN PCSTR *ppszSids,
-    IN DWORD NumSids,
-    OUT PLUID_AND_ATTRIBUTES *ppPrivileges,
-    OUT PDWORD pNumPrivileges
+    IN PSTR pszPrivilegeName,
+    OUT PLUID pPrivilegeValue
+    );
+
+
+DWORD
+LocalDirLookupPrivilegeName(
+    IN HANDLE hProvider,
+    IN PLUID pPrivilegeValue,
+    OUT PSTR *ppszPrivilegeName
     );
 
 

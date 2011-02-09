@@ -48,6 +48,12 @@
 #include "ipc.h"
 
 
+#define LWMSG_PWSTR \
+    LWMSG_POINTER_BEGIN, \
+    LWMSG_UINT16(WCHAR), \
+    LWMSG_POINTER_END, \
+    LWMSG_ATTR_STRING
+    
 static LWMsgTypeSpec gLsaLuidAndAttributesSpec[] =
 {
     LWMSG_STRUCT_BEGIN(LUID_AND_ATTRIBUTES),
@@ -81,7 +87,6 @@ static LWMsgTypeSpec gLsaLocalIPCEnumPrivilegesSidsReqSpec[] =
     LWMSG_PSTR,
     LWMSG_ATTR_NOT_NULL,
     LWMSG_POINTER_END,
-    LWMSG_ATTR_NOT_NULL,
     LWMSG_ATTR_LENGTH_MEMBER(LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_REQ, NumSids),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
@@ -90,7 +95,53 @@ static LWMsgTypeSpec gLsaLocalIPCEnumPrivilegesSidsReqSpec[] =
 static LWMsgTypeSpec gLsaLocalIPCEnumPrivilegesSidsRespSpec[] =
 {
     LWMSG_STRUCT_BEGIN(LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_RESP),
-    LWMSG_TYPESPEC(gLsaPrivilegeSetSpec),
+    LWMSG_MEMBER_UINT32(LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_RESP, NumPrivileges),
+    LWMSG_MEMBER_POINTER_BEGIN(LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_RESP, pPrivileges),
+    LWMSG_TYPESPEC(gLsaLuidAndAttributesSpec),
+    LWMSG_POINTER_END,
+    LWMSG_ATTR_LENGTH_MEMBER(LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_RESP, NumPrivileges),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+static LWMsgTypeSpec gLsaLocalIPCAddAccountRightsReqSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(LSA_LOCAL_IPC_ADD_ACCOUNT_RIGHTS_REQ),
+    LWMSG_MEMBER_PSTR(LSA_LOCAL_IPC_ADD_ACCOUNT_RIGHTS_REQ, pszSid),
+    LWMSG_MEMBER_UINT32(LSA_LOCAL_IPC_ADD_ACCOUNT_RIGHTS_REQ, NumAccountRights),
+    LWMSG_MEMBER_POINTER_BEGIN(LSA_LOCAL_IPC_ADD_ACCOUNT_RIGHTS_REQ, ppwszAccountRights),
+    LWMSG_PWSTR,
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_POINTER_END,
+    LWMSG_ATTR_LENGTH_MEMBER(LSA_LOCAL_IPC_ADD_ACCOUNT_RIGHTS_REQ, NumAccountRights),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+static LWMsgTypeSpec gLsaLocalIPCRemoveAccountRightsReqSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(LSA_LOCAL_IPC_REMOVE_ACCOUNT_RIGHTS_REQ),
+    LWMSG_MEMBER_PSTR(LSA_LOCAL_IPC_REMOVE_ACCOUNT_RIGHTS_REQ, pszSid),
+    LWMSG_MEMBER_UINT32(LSA_LOCAL_IPC_REMOVE_ACCOUNT_RIGHTS_REQ, RemoveAll),
+    LWMSG_MEMBER_UINT32(LSA_LOCAL_IPC_REMOVE_ACCOUNT_RIGHTS_REQ, NumAccountRights),
+    LWMSG_MEMBER_POINTER_BEGIN(LSA_LOCAL_IPC_REMOVE_ACCOUNT_RIGHTS_REQ, ppwszAccountRights),
+    LWMSG_PWSTR,
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_POINTER_END,
+    LWMSG_ATTR_LENGTH_MEMBER(LSA_LOCAL_IPC_REMOVE_ACCOUNT_RIGHTS_REQ, NumAccountRights),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+static LWMsgTypeSpec gLsaLocalIPCEnumAccountRightsRespSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(LSA_LOCAL_IPC_ENUM_ACCOUNT_RIGHTS_RESP),
+    LWMSG_MEMBER_UINT32(LSA_LOCAL_IPC_ENUM_ACCOUNT_RIGHTS_RESP, NumAccountRights),
+    LWMSG_MEMBER_POINTER_BEGIN(LSA_LOCAL_IPC_ENUM_ACCOUNT_RIGHTS_RESP, ppwszAccountRights),
+    LWMSG_PWSTR,
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_POINTER_END,
+    LWMSG_ATTR_LENGTH_MEMBER(LSA_LOCAL_IPC_ENUM_ACCOUNT_RIGHTS_RESP, NumAccountRights),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
@@ -109,6 +160,30 @@ LsaLocalIpcGetEnumPrivilegesSidsRespSpec(
     )
 {
     return gLsaLocalIPCEnumPrivilegesSidsRespSpec;
+}
+
+LWMsgTypeSpec*
+LsaLocalIpcGetAddAccountRightsReqSpec(
+    VOID
+    )
+{
+    return gLsaLocalIPCAddAccountRightsReqSpec;
+}
+
+LWMsgTypeSpec*
+LsaLocalIpcGetRemoveAccountRightsReqSpec(
+    VOID
+    )
+{
+    return gLsaLocalIPCRemoveAccountRightsReqSpec;
+}
+
+LWMsgTypeSpec*
+LsaLocalIpcGetEnumAccountRightsRespSpec(
+    VOID
+    )
+{
+    return gLsaLocalIPCEnumAccountRightsRespSpec;
 }
 
 

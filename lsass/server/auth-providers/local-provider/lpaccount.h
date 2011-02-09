@@ -33,7 +33,7 @@
  *
  * Module Name:
  *
- *        lpprivilege.c
+ *        lpaccount.h
  *
  * Abstract:
  *
@@ -41,36 +41,51 @@
  *
  *        Local Authentication Provider
  *
- *        Privilege Management API
+ *        LSA Account Management API
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#include "includes.h"
+#ifndef __LP_ACCOUNT_H__
+#define __LP_ACCOUNT_H__
 
 
 DWORD
-LocalDirLookupPrivilegeValue(
+LocalDirEnumPrivilegesSids(
     IN HANDLE hProvider,
-    IN PSTR pszPrivilegeName,
-    OUT PLUID pPrivilegeValue
-    )
-{
-    DWORD err = ERROR_SUCCESS;
-
-    return err;
-}
+    IN PCSTR *ppszSids,
+    IN DWORD NumSids,
+    OUT PLUID_AND_ATTRIBUTES *ppPrivileges,
+    OUT PDWORD pNumPrivileges
+    );
 
 
 DWORD
-LocalDirLookupPrivilegeName(
+LocalDirAddAccountRights(
     IN HANDLE hProvider,
-    IN PLUID pPrivilegeValue,
-    OUT PSTR *ppszPrivilegeName
-    )
-{
-    DWORD err = ERROR_SUCCESS;
+    IN PCSTR pszSids,
+    IN PWSTR *ppwszAccountRights,
+    IN DWORD NumAccountRights
+    );
 
-    return err;
-}
 
+DWORD
+LocalDirRemoveAccountRights(
+    IN HANDLE hProvider,
+    IN PCSTR pszSids,
+    IN BOOLEAN RemoveAll,
+    IN PWSTR *ppwszAccountRights,
+    IN DWORD NumAccountRights
+    );
+
+
+DWORD
+LocalDirEnumAccountRights(
+    IN HANDLE hProvider,
+    IN PCSTR pszAccountSid,
+    OUT PWSTR **ppwszAccountRights,
+    OUT PDWORD pNumAccountRights
+    );
+
+
+#endif /* __LP_ACCOUNT_H__ */
