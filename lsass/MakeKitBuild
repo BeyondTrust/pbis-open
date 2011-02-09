@@ -61,6 +61,7 @@ configure()
         esac
 
         mk_define LIBDIR "\"$MK_LIBDIR\""
+        mk_define MOD_EXT "\"$MK_DLO_EXT\""
         MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
         MK_CXXFLAGS="$MK_CXXFLAGS -Wall -Werror"
         MOD_EXT="$MK_DLO_EXT"
