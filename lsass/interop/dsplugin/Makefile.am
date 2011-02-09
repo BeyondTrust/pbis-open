@@ -1,10 +1,10 @@
-bundledir=$(libdir)/DSPlugin.dsplug
+bundledir=$(libdir)/LWDSPlugin.dsplug
 contentsdir=$(bundledir)/Contents
 macosdir = $(contentsdir)/MacOS
 
 SUBDIRS = etc
 
-macos_LTLIBRARIES = DSPlugIn.la
+macos_LTLIBRARIES = LWDSPlugIn.la
 contents_DATA = Info.plist
 
 AM_CFLAGS=@AM_CFLAGS@ \
@@ -13,7 +13,7 @@ AM_CFLAGS=@AM_CFLAGS@ \
 
 INFO=Info.plist
 
-DSPlugIn_la_SOURCES= \
+LWDSPlugIn_la_SOURCES= \
 	ServerModuleLib.c \
 	ServerModule.c \
 	LWIDirNodeQuery.cpp \
@@ -52,13 +52,13 @@ DSPlugIn_la_SOURCES= \
         macadutil/policyutils.c \
         macadutil/xfer.c
 
-DSPlugIn_la_CFLAGS=$(AM_CFLAGS)
+LWDSPlugIn_la_CFLAGS=$(AM_CFLAGS)
 
-DSPlugIn_la_CXXFLAGS=$(AM_CFLAGS) -fvisibility-inlines-hidden
+LWDSPlugIn_la_CXXFLAGS=$(AM_CFLAGS) -fvisibility-inlines-hidden
 
-DSPlugIn_la_CPPFLAGS=@AM_CPPFLAGS@
+LWDSPlugIn_la_CPPFLAGS=@AM_CPPFLAGS@
 
-DSPlugIn_la_LDFLAGS= \
+LWDSPlugIn_la_LDFLAGS= \
      -module -shrext '' -avoid-version -bundle_loader \
      /usr/sbin/DirectoryService \
      -framework CoreFoundation \

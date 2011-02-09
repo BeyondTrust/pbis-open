@@ -193,8 +193,8 @@ FreeADUserInfo(
     PAD_USER_ATTRIBUTES pUserADAttrs
     );
 
-#define DSPLUGIN_POLICIES "Policy\\Services\\lwedsplugin\\Parameters"
-#define DSPLUGIN_SETTINGS "Services\\lwedsplugin\\Parameters"
+#define LWDSPLUGIN_POLICIES "Policy\\Services\\lwdsplugin\\Parameters"
+#define LWDSPLUGIN_SETTINGS "Services\\lwdsplugin\\Parameters"
 
 LONG
 GetConfigurationSettings(
