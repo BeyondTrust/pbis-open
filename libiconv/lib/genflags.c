@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2002, 2005-2006 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2002, 2005-2006, 2008-2009 Free Software Foundation, Inc.
    This file is part of the GNU LIBICONV Library.
 
    The GNU LIBICONV Library is free software; you can redistribute it
@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* Consider all encodings, including the system dependent ones. */
 #define USE_AIX
@@ -97,12 +98,14 @@ int main ()
     struct wctomb_funcs ofuncs = xxx_ofuncs1,xxx_ofuncs2; \
     emit_encoding(&ofuncs,#xxx);                          \
   }
+#define DEFALIAS(xxx_alias,xxx) /* nothing */
 /* Consider all encodings, including the system dependent ones. */
 #include "encodings.def"
 #include "encodings_aix.def"
 #include "encodings_osf1.def"
 #include "encodings_dos.def"
 #include "encodings_extra.def"
+#undef DEFALIAS
 #undef DEFENCODING
 
   if (ferror(stdout) || fclose(stdout))

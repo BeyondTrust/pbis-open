@@ -1,7 +1,6 @@
-# unlocked-io.m4 serial 14
+# unlocked-io.m4 serial 15
 
-# Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-# Free Software Foundation, Inc.
+# Copyright (C) 1998-2006, 2009 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -17,7 +16,7 @@ dnl on Solaris 2.6).
 
 AC_DEFUN([gl_FUNC_GLIBC_UNLOCKED_IO],
 [
-  AC_DEFINE([USE_UNLOCKED_IO], 1,
+  AC_DEFINE([USE_UNLOCKED_IO], [1],
     [Define to 1 if you want getc etc. to use unlocked I/O if available.
      Unlocked I/O can improve performance in unithreaded apps,
      but it is not safe for multithreaded apps.])

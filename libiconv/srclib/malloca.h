@@ -4,7 +4,7 @@
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
+   the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -70,9 +70,19 @@ extern void freea (void *p);
 # define freea free
 #endif
 
-/* Maybe we should also define a variant
-    nmalloca (size_t n, size_t s) - behaves like malloca (n * s)
-   If this would be useful in your application. please speak up.  */
+/* nmalloca(N,S) is an overflow-safe variant of malloca (N * S).
+   It allocates an array of N objects, each with S bytes of memory,
+   on the stack.  S must be positive and N must be nonnegative.
+   The array must be freed using freea() before the function returns.  */
+#if 1
+/* Cf. the definition of xalloc_oversized.  */
+# define nmalloca(n, s) \
+    ((n) > (size_t) (sizeof (ptrdiff_t) <= sizeof (size_t) ? -1 : -2) / (s) \
+     ? NULL \
+     : malloca ((n) * (s)))
+#else
+extern void * nmalloca (size_t n, size_t s);
+#endif
 
 
 #ifdef __cplusplus

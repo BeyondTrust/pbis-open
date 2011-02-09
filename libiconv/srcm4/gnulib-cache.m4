@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2007 Free Software Foundation, Inc.
+# Copyright (C) 2002-2009 Free Software Foundation, Inc.
 #
 # This file is free software, distributed under the terms of the GNU
 # General Public License.  As a special exception to the GNU General
@@ -15,11 +15,29 @@
 
 
 # Specification in the form of a command-line invocation:
-#   gnulib-tool --import --dir=. --local-dir=gnulib-local --lib=libicrt --source-base=srclib --m4-base=srcm4 --doc-base=doc --aux-dir=build-aux --makefile-name=Makefile.gnulib --no-libtool --macro-prefix=gl binary-io error exit gettext gettext-h libiconv-misc mbstate memmove progname relocatable-prog unistd uniwidth/width unlocked-io xalloc
+#   gnulib-tool --import --dir=. --local-dir=gnulib-local --lib=libicrt --source-base=srclib --m4-base=srcm4 --doc-base=doc --tests-base=tests --aux-dir=build-aux --makefile-name=Makefile.gnulib --no-libtool --macro-prefix=gl binary-io error exit gettext gettext-h libiconv-misc mbstate memmove progname relocatable-prog sigpipe stdio strerror unistd uniwidth/width unlocked-io xalloc
 
 # Specification in the form of a few gnulib-tool.m4 macro invocations:
 gl_LOCAL_DIR([gnulib-local])
-gl_MODULES([binary-io error exit gettext gettext-h libiconv-misc mbstate memmove progname relocatable-prog unistd uniwidth/width unlocked-io xalloc])
+gl_MODULES([
+  binary-io
+  error
+  exit
+  gettext
+  gettext-h
+  libiconv-misc
+  mbstate
+  memmove
+  progname
+  relocatable-prog
+  sigpipe
+  stdio
+  strerror
+  unistd
+  uniwidth/width
+  unlocked-io
+  xalloc
+])
 gl_AVOID([])
 gl_SOURCE_BASE([srclib])
 gl_M4_BASE([srcm4])

@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2007 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2009 Free Software Foundation, Inc.
    This file is part of the GNU LIBICONV Library.
 
    The GNU LIBICONV Library is free software; you can redistribute it
@@ -51,6 +51,10 @@ DEFENCODING(( "US-ASCII",               /* IANA */
             ),
             ascii,
             { ascii_mbtowc, NULL },       { ascii_wctomb, NULL })
+#ifdef USE_SOLARIS_ALIASES
+DEFALIAS(     "646",                    /* Solaris */
+            ascii)
+#endif
 
 /* General multi-byte encodings */
 
@@ -60,6 +64,10 @@ DEFENCODING(( "UTF-8",                  /* IANA, RFC 2279 */
             ),
             utf8,
             { utf8_mbtowc, NULL },        { utf8_wctomb, NULL })
+#ifdef USE_HPUX_ALIASES
+DEFALIAS(     "UTF8",                   /* HP-UX */
+            utf8)
+#endif
 
 DEFENCODING(( "UCS-2",                  /* glibc */
               "ISO-10646-UCS-2",        /* IANA */
@@ -182,12 +190,16 @@ DEFENCODING(( "ISO-8859-1",             /* IANA */
               "LATIN1",                 /* IANA */
               "L1",                     /* IANA */
               "csISOLatin1",            /* IANA */
-              "ISO8859-1",              /* X11R6.4, glibc, FreeBSD */
+              "ISO8859-1",              /* X11R6.4, glibc, FreeBSD, AIX, IRIX, OSF/1, Solaris */
             /*"ISO8859_1",                 JDK 1.1 */
             /*"CP28591",                   Windows */
             ),
             iso8859_1,
             { iso8859_1_mbtowc, NULL },   { iso8859_1_wctomb, NULL })
+#ifdef USE_HPUX_ALIASES
+DEFALIAS(     "ISO88591",               /* HP-UX */
+            iso8859_1)
+#endif
 
 DEFENCODING(( "ISO-8859-2",             /* IANA */
               "ISO_8859-2",             /* IANA */
@@ -196,12 +208,16 @@ DEFENCODING(( "ISO-8859-2",             /* IANA */
               "LATIN2",                 /* IANA */
               "L2",                     /* IANA */
               "csISOLatin2",            /* IANA */
-              "ISO8859-2",              /* X11R6.4, glibc, FreeBSD */
+              "ISO8859-2",              /* X11R6.4, glibc, FreeBSD, AIX, IRIX, OSF/1, Solaris */
             /*"ISO8859_2",                 JDK 1.1 */
             /*"CP28592",                   Windows */
             ),
             iso8859_2,
             { iso8859_2_mbtowc, NULL },   { iso8859_2_wctomb, NULL })
+#ifdef USE_HPUX_ALIASES
+DEFALIAS(     "ISO88592",               /* HP-UX */
+            iso8859_2)
+#endif
 
 DEFENCODING(( "ISO-8859-3",             /* IANA */
               "ISO_8859-3",             /* IANA */
@@ -210,7 +226,7 @@ DEFENCODING(( "ISO-8859-3",             /* IANA */
               "LATIN3",                 /* IANA */
               "L3",                     /* IANA */
               "csISOLatin3",            /* IANA */
-              "ISO8859-3",              /* X11R6.4, glibc, FreeBSD */
+              "ISO8859-3",              /* X11R6.4, glibc, FreeBSD, Solaris */
             /*"ISO8859_3",                 JDK 1.1 */
             /*"CP28593",                   Windows */
             ),
@@ -224,7 +240,7 @@ DEFENCODING(( "ISO-8859-4",             /* IANA */
               "LATIN4",                 /* IANA */
               "L4",                     /* IANA */
               "csISOLatin4",            /* IANA */
-              "ISO8859-4",              /* X11R6.4, glibc, FreeBSD */
+              "ISO8859-4",              /* X11R6.4, glibc, FreeBSD, OSF/1, Solaris */
             /*"ISO8859_4",                 JDK 1.1 */
             /*"CP28594",                   Windows */
             ),
@@ -237,12 +253,16 @@ DEFENCODING(( "ISO-8859-5",             /* IANA */
               "ISO-IR-144",             /* IANA */
               "CYRILLIC",               /* IANA */
               "csISOLatinCyrillic",     /* IANA */
-              "ISO8859-5",              /* X11R6.4, glibc, FreeBSD */
+              "ISO8859-5",              /* X11R6.4, glibc, FreeBSD, AIX, IRIX, OSF/1, Solaris */
             /*"ISO8859_5",                 JDK 1.1 */
             /*"CP28595",                   Windows */
             ),
             iso8859_5,
             { iso8859_5_mbtowc, NULL },   { iso8859_5_wctomb, NULL })
+#ifdef USE_HPUX_ALIASES
+DEFALIAS(     "ISO88595",               /* HP-UX */
+            iso8859_5)
+#endif
 
 DEFENCODING(( "ISO-8859-6",             /* IANA */
               "ISO_8859-6",             /* IANA */
@@ -252,12 +272,16 @@ DEFENCODING(( "ISO-8859-6",             /* IANA */
               "ASMO-708",               /* IANA */
               "ARABIC",                 /* IANA */
               "csISOLatinArabic",       /* IANA */
-              "ISO8859-6",              /* X11R6.4, glibc, FreeBSD */
+              "ISO8859-6",              /* X11R6.4, glibc, FreeBSD, AIX, Solaris */
             /*"ISO8859_6",                 JDK 1.1 */
             /*"CP28596",                   Windows */
             ),
             iso8859_6,
             { iso8859_6_mbtowc, NULL },   { iso8859_6_wctomb, NULL })
+#ifdef USE_HPUX_ALIASES
+DEFALIAS(     "ISO88596",               /* HP-UX */
+            iso8859_6)
+#endif
 
 DEFENCODING(( "ISO-8859-7",             /* IANA, RFC 1947 */
               "ISO_8859-7",             /* IANA */
@@ -269,12 +293,16 @@ DEFENCODING(( "ISO-8859-7",             /* IANA, RFC 1947 */
               "GREEK8",                 /* IANA */
               "GREEK",                  /* IANA */
               "csISOLatinGreek",        /* IANA */
-              "ISO8859-7",              /* X11R6.4, glibc, FreeBSD */
+              "ISO8859-7",              /* X11R6.4, glibc, FreeBSD, AIX, IRIX, OSF/1, Solaris */
             /*"ISO8859_7",                 JDK 1.1 */
             /*"CP28597",                   Windows */
             ),
             iso8859_7,
             { iso8859_7_mbtowc, NULL },   { iso8859_7_wctomb, NULL })
+#ifdef USE_HPUX_ALIASES
+DEFALIAS(     "ISO88597",               /* HP-UX */
+            iso8859_7)
+#endif
 
 DEFENCODING(( "ISO-8859-8",             /* IANA */
               "ISO_8859-8",             /* IANA */
@@ -282,13 +310,17 @@ DEFENCODING(( "ISO-8859-8",             /* IANA */
               "ISO-IR-138",             /* IANA */
               "HEBREW",                 /* IANA */
               "csISOLatinHebrew",       /* IANA */
-              "ISO8859-8",              /* X11R6.4, glibc, FreeBSD */
+              "ISO8859-8",              /* X11R6.4, glibc, FreeBSD, AIX, OSF/1, Solaris */
             /*"ISO8859_8",                 JDK 1.1 */
             /*"CP28598",                   Windows */
             /*"CP38598",                   Windows */
             ),
             iso8859_8,
             { iso8859_8_mbtowc, NULL },   { iso8859_8_wctomb, NULL })
+#ifdef USE_HPUX_ALIASES
+DEFALIAS(     "ISO88598",               /* HP-UX */
+            iso8859_8)
+#endif
 
 DEFENCODING(( "ISO-8859-9",             /* IANA */
               "ISO_8859-9",             /* IANA */
@@ -297,12 +329,16 @@ DEFENCODING(( "ISO-8859-9",             /* IANA */
               "LATIN5",                 /* IANA */
               "L5",                     /* IANA */
               "csISOLatin5",            /* IANA */
-              "ISO8859-9",              /* X11R6.4, glibc, FreeBSD */
+              "ISO8859-9",              /* X11R6.4, glibc, FreeBSD, AIX, IRIX, OSF/1, Solaris */
             /*"ISO8859_9",                 JDK 1.1 */
             /*"CP28599",                   Windows */
             ),
             iso8859_9,
             { iso8859_9_mbtowc, NULL },   { iso8859_9_wctomb, NULL })
+#ifdef USE_HPUX_ALIASES
+DEFALIAS(     "ISO88599",               /* HP-UX */
+            iso8859_9)
+#endif
 
 DEFENCODING(( "ISO-8859-10",            /* IANA */
               "ISO_8859-10",
@@ -332,6 +368,10 @@ DEFENCODING(( "ISO-8859-13",            /* IANA, glibc */
             ),
             iso8859_13,
             { iso8859_13_mbtowc, NULL },  { iso8859_13_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-921",                /* AIX */
+            iso8859_13)
+#endif
 
 DEFENCODING(( "ISO-8859-14",            /* IANA, glibc */
               "ISO_8859-14",            /* IANA */
@@ -350,11 +390,15 @@ DEFENCODING(( "ISO-8859-15",            /* IANA, glibc */
               "ISO_8859-15:1998",       /* glibc */
               "ISO-IR-203",
               "LATIN-9",                /* IANA */
-              "ISO8859-15",             /* glibc, FreeBSD */
+              "ISO8859-15",             /* glibc, FreeBSD, AIX, OSF/1, Solaris */
             /*"CP28605",                   Windows */
             ),
             iso8859_15,
             { iso8859_15_mbtowc, NULL },  { iso8859_15_wctomb, NULL })
+#ifdef USE_HPUX_ALIASES
+DEFALIAS(     "ISO885915",              /* HP-UX */
+            iso8859_15)
+#endif
 
 DEFENCODING(( "ISO-8859-16",            /* IANA */
               "ISO_8859-16",            /* IANA */
@@ -399,6 +443,10 @@ DEFENCODING(( "CP1251",                 /* JDK 1.1 */
             ),
             cp1251,
             { cp1251_mbtowc, NULL },      { cp1251_wctomb, NULL })
+#ifdef USE_SOLARIS_ALIASES
+DEFALIAS(     "ANSI-1251",              /* Solaris */
+            cp1251)
+#endif
 
 DEFENCODING(( "CP1252",                 /* JDK 1.1 */
               "WINDOWS-1252",           /* IANA */
@@ -406,6 +454,10 @@ DEFENCODING(( "CP1252",                 /* JDK 1.1 */
             ),
             cp1252,
             { cp1252_mbtowc, NULL },      { cp1252_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-1252",               /* AIX */
+            cp1252)
+#endif
 
 DEFENCODING(( "CP1253",                 /* JDK 1.1 */
               "WINDOWS-1253",           /* IANA */
@@ -457,6 +509,10 @@ DEFENCODING(( "CP850",                  /* IANA, JDK 1.1 */
             ),
             cp850,
             { cp850_mbtowc, NULL },       { cp850_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-850",                /* AIX */
+            cp850)
+#endif
 
 DEFENCODING(( "CP862",                  /* IANA, JDK 1.1 */
               "IBM862",                 /* IANA */
@@ -473,6 +529,15 @@ DEFENCODING(( "CP866",                  /* IANA, JDK 1.1 */
             ),
             cp866,
             { cp866_mbtowc, NULL },       { cp866_wctomb, NULL })
+
+DEFENCODING(( "CP1131",                 /* FreeBSD, MacOS X */
+            ),
+            cp1131,
+            { cp1131_mbtowc, NULL },      { cp1131_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-1131",               /* AIX */
+            cp1131)
+#endif
 
 /* Macintosh 8-bit encodings */
 
@@ -619,7 +684,7 @@ DEFENCODING(( "CP1133",
             { cp1133_mbtowc, NULL },      { cp1133_wctomb, NULL })
 
 DEFENCODING(( "TIS-620",                /* IANA */
-              "TIS620",                 /* glibc */
+              "TIS620",                 /* glibc, HP-UX */
               "TIS620-0",               /* glibc */
               "TIS620.2529-1",          /* glibc */
               "TIS620.2533-0",          /* glibc */
@@ -628,6 +693,14 @@ DEFENCODING(( "TIS-620",                /* IANA */
             ),
             tis620,
             { tis620_mbtowc, NULL },      { tis620_wctomb, NULL })
+#ifdef USE_OSF1_ALIASES
+DEFALIAS(     "TACTIS",                 /* OSF/1 */
+            tis620)
+#endif
+#ifdef USE_SOLARIS_ALIASES
+DEFALIAS(     "TIS620.2533",            /* Solaris */
+            tis620)
+#endif
 
 DEFENCODING(( "CP874",                  /* JDK 1.1 */
               "WINDOWS-874",
@@ -737,7 +810,7 @@ DEFENCODING(( "KSC_5601",               /* IANA */
 /* CJK encodings */
 
 DEFENCODING(( "EUC-JP",                 /* IANA */
-              "EUCJP",                  /* glibc */
+              "EUCJP",                  /* glibc, HP-UX, IRIX, OSF/1, Solaris */
               "Extended_UNIX_Code_Packed_Format_for_Japanese", /* IANA */
               "csEUCPkdFmtJapanese",    /* IANA */
             /*"EUC_JP",                    JDK 1.1 */
@@ -745,20 +818,36 @@ DEFENCODING(( "EUC-JP",                 /* IANA */
             ),
             euc_jp,
             { euc_jp_mbtowc, NULL },      { euc_jp_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-EUCJP",              /* AIX */
+            euc_jp)
+#endif
+#ifdef USE_OSF1_ALIASES
+DEFALIAS(     "SDECKANJI",              /* OSF/1 */
+            euc_jp)
+#endif
 
 DEFENCODING(( "SHIFT_JIS",              /* IANA */
               "SHIFT-JIS",              /* glibc */
-              "SJIS",                   /* JDK 1.1 */
+              "SJIS",                   /* JDK 1.1, HP-UX, OSF/1 */
               "MS_KANJI",               /* IANA */
               "csShiftJIS",             /* IANA */
             ),
             sjis,
             { sjis_mbtowc, NULL },        { sjis_wctomb, NULL })
+#ifdef USE_SOLARIS_ALIASES
+DEFALIAS(     "PCK",                    /* Solaris */
+            sjis)
+#endif
 
 DEFENCODING(( "CP932",                  /* glibc */
             ),
             cp932,
             { cp932_mbtowc, NULL },       { cp932_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-932",                /* AIX */
+            cp932)
+#endif
 
 DEFENCODING(( "ISO-2022-JP",            /* IANA, RFC 1468 */
               "csISO2022JP",            /* IANA */
@@ -779,7 +868,7 @@ DEFENCODING(( "ISO-2022-JP-2",          /* IANA, RFC 1554 */
             { iso2022_jp2_mbtowc, NULL }, { iso2022_jp2_wctomb, iso2022_jp2_reset })
 
 DEFENCODING(( "EUC-CN",                 /* glibc */
-              "EUCCN",                  /* glibc */
+              "EUCCN",                  /* glibc, IRIX */
               "GB2312",                 /* IANA */
               "CN-GB",                  /* RFC 1922 */
               "csGB2312",               /* IANA */
@@ -788,6 +877,18 @@ DEFENCODING(( "EUC-CN",                 /* glibc */
             ),
             euc_cn,
             { euc_cn_mbtowc, NULL },      { euc_cn_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-EUCCN",              /* AIX */
+            euc_cn)
+#endif
+#ifdef USE_HPUX_ALIASES
+DEFALIAS(     "HP15CN",                 /* HP-UX */
+            euc_cn)
+#endif
+#ifdef USE_OSF1_ALIASES
+DEFALIAS(     "DECHANZI",               /* OSF/1 */
+            euc_cn)
+#endif
 
 DEFENCODING(( "GBK",                    /* IANA, JDK 1.1 */
             ),
@@ -826,13 +927,21 @@ DEFENCODING(( "HZ",                     /* RFC 1843 */
             { hz_mbtowc, NULL },          { hz_wctomb, hz_reset })
 
 DEFENCODING(( "EUC-TW",                 /* glibc */
-              "EUCTW",                  /* glibc */
+              "EUCTW",                  /* glibc, HP-UX, IRIX, OSF/1 */
               "csEUCTW",
             /*"EUC_TW",                    JDK 1.1 */
             /*"CP51950",                   Windows */
             ),
             euc_tw,
             { euc_tw_mbtowc, NULL },      { euc_tw_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-EUCTW",              /* AIX */
+            euc_tw)
+#endif
+#ifdef USE_SOLARIS_ALIASES
+DEFALIAS(     "CNS11643",               /* Solaris */
+            euc_tw)
+#endif
 
 DEFENCODING(( "BIG5",                   /* IANA, JDK 1.1 */
               "BIG-5",                  /* glibc */
@@ -867,25 +976,45 @@ DEFENCODING(( "BIG5-HKSCS",             /* IANA */
             { big5hkscs2004_mbtowc, big5hkscs2004_flushwc }, { big5hkscs2004_wctomb, big5hkscs2004_reset })
 
 DEFENCODING(( "EUC-KR",                 /* IANA, RFC 1557 */
-              "EUCKR",                  /* glibc */
+              "EUCKR",                  /* glibc, HP-UX, IRIX, OSF/1 */
               "csEUCKR",                /* IANA */
             /*"EUC_KR",                    JDK 1.1 */
             /*"CP51949",                   Windows */
             ),
             euc_kr,
             { euc_kr_mbtowc, NULL },      { euc_kr_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-EUCKR",              /* AIX */
+            euc_kr)
+#endif
+#ifdef USE_OSF1_ALIASES
+DEFALIAS(     "DECKOREAN",              /* OSF/1 */
+            euc_kr)
+#endif
+#ifdef USE_SOLARIS_ALIASES
+DEFALIAS(     "5601",                   /* Solaris */
+            euc_kr)
+#endif
 
 DEFENCODING(( "CP949",                  /* JDK 1.1 */
               "UHC",                    /* glibc */
             ),
             cp949,
             { cp949_mbtowc, NULL },       { cp949_wctomb, NULL })
+#ifdef USE_OSF1_ALIASES
+DEFALIAS(     "KSC5601",                /* OSF/1 */
+            cp949)
+#endif
 
 DEFENCODING(( "JOHAB",                  /* glibc */
               "CP1361",                 /* glibc */
             ),
             johab,
             { johab_mbtowc, NULL },       { johab_wctomb, NULL })
+#ifdef USE_SOLARIS_ALIASES
+DEFALIAS(     "KO_KR.JOHAP92",          /* Solaris */
+            johab)
+#endif
 
 DEFENCODING(( "ISO-2022-KR",            /* IANA, RFC 1557 */
               "csISO2022KR",            /* IANA */

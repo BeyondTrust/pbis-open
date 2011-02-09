@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2003 Free Software Foundation, Inc.
+ * Copyright (C) 1999-2003, 2008 Free Software Foundation, Inc.
  * This file is part of the GNU LIBICONV Library.
  *
  * The GNU LIBICONV Library is free software; you can redistribute it
@@ -19,14 +19,22 @@
  */
 
 #ifdef USE_AIX
-#include "aliases_aix.h"
+# if defined _AIX
+#  include "aliases_aix_sysaix.h"
+# else
+#  include "aliases_aix.h"
+# endif
 #endif
 #ifdef USE_OSF1
-#include "aliases_osf1.h"
+# if defined __osf__
+#  include "aliases_osf1_sysosf1.h"
+# else
+#  include "aliases_osf1.h"
+# endif
 #endif
 #ifdef USE_DOS
-#include "aliases_dos.h"
+# include "aliases_dos.h"
 #endif
 #ifdef USE_EXTRA
-#include "aliases_extra.h"
+# include "aliases_extra.h"
 #endif

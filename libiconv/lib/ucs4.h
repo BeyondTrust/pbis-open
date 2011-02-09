@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001 Free Software Foundation, Inc.
+ * Copyright (C) 1999-2001, 2008 Free Software Foundation, Inc.
  * This file is part of the GNU LIBICONV Library.
  *
  * The GNU LIBICONV Library is free software; you can redistribute it
@@ -42,8 +42,10 @@ ucs4_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, int n)
       *pwc = wc;
       conv->istate = state;
       return count;
-    } else
-      return RET_ILSEQ;
+    } else {
+      conv->istate = state;
+      return RET_SHIFT_ILSEQ(count);
+    }
   }
   conv->istate = state;
   return RET_TOOFEW(count);

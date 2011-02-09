@@ -4,13 +4,15 @@
 # also regenerates all aclocal.m4, config.h.in, Makefile.in, configure files
 # with new versions of autoconf or automake.
 #
-# This script requires autoconf-2.61 and automake-1.10 in the PATH.
+# This script requires autoconf-2.62 and automake-1.10 in the PATH.
 # It also requires either
 #   - the GNULIB_TOOL environment variable pointing to the gnulib-tool script
 #     in a gnulib checkout, or
-#   - the cvs program in the PATH and an internet connection.
+#   - the git program in the PATH and an internet connection.
+# It also requires
+#   - the gperf program.
 
-# Copyright (C) 2003-2007 Free Software Foundation, Inc.
+# Copyright (C) 2003-2009 Free Software Foundation, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,12 +46,10 @@ done
 if test $skip_gnulib = false; then
   if test -z "$GNULIB_TOOL"; then
     # Check out gnulib in a subdirectory 'gnulib'.
-    GNULIB_CVS_ROOT=':pserver:anonymous@pserver.git.sv.gnu.org:/gnulib.git'
-    GNULIB_CVS_REPOSITORY='gnulib'
     if test -d gnulib; then
-      (cd gnulib && cvs update -d -P)
+      (cd gnulib && git pull)
     else
-      cvs -d "$GNULIB_CVS_ROOT" checkout -d $GNULIB_CVS_REPOSITORY HEAD
+      git clone git://git.savannah.gnu.org/gnulib.git
     fi
     # Now it should contain a gnulib-tool.
     if test -f gnulib/gnulib-tool; then
@@ -71,7 +71,11 @@ if test $skip_gnulib = false; then
 fi
 
 rm -f configure config.h.in include/iconv.h.build.in
-rm -f lib/aliases.h lib/aliases_aix.h lib/aliases_osf1.h lib/aliases_dos.h lib/aliases_extra.h
+rm -f lib/aliases.h lib/aliases_sysaix.h lib/aliases_syshpux.h lib/aliases_sysosf1.h lib/aliases_syssolaris.h
+rm -f lib/aliases_aix.h lib/aliases_aix_sysaix.h
+rm -f lib/aliases_osf1.h lib/aliases_osf1_sysosf1.h
+rm -f lib/aliases_dos.h
+rm -f lib/aliases_extra.h
 rm -f lib/flags.h
 rm -f lib/translit.h
 rm -f man/iconv.1.html man/iconv.3.html man/iconv_close.3.html man/iconv_open.3.html

@@ -51,6 +51,8 @@ install : include/libcharset.h include/localcharset.h force
 	$(INSTALL_DATA) include/libcharset.h $(DESTDIR)$(includedir)/libcharset.h
 	$(INSTALL_DATA) include/localcharset.h.inst $(DESTDIR)$(includedir)/localcharset.h
 
+install-strip : install
+
 installdirs : force
 	cd lib && $(MAKE) installdirs prefix='$(prefix)' exec_prefix='$(exec_prefix)' libdir='$(libdir)'
 	$(mkinstalldirs) $(DESTDIR)$(includedir)

@@ -1,4 +1,4 @@
-dnl Copyright (C) 2000-2003, 2005-2007 Free Software Foundation, Inc.
+dnl Copyright (C) 2000-2003, 2005-2009 Free Software Foundation, Inc.
 dnl This file is part of the GNU CHARSET Library.
 dnl
 dnl The GNU CHARSET Library is free software; you can redistribute it and/or
@@ -16,17 +16,17 @@ dnl along with the GNU CHARSET Library; see the file COPYING.LIB.  If not,
 dnl write to the Free Software Foundation, Inc., 51 Franklin Street,
 dnl Fifth Floor, Boston, MA 02110-1301, USA.
 
-AC_PREREQ(2.13)
+AC_PREREQ([2.13])
 
 PACKAGE=libcharset
 VERSION=1.4
 
-AC_INIT(lib/localcharset.c)
-AC_CONFIG_AUX_DIR(build-aux)
-AC_CONFIG_HEADER(config.h)
+AC_INIT([lib/localcharset.c])
+AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_HEADER([config.h])
 AC_PROG_MAKE_SET
-AC_SUBST(PACKAGE)
-AC_SUBST(VERSION)
+AC_SUBST([PACKAGE])
+AC_SUBST([VERSION])
 
 dnl           checks for basic programs
 
@@ -46,8 +46,7 @@ dnl           checks for programs
 
 dnl           checks for UNIX variants that set DEFS
 
-AC_AIX
-AC_MINIX
+AC_USE_SYSTEM_EXTENSIONS
 
 dnl           checks for compiler output filename suffixes
 
@@ -56,15 +55,14 @@ AC_EXEEXT
 
 dnl           check for build configuration
 
-AC_LIBTOOL_WIN32_DLL
-AC_PROG_LIBTOOL
+LT_INIT([win32-dll])
 gl_VISIBILITY
 
 dnl           checks for header files and functions
 
 AM_LANGINFO_CODESET
 gl_GLIBC21
-AC_CHECK_FUNCS(setlocale)
+AC_CHECK_FUNCS([setlocale])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([lib/Makefile])

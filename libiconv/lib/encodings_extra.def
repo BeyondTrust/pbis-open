@@ -1,4 +1,4 @@
-/* Copyright (C) 2002, 2005 Free Software Foundation, Inc.
+/* Copyright (C) 2002, 2005, 2008 Free Software Foundation, Inc.
    This file is part of the GNU LIBICONV Library.
 
    The GNU LIBICONV Library is free software; you can redistribute it
@@ -17,16 +17,19 @@
    Fifth Floor, Boston, MA 02110-1301, USA.  */
 
 DEFENCODING(( "EUC-JISX0213",
+              "EUC-JIS-2004",           /* x0213.org */
             ),
             euc_jisx0213,
             { euc_jisx0213_mbtowc, euc_jisx0213_flushwc }, { euc_jisx0213_wctomb, euc_jisx0213_reset })
 
 DEFENCODING(( "SHIFT_JISX0213",
+              "SHIFT_JIS-2004",         /* x0213.org */
             ),
             shift_jisx0213,
             { shift_jisx0213_mbtowc, shift_jisx0213_flushwc }, { shift_jisx0213_wctomb, shift_jisx0213_reset })
 
 DEFENCODING(( "ISO-2022-JP-3",
+              "ISO-2022-JP-2004",       /* x0213.org */
             ),
             iso2022_jp3,
             { iso2022_jp3_mbtowc, iso2022_jp3_flushwc }, { iso2022_jp3_wctomb, iso2022_jp3_reset })

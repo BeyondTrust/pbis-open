@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001 Free Software Foundation, Inc.
+ * Copyright (C) 1999-2001, 2008 Free Software Foundation, Inc.
  * This file is part of the GNU LIBICONV Library.
  *
  * The GNU LIBICONV Library is free software; you can redistribute it
@@ -146,88 +146,88 @@ iso2022_cn_ext_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, int n)
       if (s[1] == 'N') {
         switch (state3) {
           case STATE3_NONE:
-            return RET_ILSEQ;
+            goto ilseq;
           case STATE3_DESIGNATED_CNS11643_2:
             if (s[2] < 0x80 && s[3] < 0x80) {
               int ret = cns11643_2_mbtowc(conv,pwc,s+2,2);
               if (ret == RET_ILSEQ)
-                return RET_ILSEQ;
+                goto ilseq;
               if (ret != 2) abort();
               COMBINE_STATE;
               conv->istate = state;
               return count+4;
             } else
-              return RET_ILSEQ;
+              goto ilseq;
           default: abort();
         }
       }
       if (s[1] == 'O') {
         switch (state4) {
           case STATE4_NONE:
-            return RET_ILSEQ;
+            goto ilseq;
           case STATE4_DESIGNATED_CNS11643_3:
             if (s[2] < 0x80 && s[3] < 0x80) {
               int ret = cns11643_3_mbtowc(conv,pwc,s+2,2);
               if (ret == RET_ILSEQ)
-                return RET_ILSEQ;
+                goto ilseq;
               if (ret != 2) abort();
               COMBINE_STATE;
               conv->istate = state;
               return count+4;
             } else
-              return RET_ILSEQ;
+              goto ilseq;
           case STATE4_DESIGNATED_CNS11643_4:
             if (s[2] < 0x80 && s[3] < 0x80) {
               int ret = cns11643_4_mbtowc(conv,pwc,s+2,2);
               if (ret == RET_ILSEQ)
-                return RET_ILSEQ;
+                goto ilseq;
               if (ret != 2) abort();
               COMBINE_STATE;
               conv->istate = state;
               return count+4;
             } else
-              return RET_ILSEQ;
+              goto ilseq;
           case STATE4_DESIGNATED_CNS11643_5:
             if (s[2] < 0x80 && s[3] < 0x80) {
               int ret = cns11643_5_mbtowc(conv,pwc,s+2,2);
               if (ret == RET_ILSEQ)
-                return RET_ILSEQ;
+                goto ilseq;
               if (ret != 2) abort();
               COMBINE_STATE;
               conv->istate = state;
               return count+4;
             } else
-              return RET_ILSEQ;
+              goto ilseq;
           case STATE4_DESIGNATED_CNS11643_6:
             if (s[2] < 0x80 && s[3] < 0x80) {
               int ret = cns11643_6_mbtowc(conv,pwc,s+2,2);
               if (ret == RET_ILSEQ)
-                return RET_ILSEQ;
+                goto ilseq;
               if (ret != 2) abort();
               COMBINE_STATE;
               conv->istate = state;
               return count+4;
             } else
-              return RET_ILSEQ;
+              goto ilseq;
           case STATE4_DESIGNATED_CNS11643_7:
             if (s[2] < 0x80 && s[3] < 0x80) {
               int ret = cns11643_7_mbtowc(conv,pwc,s+2,2);
               if (ret == RET_ILSEQ)
-                return RET_ILSEQ;
+                goto ilseq;
               if (ret != 2) abort();
               COMBINE_STATE;
               conv->istate = state;
               return count+4;
             } else
-              return RET_ILSEQ;
+              goto ilseq;
           default: abort();
         }
       }
-      return RET_ILSEQ;
+      goto ilseq;
     }
     if (c == SO) {
       if (state2 != STATE2_DESIGNATED_GB2312 && state2 != STATE2_DESIGNATED_CNS11643_1 && state2 != STATE2_DESIGNATED_ISO_IR_165)
-        return RET_ILSEQ;
+        goto ilseq;
       state1 = STATE_TWOBYTE;
       s++; count++;
       if (n < count+1)
@@ -248,7 +248,7 @@ iso2022_cn_ext_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, int n)
       if (c < 0x80) {
         int ret = ascii_mbtowc(conv,pwc,s,1);
         if (ret == RET_ILSEQ)
-          return RET_ILSEQ;
+          goto ilseq;
         if (ret != 1) abort();
         if (*pwc == 0x000a || *pwc == 0x000d) {
           state2 = STATE2_NONE; state3 = STATE3_NONE; state4 = STATE3_NONE;
@@ -257,7 +257,7 @@ iso2022_cn_ext_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, int n)
         conv->istate = state;
         return count+1;
       } else
-        return RET_ILSEQ;
+        goto ilseq;
     case STATE_TWOBYTE:
       if (n < count+2)
         goto none;
@@ -265,7 +265,7 @@ iso2022_cn_ext_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, int n)
         int ret;
         switch (state2) {
           case STATE2_NONE:
-            return RET_ILSEQ;
+            goto ilseq;
           case STATE2_DESIGNATED_GB2312:
             ret = gb2312_mbtowc(conv,pwc,s,2); break;
           case STATE2_DESIGNATED_CNS11643_1:
@@ -275,13 +275,13 @@ iso2022_cn_ext_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, int n)
           default: abort();
         }
         if (ret == RET_ILSEQ)
-          return RET_ILSEQ;
+          goto ilseq;
         if (ret != 2) abort();
         COMBINE_STATE;
         conv->istate = state;
         return count+2;
       } else
-        return RET_ILSEQ;
+        goto ilseq;
     default: abort();
   }
 
@@ -289,6 +289,11 @@ none:
   COMBINE_STATE;
   conv->istate = state;
   return RET_TOOFEW(count);
+
+ilseq:
+  COMBINE_STATE;
+  conv->istate = state;
+  return RET_SHIFT_ILSEQ(count);
 }
 
 static int

@@ -1,4 +1,4 @@
-dnl Copyright (C) 1999-2007 Free Software Foundation, Inc.
+dnl Copyright (C) 1999-2009 Free Software Foundation, Inc.
 dnl This file is part of the GNU LIBICONV Library.
 dnl
 dnl The GNU LIBICONV Library is free software; you can redistribute it
@@ -18,10 +18,10 @@ dnl Fifth Floor, Boston, MA 02110-1301, USA.
 
 AC_PREREQ([2.60])
 AC_INIT
-AC_CONFIG_SRCDIR(lib/iconv.c)
-AC_CONFIG_AUX_DIR(build-aux)
-AM_INIT_AUTOMAKE(libiconv, 1.12)
-AC_CONFIG_HEADERS(config.h lib/config.h)
+AC_CONFIG_SRCDIR([lib/iconv.c])
+AC_CONFIG_AUX_DIR([build-aux])
+AM_INIT_AUTOMAKE([libiconv], [1.13])
+AC_CONFIG_HEADERS([config.h lib/config.h])
 AC_PROG_MAKE_SET
 
 dnl           checks for basic programs
@@ -29,6 +29,10 @@ dnl           checks for basic programs
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
+
+AC_PATH_PROG([STRIP], [strip], [:]) dnl sets STRIP
+AM_PROG_INSTALL_STRIP               dnl overrides STRIP when cross-compiling,
+                                    dnl sets INSTALL_STRIP_PROGRAM
 
 dnl           check for host type
 
@@ -73,9 +77,12 @@ AC_EXEEXT
 
 dnl           check for build configuration
 
-AC_DISABLE_STATIC
-AC_LIBTOOL_WIN32_DLL
-AC_PROG_LIBTOOL
+LT_INIT([disable-static win32-dll])
+
+dnl Prepares the libtool configuration for handling of Windows resources, and
+dnl sets the RC variable to a program that compiles Windows resource files.
+LT_LANG([Windows Resource])
+
 gl_VISIBILITY
 AM_ICONV
 AM_GNU_GETTEXT([external], [need-ngettext])
@@ -92,16 +99,38 @@ if test "$am_cv_func_iconv" = yes -a -n "$am_cv_proto_iconv_arg1"; then
 else
   ICONV_CONST=""
 fi
-AC_SUBST(ICONV_CONST)
+AC_SUBST([ICONV_CONST])
 
 if test $gt_cv_c_wchar_t = yes; then
   HAVE_WCHAR_T=1
 else
   HAVE_WCHAR_T=0
 fi
-AC_SUBST(HAVE_WCHAR_T)
+AC_SUBST([HAVE_WCHAR_T])
 
 AC_CHECK_FUNCS([getc_unlocked mbrtowc wcrtomb mbsinit setlocale])
+
+dnl mbstate_t is used if HAVE_WCRTOMB || HAVE_MBRTOWC, see lib/loop_wchar.h.
+if test $ac_cv_func_wcrtomb = yes || test $ac_cv_func_mbrtowc = yes; then
+  USE_MBSTATE_T=1
+else
+  USE_MBSTATE_T=0
+fi
+AC_SUBST([USE_MBSTATE_T])
+
+AC_CACHE_CHECK([whether <wchar.h> is standalone],
+  [gl_cv_header_wchar_h_standalone],
+  [AC_COMPILE_IFELSE([[#include <wchar.h>
+wchar_t w;]],
+    [gl_cv_header_wchar_h_standalone=yes],
+    [gl_cv_header_wchar_h_standalone=no])])
+if test $gl_cv_header_wchar_h_standalone = yes; then
+  BROKEN_WCHAR_H=0
+else
+  BROKEN_WCHAR_H=1
+fi
+AC_SUBST([BROKEN_WCHAR_H])
+
 AC_REPLACE_FUNCS([memmove])
 
 AM_LANGINFO_CODESET
@@ -118,23 +147,6 @@ dnl End of hack to work around limitations of automake and error.m4.
 m4_popdef([AC_REPLACE_FUNCS])
 m4_popdef([AC_LIBOBJ])
 AC_SUBST([SRCLIBOBJS])
-
-dnl           check whether OS supports plug libraries
-
-OS=""
-case "$host_os" in
-  linux*)   OS="linux" ;;
-  solaris*) OS="solaris" ;;
-  osf*)     OS="osf" ;;
-esac
-if test -n "$OS"; then
-  AC_SUBST(OS)
-  AC_SUBST(GCC)
-  PLUGLIB="preloadable_libiconv.so"
-else
-  PLUGLIB=""
-fi
-AC_SUBST(PLUGLIB)
 
 dnl Compilation on mingw and Cygwin needs special Makefile rules, because
 dnl 1. when we install a shared library, we must arrange to export
@@ -161,7 +173,7 @@ fi
 AC_SUBST([DLL_VARIABLE])
 
 dnl On mingw and Cygwin, we can activate special Makefile rules which add
-dnl version information to the shared libraries and executables.
+dnl version information to the executables.
 case "$host_os" in
   mingw* | cygwin*) is_woe32=yes ;;
   *) is_woe32=no ;;
@@ -182,7 +194,8 @@ AH_BOTTOM([
 #endif
 ])
 
-AC_CONFIG_SUBDIRS(libcharset)
+AC_CONFIG_SUBDIRS([libcharset])
+AC_CONFIG_SUBDIRS([preload])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([lib/Makefile])
 AC_CONFIG_FILES([srclib/Makefile])

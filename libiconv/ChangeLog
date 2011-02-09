@@ -1,3 +1,336 @@
+2009-03-26  Bruno Haible  <bruno@clisp.org>
+
+	* Version 1.13 released.
+
+2009-03-26  Bruno Haible  <bruno@clisp.org>
+
+	* src/iconv.c: Update copyright header to GPLv3+.
+	(print_version): Update license info.
+
+2009-03-26  Bruno Haible  <bruno@clisp.org>
+
+	* src/iconv.c (print_version): Bump year.
+
+2009-03-25  Bruno Haible  <bruno@clisp.org>
+
+	* build-aux/config.guess: Update to GNU version 2009-02-03.
+	* build-aux/config.sub: Likewise.
+
+2009-03-25  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac: Bump version number to 1.13.
+	* README: Likewise.
+	* include/iconv.h.in (_LIBICONV_VERSION): Likewise.
+	* windows/iconv.rc: Update.
+	* lib/Makefile.in (LIBICONV_VERSION_INFO): Bump to 7:0:5.
+
+2009-03-25  Bruno Haible  <bruno@clisp.org>
+
+	Fix the handling of Windows resources in shared libraries.
+	* configure.ac: Invoke LT_LANG for 'Windows Resource'.
+	* lib/Makefile.in (RC): New variable.
+	(WINDRES): Remove variable.
+	(OBJECTS_RES_yes): Add .lo suffix.
+	(libiconv.res.lo): Renamed from libiconv.res. Use libtool --tag=RC.
+	(clean): Simplify.
+	Based on a patch by Roumen Petrov <bugtrack@roumenpetrov.info>.
+
+2009-03-14  Bruno Haible  <bruno@clisp.org>
+
+	* autogen.sh: Checkout gnulib using 'git' instead of 'cvs'.
+
+2009-01-24  Bruno Haible  <bruno@clisp.org>
+
+	* tools/Makefile (ALL): Add cp1131.h.
+	(cp1131.h): New rule.
+	* lib/encodings.def: Add CP1131.
+	* lib/cp1131.h: New file.
+	* lib/converters.h: Include it.
+	* README, man/iconv_open.3: Add CP1131.
+	* NOTES: Mention CP1131.
+	* tests/CP1131.TXT: New file.
+	* tests/Makefile.in (check): Also test CP1131.
+
+2009-01-17  Bruno Haible  <bruno@clisp.org>
+
+	Add support for "make install-strip".
+	* configure.ac: Search for 'strip'. Invoke AM_PROG_INSTALL_STRIP.
+	* Makefile.in (install-strip): New rule.
+	* src/Makefile.in (STRIP, INSTALL_STRIP_PROGRAM, install_sh): New
+	variables.
+	(install-strip): New rule.
+	* lib/Makefile.in (install-strip): New target.
+	* preload/Makefile.in (install-strip): Likewise.
+	* man/Makefile.in (install-strip): Likewise.
+	Reported by Alon Bar-Lev <alon.barlev@gmail.com>.
+
+2009-01-17  Bruno Haible  <bruno@clisp.org>
+
+	Update after gnulib changed.
+	* src/Makefile.in (RELOCATABLE_STRIP): New variable.
+
+2009-01-17  Bruno Haible  <bruno@clisp.org>
+
+	Make --enable-relocatable work on glibc systems.
+	* src/Makefile.in (host): New variable.
+
+2009-01-17  Bruno Haible  <bruno@clisp.org>
+
+	* lib/genflags.c: Include <string.h>.
+
+2009-01-14  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac: More consistent m4 quoting.
+	* preload/configure.ac: Likewise.
+
+2008-09-28  Bruno Haible  <bruno@clisp.org>
+
+	* build-aux/ltmain.sh (func_emit_cwrapperexe_src): On mingw,
+	preprocess the argument vector through prepare_spawn.
+
+2008-09-27  Bruno Haible  <bruno@clisp.org>
+
+	* build-aux/config.guess: Update to GNU version 2008-09-08.
+	* build-aux/config.sub: Likewise.
+
+2008-09-26  Bruno Haible  <bruno@clisp.org>
+
+	* tests/test-shiftseq.c (main1, main2): Use ICONV_CONST.
+
+2008-09-26  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.devel (GNULIB_MODULES): Add sigpipe, stdio.
+	* tests/Makefile.in (check, table-from, table-to, test-shiftseq): Link
+	all programs against libicrt.a. Needed for the stdio function
+	replacements on mingw.
+
+2008-09-21  Tadamasa Teranishi  <yw3t-trns@asahi-net.or.jp>
+
+	* lib/encodings_extra.def: Add aliases for EUC-JISX0213, SHIFT_JISX0213,
+	ISO-2022-JP-3, found on <http://x0213.org/codetable/index.en.html>.
+
+2008-09-20  Bruno Haible  <bruno@clisp.org>
+
+	* man/iconv_open_into.3: New file.
+
+2008-09-16  Bruno Haible  <bruno@clisp.org>
+
+	New function iconv_open_into.
+	* include/iconv.h.in: Include <wchar.h> and its prerequisites.
+	(iconv_allocation_t): New type.
+	(iconv_open_into): New declaration.
+	* lib/iconv_open1.h: New file, extracted from lib/iconv.c.
+	* lib/iconv_open2.h: New file, extracted from lib/iconv.c.
+	* lib/iconv.c (iconv_open): Include iconv_open1.h and iconv_open2.h.
+	Verify size of iconv_allocation_t.
+	(iconv_open_into): New function.
+	* lib/loop_wchar.h (struct wchar_conv_struct): Don't define a state
+	field if !(HAVE_WCRTOMB || HAVE_MBRTOWC).
+	* configure.ac: Set and substitute USE_MBSTATE_T, BROKEN_WCHAR_H.
+	Reported by Roman Rybalko <romanr@romanr.info>.
+
+2008-09-16  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.devel (AUTOCONF, AUTOHEADER): Switch to version 2.63.
+
+2008-09-16  Bruno Haible  <bruno@clisp.org>
+
+	* include/iconv.h.in: Use Unicode single-quotes in comments.
+
+2008-09-14  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.devel (GNULIB_MODULES): Add strerror.
+
+2008-09-07  Bruno Haible  <bruno@clisp.org>
+
+	Make behaviour when encountering invalid input after a shift sequence
+	more consistent.
+	* lib/converters.h (RET_SHIFT_ILSEQ): New macro.
+	(RET_ILSEQ): Define in terms of RET_SHIFT_ILSEQ.
+	(RET_TOOFEW): Change to avoid collisions with RET_SHIFT_ILSEQ.
+	(DECODE_SHIFT_ILSEQ, DECODE_TOOFEW): New macros.
+	* lib/loop_unicode.h (unicode_loop_convert): Take into account the
+	shift count contained in the negative return values.
+	* lib/hz.h (hz_mbtowc): When encountering invalid input, store the
+	modified state and return RET_SHIFT_ILSEQ.
+	* lib/iso2022_cn.h (iso2022_cn_mbtowc): Likewise.
+	* lib/iso2022_cnext.h (iso2022_cn_ext_mbtowc): Likewise.
+	* lib/iso2022_jp.h (iso2022_jp_mbtowc): Likewise.
+	* lib/iso2022_jp1.h (iso2022_jp1_mbtowc): Likewise.
+	* lib/iso2022_jp2.h (iso2022_jp2_mbtowc): Likewise.
+	* lib/iso2022_jp3.h (iso2022_jp3_mbtowc): Likewise.
+	* lib/iso2022_kr.h (iso2022_kr_mbtowc): Likewise.
+	* lib/ucs2.h (ucs2_mbtowc): Likewise.
+	* lib/ucs4.h (ucs4_mbtowc): Likewise.
+	* lib/utf16.h (utf16_mbtowc): Likewise.
+	* lib/utf32.h (utf32_mbtowc): Likewise.
+	* lib/utf7.h (utf7_mbtowc): Likewise.
+	* lib/utf16be.h (utf16be_mbtowcutf16be_mbtowc): When encountering
+	invalid input, return RET_SHIFT_ILSEQ.
+	* lib/utf16le.h (utf16le_mbtowc): Likewise.
+	* tests/test-shiftseq.c: New file.
+	* tests/Makefile.in (check): Run test-shiftseq.
+	(test-shiftseq, test-shiftseq.@OBJEXT@): New rules.
+	(clean): Remove test-shiftseq executable.
+	Reported by Roman Rybalko <roman_rybalko@users.sourceforge.net>
+	at <http://savannah.gnu.org/bugs/?24216>.
+
+2008-09-07  Bruno Haible  <bruno@clisp.org>
+
+	* man/iconv.3: Clarify the processing of shift-sequences.
+
+2008-09-07  Bruno Haible  <bruno@clisp.org>
+
+	* m4/libtool.m4: Update from libtool-2.2.6, with modifications:
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltoptions.m4: Update from libtool-2.2.6.
+	* m4/ltsugar.m4: Likewise.
+	* m4/ltversion.m4: Likewise.
+	* build-aux/ltmain.sh: Likewise.
+
+2008-09-06  Bruno Haible  <bruno@clisp.org>
+
+	* lib/gbk.h (gbk_wctomb): Fix an out-of-bounds write.
+	Reported by Roman Rybalko <roman_rybalko@users.sourceforge.net>
+	at <http://savannah.gnu.org/bugs/?24214>.
+
+2008-06-30  Bruno Haible  <bruno@clisp.org>
+
+	Fix sed expressions to work with the old sed-3.02 on MSYS.
+	* windows/windres-options (sed_extract_major, sed_extract_minor,
+	sed_extract_subminor): Put a semicolon before the closing brace. Use
+	an i\ command instead of an a\ command.
+	Reported by Sunil Negi <sunil.negi@morningstar.com>
+	in <http://article.gmane.org/gmane.comp.gnu.mingw.msys/4410>
+	via Keith Marshall <keithmarshall@users.sourceforge.net>.
+
+2008-05-22  Bruno Haible  <bruno@clisp.org>
+
+	* README.woe32: Update with info from GNU gettext's README.woe32.
+
+2008-05-18  Bruno Haible  <bruno@clisp.org>
+
+	* m4/libtool.m4: Update from libtool-2.2.4, with modifications:
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltoptions.m4: Update from libtool-2.2.4.
+	* m4/ltversion.m4: Likewise.
+	* m4/lt~obsolete.m4: Likewise.
+	* build-aux/ltmain.sh: Likewise.
+
+2008-04-14  Bruno Haible  <bruno@clisp.org>
+
+	* tests/Makefile.in (check): Remove *.dSYM directories left over by gcc
+	on MacOS X 10.5.
+
+2008-04-14  Bruno Haible  <bruno@clisp.org>
+
+	* preload/configure.ac: Invoke AC_USE_SYSTEM_EXTENSIONS instead of
+	AC_AIX and AC_MINIX.
+	* Makefile.devel (AUTOCONF, AUTOHEADER): Require autoconf-2.62.
+	* preload/Makefile.devel (AUTOCONF): Likewise.
+	* autogen.sh: Likewise.
+
+2008-04-06  Bruno Haible  <bruno@clisp.org>
+
+	* m4/libtool.m4: Update from libtool-2.2.2, with modifications:
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltoptions.m4: New file, from libtool-2.2.2.
+	* m4/ltsugar.m4: New file, from libtool-2.2.2.
+	* m4/ltversion.m4: New file, from libtool-2.2.2.
+	* m4/lt~obsolete.m4: New file, from libtool-2.2.2.
+	* build-aux/ltmain.sh: New file, from libtool-2.2.2.
+	* configure.ac: Use LT_INIT instead of AC_PROG_LIBTOOL.
+	* preload/configure.ac: Likewise.
+
+2008-04-06  Bruno Haible  <bruno@clisp.org>
+
+	More portable way of building the preloadable library.
+	* preload/Makefile.devel: New file.
+	* preload/Makefile.in: New file, based on lib/Makefile.in.
+	* preload/configure.ac: New file, based on configure.ac.
+	* Makefile.devel (all): Recurse into preload directory.
+	* Makefile.in (all, install, installdirs, uninstall, check,
+	mostlyclean, clean, distclean, maintainer-clean): Recurse into preload
+	directory.
+	* configure.ac: Likewise.
+	(OS, GCC, PLUGLIB): Remove definitions.
+	* lib/Makefile.in (all): Don't depend on PLUGLIB.
+	(preloadable_libiconv.so, preloadable_libiconv_linux.so,
+	preloadable_libiconv_solaris.so, preloadable_libiconv_osf.so): Remove
+	rules.
+	(install, uninstall, clean): Don't handle the preloadable library here.
+
+2008-04-06  Bruno Haible  <bruno@clisp.org>
+
+	Avoid a gcc warning.
+	* lib/loop_unicode.h (unicode_loop_convert): Add a cast.
+
+2008-04-06  Bruno Haible  <bruno@clisp.org>
+
+	* src/iconv.c (print_version): Bump year.
+
+2008-04-06  Bruno Haible  <bruno@clisp.org>
+
+	Support all possible nl_langinfo(CODESET) results on the respective
+	platforms, according to libcharset/lib/config.charset.
+	* lib/encodings.def: Add DEFALIAS statements, conditional on
+	USE_AIX_ALIASES, USE_HPUX_ALIASES, USE_OSF1_ALIASES,
+	USE_SOLARIS_ALIASES.
+	* lib/encodings_aix.def: Add DEFALIAS statements, conditional on
+	USE_AIX_ALIASES.
+	* lib/encodings_osf1.def: Add DEFALIAS statements, conditional on
+	USE_OSF1_ALIASES.
+	* lib/genaliases.c (emit_alias): New function, extracted from
+	emit_encoding.
+	(emit_encoding): Use it.
+	(main): Define DEFALIAS.
+	* lib/genaliases2.c (counter): New variable, extracted from
+	emit_encoding.
+	(emit_alias): New function, extracted from emit_encoding.
+	(emit_encoding): Use it.
+	(main): Define DEFALIAS.
+	* lib/genflags.c (main): Define DEFALIAS.
+	* lib/iconv.c (all_encodings): Define DEFALIAS.
+	Include the system dependent variant of aliases.h on the appropriate
+	systems.
+	(all_canonical): Include the system dependent variant of canonical.h,
+	canonical_aix.h, canonical_osf1.h, canonical_local.h on the appropriate
+	systems.
+	* lib/aliases2.h: Include the system dependent variant of
+	aliases_aix.h or aliases_osf1.h on the appropriate systems.
+	* lib/Makefile.in (iconv.lo): Depend on aliases_sysaix.h,
+	aliases_syshpux.h, aliases_sysosf1.h, aliases_syssolaris.h,
+	aliases_aix_sysaix.h, lib/aliases_osf1_sysosf1.h, and also
+	aliases_extra.h, translit.h.
+	* Makefile.devel (all): Depend on lib/aliases_sysaix.h,
+	lib/aliases_syshpux.h, lib/aliases_sysosf1.h, lib/aliases_syssolaris.h,
+	lib/aliases_aix_sysaix.h, lib/aliases_osf1_sysosf1.h.
+	(lib/aliases_sysaix.h, lib/aliases_syshpux.h, lib/aliases_sysosf1.h,
+	lib/aliases_syssolaris.h): New rules.
+	(lib/aliases_aix_sysaix.h): New rule.
+	(lib/aliases_osf1_sysosf1.h): New rule.
+	* autogen.sh: Also remove lib/aliases_sysaix.h, lib/aliases_syshpux.h,
+	lib/aliases_sysosf1.h, lib/aliases_syssolaris.h,
+	lib/aliases_aix_sysaix.h, lib/aliases_osf1_sysosf1.h.
+
+2008-04-06  Bruno Haible  <bruno@clisp.org>
+
+	* build-aux/config.libpath: Remove file, brought in by gnulib-tool.
+	* build-aux/config.rpath: Remove file, brought in by gnulib-tool.
+
+2007-11-11  Bruno Haible  <bruno@clisp.org>
+
+	* Version 1.12 released.
+
 2007-11-11  Bruno Haible  <bruno@clisp.org>
 
 	* Makefile.devel (AUTOCONF, AUTOHEADER): Require version 2.61.

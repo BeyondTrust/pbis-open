@@ -1,5 +1,5 @@
 /* Binary mode I/O.
-   Copyright (C) 2001, 2003, 2005 Free Software Foundation, Inc.
+   Copyright (C) 2001, 2003, 2005, 2008 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,19 +30,18 @@
 # define O_BINARY _O_BINARY
 # define O_TEXT _O_TEXT
 #endif
-#ifdef __BEOS__
-  /* BeOS 5 has O_BINARY and O_TEXT, but they have no effect.  */
+#if defined __BEOS__ || defined __HAIKU__
+  /* BeOS 5 and Haiku have O_BINARY and O_TEXT, but they have no effect.  */
 # undef O_BINARY
 # undef O_TEXT
 #endif
 #if O_BINARY
-# if !(defined __EMX__ || defined __DJGPP__ || defined __CYGWIN__)
+# if defined __EMX__ || defined __DJGPP__ || defined __CYGWIN__
+#  include <io.h> /* declares setmode() */
+# else
 #  define setmode _setmode
 #  undef fileno
 #  define fileno _fileno
-# endif
-# if defined __DJGPP__ || defined __CYGWIN__
-#  include <io.h> /* declares setmode() */
 # endif
 # ifdef __DJGPP__
 #  include <unistd.h> /* declares isatty() */

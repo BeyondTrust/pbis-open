@@ -1,13 +1,15 @@
-# setenv.m4 serial 8
-dnl Copyright (C) 2001-2004, 2006-2007 Free Software Foundation, Inc.
+# setenv.m4 serial 11
+dnl Copyright (C) 2001-2004, 2006-2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 
 AC_DEFUN([gl_FUNC_SETENV],
 [
+  AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
   AC_CHECK_FUNCS_ONCE([setenv])
   if test $ac_cv_func_setenv = no; then
+    HAVE_SETENV=0
     AC_LIBOBJ([setenv])
     gl_PREREQ_SETENV
   fi
@@ -16,18 +18,24 @@ AC_DEFUN([gl_FUNC_SETENV],
 # Like gl_FUNC_SETENV, except prepare for separate compilation (no AC_LIBOBJ).
 AC_DEFUN([gl_FUNC_SETENV_SEPARATE],
 [
+  AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
   AC_CHECK_FUNCS_ONCE([setenv])
+  if test $ac_cv_func_setenv = no; then
+    HAVE_SETENV=0
+  fi
   gl_PREREQ_SETENV
 ])
 
 AC_DEFUN([gl_FUNC_UNSETENV],
 [
+  AC_REQUIRE([gl_STDLIB_H_DEFAULTS])
   AC_CHECK_FUNCS([unsetenv])
   if test $ac_cv_func_unsetenv = no; then
+    HAVE_UNSETENV=0
     AC_LIBOBJ([unsetenv])
     gl_PREREQ_UNSETENV
   else
-    AC_CACHE_CHECK([for unsetenv() return type], gt_cv_func_unsetenv_ret,
+    AC_CACHE_CHECK([for unsetenv() return type], [gt_cv_func_unsetenv_ret],
       [AC_TRY_COMPILE([#include <stdlib.h>
 extern
 #ifdef __cplusplus
@@ -40,27 +48,8 @@ int unsetenv();
 #endif
 ], , gt_cv_func_unsetenv_ret='int', gt_cv_func_unsetenv_ret='void')])
     if test $gt_cv_func_unsetenv_ret = 'void'; then
-      AC_DEFINE(VOID_UNSETENV, 1, [Define if unsetenv() returns void, not int.])
+      VOID_UNSETENV=1
     fi
-  fi
-])
-
-# Check if a variable is properly declared.
-# gt_CHECK_VAR_DECL(includes,variable)
-AC_DEFUN([gt_CHECK_VAR_DECL],
-[
-  define([gt_cv_var], [gt_cv_var_]$2[_declaration])
-  AC_MSG_CHECKING([if $2 is properly declared])
-  AC_CACHE_VAL(gt_cv_var, [
-    AC_TRY_COMPILE([$1
-      extern struct { int foo; } $2;],
-      [$2.foo = 1;],
-      gt_cv_var=no,
-      gt_cv_var=yes)])
-  AC_MSG_RESULT($gt_cv_var)
-  if test $gt_cv_var = yes; then
-    AC_DEFINE([HAVE_]translit($2, [a-z], [A-Z])[_DECL], 1,
-              [Define if you have the declaration of $2.])
   fi
 ])
 
@@ -68,15 +57,15 @@ AC_DEFUN([gt_CHECK_VAR_DECL],
 AC_DEFUN([gl_PREREQ_SETENV],
 [
   AC_REQUIRE([AC_FUNC_ALLOCA])
-  AC_CHECK_HEADERS_ONCE(unistd.h)
-  AC_CHECK_HEADERS(search.h)
-  AC_CHECK_FUNCS(tsearch)
-  gt_CHECK_VAR_DECL([#include <unistd.h>], environ)
+  AC_REQUIRE([gl_ENVIRON])
+  AC_CHECK_HEADERS_ONCE([unistd.h])
+  AC_CHECK_HEADERS([search.h])
+  AC_CHECK_FUNCS([tsearch])
 ])
 
 # Prerequisites of lib/unsetenv.c.
 AC_DEFUN([gl_PREREQ_UNSETENV],
 [
-  AC_CHECK_HEADERS_ONCE(unistd.h)
-  gt_CHECK_VAR_DECL([#include <unistd.h>], environ)
+  AC_REQUIRE([gl_ENVIRON])
+  AC_CHECK_HEADERS_ONCE([unistd.h])
 ])

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2003, 2005-2006 Free Software Foundation, Inc.
+ * Copyright (C) 1999-2003, 2005-2006, 2008 Free Software Foundation, Inc.
  * This file is part of the GNU LIBICONV Library.
  *
  * The GNU LIBICONV Library is free software; you can redistribute it
@@ -283,57 +283,62 @@ static size_t unicode_loop_convert (iconv_t icd,
     int outcount;
     incount = cd->ifuncs.xxx_mbtowc(cd,&wc,inptr,inleft);
     if (incount < 0) {
-      if (incount == RET_ILSEQ) {
-        /* Case 1: invalid input */
+      if ((unsigned int)(-1-incount) % 2 == (unsigned int)(-1-RET_ILSEQ) % 2) {
+        /* Case 1: invalid input, possibly after a shift sequence */
+        incount = DECODE_SHIFT_ILSEQ(incount);
         if (cd->discard_ilseq) {
           switch (cd->iindex) {
             case ei_ucs4: case ei_ucs4be: case ei_ucs4le:
             case ei_utf32: case ei_utf32be: case ei_utf32le:
             case ei_ucs4internal: case ei_ucs4swapped:
-              incount = 4; break;
+              incount += 4; break;
             case ei_ucs2: case ei_ucs2be: case ei_ucs2le:
             case ei_utf16: case ei_utf16be: case ei_utf16le:
             case ei_ucs2internal: case ei_ucs2swapped:
-              incount = 2; break;
+              incount += 2; break;
             default:
-              incount = 1; break;
+              incount += 1; break;
           }
           goto outcount_zero;
         }
         #ifndef LIBICONV_PLUG
         else if (cd->fallbacks.mb_to_uc_fallback != NULL) {
+          unsigned int incount2;
           struct mb_to_uc_fallback_locals locals;
           switch (cd->iindex) {
             case ei_ucs4: case ei_ucs4be: case ei_ucs4le:
             case ei_utf32: case ei_utf32be: case ei_utf32le:
             case ei_ucs4internal: case ei_ucs4swapped:
-              incount = 4; break;
+              incount2 = 4; break;
             case ei_ucs2: case ei_ucs2be: case ei_ucs2le:
             case ei_utf16: case ei_utf16be: case ei_utf16le:
             case ei_ucs2internal: case ei_ucs2swapped:
-              incount = 2; break;
+              incount2 = 2; break;
             default:
-              incount = 1; break;
+              incount2 = 1; break;
           }
           locals.l_cd = cd;
           locals.l_outbuf = outptr;
           locals.l_outbytesleft = outleft;
           locals.l_errno = 0;
-          cd->fallbacks.mb_to_uc_fallback(inptr, incount,
+          cd->fallbacks.mb_to_uc_fallback((const char*)inptr+incount, incount2,
                                           mb_to_uc_write_replacement,
                                           &locals,
                                           cd->fallbacks.data);
           if (locals.l_errno != 0) {
+            inptr += incount; inleft -= incount;
             errno = locals.l_errno;
             result = -1;
             break;
           }
+          incount += incount2;
           outptr = locals.l_outbuf;
           outleft = locals.l_outbytesleft;
           result += 1;
           goto outcount_zero;
         }
         #endif
+        inptr += incount; inleft -= incount;
         errno = EILSEQ;
         result = -1;
         break;
@@ -345,7 +350,7 @@ static size_t unicode_loop_convert (iconv_t icd,
         break;
       }
       /* Case 3: k bytes read, but only a shift sequence */
-      incount = -2-incount;
+      incount = DECODE_TOOFEW(incount);
     } else {
       /* Case 4: k bytes read, making up a wide character */
       if (outleft == 0) {

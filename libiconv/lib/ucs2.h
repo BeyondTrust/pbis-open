@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001 Free Software Foundation, Inc.
+ * Copyright (C) 1999-2001, 2008 Free Software Foundation, Inc.
  * This file is part of the GNU LIBICONV Library.
  *
  * The GNU LIBICONV Library is free software; you can redistribute it
@@ -37,7 +37,8 @@ ucs2_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, int n)
     } else if (wc == 0xfffe) {
       state ^= 1;
     } else if (wc >= 0xd800 && wc < 0xe000) {
-      return RET_ILSEQ;
+      conv->istate = state;
+      return RET_SHIFT_ILSEQ(count);
     } else {
       *pwc = wc;
       conv->istate = state;

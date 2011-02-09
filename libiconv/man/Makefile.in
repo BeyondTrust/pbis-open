@@ -42,6 +42,8 @@ install : force
 	if [ ! -d $(DESTDIR)$(htmldir) ] ; then $(mkinstalldirs) $(DESTDIR)$(htmldir) ; fi
 	builddir="`pwd`"; cd $(srcdir) && for f in *.html ; do (cd "$$builddir"; echo $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(htmldir)/$$f ; $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(htmldir)/$$f) ; done
 
+install-strip : install
+
 installdirs : force
 	if [ ! -d $(DESTDIR)$(mandir)/man1 ] ; then $(mkinstalldirs) $(DESTDIR)$(mandir)/man1 ; fi
 	if [ ! -d $(DESTDIR)$(mandir)/man3 ] ; then $(mkinstalldirs) $(DESTDIR)$(mandir)/man3 ; fi

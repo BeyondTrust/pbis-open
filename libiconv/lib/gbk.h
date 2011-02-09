@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001, 2005 Free Software Foundation, Inc.
+ * Copyright (C) 1999-2001, 2005, 2008 Free Software Foundation, Inc.
  * This file is part of the GNU LIBICONV Library.
  *
  * The GNU LIBICONV Library is free software; you can redistribute it
@@ -135,6 +135,8 @@ gbk_wctomb (conv_t conv, unsigned char *r, ucs4_t wc, int n)
     return 2;
   }
   if (wc >= 0x2170 && wc <= 0x2179) {
+    if (n < 2)
+      return RET_TOOSMALL;
     r[0] = 0xa2;
     r[1] = 0xa1 + (wc-0x2170);
     return 2;

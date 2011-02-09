@@ -37,6 +37,11 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 mkinstalldirs = $(SHELL) @top_srcdir@/build-aux/mkinstalldirs
 
+# Programs used by "make install-strip":
+STRIP = @STRIP@
+INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
+install_sh = @install_sh@
+
 #### End of system configuration section. ####
 
 SHELL = /bin/sh
@@ -48,6 +53,9 @@ top_builddir = ..
 
 # Needed by SET_RELOCATABLE.
 EXEEXT = @EXEEXT@
+
+# Needed by RELOCATABLE_LDFLAGS.
+host = @host@
 
 OBJECTS_RES_yes = iconv.res
 OBJECTS_RES_no =
@@ -88,6 +96,7 @@ RELOCATABLE_SRC_DIR = $(top_srcdir)/srclib
 RELOCATABLE_BUILD_DIR = ../srclib
 RELOCATABLE_CONFIG_H_DIR = ..
 RELOCATABLE_LDFLAGS = @RELOCATABLE_LDFLAGS@
+RELOCATABLE_STRIP = :
 INSTALL_PROGRAM_ENV = @INSTALL_PROGRAM_ENV@
 iconv_LDFLAGS = `if test -n '$(RELOCATABLE_LDFLAGS)'; then $(RELOCATABLE_LDFLAGS) $(bindir); fi`
 
@@ -107,6 +116,14 @@ install : all force
 	  *) $(LIBTOOL_LINK) $(CC) $(LDFLAGS) $(CFLAGS) $(iconv_LDFLAGS) iconv.@OBJEXT@ ../srclib/libicrt.a $(DESTDIR)$(libdir)/libiconv.la @LTLIBINTL@ $(OBJECTS_RES_@WOE32@) -o iconv;; \
 	esac
 	$(INSTALL_PROGRAM_ENV) $(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) iconv $(DESTDIR)$(bindir)/iconv
+
+install-strip : force
+	case '$(INSTALL_PROGRAM)' in \
+	  */install-reloc) \
+	    $(MAKE) install prefix='$(prefix)' exec_prefix='$(exec_prefix)' libdir='$(libdir)' RELOCATABLE_STRIP='$(STRIP)' ;; \
+	  *) \
+	    $(MAKE) install prefix='$(prefix)' exec_prefix='$(exec_prefix)' libdir='$(libdir)' INSTALL_PROGRAM='$(INSTALL_STRIP_PROGRAM)' ;; \
+	esac
 
 installdirs : force
 	if [ ! -d $(DESTDIR)$(bindir) ] ; then $(mkinstalldirs) $(DESTDIR)$(bindir) ; fi

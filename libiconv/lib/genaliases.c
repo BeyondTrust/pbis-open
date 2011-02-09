@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2001, 2003, 2005 Free Software Foundation, Inc.
+/* Copyright (C) 1999-2001, 2003, 2005, 2008 Free Software Foundation, Inc.
    This file is part of the GNU LIBICONV Library.
 
    The GNU LIBICONV Library is free software; you can redistribute it
@@ -21,6 +21,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static void emit_alias (FILE* out1, const char* alias, const char* c_name)
+{
+  /* Output alias in upper case. */
+  const char* s = alias;
+  for (; *s; s++) {
+    unsigned char c = * (unsigned char *) s;
+    if (c >= 0x80)
+      exit(1);
+    if (c >= 'a' && c <= 'z')
+      c -= 'a'-'A';
+    putc(c, out1);
+  }
+  fprintf(out1,", ei_%s\n", c_name);
+}
+
 static void emit_encoding (FILE* out1, FILE* out2, const char* const* names, size_t n, const char* c_name)
 {
   fprintf(out2,"grep 'sizeof(\"");
@@ -37,19 +52,8 @@ static void emit_encoding (FILE* out1, FILE* out2, const char* const* names, siz
     }
   }
   fprintf(out2,"\")' tmp.h | sed -e 's|^.*\\(stringpool_str[0-9]*\\).*$|  (int)(long)\\&((struct stringpool_t *)0)->\\1,|'\n");
-  for (; n > 0; names++, n--) {
-    /* Output *names in upper case. */
-    const char* s = *names;
-    for (; *s; s++) {
-      unsigned char c = * (unsigned char *) s;
-      if (c >= 0x80)
-        exit(1);
-      if (c >= 'a' && c <= 'z')
-        c -= 'a'-'A';
-      putc(c, out1);
-    }
-    fprintf(out1,", ei_%s\n", c_name);
-  }
+  for (; n > 0; names++, n--)
+    emit_alias(out1, *names, c_name);
 }
 
 int main ()
@@ -74,6 +78,7 @@ int main ()
     emit_encoding(stdout,stdout2,names,sizeof(names)/sizeof(names[0]),#xxx); \
   }
 #define BRACIFY(...) { __VA_ARGS__ }
+#define DEFALIAS(xxx_alias,xxx) emit_alias(stdout,xxx_alias,#xxx);
 
   stdout2 = fdopen(3, "w");
   if (stdout2 == NULL)
@@ -89,6 +94,7 @@ int main ()
   if (fclose(stdout2))
     exit(1);
 
+#undef DEFALIAS
 #undef BRACIFY
 #undef DEFENCODING
 

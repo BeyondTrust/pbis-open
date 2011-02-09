@@ -1,4 +1,4 @@
-/* Copyright (C) 1992,1995-1999,2000-2003,2005-2007 Free Software Foundation, Inc.
+/* Copyright (C) 1992,1995-1999,2000-2003,2005-2008 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
    This program is free software: you can redistribute it and/or modify
@@ -19,12 +19,14 @@
 #endif
 #include <alloca.h>
 
+/* Specification.  */
+#include <stdlib.h>
+
 #include <errno.h>
 #ifndef __set_errno
 # define __set_errno(ev) ((errno) = (ev))
 #endif
 
-#include <stdlib.h>
 #include <string.h>
 #if _LIBC || HAVE_UNISTD_H
 # include <unistd.h>
@@ -38,9 +40,6 @@
 
 #if !_LIBC
 # define __environ	environ
-# ifndef HAVE_ENVIRON_DECL
-extern char **environ;
-# endif
 #endif
 
 #if _LIBC

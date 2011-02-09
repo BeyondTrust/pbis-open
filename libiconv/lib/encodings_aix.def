@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2002 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2002, 2008 Free Software Foundation, Inc.
    This file is part of the GNU LIBICONV Library.
 
    The GNU LIBICONV Library is free software; you can redistribute it
@@ -22,31 +22,55 @@ DEFENCODING(( "CP856",
             ),
             cp856,
             { cp856_mbtowc, NULL },       { cp856_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-856",                /* AIX */
+            cp856)
+#endif
 
 DEFENCODING(( "CP922",
             ),
             cp922,
             { cp922_mbtowc, NULL },       { cp922_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-922",                /* AIX */
+            cp922)
+#endif
 
 DEFENCODING(( "CP943",
             ),
             cp943,
             { cp943_mbtowc, NULL },       { cp943_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-943",                /* AIX */
+            cp943)
+#endif
 
 DEFENCODING(( "CP1046",
             ),
             cp1046,
             { cp1046_mbtowc, NULL },      { cp1046_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-1046",               /* AIX */
+            cp1046)
+#endif
 
 DEFENCODING(( "CP1124",
             ),
             cp1124,
             { cp1124_mbtowc, NULL },      { cp1124_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-1124",               /* AIX */
+            cp1124)
+#endif
 
 DEFENCODING(( "CP1129",
             ),
             cp1129,
             { cp1129_mbtowc, NULL },      { cp1129_wctomb, NULL })
+#ifdef USE_AIX_ALIASES
+DEFALIAS(     "IBM-1129",               /* AIX */
+            cp1129)
+#endif
 
 DEFENCODING(( "CP1161",
               "IBM1161",                /* glibc */

@@ -1,3 +1,56 @@
+2009-03-26  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.in (install, installdir): Ensure that $(DESTDIR)$(libdir)
+	exists, unconditionally.
+
+2009-03-25  Bruno Haible  <bruno@clisp.org>
+
+	* relocatable.h: Update from gnulib.
+	* relocatable.c: Likewise.
+
+2009-01-25  Bruno Haible  <bruno@clisp.org>
+
+	Don't install charset.alias on MacOS X >= 10.3.
+	* localcharset.c (DARWIN7): New macro.
+	(get_charset_aliases): Hardcode the result for Darwin7.
+	* Makefile.in (install, installdirs): Don't install charset.alias on
+	MacOS X >= 10.3.
+
+2009-01-25  Bruno Haible  <bruno@clisp.org>
+
+	Don't install charset.alias on mingw and Cygwin.
+	* Makefile.in (install, installdirs): Don't install charset.alias on
+	mingw and Cygwin, if the file does not yet exist. The result for these
+	platforms is hardcoded in localcharset.c.
+
+2009-01-24  Bruno Haible  <bruno@clisp.org>
+
+	Add support for non-UTF-8 locales on MacOS X.
+	* config.charset: Add CP1131, ARMSCII-8, PT154 to the list of canonical
+	encodings. For Darwin 7 and newer, don't map traditional encodings to
+	UTF-8.
+	Reported by Vincent Lefevre <vincent@vinc17.org>
+	at <http://savannah.gnu.org/bugs/?25235>.
+
+2008-11-10  Ingo Weinhold  <ingo_weinhold@gmx.de>
+
+	* config.charset: Treat Haiku like BeOS.
+
+2009-01-16  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.in (install-strip): New target.
+	Reported by Alon Bar-Lev <alon.barlev@gmail.com>.
+
+2008-04-13  Bruno Haible  <bruno@clisp.org>
+
+	* localcharset.c (OS2): Don't redefine if already defined.
+	Reported by Elbert Pol <e.pol@chello.nl>.
+
+2007-11-14  Bruno Haible  <bruno@clisp.org>
+
+	* config.charset: Update for OpenBSD 4.1.
+	Reported and helped by Ben Pfaff <blp@cs.stanford.edu>.
+
 2006-10-31  Bruno Haible  <bruno@clisp.org>
 
 	Update from GNU gettext.

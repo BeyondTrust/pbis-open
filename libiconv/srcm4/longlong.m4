@@ -1,5 +1,5 @@
-# longlong.m4 serial 13
-dnl Copyright (C) 1999-2007 Free Software Foundation, Inc.
+# longlong.m4 serial 14
+dnl Copyright (C) 1999-2007, 2009 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -46,7 +46,7 @@ AC_DEFUN([AC_TYPE_LONG_LONG_INT],
 	  [ac_cv_type_long_long_int=yes])],
        [ac_cv_type_long_long_int=no])])
   if test $ac_cv_type_long_long_int = yes; then
-    AC_DEFINE([HAVE_LONG_LONG_INT], 1,
+    AC_DEFINE([HAVE_LONG_LONG_INT], [1],
       [Define to 1 if the system has the type `long long int'.])
   fi
 ])
@@ -69,7 +69,7 @@ AC_DEFUN([AC_TYPE_UNSIGNED_LONG_LONG_INT],
        [ac_cv_type_unsigned_long_long_int=yes],
        [ac_cv_type_unsigned_long_long_int=no])])
   if test $ac_cv_type_unsigned_long_long_int = yes; then
-    AC_DEFINE([HAVE_UNSIGNED_LONG_LONG_INT], 1,
+    AC_DEFINE([HAVE_UNSIGNED_LONG_LONG_INT], [1],
       [Define to 1 if the system has the type `unsigned long long int'.])
   fi
 ])
@@ -82,13 +82,10 @@ AC_DEFUN([AC_TYPE_UNSIGNED_LONG_LONG_INT],
 AC_DEFUN([_AC_TYPE_LONG_LONG_SNIPPET],
 [
   AC_LANG_PROGRAM(
-    [[/* Test preprocessor.  */
-      #if ! (-9223372036854775807LL < 0 && 0 < 9223372036854775807ll)
-        error in preprocessor;
-      #endif
-      #if ! (18446744073709551615ULL <= -1ull)
-        error in preprocessor;
-      #endif
+    [[/* For now, do not test the preprocessor; as of 2007 there are too many
+	 implementations with broken preprocessors.  Perhaps this can
+	 be revisited in 2012.  In the meantime, code should not expect
+	 #if to work with literals wider than 32 bits.  */
       /* Test literals.  */
       long long int ll = 9223372036854775807ll;
       long long int nll = -9223372036854775807LL;

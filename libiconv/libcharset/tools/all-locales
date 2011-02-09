@@ -16,7 +16,8 @@ case "$host_os" in
   freebsd*)
     cd /usr/share/locale && ls -1
     ;;
-  darwin*)
+  darwin* | openbsd*)
+    echo C
     cd /usr/share/locale && ls -1 */LC_CTYPE | sed -e 's,/LC_CTYPE$,,'
     ;;
   *)

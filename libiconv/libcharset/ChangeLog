@@ -1,3 +1,97 @@
+2009-01-25  Bruno Haible  <bruno@clisp.org>
+
+	Don't install charset.alias on MacOS X >= 10.3.
+	* INTEGRATE: Don't install charset.alias on MacOS X >= 10.3, if the
+	file does not yet exist.
+
+2009-01-25  Bruno Haible  <bruno@clisp.org>
+
+	Don't install charset.alias on mingw and Cygwin.
+	* INTEGRATE: Don't install charset.alias on mingw and Cygwin, if the
+	file does not yet exist. The result for these platforms is hardcoded in
+	localcharset.c.
+
+2009-01-24  Bruno Haible  <bruno@clisp.org>
+
+	* tools/all-charsets: Add CP1131, ARMSCII-8, PT154 to the list of
+	allowed encodings.
+	* tools/darwin-7.5: Regenerated.
+	* tools/darwin-9.5: Regenerated.
+
+2009-01-18  Bruno Haible  <bruno@clisp.org>
+
+	* tools/darwin-9.5: New file.
+
+2009-01-18  Bruno Haible  <bruno@clisp.org>
+
+	* tools/locale_monthnames.c: New file.
+
+2009-01-16  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.in (install-strip): New target.
+	Reported by Alon Bar-Lev <alon.barlev@gmail.com>.
+
+2009-01-14  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac: More consistent m4 quoting.
+
+2008-09-28  Bruno Haible  <bruno@clisp.org>
+
+	* build-aux/ltmain.sh (func_emit_cwrapperexe_src): On mingw,
+	preprocess the argument vector through prepare_spawn.
+
+2008-09-16  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.devel (AUTOCONF, AUTOHEADER): Switch to version 2.63.
+
+2008-09-07  Bruno Haible  <bruno@clisp.org>
+
+	* m4/libtool.m4: Update from libtool-2.2.6, with modifications:
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltoptions.m4: Update from libtool-2.2.6.
+	* m4/ltsugar.m4: Likewise.
+	* m4/ltversion.m4: Likewise.
+	* build-aux/ltmain.sh: Likewise.
+
+2008-05-18  Bruno Haible  <bruno@clisp.org>
+
+	* m4/libtool.m4: Update from libtool-2.2.4, with modifications:
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltoptions.m4: Update from libtool-2.2.4.
+	* m4/ltversion.m4: Likewise.
+	* m4/lt~obsolete.m4: Likewise.
+	* build-aux/ltmain.sh: Likewise.
+
+2008-04-14  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac: Invoke AC_USE_SYSTEM_EXTENSIONS instead of AC_AIX and
+	AC_MINIX.
+	* Makefile.devel (AUTOCONF, AUTOHEADER): Require autoconf-2.62.
+
+2008-04-06  Bruno Haible  <bruno@clisp.org>
+
+	* m4/libtool.m4: Update from libtool-2.2.2, with modifications:
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltoptions.m4: New file, from libtool-2.2.2.
+	* m4/ltsugar.m4: New file, from libtool-2.2.2.
+	* m4/ltversion.m4: New file, from libtool-2.2.2.
+	* m4/lt~obsolete.m4: New file, from libtool-2.2.2.
+	* build-aux/ltmain.sh: New file, from libtool-2.2.2.
+	* configure.ac: Use LT_INIT instead of AC_PROG_LIBTOOL.
+
+2007-11-14  Bruno Haible  <bruno@clisp.org>
+
+	* tools/all-locales: Add "C" for Darwin. Treat OpenBSD like Darwin.
+
 2007-11-11  Bruno Haible  <bruno@clisp.org>
 
 	* Makefile.devel (AUTOCONF, AUTOHEADER): Require version 2.61.

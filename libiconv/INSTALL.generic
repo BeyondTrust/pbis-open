@@ -81,6 +81,20 @@ in the source code directory.  After you have installed the package for
 one architecture, use `make distclean' before reconfiguring for another
 architecture.
 
+   On MacOS X 10.5 and later systems, you can create libraries and
+executables that work on multiple system types--known as "fat" or
+"universal" binaries--by specifying multiple '-arch' options to the
+compiler but only a single '-arch' option to the preprocessor.  Like
+this:
+
+     ./configure CC="gcc -arch i386 -arch x86_64 -arch ppc -arch ppc64" \
+                 CXX="g++ -arch i386 -arch x86_64 -arch ppc -arch ppc64" \
+                 CPP="gcc -E" CXXCPP="g++ -E"
+
+   This is not guaranteed to produce working output in all cases.  You
+may have to build one architecture at a time and combine the results
+using the 'lipo' tool if you have problems.
+
 Installation Names
 ==================
 
@@ -169,23 +183,26 @@ Particular Systems
 is not installed, it is recommended to use the following options in order
 to use an ANSI C compiler:
 
-     env CC="cc -Ae" ./configure
+     ./configure CC="cc -Ae -D_XOPEN_SOURCE=500"
 
-   On OSF/1 a.k.a. Tru64, some versions of the default C compiler don't grok
-its <wchar.h> header file.  The option -nodtk can be used as a workaround.
-If GNU CC is not installed, it is therefore recommended to try
+and if that doesn't work, install pre-built binaries of GCC for HP-UX.
 
-     env CC="cc" ./configure
+   On OSF/1 a.k.a. Tru64, some versions of the default C compiler cannot
+parse its `<wchar.h>' header file.  The option `-nodtk' can be used as
+a workaround.  If GNU CC is not installed, it is therefore recommended
+to try
+
+     ./configure CC="cc"
 
 and if that doesn't work, try
 
-     env CC="cc -nodtk" ./configure
+     ./configure CC="cc -nodtk"
 
    On AIX 3, the C include files by default don't define some necessary
 prototype declarations.  If GNU CC is not installed, it is recommended to
 use the following options:
 
-     env CC="xlc -D_ALL_SOURCE" ./configure
+     ./configure CC="xlc -D_ALL_SOURCE"
 
    On BeOS, user installed software goes in /boot/home/config, not
 /usr/local.  It is recommended to use the following options:

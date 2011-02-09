@@ -1,20 +1,18 @@
-/* Copyright (C) 2000-2007 Free Software Foundation, Inc.
+/* Copyright (C) 2000-2009 Free Software Foundation, Inc.
    This file is part of the GNU LIBICONV Library.
 
-   The GNU LIBICONV Library is free software; you can redistribute it
-   and/or modify it under the terms of the GNU Library General Public
-   License as published by the Free Software Foundation; either version 2
-   of the License, or (at your option) any later version.
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
 
-   The GNU LIBICONV Library is distributed in the hope that it will be
-   useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-   Library General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-   You should have received a copy of the GNU Library General Public
-   License along with the GNU LIBICONV Library; see the file COPYING.LIB.
-   If not, write to the Free Software Foundation, Inc., 51 Franklin Street,
-   Fifth Floor, Boston, MA 02110-1301, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
 #ifndef ICONV_CONST
@@ -192,10 +190,10 @@ static void print_version (void)
 {
   printf("iconv (GNU libiconv %d.%d)\n",
          _libiconv_version >> 8, _libiconv_version & 0xff);
-  printf("Copyright (C) %s Free Software Foundation, Inc.\n", "2000-2007");
+  printf("Copyright (C) %s Free Software Foundation, Inc.\n", "2000-2009");
   /* xgettext: no-wrap */
   fputs (_("\
-License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>\n\
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\
 This is free software: you are free to change and redistribute it.\n\
 There is NO WARRANTY, to the extent permitted by law.\n\
 "),stdout);

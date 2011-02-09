@@ -35,6 +35,7 @@ ALL = \
  cp850.h \
  cp862.h \
  cp866.h \
+ cp1131.h \
  mac_roman.h \
  mac_centraleurope.h \
  mac_iceland.h \
@@ -216,6 +217,9 @@ cp862.h : $(TABLESDIR)/unicode.org-mappings/VENDORS/MICSFT/PC/CP862.TXT 8bit_tab
 
 cp866.h : $(TABLESDIR)/unicode.org-mappings/VENDORS/MICSFT/PC/CP866.TXT 8bit_tab_to_h
 	./8bit_tab_to_h CP866 cp866 < $<
+
+cp1131.h : $(TABLESDIR)/other/CP1131.TXT 8bit_tab_to_h
+	(echo '#' ; cat $<) | ./8bit_tab_to_h CP1131 cp1131
 
 mac_roman.h : $(TABLESDIR)/jdk-1.1.7b/MAC-ROMAN.TXT 8bit_tab_to_h
 	./8bit_tab_to_h MacRoman mac_roman < $<

@@ -31,7 +31,8 @@ LIBTOOL_COMPILE = $(LIBTOOL) --mode=compile
 LIBTOOL_LINK = $(LIBTOOL) --mode=link
 LIBTOOL_INSTALL = $(LIBTOOL) --mode=install
 LIBTOOL_UNINSTALL = $(LIBTOOL) --mode=uninstall
-WINDRES = @WINDRES@
+# Windows resource compiler (windres). Used via libtool.
+RC = @RC@
 CP = cp
 MV = mv
 LN = @LN@
@@ -50,7 +51,7 @@ SHELL = /bin/sh
 
 # Before making a release, change this according to the libtool documentation,
 # section "Library interface versions".
-LIBICONV_VERSION_INFO = 6:0:4
+LIBICONV_VERSION_INFO = 7:0:5
 
 PACKAGE_VERSION = @VERSION@
 
@@ -62,45 +63,22 @@ SOURCES = $(srcdir)/iconv.c $(srcdir)/../libcharset/lib/localcharset.c $(srcdir)
 OBJECTS = iconv.lo localcharset.lo relocatable.lo $(OBJECTS_EXP_@WOE32DLL@) $(OBJECTS_RES_@WOE32@)
 OBJECTS_EXP_yes = iconv-exports.lo
 OBJECTS_EXP_no =
-OBJECTS_RES_yes = libiconv.res
+OBJECTS_RES_yes = libiconv.res.lo
 OBJECTS_RES_no =
 
-all : @PLUGLIB@ libiconv.la
+all : libiconv.la
 
 libiconv.la : $(OBJECTS)
 	$(LIBTOOL_LINK) $(CC) $(LDFLAGS) $(CFLAGS) -o libiconv.la -rpath $(libdir) -version-info $(LIBICONV_VERSION_INFO) -no-undefined $(OBJECTS)
 
-preloadable_libiconv.so : preloadable_libiconv_@OS@.so
-	$(RM) preloadable_libiconv.so
-	$(LN_S) preloadable_libiconv_@OS@.so preloadable_libiconv.so
-
-preloadable_libiconv_linux.so : $(SOURCES)
-	if test -n "@GCC@"; then \
-	  $(LIBTOOL_LINK) $(CC) $(LDFLAGS) $(INCLUDES) $(CFLAGS) $(CPPFLAGS) $(DEFS) -fPIC -DPIC -DLIBICONV_PLUG $(SOURCES) -shared -o preloadable_libiconv_linux.so; \
-	else \
-	  $(LIBTOOL_LINK) $(CC) $(LDFLAGS) $(INCLUDES) $(CFLAGS) $(CPPFLAGS) $(DEFS) -KPIC -DPIC -DLIBICONV_PLUG $(SOURCES) -shared -o preloadable_libiconv_linux.so; \
-	fi
-
-preloadable_libiconv_solaris.so : $(SOURCES)
-	if test -n "@GCC@"; then \
-	  $(LIBTOOL_LINK) $(CC) $(LDFLAGS) $(INCLUDES) $(CFLAGS) $(CPPFLAGS) $(DEFS) -fPIC -DPIC -DLIBICONV_PLUG $(SOURCES) -shared -o preloadable_libiconv_solaris.so; \
-	else \
-	  $(LIBTOOL_LINK) $(CC) $(LDFLAGS) $(INCLUDES) $(CFLAGS) $(CPPFLAGS) $(DEFS) -KPIC -DPIC -DLIBICONV_PLUG $(SOURCES) -G -o preloadable_libiconv_solaris.so; \
-	fi
-
-preloadable_libiconv_osf.so : $(SOURCES)
-	if test -n "@GCC@"; then \
-	  $(LIBTOOL_LINK) $(CC) $(LDFLAGS) $(INCLUDES) $(CFLAGS) $(CPPFLAGS) $(DEFS) -fPIC -DPIC -DLIBICONV_PLUG $(SOURCES) -shared -o preloadable_libiconv_osf.so; \
-	else \
-	  mkdir objects; \
-	  for f in $(SOURCES); do \
-	    $(CC) $(INCLUDES) $(CFLAGS) $(CPPFLAGS) $(DEFS) -DPIC -DLIBICONV_PLUG -c $$f -o objects/`basename $$f | sed -e 's,\.c$$,.o,'`; \
-	  done; \
-	  /bin/ld -shared -expect_unresolved \* -o preloadable_libiconv_osf.so objects/*.o; \
-	  rm -rf objects; \
-	fi
-
-iconv.lo : $(srcdir)/iconv.c $(srcdir)/converters.h $(srcdir)/encodings.def $(srcdir)/encodings_aix.def $(srcdir)/encodings_osf1.def $(srcdir)/encodings_dos.def $(srcdir)/encodings_local.def $(srcdir)/aliases.h $(srcdir)/aliases_aix.h $(srcdir)/aliases_osf1.h $(srcdir)/aliases_dos.h $(srcdir)/flags.h
+iconv.lo : $(srcdir)/iconv.c $(srcdir)/converters.h \
+           $(srcdir)/encodings.def $(srcdir)/encodings_aix.def $(srcdir)/encodings_osf1.def $(srcdir)/encodings_dos.def $(srcdir)/encodings_local.def \
+           $(srcdir)/aliases.h $(srcdir)/aliases_sysaix.h $(srcdir)/aliases_syshpux.h $(srcdir)/aliases_sysosf1.h $(srcdir)/aliases_syssolaris.h \
+           $(srcdir)/aliases_aix.h $(srcdir)/aliases_aix_sysaix.h \
+           $(srcdir)/aliases_osf1.h $(srcdir)/aliases_osf1_sysosf1.h \
+           $(srcdir)/aliases_dos.h \
+           $(srcdir)/aliases_extra.h \
+           $(srcdir)/flags.h $(srcdir)/translit.h
 	$(LIBTOOL_COMPILE) $(CC) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $(DEFS) -c $(srcdir)/iconv.c
 
 localcharset.lo : $(srcdir)/../libcharset/lib/localcharset.c $(srcdir)/relocatable.h
@@ -112,8 +90,8 @@ relocatable.lo : $(srcdir)/relocatable.c $(srcdir)/relocatable.h
 iconv-exports.lo : $(srcdir)/../woe32dll/iconv-exports.c
 	$(LIBTOOL_COMPILE) $(CC) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $(DEFS) -c $(srcdir)/../woe32dll/iconv-exports.c
 
-libiconv.res : $(srcdir)/../windows/libiconv.rc
-	$(WINDRES) `$(SHELL) $(srcdir)/../windows/windres-options --escape $(PACKAGE_VERSION)` -i $(srcdir)/../windows/libiconv.rc -o libiconv.res --output-format=coff
+libiconv.res.lo : $(srcdir)/../windows/libiconv.rc
+	$(LIBTOOL_COMPILE) --tag=RC $(RC) `$(SHELL) $(srcdir)/../windows/windres-options --escape $(PACKAGE_VERSION)` -i $(srcdir)/../windows/libiconv.rc -o libiconv.res.lo --output-format=coff
 
 # Installs the library and include files only. Typically called with only
 # $(libdir) and $(includedir) - don't use $(prefix) and $(exec_prefix) here.
@@ -135,21 +113,21 @@ install : all force
 	         rm -f $$objects && \
 	         mv -f libiconv.new.a libiconv.a) ;; \
 	esac
-	if test -n "@PLUGLIB@"; then $(INSTALL_DATA) @PLUGLIB@ $(DESTDIR)$(libdir)/@PLUGLIB@.new && mv $(DESTDIR)$(libdir)/@PLUGLIB@.new $(DESTDIR)$(libdir)/@PLUGLIB@ ; fi
+
+install-strip : install
 
 installdirs : force
 	if [ ! -d $(DESTDIR)$(libdir) ] ; then $(mkinstalldirs) $(DESTDIR)$(libdir) ; fi
 
 uninstall : force
 	$(LIBTOOL_UNINSTALL) $(RM) $(DESTDIR)$(libdir)/libiconv.la
-	if test -n "@PLUGLIB@"; then $(RM) $(DESTDIR)$(libdir)/@PLUGLIB@ ; fi
 
 check : all
 
 mostlyclean : clean
 
 clean : force
-	$(RM) *.o *.lo libiconv.res *.a *.la preloadable_libiconv* core *.stackdump so_locations
+	$(RM) *.o *.lo *.a *.la core *.stackdump so_locations
 	$(RM) -r .libs _libs
 
 distclean : clean

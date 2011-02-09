@@ -206,6 +206,7 @@ CP866, ei_cp866
 IBM866, ei_cp866
 866, ei_cp866
 CSIBM866, ei_cp866
+CP1131, ei_cp1131
 MACROMAN, ei_mac_roman
 MACINTOSH, ei_mac_roman
 MAC, ei_mac_roman

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2001 Free Software Foundation, Inc.
+ * Copyright (C) 1999-2001, 2008 Free Software Foundation, Inc.
  * This file is part of the GNU LIBICONV Library.
  *
  * The GNU LIBICONV Library is free software; you can redistribute it
@@ -67,7 +67,7 @@ hz_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, int n)
           continue;
         }
       }
-      return RET_ILSEQ;
+      goto ilseq;
     }
     break;
   }
@@ -81,7 +81,7 @@ hz_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, int n)
       goto none;
     ret = gb2312_mbtowc(conv,pwc,s,2);
     if (ret == RET_ILSEQ)
-      return RET_ILSEQ;
+      goto ilseq;
     if (ret != 2) abort();
     conv->istate = state;
     return count+2;
@@ -90,6 +90,10 @@ hz_mbtowc (conv_t conv, ucs4_t *pwc, const unsigned char *s, int n)
 none:
   conv->istate = state;
   return RET_TOOFEW(count);
+
+ilseq:
+  conv->istate = state;
+  return RET_SHIFT_ILSEQ(count);
 }
 
 static int

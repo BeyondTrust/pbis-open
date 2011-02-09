@@ -63,6 +63,7 @@
 #define ei_cp850_oflags (HAVE_ACCENTS)
 #define ei_cp862_oflags (0)
 #define ei_cp866_oflags (0)
+#define ei_cp1131_oflags (0)
 #define ei_mac_roman_oflags (HAVE_ACCENTS | HAVE_QUOTATION_MARKS)
 #define ei_mac_centraleurope_oflags (HAVE_QUOTATION_MARKS)
 #define ei_mac_iceland_oflags (HAVE_ACCENTS | HAVE_QUOTATION_MARKS)

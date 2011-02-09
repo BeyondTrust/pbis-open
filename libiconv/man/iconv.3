@@ -9,7 +9,7 @@
 .\"   GNU glibc-2 source code and manual
 .\"   OpenGroup's Single Unix specification http://www.UNIX-systems.org/online.html
 .\"
-.TH ICONV 3  "March 31, 2007" "GNU" "Linux Programmer's Manual"
+.TH ICONV 3  "September 7, 2008" "GNU" "Linux Programmer's Manual"
 .SH NAME
 iconv \- perform character set conversion
 .SH SYNOPSIS
@@ -35,6 +35,9 @@ each character conversion it increments \fI*inbuf\fP and decrements
 \fI*inbytesleft\fP by the number of converted input bytes, it increments
 \fI*outbuf\fP and decrements \fI*outbytesleft\fP by the number of converted
 output bytes, and it updates the conversion state contained in \fIcd\fP.
+If the character encoding of the input is stateful, the \fBiconv\fP function
+can also convert a sequence of input bytes to an update of the conversion state
+without producing any output bytes; such input is called a \fIshift sequence\fP.
 The conversion can stop for four reasons:
 .PP
 1. An invalid multibyte sequence is encountered in the input. In this case

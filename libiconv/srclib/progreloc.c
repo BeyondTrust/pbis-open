@@ -1,5 +1,5 @@
 /* Provide relocatable programs.
-   Copyright (C) 2003-2006 Free Software Foundation, Inc.
+   Copyright (C) 2003-2009 Free Software Foundation, Inc.
    Written by Bruno Haible <bruno@clisp.org>, 2003.
 
    This program is free software: you can redistribute it and/or modify
@@ -43,9 +43,15 @@
 # include <windows.h>
 #endif
 
-#include "xreadlink.h"
 #include "canonicalize.h"
 #include "relocatable.h"
+
+#ifdef NO_XMALLOC
+# include "areadlink.h"
+# define xreadlink areadlink
+#else
+# include "xreadlink.h"
+#endif
 
 #ifdef NO_XMALLOC
 # define xmalloc malloc
@@ -190,10 +196,10 @@ find_executable (const char *argv0)
 #endif
 #if HAVE_MACH_O_DYLD_H && HAVE__NSGETEXECUTABLEPATH
   /* On MacOS X 10.2 or newer, the function
-       int _NSGetExecutablePath (char *buf, unsigned long *bufsize);
+       int _NSGetExecutablePath (char *buf, uint32_t *bufsize);
      can be used to retrieve the executable's full path.  */
   char location[4096];
-  unsigned long length = sizeof (location);
+  unsigned int length = sizeof (location);
   if (_NSGetExecutablePath (location, &length) == 0
       && location[0] == '/')
     return canonicalize_file_name (location);
@@ -275,7 +281,7 @@ static void
 prepare_relocate (const char *orig_installprefix, const char *orig_installdir,
 		  const char *argv0)
 {
-  const char *curr_prefix;
+  char *curr_prefix;
 
   /* Determine the full pathname of the current executable.  */
   executable_fullname = find_executable (argv0);
@@ -284,8 +290,12 @@ prepare_relocate (const char *orig_installprefix, const char *orig_installdir,
   curr_prefix = compute_curr_prefix (orig_installprefix, orig_installdir,
 				     executable_fullname);
   if (curr_prefix != NULL)
-    /* Now pass this prefix to all copies of the relocate.c source file.  */
-    set_relocation_prefix (orig_installprefix, curr_prefix);
+    {
+      /* Now pass this prefix to all copies of the relocate.c source file.  */
+      set_relocation_prefix (orig_installprefix, curr_prefix);
+
+      free (curr_prefix);
+    }
 }
 
 /* Set program_name, based on argv[0], and original installation prefix and

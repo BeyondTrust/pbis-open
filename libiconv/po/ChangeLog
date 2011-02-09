@@ -1,3 +1,55 @@
+2009-03-24  Bruno Haible  <bruno@clisp.org>
+
+	* bg.po: New file, from Roumen Petrov <transl@roumenpetrov.info>.
+	* LINGUAS: Add bg.
+
+2009-01-24  Bruno Haible  <bruno@clisp.org>
+
+	* id.po: Update from Arif E. Nugroho <arif_endro@yahoo.com>.
+	* it.po: Update from Milo Casagrande <milo_casagrande@yahoo.it>.
+
+2008-11-11  Bruno Haible  <bruno@clisp.org>
+
+	* zh_CN.po: Update from Ji ZhengYu <zhengyuji@gmail.com>.
+
+2008-05-18  Bruno Haible  <bruno@clisp.org>
+
+	* zh_CN.po: Update from Ji ZhengYu <zhengyuji@gmail.com>.
+
+2008-04-27  Bruno Haible  <bruno@clisp.org>
+
+	* sl.po: Update from
+	Primož Peterlin <primoz.peterlin@biofiz.mf.uni-lj.si>.
+
+2008-03-30  Bruno Haible  <bruno@clisp.org>
+
+	* fr.po: Update from François-Xavier Coudert <fxcoudert@gmail.com>.
+
+2008-02-18  Bruno Haible  <bruno@clisp.org>
+
+	* ga.po: Update from Kevin Scannell <kscanne@gmail.com>.
+
+2008-02-09  Bruno Haible  <bruno@clisp.org>
+
+	* sv.po: Update from Daniel Nylander <po@danielnylander.se>.
+
+2008-01-31  Bruno Haible  <bruno@clisp.org>
+
+	* sk.po: Update from Marcel Telka <marcel@telka.sk>.
+
+2008-01-08  Bruno Haible  <bruno@clisp.org>
+
+	* de.po: Update from Bruno Haible <bruno@clisp.org>.
+	* eo.po: Update from Edmund Grimley Evans <edmundo@rano.org>.
+	* fi.po: Update from Jorma Karvonen <karvjorm@users.sf.net>.
+	* nl.po: Update from Tim Van Holder <tim.van.holder@telenet.be>.
+	* pl.po: Update from Jakub Bogusz <qboosh@pld-linux.org>.
+	* vi.po: Update from Clytie Siddall <clytie@riverland.net.au>.
+
+2007-11-30  Bruno Haible  <bruno@clisp.org>
+
+	* pl.po: Update from Jakub Bogusz <qboosh@pld-linux.org>.
+
 2007-11-11  gettextize  <bug-gnu-gettext@gnu.org>
 
 	* Makefile.in.in: Upgrade to gettext-0.17.

@@ -1,3 +1,16 @@
+New in 1.13:
+* The library and the iconv program now understand platform dependent aliases,
+  for better compatibility with the platform's own iconv_open function.
+  Examples: "646" on Solaris, "iso88591" on HP-UX, "IBM-1252" on AIX.
+* For stateful encodings, when the input ends with a shift sequence followed
+  by invalid input, the iconv function now increments the input pointer past
+  the shift sequence before returning (size_t)(-1) with errno = EILSEQ. This
+  is also like GNU libc's iconv() behaves.
+* The library exports a new function iconv_open_into() that stores the
+  conversion descriptor in pre-allocated memory, rather than allocating fresh
+  memory for it.
+* Added CP1131 converter.
+
 New in 1.12:
 * The iconv program is now licensed under the GPL version 3, instead of the
   GPL version 2. The libiconv library continues to be licensed under LGPL.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000-2002, 2005-2006 Free Software Foundation, Inc.
+ * Copyright (C) 2000-2002, 2005-2006, 2008 Free Software Foundation, Inc.
  * This file is part of the GNU LIBICONV Library.
  *
  * The GNU LIBICONV Library is free software; you can redistribute it
@@ -38,10 +38,6 @@
 #   define mbsinit(ps) 1
 #  endif
 # endif
-#else
-# ifndef mbstate_t
-   typedef int mbstate_t;
-# endif
 #endif
 
 /*
@@ -49,7 +45,9 @@
  */
 struct wchar_conv_struct {
   struct conv_struct parent;
+#if HAVE_WCRTOMB || HAVE_MBRTOWC
   mbstate_t state;
+#endif
 };
 
 

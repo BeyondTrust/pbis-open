@@ -2,7 +2,7 @@
 # Output a system dependent set of variables, describing how to set the
 # run time search path of shared libraries in an executable at run time.
 #
-#   Copyright 1996-2007 Free Software Foundation, Inc.
+#   Copyright 1996-2008 Free Software Foundation, Inc.
 #   Taken from GNU libtool, 2003
 #   Originally by Gordon Matzigkeit <gord@gnu.ai.mit.edu>, 1996
 #
@@ -42,7 +42,7 @@ case $host_os in
   aix3*)
     shlibpath_var=LIBPATH
     ;;
-  aix4* | aix5*)
+  aix[4-9]*)
     if test "$host_cpu" = ia64; then
       # AIX 5 supports IA64
       shlibpath_var=LD_LIBRARY_PATH
@@ -56,7 +56,7 @@ case $host_os in
   bsdi[45]*)
     shlibpath_var=LD_LIBRARY_PATH
     ;;
-  cygwin* | mingw* | pw32*)
+  cygwin* | mingw* | pw32* | cegcc*)
     # FIXME: first we should search . and the directory the executable is in
     shlibpath_var=PATH
     ;;

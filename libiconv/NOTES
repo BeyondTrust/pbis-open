@@ -177,6 +177,9 @@ A: libiconv, as an internationalization library, supports those character
        pages and emails.
      * CP866
        We implement this because Netscape Communicator does.
+     * CP1131
+       We implement this because it is the locale encoding of a Belorusian
+       locale in FreeBSD and MacOS X.
      * Mac{Roman,CentralEurope,Croatian,Romania,Cyrillic,Greek,Turkish} and
        Mac{Hebrew,Arabic}
        We implement these because the Sun JDK does, and because Mac users
