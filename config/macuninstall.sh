@@ -288,7 +288,7 @@ main()
         fi
     done
 
-    for plugin in LWIDSPLugIn LWEDSPlugIn ; do
+    for plugin in LWIDSPLugIn LWEDSPlugIn LWDSPlugin ; do
         path="/System/Library/Frameworks/DirectoryService.framework/Resources/Plugins/${plugin}.dsplug"
         echo "Checking for link to DS plugin (${path})"
         if [ -h "${path}" ]; then
