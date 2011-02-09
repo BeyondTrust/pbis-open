@@ -507,7 +507,7 @@ LwRtlCreateHashMap(
  */
 LW_NTSTATUS
 LwRtlHashMapInsert(
-    LW_IN LW_OUT PLW_HASHMAP pTable,
+    LW_IN LW_OUT PLW_HASHMAP pMap,
     LW_IN LW_PVOID pKey,
     LW_IN LW_PVOID pValue,
     LW_OUT LW_OPTIONAL PLW_HASHMAP_PAIR pPrevPair
@@ -526,7 +526,7 @@ LwRtlHashMapInsert(
  */
 LW_NTSTATUS
 LwRtlHashMapRemove(
-    LW_IN LW_OUT PLW_HASHMAP pTable,
+    LW_IN LW_OUT PLW_HASHMAP pMap,
     LW_IN LW_PVOID pKey,
     LW_OUT LW_OPTIONAL PLW_HASHMAP_PAIR pPair
     );

@@ -371,7 +371,7 @@ LW_VOID
  * @param[out] ppTask the created task
  * @param[in] pGroup an optional task group for the task
  * @param[in] pfnFunc the task wakeup function
- * @param[in] pData the user context pointer passed to pfnFunc
+ * @param[in] pContext the user context pointer passed to pfnFunc
  * @retval #LW_STATUS_SUCCESS success
  * @retval #LW_STATUS_INSUFFICIENT_RESOURCES out of memory
  * @retval #LW_STATUS_CANCELLED the specified task group was cancelled

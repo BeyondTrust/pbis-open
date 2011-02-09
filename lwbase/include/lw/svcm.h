@@ -192,7 +192,7 @@ typedef PLW_SVCM_MODULE
  *
  * @param[in] pInstance the service instance
  * @param[in] Status an NTSTATUS code indicating the result of the command
- * @param[in] pContext the context parameter provided to #LwRtlSvcmLoad()
+ * @param[in] pContext the user context pointer
  */
 typedef VOID
 (*LW_SVCM_NOTIFY_FUNCTION) (
@@ -242,14 +242,10 @@ LwRtlSvcmGetData(
  * @brief Load a service module
  *
  * Loads the service with the given name from the module
- * file at the specified path.  A notification function
- * and context pointer must be provided; it will be invoked
- * whenever the service changes state asynchronously.
+ * file at the specified path.
  *
  * @param[in] pServiceName the name of the service
  * @param[in] pModulePath the filesystem path of the module object file
- * @param[in] Notify a state change notification function
- * @param[in] pContext a context pointer to pass to the notify function
  * @param[out] ppInstance set to the created service instance
  * @return an NTSTATUS code
  */
@@ -270,7 +266,7 @@ LwRtlSvcmLoad(
  *
  * @param[in] pInstance the service instance
  * @param[in] ArgCount argument count
- * @param[in] ppArgv arguments
+ * @param[in] ppArgs arguments
  * @param[in] FdCount file descriptor count
  * @param[in] pFds file descriptors
  * @param[in] Notify the callback to invoke when startup completes
@@ -292,9 +288,9 @@ LwRtlSvcmStart(
  * @brief Stop a service
  *
  * Instructs the given service instance to stop.
- * This function will return immediately, and any
- * state change will be indicated asynchronously through
- * the registered notification function.
+ * This function will return immediately -- the provided
+ * notify callback will be invoked when the service has
+ * completed stopping.
  *
  * @param[in] pInstance the service instance
  * @param[in] Notify the callback to invoke when startup completes
@@ -312,7 +308,9 @@ LwRtlSvcmStop(
  * @brief Refresh service configuration
  *
  * Instructs the given service instance to refresh its
- * configuration.
+ * configuration. This function will return immediately
+ * -- the provided notify callback will be invoked when
+ * the service has completed refreshing.
  *
  * @param[in] pInstance the service instance
  * @param[in] Notify the callback to invoke when startup completes
@@ -340,6 +338,8 @@ VOID
 LwRtlSvcmUnload(
     LW_IN LW_OUT PLW_SVCM_INSTANCE pInstance
     );
+
+/*@}*/
 
 LW_END_EXTERN_C
 
