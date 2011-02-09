@@ -215,7 +215,7 @@ rpc__smb_transport_info_equal(
         (smb_info2 != NULL &&
          ((smb_info1->creds == NULL && smb_info2->creds == NULL) ||
           (smb_info1->creds != NULL && smb_info2->creds != NULL &&
-           LwIoCompareCredss(smb_info1->creds, smb_info2->creds))));
+           LwIoCompareCreds(smb_info1->creds, smb_info2->creds))));
 }
 
 INTERNAL

@@ -317,7 +317,7 @@ LwIoDeleteCreds(
 }
 
 BOOLEAN
-LwIoCompareCredss(
+LwIoCompareCreds(
     PIO_CREDS pCredsOne,
     PIO_CREDS pCredsTwo
     )

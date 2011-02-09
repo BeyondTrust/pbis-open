@@ -219,7 +219,7 @@ LwIoCreateKrb5CredsA(
     );
 
 BOOLEAN
-LwIoCompareCredss(
+LwIoCompareCreds(
     LW_PIO_CREDS pCreds1,
     LW_PIO_CREDS pCreds2
     );
