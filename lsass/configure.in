@@ -714,8 +714,8 @@ AC_DEFINE_UNQUOTED(CONFIGDIR, "$CONFIGDIR", [Config directory])
 lsassregdir="$datadir/config"
 AC_SUBST(lsassregdir)
 
-dspluginregdir="$datadir/config"
-AC_SUBST(dspluginregdir)
+lwdspluginregdir="$datadir/config"
+AC_SUBST(lwdspluginregdir)
 
 if test x"$localstatedir" = x"/var"; then
     lsasscachedir="$localstatedir/lib/likewise"

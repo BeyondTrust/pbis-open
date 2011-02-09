@@ -1,1 +1,1 @@
-dspluginreg_DATA = dsplugin.reg
+lwdspluginreg_DATA = lwdsplugin.reg

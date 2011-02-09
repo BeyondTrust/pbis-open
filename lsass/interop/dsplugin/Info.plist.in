@@ -9,7 +9,7 @@
         <key>CFBundleDevelopmentRegion</key>
         <string>English</string>
         <key>CFBundleExecutable</key>
-        <string>DSPlugIn</string>
+        <string>LWDSPlugIn</string>
 <!--
         <key>CFBundleGetInfoString</key>
         <string></string>
@@ -17,7 +17,7 @@
         <string></string>
 -->
         <key>CFBundleIdentifier</key>
-        <string>com.likewisesoftware.DSPlugIn</string>
+        <string>com.likewisesoftware.LWDSPlugIn</string>
         <key>CFBundleInfoDictionaryVersion</key>
         <string>6.0</string>
         <key>CFBundleName</key>
