@@ -59,7 +59,7 @@ LsaPamConverse(
     LSA_PAM_CONVERSE_MESSAGE message;
 
     message.messageStyle = messageStyle;
-    message.pszMessage = pszPrompt;
+    message.pszMessage = (PSTR) pszPrompt;
     message.ppszResponse = ppszResponse;
 
     return LsaPamConverseMulti(pamh, 1, &message);
@@ -102,7 +102,7 @@ LsaPamConverseMulti(
         for (i = 0; i < numMessages; ++i)
         {
             msgs[i].msg_style = pLsaPamConvMessages[i].messageStyle;
-            msgs[i].msg = (PAM_MESSAGE_MSG_TYPE) pLsaPamConvMessages[i].pszMessage;
+            msgs[i].msg = pLsaPamConvMessages[i].pszMessage;
 
             switch (msgs[i].msg_style)
             {

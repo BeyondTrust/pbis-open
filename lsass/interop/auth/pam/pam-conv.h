@@ -60,7 +60,7 @@ LsaPamConverse(
 typedef struct __LSA_PAM_CONVERSE_MESSAGE
 {
     int           messageStyle;
-    PCSTR         pszMessage;
+    PSTR          pszMessage;
     PSTR*         ppszResponse;
 } LSA_PAM_CONVERSE_MESSAGE, *PLSA_PAM_CONVERSE_MESSAGE;
 
