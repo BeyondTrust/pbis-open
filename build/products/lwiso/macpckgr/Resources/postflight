@@ -266,6 +266,17 @@ enable_plugin()
     sleep 3
 }
 
+configure_logon_message_application()
+{
+    /usr/bin/defaults read /Library/Preferences/loginwindow | grep 'Likewise Logon Message.app' > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "Configuring Likewise Logon Message application"
+        defaults write /Library/Preferences/loginwindow AutoLaunchedApplicationDictionary -array-add '{ "Path" = "/opt/likewise/bin/Likewise Logon Message.app"; "Hide" = "0"; }'
+    else
+        echo "Likewise Logon Message application already configured"
+    fi
+}
+
 import_5_0123_file()
 {
     CONVERT="/opt/likewise/bin/conf2reg"
@@ -361,7 +372,7 @@ restore_6_0_configuration()
 
 import_registry()
 {
-    REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg lwiod.reg rdr.reg npfs.reg srv.reg pvfs.reg dcerpcd.reg srvsvcd.reg nfs.reg"
+    REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg lwdsplugin.reg lwiod.reg rdr.reg npfs.reg srv.reg pvfs.reg dcerpcd.reg srvsvcd.reg nfs.reg"
     REGFILES_IMPORT="lsassd-import.reg"
     REGUPGRADE="/opt/likewise/bin/lwregshell upgrade"
     REGIMPORT="/opt/likewise/bin/lwregshell import"
@@ -426,8 +437,8 @@ restore_configuration()
 
 UPGRADEDIR5=/tmp/lw-upgrade-5
 UPGRADEDIR6=/tmp/lw-upgrade-6
-AUTOSTART="netlogon lwio dcerpc"
-DAEMONS="eventlog lsass"
+AUTOSTART="netlogon lwio dcerpc eventlog lsass"
+DAEMONS=""
 
 echo "Finalizing Likewise installation process"
 
@@ -460,6 +471,11 @@ enable_plugin
 /usr/bin/dscl /Search -create / SearchPolicy CSPSearchPath
 /usr/bin/dscl /Search -append / CSPSearchPath "/Likewise - Active Directory"
 
+# Create Global Login Item entry for Likewise Logon Message.app
+# to display licensing and password expiration warning messages on
+# user logon activity.
+configure_logon_message_application
+
 # Add Likewise Utilities folder to Applications location in Finder. Shortcut
 # the Likewise Domain Join application to here.
 if test -d /Applications/Likewise\ Utilities; then
@@ -467,11 +483,9 @@ if test -d /Applications/Likewise\ Utilities; then
 else
     mkdir -p /Applications/Likewise\ Utilities
     if test -f /Applications/Likewise\Utilities/Likewise\ Domain\ Join; then
-        echo "Likewise Domain Join application already created in utilities fold
-er"
+        echo "Likewise Domain Join application already created in utilities folder"
     else
-        ln -s /opt/likewise/bin/Likewise\ Domain\ Join.app /Applications/Likewis
-e\ Utilities/.
+        ln -s /opt/likewise/bin/Likewise\ Domain\ Join.app /Applications/Likewise\ Utilities/.
     fi
 fi
 
@@ -492,7 +506,7 @@ if [ -z "$JOINED" ]; then
     log_info "Use the domainjoin-cli program to join your computer to an Active "
     log_info "Directory domain which will enable logons to your system with Active Directory "
     log_info "user accounts."
-    open -a /opt/likewise/bin/Likewise\ Domain\ Join.app&
+    open -a /opt/likewise/bin/Likewise\ Domain\ Join.app/Contents/MacOS/Likewise\ Domain\ Join&
 else
     log_info ""
     log_info "Your computer is joined to the following domain:"
