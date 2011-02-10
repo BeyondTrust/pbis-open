@@ -1,6 +1,6 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -140,11 +140,6 @@ LsaDmEnginepDiscoverTrustsForDomain(
                                                 NETR_TRUST_FLAG_IN_FOREST),
                                                &pTrusts,
                                                &dwTrustCount);
-    if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
-    {
-        LSA_LOG_ERROR("Unable to enumerate trusts for '%s' domain because it is offline",
-                      pszDomainName, dwError);
-    }
     BAIL_ON_LSA_ERROR(dwError);
 
     // There must be at least one trust (primary)
@@ -465,6 +460,14 @@ LsaDmEnginepDiscoverTrustsInternal(
                   pszDnsPrimaryDomainName,
                   pszDnsPrimaryForestName,
                   &pTrustedForestRootList);
+    if (dwError != ERROR_SUCCESS)
+    {
+        LSA_LOG_ERROR(
+            "Fatal error enumerating trusts for domain %s. Error was %s (%u)\n",
+            pszDnsPrimaryDomainName,
+            LW_SAFE_LOG_STRING(LwWin32ErrorToName(dwError)),
+            dwError);
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
     // If own domain is not the forest root, enumerate the forest root
@@ -484,18 +487,16 @@ LsaDmEnginepDiscoverTrustsInternal(
                       pszDnsPrimaryForestName,
                       pszDnsPrimaryForestName,
                       &pTrustedForestRootList);
-        switch (dwError)
+        if (dwError != ERROR_SUCCESS)
         {
-        case LW_ERROR_DOMAIN_IS_OFFLINE:
-        case ERROR_ACCESS_DENIED:
-            /* If we can't enumerate our forest's trusts because the forest root
-               domain is offline or we do not have permission to enumerate
-               its trusts, ignore the error and continue */
-            dwError = 0;
-            break;
-        default:
-            BAIL_ON_LSA_ERROR(dwError);
-        }
+            LSA_LOG_ERROR(
+                "Ignoring failure enumerating trusts for forest %s. "
+                "Error was %s (%u)\n",
+                pszDnsPrimaryForestName,
+                LW_SAFE_LOG_STRING(LwWin32ErrorToName(dwError)),
+                dwError);
+            dwError = ERROR_SUCCESS;
+        }	
     }
 
     if (pTrustedForestRootList)
@@ -511,18 +512,15 @@ LsaDmEnginepDiscoverTrustsInternal(
                           pszDnsForestName,
                           pszDnsForestName,
                           NULL);
-            switch (dwError)
+            if (dwError != ERROR_SUCCESS)
             {
-            case LW_ERROR_DOMAIN_IS_OFFLINE:
-            case ERROR_ACCESS_DENIED:
-                /* If we can't enumerate the trusts of one of our forest's
-                   trusts because the trusted domain is offline or we do
-                   or we do not have permission to enumerate its trusts,
-                   ignore the error and continue */
-                dwError = 0;
-                break;
-            default:
-                BAIL_ON_LSA_ERROR(dwError);
+                LSA_LOG_ERROR(
+                    "Ignoring failure enumerating trusts for forest %s. "
+                    "Error was %s (%u)\n",
+                    pszDnsForestName,
+                    LW_SAFE_LOG_STRING(LwWin32ErrorToName(dwError)),
+                    dwError);
+                dwError = ERROR_SUCCESS;
             }
         }
     }
