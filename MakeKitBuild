@@ -17,6 +17,9 @@ defaults()
     MK_DATADIR="/opt/likewise/share"
     MK_DOCDIR="/opt/likewise/share/doc"
     MK_MANDIR="/usr/share/man"
+    
+    # Fail on warnings
+    MK_FAIL_ON_WARN=yes
 }
 
 option()
