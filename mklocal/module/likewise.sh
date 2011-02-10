@@ -89,6 +89,10 @@ lw_define_feature_macros()
             mk_define _HPUX_SOURCE 1
             mk_define _REENTRANT
             mk_define _XOPEN_SOURCE_EXTENDED 1
+            if [ "$MK_ARCH" = "ia64" ]
+            then
+                mk_define _XOPEN_SOURCE 500
+            fi
             # HACK HACK HACK
             mk_write_config_header "union mpinfou {};"
             ;;
