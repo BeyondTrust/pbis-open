@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# if this is a local deinstall, stop the daemon
+if [ -z "$PKG_INSTALL_ROOT" ]
+then
+   ZONENAME="`zonename 2>/dev/null`"
+   if [ -z "$ZONENAME" ]; then
+       PSOPTS="-e"
+   else
+       PSOPTS="-z $ZONENAME"
+   fi
+   DAEMONPID=`ps $PSOPTS -o pid,comm | grep reapsysld | awk '{print $1}'`
+   [ ! -z "$DAEMONPID" ] && kill -TERM $DAEMONPID
+   sleep 2
+fi

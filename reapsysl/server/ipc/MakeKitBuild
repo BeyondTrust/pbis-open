@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+        GROUP="ipc" \
+        SOURCES="ipc_log.c ipc_error.c ipc_state.c globals.c" \
+        INCLUDEDIRS=". ../include ../../include" \
+        HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
+        LIBDEPS="lwmsg lwbase lwbase_nothr"
+}

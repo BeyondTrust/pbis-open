@@ -1,0 +1,7 @@
+make()
+{
+    mk_install_file \
+        FILE="reapsysl.reg" \
+        INSTALLDIR="${LW_CONFIGDIR}" \
+        MODE="0644"
+}

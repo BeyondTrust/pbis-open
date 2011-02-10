@@ -1,0 +1,21 @@
+make()
+{
+    UTIL_SOURCES="\
+	rsys-cfg.c \
+	rsys-dlinkedlist.c \
+	rsys-error.c \
+	rsys-futils.c \
+	rsys-mem.c \
+	rsys-paths.c \
+	rsys-stack.c \
+	rsys-str.c \
+	rsys-strerror.c \
+	rsys-sysfuncs.c"
+
+    mk_group \
+        GROUP=utils \
+        SOURCES="$UTIL_SOURCES" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lwadvapi.h reg/lwreg.h" \
+        LIBDEPS="rsyslogging lwadvapi lwadvapi_nothr regclient"
+}

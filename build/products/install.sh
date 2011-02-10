@@ -703,6 +703,7 @@ solaris_deconfigure_zones()
         zlogin $zone svcadm disable dcerpcd > /dev/null 2>/dev/null
         zlogin $zone svcadm disable lwsmd > /dev/null 2>/dev/null
         zlogin $zone svcadm disable lwregd > /dev/null 2>/dev/null
+        zlogin $zone svcadm disable reapsysld > /dev/null 2>/dev/null
     done
 }
 
@@ -917,6 +918,7 @@ kill_likewise_daemons()
     kill_process dcerpcd
     kill_process netlogond
     kill_process lwregd
+    kill_process reapsysld
 }
 
 stop_daemon()

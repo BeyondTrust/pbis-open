@@ -21,7 +21,7 @@ make()
         DESTDIR="${MK_DATADIR}" \
         SOURCE="likewise.pam-auth-update"        
 
-    for i in dcerpcd eventlogd lsassd lwiod lwregd lwsmd netlogond srvsvcd
+    for i in dcerpcd eventlogd lsassd lwiod lwregd lwsmd netlogond srvsvcd reapsysld
     do
 	lw_init_script "$i"
     done

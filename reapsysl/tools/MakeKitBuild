@@ -1,0 +1,3 @@
+SUBDIRS="\
+        set_log_level \
+        get_log_info"

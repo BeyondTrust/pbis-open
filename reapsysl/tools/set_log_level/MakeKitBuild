@@ -1,0 +1,10 @@
+make()
+{
+    mk_program \
+        PROGRAM=rsys-set-log-level \
+	GROUPS="../../utils/utils" \
+        SOURCES="main.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="reg/lwreg.h lwadvapi.h" \
+        LIBDEPS="rsysclientapi rsyslogging lwadvapi lwadvapi_nothr"
+}

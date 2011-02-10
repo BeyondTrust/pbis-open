@@ -1,0 +1,13 @@
+make()
+{
+    CLIENT_SOURCES="\
+	ipc_client.c \
+	logging.c"
+
+    mk_library \
+        LIB=rsysclientapi \
+	GROUPS="../ipc/ipc" \
+        SOURCES="$CLIENT_SOURCES" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h reg/lwreg.h"
+}

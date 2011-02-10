@@ -1,0 +1,102 @@
+[HKEY_THIS_MACHINE\Services]
+
+[HKEY_THIS_MACHINE\Services\reapsysl]
+"Description"="Likewise System Log Reaper"
+"Path"="/opt/likewise/sbin/reapsysld"
+"Arguments"="/opt/likewise/sbin/reapsysld"
+"Environment"=""
+"Dependencies"="netlogon lwio lwreg eventlog"
+"Type"=dword:00000001
+"Autostart"=dword:00000001
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters]
+"EscrowMicroseconds"=dword:000F4240
+"LogUnmatchedErrorEvents"=dword:00000000
+"LogUnmatchedWarningEvents"=dword:00000000
+"LogUnmatchedInfoEvents"=dword:00000000
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern]
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event1]
+"Event"=dword:00000001
+"Type"="Failure Audit"
+"Regex"="^.* login:( \\[ID [[:digit:]]+ [^]]+\\])? (FAILED LOGIN [[:digit:]]+ FROM \\(.*\\) FOR|REPEATED LOGIN FAILURES ON /dev/console,) ([^,]+)(, Authentication failure|, User not known to the underlying authentication module)?$"
+"UsernameIndex"=dword:00000003
+"UserType"=dword:00000002
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event2a]
+"Event"=dword:00000002
+"Type"="Success Audit"
+"Regex"="^.* login:( \\[ID [[:digit:]]+ [^]]+\\])? LOGIN ON [^ ]+ BY (.*)$"
+"UsernameIndex"=dword:00000002
+"UserType"=dword:00000002
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event2b]
+"Event"=dword:00000002
+"Type"="Success Audit"
+"Regex"="^.* login:( \\[ID [[:digit:]]+ [^]]+\\])? (.*) LOGIN (/dev/console|ON tty.)$"
+"UsernameIndex"=dword:00000002
+"UserType"=dword:00000002
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event3]
+"Event"=dword:00000003
+"Type"="Failure Audit"
+"Regex"="^.* sshd\\[[[:digit:]]+\\]:( \\[ID [[:digit:]]+ [^]]+\\])? (error: PAM: [Aa]uthentication (failure|error)|Failed (keyboard-interactive|password)) for (.*) from .*"
+"UsernameIndex"=dword:00000005
+"UserType"=dword:00000002
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event4]
+"Event"=dword:00000004
+"Type"="Success Audit"
+"Regex"="^.* sshd\\[[[:digit:]]+\\]:( \\[ID [[:digit:]]+ [^]]+\\])? Accepted [^ ]+ for (.*) from [^ ]+ port [[:digit:]]+ ssh[[:digit:]]?$"
+"UsernameIndex"=dword:00000002
+"UserType"=dword:00000002
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event5]
+"Event"=dword:00000005
+"Type"="Failure Audit"
+"Regex"="^.* sudo(\\[[[:digit:]]+\\])?:( \\[ID [[:digit:]]+ [^]]+\\])?[[:space:]]*([^[:space:]]*)[[:space:]]*: [[:digit:]]+ incorrect password attempts? ; TTY=.* ; PWD=.* ; USER=.* ; COMMAND=.*$"
+"UsernameIndex"=dword:00000003
+"UserType"=dword:00000000
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event6]
+"Event"=dword:00000006
+"Type"="Failure Audit"
+"Regex"="^.* sudo(\\[[[:digit:]]+\\])?:( \\[ID [[:digit:]]+ [^]]+\\])?[[:space:]]*([^[:space:]]*)[[:space:]]*: (command not allowed|user NOT in sudoers) ; TTY=.* ; PWD=.* ; USER=.* ; COMMAND=.*$"
+"UsernameIndex"=dword:00000003
+"UserType"=dword:00000000
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event7]
+"Event"=dword:00000007
+"Type"="Success Audit"
+"Regex"="^.* sudo(\\[[[:digit:]]+\\])?:( \\[ID [[:digit:]]+ [^]]+\\])?[[:space:]]*([^[:space:]]*)[[:space:]]*: TTY=.* ; PWD=.* ; USER=.* ; COMMAND=.*$"
+"UsernameIndex"=dword:00000003
+"UserType"=dword:00000000
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event8]
+"Event"=dword:00000008
+"Type"="Failure Audit"
+"Regex"="^.* sshd\\[[[:digit:]]+\\]:( \\[ID [[:digit:]]+ [^]]+\\])? (error: PAM: [Aa]uthentication (failure|error)|Failed (keyboard-interactive|password)) for (.*) from .*"
+"UsernameIndex"=dword:00000005
+"UserType"=dword:00000001
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event9]
+"Event"=dword:00000009
+"Type"="Success Audit"
+"Regex"="^.* sshd\\[[[:digit:]]+\\]:( \\[ID [[:digit:]]+ [^]]+\\])? Accepted [^ ]+ for (.*) from [^ ]+ port [[:digit:]]+ ssh[[:digit:]]?$"
+"UsernameIndex"=dword:00000002
+"UserType"=dword:00000001
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event10]
+"Event"=dword:0000000A
+"Type"="Failure Audit"
+"Regex"="^.* login:( \\[ID [[:digit:]]+ [^]]+\\])? (FAILED LOGIN [[:digit:]]+ FROM \\(.*\\) FOR|REPEATED LOGIN FAILURES ON /dev/console,) ([^,]+)(, Authentication failure|, User not known to the underlying authentication module)?$"
+"UsernameIndex"=dword:00000003
+"UserType"=dword:00000001
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event11]
+"Event"=dword:0000000B
+"Type"="Success Audit"
+"Regex"="^.* login:( \\[ID [[:digit:]]+ [^]]+\\])? LOGIN ON [^ ]+ BY (.*)$"
+"UsernameIndex"=dword:00000002
+"UserType"=dword:00000001

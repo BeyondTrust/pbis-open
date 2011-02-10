@@ -1,0 +1,6 @@
+make()
+{
+    mk_headers \
+        HEADERS='rsys-client.h  rsys-ipc.h      rsys/logging.h  rsys-system.h \
+		 rsys-def.h     rsys-logging.h  rsys/rsys.h     rsys-utils.h'
+}

@@ -1,0 +1,158 @@
+#
+# Likewise reapsysld
+#
+[global]
+# The number of microseconds a syslog event is kept in the buffer to see if
+# its priority is promoted by sending a duplicate event on a different pipe.
+escrow-microseconds = 1000000
+log-unmatched-error-events = false
+log-unmatched-warning-events = false
+log-unmatched-info-events = false
+
+# Text console login failure example
+# Fedora 8 32bit:
+# May 11 14:18:44 saleslaptop login: FAILED LOGIN 2 FROM (null) FOR testuser, Authentication failure
+# RHEL 5 64bit:
+# May 25 09:35:56 rhel5364b01 login: FAILED LOGIN 2 FROM (null) FOR bad, User not known to the underlying authentication module
+# Solaris 10 Sparc
+# Solaris will log a message for a failed console login after repeated
+# failures. The number of attempts can be changed in /etc/default/login, and
+# the default is 5.
+# May  3 16:11:05 sol10u5z login: [ID 561941 auth.crit] REPEATED LOGIN FAILURES ON /dev/console, root
+[pattern]
+id = 1
+type = Failure Audit
+regex = ^.* login:( \[ID [[:digit:]]+ [^]]+\])? (FAILED LOGIN [[:digit:]]+ FROM \(.*\) FOR|REPEATED LOGIN FAILURES ON /dev/console,) ([^,]+)(, Authentication failure|, User not known to the underlying authentication module)?$
+username-index = 3
+user-type = local
+
+# Text console login success example
+# Fedora 8 32bit:
+# May 11 14:18:00 saleslaptop login: LOGIN ON tty1 BY testuser
+# RHEL 5 64bit:
+# May 25 09:17:56 rhel5364b01 login: ROOT LOGIN ON tty1
+# Solaris 10 Sparc
+# Only root logins are logged on Solaris
+# May  3 15:50:20 sol10u5z login: [ID 644210 auth.notice] ROOT LOGIN /dev/console
+[pattern]
+id = 2
+type = Success Audit
+regex = ^.* login:( \[ID [[:digit:]]+ [^]]+\])? LOGIN ON [^ ]+ BY (.*)$
+username-index = 2
+user-type = local
+
+[pattern]
+id = 2
+type = Success Audit
+regex = ^.* login:( \[ID [[:digit:]]+ [^]]+\])? (.*) LOGIN (/dev/console|ON tty.)$
+username-index = 2
+user-type = local
+
+# Ssh login failure example
+# Fedora 8 32bit:
+# May 11 14:22:28 saleslaptop sshd[959]: error: PAM: Authentication failure for testuser from kyle-vmserver.corp.centeris.com
+# Mac 10.5.4 x86:
+# May 15 11:09:27 stressmac sshd[61188]: error: PAM: Authentication failure for testuser from 10.100.0.99
+# Mac 10.6.2 x86:
+# Feb 16 07:12:35 glennc-mbp sshd[8086]: error: PAM: authentication error for glenncurtis from glennc-mbp.corp.centeris.com via 127.0.0.1
+
+# Solaris 10u5 Sparc
+# By default, Solaris will only send a login failed syslog entry that contains the username when either the loglevel is changed to verbose, or after 3 password attempts. These are those messages:
+# Apr 30 07:53:27 sol10u5z sshd[20323]: [ID 800047 auth.notice] Failed keyboard-interactive for kyle-domain\administrator from 127.0.0.1 port 33517 ssh2
+# Apr 30 08:39:12 sol10u5z sshd[20947]: [ID 800047 auth.info] Failed password for root from 10.100.0.44 port 53866 ssh2
+# But this message needs to be ignored
+# Apr 30 08:38:54 sol10u5z sshd[20947]: [ID 800047 auth.info] Failed none for root from 10.100.0.44 port 53866 ssh2
+[pattern]
+id = 3
+type = Failure Audit
+regex = ^.* sshd\[[[:digit:]]+\]:( \[ID [[:digit:]]+ [^]]+\])? (error: PAM: [Aa]uthentication (failure|error)|Failed (keyboard-interactive|password)) for (.*) from .*
+username-index = 5
+user-type = local
+
+# Ssh login success example
+# Fedora 8 32bit:
+# May 11 14:24:19 saleslaptop sshd[1009]: Accepted keyboard-interactive/pam for lampi\\locouser1 from 10.100.0.117 port 42082 ssh2
+# Mac 10.5.4 x86:
+# May 15 11:10:57 stressmac sshd[61188]: Accepted password for testuser from 10.100.0.99 port 3830 ssh2
+# Solaris 10 Sparc:
+# Apr 30 08:50:25 sol10u5z sshd[21035]: [ID 800047 auth.info] Accepted password for root from 127.0.0.1 port 33542 ssh2
+[pattern]
+id = 4
+type = Success Audit
+regex = ^.* sshd\[[[:digit:]]+\]:( \[ID [[:digit:]]+ [^]]+\])? Accepted [^ ]+ for (.*) from [^ ]+ port [[:digit:]]+ ssh[[:digit:]]?$
+username-index = 2
+user-type = local
+
+# Sudo bad password example
+# Fedora 8 32bit:
+# May 11 14:28:40 saleslaptop sudo: LAMPI\locouser1 : 1 incorrect password attempt ; TTY=pts/4 ; PWD=/home/LAMPI/locouser1 ; USER=root ; COMMAND=/bin/ls
+# Mac 10.5.4 x86:
+# May 15 11:13:30 stressmac sudo[61230]: testuser : 3 incorrect password attempts ; TTY=ttys014 ; PWD=/Users/testuser ; USER=root ; COMMAND=/bin/ls /
+# Solaris 10 sparc:
+# May  3 17:11:56 sol10u5z sudo: [ID 702911 local2.alert] testuser : 3 incorrect password attempts ; TTY=pts/2 ; PWD=/ ; USER=root ; COMMAND=/bin//ls
+[pattern]
+id = 5
+type = Failure Audit
+regex = ^.* sudo(\[[[:digit:]]+\])?:( \[ID [[:digit:]]+ [^]]+\])?[[:space:]]*([^[:space:]]*)[[:space:]]*: [[:digit:]]+ incorrect password attempts? ; TTY=.* ; PWD=.* ; USER=.* ; COMMAND=.*$
+username-index = 3
+user-type = any
+
+# Sudo access denied example
+# Fedora 8 32bit:
+# May 11 14:30:19 saleslaptop sudo: LAMPI\localuser1 : command not allowed ; TTY=pts/4 ; PWD=/home/LAMPI/localuser1 ; USER=root ; COMMAND=/bin/ls
+# RHEL 5.4:
+# Apr  5 15:05:00 lwtest1 sudo: likewise : user NOT in sudoers ; TTY=pts/0 ; PWD=/home/likewise ; USER=root ; COMMAND=/bin/su -
+# Solaris 10 Sparc:
+# Apr 30 08:59:23 sol10u5z sudo: [ID 702911 local2.alert] KYLE-DOMAIN\administrator : user NOT in sudoers ; TTY=pts/6 ; PWD=/ ; USER=root ; COMMAND=/usr/ucb//ls
+[pattern]
+id = 6
+type = Failure Audit
+regex = ^.* sudo(\[[[:digit:]]+\])?:( \[ID [[:digit:]]+ [^]]+\])?[[:space:]]*([^[:space:]]*)[[:space:]]*: (command not allowed|user NOT in sudoers) ; TTY=.* ; PWD=.* ; USER=.* ; COMMAND=.*$
+username-index = 3
+user-type = any
+
+# Sudo success example
+# Fedora 8 32bit:
+# May 11 14:32:16 saleslaptop sudo: LAMPI\localuser1 : TTY=pts/4 ; PWD=/home/LAMPI/localuser1 ; USER=root ; COMMAND=/bin/ls /
+# Mac 10.5.4 x86:
+# May 15 11:12:26 stressmac sudo[61226]: testuser : TTY=ttys014 ; PWD=/Users/testuser ; USER=root ; COMMAND=/bin/ls /
+# Solaris 10 sparc:
+# May  3 17:15:24 sol10u5z sudo: [ID 702911 local2.notice] testuser : TTY=pts/2 ; PWD=/ ; USER=root ; COMMAND=/bin//ls
+[pattern]
+id = 7
+type = Success Audit
+regex = ^.* sudo(\[[[:digit:]]+\])?:( \[ID [[:digit:]]+ [^]]+\])?[[:space:]]*([^[:space:]]*)[[:space:]]*: TTY=.* ; PWD=.* ; USER=.* ; COMMAND=.*$
+username-index = 3
+user-type = any
+
+# Ssh AD failure
+[pattern]
+id = 8
+type = Failure Audit
+regex = ^.* sshd\[[[:digit:]]+\]:( \[ID [[:digit:]]+ [^]]+\])? (error: PAM: [Aa]uthentication (failure|error)|Failed (keyboard-interactive|password)) for (.*) from .*
+username-index = 5
+user-type = AD
+
+# Ssh AD success
+[pattern]
+id = 9
+type = Success Audit
+regex = ^.* sshd\[[[:digit:]]+\]:( \[ID [[:digit:]]+ [^]]+\])? Accepted [^ ]+ for (.*) from [^ ]+ port [[:digit:]]+ ssh[[:digit:]]?$
+username-index = 2
+user-type = AD
+
+# Text console AD login failure
+[pattern]
+id = 10
+type = Failure Audit
+regex = ^.* login:( \[ID [[:digit:]]+ [^]]+\])? (FAILED LOGIN [[:digit:]]+ FROM \(.*\) FOR|REPEATED LOGIN FAILURES ON /dev/console,) ([^,]+)(, Authentication failure|, User not known to the underlying authentication module)?$
+username-index = 3
+user-type = AD
+
+# Text console AD login success
+[pattern]
+id = 11
+type = Success Audit
+regex = ^.* login:( \[ID [[:digit:]]+ [^]]+\])? LOGIN ON [^ ]+ BY (.*)$
+username-index = 2
+user-type = AD
