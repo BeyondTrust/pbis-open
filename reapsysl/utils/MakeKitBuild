@@ -17,5 +17,5 @@ make()
         SOURCES="$UTIL_SOURCES" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="lwadvapi.h reg/lwreg.h" \
-        LIBDEPS="rsyslogging lwadvapi lwadvapi_nothr regclient"
+        LIBDEPS="rsyslogging lwadvapi lwadvapi_nothr regclient lwbase_nothr"
 }

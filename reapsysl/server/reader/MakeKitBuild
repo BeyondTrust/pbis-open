@@ -8,6 +8,6 @@ make()
         GROUP=reader \
         SOURCES="$API_SOURCES" \
         INCLUDEDIRS=". ../include ../../include" \
-        HEADERDEPS="reg/lwreg.h reg/regutil.h lwmsg/lwmsg.h lwadvapi.h" \
-        LIBDEPS="eventlog lsaclient regclient rsutils lwmsg lwadvapi ldap_r $LIB_PTHREAD $LIB_DL"
+        HEADERDEPS="reg/lwreg.h reg/regutil.h lwmsg/lwmsg.h lwadvapi.h dce/rpcsts.h lsa/lsa.h" \
+        LIBDEPS="eventlog lsaclient regclient rsutils lwmsg lwadvapi ldap_r lsaclient lsacommon $LIB_PTHREAD $LIB_DL"
 }
