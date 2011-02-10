@@ -1,7 +1,6 @@
 make()
 {
-    mk_install_file \
-        FILE="netlogond.reg" \
-        INSTALLDIR="${LW_CONFIGDIR}" \
-        MODE="0644"
+    mk_stage \
+        SOURCE="netlogond.reg" \
+        DESTDIR="${LW_CONFIGDIR}"
 }

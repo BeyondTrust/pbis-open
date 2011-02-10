@@ -27,8 +27,7 @@ make()
             LIBDEPS="lwmsg lwmsg_nothr"
     fi
 
-    mk_install_file \
-        FILE=lwreg.reg \
-        INSTALLDIR="${LW_CONFIGDIR}" \
-        MODE=0644
+    mk_stage \
+        SOURCE=lwreg.reg \
+        DESTDIR="${LW_CONFIGDIR}"
 }

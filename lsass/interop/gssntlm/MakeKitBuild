@@ -8,7 +8,7 @@ make()
 	HEADERDEPS="gssapi.h lwadvapi.h" \
 	LIBDEPS="lsacommon lsaclient_ntlm krb5 gssapi_krb5"
 
-    mk_install_file \
-        FILE=mech \
-        INSTALLDIR="${MK_SYSCONFDIR}/gss"
+    mk_stage \
+        SOURCE=mech \
+        DESTDIR="${MK_SYSCONFDIR}/gss"
 }

@@ -6,7 +6,7 @@ make()
         HEADERDEPS="lw/types.h" \
         LIBDEPS=""
 
-    mk_install_file \
-        FILE="regupgr61.sh" \
-        INSTALLDIR="${MK_BINDIR}"
+    mk_stage \
+        SOURCE="regupgr61.sh" \
+        DESTDIR="${MK_BINDIR}"
 }

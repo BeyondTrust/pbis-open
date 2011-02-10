@@ -8,7 +8,8 @@ make()
         LIBDEPS="regclient rsutils edit" \
         HEADERDEPS="lw/base.h lwmsg/lwmsg.h histedit.h"
 
-    mk_install_file \
-        INSTALLFILE="${MK_BINDIR}/lw-edit-reg" \
-        FILE="lw-edit-reg.sh"
+    mk_stage \
+        DEST="${MK_BINDIR}/lw-edit-reg" \
+        SOURCE="lw-edit-reg.sh" \
+        MODE=0755
 }
