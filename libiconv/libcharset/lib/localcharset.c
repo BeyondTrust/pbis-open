@@ -113,7 +113,6 @@ static const char *
 get_charset_aliases (void)
 {
   const char *cp;
-  int allocated = 0;
 
   cp = charset_aliases;
   if (cp == NULL)
@@ -123,6 +122,8 @@ get_charset_aliases (void)
       const char *dir;
       const char *base = "charset.alias";
       char *file_name;
+      int allocated = 0;
+
 
       /* Make it possible to override the charset.alias location.  This is
 	 necessary for running the testsuite before "make install".  */
@@ -309,10 +310,12 @@ get_charset_aliases (void)
 #endif
 
       charset_aliases = cp;
+#if !(defined DARWIN7 || defined VMS || defined WIN32_NATIVE || defined __CYGWIN__)
       if (allocated)
        {
           free(dir);
        }
+#endif
     
     }
 
