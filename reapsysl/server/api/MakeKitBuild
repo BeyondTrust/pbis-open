@@ -8,7 +8,6 @@ make()
 
     mk_group \
         GROUP=api \
-        GROUPS="../../utils/utils" \
         SOURCES="$API_SOURCES" \
         INCLUDEDIRS=". ../include ../../include" \
         HEADERDEPS="reg/lwreg.h reg/regutil.h lwmsg/lwmsg.h lwadvapi.h" \
