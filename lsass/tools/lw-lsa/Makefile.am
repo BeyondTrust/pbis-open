@@ -29,7 +29,8 @@ MODE_NAMES = \
 	find-objects \
 	enum-objects \
 	enum-members \
-	query-member-of
+	query-member-of \
+        account-rights
 
 bin_PROGRAMS = lw-lsa
 
@@ -69,6 +70,7 @@ lw_lsa_SOURCES = \
 	enum_members.c \
 	query_member_of.c \
         join_leave_main.c \
+        account_rights_main.c \
 	common.c \
 	main.c
 
