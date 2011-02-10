@@ -779,6 +779,7 @@ error:
     if (status != STATUS_PENDING && pTree)
     {
         RdrTree2Release(pTree);
+        pTree = NULL;
     }
 
     goto cleanup;
