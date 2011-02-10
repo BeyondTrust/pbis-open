@@ -72,7 +72,7 @@ rpc_feature_flags()
             _feature_flags="-D_GNU_SOURCE -D_BSD -D_XOPEN_SOURCE=500 -D__EXTENSIONS__ -D_POSIX_PTHREAD_SEMANTICS -D_ALL_SOURCE=1 -D_REENTRANT"
             ;;
         freebsd)
-            _feature_flags="-D_SOCKADDR_LEN -D__EXTENSIONS__ -D_REENTRANT -D_BSD"
+            _feature_flags="-D_SOCKADDR_LEN -D_BSD"
             IDL_CFLAGS="$IDL_CFLAGS -D_SOCKADDR_LEN"
             ;;
         solaris)

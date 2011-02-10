@@ -1,10 +1,17 @@
 make()
 {
+    EXTRA_CPPFLAGS=""
+    
+    if [ "$MK_OS" != "freebsd" ]
+    then
+        EXTRA_CPPFLAGS="-D_POSIX_C_SOURCE"
+    fi
+
     mk_group \
         GROUP="uuid" \
         SOURCES="uuid.c uuidsys.c get_802_addr.c" \
         INCLUDEDIRS=". ../include" \
-        CPPFLAGS="-D_POSIX_C_SOURCE" \
+        CPPFLAGS="$EXTRA_CPPFLAGS" \
         CFLAGS="-Wall -Werror" \
         HEADERDEPS="dce/rpc.h" \
         LIBDEPS="$LIB_SOCKET"
@@ -13,7 +20,7 @@ make()
         PROGRAM="uuid" \
         SOURCES="uuidtool.c" \
         INCLUDEDIRS=". ../include" \
-        CPPFLAGS="-D_POSIX_C_SOURCE" \
+        CPPFLAGS="$EXTRA_CPPFLAGS" \
         CFLAGS="-Wall -Werror" \
         HEADERDEPS="dce/rpc.h" \
         GROUPS="uuid"
