@@ -963,8 +963,3 @@ cleanup:
     ;
 }
 
-struct _DaemonList daemonList[] = {    
-    { "gpagentd", {NULL}, FALSE, 3, 0 },
-    { NULL, {NULL}, FALSE, 0, 0 },
-};
-

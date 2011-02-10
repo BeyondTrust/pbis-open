@@ -36,6 +36,7 @@
 #include "djauthinfo.h"
 #include "djkrb5conf.h"
 #include "djregistry.h"
+#include "djservicemgr.h"
 #include "ctshell.h"
 #include "ctstrutils.h"
 #include <glob.h>
@@ -713,6 +714,8 @@ static void DoJoin(JoinProcessOptions *options, LWException **exc)
         pszCanonicalizedOU = NULL;
     }
 
+    DJStartService("lsass");
+
     LW_TRY(exc, SetLsassTimeSync(!options->disableTimeSync, &LW_EXC));
 
     LW_TRY(exc, DJCreateComputerAccount(&options->shortDomainName, options, &LW_EXC));
@@ -972,99 +975,6 @@ cleanup:
 
 void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
 {
-    BOOLEAN systemDcedExists = FALSE;
-    LWException *innerExc = NULL;
-    int firstStart = 0;
-    int firstStop = 0;
-    int stopLaterOffset = 0;
-
-#ifndef MINIMAL_JOIN
-
-    if (geteuid() == 0)
-    {
-        LW_CLEANUP_CTERR(exc, DJGetBaseDaemonPriorities(
-                    &firstStart,
-                    &firstStop,
-                    &stopLaterOffset));
-
-        LW_TRY(exc, DJManageDaemon("lwsmd", TRUE,
-                    firstStart - 2,
-                    firstStop + stopLaterOffset * 1,
-                    &LW_EXC));
-        LW_TRY(exc, DJManageDaemon("lwregd", TRUE,
-                    firstStart - 1, 
-                    firstStop + stopLaterOffset * 2,
-                    &LW_EXC));
-        LW_TRY(exc, DJManageDaemon("netlogond", TRUE,
-                    firstStart + 0,
-                    firstStop + stopLaterOffset * 0,
-                    &LW_EXC));
-        LW_TRY(exc, DJManageDaemon("lwiod", TRUE,
-                    firstStart + 1,
-                    firstStop + stopLaterOffset * 0,
-                    &LW_EXC));
-
-        if (bEnableDcerpcd)
-        {
-            // Use the system's dced daemon if it exists, otherwise use the
-            // Likewise version.
-            LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists(
-                        HPUX_SYSTEM_RPCD_PATH,
-                        &systemDcedExists));
-            if (systemDcedExists)
-            {
-                LW_TRY(exc, DJManageDaemon(HPUX_SYSTEM_RPCD_PATH, TRUE,
-                            590, 410, &LW_EXC));
-            }
-            else
-            {
-                LW_TRY(exc, DJManageDaemon("dcerpcd", TRUE,
-                            firstStart + 0,
-                            firstStop + stopLaterOffset * 2,
-                            &LW_EXC));
-            }
-
-            DJManageDaemon("eventlogd", TRUE,
-                        firstStart + 1,
-                        firstStop + stopLaterOffset * 1,
-                        &innerExc);
-            if (!LW_IS_OK(innerExc) && innerExc->code != ERROR_SERVICE_NOT_FOUND)
-            {
-                DJLogException(LOG_LEVEL_WARNING, innerExc);
-            }
-        }
-        else
-        {
-	    DJ_LOG_VERBOSE("Disable eventlog dependency on dcerpc service");
-            LW_TRY(exc, SetStringRegistryValue("Services\\eventlog",
-                                               "Dependencies",
-                                               ""));
- 
-	    DJ_LOG_VERBOSE("Disable dcerpc service from starting at reboot");
-            LW_TRY(exc, SetBooleanRegistryValue("Services\\dcerpc",
-                                                "Autostart",
-                                                FALSE));
-
-            LW_TRY(exc, LwSmRefresh());
-
-	    DJ_LOG_VERBOSE("Stop running instance of dcerpc service");
-            LW_TRY(exc, DJStartStopDaemon("dcerpc", FALSE, &LW_EXC));
-        }
-
-        LW_TRY(exc, DJManageDaemon("lsassd", TRUE,
-                    firstStart + 2,
-                    firstStop + stopLaterOffset * 2,
-                    &LW_EXC));
-    }
-
-#if 0
-        LW_TRY(exc, DJManageDaemon("srvsvcd", TRUE,
-                    21, 9, &LW_EXC));
-#endif
-#endif
-
-cleanup:
-    LWHandle(&innerExc);
 }
 
 void DJNetShutdown(LWException **exc)
