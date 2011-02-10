@@ -95,7 +95,7 @@ function component_populate
 
        rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/ --exclude "${PREFIX_DIR}/bin"
        x_rm ${POPULATE_PREFIX_DIR}/${_lib}/preloadable_libiconv.*
-       x_rm ${POPULATE_PREFIX_DIR}/${_lib}/libcharset.*
+       x_rm ${POPULATE_PREFIX_DIR}/${_lib}/charset.*
 
     else
  
