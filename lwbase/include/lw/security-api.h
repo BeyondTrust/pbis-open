@@ -690,7 +690,8 @@ RtlPrivilegeCheck(
 /// SE_PRIVILEGE_USED_FOR_ACCESS flag set in Attributes field.
 ///
 /// @param[in,out] RequiredPrivileges - The required set of privileges to be
-/// checked
+/// checked and marked (if found enabled in AccessToken) with
+/// SE_PRIVILEGE_USER_FOR_ACCESS
 /// @param[in] AccessToken - An access token checked for the required privileges
 ///
 /// @return BOOLEAN result of the privilege check.
