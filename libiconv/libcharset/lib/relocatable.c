@@ -413,11 +413,12 @@ get_shared_library_fullname ()
    The returned string is either PATHNAME unmodified or a freshly allocated
    string that you can free with free() after casting it to 'char *'.  */
 const char *
-relocate (const char *pathname)
+relocate (const char *pathname, int *allocated)
 {
 #if defined PIC && defined INSTALLDIR
   static int initialized;
 
+  *allocated = 0;
   /* Initialization code for a shared library.  */
   if (!initialized)
     {
@@ -482,6 +483,7 @@ relocate (const char *pathname)
 	    {
 	      memcpy (result, curr_prefix, curr_prefix_len);
 	      strcpy (result + curr_prefix_len, pathname_tail);
+              *allocated = 1;
 	      return result;
 	    }
 	}
