@@ -137,6 +137,8 @@ do
     show ${MAKE} -j"$JOBS" "$target"
 done
 
+show mkdir -p "$DIST_DIR"
+
 if [ -d package ]
 then
     show mkdir -p "$DIST_DIR/package"
