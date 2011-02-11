@@ -147,4 +147,5 @@ fi
   
 show cp -f "config.log" "$DIST_DIR/config.log"
 show cd "stage"
-show tar czfv "$DIST_DIR/stage-${ID}-${REVISION}.tar.gz" .
+show tar cfv - . | gzip > "$DIST_DIR/stage-${ID}-${REVISION}.tar.gz"
+
