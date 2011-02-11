@@ -364,6 +364,7 @@ DNSGetPtrNameForAddr(
 {
     DWORD dwError = 0;
     PSTR pszRecordName = NULL;
+    DWORD dwIPV4Addr = ntohl(pAddr->sin_addr.s_addr);
 
     if (pAddr->sin_family != AF_INET)
     {
@@ -374,10 +375,10 @@ DNSGetPtrNameForAddr(
     dwError = LwRtlCStringAllocatePrintf(
                     &pszRecordName,
                     "%d.%d.%d.%d.in-addr.arpa",
-                    (pAddr->sin_addr.s_addr >>  0) & 255,
-                    (pAddr->sin_addr.s_addr >>  8) & 255,
-                    (pAddr->sin_addr.s_addr >> 16) & 255,
-                    (pAddr->sin_addr.s_addr >> 24) & 255
+                    (dwIPV4Addr >>  0) & 255,
+                    (dwIPV4Addr >>  8) & 255,
+                    (dwIPV4Addr >> 16) & 255,
+                    (dwIPV4Addr >> 24) & 255
                 );
     if (dwError)
     {
@@ -405,6 +406,7 @@ DNSGetPtrZoneForAddr(
 {
     DWORD dwError = 0;
     PSTR pszZoneName = NULL;
+    DWORD dwIPV4Addr = ntohl(pAddr->sin_addr.s_addr);
 
     if (pAddr->sin_family != AF_INET)
     {
@@ -415,9 +417,9 @@ DNSGetPtrZoneForAddr(
     dwError = LwRtlCStringAllocatePrintf(
                     &pszZoneName,
                     "%d.%d.%d.in-addr.arpa",
-                    (pAddr->sin_addr.s_addr >>  8) & 255,
-                    (pAddr->sin_addr.s_addr >> 16) & 255,
-                    (pAddr->sin_addr.s_addr >> 24) & 255
+                    (dwIPV4Addr >>  8) & 255,
+                    (dwIPV4Addr >> 16) & 255,
+                    (dwIPV4Addr >> 24) & 255
                 );
     if (dwError)
     {
