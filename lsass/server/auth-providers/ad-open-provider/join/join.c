@@ -2811,53 +2811,36 @@ LsaChangeDomainGroupMembership(
 {
     DWORD dwError = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    WCHAR wszLocalSystem[] = { '\\', '\\', '\0' };
-    PWSTR pwszSystem = wszLocalSystem;
     PSID pDomainSid = NULL;
-    SAMR_BINDING hSamrBinding = NULL;
-    DWORD dwLocalSamrAccessMask = SAMR_ACCESS_ENUM_DOMAINS |
-                                  SAMR_ACCESS_OPEN_DOMAIN;
-    SamrConnectInfo ConnReq;
-    DWORD dwConnReqLevel = 0;
-    SamrConnectInfo ConnInfo;
-    DWORD dwConnLevel = 0;
-    CONNECT_HANDLE hSamrConn = NULL;
-    DWORD dwBuiltinDomainAccessMask = DOMAIN_ACCESS_OPEN_ACCOUNT;
-    PSID pBuiltinDomainSid = NULL;
-    DOMAIN_HANDLE hBuiltinDomain = NULL;
-    DWORD dwAliasAccessMask = ALIAS_ACCESS_ADD_MEMBER |
-                              ALIAS_ACCESS_REMOVE_MEMBER;
-    ACCOUNT_HANDLE hAlias = NULL;
+    PSID pBuiltinAdminsSid = NULL;
+    PSID pBuiltinUsersSid = NULL;
     PSID pDomainAdminsSid = NULL;
     PSID pDomainUsersSid = NULL;
-    DWORD iGroup = 0;
-    DWORD iMember = 0;
-
-    PSID *pppAdminMembers[] = { &pDomainAdminsSid, NULL };
-    PSID *pppUsersMembers[] = { &pDomainUsersSid, NULL };
-
-    struct _LOCAL_GROUP_MEMBERS
-    {
-        DWORD   dwLocalGroupRid;
-        PSID  **pppMembers;
-    }
-    Memberships[] =
-    {
-        { DOMAIN_ALIAS_RID_ADMINS,
-          pppAdminMembers
-        },
-        { DOMAIN_ALIAS_RID_USERS,
-          pppUsersMembers
-        }
-    };
-
-    memset(&ConnReq, 0, sizeof(ConnReq));
-    memset(&ConnInfo, 0, sizeof(ConnInfo));
+    PSTR pszBuiltinAdminsSid = NULL;
+    PSTR pszBuiltinUsersSid = NULL;
+    PSTR pszDomainAdminsSid = NULL;
+    PSTR pszDomainUsersSid = NULL;
+    LSA_GROUP_MOD_INFO_2 adminsMods = {0};
+    LSA_GROUP_MOD_INFO_2 usersMods = {0};
+    PSTR pszTargetProvider = NULL;
+    HANDLE hConnection = NULL;
 
     ntStatus = RtlAllocateSidFromCString(
                    &pDomainSid,
                    pszDomainSID);
     BAIL_ON_NT_STATUS(ntStatus);
+
+    dwError = LwAllocateWellKnownSid(WinBuiltinAdministratorsSid,
+                                   NULL,
+                                   &pBuiltinAdminsSid,
+                                   NULL);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateWellKnownSid(WinBuiltinUsersSid,
+                                   NULL,
+                                   &pBuiltinUsersSid,
+                                   NULL);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateWellKnownSid(WinAccountDomainAdminsSid,
                                    pDomainSid,
@@ -2871,120 +2854,91 @@ LsaChangeDomainGroupMembership(
                                    NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /*
-     * Connect local samr rpc server and open BUILTIN domain
-     */
-    ntStatus = SamrInitBindingDefault(&hSamrBinding,
-                                      NULL,
-                                      NULL);
+    ntStatus = RtlAllocateCStringFromSid(
+                  &pszBuiltinAdminsSid,
+                  pBuiltinAdminsSid);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    ConnReq.info1.client_version = SAMR_CONNECT_POST_WIN2K;
-    dwConnReqLevel = 1;
-
-    ntStatus = SamrConnect5(hSamrBinding,
-                            pwszSystem,
-                            dwLocalSamrAccessMask,
-                            dwConnReqLevel,
-                            &ConnReq,
-                            &dwConnLevel,
-                            &ConnInfo,
-                            &hSamrConn);
+    ntStatus = RtlAllocateCStringFromSid(
+                  &pszBuiltinUsersSid,
+                  pBuiltinUsersSid);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    dwError = LwAllocateWellKnownSid(WinBuiltinDomainSid,
-                                   NULL,
-                                   &pBuiltinDomainSid,
-                                   NULL);
+    ntStatus = RtlAllocateCStringFromSid(
+                  &pszDomainAdminsSid,
+                  pDomainAdminsSid);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    ntStatus = RtlAllocateCStringFromSid(
+                  &pszDomainUsersSid,
+                  pDomainUsersSid);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    adminsMods.pszSid = pszBuiltinAdminsSid;
+    if (bEnable)
+    {
+        adminsMods.actions.bAddMembers = TRUE;
+        adminsMods.dwAddMembersNum = 1;
+        adminsMods.ppszAddMembers = &pszDomainAdminsSid;
+    }
+    else
+    {
+        adminsMods.actions.bRemoveMembers = TRUE;
+        adminsMods.dwRemoveMembersNum = 1;
+        adminsMods.ppszRemoveMembers = &pszDomainAdminsSid;
+    }
+
+    usersMods.pszSid = pszBuiltinUsersSid;
+    if (bEnable)
+    {
+        usersMods.actions.bAddMembers = TRUE;
+        usersMods.dwAddMembersNum = 1;
+        usersMods.ppszAddMembers = &pszDomainUsersSid;
+    }
+    else
+    {
+        usersMods.actions.bRemoveMembers = TRUE;
+        usersMods.dwRemoveMembersNum = 1;
+        usersMods.ppszRemoveMembers = &pszDomainUsersSid;
+    }
+
+    dwError = LwAllocateStringPrintf(
+                  &pszTargetProvider,
+                  ":%s",
+                  pszDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    ntStatus = SamrOpenDomain(hSamrBinding,
-                              hSamrConn,
-                              dwBuiltinDomainAccessMask,
-                              pBuiltinDomainSid,
-                              &hBuiltinDomain);
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LsaSrvOpenServer(0, 0, getpid(), &hConnection);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    /*
-     * Add requested domain groups or users to their
-     * corresponding local groups
-     */
-    for (iGroup = 0;
-         iGroup < sizeof(Memberships)/sizeof(Memberships[0]);
-         iGroup++)
-    {
-        DWORD dwRid = Memberships[iGroup].dwLocalGroupRid;
+    dwError = LsaSrvModifyGroup2(
+                  hConnection,
+                  pszTargetProvider,
+                  &adminsMods);
+    BAIL_ON_LSA_ERROR(dwError);
 
-        ntStatus = SamrOpenAlias(hSamrBinding,
-                                 hBuiltinDomain,
-                                 dwAliasAccessMask,
-                                 dwRid,
-                                 &hAlias);
-        BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LsaSrvModifyGroup2(
+                  hConnection,
+                  pszTargetProvider,
+                  &usersMods);
+    BAIL_ON_LSA_ERROR(dwError);
 
-        for (iMember = 0;
-             Memberships[iGroup].pppMembers[iMember] != NULL;
-             iMember++)
-        {
-            PSID *ppSid = Memberships[iGroup].pppMembers[iMember];
-
-            if (bEnable)
-            {
-                ntStatus = SamrAddAliasMember(hSamrBinding,
-                                              hAlias,
-                                              (*ppSid));
-                if (ntStatus == STATUS_MEMBER_IN_ALIAS)
-                {
-                    ntStatus = STATUS_SUCCESS;
-                }
-            }
-            else
-            {
-                // This should not cause the join to fail even if we cannot
-                // remove the group members
-
-                ntStatus = SamrDeleteAliasMember(hSamrBinding,
-                                                 hAlias,
-                                                 (*ppSid));
-                if ((ntStatus != STATUS_SUCCESS) && 
-                    (ntStatus != STATUS_NO_SUCH_MEMBER))
-                {
-                    // Perhaps log an error here
-                    ;
-                }
-                ntStatus = STATUS_SUCCESS;
-            }
-            BAIL_ON_NT_STATUS(ntStatus);
-        }
-
-        ntStatus = SamrClose(hSamrBinding, hAlias);
-        BAIL_ON_NT_STATUS(ntStatus);
-
-        hAlias = NULL;
-    }
-
-cleanup:
-    if (hSamrBinding && hAlias)
-    {
-        SamrClose(hSamrBinding, hAlias);
-    }
-
-    if (hSamrBinding && hBuiltinDomain)
-    {
-        SamrClose(hSamrBinding, hBuiltinDomain);
-    }
-
-    if (hSamrBinding && hSamrConn)
-    {
-        SamrClose(hSamrBinding, hSamrConn);
-    }
-
-    SamrFreeBinding(&hSamrBinding);
-
-    LW_SAFE_FREE_MEMORY(pBuiltinDomainSid);
+error:
+    LW_SAFE_FREE_MEMORY(pDomainSid);
+    LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
+    LW_SAFE_FREE_MEMORY(pBuiltinUsersSid);
     LW_SAFE_FREE_MEMORY(pDomainAdminsSid);
     LW_SAFE_FREE_MEMORY(pDomainUsersSid);
-    LW_SAFE_FREE_MEMORY(pDomainSid);
+    LW_SAFE_FREE_MEMORY(pszBuiltinAdminsSid);
+    LW_SAFE_FREE_MEMORY(pszBuiltinUsersSid);
+    LW_SAFE_FREE_MEMORY(pszDomainAdminsSid);
+    LW_SAFE_FREE_MEMORY(pszDomainUsersSid);
+    LW_SAFE_FREE_MEMORY(pszTargetProvider);
+
+    if (hConnection)
+    {
+        LsaSrvCloseServer(hConnection);
+    }
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -2993,9 +2947,6 @@ cleanup:
     }
 
     return dwError;
-
-error:
-    goto cleanup;
 }
 
 
