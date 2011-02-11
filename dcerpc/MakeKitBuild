@@ -194,7 +194,7 @@ configure()
     # Required headers
     mk_check_headers \
         FAIL=yes \
-        lwio/lwio.h lw/base.h
+        lwio/lwio.h lw/base.h gssapi.h
 
     # Optional headers
     mk_check_headers \
@@ -216,7 +216,7 @@ configure()
     # Required libraries
     mk_check_libraries \
         FAIL=yes \
-        lwioclient
+        lwioclient gssapi_krb5
 
     # Schannel
     if [ "$ENABLE_SCHANNEL" = "yes" ]

@@ -18,10 +18,10 @@ configure()
     mk_define LWREPORT_XML "\"${LW_CACHEDIR}/lwreport.xml\""
 
     mk_check_headers FAIL=yes \
-        popt.h
+        popt.h sqlite3.h gssapi.h
 
     mk_check_libraries FAIL=yes \
-        popt
+        popt sqlite3 gssapi_krb5
 
     mk_check_libraries pthread dl
 

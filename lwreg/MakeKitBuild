@@ -58,11 +58,11 @@ configure()
 
     mk_check_headers \
 	FAIL=yes \
-	sqlite3.h
+	sqlite3.h uuid/uuid.h
     
     mk_check_libraries \
 	FAIL=yes \
-	sqlite3
+	sqlite3 uuid
 
     mk_check_libraries pthread
 

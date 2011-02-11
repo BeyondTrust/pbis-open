@@ -101,12 +101,12 @@ configure()
 
     mk_check_libraries \
         FAIL="yes" \
-        regclient lwbase krb5 gssapi_krb5 crypto lwnetclientapi
+        regclient lwbase krb5 gssapi_krb5 crypto lwnetclientapi uuid
 
     mk_check_headers \
         FAIL="yes" \
         reg/reg.h lw/base.h krb5.h gssapi.h openssl/crypto.h wc16str.h \
-        openssl/md5.h openssl/hmac.h openssl/rand.h
+        openssl/md5.h openssl/hmac.h openssl/rand.h uuid/uuid.h
 
     mk_check_headers \
         inttypes.h stdlib.h sys/varargs.h dlfcn.h pthread.h \

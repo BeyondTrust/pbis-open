@@ -176,7 +176,8 @@ configure()
     mk_check_headers \
 	FAIL=yes \
 	gssapi.h ldap.h lw/base.h lwadvapi.h openssl/md4.h \
-        openssl/rc4.h
+        openssl/rc4.h openssl/rand.h openssl/md5.h krb5.h uuid/uuid.h \
+        sqlite3.h
 
     mk_check_headers \
         eventlog.h
@@ -194,7 +195,8 @@ configure()
     mk_check_libraries \
 	FAIL=yes \
 	lwbase_nothr lwbase lwadvapi_nothr lwadvapi \
-	lwmsg_nothr lwmsg pam sqlite3
+	lwmsg_nothr lwmsg pam sqlite3 crypto krb5 gssapi_krb5 \
+        uuid ldap_r
 
     mk_check_libraries \
         eventlog

@@ -11,5 +11,5 @@ make()
         SOURCES="$API_SOURCES" \
         INCLUDEDIRS=". ../include ../../include" \
         HEADERDEPS="reg/lwreg.h reg/regutil.h lwmsg/lwmsg.h lwadvapi.h" \
-        LIBDEPS="rsyslogging rsysclientapi regclient rsutils lwmsg lwadvapi ldap_r $LIB_PTHREAD $LIB_DL"
+        LIBDEPS="rsyslogging rsysclientapi regclient rsutils lwmsg lwadvapi $LIB_PTHREAD $LIB_DL"
 }
