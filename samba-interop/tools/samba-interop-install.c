@@ -665,7 +665,9 @@ GetSecretsPath(
     };
     PSTR pSambaPrivateDir = NULL;
     PSTR pPath = NULL;
+    struct stat statBuf = { 0 };
 
+    // Look for secrets.tdb in the statedir (Ubuntu 10.10 is like this)
     error = LwAllocateStringPrintf(
             &pCommandLine,
             "%s -b | grep PRIVATE_DIR:",
@@ -681,26 +683,93 @@ GetSecretsPath(
                 &pSambaPrivateDir,
                 NULL);
     BAIL_ON_LSA_ERROR(error);
-
-    LwStripWhitespace(
-            pSambaPrivateDir,
-            TRUE,
-            TRUE);
-
-    if (!strncmp(pSambaPrivateDir, "PRIVATE_DIR: ", sizeof("PRIVATE_DIR: ") -1))
+    if (error == ERROR_BAD_COMMAND)
     {
-        memmove(
-                pSambaPrivateDir,
-                pSambaPrivateDir + (sizeof("PRIVATE_DIR: ") - 1),
-                strlen(pSambaPrivateDir) - (sizeof("PRIVATE_DIR: ") - 1) + 1);
+        pSambaPrivateDir = NULL;
+        error = ERROR_BAD_COMMAND;
+    }
+    else
+    {
+        if (strstr(pSambaPrivateDir, ": "))
+        {
+            char *pValueStart = strstr(pSambaPrivateDir, ": ") + 2;
+            memmove(
+                    pSambaPrivateDir,
+                    pValueStart,
+                    strlen(pSambaPrivateDir) -
+                        (pValueStart - pSambaPrivateDir) + 1);
+        }
+
+        error = LwAllocateStringPrintf(
+                &pPath,
+                "%s/secrets.tdb",
+                pSambaPrivateDir
+                );
+        BAIL_ON_LSA_ERROR(error);
+        
+        // Verify the path exists
+        if (stat(pPath, &statBuf) < 0)
+        {
+            if (errno == ENOENT)
+            {
+                // Try the private dir instead
+                LW_SAFE_FREE_STRING(pSambaPrivateDir);
+                LW_SAFE_FREE_STRING(pPath);
+            }
+            else
+            {
+                LW_LOG_ERROR("Cannot find secrets.tdb at %s",
+                        pPath);
+                error = LwMapErrnoToLwError(errno);
+                BAIL_ON_LSA_ERROR(error);   
+            }
+        }
     }
 
-    error = LwAllocateStringPrintf(
-            &pPath,
-            "%s/secrets.tdb",
-            pSambaPrivateDir
-            );
-    BAIL_ON_LSA_ERROR(error);
+    if (pPath == NULL)
+    {
+        // This version of smbd is older than 3.5, or the distro vendor decided
+        // to put the file in the private dir (Fedora 14 is like that).
+        LW_SAFE_FREE_STRING(pCommandLine);
+
+        error = LwAllocateStringPrintf(
+                &pCommandLine,
+                "%s -b | grep PRIVATE_DIR:",
+                pSmbdPath
+                );
+        BAIL_ON_LSA_ERROR(error);
+
+        ppArgs[2] = pCommandLine;
+
+        error = CaptureOutputWithStderr(
+                    "/bin/sh",
+                    ppArgs,
+                    &pSambaPrivateDir,
+                    NULL);
+        BAIL_ON_LSA_ERROR(error);
+
+        LwStripWhitespace(
+                pSambaPrivateDir,
+                TRUE,
+                TRUE);
+
+        if (strstr(pSambaPrivateDir, ": "))
+        {
+            char *pValueStart = strstr(pSambaPrivateDir, ": ") + 2;
+            memmove(
+                    pSambaPrivateDir,
+                    pValueStart,
+                    strlen(pSambaPrivateDir) -
+                        (pValueStart - pSambaPrivateDir) + 1);
+        }
+
+        error = LwAllocateStringPrintf(
+                &pPath,
+                "%s/secrets.tdb",
+                pSambaPrivateDir
+                );
+        BAIL_ON_LSA_ERROR(error);
+    }
 
 cleanup:
     *ppPath = pPath;
