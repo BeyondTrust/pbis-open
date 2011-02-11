@@ -759,7 +759,9 @@ GetSecretsPath(
     };
     PSTR pSambaPrivateDir = NULL;
     PSTR pPath = NULL;
+    struct stat statBuf = { 0 };
 
+    // Look for secrets.tdb in the statedir (Ubuntu 10.10 is like this)
     error = LwAllocateStringPrintf(
             &pCommandLine,
             "%s -b | grep STATEDIR:",
@@ -777,8 +779,51 @@ GetSecretsPath(
     BAIL_ON_LSA_ERROR(error);
     if (error == ERROR_BAD_COMMAND)
     {
-        // This version of smbd is older than 3.5. Try looking for the
-        // PRIVATE_DIR instead.
+        pSambaPrivateDir = NULL;
+        error = ERROR_BAD_COMMAND;
+    }
+    else
+    {
+        if (strstr(pSambaPrivateDir, ": "))
+        {
+            char *pValueStart = strstr(pSambaPrivateDir, ": ") + 2;
+            memmove(
+                    pSambaPrivateDir,
+                    pValueStart,
+                    strlen(pSambaPrivateDir) -
+                        (pValueStart - pSambaPrivateDir) + 1);
+        }
+
+        error = LwAllocateStringPrintf(
+                &pPath,
+                "%s/secrets.tdb",
+                pSambaPrivateDir
+                );
+        BAIL_ON_LSA_ERROR(error);
+        
+        // Verify the path exists
+        if (stat(pPath, &statBuf) < 0)
+        {
+            if (errno == ENOENT)
+            {
+                // Try the private dir instead
+                LW_SAFE_FREE_STRING(pSambaPrivateDir);
+                LW_SAFE_FREE_STRING(pPath);
+            }
+            else
+            {
+                LW_RTL_LOG_ERROR("Cannot find secrets.tdb at %s",
+                        pPath);
+                error = LwMapErrnoToLwError(errno);
+                BAIL_ON_LSA_ERROR(error);   
+            }
+        }
+    }
+
+    if (pPath == NULL)
+    {
+        // This version of smbd is older than 3.5, or the distro vendor decided
+        // to put the file in the private dir (Fedora 14 is like that).
         LW_SAFE_FREE_STRING(pCommandLine);
 
         error = LwAllocateStringPrintf(
@@ -795,29 +840,30 @@ GetSecretsPath(
                     ppArgs,
                     &pSambaPrivateDir,
                     NULL);
-    }
-    BAIL_ON_LSA_ERROR(error);
+        BAIL_ON_LSA_ERROR(error);
 
-    LwStripWhitespace(
-            pSambaPrivateDir,
-            TRUE,
-            TRUE);
-
-    if (strstr(pSambaPrivateDir, ": "))
-    {
-        char *pValueStart = strstr(pSambaPrivateDir, ": ") + 2;
-        memmove(
+        LwStripWhitespace(
                 pSambaPrivateDir,
-                pValueStart,
-                strlen(pSambaPrivateDir) - (pValueStart - pSambaPrivateDir) + 1);
-    }
+                TRUE,
+                TRUE);
 
-    error = LwAllocateStringPrintf(
-            &pPath,
-            "%s/secrets.tdb",
-            pSambaPrivateDir
-            );
-    BAIL_ON_LSA_ERROR(error);
+        if (strstr(pSambaPrivateDir, ": "))
+        {
+            char *pValueStart = strstr(pSambaPrivateDir, ": ") + 2;
+            memmove(
+                    pSambaPrivateDir,
+                    pValueStart,
+                    strlen(pSambaPrivateDir) -
+                        (pValueStart - pSambaPrivateDir) + 1);
+        }
+
+        error = LwAllocateStringPrintf(
+                &pPath,
+                "%s/secrets.tdb",
+                pSambaPrivateDir
+                );
+        BAIL_ON_LSA_ERROR(error);
+    }
 
 cleanup:
     *ppPath = pPath;
