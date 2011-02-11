@@ -28,6 +28,7 @@ make()
             SOURCES="$LAM_SOURCES" \
             GROUPS="../common/common" \
             INCLUDEDIRS=". ../include ../../auth/include ../../../include" \
+            HEADERDEPS="lwadvapi.h lwmsg/lwmsg.h" \
             LDFLAGS="-Wl,-eLsaNssInitialize" \
             LIBDEPS="lsaauth lsaclient"
         
@@ -37,6 +38,7 @@ make()
             SOURCES="$NETSVC_SOURCES" \
             GROUPS="../common/common" \
             INCLUDEDIRS=". ../include ../../auth/include ../../../include" \
+            HEADERDEPS="lwadvapi.h lwmsg/lwmsg.h" \
             LIBDEPS="lsaauth lsaclient"
     mk_multiarch_done
 }
