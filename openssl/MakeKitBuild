@@ -185,14 +185,13 @@ configure_openssl()
         mk_run_quiet_or_fail \
             ./Configure \
             --prefix="${MK_PREFIX}" \
-            shared \
-            "$host_string"
+            shared no-hw "$host_string"
     else
         mk_run_quiet_or_fail \
             ./config \
             --prefix="${MK_PREFIX}" \
             -d \
-            shared
+            shared no-hw
     fi
 
     mk_cd_or_fail "${old_pwd}"
