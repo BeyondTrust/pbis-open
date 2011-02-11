@@ -129,6 +129,7 @@ configure()
 
     case "$LW_DEVICE_PROFILE" in
         embedded)
+            mk_skip_subdir reapsysl
             mk_skip_subdir eventlog
             mk_skip_subdir domainjoin
             mk_skip_subdir centutils
