@@ -289,17 +289,28 @@ LwIoAssertionFailedFormat(
     );
 
 #define LWIO_ASSERT_MSG(Expression, Message) \
-    ((Expression) ? \
-     TRUE : \
-     (LwIoAssertionFailed(#Expression, Message, __FUNCTION__, __FILE__, __LINE__), FALSE))
+    do { \
+        if (!(Expression)) \
+        { \
+            LwIoAssertionFailed(#Expression, Message, __FUNCTION__, __FILE__, __LINE__); \
+        } \
+    } while(0)
 
 #define LWIO_ASSERT_FORMAT(Expression, Format, ...) \
-    ((Expression) ? \
-     TRUE : \
-     (LwIoAssertionFailedFormat(#Expression, Format, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__), FALSE))
+    do { \
+        if (!(Expression)) \
+        { \
+            LwIoAssertionFailedFormat(#Expression, Format, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__); \
+        } \
+    } while(0)
+
 
 #define LWIO_ASSERT(Expression) \
     LWIO_ASSERT_MSG(Expression, NULL)
+
+#define LWIO_ASSERT_VALUE_MSG(Expression, Message) \
+    ((Expression) ? TRUE : \
+        (LwIoAssertionFailed(#Expression, Message, __FUNCTION__, __FILE__, __LINE__), FALSE))
 
 //defined flags in dwOptions
 #define SMB_CFG_OPTION_STRIP_SECTION          0x00000001

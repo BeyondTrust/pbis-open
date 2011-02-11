@@ -192,7 +192,7 @@ IopFileObjectGetCloseIrp(
     FileHandle->pCloseIrp = NULL;
     IopFileObjectUnlock(FileHandle);
 
-    if (!LWIO_ASSERT_MSG(pIrp, "Cannot close already closed file"))
+    if (!LWIO_ASSERT_VALUE_MSG(pIrp, "Cannot close already closed file"))
     {
         status = STATUS_FILE_CLOSED;
         GOTO_CLEANUP_ON_STATUS_EE(status, EE);
