@@ -109,7 +109,7 @@ mk_moonunit()
         LDFLAGS="$LDFLAGS" \
         LIBDIRS="$LIBDIRS" \
         INCLUDEDIRS="$INCLUDEDIRS" \
-        LIBDEPS="$LIBDEPS" \
+        LIBDEPS="$LIBDEPS moonunit" \
         HEADERDEPS="$HEADERDEPS" \
         GROUPS="$GROUPS" \
         DEPS="$DEPS"
