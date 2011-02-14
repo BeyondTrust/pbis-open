@@ -129,8 +129,9 @@ configure()
         mk_check_program moonunit
         mk_check_program moonunit-stub
         mk_check_headers moonunit/moonunit.h
+        mk_check_libraries moonunit
         
-        if [ -n "$MOONUNIT" -a -n "$MOONUNIT_STUB" -a "$HAVE_MOONUNIT_MOONUNIT_H" != no ]
+        if [ -n "$MOONUNIT" -a -n "$MOONUNIT_STUB" -a "$HAVE_MOONUNIT_MOONUNIT_H" != no -a "$HAVE_LIB_MOONUNIT" != no ]
         then
             HAVE_MOONUNIT=yes
         else
