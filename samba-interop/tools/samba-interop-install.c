@@ -682,7 +682,6 @@ GetSecretsPath(
                 ppArgs,
                 &pSambaPrivateDir,
                 NULL);
-    BAIL_ON_LSA_ERROR(error);
     if (error == ERROR_BAD_COMMAND)
     {
         pSambaPrivateDir = NULL;
@@ -699,6 +698,11 @@ GetSecretsPath(
                     strlen(pSambaPrivateDir) -
                         (pValueStart - pSambaPrivateDir) + 1);
         }
+
+        LwStripWhitespace(
+                pSambaPrivateDir,
+                TRUE,
+                TRUE);
 
         error = LwAllocateStringPrintf(
                 &pPath,
