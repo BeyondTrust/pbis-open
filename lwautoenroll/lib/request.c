@@ -4,7 +4,6 @@
 #include <lwautoenroll/lwautoenroll.h>
 #include <bail.h>
 #include <curl_util.h>
-#include <ldap_util.h>
 #include <mspki.h>
 #include <soap_util.h>
 #include <ssl_util.h>
@@ -16,7 +15,6 @@
 
 #include <lwerror.h>
 #include <lwkrb5.h>
-#include <lwldap.h>
 #include <lwmem.h>
 #include <lwstr.h>
 
@@ -25,170 +23,9 @@
 #include <sys/param.h>
 
 #include <ctype.h>
-#include <ldap.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#define LDAP_QUERY  "(objectClass=pKIEnrollmentService)"
-#define LDAP_BASE   "cn=Public Key Services,cn=Services,cn=Configuration"
-
-static DWORD
-LwAutoEnrollGetUrl(
-        IN PCSTR domainDnsName,
-        IN const PLW_AUTOENROLL_TEMPLATE pTemplate,
-        OUT PSTR* pUrl
-        )
-{
-    PSTR domainDn = NULL;
-    HANDLE ldapConnection = (HANDLE) NULL;
-    static PSTR attributeList[] =
-    {
-        "certificateTemplates",
-        "msPKI-Enrollment-Servers",
-        NULL
-    };
-    LDAP *pLdap = NULL;
-    LDAPMessage *pLdapResults = NULL;
-    LDAPMessage *pLdapResult = NULL;
-    struct berval **ppValues = NULL;
-    int numValues = 0;
-    int value = 0;
-    PSTR enrollmentUrl = NULL;
-    int enrollmentServerPriority = INT_MAX;
-    DWORD error = LW_ERROR_SUCCESS;
-
-    error = LwLdapConvertDomainToDN(
-                domainDnsName,
-                &domainDn);
-    BAIL_ON_LW_ERROR(error);
-
-    error = LwAutoEnrollLdapConnect(
-                domainDnsName,
-                &ldapConnection);
-    BAIL_ON_LW_ERROR(error);
-
-    error = LwAutoEnrollLdapSearch(
-                ldapConnection,
-                domainDn,
-                LDAP_BASE,
-                LDAP_SCOPE_SUBTREE,
-                LDAP_QUERY,
-                attributeList,
-                &pLdapResults);
-    BAIL_ON_LW_ERROR(error);
-
-    pLdap = LwLdapGetSession(ldapConnection);
-
-    for (pLdapResult = LwLdapFirstEntry(
-                            ldapConnection,
-                            pLdapResults);
-            pLdapResult != NULL;
-            pLdapResult = LwLdapNextEntry(
-                            ldapConnection,
-                            pLdapResult)
-        )
-    {
-        ldap_value_free_len(ppValues);
-        ppValues = ldap_get_values_len(
-                        pLdap,
-                        pLdapResult,
-                        "certificateTemplates");
-        numValues = ldap_count_values_len(ppValues);
-
-        for (value = 0; value < numValues; ++value)
-        {
-            if (!strncmp(
-                    pTemplate->name,
-                    ppValues[value]->bv_val,
-                    ppValues[value]->bv_len))
-            {
-                ldap_value_free_len(ppValues);
-                ppValues = ldap_get_values_len(
-                                pLdap,
-                                pLdapResult,
-                                "msPKI-Enrollment-Servers");
-                if (ppValues != NULL)
-                {
-                    PSTR serverInfo = ppValues[0]->bv_val;
-                    int priority;
-                    int authType;
-                    int renewOnly;
-
-                    priority = strtoul(serverInfo, &serverInfo, 10);
-                    if (*serverInfo != '\n')
-                    {
-                        break;
-                    }
-
-                    if (priority > enrollmentServerPriority)
-                    {
-                        break;
-                    }
-
-                    ++serverInfo;
-                    authType = strtoul(serverInfo, &serverInfo, 10);
-                    if (*serverInfo != '\n')
-                    {
-                        break;
-                    }
-
-                    if (authType != 2) // kerberos
-                    {
-                        break;
-                    }
-
-                    ++serverInfo;
-                    renewOnly = strtoul(serverInfo, &serverInfo, 10);
-                    if (*serverInfo != '\n')
-                    {
-                        break;
-                    }
-
-                    ++serverInfo;
-                    error = LwAllocateString(serverInfo, &enrollmentUrl);
-                    BAIL_ON_LW_ERROR(error);
-                }
-
-                break;
-            }
-        }
-    }
-
-    if (enrollmentUrl == NULL)
-    {
-        BAIL_WITH_LW_ERROR(
-            LW_ERROR_INVALID_PARAMETER,
-            ": No enrollment server found for template '%s'",
-            pTemplate->name);
-    }
-
-cleanup:
-    if (error)
-    {
-        LW_SAFE_FREE_STRING(enrollmentUrl);
-    }
-
-    if (pLdapResults)
-    {
-        ldap_msgfree(pLdapResults);
-    }
-
-    if (ldapConnection)
-    {
-        LwLdapCloseDirectory(ldapConnection);
-    }
-
-    if (ppValues)
-    {
-        ldap_value_free_len(ppValues);
-    }
-
-    LW_SAFE_FREE_STRING(domainDn);
-
-    *pUrl = enrollmentUrl;
-    return error;
-}
 
 static DWORD
 CheckSoapFault(
@@ -507,7 +344,6 @@ LwAutoEnrollRequestCertificate(
     PSTR krbUpn = NULL;
     LSA_QUERY_LIST QueryList = { 0 };
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
-    PCSTR domainDn = NULL;
     PSTR domainDnsName = NULL;
     X509_REQ *pX509Request = NULL;
     OpenSOAPEnvelopePtr pSoapRequest = NULL;
@@ -576,19 +412,8 @@ LwAutoEnrollRequestCertificate(
 
     if (*pUrl == NULL)
     {
-        error = LwAutoEnrollFindDomainDn(
-                    ppObjects[0]->pszDN,
-                    &domainDn);
-        BAIL_ON_LW_ERROR(error);
-
-        error = LwLdapConvertDNToDomain(
-                    domainDn,
-                    &domainDnsName);
-        BAIL_ON_LW_ERROR(error);
-
-        error = LwAutoEnrollGetUrl(
-                    domainDnsName,
-                    pTemplate,
+        error = LwAllocateString(
+                    pTemplate->pEnrollmentServices->url,
                     pUrl);
         BAIL_ON_LW_ERROR(error);
     }

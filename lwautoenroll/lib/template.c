@@ -20,8 +20,133 @@
 #include <ldap.h>
 #include <string.h>
 
-#define LDAP_QUERY  "(objectClass=pKICertificateTemplate)"
 #define LDAP_BASE   "cn=Public Key Services,cn=Services,cn=Configuration"
+
+static DWORD
+LwAutoEnrollGetUrls(
+        IN HANDLE ldapConnection,
+        IN LDAP *pLdap,
+        IN LDAPMessage *pServiceLdapResults,
+        IN OUT PLW_AUTOENROLL_TEMPLATE pTemplate
+        )
+{
+    LDAPMessage *pLdapResult = NULL;
+    struct berval **ppValues = NULL;
+    int numValues = 0;
+    int value = 0;
+    PLW_AUTOENROLL_SERVICE pService = NULL;
+    DWORD error = LW_ERROR_SUCCESS;
+
+    for (pLdapResult = LwLdapFirstEntry(
+                            ldapConnection,
+                            pServiceLdapResults);
+            pLdapResult != NULL;
+            pLdapResult = LwLdapNextEntry(
+                            ldapConnection,
+                            pLdapResult)
+        )
+    {
+        ldap_value_free_len(ppValues);
+        ppValues = ldap_get_values_len(
+                        pLdap,
+                        pLdapResult,
+                        "certificateTemplates");
+        numValues = ldap_count_values_len(ppValues);
+
+        for (value = 0; value < numValues; ++value)
+        {
+            if (!strncmp(
+                    pTemplate->name,
+                    ppValues[value]->bv_val,
+                    ppValues[value]->bv_len))
+            {
+                ldap_value_free_len(ppValues);
+                ppValues = ldap_get_values_len(
+                                pLdap,
+                                pLdapResult,
+                                "msPKI-Enrollment-Servers");
+                if (ppValues != NULL)
+                {
+                    int i;
+                    int numValues;
+
+                    numValues = ldap_count_values_len(ppValues);
+                    for (i = 0; i < numValues; ++i)
+                    {
+                        PSTR serverInfo = ppValues[i]->bv_val;
+                        int priority;
+                        int authType;
+                        int renewOnly;
+                        PLW_AUTOENROLL_SERVICE *ppService = NULL;
+
+                        priority = strtoul(serverInfo, &serverInfo, 10);
+                        if (*serverInfo != '\n')
+                        {
+                            continue;
+                        }
+
+                        ++serverInfo;
+                        authType = strtoul(serverInfo, &serverInfo, 10);
+                        if (*serverInfo != '\n')
+                        {
+                            continue;
+                        }
+
+                        if (authType != 2) // kerberos
+                        {
+                            continue;
+                        }
+
+                        ++serverInfo;
+                        renewOnly = strtoul(serverInfo, &serverInfo, 10);
+                        if (*serverInfo != '\n')
+                        {
+                            continue;
+                        }
+
+                        ++serverInfo;
+
+                        error = LwAllocateMemory(
+                                    sizeof(*pService),
+                                    (PVOID*) &pService);
+                        BAIL_ON_LW_ERROR(error);
+
+                        error = LwAllocateString(
+                                    serverInfo,
+                                    &pService->url);
+                        BAIL_ON_LW_ERROR(error);
+
+                        pService->priority = priority;
+                        pService->renewOnly = renewOnly;
+
+                        for (ppService = &pTemplate->pEnrollmentServices;
+                                *ppService != NULL;
+                                ppService = &((*ppService)->next))
+                        {
+                            if ((*ppService)->priority > priority)
+                            {
+                                break;
+                            }
+                        }
+
+                        pService->next = *ppService;
+                        *ppService = pService;
+                    }
+                }
+
+                break;
+            }
+        }
+    }
+
+cleanup:
+    if (ppValues)
+    {
+        ldap_value_free_len(ppValues);
+    }
+
+    return error;
+}
 
 DWORD
 LwAutoEnrollGetTemplateList(
@@ -42,6 +167,7 @@ LwAutoEnrollGetTemplateList(
     PSTR domainDnsName = NULL;
     LDAP *pLdap = NULL;
     LDAPMessage *pLdapResults = NULL;
+    LDAPMessage *pServiceLdapResults = NULL;
     LDAPMessage *pLdapResult = NULL;
     PCSTR domainDn = NULL;
     PLW_AUTOENROLL_TEMPLATE pTemplateList = NULL;
@@ -53,7 +179,7 @@ LwAutoEnrollGetTemplateList(
     EXTENDED_KEY_USAGE *extendedKeyUsage = NULL;
     STACK_OF(ASN1_OBJECT) *criticalExtensions = NULL;
     DWORD error = LW_ERROR_SUCCESS;
-    static PSTR attributeList[] =
+    static PSTR templateAttributeList[] =
     {
         "name",
         "displayName",
@@ -64,6 +190,12 @@ LwAutoEnrollGetTemplateList(
         "msPKI-Enrollment-Flag",
         "msPKI-Certificate-Name-Flag",
         "msPKI-Minimal-Key-Size",
+        NULL
+    };
+    static PSTR serviceAttributeList[] =
+    {
+        "certificateTemplates",
+        "msPKI-Enrollment-Servers",
         NULL
     };
 
@@ -131,8 +263,18 @@ LwAutoEnrollGetTemplateList(
                 domainDn,
                 LDAP_BASE,
                 LDAP_SCOPE_SUBTREE,
-                LDAP_QUERY,
-                attributeList,
+                "(objectClass=pKIEnrollmentService)",
+                serviceAttributeList,
+                &pServiceLdapResults);
+    BAIL_ON_LW_ERROR(error);
+
+    error = LwAutoEnrollLdapSearch(
+                ldapConnection,
+                domainDn,
+                LDAP_BASE,
+                LDAP_SCOPE_SUBTREE,
+                "(objectClass=pKICertificateTemplate)",
+                templateAttributeList,
                 &pLdapResults);
     BAIL_ON_LW_ERROR(error);
 
@@ -438,6 +580,19 @@ LwAutoEnrollGetTemplateList(
         pTemplateList[numTemplates].extendedKeyUsage = extendedKeyUsage;
         pTemplateList[numTemplates].criticalExtensions = criticalExtensions;
 
+        error = LwAutoEnrollGetUrls(
+                    ldapConnection,
+                    pLdap,
+                    pServiceLdapResults,
+                    &pTemplateList[numTemplates]);
+        BAIL_ON_LW_ERROR(error);
+
+        if (pTemplateList[numTemplates].pEnrollmentServices == NULL)
+        {
+            /* No enrollment services for this template, so skip it. */
+            continue;
+        }
+
         name = NULL;
         displayName = NULL;
         extendedKeyUsage = NULL;
@@ -500,6 +655,11 @@ cleanup:
         ldap_msgfree(pLdapResults);
     }
 
+    if (pServiceLdapResults)
+    {
+        ldap_msgfree(pServiceLdapResults);
+    }
+
     if (extendedKeyUsage)
     {
         EXTENDED_KEY_USAGE_free(extendedKeyUsage);
@@ -521,6 +681,21 @@ cleanup:
     *pNumTemplates = numTemplates;
 
     return error;
+}
+
+static VOID
+LwAutoEnrollFreeServiceList(
+        IN PLW_AUTOENROLL_SERVICE pService
+        )
+{
+    while (pService)
+    {
+        PLW_AUTOENROLL_SERVICE next = pService->next;
+
+        LW_SAFE_FREE_STRING(pService->url);
+        LwFreeMemory(pService);
+        pService = next;
+    }
 }
 
 VOID
@@ -569,6 +744,9 @@ LwAutoEnrollFreeTemplateList(
         {
             sk_X509_ATTRIBUTE_free(pTemplateList[template].attributes);
         }
+
+        LwAutoEnrollFreeServiceList(
+            pTemplateList[template].pEnrollmentServices);
     }
 
     LW_SAFE_FREE_MEMORY(pTemplateList);

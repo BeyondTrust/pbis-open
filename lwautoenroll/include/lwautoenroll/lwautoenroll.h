@@ -15,6 +15,20 @@
 #include <lw/types.h>
 
 /**
+ * @brief Autoenrollment Service
+ *
+ * The information needed about an autoenrollment service.
+ */
+typedef struct _LW_AUTOENROLL_SERVICE
+{
+    struct _LW_AUTOENROLL_SERVICE   *next;
+    int                             priority;
+    LW_BOOL                         renewOnly;
+    PSTR                            url;
+
+} LW_AUTOENROLL_SERVICE, *PLW_AUTOENROLL_SERVICE;
+
+/**
  * @brief Autoenrollment Certificate Template
  *
  * The information needed about a certificate template.
@@ -31,6 +45,11 @@ typedef struct _LW_AUTOENROLL_TEMPLATE
          * Only needed for internal use.
          */
         PCSTR                       csp;
+        /**
+         * @brief A linked list of enrollment servers that can be used
+         * for this template.
+         */
+        PLW_AUTOENROLL_SERVICE      pEnrollmentServices;
         /**
          * @brief The minimum key size specified in the template.
          *
