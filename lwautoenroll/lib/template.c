@@ -321,7 +321,7 @@ LwAutoEnrollGetTemplateList(
 
         if (criticalExtensions)
         {
-            sk_ASN1_OBJECT_free(criticalExtensions);
+            sk_ASN1_OBJECT_pop_free(criticalExtensions, ASN1_OBJECT_free);
             criticalExtensions = NULL;
         }
 
