@@ -106,6 +106,11 @@ LwAutoEnrollGetTemplateList(
                 &ppObjects);
     BAIL_ON_LW_ERROR(error);
 
+    if (ppObjects == NULL || ppObjects[0] == NULL)
+    {
+        BAIL_WITH_LW_ERROR(LW_ERROR_NO_SUCH_USER);
+    }
+
     error = LwAutoEnrollFindDomainDn(
                 ppObjects[0]->pszDN,
                 &domainDn);
