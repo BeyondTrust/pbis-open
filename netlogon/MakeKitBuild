@@ -35,7 +35,7 @@ configure()
         rsutils regclient lwadvapi ldap_r
 
     mk_check_headers \
-        sys/types.h netinet/in.h arpa/nameser.h
+        sys/types.h netinet/in.h netinet/in6.h arpa/nameser.h
 
     mk_check_headers \
         HEADERDEPS="sys/types.h netinet/in.h arpa/nameser.h" \
