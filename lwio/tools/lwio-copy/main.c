@@ -56,6 +56,7 @@ ParseArgs(
     PSTR*    ppszSourcePath,
     PSTR*    ppszTargetPath,
     PSTR*    ppszPrincipal,
+    PSTR*    ppszDomain,
     PSTR*    ppszPassword,
     PBOOLEAN pbCopyRecursive
     );
@@ -123,6 +124,7 @@ main(
     PSTR pszCachePath = NULL;
     PSTR pszPrincipal = NULL;
     PSTR pszPassword = NULL;
+    PSTR pszDomain = NULL;
     PIO_CREDS pCreds = NULL;
     BOOLEAN bRevertThreadCreds = FALSE;
     BOOLEAN bDestroyKrb5Cache = FALSE;
@@ -141,6 +143,7 @@ main(
                 &pszSourcePath,
                 &pszTargetPath,
                 &pszPrincipal,
+                &pszDomain,
                 &pszPassword,
                 &bCopyRecursive);
     BAIL_ON_NT_STATUS(ntStatus);
@@ -153,20 +156,23 @@ main(
             BAIL_ON_NT_STATUS(ntStatus);
         }
 
-        LWIO_SAFE_FREE_STRING(pszCachePath);
+        if (!pszDomain)
+        {
+            LWIO_SAFE_FREE_STRING(pszCachePath);
+            
+            ntStatus = LwIoCreateKrb5Cache(
+                pszPrincipal,
+                pszPassword,
+                &pszCachePath);
+            BAIL_ON_NT_STATUS(ntStatus);
+            
+            bDestroyKrb5Cache = TRUE;
+            
+            ntStatus = SMBAllocateString(pszCachePath, &gpszLwioCopyKrb5CachePath);
+            BAIL_ON_NT_STATUS(ntStatus);
 
-        ntStatus = LwIoCreateKrb5Cache(
-                        pszPrincipal,
-                        pszPassword,
-                        &pszCachePath);
-        BAIL_ON_NT_STATUS(ntStatus);
-
-        bDestroyKrb5Cache = TRUE;
-
-        ntStatus = SMBAllocateString(pszCachePath, &gpszLwioCopyKrb5CachePath);
-        BAIL_ON_NT_STATUS(ntStatus);
-
-        bDestroyKrb5Cache = FALSE;
+            bDestroyKrb5Cache = FALSE;
+        }
     }
 
     if (!IsNullOrEmptyString(pszCachePath))
@@ -187,6 +193,20 @@ main(
         ntStatus = LwIoSetThreadCreds(pCreds);
         BAIL_ON_NT_STATUS(ntStatus);
 
+        bRevertThreadCreds = TRUE;
+    }
+    else
+    {
+        ntStatus = LwIoCreatePlainCredsA(
+            pszPrincipal ? pszPrincipal : "",
+            pszDomain ? pszDomain : "",
+            pszPassword ? pszPassword : "",
+            &pCreds);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        ntStatus = LwIoSetThreadCreds(pCreds);
+        BAIL_ON_NT_STATUS(ntStatus);
+        
         bRevertThreadCreds = TRUE;
     }
 
@@ -214,6 +234,7 @@ cleanup:
     LWIO_SAFE_FREE_STRING(pszSourcePath);
     LWIO_SAFE_FREE_STRING(pszCachePath);
     LWIO_SAFE_FREE_STRING(pszPrincipal);
+    LWIO_SAFE_FREE_STRING(pszDomain);
     LWIO_SAFE_FREE_STRING(pszPassword);
 
     if(ntStatus == STATUS_SUCCESS)
@@ -237,6 +258,7 @@ ParseArgs(
     PSTR*    ppszSourcePath,
     PSTR*    ppszTargetPath,
     PSTR*    ppszPrincipal,
+    PSTR*    ppszDomain,
     PSTR*    ppszPassword,
     PBOOLEAN pbCopyRecursive
     )
@@ -247,7 +269,8 @@ ParseArgs(
         PARSE_MODE_OPEN = 0,
         PARSE_MODE_KRB5_CACHE_PATH,
         PARSE_MODE_UPN,
-        PARSE_MODE_PASSWORD
+        PARSE_MODE_PASSWORD,
+        PARSE_MODE_DOMAIN
     } ParseMode;
     typedef enum
     {
@@ -261,6 +284,7 @@ ParseArgs(
     PSTR pszTargetPath = NULL;
     PSTR pszCachePath = NULL;
     PSTR pszPrincipal = NULL;
+    PSTR pszDomain = NULL;
     PSTR pszPassword = NULL;
     LwioCopyKrb5Spec krb5Spec = LWIO_COPY_KRB5_NO_SPEC;
     BOOLEAN bCopyRecursive = FALSE;
@@ -293,6 +317,10 @@ ParseArgs(
                 else if (!strcasecmp(pszArg, "-p"))
                 {
                     parseMode = PARSE_MODE_PASSWORD;
+                }
+                else if (!strcasecmp(pszArg, "-d"))
+                {
+                    parseMode = PARSE_MODE_DOMAIN;
                 }
                 else if (IsNullOrEmptyString(pszSourcePath))
                 {
@@ -373,6 +401,19 @@ ParseArgs(
 
                 break;
 
+            case PARSE_MODE_DOMAIN:
+
+                LWIO_SAFE_FREE_STRING(pszDomain);
+
+                ntStatus = SMBAllocateString(
+                            pszArg,
+                            &pszDomain);
+                BAIL_ON_NT_STATUS(ntStatus);
+
+                parseMode = PARSE_MODE_OPEN;
+
+                break;
+
             default:
 
                 ShowUsage();
@@ -446,6 +487,7 @@ ParseArgs(
     *ppszSourcePath = pszSourcePath;
     *ppszTargetPath = pszTargetPath;
     *ppszPrincipal = pszPrincipal;
+    *ppszDomain = pszDomain;
     *ppszPassword  = pszPassword;
     *pbCopyRecursive = bCopyRecursive;
 
@@ -466,6 +508,7 @@ error:
     LWIO_SAFE_FREE_STRING(pszSourcePath);
     LWIO_SAFE_FREE_STRING(pszCachePath);
     LWIO_SAFE_FREE_STRING(pszPrincipal);
+    LWIO_SAFE_FREE_STRING(pszDomain);
     LWIO_SAFE_FREE_STRING(pszPassword);
 
     goto cleanup;
@@ -747,7 +790,7 @@ ShowUsage(
     )
 {
     // printf("Usage: lwio-copy [-h] [-r] [ -k <path> | -u <user id>@REALM] <source path> <target path>\n");
-    printf("Usage: lwio-copy [-h] [ -k <path> | -u user-id@REALM -p <password>] <source path> <target path>\n");
+    printf("Usage: lwio-copy [-h] [ -k <path> | -u user-id@REALM -p <password> | -u user -d DOMAIN -p <password> ] <source path> <target path>\n");
     printf("\t-h Show help\n");
     // printf("\t-r Recurse when copying a directory\n");
     printf("\t-k kerberos cache path\n");
