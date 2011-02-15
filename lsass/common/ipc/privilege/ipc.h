@@ -1,9 +1,9 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -41,22 +41,22 @@
  *
  *        Interprocess Communication (Private Include)
  *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
  *
  */
-#include "config.h"
+#include <config.h>
 
-#include "lsasystem.h"
+#include <lsasystem.h>
 
-#include "lsadef.h"
-#include "lsa/lsa.h"
+#include <lsadef.h>
+#include <lsa/lsa.h>
 
 #include <lwmsg/lwmsg.h>
+#include <lwmem.h>
+#include <lwstr.h>
 
-#include "lwmem.h"
-#include "lwstr.h"
-#include "lwsecurityidentifier.h"
+#include <lwsecurityidentifier.h>
+#include <lsautils.h>
 
-#include "lsautils.h"
-#include "lsaipc-common.h"
-#include "lsaipc.h"
+#include <lsaipc-common.h>
+#include <lsaipc-privilege.h>

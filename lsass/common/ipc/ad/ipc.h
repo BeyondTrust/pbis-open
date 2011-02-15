@@ -58,6 +58,7 @@
 #include <lwsecurityidentifier.h>
 #include <lsautils.h>
 
+#include "lsaipc-common.h"
 #include "lsaipc.h"
 #include "lsaadprovider.h"
 #include <lsa/lsapstore-types.h>

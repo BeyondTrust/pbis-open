@@ -1286,6 +1286,15 @@ static LWMsgTypeSpec gLsa2IpcGetSmartCardUserObjectResSpec[] =
     LWMSG_TYPE_END
 };
 
+
+extern LWMsgTypeSpec gLsaPrivsIPCEnumPrivilegesSidsReqSpec[];
+extern LWMsgTypeSpec gLsaPrivsIPCEnumPrivilegesSidsRespSpec[];
+extern LWMsgTypeSpec gLsaPrivsIPCAddAccountRightsReqSpec[];
+extern LWMsgTypeSpec gLsaPrivsIPCRemoveAccountRightsReqSpec[];
+extern LWMsgTypeSpec gLsaPrivsIPCEnumAccountRightsReqSpec[];
+extern LWMsgTypeSpec gLsaPrivsIPCEnumAccountRightsRespSpec[];
+
+
 static LWMsgProtocolSpec gLsaIPCSpec[] =
 {
     LWMSG_MESSAGE(LSA_Q_AUTH_USER_PAM, gLsaAuthUserPamParamsSpec),
@@ -1385,6 +1394,14 @@ static LWMsgProtocolSpec gLsaIPCSpec[] =
     LWMSG_MESSAGE(LSA2_R_MODIFY_USER, NULL),
     LWMSG_MESSAGE(LSA2_Q_GET_SMARTCARD_USER_OBJECT, NULL),
     LWMSG_MESSAGE(LSA2_R_GET_SMARTCARD_USER_OBJECT, gLsa2IpcGetSmartCardUserObjectResSpec),
+    LWMSG_MESSAGE(LSA_PRIVS_Q_ENUM_PRIVILEGES_SIDS, gLsaPrivsIPCEnumPrivilegesSidsReqSpec),
+    LWMSG_MESSAGE(LSA_PRIVS_R_ENUM_PRIVILEGES_SIDS, gLsaPrivsIPCEnumPrivilegesSidsRespSpec),
+    LWMSG_MESSAGE(LSA_PRIVS_Q_ADD_ACCOUNT_RIGHTS, gLsaPrivsIPCAddAccountRightsReqSpec),
+    LWMSG_MESSAGE(LSA_PRIVS_R_ADD_ACCOUNT_RIGHTS, NULL),
+    LWMSG_MESSAGE(LSA_PRIVS_Q_REMOVE_ACCOUNT_RIGHTS, gLsaPrivsIPCRemoveAccountRightsReqSpec),
+    LWMSG_MESSAGE(LSA_PRIVS_R_REMOVE_ACCOUNT_RIGHTS, NULL),
+    LWMSG_MESSAGE(LSA_PRIVS_Q_ENUM_ACCOUNT_RIGHTS, gLsaPrivsIPCEnumAccountRightsReqSpec),
+    LWMSG_MESSAGE(LSA_PRIVS_R_ENUM_ACCOUNT_RIGHTS, gLsaPrivsIPCEnumAccountRightsRespSpec),
     LWMSG_PROTOCOL_END
 };
 
