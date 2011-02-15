@@ -4,7 +4,7 @@ make()
         GROUP="samba-pstore-plugin" \
         SOURCES="samba-pstore-plugin.c" \
         INCLUDEDIRS=". ../include" \
-        HEADERDEPS="tdb.h lw/winerror.h reg/regutil.h" \
+        HEADERDEPS="tdb.h reg/regutil.h lwadvapi.h lsa/lsapstore-api.h" \
         LIBDEPS="tdb lwadvapi rsutils lwbase_nothr"
 
     mk_dlo \
