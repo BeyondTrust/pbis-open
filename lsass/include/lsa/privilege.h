@@ -1,9 +1,9 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -28,43 +28,71 @@
  * license@likewisesoftware.com
  */
 
+
+
 /*
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
  *
- *        client.h
+ *        privilege.h
  *
  * Abstract:
  *
- *        Likewise Security and Authentication Subsystem (LSASS)
+ *        Likewise Security and Authentication Subsystem (LSASS) Client API
  *
- *        API (Client)
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
  *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
  */
-#include "config.h"
+#ifndef __LSACLIENT_PRIVILEGE_H__
+#define __LSACLIENT_PRIVILEGE_H__
 
-#include "lsasystem.h"
+#include <lsa/lsa.h>
+#include <sys/types.h>
 
-#include "lsa/lsa.h"
 
-#include "lsadef.h"
+DWORD
+LsaPrivsAddAccountRights(
+    IN HANDLE hLsaConnection,
+    IN PSID pAccountSid,
+    IN PWSTR *ppwszAccountRights,
+    IN DWORD NumAccountRights
+    );
 
-#include <lwmsg/lwmsg.h>
-#include <lwhash.h>
 
-#include "lsaclient.h"
-#include "lsalocalprovider.h"
-#include "lsaipc-common.h"
-#include "lsaipc.h"
+DWORD
+LsaPrivsRemoveAccountRights(
+    IN HANDLE hLsaConnection,
+    IN PSID pAccountSid,
+    IN BOOLEAN RemoveAll,
+    IN PWSTR *ppwszAccountRights,
+    IN DWORD NumAccountRights
+    );
 
-#include "auth_p.h"
-#include "groups_p.h"
-#include "artefacts_p.h"
-#include "clientipc_p.h"
-#include "session_p.h"
-#include "users_p.h"
-#include "config_p.h"
-#include "marshal_p.h"
+
+DWORD
+LsaPrivsLookupPrivilegeValue(
+    IN HANDLE hLsaConnection,
+    IN PCWSTR pwszPrivilegeName,
+    OUT PLUID pPrivilegeValue
+    );
+
+
+DWORD
+LsaPrivsLookupPrivilegeName(
+    IN HANDLE hLsaConnection,
+    IN PLUID pPrivilegeValue,
+    OUT PWSTR *ppwszPrivilegeName
+    );
+
+
+DWORD
+LsaPrivsEnumAccountRights(
+    IN HANDLE hLsaConnection,
+    IN PSID pAccountSid,
+    OUT PWSTR **pppwszAccountRights,
+    OUT PDWORD pNumAccountRights
+    );
+
+
+#endif /* __LSACLIENT_PRIVILEGE_H__ */

@@ -37,7 +37,7 @@ make()
     mk_library \
 	LIB=lsaserverapi \
 	SOURCES="$API_SOURCES" \
-	GROUPS="../../interop/lwmapsecurity/lwmapsecurity_internal ../../logging_r/logging_r" \
+	GROUPS="../../interop/lwmapsecurity/lwmapsecurity_internal ../../logging_r/logging_r ../privilege/privilege" \
 	CPPFLAGS="-DLW_ENABLE_THREADS" \
 	INCLUDEDIRS=". ../include ../../include" \
 	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h dce/rpc.h" \

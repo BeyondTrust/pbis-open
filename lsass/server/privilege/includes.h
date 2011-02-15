@@ -1,9 +1,9 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- */
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    2004-2011
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,91 +33,30 @@
  *
  * Module Name:
  *
- *        api.h
+ *        includes.h
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        LSA Server API (Private Header)
+ *        Local Privileges (Private include)
  *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#include "config.h"
-
-#include "lsasystem.h"
+#include <config.h>
+#include <lsasystem.h>
+#include <lsadef.h>
 #include <lsa/lsa.h>
-#include <lwmsg/lwmsg.h>
-
-#include <dce/rpc.h>
-#include <dce/dcethread.h>
-#include <lw/base.h>
 #include <reg/reg.h>
 
-#ifdef HAVE_EVENTLOG_H
-#include <eventlog.h>
-#endif
-
-#include "lsadef.h"
-#include "lwmem.h"
-#include "lwstr.h"
-#include "lwsecurityidentifier.h"
-#include "lsautils.h"
-#include "lsalog_r.h"
-#include "lsaregdef.h"
-#include "lwmapsecurity-lsass.h"
+#include <lwmem.h>
+#include <lwstr.h>
 #include <lwhash.h>
 
-#include "lsasrvutils.h"
-#include "lsaserver.h"
-#include <lsa/provider.h>
-#include "lsarpcsrv.h"
-#include "rpcctl.h"
-#include "directory.h"
-
-#include "structs_p.h"
-#include "auth_p.h"
-#include "auth_provider_p.h"
-#include "rpc_server_p.h"
-#include "event_p.h"
-#include "externs_p.h"
-#include "session_p.h"
-#include "state_p.h"
-#include "metrics_p.h"
-#include "status_p.h"
-#include "config_p.h"
-
-#include "lsasrvapi.h"
-#include "lsasrvapi2.h"
-#include "lsasrvprivilege-internal.h"
-
-#include "lsaipc-common.h"
-#include "lsaipc.h"
-
-#include "ipc_error_p.h"
-#include "externs_p.h"
-
-#include <lsarpcsrv.h>
-
-#include "rpcctl-register.h"
-#include "externs.h"
-
-
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
+#include <lsautils.h>
+#include <lsasrvutils.h>
+#include <lsaipc-common.h>
+#include <lsaipc-privilege.h>
+#include <lsasrvprivilege.h>
+#include <lsasrvprivilege-internal.h>

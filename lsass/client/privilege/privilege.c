@@ -1,9 +1,9 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    2004-2011
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -33,38 +33,41 @@
  *
  * Module Name:
  *
- *        client.h
+ *        privilege.c
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        API (Client)
+ *        Local Privileges API
  *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
-#include "config.h"
 
-#include "lsasystem.h"
+#include "includes.h"
 
-#include "lsa/lsa.h"
 
-#include "lsadef.h"
+DWORD
+LsaPrivsLookupPrivilegeValue(
+    IN HANDLE hLsaConnection,
+    IN PCWSTR pwszPrivilegeName,
+    OUT PLUID pPrivilegeValue
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
 
-#include <lwmsg/lwmsg.h>
-#include <lwhash.h>
+    return dwError;
+}
 
-#include "lsaclient.h"
-#include "lsalocalprovider.h"
-#include "lsaipc-common.h"
-#include "lsaipc.h"
 
-#include "auth_p.h"
-#include "groups_p.h"
-#include "artefacts_p.h"
-#include "clientipc_p.h"
-#include "session_p.h"
-#include "users_p.h"
-#include "config_p.h"
-#include "marshal_p.h"
+DWORD
+LsaPrivsLookupPrivilegeName(
+    IN HANDLE hLsaConnection,
+    IN PLUID pPrivilegeValue,
+    OUT PWSTR *ppwszPrivilegeName
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+
+    return dwError;
+}

@@ -5,7 +5,7 @@ lsainclude_HEADERS = \
     lsa/lsapstore-api.h \
     lsa/lsapstore-plugin.h \
     lsa/ad.h \
-    lsa/local.h \
+    lsa/privilege.h \
     lsa/ad-types.h \
     lsa/provider.h
 
@@ -37,7 +37,10 @@ lsainternal_HEADERS =       \
     lsalocalprovider.h      \
     lsadatablob.h           \
     lsadef.h                \
+    lsaipc-common.h         \
     lsaipc.h                \
+    lsaipc-privilege.h      \
+    lsaprivilege-internal.h \
     lsalist.h               \
     lsasrvcred.h            \
     lsasystem.h             \

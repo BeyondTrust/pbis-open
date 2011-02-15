@@ -16,7 +16,7 @@ make()
         lsa/ad-types.h
 
     mk_headers \
-        MASTER="lsa/local.h" \
+        MASTER="lsa/privilege.h" \
         HEADERDEPS="lsa/lsa.h"
 
     mk_headers \
@@ -39,7 +39,10 @@ make()
 	lsalocalprovider.h      \
 	lsadatablob.h           \
 	lsadef.h                \
+        lsaipc-common.h         \
 	lsaipc.h                \
+        lsaipc-privilege.h      \
+        lsaprivilege-internal.h \
 	lsalist.h               \
 	lsasrvcred.h            \
 	lsasystem.h             \

@@ -1,0 +1,14 @@
+make()
+{
+    PRIVS_SOURCES="\
+        account.c"
+
+    mk_multiarch_do
+        mk_group \
+	    GROUP="privilege" \
+	    SOURCES="$PRIVS_SOURCES" \
+	    INCLUDEDIRS="../../include" \
+	    HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
+	    LIBDEPS="lwmsg_nothr lsacommon"
+    mk_multiarch_done
+}

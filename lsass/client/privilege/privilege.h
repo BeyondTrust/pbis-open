@@ -1,9 +1,9 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    2004-2011
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -33,38 +33,27 @@
  *
  * Module Name:
  *
- *        client.h
+ *        privilege.h
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        API (Client)
+ *        Local Privileges API
  *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
-#include "config.h"
 
-#include "lsasystem.h"
+#ifndef __PRIVILEGE_H__
+#define __PRIVILEGE_H__
 
-#include "lsa/lsa.h"
+typedef struct __LSA_CLIENT_CONNECTION_CONTEXT
+{
+    LWMsgProtocol* pProtocol;
+    LWMsgAssoc* pAssoc;
+    LWMsgSession* pSession;
+} LSA_CLIENT_CONNECTION_CONTEXT, *PLSA_CLIENT_CONNECTION_CONTEXT;
 
-#include "lsadef.h"
 
-#include <lwmsg/lwmsg.h>
-#include <lwhash.h>
 
-#include "lsaclient.h"
-#include "lsalocalprovider.h"
-#include "lsaipc-common.h"
-#include "lsaipc.h"
-
-#include "auth_p.h"
-#include "groups_p.h"
-#include "artefacts_p.h"
-#include "clientipc_p.h"
-#include "session_p.h"
-#include "users_p.h"
-#include "config_p.h"
-#include "marshal_p.h"
+#endif /* __PRIVILEGE_H__ */

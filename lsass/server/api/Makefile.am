@@ -3,7 +3,8 @@ AM_CPPFLAGS = @AM_CPPFLAGS@ -I$(top_srcdir)/include
 ADDITIONAL_LIBS =
 NOINST_DEP_LIBS = \
 	@top_builddir@/logging_r/liblsalog_r.la \
-	@top_builddir@/server/store/dsapi/libdsapi.la
+	@top_builddir@/server/store/dsapi/libdsapi.la \
+        @top_builddir@/server/privilege/liblsaserver_privilege.la
 
 if ENABLE_MINIMAL
 noinst_LTLIBRARIES = liblsaserverapi.la

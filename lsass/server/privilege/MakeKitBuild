@@ -1,0 +1,18 @@
+make()
+{
+    PRIVS_SOURCES="\
+        ipc_dispatch.c \
+        privilege.c \
+        account.c"
+
+    LIBDEPS="lsautils"
+
+    mk_multiarch_do
+        mk_group \
+            GROUP="privilege" \
+            SOURCES="$PRIVS_SOURCES" \
+            INCLUDEDIRS=". ../include ../../include" \
+            HEADERDEPS="lwadvapi.h"
+            LIBDEPS="regclient"
+    mk_multiarch_done
+}

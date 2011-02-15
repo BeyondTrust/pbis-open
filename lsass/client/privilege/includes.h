@@ -1,9 +1,9 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -33,38 +33,27 @@
  *
  * Module Name:
  *
- *        client.h
+ *        includes.h
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        API (Client)
+ *        Local Privileges API (Client)
  *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
-#include "config.h"
 
-#include "lsasystem.h"
-
-#include "lsa/lsa.h"
-
-#include "lsadef.h"
-
+#include <config.h>
+#include <lsasystem.h>
+#include <lw/base.h>
 #include <lwmsg/lwmsg.h>
-#include <lwhash.h>
 
-#include "lsaclient.h"
-#include "lsalocalprovider.h"
-#include "lsaipc-common.h"
-#include "lsaipc.h"
+#include <lsa/lsa.h>
+#include <lsa/privilege.h>
+#include <lsadef.h>
+#include <lsaclient.h>
+#include <lsaipc-common.h>
+#include <lsaipc-privilege.h>
 
-#include "auth_p.h"
-#include "groups_p.h"
-#include "artefacts_p.h"
-#include "clientipc_p.h"
-#include "session_p.h"
-#include "users_p.h"
-#include "config_p.h"
-#include "marshal_p.h"
+#include "privilege.h"

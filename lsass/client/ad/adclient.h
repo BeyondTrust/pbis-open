@@ -57,5 +57,6 @@
 
 #include "lsaclient.h"
 #include "lsaadprovider.h"
+#include "lsaipc-common.h"
 #include "lsaipc.h"
 
