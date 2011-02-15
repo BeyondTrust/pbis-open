@@ -6,9 +6,6 @@ configure()
 
     lw_define_feature_macros
 
-    mk_export MOD_EXT="$MK_DLO_EXT"
-    mk_export LIBDIR="$MK_LIBDIR"
-
     mk_define MOD_EXT "\"$MK_DLO_EXT\""
     mk_define LIBDIR "\"$MK_LIBDIR\""
 
