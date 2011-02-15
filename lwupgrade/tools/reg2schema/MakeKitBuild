@@ -1,12 +1,6 @@
 make()
 {
-    mk_program \
-        PROGRAM=psupgrade \
-        SOURCES="psupgrade.c" \
-        HEADERDEPS="lw/types.h" \
-        LIBDEPS=""
-
     mk_stage \
-        SOURCE="regupgr61.sh" \
+        SOURCE="regupgr61.sh reg61sed.sh" \
         DESTDIR="${MK_BINDIR}"
 }
