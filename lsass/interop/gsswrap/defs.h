@@ -61,11 +61,11 @@
        bInLock = FALSE; \
     }
 
-#define BAIL_ON_SEC_ERROR(dwMajorStatus, dwMinorStatus)         \
-    if ((dwMajorStatus!= GSS_S_COMPLETE) &&                     \
-        (dwMajorStatus != GSS_S_CONTINUE_NEEDED)) {             \
-        dwError = LW_ERROR_GSS_CALL_FAILED;                     \
-        goto error;                                             \
+#define BAIL_ON_SEC_ERROR(pGssErrorInfo)                             \
+    if (((pGssErrorInfo)->dwMajorStatus != GSS_S_COMPLETE) &&        \
+        ((pGssErrorInfo)->dwMajorStatus != GSS_S_CONTINUE_NEEDED)) { \
+        dwError = LW_ERROR_GSS_CALL_FAILED;                          \
+        goto error;                                                  \
     }
 
 #define BAIL_ON_LSA_GSS_ERROR(dwError) \
