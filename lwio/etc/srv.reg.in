@@ -87,6 +87,11 @@
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\shares\security]
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\smb1]
+"LockViolationTimeoutMillisecs" = { 
+    default = dword:000000FA 
+    doc = "" 
+}
+
 "OplockTimeoutMillisecs" = { 
     default = dword:00007530 
     doc = "" 
