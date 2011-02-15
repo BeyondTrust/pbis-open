@@ -21,7 +21,7 @@ configure()
         grp.h stdarg.h syslog.h stddef.h
 
     mk_check_types \
-        HEADERDEPS="stdbool.h sys/wait.h signal.h" \
+        HEADERDEPS="stdbool.h sys/wait.h signal.h stdlib.h" \
         comparison_fn_t bool Bool sig_atomic_t
    
     mk_check_sizeofs \
