@@ -640,7 +640,7 @@ ProcessAccountRights(
         {
             PACCOUNT_RIGHTS_DATA pData = pTask->pData;
 
-            dwError = LsaLocalAddAccountRights(
+            dwError = LsaPrivsAddAccountRights(
                                hLsaConnection,
                                pAccountSid,
                                pData->ppwszAccountRights,
@@ -655,7 +655,7 @@ ProcessAccountRights(
         {
             PACCOUNT_RIGHTS_DATA pData = pTask->pData;
 
-            dwError = LsaLocalRemoveAccountRights(
+            dwError = LsaPrivsRemoveAccountRights(
                                hLsaConnection,
                                pAccountSid,
                                FALSE,
@@ -681,7 +681,7 @@ ProcessAccountRights(
                         pszAccountSid);
             }
 
-            dwError = LsaLocalEnumAccountRights(
+            dwError = LsaPrivsEnumAccountRights(
                                hLsaConnection,
                                pAccountSid,
                                &ppwszAccountRights,

@@ -49,7 +49,7 @@
 #include <lw/rtlmemory.h>
 #include <lw/security-api.h>
 #include <lsa/lsa.h>
-#include <lsa/local.h>
+#include <lsa/privilege.h>
 #include <lwmem.h>
 #include <lwstr.h>
 #include <lwsecurityidentifier.h>

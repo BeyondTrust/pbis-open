@@ -44,6 +44,7 @@ static main_entry entry_list[] =
     {"enum-objects", EnumObjectsMain},
     {"enum-members", EnumMembersMain},
     {"query-member-of", QueryMemberOfMain},
+    {"account-rights", account_rights_main},
     {"join", JoinLeaveMain},
     {"leave", JoinLeaveMain},
 #ifndef LW_SERVICE_CONTAINERS
