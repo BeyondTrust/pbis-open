@@ -89,11 +89,11 @@ LwioSrvRefreshConfig(
 
 cleanup:
 
+    LwioSrvFreeConfigContents(&newConfig);
+
     return ntStatus;
 
 error:
-
-    LwioSrvFreeConfigContents(&newConfig);
 
     goto cleanup;
 }
