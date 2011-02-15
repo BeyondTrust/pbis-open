@@ -74,18 +74,6 @@ LocalSetDomainSid(
 
 static
 DWORD
-LocalEnumPrivilegesSids(
-    IN HANDLE  hProvider,
-    IN uid_t   peerUID,
-    IN gid_t   peerGID,
-    IN DWORD   dwInputBufferSize,
-    IN PVOID   pInputBuffer,
-    OUT DWORD* pdwOutputBufferSize,
-    OUT PVOID* ppOutputBuffer
-    );
-
-static
-DWORD
 LocalInitializeProvider(
     OUT PCSTR* ppszProviderName,
     OUT PLSA_PROVIDER_FUNCTION_TABLE* ppFunctionTable
@@ -1078,17 +1066,6 @@ LocalIoControl(
                                     NULL);
         break;
 
-    case LSA_LOCAL_IO_ENUMPRIVSIDS:
-        dwError = LocalEnumPrivilegesSids(
-                                 hProvider,
-                                 peerUID,
-                                 peerGID,
-                                 dwInputBufferSize,
-                                 pInputBuffer,
-                                 &dwOutputBufferSize,
-                                 &pOutputBuffer);
-        break;
-
     default:
         dwError = LW_ERROR_NOT_HANDLED;
         break;
@@ -1166,88 +1143,6 @@ cleanup:
 
 error:
     goto cleanup;
-}
-
-static
-DWORD
-LocalEnumPrivilegesSids(
-    IN HANDLE  hProvider,
-    IN uid_t   peerUID,
-    IN gid_t   peerGID,
-    IN DWORD   dwInputBufferSize,
-    IN PVOID   pInputBuffer,
-    OUT DWORD* pdwOutputBufferSize,
-    OUT PVOID* ppOutputBuffer
-    )
-{
-    DWORD err = ERROR_SUCCESS;
-    LWMsgContext *context = NULL;
-    LWMsgDataContext* pDataContext = NULL;
-    PLSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_REQ pRequest = NULL;
-    LSA_LOCAL_IPC_ENUM_PRIVILEGES_SIDS_RESP response = {0};
-    PVOID pOutputBuffer = NULL;
-    size_t outputBufferSize = 0;
-
-    // TODO: Should this be root-only call ?
-
-    err = MAP_LWMSG_ERROR(lwmsg_context_new(NULL, &context));
-    BAIL_ON_LSA_ERROR(err);
-
-    err = MAP_LWMSG_ERROR(lwmsg_data_context_new(context, &pDataContext));
-    BAIL_ON_LSA_ERROR(err);
-
-    err = MAP_LWMSG_ERROR(lwmsg_data_unmarshal_flat(
-                          pDataContext,
-                          LsaLocalIpcGetEnumPrivilegesSidsReqSpec(),
-                          pInputBuffer,
-                          dwInputBufferSize,
-                          (PVOID*)&pRequest));
-    BAIL_ON_LSA_ERROR(err);
-
-    err = LocalDirEnumPrivilegesSids(hProvider,
-                                     pRequest->ppszSids,
-                                     pRequest->NumSids,
-                                     &response.pPrivileges,
-                                     &response.NumPrivileges);
-    BAIL_ON_LSA_ERROR(err);
-
-    err = MAP_LWMSG_ERROR(lwmsg_data_marshal_flat_alloc(
-                          pDataContext,
-                          LsaLocalIpcGetEnumPrivilegesSidsRespSpec(),
-                          &response,
-                          &pOutputBuffer,
-                          &outputBufferSize));
-    BAIL_ON_LSA_ERROR(err);
-
-    *pdwOutputBufferSize = (DWORD) outputBufferSize;
-    *ppOutputBuffer      = pOutputBuffer;
-
-error:
-    if (err)
-    {
-        *pdwOutputBufferSize = 0;
-        *ppOutputBuffer      = NULL;
-    }
-
-    if (pRequest)
-    {
-        lwmsg_data_free_graph(
-            pDataContext,
-            LsaLocalIpcGetEnumPrivilegesSidsReqSpec(),
-            pRequest);
-    }
-
-    if (pDataContext)
-    {
-        lwmsg_data_context_delete(pDataContext);
-    }
-
-    if (context)
-    {
-        lwmsg_context_delete(context);
-    }
-
-    return err;
 }
 
 DWORD
