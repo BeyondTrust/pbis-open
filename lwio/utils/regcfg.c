@@ -115,7 +115,7 @@ LwIoProcessConfig(
                             &ppszTmp);
                 if (ntStatus == STATUS_SUCCESS)
                 {
-                    LwIoMultiStringFree(*((PSTR **)pConfig[dwEntry].pValue));
+                    LwIoMultiStringFree(((PSTR **)pConfig[dwEntry].pValue));
                     *((PSTR **)pConfig[dwEntry].pValue) = ppszTmp;
                 }
                 break;
@@ -388,14 +388,6 @@ cleanup:
 
 error:
     goto cleanup;
-}
-
-VOID
-LwIoMultiStringFree(
-    PSTR *ppszStrings
-    )
-{
-    RegFreeMultiStrsA(ppszStrings);
 }
 
 NTSTATUS

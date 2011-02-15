@@ -180,9 +180,15 @@ LwIoReadConfigMultiString(
     PSTR    **pppszValue
     );
 
+NTSTATUS
+LwIoMultiStringCopy(
+    PSTR **pppszNewStrings,
+    PCSTR *ppszOriginalStrings
+    );
+
 VOID
 LwIoMultiStringFree(
-    PSTR *ppszValue
+    PSTR **pppszValue
     );
 
 NTSTATUS

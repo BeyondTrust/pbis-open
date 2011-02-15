@@ -15,6 +15,7 @@ liblwioutils_la_SOURCES = \
     logger.c      \
     lwlist.c      \
     memory.c      \
+    multistring.c \
     queue.c       \
     lwiologinfo.c \
     path.c        \
