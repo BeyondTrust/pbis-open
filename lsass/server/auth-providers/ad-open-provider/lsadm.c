@@ -389,41 +389,6 @@ error:
 #define LSA_DM_THREAD_FIRST_PERIOD 60
 /// Minimum time interval to wait between runs.
 #define LSA_DM_THREAD_MIN_PERIOD 60
-
-static
-time_t
-LsaDmpGetNextCheckOnlineTime(
-    IN time_t LastCheckTime,
-    IN DWORD dwCheckOnlineSeconds
-    )
-{
-    time_t nextCheckTime = 0;
-
-    // Note that we assume nobody is setting the date
-    // to before 1970...
-    if (!LastCheckTime)
-    {
-        nextCheckTime = time(NULL) + LSA_DM_THREAD_FIRST_PERIOD;
-    }
-    else
-    {
-        //
-        // We compute the next time to check based on the last
-        // time we checked, making sure that we are not going
-        // too often (e.g., if checking is taking a long time
-        // compared to the interval).  This also handles
-        // someone setting very short interval (e.g., 0 seconds).
-        //
-
-        time_t minNextCheckTime = time(NULL) + LSA_DM_THREAD_MIN_PERIOD;
-        nextCheckTime = LastCheckTime + dwCheckOnlineSeconds;
-        // Make sure that we are not checking more often than allowed.
-        nextCheckTime = LSA_MAX(nextCheckTime, minNextCheckTime);
-    }
-
-    return nextCheckTime;
-}
-
 static
 PVOID
 LsaDmpThreadRoutine(
@@ -433,7 +398,7 @@ LsaDmpThreadRoutine(
     DWORD dwError = 0;
     PLSA_DM_STATE pState = (PLSA_DM_STATE) pContext;
     PLSA_DM_THREAD_INFO pThreadInfo = &pState->OnlineDetectionThread;
-    time_t lastCheckTime = 0;
+    time_t nextCheckTime = time(NULL) + LSA_DM_THREAD_FIRST_PERIOD;
 
     LSA_LOG_VERBOSE("Started domain manager online detection thread");
 
@@ -441,7 +406,6 @@ LsaDmpThreadRoutine(
     {
         DWORD dwCheckOnlineSeconds = 0;
         BOOLEAN bIsDone = FALSE;
-        time_t nextCheckTime = 0;
         struct timespec wakeTime = { 0 };
         BOOLEAN bIsTriggered = FALSE;
 
@@ -450,10 +414,6 @@ LsaDmpThreadRoutine(
         LsaDmpAcquireMutex(pState->pMutex);
         dwCheckOnlineSeconds = pState->dwCheckOnlineSeconds;
         LsaDmpReleaseMutex(pState->pMutex);
-
-        nextCheckTime = LsaDmpGetNextCheckOnlineTime(
-                                lastCheckTime,
-                                dwCheckOnlineSeconds);
 
         wakeTime.tv_sec = nextCheckTime;
 
@@ -486,8 +446,10 @@ LsaDmpThreadRoutine(
         }
         if (ETIMEDOUT == dwError || bIsTriggered)
         {
+        	time_t minNextCheckTime = 0;
             // Mark the time so we don't try to check again too soon.
-            lastCheckTime = time(NULL);
+            nextCheckTime = time(NULL) + dwCheckOnlineSeconds;
+
             // Do detection
             dwError = LsaDmpDetectTransitionOnlineAllDomains(pState,
                                                              pThreadInfo);
@@ -496,6 +458,10 @@ LsaDmpThreadRoutine(
                 // TODO -- log something?
                 dwError = 0;
             }
+
+            // If the processing took too long, don't try again immediately
+            minNextCheckTime = time(NULL) + LSA_DM_THREAD_MIN_PERIOD;
+            nextCheckTime = LSA_MAX(nextCheckTime, minNextCheckTime);
         }
         else
         {
