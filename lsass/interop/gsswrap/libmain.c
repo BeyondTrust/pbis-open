@@ -116,8 +116,8 @@ LsaGssShutdown(
 
 VOID
 LsaGssFreeStringArray(
-    PSTR* ppszStringArray,
-    DWORD dwNumStrings
+    PSTR* ppszStringArray,          /* IN OUT          */
+    DWORD dwNumStrings              /* IN              */
     )
 {
     if (ppszStringArray)
@@ -138,7 +138,7 @@ LsaGssFreeStringArray(
 
 VOID
 LsaGssFreeMemory(
-    PVOID pMemory
+    PVOID pMemory                   /* IN OUT          */
     )
 {
     if (pMemory)

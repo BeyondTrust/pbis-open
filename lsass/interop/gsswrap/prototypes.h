@@ -47,35 +47,43 @@
 
 DWORD
 LsaGssCreateContext(
-    PLSA_GSS_CONTEXT* ppContext
+    PLSA_GSS_CONTEXT* ppContext      /*    OUT          */
     );
 
 DWORD
 LsaGssAuthenticate(
-   PLSA_GSS_CONTEXT pContext,
-   PBYTE            pInBytes,
-   DWORD            dwInLength,
-   PBYTE*           ppOutBytes,
-   PDWORD           pdwOutBytes,
-   PBOOLEAN         pbContinueNeeded
+   PLSA_GSS_CONTEXT pContext,        /* IN              */
+   PBYTE            pInBytes,        /* IN              */
+   DWORD            dwInLength,      /* IN              */
+   PBYTE*           ppOutBytes,      /*    OUT          */
+   PDWORD           pdwOutBytes,     /*    OUT          */
+   PBOOLEAN         pbContinueNeeded /*    OUT          */
    );
 
 DWORD
 LsaGssGetRoles(
-    PLSA_GSS_CONTEXT pContext,
-    PSTR**           pppszRoles,
-    PDWORD           pdwNumRoles
+    PLSA_GSS_CONTEXT pContext,       /* IN              */
+    PSTR**           pppszRoles,     /*    OUT          */
+    PDWORD           pdwNumRoles     /*    OUT          */
     );
 
 DWORD
 LsaGssGetClientPrincipalName(
+    PLSA_GSS_CONTEXT pContext,       /* IN              */
+    PSTR*            ppszclientName  /*    OUT          */
+    );
+
+DWORD
+LsaGssGetErrorInfo(
     PLSA_GSS_CONTEXT pContext,
-    PSTR*            ppszclientName
+    PDWORD           pdwMajorStatus,
+    PDWORD           pdwMinorStatus,
+    PSTR*            ppszError
     );
 
 VOID
 LsaGssFreeContext(
-    PLSA_GSS_CONTEXT pContext
+    PLSA_GSS_CONTEXT pContext        /* IN OUT          */
     );
 
 // libmain.c
@@ -92,12 +100,12 @@ LsaGssShutdown(
 
 VOID
 LsaGssFreeStringArray(
-    PSTR* ppszStringArray,
-    DWORD dwNumStrings
+    PSTR* ppszStringArray,          /* IN OUT          */
+    DWORD dwNumStrings              /* IN              */
     );
 
 VOID
 LsaGssFreeMemory(
-    PVOID pMemory
+    PVOID pMemory                   /* IN OUT          */
     );
 

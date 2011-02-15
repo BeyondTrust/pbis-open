@@ -52,12 +52,21 @@ typedef enum
 
 } LSA_GSS_CONTEXT_STATUS;
 
+typedef struct _LSA_GSS_ERROR_INFO
+{
+    OM_uint32 dwMajorStatus;
+    OM_uint32 dwMinorStatus;
+
+} LSA_GSS_ERROR_INFO, *PLSA_GSS_ERROR_INFO;
+
 typedef struct _LSA_GSS_CONTEXT
 {
     pthread_mutex_t  mutex;
     pthread_mutex_t* pMutex;
 
     gss_ctx_id_t     gssCtx;
+
+    LSA_GSS_ERROR_INFO errorInfo;
 
     LSA_GSS_CONTEXT_STATUS status;
 

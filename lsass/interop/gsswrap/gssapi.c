@@ -46,28 +46,30 @@
 #include "includes.h"
 
 static
-void
-LsaGssDisplayStatus(
-    PCSTR     pszId,
-    OM_uint32 maj_stat,
-    OM_uint32 min_stat
+DWORD
+LsaGssGetDisplayStatus(
+    PLSA_GSS_ERROR_INFO pErrorInfo,  /* IN              */
+    PSTR*               ppszError    /*    OUT          */
     );
 
 static
-void
-LsaGssDisplayStatus_1(
-    PCSTR     pszId,
-    OM_uint32 code,
-    int       type
+VOID
+LsaGssGetDisplayStatus_1(
+    OM_uint32 code,        /* IN              */
+    int       type,        /* IN              */
+    PSTR      pszBuffer,   /* IN OUT          */
+    DWORD     dwBufferSize /* IN              */
     );
 
 DWORD
 LsaGssCreateContext(
-    PLSA_GSS_CONTEXT* ppContext
+    PLSA_GSS_CONTEXT* ppContext      /*    OUT          */
     )
 {
     DWORD dwError = 0;
     PLSA_GSS_CONTEXT pContext = NULL;
+
+    BAIL_ON_INVALID_POINTER(ppContext);
 
     dwError = LwAllocateMemory(sizeof(*pContext), (PVOID*)&pContext);
     BAIL_ON_LSA_GSS_ERROR(dwError);
@@ -86,22 +88,30 @@ cleanup:
 
 error:
 
+    if (ppContext)
+    {
+        *ppContext = NULL;
+    }
+
+    if (pContext)
+    {
+        LsaGssFreeContext(pContext);
+    }
+
     goto cleanup;
 }
 
 DWORD
 LsaGssAuthenticate(
-   PLSA_GSS_CONTEXT pContext,
-   PBYTE            pInBytes,
-   DWORD            dwInLength,
-   PBYTE*           ppOutBytes,
-   PDWORD           pdwOutBytes,
-   PBOOLEAN         pbContinueNeeded
+   PLSA_GSS_CONTEXT pContext,        /* IN              */
+   PBYTE            pInBytes,        /* IN              */
+   DWORD            dwInLength,      /* IN              */
+   PBYTE*           ppOutBytes,      /*    OUT          */
+   PDWORD           pdwOutBytes,     /*    OUT          */
+   PBOOLEAN         pbContinueNeeded /*    OUT          */
    )
 {
     DWORD dwError = 0;
-    DWORD dwMajorStatus = 0;
-    DWORD dwMinorStatus = 0;
     BOOLEAN bInLock = FALSE;
     gss_buffer_desc input_desc = {0};
     gss_buffer_desc output_desc = {0};
@@ -124,27 +134,22 @@ LsaGssAuthenticate(
     input_desc.length = dwInLength;
     input_desc.value = pInBytes;
 
-    dwMajorStatus = gss_accept_sec_context(
-                        (OM_uint32 *)&dwMinorStatus,
-                        &pContext->gssCtx,
-                        NULL,
-                        &input_desc,
-                        NULL,
-                        NULL,
-                        &gss_spnego_mech_oid,
-                        &output_desc,
-                        &ret_flags,
-                        NULL,
-                        NULL);
+    pContext->errorInfo.dwMajorStatus =
+            gss_accept_sec_context(
+                            &pContext->errorInfo.dwMinorStatus,
+                            &pContext->gssCtx,
+                            NULL,
+                            &input_desc,
+                            NULL,
+                            NULL,
+                            &gss_spnego_mech_oid,
+                            &output_desc,
+                            &ret_flags,
+                            NULL,
+                            NULL);
+    BAIL_ON_SEC_ERROR(&pContext->errorInfo);
 
-    LsaGssDisplayStatus(
-        "gss_accept_sec_context",
-        dwMajorStatus,
-        dwMinorStatus);
-
-    BAIL_ON_SEC_ERROR(dwMajorStatus, dwMinorStatus);
-
-    switch (dwMajorStatus)
+    switch (pContext->errorInfo.dwMajorStatus)
     {
         case GSS_S_CONTINUE_NEEDED:
 
@@ -186,7 +191,10 @@ LsaGssAuthenticate(
 
 cleanup:
 
-    gss_release_buffer(&dwMinorStatus, &output_desc);
+    if (pContext)
+    {
+        gss_release_buffer(&pContext->errorInfo.dwMinorStatus, &output_desc);
+    }
 
     LSA_GSS_UNLOCK_MUTEX(bInLock, &pContext->mutex);
 
@@ -221,9 +229,9 @@ error:
 
 DWORD
 LsaGssGetRoles(
-    PLSA_GSS_CONTEXT pContext,
-    PSTR**           pppszRoles,
-    PDWORD           pdwNumRoles
+    PLSA_GSS_CONTEXT pContext,   /* IN              */
+    PSTR**           pppszRoles, /*    OUT          */
+    PDWORD           pdwNumRoles /*    OUT          */
     )
 {
     DWORD dwError = 0;
@@ -379,6 +387,8 @@ cleanup:
         LsaCloseServer(hLsaConnection);
     }
 
+    LSA_GSS_UNLOCK_MUTEX(bInLock, &pContext->mutex);
+
     return dwError;
 
 error:
@@ -393,13 +403,11 @@ error:
 
 DWORD
 LsaGssGetClientPrincipalName(
-    PLSA_GSS_CONTEXT pContext,
-    PSTR*            ppszclientName
+    PLSA_GSS_CONTEXT pContext,      /* IN              */
+    PSTR*            ppszclientName /*    OUT          */
     )
 {
     DWORD dwError = 0;
-    OM_uint32 gssMajor = GSS_S_COMPLETE;
-    OM_uint32 gssMinor = 0;
     gss_buffer_desc nameBuffer = {0};
     gss_buffer_set_t clientName = NULL;
     gss_name_t initiatorName = {0};
@@ -420,8 +428,9 @@ LsaGssGetClientPrincipalName(
 
     /* Try the old way first */
 
-    gssMajor = gss_inquire_context(
-                   &gssMinor,
+    pContext->errorInfo.dwMajorStatus =
+            gss_inquire_context(
+                   &pContext->errorInfo.dwMinorStatus,
                    pContext->gssCtx,
                    &initiatorName,
                    NULL,
@@ -430,14 +439,15 @@ LsaGssGetClientPrincipalName(
                    NULL,
                    NULL,
                    NULL);
-    if (gssMajor == GSS_S_COMPLETE)
+    if (pContext->errorInfo.dwMajorStatus == GSS_S_COMPLETE)
     {
-        gssMajor = gss_display_name(
-                       &gssMinor,
+        pContext->errorInfo.dwMajorStatus =
+                gss_display_name(
+                       &pContext->errorInfo.dwMinorStatus,
                        initiatorName,
                        &clientNameBuffer,
                        &nameOid);
-        BAIL_ON_SEC_ERROR(gssMajor, gssMinor);
+        BAIL_ON_SEC_ERROR(&pContext->errorInfo);
 
         nameBuffer = clientNameBuffer;
     }
@@ -445,12 +455,13 @@ LsaGssGetClientPrincipalName(
     {
         /* Fallback to using the newer inquire_by_oid() method */
 
-        gssMajor = gss_inquire_sec_context_by_oid(
-                        &gssMinor,
+        pContext->errorInfo.dwMajorStatus =
+                gss_inquire_sec_context_by_oid(
+                        &pContext->errorInfo.dwMinorStatus,
                         pContext->gssCtx,
                         GSS_C_NT_STRING_UID_NAME,
                         &clientName);
-        BAIL_ON_SEC_ERROR(gssMajor, gssMinor);
+        BAIL_ON_SEC_ERROR(&pContext->errorInfo);
 
         if (!clientName || (clientName->count == 0))
         {
@@ -473,11 +484,20 @@ LsaGssGetClientPrincipalName(
 
 cleanup:
 
-    LSA_GSS_UNLOCK_MUTEX(bInLock, &pContext->mutex);
+    if (pContext)
+    {
+        gss_release_buffer_set(
+                &pContext->errorInfo.dwMinorStatus,
+                &clientName);
 
-    gss_release_buffer_set(&gssMinor, &clientName);
-    gss_release_name(&gssMinor, &initiatorName);
-    gss_release_buffer(&gssMinor, &clientNameBuffer);
+        gss_release_name(&pContext->errorInfo.dwMinorStatus, &initiatorName);
+
+        gss_release_buffer(
+                &pContext->errorInfo.dwMinorStatus,
+                &clientNameBuffer);
+    }
+
+    LSA_GSS_UNLOCK_MUTEX(bInLock, &pContext->mutex);
 
     return dwError;
 
@@ -493,9 +513,163 @@ error:
     goto cleanup;
 }
 
+DWORD
+LsaGssGetErrorInfo(
+    PLSA_GSS_CONTEXT pContext,
+    PDWORD           pdwMajorStatus,
+    PDWORD           pdwMinorStatus,
+    PSTR*            ppszError
+    )
+{
+    DWORD   dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PSTR    pszError = NULL;
+
+    BAIL_ON_INVALID_POINTER(pContext);
+    BAIL_ON_INVALID_POINTER(pdwMajorStatus);
+    BAIL_ON_INVALID_POINTER(pdwMinorStatus);
+    BAIL_ON_INVALID_POINTER(ppszError);
+
+    LSA_GSS_LOCK_MUTEX(bInLock, &pContext->mutex);
+
+    dwError = LsaGssGetDisplayStatus(&pContext->errorInfo, &pszError);
+    BAIL_ON_LSA_GSS_ERROR(dwError);
+
+    *pdwMajorStatus = pContext->errorInfo.dwMajorStatus;
+    *pdwMinorStatus = pContext->errorInfo.dwMinorStatus;
+    *ppszError = pszError;
+
+cleanup:
+
+    LSA_GSS_UNLOCK_MUTEX(bInLock, &pContext->mutex);
+
+    return dwError;
+
+error:
+
+    if (pdwMajorStatus)
+    {
+        *pdwMajorStatus = 0;
+    }
+    if (pdwMinorStatus)
+    {
+        *pdwMinorStatus = 0;
+    }
+    if (ppszError)
+    {
+        *ppszError = NULL;
+    }
+    if (pszError)
+    {
+        LwFreeMemory(pszError);
+    }
+
+    goto cleanup;
+}
+
+static
+DWORD
+LsaGssGetDisplayStatus(
+    PLSA_GSS_ERROR_INFO pErrorInfo,  /* IN              */
+    PSTR*               ppszError    /*    OUT          */
+    )
+{
+    DWORD dwError = 0;
+    CHAR  szMajorStatus[256] = "";
+    CHAR  szMinorStatus[256] = "";
+    PSTR  pszError = NULL;
+
+    if (pErrorInfo->dwMajorStatus)
+    {
+         LsaGssGetDisplayStatus_1(
+                 pErrorInfo->dwMajorStatus,
+                 GSS_C_GSS_CODE,
+                 &szMajorStatus[0],
+                 sizeof(szMajorStatus) - 1);
+    }
+
+    if (pErrorInfo->dwMinorStatus)
+    {
+         LsaGssGetDisplayStatus_1(
+                 pErrorInfo->dwMinorStatus,
+                 GSS_C_MECH_CODE,
+                 &szMinorStatus[0],
+                 sizeof(szMinorStatus) - 1);
+    }
+
+    dwError = LwAllocateStringPrintf(
+                    &pszError,
+                    "GSSAPI Error::Major:%s::Minor:%s",
+                    szMajorStatus,
+                    szMinorStatus);
+    BAIL_ON_LSA_GSS_ERROR(dwError);
+
+    *ppszError = pszError;
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    *ppszError = NULL;
+
+    if (pszError)
+    {
+        LwFreeMemory(pszError);
+    }
+
+    goto cleanup;
+}
+
+static
+VOID
+LsaGssGetDisplayStatus_1(
+    OM_uint32 code,        /* IN              */
+    int       type,        /* IN              */
+    PSTR      pszBuffer,   /* IN OUT          */
+    DWORD     dwBufferSize /* IN              */
+    )
+{
+    OM_uint32 msg_ctx = 0;
+
+    do
+    {
+        gss_buffer_desc msg;
+        OM_uint32       maj_stat, min_stat;
+        int             nWritten = 0;
+
+        maj_stat = gss_display_status(
+                            &min_stat,
+                            code,
+                            type,
+                            GSS_C_NULL_OID,
+                            &msg_ctx,
+                            &msg);
+
+        nWritten = snprintf(
+                        pszBuffer,
+                        dwBufferSize,
+                        "%s.",
+                        (char *)msg.value);
+        if (nWritten < 0)
+        {
+            break;
+        }
+        else
+        {
+            pszBuffer    += nWritten;
+            dwBufferSize -= nWritten;
+        }
+
+        (void) gss_release_buffer(&min_stat, &msg);
+
+    } while ((msg_ctx != 0) && (dwBufferSize > 0));
+}
+
 VOID
 LsaGssFreeContext(
-    PLSA_GSS_CONTEXT pContext
+    PLSA_GSS_CONTEXT pContext /* IN OUT          */
     )
 {
     if (pContext)
@@ -520,69 +694,4 @@ LsaGssFreeContext(
     }
 }
 
-static
-void
-LsaGssDisplayStatus(
-    PCSTR     pszId,
-    OM_uint32 maj_stat,
-    OM_uint32 min_stat
-    )
-{
-     LsaGssDisplayStatus_1(pszId, maj_stat, GSS_C_GSS_CODE);
-     LsaGssDisplayStatus_1(pszId, min_stat, GSS_C_MECH_CODE);
-}
-
-static
-void
-LsaGssDisplayStatus_1(
-    PCSTR     pszId,
-    OM_uint32 code,
-    int       type
-    )
-{
-    OM_uint32 maj_stat, min_stat;
-    gss_buffer_desc msg;
-    OM_uint32 msg_ctx;
-
-    if ( code == 0 )
-    {
-        return;
-    }
-
-    msg_ctx = 0;
-    while (1)
-    {
-        maj_stat = gss_display_status(&min_stat, code,
-                                      type, GSS_C_NULL_OID,
-                                      &msg_ctx, &msg);
-
-        switch(code)
-        {
-            case GSS_S_COMPLETE:
-            case GSS_S_CONTINUE_NEEDED:
-            case 40157:   /* What minor code is this? */
-                LSA_GSS_LOG_VERBOSE(
-                        "GSS-API error calling %s: %d (%s)\n",
-                        pszId,
-                        code,
-                        (char *)msg.value);
-                break;
-
-            default:
-
-                LSA_GSS_LOG_ERROR(
-                        "GSS-API error calling %s: %d (%s)\n",
-                        pszId,
-                        code,
-                        (char *)msg.value);
-        }
-
-        (void) gss_release_buffer(&min_stat, &msg);
-
-        if (!msg_ctx)
-        {
-            break;
-        }
-    }
-}
 
