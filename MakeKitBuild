@@ -5,9 +5,8 @@ LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv popt \
 SUBDIRS="$LW_ALL_BUNDLED \
          lwbase lwmsg lwreg lwadvapi netlogon \
          lwio nfs libschannel dcerpc centutils lwsm eventlog lsass lwdns \
-         srvsvc lwnetapi lwtools domainjoin lwconfig lwupgrade config package \
+         srvsvc lwnetapi lwtools domainjoin lwconfig lwupgrade samba-interop config package \
 	 reapsysl"
-
 
 defaults()
 {
@@ -35,6 +34,13 @@ option()
             default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2"
             ;;
     esac
+
+    mk_option \
+        OPTION=samba-interop \
+        PARAM="yes|no" \
+        VAR="LW_SAMBA_INTEROP" \
+        DEFAULT="no" \
+        HELP="Build samba interop libraries"
 
     mk_option \
         OPTION=lw-bundled-libs \
@@ -116,6 +122,8 @@ configure()
     do
         lw_use_bundled "$comp" || mk_skip_subdir "$comp"
     done
+
+    [ "$LW_SAMBA_INTEROP" = "yes" ] || mk_skip_subdir "samba-interop"
 
     case "$LW_FEATURE_LEVEL" in
         auth)
@@ -223,6 +231,8 @@ lw_print_features()
         mk_get_export domainjoin DJ_GUI_INTERFACE
         lw_print_feature "Domain join GUI" "$result"
     fi
+
+    lw_print_feature "Samba interoperability" "$LW_SAMBA_INTEROP"
 
     types=""
 
