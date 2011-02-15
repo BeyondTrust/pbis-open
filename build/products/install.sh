@@ -999,19 +999,21 @@ determine_upgrade_type()
     VERSIONFILE=`get_prefix_dir`/data/VERSION
     if [ -f $VERSIONFILE ]; then
         UPGRADING=1
-        if [ -n "`grep '^VERSION=5.0' $VERSIONFILE`" -o \
-             -n "`grep '^VERSION=5.1' $VERSIONFILE`" -o \
-             -n "`grep '^VERSION=5.2' $VERSIONFILE`" -o \
-             -n "`grep '^VERSION=5.3' $VERSIONFILE`" ]; then
+        if [ -n "`grep '^VERSION=5\.0' $VERSIONFILE`" -o \
+             -n "`grep '^VERSION=5\.1' $VERSIONFILE`" -o \
+             -n "`grep '^VERSION=5\.2' $VERSIONFILE`" -o \
+             -n "`grep '^VERSION=5\.3' $VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
             UPGRADEDIR5=/tmp/lw-upgrade
             mkdir -p "${UPGRADEDIR5}"
             log_info "Preserving 5.x (0 <= x <= 3) configuration in ${UPGRADEDIR5}."
-        elif [ -n "`grep '^VERSION=5.4' $VERSIONFILE`" ]; then
+        elif [ -n "`grep '^VERSION=5\.4' $VERSIONFILE`" ]; then
             UPGRADING_FROM_5_4=1
             UPGRADEDIR5=/tmp/lw-upgrade
             mkdir -p "${UPGRADEDIR5}"
             log_info "Preserving 5.4 configuration in ${UPGRADEDIR5}."
+        elif [ -n "`grep '^VERSION=6\.0' $VERSIONFILE`" ]; then
+            UPGRADING_FROM_6_0=1
         fi
     elif [ -x /usr/bin/dpkg ]; then
         if check_deb_installed likewise-open
@@ -1089,6 +1091,20 @@ import_5_0123_file()
     return 1
 }
 
+backup_registry()
+{
+  VAR_DIR="/var/lib/likewise/db"
+
+  # Make a backup of the registry, in case something "BAD" happens
+  if [ ! -f $VAR_DIR/registry60.db -a -f $VAR_DIR/registry.db ]; then
+    cp $VAR_DIR/registry.db $VAR_DIR/registry60.db
+    if [ $? -ne 0 ]; then
+      exit 1
+    fi
+fi
+
+}
+
 restore_5_0123_configuration()
 {
     CONVERT="`get_prefix_dir`/bin/conf2reg"
@@ -1112,10 +1128,13 @@ restore_5_0123_configuration()
 
 fix_60_registry()
 {
+    if [ -z "$UPGRADING_FROM_6_0" ]; then
+        return 0;
+    fi
     REGIMPORT="`get_prefix_dir`/bin/lwregshell cleanup"
 
     # Migrate pstore entries from default to joined domain
-    ${PREFIX}/bin/regupgr61.sh
+    ${PREFIX}/bin/regupgr61.sh --install
 
     for regfile in ${REGFILES}
     do
@@ -1234,6 +1253,9 @@ do_install()
 
     # Save 5.4 registry files.
     preserve_5_4_configuration
+
+    # Backup registry being upgraded before making any changes
+    backup_registry
 
     prefix_dir=`get_prefix_dir`
     if [ $? -eq 0 -a -d "$prefix_dir" ]; then

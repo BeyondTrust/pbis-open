@@ -2,9 +2,15 @@
 tmpreg=/tmp/regup-$$.txt
 BIN_DIR=/opt/likewise/bin
 LWREGSHELL=$BIN_DIR/lwregshell
-PSTORE_UPGRADE=$BIN_DIR/psupgrade
+PSTORE_UPGRADE=$BIN_DIR/reg61sed.sh
 
-#verify tools needed to perform registry upgrade are present
+if [ "$1" != "--install" ]; then
+  echo "WARNING: This tool is called during system installation"
+  echo "         and upgrade, and should not be called by an end-user."
+  exit 1
+fi
+
+# Verify tools needed to perform registry upgrade are present
 if [ ! -x $LWREGSHELL ]; then
   exit 1
 fi
@@ -13,7 +19,7 @@ if [ ! -x $PSTORE_UPGRADE ]; then
 fi
 
 # Export the existing registry, in legacy format
-$LWREGSHELL export --legacy $tmpreg
+$LWREGSHELL export --legacy - | sed 's/^#//' > $tmpreg
 if [ ! -s $tmpreg ]; then
   exit 1
 fi
