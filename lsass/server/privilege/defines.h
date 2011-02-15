@@ -33,34 +33,26 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        defines.h
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        Local Privileges (Private include)
+ *        Local Privileges macros
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#include <config.h>
-#include <lsasystem.h>
-#include <lsadef.h>
-#include <lsa/lsa.h>
-#include <reg/reg.h>
+#ifndef __LSASRV_PRIVILEGE_DEFINES_H__
+#define __LSASRV_PRIVILEGE_DEFINES_H__
 
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwhash.h>
 
-#include <lsautils.h>
-#include <lsasrvutils.h>
-#include <lsaipc-common.h>
-#include <lsaipc-privilege.h>
-#include <lsasrvprivilege.h>
-#include <lsasrvprivilege-internal.h>
+#define LSASS_REG_KEY             "\\Services\\lsass"
+#define LSA_PRIVILEGES_REG_KEY    LSASS_REG_KEY "\\Privileges"
+#define LSA_ACCOUNTS_REG_KEY      LSASS_REG_KEY "\\Accounts"
 
-#include "defines.h"
-#include "structs.h"
-#include "externs.h"
+#define LSA_PRIVILEGES_DB_SIZE    (16)
+
+
+#endif /* __LSASRV_PRIVILEGE_DEFINES_H__ */

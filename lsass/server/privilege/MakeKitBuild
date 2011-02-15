@@ -2,8 +2,10 @@ make()
 {
     PRIVS_SOURCES="\
         ipc_dispatch.c \
+        globals.c \
         privilege.c \
-        account.c"
+        account.c \
+        privilegedb.c"
 
     LIBDEPS="lsautils"
 

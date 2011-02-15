@@ -4,8 +4,10 @@ noinst_LTLIBRARIES = liblsaserver_privilege.la
 
 liblsaserver_privilege_la_SOURCES = \
     ipc_dispatch.c \
+    globals.c \
     privilege.c \
-    account.c
+    account.c \
+    privilegedb.c
 
 liblsaserver_privilege_la_CPPFLAGS = \
     $(AM_CPPFLAGS) \

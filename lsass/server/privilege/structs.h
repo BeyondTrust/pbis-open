@@ -33,34 +33,37 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        structs.h
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        Local Privileges (Private include)
+ *        Local Privileges structures and typedefs
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#include <config.h>
-#include <lsasystem.h>
-#include <lsadef.h>
-#include <lsa/lsa.h>
-#include <reg/reg.h>
+#ifndef __LSASRV_PRIVILEGE_STRUCTS_H__
+#define __LSASRV_PRIVILEGE_STRUCTS_H__
 
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwhash.h>
 
-#include <lsautils.h>
-#include <lsasrvutils.h>
-#include <lsaipc-common.h>
-#include <lsaipc-privilege.h>
-#include <lsasrvprivilege.h>
-#include <lsasrvprivilege-internal.h>
+typedef struct _LSASRV_PRIVILEGE_GLOBALS
+{
+    PLW_HASH_TABLE pPrivileges;
+    PLW_HASH_TABLE pAccounts;
 
-#include "defines.h"
-#include "structs.h"
-#include "externs.h"
+} LSASRV_PRIVILEGE_GLOBALS, *PLSASRV_PRIVILEGE_GLOBALS;
+
+
+typedef struct _LSA_PRIVILEGE
+{
+    PSTR     pszName;
+    PWSTR    pwszDescription;
+    LUID     Luid;
+    BOOLEAN  EnabledByDefault;
+
+} LSA_PRIVILEGE, *PLSA_PRIVILEGE;
+
+
+#endif /* __LSASRV_PRIVILEGE_STRUCTS_H__ */

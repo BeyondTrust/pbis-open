@@ -33,34 +33,21 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        externs.h
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        Local Privileges (Private include)
+ *        Local Privileges extern declarations
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#include <config.h>
-#include <lsasystem.h>
-#include <lsadef.h>
-#include <lsa/lsa.h>
-#include <reg/reg.h>
+#ifndef __LSASRV_PRIVILEGE_EXTERNS_H__
+#define __LSASRV_PRIVILEGE_EXTERNS_H__
 
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwhash.h>
+extern LSASRV_PRIVILEGE_GLOBALS gLsaPrivilegeGlobals;
 
-#include <lsautils.h>
-#include <lsasrvutils.h>
-#include <lsaipc-common.h>
-#include <lsaipc-privilege.h>
-#include <lsasrvprivilege.h>
-#include <lsasrvprivilege-internal.h>
 
-#include "defines.h"
-#include "structs.h"
-#include "externs.h"
+#endif /* __LSASRV_PRIVILEGE_STRUCTS_H__ */
