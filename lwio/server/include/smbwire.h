@@ -1688,6 +1688,12 @@ typedef struct _TRANS2_FILE_INTERNAL_INFORMATION {
 } __attribute__((__packed__)) TRANS2_FILE_INTERNAL_INFORMATION,
                              *PTRANS2_FILE_INTERNAL_INFORMATION;
 
+typedef struct _TRANS2_FILE_ATTRIBUTE_TAG_INFORMATION {
+    ULONG FileAttributes;
+    ULONG ReparseTag;
+} __attribute__((__packed__)) TRANS2_FILE_ATTRIBUTE_TAG_INFORMATION,
+                             *PTRANS2_ATTRIBUTE_TAG_INFORMATION;
+
 typedef struct _TRANS2_FILE_FS_CONTROL_INFORMATION {
     LONG64          FreeSpaceStartFiltering;
     LONG64          FreeSpaceThreshold;
