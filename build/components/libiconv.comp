@@ -46,9 +46,15 @@ function component_build
 {
     _setup_build_env
 
-    # Hack to work around broken -fvisibility on solaris
+    # Hack to work around brokenness on solaris
     if [ "${BUILD_OS_TYPE}" = "solaris" ]
     then
+        cat > preload/Makefile <<EOF
+all:
+
+install:
+
+EOF
 	${MAKE} ${_mflags} all CFLAG_VISIBILITY=""
     else
 	${MAKE} ${_mflags} all
