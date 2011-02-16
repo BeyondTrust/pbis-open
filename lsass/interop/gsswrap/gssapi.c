@@ -193,7 +193,9 @@ cleanup:
 
     if (pContext)
     {
-        gss_release_buffer(NULL, &output_desc);
+        OM_uint32 dwMinorStatus;
+
+        gss_release_buffer(&dwMinorStatus, &output_desc);
     }
 
     LSA_GSS_UNLOCK_MUTEX(bInLock, &pContext->mutex);
