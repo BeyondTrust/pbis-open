@@ -193,7 +193,7 @@ cleanup:
 
     if (pContext)
     {
-        gss_release_buffer(&pContext->errorInfo.dwMinorStatus, &output_desc);
+        gss_release_buffer(NULL, &output_desc);
     }
 
     LSA_GSS_UNLOCK_MUTEX(bInLock, &pContext->mutex);
@@ -486,15 +486,11 @@ cleanup:
 
     if (pContext)
     {
-        gss_release_buffer_set(
-                &pContext->errorInfo.dwMinorStatus,
-                &clientName);
+        gss_release_buffer_set(NULL, &clientName);
 
-        gss_release_name(&pContext->errorInfo.dwMinorStatus, &initiatorName);
+        gss_release_name(NULL, &initiatorName);
 
-        gss_release_buffer(
-                &pContext->errorInfo.dwMinorStatus,
-                &clientNameBuffer);
+        gss_release_buffer(NULL, &clientNameBuffer);
     }
 
     LSA_GSS_UNLOCK_MUTEX(bInLock, &pContext->mutex);
