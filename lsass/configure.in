@@ -1100,6 +1100,8 @@ AC_CONFIG_FILES([Makefile
                  tools/lw-lsa/Makefile
                  etc/Makefile
                  etc/lsassd.reg
+                 etc/privileges.reg
+                 etc/accounts.reg
                  include/lsaregdef.h
                  include/Makefile
                  scripts/Makefile

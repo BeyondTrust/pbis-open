@@ -64,4 +64,16 @@ LsaSrvPrivsLookupPrivilegeName(
     );
 
 
+BOOLEAN
+LsaSrvIsPrivilegeNameValid(
+    PCSTR pszPrivilegeName
+    );
+
+
+BOOLEAN
+LsaSrvIsPrivilegeValueValid(
+    PLUID pValue
+    );
+
+
 #endif /* __LP_PRIVILEGE_H__ */

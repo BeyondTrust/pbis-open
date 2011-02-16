@@ -64,3 +64,4 @@
 #include "defines.h"
 #include "structs.h"
 #include "externs.h"
+#include "privilege.h"

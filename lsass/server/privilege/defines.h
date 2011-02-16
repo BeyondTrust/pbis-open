@@ -48,11 +48,13 @@
 #define __LSASRV_PRIVILEGE_DEFINES_H__
 
 
-#define LSASS_REG_KEY             "\\Services\\lsass"
+#define LSASS_REG_KEY             HKEY_THIS_MACHINE "\\Services\\lsass"
 #define LSA_PRIVILEGES_REG_KEY    LSASS_REG_KEY "\\Privileges"
 #define LSA_ACCOUNTS_REG_KEY      LSASS_REG_KEY "\\Accounts"
 
 #define LSA_PRIVILEGES_DB_SIZE    (16)
+
+#define LSA_PRIVILEGE_VALID_PREFIXES {"Se"}
 
 
 #endif /* __LSASRV_PRIVILEGE_DEFINES_H__ */

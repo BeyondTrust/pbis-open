@@ -50,7 +50,7 @@
 DWORD
 LsaSrvPrivsLookupPrivilegeValue(
     IN HANDLE hProvider,
-    IN PSTR pszPrivilegeName,
+    IN PCWSTR pwszPrivilegeName,
     OUT PLUID pPrivilegeValue
     )
 {
@@ -64,10 +64,49 @@ DWORD
 LsaSrvPrivsLookupPrivilegeName(
     IN HANDLE hProvider,
     IN PLUID pPrivilegeValue,
-    OUT PSTR *ppszPrivilegeName
+    OUT PWSTR *ppwszPrivilegeName
     )
 {
     DWORD err = ERROR_SUCCESS;
 
     return err;
+}
+
+
+BOOLEAN
+LsaSrvIsPrivilegeNameValid(
+    PCSTR pszPrivilegeName
+    )
+{
+    BOOLEAN Valid = FALSE;
+    PSTR ppszPrefixes[] = LSA_PRIVILEGE_VALID_PREFIXES;
+    DWORD i = 0;
+    PSTR pszPref = NULL;
+
+    if (!LW_IS_NULL_OR_EMPTY_STR(pszPrivilegeName))
+    {
+        for (i = 0;
+             !Valid && i < sizeof(ppszPrefixes)/sizeof(ppszPrefixes[0]);
+             i++)
+        {
+            LwStrStr(pszPrivilegeName,
+                     ppszPrefixes[i],
+                     &pszPref);
+            if (pszPrivilegeName == pszPref)
+            {
+                Valid = TRUE;
+            }
+        }
+    }
+        
+    return Valid;
+}
+
+
+BOOLEAN
+LsaSrvIsPrivilegeValueValid(
+    PLUID pValue
+    )
+{
+    return (pValue->HighPart == 0);
 }

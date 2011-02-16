@@ -222,6 +222,12 @@ LsaSrvCreatePrivilegesDb(
                      NULL);
         BAIL_ON_LSA_ERROR(err);
 
+        if (!LsaSrvIsPrivilegeNameValid(pszPrivilegeName))
+        {
+            err = ERROR_INVALID_DATA;
+            BAIL_ON_LSA_ERROR(err);
+        }
+
         err = RegOpenKeyExA(
                      hRegistry,
                      hPrivilegesKey,
@@ -379,6 +385,12 @@ LsaSrvReadPrivilegeEntry(
         BAIL_ON_LSA_ERROR(err);
     }
 
+    if (!LsaSrvIsPrivilegeValueValid(&privilegeValue))
+    {
+        err = ERROR_INVALID_DATA;
+        BAIL_ON_LSA_ERROR(err);
+    }
+
     //
     // "Enabled By Default" flag
     //
@@ -464,6 +476,20 @@ error:
     }
 
     return err;
+}
+
+
+VOID
+LsaSrvFreePrivileges(
+    VOID
+    )
+{
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+
+    if (pGlobals->pPrivileges)
+    {
+        LwHashSafeFree(&pGlobals->pPrivileges);
+    }
 }
 
 

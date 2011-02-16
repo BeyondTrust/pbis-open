@@ -49,6 +49,18 @@
 
 
 DWORD
+LsaSrvInitPrivileges(
+    VOID
+    );
+
+
+VOID
+LsaSrvFreePrivileges(
+    VOID
+    );
+
+
+DWORD
 LsaSrvPrivsAddAccountRights(
     IN HANDLE hProvider,
     IN OPTIONAL PACCESS_TOKEN pAccessToken,
@@ -80,4 +92,3 @@ LsaSrvPrivsEnumAccountRights(
 
 
 #endif /* __LSASRV_PRIVILEGE_H__ */
-
