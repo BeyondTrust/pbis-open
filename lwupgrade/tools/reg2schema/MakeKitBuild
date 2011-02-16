@@ -1,6 +1,6 @@
 make()
 {
     mk_stage \
-        SOURCE="regupgr61.sh reg61sed.sh" \
-        DESTDIR="${MK_BINDIR}"
+        DESTDIR="${MK_BINDIR}" \
+        regupgr61.sh reg61sed.sh
 }
