@@ -54,6 +54,13 @@ packages (depending on your Linux distro):
          when building on x86_64
          - ia32-libs, libc6-dev-i386, gcc-multilib
 
+    Note: The default version of awk on some Ubuntu systems has a known bug
+    which causes it to segfault when attempting to build.  You can work around
+    this by installing GNU awk:
+
+        sudo apt-get install gawk
+
+    See https://launchpad.net/ubuntu/+source/mawk/+bug/23494 for details
 
 The easiest way to begin a build is to run:
 
