@@ -440,7 +440,7 @@ RdrSession2FindOrCreate(
             (PWSTR*) (PVOID) &key.pVerifier,
             pCreds->payload.plain.pwszPassword);
         BAIL_ON_NT_STATUS(ntStatus);
-        key.VerifierLength = LwRtlWC16StringNumChars(pCreds->payload.plain.pwszPassword);
+        key.VerifierLength = LwRtlWC16StringNumChars(pCreds->payload.plain.pwszPassword) * 2;
         break;
     default:
         ntStatus = STATUS_ACCESS_DENIED;
