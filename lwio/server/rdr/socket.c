@@ -403,7 +403,9 @@ RdrSocketHashSessionCompareByKey(
     const struct _RDR_SESSION_KEY* pKey2 = (struct _RDR_SESSION_KEY*) vp2;
     
     return !(pKey1->uid == pKey2->uid &&
-             !strcmp(pKey1->pszPrincipal, pKey2->pszPrincipal));
+             !strcmp(pKey1->pszPrincipal, pKey2->pszPrincipal) &&
+             pKey1->VerifierLength == pKey2->VerifierLength &&
+             !memcmp(pKey1->pVerifier, pKey2->pVerifier, pKey1->VerifierLength));
 }
 
 static
@@ -413,8 +415,15 @@ RdrSocketHashSessionByKey(
     )
 {
     const struct _RDR_SESSION_KEY* pKey = (struct _RDR_SESSION_KEY*) vp;
+    size_t hash = SMBHashCaselessString(pKey->pszPrincipal) ^ (pKey->uid ^ (pKey->uid << 16));
+    ULONG index = 0;
 
-    return SMBHashCaselessString(pKey->pszPrincipal) ^ (pKey->uid ^ (pKey->uid << 16));
+    for (index = 0; index < pKey->VerifierLength; index++)
+    {
+        hash = hash * 31 + pKey->pVerifier[index];
+    }
+
+    return hash;
 }
 
 static

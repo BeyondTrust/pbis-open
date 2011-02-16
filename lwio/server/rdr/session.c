@@ -354,6 +354,7 @@ RdrSessionFree(
 
     LWIO_SAFE_FREE_MEMORY(pSession->pSessionKey);
     LWIO_SAFE_FREE_MEMORY(pSession->key.pszPrincipal);
+    LWIO_SAFE_FREE_MEMORY(pSession->key.pVerifier);
 
     if (pSession->pTimeout)
     {
@@ -415,6 +416,8 @@ RdrSessionFindOrCreate(
     BOOLEAN bInLock = FALSE;
     PRDR_SOCKET pSocket = *ppSocket;
     struct _RDR_SESSION_KEY key = {0};
+    PSTR pszUser = NULL;
+    PSTR pszDomain = NULL;
 
     LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
 
@@ -425,12 +428,34 @@ RdrSessionFindOrCreate(
             &key.pszPrincipal,
             pCreds->payload.krb5Tgt.pwszClientPrincipal);
         BAIL_ON_NT_STATUS(ntStatus);
+        key.VerifierLength = pCreds->payload.krb5Tgt.ulTgtSize;
+        ntStatus = RTL_ALLOCATE(&key.pVerifier, BYTE, key.VerifierLength);
+        BAIL_ON_NT_STATUS(ntStatus);
+        memcpy(key.pVerifier, pCreds->payload.krb5Tgt.pTgtData, key.VerifierLength);
         break;
     case IO_CREDS_TYPE_PLAIN:
         ntStatus = LwRtlCStringAllocateFromWC16String(
-            &key.pszPrincipal,
-            pCreds->payload.krb5Tgt.pwszClientPrincipal);
+            &pszUser,
+            pCreds->payload.plain.pwszUsername);
         BAIL_ON_NT_STATUS(ntStatus);
+
+        ntStatus = LwRtlCStringAllocateFromWC16String(
+            &pszDomain,
+            pCreds->payload.plain.pwszDomain);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        ntStatus = LwRtlCStringAllocatePrintf(
+            &key.pszPrincipal,
+            "%s\\%s",
+            pszDomain,
+            pszUser);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        ntStatus = LwRtlWC16StringDuplicate(
+            (PWSTR*) (PVOID) &key.pVerifier,
+            pCreds->payload.plain.pwszPassword);
+        BAIL_ON_NT_STATUS(ntStatus);
+        key.VerifierLength = LwRtlWC16StringNumChars(pCreds->payload.plain.pwszPassword);
         break;
     default:
         ntStatus = STATUS_ACCESS_DENIED;
@@ -458,14 +483,8 @@ RdrSessionFindOrCreate(
         BAIL_ON_NT_STATUS(ntStatus);
         
         pSession->pSocket = pSocket;
-
-        ntStatus = SMBStrndup(
-            key.pszPrincipal,
-            strlen(key.pszPrincipal) + 1,
-            &pSession->key.pszPrincipal);
-        BAIL_ON_NT_STATUS(ntStatus);
-        
-        pSession->key.uid = key.uid;
+        pSession->key = key;
+        memset(&key, 0, sizeof(key));
         
         ntStatus = SMBHashSetValue(
             pSocket->pSessionHashByPrincipal,
@@ -485,6 +504,9 @@ RdrSessionFindOrCreate(
 cleanup:
 
     LWIO_SAFE_FREE_STRING(key.pszPrincipal);
+    LWIO_SAFE_FREE_MEMORY(key.pVerifier);
+    RTL_FREE(&pszUser);
+    RTL_FREE(&pszDomain);
     
     return ntStatus;
     

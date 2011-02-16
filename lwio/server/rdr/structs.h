@@ -250,6 +250,8 @@ typedef struct _RDR_SESSION
     {
         uid_t uid;
         PSTR pszPrincipal;
+        ULONG VerifierLength;
+        PBYTE pVerifier;
     } key;
     SMB_HASH_TABLE *pTreeHashByPath;
     SMB_HASH_TABLE *pTreeHashByTID;
