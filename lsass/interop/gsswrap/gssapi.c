@@ -486,11 +486,13 @@ cleanup:
 
     if (pContext)
     {
-        gss_release_buffer_set(NULL, &clientName);
+        OM_uint32 dwMinorStatus;
 
-        gss_release_name(NULL, &initiatorName);
+        gss_release_buffer_set(&dwMinorStatus, &clientName);
 
-        gss_release_buffer(NULL, &clientNameBuffer);
+        gss_release_name(&dwMinorStatus, &initiatorName);
+
+        gss_release_buffer(&dwMinorStatus, &clientNameBuffer);
     }
 
     LSA_GSS_UNLOCK_MUTEX(bInLock, &pContext->mutex);
