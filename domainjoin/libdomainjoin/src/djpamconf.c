@@ -36,6 +36,7 @@
 #include "djstr.h"
 #include "djdistroinfo.h"
 #include "djpamconf.h"
+#include <libgen.h>
 
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
@@ -55,11 +56,18 @@ struct PamLine
     char *defaultInclude;
 };
 
+struct PamServiceAlias
+{
+    char *pFromService;
+    char *pToService;
+};
+
 struct PamConf
 {
     struct PamLine *lines;
     int lineCount;
-    DynamicArray private_data;
+    DynamicArray private_lines;
+    DynamicArray private_aliases;
     int modified;
 };
 
@@ -120,6 +128,13 @@ static DWORD AddOption(struct PamConf *conf, int line, const char *option);
 static int ContainsOption(struct PamConf *conf, int line, const char *option);
 
 static DWORD RemoveOption(struct PamConf *conf, int line, const char *option, int *pFound);
+
+static
+const char *
+GetUnaliasedServiceName(
+    struct PamConf *conf,
+    const char *name
+    );
 
 static
 DWORD
@@ -270,8 +285,8 @@ static void FreeServicesList(char **list)
 
 static void UpdatePublicLines(struct PamConf *conf)
 {
-    conf->lines = conf->private_data.data;
-    conf->lineCount = conf->private_data.size;
+    conf->lines = conf->private_lines.data;
+    conf->lineCount = conf->private_lines.size;
 }
 
 static const char *Basename(const char *path)
@@ -463,7 +478,7 @@ static DWORD AddFormattedLine(struct PamConf *conf, const char *filename, const 
 
     BAIL_ON_CENTERIS_ERROR(ceError = ParsePamLine(&lineObj, filename, linestr, endptr));
 
-    BAIL_ON_CENTERIS_ERROR(ceError = CTArrayAppend(&conf->private_data, sizeof(struct PamLine), &lineObj, 1));
+    BAIL_ON_CENTERIS_ERROR(ceError = CTArrayAppend(&conf->private_lines, sizeof(struct PamLine), &lineObj, 1));
     memset(&lineObj, 0, sizeof(struct PamLine));
     UpdatePublicLines(conf);
     conf->modified = 1;
@@ -523,7 +538,7 @@ static DWORD CopyLine(struct PamConf *conf, int oldLine, int *newLine)
     else
         lineObj.comment = NULL;
 
-    BAIL_ON_CENTERIS_ERROR(ceError = CTArrayInsert(&conf->private_data, oldLine + 1, sizeof(struct PamLine), &lineObj, 1));
+    BAIL_ON_CENTERIS_ERROR(ceError = CTArrayInsert(&conf->private_lines, oldLine + 1, sizeof(struct PamLine), &lineObj, 1));
     memset(&lineObj, 0, sizeof(lineObj));
     if(newLine != NULL)
         *newLine = oldLine + 1;
@@ -644,7 +659,7 @@ error:
 static DWORD RemoveLine(struct PamConf *conf, int *line)
 {
     DWORD ceError = ERROR_SUCCESS;
-    BAIL_ON_CENTERIS_ERROR(ceError = CTArrayRemove(&conf->private_data, *line, sizeof(struct PamLine),
+    BAIL_ON_CENTERIS_ERROR(ceError = CTArrayRemove(&conf->private_lines, *line, sizeof(struct PamLine),
             1));
     UpdatePublicLines(conf);
     conf->modified = 1;
@@ -800,6 +815,63 @@ error:
     return ceError;
 }
 
+static
+DWORD
+AddPamServiceAlias(
+    struct PamConf *conf,
+    const char *pFromName,
+    const char *pToName
+    )
+{
+    struct PamServiceAlias alias = { 0 };
+    DWORD ceError = 0;
+
+    ceError = CTStrdup(
+            pFromName,
+            &alias.pFromService);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    ceError = CTStrdup(
+            pToName,
+            &alias.pToService);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    ceError = CTArrayAppend(
+                    &conf->private_aliases,
+                    sizeof(alias),
+                    &alias,
+                    1);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+    memset(&alias, 0, sizeof(alias));
+
+error:
+    CT_SAFE_FREE_STRING(alias.pToService);
+    CT_SAFE_FREE_STRING(alias.pFromService);
+    return ceError;
+}
+
+static
+const char *
+GetUnaliasedServiceName(
+    struct PamConf *conf,
+    const char *name
+    )
+{
+    struct PamServiceAlias *aliases = (struct PamServiceAlias *)conf->
+        private_aliases.data;
+    int i = 0;
+    int aliasCount = conf->private_aliases.size;
+
+    for (i = 0; i < aliasCount; i++)
+    {
+        if (!strcmp(aliases[i].pFromService, name))
+        {
+            return aliases[i].pToService;
+        }
+    }
+    return name;
+}
+
 void GetModuleControl(struct PamLine *lineObj, const char **module, const char **control);
 
 static DWORD ReadPamFile(struct PamConf *conf, const char *rootPrefix, const char *filename)
@@ -909,6 +981,12 @@ ReadPamDirFile(
     BOOLEAN bIsDir = FALSE;
     PSTR pNonPrefixedFilePath = NULL;
     PSTR pFilePath = NULL;
+    PSTR pSymTarget = NULL;
+    struct stat pamDirectoryStat = { 0 };
+    struct stat compareDirectoryStat = { 0 };
+    PSTR pSymDirName = NULL;
+    PSTR pSymBaseName = NULL;
+    PSTR pAbsSymDirName = NULL;
 
     if (pFileEntry[0] == '.' || /*Ignore hidden files*/
        CTStrEndsWith(pFileEntry, ".bak") ||
@@ -936,19 +1014,82 @@ ReadPamDirFile(
         goto error;
     }
 
-    ceError = CTAllocateStringPrintf(
-                    &pNonPrefixedFilePath,
-                    "%s/%s",
-                    pDirPath,
-                    pFileEntry);
+    ceError = CTGetSymLinkTarget(pFilePath, &pSymTarget);
+    if (ceError == LW_ERROR_INVALID_PARAMETER)
+    {
+        // It is not a symlink
+        ceError = 0;
+    }
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    ceError = ReadPamFile(conf, pRootPrefix, pNonPrefixedFilePath);
-    BAIL_ON_CENTERIS_ERROR(ceError);
+    if (pSymTarget != NULL)
+    {
+        // Only treat this symlink as an alias if it points to a file in the
+        // same directory.
+
+        pSymBaseName = basename(pSymTarget);
+        pSymDirName = dirname(pSymDirName);
+
+        while (stat(pDirPath, &pamDirectoryStat) < 0)
+        {
+            if (errno == EINTR)
+                continue;
+            ceError = LwMapErrnoToLwError(errno);
+            BAIL_ON_CENTERIS_ERROR(ceError);
+        }
+        if (pSymDirName[0] != '/')
+        {
+            // If the path is relative, make it absolute
+            ceError = CTAllocateStringPrintf(
+                            &pAbsSymDirName,
+                            "%s/%s",
+                            pDirPath,
+                            pSymDirName);
+            BAIL_ON_CENTERIS_ERROR(ceError);
+            pSymDirName = pAbsSymDirName;
+        }
+        while (stat(pSymDirName, &compareDirectoryStat) < 0)
+        {
+            if (errno == EINTR)
+                continue;
+            ceError = LwMapErrnoToLwError(errno);
+            BAIL_ON_CENTERIS_ERROR(ceError);
+        }
+
+        if (pamDirectoryStat.st_dev != compareDirectoryStat.st_dev ||
+                pamDirectoryStat.st_ino != compareDirectoryStat.st_ino)
+        {
+            CT_SAFE_FREE_STRING(pSymTarget);
+            pSymBaseName = NULL;
+        }
+    }
+
+    if (pSymBaseName != NULL)
+    {
+        ceError = AddPamServiceAlias(
+                conf,
+                pFileEntry,
+                pSymBaseName);
+        BAIL_ON_CENTERIS_ERROR(ceError);
+    }
+    else
+    {
+        ceError = CTAllocateStringPrintf(
+                        &pNonPrefixedFilePath,
+                        "%s/%s",
+                        pDirPath,
+                        pFileEntry);
+        BAIL_ON_CENTERIS_ERROR(ceError);
+
+        ceError = ReadPamFile(conf, pRootPrefix, pNonPrefixedFilePath);
+        BAIL_ON_CENTERIS_ERROR(ceError);
+    }
 
 error:
     CT_SAFE_FREE_STRING(pFilePath);
+    CT_SAFE_FREE_STRING(pAbsSymDirName);
     CT_SAFE_FREE_STRING(pNonPrefixedFilePath);
+    CT_SAFE_FREE_STRING(pSymTarget);
     return ceError;
 }
 
@@ -1278,6 +1419,16 @@ error:
     return ceError;
 }
 
+static
+void
+FreePamServiceAliasContents(
+    struct PamServiceAlias *pAlias
+    )
+{
+    CT_SAFE_FREE_STRING(pAlias->pFromService);
+    CT_SAFE_FREE_STRING(pAlias->pToService);
+}
+
 static void FreePamConfContents(struct PamConf *conf)
 {
     int i;
@@ -1285,8 +1436,15 @@ static void FreePamConfContents(struct PamConf *conf)
     {
         FreePamLineContents(&conf->lines[i]);
     }
-    CTArrayFree(&conf->private_data);
+    CTArrayFree(&conf->private_lines);
     UpdatePublicLines(conf);
+
+    for(i = 0; i < conf->private_aliases.size; i++)
+    {
+        FreePamServiceAliasContents(&((struct PamServiceAlias *)
+                    conf->private_aliases.data)[i]);
+    }
+    CTArrayFree(&conf->private_aliases);
 }
 
 /* Strips known module paths off from the beginning of the module name, and strips off known extensions from the end of the module name.
@@ -1808,41 +1966,71 @@ static BOOLEAN PamModuleGrantsDomainLogins( const char * phase, const char * mod
 }
 */
 
-static DWORD GetIncludeName(struct PamLine *lineObj, PSTR *includeService)
+static
+DWORD
+GetIncludeName(
+    struct PamConf *conf,
+    struct PamLine *lineObj,
+    PSTR *ppIncludeService)
 {
+    DWORD ceError = 0;
     char buffer[256] = "";
+    PCSTR pRawName = NULL;
+    PSTR pIncludeService = NULL;
+
     if(lineObj->module != NULL)
         NormalizeModuleName( buffer, lineObj->module->value, sizeof(buffer));
 
-    if(lineObj->phase != NULL && !strcmp(lineObj->phase->value, "@include"))
+
+    if(lineObj->phase != NULL &&
+            !strcmp(lineObj->phase->value, "@include"))
     {
-        return CTStrdup(lineObj->control->value, includeService);
+        pRawName = lineObj->control->value;
     }
-    if(lineObj->control != NULL && !strcmp(lineObj->control->value, "include"))
+    else if(lineObj->control != NULL &&
+            !strcmp(lineObj->control->value, "include"))
     {
-        return CTStrdup(lineObj->module->value, includeService);
+        pRawName = lineObj->module->value;
     }
-    if(lineObj->control != NULL && !strcmp(lineObj->control->value, "substack"))
+    else if(lineObj->control != NULL &&
+            !strcmp(lineObj->control->value, "substack"))
     {
-        return CTStrdup(lineObj->module->value, includeService);
+        pRawName = lineObj->module->value;
     }
-    if(!strcmp(buffer, "pam_stack"))
+    else if(!strcmp(buffer, "pam_stack"))
     {
         int i;
         for(i = 0; i < lineObj->optionCount; i++)
         {
             if(CTStrStartsWith(lineObj->options[i].value, "service="))
             {
-                return CTStrdup(lineObj->options[i].value + strlen("service="), includeService);
+                pRawName = lineObj->options[i].value + strlen("service=");
+                break;
             }
         }
     }
-    if (!strcmp(buffer, "pam_per_user") && lineObj->defaultInclude)
+    if (pRawName == NULL &&
+            !strcmp(buffer, "pam_per_user") && lineObj->defaultInclude)
     {
-        return CTStrdup(lineObj->defaultInclude, includeService);
+        pRawName = lineObj->defaultInclude;
     }
-    *includeService = NULL;
-    return ERROR_SUCCESS;
+
+    if (pRawName != NULL)
+    {
+        ceError = CTStrdup(
+                GetUnaliasedServiceName(conf, pRawName),
+                &pIncludeService);
+        BAIL_ON_CENTERIS_ERROR(ceError);
+    }
+    *ppIncludeService = pIncludeService;
+
+error:
+    if (ceError)
+    {
+        CT_SAFE_FREE_STRING(pIncludeService);
+        *ppIncludeService = NULL;
+    }
+    return ceError;
 }
 
 struct ConfigurePamModuleState
@@ -1911,7 +2099,11 @@ static DWORD PamOldCenterisDisable(struct PamConf *conf, const char *service, co
         DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
 
         CT_SAFE_FREE_STRING(includeService);
-        BAIL_ON_CENTERIS_ERROR(ceError = GetIncludeName(lineObj, &includeService));
+        ceError = GetIncludeName(
+                        conf,
+                        lineObj,
+                        &includeService);
+        BAIL_ON_CENTERIS_ERROR(ceError);
         if(includeService != NULL)
         {
             DJ_LOG_INFO("Including %s for service %s", includeService, service);
@@ -2021,7 +2213,11 @@ static DWORD PamLwidentityDisable(struct PamConf *conf, const char *service, con
         DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
 
         CT_SAFE_FREE_STRING(includeService);
-        BAIL_ON_CENTERIS_ERROR(ceError = GetIncludeName(lineObj, &includeService));
+        ceError = GetIncludeName(
+                        conf,
+                        lineObj,
+                        &includeService);
+        BAIL_ON_CENTERIS_ERROR(ceError);
         if(includeService != NULL)
         {
             DJ_LOG_INFO("Including %s for service %s", includeService, service);
@@ -2248,6 +2444,7 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
     BOOLEAN doingPasswdForAIX = FALSE;
     LWException *nestedException = NULL;
     PSTR newMessage = NULL;
+    DWORD ceError = 0;
 
     DJ_LOG_INFO("Enabling pam_lwidentity for pam service %s for phase %s", service, phase);
     memset(&comment, 0, sizeof(comment));
@@ -2311,7 +2508,11 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
         DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
 
         CT_SAFE_FREE_STRING(includeService);
-        LW_CLEANUP_CTERR(exc, GetIncludeName(lineObj, &includeService));
+        ceError = GetIncludeName(
+                        conf,
+                        lineObj,
+                        &includeService);
+        LW_CLEANUP_CTERR(exc, ceError);
         if(includeService != NULL)
         {
             DJ_LOG_INFO("Including %s for service %s", includeService, service);
@@ -2918,7 +3119,11 @@ static DWORD PamLwiPassPolicyDisable(struct PamConf *conf, const char *service, 
         DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
 
         CT_SAFE_FREE_STRING(includeService);
-        BAIL_ON_CENTERIS_ERROR(ceError = GetIncludeName(lineObj, &includeService));
+        ceError = GetIncludeName(
+                        conf,
+                        lineObj,
+                        &includeService);
+        BAIL_ON_CENTERIS_ERROR(ceError);
         if(includeService != NULL)
         {
             DJ_LOG_INFO("Including %s for service %s", includeService, service);
@@ -3004,7 +3209,11 @@ static DWORD PamLwiPassPolicyEnable(struct PamConf *conf, const char *service, c
         DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
 
         CT_SAFE_FREE_STRING(includeService);
-        BAIL_ON_CENTERIS_ERROR(ceError = GetIncludeName(lineObj, &includeService));
+        ceError = GetIncludeName(
+                        conf,
+                        lineObj,
+                        &includeService);
+        BAIL_ON_CENTERIS_ERROR(ceError);
         if(includeService != NULL)
         {
             DJ_LOG_INFO("Including %s for service %s", includeService, service);
@@ -3242,13 +3451,9 @@ static DWORD FindPamLwidentity(const char *testPrefix, char **destName, DWORD *f
 {
     DWORD ceError;
     ceError = FindModulePath(testPrefix, "pam_lsass", destName, flags);
-    if(ceError == ERROR_MISSING_SYSTEMFILE)
-    {
-        ceError = FindModulePath(testPrefix, "pam_lwidentity", destName, flags);
-    }
     if(ceError)
     {
-        DJ_LOG_ERROR("Unable to find pam_lwidentity or pam_lsass");
+        DJ_LOG_ERROR("Unable to find pam_lsass");
     }
     return ceError;
 }
@@ -3309,6 +3514,13 @@ void DJUpdatePamConf(const char *testPrefix,
              * gdm instead.
              */
             DJ_LOG_INFO("Not directly enabling pam entry point 'system-auth'");
+            continue;
+        }
+        if(!strcmp(services[i], "system-auth-ac"))
+        {
+            /* Include file on Fedora 14.
+             */
+            DJ_LOG_INFO("Not directly enabling pam entry point 'system-auth-ac'");
             continue;
         }
         if(!strcmp(services[i], "common-session"))
@@ -3708,7 +3920,11 @@ static DWORD IsLwidentityEnabled(struct PamConf *conf, const char *service, cons
         GetModuleControl(lineObj, &module, &control);
 
         CT_SAFE_FREE_STRING(includeService);
-        BAIL_ON_CENTERIS_ERROR(ceError = GetIncludeName(lineObj, &includeService));
+        ceError = GetIncludeName(
+                        conf,
+                        lineObj,
+                        &includeService);
+        BAIL_ON_CENTERIS_ERROR(ceError);
         if(includeService != NULL)
         {
             ceError = IsLwidentityEnabled(conf, includeService, phase, configured);
