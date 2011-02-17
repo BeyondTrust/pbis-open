@@ -670,7 +670,7 @@ GetSecretsPath(
     // Look for secrets.tdb in the statedir (Ubuntu 10.10 is like this)
     error = LwAllocateStringPrintf(
             &pCommandLine,
-            "%s -b | grep PRIVATE_DIR:",
+            "%s -b | grep STATEDIR:",
             pSmbdPath
             );
     BAIL_ON_LSA_ERROR(error);
