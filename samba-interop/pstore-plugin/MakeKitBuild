@@ -1,0 +1,13 @@
+make()
+{
+    mk_group \
+        GROUP="samba-pstore-plugin" \
+        SOURCES="samba-pstore-plugin.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="tdb.h lw/winerror.h reg/regutil.h" \
+        LIBDEPS="tdb lwadvapi rsutils lwbase_nothr"
+
+    mk_dlo \
+        DLO=samba-pstore-plugin \
+        GROUPS="samba-pstore-plugin"
+}
