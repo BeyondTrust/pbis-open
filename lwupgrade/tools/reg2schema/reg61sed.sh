@@ -37,9 +37,9 @@ write_sed_script()
   fi
 
   cat << NNNN > "$TMPSEDSCRIPT"
-  #
-  # Move/translate pstore default parameters
-  #
+#
+# Move/translate pstore default parameters
+#
 /\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.Pstore.Default\]/,/^/{
   s/\\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.Pstore.Default\\]/[HKEY_THIS_MACHINE\\\\Services\\\\lsass\\\\Parameters\\\\Providers\\\\ActiveDirectory\\\\DomainJoin\\\\$DOMAINNAME\\\\Pstore]/
   s/"DomainDnsName"/"DnsDomainName"/
@@ -49,7 +49,7 @@ write_sed_script()
   s/"MachineAccount"/"SamAccountName"/
   s/"ClientModifyTimestamp"/"UnixLastChangeTime"/
 
-  #Hack to anchor addition of
+#Hack to anchor addition of
   /.*HostName.*/{
     a\\
 "AccountFlags"=dword:00000001
