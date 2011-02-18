@@ -291,4 +291,7 @@ configure()
     else
         mk_output_file etc/lsassd.reg
     fi
+
+    mk_output_file etc/privileges.reg
+    mk_output_file etc/accounts.reg
 }
