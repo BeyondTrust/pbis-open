@@ -88,17 +88,15 @@ SamDbBuildDirectoryContext(
     *ppDirContext = pDirContext;
 
 cleanup:
-
     return dwError;
 
 error:
-
-    *ppDirContext = NULL;
-
     if (pDirContext)
     {
         SamDbFreeDirectoryContext(pDirContext);
     }
+
+    *ppDirContext = NULL;
 
     goto cleanup;
 }
@@ -116,7 +114,7 @@ SamDbAcquireDbContext(
 
     SAMDB_LOCK_MUTEX(bInLock, &gSamGlobals.mutex);
 
-    if (gSamGlobals.dwNumDbContexts)
+    if (gSamGlobals.pDbContextList)
     {
         pDbContext = gSamGlobals.pDbContextList;
 
@@ -144,19 +142,17 @@ SamDbAcquireDbContext(
     *ppDbContext = pDbContext;
 
 cleanup:
-
     SAMDB_UNLOCK_MUTEX(bInLock, &gSamGlobals.mutex);
 
     return dwError;
 
 error:
-
-    *ppDbContext = pDbContext;
-
     if (pDbContext)
     {
         SamDbFreeDbContext(pDbContext);
     }
+
+    *ppDbContext = NULL;
 
     goto cleanup;
 }
