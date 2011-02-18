@@ -78,7 +78,12 @@ fi
 
 TMP_FILE="/tmp/.lw-edit-reg-$$.txt"
 
-"${BINDIR}/lwregshell" export --legacy ${ROOT_PATH} "${TMP_FILE}" || exit $?
+#
+# Warning: \r is embedded as ^M (0xd) as not all UNIX sed supports 
+# the \r escape sequence for this character.
+#
+"${BINDIR}/lwregshell" export --legacy ${ROOT_PATH} - | \
+    sed 's|$||' > "${TMP_FILE}" || exit $?
 ${EDITOR} "${TMP_FILE}" || exit $?
 "${BINDIR}/lwregshell" import "${TMP_FILE}" || exit $?
 rm -f "${TMP_FILE}"
