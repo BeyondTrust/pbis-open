@@ -79,6 +79,7 @@ LsaSrvAuthenticateUserPam(
         if (pPamAuthInfo)
         {
             LsaFreeAuthUserPamInfo(pPamAuthInfo);
+            pPamAuthInfo = NULL;
         }
         dwError = pProvider->pFnTable->pfnAuthenticateUserPam(
                                             hProvider,
