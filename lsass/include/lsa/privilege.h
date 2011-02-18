@@ -104,6 +104,49 @@
 #define POLICY_MODE_REMOTE_INTERACTIVE       (0x00000400)
 #define POLICY_MODE_DENY_REMOTE_INTERACTIVE  (0x00000800)
 
+//
+// System access right names for predefined unicode strings
+//
+#define SE_INTERACTIVE_LOGON_NAME  {'S','e','I','n','t','e','r', \
+                                    'a','c','t','i','v','e', \
+                                    'L','o','g','o','n', \
+                                    'R','i','g','h','t','\0'}
+#define SE_NETWORK_LOGON_NAME  {'S','e','N','e','t','w','o','r','k', \
+                                'L','o','g','o','n', \
+                                'R','i','g','h','t','\0'}
+#define SE_BATCH_LOGON_NAME  {'S','e','B','a','t','c','h', \
+                              'L','o','g','o','n', \
+                              'R','i','g','h','t','\0'}
+#define SE_SERVICE_LOGON_NAME  {'S','e','S','e','r','v','i','c','e', \
+                                'L','o','g','o','n', \
+                                'R','i','g','h','t','\0'}
+#define SE_DENY_INTERACTIVE_LOGON_NAME  {'S','e','D','e','n','y', \
+                                         'I','n','t','e','r', \
+                                         'a','c','t','i','v','e', \
+                                         'L','o','g','o','n', \
+                                         'R','i','g','h','t','\0'}
+#define SE_DENY_NETWORK_LOGON_NAME  {'S','e','D','e','n','y', \
+                                     'N','e','t','w','o','r','k', \
+                                     'L','o','g','o','n', \
+                                     'R','i','g','h','t','\0'}
+#define SE_DENY_BATCH_LOGON_NAME  {'S','e','B','a','t','c','h', \
+                                   'L','o','g','o','n', \
+                                   'R','i','g','h','t','\0'}
+#define SE_DENY_SERVICE_LOGON_NAME  {'S','e','S','e','r','v','i','c','e', \
+                                     'L','o','g','o','n', \
+                                     'R','i','g','h','t','\0'}
+#define SE_REMOTE_INTERACTIVE_LOGON_NAME  {'S','e','R','e','m','o','t','e', \
+                                           'I','n','t','e','r', \
+                                           'a','c','t','i','v','e', \
+                                           'L','o','g','o','n', \
+                                           'R','i','g','h','t','\0'}
+#define SE_DENY_REMOTE_INTERACTIVE_LOGON_NAME  {'S','e','D','e','n','y', \
+                                                'R','e','m','o','t','e', \
+                                                'I','n','t','e','r', \
+                                                'a','c','t','i','v','e', \
+                                                'L','o','g','o','n', \
+                                                'R','i','g','h','t','\0'}
+
 
 DWORD
 LsaPrivsAddAccountRights(
