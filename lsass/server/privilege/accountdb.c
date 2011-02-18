@@ -465,6 +465,7 @@ LsaSrvGetAccountEntry(
     {
         // Maps to STATUS_OBJECT_NAME_NOT_FOUND
         err = ERROR_FILE_NOT_FOUND;
+        BAIL_ON_LSA_ERROR(err);
     }
     else if (err != ERROR_SUCCESS)
     {

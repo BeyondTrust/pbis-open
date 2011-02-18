@@ -535,6 +535,7 @@ LsaSrvGetPrivilegeEntryByName(
     {
         // Maps to STATUS_NO_SUCH_PRIVILEGE
         err = ERROR_NO_SUCH_PRIVILEGE;
+        BAIL_ON_LSA_ERROR(err);
     }
     else if (err != ERROR_SUCCESS)
     {
