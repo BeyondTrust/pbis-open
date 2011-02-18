@@ -606,6 +606,7 @@ struct
     { ARCH_X86_32, "i586" },
     { ARCH_X86_32, "i686" },
     { ARCH_X86_64, "x86_64" },
+    { ARCH_X86_64, "amd64" },
     { ARCH_HPPA, "hppa" },
     { ARCH_IA64, "ia64" },
     { ARCH_IA64, "itanium" },
