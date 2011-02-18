@@ -90,6 +90,20 @@
 #define SE_TIME_ZONE_NAME  {'S','e','T','i','m','e','Z','o','n','e', \
                             'P','r','i','v','i','l','e','g','e','\0'}
 
+//
+// System access right flags
+//
+#define POLICY_MODE_INTERACTIVE              (0x00000001)
+#define POLICY_MODE_NETWORK                  (0x00000002)
+#define POLICY_MODE_BATCH                    (0x00000004)
+#define POLICY_MODE_SERVICE                  (0x00000010)
+#define POLICY_MODE_DENY_INTERACTIVE         (0x00000040)
+#define POLICY_MODE_DENY_NETWORK             (0x00000080)
+#define POLICY_MODE_DENY_BATCH               (0x00000100)
+#define POLICY_MODE_DENY_SERVICE             (0x00000200)
+#define POLICY_MODE_REMOTE_INTERACTIVE       (0x00000400)
+#define POLICY_MODE_DENY_REMOTE_INTERACTIVE  (0x00000800)
+
 
 DWORD
 LsaPrivsAddAccountRights(
