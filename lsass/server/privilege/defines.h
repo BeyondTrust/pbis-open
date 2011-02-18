@@ -44,17 +44,42 @@
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef __LSASRV_PRIVILEGE_DEFINES_H__
-#define __LSASRV_PRIVILEGE_DEFINES_H__
+#ifndef __LSASRV_PRIVS_DEFINES_H__
+#define __LSASRV_PRIVS_DEFINES_H__
 
 
 #define LSASS_REG_KEY             HKEY_THIS_MACHINE "\\Services\\lsass"
 #define LSA_PRIVILEGES_REG_KEY    LSASS_REG_KEY "\\Privileges"
 #define LSA_ACCOUNTS_REG_KEY      LSASS_REG_KEY "\\Accounts"
 
+#define LSA_ACCOUNTS_PRIVILEGES_SUBKEY         "Privileges"
+#define LSA_ACCOUNTS_SYS_ACCESS_RIGHTS_SUBKEY  "SystemAccessRights"
+
 #define LSA_PRIVILEGES_DB_SIZE    (16)
+#define LSA_ACCOUNTS_DB_SIZE      (16)
 
 #define LSA_PRIVILEGE_VALID_PREFIXES {"Se"}
 
+#define LSA_MAX_PRIVILEGES_COUNT  (100)
 
-#endif /* __LSASRV_PRIVILEGE_DEFINES_H__ */
+
+#define LSASRV_PRIVS_WRLOCK_RWLOCK(bInLock, pRwLock) \
+        if (!bInLock) { \
+            pthread_rwlock_wrlock(pRwLock); \
+            bInLock = TRUE; \
+        }
+
+#define LSASRV_PRIVS_RDLOCK_RWLOCK(bInLock, pRwLock) \
+        if (!bInLock) { \
+            pthread_rwlock_rdlock(pRwLock); \
+            bInLock = TRUE; \
+        }
+
+#define LSASRV_PRIVS_UNLOCK_RWLOCK(bInLock, pRwLock) \
+        if (bInLock) { \
+            pthread_rwlock_unlock(pRwLock); \
+            bInLock = FALSE; \
+        }
+
+
+#endif /* __LSASRV_PRIVS_DEFINES_H__ */

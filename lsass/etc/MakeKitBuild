@@ -1,6 +1,8 @@
 make()
 {
     mk_stage \
-	SOURCE="lsassd.reg" \
-	DESTDIR="${LW_CONFIGDIR}"
+        DESTDIR="${LW_CONFIGDIR}" \
+        lsassd.reg \
+        privileges.reg \
+        accounts.reg
 }

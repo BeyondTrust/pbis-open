@@ -44,16 +44,8 @@
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef __PRIVILEGE_H__
-#define __PRIVILEGE_H__
-
-
-DWORD
-LsaSrvPrivsLookupPrivilegeValue(
-    IN HANDLE hProvider,
-    IN PCWSTR pwszPrivilegeName,
-    OUT PLUID pPrivilegeValue
-    );
+#ifndef __LSASRV_PRIVILEGE_DEFINES_H__
+#define __LSASRV_PRIVILEGE_DEFINES_H__
 
 
 DWORD
@@ -76,4 +68,4 @@ LsaSrvIsPrivilegeValueValid(
     );
 
 
-#endif /* __LP_PRIVILEGE_H__ */
+#endif /* __LSASRV_PRIVILEGE_DEFINES_H__ */

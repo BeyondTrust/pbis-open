@@ -50,7 +50,10 @@
 
 typedef struct _LSASRV_PRIVILEGE_GLOBALS
 {
+    pthread_rwlock_t privilegesRwLock;
     PLW_HASH_TABLE pPrivileges;
+
+    pthread_rwlock_t accountsRwLock;
     PLW_HASH_TABLE pAccounts;
 
 } LSASRV_PRIVILEGE_GLOBALS, *PLSASRV_PRIVILEGE_GLOBALS;
@@ -64,6 +67,16 @@ typedef struct _LSA_PRIVILEGE
     BOOLEAN  EnabledByDefault;
 
 } LSA_PRIVILEGE, *PLSA_PRIVILEGE;
+
+
+typedef struct _LSA_ACCOUNT
+{
+    PSID pSid;
+    LUID_AND_ATTRIBUTES Privileges[LSA_MAX_PRIVILEGES_COUNT];
+    DWORD SystemAccessRights;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc;
+
+} LSA_ACCOUNT, *PLSA_ACCOUNT;
 
 
 #endif /* __LSASRV_PRIVILEGE_STRUCTS_H__ */

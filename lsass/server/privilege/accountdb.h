@@ -33,71 +33,44 @@
  *
  * Module Name:
  *
- *        lsasrvprivilege.h
+ *        accountdb.h
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        Local Privilege Server API
+ *        Local Authentication Provider
+ *
+ *        LSA Accounts database
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef __LSASRV_PRIVILEGE_H__
-#define __LSASRV_PRIVILEGE_H__
+#ifndef __LSASRV_PRIVS_ACCOUNTDB_H__
+#define __LSASRV_PRIVS_ACCOUNTDB_H__
 
 
 DWORD
-LsaSrvInitPrivileges(
-    VOID
-    );
-
-
-VOID
-LsaSrvFreePrivileges(
-    VOID
+LsaSrvCreateAccountsDb(
+    IN HANDLE hRegistry,
+    IN HKEY hAccountsKey,
+    OUT PLW_HASH_TABLE *ppAccounts
     );
 
 
 DWORD
-LsaSrvPrivsAddAccountRights(
-    IN HANDLE hProvider,
-    IN OPTIONAL PACCESS_TOKEN pAccessToken,
-    IN PCSTR pszSids,
-    IN PWSTR *ppwszAccountRights,
-    IN DWORD NumAccountRights
+LsaSrvGetAccountEntry(
+    IN PSID pAccountSid,
+    OUT PLSA_ACCOUNT *ppAccountEntry
     );
 
 
 DWORD
-LsaSrvPrivsRemoveAccountRights(
-    IN HANDLE hProvider,
-    IN OPTIONAL PACCESS_TOKEN pAccessToken,
-    IN PCSTR pszSids,
-    IN BOOLEAN RemoveAll,
-    IN PWSTR *ppwszAccountRights,
-    IN DWORD NumAccountRights
+LsaSrvSetAccountEntry(
+    IN PSID pAccountSid,
+    IN PLSA_ACCOUNT pAccountEntry,
+    IN BOOLEAN Overwrite
     );
 
 
-DWORD
-LsaSrvPrivsEnumAccountRights(
-    IN HANDLE hProvider,
-    IN OPTIONAL PACCESS_TOKEN pAccessToken,
-    IN PCSTR pszAccountSid,
-    OUT PWSTR **ppwszAccountRights,
-    OUT PDWORD pNumAccountRights
-    );
-
-
-DWORD
-LsaSrvPrivsLookupPrivilegeValue(
-    IN HANDLE hProvider,
-    IN OPTIONAL PACCESS_TOKEN pAccessToken,
-    IN PCWSTR pwszPrivilegeName,
-    OUT PLUID pPrivilegeValue
-    );
-
-
-#endif /* __LSASRV_PRIVILEGE_H__ */
+#endif /* __LSASRV_PRIVS_ACCOUNTDB_H__ */

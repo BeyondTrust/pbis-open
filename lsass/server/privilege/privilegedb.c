@@ -78,10 +78,11 @@ LsaSrvFreePrivilegeEntry(
 
 static
 DWORD
-LsaSrvCreateAccountsDb(
-    IN HANDLE hRegistry,
-    IN HKEY hAccountsKey,
-    OUT PLW_HASH_TABLE *ppAccounts
+LsaSrvSetPrivilegeEntry_inlock(
+    IN PLW_HASH_TABLE pPrivilegesTable,
+    IN PSTR pszPrivilegeName,
+    IN PLSA_PRIVILEGE pPrivilegeEntry,
+    IN BOOLEAN Overwrite
     );
 
 
@@ -108,6 +109,8 @@ LsaSrvInitPrivileges(
                  &hPrivileges);
     BAIL_ON_LSA_ERROR(err);
 
+    pthread_rwlock_init(&pGlobals->privilegesRwLock, NULL);
+
     err = LsaSrvCreatePrivilegesDb(
                  hRegistry,
                  hPrivileges,
@@ -123,6 +126,8 @@ LsaSrvInitPrivileges(
                  &hAccounts);
     BAIL_ON_LSA_ERROR(err);
 
+    pthread_rwlock_init(&pGlobals->accountsRwLock, NULL);
+
     err = LsaSrvCreateAccountsDb(
                  hRegistry,
                  hAccounts,
@@ -130,6 +135,11 @@ LsaSrvInitPrivileges(
     BAIL_ON_LSA_ERROR(err);
 
 error:
+    if (err)
+    {
+        LsaSrvFreePrivileges();
+    }
+
     if (hRegistry)
     {
         RegCloseServer(hRegistry);
@@ -158,6 +168,8 @@ LsaSrvCreatePrivilegesDb(
     )
 {
     DWORD err = ERROR_SUCCESS;
+    BOOLEAN Locked = FALSE;
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
     PLW_HASH_TABLE pHash = NULL;
     DWORD numKeys = 0;
     DWORD maxKeyLen = 0;
@@ -167,10 +179,11 @@ LsaSrvCreatePrivilegesDb(
     PSTR pszKey = NULL;
     PLSA_PRIVILEGE pPrivilegeEntry = NULL;
 
+    LSASRV_PRIVS_WRLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
+
     //
     // Create the database hash table
     //
-
     err = LwHashCreate(
                  LSA_PRIVILEGES_DB_SIZE,
                  LwHashCaselessStringCompare,
@@ -205,7 +218,6 @@ LsaSrvCreatePrivilegesDb(
     // Enumerate through privileges keys. Each key represents a single
     // privilege with the key name being privilege name.
     //
-
     for (i = 0; i < numKeys; i++)
     {
         DWORD privilegeNameLen = maxKeyLen;
@@ -240,7 +252,6 @@ LsaSrvCreatePrivilegesDb(
         //
         // Read privilege info to the database entry
         //
-
         err = LsaSrvReadPrivilegeEntry(
                      hRegistry,
                      hPrivilege,
@@ -253,10 +264,11 @@ LsaSrvCreatePrivilegesDb(
                      &pszKey);
         BAIL_ON_LSA_ERROR(err);
 
-        err = LwHashSetValue(
+        err = LsaSrvSetPrivilegeEntry_inlock(
                      pHash,
                      pszKey,
-                     pPrivilegeEntry);
+                     pPrivilegeEntry,
+                     FALSE);
         BAIL_ON_LSA_ERROR(err);
 
         pszKey          = NULL;
@@ -294,6 +306,8 @@ error:
 
         *ppPrivileges = NULL;
     }
+
+    LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
 
     LW_SAFE_FREE_MEMORY(pszPrivilegeName);
 
@@ -490,18 +504,125 @@ LsaSrvFreePrivileges(
     {
         LwHashSafeFree(&pGlobals->pPrivileges);
     }
+
+    if (pGlobals->pAccounts)
+    {        
+        LwHashSafeFree(&pGlobals->pAccounts);
+    }
+
+    pthread_rwlock_destroy(&pGlobals->privilegesRwLock);
+    pthread_rwlock_destroy(&pGlobals->accountsRwLock);
+}
+
+
+DWORD
+LsaSrvGetPrivilegeEntryByName(
+    IN PCSTR pszPrivilegeName,
+    OUT PLSA_PRIVILEGE *ppPrivilegeEntry
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    BOOLEAN Locked = FALSE;
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+    PLSA_PRIVILEGE pPrivilegeEntry = NULL;
+
+    LSASRV_PRIVS_RDLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
+
+    err = LwHashGetValue(gLsaPrivilegeGlobals.pPrivileges,
+                         pszPrivilegeName,
+                         (PVOID)&pPrivilegeEntry);
+    if (err == ERROR_NOT_FOUND)
+    {
+        // Maps to STATUS_NO_SUCH_PRIVILEGE
+        err = ERROR_NO_SUCH_PRIVILEGE;
+    }
+    else if (err != ERROR_SUCCESS)
+    {
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    *ppPrivilegeEntry = pPrivilegeEntry;
+
+error:
+    LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
+
+    if (err)
+    {
+        if (ppPrivilegeEntry)
+        {
+            *ppPrivilegeEntry = NULL;
+        }
+    }
+
+    return err;
 }
 
 
 static
 DWORD
-LsaSrvCreateAccountsDb(
-    IN HANDLE hRegistry,
-    IN HKEY hAccountsKey,
-    OUT PLW_HASH_TABLE *ppAccounts
+LsaSrvSetPrivilegeEntry_inlock(
+    IN PLW_HASH_TABLE pPrivilegesTable,
+    IN PSTR pszPrivilegeName,
+    IN PLSA_PRIVILEGE pPrivilegeEntry,
+    IN BOOLEAN Overwrite
     )
 {
     DWORD err = ERROR_SUCCESS;
+    PLSA_PRIVILEGE pExistingEntry = NULL;
+
+    //
+    // Check if a value already exists under this key and
+    // overwrite it if requested
+    //
+    err = LwHashGetValue(pPrivilegesTable,
+                         pszPrivilegeName,
+                         (PVOID)&pExistingEntry);
+    if (err == ERROR_SUCCESS && !Overwrite)
+    {
+        LSA_LOG_WARNING("Duplicate %s privilege entry found",
+                        pszPrivilegeName);
+
+        err = ERROR_ALREADY_EXISTS;
+        BAIL_ON_LSA_ERROR(err);
+    }
+    else if (err == ERROR_NOT_FOUND)
+    {
+        err = ERROR_SUCCESS;
+    }
+    else
+    {
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    err = LwHashSetValue(pPrivilegesTable,
+                         pszPrivilegeName,
+                         pPrivilegeEntry);
+
+    BAIL_ON_LSA_ERROR(err);
+
+error:
+    return err;
+}
+
+
+DWORD
+LsaSrvSetPrivilegeEntry(
+    IN PSTR pszPrivilegeName,
+    IN PLSA_PRIVILEGE pPrivilegeEntry,
+    IN BOOLEAN Overwrite
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    BOOLEAN Locked = FALSE;
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+
+    LSASRV_PRIVS_WRLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
+    err = LsaSrvSetPrivilegeEntry_inlock(
+                      pGlobals->pPrivileges,
+                      pszPrivilegeName,
+                      pPrivilegeEntry,
+                      Overwrite);
+    LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
 
     return err;
 }

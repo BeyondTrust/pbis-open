@@ -47,6 +47,7 @@
 #include <config.h>
 #include <lsasystem.h>
 #include <lsadef.h>
+#include <lw/base.h>
 #include <lsa/lsa.h>
 #include <reg/reg.h>
 
@@ -65,3 +66,5 @@
 #include "structs.h"
 #include "externs.h"
 #include "privilege.h"
+#include "privilegedb.h"
+#include "accountdb.h"

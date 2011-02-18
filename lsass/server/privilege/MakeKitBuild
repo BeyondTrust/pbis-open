@@ -5,7 +5,8 @@ make()
         globals.c \
         privilege.c \
         account.c \
-        privilegedb.c"
+        privilegedb.c \
+        accountdb.c"
 
     LIBDEPS="lsautils"
 
