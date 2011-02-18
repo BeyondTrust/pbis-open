@@ -70,6 +70,11 @@ AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CFLAGS)
 
 AC_C_BIGENDIAN
+if test "x$ac_cv_c_bigendian" = "xyes"; then
+    AC_DEFINE([LW_BIG_ENDIAN], [], [Define standard macro for Big Endian systems])
+else
+    AC_DEFINE([LW_LITTLE_ENDIAN], [], [Define standard macro for Little Endian systems])
+fi
 
 AC_PROG_CC
 AC_PROG_CXX
