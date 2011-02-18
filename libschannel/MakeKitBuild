@@ -8,6 +8,11 @@ configure()
     
     mk_check_endian
 
+    case "$ENDIANNESS" in
+        big) mk_define LW_BIG_ENDIAN;;
+        little) mk_define LW_LITTLE_ENDIAN;;
+    esac
+
     # Necessary headers
     mk_check_headers FAIL=yes \
         openssl/crypto.h
