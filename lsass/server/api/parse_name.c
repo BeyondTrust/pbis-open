@@ -1,3 +1,7 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
+
 /*
  * Copyright Likewise Software
  * All rights reserved.
@@ -74,8 +78,13 @@ LsaSrvCrackDomainQualifiedName(
 
         if (!LW_IS_NULL_OR_EMPTY_STR(pszNameCopy+idx+1)) {
             dwError = LwAllocateString(pszNameCopy+idx+1, &pNameInfo->pszName);
-            BAIL_ON_LSA_ERROR(dwError);
         }
+        else
+        {
+            dwError = ERROR_INVALID_NAME;
+        }
+        BAIL_ON_LSA_ERROR(dwError);
+
         pNameInfo->nameType = NameType_NT4;
     }
     else if ((pszIndex = strchr(pszNameCopy, '@')) != NULL) {
@@ -85,8 +94,13 @@ LsaSrvCrackDomainQualifiedName(
 
         if (!LW_IS_NULL_OR_EMPTY_STR(pszNameCopy+idx+1)) {
             dwError = LwAllocateString(pszNameCopy+idx+1, &pNameInfo->pszDomain);
-            BAIL_ON_LSA_ERROR(dwError);
         }
+        else
+        {
+            dwError = ERROR_INVALID_NAME;
+        }
+        BAIL_ON_LSA_ERROR(dwError);
+
         pNameInfo->nameType = NameType_UPN;
     }
     else {
