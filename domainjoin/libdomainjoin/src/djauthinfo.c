@@ -1076,25 +1076,23 @@ void DJCreateComputerAccount(
         dnsDomain = hostFqdn + strlen(shortHostname) + 1;
     }
 
-    dwError = SetBooleanRegistryValue("Services\\lsass\\Parameters\\Providers\\ActiveDirectory",
-                                   "AssumeDefaultDomain",
-                                   options->assumeDefaultDomain);
-    if (dwError)
-    {
-        LW_RAISE_LSERR(exc, dwError);
-        goto cleanup;
-    }
-
-    dwError = SetStringRegistryValue("Services\\lsass\\Parameters\\Providers\\ActiveDirectory",
-                                     "UserDomainPrefix",
-                                     options->userDomainPrefix);
-    if (dwError)
-    {
-        LW_RAISE_LSERR(exc, dwError);
-        goto cleanup;
-    }
-
     LW_CLEANUP_LSERR(exc, LsaOpenServer(&lsa));
+
+    if (options->setAssumeDefaultDomain)
+    {
+        dwError = SetBooleanRegistryValue("Services\\lsass\\Parameters\\Providers\\ActiveDirectory",
+                                       "AssumeDefaultDomain",
+                                       options->assumeDefaultDomain);
+        LW_CLEANUP_LSERR(exc, dwError);
+
+        dwError = SetStringRegistryValue("Services\\lsass\\Parameters\\Providers\\ActiveDirectory",
+                                         "UserDomainPrefix",
+                                         options->userDomainPrefix);
+        LW_CLEANUP_LSERR(exc, dwError);
+
+        dwError = LsaRefreshConfiguration(lsa);
+        LW_CLEANUP_LSERR(exc, dwError);
+    }
 
     dwError = LsaAdJoinDomain(
                  lsa,
