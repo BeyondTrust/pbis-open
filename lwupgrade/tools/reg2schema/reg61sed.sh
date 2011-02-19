@@ -29,7 +29,6 @@ write_sed_script()
 {
   DOMAINNAME=$1
   FQDN=$2
-  SHORTDOMAIN=$3
 
   touch "$TMPSEDSCRIPT"
   if [ $? -ne 0 ]; then
@@ -52,8 +51,10 @@ write_sed_script()
 
   #Hack to anchor addition of
   /.*HostName.*/{
-    a"AccountFlags"=dword:00000001
-    a"KeyVersionNumber"=dword:00000000
+    a\\
+"AccountFlags"=dword:00000001
+    a\\
+"KeyVersionNumber"=dword:00000000
     /.*HostName.*/d
   }
   /"CreationTimestamp"/d
@@ -65,7 +66,8 @@ write_sed_script()
 # Move Pstore machine password under the subkey of the default joined domain
 #
 /\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.Pstore.Default.MachinePassword\]/,/^/{
-  /\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.Pstore.Default.MachinePassword\]/a@security = O:SYG:S-1-5-32-544D:(A;;RCSDWDWOKAKRKWKXNRNWNX;;;SY)
+  /\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.Pstore.Default.MachinePassword\]/a\\
+@security = O:SYG:S-1-5-32-544D:(A;;RCSDWDWOKAKRKWKXNRNWNX;;;SY)
   s/\\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.Pstore.Default.MachinePassword]/[HKEY_THIS_MACHINE\\\\Services\\\\lsass\\\\Parameters\\\\Providers\\\\ActiveDirectory\\\\DomainJoin\\\\$DOMAINNAME\\\\Pstore\\\\PasswordInfo]/
   s/"MachinePassword"/"Password"/
   /[^]/p
@@ -81,9 +83,11 @@ write_sed_script()
 
 #
 # Move DomainTrust information under the default joined domain
+# Note use of back reference, and excessive backslash escaping 
+# needed to make this happen.
 #
-/\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.DomainTrust.$SHORTDOMAIN\]/,/^/{
-  s/\\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.DomainTrust.$SHORTDOMAIN]/[HKEY_THIS_MACHINE\\\\Services\\\\lsass\\\\Parameters\\\\Providers\\\\ActiveDirectory\\\\DomainJoin\\\\$DOMAINNAME\\\\DomainTrust\\\\$SHORTDOMAIN]/
+/\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.DomainTrust\\\\.*\]/,/^/{
+  s/\\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.DomainTrust\\\\\\(.*\\)\]/[HKEY_THIS_MACHINE\\\\Services\\\\lsass\\\\Parameters\\\\Providers\\\\ActiveDirectory\\\\DomainJoin\\\\$DOMAINNAME\\\\DomainTrust\\\\\\1]/
   /[^]/p
 }
 
@@ -117,7 +121,7 @@ get_host_dns_domain()
   infile=$1
   grep '^"HostDnsDomain"=' $infile | \
        sed -e 's|HostDnsDomain.*=||' -e 's|"||g' | \
-       tr -d '\r' 
+       tr -d '\r'
 }
 
 get_hostname()
@@ -129,15 +133,6 @@ get_hostname()
 }
 
 
-get_short_domain()
-{
-  infile=$1
-
-  grep '^"ShortDomain"="' $infile | \
-  sed -e 's/"ShortDomain"="//' -e 's/"//g' | \
-  tr -d '\r'
-}
-
 
 main()
 {
@@ -148,18 +143,24 @@ main()
   shift
 
   DOMAIN_NAME_LC=`get_host_dns_domain $infile`
-  DOMAIN_NAME=`echo $DOMAIN_NAME_LC | tr 'a-z' 'A-Z'`
+  DOMAIN_NAME=`echo $DOMAIN_NAME_LC | tr '[a-z]' '[A-Z]'`
 
   HOSTNAME=`get_hostname $infile`
-  HOSTNAME_LC=`echo $HOSTNAME | tr 'A-Z' 'a-z'`
+  HOSTNAME_LC=`echo $HOSTNAME | tr '[A-Z]' '[a-z]'`
 
   FQDN="${HOSTNAME_LC}.${DOMAIN_NAME_LC}"
-  SHORTDOMAIN=`get_short_domain $infile`
 
+#echo DOMAIN_NAME_LC=$DOMAIN_NAME_LC 1>&2
+#echo DOMAIN_NAME=$DOMAIN_NAME 1>&2
+
+#echo HOSTNAME=$HOSTNAME 1>&2
+#echo HOSTNAME_LC=$HOSTNAME_LC 1>&2
+
+#echo FQDN=$FQDN 1>&2
   #
   # Create sed script that modifies the exported 6.0 registry to 6.0+x format
   #
-  write_sed_script $DOMAIN_NAME $FQDN $SHORTDOMAIN
+  write_sed_script $DOMAIN_NAME $FQDN
   trap "rm -f $TMPSEDSCRIPT; exit 1" 1 2 3 15
 
   execute_sed_script $infile
