@@ -75,7 +75,7 @@ ShowUsage()
     fprintf(stdout, "    setname <computer name>\n");
     fprintf(stdout, "    join [--notimesync] [--enable <module> --disable <module> ...] [--ou <organizationalUnit>] <domain name> <user name> [<password>]\n");
     fprintf(stdout, "    join [--advanced] --preview [--ou <organizationalUnit>] <domain name>\n");
-    fprintf(stdout, "    join [--assumeDefaultDomain] [--userDomainPrefix <short domain name>] [--ou <organizationalUnit>] <domain name>\n");
+    fprintf(stdout, "    join [--assumeDefaultDomain {yes|no}] [--userDomainPrefix <short domain name>] [--ou <organizationalUnit>] <domain name>\n");
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
     fprintf(stdout, "    leave [--enable <module> --disable <module> ...] [user name] [password]\n");
     fprintf(stdout, "    leave [--advanced] --preview [user name] [password]\n");
@@ -362,14 +362,35 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
         else if(!strcmp(argv[0], "--assumeDefaultDomain"))
         {
             DJ_LOG_INFO("Domainjoin invoked with option --assumeDefaultDomain");
-            options.assumeDefaultDomain = TRUE;
+            options.setAssumeDefaultDomain = TRUE;
+
+            if (!strcasecmp(argv[1], "yes") || !strcasecmp(argv[1], "true") ||
+                !strcasecmp(argv[1], "on"))
+            {
+                options.assumeDefaultDomain = TRUE;
+            }
+            else if (!strcasecmp(argv[1], "no") ||
+                !strcasecmp(argv[1], "false") ||
+                !strcasecmp(argv[1], "off"))
+            {
+                options.assumeDefaultDomain = FALSE;
+            }
+            else
+            {
+                LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
+                goto cleanup;
+            }
+            argv++;
+            argc--;
         }
         else if(!strcmp(argv[0], "--userDomainPrefix"))
         {
             DJ_LOG_INFO("Domainjoin invoked with option --userDomainPrefix %s", argv[1]);
+            options.setAssumeDefaultDomain = TRUE;
             options.assumeDefaultDomain = TRUE;
             CT_SAFE_FREE_STRING(options.userDomainPrefix);
             LW_CLEANUP_CTERR(exc, CTStrdup(argv[1], &options.userDomainPrefix));
+            CTStrToUpper(options.userDomainPrefix);
             argv++;
             argc--;
         }
