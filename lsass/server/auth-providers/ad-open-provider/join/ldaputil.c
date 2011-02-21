@@ -409,9 +409,13 @@ wchar16_t* LdapAttrValDnsHostName(const wchar16_t *name, const wchar16_t *dnsdom
 }
 
 
-wchar16_t *LdapAttrValSvcPrincipalName(const wchar16_t *name)
+wchar16_t*
+LdapAttrValSvcPrincipalName(
+    const char *type,
+    const wchar16_t *name
+    )
 {
-    return asw16printfw(L"HOST/%ws", name);
+    return asw16printfw(L"%s/%ws", type, name);
 }
 
 

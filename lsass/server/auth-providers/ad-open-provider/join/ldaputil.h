@@ -84,6 +84,7 @@ LdapAttrValDnsHostName(
 
 wchar16_t*
 LdapAttrValSvcPrincipalName(
+    const char *type,
     const wchar16_t *name
     );
 

@@ -813,8 +813,8 @@ LsaJoinDomainInternal(
                                    &pwszSpnAttrName);
             BAIL_ON_LSA_ERROR(dwError);
 
-            pwszSpnAttrVal[0] = LdapAttrValSvcPrincipalName(pwszDnsHostName);
-            pwszSpnAttrVal[1] = LdapAttrValSvcPrincipalName(pwszHostname);
+            pwszSpnAttrVal[0] = LdapAttrValSvcPrincipalName("HOST", pwszDnsHostName);
+            pwszSpnAttrVal[1] = LdapAttrValSvcPrincipalName("HOST", pwszHostname);
             pwszSpnAttrVal[2] = NULL;
 
             dwError = LsaMachAcctSetAttribute(pLdap, pwszDn, pwszSpnAttrName,
