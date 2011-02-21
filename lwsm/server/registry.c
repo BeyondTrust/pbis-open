@@ -298,6 +298,11 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pszParentKey);
     LW_SAFE_FREE_MEMORY(pwszParentKey);
 
+    if (pRootKey)
+    {
+        RegCloseKey(hReg, pRootKey);
+    }
+
     return dwError;
 
 error:
@@ -360,6 +365,7 @@ LwSmRegistryReadString(
     WCHAR wszValue[MAX_VALUE_LENGTH];
     DWORD dwSize = 0;
     DWORD dwType = 0;
+    PWSTR pwszValue = NULL;
 
     memset(wszValue, 0, sizeof(wszValue));
     dwSize = sizeof(wszValue);
@@ -375,14 +381,18 @@ LwSmRegistryReadString(
         &dwSize);
     BAIL_ON_ERROR(dwError);
 
-    dwError = LwAllocateWc16String(ppwszValue, wszValue);
+    dwError = LwAllocateMemory(dwSize + sizeof(WCHAR), OUT_PPVOID(&pwszValue));
     BAIL_ON_ERROR(dwError);
+
+    memcpy(pwszValue, wszValue, dwSize);
+    *ppwszValue = pwszValue;
 
 cleanup:
 
     return dwError;
 
 error:
+
     *ppwszValue = NULL;
 
     goto cleanup;
