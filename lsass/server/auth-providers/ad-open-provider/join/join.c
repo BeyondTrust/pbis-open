@@ -1,6 +1,6 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- */
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -157,6 +157,16 @@ LsaSaveMachinePassword(
     PCWSTR  pwszPassword
     );
 
+static
+DWORD
+LsaBuildPrincipalName(
+    OUT PWSTR *ppPrincipalName,
+    IN PCWSTR InstanceName,
+    IN PCWSTR HostName,
+    IN BOOLEAN UpperCaseHostName,
+    IN OPTIONAL PCWSTR RealmName,
+    IN OPTIONAL BOOLEAN UpperCaseRealmName
+    );
 
 static
 DWORD
@@ -1926,22 +1936,14 @@ LsaSaveMachinePassword(
     PCWSTR  pwszPassword
     )
 {
-    wchar_t wszHostFqdnFmt[] = L"host/%ws.%ws";
-    wchar_t wszHostFmt[] = L"host/%ws";
-    wchar_t wszCifsFqdnFmt[] = L"cifs/%ws.%ws";
-
     DWORD dwError = ERROR_SUCCESS;
     PWSTR pwszAccount = NULL;
     PWSTR pwszDomain = NULL;
     PWSTR pwszAdDnsDomainNameLc = NULL;
     PWSTR pwszAdDnsDomainNameUc = NULL;
-    PWSTR pwszMachDnsDomainNameUc = NULL;
     PWSTR pwszMachDnsDomainNameLc = NULL;
-    size_t sMachDnsDomainNameLcLen = 0;
     PWSTR pwszSid = NULL;
-    PWSTR pwszHostnameUc = NULL;
     PWSTR pwszHostnameLc = NULL;
-    size_t sHostnameLcLen = 0;
     PWSTR pwszPass = NULL;
     LSA_MACHINE_PASSWORD_INFO_W passwordInfo = { { 0 } };
     size_t sPassLen = 0;
@@ -1949,14 +1951,11 @@ LsaSaveMachinePassword(
     PWSTR pwszBaseDn = NULL;
     PWSTR pwszSalt = NULL;
     /* various forms of principal name for keytab */
-    PWSTR pwszHostMachineUc = NULL;
-    PWSTR pwszHostMachineLc = NULL;
-    PWSTR pwszHostMachineFqdn = NULL;
-    size_t sHostMachineFqdnSize = 0;
-    PWSTR pwszCifsMachineFqdn = NULL;
-    size_t sCifsMachineFqdnSize = 0;
     PWSTR pwszPrincipal = NULL;
     PWSTR pwszFqdn = NULL;
+    PWSTR principalName = NULL;
+    WCHAR hostInstanceName[] = { 'h', 'o', 's', 't', 0x0};
+    WCHAR cifsInstanceName[] = { 'c', 'i', 'f', 's', 0x0};
 
     dwError = LwAllocateWc16String(&pwszAccount,
                                    pwszMachineAccountName);
@@ -1978,12 +1977,6 @@ LsaSaveMachinePassword(
 
     LwWc16sToUpper(pwszAdDnsDomainNameUc);
 
-    dwError = LwAllocateWc16String(&pwszMachDnsDomainNameUc,
-                                   pwszMachineDnsDomain);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LwWc16sToUpper(pwszMachDnsDomainNameUc);
-
     dwError = LwAllocateWc16String(&pwszMachDnsDomainNameLc,
                                    pwszMachineDnsDomain);
     BAIL_ON_LSA_ERROR(dwError);
@@ -1993,12 +1986,6 @@ LsaSaveMachinePassword(
     dwError = LwAllocateWc16String(&pwszSid,
                                    pwszSidStr);
     BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwAllocateWc16String(&pwszHostnameUc,
-                                   pwszMachineName);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LwWc16sToUpper(pwszHostnameUc);
 
     dwError = LwAllocateWc16String(&pwszHostnameLc,
                                    pwszMachineName);
@@ -2087,278 +2074,262 @@ LsaSaveMachinePassword(
      * Update keytab records with various forms of machine principal
      */
 
-    /*
-     * MACHINE$@DOMAIN.NET
-     */
-    dwError = LsaSavePrincipalKey(pwszAccount,
-                                  pwszPass,
-                                  sPassLen,
-                                  pwszAdDnsDomainNameUc,
-                                  pwszSalt,
-                                  pwszDCName,
-                                  dwKvno);
+
+    // MACHINE$@DOMAIN.NET
+
+    dwError = LsaSavePrincipalKey(
+                  pwszAccount,
+                  pwszPass,
+                  sPassLen,
+                  pwszAdDnsDomainNameUc,
+                  pwszSalt,
+                  pwszDCName,
+                  dwKvno);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /*
-     * host/MACHINE@DOMAIN.NET
-     */
+    // host/MACHINE@DOMAIN.NET
 
-    dwError = LwAllocateWc16sPrintfW(&pwszHostMachineUc,
-                                     wszHostFmt,
-                                     pwszHostnameUc);
+    dwError = LsaBuildPrincipalName(
+                  &principalName,
+                  hostInstanceName,
+                  pwszMachineName,
+                  TRUE,
+                  NULL,
+                  FALSE);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaSavePrincipalKey(pwszHostMachineUc,
-                                  pwszPass,
-                                  sPassLen,
-                                  pwszAdDnsDomainNameUc,
-                                  pwszSalt,
-                                  pwszDCName,
-                                  dwKvno);
+    dwError = LsaSavePrincipalKey(
+                  principalName,
+                  pwszPass,
+                  sPassLen,
+                  pwszAdDnsDomainNameUc,
+                  pwszSalt,
+                  pwszDCName,
+                  dwKvno);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwWc16sLen(pwszHostnameLc,
-                         &sHostnameLcLen);
+    LW_SAFE_FREE_MEMORY(principalName);
+
+    // host/machine@DOMAIN.NET
+
+    dwError = LsaBuildPrincipalName(
+                  &principalName,
+                  hostInstanceName,
+                  pwszMachineName,
+                  FALSE,
+                  NULL,
+                  FALSE);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwWc16sLen(pwszMachDnsDomainNameLc,
-                         &sMachDnsDomainNameLcLen);
+    dwError = LsaSavePrincipalKey(
+                  principalName,
+                  pwszPass,
+                  sPassLen,
+                  pwszAdDnsDomainNameUc,
+                  pwszSalt,
+                  pwszDCName,
+                  dwKvno);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /*
-     * host/machine.domain.net@DOMAIN.NET
-     */
-    sHostMachineFqdnSize = sHostnameLcLen + sMachDnsDomainNameLcLen +
-                           (sizeof(wszHostFqdnFmt)/sizeof(wszHostFqdnFmt[0]));
+    LW_SAFE_FREE_MEMORY(principalName);
 
-    dwError = LwAllocateMemory(
-                        sizeof(pwszHostMachineFqdn[0]) * sHostMachineFqdnSize,
-                        OUT_PPVOID(&pwszHostMachineFqdn));
+    // host/MACHINE.DOMAIN.NET@DOMAIN.NET
+
+    dwError = LsaBuildPrincipalName(
+                  &principalName,
+                  hostInstanceName,
+                  pwszMachineName,
+                  TRUE,
+                  pwszMachineDnsDomain,
+                  TRUE);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (sw16printfw(
-                pwszHostMachineFqdn,
-                sHostMachineFqdnSize,
-                wszHostFqdnFmt,
-                pwszHostnameLc,
-                pwszMachDnsDomainNameLc) < 0)
-    {
-        dwError = LwErrnoToWin32Error(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwError = LsaSavePrincipalKey(pwszHostMachineFqdn,
-                                  pwszPass,
-                                  sPassLen,
-                                  pwszAdDnsDomainNameUc,
-                                  pwszSalt,
-                                  pwszDCName,
-                                  dwKvno);
+    dwError = LsaSavePrincipalKey(
+                  principalName,
+                  pwszPass,
+                  sPassLen,
+                  pwszAdDnsDomainNameUc,
+                  pwszSalt,
+                  pwszDCName,
+                  dwKvno);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /*
-     * host/MACHINE.DOMAIN.NET@DOMAIN.NET
-     */
-    if (sw16printfw(
-                pwszHostMachineFqdn,
-                sHostMachineFqdnSize,
-                wszHostFqdnFmt,
-                pwszHostnameUc,
-                pwszMachDnsDomainNameUc) < 0)
-    {
-        dwError = LwErrnoToWin32Error(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    LW_SAFE_FREE_MEMORY(principalName);
 
-    dwError = LsaSavePrincipalKey(pwszHostMachineFqdn,
-                                  pwszPass,
-                                  sPassLen,
-                                  pwszAdDnsDomainNameUc,
-                                  pwszSalt,
-                                  pwszDCName,
-                                  dwKvno);
+    // host/machine.domain.net@DOMAIN.NET
+
+    dwError = LsaBuildPrincipalName(
+                  &principalName,
+                  hostInstanceName,
+                  pwszMachineName,
+                  FALSE,
+                  pwszMachineDnsDomain,
+                  FALSE);
+    BAIL_ON_LSA_ERROR(dwError);
+    
+    dwError = LsaSavePrincipalKey(
+                  principalName,
+                  pwszPass,
+                  sPassLen,
+                  pwszAdDnsDomainNameUc,
+                  pwszSalt,
+                  pwszDCName,
+                  dwKvno);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /*
-     * host/MACHINE.domain.net@DOMAIN.NET
-     */
-    if (sw16printfw(
-                pwszHostMachineFqdn,
-                sHostMachineFqdnSize,
-                wszHostFqdnFmt,
-                pwszHostnameUc,
-                pwszMachDnsDomainNameLc) < 0)
-    {
-        dwError = LwErrnoToWin32Error(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    LW_SAFE_FREE_MEMORY(principalName);
 
-    dwError = LsaSavePrincipalKey(pwszHostMachineFqdn,
-                                  pwszPass,
-                                  sPassLen,
-                                  pwszAdDnsDomainNameUc,
-                                  pwszSalt,
-                                  pwszDCName,
-                                  dwKvno);
+    // host/MACHINE.domain.net@DOMAIN.NET
+
+    dwError = LsaBuildPrincipalName(
+                  &principalName,
+                  hostInstanceName,
+                  pwszMachineName,
+                  TRUE,
+                  pwszMachineDnsDomain,
+                  FALSE);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /*
-     * host/machine.DOMAIN.NET@DOMAIN.NET
-     */
-    if (sw16printfw(
-                pwszHostMachineFqdn,
-                sHostMachineFqdnSize,
-                wszHostFqdnFmt,
-                pwszHostnameLc,
-                pwszMachDnsDomainNameUc) < 0)
-    {
-        dwError = LwErrnoToWin32Error(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwError = LsaSavePrincipalKey(pwszHostMachineFqdn,
-                                  pwszPass,
-                                  sPassLen,
-                                  pwszAdDnsDomainNameUc,
-                                  pwszSalt,
-                                  pwszDCName,
-                                  dwKvno);
+    dwError = LsaSavePrincipalKey(
+                  principalName,
+                  pwszPass,
+                  sPassLen,
+                  pwszAdDnsDomainNameUc,
+                  pwszSalt,
+                  pwszDCName,
+                  dwKvno);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /*
-     * host/machine@DOMAIN.NET
-     */
-    dwError = LwAllocateWc16sPrintfW(&pwszHostMachineLc,
-                                     wszHostFmt,
-                                     pwszHostnameLc);
+    LW_SAFE_FREE_MEMORY(principalName);
+
+    // host/machine.DOMAIN.NET@DOMAIN.NET
+
+    dwError = LsaBuildPrincipalName(
+                  &principalName,
+                  hostInstanceName,
+                  pwszMachineName,
+                  FALSE,
+                  pwszMachineDnsDomain,
+                  TRUE);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaSavePrincipalKey(pwszHostMachineLc,
-                                  pwszPass,
-                                  sPassLen,
-                                  pwszAdDnsDomainNameUc,
-                                  pwszSalt,
-                                  pwszDCName,
-                                  dwKvno);
+    dwError = LsaSavePrincipalKey(
+                  principalName,
+                  pwszPass,
+                  sPassLen,
+                  pwszAdDnsDomainNameUc,
+                  pwszSalt,
+                  pwszDCName,
+                  dwKvno);
     BAIL_ON_LSA_ERROR(dwError);
 
-    sCifsMachineFqdnSize = sHostnameLcLen + sMachDnsDomainNameLcLen +
-                           (sizeof(wszCifsFqdnFmt)/sizeof(wszCifsFqdnFmt[0]));
+    LW_SAFE_FREE_MEMORY(principalName);
 
-    /*
-     * cifs/machine.domain.net@DOMAIN.NET
-     */
-    dwError = LwAllocateMemory(
-                       sizeof(pwszCifsMachineFqdn[0]) * sCifsMachineFqdnSize,
-                       OUT_PPVOID(&pwszCifsMachineFqdn));
+    // cifs/machine.domain.net@DOMAIN.NET
+
+    dwError = LsaBuildPrincipalName(
+                  &principalName,
+                  cifsInstanceName,
+                  pwszMachineName,
+                  FALSE,
+                  pwszMachineDnsDomain,
+                  FALSE);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (sw16printfw(
-                pwszCifsMachineFqdn,
-                sCifsMachineFqdnSize,
-                wszCifsFqdnFmt,
-                pwszHostnameLc,
-                pwszMachDnsDomainNameLc) < 0)
-    {
-        dwError = LwErrnoToWin32Error(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwError = LsaSavePrincipalKey(pwszCifsMachineFqdn,
-                                  pwszPass,
-                                  sPassLen,
-                                  pwszAdDnsDomainNameUc,
-                                  pwszSalt,
-                                  pwszDCName,
-                                  dwKvno);
+    dwError = LsaSavePrincipalKey(
+                  principalName,
+                  pwszPass,
+                  sPassLen,
+                  pwszAdDnsDomainNameUc,
+                  pwszSalt,
+                  pwszDCName,
+                  dwKvno);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /*
-     * cifs/MACHINE.DOMAIN.NET@DOMAIN.NET
-     */
-    if (sw16printfw(
-                pwszCifsMachineFqdn,
-                sCifsMachineFqdnSize,
-                wszCifsFqdnFmt,
-                pwszHostnameUc,
-                pwszMachDnsDomainNameUc) < 0)
-    {
-        dwError = LwErrnoToWin32Error(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    LW_SAFE_FREE_MEMORY(principalName);
 
-    dwError = LsaSavePrincipalKey(pwszCifsMachineFqdn,
-                                  pwszPass,
-                                  sPassLen,
-                                  pwszAdDnsDomainNameUc,
-                                  pwszSalt,
-                                  pwszDCName,
-                                  dwKvno);
+    // cifs/MACHINE.DOMAIN.NET@DOMAIN.NET
+
+    dwError = LsaBuildPrincipalName(
+                  &principalName,
+                  cifsInstanceName,
+                  pwszMachineName,
+                  TRUE,
+                  pwszMachineDnsDomain,
+                  TRUE);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /*
-     * cifs/MACHINE.domain.net@DOMAIN.NET
-     */
-    if (sw16printfw(
-                pwszCifsMachineFqdn,
-                sCifsMachineFqdnSize,
-                wszCifsFqdnFmt,
-                pwszHostnameUc,
-                pwszMachDnsDomainNameLc) < 0)
-    {
-        dwError = LwErrnoToWin32Error(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwError = LsaSavePrincipalKey(pwszCifsMachineFqdn,
-                                  pwszPass,
-                                  sPassLen,
-                                  pwszAdDnsDomainNameUc,
-                                  pwszSalt,
-                                  pwszDCName,
-                                  dwKvno);
+    dwError = LsaSavePrincipalKey(
+                  principalName,
+                  pwszPass,
+                  sPassLen,
+                  pwszAdDnsDomainNameUc,
+                  pwszSalt,
+                  pwszDCName,
+                  dwKvno);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /*
-     * cifs/machine.DOMAIN.NET@DOMAIN.NET
-     */
-    if (sw16printfw(
-                pwszCifsMachineFqdn,
-                sCifsMachineFqdnSize,
-                wszCifsFqdnFmt,
-                pwszHostnameLc,
-                pwszMachDnsDomainNameUc) < 0)
-    {
-        dwError = LwErrnoToWin32Error(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    LW_SAFE_FREE_MEMORY(principalName);
 
-    dwError = LsaSavePrincipalKey(pwszCifsMachineFqdn,
-                                  pwszPass,
-                                  sPassLen,
-                                  pwszMachDnsDomainNameUc,
-                                  pwszSalt,
-                                  pwszDCName,
-                                  dwKvno);
+    // cifs/MACHINE.domain.net@DOMAIN.NET
+
+    dwError = LsaBuildPrincipalName(
+                  &principalName,
+                  cifsInstanceName,
+                  pwszMachineName,
+                  TRUE,
+                  pwszMachineDnsDomain,
+                  FALSE);
     BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaSavePrincipalKey(
+                  principalName,
+                  pwszPass,
+                  sPassLen,
+                  pwszAdDnsDomainNameUc,
+                  pwszSalt,
+                  pwszDCName,
+                  dwKvno);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LW_SAFE_FREE_MEMORY(principalName);
+
+    // cifs/machine.DOMAIN.NET@DOMAIN.NET
+
+    dwError = LsaBuildPrincipalName(
+                  &principalName,
+                  cifsInstanceName,
+                  pwszMachineName,
+                  FALSE,
+                  pwszMachineDnsDomain,
+                  TRUE);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaSavePrincipalKey(
+                  principalName,
+                  pwszPass,
+                  sPassLen,
+                  pwszAdDnsDomainNameUc,
+                  pwszSalt,
+                  pwszDCName,
+                  dwKvno);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LW_SAFE_FREE_MEMORY(principalName);
+
 
 cleanup:
+    LW_SAFE_FREE_MEMORY(principalName);
     LW_SAFE_FREE_MEMORY(pwszBaseDn);
     LW_SAFE_FREE_MEMORY(pwszSalt);
     LW_SAFE_FREE_MEMORY(pwszDomain);
     LW_SAFE_FREE_MEMORY(pwszAdDnsDomainNameLc);
     LW_SAFE_FREE_MEMORY(pwszAdDnsDomainNameUc);
     LW_SAFE_FREE_MEMORY(pwszMachDnsDomainNameLc);
-    LW_SAFE_FREE_MEMORY(pwszMachDnsDomainNameUc);
     LW_SAFE_FREE_MEMORY(pwszSid);
     LW_SAFE_FREE_MEMORY(pwszHostnameLc);
-    LW_SAFE_FREE_MEMORY(pwszHostnameUc);
     LW_SAFE_FREE_MEMORY(pwszPass);
     LW_SAFE_FREE_MEMORY(pwszAccount);
-    LW_SAFE_FREE_MEMORY(pwszHostMachineUc);
-    LW_SAFE_FREE_MEMORY(pwszHostMachineLc);
-    LW_SAFE_FREE_MEMORY(pwszHostMachineFqdn);
-    LW_SAFE_FREE_MEMORY(pwszCifsMachineFqdn);
     LW_SAFE_FREE_MEMORY(pwszPrincipal);
     LW_SAFE_FREE_MEMORY(pwszFqdn);
 
@@ -2368,6 +2339,88 @@ error:
     goto cleanup;
 }
 
+
+////////////////////////////////////////////////////////////////////////
+
+static
+DWORD
+LsaBuildPrincipalName(
+    OUT PWSTR *ppPrincipalName,
+    IN PCWSTR InstanceName,
+    IN PCWSTR HostName,
+    IN BOOLEAN UpperCaseHostName,
+    IN OPTIONAL PCWSTR RealmName,
+    IN OPTIONAL BOOLEAN UpperCaseRealmName
+    )
+{
+    DWORD dwError= ERROR_SUCCESS;
+    PWSTR hostName = NULL;
+    PWSTR realmName = NULL;
+    PWSTR principalName = NULL;
+
+    dwError = LwAllocateWc16String(&hostName, HostName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (UpperCaseHostName)
+    {
+        LwWc16sToUpper(hostName);
+    }
+    else
+    {
+        LwWc16sToLower(hostName);
+    }
+
+    if (RealmName)
+    {
+        dwError = LwAllocateWc16String(&realmName, RealmName);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        if (UpperCaseRealmName)
+        {
+            LwWc16sToUpper(realmName);
+        }
+        else
+        {
+            LwWc16sToLower(realmName);
+        }
+    }
+
+    if (realmName)
+    {
+        dwError = LwAllocateWc16sPrintfW(
+                      &principalName,
+                      L"%ws/%ws.%ws",
+                      InstanceName,
+                      hostName,
+                      realmName);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LwAllocateWc16sPrintfW(
+                      &principalName,
+                      L"%ws/%ws",
+                      InstanceName,
+                      hostName);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    *ppPrincipalName = principalName;
+
+error:
+    if (dwError != ERROR_SUCCESS)
+    {
+        LW_SAFE_FREE_MEMORY(principalName);
+    }
+
+    LW_SAFE_FREE_MEMORY(hostName);
+    LW_SAFE_FREE_MEMORY(realmName);
+
+    return dwError;
+}
+
+
+////////////////////////////////////////////////////////////////////////
 
 static
 DWORD
@@ -3294,15 +3347,3 @@ error:
     goto cleanup;
 }
 
-
-
-
-
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
