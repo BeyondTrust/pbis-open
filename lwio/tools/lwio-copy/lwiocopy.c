@@ -373,7 +373,7 @@ LwioCopyFileFromRemoteToRemote(
                     pszTargetPath,
                     FILE_WRITE_DATA,
                     FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-                    FILE_OPEN_IF,
+                    FILE_OVERWRITE_IF,
                     FILE_NON_DIRECTORY_FILE,
                     &hRemDstFile);
     BAIL_ON_NT_STATUS(status);
@@ -793,7 +793,7 @@ LwioCopyFileToRemote(
                     pszTargetPath,
                     FILE_WRITE_DATA,
                     FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-                    FILE_OPEN_IF,
+                    FILE_OVERWRITE_IF,
                     FILE_NON_DIRECTORY_FILE,
                     &hRemoteFile);
     BAIL_ON_NT_STATUS(status);
