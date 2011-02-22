@@ -237,6 +237,7 @@ AD_ProvisionHomeDir(
 
 DWORD
 AD_CreateK5Login(
+    PLSA_AD_PROVIDER_STATE pState,
     PLSA_SECURITY_OBJECT pObject
     );
 

@@ -3002,6 +3002,7 @@ error:
 
 DWORD
 AD_CreateK5Login(
+    PLSA_AD_PROVIDER_STATE pState,
     PLSA_SECURITY_OBJECT pObject
     )
 {
@@ -3009,11 +3010,15 @@ AD_CreateK5Login(
     PSTR    pszK5LoginPath = NULL;
     PSTR    pszK5LoginPath_tmp = NULL;
     PSTR    pszData = NULL;
+    PSTR    pszNewData = NULL;
     BOOLEAN bExists = FALSE;
     PSTR pszUpnCopy = NULL;
     PSTR pszUpnCopyLower = NULL;
     int     fd = -1;
     BOOLEAN bRemoveFile = FALSE;
+    PSTR pszDnsDomainName = NULL;
+    PSTR pszGeneratedUpn = NULL;
+    PSTR pszGeneratedUpnLower = NULL;
 
     BAIL_ON_INVALID_STRING(pObject->userInfo.pszHomedir);
     BAIL_ON_INVALID_STRING(pObject->userInfo.pszUPN);
@@ -3057,24 +3062,78 @@ AD_CreateK5Login(
 
     LsaPrincipalNonRealmToLower(pszUpnCopyLower);
 
-    if (!strcmp(pszUpnCopy, pszUpnCopyLower))
+    dwError = LsaDmWrapGetDomainName(
+                    pState->hDmState,
+                    pObject->pszNetbiosDomainName,
+                    &pszDnsDomainName,
+                    NULL);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LwStrToUpper(pszDnsDomainName);
+
+    dwError = LwAllocateStringPrintf(
+                    &pszGeneratedUpn,
+                    "%s@%s",
+                    pObject->pszSamAccountName,
+                    pszDnsDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    // Create another copy of the UPN that has lowercase non-realm part.
+    dwError = LwAllocateString(
+                    pszGeneratedUpn,
+                    &pszGeneratedUpnLower);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaPrincipalNonRealmToLower(pszGeneratedUpnLower);
+
+    dwError = LwAllocateStringPrintf(
+                    &pszData,
+                    "%s\n",
+                    pszUpnCopy);
+    BAIL_ON_LSA_ERROR(dwError);
+
+
+    if (strcmp(pszUpnCopy, pszUpnCopyLower))
     {
-        // If the UPNs are the same, just need to write one.
+        // The UPNs are different, add the new one
         dwError = LwAllocateStringPrintf(
-                        &pszData,
-                        "%s\n",
-                        pszUpnCopy);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-    else
-    {
-        // Otherwise, they are different and we want both.
-        dwError = LwAllocateStringPrintf(
-                        &pszData,
-                        "%s\n%s\n",
-                        pszUpnCopy,
+                        &pszNewData,
+                        "%s%s\n",
+                        pszData,
                         pszUpnCopyLower);
         BAIL_ON_LSA_ERROR(dwError);
+        LW_SAFE_FREE_STRING(pszData);
+        pszData = pszNewData;
+        pszNewData = NULL;
+    }
+
+    if (strcmp(pszUpnCopy, pszGeneratedUpn))
+    {
+        // The UPNs are different, add the new one
+        dwError = LwAllocateStringPrintf(
+                        &pszNewData,
+                        "%s%s\n",
+                        pszData,
+                        pszGeneratedUpn);
+        BAIL_ON_LSA_ERROR(dwError);
+        LW_SAFE_FREE_STRING(pszData);
+        pszData = pszNewData;
+        pszNewData = NULL;
+    }
+
+    if (strcmp(pszUpnCopyLower, pszGeneratedUpnLower) &&
+            strcmp(pszGeneratedUpn, pszGeneratedUpnLower))
+    {
+        // The UPNs are different, add the new one
+        dwError = LwAllocateStringPrintf(
+                        &pszNewData,
+                        "%s%s\n",
+                        pszData,
+                        pszGeneratedUpnLower);
+        BAIL_ON_LSA_ERROR(dwError);
+        LW_SAFE_FREE_STRING(pszData);
+        pszData = pszNewData;
+        pszNewData = NULL;
     }
 
     dwError = LwAllocateStringPrintf(
@@ -3154,6 +3213,10 @@ cleanup:
     LW_SAFE_FREE_STRING(pszUpnCopyLower);
     LW_SAFE_FREE_STRING(pszK5LoginPath_tmp);
     LW_SAFE_FREE_STRING(pszK5LoginPath);
+    LW_SAFE_FREE_STRING(pszNewData);
+    LW_SAFE_FREE_STRING(pszDnsDomainName);
+    LW_SAFE_FREE_STRING(pszGeneratedUpn);
+    LW_SAFE_FREE_STRING(pszGeneratedUpnLower);
 
     return dwError;
 

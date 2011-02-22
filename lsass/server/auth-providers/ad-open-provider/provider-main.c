@@ -3344,7 +3344,7 @@ AD_OpenSession(
 
     if (AD_ShouldCreateK5Login(pContext->pState))
     {
-        dwError = AD_CreateK5Login(ppObjects[0]);
+        dwError = AD_CreateK5Login(pContext->pState, ppObjects[0]);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
