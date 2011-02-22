@@ -1268,9 +1268,6 @@ cleanup:
         *IoStatusBlock = ioStatusBlock;
     }
 
-    // Cannot return STATUS_PENDING if FailImmediately is TRUE.
-    LWIO_ASSERT(!FailImmediately || (STATUS_PENDING != status));
-
     IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
     return status;
 }
