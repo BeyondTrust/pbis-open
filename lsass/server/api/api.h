@@ -91,7 +91,8 @@
 
 #include "lsasrvapi.h"
 #include "lsasrvapi2.h"
-#include "lsasrvprivilege-internal.h"
+#include "lsasrvprivilege.h"
+#include "lsasrvprivilege-ipc.h"
 
 #include "lsaipc-common.h"
 #include "lsaipc.h"
