@@ -117,13 +117,24 @@ LsaSrvIpcPrivsAddAccountRights(
     )
 {
     DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     PLSA_PRIVS_IPC_ADD_ACCOUNT_RIGHTS_REQ pRequest = pIn->data;
     PLSA_IPC_ERROR pError = NULL;
+    PSID pSid = NULL;
+
+    ntStatus = RtlAllocateSidFromCString(
+                  &pSid,
+                  pRequest->pszSid);
+    if (ntStatus)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+        BAIL_ON_LSA_ERROR(err);
+    }
 
     err = LsaSrvPrivsAddAccountRights(
                   LsaSrvIpcGetSessionData(pCall),
                   NULL,
-                  pRequest->pszSid,
+                  pSid,
                   pRequest->ppwszAccountRights,
                   pRequest->NumAccountRights);
     if (err == ERROR_SUCCESS)
@@ -141,6 +152,8 @@ LsaSrvIpcPrivsAddAccountRights(
     }
 
 error:
+    RTL_FREE(&pSid);
+
     return MAP_LW_ERROR_IPC(err);
 }
 
@@ -154,13 +167,24 @@ LsaSrvIpcPrivsRemoveAccountRights(
     )
 {
     DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     PLSA_PRIVS_IPC_REMOVE_ACCOUNT_RIGHTS_REQ pRequest = pIn->data;
     PLSA_IPC_ERROR pError = NULL;
+    PSID pSid = NULL;
+
+    ntStatus = RtlAllocateSidFromCString(
+                  &pSid,
+                  pRequest->pszSid);
+    if (ntStatus)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+        BAIL_ON_LSA_ERROR(err);
+    }
 
     err = LsaSrvPrivsRemoveAccountRights(
                   LsaSrvIpcGetSessionData(pCall),
                   NULL,
-                  pRequest->pszSid,
+                  pSid,
                   pRequest->RemoveAll,
                   pRequest->ppwszAccountRights,
                   pRequest->NumAccountRights);
@@ -179,6 +203,8 @@ LsaSrvIpcPrivsRemoveAccountRights(
     }
 
 error:
+    RTL_FREE(&pSid);
+
     return MAP_LW_ERROR_IPC(err);
 }
 
@@ -192,16 +218,27 @@ LsaSrvIpcPrivsEnumAccountRights(
     )
 {
     DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     PLSA_PRIVS_IPC_ENUM_ACCOUNT_RIGHTS_REQ pRequest = pIn->data;
     PLSA_PRIVS_IPC_ENUM_ACCOUNT_RIGHTS_RESP pResponse = NULL;
     PWSTR *ppwszAccountRights = NULL;
     DWORD NumAccountRights = 0;
     PLSA_IPC_ERROR pError = NULL;
+    PSID pSid = NULL;
+
+    ntStatus = RtlAllocateSidFromCString(
+                  &pSid,
+                  pRequest->pszSid);
+    if (ntStatus)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+        BAIL_ON_LSA_ERROR(err);
+    }
 
     err = LsaSrvPrivsEnumAccountRights(
                   LsaSrvIpcGetSessionData(pCall),
                   NULL,
-                  pRequest->pszSid,
+                  pSid,
                   &ppwszAccountRights,
                   &NumAccountRights);
     if (err == ERROR_SUCCESS)

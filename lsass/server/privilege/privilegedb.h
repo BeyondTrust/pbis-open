@@ -58,6 +58,13 @@ LsaSrvGetPrivilegeEntryByName(
 
 
 DWORD
+LsaSrvGetPrivilegeEntryByValue(
+    IN PLUID PrivilegeValue,
+    OUT PLSA_PRIVILEGE *ppPrivilegeEntry
+    );
+
+
+DWORD
 LsaSrvSetPrivilegeEntry(
     IN PSTR pszPrivilegeName,
     IN PLSA_PRIVILEGE pPrivilegeEntry,

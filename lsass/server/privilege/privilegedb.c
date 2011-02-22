@@ -140,11 +140,6 @@ error:
         LsaSrvFreePrivileges();
     }
 
-    if (hRegistry)
-    {
-        RegCloseServer(hRegistry);
-    }
-
     if (hPrivileges)
     {
         RegCloseKey(hRegistry, hPrivileges);
@@ -153,6 +148,11 @@ error:
     if (hAccounts)
     {
         RegCloseKey(hRegistry, hAccounts);
+    }
+
+    if (hRegistry)
+    {
+        RegCloseServer(hRegistry);
     }
 
     return err;
@@ -499,6 +499,10 @@ LsaSrvFreePrivileges(
     )
 {
     PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+    BOOLEAN Locked = FALSE;
+
+    LSASRV_PRIVS_WRLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
+    LSASRV_PRIVS_WRLOCK_RWLOCK(Locked, &pGlobals->accountsRwLock);
 
     if (pGlobals->pPrivileges)
     {
@@ -510,8 +514,10 @@ LsaSrvFreePrivileges(
         LwHashSafeFree(&pGlobals->pAccounts);
     }
 
-    pthread_rwlock_destroy(&pGlobals->privilegesRwLock);
+    LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->accountsRwLock);
+    LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
     pthread_rwlock_destroy(&pGlobals->accountsRwLock);
+    pthread_rwlock_destroy(&pGlobals->privilegesRwLock);
 }
 
 
@@ -539,6 +545,64 @@ LsaSrvGetPrivilegeEntryByName(
     }
     else if (err != ERROR_SUCCESS)
     {
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    *ppPrivilegeEntry = pPrivilegeEntry;
+
+error:
+    LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
+
+    if (err)
+    {
+        if (ppPrivilegeEntry)
+        {
+            *ppPrivilegeEntry = NULL;
+        }
+    }
+
+    return err;
+}
+
+
+DWORD
+LsaSrvGetPrivilegeEntryByValue(
+    IN PLUID PrivilegeValue,
+    OUT PLSA_PRIVILEGE *ppPrivilegeEntry
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    BOOLEAN Locked = FALSE;
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+    LW_HASH_ITERATOR iterator = {0};
+    LW_HASH_ENTRY* pEntry = NULL;
+    PLSA_PRIVILEGE pPrivilegeEntry = NULL;
+
+    LSASRV_PRIVS_RDLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
+
+    err = LwHashGetIterator(
+                 pGlobals->pPrivileges,
+                 &iterator);
+    BAIL_ON_LSA_ERROR(err);
+
+    do
+    {
+        pEntry = LwHashNext(&iterator);
+
+        pPrivilegeEntry = (PLSA_PRIVILEGE)pEntry->pValue;
+        if (!RtlEqualLuid(
+                     &pPrivilegeEntry->Luid,
+                     PrivilegeValue))
+        {
+            pPrivilegeEntry = NULL;
+        }
+
+    } while (pEntry && !pPrivilegeEntry);
+
+    if (!pPrivilegeEntry)
+    {
+        // Maps to STATUS_NO_SUCH_PRIVILEGE
+        err = ERROR_NO_SUCH_PRIVILEGE;
         BAIL_ON_LSA_ERROR(err);
     }
 

@@ -48,6 +48,11 @@
 #define __LSASRV_PRIVILEGE_H__
 
 
+struct _LSA_ACCOUNT_CONTEXT;
+typedef struct _LSA_ACCOUNT_CONTEXT
+LSA_ACCOUNT_CONTEXT, *PLSA_ACCOUNT_CONTEXT;
+
+
 DWORD
 LsaSrvInitPrivileges(
     VOID
@@ -61,10 +66,37 @@ LsaSrvFreePrivileges(
 
 
 DWORD
+LsaSrvPrivsOpenAccount(
+    IN HANDLE hProvider,
+    IN OPTIONAL PACCESS_TOKEN pAccessToken,
+    IN PSID Sid,
+    IN ACCESS_MASK AccessRights,
+    OUT PLSA_ACCOUNT_CONTEXT *pAccountContext
+    );
+
+
+DWORD
+LsaSrvPrivsCreateAccount(
+    IN HANDLE hProvider,
+    IN OPTIONAL PACCESS_TOKEN pAccessToken,
+    IN PSID Sid,
+    IN ACCESS_MASK AccessRights,
+    OUT PLSA_ACCOUNT_CONTEXT *pAccountContext
+    );
+
+
+VOID
+LsaSrvPrivsCloseAccount(
+    IN HANDLE hProvider,
+    IN OUT PLSA_ACCOUNT_CONTEXT *pAccountContext
+    );
+
+
+DWORD
 LsaSrvPrivsAddAccountRights(
     IN HANDLE hProvider,
     IN OPTIONAL PACCESS_TOKEN pAccessToken,
-    IN PCSTR pszSids,
+    IN PSID AccountSid,
     IN PWSTR *ppwszAccountRights,
     IN DWORD NumAccountRights
     );
@@ -74,7 +106,7 @@ DWORD
 LsaSrvPrivsRemoveAccountRights(
     IN HANDLE hProvider,
     IN OPTIONAL PACCESS_TOKEN pAccessToken,
-    IN PCSTR pszSids,
+    IN PSID AccountSid,
     IN BOOLEAN RemoveAll,
     IN PWSTR *ppwszAccountRights,
     IN DWORD NumAccountRights
@@ -85,7 +117,7 @@ DWORD
 LsaSrvPrivsEnumAccountRights(
     IN HANDLE hProvider,
     IN OPTIONAL PACCESS_TOKEN pAccessToken,
-    IN PCSTR pszAccountSid,
+    IN PSID AccountSid,
     OUT PWSTR **ppwszAccountRights,
     OUT PDWORD pNumAccountRights
     );
@@ -97,6 +129,23 @@ LsaSrvPrivsLookupPrivilegeValue(
     IN OPTIONAL PACCESS_TOKEN pAccessToken,
     IN PCWSTR pwszPrivilegeName,
     OUT PLUID pPrivilegeValue
+    );
+
+
+DWORD
+LsaSrvPrivsAddPrivilegesToAccount(
+    IN HANDLE hProvider,
+    IN PLSA_ACCOUNT_CONTEXT pAccountContext,
+    IN PPRIVILEGE_SET pPrivilegeSet
+    );
+
+
+DWORD
+LsaSrvPrivsRemovePrivilegesFromAccount(
+    IN HANDLE hProvider,
+    IN PLSA_ACCOUNT_CONTEXT pAccountContext,
+    IN BOOLEAN RemoveAll,
+    IN PPRIVILEGE_SET pPrivilegeSet
     );
 
 

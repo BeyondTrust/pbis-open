@@ -33,40 +33,64 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        lsasrvprivilege-ipc.h
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        Local Privileges (Private include)
+ *        Local Privilege Server internal API
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#include <config.h>
-#include <lsasystem.h>
-#include <lsadef.h>
-#include <lw/base.h>
-#include <lsa/lsa.h>
-#include <reg/reg.h>
-#include <lwio/lwio.h>
-#include <lw/rpc/lsa.h>
+#ifndef __LSASRV_PRIVILEGE_IPC_H__
+#define __LSASRV_PRIVILEGE_IPC_H__
 
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwhash.h>
 
-#include <lsautils.h>
-#include <lsasrvutils.h>
-#include <lsaipc-common.h>
-#include <lsaipc-privilege.h>
-#include <lsasrvprivilege.h>
-#include <lsasrvprivilege-internal.h>
+LWMsgStatus
+LsaSrvIpcPrivsEnumPrivilegesSids(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    void* data
+    );
 
-#include "defines.h"
-#include "structs.h"
-#include "externs.h"
-#include "privilege.h"
-#include "privilegedb.h"
-#include "accountdb.h"
+
+LWMsgStatus
+LsaSrvIpcPrivsEnumPrivilegesSids(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    void* data
+    );
+
+
+LWMsgStatus
+LsaSrvIpcPrivsAddAccountRights(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    void* data
+    );
+
+
+LWMsgStatus
+LsaSrvIpcPrivsRemoveAccountRights(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    void* data
+    );
+
+
+LWMsgStatus
+LsaSrvIpcPrivsEnumAccountRights(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    void* data
+    );
+
+
+#endif /* __LSASRV_PRIVILEGE_IPC_H__ */

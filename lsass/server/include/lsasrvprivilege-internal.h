@@ -48,51 +48,6 @@
 #define __LSASRV_PRIVILEGE_INTERNAL_H__
 
 
-LWMsgStatus
-LsaSrvIpcPrivsEnumPrivilegesSids(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    void* data
-    );
-
-
-LWMsgStatus
-LsaSrvIpcPrivsEnumPrivilegesSids(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    void* data
-    );
-
-
-LWMsgStatus
-LsaSrvIpcPrivsAddAccountRights(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    void* data
-    );
-
-
-LWMsgStatus
-LsaSrvIpcPrivsRemoveAccountRights(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    void* data
-    );
-
-
-LWMsgStatus
-LsaSrvIpcPrivsEnumAccountRights(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    void* data
-    );
-
-
 DWORD
 LsaSrvPrivsEnumPrivilegesSids(
     IN HANDLE hProvider,

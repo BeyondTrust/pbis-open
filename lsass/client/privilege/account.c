@@ -87,6 +87,7 @@ LsaPrivsEnumPrivilegesSids(
     switch (out.tag)
     {
         case LSA_PRIVS_R_ENUM_PRIVILEGES_SIDS:
+            pResponse = (PLSA_PRIVS_IPC_ENUM_PRIVILEGES_SIDS_RESP)out.data;
             *ppPrivileges   = pResponse->pPrivileges;
             *pNumPrivileges = pResponse->NumPrivileges;
             break;
@@ -272,7 +273,7 @@ LsaPrivsEnumAccountRights(
     switch (out.tag)
     {
         case LSA_PRIVS_R_ENUM_ACCOUNT_RIGHTS:
-            pResponse = out.data;
+            pResponse = (PLSA_PRIVS_IPC_ENUM_ACCOUNT_RIGHTS_RESP)out.data;
             out.data  = NULL;
             break;
 

@@ -68,6 +68,11 @@
 #define LSA_ACCESS_VIEW_SYS_AUDIT_REQS         0x00000002
 #define LSA_ACCESS_VIEW_POLICY_INFO            0x00000001
 
+#define LSA_ACCOUNT_VIEW                       0x00000001
+#define LSA_ACCOUNT_ADJUST_PRIVILEGES          0x00000002
+#define LSA_ACCOUNT_ADJUST_QUOTAS              0x00000004
+#define LSA_ACCOUNT_ADJUST_SYSTEM_ACCESS       0x00000008
+
 
 typedef struct _object_attribute {
     ULONG len;

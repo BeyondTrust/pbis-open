@@ -73,4 +73,18 @@ LsaSrvSetAccountEntry(
     );
 
 
+DWORD
+LsaSrvAddAccount(
+    IN PSID pAccountSid,
+    IN PLSA_ACCOUNT pAccountEntry
+    );
+
+
+DWORD
+LsaSrvUpdateAccount(
+    IN PSID pAccountSid,
+    IN PLSA_ACCOUNT pAccountEntry
+    );
+
+
 #endif /* __LSASRV_PRIVS_ACCOUNTDB_H__ */

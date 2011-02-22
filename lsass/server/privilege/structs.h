@@ -71,12 +71,21 @@ typedef struct _LSA_PRIVILEGE
 
 typedef struct _LSA_ACCOUNT
 {
+    pthread_rwlock_t accountRwLock;
+
     PSID pSid;
     LUID_AND_ATTRIBUTES Privileges[LSA_MAX_PRIVILEGES_COUNT];
+    DWORD NumPrivileges;
     DWORD SystemAccessRights;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc;
 
 } LSA_ACCOUNT, *PLSA_ACCOUNT;
+
+
+struct _LSA_ACCOUNT_CONTEXT
+{
+    PLSA_ACCOUNT pAccount;
+};
 
 
 #endif /* __LSASRV_PRIVILEGE_STRUCTS_H__ */
