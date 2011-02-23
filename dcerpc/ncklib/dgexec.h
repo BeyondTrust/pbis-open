@@ -40,9 +40,7 @@
 #ifndef _DGEXEC_H
 #define _DGEXEC_H
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 PRIVATE void rpc__dg_execute_call    (
         pointer_t  /*scall_*/,

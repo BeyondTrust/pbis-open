@@ -37,9 +37,7 @@
 **
 */
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 /* 
  * Number of times per second the clock ticks (LSB weight for time values).

@@ -72,9 +72,7 @@
  * would be overwritten. 
  */
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 /*int pthd4_get_expiration_np(struct timespec *delta, struct timespec *abstime);*/
 

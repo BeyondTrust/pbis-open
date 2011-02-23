@@ -37,6 +37,9 @@
 **
 */
 
+#ifndef IDLBASE_H
+#define IDLBASE_H 	1
+
 #if defined(__GNUC__) && (__GNUC__ >= 3)
 #    define __IDL_UNUSED__ __attribute__((unused))
 #    define __IDL_UNUSED_LABEL__ __IDL_UNUSED__
@@ -45,17 +48,10 @@
 #    define __IDL_UNUSED_LABEL__
 #endif
 
-#ifndef _DCE_PROTOTYPE_
-#define _DCE_PROTOTYPE_(arg) arg
-#define _DCE_PROTO_
 #ifndef TRUE
 #define TRUE 1
 #define FALSE 0
 #endif  /* TRUE */
-#endif /* _DCE_PROTOTYPE_ */
-
-#ifndef IDLBASE_H
-#define IDLBASE_H 	1
 
 #ifdef __cplusplus
     extern "C" {
@@ -149,22 +145,6 @@
 #ifdef VOLATILE_NOT_SUPPORTED 
 #  define volatile
 #endif
-
-/***************************************************************************/
-
-/*
- *  Define IDL_PROTOTYPES to control function prototyping.
- *  Define IDL_NO_PROTOTYPES to hide prototypes regardless of conditions.
- *  Define NIDL_PROTOTYPES for compatibility.
- *
- * use _DCE_PROTOTYPE_ instead, since this should 
- * apply to all of DCE for a particular platform
- */
-
-#define IDL_PROTOTYPES 1
-
-/***************************************************************************/
-
 
 /*
  * define true and false

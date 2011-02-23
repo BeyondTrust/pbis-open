@@ -39,9 +39,7 @@
 **
 */
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 /*
  * C O N N E C T I O N   S T A T E S

@@ -90,9 +90,7 @@
 **
 */
            
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 typedef void (*rpc_timer_proc_p_t) ( pointer_t );
 

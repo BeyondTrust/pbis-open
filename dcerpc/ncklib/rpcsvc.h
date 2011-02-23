@@ -202,9 +202,6 @@
  * Format arguments and print as a serviceability
  * debug message.  (This routine is what EPRINTF
  * now evaluates to.)
- *
- * Since we need stdarg and all DCE code is now
- * supposed to be ANSI, no need for _DCE_PROTOTYPE_.
  */
 
 #include <stdarg.h>
@@ -220,10 +217,6 @@ int rpc__svc_eprintf (
  */
 
 /*
- * Requires ANSI prototype for stdargs, so no
- * point in using _DCE_PROTOTYPE_ ... DCE is
- * supposed to be pure ANSI now anyway ...
- *
  * Called only by RPC_DBG_PRINTF macro.
  */
 

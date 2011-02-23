@@ -85,9 +85,7 @@
  * Include a OS / machine specific configuration file.  
  */
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif 
 
 #ifdef DCE_RPC_DEBUG
 #define DCE_DEBUG	1

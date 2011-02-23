@@ -70,9 +70,7 @@
  * Prototype for the private 'c' routines used by the RPC_RANDOM macros.
  */
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 
 PRIVATE void rpc__random_init ( unsigned32  /*seed*/ );

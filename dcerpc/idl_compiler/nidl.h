@@ -66,24 +66,11 @@ typedef enum { false = 0, true = 1 } bool;
 # define DEBUG_VERBOSE 1
 #endif
 
-#ifdef __STDC__
 #   include <stdlib.h>
 #   ifndef CHAR_BIT
 #       include <limits.h>  /* Bring in limits.h if not cacaded in yet */
 #   endif
-#else /* prototypes that normally come from stdlib.h */
-    extern void *malloc();
-    extern void free();
-    extern char *getenv();
-    extern int atoi();
-    extern double atof();
-    extern long atol();
-#endif
-#ifdef __STDC__
 #  include <assert.h>
-#else
-#  define assert(ex) if (ex) ;
-#endif
 #include <sysdep.h>
 
 /*

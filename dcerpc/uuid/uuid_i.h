@@ -41,9 +41,7 @@
 */
 
 #ifndef UUID_BUILD_STANDALONE
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 #endif
 
 

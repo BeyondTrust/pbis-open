@@ -41,9 +41,7 @@
 #ifndef _DGSLSN_H
 #define _DGSLSN_H
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 
 PRIVATE boolean32 rpc__dg_svr_chk_and_set_sboot (

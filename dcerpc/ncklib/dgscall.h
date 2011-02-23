@@ -40,9 +40,7 @@
 #ifndef _DGSCALL_H
 #define _DGSCALL_H
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 
 /*

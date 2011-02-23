@@ -39,9 +39,7 @@
 **
 */
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 /*
  * Memory Allocation.

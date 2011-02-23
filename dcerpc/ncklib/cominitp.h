@@ -44,9 +44,7 @@
 /*
  * Note: these are defined for later use of shared images
  */
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 #ifdef __cplusplus
 extern "C" {

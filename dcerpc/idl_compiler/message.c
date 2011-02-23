@@ -41,10 +41,8 @@
 #endif
 
 #ifdef UUIDGEN  /* Building for uuidgen, so include whatever's needed from nidl.h. */
-#   if defined __STDC__
 #       include <limits.h>
 #       include <stdlib.h>
-#   endif
 #   include <uuidmsg.h>
 #   define MESSAGE_VERSION      UUIDGEN_MESSAGE_VERSION
 #   define MESSAGE_VERSION_USED UUIDGEN_MESSAGE_VERSION_USED
@@ -82,13 +80,8 @@
 #   else
 #       warning Message catalog support disabled
 #   endif
-#   ifdef __STDC__
 #       include <stdarg.h>  /* New! Improved! Method */
 #       define VA_START(L, A, T) va_start(L, A)
-#   else
-#       include <varargs.h> /* Traditional Method */
-#       define VA_START(L, A, T) T A; va_start(L); A = va_arg(L,T)
-#   endif
 
 #ifdef UUIDGEN
 #   ifndef PATH_MAX

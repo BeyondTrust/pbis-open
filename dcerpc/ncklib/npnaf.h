@@ -73,9 +73,7 @@
 #include <config.h>
 #endif
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 #ifndef sec_id_base_v0_0_included
 #include <dce/id_base.h>

@@ -40,9 +40,7 @@
 **
 */
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 
 #ifdef __cplusplus

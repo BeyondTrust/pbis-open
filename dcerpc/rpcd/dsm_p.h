@@ -47,14 +47,6 @@
 #include  <errno.h>
 #include  <sys/file.h>
 
-#ifndef _DCE_PROTOTYPE_
-# ifdef __STDC__
-#  define _DCE_PROTOTYPE_(x) x
-# else 
-#  define _DCE_PROTOTYPE_(x) ()
-# endif
-#endif
-
 /*
  * lseek direction macros
  */

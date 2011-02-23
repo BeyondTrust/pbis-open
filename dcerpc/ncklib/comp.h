@@ -43,9 +43,7 @@
 
 /***********************************************************************/
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 #include <comprot.h>    /* Externals for Protocol Services sub-component*/
 #include <comnaf.h>     /* Externals for NAF Services sub-component     */

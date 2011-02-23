@@ -61,9 +61,7 @@
  * Include platform-specific socket definitions
  */
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 /*
  * The maximum number of iov elements which can be sent through

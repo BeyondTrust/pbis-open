@@ -40,9 +40,7 @@
 **
 */
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 /*
  * R P C _ _ D G _ F W D _ P K T

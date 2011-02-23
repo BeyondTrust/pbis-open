@@ -563,9 +563,7 @@ typedef struct rpc_cond_t
  * Prototypes for the support routines.
  */
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif /* _DCE_PROTOTYPE_ */
 
 boolean rpc__mutex_init ( rpc_mutex_p_t  /*mp*/ );
 

@@ -57,10 +57,6 @@
  * global or statics at the file scope, will be loaded as R/W, per-process,
  * and zero-filled.
  */
-#if __STDC__
 #   pragma HP_SECTION( , nck_pure_data$)
-#else
-#   section( , nck_pure_data$)
-#endif
 
 #endif

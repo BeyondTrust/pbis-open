@@ -312,9 +312,7 @@
 #include <dce/stubbase.h>
 #include <lsysdep.h>
 
-#   ifdef __STDC__
 #       include <stdlib.h>
-#   endif
 
 #define INTERNAL static
 #define PUBLIC

@@ -41,9 +41,7 @@
 #ifndef _DGCLSN_H
 #define _DGCLSN_H	1
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 
 #ifdef __cplusplus

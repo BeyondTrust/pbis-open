@@ -43,9 +43,7 @@
  * The max number of socket that the listener can keep track of.
  */
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 
 #ifndef RPC_C_SERVER_MAX_SOCKETS

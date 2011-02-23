@@ -40,9 +40,7 @@
 #ifndef _DGCCT_H
 #define _DGCCT_H
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 
 /*

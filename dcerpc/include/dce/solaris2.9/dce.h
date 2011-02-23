@@ -54,47 +54,13 @@ extern "C" {
 #  define MAX(x, y)         ((x) > (y) ? (x) : (y))
 #endif
 
-
-/* 
- * The following allows for the support of both old and new style 
- * function definitions and prototypes.  All DCE code is required to 
- * be ANSI C compliant and to use prototypes.  For those components 
- * that wish to support old-style definitions, the following macros 
- * must be used.
- *
- *  Declare a prototype like this (don't use variables):
- *      int foo (int, void *, struct bar *)
- *  
- *  Define a function like this:
- *      int foo 
- *      #if defined(_DCE_PROTO_)
- *              (
- *              int a, 
- *              void *b,
- *              struct bar *c
- *              )
- *      #else
- *              (a, b, c)
- *              int a;
- *              void *b;
- *              struct bar *c;
- *      #endif
- */
-#if defined(__STDC__)                   /* other conditionals can be tested */
-#  define _DCE_PROTO_
-#endif                                  /* defined(__STDC__) */
-
-#  define _DCE_PROTOTYPE_(arg) arg 
-
 /* 
  * For those components wishing to support platforms where void 
  * pointers are not available, they can use the following typedef for 
  * a generic pointer type.  If they are supporting such platforms they 
  * must use this.
  */
-#if defined(__STDC__)
 #  define _DCE_VOID_
-#endif                                  /* defined(__STDC__) */
 
 #if defined(_DCE_VOID_)
   typedef void * pointer_t;
@@ -107,9 +73,7 @@ extern "C" {
  * an ANSI and non-ANSI environment.  Support of non-ANSI environments 
  * is not required, but where done, this macro must be used.
  */
-#if defined(__STDC__)
 #  define _DCE_TOKENCONCAT_
-#endif
 
 #if defined(_DCE_TOKENCONCAT_)
 #  define DCE_CONCAT(a, b)      a ## b

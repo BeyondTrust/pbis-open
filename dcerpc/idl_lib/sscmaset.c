@@ -52,9 +52,7 @@
 #endif
 
 #   include <stdio.h>
-#   ifdef __STDC__
 #       include <stdlib.h>
-#   endif
 
 /*
  * declare the default character translation tables.  Not in stubbase, since

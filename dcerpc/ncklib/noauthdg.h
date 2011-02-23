@@ -45,9 +45,7 @@
 #include <noauth.h>
 #include <dce/conv.h>
 
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 
 /*

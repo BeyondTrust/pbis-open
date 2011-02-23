@@ -64,9 +64,7 @@
  * that we'll ever allocate.
  */
            
-#ifndef _DCE_PROTOTYPE_
 #include <dce/dce.h>
-#endif
 
 
 #ifndef RPC_C_DG_PKT_MAX
