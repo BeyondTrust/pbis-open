@@ -77,37 +77,37 @@
     (xq)->awaiting_ack = false \
 )
 
-PRIVATE void rpc__dg_xmitq_elt_xmit _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_xmitq_elt_xmit (
         rpc_dg_xmitq_elt_p_t  /*xqe*/,
         rpc_dg_call_p_t  /*call*/,
         boolean32  /*block*/
-    ));
+    );
 
-PRIVATE void rpc__dg_xmitq_init _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_xmitq_init (
         rpc_dg_xmitq_p_t  /*xq*/
-    ));
+    );
 
-PRIVATE void rpc__dg_xmitq_reinit _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_xmitq_reinit (
         rpc_dg_xmitq_p_t  /*xq*/
-    ));
+    );
 
-PRIVATE void rpc__dg_xmitq_free _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_xmitq_free (
         rpc_dg_xmitq_p_t  /*xq*/,
         rpc_dg_call_p_t  /*call*/
-    ));
+    );
 
-PRIVATE void rpc__dg_xmitq_append_pp _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_xmitq_append_pp (
         rpc_dg_call_p_t  /*call*/,
         unsigned32 * /*st*/
-    ));
+    );
 
-PRIVATE boolean rpc__dg_xmitq_awaiting_ack_tmo _DCE_PROTOTYPE_((
+PRIVATE boolean rpc__dg_xmitq_awaiting_ack_tmo (
         rpc_dg_xmitq_p_t  /*xq*/,
         unsigned32  /*com_timeout_knob*/
-    ));
+    );
 
-PRIVATE void rpc__dg_xmitq_restart _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_xmitq_restart (
         rpc_dg_call_p_t  /*call*/
-    ));
+    );
 
 #endif /* _DGXQ_H */

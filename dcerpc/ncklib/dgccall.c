@@ -62,61 +62,61 @@ typedef struct {
 
 /* ========================================================================= */
 
-INTERNAL void ccall_common_init _DCE_PROTOTYPE_((
+INTERNAL void ccall_common_init (
         rpc_dg_binding_client_p_t  /*h*/,
         rpc_dg_ccall_p_t  /*ccall*/,
         unsigned32  /*options*/,
         rpc_if_rep_p_t  /*ifspec*/,
         unsigned32  /*opnum*/,
         unsigned32 * /*st*/
-    ));
+    );
 
-INTERNAL rpc_dg_ccall_p_t ccall_alloc _DCE_PROTOTYPE_((
+INTERNAL rpc_dg_ccall_p_t ccall_alloc (
         rpc_dg_binding_client_p_t  /*h*/,
         unsigned32  /*options*/,
         rpc_if_rep_p_t  /*ifspec*/,
         unsigned32  /*opnum*/,
         unsigned32 * /*st*/
-    ));
+    );
 
-INTERNAL rpc_dg_ccall_p_t ccall_reinit _DCE_PROTOTYPE_((
+INTERNAL rpc_dg_ccall_p_t ccall_reinit (
         rpc_dg_binding_client_p_t  /*h*/,
         unsigned32  /*options*/,
         rpc_if_rep_p_t  /*ifspec*/,
         unsigned32  /*opnum*/,
         boolean * /*insert_in_ccallt*/,
         unsigned32 * /*st*/
-    ));
+    );
 
-INTERNAL void xmit_ping _DCE_PROTOTYPE_(( rpc_dg_ccall_p_t  /*ccall*/));
+INTERNAL void xmit_ping ( rpc_dg_ccall_p_t  /*ccall*/);
 
-INTERNAL void xmit_orphan_quit _DCE_PROTOTYPE_(( rpc_dg_ccall_p_t  /*ccall*/));
+INTERNAL void xmit_orphan_quit ( rpc_dg_ccall_p_t  /*ccall*/);
 
-INTERNAL void recv_state_timer _DCE_PROTOTYPE_((rpc_dg_ccall_p_t  /*ccall*/));
+INTERNAL void recv_state_timer (rpc_dg_ccall_p_t  /*ccall*/);
 
-INTERNAL void ccall_orphan_timer _DCE_PROTOTYPE_((rpc_dg_ccall_p_t  /*ccall*/));
+INTERNAL void ccall_orphan_timer (rpc_dg_ccall_p_t  /*ccall*/);
 
-INTERNAL void ccall_cancel_timer _DCE_PROTOTYPE_((rpc_dg_ccall_p_t  /*ccall*/));
+INTERNAL void ccall_cancel_timer (rpc_dg_ccall_p_t  /*ccall*/);
 
-INTERNAL void ccall_uncache _DCE_PROTOTYPE_((rpc_dg_ccall_p_t  /*ccall*/));
+INTERNAL void ccall_uncache (rpc_dg_ccall_p_t  /*ccall*/);
 
-INTERNAL void ccall_binding_serialize _DCE_PROTOTYPE_((
+INTERNAL void ccall_binding_serialize (
         rpc_dg_binding_client_p_t  /*h*/,
         boolean32  /*is_brdcst*/,
         unsigned32 * /*cancel_cnt*/,
         rpc_clock_p_t  /*cancel_time*/,
         unsigned32 * /*st*/
-    ));
+    );
 
-INTERNAL void ccall_initial_cancel_setup _DCE_PROTOTYPE_((
+INTERNAL void ccall_initial_cancel_setup (
         rpc_dg_ccall_p_t  /*ccall*/,
         unsigned32  /*cancel_cnt*/,
         rpc_clock_t  /*cancel_time*/
-    ));
+    );
 
-INTERNAL void ccall_timeout_timer _DCE_PROTOTYPE_ ((
+INTERNAL void ccall_timeout_timer (
         rpc_dg_ccall_p_t  /*ccall*/
-    ));
+    );
 
 /* ========================================================================= */
 

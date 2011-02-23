@@ -43,75 +43,75 @@
  * R P C _ _ C N _ B I N D I N G _ A L L O C
  */
 
-PRIVATE rpc_binding_rep_t *rpc__cn_binding_alloc _DCE_PROTOTYPE_ ((
+PRIVATE rpc_binding_rep_t *rpc__cn_binding_alloc (
     boolean32            /* is_server */,
-    unsigned32          * /* st */));
+    unsigned32          * /* st */);
 
 /*
  * R P C _ _ C N _ B I N D I N G _ I N I T
  */
 
-PRIVATE void rpc__cn_binding_init _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_binding_init (
     rpc_binding_rep_p_t  /* binding_r */,
-    unsigned32          * /* st */));
+    unsigned32          * /* st */);
 
 /*
  * R P C _ _ C N _ B I N D I N G _ R E S E T
  */
 
-PRIVATE void rpc__cn_binding_reset _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_binding_reset (
     rpc_binding_rep_p_t  /* binding_r */,
-    unsigned32          * /* st */));
+    unsigned32          * /* st */);
 
 /*
  * R P C _ _ C N _ B I N D I N G _ C H A N G E D
  */
 
-PRIVATE void rpc__cn_binding_changed _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_binding_changed (
     rpc_binding_rep_p_t  /* binding_r */,
-    unsigned32          * /* st */));
+    unsigned32          * /* st */);
 
 /*
  * R P C _ _ C N _ B I N D I N G _ F R E E
  */
 
-PRIVATE void rpc__cn_binding_free _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_binding_free (
     rpc_binding_rep_p_t * /* binding_r */,
-    unsigned32          * /* st */));
+    unsigned32          * /* st */);
 
 /*
  * R P C _ _ C N _ B I N D I N G _ I N Q _ A D D R
  */
 
-PRIVATE void rpc__cn_binding_inq_addr _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_binding_inq_addr (
     rpc_binding_rep_p_t  /* binding_r */,
     rpc_addr_p_t        * /* rpc_addr */,
-    unsigned32          * /* st */));
+    unsigned32          * /* st */);
 
 /*
  * R P C _ _ C N _ B I N D I N G _ I N Q _ C L I E N T
  */
 
-PRIVATE void rpc__cn_binding_inq_client _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_binding_inq_client (
     rpc_binding_rep_p_t  /* binding_r */,
     rpc_client_handle_t * /* client_h */,
-    unsigned32          * /* st */));
+    unsigned32          * /* st */);
 
 /*
  * R P C _ _ C N _ B I N D I N G _ C O P Y
  */
 
-PRIVATE void rpc__cn_binding_copy _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_binding_copy (
     rpc_binding_rep_p_t  /* src_binding_r */,
     rpc_binding_rep_p_t  /* dst_binding_r */,
-    unsigned32          * /* st */));
+    unsigned32          * /* st */);
 
 /*
  * R P C _ _ C N _ B I N D I N G _ C R O S S _ F O R K
  */
 
-PRIVATE void rpc__cn_binding_cross_fork _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_binding_cross_fork (
     rpc_binding_rep_p_t  /* binding_r */,
-    unsigned32          * /* st */));
+    unsigned32          * /* st */);
 
 #endif /* _CNBIND_H */

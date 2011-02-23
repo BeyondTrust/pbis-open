@@ -43,30 +43,30 @@
 
 #include <schnauthcn.h>
 
-INTERNAL boolean32 rpc__schnauth_cn_three_way _DCE_PROTOTYPE_((void));
+INTERNAL boolean32 rpc__schnauth_cn_three_way (void);
 
-INTERNAL boolean32 rpc__schnauth_cn_context_valid _DCE_PROTOTYPE_((
+INTERNAL boolean32 rpc__schnauth_cn_context_valid (
         rpc_cn_sec_context_p_t           /*sec*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__schnauth_cn_create_info _DCE_PROTOTYPE_((
+INTERNAL void rpc__schnauth_cn_create_info (
        rpc_authn_level_t                 /*authn_level*/,
        rpc_auth_info_p_t                * /*auth_info*/,
        unsigned32                       * /*st*/
-    ));
+    );
 
-INTERNAL boolean32 rpc__schnauth_cn_cred_changed _DCE_PROTOTYPE_((
+INTERNAL boolean32 rpc__schnauth_cn_cred_changed (
         rpc_cn_sec_context_p_t           /*sec*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__schnauth_cn_cred_refresh _DCE_PROTOTYPE_((
+INTERNAL void rpc__schnauth_cn_cred_refresh (
         rpc_auth_info_p_t                /*auth_info*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__schnauth_cn_fmt_client_req _DCE_PROTOTYPE_((
+INTERNAL void rpc__schnauth_cn_fmt_client_req (
         rpc_cn_assoc_sec_context_p_t      /* assoc_sec */,
         rpc_cn_sec_context_p_t            /* sec */,
         pointer_t                         /* auth_value */,
@@ -75,9 +75,9 @@ INTERNAL void rpc__schnauth_cn_fmt_client_req _DCE_PROTOTYPE_((
         unsigned32                      * /* auth_len_remain */,
         unsigned32                        /* old_server */,
         unsigned32                      * /* st */
-    ));
+    );
 
-INTERNAL void rpc__schnauth_cn_fmt_srvr_resp _DCE_PROTOTYPE_((
+INTERNAL void rpc__schnauth_cn_fmt_srvr_resp (
         unsigned32                       /*verify_st*/,
         rpc_cn_assoc_sec_context_p_t     /*assoc_sec*/,
         rpc_cn_sec_context_p_t           /*sec*/,
@@ -85,37 +85,37 @@ INTERNAL void rpc__schnauth_cn_fmt_srvr_resp _DCE_PROTOTYPE_((
         unsigned32                       /*req_auth_value_len*/,
         pointer_t                        /*auth_value*/,
         unsigned32                      * /*auth_value_len*/
-    ));
+    );
 
-INTERNAL void rpc__schnauth_cn_free_prot_info _DCE_PROTOTYPE_((
+INTERNAL void rpc__schnauth_cn_free_prot_info (
         rpc_auth_info_p_t                /*info*/,
         rpc_cn_auth_info_p_t            * /*cn_info*/
-    ));
+    );
 
-INTERNAL void rpc__schnauth_cn_get_prot_info _DCE_PROTOTYPE_((
+INTERNAL void rpc__schnauth_cn_get_prot_info (
         rpc_auth_info_p_t                /*info*/,
         rpc_cn_auth_info_p_t            * /*cn_info*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__schnauth_cn_pre_call _DCE_PROTOTYPE_((
+INTERNAL void rpc__schnauth_cn_pre_call (
         rpc_cn_assoc_sec_context_p_t     /*assoc_sec*/,
         rpc_cn_sec_context_p_t           /*sec*/,
         pointer_t                        /*auth_value*/,
         unsigned32                      * /*auth_value_len*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__schnauth_cn_pre_send _DCE_PROTOTYPE_((
+INTERNAL void rpc__schnauth_cn_pre_send (
         rpc_cn_assoc_sec_context_p_t     /*assoc_sec*/,
         rpc_cn_sec_context_p_t           /*sec*/,
         rpc_socket_iovec_p_t             /*iov*/,
         unsigned32                       /*iovlen*/,
 	rpc_socket_iovec_p_t             /*out_iov*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__schnauth_cn_recv_check _DCE_PROTOTYPE_((
+INTERNAL void rpc__schnauth_cn_recv_check (
         rpc_cn_assoc_sec_context_p_t     /*assoc_sec*/,
         rpc_cn_sec_context_p_t           /*sec*/,
         rpc_cn_common_hdr_p_t            /*pdu*/,
@@ -124,36 +124,36 @@ INTERNAL void rpc__schnauth_cn_recv_check _DCE_PROTOTYPE_((
         rpc_cn_auth_tlr_p_t              /*auth_tlr*/,
         boolean32                        /*unpack_ints*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__schnauth_cn_tlr_uuid_crc _DCE_PROTOTYPE_((
+INTERNAL void rpc__schnauth_cn_tlr_uuid_crc (
         pointer_t                /*auth_value*/,
         unsigned32               /*auth_value_len*/,
         unsigned32              * /*uuid_crc*/
-    ));
+    );
 
-INTERNAL void rpc__schnauth_cn_tlr_unpack _DCE_PROTOTYPE_((
+INTERNAL void rpc__schnauth_cn_tlr_unpack (
         rpc_cn_packet_p_t        /*pkt_p*/,
         unsigned32               /*auth_value_len*/,
         unsigned8               * /*packed_drep*/
-    ));
+    );
 
-INTERNAL void rpc__schnauth_cn_vfy_client_req _DCE_PROTOTYPE_((
+INTERNAL void rpc__schnauth_cn_vfy_client_req (
         rpc_cn_assoc_sec_context_p_t    /* assoc_sec */,
         rpc_cn_sec_context_p_t          /* sec */,
         pointer_t                       /* auth_value */,
         unsigned32                      /* auth_value_len */,
 	unsigned32		        /* old_client */,
         unsigned32                      * /* st */
-    ));
+    );
 
-INTERNAL void rpc__schnauth_cn_vfy_srvr_resp _DCE_PROTOTYPE_((
+INTERNAL void rpc__schnauth_cn_vfy_srvr_resp (
         rpc_cn_assoc_sec_context_p_t     /*assoc_sec*/,
         rpc_cn_sec_context_p_t           /*sec*/,
         pointer_t                        /*auth_value*/,
         unsigned32                       /*auth_value_len*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
 GLOBAL rpc_cn_auth_epv_t rpc_g_schnauth_cn_epv =
 {

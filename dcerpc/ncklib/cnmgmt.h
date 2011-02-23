@@ -48,30 +48,30 @@
  * R P C _ _ C N _ M G M T _ I N I T
  */
 
-PRIVATE void rpc__cn_mgmt_init _DCE_PROTOTYPE_ ((void));
+PRIVATE void rpc__cn_mgmt_init (void);
 
 /*
  * R P C _ _ C N _ M G M T _ I N Q _ C A L L S _ S E N T
  */
 
-PRIVATE unsigned32 rpc__cn_mgmt_inq_calls_sent _DCE_PROTOTYPE_ ((void));
+PRIVATE unsigned32 rpc__cn_mgmt_inq_calls_sent (void);
 
 /*
  * R P C _ _ C N _ M G M T _ I N Q _ C A L L S _ R C V D 
  */
 
-PRIVATE unsigned32 rpc__cn_mgmt_inq_calls_rcvd _DCE_PROTOTYPE_ ((void));
+PRIVATE unsigned32 rpc__cn_mgmt_inq_calls_rcvd (void);
 
 /*
  * R P C _ _ C N _ M G M T _ I N Q _ P K T S _ S E N T
  */
 
-PRIVATE unsigned32 rpc__cn_mgmt_inq_pkts_sent _DCE_PROTOTYPE_ ((void));
+PRIVATE unsigned32 rpc__cn_mgmt_inq_pkts_sent (void);
 
 /*
  * R P C _ _ C N _ M G M T _ I N Q _ P K T S _ R C V D
  */
 
-PRIVATE unsigned32 rpc__cn_mgmt_inq_pkts_rcvd _DCE_PROTOTYPE_ ((void));
+PRIVATE unsigned32 rpc__cn_mgmt_inq_pkts_rcvd (void);
 
 #endif /* _CNMGMT_H */

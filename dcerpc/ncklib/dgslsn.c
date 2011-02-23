@@ -57,16 +57,16 @@
 #include <comprot.h>
 #include <comcthd.h>
 
-INTERNAL void scall_xmit_cancel_quack _DCE_PROTOTYPE_ ((
+INTERNAL void scall_xmit_cancel_quack (
         rpc_dg_scall_p_t  /*scall*/,
         unsigned32  /*cancel_id*/,
         unsigned32  /*is_accepting*/
-    ));
+    );
 
-INTERNAL void do_quit_body _DCE_PROTOTYPE_ ((
+INTERNAL void do_quit_body (
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_scall_p_t  /*scall*/
-    ));
+    );
 
 /*
  * Orphan quit packet check macro. 
@@ -517,11 +517,11 @@ PRIVATE boolean rpc__dg_do_ack
  * Routine common to request and ping processing, in case we got a packet
  * whose sequence is current.
  */
-INTERNAL void ping_common  _DCE_PROTOTYPE_((
+INTERNAL void ping_common  (
         rpc_dg_sock_pool_elt_p_t  /*sp*/, 
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_scall_p_t  /*scall*/ 
-    ));
+    );
 
 INTERNAL void ping_common
 (
@@ -763,11 +763,11 @@ typedef enum {
     do_req_e_non_idem_rerun
 } do_req_enum_t;
 
-INTERNAL do_req_enum_t do_request_common _DCE_PROTOTYPE_((
+INTERNAL do_req_enum_t do_request_common (
         unsigned32  /*cur_call_seq*/,
         rpc_dg_call_state_t  /*cur_call_state*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/
-    ));
+    );
 
 INTERNAL do_req_enum_t do_request_common
 (
@@ -995,11 +995,11 @@ INTERNAL do_req_enum_t do_request_common
  * can check using the common SCALL processing.
  */
 
-INTERNAL boolean do_cbk_request _DCE_PROTOTYPE_((
+INTERNAL boolean do_cbk_request (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_scall_p_t * /*scallp*/
-    ));
+    );
 
 INTERNAL boolean do_cbk_request
 (

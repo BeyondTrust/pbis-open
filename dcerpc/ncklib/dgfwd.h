@@ -50,10 +50,10 @@
  * Forwarding Service.
  */
 
-PRIVATE unsigned32 rpc__dg_fwd_pkt    _DCE_PROTOTYPE_ ((
+PRIVATE unsigned32 rpc__dg_fwd_pkt    (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/
-    ));
+    );
 
 /*
  * Can return three values:
@@ -71,6 +71,6 @@ PRIVATE unsigned32 rpc__dg_fwd_pkt    _DCE_PROTOTYPE_ ((
  * Initialize forwarding service private mutex.
  */
 
-PRIVATE void rpc__dg_fwd_init _DCE_PROTOTYPE_ ((void));
+PRIVATE void rpc__dg_fwd_init (void);
 
 #endif /* _DGFWD_H */

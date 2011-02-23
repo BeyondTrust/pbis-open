@@ -62,14 +62,14 @@
     } \
 }
 
-PRIVATE void rpc__dg_binding_inq_client _DCE_PROTOTYPE_((   
+PRIVATE void rpc__dg_binding_inq_client (   
         rpc_binding_rep_p_t  /*binding_r*/,
         rpc_client_handle_t * /*client_h*/,
         unsigned32 * /*st*/
-    ));
+    );
 
-PRIVATE void rpc__dg_client_free _DCE_PROTOTYPE_((   
+PRIVATE void rpc__dg_client_free (   
         rpc_client_handle_t  /*client_h*/
-    ));
+    );
 
 #endif /* _DGSLIVE_H */

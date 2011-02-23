@@ -884,10 +884,10 @@ typedef unsigned_char_t rpc_string_binding_t[RPC_C_STRING_BINDING_MAX];
  *      rpc__cthread_invoke_null that will be called back by
  *      the Call Thread Service when the thread is woken up
  */
-typedef void (*rpc_prot_cthread_executor_fn_t) _DCE_PROTOTYPE_ ((
+typedef void (*rpc_prot_cthread_executor_fn_t) (
         pointer_t               /* args */,
         boolean32               /* call_was_queued */
-    ));
+    );
 
 /*
  * R P C _ C T H R E A D _ P V T _ I N F O _ T
@@ -1236,43 +1236,43 @@ typedef struct
     --(binding_rep_p_t)->calls_in_progress; \
 }
 
-PRIVATE void rpc__binding_free _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__binding_free (
         rpc_binding_rep_p_t         * /* binding_rep */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE rpc_binding_rep_t *rpc__binding_alloc _DCE_PROTOTYPE_ ((
+PRIVATE rpc_binding_rep_t *rpc__binding_alloc (
         boolean32                   /* is_server */,
         dce_uuid_p_t                    /* object_uuid */,
         rpc_protocol_id_t           /* protocol_id */,
         rpc_addr_p_t                /* rpc_addr */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__binding_inq_sockaddr _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__binding_inq_sockaddr (
         rpc_binding_handle_t        /* binding_h */,
         sockaddr_p_t                */* sa */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__binding_cross_fork _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__binding_cross_fork (
         rpc_binding_rep_p_t         /* binding_rep */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__binding_set_prot_version _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__binding_set_prot_version (
     rpc_binding_handle_t	   /* binding_h */,
     rpc_tower_ref_p_t		   /* tower_ref */,
-    unsigned32			    * /* status */));
+    unsigned32			    * /* status */);
 
-PRIVATE void rpc__binding_prot_version_alloc _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__binding_prot_version_alloc (
     rpc_protocol_version_p_t    * /* prot_version */,
     unsigned32		          /* major_version */,
     unsigned32		          /* minor_version */,
-    unsigned32		        * /* status */));
+    unsigned32		        * /* status */);
 
-PRIVATE void rpc__binding_prot_version_free _DCE_PROTOTYPE_ ((
-    rpc_protocol_version_p_t	* /* protocol_version */ ));
+PRIVATE void rpc__binding_prot_version_free (
+    rpc_protocol_version_p_t	* /* protocol_version */ );
 
 
 /***********************************************************************/
@@ -1287,11 +1287,11 @@ PRIVATE void rpc__binding_prot_version_free _DCE_PROTOTYPE_ ((
  *
  */
 
-PRIVATE void rpc__call_reject _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__call_reject (
         rpc_call_rep_p_t            /* call_r */,
         unsigned32                  /* architected_status */,
         unsigned32                  status
-    ));
+    );
 
 
 /***********************************************************************/
@@ -1307,15 +1307,15 @@ PRIVATE void rpc__call_reject _DCE_PROTOTYPE_ ((
  * Common Interface Services - shared macros and prototypes
  */
 
-PRIVATE void rpc__if_init _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__if_init (
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__if_fork_handler _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__if_fork_handler (
         rpc_fork_stage_id_t stage
-    ));
+    );
 
-PRIVATE void rpc__if_lookup _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__if_lookup (
         dce_uuid_p_t                    /* if_uuid */,
         unsigned32                  /* if_vers */,
         dce_uuid_p_t                    /* type_uuid */,
@@ -1324,9 +1324,9 @@ PRIVATE void rpc__if_lookup _DCE_PROTOTYPE_ ((
         rpc_v2_server_stub_epv_t    */* ss_epv */,
         rpc_mgr_epv_t               */* mgr_epv */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__if_lookup2 _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__if_lookup2 (
         dce_uuid_p_t                    /* if_uuid */,
         unsigned32                  /* if_vers */,
         dce_uuid_p_t                    /* type_uuid */,
@@ -1339,27 +1339,27 @@ PRIVATE void rpc__if_lookup2 _DCE_PROTOTYPE_ ((
         unsigned32                  * /* max_rpc_size */,
         rpc_if_callback_fn_t        * /* if_callback */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__if_set_wk_endpoint _DCE_PROTOTYPE_ ((      
+PRIVATE void rpc__if_set_wk_endpoint (      
         rpc_if_rep_p_t              /* ifspec */,
         rpc_addr_p_t                */* rpc_addr */,
         unsigned32                  *st
-    ));
+    );
 
-PRIVATE boolean rpc__if_id_compare _DCE_PROTOTYPE_ ((
+PRIVATE boolean rpc__if_id_compare (
         rpc_if_id_p_t               /* if_id_ref */,
         rpc_if_id_p_t               /* if_id */,
         unsigned32                  /* if_vers_option */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE unsigned32 rpc__if_mgmt_inq_num_registered _DCE_PROTOTYPE_ ((void));
+PRIVATE unsigned32 rpc__if_mgmt_inq_num_registered (void);
 
-PRIVATE void rpc__if_mgmt_inq_if_ids _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__if_mgmt_inq_if_ids (
         rpc_if_id_vector_p_t        */* if_info */,
         unsigned32                  * /* status */
-    ));
+    );
 
 
 /***********************************************************************/
@@ -1368,65 +1368,65 @@ PRIVATE void rpc__if_mgmt_inq_if_ids _DCE_PROTOTYPE_ ((
  * Common Network Services - shared macros and prototypes
  */
 
-PRIVATE void rpc__network_init _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__network_init (
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__network_fork_handler _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__network_fork_handler (
         rpc_fork_stage_id_t stage
-    ));
+    );
 
-PRIVATE void rpc__network_add_desc _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__network_add_desc (
         rpc_socket_t                /* desc */,
         boolean32                   /* is_server */,
         boolean32                   /* is_dynamic */,
         rpc_protseq_id_t            /* rpc_protseq_id */,
         pointer_t                   /* priv_info */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__network_remove_desc _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__network_remove_desc (
         rpc_socket_t                /* desc */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__network_set_priv_info _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__network_set_priv_info (
         rpc_socket_t                /* desc */,
         pointer_t                   /* priv_info */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__network_inq_priv_info _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__network_inq_priv_info (
         rpc_socket_t                /* desc */,
         pointer_t                   */* priv_info */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__network_inq_prot_version _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__network_inq_prot_version (
         rpc_protseq_id_t            /* rpc_protseq_id */,
         unsigned8                   */* prot_id */,
         unsigned32                  */* version_major */,
         unsigned32                  */* version_minor */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__network_pseq_from_pseq_id _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__network_pseq_from_pseq_id (
         rpc_protseq_id_t            /* rpc_protseq_id */, 
         unsigned_char_p_t           */* protseq */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE rpc_protocol_id_t rpc__network_pseq_id_from_pseq _DCE_PROTOTYPE_  ((
+PRIVATE rpc_protocol_id_t rpc__network_pseq_id_from_pseq (
         unsigned_char_p_t           /* rpc_protseq */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__network_inq_local_addr _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__network_inq_local_addr (
         rpc_protseq_id_t            /* rpc_protseq_id */,
         unsigned_char_p_t           /* endpoint */,
         rpc_addr_p_t                */* rpc_addr */,
         unsigned32                  * /* status */
-    ));
+    );
 
 
 
@@ -1437,7 +1437,7 @@ PRIVATE void rpc__network_inq_local_addr _DCE_PROTOTYPE_ ((
  * Common Network Address Family Services - shared macros and prototypes
  */
 
-PRIVATE void rpc__naf_addr_alloc _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_addr_alloc (
         rpc_protseq_id_t            /* rpc_protseq_id */,
         rpc_naf_id_t                /* naf_id */,
         unsigned_char_p_t           /* endpoint */,
@@ -1445,148 +1445,148 @@ PRIVATE void rpc__naf_addr_alloc _DCE_PROTOTYPE_ ((
         unsigned_char_p_t           /* network_options */,
         rpc_addr_p_t                */* rpc_addr */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_addr_copy _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_addr_copy (
         rpc_addr_p_t                /* src_rpc_addr */,
         rpc_addr_p_t                */* dst_rpc_addr */,
         unsigned32                  * /* status */
-    ));
+    );
     
-PRIVATE void rpc__naf_addr_overcopy _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_addr_overcopy (
         rpc_addr_p_t                /* src_rpc_addr */,
         rpc_addr_p_t                */* dst_rpc_addr */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_addr_free _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_addr_free (
         rpc_addr_p_t                */* rpc_addr */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_addr_vector_free _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_addr_vector_free (
         rpc_addr_vector_p_t         */* rpc_addr_vec */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_addr_set_endpoint _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_addr_set_endpoint (
         unsigned_char_p_t           /* endpoint */,
         rpc_addr_p_t                */* rpc_addr */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_addr_inq_endpoint _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_addr_inq_endpoint (
         rpc_addr_p_t                /* rpc_addr */,
         unsigned_char_t             **/* endpoint */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_addr_set_netaddr _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_addr_set_netaddr (
         unsigned_char_p_t           /* netaddr */,
         rpc_addr_p_t                */* rpc_addr */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_addr_inq_netaddr _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_addr_inq_netaddr (
         rpc_addr_p_t                /* rpc_addr */,
         unsigned_char_t             **/* netaddr */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_addr_set_options _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_addr_set_options (
         unsigned_char_p_t           /* network_options */,
         rpc_addr_p_t                */* rpc_addr */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_addr_inq_options _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_addr_inq_options (
         rpc_addr_p_t                /* rpc_addr */,
         unsigned_char_t             **/* network_options */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_desc_inq_addr _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_desc_inq_addr (
         rpc_protseq_id_t            /* protseq_id */,
         rpc_socket_t                /* desc */,
         rpc_addr_vector_p_t         */* rpc_addr_vec */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_desc_inq_network _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_desc_inq_network (
         rpc_socket_t                /* desc */,
         rpc_naf_id_t                */* naf_id */,
         rpc_network_if_id_t         */* socket_type */,
         rpc_network_protocol_id_t   */* protocol_id */,
         unsigned32                  * /* status */
-    ));
+    );
     
-PRIVATE void rpc__naf_desc_inq_naf_id _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_desc_inq_naf_id (
         rpc_socket_t                /* desc */,
         rpc_naf_id_t                */* naf_id */,
         unsigned32                  * /* status */
-    ));
+    );
     
-PRIVATE void rpc__naf_desc_inq_protseq_id _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_desc_inq_protseq_id (
         rpc_socket_t                /* desc */,
         rpc_network_protocol_id_t   /* protocol_id */,
         rpc_protseq_id_t            */* protseq_id */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_desc_inq_peer_addr _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_desc_inq_peer_addr (
         rpc_socket_t                /* desc */,
         rpc_protseq_id_t            /* protseq_id */,
         rpc_addr_p_t                */* addr */,
         unsigned32                  * /* status */
-    ));
+    );
     
-PRIVATE void rpc__naf_inq_max_tsdu _DCE_PROTOTYPE_ ((  
+PRIVATE void rpc__naf_inq_max_tsdu (  
         rpc_protseq_id_t            /* protseq_id */,
         unsigned32                  */* max_tsdu */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_get_broadcast _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_get_broadcast (
         rpc_naf_id_t                /* naf_id */,
         rpc_protseq_id_t            /* protseq_id */,
         rpc_addr_vector_p_t         */* rpc_addrs */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE boolean rpc__naf_addr_compare _DCE_PROTOTYPE_ ((
+PRIVATE boolean rpc__naf_addr_compare (
         rpc_addr_p_t                /* addr1 */,
         rpc_addr_p_t                /* addr2 */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_inq_max_pth_unfrg_tpdu _DCE_PROTOTYPE_ ((  
+PRIVATE void rpc__naf_inq_max_pth_unfrg_tpdu (  
         rpc_addr_p_t                /* rpc_addr */,
         unsigned32                  */* max_tpdu */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_inq_max_loc_unfrg_tpdu _DCE_PROTOTYPE_ ((  
+PRIVATE void rpc__naf_inq_max_loc_unfrg_tpdu (  
         rpc_protseq_id_t            /* pseq_id */,
         unsigned32                  */* max_tpdu */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_set_pkt_nodelay _DCE_PROTOTYPE_ ((  
+PRIVATE void rpc__naf_set_pkt_nodelay (  
         rpc_socket_t                /* desc */,
         rpc_addr_p_t                /* rpc_addr */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE boolean rpc__naf_is_connect_closed _DCE_PROTOTYPE_ ((  
+PRIVATE boolean rpc__naf_is_connect_closed (  
         rpc_socket_t                /* desc */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_inq_max_frag_size _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_inq_max_frag_size (
         rpc_addr_p_t                /* rpc_addr */,
         unsigned32                  * /* max_frag_size */,
         unsigned32                  * /* status */
-    ));
+    );
 
 
 /***********************************************************************/
@@ -1595,9 +1595,9 @@ PRIVATE void rpc__naf_inq_max_frag_size _DCE_PROTOTYPE_ ((
  * Common Object Services - shared macros and prototypes
  */
 
-PRIVATE void rpc__obj_init _DCE_PROTOTYPE_ (( unsigned32 * /* status */ ));
+PRIVATE void rpc__obj_init ( unsigned32 * /* status */ );
 
-PRIVATE void rpc__obj_fork_handler _DCE_PROTOTYPE_ (( rpc_fork_stage_id_t ));
+PRIVATE void rpc__obj_fork_handler ( rpc_fork_stage_id_t );
 
 
 /***********************************************************************/
@@ -1606,24 +1606,24 @@ PRIVATE void rpc__obj_fork_handler _DCE_PROTOTYPE_ (( rpc_fork_stage_id_t ));
  * Common Protocol Tower Services - shared macros and prototypes
  */
 
-PRIVATE void rpc__naf_addr_from_sa _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_addr_from_sa (
         sockaddr_p_t                /* sockaddr */,
         unsigned32                  /* sockaddr_len */,
         rpc_addr_p_t                */* rpc_addr */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_tower_flrs_from_addr _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_tower_flrs_from_addr (
         rpc_addr_p_t               /* rpc_addr */,
         twr_p_t                    */* lower_flrs */,
         unsigned32                 * /* status */
-    ));
+    );
 
-PRIVATE void rpc__naf_tower_flrs_to_addr _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__naf_tower_flrs_to_addr (
         byte_p_t                   /* tower_octet_string */,
         rpc_addr_p_t               */* rpc_addr */,
         unsigned32                 * /* status */
-    ));
+    );
 
 /***********************************************************************/
 /***********************************************************************/
@@ -1631,7 +1631,7 @@ PRIVATE void rpc__naf_tower_flrs_to_addr _DCE_PROTOTYPE_ ((
  * Common Server (object) Services - shared macros and prototypes
  */
 
-PRIVATE void rpc__server_register_if_int _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__server_register_if_int (
 
         rpc_if_handle_t             /* ifspec_h */,
         dce_uuid_p_t                    /* mgr_type_uuid */,
@@ -1642,20 +1642,20 @@ PRIVATE void rpc__server_register_if_int _DCE_PROTOTYPE_ ((
         rpc_if_callback_fn_t        /* if_callback */,
         boolean32                   /* internal */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__server_unregister_if_int _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__server_unregister_if_int (
         rpc_if_handle_t             /* ifspec_h */,
         dce_uuid_p_t                    /* mgr_type_uuid */,
         rpc_if_handle_t             */* rtn_ifspec_h */,
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE void rpc__server_stop_listening _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__server_stop_listening (
         unsigned32                  * /* status */
-    ));
+    );
 
-PRIVATE boolean32 rpc__server_is_listening _DCE_PROTOTYPE_ ((void));
+PRIVATE boolean32 rpc__server_is_listening (void);
 
 
 
@@ -1665,10 +1665,10 @@ PRIVATE boolean32 rpc__server_is_listening _DCE_PROTOTYPE_ ((void));
  * Common Utility Services - shared macros and prototypes
  */
 
-PRIVATE unsigned32 rpc__strcspn _DCE_PROTOTYPE_ ((
+PRIVATE unsigned32 rpc__strcspn (
         unsigned_char_p_t           /* string */,
         char                        * /* term_set */
-    ));
+    );
 
 PRIVATE size_t rpc__get_token(
     const unsigned char       *string,
@@ -1678,16 +1678,16 @@ PRIVATE size_t rpc__get_token(
     unsigned32              *status
 );
     
-PRIVATE void rpc__strncpy _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__strncpy (
         unsigned_char_p_t           /* dst_string */,
         unsigned_char_p_t           /* src_string */,
         unsigned32                  /* max_length */
-    ));
+    );
 
-PRIVATE unsigned32 rpc__strsqz _DCE_PROTOTYPE_ (( unsigned_char_p_t));
+PRIVATE unsigned32 rpc__strsqz ( unsigned_char_p_t);
 
 
-PRIVATE unsigned_char_p_t rpc__stralloc _DCE_PROTOTYPE_ (( unsigned_char_p_t));
+PRIVATE unsigned_char_p_t rpc__stralloc ( unsigned_char_p_t);
 
 
 
@@ -1698,9 +1698,9 @@ PRIVATE unsigned_char_p_t rpc__stralloc _DCE_PROTOTYPE_ (( unsigned_char_p_t));
  * Name Service binding->ns_specific free function.
  */
 
-typedef void (*rpc_g_ns_specific_free_fn_t) _DCE_PROTOTYPE_ ((
+typedef void (*rpc_g_ns_specific_free_fn_t) (
         pointer_t   * /* ns_specific*/
-    ));
+    );
 
 EXTERNAL rpc_g_ns_specific_free_fn_t  rpc_g_ns_specific_free_fn;
 
@@ -1724,29 +1724,29 @@ typedef struct
 typedef rpc_auth_rpc_prot_epv_p_t *rpc_auth_rpc_prot_epv_tbl_t;
 typedef rpc_auth_rpc_prot_epv_tbl_t *rpc_auth_rpc_prot_epv_tbl_p_t;
 
-PRIVATE void rpc__auth_info_reference _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__auth_info_reference (
         rpc_auth_info_p_t       /* auth_info */
-    ));
+    );
 
-PRIVATE void rpc__auth_info_release _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__auth_info_release (
         rpc_auth_info_p_t       * /* info */
-    ));
+    );
 
-PRIVATE rpc_auth_rpc_prot_epv_t *rpc__auth_rpc_prot_epv _DCE_PROTOTYPE_ ((
+PRIVATE rpc_auth_rpc_prot_epv_t *rpc__auth_rpc_prot_epv (
         rpc_authn_protocol_id_t /* authn_prot_id */,
         rpc_protocol_id_t       /* rpc_prot_id */
-    ));
+    );
 
-PRIVATE unsigned32 rpc__auth_cvt_id_api_to_wire _DCE_PROTOTYPE_ ((
+PRIVATE unsigned32 rpc__auth_cvt_id_api_to_wire (
         rpc_authn_protocol_id_t /* api_authn_prot_id */,
         unsigned32              * /* status */
-    ));
+    );
 
-PRIVATE rpc_authn_protocol_id_t rpc__auth_cvt_id_wire_to_api _DCE_PROTOTYPE_((
+PRIVATE rpc_authn_protocol_id_t rpc__auth_cvt_id_wire_to_api (
         unsigned32              /* wire_authn_prot_id */,
         unsigned32              * /* status */
-    ));
+    );
 
-PRIVATE boolean32 rpc__auth_inq_supported _DCE_PROTOTYPE_ ((rpc_authn_protocol_id_t));
+PRIVATE boolean32 rpc__auth_inq_supported (rpc_authn_protocol_id_t);
 
 #endif /* _COM_H */

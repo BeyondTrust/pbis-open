@@ -92,45 +92,45 @@ int ioctl(int d, int request, ...);
 #endif
 
 INTERNAL void usage
-    _DCE_PROTOTYPE_ ((
+    (
         void
-    ));
+    );
 
 #if 0
 INTERNAL boolean32 match_command
-    _DCE_PROTOTYPE_ ((
+    (
         char           *key,
         char           *str,
         long           min_len
-    ));
+    );
 #endif
 
 INTERNAL void process_args
-    _DCE_PROTOTYPE_ ((
+    (
         int             argc,
         char            *argv[]
-    ));
+    );
 
 INTERNAL void register_ifs
-    _DCE_PROTOTYPE_ ((
+    (
         error_status_t  *status
-    ));
+    );
 
 #if 0
 INTERNAL void use_protseqs
-    _DCE_PROTOTYPE_ ((
+    (
         error_status_t  *status
-    ));
+    );
 #endif
 
 INTERNAL void init
-    _DCE_PROTOTYPE_ ((
+    (
         error_status_t  *status
-    ));
+    );
 
 
 INTERNAL void fwd_map
-    _DCE_PROTOTYPE_ ((
+    (
         dce_uuid_p_t                object,
         rpc_if_id_p_t           interface,
         rpc_syntax_id_p_t       data_rep,
@@ -142,7 +142,7 @@ INTERNAL void fwd_map
         rpc_addr_p_t            *fwd_addr,
         rpc_fwd_action_t        *fwd_action,
         error_status_t          *status
-    ));
+    );
 
 
 

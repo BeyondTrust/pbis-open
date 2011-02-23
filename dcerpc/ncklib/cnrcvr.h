@@ -40,6 +40,6 @@
 **
 */
 
-PRIVATE void rpc__cn_network_receiver    _DCE_PROTOTYPE_ ((rpc_cn_assoc_p_t));
+PRIVATE void rpc__cn_network_receiver    (rpc_cn_assoc_p_t);
 
 #endif /* _CNRCVR_H */

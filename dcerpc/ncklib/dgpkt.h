@@ -193,47 +193,47 @@ EXTERNAL rpc_dg_pkt_pool_t rpc_g_dg_pkt_pool;
 
 /* ========================================================================= */
 
-PRIVATE void rpc__dg_pkt_pool_init    _DCE_PROTOTYPE_((void));
+PRIVATE void rpc__dg_pkt_pool_init    (void);
 
 
-PRIVATE void rpc__dg_pkt_pool_fork_handler    _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_pkt_pool_fork_handler    (
         rpc_fork_stage_id_t  /*stage*/
-    ));
+    );
 
-PRIVATE rpc_dg_xmitq_elt_p_t rpc__dg_pkt_alloc_xqe    _DCE_PROTOTYPE_((
+PRIVATE rpc_dg_xmitq_elt_p_t rpc__dg_pkt_alloc_xqe    (
         rpc_dg_call_p_t  /*call*/,
         unsigned32 * /*st*/
-    ));
+    );
 
-PRIVATE rpc_dg_recvq_elt_p_t rpc__dg_pkt_alloc_rqe    _DCE_PROTOTYPE_((
+PRIVATE rpc_dg_recvq_elt_p_t rpc__dg_pkt_alloc_rqe    (
         rpc_dg_ccall_p_t  /*ccall*/
-    ));
+    );
 
-PRIVATE void rpc__dg_pkt_free_xqe    _DCE_PROTOTYPE_((                  
+PRIVATE void rpc__dg_pkt_free_xqe    (                  
         rpc_dg_xmitq_elt_p_t  /*pkt*/,
         rpc_dg_call_p_t  /*call*/
-    ));
+    );
 
-PRIVATE void rpc__dg_pkt_free_rqe_for_stub    _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_pkt_free_rqe_for_stub    (
         rpc_dg_recvq_elt_p_t  /*pkt*/
-    ));
+    );
 
-PRIVATE void rpc__dg_pkt_free_rqe    _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_pkt_free_rqe    (
         rpc_dg_recvq_elt_p_t  /*pkt*/,
         rpc_dg_call_p_t  /*call*/
-    ));
+    );
      
-PRIVATE boolean32 rpc__dg_pkt_adjust_reservation    _DCE_PROTOTYPE_((
+PRIVATE boolean32 rpc__dg_pkt_adjust_reservation    (
         rpc_dg_call_p_t  /*call*/,
         unsigned32 /*nreq*/,
         boolean32  /*block*/
-    ));
+    );
 
-PRIVATE void rpc__dg_pkt_cancel_reservation    _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_pkt_cancel_reservation    (
         rpc_dg_call_p_t  /*call*/
-    ));
+    );
 
-PRIVATE boolean32 rpc__dg_pkt_is_rationing    _DCE_PROTOTYPE_((
+PRIVATE boolean32 rpc__dg_pkt_is_rationing    (
         boolean32 * /*low_on_pkts*/
-    ));
+    );
 #endif /* _DGPKT_H */

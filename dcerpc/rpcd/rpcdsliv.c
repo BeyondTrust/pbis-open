@@ -69,21 +69,21 @@
 
 
 INTERNAL void sliv_task1
-    _DCE_PROTOTYPE_((
+    (
         void    *arg
-    ));
+    );
 
 INTERNAL void sliv_task2
-    _DCE_PROTOTYPE_((
+    (
         void    *arg
-    ));
+    );
 
 INTERNAL boolean32 ping_server
-    _DCE_PROTOTYPE_((
+    (
         db_entry_t      *entp,
         unsigned32      timeout,
         error_status_t  *status
-    ));
+    );
 
 
 

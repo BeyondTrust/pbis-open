@@ -87,18 +87,18 @@ extern "C" {
 #endif
 
 
-PRIVATE void rpc__dg_cct_get _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_cct_get (
         rpc_auth_info_p_t /*auth_info*/,
         rpc_dg_ccall_p_t /*ccall*/
-    ));
+    );
 
-PRIVATE void rpc__dg_cct_release _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_cct_release (
         rpc_dg_ccte_ref_p_t /*ccte_ref*/
-    ));
+    );
 
-PRIVATE void rpc__dg_cct_fork_handler _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_cct_fork_handler (
         rpc_fork_stage_id_t /*stage*/
-    ));
+    );
 
 #ifdef __cplusplus
 }

@@ -128,11 +128,11 @@ PRIVATE boolean rpc__dg_xmitq_awaiting_ack_tmo
  * Send a datagram out all the appropriate broadcast addresses.
  */
 
-INTERNAL void send_broadcast _DCE_PROTOTYPE_((
+INTERNAL void send_broadcast (
         rpc_dg_call_p_t  /*call*/,
         rpc_socket_iovec_p_t  /*iov*/,
         int  /*iovlen*/
-    ));
+    );
 
 INTERNAL void send_broadcast
 (

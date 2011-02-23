@@ -2188,13 +2188,13 @@ extern "C" {
 #endif
 
 
-PRIVATE rpc_socket_error_t rpc__dg_lossy_socket_sendmsg _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__dg_lossy_socket_sendmsg (
         rpc_socket_t /*sock*/,
         rpc_socket_iovec_p_t /*iov*/,
         int /*iov_len*/,
         rpc_addr_p_t /*addr*/,
         int * /*cc*/
-    ));
+    );
 
 #endif
 
@@ -2253,31 +2253,31 @@ extern "C" {
 /* 
  * invoked on server to create new auth_t for a new client 
  */
-typedef rpc_key_info_p_t (*rpc_dg_auth_create_fn_t) _DCE_PROTOTYPE_((
+typedef rpc_key_info_p_t (*rpc_dg_auth_create_fn_t) (
         unsigned32 * /*st*/
-    ));
+    );
 
 /* 
  * invoked before each call 
  */
-typedef void (*rpc_dg_auth_pre_call_fn_t) _DCE_PROTOTYPE_((
+typedef void (*rpc_dg_auth_pre_call_fn_t) (
         rpc_key_info_p_t                /*info*/,
         handle_t                         /*h*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
 
-typedef void (*rpc_dg_auth_encrypt_fn_t) _DCE_PROTOTYPE_((
+typedef void (*rpc_dg_auth_encrypt_fn_t) (
         rpc_key_info_p_t                /*info*/,
         rpc_dg_xmitq_elt_p_t            ,
         unsigned32                      * /*st*/
-    ));
+    );
 
     
 /* 
  * invoked after header is packed   
  */
-typedef void (*rpc_dg_auth_pre_send_fn_t) _DCE_PROTOTYPE_((
+typedef void (*rpc_dg_auth_pre_send_fn_t) (
         rpc_key_info_p_t                /*info*/,
         rpc_dg_xmitq_elt_p_t            ,
         rpc_dg_pkt_hdr_p_t              ,
@@ -2285,24 +2285,24 @@ typedef void (*rpc_dg_auth_pre_send_fn_t) _DCE_PROTOTYPE_((
         int                              /*iovlen*/,
         pointer_t                        /*cksum*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
         
 
 /* 
  * invoked after header in unpacked
  */
-typedef void (*rpc_dg_auth_recv_ck_fn_t) _DCE_PROTOTYPE_((
+typedef void (*rpc_dg_auth_recv_ck_fn_t) (
         rpc_key_info_p_t                /*info*/,
         rpc_dg_recvq_elt_p_t             /*pkt*/,
         pointer_t                        /*cksum*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
 /* 
  * called on server side 
  */
-typedef void (*rpc_dg_auth_way_fn_t) _DCE_PROTOTYPE_((
+typedef void (*rpc_dg_auth_way_fn_t) (
         rpc_key_info_p_t               /* in */   /*info*/,
         handle_t                        /* in */   /*h*/,
         dce_uuid_t                          /* in */  * /*actuid*/,
@@ -2310,13 +2310,13 @@ typedef void (*rpc_dg_auth_way_fn_t) _DCE_PROTOTYPE_((
         unsigned32                      /* out */ * /*seqno*/,
         dce_uuid_t                          /* out */ * /*cas_uuid*/,
         unsigned32                      /* out */ * /*st*/
-    ));
+    );
 
     
 /* 
  * called on client side 
  */
-typedef void (*rpc_dg_auth_way_handler_fn_t) _DCE_PROTOTYPE_((
+typedef void (*rpc_dg_auth_way_handler_fn_t) (
         rpc_key_info_p_t                /*info*/,
         ndr_byte                        * /*in_data*/,
         signed32                         /*in_len*/,
@@ -2324,7 +2324,7 @@ typedef void (*rpc_dg_auth_way_handler_fn_t) _DCE_PROTOTYPE_((
         ndr_byte                        ** /*out_data*/,
         signed32                        * /*out_len*/,
         unsigned32                      * /*st*/
-     ));
+     );
 
 
 /*
@@ -2332,9 +2332,9 @@ typedef void (*rpc_dg_auth_way_handler_fn_t) _DCE_PROTOTYPE_((
  * Note that this theoretically "can't fail".
  */
 
-typedef rpc_key_info_p_t (*rpc_dg_auth_new_key_fn_t) _DCE_PROTOTYPE_ ((
+typedef rpc_key_info_p_t (*rpc_dg_auth_new_key_fn_t) (
         rpc_auth_info_p_t               /*info*/
-    ));
+    );
 
 typedef struct rpc_dg_auth_epv_t
 {
@@ -2379,7 +2379,7 @@ typedef struct
 
 #define RPC_DG_STATS_INCR(s) (rpc_g_dg_stats.s++)
 
-PRIVATE void rpc__dg_stats_print _DCE_PROTOTYPE_(( void ));
+PRIVATE void rpc__dg_stats_print ( void );
 
 /* ========================================================================= */
 
@@ -2404,65 +2404,65 @@ typedef unsigned32 rpc_dg_rd_flags_t;
 /*
  * Prototype of the DG fork handling routine.
  */
-void rpc__ncadg_fork_handler _DCE_PROTOTYPE_ (( rpc_fork_stage_id_t /*stage*/));
+void rpc__ncadg_fork_handler ( rpc_fork_stage_id_t /*stage*/);
 
 
 /*
  * Prototypes of routines used in the DG RPC Protocol Service (call)
  */
 
-PRIVATE rpc_call_rep_p_t rpc__dg_call_start _DCE_PROTOTYPE_((
+PRIVATE rpc_call_rep_p_t rpc__dg_call_start (
         rpc_binding_rep_p_t  /*h*/,
         unsigned32  /*options*/,
         rpc_if_rep_p_t  /*ifspec*/, 
         unsigned32  /*opn*/, 
         rpc_transfer_syntax_t * /*transfer_syntax*/,
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_call_transmit _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_call_transmit (
         rpc_call_rep_p_t  /*call*/, 
         rpc_iovector_p_t  /*data*/, 
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_call_transceive _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_call_transceive (
         rpc_call_rep_p_t  /*call*/, 
         rpc_iovector_p_t  /*send_data*/, 
         rpc_iovector_elt_t * /*recv_data*/, 
         ndr_format_t * /*ndr_format*/, 
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_call_receive _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_call_receive (
         rpc_call_rep_p_t  /*call*/, 
         rpc_iovector_elt_t * /*data*/, 
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_call_end _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_call_end (
         rpc_call_rep_p_t * /*call*/,
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_call_block_until_free _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_call_block_until_free (
         rpc_call_rep_p_t  /*call*/,
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_call_alert _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_call_alert (
         rpc_call_rep_p_t  /*call*/,
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_call_fault _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_call_fault (
         rpc_call_rep_p_t  /*call*/,
         rpc_iovector_p_t  /*fault_info*/,
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_call_receive_fault _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_call_receive_fault (
         rpc_call_rep_p_t  /*call*/, 
         rpc_iovector_elt_t * /*data*/, 
         ndr_format_t * /*remote_ndr_format*/,
         unsigned32 * /*st*/
-    ));
-PRIVATE boolean32 rpc__dg_call_did_mgr_execute _DCE_PROTOTYPE_((
+    );
+PRIVATE boolean32 rpc__dg_call_did_mgr_execute (
         rpc_call_rep_p_t  /*call*/,
         unsigned32 * /*st*/
-    ));
+    );
 
 /* =============================================================================== */
 
@@ -2470,53 +2470,53 @@ PRIVATE boolean32 rpc__dg_call_did_mgr_execute _DCE_PROTOTYPE_((
  * Prototypes of routines used in the DG RPC Protocol Service (network).
  */
 
-PRIVATE pointer_t rpc__dg_network_init_desc _DCE_PROTOTYPE_((
+PRIVATE pointer_t rpc__dg_network_init_desc (
         rpc_socket_t * /*sock*/,
         rpc_protseq_id_t  /*pseq_id*/,
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_network_use_protseq _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_network_use_protseq (
         rpc_protseq_id_t  /*pseq_id*/,
         unsigned32  /*max_calls*/,
         rpc_addr_p_t  /*rpc_addr*/,
         unsigned_char_p_t  /*endpoint*/,
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_network_mon _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_network_mon (
         rpc_binding_rep_p_t  /*binding_r*/,
         rpc_client_handle_t  /*client_h*/,
         rpc_network_rundown_fn_t  /*rundown*/,
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_network_stop_mon _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_network_stop_mon (
         rpc_binding_rep_p_t  /*binding_r*/,
         rpc_client_handle_t  /*client_h*/,
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_network_maint _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_network_maint (
         rpc_binding_rep_p_t  /*binding_r*/,
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_network_stop_maint _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_network_stop_maint (
         rpc_binding_rep_p_t  /*binding_r*/,
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_network_close _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_network_close (
         rpc_binding_rep_p_t  /*binding_r*/,
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_network_select_dispatch _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_network_select_dispatch (
         rpc_socket_t  /*desc*/,
         pointer_t  /*si*/,
         boolean32  /*is_active*/,
         unsigned32 * /*st*/
-    ));
-PRIVATE void rpc__dg_network_inq_prot_vers _DCE_PROTOTYPE_((
+    );
+PRIVATE void rpc__dg_network_inq_prot_vers (
         unsigned8 * /*prot_id*/,
         unsigned32 * /*vers_major*/,
         unsigned32 * /*vers_minor*/,
         unsigned32 * /*st*/
-    ));
+    );
 
 /* =============================================================================== */
 
@@ -2524,60 +2524,60 @@ PRIVATE void rpc__dg_network_inq_prot_vers _DCE_PROTOTYPE_((
  * Prototypes of routines used in the DG RPC Protocol Service (mgmt)
  */
 
-PRIVATE unsigned32 rpc__dg_mgmt_inq_calls_sent _DCE_PROTOTYPE_(( void ));
-PRIVATE unsigned32 rpc__dg_mgmt_inq_calls_rcvd _DCE_PROTOTYPE_(( void ));
-PRIVATE unsigned32 rpc__dg_mgmt_inq_pkts_sent _DCE_PROTOTYPE_(( void ));
-PRIVATE unsigned32 rpc__dg_mgmt_inq_pkts_rcvd _DCE_PROTOTYPE_(( void ));
+PRIVATE unsigned32 rpc__dg_mgmt_inq_calls_sent ( void );
+PRIVATE unsigned32 rpc__dg_mgmt_inq_calls_rcvd ( void );
+PRIVATE unsigned32 rpc__dg_mgmt_inq_pkts_sent ( void );
+PRIVATE unsigned32 rpc__dg_mgmt_inq_pkts_rcvd ( void );
 
 /* ========================================================================= */
 
-PRIVATE void rpc__dg_monitor_init _DCE_PROTOTYPE_((void));
+PRIVATE void rpc__dg_monitor_init (void);
 
-PRIVATE void rpc__dg_monitor_fork_handler _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_monitor_fork_handler (
         rpc_fork_stage_id_t /*stage*/
-    ));
+    );
 
-PRIVATE void rpc__dg_maintain_init _DCE_PROTOTYPE_((void));
+PRIVATE void rpc__dg_maintain_init (void);
 
-PRIVATE void rpc__dg_maintain_fork_handler _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_maintain_fork_handler (
         rpc_fork_stage_id_t /*stage*/
-    ));
+    );
 
-PRIVATE void rpc__dg_call_transmit_int _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_call_transmit_int (
         rpc_dg_call_p_t  /*call*/,
         rpc_iovector_p_t  /*data*/, 
         unsigned32 * /*st*/
-    ));
+    );
 
-PRIVATE void rpc__dg_call_receive_int _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_call_receive_int (
         rpc_dg_call_p_t  /*call*/,
         rpc_iovector_elt_t * /*data*/, 
         unsigned32 * /*st*/
-    ));
+    );
 
-PRIVATE boolean32 rpc__dg_handle_conv _DCE_PROTOTYPE_((
+PRIVATE boolean32 rpc__dg_handle_conv (
         rpc_socket_t  /*sock*/,
         rpc_dg_recvq_elt_p_t /*rqe*/
-    ));
+    );
 
-PRIVATE void rpc__dg_convc_indy _DCE_PROTOTYPE_(( dce_uuid_p_t /*cas_uuid*/));
+PRIVATE void rpc__dg_convc_indy ( dce_uuid_p_t /*cas_uuid*/);
 
 
-PRIVATE void rpc__dg_handle_convc _DCE_PROTOTYPE_(( 
+PRIVATE void rpc__dg_handle_convc ( 
         rpc_dg_recvq_elt_p_t /*rqe*/
-    ));
+    );
 
 #ifdef PASSWD_ETC
-PRIVATE void rpc__dg_handle_rgy _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_handle_rgy (
         rpc_socket_t  /*sock*/,
         rpc_dg_recvq_elt_p_t /*rqe*/
-    ));
+    );
 #endif
 
-PRIVATE void rpc__dg_get_epkt_body_st _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_get_epkt_body_st (
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         unsigned32 * /*st*/
-    ));
+    );
 
 /* ========================================================================= */
 
@@ -2587,18 +2587,18 @@ PRIVATE void rpc__dg_get_epkt_body_st _DCE_PROTOTYPE_((
 
 /* ========================================================================= */
 
-PRIVATE void rpc__dg_conv_init _DCE_PROTOTYPE_(( void ));
+PRIVATE void rpc__dg_conv_init ( void );
 
-PRIVATE void rpc__dg_conv_fork_handler _DCE_PROTOTYPE_(( 
+PRIVATE void rpc__dg_conv_fork_handler ( 
     rpc_fork_stage_id_t /*stage*/
-    ));
+    );
 
-PRIVATE void rpc__dg_fack_common    _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_fack_common    (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_call_p_t  /*call*/,
         boolean * /*sent_data*/
-    ));
+    );
 
 /* ======================================================================== */
 

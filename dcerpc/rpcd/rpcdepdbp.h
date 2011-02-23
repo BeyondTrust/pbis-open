@@ -47,17 +47,17 @@
  *  memory
  */        
 PRIVATE void epdb_delete_entry
-    _DCE_PROTOTYPE_((
+    (
         struct db       *h,
         db_entry_p_t    entp,
         error_status_t  *status
-    ));
+    );
         
 
 PRIVATE void sliv_init
-    _DCE_PROTOTYPE_((
+    (
         struct db       *h,
         error_status_t  *status
-    ));
+    );
 
 #endif

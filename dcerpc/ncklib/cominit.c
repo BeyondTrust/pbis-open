@@ -60,28 +60,28 @@
 #define DEFAULT_STACK_SIZE 64000
 
 #ifdef RRPC
-PRIVATE unsigned32 rpc__rrpc_init _DCE_PROTOTYPE_ ((void));
+PRIVATE unsigned32 rpc__rrpc_init (void);
 #endif
 
-INTERNAL boolean supported_naf _DCE_PROTOTYPE_ ((
+INTERNAL boolean supported_naf (
         rpc_naf_id_elt_p_t               /*naf*/
-    ));
+    );
     
-INTERNAL boolean supported_interface _DCE_PROTOTYPE_ ((
+INTERNAL boolean supported_interface (
         rpc_naf_id_t                    /*naf*/,
         rpc_network_if_id_t             /*network_if*/,
         rpc_network_protocol_id_t        /*network_protocol*/
-    ));
+    );
 
-INTERNAL boolean protocol_is_compatible _DCE_PROTOTYPE_ ((
+INTERNAL boolean protocol_is_compatible (
         rpc_protocol_id_elt_p_t          /*rpc_protocol*/
-    ));
+    );
 
-INTERNAL void init_once _DCE_PROTOTYPE_ ((void));
+INTERNAL void init_once (void);
 
-INTERNAL void thread_context_destructor _DCE_PROTOTYPE_ ((
+INTERNAL void thread_context_destructor (
         rpc_thread_context_p_t   /*ctx_value*/
-    ));
+    );
 
 /*
  * The structure that defines the one-time initialization code. This
@@ -114,11 +114,11 @@ GLOBAL   dcethread*      init_thread;
 
 #ifndef NO_GETENV
 
-INTERNAL void init_getenv_protseqs _DCE_PROTOTYPE_ ((void));
+INTERNAL void init_getenv_protseqs (void);
 
-INTERNAL void init_getenv_debug _DCE_PROTOTYPE_ ((void));
+INTERNAL void init_getenv_debug (void);
 
-INTERNAL void init_getenv_port_restriction _DCE_PROTOTYPE_ ((void));
+INTERNAL void init_getenv_port_restriction (void);
 
 #endif
 
@@ -345,7 +345,7 @@ INTERNAL void init_once(void)
 	 * create the per-thread context key
 	 */
 	dcethread_keycreate_throw (&rpc_g_thread_context_key, 
-			(void (*) _DCE_PROTOTYPE_((pointer_t))) thread_context_destructor);
+			(void (*) (pointer_t)) thread_context_destructor);
 
 	/*
 	 * Initialize the timer service.

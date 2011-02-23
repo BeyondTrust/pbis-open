@@ -107,13 +107,13 @@ GLOBAL char     *rpc_g_cn_grp_server_states [] =
 /*  
  * The predicate routine prototypes.
  */
-INTERNAL unsigned8 server_refs_pred_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned8 server_refs_pred_rtn (
     pointer_t spc_struct, 
-    pointer_t event_param));
+    pointer_t event_param);
 
-INTERNAL unsigned8 server_assoc_count_pred_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned8 server_assoc_count_pred_rtn (
     pointer_t spc_struct, 
-    pointer_t event_param)) ATTRIBUTE_UNUSED;
+    pointer_t event_param) ATTRIBUTE_UNUSED;
 
 
 
@@ -134,25 +134,25 @@ INTERNAL unsigned8 server_assoc_count_pred_rtn _DCE_PROTOTYPE_ ((
 /*  
  * The action routine prototypes.
  */
-INTERNAL unsigned32     create_group_id_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     create_group_id_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     incr_assoc_count_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     incr_assoc_count_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     decr_assoc_count_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     decr_assoc_count_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     rundown_handles_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     rundown_handles_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
 
 /*  

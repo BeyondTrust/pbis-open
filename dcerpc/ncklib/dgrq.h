@@ -87,9 +87,9 @@
                                 (rqe)->pkt_len; \
 }
 
-PRIVATE void rpc__dg_recvq_init _DCE_PROTOTYPE_(( rpc_dg_recvq_p_t  /*rq*/));
+PRIVATE void rpc__dg_recvq_init ( rpc_dg_recvq_p_t  /*rq*/);
 
 
-PRIVATE void rpc__dg_recvq_free _DCE_PROTOTYPE_(( rpc_dg_recvq_p_t  /*rq*/));
+PRIVATE void rpc__dg_recvq_free ( rpc_dg_recvq_p_t  /*rq*/);
 
 #endif /* _DGRQ_H */

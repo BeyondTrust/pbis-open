@@ -50,9 +50,9 @@
  * Release any client call binding we might have in the binding binding.
  */
 
-INTERNAL void release_cached_ccall _DCE_PROTOTYPE_((
+INTERNAL void release_cached_ccall (
         rpc_dg_binding_client_p_t /*h*/
-    ));
+    );
 
 INTERNAL void release_cached_ccall
 (

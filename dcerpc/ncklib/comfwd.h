@@ -83,7 +83,7 @@ typedef enum
     rpc_e_fwd_delayed
 } rpc_fwd_action_t;
 
-typedef void (*rpc_fwd_map_fn_t) _DCE_PROTOTYPE_ ((
+typedef void (*rpc_fwd_map_fn_t) (
         /* [in] */    dce_uuid_p_t           /*obj_uuid*/,
         /* [in] */    rpc_if_id_p_t      /*if_id*/,
         /* [in] */    rpc_syntax_id_p_t  /*data_rep*/,
@@ -95,7 +95,7 @@ typedef void (*rpc_fwd_map_fn_t) _DCE_PROTOTYPE_ ((
         /* [out] */   rpc_addr_p_t      * /*fwd_addr*/,
         /* [out] */   rpc_fwd_action_t  * /*fwd_action*/,
         /* [out] */   unsigned32        * /*status*/
-    ));
+    );
 
 /*
  * Register a forwarding map function with the runtime.  This registered
@@ -103,17 +103,17 @@ typedef void (*rpc_fwd_map_fn_t) _DCE_PROTOTYPE_ ((
  * appropriate forwarding endpoint for a received pkt that is not for
  * any of the server's registered interfaces.
  */
-PRIVATE void rpc__server_register_fwd_map _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__server_register_fwd_map (
         /* [in] */    rpc_fwd_map_fn_t    /*map_fn*/,
         /* [out] */   unsigned32          * /*status*/
-    ));
+    );
 
-PRIVATE void rpc__server_fwd_resolve_delayed _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__server_fwd_resolve_delayed (
 	/* [in] */   dce_uuid_p_t            /*actuuid*/,
         /* [in] */   rpc_addr_p_t        /*fwd_addr*/,
         /* [in] */   rpc_fwd_action_t  * /*fwd_action*/,
         /* [out] */  unsigned32        * /*status*/
-    ));
+    );
 
 /***********************************************************************/
 /*

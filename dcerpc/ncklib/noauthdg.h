@@ -88,23 +88,23 @@ extern "C" {
 #endif
 
 
-void rpc__noauth_dg_pre_call _DCE_PROTOTYPE_((                         
+void rpc__noauth_dg_pre_call (                         
         rpc_auth_info_p_t               ,
         handle_t                        ,
         unsigned32                      *
-    ));
+    );
 
-rpc_auth_info_p_t rpc__noauth_dg_create _DCE_PROTOTYPE_((
+rpc_auth_info_p_t rpc__noauth_dg_create (
         unsigned32                      * /*st*/
-    ));
+    );
 
-void rpc__noauth_dg_encrypt _DCE_PROTOTYPE_((
+void rpc__noauth_dg_encrypt (
         rpc_auth_info_p_t                /*info*/,
         rpc_dg_xmitq_elt_p_t            ,
         unsigned32                      * /*st*/
-    ));
+    );
 
-void rpc__noauth_dg_pre_send _DCE_PROTOTYPE_((                         
+void rpc__noauth_dg_pre_send (                         
         rpc_auth_info_p_t                /*info*/,
         rpc_dg_xmitq_elt_p_t             /*pkt*/,
         rpc_dg_pkt_hdr_p_t               /*hdrp*/,
@@ -112,16 +112,16 @@ void rpc__noauth_dg_pre_send _DCE_PROTOTYPE_((
         int                              /*iovlen*/,
         pointer_t                        /*cksum*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
-void rpc__noauth_dg_recv_ck _DCE_PROTOTYPE_((                         
+void rpc__noauth_dg_recv_ck (                         
         rpc_auth_info_p_t                /*info*/,
         rpc_dg_recvq_elt_p_t             /*pkt*/,
         pointer_t                        /*cksum*/,
         error_status_t                  * /*st*/
-    ));
+    );
 
-void rpc__noauth_dg_who_are_you _DCE_PROTOTYPE_((                         
+void rpc__noauth_dg_who_are_you (                         
         rpc_auth_info_p_t                /*info*/,
         handle_t                        ,
         dce_uuid_t                          *,
@@ -129,9 +129,9 @@ void rpc__noauth_dg_who_are_you _DCE_PROTOTYPE_((
         unsigned32                      *,
         dce_uuid_t                          *,
         unsigned32                      *
-    ));
+    );
 
-void rpc__noauth_dg_way_handler _DCE_PROTOTYPE_((
+void rpc__noauth_dg_way_handler (
         rpc_auth_info_p_t                /*info*/,
         ndr_byte                        * /*in_data*/,
         signed32                         /*in_len*/,
@@ -139,7 +139,7 @@ void rpc__noauth_dg_way_handler _DCE_PROTOTYPE_((
         ndr_byte                        * /*out_data*/,
         signed32                        * /*out_len*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
 #ifdef __cplusplus
 }

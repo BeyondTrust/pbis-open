@@ -54,7 +54,7 @@ typedef struct pickle_handle_s * pickle_handle_t;
  * Create a pickling context.  This must be called to obtain a pickling
  * context before any pickling calls can be performed.
  */
-pickle_handle_t sec_pickle_create _DCE_PROTOTYPE_ (( void ));
+pickle_handle_t sec_pickle_create ( void );
 
 
 /* s e c _ p i c k l e _ r e l e a s e
@@ -62,7 +62,7 @@ pickle_handle_t sec_pickle_create _DCE_PROTOTYPE_ (( void ));
  * Terminate a pickling context.  This function will release any storage
  * associated with the pickling context.
  */
-void sec_pickle_release _DCE_PROTOTYPE_ (( pickle_handle_t * /*p*/));
+void sec_pickle_release ( pickle_handle_t * /*p*/);
 
 
 /* s e c _ i d _ p a c _ f r e e
@@ -70,25 +70,25 @@ void sec_pickle_release _DCE_PROTOTYPE_ (( pickle_handle_t * /*p*/));
  * Release dynamic storage associated with a PAC.
  */
 
-void sec_id_pac_free _DCE_PROTOTYPE_ (( sec_id_pac_t *)) ;
+void sec_id_pac_free ( sec_id_pac_t *) ;
 
 /* s e c _ i d _ p a c _ p i c k l e
  *
  * Pickle a pac.
  */
-extern void     sec_id_pac_pickle _DCE_PROTOTYPE_ ((
+extern void     sec_id_pac_pickle (
         /* [in] */      pickle_handle_t          /*pickle_handle*/,
         /* [in] */      sec_id_pac_t            *  /*pac*/,
         /* [out] */     sec_id_pickled_pac_t    **  /*pickled_pac*/
-  ));
+  );
 
 /* s e c _ i d _ p a c _ u n p i c k l e
  *
  * unpickle a pac 
  */
 
-extern void     sec_id_pac_unpickle _DCE_PROTOTYPE_ ((
+extern void     sec_id_pac_unpickle (
         /* [in] */      sec_id_pickled_pac_t    *  /*pickled_pac*/,
         /* [out] */     sec_id_pac_t            *  /*pac*/
-  ));
+  );
 #endif

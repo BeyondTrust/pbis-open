@@ -105,14 +105,14 @@ GLOBAL char     *rpc_g_cn_call_client_states [] =
 /*  
  * The predicate routine prototypes.
  */
-INTERNAL unsigned8 maybe_semantics_pred_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned8 maybe_semantics_pred_rtn (
         pointer_t /*spc_struct*/, 
         pointer_t /*event_param*/
-    )) ATTRIBUTE_UNUSED;
-INTERNAL unsigned8 last_recv_frag_pred_rtn _DCE_PROTOTYPE_ ((
+    ) ATTRIBUTE_UNUSED;
+INTERNAL unsigned8 last_recv_frag_pred_rtn (
         pointer_t /*spc_struct*/, 
         pointer_t /*event_param*/
-    )) ATTRIBUTE_UNUSED;
+    ) ATTRIBUTE_UNUSED;
 
 
 /***********************************************************************/
@@ -150,46 +150,46 @@ INTERNAL unsigned8 last_recv_frag_pred_rtn _DCE_PROTOTYPE_ ((
 /*  
  * The Action routine prototypes.
  */
-INTERNAL unsigned32     transmit_req_action_rtn _DCE_PROTOTYPE_ (( 
+INTERNAL unsigned32     transmit_req_action_rtn ( 
         pointer_t /*spc_struct*/, 
         pointer_t /*event_param*/,
         pointer_t /*sm*/
-    ));
-INTERNAL unsigned32     handle_recv_frag_action_rtn _DCE_PROTOTYPE_ (( 
+    );
+INTERNAL unsigned32     handle_recv_frag_action_rtn ( 
         pointer_t /*spc_struct*/, 
         pointer_t /*event_param*/,
         pointer_t /*sm*/
-    ));
-INTERNAL unsigned32     raise_fault_action_rtn _DCE_PROTOTYPE_ ((
+    );
+INTERNAL unsigned32     raise_fault_action_rtn (
         pointer_t /*spc_struct*/, 
         pointer_t /*event_param*/,
         pointer_t /*sm*/
-    ));
-INTERNAL unsigned32     forward_alert_action_rtn _DCE_PROTOTYPE_ ((  
+    );
+INTERNAL unsigned32     forward_alert_action_rtn (  
         pointer_t /*spc_struct*/, 
         pointer_t /*event_param*/,
         pointer_t /*sm*/
-    ));
-INTERNAL unsigned32     allocate_assoc_action_rtn _DCE_PROTOTYPE_ (( 
+    );
+INTERNAL unsigned32     allocate_assoc_action_rtn ( 
         pointer_t /*spc_struct*/, 
         pointer_t /*event_param*/,
         pointer_t /*sm*/
-    ));
-INTERNAL unsigned32     abort_send_action_rtn _DCE_PROTOTYPE_ ((
+    );
+INTERNAL unsigned32     abort_send_action_rtn (
         pointer_t /*spc_struct*/, 
         pointer_t /*event_param*/,
         pointer_t /*sm*/
-    ));
-INTERNAL unsigned32     abort_recv_action_rtn _DCE_PROTOTYPE_ ((
+    );
+INTERNAL unsigned32     abort_recv_action_rtn (
         pointer_t /*spc_struct*/, 
         pointer_t /*event_param*/,
         pointer_t /*sm*/
-    ));
-INTERNAL unsigned32     send_last_frag_action_rtn _DCE_PROTOTYPE_ (( 
+    );
+INTERNAL unsigned32     send_last_frag_action_rtn ( 
         pointer_t /*spc_struct*/, 
         pointer_t /*event_param*/,
         pointer_t /*sm*/
-    ));
+    );
 
 /*  
  * The action table itself.

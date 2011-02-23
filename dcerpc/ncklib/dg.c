@@ -69,7 +69,7 @@
         cancel_check(call); \
     }
 
-    INTERNAL void cancel_check _DCE_PROTOTYPE_(( rpc_dg_call_p_t ));
+    INTERNAL void cancel_check ( rpc_dg_call_p_t );
 
 #else
 #    define CANCEL_CHECK(fnum, call)  {}

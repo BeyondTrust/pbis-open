@@ -121,7 +121,7 @@ extern void rpc_cs_binding_set_method (
  * prototype declarations for locally defined routines
  */
 extern void stub_conversion
-    _DCE_PROTOTYPE_ ((
+    (
 	rpc_binding_handle_t	h,
 	boolean32		server_side,
 	unsigned32		from_tag,
@@ -131,7 +131,7 @@ extern void stub_conversion
 	byte_t			*conv_wdata,
 	unsigned32		*conv_p_w_data_len,
 	error_status_t		*status
-    ));
+    );
 
 /*
  * Well-known UUID for code set attribute

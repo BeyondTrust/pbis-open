@@ -66,86 +66,86 @@ INTERNAL epdb_handle_t    epdb_handle = NULL;
 
 
 INTERNAL void epdb_recreate_lists
-    _DCE_PROTOTYPE_((
+    (
         struct db       *h,
         error_status_t  *status
-    ));
+    );
     
 INTERNAL void epdb_chk_entry
-    _DCE_PROTOTYPE_((
+    (
         ept_entry_p_t   xentry,
         twr_fields_p_t  tfp,
         rpc_addr_p_t    addr,
         error_status_t  *status
-    ));
+    );
 
 INTERNAL void epdb_chk_map_entry
-    _DCE_PROTOTYPE_((
+    (
         twr_fields_p_t  tfp,
         error_status_t  *status
-    ));
+    );
 
 INTERNAL void epdb_to_ept
-    _DCE_PROTOTYPE_((
+    (
         db_entry_p_t    entp,
         ept_entry_t     *xentry,
         error_status_t  *status
-    ));
+    );
         
 INTERNAL void epdb_insert_entry
-    _DCE_PROTOTYPE_((
+    (
         struct db       *h,
         ept_entry_p_t   xentry,
         twr_fields_p_t  tfp,
         rpc_addr_p_t    addr,
         db_entry_p_t    *entp,
         error_status_t  *status
-    ));
+    );
         
 INTERNAL void epdb_replace_entry
-    _DCE_PROTOTYPE_((
+    (
         struct db       *h,
         ept_entry_p_t   xentry,
         db_entry_p_t    entp,
         error_status_t  *status
-    ));
+    );
         
 INTERNAL boolean32 epdb_is_replace_candidate
-    _DCE_PROTOTYPE_((
+    (
         db_entry_t      *entp,
         dce_uuid_p_t        object,
         twr_fields_p_t  tfp,
         rpc_addr_p_t    addr
-    ));
+    );
 
 INTERNAL void epdb_delete_replaceable_entries
-    _DCE_PROTOTYPE_((
+    (
         struct db       *h,
         dce_uuid_p_t        object,
         twr_fields_p_t  tfp,
         rpc_addr_p_t    addr,
         error_status_t  *status
-    ));
+    );
 
 INTERNAL void epdb_delete_entries_by_obj_if_addr
-    _DCE_PROTOTYPE_((
+    (
         struct db           *h,
         boolean32           object_speced,
         dce_uuid_p_t            object,
         rpc_if_id_p_t       interface,
         rpc_addr_p_t        addr,
         error_status_t      *status
-    ));
+    );
 
 INTERNAL db_entry_t *epdb_lookup_entry
-    _DCE_PROTOTYPE_((
+    (
         struct db       *h,
         ept_entry_p_t   xentry
-    ));
+    );
         
 
 INTERNAL void lookup
-    _DCE_PROTOTYPE_((
+    (
         struct db           *h,
         unsigned32          inquiry_type,
         dce_uuid_p_t            object,
@@ -156,10 +156,10 @@ INTERNAL void lookup
         unsigned32          *num_ents,
         ept_entry_t         entries[],
         error_status_t      *status
-    ));
+    );
         
 INTERNAL void lookup_match
-    _DCE_PROTOTYPE_((
+    (
         unsigned32          inquiry_type,
         dce_uuid_p_t            object,
         rpc_if_id_p_t       interface,
@@ -170,10 +170,10 @@ INTERNAL void lookup_match
         unsigned32          list_type,
         db_lists_t          **lpp,
         error_status_t      *status
-    ));
+    );
         
 INTERNAL void map
-    _DCE_PROTOTYPE_((
+    (
         struct db           *h,
         dce_uuid_p_t            object,
         rpc_if_id_p_t       interface,
@@ -187,10 +187,10 @@ INTERNAL void map
         unsigned32          *n_ents,
         db_entry_t          *db_entries[],
         unsigned32          *status
-    ));
+    );
         
 INTERNAL void map_match
-    _DCE_PROTOTYPE_((
+    (
         dce_uuid_p_t            object,
         rpc_if_id_p_t       interface,
         rpc_syntax_id_p_t   data_rep,
@@ -206,10 +206,10 @@ INTERNAL void map_match
         db_list_type_t      list,
         db_lists_t          **lpp,
         unsigned32          *status
-    ));
+    );
 
 INTERNAL void map_mgmt
-    _DCE_PROTOTYPE_((
+    (
         struct db           *h,
         dce_uuid_p_t            object,
         rpc_syntax_id_p_t   data_rep,
@@ -222,10 +222,10 @@ INTERNAL void map_mgmt
         unsigned32          *n_ents,
         db_entry_t          *db_entries[],
         unsigned32          *status
-    ));
+    );
         
 INTERNAL void map_mgmt_match
-    _DCE_PROTOTYPE_((
+    (
         dce_uuid_p_t            object,
         rpc_syntax_id_p_t   data_rep,
         rpc_protocol_id_t   rpc_protocol,
@@ -240,14 +240,14 @@ INTERNAL void map_mgmt_match
         db_list_type_t      list,
         db_lists_t          **lpp,
         unsigned32          *status
-    ));
+    );
 
 INTERNAL boolean32 map_mgmt_endpt_unique
-    _DCE_PROTOTYPE_((
+    (
         rpc_addr_p_t    addr,
         unsigned32      n_ents,
         db_entry_t      *entries[]
-    ));
+    );
 
 
 /*

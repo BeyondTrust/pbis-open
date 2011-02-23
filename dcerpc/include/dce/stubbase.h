@@ -790,7 +790,7 @@ typedef rpc_buff_dealloc_fn_t rpc_ss_dealloc_t;
  * Wrapper needed for free() routine assignments in generated files.
  */
 
-void rpc_ss_call_free   _DCE_PROTOTYPE_ (( rpc_void_p_t ));
+void rpc_ss_call_free   ( rpc_void_p_t );
 
 /*
  * Table of caller nodes that are marshalled during an operation
@@ -817,10 +817,10 @@ typedef volatile struct {
  * Returns NULL if unable to allocate
  */
 
-byte_p_t rpc_ss_mem_alloc   _DCE_PROTOTYPE_ ((
+byte_p_t rpc_ss_mem_alloc   (
     rpc_ss_mem_handle *,  /* The (initially NULL) allocation handle */
     unsigned               /* Number of bytes to allocate */
-));
+);
 
 /*
  * rpc_sm_mem_alloc
@@ -830,11 +830,11 @@ byte_p_t rpc_ss_mem_alloc   _DCE_PROTOTYPE_ ((
  * Returns NULL if unable to allocate
  * returns rpc_s_no_memory instead of Raise( rpc_x_no_memory)
  */
-byte_p_t rpc_sm_mem_alloc   _DCE_PROTOTYPE_ ((
+byte_p_t rpc_sm_mem_alloc   (
     rpc_ss_mem_handle *,    /* The (initially NULL) allocation handle */
     unsigned,               /* Number of bytes to allocate */
     error_status_t *        /*The status parameter if alloc returns NULL */
-));
+);
 
 
 /*
@@ -843,7 +843,7 @@ byte_p_t rpc_sm_mem_alloc   _DCE_PROTOTYPE_ ((
  * Frees all memory associated with the handle passed
  */
 
-void rpc_ss_mem_free   _DCE_PROTOTYPE_ ((rpc_ss_mem_handle *));
+void rpc_ss_mem_free   (rpc_ss_mem_handle *);
 
 
 
@@ -854,12 +854,12 @@ void rpc_ss_mem_free   _DCE_PROTOTYPE_ ((rpc_ss_mem_handle *));
  * Frees the memory if 'free' is non-zero
  */
 
-void rpc_ss_mem_release   _DCE_PROTOTYPE_ ((
+void rpc_ss_mem_release   (
     rpc_ss_mem_handle *,
     byte_p_t ,/* The aligned address of the memory to be
                           released */
     int /*freeit*/         /* Non-zero if the memory should be freed */
-));
+);
 
 #ifdef MIA
 /*
@@ -867,11 +867,11 @@ void rpc_ss_mem_release   _DCE_PROTOTYPE_ ((
  *
  * Same functionality as rpc_ss_mem_release with freeit != 0
  */
-void rpc_ss_mem_item_free   _DCE_PROTOTYPE_ ((
+void rpc_ss_mem_item_free   (
     rpc_ss_mem_handle *,
     byte_p_t  /* The aligned address of the memory to be
                           released */
-));
+);
 #endif /* MIA  */
 
 #if 0
@@ -881,7 +881,7 @@ void rpc_ss_mem_item_free   _DCE_PROTOTYPE_ ((
  * A routine to pass to the runtime: passed an aligned data address,
  * frees the original block of memory containing the address.
  */
-void rpc_ss_mem_dealloc   _DCE_PROTOTYPE_ (( byte_p_t ));
+void rpc_ss_mem_dealloc   ( byte_p_t );
 #endif
 
 
@@ -898,8 +898,8 @@ typedef struct rpc_ss_marsh_state_t
     rpc_iovector_elt_t *p_rcvd_data;  /* address of received data descriptor */
     rpc_ss_mem_handle *p_mem_h;       /* ptr to stub memory management handle */
     rpc_call_handle_t call_h;
-    rpc_void_p_t (*p_allocate) _DCE_PROTOTYPE_ (( idl_size_t ));
-    void (*p_free) _DCE_PROTOTYPE_ (( rpc_void_p_t )) ;
+    rpc_void_p_t (*p_allocate) ( idl_size_t );
+    void (*p_free) ( rpc_void_p_t ) ;
     rpc_ss_node_table_t node_table;   /* node number to pointer table */
     unsigned long space_in_buff;      /* Space left in buffer */
     rpc_iovector_t  *p_iovec;         /* Address of I/O vector */
@@ -928,55 +928,55 @@ typedef enum { rpc_ss_mutable_node_k, rpc_ss_old_ref_node_k,
  * Support operations for pointer <-> node number mapping
  */
 
-void rpc_ss_init_node_table   _DCE_PROTOTYPE_ ((
+void rpc_ss_init_node_table   (
     volatile rpc_ss_node_table_t *, 
     rpc_ss_mem_handle *
-));
+);
 
-void rpc_ss_enable_reflect_deletes  _DCE_PROTOTYPE_ ((
+void rpc_ss_enable_reflect_deletes  (
  rpc_ss_node_table_t 
-));
+);
 
-idl_ulong_int rpc_ss_register_node   _DCE_PROTOTYPE_ ((
+idl_ulong_int rpc_ss_register_node   (
     rpc_ss_node_table_t  /*tab*/,
     byte_p_t  /*ptr*/,
     long  /*marshalling*/,
     long * /*has_been_marshalled*/
-));
+);
 
 
-byte_p_t rpc_ss_lookup_node_by_num   _DCE_PROTOTYPE_ ((
+byte_p_t rpc_ss_lookup_node_by_num   (
     rpc_ss_node_table_t  /*tab*/,
     idl_ulong_int /*num*/
-));
+);
 
-byte_p_t rpc_ss_lookup_pointer_to_node   _DCE_PROTOTYPE_ ((
+byte_p_t rpc_ss_lookup_pointer_to_node   (
     rpc_ss_node_table_t  /*tab*/,
     idl_ulong_int  /*num*/,
     long * /*has_been_unmarshalled*/
-));
+);
 
-byte_p_t rpc_ss_return_pointer_to_node   _DCE_PROTOTYPE_ ((
+byte_p_t rpc_ss_return_pointer_to_node   (
     rpc_ss_node_table_t  /*tab*/,
     idl_ulong_int  /*num*/,
     idl_ulong_int  /*size*/,
-    rpc_void_p_t (*p_allocate) _DCE_PROTOTYPE_(( idl_size_t)),
+    rpc_void_p_t (*p_allocate) ( idl_size_t),
     long * /*has_been_unmarshalled*/,
     long * /*new_node*/
-));
+);
 
-void rpc_ss_unregister_node   _DCE_PROTOTYPE_ ((
+void rpc_ss_unregister_node   (
     rpc_ss_node_table_t  /*tab*/,
     byte_p_t  /*ptr*/
-));
+);
 
 
 #define NIDL_BUFF_SIZE 2048
 
-void rpc_ss_marsh_change_buff   _DCE_PROTOTYPE_ ((
+void rpc_ss_marsh_change_buff   (
     rpc_ss_marsh_state_t * /*msp*/,          /* marshalling state */
     unsigned long /*size_next_structure*/   /* Size needed in marshalling buffer */
-));
+);
 
 /*
  *  Stub initialization macros
@@ -987,14 +987,14 @@ extern ndr_boolean rpc_ss_server_is_set_up;
 extern ndr_boolean rpc_ss_allocate_is_set_up;
 extern ndr_boolean rpc_ss_context_is_set_up;
 
-void rpc_ss_init_client_once   _DCE_PROTOTYPE_ ((void));
+void rpc_ss_init_client_once   (void);
 
-void rpc_ss_init_server_once   _DCE_PROTOTYPE_ ((void));
+void rpc_ss_init_server_once   (void);
 
 
-void rpc_ss_init_allocate_once  _DCE_PROTOTYPE_ ((void));
+void rpc_ss_init_allocate_once  (void);
 
-void rpc_ss_init_context_once   _DCE_PROTOTYPE_ ((void));
+void rpc_ss_init_context_once   (void);
 
 
 #define RPC_SS_INIT_CLIENT if(!rpc_ss_client_is_set_up)rpc_ss_init_client_once();
@@ -1046,28 +1046,28 @@ void rpc_ss_init_context_once   _DCE_PROTOTYPE_ ((void));
  *  CMA SUPPORT ROUTINES
  */
 
-void rpc_ss_send_server_exception   _DCE_PROTOTYPE_ ((
+void rpc_ss_send_server_exception   (
     rpc_call_handle_t,
     dcethread_exc *
-));
+);
 
-void rpc_ss_report_error   _DCE_PROTOTYPE_ ((
+void rpc_ss_report_error   (
     ndr_ulong_int  /*fault_code*/,
     ndr_ulong_int  /*result_code*/,
     RPC_SS_THREADS_CANCEL_STATE_T  /*async_cancel_state*/,
     error_status_t * /*p_comm_status*/,
     error_status_t * /*p_fault_status*/
-));
+);
 
 /*
  * OPTIMIZATION SUPPORT
  */
-void rpc_ss_new_recv_buff   _DCE_PROTOTYPE_ ((
+void rpc_ss_new_recv_buff   (
     rpc_iovector_elt_t * /*elt*/,
     rpc_call_handle_t  /*call_h*/,
     rpc_mp_t * /*p_mp*/,
     volatile error_status_t * /*st*/
-));
+);
 
 
 /*
@@ -1083,8 +1083,8 @@ typedef struct rpc_ss_thread_support_ptrs_t
 {
     RPC_SS_THREADS_MUTEX_T mutex;    /* Helper thread protection */
     rpc_ss_mem_handle *p_mem_h;
-    rpc_void_p_t (*p_allocate) _DCE_PROTOTYPE_ ((idl_size_t));
-    void (*p_free) _DCE_PROTOTYPE_ (( rpc_void_p_t)) ;
+    rpc_void_p_t (*p_allocate) (idl_size_t);
+    void (*p_free) ( rpc_void_p_t) ;
 } rpc_ss_thread_support_ptrs_t;
 
 /*
@@ -1099,25 +1099,25 @@ typedef struct rpc_ss_thread_indirection_t
 
 extern RPC_SS_THREADS_KEY_T rpc_ss_thread_supp_key;
 
-void rpc_ss_build_indirection_struct  _DCE_PROTOTYPE_ ((
+void rpc_ss_build_indirection_struct  (
     rpc_ss_thread_support_ptrs_t * /*p_thread_support_ptrs*/,
     rpc_ss_mem_handle * /*p_mem_handle*/,
     idl_boolean  /*free_referents*/
-));
+);
 
-void rpc_ss_create_support_ptrs   _DCE_PROTOTYPE_ ((
+void rpc_ss_create_support_ptrs   (
     rpc_ss_thread_support_ptrs_t * /*p_thread_support_ptrs*/,
     rpc_ss_mem_handle * /*p_mem_handle*/
-));
+);
 
-void rpc_ss_get_support_ptrs  _DCE_PROTOTYPE_ ((
+void rpc_ss_get_support_ptrs  (
     rpc_ss_thread_support_ptrs_t ** /*p_p_thread_support_ptrs*/
-));
+);
 
-void rpc_ss_destroy_support_ptrs   _DCE_PROTOTYPE_ ((void));
+void rpc_ss_destroy_support_ptrs   (void);
 
 
-void rpc_ss_client_establish_alloc  _DCE_PROTOTYPE_ ((rpc_ss_marsh_state_t *));
+void rpc_ss_client_establish_alloc  (rpc_ss_marsh_state_t *);
 
 /*
  *    MARSHALLING AND UNMARSHALLING PIPES
@@ -1147,7 +1147,7 @@ typedef struct rpc_ss_ee_pipe_state_t
     error_status_t *p_st;             /* address of status in the stub */
 } rpc_ss_ee_pipe_state_t;
 
-void rpc_ss_initialize_callee_pipe   _DCE_PROTOTYPE_ ((
+void rpc_ss_initialize_callee_pipe   (
     long ,        /* index of pipe in set of pipes in the
                                         operation's parameter list */
     long ,      /* index of next [in] pipe to process */
@@ -1161,7 +1161,7 @@ void rpc_ss_initialize_callee_pipe   _DCE_PROTOTYPE_ ((
     rpc_call_handle_t ,
     rpc_ss_ee_pipe_state_t **, /* address of ptr to pipe state block */
     error_status_t *
-));
+);
 
 #define rpc_p_pipe_state ((rpc_ss_ee_pipe_state_t *)state)
 
@@ -1184,432 +1184,432 @@ extern RPC_SS_THREADS_MUTEX_T rpc_ss_context_table_mutex;
 
 typedef void (*ctx_rundown_fn_p_t)(rpc_ss_context_t);
 
-void rpc_ss_er_ctx_to_wire   _DCE_PROTOTYPE_ ((
+void rpc_ss_er_ctx_to_wire   (
     rpc_ss_context_t        ,  /* [in] opaque pointer */
     ndr_context_handle      *, /* [out] ndr_context_handle */
     handle_t                ,               /* binding handle */
     ndr_boolean             ,          /* TRUE for [in, out] parameters */
     volatile error_status_t *
-));
+);
 
-void rpc_ss_er_ctx_from_wire   _DCE_PROTOTYPE_ ((
+void rpc_ss_er_ctx_from_wire   (
     ndr_context_handle      *,   /* [in] ndr_context_handle */
     rpc_ss_context_t        *, /* [out] opaque pointer */
     handle_t                ,                 /* binding handle */
     ndr_boolean             ,            /* TRUE for [in, out] parameters */
     volatile error_status_t *
-));
+);
 
 
 
-void rpc_ss_ee_ctx_to_wire   _DCE_PROTOTYPE_ ((
+void rpc_ss_ee_ctx_to_wire   (
     rpc_ss_context_t        ,   /* [in] opaque pointer */
     ndr_context_handle      *,  /* [out] ndr_context_handle */
     handle_t                ,   /* binding handle */
     ctx_rundown_fn_p_t      ,   /* Pointer to context rundown routine */
     ndr_boolean             ,   /* TRUE for [in, out] parameters */
     volatile error_status_t *
-));
+);
 
-void rpc_ss_ee_ctx_from_wire   _DCE_PROTOTYPE_ ((
+void rpc_ss_ee_ctx_from_wire   (
     ndr_context_handle      *,   /* [in] ndr_context_handle */
     rpc_ss_context_t        *, /* [out] opaque pointer */
     volatile error_status_t *
-));
+);
 
-void rpc_ss_ctx_client_ref_count_inc   _DCE_PROTOTYPE_ ((
+void rpc_ss_ctx_client_ref_count_inc   (
   handle_t ,
   error_status_t *
-));
+);
 
-void rpc_ss_ctx_client_ref_count_dec   _DCE_PROTOTYPE_ ((
+void rpc_ss_ctx_client_ref_count_dec   (
   handle_t h, 
   error_status_t *
-));
+);
 
-void rpc_ss_ctx_client_ref_count_i_2   _DCE_PROTOTYPE_ ((
+void rpc_ss_ctx_client_ref_count_i_2   (
     handle_t ,
     rpc_client_handle_t *,
     error_status_t *
-));
+);
 
-void rpc_ss_ctx_client_ref_count_d_2 _DCE_PROTOTYPE_ ((
+void rpc_ss_ctx_client_ref_count_d_2 (
     handle_t ,
     rpc_client_handle_t
-));
+);
 
-void rpc_ss_init_callee_ctx_tables   _DCE_PROTOTYPE_ ((void));
+void rpc_ss_init_callee_ctx_tables   (void);
 
 #define uuid_tOmr rpc_ss_m_uuid
 #define uuid_tOur rpc_ss_u_uuid
 #define uuid_tOme rpc_ss_m_uuid
 #define uuid_tOue rpc_ss_u_uuid
 
-void rpc_ss_m_uuid  _DCE_PROTOTYPE_ ((
+void rpc_ss_m_uuid  (
    dce_uuid_t *, 
    rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_u_uuid   _DCE_PROTOTYPE_ ((
+void rpc_ss_u_uuid   (
    dce_uuid_t *, 
    rpc_ss_marsh_state_t *
-));
+);
 
 /*
  *    MARSHALLING AND UNMARSHALLING OF POINTED AT SCALARS
  */
 
-void rpc_ss_mr_boolean   _DCE_PROTOTYPE_ ((
+void rpc_ss_mr_boolean   (
      idl_boolean *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ur_boolean   _DCE_PROTOTYPE_ ((
+void rpc_ss_ur_boolean   (
     idl_boolean **,
     rpc_ss_node_type_k_t, 
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_me_boolean   _DCE_PROTOTYPE_ ((
+void rpc_ss_me_boolean   (
     idl_boolean *,
     rpc_ss_node_type_k_t,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ue_boolean   _DCE_PROTOTYPE_ ((
+void rpc_ss_ue_boolean   (
     idl_boolean **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_mr_byte   _DCE_PROTOTYPE_ ((
+void rpc_ss_mr_byte   (
     idl_byte *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ur_byte   _DCE_PROTOTYPE_ ((
+void rpc_ss_ur_byte   (
     idl_byte **, 
     rpc_ss_node_type_k_t,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_me_byte   _DCE_PROTOTYPE_ ((
+void rpc_ss_me_byte   (
     idl_byte *,
     rpc_ss_node_type_k_t,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ue_byte   _DCE_PROTOTYPE_ ((
+void rpc_ss_ue_byte   (
     idl_byte **, 
     rpc_ss_node_type_k_t , 
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_mr_char   _DCE_PROTOTYPE_ ((
+void rpc_ss_mr_char   (
     idl_char *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ur_char   _DCE_PROTOTYPE_ ((
+void rpc_ss_ur_char   (
     idl_char **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_me_char   _DCE_PROTOTYPE_ ((
+void rpc_ss_me_char   (
     idl_char *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ue_char   _DCE_PROTOTYPE_ ((
+void rpc_ss_ue_char   (
     idl_char **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
 
-void rpc_ss_mr_enum   _DCE_PROTOTYPE_ ((
+void rpc_ss_mr_enum   (
     int *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ur_enum   _DCE_PROTOTYPE_ ((
+void rpc_ss_ur_enum   (
     int **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_me_enum   _DCE_PROTOTYPE_ ((
+void rpc_ss_me_enum   (
     int *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ue_enum   _DCE_PROTOTYPE_ ((
+void rpc_ss_ue_enum   (
     int **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_mr_small_int   _DCE_PROTOTYPE_ ((
+void rpc_ss_mr_small_int   (
     idl_small_int *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ur_small_int   _DCE_PROTOTYPE_ ((
+void rpc_ss_ur_small_int   (
     idl_small_int **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_me_small_int   _DCE_PROTOTYPE_ ((
+void rpc_ss_me_small_int   (
     idl_small_int *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ue_small_int   _DCE_PROTOTYPE_ ((
+void rpc_ss_ue_small_int   (
     idl_small_int **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_mr_short_int   _DCE_PROTOTYPE_ ((
+void rpc_ss_mr_short_int   (
     idl_short_int *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ur_short_int   _DCE_PROTOTYPE_ ((
+void rpc_ss_ur_short_int   (
     idl_short_int **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_me_short_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_me_short_int  (
     idl_short_int *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ue_short_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_ue_short_int  (
     idl_short_int **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_mr_long_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_mr_long_int  (
     idl_long_int *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ur_long_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_ur_long_int  (
     idl_long_int **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_me_long_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_me_long_int  (
     idl_long_int *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ue_long_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_ue_long_int  (
     idl_long_int **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
 
-void  rpc_ss_mr_hyper_int  _DCE_PROTOTYPE_ ((
+void  rpc_ss_mr_hyper_int  (
     idl_hyper_int *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ur_hyper_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_ur_hyper_int  (
     idl_hyper_int **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_me_hyper_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_me_hyper_int  (
     idl_hyper_int *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ue_hyper_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_ue_hyper_int  (
     idl_hyper_int **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_mr_usmall_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_mr_usmall_int  (
     idl_usmall_int *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ur_usmall_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_ur_usmall_int  (
     idl_usmall_int **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
 
-void rpc_ss_me_usmall_int   _DCE_PROTOTYPE_ ((
+void rpc_ss_me_usmall_int   (
     idl_usmall_int *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ue_usmall_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_ue_usmall_int  (
     idl_usmall_int **, 
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_mr_ushort_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_mr_ushort_int  (
     idl_ushort_int *, 
     rpc_ss_node_type_k_t,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ur_ushort_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_ur_ushort_int  (
     idl_ushort_int **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_me_ushort_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_me_ushort_int  (
     idl_ushort_int *,
     rpc_ss_node_type_k_t, 
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ue_ushort_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_ue_ushort_int  (
     idl_ushort_int **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_mr_ulong_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_mr_ulong_int  (
     idl_ulong_int *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ur_ulong_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_ur_ulong_int  (
     idl_ulong_int **, 
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_me_ulong_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_me_ulong_int  (
     idl_ulong_int *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ue_ulong_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_ue_ulong_int  (
     idl_ulong_int **, 
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_mr_uhyper_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_mr_uhyper_int  (
     idl_uhyper_int *, 
     rpc_ss_node_type_k_t,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ur_uhyper_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_ur_uhyper_int  (
     idl_uhyper_int **, 
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_me_uhyper_int _DCE_PROTOTYPE_ ((
+void rpc_ss_me_uhyper_int (
     idl_uhyper_int *,
     rpc_ss_node_type_k_t,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ue_uhyper_int  _DCE_PROTOTYPE_ ((
+void rpc_ss_ue_uhyper_int  (
     idl_uhyper_int **, 
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_mr_short_float  _DCE_PROTOTYPE_ ((
+void rpc_ss_mr_short_float  (
     idl_short_float *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ur_short_float  _DCE_PROTOTYPE_ ((
+void rpc_ss_ur_short_float  (
     idl_short_float **,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_me_short_float  _DCE_PROTOTYPE_ ((
+void rpc_ss_me_short_float  (
     idl_short_float *,
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ue_short_float  _DCE_PROTOTYPE_ ((
+void rpc_ss_ue_short_float  (
     idl_short_float **, 
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_mr_long_float  _DCE_PROTOTYPE_ ((
+void rpc_ss_mr_long_float  (
     idl_long_float *, 
     rpc_ss_node_type_k_t,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ur_long_float   _DCE_PROTOTYPE_ ((
+void rpc_ss_ur_long_float   (
     idl_long_float **,
     rpc_ss_node_type_k_t,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_me_long_float  _DCE_PROTOTYPE_ ((
+void rpc_ss_me_long_float  (
     idl_long_float *, 
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
-void rpc_ss_ue_long_float  _DCE_PROTOTYPE_ ((
+void rpc_ss_ue_long_float  (
     idl_long_float **, 
     rpc_ss_node_type_k_t ,
     rpc_ss_marsh_state_t *
-));
+);
 
 /*
  *  AUTO_HANDLE SUPPORT
  */
 
-void rpc_ss_make_import_cursor_valid  _DCE_PROTOTYPE_ ((
+void rpc_ss_make_import_cursor_valid  (
      RPC_SS_THREADS_MUTEX_T *, 
      rpc_ns_import_handle_t  *, 
      rpc_if_handle_t ,
      error_status_t *
-));
+);
 
-void rpc_ss_import_cursor_advance   _DCE_PROTOTYPE_ ((
+void rpc_ss_import_cursor_advance   (
     RPC_SS_THREADS_MUTEX_T *,
     idl_boolean *,
     rpc_ns_import_handle_t *,
@@ -1619,31 +1619,31 @@ void rpc_ss_import_cursor_advance   _DCE_PROTOTYPE_ ((
     rpc_binding_handle_t *,
     error_status_t *,
     error_status_t *
-));
+);
 
-void rpc_ss_flag_error_on_binding   _DCE_PROTOTYPE_ ((
+void rpc_ss_flag_error_on_binding   (
    RPC_SS_THREADS_MUTEX_T *,
     ndr_boolean *,
     rpc_binding_handle_t *,
     rpc_binding_handle_t *
-));
+);
 
 /*
  *  CALL END, GETTING FAULT IF THERE IS ONE
  */
 
-void rpc_ss_call_end   _DCE_PROTOTYPE_ ((
+void rpc_ss_call_end   (
     volatile rpc_call_handle_t *,
     volatile ndr_ulong_int *,
     volatile error_status_t *
-));
+);
 
-void rpc_ss_call_end_2   _DCE_PROTOTYPE_ ((
+void rpc_ss_call_end_2   (
     volatile rpc_call_handle_t *,
     volatile ndr_ulong_int *,
     volatile ndr_ulong_int *,
     volatile error_status_t *
-));
+);
 
 
 /*
@@ -1654,33 +1654,33 @@ globalref rpc_trans_tab_p_t ndr_g_ascii_to_ebcdic;
 
 globalref rpc_trans_tab_p_t ndr_g_ebcdic_to_ascii;
 
-void ndr_cvt_string   _DCE_PROTOTYPE_ ((
+void ndr_cvt_string   (
         ndr_format_t ,
         ndr_format_t ,
         char_p_t ,
         char_p_t 
-));
+);
 
-void ndr_cvt_short_float   _DCE_PROTOTYPE_ ((
+void ndr_cvt_short_float   (
         ndr_format_t, 
         ndr_format_t, 
         short_float_p_t,
         short_float_p_t
-));
+);
 
-void ndr_cvt_long_float   _DCE_PROTOTYPE_ ((
+void ndr_cvt_long_float   (
         ndr_format_t ,
         ndr_format_t ,
         long_float_p_t ,
         long_float_p_t 
-));
+);
 
 
 /*
  *  Support routines for marshalling and unmarshalling [string]
  */
 
-idl_ulong_int rpc_ss_strsiz   _DCE_PROTOTYPE_ (( idl_char *, idl_ulong_int));
+idl_ulong_int rpc_ss_strsiz   ( idl_char *, idl_ulong_int);
 
 
 /*
@@ -1689,13 +1689,13 @@ idl_ulong_int rpc_ss_strsiz   _DCE_PROTOTYPE_ (( idl_char *, idl_ulong_int));
 
 #ifdef IDL_ENABLE_STATUS_MAPPING
 
-void rpc_ss_map_dce_to_local_status  _DCE_PROTOTYPE_ ((
+void rpc_ss_map_dce_to_local_status  (
    error_status_t *   /* [in,out] pointer to DCE status -> local status */
-));
+);
 
-void rpc_ss_map_local_to_dce_status    _DCE_PROTOTYPE_ ((
+void rpc_ss_map_local_to_dce_status    (
     error_status_t *   /* [in,out] pointer to local status -> DCE status */
-));
+);
 
 #endif /* IDL_ENABLE_STATUS_MAPPING */
 
@@ -1703,11 +1703,11 @@ void rpc_ss_map_local_to_dce_status    _DCE_PROTOTYPE_ ((
  * Canned routines that can be used in an ACF [binding_callout] attribute.
  * These routines are called from the client stub.
  */
-void rpc_ss_bind_authn_client _DCE_PROTOTYPE_ ((
+void rpc_ss_bind_authn_client (
     rpc_binding_handle_t    *,      /* [io] Binding handle */
     rpc_if_handle_t         ,       /* [in] Interface handle */
     error_status_t          *       /*[out] Return status */
-));
+);
 
 
 #endif  /* !defined(NCK) || defined(NCK_NEED_MARSHALLING) */

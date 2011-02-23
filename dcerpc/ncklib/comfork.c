@@ -76,17 +76,17 @@ INTERNAL struct atfork_user_data_t
 
 /* ========================================================================= */
 
-INTERNAL void _pre_fork _DCE_PROTOTYPE_((
+INTERNAL void _pre_fork (
         pointer_t   /*arg*/
-    ));
+    );
 
-INTERNAL void _post_fork_child _DCE_PROTOTYPE_((
+INTERNAL void _post_fork_child (
         pointer_t   /*arg*/
-    ));
+    );
 
-INTERNAL void _post_fork_parent _DCE_PROTOTYPE_((
+INTERNAL void _post_fork_parent (
         pointer_t   /*arg*/
-    ));
+    );
 
 /* ========================================================================= */
 

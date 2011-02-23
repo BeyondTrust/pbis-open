@@ -48,21 +48,21 @@ INTERNAL rpc_dg_fpkt_hdr_t fhdr;
 
 /* ======= */
 
-INTERNAL void fwd_reject _DCE_PROTOTYPE_((
+INTERNAL void fwd_reject (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/
-    ));
+    );
 
-INTERNAL void fwd_forward _DCE_PROTOTYPE_((
+INTERNAL void fwd_forward (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_addr_p_t  /*fwd_addr*/
-    ));
+    );
 
-INTERNAL void fwd_delayed _DCE_PROTOTYPE_((
+INTERNAL void fwd_delayed (
     rpc_dg_sock_pool_elt_p_t /*sp*/,
     rpc_dg_recvq_elt_p_t /*rqe*/
-    ));
+    );
 
 /* ======= */
 

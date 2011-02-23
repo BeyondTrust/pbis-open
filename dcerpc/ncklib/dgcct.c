@@ -92,23 +92,23 @@ INTERNAL int rpc_g_dg_cct_timeout = CCTE_TIMEOUT_INTERVAL;
 
 /* ========================================================================= */
 
-INTERNAL void update_ccall_from_ccte _DCE_PROTOTYPE_((
+INTERNAL void update_ccall_from_ccte (
         rpc_dg_ccall_p_t /*ccall*/,
         rpc_dg_cct_elt_p_t  /*ccte*/
-    ));
+    );
 
-INTERNAL rpc_dg_cct_elt_p_t ccte_create _DCE_PROTOTYPE_((
+INTERNAL rpc_dg_cct_elt_p_t ccte_create (
         rpc_auth_info_p_t /*auth_info*/,
         unsigned32  /*probe*/
-    ));
+    );
 
-INTERNAL void cct_timer_fn _DCE_PROTOTYPE_((
+INTERNAL void cct_timer_fn (
         pointer_t  /*p*/
-    ));
+    );
 
-INTERNAL void create_activity_uuid _DCE_PROTOTYPE_((
+INTERNAL void create_activity_uuid (
         dce_uuid_t * /*uuid*/
-    ));
+    );
 
 /* ========================================================================= */
 

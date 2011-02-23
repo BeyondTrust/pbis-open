@@ -44,15 +44,15 @@
 #include <dgcall.h>
 
 
-INTERNAL boolean32 chk_sboot _DCE_PROTOTYPE_((
+INTERNAL boolean32 chk_sboot (
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_ccall_p_t  /*ccall*/
-    ));
+    );
 
-INTERNAL void do_quack_body _DCE_PROTOTYPE_((
+INTERNAL void do_quack_body (
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_ccall_p_t  /*ccall*/
-    ));
+    );
 
 /* ========================================================================= */
 
@@ -487,10 +487,10 @@ PRIVATE boolean rpc__dg_do_response
  * shared by the "working" and "nocall/fack" packet processing routines.
  */
 
-INTERNAL void ping_later _DCE_PROTOTYPE_((
+INTERNAL void ping_later (
         rpc_dg_ccall_p_t /*ccall*/,
         rpc_dg_recvq_elt_p_t /*rqe*/
-    ));
+    );
 
 INTERNAL void ping_later
 (

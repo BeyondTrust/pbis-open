@@ -92,33 +92,33 @@
     RPC_CN_FORWARD_QUEUED_CANCELS (call_r, st); \
 }
     
-INTERNAL unsigned32 rpc__cn_call_cvt_from_nca_st _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32 rpc__cn_call_cvt_from_nca_st (
         unsigned32      /*a_st*/
-    ));
+    );
 
-INTERNAL unsigned32 rpc__cn_call_cvt_to_nca_st _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32 rpc__cn_call_cvt_to_nca_st (
         unsigned32      /*l_st*/
-    ));
+    );
 
-INTERNAL void rpc__cn_call_check_for_cancel _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__cn_call_check_for_cancel (
         rpc_cn_call_rep_p_t     /*call_rep*/
-    ));
+    );
 
-INTERNAL void rpc__cn_call_forward_cancel _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__cn_call_forward_cancel (
         rpc_cn_call_rep_p_t     /*call_rep*/,
         unsigned32              * /*status*/
-    ));
+    );
 
-INTERNAL void rpc__cn_call_binding_serialize _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__cn_call_binding_serialize (
         rpc_binding_rep_p_t     /*binding_r*/,
         rpc_clock_t             /*cancel_timeout*/,
         unsigned32              * /*cancel_cnt*/,
         unsigned32              * /*st*/
-    ));
+    );
 
-INTERNAL boolean rpc__cn_call_cancel_timer _DCE_PROTOTYPE_ ((
+INTERNAL boolean rpc__cn_call_cancel_timer (
         rpc_cn_call_rep_p_t     /*call_r*/
-    ));
+    );
 
 /***********************************************************************/
 

@@ -46,9 +46,9 @@
 #endif
 
 #ifndef _DCE_PROTOTYPE_
-#define _DCE_PROTOTYPE_(arg) arg 
+#define _DCE_PROTOTYPE_(arg) arg
 #define _DCE_PROTO_
-#ifndef TRUE 
+#ifndef TRUE
 #define TRUE 1
 #define FALSE 0
 #endif  /* TRUE */
@@ -264,11 +264,11 @@ typedef idl_void_p_t ndr_void_p_t;
  *  Allocate and free node storage
  */
 
-idl_void_p_t rpc_ss_allocate _DCE_PROTOTYPE_ ( (idl_size_t));
+idl_void_p_t rpc_ss_allocate (idl_size_t);
 
-void rpc_ss_free _DCE_PROTOTYPE_ ( (idl_void_p_t) );
+void rpc_ss_free (idl_void_p_t);
 
-void rpc_ss_client_free _DCE_PROTOTYPE_ ( (idl_void_p_t) );
+void rpc_ss_client_free (idl_void_p_t);
 
 /*
  *  Helper thread support
@@ -276,30 +276,30 @@ void rpc_ss_client_free _DCE_PROTOTYPE_ ( (idl_void_p_t) );
 
 typedef idl_void_p_t rpc_ss_thread_handle_t;
 
-rpc_ss_thread_handle_t rpc_ss_get_thread_handle _DCE_PROTOTYPE_ ( (void) );
+rpc_ss_thread_handle_t rpc_ss_get_thread_handle (void);
 
-void rpc_ss_set_thread_handle _DCE_PROTOTYPE_ ( (rpc_ss_thread_handle_t) );
+void rpc_ss_set_thread_handle (rpc_ss_thread_handle_t);
 
-void rpc_ss_set_client_alloc_free _DCE_PROTOTYPE_ ((
+void rpc_ss_set_client_alloc_free (
      idl_void_p_t (*)(idl_size_t),
     void (*)(idl_void_p_t)
-));
+);
  
-void rpc_ss_swap_client_alloc_free _DCE_PROTOTYPE_ ((
+void rpc_ss_swap_client_alloc_free (
     idl_void_p_t (*)(idl_size_t),
     void (*)(idl_void_p_t),
     idl_void_p_t (**)(idl_size_t),
     void (**)( idl_void_p_t)
-));
+);
 
-void rpc_ss_enable_allocate _DCE_PROTOTYPE_ ( (void) );
+void rpc_ss_enable_allocate (void);
 
-void rpc_ss_disable_allocate _DCE_PROTOTYPE_ ( (void) );
+void rpc_ss_disable_allocate (void);
 
 /*
  * Destroy an unusable client context handle
  */
-void rpc_ss_destroy_client_context _DCE_PROTOTYPE_ ( (rpc_ss_context_t *) );
+void rpc_ss_destroy_client_context (rpc_ss_context_t *);
 
 
 
@@ -307,38 +307,38 @@ void rpc_ss_destroy_client_context _DCE_PROTOTYPE_ ( (rpc_ss_context_t *) );
  *  Prototypes for rpc_sm_... routines
  */
 
-idl_void_p_t rpc_sm_allocate _DCE_PROTOTYPE_ ((idl_size_t, idl_ulong_int *));
+idl_void_p_t rpc_sm_allocate (idl_size_t, idl_ulong_int *);
 
-void rpc_sm_client_free _DCE_PROTOTYPE_ ((idl_void_p_t, idl_ulong_int *));
+void rpc_sm_client_free (idl_void_p_t, idl_ulong_int *);
 
-void rpc_sm_destroy_client_context  _DCE_PROTOTYPE_ ((
+void rpc_sm_destroy_client_context  (
     rpc_ss_context_t *,
     idl_ulong_int * 
-));
+);
 
-void rpc_sm_disable_allocate _DCE_PROTOTYPE_ ( (idl_ulong_int * ) );
+void rpc_sm_disable_allocate (idl_ulong_int * );
 
-void rpc_sm_enable_allocate _DCE_PROTOTYPE_ ( (  idl_ulong_int * ) );
+void rpc_sm_enable_allocate (  idl_ulong_int * );
 
-void rpc_sm_free _DCE_PROTOTYPE_ ( (idl_void_p_t, idl_ulong_int * ) );
+void rpc_sm_free (idl_void_p_t, idl_ulong_int * );
 
-rpc_ss_thread_handle_t rpc_sm_get_thread_handle _DCE_PROTOTYPE_ ( (idl_ulong_int * ) );
+rpc_ss_thread_handle_t rpc_sm_get_thread_handle (idl_ulong_int * );
 
-void rpc_sm_set_client_alloc_free  _DCE_PROTOTYPE_ ((
+void rpc_sm_set_client_alloc_free  (
     idl_void_p_t (*)(idl_size_t),
     void (*)(idl_void_p_t ),
     idl_ulong_int *
-));
+);
 
-void rpc_sm_set_thread_handle _DCE_PROTOTYPE_ ( ( rpc_ss_thread_handle_t , idl_ulong_int * ) );
+void rpc_sm_set_thread_handle ( rpc_ss_thread_handle_t , idl_ulong_int * );
 
-void rpc_sm_swap_client_alloc_free _DCE_PROTOTYPE_ ((
+void rpc_sm_swap_client_alloc_free (
      idl_void_p_t (*)(idl_size_t),
     void (*)(idl_void_p_t),
     idl_void_p_t (**)(idl_size_t),
     void (**)(idl_void_p_t),
     idl_ulong_int *
-));
+);
 
 /* International character machinery */
 

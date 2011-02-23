@@ -68,7 +68,7 @@
  * corresponding mutex.
  */
 
-void rpc__cn_init_seqnum _DCE_PROTOTYPE_ ((void));
+void rpc__cn_init_seqnum (void);
 
 /*
  * R P C _ _ C N _ G E N _ L O C A L _ I D
@@ -76,8 +76,8 @@ void rpc__cn_init_seqnum _DCE_PROTOTYPE_ ((void));
  * This routine creates a new local identifier.
  */
 
-void rpc__cn_gen_local_id _DCE_PROTOTYPE_ ((
+void rpc__cn_gen_local_id (
     unsigned32          /* index */,
-    rpc_cn_local_id_t   * /* lcl_id */));
+    rpc_cn_local_id_t   * /* lcl_id */);
 
 #endif /* _CNID_H */

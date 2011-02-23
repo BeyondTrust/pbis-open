@@ -97,37 +97,37 @@ typedef struct rpc_addr_http_t
     char                    http_proxy[128];
 } rpc_http_addr_t, *rpc_http_addr_p_t;
 
-PRIVATE void rpc__http_init _DCE_PROTOTYPE_ ((  
+PRIVATE void rpc__http_init (  
         rpc_naf_epv_p_t             * /*naf_epv*/,
         unsigned32                  * /*status*/
-    ));
+    );
 
-PRIVATE void rpc__http_desc_inq_addr _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__http_desc_inq_addr (
         rpc_protseq_id_t             /*protseq_id*/,
         rpc_socket_t                 /*desc*/,
         rpc_addr_vector_p_t         * /*rpc_addr_vec*/,
         unsigned32                  * /*st*/
-    ));
+    );
 
-PRIVATE void rpc__http_get_broadcast _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__http_get_broadcast (
         rpc_naf_id_t                 /*naf_id*/,
         rpc_protseq_id_t             /*rpc_protseq_id*/,
         rpc_addr_vector_p_t         * /*rpc_addrs*/,
         unsigned32                  * /*status*/
-    ));
+    );
 
-PRIVATE void rpc__http_init_local_addr_vec _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__http_init_local_addr_vec (
         unsigned32                  * /*status*/
-    ));
+    );
 
-PRIVATE boolean32 rpc__http_is_local_network _DCE_PROTOTYPE_ ((
+PRIVATE boolean32 rpc__http_is_local_network (
         rpc_addr_p_t                 /*rpc_addr*/,
         unsigned32                  * /*status*/
-    ));
+    );
 
-PRIVATE boolean32 rpc__http_is_local_addr _DCE_PROTOTYPE_ ((
+PRIVATE boolean32 rpc__http_is_local_addr (
         rpc_addr_p_t                 /*rpc_addr*/,
         unsigned32                  * /*status*/
-    ));
+    );
 
 #endif /* _HTTPNAF_H */

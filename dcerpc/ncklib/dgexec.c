@@ -54,10 +54,10 @@
 
 /* ========================================================================= */
 
-INTERNAL void queue_mapped_reject _DCE_PROTOTYPE_ (( 
+INTERNAL void queue_mapped_reject ( 
         rpc_dg_scall_p_t  /*scall*/,
         unsigned32        /*st*/
-    ));
+    );
 
 /* ========================================================================= */
 /*

@@ -73,48 +73,48 @@ INTERNAL unsigned32 server_com_timeout;
  * of mgmt.idl).
  */
 
-INTERNAL void inq_if_ids _DCE_PROTOTYPE_ ((    
+INTERNAL void inq_if_ids (    
         rpc_binding_handle_t     /*binding_h*/,
         rpc_if_id_vector_p_t    * /*if_id_vector*/,
         unsigned32              * /*status*/
-    ));
+    );
 
-INTERNAL void inq_stats _DCE_PROTOTYPE_ ((            
+INTERNAL void inq_stats (            
         rpc_binding_handle_t     /*binding_h*/,
         unsigned32              * /*count*/,
         unsigned32              statistics[],
         unsigned32              * /*status*/
-    ));
+    );
 
-INTERNAL boolean32 is_server_listening _DCE_PROTOTYPE_ ((            
+INTERNAL boolean32 is_server_listening (            
         rpc_binding_handle_t     /*binding_h*/,
         unsigned32              * /*status*/
-    ));
+    );
 
 
-INTERNAL void inq_princ_name _DCE_PROTOTYPE_ ((            
+INTERNAL void inq_princ_name (            
         rpc_binding_handle_t     /*binding_h*/,
         unsigned32               /*authn_proto*/,
         unsigned32               /*princ_name_size*/,
         idl_char                princ_name[],
         unsigned32              * /*status*/
-    ));
+    );
 
 
 
 
-INTERNAL idl_void_p_t my_allocate _DCE_PROTOTYPE_ ((
+INTERNAL idl_void_p_t my_allocate (
         idl_size_t  /*size*/
-    ));
+    );
 
-INTERNAL void my_free _DCE_PROTOTYPE_ ((
+INTERNAL void my_free (
         idl_void_p_t  /*ptr*/
-    ));
+    );
 
-INTERNAL void remote_binding_validate _DCE_PROTOTYPE_ ((
+INTERNAL void remote_binding_validate (
         rpc_binding_handle_t     /*binding_h*/,
         unsigned32              * /*status*/
-    ));
+    );
 
 
 
@@ -336,10 +336,10 @@ PRIVATE void rpc_mgmt_inq_if_ids
     unsigned32              *status
 )
 {
-    idl_void_p_t            (*old_allocate) _DCE_PROTOTYPE_ ((idl_size_t));
-    idl_void_p_t            (*tmp_allocate) _DCE_PROTOTYPE_ ((idl_size_t));
-    void                    (*old_free) _DCE_PROTOTYPE_ ((idl_void_p_t));
-    void                    (*tmp_free) _DCE_PROTOTYPE_ ((idl_void_p_t));
+    idl_void_p_t            (*old_allocate) (idl_size_t);
+    idl_void_p_t            (*tmp_allocate) (idl_size_t);
+    void                    (*old_free) (idl_void_p_t);
+    void                    (*tmp_free) (idl_void_p_t);
 
     RPC_VERIFY_INIT ();
     
@@ -733,11 +733,11 @@ PUBLIC void rpc_mgmt_set_cancel_timeout
 **--
 **/
 
-PUBLIC void rpc_mgmt_set_call_timeout _DCE_PROTOTYPE_ ((
+PUBLIC void rpc_mgmt_set_call_timeout (
         rpc_binding_handle_t     /*binding_h*/,
         unsigned32               /*seconds*/,
         unsigned32              * /*status*/
-    ));
+    );
 
 PUBLIC void rpc_mgmt_set_call_timeout 
 (

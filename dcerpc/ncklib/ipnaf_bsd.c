@@ -59,41 +59,41 @@
  *  Internal prototypes and typedefs.
  */
 
-typedef boolean (*enumerate_fn_p_t) _DCE_PROTOTYPE_ ((
+typedef boolean (*enumerate_fn_p_t) (
         int                     /* in  */  /*desc*/,
         struct ifreq            /* in  */ * /*ifr*/,
         unsigned32              /* in  */  /*if_flags*/,
         struct sockaddr         /* in  */ * /*if_addr*/,
         rpc_ip_addr_p_t         /* out */  /*ip_addr*/,
         rpc_ip_addr_p_t         /* out */  /*netmask_addr*/
-    ));
+    );
 
-INTERNAL void enumerate_interfaces _DCE_PROTOTYPE_ ((
+INTERNAL void enumerate_interfaces (
         rpc_protseq_id_t         /*protseq_id*/,
         rpc_socket_t             /*desc*/,
         enumerate_fn_p_t         /*efun*/,
         rpc_addr_vector_p_t     * /*rpc_addr_vec*/,
         rpc_addr_vector_p_t     * /*netmask_addr_vec*/,
         unsigned32              * /*st*/
-    ));
+    );
 
-INTERNAL boolean get_addr _DCE_PROTOTYPE_ ((
+INTERNAL boolean get_addr (
         int                      /*desc*/,
         struct ifreq            * /*ifr*/,
         unsigned32               /*if_flags*/,
         struct sockaddr         * /*if_addr*/,
         rpc_ip_addr_p_t          /*ip_addr*/,
         rpc_ip_addr_p_t          /*netmask_addr*/
-    ));                            
+    );                            
 
-INTERNAL boolean get_broadcast_addr _DCE_PROTOTYPE_ ((
+INTERNAL boolean get_broadcast_addr (
         int                      /*desc*/,
         struct ifreq            * /*ifr*/,
         unsigned32               /*if_flags*/,
         struct sockaddr         * /*if_addr*/,
         rpc_ip_addr_p_t          /*ip_addr*/,
         rpc_ip_addr_p_t          /*netmask_addr*/
-    ));
+    );
 
 #ifndef NO_SPRINTF
 #  define RPC__IP_NETWORK_SPRINTF   sprintf

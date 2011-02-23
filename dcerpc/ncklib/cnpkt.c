@@ -70,24 +70,24 @@ GLOBAL rpc_cn_common_hdr_t rpc_g_cn_common_hdr =
 };
 
 
-INTERNAL rpc_cn_pres_result_list_p_t unpack_port_any _DCE_PROTOTYPE_ ((
+INTERNAL rpc_cn_pres_result_list_p_t unpack_port_any (
         rpc_cn_port_any_t       * /*port_any_p*/,
         unsigned8               * /*drepp*/
-        ));
+        );
 
-INTERNAL rpc_cn_auth_tlr_p_t unpack_pres_context_list _DCE_PROTOTYPE_ ((
+INTERNAL rpc_cn_auth_tlr_p_t unpack_pres_context_list (
         rpc_cn_pres_cont_list_p_t /*pcontp*/,
         boolean32               /*swap*/
-        ));
+        );
 
-INTERNAL rpc_cn_auth_tlr_p_t unpack_pres_result_list _DCE_PROTOTYPE_ ((
+INTERNAL rpc_cn_auth_tlr_p_t unpack_pres_result_list (
         rpc_cn_pres_result_list_p_t /*presp*/,
         boolean32               /*swap*/
-        ));
+        );
 
-INTERNAL rpc_cn_auth_tlr_p_t unpack_versions_supported _DCE_PROTOTYPE_ ((
+INTERNAL rpc_cn_auth_tlr_p_t unpack_versions_supported (
         rpc_cn_versions_supported_p_t /*versp*/
-        ));
+        );
 
 /*
 **++

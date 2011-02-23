@@ -52,28 +52,28 @@ INTERNAL rpc_mutex_t    auth_info_cache_mutex;
 /*
  * R P C _ _ A U T H _ I N F O _ C A C H E _ L K U P
  */
-INTERNAL rpc_auth_info_t *rpc__auth_info_cache_lkup _DCE_PROTOTYPE_ ((
+INTERNAL rpc_auth_info_t *rpc__auth_info_cache_lkup (
         unsigned_char_p_t                    /*server_princ_name*/,
         rpc_authn_level_t                    /*authn_level*/,
         rpc_auth_identity_handle_t           /*auth_identity*/,
         rpc_authz_protocol_id_t              /*authz_protocol*/,
         rpc_authn_protocol_id_t             /* authn_protocol*/
-    ));
+    );
 
 /*
  * R P C _ _ A U T H _ I N F O _ C A C H E _ A D D
  */
 
-INTERNAL void rpc__auth_info_cache_add _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__auth_info_cache_add (
         rpc_auth_info_p_t                   /*auth_info*/
-    ));
+    );
 
 /*
  * R P C _ _ A U T H _ I N F O _ C A C H E _ R E M O V E
  */
-INTERNAL void rpc__auth_info_cache_remove _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__auth_info_cache_remove (
         rpc_auth_info_p_t                   /*auth_info*/
-    ));
+    );
 
 
 

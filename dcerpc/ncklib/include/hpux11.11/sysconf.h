@@ -140,7 +140,7 @@
 
 #define ATFORK(handler) rpc__atfork(handler)
 
-extern void rpc__cma_atfork _DCE_PROTOTYPE_((void *));
+extern void rpc__cma_atfork (void *);
 
 /****************************************************************************/
 

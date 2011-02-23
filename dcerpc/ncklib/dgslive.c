@@ -46,7 +46,7 @@
 
 /* ========================================================================= */
 
-INTERNAL void network_monitor_liveness    _DCE_PROTOTYPE_((void));
+INTERNAL void network_monitor_liveness    (void);
 
 /* ========================================================================= */
 
@@ -94,9 +94,9 @@ INTERNAL unsigned32 active_monitors = 0;
  * global client_rep table.
  */
 
-INTERNAL rpc_dg_client_rep_p_t find_client _DCE_PROTOTYPE_((
+INTERNAL rpc_dg_client_rep_p_t find_client (
         dce_uuid_p_t /*cas_uuid*/
-    ));
+    );
 
 INTERNAL rpc_dg_client_rep_p_t find_client
 (

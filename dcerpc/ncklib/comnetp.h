@@ -97,22 +97,22 @@ extern "C" {
 #endif
 
 
-PRIVATE void rpc__nlsn_activate_desc _DCE_PROTOTYPE_((
+PRIVATE void rpc__nlsn_activate_desc (
         rpc_listener_state_p_t  /*lstate*/,
         unsigned32              /*idx*/,
         unsigned32              * /*status*/
-    ));
+    );
 
-PRIVATE void rpc__nlsn_deactivate_desc _DCE_PROTOTYPE_((
+PRIVATE void rpc__nlsn_deactivate_desc (
         rpc_listener_state_p_t  /*lstate*/,
         unsigned32              /*idx*/,
         unsigned32              * /*status*/
-    ));
+    );
 
-PRIVATE void rpc__nlsn_fork_handler _DCE_PROTOTYPE_((
+PRIVATE void rpc__nlsn_fork_handler (
         rpc_listener_state_p_t  /*lstate*/,
         rpc_fork_stage_id_t /*stage*/
-    ));
+    );
 
 #ifdef __cplusplus
 }

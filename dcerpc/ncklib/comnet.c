@@ -97,11 +97,11 @@ INTERNAL rpc_cond_t                 shutdown_cond;
  * forward declarations of internal (static) functions
  */
 
-INTERNAL void bv_alloc _DCE_PROTOTYPE_ ((
+INTERNAL void bv_alloc (
         rpc_binding_vector_p_t      /*old_vec*/,
         rpc_binding_vector_p_t      * /*new_vec*/,
         unsigned32                  * /*status*/
-    ));
+    );
 
 /*
 **++

@@ -189,36 +189,36 @@ typedef struct rpc_dg_sock_pool_t {
                                 
 /* ======================================================================== */
 
-PRIVATE void rpc__dg_network_use_protseq_sv _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_network_use_protseq_sv (
         rpc_protseq_id_t  /*pseq_id*/,
         unsigned32  /*max_calls*/,
         rpc_addr_p_t  /*rpc_addr*/,
         unsigned_char_p_t  /*endpoint*/,
         unsigned32 * /*st*/
-    ));
+    );
 
-PRIVATE void rpc__dg_network_use_protseq_cl _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_network_use_protseq_cl (
         rpc_protseq_id_t  /*pseq_id*/,
         rpc_dg_sock_pool_elt_p_t * /*sp_elt*/
-    ));                                  
+    );                                  
 
-PRIVATE void rpc__dg_network_disable_desc _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_network_disable_desc (
         rpc_dg_sock_pool_elt_p_t  /*sp_elt*/
-    ));
+    );
 
-PRIVATE void rpc__dg_network_init _DCE_PROTOTYPE_((void));
+PRIVATE void rpc__dg_network_init (void);
 
-PRIVATE void rpc__dg_network_fork_handler _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_network_fork_handler (
         rpc_fork_stage_id_t  /*stage*/
-    ));
+    );
 
-PRIVATE void rpc__dg_network_sock_release _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_network_sock_release (
         rpc_dg_sock_pool_elt_p_t * /*sp*/
-    ));
+    );
 
-PRIVATE void rpc__dg_network_sock_reference _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_network_sock_reference (
         rpc_dg_sock_pool_elt_p_t  /*sp*/
-    ));
+    );
 
 
 #endif /* _DGSOC_H */

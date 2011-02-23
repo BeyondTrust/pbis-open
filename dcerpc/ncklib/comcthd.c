@@ -303,64 +303,64 @@ INTERNAL boolean                cthread_invoke_enabled;
 INTERNAL rpc_thread_pool_fn_t   cthread_pool_lookup_fn;
 
 
-INTERNAL void cthread_create _DCE_PROTOTYPE_ ((
+INTERNAL void cthread_create (
         cthread_elt_p_t          /*cthread*/,
         unsigned32              * /*status*/
-    ));
+    );
 
-INTERNAL void cthread_call_executor _DCE_PROTOTYPE_ ((
+INTERNAL void cthread_call_executor (
         cthread_elt_p_t        /*cthread*/
-    ));
+    );
 
-INTERNAL void cthread_reaper _DCE_PROTOTYPE_ ((
+INTERNAL void cthread_reaper (
         pointer_t    /*arg*/
-    ));
+    );
 
-INTERNAL cthread_pool_elt_p_t cthread_pool_alloc _DCE_PROTOTYPE_ ((
+INTERNAL cthread_pool_elt_p_t cthread_pool_alloc (
         unsigned32   /*n_threads*/,
         boolean32    /*is_default_pool*/,
         unsigned32  * /*status*/
-    ));
+    );
 
-INTERNAL void cthread_pool_set_threadcnt _DCE_PROTOTYPE_ ((
+INTERNAL void cthread_pool_set_threadcnt (
         cthread_pool_elt_p_t  /*p*/,
         unsigned32   /*n_threads*/,
         unsigned32  * /*status*/
-    ));
+    );
 
-INTERNAL void cthread_pool_free _DCE_PROTOTYPE_ ((
+INTERNAL void cthread_pool_free (
         cthread_pool_elt_p_t  /*p*/,
         unsigned32  * /*status*/
-    ));
+    );
 
-INTERNAL void cthread_pool_start _DCE_PROTOTYPE_ ((
+INTERNAL void cthread_pool_start (
         cthread_pool_elt_p_t  /*p*/,
         unsigned32  * /*status*/
-    ));
+    );
 
-INTERNAL void cthread_pool_stop _DCE_PROTOTYPE_ ((
+INTERNAL void cthread_pool_stop (
         cthread_pool_elt_p_t  /*p*/,
         unsigned32  /*wait_flag*/,
         unsigned32  * /*status*/
-    ));
+    );
 
-INTERNAL cthread_elt_p_t cthread_pool_assign_thread _DCE_PROTOTYPE_ ((
+INTERNAL cthread_elt_p_t cthread_pool_assign_thread (
         cthread_pool_elt_p_t     /*p*/
-    ));
+    );
 
-INTERNAL void cthread_pool_queue_call _DCE_PROTOTYPE_ ((
+INTERNAL void cthread_pool_queue_call (
         cthread_pool_elt_p_t     /*p*/,
         rpc_call_rep_p_t         /*call_rep*/,
         unsigned32              * /*status*/
-    ));
+    );
 
-INTERNAL rpc_call_rep_p_t cthread_pool_dequeue_first _DCE_PROTOTYPE_ ((
+INTERNAL rpc_call_rep_p_t cthread_pool_dequeue_first (
         cthread_pool_elt_p_t     /*p*/
-    ));
+    );
 
-INTERNAL boolean32 cthread_call_dequeue _DCE_PROTOTYPE_ ((
+INTERNAL boolean32 cthread_call_dequeue (
         rpc_call_rep_p_t         /*call_rep*/
-    ));
+    );
 
 
 /*

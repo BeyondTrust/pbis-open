@@ -50,7 +50,7 @@
 #include <cnpkt.h>	/* NCA connection packet layout */
 #include <cnassoc.h>    /* NCA connection association service */
 
-void rpc__cn_minute_system_time _DCE_PROTOTYPE_ ((void));
+void rpc__cn_minute_system_time (void);
 
 /*
  * INTERNAL variables.

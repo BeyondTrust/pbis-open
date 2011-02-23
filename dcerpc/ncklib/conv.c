@@ -49,12 +49,12 @@
 
 /* ========================================================================= */
 
-INTERNAL boolean conv_common  _DCE_PROTOTYPE_ ((
+INTERNAL boolean conv_common  (
         dce_uuid_t * /*actuid*/,
         unsigned32 /*boot_time*/,
         rpc_dg_ccall_p_t * /*ccall*/,
         unsigned32 * /*st*/
-    ));
+    );
 
 /* ========================================================================= */
 

@@ -112,15 +112,15 @@ GLOBAL char     *rpc_g_cn_grp_client_states [] =
 /*  
  * The action routine prototypes.
  */
-INTERNAL unsigned32     incr_assoc_count_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     incr_assoc_count_action_rtn (
     pointer_t /*spc_struct*/, 
     pointer_t /*event_param*/,
-    pointer_t /*sm*/));
+    pointer_t /*sm*/);
 
-INTERNAL unsigned32     decr_assoc_count_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     decr_assoc_count_action_rtn (
     pointer_t /*spc_struct*/, 
     pointer_t /*event_param*/, 
-    pointer_t /*sm*/));
+    pointer_t /*sm*/);
 
 /*  
  * The action table itself.

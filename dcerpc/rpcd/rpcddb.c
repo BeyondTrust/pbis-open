@@ -58,22 +58,22 @@ typedef struct {
 
 
 INTERNAL void list_add
-    _DCE_PROTOTYPE_((
+    (
         db_list_t   *list,
         db_list_t   *elp
-    ));
+    );
 
 INTERNAL void list_remove
-    _DCE_PROTOTYPE_((
+    (
         db_list_t   *list,
         db_list_t   *elp
-    ));
+    );
 
 INTERNAL boolean32 db_bad_context
-    _DCE_PROTOTYPE_ ((
+    (
         struct db           *h,
         ept_lookup_handle_t *entry_handle
-    )); 
+    ); 
 
 /*
  * Setup the persistent database image.

@@ -90,11 +90,11 @@ typedef struct
 } rpc_if_type_info_t, *rpc_if_type_info_p_t;
 
 
-INTERNAL void unregister_if_entry _DCE_PROTOTYPE_ ((
+INTERNAL void unregister_if_entry (
         rpc_if_rgy_entry_p_t    /*if_entry*/,
         dce_uuid_p_t                /*mgr_type_uuid*/,
         unsigned32              * /*status*/
-    ));
+    );
 
 /*
 **++

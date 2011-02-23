@@ -50,23 +50,23 @@ GLOBAL rpc_dg_pkt_pool_t rpc_g_dg_pkt_pool;
 
 /* ========================================================================= */
 
-INTERNAL rpc_dg_pkt_pool_elt_p_t pkt_alloc _DCE_PROTOTYPE_((void));
+INTERNAL rpc_dg_pkt_pool_elt_p_t pkt_alloc (void);
 
 
-INTERNAL void pkt_free _DCE_PROTOTYPE_((
+INTERNAL void pkt_free (
         rpc_dg_pkt_pool_elt_p_t  /*pkt*/,
         rpc_dg_call_p_t  /*call*/
-    ));
+    );
 
-INTERNAL void dequeue_pool_waiter _DCE_PROTOTYPE_((
+INTERNAL void dequeue_pool_waiter (
         rpc_dg_call_p_t  /*call*/,
         rpc_dg_call_p_t * /*head*/,
         rpc_dg_call_p_t * /*tail*/
-    ));
+    );
 
-INTERNAL void scan_waiter_lists _DCE_PROTOTYPE_((
+INTERNAL void scan_waiter_lists (
         rpc_dg_call_p_t  /*call*/
-    ));
+    );
 
 /* ========================================================================= */
         

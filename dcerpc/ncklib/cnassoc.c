@@ -107,7 +107,7 @@ INTERNAL boolean32              grp_new_in_progress;
  * R P C _ _ C N _ A S S O C _ O P E N
  */
 
-INTERNAL void rpc__cn_assoc_open _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__cn_assoc_open (
     rpc_cn_assoc_p_t             /*assoc*/,
     rpc_addr_p_t                 /*rpc_addr*/,
     rpc_if_rep_p_t               /*if_r*/,
@@ -117,68 +117,68 @@ INTERNAL void rpc__cn_assoc_open _DCE_PROTOTYPE_ ((
     rpc_transfer_syntax_t       * /*syntax*/,
     unsigned16                  * /*context_id*/,
     rpc_cn_sec_context_p_t      * /*sec*/,
-    unsigned32                  * /*st*/));
+    unsigned32                  * /*st*/);
 
 /*
  * R P C _ _ C N _ A S S O C _ A L T E R _ C O N T E X T
  */
 
-INTERNAL void rpc__cn_assoc_alter_context _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__cn_assoc_alter_context (
     rpc_cn_assoc_p_t             /*assoc*/,
     rpc_if_rep_p_t               /*if_r*/,
     rpc_auth_info_p_t            /*info*/,
     rpc_transfer_syntax_t       * /*syntax*/,
     unsigned16                  * /*context_id*/,
     rpc_cn_sec_context_p_t      * /*sec*/,
-    unsigned32                  * /*st*/));
+    unsigned32                  * /*st*/);
 
 /*
  * R P C _ _ C N _ A S S O C _ R E C L A I M
  */
 
-INTERNAL void rpc__cn_assoc_reclaim _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__cn_assoc_reclaim (
     rpc_cn_local_id_t            /*grp_id*/,
     unsigned32                   /*type*/,
-    boolean32			 /*loop*/));
+    boolean32			 /*loop*/);
 
 /*
  * R P C _ _ C N _ A S S O C _ T I M E R _ R E C L A I M
  */
 
-INTERNAL void rpc__cn_assoc_timer_reclaim _DCE_PROTOTYPE_ ((
-    pointer_t                   /*type*/));
+INTERNAL void rpc__cn_assoc_timer_reclaim (
+    pointer_t                   /*type*/);
 
 /*
  * R P C _ _ C N _ A S S O C _ A C B _ A L L O C
  */
 
-INTERNAL rpc_cn_assoc_t *rpc__cn_assoc_acb_alloc _DCE_PROTOTYPE_ ((
+INTERNAL rpc_cn_assoc_t *rpc__cn_assoc_acb_alloc (
     boolean32                    /*wait*/,
     unsigned32                   /*type*/,
-    unsigned32                  * /*st*/));
+    unsigned32                  * /*st*/);
 
 /*
  * R P C _ _ C N _ A S S O C _ G R P _ I N I T
  */
 
-INTERNAL void rpc__cn_assoc_grp_init _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__cn_assoc_grp_init (
     rpc_cn_assoc_grp_p_t         /*assoc_grp*/,
-    unsigned32                   /*index*/));
+    unsigned32                   /*index*/);
 
 /*
  * R P C _ _ C N _ A S S O C _ G R P _ C R E A T E 
  */
 
-INTERNAL rpc_cn_local_id_t rpc__cn_assoc_grp_create _DCE_PROTOTYPE_ ((
-    unsigned32                  * /*st*/));
+INTERNAL rpc_cn_local_id_t rpc__cn_assoc_grp_create (
+    unsigned32                  * /*st*/);
 
 /*
  * R P C _ _ C N _ A S S O C _ S Y N T A X _ A L L O C
  */
 
-INTERNAL rpc_cn_syntax_t *rpc__cn_assoc_syntax_alloc _DCE_PROTOTYPE_ ((
+INTERNAL rpc_cn_syntax_t *rpc__cn_assoc_syntax_alloc (
     rpc_if_rep_p_t               /*if_r*/,
-    unsigned32                  * /*st*/));
+    unsigned32                  * /*st*/);
 
 
 /******************************************************************************/

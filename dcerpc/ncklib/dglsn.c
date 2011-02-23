@@ -62,89 +62,89 @@
 
 /* ========================================================================= */
 
-INTERNAL void swab_hdr _DCE_PROTOTYPE_((
+INTERNAL void swab_hdr (
         rpc_dg_recvq_elt_p_t  /*rqe*/
-    ));
+    );
 
-INTERNAL unsigned32 recv_pkt _DCE_PROTOTYPE_((
+INTERNAL unsigned32 recv_pkt (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/
-    ));
+    );
 
-INTERNAL unsigned32 recv_pkt_private _DCE_PROTOTYPE_((
+INTERNAL unsigned32 recv_pkt_private (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/
-    ));
+    );
 
-INTERNAL void do_selective_ack _DCE_PROTOTYPE_((
+INTERNAL void do_selective_ack (
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_call_p_t  /*call*/,
         unsigned32 * /*window_incr*/,
         unsigned32 * /*rexmit_cnt*/,
         unsigned32  /*curr_serial*/
-    ));
+    );
 
-INTERNAL void do_fack_body _DCE_PROTOTYPE_((
+INTERNAL void do_fack_body (
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_call_p_t  /*call*/,
         unsigned32 * /*window_incr*/,
         unsigned32 * /*rexmit_cnt*/,
         unsigned32  /*curr_serial*/
-    ));
+    );
 
-INTERNAL boolean do_fack _DCE_PROTOTYPE_((
+INTERNAL boolean do_fack (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/
-    ));
+    );
 
-INTERNAL void marshall_uuid _DCE_PROTOTYPE_((
+INTERNAL void marshall_uuid (
         char * /*p*/,
         dce_uuid_p_t  /*uuid*/
-    ));
+    );
 
 /* ========================================================================= */
 
-INTERNAL void conv_stub_who_are_you _DCE_PROTOTYPE_((
+INTERNAL void conv_stub_who_are_you (
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_pkt_hdr_p_t  /*resp_hdrp*/,
         dce_uuid_p_t  /*clt_actid*/,
         unsigned32  /*clt_boot*/
-    ));
+    );
 
-INTERNAL void conv_stub_who_are_you2 _DCE_PROTOTYPE_((
+INTERNAL void conv_stub_who_are_you2 (
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_pkt_hdr_p_t  /*resp_hdrp*/,
         dce_uuid_p_t  /*clt_actid*/,
         unsigned32  /*clt_boot*/
-    ));
+    );
 
-INTERNAL void conv_stub_are_you_there _DCE_PROTOTYPE_((
+INTERNAL void conv_stub_are_you_there (
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_pkt_hdr_p_t  /*resp_hdrp*/,
         dce_uuid_p_t  /*clt_actid*/,
         unsigned32  /*clt_boot*/
-    ));
+    );
 
-INTERNAL void conv_stub_who_are_you_auth _DCE_PROTOTYPE_((
+INTERNAL void conv_stub_who_are_you_auth (
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_pkt_hdr_p_t  /*resp_hdrp*/,
         dce_uuid_p_t  /*clt_actid*/,
         unsigned32  /*clt_boot*/
-    ));
+    );
 
-typedef void (*conv_stub_t) _DCE_PROTOTYPE_((
+typedef void (*conv_stub_t) (
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_pkt_hdr_p_t  /*resp_hdrp*/,
         dce_uuid_p_t  /*clt_actid*/,
         unsigned32  /*clt_boot*/
-    ));
+    );
 
-INTERNAL void conv_stub_who_are_you_auth_more _DCE_PROTOTYPE_((
+INTERNAL void conv_stub_who_are_you_auth_more (
         rpc_dg_recvq_elt_p_t /*rqe*/,
         rpc_dg_pkt_hdr_p_t /*resp_hdrp*/,
         dce_uuid_p_t /*clt_actid*/,
         unsigned32 /*clt_boot*/
-    ));
+    );
 
 /* ================================================================ */
 
@@ -401,22 +401,22 @@ INTERNAL dcethread* conv_thread;
 INTERNAL boolean convq_running = false, convq_was_running = false;
 INTERNAL boolean convq_stop = false;
 
-INTERNAL boolean32 convq_add _DCE_PROTOTYPE_ ((
+INTERNAL boolean32 convq_add (
         rpc_dg_recvq_elt_p_t  /*rqe*/
-    ));
+    );
 
-INTERNAL void convq_remove _DCE_PROTOTYPE_ ((void));
+INTERNAL void convq_remove (void);
 
-INTERNAL void convq_loop _DCE_PROTOTYPE_ ((void));
+INTERNAL void convq_loop (void);
 
 
-INTERNAL boolean32 convq_has_act _DCE_PROTOTYPE_ (( dce_uuid_p_t  /*actuid*/));
+INTERNAL boolean32 convq_has_act ( dce_uuid_p_t  /*actuid*/);
 
         
-INTERNAL boolean32 handle_conv_int _DCE_PROTOTYPE_ ((
+INTERNAL boolean32 handle_conv_int (
         rpc_socket_t  /*sock*/,
         rpc_dg_recvq_elt_p_t  /*rqe1*/
-    ));
+    );
 
 
 /*
@@ -2672,10 +2672,10 @@ PRIVATE void rpc__dg_fack_common
  * Packet handler for packets with bogus packet types.
  */
 
-INTERNAL rpc_dg_rd_flags_t do_bad_pkt _DCE_PROTOTYPE_((
+INTERNAL rpc_dg_rd_flags_t do_bad_pkt (
         rpc_dg_sock_pool_elt_p_t /*sp*/,
         rpc_dg_recvq_elt_p_t /*rqe*/
-    ));
+    );
 
 INTERNAL rpc_dg_rd_flags_t do_bad_pkt
 (
@@ -2696,10 +2696,10 @@ INTERNAL rpc_dg_rd_flags_t do_bad_pkt
  * Returns "dispatch flags".  See "rpc_dg_rd_flags_t" in "dg.h".
  */
 
-INTERNAL rpc_dg_rd_flags_t recv_dispatch _DCE_PROTOTYPE_((
+INTERNAL rpc_dg_rd_flags_t recv_dispatch (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/
-    ));
+    );
 
 INTERNAL unsigned32 recv_dispatch
 (

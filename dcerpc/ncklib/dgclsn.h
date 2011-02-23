@@ -51,47 +51,47 @@ extern "C" {
 #endif
 
 
-PRIVATE boolean rpc__dg_do_common_response _DCE_PROTOTYPE_ ((               
+PRIVATE boolean rpc__dg_do_common_response (               
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_ccall_p_t  /*ccall*/
-    ));
+    );
 
-PRIVATE boolean rpc__dg_do_reject _DCE_PROTOTYPE_((
+PRIVATE boolean rpc__dg_do_reject (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_ccall_p_t  /*ccall*/
-    ));
+    );
 
-PRIVATE boolean rpc__dg_do_fault _DCE_PROTOTYPE_((
+PRIVATE boolean rpc__dg_do_fault (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_ccall_p_t  /*ccall*/
-    ));
+    );
 
-PRIVATE boolean rpc__dg_do_response _DCE_PROTOTYPE_((
+PRIVATE boolean rpc__dg_do_response (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_ccall_p_t  /*ccall*/
-    ));
+    );
 
-PRIVATE boolean rpc__dg_do_working _DCE_PROTOTYPE_((
+PRIVATE boolean rpc__dg_do_working (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_ccall_p_t  /*ccall*/
-    ));
+    );
 
-PRIVATE boolean rpc__dg_do_nocall _DCE_PROTOTYPE_((
+PRIVATE boolean rpc__dg_do_nocall (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_ccall_p_t  /*ccall*/
-    ));
+    );
 
-PRIVATE boolean rpc__dg_do_quack _DCE_PROTOTYPE_((
+PRIVATE boolean rpc__dg_do_quack (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_ccall_p_t  /*ccall*/
-    ));
+    );
 
 #ifdef __cplusplus
 }

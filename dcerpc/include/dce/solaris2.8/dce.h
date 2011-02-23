@@ -66,7 +66,7 @@ extern "C" {
  * must be used.
  *
  *  Declare a prototype like this (don't use variables):
- *      int foo _DCE_PROTOTYPE_((int, void *, struct bar *))
+ *      int foo (int, void *, struct bar *)
  *  
  *  Define a function like this:
  *      int foo 

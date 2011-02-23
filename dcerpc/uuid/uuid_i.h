@@ -205,22 +205,22 @@ typedef struct
  *
  * 32-bit unsigned * 32-bit unsigned multiply -> 64-bit result
  */
- void uuid__uemul _DCE_PROTOTYPE_ ((
+ void uuid__uemul (
         unsigned32           /*u*/,
         unsigned32           /*v*/,
         unsigned64_t        * /*prodPtr*/
-    ));
+    );
 
 /*
  * U U I D _ _ R E A D _ C L O C K
  */
- unsigned16 uuid__read_clock _DCE_PROTOTYPE_ (( void ));
+ unsigned16 uuid__read_clock ( void );
 
 
 /*
  * U U I D _ _ W R I T E _ C L O C K
  */
- void uuid__write_clock _DCE_PROTOTYPE_ (( unsigned16 /*time*/ ));
+ void uuid__write_clock ( unsigned16 /*time*/ );
 
 
 /*
@@ -228,7 +228,7 @@ typedef struct
  *
  * Get the process id
  */
- unsigned32 uuid__get_os_pid _DCE_PROTOTYPE_ (( void ));
+ unsigned32 uuid__get_os_pid ( void );
 
 
 /*
@@ -236,7 +236,7 @@ typedef struct
  *
  * Get OS time
  */
- void uuid__get_os_time _DCE_PROTOTYPE_(( dce_uuid_time_t * /*uuid_time*/));
+ void uuid__get_os_time ( dce_uuid_time_t * /*uuid_time*/);
 
 
 /*
@@ -244,9 +244,9 @@ typedef struct
  *
  * Get ethernet hardware address from the OS
  */
- void uuid__get_os_address _DCE_PROTOTYPE_ ((
+ void uuid__get_os_address (
         dce_uuid_address_t      * /*address*/,
         unsigned32              * /*st*/
-    ));
+    );
 
 #endif /* _UUIDP_H */

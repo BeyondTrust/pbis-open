@@ -46,32 +46,32 @@
 #endif
 
 
-PRIVATE boolean32 rpc__dg_svr_chk_and_set_sboot _DCE_PROTOTYPE_((
+PRIVATE boolean32 rpc__dg_svr_chk_and_set_sboot (
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_sock_pool_elt_p_t  /*sp*/
-    ));
+    );
 
-PRIVATE boolean rpc__dg_do_quit _DCE_PROTOTYPE_((
+PRIVATE boolean rpc__dg_do_quit (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_scall_p_t  /*scall*/
-    ));
+    );
 
-PRIVATE boolean rpc__dg_do_ack _DCE_PROTOTYPE_((
+PRIVATE boolean rpc__dg_do_ack (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_scall_p_t  /*scall*/
-     ));
+     );
 
-PRIVATE boolean rpc__dg_do_ping _DCE_PROTOTYPE_((
+PRIVATE boolean rpc__dg_do_ping (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_scall_p_t  /*scall*/
-    ));
+    );
 
-PRIVATE boolean rpc__dg_do_request _DCE_PROTOTYPE_((
+PRIVATE boolean rpc__dg_do_request (
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/
-    ));
+    );
 
 #endif /* _DGSLSN_H */

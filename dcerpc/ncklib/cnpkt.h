@@ -1039,13 +1039,13 @@ EXTERNAL rpc_cn_common_hdr_t rpc_g_cn_common_hdr;
  * R P C _ C N _ U N P A C K _ H D R 
  */
 
-PRIVATE void rpc__cn_unpack_hdr _DCE_PROTOTYPE_ ((rpc_cn_packet_p_t));
+PRIVATE void rpc__cn_unpack_hdr (rpc_cn_packet_p_t);
 
 /*
  * R P C _ C N _ P K T _ F O R M A T _ C O M M O N
  */
 
-PRIVATE void rpc__cn_pkt_format_common _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_pkt_format_common (
         rpc_cn_packet_p_t       /* pkt_p */,
         unsigned32              /* ptype */,
         unsigned32              /* flags */,
@@ -1053,26 +1053,26 @@ PRIVATE void rpc__cn_pkt_format_common _DCE_PROTOTYPE_ ((
         unsigned32              /* auth_len */,
         unsigned32              /* call_id */,
         unsigned8               /* minor_version */
-    ));
+    );
 
 /*
  * R P C _ C N _ S T A T S _ P R I N T
  */
 
-PRIVATE void rpc__cn_stats_print _DCE_PROTOTYPE_ ((void ));
+PRIVATE void rpc__cn_stats_print (void );
 
 /*
  * R P C _ C N _ P K T _ N A M E
  */
-PRIVATE char *rpc__cn_pkt_name _DCE_PROTOTYPE_ (( unsigned32));
+PRIVATE char *rpc__cn_pkt_name ( unsigned32);
 
 
 /*
  * R P C _ C N _ P K T _ C R C _ C O M P U T E
  */
-PRIVATE unsigned32 rpc__cn_pkt_crc_compute _DCE_PROTOTYPE_ ((
+PRIVATE unsigned32 rpc__cn_pkt_crc_compute (
         unsigned8       * /* block */,
         unsigned32      /* block_len */
-    ));
+    );
 
 #endif /* _CNPKT_H */

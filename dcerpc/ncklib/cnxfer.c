@@ -53,10 +53,10 @@
  * Prototype for internal entrypoints.
  */
 
-INTERNAL void rpc__cn_prep_next_iovector_elmt _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__cn_prep_next_iovector_elmt (
         rpc_cn_call_rep_p_t /*call_rep*/, 
         unsigned32     * /*status*/
-    ));
+    );
 
 
 /*

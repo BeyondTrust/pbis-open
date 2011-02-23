@@ -51,6 +51,6 @@
 
 typedef unsigned32       rpc_fork_stage_id_t;
 
-PRIVATE void rpc__atfork _DCE_PROTOTYPE_(( void *handler));
+PRIVATE void rpc__atfork ( void *handler);
 
 #endif /* RCPFORK_H */

@@ -52,7 +52,7 @@ INTERNAL unsigned32 rpc_g_gssauth_free_count = 0;
 INTERNAL rpc_auth_rpc_prot_epv_p_t rpc_g_gssauth_negotiate_rpc_prot_epv[RPC_C_PROTOCOL_ID_MAX];
 INTERNAL rpc_auth_rpc_prot_epv_p_t rpc_g_gssauth_mskrb_rpc_prot_epv[RPC_C_PROTOCOL_ID_MAX];
 
-INTERNAL void rpc__gssauth_negotiate_bnd_set_auth _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__gssauth_negotiate_bnd_set_auth (
 	unsigned_char_p_t		/* in  */    /*server_princ_name*/,
 	rpc_authn_level_t		/* in  */    /*authn_level*/,
 	rpc_auth_identity_handle_t	/* in  */    /*auth_identity*/,
@@ -60,9 +60,9 @@ INTERNAL void rpc__gssauth_negotiate_bnd_set_auth _DCE_PROTOTYPE_ ((
 	rpc_binding_handle_t		/* in  */    /*binding_h*/,
 	rpc_auth_info_p_t		/* out */    * /*auth_info*/,
 	unsigned32			/* out */    * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__gssauth_mskrb_bnd_set_auth _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__gssauth_mskrb_bnd_set_auth (
 	unsigned_char_p_t		/* in  */    /*server_princ_name*/,
 	rpc_authn_level_t		/* in  */    /*authn_level*/,
 	rpc_auth_identity_handle_t	/* in  */    /*auth_identity*/,
@@ -70,48 +70,48 @@ INTERNAL void rpc__gssauth_mskrb_bnd_set_auth _DCE_PROTOTYPE_ ((
 	rpc_binding_handle_t		/* in  */    /*binding_h*/,
 	rpc_auth_info_p_t		/* out */    * /*auth_info*/,
 	unsigned32			/* out */    * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__gssauth_srv_reg_auth _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__gssauth_srv_reg_auth (
 	unsigned_char_p_t		/* in  */    /*server_princ_name*/,
 	rpc_auth_key_retrieval_fn_t	/* in  */    /*get_key_func*/,
 	pointer_t			/* in  */    /*arg*/,
 	unsigned32			/* out */    * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__gssauth_mgt_inq_def _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__gssauth_mgt_inq_def (
 	unsigned32			/* out */    * /*authn_level*/,
 	unsigned32			/* out */    * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__gssauth_inq_my_princ_name _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__gssauth_inq_my_princ_name (
 	unsigned32			/* in */     /*princ_name_size*/,
 	unsigned_char_p_t		/* out */    /*princ_name*/,
 	unsigned32			/* out */    * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__gssauth_free_info _DCE_PROTOTYPE_((
+INTERNAL void rpc__gssauth_free_info (
 	rpc_auth_info_p_t		/* in/out */ * /*info*/
-    ));
+    );
 
-INTERNAL void rpc__gssauth_free_key _DCE_PROTOTYPE_((
+INTERNAL void rpc__gssauth_free_key (
 	rpc_key_info_p_t		/* in/out */ * /*info*/
-    ));
+    );
 
-INTERNAL error_status_t rpc__gssauth_resolve_identity _DCE_PROTOTYPE_((
+INTERNAL error_status_t rpc__gssauth_resolve_identity (
 	rpc_auth_identity_handle_t	/* in */     /* in_identity*/,
 	rpc_auth_identity_handle_t	/* out */    * /*out_identity*/
-    ));
+    );
 
-INTERNAL void rpc__gssauth_release_identity _DCE_PROTOTYPE_((
+INTERNAL void rpc__gssauth_release_identity (
 	rpc_auth_identity_handle_t	/* in/out */ * /*identity*/
-    ));
+    );
 
-INTERNAL void rpc__gssauth_inq_sec_context _DCE_PROTOTYPE_((
+INTERNAL void rpc__gssauth_inq_sec_context (
 	rpc_auth_info_p_t		/* in */     /*auth_info*/,
 	void				/* out */    ** /*mech_context*/,
 	unsigned32			/* out */    * /*stp*/
-    ));
+    );
 
 INTERNAL void rpc__gssauth_inq_access_token(
     rpc_auth_info_p_t auth_info,

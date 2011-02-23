@@ -79,54 +79,54 @@
     }
 
 
-PRIVATE void rpc__dg_plog_pkt _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_plog_pkt (
         rpc_dg_raw_pkt_hdr_p_t  /*hdrp*/,
         rpc_dg_pkt_body_p_t  /*bodyp*/,
         boolean32  /*recv*/,
         unsigned32  /*lossy_action*/
-    ));
+    );
 
-PRIVATE void rpc__dg_plog_dump _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_plog_dump (
          /*void*/
-    ));
+    );
 
 #endif
 
 /* ========================================================================= */
 
-PRIVATE void rpc__dg_xmit_pkt _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_xmit_pkt (
         rpc_socket_t  /*sock*/,
         rpc_addr_p_t  /*addr*/,
         rpc_socket_iovec_p_t  /*iov*/,
         int  /*iovlen*/,
         boolean * /*b*/
-    ));
+    );
 
-PRIVATE void rpc__dg_xmit_hdr_only_pkt _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_xmit_hdr_only_pkt (
         rpc_socket_t  /*sock*/,
         rpc_addr_p_t  /*addr*/,
         rpc_dg_pkt_hdr_p_t  /*hdrp*/,
         rpc_dg_ptype_t  /*ptype*/
-    ));
+    );
 
-PRIVATE void rpc__dg_xmit_error_body_pkt _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_xmit_error_body_pkt (
         rpc_socket_t  /*sock*/,
         rpc_addr_p_t  /*addr*/,
         rpc_dg_pkt_hdr_p_t  /*hdrp*/,
         rpc_dg_ptype_t  /*ptype*/,
         unsigned32  /*errst*/
-    ));
+    );
 
-PRIVATE char *rpc__dg_act_seq_string _DCE_PROTOTYPE_((
+PRIVATE char *rpc__dg_act_seq_string (
         rpc_dg_pkt_hdr_p_t  /*hdrp*/
-    ));
+    );
 
-PRIVATE char *rpc__dg_pkt_name _DCE_PROTOTYPE_((
+PRIVATE char *rpc__dg_pkt_name (
         rpc_dg_ptype_t  /*ptype*/
-    ));
+    );
 
-PRIVATE unsigned16 rpc__dg_uuid_hash _DCE_PROTOTYPE_((
+PRIVATE unsigned16 rpc__dg_uuid_hash (
         dce_uuid_p_t  /*uuid*/
-    ));
+    );
 
 #endif /* _DGUTL_H */

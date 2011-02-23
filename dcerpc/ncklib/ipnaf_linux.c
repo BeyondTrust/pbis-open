@@ -72,19 +72,19 @@ int ioctl(int d, int request, ...);
  *  Internal prototypes and typedefs.
  */
 
-INTERNAL boolean get_addr _DCE_PROTOTYPE_ ((
+INTERNAL boolean get_addr (
         rpc_socket_t          /*sock*/,
         rpc_addr_p_t          /*ip_addr*/,
         rpc_addr_p_t          /*netmask_addr*/,
         rpc_addr_p_t          /*broadcast_addr*/
-    ));                            
+    );                            
 
-INTERNAL boolean get_broadcast_addr _DCE_PROTOTYPE_ ((
+INTERNAL boolean get_broadcast_addr (
         rpc_socket_t          /*sock*/,
         rpc_addr_p_t          /*ip_addr*/,
         rpc_addr_p_t          /*netmask_addr*/,
         rpc_addr_p_t          /*broadcast_addr*/
-    ));
+    );
 
 #ifndef NO_SPRINTF
 #  define RPC__IP_NETWORK_SPRINTF   sprintf

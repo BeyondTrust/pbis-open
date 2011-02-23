@@ -85,7 +85,7 @@ INTERNAL int rpc_g_dg_sct_timeout = SCTE_TIMEOUT_INTERVAL;
 
 /* ========================================================================= */
 
-INTERNAL void rpc__dg_sct_timer _DCE_PROTOTYPE_(( pointer_t ));
+INTERNAL void rpc__dg_sct_timer ( pointer_t );
 
 
 /* ========================================================================= */

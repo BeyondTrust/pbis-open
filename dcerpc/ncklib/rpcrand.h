@@ -75,12 +75,12 @@
 #endif
 
 
-PRIVATE void rpc__random_init _DCE_PROTOTYPE_ (( unsigned32  /*seed*/ ));
+PRIVATE void rpc__random_init ( unsigned32  /*seed*/ );
 
-PRIVATE unsigned32 rpc__random_get _DCE_PROTOTYPE_ ((
+PRIVATE unsigned32 rpc__random_get (
         unsigned32  /*lower*/,
         unsigned32  /*upper*/
-    ));
+    );
 
 #endif /* _RPCRAND_H */
         

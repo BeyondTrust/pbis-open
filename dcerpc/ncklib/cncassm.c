@@ -107,7 +107,7 @@ GLOBAL char     *rpc_g_cn_assoc_client_states [] =
  * Internal function prototyes
  */
 /******************************************************************************/
-INTERNAL void send_pdu _DCE_PROTOTYPE_ ((
+INTERNAL void send_pdu (
     rpc_cn_assoc_p_t            /*assoc*/,
     unsigned32                  /*pdu_type*/,
     rpc_cn_syntax_p_t           /*pres_context*/,
@@ -115,7 +115,7 @@ INTERNAL void send_pdu _DCE_PROTOTYPE_ ((
     unsigned32                  /*grp_id*/,
     rpc_cn_sec_context_p_t      /*sec_context*/,
     boolean                     /*old_server*/,
-    unsigned32 *               /*st*/));
+    unsigned32 *               /*st*/);
 
 
 /***********************************************************************/
@@ -149,29 +149,29 @@ INTERNAL void send_pdu _DCE_PROTOTYPE_ ((
 /*  
  * The predicate routine prototypes.
  */
-INTERNAL unsigned8 shutdown_requested_pred_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned8 shutdown_requested_pred_rtn (
     pointer_t /* spc_struct */, 
-    pointer_t /* event_param */));
+    pointer_t /* event_param */);
 
-INTERNAL unsigned8 shutdown_allowed_pred_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned8 shutdown_allowed_pred_rtn (
     pointer_t /* spc_struct */, 
-    pointer_t /* event_param */));
+    pointer_t /* event_param */);
 
-INTERNAL unsigned8 active_pred_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned8 active_pred_rtn (
     pointer_t /* spc_struct */, 
-    pointer_t /* event_param */)) ATTRIBUTE_UNUSED;
+    pointer_t /* event_param */) ATTRIBUTE_UNUSED;
 
-INTERNAL unsigned8 shutdown_allowed_req_pred_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned8 shutdown_allowed_req_pred_rtn (
     pointer_t /* spc_struct */, 
-    pointer_t /* event_param */)) ATTRIBUTE_UNUSED;
+    pointer_t /* event_param */) ATTRIBUTE_UNUSED;
 
-INTERNAL unsigned8 lastfrag_pred_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned8 lastfrag_pred_rtn (
     pointer_t /* spc_struct */, 
-    pointer_t /* event_param */));
+    pointer_t /* event_param */);
 
-INTERNAL unsigned8 version_mismatch_pred_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned8 version_mismatch_pred_rtn (
     pointer_t /* spc_struct */, 
-    pointer_t /* event_param */));
+    pointer_t /* event_param */);
 
 
 
@@ -261,125 +261,125 @@ INTERNAL unsigned8 version_mismatch_pred_rtn _DCE_PROTOTYPE_ ((
 /*  
  * The action routine prototypes.
  */
-INTERNAL unsigned32     init_assoc_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     init_assoc_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     request_conn_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     request_conn_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     mark_assoc_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     mark_assoc_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     add_assoc_to_grp_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     add_assoc_to_grp_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     rem_assoc_from_grp_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     rem_assoc_from_grp_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     set_secondary_addr_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     set_secondary_addr_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     authent3_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     authent3_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     send_alt_context_req_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     send_alt_context_req_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     abort_assoc_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     abort_assoc_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     set_shutdown_request_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     set_shutdown_request_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     discon_calls_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     discon_calls_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     incr_active_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     incr_active_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     decr_active_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     decr_active_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     mark_syntax_and_sec_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     mark_syntax_and_sec_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     mark_abort_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     mark_abort_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     add_mark_set_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     add_mark_set_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     rem_mark_abort_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     rem_mark_abort_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     rem_mark_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     rem_mark_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     rem_mark_discon_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     rem_mark_discon_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     decr_rem_mark_abort_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     decr_rem_mark_abort_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     shutdown_allowed_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     shutdown_allowed_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     process_frag_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     process_frag_action_rtn (
     pointer_t /* spc_struct */,
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     retry_assoc_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     retry_assoc_action_rtn (
     pointer_t /* spc_struct */, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
-INTERNAL unsigned32     illegal_event_abort_action_rtn _DCE_PROTOTYPE_ ((
+INTERNAL unsigned32     illegal_event_abort_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
-    pointer_t  /*sm*/));
+    pointer_t  /*sm*/);
 
 /*  
  * The action table itself.

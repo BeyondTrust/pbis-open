@@ -55,9 +55,9 @@ extern "C" {
  *
  */
 
-PRIVATE void rpc__cthread_init _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cthread_init (
         unsigned32                  * /*status*/
-    ));
+    );
 
 
 /***********************************************************************/
@@ -66,10 +66,10 @@ PRIVATE void rpc__cthread_init _DCE_PROTOTYPE_ ((
  *
  */
 
-PRIVATE void rpc__cthread_start_all _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cthread_start_all (
         unsigned32              /*default_pool_cthreads*/,
         unsigned32              * /*status*/
-    ));
+    );
 
 
 /***********************************************************************/
@@ -78,9 +78,9 @@ PRIVATE void rpc__cthread_start_all _DCE_PROTOTYPE_ ((
  *
  */
 
-PRIVATE void rpc__cthread_stop_all _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cthread_stop_all (
         unsigned32              * /*status*/
-    ));
+    );
 
 
 /***********************************************************************/
@@ -89,7 +89,7 @@ PRIVATE void rpc__cthread_stop_all _DCE_PROTOTYPE_ ((
  *
  */
 
-PRIVATE void rpc__cthread_invoke_null _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cthread_invoke_null (
         rpc_call_rep_p_t        /*call_rep*/,
         dce_uuid_p_t                /*object*/,
         dce_uuid_p_t                /*if_uuid*/,
@@ -98,7 +98,7 @@ PRIVATE void rpc__cthread_invoke_null _DCE_PROTOTYPE_ ((
         rpc_prot_cthread_executor_fn_t /*cthread_executor*/,
         pointer_t               /*call_args*/,
         unsigned32              * /*status*/
-    ));
+    );
 
 
 /***********************************************************************/
@@ -107,9 +107,9 @@ PRIVATE void rpc__cthread_invoke_null _DCE_PROTOTYPE_ ((
  *
  */
 
-PRIVATE boolean32 rpc__cthread_dequeue _DCE_PROTOTYPE_ ((
+PRIVATE boolean32 rpc__cthread_dequeue (
         rpc_call_rep_p_t        /*call*/
-    ));
+    );
 
 
 /***********************************************************************/
@@ -118,9 +118,9 @@ PRIVATE boolean32 rpc__cthread_dequeue _DCE_PROTOTYPE_ ((
  *
  */
 
-PRIVATE void rpc__cthread_cancel _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cthread_cancel (
         rpc_call_rep_p_t        /*call*/
-    ));
+    );
 
 /***********************************************************************/
 /*
@@ -128,18 +128,18 @@ PRIVATE void rpc__cthread_cancel _DCE_PROTOTYPE_ ((
  *
  */
 
-PRIVATE boolean32 rpc__cthread_cancel_caf _DCE_PROTOTYPE_ ((
+PRIVATE boolean32 rpc__cthread_cancel_caf (
         rpc_call_rep_p_t        /*call*/
-    ));
+    );
 
 /***********************************************************************/
 /*
  * R P C _ _ C T H R E A D _ C A N C E L _ E N A B L E _ P O S T I N G
  *
  */
- PRIVATE void rpc__cthread_cancel_enable_post _DCE_PROTOTYPE_ ((
+ PRIVATE void rpc__cthread_cancel_enable_post (
         rpc_call_rep_p_t        /*call*/
-    ));
+    );
 
 
 #ifdef _cplusplus

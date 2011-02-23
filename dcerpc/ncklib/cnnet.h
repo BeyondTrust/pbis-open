@@ -93,99 +93,99 @@
  * R P C _ _ C N _ N E T W O R K _ U S E _ P R O T S E Q 
  */
 
-PRIVATE void rpc__cn_network_use_protseq _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_network_use_protseq (
     rpc_protseq_id_t            /* pseq_id */, 
     unsigned32                  /* max_calls */,
     rpc_addr_p_t                /* rpc_addr */,
     unsigned_char_p_t           /* endpoint */,
-    unsigned32                  */* st */));
+    unsigned32                  */* st */);
 
 /*
  * R P C _ _ C N _ N E T W O R K _ M O N 
  */
 
-PRIVATE void rpc__cn_network_mon _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_network_mon (
     rpc_binding_rep_p_t     /* binding_r */,
     rpc_client_handle_t     /* client_h */,
     rpc_network_rundown_fn_t /* rundown */,
-    unsigned32              */* st */));
+    unsigned32              */* st */);
 
 /*
  * R P C _ _ C N _ N E T W O R K _ S T O P _ M O N 
  */
 
-PRIVATE void rpc__cn_network_stop_mon _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_network_stop_mon (
     rpc_binding_rep_p_t     /* binding_r */,
     rpc_client_handle_t     /* client_h */,
-    unsigned32              */* st */));
+    unsigned32              */* st */);
 
 /*
  * R P C _ _ C N _ N E T W O R K _ M A I N T
  */
 
-PRIVATE void rpc__cn_network_maint _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_network_maint (
     rpc_binding_rep_p_t     /* binding_r */,
-    unsigned32              */* st */));
+    unsigned32              */* st */);
 
 /*
  * R P C _ _ C N _ N E T W O R K _ S T O P _ M A I N T
  */
 
-PRIVATE void rpc__cn_network_stop_maint _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_network_stop_maint (
     rpc_binding_rep_p_t     /* binding_r */,
-    unsigned32              */* st */));
+    unsigned32              */* st */);
 
 /*
  * R P C _ _ C N _ N E T W O R K _ C L O S E
  */
 
-PRIVATE void rpc__cn_network_close _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_network_close (
     rpc_binding_rep_p_t     /* binding_r */,
-    unsigned32              */* st */));
+    unsigned32              */* st */);
 
 /*
  * R P C _ _ C N _ N E T W O R K _ S E L E C T _ D I S P A T C H 
  */
 
-PRIVATE void rpc__cn_network_select_dispatch _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_network_select_dispatch (
     rpc_socket_t            /* desc */,
     pointer_t               /* priv_info */,
     boolean32               /* is_active */,
-    unsigned32              */* st */));
+    unsigned32              */* st */);
 
 /*
  * R P C _ _ C N _ N E T W O R K _ I N Q _ P R O T _ V E R S
  */
 
-PRIVATE void rpc__cn_network_inq_prot_vers _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_network_inq_prot_vers (
     unsigned8               */* prot_id */,
     unsigned32              */* version_major */,
     unsigned32              */* version_minor */,
-    unsigned32              */* st */));
+    unsigned32              */* st */);
 
 /*
  * R P C _ _ C N _ N E T W O R K _ R E Q _ C O N N E C T
  */
 
-PRIVATE void rpc__cn_network_req_connect _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_network_req_connect (
     rpc_addr_p_t            /* rpc_addr */,
     rpc_cn_assoc_p_t        /* assoc */,
-    unsigned32              */* st */));
+    unsigned32              */* st */);
 
 /*
  * R P C _ _ C N _ N E T W O R K _ C L O S E _ C O N N E C T
  */
 
-PRIVATE void rpc__cn_network_close_connect _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_network_close_connect (
     rpc_cn_assoc_p_t        /* assoc */,
-    unsigned32              */* st */));
+    unsigned32              */* st */);
 
 
 /*
  * R P C _ _ C N _ N E T W O R K _ C O N N E C T _ F A I L
  */
 
-PRIVATE boolean32 rpc__cn_network_connect_fail _DCE_PROTOTYPE_ ((unsigned32));
+PRIVATE boolean32 rpc__cn_network_connect_fail (unsigned32);
 
 
 /*
@@ -195,18 +195,18 @@ PRIVATE boolean32 rpc__cn_network_connect_fail _DCE_PROTOTYPE_ ((unsigned32));
 /*
  * R P C _ _ C N _ S E T _ S O C K _ B U F F S I Z E
  */
-PRIVATE void rpc__cn_set_sock_buffsize _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_set_sock_buffsize (
         unsigned32	  /* rsize */,
         unsigned32	  /* ssize */,
-        error_status_t	* /* st */));
+        error_status_t	* /* st */);
 
 /*
  * R P C _ _ C N _ I N Q _ S O C K _ B U F F S I Z E
  */
-PRIVATE void rpc__cn_inq_sock_buffsize _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_inq_sock_buffsize (
         unsigned32	* /* rsize */,
         unsigned32	* /* ssize */,
-        error_status_t  * /* st */));
+        error_status_t  * /* st */);
 
 
 #endif /* _CNNET_H */

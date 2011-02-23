@@ -84,23 +84,23 @@ typedef struct {
 
 /* ========================================================================= */
 
-INTERNAL void rpc__dg_scall_timer _DCE_PROTOTYPE_((
+INTERNAL void rpc__dg_scall_timer (
         pointer_t  /*p*/
-    ));
+    );
 
-INTERNAL rpc_dg_scall_p_t scall_init _DCE_PROTOTYPE_((
+INTERNAL rpc_dg_scall_p_t scall_init (
         rpc_dg_scall_p_t  /*scall*/,
         rpc_dg_sock_pool_elt_p_t  /*sp*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/
-    ));
+    );
 
-INTERNAL boolean32 scall_uncache _DCE_PROTOTYPE_((
+INTERNAL boolean32 scall_uncache (
         rpc_dg_scall_p_t  /*scall*/
-    ));
+    );
 
-INTERNAL void release_scall_from_scte _DCE_PROTOTYPE_((
+INTERNAL void release_scall_from_scte (
         rpc_dg_scall_p_t  /*scall*/
-    ));
+    );
 
 /* ========================================================================= */
 

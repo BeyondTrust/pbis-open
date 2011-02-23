@@ -94,7 +94,7 @@
 #include <dce/dce.h>
 #endif
 
-typedef void (*rpc_timer_proc_p_t) _DCE_PROTOTYPE_(( pointer_t ));
+typedef void (*rpc_timer_proc_p_t) ( pointer_t );
 
 /*
  * This type is used to create a list of periodic functions ordered by
@@ -113,47 +113,47 @@ typedef struct rpc_timer_t
 /* 
  * Initialize the timer package.
  */
-PRIVATE void rpc__timer_init _DCE_PROTOTYPE_((void));
+PRIVATE void rpc__timer_init (void);
        
 /* 
  * Timer package fork handling routine
  */
-PRIVATE void rpc__timer_fork_handler _DCE_PROTOTYPE_((
+PRIVATE void rpc__timer_fork_handler (
     rpc_fork_stage_id_t  /*stage*/
-));
+);
 
 /* 
  * Shutdown the timer package.
  */
-PRIVATE void rpc__timer_shutdown _DCE_PROTOTYPE_((void));
+PRIVATE void rpc__timer_shutdown (void);
 
 /* 
  * Register a routine to be run at a specific interval.
  */
-PRIVATE void rpc__timer_set _DCE_PROTOTYPE_((
+PRIVATE void rpc__timer_set (
     rpc_timer_p_t /*t*/,
     rpc_timer_proc_p_t /*proc*/,
     pointer_t /*parg*/, 
     rpc_clock_t  /*freq*/
-));
+);
 
 /* 
  * Change one or more of the characteristics of a periodic routine.
  */
-PRIVATE void rpc__timer_adjust _DCE_PROTOTYPE_((
+PRIVATE void rpc__timer_adjust (
     rpc_timer_p_t /*t*/,
     rpc_clock_t /*freq*/
-));
+);
 
 /*
  * Discontinue running a previously registered periodic routine.
  */
-PRIVATE void rpc__timer_clear _DCE_PROTOTYPE_((rpc_timer_p_t /*t*/));
+PRIVATE void rpc__timer_clear (rpc_timer_p_t /*t*/);
 
 /*
  * Run any periodic routines that are ready.  Return the amount of time
  * until the next scheduled routine should be run.
  */                                          
-PRIVATE rpc_clock_t rpc__timer_callout _DCE_PROTOTYPE_((void));
+PRIVATE rpc_clock_t rpc__timer_callout (void);
 
 #endif /* _RPCTIMER_H */

@@ -39,30 +39,30 @@
 #include <ntlmssp.h>
 #include <ntlmsspcn.h>
 
-INTERNAL boolean32 rpc__ntlmauth_cn_three_way _DCE_PROTOTYPE_((void));
+INTERNAL boolean32 rpc__ntlmauth_cn_three_way (void);
 
-INTERNAL boolean32 rpc__ntlmauth_cn_context_valid _DCE_PROTOTYPE_((
+INTERNAL boolean32 rpc__ntlmauth_cn_context_valid (
 	rpc_cn_sec_context_p_t		/* in */     /*sec*/,
 	unsigned32			/* out */    * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__ntlmauth_cn_create_info _DCE_PROTOTYPE_((
+INTERNAL void rpc__ntlmauth_cn_create_info (
        rpc_authn_level_t		/* in */     /*authn_level*/,
        rpc_auth_info_p_t		/* out */    * /*auth_info*/,
        unsigned32			/* out */    * /*st*/
-    ));
+    );
 
-INTERNAL boolean32 rpc__ntlmauth_cn_cred_changed _DCE_PROTOTYPE_((
+INTERNAL boolean32 rpc__ntlmauth_cn_cred_changed (
 	rpc_cn_sec_context_p_t		/* in */     /*sec*/,
 	unsigned32			/* out */    * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__ntlmauth_cn_cred_refresh _DCE_PROTOTYPE_((
+INTERNAL void rpc__ntlmauth_cn_cred_refresh (
 	rpc_auth_info_p_t		/* in */     /*auth_info*/,
 	unsigned32			/* out */    * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__ntlmauth_cn_fmt_client_req _DCE_PROTOTYPE_((
+INTERNAL void rpc__ntlmauth_cn_fmt_client_req (
 	rpc_cn_assoc_sec_context_p_t	/* in */     /*assoc_sec*/,
 	rpc_cn_sec_context_p_t		/* in */     /*sec*/,
 	pointer_t			/* in/out */ /*auth_value*/,
@@ -71,9 +71,9 @@ INTERNAL void rpc__ntlmauth_cn_fmt_client_req _DCE_PROTOTYPE_((
 	unsigned32			/* out */    * /*auth_len_remain*/,
 	unsigned32			/* in */     /*old_server*/,
 	unsigned32			/* out */    * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__ntlmauth_cn_fmt_srvr_resp _DCE_PROTOTYPE_((
+INTERNAL void rpc__ntlmauth_cn_fmt_srvr_resp (
 	unsigned32			/* in */     /*verify_st*/,
 	rpc_cn_assoc_sec_context_p_t	/* in */     /*assoc_sec*/,
 	rpc_cn_sec_context_p_t		/* in */     /*sec*/,
@@ -81,37 +81,37 @@ INTERNAL void rpc__ntlmauth_cn_fmt_srvr_resp _DCE_PROTOTYPE_((
 	unsigned32			/* in */     /*req_auth_value_len*/,
 	pointer_t			/* in/out */ /*auth_value*/,
 	unsigned32			/* in/out */ * /*auth_value_len*/
-    ));
+    );
 
-INTERNAL void rpc__ntlmauth_cn_free_prot_info _DCE_PROTOTYPE_((
+INTERNAL void rpc__ntlmauth_cn_free_prot_info (
 	rpc_auth_info_p_t		/* in */     /*info*/,
 	rpc_cn_auth_info_p_t		/* in/out */ * /*cn_info*/
-    ));
+    );
 
-INTERNAL void rpc__ntlmauth_cn_get_prot_info _DCE_PROTOTYPE_((
+INTERNAL void rpc__ntlmauth_cn_get_prot_info (
 	rpc_auth_info_p_t		/* in */     /*info*/,
 	rpc_cn_auth_info_p_t		/* out */    * /*cn_info*/,
 	unsigned32			/* out */    * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__ntlmauth_cn_pre_call _DCE_PROTOTYPE_((
+INTERNAL void rpc__ntlmauth_cn_pre_call (
 	rpc_cn_assoc_sec_context_p_t	/* in */     /*assoc_sec*/,
 	rpc_cn_sec_context_p_t		/* in */     /*sec*/,
 	pointer_t			/* in/out */ /*auth_value*/,
 	unsigned32			/* in/out */ * /*auth_value_len*/,
 	unsigned32			/* in/out */ * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__ntlmauth_cn_pre_send _DCE_PROTOTYPE_((
+INTERNAL void rpc__ntlmauth_cn_pre_send (
 	rpc_cn_assoc_sec_context_p_t	/* in */     /*assoc_sec*/,
 	rpc_cn_sec_context_p_t		/* in */     /*sec*/,
 	rpc_socket_iovec_p_t		/* in/out */ /*iov*/,
 	unsigned32			/* in */     /*iovlen*/,
 	rpc_socket_iovec_p_t		/* out */    /*out_iov*/,
 	unsigned32			/* out */    * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__ntlmauth_cn_recv_check _DCE_PROTOTYPE_((
+INTERNAL void rpc__ntlmauth_cn_recv_check (
 	rpc_cn_assoc_sec_context_p_t	/* in */     /*assoc_sec*/,
 	rpc_cn_sec_context_p_t		/* in */     /*sec*/,
 	rpc_cn_common_hdr_p_t		/* in */     /*pdu*/,
@@ -120,36 +120,36 @@ INTERNAL void rpc__ntlmauth_cn_recv_check _DCE_PROTOTYPE_((
 	rpc_cn_auth_tlr_p_t		/* in */     /*auth_tlr*/,
 	boolean32			/* in */     /*unpack_ints*/,
 	unsigned32			/* out */    * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__ntlmauth_cn_tlr_uuid_crc _DCE_PROTOTYPE_((
+INTERNAL void rpc__ntlmauth_cn_tlr_uuid_crc (
 	pointer_t			/* in */     /*auth_value*/,
 	unsigned32			/* in */     /*auth_value_len*/,
 	unsigned32			/* out */    * /*uuid_crc*/
-    ));
+    );
 
-INTERNAL void rpc__ntlmauth_cn_tlr_unpack _DCE_PROTOTYPE_((
+INTERNAL void rpc__ntlmauth_cn_tlr_unpack (
 	rpc_cn_packet_p_t		/* in */     /*pkt_p*/,
 	unsigned32			/* in */     /*auth_value_len*/,
 	unsigned8			/* out */    * /*packed_drep*/
-    ));
+    );
 
-INTERNAL void rpc__ntlmauth_cn_vfy_client_req _DCE_PROTOTYPE_((
+INTERNAL void rpc__ntlmauth_cn_vfy_client_req (
 	rpc_cn_assoc_sec_context_p_t	/* in */     /*assoc_sec*/,
 	rpc_cn_sec_context_p_t		/* in */     /*sec*/,
 	pointer_t			/* in */     /*auth_value*/,
 	unsigned32			/* in */     /*auth_value_len*/,
 	unsigned32			/* in */     /*old_client*/,
 	unsigned32			/* out */    * /*st*/
-    ));
+    );
 
-INTERNAL void rpc__ntlmauth_cn_vfy_srvr_resp _DCE_PROTOTYPE_((
+INTERNAL void rpc__ntlmauth_cn_vfy_srvr_resp (
 	rpc_cn_assoc_sec_context_p_t	/* in */     /*assoc_sec*/,
 	rpc_cn_sec_context_p_t		/* in */     /*sec*/,
 	pointer_t			/* in/out */ /*auth_value*/,
 	unsigned32			/* in */     /*auth_value_len*/,
 	unsigned32			/* out */    * /*st*/
-    ));
+    );
 
 INTERNAL rpc_cn_auth_epv_t rpc_g_ntlmauth_cn_epv =
 {

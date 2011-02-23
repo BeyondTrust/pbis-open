@@ -46,8 +46,8 @@
  * R P C _ _ C N _ C A L L _ E X E C U T O R
  */
 
-PRIVATE void rpc__cn_call_executor _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__cn_call_executor (
         pointer_t       /* call_r */,
         boolean32       /* call_was_queued */
-    ));
+    );
 #endif /* _CNCTHD_H */

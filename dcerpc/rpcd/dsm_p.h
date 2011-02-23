@@ -233,24 +233,24 @@ typedef struct dsm_db_t * dsm_handle;   /* internal version of opaque handle */
 */
 
 #ifdef _I_AM_DSM_C_
-private block_t *   get_free_block      _DCE_PROTOTYPE_((dsm_handle,unsigned long));
-private block_t *   grow_file           _DCE_PROTOTYPE_((dsm_handle,unsigned long, error_status_t *));
-private void        write_header        _DCE_PROTOTYPE_((dsm_handle,block_t *, error_status_t *));
-private void        write_block         _DCE_PROTOTYPE_((dsm_handle,block_t *,unsigned long, error_status_t *));
-private void        update_file_header  _DCE_PROTOTYPE_((dsm_handle, error_status_t *));
-private int         create_file         _DCE_PROTOTYPE_((unsigned char *));
-private void        make_free           _DCE_PROTOTYPE_((dsm_handle,block_t *, error_status_t *));
-private void        free_block          _DCE_PROTOTYPE_((dsm_handle,block_t *));
-private void        free_map            _DCE_PROTOTYPE_((file_map_t *));
-private void        coalesce            _DCE_PROTOTYPE_((dsm_handle, error_status_t *));
-private void        build_freelist      _DCE_PROTOTYPE_((dsm_handle));
-private block_t *   get_next_block      _DCE_PROTOTYPE_((dsm_handle,block_t *));
-private block_t *   block_from_ptr      _DCE_PROTOTYPE_((void *, error_status_t *));
-private block_t *   get_earlier_block   _DCE_PROTOTYPE_((dsm_handle,dsm_marker_t));
-private void        cache_clear         _DCE_PROTOTYPE_((dsm_handle));
-private void        cache_add           _DCE_PROTOTYPE_((dsm_handle,block_t *,dsm_marker_t));
-private block_t *   cache_lookup        _DCE_PROTOTYPE_((dsm_handle,dsm_marker_t));
+private block_t *   get_free_block      (dsm_handle,unsigned long);
+private block_t *   grow_file           (dsm_handle,unsigned long, error_status_t *);
+private void        write_header        (dsm_handle,block_t *, error_status_t *);
+private void        write_block         (dsm_handle,block_t *,unsigned long, error_status_t *);
+private void        update_file_header  (dsm_handle, error_status_t *);
+private int         create_file         (unsigned char *);
+private void        make_free           (dsm_handle,block_t *, error_status_t *);
+private void        free_block          (dsm_handle,block_t *);
+private void        free_map            (file_map_t *);
+private void        coalesce            (dsm_handle, error_status_t *);
+private void        build_freelist      (dsm_handle);
+private block_t *   get_next_block      (dsm_handle,block_t *);
+private block_t *   block_from_ptr      (void *, error_status_t *);
+private block_t *   get_earlier_block   (dsm_handle,dsm_marker_t);
+private void        cache_clear         (dsm_handle);
+private void        cache_add           (dsm_handle,block_t *,dsm_marker_t);
+private block_t *   cache_lookup        (dsm_handle,dsm_marker_t);
 #endif
-public void         dsm__lock_file      _DCE_PROTOTYPE_((int, error_status_t *));
-public int          dsm__flush_file     _DCE_PROTOTYPE_((int));
+public void         dsm__lock_file      (int, error_status_t *);
+public int          dsm__flush_file     (int);
 

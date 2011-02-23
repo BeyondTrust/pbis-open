@@ -54,20 +54,20 @@ extern "C" {
 
 PRIVATE void rpc__load_modules(void);
 	
-PRIVATE rpc_naf_init_fn_t rpc__load_naf _DCE_PROTOTYPE_ ((
+PRIVATE rpc_naf_init_fn_t rpc__load_naf (
         rpc_naf_id_elt_p_t              /*naf*/, 
         unsigned32                      * /*st*/
-    ));
+    );
 
-PRIVATE rpc_prot_init_fn_t rpc__load_prot _DCE_PROTOTYPE_ ((
+PRIVATE rpc_prot_init_fn_t rpc__load_prot (
         rpc_protocol_id_elt_p_t         /*rpc_protocol*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
-PRIVATE rpc_auth_init_fn_t rpc__load_auth _DCE_PROTOTYPE_ ((
+PRIVATE rpc_auth_init_fn_t rpc__load_auth (
         rpc_authn_protocol_id_elt_p_t   /*auth_protocol*/,
         unsigned32                      * /*st*/
-    ));
+    );
 
 #ifdef __cplusplus
 }

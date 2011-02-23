@@ -44,10 +44,10 @@
 #include <dce/dce.h>
 #endif
 
-PRIVATE void rpc__dg_execute_call    _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_execute_call    (
         pointer_t  /*scall_*/,
         boolean32  /*call_was_queued*/
-    ));
+    );
 
 /*
  * To implement backward compatibilty, declare a pointer to a routine
@@ -62,7 +62,7 @@ PRIVATE void rpc__dg_execute_call    _DCE_PROTOTYPE_((
  * compatibilty code.
  */
 
-typedef void (*rpc__dg_pre_v2_server_fn_t) _DCE_PROTOTYPE_ ((
+typedef void (*rpc__dg_pre_v2_server_fn_t) (
         rpc_if_rep_p_t  /*ifspec*/,
         unsigned32  /*opnum*/,
         handle_t  /*h*/,
@@ -72,6 +72,6 @@ typedef void (*rpc__dg_pre_v2_server_fn_t) _DCE_PROTOTYPE_ ((
         rpc_v2_server_stub_epv_t  /*server_stub_epv*/,
         rpc_mgr_epv_t  /*mgr_epv*/,
         unsigned32 * /*st*/
-    )); 
+    ); 
                                                                
 #endif /* _DGEXEC_H */

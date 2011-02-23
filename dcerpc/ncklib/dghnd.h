@@ -59,46 +59,46 @@
 
 /* ========================================================================= */
 
-rpc_binding_rep_t *rpc__dg_binding_alloc    _DCE_PROTOTYPE_((
+rpc_binding_rep_t *rpc__dg_binding_alloc    (
         boolean32  /*is_server*/,
         unsigned32 * /*st*/
-    ));
-void rpc__dg_binding_init    _DCE_PROTOTYPE_((
+    );
+void rpc__dg_binding_init    (
         rpc_binding_rep_p_t  /*h*/, 
         unsigned32 * /*st*/
-    ));
-void rpc__dg_binding_reset    _DCE_PROTOTYPE_((
+    );
+void rpc__dg_binding_reset    (
         rpc_binding_rep_p_t  /*h*/,
         unsigned32 * /*st*/
-    ));
-void rpc__dg_binding_changed    _DCE_PROTOTYPE_((
+    );
+void rpc__dg_binding_changed    (
         rpc_binding_rep_p_t  /*h*/,
         unsigned32 * /*st*/
-    ));
-void rpc__dg_binding_free    _DCE_PROTOTYPE_((
+    );
+void rpc__dg_binding_free    (
         rpc_binding_rep_p_t * /*h*/,
         unsigned32 * /*st*/
-    ));
-void rpc__dg_binding_inq_addr    _DCE_PROTOTYPE_((
+    );
+void rpc__dg_binding_inq_addr    (
         rpc_binding_rep_p_t  /*h*/,
         rpc_addr_p_t * /*rpc_addr*/,
         unsigned32 * /*st*/
-    ));
-void rpc__dg_binding_copy    _DCE_PROTOTYPE_((
+    );
+void rpc__dg_binding_copy    (
         rpc_binding_rep_p_t  /*src_h*/,
         rpc_binding_rep_p_t  /*dst_h*/,
         unsigned32 * /*st*/
-    ));
+    );
 
-rpc_dg_binding_client_p_t rpc__dg_binding_srvr_to_client    _DCE_PROTOTYPE_((
+rpc_dg_binding_client_p_t rpc__dg_binding_srvr_to_client    (
         rpc_dg_binding_server_p_t  /*shand*/,
         unsigned32 * /*st*/
-    ));
+    );
 
-void rpc__dg_binding_cross_fork    _DCE_PROTOTYPE_((
+void rpc__dg_binding_cross_fork    (
         rpc_binding_rep_p_t  /*h*/,
         unsigned32 * /*st*/
-    ));
+    );
 
 #endif /* _DGHND_H */
 

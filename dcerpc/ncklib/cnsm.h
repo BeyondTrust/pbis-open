@@ -47,37 +47,37 @@
  * R P C _ _ C N _ S M _ I N I T
  */
 
-void rpc__cn_sm_init _DCE_PROTOTYPE_ ((
+void rpc__cn_sm_init (
     rpc_cn_sm_state_entry_p_t   */* state_tbl */,
     rpc_cn_sm_action_fn_p_t     /* action_tbl */,
     rpc_cn_sm_ctlblk_p_t         /* sm */,
-    unsigned32			 /* tbl_id */));
+    unsigned32			 /* tbl_id */);
                        
 /*
  * R P C _ _ C N _ S M _ E V A L _ E V E N T
  */
 
-unsigned32     rpc__cn_sm_eval_event _DCE_PROTOTYPE_ ((
+unsigned32     rpc__cn_sm_eval_event (
     unsigned32                  /* event_id */,
     pointer_t                   /* event_parameter */,
     pointer_t                   /* spc_struct */,
-    rpc_cn_sm_ctlblk_p_t         /* sm */));
+    rpc_cn_sm_ctlblk_p_t         /* sm */);
 
 
 /*
  * R P C _ _ C N _ S M _ I N I T _ E V E N T _ L I S T
  */
 
-void rpc__cn_sm_init_event_list _DCE_PROTOTYPE_ ((rpc_cn_sm_ctlblk_t  *));
+void rpc__cn_sm_init_event_list (rpc_cn_sm_ctlblk_t  *);
 
 
 /*
  * R P C _ _ C N _ S M _ I N S E R T _ E V E N T
  */
 
-void rpc__cn_sm_insert_event _DCE_PROTOTYPE_ ((
+void rpc__cn_sm_insert_event (
     rpc_cn_sm_event_entry_p_t   /* event */,
-    rpc_cn_sm_ctlblk_t          * /* sm */));
+    rpc_cn_sm_ctlblk_t          * /* sm */);
 
 
 /*

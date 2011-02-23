@@ -77,40 +77,40 @@ typedef struct {
 } mgmt_ep_inq_rep_t, *mgmt_ep_inq_rep_p_t;
 
 
-INTERNAL void ep_register _DCE_PROTOTYPE_((
+INTERNAL void ep_register (
         rpc_if_handle_t         ifspec,
         rpc_binding_vector_t    *binding_vec,
         uuid_vector_t           *object_uuid_vec,
         unsigned_char_p_t       annotation,
         boolean32               replace,
         unsigned32              * /*status*/
-    ));
+    );
 
-INTERNAL void get_ep_binding _DCE_PROTOTYPE_((
+INTERNAL void get_ep_binding (
         rpc_binding_handle_t    input_binding,
         rpc_binding_handle_t    *output_binding,
         unsigned32              * /*status*/
-    ));
+    );
 
-INTERNAL void tower_to_if_id _DCE_PROTOTYPE_((
+INTERNAL void tower_to_if_id (
         twr_p_t                 tower,
         rpc_if_id_t             *if_id,
         unsigned32              * /*status*/
-    ));
+    );
 
-INTERNAL void ep_get_endpoint _DCE_PROTOTYPE_((
+INTERNAL void ep_get_endpoint (
        rpc_if_rep_p_t          if_r,
        rpc_binding_rep_p_t     binding_r,
        unsigned32              * /*st*/
-    ));
+    );
 
-INTERNAL idl_void_p_t rpc__ep_mem_alloc _DCE_PROTOTYPE_ ((
+INTERNAL idl_void_p_t rpc__ep_mem_alloc (
         idl_size_t  /*size*/
-    ));
+    );
 
-INTERNAL void rpc__ep_mem_free _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__ep_mem_free (
         pointer_t  /*ptr*/
-    ));
+    );
 
 
 /*
@@ -1034,10 +1034,10 @@ PUBLIC void rpc_mgmt_ep_elt_inq_next
     unsigned32              asize;
     unsigned32              i;
     boolean32               supported_tower = false;
-    idl_void_p_t            (*old_allocate) _DCE_PROTOTYPE_ (( idl_size_t ));
-    idl_void_p_t            (*tmp_allocate) _DCE_PROTOTYPE_ (( idl_size_t ));
-    void                    (*old_free) _DCE_PROTOTYPE_ ((idl_void_p_t ));
-    void                    (*tmp_free) _DCE_PROTOTYPE_ ((idl_void_p_t ));
+    idl_void_p_t            (*old_allocate) ( idl_size_t );
+    idl_void_p_t            (*tmp_allocate) ( idl_size_t );
+    void                    (*old_free) (idl_void_p_t );
+    void                    (*tmp_free) (idl_void_p_t );
 
     CODING_ERROR (status);
     RPC_VERIFY_INIT ();
@@ -1856,10 +1856,10 @@ INTERNAL void ep_get_endpoint
     volatile boolean32                   full_restore_flag = true;
     boolean32                   map_lookup;
     volatile boolean32                   free_prot_version = false;
-    idl_void_p_t            (*old_allocate) _DCE_PROTOTYPE_ (( idl_size_t ));
-    idl_void_p_t            (*tmp_allocate) _DCE_PROTOTYPE_ (( idl_size_t ));
-    void                    (*old_free) _DCE_PROTOTYPE_ ((idl_void_p_t ));
-    void                    (*tmp_free) _DCE_PROTOTYPE_ ((idl_void_p_t ));
+    idl_void_p_t            (*old_allocate) ( idl_size_t );
+    idl_void_p_t            (*tmp_allocate) ( idl_size_t );
+    void                    (*old_free) (idl_void_p_t );
+    void                    (*tmp_free) (idl_void_p_t );
 
 //	DO_NOT_CLOBBER(towers);
 	towers = NULL;

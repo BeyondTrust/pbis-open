@@ -115,19 +115,19 @@ INTERNAL rpc_cn_pkt_info_t packet_info_table[] =
 /*
  * R E C E I V E _ D I S P A T C H
  */
-INTERNAL void receive_dispatch _DCE_PROTOTYPE_ ((
+INTERNAL void receive_dispatch (
         rpc_cn_assoc_p_t        /*assoc*/
-    ));
+    );
 
 /*
  * R E C E I V E _ P A C K E T
  */
-INTERNAL void receive_packet _DCE_PROTOTYPE_ ((
+INTERNAL void receive_packet (
         rpc_cn_assoc_p_t        /*assoc*/,
         rpc_cn_fragbuf_p_t      * /*fragbuf_p*/,
         rpc_cn_fragbuf_p_t      * /*ovf_fragbuf_p*/,
         unsigned32              * /*st*/
-    ));
+    );
 
 /*
  * R P C _ C N _ S E N D _ F A U L T 

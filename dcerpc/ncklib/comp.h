@@ -386,12 +386,12 @@ EXTERNAL dcethread_attr     rpc_g_server_dcethread_attr;
 extern "C" {
 #endif
 
-PRIVATE void rpc__if_inq_endpoint _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__if_inq_endpoint (
         rpc_if_rep_p_t          /*ifspec*/,
         rpc_protseq_id_t        /*protseq_id*/,
         unsigned_char_t         ** /*endpoint*/,
         unsigned32              * /*status*/
-    ));
+    );
 
 #include <comimage.h>
 

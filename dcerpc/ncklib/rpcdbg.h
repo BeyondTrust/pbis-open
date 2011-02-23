@@ -232,10 +232,10 @@ EXTERNAL unsigned8 rpc_g_dbg_switches[];
  * R P C _ _ D B G _ S E T _ S W I T C H E S
  */
 
-PUBLIC void rpc__dbg_set_switches    _DCE_PROTOTYPE_ ((
+PUBLIC void rpc__dbg_set_switches    (
         char            * /*s*/,
         unsigned32      * /*st*/
-    ));
+    );
 
 
 #ifndef	DCE_RPC_SVC
@@ -265,7 +265,7 @@ PUBLIC void rpc__dbg_set_switches    _DCE_PROTOTYPE_ ((
 
 #include <stdarg.h>
 
-PRIVATE int rpc__printf _DCE_PROTOTYPE_ (( char * /*format*/, ...));
+PRIVATE int rpc__printf ( char * /*format*/, ...);
 
 #endif /* NO_RPC_PRINTF */
 
@@ -275,25 +275,25 @@ PRIVATE int rpc__printf _DCE_PROTOTYPE_ (( char * /*format*/, ...));
  * R P C _ _ D I E
  */
 
-PRIVATE void rpc__die _DCE_PROTOTYPE_ ((
+PRIVATE void rpc__die (
         char            * /*text*/,
         char            * /*file*/,
         int              /*line*/
-    ));
+    );
 
 /*
  * R P C _ _ U U I D _ S T R I N G
  */
 
-PRIVATE char *rpc__uuid_string _DCE_PROTOTYPE_(( dce_uuid_t */*uuid*/));
+PRIVATE char *rpc__uuid_string ( dce_uuid_t */*uuid*/);
 
 /*
  * R P C _ _ P R I N T _ S O U R C E
  */
 
-PRIVATE void rpc__print_source _DCE_PROTOTYPE_((
+PRIVATE void rpc__print_source (
         char            * /*file*/,
         int             /*line*/
-    ));
+    );
 
 #endif /* _RPCDBG_H */

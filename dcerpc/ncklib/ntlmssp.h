@@ -95,18 +95,18 @@ typedef struct rpc_ntlmssp_auth_ident
  * Prototypes for PRIVATE routines.
  */
 
-PRIVATE rpc_protocol_id_t rpc__ntlmauth_cn_init _DCE_PROTOTYPE_ ((
+PRIVATE rpc_protocol_id_t rpc__ntlmauth_cn_init (
          rpc_auth_rpc_prot_epv_p_t      * /*epv*/,
          unsigned32                     * /*st*/
-    ));
+    );
 
-PRIVATE const char *rpc__ntlmauth_error_map _DCE_PROTOTYPE_ ((
+PRIVATE const char *rpc__ntlmauth_error_map (
 	int			/*major_status*/,
 	OM_uint32		/*minor_status*/,
 	const gss_OID		/*mech*/,
 	char			* /*message_buffer*/,
 	unsigned32		/*message_length*/,
 	unsigned32		* /*st*/
-    ));
+    );
 
 #endif /* _NTLMSSP_H */

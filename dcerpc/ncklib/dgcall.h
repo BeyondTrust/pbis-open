@@ -157,9 +157,9 @@ extern "C" {
 
 #ifdef DEBUG
 
-PRIVATE char *rpc__dg_call_state_name _DCE_PROTOTYPE_((
+PRIVATE char *rpc__dg_call_state_name (
         rpc_dg_call_state_t state
-    ));
+    );
 
 #else
 
@@ -167,58 +167,58 @@ PRIVATE char *rpc__dg_call_state_name _DCE_PROTOTYPE_((
 
 #endif
 
-PRIVATE void rpc__dg_call_xmit_fack _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_call_xmit_fack (
         rpc_dg_call_p_t  /*call*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         boolean32 /*is_nocall*/
-    ));
+    );
 
-PRIVATE void rpc__dg_call_xmit _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_call_xmit (
         rpc_dg_call_p_t  /*call*/,
         boolean32 /*block*/
-    ));
+    );
 
-PRIVATE void rpc__dg_call_xmitq_timer _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_call_xmitq_timer (
         rpc_dg_call_p_t /*call*/
-    ));
+    );
 
-PRIVATE void rpc__dg_call_init _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_call_init (
         rpc_dg_call_p_t /*call*/
-    ));
+    );
 
-PRIVATE void rpc__dg_call_free _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_call_free (
         rpc_dg_call_p_t /*call*/
-    ));
+    );
 
-PRIVATE void rpc__dg_call_wait _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_call_wait (
         rpc_dg_call_p_t /*call*/,
         rpc_dg_wait_event_t /*event*/,
         unsigned32 * /*st*/
-    ));
+    );
 
-PRIVATE void rpc__dg_call_signal _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_call_signal (
         rpc_dg_call_p_t /*call*/
-    ));
+    );
 
-PRIVATE void rpc__dg_call_xmitq_push _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_call_xmitq_push (
         rpc_dg_call_p_t /*call*/,
         unsigned32 * /*st*/
-    ));
+    );
 
-PRIVATE boolean rpc__dg_call_recvq_insert _DCE_PROTOTYPE_((
+PRIVATE boolean rpc__dg_call_recvq_insert (
         rpc_dg_call_p_t /*call*/,
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         boolean * /*rqe_is_head_inorder*/
-    ));
+    );
 
-PRIVATE void rpc__dg_call_signal_failure _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_call_signal_failure (
         rpc_dg_call_p_t /*call*/,
         unsigned32 /*stcode*/
-    ));
+    );
 
-PRIVATE void rpc__dg_call_local_cancel _DCE_PROTOTYPE_((
+PRIVATE void rpc__dg_call_local_cancel (
         rpc_dg_call_p_t /*call*/
-    ));
+    );
 
 #ifdef __cplusplus
 }

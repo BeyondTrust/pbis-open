@@ -78,7 +78,7 @@ INTERNAL struct {
  * the packets AND be told about it.
  */
 
-INTERNAL void set_lossy_params _DCE_PROTOTYPE_ (( void ));
+INTERNAL void set_lossy_params ( void );
 
 
 INTERNAL void set_lossy_params( void )
@@ -123,10 +123,10 @@ INTERNAL void set_lossy_params( void )
  * Make a copy of a thing into malloc'd storage.
  */
 
-INTERNAL unsigned8 *mcopy _DCE_PROTOTYPE_((
+INTERNAL unsigned8 *mcopy (
         unsigned8 * /*p*/,
         int  /*len*/
-    ));
+    );
 
 INTERNAL unsigned8 *mcopy
 (
@@ -152,10 +152,10 @@ INTERNAL unsigned8 *mcopy
  * Make a copy of an I/O vector and all it points to into malloc'd storage.
  */
 
-INTERNAL rpc_socket_iovec_p_t mcopy_iov _DCE_PROTOTYPE_((
+INTERNAL rpc_socket_iovec_p_t mcopy_iov (
         rpc_socket_iovec_p_t  /*iov*/,
         int  /*iovlen*/
-    ));
+    );
 
 INTERNAL rpc_socket_iovec_p_t mcopy_iov
 (
@@ -184,10 +184,10 @@ INTERNAL rpc_socket_iovec_p_t mcopy_iov
  * Free an I/O vector.
  */
 
-INTERNAL void free_iov _DCE_PROTOTYPE_((
+INTERNAL void free_iov (
         rpc_socket_iovec_p_t /*iov*/,
         int /*iovlen*/
-    ));
+    );
 
 INTERNAL void free_iov
 (
@@ -210,12 +210,12 @@ INTERNAL void free_iov
  * Make a copy and stash a packet described by rpc__socket_sendmsg() args.
  */
 
-INTERNAL void stash_sendmsg_pkt _DCE_PROTOTYPE_((
+INTERNAL void stash_sendmsg_pkt (
         rpc_socket_t  /*sock*/,
         rpc_socket_iovec_p_t  /*iov*/,
         int  /*iov_len*/,
         rpc_addr_p_t  /*addr*/
-    ));
+    );
 
 INTERNAL void stash_sendmsg_pkt
 (
@@ -245,7 +245,7 @@ INTERNAL void stash_sendmsg_pkt
  * Transmit the packet we stashed away earlier.
  */
 
-INTERNAL void xmit_stashed_sendmsg_pkt _DCE_PROTOTYPE_((void));
+INTERNAL void xmit_stashed_sendmsg_pkt (void);
 
 
 INTERNAL void xmit_stashed_sendmsg_pkt( void )

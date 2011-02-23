@@ -137,11 +137,11 @@ EXTERNAL char   *rpc_g_cn_call_server_states [];
  * Action routine to invoke in case of a protocol error detected
  * during an illegal state transition.
  */
-PRIVATE unsigned32     rpc__cn_call_sm_protocol_error _DCE_PROTOTYPE_ ((
+PRIVATE unsigned32     rpc__cn_call_sm_protocol_error (
         pointer_t /* sc_struct */,
         pointer_t /* event_param */,
 	pointer_t /* sm		 */
-    ));
+    );
 
 
 /***********************************************************************/

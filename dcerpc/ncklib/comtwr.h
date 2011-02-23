@@ -49,18 +49,18 @@
 extern "C" {
 #endif
 
-PRIVATE void rpc__tower_free _DCE_PROTOTYPE_ (( 
+PRIVATE void rpc__tower_free ( 
     twr_p_t                 * /*tower*/,
-    unsigned32              * /*status*/ ));
+    unsigned32              * /*status*/ );
 
-PRIVATE void rpc__tower_from_tower_ref _DCE_PROTOTYPE_ (( 
+PRIVATE void rpc__tower_from_tower_ref ( 
     rpc_tower_ref_p_t        /*tower_ref*/,
     twr_p_t                 * /*tower*/,
-    unsigned32              * /*status*/ ));
+    unsigned32              * /*status*/ );
 
-PRIVATE void rpc__tower_to_tower_ref _DCE_PROTOTYPE_ (( 
+PRIVATE void rpc__tower_to_tower_ref ( 
    twr_p_t                  /*tower*/,
    rpc_tower_ref_p_t       * /*tower_ref*/,
-   unsigned32              * /*status*/ ));
+   unsigned32              * /*status*/ );
 
 #endif /* _COMTRW_H */

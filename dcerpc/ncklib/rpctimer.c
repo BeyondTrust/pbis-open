@@ -57,15 +57,15 @@ INTERNAL dcethread* timer_task;
 INTERNAL boolean timer_task_running = false;
 INTERNAL boolean timer_task_was_running = false;
 
-INTERNAL void timer_loop _DCE_PROTOTYPE_((void));
+INTERNAL void timer_loop (void);
 
 
-INTERNAL void rpc__timer_set_int _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__timer_set_int (
         rpc_timer_p_t            /*t*/,
         rpc_timer_proc_p_t       /*proc*/,
         pointer_t                /*parg*/,
         rpc_clock_t              /*freq*/
-    ));
+    );
 
 
 /*

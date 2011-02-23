@@ -300,18 +300,18 @@ static boolean got_address = FALSE;
  * Startup initialization routine for UUID module.
  */
 
-static void init _DCE_PROTOTYPE_ (( unsigned32 * /*st*/ ));
+static void init ( unsigned32 * /*st*/ );
 
 /*
  * T R U E _ R A N D O M _ I N I T
  */
 
-static void true_random_init _DCE_PROTOTYPE_ ((void));
+static void true_random_init (void);
 
 /*
  * T R U E _ R A N D O M
  */
-static unsigned16 true_random _DCE_PROTOTYPE_ ((void));
+static unsigned16 true_random (void);
 
 
 /*
@@ -323,24 +323,24 @@ static unsigned16 true_random _DCE_PROTOTYPE_ ((void));
  *       I've put it in here as 16-bits since there isn't a
  *       14-bit unsigned integer type (yet)
  */ 
-static void new_clock_seq _DCE_PROTOTYPE_(( unsigned16 * /*clock_seq*/));
+static void new_clock_seq ( unsigned16 * /*clock_seq*/);
 
 /*
  * S T R U C T U R E _ I S _ K N O W N
  *
  * Does the UUID have the known standard structure layout?
  */
-boolean structure_is_known _DCE_PROTOTYPE_(( dce_uuid_p_t /*uuid*/));
+boolean structure_is_known ( dce_uuid_p_t /*uuid*/);
 
 /*
  * T I M E _ C M P
  *
  * Compares two UUID times (64-bit DEC UID UTC values)
  */
-static uuid_compval_t time_cmp _DCE_PROTOTYPE_ ((
+static uuid_compval_t time_cmp (
         dce_uuid_time_p_t        /*time1*/,
         dce_uuid_time_p_t        /*time2*/
-    ));
+    );
 
 /*
  * U U I D _ G E T _ A D D R E S S
@@ -348,10 +348,10 @@ static uuid_compval_t time_cmp _DCE_PROTOTYPE_ ((
  * Get our IEEE 802 address (calls uuid__get_os_address)
  */
 
-void uuid_get_address _DCE_PROTOTYPE_ ((
+void uuid_get_address (
         dce_uuid_address_t      * /*address*/,
         unsigned32          * /*st*/
-    ));
+    );
 
 
 

@@ -43,18 +43,18 @@
 
 /* ========================================================================= */
 
-INTERNAL void sock_free _DCE_PROTOTYPE_((
+INTERNAL void sock_free (
         rpc_dg_sock_pool_elt_p_t * /*sp_elt*/
-    ));
+    );
 
-INTERNAL void use_protseq _DCE_PROTOTYPE_((
+INTERNAL void use_protseq (
         boolean32  /*is_server*/,
         rpc_protseq_id_t  /*pseq_id*/,
         rpc_addr_p_t  /*rpc_addr*/,
         unsigned_char_p_t  /*endpoint*/,
         rpc_dg_sock_pool_elt_p_t * /*sock_pool_elt*/,
         unsigned32 * /*st*/
-    )); 
+    ); 
 
 /* ========================================================================= */
 

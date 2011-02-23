@@ -567,69 +567,69 @@ typedef struct rpc_cond_t
 #include <dce/dce.h>
 #endif /* _DCE_PROTOTYPE_ */
 
-boolean rpc__mutex_init _DCE_PROTOTYPE_(( rpc_mutex_p_t  /*mp*/ ));
+boolean rpc__mutex_init ( rpc_mutex_p_t  /*mp*/ );
 
-boolean rpc__mutex_delete _DCE_PROTOTYPE_(( rpc_mutex_p_t  /*mp*/ ));
+boolean rpc__mutex_delete ( rpc_mutex_p_t  /*mp*/ );
 
-boolean rpc__mutex_lock _DCE_PROTOTYPE_((
+boolean rpc__mutex_lock (
         rpc_mutex_p_t  /*mp*/,
         char * /*file*/,
         int  /*line*/
-    ));
+    );
 
-boolean rpc__mutex_try_lock _DCE_PROTOTYPE_((
+boolean rpc__mutex_try_lock (
         rpc_mutex_p_t  /*mp*/,
         boolean * /*bp*/,
         char * /*file*/,
         int  /*line*/
-    ));
+    );
 
-boolean rpc__mutex_unlock _DCE_PROTOTYPE_(( rpc_mutex_p_t  /*mp*/ ));
+boolean rpc__mutex_unlock ( rpc_mutex_p_t  /*mp*/ );
 
-boolean rpc__mutex_lock_assert _DCE_PROTOTYPE_(( rpc_mutex_p_t  /*mp*/));
+boolean rpc__mutex_lock_assert ( rpc_mutex_p_t  /*mp*/);
 
-boolean rpc__mutex_unlock_assert _DCE_PROTOTYPE_(( rpc_mutex_p_t  /*mp*/));
+boolean rpc__mutex_unlock_assert ( rpc_mutex_p_t  /*mp*/);
 
 
-boolean rpc__cond_init _DCE_PROTOTYPE_((
+boolean rpc__cond_init (
         rpc_cond_p_t  /*cp*/,
         rpc_mutex_p_t  /*mp*/
-    ));
+    );
 
-boolean rpc__cond_delete _DCE_PROTOTYPE_((
+boolean rpc__cond_delete (
         rpc_cond_p_t  /*cp*/,
         rpc_mutex_p_t  /*mp*/
-    ));
+    );
 
-boolean rpc__cond_wait _DCE_PROTOTYPE_((
+boolean rpc__cond_wait (
         rpc_cond_p_t  /*cp*/,
         rpc_mutex_p_t  /*mp*/,
         char * /*file*/,
         int  /*line*/
-    ));
+    );
 
-boolean rpc__cond_timed_wait _DCE_PROTOTYPE_((
+boolean rpc__cond_timed_wait (
         rpc_cond_p_t  /*cp*/,
         rpc_mutex_p_t  /*mp*/,
         struct timespec * /*wtime*/,
         char * /*file*/,
         int  /*line*/
-    ));
+    );
 
-boolean rpc__cond_signal _DCE_PROTOTYPE_((
+boolean rpc__cond_signal (
         rpc_cond_p_t  /*cp*/,
         rpc_mutex_p_t  /*mp*/
-    ));
+    );
 
-boolean rpc__cond_broadcast _DCE_PROTOTYPE_((
+boolean rpc__cond_broadcast (
         rpc_cond_p_t  /*cp*/,
         rpc_mutex_p_t  /*mp*/
-    ));
+    );
 
 #else 
 
 #ifdef MIREK_NOT_DEFINED
-static void rpc__mutex_none _DCE_PROTOTYPE_((void));
+static void rpc__mutex_none (void);
 #endif
 #endif /* defined(RPC_MUTEX_DEBUG) || defined(RPC_MUTEX_STATS) */
 

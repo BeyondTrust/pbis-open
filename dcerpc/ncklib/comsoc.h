@@ -303,11 +303,11 @@ extern "C" {
  * (see BSD UNIX socket(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_open _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_open (
         rpc_protseq_id_t pseq_id,
         rpc_transport_info_handle_t info,
         rpc_socket_t * sock
-    ));
+    );
 
 
 /*
@@ -318,12 +318,12 @@ PRIVATE rpc_socket_error_t rpc__socket_open _DCE_PROTOTYPE_((
  * determine what network services are supported by the host OS.
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_open_basic _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_open_basic (
         rpc_naf_id_t  /*naf*/,
         rpc_network_if_id_t  /*net_if*/,
         rpc_network_protocol_id_t  /*net_prot*/,
         rpc_socket_basic_t * /*sock*/
-    ));
+    );
 
 
 /*
@@ -334,9 +334,9 @@ PRIVATE rpc_socket_error_t rpc__socket_open_basic _DCE_PROTOTYPE_((
  * (see BSD UNIX close(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_close _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_close (
         rpc_socket_t /*sock*/
-    ));
+    );
 
 
 /*
@@ -347,9 +347,9 @@ PRIVATE rpc_socket_error_t rpc__socket_close _DCE_PROTOTYPE_((
  * (see BSD UNIX close(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_close_basic _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_close_basic (
         rpc_socket_basic_t /*sock*/
-    ));
+    );
 
 /*
  * R P C _ _ S O C K E T _ B I N D
@@ -359,10 +359,10 @@ PRIVATE rpc_socket_error_t rpc__socket_close_basic _DCE_PROTOTYPE_((
  * (see BSD UNIX bind(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_bind _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_bind (
         rpc_socket_t  /*sock*/,
         rpc_addr_p_t /*addr*/
-    ));
+    );
 
 /*
  * R P C _ _ S O C K E T _ C O N N E C T
@@ -373,11 +373,11 @@ PRIVATE rpc_socket_error_t rpc__socket_bind _DCE_PROTOTYPE_((
  * (see BSD UNIX connect(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_connect _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_connect (
         rpc_socket_t  /*sock*/,
         rpc_addr_p_t /*addr*/,
 	rpc_cn_assoc_t* /*assoc*/
-    ));
+    );
 
 
 /*
@@ -393,11 +393,11 @@ PRIVATE rpc_socket_error_t rpc__socket_connect _DCE_PROTOTYPE_((
  * (see BSD UNIX accept(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_accept _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_accept (
         rpc_socket_t  /*sock*/,
         rpc_addr_p_t  /*addr*/,
         rpc_socket_t * /*newsock*/
-    ));
+    );
 
 
 /*
@@ -409,10 +409,10 @@ PRIVATE rpc_socket_error_t rpc__socket_accept _DCE_PROTOTYPE_((
  * (see BSD UNIX listen(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_listen _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_listen (
         rpc_socket_t /*sock*/,
         int /*backlog*/
-    ));
+    );
 
 
 /*
@@ -424,13 +424,13 @@ PRIVATE rpc_socket_error_t rpc__socket_listen _DCE_PROTOTYPE_((
  * (see BSD UNIX sendmsg(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_sendmsg _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_sendmsg (
         rpc_socket_t  /*sock*/,
         rpc_socket_iovec_p_t  /*iov*/,   /* array of bufs of data to send */
         int  /*iov_len*/,        /* number of bufs */
         rpc_addr_p_t  /*addr*/,  /* addr of receiver */
         int * /*cc*/             /* returned number of bytes actually sent */
-    ));
+    );
 
 
 /*
@@ -446,13 +446,13 @@ PRIVATE rpc_socket_error_t rpc__socket_sendmsg _DCE_PROTOTYPE_((
  * (see BSD UNIX recvfrom(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_recvfrom _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_recvfrom (
         rpc_socket_t  /*sock*/,
         byte_p_t  /*buf*/,       /* buf for rcvd data */
         int  /*len*/,            /* len of above buf */
         rpc_addr_p_t  /*from*/,  /* addr of sender */
         int * /*cc*/             /* returned number of bytes actually rcvd */
-    ));
+    );
 
 
 /*
@@ -467,13 +467,13 @@ PRIVATE rpc_socket_error_t rpc__socket_recvfrom _DCE_PROTOTYPE_((
  * (see BSD UNIX recvmsg(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_recvmsg _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_recvmsg (
         rpc_socket_t  /*sock*/,
         rpc_socket_iovec_p_t  /*iov*/,   /* array of bufs for rcvd data */
         int  /*iov_len*/,        /* number of bufs */
         rpc_addr_p_t  /*addr*/,  /* addr of sender */
         int * /*cc*/             /* returned number of bytes actually rcvd */
-    ));
+    );
 
 
 /*
@@ -495,10 +495,10 @@ PRIVATE rpc_socket_error_t rpc__socket_recvmsg _DCE_PROTOTYPE_((
  * (see BSD UNIX getsockname(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_inq_endpoint _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_inq_endpoint (
         rpc_socket_t  /*sock*/,
         rpc_addr_p_t /*addr*/
-    ));
+    );
 
 /*
  * R P C _ _ S O C K E T _ I N Q _ P E E R _ E N D P O I N T
@@ -519,10 +519,10 @@ PRIVATE rpc_socket_error_t rpc__socket_inq_endpoint _DCE_PROTOTYPE_((
  * (see BSD UNIX getsockname(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_inq_peer_endpoint _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_inq_peer_endpoint (
         rpc_socket_t  /*sock*/,
         rpc_addr_p_t /*addr*/
-    ));
+    );
 
 
 /*
@@ -532,9 +532,9 @@ PRIVATE rpc_socket_error_t rpc__socket_inq_peer_endpoint _DCE_PROTOTYPE_((
  * Used only by Datagram based Protocol Services.
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_set_broadcast _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_set_broadcast (
         rpc_socket_t /*sock*/
-    ));
+    );
 
 
 /*
@@ -546,13 +546,13 @@ PRIVATE rpc_socket_error_t rpc__socket_set_broadcast _DCE_PROTOTYPE_((
  * (similar to BSD UNIX setsockopt()).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_set_bufs _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_set_bufs (
         rpc_socket_t  /*sock*/, 
         unsigned32  /*txsize*/, 
         unsigned32  /*rxsize*/, 
         unsigned32 * /*ntxsize*/, 
         unsigned32 * /*nrxsize*/
-    ));
+    );
 
 
 /*
@@ -563,9 +563,9 @@ PRIVATE rpc_socket_error_t rpc__socket_set_bufs _DCE_PROTOTYPE_((
  * (see BSD UNIX fcntl(sock, F_SETFL, O_NDELAY))
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_set_nbio _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_set_nbio (
         rpc_socket_t /*sock*/
-    ));
+    );
 
 
 /*
@@ -577,9 +577,9 @@ PRIVATE rpc_socket_error_t rpc__socket_set_nbio _DCE_PROTOTYPE_((
  * (see BSD UNIX fcntl(sock, F_SETFD, 1))
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_set_close_on_exec _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_set_close_on_exec (
         rpc_socket_t /*sock*/
-    ));
+    );
 
 /*
  * R P C _ _ S O C K E T _ G E T P E E R N A M E
@@ -590,10 +590,10 @@ PRIVATE rpc_socket_error_t rpc__socket_set_close_on_exec _DCE_PROTOTYPE_((
  * (see BSD UNIX getpeername(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_getpeername _DCE_PROTOTYPE_ ((
+PRIVATE rpc_socket_error_t rpc__socket_getpeername (
         rpc_socket_t  /*sock*/,
         rpc_addr_p_t /*addr*/
-    ));
+    );
 
 /*
  * R P C _ _ S O C K E T _ G E T _ I F _ I D
@@ -603,10 +603,10 @@ PRIVATE rpc_socket_error_t rpc__socket_getpeername _DCE_PROTOTYPE_ ((
  * (see BSD UNIX getsockopt(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_get_if_id _DCE_PROTOTYPE_ ((
+PRIVATE rpc_socket_error_t rpc__socket_get_if_id (
         rpc_socket_t         /*sock*/,
         rpc_network_if_id_t * /*network_if_id*/
-    ));
+    );
 
 /*
  * R P C _ _ S O C K E T _ S E T _ K E E P A L I V E.
@@ -617,9 +617,9 @@ PRIVATE rpc_socket_error_t rpc__socket_get_if_id _DCE_PROTOTYPE_ ((
  * (see BSD UNIX setsockopt(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_set_keepalive _DCE_PROTOTYPE_ ((
+PRIVATE rpc_socket_error_t rpc__socket_set_keepalive (
         rpc_socket_t        /*sock*/
-    ));
+    );
 
 /*
  * R P C _ _ S O C K E T _ N O W R I T E B L O C K _ W A I T
@@ -630,10 +630,10 @@ PRIVATE rpc_socket_error_t rpc__socket_set_keepalive _DCE_PROTOTYPE_ ((
  * if a timeout occurs.  This operation in not cancellable.
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_nowriteblock_wait _DCE_PROTOTYPE_((
+PRIVATE rpc_socket_error_t rpc__socket_nowriteblock_wait (
         rpc_socket_t  /*sock*/,
         struct timeval * /*tmo*/
-    ));
+    );
 
 /*
  * R P C _ _ S O C K E T _ S E T _ R C V T I M E O
@@ -644,10 +644,10 @@ PRIVATE rpc_socket_error_t rpc__socket_nowriteblock_wait _DCE_PROTOTYPE_((
  * (see BSD UNIX setsockopt(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_set_rcvtimeo _DCE_PROTOTYPE_ ((
+PRIVATE rpc_socket_error_t rpc__socket_set_rcvtimeo (
         rpc_socket_t,       /*sock*/
         struct timeval *    /*tmo*/
-    ));
+    );
 
 /*
  * R P C _ _ S O C K E T _ G E T P E E R E I D
@@ -655,11 +655,11 @@ PRIVATE rpc_socket_error_t rpc__socket_set_rcvtimeo _DCE_PROTOTYPE_ ((
  * Get UNIX domain socket peer credentials
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_getpeereid _DCE_PROTOTYPE_ ((
+PRIVATE rpc_socket_error_t rpc__socket_getpeereid (
 	rpc_socket_t,	    /*sock*/
 	uid_t *,
 	gid_t *
-    ));
+    );
 
 PRIVATE int
 rpc__socket_get_select_desc(

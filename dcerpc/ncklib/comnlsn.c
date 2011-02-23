@@ -125,15 +125,15 @@ INTERNAL RPC_SELECT_FD_SET_T        readfds_copy;
 
 
 
-INTERNAL void copy_listener_state _DCE_PROTOTYPE_ ((
+INTERNAL void copy_listener_state (
         rpc_listener_state_p_t   /*lstate*/
-    ));
+    );
 
-INTERNAL void lthread _DCE_PROTOTYPE_ ((
+INTERNAL void lthread (
         rpc_listener_state_p_t   /*lstate*/
-    ));
+    );
 
-INTERNAL void lthread_loop _DCE_PROTOTYPE_ ((void));
+INTERNAL void lthread_loop (void);
 
 
 

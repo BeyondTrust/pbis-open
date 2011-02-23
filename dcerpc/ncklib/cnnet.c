@@ -78,22 +78,22 @@ static unsigned32	rpc_g_cn_socket_write_buffer=0;
 /*
  * Local routines
  */
-INTERNAL void rpc__cn_network_desc_inq_ep _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__cn_network_desc_inq_ep (
     rpc_socket_t             /*desc*/,
     rpc_protseq_id_t         /*pseq_id*/,
     unsigned_char_p_t       * /*endpoint*/,
-    unsigned32              *status));
+    unsigned32              *status);
 
-INTERNAL void rpc__cn_network_serr_to_status _DCE_PROTOTYPE_ ((
+INTERNAL void rpc__cn_network_serr_to_status (
     rpc_socket_error_t       /*serr*/,
-    unsigned32              *st));
+    unsigned32              *st);
 
-INTERNAL pointer_t rpc__cn_network_init_desc _DCE_PROTOTYPE_ ((
+INTERNAL pointer_t rpc__cn_network_init_desc (
     rpc_socket_t                * /*desc*/,
     boolean32                    /*spawned*/,
     rpc_protseq_id_t             /*pseq_id*/,
     unsigned32                   /*backlog*/,
-    unsigned32                  *st));
+    unsigned32                  *st);
 
 
 /***********************************************************************/
