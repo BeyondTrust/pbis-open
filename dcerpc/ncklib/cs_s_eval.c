@@ -110,7 +110,6 @@
 
 PUBLIC 
 void rpc_ns_import_ctx_add_eval
-#ifdef _DCE_PROTO_
 (
 	rpc_ns_handle_t		*import_ctx,
 	unsigned32		func_type,
@@ -119,15 +118,6 @@ void rpc_ns_import_ctx_add_eval
 	void			(*cs_free_func)(void *cntx),
 	error_status_t		*status
 )
-#else
-(import_ctx, func_type, args, eval_func, cs_free_func, status)
-	rpc_ns_handle_t		*import_ctx;
-	unsigned32		func_type;
-	void			*args;
-	void			(*eval_func)(handle_t binding_h, void *args, void **cntx);
-	void			(*cs_free_func)(void *cntx);
-	error_status_t		*status;
-#endif
 {
 	rpc_cs_eval_func_p_t		eval_func_rep;
 	rpc_cs_eval_list_p_t		eval_list_p;
@@ -309,18 +299,11 @@ void rpc_ns_import_ctx_add_eval
 
 PUBLIC 
 void rpc_cs_eval_with_universal
-#ifdef _DCE_PROTO_
 (
 	handle_t		binding_h,
 	void			*args,
 	void			**cntx
 )
-#else
-(binding_h, args, cntx)
-	handle_t		binding_h;
-	void			*args;
-	void			**cntx;
-#endif
 {
 	rpc_cs_codeset_i14y_data_p	i14y_data_p;	
 	rpc_cs_codeset_i14y_data_p	cntx_i14y_data_p;	
@@ -600,18 +583,11 @@ void rpc_cs_eval_with_universal
 
 PUBLIC 
 void rpc_cs_eval_without_universal
-#ifdef _DCE_PROTO_
 (
 	handle_t		binding_h,
 	void			*args,
 	void			**cntx
 )
-#else
-(binding_h, args, cntx)
-	handle_t		binding_h;
-	void			*args;
-	void			**cntx;
-#endif
 {
 	rpc_cs_codeset_i14y_data_p	i14y_data_p;	
 	rpc_cs_codeset_i14y_data_p	cntx_i14y_data_p;	
@@ -878,18 +854,11 @@ void rpc_cs_eval_without_universal
 
 PUBLIC 
 void rpc_cs_char_set_compat_check
-#ifdef _DCE_PROTO_
 (
 	unsigned32		client_codeset,
 	unsigned32		server_codeset,
 	error_status_t		*status
 )
-#else
-(client_codeset, server_codeset, status)
-	unsigned32		client_codeset;
-	unsigned32		server_codeset;
-	error_status_t		*status;
-#endif
 {
 	unsigned_char_t	*client_code_set_name;
 	unsigned16	client_char_sets_number;
@@ -995,18 +964,11 @@ void rpc_cs_char_set_compat_check
 */
 PRIVATE
 void rpc_cs_binding_set_method
-#ifdef _DCE_PROTO_
 (
 	rpc_binding_handle_t		*h,
 	rpc_cs_method_eval_p_t		method_p,
 	error_status_t			*status
 )
-#else
-(h, method_p, status)
-	rpc_binding_handle_t		*h;
-	rpc_cs_method_eval_p_t		method_p;
-	error_status_t			*status;
-#endif
 {
 	rpc_cs_method_eval_p_t  bind_method;
 	rpc_binding_rep_p_t	bind_eval_p;
@@ -1074,7 +1036,6 @@ void rpc_cs_binding_set_method
 
 PUBLIC 
 void rpc_cs_binding_set_tags
-#ifdef _DCE_PROTO_
 (
 	rpc_binding_handle_t		*h,
 	unsigned32			stag,
@@ -1082,14 +1043,6 @@ void rpc_cs_binding_set_tags
 	unsigned16			stag_max_bytes,
 	error_status_t			*status
 )
-#else
-(h, stag, drtag, stag_max_bytes, status)
-	rpc_binding_handle_t		*h;
-	unsigned32			stag;
-	unsigned32			drtag;
-	unsigned16			stag_max_bytes;
-	error_status_t			*status;
-#endif
 {
 	rpc_cs_tags_eval_p_t	bind_tags;
 	rpc_binding_rep_p_t	bind_eval_p;
@@ -1165,18 +1118,11 @@ void rpc_cs_binding_set_tags
 
 PUBLIC 
 void rpc_cs_binding_set_eval
-#ifdef _DCE_PROTO_
 (
 	rpc_binding_handle_t		*h,
 	void				(*cs_stub_eval_func)(unsigned32 *p_stag, unsigned32 *p_drtag, error_status_t *status),
 	error_status_t			*status
 )
-#else
-(h, cs_stub_eval_func, status)
-	rpc_binding_handle_t		*h;
-	void				(*cs_stub_eval_func)(unsigned32 *p_stag, unsigned32 *p_drtag, error_status_t *status);
-	error_status_t			*status;
-#endif
 {
 	rpc_cs_method_eval_p_t  bind_method;
 	rpc_binding_rep_p_t	bind_eval_p;

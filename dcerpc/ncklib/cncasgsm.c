@@ -322,20 +322,11 @@ GLOBAL rpc_cn_sm_state_entry_p_t rpc_g_cn_client_grp_sm [] =
 **/
 
 INTERNAL unsigned32     incr_assoc_count_action_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param,
   pointer_t       sm
 )
-#else
-(spc_struct, event_param, sm)
-
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-
-#endif
 {
     rpc_cn_assoc_grp_t          *assoc_grp;
     rpc_cn_sm_ctlblk_t		*sm_p; 
@@ -402,18 +393,11 @@ pointer_t       sm;
 **/
 
 INTERNAL unsigned32     decr_assoc_count_action_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param,
   pointer_t	  sm 
 )
-#else
-(spc_struct, event_param, sm)
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-#endif
 {
     rpc_cn_assoc_grp_t          *assoc_grp;
     rpc_cn_assoc_t              *assoc;

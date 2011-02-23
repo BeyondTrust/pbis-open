@@ -119,16 +119,11 @@ INTERNAL void scan_waiter_lists _DCE_PROTOTYPE_((
  */                                                       
                     
 INTERNAL void dequeue_pool_waiter
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call, 
     rpc_dg_call_p_t *head, 
     rpc_dg_call_p_t *tail                              
 )
-#else
-(call, head, tail)
-rpc_dg_call_p_t call, *head, *tail;                              
-#endif
 {
     rpc_dg_call_p_t waiter = *head, prev = NULL;
                           
@@ -186,14 +181,9 @@ rpc_dg_call_p_t call, *head, *tail;
  */                                                    
 
 INTERNAL void scan_waiter_lists
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call
 )
-#else
-(call)
-rpc_dg_call_p_t call;
-#endif
 {
     rpc_dg_call_p_t waiter = NULL, prev = NULL;
     rpc_dg_pkt_pool_t *pool = &rpc_g_dg_pkt_pool;
@@ -426,14 +416,9 @@ PRIVATE void rpc__dg_pkt_pool_init(void)
  */
 
 PRIVATE void rpc__dg_pkt_pool_fork_handler
-#ifdef _DCE_PROTO_
 (
     rpc_fork_stage_id_t stage
 )
-#else
-(stage)
-rpc_fork_stage_id_t stage;
-#endif
 {                           
     rpc_dg_pkt_pool_elt_p_t   pkt, next_pkt;
     rpc_dg_pkt_pool_t *pool = &rpc_g_dg_pkt_pool;
@@ -591,16 +576,10 @@ INTERNAL rpc_dg_pkt_pool_elt_p_t pkt_alloc(void)
  */
 
 PRIVATE rpc_dg_xmitq_elt_p_t rpc__dg_pkt_alloc_xqe
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call,
     unsigned32 *st
 )
-#else
-(call, st)
-rpc_dg_call_p_t call;
-unsigned32 *st;
-#endif
 {
     rpc_dg_pkt_pool_elt_p_t pkt;
     rpc_dg_xmitq_elt_p_t xqe = NULL;
@@ -892,16 +871,10 @@ rpc_dg_ccall_p_t ccall;
  */
 
 INTERNAL void pkt_free
-#ifdef _DCE_PROTO_
 (
     rpc_dg_pkt_pool_elt_p_t pkt,
     rpc_dg_call_p_t call
 )
-#else
-(pkt, call)
-rpc_dg_pkt_pool_elt_p_t pkt;
-rpc_dg_call_p_t call;
-#endif
 {            
     rpc_dg_pkt_pool_t *pool = &rpc_g_dg_pkt_pool;
 
@@ -1078,16 +1051,10 @@ rpc_dg_call_p_t call;
  */          
 
 PRIVATE void rpc__dg_pkt_free_xqe
-#ifdef _DCE_PROTO_
 (
     rpc_dg_xmitq_elt_p_t xqe,
     rpc_dg_call_p_t call
 )
-#else
-(xqe, call)
-rpc_dg_xmitq_elt_p_t xqe;
-rpc_dg_call_p_t call;
-#endif
 {
     rpc_dg_xmitq_elt_p_t tmp;
     RPC_DG_CALL_LOCK_ASSERT(call);
@@ -1137,14 +1104,9 @@ rpc_dg_call_p_t call;
  */
 
 PRIVATE void rpc__dg_pkt_free_rqe_for_stub
-#ifdef _DCE_PROTO_
 (
     rpc_dg_recvq_elt_p_t rqe
 )
-#else
-(rqe)
-rpc_dg_recvq_elt_p_t rqe;
-#endif
 {
     rpc__dg_pkt_free_rqe(rqe, NULL);
 }
@@ -1163,16 +1125,10 @@ rpc_dg_recvq_elt_p_t rqe;
  */                               
 
 PRIVATE void rpc__dg_pkt_free_rqe
-#ifdef _DCE_PROTO_
 (
     rpc_dg_recvq_elt_p_t rqe,
     rpc_dg_call_p_t call
 )
-#else
-(rqe, call)
-rpc_dg_recvq_elt_p_t rqe;
-rpc_dg_call_p_t call;
-#endif
 {
     rpc_dg_pkt_pool_elt_p_t    p = (rpc_dg_pkt_pool_elt_p_t) rqe;
     rpc_dg_recvq_elt_p_t tmp;
@@ -1233,18 +1189,11 @@ rpc_dg_call_p_t call;
  */                                                              
 
 PRIVATE boolean32 rpc__dg_pkt_adjust_reservation
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call,                                
     unsigned32 nreq,
     boolean32 block
 )
-#else
-(call, nreq, block)
-rpc_dg_call_p_t call;                                
-unsigned32 nreq;
-boolean32 block;
-#endif
 {
     unsigned32 st = rpc_s_ok;
     boolean32 got_it = false;
@@ -1481,14 +1430,9 @@ boolean32 block;
  */                                                              
 
 PRIVATE void rpc__dg_pkt_cancel_reservation
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call                                
 )
-#else
-(call)
-rpc_dg_call_p_t call;                                
-#endif
 { 
     rpc_dg_pkt_pool_t *pool = &rpc_g_dg_pkt_pool;
 
@@ -1577,18 +1521,11 @@ rpc_dg_call_p_t call;
  */                                                              
 
 PUBLIC void rpc_mgmt_set_max_concurrency
-#ifdef _DCE_PROTO_
 (
     unsigned32 max_client_calls,
     unsigned32 max_server_calls,
     unsigned32 *status
 )
-#else
-(max_client_calls, max_server_calls, status)
-unsigned32 max_client_calls;
-unsigned32 max_server_calls;
-unsigned32 *status;
-#endif
 {
     unsigned32 new_max;
 
@@ -1648,14 +1585,9 @@ PUBLIC unsigned32 rpc_mgmt_get_max_concurrency(void)
  * Return the packet pool's rationing state.
  */          
 PRIVATE boolean32 rpc__dg_pkt_is_rationing
-#ifdef _DCE_PROTO_
 (
  boolean32 *low_on_pkts
 )
-#else
-(low_on_pkts)
-boolean32 *low_on_pkts;
-#endif
 {
     boolean32 is_rationing;
 

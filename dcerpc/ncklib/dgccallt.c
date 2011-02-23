@@ -51,14 +51,9 @@
  */
 
 PRIVATE void rpc__dg_ccallt_insert
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall
 )
-#else
-(ccall)
-rpc_dg_ccall_p_t ccall;
-#endif
 {
     unsigned16 probe = ccall->c.actid_hash % RPC_DG_CCALLT_SIZE;
 
@@ -79,14 +74,9 @@ rpc_dg_ccall_p_t ccall;
  */
 
 PRIVATE void rpc__dg_ccallt_remove
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall
 )
-#else
-(ccall)
-rpc_dg_ccall_p_t ccall;
-#endif
 {
     unsigned16 probe = ccall->c.actid_hash % RPC_DG_CCALLT_SIZE;
     rpc_dg_ccall_p_t scan_ccall, prev_scan_ccall;
@@ -132,16 +122,10 @@ rpc_dg_ccall_p_t ccall;
  */
 
 PRIVATE rpc_dg_ccall_p_t rpc__dg_ccallt_lookup
-#ifdef _DCE_PROTO_
 (
     dce_uuid_p_t actid,
     unsigned32 probe_hint
 )
-#else
-(actid, probe_hint)
-uuid_p_t actid;
-unsigned32 probe_hint;
-#endif
 {
     rpc_dg_ccall_p_t ccall;
     unsigned16 probe;
@@ -201,14 +185,9 @@ RETRY:
  * Handle fork related processing for this module.
  */
 PRIVATE void rpc__dg_ccallt_fork_handler
-#ifdef _DCE_PROTO_
 (
     rpc_fork_stage_id_t stage
 )
-#else
-(stage)
-rpc_fork_stage_id_t stage;
-#endif
 {                           
     unsigned32 i;
 

@@ -166,25 +166,19 @@ extern char *CMD_def_cpp_cmd;   /* Default cpp command */
 /* Functions exported by command.c */
 
 extern boolean CMD_parse_args(
-#ifdef PROTO
     int             argc,
     char            **argv,
     boolean         **p_cmd_opt,
     void            ***p_cmd_val,
     STRTAB_str_t    *idl_sid
-#endif
 );
 
 extern void CMD_explain_args(
-#ifdef PROTO
     void
-#endif
 );
 
 extern boolean add_def_string(
-#ifdef PROTO
     char *def_string
-#endif
 );
 
 extern boolean CMD_DCL_interface;

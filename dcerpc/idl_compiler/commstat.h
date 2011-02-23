@@ -49,30 +49,23 @@ typedef struct BE_stat_info_t {
 
 void BE_get_comm_stat_info
 (
-#ifdef PROTO
     AST_operation_n_t *p_operation,
     BE_stat_info_t *p_comm_stat_info
-#endif
 );
 
 void BE_get_fault_stat_info
 (
-#ifdef PROTO
     AST_operation_n_t *p_operation,
     BE_stat_info_t *p_fault_stat_info
-#endif
 );
 
 void CSPELL_receive_fault
 (
-#ifdef PROTO
     FILE *fid
-#endif
 );
 
 void CSPELL_return_status
 (
-#ifdef PROTO
     FILE *fid,
     BE_stat_info_t *p_comm_stat_info,
     BE_stat_info_t *p_fault_stat_info,
@@ -80,7 +73,6 @@ void CSPELL_return_status
     char *result_param_name,
     int num_user_exceptions,
     char *IDL_msp_name
-#endif
 );
 
 #endif

@@ -66,7 +66,6 @@ INTERNAL rpc_auth_epv_t rpc_g_noauth_epv =
  */
 
 PRIVATE void rpc__noauth_bnd_set_auth 
-#ifdef _DCE_PROTO_
 (
         unsigned_char_p_t server_name,
         rpc_authn_level_t level,
@@ -76,16 +75,6 @@ PRIVATE void rpc__noauth_bnd_set_auth
         rpc_auth_info_p_t *infop,
         unsigned32 *stp
 )
-#else
-(server_name, level, auth_ident, authz_prot, binding_h, infop, stp)
-    unsigned_char_p_t server_name;
-    rpc_authn_level_t level;
-    rpc_auth_identity_handle_t auth_ident;
-    rpc_authz_protocol_id_t authz_prot;
-    rpc_binding_handle_t binding_h;
-    rpc_auth_info_p_t *infop;
-    unsigned32 *stp;
-#endif
 {
     int st, i;
     rpc_noauth_info_p_t noauth_info;
@@ -176,18 +165,11 @@ void rpc__module_init_func(void)
  */
 
 PRIVATE void rpc__noauth_init 
-#ifdef _DCE_PROTO_
 (
         rpc_auth_epv_p_t *epv,
         rpc_auth_rpc_prot_epv_tbl_t *rpc_prot_epv,
         unsigned32 *st
 )
-#else
-(epv, rpc_prot_epv, st)
-    rpc_auth_epv_p_t *epv;
-    rpc_auth_rpc_prot_epv_tbl_t *rpc_prot_epv;
-    unsigned32 *st;
-#endif
 {
     unsigned32                  prot_id;
     rpc_auth_rpc_prot_epv_t     *prot_epv;
@@ -228,14 +210,9 @@ PRIVATE void rpc__noauth_init
  */
 
 PRIVATE void rpc__noauth_free_info 
-#ifdef _DCE_PROTO_
 (
         rpc_auth_info_p_t *info
 )
-#else
-(info)
-    rpc_auth_info_p_t *info;
-#endif
 {
     rpc_noauth_info_p_t noauth_info = (rpc_noauth_info_p_t)*info ;
     char *info_type = (*info)->is_server?"server":"client";
@@ -269,16 +246,10 @@ PRIVATE void rpc__noauth_free_info
  */
 
 PRIVATE void rpc__noauth_mgt_inq_def
-#ifdef _DCE_PROTO_
 (
         unsigned32 *authn_level,
         unsigned32 *stp
 )
-#else
-(authn_level, stp)
-    unsigned32 *authn_level;
-    unsigned32 *stp;
-#endif
 {
     *authn_level = rpc_c_authn_level_none;
     *stp = rpc_s_ok;
@@ -291,20 +262,12 @@ PRIVATE void rpc__noauth_mgt_inq_def
  */
 
 PRIVATE void rpc__noauth_srv_reg_auth 
-#ifdef _DCE_PROTO_
 (
         unsigned_char_p_t server_name,
         rpc_auth_key_retrieval_fn_t get_key_func,
         pointer_t arg,
         unsigned32 *stp
 )
-#else
-(server_name, get_key_func, arg, stp)
-    unsigned_char_p_t server_name;
-    rpc_auth_key_retrieval_fn_t get_key_func;
-    pointer_t arg;
-    unsigned32 *stp;
-#endif
 {
     *stp = rpc_s_ok;
 }
@@ -317,18 +280,11 @@ PRIVATE void rpc__noauth_srv_reg_auth
  */
 
 PRIVATE void rpc__noauth_inq_my_princ_name 
-#ifdef _DCE_PROTO_
 (
         unsigned32 name_size,
         unsigned_char_p_t name,
         unsigned32 *stp
 )
-#else
-(name_size, name, stp)
-    unsigned32 name_size;
-    unsigned_char_p_t name;
-    unsigned32 *stp;
-#endif
 {
     if (name_size > 0) {
         rpc__strncpy(name, (unsigned char *)"", name_size - 1);

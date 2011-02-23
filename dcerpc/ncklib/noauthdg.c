@@ -64,18 +64,11 @@ INTERNAL rpc_dg_auth_epv_t rpc_g_noauth_dg_epv =
  */
 
 PRIVATE void rpc__noauth_dg_encrypt
-#ifdef _DCE_PROTO_
 (
         rpc_auth_info_p_t               info,
         rpc_dg_xmitq_elt_p_t            xqe,
         unsigned32                      *st
 )
-#else
-(info, xqe, st)
-    rpc_auth_info_p_t               info;
-    rpc_dg_xmitq_elt_p_t            xqe;
-    unsigned32                      *st;
-#endif
 {
     *st = rpc_s_ok;
 }
@@ -88,7 +81,6 @@ PRIVATE void rpc__noauth_dg_encrypt
  */
 
 PRIVATE void rpc__noauth_dg_pre_send 
-#ifdef _DCE_PROTO_
 (
         rpc_auth_info_p_t info,
         rpc_dg_xmitq_elt_p_t pkt,
@@ -98,16 +90,6 @@ PRIVATE void rpc__noauth_dg_pre_send
         pointer_t cksum,
         error_status_t *st
 )
-#else
-(info, pkt, hdrp, iov, iovlen, cksum, st)
-    rpc_auth_info_p_t info;
-    rpc_dg_xmitq_elt_p_t pkt;
-    rpc_dg_pkt_hdr_p_t hdrp;
-    rpc_socket_iovec_p_t iov;
-    int iovlen;
-    pointer_t cksum;
-    error_status_t *st;
-#endif
 {
     *st = rpc_s_ok;
 }
@@ -119,20 +101,12 @@ PRIVATE void rpc__noauth_dg_pre_send
  */
 
 PRIVATE void rpc__noauth_dg_recv_ck 
-#ifdef _DCE_PROTO_
 (
         rpc_auth_info_p_t info,
         rpc_dg_recvq_elt_p_t pkt,
         pointer_t cksum,
         error_status_t *st
 )
-#else
-(info, pkt, cksum, st)
-    rpc_auth_info_p_t info;
-    rpc_dg_recvq_elt_p_t pkt;
-    pointer_t cksum;
-    error_status_t *st;
-#endif
 {
     *st = rpc_s_ok;
 }
@@ -144,18 +118,11 @@ PRIVATE void rpc__noauth_dg_recv_ck
  */
 
 PRIVATE void rpc__noauth_dg_pre_call 
-#ifdef _DCE_PROTO_
 (
         rpc_auth_info_p_t info,
         handle_t h,
         unsigned32 *st
 )
-#else
-(info, h, st)
-    rpc_auth_info_p_t info;
-    handle_t h;
-    unsigned32 *st;
-#endif
 {
     *st = rpc_s_ok;
 }
@@ -167,7 +134,6 @@ PRIVATE void rpc__noauth_dg_pre_call
  */
 
 PRIVATE void rpc__noauth_dg_way_handler 
-#ifdef _DCE_PROTO_
 (
         rpc_auth_info_p_t info,
         ndr_byte *in_data,
@@ -177,16 +143,6 @@ PRIVATE void rpc__noauth_dg_way_handler
         signed32 *out_len,
         unsigned32 *stp
 )
-#else
-(info, in_data, in_len, out_max_len, out_data, out_len, stp)
-    rpc_auth_info_p_t info;
-    ndr_byte *in_data;
-    signed32 in_len;
-    signed32 out_max_len;
-    ndr_byte *out_data;
-    signed32 *out_len;
-    unsigned32 *stp;
-#endif
 {
     sec_krb_message message;
     error_status_t st;
@@ -237,7 +193,6 @@ out:
  */
 
 PRIVATE void rpc__noauth_dg_who_are_you 
-#ifdef _DCE_PROTO_
 (
         rpc_auth_info_p_t info,
         handle_t h,
@@ -247,16 +202,6 @@ PRIVATE void rpc__noauth_dg_who_are_you
         dce_uuid_t *cas_uuid,
         unsigned32 *stp
 )
-#else
-(info, h, actuid, boot_time, seq, cas_uuid, stp)
-    rpc_auth_info_p_t info;
-    handle_t h;
-    dce_uuid_t *actuid;
-    unsigned32 boot_time;
-    unsigned32 *seq;
-    dce_uuid_t *cas_uuid;
-    unsigned32 *stp;
-#endif
 {
     rpc_noauth_info_p_t noauth_info = (rpc_noauth_info_p_t)info;
     unsigned char inbuf[12];    /* XXX size */
@@ -301,14 +246,9 @@ PRIVATE void rpc__noauth_dg_who_are_you
  */
 
 PRIVATE rpc_auth_info_p_t rpc__noauth_dg_create 
-#ifdef _DCE_PROTO_
 (
         unsigned32 *stp
 )
-#else
-(stp)
-    unsigned32 *stp;
-#endif
 {
     rpc_noauth_info_p_t noauth_info;
 
@@ -357,16 +297,10 @@ PRIVATE rpc_auth_info_p_t rpc__noauth_dg_create
  */
 
 PRIVATE rpc_protocol_id_t rpc__noauth_dg_init 
-#ifdef _DCE_PROTO_
 (
         rpc_auth_rpc_prot_epv_p_t       *epv,
         unsigned32                      *st
 )
-#else
-(epv, st)
-    rpc_auth_rpc_prot_epv_p_t       *epv;
-    unsigned32                      *st;
-#endif
 {
     *epv = (rpc_auth_rpc_prot_epv_p_t) (&rpc_g_noauth_dg_epv);
     *st = rpc_s_ok;

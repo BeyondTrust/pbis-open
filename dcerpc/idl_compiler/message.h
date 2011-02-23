@@ -47,13 +47,9 @@ void message_print(
 );
 
 void message_open(
-#ifdef PROTO
     char *image_name
-#endif
 );
 
 void message_close(
-#ifdef PROTO
     void
-#endif
 );

@@ -863,14 +863,9 @@ INTERNAL void init_once(void)
 **/
 
 INTERNAL boolean supported_naf 
-#ifdef _DCE_PROTO_
 (
     rpc_naf_id_elt_p_t      naf
 )
-#else
-(naf)
-rpc_naf_id_elt_p_t      naf;
-#endif
 {
     rpc_socket_basic_t            socket;
     rpc_socket_error_t      socket_error;
@@ -933,18 +928,11 @@ rpc_naf_id_elt_p_t      naf;
 **/
 
 INTERNAL boolean supported_interface 
-#ifdef _DCE_PROTO_
 (
     rpc_naf_id_t            naf,
     rpc_network_if_id_t     network_if,
     rpc_network_protocol_id_t network_protocol
 )
-#else
-(naf, network_if, network_protocol)
-rpc_naf_id_t            naf;
-rpc_network_if_id_t     network_if;
-rpc_network_protocol_id_t network_protocol;
-#endif
 {
     rpc_socket_basic_t            socket;
     rpc_socket_error_t      socket_error;
@@ -1002,14 +990,9 @@ rpc_network_protocol_id_t network_protocol;
 **/
 
 INTERNAL boolean protocol_is_compatible 
-#ifdef _DCE_PROTO_
 (
     rpc_protocol_id_elt_p_t rpc_protocol
 )
-#else
-(rpc_protocol)
-rpc_protocol_id_elt_p_t rpc_protocol;
-#endif
 {
     unsigned32              i;
     rpc_protseq_id_elt_p_t  rpc_protseq;
@@ -1065,14 +1048,9 @@ rpc_protocol_id_elt_p_t rpc_protocol;
 **/
 
 INTERNAL void thread_context_destructor 
-#ifdef _DCE_PROTO_
 (
     rpc_thread_context_p_t      ctx_value
 )
-#else
-(ctx_value)
-rpc_thread_context_p_t      ctx_value;
-#endif
 {
     RPC_MEM_FREE (ctx_value, RPC_C_MEM_THREAD_CONTEXT);
 }
@@ -1362,16 +1340,10 @@ INTERNAL void init_getenv_port_restriction (void)
 
 
 PRIVATE void rpc__set_port_restriction_from_string
-#ifdef _DCE_PROTO_
 (
  unsigned_char_p_t  input_string,
  unsigned32         *status
 )
-#else
-(input_string, status)
-unsigned_char_p_t  input_string;
-unsigned32         *status;
-#endif
 {
     unsigned_char_p_t       buf = NULL;
     unsigned_char_p_t       p;
@@ -1624,14 +1596,9 @@ cleanup_and_return:
 **--
 **/       
 PRIVATE void rpc__fork_handler
-#ifdef _DCE_PROTO_
 (
   rpc_fork_stage_id_t stage
 )
-#else
-(stage)
-rpc_fork_stage_id_t stage;
-#endif
 {   
     unsigned32 ctr;
     rpc_protocol_id_elt_p_t rpc_protocol;

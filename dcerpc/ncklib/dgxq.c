@@ -82,16 +82,10 @@ typedef struct {
  */
 
 PRIVATE boolean rpc__dg_xmitq_awaiting_ack_tmo
-#ifdef _DCE_PROTO_
 (
     rpc_dg_xmitq_p_t xq,
     unsigned32 com_timeout_knob
 )
-#else
-(xq, com_timeout_knob)
-rpc_dg_xmitq_p_t xq;
-unsigned32 com_timeout_knob;
-#endif
 {
     rpc_clock_t timestamp, wait_time;
     static com_timeout_params_t xq_com_timeout_params[] = {
@@ -141,18 +135,11 @@ INTERNAL void send_broadcast _DCE_PROTOTYPE_((
     ));
 
 INTERNAL void send_broadcast
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call,
     rpc_socket_iovec_p_t iov,
     int iovlen
 )
-#else
-(call, iov, iovlen)
-rpc_dg_call_p_t call;
-rpc_socket_iovec_p_t iov;
-int iovlen;
-#endif
 {
     unsigned32 st, j;
     rpc_socket_error_t serr;
@@ -223,18 +210,11 @@ int iovlen;
  */
 
 PRIVATE void rpc__dg_xmitq_elt_xmit
-#ifdef _DCE_PROTO_
 (
     rpc_dg_xmitq_elt_p_t xqe,
     rpc_dg_call_p_t call,                               
     boolean32 block
 )
-#else
-(xqe, call, block)
-rpc_dg_xmitq_elt_p_t xqe;
-rpc_dg_call_p_t call;                               
-boolean32 block;
-#endif
 {
     rpc_socket_iovec_t iov[RPC_C_DG_MAX_NUM_PKTS_IN_FRAG+1];
     int iovlen;
@@ -506,14 +486,9 @@ boolean32 block;
  */
 
 PRIVATE void rpc__dg_xmitq_init
-#ifdef _DCE_PROTO_
 (
     rpc_dg_xmitq_p_t xq
 )
-#else
-(xq)
-rpc_dg_xmitq_p_t xq;
-#endif
 {
     /*
      * Presumably the call is either locked or "private" at this point
@@ -553,14 +528,9 @@ rpc_dg_xmitq_p_t xq;
  */
 
 PRIVATE void rpc__dg_xmitq_reinit
-#ifdef _DCE_PROTO_
 (
     rpc_dg_xmitq_p_t xq
 )
-#else
-(xq)
-rpc_dg_xmitq_p_t xq;
-#endif
 {
     /*
      * Presumably the call is either locked or "private" at this point
@@ -597,16 +567,10 @@ rpc_dg_xmitq_p_t xq;
  */
 
 PRIVATE void rpc__dg_xmitq_free
-#ifdef _DCE_PROTO_
 (
     rpc_dg_xmitq_p_t xq,
     rpc_dg_call_p_t call
 )
-#else
-(xq, call)
-rpc_dg_xmitq_p_t xq;
-rpc_dg_call_p_t call;
-#endif
 {
     /*
      * presumably the call is either locked or 'private' at this point
@@ -639,16 +603,10 @@ rpc_dg_call_p_t call;
  */
 
 PRIVATE void rpc__dg_xmitq_append_pp
-#ifdef _DCE_PROTO_
 (
         rpc_dg_call_p_t call,
         unsigned32 *st
 )
-#else
-(call, st)
-    rpc_dg_call_p_t call;
-    unsigned32 *st;
-#endif
 {
     rpc_dg_xmitq_p_t xq = &call->xq;
     rpc_dg_xmitq_elt_p_t xqe = xq->part_xqe;
@@ -791,14 +749,9 @@ PRIVATE void rpc__dg_xmitq_append_pp
  */
 
 PRIVATE void rpc__dg_xmitq_restart
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call
 )
-#else
-(call)
-rpc_dg_call_p_t call;
-#endif
 {  
     rpc_dg_xmitq_p_t xq = &call->xq;
     rpc_dg_xmitq_elt_p_t xqe, tail = NULL;

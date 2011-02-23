@@ -161,7 +161,6 @@ INTERNAL void rpc__ep_mem_free _DCE_PROTOTYPE_ ((
 **/
 
 PUBLIC void rpc_ep_register 
-#ifdef _DCE_PROTO_
 (
     rpc_if_handle_t             ifspec,
     rpc_binding_vector_t        *binding_vec,
@@ -169,14 +168,6 @@ PUBLIC void rpc_ep_register
     unsigned_char_p_t           annotation,
     unsigned32                  *status
 )
-#else
-(ifspec, binding_vec, object_uuid_vec, annotation, status)
-rpc_if_handle_t             ifspec;
-rpc_binding_vector_t        *binding_vec;
-uuid_vector_t               *object_uuid_vec;
-unsigned_char_p_t           annotation;
-unsigned32                  *status;
-#endif
 {
     ep_register (ifspec, binding_vec, object_uuid_vec, annotation, true, status);
 }
@@ -227,7 +218,6 @@ unsigned32                  *status;
 **/
 
 PUBLIC void rpc_ep_register_no_replace 
-#ifdef _DCE_PROTO_
 (
     rpc_if_handle_t             ifspec,
     rpc_binding_vector_t        *binding_vec,
@@ -235,14 +225,6 @@ PUBLIC void rpc_ep_register_no_replace
     unsigned_char_p_t           annotation,
     unsigned32                  *status
 )
-#else
-(ifspec, binding_vec, object_uuid_vec, annotation, status)
-rpc_if_handle_t             ifspec;
-rpc_binding_vector_t        *binding_vec;
-uuid_vector_t               *object_uuid_vec;
-unsigned_char_p_t           annotation;
-unsigned32                  *status;
-#endif
 {
     ep_register (ifspec, binding_vec, object_uuid_vec, annotation, false, status);
 }
@@ -294,7 +276,6 @@ unsigned32                  *status;
 **/
 
 INTERNAL void ep_register 
-#ifdef _DCE_PROTO_
 (
     rpc_if_handle_t             ifspec,
     rpc_binding_vector_t        *binding_vec,
@@ -303,15 +284,6 @@ INTERNAL void ep_register
     boolean32                   replace,
     unsigned32                  *status
 )
-#else
-(ifspec, binding_vec, object_uuid_vec, annotation, replace, status)
-rpc_if_handle_t             ifspec;
-rpc_binding_vector_t        *binding_vec;
-uuid_vector_t               *object_uuid_vec;
-unsigned_char_p_t           annotation;
-boolean32                   replace;
-unsigned32                  *status;
-#endif
 {
     ept_entry_t                 *ept_entry;
     rpc_if_rep_p_t              if_rep = (rpc_if_rep_p_t) ifspec;
@@ -649,20 +621,12 @@ unsigned32                  *status;
 **/
 
 PUBLIC void rpc_ep_unregister 
-#ifdef _DCE_PROTO_
 (
     rpc_if_handle_t             ifspec,
     rpc_binding_vector_t        *binding_vec,
     uuid_vector_t               *object_uuid_vec,
     unsigned32                  *status
 )
-#else
-(ifspec, binding_vec, object_uuid_vec, status)
-rpc_if_handle_t             ifspec;
-rpc_binding_vector_t        *binding_vec;
-uuid_vector_t               *object_uuid_vec;
-unsigned32                  *status;
-#endif
 { 
     ept_entry_t                 *ept_entry;
     rpc_if_rep_p_t              if_rep = (rpc_if_rep_p_t) ifspec;
@@ -903,7 +867,6 @@ unsigned32                  *status;
 **/
 
 PUBLIC void rpc_mgmt_ep_elt_inq_begin 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    input_binding,
     unsigned32              inquiry_type,
@@ -913,16 +876,6 @@ PUBLIC void rpc_mgmt_ep_elt_inq_begin
     rpc_ep_inq_handle_t     *inquiry_context,
     unsigned32              *status
 )
-#else
-(input_binding, inquiry_type, if_id, vers_option, object_uuid, inquiry_context, status)
-rpc_binding_handle_t    input_binding;
-unsigned32              inquiry_type;
-rpc_if_id_p_t           if_id;
-unsigned32              vers_option;
-uuid_p_t                object_uuid;
-rpc_ep_inq_handle_t     *inquiry_context;
-unsigned32              *status;
-#endif
 {
     mgmt_ep_inq_rep_t       *chp;
     rpc_binding_handle_t    ep_binding;
@@ -1067,7 +1020,6 @@ unsigned32              *status;
 **--
 **/
 PUBLIC void rpc_mgmt_ep_elt_inq_next 
-#ifdef _DCE_PROTO_
 (
     rpc_ep_inq_handle_t       inquiry_context,
     rpc_if_id_t               *if_id,
@@ -1076,15 +1028,6 @@ PUBLIC void rpc_mgmt_ep_elt_inq_next
     unsigned_char_p_t         *annotation,
     unsigned32                *status
 )
-#else
-(inquiry_context, if_id, binding, object_uuid, annotation, status)
-rpc_ep_inq_handle_t       inquiry_context;
-rpc_if_id_t               *if_id;
-rpc_binding_handle_t      *binding;
-dce_uuid_t                    *object_uuid;
-unsigned_char_p_t         *annotation;
-unsigned32                *status;
-#endif
 {
     mgmt_ep_inq_rep_t       *chp;
     ept_entry_t             *entp;
@@ -1296,16 +1239,10 @@ unsigned32                *status;
 **/
 
 PUBLIC void rpc_mgmt_ep_elt_inq_done
-#ifdef _DCE_PROTO_
 (
     rpc_ep_inq_handle_t     *inquiry_context,
     unsigned32              *status
 )
-#else
-(inquiry_context, status)
-rpc_ep_inq_handle_t     *inquiry_context;
-unsigned32              *status;
-#endif
 {
     mgmt_ep_inq_rep_t       *chp; 
     ept_entry_t             *entp;
@@ -1382,7 +1319,6 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_mgmt_ep_unregister 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    input_binding,
     rpc_if_id_p_t           if_id,
@@ -1390,14 +1326,6 @@ PUBLIC void rpc_mgmt_ep_unregister
     dce_uuid_p_t                object_uuid,
     unsigned32              *status
 )
-#else
-(input_binding, if_id, binding, object_uuid, status)
-rpc_binding_handle_t    input_binding;
-rpc_if_id_p_t           if_id;
-rpc_binding_handle_t    binding;
-uuid_p_t                object_uuid;
-unsigned32              *status;
-#endif
 {
     rpc_binding_handle_t        ep_binding;
     rpc_tower_ref_vector_p_t    tower_vec;
@@ -1530,18 +1458,11 @@ unsigned32              *status;
 **/
 
 INTERNAL void get_ep_binding
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    input_binding,
     rpc_binding_handle_t    *output_binding,
     unsigned32              *status
 )
-#else
-(input_binding, output_binding, status)
-rpc_binding_handle_t    input_binding;
-rpc_binding_handle_t    *output_binding;
-unsigned32              *status;
-#endif
 {
     rpc_protseq_vector_t    *protseq_vector;
     unsigned_char_t         protseq_str[64];
@@ -1665,18 +1586,11 @@ unsigned32              *status;
 **--
 **/
 PRIVATE void rpc_binding_to_epmap
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    input_binding,
     rpc_binding_handle_t    *output_binding,
     unsigned32              *status
 )
-#else
-(input_binding, output_binding, status)
-rpc_binding_handle_t    input_binding;
-rpc_binding_handle_t    *output_binding;
-unsigned32              *status;
-#endif
 {
     get_ep_binding(input_binding, output_binding, status);
 }
@@ -1716,18 +1630,11 @@ unsigned32              *status;
 **/
 
 INTERNAL void tower_to_if_id
-#ifdef _DCE_PROTO_
 (
     twr_p_t         tower,
     rpc_if_id_t     *if_id,
     unsigned32      *status
 )
-#else
-(tower, if_id, status)
-twr_p_t         tower;
-rpc_if_id_t     *if_id;
-unsigned32      *status;
-#endif
 {
     rpc_tower_ref_t *tref;
     unsigned32      tmp_st;
@@ -1840,18 +1747,11 @@ unsigned32      *status;
 **/
 
 PUBLIC void rpc_ep_resolve_binding 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t  binding_h,
     rpc_if_handle_t       if_spec_h,
     unsigned32            *status
 )
-#else
-(binding_h, if_spec_h, status)
-rpc_binding_handle_t  binding_h;
-rpc_if_handle_t       if_spec_h;
-unsigned32            *status;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep = (rpc_binding_rep_p_t) binding_h;
     
@@ -1933,18 +1833,11 @@ unsigned32            *status;
 **/
 
 INTERNAL void ep_get_endpoint 
-#ifdef _DCE_PROTO_
 (
     rpc_if_rep_p_t          if_r,
     rpc_binding_rep_p_t     binding_r,
     unsigned32              *st
 )
-#else
-(if_r, binding_r, st)
-rpc_if_rep_p_t          if_r;
-rpc_binding_rep_p_t     binding_r;
-unsigned32              *st;
-#endif
 {
     unsigned32                  temp_status;
     unsigned_char_p_t           endpoint = NULL;
@@ -2529,14 +2422,9 @@ EXIT:
 **/
 
 INTERNAL idl_void_p_t rpc__ep_mem_alloc 
-#ifdef _DCE_PROTO_
 (
  idl_size_t           size
 )
-#else
-(size)
-     idl_size_t size;
-#endif
 {
     idl_void_p_t             ptr;
 
@@ -2583,14 +2471,9 @@ INTERNAL idl_void_p_t rpc__ep_mem_alloc
 **/
 
 INTERNAL void rpc__ep_mem_free 
-#ifdef _DCE_PROTO_
 (
   pointer_t            ptr
 )
-#else
-(ptr)
-pointer_t            ptr;
-#endif
 {
     RPC_MEM_FREE (ptr, RPC_C_MEM_TOWER);
 }

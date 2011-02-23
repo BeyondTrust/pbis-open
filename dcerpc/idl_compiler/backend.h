@@ -37,7 +37,6 @@
 */
 boolean BE_main
 (
-#ifdef PROTO
     boolean             *cmd_opt,   /* [in] array of cmd option flags */
     void                **cmd_val,  /* [in] array of cmd option values */
     FILE                *h_fid,     /* [in] header file handle, or NULL */
@@ -46,28 +45,21 @@ boolean BE_main
     FILE                *cstub_fid, /* [in] cstub file handle, or NULL */
     FILE                *sstub_fid, /* [in] sstub file handle, or NULL */
     AST_interface_n_t   *int_p      /* [in] ptr to interface node */
-#endif
 );
 
 void BE_push_malloc_ctx
 (
-#ifdef PROTO
       void
-#endif
 );
 
 void BE_push_perm_malloc_ctx
 (
-#ifdef PROTO
       void
-#endif
 );
 
 void BE_pop_malloc_ctx
 (
-#ifdef PROTO
       void
-#endif
 );
 
 heap_mem *BE_ctx_malloc

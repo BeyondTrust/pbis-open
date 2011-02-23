@@ -176,10 +176,8 @@ typedef struct
  * Necessary forward function declarations.
  */
 static void PROP_type_info(
-#ifdef PROTO
     AST_type_n_t        *type_p,         /* [in] Ptr to AST type node */
     prop_ctx_t          *ctx             /* [in,out] ptr prop context */
-#endif
 );
 
 /*
@@ -191,14 +189,9 @@ static void PROP_type_info(
 */
 
 static void type_visit
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
     visit_t             *visit_p;
@@ -221,14 +214,9 @@ static void type_visit
 */
 
 static void type_unvisit
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
     visit_t             *visit_p, *prev_p;
@@ -265,14 +253,9 @@ static void type_unvisit
 */
 
 static boolean type_visited
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
     visit_t             *visit_p;
@@ -294,11 +277,7 @@ static boolean type_visited
 */
 
 static void type_visit_free
-#ifdef PROTO
 (void)
-#else
-()
-#endif
 
 {
     visit_t             *visit_p;
@@ -334,14 +313,9 @@ static void type_visit_free
 */
 
 static void PROP_set_nf_cs_char_param
-#ifdef PROTO
 (
     AST_parameter_n_t   *cs_param_p     /* [in] Ptr to AST parameter node */
 )
-#else
-(cs_param_p)
-    AST_parameter_n_t   *cs_param_p;    /* [in] Ptr to AST parameter node */
-#endif
 
 {
     AST_operation_n_t   *op_p;
@@ -447,14 +421,9 @@ static void PROP_set_nf_cs_char_param
 */
 
 static void PROP_set_used_as_reg_fld_attr
-#ifdef PROTO
 (
     AST_instance_n_t    *inst_p         /* [in] Ptr to instance node */
 )
-#else
-(inst_p)
-    AST_instance_n_t    *inst_p;        /* [in] Ptr to instance node */
-#endif
 
 {
     AST_field_attr_n_t  *fattr_p;
@@ -512,16 +481,10 @@ static void PROP_set_used_as_reg_fld_attr
 */
 
 void PROP_set_type_attr
-#ifdef PROTO
 (
     AST_type_n_t *type_node_ptr,
     AST_flags_t  type_attr
 )
-#else
-(type_node_ptr, type_attr)
-    AST_type_n_t *type_node_ptr;
-    AST_flags_t  type_attr;
-#endif
 {
 
       /* Set the attribute on the type */
@@ -554,16 +517,10 @@ void PROP_set_type_attr
 */
 
 static void PROP_set_type_usage_attr
-#ifdef PROTO
 (
     AST_type_n_t *type_node_ptr,
     AST_flags_t  type_attr
 )
-#else
-(type_node_ptr, type_attr)
-    AST_type_n_t *type_node_ptr;
-    AST_flags_t  type_attr;
-#endif
 {
       if ((type_node_ptr->kind == AST_pointer_k) &&
          (type_node_ptr->type_structure.pointer->pointee_type->array_rep_type != NULL))
@@ -594,18 +551,11 @@ static void PROP_set_type_usage_attr
 */
 
 static void PROP_process_pa_type
-#ifdef PROTO
 (
     AST_type_n_t *type_node_ptr,
     AST_type_p_n_t **pa_types,
     prop_ctx_t          *ctx             /* [in,out] ptr prop context */
 )
-#else
-(type_node_ptr, pa_types, ctx)
-    AST_type_n_t *type_node_ptr;
-    AST_type_p_n_t **pa_types;
-    prop_ctx_t          *ctx;            /* [in,out] ptr prop context */
-#endif
 {
     AST_type_p_n_t *tp_node; /* type pointer node to link on chain */
 
@@ -706,14 +656,9 @@ static void PROP_process_pa_type
 */
 
 void PROP_process_up_type
-#ifdef PROTO
 (
     AST_type_n_t *type_node_ptr
 )
-#else
-(type_node_ptr)
-    AST_type_n_t *type_node_ptr;
-#endif
 {
     AST_type_p_n_t *tp_node; /* type pointer node to link on chain */
 
@@ -740,14 +685,9 @@ void PROP_process_up_type
 */
 
 static boolean type_contains_context
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
 
@@ -864,14 +804,9 @@ static boolean type_contains_context
 */
 
 static boolean type_contains_ool
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
 
@@ -994,14 +929,9 @@ static boolean type_contains_ool
 */
 
 static boolean type_contains_conformant
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
     AST_field_n_t       *field_p;       /* A field in the structure */
@@ -1065,7 +995,6 @@ static boolean type_contains_conformant
         return
 
 static void type_prop_param
-#ifdef PROTO
 (
     AST_parameter_n_t   *param_p,       /* [in] Ptr to AST parameter node */
     AST_type_n_t        *type_p,        /* [in] Ptr to AST type node */
@@ -1073,14 +1002,6 @@ static void type_prop_param
     boolean             string_set,     /* [in] TRUE => [string] on instance */
     boolean             non_ref         /* [in] TRUE => not [ref] on instance */
 )
-#else
-(param_p, type_p, fattr_p, string_set, non_ref)
-    AST_parameter_n_t   *param_p;       /* [in] Ptr to AST parameter node */
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-    AST_field_attr_n_t  *fattr_p;       /* [in] Field attributes on instance */
-    boolean             string_set;     /* [in] TRUE => [string] on instance */
-    boolean             non_ref;        /* [in] TRUE => not [ref] on instance */
-#endif
 
 {
     /*
@@ -1246,7 +1167,6 @@ static void type_prop_param
 }
 
 static void prop_pointer_types
-#ifdef PROTO
 (
     AST_type_n_t        *type_p,        /* [in] Ptr to AST type node */
     boolean             *ptr,           /*[out] TRUE => contains ptr */
@@ -1254,14 +1174,6 @@ static void prop_pointer_types
     boolean             *unique,        /*[out] TRUE => contains unique ptr */
     boolean             *full           /*[out] TRUE => contains full ptr */
 )
-#else
-(type_p, ptr, ref, unique, full)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-    boolean             *ptr;           /*[out] TRUE => contains ptr */
-    boolean             *ref;           /*[out] TRUE => contains ref ptr */
-    boolean             *unique;        /*[out] TRUE => contains unique ptr */
-    boolean             *full;          /*[out] TRUE => contains full ptr */
-#endif
 
 {
     boolean             c_ptr;          /* Contained type has ptr */
@@ -1394,16 +1306,10 @@ static void prop_pointer_types
 */
 
 static void PROP_type_info_OR
-#ifdef PROTO
 (
     prop_ctx_t  *dst_ctx,       /* [io] Destination propagation context */
     prop_ctx_t  *src_ctx        /* [in] Source propagation context */
 )
-#else
-(dst_ctx, src_ctx)
-    prop_ctx_t  *dst_ctx;       /* [io] Destination propagation context */
-    prop_ctx_t  *src_ctx;       /* [in] Source propagation context */
-#endif
 
 {
     dst_ctx->toplevel_ref_param |= src_ctx->toplevel_ref_param;
@@ -1436,16 +1342,10 @@ static void PROP_type_info_OR
 */
 
 static void PROP_type_union
-#ifdef PROTO
 (
     AST_type_n_t        *type_p,         /* [in] Ptr to AST type node */
     prop_ctx_t          *ctx             /* [in,out] ptr prop context */
 )
-#else
-(type_p, ctx)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-    prop_ctx_t          *ctx;           /* [in,out] ptr prop context */
-#endif
 
 {
     AST_disc_union_n_t  *union_p;   /* Ptr to discriminated union node */
@@ -1498,16 +1398,10 @@ static void PROP_type_union
 */
 
 static void PROP_type_struct
-#ifdef PROTO
 (
     AST_type_n_t        *type_p,         /* [in] Ptr to AST type node */
     prop_ctx_t          *ctx             /* [in,out] ptr prop context */
 )
-#else
-(type_p, ctx)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-    prop_ctx_t          *ctx;           /* [in,out] ptr prop context */
-#endif
 
 {
     AST_structure_n_t   *struct_p;  /* Ptr to structure node */
@@ -1579,16 +1473,10 @@ static void PROP_type_struct
 */
 
 static void PROP_type_info
-#ifdef PROTO
 (
     AST_type_n_t        *type_p,         /* [in] Ptr to AST type node */
     prop_ctx_t          *ctx             /* [in,out] ptr prop context */
 )
-#else
-(type_p, ctx)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-    prop_ctx_t          *ctx;             /* [in,out] ptr prop context */
-#endif
 
 {
     boolean toplevel_ref_param;           /* Local copy of ctx->toplevel_ref_param */
@@ -2177,7 +2065,6 @@ static void PROP_type_info
 */
 
 static void type_process_in_out_attrs
-#ifdef PROTO
 (
     AST_type_n_t        *type_p,        /* [in] Ptr to AST type node */
     boolean             set_in,         /* [in] TRUE => set [in] */
@@ -2185,14 +2072,6 @@ static void type_process_in_out_attrs
     boolean             set_out_pa_ref, /* [in] TRUE => set [out_pa_ref] */
     boolean             varying         /* [in] TRUE => set varying flags */
 )
-#else
-(type_p, set_in, set_out, set_out_pa_ref, varying)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-    boolean             set_in;         /* [in] TRUE => set [in] */
-    boolean             set_out;        /* [in] TRUE => set [out] */
-    boolean             set_out_pa_ref; /* [in] TRUE => set [out_pa_ref] */
-    boolean             varying;        /* [in] TRUE => set varying */
-#endif
 
 {
     /*
@@ -2348,14 +2227,9 @@ static void type_process_in_out_attrs
 */
 
 static boolean type_contains_mutable
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
 
@@ -2468,14 +2342,9 @@ static boolean type_contains_mutable
 */
 
 static boolean type_contains_pointer
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
 
@@ -2578,14 +2447,9 @@ static boolean type_contains_pointer
 */
 
 static void type_prop_conformant
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
     visited_list = NULL;                /* Init the visited list */
@@ -2609,14 +2473,9 @@ static void type_prop_conformant
 */
 
 static void type_prop_up_to_param
-#ifdef PROTO
 (
     AST_parameter_n_t   *param_p        /* [in] Ptr to AST parameter node */
 )
-#else
-(param_p)
-    AST_parameter_n_t   *param_p;       /* [in] Ptr to AST parameter node */
-#endif
 
 {
     AST_type_n_t        *type_p;        /* Parameter data type */
@@ -2650,14 +2509,9 @@ static void type_prop_up_to_param
 */
 
 static boolean type_has_mutable
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
     boolean has_mutable;
@@ -2686,14 +2540,9 @@ static boolean type_has_mutable
 */
 
 static boolean type_has_pointer
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
     boolean has_pointer;
@@ -2717,14 +2566,9 @@ static boolean type_has_pointer
 */
 
 static void type_prop_ptr_attrs
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
     boolean             ptr;            /* Type has pointer */
@@ -2754,20 +2598,12 @@ static void type_prop_ptr_attrs
 
 
 static void type_prop_in_out_attrs
-#ifdef PROTO
 (
     AST_type_n_t        *type_p,        /* [in] Ptr to AST type node */
     boolean             in,             /* [in] true if in */
     boolean             out,            /* [in] true if out */
     boolean             varying         /* [in] true if varying */
 )
-#else
-(type_p, in, out, varying)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-    boolean             in;             /* [in] true if in */
-    boolean             out;            /* [in] true if out */
-    boolean             varying;        /* [in] true if varying */
-#endif
 
 {
     if (!in && !out && !AST_OUT_PA_REF_SET(type_p))
@@ -2796,14 +2632,9 @@ static void type_prop_in_out_attrs
 */
 
 static boolean type_has_context
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
     boolean has_context;
@@ -2829,14 +2660,9 @@ static boolean type_has_context
 */
 
 static boolean type_has_ool
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
     boolean has_ool;
@@ -2860,14 +2686,9 @@ static boolean type_has_ool
 */
 
 static NAMETABLE_id_t *type_get_tag_name_addr
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
     switch (type_p->kind)
@@ -2892,14 +2713,9 @@ static NAMETABLE_id_t *type_get_tag_name_addr
 */
 
 static void type_prop_to_instance
-#ifdef PROTO
 (
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(type_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 
 {
     switch (type_p->kind)
@@ -2957,18 +2773,11 @@ static void type_prop_to_instance
 */
 
 static void type_prop
-#ifdef PROTO
 (
     AST_type_n_t        *type_p,        /* [in] Ptr to AST type node */
     AST_interface_n_t   *int_p,         /* [in] Ptr to interface node */
     AST_interface_n_t   *parent_int_p   /* [in] Parent interface node */
 )
-#else
-(type_p, int_p, parent_int_p)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-    AST_interface_n_t   *int_p;         /* [in] Ptr to interface node */
-    AST_interface_n_t   *parent_int_p;  /* [in] Parent interface node */
-#endif
 
 {
     prop_ctx_t          ctx;           /* context during propagation */
@@ -3123,18 +2932,11 @@ static void type_prop
 */
 
 static void param_prop
-#ifdef PROTO
 (
     AST_parameter_n_t   *param_p,       /* [in] Ptr to AST parameter node */
     AST_operation_n_t   *op_p,          /* [in] Ptr to operation node */
     AST_interface_n_t   *int_p          /* [in] Ptr to interface node */
 )
-#else
-(param_p, op_p, int_p)
-    AST_parameter_n_t   *param_p;       /* [in] Ptr to AST parameter node */
-    AST_operation_n_t   *op_p;          /* [in] Ptr to operation node */
-    AST_interface_n_t   *int_p;         /* [in] Ptr to interface node */
-#endif
 
 {
     AST_type_n_t        *top_type_p;    /* Top-level parameter type */
@@ -3409,14 +3211,9 @@ static void param_prop
 */
 
 static void op_add_binding_handle_param
-#ifdef PROTO
 (
     AST_operation_n_t   *op_p           /* [in] Ptr to AST operation node */
 )
-#else
-(op_p)
-    AST_operation_n_t   *op_p;          /* [in] Ptr to AST operation node */
-#endif
 
 {
     NAMETABLE_id_t      new_param_id;   /* Nametable id of new parameter name */
@@ -3453,14 +3250,9 @@ static void op_add_binding_handle_param
 */
 
 static void PROP_auto_heap
-#ifdef PROTO
 (
     AST_operation_n_t   *op_p          /* [in] Ptr to AST operation node */
 )
-#else
-(op_p)
-    AST_operation_n_t   *op_p;          /* [in] Ptr to AST operation node */
-#endif
 
 {
     AST_parameter_n_t   *param_p;       /* A parameter in the operation */
@@ -3523,16 +3315,10 @@ static void PROP_auto_heap
 */
 
 static void operation_prop
-#ifdef PROTO
 (
     AST_operation_n_t   *op_p,          /* [in] Ptr to AST operation node */
     AST_interface_n_t   *int_p          /* [in] Ptr to interface node */
 )
-#else
-(op_p, int_p)
-    AST_operation_n_t   *op_p;          /* [in] Ptr to AST operation node */
-    AST_interface_n_t   *int_p;         /* [in] Ptr to interface node */
-#endif
 
 {
     AST_parameter_n_t   *param_p;       /* A parameter in the operation */
@@ -3660,18 +3446,11 @@ static void operation_prop
 */
 
 static void export_prop
-#ifdef PROTO
 (
     AST_export_n_t      *export_p,      /* [in] Ptr to AST export node */
     AST_interface_n_t   *int_p,         /* [in] Ptr to interface node */
     AST_interface_n_t   *parent_int_p   /* [in] Parent interface node */
 )
-#else
-(export_p, int_p, parent_int_p)
-    AST_export_n_t      *export_p;      /* [in] Ptr to AST export node */
-    AST_interface_n_t   *int_p;         /* [in] Ptr to interface node */
-    AST_interface_n_t   *parent_int_p;  /* [in] Parent interface node */
-#endif
 
 {
     switch (export_p->kind)
@@ -3701,16 +3480,10 @@ static void export_prop
 */
 
 static void interface_prop
-#ifdef PROTO
 (
     AST_interface_n_t   *int_p,         /* [in] Ptr to interface node */
     AST_interface_n_t   *parent_int_p   /* [in] Parent interface node */
 )
-#else
-(int_p, parent_int_p)
-    AST_interface_n_t   *int_p;         /* [in] Ptr to interface node */
-    AST_interface_n_t   *parent_int_p;  /* [in] Parent interface node */
-#endif
 
 {
     AST_export_n_t      *export_p;      /* Ptr to export node */
@@ -3775,9 +3548,7 @@ static void interface_prop
 }
 
 static AST_type_p_n_t *PROP_remove_type_p(
-#ifdef PROTO
 AST_type_p_n_t **list_root, AST_type_p_n_t *type_p, AST_type_p_n_t *prev_type_p
-#endif
 );
 /*
 **
@@ -3788,14 +3559,7 @@ AST_type_p_n_t **list_root, AST_type_p_n_t *type_p, AST_type_p_n_t *prev_type_p
 **  to the one removed.
 */
 static AST_type_p_n_t *PROP_remove_type_p
-#ifdef PROTO
 (AST_type_p_n_t **list_root, AST_type_p_n_t *type_p, AST_type_p_n_t *prev_type_p)
-#else
-(list_root, type_p, prev_type_p)
-    AST_type_p_n_t **list_root;
-    AST_type_p_n_t *type_p;
-    AST_type_p_n_t *prev_type_p;
-#endif
 {
     /* If removing the head of the list */
     if (*list_root == type_p)
@@ -3856,13 +3620,7 @@ static AST_type_p_n_t *PROP_remove_type_p
 */
 
 static void     PROP_post_filter_types_list
-#ifdef PROTO
 (AST_type_p_n_t **list_root, boolean filter_xmit_as ATTRIBUTE_UNUSED)
-#else
-(list_root, filter_xmit_as)
-    AST_type_p_n_t **list_root;
-    boolean filter_xmit_as;
-#endif
 {
     AST_type_p_n_t    *cp;      /* Current type being processed */
     AST_type_p_n_t    *pcp;     /* pointer to type previous current being compared */
@@ -3996,18 +3754,11 @@ restart: /* If the current node is removed from the list, recheck new current */
 */
 
 static void type_add_type_to_sp_list
-#ifdef PROTO
 (
     AST_type_n_t        *type_node_ptr, /* [in] Ptr to AST type node */
     AST_type_p_n_t      **types_list,   /* [in,out] Ptr to AST type list */
     AST_type_n_t        *parent_type_ptr ATTRIBUTE_UNUSED    /* [in] Ptr to parent type node */
 )
-#else
-(type_node_ptr, types_list, parent_type_ptr)
-    AST_type_n_t        *type_node_ptr;  /* [in] Ptr to AST type node */
-    AST_type_p_n_t      **types_list;    /* [in,out] Ptr to AST type list */
-    AST_type_n_t        *parent_type_ptr;  /* [in] Ptr to parent type node */
-#endif
 
 {
     AST_type_p_n_t    *tp;      /* Current type being processed */
@@ -4077,16 +3828,10 @@ static void type_add_type_to_sp_list
 */
 
 static void type_find_pa_types
-#ifdef PROTO
 (
     AST_type_n_t        *type_p,         /* [in] Ptr to AST type node */
     AST_type_p_n_t      **types_list    /* [in] Ptr to AST type list */
 )
-#else
-(type_p, types_list)
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-    AST_type_p_n_t      **types_list;    /* [in] Ptr to AST type list */
-#endif
 
 {
     /* if the type has already been visited then nothing to do. */
@@ -4206,13 +3951,7 @@ static void type_find_pa_types
 */
 
 static void     PROP_contained_pa_to_sp_list
-#ifdef PROTO
 (AST_type_p_n_t **types_list,AST_type_p_n_t **dest_list)
-#else
-(types_list,dest_list)
-    AST_type_p_n_t **types_list;
-    AST_type_p_n_t **dest_list;
-#endif
 {
     AST_type_p_n_t    *cp;      /* Current type being processed */
     AST_type_p_n_t    *contained_pa_types = NULL;
@@ -4243,16 +3982,10 @@ static void     PROP_contained_pa_to_sp_list
 */
 
 static void types_list_prop
-#ifdef PROTO
 (
     AST_type_p_n_t      *typep_p,       /* [in] Listhead for types list */
     AST_interface_n_t   *int_p          /* [in] Ptr to interface node */
 )
-#else
-(typep_p, int_p)
-    AST_type_p_n_t      *typep_p;       /* [in] Listhead for types list */
-    AST_interface_n_t   *int_p;         /* [in] Ptr to interface node */
-#endif
 
 {
     AST_type_n_t        *type_p;        /* Ptr to a type node */
@@ -4292,18 +4025,11 @@ static void types_list_prop
 */
 
 boolean PROP_main               /* Returns TRUE on success */
-#ifdef PROTO
 (
     boolean     *cmd_opt_arr,   /* [in] Array of command option flags */
     void        **cmd_val_arr,  /* [in] Array of command option values */
     AST_interface_n_t *int_p    /* [in] Ptr to AST interface node */
 )
-#else
-(cmd_opt_arr, cmd_val_arr, int_p)
-    boolean     *cmd_opt_arr;   /* [in] Array of command option flags */
-    void        **cmd_val_arr;  /* [in] Array of command option values */
-    AST_interface_n_t *int_p;   /* [in] Ptr to AST interface node */
-#endif
 
 {
     /* Save passed command array addresses in static storage. */

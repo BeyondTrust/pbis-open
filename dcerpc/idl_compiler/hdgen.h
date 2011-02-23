@@ -47,19 +47,15 @@ void BE_gen_c_header(
 
 void CSPELL_type_def
 (
-#ifdef PROTO
     FILE *fid,
     AST_type_n_t *tp,
     boolean spell_tag
-#endif
 );
 
 char *mapchar
 (
-#ifdef PROTO
     AST_constant_n_t *cp,   /* Constant node with kind == AST_char_const_k */
     boolean warning_flag    /* TRUE => log warning on nonportable escape char */
-#endif
 );
 int BE_is_handle_param(AST_parameter_n_t * p);
 enum orpc_class_def_type { class_def, proxy_def, stub_def };

@@ -137,14 +137,9 @@ INTERNAL void rpc__auth_info_cache_remove _DCE_PROTOTYPE_ ((
 **/
 
 PRIVATE boolean32 rpc__auth_inq_supported 
-#ifdef _DCE_PROTO_
 (
   rpc_authn_protocol_id_t         authn_prot_id
 )
-#else
-(authn_prot_id)
-rpc_authn_protocol_id_t         authn_prot_id;
-#endif
 {
     return (RPC_AUTHN_INQ_SUPPORTED(authn_prot_id));
 }
@@ -186,16 +181,10 @@ rpc_authn_protocol_id_t         authn_prot_id;
 **/
 
 PRIVATE unsigned32 rpc__auth_cvt_id_api_to_wire 
-#ifdef _DCE_PROTO_
 (
   rpc_authn_protocol_id_t api_authn_prot_id,
   unsigned32              *status
 )
-#else
-(api_authn_prot_id, status)
-rpc_authn_protocol_id_t api_authn_prot_id;
-unsigned32              *status;
-#endif
 {
     if (! RPC_AUTHN_IN_RANGE(api_authn_prot_id) || 
         ! RPC_AUTHN_INQ_SUPPORTED(api_authn_prot_id))
@@ -245,16 +234,10 @@ unsigned32              *status;
 **/
 
 PRIVATE rpc_authn_protocol_id_t rpc__auth_cvt_id_wire_to_api 
-#ifdef _DCE_PROTO_
 (
   unsigned32      wire_authn_prot_id,
   unsigned32      *status
 )
-#else
-(wire_authn_prot_id, status)
-unsigned32      wire_authn_prot_id;
-unsigned32      *status;
-#endif
 {
     rpc_authn_protocol_id_t authn_protocol;
 
@@ -318,16 +301,10 @@ unsigned32      *status;
 **/
 
 PRIVATE rpc_auth_rpc_prot_epv_t *rpc__auth_rpc_prot_epv
-#ifdef _DCE_PROTO_
 (
   rpc_authn_protocol_id_t authn_prot_id,
   rpc_protocol_id_t       rpc_prot_id
 )
-#else
-(authn_prot_id, rpc_prot_id)  
-rpc_authn_protocol_id_t authn_prot_id;
-rpc_protocol_id_t       rpc_prot_id;
-#endif
 {
     return (RPC_AUTHN_INQ_RPC_PROT_EPV(authn_prot_id,rpc_prot_id));
 }
@@ -364,14 +341,9 @@ rpc_protocol_id_t       rpc_prot_id;
 **/
 
 PRIVATE void rpc__auth_info_reference
-#ifdef _DCE_PROTO_
 (
   rpc_auth_info_p_t   auth_info
 )
-#else
-(auth_info)  
-rpc_auth_info_p_t   auth_info;
-#endif
 {
 #ifdef DEBUG
     char *info_type = auth_info->is_server?"server":"client";
@@ -420,14 +392,9 @@ rpc_auth_info_p_t   auth_info;
 **/
 
 PRIVATE void rpc__auth_info_binding_release
-#ifdef _DCE_PROTO_
 (
   rpc_binding_rep_p_t     binding_rep
 )
-#else
-(binding_rep)
-rpc_binding_rep_p_t     binding_rep;
-#endif
 {
     rpc__auth_info_release (&binding_rep->auth_info);
 }
@@ -466,14 +433,9 @@ rpc_binding_rep_p_t     binding_rep;
 **/
 
 PRIVATE void rpc__auth_info_release
-#ifdef _DCE_PROTO_
 (
  rpc_auth_info_p_t       *info
 )
-#else
-(info)
-rpc_auth_info_p_t       *info;
-#endif
 {
     rpc_auth_info_p_t auth_info = *info;
     char *info_type;
@@ -561,14 +523,9 @@ rpc_auth_info_p_t       *info;
 **/
 
 PRIVATE void rpc__key_info_reference
-#ifdef _DCE_PROTO_
 (
   rpc_key_info_p_t   key_info
 )
-#else
-(key_info)  
-rpc_key_info_p_t   key_info;
-#endif
 {
     RPC_DBG_PRINTF(rpc_e_dbg_auth, 3, ("(rpc__key_info_reference) %x: bumping %s refcnt (was %d, now %d)\n",
         key_info,
@@ -612,14 +569,9 @@ rpc_key_info_p_t   key_info;
 **/
 
 PRIVATE void rpc__key_info_release
-#ifdef _DCE_PROTO_
 (
   rpc_key_info_p_t       *info
 )
-#else
-(info)
-rpc_key_info_p_t       *info;
-#endif
 {
     rpc_key_info_p_t key_info = *info;
     
@@ -687,20 +639,12 @@ rpc_key_info_p_t       *info;
 **/
 
 PRIVATE void rpc__auth_inq_my_princ_name
-#ifdef _DCE_PROTO_
 (
   unsigned32              dce_rpc_authn_protocol,
   unsigned32              princ_name_size,
   unsigned_char_p_t       princ_name,
   unsigned32              *st
 )
-#else
-(dce_rpc_authn_protocol, princ_name_size, princ_name, st)
-unsigned32              dce_rpc_authn_protocol;
-unsigned32              princ_name_size;
-unsigned_char_p_t       princ_name;
-unsigned32              *st;
-#endif
 {
     rpc_authn_protocol_id_t authn_protocol;
 
@@ -762,7 +706,6 @@ unsigned32              *st;
 **/
 
 PUBLIC void rpc_binding_set_auth_info 
-#ifdef _DCE_PROTO_
 (
   rpc_binding_handle_t    binding_h,
   unsigned_char_p_t       server_princ_name,
@@ -772,17 +715,6 @@ PUBLIC void rpc_binding_set_auth_info
   unsigned32              authz_protocol,
   unsigned32              *st
 )
-#else
-(binding_h, server_princ_name, authn_level, authn_protocol, 
- auth_identity, authz_protocol, st)
-rpc_binding_handle_t    binding_h;
-unsigned_char_p_t       server_princ_name;
-unsigned32              authn_level;
-unsigned32              authn_protocol;  
-rpc_auth_identity_handle_t auth_identity;
-unsigned32              authz_protocol;
-unsigned32              *st;
-#endif
 {
     rpc_auth_identity_handle_t ref_auth_identity;
     rpc_auth_info_p_t       auth_info;
@@ -990,7 +922,6 @@ unsigned32              *st;
 **/
 
 PUBLIC void rpc_binding_inq_auth_info
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned_char_p_t       *server_princ_name,
@@ -1000,17 +931,6 @@ PUBLIC void rpc_binding_inq_auth_info
     unsigned32              *authz_protocol,
     unsigned32              *st
     )
-#else
-(binding_h, server_princ_name, authn_level, authn_protocol, 
-     auth_identity, authz_protocol, st)
-rpc_binding_handle_t    binding_h;
-unsigned_char_p_t       *server_princ_name;
-unsigned32              *authn_level;
-unsigned32              *authn_protocol;  
-rpc_auth_identity_handle_t *auth_identity;
-unsigned32              *authz_protocol;
-unsigned32              *st;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep = (rpc_binding_rep_p_t) binding_h;
     rpc_auth_info_p_t       auth_info;
@@ -1088,7 +1008,6 @@ unsigned32              *st;
 **/
 
 PUBLIC void rpc_server_register_auth_info 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_p_t       server_princ_name,
     unsigned32              authn_protocol,
@@ -1096,14 +1015,6 @@ PUBLIC void rpc_server_register_auth_info
     ndr_void_p_t            arg,
     unsigned32              *st
 )
-#else
-(server_princ_name, authn_protocol, get_key_func, arg, st)
-unsigned_char_p_t       server_princ_name;
-unsigned32              authn_protocol;
-rpc_auth_key_retrieval_fn_t get_key_func;
-ndr_void_p_t            arg;
-unsigned32              *st;
-#endif
 {
     CODING_ERROR (st);
     RPC_VERIFY_INIT ();
@@ -1177,7 +1088,6 @@ unsigned32              *st;
 
 PUBLIC void rpc_binding_inq_auth_client
     
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     rpc_authz_handle_t      *privs,
@@ -1187,17 +1097,6 @@ PUBLIC void rpc_binding_inq_auth_client
     unsigned32              *authz_protocol,
     unsigned32              *st
 )
-#else
-(binding_h, privs, server_princ_name, authn_level, 
-     authn_protocol, authz_protocol, st)
-rpc_binding_handle_t    binding_h;
-rpc_authz_handle_t      *privs;
-unsigned_char_p_t       *server_princ_name;
-unsigned32              *authn_level;
-unsigned32              *authn_protocol;
-unsigned32              *authz_protocol;
-unsigned32              *st;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep = (rpc_binding_rep_p_t) binding_h;
     rpc_auth_info_p_t       auth_info;
@@ -1290,7 +1189,6 @@ unsigned32              *st;
 
 PUBLIC void rpc_binding_inq_auth_caller
 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     rpc_authz_cred_handle_t *creds,
@@ -1300,17 +1198,6 @@ PUBLIC void rpc_binding_inq_auth_caller
     unsigned32              *authz_protocol,
     unsigned32              *st
 )
-#else
-(binding_h, creds, server_princ_name, authn_level, 
-     authn_protocol, authz_protocol, st)
-rpc_binding_handle_t    binding_h;
-rpc_authz_cred_handle_t *creds;
-unsigned_char_p_t       *server_princ_name;
-unsigned32              *authn_level;
-unsigned32              *authn_protocol;
-unsigned32              *authz_protocol;
-unsigned32              *st;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep = (rpc_binding_rep_p_t) binding_h;
     rpc_auth_info_p_t       auth_info;
@@ -1390,18 +1277,11 @@ unsigned32              *st;
 **/
 
 PUBLIC void rpc_mgmt_inq_dflt_protect_level 
-#ifdef _DCE_PROTO_
 (
     unsigned32              authn_protocol,
     unsigned32              *authn_level,
     unsigned32              *st
 )
-#else
-(authn_protocol, authn_level, st)
-unsigned32              authn_protocol;
-unsigned32              *authn_level;
-unsigned32              *st;
-#endif
 {
     CODING_ERROR (st);
     RPC_VERIFY_INIT ();
@@ -1425,18 +1305,11 @@ unsigned32              *st;
  */
 
 PUBLIC void rpc_mgmt_inq_dflt_authn_level 
-#ifdef _DCE_PROTO_
 (
   unsigned32              authn_protocol,
   unsigned32              *authn_level,
   unsigned32              *st
 )
-#else
-(authn_protocol, authn_level, st)
-unsigned32              authn_protocol;
-unsigned32              *authn_level;
-unsigned32              *st;
-#endif
 {
     rpc_mgmt_inq_dflt_protect_level (authn_protocol, authn_level, st);
 }
@@ -1474,14 +1347,9 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__auth_info_cache_init 
-#ifdef _DCE_PROTO_
 (
   unsigned32      *status
 )
-#else
-(status)
-unsigned32      *status;
-#endif
 {
     CODING_ERROR (status);
 
@@ -1538,7 +1406,6 @@ unsigned32      *status;
 **/
 
 INTERNAL rpc_auth_info_t *rpc__auth_info_cache_lkup 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_p_t                   server_princ_name,
     rpc_authn_level_t                   authn_level,
@@ -1546,14 +1413,6 @@ INTERNAL rpc_auth_info_t *rpc__auth_info_cache_lkup
     rpc_authz_protocol_id_t             authz_protocol,
     rpc_authn_protocol_id_t             authn_protocol
 )
-#else
-(server_princ_name, authn_level, auth_identity, authz_protocol, authn_protocol)
-unsigned_char_p_t                   server_princ_name;
-rpc_authn_level_t                   authn_level;
-rpc_auth_identity_handle_t          auth_identity;
-rpc_authz_protocol_id_t             authz_protocol;
-rpc_authn_protocol_id_t             authn_protocol;
-#endif
 {
     rpc_auth_info_t     *auth_info;
 
@@ -1643,14 +1502,9 @@ rpc_authn_protocol_id_t             authn_protocol;
 **/
 
 INTERNAL void rpc__auth_info_cache_add 
-#ifdef _DCE_PROTO_
 (
   rpc_auth_info_p_t auth_info
 )
-#else
-(auth_info)
-rpc_auth_info_p_t auth_info;
-#endif
 {
     assert (!auth_info->is_server);
 
@@ -1701,14 +1555,9 @@ rpc_auth_info_p_t auth_info;
 **/
 
 INTERNAL void rpc__auth_info_cache_remove 
-#ifdef _DCE_PROTO_
 (
   rpc_auth_info_p_t       auth_info
 )
-#else
-(auth_info)
-rpc_auth_info_p_t       auth_info;
-#endif
 {
     char *info_type;
 
@@ -1773,18 +1622,11 @@ rpc_auth_info_p_t       auth_info;
 
 PUBLIC void rpc_server_inq_call_attributes
 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     rpc_call_attributes_t   *attributes,
     unsigned32              *st
 )
-#else
-(binding_h, attributes, st)
-rpc_binding_handle_t    binding_h;
-rpc_call_attributes_t   *attributes;
-unsigned32              *st;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep = (rpc_binding_rep_p_t) binding_h;
     rpc_auth_info_p_t       auth_info;
@@ -1882,20 +1724,12 @@ unsigned32              *st;
 **/
 
 PUBLIC void rpc_binding_inq_security_context
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned32              *authn_protocol,  
     void                    **mech_context,
     unsigned32              *st
     )
-#else
-(binding_h, authn_protocol, mech_context, st)
-rpc_binding_handle_t    binding_h;
-unsigned32              *authn_protocol;  
-void                    **mech_context;
-unsigned32              *st;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep = (rpc_binding_rep_p_t) binding_h;
     rpc_auth_info_p_t       auth_info;

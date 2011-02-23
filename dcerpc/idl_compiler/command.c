@@ -232,11 +232,7 @@ OPTIONS option_table[]={
 **  Explains command line arguments.
 */
 
-#ifdef PROTO
 void CMD_explain_args(void)
-#else
-void CMD_explain_args()
-#endif
 
 {
     message_print(NIDL_USAGE);
@@ -262,18 +258,11 @@ void CMD_explain_args()
 */
 
 static int check_str_list
-#ifdef PROTO
 (
     char        *opt,           /* [in] Name of command option */
     char        *val,           /* [in] Value assigned to command option */
     char        **list          /* [in] List of legal values for cmd option */
 )
-#else
-(opt, val, list)
-    char        *opt;           /* [in] Name of command option */
-    char        *val;           /* [in] Value assigned to command option */
-    char        **list;         /* [in] List of legal values for cmd option */
-#endif
 
 {
     int i;      /* List index */
@@ -307,20 +296,12 @@ static int check_str_list
 */
 
 static int check_str_int_list
-#ifdef PROTO
 (
     char        *opt,           /* [in] Name of command option */
     char        *val,           /* [in] Value assigned to command option */
     char        **list,         /* [in] List of legal values for cmd option */
     int         *ilist          /* [in] List of corresponding integer values */
 )
-#else
-(opt, val, list, ilist)
-    char        *opt;           /* [in] Name of command option */
-    char        *val;           /* [in] Value assigned to command option */
-    char        **list;         /* [in] List of legal values for cmd option */
-    int         *ilist;         /* [in] List of corresponding integer values */
-#endif
 
 {
     int i;      /* List index */
@@ -414,11 +395,7 @@ static opt_struct opt_info[NUM_OPTS] =
 #endif
 };
 
-#ifdef PROTO
 static void dump_cmd_data(void)
-#else
-static void dump_cmd_data()
-#endif
 
 {
     int     i;          /* Option index */
@@ -486,14 +463,9 @@ static void dump_cmd_data()
 */
 
 static char *alloc_and_copy     /* Returns address of new string */
-#ifdef PROTO
 (
     char    *orig_str           /* String to copy */
 )
-#else
-(orig_str)
-    char    *orig_str;          /* String to copy */
-#endif
 
 {
     char    *new_str;           /* Local ptr to new string */
@@ -516,14 +488,9 @@ static char *alloc_and_copy     /* Returns address of new string */
 */
 
 boolean add_def_string
-#ifdef PROTO
 (
     char *def_string           /* [in] Additional #define string for preprocessor input */
 )
-#else
-(def_string)
-     char *def_string;
-#endif
 
 {
     char **defs = (char**) cmd_val[opt_cpp_def];
@@ -567,14 +534,9 @@ boolean add_def_string
 */
 
 static boolean get_src_filespec
-#ifdef PROTO
 (
     char    *src_filespec       /* [out] Source filespec */
 )
-#else
-(src_filespec)
-    char    *src_filespec;      /* [out] Source filespec */
-#endif
 
 {
     int     other_count;        /* Parameter cnt (excl. option cnt) */
@@ -658,7 +620,6 @@ static boolean get_src_filespec
 */
 
 boolean CMD_parse_args          /* Returns TRUE on success */
-#ifdef PROTO
 (
     int         argc,           /* [in] Argument count */
     char        **argv,         /* [in] Argument vector */
@@ -667,15 +628,6 @@ boolean CMD_parse_args          /* Returns TRUE on success */
     STRTAB_str_t *p_idl_sid     /*[out] Ptr to IDL filespec stringtable ID */
                                 /*      STRTAB_NULL_STR => stdin */
 )
-#else
-(argc, argv, p_cmd_opt, p_cmd_val, p_idl_sid)
-    int         argc;           /* [in] Argument count */
-    char        **argv;         /* [in] Argument vector */
-    boolean     **p_cmd_opt;    /*[out] Ptr to array of cmd option arguments */
-    void        ***p_cmd_val;   /*[out] Ptr to array of cmd option values */
-    STRTAB_str_t *p_idl_sid;    /*[out] Ptr to IDL filespec stringtable ID */
-                                /*      STRTAB_NULL_STR => stdin */
-#endif
 
 {
     FILE_k_t out_dir_kind;              /* File kind of -out string */

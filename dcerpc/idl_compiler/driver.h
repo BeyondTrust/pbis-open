@@ -38,15 +38,11 @@
 */
 
 boolean DRIVER_main(
-#ifdef PROTO
     int argc,
     char **argv
-#endif
 );
 
 void nidl_terminate (
-#ifdef PROTO
     void
-#endif
 );
 

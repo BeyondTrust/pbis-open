@@ -106,20 +106,12 @@
 **/
 
 PUBLIC void twr_ip_lower_flrs_from_sa 
-#ifdef _DCE_PROTO_
 (
     unsigned32        trans_prot,
     sockaddr_p_t      sa,
     twr_p_t           *lower_flrs,
     unsigned32        *status
 )
-#else
-(trans_prot, sa, lower_flrs, status)
-unsigned32        trans_prot;
-sockaddr_p_t      sa;
-twr_p_t           *lower_flrs;
-unsigned32        *status;
-#endif
 {
     unsigned8   protocol_id[TWR_C_NUM_IP_LOWER_FLRS];
     unsigned16  id_size = TWR_C_TOWER_PROT_ID_SIZE,
@@ -336,20 +328,12 @@ unsigned32        *status;
 **/
 
 PUBLIC void twr_ip_lower_flrs_to_sa 
-#ifdef _DCE_PROTO_
 (
     byte_p_t          tower_octet_string, 
     sockaddr_p_t      *sa,
     unsigned32        *sa_len,
     unsigned32        *status
 )
-#else
-( tower_octet_string, sa, sa_len, status )
-byte_p_t          tower_octet_string; 
-sockaddr_p_t      *sa;
-unsigned32        *sa_len;
-unsigned32        *status;
-#endif
 {
     unsigned8   id;
     byte_p_t    tower;

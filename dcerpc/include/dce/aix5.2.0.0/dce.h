@@ -75,11 +75,7 @@ extern "C" {
 #  define _DCE_PROTO_
 #endif                                  /* defined(__STDC__) */
 
-#if defined(_DCE_PROTO_)
 #  define _DCE_PROTOTYPE_(arg) arg 
-#else                                   /* defined(_DCE_PROTO_) */
-#  define _DCE_PROTOTYPE_(arg) ()
-#endif                                  /* defined(_DCE_PROTO_) */
 
 /* 
  * For those components wishing to support platforms where void 

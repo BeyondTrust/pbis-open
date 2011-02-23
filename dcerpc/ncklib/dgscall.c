@@ -112,14 +112,9 @@ INTERNAL void release_scall_from_scte _DCE_PROTOTYPE_((
  */
 
 INTERNAL void release_scall_from_scte
-#ifdef _DCE_PROTO_
 (
     rpc_dg_scall_p_t   scall
 )
-#else
-(scall)
-rpc_dg_scall_p_t   scall;
-#endif
 {
     if (scall->scte->scall == scall)
     {
@@ -180,14 +175,9 @@ rpc_dg_scall_p_t   scall;
  */
 
 INTERNAL boolean32 scall_uncache
-#ifdef _DCE_PROTO_
 (
     rpc_dg_scall_p_t scall
 )
-#else
-(scall)
-rpc_dg_scall_p_t scall;
-#endif
 {
     unsigned32 st;
     boolean b;
@@ -343,14 +333,9 @@ rpc_dg_scall_p_t scall;
  */
   
 PRIVATE void rpc__dg_scall_orphan_call
-#ifdef _DCE_PROTO_
 (
     rpc_dg_scall_p_t scall
 )
-#else
-(scall)
-rpc_dg_scall_p_t scall;
-#endif
 {
 
     RPC_LOCK_ASSERT(0);
@@ -476,14 +461,9 @@ rpc_dg_scall_p_t scall;
  */
 
 INTERNAL void rpc__dg_scall_timer
-#ifdef _DCE_PROTO_
 (
     pointer_t p
 )
-#else
-(p)
-pointer_t p;
-#endif
 {
     rpc_dg_scall_p_t scall = (rpc_dg_scall_p_t) p;
     static rpc_clock_t rpc_c_dg_scall_max_idle_time = RPC_CLOCK_SEC(10);
@@ -657,18 +637,11 @@ pointer_t p;
  */
 
 PRIVATE void rpc__dg_scall_reinit
-#ifdef _DCE_PROTO_
 (
     rpc_dg_scall_p_t scall,
     rpc_dg_sock_pool_elt_p_t sp,
     rpc_dg_recvq_elt_p_t rqe
 )
-#else
-(scall, sp, rqe)
-rpc_dg_scall_p_t scall;
-rpc_dg_sock_pool_elt_p_t sp;
-rpc_dg_recvq_elt_p_t rqe;
-#endif
 {
     rpc_dg_pkt_hdr_p_t hdrp = rqe->hdrp;
     unsigned32 st;
@@ -878,18 +851,11 @@ rpc_dg_recvq_elt_p_t rqe;
  */
 
 INTERNAL rpc_dg_scall_p_t scall_init
-#ifdef _DCE_PROTO_
 (
     rpc_dg_scall_p_t scall,
     rpc_dg_sock_pool_elt_p_t sp,
     rpc_dg_recvq_elt_p_t rqe
 )
-#else
-(scall, sp, rqe)
-rpc_dg_scall_p_t scall;
-rpc_dg_sock_pool_elt_p_t sp;
-rpc_dg_recvq_elt_p_t rqe;
-#endif
 {
     /*
      * Initialize the common call handle fields
@@ -950,18 +916,11 @@ rpc_dg_recvq_elt_p_t rqe;
  */
 
 PRIVATE rpc_dg_scall_p_t rpc__dg_scall_cbk_alloc
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall,
     rpc_dg_sock_pool_elt_p_t sp,
     rpc_dg_recvq_elt_p_t rqe
 )
-#else
-(ccall, sp, rqe)
-rpc_dg_ccall_p_t ccall;
-rpc_dg_sock_pool_elt_p_t sp;
-rpc_dg_recvq_elt_p_t rqe;
-#endif
 {
     rpc_dg_scall_p_t scall;
     static rpc_clock_t rpc_c_dg_scall_timer_freq_init = RPC_CLOCK_SEC(1);
@@ -1040,18 +999,11 @@ rpc_dg_recvq_elt_p_t rqe;
  */
 
 PRIVATE rpc_dg_scall_p_t rpc__dg_scall_alloc
-#ifdef _DCE_PROTO_
 (
     rpc_dg_sct_elt_p_t scte,
     rpc_dg_sock_pool_elt_p_t sp,
     rpc_dg_recvq_elt_p_t rqe
 )
-#else
-(scte, sp, rqe)
-rpc_dg_sct_elt_p_t scte;
-rpc_dg_sock_pool_elt_p_t sp;
-rpc_dg_recvq_elt_p_t rqe;
-#endif
 {
     rpc_dg_scall_p_t scall;
     unsigned32 st ATTRIBUTE_UNUSED;
@@ -1132,14 +1084,9 @@ rpc_dg_recvq_elt_p_t rqe;
  */
 
 PRIVATE void rpc__dg_scall_free
-#ifdef _DCE_PROTO_
 (
     rpc_dg_scall_p_t scall
 )
-#else
-(scall)
-rpc_dg_scall_p_t scall;
-#endif
 {
     RPC_DG_CALL_LOCK_ASSERT(&scall->c);
 

@@ -37,9 +37,7 @@
 
 void DDBE_spell_restart_logic
 (
-#ifdef PROTO
     FILE * fid,
     AST_operation_n_t *p_operation
-#endif
 );
 

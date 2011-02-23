@@ -89,14 +89,9 @@ INTERNAL void _post_fork_parent _DCE_PROTOTYPE_((
  * the fork/vfork system call.
  */         
 INTERNAL void _pre_fork
-#ifdef _DCE_PROTO_
 (
   cma_t_address arg 
 )
-#else
-(arg)
-cma_t_address arg;
-#endif
 {                      
     RPC_DBG_PRINTF(rpc_e_dbg_atfork, 1,
                ("(_pre_fork) entering, pid %d, pre %d, post_p %d, post_c %d\n",
@@ -126,14 +121,9 @@ cma_t_address arg;
  */         
 
 INTERNAL void _post_fork_child
-#ifdef _DCE_PROTO_
 (
   cma_t_address arg
 )
-#else
-(arg)
-cma_t_address arg;
-#endif
 {
     RPC_DBG_PRINTF(rpc_e_dbg_atfork, 1,
         ("(_post_fork_child) entering, pid %d, pre %d, post_p %d, post_c %d\n",
@@ -164,14 +154,9 @@ cma_t_address arg;
 
 
 INTERNAL void _post_fork_parent
-#ifdef _DCE_PROTO_
 (
   cma_t_address arg
 )
-#else 
-(arg)
-cma_t_address arg;
-#endif
 {
     RPC_DBG_PRINTF(rpc_e_dbg_atfork, 1,
        ("(_post_fork_parent) entering, pid %d, pre %d, post_p %d, post_c %d\n",
@@ -195,14 +180,9 @@ cma_t_address arg;
 
 
 PRIVATE void rpc__cma_atfork
-#ifdef _DCE_PROTO_
 (
  void *handler
 )
-#else 
-(handler)
-void *handler;
-#endif
 {
     if (handler == NULL)
         return;

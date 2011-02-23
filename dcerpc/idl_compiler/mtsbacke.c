@@ -69,16 +69,10 @@ boolean BE_dump_debug, BE_dump_flat, BE_dump_mnode, BE_dump_mool,
  * Initialize the various backend globals
  */
 static void be_init
-#ifdef PROTO
 (
     boolean *cmd_opt,
     void **cmd_val
 )
-#else
-(cmd_opt, cmd_val)
-    boolean *cmd_opt;
-    void **cmd_val;
-#endif
 {
     boolean *bugs;
 
@@ -234,13 +228,9 @@ heap_mem *BE_ctx_malloc
 ** BE_push_malloc_ctx: Push a new context in which memory is allocated
 */
 void BE_push_malloc_ctx
-#ifdef PROTO
 (
       void
 )
-#else
-()
-#endif
 {
       /*
        * Allocate a malloc context block to hang allocations made in this
@@ -260,13 +250,9 @@ void BE_push_malloc_ctx
 ** within this context (unless it was a permanent context).
 */
 void BE_pop_malloc_ctx
-#ifdef PROTO
 (
     void
 )
-#else
-()
-#endif
 {
       malloc_t *list,*curr;
       malloc_ctx_t *ctx;
@@ -319,13 +305,6 @@ boolean BE_main              /* returns true on successful completion */
     if (!cmd_opt[opt_confirm])
         print_errors();
 
-#if DUMPERS && 0
-	 /* XXX: ??? */
-    /* Dump the IREP if requested. */
-    if (cmd_opt[opt_dump_flat])
-        IR_dump_irep(int_p);
-#endif
-
     /* Call the Data Driven Backend if stubs are required. */
     if (cstub_fid || sstub_fid)
         DDBE_main(cmd_opt, cmd_val, int_p, &dd_vip);
@@ -357,16 +336,10 @@ boolean BE_main              /* returns true on successful completion */
  * Output #includes needed at the start of MTS stubs
  */
 void CSPELL_mts_includes
-#ifdef PROTO
 (
     FILE *fid,
     char header_name[]
 )
-#else
-(fid, header_name)
-    FILE *fid;
-    char header_name[];
-#endif
 {
 
     fprintf (fid, USER_INCLUDE_TEMPLATE, header_name);
@@ -396,14 +369,9 @@ char const *BE_get_name
  * Allocates and returns a type node
  */
 AST_type_n_t *BE_get_type_node
-#ifdef PROTO
 (
     AST_type_k_t kind
 )
-#else
-(kind)
-    AST_type_k_t kind;
-#endif
 {
     AST_type_n_t *new_type = (AST_type_n_t *)BE_ctx_malloc(sizeof(AST_type_n_t));
 
@@ -426,16 +394,10 @@ AST_type_n_t *BE_get_type_node
 /*                                                                            */
 /******************************************************************************/
 void BE_gen_pipe_routine_decls
-#ifdef PROTO
 (
     FILE *fid ATTRIBUTE_UNUSED,
     AST_interface_n_t *p_interface ATTRIBUTE_UNUSED
 )
-#else
-( fid, p_interface )
-    FILE *fid;
-    AST_interface_n_t *p_interface;
-#endif
 {
 }
 

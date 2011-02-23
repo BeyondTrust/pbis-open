@@ -68,14 +68,9 @@ extern NAMETABLE_temp_name_t * NAMETABLE_temp_chain;
  */
 
 static void NAMETABLE_dump_bindings_4_node
-#ifdef PROTO
 (
     NAMETABLE_binding_n_t * pp
 )
-#else
-(pp)
-    NAMETABLE_binding_n_t * pp;
-#endif
 
 {
     NAMETABLE_binding_n_t * p;

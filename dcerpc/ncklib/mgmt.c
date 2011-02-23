@@ -330,18 +330,11 @@ PUBLIC unsigned32 rpc_mgmt_inq_server_com_timeout (void)
 **/
 
 PRIVATE void rpc_mgmt_inq_if_ids 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     rpc_if_id_vector_p_t    *if_id_vector,
     unsigned32              *status
 )
-#else
-(binding_h, if_id_vector, status)
-rpc_binding_handle_t    binding_h;
-rpc_if_id_vector_p_t    *if_id_vector;
-unsigned32              *status;
-#endif
 {
     idl_void_p_t            (*old_allocate) _DCE_PROTOTYPE_ ((idl_size_t));
     idl_void_p_t            (*tmp_allocate) _DCE_PROTOTYPE_ ((idl_size_t));
@@ -429,18 +422,11 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_mgmt_inq_stats 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     rpc_stats_vector_p_t    *statistics,
     unsigned32              *status
 )
-#else
-(binding_h, statistics, status)
-rpc_binding_handle_t    binding_h;
-rpc_stats_vector_p_t    *statistics;
-unsigned32              *status;
-#endif
 {
     unsigned32              i;
 
@@ -545,16 +531,10 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_mgmt_stats_vector_free 
-#ifdef _DCE_PROTO_
 (
     rpc_stats_vector_p_t    *statistics,
     unsigned32              *status
 )
-#else
-(statistics, status)
-rpc_stats_vector_p_t    *statistics;
-unsigned32              *status;
-#endif
 {
     RPC_MEM_FREE (*statistics, RPC_C_MEM_STATS_VECTOR);
     *statistics = NULL;
@@ -602,16 +582,10 @@ unsigned32              *status;
 **/
 
 PUBLIC boolean32 rpc_mgmt_is_server_listening 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned32              *status
 )
-#else
-(binding_h, status)
-rpc_binding_handle_t    binding_h;
-unsigned32              *status;
-#endif
 {
 
 
@@ -692,16 +666,10 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_mgmt_set_cancel_timeout 
-#ifdef _DCE_PROTO_
 (
     signed32                seconds,
     unsigned32              *status
 )
-#else
-(seconds, status)
-signed32                seconds;
-unsigned32              *status;
-#endif
 {
     CODING_ERROR (status);
     RPC_VERIFY_INIT ();
@@ -772,18 +740,11 @@ PUBLIC void rpc_mgmt_set_call_timeout _DCE_PROTOTYPE_ ((
     ));
 
 PUBLIC void rpc_mgmt_set_call_timeout 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned32              seconds,
     unsigned32              *status
 )
-#else
-(binding_h, seconds, status)
-rpc_binding_handle_t    binding_h;
-unsigned32              seconds;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t binding_rep = (rpc_binding_rep_p_t) binding_h; 
 
@@ -854,18 +815,11 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_mgmt_set_com_timeout 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned32              timeout,
     unsigned32              *status
 )
-#else
-(binding_h, timeout, status)
-rpc_binding_handle_t    binding_h;
-unsigned32              timeout;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep = (rpc_binding_rep_p_t) binding_h;
 
@@ -961,16 +915,10 @@ Note: there should be a dispatching routine in com...
 **/
 
 PUBLIC void rpc_mgmt_set_server_com_timeout 
-#ifdef _DCE_PROTO_
 (
  unsigned32              timeout,
  unsigned32 * status
 )
-#else
-(timeout, status)
-unsigned32              timeout;
-unsigned32              *status;
-#endif
 {
 
     CODING_ERROR (status);
@@ -1034,16 +982,10 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_mgmt_set_server_stack_size 
-#ifdef _DCE_PROTO_
 (
     unsigned32              thread_stack_size,
     unsigned32              *status
 )
-#else
-(thread_stack_size, status)
-unsigned32              thread_stack_size;
-unsigned32              *status;
-#endif
 {
     CODING_ERROR (status);
     RPC_VERIFY_INIT ();
@@ -1113,16 +1055,10 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_mgmt_stop_server_listening 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned32              *status
 )
-#else
-(binding_h, status)
-rpc_binding_handle_t    binding_h;
-unsigned32              *status;
-#endif
 {
 
     RPC_VERIFY_INIT ();
@@ -1193,20 +1129,12 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_mgmt_inq_server_princ_name 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned32              authn_protocol,
     unsigned_char_p_t       *server_princ_name,
     unsigned32              *status
 )
-#else
-(binding_h, authn_protocol, server_princ_name, status)
-rpc_binding_handle_t    binding_h;
-unsigned32              authn_protocol;
-unsigned_char_p_t       *server_princ_name;
-unsigned32              *status;
-#endif
 {
     unsigned32          dce_rpc_authn_protocol;
 
@@ -1301,16 +1229,10 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_mgmt_set_authorization_fn 
-#ifdef _DCE_PROTO_
 (
     rpc_mgmt_authorization_fn_t authorization_fn_arg,
     unsigned32              *status
 )
-#else
-(authorization_fn_arg, status)
-rpc_mgmt_authorization_fn_t authorization_fn_arg;
-unsigned32              *status;
-#endif
 {
     RPC_VERIFY_INIT ();
     authorization_fn = authorization_fn_arg;
@@ -1356,18 +1278,11 @@ unsigned32              *status;
 **/
 
 INTERNAL void inq_if_ids 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     rpc_if_id_vector_p_t    *if_id_vector,
     unsigned32              *status
 )
-#else
-(binding_h, if_id_vector, status)
-rpc_binding_handle_t    binding_h;
-rpc_if_id_vector_p_t    *if_id_vector;
-unsigned32              *status;
-#endif
 {
     rpc_if_id_vector_p_t    local_if_id_vector;
     unsigned32              index;
@@ -1501,16 +1416,10 @@ unsigned32              *status;
 **/
 
 PRIVATE void rpc__mgmt_stop_server_lsn_mgr 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned32              *status
 )
-#else
-(binding_h, status)
-rpc_binding_handle_t    binding_h;
-unsigned32              *status;
-#endif
 {
     if (! rpc__mgmt_authorization_check (binding_h, rpc_c_mgmt_stop_server_listen, 
                                false, status))
@@ -1562,20 +1471,12 @@ unsigned32              *status;
 **/
 
 INTERNAL void inq_stats 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned32              *count,
     unsigned32              statistics[],
     unsigned32              *status
 )
-#else
-(binding_h, count, statistics, status)
-rpc_binding_handle_t    binding_h;
-unsigned32              *count;
-unsigned32              statistics[];
-unsigned32              *status;
-#endif
 {
     rpc_stats_vector_p_t        stats_vector;
     unsigned32                  temp_status;
@@ -1646,16 +1547,10 @@ unsigned32              *status;
 **/
 
 INTERNAL boolean32 is_server_listening 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned32              *status
 )
-#else
-(binding_h, status)
-rpc_binding_handle_t    binding_h;
-unsigned32              *status;
-#endif
 {
     if (! rpc__mgmt_authorization_check (binding_h, rpc_c_mgmt_is_server_listen, 
                                true, status))
@@ -1713,7 +1608,6 @@ unsigned32              *status;
 **/
 
 INTERNAL void inq_princ_name 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned32              authn_proto,
@@ -1721,14 +1615,6 @@ INTERNAL void inq_princ_name
     idl_char                princ_name[],
     unsigned32              *status
 )
-#else
-(binding_h, authn_proto, princ_name_size, princ_name, status)
-rpc_binding_handle_t    binding_h;
-unsigned32              authn_proto;
-unsigned32              princ_name_size;
-idl_char                princ_name[];
-unsigned32              *status;
-#endif
 {
     if (! rpc__mgmt_authorization_check (binding_h, rpc_c_mgmt_inq_princ_name,
                                true, status))
@@ -1788,20 +1674,12 @@ unsigned32              *status;
 **/
 
 PRIVATE boolean32 rpc__mgmt_authorization_check 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned32              op,
     boolean32               deflt,
     unsigned32              *status
 )
-#else
-(binding_h, op, deflt, status)
-rpc_binding_handle_t    binding_h;
-unsigned32              op;
-boolean32               deflt;
-unsigned32              *status;
-#endif
 {
     if (authorization_fn == NULL)
     {
@@ -1857,14 +1735,9 @@ unsigned32              *status;
 **/
 
 INTERNAL idl_void_p_t my_allocate 
-#ifdef _DCE_PROTO_
 (
     idl_size_t           size
 )
-#else
-(size)
-     idl_size_t size;
-#endif
 {
     idl_void_p_t             ptr;
 
@@ -1911,14 +1784,9 @@ INTERNAL idl_void_p_t my_allocate
 **/
 
 INTERNAL void my_free 
-#ifdef _DCE_PROTO_
 (
     idl_void_p_t            ptr
 )
-#else
-(ptr)
-idl_void_p_t            ptr;
-#endif
 {
     RPC_MEM_FREE (ptr, RPC_C_MEM_STRING);
 }
@@ -1961,16 +1829,10 @@ idl_void_p_t            ptr;
 **/
 
 INTERNAL void remote_binding_validate 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned32              *status
 )
-#else
-(binding_h, status)
-rpc_binding_handle_t    binding_h;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t binding_rep = (rpc_binding_rep_p_t) binding_h;
 

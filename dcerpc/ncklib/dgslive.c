@@ -99,14 +99,9 @@ INTERNAL rpc_dg_client_rep_p_t find_client _DCE_PROTOTYPE_((
     ));
 
 INTERNAL rpc_dg_client_rep_p_t find_client
-#ifdef _DCE_PROTO_
 (
     dce_uuid_p_t cas_uuid
 )
-#else
-(cas_uuid)
-uuid_p_t cas_uuid;
-#endif
 {
     rpc_dg_client_rep_p_t client;
     unsigned16 probe;
@@ -141,20 +136,12 @@ uuid_p_t cas_uuid;
  */
 
 PRIVATE void rpc__dg_network_mon
-#ifdef _DCE_PROTO_
 (
     rpc_binding_rep_p_t binding_r ATTRIBUTE_UNUSED,
     rpc_client_handle_t client_h,
     rpc_network_rundown_fn_t rundown,
     unsigned32 *st
 )
-#else
-(binding_r, client_h, rundown, st)
-rpc_binding_rep_p_t binding_r;
-rpc_client_handle_t client_h;
-rpc_network_rundown_fn_t rundown;
-unsigned32 *st;
-#endif
 {            
     rpc_dg_client_rep_p_t ptr, client = (rpc_dg_client_rep_p_t) client_h;
     unsigned16 probe;
@@ -227,18 +214,11 @@ unsigned32 *st;
  */
  
 PRIVATE void rpc__dg_network_stop_mon
-#ifdef _DCE_PROTO_
 (
     rpc_binding_rep_p_t binding_r ATTRIBUTE_UNUSED,
     rpc_client_handle_t client_h,
     unsigned32 *st
 )
-#else
-(binding_r, client_h, st)
-rpc_binding_rep_p_t binding_r;
-rpc_client_handle_t client_h;
-unsigned32 *st;
-#endif
 {
     rpc_dg_client_rep_p_t client = (rpc_dg_client_rep_p_t) client_h;
     rpc_dg_client_rep_p_t ptr;
@@ -382,14 +362,9 @@ INTERNAL void network_monitor_liveness(void)
  */
 
 PRIVATE void rpc__dg_convc_indy
-#ifdef _DCE_PROTO_
 (
     dce_uuid_t *cas_uuid
 )
-#else
-(cas_uuid)
-dce_uuid_t *cas_uuid;
-#endif
 {
     rpc_dg_client_rep_p_t client;
                 
@@ -412,18 +387,11 @@ dce_uuid_t *cas_uuid;
  */
 
 PRIVATE void rpc__dg_binding_inq_client
-#ifdef _DCE_PROTO_
 (
     rpc_binding_rep_p_t binding_r,
     rpc_client_handle_t *client_h,
     unsigned32 *st
 )
-#else
-(binding_r, client_h, st)
-rpc_binding_rep_p_t binding_r;
-rpc_client_handle_t *client_h;
-unsigned32 *st;
-#endif
 {       
     rpc_dg_binding_server_p_t shand = (rpc_dg_binding_server_p_t) binding_r;
     rpc_dg_scall_p_t scall = shand->scall;
@@ -589,14 +557,9 @@ PRIVATE void rpc__dg_monitor_init(void)
  */
 
 PRIVATE void rpc__dg_monitor_fork_handler
-#ifdef _DCE_PROTO_
 (
     rpc_fork_stage_id_t stage
 )
-#else
-(stage)
-rpc_fork_stage_id_t stage;
-#endif
 {                           
     unsigned32 i;
     unsigned32 st;
@@ -671,14 +634,9 @@ rpc_fork_stage_id_t stage;
  */
 
 PRIVATE void rpc__dg_client_free
-#ifdef _DCE_PROTO_
 (
     rpc_client_handle_t client_h
 )
-#else
-(client_h)
-rpc_client_handle_t client_h;
-#endif
 {
     unsigned16 probe;
     rpc_dg_client_rep_p_t client = (rpc_dg_client_rep_p_t) client_h;

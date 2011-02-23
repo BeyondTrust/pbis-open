@@ -87,20 +87,12 @@
 **/
 
 PRIVATE void rpc__cn_sm_init 
-#ifdef _DCE_PROTO_
 (
 rpc_cn_sm_state_entry_p_t       *state_tbl,
 rpc_cn_sm_action_fn_p_t         action_tbl,
 rpc_cn_sm_ctlblk_p_t            sm,
 unsigned32			tbl_id 
 )
-#else
-(state_tbl, pred_tbl, action_tbl, sm)
-rpc_cn_sm_state_entry_p_t       *state_tbl;
-rpc_cn_sm_action_fn_p_t         action_tbl;
-rpc_cn_sm_ctlblk_p_t            sm;
-unsigned32			tbl_id; 
-#endif
 {
 
     /*
@@ -164,14 +156,9 @@ unsigned32			tbl_id;
 **/
 
 PRIVATE void rpc__cn_sm_init_event_list 
-#ifdef _DCE_PROTO_
 (
  rpc_cn_sm_ctlblk_t      *sm
 )
-#else
-(sm)
-rpc_cn_sm_ctlblk_t      *sm;
-#endif
 {
     /*
      * Set up the event list so that it's empty. This means the state
@@ -230,20 +217,12 @@ rpc_cn_sm_ctlblk_t      *sm;
 **/
 
 PRIVATE unsigned32     rpc__cn_sm_eval_event 
-#ifdef _DCE_PROTO_
 (
   unsigned32              event_id,
   pointer_t               event_parameter,
   pointer_t               spc_struct,
   rpc_cn_sm_ctlblk_t      *sm
 )
-#else
-(event_id, event_parameter, spc_struct, sm)
-unsigned32              event_id;
-pointer_t               event_parameter;
-pointer_t               spc_struct;
-rpc_cn_sm_ctlblk_t      *sm;
-#endif
 {
     rpc_cn_sm_event_entry_t     next_event;
     unsigned8                   action_index;
@@ -362,16 +341,10 @@ rpc_cn_sm_ctlblk_t      *sm;
 **/
 
 PRIVATE void rpc__cn_sm_insert_event 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_sm_event_entry_p_t       event,
   rpc_cn_sm_ctlblk_t              *sm
 )
-#else
-(event, sm)
-rpc_cn_sm_event_entry_p_t       event;
-rpc_cn_sm_ctlblk_t              *sm;
-#endif
 {
 #ifdef DEBUG
     /*

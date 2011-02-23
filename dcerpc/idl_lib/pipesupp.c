@@ -52,7 +52,6 @@
 #endif
 
 void rpc_ss_initialize_callee_pipe
-#ifdef IDL_PROTOTYPES
 (
     long pipe_index,    /* Index of pipe in set of pipes in the
                             operation's parameter list */
@@ -68,23 +67,6 @@ void rpc_ss_initialize_callee_pipe
     rpc_ss_ee_pipe_state_t **p_p_pipe_state,    /* Addr of ptr to pipe state block */
     error_status_t *st
 )
-#else
-( pipe_index, next_in_pipe, next_out_pipe, p_current_pipe, p_mp, p_op, src_drep,
-  p_rcvd_data, p_mem_h, call_h, p_p_pipe_state, st )
-    long pipe_index;    /* Index of pipe in set of pipes in the
-                            operation's parameter list */
-    long next_in_pipe;     /* Index of next [in] pipe to process */
-    long next_out_pipe;     /* Index of next [out] pipe to process */
-    long *p_current_pipe;
-    rpc_mp_t *p_mp;         /* Ptr to marshalling pointer */
-    rpc_op_t *p_op;     /* Ptr to offset pointer */
-    ndr_format_t src_drep;   /* Sender's data representation */
-    rpc_iovector_elt_t *p_rcvd_data; /* Addr of received data descriptor */
-    rpc_ss_mem_handle *p_mem_h;    /* Ptr to stub memory allocation handle */
-    rpc_call_handle_t call_h;
-    rpc_ss_ee_pipe_state_t **p_p_pipe_state;    /* Addr of ptr to pipe state block */
-    error_status_t *st;
-#endif
 {
     rpc_ss_ee_pipe_state_t *p_pipe_state;
 
@@ -125,7 +107,6 @@ void rpc_ss_initialize_callee_pipe
 #ifdef MIA
 
 void rpc_ss_mts_init_callee_pipe
-#ifdef IDL_PROTOTYPES
 (
     long pipe_index,    /* Index of pipe in set of pipes in the
                             operation's parameter list */
@@ -138,18 +119,6 @@ void rpc_ss_mts_init_callee_pipe
     rpc_ss_mts_ee_pipe_state_t **p_p_pipe_state
                                            /* Addr of ptr to pipe state block */
 )
-#else
-( pipe_index, next_in_pipe, next_out_pipe, p_current_pipe, IDL_msp,
-  IDL_base_type_offset, p_p_pipe_state )
-    long pipe_index;    /* Index of pipe in set of pipes in the
-                            operation's parameter list */
-    long next_in_pipe;     /* Index of next [in] pipe to process */
-    long next_out_pipe;     /* Index of next [out] pipe to process */
-    long *p_current_pipe;
-    struct IDL_ms_t *IDL_msp;
-    unsigned long IDL_base_type_offset;
-    rpc_ss_mts_ee_pipe_state_t **p_p_pipe_state;
-#endif
 {
     rpc_ss_mts_ee_pipe_state_t *p_pipe_state;
 

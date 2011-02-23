@@ -86,16 +86,10 @@
 **/
 
 PRIVATE void rpc__binding_free 
-#ifdef _DCE_PROTO_
 (
   rpc_binding_rep_p_t     *binding_rep_p,
   unsigned32              *status
 )
-#else
-(binding_rep_p, status)
-rpc_binding_rep_p_t     *binding_rep_p;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep = *binding_rep_p;
     unsigned32		    temp_status = rpc_s_ok;
@@ -241,16 +235,10 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_binding_free 
-#ifdef _DCE_PROTO_
 (
   rpc_binding_handle_t    *binding_h,
   unsigned32              *status
 )
-#else
-(binding_h, status)
-rpc_binding_handle_t    *binding_h;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep = (rpc_binding_rep_p_t) *binding_h;
 
@@ -314,16 +302,10 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_binding_vector_free 
-#ifdef _DCE_PROTO_
 (
   rpc_binding_vector_p_t  *binding_vec,
   unsigned32              *status
 )
-#else
-(binding_vec, status)
-rpc_binding_vector_p_t  *binding_vec;
-unsigned32              *status;
-#endif
 {
     unsigned32              i;
 
@@ -408,18 +390,11 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_binding_set_object 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     dce_uuid_p_t                object_uuid,
     unsigned32              *status
 )
-#else
-(binding_h, object_uuid, status)
-rpc_binding_handle_t    binding_h;
-uuid_p_t                object_uuid;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep = (rpc_binding_rep_p_t) binding_h;
 
@@ -493,18 +468,11 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_binding_inq_object 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     dce_uuid_t                  *object_uuid,
     unsigned32              *status
 )
-#else
-(binding_h, object_uuid, status)
-rpc_binding_handle_t    binding_h;
-dce_uuid_t              *object_uuid;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t binding_rep = (rpc_binding_rep_p_t) binding_h;
 
@@ -564,16 +532,10 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_binding_reset 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned32              *status
 )
-#else
-(binding_h, status)
-rpc_binding_handle_t    binding_h;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep = (rpc_binding_rep_p_t) binding_h;
 
@@ -673,18 +635,11 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_binding_copy 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    src_binding_h,
     rpc_binding_handle_t    *dst_binding_h,
     unsigned32              *status
 )
-#else
-(src_binding_h, dst_binding_h, status)
-rpc_binding_handle_t    src_binding_h;
-rpc_binding_handle_t    *dst_binding_h;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t     src_binding_rep = (rpc_binding_rep_p_t) src_binding_h;
     rpc_binding_rep_p_t     dst_binding_rep;
@@ -898,18 +853,11 @@ CLEANUP:
 **/
 
 PUBLIC void rpc_binding_to_string_binding 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     unsigned_char_p_t       *string_binding,
     unsigned32              *status
 )
-#else
-(binding_h, string_binding, status)
-rpc_binding_handle_t    binding_h;
-unsigned_char_p_t       *string_binding;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep = (rpc_binding_rep_p_t) binding_h;
     rpc_addr_p_t            rpc_addr = NULL;
@@ -1103,18 +1051,11 @@ CLEANUP:
 **/
 
 PUBLIC void rpc_binding_from_string_binding 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_p_t       string_binding,
     rpc_binding_handle_t    *binding_h,
     unsigned32              *status
 )
-#else
-(string_binding, binding_h, status)
-unsigned_char_p_t       string_binding;
-rpc_binding_handle_t    *binding_h;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep;
     dce_uuid_t                  obj_uuid;
@@ -1324,7 +1265,6 @@ CLEANUP:
 **/
 
 PUBLIC void rpc_string_binding_parse 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_p_t       string_binding,
     unsigned_char_p_t       *string_object_uuid,
@@ -1334,17 +1274,6 @@ PUBLIC void rpc_string_binding_parse
     unsigned_char_p_t       *network_options,
     unsigned32              *status
 )
-#else
-(string_binding, string_object_uuid, protseq, netaddr, endpoint, 
- network_options, status)
-unsigned_char_p_t       string_binding;
-unsigned_char_p_t       *string_object_uuid;
-unsigned_char_p_t       *protseq;
-unsigned_char_p_t       *netaddr;
-unsigned_char_p_t       *endpoint;
-unsigned_char_p_t       *network_options;
-unsigned32              *status;
-#endif
 {
 #define RPC_C_NETWORK_OPTIONS_MAX   1024
 
@@ -1831,7 +1760,6 @@ CLEANUP:
 **/
 
 PUBLIC void rpc_string_binding_compose 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_p_t       string_object_uuid,
     unsigned_char_p_t       protseq,
@@ -1841,17 +1769,6 @@ PUBLIC void rpc_string_binding_compose
     unsigned_char_p_t       *string_binding,
     unsigned32              *status
 )
-#else
-(string_object_uuid, protseq, netaddr,endpoint, 
- network_options, string_binding, status)
-unsigned_char_p_t       string_object_uuid;
-unsigned_char_p_t       protseq;
-unsigned_char_p_t       netaddr;
-unsigned_char_p_t       endpoint;
-unsigned_char_p_t       network_options;
-unsigned_char_p_t       *string_binding;
-unsigned32              *status;
-#endif
 {
     unsigned_char_p_t   string_binding_ptr;
     unsigned32          string_binding_size = 1;
@@ -2047,7 +1964,6 @@ unsigned32              *status;
 **/
 
 PRIVATE rpc_binding_rep_t *rpc__binding_alloc 
-#ifdef _DCE_PROTO_
 (
     boolean32               is_server,
     dce_uuid_p_t                object_uuid,
@@ -2055,14 +1971,6 @@ PRIVATE rpc_binding_rep_t *rpc__binding_alloc
     rpc_addr_p_t            rpc_addr,
     unsigned32              *status
 )
-#else
-(is_server, object_uuid, protocol_id, rpc_addr, status)
-boolean32               is_server;
-uuid_p_t                object_uuid;
-rpc_protocol_id_t       protocol_id;
-rpc_addr_p_t            rpc_addr;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep;
     unsigned_char_p_t       endpoint = NULL;
@@ -2205,18 +2113,11 @@ CLEANUP:
 **/
 
 PUBLIC void rpc_binding_inq_client 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     rpc_client_handle_t     *client_h,
     unsigned32              *status
 )
-#else
-(binding_h, client_h, status)
-rpc_binding_handle_t    binding_h;
-rpc_client_handle_t     *client_h;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t binding_rep = (rpc_binding_rep_p_t) binding_h;
 
@@ -2280,18 +2181,11 @@ unsigned32              *status;
 **/
 
  void rpc_binding_handle_copy 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    source_binding,
     rpc_binding_handle_t    *destination_binding,
     unsigned32              *status
 )
-#else
-(source_binding, destination_binding, status)
-rpc_binding_handle_t    source_binding;
-rpc_binding_handle_t    *destination_binding;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t     src_binding_rep = (rpc_binding_rep_p_t) source_binding;
     rpc_binding_rep_p_t     *dst_binding_rep = 
@@ -2363,18 +2257,11 @@ unsigned32              *status;
 **/
 
 PUBLIC boolean32 rpc_binding_handle_equal 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding1,
     rpc_binding_handle_t    binding2,
     unsigned32              *status
 )
-#else
-(binding1, binding2, status)
-rpc_binding_handle_t    binding1;
-rpc_binding_handle_t    binding2;
-unsigned32              *status;
-#endif
 {
     CODING_ERROR (status);
     RPC_VERIFY_INIT ();
@@ -2439,18 +2326,11 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_binding_server_to_client 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    src_binding_h,
     rpc_binding_handle_t    *dst_binding_h,
     unsigned32              *status
 )
-#else
-(src_binding_h, dst_binding_h, status)
-rpc_binding_handle_t    src_binding_h;
-rpc_binding_handle_t    *dst_binding_h;
-unsigned32              *status;
-#endif
 {
     rpc_binding_server_from_client (src_binding_h, dst_binding_h, status);
     return;
@@ -2507,18 +2387,11 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_binding_server_from_client 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    src_binding_h,
     rpc_binding_handle_t    *dst_binding_h,
     unsigned32              *status
     )
-#else
-(src_binding_h, dst_binding_h, status)
-rpc_binding_handle_t    src_binding_h;
-rpc_binding_handle_t    *dst_binding_h;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t     src_binding_rep = (rpc_binding_rep_p_t) src_binding_h;
     rpc_binding_rep_p_t     dst_binding_rep;
@@ -2655,18 +2528,11 @@ CLEANUP:
 **/
 
 PRIVATE void rpc__binding_inq_sockaddr 
-#ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
     sockaddr_p_t            *sa,
     unsigned32              *status
 )
-#else
-(binding_h, sa, status)
-rpc_binding_handle_t    binding_h;
-sockaddr_p_t            *sa;
-unsigned32              *status;
-#endif
 {
     *sa = &((rpc_binding_rep_p_t) binding_h)->rpc_addr->sa;
 
@@ -2715,16 +2581,10 @@ unsigned32              *status;
 **/
 
 PRIVATE void rpc__binding_cross_fork 
-#ifdef _DCE_PROTO_
 (
   rpc_binding_rep_p_t binding_rep,
   unsigned32 * status 
 )
-#else
-(binding_rep, status)
-rpc_binding_rep_p_t binding_rep;                
-unsigned32 *status;
-#endif
 {  
     /*
      * Servers aren't allowed to fork, so we only allow passing

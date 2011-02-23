@@ -86,17 +86,10 @@
 **/
 
 PRIVATE rpc_binding_rep_t *rpc__cn_binding_alloc 
-#ifdef _DCE_PROTO_
 (
   boolean32               is_server,
   unsigned32              *st
 )
-#else
-(is_server, st)
-
-boolean32               is_server;
-unsigned32              *st;
-#endif
 {
     rpc_cn_binding_rep_p_t brp;
 
@@ -182,17 +175,10 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_binding_init 
-#ifdef _DCE_PROTO_
 (
  rpc_binding_rep_p_t     binding_r,
  unsigned32              *st
 )
-#else
-(binding_r, st)
-
- rpc_binding_rep_p_t     binding_r;
- unsigned32              *st;
-#endif
 {
     unsigned32                  type;
     rpc_cn_local_id_t           grp_id;
@@ -273,17 +259,10 @@ PRIVATE void rpc__cn_binding_init
 **/
 
 PRIVATE void rpc__cn_binding_reset 
-#ifdef _DCE_PROTO_
 (
   rpc_binding_rep_p_t     binding_r,
   unsigned32              *st
 )
-#else
-(binding_r, st)
-
-rpc_binding_rep_p_t     binding_r;
-unsigned32              *st;
-#endif
 {
     CODING_ERROR (st);
 
@@ -337,17 +316,10 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_binding_changed 
-#ifdef _DCE_PROTO_
 (
   rpc_binding_rep_p_t     binding_r,
   unsigned32              *st
 )
-#else
-(binding_r, st)
-
-rpc_binding_rep_p_t     binding_r;
-unsigned32              *st;
-#endif
 {
     CODING_ERROR (st);
 
@@ -394,17 +366,10 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_binding_free 
-#ifdef _DCE_PROTO_
 (
   rpc_binding_rep_p_t     *binding_r,
   unsigned32              *st
 )
-#else
-(binding_r, st)
-
-rpc_binding_rep_p_t     *binding_r;
-unsigned32              *st;
-#endif
 {
     CODING_ERROR (st);
 
@@ -464,19 +429,11 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_binding_inq_addr 
-#ifdef _DCE_PROTO_
 (
   rpc_binding_rep_p_t     binding_r,
   rpc_addr_p_t            *rpc_addr,
   unsigned32              *st
 )
-#else
-(binding_r, rpc_addr, st)
-
-rpc_binding_rep_p_t     binding_r;
-rpc_addr_p_t            *rpc_addr;
-unsigned32              *st;
-#endif
 {
     unsigned32          type;
     rpc_cn_local_id_t   grp_id;
@@ -604,19 +561,11 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_binding_inq_client 
-#ifdef _DCE_PROTO_
 (
   rpc_binding_rep_p_t     binding_r,
   rpc_client_handle_t     *client_h,
   unsigned32              *st
 )
-#else
-(binding_r, client_h, st)
-
-rpc_binding_rep_p_t     binding_r;
-rpc_client_handle_t     *client_h;
-unsigned32              *st;
-#endif
 {
     rpc_cn_local_id_t   grp_id;
 
@@ -679,19 +628,11 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_binding_copy 
-#ifdef _DCE_PROTO_
 (
   rpc_binding_rep_p_t     src_binding_r,
   rpc_binding_rep_p_t     dst_binding_r,
   unsigned32              *st
 )
-#else
-(src_binding_r, dst_binding_r, st)
-
-rpc_binding_rep_p_t     src_binding_r;
-rpc_binding_rep_p_t     dst_binding_r;
-unsigned32              *st;
-#endif
 {
     CODING_ERROR (st);
 
@@ -743,17 +684,10 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_binding_cross_fork 
-#ifdef _DCE_PROTO_
 (
   rpc_binding_rep_p_t     binding_r ATTRIBUTE_UNUSED,
   unsigned32              *st
 )
-#else
-(binding_r, st)
-
-rpc_binding_rep_p_t     binding_r;
-unsigned32              *st;
-#endif
 {
     CODING_ERROR (st);
 

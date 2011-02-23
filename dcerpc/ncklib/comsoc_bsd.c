@@ -453,14 +453,9 @@ rpc__bsd_socket_close_basic(
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_destruct
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock
 )
-#else
-(sock)
-rpc_socket_t        sock;
-#endif
 {
     rpc_socket_error_t  serr = RPC_C_SOCKET_OK;
     rpc_bsd_socket_p_t lrpc = (rpc_bsd_socket_p_t) sock->data.pointer;
@@ -498,16 +493,10 @@ rpc_socket_t        sock;
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_bind
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     rpc_addr_p_t        addr
 )
-#else
-(sock, addr)
-rpc_socket_t        sock;
-rpc_addr_p_t        addr;
-#endif
 {
     rpc_socket_error_t  serr = EINVAL;
     unsigned32 status;
@@ -752,18 +741,11 @@ INTERNAL rpc_socket_error_t rpc__bsd_socket_recvsession_key
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_connect
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     rpc_addr_p_t        addr,
     rpc_cn_assoc_t      *assoc ATTRIBUTE_UNUSED
 )
-#else
-(sock, addr, binding_rep)
-rpc_socket_t        sock;
-rpc_addr_p_t        addr;
-rpc_cn_assoc_t     *assoc;
-#endif
 {
     rpc_socket_error_t  serr;
     //rpc_binding_rep_t *binding_rep;
@@ -850,18 +832,11 @@ error:
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_accept
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     rpc_addr_p_t        addr,
     rpc_socket_t        *newsock
 )
-#else
-(sock, addr, newsock)
-rpc_socket_t        sock;
-rpc_addr_p_t        addr;
-rpc_socket_t        *newsock;
-#endif
 {
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
     rpc_bsd_socket_p_t lrpc = (rpc_bsd_socket_p_t) sock->data.pointer;
@@ -975,16 +950,10 @@ cleanup:
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_listen
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     int                 backlog
 )
-#else
-(sock, backlog)
-rpc_socket_t        sock;
-int                 backlog;
-#endif
 {
     rpc_socket_error_t  serr;
     rpc_bsd_socket_p_t lrpc = (rpc_bsd_socket_p_t) sock->data.pointer;
@@ -1007,7 +976,6 @@ int                 backlog;
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_sendmsg
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     rpc_socket_iovec_p_t iov,       /* array of bufs of data to send */
@@ -1015,14 +983,6 @@ INTERNAL rpc_socket_error_t rpc__bsd_socket_sendmsg
     rpc_addr_p_t        addr,       /* addr of receiver */
     int                 *cc        /* returned number of bytes actually sent */
 )
-#else
-(sock, iov, iov_len, addr, cc)
-rpc_socket_t        sock;
-rpc_socket_iovec_p_t iov;       /* array of bufs of data to send */
-int                 iov_len;    /* number of bufs */
-rpc_addr_p_t        addr;       /* addr of receiver */
-int                 *cc;        /* returned number of bytes actually sent */
-#endif
 {
     rpc_socket_error_t serr;
 
@@ -1044,7 +1004,6 @@ int                 *cc;        /* returned number of bytes actually sent */
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_recvfrom
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     byte_p_t            buf,        /* buf for rcvd data */
@@ -1052,14 +1011,6 @@ INTERNAL rpc_socket_error_t rpc__bsd_socket_recvfrom
     rpc_addr_p_t        from,       /* addr of sender */
     int                 *cc        /* returned number of bytes actually rcvd */
 )
-#else
-(sock, buf, len, from, cc)
-rpc_socket_t        sock;
-byte_p_t            buf;        /* buf for rcvd data */
-int                 len;        /* len of above buf */
-rpc_addr_p_t        from;       /* addr of sender */
-int                 *cc;        /* returned number of bytes actually rcvd */
-#endif
 {
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
 
@@ -1080,7 +1031,6 @@ int                 *cc;        /* returned number of bytes actually rcvd */
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_recvmsg
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     rpc_socket_iovec_p_t iov,       /* array of bufs for rcvd data */
@@ -1088,14 +1038,6 @@ INTERNAL rpc_socket_error_t rpc__bsd_socket_recvmsg
     rpc_addr_p_t        addr,       /* addr of sender */
     int                 *cc        /* returned number of bytes actually rcvd */
 )
-#else
-(sock, iov, iov_len, addr, cc)
-rpc_socket_t        sock;
-rpc_socket_iovec_p_t iov;       /* array of bufs for rcvd data */
-int                 iov_len;    /* number of bufs */
-rpc_addr_p_t        addr;       /* addr of sender */
-int                 *cc;        /* returned number of bytes actually rcvd */
-#endif
 {
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
 
@@ -1123,16 +1065,10 @@ int                 *cc;        /* returned number of bytes actually rcvd */
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_inq_endpoint
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     rpc_addr_p_t        addr
 )
-#else
-(sock, addr)
-rpc_socket_t        sock;
-rpc_addr_p_t        addr;
-#endif
 {
     rpc_socket_error_t  serr;
     rpc_bsd_socket_p_t lrpc = (rpc_bsd_socket_p_t) sock->data.pointer;
@@ -1155,14 +1091,9 @@ rpc_addr_p_t        addr;
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_set_broadcast
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock
 )
-#else
-(sock)
-rpc_socket_t        sock;
-#endif
 {
 #ifdef SO_BROADCAST
     int                 setsock_val = 1;
@@ -1203,7 +1134,6 @@ rpc_socket_t        sock;
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_set_bufs
     
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     unsigned32          txsize,
@@ -1211,14 +1141,6 @@ INTERNAL rpc_socket_error_t rpc__bsd_socket_set_bufs
     unsigned32          *ntxsize,
     unsigned32          *nrxsize
 )
-#else
-(sock, txsize, rxsize, ntxsize, nrxsize)
-rpc_socket_t        sock;
-unsigned32          txsize;
-unsigned32          rxsize;
-unsigned32          *ntxsize;
-unsigned32          *nrxsize;
-#endif
 {
     socklen_t sizelen;
     int e;
@@ -1317,14 +1239,9 @@ unsigned32          *nrxsize;
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_set_nbio
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock
 )
-#else
-(sock)
-rpc_socket_t        sock;
-#endif
 {
 #ifndef vms
 
@@ -1369,14 +1286,9 @@ rpc_socket_t        sock;
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_set_close_on_exec
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock
 )
-#else
-(sock)
-rpc_socket_t        sock;
-#endif
 {
 #ifndef vms
     rpc_socket_error_t  serr = RPC_C_SOCKET_OK;
@@ -1405,16 +1317,10 @@ rpc_socket_t        sock;
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_getpeername
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t sock,
     rpc_addr_p_t addr
 )
-#else
-(sock, addr)
-rpc_socket_t sock;
-rpc_addr_p_t addr;
-#endif
 {
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
     rpc_bsd_socket_p_t lrpc = (rpc_bsd_socket_p_t) sock->data.pointer;
@@ -1437,16 +1343,10 @@ rpc_addr_p_t addr;
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_get_if_id
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     rpc_network_if_id_t *network_if_id
 )
-#else
-(sock, network_if_id)
-rpc_socket_t        sock;
-rpc_network_if_id_t *network_if_id;
-#endif
 {
     socklen_t optlen = 0;
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
@@ -1477,14 +1377,9 @@ rpc_network_if_id_t *network_if_id;
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_set_keepalive
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock
 )
-#else
-(sock)
-rpc_socket_t        sock;
-#endif
 {
 #ifdef SO_KEEPALIVE
     int                 setsock_val = 1;
@@ -1517,16 +1412,10 @@ rpc_socket_t        sock;
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_nowriteblock_wait
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t sock,
     struct timeval *tmo
 )
-#else
-(sock, tmo)
-rpc_socket_t sock;
-struct timeval *tmo;
-#endif
 {
     fd_set  write_fds;
     int     nfds, num_found;
@@ -1568,16 +1457,10 @@ struct timeval *tmo;
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_set_rcvtimeo
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     struct timeval      *tmo
 )
-#else
-(sock)
-rpc_socket_t        sock;
-struct timeval      *tmo;
-#endif
 {
 #ifdef SO_RCVTIMEO
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
@@ -1605,18 +1488,11 @@ struct timeval      *tmo;
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_getpeereid
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     uid_t		*euid,
     gid_t		*egid
 )
-#else
-(sock, euid, egid)
-rpc_socket_t        sock;
-uid_t		    *euid;
-gid_t		    *egid;
-#endif
 {
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
 #if defined(SO_PEERCRED)
@@ -1665,16 +1541,10 @@ gid_t		    *egid;
 #if !defined(SO_PEERCRED) && !(defined(HAVE_GETPEEREID) && HAVE_DECL_GETPEEREID)
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_sendpeereid
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     rpc_addr_p_t        addr
 )
-#else
-(sock)
-rpc_socket_t        sock;
-rpc_addr_p_t        addr;
-#endif
 {
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
     rpc_bsd_socket_p_t lrpc = (rpc_bsd_socket_p_t) sock->data.pointer;
@@ -1760,18 +1630,11 @@ error:
 
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_recvpeereid
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     uid_t		*euid,
     gid_t		*egid
 )
-#else
-(sock, euid, egid)
-rpc_socket_t        sock;
-uid_t		    *euid;
-gid_t		    *egid;
-#endif
 {
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
     rpc_bsd_socket_p_t lrpc = (rpc_bsd_socket_p_t) sock->data.pointer;
@@ -1872,16 +1735,10 @@ error:
  */
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_createsessionkey
-#ifdef _DCE_PROTO_
 (
     unsigned char **session_key,
     unsigned16     *session_key_len
 )
-#else
-(session_key, session_key_len)
-unsigned char    **session_key;
-unsigned16        *session_key_len;
-#endif
 {
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
     unsigned16 key_len = 0;
@@ -1937,18 +1794,11 @@ cleanup:
 
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_sendsessionkey
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     unsigned char      *session_key,
     unsigned16          session_key_len
 )
-#else
-(sock, session_key, session_key_len)
-rpc_socket_t        sock;
-unsigned char      *session_key;
-unsigned16          session_key_len;
-#endif
 {
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
     rpc_bsd_socket_p_t lrpc = (rpc_bsd_socket_p_t) sock->data.pointer;
@@ -1982,18 +1832,11 @@ error:
 
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_recvsession_key
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t        sock,
     unsigned char     **session_key,
     unsigned16 	       *session_key_len
 )
-#else
-(sock, session_key, session_key)
-rpc_socket_t        sock;
-unsigned char     **session_key;
-unsigned16         *session_key_len;
-#endif
 {
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
     rpc_bsd_socket_p_t lrpc = (rpc_bsd_socket_p_t) sock->data.pointer;

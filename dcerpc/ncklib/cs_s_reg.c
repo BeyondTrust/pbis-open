@@ -74,16 +74,10 @@ static error_status_t	rpc_g_codesets_status;
 */
 PRIVATE
 void name_sort
-#ifdef _DCE_PROTO_
 (
 	entry_t		**codesets, 
 	int		entry_count
 )
-#else
-(codesets, entry_count)
-	entry_t		**codesets;
-	int		entry_count;
-#endif
 {
 	int	i, j, k;
 	entry_t	*temp;
@@ -114,16 +108,10 @@ void name_sort
 */
 PRIVATE
 void priority_sort
-#ifdef _DCE_PROTO_
 (
 	entry_t		**codesets, 
 	int		entry_count
 )
-#else
-(codesets, entry_count)
-	entry_t		**codesets; 
-	int		entry_count;
-#endif
 {
 	int	i, j, k;
 	entry_t	*temp;
@@ -155,7 +143,6 @@ void priority_sort
 */
 PRIVATE
 void c_binary_search
-#ifdef _DCE_PROTO_
 (
 	entry_t		**codesets, 
 	int		low, 
@@ -163,14 +150,6 @@ void c_binary_search
 	long		key_value,
 	entry_t		**code_entry
 )
-#else
-(codesets, low, high, key_value, code_entry)
-	entry_t		**codesets;
-	int		low;
-	int		high;
-	long		key_value;
-	entry_t		**code_entry;
-#endif
 {
 	int	middle;
 	long	code1, code2;
@@ -212,7 +191,6 @@ void c_binary_search
 */
 PRIVATE
 void n_binary_search
-#ifdef _DCE_PROTO_
 (
 	entry_t		**codesets, 
 	int		low, 
@@ -220,14 +198,6 @@ void n_binary_search
 	char		*key_name,
 	entry_t		**code_entry
 )
-#else
-(codesets, low, high, key_name, code_entry)
-	entry_t		**codesets;
-	int		low;
-	int		high;
-	char		*key_name;
-	entry_t		**code_entry;
-#endif
 {
 	int	middle, k;
 
@@ -268,13 +238,9 @@ void n_binary_search
 */
 PRIVATE
 rpc__codesets_really_read_file
-#ifdef _DCE_PROTO_
 (
 	void
 )
-#else
-()
-#endif
 {
 	int	i, j, k;
 	entry_t	*ep;
@@ -423,14 +389,9 @@ rpc__codesets_really_read_file
 */
 PRIVATE
 rpc__codesets_read_registry_file
-#ifdef _DCE_PROTO_
 (
 	error_status_t	*status
 )
-#else
-(status)
-	error_status_t	*status;
-#endif
 {
 	entry_t		**sort_name_codesets;
 	entry_t		**sort_name_save;
@@ -565,7 +526,6 @@ rpc__codesets_read_registry_file
 
 PUBLIC 
 void dce_cs_loc_to_rgy
-#ifdef _DCE_PROTO_
 (
 	idl_char		*local_code_set_name,
 	unsigned32		*rgy_code_set_value,
@@ -573,15 +533,6 @@ void dce_cs_loc_to_rgy
 	unsigned16		**rgy_char_sets_value,
 	error_status_t		*status
 )
-#else
-(local_code_set_name, rgy_code_set_value, rgy_char_sets_number, 
-						rgy_char_sets_value, status)
-	idl_char		*local_code_set_name;
-	unsigned32		*rgy_code_set_value;
-	unsigned16		*rgy_char_sets_number;
-	unsigned16		**rgy_char_sets_value;
-	error_status_t		*status;
-#endif
 {
 	entry_t		**epp;
 	entry_t		*found = NULL;
@@ -685,7 +636,6 @@ void dce_cs_loc_to_rgy
 
 PUBLIC 
 void dce_cs_rgy_to_loc
-#ifdef _DCE_PROTO_
 (
 	unsigned32		rgy_code_set_value,
 	idl_char 		**local_code_set_name,
@@ -693,15 +643,6 @@ void dce_cs_rgy_to_loc
 	unsigned16		**rgy_char_sets_value,
 	error_status_t		*status
 )
-#else
-(rgy_code_set_value, local_code_set_name, rgy_char_sets_number, 
-						rgy_char_sets_value, status)
-	unsigned32		rgy_code_set_value;
-	idl_char 		**local_code_set_name;
-	unsigned16		*rgy_char_sets_number;
-	unsigned16		**rgy_char_sets_value;
-	error_status_t		*status;
-#endif
 {
 	entry_t		**epp;
 	entry_t		*found = NULL;
@@ -806,18 +747,11 @@ void dce_cs_rgy_to_loc
 
 PUBLIC 
 void rpc_rgy_get_max_bytes
-#ifdef _DCE_PROTO_
 (
 	unsigned32		tag,
 	unsigned16		*max_bytes,
 	error_status_t		*status
 )
-#else
-(tag, max_bytes, status)
-	unsigned32		tag;
-	unsigned16		*max_bytes;
-	error_status_t		*status;
-#endif
 {
 	entry_t		**epp;
 	entry_t		*found = NULL;
@@ -892,16 +826,10 @@ void rpc_rgy_get_max_bytes
 
 PUBLIC 
 void rpc_rgy_get_codesets
-#ifdef _DCE_PROTO_
 (
 	rpc_codeset_mgmt_p_t	*codesets_p,
 	error_status_t		*status
 )
-#else
-(codesets_p, status)
-	rpc_codeset_mgmt_p_t	*codesets_p;
-	error_status_t		*status;
-#endif
 {
 	int             i;
 	entry_t		**epp;

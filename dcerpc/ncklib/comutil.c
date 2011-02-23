@@ -162,16 +162,10 @@ INTERNAL unsigned_char_t cvt_ebcdic_to_ascii[] = {
 **/
 
 PUBLIC void rpc_string_free 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_p_t       *string,
     unsigned32              *status
 )
-#else
-(string, status)
-unsigned_char_p_t       *string;
-unsigned32              *status;
-#endif
 {
     CODING_ERROR (status);
    
@@ -343,16 +337,10 @@ PRIVATE size_t rpc__get_token(
 **/
 
 PRIVATE unsigned32 rpc__strcspn 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_p_t       string,
     char                    *term_set
 )
-#else
-(string, term_set)
-unsigned_char_p_t       string;
-char                    *term_set;
-#endif
 {
     unsigned_char_p_t   ptr;
     unsigned_char_p_t   term_ptr;
@@ -468,18 +456,11 @@ char                    *term_set;
 **/
 
 PRIVATE void rpc__strncpy 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_p_t       dst_string,
     unsigned_char_p_t       src_string,
     unsigned32              max_len
 )
-#else
-(dst_string, src_string, max_len)
-unsigned_char_p_t       dst_string;
-unsigned_char_p_t       src_string;
-unsigned32              max_len;
-#endif
 {
     /*
      * make sure there's something to do before we start
@@ -536,14 +517,9 @@ unsigned32              max_len;
 **/
 
 PRIVATE unsigned32 rpc__strsqz 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_t         *string
 )
-#else
-(string)
-unsigned_char_t         *string;
-#endif
 {
     unsigned_char_p_t   ptr1, ptr2;
     unsigned32          count;
@@ -687,14 +663,9 @@ unsigned_char_p_t       string;
 **/
 
 PRIVATE unsigned_char_p_t rpc__stralloc 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_p_t       string
 )
-#else
-(string)
-unsigned_char_p_t       string;
-#endif
 {
 
     return (rpc_stralloc (string));
@@ -740,20 +711,12 @@ unsigned_char_p_t       string;
 **/
 
 PUBLIC void rpc_util_strcvt 
-#ifdef _DCE_PROTO_
 (
     boolean32		to_ascii,
     unsigned32		len,
     unsigned_char_p_t	src,
     unsigned_char_p_t	dst
 )
-#else
-(to_ascii, len, src, dst)
-boolean32		to_ascii;
-unsigned32		len;
-unsigned_char_p_t	src;
-unsigned_char_p_t	dst;
-#endif
 {
     unsigned_char_p_t cvt_tbl;
 

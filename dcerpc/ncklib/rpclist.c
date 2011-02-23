@@ -109,7 +109,6 @@ GLOBAL rpc_lookaside_rcb_t rpc_g_lookaside_rcb =
 **/
 
 PRIVATE void rpc__list_desc_init 
-#ifdef _DCE_PROTO_
 (
     rpc_list_desc_p_t               list_desc,
     unsigned32                      max_size,
@@ -120,17 +119,6 @@ PRIVATE void rpc__list_desc_init
     rpc_mutex_p_t                   mutex,
     rpc_cond_p_t                    cond
 )
-#else
-(list_desc, max_size, element_size, element_type, alloc_rtn, free_rtn, mutex, cond) 
-rpc_list_desc_p_t               list_desc;
-unsigned32                      max_size;
-unsigned32                      element_size;
-unsigned32                      element_type;
-rpc_list_element_alloc_fn_t     alloc_rtn;
-rpc_list_element_free_fn_t      free_rtn;
-rpc_mutex_p_t                   mutex;
-rpc_cond_p_t                    cond;
-#endif
 {
     list_desc->max_size = max_size;
     list_desc->cur_size = 0;
@@ -190,16 +178,10 @@ rpc_cond_p_t                    cond;
 **/
 
 PRIVATE pointer_t rpc__list_element_alloc 
-#ifdef _DCE_PROTO_
 (
     rpc_list_desc_p_t       list_desc,
     boolean32               block
 )
-#else
-(list_desc, block)
-rpc_list_desc_p_t       list_desc;
-boolean32               block;
-#endif
 {
     volatile pointer_t  element;
     unsigned32          wait_cnt;
@@ -405,16 +387,10 @@ boolean32               block;
 **/
 
 PRIVATE void rpc__list_element_free 
-#ifdef _DCE_PROTO_
 (
     rpc_list_desc_p_t       list_desc,
     pointer_t               list_element
 )
-#else
-(list_desc, list_element)
-rpc_list_desc_p_t       list_desc;
-pointer_t               list_element;
-#endif
 {
     RPC_LOG_LIST_ELT_FREE_NTR;
 
@@ -532,14 +508,9 @@ pointer_t               list_element;
 **/
 
 PRIVATE void rpc__list_fork_handler
-#ifdef _DCE_PROTO_
 (
     rpc_fork_stage_id_t     stage
 )
-#else
-(stage)
-rpc_fork_stage_id_t     stage;
-#endif
 {
     switch ((int)stage)
     {

@@ -435,12 +435,10 @@ typedef struct DDBE_param_i_t {
  * and spell the corresponding vector data.
  */
 extern boolean DDBE_main(           /* Main rtn for Data Driven Backend */
-#ifdef PROTO
     boolean             *cmd_opt,   /* [in] array of cmd option flags */
     void                **cmd_val,  /* [in] array of cmd option values */
     AST_interface_n_t   *int_p,     /* [in] ptr to interface node */
     DDBE_vectors_t      **p_vip     /*[out] vector information pointer */
-#endif
 );
 
 
@@ -454,11 +452,9 @@ extern boolean DDBE_main(           /* Main rtn for Data Driven Backend */
  *  of specified kind returns TRUE, otherwise this case returns FALSE.
  */
 extern boolean DDBE_param_is_array_of_kind(
-#ifdef PROTO
     AST_parameter_n_t   *param_p,   /* [in] Ptr to AST parameter node */
     AST_type_k_t        elem_kind,  /* [in] Array element kind */
     boolean             a_of_a      /* [in] TRUE=>a of a of kind returns TRUE */
-#endif
 );
 
 /*
@@ -466,9 +462,7 @@ extern boolean DDBE_param_is_array_of_kind(
  *  a conformant array.
  */
 extern boolean DDBE_cfmt_arr_local_rep(
-#ifdef PROTO
     AST_parameter_n_t   *param_p    /* [in] Ptr to AST parameter node */
-#endif
 );
 
 
@@ -484,10 +478,8 @@ extern long     DDBE_inst_num;
  *  Spells the Interpreter tag that corresponds to a scalar type.
  */
 extern void DDBE_spell_type_kind(
-#ifdef PROTO
     FILE                *fid,       /* [in] output file handle */
     DDBE_vec_rep_t      *vec_p      /* [in] ptr to vector entry */
-#endif
 );
 
 /*
@@ -495,24 +487,20 @@ extern void DDBE_spell_type_kind(
  * offset vector.  This is necessary so that the data is portable.
  */
 extern void DDBE_spell_offset_instances(
-#ifdef PROTO
     FILE                *fid,       /* [in] output file handle */
     DDBE_vectors_t      *vip,       /* [in] vector information pointer */
     boolean             *cmd_opt,   /* [in] array of cmd option flags */
     void                **cmd_val   /* [in] array of cmd option values */
-#endif
 );
 
 /*
  * Spells the offset vector definition.
  */
 extern void DDBE_spell_offset_vec(
-#ifdef PROTO
     FILE                *fid,       /* [in] output file handle */
     DDBE_vectors_t      *vip,       /* [in] vector information pointer */
     boolean             *cmd_opt,   /* [in] array of cmd option flags */
     void                **cmd_val   /* [in] array of cmd option values */
-#endif
 );
 
 /*
@@ -520,12 +508,10 @@ extern void DDBE_spell_offset_vec(
  * that are spelt by DDBE_spell_offset_instances.
  */
 extern void DDBE_spell_offset_vec_use_inst(
-#ifdef PROTO
     FILE                *fid,       /* [in] output file handle */
     DDBE_vectors_t      *vip,       /* [in] vector information pointer */
     boolean             *cmd_opt,   /* [in] array of cmd option flags */
     void                **cmd_val   /* [in] array of cmd option values */
-#endif
 );
 
 /*
@@ -534,77 +520,65 @@ extern void DDBE_spell_offset_vec_use_inst(
  *  the offset vector.  Alternative to using DDBE_spell_offset_vec.
  */
 extern void DDBE_init_offset_vec(
-#ifdef PROTO
     FILE                *fid,       /* [in] output file handle */
     DDBE_vectors_t      *vip,       /* [in] vector information pointer */
     boolean             *cmd_opt,   /* [in] array of cmd option flags */
     void                **cmd_val   /* [in] array of cmd option values */
-#endif
 );
 
 /*
  * Spells the routine vector definition.
  */
 extern void DDBE_spell_rtn_vec(
-#ifdef PROTO
     FILE                *fid,       /* [in] output file handle */
     DDBE_vectors_t      *vip,       /* [in] vector information pointer */
     boolean             *cmd_opt,   /* [in] array of cmd option flags */
     void                **cmd_val,   /* [in] array of cmd option values */
     boolean         client_side     /* [in] T=>client only, F=>server only */
-#endif
 );
 
 /*
  * Spells the type vector definition.
  */
 extern void DDBE_spell_type_vec(
-#ifdef PROTO
     FILE                *fid,       /* [in] output file handle */
     DDBE_vectors_t      *vip,       /* [in] vector information pointer */
     boolean             *cmd_opt,   /* [in] array of cmd option flags */
     void                **cmd_val   /* [in] array of cmd option values */
-#endif
 );
 
 /*
  *  Spell the definition of the parameter vector for an operation.
  */
 extern void DDBE_spell_param_vec_def(
-#ifdef PROTO
     FILE            *fid,           /* [in] output file handle */
     AST_operation_n_t *oper_p,      /* [in] ptr to AST operation node */
     BE_side_t       side,           /* [in] client or server side code */
     boolean         *cmd_opt,       /* [in] array of cmd option flags */
     void            **cmd_val       /* [in] array of cmd option values */
-#endif
 );
 
 /*
  *  Spell the initialization of the parameter vector for an operation.
  */
 extern void DDBE_spell_param_vec_init(
-#ifdef PROTO
     FILE            *fid,           /* [in] output file handle */
     AST_operation_n_t *oper_p,      /* [in] ptr to AST operation node */
     BE_side_t       side,           /* [in] client or server side code */
     boolean         *cmd_opt,       /* [in] array of cmd option flags */
     void            **cmd_val       /* [in] array of cmd option values */
-#endif
 );
 
 /*
  *  Spells the code to marshall or unmarshall the parameters in an operation.
  */
 extern void DDBE_spell_marsh_or_unmar(
-#ifdef PROTO
     FILE            *fid,           /* [in] output file handle */
     AST_operation_n_t *oper_p,      /* [in] ptr to AST operation node */
     char            *interp_name,   /* [in] marshalling interpreter rtn name */
     char            *state_ptr_name,/* [in] name of state pointer variable */
     BE_side_t       side,           /* [in] client or server side code */
     BE_marshalling_k_t mar_or_unmar /* [in] spell marshall or unmarshall code */
-#endif
 );
 
 #endif

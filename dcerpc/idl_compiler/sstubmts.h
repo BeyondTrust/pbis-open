@@ -37,7 +37,6 @@
 
 void BE_gen_sstub
 (
-#ifdef PROTO
     FILE *fid,              /* Handle for emitted C text */
     AST_interface_n_t *p_interface,     /* Ptr to AST interface node */
     language_k_t language,  /* Language stub is to interface to */
@@ -45,6 +44,5 @@ void BE_gen_sstub
     boolean *cmd_opt,
     void **cmd_val,
     DDBE_vectors_t *dd_vip    /* Data driven BE vector information ptr */
-#endif
 );
 

@@ -83,14 +83,9 @@ static void common()
 /***************************************************************************/
 
 void perf_init
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h
 )
-#else
-    (h)
-    handle_t                h;
-#endif
 {
     print_binding_info ("perf_init", h);
     n_calls = 0;
@@ -116,14 +111,9 @@ void perf_info
 /***************************************************************************/
 
 void perf_null 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h __attribute__((unused))
 )
-#else
-    (h)
-    handle_t                h;
-#endif
 {
     common();
 }
@@ -131,14 +121,9 @@ void perf_null
 /***************************************************************************/
 
 void perf_null_idem 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h __attribute__((unused))
 )
-#else
-    (h)
-    handle_t                h;
-#endif
 {
     common();
 }
@@ -146,7 +131,6 @@ void perf_null_idem
 /***************************************************************************/
 
 void perf_in 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h __attribute__((unused)),
     perf_data_t             d,
@@ -154,14 +138,6 @@ void perf_in
     idl_boolean             verify,
     unsigned32           *sum
 )
-#else
-    (h, d, l, verify, sum)
-    handle_t                h;
-    perf_data_t             d;
-    unsigned32           l;
-    idl_boolean             verify;
-    unsigned32           *sum;
-#endif
 {
     unsigned long           i, rsum;
     
@@ -183,7 +159,6 @@ void perf_in
 /***************************************************************************/
 
 void perf_in_idem 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h __attribute__((unused)),
     perf_data_t             d,
@@ -191,14 +166,6 @@ void perf_in_idem
     idl_boolean             verify,
     unsigned32           *sum
 )
-#else
-    (h, d, l, verify, sum)
-    handle_t                h;
-    perf_data_t             d;
-    unsigned32          l;
-    idl_boolean             verify;
-    unsigned32           *sum;
-#endif
 {
     perf_in(h, d, l, verify, sum);
 }
@@ -206,7 +173,6 @@ void perf_in_idem
 /***************************************************************************/
 
 void perf_out 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h __attribute__((unused)),
     perf_data_t             d,
@@ -215,15 +181,6 @@ void perf_out
     unsigned32           pass,
     idl_boolean             verify
 )
-#else
-    (h, d, l, m, pass, verify)
-    handle_t                h;
-    perf_data_t             d;
-    unsigned32           *l;
-    unsigned32           m;
-    unsigned32           pass;
-    idl_boolean             verify;
-#endif
 {
     unsigned long           i;
 
@@ -246,7 +203,6 @@ void perf_out
 /***************************************************************************/
 
 void perf_out_idem 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h,
     perf_data_t             d,
@@ -255,15 +211,6 @@ void perf_out_idem
     unsigned32           pass,
     idl_boolean             verify
 )
-#else
-    (h, d, l, m, pass, verify)
-    handle_t                h;
-    perf_data_t             d;
-    unsigned32           *l;
-    unsigned32           m;
-    unsigned32           pass;
-    idl_boolean             verify;
-#endif
 {
     perf_out(h, d, l, m, pass, verify);
 }
@@ -271,16 +218,10 @@ void perf_out_idem
 /***************************************************************************/
 
 void perf_brd 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h,
     idl_char                *name
 )
-#else
-    (h, name)
-    handle_t                h;
-    idl_char                *name;
-#endif
 {
     print_binding_info ("perf_brd", h);
     common();
@@ -291,14 +232,9 @@ void perf_brd
 /***************************************************************************/
 
 void perf_maybe 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h
 )
-#else
-    (h)
-    handle_t                h;
-#endif
 {
     print_binding_info ("perf_maybe", h);
     common();
@@ -308,14 +244,9 @@ void perf_maybe
 /***************************************************************************/
 
 void perf_brd_maybe 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h
 )
-#else
-    (h)
-    handle_t                h;
-#endif
 {
     print_binding_info ("perf_brd_maybe", h);
     common();
@@ -325,7 +256,6 @@ void perf_brd_maybe
 /***************************************************************************/
 
 void perf_fp_test 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h __attribute__((unused)),
     float                   *f1,
@@ -335,14 +265,6 @@ void perf_fp_test
     float                   *o1,
     double                  *o2
 )
-#else
-    (h, f1, f2, d1, d2, o1, o2)
-    handle_t                h;
-    float                   *f1, *f2;
-    double                  d1, d2;
-    float                   *o1;
-    double                  *o2;
-#endif
 {
     common();
 
@@ -361,18 +283,11 @@ static boolean32            got_fwd_bindings = false;
 static rpc_binding_vector_p_t fwd_bv;
 
 void perf_register_b 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h,
     idl_boolean             global __attribute__((unused)),
     unsigned32              *st
 )
-#else
-    (h, global, st)
-    handle_t                h;
-    idl_boolean             global;
-    unsigned32              *st;
-#endif
 {
     unsigned_char_p_t       bstr;
     unsigned_char_p_t       protseq;
@@ -485,16 +400,10 @@ void perf_register_b
 /***************************************************************************/
 
 void perf_unregister_b
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h,
     unsigned32              *st
 )
-#else
-    (h, st)
-    handle_t                h;
-    unsigned32              *st;
-#endif
 {
     unsigned32              st1, st2;
     extern rpc_if_handle_t  perfb_v1_0_s_ifspec;
@@ -529,14 +438,9 @@ void perf_unregister_b
 /***************************************************************************/
 
 void perf_exception 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h
 )
-#else
-    (h)
-    handle_t                h;
-#endif
 {
 
     print_binding_info ("perf_exception", h);
@@ -559,18 +463,11 @@ void perf_exception
 /***************************************************************************/
 
 static void slow
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h __attribute__((unused)),
     perf_slow_mode_t        mode,
     unsigned32           secs
 )
-#else
-    (h, mode, secs)
-    handle_t                h;
-    perf_slow_mode_t        mode;
-    unsigned32           secs;
-#endif
 {
     long                    start_time;
 
@@ -692,18 +589,11 @@ DONE:
 /***************************************************************************/
 
 void perf_null_slow 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h,
     perf_slow_mode_t        mode,
     unsigned32           secs
 )
-#else
-    (h, mode, secs)
-    handle_t                h;
-    perf_slow_mode_t        mode;
-    unsigned32           secs;
-#endif
 {
   int oc = 0;
   
@@ -721,18 +611,11 @@ void perf_null_slow
 /***************************************************************************/
 
 void perf_null_slow_idem 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h,
     perf_slow_mode_t        mode,
     unsigned32           secs
 )
-#else
-    (h, mode, secs)
-    handle_t                h;
-    perf_slow_mode_t        mode;
-    unsigned32           secs;
-#endif
 {
   int oc =0;
   
@@ -750,14 +633,9 @@ void perf_null_slow_idem
 /***************************************************************************/
 
 void perf_shutdown 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h
 )
-#else
-    (h)
-    handle_t                h;
-#endif
 {
     unsigned32          st;
 
@@ -775,14 +653,9 @@ struct shutdown_info
 
 
 static void *shutdown_thread
-#ifdef IDL_PROTOTYPES
 (
     void *p_
 )
-#else
-    (p_)
-    void *p_;
-#endif
 {
     struct shutdown_info *p = (struct shutdown_info *) p_;
     unsigned32          st;
@@ -809,16 +682,10 @@ static void *shutdown_thread
 
 
 void perf_shutdown2
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h __attribute__((unused)),
     unsigned32              secs
 )
-#else
-    (h, secs)
-    handle_t                h;
-    unsigned32              secs;
-#endif
 {
     struct shutdown_info *p;
     pthread_t           thread;
@@ -840,16 +707,10 @@ void perf_shutdown2
 /***************************************************************************/
 
 void perf_call_callback 
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h,
     unsigned32           idem
 )
-#else
-    (h, idem)
-    handle_t                h;
-    unsigned32          idem;
-#endif
 {
     unsigned                     i;
     unsigned32           c, passes;
@@ -894,14 +755,9 @@ struct context
 #define CONTEXT_MAGIC 0xfeedf00d
 
 void perf_context_t_rundown
-#ifdef IDL_PROTOTYPES
 (
     rpc_ss_context_t        context
 )
-#else
-    (context)
-    rpc_ss_context_t        context;
-#endif
 {
     struct context *p = (struct context *) context;
 
@@ -919,18 +775,11 @@ void perf_context_t_rundown
 /***************************************************************************/
 
 void perf_get_context
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h,
     unsigned32           data,
     perf_context_t          *context
 )
-#else
-    (h, data, context)
-    handle_t                h;
-    unsigned32           data;
-    perf_context_t          *context;
-#endif
 {
     struct context *p;
 
@@ -946,16 +795,10 @@ void perf_get_context
 /***************************************************************************/
 
 idl_boolean perf_test_context
-#ifdef IDL_PROTOTYPES
 (
     perf_context_t          context,
     unsigned32           *data
 )
-#else
-    (context, data)
-    perf_context_t          context;
-    unsigned32           *data;
-#endif
 {
     struct context *p = (struct context *) context;
 
@@ -973,16 +816,10 @@ idl_boolean perf_test_context
 /***************************************************************************/
 
 idl_boolean perf_free_context
-#ifdef IDL_PROTOTYPES
 (
     perf_context_t          *context,
     unsigned32           *data
 )
-#else
-    (context, data)
-    perf_context_t          *context;
-    unsigned32           *data;
-#endif
 {
     struct context *p = (struct context *) *context;
 
@@ -1004,14 +841,9 @@ idl_boolean perf_free_context
 /***************************************************************************/
 
 void perf_brd_fault
-#ifdef IDL_PROTOTYPES
 (
     handle_t                h
 )
-#else
-    (h)
-    handle_t                h;
-#endif
 {
     common();
     n_brd++; 

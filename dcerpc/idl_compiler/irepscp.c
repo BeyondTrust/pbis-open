@@ -59,20 +59,12 @@
 **  Assumption: Passed tuple has a valid type node ptr argument.
 */
 static void IR_push_scope
-#ifdef PROTO
 (
     IR_scope_ctx_t      *ctx_p,         /* [io] Scope context */
     IR_tup_n_t          *tup_p,         /* [in] Irep tuple */
     AST_instance_n_t    *inst_p,        /* [in] Ptr to AST instance node */
     IR_scope_k_t        scope           /* [in] Scope data kind */
 )
-#else
-(ctx_p, tup_p, inst_p, scope)
-    IR_scope_ctx_t      *ctx_p;         /* [io] Scope context */
-    IR_tup_n_t          *tup_p;         /* [in] Irep tuple */
-    AST_instance_n_t    *inst_p;        /* [in] Ptr to AST instance node */
-    IR_scope_k_t        scope;          /* [in] Scope data kind */
-#endif
 {
     /* Grow the stack if necessary */
     if (ctx_p->scope >= ctx_p->scope_stack_size-1)
@@ -107,14 +99,9 @@ static void IR_push_scope
 **  Pops data off the data scoping stack.
 */
 static void IR_pop_scope
-#ifdef PROTO
 (
     IR_scope_ctx_t      *ctx_p          /* [io] Scope context */
 )
-#else
-(ctx_p)
-    IR_scope_ctx_t      *ctx_p;         /* [io] Scope context */
-#endif
 {
     ctx_p->scope--;
 }
@@ -126,18 +113,11 @@ static void IR_pop_scope
 **  Pushes data on the type scoping stack.  Grows the stack if necessary.
 */
 static void IR_push_type
-#ifdef PROTO
 (
     IR_scope_ctx_t      *ctx_p,         /* [io] Scope context */
     AST_type_n_t        *type_p,        /* [in] Ptr to AST type node */
     IR_flags_t          flags           /* [in] IREP flags */
 )
-#else
-(ctx_p, type_p, flags)
-    IR_scope_ctx_t      *ctx_p;         /* [io] Scope context */
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-    IR_flags_t          flags;          /* [in] IREP flags */
-#endif
 {
     /* Grow the stack if necessary */
     if (ctx_p->type_scope >= ctx_p->type_stack_size-1)
@@ -167,14 +147,9 @@ static void IR_push_type
 **  Pops data off the type scoping stack.
 */
 static void IR_pop_type
-#ifdef PROTO
 (
     IR_scope_ctx_t      *ctx_p          /* [io] Scope context */
 )
-#else
-(ctx_p)
-    IR_scope_ctx_t      *ctx_p;         /* [io] Scope context */
-#endif
 {
     ctx_p->type_scope--;
 }
@@ -193,14 +168,9 @@ static void IR_pop_type
 **  Allocates and initializes a scope context and returns its address.
 */
 IR_scope_ctx_t *IR_init_scope           /* Returns ptr to new scope context */
-#ifdef PROTO
 (
     struct AST_parameter_n_t *param_p   /* [in] Ptr to AST parameter node */
 )
-#else
-(param_p)
-    struct AST_parameter_n_t *param_p;  /* [in] Ptr to AST parameter node */
-#endif
 {
     IR_scope_ctx_t      *ctx_p;
 
@@ -229,14 +199,9 @@ IR_scope_ctx_t *IR_init_scope           /* Returns ptr to new scope context */
 **  Cleans up a scope context.
 */
 void IR_finish_scope
-#ifdef PROTO
 (
     IR_scope_ctx_t      *ctx_p          /* [io] Scope context */
 )
-#else
-(ctx_p)
-    IR_scope_ctx_t      *ctx_p;         /* [io] Scope context */
-#endif
 {
     FREE(ctx_p->scope_a);
     FREE(ctx_p->type_s_a);
@@ -250,16 +215,10 @@ void IR_finish_scope
 **  Processes tuple and maintains scoping data.
 */
 void IR_process_tup
-#ifdef PROTO
 (
     IR_scope_ctx_t      *ctx_p,         /* [io] Scope context */
     IR_tup_n_t          *tup_p          /* [in] Irep tuple */
 )
-#else
-(ctx_p, tup_p)
-    IR_scope_ctx_t      *ctx_p;         /* [io] Scope context */
-    IR_tup_n_t          *tup_p;         /* [in] Irep tuple */
-#endif
 {
     switch (tup_p->opcode)
     {
@@ -358,16 +317,10 @@ void IR_process_tup
 **      If processing  struct within struct, IR_in_scope(ctx,IR_SCP_STRUCT) = 2.
 */
 int IR_in_scope                         /* Returns data kind nesting level */
-#ifdef PROTO
 (
     IR_scope_ctx_t      *ctx_p,         /* [in] Scope context */
     IR_scope_k_t        scope           /* [in] Scope data kind */
 )
-#else
-(ctx_p, scope)
-    IR_scope_ctx_t      *ctx_p;         /* [in] Scope context */
-    IR_scope_k_t        scope;          /* [in] Scope data kind */
-#endif
 {
     int level;
 
@@ -386,16 +339,10 @@ int IR_in_scope                         /* Returns data kind nesting level */
 **  scope as its starting point.
 */
 int IR_in_scope_parent                  /* Returns data kind nesting level */
-#ifdef PROTO
 (
     IR_scope_ctx_t      *ctx_p,         /* [in] Scope context */
     IR_scope_k_t        scope           /* [in] Scope data kind */
 )
-#else
-(ctx_p, scope)
-    IR_scope_ctx_t      *ctx_p;         /* [in] Scope context */
-    IR_scope_k_t        scope;          /* [in] Scope data kind */
-#endif
 {
     int level;
 
@@ -420,16 +367,10 @@ int IR_in_scope_parent                  /* Returns data kind nesting level */
 **      IR_under_scope(ctx,IR_SCP_ARRAY)    = FALSE
 */
 boolean IR_under_scope                  /* Returns TRUE if under scope kind */
-#ifdef PROTO
 (
     IR_scope_ctx_t      *ctx_p,         /* [in] Scope context */
     IR_scope_k_t        scope           /* [in] Scope data kind */
 )
-#else
-(ctx_p, scope)
-    IR_scope_ctx_t      *ctx_p;         /* [in] Scope context */
-    IR_scope_k_t        scope;          /* [in] Scope data kind */
-#endif
 {
     int level;
 
@@ -451,18 +392,11 @@ boolean IR_under_scope                  /* Returns TRUE if under scope kind */
 **      IR_under_scope_under_scope(ctx,IR_SCP_STRUCT,IR_SCP_POINTER) = FALSE
 */
 boolean IR_under_scope_under_scope      /* Returns TRUE if under scope kinds */
-#ifdef PROTO
 (
     IR_scope_ctx_t      *ctx_p,         /* [in] Scope context */
     IR_scope_k_t        cscope,         /* [in] Child scope data kind */
     IR_scope_k_t        pscope          /* [in] Parent scope data kind */
 )
-#else
-(ctx_p, cscope, pscope)
-    IR_scope_ctx_t      *ctx_p;         /* [in] Scope context */
-    IR_scope_k_t        cscope;         /* [in] Child scope data kind */
-    IR_scope_k_t        pscope;         /* [in] Parent scope data kind */
-#endif
 {
     int level;
 
@@ -492,16 +426,10 @@ boolean IR_under_scope_under_scope      /* Returns TRUE if under scope kinds */
 **      and we want this routine to correctly determine nesting for that case.
 */
 int IR_under_type                       /* Returns type nesting level */
-#ifdef PROTO
 (
     IR_scope_ctx_t      *ctx_p,         /* [in] Scope context */
     AST_type_n_t        *type_p         /* [in] Ptr to AST type node */
 )
-#else
-(ctx_p, type_p)
-    IR_scope_ctx_t      *ctx_p;         /* [in] Scope context */
-    AST_type_n_t        *type_p;        /* [in] Ptr to AST type node */
-#endif
 {
     int level;
     int nesting = 0;
@@ -522,16 +450,10 @@ int IR_under_type                       /* Returns type nesting level */
 **  Constructs a field expression for a toplevel or nested field reference.
 */
 STRTAB_str_t IR_field_expr              /* Returns field expression */
-#ifdef PROTO
 (
     IR_scope_ctx_t      *ctx_p,         /* [in] Scope context */
     AST_field_n_t       *field_p        /* [in] Ptr to AST field node */
 )
-#else
-(ctx_p, field_p)
-    IR_scope_ctx_t      *ctx_p;         /* [in] Scope context */
-    AST_field_n_t       *field_p;       /* [in] Ptr to AST field node */
-#endif
 {
     AST_instance_n_t    *inst_p;        /* Instance node with struct scope */
     char const          *inst_name;     /* Instance name */

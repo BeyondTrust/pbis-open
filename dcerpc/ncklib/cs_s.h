@@ -111,11 +111,9 @@ typedef struct codeset_i14y_data {
  * to be used by application developers.  Only runtime uses it.
  */
 extern void rpc_cs_binding_set_method (
-#ifdef IDL_PROTOTYPES
     /* [in, out] */ rpc_binding_handle_t *h,
     /* [in] */ rpc_cs_method_eval_p_t method_p,
     /* [out] */ error_status_t *status
-#endif
 );
 
 

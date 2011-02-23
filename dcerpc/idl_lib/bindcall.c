@@ -45,18 +45,11 @@
 #include <dce/stubbase.h>
 
 void rpc_ss_bind_authn_client
-#ifdef IDL_PROTOTYPES
 (
     rpc_binding_handle_t    *p_bh,      /* [io] Binding handle */
     rpc_if_handle_t         if_h,       /* [in] Interface handle */
     error_status_t          *p_st       /*[out] Return status */
 )
-#else
-(p_bh, if_h, p_st)
-    rpc_binding_handle_t    *p_bh;      /* [io] Binding handle */
-    rpc_if_handle_t         if_h;       /* [in] Interface handle */
-    error_status_t          *p_st;      /*[out] Return status */
-#endif
 {
     unsigned_char_t *princ_name;        /* Server principal name */
 

@@ -59,111 +59,81 @@ static char *debug_dump = NULL;
  */
 
 static void AST_dump_export_list  (
-#ifdef PROTO
     AST_export_n_t *export_list_ptr
-#endif
 );
 
 static void AST_dump_exported_item  (
-#ifdef PROTO
     AST_export_n_t *export_ptr
-#endif
 );
 
 static void AST_dump_import_list (
-#ifdef PROTO
     AST_import_n_t *import_list_ptr
-#endif
 );
 
 static void AST_dump_include_list (
-#ifdef PROTO
     AST_include_n_t *include_list_ptr
-#endif
 );
 
 static void AST_dump_ports_list  (
-#ifdef PROTO
     AST_interface_n_t *interface_node_ptr
-#endif
 );
 
 static void AST_dump_simple_types_list
     (
-#ifdef PROTO
     AST_type_p_n_t *type_p_list,
     int indentation
-#endif
 );
 
 static void AST_dump_array        (
-#ifdef PROTO
     AST_array_n_t *array_node_ptr,
     int indentation
-#endif
 );
 
 static void AST_dump_indices      (
-#ifdef PROTO
     AST_array_index_n_t *index_node_ptr,
     unsigned short array_size,
     int indentation
-#endif
 );
 
 static void AST_dump_structure  (
-#ifdef PROTO
     AST_structure_n_t *structure_node_ptr,
     int indentation
-#endif
 );
 
 static void AST_dump_disc_union    (
-#ifdef PROTO
     AST_disc_union_n_t *disc_union_node_ptr,
     int indentation
-#endif
 );
 
 static void AST_dump_arm (
-#ifdef PROTO
     AST_arm_n_t *arm_node_ptr,
     int indentation
-#endif
 );
 
 static void AST_dump_enumerators  (
-#ifdef PROTO
     AST_enumeration_n_t *enum_node_ptr,
     int indentation
-#endif
 );
 
 
 static void AST_dump_field_attrs (
-#ifdef PROTO
     ASTP_node_t  *parent_node,
     AST_type_n_t *type_node,
     AST_field_attr_n_t *field_attr_node,
     int indentation
-#endif
 );
 
 static void AST_dump_field_ref (
-#ifdef PROTO
     AST_field_ref_n_t *field_ref_vector,
     fe_node_k_t parent_node_kind,
     unsigned short dimension,
     int indentation
-#endif
 );
 
 static void print_type_name (
-#ifdef PROTO
     char *format,
     AST_type_k_t type,
     int indentation
-#endif
 );
 
 
@@ -176,14 +146,9 @@ static void print_type_name (
 /********************************************************************/
 
 static void indent
-#ifdef PROTO
 (
     int     scope
 )
-#else
-(scope)
-    int     scope;
-#endif
 {
     int     i;
 
@@ -217,16 +182,10 @@ static void dump_node_address
 #define dump_nametable_id AST_dump_nametable_id
 
 void AST_dump_nametable_id
-#ifdef PROTO
 (
     char   *format_string,
     NAMETABLE_id_t id
 )
-#else
-(format_string, id)
-    char   *format_string;
-    NAMETABLE_id_t id;
-#endif
 {
     const char   *name_ptr;
 
@@ -241,18 +200,11 @@ void AST_dump_nametable_id
 
 #if 0 /* Currently, Unused */
 static void print_boolean
-#ifdef PROTO
 (
     char *format,
     boolean value,
     int scope
 )
-#else
-(format, value, scope)
-    char *format;
-    boolean value;
-    int scope;
-#endif
 {
     indent(scope);
     if (value)
@@ -264,14 +216,9 @@ static void print_boolean
 
 
 void AST_dump_interface
-#ifdef PROTO
 (
     AST_interface_n_t *if_n_p
 )
-#else
-(if_n_p)
-    AST_interface_n_t *if_n_p;
-#endif
 {
     if (if_n_p == NULL)
         return;
@@ -451,14 +398,9 @@ void AST_dump_interface
 }
 
 static void AST_dump_include_list
-#ifdef PROTO
 (
     AST_include_n_t *include_list_ptr
 )
-#else
-(include_list_ptr)
-    AST_include_n_t *include_list_ptr;
-#endif
 {
     AST_include_n_t *ip;
     const char *include_file;
@@ -473,14 +415,9 @@ static void AST_dump_include_list
 }
 
 static void AST_dump_import_list
-#ifdef PROTO
 (
     AST_import_n_t *import_list_ptr
 )
-#else
-(import_list_ptr)
-    AST_import_n_t *import_list_ptr;
-#endif
 {
     AST_import_n_t *ip;
     const char *import_file;
@@ -495,14 +432,9 @@ static void AST_dump_import_list
 }
 
 static void AST_dump_export_list
-#ifdef PROTO
 (
     AST_export_n_t *export_list_ptr
 )
-#else
-(export_list_ptr)
-    AST_export_n_t *export_list_ptr;
-#endif
 {
     AST_export_n_t *ep;
 
@@ -512,14 +444,9 @@ static void AST_dump_export_list
 
 
 static void AST_dump_exported_item
-#ifdef PROTO
 (
     AST_export_n_t *export_ptr
 )
-#else
-(export_ptr)
-    AST_export_n_t *export_ptr;
-#endif
 {
 
     printf ("\nExported Item: ");
@@ -563,14 +490,9 @@ static void AST_dump_exported_item
 }
 
 static void AST_dump_ports_list
-#ifdef PROTO
 (
     AST_interface_n_t *interface_node_ptr
 )
-#else
-(interface_node_ptr)
-    AST_interface_n_t *interface_node_ptr;
-#endif
 {
 
     int i;
@@ -591,16 +513,10 @@ static void AST_dump_ports_list
 #if 0 /* Currently unused */
 
 void AST_dump_types_list
-#ifdef PROTO
 (
     AST_type_p_n_t *type_p_list,
     int indentation
 )
-#else
-(type_p_list, indentation)
-    AST_type_p_n_t *type_p_list;
-    int indentation;
-#endif
 {
     AST_type_p_n_t *type_ptr;
 
@@ -619,16 +535,10 @@ void AST_dump_types_list
 
 
 static void AST_dump_simple_types_list
-#ifdef PROTO
 (
     AST_type_p_n_t *type_p_list,
     int indentation
 )
-#else
-(type_p_list, indentation)
-    AST_type_p_n_t *type_p_list;
-    int indentation;
-#endif
 {
     AST_type_p_n_t *type_ptr;
 
@@ -662,16 +572,10 @@ static void AST_dump_simple_types_list
 }
 
 void AST_dump_constant
-#ifdef PROTO
 (
     AST_constant_n_t *constant_node_ptr,
     int indentation
 )
-#else
-(constant_node_ptr, indentation)
-    AST_constant_n_t *constant_node_ptr;
-    int indentation;
-#endif
 {
     const char   *string_val_ptr;
 
@@ -741,18 +645,11 @@ void AST_dump_constant
 
 
 static void print_type_name
-#ifdef PROTO
 (
     char   *format,
     AST_type_k_t type,
     int    indentation
 )
-#else
-(format, type, indentation)
-    char   *format;
-    AST_type_k_t type;
-    int    indentation;
-#endif
 {
     indent (indentation);
 
@@ -833,16 +730,10 @@ static void print_type_name
 }
 
 static void AST_dump_array
-#ifdef PROTO
 (
     AST_array_n_t *array_node_ptr,
     int     indentation
 )
-#else
-(array_node_ptr, indentation)
-    AST_array_n_t *array_node_ptr;
-    int     indentation;
-#endif
 {
     dump_node_address("Array ", (char *)array_node_ptr, indentation);
     AST_dump_type (array_node_ptr->element_type,
@@ -853,18 +744,11 @@ static void AST_dump_array
 
 
 static void AST_dump_indices
-#ifdef PROTO
 (
     AST_array_index_n_t *index_node_ptr,
     unsigned short array_size,
     int indentation
 )
-#else
-(index_node_ptr, array_size, indentation)
-    AST_array_index_n_t *index_node_ptr;
-    unsigned short array_size;
-    int indentation;
-#endif
 {
 
     unsigned short dimension;
@@ -892,18 +776,11 @@ static void AST_dump_indices
 
 
 void AST_dump_type
-#ifdef PROTO
 (
     AST_type_n_t * type_n_p,
     char   * format,
     int      indentation
 )
-#else
-(type_n_p, format, indentation)
-    AST_type_n_t * type_n_p;
-    char   * format;
-    int      indentation;
-#endif
 {
     static int visit_count = 0;
 #define MAX_DEPTH 10
@@ -1153,16 +1030,10 @@ void AST_dump_type
 
 
 static void AST_dump_enumerators
-#ifdef PROTO
 (
     AST_enumeration_n_t *enum_node_ptr,
     int indentation
 )
-#else
-(enum_node_ptr, indentation)
-    AST_enumeration_n_t *enum_node_ptr;
-    int indentation;
-#endif
 {
     AST_constant_n_t    *cp;
 
@@ -1176,16 +1047,10 @@ static void AST_dump_enumerators
 
 
 static void AST_dump_structure
-#ifdef PROTO
 (
     AST_structure_n_t * structure_node_ptr,
     int     indentation
 )
-#else
-(structure_node_ptr, indentation)
-    AST_structure_n_t * structure_node_ptr;
-    int     indentation;
-#endif
 {
     AST_field_n_t * fp;
 
@@ -1267,16 +1132,10 @@ static void AST_dump_structure
 
 
 static void AST_dump_disc_union
-#ifdef PROTO
 (
     AST_disc_union_n_t * disc_union_node_ptr,
     int     indentation
 )
-#else
-(disc_union_node_ptr, indentation)
-    AST_disc_union_n_t * disc_union_node_ptr;
-    int     indentation;
-#endif
 {
     AST_arm_n_t * ap;
 
@@ -1298,16 +1157,10 @@ static void AST_dump_disc_union
 
 
 static void AST_dump_arm
-#ifdef PROTO
 (
     AST_arm_n_t  * arm_node_ptr,
     int     indentation
 )
-#else
-(arm_node_ptr, indentation)
-    AST_arm_n_t  * arm_node_ptr;
-    int     indentation;
-#endif
 {
     AST_case_label_n_t * lp;
 
@@ -1375,16 +1228,10 @@ static void AST_dump_arm
 
 
 void AST_dump_operation
-#ifdef PROTO
 (
     AST_operation_n_t *operation_node_ptr,
     int indentation
 )
-#else
-(operation_node_ptr, indentation)
-    AST_operation_n_t *operation_node_ptr;
-    int indentation;
-#endif
 {
     AST_parameter_n_t *pp;
 
@@ -1546,16 +1393,10 @@ void AST_dump_operation
 
 
 void AST_dump_parameter
-#ifdef PROTO
 (
     AST_parameter_n_t *param_node_ptr,
     int     indentation
 )
-#else
-(param_node_ptr, indentation)
-    AST_parameter_n_t *param_node_ptr;
-    int     indentation;
-#endif
 {
 
     printf("\n");
@@ -1692,20 +1533,12 @@ void AST_dump_parameter
 }
 
 static void AST_dump_field_attrs
-#ifdef PROTO
 (
     ASTP_node_t  *parent_node,
     AST_type_n_t *type_node,
     AST_field_attr_n_t *field_attr_node,
     int indentation
 )
-#else
-(parent_node, type_node, field_attr_node, indentation)
-    ASTP_node_t  *parent_node;
-    AST_type_n_t *type_node;
-    AST_field_attr_n_t *field_attr_node;
-    int indentation;
-#endif
 {
 
     AST_type_n_t *tp;
@@ -1806,20 +1639,12 @@ static void AST_dump_field_attrs
 }
 
 static void AST_dump_field_ref
-#ifdef PROTO
 (
     AST_field_ref_n_t *field_ref_vector,
     fe_node_k_t parent_node_kind,
     unsigned short dimension,
     int indentation
 )
-#else
-(field_ref_vector, parent_node_kind, dimension, indentation)
-    AST_field_ref_n_t *field_ref_vector;
-    fe_node_k_t parent_node_kind;
-    unsigned short dimension;
-    int indentation;
-#endif
 {
     AST_field_ref_n_t *reference_ptr;
     unsigned short  i;

@@ -163,7 +163,6 @@ void rpc__cn_init_func(void)
 **/
 
 void rpc__ncacn_init 
-#ifdef _DCE_PROTO_
 (
     rpc_prot_call_epv_p_t           *call_epv,
     rpc_prot_mgmt_epv_p_t           *mgmt_epv,
@@ -172,15 +171,6 @@ void rpc__ncacn_init
     rpc_prot_fork_handler_fn_t      *fork_handler,
     unsigned32                      *st
 )
-#else
-(call_epv, mgmt_epv, binding_epv, network_epv, fork_handler, st)
-rpc_prot_call_epv_p_t           *call_epv;
-rpc_prot_mgmt_epv_p_t           *mgmt_epv;
-rpc_prot_binding_epv_p_t        *binding_epv;
-rpc_prot_network_epv_p_t        *network_epv;
-rpc_prot_fork_handler_fn_t      *fork_handler;
-unsigned32                      *st;
-#endif
 {
 
     CODING_ERROR (st);

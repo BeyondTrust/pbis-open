@@ -174,7 +174,6 @@ INTERNAL rpc_ip_s_addr_vector_p_t local_ip_addr_vec = NULL;
 #endif
 
 INTERNAL void enumerate_interfaces 
-#ifdef _DCE_PROTO_
 (
     rpc_protseq_id_t        protseq_id,
     rpc_socket_t            desc,
@@ -183,15 +182,6 @@ INTERNAL void enumerate_interfaces
     rpc_addr_vector_p_t     *netmask_addr_vec,
     unsigned32              *status
 )
-#else
-(protseq_id, desc, efun, rpc_addr_vec, netmask_addr_vec, status)
-rpc_protseq_id_t        protseq_id;
-rpc_socket_t            desc;
-enumerate_fn_p_t        efun;
-rpc_addr_vector_p_t     *rpc_addr_vec;
-rpc_addr_vector_p_t     *netmask_addr_vec;
-unsigned32              *status;
-#endif
 {
     rpc_ip_addr_p_t         ip_addr;
     int                     n_ifs;
@@ -508,7 +498,6 @@ FREE_IT:
 **/
 
 INTERNAL boolean get_addr 
-#ifdef _DCE_PROTO_
 (
     int                     desc,
     struct ifreq            *ifr,
@@ -517,15 +506,6 @@ INTERNAL boolean get_addr
     rpc_ip_addr_p_t         ip_addr,
     rpc_ip_addr_p_t         netmask_addr
 )
-#else
-(desc, ifr, if_flags, if_addr, ip_addr, netmask_addr)
-int                     desc;
-struct ifreq            *ifr;
-unsigned32              if_flags;
-struct sockaddr         *if_addr;
-rpc_ip_addr_p_t         ip_addr;
-rpc_ip_addr_p_t         netmask_addr;
-#endif
 {
     struct ifreq            ifreq;
 
@@ -615,20 +595,12 @@ rpc_ip_addr_p_t         netmask_addr;
 **/
 
 PRIVATE void rpc__ip_desc_inq_addr 
-#ifdef _DCE_PROTO_
 (
     rpc_protseq_id_t        protseq_id,
     rpc_socket_t            desc,
     rpc_addr_vector_p_t     *rpc_addr_vec,
     unsigned32              *status
 )
-#else
-(protseq_id, desc, rpc_addr_vec, status)
-rpc_protseq_id_t        protseq_id;
-rpc_socket_t            desc;
-rpc_addr_vector_p_t     *rpc_addr_vec;
-unsigned32              *status;
-#endif
 {
     rpc_ip_addr_p_t         ip_addr;
     rpc_ip_addr_t           loc_ip_addr;
@@ -753,7 +725,6 @@ unsigned32              *status;
 **/
 
 INTERNAL boolean get_broadcast_addr 
-#ifdef _DCE_PROTO_
 (
     int                     desc,
     struct ifreq            *ifr,
@@ -762,15 +733,6 @@ INTERNAL boolean get_broadcast_addr
     rpc_ip_addr_p_t         ip_addr,
     rpc_ip_addr_p_t         netmask_addr
 )
-#else
-(desc, ifr, if_flags, if_addr, ip_addr, netmask_addr)
-int                     desc;
-struct ifreq            *ifr;
-unsigned32              if_flags;
-struct sockaddr         *if_addr;
-rpc_ip_addr_p_t         ip_addr;
-rpc_ip_addr_p_t         netmask_addr;
-#endif
 {
     struct ifreq            ifreq;
 
@@ -855,20 +817,12 @@ rpc_ip_addr_p_t         netmask_addr;
 **/
 
 PRIVATE void rpc__ip_get_broadcast 
-#ifdef _DCE_PROTO_
 (
     rpc_naf_id_t            naf_id,
     rpc_protseq_id_t        protseq_id,
     rpc_addr_vector_p_t     *rpc_addr_vec,
     unsigned32              *status 
 )
-#else
-(naf_id, protseq_id, rpc_addr_vec, status)
-rpc_naf_id_t            naf_id;
-rpc_protseq_id_t        protseq_id;
-rpc_addr_vector_p_t     *rpc_addr_vec;
-unsigned32              *status; 
-#endif
 {
     int                     desc;
 
@@ -925,14 +879,9 @@ unsigned32              *status;
 **/
 
 PRIVATE void rpc__ip_init_local_addr_vec
-#ifdef _DCE_PROTO_
 (
     unsigned32 *status
 )
-#else
-(status)
-unsigned32 *status; 
-#endif
 {
     int                     desc;
     unsigned32              lstatus;
@@ -1074,16 +1023,10 @@ free_rpc_addrs:
 **--
 **/
 PRIVATE boolean32 rpc__ip_is_local_network
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t rpc_addr,
     unsigned32   *status
 )
-#else
-(rpc_addr, status)
-rpc_addr_p_t rpc_addr;
-unsigned32   *status; 
-#endif
 {
     rpc_ip_addr_p_t         ip_addr = (rpc_ip_addr_p_t) rpc_addr;
     unsigned32              addr1;
@@ -1170,16 +1113,10 @@ unsigned32   *status;
 **/
 
 PRIVATE boolean32 rpc__ip_is_local_addr
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t rpc_addr,
     unsigned32   *status
 )
-#else
-(rpc_addr, status)
-rpc_addr_p_t rpc_addr;
-unsigned32   *status; 
-#endif
 {
     rpc_ip_addr_p_t         ip_addr = (rpc_ip_addr_p_t) rpc_addr;
     unsigned32              i;

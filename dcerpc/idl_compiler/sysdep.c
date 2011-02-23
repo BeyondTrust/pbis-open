@@ -56,14 +56,9 @@ static int temp_count = 0;
 static char *temp_names[MAX_INCLUSION_DEPTH];
 
 char *sysdep_save_temp
-#ifdef PROTO
 (
     char *old_name
 )
-#else
-(old_name)
-    char *old_name;
-#endif
 {
 #ifndef vms
         char new_name[64];
@@ -81,11 +76,7 @@ char *sysdep_save_temp
 }
 
 void sysdep_cleanup_temp
-#ifdef PROTO
 ()
-#else
-()
-#endif
 {
 #ifndef vms
         int i;
@@ -111,14 +102,9 @@ void sysdep_cleanup_temp
 #ifdef MSDOS
 /* Make a legal unix file name from a DOS one */
 void msdos_fix_filename
-#ifdef PROTO
 (
     char *name
 )
-#else
-(name)
-    char *name;
-#endif
 {
         while(*name)
         {
@@ -182,14 +168,9 @@ static FILE * previous_fid = NULL;      /* File id from previous call */
 */
 
 void flush_output_line
-#ifdef PROTO
 (
     FILE * fid                  /* [in] File handle */
 )
-#else
-(fid)
-    FILE * fid;                 /* [in] File handle */
-#endif
 
 {
     /*
@@ -226,18 +207,11 @@ void flush_output_line
 */
 
 int output_line
-#ifdef PROTO
 (
     FILE * fid,                 /* [in] File handle */
     char *format,               /* [in] Format string */
     ...                         /* [in] 0-N format arguments */
 )
-#else
-(fid, format, va_alist)
-    FILE * fid;                 /* [in] File handle */
-    char *format;               /* [in] Format string */
-    va_dcl                      /* [in] 0-N format arguments */
-#endif
 
 {
     va_list args;

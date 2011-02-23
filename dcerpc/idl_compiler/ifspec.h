@@ -40,20 +40,16 @@
 #define IFSPEC_H
 
 extern void CSPELL_interface_def(
-#ifdef PROTO
     FILE *fid,
     AST_interface_n_t *ifp,
     BE_output_k_t kind,
     boolean generate_mepv
-#endif
 );
 
 void CSPELL_manager_epv
 (
-#ifdef PROTO
     FILE *fid,
     AST_interface_n_t *ifp
-#endif
 );
 
 #endif

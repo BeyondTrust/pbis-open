@@ -78,13 +78,7 @@
 **/
 
 PRIVATE void rpc__cn_call_executor 
-#ifdef _DCE_PROTO_
 (pointer_t arg, boolean32 call_was_queued ATTRIBUTE_UNUSED) 
-#else 
-(arg, call_was_queued)
-pointer_t               arg;
-boolean32               call_was_queued;
-#endif
 {
     rpc_binding_rep_t           *binding_r;
     rpc_cn_call_rep_t           *call_r;

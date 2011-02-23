@@ -52,31 +52,23 @@ extern int nidl_yylineno;
  */
 
 static void ASTP_add_tag_binding (
-#ifdef PROTO
     NAMETABLE_id_t      name,
     AST_type_n_t *type_node
-#endif
 );
 
 static void ASTP_process_sp_type (
-#ifdef PROTO
     AST_interface_n_t *interface_node_ptr,
     AST_type_n_t *type_node_ptr
-#endif
 );
 
 static AST_field_n_t *AST_field_node (
-#ifdef PROTO
     NAMETABLE_id_t field_name
-#endif
 );
 
 static void AST_find_self_reference (
-#ifdef PROTO
     AST_interface_n_t *interface_node_ptr,
     AST_type_p_n_t *active_type_chain,
     AST_type_n_t *current_type_node_ptr
-#endif
 );
 
 
@@ -100,16 +92,10 @@ extern int error_count;     /* number of errors detected thus far */
  */
 
 static void ASTP_add_tag_binding
-#ifdef PROTO
 (
     NAMETABLE_id_t      name,
     AST_type_n_t *type_node
 )
-#else
-(name, type_node)
-    NAMETABLE_id_t      name;
-    AST_type_n_t *type_node;
-#endif
 {
     /*
      * Add name to nametable and bind it to the specified node
@@ -151,20 +137,12 @@ static void ASTP_add_tag_binding
  */
 
 ASTP_array_index_n_t *ASTP_array_index_node
-#ifdef PROTO
 (
     AST_constant_n_t *lower_bound,          /* Pointer to lower bound constant node */
     ASTP_bound_t     lower_bound_type,      /* Lower bound type */
     AST_constant_n_t *upper_bound,          /* Pointer to upper bound constant node */
     ASTP_bound_t     upper_bound_type       /* Upper bound type */
 )
-#else
-(lower_bound, lower_bound_type,upper_bound, upper_bound_type)
-    AST_constant_n_t *lower_bound;          /* Pointer to lower bound constant node */
-    ASTP_bound_t     lower_bound_type;      /* Lower bound type */
-    AST_constant_n_t *upper_bound;          /* Pointer to upper bound constant node */
-    ASTP_bound_t     upper_bound_type;      /* Upper bound type */
-#endif
 {
     ASTP_array_index_n_t *index_node_ptr;
 
@@ -217,14 +195,9 @@ ASTP_array_index_n_t *ASTP_array_index_node
  */
 
 AST_array_index_n_t *AST_array_index_node
-#ifdef PROTO
 (
     unsigned short array_size
 )
-#else
-(array_size)
-    unsigned short array_size;
-#endif
 {
     unsigned short      i;
     AST_array_index_n_t *index_vector,
@@ -256,14 +229,9 @@ AST_array_index_n_t *AST_array_index_node
 
 
 AST_array_n_t *AST_array_node
-#ifdef PROTO
 (
     AST_type_n_t *element_type_ptr
 )
-#else
-(element_type_ptr)
-    AST_type_n_t *element_type_ptr;
-#endif
 {
     AST_array_n_t *array_node_ptr;
 
@@ -291,11 +259,7 @@ AST_array_n_t *AST_array_node
  */
 
 AST_field_attr_n_t *AST_field_attr_node
-#ifdef PROTO
 (void)
-#else
-()
-#endif
 {
     AST_field_attr_n_t *field_attr_node_ptr;
 
@@ -318,14 +282,9 @@ AST_field_attr_n_t *AST_field_attr_node
  */
 
 AST_field_ref_n_t *AST_field_ref_node
-#ifdef PROTO
 (
     unsigned short dimension
 )
-#else
-(dimension)
-    unsigned short dimension;
-#endif
 {
     unsigned short i;
     AST_field_ref_n_t *field_ref_vector,
@@ -357,16 +316,10 @@ AST_field_ref_n_t *AST_field_ref_node
  *
  */
 AST_type_n_t *AST_structure_node
-#ifdef PROTO
 (
     AST_field_n_t *field_list,
     NAMETABLE_id_t identifier
 )
-#else
-(field_list, identifier)
-    AST_field_n_t *field_list;
-    NAMETABLE_id_t identifier;
-#endif
 {
     AST_structure_n_t   *structure_node_ptr;    /* Structure */
     AST_type_n_t        *type_node_ptr;         /* Type node for structure */
@@ -518,16 +471,10 @@ AST_type_n_t *AST_structure_node
  */
 
 AST_arm_n_t *AST_label_arm
-#ifdef PROTO
 (
     AST_arm_n_t *member,
     AST_case_label_n_t *case_labels
 )
-#else
-(member, case_labels)
-    AST_arm_n_t *member;
-    AST_case_label_n_t *case_labels;
-#endif
 {
     /*
      * Fill in the fields of the arm node which identifies the list of values
@@ -553,14 +500,9 @@ AST_arm_n_t *AST_label_arm
  */
 
 AST_case_label_n_t *AST_case_label_node
-#ifdef PROTO
 (
     AST_constant_n_t *case_label
 )
-#else
-(case_label)
-    AST_constant_n_t *case_label;
-#endif
 {
     AST_case_label_n_t *case_label_node;
 
@@ -595,11 +537,7 @@ AST_case_label_n_t *AST_case_label_node
  */
 
 AST_case_label_n_t *AST_default_case_label_node
-#ifdef PROTO
 (void)
-#else
-()
-#endif
 {
     AST_case_label_n_t *case_label_node;
 
@@ -627,7 +565,6 @@ AST_case_label_n_t *AST_default_case_label_node
  *
  */
 AST_type_n_t *AST_disc_union_node
-#ifdef PROTO
 (
     NAMETABLE_id_t identifier,
     NAMETABLE_id_t union_name,
@@ -635,14 +572,6 @@ AST_type_n_t *AST_disc_union_node
     AST_type_n_t *disc_type,
     AST_arm_n_t *arm_list
 )
-#else
-(identifier, union_name, disc_name, disc_type, arm_list)
-    NAMETABLE_id_t identifier;
-    NAMETABLE_id_t union_name;
-    NAMETABLE_id_t disc_name;
-    AST_type_n_t *disc_type;
-    AST_arm_n_t *arm_list;
-#endif
 {
     AST_disc_union_n_t  *disc_union_node_ptr;   /* disc_union */
     AST_type_n_t        *type_node_ptr;         /* Type node for disc_union */
@@ -798,18 +727,11 @@ AST_type_n_t *AST_disc_union_node
  */
 
 AST_arm_n_t *AST_arm_node
-#ifdef PROTO
 (
     NAMETABLE_id_t name,
     AST_case_label_n_t *label,
     AST_type_n_t *type
 )
-#else
-(name, label, type)
-    NAMETABLE_id_t name;
-    AST_case_label_n_t *label;
-    AST_type_n_t *type;
-#endif
 {
     AST_arm_n_t * arm_node_ptr;
 
@@ -852,14 +774,9 @@ AST_arm_n_t *AST_arm_node
  */
 
 static AST_field_n_t * AST_field_node
-#ifdef PROTO
 (
     NAMETABLE_id_t field_name
 )
-#else
-(field_name)
-    NAMETABLE_id_t field_name;
-#endif
 {
     AST_field_n_t * field_node_ptr;
 
@@ -901,18 +818,11 @@ static AST_field_n_t * AST_field_node
  */
 
 AST_field_n_t *AST_declarators_to_fields
-#ifdef PROTO
 (
     ASTP_declarator_n_t *declarators_ptr,
     AST_type_n_t        *type_ptr,
     ASTP_attributes_t   *attributes
 )
-#else
-(declarators_ptr, type_ptr, attributes)
-    ASTP_declarator_n_t *declarators_ptr;
-    AST_type_n_t *type_ptr;
-    ASTP_attributes_t   *attributes;
-#endif
 {
     AST_field_n_t * field_list = NULL;
     AST_field_n_t * new_field;
@@ -975,18 +885,11 @@ AST_field_n_t *AST_declarators_to_fields
  */
 
 AST_arm_n_t *AST_declarator_to_arm
-#ifdef PROTO
 (
     AST_type_n_t *type_ptr,
     ASTP_declarator_n_t *declarator,
     ASTP_attributes_t   *attributes
 )
-#else
-(type_ptr, declarator, attributes)
-    AST_type_n_t *type_ptr;
-    ASTP_declarator_n_t *declarator;
-    ASTP_attributes_t   *attributes;
-#endif
 {
     AST_arm_n_t * arm_list = NULL;
     AST_arm_n_t * new_arm;
@@ -1094,16 +997,10 @@ AST_arm_n_t *AST_declarator_to_arm
  */
 
 AST_type_n_t *AST_type_from_tag
-#ifdef PROTO
 (
     AST_type_k_t kind,
     NAMETABLE_id_t identifier
 )
-#else
-(kind, identifier)
-    AST_type_k_t kind;
-    NAMETABLE_id_t identifier;
-#endif
 {
     AST_type_n_t        *tag_type_node_ptr;     /* Type node for tag */
 
@@ -1193,14 +1090,9 @@ AST_type_n_t *AST_type_from_tag
  *
  */
 void ASTP_patch_tag_references
-#ifdef PROTO
 (
     AST_interface_n_t *interface_node_ptr
 )
-#else
-(interface_node_ptr)
-    AST_interface_n_t *interface_node_ptr;
-#endif
 {
     AST_type_n_t *type_node_ptr;
     ASTP_tag_ref_n_t *tag_ref_node_ptr;
@@ -1351,18 +1243,11 @@ void ASTP_patch_tag_references
  */
 
 static int ASTP_check_chain
-#ifdef PROTO
 (
     AST_interface_n_t *interface_node_ptr,
     AST_type_p_n_t *active_type_chain,
     AST_type_n_t *current_type_node_ptr
 )
-#else
-(interface_node_ptr, active_type_chain, current_type_node_ptr)
-    AST_interface_n_t *interface_node_ptr;
-    AST_type_p_n_t *active_type_chain;
-    AST_type_n_t *current_type_node_ptr;
-#endif
 {
     AST_type_p_n_t  *tp;                /* pointer into current chain */
     int             found;              /* current node found on active chain */
@@ -1412,18 +1297,11 @@ static int ASTP_check_chain
  */
 
 static void AST_find_self_reference
-#ifdef PROTO
 (
     AST_interface_n_t *interface_node_ptr,
     AST_type_p_n_t *active_type_chain,
     AST_type_n_t *current_type_node_ptr
 )
-#else
-(interface_node_ptr, active_type_chain, current_type_node_ptr)
-    AST_interface_n_t *interface_node_ptr;
-    AST_type_p_n_t *active_type_chain;
-    AST_type_n_t *current_type_node_ptr;
-#endif
 {
     AST_type_p_n_t  link_node;
     AST_field_n_t   *fp;
@@ -1539,16 +1417,10 @@ static void AST_find_self_reference
  */
 
 static void ASTP_process_sp_type
-#ifdef PROTO
 (
     AST_interface_n_t *interface_node_ptr,
     AST_type_n_t *type_node_ptr
 )
-#else
-(interface_node_ptr, type_node_ptr)
-    AST_interface_n_t *interface_node_ptr;
-    AST_type_n_t *type_node_ptr;
-#endif
 {
     AST_type_p_n_t *tp_node; /* type pointer node to link on chain */
 

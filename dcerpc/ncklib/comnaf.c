@@ -100,7 +100,6 @@
 **/
 
 PRIVATE void rpc__naf_addr_alloc 
-#ifdef _DCE_PROTO_
 (
     rpc_protseq_id_t        protseq_id,
     rpc_naf_id_t            naf_id,
@@ -110,16 +109,6 @@ PRIVATE void rpc__naf_addr_alloc
     rpc_addr_p_t            *rpc_addr,
     unsigned32              *status
 )
-#else
-(protseq_id, naf_id, endpoint, netaddr, network_options, rpc_addr, status)
-rpc_protseq_id_t        protseq_id;
-rpc_naf_id_t            naf_id;
-unsigned_char_p_t       endpoint;
-unsigned_char_p_t       netaddr;
-unsigned_char_p_t       network_options;
-rpc_addr_p_t            *rpc_addr;
-unsigned32              *status;
-#endif
 {
     RPC_LOG_NAF_ADDR_ALLOC_NTR;
 
@@ -169,16 +158,10 @@ unsigned32              *status;
 **/
 
 PRIVATE void rpc__naf_addr_free 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t            *rpc_addr,
     unsigned32              *status
 )
-#else
-(rpc_addr, status)
-rpc_addr_p_t            *rpc_addr;
-unsigned32              *status;
-#endif
 {
     RPC_LOG_NAF_ADDR_FREE_NTR;
 
@@ -231,16 +214,10 @@ unsigned32              *status;
 **/
 
 PRIVATE void rpc__naf_addr_vector_free 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_vector_p_t     *rpc_addr_vec,
     unsigned32              *status
 )
-#else
-(rpc_addr_vec, status)
-rpc_addr_vector_p_t     *rpc_addr_vec;
-unsigned32              *status;
-#endif
 {
     unsigned16 i;
 
@@ -301,18 +278,11 @@ unsigned32              *status;
 **/
 
 PRIVATE void rpc__naf_addr_copy 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t            src_rpc_addr,
     rpc_addr_p_t            *dst_rpc_addr,
     unsigned32              *status
 )
-#else
-(src_rpc_addr, dst_rpc_addr, status)
-rpc_addr_p_t            src_rpc_addr;
-rpc_addr_p_t            *dst_rpc_addr;
-unsigned32              *status;
-#endif
 {
     RPC_LOG_NAF_ADDR_COPY_NTR;
 
@@ -365,18 +335,11 @@ unsigned32              *status;
 **/
 
 PRIVATE void rpc__naf_addr_overcopy 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t            src_rpc_addr,
     rpc_addr_p_t            *dst_rpc_addr,
     unsigned32              *status
 )
-#else
-(src_rpc_addr, dst_rpc_addr, status)
-rpc_addr_p_t            src_rpc_addr;
-rpc_addr_p_t            *dst_rpc_addr;
-unsigned32              *status;
-#endif
 {
     /*
      * If there is no existing destinition address yet, or if it's not big
@@ -441,18 +404,11 @@ unsigned32              *status;
 **/
 
 PRIVATE void rpc__naf_addr_set_endpoint 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_p_t       endpoint,
     rpc_addr_p_t            *rpc_addr,
     unsigned32              *status
 )
-#else
-(endpoint, rpc_addr, status)
-unsigned_char_p_t       endpoint;
-rpc_addr_p_t            *rpc_addr;
-unsigned32              *status;
-#endif
 {
     /*
      * dispatch to the appropriate NAF service
@@ -501,18 +457,11 @@ unsigned32              *status;
 **/
 
 PRIVATE void rpc__naf_addr_inq_endpoint 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t            rpc_addr,
     unsigned_char_t         **endpoint,
     unsigned32              *status
 )
-#else
-(rpc_addr, endpoint, status)
-rpc_addr_p_t            rpc_addr;
-unsigned_char_t         **endpoint;
-unsigned32              *status;
-#endif
 {
     /*
      * dispatch to the appropriate NAF service
@@ -561,18 +510,11 @@ unsigned32              *status;
 **/
 
 PRIVATE void rpc__naf_addr_set_netaddr 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_p_t       netaddr,
     rpc_addr_p_t            *rpc_addr,
     unsigned32              *status
 )
-#else
-(netaddr, rpc_addr, status)
-unsigned_char_p_t       netaddr;
-rpc_addr_p_t            *rpc_addr;
-unsigned32              *status;
-#endif
 {
     /*
      * dispatch to the appropriate NAF service
@@ -914,18 +856,11 @@ unsigned32                *status;
 **/
 
 PRIVATE void rpc__naf_desc_inq_naf_id 
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t              desc,
     rpc_naf_id_t              *naf_id,
     unsigned32                *status
 )
-#else
-(desc, naf_id, status)
-rpc_socket_t              desc;
-rpc_naf_id_t              *naf_id;
-unsigned32                *status;
-#endif
 {
     rpc_addr_p_t        addr;
     unsigned8           buff[sizeof (*addr)];
@@ -1026,20 +961,12 @@ error:
 **/
 
 PRIVATE void rpc__naf_desc_inq_protseq_id 
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t              desc,
     rpc_network_protocol_id_t protocol_id,
     rpc_protseq_id_t         *protseq_id,
     unsigned32               *status
 )
-#else
-(desc, protocol_id, protseq_id, status)
-rpc_socket_t              desc;
-rpc_network_protocol_id_t protocol_id;
-rpc_protseq_id_t         *protseq_id;
-unsigned32               *status;
-#endif
 {
     rpc_protseq_id_t         i;           /* index into protseq table */
     rpc_naf_id_t             naf_id;      /* naf id returned to us */
@@ -1133,20 +1060,12 @@ unsigned32               *status;
 **/
 
 PRIVATE void rpc__naf_desc_inq_peer_addr 
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t             desc,
     rpc_protseq_id_t         protseq_id,
     rpc_addr_p_t            *addr,
     unsigned32              *status
 )
-#else
-(desc, protseq_id, addr, status)
-rpc_socket_t             desc;
-rpc_protseq_id_t         protseq_id;
-rpc_addr_p_t            *addr;
-unsigned32              *status;
-#endif
 {
     rpc_naf_id_t naf_id;                                     
 
@@ -1201,18 +1120,11 @@ unsigned32              *status;
 **/
 
 PRIVATE void rpc__naf_inq_max_tsdu 
-#ifdef _DCE_PROTO_
 (
     rpc_protseq_id_t pseq_id,
     unsigned32 *max_tsdu,
     unsigned32     *status
 )
-#else
-(pseq_id, max_tsdu, status)
-rpc_protseq_id_t pseq_id;
-unsigned32 *max_tsdu;
-unsigned32     *status;
-#endif
 {
     rpc_naf_id_t naf_id;                                     
     rpc_network_if_id_t iftype;
@@ -1269,18 +1181,11 @@ unsigned32     *status;
 **/
 
 PRIVATE void rpc__naf_inq_max_pth_unfrg_tpdu 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t rpc_addr,
     unsigned32 *max_tpdu,
     unsigned32     *status
 )
-#else
-(rpc_addr, max_tpdu, status)
-rpc_addr_p_t rpc_addr;
-unsigned32 *max_tpdu;
-unsigned32     *status;
-#endif
 {
     /*
      * dispatch to the appropriate NAF service
@@ -1331,18 +1236,11 @@ unsigned32     *status;
 **/
 
 PRIVATE void rpc__naf_inq_max_loc_unfrg_tpdu 
-#ifdef _DCE_PROTO_
 (
     rpc_protseq_id_t pseq_id,
     unsigned32 *max_tpdu,
     unsigned32     *status
 )
-#else
-(pseq_id, max_tpdu, status)
-rpc_protseq_id_t pseq_id;
-unsigned32 *max_tpdu;
-unsigned32     *status;
-#endif
 {
     rpc_naf_id_t naf_id;                                     
     rpc_network_if_id_t iftype;
@@ -1401,20 +1299,12 @@ unsigned32     *status;
 **/
 
 PRIVATE void rpc__naf_get_broadcast 
-#ifdef _DCE_PROTO_
 (
     rpc_naf_id_t            naf_id,
     rpc_protseq_id_t        protseq_id,
     rpc_addr_vector_p_t     *rpc_addrs,
      unsigned32 	    *status 
 )
-#else
-(naf_id, protseq_id, rpc_addrs, status)
-rpc_naf_id_t            naf_id;
-rpc_protseq_id_t        protseq_id;
-rpc_addr_vector_p_t     *rpc_addrs;
-unsigned32              *status;
-#endif
 {
     /*
      * dispatch to the appropriate NAF service
@@ -1462,18 +1352,11 @@ unsigned32              *status;
 **/
 
 PRIVATE boolean rpc__naf_addr_compare 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t            addr1,
     rpc_addr_p_t            addr2,
     unsigned32              *status
 )
-#else
-(addr1, addr2, status)
-rpc_addr_p_t            addr1;
-rpc_addr_p_t            addr2;
-unsigned32              *status;
-#endif
 {   
     /*
      * Handle NULL pointers here.
@@ -1538,18 +1421,11 @@ unsigned32              *status;
 **/
 
 PRIVATE void rpc__naf_set_pkt_nodelay 
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t            desc,
     rpc_addr_p_t            rpc_addr,
     unsigned32              *status
 )
-#else
-(desc, rpc_addr, status)
-rpc_socket_t            desc;
-rpc_addr_p_t            rpc_addr;
-unsigned32              *status;
-#endif
 {   
     rpc_naf_id_t            naf_id;
 
@@ -1610,16 +1486,10 @@ unsigned32              *status;
 **/
 
 PRIVATE boolean rpc__naf_is_connect_closed 
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t            desc,
     unsigned32              *status
 )
-#else
-(desc, status)
-rpc_socket_t            desc;
-unsigned32              *status;
-#endif
 {   
     rpc_naf_id_t            naf_id;
 
@@ -1670,20 +1540,12 @@ unsigned32              *status;
 **/
 
 PRIVATE void rpc__naf_addr_from_sa 
-#ifdef _DCE_PROTO_
 (
     sockaddr_p_t     sockaddr,
     unsigned32       sockaddr_len,
     rpc_addr_p_t     *rpc_addr,
     unsigned32     *status
 )
-#else
-(sockaddr, sockaddr_len, rpc_addr, status)
-sockaddr_p_t     sockaddr;
-unsigned32       sockaddr_len;
-rpc_addr_p_t     *rpc_addr;
-unsigned32       *status;
-#endif
 {
     /*
      * Allocate memory for an RPC address.
@@ -1745,18 +1607,11 @@ unsigned32       *status;
 **/
 
 PRIVATE void rpc__naf_tower_flrs_from_addr 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t       rpc_addr,
     twr_p_t            *lower_flrs,
     unsigned32         *status
 )
-#else
-(rpc_addr, lower_flrs, status)
-rpc_addr_p_t       rpc_addr;
-twr_p_t            *lower_flrs;
-unsigned32         *status;
-#endif
 {
     /*
      * Dispatch to the appropriate NAF service tower_flrs_from_addr routine
@@ -1806,18 +1661,11 @@ unsigned32         *status;
 **/
 
 PRIVATE void rpc__naf_tower_flrs_to_addr 
-#ifdef _DCE_PROTO_
 (
   byte_p_t           tower_octet_string,
   rpc_addr_p_t       *rpc_addr,
   unsigned32         *status
 )
-#else
-(tower_octet_string, rpc_addr, status)
-byte_p_t           tower_octet_string;
-rpc_addr_p_t       *rpc_addr;
-unsigned32         *status;
-#endif
 {
     rpc_protseq_id_t  protseq_id;
     rpc_naf_id_t      naf_id;
@@ -1965,7 +1813,6 @@ unsigned32         *status;
 **/
 
 PRIVATE void rpc__naf_set_port_restriction 
-#ifdef _DCE_PROTO_
 (
      rpc_protseq_id_t            protseq_id,
      unsigned32                  n_elements,
@@ -1973,14 +1820,6 @@ PRIVATE void rpc__naf_set_port_restriction
      unsigned_char_p_t           *last_port_name_list,
      unsigned32                  *status
 )               
-#else 
-(protseq_id, n_elements, first_port_name_list, last_port_name_list, status)
-rpc_protseq_id_t            protseq_id;
-unsigned32                  n_elements;
-unsigned_char_p_t           *first_port_name_list;
-unsigned_char_p_t           *last_port_name_list;
-unsigned32                  *status;
-#endif
 {
 
     rpc_naf_id_t        naf_id;
@@ -2038,18 +1877,11 @@ unsigned32                  *status;
 **/
 
 PRIVATE void rpc__naf_get_next_restricted_port
-#ifdef _DCE_PROTO_
 (
      rpc_protseq_id_t            protseq_id,
      unsigned_char_p_t           *port_name,
      unsigned32                  *status
 )
-#else
-( protseq_id, port_name, status)
- rpc_protseq_id_t            protseq_id;
- unsigned_char_p_t           *port_name;
- unsigned32                  *status;
-#endif
 {
 
     rpc_naf_id_t        naf_id;
@@ -2106,18 +1938,11 @@ PRIVATE void rpc__naf_get_next_restricted_port
 **/
 
 PRIVATE void rpc__naf_inq_max_frag_size
-#ifdef _DCE_PROTO_
 (
  rpc_addr_p_t rpc_addr,
  unsigned32   *max_frag_size,
  unsigned32   *status
 )
-#else
-(rpc_addr, max_frag_size, status)
-rpc_addr_p_t rpc_addr;
-unsigned32   *max_frag_size;
-unsigned32   *status;
-#endif
 {
     /*
      * dispatch to the appropriate NAF service

@@ -40,29 +40,21 @@
 #define CSPELDCL_H
 
 extern void CSPELL_constant_val (
-#ifdef PROTO
     FILE *fid, AST_constant_n_t *cp
-#endif
 );
 
 extern void CSPELL_labels (
-#ifdef PROTO
     FILE *fid, AST_case_label_n_t *tgp
-#endif
 );
 
 extern void CSPELL_parameter_list (
-#ifdef PROTO
     FILE        *fid,
     AST_parameter_n_t *pp,
     boolean encoding_services
-#endif
 );
 
 extern void CSPELL_finish_synopsis (
-#ifdef PROTO
     FILE *fid, AST_parameter_n_t *paramlist
-#endif
 );
 
 

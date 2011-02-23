@@ -44,10 +44,8 @@ extern void    **BE_cmd_val;
 
 void CSPELL_mts_includes
 (
-#ifdef PROTO
     FILE *fid,
     char header_name[]
-#endif
 );
 
 

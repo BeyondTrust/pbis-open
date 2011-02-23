@@ -98,16 +98,10 @@ INTERNAL char         uuid_string_buff[40];
  */
 
 PUBLIC void rpc__dbg_set_switches 
-#ifdef _DCE_PROTO_
 (
     char            *s ATTRIBUTE_UNUSED,
     unsigned32      *status
 )
-#else
-(s, status)
-char            *s;
-unsigned32      *status;
-#endif
 {
 #ifndef DEBUG
 
@@ -260,18 +254,11 @@ PRIVATE int rpc__printf (char *format, ...)
  */
 
 PRIVATE void rpc__die 
-#ifdef _DCE_PROTO_
 (
     char            *text,
     char            *file,
     int             line
 )
-#else
-(text, file, line)
-char            *text;
-char            *file;
-int             line;
-#endif
 {
 #ifndef FILE_SEPARATOR_CHAR 
 #define FILE_SEPARATOR_CHAR '/'
@@ -305,14 +292,9 @@ int             line;
  */
 
 PRIVATE char *rpc__uuid_string 
-#ifdef _DCE_PROTO_
 (
     dce_uuid_t          *uuid ATTRIBUTE_UNUSED
 )
-#else
-(uuid)
-dce_uuid_t          *uuid;
-#endif
 {
 #ifndef DEBUG
 

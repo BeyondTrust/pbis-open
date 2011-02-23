@@ -110,20 +110,12 @@ INTERNAL char act_seq_string_buff[64];
  */
 
 PRIVATE void rpc__dg_plog_pkt
-#ifdef _DCE_PROTO_
 (
     rpc_dg_raw_pkt_hdr_p_t hdrp,
     rpc_dg_pkt_body_p_t bodyp,
     boolean32 recv,
     unsigned32 lossy_action     /* (0)drop, (1)?, (2)rexmit, (3)normal */
 )
-#else
-(hdrp, bodyp, recv, lossy_action)
-rpc_dg_raw_pkt_hdr_p_t hdrp;
-rpc_dg_pkt_body_p_t bodyp;
-boolean32 recv;
-unsigned32 lossy_action;    /* (0)drop, (1)?, (2)rexmit, (3)normal */
-#endif
 {
     pktlog_elt_p_t pp;
 
@@ -259,14 +251,9 @@ PRIVATE void rpc__dg_plog_dump(void)
  */
 
 PRIVATE char *rpc__dg_act_seq_string
-#ifdef _DCE_PROTO_
 (
     rpc_dg_pkt_hdr_p_t hdrp ATTRIBUTE_UNUSED
 )
-#else
-(hdrp)
-rpc_dg_pkt_hdr_p_t hdrp;
-#endif
 {
 #ifndef DEBUG
 
@@ -292,14 +279,9 @@ rpc_dg_pkt_hdr_p_t hdrp;
  */
 
 PRIVATE char *rpc__dg_pkt_name
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ptype_t ptype ATTRIBUTE_UNUSED
 )
-#else
-(ptype)
-rpc_dg_ptype_t ptype;
-#endif
 {
 #ifndef DEBUG
 
@@ -349,7 +331,6 @@ rpc_dg_ptype_t ptype;
  */
 
 PRIVATE void rpc__dg_xmit_pkt
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t sock,
     rpc_addr_p_t addr,
@@ -357,14 +338,6 @@ PRIVATE void rpc__dg_xmit_pkt
     int iovlen,
     boolean *b
 )
-#else
-(sock, addr, iov, iovlen, b)
-rpc_socket_t sock;
-rpc_addr_p_t addr;
-rpc_socket_iovec_p_t iov;
-int iovlen;
-boolean *b;
-#endif
 {
 #ifdef MISPACKED_HDR
     rpc_dg_raw_pkt_hdr_t raw_hdr;
@@ -415,20 +388,12 @@ boolean *b;
  */
 
 PRIVATE void rpc__dg_xmit_hdr_only_pkt
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t sock,
     rpc_addr_p_t addr,
     rpc_dg_pkt_hdr_p_t hdrp,
     rpc_dg_ptype_t ptype
 )
-#else
-(sock, addr, hdrp, ptype)
-rpc_socket_t sock;
-rpc_addr_p_t addr;
-rpc_dg_pkt_hdr_p_t hdrp;
-rpc_dg_ptype_t ptype;
-#endif
 {
     rpc_socket_iovec_t iov[1];
     rpc_dg_pkt_hdr_t hdr;
@@ -469,7 +434,6 @@ rpc_dg_ptype_t ptype;
  */
 
 PRIVATE void rpc__dg_xmit_error_body_pkt
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t sock,
     rpc_addr_p_t addr,
@@ -477,14 +441,6 @@ PRIVATE void rpc__dg_xmit_error_body_pkt
     rpc_dg_ptype_t ptype,
     unsigned32 errst
 )
-#else
-(sock, addr, hdrp, ptype, errst)
-rpc_socket_t sock;
-rpc_addr_p_t addr;
-rpc_dg_pkt_hdr_p_t hdrp;
-rpc_dg_ptype_t ptype;
-unsigned32 errst;
-#endif
 {
     rpc_socket_iovec_t iov[2];
     rpc_dg_pkt_hdr_t hdr;
@@ -636,14 +592,9 @@ PRIVATE void rpc__dg_stats_print(void)
  */
 
 PRIVATE unsigned16 rpc__dg_uuid_hash
-#ifdef _DCE_PROTO_
 (
     dce_uuid_p_t uuid
 )
-#else
-(uuid)
-uuid_p_t uuid;
-#endif
 {
     unsigned32 *lp = (unsigned32 *) uuid;
     unsigned32 hash = lp[0] ^ lp[1] ^ lp[2] ^ lp[3];

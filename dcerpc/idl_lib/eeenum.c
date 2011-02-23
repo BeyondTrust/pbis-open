@@ -50,18 +50,11 @@
 void
 
 rpc_ss_me_enum
-#ifdef IDL_PROTOTYPES
 (
     int *p_node,
     rpc_ss_node_type_k_t NIDL_node_type,
     rpc_ss_marsh_state_t *NIDL_msp
 )
-#else
-( p_node, NIDL_node_type, NIDL_msp)
-    int *p_node;
-    rpc_ss_node_type_k_t NIDL_node_type;
-    rpc_ss_marsh_state_t *NIDL_msp;
-#endif
 {
   long NIDL_already_marshalled;
   unsigned long space_for_node;
@@ -91,18 +84,11 @@ rpc_ss_me_enum
 void
 
 rpc_ss_ue_enum
-#ifdef IDL_PROTOTYPES
 (
     int **p_referred_to_by,
     rpc_ss_node_type_k_t NIDL_node_type,
     rpc_ss_marsh_state_t *p_unmar_params
 )
-#else
-( p_referred_to_by,NIDL_node_type,p_unmar_params )
-    int **p_referred_to_by;
-    rpc_ss_node_type_k_t NIDL_node_type;
-    rpc_ss_marsh_state_t *p_unmar_params;
-#endif
 {
   int  *p_node = NULL;
   long NIDL_already_unmarshalled = 0;

@@ -54,14 +54,9 @@
 /*                                                                            */
 /******************************************************************************/
 idl_void_p_t rpc_ss_allocate
-#ifdef IDL_PROTOTYPES
 (
     idl_size_t size
 )
-#else
-( size )
-    idl_size_t size;
-#endif
 {
     rpc_ss_thread_support_ptrs_t *p_support_ptrs = NULL;
     rpc_void_p_t                 p_new_node = NULL;
@@ -92,14 +87,9 @@ idl_void_p_t rpc_ss_allocate
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_free
-#ifdef IDL_PROTOTYPES
 (
     idl_void_p_t node_to_free
 )
-#else
-(node_to_free)
-    idl_void_p_t node_to_free;
-#endif
 {
     rpc_ss_thread_support_ptrs_t *p_support_ptrs = NULL;
 

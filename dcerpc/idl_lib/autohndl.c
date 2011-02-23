@@ -55,20 +55,12 @@
 /*                                                                             */
 /*******************************************************************************/
 void rpc_ss_make_import_cursor_valid
-#ifdef IDL_PROTOTYPES
 (
     RPC_SS_THREADS_MUTEX_T *p_import_cursor_mutex,
     rpc_ns_handle_t *p_import_cursor,
     rpc_if_handle_t p_if_spec,
     error_status_t *p_import_cursor_status
 )
-#else
-( p_import_cursor_mutex, p_import_cursor, p_if_spec, p_import_cursor_status )
-    RPC_SS_THREADS_MUTEX_T *p_import_cursor_mutex;
-    rpc_ns_handle_t *p_import_cursor;
-    rpc_if_handle_t p_if_spec;
-    error_status_t *p_import_cursor_status;
-#endif
 {
     RPC_SS_THREADS_MUTEX_LOCK( p_import_cursor_mutex );
     DCETHREAD_TRY
@@ -88,7 +80,6 @@ void rpc_ss_make_import_cursor_valid
 /*                                                                             */
 /*******************************************************************************/
 void rpc_ss_import_cursor_advance
-#ifdef IDL_PROTOTYPES
 (
     RPC_SS_THREADS_MUTEX_T *p_import_cursor_mutex,
     ndr_boolean *p_cache_timeout_was_set_low, /* true if the cache time out */
@@ -105,25 +96,6 @@ void rpc_ss_import_cursor_advance
     error_status_t *p_import_cursor_status,
     error_status_t *p_st
 )
-#else
-( p_import_cursor_mutex, p_cache_timeout_was_set_low,
-  p_import_cursor, p_if_spec, p_binding_had_error, p_interface_binding,
-  p_operation_binding, p_import_cursor_status, p_st )
-    RPC_SS_THREADS_MUTEX_T *p_import_cursor_mutex;
-    ndr_boolean *p_cache_timeout_was_set_low;  /* true if the cache time    */
-                                               /* out for this import       */
-                                               /* context was set low at    */
-                                               /* some point.               */
-    rpc_ns_handle_t *p_import_cursor;
-    rpc_if_handle_t p_if_spec;
-    ndr_boolean *p_binding_had_error;
-    rpc_binding_handle_t *p_interface_binding;
-        /* Ptr to binding currently being used for this interface */
-    rpc_binding_handle_t *p_operation_binding;
-      /* Ptr to location for binding operation is using, NULL if first attempt */
-    error_status_t *p_import_cursor_status;
-    error_status_t *p_st;
-#endif
 {
     error_status_t st2;
 
@@ -211,7 +183,6 @@ void rpc_ss_import_cursor_advance
 /*                                                                             */
 /*******************************************************************************/
 void rpc_ss_flag_error_on_binding
-#ifdef IDL_PROTOTYPES
 (
     RPC_SS_THREADS_MUTEX_T *p_import_cursor_mutex,
     ndr_boolean *p_binding_had_error,
@@ -220,14 +191,6 @@ void rpc_ss_flag_error_on_binding
     rpc_binding_handle_t *p_operation_binding
       /* Ptr to location for binding operation is using */
 )
-#else
-( p_import_cursor_mutex,
-  p_binding_had_error, p_interface_binding, p_operation_binding )
-    RPC_SS_THREADS_MUTEX_T *p_import_cursor_mutex;
-    ndr_boolean *p_binding_had_error;
-    rpc_binding_handle_t *p_interface_binding;
-    rpc_binding_handle_t *p_operation_binding;
-#endif
 {
     RPC_SS_THREADS_MUTEX_LOCK( p_import_cursor_mutex );
     if ( *p_interface_binding == *p_operation_binding )

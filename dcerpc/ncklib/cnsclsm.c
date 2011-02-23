@@ -399,16 +399,10 @@ GLOBAL rpc_cn_sm_state_entry_p_t rpc_g_cn_server_call_sm [] =
 **/
 
 INTERNAL unsigned8 disconnected_maybe_pred_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param
 )
-#else
-(spc_struct, event_param)
-pointer_t       spc_struct;
-pointer_t       event_param;
-#endif
 {
     RPC_CN_DBG_RTN_PRINTF(SERVER disconnected_maybe_pred_rtn);
 
@@ -477,16 +471,10 @@ pointer_t       event_param;
 **/
 
 INTERNAL unsigned8 disc_last_send_pred_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param ATTRIBUTE_UNUSED
 )
-#else
-(spc_struct, event_param)
-pointer_t       spc_struct;
-pointer_t       event_param;
-#endif
 {
     RPC_CN_DBG_RTN_PRINTF(SERVER disc_last_send_pred_rtn);
 
@@ -633,16 +621,10 @@ pointer_t       event_param;
 **/
 
 INTERNAL unsigned8 request_fault_pred_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param ATTRIBUTE_UNUSED
 )
-#else
-(spc_struct, event_param)
-pointer_t       spc_struct;
-pointer_t       event_param;
-#endif
 {
     rpc_cn_call_rep_p_t call_rep;
 
@@ -796,16 +778,10 @@ pointer_t       event_param;
 **/
 
 INTERNAL unsigned8 response_fault_pred_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param ATTRIBUTE_UNUSED
 )
-#else
-(spc_struct, event_param)
-pointer_t       spc_struct;
-pointer_t       event_param;
-#endif
 {
     rpc_cn_packet_p_t   header_p;
 
@@ -956,16 +932,10 @@ pointer_t       event_param;
 
 
 INTERNAL unsigned8 last_recv_frag_pred_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct ATTRIBUTE_UNUSED,
   pointer_t       event_param
 )
-#else
-(spc_struct, event_param)
-pointer_t       spc_struct;
-pointer_t       event_param;
-#endif
 {
 
     RPC_CN_DBG_RTN_PRINTF(SERVER last_recv_frag_pred_rtn);
@@ -1089,16 +1059,10 @@ pointer_t       event_param;
 **/
 
 INTERNAL unsigned8 first_frag_pred_rtn
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct ATTRIBUTE_UNUSED,
   pointer_t       event_param
 )
-#else
-(spc_struct, event_param)
-pointer_t       spc_struct;
-pointer_t       event_param;
-#endif
 
 {
     RPC_CN_DBG_RTN_PRINTF(SERVER first_frag_pred_rtn);
@@ -1337,18 +1301,11 @@ pointer_t       event_param;
 **--
 **/
 INTERNAL unsigned32     handle_first_frag_action_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param,
   pointer_t       sm 
 )
-#else
-(spc_struct, event_param, sm)
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-#endif
 {
     unsigned32              status;
     rpc_cn_fragbuf_p_t      request_fragbuf;
@@ -1586,18 +1543,11 @@ pointer_t       sm;
 **--
 **/
 INTERNAL unsigned32     handle_frag_action_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param,
   pointer_t       sm 
 )
-#else
-(spc_struct, event_param, sm)
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-#endif
 {
     unsigned32              status;
     rpc_cn_fragbuf_p_t      fragbuf;
@@ -1694,18 +1644,11 @@ pointer_t       sm;
 **/
 
 INTERNAL unsigned32     send_call_resp_action_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param,
   pointer_t       sm 
 )
-#else
-(spc_struct, event_param, sm)
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-#endif
 {
     rpc_cn_call_rep_p_t     call_rep;
     rpc_iovector_p_t        stub_data_p;
@@ -1879,18 +1822,11 @@ pointer_t       sm;
 **--
 **/
 INTERNAL unsigned32     send_call_fault_action_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param,
   pointer_t       sm 
 )
-#else
-(spc_struct, event_param, sm)
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-#endif
 {
     rpc_cn_call_rep_p_t     call_rep;
     rpc_cn_packet_p_t       header_p;
@@ -2105,18 +2041,11 @@ pointer_t       sm;
 **--
 **/
 INTERNAL unsigned32     process_alert_msg_action_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param,
   pointer_t       sm 
 )
-#else
-(spc_struct, event_param, sm)
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-#endif
 {
     rpc_cn_call_rep_p_t     call_rep;
     rpc_cn_fragbuf_p_t      fragbuf;
@@ -2211,18 +2140,11 @@ pointer_t       sm;
 **--
 **/
 INTERNAL unsigned32     abort_resp_action_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param ATTRIBUTE_UNUSED,
   pointer_t       sm ATTRIBUTE_UNUSED
 )
-#else
-(spc_struct, event_param, sm)
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-#endif
 {
     rpc_cn_call_rep_p_t     call_rep;
     rpc_cn_packet_p_t       header_p ATTRIBUTE_UNUSED;
@@ -2314,18 +2236,11 @@ pointer_t       sm;
 **--
 **/
 INTERNAL unsigned32     abort_resp_send_fault_action_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param,
   pointer_t       sm 
 )
-#else
-(spc_struct, event_param, sm)
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-#endif
 {
     unsigned32              status;
     rpc_cn_sm_ctlblk_t 	    *sm_p;
@@ -2561,18 +2476,11 @@ pointer_t       sm;
 **/
 
 INTERNAL unsigned32     stop_orphan_action_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param,
   pointer_t       sm 
 )
-#else
-(spc_struct, event_param, sm)
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-#endif
 {
     rpc_cn_call_rep_p_t     call_rep;
     rpc_cn_fragbuf_p_t      fragbuf;
@@ -2717,18 +2625,11 @@ pointer_t       sm;
 **--
 **/
 INTERNAL unsigned32     discard_fragment_action_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct ATTRIBUTE_UNUSED,
   pointer_t       event_param,
   pointer_t       sm ATTRIBUTE_UNUSED
 )
-#else
-(spc_struct, event_param, sm)
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-#endif
 {
     rpc_cn_fragbuf_p_t  fragbuf_p;
     unsigned32          status;
@@ -2783,18 +2684,11 @@ pointer_t       sm;
 **--
 **/
 INTERNAL unsigned32     call_end_action_rtn 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param ATTRIBUTE_UNUSED,
   pointer_t       sm 
 )
-#else
-(spc_struct, event_param, sm)
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-#endif
 {
     rpc_cn_call_rep_p_t     call_rep;
     rpc_cn_packet_p_t       header_p;
@@ -2934,18 +2828,11 @@ pointer_t       sm;
 **--
 **/
 PRIVATE unsigned32     rpc__cn_call_sm_protocol_error 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param ATTRIBUTE_UNUSED,
   pointer_t       sm 
 )
-#else
-(spc_struct, event_param, sm)
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-#endif
 {
     rpc_cn_call_rep_p_t call_rep;
     unsigned32          status ATTRIBUTE_UNUSED;

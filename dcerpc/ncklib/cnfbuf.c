@@ -78,14 +78,9 @@ GLOBAL unsigned32 rpc_g_cn_large_frag_size = RPC_C_CN_LARGE_FRAG_SIZE;
 **/
 
 PRIVATE void rpc__cn_fragbuf_free 
-#ifdef _DCE_PROTO_
 (
    rpc_cn_fragbuf_p_t buffer_p 
 )
-#else
-(buffer_p)
-rpc_cn_fragbuf_p_t            buffer_p;
-#endif
 {
 #ifdef MAX_DEBUG
     memset ((char *) buffer_p->data_area, 0, rpc_g_cn_large_frag_size);
@@ -127,14 +122,9 @@ rpc_cn_fragbuf_p_t            buffer_p;
 **/
 
 PRIVATE void rpc__cn_smfragbuf_free 
-#ifdef _DCE_PROTO_
 (
    rpc_cn_fragbuf_p_t      buffer_p
 )
-#else
-(buffer_p)
-rpc_cn_fragbuf_p_t      buffer_p;
-#endif
 {
 #ifdef MAX_DEBUG
     memset ((char *) buffer_p->data_area, 0, RPC_C_CN_SMALL_FRAG_SIZE);
@@ -176,14 +166,9 @@ rpc_cn_fragbuf_p_t      buffer_p;
 **/
 
 PRIVATE rpc_cn_fragbuf_p_t rpc__cn_fragbuf_alloc 
-#ifdef _DCE_PROTO_
 (
     boolean32               alloc_large_buf
 )
-#else
-(alloc_large_buf)
-boolean32               alloc_large_buf;
-#endif
 {
     rpc_cn_fragbuf_p_t  fbp;
 
@@ -272,14 +257,9 @@ boolean32               alloc_large_buf;
 **/
 
 INTERNAL void rpc__cn_dynfragbuf_free
-#ifdef _DCE_PROTO_
 (
    rpc_cn_fragbuf_p_t buffer_p
 )
-#else
-(buffer_p)
-rpc_cn_fragbuf_p_t            buffer_p;
-#endif
 {
 #ifdef MAX_DEBUG
     memset ((char *) buffer_p->data_area, 0, buffer_p->max_data_size);
@@ -319,14 +299,9 @@ rpc_cn_fragbuf_p_t            buffer_p;
 **--
 **/
 PRIVATE rpc_cn_fragbuf_p_t rpc__cn_fragbuf_alloc_dyn
-#ifdef _DCE_PROTO_
 (
     unsigned32               alloc_size
 )
-#else
-(alloc_size)
-unsigned32               alloc_size;
-#endif
 {
     rpc_cn_fragbuf_p_t  fbp;
 

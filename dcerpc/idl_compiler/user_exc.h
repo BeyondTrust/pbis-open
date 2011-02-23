@@ -37,10 +37,8 @@
 
 void DDBE_user_exceptions
 (
-#ifdef PROTO
     FILE *fid,
     AST_interface_n_t *p_interface,
     int *p_num_declared_exceptions,
     int *p_num_extern_exceptions
-#endif
 );

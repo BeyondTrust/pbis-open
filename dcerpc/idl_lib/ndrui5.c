@@ -53,7 +53,6 @@
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_u_conf_cs_struct_hdr
-#ifdef IDL_PROTOTYPES
 (
     idl_byte *struct_defn_ptr,  /* [in] Start of structure definition */
     idl_byte *array_defn_ptr,   /* [in] Points at start of bounds info */
@@ -70,20 +69,6 @@ void rpc_ss_ndr_u_conf_cs_struct_hdr
                                                         allocated structure */
     IDL_msp_t IDL_msp
 )
-#else
-(struct_defn_ptr, array_defn_ptr, Z_values, fixed_part_size, type_has_pointers,
- conf_arr_shadow_index, allocate, cs_shadow, p_param_addr, IDL_msp)
-    idl_byte *struct_defn_ptr;
-    idl_byte *array_defn_ptr;
-    idl_ulong_int *Z_values;
-    idl_ulong_int fixed_part_size;
-    idl_boolean type_has_pointers;
-    idl_ulong_int conf_arr_shadow_index;
-    idl_boolean allocate;
-    IDL_cs_shadow_elt_t *cs_shadow;
-    rpc_void_p_t *p_param_addr;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_ulong_int sz_index;     /* Index in shadow of [size_is] item */
     idl_ulong_int cs_type_defn_index;
@@ -136,7 +121,6 @@ void rpc_ss_ndr_u_conf_cs_struct_hdr
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_unmar_cs_array
-#ifdef IDL_PROTOTYPES
 (
     rpc_void_p_t array_addr,        /* [in] */
     IDL_cs_shadow_elt_t *cs_shadow,  /* [in] ignored for fixed array */
@@ -147,15 +131,6 @@ void rpc_ss_ndr_unmar_cs_array
                                       [out] Points after array definition */
     IDL_msp_t IDL_msp
 )
-#else
-(array_addr, cs_shadow, Z_values, array_shadow_index, p_defn_vec_ptr, IDL_msp)
-    rpc_void_p_t array_addr;
-    IDL_cs_shadow_elt_t *cs_shadow;
-    idl_ulong_int *Z_values;
-    idl_ulong_int array_shadow_index;
-    idl_byte **p_defn_vec_ptr;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_byte *defn_vec_ptr;
     idl_byte array_type;
@@ -320,18 +295,11 @@ void rpc_ss_ndr_unmar_cs_array
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_unmar_cs_char
-#ifdef IDL_PROTOTYPES
 (
     rpc_void_p_t data_addr,         /* [in] */
     idl_ulong_int cs_type_defn_index,   /* [in] */
     IDL_msp_t IDL_msp
 )
-#else
-(data_addr, cs_type_defn_index, IDL_msp)
-    rpc_void_p_t data_addr;
-    idl_ulong_int cs_type_defn_index;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_byte *cs_type_defn_ptr;
     idl_ulong_int routine_index;
@@ -398,7 +366,6 @@ void rpc_ss_ndr_unmar_cs_char
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_u_struct_cs_shadow
-#ifdef IDL_PROTOTYPES
 (
     rpc_void_p_t struct_addr,           /* [in] Address of struct */
     idl_byte struct_type ATTRIBUTE_UNUSED,               /* [in] FIXED_STRUCT or CONF_STRUCT */
@@ -407,15 +374,6 @@ void rpc_ss_ndr_u_struct_cs_shadow
     IDL_cs_shadow_elt_t *cs_shadow,     /* [in] Address of cs-shadow */
     IDL_msp_t IDL_msp
 )
-#else
-(struct_addr, struct_type, offset_index, defn_vec_ptr, cs_shadow, IDL_msp)
-    rpc_void_p_t struct_addr;
-    idl_byte struct_type;
-    idl_ulong_int offset_index;
-    idl_byte *defn_vec_ptr;
-    IDL_cs_shadow_elt_t *cs_shadow;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_ulong_int *offset_vec_ptr;
     idl_byte type_byte;
@@ -527,19 +485,12 @@ void rpc_ss_ndr_u_struct_cs_shadow
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_u_param_cs_shadow
-#ifdef IDL_PROTOTYPES
 (
     idl_ulong_int type_index,  /* [in] Index of start of definitions of
                                                              parameter list */
     IDL_cs_shadow_elt_t *cs_shadow,     /* [in] Address of cs-shadow */
     IDL_msp_t IDL_msp
 )
-#else
-(type_index, cs_shadow, IDL_msp)
-    idl_ulong_int type_index;
-    IDL_cs_shadow_elt_t *cs_shadow;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_byte *type_vec_ptr;
     idl_byte type_byte;
@@ -657,7 +608,6 @@ void rpc_ss_ndr_u_param_cs_shadow
 /*                                                                            */
 /******************************************************************************/
 static void rpc_ss_ndr_conf_cs_array_param
-#ifdef IDL_PROTOTYPES
 (
     idl_boolean allocate,       /* [in] TRUE => allocate array */
     idl_byte array_type,        /* [in] Conformant or open */
@@ -668,18 +618,6 @@ static void rpc_ss_ndr_conf_cs_array_param
     rpc_void_p_t *p_array_addr, /* [out] allocated array */
     IDL_msp_t IDL_msp
 )
-#else
-(allocate, array_type, array_defn_ptr, Z_value, p_l_storage_len, p_convert_type,
- p_array_addr, IDL_msp)
-    idl_boolean allocate;
-    idl_byte array_type;
-    idl_byte *array_defn_ptr;
-    idl_ulong_int Z_value;
-    idl_ulong_int *p_l_storage_len;
-    idl_cs_convert_t *p_convert_type;
-    rpc_void_p_t *p_array_addr;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_ulong_int cs_type_defn_index;
     idl_byte *cs_type_defn_ptr;
@@ -725,7 +663,6 @@ static void rpc_ss_ndr_conf_cs_array_param
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_u_cs_array_param
-#ifdef IDL_PROTOTYPES
 (
     idl_byte **p_type_vec_ptr,     /* [in] Points at IDL_DT_..._ARRAY */
                                    /* [out] Points after array indices */
@@ -733,13 +670,6 @@ void rpc_ss_ndr_u_cs_array_param
     idl_ulong_int param_index,     /* [in] Index of parameter in param list */
     IDL_msp_t IDL_msp
 )
-#else
-(p_type_vec_ptr, param_cs_shadow, param_index, IDL_msp)
-    idl_byte **p_type_vec_ptr;
-    IDL_cs_shadow_elt_t *param_cs_shadow;
-    idl_ulong_int param_index;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_byte *type_vec_ptr;
     idl_byte array_type;
@@ -786,7 +716,6 @@ void rpc_ss_ndr_u_cs_array_param
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_alloc_out_cs_conf_array
-#ifdef IDL_PROTOTYPES
 (
     IDL_cs_shadow_elt_t *cs_shadow, /* Converted value of array size written
                                         to appropriate element */
@@ -796,13 +725,6 @@ void rpc_ss_alloc_out_cs_conf_array
                    /* Where to return address of allocated array */
     IDL_msp_t IDL_msp
 )
-#else
-(cs_shadow, p_type_vec_ptr, p_array_addr, IDL_msp)
-    IDL_cs_shadow_elt_t *cs_shadow;
-    idl_byte **p_type_vec_ptr;
-    rpc_void_p_t *p_array_addr;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_byte *type_vec_ptr = *p_type_vec_ptr;
     idl_byte array_type;        /* DT_CONF_ARRAY or DT_OPEN_ARRAY */

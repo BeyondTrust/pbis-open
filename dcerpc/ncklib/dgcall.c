@@ -57,14 +57,9 @@
 #ifdef DEBUG
 
 PRIVATE char *rpc__dg_call_state_name
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_state_t state
 )
-#else
-(state)
-rpc_dg_call_state_t state;
-#endif
 {
     static char *names[] = {
         "init",
@@ -96,18 +91,11 @@ rpc_dg_call_state_t state;
  */
 
 PRIVATE void rpc__dg_call_xmit_fack
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call,
     rpc_dg_recvq_elt_p_t rqe,
     boolean32 is_nocall
 )
-#else
-(call, rqe, is_nocall)
-rpc_dg_call_p_t call;
-rpc_dg_recvq_elt_p_t rqe;
-boolean32 is_nocall;
-#endif
 {
     unsigned32 *maskp = NULL, num_elements = 0, i, shift;
     rpc_socket_iovec_t iov[3];
@@ -418,16 +406,10 @@ boolean32 is_nocall;
  */
 
 PRIVATE void rpc__dg_call_xmit
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call,                     
     boolean32 block
 )
-#else
-(call, block)
-rpc_dg_call_p_t call;                     
-boolean32 block;
-#endif
 {              
     unsigned32 num_sent, extra_fack = 0;
     unsigned8 freqs_total;
@@ -579,14 +561,9 @@ boolean32 block;
  */
 
 PRIVATE void rpc__dg_call_xmitq_timer
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call
 )
-#else
-(call)
-rpc_dg_call_p_t call;
-#endif
 {
     rpc_dg_xmitq_p_t xq = &call->xq;
     rpc_dg_xmitq_elt_p_t xqe;
@@ -694,14 +671,9 @@ rpc_dg_call_p_t call;
  */
 
 PRIVATE void rpc__dg_call_init
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call
 )
-#else
-(call)
-rpc_dg_call_p_t call;
-#endif
 {
     rpc_clock_t now = rpc__clock_stamp();
 
@@ -763,14 +735,9 @@ rpc_dg_call_p_t call;
  */
 
 PRIVATE void rpc__dg_call_free
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call
 )
-#else
-(call)
-rpc_dg_call_p_t call;
-#endif
 {
     unsigned32 st;
 
@@ -836,18 +803,11 @@ rpc_dg_call_p_t call;
  */    
 
 PRIVATE void rpc__dg_call_wait
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call,
     rpc_dg_wait_event_t event,
     unsigned32 *st
 )
-#else
-(call, event, st) 
-rpc_dg_call_p_t call;
-rpc_dg_wait_event_t event;
-unsigned32 *st;
-#endif
 {
     boolean is_server = RPC_DG_CALL_IS_SERVER(call);
     rpc_dg_ccall_p_t ccall = (rpc_dg_ccall_p_t) call;
@@ -1000,14 +960,9 @@ unsigned32 *st;
  */
 
 PRIVATE void rpc__dg_call_signal
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call
 )
-#else
-(call)
-rpc_dg_call_p_t call;
-#endif
 {
     RPC_DG_CALL_LOCK_ASSERT(call);
 
@@ -1047,16 +1002,10 @@ rpc_dg_call_p_t call;
  */
 
 PRIVATE void rpc__dg_call_signal_failure
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call,
     unsigned32 stcode
 )
-#else
-(call, stcode)
-rpc_dg_call_p_t call;
-unsigned32 stcode;
-#endif
 {
     RPC_DG_CALL_LOCK_ASSERT(call);
 
@@ -1079,16 +1028,10 @@ unsigned32 stcode;
  */
 
 PRIVATE void rpc__dg_call_xmitq_push
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call,
     unsigned32 *st
 )
-#else
-(call, st) 
-rpc_dg_call_p_t call;
-unsigned32 *st;
-#endif
 {
     rpc_dg_xmitq_p_t xq = &call->xq;
 
@@ -1166,18 +1109,11 @@ unsigned32 *st;
  */
 
 PRIVATE boolean rpc__dg_call_recvq_insert
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call,
     rpc_dg_recvq_elt_p_t rqe,
     boolean *wake_thread
 )
-#else
-(call, rqe, wake_thread)
-rpc_dg_call_p_t call;
-rpc_dg_recvq_elt_p_t rqe;
-boolean *wake_thread;
-#endif
 {
     rpc_dg_recvq_p_t rq = &call->rq;
     rpc_dg_recvq_elt_p_t scan_rqe, prev_scan_rqe;
@@ -1595,14 +1531,9 @@ boolean *wake_thread;
  */
 
 PRIVATE void rpc__dg_call_local_cancel
-#ifdef _DCE_PROTO_
 (
     rpc_dg_call_p_t call
 )
-#else
-(call)
-rpc_dg_call_p_t call;
-#endif
 {
     RPC_DG_CALL_LOCK_ASSERT(call);
 

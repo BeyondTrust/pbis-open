@@ -81,75 +81,59 @@ typedef struct callee_context_entry_t {
 
 void rpc_ss_rundown_client
 (
-#ifdef IDL_PROTOTYPES
     rpc_client_handle_t failed_client
-#endif
 );
 
 void rpc_ss_add_to_callee_client
 (
-#ifdef IDL_PROTOTYPES
     rpc_client_handle_t ctx_client,     /* Client for whom there is another context */
     callee_context_entry_t *p_context,  /* Pointer to the context */
     ndr_boolean *p_is_new_client,       /* Pointer to TRUE if new client */
     error_status_t *result         /* Function result */
-#endif
 );
 
 void rpc_ss_take_from_callee_client
 (
-#ifdef IDL_PROTOTYPES
     callee_context_entry_t *p_context,  /* Pointer to the context */
     rpc_client_handle_t *p_close_client,
                                   /* Ptr to NULL or client to stop monitoring */
     error_status_t *result         /* Function result */
-#endif
 );
 
 
 void rpc_ss_lkddest_callee_context
 (
-#ifdef IDL_PROTOTYPES
     dce_uuid_t *p_uuid,    /* Pointer to UUID of context to be destroyed */
     rpc_client_handle_t *p_close_client,
                          /* Ptr to NULL or client to stop monitoring */
     error_status_t *result         /* Function result */
-#endif
 );    /* Returns SUCCESS unless the UUID is not in the lookup table */
 
 void rpc_ss_init_callee_client_table(
-#ifdef IDL_PROTOTYPES
     void
-#endif
 );
 
 void rpc_ss_create_callee_context
 (
-#ifdef IDL_PROTOTYPES
     rpc_ss_context_t callee_context, /* user's local form of the context */
     dce_uuid_t    *p_uuid,               /* pointer to the equivalent UUID */
     handle_t  h,                     /* Binding handle */
     ctx_rundown_fn_p_t ctx_rundown,  /* pointer to context rundown routine */
     error_status_t *result      /* Function result */
-#endif
 );
 
 /* Returns status_ok unless the UUID is not in the lookup table */
 void rpc_ss_update_callee_context
 (
-#ifdef IDL_PROTOTYPES
     rpc_ss_context_t callee_context, /* user's local form of the context */
     dce_uuid_t    *p_uuid,               /* pointer to the equivalent UUID */
     error_status_t *result      /* Function result */
-#endif
 );
 
 /* Returns status_ok unless the UUID is not in the lookup table */
 void rpc_ss_destroy_callee_context
 (
-#ifdef IDL_PROTOTYPES
     dce_uuid_t *p_uuid,          /* pointer to UUID of context to be destroyed */
     handle_t  h,                    /* Binding handle */
     error_status_t *result     /* Function result */
-#endif
 );

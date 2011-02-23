@@ -63,16 +63,10 @@ extern AST_cpp_quote_n_t * global_cppquotes_post;
  * Maps a single character into a string suitable for emission
  */
 char *mapchar
-#ifdef PROTO
 (
     AST_constant_n_t *cp,   /* Constant node with kind == AST_char_const_k */
     boolean warning_flag ATTRIBUTE_UNUSED   /* unused */
 )
-#else
-(cp, warning_flag)
-    AST_constant_n_t *cp;   /* Constant node with kind == AST_char_const_k */
-    boolean warning_flag;   /* unused */
-#endif
 {
     char c = cp->value.char_val;
     static char buf[10];
@@ -99,18 +93,11 @@ char *mapchar
 }
 
 static void CSPELL_constant_def
-#ifdef PROTO
 (
     FILE *fid,
     AST_constant_n_t *cp,
     char *cast
 )
-#else
-(fid, cp, cast)
-    FILE *fid;
-    AST_constant_n_t *cp;
-    char *cast;
-#endif
 {
     char const *s;
 
@@ -157,16 +144,10 @@ static void CSPELL_constant_def
 
 
 static void CSPELL_operation_def
-#ifdef PROTO
 (
     FILE *fid,
     AST_operation_n_t *op
 )
-#else
-(fid, op)
-    FILE *fid;
-    AST_operation_n_t *op;
-#endif
 {
     char op_internal_name[3 * MAX_ID];
     AST_type_n_t       func_type_node;
@@ -197,18 +178,11 @@ static void CSPELL_operation_def
 
 
 void CSPELL_type_def
-#ifdef PROTO
 (
     FILE *fid,
     AST_type_n_t *tp,
     boolean spell_tag
 )
-#else
-(fid, tp, spell_tag)
-    FILE *fid;
-    AST_type_n_t *tp;
-    boolean spell_tag;
-#endif
 {
     fprintf (fid, "typedef ");
     CSPELL_typed_name (fid, tp, tp->name, tp, false, spell_tag, false);
@@ -261,16 +235,10 @@ unescape_string(const char* str)
 
 //centeris wfu
 static void CPPQUOTES_exports
-#ifdef PROTO
 (
     FILE *fid,
     AST_cpp_quote_n_t *cpps
 )
-#else
-(fid, cpps)
-    FILE           *fid;
-    AST_cpp_quote_n_t *cpps;
-#endif
 {
     const char* str;
     for (; cpps; cpps = cpps->next) {        
@@ -288,16 +256,10 @@ static void CPPQUOTES_exports
 
 
 static void CSPELL_exports
-#ifdef PROTO
 (
     FILE *fid,
     AST_export_n_t *ep
 )
-#else
-(fid, ep)
-    FILE           *fid;
-    AST_export_n_t *ep;
-#endif
 {
     const char* str;
     for (; ep; ep = ep->next) {
@@ -327,16 +289,10 @@ static void CSPELL_exports
 }
 
 static void CSPELL_epv_field
-#ifdef PROTO
 (
     FILE *fid,
     AST_operation_n_t *op
 )
-#else
-(fid, op)
-    FILE   *fid;
-    AST_operation_n_t *op;
-#endif
 {
     AST_type_n_t       type_node_a, type_node_b;
     AST_pointer_n_t    pointer_node;
@@ -438,7 +394,6 @@ void BE_gen_orpc_defs(FILE * fid, AST_interface_n_t * ifp, enum orpc_class_def_t
 }
 
 static void CSPELL_epv_type_and_var
-#ifdef PROTO
 (
     FILE *fid,
     NAMETABLE_id_t if_name,
@@ -446,14 +401,6 @@ static void CSPELL_epv_type_and_var
     AST_export_n_t *ep,
     boolean declare_cepv
 )
-#else
-(fid, if_name, if_version, ep, declare_cepv)
-    FILE *fid;
-    NAMETABLE_id_t if_name;
-    unsigned long int if_version;
-    AST_export_n_t *ep;
-    boolean declare_cepv;
-#endif
 {
 	AST_operation_n_t *op;
 
@@ -484,18 +431,11 @@ static void CSPELL_epv_type_and_var
 }
 
 static void CSPELL_if_spec_refs
-#ifdef PROTO
 (
     FILE *fid,
     NAMETABLE_id_t if_name,
     unsigned long int if_version
 )
-#else
-(fid, if_name, if_version)
-    FILE *fid;
-    NAMETABLE_id_t if_name;
-    unsigned long int if_version;
-#endif
 {
     fprintf (fid, "extern rpc_if_handle_t ");
     spell_name (fid, if_name);
@@ -507,16 +447,10 @@ static void CSPELL_if_spec_refs
 }
 
 static void CSPELL_user_prototypes
-#ifdef PROTO
 (
     FILE *fid,
     AST_interface_n_t *ifp
 )
-#else
-(fid, ifp)
-    FILE *fid;
-    AST_interface_n_t *ifp;
-#endif
 {
     AST_export_n_t *ep;
     AST_type_p_n_t *tpp;
@@ -644,16 +578,10 @@ static void CSPELL_user_prototypes
  *  Spell "extern" statements for user exceptions
  */
 void BE_spell_extern_user_excs
-#ifdef PROTO
 (
     FILE *fid,              /* Handle for emitted C text */
     AST_interface_n_t *ifp /* Ptr to AST interface node */
 )
-#else
-(fid, ifp)
-FILE                *fid;
-AST_interface_n_t   *ifp;
-#endif
 {
     AST_exception_n_t *p_exception;
 
@@ -684,16 +612,10 @@ AST_interface_n_t   *ifp;
  *  Spell prototypes for I-char machinery
  */
 static void BE_spell_ichar_prototypes
-#ifdef PROTO
 (
     FILE *fid,              /* Handle for emitted C text */
     AST_interface_n_t *ifp  /* Ptr to AST interface node */
 )
-#else
-(fid, ifp)
-FILE                *fid;
-AST_interface_n_t   *ifp;
-#endif
 {
     AST_type_p_n_t *cstpp; /* Pointer to chain of [cs_char] types */
     AST_type_n_t *cstp;     /* Pointer to [cs_char] type */

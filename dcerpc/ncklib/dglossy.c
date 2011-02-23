@@ -129,16 +129,10 @@ INTERNAL unsigned8 *mcopy _DCE_PROTOTYPE_((
     ));
 
 INTERNAL unsigned8 *mcopy
-#ifdef _DCE_PROTO_
 (
     unsigned8 *p,
     int len
 )
-#else
-(p, len)
-unsigned8 *p;
-int len;
-#endif
 {
     unsigned8 *q;
 
@@ -164,16 +158,10 @@ INTERNAL rpc_socket_iovec_p_t mcopy_iov _DCE_PROTOTYPE_((
     ));
 
 INTERNAL rpc_socket_iovec_p_t mcopy_iov
-#ifdef _DCE_PROTO_
 (
     rpc_socket_iovec_p_t iov,
     int iovlen
 )
-#else
-(iov, iovlen)
-rpc_socket_iovec_p_t iov;
-int iovlen;
-#endif
 {
     unsigned16 i;
     rpc_socket_iovec_p_t ciov;
@@ -202,16 +190,10 @@ INTERNAL void free_iov _DCE_PROTOTYPE_((
     ));
 
 INTERNAL void free_iov
-#ifdef _DCE_PROTO_
 (
     rpc_socket_iovec_p_t iov,
     int iovlen
 )
-#else
-(iov, iovlen)
-rpc_socket_iovec_p_t iov;
-int iovlen;
-#endif
 {
     unsigned16 i;
 
@@ -236,20 +218,12 @@ INTERNAL void stash_sendmsg_pkt _DCE_PROTOTYPE_((
     ));
 
 INTERNAL void stash_sendmsg_pkt
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t sock,
     rpc_socket_iovec_p_t iov,
     int iov_len,
     rpc_addr_p_t addr
 )
-#else
-(sock, iov, iov_len, addr)
-rpc_socket_t sock;
-rpc_socket_iovec_p_t iov;
-int iov_len;
-rpc_addr_p_t addr;
-#endif
 {
     unsigned32 st;
 
@@ -305,7 +279,6 @@ INTERNAL void xmit_stashed_sendmsg_pkt( void )
  */
 
 PRIVATE rpc_socket_error_t rpc__dg_lossy_socket_sendmsg 
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t sock,
     rpc_socket_iovec_p_t iov,   /* array of bufs of data to send */
@@ -313,14 +286,6 @@ PRIVATE rpc_socket_error_t rpc__dg_lossy_socket_sendmsg
     rpc_addr_p_t addr,          /* addr of receiver */
     int *cc                    /* returned number of bytes actually sent */
 )
-#else
-(sock, iov, iov_len, addr, cc)
-rpc_socket_t sock;
-rpc_socket_iovec_p_t iov;   /* array of bufs of data to send */
-int iov_len;                /* number of bufs */
-rpc_addr_p_t addr;          /* addr of receiver */
-int *cc;                    /* returned number of bytes actually sent */
-#endif
 {
     int i;
     rpc_socket_error_t serr;

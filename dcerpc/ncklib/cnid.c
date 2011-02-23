@@ -143,16 +143,10 @@ PRIVATE void rpc__cn_init_seqnum (void)
 **/
 
 PRIVATE void rpc__cn_gen_local_id 
-#ifdef _DCE_PROTO_
 (
     unsigned32              index,
     rpc_cn_local_id_t       *lcl_id
 )
-#else
-(index, lcl_id)
-unsigned32              index;
-rpc_cn_local_id_t       *lcl_id;
-#endif
 {
 
     /*

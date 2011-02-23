@@ -129,14 +129,9 @@
 **/
 
 PRIVATE void rpc__np_init_local_addr_vec
-#ifdef _DCE_PROTO_
 (
     unsigned32 *status
 )
-#else
-(status)
-unsigned32 *status; 
-#endif
 {
     CODING_ERROR (status);
 
@@ -333,20 +328,12 @@ PRIVATE void rpc__np_desc_inq_addr
 **/
 
 PRIVATE void rpc__np_get_broadcast 
-#ifdef _DCE_PROTO_
 (
     rpc_naf_id_t            naf_id ATTRIBUTE_UNUSED,
     rpc_protseq_id_t        protseq_id,
     rpc_addr_vector_p_t     *rpc_addr_vec,
     unsigned32              *status 
 )
-#else
-(naf_id, protseq_id, rpc_addr_vec, status)
-rpc_naf_id_t            naf_id;
-rpc_protseq_id_t        protseq_id;
-rpc_addr_vector_p_t     *rpc_addr_vec;
-unsigned32              *status; 
-#endif
 {
 	naf_id = 0;
 	protseq_id = 0;
@@ -394,16 +381,10 @@ unsigned32              *status;
 **--
 **/
 PRIVATE boolean32 rpc__np_is_local_network
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t rpc_addr,
     unsigned32   *status
 )
-#else
-(rpc_addr, status)
-rpc_addr_p_t rpc_addr;
-unsigned32   *status; 
-#endif
 {
     CODING_ERROR (status);
 
@@ -456,16 +437,10 @@ unsigned32   *status;
 **/
 
 PRIVATE boolean32 rpc__np_is_local_addr
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t rpc_addr,
     unsigned32   *status
 )
-#else
-(rpc_addr, status)
-rpc_addr_p_t rpc_addr;
-unsigned32   *status; 
-#endif
 {
     CODING_ERROR (status);
 

@@ -84,16 +84,10 @@
 */
 
 PRIVATE void rpc__tower_free 
-#ifdef _DCE_PROTO_
 (
     twr_p_t             *tower,
     unsigned32          *status
 )
-#else
-(tower, status)
-twr_p_t             *tower;
-unsigned32          *status;
-#endif
 {
     CODING_ERROR (status);
 
@@ -149,18 +143,11 @@ unsigned32          *status;
 */
 
 PRIVATE void rpc__tower_from_tower_ref 
-#ifdef _DCE_PROTO_
 (
     rpc_tower_ref_p_t       tower_ref,
     twr_p_t                 *tower,
     unsigned32              *status
 )
-#else
-(tower_ref, tower, status)
-rpc_tower_ref_p_t       tower_ref;
-twr_p_t                 *tower;
-unsigned32              *status;
-#endif
 {
     byte_p_t                tower_p;
     unsigned16              twr_rep_16;
@@ -278,18 +265,11 @@ unsigned32              *status;
 */
 
 PRIVATE void rpc__tower_to_tower_ref 
-#ifdef _DCE_PROTO_
 (
     twr_p_t             tower,
     rpc_tower_ref_p_t   *tower_ref,
     unsigned32          *status
 )
-#else
-(tower, tower_ref, status)
-twr_p_t             tower;
-rpc_tower_ref_p_t   *tower_ref;
-unsigned32          *status;
-#endif
 {
     unsigned16              floor_count;
 
@@ -373,18 +353,11 @@ unsigned32          *status;
 */
 
 PUBLIC void rpc_tower_to_binding 
-#ifdef _DCE_PROTO_
 (
     byte_p_t                prot_tower,
     rpc_binding_handle_t    *binding,
     unsigned32              *status
 )
-#else
-(prot_tower, binding, status)
-byte_p_t                prot_tower;
-rpc_binding_handle_t    *binding;
-unsigned32              *status;
-#endif
 {
     rpc_binding_rep_p_t     binding_rep;
     rpc_protocol_id_t       prot_id;
@@ -479,20 +452,12 @@ unsigned32              *status;
 */
 
 PUBLIC void rpc_tower_vector_from_binding 
-#ifdef _DCE_PROTO_
 (
     rpc_if_handle_t         if_spec,
     rpc_binding_handle_t    binding,
     rpc_tower_vector_p_t    *twr_vector,
     unsigned32              *status
 )
-#else
-(if_spec, binding, twr_vector, status)
-rpc_if_handle_t         if_spec;
-rpc_binding_handle_t    binding;
-rpc_tower_vector_p_t    *twr_vector;
-unsigned32              *status;
-#endif
 {
     rpc_tower_ref_vector_t  *tower_ref_vector;
     unsigned int                      i;
@@ -618,16 +583,10 @@ CLEANUP:
 */
 
 PRIVATE void rpc_tower_vector_free 
-#ifdef _DCE_PROTO_
 (
     rpc_tower_vector_p_t    *twr_vector,
     unsigned32              *status
 )
-#else
-(twr_vector, status)
-rpc_tower_vector_p_t    *twr_vector;
-unsigned32              *status;
-#endif
 {
     unsigned32      i;
 

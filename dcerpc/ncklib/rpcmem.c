@@ -40,18 +40,11 @@
 #include <commonp.h>
 
 PRIVATE pointer_t rpc__mem_alloc
-#ifdef _DCE_PROTO_
 (
     unsigned32 size,
     unsigned32 type,
     unsigned32 flags ATTRIBUTE_UNUSED
 )
-#else
-(size, type, flags)
-unsigned32 size;
-unsigned32 type;
-unsigned32 flags;
-#endif
 {
     char *addr;
 
@@ -76,20 +69,12 @@ unsigned32 flags;
 }
 
 PRIVATE pointer_t rpc__mem_realloc
-#ifdef _DCE_PROTO_
 (
     pointer_t addr,
     unsigned32 size,
     unsigned32 type,
     unsigned32 flags ATTRIBUTE_UNUSED
 )
-#else
-(addr, size, type, flags)
-pointer_t addr;
-unsigned32 size;
-unsigned32 type;
-unsigned32 flags;
-#endif
 {
     RPC_MEM_REALLOC_IL(addr, pointer_t, size, type, flags);
 
@@ -112,16 +97,10 @@ unsigned32 flags;
 }
 
 PRIVATE void rpc__mem_free
-#ifdef _DCE_PROTO_
 (
     pointer_t addr,
     unsigned32 type
 )
-#else
-(addr, type)
-pointer_t addr;
-unsigned32 type;
-#endif
 {
 
 #ifdef DEBUG

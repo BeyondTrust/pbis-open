@@ -49,18 +49,11 @@
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_marsh_scalar
-#ifdef IDL_PROTOTYPES
 (
     /* [in] */  idl_byte type_byte,
     /* [in] */  rpc_void_p_t param_addr,  /* Address of item to be marshalled */
     IDL_msp_t IDL_msp
 )
-#else
-(type_byte, param_addr, IDL_msp)
-    idl_byte type_byte;
-    rpc_void_p_t param_addr;
-    IDL_msp_t IDL_msp;
-#endif
 {
     switch(type_byte)
     {
@@ -200,20 +193,12 @@ void rpc_ss_ndr_marsh_scalar
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_marsh_bounded_scalar
-#ifdef IDL_PROTOTYPES
 (
     /* [in] */  IDL_bound_pair_t *range_bounds,
     /* [in] */  idl_byte type_byte,
     /* [in] */  rpc_void_p_t param_addr,  /* Address of item to be marshalled */
     IDL_msp_t IDL_msp
 )
-#else
-(range_bounds, type_byte, param_addr, IDL_msp)
-    IDL_bound_pair_t *range_bounds;
-    idl_byte type_byte;
-    rpc_void_p_t param_addr;
-    IDL_msp_t IDL_msp;
-#endif
 {
     switch(type_byte)
     {
@@ -364,7 +349,6 @@ void rpc_ss_ndr_marsh_bounded_scalar
 /*                                                                            */
 /******************************************************************************/
 static void rpc_ss_ndr_marsh_union_body
-#ifdef IDL_PROTOTYPES
 (
     /* [in] */ idl_byte *defn_vec_ptr,
                      /* On entry GET_LONG will get number of non-default arms */
@@ -372,13 +356,6 @@ static void rpc_ss_ndr_marsh_union_body
     /* [in] */ rpc_void_p_t body_addr,    /* Address of the union body */
     IDL_msp_t IDL_msp
 )
-#else
-( defn_vec_ptr, switch_value, body_addr, IDL_msp)
-    idl_byte *defn_vec_ptr;
-    idl_ulong_int switch_value;
-    rpc_void_p_t body_addr;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_ulong_int arm_count;    /* Number of non-default arms */
     idl_byte *arm_type_ptr;
@@ -507,7 +484,6 @@ static void rpc_ss_ndr_marsh_union_body
 /*                                                                            */
 /******************************************************************************/
 static void rpc_ss_ndr_marsh_union_ptees
-#ifdef IDL_PROTOTYPES
 (
     /* [in] */ idl_byte *defn_vec_ptr,
                      /* On entry GET_LONG will get number of non-default arms */
@@ -515,13 +491,6 @@ static void rpc_ss_ndr_marsh_union_ptees
     /* [in] */ rpc_void_p_t body_addr,    /* Address of the union body */
     IDL_msp_t IDL_msp
 )
-#else
-( defn_vec_ptr, switch_value, body_addr, IDL_msp)
-    idl_byte *defn_vec_ptr;
-    idl_ulong_int switch_value;
-    rpc_void_p_t body_addr;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_ulong_int arm_count;    /* Number of arms */
     idl_byte *arm_type_ptr;
@@ -616,20 +585,12 @@ static void rpc_ss_ndr_marsh_union_ptees
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_m_enc_union_or_ptees
-#ifdef IDL_PROTOTYPES
 (
     /* [in] */ rpc_void_p_t union_addr,
     /* [in] */ idl_ulong_int defn_index,    /* Index to switch type */
     /* [in] */ idl_boolean pointees,        /* TRUE => marshall pointees */
     IDL_msp_t IDL_msp
 )
-#else
-( union_addr, defn_index, pointees, IDL_msp )
-    rpc_void_p_t union_addr;
-    idl_ulong_int defn_index;
-    idl_boolean pointees;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_byte *defn_vec_ptr;
     idl_ulong_int offset_index;
@@ -670,7 +631,6 @@ void rpc_ss_ndr_m_enc_union_or_ptees
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_m_n_e_union_or_ptees
-#ifdef IDL_PROTOTYPES
 (
     /* [in] */ rpc_void_p_t union_addr,
     /* [in] */ idl_ulong_int switch_index,
@@ -685,17 +645,6 @@ void rpc_ss_ndr_m_n_e_union_or_ptees
     /* [in] */ idl_boolean pointees,        /* TRUE => marshall pointees */
     IDL_msp_t IDL_msp
 )
-#else
-( union_addr, switch_index, defn_index, struct_addr, struct_offset_vec_ptr,
-  pointees, IDL_msp )
-    rpc_void_p_t union_addr;
-    idl_ulong_int switch_index;
-    idl_ulong_int defn_index;
-    rpc_void_p_t struct_addr;
-    idl_ulong_int *struct_offset_vec_ptr;
-    idl_boolean pointees;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_byte *defn_vec_ptr;
     idl_byte switch_type;       /* Type of discriminant */
@@ -739,18 +688,11 @@ void rpc_ss_ndr_m_n_e_union_or_ptees
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_ee_marsh_pipe_chunk
-#ifdef IDL_PROTOTYPES
 (
     rpc_ss_pipe_state_t IDL_pipe_state,
     rpc_void_p_t IDL_chunk_array,
     idl_ulong_int IDL_pipe_chunk_size
 )
-#else
-( IDL_pipe_state, IDL_chunk_array, IDL_pipe_chunk_size, IDL_ecount_p )
-    rpc_ss_pipe_state_t IDL_pipe_state;
-    rpc_void_p_t IDL_chunk_array;
-    idl_ulong_int IDL_pipe_chunk_size;
-#endif
 {
     IDL_bound_pair_t chunk_bounds;
     rpc_ss_mts_ee_pipe_state_t *p_pipe_state
@@ -798,18 +740,11 @@ void rpc_ss_ndr_ee_marsh_pipe_chunk
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_marsh_pipe
-#ifdef IDL_PROTOTYPES
 (
     /* [in] */ idl_ulong_int defn_index,  /* Points at pipe base type */
     /* [in] */ rpc_void_p_t param_addr,
     IDL_msp_t IDL_msp
 )
-#else
-( defn_index, param_addr, IDL_msp )
-    idl_ulong_int defn_index;
-    rpc_void_p_t param_addr;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_byte *defn_vec_ptr;
     idl_ulong_int element_size; /* Size of pipe base type */
@@ -855,19 +790,12 @@ void rpc_ss_ndr_marsh_pipe
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_marsh_xmit_as
-#ifdef IDL_PROTOTYPES
 (
     /* [in] */ idl_ulong_int defn_index,
                           /* Points at offset index of presented type size */
     /* [in] */ rpc_void_p_t param_addr,
     IDL_msp_t IDL_msp
 )
-#else
-( defn_index, param_addr, IDL_msp )
-    idl_ulong_int defn_index;
-    rpc_void_p_t param_addr;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_ulong_int routine_index;    /* Index in routine vector of routine group
                                                             for this type */
@@ -1020,19 +948,12 @@ void rpc_ss_ndr_marsh_xmit_as
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_marsh_context
-#ifdef IDL_PROTOTYPES
 (
     /* [in] */ idl_byte context_type,
                                     /* Need to know directionality of context */
     /* [in] */ rpc_void_p_t param_addr,
     IDL_msp_t IDL_msp
 )
-#else
-(context_type, param_addr, IDL_msp)
-    idl_byte context_type;
-    rpc_void_p_t param_addr;
-    IDL_msp_t IDL_msp;
-#endif
 {
     ndr_context_handle wire_format;
     ndr_context_handle *p_wire_format;
@@ -1071,18 +992,11 @@ void rpc_ss_ndr_marsh_context
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_marsh_v1_string
-#ifdef IDL_PROTOTYPES
 (
     /* [in] */ rpc_void_p_t param_addr,
     /* [in] */ idl_ulong_int flags,
     IDL_msp_t IDL_msp
 )
-#else
-( param_addr, flags, IDL_msp )
-    rpc_void_p_t param_addr;
-    idl_ulong_int flags;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_ushort_int actual_count;    /* See NDR spec */
     idl_byte dummy_defn_vec = IDL_DT_CHAR;  /* [v1_string] always of char */

@@ -63,9 +63,7 @@
 #endif
 
 void rpc_ss_init_server_once(
-#ifdef IDL_PROTOTYPES
     void
-#endif
 )
 {
 
@@ -94,16 +92,10 @@ void rpc_ss_init_server_once(
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_send_server_exception
-#ifdef IDL_PROTOTYPES
 (
     rpc_call_handle_t h,
     dcethread_exc *e
 )
-#else
-( h, e )
-    rpc_call_handle_t h;
-    dcethread_exc *e;
-#endif
 {
     ndr_ulong_int mapped_code;
     ndr_ulong_int fault_buff;
@@ -183,7 +175,6 @@ void rpc_ss_send_server_exception
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_send_server_exception_2
-#ifdef IDL_PROTOTYPES
 (
     rpc_call_handle_t h,
     dcethread_exc *e,
@@ -191,14 +182,6 @@ void rpc_ss_send_server_exception_2
     dcethread_exc *user_exception_pointers[],
     IDL_msp_t IDL_msp ATTRIBUTE_UNUSED
 )
-#else
-( h, e, num_user_exceptions, user_exception_pointers, IDL_msp )
-    rpc_call_handle_t h;
-    dcethread_exc *e;
-    idl_long_int num_user_exceptions;
-    dcethread_exc *user_exception_pointers[];
-    IDL_msp_t IDL_msp;
-#endif
 {
     ndr_ulong_int mapped_code;
     ndr_ulong_int fault_buff[2];

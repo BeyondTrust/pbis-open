@@ -152,18 +152,11 @@ INTERNAL void lthread_loop _DCE_PROTOTYPE_ ((void));
  */
 
 PRIVATE void rpc__nlsn_activate_desc 
-#ifdef _DCE_PROTO_
 (
     rpc_listener_state_p_t  lstate,
     unsigned32              idx,
     unsigned32              *status
 )
-#else
-(lstate, idx, status)
-rpc_listener_state_p_t  lstate;
-unsigned32              idx;
-unsigned32              *status;
-#endif
 {
     RPC_MUTEX_LOCK_ASSERT (lstate->mutex);
 
@@ -202,18 +195,11 @@ unsigned32              *status;
  */
 
 PRIVATE void rpc__nlsn_deactivate_desc 
-#ifdef _DCE_PROTO_
 (
     rpc_listener_state_p_t  lstate,
     unsigned32              idx,
     unsigned32              *status
 )
-#else
-(lstate, idx, status)
-rpc_listener_state_p_t  lstate;
-unsigned32              idx;
-unsigned32              *status;
-#endif
 {
     dcethread*   current_thread;
 
@@ -273,14 +259,9 @@ unsigned32              *status;
  */
 
 INTERNAL void copy_listener_state 
-#ifdef _DCE_PROTO_
 (
     rpc_listener_state_p_t  lstate
 )
-#else
-(lstate)
-rpc_listener_state_p_t  lstate;
-#endif
 {
     unsigned16              nd;
 
@@ -333,14 +314,9 @@ rpc_listener_state_p_t  lstate;
  */
 
 INTERNAL void lthread 
-#ifdef _DCE_PROTO_
 (
     rpc_listener_state_p_t  lstate
 )
-#else
-(lstate)
-rpc_listener_state_p_t  lstate;
-#endif
 {
     /*
      * Loop, calling the real listen loop on each pass.  Each time a
@@ -502,16 +478,10 @@ INTERNAL void lthread_loop (void)
  */
 
 PRIVATE void rpc__nlsn_fork_handler
-#ifdef _DCE_PROTO_
 (
   rpc_listener_state_p_t  lstate,
   rpc_fork_stage_id_t stage
 )
-#else
-(lstate, stage)
-rpc_listener_state_p_t  lstate;
-rpc_fork_stage_id_t stage;
-#endif
 { 
     unsigned32 st;
 

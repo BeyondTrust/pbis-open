@@ -133,16 +133,10 @@ INTERNAL void ccall_timeout_timer _DCE_PROTOTYPE_ ((
  */
 
 PRIVATE void rpc__dg_ccall_lsct_inq_scall
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall,
     rpc_dg_scall_p_t *scallp
 )    
-#else
-(ccall, scallp) 
-rpc_dg_ccall_p_t ccall;
-rpc_dg_scall_p_t *scallp;
-#endif
 {
     RPC_DG_CALL_LOCK_ASSERT(&ccall->c);
 
@@ -176,20 +170,12 @@ rpc_dg_scall_p_t *scallp;
  */
 
 PRIVATE void rpc__dg_ccall_lsct_new_call
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall,
     rpc_dg_sock_pool_elt_p_t si,
     rpc_dg_recvq_elt_p_t rqe,
     rpc_dg_scall_p_t *scallp
 )
-#else
-(ccall, si, rqe, scallp) 
-rpc_dg_ccall_p_t ccall;
-rpc_dg_sock_pool_elt_p_t si;
-rpc_dg_recvq_elt_p_t rqe;
-rpc_dg_scall_p_t *scallp;
-#endif
 {
     RPC_DG_CALL_LOCK_ASSERT(&ccall->c);
     assert(ccall->c.is_cbk == false);
@@ -228,7 +214,6 @@ rpc_dg_scall_p_t *scallp;
  */
 
 INTERNAL void ccall_common_init
-#ifdef _DCE_PROTO_
 (
     rpc_dg_binding_client_p_t h,
     rpc_dg_ccall_p_t ccall,
@@ -237,15 +222,6 @@ INTERNAL void ccall_common_init
     unsigned32 opnum,
     unsigned32 *st
 )
-#else
-(h, ccall, options, ifspec, opnum, st)
-rpc_dg_binding_client_p_t h;
-rpc_dg_ccall_p_t ccall;
-unsigned32 options;
-rpc_if_rep_p_t ifspec;
-unsigned32 opnum;
-unsigned32 *st;
-#endif
 {
     boolean doing_callback = ccall->c.is_cbk;
 
@@ -454,7 +430,6 @@ unsigned32 *st;
  */
 
 INTERNAL rpc_dg_ccall_p_t ccall_alloc
-#ifdef _DCE_PROTO_
 (
     rpc_dg_binding_client_p_t h,
     unsigned32 options,
@@ -462,14 +437,6 @@ INTERNAL rpc_dg_ccall_p_t ccall_alloc
     unsigned32 opnum,
     unsigned32 *st
 )
-#else
-(h, options, ifspec, opnum, st)
-rpc_dg_binding_client_p_t h;
-unsigned32 options;
-rpc_if_rep_p_t ifspec;
-unsigned32 opnum;
-unsigned32 *st;
-#endif
 {
     rpc_dg_pkt_hdr_p_t hdrp;
     rpc_dg_sock_pool_elt_p_t sp;
@@ -694,7 +661,6 @@ unsigned32 *st;
  */
 
 INTERNAL rpc_dg_ccall_p_t ccall_reinit
-#ifdef _DCE_PROTO_
 (
     rpc_dg_binding_client_p_t h,
     unsigned32 options,
@@ -703,15 +669,6 @@ INTERNAL rpc_dg_ccall_p_t ccall_reinit
     boolean *insert_in_ccallt,
     unsigned32 *st
 )
-#else
-(h, options, ifspec, opnum, insert_in_ccallt, st)
-rpc_dg_binding_client_p_t h;
-unsigned32 options;
-rpc_if_rep_p_t ifspec;
-unsigned32 opnum;
-boolean *insert_in_ccallt;
-unsigned32 *st;
-#endif
 {
     rpc_dg_call_state_t prev_state;
     rpc_dg_ccall_p_t ccall;
@@ -808,7 +765,6 @@ unsigned32 *st;
  */    
 
 INTERNAL void ccall_binding_serialize
-#ifdef _DCE_PROTO_
 (
     rpc_dg_binding_client_p_t h,
     boolean32 is_brdcst,
@@ -816,14 +772,6 @@ INTERNAL void ccall_binding_serialize
     rpc_clock_p_t cancel_timeout_time,
     unsigned32 *st
 )
-#else
-(h, is_brdcst, cancel_cnt, cancel_timeout_time, st)
-rpc_dg_binding_client_p_t h;
-boolean32 is_brdcst;
-unsigned32  *cancel_cnt;
-rpc_clock_p_t cancel_timeout_time;
-unsigned32 *st;
-#endif
 {
     volatile boolean    is_awaiting_timeout = false;
     volatile boolean    has_timed_out = false;
@@ -938,18 +886,11 @@ unsigned32 *st;
  */
 
 INTERNAL void ccall_initial_cancel_setup
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall,
     unsigned32 cancel_cnt,
     rpc_clock_t cancel_timeout_time
 )
-#else
-(ccall, cancel_cnt, cancel_timeout_time)
-rpc_dg_ccall_p_t ccall;
-unsigned32 cancel_cnt;
-rpc_clock_t cancel_timeout_time;
-#endif
 {
 
     if (cancel_cnt == 0)
@@ -1014,7 +955,6 @@ rpc_dg_ccall_p_t ccall;
  */
 
 PRIVATE rpc_call_rep_p_t rpc__dg_call_start
-#ifdef _DCE_PROTO_
 (
     rpc_binding_rep_p_t h_,
     unsigned32 options,
@@ -1023,15 +963,6 @@ PRIVATE rpc_call_rep_p_t rpc__dg_call_start
     rpc_transfer_syntax_t *transfer_syntax,
     unsigned32 *st
 )
-#else
-(h_, options, ifspec, opnum, transfer_syntax, st)
-rpc_binding_rep_p_t h_;
-unsigned32 options;
-rpc_if_rep_p_t ifspec;
-unsigned32 opnum;
-rpc_transfer_syntax_t *transfer_syntax;
-unsigned32 *st;
-#endif
 {
     rpc_dg_binding_client_p_t h = (rpc_dg_binding_client_p_t) h_;
     rpc_dg_ccall_p_t ccall;
@@ -1254,16 +1185,10 @@ unsigned32 *st;
  */
 
 PRIVATE void rpc__dg_call_end
-#ifdef _DCE_PROTO_
 (
     rpc_call_rep_p_t *call_,
     unsigned32 *st
 )
-#else
-(call_, st)
-rpc_call_rep_p_t *call_;
-unsigned32 *st;
-#endif
 {
     rpc_dg_ccall_p_t ccall;
     rpc_dg_binding_client_p_t h;
@@ -1536,14 +1461,9 @@ unsigned32 *st;
  */
 
 INTERNAL void xmit_ping
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall
 )
-#else
-(ccall)
-rpc_dg_ccall_p_t ccall;
-#endif
 {
     rpc_dg_xmitq_p_t xq = &ccall->c.xq;
 
@@ -1570,14 +1490,9 @@ rpc_dg_ccall_p_t ccall;
  */
 
 PRIVATE void rpc__dg_ccall_ack
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall
 )
-#else
-(ccall)
-rpc_dg_ccall_p_t ccall;
-#endif
 {
     RPC_DG_CALL_LOCK_ASSERT(&ccall->c);
 
@@ -1597,14 +1512,9 @@ rpc_dg_ccall_p_t ccall;
  */
 
 INTERNAL void xmit_orphan_quit
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall
 )
-#else
-(ccall)
-rpc_dg_ccall_p_t ccall;
-#endif
 {
     RPC_DG_CALL_LOCK_ASSERT(&ccall->c);
 
@@ -1623,16 +1533,10 @@ rpc_dg_ccall_p_t ccall;
  */
 
 PRIVATE void rpc__dg_ccall_xmit_cancel_quit
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall,
     unsigned32 cancel_id
 )
-#else
-(ccall, cancel_id)
-rpc_dg_ccall_p_t ccall;
-unsigned32 cancel_id;
-#endif
 {
     rpc_socket_iovec_t iov[2];
     rpc_dg_pkt_hdr_t hdr;
@@ -1688,14 +1592,9 @@ unsigned32 cancel_id;
  */
 
 INTERNAL void ccall_cancel_timer
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall
 )
-#else
-(ccall)
-rpc_dg_ccall_p_t ccall;
-#endif
 {
     rpc_clock_t now;
     /*
@@ -1776,14 +1675,9 @@ rpc_dg_ccall_p_t ccall;
  */
 
 INTERNAL void recv_state_timer
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall
 )
-#else
-(ccall)
-rpc_dg_ccall_p_t ccall;
-#endif
 {
     rpc_dg_ping_info_t *ping = &ccall->ping;
     rpc_clock_t now;
@@ -1920,14 +1814,9 @@ rpc_dg_ccall_p_t ccall;
  */
 
 INTERNAL void ccall_orphan_timer
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall
 )
-#else
-(ccall)
-rpc_dg_ccall_p_t ccall;
-#endif
 {
     struct rpc_dg_quit_info_t *quit = &ccall->quit;
     rpc_clock_t now;
@@ -1953,14 +1842,9 @@ rpc_dg_ccall_p_t ccall;
  * Check for and handle a call execution time timeout.
  */
 INTERNAL void ccall_timeout_timer
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall
 )
-#else
-(ccall)
-rpc_dg_ccall_p_t ccall;
-#endif
 {
     rpc_clock_t now;
 
@@ -1985,14 +1869,9 @@ rpc_dg_ccall_p_t ccall;
  */
 
 PRIVATE void rpc__dg_ccall_free
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall
 )
-#else
-(ccall)
-rpc_dg_ccall_p_t ccall;
-#endif
 {
     RPC_DG_CALL_LOCK_ASSERT(&ccall->c);
 
@@ -2039,14 +1918,9 @@ rpc_dg_ccall_p_t ccall;
  */
 
 PRIVATE void rpc__dg_ccall_free_prep
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall
 )
-#else
-(ccall)
-rpc_dg_ccall_p_t ccall;
-#endif
 {
     RPC_DG_CALL_LOCK_ASSERT(&ccall->c);
 
@@ -2064,14 +1938,9 @@ rpc_dg_ccall_p_t ccall;
  */
 
 INTERNAL void ccall_uncache
-#ifdef _DCE_PROTO_
 (
     rpc_dg_ccall_p_t ccall
 )
-#else
-(ccall)
-rpc_dg_ccall_p_t ccall;
-#endif
 {
 
 
@@ -2101,14 +1970,9 @@ rpc_dg_ccall_p_t ccall;
  */
 
 PRIVATE void rpc__dg_ccall_timer
-#ifdef _DCE_PROTO_
 (
     pointer_t p
 )
-#else
-(p)
-pointer_t p;
-#endif
 {
     rpc_dg_ccall_p_t ccall = (rpc_dg_ccall_p_t) p;
    /*

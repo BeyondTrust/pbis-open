@@ -72,7 +72,6 @@ static char rep_as_handle_name[] = "IDL_handle_rep_as";
  *
  */
 static void BE_server_binding_analyze
-#ifdef PROTO
 (
     AST_operation_n_t *p_operation,
     boolean *server_binding_explicit, /* TRUE if no client can use [auto_handle]
@@ -81,15 +80,6 @@ static void BE_server_binding_analyze
     NAMETABLE_id_t *p_rep_as_type_name,  /* type of handle param */
     NAMETABLE_id_t *p_binding_handle_name
 )
-#else
-( p_operation, server_binding_explicit, p_rep_as_handle_param,
-  p_rep_as_type_name, p_binding_handle_name )
-    AST_operation_n_t *p_operation;
-    boolean *server_binding_explicit;
-    BE_rep_as_handle_t_k_t *p_rep_as_handle_param;
-    NAMETABLE_id_t *p_rep_as_type_name;
-    NAMETABLE_id_t *p_binding_handle_name;
-#endif
 {
     AST_parameter_n_t *p_first_parameter;
     AST_type_n_t *p_type, *p_pointee_type;
@@ -166,19 +156,12 @@ static void BE_server_binding_analyze
  * Spell server surrogates as stack variables
  */
 static void DDBE_spell_stack_surrogates
-#ifdef PROTO
 (
     FILE *fid,
     param_node_link_t **p_fixed_char_array_list ATTRIBUTE_UNUSED,
                 /* Pointer to list of fixed size character array parameters */
     AST_operation_n_t *p_operation
 )
-#else
-( fid, p_fixed_char_array_list, p_operation )
-    FILE *fid;
-    param_node_link_t **p_fixed_char_array_list;
-    AST_operation_n_t *p_operation;
-#endif
 {
     unsigned long param_index;
     AST_parameter_n_t *pp;  /* Pointer down list of parameters */
@@ -282,7 +265,6 @@ static void DDBE_spell_stack_surrogates
  * Emit a call to a manager operation
  */
 static void CSPELL_manager_call
-#ifdef PROTO
 (
     FILE *fid,
     AST_interface_n_t *p_interface,
@@ -291,16 +273,6 @@ static void CSPELL_manager_call
     NAMETABLE_id_t rep_as_type_name,
     NAMETABLE_id_t binding_handle_name
 )
-#else
-(fid, p_interface, p_operation, rep_as_handle_param, rep_as_type_name,
- binding_handle_name)
-    FILE *fid;
-    AST_interface_n_t *p_interface;
-    AST_operation_n_t *p_operation;
-    BE_rep_as_handle_t_k_t rep_as_handle_param;
-    NAMETABLE_id_t rep_as_type_name;
-    NAMETABLE_id_t binding_handle_name;
-#endif
 {
     AST_parameter_n_t *pp;  /* Pointer down list of parameters */
     int param_index;        /* Index of parameter in param list */
@@ -470,18 +442,11 @@ static void CSPELL_manager_call
  *
  */
 static void DDBE_convert_out_contexts
-#ifdef PROTO
 (
     FILE *fid,
     AST_operation_n_t *p_operation,
     NAMETABLE_id_t binding_handle_name
 )
-#else
-(fid, p_operation,binding_handle_name)
-    FILE *fid;
-    AST_operation_n_t *p_operation;
-    NAMETABLE_id_t binding_handle_name;
-#endif
 {
     AST_parameter_n_t *pp;
 
@@ -847,7 +812,6 @@ static void CSPELL_server_stub_routine
  * Public entry point for server stub file generation
  */
 void BE_gen_sstub
-#ifdef PROTO
 (
     FILE *fid,              /* Handle for emitted C text */
     AST_interface_n_t *p_interface,     /* Ptr to AST interface node */
@@ -857,16 +821,6 @@ void BE_gen_sstub
     void **cmd_val,
     DDBE_vectors_t *dd_vip    /* Data driven BE vector information ptr */
 )
-#else
-(fid, p_interface, language, header_name,  cmd_opt, cmd_val, dd_vip)
-    FILE *fid;
-    AST_interface_n_t *p_interface;
-    language_k_t language;
-    char header_name[];
-    boolean *cmd_opt;
-    void **cmd_val;
-    DDBE_vectors_t *dd_vip;
-#endif
 {
     AST_export_n_t *p_export;
     AST_operation_n_t *p_operation;

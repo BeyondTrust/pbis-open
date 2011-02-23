@@ -65,14 +65,9 @@ INTERNAL void use_protseq _DCE_PROTOTYPE_((
  */
 
 INTERNAL void sock_free
-#ifdef _DCE_PROTO_
 (
     rpc_dg_sock_pool_elt_p_t *sp
 )
-#else
-(sp)
-rpc_dg_sock_pool_elt_p_t *sp;
-#endif
 {
     rpc_socket_error_t serr;
     rpc_dg_sock_pool_elt_p_t eltp, *peltp;
@@ -147,7 +142,6 @@ rpc_dg_sock_pool_elt_p_t *sp;
  */
 
 INTERNAL void use_protseq
-#ifdef _DCE_PROTO_
 (
     boolean32 is_server,
     rpc_protseq_id_t pseq_id,
@@ -156,15 +150,6 @@ INTERNAL void use_protseq
     rpc_dg_sock_pool_elt_p_t *sock_pool_elt,
     unsigned32 *st
 )
-#else
-(is_server, pseq_id, rpc_addr, endpoint, sock_pool_elt, st)
-boolean32 is_server;
-rpc_protseq_id_t pseq_id;
-rpc_addr_p_t rpc_addr;
-unsigned_char_p_t endpoint;
-rpc_dg_sock_pool_elt_p_t *sock_pool_elt;
-unsigned32 *st;
-#endif
 {
     boolean32 sock_open = false;
     boolean32 creating_private_socket = false;
@@ -485,7 +470,6 @@ CLEANUP:
  */
 
 PRIVATE void rpc__dg_network_use_protseq_sv
-#ifdef _DCE_PROTO_
 (
     rpc_protseq_id_t pseq_id,
     unsigned32 max_calls ATTRIBUTE_UNUSED,
@@ -493,14 +477,6 @@ PRIVATE void rpc__dg_network_use_protseq_sv
     unsigned_char_p_t endpoint,
     unsigned32 *st
 )
-#else
-(pseq_id, max_calls, rpc_addr, endpoint, st)
-rpc_protseq_id_t pseq_id;
-unsigned32 max_calls;
-rpc_addr_p_t rpc_addr;
-unsigned_char_p_t endpoint;
-unsigned32 *st;
-#endif
 {   
     rpc_dg_sock_pool_elt_p_t sp_elt;
         
@@ -519,16 +495,10 @@ unsigned32 *st;
  */
 
 PRIVATE void rpc__dg_network_use_protseq_cl
-#ifdef _DCE_PROTO_
 (
     rpc_protseq_id_t pseq_id,
     rpc_dg_sock_pool_elt_p_t *sp
 )
-#else
-(pseq_id, sp)
-rpc_protseq_id_t pseq_id;
-rpc_dg_sock_pool_elt_p_t *sp;
-#endif
 {                          
     rpc_addr_il_t addr;
     unsigned32 st;
@@ -558,14 +528,9 @@ rpc_dg_sock_pool_elt_p_t *sp;
  */
 
 PRIVATE void rpc__dg_network_disable_desc
-#ifdef _DCE_PROTO_
 (
     rpc_dg_sock_pool_elt_p_t sp
 )
-#else
-(sp)
-rpc_dg_sock_pool_elt_p_t sp;
-#endif
 {                                               
     unsigned32 st;
     boolean is_private;
@@ -625,14 +590,9 @@ PRIVATE void rpc__dg_network_init(void)
  */
 
 PRIVATE void rpc__dg_network_fork_handler
-#ifdef _DCE_PROTO_
 (
     rpc_fork_stage_id_t stage
 )
-#else
-(stage)
-rpc_fork_stage_id_t stage;
-#endif
 { 
     rpc_dg_sock_pool_elt_p_t eltp, neltp;
     rpc_socket_error_t serr;
@@ -699,14 +659,9 @@ rpc_dg_sock_pool_elt_p_t sp;
  */
 
 PRIVATE void rpc__dg_network_sock_release
-#ifdef _DCE_PROTO_
 (
     rpc_dg_sock_pool_elt_p_t *sp
 )
-#else
-(sp)
-rpc_dg_sock_pool_elt_p_t *sp;  
-#endif
 {  
     RPC_DG_SOCK_POOL_LOCK(0); 
 

@@ -84,16 +84,10 @@
 */
 
 PRIVATE void rpc__tower_flr_free 
-#ifdef _DCE_PROTO_
 (
     rpc_tower_floor_p_t     *floor,
     unsigned32              *status
 )
-#else
-(floor, status)
-rpc_tower_floor_p_t     *floor;
-unsigned32              *status;
-#endif
 {
     CODING_ERROR (status);
 
@@ -158,18 +152,11 @@ unsigned32              *status;
 */
 
 PRIVATE void rpc__tower_flr_from_drep 
-#ifdef _DCE_PROTO_
 (
     rpc_syntax_id_p_t       transfer_syntax,
     rpc_tower_floor_p_t     *floor,
     unsigned32              *status
 )
-#else
-(transfer_syntax, floor, status)
-rpc_syntax_id_p_t       transfer_syntax;
-rpc_tower_floor_p_t     *floor;
-unsigned32              *status;
-#endif
 {
     CODING_ERROR (status);
 
@@ -229,18 +216,11 @@ unsigned32              *status;
 */
 
 PRIVATE void rpc__tower_flr_from_if_id 
-#ifdef _DCE_PROTO_
 (
     rpc_if_id_p_t           if_id,
     rpc_tower_floor_p_t     *floor,
     unsigned32              *status
 )
-#else
-(if_id, floor, status)
-rpc_if_id_p_t           if_id;
-rpc_tower_floor_p_t     *floor;
-unsigned32              *status;
-#endif
 {
 
     CODING_ERROR (status);
@@ -306,20 +286,12 @@ unsigned32              *status;
 */
 
 PRIVATE void rpc__tower_flr_from_rpc_prot_id 
-#ifdef _DCE_PROTO_
 (
     rpc_protseq_id_t        rpc_protseq_id,
     rpc_protocol_version_p_t protocol_version,
     rpc_tower_floor_p_t     *floor,
     unsigned32              *status
 )
-#else
-(rpc_protseq_id, floor, status)
-rpc_protseq_id_t        rpc_protseq_id;
-rpc_protocol_version_p_t protocol_version;
-rpc_tower_floor_p_t     *floor;
-unsigned32              *status;
-#endif
 {
     unsigned8       tower_protocol_id;
     unsigned16      prot_id_size,
@@ -479,7 +451,6 @@ unsigned32              *status;
 */
 
 PRIVATE void rpc__tower_flr_from_uuid 
-#ifdef _DCE_PROTO_
 (
     dce_uuid_p_t                uuid,
     unsigned32              version_major,
@@ -487,14 +458,6 @@ PRIVATE void rpc__tower_flr_from_uuid
     rpc_tower_floor_p_t     *floor,
     unsigned32              *status
 )
-#else
-(uuid, version_major, version_minor, floor, status)
-uuid_p_t                uuid;
-unsigned32              version_major;
-unsigned32              version_minor;
-rpc_tower_floor_p_t     *floor;
-unsigned32              *status;
-#endif
 {
     byte_p_t        prot_id;
     unsigned16      address_size,
@@ -642,7 +605,6 @@ unsigned32              *status;
 */
 
 PRIVATE void rpc__tower_flr_id_from_uuid 
-#ifdef _DCE_PROTO_
 (
     dce_uuid_p_t        uuid,
     unsigned32      version_major,
@@ -650,15 +612,6 @@ PRIVATE void rpc__tower_flr_id_from_uuid
     byte_p_t        *prot_id,
     unsigned32      *status
 )
-#else
-(uuid, version_major, prot_id_len, prot_id, status)
-uuid_p_t        uuid;
-unsigned32      version_major;
-unsigned32      *prot_id_len;
-byte_p_t        *prot_id;
-unsigned32      *status;
-
-#endif
 {
 
     byte_t          prot_id_prefix = RPC_C_PROT_ID_PREFIX,
@@ -760,20 +713,12 @@ unsigned32      *status;
 */
 
 PRIVATE void rpc__tower_flr_id_to_uuid 
-#ifdef _DCE_PROTO_
 (
     byte_p_t        prot_id,
     dce_uuid_t          *uuid,
     unsigned32      *version_major,
     unsigned32      *status
 )
-#else
-(prot_id, uuid, version_major, status)
-byte_p_t        prot_id;
-dce_uuid_t          *uuid;
-unsigned32      *version_major;
-unsigned32      *status;
-#endif
 {
     byte_t          prot_id_prefix,
                     *prot_id_p;
@@ -862,18 +807,11 @@ unsigned32      *status;
 */
 
 PRIVATE void rpc__tower_flr_to_drep 
-#ifdef _DCE_PROTO_
 (
     rpc_tower_floor_p_t     floor,
     rpc_syntax_id_t         *transfer_syntax,
     unsigned32              *status
 )
-#else
-(floor, transfer_syntax, status)
-rpc_tower_floor_p_t     floor;
-rpc_syntax_id_t         *transfer_syntax;
-unsigned32              *status;
-#endif
 {
     unsigned32      version_major,
                     version_minor;
@@ -941,18 +879,11 @@ unsigned32              *status;
 */
 
 PRIVATE void rpc__tower_flr_to_if_id 
-#ifdef _DCE_PROTO_
 (
     rpc_tower_floor_p_t     floor,
     rpc_if_id_t             *if_id,
     unsigned32              *status
 )
-#else
-(floor, if_id, status)
-rpc_tower_floor_p_t     floor;
-rpc_if_id_t             *if_id;
-unsigned32              *status;
-#endif
 {
     unsigned32          version_major,
                         version_minor;
@@ -1022,7 +953,6 @@ unsigned32              *status;
 */
 
 PRIVATE void rpc__tower_flr_to_rpc_prot_id 
-#ifdef _DCE_PROTO_
 (
     rpc_tower_floor_p_t     floor,
     rpc_protocol_id_t       *rpc_protocol_id,
@@ -1030,14 +960,6 @@ PRIVATE void rpc__tower_flr_to_rpc_prot_id
     unsigned32              *version_minor,
     unsigned32              *status
 )
-#else
-(floor, rpc_protocol_id, version_major, version_minor, status)
-rpc_tower_floor_p_t     floor;
-rpc_protocol_id_t       *rpc_protocol_id;
-unsigned32              *version_major;
-unsigned32              *version_minor;
-unsigned32              *status;
-#endif
 {
     boolean             match;
     rpc_protseq_id_t    protseq_id;
@@ -1182,7 +1104,6 @@ unsigned32              *status;
 */
 
 PRIVATE void rpc__tower_flr_to_uuid 
-#ifdef _DCE_PROTO_
 (
     rpc_tower_floor_p_t     floor,
     dce_uuid_t                  *uuid,
@@ -1190,14 +1111,6 @@ PRIVATE void rpc__tower_flr_to_uuid
     unsigned32              *version_minor,
     unsigned32              *status
 )
-#else
-(floor, uuid, version_major, version_minor, status)
-rpc_tower_floor_p_t     floor;
-dce_uuid_t                  *uuid;
-unsigned32              *version_major;
-unsigned32              *version_minor;
-unsigned32              *status;
-#endif
 {
     unsigned16          flr_vers_minor;
 

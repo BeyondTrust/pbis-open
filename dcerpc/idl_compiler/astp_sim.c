@@ -51,25 +51,19 @@ extern int nidl_yylineno;
  * Prototypes
  */
 char *KEYWORDS_lookup_text (
-#ifdef PROTO
     long    token
-#endif
 );
 
 
 static void AST_synthesize_param_to_oper_attr (
-#ifdef PROTO
     AST_parameter_n_t *parameter_node,
     AST_operation_n_t *operation_node,
     ASTP_parameter_count_t *param_count
-#endif
 );
 
 static void AST_set_oper_has_ins_outs (
-#ifdef PROTO
     AST_operation_n_t *operation_node,
     ASTP_parameter_count_t *param_count
-#endif
 );
 
 
@@ -81,20 +75,12 @@ static void AST_set_oper_has_ins_outs (
  */
 
 ASTP_type_attr_n_t *AST_array_bound_info
-#ifdef PROTO
 (
     NAMETABLE_id_t name,
     ASTP_attr_k_t  kind,
     boolean is_pointer
 
 )
-#else
-(name, kind, is_pointer)
-    NAMETABLE_id_t name;
-    ASTP_attr_k_t  kind;
-    boolean is_pointer;
-
-#endif
 {
     ASTP_type_attr_n_t *attr_node_p;
 
@@ -164,14 +150,9 @@ ASTP_type_attr_n_t * AST_range_from_expr(
  */
 
 AST_constant_n_t *AST_boolean_constant
-#ifdef PROTO
 (
     boolean value
 )
-#else
-(value)
-    boolean value;
-#endif
 {
     AST_constant_n_t  *const_node_ptr;
 
@@ -191,16 +172,10 @@ AST_constant_n_t *AST_boolean_constant
  */
 
 AST_constant_n_t *AST_char_constant
-#ifdef PROTO
 (
     char value
 
 )
-#else
-(value)
-    char value;
-
-#endif
 {
     AST_constant_n_t  *const_node_ptr;
 
@@ -222,14 +197,9 @@ AST_constant_n_t *AST_char_constant
  */
 
 AST_constant_n_t *AST_constant_node
-#ifdef PROTO
 (
     AST_constant_k_t kind
 )
-#else
-(kind)
-    AST_constant_k_t kind;
-#endif
 {
     AST_constant_n_t *constant_node_p;
 
@@ -254,16 +224,10 @@ AST_constant_n_t *AST_constant_node
  *
  */
 static AST_operation_n_t *AST_create_operation_node
-#ifdef PROTO
 (
     NAMETABLE_id_t op_name,
     AST_parameter_n_t *parameters
 )
-#else
-(op_name, parameters)
-    NAMETABLE_id_t op_name;
-    AST_parameter_n_t *parameters;
-#endif
 {
     AST_operation_n_t *operation_node_p;
 
@@ -294,14 +258,9 @@ static AST_operation_n_t *AST_create_operation_node
  */
 
 ASTP_declarator_n_t *AST_declarator_node
-#ifdef PROTO
 (
     NAMETABLE_id_t name
 )
-#else
-(name)
-    NAMETABLE_id_t name;
-#endif
 {
     ASTP_declarator_n_t  *declarator_node_ptr;
 
@@ -335,20 +294,12 @@ ASTP_declarator_n_t *AST_declarator_node
 
 
 void AST_declarator_operation
-#ifdef PROTO
 (
     ASTP_declarator_n_t     *declarator,
     AST_type_k_t            op_kind,
     ASTP_node_t             *op_info,
     int                     pointer_count
 )
-#else
-(declarator, op_kind, op_info, pointer_count)
-    ASTP_declarator_n_t     *declarator;
-    AST_type_k_t            op_kind;
-    ASTP_node_t             *op_info;
-    int                     pointer_count;
-#endif
 {
     ASTP_declarator_op_n_t  *declarator_op;
 
@@ -422,18 +373,11 @@ void AST_declarator_operation
  */
 
 AST_parameter_n_t  *AST_declarator_to_param
-#ifdef PROTO
 (
     ASTP_attributes_t   *attributes,
     AST_type_n_t            *type,
     ASTP_declarator_n_t *declarator
 )
-#else
-(attributes, type, declarator)
-    ASTP_attributes_t   *attributes;
-    AST_type_n_t            *type;
-    ASTP_declarator_n_t *declarator;
-#endif
 {
     AST_parameter_n_t   *new_parameter;
     AST_type_n_t        *new_type;
@@ -507,16 +451,10 @@ AST_parameter_n_t  *AST_declarator_to_param
  */
 
 AST_type_n_t *AST_enumerator_node
-#ifdef PROTO
 (
     AST_constant_n_t *constant_list,
     AST_type_k_t size ATTRIBUTE_UNUSED
 )
-#else
-(constant_list, size)
-    AST_constant_n_t *constant_list;
-    AST_type_k_t size;
-#endif
 {
     AST_enumeration_n_t *enum_node_ptr;
     AST_type_n_t *type_node_ptr;
@@ -591,16 +529,10 @@ AST_type_n_t *AST_enumerator_node
  */
 
 AST_export_n_t *AST_export_node
-#ifdef PROTO
 (
     ASTP_node_t *export_ptr,
     AST_export_k_t kind
 )
-#else
-(export_ptr, kind)
-    ASTP_node_t *export_ptr;
-    AST_export_k_t kind;
-#endif
 {
     AST_export_n_t *export_node_ptr;
 
@@ -654,14 +586,9 @@ AST_export_n_t *AST_export_node
  */
 
 AST_cpp_quote_n_t *AST_cpp_quote_node
-#ifdef PROTO
 (
     STRTAB_str_t text
 )
-#else
-(text)
-    STRTAB_str_t text;
-#endif
 {
     AST_cpp_quote_n_t *cpp_quote_node_ptr;
 
@@ -691,18 +618,11 @@ AST_cpp_quote_n_t *AST_cpp_quote_node
  */
 
 AST_constant_n_t *AST_finish_constant_node
-#ifdef PROTO
 (
     AST_constant_n_t *constant_ptr,     /* Pointer to constant node */
     ASTP_declarator_n_t *declarator,    /* Constant identifier  */
     AST_type_n_t *type_ptr              /* Pointer to type node */
 )
-#else
-(constant_ptr, declarator, type_ptr)
-    AST_constant_n_t *constant_ptr;     /* Pointer to constant node */
-    ASTP_declarator_n_t *declarator;    /* Constant identifier  */
-    AST_type_n_t *type_ptr;             /* Pointer to type node */
-#endif
 {
     boolean type_check_failed = false;  /* Boolean for type check */
     AST_type_n_t *result_type;          /* Result of applying declarator */
@@ -871,14 +791,9 @@ AST_constant_n_t *AST_finish_constant_node
  */
 
 static void AST_finish_operation_node
-#ifdef PROTO
 (
     AST_operation_n_t *operation_node_p
 )
-#else
-(operation_node_p)
-    AST_operation_n_t *operation_node_p;
-#endif
 {
     AST_parameter_n_t *param_p;
     ASTP_parameter_count_t param_count;
@@ -936,18 +851,11 @@ static void AST_finish_operation_node
  */
 
 AST_operation_n_t *AST_function_node
-#ifdef PROTO
 (
     AST_type_n_t          *result_type,
     NAMETABLE_id_t        op_name,
     AST_parameter_n_t *parameters
 )
-#else
-(result_type, op_name, parameters)
-    AST_type_n_t          *result_type;
-    NAMETABLE_id_t        op_name;
-    AST_parameter_n_t *parameters;
-#endif
 {
     AST_operation_n_t *operation_node_p;
 
@@ -984,16 +892,10 @@ AST_operation_n_t *AST_function_node
  */
 
 AST_include_n_t *AST_include_node
-#ifdef PROTO
 (
     STRTAB_str_t include_file,
     STRTAB_str_t include_file_name
 )
-#else
-(include_file, include_file_name)
-    STRTAB_str_t include_file;
-    STRTAB_str_t include_file_name;
-#endif
 {
     AST_include_n_t *include_node_ptr;
 
@@ -1016,14 +918,9 @@ AST_include_n_t *AST_include_node
  */
 
 AST_import_n_t *AST_import_node
-#ifdef PROTO
 (
     STRTAB_str_t imported_file
 )
-#else
-(imported_file)
-    STRTAB_str_t imported_file;
-#endif
 {
     AST_import_n_t *import_node_ptr;
 
@@ -1047,14 +944,9 @@ AST_import_n_t *AST_import_node
  */
 
 AST_exception_n_t *AST_exception_node
-#ifdef PROTO
 (
     NAMETABLE_id_t  excep_name
 )
-#else
-(excep_name)
-    NAMETABLE_id_t  excep_name;
-#endif
 {
     ASTP_node_t         *binding;
     AST_exception_n_t   *excep_node_ptr;
@@ -1098,14 +990,9 @@ AST_exception_n_t *AST_exception_node
  */
 
 AST_name_n_t *AST_name_node
-#ifdef PROTO
 (
     NAMETABLE_id_t  name
 )
-#else
-(name)
-    NAMETABLE_id_t  name;
-#endif
 {
     AST_name_n_t *name_node_ptr;
 
@@ -1126,11 +1013,7 @@ AST_name_n_t *AST_name_node
  */
 
 void AST_init
-#ifdef PROTO
 (void)
-#else
-()
-#endif
 {
     /* Initialize a 0 constants */
     zero_constant_p = AST_integer_constant (0L);
@@ -1167,14 +1050,9 @@ void AST_init
  */
 
 AST_constant_n_t *AST_integer_constant
-#ifdef PROTO
 (
     long int    value
 )
-#else
-(value)
-    long int    value;
-#endif
 {
     AST_constant_n_t *constant_node_p;
 
@@ -1208,13 +1086,9 @@ AST_constant_n_t *AST_integer_constant
  */
 
 AST_interface_n_t *AST_interface_node
-#ifdef PROTO
 (
       void
 )
-#else
-()
-#endif
 {
     AST_interface_n_t *interface_node_p;
 
@@ -1248,16 +1122,10 @@ AST_interface_n_t *AST_interface_node
  */
 
 AST_type_n_t *AST_lookup_integer_type_node
-#ifdef PROTO
 (
       AST_type_k_t    int_size,
       int             int_signed
 )
-#else
-(int_size,int_signed)
-      AST_type_k_t    int_size;
-      int             int_signed;
-#endif
 {
     AST_type_n_t *type_node_p = NULL;
 
@@ -1328,14 +1196,9 @@ AST_type_n_t *AST_lookup_named_type
  */
 
 AST_type_n_t *AST_lookup_type_node
-#ifdef PROTO
 (
     AST_type_k_t kind
 )
-#else
-(kind)
-    AST_type_k_t kind;
-#endif
 {
     AST_type_n_t *type_node_ptr = NULL;
 
@@ -1425,14 +1288,9 @@ AST_type_n_t *AST_lookup_type_node
  */
 
 AST_constant_n_t *AST_named_constant
-#ifdef PROTO
 (
     NAMETABLE_id_t const_name
 )
-#else
-(const_name)
-    NAMETABLE_id_t const_name;
-#endif
 {
     AST_constant_n_t *named_const_node_p;
 
@@ -1466,11 +1324,7 @@ AST_constant_n_t *AST_named_constant
  */
 
 AST_constant_n_t *AST_null_constant
-#ifdef PROTO
 (void)
-#else
-()
-#endif
 {
     AST_constant_n_t  *const_node_ptr;
 
@@ -1493,18 +1347,11 @@ AST_constant_n_t *AST_null_constant
  */
 
 AST_operation_n_t *AST_operation_node
-#ifdef PROTO
 (
     AST_type_n_t      *base_type,
     ASTP_declarator_n_t *declarator,
     ASTP_attributes_t   *attributes
 )
-#else
-(base_type, declarator, attributes)
-    AST_type_n_t      *base_type;
-    ASTP_declarator_n_t *declarator;
-    ASTP_attributes_t   *attributes;
-#endif
 {
     AST_operation_n_t *operation_node_p;
     AST_type_n_t      *result_type;
@@ -1654,14 +1501,9 @@ AST_operation_n_t *AST_operation_node
  */
 
 AST_parameter_n_t * AST_parameter_node
-#ifdef PROTO
 (
     NAMETABLE_id_t identifier
 )
-#else
-(identifier)
-    NAMETABLE_id_t identifier;
-#endif
 {
     AST_parameter_n_t  * parameter_node_ptr;
 
@@ -1683,14 +1525,9 @@ AST_parameter_n_t * AST_parameter_node
  */
 
 void AST_finish_interface_node
-#ifdef PROTO
 (
     AST_interface_n_t *interface_node_p
 )
-#else
-(interface_node_p)
-    AST_interface_n_t *interface_node_p;
-#endif
 {
     if (interface_node_p == NULL) interface_node_p = AST_interface_node();
 
@@ -1702,14 +1539,9 @@ void AST_finish_interface_node
 
 
 AST_rep_as_n_t *AST_represent_as_node
-#ifdef PROTO
 (
     NAMETABLE_id_t name
 )
-#else
-(name)
-    NAMETABLE_id_t name;
-#endif
 {
     AST_rep_as_n_t *represent_as_node;
 
@@ -1728,14 +1560,9 @@ AST_rep_as_n_t *AST_represent_as_node
 
 
 AST_cs_char_n_t *AST_cs_char_node
-#ifdef PROTO
 (
     NAMETABLE_id_t name
 )
-#else
-(name)
-    NAMETABLE_id_t name;
-#endif
 {
     AST_cs_char_n_t *cs_char_node;
 
@@ -1764,16 +1591,10 @@ AST_cs_char_n_t *AST_cs_char_node
  */
 
 void ASTP_parse_port
-#ifdef PROTO
 (
     AST_interface_n_t       *interface_p,
     STRTAB_str_t        port_string
 )
-#else
-(interface_p,port_string)
-    AST_interface_n_t       *interface_p;
-    STRTAB_str_t        port_string;
-#endif
 {
     STRTAB_str_t protocol_id;
     STRTAB_str_t endpoint_id;
@@ -1891,14 +1712,9 @@ void ASTP_parse_port
  *  =====================================
  */
 AST_constant_n_t *AST_string_constant
-#ifdef PROTO
 (
     STRTAB_str_t value
 )
-#else
-(value)
-    STRTAB_str_t value;
-#endif
 {
     AST_constant_n_t *const_node_ptr;
 
@@ -1921,14 +1737,9 @@ AST_constant_n_t *AST_string_constant
  */
 
 AST_type_n_t *AST_type_node
-#ifdef PROTO
 (
     AST_type_k_t kind
 )
-#else
-(kind)
-    AST_type_k_t kind;
-#endif
 {
     AST_type_n_t *type_node_ptr;
 
@@ -2008,11 +1819,7 @@ AST_type_n_t *AST_type_node
  */
 
 AST_type_p_n_t *AST_type_ptr_node
-#ifdef PROTO
 (void)
-#else
-()
-#endif
 {
     AST_type_p_n_t *type_p_node;
 
@@ -2045,14 +1852,9 @@ AST_type_p_n_t *AST_type_ptr_node
  */
 
 AST_export_n_t *AST_types_to_exports
-#ifdef PROTO
 (
     AST_type_p_n_t *type_p_list
 )
-#else
-(type_p_list)
-    AST_type_p_n_t *type_p_list;
-#endif
 {
     AST_export_n_t *export_list = NULL,
                    *export_node_ptr;
@@ -2096,16 +1898,10 @@ AST_export_n_t *AST_types_to_exports
  *
  */
 static void AST_set_oper_has_ins_outs
-#ifdef PROTO
 (
     AST_operation_n_t *operation_node,
     ASTP_parameter_count_t *param_count
 )
-#else
-(operation_node, param_count)
-    AST_operation_n_t *operation_node;
-    ASTP_parameter_count_t *param_count;
-#endif
 {
     if (param_count->in_params > 0 )
     {
@@ -2163,18 +1959,11 @@ static void AST_set_oper_has_ins_outs
  *
  */
 static void AST_synthesize_param_to_oper_attr
-#ifdef PROTO
 (
     AST_parameter_n_t *parameter_node,
     AST_operation_n_t *operation_node,
     ASTP_parameter_count_t *param_count
 )
-#else
-(parameter_node, operation_node, param_count)
-    AST_parameter_n_t *parameter_node;
-    AST_operation_n_t *operation_node;
-    ASTP_parameter_count_t *param_count;
-#endif
 {
 
     AST_type_n_t *param_type;
@@ -2288,14 +2077,9 @@ AST_constant_n_t *AST_enum_constant
  */
 
 AST_type_n_t *AST_pipe_node
-#ifdef PROTO
 (
     AST_type_n_t *pipe_type
 )
-#else
-(pipe_type)
-    AST_type_n_t *pipe_type;
-#endif
 {
     AST_pipe_n_t *pipe_node_ptr;        /* pipe node */
     AST_type_n_t *type_node_ptr;        /* type node pointing to the pipe */

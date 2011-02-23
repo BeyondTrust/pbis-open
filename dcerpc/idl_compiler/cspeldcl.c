@@ -47,16 +47,10 @@
 /*                                                                            */
 /******************************************************************************/
 void CSPELL_constant_val_to_string
-#ifdef PROTO
 (
     AST_constant_n_t *cp,
     char *str
 )
-#else
-(cp, str)
-    AST_constant_n_t *cp;
-    char *str;
-#endif
 {
     char const *str2;
 
@@ -92,16 +86,10 @@ void CSPELL_constant_val_to_string
 /*                                                                            */
 /******************************************************************************/
 void CSPELL_constant_val
-#ifdef PROTO
 (
     FILE *fid,
     AST_constant_n_t *cp
 )
-#else
-(fid, cp)
-    FILE *fid;
-    AST_constant_n_t *cp;
-#endif
 {
     char str[max_string_len];
 
@@ -115,16 +103,10 @@ void CSPELL_constant_val
 /*                                                                            */
 /******************************************************************************/
 void CSPELL_labels
-#ifdef PROTO
 (
     FILE *fid,
     AST_case_label_n_t *clp
 )
-#else
-(fid, clp)
-    FILE  *fid;
-    AST_case_label_n_t *clp;
-#endif
 {
     boolean first = true;
 
@@ -148,18 +130,11 @@ void CSPELL_labels
 /*                                                                            */
 /******************************************************************************/
 void CSPELL_parameter_list
-#ifdef PROTO
 (
     FILE *fid,
     AST_parameter_n_t *pp,
     boolean encoding_services   /* TRUE => [encode] or [decode] on operation */
 )
-#else
-(fid, pp, encoding_services)
-    FILE *fid;
-    AST_parameter_n_t *pp;
-    boolean encoding_services;
-#endif
 {
     boolean            first = true;
 
@@ -219,16 +194,10 @@ void CSPELL_parameter_list
 /*                                                                            */
 /******************************************************************************/
 void CSPELL_finish_synopsis
-#ifdef PROTO
 (
     FILE *fid,
     AST_parameter_n_t *paramlist
 )
-#else
-(fid, paramlist)
-    FILE *fid;
-    AST_parameter_n_t *paramlist;
-#endif
 {
     AST_parameter_n_t *pp;
 

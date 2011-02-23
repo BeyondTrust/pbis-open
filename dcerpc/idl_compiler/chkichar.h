@@ -35,35 +35,25 @@
 */
 
 extern void CHK_param_cs(
-#ifdef PROTO
     AST_parameter_n_t   *param_p,       /* [in] Ptr to AST parameter node */
     AST_type_n_t        *type_p         /* [in] Parameter type */
-#endif
 );
 
 extern void CHK_op_cs(
-#ifdef PROTO
     AST_operation_n_t   *op_p           /* [in] Ptr to AST operation node */
-#endif
 );
 
 extern void CHK_field_cs(
-#ifdef PROTO
     AST_field_n_t       *field_p        /* [in] Ptr to AST field node */
-#endif
 );
 
 extern void CHK_pipe_base_type_cs(
-#ifdef PROTO
     AST_pipe_n_t        *pipe_p,        /* [in] Ptr to AST pipe node */
     AST_interface_n_t   *int_p          /* [in] Ptr to interface node */
-#endif
 );
 
 extern void CHK_type_cs(
-#ifdef PROTO
     AST_type_n_t        *top_type_p,    /* [in] Top-level presented type */
     AST_type_n_t        *type_p,        /* [in] Ptr to AST type node */
     AST_interface_n_t   *int_p          /* [in] Ptr to interface node */
-#endif
 );

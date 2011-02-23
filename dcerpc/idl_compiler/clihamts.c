@@ -53,16 +53,10 @@ char assoc_handle_ptr[] = "IDL_assoc_handle_p";
 /*                                                                            */
 /******************************************************************************/
 static void CSPELL_decl_assoc_handle_vars
-#ifdef PROTO
 (
     FILE *fid,
     BE_handle_info_t *p_handle_info
 )
-#else
-(fid, p_handle_info)
-    FILE *fid;
-    BE_handle_info_t *p_handle_info;
-#endif
 {
     if ( (p_handle_info->handle_type == BE_impl_handle_t_k)
          || (p_handle_info->handle_type == BE_context_handle_k)
@@ -88,20 +82,12 @@ static void CSPELL_decl_assoc_handle_vars
 /*                                                                            */
 /******************************************************************************/
 void BE_setup_client_handle
-#ifdef PROTO
 (
     FILE *fid,
     AST_interface_n_t *p_interface,
     AST_operation_n_t *p_operation,
     BE_handle_info_t *p_handle_info
 )
-#else
-(fid, p_interface, p_operation, p_handle_info)
-    FILE *fid;
-    AST_interface_n_t *p_interface;
-    AST_operation_n_t *p_operation;
-    BE_handle_info_t *p_handle_info;
-#endif
 {
     AST_parameter_n_t *p_first_parameter;
     AST_type_n_t *p_type;
@@ -227,16 +213,10 @@ void BE_setup_client_handle
 /*                                                                            */
 /******************************************************************************/
 static void CSPELL_dup_implicit_handle_t
-#ifdef PROTO
 (
     FILE *fid,
     AST_interface_n_t *p_interface
 )
-#else
-( fid, p_interface )
-    FILE *fid;
-    AST_interface_n_t *p_interface;
-#endif
 {
     fprintf(fid,"rpc_binding_handle_copy(");
     spell_name(fid, p_interface->implicit_handle_name);
@@ -251,16 +231,10 @@ static void CSPELL_dup_implicit_handle_t
 /*                                                                            */
 /******************************************************************************/
 static void CSPELL_bind_generic_handle
-#ifdef PROTO
 (
     FILE *fid,
     BE_handle_info_t *p_handle_info
 )
-#else
-( fid, p_handle_info )
-    FILE *fid;
-    BE_handle_info_t *p_handle_info;
-#endif
 {
         fprintf (fid,
                  "IDL_assoc_handle = (volatile handle_t)%s_bind(%c%s%s);\n",
@@ -275,20 +249,12 @@ static void CSPELL_bind_generic_handle
 /*                                                                            */
 /******************************************************************************/
 static void CSPELL_bind_auto_handle
-#ifdef PROTO
 (
     FILE *fid,
     AST_operation_n_t *p_operation ATTRIBUTE_UNUSED,
     BE_stat_info_t *p_comm_stat_info ATTRIBUTE_UNUSED,
     BE_stat_info_t *p_fault_stat_info ATTRIBUTE_UNUSED
 )
-#else
-( fid, p_operation, p_comm_stat_info, p_fault_stat_info )
-    FILE *fid;
-    AST_operation_n_t *p_operation;
-    BE_stat_info_t *p_comm_stat_info;
-    BE_stat_info_t *p_fault_stat_info;
-#endif
 {
         fprintf (fid,"rpc_ss_make_import_cursor_valid(&IDL_auto_handle_mutex,\n");
         fprintf (fid,    "&IDL_import_cursor,\n" );
@@ -330,7 +296,6 @@ static void CSPELL_bind_auto_handle
 /*                                                                            */
 /******************************************************************************/
 void CSPELL_call_start
-#ifdef PROTO
 (
     FILE *fid,
     BE_handle_info_t *p_handle_info,
@@ -340,17 +305,6 @@ void CSPELL_call_start
     BE_stat_info_t *p_comm_stat_info,
     BE_stat_info_t *p_fault_stat_info
 )
-#else
-(fid, p_handle_info, p_interface, p_operation, op_num, p_comm_stat_info,
- p_fault_stat_info)
-    FILE *fid;
-    BE_handle_info_t *p_handle_info;
-    AST_interface_n_t *p_interface;
-    AST_operation_n_t *p_operation;
-    unsigned long op_num;            /* Number of current operation */
-    BE_stat_info_t *p_comm_stat_info;
-    BE_stat_info_t *p_fault_stat_info;
-#endif
 {
     AST_parameter_n_t *p_parameter;
     char const *parameter_name;
@@ -496,14 +450,9 @@ void CSPELL_call_start
 /*                                                                            */
 /******************************************************************************/
 void CSPELL_auto_handle_statics
-#ifdef PROTO
 (
     FILE * fid
 )
-#else
-(fid)
-    FILE *fid;
-#endif
 {
     /* Declare the variables */
     fprintf( fid,
@@ -530,16 +479,10 @@ void CSPELL_auto_handle_statics
 /*                                                                            */
 /******************************************************************************/
 void DDBE_spell_restart_logic
-#ifdef PROTO
 (
     FILE * fid,
     AST_operation_n_t *p_operation ATTRIBUTE_UNUSED
 )
-#else
-(fid,p_operation)
-    FILE *fid;
-    AST_operation_n_t *p_operation;
-#endif
 {
 #ifdef PERFMON
         fprintf (fid, "#ifdef PERFMON\n");
@@ -580,16 +523,10 @@ void DDBE_spell_restart_logic
 /*                                                                            */
 /******************************************************************************/
 void CSPELL_binding_free_if_needed
-#ifdef PROTO
 (
     FILE *fid,
     BE_handle_info_t *p_handle_info
 )
-#else
-(fid, p_handle_info)
-    FILE *fid;
-    BE_handle_info_t *p_handle_info;
-#endif
 {
     if (p_handle_info->handle_type == BE_impl_handle_t_k)
     {

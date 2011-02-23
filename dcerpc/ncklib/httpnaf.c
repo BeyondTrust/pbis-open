@@ -333,16 +333,10 @@ PRIVATE void rpc__http_naf_init_func(void)
 #endif
 
 PRIVATE void  rpc__http_init 
-#ifdef _DCE_PROTO_
 (
     rpc_naf_epv_p_t         *naf_epv,
     unsigned32              *status
 )
-#else
-(naf_epv, status)  
-rpc_naf_epv_p_t         *naf_epv;
-unsigned32              *status;
-#endif
 {
     /*  
      * The Internal Entry Point Vectors for the Internet Protocol Family
@@ -452,7 +446,6 @@ unsigned32              *status;
 **/
 
 INTERNAL void addr_alloc 
-#ifdef _DCE_PROTO_
 (
     rpc_protseq_id_t        rpc_protseq_id,
     rpc_naf_id_t            naf_id,
@@ -462,16 +455,6 @@ INTERNAL void addr_alloc
     rpc_addr_p_t            *rpc_addr,
     unsigned32              *status
 )
-#else
-(rpc_protseq_id, naf_id, endpoint, netaddr, network_options, rpc_addr, status)
-rpc_protseq_id_t        rpc_protseq_id;
-rpc_naf_id_t            naf_id;
-unsigned_char_p_t       endpoint;
-unsigned_char_p_t       netaddr;
-unsigned_char_p_t       network_options;
-rpc_addr_p_t            *rpc_addr;
-unsigned32              *status;
-#endif
 {
     CODING_ERROR (status);
     
@@ -574,18 +557,11 @@ unsigned32              *status;
 **/
 
 INTERNAL void addr_copy 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t            src_rpc_addr,
     rpc_addr_p_t            *dst_rpc_addr,
     unsigned32              *status
 )
-#else
-(src_rpc_addr, dst_rpc_addr, status)
-rpc_addr_p_t            src_rpc_addr;
-rpc_addr_p_t            *dst_rpc_addr;
-unsigned32              *status;
-#endif
 {
     CODING_ERROR (status);
     
@@ -667,16 +643,10 @@ unsigned32              *status;
 **/
 
 INTERNAL void addr_free 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t            *rpc_addr,
     unsigned32              *status
 )
-#else
-(rpc_addr, status)
-rpc_addr_p_t            *rpc_addr;
-unsigned32              *status;
-#endif
 {
     CODING_ERROR (status);
     
@@ -743,18 +713,11 @@ unsigned32              *status;
 **/
 
 INTERNAL void addr_set_endpoint 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_p_t       endpoint,
     rpc_addr_p_t            *rpc_addr,
     unsigned32              *status
 )
-#else
-(endpoint, rpc_addr, status)
-unsigned_char_p_t       endpoint;
-rpc_addr_p_t            *rpc_addr;
-unsigned32              *status;
-#endif
 {
     rpc_http_addr_p_t   http_addr = (rpc_http_addr_p_t) *rpc_addr;
  
@@ -827,18 +790,11 @@ unsigned32              *status;
 **/
 
 INTERNAL void addr_inq_endpoint 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t            rpc_addr,
     unsigned_char_t         **endpoint,
     unsigned32              *status
 )
-#else
-(rpc_addr, endpoint, status)
-rpc_addr_p_t            rpc_addr;
-unsigned_char_t         **endpoint;
-unsigned32              *status;
-#endif
 {
     rpc_http_addr_p_t     http_addr = (rpc_http_addr_p_t) rpc_addr;
     static const unsigned int max_endpoint_len = 6;
@@ -915,18 +871,11 @@ unsigned32              *status;
 **/
 
 INTERNAL void addr_set_netaddr 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_p_t       netaddr,
     rpc_addr_p_t            *rpc_addr,
     unsigned32              *status
 )
-#else
-(netaddr, rpc_addr, status)
-unsigned_char_p_t       netaddr;
-rpc_addr_p_t            *rpc_addr;
-unsigned32              *status;
-#endif
 {
     rpc_http_addr_p_t     http_addr = (rpc_http_addr_p_t) *rpc_addr;
 
@@ -991,18 +940,11 @@ unsigned32              *status;
 **/
 
 INTERNAL void addr_inq_netaddr 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t            rpc_addr,
     unsigned_char_t         **p_netaddr,
     unsigned32              *status
 )
-#else
-(rpc_addr, netaddr, status)
-rpc_addr_p_t            rpc_addr;
-unsigned_char_t         **p_netaddr;
-unsigned32              *status;
-#endif
 {
     rpc_http_addr_p_t     http_addr = (rpc_http_addr_p_t) rpc_addr;
     unsigned_char_p_t netaddr;
@@ -1073,18 +1015,11 @@ unsigned32              *status;
 
 
 INTERNAL void addr_set_options 
-#ifdef _DCE_PROTO_
 (
     unsigned_char_p_t       network_options ATTRIBUTE_UNUSED,
     rpc_addr_p_t            *rpc_addr ATTRIBUTE_UNUSED,
     unsigned32              *status
 )
-#else
-(network_options, rpc_addr, status)
-unsigned_char_p_t       network_options;
-rpc_addr_p_t            *rpc_addr;
-unsigned32              *status;
-#endif
 {
     *status = rpc_s_ok;
 }
@@ -1134,18 +1069,11 @@ unsigned32              *status;
 **/
 
 INTERNAL void addr_inq_options 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t            rpc_addr ATTRIBUTE_UNUSED,
     unsigned_char_t         **network_options,
     unsigned32              *status
 )
-#else
-(rpc_addr, network_options, status)
-rpc_addr_p_t            rpc_addr;
-unsigned_char_t         **network_options;
-unsigned32              *status;
-#endif
 {
     RPC_MEM_ALLOC(
         *network_options,
@@ -1196,7 +1124,6 @@ unsigned32              *status;
 **/
 
 INTERNAL void inq_max_tsdu 
-#ifdef _DCE_PROTO_
 (
     rpc_naf_id_t            naf_id ATTRIBUTE_UNUSED,
     rpc_network_if_id_t     iftype ATTRIBUTE_UNUSED,
@@ -1204,14 +1131,6 @@ INTERNAL void inq_max_tsdu
     unsigned32              *max_tsdu,
     unsigned32              *status
 )
-#else
-(naf_id, iftype, protocol, max_tsdu, status)
-rpc_naf_id_t            naf_id;
-rpc_network_if_id_t     iftype;
-rpc_network_protocol_id_t protocol;
-unsigned32              *max_tsdu;
-unsigned32              *status;
-#endif
 {
     *max_tsdu = MAX_FRAG_SIZE;
 
@@ -1255,17 +1174,11 @@ unsigned32              *status;
 **/
 
 INTERNAL boolean addr_compare 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t            addr1, 
     rpc_addr_p_t            addr2,
     unsigned32              *status ATTRIBUTE_UNUSED
 )
-#else
-(addr1, addr2, status)
-rpc_addr_p_t            addr1, addr2;
-unsigned32              *status;
-#endif
 {
     rpc_http_addr_p_t     http_addr1 = (rpc_http_addr_p_t) addr1;
     rpc_http_addr_p_t     http_addr2 = (rpc_http_addr_p_t) addr2;
@@ -1313,7 +1226,6 @@ unsigned32              *status;
 **/
 
 INTERNAL void inq_max_pth_unfrag_tpdu 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t            rpc_addr ATTRIBUTE_UNUSED,
     rpc_network_if_id_t     iftype ATTRIBUTE_UNUSED,
@@ -1321,14 +1233,6 @@ INTERNAL void inq_max_pth_unfrag_tpdu
     unsigned32              *max_tpdu,
     unsigned32              *status
 )
-#else
-(rpc_addr, iftype, protocol, max_tpdu, status)
-rpc_addr_p_t            rpc_addr;
-rpc_network_if_id_t     iftype;
-rpc_network_protocol_id_t protocol;
-unsigned32              *max_tpdu;
-unsigned32              *status;
-#endif
 {
     *max_tpdu = MAX_FRAG_SIZE;
 
@@ -1373,7 +1277,6 @@ unsigned32              *status;
 **/
 
 INTERNAL void inq_max_loc_unfrag_tpdu 
-#ifdef _DCE_PROTO_
 (
     rpc_naf_id_t            naf_id ATTRIBUTE_UNUSED,
     rpc_network_if_id_t     iftype,
@@ -1381,14 +1284,6 @@ INTERNAL void inq_max_loc_unfrag_tpdu
     unsigned32              *max_tpdu,
     unsigned32              *status
 )
-#else
-(naf_id, iftype, protocol, max_tpdu, status)
-rpc_naf_id_t            naf_id;
-rpc_network_if_id_t     iftype;
-rpc_network_protocol_id_t protocol;
-unsigned32              *max_tpdu;
-unsigned32              *status;
-#endif
 {
 	iftype = 0;
 	protocol = 0;
@@ -1437,20 +1332,12 @@ unsigned32              *status;
 **/
 
 INTERNAL void desc_inq_network 
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t              desc,
     rpc_network_if_id_t       *socket_type,
     rpc_network_protocol_id_t *protocol_id,
     unsigned32                *status
 )
-#else
-(desc, socket_type, protocol_id, status)
-rpc_socket_t              desc;
-rpc_network_if_id_t       *socket_type;
-rpc_network_protocol_id_t *protocol_id;
-unsigned32                *status;
-#endif
 {
     rpc_socket_error_t serr;
     rpc_http_addr_t addr;
@@ -1517,16 +1404,10 @@ unsigned32                *status;
 **/
 
 INTERNAL void set_pkt_nodelay 
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t            desc,
     unsigned32              *status
 )
-#else
-(desc, status)
-rpc_socket_t            desc;
-unsigned32              *status;
-#endif
 {
 	desc = 0;
     *status = rpc_s_ok;
@@ -1572,16 +1453,10 @@ unsigned32              *status;
 **/
 
 INTERNAL boolean is_connect_closed 
-#ifdef _DCE_PROTO_
 (
     rpc_socket_t            desc ATTRIBUTE_UNUSED,
     unsigned32              *status
 )
-#else
-(desc, status)
-rpc_socket_t            desc;
-unsigned32              *status;
-#endif
 {
     *status = rpc_s_ok;
     return (true);
@@ -1623,18 +1498,11 @@ unsigned32              *status;
 **/
 
 INTERNAL void tower_flrs_from_addr 
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t       rpc_addr,
     twr_p_t            *lower_flrs,
     unsigned32         *status
 )
-#else
-(rpc_addr, lower_flrs, status)
-rpc_addr_p_t       rpc_addr;
-twr_p_t            *lower_flrs;
-unsigned32         *status;
-#endif
 {
     unsigned32    net_prot_id ATTRIBUTE_UNUSED;
 
@@ -1769,18 +1637,11 @@ unsigned32         *status;
 **/
 
 INTERNAL void tower_flrs_to_addr 
-#ifdef _DCE_PROTO_
 (
     byte_p_t           tower_octet_string,
     rpc_addr_p_t       *rpc_addr,
     unsigned32         *status
 )
-#else
-(tower_octet_string, rpc_addr, status)
-byte_p_t           tower_octet_string;
-rpc_addr_p_t       *rpc_addr;
-unsigned32         *status;
-#endif
 {
     sockaddr_t    *sa ATTRIBUTE_UNUSED;
     unsigned32    sa_len ATTRIBUTE_UNUSED;
@@ -1889,20 +1750,12 @@ unsigned32         *status;
 **/
 
 INTERNAL void desc_inq_peer_addr 
-#ifdef _DCE_PROTO_
 (
     rpc_protseq_id_t        protseq_id,
     rpc_socket_t            desc,
     rpc_addr_p_t            *rpc_addr,
     unsigned32              *status
 )
-#else
-(protseq_id, desc, rpc_addr, status)
-rpc_protseq_id_t        protseq_id;
-rpc_socket_t            desc;
-rpc_addr_p_t            *rpc_addr;
-unsigned32              *status;
-#endif
 {
     rpc_socket_error_t  serr;
     rpc_http_addr_p_t http_addr;
@@ -2008,7 +1861,6 @@ unsigned32              *status;
 
 
 INTERNAL void set_port_restriction
-#ifdef _DCE_PROTO_
 (
      rpc_protseq_id_t            protseq_id,
      unsigned32                  n_elements,
@@ -2016,14 +1868,6 @@ INTERNAL void set_port_restriction
      unsigned_char_p_t           *last_port_name_list,
      unsigned32                  *status
 )
-#else 
-(protseq_id, n_elements, first_port_name_list, last_port_name_list, status)
-rpc_protseq_id_t            protseq_id;
-unsigned32                  n_elements;
-unsigned_char_p_t           *first_port_name_list;
-unsigned_char_p_t           *last_port_name_list;
-unsigned32                  *status;
-#endif
 {
     CODING_ERROR (status);
 
@@ -2073,18 +1917,11 @@ unsigned32                  *status;
 **/
 
 INTERNAL void get_next_restricted_port
-#ifdef _DCE_PROTO_
 (
     rpc_protseq_id_t           protseq_id,
      unsigned_char_p_t          *port_name,
      unsigned32                 *status
 )
-#else
-(protseq_id, port_name, status)
-rpc_protseq_id_t           protseq_id;
-unsigned_char_p_t          *port_name;
-unsigned32                 *status;
-#endif
 {
     CODING_ERROR (status);
 
@@ -2138,18 +1975,11 @@ unsigned32                 *status;
 **/
 
 INTERNAL void inq_max_frag_size
-#ifdef _DCE_PROTO_
 (
  rpc_addr_p_t rpc_addr,
  unsigned32   *max_frag_size,
  unsigned32   *status
 )
-#else
-(rpc_addr, max_frag_size, status)
-rpc_addr_p_t rpc_addr;
-unsigned32   *max_frag_size;
-unsigned32   *status;
-#endif
 {
     rpc_addr = 0;
 

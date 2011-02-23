@@ -108,14 +108,9 @@ INTERNAL rpc_object_inq_fn_t inq_fn = NULL;
 **/
 
 PRIVATE void rpc__obj_init 
-#ifdef _DCE_PROTO_
 (
     unsigned32                  *status
 )
-#else
-(status)
-unsigned32                  *status;
-#endif
 {
     CODING_ERROR (status);
 
@@ -155,14 +150,9 @@ unsigned32                  *status;
 **/
 
 PRIVATE void rpc__obj_fork_handler
-#ifdef _DCE_PROTO_
 (
     rpc_fork_stage_id_t stage
 )
-#else
-(stage)
-rpc_fork_stage_id_t stage;
-#endif
 {   
     unsigned32 i;
 
@@ -240,18 +230,11 @@ rpc_fork_stage_id_t stage;
 **/
 
 PUBLIC void rpc_object_set_type 
-#ifdef _DCE_PROTO_
 (
     dce_uuid_p_t                object_uuid,
     dce_uuid_p_t                type_uuid,
     unsigned32              *status
 )
-#else
-(object_uuid, type_uuid, status)
-uuid_p_t                object_uuid;
-uuid_p_t                type_uuid;
-unsigned32              *status;
-#endif
 {
     rpc_obj_rgy_entry_p_t   obj_entry;
     unsigned32              index;
@@ -417,18 +400,11 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_object_inq_type 
-#ifdef _DCE_PROTO_
 (
     dce_uuid_p_t                object_uuid,
     dce_uuid_t                  *type_uuid,
     unsigned32              *status
 )
-#else
-(object_uuid, type_uuid, status)
-uuid_p_t                object_uuid;
-dce_uuid_t                  *type_uuid;
-unsigned32              *status;
-#endif
 {
     rpc_obj_rgy_entry_p_t   obj_entry;
     unsigned32              index;
@@ -544,16 +520,10 @@ unsigned32              *status;
 **/
 
 PUBLIC void rpc_object_set_inq_fn 
-#ifdef _DCE_PROTO_
 (
     rpc_object_inq_fn_t     inq_fn_arg,
     unsigned32              *status
 )
-#else
-(inq_fn_arg, status)
-rpc_object_inq_fn_t     inq_fn_arg;
-unsigned32              *status;
-#endif
 {
     CODING_ERROR (status);
     RPC_VERIFY_INIT ();

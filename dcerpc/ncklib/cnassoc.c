@@ -298,7 +298,6 @@ INTERNAL rpc_cn_syntax_t *rpc__cn_assoc_syntax_alloc _DCE_PROTOTYPE_ ((
 **/
 
 PRIVATE rpc_cn_assoc_t *rpc__cn_assoc_request 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_call_rep_p_t     call_r,
   rpc_cn_binding_rep_p_t  binding_r,
@@ -308,16 +307,6 @@ PRIVATE rpc_cn_assoc_t *rpc__cn_assoc_request
   rpc_cn_sec_context_p_t  *sec,
   unsigned32              *st
 )
-#else
-(call_r, binding_r, if_r, syntax, context_id, sec, st)
-rpc_cn_call_rep_p_t     call_r;
-rpc_cn_binding_rep_p_t  binding_r;
-rpc_if_rep_p_t          if_r;
-rpc_transfer_syntax_t   *syntax;
-unsigned16              *context_id;
-rpc_cn_sec_context_p_t  *sec;
-unsigned32              *st;
-#endif
 {
     rpc_cn_assoc_t      * volatile assoc = NULL;
     rpc_cn_assoc_grp_t  * volatile assoc_grp = NULL;
@@ -981,18 +970,11 @@ unsigned32              *st;
 **/
 
 PRIVATE rpc_cn_assoc_t *rpc__cn_assoc_listen 
-#ifdef _DCE_PROTO_
 (
    rpc_socket_t            newsock,
    unsigned_char_p_t       endpoint,
    unsigned32              *st
 )
-#else
-(newsock, endpoint, st)
-rpc_socket_t            newsock;
-unsigned_char_p_t       endpoint;
-unsigned32              *st;
-#endif
 {
     rpc_cn_assoc_t      *assoc;
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
@@ -1093,16 +1075,10 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_assoc_alloc 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t        assoc,
   unsigned32              *st
 )
-#else
-(assoc, st)
-rpc_cn_assoc_p_t        assoc;
-unsigned32              *st;
-#endif
 {
     RPC_LOG_CN_ASSOC_ALLOC_NTR;
     RPC_CN_DBG_RTN_PRINTF(rpc__cn_assoc_alloc);
@@ -1156,18 +1132,11 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_assoc_dealloc 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t        assoc,
   rpc_cn_call_rep_p_t     call_rep,
   unsigned32              *st
 )
-#else
-(assoc, call_rep, st)
-rpc_cn_assoc_p_t        assoc;
-rpc_cn_call_rep_p_t     call_rep;
-unsigned32              *st;
-#endif
 {
     rpc_cn_assoc_grp_t  *assoc_grp;
     rpc_cn_fragbuf_t    *fragbuf;
@@ -1293,16 +1262,10 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_assoc_abort 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t        assoc,
   unsigned32              *st
 )
-#else
-(assoc, st)
-rpc_cn_assoc_p_t        assoc;
-unsigned32              *st;
-#endif
 {
     RPC_CN_DBG_RTN_PRINTF(rpc__cn_assoc_abort);
     
@@ -1355,16 +1318,10 @@ unsigned32              *st;
 **/
 
 PRIVATE rpc_cn_call_rep_t *rpc__cn_assoc_pop_call 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t   assoc,
   rpc_cn_call_rep_p_t  call_rep
 )
-#else
-(assoc, call_rep)
-rpc_cn_assoc_p_t   assoc;
-rpc_cn_call_rep_p_t  call_rep;
-#endif
 {
     rpc_cn_call_rep_t   *call_r;
     rpc_cn_assoc_grp_t  *assoc_grp;
@@ -1482,18 +1439,11 @@ rpc_cn_call_rep_p_t  call_rep;
 **/
 
 PRIVATE void rpc__cn_assoc_push_call 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t        assoc,
   rpc_cn_call_rep_p_t     call_r,
   unsigned32              *st
 )
-#else
-(assoc, call_r, st)
-rpc_cn_assoc_p_t        assoc;
-rpc_cn_call_rep_p_t     call_r;
-unsigned32              *st;
-#endif
 {
     rpc_cn_assoc_grp_t  *assoc_grp;
 
@@ -1561,18 +1511,11 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_assoc_queue_frag 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t        assoc,
   rpc_cn_fragbuf_p_t      fragbuf,
   boolean32               signal
 )
-#else
-(assoc, fragbuf, signal)
-rpc_cn_assoc_p_t        assoc;
-rpc_cn_fragbuf_p_t      fragbuf;
-boolean32               signal;
-#endif
 {
     RPC_LOG_CN_ASSOC_Q_FRAG_NTR;
     RPC_CN_DBG_RTN_PRINTF(rpc__cn_assoc_queue_frag);
@@ -1631,14 +1574,9 @@ boolean32               signal;
 **/
 
 PRIVATE void rpc__cn_assoc_queue_dummy_frag 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t        assoc
 )
-#else
-(assoc)
-rpc_cn_assoc_p_t        assoc;
-#endif
 {
     RPC_CN_DBG_RTN_PRINTF(rpc__cn_assoc_queue_dummy_frag);
     
@@ -1700,18 +1638,11 @@ rpc_cn_assoc_p_t        assoc;
 **/
 
 PRIVATE void rpc__cn_assoc_receive_frag 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t        assoc,
   rpc_cn_fragbuf_p_t      *fragbuf,
   unsigned32              *st
 )
-#else
-(assoc, fragbuf, st)
-rpc_cn_assoc_p_t        assoc;
-rpc_cn_fragbuf_p_t      *fragbuf;
-unsigned32              *st;
-#endif
 {
     volatile boolean32  retry_op;
     rpc_cn_call_rep_p_t call_rep;
@@ -1846,20 +1777,12 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_assoc_send_frag 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t        assoc,
   rpc_iovector_p_t        iovector,
   rpc_cn_sec_context_p_t  sec,
   unsigned32              *st
 )
-#else
-(assoc, iovector, sec, st)
-rpc_cn_assoc_p_t        assoc;
-rpc_iovector_p_t        iovector;
-rpc_cn_sec_context_p_t  sec;
-unsigned32              *st;
-#endif
 {
     rpc_socket_iovec_t          iov[RPC_C_MAX_IOVEC_LEN];
     volatile int                iovcnt;
@@ -2212,7 +2135,6 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_assoc_send_fragbuf 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t        assoc,
   rpc_cn_fragbuf_p_t      fragbuf,
@@ -2220,14 +2142,6 @@ PRIVATE void rpc__cn_assoc_send_fragbuf
   boolean32                freebuf,
   unsigned32              *st
 )
-#else 
-(assoc, fragbuf, sec, st)
-rpc_cn_assoc_p_t        assoc;
-rpc_cn_fragbuf_p_t      fragbuf;
-rpc_cn_sec_context_p_t  sec;
-boolean32		freebuf;
-unsigned32              *st;
-#endif 
 {
     rpc_iovector_t              iovector;
 
@@ -2309,7 +2223,6 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_assoc_syntax_negotiate 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t                assoc,
   rpc_cn_pres_cont_list_p_t       pres_cont_list,
@@ -2317,14 +2230,6 @@ PRIVATE void rpc__cn_assoc_syntax_negotiate
   rpc_cn_pres_result_list_t       *pres_result_list,
   unsigned32                      *st
 )
-#else
-(assoc, pres_cont_list, size, pres_result_list, st)
-rpc_cn_assoc_p_t                assoc;
-rpc_cn_pres_cont_list_p_t       pres_cont_list;
-unsigned32                      *size;
-rpc_cn_pres_result_list_t       *pres_result_list;
-unsigned32                      *st;
-#endif
 {
     unsigned16                  ihint;
     rpc_if_rep_t                *if_r;
@@ -2544,20 +2449,12 @@ unsigned32                      *st;
 **/
 
 PRIVATE void rpc__cn_assoc_syntax_lkup_by_id 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t		assoc,
   unsigned32                      context_id,
   rpc_cn_syntax_p_t               *pres_context,
   unsigned32    		        *st
 )
-#else
-(assoc, context_id, pres_context, st)
-rpc_cn_assoc_p_t		assoc;
-unsigned32                      context_id;
-rpc_cn_syntax_p_t               *pres_context;
-unsigned32    		        *st;
-#endif
 {
     RPC_LOG_CN_ASSOC_SYN_LKUP_NTR;
     RPC_CN_DBG_RTN_PRINTF(rpc__cn_assoc_syntax_lkup_by_id);
@@ -2637,20 +2534,12 @@ unsigned32    		        *st;
 **/
 
 PRIVATE void rpc__cn_assoc_syntax_lkup_by_cl 
-#ifdef _DCE_PROTO_
 (
 rpc_cn_assoc_p_t		assoc,
 unsigned32                      call_id,
 rpc_cn_syntax_p_t               *pres_context,
 unsigned32    		        *st
 )
-#else
-(assoc, call_id, pres_context, st)
-rpc_cn_assoc_p_t		assoc;
-unsigned32                      call_id;
-rpc_cn_syntax_p_t               *pres_context;
-unsigned32    		        *st;
-#endif
 {
     RPC_LOG_CN_ASSOC_SYN_LKUP_NTR;
     RPC_CN_DBG_RTN_PRINTF(rpc__cn_assoc_syntax_lkup_by_cl);
@@ -2729,20 +2618,12 @@ unsigned32    		        *st;
 **/
 
 PRIVATE void rpc__cn_assoc_sec_lkup_by_id 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t		        assoc,
   unsigned32                              key_id,
   rpc_cn_sec_context_p_t                  *sec,
   unsigned32    		                *st
 )
-#else
-(assoc, key_id, sec, st)
-rpc_cn_assoc_p_t		        assoc;
-unsigned32                              key_id;
-rpc_cn_sec_context_p_t                  *sec;
-unsigned32    		                *st;
-#endif
 {
     rpc_cn_sec_context_t                *sec_context;
     
@@ -2824,20 +2705,12 @@ unsigned32    		                *st;
 **/
 
 PRIVATE void rpc__cn_assoc_sec_lkup_by_cl
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t		        assoc,
   unsigned32                            call_id,
   rpc_cn_sec_context_p_t                *sec,
   unsigned32    		        *st
 )
-#else
-(assoc, key_id, sec, st)
-rpc_cn_assoc_p_t		        assoc;
-unsigned32                              call_id;
-rpc_cn_sec_context_p_t                  *sec;
-unsigned32    		                *st;
-#endif
 {
     rpc_cn_sec_context_t                *sec_context;
 
@@ -2918,16 +2791,10 @@ unsigned32    		                *st;
 **/
 
 PRIVATE void rpc__cn_assoc_post_error 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t        assoc,
   unsigned32              st
 )
-#else
-(assoc, st)
-rpc_cn_assoc_p_t        assoc;
-unsigned32              st;
-#endif
 {
     unsigned32          local_st;
 
@@ -3019,18 +2886,11 @@ unsigned32              st;
 **--
 **/
 PRIVATE unsigned32 rpc__cn_assoc_sm_protocol_error 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param ATTRIBUTE_UNUSED,
   pointer_t       sm ATTRIBUTE_UNUSED
 )
-#else
-(spc_struct, event_param, sm)
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-#endif
 {
     rpc_cn_assoc_t      *assoc;
 
@@ -3101,14 +2961,9 @@ rpc_g_cn_assoc_client_events[assoc->assoc_state.cur_event-RPC_C_CN_STATEBASE],
 **/
 
 PRIVATE unsigned32 rpc__cn_assoc_status_to_prej 
-#ifdef _DCE_PROTO_
 (
 unsigned32      st
 )
-#else
-(st)
-unsigned32      st;
-#endif
 {
     switch ((int)st)
     {
@@ -3160,14 +3015,9 @@ unsigned32      st;
 **/
 
 PRIVATE unsigned32 rpc__cn_assoc_prej_to_status 
-#ifdef _DCE_PROTO_
 (
 unsigned32      prej
 )
-#else
-(prej)
-unsigned32      prej;
-#endif
 {
     switch ((int)prej)
     {
@@ -3232,14 +3082,9 @@ unsigned32      prej;
 **/
 
 PRIVATE unsigned32 rpc__cn_assoc_pprov_to_status 
-#ifdef _DCE_PROTO_
 (
 unsigned32      pprov
 )
-#else
-(pprov)
-unsigned32      pprov;
-#endif
 {
     switch ((int)pprov)
     {
@@ -3555,7 +3400,6 @@ INTERNAL void rpc__cn_assoc_open
 **/
 
 INTERNAL void rpc__cn_assoc_alter_context 
-#ifdef _DCE_PROTO_
 (
 rpc_cn_assoc_p_t        assoc,
 rpc_if_rep_p_t          if_r,
@@ -3565,16 +3409,6 @@ unsigned16              *context_id,
 rpc_cn_sec_context_p_t  *sec,
 unsigned32              *st
 )
-#else
-(assoc, if_r, info, syntax, context_id, sec, st)
-rpc_cn_assoc_p_t        assoc;
-rpc_if_rep_p_t          if_r;
-rpc_auth_info_p_t       info;
-rpc_transfer_syntax_t   *syntax;
-unsigned16              *context_id;
-rpc_cn_sec_context_p_t  *sec;
-unsigned32              *st;
-#endif
 {
     rpc_cn_syntax_t             *pres_context;
     rpc_cn_sec_context_t        *sec_context;
@@ -3883,16 +3717,10 @@ unsigned32              *st;
 **/
 
 PRIVATE rpc_cn_sec_context_t *rpc__cn_assoc_sec_alloc 
-#ifdef _DCE_PROTO_
 (
   rpc_auth_info_p_t       info,
   unsigned32              *st
 )
-#else
-(info, st)
-rpc_auth_info_p_t       info;
-unsigned32              *st;
-#endif
 {
     rpc_cn_sec_context_t        *sec_context;
     rpc_cn_auth_info_t          *cn_info;
@@ -4001,14 +3829,9 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_assoc_sec_free 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_sec_context_p_t  *sec
 )
-#else 
-(sec)
-rpc_cn_sec_context_p_t  *sec;
-#endif
 {
     /*
      * Free the CN specific per-principal-pair security
@@ -4066,16 +3889,10 @@ rpc_cn_sec_context_p_t  *sec;
 **/
 
 INTERNAL rpc_cn_syntax_t *rpc__cn_assoc_syntax_alloc 
-#ifdef _DCE_PROTO_
 (
   rpc_if_rep_p_t          if_r,
   unsigned32              *st
 )
-#else
-(if_r, st)
-rpc_if_rep_p_t          if_r;
-unsigned32              *st;
-#endif
 {
     rpc_cn_syntax_t             *pres_context;
 
@@ -4129,14 +3946,9 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_assoc_syntax_free 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_syntax_p_t       *syntax
 )
-#else
-(syntax)
- rpc_cn_syntax_p_t       *syntax;
-#endif
 {
     /*
      * Free the presentation context element.
@@ -4180,14 +3992,9 @@ PRIVATE void rpc__cn_assoc_syntax_free
 **/
 
 INTERNAL void rpc__cn_assoc_timer_reclaim 
-#ifdef _DCE_PROTO_
 (
  pointer_t       type 
 )
-#else
-(type)
-pointer_t       type;
-#endif
 {
     rpc_cn_local_id_t   grp_id;
 
@@ -4242,18 +4049,11 @@ pointer_t       type;
 **/
 
 INTERNAL void rpc__cn_assoc_reclaim 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_local_id_t       grp_id,
   unsigned32              type,
   boolean32		loop
 )
-#else
-(grp_id, type, loop)
-rpc_cn_local_id_t       grp_id;
-unsigned32              type;
-boolean32		loop;
-#endif
 {
     unsigned32          i;
     boolean		shutdown_or_abort = false;
@@ -4437,18 +4237,11 @@ boolean32		loop;
 **/
 
 INTERNAL rpc_cn_assoc_t *rpc__cn_assoc_acb_alloc 
-#ifdef _DCE_PROTO_
 (
 boolean32       wait,
 unsigned32      type,
 unsigned32      *st
 )
-#else 
-(wait, type, st)
-boolean32       wait;
-unsigned32      type;
-unsigned32      *st;
-#endif
 {
     rpc_cn_assoc_t      *assoc;
     
@@ -4541,14 +4334,9 @@ unsigned32      *st;
 **/
 
 PRIVATE void rpc__cn_assoc_acb_dealloc 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t   assoc
 )
-#else
-(assoc)
-rpc_cn_assoc_p_t   assoc;
-#endif
 {
     rpc_cn_fragbuf_t            *fragbuf;
     rpc_cn_syntax_t             *pres_context;
@@ -4726,14 +4514,9 @@ rpc_cn_assoc_p_t   assoc;
 **/
 
 PRIVATE void rpc__cn_assoc_acb_create 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t        assoc
 )
-#else
-(assoc)
-rpc_cn_assoc_p_t        assoc;
-#endif
 {
     RPC_LOG_CN_ASSOC_ACB_CR_NTR;
     RPC_CN_DBG_RTN_PRINTF(rpc__cn_assoc_acb_create);
@@ -4796,14 +4579,9 @@ rpc_cn_assoc_p_t        assoc;
 **/
 
 PRIVATE void rpc__cn_assoc_acb_free 
-#ifdef _DCE_PROTO_
 (
  rpc_cn_assoc_p_t        assoc
 )
-#else
-(assoc)
-rpc_cn_assoc_p_t        assoc;
-#endif
 {
     rpc_cn_ctlblk_t     * volatile ccb;
     dcethread*          current_thread_id;
@@ -4936,16 +4714,10 @@ rpc_cn_assoc_p_t        assoc;
 **/
 
 INTERNAL void rpc__cn_assoc_grp_init 
-#ifdef _DCE_PROTO_
 (
  rpc_cn_assoc_grp_p_t    assoc_grp,
  unsigned32              index
 )
-#else 
-(assoc_grp, index)
-rpc_cn_assoc_grp_p_t    assoc_grp;
-unsigned32              index;
-#endif
 {
     RPC_CN_DBG_RTN_PRINTF(rpc__cn_assoc_grp_init);
     
@@ -4998,14 +4770,9 @@ unsigned32              index;
 **/
 
 INTERNAL rpc_cn_local_id_t rpc__cn_assoc_grp_create 
-#ifdef _DCE_PROTO_
 (
   unsigned32              *st
 )
-#else 
-(st)
-unsigned32 *st ;
-#endif
 {
     rpc_cn_assoc_grp_t  *new_assoc_grp;
     rpc_cn_local_id_t   grp_id;
@@ -5132,7 +4899,6 @@ unsigned32 *st ;
 **/
 
 PRIVATE rpc_cn_local_id_t rpc__cn_assoc_grp_alloc 
-#ifdef _DCE_PROTO_
 (
   rpc_addr_p_t            rpc_addr,
   rpc_transport_info_p_t  transport_info,
@@ -5140,14 +4906,6 @@ PRIVATE rpc_cn_local_id_t rpc__cn_assoc_grp_alloc
   unsigned32              rem_id,
   unsigned32              *st
 )
-#else
-(rpc_addr, token_id, type, rem_id, st)
-rpc_addr_p_t            rpc_addr;
-rpc_id_token_t            token_id;
-unsigned32              type;
-unsigned32              rem_id;
-unsigned32              *st;
-#endif
 {
     rpc_cn_assoc_grp_t  *assoc_grp;
     rpc_cn_local_id_t   grp_id;
@@ -5316,14 +5074,9 @@ unsigned32              *st;
 **/
 
 PRIVATE void rpc__cn_assoc_grp_dealloc 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_local_id_t       grp_id
 )
-#else 
-(grpid)
-rpc_cn_local_id_t       grp_id;
-#endif
 {
     rpc_cn_assoc_grp_t  *assoc_grp;
     rpc_addr_p_t        rpc_addr;
@@ -5428,16 +5181,10 @@ rpc_cn_local_id_t       grp_id;
 **/
 
 PRIVATE void rpc__cn_assoc_grp_add_assoc 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_local_id_t       grp_id,
   rpc_cn_assoc_p_t        assoc
 )
-#else
-(grp_id, assoc)
-rpc_cn_local_id_t       grp_id;
-rpc_cn_assoc_p_t        assoc;
-#endif
 {
     rpc_cn_assoc_grp_t  *assoc_grp;
 
@@ -5495,16 +5242,10 @@ rpc_cn_assoc_p_t        assoc;
 **/
 
 PRIVATE void rpc__cn_assoc_grp_rem_assoc 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_local_id_t       grp_id,
   rpc_cn_assoc_p_t        assoc
 )
-#else
-(grp_id, assoc)
-rpc_cn_local_id_t       grp_id;
-rpc_cn_assoc_p_t        assoc;
-#endif
 {
     rpc_cn_assoc_grp_t  *assoc_grp;
 
@@ -5591,20 +5332,12 @@ rpc_cn_assoc_p_t        assoc;
 **/
 
 PRIVATE rpc_cn_local_id_t rpc__cn_assoc_grp_lkup_by_addr 
-#ifdef _DCE_PROTO_
 (
   rpc_addr_p_t            rpc_addr,
   rpc_transport_info_p_t  transport_info,
   unsigned32              type,
   unsigned32              *st
 )
-#else
-(rpc_addr, imp_token, type, st)
-rpc_addr_p_t            rpc_addr;
-rpc_id_token_t            imp_token;
-unsigned32              type;
-unsigned32              *st;
-#endif
 {
     boolean             addrs_equal;
     unsigned32          i;
@@ -5715,20 +5448,12 @@ unsigned32              *st;
 **/
 
 PRIVATE rpc_cn_local_id_t rpc__cn_assoc_grp_lkup_by_remid 
-#ifdef _DCE_PROTO_
 (
   unsigned32              rem_id,
   unsigned32              type,
   rpc_addr_p_t            rpc_addr,
   unsigned32              *st
 )
-#else
-(rem_id, type, rpc_addr, st)
-unsigned32              rem_id;
-unsigned32              type;
-rpc_addr_p_t            rpc_addr;
-unsigned32              *st;
-#endif
 {
     unsigned32          i;
     rpc_cn_assoc_grp_t  *assoc_grp;
@@ -6030,18 +5755,11 @@ PRIVATE void rpc__cn_assoc_grp_tbl_init (void)
 **/
 
 PRIVATE unsigned32     rpc__cn_grp_sm_protocol_error 
-#ifdef _DCE_PROTO_
 (
   pointer_t       spc_struct,
   pointer_t       event_param ATTRIBUTE_UNUSED,
   pointer_t       sm ATTRIBUTE_UNUSED
 )
-#else
-(spc_struct, event_param, sm)
-pointer_t       spc_struct;
-pointer_t       event_param;
-pointer_t       sm;
-#endif
 {
     rpc_cn_assoc_grp_t  *assoc_grp;
 

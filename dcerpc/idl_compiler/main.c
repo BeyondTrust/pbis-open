@@ -40,16 +40,10 @@
 #include <driver.h>             /* Main driver defs */
 
 int main
-#ifdef PROTO
 (
     int  argc,
     char **argv
 )
-#else
-(argc, argv)
-    int  argc;
-    char **argv;
-#endif
 {
     if (!DRIVER_main(argc, argv))
         exit(pgm_error);

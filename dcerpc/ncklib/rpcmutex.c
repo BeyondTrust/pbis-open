@@ -74,14 +74,9 @@ INTERNAL rpc_cond_stats_t cond_stats = {0};
  */
 
 PRIVATE boolean rpc__mutex_init
-#ifdef _DCE_PROTO_
 (
     rpc_mutex_p_t mp
 )
-#else
-(mp) 
-rpc_mutex_p_t mp;
-#endif
 {
     mp->stats.busy = 0;
     mp->stats.lock = 0;
@@ -108,14 +103,9 @@ rpc_mutex_p_t mp;
  */
 
 PRIVATE boolean rpc__mutex_delete
-#ifdef _DCE_PROTO_
 (
     rpc_mutex_p_t mp
 )
-#else
-(mp) 
-rpc_mutex_p_t mp;
-#endif
 {
     mp->stats.deletes++;
     mutex_stats.deletes++;
@@ -129,18 +119,11 @@ rpc_mutex_p_t mp;
  */
 
 PRIVATE boolean rpc__mutex_lock
-#ifdef _DCE_PROTO_
 (
     rpc_mutex_p_t mp,
     char *file,
     int line
 )
-#else
-(mp, file, line) 
-rpc_mutex_p_t mp;
-char *file;
-int line;
-#endif
 {
     dcethread* my_thread = NULL_THREAD;
     boolean is_locked = mp->is_locked;
@@ -182,20 +165,12 @@ int line;
  */
 
 PRIVATE boolean rpc__mutex_try_lock
-#ifdef _DCE_PROTO_
 (
     rpc_mutex_p_t mp,
     boolean *bp,
     char *file,
     int line
 )
-#else
-(mp, bp, file, line) 
-rpc_mutex_p_t mp;
-boolean *bp;
-char *file;
-int line;
-#endif
 {
     dcethread* my_thread = NULL_THREAD;
     boolean is_locked = mp->is_locked;
@@ -240,14 +215,9 @@ int line;
  */
 
 PRIVATE boolean rpc__mutex_unlock
-#ifdef _DCE_PROTO_
 (
     rpc_mutex_p_t mp
 )
-#else
-(mp) 
-rpc_mutex_p_t mp;
-#endif
 {
     dcethread* my_thread;
     boolean is_locked = mp->is_locked;
@@ -287,14 +257,9 @@ rpc_mutex_p_t mp;
  */
 
 PRIVATE boolean rpc__mutex_lock_assert
-#ifdef _DCE_PROTO_
 (
     rpc_mutex_p_t mp
 )
-#else
-(mp) 
-rpc_mutex_p_t mp;
-#endif
 {
     dcethread* my_thread;
     boolean is_locked = mp->is_locked;
@@ -330,14 +295,9 @@ rpc_mutex_p_t mp;
  */
 
 PRIVATE boolean rpc__mutex_unlock_assert
-#ifdef _DCE_PROTO_
 (
     rpc_mutex_p_t mp
 )
-#else
-(mp) 
-rpc_mutex_p_t mp;
-#endif
 {
     dcethread* my_thread;
     boolean is_locked = mp->is_locked;
@@ -369,16 +329,10 @@ rpc_mutex_p_t mp;
  */
 
 boolean rpc__cond_init
-#ifdef _DCE_PROTO_
 (
     rpc_cond_p_t cp,
     rpc_mutex_p_t mp
 )
-#else
-(cp, mp)
-rpc_cond_p_t cp;
-rpc_mutex_p_t mp;
-#endif
 {
     cp->stats.init = 1;
     cp->stats.deletes = 0;
@@ -396,16 +350,10 @@ rpc_mutex_p_t mp;
  */
 
 boolean rpc__cond_delete
-#ifdef _DCE_PROTO_
 (
     rpc_cond_p_t cp,
     rpc_mutex_p_t mp ATTRIBUTE_UNUSED
 )
-#else
-(cp, mp)
-rpc_cond_p_t cp;
-rpc_mutex_p_t mp;
-#endif
 {
     cp->stats.deletes++;
     cond_stats.deletes++;
@@ -421,20 +369,12 @@ rpc_mutex_p_t mp;
  */
 
 boolean rpc__cond_wait
-#ifdef _DCE_PROTO_
 (
     rpc_cond_p_t cp,
     rpc_mutex_p_t mp,
     char *file,
     int line
 )
-#else
-(cp, mp, file, line)
-rpc_cond_p_t cp;
-rpc_mutex_p_t mp;
-char *file;
-int line;
-#endif
 {
     dcethread* my_thread;
     volatile boolean dbg;
@@ -492,7 +432,6 @@ int line;
  */
 
 boolean rpc__cond_timed_wait
-#ifdef _DCE_PROTO_
 (
     rpc_cond_p_t cp,
     rpc_mutex_p_t mp,
@@ -500,14 +439,6 @@ boolean rpc__cond_timed_wait
     char *file,
     int line
 )
-#else
-(cp, mp, wtime, file, line)
-rpc_cond_p_t cp;
-rpc_mutex_p_t mp;
-struct timespec *wtime;
-char *file;
-int line;
-#endif
 {
     dcethread* my_thread;
     volatile boolean dbg;
@@ -567,16 +498,10 @@ int line;
  */
 
 boolean rpc__cond_signal
-#ifdef _DCE_PROTO_
 (
     rpc_cond_p_t cp,
     rpc_mutex_p_t mp ATTRIBUTE_UNUSED
 )
-#else
-(cp, mp)
-rpc_cond_p_t cp;
-rpc_mutex_p_t mp;
-#endif
 {
     cp->stats.signals++;
     cond_stats.signals++;
@@ -593,16 +518,10 @@ rpc_mutex_p_t mp;
  */
 
 boolean rpc__cond_broadcast
-#ifdef _DCE_PROTO_
 (
     rpc_cond_p_t cp,
     rpc_mutex_p_t mp ATTRIBUTE_UNUSED
 )
-#else
-(cp, mp)
-rpc_cond_p_t cp;
-rpc_mutex_p_t mp;
-#endif
 {
     cp->stats.signals++;
     cond_stats.signals++;

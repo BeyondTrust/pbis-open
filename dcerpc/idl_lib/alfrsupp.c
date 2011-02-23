@@ -150,9 +150,7 @@ rpc_ss_disable_allocate occurs.
 #ifdef STUBS_USE_PTHREADS
 typedef void (*destructor_t)
 (
-#ifdef IDL_PROTOTYPES
     rpc_ss_threads_dest_arg_t arg
-#endif
 );
 #else
     typedef cma_t_destructor destructor_t;
@@ -178,14 +176,9 @@ RPC_SS_THREADS_KEY_T rpc_ss_thread_supp_key;
 /*                                                                            */
 /******************************************************************************/
 static void rpc_ss_destroy_thread_ctx
-#ifdef IDL_PROTOTYPES
 (
     rpc_ss_thread_indirection_t *thread_indirection_ptr
 )
-#else
-( thread_indirection_ptr )
-    rpc_ss_thread_indirection_t *thread_indirection_ptr;
-#endif
 {
     rpc_ss_thread_support_ptrs_t *p_thread_support_ptrs;
 
@@ -227,14 +220,9 @@ static void rpc_ss_destroy_thread_ctx
 /*                                                                            */
 /******************************************************************************/
 static void rpc_ss_thread_ctx_destructor
-#ifdef IDL_PROTOTYPES
 (
     rpc_ss_threads_dest_arg_t arg
 )
-#else
-( arg )
-    rpc_ss_threads_dest_arg_t arg;
-#endif
 {
     rpc_ss_thread_indirection_t *thread_indirection_ptr =
         (rpc_ss_thread_indirection_t *) arg;
@@ -243,9 +231,7 @@ static void rpc_ss_thread_ctx_destructor
 }
 
 static void rpc_ss_init_allocate(
-#ifdef IDL_PROTOTYPES
     void
-#endif
 )
 {
     /* Key for thread local storage for tree management */
@@ -254,9 +240,7 @@ static void rpc_ss_init_allocate(
 }
 
 void rpc_ss_init_allocate_once(
-#ifdef IDL_PROTOTYPES
     void
-#endif
 )
 {
     RPC_SS_THREADS_INIT;
@@ -299,14 +283,9 @@ static void *rpc_ss_client_default_malloc
 /*                                                                            */
 /******************************************************************************/
 static void rpc_ss_client_get_thread_ctx
-#ifdef IDL_PROTOTYPES
 (
     rpc_ss_thread_support_ptrs_t **p_p_support_ptrs
 )
-#else
-( p_p_support_ptrs)
-    rpc_ss_thread_support_ptrs_t **p_p_support_ptrs;
-#endif
 {
     rpc_ss_thread_support_ptrs_t *p_support_ptrs;
     rpc_ss_thread_indirection_t *thread_indirection_ptr;
@@ -339,15 +318,11 @@ static void rpc_ss_client_get_thread_ctx
         RPC_SS_THREADS_MUTEX_CREATE (&(p_support_ptrs->mutex));
 
         p_support_ptrs->p_allocate = (idl_void_p_t (*)(
-#       ifdef IDL_PROTOTYPES
             idl_size_t size
-#       endif
             ))rpc_ss_client_default_malloc;
 
         p_support_ptrs->p_free = (void (*)(
-#       ifdef IDL_PROTOTYPES
             idl_void_p_t ptr
-#       endif
             ))free;
 
         thread_indirection_ptr = (rpc_ss_thread_indirection_t *)
@@ -373,14 +348,9 @@ static void rpc_ss_client_get_thread_ctx
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_client_establish_alloc
-#ifdef IDL_PROTOTYPES
 (
     rpc_ss_marsh_state_t *p_unmar_params
 )
-#else
-( p_unmar_params )
-    rpc_ss_marsh_state_t *p_unmar_params;
-#endif
 {
     rpc_ss_thread_support_ptrs_t *p_support_ptrs;
 
@@ -395,11 +365,7 @@ void rpc_ss_client_establish_alloc
 /*                                                                            */
 /******************************************************************************/
 rpc_ss_thread_handle_t rpc_ss_get_thread_handle
-#ifdef IDL_PROTOTYPES
 ( void )
-#else
-()
-#endif
 {
     rpc_ss_thread_indirection_t *thread_indirection_ptr;
 
@@ -415,14 +381,9 @@ rpc_ss_thread_handle_t rpc_ss_get_thread_handle
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_set_thread_handle
-#ifdef IDL_PROTOTYPES
 (
     rpc_ss_thread_handle_t thread_handle
 )
-#else
-( thread_handle )
-    rpc_ss_thread_handle_t thread_handle;
-#endif
 {
     rpc_ss_thread_indirection_t *helper_thread_indirection_ptr;
 
@@ -454,7 +415,6 @@ void rpc_ss_set_thread_handle
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_set_client_alloc_free
-#ifdef IDL_PROTOTYPES
 (
     idl_void_p_t (*p_allocate)(
         idl_size_t size
@@ -463,11 +423,6 @@ void rpc_ss_set_client_alloc_free
         idl_void_p_t ptr
     )
 )
-#else
-( p_allocate, p_free )
-    idl_void_p_t (*p_allocate)();
-    void (*p_free)();
-#endif
 {
     rpc_ss_thread_support_ptrs_t *p_support_ptrs;
 
@@ -482,7 +437,6 @@ void rpc_ss_set_client_alloc_free
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_swap_client_alloc_free
-#ifdef IDL_PROTOTYPES
 (
     idl_void_p_t (*p_allocate)(
         idl_size_t size
@@ -497,13 +451,6 @@ void rpc_ss_swap_client_alloc_free
         idl_void_p_t ptr
     )
 )
-#else
-( p_allocate, p_free, p_p_old_allocate, p_p_old_free )
-    idl_void_p_t (*p_allocate)();
-    void         (*p_free)();
-    idl_void_p_t (**p_p_old_allocate)();
-    void         (**p_p_old_free)();
-#endif
 {
     rpc_ss_thread_support_ptrs_t *p_support_ptrs;
 
@@ -523,14 +470,9 @@ void rpc_ss_swap_client_alloc_free
 /*                                                                          */
 /****************************************************************************/
 void rpc_ss_client_free
-#ifdef IDL_PROTOTYPES
 (
     idl_void_p_t p_mem
 )
-#else
-( p_mem )
-    idl_void_p_t p_mem;
-#endif
 {
     rpc_ss_thread_support_ptrs_t *p_support_ptrs;
 
@@ -547,11 +489,7 @@ void rpc_ss_client_free
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_enable_allocate
-#ifdef IDL_PROTOTYPES
 ( void )
-#else
-()
-#endif
 {
     rpc_ss_mem_handle *p_mem_handle;
     rpc_ss_thread_support_ptrs_t *p_thread_support_ptrs;
@@ -590,11 +528,7 @@ void rpc_ss_enable_allocate
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_disable_allocate
-#ifdef IDL_PROTOTYPES
 ( void )
-#else
-()
-#endif
 {
     rpc_ss_thread_indirection_t *helper_thread_indirection_ptr;
 
@@ -617,14 +551,9 @@ void rpc_ss_disable_allocate
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_mts_client_estab_alloc
-#ifdef IDL_PROTOTYPES
 (
     volatile IDL_ms_t * IDL_msp
 )
-#else
-( IDL_msp )
-    volatile IDL_ms_t * IDL_msp;
-#endif
 {
     rpc_ss_thread_support_ptrs_t *p_support_ptrs;
 

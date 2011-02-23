@@ -49,16 +49,10 @@
 /*                                                                             */
 /*******************************************************************************/
 void BE_get_comm_stat_info
-#ifdef PROTO
 (
     AST_operation_n_t *p_operation,
     BE_stat_info_t *p_comm_stat_info
 )
-#else
-( p_operation, p_comm_stat_info )
-    AST_operation_n_t *p_operation;
-    BE_stat_info_t *p_comm_stat_info;
-#endif
 {
     AST_parameter_n_t *p_parameter;
 
@@ -93,16 +87,10 @@ void BE_get_comm_stat_info
 /*                                                                             */
 /*******************************************************************************/
 void BE_get_fault_stat_info
-#ifdef PROTO
 (
     AST_operation_n_t *p_operation,
     BE_stat_info_t *p_fault_stat_info
 )
-#else
-( p_operation, p_fault_stat_info )
-    AST_operation_n_t *p_operation;
-    BE_stat_info_t *p_fault_stat_info;
-#endif
 {
     AST_parameter_n_t *p_parameter;
 
@@ -137,7 +125,6 @@ void BE_get_fault_stat_info
 /*                                                                             */
 /*******************************************************************************/
 void CSPELL_return_status
-#ifdef PROTO
 (
     FILE *fid,
     BE_stat_info_t *p_comm_stat_info,
@@ -147,17 +134,6 @@ void CSPELL_return_status
     int num_user_exceptions,
     char *IDL_msp_name     /* Lexical form of pointer to IDL_ms_t state block */
 )
-#else
-( fid, p_comm_stat_info, p_fault_stat_info, status_var_name, result_param_name,
-  num_user_exceptions, IDL_msp_name )
-    FILE *fid;
-    BE_stat_info_t *p_comm_stat_info;
-    BE_stat_info_t *p_fault_stat_info;
-    char *status_var_name;
-    char *result_param_name;
-    int num_user_exceptions;
-    char *IDL_msp_name;    /* Lexical form of pointer to IDL_ms_t state block */
-#endif
 {
 #define MAX_STATUS_STRING 72+MAX_ID+MAX_ID
     char const *str_p_comm_status; /* String used as parameter describing how

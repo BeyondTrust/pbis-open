@@ -51,20 +51,12 @@
 /*                                                                            */
 /******************************************************************************/
 static void BE_get_next_pipe_index
-#ifdef PROTO
 (
     AST_parameter_n_t *p_parameter,
     unsigned long ast_in_or_out,    /* AST_IN or AST_OUT */
     long curr_pipe_index,
     long *p_next_pipe_index      /* 0 if no more pipes inrequested direction */
 )
-#else
-( p_parameter, ast_in_or_out, curr_pipe_index, p_next_pipe_index )
-    AST_parameter_n_t *p_parameter;
-    unsigned long ast_in_or_out;    /* AST_IN or AST_OUT */
-    long curr_pipe_index;
-    long *p_next_pipe_index ;
-#endif
 {
     for ( p_parameter = p_parameter->next;
           p_parameter != NULL;
@@ -114,18 +106,11 @@ static void BE_get_pipe_type_name
 /*                                                                            */
 /******************************************************************************/
 void DDBE_init_server_pipes
-#ifdef PROTO
 (
     FILE *fid,
     AST_operation_n_t *p_operation,
     long *p_first_pipe      /* ptr to index and direction of first pipe */
 )
-#else
-( fid, p_operation, p_first_pipe )
-    FILE *fid;
-    AST_operation_n_t *p_operation;
-    long *p_first_pipe;      /* ptr to index and direction of first pipe */
-#endif
 {
     long first_in_pipe;     /* index of first [in] pipe */
     long first_out_pipe;    /* index of first [out] pipe */

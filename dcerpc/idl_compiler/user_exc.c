@@ -46,20 +46,12 @@
 /*                                                                            */
 /******************************************************************************/
 static void DDBE_list_exceptions
-#ifdef PROTO
 (
     FILE *fid,                      /* [in] Handle for emitted C text */
     AST_interface_n_t *p_interface, /* [in] Pointer to AST interface node */
     int *p_num_declared_exceptions, /* [out] Number of declared exceptions */
     int *p_num_extern_exceptions    /* [out] Number of external exceptions */
 )
-#else
-(fid, p_interface, p_num_declared_exceptions, p_num_extern_exceptions)
-    FILE *fid;
-    AST_interface_n_t *p_interface;
-    int *p_num_declared_exceptions;
-    int *p_num_extern_exceptions;
-#endif
 {
     AST_exception_n_t *p_exception;
 
@@ -89,16 +81,10 @@ static void DDBE_list_exceptions
 /*                                                                            */
 /******************************************************************************/
 static void DDBE_init_exceptions
-#ifdef PROTO
 (
     FILE *fid,                      /* [in] Handle for emitted C text */
     AST_interface_n_t *p_interface  /* [in] Pointer to AST interface node */
 )
-#else
-(fid, p_interface)
-    FILE *fid;
-    AST_interface_n_t *p_interface;
-#endif
 {
     AST_exception_n_t *p_exception;
 
@@ -126,16 +112,10 @@ static void DDBE_init_exceptions
 /*                                                                            */
 /******************************************************************************/
 static void DDBE_ref_exception_array
-#ifdef PROTO
 (
     FILE *fid,                      /* [in] Handle for emitted C text */
     AST_interface_n_t *p_interface  /* [in] Pointer to AST interface node */
 )
-#else
-(fid, p_interface)
-    FILE *fid;
-    AST_interface_n_t *p_interface;
-#endif
 {
     AST_exception_n_t *p_exception;
     boolean first = true;
@@ -161,20 +141,12 @@ static void DDBE_ref_exception_array
 /*                                                                            */
 /******************************************************************************/
 void DDBE_user_exceptions
-#ifdef PROTO
 (
     FILE *fid,                      /* [in] Handle for emitted C text */
     AST_interface_n_t *p_interface, /* [in] Pointer to AST interface node */
     int *p_num_declared_exceptions, /* [out] Number of declared exceptions */
     int *p_num_extern_exceptions    /* [out] Number of external exceptions */
 )
-#else
-(fid, p_interface, p_num_declared_exceptions, p_num_extern_exceptions)
-    FILE *fid;
-    AST_interface_n_t *p_interface;
-    int *p_num_declared_exceptions;
-    int *p_num_extern_exceptions;
-#endif
 {
     DDBE_list_exceptions(fid, p_interface, p_num_declared_exceptions,
                          p_num_extern_exceptions);

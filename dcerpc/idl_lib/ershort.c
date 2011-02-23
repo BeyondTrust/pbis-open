@@ -51,18 +51,11 @@ void
 
 
 rpc_ss_mr_short_int
-#ifdef IDL_PROTOTYPES
 (
     idl_short_int *p_node,
     rpc_ss_node_type_k_t NIDL_node_type,
     rpc_ss_marsh_state_t *NIDL_msp
 )
-#else
-( p_node, NIDL_node_type, NIDL_msp)
-    idl_short_int *p_node;
-    rpc_ss_node_type_k_t NIDL_node_type;
-    rpc_ss_marsh_state_t *NIDL_msp;
-#endif
 {
   long NIDL_already_marshalled;
   unsigned long space_for_node;
@@ -93,18 +86,11 @@ void
 
 
 rpc_ss_ur_short_int
-#ifdef IDL_PROTOTYPES
 (
     idl_short_int **p_referred_to_by,
     rpc_ss_node_type_k_t NIDL_node_type,
     rpc_ss_marsh_state_t *p_unmar_params
 )
-#else
-( p_referred_to_by,NIDL_node_type,p_unmar_params )
-    idl_short_int **p_referred_to_by;
-    rpc_ss_node_type_k_t NIDL_node_type;
-    rpc_ss_marsh_state_t *p_unmar_params;
-#endif
 {
   idl_short_int  *p_node = NULL;
   long NIDL_already_unmarshalled = 0;

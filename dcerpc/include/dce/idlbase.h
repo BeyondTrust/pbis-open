@@ -161,11 +161,7 @@
  * apply to all of DCE for a particular platform
  */
 
-#ifdef _DCE_PROTO_
-#if ! defined(IDL_PROTOTYPES) && ! defined(IDL_NO_PROTOTYPES)
 #define IDL_PROTOTYPES 1
-#endif
-#endif
 
 /***************************************************************************/
 

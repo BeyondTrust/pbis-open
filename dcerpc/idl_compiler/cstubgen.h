@@ -44,27 +44,21 @@
 extern BE_handle_info_t BE_handle_info;
 
 void CSPELL_test_status (
-#ifdef PROTO
     FILE *fid
-#endif
 );
 
 void CSPELL_test_transceive_status
 (
-#ifdef PROTO
     FILE *fid
-#endif
 );
 
 void BE_gen_cstub(
-#ifdef PROTO
     FILE *fid,                      /* Handle for emitted C text */
     AST_interface_n_t *p_interface, /* Ptr to AST interface node */
     language_k_t language,          /* Language stub is to interface to */
     char header_name[],             /* Name of header file to be included in stub */
     boolean bugs[],                 /* List of backward compatibility "bugs" */
     boolean generate_cepv           /* generate cepv if true */
-#endif
 );
 
 #endif

@@ -97,14 +97,9 @@ INTERNAL void _post_fork_parent _DCE_PROTOTYPE_((
  * the fork/vfork system call.
  */         
 INTERNAL void _pre_fork
-#ifdef _DCE_PROTO_
 (
   pointer_t arg 
 )
-#else
-(arg)
-pointer_t arg;
-#endif
 {                      
     RPC_DBG_PRINTF(rpc_e_dbg_atfork, 1,
                ("(_pre_fork) entering, pid %d, pre %d, post_p %d, post_c %d\n",
@@ -135,14 +130,9 @@ pointer_t arg;
  */         
 
 INTERNAL void _post_fork_child
-#ifdef _DCE_PROTO_
 (
   pointer_t arg
 )
-#else
-(arg)
-pointer_t arg;
-#endif
 {
     RPC_DBG_PRINTF(rpc_e_dbg_atfork, 1,
         ("(_post_fork_child) entering, pid %d, pre %d, post_p %d, post_c %d\n",
@@ -175,14 +165,9 @@ pointer_t arg;
 
 
 INTERNAL void _post_fork_parent
-#ifdef _DCE_PROTO_
 (
   pointer_t arg
 )
-#else 
-(arg)
-pointer_t arg;
-#endif
 {
     RPC_DBG_PRINTF(rpc_e_dbg_atfork, 1,
        ("(_post_fork_parent) entering, pid %d, pre %d, post_p %d, post_c %d\n",
@@ -208,14 +193,9 @@ pointer_t arg;
 
 
 PRIVATE void rpc__atfork
-#ifdef _DCE_PROTO_
 (
  void *handler
 )
-#else 
-(handler)
-void *handler;
-#endif
 {
     if (handler == NULL)
         return;

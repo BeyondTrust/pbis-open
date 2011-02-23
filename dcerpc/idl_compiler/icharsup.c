@@ -51,20 +51,12 @@
 /*                                                                            */
 /******************************************************************************/
 void BE_cs_analyze_and_spell_vars
-#ifdef PROTO
 (
     FILE *fid,                      /* [in] Handle for emitted C text */
     AST_operation_n_t *p_operation, /* [in] Pointer to AST operation node */
     BE_side_t side,                 /* [in] client or server */
     BE_cs_info_t *p_cs_info         /* [out] Description of I-char machinery */
 )
-#else
-(fid, p_operation, side, p_cs_info)
-    FILE *fid;
-    BE_side_t side;
-    AST_operation_n_t *p_operation;
-    BE_cs_info_t *p_cs_info;
-#endif
 {
     AST_parameter_n_t *p_parameter;
 
@@ -194,20 +186,12 @@ void BE_cs_analyze_and_spell_vars
 /*                                                                            */
 /******************************************************************************/
 void BE_spell_cs_state
-#ifdef PROTO
 (
     FILE *fid,                      /* [in] Handle for emitted C text */
     char *state_access,             /* [in] "IDL_ms." or "IDL_msp->" */
     BE_side_t side,                 /* [in] client or server */
     BE_cs_info_t *p_cs_info         /* [in] Description of I-char machinery */
 )
-#else
-(fid, state_access, side, p_cs_info)
-    FILE *fid;
-    char *state_access;
-    BE_side_t side;
-    BE_cs_info_t *p_cs_info;
-#endif
 {
     if ( ! p_cs_info->cs_machinery )
         return;
@@ -255,7 +239,6 @@ void BE_spell_cs_state
 /*                                                                            */
 /******************************************************************************/
 void BE_spell_cs_tag_rtn_call
-#ifdef PROTO
 (
     FILE *fid,                      /* [in] Handle for emitted C text */
     char *state_access,             /* [in] "IDL_ms." or "IDL_msp->" */
@@ -265,16 +248,6 @@ void BE_spell_cs_tag_rtn_call
     BE_cs_info_t *p_cs_info,        /* [in] Description of I-char machinery */
     boolean pickling                /* [in] TRUE => called from pickling stub */
 )
-#else
-(fid, state_access, p_operation, side, p_handle_info, p_cs_info, pickling)
-    FILE *fid;
-    char *state_access;
-    AST_operation_n_t *p_operation;
-    BE_side_t side;
-    BE_handle_info_t *p_handle_info;
-    BE_cs_info_t *p_cs_info;
-    boolean pickling;
-#endif
 {
     if ((p_operation->cs_tag_rtn_name == NAMETABLE_NIL_ID)
         || ( ! p_cs_info->cs_machinery ) )

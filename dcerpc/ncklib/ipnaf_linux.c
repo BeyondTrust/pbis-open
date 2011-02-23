@@ -497,14 +497,9 @@ done:
 **/
 
 PRIVATE void rpc__ip_init_local_addr_vec
-#ifdef _DCE_PROTO_
 (
     unsigned32 *status
 )
-#else
-(status)
-unsigned32 *status; 
-#endif
 {
     rpc_socket_t            sock = RPC_SOCKET_INVALID;
     unsigned32              i;
@@ -651,16 +646,10 @@ error:
 **--
 **/
 PRIVATE boolean32 rpc__ip_is_local_network
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t rpc_addr,
     unsigned32   *status
 )
-#else
-(rpc_addr, status)
-rpc_addr_p_t rpc_addr;
-unsigned32   *status; 
-#endif
 {
     rpc_ip_addr_p_t         ip_addr = (rpc_ip_addr_p_t) rpc_addr;
     unsigned32              addr1;
@@ -747,16 +736,10 @@ unsigned32   *status;
 **/
 
 PRIVATE boolean32 rpc__ip_is_local_addr
-#ifdef _DCE_PROTO_
 (
     rpc_addr_p_t rpc_addr,
     unsigned32   *status
 )
-#else
-(rpc_addr, status)
-rpc_addr_p_t rpc_addr;
-unsigned32   *status; 
-#endif
 {
     rpc_ip_addr_p_t         ip_addr = (rpc_ip_addr_p_t) rpc_addr;
     unsigned32              i;

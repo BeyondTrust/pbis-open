@@ -106,14 +106,9 @@
 static char DDBE_long_buf[DDBE_MAX_EXPR];
 
 static char *DDBE_spell_long
-#ifdef PROTO
 (
     long            val             /* [in] long value */
 )
-#else
-(val)
-    long            val;            /* [in] long value */
-#endif
 {
     if (DDBE_stub_hex)
         sprintf(DDBE_long_buf, "0x%04lx", val);
@@ -124,14 +119,9 @@ static char *DDBE_spell_long
 }
 
 static char *DDBE_spell_long_nf
-#ifdef PROTO
 (
     long            val             /* [in] long value */
 )
-#else
-(val)
-    long            val;            /* [in] long value */
-#endif
 {
     if (DDBE_stub_hex)
         sprintf(DDBE_long_buf, "0x%lx", val);
@@ -149,18 +139,11 @@ static char *DDBE_spell_long_nf
  *  encoding is not dependent on the platform's integer endianism.
  */
 static void DDBE_spell_long_val
-#ifdef PROTO
 (
     FILE            *fid,           /* [in] output file handle */
     DDBE_vec_rep_t  *vec_p,         /* [in] ptr to vector entry list */
     boolean         little_endian ATTRIBUTE_UNUSED   /* [in] T/F => spell as little/big endian */
 )
-#else
-(fid, vec_p, little_endian)
-    FILE            *fid;           /* [in] output file handle */
-    DDBE_vec_rep_t  *vec_p;         /* [in] ptr to vector entry list */
-    boolean         little_endian;  /* [in] T/F => spell as little/big endian */
-#endif
 {
     byte        *bp;
     int         i;
@@ -189,18 +172,11 @@ static void DDBE_spell_long_val
  *  encoding is not dependent on the platform's integer endianism.
  */
 static void DDBE_spell_short_bytes
-#ifdef PROTO
 (
     FILE            *fid,           /* [in] output file handle */
     unsigned short  *val,           /* [in] value to print */
     boolean         little_endian ATTRIBUTE_UNUSED  /* [in] T/F => spell as little/big endian */
 )
-#else
-(fid, val, little_endian)
-    FILE            *fid;           /* [in] output file handle */
-    unsigned short  *val;           /* [in] value to print */
-    boolean         little_endian;  /* [in] T/F => spell as little/big endian */
-#endif
 {
     byte        *bp;
     int         i;
@@ -219,18 +195,11 @@ static void DDBE_spell_short_bytes
  *  encoding is not dependent on the platform's integer endianism.
  */
 static void DDBE_spell_long_bytes
-#ifdef PROTO
 (
     FILE            *fid,           /* [in] output file handle */
     unsigned long   *val,           /* [in] value to print */
     boolean         little_endian ATTRIBUTE_UNUSED  /* [in] T/F => spell as little/big endian */
 )
-#else
-(fid, val, little_endian)
-    FILE            *fid;           /* [in] output file handle */
-    unsigned long   *val;           /* [in] value to print */
-    boolean         little_endian;  /* [in] T/F => spell as little/big endian */
-#endif
 {
     byte        *bp;
     int         i;
@@ -250,18 +219,11 @@ static void DDBE_spell_long_bytes
  *  endianism.
  */
 static void DDBE_spell_long_bool_val
-#ifdef PROTO
 (
     FILE            *fid,           /* [in] output file handle */
     DDBE_vec_rep_t  *vec_p,         /* [in] ptr to vector entry list */
     boolean         little_endian   /* [in] T/F => spell as little/big endian */
 )
-#else
-(fid, vec_p, little_endian)
-    FILE            *fid;           /* [in] output file handle */
-    DDBE_vec_rep_t  *vec_p;         /* [in] ptr to vector entry list */
-    boolean         little_endian;  /* [in] T/F => spell as little/big endian */
-#endif
 {
     char        *sym;
 #ifdef DUMPERS
@@ -300,18 +262,11 @@ static void DDBE_spell_long_bool_val
  *  Assumption: Input type is a structure.
  */
 static void DDBE_last_field
-#ifdef PROTO
 (
     AST_type_n_t        *type_p,    /* [in] ptr to AST type node */
     AST_field_n_t       **p_field_p,/*[out] ptr to AST field node */
     STRTAB_str_t        *field_expr /*[out] field expression */
 )
-#else
-(type_p, p_field_p, field_expr)
-    AST_type_n_t        *type_p;    /* [in] ptr to AST type node */
-    AST_field_n_t       **p_field_p;/*[out] ptr to AST field node */
-    STRTAB_str_t        *field_expr;/*[out] field expression */
-#endif
 {
     AST_structure_n_t   *struct_p;
     AST_field_n_t       *field_p;
@@ -354,18 +309,11 @@ static void DDBE_last_field
  *  Spells an expression for the size of a data type.
  */
 static void DDBE_sizeof_expr
-#ifdef PROTO
 (
     FILE                *fid,       /* [in] output file handle */
     AST_type_n_t        *type_p,    /* [in] ptr to AST type node */
     STRTAB_str_t        comment_id ATTRIBUTE_UNUSED /* [in] ID of comment string */
 )
-#else
-(fid, type_p, comment_id)
-    FILE                *fid;       /* [in] output file handle */
-    AST_type_n_t        *type_p;    /* [in] ptr to AST type node */
-    STRTAB_str_t        comment_id; /* [in] ID of comment string */
-#endif
 {
 #ifdef DUMPERS
     char const          *comment;   /* Comment string */
@@ -412,18 +360,11 @@ static void DDBE_sizeof_expr
  *  declarations that are spelt by DDBE_spell_offset_instances.
  */
 static void DDBE_sizeof_expr_use_inst
-#ifdef PROTO
 (
     FILE                *fid,       /* [in] output file handle */
     AST_type_n_t        *type_p,    /* [in] ptr to AST type node */
     STRTAB_str_t        comment_id ATTRIBUTE_UNUSED /* [in] ID of comment string */
 )
-#else
-(fid, type_p, comment_id)
-    FILE                *fid;       /* [in] output file handle */
-    AST_type_n_t        *type_p;    /* [in] ptr to AST type node */
-    STRTAB_str_t        comment_id; /* [in] ID of comment string */
-#endif
 {
     char const          *inst_name; /* Name of generated instance of type */
 #ifdef DUMPERS
@@ -465,14 +406,9 @@ static void DDBE_sizeof_expr_use_inst
  *  a conformant array.
  */
 boolean DDBE_cfmt_arr_local_rep
-#ifdef PROTO
 (
     AST_parameter_n_t   *param_p    /* [in] Ptr to AST parameter node */
 )
-#else
-(param_p)
-    AST_parameter_n_t   *param_p;   /* [in] Ptr to AST parameter node */
-#endif
 {
     AST_type_n_t        *type_p;
 
@@ -509,20 +445,12 @@ boolean DDBE_cfmt_arr_local_rep
  *  offset vector.  This is necessary so that the data is portable.
  */
 void DDBE_spell_offset_instances
-#ifdef PROTO
 (
     FILE                *fid,       /* [in] output file handle */
     DDBE_vectors_t      *vip,       /* [in] vector information pointer */
     boolean             *cmd_opt ATTRIBUTE_UNUSED,   /* [in] array of cmd option flags */
     void                **cmd_val ATTRIBUTE_UNUSED  /* [in] array of cmd option values */
 )
-#else
-(fid, vip, cmd_opt, cmd_val)
-    FILE                *fid;       /* [in] output file handle */
-    DDBE_vectors_t      *vip;       /* [in] vector information pointer */
-    boolean             *cmd_opt;   /* [in] array of cmd option flags */
-    void                **cmd_val;  /* [in] array of cmd option values */
-#endif
 {
     DDBE_vec_rep_t      *vec_p;     /* Ptr to offset vector entry list */
     AST_type_n_t        *type_p;    /* Ptr to AST structure type node */
@@ -572,20 +500,12 @@ void DDBE_spell_offset_instances
  *  and thus is the most straightforward way of spelling the offset vector.
  */
 void DDBE_spell_offset_vec
-#ifdef PROTO
 (
     FILE                *fid,       /* [in] output file handle */
     DDBE_vectors_t      *vip,       /* [in] vector information pointer */
     boolean             *cmd_opt ATTRIBUTE_UNUSED,   /* [in] array of cmd option flags */
     void                **cmd_val ATTRIBUTE_UNUSED  /* [in] array of cmd option values */
 )
-#else
-(fid, vip, cmd_opt, cmd_val)
-    FILE                *fid;       /* [in] output file handle */
-    DDBE_vectors_t      *vip;       /* [in] vector information pointer */
-    boolean             *cmd_opt;   /* [in] array of cmd option flags */
-    void                **cmd_val;  /* [in] array of cmd option values */
-#endif
 {
     DDBE_vec_rep_t      *vec_p;     /* Ptr to offset vector entry list */
     AST_type_n_t        *type_p = NULL;    /* Ptr to AST type node */
@@ -723,20 +643,12 @@ void DDBE_spell_offset_vec
  *  initialize the offset vector.
  */
 void DDBE_spell_offset_vec_use_inst
-#ifdef PROTO
 (
     FILE                *fid,       /* [in] output file handle */
     DDBE_vectors_t      *vip,       /* [in] vector information pointer */
     boolean             *cmd_opt ATTRIBUTE_UNUSED,   /* [in] array of cmd option flags */
     void                **cmd_val ATTRIBUTE_UNUSED  /* [in] array of cmd option values */
 )
-#else
-(fid, vip, cmd_opt, cmd_val)
-    FILE                *fid;       /* [in] output file handle */
-    DDBE_vectors_t      *vip;       /* [in] vector information pointer */
-    boolean             *cmd_opt;   /* [in] array of cmd option flags */
-    void                **cmd_val;  /* [in] array of cmd option values */
-#endif
 {
     DDBE_vec_rep_t      *vec_p;     /* Ptr to offset vector entry list */
     AST_type_n_t        *type_p;    /* Ptr to AST type node */
@@ -836,20 +748,12 @@ void DDBE_spell_offset_vec_use_inst
  *  the offset vector.  Alternative to using DDBE_spell_offset_vec_use_inst.
  */
 void DDBE_init_offset_vec
-#ifdef PROTO
 (
     FILE                *fid,       /* [in] output file handle */
     DDBE_vectors_t      *vip,       /* [in] vector information pointer */
     boolean             *cmd_opt ATTRIBUTE_UNUSED,   /* [in] array of cmd option flags */
     void                **cmd_val ATTRIBUTE_UNUSED  /* [in] array of cmd option values */
 )
-#else
-(fid, vip, cmd_opt, cmd_val)
-    FILE                *fid;       /* [in] output file handle */
-    DDBE_vectors_t      *vip;       /* [in] vector information pointer */
-    boolean             *cmd_opt;   /* [in] array of cmd option flags */
-    void                **cmd_val;  /* [in] array of cmd option values */
-#endif
 {
     DDBE_vec_rep_t      *vec_p;     /* Ptr to offset vector entry list */
     AST_type_n_t        *type_p;    /* Ptr to AST type node */
@@ -1018,16 +922,10 @@ void DDBE_spell_rtn_vec
  *  Assumes: vip->type_vec_size is offset to addenda portion of type vector.
  */
 void DDBE_spell_type_vec_preamble
-#ifdef PROTO
 (
     FILE                *fid,       /* [in] output file handle */
     DDBE_vectors_t      *vip        /* [in] vector information pointer */
 )
-#else
-(fid, vip)
-    FILE                *fid;       /* [in] output file handle */
-    DDBE_vectors_t      *vip;       /* [in] vector information pointer */
-#endif
 {
     AST_interface_n_t   *int_p;     /* Ptr to AST interface node */
     AST_export_n_t      *export_p;  /* Ptr to AST export node */
@@ -1280,20 +1178,12 @@ void DDBE_spell_type_vec_preamble
  *           vip->type_vec_size does include the addenda on exit.
  */
 void DDBE_spell_type_vec_addenda
-#ifdef PROTO
 (
     FILE                *fid,       /* [in] output file handle */
     DDBE_vectors_t      *vip,       /* [io] vector information pointer */
     boolean             *cmd_opt ATTRIBUTE_UNUSED,   /* [in] array of cmd option flags */
     void                **cmd_val  /* [in] array of cmd option values */
 )
-#else
-(fid, vip, cmd_opt, cmd_val)
-    FILE                *fid;       /* [in] output file handle */
-    DDBE_vectors_t      *vip;       /* [io] vector information pointer */
-    boolean             *cmd_opt;   /* [in] array of cmd option flags */
-    void                **cmd_val;  /* [in] array of cmd option values */
-#endif
 {
     unsigned long size,index,longint; /* 4-byte integer data */
     byte                *p4;        /* Pointer to 4-byte integer */
@@ -1413,20 +1303,12 @@ void DDBE_spell_type_vec_addenda
  *  Spells the type vector definition.
  */
 void DDBE_spell_type_vec
-#ifdef PROTO
 (
     FILE                *fid,       /* [in] output file handle */
     DDBE_vectors_t      *vip,       /* [in] vector information pointer */
     boolean             *cmd_opt,   /* [in] array of cmd option flags */
     void                **cmd_val   /* [in] array of cmd option values */
 )
-#else
-(fid, vip, cmd_opt, cmd_val)
-    FILE                *fid;       /* [in] output file handle */
-    DDBE_vectors_t      *vip;       /* [in] vector information pointer */
-    boolean             *cmd_opt;   /* [in] array of cmd option flags */
-    void                **cmd_val;  /* [in] array of cmd option values */
-#endif
 {
     DDBE_vec_rep_t      *vec_p;     /* Ptr to type vector entry list */
     char const *name;
@@ -1542,7 +1424,6 @@ void DDBE_spell_type_vec
  *  Spell the definition of the parameter vector for an operation.
  */
 void DDBE_spell_param_vec_def
-#ifdef PROTO
 (
     FILE            *fid,           /* [in] output file handle */
     AST_operation_n_t *oper_p,      /* [in] ptr to AST operation node */
@@ -1550,14 +1431,6 @@ void DDBE_spell_param_vec_def
     boolean         *cmd_opt ATTRIBUTE_UNUSED,       /* [in] array of cmd option flags */
     void            **cmd_val ATTRIBUTE_UNUSED      /* [in] array of cmd option values */
 )
-#else
-(fid, oper_p, side, cmd_opt, cmd_val)
-    FILE            *fid;           /* [in] output file handle */
-    AST_operation_n_t *oper_p;      /* [in] ptr to AST operation node */
-    BE_side_t       side;           /* [in] client or server side code */
-    boolean         *cmd_opt;       /* [in] array of cmd option flags */
-    void            **cmd_val;      /* [in] array of cmd option values */
-#endif
 {
     DDBE_oper_i_t   *oper_i_p;      /* Ptr to operation info node */
     AST_parameter_n_t *param_p;     /* Ptr to AST parameter node */
@@ -1596,7 +1469,6 @@ void DDBE_spell_param_vec_def
  *  Spell the initialization of the parameter vector for an operation.
  */
 void DDBE_spell_param_vec_init
-#ifdef PROTO
 (
     FILE            *fid,           /* [in] output file handle */
     AST_operation_n_t *oper_p,      /* [in] ptr to AST operation node */
@@ -1604,14 +1476,6 @@ void DDBE_spell_param_vec_init
     boolean         *cmd_opt ATTRIBUTE_UNUSED,       /* [in] array of cmd option flags */
     void            **cmd_val ATTRIBUTE_UNUSED      /* [in] array of cmd option values */
 )
-#else
-(fid, oper_p, side, cmd_opt, cmd_val)
-    FILE            *fid;           /* [in] output file handle */
-    AST_operation_n_t *oper_p;      /* [in] ptr to AST operation node */
-    BE_side_t       side;           /* [in] client or server side code */
-    boolean         *cmd_opt;       /* [in] array of cmd option flags */
-    void            **cmd_val;      /* [in] array of cmd option values */
-#endif
 {
     AST_parameter_n_t *param_p;     /* Ptr to AST parameter node */
     DDBE_oper_i_t   *oper_i_p;      /* Ptr to operation info node */
@@ -1696,7 +1560,6 @@ void DDBE_spell_param_vec_init
  *  Spells the code to marshall or unmarshall the parameters in an operation.
  */
 void DDBE_spell_marsh_or_unmar
-#ifdef PROTO
 (
     FILE            *fid,           /* [in] output file handle */
     AST_operation_n_t *oper_p,      /* [in] ptr to AST operation node */
@@ -1705,15 +1568,6 @@ void DDBE_spell_marsh_or_unmar
     BE_side_t       side,           /* [in] client or server side code */
     BE_marshalling_k_t mar_or_unmar /* [in] spell marshall or unmarshall code */
 )
-#else
-(fid, oper_p, interp_name, state_ptr_name, side, mar_or_unmar)
-    FILE            *fid;           /* [in] output file handle */
-    AST_operation_n_t *oper_p;      /* [in] ptr to AST operation node */
-    char            *interp_name;   /* [in] marshalling interpreter rtn name */
-    char            *state_ptr_name;/* [in] name of state pointer variable */
-    BE_side_t       side;           /* [in] client or server side code */
-    BE_marshalling_k_t mar_or_unmar;/* [in] spell marshall or unmarshall code */
-#endif
 {
     DDBE_oper_i_t   *oper_i_p;      /* Ptr to operation info node */
     boolean         in_params;      /* TRUE => processing [in] parameters */

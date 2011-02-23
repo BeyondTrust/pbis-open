@@ -43,17 +43,13 @@
 #define DCEIDL_DEF   "_DCE_IDL_"
 
 boolean FE_main(
-#ifdef PROTO
     boolean             *cmd_opt,
     void                **cmd_val,
     STRTAB_str_t        idl_sid,
     AST_interface_n_t   **int_p
-#endif
 );
 
 
 AST_interface_n_t   *FE_parse_import(
-#ifdef PROTO
     STRTAB_str_t new_input
-#endif
 );

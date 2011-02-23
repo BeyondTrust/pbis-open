@@ -102,18 +102,11 @@ INTERNAL void rpc__dg_sct_timer _DCE_PROTOTYPE_(( pointer_t ));
  */
 
 PRIVATE void rpc__dg_sct_inq_scall
-#ifdef _DCE_PROTO_
 (
     rpc_dg_sct_elt_p_t scte,
     rpc_dg_scall_p_t *scallp,
     rpc_dg_recvq_elt_p_t rqe
 )
-#else
-(scte, scallp, rqe) 
-rpc_dg_sct_elt_p_t scte;
-rpc_dg_scall_p_t *scallp;
-rpc_dg_recvq_elt_p_t rqe;
-#endif
 {
     unsigned32 cur_rqe_seq = rqe->hdrp->seq;
     rpc_dg_scall_p_t temp;
@@ -205,20 +198,12 @@ rpc_dg_recvq_elt_p_t rqe;
  */
 
 PRIVATE void rpc__dg_sct_new_call
-#ifdef _DCE_PROTO_
 (
     rpc_dg_sct_elt_p_t scte,
     rpc_dg_sock_pool_elt_p_t si,
     rpc_dg_recvq_elt_p_t rqe,
     rpc_dg_scall_p_t *scallp
 )
-#else
-(scte, si, rqe, scallp) 
-rpc_dg_sct_elt_p_t scte;
-rpc_dg_sock_pool_elt_p_t si;
-rpc_dg_recvq_elt_p_t rqe;
-rpc_dg_scall_p_t *scallp;
-#endif
 {
     boolean  maybe = RPC_DG_HDR_FLAG_IS_SET(rqe->hdrp, RPC_C_DG_PF_MAYBE);
     unsigned32 cur_rqe_seq = rqe->hdrp->seq;
@@ -302,16 +287,10 @@ rpc_dg_scall_p_t *scallp;
  */
 
 PRIVATE void rpc__dg_sct_backout_new_call
-#ifdef _DCE_PROTO_
 (
     rpc_dg_sct_elt_p_t scte,
     unsigned32 seq
 )
-#else
-(scte, seq) 
-rpc_dg_sct_elt_p_t scte;
-unsigned32 seq;
-#endif
 {
     RPC_LOCK_ASSERT(0);
 
@@ -336,16 +315,10 @@ unsigned32 seq;
 
 
 PRIVATE rpc_dg_sct_elt_p_t rpc__dg_sct_lookup
-#ifdef _DCE_PROTO_
 (
     dce_uuid_p_t actid,
     unsigned32 probe_hint
 )
-#else
-(actid, probe_hint)
-uuid_p_t actid;
-unsigned32 probe_hint;
-#endif
 {
     rpc_dg_sct_elt_p_t scte;
     unsigned16 probe;
@@ -412,18 +385,11 @@ RETRY:
  */
 
 PRIVATE rpc_dg_sct_elt_p_t rpc__dg_sct_get
-#ifdef _DCE_PROTO_
 (
     dce_uuid_p_t actid,
     unsigned32 probe_hint,
     unsigned32 seq
 )
-#else
-(actid, probe_hint, seq)
-uuid_p_t actid;
-unsigned32 probe_hint;
-unsigned32 seq;
-#endif
 {
     rpc_dg_sct_elt_p_t scte;
     unsigned16 probe;
@@ -502,14 +468,9 @@ unsigned32 seq;
  */
 
 INTERNAL void rpc__dg_sct_timer
-#ifdef _DCE_PROTO_
 (
     pointer_t junk ATTRIBUTE_UNUSED
 )
-#else
-(junk)
-pointer_t junk;
-#endif
 {
     rpc_dg_sct_elt_p_t scte, prev_scte;
     unsigned32 i;
@@ -632,16 +593,10 @@ pointer_t junk;
  */
 
 PRIVATE rpc_binding_handle_t rpc__dg_sct_make_way_binding
-#ifdef _DCE_PROTO_
 (
     rpc_dg_sct_elt_p_t scte,
     unsigned32 *st
 )
-#else
-(scte, st)
-rpc_dg_sct_elt_p_t scte;
-unsigned32 *st;
-#endif
 {
     rpc_addr_p_t way_addr;
     rpc_dg_binding_client_p_t client_binding; 
@@ -709,18 +664,11 @@ unsigned32 *st;
  */
 
 PRIVATE void rpc__dg_sct_way_validate
-#ifdef _DCE_PROTO_
 (
     rpc_dg_sct_elt_p_t scte,
     unsigned32 force_way_auth,
     unsigned32 *st
 )
-#else
-(scte, force_way_auth, st)
-rpc_dg_sct_elt_p_t scte;
-unsigned32 force_way_auth;
-unsigned32 *st;
-#endif
 {
     rpc_dg_sct_elt_p_t scte_ref;
     unsigned32 seq;
@@ -872,14 +820,9 @@ unsigned32 *st;
  */
 
 PRIVATE void rpc__dg_sct_fork_handler
-#ifdef _DCE_PROTO_
 (
     rpc_fork_stage_id_t stage
 )
-#else
-(stage)
-rpc_fork_stage_id_t stage;
-#endif
 {                           
     unsigned32 i;
 
