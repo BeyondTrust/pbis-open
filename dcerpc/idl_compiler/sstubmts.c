@@ -525,8 +525,6 @@ static void CSPELL_server_stub_routine
 
     fprintf (fid, "\nstatic void op%d_ssr", p_operation->op_number);
 
-    fprintf (fid, "\n#ifdef IDL_PROTOTYPES\n");
-
     fprintf (fid, "(\n");
     fprintf (fid, " handle_t %s,\n", handle_info.assoc_name);
     fprintf (fid, " rpc_call_handle_t IDL_call_h,\n");
@@ -535,21 +533,6 @@ static void CSPELL_server_stub_routine
     fprintf (fid, " __IDL_UNUSED__ rpc_transfer_syntax_p_t IDL_transfer_syntax_p,\n");
     fprintf (fid, " rpc_mgr_epv_t IDL_mgr_epv,\n");
     fprintf (fid, " error_status_t *IDL_status_p\n)\n");
-
-    fprintf (fid, "#else\n");
-
-    fprintf (fid,
-         "(%s, IDL_call_h, IDL_elt_p, IDL_drep_p, IDL_transfer_syntax_p, IDL_mgr_epv, IDL_status_p)\n",
-             handle_info.assoc_name);
-    fprintf (fid, " handle_t %s;\n",  handle_info.assoc_name);
-    fprintf (fid, " rpc_call_handle_t IDL_call_h;\n");
-    fprintf (fid, " rpc_iovector_elt_p_t IDL_elt_p;\n");
-    fprintf (fid, " ndr_format_p_t IDL_drep_p;\n");
-    fprintf (fid, " __IDL_UNUSED__ rpc_transfer_syntax_p_t IDL_transfer_syntax_p;\n");
-    fprintf (fid, " rpc_mgr_epv_t IDL_mgr_epv;\n");
-    fprintf (fid, " error_status_t *IDL_status_p;\n");
-
-    fprintf (fid, "#endif\n");
 
     fprintf (fid, "{\n");
     fprintf(fid, "IDL_ms_t IDL_ms;\n");

@@ -129,8 +129,6 @@ void CSPELL_csr_header
 
 	CSPELL_function_def_header (fid, p_operation, emitted_name);
 
-	CSPELL_finish_synopsis (fid, p_operation->parameters);
-
 	/* restore skipped handle params */
 	if (handle_param)
 		p_operation->parameters->next = handle_param;

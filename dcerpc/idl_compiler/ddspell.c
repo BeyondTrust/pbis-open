@@ -770,11 +770,7 @@ void DDBE_init_offset_vec
             DDBE_PREFIX_IDL, DDBE_spell_long_nf(vip->offset_vec_size));
 
     fprintf(fid, "static void %sinit_offset_vec\n", DDBE_PREFIX_IDL);
-    fprintf(fid, "#ifdef IDL_PROTOTYPES\n");
     fprintf(fid, "(void)\n");
-    fprintf(fid, "#else\n");
-    fprintf(fid, "()\n");
-    fprintf(fid, "#endif\n{\n");
 
     fprintf(fid, "%soffset_vec[%s] = 0;", DDBE_PREFIX_IDL, DDBE_spell_long(0));
     DDBE_SPELL_TEXT(fid, "\t/* sentinel */");

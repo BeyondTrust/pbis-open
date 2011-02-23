@@ -53,9 +53,4 @@ extern void CSPELL_parameter_list (
     boolean encoding_services
 );
 
-extern void CSPELL_finish_synopsis (
-    FILE *fid, AST_parameter_n_t *paramlist
-);
-
-
 #endif

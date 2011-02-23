@@ -295,38 +295,17 @@ static void CSPELL_function_sig
  boolean encoding_services   /* TRUE => [encode] or [decode] on operation */
 )
 {
-	boolean            first = true;
-
 	if (!func_def)
 	{
-		fprintf (fid, "(\n#ifdef IDL_PROTOTYPES\n");
+		fprintf (fid, "(\n");
 		CSPELL_parameter_list (fid, pp, encoding_services);
-		fprintf (fid, "\n#endif\n)");
+		fprintf (fid, "\n)");
 	}
 	else
 	{
-		fprintf (fid, "\n#ifdef IDL_PROTOTYPES\n(\n");
+		fprintf (fid, "\n(\n");
 		CSPELL_parameter_list (fid, pp, encoding_services);
-		fprintf (fid, "\n)\n#else\n(");
-		for (; pp != NULL; pp = pp->next)
-		{
-			if (AST_HIDDEN_SET(pp))
-			{
-				/* Parameter does not appear in signature delivered to user */
-				continue;
-			}
-			if (first)
-				first = false;
-			else
-				fprintf (fid, ", ");
-#ifndef MIA
-			if (pp->be_info.param)
-				spell_name(fid, pp->be_info.param->name);
-			else
-#endif
-				spell_name (fid, pp->name);
-		}
-		fprintf (fid, ")\n#endif\n");
+		fprintf (fid, "\n)\n");
 	}
 }
 
@@ -426,7 +405,6 @@ void CSPELL_pipe_struct_routine_decl
 	}
 
 	fprintf( fid, "void (* %s)(\n",name);
-	fprintf (fid, "#ifdef IDL_PROTOTYPES\n" );
 	fprintf (fid, "rpc_ss_pipe_state_t state,\n" );
 	if ( routine_kind == BE_pipe_alloc_k )
 	{
@@ -447,7 +425,6 @@ void CSPELL_pipe_struct_routine_decl
 	fprintf( fid, "idl_ulong_int %c%ccount\n",
 			((routine_kind == BE_pipe_push_k) ? ' ' : '*'),
 			((routine_kind == BE_pipe_alloc_k) ? 'b' : 'e') );
-	fprintf (fid, "#endif\n)" );
 	if (!cast) fprintf (fid, ";\n");
 }
 

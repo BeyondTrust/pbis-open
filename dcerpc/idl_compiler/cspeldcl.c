@@ -186,32 +186,3 @@ void CSPELL_parameter_list
     else
         fprintf (fid, "    void");
 }
-
-
-/******************************************************************************/
-/*                                                                            */
-/*    Spell new and old style parameter lists                                 */
-/*                                                                            */
-/******************************************************************************/
-void CSPELL_finish_synopsis
-(
-    FILE *fid,
-    AST_parameter_n_t *paramlist
-)
-{
-    AST_parameter_n_t *pp;
-
-    fprintf (fid, "\n#ifndef IDL_PROTOTYPES\n");
-    for (pp = paramlist; pp != NULL; pp = pp->next)
-    {
-        if (AST_HIDDEN_SET(pp))
-        {
-            /* Parameter does not appear in signature delivered to user */
-            continue;
-        }
-	fprintf(fid,"    ");
-            CSPELL_var_decl (fid, pp->type, pp->name);
-    }
-    fprintf (fid, "#endif\n");
-}
-
