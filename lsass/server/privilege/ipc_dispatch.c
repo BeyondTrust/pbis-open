@@ -73,23 +73,26 @@ LsaSrvIpcPrivsEnumPrivilegesSids(
     PLSA_PRIVS_IPC_ENUM_PRIVILEGES_SIDS_REQ pRequest = pIn->data;
     PLSA_PRIVS_IPC_ENUM_PRIVILEGES_SIDS_RESP pResponse = NULL;
     PLUID_AND_ATTRIBUTES pPrivileges = NULL;
-    DWORD NumPrivileges = 0;
+    DWORD numPrivileges = 0;
+    DWORD systemAccessRights = 0;
     PLSA_IPC_ERROR pError = NULL;
 
-    err = LsaSrvPrivsEnumPrivilegesSids(
+    err = LsaSrvPrivsEnumAccountRightsSids(
                   LsaSrvIpcGetSessionData(pCall),
                   pRequest->ppszSids,
                   pRequest->NumSids,
                   &pPrivileges,
-                  &NumPrivileges);
+                  &numPrivileges,
+                  &systemAccessRights);
     if (err == ERROR_SUCCESS)
     {
         err = LwAllocateMemory(sizeof(*pResponse),
-                                   OUT_PPVOID(&pResponse));
+                               OUT_PPVOID(&pResponse));
         BAIL_ON_LSA_ERROR(err);
 
-        pResponse->pPrivileges   = pPrivileges;
-        pResponse->NumPrivileges = NumPrivileges;
+        pResponse->pPrivileges        = pPrivileges;
+        pResponse->NumPrivileges      = numPrivileges;
+        pResponse->SystemAccessRights = systemAccessRights;
 
         pOut->tag  = LSA_PRIVS_R_ENUM_PRIVILEGES_SIDS;
         pOut->data = pResponse;
@@ -244,13 +247,13 @@ LsaSrvIpcPrivsEnumAccountRights(
     if (err == ERROR_SUCCESS)
     {
         err = LwAllocateMemory(sizeof(*pResponse),
-                                   OUT_PPVOID(&pResponse));
+                               OUT_PPVOID(&pResponse));
         BAIL_ON_LSA_ERROR(err);
 
         pResponse->ppwszAccountRights = ppwszAccountRights;
         pResponse->NumAccountRights   = NumAccountRights;
 
-        pOut->tag  = LSA_PRIVS_R_ADD_ACCOUNT_RIGHTS;
+        pOut->tag  = LSA_PRIVS_R_ENUM_ACCOUNT_RIGHTS;
         pOut->data = pResponse;
     }
     else

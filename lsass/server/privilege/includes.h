@@ -49,6 +49,7 @@
 #include <lsadef.h>
 #include <lw/base.h>
 #include <lsa/lsa.h>
+#include <lsa/privilege.h>
 #include <reg/reg.h>
 #include <lwio/lwio.h>
 #include <lw/rpc/lsa.h>

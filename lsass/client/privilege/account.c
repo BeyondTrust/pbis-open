@@ -56,12 +56,13 @@ LsaIpcAcquireCall(
 
 
 DWORD
-LsaPrivsEnumPrivilegesSids(
+LsaPrivsEnumAccountRightsSids(
     IN HANDLE hLsaConnection,
     IN PSTR *ppszSids,
     IN DWORD NumSids,
-    IN PLUID_AND_ATTRIBUTES *ppPrivileges,
-    IN PDWORD pNumPrivileges
+    OUT PLUID_AND_ATTRIBUTES *ppPrivileges,
+    OUT PDWORD pNumPrivileges,
+    OUT PDWORD pSystemAccessRights
     )
 {
     DWORD dwError = ERROR_SUCCESS;
@@ -88,8 +89,9 @@ LsaPrivsEnumPrivilegesSids(
     {
         case LSA_PRIVS_R_ENUM_PRIVILEGES_SIDS:
             pResponse = (PLSA_PRIVS_IPC_ENUM_PRIVILEGES_SIDS_RESP)out.data;
-            *ppPrivileges   = pResponse->pPrivileges;
-            *pNumPrivileges = pResponse->NumPrivileges;
+            *ppPrivileges        = pResponse->pPrivileges;
+            *pNumPrivileges      = pResponse->NumPrivileges;
+            *pSystemAccessRights = pResponse->SystemAccessRights;
             break;
 
         case LSA2_R_ERROR:

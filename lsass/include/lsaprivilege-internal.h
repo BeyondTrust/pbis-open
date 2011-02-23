@@ -52,12 +52,13 @@
 
 
 DWORD
-LsaPrivsEnumPrivilegesSids(
+LsaPrivsEnumAccountRightsSids(
     IN HANDLE hLsaConnection,
     IN PSTR *ppSids,
     IN DWORD NumSids,
     OUT PLUID_AND_ATTRIBUTES *ppPrivileges,
-    OUT PDWORD pNumPrivileges
+    OUT PDWORD pNumPrivileges,
+    OUT PDWORD pSystemAccessRights
     );
 
 

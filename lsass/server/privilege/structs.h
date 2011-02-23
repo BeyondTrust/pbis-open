@@ -85,6 +85,7 @@ typedef struct _LSA_ACCOUNT
 struct _LSA_ACCOUNT_CONTEXT
 {
     PLSA_ACCOUNT pAccount;
+    BOOLEAN Dirty;
 };
 
 

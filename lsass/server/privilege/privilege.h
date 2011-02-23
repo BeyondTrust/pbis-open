@@ -48,14 +48,6 @@
 #define __LSASRV_PRIVILEGE_DEFINES_H__
 
 
-DWORD
-LsaSrvPrivsLookupPrivilegeName(
-    IN HANDLE hProvider,
-    IN PLUID pPrivilegeValue,
-    OUT PWSTR *ppwszPrivilegeName
-    );
-
-
 BOOLEAN
 LsaSrvIsPrivilegeNameValid(
     PCSTR pszPrivilegeName

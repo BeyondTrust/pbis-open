@@ -50,7 +50,7 @@
 DWORD
 LsaSrvPrivsLookupPrivilegeValue(
     IN HANDLE hProvider,
-    IN OPTIONAL PACCESS_TOKEN pAccessToken,
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PCWSTR pwszPrivilegeName,
     OUT PLUID pPrivilegeValue
     )
@@ -89,11 +89,36 @@ error:
 DWORD
 LsaSrvPrivsLookupPrivilegeName(
     IN HANDLE hProvider,
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLUID pPrivilegeValue,
-    OUT PWSTR *ppwszPrivilegeName
+    OUT PWSTR *pPrivilegeName
     )
 {
     DWORD err = ERROR_SUCCESS;
+    PWSTR privilegeName = NULL;
+    PLSA_PRIVILEGE pPrivilegeEntry = NULL;
+
+    err = LsaSrvGetPrivilegeEntryByValue(
+                       pPrivilegeValue,
+                       &pPrivilegeEntry);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = LwMbsToWc16s(pPrivilegeEntry->pszName,
+                       &privilegeName);
+    BAIL_ON_LSA_ERROR(err);
+
+    *pPrivilegeName = privilegeName;
+
+error:
+    if (err)
+    {
+        LW_SAFE_FREE_MEMORY(privilegeName);
+
+        if (pPrivilegeName)
+        {
+            pPrivilegeName = NULL;
+        }
+    }
 
     return err;
 }
