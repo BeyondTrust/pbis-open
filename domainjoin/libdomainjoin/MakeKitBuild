@@ -32,5 +32,5 @@ make()
 	SOURCES="$DJ_SOURCES" \
 	INCLUDEDIRS="include ../include" \
 	HEADERDEPS="lsa/lsa.h lsa/ad.h ctbase.h" \
-	LIBDEPS="centutils lwnetclientapi regclient eventlog lsaclient lwsm"
+	LIBDEPS="centutils lwnetclientapi regclient eventlog lsaclient lwsm rsutils"
 }
