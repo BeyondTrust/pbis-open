@@ -62,9 +62,7 @@
 #include "lwsecurityidentifier.h"
 #include "lsautils.h"
 #include <assert.h>
-#include "lsass-calls.h"
 #include "lsalocalprovider.h"
-
 
 typedef struct _LW_MAP_SECURITY_PLUGIN_CONTEXT {
     // TODO-Add connection caching using TLS, a connection pool,
@@ -115,7 +113,7 @@ LsaMapSecurityOpenConnection(
     DWORD dwError = LW_ERROR_SUCCESS;
     HANDLE hConnection = NULL;
 
-    dwError = LsaOpenServer(&hConnection);
+    dwError = LsaOpenServerThreaded(&hConnection);
     status = LsaLsaErrorToNtStatus(dwError);
 
     *phConnection = hConnection;

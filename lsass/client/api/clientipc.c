@@ -179,7 +179,7 @@ LsaIpcAcquireCall(
     DWORD dwError = 0;
     PLSA_CLIENT_CONNECTION_CONTEXT pContext = hServer;
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_assoc_acquire_call(pContext->pAssoc, ppCall));
+    dwError = MAP_LWMSG_ERROR(lwmsg_session_acquire_call(pContext->pSession, ppCall));
     BAIL_ON_LSA_ERROR(dwError);
 
 error:

@@ -824,6 +824,25 @@ LsaOpenServer(
     LW_PHANDLE phConnection
     );
 
+/**
+ * @ingroup connection
+ * @brief Open connection to local LSASS server (thread-safe)
+ *
+ * Creates a connection handle to the local LSASS server.
+ * The handle may safely be used by multiple threads.
+ * This function is only available when linking with
+ * lsaclientthr
+ *
+ * @param[out] phConnection the created connection handle
+ * @retval LW_ERROR_SUCCESS success
+ * @retval ECONNREFUSED the connection was refused
+ * @retval ENOENT the local domain socket was not present
+ */
+DWORD
+LsaOpenServerThreaded(
+    PHANDLE phConnection
+    );
+
 LW_DWORD
 LsaBuildLogInfo(
     LsaLogLevel maxAllowedLogLevel,

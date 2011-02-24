@@ -24,5 +24,12 @@ make()
 	    HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h lwhash.h" \
 	    LIBDEPS="lwmsg_nothr lwadvapi_nothr lsacommon"
     mk_multiarch_done
+
+    mk_group \
+        GROUP="api_thr" \
+        SOURCES="clientipc_thr.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="lwmsg/lwmsg.h lw/base.h lwadvapi.h lwhash.h" \
+        LIBDEPS="lwmsg lwbase lwadvapi_nothr lsacommon"
 }
 

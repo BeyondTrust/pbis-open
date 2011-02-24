@@ -52,6 +52,7 @@
 
 #include "lsadef.h"
 
+#include <lw/base.h>
 #include <lwmsg/lwmsg.h>
 #include <lwhash.h>
 

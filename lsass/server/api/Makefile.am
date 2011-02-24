@@ -17,7 +17,6 @@ lib_LTLIBRARIES = liblsaserverapi.la
 ADDITIONAL_CPPFLAGS =
 ADDITIONAL_LIBS += @EVENTLOG_LIBS@
 ADDITIONAL_LIBS += $(NOINST_DEP_LIBS)
-ADDITIONAL_LIBS += $(top_builddir)/interop/lwmapsecurity/liblwmapsecurity_internal_lsass.la
 endif
 
 liblsaserverapi_la_SOURCES = \
