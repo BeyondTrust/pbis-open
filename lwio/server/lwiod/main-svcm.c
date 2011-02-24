@@ -183,6 +183,11 @@ LwIoSvcmStop(
         lwmsg_peer_delete(pServer);
     }
 
+    if (pProtocol)
+    {
+        lwmsg_protocol_delete(pProtocol);
+    }
+
     if (pContext)
     {
         lwmsg_context_delete(pContext);
