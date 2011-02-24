@@ -40,6 +40,7 @@
 
 static LWMsgProtocol* gpProtocol = NULL;
 static LWMsgPeer* gpClient = NULL;
+static LWMsgSession* gpSession = NULL;
 static pthread_once_t gOnce = ONCE_INIT;
 static DWORD gOnceError = 0;
 
@@ -68,6 +69,11 @@ __LwSmIpcCallInit(
                                    SM_ENDPOINT));
     BAIL_ON_ERROR(dwError);
     
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_connect(
+                                   gpClient,
+                                   &gpSession));
+    BAIL_ON_ERROR(dwError);
+
 cleanup:
     
     gOnceError = dwError;
