@@ -186,7 +186,14 @@ LsaSrvStartListenThread(
 
     dwError = MAP_LWMSG_ERROR(lwmsg_peer_add_listen_endpoint(
                               gpServer,
-                              LWMSG_CONNECTION_MODE_LOCAL,
+                              LWMSG_ENDPOINT_DIRECT,
+                              "lsass",
+                              0));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_add_listen_endpoint(
+                              gpServer,
+                              LWMSG_ENDPOINT_LOCAL,
                               pszCommPath,
                               0666));
     BAIL_ON_LSA_ERROR(dwError);
