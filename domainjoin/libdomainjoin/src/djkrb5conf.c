@@ -35,6 +35,7 @@
 #include "djstr.h"
 #include "djauthinfo.h"
 #include <lsa/lsa.h>
+#include <reg/regutil.h>
 
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
@@ -775,7 +776,13 @@ cleanup:
     return ceError;
 }
 
-static DWORD GetAuthToLocalRule(DomainMapping *mapping, char **result)
+static
+DWORD
+GetAuthToLocalRule(
+    DomainMapping *mapping,
+    PCSTR pAssumedPrefix,
+    char **result
+    )
 {
     DWORD ceError = ERROR_SUCCESS;
     char *escapedDomain = NULL;
@@ -786,9 +793,21 @@ static DWORD GetAuthToLocalRule(DomainMapping *mapping, char **result)
     GCE(ceError = CTStrdup(mapping->shortName, &shortUpper));
     CTStrToUpper(shortUpper);
 
-    GCE(ceError = CTAllocateStringPrintf(result,
-                "RULE:[1:$0\\$1](^%s\\\\.*)s/^%s/%s/",
-                escapedDomain, escapedDomain, shortUpper));
+    if (pAssumedPrefix && !strcmp(shortUpper, pAssumedPrefix))
+    {
+        ceError = CTAllocateStringPrintf(result,
+                        "RULE:[1:$0\\$1](^%s\\\\.*)s/^%s\\\\//",
+                        escapedDomain, escapedDomain);
+        GCE(ceError);
+    }
+    else
+    {
+        ceError = CTAllocateStringPrintf(result,
+                        "RULE:[1:$0\\$1](^%s\\\\.*)s/^%s/%s/",
+                        escapedDomain, escapedDomain, shortUpper);
+        GCE(ceError);
+    }
+
 cleanup:
     CT_SAFE_FREE_STRING(escapedDomain);
     CT_SAFE_FREE_STRING(shortUpper);
@@ -850,16 +869,17 @@ GatherDomainMappings(
     memset(mappings, 0, sizeof(*mappings));
     memset(&add, 0, sizeof(add));
 
-    GCE(ceError = CTStrdup(pszDomainName, &add.longName));
-    GCE(ceError = CTStrdup(pszShortDomainName, &add.shortName));
-    GCE(ceError = CTArrayAppend(mappings, sizeof(add), &add, 1));
-    memset(&add, 0, sizeof(add));
-
     ceError = LsaOpenServer(&hLsa);
     if (ceError == ERROR_FILE_NOT_FOUND || ceError == LW_ERROR_ERRNO_ECONNREFUSED)
     {
         DJ_LOG_INFO("Unable to get trust list because lsass is not running");
         ceError = 0;
+
+        // Put in the default entry
+        GCE(ceError = CTStrdup(pszDomainName, &add.longName));
+        GCE(ceError = CTStrdup(pszShortDomainName, &add.shortName));
+        GCE(ceError = CTArrayAppend(mappings, sizeof(add), &add, 1));
+        memset(&add, 0, sizeof(add));
         goto cleanup;
     }
     GCE(ceError);
@@ -1006,10 +1026,13 @@ cleanup:
     return ceError;
 }
 
-static DWORD
-Krb5JoinDomain(Krb5Entry *conf,
+static
+DWORD
+Krb5JoinDomain(
+    Krb5Entry *conf,
     PCSTR pszDomainName,
-    PCSTR pszShortDomainName)
+    PCSTR pszShortDomainName,
+    PCSTR pDefaultPrefix)
 {
     DWORD ceError = ERROR_SUCCESS;
     Krb5Entry *libdefaults;
@@ -1022,7 +1045,6 @@ Krb5JoinDomain(Krb5Entry *conf,
     Krb5Entry *addNode = NULL;
     char *domainUpper = NULL;
     char *domainLower = NULL;
-    char *autoShortDomain = NULL;
     DynamicArray trusts;
     char *mappingString = NULL;
     size_t i;
@@ -1031,23 +1053,13 @@ Krb5JoinDomain(Krb5Entry *conf,
         "DES-CBC-MD5",
 	"DES-CBC-CRC",
     };
+
     memset(&trusts, 0, sizeof(trusts));
 
     if(IsNullOrEmptyString(pszDomainName))
     {
         DJ_LOG_ERROR("Please specify the long domain name");
         GCE(ceError = ERROR_INVALID_PARAMETER);
-    }
-    if(IsNullOrEmptyString(pszShortDomainName))
-    {
-        char *dotPosition = NULL;
-        CTStrdup(pszDomainName, &autoShortDomain);
-        dotPosition = strchr(autoShortDomain, '.');
-        if(dotPosition)
-            *dotPosition = 0;
-        pszShortDomainName = autoShortDomain;
-
-        DJ_LOG_WARNING("Short domain name not specified. Defaulting to '%s'", pszShortDomainName);
     }
 
     GCE(ceError = GatherDomainMappings( &trusts,
@@ -1093,7 +1105,13 @@ Krb5JoinDomain(Krb5Entry *conf,
     {
         DomainMapping *current = ((DomainMapping *)trusts.data) + i;
         CT_SAFE_FREE_STRING(mappingString);
-        GCE(ceError = GetAuthToLocalRule(current, &mappingString));
+
+        ceError = GetAuthToLocalRule(
+                        current,
+                        pDefaultPrefix,
+                        &mappingString);
+        GCE(ceError);
+
         GCE(ceError = CreateValueNode(conf, 3, "auth_to_local", mappingString, &addNode));
         GCE(ceError = AddChildNode(domainGroup, addNode));
         addNode = NULL;
@@ -1136,7 +1154,6 @@ Krb5JoinDomain(Krb5Entry *conf,
 cleanup:
     CT_SAFE_FREE_STRING(domainLower);
     CT_SAFE_FREE_STRING(mappingString);
-    CT_SAFE_FREE_STRING(autoShortDomain);
     CT_SAFE_FREE_STRING(domainUpper);
     FreeDomainMappings(&trusts);
     FreeKrb5Entry(&domainGroup);
@@ -1232,6 +1249,7 @@ DJModifyKrb5Conf(
     BOOLEAN enable,
     PCSTR pszDomainName,
     PCSTR pszShortDomainName,
+    const JoinProcessOptions *options,
     BOOLEAN *modified
     )
 {
@@ -1239,16 +1257,113 @@ DJModifyKrb5Conf(
     Krb5Entry conf;
     BOOLEAN readModified = FALSE;
     memset(&conf, 0, sizeof(conf));
+    REG_DATA_TYPE readType = 0;
+    PVOID pReadData = NULL;
+    DWORD readLen = 0;
+    BOOLEAN bAssumeDefaultDomain = FALSE;
+    PCSTR pDefaultPrefix = NULL;
+    PSTR pAutoShortDomain = NULL;
 
     DJ_LOG_INFO("Starting krb5.conf configuration (%s)", enable? "enabling" : "disabling");
 
     if(testPrefix == NULL)
         testPrefix = "";
 
+    if (IsNullOrEmptyString(pszShortDomainName))
+    {
+        char *dotPosition = NULL;
+        CTStrdup(pszDomainName, &pAutoShortDomain);
+        dotPosition = strchr(pAutoShortDomain, '.');
+        if(dotPosition)
+            *dotPosition = 0;
+        pszShortDomainName = pAutoShortDomain;
+
+        DJ_LOG_WARNING("Short domain name not specified. Defaulting to '%s'", pszShortDomainName);
+    }
+
+    ceError = RegUtilGetValue(
+                    NULL,
+                    HKEY_THIS_MACHINE,
+                    NULL,
+                    "Services\\lsass\\Parameters\\Providers\\ActiveDirectory",
+                    "AssumeDefaultDomain",
+                    &readType,
+                    &pReadData,
+                    &readLen);
+    if (ceError != LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        GCE(ceError);
+
+        if (readType != REG_DWORD || readLen != sizeof(DWORD))
+        {
+            GCE(ceError = ERROR_INVALID_PARAMETER);
+        }
+        bAssumeDefaultDomain = (DWORD)pReadData;
+    }
+    else
+    {
+        ceError = 0;
+    }
+
+    if (options && options->setAssumeDefaultDomain)
+    {
+        bAssumeDefaultDomain = options->assumeDefaultDomain;
+    }
+
+    if (bAssumeDefaultDomain)
+    {
+        pDefaultPrefix = pszShortDomainName;
+
+        if (pReadData && readType != REG_DWORD)
+        {
+            RegFreeMemory(pReadData);
+            pReadData = NULL;
+        }
+
+        ceError = RegUtilGetValue(
+            NULL,
+            HKEY_THIS_MACHINE,
+            NULL,
+            "Services\\lsass\\Parameters\\Providers\\ActiveDirectory",
+            "UserDomainPrefix",
+            &readType,
+            &pReadData,
+            &readLen);
+        if (ceError != LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+        {
+            GCE(ceError);
+
+            if (readType != REG_SZ || readLen < 1 ||
+                    ((PSTR)pReadData)[readLen - 1] != 0)
+            {
+                GCE(ceError = ERROR_INVALID_PARAMETER);
+            }
+            if (readLen > 1)
+            {
+                pDefaultPrefix = pReadData;
+            }
+        }
+        else
+        {
+            ceError = 0;
+        }
+
+        if (options && options->userDomainPrefix &&
+                options->userDomainPrefix[0])
+        {
+            pDefaultPrefix = options->userDomainPrefix;
+        }
+    }
+
     GCE(ceError = ReadKrb5Configuration(testPrefix, &conf, &readModified));
     if(enable)
     {
-        GCE(ceError = Krb5JoinDomain(&conf, pszDomainName, pszShortDomainName));
+        ceError = Krb5JoinDomain(
+                    &conf,
+                    pszDomainName,
+                    pszShortDomainName,
+                    pDefaultPrefix);
+        GCE(ceError);
     }
     else
     {
@@ -1260,6 +1375,11 @@ DJModifyKrb5Conf(
     DJ_LOG_INFO("Finishing krb5.conf configuration");
 
 cleanup:
+    if (pReadData && readType != REG_DWORD)
+    {
+        RegFreeMemory(pReadData);
+    }
+    CT_SAFE_FREE_STRING(pAutoShortDomain);
     FreeKrb5EntryContents(&conf);
     return ceError;
 }
@@ -1515,9 +1635,13 @@ static QueryResult QueryKrb5(const JoinProcessOptions *options, LWException **ex
         //Ignore failures from this command
         DJGuessShortDomainName(options->domainName, &shortName, NULL);
     }
-    LW_CLEANUP_CTERR(exc, DJModifyKrb5Conf(tempDir, options->joiningDomain,
-        options->domainName,
-        shortName, &modified));
+    LW_CLEANUP_CTERR(exc, DJModifyKrb5Conf(
+                            tempDir,
+                            options->joiningDomain,
+                            options->domainName,
+                            shortName,
+                            options,
+                            &modified));
     if(modified)
     {
         result = SufficientlyConfigured;
@@ -1538,9 +1662,13 @@ cleanup:
 
 static void DoKrb5(JoinProcessOptions *options, LWException **exc)
 {
-    LW_CLEANUP_CTERR(exc, DJModifyKrb5Conf(NULL, options->joiningDomain,
-        options->domainName,
-        options->shortDomainName, NULL));
+    LW_CLEANUP_CTERR(exc, DJModifyKrb5Conf(
+                            NULL,
+                            options->joiningDomain,
+                            options->domainName,
+                            options->shortDomainName,
+                            options,
+                            NULL));
 cleanup:
     ;
 }
@@ -1566,9 +1694,13 @@ static PSTR GetKrb5Description(const JoinProcessOptions *options, LWException **
         //Ignore failures from this command
         DJGuessShortDomainName(options->domainName, &shortName, NULL);
     }
-    LW_CLEANUP_CTERR(exc, DJModifyKrb5Conf(tempDir, options->joiningDomain,
-        options->domainName,
-        shortName, &modified));
+    LW_CLEANUP_CTERR(exc, DJModifyKrb5Conf(
+                            tempDir,
+                            options->joiningDomain,
+                            options->domainName,
+                            shortName,
+                            options,
+                            &modified));
 
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
             &finalPath, "%s%s", tempDir, "/etc/krb5.conf"));
