@@ -85,6 +85,7 @@ LWNetOpenServerOnce(
                                   LWMSG_CONNECTION_MODE_LOCAL,
                                   LWNET_CACHE_DIR "/" LWNET_SERVER_FILENAME));
 
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_connect(gContext.pClient, &gContext.pSession));
     BAIL_ON_LWNET_ERROR(dwError);
 
 cleanup:

@@ -56,6 +56,7 @@ typedef struct __LWNET_CLIENT_CONNECTION_CONTEXT
 {
     LWMsgProtocol* pProtocol;
     LWMsgPeer* pClient;
+    LWMsgSession* pSession;
 } LWNET_CLIENT_CONNECTION_CONTEXT, *PLWNET_CLIENT_CONNECTION_CONTEXT;
 
 DWORD
