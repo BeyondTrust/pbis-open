@@ -97,7 +97,12 @@ NtRegOpenServerInitialize(
         
         status = MAP_LWMSG_ERROR(lwmsg_peer_add_connect_endpoint(
                                      gContext.pClient,
-                                     LWMSG_CONNECTION_MODE_LOCAL,
+                                     LWMSG_ENDPOINT_DIRECT,
+                                     "lwreg"));
+
+        status = MAP_LWMSG_ERROR(lwmsg_peer_add_connect_endpoint(
+                                     gContext.pClient,
+                                     LWMSG_ENDPOINT_LOCAL,
                                      CACHEDIR "/" REG_SERVER_FILENAME));
         BAIL_ON_NT_STATUS(status);
     }
