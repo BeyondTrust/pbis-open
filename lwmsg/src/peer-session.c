@@ -26,18 +26,19 @@
 /*
  * Module Name:
  *
- *        session-shared.c
+ *        peer-session.c
  *
  * Abstract:
  *
  *        Session management API
- *        Shared (thread-safe) session manager implementation
+ *        Peer session manager implementation
  *
  * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
  *
  */
 #include <config.h>
 #include "session-private.h"
+#include "peer-private.h"
 #include "util-private.h"
 
 #include <stdlib.h>
@@ -46,13 +47,13 @@
 #include <pthread.h>
 #include <limits.h>
 
-typedef struct SharedHandleKey
+typedef struct PeerHandleKey
 {
     LWMsgHandleType type;
     LWMsgHandleID id;
-} SharedHandleKey;
+} PeerHandleKey;
 
-typedef struct SharedSession
+typedef struct PeerSession
 {
     LWMsgSession base;
     /* Session identifier */
@@ -69,14 +70,14 @@ typedef struct SharedSession
     unsigned long volatile next_hid;
     /* User data pointer */
     void* data;
-    /* Link in hash table by rsmid */
-    LWMsgRing ring;
-} SharedSession;
+    /* Owning peer */
+    LWMsgPeer* peer;
+} PeerSession;
 
 struct LWMsgHandle
 {
     /* Key */
-    SharedHandleKey key;
+    PeerHandleKey key;
     /* Validity bit */
     LWMsgBool volatile valid;
     /* Reference count */
@@ -91,59 +92,11 @@ struct LWMsgHandle
     LWMsgRing id_ring;
 };
 
-typedef struct SharedManager
-{
-    LWMsgSessionManager base;
-    LWMsgHashTable sessions;
-    LWMsgSessionConstructFunction construct;
-    LWMsgSessionDestructFunction destruct;
-    void* construct_data;
-    pthread_mutex_t lock;
-} SharedManager;
-
-#define SHARED_MANAGER(obj) ((SharedManager*) (obj))
-#define SHARED_SESSION(obj) ((SharedSession*) (obj))
+#define SHARED_SESSION(obj) ((PeerSession*) (obj))
 
 static
 void*
-shared_session_get_key(
-    const void* entry
-    )
-{
-    return &((SharedSession*) entry)->id.connect;
-}
-
-static
-size_t
-shared_session_digest(
-    const void* key
-    )
-{
-    const LWMsgSessionCookie* cookie = key;
-    size_t hash = 0;
-    int i = 0;
-
-    for (i = 0; i < sizeof(cookie->bytes); i++)
-    {
-        hash = hash * 31 + cookie->bytes[i];
-    }
-
-    return hash;
-}
-
-static
-LWMsgBool
-shared_session_equal(
-    const void* key1,
-    const void* key2
-    )
-{
-    return memcmp(key1, key2, sizeof(LWMsgSessionCookie)) == 0;
-}
-
-static
-void*
-shared_handle_get_key_id(
+peer_handle_get_key_id(
     const void* entry
     )
 {
@@ -152,52 +105,34 @@ shared_handle_get_key_id(
 
 static
 size_t
-shared_handle_digest_id(
+peer_handle_digest_id(
     const void* key
     )
 {
-    const SharedHandleKey* hkey = key;
+    const PeerHandleKey* hkey = key;
 
     return hkey->type == LWMSG_HANDLE_LOCAL ? hkey->id : ~hkey->id;
 }
 
 static
 LWMsgBool
-shared_handle_equal_id(
+peer_handle_equal_id(
     const void* key1,
     const void* key2
     )
 {
-    const SharedHandleKey* hkey1 = key1;
-    const SharedHandleKey* hkey2 = key2;
+    const PeerHandleKey* hkey1 = key1;
+    const PeerHandleKey* hkey2 = key2;
 
     return 
         hkey1->type == hkey2->type &&
         hkey1->id == hkey2->id;
 }
 
-static inline
-void
-shared_lock(
-    SharedManager* priv
-    )
-{
-    pthread_mutex_lock(&priv->lock);
-}
-
-static inline
-void
-shared_unlock(
-    SharedManager* priv
-    )
-{
-    pthread_mutex_unlock(&priv->lock);
-}
-
 static inline 
 void
 session_lock(
-    SharedSession* session
+    PeerSession* session
     )
 {
     pthread_mutex_lock(&session->lock);
@@ -206,15 +141,15 @@ session_lock(
 static inline
 void
 session_unlock(
-    SharedSession* session
+    PeerSession* session
     )
 {
     pthread_mutex_unlock(&session->lock);
 }
 
 static void
-shared_free_handle(
-    SharedSession* session,
+peer_free_handle(
+    PeerSession* session,
     LWMsgHandle* entry
     )
 {
@@ -230,8 +165,8 @@ shared_free_handle(
 
 static
 LWMsgStatus
-shared_add_handle(
-    SharedSession* session,
+peer_add_handle(
+    PeerSession* session,
     const char* type,
     LWMsgHandleType locality,
     void* pointer,
@@ -242,7 +177,7 @@ shared_add_handle(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgHandle* handle = NULL;
-    SharedSession* my_session = SHARED_SESSION(session);
+    PeerSession* my_session = SHARED_SESSION(session);
 
     BAIL_ON_ERROR(status = LWMSG_ALLOC(&handle));
 
@@ -266,39 +201,26 @@ error:
 }
 
 static
-SharedSession*
-shared_find_session(
-    SharedManager* priv,
-    const LWMsgSessionCookie* cookie
-    )
-{
-    return lwmsg_hash_find_key(&priv->sessions, cookie);
-}
-
-static
 void
-shared_free_session(
-    SharedManager* manager,
-    SharedSession* session
+peer_free_session(
+    PeerSession* session
     )
 {
     LWMsgHandle* handle = NULL;
     LWMsgHashIter iter = {0};
 
-    lwmsg_hash_remove_entry(&manager->sessions, session);
-
     lwmsg_hash_iter_begin(&session->handle_by_id, &iter);
     while ((handle = lwmsg_hash_iter_next(&session->handle_by_id, &iter)))
     {
-        shared_free_handle(session, handle);
+        peer_free_handle(session, handle);
     }
     lwmsg_hash_iter_end(&session->handle_by_id, &iter);
 
     lwmsg_hash_destroy(&session->handle_by_id);
 
-    if (manager->destruct && session->data)
+    if (session->peer->session_destruct && session->data)
     {
-        manager->destruct(session->sec_token, session->data);
+        session->peer->session_destruct(session->sec_token, session->data);
     }
 
     if (session->sec_token)
@@ -312,9 +234,8 @@ shared_free_session(
 
 static
 void
-shared_reset_session(
-    SharedManager* manager,
-    SharedSession* session
+peer_reset_session(
+    PeerSession* session
     )
 {
     LWMsgHandle* handle = NULL;
@@ -333,161 +254,38 @@ shared_reset_session(
 }
 
 static
-void
-shared_delete(
-    LWMsgSessionManager* manager
-    )
-{
-    SharedManager* priv = SHARED_MANAGER(manager);
-    LWMsgHashIter iter = {0};
-    SharedSession* entry = NULL;
-
-    lwmsg_hash_iter_begin(&priv->sessions, &iter);
-    while ((entry = lwmsg_hash_iter_next(&priv->sessions, &iter)))
-    {
-        shared_free_session(priv, entry);
-    }
-    lwmsg_hash_iter_end(&priv->sessions, &iter);
-
-    lwmsg_hash_destroy(&priv->sessions);
-
-    pthread_mutex_destroy(&priv->lock);
-
-    free(priv);
-}
-
-static
 LWMsgStatus
-shared_create(
-    LWMsgSessionManager* manager,
-    LWMsgSession** out_session
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    SharedManager* priv = SHARED_MANAGER(manager);
-    SharedSession* session = NULL;
-
-    shared_lock(priv);
-
-    session = calloc(1, sizeof(*session));
-    if (!session)
-    {
-        BAIL_ON_ERROR(status = LWMSG_STATUS_MEMORY);
-    }
-
-    session->base.manager = manager;
-    
-    lwmsg_ring_init(&session->ring);
- 
-    BAIL_ON_ERROR(status = lwmsg_hash_init(
-                      &session->handle_by_id,
-                      31,
-                      shared_handle_get_key_id,
-                      shared_handle_digest_id,
-                      shared_handle_equal_id,
-                      offsetof(LWMsgHandle, id_ring)));
-    
-    lwmsg_session_generate_cookie(&session->id.connect);
-    
-    session->refs = 1;
-        
-    *out_session = LWMSG_SESSION(session);
-
-done:
-
-    shared_unlock(priv);
-
-    return status;    
-
-error:
-
-    if (session)
-    {
-        shared_free_session(priv, session);
-    }
-
-    goto done;
-}
-
-static
-LWMsgStatus
-shared_accept(
-    LWMsgSessionManager* manager,
+peer_accept(
+    LWMsgSession* session,
     const LWMsgSessionCookie* connect,
-    LWMsgSecurityToken* token,
-    LWMsgSession** out_session
+    LWMsgSecurityToken* token
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    SharedManager* priv = SHARED_MANAGER(manager);
-    SharedSession* session = NULL;
+    PeerSession* my_session = SHARED_SESSION(session);
 
-    shared_lock(priv);
-
-    session = shared_find_session(priv, connect);
-
-    if (session)
+    if (my_session->peer->session_construct)
     {
-        if (!session->sec_token || !lwmsg_security_token_can_access(session->sec_token, token))
-        {
-            session = NULL;
-            BAIL_ON_ERROR(status = LWMSG_STATUS_SECURITY);
-        }
-
-        session->refs++;
-        lwmsg_security_token_delete(token);
-    }
-    else
-    {
-        session = calloc(1, sizeof(*session));
-        if (!session)
-        {
-            BAIL_ON_ERROR(status = LWMSG_STATUS_MEMORY);
-        }
-
-        session->base.manager = manager;
-
-        lwmsg_ring_init(&session->ring);
- 
-        BAIL_ON_ERROR(status = lwmsg_hash_init(
-                          &session->handle_by_id,
-                          31,
-                          shared_handle_get_key_id,
-                          shared_handle_digest_id,
-                          shared_handle_equal_id,
-                          offsetof(LWMsgHandle, id_ring)));
-
-        memcpy(session->id.connect.bytes, connect->bytes, sizeof(connect->bytes));
-        lwmsg_session_generate_cookie(&session->id.accept);
-
-        session->refs = 1;
-
-        if (priv->construct)
-        {
-            BAIL_ON_ERROR(status = priv->construct(
-                              token,
-                              priv->construct_data,
-                              &session->data));
-        }
-
-        session->sec_token = token;
-        
-        lwmsg_hash_insert_entry(&priv->sessions, session);
+        BAIL_ON_ERROR(status = my_session->peer->session_construct(
+            token,
+            my_session->peer->session_construct_data,
+            &my_session->data));
     }
 
-    *out_session = LWMSG_SESSION(session);
+    my_session->sec_token = token;
+    my_session->refs++;
+    memcpy(my_session->id.connect.bytes, connect->bytes, sizeof(connect->bytes));
+    lwmsg_session_generate_cookie(&my_session->id.accept);
 
 done:
-
-    shared_unlock(priv);
 
     return status;    
 
 error:
 
-    if (session)
+    if (my_session)
     {
-        shared_free_session(priv, session);
+        peer_free_session(my_session);
     }
 
     goto done;
@@ -495,14 +293,14 @@ error:
 
 static
 LWMsgStatus
-shared_connect(
+peer_connect(
     LWMsgSession* session,
     const LWMsgSessionCookie* accept,
     LWMsgSecurityToken* token
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    SharedSession* ssession = SHARED_SESSION(session);
+    PeerSession* ssession = SHARED_SESSION(session);
 
     session_lock(ssession);
 
@@ -519,7 +317,7 @@ shared_connect(
             lwmsg_hash_get_count(&ssession->handle_by_id) > 0)
         {
             /* Reset the session */
-            shared_reset_session(SHARED_MANAGER(session->manager), ssession);
+            peer_reset_session(ssession);
         }
 
         lwmsg_security_token_delete(token);
@@ -548,45 +346,40 @@ error:
 
 static
 void
-shared_release(
+peer_release(
     LWMsgSession* session
     )
 {
-    SharedManager* priv = SHARED_MANAGER(session->manager);
-    SharedSession* my_session = SHARED_SESSION(session);
-
-    shared_lock(priv);
+    PeerSession* my_session = SHARED_SESSION(session);
 
     my_session->refs--;
 
     if (my_session->refs == 0)
     {
-        shared_free_session(priv, my_session);
+        peer_free_session(my_session);
     }
-
-    shared_unlock(priv);
 }
 
 static
 LWMsgSecurityToken*
-shared_get_peer_security_token (
+peer_get_peer_security_token (
     LWMsgSession* session
     )
 {
-    SharedSession* my_session = SHARED_SESSION(session);
+    PeerSession* my_session = SHARED_SESSION(session);
 
     return my_session->sec_token;
 }
 
 static
 LWMsgHandle*
-shared_find_handle_by_id(
-    SharedSession* session,
+peer_find_handle_by_id(
+    PeerSession* session,
     LWMsgHandleType type,
     LWMsgHandleID id
     )
 {
-    SharedHandleKey key = {0};
+    PeerHandleKey key = {0};
 
     key.type = type;
     key.id = id;
@@ -596,7 +389,7 @@ shared_find_handle_by_id(
 
 static
 LWMsgStatus
-shared_register_handle_remote(
+peer_register_handle_remote(
     LWMsgSession* session,
     const char* type,
     LWMsgHandleID hid,
@@ -605,11 +398,11 @@ shared_register_handle_remote(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgHandle* my_handle = NULL;
-    SharedSession* my_session = SHARED_SESSION(session);
+    PeerSession* my_session = SHARED_SESSION(session);
 
     session_lock(my_session);
 
-    BAIL_ON_ERROR(status = shared_add_handle(
+    BAIL_ON_ERROR(status = peer_add_handle(
                       my_session,
                       type,
                       LWMSG_HANDLE_REMOTE,
@@ -632,7 +425,7 @@ error:
 
 static
 LWMsgStatus
-shared_register_handle_local(
+peer_register_handle_local(
     LWMsgSession* session,
     const char* type,
     void* data,
@@ -642,8 +435,8 @@ shared_register_handle_local(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgHandle* my_handle = NULL;
-    SharedSession* my_session = SHARED_SESSION(session);
-    SharedHandleKey key = {0};
+    PeerSession* my_session = SHARED_SESSION(session);
+    PeerHandleKey key = {0};
 
     if (!data)
     {
@@ -663,7 +456,7 @@ shared_register_handle_local(
         key.id = my_session->next_hid++;
     } while (lwmsg_hash_find_key(&my_session->handle_by_id, &key));
 
-    BAIL_ON_ERROR(status = shared_add_handle(
+    BAIL_ON_ERROR(status = peer_add_handle(
                       my_session,
                       type,
                       LWMSG_HANDLE_LOCAL,
@@ -686,12 +479,12 @@ error:
 
 static
 void
-shared_retain_handle(
+peer_retain_handle(
     LWMsgSession* session,
     LWMsgHandle* handle
     )
 {
-    SharedSession* my_session = SHARED_SESSION(session);
+    PeerSession* my_session = SHARED_SESSION(session);
 
     session_lock(my_session);
 
@@ -702,18 +495,18 @@ shared_retain_handle(
 
 static
 void
-shared_release_handle(
+peer_release_handle(
     LWMsgSession* session,
     LWMsgHandle* handle
     )
 {
-    SharedSession* my_session = SHARED_SESSION(session);
+    PeerSession* my_session = SHARED_SESSION(session);
 
     session_lock(my_session);
 
     if (--handle->refs == 0)
     {
-        shared_free_handle(my_session, handle);
+        peer_free_handle(my_session, handle);
     }
 
     session_unlock(my_session);
@@ -721,13 +514,13 @@ shared_release_handle(
 
 static
 LWMsgStatus
-shared_unregister_handle(
+peer_unregister_handle(
     LWMsgSession* session,
     LWMsgHandle* handle
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    SharedSession* my_session = SHARED_SESSION(session);
+    PeerSession* my_session = SHARED_SESSION(session);
 
     session_lock(my_session);
 
@@ -740,7 +533,7 @@ shared_unregister_handle(
 
     if (--handle->refs == 0)
     {
-        shared_free_handle(my_session, handle);
+        peer_free_handle(my_session, handle);
     }
 
 done:
@@ -756,7 +549,7 @@ error:
 
 static
 LWMsgStatus
-shared_resolve_handle_to_id(
+peer_resolve_handle_to_id(
     LWMsgSession* session,
     LWMsgHandle* handle,
     const char** type,
@@ -765,7 +558,7 @@ shared_resolve_handle_to_id(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    SharedSession* my_session = SHARED_SESSION(session);
+    PeerSession* my_session = SHARED_SESSION(session);
 
     if (!handle)
     {
@@ -807,7 +600,7 @@ error:
 
 static
 LWMsgStatus
-shared_resolve_id_to_handle(
+peer_resolve_id_to_handle(
     LWMsgSession* session,
     const char* type,
     LWMsgHandleType htype,
@@ -817,11 +610,11 @@ shared_resolve_id_to_handle(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgHandle* my_handle = NULL;
-    SharedSession* my_session = SHARED_SESSION(session);
+    PeerSession* my_session = SHARED_SESSION(session);
 
     session_lock(my_session);
 
-    my_handle = shared_find_handle_by_id(my_session, htype, hid);
+    my_handle = peer_find_handle_by_id(my_session, htype, hid);
 
     if (!my_handle)
     {
@@ -849,14 +642,14 @@ error:
 
 static
 LWMsgStatus
-shared_get_handle_data(
+peer_get_handle_data(
     LWMsgSession* session,
     LWMsgHandle* handle,
     void** data
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    SharedSession* my_session = SHARED_SESSION(session);
+    PeerSession* my_session = SHARED_SESSION(session);
 
     session_lock(my_session);
 
@@ -883,12 +676,12 @@ error:
 
 static
 void*
-shared_get_data (
+peer_get_data (
     LWMsgSession* session
     )
 {
     void* data = NULL;
-    SharedSession* my_session = SHARED_SESSION(session);
+    PeerSession* my_session = SHARED_SESSION(session);
 
     session_lock(my_session);
 
@@ -901,7 +694,7 @@ shared_get_data (
 
 static
 const LWMsgSessionID*
-shared_get_id(
+peer_get_id(
     LWMsgSession* session
     )
 {
@@ -910,12 +703,12 @@ shared_get_id(
 
 static
 size_t
-shared_get_assoc_count(
+peer_get_assoc_count(
     LWMsgSession* session
     )
 {
     size_t refs;
-    SharedSession* my_session = SHARED_SESSION(session);
+    PeerSession* my_session = SHARED_SESSION(session);
 
     session_lock(my_session);
     refs = my_session->refs;
@@ -925,12 +718,12 @@ shared_get_assoc_count(
 
 static
 size_t
-shared_get_handle_count(
+peer_get_handle_count(
     LWMsgSession* session
     )
 {
     size_t handles;
-    SharedSession* my_session = SHARED_SESSION(session);
+    PeerSession* my_session = SHARED_SESSION(session);
 
     session_lock(my_session);
     handles = lwmsg_hash_get_count(&my_session->handle_by_id);
@@ -938,58 +731,53 @@ shared_get_handle_count(
     return handles;
 }
 
-static LWMsgSessionManagerClass shared_class = 
+static LWMsgSessionClass peer_class =
 {
-    .delete = shared_delete,
-    .create = shared_create,
-    .accept = shared_accept,
-    .connect = shared_connect,
-    .release = shared_release,
-    .register_handle_local = shared_register_handle_local,
-    .register_handle_remote = shared_register_handle_remote,
-    .retain_handle = shared_retain_handle,
-    .release_handle = shared_release_handle,
-    .unregister_handle = shared_unregister_handle,
-    .resolve_handle_to_id = shared_resolve_handle_to_id,
-    .resolve_id_to_handle = shared_resolve_id_to_handle,
-    .get_handle_data = shared_get_handle_data,
-    .get_data = shared_get_data,
-    .get_id = shared_get_id,
-    .get_assoc_count = shared_get_assoc_count,
-    .get_handle_count = shared_get_handle_count,
-    .get_peer_security_token = shared_get_peer_security_token
+    .accept = peer_accept,
+    .connect = peer_connect,
+    .release = peer_release,
+    .register_handle_local = peer_register_handle_local,
+    .register_handle_remote = peer_register_handle_remote,
+    .retain_handle = peer_retain_handle,
+    .release_handle = peer_release_handle,
+    .unregister_handle = peer_unregister_handle,
+    .resolve_handle_to_id = peer_resolve_handle_to_id,
+    .resolve_id_to_handle = peer_resolve_id_to_handle,
+    .get_handle_data = peer_get_handle_data,
+    .get_data = peer_get_data,
+    .get_id = peer_get_id,
+    .get_assoc_count = peer_get_assoc_count,
+    .get_handle_count = peer_get_handle_count,
+    .get_peer_security_token = peer_get_peer_security_token
 };
-                                         
+
 LWMsgStatus
-lwmsg_shared_session_manager_new(
-    LWMsgSessionConstructFunction construct,
-    LWMsgSessionDestructFunction destruct,
-    void* construct_data,
-    LWMsgSessionManager** manager
+lwmsg_peer_session_new(
+    LWMsgPeer* peer,
+    LWMsgSession** out_session
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    SharedManager* my_manager = NULL;
-    
-    BAIL_ON_ERROR(status = LWMSG_ALLOC(&my_manager));
+    PeerSession* session = NULL;
 
-    my_manager->construct = construct;
-    my_manager->destruct = destruct;
-    my_manager->construct_data = construct_data;
+    BAIL_ON_ERROR(status = LWMSG_ALLOC(&session));
+
+    session->base.sclass = &peer_class;
+    session->peer = peer;
 
     BAIL_ON_ERROR(status = lwmsg_hash_init(
-                      &my_manager->sessions,
+                      &session->handle_by_id,
                       31,
-                      shared_session_get_key,
-                      shared_session_digest,
-                      shared_session_equal,
-                      offsetof(SharedSession, ring)));
+                      peer_handle_get_key_id,
+                      peer_handle_digest_id,
+                      peer_handle_equal_id,
+                      offsetof(LWMsgHandle, id_ring)));
 
-    BAIL_ON_ERROR(status = lwmsg_session_manager_init(&my_manager->base, &shared_class));
+    lwmsg_session_generate_cookie(&session->id.connect);
 
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(pthread_mutex_init(&my_manager->lock, NULL)));
+    session->refs = 1;
 
-    *manager = LWMSG_SESSION_MANAGER(my_manager);
+    *out_session = LWMSG_SESSION(session);
 
 done:
 
@@ -997,9 +785,9 @@ done:
 
 error:
 
-    if (my_manager)
+    if (session)
     {
-        free(my_manager);
+        peer_free_session(session);
     }
 
     goto done;

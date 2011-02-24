@@ -62,6 +62,7 @@ src_liblwmsg_nothr_la_SOURCES = \
 	src/assoc.c \
 	src/assoc-marshal.c \
 	src/assoc-call.c \
+	src/assoc-session.c \
 	src/call.c \
 	src/convert.c \
 	src/connection.c \
@@ -89,7 +90,6 @@ src_liblwmsg_nothr_la_SOURCES = \
 	src/security.c \
 	src/mt19937ar.c \
 	src/session.c \
-	src/session-default.c \
 	src/archive.c \
 	src/archive-format.c
 
@@ -100,7 +100,7 @@ src_liblwmsg_la_SOURCES = \
 	src/peer.c \
 	src/peer-task.c \
 	src/peer-call.c \
-	src/session-shared.c
+	src/peer-session.c
 
 src_liblwmsg_la_LIBADD = src/liblwmsg_nothr.la @LIB_PTHREAD@ -llwbase
 src_liblwmsg_la_LDFLAGS = $(AM_LDFLAGS) -export-symbols $(top_srcdir)/src/liblwmsg.sym
@@ -121,7 +121,6 @@ TEST_SOURCES = \
 	test/test-convert.c \
 	test/test-marshal.c \
 	test/test-assoc.c \
-	test/test-session.c \
 	test/test-client-server.c \
 	test/test-async.c \
 	test/test-archive.c \

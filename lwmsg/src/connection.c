@@ -102,11 +102,6 @@ lwmsg_connection_destruct(
         lwmsg_session_release(priv->default_session);
     }
 
-    if (priv->default_manager)
-    {
-        lwmsg_session_manager_delete(priv->default_manager);
-    }
-    
     if (priv->marshal_context)
     {
         lwmsg_data_context_delete(priv->marshal_context);
@@ -360,26 +355,15 @@ lwmsg_connection_connect(
 
     if (!session)
     {
-        if (!priv->default_manager)
-        {
-            BAIL_ON_ERROR(status = lwmsg_default_session_manager_new(
-                              NULL,
-                              NULL,
-                              NULL,
-                              &priv->default_manager));
-        }
-
         if (!priv->default_session)
         {
-            BAIL_ON_ERROR(status = lwmsg_session_create(
-                              priv->default_manager,
-                              &priv->default_session));
+            BAIL_ON_ERROR(status = lwmsg_assoc_session_new(&priv->default_session));
         }
 
         session = priv->default_session;
     }
 
-    priv->params.connect.session = session;
+    priv->params.establish.session = session;
 
     BAIL_ON_ERROR(status = lwmsg_connection_run(assoc, CONNECTION_EVENT_CONNECT));
 
@@ -392,29 +376,23 @@ static
 LWMsgStatus
 lwmsg_connection_accept(
     LWMsgAssoc* assoc,
-    LWMsgSessionManager* manager,
-    LWMsgSession** session
+    LWMsgSession* session
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     ConnectionPrivate* priv = CONNECTION_PRIVATE(assoc);
 
-    if (!manager)
+    if (!session)
     {
-        if (!priv->default_manager)
+        if (!priv->default_session)
         {
-            BAIL_ON_ERROR(status = lwmsg_default_session_manager_new(
-                              NULL,
-                              NULL,
-                              NULL,
-                              &priv->default_manager));
+            BAIL_ON_ERROR(status = lwmsg_assoc_session_new(&priv->default_session));
         }
 
-        manager = priv->default_manager;
+        session = priv->default_session;
     }
 
-    priv->params.accept.manager = manager;
-    priv->params.accept.session = session;
+    priv->params.establish.session = session;
     
     BAIL_ON_ERROR(status = lwmsg_connection_run(assoc, CONNECTION_EVENT_ACCEPT));
 

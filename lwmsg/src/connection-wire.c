@@ -1098,8 +1098,7 @@ lwmsg_connection_begin_recv_connect(
 LWMsgStatus
 lwmsg_connection_finish_recv_connect(
     LWMsgAssoc* assoc,
-    LWMsgSessionManager* manager,
-    LWMsgSession** session
+    LWMsgSession* session
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
@@ -1177,12 +1176,10 @@ lwmsg_connection_finish_recv_connect(
     }
 
     /* Accept client into a session */
-    BAIL_ON_ERROR(status = lwmsg_session_accept(
-                      manager,
+    BAIL_ON_ERROR(status = session->sclass->accept(
+                      session,
                       (const LWMsgSessionCookie*) packet->contents.greeting.cookie,
-                      token,
-                      session));
-
+                      token));
     token = NULL;
 
     /* Reconstruct buffers in case our packet size changed */
@@ -1411,7 +1408,7 @@ lwmsg_connection_finish_recv_accept(
     }
 
     /* Connect the session */
-    BAIL_ON_ERROR(status = lwmsg_session_connect(
+    BAIL_ON_ERROR(status = session->sclass->connect(
                       session,
                       (const LWMsgSessionCookie*) packet->contents.greeting.cookie,
                       token));

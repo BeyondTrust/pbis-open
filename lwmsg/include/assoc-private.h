@@ -194,8 +194,7 @@ typedef struct LWMsgAssocClass
     LWMsgStatus
     (*accept_peer)(
         LWMsgAssoc* assoc,
-        LWMsgSessionManager* manager,
-        LWMsgSession** session
+        LWMsgSession* session
         );
 } LWMsgAssocClass;
 
@@ -244,6 +243,11 @@ lwmsg_assoc_new(
 LWMsgStatus
 lwmsg_assoc_call_init(
     AssocCall* call
+    );
+
+LWMsgStatus
+lwmsg_assoc_session_new(
+    LWMsgSession** out_session
     );
 
 #endif

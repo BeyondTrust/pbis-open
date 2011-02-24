@@ -86,7 +86,7 @@ lwmsg_assoc_marshal_handle(
     
     if (handle != NULL)
     {
-        status = session->manager->mclass->resolve_handle_to_id(
+        status = session->sclass->resolve_handle_to_id(
             session,
             handle,
             &type,
@@ -213,7 +213,7 @@ lwmsg_assoc_unmarshal_handle(
         }
 
         /* Look up the handle */
-        status = session->manager->mclass->resolve_id_to_handle(
+        status = session->sclass->resolve_id_to_handle(
             session,
             (const char*) data,
             location,
@@ -226,7 +226,7 @@ lwmsg_assoc_unmarshal_handle(
             if (location == LWMSG_HANDLE_REMOTE)
             {
                 /* Implicitly register handle seen from the peer for the first time */
-                BAIL_ON_ERROR(status = session->manager->mclass->register_handle_remote(
+                BAIL_ON_ERROR(status = session->sclass->register_handle_remote(
                                   session,
                                   (const char*) data,
                                   transmit->data.local_id,
@@ -321,7 +321,7 @@ lwmsg_assoc_print_handle(
 
     if (handle != NULL)
     {
-        status = session->manager->mclass->resolve_handle_to_id(
+        status = session->sclass->resolve_handle_to_id(
             session,
             handle,
             &type,

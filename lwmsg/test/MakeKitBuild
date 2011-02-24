@@ -5,7 +5,6 @@ make()
         test-convert.c \
         test-marshal.c \
         test-assoc.c \
-        test-session.c \
         test-client-server.c \
         test-async.c \
         test-archive.c \

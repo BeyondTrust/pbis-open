@@ -161,12 +161,7 @@ typedef struct ConnectionPrivate
         struct
         {
             LWMsgSession* session;
-        } connect;
-        struct
-        {
-            LWMsgSessionManager* manager;
-            LWMsgSession** session;
-        } accept;
+        } establish;
     } params;
 
     /* Timeouts (relative) */
@@ -187,8 +182,6 @@ typedef struct ConnectionPrivate
     unsigned is_nonblock:1;
     /* Marshal handle */
     LWMsgDataContext* marshal_context;
-    /* Default session manager */
-    LWMsgSessionManager* default_manager;
     /* Default session */
     LWMsgSession* default_session;
 } ConnectionPrivate;
@@ -394,8 +387,7 @@ lwmsg_connection_begin_recv_connect(
 LWMsgStatus
 lwmsg_connection_finish_recv_connect(
     LWMsgAssoc* assoc,
-    LWMsgSessionManager* manager,
-    LWMsgSession** session
+    LWMsgSession* session
     );
 
 LWMsgStatus

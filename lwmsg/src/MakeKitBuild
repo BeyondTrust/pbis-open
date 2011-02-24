@@ -5,6 +5,7 @@ make()
     LWMSG_NOTHR_SOURCES="\
         assoc.c \
         assoc-marshal.c \
+        assoc-session.c \
         assoc-call.c \
         call.c \
         convert.c \
@@ -33,7 +34,6 @@ make()
         security.c \
         mt19937ar.c \
         session.c \
-        session-default.c \
         archive.c \
         archive-format.c"
 
@@ -41,7 +41,7 @@ make()
         peer.c \
         peer-task.c \
         peer-call.c \
-        session-shared.c"
+        peer-session.c"
 
     mk_multiarch_do
         mk_library \

@@ -464,14 +464,12 @@ lwmsg_assoc_connect(
  * @brief Accept connection from peer on assocation
  *
  * Accepts a connection from a peer on the given association.  The peer should call
- * #lwmsg_assoc_connect() to initiate the connection.  An existing session manager can be
- * passed in the <tt>manager</tt> parameter.  This session manager will be used to find
- * a session for the connecting peer.  If one is not specified explicitly, the association
- * will fall back on a default session manager.
+ * #lwmsg_assoc_connect() to initiate the connection.  An existing session can be
+ * passed as the <tt>session</tt> parameter.  Otherwise, the association will create
+ * one automatically.
  *
  * @param[in,out] assoc the association
- * @param[in,out] manager (optional) a session manager to use to find a session for the connecting peer
- * @param[out] session (optional) the session for the accepted peer
+ * @param[in,out] session (optional) an existing session to use
  * @lwmsg_status
  * @lwmsg_success
  * @lwmsg_memory
@@ -481,8 +479,7 @@ lwmsg_assoc_connect(
 LWMsgStatus
 lwmsg_assoc_accept(
     LWMsgAssoc* assoc,
-    LWMsgSessionManager* manager,
-    LWMsgSession** session
+    LWMsgSession* session
     );
  
 /**

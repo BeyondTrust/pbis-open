@@ -62,8 +62,6 @@
 
 /*@{*/
 
-typedef struct LWMsgSessionManager LWMsgSessionManager;
-
 /**
  * @brief A session
  *

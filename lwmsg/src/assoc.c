@@ -315,11 +315,10 @@ lwmsg_assoc_connect(
 LWMsgStatus
 lwmsg_assoc_accept(
     LWMsgAssoc* assoc,
-    LWMsgSessionManager* manager,
-    LWMsgSession** session
+    LWMsgSession* session
     )
 {
-    return assoc->aclass->accept_peer(assoc, manager, session);
+    return assoc->aclass->accept_peer(assoc, session);
 }
 
 LWMsgStatus

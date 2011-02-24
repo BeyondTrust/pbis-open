@@ -80,7 +80,7 @@ lwmsg_test_assoc_thread(
     }
     else
     {
-        MU_TRY_ASSOC(info->assoc, lwmsg_assoc_accept(info->assoc, NULL, NULL));
+        MU_TRY_ASSOC(info->assoc, lwmsg_assoc_accept(info->assoc, NULL));
     }
 
     info->func(info->assoc);

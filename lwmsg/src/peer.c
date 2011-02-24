@@ -178,11 +178,6 @@ lwmsg_peer_delete(
         lwmsg_session_release(peer->connect_session);
     }
 
-    if (peer->session_manager)
-    {
-        lwmsg_session_manager_delete(peer->session_manager);
-    }
-    
     if (peer->lock_init)
     {
         pthread_mutex_destroy(&peer->lock);
@@ -461,15 +456,6 @@ lwmsg_peer_startup(
     PeerEndpoint* endpoint = NULL;
     PeerListenTask* task = NULL;
     char* message = NULL;
-
-    if (!peer->session_manager)
-    {
-        BAIL_ON_ERROR(status = lwmsg_shared_session_manager_new(
-                          peer->session_construct,
-                          peer->session_destruct,
-                          peer->session_construct_data,
-                          &peer->session_manager));
-    }
 
     BAIL_ON_ERROR(status = lwmsg_task_group_new(peer->task_manager, &peer->listen_tasks));
 
@@ -939,19 +925,10 @@ lwmsg_peer_try_connect(
     LWMsgRing* ring = NULL;
     PeerEndpoint* endpoint = NULL;
 
-    if (!peer->session_manager)
-    {
-        BAIL_ON_ERROR(status = lwmsg_shared_session_manager_new(
-                          peer->session_construct,
-                          peer->session_destruct,
-                          peer->session_construct_data,
-                          &peer->session_manager));
-    }
-    
     if (!peer->connect_session)
     {
-        BAIL_ON_ERROR(status = lwmsg_session_create(
-                          peer->session_manager,
+        BAIL_ON_ERROR(status = lwmsg_peer_session_new(
+                          peer,
                           &peer->connect_session));
     }
 

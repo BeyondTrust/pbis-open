@@ -93,7 +93,7 @@ empty_receiver(void* _assoc)
     LWMsgMessage request_msg = LWMSG_MESSAGE_INITIALIZER;
     LWMsgMessage reply_msg = LWMSG_MESSAGE_INITIALIZER;
 
-    MU_TRY_ASSOC(assoc, lwmsg_assoc_accept(assoc, NULL, NULL));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_accept(assoc, NULL));
     
     MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &request_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, request_msg.tag, EMPTY_REQUEST);
@@ -258,7 +258,7 @@ foo_receiver(void* _assoc)
     FooReply* reply;
     size_t i;
     
-    MU_TRY_ASSOC(assoc, lwmsg_assoc_accept(assoc, NULL, NULL));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_accept(assoc, NULL));
 
     MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &request_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, request_msg.tag, FOO_REQUEST);
@@ -575,7 +575,9 @@ auth_receiver(void* _assoc)
     LWMsgSecurityToken* token;
     LWMsgSession* session = NULL;
     
-    MU_TRY_ASSOC(assoc, lwmsg_assoc_accept(assoc, NULL, &session));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_accept(assoc, NULL));
+
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_get_session(assoc, &session));
 
     MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &request_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, request_msg.tag, AUTH_REQUEST);
@@ -965,7 +967,7 @@ handle_receiver(void* _assoc)
     LWMsgMessage send_message = LWMSG_MESSAGE_INITIALIZER;
     size_t i;
 
-    MU_TRY_ASSOC(assoc, lwmsg_assoc_accept(assoc, NULL, NULL));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_accept(assoc, NULL));
 
     do
     {
@@ -1151,7 +1153,7 @@ fd_receiver(void* _assoc)
     FdReply reply;
     char buffer[1024];
 
-    MU_TRY_ASSOC(assoc, lwmsg_assoc_accept(assoc, NULL, NULL));
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_accept(assoc, NULL));
     
     MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &request_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, request_msg.tag, FD_REQUEST);

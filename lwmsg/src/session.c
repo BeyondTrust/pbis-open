@@ -105,63 +105,12 @@ lwmsg_session_generate_cookie(
     }
 }
 
-LWMsgStatus
-lwmsg_session_manager_init(
-    LWMsgSessionManager* manager,
-    LWMsgSessionManagerClass* mclass
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-
-    manager->mclass = mclass;
-
-    return status;
-}
-
-void
-lwmsg_session_manager_delete(
-    LWMsgSessionManager* manager
-    )
-{
-    manager->mclass->delete(manager);
-}
-
-LWMsgStatus
-lwmsg_session_create(
-    LWMsgSessionManager* manager,
-    LWMsgSession** session
-    )
-{
-    return manager->mclass->create(manager, session);
-}
-
-LWMsgStatus
-lwmsg_session_connect(
-    LWMsgSession* session,
-    const LWMsgSessionCookie* accept,
-    LWMsgSecurityToken* token
-    )
-{
-    return session->manager->mclass->connect(session, accept, token);
-}
-
-LWMsgStatus
-lwmsg_session_accept(
-    LWMsgSessionManager* manager,
-    const LWMsgSessionCookie* connect,
-    LWMsgSecurityToken* token,
-    LWMsgSession** session
-    )
-{
-    return manager->mclass->accept(manager, connect, token, session);
-}
-
 void
 lwmsg_session_release(
     LWMsgSession* session
     )
 {
-    session->manager->mclass->release(session);
+    session->sclass->release(session);
 }
 
 size_t
@@ -169,7 +118,7 @@ lwmsg_session_get_assoc_count(
     LWMsgSession* session
     )
 {
-    return session->manager->mclass->get_assoc_count(session);
+    return session->sclass->get_assoc_count(session);
 }
 
 size_t
@@ -177,7 +126,7 @@ lwmsg_session_get_handle_count(
     LWMsgSession* session
     )
 {
-    return session->manager->mclass->get_handle_count(session);
+    return session->sclass->get_handle_count(session);
 }
 
 LWMsgStatus
@@ -189,7 +138,7 @@ lwmsg_session_register_handle(
     LWMsgHandle** handle
     )
 {
-    return session->manager->mclass->register_handle_local(
+    return session->sclass->register_handle_local(
         session,
         typename,
         data,
@@ -203,7 +152,7 @@ lwmsg_session_retain_handle(
     LWMsgHandle* handle
     )
 {
-    session->manager->mclass->retain_handle(session, handle);
+    session->sclass->retain_handle(session, handle);
 }
 
 void
@@ -212,7 +161,7 @@ lwmsg_session_release_handle(
     LWMsgHandle* handle
     )
 {
-    session->manager->mclass->release_handle(session, handle);
+    session->sclass->release_handle(session, handle);
 }
 
 LWMsgStatus
@@ -221,7 +170,7 @@ lwmsg_session_unregister_handle(
     LWMsgHandle* handle
     )
 {
-    return session->manager->mclass->unregister_handle(session, handle);
+    return session->sclass->unregister_handle(session, handle);
 }
 
 LWMsgStatus
@@ -231,7 +180,7 @@ lwmsg_session_get_handle_data(
     void** data
     )
 {
-    return session->manager->mclass->get_handle_data(session, handle, data);
+    return session->sclass->get_handle_data(session, handle, data);
 }
 
 LWMsgStatus
@@ -243,7 +192,7 @@ lwmsg_session_get_handle_location(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
 
-    status = session->manager->mclass->resolve_handle_to_id(
+    status = session->sclass->resolve_handle_to_id(
         session,
         handle,
         NULL,
@@ -258,7 +207,7 @@ lwmsg_session_get_data(
     LWMsgSession* session
     )
 {
-    return session->manager->mclass->get_data(session);
+    return session->sclass->get_data(session);
 }
 
 LWMsgSecurityToken*
@@ -266,7 +215,7 @@ lwmsg_session_get_peer_security_token(
     LWMsgSession* session
     )
 {
-    return session->manager->mclass->get_peer_security_token(session);
+    return session->sclass->get_peer_security_token(session);
 }
 
 const LWMsgSessionID*
@@ -274,5 +223,5 @@ lwmsg_session_get_id(
     LWMsgSession* session
     )
 {
-    return session->manager->mclass->get_id(session);
+    return session->sclass->get_id(session);
 }

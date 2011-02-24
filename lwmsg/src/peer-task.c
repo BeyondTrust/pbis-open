@@ -384,6 +384,11 @@ lwmsg_peer_task_delete(
         lwmsg_task_release(task->event_task);
     }
 
+    if (task->session_release && task->session)
+    {
+        lwmsg_session_release(task->session);
+    }
+
     pthread_mutex_destroy(&task->call_lock);
     pthread_cond_destroy(&task->call_event);
 
@@ -1087,7 +1092,13 @@ lwmsg_peer_task_run_accept(
     /* We already have the fd when accepting a connection, so set it up for events now */
     BAIL_ON_ERROR(status = lwmsg_task_set_trigger_fd(task->event_task, CONNECTION_PRIVATE(task->assoc)->fd));
 
-    status = lwmsg_assoc_accept(task->assoc, peer->session_manager, &task->session);
+    if (!task->session)
+    {
+        BAIL_ON_ERROR(status = lwmsg_peer_session_new(peer, &task->session));
+        task->session_release = LWMSG_TRUE;
+    }
+
+    status = lwmsg_assoc_accept(task->assoc, task->session);
 
     switch (status)
     {

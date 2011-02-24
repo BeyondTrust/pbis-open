@@ -69,25 +69,8 @@ typedef struct LWMsgSessionID
 typedef char LWMsgSessionString[66];
 typedef uint32_t LWMsgHandleID;
 
-/**
- * @internal
- * @brief Session manager function table structure
- *
- * This structure contains the implementation of a session manager.
- */
-typedef struct LWMsgSessionManagerClass
+typedef struct LWMsgSessionClass
 {
-    void
-    (*delete) (
-        LWMsgSessionManager* manager
-        );
-
-    LWMsgStatus
-    (*create) (
-        LWMsgSessionManager* manager,
-        LWMsgSession** session
-        );
-
     LWMsgStatus
     (*connect) (
         LWMsgSession* session,
@@ -97,10 +80,9 @@ typedef struct LWMsgSessionManagerClass
 
     LWMsgStatus
     (*accept) (
-        LWMsgSessionManager* manager,
+        LWMsgSession* session,
         const LWMsgSessionCookie* connect,
-        LWMsgSecurityToken* token,
-        LWMsgSession** session);
+        LWMsgSecurityToken* token);
 
     void
     (*release) (
@@ -192,16 +174,11 @@ typedef struct LWMsgSessionManagerClass
     (*get_handle_count) (
         LWMsgSession* session
         );
-} LWMsgSessionManagerClass;
+} LWMsgSessionClass;
 
 struct LWMsgSession
 {
-    LWMsgSessionManager* manager;
-};
-
-struct LWMsgSessionManager
-{
-    LWMsgSessionManagerClass* mclass;
+    LWMsgSessionClass* sclass;
 };
 
 const LWMsgSessionID*
@@ -214,65 +191,15 @@ lwmsg_session_generate_cookie(
     LWMsgSessionCookie* cookie
     );
 
-#ifndef LWMSG_NO_THREADS
-LWMsgStatus
-lwmsg_shared_session_manager_new(
-    LWMsgSessionConstructFunction construct,
-    LWMsgSessionDestructFunction destruct,
-    void* construct_data,
-    LWMsgSessionManager** out_manager
-    );
-#endif
-
-void
-lwmsg_session_manager_delete(
-    LWMsgSessionManager* manager
-    );
-
 void
 lwmsg_session_id_to_string(
     const LWMsgSessionID* smid,
     LWMsgSessionString buffer
     );
 
-LWMsgStatus
-lwmsg_session_create (
-    LWMsgSessionManager* manager,
-    LWMsgSession** session
-    );
-
-LWMsgStatus
-lwmsg_session_connect (
-    LWMsgSession* session,
-    const LWMsgSessionCookie* accept,
-    LWMsgSecurityToken* token
-    );
-
-LWMsgStatus
-lwmsg_session_accept(
-    LWMsgSessionManager* manager,
-    const LWMsgSessionCookie* connect,
-    LWMsgSecurityToken* token,
-    LWMsgSession** session
-    );
-
 void
 lwmsg_session_release(
     LWMsgSession* session
-    );
-
-LWMsgStatus
-lwmsg_default_session_manager_new(
-    LWMsgSessionConstructFunction construct,
-    LWMsgSessionDestructFunction destruct,
-    void* construct_data,
-    LWMsgSessionManager** out_manager
-    );
-
-LWMsgStatus
-lwmsg_session_manager_init(
-    LWMsgSessionManager* manager,
-    LWMsgSessionManagerClass* mclass
     );
 
 size_t
@@ -285,7 +212,6 @@ lwmsg_session_get_handle_count(
     LWMsgSession* session
     );
 
-#define LWMSG_SESSION_MANAGER(obj) ((LWMsgSessionManager*) (obj))
 #define LWMSG_SESSION(obj) ((LWMsgSession*) (obj))
 
 /*@}*/

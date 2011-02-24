@@ -126,6 +126,7 @@ typedef struct PeerAssocTask
     PeerAssocTaskType type;
     LWMsgAssoc* assoc;
     LWMsgSession* session;
+    unsigned session_release:1;
     LWMsgHashTable incoming_calls;
     LWMsgHashTable outgoing_calls;
     LWMsgRing active_incoming_calls;
@@ -168,7 +169,6 @@ struct LWMsgPeer
     LWMsgErrorContext error;
     const LWMsgContext* context;
     LWMsgProtocol* protocol;
-    LWMsgSessionManager* session_manager;
     LWMsgTaskManager* task_manager;
     size_t max_clients;
     size_t max_dispatch;
@@ -256,6 +256,12 @@ lwmsg_peer_lock(
 void
 lwmsg_peer_unlock(
     LWMsgPeer* peer
+    );
+
+LWMsgStatus
+lwmsg_peer_session_new(
+    LWMsgPeer* peer,
+    LWMsgSession** out_session
     );
 
 LWMsgStatus

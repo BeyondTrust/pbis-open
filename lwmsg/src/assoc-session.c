@@ -26,7 +26,7 @@
 /*
  * Module Name:
  *
- *        session-default.c
+ *        assoc-session.c
  *
  * Abstract:
  *
@@ -36,6 +36,8 @@
  * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
  *
  */
+
+#include "assoc-private.h"
 #include "session-private.h"
 #include "util-private.h"
 
@@ -56,10 +58,12 @@ typedef struct DefaultSession
     struct LWMsgHandle* handles;
     /* Number of handles */
     size_t num_handles;
-    /* Links to other sessions in the manager */
-    struct DefaultSession* next, *prev;
     /* User data pointer */
     void* data;
+    LWMsgSessionConstructFunction construct;
+    LWMsgSessionDestructFunction destruct;
+    void* construct_data;
+    LWMsgHandleID next_hid;
 } DefaultSession;
 
 struct LWMsgHandle
@@ -81,16 +85,6 @@ struct LWMsgHandle
     /* Links to other handles in the session */
     struct LWMsgHandle *next, *prev;
 };
-
-typedef struct DefaultManager
-{
-    LWMsgSessionManager base;
-    DefaultSession* sessions;
-    unsigned long next_hid;
-    LWMsgSessionConstructFunction construct;
-    LWMsgSessionDestructFunction destruct;
-    void* construct_data;
-} DefaultManager;
 
 #define DEFAULT_MANAGER(obj) ((DefaultManager*) (obj))
 #define DEFAULT_SESSION(obj) ((DefaultSession*) (obj))
@@ -166,26 +160,6 @@ error:
 }
 
 static
-DefaultSession*
-default_find_session(
-    DefaultManager* priv,
-    const LWMsgSessionCookie* connect
-    )
-{
-    DefaultSession* entry = NULL;
-
-    for (entry = priv->sessions; entry; entry = entry->next)
-    {
-        if (!memcmp(connect->bytes, entry->id.connect.bytes, sizeof(connect->bytes)))
-        {
-            return entry;
-        }
-    }
-
-    return NULL;
-}
-
-static
 void
 default_free_session(
     DefaultSession* session
@@ -199,9 +173,9 @@ default_free_session(
         default_free_handle(handle);
     }
 
-    if (DEFAULT_MANAGER(session->base.manager)->destruct && session->data)
+    if (session->destruct && session->data)
     {
-        DEFAULT_MANAGER(session->base.manager)->destruct(session->sec_token, session->data);
+        session->destruct(session->sec_token, session->data);
     }
 
     if (session->sec_token)
@@ -213,122 +187,33 @@ default_free_session(
 }
 
 static
-void
-default_delete(
-    LWMsgSessionManager* manager
-    )
-{
-    DefaultManager* priv = DEFAULT_MANAGER(manager);
-    DefaultSession* entry, *next;
-
-    for (entry = priv->sessions; entry; entry = next)
-    {
-        next = entry->next;
-
-        default_free_session(entry);
-    }
-
-    free(manager);
-}
-
-static
-LWMsgStatus
-default_create(
-    LWMsgSessionManager* manager,
-    LWMsgSession** out_session
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    DefaultSession* session = NULL;
-
-    session = calloc(1, sizeof(*session));
-    if (!session)
-    {
-        BAIL_ON_ERROR(status = LWMSG_STATUS_MEMORY);
-    }
-    
-    session->base.manager = manager;
-    session->refs = 1;
-
-    lwmsg_session_generate_cookie(&session->id.connect);
-
-    *out_session = LWMSG_SESSION(session);
-
-error:
-
-    return status;
-}
-
-static
 LWMsgStatus
 default_accept(
-    LWMsgSessionManager* manager,
+    LWMsgSession* session,
     const LWMsgSessionCookie* connect,
-    LWMsgSecurityToken* token,
-    LWMsgSession** out_session
+    LWMsgSecurityToken* token
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    DefaultManager* priv = DEFAULT_MANAGER(manager);
-    DefaultSession* session = default_find_session(priv, connect);
+    DefaultSession* my_session = (DefaultSession*) session;
     
-    if (session)
+    if (my_session->construct)
     {
-        if (!session->sec_token || !lwmsg_security_token_can_access(session->sec_token, token))
-        {
-            session = NULL;
-            BAIL_ON_ERROR(status = LWMSG_STATUS_SECURITY);
-        }
-
-        session->refs++;
-        lwmsg_security_token_delete(token);
-    }
-    else
-    {
-        session = calloc(1, sizeof(*session));
-        if (!session)
-        {
-            BAIL_ON_ERROR(status = LWMSG_STATUS_MEMORY);
-        }
-
-        session->base.manager = manager;
-
-        memcpy(session->id.connect.bytes, connect->bytes, sizeof(connect->bytes));
-        lwmsg_session_generate_cookie(&session->id.accept);
-
-        session->refs = 1;
-
-        if (DEFAULT_MANAGER(manager)->construct)
-        {
-            BAIL_ON_ERROR(status = DEFAULT_MANAGER(manager)->construct(
-                              token,
-                              DEFAULT_MANAGER(manager)->construct_data,
-                              &session->data));
-        }
-
-        session->sec_token = token;
-
-        if (priv->sessions)
-        {
-            priv->sessions->prev = session;
-        }
-
-        session->next = priv->sessions;
-        priv->sessions = session;
+        BAIL_ON_ERROR(status = my_session->construct(
+            token,
+            my_session->construct_data,
+            &my_session->data));
     }
 
-    *out_session = LWMSG_SESSION(session);
+    my_session->refs++;
+    my_session->sec_token = token;
+    memcpy(my_session->id.connect.bytes, connect->bytes, sizeof(connect->bytes));
 
 done:
 
     return status;
 
 error:
-
-    if (session)
-    {
-        default_free_session(session);
-    }
 
     goto done;
 }
@@ -387,28 +272,12 @@ default_release(
     LWMsgSession* session
     )
 {
-    DefaultManager* priv = DEFAULT_MANAGER(session->manager);
     DefaultSession* my_session = DEFAULT_SESSION(session);
 
     my_session->refs--;
     
     if (my_session->refs == 0)
     {
-        if (priv->sessions == my_session)
-        {
-            priv->sessions = priv->sessions->next;
-        }
-
-        if (my_session->next)
-        {
-            my_session->next->prev = my_session->prev;
-        }
-        
-        if (my_session->prev)
-        {
-            my_session->prev->next = my_session->next;
-        }
-
         default_free_session(my_session);
     }
 }
@@ -466,15 +335,15 @@ default_register_handle_local(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    DefaultManager* priv = DEFAULT_MANAGER(session->manager);
     LWMsgHandle* my_handle = NULL;
+    DefaultSession* my_session = DEFAULT_SESSION(session);
 
     BAIL_ON_ERROR(status = default_add_handle(
-                      DEFAULT_SESSION(session),
+                      my_session,
                       type,
                       LWMSG_HANDLE_LOCAL,
                       data,
-                      priv->next_hid++,
+                      my_session->next_hid++,
                       cleanup,
                       &my_handle));
 
@@ -703,10 +572,8 @@ default_get_handle_count(
     return DEFAULT_SESSION(session)->num_handles;
 }
 
-static LWMsgSessionManagerClass default_class = 
+static LWMsgSessionClass default_class =
 {
-    .delete = default_delete,
-    .create = default_create,
     .accept = default_accept,
     .connect = default_connect,
     .release = default_release,
@@ -726,36 +593,27 @@ static LWMsgSessionManagerClass default_class =
 };
 
 LWMsgStatus
-lwmsg_default_session_manager_new(
-    LWMsgSessionConstructFunction construct,
-    LWMsgSessionDestructFunction destruct,
-    void* construct_data,
-    LWMsgSessionManager** manager
+lwmsg_assoc_session_new(
+    LWMsgSession** out_session
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    DefaultManager* my_manager = NULL;
+    DefaultSession* session = NULL;
+
+    session = calloc(1, sizeof(*session));
+    if (!session)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MEMORY);
+    }
     
-    BAIL_ON_ERROR(status = LWMSG_ALLOC(&my_manager));
+    session->base.sclass = &default_class;
+    session->refs = 1;
 
-    my_manager->construct = construct;
-    my_manager->destruct = destruct;
-    my_manager->construct_data = construct_data;
+    lwmsg_session_generate_cookie(&session->id.connect);
 
-    BAIL_ON_ERROR(status = lwmsg_session_manager_init(&my_manager->base, &default_class));
-
-    *manager = LWMSG_SESSION_MANAGER(my_manager);
-
-done:
-
-    return status;
+    *out_session = LWMSG_SESSION(session);
 
 error:
 
-    if (my_manager)
-    {
-        free(my_manager);
-    }
-
-    goto done;
+    return status;
 }
