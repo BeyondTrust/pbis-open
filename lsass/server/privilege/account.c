@@ -72,6 +72,18 @@ LsaSrvMergePrivilegeLists(
 
 static
 DWORD
+LsaSrvRemovePrivilegesFromPrivilegeList(
+    IN PLUID_AND_ATTRIBUTES pPrivs1,
+    IN DWORD NumPrivs1,
+    IN PLUID_AND_ATTRIBUTES pPrivs2,
+    IN DWORD NumPrivs2,
+    IN DWORD RetPrivsLen,
+    IN OUT OPTIONAL PLUID_AND_ATTRIBUTES pRetPrivs,
+    OUT PDWORD pNumRetPrivs
+    );
+
+static
+DWORD
 LsaSrvAccountRightNameToSar(
     IN PWSTR AccessRightName,
     OUT PDWORD pAccessRight
@@ -167,7 +179,8 @@ LsaSrvPrivsEnumAccountRightsSids(
                                 pPrivileges,
                                 &numPrivileges);
         // Error check goes after unlocking account to prevent from leaving
-        // account locked if we bailed after error code was returned
+        // account locked if we would have bailed after error code had been
+        // returned
         LSASRV_PRIVS_UNLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
         BAIL_ON_LSA_ERROR(err);
 
@@ -234,10 +247,11 @@ LsaSrvPrivsAddAccountRights(
     DWORD err = ERROR_SUCCESS;
     ACCESS_MASK accessRights = LSA_ACCOUNT_ADJUST_PRIVILEGES;
     PACCESS_TOKEN accessToken = AccessToken;
-    PLSA_ACCOUNT_CONTEXT accountContext = NULL;
+    PLSA_ACCOUNT_CONTEXT pAccountContext = NULL;
     BOOLEAN accountLocked = FALSE;
     PLSA_ACCOUNT pAccount = NULL;
     PPRIVILEGE_SET pPrivilegeSet = NULL;
+    DWORD newNumPrivileges = 0;
     DWORD addAccessRights = 0;
     DWORD newAccessRights = 0;
     
@@ -246,7 +260,7 @@ LsaSrvPrivsAddAccountRights(
                             accessToken,
                             pAccountSid,
                             accessRights,
-                            &accountContext);
+                            &pAccountContext);
     if (err == ERROR_FILE_NOT_FOUND)
     {
         err = LsaSrvPrivsCreateAccount(
@@ -254,15 +268,13 @@ LsaSrvPrivsAddAccountRights(
                                 accessToken,
                                 pAccountSid,
                                 accessRights,
-                                &accountContext);
+                                &pAccountContext);
         BAIL_ON_LSA_ERROR(err);
     }
     else if (err != ERROR_SUCCESS)
     {
         BAIL_ON_LSA_ERROR(err);
     }
-
-    pAccount = accountContext->pAccount;
 
     err = LsaSrvResolveNamesToPrivilegesAndSar(
                         hProvider,
@@ -273,30 +285,48 @@ LsaSrvPrivsAddAccountRights(
                         &addAccessRights);
     BAIL_ON_LSA_ERROR(err);
 
-    err = LsaSrvPrivsAddPrivilegesToAccount(
-                        hProvider,
-                        accessToken,
-                        accountContext,
-                        pPrivilegeSet);
+    pAccount = pAccountContext->pAccount;
+    LSASRV_PRIVS_WRLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
+
+    // Add Privileges
+    err = LsaSrvMergePrivilegeLists(
+                  pAccount->Privileges,
+                  pAccount->NumPrivileges,
+                  pPrivilegeSet->Privilege,
+                  pPrivilegeSet->PrivilegeCount,
+                  sizeof(pAccount->Privileges)/sizeof(pAccount->Privileges[0]),
+                  NULL,
+                  &newNumPrivileges);
     BAIL_ON_LSA_ERROR(err);
 
-    LSASRV_PRIVS_RDLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
+    pAccountContext->Dirty = (newNumPrivileges > pAccount->NumPrivileges);
+    pAccount->NumPrivileges = newNumPrivileges;
+
+    // Add System Access Rights
     newAccessRights = pAccount->SystemAccessRights | addAccessRights;
-    LSASRV_PRIVS_UNLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
+    pAccountContext->Dirty |= (newAccessRights != pAccount->SystemAccessRights);
 
-    err = LsaSrvPrivsSetSystemAccessRights(
-                        hProvider,
-                        accessToken,
-                        accountContext,
-                        newAccessRights);
-    BAIL_ON_LSA_ERROR(err);
+    pAccount->SystemAccessRights = newAccessRights;
+
+    // Save the changes (if there were any)
+    if (pAccountContext->Dirty)
+    {
+        err = LsaSrvUpdateAccount_inlock(
+                      pAccount->pSid,
+                      pAccount);
+        BAIL_ON_LSA_ERROR(err);
+
+        pAccountContext->Dirty = FALSE;
+    }
 
 error:
-    if (accountContext)
+    LSASRV_PRIVS_UNLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
+
+    if (pAccountContext)
     {
         LsaSrvPrivsCloseAccount(
                     hProvider,
-                    &accountContext);
+                    &pAccountContext);
     }
 
     LW_SAFE_FREE_MEMORY(pPrivilegeSet);
@@ -387,10 +417,11 @@ LsaSrvPrivsRemoveAccountRights(
     DWORD err = ERROR_SUCCESS;
     ACCESS_MASK accessRights = LSA_ACCOUNT_ADJUST_PRIVILEGES;
     PACCESS_TOKEN accessToken = AccessToken;
-    PLSA_ACCOUNT_CONTEXT accountContext = NULL;
+    PLSA_ACCOUNT_CONTEXT pAccountContext = NULL;
     BOOLEAN accountLocked = FALSE;
     PLSA_ACCOUNT pAccount = NULL;
     PPRIVILEGE_SET pPrivilegeSet = NULL;
+    DWORD newNumPrivileges = 0;
     DWORD removeAccessRights = 0;
     DWORD newAccessRights = 0;
 
@@ -399,10 +430,8 @@ LsaSrvPrivsRemoveAccountRights(
                             accessToken,
                             AccountSid,
                             accessRights,
-                            &accountContext);
+                            &pAccountContext);
     BAIL_ON_LSA_ERROR(err);
-
-    pAccount = accountContext->pAccount;
 
     err = LsaSrvResolveNamesToPrivilegesAndSar(
                         hProvider,
@@ -413,31 +442,60 @@ LsaSrvPrivsRemoveAccountRights(
                         &removeAccessRights);
     BAIL_ON_LSA_ERROR(err);
 
-    err = LsaSrvPrivsRemovePrivilegesFromAccount(
-                        hProvider,
-                        accessToken,
-                        accountContext,
-                        RemoveAll,
-                        pPrivilegeSet);
-    BAIL_ON_LSA_ERROR(err);
+    pAccount = pAccountContext->pAccount;
+    LSASRV_PRIVS_WRLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
 
-    LSASRV_PRIVS_RDLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
+    if (RemoveAll)
+    {
+        // Remove everything
+        memset(pAccount->Privileges, 0, sizeof(pAccount->Privileges));
+        newNumPrivileges = 0;
+
+        removeAccessRights = pAccount->SystemAccessRights;
+    }
+    else
+    {
+        // Remove Privileges
+        err = LsaSrvRemovePrivilegesFromPrivilegeList(
+                            pAccount->Privileges,
+                            pAccount->NumPrivileges,
+                            pPrivilegeSet->Privilege,
+                            pPrivilegeSet->PrivilegeCount,
+                            (sizeof(pAccount->Privileges)/
+                             sizeof(pAccount->Privileges[0])),
+                            NULL,
+                            &newNumPrivileges);
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    pAccountContext->Dirty = (newNumPrivileges < pAccount->NumPrivileges);
+    pAccount->NumPrivileges = newNumPrivileges;
+
+    // Remove System Access Rights
     newAccessRights = pAccount->SystemAccessRights ^ removeAccessRights;
-    LSASRV_PRIVS_UNLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
+    pAccountContext->Dirty |= (newAccessRights != pAccount->SystemAccessRights);
 
-    err = LsaSrvPrivsSetSystemAccessRights(
-                        hProvider,
-                        accessToken,
-                        accountContext,
-                        newAccessRights);
-    BAIL_ON_LSA_ERROR(err);
+    pAccount->SystemAccessRights = newAccessRights;
+
+    // Save the changes (if there were any)
+    if (pAccountContext->Dirty)
+    {
+        err = LsaSrvUpdateAccount_inlock(
+                      pAccount->pSid,
+                      pAccount);
+        BAIL_ON_LSA_ERROR(err);
+
+        pAccountContext->Dirty = FALSE;
+    }
 
 error:
-    if (accountContext)
+    LSASRV_PRIVS_UNLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
+
+    if (pAccountContext)
     {
         LsaSrvPrivsCloseAccount(
                     hProvider,
-                    &accountContext);
+                    &pAccountContext);
     }
 
     LW_SAFE_FREE_MEMORY(pPrivilegeSet);
@@ -478,7 +536,6 @@ LsaSrvPrivsEnumAccountRights(
     BAIL_ON_LSA_ERROR(err);
 
     pAccount = accountContext->pAccount;
-
     LSASRV_PRIVS_RDLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
 
     systemAccessRights = pAccount->SystemAccessRights;
@@ -626,6 +683,8 @@ LsaSrvPrivsCreateAccount(
                      OUT_PPVOID(&pAccount));
     BAIL_ON_LSA_ERROR(err);
 
+    pthread_rwlock_init(&pAccount->accountRwLock, NULL);
+
     sidSize = RtlLengthSid(Sid);
     err = LwAllocateMemory(
                      sidSize,
@@ -649,7 +708,7 @@ LsaSrvPrivsCreateAccount(
                      Sid);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    err = LsaSrvAddAccount(
+    err = LsaSrvAddAccount_inlock(
                      accountSid,
                      pAccount);
     if (err)
@@ -735,8 +794,9 @@ LsaSrvPrivsAddPrivilegesToAccount(
 
     if (pAccountContext->Dirty)
     {
-        err = LsaSrvUpdateAccount(pAccount->pSid,
-                                  pAccount);
+        err = LsaSrvUpdateAccount_inlock(
+                      pAccount->pSid,
+                      pAccount);
         BAIL_ON_LSA_ERROR(err);
 
         pAccountContext->Dirty = FALSE;
@@ -807,6 +867,8 @@ LsaSrvMergePrivilegeLists(
 
             pMergedPrivs[numMergedPrivs++].Luid = pPrivs2[i].Luid;
         }
+
+        found = FALSE;
     }
 
     *pNumRetPrivs = numMergedPrivs;
@@ -833,57 +895,126 @@ LsaSrvPrivsRemovePrivilegesFromAccount(
     DWORD err = ERROR_SUCCESS;
     BOOLEAN accountLocked = FALSE;
     PLSA_ACCOUNT pAccount = pAccountContext->pAccount;
-    DWORD i = 0;
-    DWORD j = 0;
-    DWORD offset = 0;
-    PLUID_AND_ATTRIBUTES pPrivileges = pAccount->Privileges;
-    BOOLEAN found = FALSE;
+    DWORD newNumPrivileges = 0;
 
     LSASRV_PRIVS_WRLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
 
-    for (i = 0; !RemoveAll && i < pPrivilegeSet->PrivilegeCount; i++)
+    // Remove Privileges
+    if (RemoveAll)
     {
-        for (j = 0; j < pAccount->NumPrivileges; j++)
-        {
-            if (RtlEqualLuid(&pPrivilegeSet->Privilege[i].Luid,
-                             &pAccount->Privileges[j].Luid))
-            {
-                offset++; 
-                found = TRUE;
-                pAccountContext->Dirty = TRUE;
-            }
-
-            if (found && (j + offset < pAccount->NumPrivileges))
-            {
-                pPrivileges[j].Luid = pAccount->Privileges[j + offset].Luid;
-                pPrivileges[j].Attributes
-                                  = pAccount->Privileges[j + offset].Attributes;
-
-                pAccount->NumPrivileges--;
-            }
-            else if (found && (j + offset >= pAccount->NumPrivileges))
-            {
-                LUID emptyLuid = {0,0};
-
-                pPrivileges[j].Luid       = emptyLuid;
-                pPrivileges[j].Attributes = 0;
-
-                pAccount->NumPrivileges--;
-            }
-        }
+        memset(pAccount->Privileges, 0, sizeof(pAccount->Privileges));
+        newNumPrivileges = 0;
     }
+    else
+    {
+        err = LsaSrvRemovePrivilegesFromPrivilegeList(
+                      pAccount->Privileges,
+                      pAccount->NumPrivileges,
+                      pPrivilegeSet->Privilege,
+                      pPrivilegeSet->PrivilegeCount,
+                      (sizeof(pAccount->Privileges)/
+                       sizeof(pAccount->Privileges[0])),
+                      NULL,
+                      &newNumPrivileges);
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    pAccountContext->Dirty = (newNumPrivileges < pAccount->NumPrivileges);
+    pAccount->NumPrivileges = newNumPrivileges;
 
     if (pAccountContext->Dirty)
     {
-        err = LsaSrvUpdateAccount(pAccount->pSid,
-                                  pAccount);
+        err = LsaSrvUpdateAccount_inlock(
+                      pAccount->pSid,
+                      pAccount);
         BAIL_ON_LSA_ERROR(err);
-                   
+
         pAccountContext->Dirty = FALSE;
     }
-                   
+
 error:
     LSASRV_PRIVS_UNLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
+
+    return err;
+}
+
+
+static
+DWORD
+LsaSrvRemovePrivilegesFromPrivilegeList(
+    IN PLUID_AND_ATTRIBUTES pPrivs1,
+    IN DWORD NumPrivs1,
+    IN PLUID_AND_ATTRIBUTES pPrivs2,
+    IN DWORD NumPrivs2,
+    IN DWORD RetPrivsLen,
+    IN OUT OPTIONAL PLUID_AND_ATTRIBUTES pRetPrivs,
+    OUT PDWORD pNumRetPrivs
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    DWORD i = 0;
+    DWORD j = 0;
+    DWORD offset = 0;
+    DWORD removed = 0;
+    PLUID_AND_ATTRIBUTES pDestPrivs = NULL;
+    DWORD numDestPrivs = 0;
+
+    if (pRetPrivs &&
+        pPrivs1 != pRetPrivs)
+    {
+        pDestPrivs = pRetPrivs;
+
+        if (NumPrivs1 > RetPrivsLen)
+        {
+            err = ERROR_INSUFFICIENT_BUFFER;
+            BAIL_ON_LSA_ERROR(err);
+        }
+
+        memcpy(pDestPrivs, pPrivs1, sizeof(*pDestPrivs)* NumPrivs1);
+    }
+    else
+    {
+        pDestPrivs = pPrivs1;
+    }
+
+    numDestPrivs = NumPrivs1;
+
+    for (i = 0; i < NumPrivs2; i++)
+    {
+        for (j = 0; j < numDestPrivs; j++)
+        {
+            if (RtlEqualLuid(
+                     &pPrivs2[i].Luid,
+                     &pDestPrivs[j].Luid))
+            {
+                offset++; 
+            }
+
+            if (offset && (j + offset < RetPrivsLen - 1))
+            {
+                pDestPrivs[j].Luid = pDestPrivs[j + offset].Luid;
+                pDestPrivs[j].Attributes = pDestPrivs[j + offset].Attributes;
+            }
+            else if (offset && (j + offset == RetPrivsLen - 1))
+            {
+                LUID emptyLuid = {0,0};
+
+                pDestPrivs[j].Luid       = emptyLuid;
+                pDestPrivs[j].Attributes = 0;
+            }
+        }
+                   
+        removed += offset;
+        offset   = 0;
+    }
+                   
+    *pNumRetPrivs = NumPrivs1 - removed;
+
+error:
+    if (err)
+    {
+        *pNumRetPrivs = 0;
+    }
 
     return err;
 }
@@ -933,8 +1064,9 @@ LsaSrvPrivsSetSystemAccessRights(
 
     if (pAccountContext->Dirty)
     {
-        err = LsaSrvUpdateAccount(pAccount->pSid,
-                                  pAccount);
+        err = LsaSrvUpdateAccount_inlock(
+                      pAccount->pSid,
+                      pAccount);
         BAIL_ON_LSA_ERROR(err);
 
         pAccountContext->Dirty = FALSE;
@@ -1047,7 +1179,7 @@ LsaSrvLookupSysAccessRightNameMap(
     if (accessRightName == NULL && systemAccessRight == 0)
     {
         // Maps to STATUS_NO_SUCH_PRIVILEGE
-        err = ERROR_NOT_FOUND;
+        err = ERROR_NO_SUCH_PRIVILEGE;
     }
 
     if (ResolveName)

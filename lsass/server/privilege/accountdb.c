@@ -74,6 +74,15 @@ LsaSrvFreeAccountEntry(
 
 static
 DWORD
+LsaSrvReadAccountEntry(
+    IN HANDLE hRegistry,
+    IN HKEY hEntry,
+    IN PSID AccountSid,
+    OUT PLSA_ACCOUNT *ppAccountEntry
+    );
+
+static
+DWORD
 LsaSrvGetPrivilegeValuesFromNames(
     PSTR pszPrivilegeNames,
     DWORD PrivilegeNamesSize,
@@ -102,7 +111,7 @@ LsaSrvSaveAccount_inlock(
 
 static
 DWORD
-LsaSrvGetPrivilegeNames(
+LsaSrvGetPrivilegeNames_inlock(
     IN PLSA_ACCOUNT pAccountEntry,
     OUT PWSTR **ppPrivilegeNames
     );
@@ -120,20 +129,13 @@ LsaSrvCreateAccountsDb(
     BOOLEAN Locked = FALSE;
     PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
     PLW_HASH_TABLE pHash = NULL;
-    PSTR pszPrivilegeName = LSA_ACCOUNTS_PRIVILEGES_SUBKEY;
-    PSTR pszSysAccessRightsName = LSA_ACCOUNTS_SYS_ACCESS_RIGHTS_SUBKEY;
-    HKEY hPrivilegesKey = NULL;
-    HKEY hSystemAccessRightsKey = NULL;
     DWORD i = 0;
-    DWORD numValues = 0;
-    DWORD maxValueNameLen = 0;
-    DWORD maxValueLen = 0;
-    PSTR pszAccount = NULL;
-    PSID pAccountSid = NULL;
-    PSTR pszPrivileges = NULL;
-    DWORD systemAccess = 0;
+    DWORD numKeys = 0;
+    DWORD maxKeyLen = 0;
+    PWSTR pwszAccount = NULL;
+    HKEY hAccount = NULL;
+    PSID accountSid = NULL;
     PLSA_ACCOUNT pAccountEntry = NULL;
-    DWORD accountSidSize = 0;
 
     LSASRV_PRIVS_WRLOCK_RWLOCK(Locked, &pGlobals->accountsRwLock);
 
@@ -150,80 +152,51 @@ LsaSrvCreateAccountsDb(
     BAIL_ON_LSA_ERROR(err);
 
     //
-    // Open Privileges and SystemAccessRights subkeys
+    // Prepare for enumerating values under the Privileges key
     //
-    err = RegOpenKeyExA(
+    err = RegQueryInfoKeyW(
                  hRegistry,
                  hAccountsKey,
-                 pszPrivilegeName,
-                 0,
-                 KEY_READ,
-                 &hPrivilegesKey);
-    BAIL_ON_LSA_ERROR(err);
-
-    err = RegOpenKeyExA(
-                 hRegistry,
-                 hAccountsKey,
-                 pszSysAccessRightsName,
-                 0,
-                 KEY_READ,
-                 &hSystemAccessRightsKey);
-    BAIL_ON_LSA_ERROR(err);
-
-    //
-    // Prepare to enumerating values under the Privileges key
-    //
-    err = RegQueryInfoKeyA(
-                 hRegistry,
-                 hPrivilegesKey,
+                 NULL,
+                 NULL,
+                 NULL,
+                 &numKeys,
+                 &maxKeyLen,
                  NULL,
                  NULL,
                  NULL,
                  NULL,
-                 NULL,
-                 NULL,
-                 &numValues,
-                 &maxValueNameLen,
-                 &maxValueLen,
                  NULL,
                  NULL);
     BAIL_ON_LSA_ERROR(err);
 
     err = LwAllocateMemory(
-                 maxValueNameLen,
-                 OUT_PPVOID(&pszAccount));
+                 sizeof(WCHAR) * maxKeyLen,
+                 OUT_PPVOID(&pwszAccount));
     BAIL_ON_LSA_ERROR(err);
 
-    err = LwAllocateMemory(
-                 maxValueLen,
-                 OUT_PPVOID(&pszPrivileges));
-    BAIL_ON_LSA_ERROR(err);
-
-    for (i = 0; i < numValues; i++)
+    for (i = 0; i < numKeys; i++)
     {
-        DWORD accountLen = maxValueNameLen;
-        DWORD privilegesSize = maxValueLen;
-        DWORD privilegesType = 0;
-        DWORD systemAccessSize = 0;
+        DWORD accountKeyLen = sizeof(WCHAR) * maxKeyLen;
 
-        err = RegEnumValueA(
+        err = RegEnumKeyExW(
                      hRegistry,
-                     hPrivilegesKey,
+                     hAccountsKey,
                      i,
-                     pszAccount,
-                     &accountLen,
+                     pwszAccount,
+                     &accountKeyLen,
                      NULL,
-                     &privilegesType,
-                     (PBYTE)pszPrivileges,
-                     &privilegesSize);
+                     NULL,
+                     NULL,
+                     NULL);
         BAIL_ON_LSA_ERROR(err);
 
         //
         // Each account is a SID
         //
-        ntStatus = RtlAllocateSidFromCString(
-                     &pAccountSid,
-                     pszAccount);
+        ntStatus = RtlAllocateSidFromWC16String(
+                     &accountSid,
+                     pwszAccount);
         if (ntStatus == STATUS_INVALID_SID)
         {
             err = ERROR_INVALID_DATA;
@@ -234,78 +207,43 @@ LsaSrvCreateAccountsDb(
             BAIL_ON_NT_STATUS(ntStatus);
         }
 
-        //
-        // Get system access rights value under SystemAccessRights subkey
-        systemAccessSize = sizeof(systemAccess);
-        err = RegGetValueA(
+        err = RegOpenKeyExW(
                      hRegistry,
-                     hSystemAccessRightsKey,
-                     NULL,
-                     pszAccount,
-                     RRF_RT_REG_DWORD,
-                     NULL,
-                     (PBYTE)&systemAccess,
-                     &systemAccessSize);
+                     hAccountsKey,
+                     pwszAccount,
+                     0,
+                     KEY_READ,
+                     &hAccount);
         BAIL_ON_LSA_ERROR(err);
 
-        //
-        // Create LSA_ACCOUNT entry
-        //
-        err = LwAllocateMemory(
-                     sizeof(*pAccountEntry),
-                     OUT_PPVOID(&pAccountEntry));
+        err = LsaSrvReadAccountEntry(
+                     hRegistry,
+                     hAccount,
+                     accountSid,
+                     &pAccountEntry);
         BAIL_ON_LSA_ERROR(err);
-
-        pthread_rwlock_init(&pAccountEntry->accountRwLock, NULL);
-
-        accountSidSize = RtlLengthSid(pAccountSid);
-        err = LwAllocateMemory(
-                     accountSidSize,
-                     OUT_PPVOID(&pAccountEntry->pSid));
-        BAIL_ON_LSA_ERROR(err);
-
-        ntStatus = RtlCopySid(
-                     accountSidSize,
-                     pAccountEntry->pSid,
-                     pAccountSid);
-        BAIL_ON_NT_STATUS(ntStatus);
-
-        err = LsaSrvGetPrivilegeValuesFromNames(
-                     pszPrivileges,
-                     privilegesSize,
-                     sizeof(pAccountEntry->Privileges)/
-                     sizeof(pAccountEntry->Privileges[0]),
-                     pAccountEntry->Privileges,
-                     &pAccountEntry->NumPrivileges);
-        if (err == ERROR_INCORRECT_SIZE)
-        {
-            LSA_LOG_ERROR("Incorrect size of the privileges list assigned to %s",
-                          pszAccount);
-
-            err = ERROR_INVALID_DATA;
-            BAIL_ON_LSA_ERROR(err);
-        }
-        else if (err != ERROR_SUCCESS)
-        {
-            BAIL_ON_LSA_ERROR(err);
-        }
-
-        pAccountEntry->SystemAccessRights = systemAccess;
 
         err = LsaSrvSetAccountEntry_inlock(
                      pHash,
-                     pAccountSid,
+                     accountSid,
                      pAccountEntry,
                      FALSE);
         BAIL_ON_LSA_ERROR(err);
 
-        pAccountSid   = NULL;
+        accountSid    = NULL;
         pAccountEntry = NULL;
 
-        memset(pszAccount, 0, maxValueNameLen);
-        memset(pszPrivileges, 0, maxValueLen);
-        systemAccess = 0;
+        //
+        // Close the account subkey and cleanup the
+        // name and the handle
+        //
+        err = RegCloseKey(
+                     hRegistry,
+                     hAccount);
+        BAIL_ON_LSA_ERROR(err);
 
+        memset(pwszAccount, 0, sizeof(WCHAR) * maxKeyLen);
+        hAccount = NULL;
     }
 
     *ppAccounts = pHash;
@@ -313,6 +251,13 @@ LsaSrvCreateAccountsDb(
 error:
     if (err)
     {
+        if (pAccountEntry)
+        {
+            LsaSrvFreeAccountEntry(pAccountEntry);
+        }
+
+        LW_SAFE_FREE_MEMORY(accountSid);
+
         if (pHash)
         {
             LwHashSafeFree(&pHash);
@@ -323,22 +268,7 @@ error:
 
     LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->accountsRwLock);
 
-    if (hPrivilegesKey)
-    {
-        RegCloseKey(
-                 hRegistry,
-                 hPrivilegesKey);
-    }
-
-    if (hSystemAccessRightsKey)
-    {
-        RegCloseKey(
-                 hRegistry,
-                 hSystemAccessRightsKey);
-    }
-
-    LW_SAFE_FREE_MEMORY(pszAccount);
-    LW_SAFE_FREE_MEMORY(pszPrivileges);
+    LW_SAFE_FREE_MEMORY(pwszAccount);
 
     if (err == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -422,6 +352,146 @@ LsaSrvFreeAccountEntry(
     pthread_rwlock_destroy(&pEntry->accountRwLock);
 
     LW_SAFE_FREE_MEMORY(pEntry);
+}
+
+
+static
+DWORD
+LsaSrvReadAccountEntry(
+    IN HANDLE hRegistry,
+    IN HKEY hEntry,
+    IN PSID AccountSid,
+    OUT PLSA_ACCOUNT *ppAccountEntry
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PSTR privilegesValueName = LSA_ACCOUNTS_PRIVILEGES_NAME;
+    DWORD privilegesValueSize = 0;
+    PSTR privilegesValue = NULL;
+    PSTR sysAccountRightsValueName = LSA_ACCOUNTS_SYS_ACCESS_RIGHTS_NAME;
+    DWORD systemAccess = 0;
+    DWORD systemAccessSize = 0;
+    PLSA_ACCOUNT pAccountEntry = NULL;
+    DWORD accountSidSize = 0;
+    PSTR pszAccountSid = NULL;
+
+    //
+    // Get privileges value
+    //
+    err = RegGetValueA(
+                 hRegistry,
+                 hEntry,
+                 NULL,
+                 privilegesValueName,
+                 RRF_RT_REG_MULTI_SZ,
+                 NULL,
+                 NULL,
+                 &privilegesValueSize);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = LwAllocateMemory(
+                 privilegesValueSize,
+                 OUT_PPVOID(&privilegesValue));
+    BAIL_ON_LSA_ERROR(err);
+
+    err = RegGetValueA(
+                 hRegistry,
+                 hEntry,
+                 NULL,
+                 privilegesValueName,
+                 RRF_RT_REG_MULTI_SZ,
+                 NULL,
+                 (PBYTE)privilegesValue,
+                 &privilegesValueSize);
+    BAIL_ON_LSA_ERROR(err);
+
+    //
+    // Get system access rights value
+    //
+    systemAccessSize = sizeof(systemAccess);
+    err = RegGetValueA(
+                 hRegistry,
+                 hEntry,
+                 NULL,
+                 sysAccountRightsValueName,
+                 RRF_RT_REG_DWORD,
+                 NULL,
+                 (PBYTE)&systemAccess,
+                 &systemAccessSize);
+    BAIL_ON_LSA_ERROR(err);
+
+    //
+    // Create LSA_ACCOUNT entry
+    //
+    err = LwAllocateMemory(
+                 sizeof(*pAccountEntry),
+                 OUT_PPVOID(&pAccountEntry));
+    BAIL_ON_LSA_ERROR(err);
+
+    pthread_rwlock_init(&pAccountEntry->accountRwLock, NULL);
+
+    accountSidSize = RtlLengthSid(AccountSid);
+    err = LwAllocateMemory(
+                 accountSidSize,
+                 OUT_PPVOID(&pAccountEntry->pSid));
+    BAIL_ON_LSA_ERROR(err);
+
+    ntStatus = RtlCopySid(
+                 accountSidSize,
+                 pAccountEntry->pSid,
+                 AccountSid);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    err = LsaSrvGetPrivilegeValuesFromNames(
+                 privilegesValue,
+                 privilegesValueSize,
+                 sizeof(pAccountEntry->Privileges)/
+                 sizeof(pAccountEntry->Privileges[0]),
+                 pAccountEntry->Privileges,
+                 &pAccountEntry->NumPrivileges);
+    if (err == ERROR_INCORRECT_SIZE)
+    {
+        ntStatus = RtlAllocateCStringFromSid(
+                     &pszAccountSid,
+                     AccountSid);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        LSA_LOG_ERROR("Incorrect size of the privileges list assigned to %s",
+                      pszAccountSid);
+
+        err = ERROR_INVALID_DATA;
+        BAIL_ON_LSA_ERROR(err);
+    }
+    else if (err != ERROR_SUCCESS)
+    {
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    pAccountEntry->SystemAccessRights = systemAccess;
+
+    *ppAccountEntry = pAccountEntry;
+
+error:
+    if (err)
+    {
+        if (pAccountEntry)
+        {
+            LsaSrvFreeAccountEntry(pAccountEntry);
+        }
+
+        *ppAccountEntry = NULL;
+    }
+
+    LW_SAFE_FREE_MEMORY(privilegesValue);
+
+    if (err == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return err;
 }
 
 
@@ -619,7 +689,7 @@ error:
 
 
 DWORD
-LsaSrvAddAccount(
+LsaSrvAddAccount_inlock(
     IN PSID pAccountSid,
     IN PLSA_ACCOUNT pAccountEntry
     )
@@ -630,7 +700,7 @@ LsaSrvAddAccount(
     PWSTR *pPrivilegeNames = NULL;
     BOOLEAN Overwrite = FALSE;
 
-    err = LsaSrvGetPrivilegeNames(
+    err = LsaSrvGetPrivilegeNames_inlock(
                       pAccountEntry,
                       &pPrivilegeNames);
     BAIL_ON_LSA_ERROR(err);
@@ -681,12 +751,10 @@ LsaSrvSaveAccount_inlock(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     HANDLE hRegistry = NULL;
     HKEY hAccountsKey = NULL;
-    PSTR pszPrivilegeName = LSA_ACCOUNTS_PRIVILEGES_SUBKEY;
-    PSTR pszSysAccessRightsName = LSA_ACCOUNTS_SYS_ACCESS_RIGHTS_SUBKEY;
-    HKEY hPrivilegesKey = NULL;
-    HKEY hSystemAccessRightsKey = NULL;
     PWSTR account = NULL;
-    DWORD existingPrivilegesBlobSize = 0;
+    HKEY hAccount = NULL;
+    WCHAR wszPrivilegeValueName[] = LSA_ACCOUNTS_PRIVILEGES_NAME_W;
+    WCHAR wszSysAccessRightsValueName[] = LSA_ACCOUNTS_SYS_ACCESS_RIGHTS_NAME_W;
     PBYTE privilegeNamesBlob = NULL;
     SSIZE_T privilegeNamesBlobSize = 0;
 
@@ -698,60 +766,53 @@ LsaSrvSaveAccount_inlock(
                  NULL,
                  LSA_ACCOUNTS_REG_KEY,
                  0,
-                 KEY_READ,
+                 KEY_WRITE,
                  &hAccountsKey);
     BAIL_ON_LSA_ERROR(err);
 
-    //
-    // Open Privileges and SystemAccessRights subkeys
-    //
-    err = RegOpenKeyExA(
-                 hRegistry,
-                 hAccountsKey,
-                 pszPrivilegeName,
-                 0,
-                 KEY_WRITE,
-                 &hPrivilegesKey);
-    BAIL_ON_LSA_ERROR(err);
-
-    err = RegOpenKeyExA(
-                 hRegistry,
-                 hAccountsKey,
-                 pszSysAccessRightsName,
-                 0,
-                 KEY_WRITE,
-                 &hSystemAccessRightsKey);
-    BAIL_ON_LSA_ERROR(err);
-
-    // Check if account already exists
     ntStatus = RtlAllocateWC16StringFromSid(
                  &account,
                  pAccountSid);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    err = RegGetValueW(
+    //
+    // Open the account subkey or create it if not existing
+    //
+    err = RegOpenKeyExW(
                  hRegistry,
-                 hPrivilegesKey,
-                 NULL,
+                 hAccountsKey,
                  account,
-                 RRF_RT_REG_MULTI_SZ,
-                 NULL,
-                 NULL,
-                 &existingPrivilegesBlobSize);
-    if (err == ERROR_SUCCESS &&
-        !Overwrite)
+                 0,
+                 KEY_WRITE,
+                 &hAccount);
+    if (err == ERROR_SUCCESS && !Overwrite)
     {
         err = ERROR_ALREADY_EXISTS;
         BAIL_ON_LSA_ERROR(err);
     }
     else if (err == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
-        err = ERROR_SUCCESS;
+        err = RegCreateKeyExW(
+                     hRegistry,
+                     hAccountsKey,
+                     account,
+                     0,
+                     NULL,
+                     0,
+                     KEY_WRITE,
+                     NULL,
+                     &hAccount,
+                     NULL);
+        BAIL_ON_LSA_ERROR(err);
     }
     else if (err != ERROR_SUCCESS)
     {
         BAIL_ON_LSA_ERROR(err);
     }
+
+    //
+    // Save Privileges value
+    //
 
     // Convert privilege names array to blob and save it
     err = RegMultiStrsToByteArrayW(
@@ -762,19 +823,22 @@ LsaSrvSaveAccount_inlock(
 
     err = RegSetValueExW(
                  hRegistry,
-                 hPrivilegesKey,
-                 account,
+                 hAccount,
+                 wszPrivilegeValueName,
                  0,
                  REG_MULTI_SZ,
                  privilegeNamesBlob,
                  privilegeNamesBlobSize);
     BAIL_ON_LSA_ERROR(err);
 
+    //
     // Save system access rights
+    //
+
     err = RegSetValueExW(
                  hRegistry,
-                 hSystemAccessRightsKey,
-                 account,
+                 hAccount,
+                 wszSysAccessRightsValueName,
                  0,
                  REG_DWORD,
                  (PBYTE)&SystemAccessRights,
@@ -782,18 +846,9 @@ LsaSrvSaveAccount_inlock(
     BAIL_ON_LSA_ERROR(err);
 
 error:
-    if (hPrivilegesKey)
+    if (hAccount)
     {
-        RegCloseKey(
-                 hRegistry,
-                 hPrivilegesKey);
-    }
-
-    if (hSystemAccessRightsKey)
-    {
-        RegCloseKey(
-                 hRegistry,
-                 hSystemAccessRightsKey);
+        RegCloseKey(hRegistry, hAccount);
     }
 
     if (hAccountsKey)
@@ -807,6 +862,7 @@ error:
     }
 
     RTL_FREE(&account);
+    LW_SAFE_FREE_MEMORY(privilegeNamesBlob);
 
     if (err == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -820,7 +876,7 @@ error:
 
 static
 DWORD
-LsaSrvGetPrivilegeNames(
+LsaSrvGetPrivilegeNames_inlock(
     IN PLSA_ACCOUNT pAccountEntry,
     OUT PWSTR **ppPrivilegeNames
     )
@@ -868,7 +924,7 @@ error:
 
 
 DWORD
-LsaSrvUpdateAccount(
+LsaSrvUpdateAccount_inlock(
     IN PSID pAccountSid,
     IN PLSA_ACCOUNT pAccountEntry
     )
@@ -879,7 +935,7 @@ LsaSrvUpdateAccount(
     PWSTR *pPrivilegeNames = NULL;
     BOOLEAN Overwrite = TRUE;
 
-    err = LsaSrvGetPrivilegeNames(
+    err = LsaSrvGetPrivilegeNames_inlock(
                       pAccountEntry,
                       &pPrivilegeNames);
     BAIL_ON_LSA_ERROR(err);

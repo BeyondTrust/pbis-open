@@ -52,8 +52,13 @@
 #define LSA_PRIVILEGES_REG_KEY    LSASS_REG_KEY "\\Privileges"
 #define LSA_ACCOUNTS_REG_KEY      LSASS_REG_KEY "\\Accounts"
 
-#define LSA_ACCOUNTS_PRIVILEGES_SUBKEY         "Privileges"
-#define LSA_ACCOUNTS_SYS_ACCESS_RIGHTS_SUBKEY  "SystemAccessRights"
+#define LSA_ACCOUNTS_PRIVILEGES_NAME         "Privileges"
+#define LSA_ACCOUNTS_SYS_ACCESS_RIGHTS_NAME  "SystemAccessRights"
+
+#define LSA_ACCOUNTS_PRIVILEGES_NAME_W \
+    {'P','r','i','v','i','l','e','g','e','s','\0'}
+#define LSA_ACCOUNTS_SYS_ACCESS_RIGHTS_NAME_W \
+    {'S','y','s','t','e','m','A','c','c','e','s','s','R','i','g','h','t','s','\0'}
 
 #define LSA_PRIVILEGES_DB_SIZE    (16)
 #define LSA_ACCOUNTS_DB_SIZE      (16)

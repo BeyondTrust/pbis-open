@@ -74,14 +74,14 @@ LsaSrvSetAccountEntry(
 
 
 DWORD
-LsaSrvAddAccount(
+LsaSrvAddAccount_inlock(
     IN PSID pAccountSid,
     IN PLSA_ACCOUNT pAccountEntry
     );
 
 
 DWORD
-LsaSrvUpdateAccount(
+LsaSrvUpdateAccount_inlock(
     IN PSID pAccountSid,
     IN PLSA_ACCOUNT pAccountEntry
     );
