@@ -25,7 +25,7 @@ typedef struct OpenRequest
 /* Parameters sent in a write request */
 typedef struct WriteRequest
 {
-    FileHandle* handle;
+    LWMsgHandle* handle;
     unsigned long size;
     char* data;
 } WriteRequest;
@@ -33,7 +33,7 @@ typedef struct WriteRequest
 /* Parameters sent in a read request */
 typedef struct ReadRequest
 {
-    FileHandle* handle;
+    LWMsgHandle* handle;
     unsigned long size;
 } ReadRequest;
 
@@ -52,8 +52,8 @@ typedef struct ReadReply
 
 /* Notably missing structures:
  *
- * OpenReply - the reply type is just a FileHandle if it succeeds
- * CloseRequest - the request type is just a FileHandle
+ * OpenReply - the reply type is just a LWMsgHandle if it succeeds
+ * CloseRequest - the request type is just a LWMsgHandle
  */
 
 /* End message structures */
@@ -62,11 +62,11 @@ typedef struct ReadReply
 typedef enum MessageType
 {
     FSERV_OPEN_REQ,         /* OpenRequest */
-    FSERV_OPEN_RES,         /* FileHandle */
+    FSERV_OPEN_RES,         /* LWMsgHandle */
     FSERV_READ_REQ,         /* ReadRequest */
     FSERV_READ_RES,         /* ReadReply */
     FSERV_WRITE_REQ,        /* WriteRequest */
-    FSERV_CLOSE_REQ,        /* FileHandle */
+    FSERV_CLOSE_REQ,        /* LWMsgHandle */
     FSERV_VOID_RES,         /* void */
     FSERV_ERROR_RES         /* StatusReply */
 } MessageType;

@@ -1,4 +1,5 @@
 #include "protocol-server.h"
+#include "fserver.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -124,6 +125,7 @@ fserv_open_srv(
     int flags = 0;
     int fd = -1;
     int ret;
+    LWMsgHandle* lwmsg_handle = NULL;
     
     LOG("fserv_open() of %s on session %p\n", req->path, session);
 
@@ -188,7 +190,12 @@ fserv_open_srv(
             handle->mode = req->mode;
             
             /* Register handle */
-            status = lwmsg_session_register_handle(session, "FileHandle", handle, fserv_free_handle);
+            status = lwmsg_session_register_handle(
+                session,
+                "FileHandle",
+                handle,
+                fserv_free_handle,
+                &lwmsg_handle);
             if (status)
             {
                 goto error;
@@ -196,15 +203,11 @@ fserv_open_srv(
             
             /* Set output parameters */
             out->tag = FSERV_OPEN_RES;
-            out->data = (void*) handle;
+            out->data = lwmsg_handle;
             handle = NULL;
 
             /* Retain handle */
-            status = lwmsg_session_retain_handle(session, out->data);
-            if (status)
-            {
-                goto error;
-            }
+            lwmsg_session_retain_handle(session, lwmsg_handle);
 
             LOG("Successfully opened %s as fd %i for session %p\n",
                 req->path, fd, session);
@@ -246,9 +249,22 @@ fserv_write_srv(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     WriteRequest* req = (WriteRequest*) in->data;
     StatusReply* sreply = NULL;
-    int fd = req->handle->fd;
+    FileHandle* handle = NULL;
+    int fd = -1;
     LWMsgSession* session = lwmsg_call_get_session(call);
     
+    /* Get our internal handle from the lwmsg handle */
+    status = lwmsg_session_get_handle_data(
+        session,
+        req->handle,
+        (void**)(void*) &handle);
+    if (status)
+    {
+        goto error;
+    }
+
+    fd = handle->fd;
+
     LOG("fserv_write() of %lu bytes to fd %i on session %p\n",
         (unsigned long) req->size, fd, session);
 
@@ -291,10 +307,23 @@ fserv_read_srv(
     ReadRequest* req = (ReadRequest*) in->data;
     StatusReply* sreply = NULL;
     ReadReply* rreply = NULL;
-    int fd = req->handle->fd;
+    FileHandle* handle = NULL;
+    int fd = -1;
     int ret = 0;
     LWMsgSession* session = lwmsg_call_get_session(call);
     
+    /* Get our internal handle from the lwmsg handle */
+    status = lwmsg_session_get_handle_data(
+        session,
+        req->handle,
+        (void**)(void*) &handle);
+    if (status)
+    {
+        goto error;
+    }
+
+    fd = handle->fd;
+
     LOG("fserv_read() of %lu bytes from fd %i on session %p\n",
         (unsigned long) req->size, fd, session);
 
@@ -365,13 +394,23 @@ fserv_close_srv(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgSession* session = lwmsg_call_get_session(call);
-    FileHandle* handle = (FileHandle*) in->data;
+    FileHandle* handle = NULL;
     StatusReply* sreply = NULL;
 
     LOG("fserv_close() on fd %i for session %p\n", handle->fd, session);
 
+    /* Get our internal handle from the lwmsg handle */
+    status = lwmsg_session_get_handle_data(
+        session,
+        (LWMsgHandle*) in->data,
+        (void**)(void*) &handle);
+    if (status)
+    {
+        goto error;
+    }
+
     /* Unregister the handle no matter what */
-    status = lwmsg_session_release_handle(session, handle);
+    status = lwmsg_session_unregister_handle(session, (LWMsgHandle*) in->data);
     if (status)
     {
         goto error;

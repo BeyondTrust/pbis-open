@@ -328,7 +328,9 @@ If it succeeds, we allocate and fill in a handle structure:
 @until ;
 @until ;
 
-Before the handle can be given to the caller, it must be registered with the session.
+Before the handle can be given to the caller, we must register
+it with the lwmsg session.  This will give us an #LWMsgHandle
+which can be placed in the output parameters.
 This is performed with the #lwmsg_session_register_handle() call:
 
 @skip Register handle

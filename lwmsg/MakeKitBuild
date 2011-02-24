@@ -1,4 +1,13 @@
-SUBDIRS='include src test'
+SUBDIRS='include src test example'
+
+option()
+{
+    mk_option \
+        OPTION=lwmsg-examples \
+        VAR="LWMSG_BUILD_EXAMPLES" \
+        DEFAULT="no" \
+        HELP="Build and install example programs"
+}
 
 configure()
 {
@@ -34,4 +43,6 @@ configure()
     mk_multiarch_do
         mk_define "MOD_EXT" "${MK_DLO_EXT}"
     mk_multiarch_done
+    
+    [ "$LWMSG_BUILD_EXAMPLES" = "yes" ] || mk_skip_subdir example
 }

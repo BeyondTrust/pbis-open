@@ -200,7 +200,7 @@ fserv_read(
     }
 
     /* Set up request parameters */
-    request.handle = file;
+    request.handle = (LWMsgHandle*) file;
     request.size = size;
     in.tag = FSERV_READ_REQ;
     in.data = &request;
@@ -268,7 +268,7 @@ fserv_write(
     }
 
     /* Set up request parameters */
-    request.handle = file;
+    request.handle = (LWMsgHandle*) file;
     request.size = size;
     request.data = (char*) buffer;
     in.tag = FSERV_WRITE_REQ;
@@ -361,7 +361,7 @@ fserv_close(
 error:
 
     /* Release the handle even on failure */
-    lwmsg_session_release_handle(session, file);
+    lwmsg_session_release_handle(session, (LWMsgHandle*) file);
 
     if (call)
     {

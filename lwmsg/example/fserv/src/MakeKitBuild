@@ -1,0 +1,37 @@
+make()
+{
+    mk_library \
+        LIB=fservcommon \
+        SOURCES="protocol.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lwmsg/lwmsg.h" \
+        LIBDEPS="lwmsg_nothr lwmsg"
+
+    mk_library \
+        LIB=fservclient \
+        SOURCES="fserv-client.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lwmsg/lwmsg.h" \
+        LIBDEPS="fservcommon lwmsg lwmsg_nothr"
+
+    mk_program \
+        PROGRAM=fserver \
+        SOURCES="fserver.c fserver-dispatch.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lwmsg/lwmsg.h" \
+        LIBDEPS="fservcommon lwmsg lwmsg_nothr $LIB_PTHREAD"
+
+    mk_program \
+        PROGRAM=fcat \
+        SOURCES="fcat.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lwmsg/lwmsg.h" \
+        LIBDEPS="fservclient"
+
+    mk_program \
+        PROGRAM=fsink \
+        SOURCES="fsink.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lwmsg/lwmsg.h" \
+        LIBDEPS="fservclient"
+}
