@@ -411,9 +411,10 @@ FreeDomainControllerEx(
     IN void *p
     )
 {
-    struct wbcDomainControllerInfoEx *pController = NULL;
+    struct wbcDomainControllerInfoEx *pController =
+            (struct wbcDomainControllerInfoEx *)p;
 
-    if (!p)
+    if (!pController)
     {
         return 0;
     }
