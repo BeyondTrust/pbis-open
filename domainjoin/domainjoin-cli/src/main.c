@@ -771,7 +771,7 @@ void DoConfigure(int argc, char **argv, LWException **exc)
         LW_TRY(exc, DJConfigureSshForADLogin(testPrefix, GetEnableBoolean(dwEnable), NULL, &LW_EXC));
     else if(!strcmp(argv[0], "krb5"))
         LW_CLEANUP_CTERR(exc, DJModifyKrb5Conf(testPrefix,
-            GetEnableBoolean(dwEnable), longDomain, shortDomain, NULL));
+            GetEnableBoolean(dwEnable), longDomain, shortDomain, NULL, NULL));
     else if(!strcmp(argv[0], "eventfwdd"))
         LW_CLEANUP_CTERR(exc, DJConfigureEventFwd(testPrefix, GetEnableBoolean(dwEnable)));
     else if(!strcmp(argv[0], "reapsysld"))

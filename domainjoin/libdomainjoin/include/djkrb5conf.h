@@ -39,6 +39,7 @@ DJModifyKrb5Conf(
     BOOLEAN enable,
     PCSTR pszDomainName,
     PCSTR pszShortDomainName,
+    const JoinProcessOptions *options,
     BOOLEAN *modified
     );
 
