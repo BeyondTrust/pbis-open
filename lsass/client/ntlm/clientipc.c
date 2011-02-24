@@ -81,7 +81,14 @@ NtlmInitialize(
         dwError = LwMapLwmsgStatusToLwError(
             lwmsg_peer_add_connect_endpoint(
                 gpClient,
-                LWMSG_CONNECTION_MODE_LOCAL,
+                LWMSG_ENDPOINT_DIRECT,
+                "ntlm"));
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = LwMapLwmsgStatusToLwError(
+            lwmsg_peer_add_connect_endpoint(
+                gpClient,
+                LWMSG_ENDPOINT_LOCAL,
                 CACHEDIR "/" NTLM_SERVER_FILENAME));
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -194,7 +201,10 @@ NtlmTransactAcceptSecurityContext(
                 pResultList->hNewContext = NULL;
             }
 
-            NtlmIpcReleaseHandle((LWMsgHandle*) hContext);
+            if (hContext)
+            {
+                NtlmIpcReleaseHandle((LWMsgHandle*) hContext);
+            }
 
             *pfContextAttr = pResultList->fContextAttr;
             *ptsTimeStamp = pResultList->tsTimeStamp;

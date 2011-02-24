@@ -299,10 +299,16 @@ NtlmSrvStartListenThread(
         NtlmSrvGetDispatchSpec()));
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_add_listen_endpoint(
+        gpNtlmServer,
+        LWMSG_ENDPOINT_DIRECT,
+        "ntlm",
+        0));
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = MAP_LWMSG_ERROR(lwmsg_peer_add_listen_endpoint(
         gpNtlmServer,
-        LWMSG_CONNECTION_MODE_LOCAL,
+        LWMSG_ENDPOINT_LOCAL,
         pszCommPath,
         0666));
     BAIL_ON_LSA_ERROR(dwError);
