@@ -265,7 +265,37 @@ static LWMsgProtocol* protocol;
 static LWMsgPeer* client;
 static LWMsgPeer* server;
 
-MU_FIXTURE_SETUP(async)
+MU_FIXTURE_SETUP(async_indirect)
+{
+    MU_TRY(lwmsg_context_new(NULL, &context));
+    lwmsg_context_set_log_function(context, lwmsg_test_log_function, NULL);
+
+    MU_TRY(lwmsg_protocol_new(context, &protocol));
+    MU_TRY(lwmsg_protocol_add_protocol_spec(protocol, async_protocol_spec));
+
+    MU_TRY(lwmsg_peer_new(context, protocol, &server));
+    MU_TRY(lwmsg_peer_add_dispatch_spec(server, async_dispatch_spec));
+    MU_TRY(lwmsg_peer_add_listen_endpoint(server, LWMSG_ENDPOINT_LOCAL, TEST_ENDPOINT, 0600));
+    MU_TRY(lwmsg_peer_start_listen(server));
+
+    MU_TRY(lwmsg_peer_new(NULL, protocol, &client));
+    MU_TRY(lwmsg_peer_add_connect_endpoint(client, LWMSG_ENDPOINT_LOCAL, TEST_ENDPOINT));
+    MU_TRY(lwmsg_peer_connect(client, NULL));
+}
+
+MU_FIXTURE_TEARDOWN(async_indirect)
+{
+    MU_TRY(lwmsg_peer_disconnect(client));
+    lwmsg_peer_delete(client);
+
+    MU_TRY(lwmsg_peer_stop_listen(server));
+    lwmsg_peer_delete(server);
+
+    lwmsg_protocol_delete(protocol);
+    lwmsg_context_delete(context);
+}
+
+MU_FIXTURE_SETUP(async_direct)
 {
     MU_TRY(lwmsg_context_new(NULL, &context));
     lwmsg_context_set_log_function(context, lwmsg_test_log_function, NULL);
@@ -276,13 +306,14 @@ MU_FIXTURE_SETUP(async)
     MU_TRY(lwmsg_peer_new(context, protocol, &server));
     MU_TRY(lwmsg_peer_add_dispatch_spec(server, async_dispatch_spec));
     MU_TRY(lwmsg_peer_add_listen_endpoint(server, LWMSG_ENDPOINT_DIRECT, "test", 0));
-    MU_TRY(lwmsg_peer_add_listen_endpoint(server, LWMSG_ENDPOINT_LOCAL, TEST_ENDPOINT, 0600));
     MU_TRY(lwmsg_peer_start_listen(server));
     
     MU_TRY(lwmsg_peer_new(NULL, protocol, &client));
+    MU_TRY(lwmsg_peer_add_connect_endpoint(client, LWMSG_ENDPOINT_DIRECT, "test"));
+    MU_TRY(lwmsg_peer_connect(client, NULL));
 }
 
-MU_FIXTURE_TEARDOWN(async)
+MU_FIXTURE_TEARDOWN(async_direct)
 {
     MU_TRY(lwmsg_peer_disconnect(client));
     lwmsg_peer_delete(client);
@@ -297,23 +328,11 @@ MU_FIXTURE_TEARDOWN(async)
 static
 void
 setup(
-    LWMsgBool direct,
     LWMsgBool nonblock,
     LWMsgBool async,
     LWMsgParams* in
     )
 {
-    if (direct)
-    {
-        MU_TRY(lwmsg_peer_add_connect_endpoint(client, LWMSG_ENDPOINT_DIRECT, "test"));
-    }
-    else
-    {
-        MU_TRY(lwmsg_peer_add_connect_endpoint(client, LWMSG_ENDPOINT_LOCAL, TEST_ENDPOINT));
-    }
-
-    MU_TRY(lwmsg_peer_connect(client, NULL));
-
     switch (nonblock)
     {
     case LWMSG_TRUE:
@@ -343,7 +362,6 @@ setup(
 static
 void
 test_basic(
-    LWMsgBool direct,
     LWMsgBool nonblock,
     LWMsgBool async
     )
@@ -352,7 +370,7 @@ test_basic(
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* call = NULL;
 
-    setup(direct, nonblock, async, &in);
+    setup(nonblock, async, &in);
 
     MU_TRY(lwmsg_peer_acquire_call(client, &call));
     MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
@@ -366,7 +384,6 @@ test_basic(
 static
 void
 test_disconnect(
-    LWMsgBool direct,
     LWMsgBool nonblock,
     LWMsgBool async
     )
@@ -376,7 +393,7 @@ test_disconnect(
     LWMsgCall* call = NULL;
     struct timespec ts = {0, (DELAY_IN_MS * 1000000) / 2};
 
-    setup(direct, nonblock, async, &in);
+    setup(nonblock, async, &in);
 
     MU_TRY(lwmsg_peer_acquire_call(client, &call));
     MU_ASSERT_EQUAL(
@@ -393,7 +410,6 @@ test_disconnect(
 static
 void
 test_shutdown(
-    LWMsgBool direct,
     LWMsgBool nonblock,
     LWMsgBool async
     )
@@ -403,7 +419,7 @@ test_shutdown(
     LWMsgCall* call = NULL;
     struct timespec ts = {0, (DELAY_IN_MS * 1000000) / 2};
 
-    setup(direct, nonblock, async, &in);
+    setup(nonblock, async, &in);
 
     MU_TRY(lwmsg_peer_acquire_call(client, &call));
     MU_ASSERT_EQUAL(
@@ -421,7 +437,6 @@ test_shutdown(
 static
 void
 test_cancel(
-    LWMsgBool direct,
     LWMsgBool nonblock,
     LWMsgBool async
     )
@@ -431,7 +446,7 @@ test_cancel(
     LWMsgCall* call = NULL;
     struct timespec ts = {0, (DELAY_IN_MS * 1000000) / 2};
 
-    setup(direct, nonblock, async, &in);
+    setup(nonblock, async, &in);
 
     MU_TRY(lwmsg_peer_acquire_call(client, &call));
     MU_ASSERT_EQUAL(
@@ -447,102 +462,102 @@ test_cancel(
     lwmsg_call_release(call);
 }
 
-MU_TEST(async, indirect_nonblock_synchrounous)
+MU_TEST(async_indirect, nonblock_synchrounous)
 {
-    test_basic(LWMSG_FALSE, LWMSG_TRUE, LWMSG_FALSE);
+    test_basic(LWMSG_TRUE, LWMSG_FALSE);
 }
 
-MU_TEST(async, indirect_nonblock_asynchronous)
+MU_TEST(async_indirect, nonblock_asynchronous)
 {
-    test_basic(LWMSG_FALSE, LWMSG_TRUE, LWMSG_TRUE);
+    test_basic(LWMSG_TRUE, LWMSG_TRUE);
 }
 
-MU_TEST(async, indirect_block_synchrounous)
+MU_TEST(async_indirect, block_synchrounous)
 {
-    test_basic(LWMSG_FALSE, LWMSG_FALSE, LWMSG_FALSE);
+    test_basic(LWMSG_FALSE, LWMSG_FALSE);
 }
 
-MU_TEST(async, indirect_block_asynchronous)
+MU_TEST(async_indirect, block_asynchronous)
 {
-    test_basic(LWMSG_FALSE, LWMSG_FALSE, LWMSG_TRUE);
+    test_basic(LWMSG_FALSE, LWMSG_TRUE);
 }
 
-MU_TEST(async, direct_nonblock_synchrounous)
+MU_TEST(async_direct, nonblock_synchrounous)
 {
-    test_basic(LWMSG_TRUE, LWMSG_TRUE, LWMSG_FALSE);
+    test_basic(LWMSG_TRUE, LWMSG_FALSE);
 }
 
-MU_TEST(async, direct_nonblock_asynchronous)
+MU_TEST(async_direct, nonblock_asynchronous)
 {
-    test_basic(LWMSG_TRUE, LWMSG_TRUE, LWMSG_TRUE);
+    test_basic(LWMSG_TRUE, LWMSG_TRUE);
 }
 
-MU_TEST(async, direct_block_synchrounous)
+MU_TEST(async_direct, block_synchrounous)
 {
-    test_basic(LWMSG_TRUE, LWMSG_FALSE, LWMSG_FALSE);
+    test_basic(LWMSG_FALSE, LWMSG_FALSE);
 }
 
-MU_TEST(async, direct_block_asynchronous)
+MU_TEST(async_direct, block_asynchronous)
 {
-    test_basic(LWMSG_TRUE, LWMSG_FALSE, LWMSG_TRUE);
+    test_basic(LWMSG_FALSE, LWMSG_TRUE);
 }
 
-MU_TEST(async, indirect_nonblock_asynchronous_disconnect)
+MU_TEST(async_indirect, nonblock_asynchronous_disconnect)
 {
-    test_disconnect(LWMSG_FALSE, LWMSG_TRUE, LWMSG_TRUE);
+    test_disconnect(LWMSG_TRUE, LWMSG_TRUE);
 }
 
-MU_TEST(async, indirect_block_asynchronous_disconnect)
+MU_TEST(async_indirect, block_asynchronous_disconnect)
 {
-    test_disconnect(LWMSG_FALSE, LWMSG_FALSE, LWMSG_TRUE);
+    test_disconnect(LWMSG_FALSE, LWMSG_TRUE);
 }
 
-MU_TEST(async, direct_nonblock_asynchronous_disconnect)
+MU_TEST(async_direct, nonblock_asynchronous_disconnect)
 {
-    test_disconnect(LWMSG_TRUE, LWMSG_TRUE, LWMSG_TRUE);
+    test_disconnect(LWMSG_TRUE, LWMSG_TRUE);
 }
 
-MU_TEST(async, direct_block_asynchronous_disconnect)
+MU_TEST(async_direct, block_asynchronous_disconnect)
 {
-    test_disconnect(LWMSG_TRUE, LWMSG_FALSE, LWMSG_TRUE);
+    test_disconnect(LWMSG_FALSE, LWMSG_TRUE);
 }
 
-MU_TEST(async, indirect_nonblock_asynchronous_shutdown)
+MU_TEST(async_indirect, nonblock_asynchronous_shutdown)
 {
-    test_shutdown(LWMSG_FALSE, LWMSG_TRUE, LWMSG_TRUE);
+    test_shutdown(LWMSG_TRUE, LWMSG_TRUE);
 }
 
-MU_TEST(async, indirect_block_asynchronous_shutdown)
+MU_TEST(async_indirect, block_asynchronous_shutdown)
 {
-    test_shutdown(LWMSG_FALSE, LWMSG_FALSE, LWMSG_TRUE);
+    test_shutdown(LWMSG_FALSE, LWMSG_TRUE);
 }
 
-MU_TEST(async, direct_nonblock_asynchronous_shutdown)
+MU_TEST(async_direct, nonblock_asynchronous_shutdown)
 {
-    test_shutdown(LWMSG_TRUE, LWMSG_TRUE, LWMSG_TRUE);
+    test_shutdown(LWMSG_TRUE, LWMSG_TRUE);
 }
 
-MU_TEST(async, direct_block_asynchronous_shutdown)
+MU_TEST(async_direct, block_asynchronous_shutdown)
 {
-    test_shutdown(LWMSG_TRUE, LWMSG_FALSE, LWMSG_TRUE);
+    test_shutdown(LWMSG_FALSE, LWMSG_TRUE);
 }
 
-MU_TEST(async, indirect_nonblock_asynchronous_cancel)
+MU_TEST(async_indirect, nonblock_asynchronous_cancel)
 {
-    test_cancel(LWMSG_FALSE, LWMSG_TRUE, LWMSG_TRUE);
+    test_cancel(LWMSG_TRUE, LWMSG_TRUE);
 }
 
-MU_TEST(async, indirect_block_asynchronous_cancel)
+MU_TEST(async_indirect, block_asynchronous_cancel)
 {
-    test_cancel(LWMSG_FALSE, LWMSG_FALSE, LWMSG_TRUE);
+    test_cancel(LWMSG_FALSE, LWMSG_TRUE);
 }
 
-MU_TEST(async, direct_nonblock_asynchronous_cancel)
+MU_TEST(async_direct, nonblock_asynchronous_cancel)
 {
-    test_cancel(LWMSG_TRUE, LWMSG_TRUE, LWMSG_TRUE);
+    test_cancel(LWMSG_TRUE, LWMSG_TRUE);
 }
 
-MU_TEST(async, direct_block_asynchronous_cancel)
+MU_TEST(async_direct, block_asynchronous_cancel)
 {
-    test_cancel(LWMSG_TRUE, LWMSG_FALSE, LWMSG_TRUE);
+    test_cancel(LWMSG_FALSE, LWMSG_TRUE);
 }

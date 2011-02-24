@@ -681,7 +681,7 @@ LWMsgProtocol* protocol = NULL;
 LWMsgPeer* server = NULL;
 LWMsgPeer* client = NULL;
 
-MU_FIXTURE_SETUP(client_server)
+MU_FIXTURE_SETUP(client_server_indirect)
 {
     LWMsgTime timeout = {0, 50 * 1000};
 
@@ -701,7 +701,7 @@ MU_FIXTURE_SETUP(client_server)
     MU_TRY(lwmsg_peer_set_timeout(client, LWMSG_TIMEOUT_ESTABLISH, &timeout));
 }
 
-MU_FIXTURE_TEARDOWN(client_server)
+MU_FIXTURE_TEARDOWN(client_server_indirect)
 {
     lwmsg_peer_delete(client);
     lwmsg_peer_delete(server);
@@ -709,8 +709,209 @@ MU_FIXTURE_TEARDOWN(client_server)
     lwmsg_context_delete(context);
 }
 
-/* Test callback support */
-MU_TEST(client_server, callback)
+MU_FIXTURE_SETUP(client_server_direct)
+{
+    LWMsgTime timeout = {0, 50 * 1000};
+
+    MU_TRY(lwmsg_context_new(NULL, &context));
+    lwmsg_context_set_log_function(context, lwmsg_test_log_function, NULL);
+
+    MU_TRY(lwmsg_protocol_new(context, &protocol));
+    MU_TRY(lwmsg_protocol_add_protocol_spec(protocol, multicall_spec));
+
+    MU_TRY(lwmsg_peer_new(context, protocol, &server));
+    MU_TRY(lwmsg_peer_add_dispatch_spec(server, multicall_dispatch));
+    MU_TRY(lwmsg_peer_add_listen_endpoint(server, LWMSG_ENDPOINT_DIRECT, "test", 0));
+
+    MU_TRY(lwmsg_peer_new(NULL, protocol, &client));
+    MU_TRY(lwmsg_peer_add_dispatch_spec(client, invoke_dispatch));
+    MU_TRY(lwmsg_peer_add_connect_endpoint(client, LWMSG_ENDPOINT_DIRECT, "test"));
+    MU_TRY(lwmsg_peer_set_timeout(client, LWMSG_TIMEOUT_ESTABLISH, &timeout));
+}
+
+MU_FIXTURE_TEARDOWN(client_server_direct)
+{
+    lwmsg_peer_delete(client);
+    lwmsg_peer_delete(server);
+    lwmsg_protocol_delete(protocol);
+    lwmsg_context_delete(context);
+}
+
+/* Basic call test */
+static
+void
+test_ping(
+    void
+    )
+{
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* call = NULL;
+
+    in.tag = PING_REQUEST;
+
+    MU_TRY(lwmsg_peer_start_listen(server));
+    MU_TRY(lwmsg_peer_connect(client, NULL));
+    MU_TRY(lwmsg_peer_acquire_call(client, &call));
+    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out.tag, PING_REPLY);
+
+    lwmsg_call_release(call);
+
+    MU_TRY(lwmsg_peer_disconnect(client));
+    MU_TRY(lwmsg_peer_stop_listen(server));
+}
+
+/*
+ * Test that making a call after restarting
+ * the server succeeds without restarting
+ * the client.
+ */
+static
+void
+test_call_restart_call(
+    void
+    )
+{
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* call = NULL;
+
+    in.tag = PING_REQUEST;
+
+    MU_TRY(lwmsg_peer_start_listen(server));
+    MU_TRY(lwmsg_peer_connect(client, NULL));
+    MU_TRY(lwmsg_peer_acquire_call(client, &call));
+    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out.tag, PING_REPLY);
+
+    lwmsg_call_release(call);
+
+    MU_TRY(lwmsg_peer_stop_listen(server));
+    MU_TRY(lwmsg_peer_start_listen(server));
+
+    MU_TRY(lwmsg_peer_acquire_call(client, &call));
+    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out.tag, PING_REPLY);
+
+    lwmsg_call_release(call);
+}
+
+/*
+ * Test that making a call after reconnecting
+ * the client succeeds without restarting
+ * the server.
+ */
+static
+void
+test_call_reconnect_call(
+    void
+    )
+{
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* call = NULL;
+
+    in.tag = PING_REQUEST;
+
+    MU_TRY(lwmsg_peer_start_listen(server));
+    MU_TRY(lwmsg_peer_connect(client, NULL));
+    MU_TRY(lwmsg_peer_acquire_call(client, &call));
+    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out.tag, PING_REPLY);
+
+    lwmsg_call_release(call);
+
+    MU_TRY(lwmsg_peer_disconnect(client));
+    MU_TRY(lwmsg_peer_connect(client, NULL));
+
+    MU_TRY(lwmsg_peer_acquire_call(client, &call));
+    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out.tag, PING_REPLY);
+
+    lwmsg_call_release(call);
+}
+
+/*
+ * Test that making a call after failing
+ * to make an earlier call because the server
+ * was not yet started succeeds.
+ */
+static
+void
+test_call_fail_start_call(
+    void
+    )
+{
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* call = NULL;
+
+    in.tag = PING_REQUEST;
+
+    MU_TRY(lwmsg_peer_connect(client, NULL));
+    if (lwmsg_peer_acquire_call(client, &call) == LWMSG_STATUS_SUCCESS)
+    {
+        MU_ASSERT_NOT_EQUAL(
+            MU_TYPE_INTEGER,
+            lwmsg_call_dispatch(call, &in, &out, NULL, NULL),
+            LWMSG_STATUS_SUCCESS);
+    }
+
+    lwmsg_call_release(call);
+
+    MU_TRY(lwmsg_peer_start_listen(server));
+    MU_TRY(lwmsg_peer_acquire_call(client, &call));
+    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out.tag, PING_REPLY);
+
+    lwmsg_call_release(call);
+}
+
+/*
+ * Test that making a call after the server
+ * shuts down fails.
+ */
+static
+void
+test_call_shutdown_call_fail(
+    void
+    )
+{
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* call = NULL;
+
+    in.tag = PING_REQUEST;
+
+    MU_TRY(lwmsg_peer_start_listen(server));
+    MU_TRY(lwmsg_peer_connect(client, NULL));
+    MU_TRY(lwmsg_peer_acquire_call(client, &call));
+    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
+
+    lwmsg_call_release(call);
+
+    MU_TRY(lwmsg_peer_stop_listen(server));
+
+    if (lwmsg_peer_acquire_call(client, &call) == LWMSG_STATUS_SUCCESS)
+    {
+        MU_ASSERT_NOT_EQUAL(
+            MU_TYPE_INTEGER,
+            lwmsg_call_dispatch(call, &in, &out, NULL, NULL),
+            LWMSG_STATUS_SUCCESS);
+    }
+
+    lwmsg_call_release(call);
+}
+
+/*
+ * Test callback support.
+ */
+static
+void
+test_callback(
+    void
+    )
 {
     LWMsgSession* session = NULL;
     LWMsgCall* call = NULL;
@@ -724,7 +925,7 @@ MU_TEST(client_server, callback)
 
     MU_TRY(lwmsg_peer_start_listen(server));
     MU_TRY(lwmsg_peer_connect(client, &session));
-    
+
     MU_TRY(lwmsg_session_register_handle(session, "IntFunction", times_two, NULL, &handle));
 
     req.func = handle;
@@ -752,80 +953,69 @@ MU_TEST(client_server, callback)
     MU_TRY(lwmsg_peer_stop_listen(server));
 }
 
-/* Ensure that we can successfully connect to a server
-   after failing to connect the first time */
-MU_TEST(client_server, connect_fail_connect_succeed)
+MU_TEST(client_server_indirect, ping)
 {
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    LWMsgCall* call = NULL;
-
-    MU_TRY(status = lwmsg_peer_connect(client, NULL));
-    /* An attempt to acquire a call should fail with the same error */
-    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, lwmsg_peer_acquire_call(client, &call), status);
-    /* Once we start the server, everything should go smoothly */
-    MU_TRY(lwmsg_peer_start_listen(server));
-    MU_TRY(lwmsg_peer_connect(client, NULL));
-    MU_TRY(lwmsg_peer_disconnect(client));
-    MU_TRY(lwmsg_peer_stop_listen(server));
+    test_ping();
 }
 
-/* Ensure that we can successfully reconnect to a server
-   after explicitly disconnecting */
-MU_TEST(client_server, connect_disconnect_connect_succeed)
+MU_TEST(client_server_direct, ping)
 {
-    MU_TRY(lwmsg_peer_start_listen(server));
-    MU_TRY(lwmsg_peer_connect(client, NULL));
-    MU_TRY(lwmsg_peer_disconnect(client));
-    MU_TRY(lwmsg_peer_connect(client, NULL));
-    MU_TRY(lwmsg_peer_disconnect(client));
-    MU_TRY(lwmsg_peer_stop_listen(server));
+    test_ping();
 }
 
-#if 0
-/* Ensure that acquiring a call handle fails if the server
-   has disconnected us */
-MU_TEST(client_server, connect_stop_listen_acquire_fails)
+MU_TEST(client_server_indirect, call_restart_call)
 {
-    LWMsgCall* call = NULL;
-    struct timespec ts = {0, 50000000};
-
-    MU_TRY(lwmsg_peer_start_listen(server));
-    MU_TRY(lwmsg_peer_connect(client, NULL));
-    MU_TRY(lwmsg_peer_acquire_call(client, &call));
-    lwmsg_call_release(call);
-    MU_TRY(lwmsg_peer_stop_listen(server));
-    nanosleep(&ts, NULL);
-    MU_ASSERT_EQUAL(
-        MU_TYPE_INTEGER,
-        lwmsg_peer_acquire_call(client, &call),
-        LWMSG_STATUS_PEER_CLOSE);
-    MU_TRY(lwmsg_peer_disconnect(client));
+    test_call_restart_call();
 }
-#endif
 
-/* Ensure that we can automatically reconnect if the server
-   goes down and comes back up */
-MU_TEST(client_server, connect_restart_acquire_succeeds)
+MU_TEST(client_server_direct, call_restart_call)
 {
-    LWMsgCall* call = NULL;
-    struct timespec ts = {0, 50000000};
+    test_call_restart_call();
+}
 
-    MU_TRY(lwmsg_peer_start_listen(server));
-    MU_TRY(lwmsg_peer_connect(client, NULL));
-    MU_TRY(lwmsg_peer_acquire_call(client, &call));
-    lwmsg_call_release(call);
-    MU_TRY(lwmsg_peer_stop_listen(server));
-    nanosleep(&ts, NULL);
-    MU_TRY(lwmsg_peer_start_listen(server));
-    MU_TRY(lwmsg_peer_acquire_call(client, &call));
-    lwmsg_call_release(call);
-    MU_TRY(lwmsg_peer_disconnect(client));
-    MU_TRY(lwmsg_peer_stop_listen(server));
+MU_TEST(client_server_indirect, call_reconnect_call)
+{
+    test_call_reconnect_call();
+}
+
+MU_TEST(client_server_direct, call_reconnect_call)
+{
+    test_call_reconnect_call();
+}
+
+MU_TEST(client_server_indirect, call_fail_start_call)
+{
+    test_call_fail_start_call();
+}
+
+MU_TEST(client_server_direct, call_fail_start_call)
+{
+    test_call_fail_start_call();
+}
+
+MU_TEST(client_server_indirect, call_shutdown_call_fail)
+{
+    test_call_shutdown_call_fail();
+}
+
+MU_TEST(client_server_direct, call_shutdown_call_fail)
+{
+    test_call_shutdown_call_fail();
+}
+
+MU_TEST(client_server_indirect, callback)
+{
+    test_callback();
+}
+
+MU_TEST(client_server_direct, callback)
+{
+    test_callback();
 }
 
 /* Ensure that the server removes its domain socket file
    when it is stopped */
-MU_TEST(client_server, stop_listen_removes_endpoint)
+MU_TEST(client_server_indirect, stop_listen_removes_endpoint)
 {
     struct stat statbuf;
     int ret = -1;
@@ -840,7 +1030,7 @@ MU_TEST(client_server, stop_listen_removes_endpoint)
 
 /* Ensure that attempting to listen on an endpoint that cannot
    be created (e.g. due to the directory not existing) fails */
-MU_TEST(client_server, start_listen_on_bad_endpoint_fails)
+MU_TEST(client_server_indirect, start_listen_on_bad_endpoint_fails)
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
 
@@ -856,7 +1046,7 @@ error:
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, status, LWMSG_STATUS_FILE_NOT_FOUND);
 }
 
-MU_TEST(client_server, bogus_reply_fail_ping_succeed)
+MU_TEST(client_server_indirect, bogus_reply_fail_ping_succeed)
 {
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
@@ -888,7 +1078,7 @@ MU_TEST(client_server, bogus_reply_fail_ping_succeed)
 
 #define NUM_ASSOCS 128
 
-MU_TEST(client_server, client_limit_timeout)
+MU_TEST(client_server_indirect, client_limit_timeout)
 {
     LWMsgAssoc* assocs[NUM_ASSOCS] = {0};
     LWMsgTime idle = {1, 0};
@@ -959,7 +1149,7 @@ trace_end(
     }
 }
 
-MU_TEST(client_server, tracing)
+MU_TEST(client_server_indirect, tracing)
 {
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
@@ -982,93 +1172,6 @@ MU_TEST(client_server, tracing)
     MU_ASSERT(info.outgoing_begin);
     MU_ASSERT(info.outgoing_end);
 
-    MU_TRY(lwmsg_peer_disconnect(client));
-    MU_TRY(lwmsg_peer_stop_listen(server));
-}
-
-MU_FIXTURE_SETUP(direct)
-{
-    MU_TRY(lwmsg_context_new(NULL, &context));
-    lwmsg_context_set_log_function(context, lwmsg_test_log_function, NULL);
-
-    MU_TRY(lwmsg_protocol_new(context, &protocol));
-    MU_TRY(lwmsg_protocol_add_protocol_spec(protocol, multicall_spec));
-
-    MU_TRY(lwmsg_peer_new(context, protocol, &server));
-    MU_TRY(lwmsg_peer_add_dispatch_spec(server, multicall_dispatch));
-    MU_TRY(lwmsg_peer_add_listen_endpoint(server, LWMSG_ENDPOINT_DIRECT, "test", 0));
-
-    MU_TRY(lwmsg_peer_new(NULL, protocol, &client));
-    MU_TRY(lwmsg_peer_add_dispatch_spec(client, invoke_dispatch));
-    MU_TRY(lwmsg_peer_add_connect_endpoint(client, LWMSG_ENDPOINT_DIRECT, "test"));
-}
-
-MU_FIXTURE_TEARDOWN(direct)
-{
-    lwmsg_peer_delete(client);
-    lwmsg_peer_delete(server);
-    lwmsg_protocol_delete(protocol);
-    lwmsg_context_delete(context);
-}
-
-MU_TEST(direct, ping)
-{
-    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
-    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
-    LWMsgCall* call = NULL;
-
-    in.tag = PING_REQUEST;
-
-    MU_TRY(lwmsg_peer_start_listen(server));
-    MU_TRY(lwmsg_peer_connect(client, NULL));
-    MU_TRY(lwmsg_peer_acquire_call(client, &call));
-    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
-    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out.tag, PING_REPLY);
-
-    lwmsg_call_release(call);
-
-    MU_TRY(lwmsg_peer_disconnect(client));
-    MU_TRY(lwmsg_peer_stop_listen(server));
-}
-
-MU_TEST(direct, callback)
-{
-    LWMsgSession* session = NULL;
-    LWMsgCall* call = NULL;
-    MulticallRequest req;
-    MulticallReply* rep;
-    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
-    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
-    int values[] = {1, 2, 3, 4, 5};
-    unsigned int i;
-    LWMsgHandle* handle = NULL;
-
-    MU_TRY(lwmsg_peer_start_listen(server));
-    MU_TRY(lwmsg_peer_connect(client, &session));
-
-    MU_TRY(lwmsg_session_register_handle(session, "IntFunction", times_two, NULL, &handle));
-
-    req.func = handle;
-    req.num_values = sizeof(values) / sizeof(*values);
-    req.values = values;
-    in.tag = MULTICALL_REQUEST;
-    in.data = &req;
-
-    MU_TRY(lwmsg_peer_acquire_call(client, &call));
-    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
-    rep = (MulticallReply*) out.data;
-
-    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out.tag, MULTICALL_REPLY);
-    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, rep->num_values, req.num_values);
-
-    for (i = 0; i < rep->num_values; i++)
-    {
-        MU_ASSERT_EQUAL(MU_TYPE_INTEGER, rep->values[i], times_two(req.values[i]));
-    }
-
-    MU_TRY(lwmsg_session_unregister_handle(session, handle));
-    MU_TRY(lwmsg_call_destroy_params(call, &out));
-    lwmsg_call_release(call);
     MU_TRY(lwmsg_peer_disconnect(client));
     MU_TRY(lwmsg_peer_stop_listen(server));
 }
