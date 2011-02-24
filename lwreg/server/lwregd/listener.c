@@ -230,5 +230,15 @@ error:
         gpServer = NULL;
     }
 
+    if (gpProtocol)
+    {
+        lwmsg_protocol_delete(gpProtocol);
+    }
+
+    if (gpContext)
+    {
+        lwmsg_context_delete(gpContext);
+    }
+
     return dwError;
 }
