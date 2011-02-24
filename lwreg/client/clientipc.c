@@ -52,21 +52,15 @@ static volatile LONG glLibraryRefCount = 0;
 static pthread_mutex_t gLock = PTHREAD_MUTEX_INITIALIZER;
 
 static
-NTSTATUS
+VOID
 RegIpcReleaseHandle(
     IN HANDLE hConnection,
     IN PVOID pHandle
     )
 {
-    NTSTATUS status = 0;
     PREG_CLIENT_CONNECTION_CONTEXT pContext = hConnection;
 
-    status = MAP_LWMSG_ERROR(lwmsg_session_release_handle(pContext->pSession, pHandle));
-    BAIL_ON_NT_STATUS(status);
-
-error:
-
-    return status;
+    lwmsg_session_release_handle(pContext->pSession, pHandle);
 }
 
 DWORD
@@ -339,7 +333,7 @@ RegTransactCreateKeyExW(
     		  (ulSecDescLen <= SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE));
     }
 
-    CreateKeyExReq.hKey = hKey;
+    CreateKeyExReq.hKey = (LWMsgHandle*) hKey;
     CreateKeyExReq.pSubKey = pSubKey;
     CreateKeyExReq.pClass = pClass;
     CreateKeyExReq.dwOptions = dwOptions;
@@ -357,7 +351,7 @@ RegTransactCreateKeyExW(
     {
         case REG_R_CREATE_KEY_EX:
             pCreateKeyExResp = (PREG_IPC_CREATE_KEY_EX_RESPONSE)out.data;
-            *phkResult = pCreateKeyExResp->hkResult;
+            *phkResult = (HKEY) pCreateKeyExResp->hkResult;
             pCreateKeyExResp->hkResult = NULL;
 
             if(pdwDisposition)
@@ -414,7 +408,7 @@ RegTransactOpenKeyExW(
     status = RegIpcAcquireCall(hConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    OpenKeyExReq.hKey = hKey;
+    OpenKeyExReq.hKey = (LWMsgHandle*) hKey;
     OpenKeyExReq.pSubKey = pwszSubKey;
     OpenKeyExReq.AccessDesired = AccessDesired;
 
@@ -429,7 +423,7 @@ RegTransactOpenKeyExW(
         case REG_R_OPEN_KEYW_EX:
             pOpenKeyExResp = (PREG_IPC_OPEN_KEY_EX_RESPONSE) out.data;
 
-            *phkResult = pOpenKeyExResp->hkResult;
+            *phkResult = (HKEY) pOpenKeyExResp->hkResult;
             pOpenKeyExResp->hkResult = NULL;
 
             break;
@@ -474,7 +468,7 @@ RegTransactCloseKey(
     status = RegIpcAcquireCall(hConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    CloseKeyReq.hKey = hKey;
+    CloseKeyReq.hKey = (LWMsgHandle*) hKey;
 
     in.tag = REG_Q_CLOSE_KEY;
     in.data = &CloseKeyReq;
@@ -534,7 +528,7 @@ RegTransactDeleteKeyW(
     status = RegIpcAcquireCall(hConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    DeleteKeyReq.hKey = hKey;
+    DeleteKeyReq.hKey = (LWMsgHandle*) hKey;
     DeleteKeyReq.pSubKey = pSubKey;
 
     in.tag = REG_Q_DELETE_KEY;
@@ -602,7 +596,7 @@ RegTransactQueryInfoKeyW(
     status = RegIpcAcquireCall(hConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    QueryInfoKeyReq.hKey = hKey;
+    QueryInfoKeyReq.hKey = (LWMsgHandle*) hKey;
     QueryInfoKeyReq.pcClass = pcClass;
 
     in.tag = REG_Q_QUERY_INFO_KEYW;
@@ -692,7 +686,7 @@ RegTransactEnumKeyExW(
     status = RegIpcAcquireCall(hConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    EnumKeyExReq.hKey = hKey;
+    EnumKeyExReq.hKey = (LWMsgHandle*) hKey;
     EnumKeyExReq.dwIndex = dwIndex;
     EnumKeyExReq.cName = *pcName;
     EnumKeyExReq.cClass = pcClass ? *pcClass : 0;
@@ -770,7 +764,7 @@ RegTransactGetValueW(
     status = RegIpcAcquireCall(hConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    GetValueReq.hKey = hKey;
+    GetValueReq.hKey = (LWMsgHandle*) hKey;
     GetValueReq.pSubKey = pSubKey;
     GetValueReq.pValue = pValue;
     GetValueReq.Flags = Flags;
@@ -848,7 +842,7 @@ RegTransactDeleteKeyValueW(
     status = RegIpcAcquireCall(hConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    DeleteKeyValueReq.hKey = hKey;
+    DeleteKeyValueReq.hKey = (LWMsgHandle*) hKey;
     DeleteKeyValueReq.pSubKey = pSubKey;
     DeleteKeyValueReq.pValueName = pValueName;
 
@@ -905,7 +899,7 @@ RegTransactDeleteTreeW(
     status = RegIpcAcquireCall(hConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    DeleteTreeReq.hKey = hKey;
+    DeleteTreeReq.hKey = (LWMsgHandle*) hKey;
     DeleteTreeReq.pSubKey = pSubKey;
 
     in.tag = REG_Q_DELETE_TREE;
@@ -962,7 +956,7 @@ RegTransactDeleteValueW(
     status = RegIpcAcquireCall(hConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    DeleteValueReq.hKey = hKey;
+    DeleteValueReq.hKey = (LWMsgHandle*) hKey;
     DeleteValueReq.pValueName = pValueName;
 
     in.tag = REG_Q_DELETE_VALUE;
@@ -1025,7 +1019,7 @@ RegTransactEnumValueW(
     status = RegIpcAcquireCall(hConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    EnumValueReq.hKey = hKey;
+    EnumValueReq.hKey = (LWMsgHandle*) hKey;
     EnumValueReq.dwIndex = dwIndex;
     EnumValueReq.cName = *pcchValueName;
     EnumValueReq.cValue = pcbData == NULL ? 0 : *pcbData;
@@ -1111,7 +1105,7 @@ RegTransactQueryMultipleValues(
     status = RegIpcAcquireCall(hConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    QueryMultipleValuesReq.hKey = hKey;
+    QueryMultipleValuesReq.hKey = (LWMsgHandle*) hKey;
     QueryMultipleValuesReq.num_vals = num_vals;
     QueryMultipleValuesReq.val_list = val_list;
     if (pValueBuf)
@@ -1205,7 +1199,7 @@ RegTransactSetValueExW(
 	status = RegIpcAcquireCall(hConnection, &pCall);
 	BAIL_ON_NT_STATUS(status);
 
-    SetValueExReq.hKey = hKey;
+    SetValueExReq.hKey = (LWMsgHandle*) hKey;
     SetValueExReq.pValueName = pValueName;
     SetValueExReq.dwType = dwType;
     SetValueExReq.pData = pData;
@@ -1267,7 +1261,7 @@ RegTransactSetKeySecurity(
     status = RegIpcAcquireCall(hConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    SetKeySecurityReq.hKey = hKey;
+    SetKeySecurityReq.hKey = (LWMsgHandle*) hKey;
     SetKeySecurityReq.SecurityInformation = SecurityInformation;
     SetKeySecurityReq.SecurityDescriptor = SecurityDescriptor;
     SetKeySecurityReq.Length = Length;
@@ -1329,7 +1323,7 @@ RegTransactGetKeySecurity(
     status = RegIpcAcquireCall(hConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    GetKeySecurityReq.hKey = hKey;
+    GetKeySecurityReq.hKey = (LWMsgHandle*) hKey;
     GetKeySecurityReq.SecurityInformation = SecurityInformation;
     GetKeySecurityReq.Length = *lpcbSecurityDescriptor;
     GetKeySecurityReq.bRetSecurityDescriptor = SecurityDescriptor ? TRUE : FALSE;
@@ -1402,7 +1396,7 @@ RegTransactSetValueAttributesW(
     status = RegIpcAcquireCall(hRegConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    SetValueAttrsReq.hKey = hKey;
+    SetValueAttrsReq.hKey = (LWMsgHandle*) hKey;
     SetValueAttrsReq.pSubKey = pSubKey;
     SetValueAttrsReq.pValueName = pValueName;
     SetValueAttrsReq.pValueAttributes = pValueAttributes;
@@ -1472,7 +1466,7 @@ RegTransactGetValueAttributesW(
     status = RegIpcAcquireCall(hRegConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    GetValueAttrsReq.hKey = hKey;
+    GetValueAttrsReq.hKey = (LWMsgHandle*) hKey;
     GetValueAttrsReq.pSubKey = pwszSubKey;
     GetValueAttrsReq.pValueName = pwszValueName;
     GetValueAttrsReq.bRetCurrentValue = ppCurrentValue ? TRUE : FALSE;
@@ -1547,7 +1541,7 @@ RegTransactDeleteValueAttributesW(
     status = RegIpcAcquireCall(hRegConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
-    DeleteValueAttrsReq.hKey = hKey;
+    DeleteValueAttrsReq.hKey = (LWMsgHandle*) hKey;
     DeleteValueAttrsReq.pSubKey = pwszSubKey;
     DeleteValueAttrsReq.pValueName = pwszValueName;
 

@@ -77,13 +77,6 @@ typedef uint32_t LWMsgHandleID;
  */
 typedef struct LWMsgSessionManagerClass
 {
-    /**
-     * @brief Delete session manager
-     *
-     * Deletes the session manager
-     *
-     * @param manager the session manager
-     */
     void
     (*delete) (
         LWMsgSessionManager* manager
@@ -114,196 +107,72 @@ typedef struct LWMsgSessionManagerClass
         LWMsgSession* session
         );
 
-    /**
-     * @brief Register local handle
-     *
-     * Registers a local handle on the given session.
-     *
-     * @param[in] manager the session manager
-     * @param[in,out] handle the session handle
-     * @param[in] type the name of the handle type
-     * @param[in] ptr the handle pointer
-     * @param[in] cleanup an optional cleanup function for the handle
-     * @param[out] hid a unique integer which identifies the handle within the session
-     * @lwmsg_status
-     * @lwmsg_success
-     * @lwmsg_memory
-     * @lwmsg_code{INVALID_HANDLE, the handle is already registered}
-     * @lwmsg_endstatus
-     */
     LWMsgStatus
     (*register_handle_local) (
         LWMsgSession* session,
         const char* type,
-        void* ptr,
+        void* data,
         void (*cleanup)(void* ptr),
-        LWMsgHandleID* hid
+        LWMsgHandle** handle
         );
 
-    /**
-     * @brief Register remote handle
-     *
-     * Registers a remote handle on the given session.
-     *
-     * @param[in] manager the session manager
-     * @param[in,out] handle the session handle
-     * @param[in] type the name of the handle type
-     * @param[in] hid the internal ID of the handle
-     * @param[in] cleanup an optional cleanup function for the handle
-     * @param[out] ptr a pointer to a unique proxy object which represents the handle locally
-     * @lwmsg_status
-     * @lwmsg_success
-     * @lwmsg_memory
-     * @lwmsg_code{INVALID_HANDLE, the handle is already registered}
-     * @lwmsg_endstatus
-     */
     LWMsgStatus
     (*register_handle_remote) (
         LWMsgSession* session,
         const char* type,
         LWMsgHandleID hid,
         void (*cleanup)(void* ptr),
-        void** ptr
+        LWMsgHandle** handle
         );
     
-    /**
-     * @brief Retain handle
-     *
-     * Retains a reference to the given handle, increasing its reference count by
-     * one.  Even if a handle is unregistered, it will not be cleaned up until
-     * all references are released.
-     *
-     * @param[in] manager the session manager
-     * @param[in,out] session
-     * @param[in] ptr the handle pointer
-     * @lwmsg_status
-     * @lwmsg_success
-     * @lwmsg_code{INVALID_HANDLE, the pointer is not registered as a handle}
-     */
-    LWMsgStatus
+    void
     (*retain_handle) (
         LWMsgSession* session,
-        void* ptr
+        LWMsgHandle* handle
         );
 
-    /**
-     * @brief Release handle
-     *
-     * Releases a reference to the given handle, decreasing its reference count by
-     * one.  When the handle reaches zero references, the cleanup function passed
-     * the register function will be invoked.
-     *
-     * @param[in] manager the session manager
-     * @param[in,out] session
-     * @param[in] ptr the handle pointer
-     * @lwmsg_status
-     * @lwmsg_success
-     * @lwmsg_code{INVALID_HANDLE, the pointer is not registered as a handle}
-     * @lwmsg_endstatus
-     */
-    LWMsgStatus
+    void
     (*release_handle) (
         LWMsgSession* session,
-        void* ptr
+        LWMsgHandle* handle
         );
 
-    /**
-     * @brief Unregister handle
-     *
-     * Releases a reference to the given handle, decreasing its reference count by
-     * one, and marks the handle as stale.  Any further attempts to use the handle's
-     * internal ID will fail, but release and retain operations will continue to
-     * succeed until the reference count reaches 0.
-     *
-     * @param[in] manager the session manager
-     * @param[in,out] session
-     * @param[in] ptr the handle pointer
-     * @lwmsg_status
-     * @lwmsg_success
-     * @lwmsg_code{INVALID_HANDLE, the pointer is not registered as a handle}
-     * @lwmsg_endstatus
-     */
     LWMsgStatus
     (*unregister_handle) (
         LWMsgSession* session,
-        void* ptr
+        LWMsgHandle* handle
         );
 
-    /**
-     * @brief Map pointer to internal handle ID
-     *
-     * Maps a handle pointer to the internal ID within the session.
-     *
-     * @param[in] manager the session manager
-     * @param[in,out] session
-     * @param[in] ptr the handle pointer
-     * @param[out] type the name of the handle type in the type specification
-     * @param[out] htype the type of the handle -- local or remote
-     * @param[out] hid the internal ID of the handle
-     * @lwmsg_status
-     * @lwmsg_success
-     * @lwmsg_code{INVALID_HANDLE, the pointer is not registered as a handle}
-     * @lwmsg_endstatus
-     */
     LWMsgStatus
-    (*handle_pointer_to_id) (
+    (*get_handle_data) (
         LWMsgSession* session,
-        void* ptr,
+        LWMsgHandle* handle,
+        void** data
+        );
+
+    LWMsgStatus
+    (*resolve_handle_to_id) (
+        LWMsgSession* session,
+        LWMsgHandle* handle,
         const char** type,
         LWMsgHandleType* htype,
         LWMsgHandleID* hid
         );
 
-    /**
-     * @brief Map internal handle ID to pointer
-     *
-     * Maps an internal handle ID to a pointer
-     *
-     * @param[in] manager the session manager
-     * @param[in,out] session the session handle
-     * @param[in] type the name of the handle type in the type specification
-     * @param[in] htype the type of the handle -- local or remote
-     * @param[out] ptr the handle pointer
-     * @lwmsg_status
-     * @lwmsg_success
-     * @lwmsg_code{INVALID_HANDLE, the given ID\, type name\, and type is not registered as a handle}
-     * @lwmsg_endstatus
-     */
     LWMsgStatus
-    (*handle_id_to_pointer) (
+    (*resolve_id_to_handle) (
         LWMsgSession* session,
         const char* type,
         LWMsgHandleType htype,
         LWMsgHandleID hid,
-        void** ptr
+        LWMsgHandle** handle
         );
 
-    /**
-     * @brief Get security token for peer
-     *
-     * Gets a security token which represents the identity of the peer
-     * for the given session.
-     *
-     * @param[in] manager the session manager
-     * @param[in] session the session handle
-     * @return a security token representing the peer identity, or NULL if unauthenticated
-     */
     LWMsgSecurityToken*
     (*get_peer_security_token) (
         LWMsgSession* session
         );
 
-    /**
-     * @brief Get custom session data
-     *
-     * Gets a custom data pointer for the given session.  The data
-     * pointer is set by the construtor function passed to the session enter
-     * function.
-     *
-     * @param[in] manager the session manager
-     * @param[in] session the session handle
-     * @return the session data pointer
-     */
     void*
     (*get_data) (
         LWMsgSession* session
@@ -393,42 +262,6 @@ lwmsg_session_release(
     );
 
 LWMsgStatus
-lwmsg_session_register_handle_local (
-    LWMsgSession* session,
-    const char* type,
-    void* ptr,
-    void (*cleanup)(void* ptr),
-    LWMsgHandleID* hid
-    );
-
-LWMsgStatus
-lwmsg_session_register_handle_remote (
-    LWMsgSession* session,
-    const char* type,
-    LWMsgHandleID hid,
-    void (*cleanup)(void* ptr),
-    void** ptr
-    );
-
-LWMsgStatus
-lwmsg_session_handle_pointer_to_id (
-    LWMsgSession* session,
-    void* ptr,
-    const char** type,
-    LWMsgHandleType* htype,
-    LWMsgHandleID* hid
-    );
-
-LWMsgStatus
-lwmsg_session_handle_id_to_pointer (
-    LWMsgSession* session,
-    const char* type,
-    LWMsgHandleType htype,
-    LWMsgHandleID hid,
-    void** ptr
-    );
-
-LWMsgStatus
 lwmsg_default_session_manager_new(
     LWMsgSessionConstructFunction construct,
     LWMsgSessionDestructFunction destruct,
@@ -442,31 +275,11 @@ lwmsg_session_manager_init(
     LWMsgSessionManagerClass* mclass
     );
 
-/**
- * @internal
- * @brief Get association count
- *
- * Returns a count of the number of associations that
- * have entered the given session.
- *
- * @param session the session
- * @return the number of associations currently inside the session
- */
 size_t
 lwmsg_session_get_assoc_count(
     LWMsgSession* session
     );
 
-/**
- * @internal
- * @brief Get handle count
- *
- * Returns a count of the number of handles contained
- * in the given session.
- *
- * @param session the session
- * @return the number of handles current contained in the session
- */
 size_t
 lwmsg_session_get_handle_count(
     LWMsgSession* session

@@ -81,7 +81,8 @@ static
 DWORD
 LwSmRegisterAndRetainHandle(
     LWMsgCall* pCall,
-    LW_SERVICE_HANDLE hHandle
+    LW_SERVICE_HANDLE hHandle,
+    LWMsgHandle** ppHandle
     )
 {
     DWORD dwError = 0;
@@ -91,20 +92,17 @@ LwSmRegisterAndRetainHandle(
                                    pSession,
                                    "LW_SERVICE_HANDLE",
                                    hHandle,
-                                   LwSmCleanupHandle
-                                   ));
+                                   LwSmCleanupHandle,
+                                   ppHandle));
     BAIL_ON_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_session_retain_handle(pSession, hHandle));
-    assert(!dwError);
+    lwmsg_session_retain_handle(pSession, *ppHandle);
 
 cleanup:
 
     return dwError;
 
 error:
-
-    lwmsg_session_unregister_handle(pSession, hHandle);
 
     goto cleanup;
 }
@@ -113,7 +111,7 @@ static
 DWORD
 LwSmUnregisterHandle(
     LWMsgCall* pCall,
-    LW_SERVICE_HANDLE hHandle
+    LWMsgHandle* pHandle
     )
 {
     DWORD dwError = 0;
@@ -121,7 +119,7 @@ LwSmUnregisterHandle(
     
     dwError = MAP_LWMSG_STATUS(lwmsg_session_unregister_handle(
                                    pSession,
-                                   hHandle));
+                                   pHandle));
     BAIL_ON_ERROR(dwError);
 
 cleanup:
@@ -131,6 +129,29 @@ cleanup:
 error:
 
     goto cleanup;
+}
+
+static
+DWORD
+LwSmGetHandle(
+    LWMsgCall* pCall,
+    LWMsgHandle* pHandle,
+    PLW_SERVICE_HANDLE phHandle
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    LWMsgSession* pSession = lwmsg_call_get_session(pCall);
+
+    dwError = MAP_LWMSG_STATUS(
+        lwmsg_session_get_handle_data(
+            pSession,
+            pHandle,
+            OUT_PPVOID(phHandle)));
+    BAIL_ON_ERROR(dwError);
+
+error:
+
+    return dwError;
 }
 
 static
@@ -181,16 +202,17 @@ LwSmDispatchAcquireServiceHandle(
 {
     DWORD dwError = 0;
     LW_SERVICE_HANDLE hHandle = NULL;
+    LWMsgHandle* pHandle = NULL;
 
     dwError = LwSmSrvAcquireServiceHandle((PCWSTR) pIn->data, &hHandle);
     
     if (dwError == 0)
     {
-        dwError = LwSmRegisterAndRetainHandle(pCall, hHandle);
+        dwError = LwSmRegisterAndRetainHandle(pCall, hHandle, &pHandle);
         BAIL_ON_ERROR(dwError);
 
         pOut->tag = SM_IPC_ACQUIRE_SERVICE_HANDLE_RES;
-        pOut->data = hHandle;
+        pOut->data = pHandle;
         hHandle = NULL;
     }
     else
@@ -223,9 +245,9 @@ LwSmDispatchReleaseServiceHandle(
     )
 {
     DWORD dwError = 0;
-    LW_SERVICE_HANDLE hHandle = pIn->data;
+    LWMsgHandle* pHandle = pIn->data;
 
-    dwError = LwSmUnregisterHandle(pCall, hHandle);
+    dwError = LwSmUnregisterHandle(pCall, pHandle);
     
     if (dwError == 0)
     {
@@ -291,8 +313,11 @@ LwSmDispatchGetServiceStatus(
     )
 {
     DWORD dwError = 0;
-    LW_SERVICE_HANDLE hHandle = (LW_SERVICE_HANDLE) pIn->data;
+    LW_SERVICE_HANDLE hHandle = NULL;
     PLW_SERVICE_STATUS pStatus = NULL;
+
+    dwError = LwSmGetHandle(pCall, (LWMsgHandle*) pIn->data, &hHandle);
+    BAIL_ON_ERROR(dwError);
 
     dwError = LwAllocateMemory(sizeof(*pStatus), OUT_PPVOID(&pStatus));
     BAIL_ON_ERROR(dwError);
@@ -332,8 +357,11 @@ LwSmDispatchStartService(
     )
 {
     DWORD dwError = 0;
-    LW_SERVICE_HANDLE hHandle = (LW_SERVICE_HANDLE) pIn->data;
+    LW_SERVICE_HANDLE hHandle = NULL;
     uid_t uid = -1;
+
+    dwError = LwSmGetHandle(pCall, (LWMsgHandle*) pIn->data, &hHandle);
+    BAIL_ON_ERROR(dwError);
 
     dwError = LwSmGetCallUid(pCall, &uid);
     BAIL_ON_ERROR(dwError);
@@ -377,8 +405,11 @@ LwSmDispatchStopService(
     )
 {
     DWORD dwError = 0;
-    LW_SERVICE_HANDLE hHandle = (LW_SERVICE_HANDLE) pIn->data;
+    LW_SERVICE_HANDLE hHandle = NULL;
     uid_t uid = -1;
+
+    dwError = LwSmGetHandle(pCall, (LWMsgHandle*) pIn->data, &hHandle);
+    BAIL_ON_ERROR(dwError);
 
     dwError = LwSmGetCallUid(pCall, &uid);
     BAIL_ON_ERROR(dwError);
@@ -422,8 +453,11 @@ LwSmDispatchRefreshService(
     )
 {
     DWORD dwError = 0;
-    LW_SERVICE_HANDLE hHandle = (LW_SERVICE_HANDLE) pIn->data;
+    LW_SERVICE_HANDLE hHandle = NULL;
     uid_t uid = -1;
+
+    dwError = LwSmGetHandle(pCall, (LWMsgHandle*) pIn->data, &hHandle);
+    BAIL_ON_ERROR(dwError);
 
     dwError = LwSmGetCallUid(pCall, &uid);
     BAIL_ON_ERROR(dwError);
@@ -467,8 +501,11 @@ LwSmDispatchGetServiceInfo(
     )
 {
     DWORD dwError = 0;
-    LW_SERVICE_HANDLE hHandle = (LW_SERVICE_HANDLE) pIn->data;
+    LW_SERVICE_HANDLE hHandle = NULL;
     PLW_SERVICE_INFO pInfo = NULL;
+
+    dwError = LwSmGetHandle(pCall, (LWMsgHandle*) pIn->data, &hHandle);
+    BAIL_ON_ERROR(dwError);
 
     dwError = LwSmSrvGetServiceInfo(hHandle, &pInfo);
     
@@ -566,11 +603,15 @@ LwSmDispatchWaitService(
     DWORD dwError = 0;
     PSM_IPC_WAIT_STATE_CHANGE_REQ pReq = pIn->data;
     PSM_WAIT_CONTEXT pContext = NULL;
+    LW_SERVICE_HANDLE hHandle = NULL;
+
+    dwError = LwSmGetHandle(pCall, pReq->hHandle, &hHandle);
+    BAIL_ON_ERROR(dwError);
 
     dwError = LwAllocateMemory(sizeof(*pContext), OUT_PPVOID(&pContext));
     BAIL_ON_ERROR(dwError);
 
-    pContext->pEntry = pReq->hHandle->pEntry;
+    pContext->pEntry = hHandle->pEntry;
     pContext->pCall = pCall;
     pContext->pOut = pOut;
 

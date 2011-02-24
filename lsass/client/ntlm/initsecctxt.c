@@ -65,12 +65,15 @@ NtlmClientInitializeSecurityContext(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
 
+    BAIL_ON_INVALID_POINTER(phContext);
+    BAIL_ON_INVALID_POINTER(phNewContext);
+
     *pfContextAttr = 0;
     *ptsExpiry = 0;
 
     dwError = NtlmTransactInitializeSecurityContext(
-        phCredential,
-        phContext,
+        phCredential ? *phCredential : NULL,
+        *phContext,
         pszTargetName,
         fContextReq,
         Reserved1,
@@ -80,8 +83,7 @@ NtlmClientInitializeSecurityContext(
         phNewContext,
         pOutput,
         pfContextAttr,
-        ptsExpiry
-        );
+        ptsExpiry);
 
     if (dwError != LW_WARNING_CONTINUE_NEEDED)
     {

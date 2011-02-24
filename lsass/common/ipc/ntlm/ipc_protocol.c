@@ -296,7 +296,6 @@ static LWMsgTypeSpec gNtlmAcceptSecCtxtSpec[] =
     // PSecBufferDesc pInput;
     // DWORD fContextReq;
     // DWORD TargetDataRep;
-    // PNTLM_CONTEXT_HANDLE phNewContext;
     // PSecBufferDesc pOutput;
 
     LWMSG_STRUCT_BEGIN(NTLM_IPC_ACCEPT_SEC_CTXT_REQ),
@@ -314,9 +313,6 @@ static LWMsgTypeSpec gNtlmAcceptSecCtxtSpec[] =
     LWMSG_MEMBER_UINT32(NTLM_IPC_ACCEPT_SEC_CTXT_REQ, fContextReq),
 
     LWMSG_MEMBER_UINT32(NTLM_IPC_ACCEPT_SEC_CTXT_REQ, TargetDataRep),
-
-    LWMSG_MEMBER_HANDLE(NTLM_IPC_ACCEPT_SEC_CTXT_REQ, hNewContext, NTLM_CONTEXT_HANDLE),
-    LWMSG_ATTR_HANDLE_LOCAL_FOR_RECEIVER,
 
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
@@ -613,7 +609,6 @@ static LWMsgTypeSpec gNtlmInitSecCtxtSpec[] =
     //ULONG TargetDataRep;
     //PSecBufferDesc pInput;
     //ULONG Reserved2;
-    //PNTLM_CONTEXT_HANDLE phNewContext;
     //PSecBufferDesc pOutput;
 
     LWMSG_STRUCT_BEGIN(NTLM_IPC_INIT_SEC_CTXT_REQ),
@@ -637,9 +632,6 @@ static LWMsgTypeSpec gNtlmInitSecCtxtSpec[] =
     LWMSG_POINTER_END,
 
     LWMSG_MEMBER_UINT32(NTLM_IPC_INIT_SEC_CTXT_REQ, Reserved2),
-
-    LWMSG_MEMBER_HANDLE(NTLM_IPC_INIT_SEC_CTXT_REQ, hNewContext, NTLM_CONTEXT_HANDLE),
-    LWMSG_ATTR_HANDLE_LOCAL_FOR_RECEIVER,
 
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END

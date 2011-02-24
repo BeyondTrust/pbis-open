@@ -187,21 +187,15 @@ error:
     return dwError;
 }
 
-DWORD
+VOID
 LsaIpcReleaseHandle(
     HANDLE hServer,
-    PVOID pHandle
+    LWMsgHandle* pHandle
     )
 {
-    DWORD dwError = 0;
     PLSA_CLIENT_CONNECTION_CONTEXT pContext = hServer;
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_session_release_handle(pContext->pSession, pHandle));
-    BAIL_ON_LSA_ERROR(dwError);
-
-error:
-
-    return dwError;
+    lwmsg_session_release_handle(pContext->pSession, pHandle);
 }
 
 DWORD

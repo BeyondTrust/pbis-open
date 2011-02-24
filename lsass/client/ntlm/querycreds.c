@@ -56,11 +56,14 @@ NtlmClientQueryCredentialsAttributes(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
 
+    BAIL_ON_INVALID_POINTER(phCredential);
+
     dwError = NtlmTransactQueryCredentialsAttributes(
-        phCredential,
+        *phCredential,
         ulAttribute,
-        pBuffer
-        );
+        pBuffer);
+
+error:
 
     return dwError;
 }

@@ -57,12 +57,15 @@ NtlmClientMakeSignature(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
 
+    BAIL_ON_INVALID_POINTER(phContext);
+
     dwError = NtlmTransactMakeSignature(
-        phContext,
+        *phContext,
         dwQop,
         pMessage,
-        MessageSeqNo
-        );
+        MessageSeqNo);
+
+error:
 
     return dwError;
 }

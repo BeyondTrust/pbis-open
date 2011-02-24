@@ -702,7 +702,7 @@ typedef enum HandleGetType
 
 typedef struct HandleGetRequest
 {
-    Handle* handle;
+    LWMsgHandle* handle;
     HandleGetType type;
 } HandleGetRequest;
 
@@ -778,7 +778,7 @@ static void*
 handle_sender(void* _assoc)
 {
     LWMsgAssoc* assoc = (LWMsgAssoc*) _assoc;
-    Handle* handle = NULL;
+    LWMsgHandle* handle = NULL;
     HandleCreateRequest create_request = {0};
     HandleGetRequest get_request = {0};
     HandleGetReply* get_reply = NULL;
@@ -859,20 +859,21 @@ handle_create_srv(
     )
 {
     HandleCreateRequest* request = in->data;
-    Handle* handle = NULL;
+    Handle* handle_data = NULL;
+    LWMsgHandle* handle = NULL;
     LWMsgSession* session = NULL;
 
-    handle = malloc(sizeof(*handle));
-    handle->saved_string = strdup(request->save_string);
-    handle->saved_integer = request->save_integer;
+    handle_data = malloc(sizeof(*handle_data));
+    handle_data->saved_string = strdup(request->save_string);
+    handle_data->saved_integer = request->save_integer;
 
     MU_TRY_ASSOC(assoc, lwmsg_assoc_get_session(assoc, &session));
-    MU_TRY_ASSOC(assoc, lwmsg_session_register_handle(session, "Handle", handle, free));
+    MU_TRY_ASSOC(assoc, lwmsg_session_register_handle(session, "Handle", handle_data, free, &handle));
 
     out->tag = HANDLE_CREATE_REPLY;
     out->data = handle;
 
-    MU_TRY_ASSOC(assoc, lwmsg_session_retain_handle(session, handle));
+    lwmsg_session_retain_handle(session, handle);
     
     return LWMSG_STATUS_SUCCESS;
 }
@@ -885,7 +886,7 @@ handle_destroy_srv(
     void* data
     )
 {
-    Handle* handle = in->data;
+    LWMsgHandle* handle = in->data;
     HandleDestroyReply* reply = malloc(sizeof(*reply));
     LWMsgSession* session = NULL;
 
@@ -910,16 +911,21 @@ handle_get_srv(
 {
     HandleGetRequest* request = in->data;
     HandleGetReply* reply = malloc(sizeof(*reply));
+    Handle* handle_data = NULL;
+    LWMsgSession* session = NULL;
+
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_get_session(assoc, &session));
+    MU_TRY(lwmsg_session_get_handle_data(session, request->handle, (void**)(void*) &handle_data));
 
     reply->type = request->type;
 
     switch (request->type)
     {
     case HANDLE_GET_STRING:
-        reply->value.string = request->handle->saved_string;
+        reply->value.string = handle_data->saved_string;
         break;
     case HANDLE_GET_INTEGER:
-        reply->value.integer = request->handle->saved_integer;
+        reply->value.integer = handle_data->saved_integer;
         break;
     }
     
@@ -1263,18 +1269,22 @@ send_local_recv_back_success(LWMsgAssoc* assoc)
     LWMsgMessage request_msg = LWMSG_MESSAGE_INITIALIZER;
     LWMsgMessage reply_msg = LWMSG_MESSAGE_INITIALIZER;
     LWMsgSession* session = NULL;
+    void* data = NULL;
+    LWMsgHandle* handle = NULL;
 
-    request_msg.tag = TRIVIAL_REMOTE;
-    request_msg.data = &dummy;
+    MU_TRY_ASSOC(assoc, lwmsg_assoc_get_session(assoc, &session));
+    MU_TRY_ASSOC(assoc, lwmsg_session_register_handle(session, "AHandle", &dummy, NULL, &handle));
 
     /* The handle is being created by us, so it is REMOTE for the receiver */
-    MU_TRY_ASSOC(assoc, lwmsg_assoc_get_session(assoc, &session));
-    MU_TRY_ASSOC(assoc, lwmsg_session_register_handle(session, "AHandle", &dummy, NULL));
+    request_msg.tag = TRIVIAL_REMOTE;
+    request_msg.data = handle;
+
     MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message(assoc, &request_msg));
     MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &reply_msg));
 
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, reply_msg.tag, TRIVIAL_LOCAL);
-    MU_ASSERT_EQUAL(MU_TYPE_POINTER, reply_msg.data, &dummy);
+    MU_TRY(lwmsg_session_get_handle_data(session, (LWMsgHandle*) reply_msg.data, &data));
+    MU_ASSERT_EQUAL(MU_TYPE_POINTER, data, &dummy);
 }
 
 static void
@@ -1300,21 +1310,21 @@ send_local_recv_back_failure(LWMsgAssoc* assoc)
     LWMsgSession* session = NULL;
     LWMsgMessage send = LWMSG_MESSAGE_INITIALIZER;
     LWMsgMessage recv = LWMSG_MESSAGE_INITIALIZER;
-
-    send.tag = TRIVIAL_REMOTE;
-    send.data = &dummy;
+    LWMsgHandle* handle = NULL;
 
     /* The handle is being created by us, so it is REMOTE for the recvr */
     MU_TRY_ASSOC(assoc, lwmsg_assoc_get_session(assoc, &session));
-    MU_TRY_ASSOC(assoc, lwmsg_session_register_handle(session, "AHandle", &dummy, NULL));
+    MU_TRY_ASSOC(assoc, lwmsg_session_register_handle(session, "AHandle", &dummy, NULL, &handle));
+
+    send.tag = TRIVIAL_REMOTE;
+    send.data = handle;
+
     MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message(assoc, &send));
     /* The peer is going to bomb out on us, so expect a disconnect */
     status = lwmsg_assoc_recv_message(assoc, &recv);
 
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, status, LWMSG_STATUS_PEER_CLOSE);
 }
-
-
 
 static void
 recv_remote_send_back_failure(LWMsgAssoc* assoc)
@@ -1324,15 +1334,16 @@ recv_remote_send_back_failure(LWMsgAssoc* assoc)
     LWMsgSession* session = NULL;
     LWMsgMessage send = LWMSG_MESSAGE_INITIALIZER;
     LWMsgMessage recv = LWMSG_MESSAGE_INITIALIZER;
+    LWMsgHandle* handle = NULL;
 
     MU_TRY_ASSOC(assoc, lwmsg_assoc_get_session(assoc, &session));
 
     MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &recv));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, recv.tag, TRIVIAL_REMOTE);
     /* Send back a local handle instead of what it expects */
-    MU_TRY_ASSOC(assoc, lwmsg_session_register_handle(session, "AHandle", &dummy2, NULL));
+    MU_TRY_ASSOC(assoc, lwmsg_session_register_handle(session, "AHandle", &dummy2, NULL, &handle));
     send.tag = TRIVIAL_LOCAL;
-    send.data = &dummy2;
+    send.data = handle;
     status = lwmsg_assoc_send_message(assoc, &send);
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, status, LWMSG_STATUS_INVALID_HANDLE);
     MU_VERBOSE("%s", lwmsg_assoc_get_error_message(assoc, status));
@@ -1378,19 +1389,23 @@ send_local_recv_back_send_back_success(LWMsgAssoc* assoc)
     LWMsgSession* session = NULL;
     LWMsgMessage send = LWMSG_MESSAGE_INITIALIZER;
     LWMsgMessage recv = LWMSG_MESSAGE_INITIALIZER;
+    LWMsgHandle* handle = NULL;
+    void* data = NULL;
     
-    send.tag = TRIVIAL_REMOTE;
-    send.data = &dummy;
-
     MU_TRY_ASSOC(assoc, lwmsg_assoc_get_session(assoc, &session));
 
     /* The handle is being created by us, so it is REMOTE for the receiver */
-    MU_TRY_ASSOC(assoc, lwmsg_session_register_handle(session, "AHandle", &dummy, NULL));
+    MU_TRY_ASSOC(assoc, lwmsg_session_register_handle(session, "AHandle", &dummy, NULL, &handle));
+
+    send.tag = TRIVIAL_REMOTE;
+    send.data = handle;
+
     MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message(assoc, &send));
     MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &recv));
 
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, recv.tag, TRIVIAL_LOCAL);
-    MU_ASSERT_EQUAL(MU_TYPE_POINTER, recv.data, &dummy);
+    MU_TRY(lwmsg_session_get_handle_data(session, (LWMsgHandle*) recv.data, &data));
+    MU_ASSERT_EQUAL(MU_TYPE_POINTER, data, &dummy);
 
     send.tag = TRIVIAL_REMOTE;
     send.data = recv.data;
@@ -1401,21 +1416,21 @@ send_local_recv_back_send_back_success(LWMsgAssoc* assoc)
 static void
 recv_remote_send_back_recv_back_success(LWMsgAssoc* assoc)
 {
-    int* dummy = 0;
+    LWMsgHandle* handle = NULL;
     LWMsgMessage send = LWMSG_MESSAGE_INITIALIZER;
     LWMsgMessage recv = LWMSG_MESSAGE_INITIALIZER;
 
     MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &recv));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, recv.tag, TRIVIAL_REMOTE);
 
-    dummy = recv.data;
+    handle = (LWMsgHandle*) recv.data;
     send.tag = TRIVIAL_LOCAL;
-    send.data = dummy;
+    send.data = handle;
 
     MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message(assoc, &send));
     MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &recv));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, recv.tag, TRIVIAL_REMOTE);
-    MU_ASSERT_EQUAL(MU_TYPE_POINTER, recv.data, dummy);
+    MU_ASSERT_EQUAL(MU_TYPE_POINTER, recv.data, handle);
 }
 
 static void
@@ -1444,17 +1459,19 @@ send_local_recv_back_local_send_failure(LWMsgAssoc* assoc)
     LWMsgMessage request_msg = LWMSG_MESSAGE_INITIALIZER;
     LWMsgMessage reply_msg = LWMSG_MESSAGE_INITIALIZER;
     LWMsgSession* session = NULL;
+    LWMsgHandle* handle = NULL;
 
     MU_TRY_ASSOC(assoc, lwmsg_assoc_get_session(assoc, &session));
 
-    request_msg.tag = TRIVIAL_REMOTE;
-    request_msg.data = &dummy;
-
     /* The handle is being created by us, so it is REMOTE for the receiver */
-    MU_TRY_ASSOC(assoc, lwmsg_session_register_handle(session, "AHandle", &dummy, NULL));
+    MU_TRY_ASSOC(assoc, lwmsg_session_register_handle(session, "AHandle", &dummy, NULL, &handle));
+
+    request_msg.tag = TRIVIAL_REMOTE;
+    request_msg.data = handle;
+
     MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message(assoc, &request_msg));
     /* Before receiving it back, we sabotage things by unregistering the handle */
-    MU_TRY_ASSOC(assoc, lwmsg_session_unregister_handle(session, &dummy));
+    MU_TRY_ASSOC(assoc, lwmsg_session_unregister_handle(session, handle));
     MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &reply_msg));
 
     MU_ASSERT(reply_msg.flags & LWMSG_MESSAGE_FLAG_SYNTHETIC);
@@ -1494,14 +1511,16 @@ send_local_recv_back_bogus(LWMsgAssoc* assoc)
     LWMsgMessage request_msg = LWMSG_MESSAGE_INITIALIZER;
     LWMsgMessage reply_msg = LWMSG_MESSAGE_INITIALIZER;
     LWMsgSession* session = NULL;
+    LWMsgHandle* handle = NULL;
 
     MU_TRY_ASSOC(assoc, lwmsg_assoc_get_session(assoc, &session));
 
-    request_msg.tag = TRIVIAL_REMOTE;
-    request_msg.data = &dummy;
-
     /* The handle is being created by us, so it is REMOTE for the receiver */
-    MU_TRY_ASSOC(assoc, lwmsg_session_register_handle(session, "AHandle", &dummy, NULL));
+    MU_TRY_ASSOC(assoc, lwmsg_session_register_handle(session, "AHandle", &dummy, NULL, &handle));
+
+    request_msg.tag = TRIVIAL_REMOTE;
+    request_msg.data = handle;
+
     MU_TRY_ASSOC(assoc, lwmsg_assoc_send_message(assoc, &request_msg));
     MU_TRY_ASSOC(assoc, lwmsg_assoc_recv_message(assoc, &reply_msg));
 

@@ -164,74 +164,6 @@ lwmsg_session_release(
     session->manager->mclass->release(session);
 }
 
-LWMsgStatus
-lwmsg_session_register_handle_local (
-    LWMsgSession* session,
-    const char* type,
-    void* ptr,
-    void (*cleanup)(void* ptr),
-    LWMsgHandleID* hid
-    )
-{
-    return session->manager->mclass->register_handle_local(
-        session,
-        type,
-        ptr,
-        cleanup,
-        hid);
-}
-
-LWMsgStatus
-lwmsg_session_register_handle_remote (
-    LWMsgSession* session,
-    const char* type,
-    LWMsgHandleID hid,
-    void (*cleanup)(void* ptr),
-    void** ptr
-    )
-{
-    return session->manager->mclass->register_handle_remote(
-        session,
-        type,
-        hid,
-        cleanup,
-        ptr);
-}
-
-LWMsgStatus
-lwmsg_session_handle_pointer_to_id (
-    LWMsgSession* session,
-    void* ptr,
-    const char** type,
-    LWMsgHandleType* htype,
-    LWMsgHandleID* hid
-    )
-{
-    return session->manager->mclass->handle_pointer_to_id(
-        session,
-        ptr,
-        type,
-        htype,
-        hid);
-}
-
-LWMsgStatus
-lwmsg_session_handle_id_to_pointer (
-    LWMsgSession* session,
-    const char* type,
-    LWMsgHandleType htype,
-    LWMsgHandleID hid,
-    void** ptr
-    )
-{
-    return session->manager->mclass->handle_id_to_pointer(
-        session,
-        type,
-        htype,
-        hid,
-        ptr);
-}
-
 size_t
 lwmsg_session_get_assoc_count(
     LWMsgSession* session
@@ -252,55 +184,66 @@ LWMsgStatus
 lwmsg_session_register_handle(
     LWMsgSession* session,
     const char* typename,
-    void* handle,
-    LWMsgHandleCleanupFunction cleanup
+    void* data,
+    LWMsgHandleCleanupFunction cleanup,
+    LWMsgHandle** handle
     )
 {
-    return lwmsg_session_register_handle_local(
+    return session->manager->mclass->register_handle_local(
         session,
         typename,
-        handle,
+        data,
         cleanup,
-        NULL);
+        handle);
 }
 
-LWMsgStatus
+void
 lwmsg_session_retain_handle(
     LWMsgSession* session,
-    void* handle
+    LWMsgHandle* handle
     )
 {
-    return session->manager->mclass->retain_handle(session, handle);
+    session->manager->mclass->retain_handle(session, handle);
 }
 
-LWMsgStatus
+void
 lwmsg_session_release_handle(
     LWMsgSession* session,
-    void* handle
+    LWMsgHandle* handle
     )
 {
-    return session->manager->mclass->release_handle(session, handle);
+    session->manager->mclass->release_handle(session, handle);
 }
 
 LWMsgStatus
 lwmsg_session_unregister_handle(
     LWMsgSession* session,
-    void* handle
+    LWMsgHandle* handle
     )
 {
     return session->manager->mclass->unregister_handle(session, handle);
 }
 
 LWMsgStatus
+lwmsg_session_get_handle_data(
+    LWMsgSession* session,
+    LWMsgHandle* handle,
+    void** data
+    )
+{
+    return session->manager->mclass->get_handle_data(session, handle, data);
+}
+
+LWMsgStatus
 lwmsg_session_get_handle_location(
     LWMsgSession* session,
-    void* handle,
+    LWMsgHandle* handle,
     LWMsgHandleType* location
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
 
-    status = lwmsg_session_handle_pointer_to_id(
+    status = session->manager->mclass->resolve_handle_to_id(
         session,
         handle,
         NULL,

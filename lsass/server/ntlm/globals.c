@@ -46,25 +46,6 @@
  */
 #include "ntlmsrvapi.h"
 
-LWMsgDispatchSpec gNtlmMessageHandlers[] =
-{
-    LWMSG_DISPATCH_BLOCK(NTLM_Q_ACCEPT_SEC_CTXT, NtlmSrvIpcAcceptSecurityContext),
-    LWMSG_DISPATCH_BLOCK(NTLM_Q_ACQUIRE_CREDS, NtlmSrvIpcAcquireCredentialsHandle),
-    LWMSG_DISPATCH_BLOCK(NTLM_Q_DECRYPT_MSG, NtlmSrvIpcDecryptMessage),
-    LWMSG_DISPATCH_BLOCK(NTLM_Q_DELETE_SEC_CTXT, NtlmSrvIpcDeleteSecurityContext),
-    LWMSG_DISPATCH_BLOCK(NTLM_Q_ENCRYPT_MSG, NtlmSrvIpcEncryptMessage),
-    LWMSG_DISPATCH_BLOCK(NTLM_Q_EXPORT_SEC_CTXT, NtlmSrvIpcExportSecurityContext),
-    LWMSG_DISPATCH_BLOCK(NTLM_Q_FREE_CREDS, NtlmSrvIpcFreeCredentialsHandle),
-    LWMSG_DISPATCH_BLOCK(NTLM_Q_IMPORT_SEC_CTXT, NtlmSrvIpcImportSecurityContext),
-    LWMSG_DISPATCH_BLOCK(NTLM_Q_INIT_SEC_CTXT, NtlmSrvIpcInitializeSecurityContext),
-    LWMSG_DISPATCH_BLOCK(NTLM_Q_MAKE_SIGN, NtlmSrvIpcMakeSignature),
-    LWMSG_DISPATCH_BLOCK(NTLM_Q_QUERY_CREDS, NtlmSrvIpcQueryCredentialsAttributes),
-    LWMSG_DISPATCH_BLOCK(NTLM_Q_QUERY_CTXT, NtlmSrvIpcQueryContextAttributes),
-    LWMSG_DISPATCH_BLOCK(NTLM_Q_SET_CREDS, NtlmSrvIpcSetCredentialsAttributes),
-    LWMSG_DISPATCH_BLOCK(NTLM_Q_VERIFY_SIGN, NtlmSrvIpcVerifySignature),
-    LWMSG_DISPATCH_END
-};
-
 WIN_VERSION_INFO gW2KSpoof = {5, 0, 2195, 0x0f000000};
 WIN_VERSION_INFO gXpSpoof = {5, 1, 2600, 0x0f000000};
 

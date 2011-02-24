@@ -50,6 +50,7 @@
 
 typedef struct _IO_IPC_CALL_CONTEXT
 {
+    IO_FILE_HANDLE FileHandle;
     IO_STATUS_BLOCK ioStatusBlock;
     IO_ASYNC_CONTROL_BLOCK asyncBlock;
     PIO_CREATE_SECURITY_CONTEXT pSecurityContext;
@@ -225,7 +226,8 @@ static
 NTSTATUS
 IopIpcRegisterFileHandle(
     IN LWMsgCall* pCall,
-    IN IO_FILE_HANDLE FileHandle
+    IN IO_FILE_HANDLE FileHandle,
+    OUT LWMsgHandle** ppHandle
     )
 {
     NTSTATUS status = 0;
@@ -235,25 +237,36 @@ IopIpcRegisterFileHandle(
                                             pSession,
                                             "IO_FILE_HANDLE",
                                             FileHandle,
-                                            IopIpcCleanupFileHandle));
+                                            IopIpcCleanupFileHandle,
+                                            ppHandle));
     return status;
 }
 
 static
 NTSTATUS
-IopIpcRetainFileHandle(
+IopIpcGetFileHandle(
     IN LWMsgCall* pCall,
-    IN IO_FILE_HANDLE FileHandle
+    IN LWMsgHandle* pHandle,
+    OUT PIO_FILE_HANDLE pFileHandle
     )
 {
-    NTSTATUS status = 0;
+    return NtIpcLWMsgStatusToNtStatus(
+        lwmsg_session_get_handle_data(
+            lwmsg_call_get_session(pCall),
+            pHandle,
+            OUT_PPVOID(pFileHandle)));
+}
+
+static
+VOID
+IopIpcRetainFileHandle(
+    IN LWMsgCall* pCall,
+    IN LWMsgHandle* FileHandle
+    )
+{
     LWMsgSession* pSession = lwmsg_call_get_session(pCall);
 
-    status = NtIpcLWMsgStatusToNtStatus(lwmsg_session_retain_handle(
-                                            pSession,
-                                            FileHandle));
-    assert(!status);
-    return status;
+    lwmsg_session_retain_handle(pSession, FileHandle);
 }
 
 static
@@ -298,13 +311,12 @@ IopIpcCompleteCreateCall(
     PNT_IPC_MESSAGE_CREATE_FILE_RESULT pReply = pContext->pOut->data;
     NTSTATUS status = STATUS_SUCCESS;
 
-    if (pReply->FileHandle)
+    if (pContext->FileHandle)
     {
-        status = IopIpcRegisterFileHandle(pContext->pCall, pReply->FileHandle);
+        status = IopIpcRegisterFileHandle(pContext->pCall, pContext->FileHandle, &pReply->FileHandle);
         GOTO_CLEANUP_ON_STATUS(status);
         
-        status = IopIpcRetainFileHandle(pContext->pCall, pReply->FileHandle);
-        GOTO_CLEANUP_ON_STATUS(status);
+        IopIpcRetainFileHandle(pContext->pCall, pReply->FileHandle);
     }
 
     status = pContext->ioStatusBlock.Status;
@@ -380,7 +392,7 @@ IopIpcCreateFile(
     pOut->data = pReply;
     
     status = IoCreateFile(
-        &pReply->FileHandle,
+        &pContext->FileHandle,
         &pContext->asyncBlock,
         &pContext->ioStatusBlock,
         pContext->pSecurityContext,
@@ -403,13 +415,12 @@ IopIpcCreateFile(
         lwmsg_call_pend(pCall, IopIpcCancelCall, pContext);
         break;
     case STATUS_SUCCESS:
-        if (pReply->FileHandle)
+        if (pContext->FileHandle)
         {
-            status = IopIpcRegisterFileHandle(pCall, pReply->FileHandle);
+            status = IopIpcRegisterFileHandle(pCall, pContext->FileHandle, &pReply->FileHandle);
             GOTO_CLEANUP_ON_STATUS_EE(status, EE);
             
-            status = IopIpcRetainFileHandle(pCall, pReply->FileHandle);
-            GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+            IopIpcRetainFileHandle(pCall, pReply->FileHandle);
         }
         /* Intentionally fall through to default case */
     default:
@@ -453,6 +464,10 @@ IopIpcCloseFile(
     PNT_IPC_MESSAGE_GENERIC_FILE pMessage = (PNT_IPC_MESSAGE_GENERIC_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT pReply = NULL;
     PIO_IPC_CALL_CONTEXT pContext = NULL;
+    IO_FILE_HANDLE FileHandle = NULL;
+
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = NtIpcUnregisterFileHandle(pCall, pMessage->FileHandle);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -467,9 +482,10 @@ IopIpcCloseFile(
     pOut->data = pReply;
     
     status = IoRundownFile(
-        pMessage->FileHandle,
+        FileHandle,
         &pContext->asyncBlock,
         &pContext->ioStatusBlock);
+
     switch (status)
     {
     case STATUS_PENDING:
@@ -510,6 +526,10 @@ IopIpcReadFile(
     PNT_IPC_MESSAGE_READ_FILE pMessage = (PNT_IPC_MESSAGE_READ_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT pReply = NULL;
     PIO_IPC_CALL_CONTEXT pContext = NULL;
+    IO_FILE_HANDLE FileHandle = NULL;
+
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IopIpcCreateCallContext(pCall, pIn, pOut, IopIpcCompleteGenericCall, &pContext);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -527,7 +547,7 @@ IopIpcReadFile(
     }
 
     status = IoReadFile(
-        pMessage->FileHandle,
+        FileHandle,
         &pContext->asyncBlock,
         &pContext->ioStatusBlock,
         pReply->Buffer,
@@ -569,13 +589,14 @@ IopIpcWriteFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_WRITE_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_WRITE_FILE_RESULT;
     PNT_IPC_MESSAGE_WRITE_FILE pMessage = (PNT_IPC_MESSAGE_WRITE_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT pReply = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    IO_FILE_HANDLE FileHandle = NULL;
 
-    assert(messageType == pIn->tag);
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT, sizeof(*pReply));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -584,7 +605,7 @@ IopIpcWriteFile(
     pOut->data = pReply;
 
     pReply->Status = IoWriteFile(
-                            pMessage->FileHandle,
+                            FileHandle,
                             NULL,
                             &ioStatusBlock,
                             pMessage->Buffer,
@@ -609,13 +630,14 @@ IopIpcDeviceIoControlFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_DEVICE_IO_CONTROL_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_DEVICE_IO_CONTROL_FILE_RESULT;
     PNT_IPC_MESSAGE_GENERIC_CONTROL_FILE pMessage = (PNT_IPC_MESSAGE_GENERIC_CONTROL_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT pReply = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    IO_FILE_HANDLE FileHandle = NULL;
 
-    assert(messageType == pIn->tag);
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);;
 
     status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT, sizeof(*pReply));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -630,7 +652,7 @@ IopIpcDeviceIoControlFile(
     }
 
     pReply->Status = IoDeviceIoControlFile(
-                            pMessage->FileHandle,
+                            FileHandle,
                             NULL,
                             &ioStatusBlock,
                             pMessage->ControlCode,
@@ -656,13 +678,14 @@ IopIpcFsControlFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_FS_CONTROL_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_FS_CONTROL_FILE_RESULT;
     PNT_IPC_MESSAGE_GENERIC_CONTROL_FILE pMessage = (PNT_IPC_MESSAGE_GENERIC_CONTROL_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT pReply = NULL;
     PIO_IPC_CALL_CONTEXT pContext = NULL;
+    IO_FILE_HANDLE FileHandle = NULL;
 
-    assert(messageType == pIn->tag);
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IopIpcCreateCallContext(pCall, pIn, pOut, IopIpcCompleteGenericCall, &pContext);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -680,7 +703,7 @@ IopIpcFsControlFile(
     }
     
     status = IoFsControlFile(
-        pMessage->FileHandle,
+        FileHandle,
         &pContext->asyncBlock,
         &pContext->ioStatusBlock,
         pMessage->ControlCode,
@@ -723,13 +746,14 @@ IopIpcFlushBuffersFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_FLUSH_BUFFERS_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_FLUSH_BUFFERS_FILE_RESULT;
     PNT_IPC_MESSAGE_GENERIC_FILE pMessage = (PNT_IPC_MESSAGE_GENERIC_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT pReply = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    IO_FILE_HANDLE FileHandle = NULL;
 
-    assert(messageType == pIn->tag);
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT, sizeof(*pReply));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -737,7 +761,7 @@ IopIpcFlushBuffersFile(
     pOut->tag = replyType;
     pOut->data = pReply;
 
-    pReply->Status = IoFlushBuffersFile(pMessage->FileHandle, NULL, &ioStatusBlock);
+    pReply->Status = IoFlushBuffersFile(FileHandle, NULL, &ioStatusBlock);
     pReply->Status = ioStatusBlock.Status;
     pReply->BytesTransferred = ioStatusBlock.BytesTransferred;
 
@@ -756,13 +780,14 @@ IopIpcQueryInformationFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_QUERY_INFORMATION_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_QUERY_INFORMATION_FILE_RESULT;
     PNT_IPC_MESSAGE_QUERY_INFORMATION_FILE pMessage = (PNT_IPC_MESSAGE_QUERY_INFORMATION_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT pReply = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    IO_FILE_HANDLE FileHandle = NULL;
 
-    assert(messageType == pIn->tag);
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT, sizeof(*pReply));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -777,7 +802,7 @@ IopIpcQueryInformationFile(
     }
 
     pReply->Status = IoQueryInformationFile(
-                            pMessage->FileHandle,
+                            FileHandle,
                             NULL,
                             &ioStatusBlock,
                             pReply->Buffer,
@@ -801,13 +826,14 @@ IopIpcSetInformationFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_SET_INFORMATION_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_SET_INFORMATION_FILE_RESULT;
     PNT_IPC_MESSAGE_SET_INFORMATION_FILE pMessage = (PNT_IPC_MESSAGE_SET_INFORMATION_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT pReply = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    IO_FILE_HANDLE FileHandle = NULL;
 
-    assert(messageType == pIn->tag);
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT, sizeof(*pReply));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -824,7 +850,7 @@ IopIpcSetInformationFile(
     }
 
     pReply->Status = IoSetInformationFile(
-                            pMessage->FileHandle,
+                            FileHandle,
                             NULL,
                             &ioStatusBlock,
                             pMessage->FileInformation,
@@ -848,13 +874,14 @@ IopIpcQueryDirectoryFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_QUERY_DIRECTORY_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_QUERY_DIRECTORY_FILE_RESULT;
     PNT_IPC_MESSAGE_QUERY_DIRECTORY_FILE pMessage = (PNT_IPC_MESSAGE_QUERY_DIRECTORY_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT pReply = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    IO_FILE_HANDLE FileHandle = NULL;
 
-    assert(messageType == pIn->tag);
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT, sizeof(*pReply));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -869,7 +896,7 @@ IopIpcQueryDirectoryFile(
     }
 
     pReply->Status = IoQueryDirectoryFile(
-                            pMessage->FileHandle,
+                            FileHandle,
                             NULL,
                             &ioStatusBlock,
                             pReply->Buffer,
@@ -896,13 +923,14 @@ IopIpcReadDirectoryChangeFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_READ_DIRECTORY_CHANGE_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_READ_DIRECTORY_CHANGE_FILE_RESULT;
     PNT_IPC_MESSAGE_READ_DIRECTORY_CHANGE_FILE pMessage = (PNT_IPC_MESSAGE_READ_DIRECTORY_CHANGE_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT pReply = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    IO_FILE_HANDLE FileHandle = NULL;
 
-    assert(messageType == pIn->tag);
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT, sizeof(*pReply));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -917,7 +945,7 @@ IopIpcReadDirectoryChangeFile(
     }
 
     pReply->Status = IoReadDirectoryChangeFile(
-                            pMessage->FileHandle,
+                            FileHandle,
                             NULL,
                             &ioStatusBlock,
                             pReply->Buffer,
@@ -943,13 +971,14 @@ IopIpcQueryVolumeInformationFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_QUERY_VOLUME_INFORMATION_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_QUERY_VOLUME_INFORMATION_FILE_RESULT;
     PNT_IPC_MESSAGE_QUERY_VOLUME_INFORMATION_FILE pMessage = (PNT_IPC_MESSAGE_QUERY_VOLUME_INFORMATION_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT pReply = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    IO_FILE_HANDLE FileHandle = NULL;
 
-    assert(messageType == pIn->tag);
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT, sizeof(*pReply));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -964,7 +993,7 @@ IopIpcQueryVolumeInformationFile(
     }
 
     pReply->Status = IoQueryVolumeInformationFile(
-                            pMessage->FileHandle,
+                            FileHandle,
                             NULL,
                             &ioStatusBlock,
                             pReply->Buffer,
@@ -988,13 +1017,14 @@ IopIpcUnlockFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_UNLOCK_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_UNLOCK_FILE_RESULT;
     PNT_IPC_MESSAGE_UNLOCK_FILE pMessage = (PNT_IPC_MESSAGE_UNLOCK_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT pReply = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    IO_FILE_HANDLE FileHandle = NULL;
 
-    assert(messageType == pIn->tag);
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT, sizeof(*pReply));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -1003,7 +1033,7 @@ IopIpcUnlockFile(
     pOut->data = pReply;
 
     pReply->Status = IoUnlockFile(
-                            pMessage->FileHandle,
+                            FileHandle,
                             NULL,
                             &ioStatusBlock,
                             pMessage->ByteOffset,
@@ -1027,13 +1057,14 @@ IopIpcLockFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_LOCK_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_LOCK_FILE_RESULT;
     PNT_IPC_MESSAGE_LOCK_FILE pMessage = (PNT_IPC_MESSAGE_LOCK_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT pReply = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    IO_FILE_HANDLE FileHandle = NULL;
 
-    assert(messageType == pIn->tag);
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT, sizeof(*pReply));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -1042,7 +1073,7 @@ IopIpcLockFile(
     pOut->data = pReply;
 
     pReply->Status = IoLockFile(
-                            pMessage->FileHandle,
+                            FileHandle,
                             NULL,
                             &ioStatusBlock,
                             pMessage->ByteOffset,
@@ -1068,13 +1099,14 @@ IopIpcQuerySecurityFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_QUERY_SECURITY_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_QUERY_SECURITY_FILE_RESULT;
     PNT_IPC_MESSAGE_QUERY_SECURITY_FILE pMessage = (PNT_IPC_MESSAGE_QUERY_SECURITY_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT pReply = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    IO_FILE_HANDLE FileHandle = NULL;
 
-    assert(messageType == pIn->tag);
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT, sizeof(*pReply));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -1089,7 +1121,7 @@ IopIpcQuerySecurityFile(
     }
     
     pReply->Status = IoQuerySecurityFile(
-        pMessage->FileHandle,
+        FileHandle,
         NULL,
         &ioStatusBlock,
         pMessage->SecurityInformation,
@@ -1113,13 +1145,14 @@ IopIpcSetSecurityFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_SET_SECURITY_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_SET_SECURITY_FILE_RESULT;
     PNT_IPC_MESSAGE_SET_SECURITY_FILE pMessage = (PNT_IPC_MESSAGE_SET_SECURITY_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT pReply = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    IO_FILE_HANDLE FileHandle = NULL;
 
-    assert(messageType == pIn->tag);
+    status = IopIpcGetFileHandle(pCall, pMessage->FileHandle, &FileHandle);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_GENERIC_FILE_IO_RESULT, sizeof(*pReply));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -1128,7 +1161,7 @@ IopIpcSetSecurityFile(
     pOut->data = pReply;
 
     pReply->Status = IoSetSecurityFile(
-                            pMessage->FileHandle,
+                            FileHandle,
                             NULL,
                             &ioStatusBlock,
                             pMessage->SecurityInformation,

@@ -578,7 +578,7 @@ LwSmWaitService(
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
     SM_IPC_WAIT_STATE_CHANGE_REQ req = {0};
 
-    req.hHandle = hHandle;
+    req.hHandle = (LWMsgHandle*) hHandle;
     req.state = currentState;
 
     in.tag = SM_IPC_WAIT_SERVICE_REQ;

@@ -52,14 +52,16 @@ DWORD
 NtlmSrvIpcRegisterHandle(
     LWMsgCall* pCall,
     PCSTR pszHandleType,
-    PVOID pHandle,
-    LWMsgHandleCleanupFunction pfnCleanup
+    PVOID pData,
+    LWMsgHandleCleanupFunction pfnCleanup,
+    LWMsgHandle** ppHandle
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     LWMsgSession* pSession = lwmsg_call_get_session(pCall);
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_session_register_handle(pSession, pszHandleType, pHandle, pfnCleanup));
+    dwError = MAP_LWMSG_ERROR(
+        lwmsg_session_register_handle(pSession, pszHandleType, pData, pfnCleanup, ppHandle));
     BAIL_ON_LSA_ERROR(dwError);
 
 error:
@@ -68,54 +70,68 @@ error:
 }
 
 static
-DWORD
+VOID
 NtlmSrvIpcRetainHandle(
     LWMsgCall* pCall,
-    PVOID pHandle
+    LWMsgHandle* pHandle
     )
 {
-    DWORD dwError = LW_ERROR_SUCCESS;
     LWMsgSession* pSession = lwmsg_call_get_session(pCall);
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_session_retain_handle(pSession, pHandle));
-    BAIL_ON_LSA_ERROR(dwError);
-
-error:
-
-    return dwError;
+    lwmsg_session_retain_handle(pSession, pHandle);
 }
-
-#if 0
-static
-DWORD
-NtlmSrvIpcReleaseHandle(
-    LWMsgCall* pCall,
-    PVOID pHandle
-    )
-{
-    DWORD dwError = LW_ERROR_SUCCESS;
-    LWMsgSession* pSession = lwmsg_call_get_session(pCall);
-
-    dwError = MAP_LWMSG_ERROR(lwmsg_session_release_handle(pSession, pHandle));
-    BAIL_ON_LSA_ERROR(dwError);
-
-error:
-
-    return dwError;
-}
-#endif
 
 static
 DWORD
 NtlmSrvIpcUnregisterHandle(
     LWMsgCall* pCall,
-    PVOID pHandle
+    LWMsgHandle* pHandle
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     LWMsgSession* pSession = lwmsg_call_get_session(pCall);
 
     dwError = MAP_LWMSG_ERROR(lwmsg_session_unregister_handle(pSession, pHandle));
+    BAIL_ON_LSA_ERROR(dwError);
+
+error:
+
+    return dwError;
+}
+
+static
+DWORD
+NtlmSrvIpcGetContextHandle(
+    LWMsgCall* pCall,
+    LWMsgHandle* pHandle,
+    PNTLM_CONTEXT_HANDLE phContext
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    LWMsgSession* pSession = lwmsg_call_get_session(pCall);
+
+    dwError = MAP_LWMSG_ERROR(
+        lwmsg_session_get_handle_data(pSession, pHandle, OUT_PPVOID(phContext)));
+    BAIL_ON_LSA_ERROR(dwError);
+
+error:
+
+    return dwError;
+}
+
+static
+DWORD
+NtlmSrvIpcGetCredHandle(
+    LWMsgCall* pCall,
+    LWMsgHandle* pHandle,
+    PNTLM_CRED_HANDLE phCred
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    LWMsgSession* pSession = lwmsg_call_get_session(pCall);
+
+    dwError = MAP_LWMSG_ERROR(
+        lwmsg_session_get_handle_data(pSession, pHandle, OUT_PPVOID(phCred)));
     BAIL_ON_LSA_ERROR(dwError);
 
 error:
@@ -173,6 +189,7 @@ error:
     return dwError;
 }
 
+static
 LWMsgStatus
 NtlmSrvIpcAcceptSecurityContext(
     LWMsgCall* pCall,
@@ -186,14 +203,28 @@ NtlmSrvIpcAcceptSecurityContext(
     PNTLM_IPC_ACCEPT_SEC_CTXT_RESPONSE pNtlmResp = NULL;
     PNTLM_IPC_ERROR pError = NULL;
     NTLM_CONTEXT_HANDLE hNewContext = NULL;
+    NTLM_CONTEXT_HANDLE hContext = NULL;
+    NTLM_CRED_HANDLE hCred = NULL;
+
+    if (pReq->hContext)
+    {
+        dwError = NtlmSrvIpcGetContextHandle(pCall, pReq->hContext, &hContext);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    if (pReq->hCredential)
+    {
+        dwError = NtlmSrvIpcGetCredHandle(pCall, pReq->hCredential, &hCred);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LwAllocateMemory(sizeof(*pNtlmResp), OUT_PPVOID(&pNtlmResp));
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = NtlmServerAcceptSecurityContext(
         NtlmSrvIpcGetSessionData(pCall),
-        pReq->hCredential,
-        &pReq->hContext,
+        hCred,
+        &hContext,
         pReq->pInput,
         pReq->fContextReq,
         pReq->TargetDataRep,
@@ -216,21 +247,20 @@ NtlmSrvIpcAcceptSecurityContext(
         pNtlmResp->dwStatus = dwError;
         dwError = LW_ERROR_SUCCESS;
 
-        pNtlmResp->hNewContext = hNewContext;
-        hNewContext = NULL;
-
         dwError = NtlmSrvIpcRegisterHandle(
             pCall,
             "NTLM_CONTEXT_HANDLE",
-            pNtlmResp->hNewContext,
-            NtlmSrvCleanupContextHandle);
+            hNewContext,
+            NtlmSrvCleanupContextHandle,
+            &pNtlmResp->hNewContext);
         BAIL_ON_LSA_ERROR(dwError);
+
+        hNewContext = NULL;
 
         pOut->tag = NTLM_R_ACCEPT_SEC_CTXT_SUCCESS;
         pOut->data = pNtlmResp;
 
-        dwError = NtlmSrvIpcRetainHandle(pCall, pNtlmResp->hNewContext);
-        BAIL_ON_LSA_ERROR(dwError);
+        NtlmSrvIpcRetainHandle(pCall, pNtlmResp->hNewContext);
     }
     else
     {
@@ -250,6 +280,7 @@ error:
     goto cleanup;
 }
 
+static
 LWMsgStatus
 NtlmSrvIpcAcquireCredentialsHandle(
     LWMsgCall* pCall,
@@ -262,6 +293,7 @@ NtlmSrvIpcAcquireCredentialsHandle(
     PNTLM_IPC_ACQUIRE_CREDS_REQ pReq = pIn->data;
     PNTLM_IPC_ACQUIRE_CREDS_RESPONSE pNtlmResp = NULL;
     PNTLM_IPC_ERROR pError = NULL;
+    NTLM_CRED_HANDLE hCred = NULL;
 
     dwError = LwAllocateMemory(
         sizeof(NTLM_IPC_ACQUIRE_CREDS_RESPONSE),
@@ -275,7 +307,7 @@ NtlmSrvIpcAcquireCredentialsHandle(
         pReq->fCredentialUse,
         pReq->pvLogonID,
         pReq->pAuthData,
-        &pNtlmResp->hCredential,
+        &hCred,
         &pNtlmResp->tsExpiry);
 
     if (!dwError)
@@ -283,15 +315,15 @@ NtlmSrvIpcAcquireCredentialsHandle(
         dwError = NtlmSrvIpcRegisterHandle(
             pCall,
             "NTLM_CRED_HANDLE",
-            pNtlmResp->hCredential,
-            NtlmSrvCleanupCredHandle);
+            hCred,
+            NtlmSrvCleanupCredHandle,
+            &pNtlmResp->hCredential);
         BAIL_ON_LSA_ERROR(dwError);
 
         pOut->tag = NTLM_R_ACQUIRE_CREDS_SUCCESS;
         pOut->data = pNtlmResp;
 
-        dwError = NtlmSrvIpcRetainHandle(pCall, pNtlmResp->hCredential);
-        BAIL_ON_LSA_ERROR(dwError);
+        NtlmSrvIpcRetainHandle(pCall, pNtlmResp->hCredential);
     }
     else
     {
@@ -310,6 +342,25 @@ error:
     goto cleanup;
 }
 
+static
+void
+NtlmServerFreeBuffers(
+    IN PSecBufferDesc pBuffer
+    )
+{
+    DWORD nIndex = 0;
+
+    if (pBuffer != NULL && pBuffer->pBuffers != NULL)
+    {
+        for (nIndex = 0; nIndex < pBuffer->cBuffers; nIndex++)
+        {
+            LW_SAFE_FREE_MEMORY(pBuffer->pBuffers[nIndex].pvBuffer);
+        }
+        LW_SAFE_FREE_MEMORY(pBuffer->pBuffers);
+    }
+}
+
+static
 DWORD
 NtlmServerDuplicateBuffers(
     IN const SecBufferDesc* pIn,
@@ -346,23 +397,7 @@ error:
     goto cleanup;
 }
 
-void
-NtlmServerFreeBuffers(
-    IN PSecBufferDesc pBuffer
-    )
-{
-    DWORD nIndex = 0;
-
-    if (pBuffer != NULL && pBuffer->pBuffers != NULL)
-    {
-        for (nIndex = 0; nIndex < pBuffer->cBuffers; nIndex++)
-        {
-            LW_SAFE_FREE_MEMORY(pBuffer->pBuffers[nIndex].pvBuffer);
-        }
-        LW_SAFE_FREE_MEMORY(pBuffer->pBuffers);
-    }
-}
-
+static
 LWMsgStatus
 NtlmSrvIpcDecryptMessage(
     LWMsgCall* pCall,
@@ -375,6 +410,13 @@ NtlmSrvIpcDecryptMessage(
     const PNTLM_IPC_DECRYPT_MSG_REQ pReq = pIn->data;
     PNTLM_IPC_DECRYPT_MSG_RESPONSE pNtlmResp = NULL;
     PNTLM_IPC_ERROR pError = NULL;
+    NTLM_CONTEXT_HANDLE hContext = NULL;
+
+    if (pReq->hContext)
+    {
+        dwError = NtlmSrvIpcGetContextHandle(pCall, pReq->hContext, &hContext);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LwAllocateMemory(
         sizeof(NTLM_IPC_DECRYPT_MSG_RESPONSE),
@@ -387,7 +429,7 @@ NtlmSrvIpcDecryptMessage(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = NtlmServerDecryptMessage(
-        pReq->hContext,
+        hContext,
         &pNtlmResp->Message,
         pReq->MessageSeqNo,
         &pNtlmResp->bEncrypted);
@@ -415,6 +457,7 @@ error:
     goto cleanup;
 }
 
+static
 LWMsgStatus
 NtlmSrvIpcDeleteSecurityContext(
     LWMsgCall* pCall,
@@ -447,6 +490,7 @@ error:
     goto cleanup;
 }
 
+static
 LWMsgStatus
 NtlmSrvIpcEncryptMessage(
     LWMsgCall* pCall,
@@ -459,6 +503,13 @@ NtlmSrvIpcEncryptMessage(
     PNTLM_IPC_ENCRYPT_MSG_REQ pReq = pIn->data;
     PNTLM_IPC_ENCRYPT_MSG_RESPONSE pNtlmResp = NULL;
     PNTLM_IPC_ERROR pError = NULL;
+    NTLM_CONTEXT_HANDLE hContext = NULL;
+
+    if (pReq->hContext)
+    {
+        dwError = NtlmSrvIpcGetContextHandle(pCall, pReq->hContext, &hContext);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LwAllocateMemory(
         sizeof(NTLM_IPC_ENCRYPT_MSG_RESPONSE),
@@ -471,7 +522,7 @@ NtlmSrvIpcEncryptMessage(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = NtlmServerEncryptMessage(
-        &pReq->hContext,
+        &hContext,
         pReq->bEncrypt,
         &pNtlmResp->Message,
         pReq->MessageSeqNo);
@@ -499,6 +550,7 @@ error:
     goto cleanup;
 }
 
+#if 0
 LWMsgStatus
 NtlmSrvIpcExportSecurityContext(
     LWMsgCall* pCall,
@@ -520,7 +572,7 @@ NtlmSrvIpcExportSecurityContext(
     dwError = NtlmServerExportSecurityContext(
         &pReq->hContext,
         pReq->fFlags,
-        &(pNtlmResp->PackedContext),
+        &pNtlmResp->PackedContext,
         &(pNtlmResp->hToken));
 
     if (!dwError)
@@ -544,7 +596,9 @@ cleanup:
 error:
     goto cleanup;
 }
+#endif
 
+static
 LWMsgStatus
 NtlmSrvIpcFreeCredentialsHandle(
     LWMsgCall* pCall,
@@ -577,6 +631,7 @@ error:
     goto cleanup;
 }
 
+#if 0
 LWMsgStatus
 NtlmSrvIpcImportSecurityContext(
     LWMsgCall* pCall,
@@ -589,6 +644,7 @@ NtlmSrvIpcImportSecurityContext(
     PNTLM_IPC_IMPORT_SEC_CTXT_REQ pReq = pIn->data;
     PNTLM_IPC_IMPORT_SEC_CTXT_RESPONSE pNtlmResp = NULL;
     PNTLM_IPC_ERROR pError = NULL;
+
 
     dwError = LwAllocateMemory(
         sizeof(NTLM_IPC_IMPORT_SEC_CTXT_RESPONSE),
@@ -622,7 +678,9 @@ cleanup:
 error:
     goto cleanup;
 }
+#endif
 
+static
 LWMsgStatus
 NtlmSrvIpcInitializeSecurityContext(
     LWMsgCall* pCall,
@@ -636,13 +694,27 @@ NtlmSrvIpcInitializeSecurityContext(
     PNTLM_IPC_INIT_SEC_CTXT_RESPONSE pNtlmResp = NULL;
     PNTLM_IPC_ERROR pError = NULL;
     NTLM_CONTEXT_HANDLE hNewContext = NULL;
+    NTLM_CONTEXT_HANDLE hContext = NULL;
+    NTLM_CRED_HANDLE hCred = NULL;
+
+    if (pReq->hContext)
+    {
+        dwError = NtlmSrvIpcGetContextHandle(pCall, pReq->hContext, &hContext);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    if (pReq->hCredential)
+    {
+        dwError = NtlmSrvIpcGetCredHandle(pCall, pReq->hCredential, &hCred);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LwAllocateMemory(sizeof(*pNtlmResp), OUT_PPVOID(&pNtlmResp));
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = NtlmServerInitializeSecurityContext(
-        pReq->hCredential,
-        pReq->hContext,
+        hCred,
+        hContext,
         pReq->pszTargetName,
         pReq->fContextReq,
         pReq->Reserved1,
@@ -652,8 +724,7 @@ NtlmSrvIpcInitializeSecurityContext(
         &hNewContext,
         &pNtlmResp->Output,
         &pNtlmResp->fContextAttr,
-        &pNtlmResp->tsExpiry
-        );
+        &pNtlmResp->tsExpiry);
 
     if (dwError == LW_ERROR_SUCCESS || dwError == LW_WARNING_CONTINUE_NEEDED)
     {
@@ -669,21 +740,20 @@ NtlmSrvIpcInitializeSecurityContext(
         pNtlmResp->dwStatus = dwError;
         dwError = LW_ERROR_SUCCESS;
 
-        pNtlmResp->hNewContext = hNewContext;
-        hNewContext = NULL;
-
         dwError = NtlmSrvIpcRegisterHandle(
             pCall,
             "NTLM_CONTEXT_HANDLE",
             pNtlmResp->hNewContext,
-            NtlmSrvCleanupContextHandle);
+            NtlmSrvCleanupContextHandle,
+            &pNtlmResp->hNewContext);
         BAIL_ON_LSA_ERROR(dwError);
+
+        hNewContext = NULL;
 
         pOut->tag = NTLM_R_INIT_SEC_CTXT_SUCCESS;
         pOut->data = pNtlmResp;
 
-        dwError = NtlmSrvIpcRetainHandle(pCall, pNtlmResp->hNewContext);
-        BAIL_ON_LSA_ERROR(dwError);
+        NtlmSrvIpcRetainHandle(pCall, pNtlmResp->hNewContext);
     }
     else
     {
@@ -708,6 +778,7 @@ error:
     goto cleanup;
 }
 
+static
 LWMsgStatus
 NtlmSrvIpcMakeSignature(
     LWMsgCall* pCall,
@@ -720,6 +791,13 @@ NtlmSrvIpcMakeSignature(
     PNTLM_IPC_MAKE_SIGN_REQ pReq = pIn->data;
     PNTLM_IPC_MAKE_SIGN_RESPONSE pNtlmResp = NULL;
     PNTLM_IPC_ERROR pError = NULL;
+    NTLM_CONTEXT_HANDLE hContext = NULL;
+
+    if (pReq->hContext)
+    {
+        dwError = NtlmSrvIpcGetContextHandle(pCall, pReq->hContext, &hContext);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LwAllocateMemory(
         sizeof(NTLM_IPC_MAKE_SIGN_RESPONSE),
@@ -732,7 +810,7 @@ NtlmSrvIpcMakeSignature(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = NtlmServerMakeSignature(
-        &pReq->hContext,
+        &hContext,
         pReq->dwQop,
         &pNtlmResp->Message,
         pReq->MessageSeqNo);
@@ -760,6 +838,7 @@ error:
     goto cleanup;
 }
 
+static
 LWMsgStatus
 NtlmSrvIpcQueryCredentialsAttributes(
     LWMsgCall* pCall,
@@ -772,6 +851,13 @@ NtlmSrvIpcQueryCredentialsAttributes(
     PNTLM_IPC_QUERY_CREDS_REQ pReq = pIn->data;
     PNTLM_IPC_QUERY_CREDS_RESPONSE pNtlmResp = NULL;
     PNTLM_IPC_ERROR pError = NULL;
+    NTLM_CRED_HANDLE hCred = NULL;
+
+    if (pReq->hCredential)
+    {
+        dwError = NtlmSrvIpcGetCredHandle(pCall, pReq->hCredential, &hCred);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LwAllocateMemory(
         sizeof(NTLM_IPC_QUERY_CREDS_RESPONSE),
@@ -779,7 +865,7 @@ NtlmSrvIpcQueryCredentialsAttributes(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = NtlmServerQueryCredentialsAttributes(
-        &pReq->hCredential,
+        &hCred,
         pReq->ulAttribute,
         (PVOID)&pNtlmResp->Buffer);
 
@@ -807,6 +893,7 @@ error:
     goto cleanup;
 }
 
+static
 LWMsgStatus
 NtlmSrvIpcQueryContextAttributes(
     LWMsgCall* pCall,
@@ -819,6 +906,13 @@ NtlmSrvIpcQueryContextAttributes(
     PNTLM_IPC_QUERY_CTXT_REQ pReq = pIn->data;
     PNTLM_IPC_QUERY_CTXT_RESPONSE pNtlmResp = NULL;
     PNTLM_IPC_ERROR pError = NULL;
+    NTLM_CONTEXT_HANDLE hContext = NULL;
+
+    if (pReq->hContext)
+    {
+        dwError = NtlmSrvIpcGetContextHandle(pCall, pReq->hContext, &hContext);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LwAllocateMemory(
         sizeof(NTLM_IPC_QUERY_CTXT_RESPONSE),
@@ -826,7 +920,7 @@ NtlmSrvIpcQueryContextAttributes(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = NtlmServerQueryContextAttributes(
-        &pReq->hContext,
+        &hContext,
         pReq->ulAttribute,
         (PVOID)&pNtlmResp->Buffer);
 
@@ -854,6 +948,7 @@ error:
     goto cleanup;
 }
 
+static
 LWMsgStatus
 NtlmSrvIpcSetCredentialsAttributes(
     LWMsgCall* pCall,
@@ -865,9 +960,16 @@ NtlmSrvIpcSetCredentialsAttributes(
     DWORD dwError = LW_ERROR_SUCCESS;
     PNTLM_IPC_ERROR pError = NULL;
     PNTLM_IPC_SET_CREDS_REQ pReq = pIn->data;
+    NTLM_CRED_HANDLE hCred = NULL;
+
+    if (pReq->hCredential)
+    {
+        dwError = NtlmSrvIpcGetCredHandle(pCall, pReq->hCredential, &hCred);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = NtlmServerSetCredentialsAttributes(
-                  &pReq->hCredential,
+                  &hCred,
                   pReq->ulAttribute,
                   &pReq->Buffer);
 
@@ -890,6 +992,7 @@ error:
     goto cleanup;
 }
 
+static
 LWMsgStatus
 NtlmSrvIpcVerifySignature(
     LWMsgCall* pCall,
@@ -902,6 +1005,13 @@ NtlmSrvIpcVerifySignature(
     PNTLM_IPC_VERIFY_SIGN_REQ pReq = pIn->data;
     PNTLM_IPC_VERIFY_SIGN_RESPONSE pNtlmResp = NULL;
     PNTLM_IPC_ERROR pError = NULL;
+    NTLM_CONTEXT_HANDLE hContext = NULL;
+
+    if (pReq->hContext)
+    {
+        dwError = NtlmSrvIpcGetContextHandle(pCall, pReq->hContext, &hContext);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LwAllocateMemory(
         sizeof(NTLM_IPC_VERIFY_SIGN_RESPONSE),
@@ -909,10 +1019,10 @@ NtlmSrvIpcVerifySignature(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = NtlmServerVerifySignature(
-        &pReq->hContext,
+        &hContext,
         pReq->pMessage,
         pReq->MessageSeqNo,
-        &(pNtlmResp->dwQop));
+        &pNtlmResp->dwQop);
 
     if (!dwError)
     {
@@ -943,9 +1053,13 @@ static LWMsgDispatchSpec gMessageHandlers[] =
     LWMSG_DISPATCH_BLOCK(NTLM_Q_DECRYPT_MSG, NtlmSrvIpcDecryptMessage),
     LWMSG_DISPATCH_BLOCK(NTLM_Q_DELETE_SEC_CTXT, NtlmSrvIpcDeleteSecurityContext),
     LWMSG_DISPATCH_BLOCK(NTLM_Q_ENCRYPT_MSG, NtlmSrvIpcEncryptMessage),
+#if 0
     LWMSG_DISPATCH_BLOCK(NTLM_Q_EXPORT_SEC_CTXT, NtlmSrvIpcExportSecurityContext),
+#endif
     LWMSG_DISPATCH_BLOCK(NTLM_Q_FREE_CREDS, NtlmSrvIpcFreeCredentialsHandle),
+#if 0
     LWMSG_DISPATCH_BLOCK(NTLM_Q_IMPORT_SEC_CTXT, NtlmSrvIpcImportSecurityContext),
+#endif
     LWMSG_DISPATCH_BLOCK(NTLM_Q_INIT_SEC_CTXT, NtlmSrvIpcInitializeSecurityContext),
     LWMSG_DISPATCH_BLOCK(NTLM_Q_MAKE_SIGN, NtlmSrvIpcMakeSignature),
     LWMSG_DISPATCH_BLOCK(NTLM_Q_QUERY_CREDS, NtlmSrvIpcQueryCredentialsAttributes),

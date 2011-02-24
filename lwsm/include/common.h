@@ -135,7 +135,7 @@ typedef enum _SM_IPC_TAG
 
 typedef struct _SM_IPC_WAIT_STATE_CHANGE_REQ
 {
-    LW_SERVICE_HANDLE hHandle;
+    LWMsgHandle* hHandle;
     LW_SERVICE_STATE state;
 } SM_IPC_WAIT_STATE_CHANGE_REQ, *PSM_IPC_WAIT_STATE_CHANGE_REQ;
 

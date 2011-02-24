@@ -122,30 +122,22 @@ error:
     return dwError;
 }
 
-DWORD
+VOID
 NtlmIpcReleaseHandle(
-    PVOID pHandle
+    LWMsgHandle* pHandle
     )
 {
-    DWORD dwError = 0;
-
-    dwError = MAP_LWMSG_ERROR(
-        lwmsg_session_release_handle(gpSession, pHandle));
-    BAIL_ON_LSA_ERROR(dwError);
-
-error:
-
-    return dwError;
+    lwmsg_session_release_handle(gpSession, pHandle);
 }
 
 DWORD
 NtlmTransactAcceptSecurityContext(
-    IN PNTLM_CRED_HANDLE phCredential,
-    IN OUT PNTLM_CONTEXT_HANDLE phContext,
+    IN NTLM_CRED_HANDLE hCredential,
+    IN NTLM_CONTEXT_HANDLE hContext,
     IN PSecBufferDesc pInput,
     IN DWORD fContextReq,
     IN DWORD TargetDataRep,
-    IN OUT PNTLM_CONTEXT_HANDLE phNewContext,
+    OUT PNTLM_CONTEXT_HANDLE phNewContext,
     IN OUT PSecBufferDesc pOutput,
     OUT PDWORD  pfContextAttr,
     OUT PTimeStamp ptsTimeStamp
@@ -168,11 +160,8 @@ NtlmTransactAcceptSecurityContext(
 
     memset(&AcceptSecCtxtReq, 0, sizeof(AcceptSecCtxtReq));
 
-    AcceptSecCtxtReq.hCredential = *phCredential;
-    if (phContext)
-    {
-        AcceptSecCtxtReq.hContext = *phContext;
-    }
+    AcceptSecCtxtReq.hCredential = (LWMsgHandle*) hCredential;
+    AcceptSecCtxtReq.hContext = (LWMsgHandle*) hContext;
     if (pInput->cBuffers != 1)
     {
         dwError = LW_ERROR_INVALID_PARAMETER;
@@ -181,11 +170,6 @@ NtlmTransactAcceptSecurityContext(
     AcceptSecCtxtReq.pInput = &pInput->pBuffers[0];
     AcceptSecCtxtReq.fContextReq = fContextReq;
     AcceptSecCtxtReq.TargetDataRep = TargetDataRep;
-
-    if (phNewContext)
-    {
-        AcceptSecCtxtReq.hNewContext = *phNewContext;
-    }
 
     In.tag = NTLM_Q_ACCEPT_SEC_CTXT;
     In.data = &AcceptSecCtxtReq;
@@ -206,9 +190,11 @@ NtlmTransactAcceptSecurityContext(
 
             if (phNewContext)
             {
-                *phNewContext = pResultList->hNewContext;
+                *phNewContext = (NTLM_CONTEXT_HANDLE) pResultList->hNewContext;
                 pResultList->hNewContext = NULL;
             }
+
+            NtlmIpcReleaseHandle((LWMsgHandle*) hContext);
 
             *pfContextAttr = pResultList->fContextAttr;
             *ptsTimeStamp = pResultList->tsTimeStamp;
@@ -226,11 +212,6 @@ NtlmTransactAcceptSecurityContext(
     }
 
 cleanup:
-    if (phContext && *phContext)
-    {
-        NtlmIpcReleaseHandle(*phContext);
-        *phContext = NULL;
-    }
 
     if (pCall)
     {
@@ -241,17 +222,10 @@ cleanup:
     return dwError;
 
 error:
+
     if (phNewContext)
     {
-        if (phContext)
-        {
-            *phNewContext = *phContext;
-            *phContext = NULL;
-        }
-        else
-        {
-            *phNewContext = NULL;
-        }
+        *phNewContext = hContext;
     }
     
     *pfContextAttr = 0;
@@ -303,7 +277,7 @@ NtlmTransactAcquireCredentialsHandle(
         case NTLM_R_ACQUIRE_CREDS_SUCCESS:
             pResultList = (PNTLM_IPC_ACQUIRE_CREDS_RESPONSE)Out.data;
 
-            *phCredential = pResultList->hCredential;
+            *phCredential = (NTLM_CRED_HANDLE) pResultList->hCredential;
             pResultList->hCredential = NULL;
 
             *ptsExpiry = pResultList->tsExpiry;
@@ -334,7 +308,7 @@ error:
 
 DWORD
 NtlmTransactDecryptMessage(
-    IN PNTLM_CONTEXT_HANDLE phContext,
+    IN NTLM_CONTEXT_HANDLE hContext,
     IN OUT PSecBufferDesc pMessage,
     IN DWORD MessageSeqNo,
     OUT PBOOLEAN pbEncrypted
@@ -354,7 +328,7 @@ NtlmTransactDecryptMessage(
 
     memset(&DecryptMsgReq, 0, sizeof(DecryptMsgReq));
 
-    DecryptMsgReq.hContext = *phContext;
+    DecryptMsgReq.hContext = (LWMsgHandle*) hContext;
     DecryptMsgReq.pMessage = pMessage;
     DecryptMsgReq.MessageSeqNo = MessageSeqNo;
 
@@ -430,7 +404,7 @@ NtlmDeleteSecurityContextComplete(
 
 DWORD
 NtlmTransactDeleteSecurityContext(
-    IN PNTLM_CONTEXT_HANDLE phContext
+    IN OUT NTLM_CONTEXT_HANDLE hContext
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
@@ -441,7 +415,7 @@ NtlmTransactDeleteSecurityContext(
     dwError = LwAllocateMemory(sizeof(*pContext), OUT_PPVOID(&pContext));
     BAIL_ON_LSA_ERROR(dwError);
 
-    pContext->Req.hContext = *phContext;
+    pContext->Req.hContext = (LWMsgHandle*) hContext;
     pContext->In.tag = NTLM_Q_DELETE_SEC_CTXT;
     pContext->In.data = &pContext->Req;
     pContext->Out.tag = LWMSG_TAG_INVALID;
@@ -468,11 +442,11 @@ NtlmTransactDeleteSecurityContext(
 
 cleanup:
 
+    NtlmIpcReleaseHandle((LWMsgHandle*) hContext);
+
     return dwError;
 
 error:
-
-    NtlmIpcReleaseHandle(*phContext);
 
     if (pCall)
     {
@@ -493,7 +467,7 @@ error:
 
 DWORD
 NtlmTransactEncryptMessage(
-    IN PNTLM_CONTEXT_HANDLE phContext,
+    IN NTLM_CONTEXT_HANDLE hContext,
     IN BOOLEAN bEncrypt,
     IN OUT PSecBufferDesc pMessage,
     IN DWORD MessageSeqNo
@@ -504,8 +478,8 @@ NtlmTransactEncryptMessage(
     // Do not free pResult and pError
     PNTLM_IPC_ENCRYPT_MSG_RESPONSE pResultList = NULL;
     PNTLM_IPC_ERROR pError = NULL;
-    LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
-    LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams In = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams Out = LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
 
     dwError = NtlmIpcAcquireCall(&pCall);
@@ -513,7 +487,7 @@ NtlmTransactEncryptMessage(
 
     memset(&EncryptMsgReq, 0, sizeof(EncryptMsgReq));
 
-    EncryptMsgReq.hContext = *phContext;
+    EncryptMsgReq.hContext = (LWMsgHandle*) hContext;
     EncryptMsgReq.bEncrypt = bEncrypt;
     EncryptMsgReq.pMessage = pMessage;
     EncryptMsgReq.MessageSeqNo = MessageSeqNo;
@@ -563,7 +537,7 @@ error:
 
 DWORD
 NtlmTransactExportSecurityContext(
-    IN PNTLM_CONTEXT_HANDLE phContext,
+    IN NTLM_CONTEXT_HANDLE hContext,
     IN DWORD fFlags,
     OUT PSecBuffer pPackedContext,
     OUT OPTIONAL HANDLE *pToken
@@ -583,7 +557,7 @@ NtlmTransactExportSecurityContext(
 
     memset(&ExportSecCtxtReq, 0, sizeof(ExportSecCtxtReq));
 
-    ExportSecCtxtReq.hContext = *phContext;
+    ExportSecCtxtReq.hContext = (LWMsgHandle*) hContext;
     ExportSecCtxtReq.fFlags = fFlags;
 
     In.tag = NTLM_Q_EXPORT_SEC_CTXT;
@@ -604,7 +578,7 @@ NtlmTransactExportSecurityContext(
 
             if (pToken)
             {
-                memcpy(pToken, &pResultList->hToken, sizeof(HANDLE));
+                *pToken = (HANDLE) pResultList->hToken;
             }
 
             break;
@@ -619,6 +593,7 @@ NtlmTransactExportSecurityContext(
     }
 
 cleanup:
+
     if (pCall)
     {
         lwmsg_call_destroy_params(pCall, &Out);
@@ -633,7 +608,7 @@ error:
 
 DWORD
 NtlmTransactFreeCredentialsHandle(
-    IN PNTLM_CRED_HANDLE phCredential
+    IN OUT NTLM_CRED_HANDLE hCredential
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
@@ -649,7 +624,7 @@ NtlmTransactFreeCredentialsHandle(
 
     memset(&FreeCredsReq, 0, sizeof(FreeCredsReq));
 
-    FreeCredsReq.hCredential = *phCredential;
+    FreeCredsReq.hCredential = (LWMsgHandle*) hCredential;
 
     In.tag = NTLM_Q_FREE_CREDS;
     In.data = &FreeCredsReq;
@@ -674,7 +649,7 @@ NtlmTransactFreeCredentialsHandle(
 
 cleanup:
 
-    NtlmIpcReleaseHandle(*phCredential);
+    NtlmIpcReleaseHandle((LWMsgHandle*) hCredential);
 
     if (pCall)
     {
@@ -712,7 +687,7 @@ NtlmTransactImportSecurityContext(
 
     ImportSecCtxtReq.pszPackage = pszPackage;
     ImportSecCtxtReq.pPackedContext = pPackedContext;
-    ImportSecCtxtReq.pToken = pToken;
+    ImportSecCtxtReq.pToken = (LWMsgHandle*) pToken;
 
     In.tag = NTLM_Q_IMPORT_SEC_CTXT;
     In.data = &ImportSecCtxtReq;
@@ -726,7 +701,8 @@ NtlmTransactImportSecurityContext(
         case NTLM_R_IMPORT_SEC_CTXT_SUCCESS:
             pResultList = (PNTLM_IPC_IMPORT_SEC_CTXT_RESPONSE)Out.data;
 
-            *phContext = pResultList->hContext;
+            *phContext = (NTLM_CONTEXT_HANDLE) pResultList->hContext;
+            pResultList->hContext = NULL;
 
             break;
         case NTLM_R_GENERIC_FAILURE:
@@ -740,6 +716,7 @@ NtlmTransactImportSecurityContext(
     }
 
 cleanup:
+
     if (pCall)
     {
         lwmsg_call_destroy_params(pCall, &Out);
@@ -749,13 +726,14 @@ cleanup:
     return dwError;
 
 error:
+
     goto cleanup;
 }
 
 DWORD
 NtlmTransactInitializeSecurityContext(
-    IN OPTIONAL PNTLM_CRED_HANDLE phCredential,
-    IN OPTIONAL PNTLM_CONTEXT_HANDLE phContext,
+    IN OPTIONAL NTLM_CRED_HANDLE hCredential,
+    IN OPTIONAL NTLM_CONTEXT_HANDLE hContext,
     IN OPTIONAL SEC_CHAR * pszTargetName,
     IN DWORD fContextReq,
     IN DWORD Reserved1,
@@ -773,8 +751,8 @@ NtlmTransactInitializeSecurityContext(
     // Do not free pResult and pError
     PNTLM_IPC_INIT_SEC_CTXT_RESPONSE pResultList = NULL;
     PNTLM_IPC_ERROR pError = NULL;
-    LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
-    LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams In = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams Out = LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
 
     NtlmInitialize();
@@ -784,14 +762,9 @@ NtlmTransactInitializeSecurityContext(
 
     memset(&InitSecCtxtReq, 0, sizeof(InitSecCtxtReq));
 
-    if (phCredential)
-    {
-        InitSecCtxtReq.hCredential = *phCredential;
-    }
-    if (phContext)
-    {
-        InitSecCtxtReq.hContext = *phContext;
-    }
+
+    InitSecCtxtReq.hCredential = (LWMsgHandle*) hCredential;
+    InitSecCtxtReq.hContext = (LWMsgHandle*) hContext;
     InitSecCtxtReq.pszTargetName = pszTargetName;
     InitSecCtxtReq.fContextReq = fContextReq;
     InitSecCtxtReq.Reserved1 = Reserved1;
@@ -803,10 +776,6 @@ NtlmTransactInitializeSecurityContext(
     }
     InitSecCtxtReq.pInput = &pInput->pBuffers[0];
     InitSecCtxtReq.Reserved2 = Reserved2;
-    if (phNewContext)
-    {
-        InitSecCtxtReq.hNewContext = *phNewContext;
-    }
 
     In.tag = NTLM_Q_INIT_SEC_CTXT;
     In.data = &InitSecCtxtReq;
@@ -834,9 +803,11 @@ NtlmTransactInitializeSecurityContext(
 
             if (phNewContext)
             {
-                *phNewContext = pResultList->hNewContext;
+                *phNewContext = (NTLM_CONTEXT_HANDLE) pResultList->hNewContext;
                 pResultList->hNewContext = NULL;
             }
+
+            NtlmIpcReleaseHandle((LWMsgHandle*) hContext);
 
             *pfContextAttr = pResultList->fContextAttr;
 
@@ -859,11 +830,6 @@ NtlmTransactInitializeSecurityContext(
     }
 
 cleanup:
-    if (phContext && *phContext)
-    {
-        NtlmIpcReleaseHandle(*phContext);
-        *phContext = NULL;
-    }
 
     if (pCall)
     {
@@ -874,17 +840,10 @@ cleanup:
     return dwError;
 
 error:
+
     if (phNewContext)
     {
-        if (phContext)
-        {
-            *phNewContext = *phContext;
-            *phContext = NULL;
-        }
-        else
-        {
-            *phNewContext = NULL;
-        }
+        *phNewContext = hContext;
     }
     
     *pfContextAttr = 0;
@@ -896,7 +855,7 @@ error:
 
 DWORD
 NtlmTransactMakeSignature(
-    IN PNTLM_CONTEXT_HANDLE phContext,
+    IN NTLM_CONTEXT_HANDLE hContext,
     IN DWORD dwQop,
     IN OUT PSecBufferDesc pMessage,
     IN DWORD MessageSeqNo
@@ -907,8 +866,8 @@ NtlmTransactMakeSignature(
     // Do not free pResult and pError
     PNTLM_IPC_MAKE_SIGN_RESPONSE pResultList = NULL;
     PNTLM_IPC_ERROR pError = NULL;
-    LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
-    LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams In = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams Out = LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
 
     NtlmInitialize();
@@ -918,7 +877,7 @@ NtlmTransactMakeSignature(
 
     memset(&MakeSignReq, 0, sizeof(MakeSignReq));
 
-    MakeSignReq.hContext = *phContext;
+    MakeSignReq.hContext = (LWMsgHandle*) hContext;
     MakeSignReq.dwQop = dwQop;
     MakeSignReq.pMessage = pMessage;
     MakeSignReq.MessageSeqNo = MessageSeqNo;
@@ -954,6 +913,7 @@ NtlmTransactMakeSignature(
     }
 
 cleanup:
+
     if (pCall)
     {
         lwmsg_call_destroy_params(pCall, &Out);
@@ -968,7 +928,7 @@ error:
 
 DWORD
 NtlmTransactQueryContextAttributes(
-    IN PNTLM_CONTEXT_HANDLE phContext,
+    IN NTLM_CONTEXT_HANDLE hContext,
     IN DWORD ulAttribute,
     OUT PVOID pBuffer
     )
@@ -978,8 +938,8 @@ NtlmTransactQueryContextAttributes(
     // Do not free pResult and pError
     PNTLM_IPC_QUERY_CTXT_RESPONSE pResultList = NULL;
     PNTLM_IPC_ERROR pError = NULL;
-    LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
-    LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams In = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams Out = LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
 
     NtlmInitialize();
@@ -989,7 +949,7 @@ NtlmTransactQueryContextAttributes(
 
     memset(&QueryCtxtReq, 0, sizeof(QueryCtxtReq));
 
-    QueryCtxtReq.hContext = *phContext;
+    QueryCtxtReq.hContext = (LWMsgHandle*) hContext;
     QueryCtxtReq.ulAttribute = ulAttribute;
 
     In.tag = NTLM_Q_QUERY_CTXT;
@@ -1057,6 +1017,7 @@ NtlmTransactQueryContextAttributes(
     }
 
 cleanup:
+
     if (pCall)
     {
         lwmsg_call_destroy_params(pCall, &Out);
@@ -1066,12 +1027,13 @@ cleanup:
     return dwError;
 
 error:
+
     goto cleanup;
 }
 
 DWORD
 NtlmTransactQueryCredentialsAttributes(
-    IN PNTLM_CRED_HANDLE phCredential,
+    IN NTLM_CRED_HANDLE hCredential,
     IN DWORD ulAttribute,
     OUT PVOID pBuffer
     )
@@ -1092,7 +1054,7 @@ NtlmTransactQueryCredentialsAttributes(
 
     memset(&QueryCredsReq, 0, sizeof(QueryCredsReq));
 
-    QueryCredsReq.hCredential = *phCredential;
+    QueryCredsReq.hCredential = (LWMsgHandle*) hCredential;
     QueryCredsReq.ulAttribute = ulAttribute;
 
     In.tag = NTLM_Q_QUERY_CREDS;
@@ -1145,7 +1107,7 @@ error:
 
 DWORD
 NtlmTransactSetCredentialsAttributes(
-    IN PNTLM_CRED_HANDLE phCredential,
+    IN NTLM_CRED_HANDLE hCredential,
     IN DWORD ulAttribute,
     IN PVOID pBuffer
     )
@@ -1165,7 +1127,7 @@ NtlmTransactSetCredentialsAttributes(
 
     memset(&SetCredsReq, 0, sizeof(SetCredsReq));
 
-    SetCredsReq.hCredential = *phCredential;
+    SetCredsReq.hCredential = (LWMsgHandle*) hCredential;
     SetCredsReq.ulAttribute = ulAttribute;
     switch (ulAttribute)
     {
@@ -1214,7 +1176,7 @@ error:
 
 DWORD
 NtlmTransactVerifySignature(
-    IN PNTLM_CONTEXT_HANDLE phContext,
+    IN NTLM_CONTEXT_HANDLE hContext,
     IN PSecBufferDesc pMessage,
     IN DWORD MessageSeqNo,
     OUT PDWORD pQop
@@ -1236,7 +1198,7 @@ NtlmTransactVerifySignature(
 
     memset(&VerifySignReq, 0, sizeof(VerifySignReq));
 
-    VerifySignReq.hContext = *phContext;
+    VerifySignReq.hContext = (LWMsgHandle*) hContext;
     VerifySignReq.pMessage = pMessage;
     VerifySignReq.MessageSeqNo = MessageSeqNo;
 

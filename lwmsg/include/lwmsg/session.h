@@ -72,6 +72,13 @@ typedef struct LWMsgSessionManager LWMsgSessionManager;
 typedef struct LWMsgSession LWMsgSession;
 
 /**
+ * @brief A handle
+ *
+ * An opaque handle structure
+ */
+typedef struct LWMsgHandle LWMsgHandle;
+
+/**
  * @brief Handle cleanup callback
  *
  * A callback used to clean up a handle after it is no longer in use.
@@ -159,21 +166,22 @@ typedef enum LWMsgHandleType
  * @param[in] typename a string constant describing the type of the handle.
  * This should be the same as the type name given to the #LWMSG_HANDLE()
  * or #LWMSG_MEMBER_HANDLE() macro in the type specification.
- * @param[in] handle the local object to register
+ * @param[in] data the local data to associate with the handle
  * @param[in] cleanup a cleanup function which should be invoked when the
  * handle is no longer referenced
+ * @param[out] handle set to the created handle
  * @lwmsg_status
  * @lwmsg_success
  * @lwmsg_memory
- * @lwmsg_code{INVALID_HANDLE, the handle is already registered}
  * @lwmsg_endstatus
  */
 LWMsgStatus
 lwmsg_session_register_handle(
     LWMsgSession* session,
     const char* typename,
-    void* handle,
-    LWMsgHandleCleanupFunction cleanup
+    void* data,
+    LWMsgHandleCleanupFunction cleanup,
+    LWMsgHandle** handle
     );
 
 /**
@@ -184,16 +192,12 @@ lwmsg_session_register_handle(
  * will be cleaned up using the function passed to #lwmsg_session_register_handle().
  *
  * @param[in,out] session the session
- * @param[in] handle the handle
- * @lwmsg_status
- * @lwmsg_success
- * @lwmsg_code{INVALID_HANDLE, the handle was not previously registered with the session}
- * @lwmsg_endstatus
+ * @param[in,out] handle the handle
  */
-LWMsgStatus
+void
 lwmsg_session_retain_handle(
     LWMsgSession* session,
-    void* handle
+    LWMsgHandle* handle
     );
 
 /**
@@ -204,16 +208,12 @@ lwmsg_session_retain_handle(
  * will be cleaned up using the function passed to #lwmsg_session_register_handle().
  *
  * @param[in,out] session the session
- * @param[in] handle the handle
- * @lwmsg_status
- * @lwmsg_success
- * @lwmsg_code{INVALID_HANDLE, the handle was not previously registered with the session}
- * @lwmsg_endstatus
+ * @param[in,out] handle the handle
  */
-LWMsgStatus
+void
 lwmsg_session_release_handle(
     LWMsgSession* session,
-    void* handle
+    LWMsgHandle* handle
     );
 
 /**
@@ -225,8 +225,9 @@ lwmsg_session_release_handle(
  * is unregistered, it may only be retained or released -- all other operations
  * treat it as invalid.
  *
- * Both local and remote handles should be explicitly unregistered when
- * no longer in use to avoid resource leaks.
+ * A handle should only be unregistered by the creator that originally
+ * registered it.  All other users of the handle should release their
+ * reference with #lwmsg_session_release_handle().
  *
  * @param[in,out] session the session
  * @param[in] handle the handle
@@ -239,7 +240,30 @@ lwmsg_session_release_handle(
 LWMsgStatus
 lwmsg_session_unregister_handle(
     LWMsgSession* session,
-    void* handle
+    LWMsgHandle* handle
+    );
+
+/**
+ * @brief Get handle data
+ *
+ * Gets the data associated with a handle when it was originally registered.
+ *
+ * This function may only safely be called by the creator of the handle
+ * that originally registered it.  In particular, attempting to use this
+ * function on a remote handle has undefined behavior.
+ *
+ * @param[in] session the session
+ * @param[in] handle the handle
+ * @param[out] data set to the data associated with the handle
+ * @retval LWMSG_STATUS_SUCCESS success
+ * @retval LWMSG_STATUS_INVALID_HANDLE the handle is invalid or has been
+ * invalidated
+ */
+LWMsgStatus
+lwmsg_session_get_handle_data(
+    LWMsgSession* session,
+    LWMsgHandle* handle,
+    void** data
     );
 
 /**
@@ -258,7 +282,7 @@ lwmsg_session_unregister_handle(
 LWMsgStatus
 lwmsg_session_get_handle_location(
     LWMsgSession* session,
-    void* handle,
+    LWMsgHandle* handle,
     LWMsgHandleType* location
     );
 

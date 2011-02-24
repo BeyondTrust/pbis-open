@@ -165,10 +165,11 @@ trivial_receiver(void* _assocs)
     LWMsgAssoc** assocs = (LWMsgAssoc**) _assocs;
     LWMsgMessage request_msg = LWMSG_MESSAGE_INITIALIZER;
     LWMsgMessage reply_msg = LWMSG_MESSAGE_INITIALIZER;
-    TrivialHandle* handle;
+    TrivialHandle* handle_data;
     TrivialReply reply;
     LWMsgSessionManager* manager = NULL;
     LWMsgSession* session = NULL;
+    LWMsgHandle* handle = NULL;
 
     MU_TRY(lwmsg_shared_session_manager_new(NULL, NULL, NULL, &manager));
 
@@ -183,12 +184,14 @@ trivial_receiver(void* _assocs)
     MU_TRY_ASSOC(assocs[0], lwmsg_assoc_recv_message(assocs[0], &request_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, request_msg.tag, TRIVIAL_OPEN);
     
-    handle = malloc(sizeof(*handle));
-    handle->trivial = 42;
+    handle_data = malloc(sizeof(*handle_data));
+    handle_data->trivial = 42;
+
+    MU_TRY_ASSOC(assocs[0], lwmsg_session_register_handle(session, "TrivialHandle", handle_data, free, &handle));
+
     reply_msg.tag = TRIVIAL_OPEN_SUCCESS;
     reply_msg.data = handle;
 
-    MU_TRY_ASSOC(assocs[0], lwmsg_session_register_handle(session, "TrivialHandle", handle, free));
     MU_TRY_ASSOC(assocs[0], lwmsg_assoc_send_message(assocs[0], &reply_msg));
 
     MU_TRY_ASSOC(assocs[1], lwmsg_assoc_accept(assocs[1], manager, NULL));
@@ -201,7 +204,6 @@ trivial_receiver(void* _assocs)
 
     MU_TRY_ASSOC(assocs[1], lwmsg_assoc_recv_message(assocs[1], &request_msg));
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, request_msg.tag, TRIVIAL_CLOSE);
-
     MU_ASSERT_EQUAL(MU_TYPE_POINTER, handle, request_msg.data);
 
     reply.trivial = 42;

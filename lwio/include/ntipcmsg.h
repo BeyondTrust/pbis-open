@@ -119,11 +119,11 @@ typedef struct _NT_IPC_HELPER_ECP {
 //
 
 typedef struct _NT_IPC_MESSAGE_GENERIC_FILE {
-    IN IO_FILE_HANDLE FileHandle;
+    IN LWMsgHandle* FileHandle;
 } NT_IPC_MESSAGE_GENERIC_FILE, *PNT_IPC_MESSAGE_GENERIC_FILE;
 
 typedef struct _NT_IPC_MESSAGE_GENERIC_CONTROL_FILE {
-    IN IO_FILE_HANDLE FileHandle;
+    IN LWMsgHandle* FileHandle;
     IN ULONG ControlCode;
     IN PVOID InputBuffer;
     IN ULONG InputBufferLength;
@@ -180,7 +180,7 @@ typedef struct _NT_IPC_MESSAGE_CREATE_FILE {
 } NT_IPC_MESSAGE_CREATE_FILE, *PNT_IPC_MESSAGE_CREATE_FILE;
 
 typedef struct _NT_IPC_MESSAGE_CREATE_FILE_RESULT {
-    OUT IO_FILE_HANDLE FileHandle;
+    OUT LWMsgHandle* FileHandle;
 
     // From IO_STATUS_BLOCK (which uses context-based union):
     OUT NTSTATUS Status;
@@ -208,7 +208,7 @@ typedef struct _NT_IPC_MESSAGE_CREATE_FILE_RESULT {
 //
 
 typedef struct _NT_IPC_MESSAGE_READ_FILE {
-    IN IO_FILE_HANDLE FileHandle;
+    IN LWMsgHandle* FileHandle;
     IN ULONG Length;
     IN OPTIONAL PULONG64 ByteOffset;
     IN OPTIONAL PULONG Key;
@@ -225,7 +225,7 @@ typedef struct _NT_IPC_MESSAGE_READ_FILE {
 //
 
 typedef struct _NT_IPC_MESSAGE_WRITE_FILE {
-    IN IO_FILE_HANDLE FileHandle;
+    IN LWMsgHandle* FileHandle;
     IN PVOID Buffer;
     IN ULONG Length;
     IN OPTIONAL PULONG64 ByteOffset;
@@ -273,7 +273,7 @@ typedef struct _NT_IPC_MESSAGE_WRITE_FILE {
 //
 
 typedef struct _NT_IPC_MESSAGE_QUERY_INFORMATION_FILE {
-    IN IO_FILE_HANDLE FileHandle;
+    IN LWMsgHandle* FileHandle;
     IN ULONG Length;
     IN FILE_INFORMATION_CLASS FileInformationClass;
 } NT_IPC_MESSAGE_QUERY_INFORMATION_FILE, *PNT_IPC_MESSAGE_QUERY_INFORMATION_FILE;
@@ -289,7 +289,7 @@ typedef struct _NT_IPC_MESSAGE_QUERY_INFORMATION_FILE {
 //
 
 typedef struct _NT_IPC_MESSAGE_SET_INFORMATION_FILE {
-    IN IO_FILE_HANDLE FileHandle;
+    IN LWMsgHandle* FileHandle;
     IN PVOID FileInformation;
     IN ULONG Length;
     IN FILE_INFORMATION_CLASS FileInformationClass;
@@ -306,7 +306,7 @@ typedef struct _NT_IPC_MESSAGE_SET_INFORMATION_FILE {
 //
 
 typedef struct _NT_IPC_MESSAGE_QUERY_DIRECTORY_FILE {
-    IN IO_FILE_HANDLE FileHandle;
+    IN LWMsgHandle* FileHandle;
     IN ULONG Length;
     IN FILE_INFORMATION_CLASS FileInformationClass;
     IN BOOLEAN ReturnSingleEntry;
@@ -325,7 +325,7 @@ typedef struct _NT_IPC_MESSAGE_QUERY_DIRECTORY_FILE {
 //
 
 typedef struct _NT_IPC_MESSAGE_READ_DIRECTORY_CHANGE_FILE {
-    IN IO_FILE_HANDLE FileHandle;
+    IN LWMsgHandle* FileHandle;
     OUT PVOID Buffer;
     IN ULONG Length;
     IN BOOLEAN WatchTree;
@@ -344,7 +344,7 @@ typedef struct _NT_IPC_MESSAGE_READ_DIRECTORY_CHANGE_FILE {
 //
 
 typedef struct _NT_IPC_MESSAGE_QUERY_VOLUME_INFORMATION_FILE {
-    IN IO_FILE_HANDLE FileHandle;
+    IN LWMsgHandle* FileHandle;
     IN ULONG Length;
     IN FILE_INFORMATION_CLASS FsInformationClass;
 } NT_IPC_MESSAGE_QUERY_VOLUME_INFORMATION_FILE, *PNT_IPC_MESSAGE_QUERY_VOLUME_INFORMATION_FILE;
@@ -360,7 +360,7 @@ typedef struct _NT_IPC_MESSAGE_QUERY_VOLUME_INFORMATION_FILE {
 //
 
 typedef struct _NT_IPC_MESSAGE_LOCK_FILE {
-    IN IO_FILE_HANDLE FileHandle;
+    IN LWMsgHandle* FileHandle;
     IN ULONG64 ByteOffset;
     IN ULONG64 Length;
     IN ULONG Key;
@@ -379,20 +379,20 @@ typedef struct _NT_IPC_MESSAGE_LOCK_FILE {
 //
 
 typedef struct _NT_IPC_MESSAGE_UNLOCK_FILE {
-    IN IO_FILE_HANDLE FileHandle;
+    IN LWMsgHandle* FileHandle;
     IN ULONG64 ByteOffset;
     IN ULONG64 Length;
     IN ULONG Key;
 } NT_IPC_MESSAGE_UNLOCK_FILE, *PNT_IPC_MESSAGE_UNLOCK_FILE;
 
 typedef struct _NT_IPC_MESSAGE_QUERY_SECURITY_FILE {
-    IN IO_FILE_HANDLE FileHandle;
+    IN LWMsgHandle* FileHandle;
     IN SECURITY_INFORMATION SecurityInformation;
     IN ULONG Length;
 } NT_IPC_MESSAGE_QUERY_SECURITY_FILE, *PNT_IPC_MESSAGE_QUERY_SECURITY_FILE;
 
 typedef struct _NT_IPC_MESSAGE_SET_SECURITY_FILE {
-    IN IO_FILE_HANDLE FileHandle;
+    IN LWMsgHandle* FileHandle;
     IN SECURITY_INFORMATION SecurityInformation;
     IN PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
     IN ULONG Length;
@@ -426,13 +426,13 @@ NtIpcAddProtocolSpecEx(
 NTSTATUS
 NtIpcUnregisterFileHandle(
     IN LWMsgCall* pCall,
-    IN IO_FILE_HANDLE FileHandle
+    IN LWMsgHandle* FileHandle
     );
 
-NTSTATUS
+VOID
 NtIpcReleaseFileHandle(
     IN LWMsgCall* pCall,
-    IN IO_FILE_HANDLE FileHandle
+    IN LWMsgHandle* FileHandle
     );
 
 #endif /* __NT_IPC_MSG_H__ */

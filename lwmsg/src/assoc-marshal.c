@@ -71,7 +71,7 @@ lwmsg_assoc_marshal_handle(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    void* pointer = NULL;
+    void* handle = NULL;
     LWMsgHandleRep* transmit = transmit_object;
     LWMsgAssoc* assoc = NULL;
     LWMsgSession* session = NULL;
@@ -82,13 +82,13 @@ lwmsg_assoc_marshal_handle(
 
     BAIL_ON_ERROR(status = assoc->aclass->get_session(assoc, &session));
 
-    pointer = *(void**) object;
+    handle = *(LWMsgHandle**) object;
     
-    if (pointer != NULL)
+    if (handle != NULL)
     {
-        status = lwmsg_session_handle_pointer_to_id(
+        status = session->manager->mclass->resolve_handle_to_id(
             session,
-            pointer,
+            handle,
             &type,
             &transmit->type,
             &transmit->data.local_id);
@@ -109,7 +109,7 @@ lwmsg_assoc_marshal_handle(
             MARSHAL_RAISE_ERROR(mcontext, status = LWMSG_STATUS_INVALID_HANDLE,
                         "Invalid handle 0x%lx(%lu): expected handle of type '%s', "
                         "got '%s'",
-                        (unsigned long) pointer,
+                        (unsigned long) handle,
                         transmit->data.local_id,
                         (const char*) data,
                         type);
@@ -124,7 +124,7 @@ lwmsg_assoc_marshal_handle(
                 MARSHAL_RAISE_ERROR(mcontext, status = LWMSG_STATUS_INVALID_HANDLE,
                             "Invalid handle 0x%lx(%lu): expected handle which is "
                             "local for the receiver",
-                            (unsigned long) pointer,
+                            (unsigned long) handle,
                             (unsigned long) transmit->data.local_id);
             }
             else
@@ -132,7 +132,7 @@ lwmsg_assoc_marshal_handle(
                 MARSHAL_RAISE_ERROR(mcontext, status = LWMSG_STATUS_INVALID_HANDLE,
                             "Invalid handle 0x%lx(%lu): expected handle which is "
                             "local for the sender",
-                            (unsigned long) pointer,
+                            (unsigned long) handle,
                             (unsigned long) transmit->data.local_id);
             }
         }
@@ -169,7 +169,7 @@ lwmsg_assoc_unmarshal_handle(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgAssoc* assoc = NULL;
-    void* pointer = NULL;
+    LWMsgHandle* handle = NULL;
     LWMsgHandleRep* transmit = transmit_object;
     LWMsgSession* session = NULL;
     const LWMsgContext* context = lwmsg_data_context_get_context(mcontext);
@@ -199,7 +199,7 @@ lwmsg_assoc_unmarshal_handle(
                 MARSHAL_RAISE_ERROR(mcontext, status = LWMSG_STATUS_INVALID_HANDLE,
                             "Invalid handle (%lu): expected handle which is "
                             "local for the receiver",
-                            (unsigned long) pointer,
+                            (unsigned long) handle,
                             (unsigned long) transmit->data.local_id);
             }
             else
@@ -207,18 +207,18 @@ lwmsg_assoc_unmarshal_handle(
                 MARSHAL_RAISE_ERROR(mcontext, status = LWMSG_STATUS_INVALID_HANDLE,
                             "Invalid handle (%lu): expected handle which is "
                             "local for the sender",
-                            (unsigned long) pointer,
+                            (unsigned long) handle,
                             (unsigned long) transmit->data.local_id);
             }
         }
 
-        /* Convert handle to pointer */
-        status = lwmsg_session_handle_id_to_pointer(
+        /* Look up the handle */
+        status = session->manager->mclass->resolve_id_to_handle(
             session,
             (const char*) data,
             location,
             transmit->data.local_id,
-            &pointer);
+            &handle);
 
         switch (status)
         {
@@ -226,12 +226,12 @@ lwmsg_assoc_unmarshal_handle(
             if (location == LWMSG_HANDLE_REMOTE)
             {
                 /* Implicitly register handle seen from the peer for the first time */
-                BAIL_ON_ERROR(status = lwmsg_session_register_handle_remote(
+                BAIL_ON_ERROR(status = session->manager->mclass->register_handle_remote(
                                   session,
                                   (const char*) data,
                                   transmit->data.local_id,
                                   NULL,
-                                  &pointer));
+                                  &handle));
             }
             else
             {
@@ -245,7 +245,7 @@ lwmsg_assoc_unmarshal_handle(
         }
         
         /* Set pointer on unmarshalled object */
-        *(void**) object = pointer;
+        *(LWMsgHandle**) object = handle;
     }
     else
     {
@@ -273,7 +273,7 @@ lwmsg_assoc_free_handle(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgAssoc* assoc = NULL;
-    void* pointer = NULL;
+    LWMsgHandle* handle = NULL;
     LWMsgSession* session = NULL;
     
     BAIL_ON_ERROR(status = lwmsg_context_get_data(
@@ -283,11 +283,11 @@ lwmsg_assoc_free_handle(
     
     BAIL_ON_ERROR(status = assoc->aclass->get_session(assoc, &session));
 
-    pointer = *(void**) object;
+    handle = *(LWMsgHandle**) object;
 
-    if (pointer)
+    if (handle)
     {
-        BAIL_ON_ERROR(status = lwmsg_session_release_handle(session, pointer));
+        lwmsg_session_release_handle(session, handle);
     }
 
 error:
@@ -305,9 +305,9 @@ lwmsg_assoc_print_handle(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    void* pointer = NULL;
+    LWMsgHandle* handle = NULL;
     LWMsgHandleType location;
-    LWMsgHandleID handle;
+    LWMsgHandleID id;
     LWMsgAssoc* assoc = NULL;
     LWMsgSession* session = NULL;
     const char* type;
@@ -317,16 +317,16 @@ lwmsg_assoc_print_handle(
 
     BAIL_ON_ERROR(status = assoc->aclass->get_session(assoc, &session));
 
-    pointer = *(void**) object;
+    handle = *(LWMsgHandle**) object;
 
-    if (pointer != NULL)
+    if (handle != NULL)
     {
-        status = lwmsg_session_handle_pointer_to_id(
+        status = session->manager->mclass->resolve_handle_to_id(
             session,
-            pointer,
+            handle,
             &type,
             &location,
-            &handle);
+            &id);
         
         switch (status)
         {
@@ -347,7 +347,7 @@ lwmsg_assoc_print_handle(
         str = lwmsg_format("<%s:%s[%lu]>",
                            type,
                            location == LWMSG_HANDLE_LOCAL ? "local" : "remote",
-                           handle);
+                           id);
 
         BAIL_ON_ERROR(status = lwmsg_buffer_write(buffer, (unsigned char*) str, strlen(str)));
     }

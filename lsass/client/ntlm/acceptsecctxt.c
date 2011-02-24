@@ -64,6 +64,8 @@ NtlmClientAcceptSecurityContext(
     TimeStamp tsTimeStamp = 0;
     DWORD fContextAttr = 0;
 
+    BAIL_ON_INVALID_POINTER(phContext);
+    BAIL_ON_INVALID_POINTER(phNewContext);
 
     if(ptsTimeStamp)
     {
@@ -76,16 +78,15 @@ NtlmClientAcceptSecurityContext(
     }
 
     dwError = NtlmTransactAcceptSecurityContext(
-        phCredential,
-        phContext,
+        phCredential ? *phCredential : NULL,
+        *phContext,
         pInput,
         fContextReq,
         TargetDataRep,
         phNewContext,
         pOutput,
         &fContextAttr,
-        &tsTimeStamp
-        );
+        &tsTimeStamp);
 
     if (dwError != LW_WARNING_CONTINUE_NEEDED)
     {

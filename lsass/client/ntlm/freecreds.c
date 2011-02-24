@@ -54,10 +54,14 @@ NtlmClientFreeCredentialsHandle(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
 
+    BAIL_ON_INVALID_POINTER(phCredential);
+
     if (*phCredential != NULL)
     {
-        dwError = NtlmTransactFreeCredentialsHandle(phCredential);
+        dwError = NtlmTransactFreeCredentialsHandle(*phCredential);
     }
 
-    return(dwError);
+error:
+
+    return dwError;
 }

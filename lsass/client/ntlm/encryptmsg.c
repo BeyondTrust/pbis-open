@@ -57,13 +57,13 @@ NtlmClientEncryptMessage(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
 
+    BAIL_ON_INVALID_POINTER(phContext);
+
     dwError = NtlmTransactEncryptMessage(
-        phContext,
+        *phContext,
         bEncrypt,
         pMessage,
-        MessageSeqNo
-        );
-
+        MessageSeqNo);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:

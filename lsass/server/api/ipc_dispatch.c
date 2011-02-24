@@ -86,14 +86,21 @@ DWORD
 LsaSrvIpcRegisterHandle(
     LWMsgCall* pCall,
     PCSTR pszHandleType,
-    PVOID pHandle,
-    LWMsgHandleCleanupFunction pfnCleanup
+    PVOID pData,
+    LWMsgHandleCleanupFunction pfnCleanup,
+    LWMsgHandle** ppHandle
     )
 {
     DWORD dwError = 0;
     LWMsgSession* pSession = lwmsg_call_get_session(pCall);
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_session_register_handle(pSession, pszHandleType, pHandle, pfnCleanup));
+    dwError = MAP_LWMSG_ERROR(
+        lwmsg_session_register_handle(
+            pSession,
+            pszHandleType,
+            pData,
+            pfnCleanup,
+            ppHandle));
     BAIL_ON_LSA_ERROR(dwError);
 
 error:
@@ -102,34 +109,48 @@ error:
 }
 
 static
-DWORD
+VOID
 LsaSrvIpcRetainHandle(
     LWMsgCall* pCall,
-    PVOID pHandle
+    LWMsgHandle* pHandle
     )
 {
-    DWORD dwError = 0;
     LWMsgSession* pSession = lwmsg_call_get_session(pCall);
 
-    dwError = MAP_LWMSG_ERROR(lwmsg_session_retain_handle(pSession, pHandle));
-    BAIL_ON_LSA_ERROR(dwError);
-
-error:
-
-    return dwError;
+    lwmsg_session_retain_handle(pSession, pHandle);
 }
 
 static
 DWORD
 LsaSrvIpcUnregisterHandle(
     LWMsgCall* pCall,
-    PVOID pHandle
+    LWMsgHandle* pHandle
     )
 {
     DWORD dwError = 0;
     LWMsgSession* pSession = lwmsg_call_get_session(pCall);
 
     dwError = MAP_LWMSG_ERROR(lwmsg_session_unregister_handle(pSession, pHandle));
+    BAIL_ON_LSA_ERROR(dwError);
+
+error:
+
+    return dwError;
+}
+
+static
+DWORD
+LsaSrvIpcGetHandle(
+    LWMsgCall* pCall,
+    LWMsgHandle* pHandle,
+    PHANDLE phHandle
+    )
+{
+    DWORD dwError = 0;
+    LWMsgSession* pSession = lwmsg_call_get_session(pCall);
+
+    dwError = MAP_LWMSG_ERROR(
+        lwmsg_session_get_handle_data(pSession, pHandle, OUT_PPVOID(phHandle)));
     BAIL_ON_LSA_ERROR(dwError);
 
 error:
@@ -257,6 +278,7 @@ LsaSrvIpcBeginEnumNSSArtefacts(
     PLSA_IPC_BEGIN_ENUM_NSSARTEFACT_REQ pReq = pIn->data;
     PLSA_IPC_ERROR pError = NULL;
     HANDLE hResume = NULL;
+    LWMsgHandle* pHandle = NULL;
 
     dwError = LsaSrvBeginEnumNSSArtefacts(
                         LsaSrvIpcGetSessionData(pCall),
@@ -272,15 +294,16 @@ LsaSrvIpcBeginEnumNSSArtefacts(
                                       pCall,
                                       "EnumArtefacts",
                                       hResume,
-                                      LsaSrvCleanupArtefactEnumHandle);
+                                      LsaSrvCleanupArtefactEnumHandle,
+                                      &pHandle);
+
         BAIL_ON_LSA_ERROR(dwError);
 
         pOut->tag = LSA_R_BEGIN_ENUM_NSS_ARTEFACTS_SUCCESS;
-        pOut->data = hResume;
+        pOut->data = pHandle;
         hResume = NULL;
 
-        dwError = LsaSrvIpcRetainHandle(pCall, pOut->data);
-        BAIL_ON_LSA_ERROR(dwError);
+        LsaSrvIpcRetainHandle(pCall, pHandle);
     }
     else
     {
@@ -298,7 +321,7 @@ cleanup:
 
 error:
 
-    if(hResume)
+    if (hResume)
     {
         LsaSrvCleanupArtefactEnumHandle(hResume);
     }
@@ -320,10 +343,17 @@ LsaSrvIpcEnumNSSArtefacts(
     DWORD  dwNumNSSArtefactsFound = 0;
     PLSA_NSS_ARTEFACT_INFO_LIST pResult = NULL;
     PLSA_IPC_ERROR pError = NULL;
+    HANDLE hEnum = NULL;
+
+    dwError = LsaSrvIpcGetHandle(
+        pCall,
+        (LWMsgHandle*) pIn->data,
+        &hEnum);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaSrvEnumNSSArtefacts(
                        LsaSrvIpcGetSessionData(pCall),
-                       (HANDLE) pIn->data,
+                       hEnum,
                        &dwNSSArtefactInfoLevel,
                        &ppNSSArtefactInfoList,
                        &dwNumNSSArtefactsFound);
@@ -388,7 +418,7 @@ LsaSrvIpcEndEnumNSSArtefacts(
     DWORD dwError = 0;
     PLSA_IPC_ERROR pError = NULL;
 
-    dwError = LsaSrvIpcUnregisterHandle(pCall, pIn->data);
+    dwError = LsaSrvIpcUnregisterHandle(pCall, (LWMsgHandle*) pIn->data);
     if (!dwError)
     {
         pOut->tag = LSA_R_END_ENUM_NSS_ARTEFACTS_SUCCESS;
@@ -1544,6 +1574,7 @@ LsaSrvIpcOpenEnumObjects(
     PLSA2_IPC_OPEN_ENUM_OBJECTS_REQ pReq = pIn->data;
     PLSA_IPC_ERROR pError = NULL;
     HANDLE hEnum = NULL;
+    LWMsgHandle* pHandle = NULL;
 
     dwError = LsaSrvOpenEnumObjects(
             LsaSrvIpcGetSessionData(pCall),
@@ -1559,14 +1590,14 @@ LsaSrvIpcOpenEnumObjects(
             pCall,
             "LSA2_IPC_ENUM_HANDLE",
             hEnum,
-            LsaSrvCleanupEnumHandle);
+            LsaSrvCleanupEnumHandle,
+            &pHandle);
         BAIL_ON_LSA_ERROR(dwError);
 
         pOut->tag = LSA2_R_OPEN_ENUM_OBJECTS;
-        pOut->data = hEnum;
+        pOut->data = pHandle;
 
-        dwError = LsaSrvIpcRetainHandle(pCall, pOut->data);
-        BAIL_ON_LSA_ERROR(dwError);
+        LsaSrvIpcRetainHandle(pCall, pHandle);
     }
     else
     {
@@ -1600,10 +1631,17 @@ LsaSrvIpcEnumObjects(
     DWORD dwObjectsCount = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     PLSA_IPC_ERROR pError = NULL;
+    HANDLE hEnum = NULL;
+
+    dwError = LsaSrvIpcGetHandle(
+        pCall,
+        pReq->hEnum,
+        &hEnum);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaSrvEnumObjects(
         LsaSrvIpcGetSessionData(pCall),
-        pReq->hEnum,
+        hEnum,
         pReq->dwMaxObjectsCount,
         &dwObjectsCount,
         &ppObjects);
@@ -1659,6 +1697,7 @@ LsaSrvIpcOpenEnumMembers(
     PLSA2_IPC_OPEN_ENUM_MEMBERS_REQ pReq = pIn->data;
     PLSA_IPC_ERROR pError = NULL;
     HANDLE hEnum = NULL;
+    LWMsgHandle* pHandle = NULL;
 
     dwError = LsaSrvOpenEnumMembers(
             LsaSrvIpcGetSessionData(pCall),
@@ -1673,14 +1712,14 @@ LsaSrvIpcOpenEnumMembers(
             pCall,
             "LSA2_IPC_ENUM_HANDLE",
             hEnum,
-            LsaSrvCleanupEnumHandle);
+            LsaSrvCleanupEnumHandle,
+            &pHandle);
         BAIL_ON_LSA_ERROR(dwError);
 
         pOut->tag = LSA2_R_OPEN_ENUM_MEMBERS;
-        pOut->data = hEnum;
+        pOut->data = pHandle;
 
-        dwError = LsaSrvIpcRetainHandle(pCall, pOut->data);
-        BAIL_ON_LSA_ERROR(dwError);
+        LsaSrvIpcRetainHandle(pCall, pHandle);
     }
     else
     {
@@ -1714,10 +1753,17 @@ LsaSrvIpcEnumMembers(
     DWORD dwSidCount = 0;
     PSTR* ppszMemberSids = NULL;
     PLSA_IPC_ERROR pError = NULL;
+    HANDLE hEnum = NULL;
+
+    dwError = LsaSrvIpcGetHandle(
+        pCall,
+        pReq->hEnum,
+        &hEnum);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaSrvEnumMembers(
         LsaSrvIpcGetSessionData(pCall),
-        pReq->hEnum,
+        hEnum,
         pReq->dwMaxSidCount,
         &dwSidCount,
         &ppszMemberSids);

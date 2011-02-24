@@ -56,11 +56,14 @@ NtlmClientQueryContextAttributes(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
 
+    BAIL_ON_INVALID_POINTER(phContext);
+
     dwError = NtlmTransactQueryContextAttributes(
-        phContext,
+        *phContext,
         ulAttribute,
-        pBuffer
-        );
+        pBuffer);
+
+error:
 
     return dwError;
 }

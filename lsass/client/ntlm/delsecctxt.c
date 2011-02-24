@@ -54,9 +54,11 @@ NtlmClientDeleteSecurityContext(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
 
-    dwError = NtlmTransactDeleteSecurityContext(
-        phContext
-        );
+    BAIL_ON_INVALID_POINTER(phContext);
+
+    dwError = NtlmTransactDeleteSecurityContext(*phContext);
+
+error:
 
     return dwError;
 }

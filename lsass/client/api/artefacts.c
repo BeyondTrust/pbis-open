@@ -279,7 +279,7 @@ LsaEndEnumNSSArtefacts(
     LWMsgMessage response = LWMSG_MESSAGE_INITIALIZER;
 
     request.tag = LSA_Q_END_ENUM_NSS_ARTEFACTS;
-    request.object = hResume;
+    request.object = (LWMsgHandle*) hResume;
 
     dwError = MAP_LWMSG_ERROR(lwmsg_assoc_send_message_transact(
                               pContext->pAssoc,
@@ -290,10 +290,6 @@ LsaEndEnumNSSArtefacts(
     switch (response.tag)
     {
         case LSA_R_END_ENUM_NSS_ARTEFACTS_SUCCESS:
-            dwError = MAP_LWMSG_ERROR(lwmsg_session_release_handle(
-                                          pContext->pSession,
-                                          hResume));
-            BAIL_ON_LSA_ERROR(dwError);
             break;
         case LSA_R_END_ENUM_NSS_ARTEFACTS_FAILURE:
             pError = (PLSA_IPC_ERROR) response.object;
@@ -306,12 +302,17 @@ LsaEndEnumNSSArtefacts(
     }
 
 cleanup:
+
+    lwmsg_assoc_destroy_message(pContext->pAssoc, &response);
+    lwmsg_session_release_handle(pContext->pSession, (LWMsgHandle*) hResume);
+
     return dwError;
 
 error:
+
     if (response.object)
     {
-        lwmsg_assoc_free_message(pContext->pAssoc, &response);
+
     }
 
     goto cleanup;

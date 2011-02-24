@@ -57,15 +57,15 @@ NtlmClientVerifySignature(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
 
+    BAIL_ON_INVALID_POINTER(phContext);
+
     *pQop = 0;
 
     dwError = NtlmTransactVerifySignature(
-        phContext,
+        *phContext,
         pMessage,
         MessageSeqNo,
-        pQop
-        );
-
+        pQop);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:

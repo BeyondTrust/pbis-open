@@ -442,7 +442,7 @@ LwNtCreateFileComplete(
 
     if (status == STATUS_SUCCESS)
     {
-        *pContext->FileHandle = pResponse->FileHandle;
+        *pContext->FileHandle = (IO_FILE_HANDLE) pResponse->FileHandle;
         pResponse->FileHandle = NULL;
         pContext->IoStatusBlock->Status = pResponse->Status;
         pContext->IoStatusBlock->CreateResult = pResponse->CreateResult;
@@ -634,7 +634,7 @@ LwNtAsyncCloseFile(
 
     pContext->IoStatusBlock = IoStatusBlock;
     pContext->pSession = connection.pSession;
-    pContext->Request.FileHandle = FileHandle;
+    pContext->Request.FileHandle = (LWMsgHandle*) FileHandle;
 
     status = NtpCtxCallAsync(
         &pContext->Base,
@@ -657,7 +657,7 @@ LwNtAsyncCloseFile(
          else
          {
              IoStatusBlock->Status = status;
-             lwmsg_session_release_handle(connection.pSession, FileHandle);
+             lwmsg_session_release_handle(connection.pSession, (LWMsgHandle*) FileHandle);
          }
      }
 
@@ -707,7 +707,7 @@ LwNtReadFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    request.FileHandle = FileHandle;
+    request.FileHandle = (LWMsgHandle*) FileHandle;
     request.Length = Length;
     request.ByteOffset = ByteOffset;
     request.Key = Key;
@@ -769,7 +769,7 @@ LwNtWriteFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    request.FileHandle = FileHandle;
+    request.FileHandle = (LWMsgHandle*) FileHandle;
     request.Buffer = Buffer;
     request.Length = Length;
     request.ByteOffset = ByteOffset;
@@ -834,7 +834,7 @@ LwNtDeviceIoControlFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    request.FileHandle = FileHandle;
+    request.FileHandle = (LWMsgHandle*) FileHandle;
     request.ControlCode = IoControlCode;
     request.InputBuffer = InputBuffer;
     request.InputBufferLength = InputBufferLength;
@@ -918,7 +918,7 @@ LwNtFsControlFile(
     status = NtpAllocAsyncContext(OUT_PPVOID(&pControlContext), sizeof(*pControlContext));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    pControlContext->Request.FileHandle = FileHandle;
+    pControlContext->Request.FileHandle = (LWMsgHandle*) FileHandle;
     pControlContext->Request.ControlCode = FsControlCode;
     pControlContext->Request.InputBuffer = InputBuffer;
     pControlContext->Request.InputBufferLength = InputBufferLength;
@@ -983,7 +983,7 @@ LwNtFlushBuffersFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    request.FileHandle = FileHandle;
+    request.FileHandle = (LWMsgHandle*) FileHandle;
 
     status = NtpCtxCall(pCall,
                         requestType,
@@ -1041,7 +1041,7 @@ LwNtQueryInformationFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    request.FileHandle = FileHandle;
+    request.FileHandle = (LWMsgHandle*) FileHandle;
     request.Length = Length;
     request.FileInformationClass = FileInformationClass;
 
@@ -1101,7 +1101,7 @@ LwNtSetInformationFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    request.FileHandle = FileHandle;
+    request.FileHandle = (LWMsgHandle*) FileHandle;
     request.FileInformation = FileInformation;
     request.Length = Length;
     request.FileInformationClass = FileInformationClass;
@@ -1180,7 +1180,7 @@ LwNtQueryDirectoryFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    request.FileHandle = FileHandle;
+    request.FileHandle = (LWMsgHandle*) FileHandle;
     request.Length = Length;
     request.FileInformationClass = FileInformationClass;
     request.ReturnSingleEntry = ReturnSingleEntry;
@@ -1245,7 +1245,7 @@ LwNtReadDirectoryChangeFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    request.FileHandle = FileHandle;
+    request.FileHandle = (LWMsgHandle*) FileHandle;
     request.Length = Length;
     request.WatchTree = WatchTree;
     request.NotifyFilter = NotifyFilter;
@@ -1307,7 +1307,7 @@ LwNtQueryVolumeInformationFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    request.FileHandle = FileHandle;
+    request.FileHandle = (LWMsgHandle*) FileHandle;
     request.Length = Length;
     request.FsInformationClass = FsInformationClass;
 
@@ -1379,7 +1379,7 @@ LwNtLockFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    request.FileHandle = FileHandle;
+    request.FileHandle = (LWMsgHandle*) FileHandle;
     request.ByteOffset = ByteOffset,
     request.Length = Length;
     request.Key = Key;
@@ -1443,7 +1443,7 @@ LwNtUnlockFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    request.FileHandle = FileHandle;
+    request.FileHandle = (LWMsgHandle*) FileHandle;
     request.ByteOffset = ByteOffset,
     request.Length = Length;
     request.Key = Key;
@@ -1582,7 +1582,7 @@ LwNtQuerySecurityFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    request.FileHandle = Handle;
+    request.FileHandle = (LWMsgHandle*) Handle;
     request.SecurityInformation = SecurityInformation;
     request.Length = Length;
 
@@ -1642,7 +1642,7 @@ LwNtSetSecurityFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    request.FileHandle = Handle;
+    request.FileHandle = (LWMsgHandle*) Handle;
     request.SecurityInformation = SecurityInformation;
     request.SecurityDescriptor = SecurityDescriptor;
     request.Length = Length;

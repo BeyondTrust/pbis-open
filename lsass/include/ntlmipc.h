@@ -97,17 +97,16 @@ typedef struct __NTLM_IPC_ERROR
 
 typedef struct __NTLM_IPC_ACCEPT_SEC_CTXT_REQ
 {
-    NTLM_CRED_HANDLE hCredential;
-    NTLM_CONTEXT_HANDLE hContext;
+    LWMsgHandle* hCredential;
+    LWMsgHandle* hContext;
     const SecBuffer* pInput;
     DWORD fContextReq;
     DWORD TargetDataRep;
-    NTLM_CONTEXT_HANDLE hNewContext;
 } NTLM_IPC_ACCEPT_SEC_CTXT_REQ, *PNTLM_IPC_ACCEPT_SEC_CTXT_REQ;
 
 typedef struct __NTLM_IPC_ACCEPT_SEC_CTXT_RESPONSE
 {
-    NTLM_CONTEXT_HANDLE hNewContext;
+    LWMsgHandle* hNewContext;
     SecBuffer Output;
     DWORD  fContextAttr;
     TimeStamp tsTimeStamp;
@@ -127,7 +126,7 @@ typedef struct __NTLM_IPC_ACQUIRE_CREDS_REQ
 
 typedef struct __NTLM_IPC_ACQUIRE_CREDS_RESPONSE
 {
-    NTLM_CRED_HANDLE hCredential;
+    LWMsgHandle* hCredential;
     TimeStamp tsExpiry;
 } NTLM_IPC_ACQUIRE_CREDS_RESPONSE, *PNTLM_IPC_ACQUIRE_CREDS_RESPONSE;
 
@@ -135,7 +134,7 @@ typedef struct __NTLM_IPC_ACQUIRE_CREDS_RESPONSE
 
 typedef struct __NTLM_IPC_DECRYPT_MSG_REQ
 {
-    NTLM_CONTEXT_HANDLE hContext;
+    LWMsgHandle* hContext;
     const SecBufferDesc* pMessage;
     DWORD MessageSeqNo;
 } NTLM_IPC_DECRYPT_MSG_REQ, *PNTLM_IPC_DECRYPT_MSG_REQ;
@@ -150,7 +149,7 @@ typedef struct __NTLM_IPC_DECRYPT_MSG_RESPONSE
 
 typedef struct __NTLM_IPC_DELETE_SEC_CTXT_REQ
 {
-    NTLM_CONTEXT_HANDLE hContext;
+    LWMsgHandle* hContext;
 } NTLM_IPC_DELETE_SEC_CTXT_REQ, *PNTLM_IPC_DELETE_SEC_CTXT_REQ;
 
 // No Response
@@ -159,7 +158,7 @@ typedef struct __NTLM_IPC_DELETE_SEC_CTXT_REQ
 
 typedef struct __NTLM_IPC_ENCRYPT_MSG_REQ
 {
-    NTLM_CONTEXT_HANDLE hContext;
+    LWMsgHandle* hContext;
     BOOLEAN bEncrypt;
     const SecBufferDesc* pMessage;
     DWORD MessageSeqNo;
@@ -174,21 +173,21 @@ typedef struct __NTLM_IPC_ENCRYPT_MSG_RESPONSE
 
 typedef struct __NTLM_IPC_EXPORT_SEC_CTXT_REQ
 {
-    NTLM_CONTEXT_HANDLE hContext;
+    LWMsgHandle* hContext;
     DWORD fFlags;
 } NTLM_IPC_EXPORT_SEC_CTXT_REQ, *PNTLM_IPC_EXPORT_SEC_CTXT_REQ;
 
 typedef struct __NTLM_IPC_EXPORT_SEC_CTXT_RESPONSE
 {
     SecBuffer PackedContext;
-    HANDLE hToken;
+    LWMsgHandle* hToken;
 } NTLM_IPC_EXPORT_SEC_CTXT_RESPONSE, *PNTLM_IPC_EXPORT_SEC_CTXT_RESPONSE;
 
 /******************************************************************************/
 
 typedef struct __NTLM_IPC_FREE_CREDS_REQ
 {
-    NTLM_CRED_HANDLE hCredential;
+    LWMsgHandle* hCredential;
 } NTLM_IPC_FREE_CREDS_REQ, *PNTLM_IPC_FREE_CREDS_REQ;
 
 // No Response
@@ -204,27 +203,26 @@ typedef struct __NTLM_IPC_IMPORT_SEC_CTXT_REQ
 
 typedef struct __NTLM_IPC_IMPORT_SEC_CTXT_RESPONSE
 {
-    NTLM_CONTEXT_HANDLE hContext;
+    LWMsgHandle* hContext;
 } NTLM_IPC_IMPORT_SEC_CTXT_RESPONSE, *PNTLM_IPC_IMPORT_SEC_CTXT_RESPONSE;
 
 /******************************************************************************/
 
 typedef struct __NTLM_IPC_INIT_SEC_CTXT_REQ
 {
-    NTLM_CRED_HANDLE hCredential;
-    NTLM_CONTEXT_HANDLE hContext;
+    LWMsgHandle* hCredential;
+    LWMsgHandle* hContext;
     SEC_CHAR * pszTargetName;
     DWORD fContextReq;
     DWORD Reserved1;
     DWORD TargetDataRep;
     const SecBuffer* pInput;
     DWORD Reserved2;
-    NTLM_CONTEXT_HANDLE hNewContext;
 } NTLM_IPC_INIT_SEC_CTXT_REQ, *PNTLM_IPC_INIT_SEC_CTXT_REQ;
 
 typedef struct __NTLM_IPC_INIT_SEC_CTXT_RESPONSE
 {
-    NTLM_CONTEXT_HANDLE hNewContext;
+    LWMsgHandle* hNewContext;
     SecBuffer Output;
     DWORD fContextAttr;
     TimeStamp tsExpiry;
@@ -235,7 +233,7 @@ typedef struct __NTLM_IPC_INIT_SEC_CTXT_RESPONSE
 
 typedef struct __NTLM_IPC_MAKE_SIGN_REQ
 {
-    NTLM_CONTEXT_HANDLE hContext;
+    LWMsgHandle* hContext;
     DWORD dwQop;
     const SecBufferDesc* pMessage;
     DWORD MessageSeqNo;
@@ -250,7 +248,7 @@ typedef struct __NTLM_IPC_MAKE_SIGN_RESPONSE
 
 typedef struct __NTLM_IPC_QUERY_CREDS_REQ
 {
-    NTLM_CRED_HANDLE hCredential;
+    LWMsgHandle* hCredential;
     DWORD ulAttribute;
 } NTLM_IPC_QUERY_CREDS_REQ, *PNTLM_IPC_QUERY_CREDS_REQ;
 
@@ -264,7 +262,7 @@ typedef struct __NTLM_IPC_QUERY_CREDS_RESPONSE
 
 typedef struct __NTLM_IPC_QUERY_CTXT_REQ
 {
-    NTLM_CONTEXT_HANDLE hContext;
+    LWMsgHandle* hContext;
     DWORD ulAttribute;
 } NTLM_IPC_QUERY_CTXT_REQ, *PNTLM_IPC_QUERY_CTXT_REQ;
 
@@ -278,7 +276,7 @@ typedef struct __NTLM_IPC_QUERY_CTXT_RESPONSE
 
 typedef struct __NTLM_IPC_SET_CREDS_REQ
 {
-    NTLM_CRED_HANDLE hCredential;
+    LWMsgHandle* hCredential;
     DWORD ulAttribute;
     SecPkgCred Buffer;
 } NTLM_IPC_SET_CREDS_REQ, *PNTLM_IPC_SET_CREDS_REQ;
@@ -289,7 +287,7 @@ typedef struct __NTLM_IPC_SET_CREDS_REQ
 
 typedef struct __NTLM_IPC_VERIFY_SIGN_REQ
 {
-    NTLM_CONTEXT_HANDLE hContext;
+    LWMsgHandle* hContext;
     const SecBufferDesc* pMessage;
     DWORD MessageSeqNo;
 } NTLM_IPC_VERIFY_SIGN_REQ, *PNTLM_IPC_VERIFY_SIGN_REQ;
@@ -312,129 +310,6 @@ NtlmIpcGetProtocolSpec(
 LWMsgDispatchSpec*
 NtlmSrvGetDispatchSpec(
     VOID
-    );
-
-LWMsgStatus
-NtlmSrvIpcAcceptSecurityContext(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    );
-
-LWMsgStatus
-NtlmSrvIpcAcquireCredentialsHandle(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    );
-
-DWORD
-NtlmServerDuplicateBuffers(
-    IN const SecBufferDesc* pIn,
-    OUT PSecBufferDesc pOut
-    );
-
-void
-NtlmServerFreeBuffers(
-    IN PSecBufferDesc pBuffer
-    );
-
-LWMsgStatus
-NtlmSrvIpcDecryptMessage(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    );
-
-LWMsgStatus
-NtlmSrvIpcDeleteSecurityContext(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    );
-
-LWMsgStatus
-NtlmSrvIpcEncryptMessage(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    );
-
-LWMsgStatus
-NtlmSrvIpcExportSecurityContext(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    );
-
-LWMsgStatus
-NtlmSrvIpcFreeCredentialsHandle(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    );
-
-LWMsgStatus
-NtlmSrvIpcImportSecurityContext(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    );
-
-LWMsgStatus
-NtlmSrvIpcInitializeSecurityContext(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    );
-
-LWMsgStatus
-NtlmSrvIpcMakeSignature(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    );
-
-LWMsgStatus
-NtlmSrvIpcQueryCredentialsAttributes(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    );
-
-LWMsgStatus
-NtlmSrvIpcQueryContextAttributes(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    );
-
-LWMsgStatus
-NtlmSrvIpcSetCredentialsAttributes(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    );
-
-LWMsgStatus
-NtlmSrvIpcVerifySignature(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
     );
 
 #endif /*__NTLMIPC_H__*/

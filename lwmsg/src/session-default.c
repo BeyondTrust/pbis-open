@@ -53,7 +53,7 @@ typedef struct DefaultSession
     /* Reference count */
     size_t refs;
     /* Pointer to linked list of handles */
-    struct DefaultHandle* handles;
+    struct LWMsgHandle* handles;
     /* Number of handles */
     size_t num_handles;
     /* Links to other sessions in the manager */
@@ -62,7 +62,7 @@ typedef struct DefaultSession
     void* data;
 } DefaultSession;
 
-typedef struct DefaultHandle
+struct LWMsgHandle
 {
     /* Handle type */
     const char* type;
@@ -79,8 +79,8 @@ typedef struct DefaultHandle
     /* Handle cleanup function */
     void (*cleanup)(void*);
     /* Links to other handles in the session */
-    struct DefaultHandle* next, *prev;
-} DefaultHandle;
+    struct LWMsgHandle *next, *prev;
+};
 
 typedef struct DefaultManager
 {
@@ -97,7 +97,7 @@ typedef struct DefaultManager
 
 static void
 default_free_handle(
-    DefaultHandle* entry
+    LWMsgHandle* entry
     )
 {
     if (entry->cleanup)
@@ -127,11 +127,11 @@ default_add_handle(
     void* pointer,
     unsigned long hid,
     void (*cleanup)(void*),
-    DefaultHandle** out_handle
+    LWMsgHandle** out_handle
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    DefaultHandle* handle = NULL;
+    LWMsgHandle* handle = NULL;
 
     handle = calloc(1, sizeof(*handle));
 
@@ -143,7 +143,7 @@ default_add_handle(
     handle->type = type;
     handle->valid = LWMSG_TRUE;
     handle->refs = 1;
-    handle->pointer = pointer ? pointer : handle;
+    handle->pointer = pointer;
     handle->cleanup = cleanup;
     handle->hid = hid;
     handle->locality = locality;
@@ -191,7 +191,7 @@ default_free_session(
     DefaultSession* session
     )
 {
-    DefaultHandle* handle, *next;
+    LWMsgHandle* handle, *next;
 
     for (handle = session->handles; handle; handle = next)
     {
@@ -431,10 +431,10 @@ default_register_handle_remote(
     const char* type,
     LWMsgHandleID hid,
     void (*cleanup)(void* ptr),
-    void** ptr)
+    LWMsgHandle** handle)
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    DefaultHandle* handle = NULL;
+    LWMsgHandle* my_handle = NULL;
 
     BAIL_ON_ERROR(status = default_add_handle(
                       DEFAULT_SESSION(session),
@@ -443,11 +443,11 @@ default_register_handle_remote(
                       NULL,
                       hid,
                       cleanup,
-                      &handle));
+                      &my_handle));
 
-    if (ptr)
+    if (handle)
     {
-        *ptr = handle->pointer;
+        *handle = my_handle;
     }
 
 error:
@@ -460,27 +460,27 @@ LWMsgStatus
 default_register_handle_local(
     LWMsgSession* session,
     const char* type,
-    void* pointer,
+    void* data,
     void (*cleanup)(void* ptr),
-    LWMsgHandleID* hid
+    LWMsgHandle** handle
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     DefaultManager* priv = DEFAULT_MANAGER(session->manager);
-    DefaultHandle* handle = NULL;
+    LWMsgHandle* my_handle = NULL;
 
     BAIL_ON_ERROR(status = default_add_handle(
                       DEFAULT_SESSION(session),
                       type,
                       LWMSG_HANDLE_LOCAL,
-                      pointer,
+                      data,
                       priv->next_hid++,
                       cleanup,
-                      &handle));
+                      &my_handle));
 
-    if (hid)
+    if (handle)
     {
-        *hid = handle->hid;
+        *handle = my_handle;
     }
 
 error:
@@ -489,95 +489,44 @@ error:
 }
 
 static
-LWMsgStatus
+void
 default_retain_handle(
     LWMsgSession* session,
-    void* ptr
+    LWMsgHandle* handle
     )
 {
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    DefaultHandle* handle = NULL;
-    DefaultSession* my_session = DEFAULT_SESSION(session);
-
-    if (!my_session)
-    {
-        BAIL_ON_ERROR(status = LWMSG_STATUS_NOT_FOUND);
-    }
-
-    for (handle = my_session->handles; handle; handle = handle->next)
-    {
-        if (handle->pointer == ptr)
-        {
-            handle->refs++;
-            goto done;
-        }
-    }
-
-    BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_HANDLE);
-
-done:
-
-    return status;
-
-error:
-    
-    goto done;
+    handle->refs++;
 }
 
 static
-LWMsgStatus
+void
 default_release_handle(
     LWMsgSession* session,
-    void* ptr
+    LWMsgHandle* handle
     )
 {
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    DefaultHandle* handle = NULL;
     DefaultSession* my_session = DEFAULT_SESSION(session);
 
-    if (!my_session)
+    if (--handle->refs == 0)
     {
-        BAIL_ON_ERROR(status = LWMSG_STATUS_NOT_FOUND);
-    }
-
-    for (handle = my_session->handles; handle; handle = handle->next)
-    {
-        if (handle->pointer == ptr)
+        if (handle == my_session->handles)
         {
-            if (--handle->refs == 0)
-            {
-                if (handle == my_session->handles)
-                {
-                    my_session->handles = my_session->handles->next;
-                }
-                
-                default_free_handle(handle);
-                my_session->num_handles--;
-            }
-            goto done;
+            my_session->handles = my_session->handles->next;
         }
+                
+        default_free_handle(handle);
+        my_session->num_handles--;
     }
-
-    BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_HANDLE);
-
-done:
-
-    return status;
-
-error:
-    
-    goto done;
 }
 
 static
 LWMsgStatus
 default_unregister_handle(
     LWMsgSession* session,
-    void* ptr
+    LWMsgHandle* handle
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    DefaultHandle* handle = NULL;
     DefaultSession* my_session = DEFAULT_SESSION(session);
 
     if (!my_session)
@@ -585,32 +534,23 @@ default_unregister_handle(
         BAIL_ON_ERROR(status = LWMSG_STATUS_NOT_FOUND);
     }
 
-    for (handle = my_session->handles; handle; handle = handle->next)
+    if (!handle->valid)
     {
-        if (handle->pointer == ptr)
-        {
-            if (!handle->valid)
-            {
-                BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_HANDLE);
-            }
-
-            handle->valid = LWMSG_FALSE;
-
-            if (--handle->refs == 0)
-            {
-                if (handle == my_session->handles)
-                {
-                    my_session->handles = my_session->handles->next;
-                }
-                
-                default_free_handle(handle);
-                my_session->num_handles--;
-            }
-            goto done;
-        }
+        BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_HANDLE);
     }
 
-    BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_HANDLE);
+    handle->valid = LWMSG_FALSE;
+
+    if (--handle->refs == 0)
+    {
+        if (handle == my_session->handles)
+        {
+            my_session->handles = my_session->handles->next;
+        }
+
+        default_free_handle(handle);
+        my_session->num_handles--;
+    }
 
 done:
 
@@ -623,44 +563,35 @@ error:
 
 static
 LWMsgStatus
-default_handle_pointer_to_id(
+default_resolve_handle_to_id(
     LWMsgSession* session,
-    void* pointer,
+    LWMsgHandle* handle,
     const char** type,
     LWMsgHandleType* htype,
     LWMsgHandleID* hid
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    DefaultHandle* handle = NULL;
-    DefaultSession* my_session = DEFAULT_SESSION(session);
 
-    for (handle = my_session->handles; handle; handle = handle->next)
+    if (!handle->valid)
     {
-        if (handle->pointer == pointer)
-        {
-            if (!handle->valid)
-            {
-                BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_HANDLE);
-            }
-
-            if (type)
-            {
-                *type = handle->type;
-            }
-            if (htype)
-            {
-                *htype = handle->locality;
-            }
-            if (hid)
-            {
-                *hid = handle->hid;
-            }
-            goto done;
-        }
+        BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_HANDLE);
     }
 
-    BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_HANDLE);
+    if (type)
+    {
+        *type = handle->type;
+    }
+
+    if (htype)
+    {
+        *htype = handle->locality;
+    }
+
+    if (hid)
+    {
+        *hid = handle->hid;
+    }
 
 done:
 
@@ -673,29 +604,29 @@ error:
 
 static
 LWMsgStatus
-default_handle_id_to_pointer(
+default_resolve_id_to_handle(
     LWMsgSession* session,
     const char* type,
     LWMsgHandleType htype,
     LWMsgHandleID hid,
-    void** pointer
+    LWMsgHandle** handle
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    DefaultHandle* handle = NULL;
+    LWMsgHandle* my_handle = NULL;
     DefaultSession* my_session = DEFAULT_SESSION(session);
 
-    for (handle = my_session->handles; handle; handle = handle->next)
+    for (my_handle = my_session->handles; my_handle; my_handle = my_handle->next)
     {
-        if (handle->hid == hid && handle->locality == htype)
+        if (my_handle->hid == hid && my_handle->locality == htype)
         {
-            if (!handle->valid || (type && strcmp(type, handle->type)))
+            if (!my_handle->valid || (type && strcmp(type, my_handle->type)))
             {
                 BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_HANDLE);
             }
             
-            *pointer = handle->pointer;
-            handle->refs++;
+            *handle = my_handle;
+            my_handle->refs++;
             goto done;
         }
     }
@@ -709,6 +640,31 @@ done:
 error:
 
     goto done;
+}
+
+static
+LWMsgStatus
+default_get_handle_data(
+    LWMsgSession* session,
+    LWMsgHandle* handle,
+    void** data
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    if (!handle->valid)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_HANDLE);
+    }
+
+    if (data)
+    {
+        *data = handle->pointer;
+    }
+
+error:
+
+    return status;
 }
 
 static
@@ -759,8 +715,9 @@ static LWMsgSessionManagerClass default_class =
     .retain_handle = default_retain_handle,
     .release_handle = default_release_handle,
     .unregister_handle = default_unregister_handle,
-    .handle_pointer_to_id = default_handle_pointer_to_id,
-    .handle_id_to_pointer = default_handle_id_to_pointer,
+    .resolve_handle_to_id = default_resolve_handle_to_id,
+    .resolve_id_to_handle = default_resolve_id_to_handle,
+    .get_handle_data = default_get_handle_data,
     .get_data = default_get_data,
     .get_id = default_get_id,
     .get_assoc_count = default_get_assoc_count,

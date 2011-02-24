@@ -69,7 +69,7 @@ typedef struct CounterReply
 
 typedef struct CounterAdd
 {
-    CounterHandle* handle;
+    LWMsgHandle* handle;
     int delta;
 } CounterAdd;
 
@@ -135,20 +135,21 @@ static LWMsgStatus
 counter_srv_open(LWMsgCall* call, const LWMsgParams* request_msg, LWMsgParams* reply_msg, void* data)
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    CounterHandle* handle = malloc(sizeof(*handle));
+    CounterHandle* handle_data = malloc(sizeof(*handle_data));
     CounterRequest* request = request_msg->data;
     LWMsgSession* session = lwmsg_call_get_session(call);
+    LWMsgHandle* handle = NULL;
 
-    pthread_mutex_init(&handle->lock, NULL);
+    pthread_mutex_init(&handle_data->lock, NULL);
 
-    handle->counter = request->counter;
+    handle_data->counter = request->counter;
 
-    MU_TRY(lwmsg_session_register_handle(session, "CounterHandle", handle, free));
+    MU_TRY(lwmsg_session_register_handle(session, "CounterHandle", handle_data, free, &handle));
 
     reply_msg->tag = COUNTER_OPEN_SUCCESS;
     reply_msg->data = handle;
 
-    MU_TRY(lwmsg_session_retain_handle(session, handle));
+    lwmsg_session_retain_handle(session, handle);
 
     return status;
 }
@@ -156,9 +157,12 @@ static LWMsgStatus
 counter_srv_add(LWMsgCall* call, const LWMsgParams* request_msg, LWMsgParams* reply_msg, void* data)
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgSession* session = lwmsg_call_get_session(call);
     CounterAdd* add = request_msg->data;
-    CounterHandle* handle = add->handle;
+    CounterHandle* handle = NULL;
     CounterReply* reply = malloc(sizeof(*reply));
+
+    MU_TRY(lwmsg_session_get_handle_data(session, add->handle, (void**)(void*)&handle));
 
     pthread_mutex_lock(&handle->lock);
     reply->counter = handle->counter;
@@ -175,8 +179,11 @@ static LWMsgStatus
 counter_srv_read(LWMsgCall* call, const LWMsgParams* request_msg, LWMsgParams* reply_msg, void* data)
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    CounterHandle* handle = request_msg->data;
+    LWMsgSession* session = lwmsg_call_get_session(call);
+    CounterHandle* handle = NULL;
     CounterReply* reply = malloc(sizeof(*reply));
+
+    MU_TRY(lwmsg_session_get_handle_data(session, (LWMsgHandle*) request_msg->data, (void**)(void*)&handle));
 
     pthread_mutex_lock(&handle->lock);
     reply->counter = handle->counter;
@@ -192,16 +199,18 @@ static LWMsgStatus
 counter_srv_close(LWMsgCall* call, const LWMsgParams* request_msg, LWMsgParams* reply_msg, void* data)
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    CounterHandle* handle = request_msg->data;
+    CounterHandle* handle = NULL;
     CounterReply* reply = malloc(sizeof(*reply));
     LWMsgSession* session = lwmsg_call_get_session(call);
+
+    MU_TRY(lwmsg_session_get_handle_data(session, (LWMsgHandle*) request_msg->data, (void**)(void*)&handle));
 
     pthread_mutex_lock(&handle->lock);
     reply->counter = handle->counter;
     pthread_mutex_unlock(&handle->lock);
     
     pthread_mutex_destroy(&handle->lock);
-    lwmsg_session_unregister_handle(session, handle);
+    lwmsg_session_unregister_handle(session, request_msg->data);
 
     reply_msg->tag = COUNTER_CLOSE_SUCCESS;
     reply_msg->data = reply;
@@ -221,7 +230,7 @@ LWMsgDispatchSpec counter_dispatch[] =
 typedef struct
 {
     LWMsgPeer* client;
-    CounterHandle* handle;
+    LWMsgHandle* handle;
     int iters;
     pthread_mutex_t lock;
     pthread_cond_t event;
@@ -402,7 +411,7 @@ MU_TEST(client_server, handle_invalidation)
     LWMsgProtocol* protocol = NULL;
     LWMsgPeer* client = NULL;
     LWMsgPeer* server = NULL;
-    CounterHandle* handle = NULL;
+    LWMsgHandle* handle = NULL;
     CounterRequest request;
     LWMsgCall* call;
     LWMsgSession* session = NULL;
@@ -446,7 +455,7 @@ MU_TEST(client_server, handle_invalidation)
 
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, lwmsg_session_get_handle_location(session, handle, &locality), LWMSG_STATUS_INVALID_HANDLE);
     
-    MU_TRY(lwmsg_session_release_handle(session, handle));
+    lwmsg_session_release_handle(session, handle);
 
     MU_TRY(lwmsg_peer_disconnect(client));
     lwmsg_peer_delete(client);
@@ -460,7 +469,7 @@ typedef int (*IntFunction) (int value);
 
 typedef struct MulticallRequest
 {
-    IntFunction func;
+    LWMsgHandle* func;
     int num_values;
     int* values;
 } MulticallRequest;
@@ -473,7 +482,7 @@ typedef struct MulticallReply
 
 typedef struct InvokeCallbackRequest
 {
-    IntFunction func;
+    LWMsgHandle* func;
     int value;
 } InvokeRequest;
 
@@ -597,9 +606,13 @@ Invoke(
 {
     InvokeRequest* req = in->data;
     int* rep = NULL;
+    LWMsgSession* session = lwmsg_call_get_session(call);
+    IntFunction func = NULL;
+
+    MU_TRY(lwmsg_session_get_handle_data(session, req->func, (void**)(void*)&func));
 
     rep = malloc(sizeof(*rep));
-    *rep = req->func(req->value);
+    *rep = func(req->value);
 
     out->tag = INVOKE_REPLY;
     out->data = rep;
@@ -703,20 +716,20 @@ MU_TEST(client_server, callback)
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
     int values[] = {1, 2, 3, 4, 5};
     unsigned int i;
+    LWMsgHandle* handle = NULL;
 
     MU_TRY(lwmsg_peer_start_listen(server));
     MU_TRY(lwmsg_peer_connect(client, &session));
     
-    req.func = times_two;
+    MU_TRY(lwmsg_session_register_handle(session, "IntFunction", times_two, NULL, &handle));
+
+    req.func = handle;
     req.num_values = sizeof(values) / sizeof(*values);
     req.values = values;
     in.tag = MULTICALL_REQUEST;
     in.data = &req;
 
     MU_TRY(lwmsg_peer_acquire_call(client, &call));
-    
-    MU_TRY(lwmsg_session_register_handle(session, "IntFunction", req.func, NULL));
-
     MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
     rep = (MulticallReply*) out.data;
 
@@ -728,7 +741,7 @@ MU_TEST(client_server, callback)
         MU_ASSERT_EQUAL(MU_TYPE_INTEGER, rep->values[i], times_two(req.values[i]));
     }
 
-    MU_TRY(lwmsg_session_unregister_handle(session, req.func));
+    MU_TRY(lwmsg_session_unregister_handle(session, handle));
     MU_TRY(lwmsg_call_destroy_params(call, &out));
     lwmsg_call_release(call);
     MU_TRY(lwmsg_peer_disconnect(client));

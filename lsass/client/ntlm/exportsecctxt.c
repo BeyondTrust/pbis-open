@@ -57,6 +57,8 @@ NtlmClientExportSecurityContext(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
 
+    BAIL_ON_INVALID_POINTER(phContext);
+
     // We don't want to zero out the SecBuffers, but we may want to initialize
     // some of their members to zero.
     // In the long run, I don't think we need this token...
@@ -66,12 +68,10 @@ NtlmClientExportSecurityContext(
     }
 
     dwError = NtlmTransactExportSecurityContext(
-        phContext,
+        *phContext,
         fFlags,
         pPackedContext,
-        pToken
-        );
-
+        pToken);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:

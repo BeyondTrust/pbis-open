@@ -119,7 +119,7 @@ typedef struct __REG_IPC_STATUS
 
 typedef struct __REG_IPC_CREATE_KEY_EX_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     PCWSTR pSubKey;
     PWSTR pClass;
     DWORD dwOptions;
@@ -130,7 +130,7 @@ typedef struct __REG_IPC_CREATE_KEY_EX_REQ
 
 typedef struct __REG_IPC_CREATE_KEY_EX_RESPONSE
 {
-    HKEY hkResult;
+    LWMsgHandle* hkResult;
     DWORD dwDisposition;
 } REG_IPC_CREATE_KEY_EX_RESPONSE, *PREG_IPC_CREATE_KEY_EX_RESPONSE;
 
@@ -140,7 +140,7 @@ typedef struct __REG_IPC_CREATE_KEY_EX_RESPONSE
 
 typedef struct __REG_IPC_CLOSE_KEY_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
 } REG_IPC_CLOSE_KEY_REQ, *PREG_IPC_CLOSE_KEY_REQ;
 
 // NO RESPONSE
@@ -158,7 +158,7 @@ typedef struct __REG_IPC_ENUM_ROOTKEYS_RESPONSE
 
 typedef struct __REG_IPC_DELETE_KEY_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     PCWSTR pSubKey;
 } REG_IPC_DELETE_KEY_REQ, *PREG_IPC_DELETE_KEY_REQ;
 
@@ -172,7 +172,7 @@ typedef struct __REG_IPC_DELETE_KEY_REQ
 
 typedef struct __REG_IPC_DELETE_KEY_VALUE_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     PCWSTR pSubKey;
     PCWSTR pValueName;
 } REG_IPC_DELETE_KEY_VALUE_REQ, *PREG_IPC_DELETE_KEY_VALUE_REQ;
@@ -186,7 +186,7 @@ typedef struct __REG_IPC_DELETE_KEY_VALUE_REQ
 
 typedef struct __REG_IPC_DELETE_TREE_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     PCWSTR pSubKey;
 } REG_IPC_DELETE_TREE_REQ, *PREG_IPC_DELETE_TREE_REQ;
 
@@ -200,7 +200,7 @@ typedef struct __REG_IPC_DELETE_TREE_REQ
 
 typedef struct __REG_IPC_DELETE_VALUE_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     PCWSTR pValueName;
 } REG_IPC_DELETE_VALUE_REQ, *PREG_IPC_DELETE_VALUE_REQ;
 
@@ -210,7 +210,7 @@ typedef struct __REG_IPC_DELETE_VALUE_REQ
 
 typedef struct __REG_IPC_ENUM_KEY_EX_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     DWORD dwIndex;
     DWORD cName;
     DWORD cClass;
@@ -229,7 +229,7 @@ typedef struct __REG_IPC_ENUM_KEY_EX_RESPONSE
 
 typedef struct __REG_IPC_ENUM_VALUE_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     DWORD dwIndex;
     DWORD cName;
     DWORD cValue;
@@ -260,7 +260,7 @@ typedef struct __REG_IPC_ENUM_VALUE_RESPONSE
 
 typedef struct __REG_IPC_GET_VALUE_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     PCWSTR pSubKey;
     PCWSTR pValue;
     REG_DATA_TYPE_FLAGS Flags;
@@ -283,14 +283,14 @@ typedef struct __REG_IPC_GET_VALUE_RESPONSE
 // OUT HKEY hkResult
 typedef struct __REG_IPC_OPEN_KEY_EX_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     PCWSTR pSubKey;
     ACCESS_MASK AccessDesired;
 } REG_IPC_OPEN_KEY_EX_REQ, *PREG_IPC_OPEN_KEY_EX_REQ;
 
 typedef struct __REG_IPC_OPEN_KEY_EX_RESPONSE
 {
-    HKEY hkResult;
+    LWMsgHandle* hkResult;
 } REG_IPC_OPEN_KEY_EX_RESPONSE, *PREG_IPC_OPEN_KEY_EX_RESPONSE;
 
 /******************************************************************************/
@@ -310,7 +310,7 @@ typedef struct __REG_IPC_OPEN_KEY_EX_RESPONSE
 
 typedef struct __REG_IPC_QUERY_INFO_KEY_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     PDWORD pcClass;
 } REG_IPC_QUERY_INFO_KEY_REQ, *PREG_IPC_QUERY_INFO_KEY_REQ;
 
@@ -339,7 +339,7 @@ typedef struct __REG_IPC_QUERY_INFO_KEY_RESPONSE
 
 typedef struct __REG_IPC_QUERY_MULTIPLE_VALUES_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     DWORD num_vals;
     PVALENT val_list;
     DWORD dwTotalsize;
@@ -366,7 +366,7 @@ typedef struct __REG_IPC_QUERY_MULTIPLE_VALUES_RESPONSE
 
 typedef struct __REG_IPC_QUERY_VALUE_EX_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     PCWSTR pValueName;
     PDWORD pcbData;
 } REG_IPC_QUERY_VALUE_EX_REQ, *PREG_IPC_QUERY_VALUE_EX_REQ;
@@ -389,7 +389,7 @@ typedef struct __REG_IPC_QUERY_VALUE_EX_RESPONSE
 
 typedef struct __REG_IPC_SET_KEY_VALUE_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     PCWSTR pSubKey;
     PCWSTR pValueName;
     DWORD dwType;
@@ -409,7 +409,7 @@ typedef struct __REG_IPC_SET_KEY_VALUE_REQ
 // IN DWORD cbData
 typedef struct __REG_IPC_SET_VALUE_EX_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     PCWSTR pValueName;
     DWORD dwType;
     const BYTE *pData;
@@ -426,7 +426,7 @@ typedef struct __REG_IPC_SET_VALUE_EX_REQ
 //IN ULONG Length
 typedef struct __REG_IPC_SET_KEY_SECURITY_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     SECURITY_INFORMATION SecurityInformation;
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
     ULONG Length;
@@ -440,7 +440,7 @@ typedef struct __REG_IPC_SET_KEY_SECURITY_REQ
 // BOOLEAN bRetSecurityDescriptor;
 typedef struct __REG_IPC_GET_KEY_SECURITY_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     SECURITY_INFORMATION SecurityInformation;
     ULONG Length;
     BOOLEAN bRetSecurityDescriptor;
@@ -466,7 +466,7 @@ typedef struct __REG_IPC_GET_KEY_SECURITY_RES
 // IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
 typedef struct __REG_IPC_SET_VALUE_ATTRS_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     PCWSTR pSubKey;
     PCWSTR pValueName;
     PLWREG_VALUE_ATTRIBUTES pValueAttributes;
@@ -485,7 +485,7 @@ typedef struct __REG_IPC_SET_VALUE_ATTRS_REQ
 
 typedef struct __REG_IPC_DELETE_VALUE_ATTRS_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     PCWSTR pSubKey;
     PCWSTR pValueName;
 } REG_IPC_DELETE_VALUE_ATTRS_REQ, *PREG_IPC_DELETE_VALUE_ATTRS_REQ;
@@ -498,7 +498,7 @@ typedef struct __REG_IPC_DELETE_VALUE_ATTRS_REQ
 
 typedef struct __REG_IPC_GET_VALUE_ATTRS_REQ
 {
-    HKEY hKey;
+    LWMsgHandle* hKey;
     PCWSTR pSubKey;
     PCWSTR pValueName;
     BOOLEAN bRetCurrentValue;
