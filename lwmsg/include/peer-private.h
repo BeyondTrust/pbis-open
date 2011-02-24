@@ -66,8 +66,15 @@ typedef enum PeerAssocTaskType
     PEER_TASK_FINISH_CLOSE,
     PEER_TASK_BEGIN_RESET,
     PEER_TASK_FINISH_RESET,
-    PEER_TASK_DROP
+    PEER_TASK_DROP,
+    PEER_TASK_DONE
 } PeerAssocTaskType;
+
+typedef struct PeerHandleKey
+{
+    LWMsgHandleType type;
+    LWMsgHandleID id;
+} PeerHandleKey;
 
 typedef struct PeerCall
 {
@@ -121,12 +128,10 @@ typedef struct PeerListenTask
 
 typedef struct PeerAssocTask
 {
-    LWMsgPeer* peer;
     LWMsgTask* event_task;
     PeerAssocTaskType type;
     LWMsgAssoc* assoc;
-    LWMsgSession* session;
-    unsigned session_release:1;
+    struct PeerSession* session;
     LWMsgHashTable incoming_calls;
     LWMsgHashTable outgoing_calls;
     LWMsgRing active_incoming_calls;
@@ -140,10 +145,8 @@ typedef struct PeerAssocTask
     unsigned recv_partial:1;
     unsigned destroy_outgoing:1;
     LWMsgCookie volatile next_cookie;
-    unsigned int volatile refcount;
+    uint32_t volatile refs;
     LWMsgStatus volatile status;
-    pthread_mutex_t call_lock;
-    pthread_cond_t call_event;
 } PeerAssocTask;
 
 typedef enum PeerState
@@ -174,19 +177,13 @@ typedef struct DirectEndpoint
 
 typedef struct DirectSession
 {
-    /* Initiating peer */
-    LWMsgPeer* peer;
+    /* Actual session */
+    struct PeerSession* session;
     /* Outstanding calls */
     LWMsgRing calls;
     LWMsgRing ring;
-
     DirectEndpoint* endpoint;
-
-    pthread_mutex_t lock;
-    pthread_cond_t event;
-    uint32_t refs;
-    unsigned lock_destroy:1;
-    unsigned event_destroy:1;
+    uint32_t volatile refs;
 } DirectSession;
 
 typedef struct DirectCall
@@ -211,6 +208,56 @@ typedef struct DirectCall
     uint8_t volatile refs;
     unsigned is_callback:1;
 } DirectCall;
+
+typedef struct PeerSession
+{
+    LWMsgSession base;
+    /* Session identifier */
+    LWMsgSessionID id;
+    /* Security token of session creator */
+    LWMsgSecurityToken* sec_token;
+    /* Reference count */
+    size_t volatile refs;
+    /* Hash of handles by id */
+    LWMsgHashTable handle_by_id;
+    /* Lock */
+    pthread_mutex_t lock;
+    unsigned lock_destroy:1;
+    /* Event */
+    pthread_cond_t event;
+    unsigned event_destroy:1;
+    /* Next handle ID */
+    unsigned long volatile next_hid;
+    /* User data pointer */
+    void* data;
+    LWMsgSessionDestructFunction destruct;
+    /* Owning peer */
+    struct LWMsgPeer* peer;
+    /* Direct session */
+    DirectSession* direct_session;
+    /* Assoc session */
+    PeerAssocTask* assoc_session;
+    PeerEndpoint* endpoint;
+} PeerSession;
+
+struct LWMsgHandle
+{
+    /* Key */
+    PeerHandleKey key;
+    /* Validity bit */
+    LWMsgBool volatile valid;
+    /* Reference count */
+    size_t volatile refs;
+    /* Handle type */
+    const char* type;
+    /* Handle pointer */
+    void* pointer;
+    /* Handle cleanup function */
+    void (*cleanup)(void*);
+    /* Link in hash table by id */
+    LWMsgRing id_ring;
+};
+
 
 struct LWMsgPeer
 {    
@@ -254,12 +301,7 @@ struct LWMsgPeer
     LWMsgRing listen_endpoints;
 
     LWMsgRing connect_endpoints;
-    PeerAssocTask* connect_task;
-    DirectSession* direct;
-    LWMsgSession* connect_session;
-    unsigned connect_session_direct:1;
-    PeerEndpoint* connect_endpoint;
-    PeerState connect_state;
+    PeerSession* connect_session;
     LWMsgStatus connect_status;
 
     /* Total number of connected clients */
@@ -312,19 +354,39 @@ lwmsg_peer_unlock(
 LWMsgStatus
 lwmsg_peer_session_new(
     LWMsgPeer* peer,
-    LWMsgSession** out_session
+    PeerSession** out_session
     );
 
 void
 lwmsg_peer_session_reset(
-    LWMsgSession* session
+    PeerSession* session
+    );
+
+void
+lwmsg_peer_session_release(
+    PeerSession* session
+    );
+
+void
+lwmsg_peer_session_retain(
+    PeerSession* session
+    );
+
+void
+lwmsg_peer_session_disconnect(
+    PeerSession* session
+    );
+
+LWMsgStatus
+lwmsg_peer_session_acquire_call(
+    PeerSession* session,
+    LWMsgCall** call
     );
 
 LWMsgStatus
 lwmsg_peer_assoc_task_new_connect(
-    LWMsgPeer* peer,
+    PeerSession* session,
     LWMsgAssoc* assoc,
-    LWMsgSession* session,
     PeerAssocTask** task
     );
 
@@ -344,27 +406,8 @@ lwmsg_peer_listen_task_delete(
     );
 
 void
-lwmsg_peer_task_cancel_and_unref(
+lwmsg_peer_task_release(
     PeerAssocTask* task
-    );
-
-void
-lwmsg_peer_task_unref(
-    PeerAssocTask* task
-    );
-
-void
-lwmsg_peer_task_ref(
-    PeerAssocTask* task
-    );
-
-LWMsgStatus
-lwmsg_peer_task_perform(
-    LWMsgPeer* peer,
-    PeerAssocTask* task,
-    LWMsgBool shutdown,
-    LWMsgTime* current_time,
-    LWMsgTime* next_deadline
     );
 
 LWMsgBool
@@ -414,8 +457,8 @@ lwmsg_peer_call_cancel_incoming(
 
 LWMsgStatus
 lwmsg_direct_session_new(
-    LWMsgPeer* peer,
-    DirectSession** session
+    PeerSession* session,
+    DirectSession** direct_session
     );
 
 void

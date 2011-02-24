@@ -85,7 +85,7 @@ lwmsg_peer_call_worker(
         &call->params.incoming.out,
         call->params.incoming.dispatch_data);
 
-    pthread_mutex_lock(&call->task->call_lock);
+    pthread_mutex_lock(&call->task->session->lock);
     call->state |= PEER_CALL_DISPATCHED;
 
     if (call->state & PEER_CALL_COMPLETED)
@@ -101,7 +101,7 @@ lwmsg_peer_call_worker(
         call->params.incoming.cancel(LWMSG_CALL(call), call->params.incoming.cancel_data);
     }
 
-    pthread_mutex_unlock(&call->task->call_lock);
+    pthread_mutex_unlock(&call->task->session->lock);
 
     switch (status)
     {
@@ -142,18 +142,18 @@ lwmsg_peer_call_dispatch_incoming(
 
     lwmsg_message_init(incoming_message);
 
-    if (call->task->peer->trace_begin)
+    if (call->task->session->peer->trace_begin)
     {
-        call->task->peer->trace_begin(
+        call->task->session->peer->trace_begin(
             LWMSG_CALL(call),
             &call->params.incoming.in,
-            call->task->peer->trace_data);
+            call->task->session->peer->trace_data);
     }
 
     if (call->params.incoming.spec->type == LWMSG_DISPATCH_TYPE_BLOCK)
     {
         BAIL_ON_ERROR(status = lwmsg_task_dispatch_work_item(
-            call->task->peer->task_manager,
+            call->task->session->peer->task_manager,
             lwmsg_peer_call_worker,
             call));
         status = LWMSG_STATUS_PENDING;
@@ -161,13 +161,13 @@ lwmsg_peer_call_dispatch_incoming(
     else
     {
         /* Drop lock for duration of call */
-        pthread_mutex_unlock(&call->task->call_lock);
+        pthread_mutex_unlock(&call->task->session->lock);
         status = ((LWMsgPeerCallFunction) call->params.incoming.spec->data) (
             LWMSG_CALL(call),
             &call->params.incoming.in,
             &call->params.incoming.out,
             call->params.incoming.dispatch_data);
-        pthread_mutex_lock(&call->task->call_lock);
+        pthread_mutex_lock(&call->task->session->lock);
 
         call->state |= PEER_CALL_DISPATCHED;
 
@@ -208,7 +208,7 @@ lwmsg_peer_call_dispatch_outgoing(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerCall* pcall = PEER_CALL(call);
 
-    pthread_mutex_lock(&pcall->task->call_lock);
+    pthread_mutex_lock(&pcall->task->session->lock);
 
     BAIL_ON_ERROR(status = pcall->task->status);
 
@@ -236,19 +236,19 @@ lwmsg_peer_call_dispatch_outgoing(
     lwmsg_task_wake(pcall->task->event_task);
 
     /* Trace call start */
-    if (pcall->task->peer->trace_begin)
+    if (pcall->task->session->peer->trace_begin)
     {
-        pcall->task->peer->trace_begin(
+        pcall->task->session->peer->trace_begin(
             LWMSG_CALL(call),
             pcall->params.outgoing.in,
-            pcall->task->peer->trace_data);
+            pcall->task->session->peer->trace_data);
     }
 
     if (!complete)
     {
         while (!(pcall->state & PEER_CALL_COMPLETED))
         {
-            pthread_cond_wait(&pcall->task->call_event, &pcall->task->call_lock);
+            pthread_cond_wait(&pcall->task->session->event, &pcall->task->session->lock);
         }
 
         status = pcall->status;
@@ -260,7 +260,7 @@ lwmsg_peer_call_dispatch_outgoing(
 
 error:
 
-    pthread_mutex_unlock(&pcall->task->call_lock);
+    pthread_mutex_unlock(&pcall->task->session->lock);
 
     return status;
 }
@@ -276,13 +276,13 @@ lwmsg_peer_call_pend_incoming(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerCall* scall = PEER_CALL(call);
 
-    pthread_mutex_lock(&scall->task->call_lock);
+    pthread_mutex_lock(&scall->task->session->lock);
 
     scall->state |= PEER_CALL_PENDED;
     scall->params.incoming.cancel = cancel;
     scall->params.incoming.cancel_data = data;
 
-    pthread_mutex_unlock(&scall->task->call_lock);
+    pthread_mutex_unlock(&scall->task->session->lock);
 
     return status;
 }
@@ -297,7 +297,7 @@ lwmsg_peer_call_complete_incoming(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerCall* pcall = PEER_CALL(call);
 
-    pthread_mutex_lock(&pcall->task->call_lock);
+    pthread_mutex_lock(&pcall->task->session->lock);
 
     pcall->status = call_status;
     pcall->state |= PEER_CALL_COMPLETED;
@@ -311,7 +311,7 @@ lwmsg_peer_call_complete_incoming(
         lwmsg_task_wake(pcall->task->event_task);
     }
 
-    pthread_mutex_unlock(&pcall->task->call_lock);
+    pthread_mutex_unlock(&pcall->task->session->lock);
     
     return status;
 }
@@ -341,12 +341,12 @@ lwmsg_peer_call_complete_outgoing(
         lwmsg_message_init(incoming_message);
 
         /* Trace call completion */
-        if (call->task->peer->trace_end)
+        if (call->task->session->peer->trace_end)
         {
-            call->task->peer->trace_end(
+            call->task->session->peer->trace_end(
                 LWMSG_CALL(call),
                 call->params.outgoing.out,
-                call->task->peer->trace_data);
+                call->task->session->peer->trace_data);
         }
 
         if (call->params.outgoing.complete)
@@ -358,7 +358,7 @@ lwmsg_peer_call_complete_outgoing(
         }
         else
         {
-            pthread_cond_broadcast(&call->task->call_event);
+            pthread_cond_broadcast(&call->task->session->event);
         }
     }
     
@@ -403,7 +403,7 @@ lwmsg_peer_call_cancel_outgoing(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerCall* pcall = PEER_CALL(call);
 
-    pthread_mutex_lock(&pcall->task->call_lock);
+    pthread_mutex_lock(&pcall->task->session->lock);
 
     if (!(pcall->state & PEER_CALL_CANCELLED))
     {
@@ -420,7 +420,7 @@ lwmsg_peer_call_cancel_outgoing(
         }
     }
 
-    pthread_mutex_unlock(&pcall->task->call_lock);
+    pthread_mutex_unlock(&pcall->task->session->lock);
 
     return status;
 }
@@ -435,7 +435,7 @@ lwmsg_peer_call_release_outgoing(
     PeerAssocTask* task = pcall->task;
     LWMsgBool delete = LWMSG_FALSE;
 
-    pthread_mutex_lock(&task->call_lock);
+    pthread_mutex_lock(&task->session->lock);
     if (pcall->state & PEER_CALL_DISPATCHED &&
         !(pcall->state & PEER_CALL_COMPLETED))
     {
@@ -449,7 +449,7 @@ lwmsg_peer_call_release_outgoing(
         lwmsg_ring_remove(&pcall->queue_ring);
         delete = LWMSG_TRUE;
     }
-    pthread_mutex_unlock(&task->call_lock);
+    pthread_mutex_unlock(&task->session->lock);
 
     if (delete)
     {
@@ -467,7 +467,7 @@ lwmsg_peer_call_get_session(
 {
     PeerCall* my_call = PEER_CALL(call);
 
-    return my_call->task->session;
+    return (LWMsgSession*) my_call->task->session;
 }
 
 static
@@ -570,7 +570,8 @@ lwmsg_peer_call_delete(
 
     if (call->task)
     {
-        lwmsg_peer_task_unref(call->task);
+        lwmsg_peer_task_release(call->task);
     }
+
     free(call);
 }

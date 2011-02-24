@@ -175,7 +175,8 @@ lwmsg_peer_delete(
 
     if (peer->connect_session)
     {
-        lwmsg_session_release(peer->connect_session);
+        lwmsg_peer_session_disconnect(peer->connect_session);
+        lwmsg_peer_session_release(peer->connect_session);
     }
 
     if (peer->lock_init)
@@ -872,187 +873,6 @@ error:
     goto done;
 }
 
-static
-LWMsgStatus
-lwmsg_peer_connect_endpoint(
-    LWMsgPeer* peer,
-    PeerEndpoint* endpoint
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    LWMsgAssoc* assoc = NULL;
-    LWMsgBool locked = LWMSG_FALSE;
-
-    switch (endpoint->type)
-    {
-    case LWMSG_ENDPOINT_DIRECT:
-        if (!peer->direct)
-        {
-            BAIL_ON_ERROR(status = lwmsg_direct_session_new(peer, &peer->direct));
-        }
-        BAIL_ON_ERROR(status = lwmsg_direct_connect(endpoint->endpoint, peer->direct));
-        break;
-    case LWMSG_ENDPOINT_LOCAL:
-        BAIL_ON_ERROR(status = lwmsg_connection_new(peer->context, peer->protocol, &assoc));
-        BAIL_ON_ERROR(status = lwmsg_connection_set_endpoint(assoc, endpoint->type, endpoint->endpoint));
-        BAIL_ON_ERROR(status = lwmsg_assoc_set_nonblock(assoc, LWMSG_TRUE));
-        /* Create task to manage it */
-        BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new_connect(peer, assoc, peer->connect_session, &peer->connect_task));
-        assoc = NULL;
-
-        LWMSG_LOCK(locked, &peer->connect_task->call_lock);
-        peer->connect_task->status = LWMSG_STATUS_PENDING;
-
-        /* Wake task up */
-        lwmsg_task_wake(peer->connect_task->event_task);
-
-        /* Wait for task to tell us it connected */
-        while (peer->connect_task->status == LWMSG_STATUS_PENDING)
-        {
-            pthread_cond_wait(&peer->connect_task->call_event, &peer->connect_task->call_lock);
-        }
-        BAIL_ON_ERROR(status = peer->connect_task->status);
-
-        break;
-    default:
-        BAIL_ON_ERROR(status = LWMSG_STATUS_UNSUPPORTED);
-    }
-
-done:
-
-    LWMSG_UNLOCK(locked, &peer->connect_task->call_lock);
-
-    return status;
-
-error:
-
-    LWMSG_UNLOCK(locked, &peer->connect_task->call_lock);
-
-    if (assoc)
-    {
-        lwmsg_assoc_delete(assoc);
-    }
-
-    if (peer->connect_task)
-    {
-        lwmsg_peer_task_cancel_and_unref(peer->connect_task);
-        peer->connect_task = NULL;
-    }
-
-    if (peer->direct)
-    {
-        lwmsg_direct_session_release(peer->direct);
-        peer->direct = NULL;
-    }
-
-    goto done;
-}
-
-static
-LWMsgStatus
-lwmsg_peer_try_connect(
-    LWMsgPeer* peer
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    LWMsgRing* ring = NULL;
-    PeerEndpoint* endpoint = NULL;
-
-    if (!peer->connect_endpoint)
-    {
-        if (!peer->connect_session)
-        {
-            BAIL_ON_ERROR(status = lwmsg_peer_session_new(
-                peer,
-                &peer->connect_session));
-        }
-
-        for (ring = peer->connect_endpoints.next; ring != &peer->connect_endpoints; ring = ring->next)
-        {
-            endpoint = LWMSG_OBJECT_FROM_MEMBER(ring, PeerEndpoint, ring);
-            status = lwmsg_peer_connect_endpoint(peer, endpoint);
-            switch (status)
-            {
-            case LWMSG_STATUS_SUCCESS:
-                peer->connect_endpoint = endpoint;
-                goto done;
-            case LWMSG_STATUS_CONNECTION_REFUSED:
-            case LWMSG_STATUS_TIMEOUT:
-            case LWMSG_STATUS_FILE_NOT_FOUND:
-            case LWMSG_STATUS_NOT_FOUND:
-                break;
-            default:
-                BAIL_ON_ERROR(status);
-            }
-        }
-    }
-    else
-    {
-        status = lwmsg_peer_connect_endpoint(peer, peer->connect_endpoint);
-        BAIL_ON_ERROR(status);
-    }
-
-done:
-
-    return status;
-
-error:
-
-    goto done;
-}
-
-static
-LWMsgStatus
-lwmsg_peer_connect_in_lock(
-    LWMsgPeer* peer,
-    LWMsgBool* locked
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-
-    PEER_LOCK(peer, *locked);
-
-    switch (peer->connect_state)
-    {
-    case PEER_STATE_STOPPED:
-        peer->connect_status = LWMSG_STATUS_SUCCESS;
-        peer->connect_state = PEER_STATE_STARTING;
-        PEER_UNLOCK(peer, *locked);
-        status = lwmsg_peer_try_connect(peer);
-        PEER_LOCK(peer, *locked);
-        if (status == LWMSG_STATUS_SUCCESS)
-        {
-            peer->connect_state = PEER_STATE_STARTED;
-            pthread_cond_broadcast(&peer->event);
-        }
-        else
-        {
-            peer->connect_status = status;
-            peer->connect_state = PEER_STATE_STOPPED;
-        }
-        break;
-    case PEER_STATE_STARTING:
-        while (peer->connect_state == PEER_STATE_STARTING)
-        {
-            BAIL_ON_ERROR(status = peer->connect_status);
-            pthread_cond_wait(&peer->event, &peer->lock);
-        }
-        break;
-    case PEER_STATE_STARTED:
-        break;
-    case PEER_STATE_STOPPING:
-        BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_STATE);
-    case PEER_STATE_ERROR:
-        BAIL_ON_ERROR(status = peer->connect_state);
-        break;
-    }
-
-error:
-
-    return status;
-}
-
-
 LWMsgStatus
 lwmsg_peer_connect(
     LWMsgPeer* peer,
@@ -1062,11 +882,16 @@ lwmsg_peer_connect(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgBool locked = LWMSG_FALSE;
 
-    BAIL_ON_ERROR(status = lwmsg_peer_connect_in_lock(peer, &locked));
+    PEER_LOCK(peer, locked);
+
+    if (!peer->connect_session)
+    {
+        BAIL_ON_ERROR(status = lwmsg_peer_session_new(peer, &peer->connect_session));
+    }
     
     if (session)
     {
-        *session = peer->connect_session;
+        *session = (LWMsgSession*) peer->connect_session;
     }
 
 error:
@@ -1083,55 +908,18 @@ lwmsg_peer_disconnect(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgBool locked = LWMSG_FALSE;
+    PeerSession* session = NULL;
 
     PEER_LOCK(peer, locked);
-    switch (peer->connect_state)
-    {
-    case PEER_STATE_STARTED:
-        peer->connect_state = PEER_STATE_STOPPING;
-        peer->connect_status = LWMSG_STATUS_SUCCESS;
-
-        PEER_UNLOCK(peer, locked);
-
-        if (peer->direct)
-        {
-            lwmsg_direct_disconnect(peer->direct);
-            lwmsg_direct_session_release(peer->direct);
-            peer->direct = NULL;
-        }
-
-        if (peer->connect_task)
-        {
-            lwmsg_peer_task_cancel_and_unref(peer->connect_task);
-            peer->connect_task = NULL;
-        }
-
-        PEER_LOCK(peer, locked);
-
-        peer->connect_state = PEER_STATE_STOPPED;
-        peer->connect_endpoint = NULL;
-        pthread_cond_broadcast(&peer->event);
-        break;
-    case PEER_STATE_STOPPING:
-        while (peer->connect_state == PEER_STATE_STOPPING)
-        {
-            BAIL_ON_ERROR(status = peer->connect_status);
-            pthread_cond_wait(&peer->event, &peer->lock);
-        }
-        break;
-    case PEER_STATE_STOPPED:
-        break;
-    case PEER_STATE_STARTING:
-        BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_STATE);
-        break;
-    case PEER_STATE_ERROR:
-        BAIL_ON_ERROR(status = peer->connect_status);
-        break;
-    }
-
-error:
-
+    session = peer->connect_session;
+    peer->connect_session = NULL;
     PEER_UNLOCK(peer, locked);
+
+    if (session)
+    {
+        lwmsg_peer_session_disconnect(session);
+        lwmsg_peer_session_release(session);
+    }
 
     return status;
 }
@@ -1143,91 +931,22 @@ lwmsg_peer_acquire_call(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    LWMsgStatus orig_status = LWMSG_STATUS_SUCCESS;
-    PeerCall* pcall = NULL;
-    DirectCall* dcall = NULL;
-    LWMsgBool locked = LWMSG_FALSE;
-    PeerAssocTask* task = NULL;
+    PeerSession* session = NULL;
 
-    if (peer->direct)
+    session = peer->connect_session;
+
+    if (!session)
     {
-        BAIL_ON_ERROR(status = lwmsg_direct_call_new(peer->direct, LWMSG_FALSE, &dcall));
-        *call = LWMSG_CALL(dcall);
+        BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_STATE);
     }
-    else
-    {
-        do
-        {
-            /* Ensure we are in a connected state, and acquire a reference
-               to the connect task */
-            PEER_LOCK(peer, locked);
-            BAIL_ON_ERROR(status = lwmsg_peer_connect_in_lock(peer, &locked));
-            task = peer->connect_task;
-            task->refcount++;
-            PEER_UNLOCK(peer, locked);
 
-            /* Check that the connect task is in a good state */
-            pthread_mutex_lock(&task->call_lock);
-            status = task->status;
-            pthread_mutex_unlock(&task->call_lock);
-
-            switch (status)
-            {
-            case LWMSG_STATUS_PEER_CLOSE:
-            case LWMSG_STATUS_PEER_RESET:
-                /* Drop the reference */
-                lwmsg_peer_task_unref(task);
-                task = NULL;
-                /* Disconnect and try again */
-                lwmsg_peer_disconnect(peer);
-                orig_status = status;
-            status = LWMSG_STATUS_AGAIN;
-            break;
-            default:
-                break;
-                BAIL_ON_ERROR(status);
-            }
-        } while (status == LWMSG_STATUS_AGAIN);
-
-        BAIL_ON_ERROR(status = lwmsg_peer_call_new(task, &pcall));
-        pcall->base.is_outgoing = LWMSG_TRUE;
-        task = NULL;
-
-        *call = LWMSG_CALL(pcall);
-    }
+    BAIL_ON_ERROR(status = lwmsg_peer_session_acquire_call(session, call));
 
 done:
-
-    PEER_UNLOCK(peer, locked);
 
     return status;
 
 error:
-
-    PEER_UNLOCK(peer, locked);
-
-    if (pcall)
-    {
-        lwmsg_peer_call_delete(pcall);
-    }
-
-    if (task)
-    {
-        lwmsg_peer_task_unref(task);
-    }
-
-    switch (status)
-    {
-    case LWMSG_STATUS_CONNECTION_REFUSED:
-    case LWMSG_STATUS_FILE_NOT_FOUND:
-        if (orig_status)
-        {
-            status = orig_status;
-        }
-        break;
-    default:
-        break;
-    }
 
     goto done;
 }

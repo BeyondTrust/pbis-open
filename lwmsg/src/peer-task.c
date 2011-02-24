@@ -70,19 +70,6 @@ lwmsg_peer_task_run_listen(
 
 static
 void
-lwmsg_peer_task_notify_status(
-    PeerAssocTask* task,
-    LWMsgStatus status
-    )
-{
-    pthread_mutex_lock(&task->call_lock);
-    task->status = status;
-    pthread_cond_broadcast(&task->call_event);
-    pthread_mutex_unlock(&task->call_lock);
-}
-
-static
-void
 lwmsg_peer_session_string_for_session(
     LWMsgSession* session,
     LWMsgSessionString string
@@ -370,7 +357,7 @@ lwmsg_peer_task_delete(
 
     if (task->assoc)
     {
-        lwmsg_peer_release_client_slot(task->peer);
+        lwmsg_peer_release_client_slot(task->session->peer);
         lwmsg_assoc_destroy_message(task->assoc, &task->incoming_message);
         if (task->destroy_outgoing)
         {
@@ -384,53 +371,29 @@ lwmsg_peer_task_delete(
         lwmsg_task_release(task->event_task);
     }
 
-    if (task->session_release && task->session)
+    if (task->session)
     {
-        lwmsg_session_release(task->session);
+        lwmsg_peer_session_release(task->session);
     }
-
-    pthread_mutex_destroy(&task->call_lock);
-    pthread_cond_destroy(&task->call_event);
 
     free(task);
 }
 
 void
-lwmsg_peer_task_cancel_and_unref(
+lwmsg_peer_task_release(
     PeerAssocTask* task
     )
 {
-    lwmsg_task_cancel(task->event_task);
-    lwmsg_peer_task_unref(task);
-}
+    int32_t refs = 0;
 
-void
-lwmsg_peer_task_unref(
-    PeerAssocTask* task
-    )
-{
-    LWMsgBool delete = LWMSG_FALSE;
-    lwmsg_peer_lock(task->peer);
-    if (--task->refcount == 0)
-    {
-        delete = LWMSG_TRUE;
-    }
-    lwmsg_peer_unlock(task->peer);
+    pthread_mutex_lock(&task->session->lock);
+    refs = --task->refs;
+    pthread_mutex_unlock(&task->session->lock);
 
-    if (delete)
+    if (refs == 0)
     {
         lwmsg_peer_task_delete(task);
     }
-}
-
-void
-lwmsg_peer_task_ref(
-    PeerAssocTask* task
-    )
-{
-    lwmsg_peer_lock(task->peer);
-    ++task->refcount;
-    lwmsg_peer_unlock(task->peer);
 }
 
 static
@@ -463,31 +426,19 @@ lwmsg_peer_call_equal(
 
 static LWMsgStatus
 lwmsg_peer_assoc_task_new(
-    LWMsgPeer* peer,
+    PeerSession* session,
     PeerAssocTaskType type,
     PeerAssocTask** task
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerAssocTask* my_task = NULL;
-    pthread_mutexattr_t mutex_attr;
-    LWMsgBool free_mutexattr = LWMSG_FALSE;
-    LWMsgBool free_mutex = LWMSG_FALSE;
-    LWMsgBool free_cond = LWMSG_FALSE;
 
     BAIL_ON_ERROR(status = LWMSG_ALLOC(&my_task));
 
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(pthread_mutexattr_init(&mutex_attr)));
-    free_mutexattr = LWMSG_TRUE;
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE)));
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(pthread_mutex_init(&my_task->call_lock, &mutex_attr)));
-    free_mutex = LWMSG_TRUE;
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(pthread_cond_init(&my_task->call_event, NULL)));
-    free_cond = LWMSG_TRUE;
-
-    my_task->peer = peer;
+    my_task->session = session;
     my_task->type = type;
-    my_task->refcount = 2;
+    my_task->refs = 1;
 
     lwmsg_ring_init(&my_task->active_incoming_calls);
     lwmsg_ring_init(&my_task->active_outgoing_calls);
@@ -515,31 +466,10 @@ lwmsg_peer_assoc_task_new(
 
 error:
 
-    if (free_mutexattr)
-    {
-        pthread_mutexattr_destroy(&mutex_attr);
-    }
-
     if (status && my_task)
     {
-        if (!free_mutex || !free_cond)
-        {
-            if (free_mutex)
-            {
-                pthread_mutex_destroy(&my_task->call_lock);
-            }
-            
-            if (free_cond)
-            {
-                pthread_cond_destroy(&my_task->call_event);
-            }
-
-            free(my_task);
-        }
-        else
-        {
-            lwmsg_peer_task_delete(my_task);
-        }
+        my_task->session = NULL;
+        lwmsg_peer_task_delete(my_task);
     }
 
     return status;
@@ -703,7 +633,7 @@ error:
 static
 LWMsgStatus
 lwmsg_peer_assoc_task_new_accept(
-    LWMsgPeer* peer,
+    PeerSession* session,
     LWMsgAssoc* assoc,
     PeerAssocTask** task
     )
@@ -711,13 +641,13 @@ lwmsg_peer_assoc_task_new_accept(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerAssocTask* my_task = NULL;
     
-    BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new(peer, PEER_TASK_BEGIN_ACCEPT, &my_task));
+    BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new(session, PEER_TASK_BEGIN_ACCEPT, &my_task));
 
     my_task->assoc = assoc;
 
     status = lwmsg_task_new(
-        peer->task_manager,
-        peer->listen_tasks,
+        session->peer->task_manager,
+        session->peer->listen_tasks,
         lwmsg_peer_task_run,
         my_task,
         &my_task->event_task);
@@ -737,6 +667,7 @@ error:
 
     if (my_task)
     {
+        my_task->session = NULL;
         lwmsg_peer_task_delete(my_task);
     }
 
@@ -745,27 +676,25 @@ error:
 
 LWMsgStatus
 lwmsg_peer_assoc_task_new_connect(
-    LWMsgPeer* peer,
+    PeerSession* session,
     LWMsgAssoc* assoc,
-    LWMsgSession* session,
     PeerAssocTask** task
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerAssocTask* my_task = NULL;
     
-    BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new(peer, PEER_TASK_BEGIN_CONNECT, &my_task));
+    BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new(session, PEER_TASK_BEGIN_CONNECT, &my_task));
 
     my_task->assoc = assoc;
-    my_task->session = session;
-
+    my_task->refs++;
 
     BAIL_ON_ERROR(status = lwmsg_task_new(
-                          peer->task_manager,
-                          peer->connect_tasks,
-                          lwmsg_peer_task_run,
-                          my_task,
-                          &my_task->event_task));
+        session->peer->task_manager,
+        session->peer->connect_tasks,
+        lwmsg_peer_task_run,
+        my_task,
+        &my_task->event_task));
     *task = my_task;
 
 done:
@@ -776,6 +705,7 @@ error:
 
     if (my_task)
     {
+        my_task->session = NULL;
         lwmsg_peer_task_delete(my_task);
     }
 
@@ -837,7 +767,7 @@ lwmsg_peer_task_subject_to_timeout(
 
     if (task->type == PEER_TASK_DISPATCH)
     {
-        handle_count = lwmsg_session_get_handle_count(task->session);
+        handle_count = lwmsg_session_get_handle_count((LWMsgSession*) task->session);
         num_clients = lwmsg_peer_get_num_clients(peer);
         
         return handle_count == 0 && num_clients == peer->max_clients && 
@@ -881,10 +811,9 @@ lwmsg_peer_task_handle_assoc_error(
 {
     if (status)
     {
-        pthread_mutex_lock(&task->call_lock);
+        pthread_mutex_lock(&task->session->lock);
         task->status = status;
-        pthread_cond_broadcast(&task->call_event);
-        pthread_mutex_unlock(&task->call_lock);
+        pthread_mutex_unlock(&task->session->lock);
     }
 
     switch (status)
@@ -950,7 +879,7 @@ lwmsg_peer_task_run_listen(
     PeerListenTask* task = data;
     int client_fd = -1;
     LWMsgAssoc* assoc = NULL;
-    PeerAssocTask* client_task = NULL;
+    PeerSession* session = NULL;
     LWMsgBool slot = LWMSG_FALSE;
     int err = 0;
     
@@ -962,7 +891,7 @@ lwmsg_peer_task_run_listen(
     while (status == LWMSG_STATUS_SUCCESS)
     {
         assoc = NULL;
-        client_task = NULL;
+        session = NULL;
         slot = LWMSG_FALSE;
         client_fd = -1;
         
@@ -1005,17 +934,17 @@ lwmsg_peer_task_run_listen(
             BAIL_ON_ERROR(status = lwmsg_set_close_on_exec(client_fd));
             
             /* Create new connection with client fd, put it into task, schedule task */
+            BAIL_ON_ERROR(status = lwmsg_peer_session_new(task->peer, &session));
             BAIL_ON_ERROR(status = lwmsg_connection_new(task->peer->context, task->peer->protocol, &assoc));
             BAIL_ON_ERROR(status = lwmsg_connection_set_fd(assoc, LWMSG_CONNECTION_MODE_LOCAL, client_fd));
             BAIL_ON_ERROR(status = lwmsg_assoc_set_nonblock(assoc, LWMSG_TRUE));
-            BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new_accept(task->peer, assoc, &client_task));
+            BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new_accept(session, assoc, &session->assoc_session));
             assoc = NULL;
             slot = LWMSG_FALSE;
             
             /* Release a reference so the task will be freed immediately
                when it is cancelled */
-            lwmsg_peer_task_unref(client_task);
-            lwmsg_task_wake(client_task->event_task);
+            lwmsg_task_wake(session->assoc_session->event_task);
         }
         else
         {
@@ -1047,9 +976,9 @@ error:
         lwmsg_assoc_delete(assoc);
     }
     
-    if (client_task)
+    if (session)
     {
-        lwmsg_peer_task_cancel_and_unref(client_task);
+        lwmsg_session_release((LWMsgSession*) session);
     }
 
     /* If the listen task aborts, the server will be left in a state
@@ -1095,10 +1024,9 @@ lwmsg_peer_task_run_accept(
     if (!task->session)
     {
         BAIL_ON_ERROR(status = lwmsg_peer_session_new(peer, &task->session));
-        task->session_release = LWMSG_TRUE;
     }
 
-    status = lwmsg_assoc_accept(task->assoc, task->session);
+    status = lwmsg_assoc_accept(task->assoc, (LWMsgSession*) task->session);
 
     switch (status)
     {
@@ -1139,14 +1067,13 @@ lwmsg_peer_task_run_connect(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
 
-    status = lwmsg_assoc_connect(task->assoc, task->session);
+    status = lwmsg_assoc_connect(task->assoc, (LWMsgSession*) task->session);
 
     switch (status)
     {
     case LWMSG_STATUS_SUCCESS:
         task->type = PEER_TASK_DISPATCH;
         BAIL_ON_ERROR(status = lwmsg_peer_log_connect(peer, task->assoc));
-        lwmsg_peer_task_notify_status(task, LWMSG_STATUS_SUCCESS);
         /* Set up the fd the assoc just created for events */
         BAIL_ON_ERROR(status = lwmsg_task_set_trigger_fd(task->event_task, CONNECTION_PRIVATE(task->assoc)->fd));
         break;
@@ -1191,7 +1118,7 @@ lwmsg_peer_task_rundown(
     LWMsgMessage cancel = LWMSG_MESSAGE_INITIALIZER;
     LWMsgMessage message = LWMSG_MESSAGE_INITIALIZER;    
 
-    pthread_mutex_lock(&task->call_lock);
+    pthread_mutex_lock(&task->session->lock);
 
     lwmsg_hash_iter_begin(&task->incoming_calls, &iter);
     while ((call = lwmsg_hash_iter_next(&task->incoming_calls, &iter)))
@@ -1242,7 +1169,7 @@ lwmsg_peer_task_rundown(
 
 error:
 
-    pthread_mutex_unlock(&task->call_lock);
+    pthread_mutex_unlock(&task->session->lock);
 
     return status;
 }
@@ -1336,7 +1263,7 @@ lwmsg_peer_task_cancel_call(
 
     if (call)
     {
-        lwmsg_peer_log_message(task->peer, task->assoc, &task->incoming_message, LWMSG_FALSE);
+        lwmsg_peer_log_message(task->session->peer, task->assoc, &task->incoming_message, LWMSG_FALSE);
         lwmsg_peer_call_cancel_incoming(call);
     }
 }
@@ -1354,7 +1281,7 @@ lwmsg_peer_task_complete_call(
 
     if (call)
     {
-        lwmsg_peer_log_message(task->peer, task->assoc, &task->incoming_message, LWMSG_TRUE);
+        lwmsg_peer_log_message(task->session->peer, task->assoc, &task->incoming_message, LWMSG_TRUE);
         lwmsg_peer_call_complete_outgoing(call, &task->incoming_message);
     }
 }
@@ -1368,7 +1295,7 @@ lwmsg_peer_task_dispatch_incoming_message(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgDispatchSpec* spec = NULL;
     LWMsgTag tag = task->incoming_message.tag;
-    LWMsgPeer* peer = task->peer;
+    LWMsgPeer* peer = task->session->peer;
     PeerCall* call = NULL;
 
     /* If the incoming message is a reply to one of our calls,
@@ -1415,8 +1342,8 @@ lwmsg_peer_task_dispatch_incoming_message(
     call->params.incoming.in.tag = LWMSG_TAG_INVALID;
     call->params.incoming.out.tag = LWMSG_TAG_INVALID;
 
-    /* The call structure holds a reference to the task */
-    lwmsg_peer_task_ref(task);
+    /* The call structure holds a reference to the session */
+    task->refs++;
 
     /* Set cookie and insert into incoming call table */
     call->cookie = task->incoming_message.cookie;
@@ -1493,6 +1420,7 @@ lwmsg_peer_task_run_finish(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     int fd = CONNECTION_PRIVATE(task->assoc)->fd;
 
+#if 0
     /* When the peer runs out of available client slots, it will
        wake all of its tasks so that it can begin enforcing timeouts
        where it previously did not bother.  Tell the task manager to
@@ -1502,6 +1430,7 @@ lwmsg_peer_task_run_finish(
     {
         *next_trigger |= LWMSG_TASK_TRIGGER_TIME;
     }
+#endif
 
     /* Did we hit a timeout? */
     if (trigger & LWMSG_TASK_TRIGGER_TIME)
@@ -1548,7 +1477,6 @@ lwmsg_peer_task_run_finish(
                 break;
             case PEER_TASK_FINISH_CONNECT:
                 BAIL_ON_ERROR(status = lwmsg_peer_log_connect(peer, task->assoc));
-                lwmsg_peer_task_notify_status(task, LWMSG_STATUS_SUCCESS);
                 task->type = PEER_TASK_DISPATCH;
                 break;
             case PEER_TASK_FINISH_CLOSE:
@@ -1618,7 +1546,7 @@ lwmsg_peer_task_finish_transceive(
             }
             else if (message == &task->outgoing_message)
             {
-                lwmsg_peer_log_message(task->peer, task->assoc, &task->outgoing_message, LWMSG_FALSE);
+                lwmsg_peer_log_message(task->session->peer, task->assoc, &task->outgoing_message, LWMSG_FALSE);
                 task->outgoing = LWMSG_FALSE;
                 if (task->destroy_outgoing)
                 {
@@ -1673,7 +1601,7 @@ lwmsg_peer_task_dispatch_calls(
             task->outgoing_message.cookie = call->cookie;
             task->outgoing_message.status = call->status;
             
-            lwmsg_peer_log_message(task->peer, task->assoc, &task->outgoing_message, LWMSG_TRUE);
+            lwmsg_peer_log_message(task->session->peer, task->assoc, &task->outgoing_message, LWMSG_TRUE);
             status = lwmsg_assoc_send_message(task->assoc, &task->outgoing_message);
             switch (status)
             {
@@ -1709,7 +1637,7 @@ lwmsg_peer_task_dispatch_calls(
             task->outgoing_message.status = LWMSG_STATUS_CANCELLED;
             task->outgoing_message.cookie = call->cookie;
             
-            lwmsg_peer_log_message(task->peer, task->assoc, &task->outgoing_message, LWMSG_TRUE);
+            lwmsg_peer_log_message(task->session->peer, task->assoc, &task->outgoing_message, LWMSG_TRUE);
             status = lwmsg_assoc_send_message(task->assoc, &task->outgoing_message);
             switch (status)
             {
@@ -1739,12 +1667,12 @@ lwmsg_peer_task_dispatch_calls(
             (call->state & PEER_CALL_DISPATCHED))
         {
             /* Trace call completion */
-            if (call->task->peer->trace_end)
+            if (call->task->session->peer->trace_end)
             {
-                call->task->peer->trace_end(
+                call->task->session->peer->trace_end(
                     LWMSG_CALL(call),
                     &call->params.incoming.out,
-                    call->task->peer->trace_data);
+                    call->task->session->peer->trace_data);
             }
 
             lwmsg_message_init(&task->outgoing_message);
@@ -1771,7 +1699,7 @@ lwmsg_peer_task_dispatch_calls(
                 switch (status)
                 {
                 case LWMSG_STATUS_SUCCESS:
-                    lwmsg_peer_log_message(task->peer, task->assoc, &task->outgoing_message, LWMSG_FALSE);
+                    lwmsg_peer_log_message(task->session->peer, task->assoc, &task->outgoing_message, LWMSG_FALSE);
                     lwmsg_assoc_destroy_message(task->assoc, &task->outgoing_message);
                     break;
                 case LWMSG_STATUS_PENDING:
@@ -1786,7 +1714,7 @@ lwmsg_peer_task_dispatch_calls(
                     /* Our reply could not be sent because the dispatch function gave us
                        bogus response parameters.  Send a synthetic reply instead so the
                        caller at least knows the call is complete */
-                    LWMSG_LOG_WARNING(task->peer->context,
+                    LWMSG_LOG_WARNING(task->session->peer->context,
                                       "(assoc:0x%lx >> %u) Response payload could not be sent: %s",
                                       LWMSG_POINTER_AS_ULONG(task->assoc),
                                       cookie,
@@ -1826,7 +1754,7 @@ lwmsg_peer_task_run_dispatch(
     LWMsgStatus send_status = LWMSG_STATUS_PENDING;
     LWMsgTime* timeout = NULL;
 
-    pthread_mutex_lock(&task->call_lock);
+    pthread_mutex_lock(&task->session->lock);
 
     /* Did we hit a timeout? */
     if (*trigger & LWMSG_TASK_TRIGGER_TIME)
@@ -1911,7 +1839,7 @@ lwmsg_peer_task_run_dispatch(
 
 error:
 
-    pthread_mutex_unlock(&task->call_lock);
+    pthread_mutex_unlock(&task->session->lock);
 
     switch (status)
     {
@@ -1949,8 +1877,7 @@ lwmsg_peer_task_run_drop(
         lwmsg_task_unset_trigger_fd(task->event_task, fd);
     }
 
-    lwmsg_peer_task_unref(task);
-    BAIL_ON_ERROR(status = LWMSG_STATUS_CANCELLED);
+    task->type = PEER_TASK_DONE;
 
 error:
 
@@ -1969,7 +1896,7 @@ lwmsg_peer_task_run(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerAssocTask* task = (PeerAssocTask*) data;
-    LWMsgPeer* peer = task->peer;
+    LWMsgPeer* peer = task->session->peer;
     LWMsgTime my_timeout = {-1, -1};
 
     if (*next_timeout >= 0)
@@ -2045,6 +1972,10 @@ lwmsg_peer_task_run(
             next_trigger,
             &my_timeout));
         break;
+    case PEER_TASK_DONE:
+        lwmsg_peer_task_release(task);
+        *next_trigger = 0;
+        return;
     default:
         break;
     }
@@ -2073,16 +2004,19 @@ error:
         }
         break;
     case LWMSG_STATUS_CANCELLED:
-        *next_trigger = 0;
-        break;            
-
+        task->type = PEER_TASK_DONE;
+        *next_trigger = LWMSG_TASK_TRIGGER_YIELD;
         break;
     default:
         LWMSG_LOG_ERROR(peer->context, "Caught error: %s (%i)", lwmsg_error_name(status), status);
+
         if (peer->except)
         {
             peer->except(peer, status, peer->except_data);
         }
+
+        task->type = PEER_TASK_DONE;
+        *next_trigger = LWMSG_TASK_TRIGGER_YIELD;
         break;
     }
 

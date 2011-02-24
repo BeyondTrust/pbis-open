@@ -47,52 +47,6 @@
 #include <pthread.h>
 #include <limits.h>
 
-typedef struct PeerHandleKey
-{
-    LWMsgHandleType type;
-    LWMsgHandleID id;
-} PeerHandleKey;
-
-typedef struct PeerSession
-{
-    LWMsgSession base;
-    /* Session identifier */
-    LWMsgSessionID id;
-    /* Security token of session creator */
-    LWMsgSecurityToken* sec_token;
-    /* Reference count */
-    size_t volatile refs;
-    /* Hash of handles by id */
-    LWMsgHashTable handle_by_id;
-    /* Lock */
-    pthread_mutex_t lock;
-    /* Next handle ID */
-    unsigned long volatile next_hid;
-    /* User data pointer */
-    void* data;
-    /* Owning peer */
-    LWMsgPeer* peer;
-    LWMsgSessionDestructFunction destruct;
-} PeerSession;
-
-struct LWMsgHandle
-{
-    /* Key */
-    PeerHandleKey key;
-    /* Validity bit */
-    LWMsgBool volatile valid;
-    /* Reference count */
-    size_t volatile refs;
-    /* Handle type */
-    const char* type;
-    /* Handle pointer */
-    void* pointer;
-    /* Handle cleanup function */
-    void (*cleanup)(void*);
-    /* Link in hash table by id */
-    LWMsgRing id_ring;
-};
-
 #define SHARED_SESSION(obj) ((PeerSession*) (obj))
 
 static
@@ -229,7 +183,16 @@ peer_free_session(
         lwmsg_security_token_delete(session->sec_token);
     }
 
-    pthread_mutex_destroy(&session->lock);
+    if (session->lock_destroy)
+    {
+        pthread_mutex_destroy(&session->lock);
+    }
+
+    if (session->event_destroy)
+    {
+        pthread_cond_destroy(&session->event);
+    }
+
     free(session);
 }
 
@@ -266,14 +229,12 @@ peer_session_reset_in_lock(
 
 void
 lwmsg_peer_session_reset(
-    LWMsgSession* session
+    PeerSession* session
     )
 {
-    PeerSession* my_session = SHARED_SESSION(session);
-
-    session_lock(my_session);
-    peer_session_reset_in_lock(my_session);
-    session_unlock(my_session);
+    session_lock(session);
+    peer_session_reset_in_lock(session);
+    session_unlock(session);
 }
 
 static
@@ -288,11 +249,11 @@ peer_accept(
     PeerSession* my_session = SHARED_SESSION(session);
     LWMsgPeer* peer = NULL;
 
-    /* FIXME: somewhat hacky */
-    if (my_session->peer->connect_session == session &&
-        my_session->peer->direct)
+    session_lock(my_session);
+
+    if (my_session->direct_session)
     {
-        peer = my_session->peer->direct->endpoint->server;
+        peer = my_session->direct_session->endpoint->server;
     }
     else
     {
@@ -315,14 +276,11 @@ peer_accept(
 
 done:
 
+    session_unlock(my_session);
+
     return status;    
 
 error:
-
-    if (my_session)
-    {
-        peer_free_session(my_session);
-    }
 
     goto done;
 }
@@ -380,20 +338,41 @@ error:
     goto done;
 }
 
+void
+lwmsg_peer_session_release(
+    PeerSession* session
+    )
+{
+    LWMsgBool locked = LWMSG_FALSE;
+    LWMsgPeer* peer = session->peer;
+
+    PEER_LOCK(peer, locked);
+    if (--session->refs == 0)
+    {
+        peer_free_session(session);
+    }
+    PEER_UNLOCK(peer, locked);
+}
+
+void
+lwmsg_peer_session_retain(
+    PeerSession* session
+    )
+{
+    LWMsgBool locked = LWMSG_FALSE;
+
+    PEER_LOCK(session->peer, locked);
+    session->refs++;
+    PEER_UNLOCK(session->peer, locked);
+}
+
 static
 void
 peer_release(
     LWMsgSession* session
     )
 {
-    PeerSession* my_session = SHARED_SESSION(session);
-
-    my_session->refs--;
-
-    if (my_session->refs == 0)
-    {
-        peer_free_session(my_session);
-    }
+    lwmsg_peer_session_release(SHARED_SESSION(session));
 }
 
 static
@@ -790,11 +769,13 @@ static LWMsgSessionClass peer_class =
 LWMsgStatus
 lwmsg_peer_session_new(
     LWMsgPeer* peer,
-    LWMsgSession** out_session
+    PeerSession** out_session
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerSession* session = NULL;
+    pthread_mutexattr_t attr;
+    LWMsgBool attr_destroy = LWMSG_FALSE;
 
     BAIL_ON_ERROR(status = LWMSG_ALLOC(&session));
 
@@ -813,7 +794,23 @@ lwmsg_peer_session_new(
 
     session->refs = 1;
 
-    *out_session = LWMSG_SESSION(session);
+    BAIL_ON_ERROR(status = lwmsg_error_map_errno(
+        pthread_mutexattr_init(&attr)));
+    attr_destroy = LWMSG_TRUE;
+
+    BAIL_ON_ERROR(status = lwmsg_error_map_errno(
+        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE)));
+
+    BAIL_ON_ERROR(status = lwmsg_error_map_errno(
+        pthread_mutex_init(&session->lock, &attr)));
+    session->lock_destroy = LWMSG_TRUE;
+
+    BAIL_ON_ERROR(status = lwmsg_error_map_errno(
+        pthread_cond_init(&session->event, NULL)));
+    session->event_destroy = LWMSG_TRUE;
+
+
+    *out_session = session;
 
 done:
 
@@ -827,4 +824,212 @@ error:
     }
 
     goto done;
+}
+
+
+static
+LWMsgStatus
+lwmsg_peer_session_connect_endpoint(
+    PeerSession* session,
+    PeerEndpoint* endpoint
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgAssoc* assoc = NULL;
+    LWMsgPeer* peer = session->peer;
+    DirectSession* direct_session = NULL;
+    PeerAssocTask* assoc_session = NULL;
+
+    switch (endpoint->type)
+    {
+    case LWMSG_ENDPOINT_DIRECT:
+        BAIL_ON_ERROR(status = lwmsg_direct_session_new(session, &direct_session));
+        session->refs++;
+        BAIL_ON_ERROR(status = lwmsg_direct_connect(endpoint->endpoint, direct_session));
+        session->direct_session = direct_session;
+        direct_session = NULL;
+        break;
+    case LWMSG_ENDPOINT_LOCAL:
+        BAIL_ON_ERROR(status = lwmsg_connection_new(peer->context, peer->protocol, &assoc));
+        BAIL_ON_ERROR(status = lwmsg_connection_set_endpoint(assoc, endpoint->type, endpoint->endpoint));
+        BAIL_ON_ERROR(status = lwmsg_assoc_set_nonblock(assoc, LWMSG_TRUE));
+        /* Create task to manage it */
+        BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new_connect(
+            session,
+            assoc,
+            &assoc_session));
+        assoc = NULL;
+        session->refs++;
+        session->assoc_session = assoc_session;
+        lwmsg_task_wake(assoc_session->event_task);
+        assoc_session = NULL;
+        break;
+    default:
+        BAIL_ON_ERROR(status = LWMSG_STATUS_UNSUPPORTED);
+    }
+
+done:
+
+    if (assoc)
+    {
+        lwmsg_assoc_delete(assoc);
+    }
+
+    if (assoc_session)
+    {
+        lwmsg_task_cancel(assoc_session->event_task);
+    }
+
+    if (direct_session)
+    {
+        lwmsg_direct_session_release(direct_session);
+    }
+
+    return status;
+
+error:
+
+    goto done;
+}
+
+static
+LWMsgStatus
+lwmsg_peer_session_connect(
+    PeerSession* session
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgPeer* peer = session->peer;
+    LWMsgRing* ring = NULL;
+    PeerEndpoint* endpoint = NULL;
+
+    for (ring = peer->connect_endpoints.next; ring != &peer->connect_endpoints; ring = ring->next)
+    {
+        endpoint = LWMSG_OBJECT_FROM_MEMBER(ring, PeerEndpoint, ring);
+        status = lwmsg_peer_session_connect_endpoint(session, endpoint);
+        switch (status)
+        {
+        case LWMSG_STATUS_SUCCESS:
+            session->endpoint = endpoint;
+            goto done;
+        case LWMSG_STATUS_CONNECTION_REFUSED:
+        case LWMSG_STATUS_TIMEOUT:
+        case LWMSG_STATUS_FILE_NOT_FOUND:
+        case LWMSG_STATUS_NOT_FOUND:
+            break;
+        default:
+            BAIL_ON_ERROR(status);
+        }
+    }
+
+done:
+
+    return status;
+
+error:
+
+    goto done;
+}
+
+void
+lwmsg_peer_session_disconnect(
+    PeerSession* session
+    )
+{
+    DirectSession* direct_session = NULL;
+    PeerAssocTask* assoc_session = NULL;
+
+    session_lock(session);
+    direct_session = session->direct_session;
+    session->direct_session = NULL;
+    assoc_session = session->assoc_session;
+    session->assoc_session = NULL;
+    session_unlock(session);
+
+    if (direct_session)
+    {
+        lwmsg_direct_disconnect(direct_session);
+        lwmsg_direct_session_release(direct_session);
+    }
+
+    if (assoc_session)
+    {
+        lwmsg_task_cancel(assoc_session->event_task);
+        lwmsg_peer_task_release(assoc_session);
+    }
+}
+
+LWMsgStatus
+lwmsg_peer_session_acquire_call(
+    PeerSession* session,
+    LWMsgCall** call
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    DirectCall* direct_call = NULL;
+    PeerCall* assoc_call = NULL;
+    DirectSession* old_direct = NULL;
+    PeerAssocTask* old_assoc = NULL;
+
+    session_lock(session);
+
+    if (session->direct_session && session->direct_session->endpoint == NULL)
+    {
+        old_direct = session->direct_session;
+        session->direct_session = NULL;
+    }
+
+    if (session->assoc_session && session->assoc_session->status != LWMSG_STATUS_SUCCESS)
+    {
+        old_assoc = session->assoc_session;
+        session->assoc_session = NULL;
+    }
+
+    if (!session->direct_session && !session->assoc_session)
+    {
+        BAIL_ON_ERROR(status = lwmsg_peer_session_connect(session));
+    }
+
+    if (session->direct_session)
+    {
+        BAIL_ON_ERROR(status = lwmsg_direct_call_new(
+            session->direct_session,
+            LWMSG_FALSE,
+            &direct_call));
+
+        session->direct_session->refs++;
+
+        *call = LWMSG_CALL(direct_call);
+    }
+    else if (session->assoc_session)
+    {
+        BAIL_ON_ERROR(status = lwmsg_peer_call_new(
+            session->assoc_session,
+            &assoc_call));
+
+        session->assoc_session->refs++;
+
+        *call = LWMSG_CALL(assoc_call);
+    }
+
+error:
+
+    session_unlock(session);
+
+    if (old_direct)
+    {
+        lwmsg_direct_session_release(old_direct);
+    }
+
+    if (old_assoc)
+    {
+        lwmsg_peer_task_release(old_assoc);
+    }
+
+    if (status)
+    {
+        *call = NULL;
+    }
+
+    return status;
 }

@@ -47,8 +47,8 @@
 
 #define LOCK_ENDPOINTS() (pthread_mutex_lock(&endpoint_lock))
 #define UNLOCK_ENDPOINTS() (pthread_mutex_unlock(&endpoint_lock))
-#define LOCK_SESSION(s) (pthread_mutex_lock(&(s)->lock))
-#define UNLOCK_SESSION(s) (pthread_mutex_unlock(&(s)->lock))
+#define LOCK_SESSION(s) (pthread_mutex_lock(&(s)->session->lock))
+#define UNLOCK_SESSION(s) (pthread_mutex_unlock(&(s)->session->lock))
 
 static pthread_mutex_t endpoint_lock = PTHREAD_MUTEX_INITIALIZER;
 static LWMsgRing endpoints = {&endpoints, &endpoints};
@@ -113,20 +113,6 @@ error:
 
 static
 void
-lwmsg_direct_call_release_in_lock(
-    DirectCall* call
-    )
-{
-    if (--call->refs == 0)
-    {
-        lwmsg_ring_remove(&call->ring);
-        lwmsg_direct_session_release(call->session);
-        free(call);
-    }
-}
-
-static
-void
 lwmsg_direct_cancel_call_in_lock(
     DirectCall* call
     )
@@ -177,14 +163,14 @@ lwmsg_direct_session_rundown_in_lock(
     /* Wait for calls to finish */
     while (!lwmsg_ring_is_empty(&session->calls))
     {
-        pthread_cond_wait(&session->event, &session->lock);
+        pthread_cond_wait(&session->session->event, &session->session->lock);
     }
 
     /* Now we can run down all handles */
-    lwmsg_peer_session_reset(session->peer->connect_session);
+    lwmsg_peer_session_reset(session->session);
 
     /* Release session reference */
-    session->peer->connect_session->sclass->release(session->peer->connect_session);
+    lwmsg_peer_session_release(session->session);
 }
 
 void
@@ -249,8 +235,8 @@ lwmsg_direct_connect(
 
     session->endpoint = endpoint;
 
-    BAIL_ON_ERROR(status = session->peer->connect_session->sclass->accept(
-        session->peer->connect_session,
+    BAIL_ON_ERROR(status = session->session->base.sclass->accept(
+        &session->session->base,
         &cookie,
         token));
     token = NULL;
@@ -275,8 +261,6 @@ lwmsg_direct_disconnect(
         LOCK_ENDPOINTS();
         lwmsg_ring_remove(&session->ring);
         UNLOCK_ENDPOINTS();
-        session->endpoint = NULL;
-
         LOCK_SESSION(session);
         lwmsg_direct_session_rundown_in_lock(session);
         UNLOCK_SESSION(session);
@@ -291,10 +275,18 @@ lwmsg_direct_call_release(
 {
     DirectCall* dcall = (DirectCall*) call;
     DirectSession* session = dcall->session;
+    uint32_t refs = 0;
 
     LOCK_SESSION(session);
-    lwmsg_direct_call_release_in_lock(dcall);
+    refs = --dcall->refs;
     UNLOCK_SESSION(session);
+
+    if (refs == 0)
+    {
+        lwmsg_ring_remove(&dcall->ring);
+        lwmsg_direct_session_release(dcall->session);
+        free(dcall);
+    }
 }
 
 static
@@ -307,7 +299,7 @@ lwmsg_direct_call_remove_in_lock(
     if (!call->session->endpoint &&
         lwmsg_ring_is_empty(&call->session->calls))
     {
-        pthread_cond_signal(&call->session->event);
+        pthread_cond_signal(&call->session->session->event);
     }
 }
 
@@ -326,7 +318,7 @@ lwmsg_direct_call_worker(
     LWMsgBool completed = LWMSG_FALSE;
     LWMsgBool canceled = LWMSG_FALSE;
 
-    target_peer = dcall->is_callback ? session->peer : endpoint->server;
+    target_peer = dcall->is_callback ? session->session->peer : endpoint->server;
     func = target_peer->dispatch.vector[dcall->in->tag]->data;
 
     status = func(LWMSG_CALL(dcall), dcall->in, dcall->out, target_peer->dispatch_data);
@@ -361,7 +353,7 @@ lwmsg_direct_call_worker(
         }
         else
         {
-            pthread_cond_broadcast(&dcall->session->event);
+            pthread_cond_broadcast(&dcall->session->session->event);
         }
     }
 }
@@ -406,7 +398,7 @@ lwmsg_direct_call_dispatch(
         BAIL_ON_ERROR(status = LWMSG_STATUS_CANCELLED);
     }
 
-    target_peer = dcall->is_callback ? session->peer : endpoint->server;
+    target_peer = dcall->is_callback ? session->session->peer : endpoint->server;
 
     if (in->tag >= target_peer->dispatch.vector_length)
     {
@@ -456,7 +448,7 @@ lwmsg_direct_call_dispatch(
         {
             while (!completed)
             {
-                pthread_cond_wait(&session->event, &session->lock);
+                pthread_cond_wait(&session->session->event, &session->session->lock);
                 completed = dcall->state & DIRECT_CALL_COMPLETED;
             }
         }
@@ -464,7 +456,7 @@ lwmsg_direct_call_dispatch(
         if (completed)
         {
             lwmsg_direct_call_remove_in_lock(dcall);
-            lwmsg_direct_call_release_in_lock(dcall);
+            unref = LWMSG_TRUE;
             status = dcall->status;
         }
         else if (canceled && dcall->cancel)
@@ -473,14 +465,13 @@ lwmsg_direct_call_dispatch(
         }
         UNLOCK_SESSION(session);
 
-
         BAIL_ON_ERROR(status);
         break;
     default:
         LOCK_SESSION(session);
         lwmsg_direct_call_remove_in_lock(dcall);
-        lwmsg_direct_call_release_in_lock(dcall);
         UNLOCK_SESSION(session);
+        unref = LWMSG_TRUE;
         BAIL_ON_ERROR(status);
     }
 
@@ -534,7 +525,7 @@ lwmsg_direct_call_complete(
     }
     else
     {
-        pthread_cond_broadcast(&dcall->session->event);
+        pthread_cond_broadcast(&dcall->session->session->event);
     }
 
     return LWMSG_STATUS_SUCCESS;
@@ -579,12 +570,12 @@ lwmsg_direct_call_destroy_params(
     if (params->data && params->tag != LWMSG_TAG_INVALID)
     {
         BAIL_ON_ERROR(status = lwmsg_protocol_get_message_type(
-            dcall->session->peer->protocol,
+            dcall->session->session->peer->protocol,
             params->tag,
             &spec));
 
         lwmsg_data_free_graph_cleanup(
-            dcall->session->peer->context,
+            dcall->session->session->peer->context,
             spec,
             params->data);
 
@@ -604,7 +595,7 @@ lwmsg_direct_call_get_session(
 {
     DirectCall* dcall = (DirectCall*) call;
 
-    return dcall->session->peer->connect_session;
+    return (LWMsgSession*) dcall->session->session;
 }
 
 LWMsgStatus
@@ -650,13 +641,8 @@ lwmsg_direct_call_new(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     DirectCall* dcall = NULL;
-    LWMsgBool locked = LWMSG_FALSE;
 
     BAIL_ON_ERROR(status = LWMSG_ALLOC(&dcall));
-
-    PEER_LOCK(session->peer, locked);
-    session->refs++;
-    PEER_UNLOCK(session->peer, locked);
 
     dcall->base.vtbl = &direct_call_class;
     lwmsg_ring_init(&dcall->ring);
@@ -677,16 +663,7 @@ lwmsg_direct_session_delete(
     DirectSession* my_session
     )
 {
-    if (my_session->lock_destroy)
-    {
-        pthread_mutex_destroy(&my_session->lock);
-    }
-
-    if (my_session->event_destroy)
-    {
-        pthread_cond_destroy(&my_session->event);
-    }
-
+    lwmsg_peer_session_release(my_session->session);
     free(my_session);
 }
 
@@ -695,14 +672,13 @@ lwmsg_direct_session_release(
     DirectSession* session
     )
 {
-    LWMsgBool delete = LWMSG_FALSE;
-    LWMsgBool locked = LWMSG_FALSE;
+    uint32_t refs = 0;
 
-    PEER_LOCK(session->peer, locked);
-    delete = (--session->refs == 0);
-    PEER_UNLOCK(session->peer, locked);
+    LOCK_SESSION(session);
+    refs = --session->refs;
+    UNLOCK_SESSION(session);
 
-    if (delete)
+    if (refs == 0)
     {
         lwmsg_direct_session_delete(session);
     }
@@ -710,8 +686,8 @@ lwmsg_direct_session_release(
 
 LWMsgStatus
 lwmsg_direct_session_new(
-    LWMsgPeer* peer,
-    DirectSession** session
+    PeerSession* session,
+    DirectSession** direct_session
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
@@ -721,30 +697,15 @@ lwmsg_direct_session_new(
 
     BAIL_ON_ERROR(status = LWMSG_ALLOC(&my_session));
 
-    my_session->peer = peer;
+    my_session->session = session;
     my_session->refs = 1;
 
     lwmsg_ring_init(&my_session->calls);
     lwmsg_ring_init(&my_session->ring);
 
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(
-        pthread_mutexattr_init(&attr)));
-    attr_destroy = LWMSG_TRUE;
-
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(
-        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE)));
-
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(
-        pthread_mutex_init(&my_session->lock, NULL)));
-    my_session->lock_destroy = LWMSG_TRUE;
-
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(
-        pthread_cond_init(&my_session->event, NULL)));
-    my_session->event_destroy = LWMSG_TRUE;
-
 done:
 
-    *session = my_session;
+    *direct_session = my_session;
 
     if (attr_destroy)
     {

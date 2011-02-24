@@ -289,6 +289,9 @@ MU_FIXTURE_TEARDOWN(async)
 
     MU_TRY(lwmsg_peer_stop_listen(server));
     lwmsg_peer_delete(server);
+
+    lwmsg_protocol_delete(protocol);
+    lwmsg_context_delete(context);
 }
 
 static

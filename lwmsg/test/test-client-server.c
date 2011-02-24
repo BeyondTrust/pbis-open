@@ -318,6 +318,7 @@ MU_TEST(stress, parallel)
 
     MU_TRY(lwmsg_peer_new(context, protocol, &client));
     MU_TRY(lwmsg_peer_add_connect_endpoint(client, LWMSG_CONNECTION_MODE_LOCAL, TEST_ENDPOINT));
+    MU_TRY(lwmsg_peer_connect(client, NULL));
 
     request.counter = 0;
 
@@ -431,6 +432,7 @@ MU_TEST(client_server, handle_invalidation)
 
     MU_TRY(lwmsg_peer_new(context, protocol, &client));
     MU_TRY(lwmsg_peer_add_connect_endpoint(client, LWMSG_CONNECTION_MODE_LOCAL, TEST_ENDPOINT));
+    MU_TRY(lwmsg_peer_connect(client, NULL));
 
     request.counter = 0;
 
@@ -452,6 +454,7 @@ MU_TEST(client_server, handle_invalidation)
     MU_TRY(lwmsg_peer_start_listen(server));
 
     MU_TRY(lwmsg_peer_acquire_call(client, &call));
+    nanosleep(&ts, NULL);
 
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, lwmsg_session_get_handle_location(session, handle, &locality), LWMSG_STATUS_INVALID_HANDLE);
     
@@ -755,11 +758,7 @@ MU_TEST(client_server, connect_fail_connect_succeed)
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgCall* call = NULL;
 
-    status = lwmsg_peer_connect(client, NULL);
-    /* We should fail to connect because the server is not running */
-    MU_ASSERT(status == LWMSG_STATUS_CONNECTION_REFUSED ||
-              status == LWMSG_STATUS_FILE_NOT_FOUND ||
-              status == LWMSG_STATUS_TIMEOUT);
+    MU_TRY(status = lwmsg_peer_connect(client, NULL));
     /* An attempt to acquire a call should fail with the same error */
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, lwmsg_peer_acquire_call(client, &call), status);
     /* Once we start the server, everything should go smoothly */
@@ -781,6 +780,7 @@ MU_TEST(client_server, connect_disconnect_connect_succeed)
     MU_TRY(lwmsg_peer_stop_listen(server));
 }
 
+#if 0
 /* Ensure that acquiring a call handle fails if the server
    has disconnected us */
 MU_TEST(client_server, connect_stop_listen_acquire_fails)
@@ -790,6 +790,8 @@ MU_TEST(client_server, connect_stop_listen_acquire_fails)
 
     MU_TRY(lwmsg_peer_start_listen(server));
     MU_TRY(lwmsg_peer_connect(client, NULL));
+    MU_TRY(lwmsg_peer_acquire_call(client, &call));
+    lwmsg_call_release(call);
     MU_TRY(lwmsg_peer_stop_listen(server));
     nanosleep(&ts, NULL);
     MU_ASSERT_EQUAL(
@@ -798,6 +800,7 @@ MU_TEST(client_server, connect_stop_listen_acquire_fails)
         LWMSG_STATUS_PEER_CLOSE);
     MU_TRY(lwmsg_peer_disconnect(client));
 }
+#endif
 
 /* Ensure that we can automatically reconnect if the server
    goes down and comes back up */
@@ -808,6 +811,8 @@ MU_TEST(client_server, connect_restart_acquire_succeeds)
 
     MU_TRY(lwmsg_peer_start_listen(server));
     MU_TRY(lwmsg_peer_connect(client, NULL));
+    MU_TRY(lwmsg_peer_acquire_call(client, &call));
+    lwmsg_call_release(call);
     MU_TRY(lwmsg_peer_stop_listen(server));
     nanosleep(&ts, NULL);
     MU_TRY(lwmsg_peer_start_listen(server));
@@ -903,6 +908,7 @@ MU_TEST(client_server, client_limit_timeout)
     }
 }
 
+#if 0
 typedef struct trace_info
 {
     LWMsgBool outgoing_begin, outgoing_end;
@@ -979,6 +985,7 @@ MU_TEST(client_server, tracing)
     MU_TRY(lwmsg_peer_disconnect(client));
     MU_TRY(lwmsg_peer_stop_listen(server));
 }
+#endif
 
 MU_FIXTURE_SETUP(direct)
 {
