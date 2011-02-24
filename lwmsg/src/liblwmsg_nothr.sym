@@ -25,6 +25,7 @@ lwmsg_connection_set_fd
 lwmsg_connection_set_endpoint
 lwmsg_local_token_get_eid
 lwmsg_local_token_get_pid
+lwmsg_local_token_new
 lwmsg_error_message
 lwmsg_error_clear
 lwmsg_error_map_errno

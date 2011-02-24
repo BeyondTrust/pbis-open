@@ -58,6 +58,12 @@ lwmsg_assoc_context_get_data(
         *out_data = data;
         return LWMSG_STATUS_SUCCESS;
     }
+    else if (!strcmp(key, "session"))
+    {
+        return lwmsg_assoc_get_session(
+            (LWMsgAssoc*) data,
+            (LWMsgSession**)(void*) out_data);
+    }
     else
     {
         return LWMSG_STATUS_NOT_FOUND;

@@ -164,6 +164,54 @@ typedef struct PeerEndpoint
     LWMsgRing ring;
 } PeerEndpoint;
 
+typedef struct DirectEndpoint
+{
+    const char* name;
+    struct LWMsgPeer* server;
+    LWMsgRing sessions;
+    LWMsgRing ring;
+} DirectEndpoint;
+
+typedef struct DirectSession
+{
+    /* Initiating peer */
+    LWMsgPeer* peer;
+    /* Outstanding calls */
+    LWMsgRing calls;
+    LWMsgRing ring;
+
+    DirectEndpoint* endpoint;
+
+    pthread_mutex_t lock;
+    pthread_cond_t event;
+    uint32_t refs;
+    unsigned lock_destroy:1;
+    unsigned event_destroy:1;
+} DirectSession;
+
+typedef struct DirectCall
+{
+    LWMsgCall base;
+    DirectSession* session;
+    enum
+    {
+        DIRECT_CALL_DISPATCHED = 0x1,
+        DIRECT_CALL_CANCELED = 0x2,
+        DIRECT_CALL_COMPLETED = 0x4
+    } state;
+
+    const LWMsgParams* in;
+    LWMsgParams* out;
+    LWMsgStatus status;
+    LWMsgCompleteFunction complete;
+    void* complete_data;
+    LWMsgCancelFunction cancel;
+    void* cancel_data;
+    LWMsgRing ring;
+    uint8_t volatile refs;
+    unsigned is_callback:1;
+} DirectCall;
+
 struct LWMsgPeer
 {    
     LWMsgErrorContext error;
@@ -207,7 +255,9 @@ struct LWMsgPeer
 
     LWMsgRing connect_endpoints;
     PeerAssocTask* connect_task;
+    DirectSession* direct;
     LWMsgSession* connect_session;
+    unsigned connect_session_direct:1;
     PeerEndpoint* connect_endpoint;
     PeerState connect_state;
     LWMsgStatus connect_status;
@@ -265,6 +315,11 @@ lwmsg_peer_session_new(
     LWMsgSession** out_session
     );
 
+void
+lwmsg_peer_session_reset(
+    LWMsgSession* session
+    );
+
 LWMsgStatus
 lwmsg_peer_assoc_task_new_connect(
     LWMsgPeer* peer,
@@ -312,15 +367,6 @@ lwmsg_peer_task_perform(
     LWMsgTime* next_deadline
     );
 
-LWMsgStatus
-lwmsg_peer_task_prepare_select(
-    LWMsgPeer* peer,
-    PeerAssocTask* task,
-    int* nfds,
-    fd_set* readset,
-    fd_set* writeset
-    );
-
 LWMsgBool
 lwmsg_peer_acquire_client_slot(
     LWMsgPeer* peer
@@ -364,6 +410,47 @@ lwmsg_peer_call_complete_outgoing(
 LWMsgStatus
 lwmsg_peer_call_cancel_incoming(
     PeerCall* call
+    );
+
+LWMsgStatus
+lwmsg_direct_session_new(
+    LWMsgPeer* peer,
+    DirectSession** session
+    );
+
+void
+lwmsg_direct_session_release(
+    DirectSession* session
+    );
+
+LWMsgStatus
+lwmsg_direct_connect(
+    const char* name,
+    DirectSession* session
+    );
+
+void
+lwmsg_direct_disconnect(
+    DirectSession* session
+    );
+
+LWMsgStatus
+lwmsg_direct_listen(
+    const char* name,
+    LWMsgPeer* server
+    );
+
+void
+lwmsg_direct_shutdown(
+    const char* name,
+    LWMsgPeer* server
+    );
+
+LWMsgStatus
+lwmsg_direct_call_new(
+    DirectSession* session,
+    LWMsgBool is_callback,
+    DirectCall** call
     );
 
 #endif

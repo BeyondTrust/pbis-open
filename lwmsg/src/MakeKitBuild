@@ -41,7 +41,8 @@ make()
         peer.c \
         peer-task.c \
         peer-call.c \
-        peer-session.c"
+        peer-session.c \
+        peer-direct.c"
 
     mk_multiarch_do
         mk_library \

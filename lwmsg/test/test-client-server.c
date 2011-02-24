@@ -979,3 +979,48 @@ MU_TEST(client_server, tracing)
     MU_TRY(lwmsg_peer_disconnect(client));
     MU_TRY(lwmsg_peer_stop_listen(server));
 }
+
+MU_FIXTURE_SETUP(direct)
+{
+    MU_TRY(lwmsg_context_new(NULL, &context));
+    lwmsg_context_set_log_function(context, lwmsg_test_log_function, NULL);
+
+    MU_TRY(lwmsg_protocol_new(context, &protocol));
+    MU_TRY(lwmsg_protocol_add_protocol_spec(protocol, multicall_spec));
+
+    MU_TRY(lwmsg_peer_new(context, protocol, &server));
+    MU_TRY(lwmsg_peer_add_dispatch_spec(server, multicall_dispatch));
+    MU_TRY(lwmsg_peer_add_listen_endpoint(server, LWMSG_ENDPOINT_DIRECT, "test", 0));
+
+    MU_TRY(lwmsg_peer_new(NULL, protocol, &client));
+    MU_TRY(lwmsg_peer_add_dispatch_spec(client, invoke_dispatch));
+    MU_TRY(lwmsg_peer_add_connect_endpoint(client, LWMSG_ENDPOINT_DIRECT, "test"));
+}
+
+MU_FIXTURE_TEARDOWN(direct)
+{
+    lwmsg_peer_delete(client);
+    lwmsg_peer_delete(server);
+    lwmsg_protocol_delete(protocol);
+    lwmsg_context_delete(context);
+}
+
+MU_TEST(direct, ping)
+{
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* call = NULL;
+
+    in.tag = PING_REQUEST;
+
+    MU_TRY(lwmsg_peer_start_listen(server));
+    MU_TRY(lwmsg_peer_connect(client, NULL));
+    MU_TRY(lwmsg_peer_acquire_call(client, &call));
+    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out.tag, PING_REPLY);
+
+    lwmsg_call_release(call);
+
+    MU_TRY(lwmsg_peer_disconnect(client));
+    MU_TRY(lwmsg_peer_stop_listen(server));
+}

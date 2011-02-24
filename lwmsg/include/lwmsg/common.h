@@ -92,7 +92,9 @@ typedef enum LWMsgEndpointType
 {
     LWMSG_ENDPOINT_NONE,
     /** Machine-local (UNIX domain socket) */
-    LWMSG_ENDPOINT_LOCAL
+    LWMSG_ENDPOINT_LOCAL,
+    /** Direct (same process) */
+    LWMSG_ENDPOINT_DIRECT
 } LWMsgEndpointType;
 
 /* @} */

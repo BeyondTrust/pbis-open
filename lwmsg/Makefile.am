@@ -100,7 +100,8 @@ src_liblwmsg_la_SOURCES = \
 	src/peer.c \
 	src/peer-task.c \
 	src/peer-call.c \
-	src/peer-session.c
+	src/peer-session.c \
+	src/peer-direct.c
 
 src_liblwmsg_la_LIBADD = src/liblwmsg_nothr.la @LIB_PTHREAD@ -llwbase
 src_liblwmsg_la_LDFLAGS = $(AM_LDFLAGS) -export-symbols $(top_srcdir)/src/liblwmsg.sym

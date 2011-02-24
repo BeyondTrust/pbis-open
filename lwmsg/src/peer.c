@@ -462,15 +462,21 @@ lwmsg_peer_startup(
     for (ring = peer->listen_endpoints.next; ring != &peer->listen_endpoints; ring = ring->next)
     {
         endpoint = LWMSG_OBJECT_FROM_MEMBER(ring, PeerEndpoint, ring);
-
-        BAIL_ON_ERROR(status = lwmsg_peer_listen_task_new(
-                          peer,
-                          endpoint->type,
-                          endpoint->endpoint,
-                          endpoint->permissions,
-                          endpoint->fd,
-                          &task));
-        task = NULL;
+        switch (endpoint->type)
+        {
+        case LWMSG_ENDPOINT_DIRECT:
+            BAIL_ON_ERROR(status = lwmsg_direct_listen(endpoint->endpoint, peer));
+            break;
+        default:
+            BAIL_ON_ERROR(status = lwmsg_peer_listen_task_new(
+                peer,
+                endpoint->type,
+                endpoint->endpoint,
+                endpoint->permissions,
+                endpoint->fd,
+                &task));
+            task = NULL;
+        }
     }
 
     /* Run all listen tasks */
@@ -564,6 +570,8 @@ lwmsg_peer_shutdown(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgRing* ring = NULL;
+    PeerEndpoint* endpoint = NULL;
 
     LWMSG_LOG_INFO(peer->context, "Shutting down listener");
 
@@ -571,6 +579,19 @@ lwmsg_peer_shutdown(
     lwmsg_task_group_wait(peer->listen_tasks);
     lwmsg_task_group_delete(peer->listen_tasks);
     peer->listen_tasks = NULL;
+
+    for (ring = peer->listen_endpoints.next; ring != &peer->listen_endpoints; ring = ring->next)
+    {
+        endpoint = LWMSG_OBJECT_FROM_MEMBER(ring, PeerEndpoint, ring);
+        switch (endpoint->type)
+        {
+        case LWMSG_ENDPOINT_DIRECT:
+            lwmsg_direct_shutdown(endpoint->endpoint, peer);
+            break;
+        default:
+            break;
+        }
+    }
 
     LWMSG_LOG_INFO(peer->context, "Listener shut down");
 
@@ -861,19 +882,17 @@ lwmsg_peer_connect_endpoint(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgAssoc* assoc = NULL;
     LWMsgBool locked = LWMSG_FALSE;
-    LWMsgBool create_session = ! peer->connect_session;
 
     switch (endpoint->type)
     {
-    case LWMSG_ENDPOINT_LOCAL:
-        /* Create association to endpoint */
-        if (create_session)
+    case LWMSG_ENDPOINT_DIRECT:
+        if (!peer->direct)
         {
-            BAIL_ON_ERROR(status = lwmsg_peer_session_new(
-                peer,
-                &peer->connect_session));
+            BAIL_ON_ERROR(status = lwmsg_direct_session_new(peer, &peer->direct));
         }
-
+        BAIL_ON_ERROR(status = lwmsg_direct_connect(endpoint->endpoint, peer->direct));
+        break;
+    case LWMSG_ENDPOINT_LOCAL:
         BAIL_ON_ERROR(status = lwmsg_connection_new(peer->context, peer->protocol, &assoc));
         BAIL_ON_ERROR(status = lwmsg_connection_set_endpoint(assoc, endpoint->type, endpoint->endpoint));
         BAIL_ON_ERROR(status = lwmsg_assoc_set_nonblock(assoc, LWMSG_TRUE));
@@ -920,10 +939,10 @@ error:
         peer->connect_task = NULL;
     }
 
-    if (create_session && peer->connect_session)
+    if (peer->direct)
     {
-        lwmsg_session_release(peer->connect_session);
-        peer->connect_session = NULL;
+        lwmsg_direct_session_release(peer->direct);
+        peer->direct = NULL;
     }
 
     goto done;
@@ -941,6 +960,13 @@ lwmsg_peer_try_connect(
 
     if (!peer->connect_endpoint)
     {
+        if (!peer->connect_session)
+        {
+            BAIL_ON_ERROR(status = lwmsg_peer_session_new(
+                peer,
+                &peer->connect_session));
+        }
+
         for (ring = peer->connect_endpoints.next; ring != &peer->connect_endpoints; ring = ring->next)
         {
             endpoint = LWMSG_OBJECT_FROM_MEMBER(ring, PeerEndpoint, ring);
@@ -953,6 +979,7 @@ lwmsg_peer_try_connect(
             case LWMSG_STATUS_CONNECTION_REFUSED:
             case LWMSG_STATUS_TIMEOUT:
             case LWMSG_STATUS_FILE_NOT_FOUND:
+            case LWMSG_STATUS_NOT_FOUND:
                 break;
             default:
                 BAIL_ON_ERROR(status);
@@ -1066,6 +1093,13 @@ lwmsg_peer_disconnect(
 
         PEER_UNLOCK(peer, locked);
 
+        if (peer->direct)
+        {
+            lwmsg_direct_disconnect(peer->direct);
+            lwmsg_direct_session_release(peer->direct);
+            peer->direct = NULL;
+        }
+
         if (peer->connect_task)
         {
             lwmsg_peer_task_cancel_and_unref(peer->connect_task);
@@ -1111,47 +1145,56 @@ lwmsg_peer_acquire_call(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgStatus orig_status = LWMSG_STATUS_SUCCESS;
     PeerCall* pcall = NULL;
+    DirectCall* dcall = NULL;
     LWMsgBool locked = LWMSG_FALSE;
     PeerAssocTask* task = NULL;
 
-    do
+    if (peer->direct)
     {
-        /* Ensure we are in a connected state, and acquire a reference
-           to the connect task */
-        PEER_LOCK(peer, locked);
-        BAIL_ON_ERROR(status = lwmsg_peer_connect_in_lock(peer, &locked));
-        task = peer->connect_task;
-        task->refcount++;
-        PEER_UNLOCK(peer, locked);
-        
-        /* Check that the connect task is in a good state */
-        pthread_mutex_lock(&task->call_lock);
-        status = task->status;
-        pthread_mutex_unlock(&task->call_lock);
-        
-        switch (status)
+        BAIL_ON_ERROR(status = lwmsg_direct_call_new(peer->direct, LWMSG_FALSE, &dcall));
+        *call = LWMSG_CALL(dcall);
+    }
+    else
+    {
+        do
         {
-        case LWMSG_STATUS_PEER_CLOSE:
-        case LWMSG_STATUS_PEER_RESET:
-            /* Drop the reference */
-            lwmsg_peer_task_unref(task);
-            task = NULL;
-            /* Disconnect and try again */
-            lwmsg_peer_disconnect(peer);
-            orig_status = status;
+            /* Ensure we are in a connected state, and acquire a reference
+               to the connect task */
+            PEER_LOCK(peer, locked);
+            BAIL_ON_ERROR(status = lwmsg_peer_connect_in_lock(peer, &locked));
+            task = peer->connect_task;
+            task->refcount++;
+            PEER_UNLOCK(peer, locked);
+
+            /* Check that the connect task is in a good state */
+            pthread_mutex_lock(&task->call_lock);
+            status = task->status;
+            pthread_mutex_unlock(&task->call_lock);
+
+            switch (status)
+            {
+            case LWMSG_STATUS_PEER_CLOSE:
+            case LWMSG_STATUS_PEER_RESET:
+                /* Drop the reference */
+                lwmsg_peer_task_unref(task);
+                task = NULL;
+                /* Disconnect and try again */
+                lwmsg_peer_disconnect(peer);
+                orig_status = status;
             status = LWMSG_STATUS_AGAIN;
             break;
-        default:
-            break;
-            BAIL_ON_ERROR(status);
-        }
-    } while (status == LWMSG_STATUS_AGAIN);
-            
-    BAIL_ON_ERROR(status = lwmsg_peer_call_new(task, &pcall));
-    pcall->base.is_outgoing = LWMSG_TRUE;
-    task = NULL;
+            default:
+                break;
+                BAIL_ON_ERROR(status);
+            }
+        } while (status == LWMSG_STATUS_AGAIN);
 
-    *call = LWMSG_CALL(pcall);
+        BAIL_ON_ERROR(status = lwmsg_peer_call_new(task, &pcall));
+        pcall->base.is_outgoing = LWMSG_TRUE;
+        task = NULL;
+
+        *call = LWMSG_CALL(pcall);
+    }
 
 done:
 

@@ -72,6 +72,7 @@ typedef struct PeerSession
     void* data;
     /* Owning peer */
     LWMsgPeer* peer;
+    LWMsgSessionDestructFunction destruct;
 } PeerSession;
 
 struct LWMsgHandle
@@ -218,9 +219,9 @@ peer_free_session(
 
     lwmsg_hash_destroy(&session->handle_by_id);
 
-    if (session->peer->session_destruct && session->data)
+    if (session->destruct && session->data)
     {
-        session->peer->session_destruct(session->sec_token, session->data);
+        session->destruct(session->sec_token, session->data);
     }
 
     if (session->sec_token)
@@ -234,23 +235,45 @@ peer_free_session(
 
 static
 void
-peer_reset_session(
-    PeerSession* session
+peer_session_reset_in_lock(
+    PeerSession* my_session
     )
 {
     LWMsgHandle* handle = NULL;
     LWMsgHashIter iter = {0};
 
-    lwmsg_hash_iter_begin(&session->handle_by_id, &iter);
-    while ((handle = lwmsg_hash_iter_next(&session->handle_by_id, &iter)))
+    lwmsg_hash_iter_begin(&my_session->handle_by_id, &iter);
+    while ((handle = lwmsg_hash_iter_next(&my_session->handle_by_id, &iter)))
     {
-        if (handle->key.type == LWMSG_HANDLE_REMOTE)
+        handle->valid = LWMSG_FALSE;
+        if (handle->cleanup && handle->pointer)
         {
-            handle->valid = LWMSG_FALSE;
-            lwmsg_hash_remove_entry(&session->handle_by_id, handle);
+            handle->cleanup(handle->pointer);
+            handle->cleanup = NULL;
+            handle->pointer = NULL;
         }
+        lwmsg_hash_remove_entry(&my_session->handle_by_id, handle);
     }
-    lwmsg_hash_iter_end(&session->handle_by_id, &iter);
+    lwmsg_hash_iter_end(&my_session->handle_by_id, &iter);
+
+    if (my_session->destruct && my_session->data)
+    {
+        my_session->destruct(my_session->sec_token, my_session->data);
+        my_session->data = NULL;
+        my_session->destruct = NULL;
+    }
+}
+
+void
+lwmsg_peer_session_reset(
+    LWMsgSession* session
+    )
+{
+    PeerSession* my_session = SHARED_SESSION(session);
+
+    session_lock(my_session);
+    peer_session_reset_in_lock(my_session);
+    session_unlock(my_session);
 }
 
 static
@@ -263,13 +286,26 @@ peer_accept(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerSession* my_session = SHARED_SESSION(session);
+    LWMsgPeer* peer = NULL;
 
-    if (my_session->peer->session_construct)
+    /* FIXME: somewhat hacky */
+    if (my_session->peer->connect_session == session &&
+        my_session->peer->direct)
     {
-        BAIL_ON_ERROR(status = my_session->peer->session_construct(
+        peer = my_session->peer->direct->endpoint->server;
+    }
+    else
+    {
+        peer = my_session->peer;
+    }
+
+    if (peer->session_construct)
+    {
+        BAIL_ON_ERROR(status = peer->session_construct(
             token,
             my_session->peer->session_construct_data,
             &my_session->data));
+        my_session->destruct = peer->session_destruct;
     }
 
     my_session->sec_token = token;
@@ -317,7 +353,7 @@ peer_connect(
             lwmsg_hash_get_count(&ssession->handle_by_id) > 0)
         {
             /* Reset the session */
-            peer_reset_session(ssession);
+            peer_session_reset_in_lock(ssession);
         }
 
         lwmsg_security_token_delete(token);
