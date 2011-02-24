@@ -1298,7 +1298,7 @@ DJModifyKrb5Conf(
         {
             GCE(ceError = ERROR_INVALID_PARAMETER);
         }
-        bAssumeDefaultDomain = (DWORD)pReadData;
+        bAssumeDefaultDomain = (DWORD)(size_t)pReadData;
     }
     else
     {
