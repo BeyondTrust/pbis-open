@@ -861,11 +861,19 @@ lwmsg_peer_connect_endpoint(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgAssoc* assoc = NULL;
     LWMsgBool locked = LWMSG_FALSE;
+    LWMsgBool create_session = ! peer->connect_session;
 
     switch (endpoint->type)
     {
     case LWMSG_ENDPOINT_LOCAL:
         /* Create association to endpoint */
+        if (create_session)
+        {
+            BAIL_ON_ERROR(status = lwmsg_peer_session_new(
+                peer,
+                &peer->connect_session));
+        }
+
         BAIL_ON_ERROR(status = lwmsg_connection_new(peer->context, peer->protocol, &assoc));
         BAIL_ON_ERROR(status = lwmsg_connection_set_endpoint(assoc, endpoint->type, endpoint->endpoint));
         BAIL_ON_ERROR(status = lwmsg_assoc_set_nonblock(assoc, LWMSG_TRUE));
@@ -912,6 +920,12 @@ error:
         peer->connect_task = NULL;
     }
 
+    if (create_session && peer->connect_session)
+    {
+        lwmsg_session_release(peer->connect_session);
+        peer->connect_session = NULL;
+    }
+
     goto done;
 }
 
@@ -925,14 +939,7 @@ lwmsg_peer_try_connect(
     LWMsgRing* ring = NULL;
     PeerEndpoint* endpoint = NULL;
 
-    if (!peer->connect_session)
-    {
-        BAIL_ON_ERROR(status = lwmsg_peer_session_new(
-                          peer,
-                          &peer->connect_session));
-    }
-
-    if (!peer->connect_task)
+    if (!peer->connect_endpoint)
     {
         for (ring = peer->connect_endpoints.next; ring != &peer->connect_endpoints; ring = ring->next)
         {
@@ -941,6 +948,7 @@ lwmsg_peer_try_connect(
             switch (status)
             {
             case LWMSG_STATUS_SUCCESS:
+                peer->connect_endpoint = endpoint;
                 goto done;
             case LWMSG_STATUS_CONNECTION_REFUSED:
             case LWMSG_STATUS_TIMEOUT:
@@ -950,6 +958,11 @@ lwmsg_peer_try_connect(
                 BAIL_ON_ERROR(status);
             }
         }
+    }
+    else
+    {
+        status = lwmsg_peer_connect_endpoint(peer, peer->connect_endpoint);
+        BAIL_ON_ERROR(status);
     }
 
 done:
@@ -1062,6 +1075,7 @@ lwmsg_peer_disconnect(
         PEER_LOCK(peer, locked);
 
         peer->connect_state = PEER_STATE_STOPPED;
+        peer->connect_endpoint = NULL;
         pthread_cond_broadcast(&peer->event);
         break;
     case PEER_STATE_STOPPING:

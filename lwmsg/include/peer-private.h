@@ -208,6 +208,7 @@ struct LWMsgPeer
     LWMsgRing connect_endpoints;
     PeerAssocTask* connect_task;
     LWMsgSession* connect_session;
+    PeerEndpoint* connect_endpoint;
     PeerState connect_state;
     LWMsgStatus connect_status;
 
