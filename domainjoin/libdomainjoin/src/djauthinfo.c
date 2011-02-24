@@ -1090,14 +1090,10 @@ void DJCreateComputerAccount(
     DistroInfo distro;
     PSTR osName = NULL;
     PSTR tempDir = NULL;
-    PSTR origEnv = NULL;
-    // Do not free origEnvVarStr
-    PSTR origEnvVarStr = NULL;
     PSTR shortHostname = NULL;
     PSTR hostFqdn = NULL;
     // Do not free dnsDomain
     PSTR dnsDomain = NULL;
-    CHAR krb5ConfEnv[256];
     DWORD dwFlags = 0;
     DWORD dwError = 0;
 
@@ -1130,35 +1126,6 @@ void DJCreateComputerAccount(
     LW_CLEANUP_CTERR(exc, CTCreateTempDirectory(&tempDir));
 
     LW_TRY(exc, DJCopyKrb5ToRootDir(NULL, tempDir, &LW_EXC));
-
-    /*
-     * Setup krb5.conf with the domain as the Kerberos realm.
-     * We do this before doing the join. This is required for any
-     * authenticated LDAP connections used to acquire a TGT in order
-     * to move the computer account into the right OU.
-     */
-    LW_CLEANUP_CTERR(exc, DJModifyKrb5Conf(
-                                 tempDir,
-                                 TRUE,
-                                 options->domainName, NULL, NULL));
-
-    origEnv = getenv("KRB5_CONFIG");
-    if (origEnv && *origEnv)
-    {
-        LW_CLEANUP_CTERR(exc,
-                         CTAllocateStringPrintf(
-                         &origEnvVarStr,
-                         "KRB5_CONFIG=%s",
-                         origEnv));
-    }
-
-    sprintf(krb5ConfEnv, "KRB5_CONFIG=%s/etc/krb5.conf", tempDir);
-
-    if (putenv(krb5ConfEnv) != 0) {
-       LW_CLEANUP_CTERR(exc, LwMapErrnoToLwError(errno));
-    }
-
-    LW_CLEANUP_LSERR(exc, LWNetExtendEnvironmentForKrb5Affinity(TRUE));
 
     if ( options->disableTimeSync || options->enableMultipleJoins )
     {
@@ -1268,12 +1235,6 @@ cleanup:
     {
         CTRemoveDirectory(tempDir);
         CT_SAFE_FREE_STRING(tempDir);
-    }
-
-    if (origEnvVarStr) {
-       putenv(origEnvVarStr);
-    } else {
-       putenv("KRB5_CONFIG=/etc/krb5.conf");
     }
 
     CT_SAFE_FREE_STRING(likewiseProduct);
