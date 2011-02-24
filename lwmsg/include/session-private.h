@@ -39,6 +39,7 @@
 #define __LWMSG_SESSION_PRIVATE_H__
 
 #include <lwmsg/session.h>
+#include <lwmsg/call.h>
 
 /**
  * @file session-private.h
@@ -173,6 +174,12 @@ typedef struct LWMsgSessionClass
     size_t
     (*get_handle_count) (
         LWMsgSession* session
+        );
+
+    LWMsgStatus
+    (*acquire_call) (
+        LWMsgSession* session,
+        LWMsgCall** call
         );
 } LWMsgSessionClass;
 

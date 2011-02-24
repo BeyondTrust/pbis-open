@@ -218,6 +218,15 @@ lwmsg_session_get_peer_security_token(
     return session->sclass->get_peer_security_token(session);
 }
 
+LWMsgStatus
+lwmsg_session_acquire_call(
+    LWMsgSession* session,
+    LWMsgCall** call
+    )
+{
+    return session->sclass->acquire_call(session, call);
+}
+
 const LWMsgSessionID*
 lwmsg_session_get_id(
     LWMsgSession* session

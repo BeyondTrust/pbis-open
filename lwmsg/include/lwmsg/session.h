@@ -53,14 +53,15 @@
  * @ingroup public
  * @brief Session abstraction
  *
- * A session encapsulates all state about an association between two peers:
- *
- * - Security information about the remote peer
- * - Information about opaque handles shared with the remote peer
- * - Custom per-session user data
+ * A session is an abstract connection with a peer that allows
+ * calls to be made and state to be shared.
  */
 
 /*@{*/
+
+#ifndef DOXYGEN
+struct LWMsgCall;
+#endif
 
 /**
  * @brief A session
@@ -310,6 +311,21 @@ lwmsg_session_get_data(
 LWMsgSecurityToken*
 lwmsg_session_get_peer_security_token(
     LWMsgSession* session
+    );
+
+/**
+ * @brief Acquire a call handle
+ *
+ * Acquires a handle suitable for making a call to the session peer.
+ *
+ * @param[in] session the session
+ * @param[out] call set to the acquired call handle
+ * @retval #LWMSG_STATUS_SUCCESS success
+ */
+LWMsgStatus
+lwmsg_session_acquire_call(
+    LWMsgSession* session,
+    struct LWMsgCall** call
     );
 
 /*@}*/

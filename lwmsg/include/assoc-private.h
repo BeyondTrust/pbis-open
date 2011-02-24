@@ -247,6 +247,7 @@ lwmsg_assoc_call_init(
 
 LWMsgStatus
 lwmsg_assoc_session_new(
+    LWMsgAssoc* assoc,
     LWMsgSession** out_session
     );
 

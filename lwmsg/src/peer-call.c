@@ -494,27 +494,6 @@ error:
     return status;
 }
 
-static
-LWMsgStatus
-lwmsg_peer_call_acquire_callback(
-    LWMsgCall* call,
-    LWMsgCall** callback
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    PeerCall* pcall = PEER_CALL(call);
-    PeerCall* my_callback = NULL;
-
-    BAIL_ON_ERROR(status = lwmsg_peer_call_new(pcall->task, &my_callback));
-
-    my_callback->base.is_outgoing = LWMSG_TRUE;
-
-    *callback = LWMSG_CALL(my_callback);
-
-error:
-
-    return status;
-}
 
 static LWMsgCallClass peer_call_class =
 {
@@ -524,8 +503,7 @@ static LWMsgCallClass peer_call_class =
     .complete = lwmsg_peer_call_complete_incoming,
     .cancel = lwmsg_peer_call_cancel_outgoing,
     .get_session = lwmsg_peer_call_get_session,
-    .destroy_params = lwmsg_peer_call_destroy_params,
-    .acquire_callback = lwmsg_peer_call_acquire_callback
+    .destroy_params = lwmsg_peer_call_destroy_params
 };
 
 LWMsgStatus

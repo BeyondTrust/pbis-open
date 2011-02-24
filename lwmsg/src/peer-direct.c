@@ -122,7 +122,7 @@ lwmsg_direct_cancel_call_in_lock(
         call->state |= DIRECT_CALL_CANCELED;
         if ((call->state & DIRECT_CALL_DISPATCHED) && call->cancel)
         {
-            call->cancel(LWMSG_CALL(call), call->cancel_data);
+            call->cancel(&call->callee, call->cancel_data);
         }
     }
 }
@@ -136,6 +136,7 @@ lwmsg_direct_session_rundown_in_lock(
     LWMsgRing* iter = NULL;
     DirectCall* call = NULL;
     LWMsgRing calls;
+    LWMsgPeer* server = session->endpoint->server;
 
     lwmsg_ring_init(&calls);
 
@@ -166,11 +167,14 @@ lwmsg_direct_session_rundown_in_lock(
         pthread_cond_wait(&session->session->event, &session->session->lock);
     }
 
-    /* Now we can run down all handles */
+    /* Now we can run down all handles on the main session */
     lwmsg_peer_session_reset(session->session);
 
-    /* Release session reference */
-    lwmsg_peer_session_release(session->session);
+    /* Release session data */
+    if (session->data && server->session_destruct)
+    {
+        server->session_destruct(session->token, session->data);
+    }
 }
 
 void
@@ -213,10 +217,6 @@ lwmsg_direct_connect(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     DirectEndpoint* endpoint = NULL;
-    LWMsgSessionCookie cookie = {{0}};
-    LWMsgSecurityToken* token = NULL;
-
-    BAIL_ON_ERROR(status = lwmsg_local_token_new(geteuid(), getegid(), getpid(), &token));
 
     LOCK_ENDPOINTS();
 
@@ -235,18 +235,15 @@ lwmsg_direct_connect(
 
     session->endpoint = endpoint;
 
-    BAIL_ON_ERROR(status = session->session->base.sclass->accept(
-        &session->session->base,
-        &cookie,
-        token));
-    token = NULL;
+    if (endpoint->server->session_construct)
+    {
+        BAIL_ON_ERROR(status = endpoint->server->session_construct(
+            session->token,
+            endpoint->server->session_construct_data,
+            &session->data));
+    }
 
 error:
-
-    if (token)
-    {
-        lwmsg_security_token_delete(token);
-    }
 
     return status;
 }
@@ -268,12 +265,155 @@ lwmsg_direct_disconnect(
 }
 
 static
+LWMsgSecurityToken*
+direct_get_security_token (
+    LWMsgSession* session
+    )
+{
+    DirectSession* dsession = (DirectSession*) session;
+
+    return dsession->token;
+}
+
+static
+LWMsgStatus
+direct_register_handle_local(
+    LWMsgSession* session,
+    const char* type,
+    void* data,
+    void (*cleanup)(void* ptr),
+    LWMsgHandle** handle
+    )
+{
+    DirectSession* dsession = (DirectSession*) session;
+
+    return dsession->session->base.sclass->register_handle_local(
+        (LWMsgSession*) dsession->session,
+        type,
+        data,
+        cleanup,
+        handle);
+}
+
+static
+void
+direct_retain_handle(
+    LWMsgSession* session,
+    LWMsgHandle* handle
+    )
+{
+    DirectSession* dsession = (DirectSession*) session;
+
+    return dsession->session->base.sclass->retain_handle(
+        (LWMsgSession*) dsession->session,
+        handle);
+}
+
+static
+void
+direct_release_handle(
+    LWMsgSession* session,
+    LWMsgHandle* handle
+    )
+{
+    DirectSession* dsession = (DirectSession*) session;
+
+    return dsession->session->base.sclass->release_handle(
+        (LWMsgSession*) dsession->session,
+        handle);
+}
+
+static
+LWMsgStatus
+direct_unregister_handle(
+    LWMsgSession* session,
+    LWMsgHandle* handle
+    )
+{
+    DirectSession* dsession = (DirectSession*) session;
+
+    return dsession->session->base.sclass->unregister_handle(
+        (LWMsgSession*) dsession->session,
+        handle);
+}
+
+static
+LWMsgStatus
+direct_resolve_handle_to_id(
+    LWMsgSession* session,
+    LWMsgHandle* handle,
+    const char** type,
+    LWMsgHandleType* htype,
+    LWMsgHandleID* hid
+    )
+{
+    DirectSession* dsession = (DirectSession*) session;
+
+    return dsession->session->base.sclass->resolve_handle_to_id(
+        (LWMsgSession*) dsession->session,
+        handle,
+        type,
+        htype,
+        hid);
+}
+
+static
+LWMsgStatus
+direct_get_handle_data(
+    LWMsgSession* session,
+    LWMsgHandle* handle,
+    void** data
+    )
+{
+    DirectSession* dsession = (DirectSession*) session;
+
+    return dsession->session->base.sclass->get_handle_data(
+        (LWMsgSession*) dsession->session,
+        handle,
+        data);
+}
+
+static
+void*
+direct_get_data (
+    LWMsgSession* session
+    )
+{
+    DirectSession* dsession = (DirectSession*) session;
+
+    return dsession->data;
+}
+
+static
+LWMsgStatus
+direct_acquire_call(
+    LWMsgSession* session,
+    LWMsgCall** call
+    )
+{
+    return lwmsg_direct_call_new((DirectSession*) session, LWMSG_TRUE, (DirectCall**)(void*) call);
+}
+
+static LWMsgSessionClass direct_session_class =
+{
+    .register_handle_local = direct_register_handle_local,
+    .retain_handle = direct_retain_handle,
+    .release_handle = direct_release_handle,
+    .unregister_handle = direct_unregister_handle,
+    .resolve_handle_to_id = direct_resolve_handle_to_id,
+    .get_handle_data = direct_get_handle_data,
+    .get_data = direct_get_data,
+    .get_peer_security_token = direct_get_security_token,
+    .acquire_call = direct_acquire_call
+};
+
+static
 void
 lwmsg_direct_call_release(
     LWMsgCall* call
     )
 {
-    DirectCall* dcall = (DirectCall*) call;
+    DirectCall* dcall = LWMSG_OBJECT_FROM_MEMBER(call, DirectCall, caller);
     DirectSession* session = dcall->session;
     uint32_t refs = 0;
 
@@ -321,7 +461,7 @@ lwmsg_direct_call_worker(
     target_peer = dcall->is_callback ? session->session->peer : endpoint->server;
     func = target_peer->dispatch.vector[dcall->in->tag]->data;
 
-    status = func(LWMSG_CALL(dcall), dcall->in, dcall->out, target_peer->dispatch_data);
+    status = func(&dcall->callee, dcall->in, dcall->out, target_peer->dispatch_data);
 
     LOCK_SESSION(session);
     completed = dcall->state & DIRECT_CALL_COMPLETED;
@@ -337,7 +477,7 @@ lwmsg_direct_call_worker(
     }
     else if (canceled && dcall->cancel)
     {
-        dcall->cancel(LWMSG_CALL(dcall), dcall->cancel_data);
+        dcall->cancel(&dcall->caller, dcall->cancel_data);
     }
     UNLOCK_SESSION(session);
 
@@ -348,8 +488,8 @@ lwmsg_direct_call_worker(
     default:
         if (dcall->complete)
         {
-            dcall->complete(LWMSG_CALL(dcall), status, dcall->complete_data);
-            lwmsg_direct_call_release(LWMSG_CALL(dcall));
+            dcall->complete(&dcall->caller, status, dcall->complete_data);
+            lwmsg_direct_call_release(&dcall->caller);
         }
         else
         {
@@ -369,7 +509,7 @@ lwmsg_direct_call_dispatch(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    DirectCall* dcall = (DirectCall*) call;
+    DirectCall* dcall = LWMSG_OBJECT_FROM_MEMBER(call, DirectCall, caller);
     DirectSession* session = dcall->session;
     DirectEndpoint* endpoint = NULL;
     LWMsgPeerCallFunction func = NULL;
@@ -432,7 +572,7 @@ lwmsg_direct_call_dispatch(
     }
 
     unref = LWMSG_FALSE;
-    status = func(call, in, out, target_peer->dispatch_data);
+    status = func(&dcall->callee, in, out, target_peer->dispatch_data);
 
     switch (status)
     {
@@ -479,7 +619,7 @@ error:
 
     if (unref)
     {
-        lwmsg_direct_call_release(LWMSG_CALL(dcall));
+        lwmsg_direct_call_release(&dcall->caller);
     }
 
     return status;
@@ -493,7 +633,7 @@ lwmsg_direct_call_pend(
     void* data
     )
 {
-    DirectCall* dcall = (DirectCall*) call;
+    DirectCall* dcall = LWMSG_OBJECT_FROM_MEMBER(call, DirectCall, callee);
 
     dcall->cancel = cancel;
     dcall->cancel_data = data;
@@ -508,7 +648,7 @@ lwmsg_direct_call_complete(
     LWMsgStatus status
     )
 {
-    DirectCall* dcall = (DirectCall*) call;
+    DirectCall* dcall = LWMSG_OBJECT_FROM_MEMBER(call, DirectCall, callee);
     LWMsgBool dispatched = LWMSG_FALSE;
 
     LOCK_SESSION(dcall->session);
@@ -521,7 +661,7 @@ lwmsg_direct_call_complete(
     if (dispatched && dcall->complete)
     {
         dcall->complete(call, status, dcall->complete_data);
-        lwmsg_direct_call_release(LWMSG_CALL(dcall));
+        lwmsg_direct_call_release(&dcall->caller);
     }
     else
     {
@@ -537,7 +677,7 @@ lwmsg_direct_call_cancel(
     LWMsgCall* call
     )
 {
-    DirectCall* dcall = (DirectCall*) call;
+    DirectCall* dcall = LWMSG_OBJECT_FROM_MEMBER(call, DirectCall, caller);
     LWMsgBool cancel = LWMSG_FALSE;
 
     LOCK_SESSION(dcall->session);
@@ -564,7 +704,7 @@ lwmsg_direct_call_destroy_params(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    DirectCall* dcall = (DirectCall*) call;
+    DirectCall* dcall = LWMSG_OBJECT_FROM_MEMBER(call, DirectCall, caller);
     LWMsgTypeSpec* spec = NULL;
 
     if (params->data && params->tag != LWMSG_TAG_INVALID)
@@ -588,48 +728,42 @@ error:
     return status;
 }
 
+static
 LWMsgSession*
-lwmsg_direct_call_get_session(
+lwmsg_direct_call_get_session_caller(
     LWMsgCall* call
     )
 {
-    DirectCall* dcall = (DirectCall*) call;
+    DirectCall* dcall = LWMSG_OBJECT_FROM_MEMBER(call, DirectCall, caller);
 
     return (LWMsgSession*) dcall->session->session;
 }
 
-LWMsgStatus
-lwmsg_direct_call_acquire_callback(
-    LWMsgCall* call,
-    LWMsgCall** callback
+static
+LWMsgSession*
+lwmsg_direct_call_get_session_callee(
+    LWMsgCall* call
     )
 {
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    DirectCall* dcall = (DirectCall*) call;
-    DirectCall* dcallback = NULL;
+    DirectCall* dcall = LWMSG_OBJECT_FROM_MEMBER(call, DirectCall, callee);
 
-    BAIL_ON_ERROR(status = lwmsg_direct_call_new(
-        dcall->session,
-        !dcall->is_callback,
-        &dcallback));
-
-    *callback = LWMSG_CALL(dcallback);
-
-error:
-
-    return status;
+    return (LWMsgSession*) dcall->session;
 }
 
-static LWMsgCallClass direct_call_class =
+static LWMsgCallClass direct_caller_class =
 {
     .release = lwmsg_direct_call_release,
     .dispatch = lwmsg_direct_call_dispatch,
-    .pend = lwmsg_direct_call_pend,
-    .complete = lwmsg_direct_call_complete,
     .cancel = lwmsg_direct_call_cancel,
     .destroy_params = lwmsg_direct_call_destroy_params,
-    .get_session = lwmsg_direct_call_get_session,
-    .acquire_callback = lwmsg_direct_call_acquire_callback
+    .get_session = lwmsg_direct_call_get_session_caller
+};
+
+static LWMsgCallClass direct_callee_class =
+{
+    .pend = lwmsg_direct_call_pend,
+    .complete = lwmsg_direct_call_complete,
+    .get_session = lwmsg_direct_call_get_session_callee
 };
 
 LWMsgStatus
@@ -644,11 +778,14 @@ lwmsg_direct_call_new(
 
     BAIL_ON_ERROR(status = LWMSG_ALLOC(&dcall));
 
-    dcall->base.vtbl = &direct_call_class;
+    dcall->caller.vtbl = &direct_caller_class;
+    dcall->callee.vtbl = &direct_callee_class;
     lwmsg_ring_init(&dcall->ring);
     dcall->session = session;
     dcall->refs = 1;
     dcall->is_callback = is_callback;
+    dcall->caller.is_outgoing = LWMSG_TRUE;
+    dcall->callee.is_outgoing = LWMSG_FALSE;
 
 error:
 
@@ -664,6 +801,12 @@ lwmsg_direct_session_delete(
     )
 {
     lwmsg_peer_session_release(my_session->session);
+
+    if (my_session->token)
+    {
+        lwmsg_security_token_delete(my_session->token);
+    }
+
     free(my_session);
 }
 
@@ -697,6 +840,9 @@ lwmsg_direct_session_new(
 
     BAIL_ON_ERROR(status = LWMSG_ALLOC(&my_session));
 
+    my_session->base.sclass = &direct_session_class;
+
+    BAIL_ON_ERROR(status = lwmsg_local_token_new(geteuid(), getegid(), getpid(), &my_session->token));
     my_session->session = session;
     my_session->refs = 1;
 

@@ -48,6 +48,8 @@
 typedef struct DefaultSession
 {
     LWMsgSession base;
+    /* Owning association */
+    LWMsgAssoc* assoc;
     /* Session identifier */
     LWMsgSessionID id;
     /* Security token of session creator */
@@ -572,6 +574,16 @@ default_get_handle_count(
     return DEFAULT_SESSION(session)->num_handles;
 }
 
+static
+LWMsgStatus
+default_acquire_call(
+    LWMsgSession* session,
+    LWMsgCall** call
+    )
+{
+    return lwmsg_assoc_acquire_call(DEFAULT_SESSION(session)->assoc, call);
+}
+
 static LWMsgSessionClass default_class =
 {
     .accept = default_accept,
@@ -589,11 +601,13 @@ static LWMsgSessionClass default_class =
     .get_id = default_get_id,
     .get_assoc_count = default_get_assoc_count,
     .get_handle_count = default_get_handle_count,
-    .get_peer_security_token = default_get_peer_security_token
+    .get_peer_security_token = default_get_peer_security_token,
+    .acquire_call = default_acquire_call
 };
 
 LWMsgStatus
 lwmsg_assoc_session_new(
+    LWMsgAssoc* assoc,
     LWMsgSession** out_session
     )
 {
@@ -608,6 +622,7 @@ lwmsg_assoc_session_new(
     
     session->base.sclass = &default_class;
     session->refs = 1;
+    session->assoc = assoc;
 
     lwmsg_session_generate_cookie(&session->id.connect);
 

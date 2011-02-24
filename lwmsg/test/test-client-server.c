@@ -571,8 +571,9 @@ Multicall(
     InvokeRequest invoke;
     LWMsgParams invoke_in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams invoke_out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgSession* session = lwmsg_call_get_session(call);
     
-    MU_TRY(lwmsg_call_acquire_callback(call, &callback));
+    MU_TRY(lwmsg_session_acquire_call(session, &callback));
 
     rep = malloc(sizeof(*rep));
     rep->values = malloc(sizeof(int) * req->num_values);
@@ -908,7 +909,6 @@ MU_TEST(client_server, client_limit_timeout)
     }
 }
 
-#if 0
 typedef struct trace_info
 {
     LWMsgBool outgoing_begin, outgoing_end;
@@ -985,7 +985,6 @@ MU_TEST(client_server, tracing)
     MU_TRY(lwmsg_peer_disconnect(client));
     MU_TRY(lwmsg_peer_stop_listen(server));
 }
-#endif
 
 MU_FIXTURE_SETUP(direct)
 {
@@ -1028,6 +1027,48 @@ MU_TEST(direct, ping)
 
     lwmsg_call_release(call);
 
+    MU_TRY(lwmsg_peer_disconnect(client));
+    MU_TRY(lwmsg_peer_stop_listen(server));
+}
+
+MU_TEST(direct, callback)
+{
+    LWMsgSession* session = NULL;
+    LWMsgCall* call = NULL;
+    MulticallRequest req;
+    MulticallReply* rep;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    int values[] = {1, 2, 3, 4, 5};
+    unsigned int i;
+    LWMsgHandle* handle = NULL;
+
+    MU_TRY(lwmsg_peer_start_listen(server));
+    MU_TRY(lwmsg_peer_connect(client, &session));
+
+    MU_TRY(lwmsg_session_register_handle(session, "IntFunction", times_two, NULL, &handle));
+
+    req.func = handle;
+    req.num_values = sizeof(values) / sizeof(*values);
+    req.values = values;
+    in.tag = MULTICALL_REQUEST;
+    in.data = &req;
+
+    MU_TRY(lwmsg_peer_acquire_call(client, &call));
+    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
+    rep = (MulticallReply*) out.data;
+
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out.tag, MULTICALL_REPLY);
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, rep->num_values, req.num_values);
+
+    for (i = 0; i < rep->num_values; i++)
+    {
+        MU_ASSERT_EQUAL(MU_TYPE_INTEGER, rep->values[i], times_two(req.values[i]));
+    }
+
+    MU_TRY(lwmsg_session_unregister_handle(session, handle));
+    MU_TRY(lwmsg_call_destroy_params(call, &out));
+    lwmsg_call_release(call);
     MU_TRY(lwmsg_peer_disconnect(client));
     MU_TRY(lwmsg_peer_stop_listen(server));
 }

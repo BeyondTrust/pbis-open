@@ -746,6 +746,16 @@ peer_get_handle_count(
     return handles;
 }
 
+static
+LWMsgStatus
+peer_acquire_call(
+    LWMsgSession* session,
+    LWMsgCall** call
+    )
+{
+    return lwmsg_peer_session_acquire_call((PeerSession*) session, call);
+}
+
 static LWMsgSessionClass peer_class =
 {
     .accept = peer_accept,
@@ -763,7 +773,8 @@ static LWMsgSessionClass peer_class =
     .get_id = peer_get_id,
     .get_assoc_count = peer_get_assoc_count,
     .get_handle_count = peer_get_handle_count,
-    .get_peer_security_token = peer_get_peer_security_token
+    .get_peer_security_token = peer_get_peer_security_token,
+    .acquire_call = peer_acquire_call
 };
 
 LWMsgStatus
@@ -1006,6 +1017,8 @@ lwmsg_peer_session_acquire_call(
         BAIL_ON_ERROR(status = lwmsg_peer_call_new(
             session->assoc_session,
             &assoc_call));
+
+        assoc_call->base.is_outgoing = LWMSG_TRUE;
 
         session->assoc_session->refs++;
 

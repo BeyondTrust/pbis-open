@@ -36,7 +36,6 @@ lwmsg_call_cancel
 lwmsg_call_release
 lwmsg_call_destroy_params
 lwmsg_call_get_session
-lwmsg_call_acquire_callback
 lwmsg_call_get_direction
 lwmsg_call_get_user_data
 lwmsg_call_set_user_data
@@ -118,6 +117,7 @@ lwmsg_session_get_handle_data
 lwmsg_session_get_handle_location
 lwmsg_session_get_data
 lwmsg_session_get_peer_security_token
+lwmsg_session_acquire_call
 lwmsg_message_init
 lwmsg_archive_new
 lwmsg_archive_set_file

@@ -573,23 +573,17 @@ lwmsg_peer_add_connect_endpoint(
     );
 
 /**
- * @brief Establish outgoing session
+ * @brief Create outgoing session
  *
- * Establishes an outgoing session on one of the endpoints registered
- * with #lwmsg_peer_add_connect_endpoint().  The endpoints will be tried
- * in the order they were added until one succeeds.  If an outgoing
- * session is already established, this function will perform no action
- * but will still return the established session.  If an outgoing session
- * is in the process of being established, this function will block until
- * it either succeeds or fails.  The session returned is guaranteed to 
- * remain valid until #lwmsg_peer_disconnect() is used.
+ * Creates a session suitable for making calls to one of the endpoints
+ * registered with #lwmsg_peer_add_connect_endpoint().  Establishing
+ * a connection to an endpoint will not occur until a call is made,
+ * at which point the endpoints will be tried in order until one succeeds.
  *
  * @param[in,out] peer the peer handle
- * @param[out] session the established session
+ * @param[out] session the created session
  * @lwmsg_status
  * @lwmsg_success
- * @lwmsg_code{CONNECTION_REFUSED, the connection was refused}
- * @lwmsg_code{FILE_NOT_FOUND, the specified local endpoint was not found}
  * @lwmsg_endstatus
  */
 LWMsgStatus
@@ -602,9 +596,9 @@ lwmsg_peer_connect(
  * @brief Close outgoing session
  *
  * Closes the session established by #lwmsg_peer_connect().  All outstanding
- * outgoing calls will be cancelled.  If no session is currently established,
- * this function is a no-op.  If the association is already being disconnected,
- * this function will block until it either succeeds or fails.
+ * outgoing calls will be canceled and all open handles will be rendered
+ * invalid.  The session handle may no longer be used after calling
+ * this function.
  *
  * @param[in,out] peer the peer handle
  * @lwmsg_status
@@ -617,19 +611,22 @@ lwmsg_peer_disconnect(
     );
 
 /**
- * @brief Acquire outgoing call handle
+ * @brief Acquire outgoing call handle [DEPRECATED]
  *
  * Acquire a call handle which can be used to make an outgoing call.  Peer
  * call handles fully support asynchronous calls.  The handle may be reused
  * after each call completes.  If the peer has not been connected with 
  * #lwmsg_peer_connect(), this function will do so implicitly.  The acquired
- * call handle should be released with #lwmsg_call_release() when no longer needed.
+ * call handle should be released with #lwmsg_call_release() when no longer
+ * needed.
  *
  * @param[in,out] peer the peer handle
  * @param[out] call the acquired call handle
  * @lwmsg_status
  * @lwmsg_success
  * @lwmsg_endstatus
+ * @deprecated Use #lwmsg_session_acquire_call() on the #LWMsgSession returned
+ * by #lwmsg_peer_connect() instead.
  */
 LWMsgStatus
 lwmsg_peer_acquire_call(

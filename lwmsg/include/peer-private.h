@@ -177,18 +177,23 @@ typedef struct DirectEndpoint
 
 typedef struct DirectSession
 {
+    /* Base */
+    LWMsgSession base;
     /* Actual session */
     struct PeerSession* session;
     /* Outstanding calls */
     LWMsgRing calls;
     LWMsgRing ring;
     DirectEndpoint* endpoint;
+    void* data;
+    LWMsgSecurityToken* token;
     uint32_t volatile refs;
 } DirectSession;
 
 typedef struct DirectCall
 {
-    LWMsgCall base;
+    LWMsgCall caller;
+    LWMsgCall callee;
     DirectSession* session;
     enum
     {
@@ -211,6 +216,7 @@ typedef struct DirectCall
 
 typedef struct PeerSession
 {
+    /* Base session struct */
     LWMsgSession base;
     /* Session identifier */
     LWMsgSessionID id;

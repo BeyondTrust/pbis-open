@@ -357,7 +357,7 @@ lwmsg_connection_connect(
     {
         if (!priv->default_session)
         {
-            BAIL_ON_ERROR(status = lwmsg_assoc_session_new(&priv->default_session));
+            BAIL_ON_ERROR(status = lwmsg_assoc_session_new(assoc, &priv->default_session));
         }
 
         session = priv->default_session;
@@ -386,7 +386,7 @@ lwmsg_connection_accept(
     {
         if (!priv->default_session)
         {
-            BAIL_ON_ERROR(status = lwmsg_assoc_session_new(&priv->default_session));
+            BAIL_ON_ERROR(status = lwmsg_assoc_session_new(assoc, &priv->default_session));
         }
 
         session = priv->default_session;

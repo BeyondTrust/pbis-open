@@ -106,15 +106,6 @@ lwmsg_call_get_session(
 {
     return call->vtbl->get_session(call);
 }
-    
-LWMsgStatus
-lwmsg_call_acquire_callback(
-    LWMsgCall* call,
-    LWMsgCall** callback
-    )
-{
-    return call->vtbl->acquire_callback(call, callback);
-}
 
 void
 lwmsg_call_set_user_data(

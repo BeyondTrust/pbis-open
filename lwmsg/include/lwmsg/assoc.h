@@ -507,7 +507,7 @@ lwmsg_assoc_print_message_alloc(
 
 /**
  * @ingroup assoc
- * @brief Acquire call handle
+ * @brief Acquire call handle [DEPRECATED]
  *
  * Acquires a call handle that can be used to make a call across an
  * association as a send followed by a receive.  Only one such call
@@ -520,6 +520,10 @@ lwmsg_assoc_print_message_alloc(
  * @lwmsg_code{BUSY, a call handle has already been acquired}
  * @lwmsg_code{UNSUPPORTED, the association does not support calls}
  * @lwmsg_endstatus
+ * @deprecated Use #lwmsg_session_acquire_call() with the session
+ * passed to #lwmsg_assoc_connect() or #lwmsg_assoc_accept().  If
+ * you did not pass a session yourself, you can use #lwmsg_assoc_get_session()
+ * to get the active session.
  */
 LWMsgStatus
 lwmsg_assoc_acquire_call(

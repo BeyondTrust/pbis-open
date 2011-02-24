@@ -263,26 +263,6 @@ lwmsg_call_get_session(
     );
 
 /**
- * @brief Acquire callback handle
- *
- * Returns an #LWMsgCall which can be used to make a call back
- * to the initiator of the given call.  This function may
- * only be used by callees.
- *
- * @param[in] call the call handle
- * @param[out] callback the callback handle
- * @lwmsg_status
- * @lwmsg_success
- * @lwmsg_memory
- * @lwmsg_endstatus
- */
-LWMsgStatus
-lwmsg_call_acquire_callback(
-    LWMsgCall* call,
-    LWMsgCall** callback
-    );
-
-/**
  * @brief Get call direction
  *
  * Returns whether a call is incoming or outgoing.
