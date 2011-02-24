@@ -327,6 +327,11 @@ LwIoThreadInit(
         
         Status = NtIpcLWMsgStatusToNtStatus(lwmsg_peer_add_connect_endpoint(
                                                 gpClient,
+                                                LWMSG_ENDPOINT_DIRECT,
+                                                "lwio"));
+
+        Status = NtIpcLWMsgStatusToNtStatus(lwmsg_peer_add_connect_endpoint(
+                                                gpClient,
                                                 LWMSG_ENDPOINT_LOCAL,
                                                 LWIO_SERVER_FILENAME));
         BAIL_ON_NT_STATUS(Status);

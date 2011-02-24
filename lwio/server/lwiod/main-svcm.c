@@ -452,6 +452,13 @@ SMBSrvExecute(
 
     dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_listen_endpoint(
                     pServer,
+                    LWMSG_ENDPOINT_DIRECT,
+                    "lwio",
+                    0));
+    BAIL_ON_LWIO_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_listen_endpoint(
+                    pServer,
                     LWMSG_ENDPOINT_LOCAL,
                     LWIO_SERVER_FILENAME,
                     (S_IRWXU | S_IRWXG | S_IRWXO)));
