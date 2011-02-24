@@ -1395,7 +1395,7 @@ static void DoNsswitch(JoinProcessOptions *options, LWException **exc)
 
     LW_TRY(exc, RestartDtloginIfRunning(options, &LW_EXC));
 
-    if (options->warningCallback != NULL)
+    if (options->joiningDomain && options->warningCallback != NULL)
     {
         options->warningCallback(options,
                                  "System restart required",
