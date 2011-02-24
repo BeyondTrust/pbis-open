@@ -82,8 +82,15 @@ LWNetOpenServerOnce(
 
     dwError = MAP_LWMSG_ERROR(lwmsg_peer_add_connect_endpoint(
                                   gContext.pClient, 
-                                  LWMSG_CONNECTION_MODE_LOCAL,
+                                  LWMSG_ENDPOINT_DIRECT,
+                                  "netlogon"));
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_peer_add_connect_endpoint(
+                                  gContext.pClient,
+                                  LWMSG_ENDPOINT_LOCAL,
                                   LWNET_CACHE_DIR "/" LWNET_SERVER_FILENAME));
+    BAIL_ON_LWNET_ERROR(dwError);
 
     dwError = MAP_LWMSG_ERROR(lwmsg_peer_connect(gContext.pClient, &gContext.pSession));
     BAIL_ON_LWNET_ERROR(dwError);
