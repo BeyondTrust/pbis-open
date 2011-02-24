@@ -80,6 +80,12 @@
              METHOD_NEITHER,                 \
              FILE_ANY_ACCESS)
 
+#define IO_FSCTL_OPLOCK_BREAK_NOTIFY         \
+    CTL_CODE(FILE_DEVICE_FILE_SYSTEM,        \
+             CUSTOM_CTL_FUNCTION(3),         \
+             METHOD_NEITHER,                 \
+             FILE_ANY_ACCESS)
+
 //
 // Type: FILE_DEVICE_NETWORK_FILE_SYSTEM
 //
