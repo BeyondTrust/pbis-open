@@ -435,6 +435,7 @@ RdrShutdown(
     if (gRdrRuntime.pSocketTaskGroup)
     {
         LwRtlWaitTaskGroup(gRdrRuntime.pSocketTaskGroup);
+        LwRtlFreeTaskGroup(&gRdrRuntime.pSocketTaskGroup);
     }
 
     /* All sockets are now gone, so free the socket hash */
