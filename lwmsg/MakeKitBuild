@@ -7,7 +7,7 @@ configure()
     lw_define_feature_macros
 
     mk_multiarch_do
-        MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+        MK_CFLAGS="$MK_CFLAGS -Wall -Werror -Wmissing-prototypes"
     mk_multiarch_done
 
     mk_check_headers \
