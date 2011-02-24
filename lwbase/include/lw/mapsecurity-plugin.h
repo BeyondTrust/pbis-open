@@ -174,11 +174,4 @@ NTSTATUS
     OUT PLW_MAP_SECURITY_PLUGIN_INTERFACE* Interface
     );
 
-
-VOID
-LwMapSecurityUseInternalPlugin(
-    IN LWMSP_CREATE_CONTEXT_CALLBACK pCreateContextCallback
-    );
-
-
 #endif /* __LW_SECURITY_TOKEN_CREATE_INFO_H__ */

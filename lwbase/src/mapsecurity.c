@@ -358,20 +358,6 @@ LwMapSecurityFreeContext(
     UNLOCK_MUTEX(&gLwMapSecurityState.Mutex, bInLock);
 }
 
-VOID
-LwMapSecurityUseInternalPlugin(
-    IN LWMSP_CREATE_CONTEXT_CALLBACK pCreateContextCallback
-    )
-{
-    BOOLEAN bInLock = FALSE;
-
-    LOCK_MUTEX(&gLwMapSecurityState.Mutex, bInLock);
-
-    gLwMapSecurityState.pCreateContextCallback = pCreateContextCallback;
-
-    UNLOCK_MUTEX(&gLwMapSecurityState.Mutex, bInLock);
-}
-
 static
 NTSTATUS
 LwMapSecurityCreateContextInternal(
