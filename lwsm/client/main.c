@@ -1015,6 +1015,15 @@ LwSmInfo(
 
     printf("\n");
 
+    if (pInfo->dwFdLimit)
+    {
+        printf("File descriptor limit: %lu\n", (unsigned long) pInfo->dwFdLimit);
+    }
+    else
+    {
+        printf("File descriptor limit: inherit\n");
+    }
+
 cleanup:
     
     LW_SAFE_FREE_MEMORY(pwszServiceName);

@@ -217,10 +217,15 @@ typedef enum _LW_SERVICE_INFO_MASK
      */
     LW_SERVICE_INFO_MASK_AUTOSTART    = 0x80,
     /**
+     * @brief Update fd limit
+     * @hideinitializer
+     */
+    LW_SERVICE_INFO_MASK_FD_LIMIT     = 0x100,
+    /**
      * @brief Update all flags
      * @hideinitializer
      */
-    LW_SERVICE_INFO_MASK_ALL          = 0xFF
+    LW_SERVICE_INFO_MASK_ALL          = 0x1FF
 } LW_SERVICE_INFO_MASK, *PLW_SERVICE_INFO_MASK;
 
 /**
@@ -247,6 +252,8 @@ typedef struct _LW_SERVICE_INFO
     LW_PWSTR* ppwszDependencies;
     /** @brief Is this service automatically started? */
     LW_BOOL bAutostart;
+    /** @brief Desired file descriptor limit for the process */
+    LW_DWORD dwFdLimit;
 } LW_SERVICE_INFO, *PLW_SERVICE_INFO;
 
 typedef const LW_SERVICE_INFO* PCLW_SERVICE_INFO;

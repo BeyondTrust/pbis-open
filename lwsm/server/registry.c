@@ -200,6 +200,8 @@ LwSmRegistryReadServiceInfo(
         {'E', 'n', 'v', 'i', 'r', 'o', 'n', 'm', 'e', 'n', 't', 0};
     static const WCHAR wszAutostart[] =
         {'A', 'u', 't', 'o', 's', 't', 'a', 'r', 't', 0};
+    static const WCHAR wszFdLimit[] =
+            {'F', 'd', 'L', 'i', 'm', 'i', 't', 0};
 
     dwError = LwWc16sToMbs(pwszName, &pszName);
     BAIL_ON_ERROR(dwError);
@@ -289,6 +291,19 @@ LwSmRegistryReadServiceInfo(
     BAIL_ON_ERROR(dwError);
 
     pInfo->bAutostart = dwAutostart ? TRUE : FALSE;
+
+    dwError = LwSmRegistryReadDword(
+        hReg,
+        pRootKey,
+        pwszParentKey,
+        wszFdLimit,
+        &pInfo->dwFdLimit);
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        dwError = 0;
+        pInfo->dwFdLimit = 0;
+    }
+    BAIL_ON_ERROR(dwError);
 
     *ppInfo = pInfo;
 

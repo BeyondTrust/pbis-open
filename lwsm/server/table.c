@@ -319,6 +319,7 @@ LwSmTableUpdateEntry(
 
     pUpdate->type = mask & LW_SERVICE_INFO_MASK_TYPE ? pInfo->type : pEntry->pInfo->type;
     pUpdate->bAutostart = mask & LW_SERVICE_INFO_MASK_AUTOSTART ? pInfo->bAutostart : pEntry->pInfo->bAutostart;
+    pUpdate->dwFdLimit = mask & LW_SERVICE_INFO_MASK_AUTOSTART ? pInfo->dwFdLimit : pEntry->pInfo->dwFdLimit;
 
     /* Atomically replace previous info structure */
     LwSmCommonFreeServiceInfo(pEntry->pInfo);
