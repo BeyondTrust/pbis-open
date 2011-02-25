@@ -147,6 +147,7 @@ lwmsg_peer_call_dispatch_incoming(
         call->task->session->peer->trace_begin(
             LWMSG_CALL(call),
             &call->params.incoming.in,
+            LWMSG_STATUS_SUCCESS,
             call->task->session->peer->trace_data);
     }
 
@@ -241,6 +242,7 @@ lwmsg_peer_call_dispatch_outgoing(
         pcall->task->session->peer->trace_begin(
             LWMSG_CALL(call),
             pcall->params.outgoing.in,
+            LWMSG_STATUS_SUCCESS,
             pcall->task->session->peer->trace_data);
     }
 
@@ -346,6 +348,7 @@ lwmsg_peer_call_complete_outgoing(
             call->task->session->peer->trace_end(
                 LWMSG_CALL(call),
                 call->params.outgoing.out,
+                call->status,
                 call->task->session->peer->trace_data);
         }
 

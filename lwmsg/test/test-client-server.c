@@ -953,6 +953,90 @@ test_callback(
     MU_TRY(lwmsg_peer_stop_listen(server));
 }
 
+
+typedef struct trace_info
+{
+    LWMsgBool outgoing_begin, outgoing_end;
+    LWMsgBool incoming_begin, incoming_end;
+} trace_info;
+
+static
+void
+trace_begin(
+    LWMsgCall* call,
+    const LWMsgParams* params,
+    LWMsgStatus status,
+    void* data
+    )
+{
+    trace_info* info = data;
+
+    if (lwmsg_call_get_direction(call) == LWMSG_CALL_INCOMING)
+    {
+        MU_VERBOSE("Begin in call %i\n", params->tag);
+        info->incoming_begin = LWMSG_TRUE;
+    }
+    else
+    {
+        MU_VERBOSE("Begin out call %i\n", params->tag);
+        info->outgoing_begin = LWMSG_TRUE;
+    }
+}
+
+static
+void
+trace_end(
+    LWMsgCall* call,
+    const LWMsgParams* params,
+    LWMsgStatus status,
+    void* data
+    )
+{
+    trace_info* info = data;
+
+    if (lwmsg_call_get_direction(call) == LWMSG_CALL_INCOMING)
+    {
+        MU_VERBOSE("End in call %i\n", params->tag);
+        info->incoming_end = LWMSG_TRUE;
+    }
+    else
+    {
+        MU_VERBOSE("End out call %i\n", params->tag);
+        info->outgoing_end = LWMSG_TRUE;
+    }
+}
+
+static
+void
+test_tracing(
+   void
+   )
+{
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* call = NULL;
+    trace_info info = {0};
+
+    in.tag = PING_REQUEST;
+    in.data = NULL;
+
+    MU_TRY(lwmsg_peer_set_trace_functions(server, trace_begin, trace_end, &info));
+    MU_TRY(lwmsg_peer_set_trace_functions(client, trace_begin, trace_end, &info));
+
+    MU_TRY(lwmsg_peer_start_listen(server));
+    MU_TRY(lwmsg_peer_connect(client, NULL));
+    MU_TRY(lwmsg_peer_acquire_call(client, &call));
+    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out.tag, PING_REPLY);
+    MU_ASSERT(info.incoming_begin);
+    MU_ASSERT(info.incoming_end);
+    MU_ASSERT(info.outgoing_begin);
+    MU_ASSERT(info.outgoing_end);
+
+    MU_TRY(lwmsg_peer_disconnect(client));
+    MU_TRY(lwmsg_peer_stop_listen(server));
+}
+
 MU_TEST(client_server_indirect, ping)
 {
     test_ping();
@@ -1011,6 +1095,16 @@ MU_TEST(client_server_indirect, callback)
 MU_TEST(client_server_direct, callback)
 {
     test_callback();
+}
+
+MU_TEST(client_server_indirect, tracing)
+{
+    test_tracing();
+}
+
+MU_TEST(client_server_direct, tracing)
+{
+    test_tracing();
 }
 
 /* Ensure that the server removes its domain socket file
@@ -1097,81 +1191,4 @@ MU_TEST(client_server_indirect, client_limit_timeout)
         MU_TRY(lwmsg_connection_set_endpoint(assocs[i], LWMSG_ENDPOINT_LOCAL, TEST_ENDPOINT));
         MU_TRY(lwmsg_assoc_connect(assocs[i], NULL));
     }
-}
-
-typedef struct trace_info
-{
-    LWMsgBool outgoing_begin, outgoing_end;
-    LWMsgBool incoming_begin, incoming_end;
-} trace_info;
-
-static
-void
-trace_begin(
-    LWMsgCall* call,
-    const LWMsgParams* params,
-    void* data
-    )
-{
-    trace_info* info = data;
-
-    if (lwmsg_call_get_direction(call) == LWMSG_CALL_INCOMING)
-    {
-        MU_VERBOSE("Begin in call %i\n", params->tag);
-        info->incoming_begin = LWMSG_TRUE;
-    }
-    else
-    {
-        MU_VERBOSE("Begin out call %i\n", params->tag);
-        info->outgoing_begin = LWMSG_TRUE;
-    }
-}
-
-static
-void
-trace_end(
-    LWMsgCall* call,
-    const LWMsgParams* params,
-    void* data
-    )
-{
-    trace_info* info = data;
-
-    if (lwmsg_call_get_direction(call) == LWMSG_CALL_INCOMING)
-    {
-        MU_VERBOSE("End in call %i\n", params->tag);
-        info->incoming_end = LWMSG_TRUE;
-    }
-    else
-    {
-        MU_VERBOSE("End out call %i\n", params->tag);
-        info->outgoing_end = LWMSG_TRUE;
-    }
-}
-
-MU_TEST(client_server_indirect, tracing)
-{
-    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
-    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
-    LWMsgCall* call = NULL;
-    trace_info info = {0};
-
-    in.tag = PING_REQUEST;
-    in.data = NULL;
-
-    MU_TRY(lwmsg_peer_set_trace_functions(server, trace_begin, trace_end, &info));
-    MU_TRY(lwmsg_peer_set_trace_functions(client, trace_begin, trace_end, &info));
-
-    MU_TRY(lwmsg_peer_start_listen(server));
-    MU_TRY(lwmsg_peer_connect(client, NULL));
-    MU_TRY(lwmsg_peer_acquire_call(client, &call));
-    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
-    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out.tag, PING_REPLY);
-    MU_ASSERT(info.incoming_begin);
-    MU_ASSERT(info.incoming_end);
-    MU_ASSERT(info.outgoing_begin);
-    MU_ASSERT(info.outgoing_end);
-
-    MU_TRY(lwmsg_peer_disconnect(client));
-    MU_TRY(lwmsg_peer_stop_listen(server));
 }

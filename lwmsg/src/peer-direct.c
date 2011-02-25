@@ -408,6 +408,55 @@ static LWMsgSessionClass direct_session_class =
 };
 
 static
+LWMsgStatus
+lwmsg_direct_call_invoke_dispatch(
+    DirectCall* call,
+    LWMsgPeerCallFunction func
+    )
+{
+    LWMsgPeer* source_peer = !call->is_callback ? call->session->session->peer : call->session->endpoint->server;
+    LWMsgPeer* target_peer = call->is_callback ? call->session->session->peer : call->session->endpoint->server;
+
+    if (source_peer->trace_begin)
+    {
+        source_peer->trace_begin(&call->caller, call->in, LWMSG_STATUS_SUCCESS, source_peer->trace_data);
+    }
+
+    if (target_peer->trace_begin)
+    {
+        target_peer->trace_begin(&call->callee, call->in, LWMSG_STATUS_SUCCESS, target_peer->trace_data);
+    }
+
+    return func(&call->callee, call->in, call->out, target_peer->dispatch_data);
+}
+
+static
+void
+lwmsg_direct_call_invoke_complete(
+    DirectCall* call,
+    LWMsgStatus status
+    )
+{
+    LWMsgPeer* source_peer = !call->is_callback ? call->session->session->peer : call->session->endpoint->server;
+    LWMsgPeer* target_peer = call->is_callback ? call->session->session->peer : call->session->endpoint->server;
+
+    if (source_peer->trace_end)
+    {
+        source_peer->trace_end(&call->caller, call->out, status, source_peer->trace_data);
+    }
+
+    if (target_peer->trace_end)
+    {
+        target_peer->trace_end(&call->callee, call->out, status, target_peer->trace_data);
+    }
+
+    if (call->complete)
+    {
+        call->complete(&call->caller, status, call->complete_data);
+    }
+}
+
+static
 void
 lwmsg_direct_call_release(
     LWMsgCall* call
@@ -461,7 +510,7 @@ lwmsg_direct_call_worker(
     target_peer = dcall->is_callback ? session->session->peer : endpoint->server;
     func = target_peer->dispatch.vector[dcall->in->tag]->data;
 
-    status = func(&dcall->callee, dcall->in, dcall->out, target_peer->dispatch_data);
+    status = lwmsg_direct_call_invoke_dispatch(dcall, func);
 
     LOCK_SESSION(session);
     completed = dcall->state & DIRECT_CALL_COMPLETED;
@@ -488,7 +537,7 @@ lwmsg_direct_call_worker(
     default:
         if (dcall->complete)
         {
-            dcall->complete(&dcall->caller, status, dcall->complete_data);
+            lwmsg_direct_call_invoke_complete(dcall, status);
             lwmsg_direct_call_release(&dcall->caller);
         }
         else
@@ -529,6 +578,8 @@ lwmsg_direct_call_dispatch(
     dcall->complete = complete;
     dcall->complete_data = data;
     dcall->refs++;
+    dcall->in = in;
+    dcall->out = out;
     UNLOCK_SESSION(session);
 
     unref = LWMSG_TRUE;
@@ -560,9 +611,6 @@ lwmsg_direct_call_dispatch(
          * so dispatch a work item and return LWMSG_STATUS_PENDING
          */
 
-        dcall->in = in;
-        dcall->out = out;
-
         BAIL_ON_ERROR(status = lwmsg_task_dispatch_work_item(
             target_peer->task_manager,
             lwmsg_direct_call_worker,
@@ -572,7 +620,7 @@ lwmsg_direct_call_dispatch(
     }
 
     unref = LWMSG_FALSE;
-    status = func(&dcall->callee, in, out, target_peer->dispatch_data);
+    status = lwmsg_direct_call_invoke_dispatch(dcall, func);
 
     switch (status)
     {
@@ -613,6 +661,11 @@ lwmsg_direct_call_dispatch(
         UNLOCK_SESSION(session);
         unref = LWMSG_TRUE;
         BAIL_ON_ERROR(status);
+    }
+
+    if (status != LWMSG_STATUS_PENDING)
+    {
+        lwmsg_direct_call_invoke_complete(dcall, status);
     }
 
 error:

@@ -1672,6 +1672,7 @@ lwmsg_peer_task_dispatch_calls(
                 call->task->session->peer->trace_end(
                     LWMSG_CALL(call),
                     &call->params.incoming.out,
+                    call->status,
                     call->task->session->peer->trace_data);
             }
 

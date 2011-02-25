@@ -240,6 +240,7 @@ void
 (*LWMsgPeerTraceFunction) (
     LWMsgCall* call,
     const LWMsgParams* params,
+    LWMsgStatus status,
     void* data
     );
 
