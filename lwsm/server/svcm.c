@@ -43,7 +43,43 @@ typedef struct
     LW_SERVICE_STATE State;
     PLW_SVCM_INSTANCE pInstance;
     PWSTR* ppArgs;
+    DWORD FdLimit;
 } SVCM_STATE, *PSVCM_STATE;
+
+pthread_mutex_t gLimitMutex = PTHREAD_MUTEX_INITIALIZER;
+
+static
+DWORD
+SetLimits(
+    PSVCM_STATE pState
+    )
+{
+    DWORD dwError = 0;
+    struct rlimit limit = {0};
+
+    pthread_mutex_lock(&gLimitMutex);
+
+    if (pState->FdLimit)
+    {
+        (void) getrlimit(RLIMIT_NOFILE, &limit);
+
+        if (pState->FdLimit > limit.rlim_cur)
+        {
+            limit.rlim_cur = pState->FdLimit;
+        }
+
+        if (pState->FdLimit > limit.rlim_max)
+        {
+            limit.rlim_max = pState->FdLimit;
+        }
+
+        (void) setrlimit(RLIMIT_NOFILE, &limit);
+    }
+
+    pthread_mutex_unlock(&gLimitMutex);
+
+    return dwError;
+}
 
 static
 VOID
@@ -104,6 +140,9 @@ LwSmSvcmStart(
     for (ArgCount = 0; pState->ppArgs[ArgCount]; ArgCount++);
 
     pState->State = LW_SERVICE_STATE_STARTING;
+
+    dwError = SetLimits(pState);
+    BAIL_ON_ERROR(dwError);
 
     dwError = LwNtStatusToWin32Error(
         LwRtlSvcmStart(
@@ -209,6 +248,7 @@ LwSmSvcmConstruct(
     BAIL_ON_ERROR(dwError);
 
     pState->State = LW_SERVICE_STATE_STOPPED;
+    pState->FdLimit = pInfo->dwFdLimit;
 
     dwError = LwSmCopyStringList(pInfo->ppwszArgs, &pState->ppArgs);
     BAIL_ON_ERROR(dwError);
