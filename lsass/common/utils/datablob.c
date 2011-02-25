@@ -92,25 +92,21 @@ error:
 /**************************************************************
  */
 
-DWORD
+VOID
 LsaDataBlobFree(
     PLSA_DATA_BLOB *ppBlob
     )
 {
-    DWORD dwError = LW_ERROR_INTERNAL;
+    if (ppBlob && *ppBlob)
+    {
+        if ((*ppBlob)->pData)
+        {
+            LwFreeMemory((*ppBlob)->pData);
+        }
 
-    /* NULL Pointer is automatic success */
-
-    if (!ppBlob) {        
-        return LW_ERROR_SUCCESS;
+        LwFreeMemory(*ppBlob);
+        *ppBlob = NULL;
     }    
-
-    LwFreeMemory((*ppBlob)->pData);
-    LwFreeMemory(*ppBlob);
-    
-    *ppBlob = NULL;
-    
-    return dwError;
 }
 
 /**************************************************************
