@@ -249,10 +249,7 @@ LwioSrvSetDefaults(
     strncpy(gpServerInfo->szPrefixPath, PREFIXDIR, PATH_MAX);
     gpServerInfo->szPrefixPath[PATH_MAX] = '\0';
 
-    setlocale(LC_ALL, "");
-
     // Enforce configuration settings
-
     ntStatus = LwioSrvInitializeConfig(&defaultConfig);
     BAIL_ON_NT_STATUS(ntStatus);
 

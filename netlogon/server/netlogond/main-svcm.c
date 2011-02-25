@@ -148,8 +148,6 @@ LWNetSrvSetDefaults(
     strcpy(gpServerInfo->szCachePath, LWNET_CACHE_DIR);
     strcpy(gpServerInfo->szPrefixPath, PREFIXDIR);
 
-    setlocale(LC_ALL, "");
-
     return (dwError);
 }
 

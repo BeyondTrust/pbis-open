@@ -151,8 +151,6 @@ RegSrvSetDefaults(
             PREFIXDIR,
             sizeof(gpServerInfo->szPrefixPath)-1);
 
-    setlocale(LC_ALL, "");
-
     return (dwError);
 }
 
