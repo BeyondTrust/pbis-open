@@ -125,16 +125,6 @@ LwioSrvReadRegistry(
     }
     BAIL_ON_NT_STATUS(ntStatus);
 
-    /* Ignore error as it may not exist; we can still use default. */
-
-    LwIoReadConfigDword(
-        pReg,
-        "MaxOpenFileDescriptors",
-        TRUE,
-        0,
-        0xFFFFFFFF,
-        &pConfig->MaxOpenFileDescriptors);
-
 cleanup:
 
     if (pReg)
@@ -193,8 +183,6 @@ LwioSrvInitializeConfig(
     pthread_rwlock_init(&pConfig->RwLock, NULL);
     pConfig->pRwLock = &pConfig->RwLock;
 
-    pConfig->MaxOpenFileDescriptors = 16384;
-
     return STATUS_SUCCESS;
 }
 
@@ -209,8 +197,6 @@ LwioSrvTransferConfigContents(
     PLWIO_CONFIG pSrcConfig
     )
 {
-    pDstConfig->MaxOpenFileDescriptors = pSrcConfig->MaxOpenFileDescriptors;
-
     return STATUS_SUCCESS;
 }
 

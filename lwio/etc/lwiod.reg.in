@@ -29,6 +29,10 @@
     default = dword:00000001
     doc = ""
 }
+"FdLimit" = {
+	default = dword:00004000
+	doc = "File descriptor limit"
+}
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters]
 "SignMessagesIfSupported" = { 

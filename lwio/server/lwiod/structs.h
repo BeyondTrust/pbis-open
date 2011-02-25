@@ -78,9 +78,6 @@ typedef struct __LWIO_CONFIG
 {
     pthread_rwlock_t RwLock;
     pthread_rwlock_t* pRwLock;
-    
-    DWORD MaxOpenFileDescriptors;
-
 } LWIO_CONFIG, *PLWIO_CONFIG;
 
 #endif /* __STRUCTS_H__ */

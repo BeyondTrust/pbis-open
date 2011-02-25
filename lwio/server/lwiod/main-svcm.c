@@ -237,10 +237,7 @@ LwioSrvSetDefaults(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    struct rlimit rlim = {0};
-    int err = 0;
     LWIO_CONFIG defaultConfig;
-    rlim_t maxOpenFileDescriptors = 0;
 
     gpServerInfo->maxAllowedLogLevel = LWIO_LOG_LEVEL_ERROR;
 
@@ -257,54 +254,7 @@ LwioSrvSetDefaults(
     // Enforce configuration settings
 
     ntStatus = LwioSrvInitializeConfig(&defaultConfig);
-    BAIL_ON_NT_STATUS(ntStatus);    
-
-    if (pConfig->MaxOpenFileDescriptors > 0)
-    {
-            maxOpenFileDescriptors = pConfig->MaxOpenFileDescriptors;
-            LWIO_LOG_VERBOSE("Setting maxOpenFileDescriptors to %d\n",
-                maxOpenFileDescriptors);
-    }
-    else
-    {
-            maxOpenFileDescriptors = RLIM_INFINITY;
-            LWIO_LOG_VERBOSE("Setting maxOpenFileDescriptors to unlimited\n");
-    }
-
-    rlim.rlim_cur = maxOpenFileDescriptors;
-    rlim.rlim_max = maxOpenFileDescriptors;
-
-    if (setrlimit(RLIMIT_NOFILE, &rlim) < 0)
-    {
-        err = errno;
-
-        ntStatus = LwErrnoToNtStatus(err);
-
-        LWIO_LOG_ERROR(
-            "Failed to set maximum file descriptors to %d - %s (0x%x).  "
-            "Using default (%d)\n",
-            pConfig->MaxOpenFileDescriptors,
-            LwNtStatusToDescription(ntStatus),
-            ntStatus,
-            defaultConfig.MaxOpenFileDescriptors);
-
-        rlim.rlim_cur = defaultConfig.MaxOpenFileDescriptors;
-        rlim.rlim_max = defaultConfig.MaxOpenFileDescriptors;
-
-        if (setrlimit(RLIMIT_NOFILE, &rlim) < 0)
-        {
-            err = errno;
-            ntStatus = LwErrnoToNtStatus(err);
-
-            LWIO_LOG_ERROR(
-                "Failed to set default file descriptor limit (%d - %s) (0x%x).\n",
-                defaultConfig.MaxOpenFileDescriptors,
-                LwNtStatusToDescription(ntStatus),
-                ntStatus);
-        }
-    }
-
-    ntStatus = STATUS_SUCCESS;
+    BAIL_ON_NT_STATUS(ntStatus);
 
 cleanup:
 
