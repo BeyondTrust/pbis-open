@@ -148,6 +148,9 @@ main(
     dwError = LwDsCacheAddPidException(getpid());
     BAIL_ON_ERROR(dwError);
 
+    /* Initialize i18n */
+    setlocale(LC_ALL, "");
+
     /* Initialize logging subsystem */
     LwSmLogInit();
 

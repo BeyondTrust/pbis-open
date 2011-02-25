@@ -55,6 +55,7 @@
 #include <dlfcn.h>
 #include <stdio.h>
 #include <syslog.h>
+#include <locale.h>
 #include <lw/winerror.h>
 #include <lw/svcm.h>
 #include <lwerror.h>
