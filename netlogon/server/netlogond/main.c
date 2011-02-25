@@ -146,6 +146,11 @@ main(
 
     LWNET_LOG_VERBOSE("LWNet main cleaning up");
 
+#ifdef ENABLE_PIDFILE
+    // On successful exit, remove the pid file. Ignore errors
+    unlink(PID_FILE);
+#endif
+
     // Post service stopped event to eventlog
     LWNetSrvLogProcessStoppedEvent(dwError);
 
