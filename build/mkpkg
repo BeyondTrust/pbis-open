@@ -357,6 +357,7 @@ foreach (<STDIN>) {
         /var/cache
         /var/lib
         /var/log
+        /opt
         )
         {
                     last if (s/^(d none $k) .*/$1 ? ? ?/);
@@ -366,13 +367,6 @@ foreach (<STDIN>) {
     < "$1" > "$2"
 
     local dir="${BUILD_PREFIX}"
-
-    while [ "${dir}" != "/" ]
-    do
-        grep -v "^d none ${dir}" < "${2}" > "${2}.out"
-        mv "${2}.out" "${2}"
-        dir="`dirname ${dir}`"
-    done
 
     exit_on_error $?
 }
@@ -417,7 +411,7 @@ function pkg_create_prototype
     # from .master
 
     # Enumerate all files, except development files
-    pkgproto ${PKG_POPULATE_ROOT}=/ | sed "s:f none .*/.*\.la .*::" | sed "s:f none .*/.*\.a .*::" | sed "s:f none .*/.*\.h .*::" | sed "s: ${BUILD_PREFIX}/: :" > "$1.tmp.1"
+    pkgproto ${PKG_POPULATE_ROOT}=/ | sed "s:f none .*/.*\.la .*::" | sed "s:f none .*/.*\.a .*::" | sed "s:f none .*/.*\.h .*::" > "$1.tmp.1"
 
     # Make sure that we do not attempt to override any perms
     # on standard directories.
@@ -476,7 +470,7 @@ function package_pkg
         -e "s|__PKG__|${PKG_NAME}|g" \
         -e "s|__ARCH__|${BUILD_OS_ARCH}|g" \
         -e "s|__VERSION__|${PKG_VERSION}.${PKG_FULL_RELEASE}|g" \
-        -e "s|__BASEDIR__|${PKG_PREFIX_DIR}|g" \
+        -e "s|BASEDIR=__BASEDIR__||g" \
         ${CONTROL_DIR}/pkginfo.master > ${CONTROL_DIR}/pkginfo
     exit_on_error $?
 
