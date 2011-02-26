@@ -283,15 +283,20 @@ function package_bff
     local _PKG_FILE=${PKG_PACKAGE_ROOT}/${PKG_NAME}-${PKG_VERSION}-${PKG_RELEASE}.${BUILD_OS_ARCH}.bff
     local _CONTROL_FILE="${_PKG_LAYOUT}/control.in"
 
+    # Remove development files, if present
+    find ${PKG_POPULATE_ROOT} -name '*.la' -print | xargs rm
+    find ${PKG_POPULATE_ROOT} -name '*.a' -print | xargs rm
+    find ${PKG_POPULATE_ROOT} -name '*.h' -print | xargs rm
+
     mkdir -p ${_PKG_LAYOUT}
     exit_on_error $?
 
     rsync -a --exclude .svn ${PKG_DIR}/ ${_PKG_LAYOUT}/
     exit_on_error $?
-    
+
     mv ${PKG_POPULATE_ROOT}/ ${_PKG_LAYOUT}/root
     exit_on_error $?
-    
+
     mkdir -p ${_PKG_LAYOUT}/root/usr/lpp/likewise
     exit_on_error $?
 
@@ -411,8 +416,8 @@ function pkg_create_prototype
     # Grab only non-directory files, as we should have the dirs
     # from .master
 
-    # Enumerate all files
-    pkgproto ${PKG_POPULATE_ROOT}=/ | sed "s: ${BUILD_PREFIX}/: :" > "$1.tmp.1"
+    # Enumerate all files, except development files
+    pkgproto ${PKG_POPULATE_ROOT}=/ | sed "s:f none .*/.*\.la .*::" | sed "s:f none .*/.*\.a .*::" | sed "s:f none .*/.*\.h .*::" | sed "s: ${BUILD_PREFIX}/: :" > "$1.tmp.1"
 
     # Make sure that we do not attempt to override any perms
     # on standard directories.
@@ -573,6 +578,11 @@ function package_freebsd
     package_init
     populate "${PKG_PREFIX_DIR}" ""
 
+    # Remove development files, if present
+    find ${PKG_POPULATE_ROOT} -name '*.la' -print0 | xargs -0 rm
+    find ${PKG_POPULATE_ROOT} -name '*.a' -print0 | xargs -0 rm
+    find ${PKG_POPULATE_ROOT} -name '*.h' -print0 | xargs -0 rm
+
     local OUT_FILE=${PKG_PACKAGE_ROOT}/${PKG_NAME}-${PKG_VERSION}.${PKG_RELEASE}-${BUILD_OS_ARCH}.tbz
 
     mkdir -p ${PKG_PACKAGE_ROOT}
@@ -700,6 +710,11 @@ function package_mac
             local ARCH_RENAME="OSX10.6-universal"
             ;;
     esac
+
+    # Remove development files, if present
+    find ${PKG_POPULATE_ROOT} -name '*.la' -print0 | xargs -0 rm
+    find ${PKG_POPULATE_ROOT} -name '*.a' -print0 | xargs -0 rm
+    find ${PKG_POPULATE_ROOT} -name '*.h' -print0 | xargs -0 rm
     
     local PMAKER=/Developer/Applications/Utilities/PackageMaker-2.1.1/PackageMaker.app/Contents/MacOS/PackageMaker
     if [ ! -x "${PMAKER}" ]; then
