@@ -1,0 +1,10 @@
+This file is not shipped to the customer.
+
+---- bff  IBM AIX
+rpm support was dropped (according to Brian) because of problems in some versions.
+
+---- pkg  Solaris.
+
+Solaris will not allow installing two packages of the same name and version. If they are the same name, a later version may overwrite an existing version.
+
+The package manager has no support for package upgrades and the manuals suggest very buggy/hackish ideas for handling upgrades.

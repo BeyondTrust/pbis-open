@@ -1,0 +1,17 @@
+#
+# Information files.
+# 
+i pkginfo=./pkginfo
+i copyright=./copyright
+i depend=./depend
+i postinstall
+i preinstall
+i preremove
+#
+# Default mode owner group
+#
+!default 0644 root other
+#
+# Pick up the file system tree
+#
+!include prototype.files
