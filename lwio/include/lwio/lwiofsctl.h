@@ -101,9 +101,36 @@
 // Oplock IoFsControl STructures
 //
 
-#define IO_OPLOCK_REQUEST_OPLOCK_BATCH      0x01
-#define IO_OPLOCK_REQUEST_OPLOCK_LEVEL_1    0x02
-#define IO_OPLOCK_REQUEST_OPLOCK_LEVEL_2    0x03
+#define IO_LEASE_CACHE_READ   0x01
+#define IO_LEASE_CACHE_WRITE  0x02
+#define IO_LEASE_CACHE_HANDLE 0x04
+
+#define IO_LEASE_REQUEST_RWH       \
+     ( \
+                      IO_LEASE_CACHE_READ  | \
+                      IO_LEASE_CACHE_WRITE | \
+                      IO_LEASE_CACHE_HANDLE \
+     )
+
+#define IO_LEASE_REQUEST_RW    \
+     (\
+                      IO_LEASE_CACHE_READ | \
+                      IO_LEASE_CACHE_WRITE \
+     )
+
+#define IO_LEASE_REQUEST_R    IO_LEASE_CACHE_READ
+
+#define IO_LEASE_REQUEST_RH                 \
+    (\
+                      IO_LEASE_CACHE_READ | \
+                      IO_LEASE_CACHE_HANDLE \
+    )
+
+#define IO_OPLOCK_REQUEST_OPLOCK_LEVEL_2   IO_LEASE_REQUEST_R
+
+#define IO_OPLOCK_REQUEST_OPLOCK_LEVEL_1   IO_LEASE_REQUEST_RW
+
+#define IO_OPLOCK_REQUEST_OPLOCK_BATCH     IO_LEASE_REQUEST_RWH
 
 typedef struct _IO_FSCTL_REQUEST_OPLOCK_INPUT_BUFFER
 {
@@ -114,9 +141,26 @@ typedef struct _IO_FSCTL_REQUEST_OPLOCK_INPUT_BUFFER
 
 // Oplock Request Output Buffer
 
-#define IO_OPLOCK_NOT_BROKEN                 0x00000000
-#define IO_OPLOCK_BROKEN_TO_NONE             0x00000001
-#define IO_OPLOCK_BROKEN_TO_LEVEL_2          0x00000002
+#define IO_LEASE_NOT_BROKEN     0x00000000
+
+#define IO_LEASE_BROKEN_TO_NONE ~IO_LEASE_REQUEST_RWH
+
+#define IO_LEASE_BROKEN_TO_RW    \
+     (\
+                      IO_LEASE_CACHE_READ | \
+                      IO_LEASE_CACHE_WRITE \
+     )
+
+#define IO_LEASE_BROKEN_TO_R    IO_LEASE_CACHE_READ
+
+#define IO_LEASE_BROKEN_TO_RH                 \
+    (\
+                      IO_LEASE_CACHE_READ | \
+                      IO_LEASE_CACHE_HANDLE \
+    )
+
+#define IO_OPLOCK_BROKEN_TO_NONE             IO_LEASE_BROKEN_TO_NONE
+#define IO_OPLOCK_BROKEN_TO_LEVEL_2          IO_LEASE_BROKEN_TO_R
 
 typedef struct _IO_FSCTL_OPLOCK_REQUEST_OUTPUT_BUFFER
 {
@@ -280,3 +324,4 @@ indent-tabs-mode: nil
 tab-width: 4
 end:
 */
+
