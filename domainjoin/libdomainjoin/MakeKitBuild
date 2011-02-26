@@ -11,6 +11,7 @@ make()
        src/djstr.c    \
        src/djroutines.c   \
        src/djregistry.c   \
+       src/djservicemgr.c \
        src/djprocutils.c  \
        src/djmodule.c \
        src/djapi.c \

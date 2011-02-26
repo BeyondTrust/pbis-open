@@ -60,6 +60,7 @@ libdomainjoin_la_SOURCES = \
        src/djstr.c    \
        src/djregistry.c \
        src/djroutines.c   \
+       src/djservicemgr.c \
        src/djprocutils.c  \
        src/djmodule.c \
        src/djapi.c
