@@ -50,6 +50,8 @@
     (NT_PENDING_OR_SUCCESS_OR_NOT(Status) || \
      ((IRP_TYPE_READ_DIRECTORY_CHANGE == (IrpType)) && \
       (STATUS_NOTIFY_ENUM_DIR == (Status))) || \
+     ((IRP_TYPE_CREATE == (IrpType)) && \
+      (STATUS_OPLOCK_BREAK_IN_PROGRESS == (Status))) || \
      ((IRP_TYPE_DEVICE_IO_CONTROL == (IrpType)) && \
       (STATUS_MORE_ENTRIES == (Status))))
 

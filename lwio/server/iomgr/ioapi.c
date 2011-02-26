@@ -188,7 +188,8 @@ IoCreateFile(
     if (STATUS_PENDING != status)
     {
         ioStatusBlock = pIrp->IoStatusBlock;
-        if (STATUS_SUCCESS == status)
+        if ((STATUS_SUCCESS == status) || 
+            (STATUS_OPLOCK_BREAK_IN_PROGRESS == status))
         {
             // Already referenced by IRP completion processing for
             // create-type IRPs.

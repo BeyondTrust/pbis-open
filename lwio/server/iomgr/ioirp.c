@@ -1,6 +1,6 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
  * Copyright Likewise Software
@@ -335,7 +335,8 @@ IopIrpCompleteInternal(
     {
     case IRP_TYPE_CREATE:
     case IRP_TYPE_CREATE_NAMED_PIPE:
-        if (STATUS_SUCCESS == pIrp->IoStatusBlock.Status)
+        if ((STATUS_SUCCESS == pIrp->IoStatusBlock.Status) ||
+            (STATUS_OPLOCK_BREAK_IN_PROGRESS == pIrp->IoStatusBlock.Status))
         {
             // Handle special success processing having to do with file handle.
             // ISSUE-May not need lock since it should be only reference
