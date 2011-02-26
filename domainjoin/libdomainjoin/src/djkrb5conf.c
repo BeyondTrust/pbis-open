@@ -874,32 +874,41 @@ GatherDomainMappings(
     {
         DJ_LOG_INFO("Unable to get trust list because lsass is not running");
         ceError = 0;
+    }
+    else
+    {
+        GCE(ceError);
 
+        GCE(ceError = LsaGetStatus(hLsa, &pStatus));
+
+        for (providerIndex = 0; providerIndex < pStatus->dwCount; providerIndex++)
+        {
+            PLSA_AUTH_PROVIDER_STATUS provider =
+                &pStatus->pAuthProviderStatusList[providerIndex];
+            for (domainIndex = 0;
+                    domainIndex < provider->dwNumTrustedDomains;
+                    domainIndex++)
+            {
+                GCE(ceError = CTStrdup(provider->
+                            pTrustedDomainInfoArray[domainIndex].pszDnsDomain,
+                            &add.longName));
+                GCE(ceError = CTStrdup(provider->
+                                pTrustedDomainInfoArray[domainIndex].
+                                pszNetbiosDomain,
+                            &add.shortName));
+                GCE(ceError = CTArrayAppend(mappings, sizeof(add), &add, 1));
+                memset(&add, 0, sizeof(add));
+            }
+        }
+    }
+    
+    if (mappings->size == 0)
+    {
         // Put in the default entry
         GCE(ceError = CTStrdup(pszDomainName, &add.longName));
         GCE(ceError = CTStrdup(pszShortDomainName, &add.shortName));
         GCE(ceError = CTArrayAppend(mappings, sizeof(add), &add, 1));
         memset(&add, 0, sizeof(add));
-        goto cleanup;
-    }
-    GCE(ceError);
-
-    GCE(ceError = LsaGetStatus(hLsa, &pStatus));
-
-    for (providerIndex = 0; providerIndex < pStatus->dwCount; providerIndex++)
-    {
-        PLSA_AUTH_PROVIDER_STATUS provider = &pStatus->pAuthProviderStatusList[providerIndex];
-        for (domainIndex = 0; domainIndex < provider->dwNumTrustedDomains; domainIndex++)
-        {
-            GCE(ceError = CTStrdup(provider->
-                        pTrustedDomainInfoArray[domainIndex].pszDnsDomain,
-                        &add.longName));
-            GCE(ceError = CTStrdup(provider->
-                        pTrustedDomainInfoArray[domainIndex].pszNetbiosDomain,
-                        &add.shortName));
-            GCE(ceError = CTArrayAppend(mappings, sizeof(add), &add, 1));
-            memset(&add, 0, sizeof(add));
-        }
     }
 
 cleanup:
@@ -1269,7 +1278,7 @@ DJModifyKrb5Conf(
     if(testPrefix == NULL)
         testPrefix = "";
 
-    if (IsNullOrEmptyString(pszShortDomainName))
+    if (IsNullOrEmptyString(pszShortDomainName) && pszDomainName)
     {
         char *dotPosition = NULL;
         CTStrdup(pszDomainName, &pAutoShortDomain);
