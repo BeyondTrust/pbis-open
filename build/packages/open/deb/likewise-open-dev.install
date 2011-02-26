@@ -1,8 +1,0 @@
-__PKG_PREFIX/include
-__PKG_PREFIX/lib*/{*.la,*.a}
-__PKG_PREFIX/share/doc/lwbase
-__PKG_PREFIX/share/doc/lwmsg
-__PKG_PREFIX/share/doc/lwsm
-__PKG_PREFIX/share/doc/lsass
-__PKG_PREFIX/lib*/sasl2/{*.la,*.a}
-

@@ -1,8 +1,0 @@
-PKG_COMPONENTS=""
-
-function package_populate
-{
-   mkdir -p ${POPULATE_ROOT_DIR}
-   mkdir -p ${POPULATE_PREFIX_DIR}
-   return 0
-}
