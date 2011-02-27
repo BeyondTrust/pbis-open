@@ -133,6 +133,22 @@ function package_deb
 
     chmod 755 ${PKG_PACKAGE_ROOT}/${PKG_NAME}/debian/rules
 
+    echo "PKG_BUILD_ROOT = ${PKG_BUILD_ROOT}"
+    # Fix up init scripts
+    for daemon in "${PKG_BUILD_ROOT}/populate/etc/init.d/"*
+    do
+        daemon_new="$daemon.new"
+        if [ -f $daemon ]; then
+            sed -e 's/^#LWI_STARTUP_TYPE_DEBIAN\(.*\)$/\1/' \
+                -e '/^#LWI_STARTUP_TYPE_SUSE.*$/ d' \
+                -e '/^#LWI_STARTUP_TYPE_REDHAT.*$/ d' \
+                -e '/^#LWI_STARTUP_TYPE_FREEBSD.*$/ d' \
+                $daemon > $daemon_new
+            mv $daemon_new $daemon
+            chmod 0755 $daemon
+        fi
+    done
+
     echo "Building ${PKG_NAME} ${PKG_TYPE}..."
     (cd ${PKG_PACKAGE_ROOT}/${PKG_NAME} && \
         dpkg-buildpackage -a`pkgtype_convert_pkgtype_and_arch_to_larch deb $BUILD_OS_ARCH` -rfakeroot -uc -b)
@@ -584,6 +600,22 @@ function package_freebsd
 
     ln -s ${PKG_POPULATE_ROOT} ${PKG_PACKAGE_ROOT}/root
     exit_on_error $?
+
+    echo "PKG_BUILD_ROOT = ${PKG_BUILD_ROOT}"
+    # Fix up init scripts
+    for daemon in "${PKG_BUILD_ROOT}/populate/etc/rc.d/"*
+    do
+        daemon_new="$daemon.new"
+        if [ -f $daemon ]; then
+            sed -e 's/^#LWI_STARTUP_TYPE_FREEBSD\(.*\)$/\1/' \
+                -e '/^#LWI_STARTUP_TYPE_SUSE.*$/ d' \
+                -e '/^#LWI_STARTUP_TYPE_REDHAT.*$/ d' \
+                -e '/^#LWI_STARTUP_TYPE_DEBIAN.*$/ d' \
+                $daemon > $daemon_new
+            mv $daemon_new $daemon
+            chmod 0755 $daemon
+        fi
+    done
 
     echo "Creating $OUT_FILE"
 
