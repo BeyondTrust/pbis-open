@@ -305,6 +305,11 @@ AD_GetDomainManagerTrustExceptionList(
     OUT PDWORD pdwTrustsCount
     );
 
+BOOLEAN
+AD_GetAddDomainToLocalGroupsEnabled(
+    IN PLSA_AD_PROVIDER_STATE pState
+    );
+
 VOID
 AD_ConfigLockAcquireRead(
     PLSA_AD_PROVIDER_STATE pState

@@ -143,6 +143,7 @@ AD_InitializeConfig(
     pConfig->DomainManager.dwTrustExceptionCount = 0;
 
     pConfig->bMultiTenancyEnabled = FALSE;
+    pConfig->bAddDomainToLocalGroupsEnabled = TRUE;
 
     dwError = LwAllocateString(
                     AD_DEFAULT_SHELL,
@@ -558,6 +559,16 @@ AD_ReadRegistry(
             MAXDWORD,
             NULL,
             &StagingConfig.bMultiTenancyEnabled,
+            NULL
+        },
+        {
+            "ADdDomainToLocalGroupsEnabled",
+            TRUE,
+            LsaTypeBoolean,
+            0,
+            MAXDWORD,
+            NULL,
+            &StagingConfig.bAddDomainToLocalGroupsEnabled,
             NULL
         }
     };
@@ -1901,6 +1912,23 @@ AD_GetDomainManagerTrustExceptionList(
     LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwError;
+}
+
+BOOLEAN
+AD_GetAddDomainToLocalGroupsEnabled(
+    IN PLSA_AD_PROVIDER_STATE pState
+    )
+{
+    BOOLEAN result = FALSE;
+    BOOLEAN bInLock = FALSE;
+
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+
+    result = pState->config.bAddDomainToLocalGroupsEnabled;
+
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+
+    return result;
 }
 
 VOID

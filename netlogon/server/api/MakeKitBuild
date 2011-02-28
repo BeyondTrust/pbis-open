@@ -16,6 +16,6 @@ make()
         GROUP=api \
         SOURCES="$API_SOURCES" \
         INCLUDEDIRS=". ../include ../../include" \
-        HEADERDEPS="reg/lwreg.h reg/regutil.h lwmsg/lwmsg.h lwadvapi.h" \
+        HEADERDEPS="reg/lwreg.h reg/regutil.h lwmsg/lwmsg.h lwadvapi.h ldap.h" \
         LIBDEPS="regclient rsutils lwmsg lwadvapi ldap_r $LIB_PTHREAD $LIB_DL"
 }
