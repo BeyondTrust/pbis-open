@@ -292,10 +292,6 @@ AD_OnlineInitializeOperatingMode(
     dwError = LwLdapConvertDomainToDN(pszDomain, &pszRootDN);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = ADFindComputerDN(pConn, pszHostName, pszDomain,
-                               &pszComputerDN);
-    BAIL_ON_LSA_ERROR(dwError);
-
     adCellSupport = AD_GetCellSupport(pState);
     switch (adCellSupport)
     {
@@ -314,6 +310,13 @@ AD_OnlineInitializeOperatingMode(
             break;
 
         default:
+            dwError = ADFindComputerDN(
+                            pConn,
+                            pszHostName,
+                            pszDomain,
+                            &pszComputerDN);
+            BAIL_ON_LSA_ERROR(dwError);
+
             dwError = AD_OnlineFindCellDN(
                             pConn,
                             pszComputerDN,
@@ -366,7 +369,10 @@ AD_OnlineInitializeOperatingMode(
     BAIL_ON_LSA_ERROR(dwError);
 
     strcpy(pProviderData->szDomain, pszDomain);
-    strcpy(pProviderData->szComputerDN, pszComputerDN);
+    if (pszComputerDN)
+    {
+        strcpy(pProviderData->szComputerDN, pszComputerDN);
+    }
     strcpy(pProviderData->szShortDomain, pszNetbiosDomainName);
 
     pProviderData->adConfigurationMode = adConfMode;
