@@ -43,6 +43,7 @@ default_homedir_prefix="/home"
 AC_DEFINE_UNQUOTED([AD_DEFAULT_HOMEDIR_PREFIX], ["$default_homedir_prefix"], [This directory substitutes for %H])
 AC_DEFINE_UNQUOTED([AD_DEFAULT_SKELDIRS], ["$default_skeldirs"], [The directory to copy skeleton files from])
 
+fdlimit=dword:00000400
 
 CF_FRAMEWORK_LDFLAGS=""
 SC_FRAMEWORK_LDFLAGS=""
@@ -88,6 +89,7 @@ case "$host_os:$host_cpu" in
                 NSS_SUBDIR="solaris"
                 ENABLE_NSS_ENUM_DEFAULT="no"
 		default_homedir_prefix="/export/home"
+		fdlimit=dword:00000100
                 AC_DEFINE([__LWI_SOLARIS__], [], [Define if OS is Solaris])
                 AC_DEFINE([_XOPEN_SOURCE], [500], [Define to desired XOPEN compliance level])
                 ;;
@@ -192,6 +194,7 @@ AC_SUBST(NSS_SUBDIR)
 AC_SUBST(MOD_EXT)
 AC_SUBST(default_skeldirs)
 AC_SUBST(default_homedir_prefix)
+AC_SUBST(fdlimit)
 AC_SUBST(CF_FRAMEWORK_LDFLAGS)
 AC_SUBST(SC_FRAMEWORK_LDFLAGS)
 AC_SUBST(DS_FRAMEWORK_LDFLAGS)
