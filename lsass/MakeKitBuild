@@ -11,6 +11,8 @@ configure()
     mk_declare_system_var PAMDIR
     mk_declare_system_var NSSDIR
 
+    mk_export fdlimit=dword:00000400
+
     # Do defines/exports of system-dependent variables
     mk_multiarch_do
         case "$MK_OS:$MK_ISA" in
@@ -25,14 +27,17 @@ configure()
             solaris:sparc_32|solaris:x86_32)
                 NSSDIR="/usr/lib"
                 PAMDIR="/usr/lib/security"
+		fdlimit=dword:00000100
                 ;;
             solaris:x86_64)
                 NSSDIR="/usr/lib/64"
                 PAMDIR="/usr/lib/security/64"
+		fdlimit=dword:00000100
                 ;;
             solaris:sparc_64)
                 NSSDIR="/usr/lib/sparcv9"
                 PAMDIR="/usr/lib/security/sparcv9"
+		fdlimit=dword:00000100
                 ;;
             aix:ppc32)
                 NSSDIR="/usr/lib/security"

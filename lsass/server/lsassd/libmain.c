@@ -144,9 +144,6 @@ lsassd_main(
        BAIL_ON_LSA_ERROR(dwError);
     }
 
-    // Ignore any errors returned by this function.
-    LsaSrvRaiseMaxFiles(1024);
-
     dwError = LWNetExtendEnvironmentForKrb5Affinity(TRUE);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -300,55 +297,6 @@ error:
 #endif
 
     return dwError;
-}
-
-DWORD
-LsaSrvRaiseMaxFiles(
-    DWORD dwMaxFiles
-    )
-{
-    DWORD dwError = 0;
-    struct rlimit maxFiles = {0};
-    BOOLEAN bRaised = FALSE;
-
-    if (getrlimit(RLIMIT_NOFILE, &maxFiles) < 0)
-    {
-        dwError = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    if (maxFiles.rlim_cur < dwMaxFiles)
-    {
-        LSA_LOG_INFO("Raising soft max fd limit from %lu to %u",
-                maxFiles.rlim_cur,
-                dwMaxFiles);
-        maxFiles.rlim_cur = dwMaxFiles;
-        bRaised = TRUE;
-    }
-    if (maxFiles.rlim_max < dwMaxFiles)
-    {
-        LSA_LOG_INFO("Raising hard max fd limit from %lu to %u",
-                maxFiles.rlim_max,
-                dwMaxFiles);
-        maxFiles.rlim_max = dwMaxFiles;
-        bRaised = TRUE;
-    }
-    
-    if (bRaised)
-    {
-        if (setrlimit(RLIMIT_NOFILE, &maxFiles) < 0)
-        {
-            dwError = LwMapErrnoToLwError(errno);
-            LSA_LOG_ERROR("Raising max fd limit failed");
-            BAIL_ON_LSA_ERROR(dwError);
-        }
-    }
-
-cleanup:
-    return dwError;
-
-error:
-    goto cleanup;
 }
 
 DWORD

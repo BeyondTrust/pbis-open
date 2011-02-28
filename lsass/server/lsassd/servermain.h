@@ -65,11 +65,6 @@ LsaSrvStartupPreCheck(
     );
 
 DWORD
-LsaSrvRaiseMaxFiles(
-    DWORD dwMaxFiles
-    );
-
-DWORD
 LsaSrvSetDefaults(
     VOID
     );

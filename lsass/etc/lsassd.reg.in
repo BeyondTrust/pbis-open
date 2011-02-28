@@ -17,6 +17,10 @@
     default = ""
     doc = ""
 }
+"FdLimit" = {
+    default = @fdlimit@
+    doc = ""
+}
 "Dependencies" = {
     default = "netlogon lwio lwreg rdr npfs"
     doc = ""
