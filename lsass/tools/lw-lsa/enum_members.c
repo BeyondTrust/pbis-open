@@ -441,6 +441,7 @@ EnumMembers(
             
             LW_SAFE_FREE_MEMORY(pszSid);
             LsaCloseEnum(hLsa, hEnum);
+            hEnum = NULL;
         }
     }
 
