@@ -17,4 +17,3 @@ lwmsg_peer_connect
 lwmsg_peer_disconnect
 lwmsg_peer_acquire_call
 lwmsg_peer_set_trace_functions
-lwmsg_shared_session_manager_new
