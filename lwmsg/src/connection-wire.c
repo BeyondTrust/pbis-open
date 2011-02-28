@@ -1176,7 +1176,7 @@ lwmsg_connection_finish_recv_connect(
     }
 
     /* Accept client into a session */
-    BAIL_ON_ERROR(status = session->sclass->accept(
+    BAIL_ON_ERROR(status = session->sclass->accept_peer(
                       session,
                       (const LWMsgSessionCookie*) packet->contents.greeting.cookie,
                       token));
@@ -1408,7 +1408,7 @@ lwmsg_connection_finish_recv_accept(
     }
 
     /* Connect the session */
-    BAIL_ON_ERROR(status = session->sclass->connect(
+    BAIL_ON_ERROR(status = session->sclass->connect_peer(
                       session,
                       (const LWMsgSessionCookie*) packet->contents.greeting.cookie,
                       token));

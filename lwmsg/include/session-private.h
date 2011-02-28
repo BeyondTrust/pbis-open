@@ -73,16 +73,16 @@ typedef uint32_t LWMsgHandleID;
 typedef struct LWMsgSessionClass
 {
     LWMsgStatus
-    (*connect) (
+    (*connect_peer) (
         LWMsgSession* session,
-        const LWMsgSessionCookie* accept,
+        const LWMsgSessionCookie* accept_peer,
         LWMsgSecurityToken* token
         );
 
     LWMsgStatus
-    (*accept) (
+    (*accept_peer) (
         LWMsgSession* session,
-        const LWMsgSessionCookie* connect,
+        const LWMsgSessionCookie* connect_peer,
         LWMsgSecurityToken* token);
 
     void

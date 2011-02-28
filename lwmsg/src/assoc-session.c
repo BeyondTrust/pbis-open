@@ -586,8 +586,8 @@ default_acquire_call(
 
 static LWMsgSessionClass default_class =
 {
-    .accept = default_accept,
-    .connect = default_connect,
+    .accept_peer = default_accept,
+    .connect_peer = default_connect,
     .release = default_release,
     .register_handle_local = default_register_handle_local,
     .register_handle_remote = default_register_handle_remote,

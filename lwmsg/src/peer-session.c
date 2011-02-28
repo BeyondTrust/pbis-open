@@ -758,8 +758,8 @@ peer_acquire_call(
 
 static LWMsgSessionClass peer_class =
 {
-    .accept = peer_accept,
-    .connect = peer_connect,
+    .accept_peer = peer_accept,
+    .connect_peer = peer_connect,
     .release = peer_release,
     .register_handle_local = peer_register_handle_local,
     .register_handle_remote = peer_register_handle_remote,
