@@ -52,12 +52,29 @@
 #define LSA_PRIVILEGES_REG_KEY    LSASS_REG_KEY "\\Privileges"
 #define LSA_ACCOUNTS_REG_KEY      LSASS_REG_KEY "\\Accounts"
 
-#define LSA_ACCOUNTS_PRIVILEGES_NAME         "Privileges"
-#define LSA_ACCOUNTS_SYS_ACCESS_RIGHTS_NAME  "SystemAccessRights"
+#define LSA_PRIVILEGE_LUID_LOW_NAME       "ValueLow"
+#define LSA_PRIVILEGE_LUID_HIGH_NAME      "ValueHigh"
+#define LSA_PRIVILEGE_ENABLED_NAME        "EnabledByDefault"
+#define LSA_PRIVILEGE_DESCRIPTION_NAME    "Description"
+#define LSA_PRIVILEGE_SECURITY_DESC_NAME  "SecurityDescriptor"
 
-#define LSA_ACCOUNTS_PRIVILEGES_NAME_W \
+#define LSA_PRIVILEGE_LUID_LOW_NAME_W \
+    {'V','a','l','u','e','L','o','w','\0'}
+#define LSA_PRIVILEGE_LUID_HIGH_NAME_W \
+    {'V','a','l','u','e','H','i','g','h','\0'}
+#define LSA_PRIVILEGE_ENABLED_NAME_W \
+    {'E','n','a','b','l','e','d','B','y','D','e','f','a','u','l','t','\0'}
+#define LSA_PRIVILEGE_DESCRIPTION_NAME_W \
+    {'D','e','s','c','r','i','p','t','i','o','n','\0'}
+#define LSA_PRIVILEGE_SECURITY_DESC_NAME_W \
+    {'S','e','c','u','r','i','t','y','D','e','s','c','r','i','p','t','o','r','\0'}
+
+#define LSA_ACCOUNT_PRIVILEGES_NAME         "Privileges"
+#define LSA_ACCOUNT_SYS_ACCESS_RIGHTS_NAME  "SystemAccessRights"
+
+#define LSA_ACCOUNT_PRIVILEGES_NAME_W \
     {'P','r','i','v','i','l','e','g','e','s','\0'}
-#define LSA_ACCOUNTS_SYS_ACCESS_RIGHTS_NAME_W \
+#define LSA_ACCOUNT_SYS_ACCESS_RIGHTS_NAME_W \
     {'S','y','s','t','e','m','A','c','c','e','s','s','R','i','g','h','t','s','\0'}
 
 #define LSA_PRIVILEGES_DB_SIZE    (16)

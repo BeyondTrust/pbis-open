@@ -67,7 +67,7 @@ LsaSrvFreePrivileges(
 
 DWORD
 LsaSrvPrivsOpenAccount(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PSID Sid,
     IN ACCESS_MASK AccessRights,
@@ -77,7 +77,7 @@ LsaSrvPrivsOpenAccount(
 
 DWORD
 LsaSrvPrivsCreateAccount(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PSID Sid,
     IN ACCESS_MASK AccessRights,
@@ -87,14 +87,13 @@ LsaSrvPrivsCreateAccount(
 
 VOID
 LsaSrvPrivsCloseAccount(
-    IN HANDLE hProvider,
     IN OUT PLSA_ACCOUNT_CONTEXT *pAccountContext
     );
 
 
 DWORD
 LsaSrvPrivsAddAccountRights(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PSID AccountSid,
     IN PWSTR *ppwszAccountRights,
@@ -104,7 +103,7 @@ LsaSrvPrivsAddAccountRights(
 
 DWORD
 LsaSrvPrivsRemoveAccountRights(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PSID AccountSid,
     IN BOOLEAN RemoveAll,
@@ -115,7 +114,7 @@ LsaSrvPrivsRemoveAccountRights(
 
 DWORD
 LsaSrvPrivsEnumAccountRights(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PSID AccountSid,
     OUT PWSTR **ppwszAccountRights,
@@ -125,7 +124,7 @@ LsaSrvPrivsEnumAccountRights(
 
 DWORD
 LsaSrvPrivsLookupPrivilegeValue(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PCWSTR pwszPrivilegeName,
     OUT PLUID pPrivilegeValue
@@ -134,7 +133,7 @@ LsaSrvPrivsLookupPrivilegeValue(
 
 DWORD
 LsaSrvPrivsLookupPrivilegeName(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLUID pPrivilegeValue,
     OUT PWSTR *ppwszPrivilegeName
@@ -143,7 +142,7 @@ LsaSrvPrivsLookupPrivilegeName(
 
 DWORD
 LsaSrvPrivsAddPrivilegesToAccount(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN PPRIVILEGE_SET pPrivilegeSet
@@ -152,7 +151,7 @@ LsaSrvPrivsAddPrivilegesToAccount(
 
 DWORD
 LsaSrvPrivsRemovePrivilegesFromAccount(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN BOOLEAN RemoveAll,
@@ -162,7 +161,7 @@ LsaSrvPrivsRemovePrivilegesFromAccount(
 
 DWORD
 LsaSrvPrivsGetSystemAccessRights(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     OUT PDWORD pSystemAccessRights
@@ -171,7 +170,7 @@ LsaSrvPrivsGetSystemAccessRights(
 
 DWORD
 LsaSrvPrivsSetSystemAccessRights(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN DWORD SystemAccessRights

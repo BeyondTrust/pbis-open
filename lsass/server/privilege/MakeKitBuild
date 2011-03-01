@@ -6,7 +6,8 @@ make()
         privilege.c \
         account.c \
         privilegedb.c \
-        accountdb.c"
+        accountdb.c \
+        security.c"
 
     LIBDEPS="lsautils"
 

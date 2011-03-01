@@ -49,15 +49,41 @@
 
 DWORD
 LsaSrvPrivsLookupPrivilegeValue(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PCWSTR pwszPrivilegeName,
     OUT PLUID pPrivilegeValue
     )
 {
     DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+    PACCESS_TOKEN accessToken = AccessToken;
+    ACCESS_MASK accessRights = LSA_ACCESS_LOOKUP_NAMES_SIDS;
+    ACCESS_MASK grantedAccess = 0;
+    GENERIC_MAPPING genericMapping = {0};
     PSTR pszPrivilegeName = NULL;
     PLSA_PRIVILEGE pPrivilegeEntry = NULL;
+
+    if (!accessToken)
+    {
+        err = LsaSrvPrivsGetAccessTokenFromServerHandle(
+                                hServer,
+                                &accessToken);
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    if (!RtlAccessCheck(pGlobals->pPrivilegesSecDesc,
+                        accessToken,
+                        accessRights,
+                        0,
+                        &genericMapping,
+                        &grantedAccess,
+                        &ntStatus))
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+                       
 
     err = LwWc16sToMbs(pwszPrivilegeName,
                        &pszPrivilegeName);
@@ -71,7 +97,7 @@ LsaSrvPrivsLookupPrivilegeValue(
     *pPrivilegeValue = pPrivilegeEntry->Luid;
 
 error:
-    if (err)
+    if (err || ntStatus)
     {
         if (pPrivilegeValue)
         {
@@ -82,13 +108,19 @@ error:
 
     LW_SAFE_FREE_MEMORY(pszPrivilegeName);
 
+    if (err == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+    }
+
     return err;
 }
 
 
 DWORD
 LsaSrvPrivsLookupPrivilegeName(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLUID pPrivilegeValue,
     OUT PWSTR *pPrivilegeName
@@ -149,7 +181,7 @@ LsaSrvIsPrivilegeNameValid(
             }
         }
     }
-        
+
     return Valid;
 }
 

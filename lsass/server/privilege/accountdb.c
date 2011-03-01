@@ -106,6 +106,7 @@ LsaSrvSaveAccount_inlock(
     IN PSID pAccountSid,
     IN PWSTR *ppwszPrivilegeNames,
     IN DWORD SystemAccessRights,
+    IN PSECURITY_DESCRIPTOR_ABSOLUTE pSecurityDesc,
     IN BOOLEAN Overwrite
     );
 
@@ -171,7 +172,7 @@ LsaSrvCreateAccountsDb(
     BAIL_ON_LSA_ERROR(err);
 
     err = LwAllocateMemory(
-                 sizeof(WCHAR) * maxKeyLen,
+                 sizeof(WCHAR) * (maxKeyLen + 1),
                  OUT_PPVOID(&pwszAccount));
     BAIL_ON_LSA_ERROR(err);
 
@@ -249,7 +250,7 @@ LsaSrvCreateAccountsDb(
     *ppAccounts = pHash;
 
 error:
-    if (err)
+    if (err || ntStatus)
     {
         if (pAccountEntry)
         {
@@ -342,11 +343,57 @@ LsaSrvFreeAccountEntry(
     )
 {
     BOOLEAN Locked = FALSE;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PSID pOwnerSid = NULL;
+    PSID pGroupSid = NULL;
+    PACL pDacl = NULL;
+    PACL pSacl = NULL;
+    BOOLEAN defaulted = FALSE;
+    BOOLEAN present = FALSE;
 
     LSASRV_PRIVS_WRLOCK_RWLOCK(Locked, &pEntry->accountRwLock);
 
     LW_SAFE_FREE_MEMORY(pEntry->pSid);
-    LW_SAFE_FREE_MEMORY(pEntry->pSecDesc);
+
+    ntStatus = RtlGetOwnerSecurityDescriptor(
+                        pEntry->pSecurityDesc,
+                        &pOwnerSid,
+                        &defaulted);
+    if (ntStatus == STATUS_SUCCESS && pOwnerSid)
+    {
+        LW_SAFE_FREE_MEMORY(pOwnerSid);
+    }
+
+    ntStatus = RtlGetGroupSecurityDescriptor(
+                        pEntry->pSecurityDesc,
+                        &pGroupSid,
+                        &defaulted);
+    if (ntStatus == STATUS_SUCCESS && pGroupSid)
+    {
+        LW_SAFE_FREE_MEMORY(pGroupSid);
+    }
+
+    ntStatus = RtlGetDaclSecurityDescriptor(
+                        pEntry->pSecurityDesc,
+                        &present,
+                        &pDacl,
+                        &defaulted);
+    if (ntStatus == STATUS_SUCCESS && pDacl)
+    {
+        LW_SAFE_FREE_MEMORY(pDacl);
+    }
+
+    ntStatus = RtlGetSaclSecurityDescriptor(
+                        pEntry->pSecurityDesc,
+                        &present,
+                        &pSacl,
+                        &defaulted);
+    if (ntStatus == STATUS_SUCCESS && pSacl)
+    {
+        LW_SAFE_FREE_MEMORY(pSacl);
+    }
+
+    LW_SAFE_FREE_MEMORY(pEntry->pSecurityDesc);
 
     LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pEntry->accountRwLock);
     pthread_rwlock_destroy(&pEntry->accountRwLock);
@@ -366,15 +413,21 @@ LsaSrvReadAccountEntry(
 {
     DWORD err = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    PSTR privilegesValueName = LSA_ACCOUNTS_PRIVILEGES_NAME;
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+    PSTR privilegesValueName = LSA_ACCOUNT_PRIVILEGES_NAME;
     DWORD privilegesValueSize = 0;
     PSTR privilegesValue = NULL;
-    PSTR sysAccountRightsValueName = LSA_ACCOUNTS_SYS_ACCESS_RIGHTS_NAME;
+    PSTR sysAccountRightsValueName = LSA_ACCOUNT_SYS_ACCESS_RIGHTS_NAME;
     DWORD systemAccess = 0;
     DWORD systemAccessSize = 0;
+    PSTR securityDescValueName = LSA_PRIVILEGE_SECURITY_DESC_NAME;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescRelative = NULL;
+    DWORD securityDescRelativeSize = 0;
+    BOOLEAN defaultSecurityDesc = FALSE;
     PLSA_ACCOUNT pAccountEntry = NULL;
     DWORD accountSidSize = 0;
     PSTR pszAccountSid = NULL;
+    PWSTR *pPrivilegeNames = NULL;
 
     //
     // Get privileges value
@@ -420,6 +473,57 @@ LsaSrvReadAccountEntry(
                  (PBYTE)&systemAccess,
                  &systemAccessSize);
     BAIL_ON_LSA_ERROR(err);
+
+    //
+    // Get account security descriptor
+    //
+    err = RegGetValueA(
+                 hRegistry,
+                 hEntry,
+                 NULL,
+                 securityDescValueName,
+                 RRF_RT_REG_BINARY,
+                 NULL,
+                 NULL,
+                 &securityDescRelativeSize);
+    if (err == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        //
+        // This is probably the first lsassd start so there is no
+        // security descriptor value assigned.
+        //
+        defaultSecurityDesc = TRUE;
+        securityDescRelativeSize = pGlobals->accountsSecDescRelativeSize;
+    }
+    else if (err != STATUS_SUCCESS)
+    {
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    err = LwAllocateMemory(
+                 securityDescRelativeSize,
+                 OUT_PPVOID(&pSecurityDescRelative));
+    BAIL_ON_LSA_ERROR(err);
+
+    if (defaultSecurityDesc)
+    {
+        memcpy(pSecurityDescRelative,
+               pGlobals->pAccountsSecDescRelative,
+               securityDescRelativeSize);
+    }
+    else
+    {
+        err = RegGetValueA(
+                     hRegistry,
+                     hEntry,
+                     NULL,
+                     securityDescValueName,
+                     RRF_RT_REG_BINARY,
+                     NULL,
+                     (PBYTE)pSecurityDescRelative,
+                     &securityDescRelativeSize);
+        BAIL_ON_LSA_ERROR(err);
+    }
 
     //
     // Create LSA_ACCOUNT entry
@@ -470,10 +574,37 @@ LsaSrvReadAccountEntry(
 
     pAccountEntry->SystemAccessRights = systemAccess;
 
+    err = LsaSrvAllocateAbsoluteFromSelfRelativeSD(
+                 pSecurityDescRelative,
+                 &pAccountEntry->pSecurityDesc);
+    BAIL_ON_LSA_ERROR(err);
+
+    if (defaultSecurityDesc)
+    {
+        BOOLEAN overwrite = TRUE;
+
+        err = LsaSrvGetPrivilegeNames_inlock(
+                          pAccountEntry,
+                          &pPrivilegeNames);
+        BAIL_ON_LSA_ERROR(err);
+
+        //
+        // Update account because it has just got its default 
+        // security descriptor
+        //
+        err = LsaSrvSaveAccount_inlock(
+                     AccountSid,
+                     pPrivilegeNames,
+                     pAccountEntry->SystemAccessRights,
+                     pAccountEntry->pSecurityDesc,
+                     overwrite);
+        BAIL_ON_LSA_ERROR(err);
+    }
+
     *ppAccountEntry = pAccountEntry;
 
 error:
-    if (err)
+    if (err || ntStatus)
     {
         if (pAccountEntry)
         {
@@ -484,6 +615,19 @@ error:
     }
 
     LW_SAFE_FREE_MEMORY(privilegesValue);
+
+    if (pPrivilegeNames)
+    {
+        DWORD i = 0;
+
+        for (i = 0; pPrivilegeNames[i]; i++)
+        {
+            LW_SAFE_FREE_MEMORY(pPrivilegeNames[i]);
+        }
+        LW_SAFE_FREE_MEMORY(pPrivilegeNames);
+    }
+
+    LW_SAFE_FREE_MEMORY(pSecurityDescRelative);
 
     if (err == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -698,7 +842,7 @@ LsaSrvAddAccount_inlock(
     BOOLEAN Locked = FALSE;
     PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
     PWSTR *pPrivilegeNames = NULL;
-    BOOLEAN Overwrite = FALSE;
+    BOOLEAN overwrite = FALSE;
 
     err = LsaSrvGetPrivilegeNames_inlock(
                       pAccountEntry,
@@ -710,14 +854,15 @@ LsaSrvAddAccount_inlock(
                       pGlobals->pAccounts,
                       pAccountSid,
                       pAccountEntry,
-                      Overwrite);
+                      overwrite);
     BAIL_ON_LSA_ERROR(err);
 
     err = LsaSrvSaveAccount_inlock(
                       pAccountSid,
                       pPrivilegeNames,
                       pAccountEntry->SystemAccessRights,
-                      Overwrite);
+                      pAccountEntry->pSecurityDesc,
+                      overwrite);
     BAIL_ON_LSA_ERROR(err);
 
 error:
@@ -744,6 +889,7 @@ LsaSrvSaveAccount_inlock(
     IN PSID pAccountSid,
     IN PWSTR *ppwszPrivilegeNames,
     IN DWORD SystemAccessRights,
+    IN PSECURITY_DESCRIPTOR_ABSOLUTE pSecurityDesc,
     IN BOOLEAN Overwrite
     )
 {
@@ -753,10 +899,13 @@ LsaSrvSaveAccount_inlock(
     HKEY hAccountsKey = NULL;
     PWSTR account = NULL;
     HKEY hAccount = NULL;
-    WCHAR wszPrivilegeValueName[] = LSA_ACCOUNTS_PRIVILEGES_NAME_W;
-    WCHAR wszSysAccessRightsValueName[] = LSA_ACCOUNTS_SYS_ACCESS_RIGHTS_NAME_W;
+    WCHAR wszPrivilegeValueName[] = LSA_ACCOUNT_PRIVILEGES_NAME_W;
+    WCHAR wszSysAccessRightsValueName[] = LSA_ACCOUNT_SYS_ACCESS_RIGHTS_NAME_W;
+    WCHAR wszSecurityDescriptorValueName[] = LSA_PRIVILEGE_SECURITY_DESC_NAME_W;
     PBYTE privilegeNamesBlob = NULL;
     SSIZE_T privilegeNamesBlobSize = 0;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescRelative = NULL;
+    DWORD securityDescRelativeSize = 0;
 
     err = RegOpenServer(&hRegistry);
     BAIL_ON_LSA_ERROR(err);
@@ -845,6 +994,44 @@ LsaSrvSaveAccount_inlock(
                  sizeof(SystemAccessRights));
     BAIL_ON_LSA_ERROR(err);
 
+    //
+    // Save account security descriptor
+    //
+
+    ntStatus = RtlAbsoluteToSelfRelativeSD(
+                 pSecurityDesc,
+                 pSecurityDescRelative,
+                 &securityDescRelativeSize);
+    if (ntStatus == STATUS_BUFFER_TOO_SMALL)
+    {
+        ntStatus = STATUS_SUCCESS;
+    }
+    else if (ntStatus != STATUS_SUCCESS)
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    err = LwAllocateMemory(
+                 securityDescRelativeSize,
+                 OUT_PPVOID(&pSecurityDescRelative));
+    BAIL_ON_LSA_ERROR(err);
+
+    ntStatus = RtlAbsoluteToSelfRelativeSD(
+                 pSecurityDesc,
+                 pSecurityDescRelative,
+                 &securityDescRelativeSize);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    err = RegSetValueExW(
+                 hRegistry,
+                 hAccount,
+                 wszSecurityDescriptorValueName,
+                 0,
+                 REG_BINARY,
+                 (PBYTE)pSecurityDescRelative,
+                 securityDescRelativeSize);
+    BAIL_ON_LSA_ERROR(err);
+
 error:
     if (hAccount)
     {
@@ -863,6 +1050,7 @@ error:
 
     RTL_FREE(&account);
     LW_SAFE_FREE_MEMORY(privilegeNamesBlob);
+    LW_SAFE_FREE_MEMORY(pSecurityDescRelative);
 
     if (err == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -945,6 +1133,7 @@ LsaSrvUpdateAccount_inlock(
                       pAccountSid,
                       pPrivilegeNames,
                       pAccountEntry->SystemAccessRights,
+                      pAccountEntry->pSecurityDesc,
                       Overwrite);
     BAIL_ON_LSA_ERROR(err);
 

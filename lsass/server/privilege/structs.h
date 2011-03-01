@@ -56,6 +56,12 @@ typedef struct _LSASRV_PRIVILEGE_GLOBALS
     pthread_rwlock_t accountsRwLock;
     PLW_HASH_TABLE pAccounts;
 
+    PSECURITY_DESCRIPTOR_ABSOLUTE pPrivilegesSecDesc;
+    PSECURITY_DESCRIPTOR_RELATIVE pAccountsSecDescRelative;
+    DWORD accountsSecDescRelativeSize;
+
+    PLW_MAP_SECURITY_CONTEXT pSecurityContext;
+
 } LSASRV_PRIVILEGE_GLOBALS, *PLSASRV_PRIVILEGE_GLOBALS;
 
 
@@ -77,7 +83,7 @@ typedef struct _LSA_ACCOUNT
     LUID_AND_ATTRIBUTES Privileges[LSA_MAX_PRIVILEGES_COUNT];
     DWORD NumPrivileges;
     DWORD SystemAccessRights;
-    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecurityDesc;
 
 } LSA_ACCOUNT, *PLSA_ACCOUNT;
 
@@ -86,7 +92,19 @@ struct _LSA_ACCOUNT_CONTEXT
 {
     PLSA_ACCOUNT pAccount;
     BOOLEAN Dirty;
+
+    PACCESS_TOKEN accessToken;
+    ACCESS_MASK grantedAccess;
 };
+
+
+typedef struct _LSASRV_PRIVILEGE_CLIENT_STATE
+{
+    DWORD peerUID;
+    DWORD peerGID;
+    DWORD peerPID;
+
+} LSASRV_PRIVILEGE_CLIENT_STATE, *PLSASRV_PRIVILEGE_CLIENT_STATE;
 
 
 #endif /* __LSASRV_PRIVILEGE_STRUCTS_H__ */

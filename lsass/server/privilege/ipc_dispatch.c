@@ -266,6 +266,8 @@ LsaSrvIpcPrivsEnumAccountRights(
     }
 
 error:
+    RTL_FREE(&pSid);
+
     return MAP_LW_ERROR_IPC(err);
 }
 

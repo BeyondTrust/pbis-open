@@ -92,10 +92,27 @@ LsaSrvInitPrivileges(
     )
 {
     DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
     HANDLE hRegistry = NULL;
     HKEY hPrivileges = NULL;
     HKEY hAccounts = NULL;
+
+    ntStatus = LwMapSecurityCreateContext(&pGlobals->pSecurityContext);
+    if (ntStatus)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    err = LsaSrvInitPrivilegesSecurity(
+                 &pGlobals->pPrivilegesSecDesc);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = LsaSrvInitAccountsSecurity(
+                 &pGlobals->pAccountsSecDescRelative,
+                 &pGlobals->accountsSecDescRelativeSize);
+    BAIL_ON_LSA_ERROR(err);
 
     err = RegOpenServer(&hRegistry);
     BAIL_ON_LSA_ERROR(err);
@@ -135,7 +152,7 @@ LsaSrvInitPrivileges(
     BAIL_ON_LSA_ERROR(err);
 
 error:
-    if (err)
+    if (err || ntStatus)
     {
         LsaSrvFreePrivileges();
     }
@@ -355,49 +372,42 @@ LsaSrvReadPrivilegeEntry(
     )
 {
     DWORD err = ERROR_SUCCESS;
+    WCHAR wszAttrValueLow[] = LSA_PRIVILEGE_LUID_LOW_NAME_W;
+    WCHAR wszAttrValueHigh[] = LSA_PRIVILEGE_LUID_HIGH_NAME_W;
+    WCHAR wszAttrEnabledByDefault[] = LSA_PRIVILEGE_ENABLED_NAME_W;
+    WCHAR wszAttrDescription[] = LSA_PRIVILEGE_DESCRIPTION_NAME_W;
     LUID privilegeValue = {0};
     DWORD enabledByDefault = 0;
-    PSTR pszDescription = NULL;
+    PWSTR description = NULL;
     DWORD valueSize = 0;
-    DWORD valueType = REG_NONE;
     PLSA_PRIVILEGE pEntry = NULL;
 
     //
     // Privilege value (LUID)
     //
     valueSize = sizeof(privilegeValue.LowPart);
-    err = RegQueryValueEx(
+    err = RegGetValueW(
                  hRegistry,
                  hEntry,
-                 "ValueLow",
-                 0,
-                 &valueType,
+                 NULL,
+                 wszAttrValueLow,
+                 RRF_RT_REG_DWORD,
+                 NULL,
                  (PBYTE)&privilegeValue.LowPart,
                  &valueSize);
     BAIL_ON_LSA_ERROR(err);
 
-    if (valueType != REG_DWORD)
-    {
-        err = ERROR_INVALID_DATA;
-        BAIL_ON_LSA_ERROR(err);
-    }
-
     valueSize = sizeof(privilegeValue.HighPart);
-    err = RegQueryValueEx(
+    err = RegGetValueW(
                  hRegistry,
                  hEntry,
-                 "ValueHigh",
-                 0,
-                 &valueType,
+                 NULL,
+                 wszAttrValueHigh,
+                 RRF_RT_REG_DWORD,
+                 NULL,
                  (PBYTE)&privilegeValue.HighPart,
                  &valueSize);
     BAIL_ON_LSA_ERROR(err);
-
-    if (valueType != REG_DWORD)
-    {
-        err = ERROR_INVALID_DATA;
-        BAIL_ON_LSA_ERROR(err);
-    }
 
     if (!LsaSrvIsPrivilegeValueValid(&privilegeValue))
     {
@@ -409,54 +419,45 @@ LsaSrvReadPrivilegeEntry(
     // "Enabled By Default" flag
     //
     valueSize = sizeof(enabledByDefault);
-    err = RegQueryValueEx(
+    err = RegGetValueW(
                  hRegistry,
                  hEntry,
-                 "EnabledByDefault",
-                 0,
-                 &valueType,
+                 NULL,
+                 wszAttrEnabledByDefault,
+                 RRF_RT_REG_DWORD,
+                 NULL,
                  (PBYTE)&enabledByDefault,
                  &valueSize);
     BAIL_ON_LSA_ERROR(err);
-
-    if (valueType != REG_DWORD)
-    {
-        err = ERROR_INVALID_DATA;
-        BAIL_ON_LSA_ERROR(err);
-    }
 
     //
     // Privilege description (display name) string
     //
     valueSize = 0;
-    err = RegQueryValueEx(
+    err = RegGetValueW(
                  hRegistry,
                  hEntry,
-                 "Description",
-                 0,
-                 &valueType,
+                 NULL,
+                 wszAttrDescription,
+                 RRF_RT_REG_SZ,
+                 NULL,
                  NULL,
                  &valueSize);
     BAIL_ON_LSA_ERROR(err);
 
-    if (valueType != REG_SZ)
-    {
-        err = ERROR_INVALID_DATA;
-        BAIL_ON_LSA_ERROR(err);
-    }
-
     err = LwAllocateMemory(
                  valueSize,
-                 OUT_PPVOID(&pszDescription));
+                 OUT_PPVOID(&description));
     BAIL_ON_LSA_ERROR(err);
 
-    err = RegQueryValueEx(
+    err = RegGetValueW(
                  hRegistry,
                  hEntry,
-                 "Description",
-                 0,
-                 &valueType,
-                 (PBYTE)pszDescription,
+                 NULL,
+                 wszAttrDescription,
+                 RRF_RT_REG_SZ,
+                 NULL,
+                 (PBYTE)description,
                  &valueSize);
     BAIL_ON_LSA_ERROR(err);
 
@@ -470,13 +471,10 @@ LsaSrvReadPrivilegeEntry(
 
     pEntry->Luid              = privilegeValue;
     pEntry->EnabledByDefault  = enabledByDefault;
+    pEntry->pwszDescription   = description;
 
     err = LwAllocateString(pszPrivilegeName,
                            &pEntry->pszName);
-    BAIL_ON_LSA_ERROR(err);
-
-    err = LwMbsToWc16s(pszDescription,
-                       &pEntry->pwszDescription);
     BAIL_ON_LSA_ERROR(err);
 
     *ppPrivilegeEntry = pEntry;
@@ -510,8 +508,20 @@ LsaSrvFreePrivileges(
     }
 
     if (pGlobals->pAccounts)
-    {        
+    {
         LwHashSafeFree(&pGlobals->pAccounts);
+    }
+
+    if (pGlobals->pPrivilegesSecDesc)
+    {
+        LsaSrvFreeSecurityDescriptor(pGlobals->pPrivilegesSecDesc);
+    }
+
+    LW_SAFE_FREE_MEMORY(pGlobals->pAccountsSecDescRelative);
+
+    if (pGlobals->pSecurityContext)
+    {
+        LwMapSecurityFreeContext(&pGlobals->pSecurityContext);
     }
 
     LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->accountsRwLock);

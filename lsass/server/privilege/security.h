@@ -33,43 +33,69 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        security.h
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        Local Privileges (Private include)
+ *        Lsa Accounts and Privileges security
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#include <config.h>
-#include <lsasystem.h>
-#include <lsadef.h>
-#include <lw/base.h>
-#include <lsa/lsa.h>
-#include <lsa/privilege.h>
-#include <reg/reg.h>
-#include <lwio/lwio.h>
-#include <lw/rpc/lsa.h>
+#ifndef __LSASRV_PRIVILEGE_SECURITY_H__
+#define __LSASRV_PRIVILEGE_SECURITY_H__
 
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwhash.h>
-#include <lwsid.h>
 
-#include <lsautils.h>
-#include <lsasrvutils.h>
-#include <lsaipc-common.h>
-#include <lsaipc-privilege.h>
-#include <lsasrvprivilege.h>
-#include <lsasrvprivilege-internal.h>
+typedef struct _ACCESS_LIST
+{
+    PSID        *ppSid;
+    ACCESS_MASK AccessMask;
+    ULONG       ulAccessType;
+} ACCESS_LIST, *PACCESS_LIST;
 
-#include "defines.h"
-#include "structs.h"
-#include "externs.h"
-#include "privilege.h"
-#include "privilegedb.h"
-#include "accountdb.h"
-#include "security.h"
+
+DWORD
+LsaSrvInitPrivilegesSecurity(
+    OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecurityDescriptor
+    );
+
+
+DWORD
+LsaSrvInitAccountsSecurity(
+    OUT PSECURITY_DESCRIPTOR_RELATIVE *ppSecurityDescRelative,
+    OUT PDWORD pSecurityDescRelativeSize
+    );
+
+
+DWORD
+LsaSrvFreeSecurityDescriptor(
+    IN PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc
+    );
+
+
+DWORD
+LsaSrvAllocateAbsoluteFromSelfRelativeSD(
+    IN PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescRelative,
+    OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecurityDesc
+    );
+
+
+VOID
+LsaSrvPrivsGetClientCreds(
+    IN HANDLE hServer,
+    OUT PDWORD pUid,
+    OUT PDWORD pGid,
+    OUT PDWORD pPid
+    );
+
+
+DWORD
+LsaSrvPrivsGetAccessTokenFromServerHandle(
+    HANDLE hServer,
+    PACCESS_TOKEN *pAccessToken
+    );
+
+
+#endif /* __LSASRV_PRIVILEGE_SECURITY_H__ */

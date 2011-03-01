@@ -49,5 +49,11 @@
 
 LSASRV_PRIVILEGE_GLOBALS gLsaPrivilegeGlobals = {
     .pPrivileges = NULL,
-    .pAccounts   = NULL
+    .pAccounts   = NULL,
+
+    .pPrivilegesSecDesc          = NULL,
+    .pAccountsSecDescRelative    = NULL,
+    .accountsSecDescRelativeSize = 0,
+
+    .pSecurityContext = NULL
 };

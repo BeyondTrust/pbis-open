@@ -50,7 +50,7 @@
 static
 DWORD
 LsaSrvResolveNamesToPrivilegesAndSar(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN PACCESS_TOKEN AccessToken,
     IN PWSTR *pAccountRights,
     IN DWORD NumAccountRights,
@@ -107,7 +107,7 @@ LsaSrvLookupSysAccessRightNameMap(
 
 DWORD
 LsaSrvPrivsEnumAccountRightsSids(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN PSTR *ppszSids,
     IN DWORD NumSids,
     OUT PLUID_AND_ATTRIBUTES *ppPrivileges,
@@ -143,11 +143,11 @@ LsaSrvPrivsEnumAccountRightsSids(
         if (ntStatus)
         {
             err = LwNtStatusToWin32Error(ntStatus);
-            BAIL_ON_LSA_ERROR(err); 
+            BAIL_ON_LSA_ERROR(err);
         }
 
         err = LsaSrvPrivsOpenAccount(
-                                hProvider,
+                                hServer,
                                 NULL,
                                 accountSid,
                                 accessRights,
@@ -184,8 +184,7 @@ LsaSrvPrivsEnumAccountRightsSids(
         LSASRV_PRIVS_UNLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
         BAIL_ON_LSA_ERROR(err);
 
-        LsaSrvPrivsCloseAccount(hProvider,
-                                &accountContext);
+        LsaSrvPrivsCloseAccount(&accountContext);
         accountContext = NULL;
         pAccount       = NULL;
 
@@ -203,11 +202,11 @@ LsaSrvPrivsEnumAccountRightsSids(
         }
     }
 
-    *ppPrivileges   = pPrivileges;
     *pNumPrivileges = numPrivileges;
+    *ppPrivileges   = (numPrivileges) ? pPrivileges : NULL;
 
 error:
-    if (err)
+    if (err || ntStatus)
     {
         LW_SAFE_FREE_MEMORY(pPrivileges);
 
@@ -225,11 +224,15 @@ error:
     if (accountContext)
     {
         LsaSrvPrivsCloseAccount(
-                  hProvider,
                   &accountContext);
     }
 
     RTL_FREE(&accountSid);
+
+    if (numPrivileges == 0)
+    {
+        LW_SAFE_FREE_MEMORY(pPrivileges);
+    }
 
     return err;
 }
@@ -237,7 +240,7 @@ error:
 
 DWORD
 LsaSrvPrivsAddAccountRights(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PSID pAccountSid,
     IN PWSTR *ppwszAccountRights,
@@ -254,9 +257,17 @@ LsaSrvPrivsAddAccountRights(
     DWORD newNumPrivileges = 0;
     DWORD addAccessRights = 0;
     DWORD newAccessRights = 0;
-    
+
+    if (!accessToken)
+    {
+        err = LsaSrvPrivsGetAccessTokenFromServerHandle(
+                                hServer,
+                                &accessToken);
+        BAIL_ON_LSA_ERROR(err);
+    }
+
     err = LsaSrvPrivsOpenAccount(
-                            hProvider,
+                            hServer,
                             accessToken,
                             pAccountSid,
                             accessRights,
@@ -264,7 +275,7 @@ LsaSrvPrivsAddAccountRights(
     if (err == ERROR_FILE_NOT_FOUND)
     {
         err = LsaSrvPrivsCreateAccount(
-                                hProvider,
+                                hServer,
                                 accessToken,
                                 pAccountSid,
                                 accessRights,
@@ -277,7 +288,7 @@ LsaSrvPrivsAddAccountRights(
     }
 
     err = LsaSrvResolveNamesToPrivilegesAndSar(
-                        hProvider,
+                        hServer,
                         accessToken,
                         ppwszAccountRights,
                         NumAccountRights,
@@ -325,7 +336,6 @@ error:
     if (pAccountContext)
     {
         LsaSrvPrivsCloseAccount(
-                    hProvider,
                     &pAccountContext);
     }
 
@@ -338,7 +348,7 @@ error:
 static
 DWORD
 LsaSrvResolveNamesToPrivilegesAndSar(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN PACCESS_TOKEN AccessToken,
     IN PWSTR *pAccountRights,
     IN DWORD NumAccountRights,
@@ -363,7 +373,7 @@ LsaSrvResolveNamesToPrivilegesAndSar(
     for (i = 0; i < NumAccountRights; i++)
     {
         err = LsaSrvPrivsLookupPrivilegeValue(
-                            hProvider,
+                            hServer,
                             AccessToken,
                             pAccountRights[i],
                             &privilegeValue);
@@ -406,7 +416,7 @@ error:
 
 DWORD
 LsaSrvPrivsRemoveAccountRights(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PSID AccountSid,
     IN BOOLEAN RemoveAll,
@@ -425,8 +435,16 @@ LsaSrvPrivsRemoveAccountRights(
     DWORD removeAccessRights = 0;
     DWORD newAccessRights = 0;
 
+    if (!accessToken)
+    {
+        err = LsaSrvPrivsGetAccessTokenFromServerHandle(
+                                hServer,
+                                &accessToken);
+        BAIL_ON_LSA_ERROR(err);
+    }
+
     err = LsaSrvPrivsOpenAccount(
-                            hProvider,
+                            hServer,
                             accessToken,
                             AccountSid,
                             accessRights,
@@ -434,7 +452,7 @@ LsaSrvPrivsRemoveAccountRights(
     BAIL_ON_LSA_ERROR(err);
 
     err = LsaSrvResolveNamesToPrivilegesAndSar(
-                        hProvider,
+                        hServer,
                         accessToken,
                         ppwszAccountRights,
                         NumAccountRights,
@@ -494,7 +512,6 @@ error:
     if (pAccountContext)
     {
         LsaSrvPrivsCloseAccount(
-                    hProvider,
                     &pAccountContext);
     }
 
@@ -506,7 +523,7 @@ error:
 
 DWORD
 LsaSrvPrivsEnumAccountRights(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN pAccessToken,
     IN PSID AccountSid,
     OUT PWSTR **ppAccountRights,
@@ -527,8 +544,16 @@ LsaSrvPrivsEnumAccountRights(
     DWORD i = 0;
     DWORD sysAccessMask = 0x00000001;
 
+    if (!accessToken)
+    {
+        err = LsaSrvPrivsGetAccessTokenFromServerHandle(
+                                hServer,
+                                &accessToken);
+        BAIL_ON_LSA_ERROR(err);
+    }
+
     err = LsaSrvPrivsOpenAccount(
-                            hProvider,
+                            hServer,
                             accessToken,
                             AccountSid,
                             accessRights,
@@ -564,7 +589,7 @@ LsaSrvPrivsEnumAccountRights(
     for (i = 0; i < pAccount->NumPrivileges; i++)
     {
         err = LsaSrvPrivsLookupPrivilegeName(
-                            hProvider,
+                            hServer,
                             accessToken,
                             &pAccount->Privileges[i].Luid,
                             &accountRightName);
@@ -615,7 +640,6 @@ error:
     if (accountContext)
     {
         LsaSrvPrivsCloseAccount(
-                  hProvider,
                   &accountContext);
     }
 
@@ -625,7 +649,7 @@ error:
 
 DWORD
 LsaSrvPrivsOpenAccount(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN pAccessToken,
     IN PSID Sid,
     IN ACCESS_MASK AccessRights,
@@ -633,8 +657,19 @@ LsaSrvPrivsOpenAccount(
     )
 {
     DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PACCESS_TOKEN accessToken = pAccessToken;
+    GENERIC_MAPPING genericMapping = {0};
     PLSA_ACCOUNT pAccount = NULL;
     PLSA_ACCOUNT_CONTEXT accountContext = NULL;
+
+    if (!accessToken)
+    {
+        err = LsaSrvPrivsGetAccessTokenFromServerHandle(
+                                hServer,
+                                &accessToken);
+        BAIL_ON_LSA_ERROR(err);
+    }
 
     err = LsaSrvGetAccountEntry(
                      Sid,
@@ -646,16 +681,34 @@ LsaSrvPrivsOpenAccount(
                      OUT_PPVOID(&accountContext));
     BAIL_ON_LSA_ERROR(err);
 
+    if (!RtlAccessCheck(pAccount->pSecurityDesc,
+                        accessToken,
+                        AccessRights,
+                        accountContext->grantedAccess,
+                        &genericMapping,
+                        &accountContext->grantedAccess,
+                        &ntStatus))
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+                       
     accountContext->pAccount = pAccount;
+    accountContext->accessToken = accessToken;
 
     *pAccountContext = accountContext;
 
 error:
-    if (err)
+    if (err || ntStatus)
     {
-        LW_SAFE_FREE_MEMORY(accountContext);
+        LsaSrvPrivsCloseAccount(&accountContext);
 
-        pAccountContext = NULL;
+        *pAccountContext = NULL;
+    }
+
+    if (err == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
     }
 
     return err;
@@ -664,7 +717,7 @@ error:
 
 DWORD
 LsaSrvPrivsCreateAccount(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN pAccessToken,
     IN PSID Sid,
     IN ACCESS_MASK AccessRights,
@@ -673,10 +726,21 @@ LsaSrvPrivsCreateAccount(
 {
     DWORD err = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
+    PACCESS_TOKEN accessToken = pAccessToken;
+    GENERIC_MAPPING genericMapping = {0};
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
     PLSA_ACCOUNT pAccount = NULL;
     DWORD sidSize = 0;
     PSID accountSid = NULL;
     PLSA_ACCOUNT_CONTEXT accountContext = NULL;
+
+    if (!accessToken)
+    {
+        err = LsaSrvPrivsGetAccessTokenFromServerHandle(
+                                hServer,
+                                &accessToken);
+        BAIL_ON_LSA_ERROR(err);
+    }
 
     err = LwAllocateMemory(
                      sizeof(*pAccount),
@@ -708,6 +772,27 @@ LsaSrvPrivsCreateAccount(
                      Sid);
     BAIL_ON_NT_STATUS(ntStatus);
 
+    err = LsaSrvAllocateAbsoluteFromSelfRelativeSD(
+                     pGlobals->pAccountsSecDescRelative,
+                     &pAccount->pSecurityDesc);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = LwAllocateMemory(
+                     sizeof(*accountContext),
+                     OUT_PPVOID(&accountContext));
+    BAIL_ON_LSA_ERROR(err);
+
+    if (!RtlAccessCheck(pAccount->pSecurityDesc,
+                        accessToken,
+                        AccessRights,
+                        accountContext->grantedAccess,
+                        &genericMapping,
+                        &accountContext->grantedAccess,
+                        &ntStatus))
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+                       
     err = LsaSrvAddAccount_inlock(
                      accountSid,
                      pAccount);
@@ -717,26 +802,23 @@ LsaSrvPrivsCreateAccount(
         // to avoid memory leak
         LW_SAFE_FREE_MEMORY(accountSid);
         LW_SAFE_FREE_MEMORY(pAccount->pSid);
+        LsaSrvFreeSecurityDescriptor(pAccount->pSecurityDesc);
         LW_SAFE_FREE_MEMORY(pAccount);
 
         BAIL_ON_LSA_ERROR(err);
     }
 
-    err = LwAllocateMemory(
-                     sizeof(*accountContext),
-                     OUT_PPVOID(&accountContext));
-    BAIL_ON_LSA_ERROR(err);
-
     accountContext->pAccount = pAccount;
+    accountContext->accessToken = accessToken;
 
     *pAccountContext = accountContext;
 
 error:
-    if (err)
+    if (err || ntStatus)
     {
-        LW_SAFE_FREE_MEMORY(accountContext);
+        LsaSrvPrivsCloseAccount(&accountContext);
 
-        pAccountContext = NULL;
+        *pAccountContext = NULL;
     }
 
     if (err == ERROR_SUCCESS &&
@@ -751,13 +833,16 @@ error:
 
 VOID
 LsaSrvPrivsCloseAccount(
-    IN HANDLE hProvider,
     IN OUT PLSA_ACCOUNT_CONTEXT *pAccountContext
     )
 {
     PLSA_ACCOUNT_CONTEXT accountContext = *pAccountContext;
 
+    if (accountContext == NULL) return;
+
     accountContext->pAccount = NULL;
+    RtlReleaseAccessToken(&accountContext->accessToken);
+
     LW_SAFE_FREE_MEMORY(accountContext);
 
     *pAccountContext = NULL;
@@ -766,7 +851,7 @@ LsaSrvPrivsCloseAccount(
 
 DWORD
 LsaSrvPrivsAddPrivilegesToAccount(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN PPRIVILEGE_SET pPrivilegeSet
@@ -776,6 +861,12 @@ LsaSrvPrivsAddPrivilegesToAccount(
     BOOLEAN accountLocked = FALSE;
     PLSA_ACCOUNT pAccount = pAccountContext->pAccount;
     DWORD numPrivileges = 0;
+
+    if (!(pAccountContext->grantedAccess & LSA_ACCOUNT_ADJUST_PRIVILEGES))
+    {
+        err = ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(err);
+    }
 
     LSASRV_PRIVS_WRLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
 
@@ -801,7 +892,7 @@ LsaSrvPrivsAddPrivilegesToAccount(
 
         pAccountContext->Dirty = FALSE;
     }
-                   
+
 error:
     LSASRV_PRIVS_UNLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
 
@@ -872,7 +963,7 @@ LsaSrvMergePrivilegeLists(
     }
 
     *pNumRetPrivs = numMergedPrivs;
-                   
+
 error:
     if (err)
     {
@@ -885,7 +976,7 @@ error:
 
 DWORD
 LsaSrvPrivsRemovePrivilegesFromAccount(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN BOOLEAN RemoveAll,
@@ -896,6 +987,12 @@ LsaSrvPrivsRemovePrivilegesFromAccount(
     BOOLEAN accountLocked = FALSE;
     PLSA_ACCOUNT pAccount = pAccountContext->pAccount;
     DWORD newNumPrivileges = 0;
+
+    if (!(pAccountContext->grantedAccess & LSA_ACCOUNT_ADJUST_PRIVILEGES))
+    {
+        err = ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(err);
+    }
 
     LSASRV_PRIVS_WRLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
 
@@ -987,7 +1084,7 @@ LsaSrvRemovePrivilegesFromPrivilegeList(
                      &pPrivs2[i].Luid,
                      &pDestPrivs[j].Luid))
             {
-                offset++; 
+                offset++;
             }
 
             if (offset && (j + offset < RetPrivsLen - 1))
@@ -1003,11 +1100,11 @@ LsaSrvRemovePrivilegesFromPrivilegeList(
                 pDestPrivs[j].Attributes = 0;
             }
         }
-                   
+
         removed += offset;
         offset   = 0;
     }
-                   
+
     *pNumRetPrivs = NumPrivs1 - removed;
 
 error:
@@ -1022,7 +1119,7 @@ error:
 
 DWORD
 LsaSrvPrivsGetSystemAccessRights(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     OUT PDWORD pSystemAccessRights
@@ -1032,10 +1129,17 @@ LsaSrvPrivsGetSystemAccessRights(
     BOOLEAN accountLocked = FALSE;
     PLSA_ACCOUNT pAccount = pAccountContext->pAccount;
 
+    if (!(pAccountContext->grantedAccess & LSA_ACCOUNT_VIEW))
+    {
+        err = ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(err);
+    }
+
     LSASRV_PRIVS_RDLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
 
     *pSystemAccessRights = pAccount->SystemAccessRights;
 
+error:
     LSASRV_PRIVS_UNLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
 
     return err;
@@ -1044,7 +1148,7 @@ LsaSrvPrivsGetSystemAccessRights(
 
 DWORD
 LsaSrvPrivsSetSystemAccessRights(
-    IN HANDLE hProvider,
+    IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN DWORD SystemAccessRights
@@ -1053,6 +1157,12 @@ LsaSrvPrivsSetSystemAccessRights(
     DWORD err = ERROR_SUCCESS;
     BOOLEAN accountLocked = FALSE;
     PLSA_ACCOUNT pAccount = pAccountContext->pAccount;
+
+    if (!(pAccountContext->grantedAccess & LSA_ACCOUNT_ADJUST_SYSTEM_ACCESS))
+    {
+        err = ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(err);
+    }
 
     LSASRV_PRIVS_WRLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
 
@@ -1071,7 +1181,7 @@ LsaSrvPrivsSetSystemAccessRights(
 
         pAccountContext->Dirty = FALSE;
     }
-                   
+
 error:
     LSASRV_PRIVS_WRLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
 
@@ -1125,7 +1235,7 @@ LsaSrvLookupSysAccessRightNameMap(
     WCHAR sarDenyBatchLogonName[] = SE_DENY_INTERACTIVE_LOGON_NAME;
     WCHAR sarDenyServiceLogonName[] = SE_DENY_SERVICE_LOGON_NAME;
     WCHAR sarRemoteInteractiveLogonName[] = SE_REMOTE_INTERACTIVE_LOGON_NAME;
-    WCHAR sarDenyRemoteInteractiveLogonName[] = 
+    WCHAR sarDenyRemoteInteractiveLogonName[] =
                                          SE_DENY_REMOTE_INTERACTIVE_LOGON_NAME;
     struct _ACCESS_RIGHT_NAME_MAP {
         PWSTR Name;
