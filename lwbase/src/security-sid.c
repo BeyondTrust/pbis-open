@@ -1001,6 +1001,15 @@ RtlCreateWellKnownSid(
             sidBuffer.Sid.SubAuthority[0] = SECURITY_CREATOR_GROUP_RID;
             break;
         }   
+        case WinAnonymousSid:
+        {
+            // S-1-5-7
+            SID_IDENTIFIER_AUTHORITY identifierAuthority = { SECURITY_CREATOR_SID_AUTHORITY };
+            status = RtlInitializeSid(&sidBuffer.Sid, &identifierAuthority, 1);
+            GOTO_CLEANUP_ON_STATUS(status);
+            sidBuffer.Sid.SubAuthority[0] = SECURITY_ANONYMOUS_LOGON_RID;
+            break;
+        }
         case WinAuthenticatedUserSid:
         {
             // S-1-5-11
