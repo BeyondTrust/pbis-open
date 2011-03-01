@@ -208,6 +208,7 @@ ParseArgs(
         PARSE_MODE_OPEN = 0,
         PARSE_MODE_ADD_ACCOUNT_RIGHTS,
         PARSE_MODE_REMOVE_ACCOUNT_RIGHTS,
+        PARSE_MODE_ENUM_ACCOUNT_RIGHTS,
         PARSE_MODE_DONE
     } ParseMode;
 
@@ -222,6 +223,7 @@ ParseArgs(
     PSTR* ppszAccountRights = NULL;
     DWORD i = 0;
     BOOLEAN Enumerate = TRUE;
+    BOOLEAN removeAll = FALSE;
 
     do {
         pArg = argv[iArg++];
@@ -247,6 +249,15 @@ ParseArgs(
                 else if (!strcmp(pArg, "--remove"))
                 {
                     parseMode = PARSE_MODE_REMOVE_ACCOUNT_RIGHTS;
+                }
+                else if (!strcmp(pArg, "--remove-all"))
+                {
+                    removeAll = TRUE;
+                    parseMode = PARSE_MODE_REMOVE_ACCOUNT_RIGHTS;
+                }
+                else if (!strcmp(pArg, "--enum"))
+                {
+                    parseMode = PARSE_MODE_ENUM_ACCOUNT_RIGHTS;
                 }
                 else
                 {
@@ -312,6 +323,24 @@ ParseArgs(
                                 OUT_PPVOID(&pData));
                 BAIL_ON_LSA_ERROR(dwError);
 
+                if (removeAll)
+                {
+                    pData->RemoveAll = TRUE;
+
+                    pTask->taskType = AccountRightsTask_Remove;
+                    pTask->pData    = pData;
+
+                    dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                    BAIL_ON_LSA_ERROR(dwError);
+
+                    dwError = LwAllocateString(pArg, &pszId);
+                    BAIL_ON_LSA_ERROR(dwError);
+
+                    Enumerate = FALSE;
+                    parseMode = PARSE_MODE_OPEN;
+                    break;
+                }
+
                 dwError = GetStringListFromString(pArg,
                                                   SEPARATOR_CHAR,
                                                   &ppszAccountRights,
@@ -334,6 +363,29 @@ ParseArgs(
                 pTask->pData    = pData;
 
                 dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                Enumerate = FALSE;
+                parseMode = PARSE_MODE_OPEN;
+                pData     = NULL;
+
+                break;
+            }
+
+            case PARSE_MODE_ENUM_ACCOUNT_RIGHTS:
+            {
+                dwError = LwAllocateMemory(
+                                sizeof(ACCOUNT_RIGHTS_TASK),
+                                OUT_PPVOID(&pTask));
+                BAIL_ON_LSA_ERROR(dwError);
+
+                pTask->taskType = AccountRightsTask_Enumerate;
+                pTask->pData    = NULL;
+
+                dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                dwError = LwAllocateString(pArg, &pszId);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 Enumerate = FALSE;
@@ -535,10 +587,11 @@ ShowUsage(
 {
     fprintf(stdout, "Usage: %s {modification options} ( account name | sid )\n\n", pszProgramName);
 
-    fprintf(stdout, "\nModification options:\n");
+    fprintf(stdout, "\nModification options (default: --enum):\n");
     fprintf(stdout, "{ --help }\n");
     fprintf(stdout, "{ --add account_right[,account_right] }\n");
     fprintf(stdout, "{ --remove account_right[,account_right] }\n");
+    fprintf(stdout, "{ --enum }\n");
 }
 
 static
@@ -658,7 +711,7 @@ ProcessAccountRights(
             dwError = LsaPrivsRemoveAccountRights(
                                hLsaConnection,
                                pAccountSid,
-                               FALSE,
+                               pData->RemoveAll,
                                pData->ppwszAccountRights,
                                pData->NumAccountRights);
             BAIL_ON_LSA_ERROR(dwError);

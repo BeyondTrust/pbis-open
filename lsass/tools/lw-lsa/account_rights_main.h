@@ -69,6 +69,7 @@ typedef struct _ACCOUNT_RIGHTS_DATA
 {
     PWSTR *ppwszAccountRights;
     DWORD NumAccountRights;
+    BOOLEAN RemoveAll;         // applies to removing only
 
 } ACCOUNT_RIGHTS_DATA, *PACCOUNT_RIGHTS_DATA;
 
