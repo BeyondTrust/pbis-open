@@ -209,7 +209,7 @@ default_accept(
 
     my_session->refs++;
     my_session->sec_token = token;
-    memcpy(my_session->id.connect.bytes, connect->bytes, sizeof(connect->bytes));
+    memcpy(my_session->id.connect_id.bytes, connect->bytes, sizeof(connect->bytes));
 
 done:
 
@@ -240,7 +240,7 @@ default_connect(
         }
     
         /* Has session state been lost? */
-        if (memcmp(&dsession->id.accept.bytes, accept->bytes, sizeof(accept->bytes)) &&
+        if (memcmp(&dsession->id.accept_id.bytes, accept->bytes, sizeof(accept->bytes)) &&
             dsession->num_handles > 0)
         {
             BAIL_ON_ERROR(status = LWMSG_STATUS_SESSION_LOST);
@@ -248,13 +248,13 @@ default_connect(
 
         lwmsg_security_token_delete(token);
         /* Update accept cookie if it changed */
-        memcpy(dsession->id.accept.bytes, accept->bytes, sizeof(accept->bytes));
+        memcpy(dsession->id.accept_id.bytes, accept->bytes, sizeof(accept->bytes));
     }
     else
     {
         /* Session has not been connected bfore */
         dsession->sec_token = token;
-        memcpy(dsession->id.accept.bytes, accept->bytes, sizeof(accept->bytes));
+        memcpy(dsession->id.accept_id.bytes, accept->bytes, sizeof(accept->bytes));
     }
 
     dsession->refs++;
@@ -624,7 +624,7 @@ lwmsg_assoc_session_new(
     session->refs = 1;
     session->assoc = assoc;
 
-    lwmsg_session_generate_cookie(&session->id.connect);
+    lwmsg_session_generate_cookie(&session->id.connect_id);
 
     *out_session = LWMSG_SESSION(session);
 

@@ -63,8 +63,8 @@ typedef struct
 
 typedef struct LWMsgSessionID
 {
-    LWMsgSessionCookie connect;
-    LWMsgSessionCookie accept;
+    LWMsgSessionCookie connect_id;
+    LWMsgSessionCookie accept_id;
 } LWMsgSessionID;
 
 typedef char LWMsgSessionString[66];

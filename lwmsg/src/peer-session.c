@@ -271,8 +271,8 @@ peer_accept(
 
     my_session->sec_token = token;
     my_session->refs++;
-    memcpy(my_session->id.connect.bytes, connect->bytes, sizeof(connect->bytes));
-    lwmsg_session_generate_cookie(&my_session->id.accept);
+    memcpy(my_session->id.connect_id.bytes, connect->bytes, sizeof(connect->bytes));
+    lwmsg_session_generate_cookie(&my_session->id.accept_id);
 
 done:
 
@@ -307,7 +307,7 @@ peer_connect(
         }
     
         /* Has session state been lost? */
-        if (memcmp(&ssession->id.accept.bytes, accept->bytes, sizeof(accept->bytes)) &&
+        if (memcmp(&ssession->id.accept_id.bytes, accept->bytes, sizeof(accept->bytes)) &&
             lwmsg_hash_get_count(&ssession->handle_by_id) > 0)
         {
             /* Reset the session */
@@ -316,13 +316,13 @@ peer_connect(
 
         lwmsg_security_token_delete(token);
         /* Update accept cookie if it changed */
-        memcpy(ssession->id.accept.bytes, accept->bytes, sizeof(accept->bytes));
+        memcpy(ssession->id.accept_id.bytes, accept->bytes, sizeof(accept->bytes));
     }
     else
     {
         /* Session has not been connected bfore */
         ssession->sec_token = token;
-        memcpy(ssession->id.accept.bytes, accept->bytes, sizeof(accept->bytes));
+        memcpy(ssession->id.accept_id.bytes, accept->bytes, sizeof(accept->bytes));
     }
 
     ssession->refs++;
@@ -801,7 +801,7 @@ lwmsg_peer_session_new(
                       peer_handle_equal_id,
                       offsetof(LWMsgHandle, id_ring)));
 
-    lwmsg_session_generate_cookie(&session->id.connect);
+    lwmsg_session_generate_cookie(&session->id.connect_id);
 
     session->refs = 1;
 

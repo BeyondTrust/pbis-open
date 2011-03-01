@@ -1012,7 +1012,7 @@ lwmsg_connection_begin_send_connect(
     packet->contents.greeting.packet_size = (uint32_t) priv->packet_size;
     packet->contents.greeting.flags = 0;
     
-    memcpy(packet->contents.greeting.cookie, id->connect.bytes, sizeof(LWMsgSessionCookie));
+    memcpy(packet->contents.greeting.cookie, id->connect_id.bytes, sizeof(LWMsgSessionCookie));
 
 #ifndef HAVE_PEERID_METHOD
     /* If this system does not have a simple method for getting the identity
@@ -1244,7 +1244,7 @@ lwmsg_connection_begin_send_accept(
     packet->contents.greeting.packet_size = (uint32_t) priv->packet_size;
     packet->contents.greeting.flags = 0;
     
-    memcpy(packet->contents.greeting.cookie, id->accept.bytes, sizeof(LWMsgSessionCookie));
+    memcpy(packet->contents.greeting.cookie, id->accept_id.bytes, sizeof(LWMsgSessionCookie));
 
 #ifndef HAVE_PEERID_METHOD
     /* If this system does not have a simple method for getting the identity

@@ -57,22 +57,22 @@ lwmsg_session_id_to_string(
     )
 {
     sprintf(buffer, "%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x-%.2x%.2x%.2x%.2x%.2x%.2x%.2x%.2x",
-            (unsigned int) id->connect.bytes[0],
-            (unsigned int) id->connect.bytes[1],
-            (unsigned int) id->connect.bytes[2],
-            (unsigned int) id->connect.bytes[3],
-            (unsigned int) id->connect.bytes[4],
-            (unsigned int) id->connect.bytes[5],
-            (unsigned int) id->connect.bytes[6],
-            (unsigned int) id->connect.bytes[7],
-            (unsigned int) id->accept.bytes[0],
-            (unsigned int) id->accept.bytes[1],
-            (unsigned int) id->accept.bytes[2],
-            (unsigned int) id->accept.bytes[3],
-            (unsigned int) id->accept.bytes[4],
-            (unsigned int) id->accept.bytes[5],
-            (unsigned int) id->accept.bytes[6],
-            (unsigned int) id->accept.bytes[7]);
+            (unsigned int) id->connect_id.bytes[0],
+            (unsigned int) id->connect_id.bytes[1],
+            (unsigned int) id->connect_id.bytes[2],
+            (unsigned int) id->connect_id.bytes[3],
+            (unsigned int) id->connect_id.bytes[4],
+            (unsigned int) id->connect_id.bytes[5],
+            (unsigned int) id->connect_id.bytes[6],
+            (unsigned int) id->connect_id.bytes[7],
+            (unsigned int) id->accept_id.bytes[0],
+            (unsigned int) id->accept_id.bytes[1],
+            (unsigned int) id->accept_id.bytes[2],
+            (unsigned int) id->accept_id.bytes[3],
+            (unsigned int) id->accept_id.bytes[4],
+            (unsigned int) id->accept_id.bytes[5],
+            (unsigned int) id->accept_id.bytes[6],
+            (unsigned int) id->accept_id.bytes[7]);
 }
 
 void
