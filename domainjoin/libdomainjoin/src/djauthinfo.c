@@ -1003,10 +1003,6 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
                     firstStart + 1,
                     firstStop + stopLaterOffset * 0,
                     &LW_EXC));
-        LW_TRY(exc, DJManageDaemon("reapsysld", TRUE,
-                    firstStart + 1,
-                    firstStop + stopLaterOffset * 0,
-                    &innerExc));
         // Ignore service not found errors
         if (!LW_IS_OK(innerExc) &&
                 innerExc->code != ERROR_SERVICE_NOT_FOUND &&
