@@ -108,7 +108,6 @@ DNSGetDomainNameOffset(
 DWORD
 DNSNegotiateSecureContext(
     HANDLE hDNSServer,
-    PCSTR  pszDomain,
     PCSTR  pszServerName,
     PCSTR  pszKeyName,
     PCtxtHandle pGSSContext
@@ -116,7 +115,6 @@ DNSNegotiateSecureContext(
 {
     DWORD dwError = 0;
     DWORD dwMajorStatus = 0;
-    char szUpperCaseDomain[256];
     char szTargetName[256];
 
     gss_buffer_desc input_name = {0};
@@ -157,11 +155,7 @@ DNSNegotiateSecureContext(
                     );
     BAIL_ON_LWDNS_ERROR(dwError);
 
-    memset(szUpperCaseDomain, 0, sizeof(szUpperCaseDomain));
-    memcpy(szUpperCaseDomain, pszDomain, strlen(pszDomain));
-    DNSStrToUpper(szUpperCaseDomain);
-
-    sprintf(szTargetName,"dns/%s@%s",pszServerName, szUpperCaseDomain);
+    sprintf(szTargetName,"dns/%s@",pszServerName);
 
     ret = krb5_init_context(&ctx);
     BAIL_ON_LWDNS_KRB_ERROR(ctx, ret);

@@ -263,7 +263,6 @@ DNSUpdatePtrSecureOnServer(
 {
     DWORD dwError = 0;
     DWORD dwResponseCode = 0;
-    PCSTR pszDomainName = strchr(pszServerName, '.');
 
     CtxtHandle GSSContext = {0};
     PCtxtHandle pGSSContext = &GSSContext;
@@ -271,16 +270,6 @@ DNSUpdatePtrSecureOnServer(
     PDNS_UPDATE_RESPONSE pDNSUpdateResponse = NULL;
     PDNS_UPDATE_RESPONSE pDNSSecureUpdateResponse = NULL;
     PSTR pszKeyName = NULL;
-
-    if (pszDomainName != NULL)
-    {
-        pszDomainName++;
-    }
-    else
-    {
-        dwError = LWDNS_ERROR_NO_SUCH_ZONE;
-        BAIL_ON_LWDNS_ERROR(dwError);
-    }
 
     dwError = DNSSendPtrUpdate(
                     hDNSServer,
@@ -302,7 +291,6 @@ DNSUpdatePtrSecureOnServer(
 
         dwError = DNSNegotiateSecureContext(
                         hDNSServer,
-                        pszDomainName,
                         pszServerName,
                         pszKeyName,
                         pGSSContext);
@@ -592,7 +580,6 @@ DNSUpdateSecure(
 
         dwError = DNSNegotiateSecureContext(
                         hDNSServer,
-                        pszDomainName,
                         pszServerName,
                         pszKeyName,
                         pGSSContext);
