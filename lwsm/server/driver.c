@@ -208,7 +208,6 @@ LwSmDriverDestruct(
     return;
 }
 
-static
 LW_SERVICE_LOADER_VTBL gDriverVtbl =
 {
     .pfnStart = LwSmDriverStart,
@@ -218,24 +217,3 @@ LW_SERVICE_LOADER_VTBL gDriverVtbl =
     .pfnConstruct = LwSmDriverConstruct,
     .pfnDestruct = LwSmDriverDestruct
 };
-
-static
-LW_SERVICE_LOADER_PLUGIN gPlugin =
-{
-    .dwInterfaceVersion = LW_SERVICE_LOADER_INTERFACE_VERSION,
-    .pVtbl = &gDriverVtbl,
-    .pszName = "driver",
-    .pszAuthor = "Likewise",
-    .pszLicense = "GPLv2"
-};
-
-DWORD
-ServiceLoaderInit(
-    DWORD dwInterfaceVersion,
-    PLW_SERVICE_LOADER_PLUGIN* ppPlugin
-    )
-{
-    *ppPlugin = &gPlugin;
-    
-    return LW_ERROR_SUCCESS;
-}

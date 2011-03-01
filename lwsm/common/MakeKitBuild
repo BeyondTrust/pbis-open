@@ -2,7 +2,7 @@ make()
 {
     mk_library \
         LIB=lwsmcommon \
-        SOURCES="*.c" \
+        SOURCES="protocol.c util.c" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="lwadvapi.h lwmsg/lwmsg.h" \
         LIBDEPS="lwadvapi lwmsg"

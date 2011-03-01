@@ -285,7 +285,6 @@ LwSmSvcmDestruct(
     return;
 }
 
-static
 LW_SERVICE_LOADER_VTBL gSvcmVtbl =
 {
     .pfnStart = LwSmSvcmStart,
@@ -296,23 +295,3 @@ LW_SERVICE_LOADER_VTBL gSvcmVtbl =
     .pfnDestruct = LwSmSvcmDestruct
 };
 
-static
-LW_SERVICE_LOADER_PLUGIN gPlugin =
-{
-    .dwInterfaceVersion = LW_SERVICE_LOADER_INTERFACE_VERSION,
-    .pVtbl = &gSvcmVtbl,
-    .pszName = "svcm",
-    .pszAuthor = "Likewise",
-    .pszLicense = "GPLv2"
-};
-
-DWORD
-ServiceLoaderInit(
-    DWORD dwInterfaceVersion,
-    PLW_SERVICE_LOADER_PLUGIN* ppPlugin
-    )
-{
-    *ppPlugin = &gPlugin;
-    
-    return LW_ERROR_SUCCESS;
-}

@@ -23,7 +23,7 @@ lwsm_include_HEADERS = include/lwsm/lwsm.h
 
 # libraries
 
-lib_LTLIBRARIES = common/liblwsmcommon.la client/liblwsm.la server/liblwsmloader.la
+lib_LTLIBRARIES = common/liblwsmcommon.la client/liblwsm.la
 
 common_liblwsmcommon_la_SOURCES = \
 	common/protocol.c \
@@ -36,35 +36,6 @@ client_liblwsm_la_SOURCES = \
 client_liblwsm_la_LIBADD = $(top_builddir)/common/liblwsmcommon.la @LIB_PTHREAD@
 client_liblwsm_la_LDFLAGS = $(AM_LDFLAGS) -export-symbols $(top_srcdir)/client/liblwsm.sym
 
-server_liblwsmloader_la_SOURCES = server/loader.c
-server_liblwsmloader_la_LIBADD = $(top_builddir)/common/liblwsmcommon.la @LIB_PTHREAD@ @LIB_DL@
-server_liblwsmloader_la_LDFLAGS = $(AM_LDFLAGS) -export-symbols $(top_srcdir)/server/liblwsmloader.sym
-
-# loaders
-
-LOADER_CFLAGS = -shared
-LOADER_LDFLAGS = -shared -module -avoid-version
-loader_LTLIBRARIES = server/executable.la server/driver.la server/stub.la
-
-server_executable_la_SOURCES = server/executable.c
-server_executable_la_CFLAGS = $(AM_CFLAGS) $(LOADER_CFLAGS)
-server_executable_la_LIBADD = $(top_builddir)/server/liblwsmloader.la
-server_executable_la_LDFLAGS = $(AM_LDFLAGS) $(LOADER_LDFLAGS)
-
-server_driver_la_SOURCES = server/driver.c
-server_driver_la_CFLAGS = $(AM_CFLAGS) $(LOADER_CFLAGS)
-server_driver_la_LIBADD = \
-    $(top_builddir)/server/liblwsmloader.la \
-    $(top_builddir)/common/liblwsmcommon.la \
-    -llwioclient \
-    @LIB_PTHREAD@
-server_driver_la_LDFLAGS = $(AM_LDFLAGS) $(LOADER_LDFLAGS)
-
-server_stub_la_SOURCES = server/stub.c
-server_stub_la_CFLAGS = $(AM_CFLAGS) $(LOADER_CFLAGS)
-server_stub_la_LIBADD = $(top_builddir)/server/liblwsmloader.la
-server_stub_la_LDFLAGS = $(AM_LDFLAGS) $(LOADER_LDFLAGS)
-
 # programs
 
 sbin_PROGRAMS = server/lwsmd
@@ -76,11 +47,15 @@ server_lwsmd_SOURCES = \
 	server/registry.c \
 	server/bootstrap.c \
 	server/logger.c \
-	server/main.c
+	server/main.c \
+        server/executable.c \
+	server/driver.c \
+        server/svcm.c \
+        server/stub.c
+
 server_lwsmd_LDADD = \
 	$(top_builddir)/common/liblwsmcommon.la \
-	$(top_builddir)/server/liblwsmloader.la \
-	-llwmsg -llwmsg_nothr -llwnetclientapi \
+	-llwmsg -llwmsg_nothr -llwnetclientapi -llwioclient \
 	-lregclient -llwadvapi -llwadvapi_nothr -llwbase -llwbase_nothr \
 	@LIB_PTHREAD@
 

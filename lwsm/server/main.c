@@ -38,9 +38,10 @@
 
 #include "includes.h"
 
+PLW_THREAD_POOL gpPool;
+
 static struct
 {
-    PLW_THREAD_POOL pPool;
     LWMsgContext* pIpcContext;
     LWMsgProtocol* pIpcProtocol;
     LWMsgPeer* pIpcServer;
@@ -52,7 +53,6 @@ static struct
     BOOLEAN bSyslog;
 } gState = 
 {
-    .pPool = NULL,
     .pIpcContext = NULL,
     .pIpcProtocol = NULL,
     .pIpcServer = NULL,
@@ -158,10 +158,6 @@ main(
     dwError = LwSmConfigureLogging(ppszArgv[0]);
     BAIL_ON_ERROR(dwError);
 
-    /* Initialize the service loader subsystem */
-    dwError = LwSmLoaderInitialize(&gTableCalls);
-    BAIL_ON_ERROR(dwError);
-
     /* Initialize the service table subsystem */
     dwError = LwSmTableInit();
     BAIL_ON_ERROR(dwError);
@@ -182,9 +178,6 @@ error:
 
     /* Shut down service table */
     LwSmTableShutdown();
-
-    /* Shut down loaders */
-    LwSmLoaderShutdown();
 
     /* Shut down logging */
     LwSmSetLogger(NULL, NULL);
@@ -510,7 +503,7 @@ MainTask(
         status = LwRtlSetTaskUnixSignal(pTask, SIGHUP, TRUE);
         BAIL_ON_ERROR(status);
         
-        status = LwRtlQueueWorkItem(gState.pPool, Startup, NULL, 0);
+        status = LwRtlQueueWorkItem(gpPool, Startup, NULL, 0);
         BAIL_ON_ERROR(status);
 
         *pWaitMask = LW_TASK_EVENT_UNIX_SIGNAL;
@@ -527,14 +520,14 @@ MainTask(
                     "Shutting down on SIGINT" :
                     "Shutting down on SIGTERM");
                 /* Shutting down stops all running services, which is a blocking operation */
-                status = LwRtlQueueWorkItem(gState.pPool, Shutdown, NULL, 0);
+                status = LwRtlQueueWorkItem(gpPool, Shutdown, NULL, 0);
                 BAIL_ON_ERROR(status);
                 *pWaitMask = LW_TASK_EVENT_COMPLETE;
                 goto cleanup;
             case SIGHUP:
                 SM_LOG_VERBOSE("Refreshing configuration on SIGHUP");
                 /* Refreshing config reads from the registry, which is a blocking operation */
-                status = LwRtlQueueWorkItem(gState.pPool, RefreshConfig, NULL, 0);
+                status = LwRtlQueueWorkItem(gpPool, RefreshConfig, NULL, 0);
                 BAIL_ON_ERROR(status);
                 break;
             default:
@@ -569,11 +562,11 @@ LwSmMain(
     DWORD dwError = 0;
     PLW_TASK pTask = NULL;
 
-    dwError = LwNtStatusToWin32Error(LwRtlCreateThreadPool(&gState.pPool, NULL));
+    dwError = LwNtStatusToWin32Error(LwRtlCreateThreadPool(&gpPool, NULL));
     BAIL_ON_ERROR(dwError);
 
     dwError = LwNtStatusToWin32Error(LwRtlCreateTask(
-                                         gState.pPool,
+                                         gpPool,
                                          &pTask,
                                          NULL,
                                          MainTask,
@@ -594,7 +587,7 @@ cleanup:
          LwRtlReleaseTask(&pTask);
      }
 
-     LwRtlFreeThreadPool(&gState.pPool);
+     LwRtlFreeThreadPool(&gpPool);
 
      return dwError;
 

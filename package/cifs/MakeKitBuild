@@ -113,7 +113,6 @@ common_files()
         "${MK_LIBDIR}/*${MK_LIB_EXT}" \
         "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
-        "${MK_LIBDIR}/lwsm-loader/*${MK_DLO_EXT}" \
         "/etc/init.d/*" \
         "${MK_SYSCONFDIR}/*" \
         "/${MK_LIBDIR##*/}/security/pam_lsass${MK_DLO_EXT}" \

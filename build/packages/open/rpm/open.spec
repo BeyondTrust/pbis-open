@@ -70,7 +70,6 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 #%{PrefixDir}/apache
 %{PrefixDir}/%{_lib}/gss/*.so
 %{PrefixDir}/%{_lib}/engines/*.so
-%{PrefixDir}/%{_lib}/lwsm-loader/*.so
 %{PrefixDir}/%{_lib}/krb5/plugins/preauth/*.so
 %{PrefixDir}/%{_lib}/krb5/plugins/libkrb5/*.so
 %{PrefixDir}/%{_lib}/krb5/plugins/libkrb5/*.so.*
@@ -647,7 +646,6 @@ exit 0
 %attr(0644,root,root) %{PrefixDir}/share/doc/*
 %attr(0644,root,root) %{PrefixDir}/ssl/*
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/pkgconfig/*
-%{PrefixDir}/%{_lib}/lwsm-loader/*.la
 %{PrefixDir}/%{_lib}/gss/*.a
 %{PrefixDir}/%{_lib}/gss/*.la
 %{PrefixDir}/%{_lib}/krb5/plugins/libkrb5/*.a

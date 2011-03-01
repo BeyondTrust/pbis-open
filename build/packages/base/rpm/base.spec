@@ -75,7 +75,6 @@ rm -rf $RPM_BUILD_ROOT/%{PrefixDir}/share
 %{PrefixDir}/bin/*
 %{PrefixDir}/sbin/*
 %{PrefixDir}/%{_lib}/engines/*.so
-%{PrefixDir}/%{_lib}/lwsm-loader/*.so
 %endif
 
 %if ! %{Compat32}
@@ -116,7 +115,6 @@ done
 %attr(0644,root,root) %{PrefixDir}/share/man/*
 %attr(0644,root,root) %{PrefixDir}/share/doc/*
 %attr(0644,root,root) %{PrefixDir}/ssl/*
-%attr(0644,root,root) %{PrefixDir}/%{_lib}/lwsm-loader/*.la
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/pkgconfig/*
 %endif
 

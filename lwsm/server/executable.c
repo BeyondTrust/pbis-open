@@ -50,7 +50,6 @@ typedef struct _SM_PROCESS_TABLE
 {
     pthread_mutex_t lock;
     pthread_mutex_t* pLock;
-    PLW_THREAD_POOL pPool;
 } SM_PROCESS_TABLE;
 
 typedef struct _SM_EXECUTABLE
@@ -70,8 +69,7 @@ typedef struct _SM_EXECUTABLE
 static SM_PROCESS_TABLE gProcTable =
 {
     .lock = PTHREAD_MUTEX_INITIALIZER,
-    .pLock = &gProcTable.lock,
-    .pPool = NULL
+    .pLock = &gProcTable.lock
 };
 
 static
@@ -212,7 +210,7 @@ LwSmExecutableStart(
     /* Create a task to track the process */
     dwError = LwNtStatusToWin32Error(
         LwRtlCreateTask(
-            gProcTable.pPool,
+            gpPool,
             &pExec->pTask,
             NULL,
             LwSmExecutableTask,
@@ -669,17 +667,6 @@ error:
     goto cleanup;
 }
 
-static
-VOID
-LwSmExecutableShutdown(
-    PLW_SERVICE_LOADER_PLUGIN pPlugin
-    )
-{
-    LwRtlFreeThreadPool(&gProcTable.pPool);
-    pthread_mutex_destroy(gProcTable.pLock);
-}
-
-static
 LW_SERVICE_LOADER_VTBL gExecutableVtbl =
 {
     .pfnStart = LwSmExecutableStart,
@@ -687,34 +674,5 @@ LW_SERVICE_LOADER_VTBL gExecutableVtbl =
     .pfnGetStatus = LwSmExecutableGetStatus,
     .pfnRefresh = LwSmExecutableRefresh,
     .pfnConstruct = LwSmExecutableConstruct,
-    .pfnDestruct = LwSmExecutableDestruct,
-    .pfnShutdown = LwSmExecutableShutdown
+    .pfnDestruct = LwSmExecutableDestruct
 };
-
-static
-LW_SERVICE_LOADER_PLUGIN gPlugin =
-{
-    .dwInterfaceVersion = LW_SERVICE_LOADER_INTERFACE_VERSION,
-    .pVtbl = &gExecutableVtbl,
-    .pszName = "executable",
-    .pszAuthor = "Likewise",
-    .pszLicense = "GPLv2"
-};
-
-DWORD
-ServiceLoaderInit(
-    DWORD dwInterfaceVersion,
-    PLW_SERVICE_LOADER_PLUGIN* ppPlugin
-    )
-{
-    DWORD dwError = 0;
-
-    dwError = LwNtStatusToWin32Error(LwRtlCreateThreadPool(&gProcTable.pPool, NULL));
-    BAIL_ON_ERROR(dwError);
-
-    *ppPlugin = &gPlugin;
-    
-error:
-
-    return dwError;
-}

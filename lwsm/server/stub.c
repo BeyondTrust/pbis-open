@@ -134,7 +134,6 @@ LwSmStubDestruct(
     return;
 }
 
-static
 LW_SERVICE_LOADER_VTBL gStubVtbl =
 {
     .pfnStart = LwSmStubStart,
@@ -144,24 +143,3 @@ LW_SERVICE_LOADER_VTBL gStubVtbl =
     .pfnConstruct = LwSmStubConstruct,
     .pfnDestruct = LwSmStubDestruct
 };
-
-static
-LW_SERVICE_LOADER_PLUGIN gPlugin =
-{
-    .dwInterfaceVersion = LW_SERVICE_LOADER_INTERFACE_VERSION,
-    .pVtbl = &gStubVtbl,
-    .pszName = "stub",
-    .pszAuthor = "Likewise",
-    .pszLicense = "GPLv2"
-};
-
-DWORD
-ServiceLoaderInit(
-    DWORD dwInterfaceVersion,
-    PLW_SERVICE_LOADER_PLUGIN* ppPlugin
-    )
-{
-    *ppPlugin = &gPlugin;
-    
-    return LW_ERROR_SUCCESS;
-}

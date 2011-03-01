@@ -66,8 +66,6 @@ LwSmTableFreeEntry(
     PSM_TABLE_ENTRY pEntry
     );
 
-static PLW_THREAD_POOL gpPool = NULL;
-
 static SM_TABLE gServiceTable = 
 {
     .lock = PTHREAD_MUTEX_INITIALIZER,
@@ -75,13 +73,13 @@ static SM_TABLE gServiceTable =
     .entries = {&gServiceTable.entries, &gServiceTable.entries}
 };
 
-static PCSTR gLoaderTable[] =
+static PLW_SERVICE_LOADER_VTBL gLoaderTable[] =
 {
-    [LW_SERVICE_TYPE_LEGACY_EXECUTABLE] = "executable",
-    [LW_SERVICE_TYPE_EXECUTABLE] = "executable",
-    [LW_SERVICE_TYPE_DRIVER] = "driver",
-    [LW_SERVICE_TYPE_MODULE] = "svcm",
-    [LW_SERVICE_TYPE_STUB] = "stub"
+    [LW_SERVICE_TYPE_LEGACY_EXECUTABLE] = &gExecutableVtbl,
+    [LW_SERVICE_TYPE_EXECUTABLE] = &gExecutableVtbl,
+    [LW_SERVICE_TYPE_DRIVER] = &gDriverVtbl,
+    [LW_SERVICE_TYPE_MODULE] = &gSvcmVtbl,
+    [LW_SERVICE_TYPE_STUB] = &gStubVtbl
 };
 
 DWORD
@@ -195,11 +193,7 @@ LwSmTableReconstructEntry(
         pEntry->object.pData = NULL;
     }
 
-    dwError = LwMbsToWc16s(gLoaderTable[pEntry->pInfo->type], &pwszLoaderName);
-    BAIL_ON_ERROR(dwError);
-
-    dwError = LwSmLoaderGetVtbl(pwszLoaderName, &pEntry->pVtbl);
-    BAIL_ON_ERROR(dwError);
+    pEntry->pVtbl = gLoaderTable[pEntry->pInfo->type];
 
     dwError = pEntry->pVtbl->pfnConstruct(&pEntry->object, pEntry->pInfo, &pEntry->object.pData);
     BAIL_ON_ERROR(dwError);
@@ -1369,18 +1363,16 @@ error:
     goto cleanup;
 }
 
-static
 PVOID
-LwSmTableGetServiceObjectData(
+LwSmGetServiceObjectData(
     PLW_SERVICE_OBJECT pObject
     )
 {
     return pObject->pData;
 }
 
-static
 VOID
-LwSmTableRetainServiceObject(
+LwSmRetainServiceObject(
     PLW_SERVICE_OBJECT pObject
     )
 {
@@ -1389,9 +1381,8 @@ LwSmTableRetainServiceObject(
     LwSmTableRetainEntry(pEntry);
 }
 
-static
 VOID
-LwSmTableReleaseServiceObject(
+LwSmReleaseServiceObject(
     PLW_SERVICE_OBJECT pObject
     )
 {
@@ -1400,9 +1391,8 @@ LwSmTableReleaseServiceObject(
     LwSmTableReleaseEntry(pEntry);
 }
 
-static
 VOID
-LwSmTableNotifyServiceObjectStateChange(
+LwSmNotifyServiceObjectStateChange(
     PLW_SERVICE_OBJECT pObject,
     LW_SERVICE_STATE newState
     )
@@ -1453,11 +1443,3 @@ LwSmTableShutdown(
     pthread_mutex_destroy(gServiceTable.pLock);
     LwRtlFreeThreadPool(&gpPool);
 }
-
-SM_LOADER_CALLS gTableCalls =
-{
-    .pfnGetServiceObjectData = LwSmTableGetServiceObjectData,
-    .pfnRetainServiceObject = LwSmTableRetainServiceObject,
-    .pfnReleaseServiceObject = LwSmTableReleaseServiceObject,
-    .pfnNotifyServiceObjectStateChange = LwSmTableNotifyServiceObjectStateChange
-};

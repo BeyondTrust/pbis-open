@@ -44,18 +44,20 @@
 #include <pthread.h>
 #include <time.h>
 
-struct _LW_SERVICE_OBJECT
+typedef struct _LW_SERVICE_OBJECT
 {
     PVOID pData;
-};
+} LW_SERVICE_OBJECT, *PLW_SERVICE_OBJECT;
 
-typedef struct _SM_LOADER_CALLS
+typedef struct _LW_SERVICE_LOADER_VTBL
 {
-    PVOID (*pfnGetServiceObjectData) (PLW_SERVICE_OBJECT pObject);
-    VOID (*pfnRetainServiceObject) (PLW_SERVICE_OBJECT pObject);
-    VOID (*pfnReleaseServiceObject) (PLW_SERVICE_OBJECT pObject);
-    VOID (*pfnNotifyServiceObjectStateChange) (PLW_SERVICE_OBJECT pObject, LW_SERVICE_STATE newState);
-} SM_LOADER_CALLS, *PSM_LOADER_CALLS;
+    DWORD (*pfnStart)(PLW_SERVICE_OBJECT pObject);
+    DWORD (*pfnStop)(PLW_SERVICE_OBJECT pObject);
+    DWORD (*pfnGetStatus)(PLW_SERVICE_OBJECT pObject, PLW_SERVICE_STATUS pStatus);
+    DWORD (*pfnRefresh)(PLW_SERVICE_OBJECT pObject);
+    DWORD (*pfnConstruct)(PLW_SERVICE_OBJECT pObject, PCLW_SERVICE_INFO pInfo, PVOID* ppData);
+    VOID  (*pfnDestruct)(PLW_SERVICE_OBJECT pObject);
+} LW_SERVICE_LOADER_VTBL, *PLW_SERVICE_LOADER_VTBL;
 
 typedef struct _SM_ENTRY_NOTIFY
 {
@@ -337,22 +339,6 @@ LwSmPopulateTable(
     VOID
     );
 
-DWORD
-LwSmLoaderInitialize(
-    PSM_LOADER_CALLS pCalls
-    );
-
-VOID
-LwSmLoaderShutdown(
-    VOID
-    );
-
-DWORD
-LwSmLoaderGetVtbl(
-    PCWSTR pwszLoaderName,
-    PLW_SERVICE_LOADER_VTBL* ppVtbl
-    );
-
 VOID
 LwSmLogInit(
     VOID
@@ -433,6 +419,27 @@ LwSmSrvGetLogInfo(
     PSTR* ppszTargetName
     );
 
+PVOID
+LwSmGetServiceObjectData(
+    PLW_SERVICE_OBJECT pObject
+    );
+
+VOID
+LwSmRetainServiceObject(
+    PLW_SERVICE_OBJECT pObject
+    );
+
+VOID
+LwSmReleaseServiceObject(
+    PLW_SERVICE_OBJECT pObject
+    );
+
+VOID
+LwSmNotifyServiceObjectStateChange(
+    PLW_SERVICE_OBJECT pObject,
+    LW_SERVICE_STATE newState
+    );
+
 #define SM_LOG(level, ...) LwSmLogPrintf((level), NULL, __func__, __FILE__, __LINE__, __VA_ARGS__)
 #define SM_LOG_ALWAYS(...) SM_LOG(LW_SM_LOG_LEVEL_ALWAYS, __VA_ARGS__)
 #define SM_LOG_ERROR(...) SM_LOG(LW_SM_LOG_LEVEL_ERROR, __VA_ARGS__)
@@ -442,6 +449,11 @@ LwSmSrvGetLogInfo(
 #define SM_LOG_DEBUG(...) SM_LOG(LW_SM_LOG_LEVEL_DEBUG, __VA_ARGS__)
 #define SM_LOG_TRACE(...) SM_LOG(LW_SM_LOG_LEVEL_TRACE, __VA_ARGS__)
 
-extern SM_LOADER_CALLS gTableCalls;
+extern LW_SERVICE_LOADER_VTBL gStubVtbl;
+extern LW_SERVICE_LOADER_VTBL gExecutableVtbl;
+extern LW_SERVICE_LOADER_VTBL gDriverVtbl;
+extern LW_SERVICE_LOADER_VTBL gSvcmVtbl;
+
+extern PLW_THREAD_POOL gpPool;
 
 #endif
