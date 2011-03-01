@@ -964,7 +964,7 @@ RequestOplock(
                   NULL);
     BAIL_ON_NT_STATUS(ntError);
 
-    OplockRequestInput.OplockRequestType = IO_LEASE_REQUEST_RWH;
+    OplockRequestInput.OplockRequestType = IO_OPLOCK_REQUEST_OPLOCK_BATCH;
 
     ntError = NtFsControlFile(
                   hFile,
