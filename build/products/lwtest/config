@@ -9,8 +9,3 @@ SCRIPT="../install.sh"
 PACKAGES="\
     lwtest
     "
-OBSOLETE_PACKAGES=""
-
-DAEMONS=""
-OBSOLETE_DAEMONS=""
-AUTOSTART=""

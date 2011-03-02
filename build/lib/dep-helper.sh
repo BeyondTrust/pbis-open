@@ -164,14 +164,14 @@ product_native_install_obsolete_packages()
     echo "`( source ${PRODUCTS_DIR}/$1/config && echo $INSTALL_OBSOLETE_PACKAGES )`"
 }
 
-product_native_install_base_packages()
+product_native_install_base_package()
 {
-    echo "`( source ${PRODUCTS_DIR}/$1/config && echo $INSTALL_BASE_PACKAGES )`"
+    echo "`( source ${PRODUCTS_DIR}/$1/config && echo $INSTALL_BASE_PACKAGE )`"
 }
 
-product_native_install_optional_packages()
+product_native_install_gui_package()
 {
-    echo "`( source ${PRODUCTS_DIR}/$1/config && echo $INSTALL_OPTIONAL_PACKAGES )`"
+    echo "`( source ${PRODUCTS_DIR}/$1/config && echo $INSTALL_GUI_PACKAGE )`"
 }
 
 product_packages_spec()
