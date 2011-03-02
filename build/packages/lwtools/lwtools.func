@@ -1,8 +1,0 @@
-PKG_COMPONENTS="lwtools"
-
-function package_populate
-{
-    populate_components
-
-    strip_common
-}

@@ -1,5 +1,0 @@
-__PKG_PREFIX/bin/rpcping
-__PKG_PREFIX/sbin
-__PKG_PREFIX/lib*/{*.so,*.so.*}
-__PKG_PREFIX/share/config
-etc/init.d
