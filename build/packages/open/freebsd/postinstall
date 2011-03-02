@@ -96,6 +96,8 @@ import_registry_configurations()
     run_or_fail "$REGIMPORT /opt/likewise/share/config/dcerpcd.reg"
     run_or_fail "$REGIMPORT /opt/likewise/share/config/eventlogd.reg"
     run_or_fail "$REGIMPORT /opt/likewise/share/config/lsassd.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/privileges.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/accounts.reg"
     run_or_fail "$REGIMPORT /opt/likewise/share/config/lwiod.reg"
     run_or_fail "$REGIMPORT /opt/likewise/share/config/lwreg.reg"
     run_or_fail "$REGIMPORT /opt/likewise/share/config/netlogond.reg"
