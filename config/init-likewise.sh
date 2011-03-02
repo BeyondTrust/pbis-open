@@ -73,15 +73,9 @@ service_start()
             ;;
          HP-UX | SOLARIS | FREEBSD | ESXI | AIX)
             printf "%s" "Starting `service_description`"
-            if type svcadm >/dev/null 2>&1 ; then
-                # Use the solaris service manager
-
-                # This will start the program again if it was in maintenance
-                # mode.
-                svcadm clear "${1}d" 2>/dev/null
-                # This will start the program again if it was disabled.
-                svcadm enable "${1}d" 2>/dev/null
-                status=$?
+            if [ -x /usr/sbin/svcadm ]; then
+                # Don't do anything!
+                status=0
             else
                 ${LWSM} -q autostart
                 status=$?

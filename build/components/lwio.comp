@@ -107,18 +107,5 @@ function component_populate
     rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}
     rm -f ${POPULATE_ROOT_DIR}/${PREFIX_DIR}/bin/lwio-fuse-mount
 
-    # Handle init scripts
-    local script=lwiod
-    x_mkinit \
-	"${BUILD_ROOT}/src/linux/config/${script}" \
-	${script} \
-	01 01 \
-	likewise.lwiod 20 09
-
-    if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
-	mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
-	x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/lwiod.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
-    fi
-
     libtool_rewrite_populate
 }

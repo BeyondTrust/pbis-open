@@ -91,29 +91,6 @@ function component_populate
 
     rsync -a --exclude lw-export-dc-cache ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
 
-    # Handle init scripts
-    local script=netlogond
-    x_mkinit \
-	"${BUILD_ROOT}/src/linux/config/${script}" \
-	${script} \
-	01 01 \
-	likewise.netlogond 19 09
-
-    # Init script links
-    case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
-        hpux-*)
-            mkdir -p ${POPULATE_ROOT_DIR}/sbin/rc1.d/
-            mkdir -p ${POPULATE_ROOT_DIR}/sbin/rc2.d/
-            ln -s /sbin/init.d/${script} ${POPULATE_ROOT_DIR}/sbin/rc1.d/K394${script}
-            ln -s /sbin/init.d/${script} ${POPULATE_ROOT_DIR}/sbin/rc2.d/S394${script}
-            ;;
-    esac
-
-    if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
-        mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
-        x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/netlogond.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
-    fi
-
     mkdir -p ${POPULATE_ROOT_DIR}/${BUILD_SYSCONFDIR}
     sed -e "s,@LIBDIR@,${MAIN_PREFIX_DIR}/${_lib}," \
 	${BUILD_ROOT}/src/linux/config/likewise-krb5-ad.conf > \

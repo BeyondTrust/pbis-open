@@ -79,23 +79,12 @@ function component_populate
 
     # Remove dcerpcd on HP-UX, install init script otherwise
     case "${BUILD_OS_TYPE}" in
-	hpux)
-	    rm -f "${POPULATE_PREFIX_DIR}/sbin/dcerpcd"
-	    ;;
-	*)
-	    local script=dcerpcd
-	    x_mkinit \
-		"${BUILD_ROOT}/src/linux/config/${script}" \
-		${script} \
-		01 01 \
-		likewise.dcerpcd 19 09
-	    ;;
+        hpux)
+            rm -f "${POPULATE_PREFIX_DIR}/sbin/dcerpcd"
+            ;;
+        *)
+            ;;
     esac
 
-    if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
-        mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
-        x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/dcerpcd.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
-    fi
-    
     libtool_rewrite_populate
 }

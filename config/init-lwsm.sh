@@ -78,15 +78,9 @@ service_start()
 	    ;;
          HP-UX | SOLARIS | FREEBSD | ESXI | AIX)
             printf "%s" "Starting `service_description $1`"
-            if type svcadm >/dev/null 2>&1 ; then
-                # Use the solaris service manager
-
-                # This will start the program again if it was in maintenance
-                # mode.
-                svcadm clear "${1}d" 2>/dev/null
-                # This will start the program again if it was disabled.
-                svcadm enable "${1}d" 2>/dev/null
-                status=$?
+            if [ -x /usr/sbin/svcadm ]; then
+                # Don't use the solaris service manager
+                status=0
             else
                 ${LWSM} -q start "${1}"
                 status=$?
@@ -146,11 +140,9 @@ service_restart()
 	    ;;
          HP-UX | SOLARIS | FREEBSD | ESXI | AIX)
             printf "%s" "Restarting `service_description $1`"
-            if type svcadm >/dev/null 2>&1 ; then
-                # Use the solaris service manager
-                svcadm clear "${1}d" 2>/dev/null
-                svcadm restart "${1}d" 2>/dev/null
-                status=$?
+            if [ -x /usr/sbin/svcadm ]; then
+                # Don't use the solaris service manager
+                status=0
             else
                 ${LWSM} -q restart "${1}"
                 status=$?
@@ -210,10 +202,9 @@ service_stop()
             ;;
         AIX | HP-UX | SOLARIS | FREEBSD | ESXI)
             printf "%s" "Stopping `service_description $1`"
-            if type svcadm >/dev/null 2>&1 ; then
-                # Use the solaris service manager
-                svcadm disable "${1}d" 2>/dev/null
-                status=$?
+            if [ -x /usr/sbin/svcadm ]; then
+                # Don't use the solaris service manager
+                status=0
             else
                 ${LWSM} -q stop "${1}"
                 status=$?

@@ -273,7 +273,16 @@ function package_depot
 
     rsync -a --exclude .svn ${PKG_DIR}/ ${PKG_PACKAGE_ROOT}/
     exit_on_error $?
-    
+
+    for file in ${PKG_DIR}/{postinstall,preinstall,preremove}; do
+        file="`basename "$file"`"
+        cat ${PKG_DIR}/$file | sed -e "s/__PKG_NAME/${PKG_NAME}/g" \
+            -e "s/__PKG_VERSION/${PKG_VERSION}/g" \
+            -e "s:__PKG_PREFIX:${BUILD_PREFIX}:g" \
+            -e "s/__PKG_ARCH/${BUILD_OS_ARCH}/g" \
+        > ${PKG_PACKAGE_ROOT}/$file
+    done
+
     ln -s ${PKG_POPULATE_ROOT} ${PKG_PACKAGE_ROOT}/root
     exit_on_error $?
     
@@ -1067,9 +1076,9 @@ function setup_package_vars
 
     if [ -z "${PKG_COMPAT_DISPOSITION}" ]; then
         case "${PKG_TYPE}" in
-            rpm)
-                PKG_COMPAT_DISPOSITION="pkg"
-                ;;
+#            rpm)
+#                PKG_COMPAT_DISPOSITION="pkg"
+#                ;;
             *)
                 PKG_COMPAT_DISPOSITION="comp"
                 ;;

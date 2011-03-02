@@ -83,18 +83,5 @@ function component_populate
 
     rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}
 
-    # Handle init scripts
-    local script=srvsvcd
-    x_mkinit \
-	"${BUILD_ROOT}/src/linux/config/${script}" \
-	${script} \
-	01 01 \
-	likewise.srvsvcd 21 09
-
-    if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
-	mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
-	x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/srvsvcd.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
-    fi
-
     libtool_rewrite_populate
 }

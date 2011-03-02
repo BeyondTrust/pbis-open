@@ -69,26 +69,26 @@ function component_populate
 
     # Handle init scripts
     x_mkinit \
-	"${BUILD_ROOT}/src/linux/config/lwsmd" \
-	lwsmd \
-	01 01 \
-	likewise.lwsmd 17 09
+        "${BUILD_ROOT}/src/linux/config/lwsmd" \
+        lwsmd \
+        01 01 \
+        likewise.lwsmd 17 09
 
     x_mkinit \
-	"${BUILD_ROOT}/src/linux/config/likewise" \
-	likewise \
-	01 01 \
-	likewise.likewise 18 08
+        "${BUILD_ROOT}/src/linux/config/likewise" \
+        likewise \
+        01 01 \
+        likewise.likewise 18 08
 
     if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
-	mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
-	x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/lwsmd.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
-	x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/likewise.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
+        mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
+        x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/lwsmd.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
+        x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/likewise.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
     fi
 
     if [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
-	mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons
-	x_cp 0755 ${BUILD_ROOT}/src/linux/config/com.likewisesoftware.lwsmd.plist ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons/.
+        mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons
+        x_cp 0755 ${BUILD_ROOT}/src/linux/config/com.likewisesoftware.lwsmd.plist ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons/.
     fi
 
     libtool_rewrite_populate
