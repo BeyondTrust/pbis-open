@@ -37,8 +37,22 @@ cpp_quote("#endif")
         );
 
     NTSTATUS lsa_Function01();
-    NTSTATUS lsa_Function02();
-    NTSTATUS lsa_Function03();
+
+    /* function 0x02 */
+    NTSTATUS LsaEnumPrivileges(
+        [in] POLICY_HANDLE hPolicy,
+        [in,out,ref] UINT32 *pResume,
+        [in] UINT32 PreferredMaxSize,
+        [out,ref] LSA_PRIVILEGE_ENUM_BUFFER *pBuffer
+        );
+
+    /* function 0x03 */
+    NTSTATUS LsaQuerySecurity(
+        [in,context_handle] void *hObject,
+        [in] UINT32 SecurityInformation,
+        [out] PLSA_SECURITY_DESCRIPTOR_BUFFER *ppSecurityDesc
+        );
+
     NTSTATUS lsa_Function04();
     NTSTATUS lsa_Function05();
     NTSTATUS lsa_Function06();
@@ -52,8 +66,23 @@ cpp_quote("#endif")
 
     NTSTATUS lsa_Function08();
     NTSTATUS lsa_Function09();
-    NTSTATUS lsa_Function0a();
-    NTSTATUS lsa_Function0b();
+
+    /* function 0x0a */
+    NTSTATUS LsaCreateAccount(
+        [in] POLICY_HANDLE hPolicy,
+        [in] SID *pAccountSid,
+        [in] UINT32 AccessMask,
+        [out] LSA_ACCOUNT_HANDLE *phAccount
+        );
+
+    /* function 0x0b */
+    NTSTATUS LsaEnumAccounts(
+        [in] POLICY_HANDLE hPolicy,
+        [in,out,ref] UINT32 *Resume,
+        [out,ref] LSA_ACCOUNT_ENUM_BUFFER *pAccounts,
+        [in] UINT32 PrefMaxSize
+        );
+
     NTSTATUS lsa_Function0c();
     NTSTATUS lsa_Function0d();
 
@@ -79,28 +108,102 @@ cpp_quote("#endif")
         );
 
     NTSTATUS lsa_Function10();
-    NTSTATUS lsa_Function11();
-    NTSTATUS lsa_Function12();
-    NTSTATUS lsa_Function13();
-    NTSTATUS lsa_Function14();
+
+    /* function 0x11 */
+    NTSTATUS LsaOpenAccount(
+        [in] POLICY_HANDLE hPolicy,
+        [in] SID *pAccountSid,
+        [in] UINT32 AccessMask,
+        [out] LSA_ACCOUNT_HANDLE *phAccount
+        );
+
+    /* function 0x12 */
+    NTSTATUS LsaEnumPrivilegesAccount(
+        [in] LSA_ACCOUNT_HANDLE hAccount,
+        [out] PRIVILEGE_SET **Privileges
+        );
+
+    /* function 0x13 */
+    NTSTATUS LsaAddPrivilegesToAccount(
+        [in] LSA_ACCOUNT_HANDLE hAccount,
+        [in,ref] PRIVILEGE_SET *pPrivileges
+        );
+
+    /* function 0x14 */
+    NTSTATUS LsaRemovePrivilegesFromAccount(
+        [in] LSA_ACCOUNT_HANDLE hAccount,
+        [in] UINT8 AllPrivileges,
+        [in,unique] PRIVILEGE_SET *pPrivileges
+        );
+
     NTSTATUS lsa_Function15();
     NTSTATUS lsa_Function16();
-    NTSTATUS lsa_Function17();
-    NTSTATUS lsa_Function18();
+
+    /* function 0x17 */
+    NTSTATUS LsaGetSystemAccessAccount(
+        [in] LSA_ACCOUNT_HANDLE hAccount,
+        [out,ref] UINT32* SystemAccess
+        );
+
+    /* function 0x18 */
+    NTSTATUS LsaSetSystemAccessAccount(
+        [in] LSA_ACCOUNT_HANDLE hAccount,
+        [in] UINT32 SystemAccess
+        );
+
     NTSTATUS lsa_Function19();
     NTSTATUS lsa_Function1a();
     NTSTATUS lsa_Function1b();
     NTSTATUS lsa_Function1c();
     NTSTATUS lsa_Function1d();
     NTSTATUS lsa_Function1e();
-    NTSTATUS lsa_Function1f();
-    NTSTATUS lsa_Function20();
+
+    /* function 0x1f */
+    NTSTATUS LsaLookupPrivilegeValue(
+        [in] POLICY_HANDLE hPolicy,
+        [in,ref] UNICODE_STRING *pName,
+        [out,ref] LUID *pValue
+        );
+
+    /* function 0x20 */
+    NTSTATUS LsaLookupPrivilegeName(
+        [in] POLICY_HANDLE hPolicy,
+        [in,ref] LUID *pValue,
+        [out,ref] UNICODE_STRING **ppName
+        );
+
     NTSTATUS lsa_Function21();
     NTSTATUS lsa_Function22();
-    NTSTATUS lsa_Function23();
-    NTSTATUS lsa_Function24();
-    NTSTATUS lsa_Function25();
-    NTSTATUS lsa_Function26();
+
+    /* function 0x23 */
+    NTSTATUS LsaEnumAccountsWithUserRight(
+        [in] POLICY_HANDLE hPolicy,
+        [in,unique] UNICODE_STRING *pName,
+        [out] LSA_ACCOUNT_ENUM_BUFFER *pAccounts
+        );
+
+    /* function 0x24 */
+    NTSTATUS LsaEnumAccountRights(
+        [in] POLICY_HANDLE hPolicy,
+        [in] SID *pAccountSid,
+        [out,ref] LSA_ACCOUNT_RIGHTS *pAccountRights
+        );
+
+    /* function 0x25 */
+    NTSTATUS LsaAddAccountRights(
+        [in] POLICY_HANDLE hPolicy,
+        [in] SID *pAccountSid,
+        [in] LSA_ACCOUNT_RIGHTS *pAccountRights
+        );
+
+    /* function 0x26 */
+    NTSTATUS LsaRemoveAccountRights(
+        [in] POLICY_HANDLE hPolicy,
+        [in] SID *pAccountSid,
+        [in] UINT8 RemoveAll,
+        [in] LSA_ACCOUNT_RIGHTS *pAccountRights
+        );
+
     NTSTATUS lsa_Function27();
     NTSTATUS lsa_Function28();
     NTSTATUS lsa_Function29();
