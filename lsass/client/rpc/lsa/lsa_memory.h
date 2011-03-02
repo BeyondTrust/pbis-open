@@ -254,6 +254,43 @@ LsaAllocatePolicyInformation(
     );
 
 
+NTSTATUS
+LsaAllocateSecurityDescriptor(
+    OUT PSECURITY_DESCRIPTOR_RELATIVE   *ppOut,
+    IN  PLSA_SECURITY_DESCRIPTOR_BUFFER  pIn
+    );
+
+
+NTSTATUS
+LsaAllocateSids(
+    OUT PSID                    *pOut,
+    IN OUT PDWORD                pdwOffset,
+    IN OUT PDWORD                pdwSpaceLeft,
+    IN PLSA_ACCOUNT_ENUM_BUFFER  pIn,
+    IN OUT PDWORD                pdwSize
+    );
+
+
+NTSTATUS
+LsaAllocateAccountRightNames(
+    OUT PWSTR               *pOut,
+    IN OUT PDWORD            pdwOffset,
+    IN OUT PDWORD            pdwSpaceLeft,
+    IN PLSA_ACCOUNT_RIGHTS   pIn,
+    IN OUT PDWORD            pdwSize
+    );
+
+
+NTSTATUS
+LsaAllocatePrivilegeNames(
+    OUT PWSTR                     *pOut,
+    IN OUT PDWORD                  pdwOffset,
+    IN OUT PDWORD                  pdwSpaceLeft,
+    IN PLSA_PRIVILEGE_ENUM_BUFFER  pIn,
+    IN OUT PDWORD                  pdwSize
+    );
+
+
 #endif /* _LSA_MEMORY_H_ */
 
 

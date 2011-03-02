@@ -4,19 +4,35 @@ lsass_srcdir = $(top_srcdir)
 
 noinst_LTLIBRARIES = liblsa_cs.la liblsa.la
 
-liblsa_la_SOURCES =         \
-    globals.c               \
-    lsa_binding.c           \
-    lsa_memory.c            \
-    lsa_stubmemory.c        \
-    lsa_openpolicy2.c       \
-    lsa_close.c             \
-    lsa_lookupnames.c       \
-    lsa_lookupnames2.c      \
-    lsa_lookupnames3.c      \
-    lsa_lookupsids.c        \
-    lsa_queryinfopolicy.c   \
-    lsa_queryinfopolicy2.c
+liblsa_la_SOURCES =                    \
+    globals.c                          \
+    lsa_binding.c                      \
+    lsa_memory.c                       \
+    lsa_stubmemory.c                   \
+    lsa_openpolicy2.c                  \
+    lsa_close.c                        \
+    lsa_querysecurity.c                \
+    lsa_lookupnames.c                  \
+    lsa_lookupnames2.c                 \
+    lsa_lookupnames3.c                 \
+    lsa_lookupsids.c                   \
+    lsa_queryinfopolicy.c              \
+    lsa_queryinfopolicy2.c             \
+    lsa_enumprivileges.c               \
+    lsa_createaccount.c                \
+    lsa_openaccount.c                  \
+    lsa_enumaccounts.c                 \
+    lsa_enumprivilegesaccount.c        \
+    lsa_addprivilegestoaccount.c       \
+    lsa_removeprivilegesfromaccount.c  \
+    lsa_getsystemaccessaccount.c       \
+    lsa_setsystemaccessaccount.c       \
+    lsa_lookupprivilegevalue.c         \
+    lsa_lookupprivilegename.c          \
+    lsa_enumaccountswithuserright.c    \
+    lsa_enumaccountrights.c            \
+    lsa_addaccountrights.c             \
+    lsa_removeaccountrights.c"
 
 DCEIDL_PASS_INCLUDES = \
     $(CPPFLAGS)        \

@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2009
+ * Copyright Likewise Software    2004-2011
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -33,86 +33,69 @@
  *
  * Module Name:
  *
- *        lsa_contexthandle.h
+ *        lsa_lookupprivilegename.c
  *
  * Abstract:
  *
- *        Remote Procedure Call (RPC) Server Interface
+ *        Remote Procedure Call (RPC) Client Interface
  *
- *        Lsa context handles
+ *        LsaLookupPrivilegeName function
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef _LSA_CONTEXT_HANDLE_H_
-#define _LSA_CONTEXT_HANDLE_H_
-
-
-enum LsaContextType
-{
-    LsaContextPolicy = 0,
-};
-
-
-typedef struct lsa_generic_context
-{
-    enum LsaContextType  Type;
-    LONG                 refcount;
-
-} LSA_GENERIC_CONTEXT, *PLSA_GENERIC_CONTEXT;
-
-
-typedef struct lsa_policy_context
-{
-    enum LsaContextType  Type;
-    LONG                 refcount;
-
-    PACCESS_TOKEN        pUserToken;
-    PBYTE                pSessionKey;
-    DWORD                dwSessionKeyLen;
-    DWORD                dwAccessGranted;
-
-    SAMR_BINDING         hSamrBinding;
-    CONNECT_HANDLE       hConn;
-    DOMAIN_HANDLE        hBuiltinDomain;
-    DOMAIN_HANDLE        hLocalDomain;
-    PSID                 pLocalDomainSid;
-    PWSTR                pwszLocalDomainName;
-    PWSTR                pwszDomainName;
-    PSID                 pDomainSid;
-    PWSTR                pwszDcName;
-    
-    PLW_HASH_TABLE      pDomains;
-    DWORD                dwDomainsNum;
-
-} POLICY_CONTEXT, *PPOLICY_CONTEXT;
+#include "includes.h"
 
 
 NTSTATUS
-LsaSrvPolicyContextClose(
-    PPOLICY_CONTEXT  pContext
-    );
+LsaLookupPrivilegeName(
+    IN  LSA_BINDING      hBinding,
+    IN  POLICY_HANDLE    hPolicy,
+    IN  PLUID            pValue,
+    OUT PWSTR           *ppwszName
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PUNICODE_STRING pName = NULL;
+    PWSTR pwszName = NULL;
 
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hPolicy, ntStatus);
+    BAIL_ON_INVALID_PTR(pValue, ntStatus);
+    BAIL_ON_INVALID_PTR(ppwszName, ntStatus);
 
-VOID
-LsaSrvPolicyContextFree(
-    PPOLICY_CONTEXT  pContext
-    );
+    DCERPC_CALL(ntStatus, cli_LsaLookupPrivilegeName(
+                              (handle_t)hBinding,
+                              hPolicy,
+                              pValue,
+                              &pName));
+    BAIL_ON_NT_STATUS(ntStatus);
 
+    ntStatus = LsaRpcAllocateMemory(
+                     OUT_PPVOID(&pwszName),
+                     pName->Length + sizeof(pName->Buffer[0]));
+    BAIL_ON_NT_STATUS(ntStatus);
 
-void
-POLICY_HANDLE_rundown(
-    void *hContext
-    );
+    memcpy(pwszName, pName->Buffer, pName->Length);
 
+    *ppwszName = pwszName;
 
-void
-LSA_ACCOUNT_HANDLE_rundown(
-    void *hContext
-    );
+error:
+    if (ntStatus)
+    {
+        if (ppwszName)
+        {
+            *ppwszName = NULL;
+        }
+    }
 
+    if (pName)
+    {
+        LsaFreeStubUnicodeString(pName);
+    }
 
-#endif /* _LSA_CONTEXT_HANDLE_H_ */
+    return ntStatus;
+}
 
 
 /*

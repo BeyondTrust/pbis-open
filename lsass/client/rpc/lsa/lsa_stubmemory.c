@@ -200,6 +200,119 @@ LsaFreeStubPolicyInformation(
 }
 
 
+VOID
+LsaFreeStubPrivilegeSet(
+    PPRIVILEGE_SET pPrivileges
+    )
+{
+    unsigned32 rpcStatus = 0;
+
+    rpc_sm_client_free(pPrivileges, &rpcStatus);
+}
+
+
+VOID
+LsaCleanStubUnicodeString(
+    PUNICODE_STRING pString
+    )
+{
+    unsigned32 rpcStatus = 0;
+
+    rpc_sm_client_free(pString->Buffer, &rpcStatus);
+
+    pString->Buffer = NULL;
+    pString->Length = 0;
+    pString->MaximumLength = 0;
+}
+
+
+VOID
+LsaFreeStubUnicodeString(
+    PUNICODE_STRING pString
+    )
+{
+    unsigned32 rpcStatus = 0;
+
+    LsaCleanStubUnicodeString(pString);
+    rpc_sm_client_free(pString, &rpcStatus);
+}
+
+
+void
+LsaCleanStubSecurityDescriptorBuffer(
+    PLSA_SECURITY_DESCRIPTOR_BUFFER pSecDescBuffer
+    )
+{
+    unsigned32 rpcStatus = 0;
+    rpc_sm_client_free(pSecDescBuffer->pBuffer,
+                       &rpcStatus);
+}
+
+
+void
+LsaFreeStubSecurityDescriptorBuffer(
+    PLSA_SECURITY_DESCRIPTOR_BUFFER pSecDescBuffer
+    )
+{
+    unsigned32 rpcStatus = 0;
+
+    LsaCleanStubSecurityDescriptorBuffer(pSecDescBuffer);
+    rpc_sm_client_free(pSecDescBuffer, &rpcStatus);
+}
+
+
+void
+LsaCleanStubAccountBuffer(
+    PLSA_ACCOUNT_ENUM_BUFFER pBuffer
+    )
+{
+    unsigned32 rpcStatus = 0;
+    int i = 0;
+
+    for (i = 0; i < pBuffer->NumAccounts; i++)
+    {
+        rpc_sm_client_free(pBuffer->pAccount[i].pSid, &rpcStatus);
+    }
+
+    rpc_sm_client_free(pBuffer->pAccount, &rpcStatus);
+}
+
+
+void
+LsaCleanStubAccountRights(
+    PLSA_ACCOUNT_RIGHTS pBuffer
+    )
+{
+    unsigned32 rpcStatus = 0;
+    int i = 0;
+
+    for (i = 0; i < pBuffer->NumAccountRights; i++)
+    {
+        rpc_sm_client_free(pBuffer->pAccountRight[i].Buffer, &rpcStatus);
+    }
+
+    rpc_sm_client_free(pBuffer->pAccountRight, &rpcStatus);
+}
+
+
+void
+LsaCleanStubPrivilegeBuffer(
+    PLSA_PRIVILEGE_ENUM_BUFFER pBuffer
+    )
+{
+    unsigned32 rpcStatus = 0;
+    int i = 0;
+
+    for (i = 0; i < pBuffer->NumPrivileges; i++)
+    {
+        rpc_sm_client_free(pBuffer->pPrivilege[i].Name.Buffer, &rpcStatus);
+    }
+
+    rpc_sm_client_free(pBuffer->pPrivilege, &rpcStatus);
+}
+
+
+
 /*
 local variables:
 mode: c

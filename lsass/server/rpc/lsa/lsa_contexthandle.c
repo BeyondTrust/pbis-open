@@ -169,6 +169,14 @@ POLICY_HANDLE_rundown(
 }
 
 
+void
+LSA_ACCOUNT_HANDLE_rundown(
+    void *hContext
+    )
+{
+}
+
+
 /*
 local variables:
 mode: c

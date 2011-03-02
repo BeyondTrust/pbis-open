@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    2004-2011
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -33,105 +33,79 @@
  *
  * Module Name:
  *
- *        lsa_stubmemory.h
+ *        lsa_querysecurity.c
  *
  * Abstract:
  *
  *        Remote Procedure Call (RPC) Client Interface
  *
- *        Lsa rpc DCE/RPC stub memory cleanup functions
+ *        LsaQuerySecurity function
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef _LSA_STUB_MEMORY_H_
-#define _LSA_STUB_MEMORY_H_
+#include "includes.h"
 
 
-VOID
-LsaCleanStubTranslatedSidArray(
-    TranslatedSidArray *pArray
-    );
+NTSTATUS
+LsaQuerySecurity(
+    IN  LSA_BINDING                    hBinding,
+    IN  void                          *hObject,
+    IN  DWORD                          SecurityInfo,
+    OUT PSECURITY_DESCRIPTOR_RELATIVE *ppSecDesc,
+    OUT PDWORD                         pSecDescLen
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PLSA_SECURITY_DESCRIPTOR_BUFFER pSecurityDescBuffer = NULL;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecurityDesc = NULL;
 
-VOID
-LsaCleanStubTranslatedSidArray2(
-    TranslatedSidArray2 *pArray
-    );
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hObject, ntStatus);
+    BAIL_ON_INVALID_PTR(ppSecDesc, ntStatus);
+    BAIL_ON_INVALID_PTR(pSecDescLen, ntStatus);
 
-VOID
-LsaCleanStubTranslatedSidArray3(
-    TranslatedSidArray3 *pArray
-    );
+    DCERPC_CALL(ntStatus, cli_LsaQuerySecurity(
+                              (handle_t)hBinding,
+                              hObject,
+                              SecurityInfo,
+                              &pSecurityDescBuffer));
+    BAIL_ON_NT_STATUS(ntStatus);
 
-VOID
-LsaCleanStubTranslatedNameArray(
-    TranslatedNameArray *pArray
-    );
+    ntStatus = LsaAllocateSecurityDescriptor(
+                              &pSecurityDesc,
+                              pSecurityDescBuffer);
+    BAIL_ON_NT_STATUS(ntStatus);
 
-VOID
-LsaCleanStubRefDomainList(
-    RefDomainList *pRefDomList
-    );
+    *ppSecDesc   = pSecurityDesc;
+    *pSecDescLen = pSecurityDescBuffer->BufferLen;
 
-VOID
-LsaFreeStubRefDomainList(
-    RefDomainList *pRefDomList
-    );
+cleanup:
+    if (pSecurityDescBuffer)
+    {
+        LsaFreeStubSecurityDescriptorBuffer(pSecurityDescBuffer);
+    }
 
-VOID
-LsaCleanStubPolicyInformation(
-    LsaPolicyInformation *pPolicyInfo,
-    UINT32 Level
-    );
+    return ntStatus;
 
-VOID
-LsaFreeStubPolicyInformation(
-    LsaPolicyInformation *pPolicyInfo,
-    UINT32 Level
-    );
+error:
+    if (pSecurityDesc)
+    {
+        LsaRpcFreeMemory(pSecurityDesc);
+    }
 
-VOID
-LsaFreeStubPrivilegeSet(
-    PPRIVILEGE_SET pPrivileges
-    );
+    if (ppSecDesc)
+    {
+        *ppSecDesc = NULL;
+    }
 
-VOID
-LsaCleanStubUnicodeString(
-    PUNICODE_STRING pString
-    );
+    if (pSecDescLen)
+    {
+        *pSecDescLen = 0;
+    }
 
-VOID
-LsaFreeStubUnicodeString(
-    PUNICODE_STRING pString
-    );
-
-void
-LsaCleanStubSecurityDescriptorBuffer(
-    PLSA_SECURITY_DESCRIPTOR_BUFFER pSecDescBuffer
-    );
-
-void
-LsaFreeStubSecurityDescriptorBuffer(
-    PLSA_SECURITY_DESCRIPTOR_BUFFER pSecDescBuffer
-    );
-
-void
-LsaCleanStubAccountBuffer(
-    PLSA_ACCOUNT_ENUM_BUFFER pBuffer
-    );
-
-void
-LsaCleanStubAccountRights(
-    PLSA_ACCOUNT_RIGHTS pBuffer
-    );
-
-void
-LsaCleanStubPrivilegeBuffer(
-    PLSA_PRIVILEGE_ENUM_BUFFER pBuffer
-    );
-
-
-#endif /* _LSA_STUB_MEMORY_H_ */
+    goto cleanup;
+}
 
 
 /*

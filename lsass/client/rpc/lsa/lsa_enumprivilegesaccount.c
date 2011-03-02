@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    2004-2011
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -33,105 +33,74 @@
  *
  * Module Name:
  *
- *        lsa_stubmemory.h
+ *        lsa_enumprivilegesaccount.c
  *
  * Abstract:
  *
  *        Remote Procedure Call (RPC) Client Interface
  *
- *        Lsa rpc DCE/RPC stub memory cleanup functions
+ *        LsaEnumPrivilegesAccount function
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef _LSA_STUB_MEMORY_H_
-#define _LSA_STUB_MEMORY_H_
+#include "includes.h"
 
 
-VOID
-LsaCleanStubTranslatedSidArray(
-    TranslatedSidArray *pArray
-    );
+NTSTATUS
+LsaEnumPrivilegesAccount(
+    IN  LSA_BINDING          hBinding,
+    IN  LSA_ACCOUNT_HANDLE   hAccount,
+    OUT PPRIVILEGE_SET      *ppPrivileges
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    size_t privilegesSize = 0;
+    PPRIVILEGE_SET pPrivs = NULL;
+    PPRIVILEGE_SET pPrivileges = NULL;
 
-VOID
-LsaCleanStubTranslatedSidArray2(
-    TranslatedSidArray2 *pArray
-    );
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hAccount, ntStatus);
+    BAIL_ON_INVALID_PTR(ppPrivileges, ntStatus);
 
-VOID
-LsaCleanStubTranslatedSidArray3(
-    TranslatedSidArray3 *pArray
-    );
+    DCERPC_CALL(ntStatus, cli_LsaEnumPrivilegesAccount(
+                              (handle_t)hBinding,
+                              hAccount,
+                              &pPrivs));
+    BAIL_ON_NT_STATUS(ntStatus);
 
-VOID
-LsaCleanStubTranslatedNameArray(
-    TranslatedNameArray *pArray
-    );
+    privilegesSize = RtlLengthPrivilegeSet(pPrivs);
 
-VOID
-LsaCleanStubRefDomainList(
-    RefDomainList *pRefDomList
-    );
+    ntStatus = LsaRpcAllocateMemory(
+                        OUT_PPVOID(&pPrivileges),
+                        privilegesSize);
+    BAIL_ON_NT_STATUS(ntStatus);
 
-VOID
-LsaFreeStubRefDomainList(
-    RefDomainList *pRefDomList
-    );
+    ntStatus = RtlCopyPrivilegeSet(
+                        privilegesSize,
+                        pPrivileges,
+                        pPrivs);
+    BAIL_ON_NT_STATUS(ntStatus);
 
-VOID
-LsaCleanStubPolicyInformation(
-    LsaPolicyInformation *pPolicyInfo,
-    UINT32 Level
-    );
+    *ppPrivileges = pPrivileges;
 
-VOID
-LsaFreeStubPolicyInformation(
-    LsaPolicyInformation *pPolicyInfo,
-    UINT32 Level
-    );
+error:
+    if (ntStatus)
+    {
+        if (ppPrivileges)
+        {
+            LW_SAFE_FREE_MEMORY(pPrivileges);
+            *ppPrivileges = NULL;
+        }
+    }
 
-VOID
-LsaFreeStubPrivilegeSet(
-    PPRIVILEGE_SET pPrivileges
-    );
+    if (pPrivs)
+    {
+        LsaFreeStubPrivilegeSet(pPrivs);
+    }
 
-VOID
-LsaCleanStubUnicodeString(
-    PUNICODE_STRING pString
-    );
-
-VOID
-LsaFreeStubUnicodeString(
-    PUNICODE_STRING pString
-    );
-
-void
-LsaCleanStubSecurityDescriptorBuffer(
-    PLSA_SECURITY_DESCRIPTOR_BUFFER pSecDescBuffer
-    );
-
-void
-LsaFreeStubSecurityDescriptorBuffer(
-    PLSA_SECURITY_DESCRIPTOR_BUFFER pSecDescBuffer
-    );
-
-void
-LsaCleanStubAccountBuffer(
-    PLSA_ACCOUNT_ENUM_BUFFER pBuffer
-    );
-
-void
-LsaCleanStubAccountRights(
-    PLSA_ACCOUNT_RIGHTS pBuffer
-    );
-
-void
-LsaCleanStubPrivilegeBuffer(
-    PLSA_PRIVILEGE_ENUM_BUFFER pBuffer
-    );
-
-
-#endif /* _LSA_STUB_MEMORY_H_ */
+    return ntStatus;
+}
 
 
 /*
