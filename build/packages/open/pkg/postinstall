@@ -110,15 +110,15 @@ enable_service_configurations_or_init_d_symlinks()
     # On older Solaris systems, in order for a deamon to start in
     # multi-user mode a start symlink must be put in /etc/rc2.d, and a stop
     # symlink must be put in /etc/rc0.d, /etc/rc1.d, /etc/rcS.d
-        run "ln -s /etc/init.d/lwsmd /etc/rc0.d/K08lwsmd"
-        run "ln -s /etc/init.d/lwsmd /etc/rc1.d/K08lwsmd"
-        run "ln -s /etc/init.d/lwsmd /etc/rcS.d/K08lwsmd"
-        run "ln -s /etc/init.d/lwsmd /etc/rc2.d/S17lwsmd"
+        run_quiet "ln -s /etc/init.d/lwsmd /etc/rc0.d/K08lwsmd"
+        run_quiet "ln -s /etc/init.d/lwsmd /etc/rc1.d/K08lwsmd"
+        run_quiet "ln -s /etc/init.d/lwsmd /etc/rcS.d/K08lwsmd"
+        run_quiet "ln -s /etc/init.d/lwsmd /etc/rc2.d/S17lwsmd"
 
-        run "ln -s /etc/init.d/likewise /etc/rc0.d/K07likewise"
-        run "ln -s /etc/init.d/likewise /etc/rc1.d/K07likewise"
-        run "ln -s /etc/init.d/likewise /etc/rcS.d/K07likewise"
-        run "ln -s /etc/init.d/likewise /etc/rc2.d/S18likewise"
+        run_quiet "ln -s /etc/init.d/likewise /etc/rc0.d/K07likewise"
+        run_quiet "ln -s /etc/init.d/likewise /etc/rc1.d/K07likewise"
+        run_quiet "ln -s /etc/init.d/likewise /etc/rcS.d/K07likewise"
+        run_quiet "ln -s /etc/init.d/likewise /etc/rc2.d/S18likewise"
 
         run "/etc/init.d/lwsmd start"
         run "/etc/init.d/likewise start"
