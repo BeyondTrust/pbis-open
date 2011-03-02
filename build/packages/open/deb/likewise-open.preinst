@@ -123,10 +123,10 @@ case "$1" in
             exit 1
         fi
 
-        run "/opt/likewise/bin/domainjoin-cli configure --disable pam"
-        run "/opt/likewise/bin/domainjoin-cli configure --disable nsswitch"
+        run_quiet "/opt/likewise/bin/domainjoin-cli configure --disable pam"
+        run_quiet "/opt/likewise/bin/domainjoin-cli configure --disable nsswitch"
 
-        run "/opt/likewise/bin/lwsm shutdown"
+        run_quiet "/opt/likewise/bin/lwsm shutdown"
 
         for daemon in $DAEMONS_TO_KILL
         do
