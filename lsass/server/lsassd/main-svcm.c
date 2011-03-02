@@ -204,8 +204,10 @@ static LW_SVCM_MODULE gService =
     .Refresh = LsaSvcmRefresh
 };
 
+#define SVCM_ENTRY_POINT LW_RTL_SVCM_ENTRY_POINT_NAME(lsass)
+
 PLW_SVCM_MODULE
-(LW_RTL_SVCM_ENTRY_POINT_NAME)(
+SVCM_ENTRY_POINT(
     VOID
     )
 {

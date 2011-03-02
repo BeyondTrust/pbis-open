@@ -94,8 +94,74 @@ cleanup:
     return status;
 }
 
+static
+NTSTATUS
+LwRtlSvcmInitializeInstance(
+    PLW_SVCM_INSTANCE pInstance,
+    PCWSTR pServiceName,
+    PCSTR pModuleName,
+    LW_SVCM_MODULE_ENTRY_FUNCTION Entry
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    pInstance->pTable = Entry();
+
+    status = ValidateModuleTable(pInstance->pTable, pModuleName);
+    GCOS(status);
+
+    status = pInstance->pTable->Init(pServiceName, pInstance);
+    if (status)
+    {
+        LW_RTL_LOG_ERROR(
+            "Could not initialize service module '%s': %s (0x%lx)",
+            pModuleName,
+            LwNtStatusToName(status),
+            (unsigned long) status);
+    }
+    GCOS(status);
+
+cleanup:
+
+    return status;
+}
+
 LW_NTSTATUS
-LwRtlSvcmLoad(
+LwRtlSvcmLoadEmbedded(
+    LW_IN LW_PCWSTR pServiceName,
+    LW_IN LW_SVCM_MODULE_ENTRY_FUNCTION Entry,
+    LW_OUT PLW_SVCM_INSTANCE* ppInstance
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PLW_SVCM_INSTANCE pInstance = NULL;
+
+    status = InitPool();
+    GCOS(status);
+
+    status = LW_RTL_ALLOCATE_AUTO(&pInstance);
+    GCOS(status);
+
+    LW_RTL_LOG_DEBUG("Loading embedded service: %s", pServiceName);
+
+    status = LwRtlSvcmInitializeInstance(pInstance, pServiceName, "<embedded>", Entry);
+    GCOS(status);
+
+cleanup:
+
+    if (!NT_SUCCESS(status))
+    {
+        LwRtlSvcmUnload(pInstance);
+        pInstance = NULL;
+    }
+
+    *ppInstance = pInstance;
+
+    return status;
+}
+
+LW_NTSTATUS
+LwRtlSvcmLoadModule(
     LW_IN LW_PCWSTR pServiceName,
     LW_IN LW_PCWSTR pModulePath,
     LW_OUT PLW_SVCM_INSTANCE* ppInstance
@@ -105,11 +171,40 @@ LwRtlSvcmLoad(
     PLW_SVCM_INSTANCE pInstance = NULL;
     PSTR pModulePathA = NULL;
     LW_SVCM_MODULE_ENTRY_FUNCTION Entry = NULL;
+    PSTR pEntryName = NULL;
+    PSTR pBareName = NULL;
+    PSTR pFinalSlash = NULL;
+    PSTR pFinalDot = NULL;
 
     status = InitPool();
     GCOS(status);
 
     status = LwRtlCStringAllocateFromWC16String(&pModulePathA, pModulePath);
+    GCOS(status);
+
+    pFinalSlash = strrchr(pModulePathA, '/');
+    pFinalDot = strrchr(pModulePathA, '.');
+
+    if (!pFinalSlash)
+    {
+        pFinalSlash = pModulePathA;
+    }
+    else
+    {
+        pFinalSlash++;
+    }
+
+    if (!pFinalDot)
+    {
+        pFinalDot = pModulePathA + strlen(pModulePathA);
+    }
+
+    status = LW_RTL_ALLOCATE(&pBareName, CHAR, (pFinalDot - pFinalSlash));
+    GCOS(status);
+
+    memcpy(pBareName, pFinalSlash, pFinalDot - pFinalSlash);
+
+    status = LwRtlCStringAllocatePrintf(&pEntryName, "_LwSvcmEntry_%s", pBareName);
     GCOS(status);
 
     status = LW_RTL_ALLOCATE_AUTO(&pInstance);
@@ -132,7 +227,7 @@ LwRtlSvcmLoad(
     }
 
     (void) dlerror();
-    Entry = dlsym(pInstance->pDlHandle, "_LwSvcmEntry");
+    Entry = dlsym(pInstance->pDlHandle, pEntryName);
 
     if (!Entry)
     {
@@ -149,25 +244,14 @@ LwRtlSvcmLoad(
         GCOS(status);
     }
 
-    pInstance->pTable = Entry();
-
-    status = ValidateModuleTable(pInstance->pTable, pModulePathA);
-    GCOS(status);
-
-    status = pInstance->pTable->Init(pServiceName, pInstance);
-    if (status)
-    {
-        LW_RTL_LOG_ERROR(
-            "Could not initialize service module '%s': %s (0x%lx)",
-            pModulePathA,
-            LwNtStatusToName(status),
-            (unsigned long) status);
-    }
+    status = LwRtlSvcmInitializeInstance(pInstance, pServiceName, pModulePathA, Entry);
     GCOS(status);
 
 cleanup:
 
     RTL_FREE(&pModulePathA);
+    RTL_FREE(&pBareName);
+    RTL_FREE(&pEntryName);
 
     if (!NT_SUCCESS(status))
     {

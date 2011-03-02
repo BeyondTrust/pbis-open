@@ -69,7 +69,7 @@ main(
     dwError = LWNetSrvSetDefaults();
     BAIL_ON_LWNET_ERROR(dwError);
 
-    dwError = LWNetSrvParseArgs(argc, argv, &gServerInfo);
+    dwError = LWNetSrvParseArgs(argc, argv, &gLwnetServerInfo);
     BAIL_ON_LWNET_ERROR(dwError);
 
     LWNetInitRtlLogging();
@@ -296,12 +296,12 @@ LWNetSrvSetDefaults(
 {
     DWORD dwError = 0;
 
-    gpServerInfo->dwLogLevel = LWNET_LOG_LEVEL_ERROR;
+    gpLwnetServerInfo->dwLogLevel = LWNET_LOG_LEVEL_ERROR;
 
-    *(gpServerInfo->szLogFilePath) = '\0';
+    *(gpLwnetServerInfo->szLogFilePath) = '\0';
 
-    strcpy(gpServerInfo->szCachePath, LWNET_CACHE_DIR);
-    strcpy(gpServerInfo->szPrefixPath, PREFIXDIR);
+    strcpy(gpLwnetServerInfo->szCachePath, LWNET_CACHE_DIR);
+    strcpy(gpLwnetServerInfo->szPrefixPath, PREFIXDIR);
 
     setlocale(LC_ALL, "");
 
@@ -530,7 +530,7 @@ LWNetSrvShouldStartAsDaemon(
 
     LWNET_LOCK_SERVERINFO(bInLock);
 
-    bResult = (gpServerInfo->dwStartAsDaemon != 0);
+    bResult = (gpLwnetServerInfo->dwStartAsDaemon != 0);
 
     LWNET_UNLOCK_SERVERINFO(bInLock);
 
@@ -614,7 +614,7 @@ LWNetSrvGetProcessExitCode(
 
     LWNET_LOCK_SERVERINFO(bInLock);
 
-    *pdwExitCode = gpServerInfo->dwExitCode;
+    *pdwExitCode = gpLwnetServerInfo->dwExitCode;
 
     LWNET_UNLOCK_SERVERINFO(bInLock);
 
@@ -630,7 +630,7 @@ LWNetSrvSetProcessExitCode(
     
     LWNET_LOCK_SERVERINFO(bInLock);
 
-    gpServerInfo->dwExitCode = dwExitCode;
+    gpLwnetServerInfo->dwExitCode = dwExitCode;
 
     LWNET_UNLOCK_SERVERINFO(bInLock);
 }
@@ -646,12 +646,12 @@ LWNetSrvGetCachePath(
   
     LWNET_LOCK_SERVERINFO(bInLock);
     
-    if (IsNullOrEmptyString(gpServerInfo->szCachePath)) {
+    if (IsNullOrEmptyString(gpLwnetServerInfo->szCachePath)) {
       dwError = ERROR_PATH_NOT_FOUND;
       BAIL_ON_LWNET_ERROR(dwError);
     }
     
-    dwError = LWNetAllocateString(gpServerInfo->szCachePath, &pszPath);
+    dwError = LWNetAllocateString(gpLwnetServerInfo->szCachePath, &pszPath);
     BAIL_ON_LWNET_ERROR(dwError);
 
     *ppszPath = pszPath;
@@ -682,12 +682,12 @@ LWNetSrvGetPrefixPath(
   
     LWNET_LOCK_SERVERINFO(bInLock);
     
-    if (IsNullOrEmptyString(gpServerInfo->szPrefixPath)) {
+    if (IsNullOrEmptyString(gpLwnetServerInfo->szPrefixPath)) {
       dwError = ERROR_PATH_NOT_FOUND;
       BAIL_ON_LWNET_ERROR(dwError);
     }
     
-    dwError = LWNetAllocateString(gpServerInfo->szPrefixPath, &pszPath);
+    dwError = LWNetAllocateString(gpLwnetServerInfo->szPrefixPath, &pszPath);
     BAIL_ON_LWNET_ERROR(dwError);
 
     *ppszPath = pszPath;
@@ -808,13 +808,13 @@ LWNetSrvInitLogging(
 
     LWNET_LOCK_SERVERINFO(bInLock);
 
-    if ((gpServerInfo->dwStartAsDaemon &&
-            gpServerInfo->szLogFilePath[0] == '\0') ||
-            gpServerInfo->bLogToSyslog)
+    if ((gpLwnetServerInfo->dwStartAsDaemon &&
+            gpLwnetServerInfo->szLogFilePath[0] == '\0') ||
+            gpLwnetServerInfo->bLogToSyslog)
     {
       
-      dwError = lwnet_init_logging_to_syslog(gpServerInfo->dwLogLevel,
-                                           gpServerInfo->bEnableDebugLogs,
+      dwError = lwnet_init_logging_to_syslog(gpLwnetServerInfo->dwLogLevel,
+                                           gpLwnetServerInfo->bEnableDebugLogs,
                                            pszProgramName,
                                            LOG_PID,
                                            LOG_DAEMON);
@@ -822,9 +822,9 @@ LWNetSrvInitLogging(
       
     } else {
       
-      dwError = lwnet_init_logging_to_file(gpServerInfo->dwLogLevel,
-                                         gpServerInfo->bEnableDebugLogs,
-                                         gpServerInfo->szLogFilePath);
+      dwError = lwnet_init_logging_to_file(gpLwnetServerInfo->dwLogLevel,
+                                         gpLwnetServerInfo->bEnableDebugLogs,
+                                         gpLwnetServerInfo->szLogFilePath);
       BAIL_ON_LWNET_ERROR(dwError);
       
     }
@@ -887,7 +887,7 @@ LWNetSrvShouldProcessExit(
 
     LWNET_LOCK_SERVERINFO(bInLock);
     
-    bExit = gpServerInfo->bProcessShouldExit;
+    bExit = gpLwnetServerInfo->bProcessShouldExit;
 
     LWNET_UNLOCK_SERVERINFO(bInLock);
     
@@ -903,7 +903,7 @@ LWNetSrvSetProcessToExit(
     
     LWNET_LOCK_SERVERINFO(bInLock);
 
-    gpServerInfo->bProcessShouldExit = bExit;
+    gpLwnetServerInfo->bProcessShouldExit = bExit;
 
     LWNET_UNLOCK_SERVERINFO(bInLock);
 }

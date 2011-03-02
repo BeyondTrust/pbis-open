@@ -124,8 +124,10 @@ static LW_SVCM_MODULE gService =
     .Stop = RegSvcmStop
 };
 
+#define SVCM_ENTRY_POINT LW_RTL_SVCM_ENTRY_POINT_NAME(lwreg)
+
 PLW_SVCM_MODULE
-(LW_RTL_SVCM_ENTRY_POINT_NAME)(
+SVCM_ENTRY_POINT(
     VOID
     )
 {
@@ -139,17 +141,17 @@ RegSrvSetDefaults(
 {
     DWORD dwError = 0;
 
-    gpServerInfo->maxAllowedLogLevel = REG_LOG_LEVEL_ERROR;
+    gpLwregServerInfo->maxAllowedLogLevel = REG_LOG_LEVEL_ERROR;
 
-    *(gpServerInfo->szLogFilePath) = '\0';
+    *(gpLwregServerInfo->szLogFilePath) = '\0';
 
-    strncpy(gpServerInfo->szCachePath,
+    strncpy(gpLwregServerInfo->szCachePath,
             CACHEDIR,
-            sizeof(gpServerInfo->szCachePath)-1);
+            sizeof(gpLwregServerInfo->szCachePath)-1);
 
-    strncpy(gpServerInfo->szPrefixPath,
+    strncpy(gpLwregServerInfo->szPrefixPath,
             PREFIXDIR,
-            sizeof(gpServerInfo->szPrefixPath)-1);
+            sizeof(gpLwregServerInfo->szPrefixPath)-1);
 
     return (dwError);
 }
@@ -224,13 +226,13 @@ RegSrvGetCachePath(
 
     REG_LOCK_SERVERINFO(bInLock);
 
-    if (IsNullOrEmptyString(gpServerInfo->szCachePath))
+    if (IsNullOrEmptyString(gpLwregServerInfo->szCachePath))
     {
         dwError = LWREG_ERROR_INVALID_CACHE_PATH;
         BAIL_ON_REG_ERROR(dwError);
     }
 
-    dwError = LwRtlCStringDuplicate(&pszPath, gpServerInfo->szCachePath);
+    dwError = LwRtlCStringDuplicate(&pszPath, gpLwregServerInfo->szCachePath);
     BAIL_ON_REG_ERROR(dwError);
 
     *ppszPath = pszPath;
@@ -261,13 +263,13 @@ RegSrvGetPrefixPath(
 
     REG_LOCK_SERVERINFO(bInLock);
 
-    if (IsNullOrEmptyString(gpServerInfo->szPrefixPath))
+    if (IsNullOrEmptyString(gpLwregServerInfo->szPrefixPath))
     {
         dwError = LWREG_ERROR_INVALID_PREFIX_PATH;
         BAIL_ON_REG_ERROR(dwError);
     }
 
-    dwError = LwRtlCStringDuplicate(&pszPath, gpServerInfo->szPrefixPath);
+    dwError = LwRtlCStringDuplicate(&pszPath, gpLwregServerInfo->szPrefixPath);
     BAIL_ON_REG_ERROR(dwError);
 
     *ppszPath = pszPath;

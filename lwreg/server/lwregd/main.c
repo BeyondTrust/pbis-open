@@ -72,7 +72,7 @@ main(
 
     dwError = RegSrvParseArgs(argc,
         argv,
-        &gServerInfo);
+        &gLwregServerInfo);
 
     BAIL_ON_REG_ERROR(dwError);
 
@@ -80,11 +80,11 @@ main(
 
     dwError = RegInitLogging_r(
         RegGetProgramName(argv[0]),
-        gServerInfo.logTarget,
-        gServerInfo.maxAllowedLogLevel,
-        gServerInfo.szLogFilePath);
+        gLwregServerInfo.logTarget,
+        gLwregServerInfo.maxAllowedLogLevel,
+        gLwregServerInfo.szLogFilePath);
 
-    LwRtlLogSetLevel(gServerInfo.maxAllowedLogLevel);
+    LwRtlLogSetLevel(gLwregServerInfo.maxAllowedLogLevel);
 
     BAIL_ON_REG_ERROR(dwError);
 
@@ -241,17 +241,17 @@ RegSrvSetDefaults(
 {
     DWORD dwError = 0;
 
-    gpServerInfo->maxAllowedLogLevel = REG_LOG_LEVEL_ERROR;
+    gpLwregServerInfo->maxAllowedLogLevel = REG_LOG_LEVEL_ERROR;
 
-    *(gpServerInfo->szLogFilePath) = '\0';
+    *(gpLwregServerInfo->szLogFilePath) = '\0';
 
-    strncpy(gpServerInfo->szCachePath,
+    strncpy(gpLwregServerInfo->szCachePath,
             CACHEDIR,
-            sizeof(gpServerInfo->szCachePath)-1);
+            sizeof(gpLwregServerInfo->szCachePath)-1);
 
-    strncpy(gpServerInfo->szPrefixPath,
+    strncpy(gpLwregServerInfo->szPrefixPath,
             PREFIXDIR,
-            sizeof(gpServerInfo->szPrefixPath)-1);
+            sizeof(gpLwregServerInfo->szPrefixPath)-1);
 
     setlocale(LC_ALL, "");
 
@@ -318,7 +318,7 @@ RegSrvParseArgs(
                 }
                 else if (strcmp(pArg, "--syslog") == 0)
                 {
-                    gServerInfo.logTarget = REG_LOG_TARGET_SYSLOG;
+                    gLwregServerInfo.logTarget = REG_LOG_TARGET_SYSLOG;
                     bLogTargetSet = TRUE;
                 }
                 else
@@ -574,7 +574,7 @@ RegSrvShouldStartAsDaemon(
 
     REG_LOCK_SERVERINFO(bInLock);
 
-    bResult = (gpServerInfo->dwStartAsDaemon != 0);
+    bResult = (gpLwregServerInfo->dwStartAsDaemon != 0);
 
     REG_UNLOCK_SERVERINFO(bInLock);
 
@@ -663,7 +663,7 @@ RegSrvGetProcessExitCode(
 
     REG_LOCK_SERVERINFO(bInLock);
 
-    *pdwExitCode = gpServerInfo->dwExitCode;
+    *pdwExitCode = gpLwregServerInfo->dwExitCode;
 
     REG_UNLOCK_SERVERINFO(bInLock);
 
@@ -679,7 +679,7 @@ RegSrvSetProcessExitCode(
 
     REG_LOCK_SERVERINFO(bInLock);
 
-    gpServerInfo->dwExitCode = dwExitCode;
+    gpLwregServerInfo->dwExitCode = dwExitCode;
 
     REG_UNLOCK_SERVERINFO(bInLock);
 }
@@ -695,13 +695,13 @@ RegSrvGetCachePath(
 
     REG_LOCK_SERVERINFO(bInLock);
 
-    if (IsNullOrEmptyString(gpServerInfo->szCachePath))
+    if (IsNullOrEmptyString(gpLwregServerInfo->szCachePath))
     {
         dwError = LWREG_ERROR_INVALID_CACHE_PATH;
         BAIL_ON_REG_ERROR(dwError);
     }
 
-    dwError = LwRtlCStringDuplicate(&pszPath, gpServerInfo->szCachePath);
+    dwError = LwRtlCStringDuplicate(&pszPath, gpLwregServerInfo->szCachePath);
     BAIL_ON_REG_ERROR(dwError);
 
     *ppszPath = pszPath;
@@ -732,13 +732,13 @@ RegSrvGetPrefixPath(
 
     REG_LOCK_SERVERINFO(bInLock);
 
-    if (IsNullOrEmptyString(gpServerInfo->szPrefixPath))
+    if (IsNullOrEmptyString(gpLwregServerInfo->szPrefixPath))
     {
         dwError = LWREG_ERROR_INVALID_PREFIX_PATH;
         BAIL_ON_REG_ERROR(dwError);
     }
 
-    dwError = LwRtlCStringDuplicate(&pszPath, gpServerInfo->szPrefixPath);
+    dwError = LwRtlCStringDuplicate(&pszPath, gpLwregServerInfo->szPrefixPath);
     BAIL_ON_REG_ERROR(dwError);
 
     *ppszPath = pszPath;
@@ -894,7 +894,7 @@ RegSrvShouldProcessExit(
 
     REG_LOCK_SERVERINFO(bInLock);
 
-    bExit = gpServerInfo->bProcessShouldExit;
+    bExit = gpLwregServerInfo->bProcessShouldExit;
 
     REG_UNLOCK_SERVERINFO(bInLock);
 
@@ -910,7 +910,7 @@ RegSrvSetProcessToExit(
 
     REG_LOCK_SERVERINFO(bInLock);
 
-    gpServerInfo->bProcessShouldExit = bExit;
+    gpLwregServerInfo->bProcessShouldExit = bExit;
 
     REG_UNLOCK_SERVERINFO(bInLock);
 }

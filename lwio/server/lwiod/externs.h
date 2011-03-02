@@ -49,8 +49,8 @@
 #ifndef __EXTERNS_P_H__
 #define __EXTERNS_P_H__
 
-extern SMBSERVERINFO  gServerInfo;
-extern PSMBSERVERINFO gpServerInfo;
+extern SMBSERVERINFO  gLwioServerInfo;
+extern PSMBSERVERINFO gpLwioServerInfo;
 
 extern pthread_t gSignalHandlerThread;
 extern pthread_t* gpSignalHandlerThread;
@@ -63,13 +63,13 @@ extern pthread_t* gpSignalHandlerThread;
 
 #define LWIO_LOCK_SERVERINFO(bInLock)                  \
         if (!bInLock) {                               \
-           pthread_mutex_lock(gpServerInfo->pLock);   \
+           pthread_mutex_lock(gpLwioServerInfo->pLock);   \
            bInLock = TRUE;                            \
         }
 
 #define LWIO_UNLOCK_SERVERINFO(bInLock)                \
         if (bInLock) {                                \
-           pthread_mutex_unlock(gpServerInfo->pLock); \
+           pthread_mutex_unlock(gpLwioServerInfo->pLock); \
            bInLock = FALSE;                           \
         }
 

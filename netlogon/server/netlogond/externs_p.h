@@ -48,8 +48,8 @@
 #ifndef __EXTERNS_P_H__
 #define __EXTERNS_P_H__
 
-extern LWNETSERVERINFO  gServerInfo;
-extern PLWNETSERVERINFO gpServerInfo;
+extern LWNETSERVERINFO  gLwnetServerInfo;
+extern PLWNETSERVERINFO gpLwnetServerInfo;
 
 #define DAEMON_NAME "netlogond"
 #define PID_DIR     "/var/run"
@@ -59,13 +59,13 @@ extern PLWNETSERVERINFO gpServerInfo;
 
 #define LWNET_LOCK_SERVERINFO(bInLock)               \
         if (!bInLock) {                               \
-           pthread_mutex_lock(&gpServerInfo->lock);   \
+           pthread_mutex_lock(&gpLwnetServerInfo->lock);   \
            bInLock = TRUE;                            \
         }
 
 #define LWNET_UNLOCK_SERVERINFO(bInLock)             \
         if (bInLock) {                                \
-           pthread_mutex_unlock(&gpServerInfo->lock); \
+           pthread_mutex_unlock(&gpLwnetServerInfo->lock); \
            bInLock = FALSE;                           \
         }
 

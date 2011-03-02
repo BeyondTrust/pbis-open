@@ -38,6 +38,12 @@
 
 #include "includes.h"
 
+#define DECLARE(name) \
+    extern PLW_SVCM_MODULE LW_RTL_SVCM_ENTRY_POINT_NAME(name)(VOID)
+
+#define EMBED(name) \
+{ LIBDIR "/lw-svcm/" #name MOD_EXT, LW_RTL_SVCM_ENTRY_POINT_NAME(name) }
+
 typedef struct
 {
     LW_SERVICE_STATE State;
@@ -47,6 +53,42 @@ typedef struct
 } SVCM_STATE, *PSVCM_STATE;
 
 pthread_mutex_t gLimitMutex = PTHREAD_MUTEX_INITIALIZER;
+
+#ifdef EMBED_LWREG
+DECLARE(lwreg);
+#endif
+
+#ifdef EMBED_NETLOGON
+DECLARE(netlogon);
+#endif
+
+#ifdef EMBED_LWIO
+DECLARE(lwio);
+#endif
+
+#ifdef EMBED_LSASS
+DECLARE(lsass);
+#endif
+
+struct {
+    PCSTR pPath;
+    LW_SVCM_MODULE_ENTRY_FUNCTION Entry;
+} gEmbedded[] =
+{
+#ifdef EMBED_LWREG
+    EMBED(lwreg),
+#endif
+#ifdef EMBED_NETLOGON
+    EMBED(netlogon),
+#endif
+#ifdef EMBED_LWIO
+    EMBED(lwio),
+#endif
+#ifdef EMBED_LSASS
+    EMBED(lsass),
+#endif
+    {NULL, NULL}
+};
 
 static
 DWORD
@@ -243,6 +285,9 @@ LwSmSvcmConstruct(
 {
     DWORD dwError = 0;
     PSVCM_STATE pState = NULL;
+    PSTR pPath = NULL;
+    LW_SVCM_MODULE_ENTRY_FUNCTION entry = NULL;
+    int i = 0;
 
     dwError = LwAllocateMemory(sizeof(*pState), OUT_PPVOID(&pState));
     BAIL_ON_ERROR(dwError);
@@ -253,16 +298,41 @@ LwSmSvcmConstruct(
     dwError = LwSmCopyStringList(pInfo->ppwszArgs, &pState->ppArgs);
     BAIL_ON_ERROR(dwError);
 
-    dwError = LwNtStatusToWin32Error(
-        LwRtlSvcmLoad(
-            pInfo->pwszName,
-            pInfo->pwszPath,
-            &pState->pInstance));
+    dwError = LwWc16sToMbs(pInfo->pwszPath, &pPath);
+    BAIL_ON_ERROR(dwError);
+
+    for (i = 0; gEmbedded[i].pPath; i++)
+    {
+        if (!strcmp(gEmbedded[i].pPath, pPath))
+        {
+            entry = gEmbedded[i].Entry;
+            break;
+        }
+    }
+
+    if (entry)
+    {
+        dwError = LwNtStatusToWin32Error(
+            LwRtlSvcmLoadEmbedded(
+                pInfo->pwszName,
+                entry,
+                &pState->pInstance));
+    }
+    else
+    {
+        dwError = LwNtStatusToWin32Error(
+            LwRtlSvcmLoadModule(
+                pInfo->pwszName,
+                pInfo->pwszPath,
+                &pState->pInstance));
+    }
     BAIL_ON_ERROR(dwError);
 
     *ppData = pState;
 
 error:
+
+    RTL_FREE(&pPath);
 
     return dwError;
 }

@@ -17,6 +17,14 @@ configure()
 
     mk_export MOD_EXT="$MK_DLO_EXT"
 
+    if [ "$LW_DEVICE_PROFILE" = "embedded" ]
+    then
+        mk_define EMBED_LWREG
+        mk_define EMBED_NETLOGON
+        mk_define EMBED_LWIO
+        mk_define EMBED_LSASS
+    fi
+
     # Check endianness
     mk_check_endian
 

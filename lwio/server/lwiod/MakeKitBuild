@@ -15,9 +15,8 @@ make()
 
     if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
     then
-        mk_dlo \
-            DLO="lwio" \
-            INSTALLDIR="${MK_LIBDIR}/lw-svcm" \
+        lw_service \
+            SERVICE="lwio" \
             SOURCES="$LWIO_SOURCES" \
             GROUPS="$DRIVER_GROUPS" \
             INCLUDEDIRS=". ../include ../../include" \

@@ -6,9 +6,8 @@ make()
 
     if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
     then
-        mk_dlo \
-            DLO="netlogon" \
-            INSTALLDIR="${MK_LIBDIR}/lw-svcm" \
+        lw_service \
+            SERVICE="netlogon" \
             SOURCES="$NETLOGON_SOURCES" \
             GROUPS="../ipc/ipc ../api/api" \
             INCLUDEDIRS=". ../include ../../include" \

@@ -15,9 +15,8 @@ make()
 
     if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
     then
-        mk_dlo \
-	    DLO=lsass \
-	    INSTALLDIR="${MK_LIBDIR}/lw-svcm" \
+        lw_service \
+	    SERVICE=lsass \
 	    SOURCES="main-svcm.c globals.c listener.c" \
             GROUPS="$PROVIDER_GROUPS" \
 	    INCLUDEDIRS=". ../include ../../include" \

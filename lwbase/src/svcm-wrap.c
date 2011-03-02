@@ -104,7 +104,7 @@ int main(
         GCOS(status);
     }
 
-    status = LwRtlSvcmLoad(
+    status = LwRtlSvcmLoadModule(
         gState.pServiceName,
         gState.pServicePath,
         &gState.pService);

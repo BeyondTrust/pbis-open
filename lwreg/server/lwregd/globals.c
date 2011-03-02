@@ -48,7 +48,7 @@
  */
 #include "registryd.h"
 
-REGSERVERINFO gServerInfo =
+REGSERVERINFO gLwregServerInfo =
 {
     PTHREAD_MUTEX_INITIALIZER,  /* Lock              */
     0,                          /* Start as daemon   */
@@ -61,5 +61,5 @@ REGSERVERINFO gServerInfo =
     0                           /* Process exit code */
 };
 
-PREGSERVERINFO gpServerInfo = &gServerInfo;
+PREGSERVERINFO gpLwregServerInfo = &gLwregServerInfo;
 

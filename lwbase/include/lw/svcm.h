@@ -178,11 +178,13 @@ typedef PLW_SVCM_MODULE
  * @brief Service module entry point name
  *
  * The entry point function of a service module
- * must have this name.
+ * must have a name derived from the use of this
+ * macro.
  *
+ * @param name the bare name of the module file (no extension)
  * @hideinitializer
  */
-#define LW_RTL_SVCM_ENTRY_POINT_NAME _LwSvcmEntry
+#define LW_RTL_SVCM_ENTRY_POINT_NAME(name) _LwSvcmEntry_##name
 
 /**
  * @brief Service command completion function
@@ -250,9 +252,29 @@ LwRtlSvcmGetData(
  * @return an NTSTATUS code
  */
 LW_NTSTATUS
-LwRtlSvcmLoad(
+LwRtlSvcmLoadModule(
     LW_IN LW_PCWSTR pServiceName,
     LW_IN LW_PCWSTR pModulePath,
+    LW_OUT PLW_SVCM_INSTANCE* ppInstance
+    );
+
+/**
+ * @brief Load an embedded service
+ *
+ * Loads the service with the given name directly
+ * from the specified module entry point.  This allows
+ * services to be compiled directly into a program
+ * and then loaded.
+ *
+ * @param[in] pServiceName the name of the service
+ * @param[in] Entry the entry point function
+ * @param[out] ppInstance set to the created service instance
+ * @return an NTSTATUS code
+ */
+LW_NTSTATUS
+LwRtlSvcmLoadEmbedded(
+    LW_IN LW_PCWSTR pServiceName,
+    LW_IN LW_SVCM_MODULE_ENTRY_FUNCTION Entry,
     LW_OUT PLW_SVCM_INSTANCE* ppInstance
     );
 

@@ -196,21 +196,21 @@ lwiod_main(
     dwError = LwNtStatusToWin32Error(ntStatus);
     BAIL_ON_LWIO_ERROR(dwError);
 
-    pthread_mutex_init(&gServerInfo.lock, NULL);
-    gServerInfo.pLock = &gServerInfo.lock;
+    pthread_mutex_init(&gLwioServerInfo.lock, NULL);
+    gLwioServerInfo.pLock = &gLwioServerInfo.lock;
 
     dwError = LwioSrvParseArgs(argc,
                               argv,
-                              &gServerInfo);
+                              &gLwioServerInfo);
     BAIL_ON_LWIO_ERROR(dwError);
 
     LwIoInitRtlLogging();
 
     dwError = LwioInitLogging_r(
                     SMBGetProgramName(argv[0]),
-                    gServerInfo.logTarget,
-                    gServerInfo.maxAllowedLogLevel,
-                    gServerInfo.szLogFilePath);
+                    gLwioServerInfo.logTarget,
+                    gLwioServerInfo.maxAllowedLogLevel,
+                    gLwioServerInfo.szLogFilePath);
     BAIL_ON_LWIO_ERROR(dwError);
 
     LWIO_LOG_VERBOSE("Logging started");
@@ -258,10 +258,10 @@ cleanup:
 
     LwioShutdownLogging_r();
 
-    if (gServerInfo.pLock)
+    if (gLwioServerInfo.pLock)
     {
-        pthread_mutex_destroy(&gServerInfo.lock);
-        gServerInfo.pLock = NULL;
+        pthread_mutex_destroy(&gLwioServerInfo.lock);
+        gLwioServerInfo.pLock = NULL;
     }
 
     return dwError;
@@ -344,15 +344,15 @@ LwioSrvSetDefaults(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     LWIO_CONFIG defaultConfig;
 
-    gpServerInfo->maxAllowedLogLevel = LWIO_LOG_LEVEL_ERROR;
+    gpLwioServerInfo->maxAllowedLogLevel = LWIO_LOG_LEVEL_ERROR;
 
-    *(gpServerInfo->szLogFilePath) = '\0';
+    *(gpLwioServerInfo->szLogFilePath) = '\0';
 
-    strncpy(gpServerInfo->szCachePath, CACHEDIR, PATH_MAX);
-    gpServerInfo->szCachePath[PATH_MAX] = '\0';
+    strncpy(gpLwioServerInfo->szCachePath, CACHEDIR, PATH_MAX);
+    gpLwioServerInfo->szCachePath[PATH_MAX] = '\0';
 
-    strncpy(gpServerInfo->szPrefixPath, PREFIXDIR, PATH_MAX);
-    gpServerInfo->szPrefixPath[PATH_MAX] = '\0';
+    strncpy(gpLwioServerInfo->szPrefixPath, PREFIXDIR, PATH_MAX);
+    gpLwioServerInfo->szPrefixPath[PATH_MAX] = '\0';
 
     setlocale(LC_ALL, "");
 
@@ -626,7 +626,7 @@ SMBSrvShouldStartAsDaemon(
 
     LWIO_LOCK_SERVERINFO(bInLock);
 
-    bResult = (gpServerInfo->dwStartAsDaemon != 0);
+    bResult = (gpLwioServerInfo->dwStartAsDaemon != 0);
 
     LWIO_UNLOCK_SERVERINFO(bInLock);
 
@@ -1037,7 +1037,7 @@ SMBSrvShouldProcessExit(
 
     LWIO_LOCK_SERVERINFO(bInLock);
 
-    bExit = gpServerInfo->bProcessShouldExit;
+    bExit = gpLwioServerInfo->bProcessShouldExit;
 
     LWIO_UNLOCK_SERVERINFO(bInLock);
 
@@ -1053,7 +1053,7 @@ SMBSrvSetProcessToExit(
 
     LWIO_LOCK_SERVERINFO(bInLock);
 
-    gpServerInfo->bProcessShouldExit = bExit;
+    gpLwioServerInfo->bProcessShouldExit = bExit;
 
     LWIO_UNLOCK_SERVERINFO(bInLock);
 }

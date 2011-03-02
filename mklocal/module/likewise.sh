@@ -221,3 +221,39 @@ lw_check_pthread_once_init()
 
     result="$HAVE_BROKEN_ONCE_INIT"
 }
+
+lw_service()
+{
+    mk_push_vars SERVICE SOURCES GROUPS HEADERDEPS LIBDEPS INCLUDEDIRS CPPFLAGS LDFLAGS CFLAGS CXXFLAGS
+    mk_parse_params
+
+    if [ "$LW_DEVICE_PROFILE" = "embedded" ]
+    then
+        mk_group \
+            GROUP="$SERVICE" \
+            SOURCES="$SOURCES" \
+            GROUPDEPS="$GROUPS" \
+            HEADERDEPS="$HEADERDEPS" \
+            LIBDEPS="$LIBDEPS" \
+            INCLUDEDIRS="$INCLUDEDIRS" \
+            CPPFLAGS="$CPPFLAGS" \
+            CFLAGS="$CFLAGS" \
+            CXXFLAGS="$CXXFLAGS" \
+            LDFLAGS="$LDFLAGS"
+    else
+        mk_dlo \
+            INSTALLDIR="$MK_LIBDIR/lw-svcm" \
+            DLO="$SERVICE" \
+            SOURCES="$SOURCES" \
+            GROUPS="$GROUPS" \
+            HEADERDEPS="$HEADERDEPS" \
+            LIBDEPS="$LIBDEPS" \
+            INCLUDEDIRS="$INCLUDEDIRS" \
+            CPPFLAGS="$CPPFLAGS" \
+            CFLAGS="$CFLAGS" \
+            CXXFLAGS="$CXXFLAGS" \
+            LDFLAGS="$LDFLAGS"
+    fi
+
+    mk_pop_vars
+}

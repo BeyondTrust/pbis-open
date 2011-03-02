@@ -125,8 +125,10 @@ static LW_SVCM_MODULE gService =
     .Stop = LWNetSvcmStop
 };
 
+#define SVCM_ENTRY_POINT LW_RTL_SVCM_ENTRY_POINT_NAME(netlogon)
+
 PLW_SVCM_MODULE
-(LW_RTL_SVCM_ENTRY_POINT_NAME)(
+SVCM_ENTRY_POINT(
     VOID
     )
 {
@@ -141,12 +143,12 @@ LWNetSrvSetDefaults(
 {
     DWORD dwError = 0;
 
-    gpServerInfo->dwLogLevel = LWNET_LOG_LEVEL_ERROR;
+    gpLwnetServerInfo->dwLogLevel = LWNET_LOG_LEVEL_ERROR;
 
-    *(gpServerInfo->szLogFilePath) = '\0';
+    *(gpLwnetServerInfo->szLogFilePath) = '\0';
 
-    strcpy(gpServerInfo->szCachePath, LWNET_CACHE_DIR);
-    strcpy(gpServerInfo->szPrefixPath, PREFIXDIR);
+    strcpy(gpLwnetServerInfo->szCachePath, LWNET_CACHE_DIR);
+    strcpy(gpLwnetServerInfo->szPrefixPath, PREFIXDIR);
 
     return (dwError);
 }
@@ -181,12 +183,12 @@ LWNetSrvGetCachePath(
   
     LWNET_LOCK_SERVERINFO(bInLock);
     
-    if (IsNullOrEmptyString(gpServerInfo->szCachePath)) {
+    if (IsNullOrEmptyString(gpLwnetServerInfo->szCachePath)) {
       dwError = ERROR_PATH_NOT_FOUND;
       BAIL_ON_LWNET_ERROR(dwError);
     }
     
-    dwError = LWNetAllocateString(gpServerInfo->szCachePath, &pszPath);
+    dwError = LWNetAllocateString(gpLwnetServerInfo->szCachePath, &pszPath);
     BAIL_ON_LWNET_ERROR(dwError);
 
     *ppszPath = pszPath;
@@ -217,12 +219,12 @@ LWNetSrvGetPrefixPath(
   
     LWNET_LOCK_SERVERINFO(bInLock);
     
-    if (IsNullOrEmptyString(gpServerInfo->szPrefixPath)) {
+    if (IsNullOrEmptyString(gpLwnetServerInfo->szPrefixPath)) {
       dwError = ERROR_PATH_NOT_FOUND;
       BAIL_ON_LWNET_ERROR(dwError);
     }
     
-    dwError = LWNetAllocateString(gpServerInfo->szPrefixPath, &pszPath);
+    dwError = LWNetAllocateString(gpLwnetServerInfo->szPrefixPath, &pszPath);
     BAIL_ON_LWNET_ERROR(dwError);
 
     *ppszPath = pszPath;
@@ -252,13 +254,13 @@ LWNetSrvInitLogging(
 
     LWNET_LOCK_SERVERINFO(bInLock);
 
-    if ((gpServerInfo->dwStartAsDaemon &&
-            gpServerInfo->szLogFilePath[0] == '\0') ||
-            gpServerInfo->bLogToSyslog)
+    if ((gpLwnetServerInfo->dwStartAsDaemon &&
+            gpLwnetServerInfo->szLogFilePath[0] == '\0') ||
+            gpLwnetServerInfo->bLogToSyslog)
     {
       
-      dwError = lwnet_init_logging_to_syslog(gpServerInfo->dwLogLevel,
-                                           gpServerInfo->bEnableDebugLogs,
+      dwError = lwnet_init_logging_to_syslog(gpLwnetServerInfo->dwLogLevel,
+                                           gpLwnetServerInfo->bEnableDebugLogs,
                                            pszProgramName,
                                            LOG_PID,
                                            LOG_DAEMON);
@@ -266,9 +268,9 @@ LWNetSrvInitLogging(
       
     } else {
       
-      dwError = lwnet_init_logging_to_file(gpServerInfo->dwLogLevel,
-                                         gpServerInfo->bEnableDebugLogs,
-                                         gpServerInfo->szLogFilePath);
+      dwError = lwnet_init_logging_to_file(gpLwnetServerInfo->dwLogLevel,
+                                         gpLwnetServerInfo->bEnableDebugLogs,
+                                         gpLwnetServerInfo->szLogFilePath);
       BAIL_ON_LWNET_ERROR(dwError);
       
     }

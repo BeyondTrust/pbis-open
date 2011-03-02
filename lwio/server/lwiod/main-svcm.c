@@ -138,8 +138,8 @@ LwIoSvcmStart(
     ntStatus = LwioSrvInitializeConfig(&gLwioServerConfig);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    pthread_mutex_init(&gServerInfo.lock, NULL);
-    gServerInfo.pLock = &gServerInfo.lock;
+    pthread_mutex_init(&gLwioServerInfo.lock, NULL);
+    gLwioServerInfo.pLock = &gLwioServerInfo.lock;
 
     ntStatus = LwioSrvRefreshConfig(&gLwioServerConfig);
     BAIL_ON_NT_STATUS(ntStatus);
@@ -195,10 +195,10 @@ LwIoSvcmStop(
 
     LWIO_LOG_INFO("LWIO Service exiting...");
 
-    if (gServerInfo.pLock)
+    if (gLwioServerInfo.pLock)
     {
-        pthread_mutex_destroy(&gServerInfo.lock);
-        gServerInfo.pLock = NULL;
+        pthread_mutex_destroy(&gLwioServerInfo.lock);
+        gLwioServerInfo.pLock = NULL;
     }
 
     return STATUS_SUCCESS;
@@ -222,8 +222,10 @@ static LW_SVCM_MODULE gService =
     .Refresh = LwIoSvcmRefresh
 };
 
+#define SVCM_ENTRY_POINT LW_RTL_SVCM_ENTRY_POINT_NAME(lwio)
+
 PLW_SVCM_MODULE
-(LW_RTL_SVCM_ENTRY_POINT_NAME)(
+SVCM_ENTRY_POINT(
     VOID
     )
 {
@@ -239,15 +241,15 @@ LwioSrvSetDefaults(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     LWIO_CONFIG defaultConfig;
 
-    gpServerInfo->maxAllowedLogLevel = LWIO_LOG_LEVEL_ERROR;
+    gpLwioServerInfo->maxAllowedLogLevel = LWIO_LOG_LEVEL_ERROR;
 
-    *(gpServerInfo->szLogFilePath) = '\0';
+    *(gpLwioServerInfo->szLogFilePath) = '\0';
 
-    strncpy(gpServerInfo->szCachePath, CACHEDIR, PATH_MAX);
-    gpServerInfo->szCachePath[PATH_MAX] = '\0';
+    strncpy(gpLwioServerInfo->szCachePath, CACHEDIR, PATH_MAX);
+    gpLwioServerInfo->szCachePath[PATH_MAX] = '\0';
 
-    strncpy(gpServerInfo->szPrefixPath, PREFIXDIR, PATH_MAX);
-    gpServerInfo->szPrefixPath[PATH_MAX] = '\0';
+    strncpy(gpLwioServerInfo->szPrefixPath, PREFIXDIR, PATH_MAX);
+    gpLwioServerInfo->szPrefixPath[PATH_MAX] = '\0';
 
     // Enforce configuration settings
     ntStatus = LwioSrvInitializeConfig(&defaultConfig);

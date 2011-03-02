@@ -48,7 +48,7 @@
  */
 #include "includes.h"
 
-SMBSERVERINFO gServerInfo =
+SMBSERVERINFO gLwioServerInfo =
 {
     .pLock = NULL,                              /* Lock              */
     .dwStartAsDaemon = 0,                       /* Start as daemon   */
@@ -62,7 +62,7 @@ SMBSERVERINFO gServerInfo =
     .dwExitCode = 0                             /* Process exit code */
 };
 
-PSMBSERVERINFO gpServerInfo = &gServerInfo;
+PSMBSERVERINFO gpLwioServerInfo = &gLwioServerInfo;
 
 pthread_t  gSignalHandlerThread;
 pthread_t* gpSignalHandlerThread = NULL;

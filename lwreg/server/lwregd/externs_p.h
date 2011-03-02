@@ -48,8 +48,8 @@
 #ifndef __EXTERNS_P_H__
 #define __EXTERNS_P_H__
 
-extern REGSERVERINFO  gServerInfo;
-extern PREGSERVERINFO gpServerInfo;
+extern REGSERVERINFO  gLwregServerInfo;
+extern PREGSERVERINFO gpLwregServerInfo;
 
 extern pthread_t gSignalHandlerThread;
 extern pthread_t* gpSignalHandlerThread;
@@ -62,13 +62,13 @@ extern pthread_t* gpSignalHandlerThread;
 
 #define REG_LOCK_SERVERINFO(bInLock)                  \
         if (!bInLock) {                               \
-           pthread_mutex_lock(&gpServerInfo->lock);   \
+           pthread_mutex_lock(&gpLwregServerInfo->lock);   \
            bInLock = TRUE;                            \
         }
 
 #define REG_UNLOCK_SERVERINFO(bInLock)                \
         if (bInLock) {                                \
-           pthread_mutex_unlock(&gpServerInfo->lock); \
+           pthread_mutex_unlock(&gpLwregServerInfo->lock); \
            bInLock = FALSE;                           \
         }
 

@@ -6,9 +6,8 @@ make()
 
     if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
     then
-        mk_dlo \
-	    DLO="lwreg" \
-            INSTALLDIR="${MK_LIBDIR}/lw-svcm" \
+        lw_service \
+	    SERVICE="lwreg" \
             SOURCES="$LWREG_SOURCES" \
             GROUPS="../api/regserverapi ../../logging_r/reglog_r" \
             CPPFLAGS="-DPREFIXDIR=\"${MK_PREFIX}\"" \

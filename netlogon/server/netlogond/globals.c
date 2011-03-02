@@ -47,7 +47,7 @@
  */
 #include "includes.h"
 
-LWNETSERVERINFO gServerInfo =
+LWNETSERVERINFO gLwnetServerInfo =
 {
     PTHREAD_MUTEX_INITIALIZER,  /* Lock              */
     0,                          /* Start as daemon   */
@@ -61,5 +61,5 @@ LWNETSERVERINFO gServerInfo =
     0                           /* Process exit code */
 };
 
-PLWNETSERVERINFO gpServerInfo = &gServerInfo;
+PLWNETSERVERINFO gpLwnetServerInfo = &gLwnetServerInfo;
 
