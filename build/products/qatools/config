@@ -2,7 +2,7 @@ NAME="LikewiseQATools"
 FULL_NAME="Likewise QA Tools"
 DESCRIPTION="Tools for QA of Likewise products."
 FILES="EULA"
-SCRIPT="../install.sh"
+SCRIPT="install.sh"
 
 PACKAGES="\
     qatools \
