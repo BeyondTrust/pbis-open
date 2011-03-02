@@ -201,7 +201,6 @@ RtlCreateAccessToken(
         GOTO_CLEANUP_ON_STATUS(status);
     }
 
-#if 0
     status = RtlSafeMultiplyULONG(&size,
                                   sizeof(Privileges->Privileges[0]),
                                   Privileges->PrivilegeCount);
@@ -209,7 +208,6 @@ RtlCreateAccessToken(
 
     status = RtlSafeAddULONG(&requiredSize, requiredSize, size);
     GOTO_CLEANUP_ON_STATUS(status);
-#endif
 
     status = RTL_ALLOCATE(&token, ACCESS_TOKEN, requiredSize);
     GOTO_CLEANUP_ON_STATUS(status);
@@ -239,7 +237,6 @@ RtlCreateAccessToken(
                                   RtlLengthSid(Groups->Groups[i].Sid));
     }
 
-#if 0
     token->PrivilegeCount = Privileges->PrivilegeCount;
     token->Privileges = (PLUID_AND_ATTRIBUTES) location;
     location = LwRtlOffsetToPointer(
@@ -248,7 +245,6 @@ RtlCreateAccessToken(
     memcpy(token->Privileges,
            Privileges->Privileges,
            sizeof(token->Privileges[0]) * token->PrivilegeCount);
-#endif
 
     if (Owner->Owner)
     {
