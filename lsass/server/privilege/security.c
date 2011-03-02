@@ -130,6 +130,8 @@ error:
     if (err || ntStatus)
     {
         LsaSrvFreeSecurityDescriptor(pSecDesc);
+
+        *ppSecurityDescriptor = NULL;
     }
 
     if (err == ERROR_SUCCESS &&
