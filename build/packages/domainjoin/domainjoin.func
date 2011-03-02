@@ -1,8 +1,0 @@
-PKG_COMPONENTS="domainjoin"
-
-function package_populate
-{
-    populate_components
-
-    strip_common
-}

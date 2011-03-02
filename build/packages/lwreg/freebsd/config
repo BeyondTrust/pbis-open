@@ -1,2 +1,0 @@
-DESCRIPTION="Likewise lwreg Daemon"
-DEPENDS="likewise-base"

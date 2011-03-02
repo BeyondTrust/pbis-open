@@ -1,2 +1,0 @@
-DESCRIPTION="Likewise advanced authentication infrastructure (LSASS)"
-DEPENDS="likewise-base"

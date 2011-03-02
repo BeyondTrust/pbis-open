@@ -1,3 +1,0 @@
-__PKG_PREFIX/lib*/{*.so,*.so.*}
-__PKG_PREFIX/lib*/krb5/plugins/preauth/*.so
-__PKG_PREFIX/bin

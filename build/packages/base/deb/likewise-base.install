@@ -1,6 +1,0 @@
-__PKG_PREFIX/bin
-__PKG_PREFIX/sbin
-__PKG_PREFIX/lib*/{*.so,*.so.*}
-__PKG_PREFIX/ssl/*
-__PKG_PREFIX/share/likewise.pam-auth-update
-etc/init.d

@@ -1,2 +1,0 @@
-DESCRIPTION="Likewise event logging and auditing system"
-DEPENDS="likewise-rpc"
