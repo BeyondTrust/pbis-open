@@ -98,12 +98,13 @@
 
 
 //
-// Oplock IoFsControl STructures
+// Lease IoFsControl Structures
 //
-
-#define IO_OPLOCK_REQUEST_OPLOCK_BATCH      0x01
-#define IO_OPLOCK_REQUEST_OPLOCK_LEVEL_1    0x02
-#define IO_OPLOCK_REQUEST_OPLOCK_LEVEL_2    0x03
+#define IO_LEASE_REQUEST_NONE 0x00
+#define IO_LEASE_REQUEST_RWH  0x01
+#define IO_LEASE_REQUEST_RW   0x02
+#define IO_LEASE_REQUEST_R    0x03
+#define IO_LEASE_REQUEST_RH   0x04
 
 typedef struct _IO_FSCTL_REQUEST_OPLOCK_INPUT_BUFFER
 {
@@ -112,11 +113,15 @@ typedef struct _IO_FSCTL_REQUEST_OPLOCK_INPUT_BUFFER
 } IO_FSCTL_OPLOCK_REQUEST_INPUT_BUFFER, 
     *PIO_FSCTL_OPLOCK_REQUEST_INPUT_BUFFER;
 
-// Oplock Request Output Buffer
+// Lease Request Output Buffer
 
-#define IO_OPLOCK_NOT_BROKEN                 0x00000000
-#define IO_OPLOCK_BROKEN_TO_NONE             0x00000001
-#define IO_OPLOCK_BROKEN_TO_LEVEL_2          0x00000002
+#define IO_LEASE_NOT_BROKEN                 0x00000000
+#define IO_LEASE_BROKEN_TO_NONE             0x00000001
+#define IO_LEASE_BROKEN_TO_R                0x00000002
+
+
+#define IO_OPLOCK_BROKEN_TO_NONE            IO_LEASE_BROKEN_TO_NONE
+#define IO_OPLOCK_BROKEN_TO_LEVEL_2         IO_LEASE_BROKEN_TO_R
 
 typedef struct _IO_FSCTL_OPLOCK_REQUEST_OUTPUT_BUFFER
 {
