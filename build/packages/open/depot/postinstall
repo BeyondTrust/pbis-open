@@ -101,6 +101,14 @@ import_registry_configurations()
     run_or_fail "$REGIMPORT /opt/likewise/share/config/lwiod.reg"
     run_or_fail "$REGIMPORT /opt/likewise/share/config/lwreg.reg"
     run_or_fail "$REGIMPORT /opt/likewise/share/config/netlogond.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/rdr.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/npfs.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/srv.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/pvfs.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/dfs.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/srvsvcd.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/nfs.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/reapsysl.reg"
 }
 
 determine_upgrade_type()
