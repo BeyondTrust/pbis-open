@@ -1028,7 +1028,7 @@ ReadPamDirFile(
         // same directory.
 
         pSymBaseName = basename(pSymTarget);
-        pSymDirName = dirname(pSymDirName);
+        pSymDirName = dirname(pSymTarget);
 
         while (stat(pDirPath, &pamDirectoryStat) < 0)
         {
