@@ -1,0 +1,58 @@
+NAME="LikewiseOpen"
+FULL_NAME="Likewise Open"
+DESCRIPTION="Likewise Open which provides integration with Active Directory."
+FILES="COPYING README EULA"
+SCRIPT="./install.sh"
+UNAME_RELEASE=`(uname -r) 2>/dev/null` || UNAME_RELEASE=unknown
+
+# PACKAGES - (build) Used by the build system to determine what should be built.
+# INSTALL_UPGRADE_PACKAGE   - (optional) Installed before all others.
+# INSTALL_OBSOLETE_PACKAGES - (optional) Packages to uninstall.
+# INSTALL_BASE_PACKAGE      - Everything needed for a basic installation.
+# INSTALL_GUI_PACKAGE       - (optional) domainjoin-gui
+
+PACKAGES="open"
+case "${BUILD_OS_TYPE}" in
+    aix)
+        PACKAGES="open open-upgrade"
+        INSTALL_UPGRADE_PACKAGE="likewise.open.upgrade"
+        INSTALL_OBSOLETE_PACKAGES="likewise.base likewise.domainjoin likewise.eventlog likewise.krb5 likewise.lac likewise.libxml2 likewise.lsass likewise.lwadutil likewise.lwconfig likewise.lwio likewise.lwmgmt likewise.lwnetapi likewise.lwreg likewise.lwtools likewise.lwupgrade likewise.netlogon likewise.openldap likewise.passwd likewise.pstore likewise.reskit likewise.rpc likewise.sqlite likewise.srvsvc likewise.samba.interop likewise.open.upgrade likewise.open"
+        INSTALL_BASE_PACKAGE="likewise.open"
+        INSTALL_GUI_PACKAGE=""
+        ;;
+    darwin)
+        PACKAGES="open"
+        INSTALL_UPGRADE_PACKAGE=""
+        INSTALL_OBSOLETE_PACKAGES="likewise-base likewise-domainjoin likewise-domainjoin-gui likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lwadutil likewise-lwconfig likewise-lwio likewise-lwmgmt likewise-lwnetapi likewise-lwreg likewise-lwreg-32bit likewise-lwtools likewise-lwupgrade likewise-mod-auth-kerb likewise-netlogon likewise-openldap likewise-passwd likewise-pstore likewise-reskit likewise-rpc likewise-sqlite likewise-srvsvc likewise-samba-interop likewise-open-upgrade likewise-open"
+        INSTALL_BASE_PACKAGE="likewise-open"
+        INSTALL_GUI_PACKAGE=""
+        ;;
+    freebsd)
+        PACKAGES="open open-upgrade"
+        INSTALL_UPGRADE_PACKAGE="likewise-open-upgrade"
+        INSTALL_OBSOLETE_PACKAGES="likewise-base likewise-domainjoin likewise-domainjoin-gui likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lwadutil likewise-lwconfig likewise-lwio likewise-lwmgmt likewise-lwnetapi likewise-lwreg likewise-lwreg-32bit likewise-lwtools likewise-lwupgrade likewise-mod-auth-kerb likewise-netlogon likewise-openldap likewise-passwd likewise-pstore likewise-reskit likewise-rpc likewise-sqlite likewise-srvsvc likewise-samba-interop likewise-open-upgrade likewise-open likewise-open-gui"
+        INSTALL_BASE_PACKAGE="likewise-open"
+        INSTALL_GUI_PACKAGE=""
+        ;;
+    linux)
+        PACKAGES="open open-gui open-upgrade"
+        INSTALL_UPGRADE_PACKAGE="likewise-open-upgrade"
+        INSTALL_OBSOLETE_PACKAGES="likewise-base likewise-domainjoin likewise-domainjoin-gui likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lsass-32bit likewise-lwadutil likewise-lwconfig likewise-lwio likewise-lwmgmt likewise-lwnetapi likewise-lwreg likewise-lwreg-32bit likewise-lwtools likewise-lwupgrade likewise-mod-auth-kerb likewise-netlogon likewise-openldap likewise-passwd likewise-pstore likewise-reskit likewise-rpc likewise-sqlite likewise-srvsvc likewise-samba-interop"
+        INSTALL_BASE_PACKAGE="likewise-open"
+        INSTALL_GUI_PACKAGE="likewise-open-gui"
+        ;;
+    hpux)
+        PACKAGES="open open-upgrade"
+        INSTALL_UPGRADE_PACKAGE="LikewiseOpenUpgrade"
+        INSTALL_OBSOLETE_PACKAGES="LikewiseBase LikewiseDomainjoin LikewiseDomainjoinGui LikewiseEventlog LikewiseKrb5 LikewiseLac LikewiseLibxml2 LikewiseLsass LikewiseLwadutil LikewiseLwconfig  LikewiseLwio LikewiseLwmgmt LikewiseLwnetapi LikewiseLwreg LikewiseLwtools LikewiseLwupgrade LikewiseModAuthKerb LikewiseNetlogon LikewiseOpenldap LikewisePasswd LikewisePstore LikewiseReskit LikewiseRpc LikewiseSqlite LikewiseSrvsvc LikewiseSambaInterop LikewiseOpenUpgrade LikewiseOpen LikewiseOpenGui"
+        INSTALL_BASE_PACKAGE="LikewiseOpen"
+        INSTALL_GUI_PACKAGE="LikewiseOpenGui"
+        ;;
+    solaris)
+        PACKAGES="open open-upgrade"
+        INSTALL_UPGRADE_PACKAGE="LikewiseOpenUpgrade"
+        INSTALL_OBSOLETE_PACKAGES="LikewiseBase LikewiseDomainjoin LikewiseDomainjoinGui LikewiseEventlog LikewiseKrb5 LikewiseLac LikewiseLibxml2 LikewiseLsass LikewiseLwadutil LikewiseLwconfig  LikewiseLwio LikewiseLwmgmt LikewiseLwnetapi LikewiseLwreg LikewiseLwtools LikewiseLwupgrade LikewiseModAuthKerb LikewiseNetlogon LikewiseOpenldap LikewisePasswd LikewisePstore LikewiseReskit LikewiseRpc LikewiseSqlite LikewiseSrvsvc LikewiseSambaInterop LikewiseOpenUpgrade LikewiseOpen LikewiseOpenGui"
+        INSTALL_BASE_PACKAGE="LikewiseOpen"
+        INSTALL_GUI_PACKAGE="LikewiseOpenGui"
+        ;;
+esac

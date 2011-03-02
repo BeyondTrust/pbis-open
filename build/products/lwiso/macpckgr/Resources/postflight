@@ -1,0 +1,517 @@
+#!/bin/bash
+
+log_info()
+{
+    echo "$@" 1>&2
+}
+
+ConfigureDirectoryOwners()
+{
+    echo "Prepare common installation and dependant directories used by Likewise"
+
+    OPT="/opt"
+    OPT_LW="/opt/likewise"
+    USR="/usr"
+    USR_LIB="/usr/lib"
+    ETC="/etc"
+    ETC_LW="/etc/likewise"
+    VAR="/var"
+    VAR_LIB="/var/lib"
+    VAR_LIB_LW="/var/lib/likewise"
+    VAR_LIB_LW_LWREG="/var/lib/likewise/lwreg"
+    VAR_LIB_LW_NETLOGON="/var/lib/likewise/netlogon"
+    VAR_LIB_LW_LSASS="/var/lib/likewise/lsass"
+
+    if test -d $OPT; then
+        echo "setting $OPT directory owner to 0:80"
+        chown 0:80 "$OPT"
+    else
+        echo "creating $OPT directory and setting owner to 0:80"
+        mkdir "$OPT"
+        chown 0:80 "$OPT"
+    fi
+
+    if test -d $OPT_LW; then
+        echo "setting $OPT_LW directory owner to 0:80"
+        chown -R 0:80 "$OPT_LW"
+    else
+        echo "creating $OPT_LW directory and setting owner to 0:80"
+        mkdir "$OPT_LW"
+        chown -R 0:80 "$OPT_LW"
+    fi
+
+    if test -d $USR; then
+        echo "setting $USR directory owner to 0:0"
+        chown 0:0 "$USR"
+    else
+        echo "creating $USR directory and setting owner to 0:0"
+        mkdir "$USR"
+        chown 0:0 "$USR"
+    fi
+
+    if test -d $USR_LIB; then
+        echo "setting $USR_LIB directory owner to 0:0"
+        chown 0:0 "$USR_LIB"
+    else
+        echo "creating $USR_LIB directory and setting owner to 0:0"
+        mkdir "$USR_LIB"
+        chown -R 0:0 "$USR_LIB"
+    fi
+
+    if test -d $ETC; then
+        echo "setting $ETC directory owner to 0:80"
+        chown 0:80 "$ETC"
+    else
+        echo "creating $ETC directory and setting owner to 0:80"
+        mkdir "$ETC"
+        chown 0:80 "$ETC"
+    fi
+
+    if test -d $VAR; then
+        echo "setting $VAR directory owner to 0:80"
+        chown 0:80 "$VAR"
+    else
+        echo "creating $VAR directory and setting owner to 0:80"
+        mkdir "$VAR"
+        chown 0:80 "$VAR"
+    fi
+
+    if test -d $VAR_LIB; then
+        echo "setting $VAR_LIB directory owner to 0:80"
+        chown 0:80 "$VAR_LIB"
+    else
+        echo "creating $VAR_LIB directory and setting owner to 0:80"
+        mkdir "$VAR_LIB"
+        chown 0:80 "$VAR_LIB"
+    fi
+
+    if test -d $VAR_LIB_LW; then
+        echo "setting $VAR_LIB_LW directory owner to 0:80"
+        chown -R 0:80 "$VAR_LIB_LW"
+    else
+        echo "creating $VAR_LIB_LW directory and setting owner to 0:80"
+        mkdir "$VAR_LIB_LW"
+        chown -R 0:80 "$VAR_LIB_LW"
+    fi
+
+    if test -d $VAR_LIB_LW_LWREG; then
+        echo "setting $VAR_LIB_LW_LWREG directory owner to 0:80"
+        chown -R 0:80 "$VAR_LIB_LW_LWREG"
+        chmod -R 0755 "$VAR_LIB_LW_LWREG"
+    else
+        echo "creating $VAR_LIB_LW_LWREG directory and setting owner to 0:80"
+        mkdir "$VAR_LIB_LW_LWREG"
+        chown -R 0:80 "$VAR_LIB_LW_LWREG"
+        chmod -R 0755 "$VAR_LIB_LW_LWREG"
+    fi
+
+    if test -d $VAR_LIB_LW_NETLOGON; then
+        echo "setting $VAR_LIB_NETLOGON directory owner to 0:80"
+        chown -R 0:80 "$VAR_LIB_LW_NETLOGON"
+        chmod -R 0755 "$VAR_LIB_LW_NETLOGON"
+    else
+        echo "creating $VAR_LIB_LW_NETLOGON directory and setting owner to 0:80"
+        mkdir "$VAR_LIB_LW_NETLOGON"
+        chown -R 0:80 "$VAR_LIB_LW_NETLOGON"
+        chmod -R 0755 "$VAR_LIB_LW_NETLOGON"
+    fi
+
+    if test -d $VAR_LIB_LW_LSASS; then
+        echo "setting $VAR_LIB_LW_LSASS directory owner to 0:80"
+        chown -R 0:80 "$VAR_LIB_LW_LSASS"
+        chmod -R 0755 "$VAR_LIB_LW_LSASS"
+    else
+        echo "creating $VAR_LIB_LW_LSASS directory and setting owner to 0:80"
+        mkdir "$VAR_LIB_LW_LSASS"
+        chown -R 0:80 "$VAR_LIB_LW_LSASS"
+        chmod -R 0755 "$VAR_LIB_LW_LSASS"
+    fi
+}
+
+wait_for_lwsm_running_status()
+{
+    status=1
+
+    while [ $status -ne 0 ]; do
+        /opt/likewise/bin/lwsm list > /dev/null 2>&1
+        status=$?
+        sleep 1
+    done
+
+    echo "Service lwsmd running"
+}
+
+wait_for_service_running_status()
+{
+    SERVICE=$1
+    status=1
+
+    while [ $status -ne 0 ]; do
+        /opt/likewise/bin/lwsm status $SERVICE > /dev/null 2>&1
+        status=$?
+        sleep 1
+    done
+
+    echo "Service $SERVICE running"
+}
+
+configure_and_start_lwsmd()
+{
+    SERVICE_NAME=com.likewisesoftware.lwsmd
+    SERVICE_DAEMON=/Library/LaunchDaemons/$SERVICE_NAME.plist
+    SERVICE_DAEMON_INSTALL=/etc/likewise/LaunchDaemons/$SERVICE_NAME.plist
+
+    if [ -f $SERVICE_DAEMON_INSTALL ]; then
+        echo "Configuring and starting lwsmd service with launchctl"
+        cp $SERVICE_DAEMON_INSTALL $SERVICE_DAEMON
+        launchctl load $SERVICE_DAEMON > /dev/null 2>&1
+        launchctl start $SERVICE_NAME > /dev/null 2>&1
+        wait_for_lwsm_running_status
+    fi
+}
+
+restart_lwsmd()
+{
+    SERVICE_NAME=com.likewisesoftware.lwsmd
+
+    echo "Restarting lwsmd service with launchctl"
+    launchctl stop $SERVICE_NAME > /dev/null 2>&1
+    sleep 3
+    launchctl start $SERVICE_NAME > /dev/null 2>&1
+    wait_for_lwsm_running_status
+}
+
+configure_and_start_service()
+{
+    SERVICE=$1
+
+    /opt/likewise/bin/lwregshell set_value [HKEY_THIS_MACHINE\\Services\\$SERVICE] Autostart 1 > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        /opt/likewise/bin/lwregshell add_value [HKEY_THIS_MACHINE\\Services\\$SERVICE] Autostart REG_DWORD 1 2>&1 || exit 1
+    fi
+
+    echo "Starting $SERVICE service with Likewise Service Manager"
+    /opt/likewise/bin/lwsm start $SERVICE > /dev/null 2>&1 || exit 1
+    wait_for_service_running_status $SERVICE
+}
+
+restore_daemon()
+{
+    SERVICE=$1
+
+    if [ -f /tmp/${SERVICE}.restart ]; then
+        configure_and_restart_service $SERVICE
+        rm /tmp/${SERVICE}.restart
+    fi
+}
+
+autostart_daemons()
+{
+    daemon=""
+    for daemon in ${AUTOSTART}
+    do
+        echo "Auto-configuring Likewise ${daemon} service"
+        configure_and_start_service "${daemon}"
+        if [ -f /tmp/${daemon}.restart ]; then
+            rm /tmp/${daemon}.restart
+        fi
+    done
+}
+
+restore_daemons()
+{
+    daemon=""
+    for daemon in ${DAEMONS}
+    do
+        echo "Restoring Likewise ${daemon} service"
+        restore_daemon "${daemon}"
+    done
+}
+
+enable_plugin()
+{
+    PLUGIN_DIR=LWDSPlugin.dsplug
+    PLUGIN_DIR_OPEN=LWIDSPlugin.dsplug
+    PLUGIN_DIR_ENT=LWEDSPlugin.dsplug
+    SRC_DIR=/opt/likewise/lib
+    FRAMEWORK_DIR="/System/Library/Frameworks/DirectoryService.framework/Resources/Plugins"
+
+    # Cleanup old former plugin links
+    if [ -h $FRAMEWORK_DIR/$PLUGIN_DIR_OPEN ]; then
+        /bin/rm -f $FRAMEWORK_DIR/$PLUGIN_DIR_OPEN
+    fi
+    if [ -h $FRAMEWORK_DIR/$PLUGIN_DIR_ENT ]; then
+        /bin/rm -f $FRAMEWORK_DIR/$PLUGIN_DIR_ENT
+    fi
+
+    # Cleanup prior plugin link
+    if [ -h $FRAMEWORK_DIR/$PLUGIN_DIR ]; then
+        /bin/rm -f $FRAMEWORK_DIR/$PLUGIN_DIR
+    fi
+
+    # Relink to new plugin
+    ln -s $SRC_DIR/$PLUGIN_DIR $FRAMEWORK_DIR/$PLUGIN_DIR
+
+    if [ -f /usr/bin/setfile ]; then
+        setfile -a "V" /opt
+    else
+        grep opt /.hidden > /dev/null
+        if [ $? -ne 0 ]; then
+            echo "opt" >> /.hidden
+        fi
+    fi
+
+    killall DirectoryService
+
+    sleep 3
+}
+
+configure_logon_message_application()
+{
+    /usr/bin/defaults read /Library/Preferences/loginwindow | grep 'Likewise Logon Message.app' > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "Configuring Likewise Logon Message application"
+        defaults write /Library/Preferences/loginwindow AutoLaunchedApplicationDictionary -array-add '{ "Path" = "/opt/likewise/bin/Likewise Logon Message.app"; "Hide" = "0"; }'
+    else
+        echo "Likewise Logon Message application already configured"
+    fi
+}
+
+import_5_0123_file()
+{
+    CONVERT="/opt/likewise/bin/conf2reg"
+    REGIMPORT="/opt/likewise/bin/lwregshell import"
+
+    COMMAND=$1
+    SOURCE=$2
+    # DEST is not necessary for some commands.
+    DEST=$3
+
+    if [ -f $SOURCE ]; then
+        $CONVERT $COMMAND $SOURCE $DEST > /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            log_info "Error converting ${SOURCE} to new format."
+            return 1
+        fi
+
+        if [ -n "$DEST" -a -f "$DEST" ]; then
+            $REGIMPORT $DEST > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                log_info "Error importing ${DEST} into the registry."
+                return 1
+            fi
+        fi
+        return 0
+    fi
+    log_info "Unable to find ${SOURCE}."
+    return 1
+}
+
+restore_5_0123_configuration()
+{
+    CONVERT="/opt/likewise/bin/conf2reg"
+
+    if test -d $UPGRADEDIR5; then
+        echo "Finalizing upgrade process"
+    else
+        return 0;
+    fi
+
+    echo "Converting former lsassd.conf settings for Likewise Registry"
+    import_5_0123_file "--lsass" "${UPGRADEDIR5}/lsassd.conf" \
+        "${UPGRADEDIR5}/lsassd.conf.reg"
+
+    echo "Converting former netlogond.conf settings for Likewise Registry"
+    import_5_0123_file "--netlogon" "${UPGRADEDIR5}/netlogon.conf" \
+        "${UPGRADEDIR5}/netlogon.conf.reg"
+
+    echo "Converting former eventlogd.conf settings for Likewise Registry"
+    import_5_0123_file "--eventlog" "${UPGRADEDIR5}/eventlogd.conf" \
+        "${UPGRADEDIR5}/eventlogd.conf.reg"
+
+    echo "Converting former password store database for Likewise Registry"
+    import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR5}/pstore.db"
+
+    rm -r "${UPGRADEDIR5}"
+}
+
+restore_6_0_configuration()
+{
+    if test -d $UPGRADEDIR6; then
+        echo "Finalizing upgrade process"
+    else
+        return 0;
+    fi
+
+    if [ -f "${UPGRADEDIR6}/registry.db" ]; then
+        echo "Restoring /var/lib/likewise/db/registry.db"
+        cp "${UPGRADEDIR6}/registry.db" "/var/lib/likewise/db/registry.db"
+        chmod 700 "/var/lib/likewise/db/registry.db"
+    fi
+
+    if [ -f "${UPGRADEDIR6}/sam.db" ]; then
+        echo "Restoring /var/lib/likewise/db/sam.db"
+        cp "${UPGRADEDIR6}/sam.db" "/var/lib/likewise/db/sam.db"
+        chmod 700 "/var/lib/likewise/db/sam.db"
+    fi
+
+    if [ -f "${UPGRADEDIR6}/lwi_events.db" ]; then
+        echo "Restoring /var/lib/likewise/db/lwi_events.db"
+        cp "${UPGRADEDIR6}/lwi_events.db" "/var/lib/likewise/db/lwi_events.db"
+        chmod 700 "/var/lib/likewise/db/lwi_events.db"
+    fi
+
+    if [ -f "${UPGRADEDIR6}/lsass-adcache.db" ]; then
+        echo "Restoring /var/lib/likewise/db/lsass-adcache.db"
+        cp "${UPGRADEDIR6}/lsass-adcache.db" "/var/lib/likewise/db/lsass-adcache.db"
+        chmod 700 "/var/lib/likewise/db/lsass-adcache.db"
+    fi
+
+    rm -r "${UPGRADEDIR6}"
+}
+
+import_registry()
+{
+    REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg lwdsplugin.reg lwiod.reg rdr.reg npfs.reg srv.reg dcerpcd.reg"
+    REGFILES_IMPORT="lsassd-import.reg"
+    REGUPGRADE="/opt/likewise/bin/lwregshell upgrade"
+    REGIMPORT="/opt/likewise/bin/lwregshell import"
+
+    for regfile in ${REGFILES}
+    do
+        FILEPATH="/opt/likewise/share/config/${regfile}"
+        if [ -f ${FILEPATH} ]
+        then
+            echo "Upgrading registry settings from (${FILEPATH})"
+            ${REGUPGRADE} ${FILEPATH} > /dev/null 2>&1
+            exitcode=$?
+
+            if [ $exitcode -ne '0' ]
+            then
+                echo "There was an error importing ${FILEPATH} into the registry."
+            fi
+        fi
+    done
+    for regfile in ${REGFILES_IMPORT}
+    do
+        FILEPATH="/opt/likewise/share/config/${regfile}"
+        if [ -f ${FILEPATH} ]
+        then
+            echo "Importing registry settings from (${FILEPATH})"
+            ${REGIMPORT} ${FILEPATH} > /dev/null 2>&1
+            exitcode=$?
+
+            if [ $exitcode -ne '0' ]
+            then
+                echo "There was an error importing ${FILEPATH} into the registry."
+            fi
+        fi
+    done
+}
+
+restore_configuration()
+{
+    domainjoin_cli=/opt/likewise/bin/domainjoin-cli
+    get_current_domain=/opt/likewise/bin/lw-get-current-domain
+
+    # This starts all needed likewise services
+    if [ -x "$domainjoin_cli" ]; then
+        $domainjoin_cli query > /dev/null 2>&1
+    fi
+
+    if [ -x "$get_current_domain" ]; then
+        $get_current_domain > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            if [ -x "$domainjoin_cli" ]; then
+                $domainjoin_cli configure --enable pam > /dev/null 2>&1
+                $domainjoin_cli configure --enable nsswitch > /dev/null 2>&1
+            fi
+        fi
+    fi
+}
+
+
+##
+## Main
+##
+
+UPGRADEDIR5=/tmp/lw-upgrade-5
+UPGRADEDIR6=/tmp/lw-upgrade-6
+AUTOSTART="netlogon lwio dcerpc eventlog lsass"
+DAEMONS=""
+
+echo "Finalizing Likewise installation process"
+
+# Start service manager for registry import
+configure_and_start_lwsmd
+
+# Import configuration files and the old pstore into the registry
+restore_5_0123_configuration
+restore_6_0_configuration
+
+# Populate registry
+import_registry
+
+# Stop/start service manager after registry import
+restart_lwsmd
+
+# Start any automatically-started daemons
+autostart_daemons
+
+# Restore the daemon state
+restore_daemons
+
+# Restore configuration if still joined to a domain
+restore_configuration
+
+# Configure Likewise DS plugin
+enable_plugin
+
+# Add Likewise DS Plugin to Search list
+/usr/bin/dscl /Search -create / SearchPolicy CSPSearchPath
+/usr/bin/dscl /Search -append / CSPSearchPath "/Likewise - Active Directory"
+
+# Create Global Login Item entry for Likewise Logon Message.app
+# to display licensing and password expiration warning messages on
+# user logon activity.
+configure_logon_message_application
+
+# Add Likewise Utilities folder to Applications location in Finder. Shortcut
+# the Likewise Domain Join application to here.
+if test -d /Applications/Likewise\ Utilities; then
+    echo "Likewise Utilities folder already exists"
+else
+    mkdir -p /Applications/Likewise\ Utilities
+    if test -f /Applications/Likewise\Utilities/Likewise\ Domain\ Join; then
+        echo "Likewise Domain Join application already created in utilities folder"
+    else
+        ln -s /opt/likewise/bin/Likewise\ Domain\ Join.app /Applications/Likewise\ Utilities/.
+    fi
+fi
+
+if /opt/likewise/bin/lw-get-current-domain > /dev/null 2>&1; then
+    JOINED="yes"
+fi
+
+if test -d $UPGRADEDIR5; then
+    log_info "Your former Likewise 5.X software has been successfully upgraded."
+fi
+
+if test -d $UPGRADEDIR6; then
+    log_info "Your former Likewise 6.X software has been successfully upgraded."
+fi
+
+if [ -z "$JOINED" ]; then
+    log_info ""
+    log_info "Use the domainjoin-cli program to join your computer to an Active "
+    log_info "Directory domain which will enable logons to your system with Active Directory "
+    log_info "user accounts."
+    open -a /opt/likewise/bin/Likewise\ Domain\ Join.app/Contents/MacOS/Likewise\ Domain\ Join&
+else
+    log_info ""
+    log_info "Your computer is joined to the following domain:"
+    domainjoin_cli=/opt/likewise/bin/domainjoin-cli
+    log_info "`$domainjoin_cli query`"
+fi
+
+
