@@ -67,7 +67,8 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{PrefixDir}/sbin
 %{PrefixDir}/share
 %{PrefixDir}/data
-#%{PrefixDir}/apache
+%{PrefixDir}/apache/2.0/*.so
+%{PrefixDir}/apache/2.2/*.so
 %{PrefixDir}/%{_lib}/gss/*.so
 %{PrefixDir}/%{_lib}/engines/*.so
 %{PrefixDir}/%{_lib}/krb5/plugins/preauth/*.so
@@ -650,6 +651,9 @@ exit 0
 /%{_lib}/*.a
 /%{_lib}/*.la
 /%{_lib}/security/*.la
+
+%{PrefixDir}/apache/2.0/*.a
+%{PrefixDir}/apache/2.2/*.a
 
 %attr(0644,root,root) %{PrefixDir}/include/*
 %attr(0644,root,root) %{PrefixDir}/share/man/*

@@ -3,6 +3,8 @@ PKG_NEED_FOREIGN=1
 PKG_DESC="Likewise Open"
 PKG_COMPONENTS="lwbase lwadvapi centutils openssl libiconv libuuid lwmsg lwsm popt curl lsass lwdns krb5 cyrus-sasl openldap sqlite libxml2 libschannel dcerpc lwreg lwsm eventlog netlogon lwio lwnetapi srvsvc domainjoin lwtools lwupgrade lwconfig reapsysl samba-interop"
 
+MODAUTHKERB="mod-auth-kerb-2_0 mod-auth-kerb-2_2"
+
 case "${BUILD_OS_TYPE}" in
     aix)
         PKG_COMPONENTS="$PKG_COMPONENTS passwd"
@@ -12,10 +14,10 @@ case "${BUILD_OS_TYPE}" in
         UNAME_RELEASE=`(uname -r) 2>/dev/null` || UNAME_RELEASE=unknown
         case "$UNAME_RELEASE" in
             8.*)
-                PKG_COMPONENTS="$PKG_COMPONENTS domainjoin-mac apache-2_0 apache-2_2"
+                PKG_COMPONENTS="$PKG_COMPONENTS domainjoin-mac $MODAUTHKERB"
                 ;;
             9.*)
-                PKG_COMPONENTS="$PKG_COMPONENTS domainjoin-mac apache-2_0 apache-2_2"
+                PKG_COMPONENTS="$PKG_COMPONENTS domainjoin-mac $MODAUTHKERB"
                 ;;
             10.*)
                 PKG_COMPONENTS="$PKG_COMPONENTS domainjoin-mac"
@@ -24,7 +26,7 @@ case "${BUILD_OS_TYPE}" in
         ;;
 
     freebsd)
-        PKG_COMPONENTS="$PKG_COMPONENTS passwd"
+        PKG_COMPONENTS="$PKG_COMPONENTS passwd $MODAUTHKERB"
         ;;
 
     hpux)
@@ -38,11 +40,11 @@ case "${BUILD_OS_TYPE}" in
         ;;
 
     linux)
-        PKG_COMPONENTS="$PKG_COMPONENTS passwd libfuse apache-2_0 apache-2_2"
+        PKG_COMPONENTS="$PKG_COMPONENTS passwd libfuse $MODAUTHKERB"
         ;;
 
     solaris)
-        PKG_COMPONENTS="$PKG_COMPONENTS passwd apache-2_0 apache-2_2"
+        PKG_COMPONENTS="$PKG_COMPONENTS passwd $MODAUTHKERB"
         case "${BUILD_OS_ARCH}" in
             i386)
 #                if [ "`uname -r`" = "5.10" ]; then
@@ -53,6 +55,8 @@ case "${BUILD_OS_TYPE}" in
                 ;;
         esac
         ;;
+    source)
+        PKG_COMPONENTS="$PKG_COMPONENTS passwd $MODAUTHKERB"
 esac
 
 function package_populate
