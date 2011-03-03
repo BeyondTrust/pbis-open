@@ -1,3 +1,0 @@
-NAME="__PKG_NAME__"
-VERSION="__PKG_VERSION__.0"
-DESCRIPTION="Likewise Apache Kerberos Auth Version=__PKG_VERSION__ Release=__PKG_RELEASE__"

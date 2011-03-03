@@ -1,2 +1,0 @@
-DESCRIPTION="Likewise Apache Kerberos Auth"
-DEPENDS="likewise-krb5"
