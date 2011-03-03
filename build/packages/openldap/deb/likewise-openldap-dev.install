@@ -1,3 +1,0 @@
-__PKG_PREFIX/lib*/{*.la,*.a}
-__PKG_PREFIX/lib*/sasl2/{*.la,*.a}
-__PKG_PREFIX/include

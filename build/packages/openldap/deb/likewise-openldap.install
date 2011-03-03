@@ -1,3 +1,0 @@
-__PKG_PREFIX/bin
-__PKG_PREFIX/lib*/{*.so,*.so.*}
-__PKG_PREFIX/lib*/sasl2/{*.so,*.so.*}

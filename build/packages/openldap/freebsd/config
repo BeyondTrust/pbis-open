@@ -1,2 +1,0 @@
-DESCRIPTION="Likewise OpenLDAP libraries"
-DEPENDS="likewise-krb5"
