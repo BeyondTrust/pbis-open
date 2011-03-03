@@ -511,8 +511,33 @@ RegLexParseDash(
     CHAR inC)
 {
     DWORD dwError = 0;
+    BOOLEAN eof = FALSE;
+    BOOLEAN isDash = FALSE;
 
-    if (lexHandle->state != REGLEX_STATE_IN_QUOTE &&
+    if (lexHandle->curToken.pszValue[lexHandle->curToken.valueCursor] == '-')
+    {
+        isDash = TRUE;
+    }
+    else
+    {
+        dwError = RegIOGetChar(ioHandle, &inC, &eof);
+        if (inC == '\r' || inC == '\n')
+        {
+            isDash = TRUE;
+        }
+        else if (inC != '-')
+        {
+            RegLexAppendChar(lexHandle, '-');
+            RegLexAppendChar(lexHandle, inC);
+            return dwError;
+        }
+        else
+        {
+            dwError = RegIOUnGetChar(ioHandle, NULL);
+            isDash = TRUE;
+        }
+    }
+    if (isDash && lexHandle->state != REGLEX_STATE_IN_QUOTE &&
         lexHandle->state != REGLEX_STATE_IN_KEY &&
         lexHandle->eValueNameType != REGLEX_VALUENAME_SECURITY)
     {
