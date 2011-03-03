@@ -87,6 +87,14 @@ AD_UpdateRdrDomainHints(
     PLSA_AD_PROVIDER_STATE pState
     );
 
+static
+DWORD
+AD_FindObjectBySidNoCache(
+    IN PAD_PROVIDER_CONTEXT pContext,
+    IN PCSTR pszSid,
+    OUT PLSA_SECURITY_OBJECT* ppObject
+    );
+
 DWORD
 AD_OnlineFindCellDN(
     IN PLSA_DM_LDAP_CONNECTION pConn,
@@ -1653,10 +1661,11 @@ error:
 
 DWORD
 AD_OnlineCheckUserPassword(
-    PAD_PROVIDER_CONTEXT pContext,
-    PLSA_SECURITY_OBJECT pUserInfo,
-    PCSTR  pszPassword,
-    PDWORD pdwGoodUntilTime
+    IN PAD_PROVIDER_CONTEXT pContext,
+    IN PLSA_SECURITY_OBJECT pUserInfo,
+    IN PCSTR  pszPassword,
+    OUT PDWORD pdwGoodUntilTime,
+    OUT OPTIONAL PLSA_SECURITY_OBJECT *ppUpdatedUserInfo
     )
 {
     DWORD dwError = 0;
@@ -1671,6 +1680,8 @@ AD_OnlineCheckUserPassword(
     LSA_TRUST_DIRECTION dwTrustDirection = LSA_TRUST_DIRECTION_UNKNOWN;
     NTSTATUS ntStatus = 0;
     PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
+    PLSA_SECURITY_OBJECT pUpdatedUserInfo = NULL;
+    time_t now = 0;
 
     dwError = AD_DetermineTrustModeandDomainName(
                         pContext->pState,
@@ -1798,29 +1809,58 @@ AD_OnlineCheckUserPassword(
         BAIL_ON_NT_STATUS(ntStatus);
     }
 
+    dwError = LsaGetCurrentTimeSeconds(&now);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (ppUpdatedUserInfo &&
+        pUserInfo->version.tLastUpdated < now - AD_LOGIN_UPDATE_CACHE_ENTRY_SECS)
+    {
+        dwError = AD_FindObjectBySidNoCache(
+                        pContext,
+                        pUserInfo->pszObjectSid,
+                        &pUpdatedUserInfo);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        dwError = ADCacheDuplicateObject(
+                        &pUpdatedUserInfo,
+                        pUserInfo);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     if (pPac != NULL)
     {
         dwError = AD_CacheGroupMembershipFromPac(
                         pContext,
                         dwTrustDirection,
-                        pUserInfo,
+                        pUpdatedUserInfo,
                         pPac);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = AD_CacheUserRealInfoFromPac(
                         pContext->pState,
-                        pUserInfo,
+                        pUpdatedUserInfo,
                         pPac);
         BAIL_ON_LSA_ERROR(dwError);
 
-        LSA_ASSERT(pUserInfo->userInfo.bIsAccountInfoKnown);
+        LSA_ASSERT(pUpdatedUserInfo->userInfo.bIsAccountInfoKnown);
     }
     else
     {
         LSA_LOG_ERROR("no pac was received for %s\\%s (uid %u). The user's group memberships and password expiration may show up incorrectly on this machine.", 
-                    LSA_SAFE_LOG_STRING(pUserInfo->pszNetbiosDomainName),
-                    LSA_SAFE_LOG_STRING(pUserInfo->pszSamAccountName),
-                    pUserInfo->userInfo.uid);
+                    LSA_SAFE_LOG_STRING(pUpdatedUserInfo->pszNetbiosDomainName),
+                    LSA_SAFE_LOG_STRING(pUpdatedUserInfo->pszSamAccountName),
+                    pUpdatedUserInfo->userInfo.uid);
+    }
+
+    if (ppUpdatedUserInfo)
+    {
+        *ppUpdatedUserInfo = pUpdatedUserInfo;
+    }
+    else
+    {
+        ADCacheSafeFreeObject(&pUpdatedUserInfo);
     }
 
 cleanup:
@@ -1839,6 +1879,11 @@ cleanup:
 
 error:
     *pdwGoodUntilTime = 0;
+    if (ppUpdatedUserInfo)
+    {
+        *ppUpdatedUserInfo = NULL;
+    }
+    ADCacheSafeFreeObject(&pUpdatedUserInfo);
 
     goto cleanup;
 }
@@ -1852,6 +1897,7 @@ AD_OnlineAuthenticateUserPam(
 {
     DWORD dwError = 0;
     PLSA_SECURITY_OBJECT pUserInfo = NULL;
+    PLSA_SECURITY_OBJECT pUpdatedUserInfo = NULL;
     DWORD dwGoodUntilTime = 0;
     PSTR pszNT4UserName = NULL;
     PLSA_AUTH_USER_PAM_INFO pPamAuthInfo = NULL;
@@ -1871,7 +1917,8 @@ AD_OnlineAuthenticateUserPam(
                     pContext,
                     pUserInfo,
                     pParams->pszPassword,
-                    &dwGoodUntilTime);
+                    &dwGoodUntilTime,
+                    &pUpdatedUserInfo);
     if (dwError == LW_ERROR_ACCOUNT_DISABLED ||
         dwError == LW_ERROR_ACCOUNT_EXPIRED ||
         dwError == LW_ERROR_PASSWORD_EXPIRED)
@@ -1899,36 +1946,28 @@ AD_OnlineAuthenticateUserPam(
     }
     BAIL_ON_LSA_ERROR(dwError);
 
-    ADCacheSafeFreeObject(&pUserInfo);
-
-    dwError = AD_FindUserObjectByName(
-                    pContext,
-                    pParams->pszLoginName,
-                    &pUserInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
     dwError = AD_VerifyUserAccountCanLogin(
                 pContext,
-                pUserInfo);
+                pUpdatedUserInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_OnlineCachePasswordVerifier(
                     pContext->pState,
-                    pUserInfo,
+                    pUpdatedUserInfo,
                     pParams->pszPassword);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateStringPrintf(
         &pszNT4UserName,
         "%s\\%s",
-        pUserInfo->pszNetbiosDomainName,
-        pUserInfo->pszSamAccountName);
+        pUpdatedUserInfo->pszNetbiosDomainName,
+        pUpdatedUserInfo->pszSamAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (pContext->pState->bIsDefault)
     {
         dwError = LsaUmAddUser(
-                      pUserInfo->userInfo.uid,
+                      pUpdatedUserInfo->userInfo.uid,
                       pszNT4UserName,
                       pParams->pszPassword,
                       dwGoodUntilTime);
@@ -1943,6 +1982,7 @@ cleanup:
     LW_SAFE_FREE_STRING(pszNT4UserName);
 
     ADCacheSafeFreeObject(&pUserInfo);
+    ADCacheSafeFreeObject(&pUpdatedUserInfo);
 
     return dwError;
 
@@ -2778,7 +2818,8 @@ AD_OnlineChangePassword(
                     pContext,
                     pCachedUser,
                     pszPassword,
-                    &dwGoodUntilTime);
+                    &dwGoodUntilTime,
+                    NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
