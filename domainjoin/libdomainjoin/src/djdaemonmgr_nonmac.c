@@ -102,9 +102,9 @@ DJGetDaemonStatus(
          */
         status = 1;
     }
-#ifdef __LWI_FREEBSD7__
-    /* FreeBSD 7.x, running the script nscd w/ status option returns 0 (and
-     * prints nothing) even when nscd is not running.
+#if defined(__LWI_FREEBSD__)
+    /* On various versions of FreeBSD, running the script nscd w/ status
+     * returns 0 (and prints nothing) even when nscd is not running.
      */
     else if (!strcmp(prefixedPath, "/etc/rc.d/nscd"))
     {
