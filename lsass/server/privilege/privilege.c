@@ -84,7 +84,6 @@ LsaSrvPrivsLookupPrivilegeValue(
         BAIL_ON_NT_STATUS(ntStatus);
     }
                        
-
     err = LwWc16sToMbs(pwszPrivilegeName,
                        &pszPrivilegeName);
     BAIL_ON_LSA_ERROR(err);
@@ -192,4 +191,145 @@ LsaSrvIsPrivilegeValueValid(
     )
 {
     return (pValue->HighPart == 0);
+}
+
+
+DWORD
+LsaSrvPrivsEnumPrivileges(
+    IN HANDLE hServer,
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
+    IN PDWORD pResume,
+    IN DWORD PreferredMaxSize,
+    OUT PWSTR **ppPrivilegeNames,
+    OUT PLUID *ppPrivilegeValues,
+    OUT PDWORD pCount
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    DWORD enumerationStatus = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+    PACCESS_TOKEN accessToken = AccessToken;
+    ACCESS_MASK accessRights = LSA_ACCESS_LOOKUP_NAMES_SIDS |
+                               LSA_ACCESS_VIEW_POLICY_INFO;
+    ACCESS_MASK grantedAccess = 0;
+    GENERIC_MAPPING genericMapping = {0};
+    DWORD resume = 0;
+    PLSA_PRIVILEGE *ppPrivileges = NULL;
+    DWORD count = 0;
+    DWORD i = 0;
+    PWSTR *pPrivilegeNames = NULL;
+    PLUID pPrivilegeValues = NULL;
+
+    if (!accessToken)
+    {
+        err = LsaSrvPrivsGetAccessTokenFromServerHandle(
+                                hServer,
+                                &accessToken);
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    if (!RtlAccessCheck(pGlobals->pPrivilegesSecDesc,
+                        accessToken,
+                        accessRights,
+                        0,
+                        &genericMapping,
+                        &grantedAccess,
+                        &ntStatus))
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    if (pResume)
+    {
+        resume = *pResume;
+    }
+
+    err = LsaSrvPrivsGetPrivilegeEntries(
+                        &resume,
+                        PreferredMaxSize,
+                        &ppPrivileges,
+                        &count);
+    if (err == ERROR_MORE_DATA ||
+        err == ERROR_NO_MORE_ITEMS)
+    {
+        enumerationStatus = err;
+        err = ERROR_SUCCESS;
+    }
+    else if (err != ERROR_SUCCESS)
+    {
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    err = LwAllocateMemory(
+                        sizeof(pPrivilegeNames[0]) * count,
+                        OUT_PPVOID(&pPrivilegeNames));
+    BAIL_ON_LSA_ERROR(err);
+
+    err = LwAllocateMemory(
+                        sizeof(pPrivilegeValues[0]) * count,
+                        OUT_PPVOID(&pPrivilegeValues));
+    BAIL_ON_LSA_ERROR(err);
+
+    for (i = 0; i < count; i++)
+    {
+        err = LwMbsToWc16s(
+                        ppPrivileges[i]->pszName,
+                        &pPrivilegeNames[i]);
+        BAIL_ON_LSA_ERROR(err);
+
+        pPrivilegeValues[i] = ppPrivileges[i]->Luid;
+    }
+
+    if (pResume)
+    {
+        *pResume = resume;
+    }
+
+    *ppPrivilegeNames  = pPrivilegeNames;
+    *ppPrivilegeValues = pPrivilegeValues;
+    *pCount            = count;
+
+error:
+    if (err || ntStatus)
+    {
+        for (i = 0; i < count; i++)
+        {
+            LW_SAFE_FREE_MEMORY(ppPrivilegeNames[i]);
+        }
+        LW_SAFE_FREE_MEMORY(ppPrivilegeNames);
+        LW_SAFE_FREE_MEMORY(ppPrivilegeValues);
+
+        if (ppPrivilegeNames)
+        {
+            *ppPrivilegeNames = NULL;
+        }
+
+        if (ppPrivilegeValues)
+        {
+            *ppPrivilegeValues = NULL;
+        }
+
+        if (pCount)
+        {
+            *pCount = 0;
+        }
+    }
+
+    // Array elements are pointers from the database so they
+    // must not be freed here
+    LW_SAFE_FREE_MEMORY(ppPrivileges);
+
+    if (err == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    if (err == ERROR_SUCCESS)
+    {
+        err = enumerationStatus;
+    }
+
+    return err;
 }

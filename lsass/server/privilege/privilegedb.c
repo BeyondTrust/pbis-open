@@ -226,6 +226,9 @@ LsaSrvCreatePrivilegesDb(
                  NULL);
     BAIL_ON_LSA_ERROR(err);
 
+    LSA_LOG_VERBOSE("Loading privileges database (%u privileges, "
+                    "longest privilege name = %u",
+                    numKeys, maxKeyLen);
     err = LwAllocateMemory(
                  maxKeyLen,
                  OUT_PPVOID(&pszPrivilegeName));
@@ -250,6 +253,9 @@ LsaSrvCreatePrivilegesDb(
                      NULL,
                      NULL);
         BAIL_ON_LSA_ERROR(err);
+
+        LSA_LOG_VERBOSE("Loading privilege %s",
+                        LSA_SAFE_LOG_STRING(pszPrivilegeName));
 
         if (!LsaSrvIsPrivilegeNameValid(pszPrivilegeName))
         {
@@ -701,3 +707,153 @@ LsaSrvSetPrivilegeEntry(
 
     return err;
 }
+
+
+DWORD
+LsaSrvPrivsGetPrivilegeEntries(
+    IN OUT PDWORD pResume,
+    IN DWORD PreferredMaxSize,
+    OUT PLSA_PRIVILEGE **pppPrivileges,
+    OUT PDWORD pCount
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    DWORD enumerationStatus = ERROR_SUCCESS;
+    BOOLEAN Locked = FALSE;
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+    DWORD totalSize = 0;
+    DWORD entrySize = 0;
+    DWORD count = 0;
+    DWORD index = 0;
+    PLSA_PRIVILEGE *ppPrivileges = NULL;
+    LW_HASH_ITERATOR iterator = {0};
+    LW_HASH_ENTRY* pEntry = NULL;
+    PLSA_PRIVILEGE pPrivilegeEntry = NULL;
+
+    LSASRV_PRIVS_RDLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
+
+    err = LwHashGetIterator(
+                 pGlobals->pPrivileges,
+                 &iterator);
+    BAIL_ON_LSA_ERROR(err);
+
+    //
+    // First, calculate how many privileges are we going to return
+    // (at least one)
+    //
+    if (PreferredMaxSize != (DWORD)(-1))
+    {
+        do
+        {
+            pEntry = LwHashNext(&iterator);
+            if (index++ < (*pResume))
+            {
+                continue;
+            }
+            else if (!pEntry)
+            {
+                break;
+            }
+
+            pPrivilegeEntry = (PLSA_PRIVILEGE)pEntry->pValue;
+            totalSize += entrySize;
+
+            // LSA_POLICY_PRIVILEGE_DEF includes UNICODE_STRING name and LUID
+            entrySize += sizeof(LSA_POLICY_PRIVILEGE_DEF);
+            entrySize += sizeof(WCHAR) * strlen(pPrivilegeEntry->pszName);
+
+            count++;
+
+        } while (pEntry && (totalSize + entrySize < PreferredMaxSize));
+
+        err = LwHashGetIterator(
+                     pGlobals->pPrivileges,
+                     &iterator);
+        BAIL_ON_LSA_ERROR(err);
+
+        index     = 0;
+        totalSize = 0;
+        entrySize = 0;
+    }
+    else
+    {
+        count = LwHashGetKeyCount(pGlobals->pPrivileges);
+    }
+
+    //
+    // Allocate array of LSA_PRIVILEGE pointers to return
+    //
+    err = LwAllocateMemory(
+                 sizeof(ppPrivileges[0]) * count,
+                 OUT_PPVOID(&ppPrivileges));
+    BAIL_ON_LSA_ERROR(err);
+
+    count = 0;
+
+    do
+    {
+        pEntry = LwHashNext(&iterator);
+        if (index++ < (*pResume))
+        {
+            continue;
+        }
+        else if (!pEntry)
+        {
+            break;
+        }
+
+        pPrivilegeEntry = (PLSA_PRIVILEGE)pEntry->pValue;
+        totalSize += entrySize;
+
+        // LSA_POLICY_PRIVILEGE_DEF includes UNICODE_STRING name and LUID
+        entrySize += sizeof(LSA_POLICY_PRIVILEGE_DEF);
+        entrySize += sizeof(WCHAR) * strlen(pPrivilegeEntry->pszName);
+
+        ppPrivileges[count++] = pPrivilegeEntry;
+
+    } while (pEntry && (totalSize + entrySize < PreferredMaxSize));
+
+    if (pEntry && count > 0)
+    {
+        enumerationStatus = ERROR_MORE_DATA;
+    }
+    else if (!pEntry && count == 0)
+    {
+        enumerationStatus = ERROR_NO_MORE_ITEMS;
+    }
+
+    *pResume       = index;
+    *pppPrivileges = ppPrivileges;
+    *pCount        = count;
+
+error:
+    LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
+
+    if (err)
+    {
+        LW_SAFE_FREE_MEMORY(ppPrivileges);
+
+        if (pppPrivileges)
+        {
+            *pppPrivileges = NULL;
+        }
+
+        if (pCount)
+        {
+            *pCount = 0;
+        }
+
+        if (pResume)
+        {
+            *pResume = 0;
+        }
+    }
+
+    if (err == ERROR_SUCCESS)
+    {
+        err = enumerationStatus;
+    }
+
+    return err;
+}
+

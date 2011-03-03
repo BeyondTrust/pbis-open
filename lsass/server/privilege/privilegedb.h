@@ -72,4 +72,13 @@ LsaSrvSetPrivilegeEntry(
     );
 
 
+DWORD
+LsaSrvPrivsGetPrivilegeEntries(
+    IN OUT PDWORD pResume,
+    IN DWORD PreferredMaxSize,
+    OUT PLSA_PRIVILEGE **pppPrivileges,
+    OUT PDWORD pCount
+    );
+
+
 #endif /* __LSASRV_PRIVS_PRIVILEGEDB_H__ */

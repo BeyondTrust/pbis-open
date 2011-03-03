@@ -1309,3 +1309,139 @@ error:
 
     return err;
 }
+
+
+DWORD
+LsaSrvPrivsEnumAccounts(
+    IN HANDLE hServer,
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
+    IN PDWORD pResume,
+    IN DWORD PreferredMaxSize,
+    OUT PSID **ppAccountSids,
+    OUT PDWORD pCount
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    DWORD enumerationStatus = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+    PACCESS_TOKEN accessToken = AccessToken;
+    ACCESS_MASK accessRights = LSA_ACCESS_LOOKUP_NAMES_SIDS |
+                               LSA_ACCESS_VIEW_POLICY_INFO;
+    ACCESS_MASK grantedAccess = 0;
+    GENERIC_MAPPING genericMapping = {0};
+    DWORD resume = 0;
+    PLSA_ACCOUNT *ppAccounts = NULL;
+    DWORD count = 0;
+    DWORD i = 0;
+    PSID *pAccountSids = NULL;
+
+    if (!accessToken)
+    {
+        err = LsaSrvPrivsGetAccessTokenFromServerHandle(
+                                hServer,
+                                &accessToken);
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    if (!RtlAccessCheck(pGlobals->pPrivilegesSecDesc,
+                        accessToken,
+                        accessRights,
+                        0,
+                        &genericMapping,
+                        &grantedAccess,
+                        &ntStatus))
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    if (pResume)
+    {
+        resume = *pResume;
+    }
+
+    err = LsaSrvPrivsGetAccountEntries(
+                        &resume,
+                        PreferredMaxSize,
+                        &ppAccounts,
+                        &count);
+    if (err == ERROR_MORE_DATA ||
+        err == ERROR_NO_MORE_ITEMS)
+    {
+        enumerationStatus = err;
+        err = ERROR_SUCCESS;
+    }
+    else if (err != ERROR_SUCCESS)
+    {
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    err = LwAllocateMemory(
+                        sizeof(pAccountSids[0]) * count,
+                        OUT_PPVOID(&pAccountSids));
+    BAIL_ON_LSA_ERROR(err);
+
+    for (i = 0; i < count; i++)
+    {
+        DWORD sidSize = RtlLengthSid(ppAccounts[i]->pSid);
+
+        err = LwAllocateMemory(
+                            sidSize,
+                            OUT_PPVOID(&pAccountSids[i]));
+        BAIL_ON_LSA_ERROR(err);
+
+        ntStatus = RtlCopySid(sidSize,
+                              pAccountSids[i],
+                              ppAccounts[i]->pSid);
+        if (ntStatus)
+        {
+            err = LwNtStatusToWin32Error(ntStatus);
+            BAIL_ON_LSA_ERROR(err);
+        }
+    }
+
+    if (pResume)
+    {
+        *pResume = resume;
+    }
+
+    *ppAccountSids  = pAccountSids;
+    *pCount         = count;
+
+error:
+    if (err || ntStatus)
+    {
+        for (i = 0; i < count; i++)
+        {
+            LW_SAFE_FREE_MEMORY(pAccountSids[i]);
+        }
+        LW_SAFE_FREE_MEMORY(pAccountSids);
+
+        if (ppAccountSids)
+        {
+            *ppAccountSids = NULL;
+        }
+
+        if (pCount)
+        {
+            *pCount = 0;
+        }
+    }
+
+    // Array elements are pointers from the database so they
+    // must not be freed here
+    LW_SAFE_FREE_MEMORY(ppAccounts);
+
+    if (err == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    if (err == ERROR_SUCCESS)
+    {
+        err = enumerationStatus;
+    }
+
+    return err;
+}

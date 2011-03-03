@@ -87,4 +87,13 @@ LsaSrvUpdateAccount_inlock(
     );
 
 
+DWORD
+LsaSrvPrivsGetAccountEntries(
+    IN OUT PDWORD pResume,
+    IN DWORD PreferredMaxSize,
+    OUT PLSA_ACCOUNT **pppAccounts,
+    OUT PDWORD pCount
+    );
+
+
 #endif /* __LSASRV_PRIVS_ACCOUNTDB_H__ */

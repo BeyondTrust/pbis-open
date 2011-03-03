@@ -134,6 +134,7 @@ LsaSrvCreateAccountsDb(
     DWORD numKeys = 0;
     DWORD maxKeyLen = 0;
     PWSTR pwszAccount = NULL;
+    PSTR pszAccount = NULL;
     HKEY hAccount = NULL;
     PSID accountSid = NULL;
     PLSA_ACCOUNT pAccountEntry = NULL;
@@ -171,6 +172,10 @@ LsaSrvCreateAccountsDb(
                  NULL);
     BAIL_ON_LSA_ERROR(err);
 
+    LSA_LOG_VERBOSE("Loading lsa accounts database (%u accounts, "
+                    "longest account name = %u",
+                    numKeys, maxKeyLen);                    
+
     err = LwAllocateMemory(
                  sizeof(WCHAR) * (maxKeyLen + 1),
                  OUT_PPVOID(&pwszAccount));
@@ -191,6 +196,14 @@ LsaSrvCreateAccountsDb(
                      NULL,
                      NULL);
         BAIL_ON_LSA_ERROR(err);
+
+        err = LwWc16sToMbs(
+                     pwszAccount,
+                     &pszAccount);
+        BAIL_ON_LSA_ERROR(err);
+
+        LSA_LOG_VERBOSE("Loading account %s",
+                        LSA_SAFE_LOG_STRING(pszAccount));
 
         //
         // Each account is a SID
@@ -243,6 +256,8 @@ LsaSrvCreateAccountsDb(
                      hAccount);
         BAIL_ON_LSA_ERROR(err);
 
+        LW_SAFE_FREE_MEMORY(pszAccount);
+
         memset(pwszAccount, 0, sizeof(WCHAR) * maxKeyLen);
         hAccount = NULL;
     }
@@ -270,6 +285,7 @@ error:
     LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->accountsRwLock);
 
     LW_SAFE_FREE_MEMORY(pwszAccount);
+    LW_SAFE_FREE_MEMORY(pszAccount);
 
     if (err == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -1149,6 +1165,156 @@ error:
             LW_SAFE_FREE_MEMORY(pPrivilegeNames[i]);
         }
         LW_SAFE_FREE_MEMORY(pPrivilegeNames);
+    }
+
+    return err;
+}
+
+
+DWORD
+LsaSrvPrivsGetAccountEntries(
+    IN OUT PDWORD pResume,
+    IN DWORD PreferredMaxSize,
+    OUT PLSA_ACCOUNT **pppAccounts,
+    OUT PDWORD pCount
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    DWORD enumerationStatus = ERROR_SUCCESS;
+    BOOLEAN Locked = FALSE;
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+    DWORD totalSize = 0;
+    DWORD entrySize = 0;
+    DWORD count = 0;
+    DWORD index = 0;
+    PLSA_ACCOUNT *ppAccounts = NULL;
+    LW_HASH_ITERATOR iterator = {0};
+    LW_HASH_ENTRY* pEntry = NULL;
+    PLSA_ACCOUNT pAccountEntry = NULL;
+
+    LSASRV_PRIVS_RDLOCK_RWLOCK(Locked, &pGlobals->accountsRwLock);
+
+    err = LwHashGetIterator(
+                 pGlobals->pAccounts,
+                 &iterator);
+    BAIL_ON_LSA_ERROR(err);
+
+    //
+    // First, calculate how many privileges are we going to return
+    // (at least one)
+    //
+    if (PreferredMaxSize != (DWORD)(-1))
+    {
+        do
+        {
+            pEntry = LwHashNext(&iterator);
+            if (index++ < (*pResume))
+            {
+                continue;
+            }
+            else if (!pEntry)
+            {
+                break;
+            }
+
+            pAccountEntry = (PLSA_ACCOUNT)pEntry->pValue;
+            totalSize += entrySize;
+
+            // LSA_ACCOUNT_INFO includes pointer to account SID
+            entrySize += sizeof(LSA_ACCOUNT_INFO);
+            entrySize += RtlLengthSid(pAccountEntry->pSid);
+
+            count++;
+
+        } while (pEntry && (totalSize + entrySize < PreferredMaxSize));
+
+        err = LwHashGetIterator(
+                     pGlobals->pAccounts,
+                     &iterator);
+        BAIL_ON_LSA_ERROR(err);
+
+        index     = 0;
+        totalSize = 0;
+        entrySize = 0;
+    }
+    else
+    {
+        count = LwHashGetKeyCount(pGlobals->pAccounts);
+    }
+
+    //
+    // Allocate array of LSA_PRIVILEGE pointers to return
+    //
+    err = LwAllocateMemory(
+                 sizeof(ppAccounts[0]) * count,
+                 OUT_PPVOID(&ppAccounts));
+    BAIL_ON_LSA_ERROR(err);
+
+    count = 0;
+
+    do
+    {
+        pEntry = LwHashNext(&iterator);
+        if (index++ < (*pResume))
+        {
+            continue;
+        }
+        else if (!pEntry)
+        {
+            break;
+        }
+
+        pAccountEntry = (PLSA_ACCOUNT)pEntry->pValue;
+        totalSize += entrySize;
+
+        // LSA_ACCOUNT_INFO includes pointer to account SID
+        entrySize += sizeof(LSA_ACCOUNT_INFO);
+        entrySize += RtlLengthSid(pAccountEntry->pSid);
+
+        ppAccounts[count++] = pAccountEntry;
+
+    } while (pEntry && (totalSize + entrySize < PreferredMaxSize));
+
+    if (pEntry && count > 0)
+    {
+        enumerationStatus = ERROR_MORE_DATA;
+    }
+    else if (!pEntry && count == 0)
+    {
+        enumerationStatus = ERROR_NO_MORE_ITEMS;
+    }
+
+    *pResume      = index;
+    *pppAccounts  = ppAccounts;
+    *pCount       = count;
+
+error:
+    LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->accountsRwLock);
+
+    if (err)
+    {
+        LW_SAFE_FREE_MEMORY(ppAccounts);
+
+        if (pppAccounts)
+        {
+            *pppAccounts = NULL;
+        }
+
+        if (pCount)
+        {
+            *pCount = 0;
+        }
+
+        if (pResume)
+        {
+            *pResume = 0;
+        }
+    }
+
+    if (err == ERROR_SUCCESS &&
+        enumerationStatus != ERROR_SUCCESS)
+    {
+        err = enumerationStatus;
     }
 
     return err;
