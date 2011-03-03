@@ -59,6 +59,7 @@
 #include <lsarpcsrv.h>
 #include <lsasrvutils.h>
 #include <lsasrvapi2.h>
+#include <lsasrvprivilege.h>
 #include <rpcctl-register.h>
 #include <directory.h>
 #include <samr_srv.h>

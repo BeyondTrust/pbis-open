@@ -131,6 +131,12 @@ LsaSrvDuplicateUnicodeStringEx(
     );
 
 
+VOID
+LsaSrvFreeUnicodeString(
+    PUNICODE_STRING pString
+    );
+
+
 NTSTATUS
 LsaSrvSidAppendRid(
     PSID *ppOutSid,

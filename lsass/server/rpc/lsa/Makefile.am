@@ -17,6 +17,8 @@ liblsa_la_SOURCES = \
     lsa_memory.c                \
     lsa_openpolicy2.c           \
     lsa_close.c                 \
+    lsa_enumprivileges.c        \
+    lsa_enumaccounts.c          \
     lsa_lookupnames.c           \
     lsa_lookupsids.c            \
     lsa_lookupnames2.c          \

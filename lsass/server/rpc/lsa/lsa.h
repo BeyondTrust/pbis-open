@@ -56,12 +56,32 @@ LsaSrvClose(
 
 
 NTSTATUS
+LsaSrvEnumPrivileges(
+    handle_t b,
+    POLICY_HANDLE hPolicy,
+    PDWORD pResume,
+    DWORD PreferredMaxSize,
+    PLSA_PRIVILEGE_ENUM_BUFFER pBuffer
+    );
+
+
+NTSTATUS
 LsaSrvOpenPolicy2(
     handle_t b,
     wchar16_t *system_name,
     ObjectAttribute *attrib,
     UINT32 access_mask,
     POLICY_HANDLE *phPolicy
+    );
+
+
+NTSTATUS
+LsaSrvEnumAccounts(
+    handle_t IDL_handle,
+    POLICY_HANDLE hPolicy,
+    PDWORD pResume,
+    PLSA_ACCOUNT_ENUM_BUFFER pAccounts,
+    DWORD PrefMaxSize
     );
 
 

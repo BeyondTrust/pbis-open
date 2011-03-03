@@ -430,6 +430,15 @@ error:
 }
 
 
+VOID
+LsaSrvFreeUnicodeString(
+    PUNICODE_STRING pString
+    )
+{
+    rpc_ss_free(pString->Buffer);
+}
+
+
 NTSTATUS
 LsaSrvSidAppendRid(
     PSID *ppOutSid,

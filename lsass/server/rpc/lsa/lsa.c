@@ -78,7 +78,13 @@ NTSTATUS srv_LsaEnumPrivileges(
     /* [out] */ LSA_PRIVILEGE_ENUM_BUFFER *pBuffer
 )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvEnumPrivileges(IDL_handle,
+                                  hPolicy,
+                                  pResume,
+                                  PreferredMaxSize,
+                                  pBuffer);
     return status;
 }
 
@@ -178,7 +184,13 @@ NTSTATUS srv_LsaEnumAccounts(
     /* [in] */ UINT32 PrefMaxSize
     )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvEnumAccounts(IDL_handle,
+                                hPolicy,
+                                Resume,
+                                pAccounts,
+                                PrefMaxSize);
     return status;
 }
 
