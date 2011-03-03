@@ -310,6 +310,7 @@ cleanup:
 
 DWORD
 GetWbclientDir(
+    PCSTR pSmbdPath,
     PSTR* ppDir
     )
 {
@@ -322,16 +323,65 @@ GetWbclientDir(
     DWORD error = 0;
     BOOLEAN exists = 0;
     PSTR pFoundPath = NULL;
+    PSTR pCommandLine = NULL;
+    PCSTR ppArgs[] = {
+        "/bin/sh",
+        "-c",
+        NULL,
+        NULL
+    };
+    PSTR pSambaLibdir = NULL;
 
     *ppDir = NULL;
 
+    // First see if libwbclient.so.0 is in Samba's libdir. There may be two
+    // copies of libwbclient.so.0 because of different architectures. This will
+    // identify which one is the primary one.
+    error = LwAllocateStringPrintf(
+            &pCommandLine,
+            "%s -b | grep LIBDIR:",
+            pSmbdPath
+            );
+    BAIL_ON_LSA_ERROR(error);
+
+    ppArgs[2] = pCommandLine;
+
+    error = CaptureOutputWithStderr(
+                "/bin/sh",
+                ppArgs,
+                &pSambaLibdir,
+                NULL);
+    BAIL_ON_LSA_ERROR(error);
+
+    LwStripWhitespace(
+            pSambaLibdir,
+            TRUE,
+            TRUE);
+
+    if (strstr(pSambaLibdir, ": "))
+    {
+        char *pValueStart = strstr(pSambaLibdir, ": ") + 2;
+        memmove(
+                pSambaLibdir,
+                pValueStart,
+                strlen(pSambaLibdir) - (pValueStart - pSambaLibdir) + 1);
+    }
+
     error = FindFileInPath(
                     WBCLIENT_FILENAME,
-                    "/usr/lib:/usr/lib64",
+                    pSambaLibdir,
                     &pFoundPath);
     if (error == ERROR_FILE_NOT_FOUND)
     {
-        error = 0;
+        // Fall back to trying the two standard system paths
+        error = FindFileInPath(
+                        WBCLIENT_FILENAME,
+                        "/usr/lib:/usr/lib64",
+                        &pFoundPath);
+        if (error == ERROR_FILE_NOT_FOUND)
+        {
+            error = 0;
+        }
     }
     BAIL_ON_LSA_ERROR(error);
 
@@ -343,6 +393,8 @@ GetWbclientDir(
         goto cleanup;
     }
 
+    // Could not find an existing libwbclient.so.0. This could be a Samba 3.0.x
+    // build. Just stick the file in a system path.
     for (index = 0; ppBackupPaths[index]; index++)
     {
         error = LwCheckFileTypeExists(
@@ -359,11 +411,14 @@ GetWbclientDir(
         }
     }
 
+    // Could not find the system library paths.
     error = ERROR_FILE_NOT_FOUND;
     BAIL_ON_LSA_ERROR(error);
 
 cleanup:
     LW_SAFE_FREE_STRING(pFoundPath);
+    LW_SAFE_FREE_STRING(pCommandLine);
+    LW_SAFE_FREE_STRING(pSambaLibdir);
     return error;
 }
 
@@ -447,6 +502,7 @@ InstallWbclient(
     char pBuffer[1024] = { 0 };
 
     error = GetWbclientDir(
+                pSmbdPath,
                 &pSambaDir);
     BAIL_ON_LSA_ERROR(error);
 
@@ -538,6 +594,7 @@ UninstallWbclient(
     struct stat statBuf = { 0 };
 
     error = GetWbclientDir(
+                pSmbdPath,
                 &pSambaDir);
     BAIL_ON_LSA_ERROR(error);
 
