@@ -13,5 +13,5 @@ Provides: likewise-open-upgrade
 Conflicts: likewise-open-upgrade
 Replaces: likewise-open-upgrade
 Description: Helper package for upgrading systems with versions preceding
- Likewise Open 6.1.
+ Likewise Open 6.2.
 

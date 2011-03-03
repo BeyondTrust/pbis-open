@@ -5,7 +5,7 @@ UPGRADEDIR=/opt/likewise-upgrade
 LOG=/var/adm/likewise-open-install.log
 TLOG=/tmp/LikewiseOpenTemp.txt
 
-DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open likewise-winbindd centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd"
+DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open likewise-winbindd centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
 
 # Display to screen and log file with a blank line between entries.
 log()

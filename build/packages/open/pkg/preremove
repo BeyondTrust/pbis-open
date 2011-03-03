@@ -7,7 +7,7 @@ TLOG=/tmp/LikewiseOpenTemp.txt
 
 
 
-DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd"
+DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
 
 # Display to screen and log file with a blank line between entires.
 log()

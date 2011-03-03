@@ -7,7 +7,7 @@ TLOG=/tmp/LikewiseOpenTemp.txt
 
 PKG_ARCH="__PKG_ARCH"
 
-DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open likewise-winbindd centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd"
+DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open likewise-winbindd centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
 
 # Display to screen and log file with a blank line between entries.
 log()

@@ -3,7 +3,8 @@
 LOG=/var/adm/likewise-open-install.log
 TLOG=/tmp/LikewiseOpenTemp.txt
 
-DAEMONS_TO_KILL="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
+DAEMONS_TO_KILL="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd
+lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
 
 # Display to screen and log file with a blank line between entires.
 log()
