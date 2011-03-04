@@ -258,14 +258,6 @@ LsaSrvPrivsAddAccountRights(
     DWORD addAccessRights = 0;
     DWORD newAccessRights = 0;
 
-    if (!accessToken)
-    {
-        err = LsaSrvPrivsGetAccessTokenFromServerHandle(
-                                hServer,
-                                &accessToken);
-        BAIL_ON_LSA_ERROR(err);
-    }
-
     err = LsaSrvPrivsOpenAccount(
                             hServer,
                             accessToken,
@@ -434,14 +426,6 @@ LsaSrvPrivsRemoveAccountRights(
     DWORD newNumPrivileges = 0;
     DWORD removeAccessRights = 0;
     DWORD newAccessRights = 0;
-
-    if (!accessToken)
-    {
-        err = LsaSrvPrivsGetAccessTokenFromServerHandle(
-                                hServer,
-                                &accessToken);
-        BAIL_ON_LSA_ERROR(err);
-    }
 
     err = LsaSrvPrivsOpenAccount(
                             hServer,
@@ -1115,6 +1099,58 @@ error:
     if (err)
     {
         *pNumRetPrivs = 0;
+    }
+
+    return err;
+}
+
+
+DWORD
+LsaSrvPrivsEnumAccountPrivileges(
+    IN PLSA_ACCOUNT_CONTEXT pAccountContext,
+    OUT PPRIVILEGE_SET *ppPrivileges
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    BOOLEAN accountLocked = FALSE;
+    PLSA_ACCOUNT pAccount = pAccountContext->pAccount;
+    DWORD numPrivileges = 0;
+    DWORD privilegesSize = 0;
+    PPRIVILEGE_SET pPrivileges = NULL;
+
+    if (!(pAccountContext->grantedAccess & LSA_ACCOUNT_VIEW))
+    {
+        err = ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    LSASRV_PRIVS_RDLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
+
+    numPrivileges  = pAccount->NumPrivileges;
+    privilegesSize = RtlLengthRequiredPrivilegeSet(numPrivileges);
+
+    err = LwAllocateMemory(privilegesSize,
+                           OUT_PPVOID(&pPrivileges));
+    BAIL_ON_LSA_ERROR(err);
+
+    pPrivileges->PrivilegeCount = numPrivileges;
+    memcpy(pPrivileges->Privilege,
+           pAccount->Privileges,
+           sizeof(pPrivileges->Privilege[0]) * numPrivileges);
+
+    *ppPrivileges = pPrivileges;
+
+error:
+    LSASRV_PRIVS_UNLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
+
+    if (err)
+    {
+        LW_SAFE_FREE_MEMORY(pPrivileges);
+
+        if (ppPrivileges)
+        {
+            *ppPrivileges = NULL;
+        }
     }
 
     return err;

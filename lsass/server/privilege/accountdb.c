@@ -173,7 +173,7 @@ LsaSrvCreateAccountsDb(
     BAIL_ON_LSA_ERROR(err);
 
     LSA_LOG_VERBOSE("Loading lsa accounts database (%u accounts, "
-                    "longest account name = %u",
+                    "longest account name = %u)",
                     numKeys, maxKeyLen);                    
 
     err = LwAllocateMemory(

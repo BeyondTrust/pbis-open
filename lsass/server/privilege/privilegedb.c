@@ -227,7 +227,7 @@ LsaSrvCreatePrivilegesDb(
     BAIL_ON_LSA_ERROR(err);
 
     LSA_LOG_VERBOSE("Loading privileges database (%u privileges, "
-                    "longest privilege name = %u",
+                    "longest privilege name = %u)",
                     numKeys, maxKeyLen);
     err = LwAllocateMemory(
                  maxKeyLen,

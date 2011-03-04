@@ -59,7 +59,8 @@ LsaSrvPrivsLookupPrivilegeValue(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
     PACCESS_TOKEN accessToken = AccessToken;
-    ACCESS_MASK accessRights = LSA_ACCESS_LOOKUP_NAMES_SIDS;
+    BOOLEAN releaseAccessToken = FALSE;
+    ACCESS_MASK accessRights = LSA_ACCESS_VIEW_POLICY_INFO;
     ACCESS_MASK grantedAccess = 0;
     GENERIC_MAPPING genericMapping = {0};
     PSTR pszPrivilegeName = NULL;
@@ -71,6 +72,8 @@ LsaSrvPrivsLookupPrivilegeValue(
                                 hServer,
                                 &accessToken);
         BAIL_ON_LSA_ERROR(err);
+
+        releaseAccessToken = TRUE;
     }
 
     if (!RtlAccessCheck(pGlobals->pPrivilegesSecDesc,
@@ -107,6 +110,11 @@ error:
 
     LW_SAFE_FREE_MEMORY(pszPrivilegeName);
 
+    if (releaseAccessToken)
+    {
+        RtlReleaseAccessToken(&accessToken);
+    }
+
     if (err == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
     {
@@ -126,8 +134,36 @@ LsaSrvPrivsLookupPrivilegeName(
     )
 {
     DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+    PACCESS_TOKEN accessToken = AccessToken;
+    BOOLEAN releaseAccessToken = FALSE;
+    ACCESS_MASK accessRights = LSA_ACCESS_VIEW_POLICY_INFO;
+    ACCESS_MASK grantedAccess = 0;
+    GENERIC_MAPPING genericMapping = {0};
     PWSTR privilegeName = NULL;
     PLSA_PRIVILEGE pPrivilegeEntry = NULL;
+
+    if (!accessToken)
+    {
+        err = LsaSrvPrivsGetAccessTokenFromServerHandle(
+                                hServer,
+                                &accessToken);
+        BAIL_ON_LSA_ERROR(err);
+
+        releaseAccessToken = TRUE;
+    }
+
+    if (!RtlAccessCheck(pGlobals->pPrivilegesSecDesc,
+                        accessToken,
+                        accessRights,
+                        0,
+                        &genericMapping,
+                        &grantedAccess,
+                        &ntStatus))
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
 
     err = LsaSrvGetPrivilegeEntryByValue(
                        pPrivilegeValue,
@@ -149,6 +185,17 @@ error:
         {
             pPrivilegeName = NULL;
         }
+    }
+
+    if (releaseAccessToken)
+    {
+        RtlReleaseAccessToken(&accessToken);
+    }
+
+    if (err == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
     }
 
     return err;

@@ -183,6 +183,13 @@ LsaSrvPrivsRemovePrivilegesFromAccount(
 
 
 DWORD
+LsaSrvPrivsEnumAccountPrivileges(
+    IN PLSA_ACCOUNT_CONTEXT pAccountContext,
+    OUT PPRIVILEGE_SET *ppPrivileges
+    );
+
+
+DWORD
 LsaSrvPrivsGetSystemAccessRights(
     IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
