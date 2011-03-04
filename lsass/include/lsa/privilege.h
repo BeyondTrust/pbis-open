@@ -53,42 +53,51 @@
 //
 // Privilege names for predefined unicode strings
 //
-#define SE_ASSIGN_AUDIT_NAME  {'S','e','A','u','d','i','t', \
-                               'P','r','i','v','i','l','e','g','e','\0'}
-#define SE_BACKUP_NAME  {'S','e','B','a','c','k','u','p', \
-                         'P','r','i','v','i','l','e','g','e','\0'}
-#define SE_CHANGE_NOTIFY_NAME  {'S','e','C','h','a','n','g','e', \
-                                'N','o','t','i','f','y', \
-                                'P','r','i','v','i','l','e','g','e','\0'}
-#define SE_CREATE_SYMBOLIC_LINK_NAME  {'S','e','C','h','a','n','g','e', \
-                                       'N','o','t','i','f','y', \
-                                       'P','r','i','v','i','l','e','g','e','\0'}
-#define SE_LOAD_DRIVER_NAME  {'S','e','L','o','a','d', 'D','r','i','v','e','r',\
-                              'P','r','i','v','i','l','e','g','e','\0'}
-#define SE_MACHINE_ACCOUNT_NAME  {'S','e','M','a','c','h','i','n','e', \
-                                  'A','c','c','o','u','n','t', \
-                                  'P','r','i','v','i','l','e','g','e','\0'}
-#define SE_MANAGE_VOLUME_NAME  {'S','e','M','a','n','a','g','e', \
-                                'V','o','l','u','m','e', \
-                                'P','r','i','v','i','l','e','g','e','\0'}
-#define SE_REMOTE_SHUTDOWN_NAME  {'S','e','M','a','n','a','g','e', \
-                                  'V','o','l','u','m','e', \
-                                  'P','r','i','v','i','l','e','g','e','\0'}
-#define SE_RESTORE_PRIVILEGE_NAME  {'S','e','R','e','s','t','o','r','e', \
-                                    'P','r','i','v','i','l','e','g','e','\0'}
-#define SE_SECURTY_PRIVILEGE  {'S','e','R','e','s','t','o','r','e', \
-                               'P','r','i','v','i','l','e','g','e','\0'}
-#define SE_SHUTDOWN_NAME  {'S','e','S','h','u','t','d','o','w','n', \
-                           'P','r','i','v','i','l','e','g','e','\0'}
-#define SE_SYSTEM_TIME_NAME  {'S','e','S','y','s','t','e','m','T','i','m','e', \
-                              'P','r','i','v','i','l','e','g','e','\0'}
-#define SE_TAKE_OWNERSHIP_NAME  {'S','e','T','a','k','e', \
-                                 'O','w','n','e','r','s','h','i','p', \
-                                 'P','r','i','v','i','l','e','g','e','\0'}
-#define SE_TCB_NAME  {'S','e','T','c','b', \
-                      'P','r','i','v','i','l','e','g','e','\0'}
-#define SE_TIME_ZONE_NAME  {'S','e','T','i','m','e','Z','o','n','e', \
-                            'P','r','i','v','i','l','e','g','e','\0'}
+#define SE_ASSIGN_AUDIT_NAME \
+    {'S','e','A','u','d','i','t','P','r','i','v','i','l','e','g','e',0}
+
+#define SE_BACKUP_NAME \
+    {'S','e','B','a','c','k','u','p','P','r','i','v','i','l','e','g','e',0}
+
+#define SE_CHANGE_NOTIFY_NAME \
+    {'S','e','C','h','a','n','g','e','N','o','t','i','f','y','P','r','i','v','i','l','e','g','e',0}
+
+#define SE_CREATE_SYMBOLIC_LINK_NAME \
+    {'S','e','C','h','a','n','g','e','N','o','t','i','f','y','P','r','i','v','i','l','e','g','e',0}
+
+#define SE_LOAD_DRIVER_NAME \
+    {'S','e','L','o','a','d', 'D','r','i','v','e','r','P','r','i','v','i','l','e','g','e',0}
+
+#define SE_MACHINE_ACCOUNT_NAME \
+    {'S','e','M','a','c','h','i','n','e','A','c','c','o','u','n','t','P','r','i','v','i','l','e','g','e',0}
+
+#define SE_MANAGE_VOLUME_NAME \
+    {'S','e','M','a','n','a','g','e','V','o','l','u','m','e','P','r','i','v','i','l','e','g','e',0}
+
+#define SE_REMOTE_SHUTDOWN_NAME \
+    {'S','e','M','a','n','a','g','e','V','o','l','u','m','e','P','r','i','v','i','l','e','g','e',0}
+
+#define SE_RESTORE_PRIVILEGE_NAME \
+    {'S','e','R','e','s','t','o','r','e','P','r','i','v','i','l','e','g','e',0}
+
+#define SE_SECURTY_PRIVILEGE \
+    {'S','e','R','e','s','t','o','r','e','P','r','i','v','i','l','e','g','e',0}
+
+#define SE_SHUTDOWN_NAME \
+    {'S','e','S','h','u','t','d','o','w','n','P','r','i','v','i','l','e','g','e',0}
+
+#define SE_SYSTEM_TIME_NAME \
+    {'S','e','S','y','s','t','e','m','T','i','m','e','P','r','i','v','i','l','e','g','e',0}
+
+#define SE_TAKE_OWNERSHIP_NAME \
+    {'S','e','T','a','k','e','O','w','n','e','r','s','h','i','p','P','r','i','v','i','l','e','g','e',0}
+
+#define SE_TCB_NAME \
+    {'S','e','T','c','b','P','r','i','v','i','l','e','g','e',0}
+
+#define SE_TIME_ZONE_NAME \
+    {'S','e','T','i','m','e','Z','o','n','e','P','r','i','v','i','l','e','g','e',0}
+
 
 //
 // System access right flags
