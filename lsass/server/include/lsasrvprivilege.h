@@ -92,6 +92,17 @@ LsaSrvPrivsCloseAccount(
 
 
 DWORD
+LsaSrvPrivsEnumAccounts(
+    IN HANDLE hServer,
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
+    IN PDWORD pResume,
+    IN DWORD PreferredMaxSize,
+    OUT PSID **ppAccountSids,
+    OUT PDWORD pCount
+    );
+
+
+DWORD
 LsaSrvPrivsAddAccountRights(
     IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
@@ -119,6 +130,18 @@ LsaSrvPrivsEnumAccountRights(
     IN PSID AccountSid,
     OUT PWSTR **ppwszAccountRights,
     OUT PDWORD pNumAccountRights
+    );
+
+
+DWORD
+LsaSrvPrivsEnumPrivileges(
+    IN HANDLE hServer,
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
+    IN PDWORD pResume,
+    IN DWORD PreferredMaxSize,
+    OUT PWSTR **ppPrivilegeNames,
+    OUT PLUID *ppPrivilegeValues,
+    OUT PDWORD pCount
     );
 
 
