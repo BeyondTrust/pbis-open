@@ -107,7 +107,7 @@ POLICY_HANDLE_rundown(
 
 
 void
-LSA_ACCOUNT_HANDLE_rundown(
+LSAR_ACCOUNT_HANDLE_rundown(
     void *hContext
     );
 
