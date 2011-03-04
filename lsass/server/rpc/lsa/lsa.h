@@ -131,6 +131,65 @@ LsaSrvOpenAccount(
 
 
 NTSTATUS
+LsaSrvEnumPrivilegesAccount(
+    handle_t b,
+    LSAR_ACCOUNT_HANDLE hAccount,
+    PPRIVILEGE_SET *ppPrivileges
+    );
+
+
+NTSTATUS
+LsaSrvAddPrivilegesToAccount(
+    handle_t b,
+    LSAR_ACCOUNT_HANDLE hAccount,
+    PPRIVILEGE_SET pPrivileges
+    );
+
+
+NTSTATUS
+LsaSrvGetSystemAccessAccount(
+    handle_t b,
+    LSAR_ACCOUNT_HANDLE hAccount,
+    PDWORD pSystemAccess
+    );
+
+
+NTSTATUS
+LsaSrvSetSystemAccessAccount(
+    handle_t b,
+    LSAR_ACCOUNT_HANDLE hAccount,
+    DWORD SystemAccess
+    );
+
+
+NTSTATUS
+LsaSrvLookupPrivilegeValue(
+    handle_t b,
+    POLICY_HANDLE hPolicy,
+    PUNICODE_STRING pName,
+    PLUID pValue
+    );
+
+
+NTSTATUS
+LsaSrvLookupPrivilegeName(
+    handle_t b,
+    POLICY_HANDLE hPolicy,
+    PLUID pValue,
+    PUNICODE_STRING *ppName
+    );
+
+
+NTSTATUS
+LsaSrvRemovePrivilegesFromAccount(
+    handle_t b,
+    LSAR_ACCOUNT_HANDLE hAccount,
+    BOOLEAN AllPrivileges,
+    PPRIVILEGE_SET pPrivileges
+    );
+
+
+NTSTATUS
 LsaSrvLookupNames2(
     handle_t b,
     POLICY_HANDLE hPolicy,

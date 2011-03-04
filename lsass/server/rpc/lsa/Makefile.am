@@ -10,28 +10,35 @@ noinst_LTLIBRARIES = liblsa_ss.la liblsa.la
 endif
 
 liblsa_la_SOURCES = \
-    globals.c                   \
-    lsa.c                       \
-    lsa_cfg.c                   \
-    lsa_srv.c                   \
-    lsa_memory.c                \
-    lsa_openpolicy2.c           \
-    lsa_close.c                 \
-    lsa_enumprivileges.c        \
-    lsa_enumaccounts.c          \
-    lsa_createaccount.c         \
-    lsa_lookupnames.c           \
-    lsa_lookupsids.c            \
-    lsa_openaccount.c           \
-    lsa_lookupnames2.c          \
-    lsa_lookupsids2.c           \
-    lsa_lookupnames3.c          \
-    lsa_queryinfopolicy.c       \
-    lsa_queryinfopolicy2.c      \
-    lsa_domaincache.c           \
-    lsa_accounts.c              \
-    lsa_accesstoken.c           \
-    lsa_security.c              \
+    globals.c                          \
+    lsa.c                              \
+    lsa_cfg.c                          \
+    lsa_srv.c                          \
+    lsa_memory.c                       \
+    lsa_openpolicy2.c                  \
+    lsa_close.c                        \
+    lsa_enumprivileges.c               \
+    lsa_enumaccounts.c                 \
+    lsa_createaccount.c                \
+    lsa_lookupnames.c                  \
+    lsa_lookupsids.c                   \
+    lsa_openaccount.c                  \
+    lsa_enumprivilegesaccount.c        \
+    lsa_addprivilegestoaccount.c       \
+    lsa_removeprivilegesfromaccount.c  \
+    lsa_getsystemaccessaccount.c       \
+    lsa_setsystemaccessaccount.c       \
+    lsa_lookupprivilegevalue.c         \
+    lsa_lookupprivilegename.c          \
+    lsa_lookupnames2.c                 \
+    lsa_lookupsids2.c                  \
+    lsa_lookupnames3.c                 \
+    lsa_queryinfopolicy.c              \
+    lsa_queryinfopolicy2.c             \
+    lsa_domaincache.c                  \
+    lsa_accounts.c                     \
+    lsa_accesstoken.c                  \
+    lsa_security.c                     \
     lsa_contexthandle.c
 
 DCEIDL_PASS_INCLUDES =       \

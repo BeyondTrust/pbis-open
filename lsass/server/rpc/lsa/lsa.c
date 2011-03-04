@@ -301,7 +301,11 @@ NTSTATUS srv_LsaEnumPrivilegesAccount(
     /* [out] */ PRIVILEGE_SET **Privileges
     )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvEnumPrivilegesAccount(IDL_handle,
+                                         hAccount,
+                                         Privileges);
     return status;
 }
 
@@ -312,7 +316,11 @@ NTSTATUS srv_LsaAddPrivilegesToAccount(
     /* [in] */ PRIVILEGE_SET *pPrivileges
 )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvAddPrivilegesToAccount(IDL_handle,
+                                          hAccount,
+                                          pPrivileges);
     return status;
 }
 
@@ -324,7 +332,12 @@ NTSTATUS srv_LsaRemovePrivilegesFromAccount(
     /* [in] */ PRIVILEGE_SET *pPrivileges
 )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvRemovePrivilegesFromAccount(IDL_handle,
+                                               hAccount,
+                                               AllPrivileges,
+                                               pPrivileges);
     return status;
 }
 
@@ -353,7 +366,11 @@ NTSTATUS srv_LsaGetSystemAccessAccount(
     /* [out] */ UINT32 *SystemAccess
     )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvGetSystemAccessAccount(IDL_handle,
+                                          hAccount,
+                                          SystemAccess);
     return status;
 }
 
@@ -364,7 +381,11 @@ NTSTATUS srv_LsaSetSystemAccessAccount(
     /* [in] */ UINT32 SystemAccess
     )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvSetSystemAccessAccount(IDL_handle,
+                                          hAccount,
+                                          SystemAccess);
     return status;
 }
 
@@ -430,7 +451,12 @@ NTSTATUS srv_LsaLookupPrivilegeValue(
     /* [out] */ LUID *pValue
 )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvLookupPrivilegeValue(IDL_handle,
+                                        hPolicy,
+                                        pName,
+                                        pValue);
     return status;
 }
 
@@ -442,7 +468,12 @@ NTSTATUS srv_LsaLookupPrivilegeName(
     /* [out] */ UNICODE_STRING **ppName
 )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvLookupPrivilegeName(IDL_handle,
+                                       hPolicy,
+                                       pValue,
+                                       ppName);
     return status;
 }
 
