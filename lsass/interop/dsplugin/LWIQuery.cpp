@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -585,7 +585,7 @@ LWIQuery::ProcessUserAttributes(
                 case LWIAttrLookup::idx_K_DS_ATTR_CN:
                 case LWIAttrLookup::idx_K_DS_ATTR_NAME:
                 case LWIAttrLookup::idx_kDS1AttrDistinguishedName:
-                    macError = SetDistinguishedName(pRecord, pUser->pw_display_name, bSetValue);
+                    macError = SetDistinguishedName(pRecord, pUser->pw_display_name, pUser->pw_name_as_queried, bSetValue);
                     GOTO_CLEANUP_ON_MACERROR(macError);
                     break;
                 case LWIAttrLookup::idx_kDS1AttrGeneratedUID:
@@ -861,7 +861,7 @@ LWIQuery::ProcessGroupAttributes(
             switch (iAttr)
             {
             case LWIAttrLookup::idx_kDS1AttrDistinguishedName:
-                macError = SetDistinguishedName(pRecord, pGroup->gr_name, bSetValue);
+                macError = SetDistinguishedName(pRecord, pGroup->gr_name, pGroup->gr_name_as_queried, bSetValue);
                 GOTO_CLEANUP_ON_MACERROR(macError);
                 break;
             case LWIAttrLookup::idx_kDS1AttrUniqueID:
@@ -1272,14 +1272,18 @@ LWIQuery::QueryAllUserInformation(const char* pszName)
 
         for (iUser = 0; iUser < dwNumUsersFound; iUser++)
         {
-            macError = AddUserRecordHelper(ppUserObjects[iUser]);
-            GOTO_CLEANUP_ON_MACERROR(macError);
+            if (ppUserObjects[iUser]->enabled)
+            {
+                macError = AddUserRecordHelper(ppUserObjects[iUser], NULL);
+                GOTO_CLEANUP_ON_MACERROR(macError);
+            }
         }
     }
     else
     {
         macError = CreateLWIUser(USER_NAME_GPO, /* Record Name */
                                  USER_NAME_GPO, /* Display name */
+                                 NULL, /* Name as queried */
                                  NULL, /* Password */
                                  NULL, /* Class */
                                  NULL, /* GECOS */
@@ -1329,8 +1333,11 @@ LWIQuery::QueryAllGroupInformation(const char* pszName)
 
         for (iGroup = 0; iGroup < dwNumGroupsFound; iGroup++)
         {
-            macError = AddGroupRecordHelper(ppGroupObjects[iGroup], false);
-            GOTO_CLEANUP_ON_MACERROR(macError);
+            if (ppGroupObjects[iGroup]->enabled)
+            {
+                macError = AddGroupRecordHelper(ppGroupObjects[iGroup], false, NULL);
+                GOTO_CLEANUP_ON_MACERROR(macError);
+            }
         }
     }
     else
@@ -1355,6 +1362,7 @@ LWIQuery::QueryAllGroupInformation(const char* pszName)
             GOTO_CLEANUP_ON_MACERROR(macError);
 
             macError = CreateLWIGroup("Group of Users managed by GPO",
+                                      NULL, /* Name as queried */
                                       NULL, /* Password */
                                       "GPOUserGroup",
                                       USER_GROUP_COMMENT,
@@ -1787,6 +1795,7 @@ LWIQuery::QueryUserInformationByName(const char* pszName)
     {
         macError = CreateLWIUser(USER_NAME_GPO, /* Record Name */
                                  USER_NAME_GPO, /* Display name */
+                                 NULL, /* Name as queried */
                                  NULL, /* Password */
                                  NULL, /* Class */
                                  NULL, /* GECOS */
@@ -1810,8 +1819,11 @@ LWIQuery::QueryUserInformationByName(const char* pszName)
         macError = GetUserObjectFromName(pszName, &ppUserObjects);
         GOTO_CLEANUP_ON_MACERROR(macError);
 
-        macError = AddUserRecordHelper(ppUserObjects[0]);
-        GOTO_CLEANUP_ON_MACERROR(macError);
+        if (ppUserObjects[0]->enabled)
+        {
+            macError = AddUserRecordHelper(ppUserObjects[0], pszName);
+            GOTO_CLEANUP_ON_MACERROR(macError);
+        }
     }
 
 cleanup:
@@ -1834,8 +1846,11 @@ LWIQuery::QueryUserInformationById(uid_t uid)
     macError = GetUserObjectFromId(uid, &ppUserObjects);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    macError = AddUserRecordHelper(ppUserObjects[0]);
-    GOTO_CLEANUP_ON_MACERROR(macError);
+    if (ppUserObjects[0]->enabled)
+    {
+        macError = AddUserRecordHelper(ppUserObjects[0], NULL);
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
 
 cleanup:
 
@@ -1857,6 +1872,7 @@ LWIQuery::QueryUserInformationByGeneratedUID(const char* pszGUID)
     {
         macError = CreateLWIUser(USER_NAME_GPO, /* Record Name */
                                  USER_NAME_GPO, /* Display name */
+                                 NULL, /* Name as queried */
                                  NULL, /* Password */
                                  NULL, /* Class */
                                  NULL, /* GECOS */
@@ -1900,6 +1916,7 @@ LWIQuery::QueryUserInformationByPrimaryGroupID(const char* pszPrimaryGID)
     if (!strcmp(pszPrimaryGID, GROUP_GID_GPO_ID)) {
         macError = CreateLWIUser(USER_NAME_GPO, /* Record Name */
                                  USER_NAME_GPO, /* Display name */
+                                 NULL, /* Name as queried */
                                  NULL, /* Password */
                                  NULL, /* Class */
                                  NULL, /* GECOS */
@@ -1980,6 +1997,7 @@ LWIQuery::QueryGroupInformationById(gid_t gid)
             GOTO_CLEANUP_ON_MACERROR(macError);
 
             macError = CreateLWIGroup("Group of Users managed by GPO",
+                                      NULL, /* Name as queried */
                                       NULL, /* Password */
                                       "GPOUserGroup",
                                       USER_GROUP_COMMENT,
@@ -2945,14 +2963,14 @@ LWIQuery::QueryGroupsForUser(
 
     for (iGroup = 0; iGroup < dwNumGroupsFound; iGroup++)
     {
-        if (ppGroups[iGroup])
+        if (ppGroups[iGroup] && ppGroups[iGroup]->enabled)
         {
             if (gid == ppGroups[iGroup]->groupInfo.gid)
             {
                 fFoundPrimaryGroup = TRUE;
             }
-
-            macError = AddGroupRecordHelper(ppGroups[iGroup], false);
+ 
+            macError = AddGroupRecordHelper(ppGroups[iGroup], false, NULL);
             GOTO_CLEANUP_ON_MACERROR(macError);
             LOG("QueryGroupsForUser adding group id", ppGroups[iGroup]);
         }
@@ -3007,6 +3025,7 @@ LWIQuery::QueryGroupsForUserByName(
             GOTO_CLEANUP_ON_MACERROR(macError);
 
             macError = CreateLWIGroup("Group of Users managed by GPO",
+                                      NULL, /* Name as queried */
                                       NULL, /* Password */
                                       "GPOUserGroup",
                                       USER_GROUP_COMMENT,
@@ -3076,6 +3095,7 @@ LWIQuery::QueryGroupsForUserById(
             GOTO_CLEANUP_ON_MACERROR(macError);
 
             macError = CreateLWIGroup("Group of Users managed by GPO",
+                                      NULL, /* Name as queried */
                                       NULL, /* Password */
                                       "GPOUserGroup",
                                       USER_GROUP_COMMENT,
@@ -3125,8 +3145,11 @@ LWIQuery::GetGroupInformationById(
         macError = GetGroupObjectFromId(gid, &ppGroupObjects);
         GOTO_CLEANUP_ON_MACERROR(macError);
 
-        macError = AddGroupRecordHelper(ppGroupObjects[0], false);
-        GOTO_CLEANUP_ON_MACERROR(macError);
+        if (ppGroupObjects[0]->enabled)
+        {
+            macError = AddGroupRecordHelper(ppGroupObjects[0], false, NULL);
+            GOTO_CLEANUP_ON_MACERROR(macError);
+        }
     }
     else
     {
@@ -3177,6 +3200,7 @@ LWIQuery::GetGroupInformationByName(
             GOTO_CLEANUP_ON_MACERROR(macError);
 
             macError = CreateLWIGroup("Group of Users managed by GPO",
+                                      NULL, /* Name as queried */
                                       NULL, /* Password */
                                       "GPOUserGroup",
                                       USER_GROUP_COMMENT,
@@ -3196,8 +3220,11 @@ LWIQuery::GetGroupInformationByName(
         macError = GetGroupObjectFromName(pszName, &ppGroupObjects);
         GOTO_CLEANUP_ON_MACERROR(macError);
 
-        macError = AddGroupRecordHelper(ppGroupObjects[0], true);
-        GOTO_CLEANUP_ON_MACERROR(macError);
+        if (ppGroupObjects[0]->enabled)
+        {
+            macError = AddGroupRecordHelper(ppGroupObjects[0], true, pszName);
+            GOTO_CLEANUP_ON_MACERROR(macError);
+        }
     }
     else
     {
@@ -3263,13 +3290,13 @@ LWIQuery::GetComputerListByName(
             GOTO_CLEANUP_ON_MACERROR(macError);
 
             macError = CreateLWIComputerList("List of Computers managed by GPO",
-                                              "GPOComputerList",
-                                              COMPUTER_LIST_COMMENT,
-                                              COMPUTER_LIST_UID_ID,
-                                              COMPUTER_LIST_UID,
-                                              "GPOComputer",
-                                              pMCXValueList,
-                                              &pComputerList);
+                                             "GPOComputerList",
+                                             COMPUTER_LIST_COMMENT,
+                                             COMPUTER_LIST_UID_ID,
+                                             COMPUTER_LIST_UID,
+                                             "GPOComputer",
+                                             pMCXValueList,
+                                             &pComputerList);
             GOTO_CLEANUP_ON_MACERROR(macError);
         }
     }
@@ -3884,7 +3911,7 @@ cleanup:
 }
 
 long
-LWIQuery::SetDistinguishedName(PDSRECORD pRecord, const char* pszName, bool bSetValue)
+LWIQuery::SetDistinguishedName(PDSRECORD pRecord, const char* pszName, const char* pszNameAsQueried, bool bSetValue)
 {
     long macError = eDSNoErr;
     PDSATTRIBUTE pAttribute = NULL;
@@ -3900,6 +3927,13 @@ LWIQuery::SetDistinguishedName(PDSRECORD pRecord, const char* pszName, bool bSet
         {
             macError = AddAttributeAndValue(kDS1AttrDistinguishedName, pszName, pRecord, &pAttribute);
             if (macError) goto exit;
+
+            if (pszNameAsQueried && strcmp(pszName, pszNameAsQueried))
+            {
+                LOG("Returning addional realname %s", pszNameAsQueried);
+                macError = SetAttributeValue(pAttribute, pszNameAsQueried);
+                if (macError) goto exit;
+            }
             
             macError = AddAttributeAndValue(K_DS_ATTR_DISPLAY_NAME, pszName, pRecord, &pAttribute);
             if (macError) goto exit;
@@ -6216,7 +6250,8 @@ LWIQuery::FreeMemberList(PLWIMEMBERLIST pMemberList)
 
 long
 LWIQuery::AddUserRecordHelper(
-    IN PLSA_SECURITY_OBJECT pUserObject
+    IN PLSA_SECURITY_OBJECT pUserObject,
+    IN OPTIONAL const char * pszNameAsQueried
     )
 {
     long macError = eDSNoErr;
@@ -6270,6 +6305,7 @@ LWIQuery::AddUserRecordHelper(
 
     macError = CreateLWIUser(pUserObject->userInfo.pszUnixName, /* Record Name */
                              pszUserName, /* Display name */
+                             pszNameAsQueried, /* Name as queried */
                              NULL, /* Password */
                              NULL, /* Class */
                              pUserObject->userInfo.pszGecos,
@@ -6333,7 +6369,8 @@ cleanup:
 long
 LWIQuery::AddGroupRecordHelper(
     IN PLSA_SECURITY_OBJECT pGroupObject,
-    IN bool bExpandMembers
+    IN bool bExpandMembers,
+    IN OPTIONAL const char* pszNameAsQueried
     )
 {
     long macError = eDSNoErr;
@@ -6352,6 +6389,7 @@ LWIQuery::AddGroupRecordHelper(
     }
 
     macError = CreateLWIGroup(pGroupObject->groupInfo.pszUnixName, /* Group Display Name */
+                              pszNameAsQueried, /* Name as queried */
                               pGroupObject->groupInfo.pszPasswd,
                               pGroupObject->groupInfo.pszUnixName, /* Group Name */
                               NULL, /* Comment */

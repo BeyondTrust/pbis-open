@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@ long
 CreateLWIUser(
     PCSTR pszName,
     PCSTR pszDisplayName,
+    PCSTR pszNameAsQueried,
     PCSTR pszPassword,
     PCSTR pszClass,
     PCSTR pszGecos,

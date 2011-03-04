@@ -118,6 +118,7 @@ typedef struct __LWIUSER
 {
     char*  pw_name;
     char*  pw_display_name;
+    char*  pw_name_as_queried;
     char*  pw_passwd;
     uid_t  pw_uid;
     gid_t  pw_gid;
@@ -137,6 +138,7 @@ typedef struct __LWIUSER
 typedef struct __LWIGROUP
 {
     char*  gr_name;
+    char*  gr_name_as_queried;
     char*  gr_passwd;
     char*  guid;
     gid_t  gr_gid;

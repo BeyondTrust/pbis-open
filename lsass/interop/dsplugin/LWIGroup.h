@@ -41,6 +41,7 @@ extern "C" {
 long
 CreateLWIGroup(
     PCSTR          pszName,
+    PCSTR          pszNameAsQueried,
     PCSTR          pszPassword,
     PCSTR          pszShortname,
     PCSTR          pszComment,

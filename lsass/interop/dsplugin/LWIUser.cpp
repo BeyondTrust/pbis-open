@@ -30,10 +30,12 @@
 
 #include "LWIUser.h"
 
+
 long
 CreateLWIUser(
     PCSTR pszName,
     PCSTR pszDisplayName,
+    PCSTR pszNameAsQueried,
     PCSTR pszPassword,
     PCSTR pszClass,
     PCSTR pszGecos,
@@ -60,10 +62,16 @@ CreateLWIUser(
         macError = LwAllocateString(pszName, &pUser->pw_name);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
-    
+
     if (pszDisplayName)
     {
         macError = LwAllocateString(pszDisplayName, &pUser->pw_display_name);
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
+
+    if (pszNameAsQueried)
+    {
+        macError = LwAllocateString(pszNameAsQueried, &pUser->pw_name_as_queried);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
     
@@ -154,6 +162,8 @@ FreeLWIUser(PLWIUSER pLWIUser)
             LW_SAFE_FREE_STRING(pLWIUser->pw_name);
         if (pLWIUser->pw_display_name)
             LW_SAFE_FREE_STRING(pLWIUser->pw_display_name);
+        if (pLWIUser->pw_name_as_queried)
+            LW_SAFE_FREE_STRING(pLWIUser->pw_name_as_queried);
         if (pLWIUser->pw_passwd)
             LW_SAFE_FREE_STRING(pLWIUser->pw_passwd);
         if (pLWIUser->pw_class)

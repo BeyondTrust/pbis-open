@@ -128,7 +128,7 @@ protected:
     long GetComputerByENetAddress(const char* pszENetAddress, PLWICOMPUTER* ppComputer);
     long GetComputerByIPAddress(const char* pszIPAddress, PLWICOMPUTER* ppComputer);
     long GetComputerByGeneratedUID(const char* pszGeneratedUID, PLWICOMPUTER* ppComputer);
-    static long SetDistinguishedName(PDSRECORD pRecord, const char* pszName, bool bSetValue);
+    static long SetDistinguishedName(PDSRECORD pRecord, const char* pszName, const char* pszNameAsQueried, bool bSetValue);
     static long SetGeneratedUID(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
     static long SetGeneratedUID(PDSRECORD pRecord, const PLWIGROUP pGroup, bool bSetValue);
     static long SetGeneratedUID(PDSRECORD pRecord, const PLWICOMPUTER pComputer, bool bSetValue);
@@ -207,9 +207,9 @@ protected:
     static void FreeMessageHeader(PDSMESSAGEHEADER pHeader);
     static long CreateMemberList(DWORD dwMemberCount, PLSA_SECURITY_OBJECT* ppMembers, PLWIMEMBERLIST* ppMemberList);
     static void FreeMemberList(PLWIMEMBERLIST pMemberList);
-    long AddUserRecordHelper(PLSA_SECURITY_OBJECT pUserObject);
+    long AddUserRecordHelper(PLSA_SECURITY_OBJECT pUserObject, OPTIONAL const char* pszNameAsQueried);
     long AddUserRecord(PLWIUSER pUser, OPTIONAL const char* AltName);
-    long AddGroupRecordHelper(PLSA_SECURITY_OBJECT pGroupObject, bool bExpandMembers);
+    long AddGroupRecordHelper(PLSA_SECURITY_OBJECT pGroupObject, bool bExpandMembers, OPTIONAL const char* pszNameAsQueried);
     long AddGroupRecord(PLWIGROUP pGroup, OPTIONAL const char* AltName);
     long AddComputerRecord(PLWICOMPUTER pComputer);
     long AddComputerListRecord(PLWICOMPUTERLIST pComputerList);
