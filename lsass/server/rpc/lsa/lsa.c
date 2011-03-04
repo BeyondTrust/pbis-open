@@ -171,7 +171,13 @@ NTSTATUS srv_LsaCreateAccount(
     /* [out] */ LSAR_ACCOUNT_HANDLE *phAccount
 )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvCreateAccount(IDL_handle,
+                                 hPolicy,
+                                 pAccountSid,
+                                 AccessMask,
+                                 phAccount);
     return status;
 }
 
@@ -278,7 +284,13 @@ NTSTATUS srv_LsaOpenAccount(
     /* [out] */ LSAR_ACCOUNT_HANDLE *phAccount
 )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvOpenAccount(IDL_handle,
+                               hPolicy,
+                               pAccountSid,
+                               AccessMask,
+                               phAccount);
     return status;
 }
 

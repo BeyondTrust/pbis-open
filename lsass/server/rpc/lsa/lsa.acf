@@ -6,9 +6,11 @@ interface lsa
 	[enable_allocate] LsaClose();
 	[enable_allocate] LsaEnumPrivileges();
 	[enable_allocate] LsaQueryInfoPolicy();
+	[enable_allocate] LsaCreateAccount();
 	[enable_allocate] LsaEnumAccounts();
 	[enable_allocate] LsaLookupNames();
 	[enable_allocate] LsaLookupSids();
+	[enable_allocate] LsaOpenAccount();
 	[enable_allocate] LsaOpenPolicy2();
 	[enable_allocate] LsaQueryInfoPolicy2();
 	[enable_allocate] LsaLookupNames2();

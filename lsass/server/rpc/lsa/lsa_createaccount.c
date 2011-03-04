@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2009
+ * Copyright Likewise Software    2004-2011
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -33,13 +33,13 @@
  *
  * Module Name:
  *
- *        lsa_close.c
+ *        lsa_createaccount.c
  *
  * Abstract:
  *
  *        Remote Procedure Call (RPC) Server Interface
  *
- *        LsaClose function
+ *        LsaCreateAccount function
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
@@ -48,43 +48,62 @@
 
 
 NTSTATUS
-LsaSrvClose(
+LsaSrvCreateAccount(
     /* [in] */ handle_t hBinding,
-    /* [out, context_handle] */ void **phInOut
+    /* [in] */ POLICY_HANDLE hPolicy,
+    /* [in] */ PSID pAccountSid,
+    /* [in] */ DWORD AccessMask,
+    /* [out] */ LSAR_ACCOUNT_HANDLE *phAccount
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    PLSA_GENERIC_CONTEXT pContext = NULL;
+    DWORD err = ERROR_SUCCESS;
+    PPOLICY_CONTEXT pPolicyCtx = (PPOLICY_CONTEXT)hPolicy;
+    PLSAR_ACCOUNT_CONTEXT pAccountCtx = NULL;
 
-    BAIL_ON_INVALID_PTR(phInOut);
-    BAIL_ON_INVALID_PTR(*phInOut);
+    BAIL_ON_INVALID_PTR(hPolicy);
+    BAIL_ON_INVALID_PTR(pAccountSid);
+    BAIL_ON_INVALID_PTR(phAccount);
 
-    pContext = (PLSA_GENERIC_CONTEXT)(*phInOut);
+    err = LwAllocateMemory(
+                        sizeof(*pAccountCtx),
+                        OUT_PPVOID(&pAccountCtx));
+    BAIL_ON_LSA_ERROR(err);
 
-    switch (pContext->Type)
-    {
-    case LsaContextPolicy:
-        ntStatus = LsaSrvPolicyContextClose((PPOLICY_CONTEXT)pContext);
-        break;
+    pAccountCtx->Type     = LsaContextAccount;
+    pAccountCtx->refcount = 1;
 
-    case LsaContextAccount:
-        LsaSrvAccountContextFree((PLSAR_ACCOUNT_CONTEXT)pContext);
-        break;
+    pAccountCtx->pPolicyCtx = pPolicyCtx;
+    InterlockedIncrement(&pPolicyCtx->refcount);
 
-    default:
-        /* Something is seriously wrong if we get a context
-           we haven't created */
-        ntStatus = STATUS_INTERNAL_ERROR;
-    }
-    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+    err = LsaSrvPrivsCreateAccount(
+                        NULL,
+                        pPolicyCtx->pUserToken,
+                        pAccountSid,
+                        AccessMask,
+                        &pAccountCtx->pAccountContext);
+    BAIL_ON_LSA_ERROR(err);
 
-    *phInOut = NULL;
-
-cleanup:
-    return ntStatus;
+    *phAccount = (LSAR_ACCOUNT_HANDLE)pAccountCtx;
 
 error:
-    goto cleanup;
+    if (err || ntStatus)
+    {
+        LsaSrvAccountContextFree(pAccountCtx);
+
+        if (phAccount)
+        {
+            *phAccount = NULL;
+        }
+    }
+
+    if (ntStatus == STATUS_SUCCESS &&
+        err != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(err);
+    }
+
+    return ntStatus;
 }
 
 

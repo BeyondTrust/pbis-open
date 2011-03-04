@@ -76,6 +76,16 @@ LsaSrvOpenPolicy2(
 
 
 NTSTATUS
+LsaSrvCreateAccount(
+    handle_t b,
+    POLICY_HANDLE hPolicy,
+    PSID pAccountSid,
+    DWORD AccessMask,
+    LSAR_ACCOUNT_HANDLE *phAccount
+    );
+
+
+NTSTATUS
 LsaSrvEnumAccounts(
     handle_t IDL_handle,
     POLICY_HANDLE hPolicy,
@@ -107,6 +117,16 @@ LsaSrvLookupSids(
     TranslatedNameArray *names,
     UINT16 level,
     UINT32 *count
+    );
+
+
+NTSTATUS
+LsaSrvOpenAccount(
+    handle_t b,
+    POLICY_HANDLE hPolicy,
+    PSID pAccountSid,
+    DWORD AccessMask,
+    LSAR_ACCOUNT_HANDLE *phAccount
     );
 
 
