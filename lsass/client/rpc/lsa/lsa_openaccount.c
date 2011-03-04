@@ -49,15 +49,15 @@
 
 NTSTATUS
 LsaOpenAccount(
-    IN  LSA_BINDING          hBinding,
-    IN  POLICY_HANDLE        hPolicy,
-    IN  PSID                 pAccountSid,
-    IN  UINT32               AccessMask,
-    OUT LSA_ACCOUNT_HANDLE  *phAccount
+    IN  LSA_BINDING           hBinding,
+    IN  POLICY_HANDLE         hPolicy,
+    IN  PSID                  pAccountSid,
+    IN  UINT32                AccessMask,
+    OUT LSAR_ACCOUNT_HANDLE  *phAccount
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    LSA_ACCOUNT_HANDLE hAccount = NULL;
+    LSAR_ACCOUNT_HANDLE hAccount = NULL;
 
     BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hPolicy, ntStatus);

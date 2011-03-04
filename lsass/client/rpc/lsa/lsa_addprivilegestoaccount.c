@@ -50,7 +50,7 @@
 NTSTATUS
 LsaAddPrivilegesToAccount(
     IN  LSA_BINDING          hBinding,
-    IN  LSA_ACCOUNT_HANDLE   hAccount,
+    IN  LSAR_ACCOUNT_HANDLE  hAccount,
     IN  PPRIVILEGE_SET       pPrivilegeSet
     )
 {

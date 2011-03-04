@@ -50,7 +50,7 @@
 NTSTATUS
 LsaEnumPrivilegesAccount(
     IN  LSA_BINDING          hBinding,
-    IN  LSA_ACCOUNT_HANDLE   hAccount,
+    IN  LSAR_ACCOUNT_HANDLE  hAccount,
     OUT PPRIVILEGE_SET      *ppPrivileges
     )
 {

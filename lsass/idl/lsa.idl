@@ -72,7 +72,7 @@ cpp_quote("#endif")
         [in] POLICY_HANDLE hPolicy,
         [in] SID *pAccountSid,
         [in] UINT32 AccessMask,
-        [out] LSA_ACCOUNT_HANDLE *phAccount
+        [out] LSAR_ACCOUNT_HANDLE *phAccount
         );
 
     /* function 0x0b */
@@ -114,24 +114,24 @@ cpp_quote("#endif")
         [in] POLICY_HANDLE hPolicy,
         [in] SID *pAccountSid,
         [in] UINT32 AccessMask,
-        [out] LSA_ACCOUNT_HANDLE *phAccount
+        [out] LSAR_ACCOUNT_HANDLE *phAccount
         );
 
     /* function 0x12 */
     NTSTATUS LsaEnumPrivilegesAccount(
-        [in] LSA_ACCOUNT_HANDLE hAccount,
+        [in] LSAR_ACCOUNT_HANDLE hAccount,
         [out] PRIVILEGE_SET **Privileges
         );
 
     /* function 0x13 */
     NTSTATUS LsaAddPrivilegesToAccount(
-        [in] LSA_ACCOUNT_HANDLE hAccount,
+        [in] LSAR_ACCOUNT_HANDLE hAccount,
         [in,ref] PRIVILEGE_SET *pPrivileges
         );
 
     /* function 0x14 */
     NTSTATUS LsaRemovePrivilegesFromAccount(
-        [in] LSA_ACCOUNT_HANDLE hAccount,
+        [in] LSAR_ACCOUNT_HANDLE hAccount,
         [in] UINT8 AllPrivileges,
         [in,unique] PRIVILEGE_SET *pPrivileges
         );
@@ -141,13 +141,13 @@ cpp_quote("#endif")
 
     /* function 0x17 */
     NTSTATUS LsaGetSystemAccessAccount(
-        [in] LSA_ACCOUNT_HANDLE hAccount,
+        [in] LSAR_ACCOUNT_HANDLE hAccount,
         [out,ref] UINT32* SystemAccess
         );
 
     /* function 0x18 */
     NTSTATUS LsaSetSystemAccessAccount(
-        [in] LSA_ACCOUNT_HANDLE hAccount,
+        [in] LSAR_ACCOUNT_HANDLE hAccount,
         [in] UINT32 SystemAccess
         );
 

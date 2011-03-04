@@ -401,7 +401,7 @@ typedef
 #ifdef _DCE_IDL_
 [context_handle]
 #endif
-void* LSA_ACCOUNT_HANDLE;
+void* LSAR_ACCOUNT_HANDLE;
 
 
 #ifndef _DCE_IDL_
@@ -533,21 +533,21 @@ LsaLookupSids(
 
 NTSTATUS
 LsaCreateAccount(
-    IN  LSA_BINDING          hBinding,
-    IN  POLICY_HANDLE        hPolicy,
-    IN  PSID                 pAccountSid,
-    IN  DWORD                AccessMask,
-    OUT LSA_ACCOUNT_HANDLE  *phAccount
+    IN  LSA_BINDING            hBinding,
+    IN  POLICY_HANDLE          hPolicy,
+    IN  PSID                   pAccountSid,
+    IN  DWORD                  AccessMask,
+    OUT LSAR_ACCOUNT_HANDLE *phAccount
     );
 
 
 NTSTATUS
 LsaOpenAccount(
-    IN  LSA_BINDING          hBinding,
-    IN  POLICY_HANDLE        hPolicy,
-    IN  PSID                 pAccountSid,
-    IN  DWORD                AccessMask,
-    OUT LSA_ACCOUNT_HANDLE  *phAccount
+    IN  LSA_BINDING             hBinding,
+    IN  POLICY_HANDLE           hPolicy,
+    IN  PSID                    pAccountSid,
+    IN  DWORD                   AccessMask,
+    OUT LSAR_ACCOUNT_HANDLE  *phAccount
     );
 
 
@@ -577,7 +577,7 @@ LsaEnumAccounts(
 NTSTATUS
 LsaEnumPrivilegesAccount(
     IN  LSA_BINDING          hBinding,
-    IN  LSA_ACCOUNT_HANDLE   hAccount,
+    IN  LSAR_ACCOUNT_HANDLE  hAccount,
     OUT PPRIVILEGE_SET      *ppPrivileges
     );
 
@@ -585,7 +585,7 @@ LsaEnumPrivilegesAccount(
 NTSTATUS
 LsaAddPrivilegesToAccount(
     IN  LSA_BINDING          hBinding,
-    IN  LSA_ACCOUNT_HANDLE   hAccount,
+    IN  LSAR_ACCOUNT_HANDLE  hAccount,
     IN  PPRIVILEGE_SET       pPrivileges
     );
 
@@ -593,7 +593,7 @@ LsaAddPrivilegesToAccount(
 NTSTATUS
 LsaRemovePrivilegesFromAccount(
     IN  LSA_BINDING          hBinding,
-    IN  LSA_ACCOUNT_HANDLE   hAccount,
+    IN  LSAR_ACCOUNT_HANDLE  hAccount,
     IN  BOOLEAN              AllPrivileges,
     IN  PPRIVILEGE_SET       pPrivileges
     );
@@ -602,7 +602,7 @@ LsaRemovePrivilegesFromAccount(
 NTSTATUS
 LsaGetSystemAccessAccount(
     IN  LSA_BINDING          hBinding,
-    IN  LSA_ACCOUNT_HANDLE   hAccount,
+    IN  LSAR_ACCOUNT_HANDLE  hAccount,
     OUT PDWORD               pSystemAccess
     );
 
@@ -610,7 +610,7 @@ LsaGetSystemAccessAccount(
 NTSTATUS
 LsaSetSystemAccessAccount(
     IN  LSA_BINDING          hBinding,
-    IN  LSA_ACCOUNT_HANDLE   hAccount,
+    IN  LSAR_ACCOUNT_HANDLE  hAccount,
     IN  DWORD                SystemAccess
     );
 

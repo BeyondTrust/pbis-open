@@ -168,7 +168,7 @@ NTSTATUS srv_LsaCreateAccount(
     /* [in] */ POLICY_HANDLE hPolicy,
     /* [in] */ SID *pAccountSid,
     /* [in] */ UINT32 AccessMask,
-    /* [out] */ LSA_ACCOUNT_HANDLE *phAccount
+    /* [out] */ LSAR_ACCOUNT_HANDLE *phAccount
 )
 {
     NTSTATUS status = STATUS_NOT_IMPLEMENTED;
@@ -275,7 +275,7 @@ NTSTATUS srv_LsaOpenAccount(
     /* [in] */ POLICY_HANDLE hPolicy,
     /* [in] */ SID *pAccountSid,
     /* [in] */ UINT32 AccessMask,
-    /* [out] */ LSA_ACCOUNT_HANDLE *phAccount
+    /* [out] */ LSAR_ACCOUNT_HANDLE *phAccount
 )
 {
     NTSTATUS status = STATUS_NOT_IMPLEMENTED;
@@ -285,7 +285,7 @@ NTSTATUS srv_LsaOpenAccount(
 
 NTSTATUS srv_LsaEnumPrivilegesAccount(
     /* [in] */ handle_t IDL_handle,
-    /* [in] */ LSA_ACCOUNT_HANDLE hAccount,
+    /* [in] */ LSAR_ACCOUNT_HANDLE hAccount,
     /* [out] */ PRIVILEGE_SET **Privileges
     )
 {
@@ -296,7 +296,7 @@ NTSTATUS srv_LsaEnumPrivilegesAccount(
 
 NTSTATUS srv_LsaAddPrivilegesToAccount(
     /* [in] */ handle_t IDL_handle,
-    /* [in] */ LSA_ACCOUNT_HANDLE hAccount,
+    /* [in] */ LSAR_ACCOUNT_HANDLE hAccount,
     /* [in] */ PRIVILEGE_SET *pPrivileges
 )
 {
@@ -307,7 +307,7 @@ NTSTATUS srv_LsaAddPrivilegesToAccount(
 
 NTSTATUS srv_LsaRemovePrivilegesFromAccount(
     /* [in] */ handle_t IDL_handle,
-    /* [in] */ LSA_ACCOUNT_HANDLE hAccount,
+    /* [in] */ LSAR_ACCOUNT_HANDLE hAccount,
     /* [in] */ UINT8 AllPrivileges,
     /* [in] */ PRIVILEGE_SET *pPrivileges
 )
@@ -337,7 +337,7 @@ NTSTATUS srv_lsa_Function16(
 
 NTSTATUS srv_LsaGetSystemAccessAccount(
     /* [in] */ handle_t IDL_handle,
-    /* [in] */ LSA_ACCOUNT_HANDLE hAccount,
+    /* [in] */ LSAR_ACCOUNT_HANDLE hAccount,
     /* [out] */ UINT32 *SystemAccess
     )
 {
@@ -348,7 +348,7 @@ NTSTATUS srv_LsaGetSystemAccessAccount(
 
 NTSTATUS srv_LsaSetSystemAccessAccount(
     /* [in] */ handle_t IDL_handle,
-    /* [in] */ LSA_ACCOUNT_HANDLE hAccount,
+    /* [in] */ LSAR_ACCOUNT_HANDLE hAccount,
     /* [in] */ UINT32 SystemAccess
     )
 {

@@ -50,7 +50,7 @@
 NTSTATUS
 LsaGetSystemAccessAccount(
     IN  LSA_BINDING          hBinding,
-    IN  LSA_ACCOUNT_HANDLE   hAccount,
+    IN  LSAR_ACCOUNT_HANDLE  hAccount,
     OUT PDWORD               pSystemAccess
     )
 {
