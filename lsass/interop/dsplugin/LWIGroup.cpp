@@ -33,6 +33,7 @@
 long
 CreateLWIGroup(
     PCSTR          pszName,
+    PCSTR          pszNameAsQueried,
     PCSTR          pszPassword,
     PCSTR          pszShortname,
     PCSTR          pszComment,
@@ -48,10 +49,16 @@ CreateLWIGroup(
     
     macError = LwAllocateMemory(sizeof(LWIGROUP), (PVOID*)&pGroup);
     GOTO_CLEANUP_ON_MACERROR(macError);
-    
+ 
     if (pszName)
     {
         macError = LwAllocateString(pszName, &pGroup->gr_name);
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
+ 
+    if (pszNameAsQueried)
+    {
+        macError = LwAllocateString(pszNameAsQueried, &pGroup->gr_name_as_queried);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
     
@@ -171,6 +178,9 @@ FreeLWIGroup(PLWIGROUP pLWIGroup)
     {
         if (pLWIGroup->gr_name)
             LW_SAFE_FREE_STRING(pLWIGroup->gr_name);
+
+        if (pLWIGroup->gr_name_as_queried)
+            LW_SAFE_FREE_STRING(pLWIGroup->gr_name_as_queried);
 
         if (pLWIGroup->gr_passwd)
             LW_SAFE_FREE_STRING(pLWIGroup->gr_passwd);
