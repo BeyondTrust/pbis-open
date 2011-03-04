@@ -514,7 +514,6 @@ AC_CONFIG_FILES([Makefile
 		 scripts/ConfigureLogin
 		 scripts/gpcron
                  tests/Makefile
-                 tests/test_nsswitch_change/src/Makefile
                  tests/test_dhcpname_change/src/Makefile
                  tests/test_sec_user/src/Makefile
                  tests/test_login_cfg/src/Makefile

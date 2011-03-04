@@ -495,12 +495,6 @@ cleanup:
 }
 
 DWORD
-UnConfigureNameServiceSwitch()
-{
-    return DJConfigureNameServiceSwitch(NULL, FALSE);
-}
-
-DWORD
 ReadNsswitchConf(NsswitchConf *conf, const char *testPrefix,
         BOOLEAN allowFileCreate)
 {
@@ -930,29 +924,6 @@ cleanup:
     FreeNsswitchConfContents(&conf);
     DJFreeDistroInfo(&distro);
 
-    return ceError;
-}
-
-DWORD
-ConfigureNameServiceSwitch()
-{
-    DWORD ceError = ERROR_SUCCESS;
-    DistroInfo distro;
-    GCE(ceError = DJGetDistroInfo(NULL, &distro));
-    GCE(ceError = DJConfigureNameServiceSwitch(NULL, TRUE));
-
-    /* By default, AIX will check a bind server before it will check its
-     * hosts file after checking DNS. This means that our FQDN setting code
-     * won't necessarily take effect. So instead we rewrite the line to put
-     * local in front.
-     */
-    if(distro.os == OS_AIX)
-    {
-        GCE(ceError = DJConfigureHostsEntry(NULL));
-    }
-
-cleanup:
-    DJFreeDistroInfo(&distro);
     return ceError;
 }
 
