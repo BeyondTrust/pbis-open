@@ -58,6 +58,7 @@ LsaEnumAccounts(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
+    NTSTATUS ntEnumStatus = STATUS_SUCCESS;
     LSA_ACCOUNT_ENUM_BUFFER accounts = {0};
     PSID *ppSids = NULL;
     DWORD offset = 0;
@@ -76,7 +77,16 @@ LsaEnumAccounts(
                               pResume,
                               &accounts,
                               PreferredMaxSize));
-    BAIL_ON_NT_STATUS(ntStatus);
+    if (ntStatus == STATUS_MORE_ENTRIES ||
+        ntStatus == STATUS_NO_MORE_ENTRIES)
+    {
+        ntEnumStatus = ntStatus;
+        ntStatus = STATUS_SUCCESS;
+    }
+    else if (ntStatus != STATUS_SUCCESS)
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
 
     offset    = 0;
     spaceLeft = 0;
@@ -130,6 +140,11 @@ error:
     }
 
     LsaCleanStubAccountBuffer(&accounts);
+
+    if (ntStatus == STATUS_SUCCESS)
+    {
+        ntStatus = ntEnumStatus;
+    }
 
     return ntStatus;
 }
