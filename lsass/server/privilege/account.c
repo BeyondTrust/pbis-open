@@ -544,14 +544,6 @@ LsaSrvPrivsEnumAccountRights(
     DWORD i = 0;
     DWORD sysAccessMask = 0x00000001;
 
-    if (!accessToken)
-    {
-        err = LsaSrvPrivsGetAccessTokenFromServerHandle(
-                                hServer,
-                                &accessToken);
-        BAIL_ON_LSA_ERROR(err);
-    }
-
     err = LsaSrvPrivsOpenAccount(
                             hServer,
                             accessToken,
@@ -659,6 +651,7 @@ LsaSrvPrivsOpenAccount(
     DWORD err = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PACCESS_TOKEN accessToken = pAccessToken;
+    BOOLEAN releaseAccessToken = FALSE;
     GENERIC_MAPPING genericMapping = {0};
     PLSA_ACCOUNT pAccount = NULL;
     PLSA_ACCOUNT_CONTEXT accountContext = NULL;
@@ -669,6 +662,8 @@ LsaSrvPrivsOpenAccount(
                                 hServer,
                                 &accessToken);
         BAIL_ON_LSA_ERROR(err);
+
+        releaseAccessToken = TRUE;
     }
 
     err = LsaSrvGetAccountEntry(
@@ -694,6 +689,7 @@ LsaSrvPrivsOpenAccount(
                        
     accountContext->pAccount = pAccount;
     accountContext->accessToken = accessToken;
+    accountContext->releaseAccessToken = releaseAccessToken;
 
     *pAccountContext = accountContext;
 
@@ -727,6 +723,7 @@ LsaSrvPrivsCreateAccount(
     DWORD err = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PACCESS_TOKEN accessToken = pAccessToken;
+    BOOLEAN releaseAccessToken = FALSE;
     GENERIC_MAPPING genericMapping = {0};
     PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
     PLSA_ACCOUNT pAccount = NULL;
@@ -740,6 +737,8 @@ LsaSrvPrivsCreateAccount(
                                 hServer,
                                 &accessToken);
         BAIL_ON_LSA_ERROR(err);
+
+        releaseAccessToken = TRUE;
     }
 
     err = LwAllocateMemory(
@@ -810,6 +809,7 @@ LsaSrvPrivsCreateAccount(
 
     accountContext->pAccount = pAccount;
     accountContext->accessToken = accessToken;
+    accountContext->releaseAccessToken = releaseAccessToken;
 
     *pAccountContext = accountContext;
 
@@ -841,7 +841,11 @@ LsaSrvPrivsCloseAccount(
     if (accountContext == NULL) return;
 
     accountContext->pAccount = NULL;
-    RtlReleaseAccessToken(&accountContext->accessToken);
+
+    if (accountContext->releaseAccessToken)
+    {
+        RtlReleaseAccessToken(&accountContext->accessToken);
+    }
 
     LW_SAFE_FREE_MEMORY(accountContext);
 

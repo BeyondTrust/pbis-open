@@ -95,6 +95,7 @@ struct _LSA_ACCOUNT_CONTEXT
 
     PACCESS_TOKEN accessToken;
     ACCESS_MASK grantedAccess;
+    BOOLEAN releaseAccessToken;
 };
 
 
