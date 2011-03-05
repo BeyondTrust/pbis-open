@@ -35,6 +35,12 @@
 DWORD
 DJConfigureNameServiceSwitch(const char *testPrefix, BOOLEAN enable);
 
+void
+DoNsswitch(
+    JoinProcessOptions *options,
+    LWException **exc
+    );
+
 DWORD
 DJConfigureHostsEntry(const char *testPrefix);
 
