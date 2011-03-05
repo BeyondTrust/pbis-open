@@ -1093,6 +1093,7 @@ AC_CONFIG_FILES([Makefile
                  tools/Makefile
                  tools/domainjoin/Makefile
                  tools/lw-lsa/Makefile
+                 tools/ticketcopy/Makefile
                  etc/Makefile
                  etc/lsassd.reg
                  include/lsaregdef.h

@@ -82,7 +82,6 @@ protected:
     static long ExtractGIDFromGeneratedUID(const char* pszBuf, gid_t& gid);
     static long BuildGeneratedUID(uid_t uid, char** ppszUID);
     static long BuildGeneratedGID(gid_t gid, char** ppszGID);
-    static long GetAuthString(const PLWIUSER pUser, char** AuthString);
 
     long ProcessUserAttributes(PDSRECORD pRecord, OPTIONAL const char* pszName, const PLWIUSER pUser);
     long ProcessGroupAttributes(PDSRECORD pRecord, OPTIONAL const char* pszName, const PLWIGROUP pGroup);
