@@ -33,12 +33,6 @@
 
 
 DWORD
-UnConfigureNameServiceSwitch();
-
-DWORD
-ConfigureNameServiceSwitch();
-
-DWORD
 DJConfigureNameServiceSwitch(const char *testPrefix, BOOLEAN enable);
 
 DWORD
