@@ -1313,7 +1313,11 @@ cleanup:
     DJFreeDistroInfo(&distro);
 }
 
-static void DoNsswitch(JoinProcessOptions *options, LWException **exc)
+void
+DoNsswitch(
+    JoinProcessOptions *options,
+    LWException **exc
+    )
 {
     LWException *restartException = NULL;
     NsswitchConf conf;

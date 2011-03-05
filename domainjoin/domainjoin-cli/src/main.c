@@ -716,6 +716,8 @@ void DoConfigure(int argc, char **argv, LWException **exc)
     PCSTR testPrefix = NULL;
     PCSTR longDomain = NULL;
     PCSTR shortDomain = NULL;
+    JoinProcessOptions options = { 0 };
+
     while(argc > 0 && CTStrStartsWith(argv[0], "--"))
     {
         if(!strcmp(argv[0], "--autoenable"))
@@ -762,11 +764,15 @@ void DoConfigure(int argc, char **argv, LWException **exc)
         goto cleanup;
     }
 
+    options.joiningDomain = GetEnableBoolean(dwEnable);
+    options.warningCallback = PrintWarning;
+
     if(!strcmp(argv[0], "pam"))
         LW_TRY(exc, DJNewConfigurePamForADLogin(testPrefix, NULL, PrintWarning, GetEnableBoolean(dwEnable), &LW_EXC));
     else if(!strcmp(argv[0], "nsswitch"))
-        LW_CLEANUP_CTERR(exc, DJConfigureNameServiceSwitch(testPrefix,
-                GetEnableBoolean(dwEnable)));
+    {
+        LW_TRY(exc, DoNsswitch(&options, &LW_EXC));
+    }
     else if(!strcmp(argv[0], "ssh"))
         LW_TRY(exc, DJConfigureSshForADLogin(testPrefix, GetEnableBoolean(dwEnable), NULL, &LW_EXC));
     else if(!strcmp(argv[0], "krb5"))
