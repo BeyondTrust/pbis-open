@@ -297,6 +297,15 @@ main()
         fi
     done
 
+    for plugin in LWIDSPLugIn LWEDSPlugIn LWDSPlugin ; do
+        path="/Library/DirectoryServices/PlugIns/${plugin}.dsplug"
+        echo "Checking for installed DS plugin (${path})"
+        if [ -h "${path}" ]; then
+            $RUN rm -r "${path}"
+            echo "Removed DS plugin"
+        fi
+    done
+
     $RUN killall DirectoryService
 
     echo "Uninstall completed."
