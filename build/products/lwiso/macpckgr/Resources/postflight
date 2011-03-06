@@ -251,7 +251,7 @@ enable_plugin()
     fi
 
     if [ -h $LIBRARY_DS_DIR/$PLUGIN_DIR ]; then
-        /bin/rm -f $LIBRARY_DS_DIR/$PLUGIN_DIR
+        /bin/rm -r $LIBRARY_DS_DIR/$PLUGIN_DIR
     fi
 
     # Install new plugin
