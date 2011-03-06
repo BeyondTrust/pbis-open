@@ -23,6 +23,7 @@
 #define MAC_OS_X_VERSION_NAME_10_4 "Tiger"
 #define MAC_OS_X_VERSION_NAME_10_5 "Leopard"
 #define MAC_OS_X_VERSION_NAME_10_6 "Snow Leopard"
+#define MAC_OS_X_VERSION_NAME_10_7 "Lion"
 
 // Local helper functions
 //
@@ -336,6 +337,11 @@ long PlugInShell_Initialize(void)
             GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_LEOPARD | LWE_DS_FLAG_IS_SNOW_LEOPARD;
             pszVersionName = MAC_OS_X_VERSION_NAME_10_6;
         }
+        else if (strstr(pszVersion, "10.7.") == pszVersion)
+        {
+            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_LEOPARD | LWE_DS_FLAG_IS_SNOW_LEOPARD;
+            pszVersionName = MAC_OS_X_VERSION_NAME_10_7;
+        }
         else
         {
             isUnsupported = true;
@@ -362,6 +368,11 @@ long PlugInShell_Initialize(void)
         {
             GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_LEOPARD | LWE_DS_FLAG_IS_SNOW_LEOPARD;
             pszVersionName = MAC_OS_X_VERSION_NAME_10_6;
+        }
+        else if (strstr(pszVersion, "11.") == pszVersion)
+        {
+            GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_IS_LEOPARD | LWE_DS_FLAG_IS_SNOW_LEOPARD;
+            pszVersionName = MAC_OS_X_VERSION_NAME_10_7;
         }
         else
         {
