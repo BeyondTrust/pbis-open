@@ -235,6 +235,7 @@ enable_plugin()
     PLUGIN_DIR_ENT=LWEDSPlugin.dsplug
     SRC_DIR=/opt/likewise/lib
     FRAMEWORK_DIR="/System/Library/Frameworks/DirectoryService.framework/Resources/Plugins"
+    LIBRARY_DS_DIR="/Library/DirectoryServices/PlugIns"
 
     # Cleanup old former plugin links
     if [ -h $FRAMEWORK_DIR/$PLUGIN_DIR_OPEN ]; then
@@ -249,8 +250,13 @@ enable_plugin()
         /bin/rm -f $FRAMEWORK_DIR/$PLUGIN_DIR
     fi
 
-    # Relink to new plugin
-    ln -s $SRC_DIR/$PLUGIN_DIR $FRAMEWORK_DIR/$PLUGIN_DIR
+    if [ -h $LIBRARY_DS_DIR/$PLUGIN_DIR ]; then
+        /bin/rm -f $LIBRARY_DS_DIR/$PLUGIN_DIR
+    fi
+
+    # Install new plugin
+    mkdir -p $LIBRARY_DS_DIR
+    cp -r $SRC_DIR/$PLUGIN_DIR $LIBRARY_DS_DIR/$PLUGIN_DIR
 
     if [ -f /usr/bin/setfile ]; then
         setfile -a "V" /opt
