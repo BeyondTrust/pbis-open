@@ -1042,6 +1042,10 @@ void DJCreateComputerAccount(
     {
         dnsDomain = hostFqdn + strlen(shortHostname) + 1;
     }
+    else
+    {
+        dnsDomain = "";
+    }
 
     LW_CLEANUP_LSERR(exc, LsaOpenServer(&lsa));
 
