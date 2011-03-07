@@ -861,8 +861,20 @@ lwmsg_peer_session_connect_endpoint(
         direct_session = NULL;
         break;
     case LWMSG_ENDPOINT_LOCAL:
+        if (!endpoint->endpoint && endpoint->fd < 0)
+        {
+            BAIL_ON_ERROR(status = LWMSG_STATUS_PEER_CLOSE);
+        }
         BAIL_ON_ERROR(status = lwmsg_connection_new(peer->context, peer->protocol, &assoc));
-        BAIL_ON_ERROR(status = lwmsg_connection_set_endpoint(assoc, endpoint->type, endpoint->endpoint));
+        if (endpoint->fd >= 0)
+        {
+            BAIL_ON_ERROR(status = lwmsg_connection_set_fd(assoc, endpoint->type, endpoint->fd));
+            endpoint->fd = -1;
+        }
+        else
+        {
+            BAIL_ON_ERROR(status = lwmsg_connection_set_endpoint(assoc, endpoint->type, endpoint->endpoint));
+        }
         BAIL_ON_ERROR(status = lwmsg_assoc_set_nonblock(assoc, LWMSG_TRUE));
         /* Create task to manage it */
         BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new_connect(
@@ -914,22 +926,28 @@ lwmsg_peer_session_connect(
     LWMsgRing* ring = NULL;
     PeerEndpoint* endpoint = NULL;
 
-    for (ring = peer->connect_endpoints.next; ring != &peer->connect_endpoints; ring = ring->next)
+    if (session->endpoint)
     {
-        endpoint = LWMSG_OBJECT_FROM_MEMBER(ring, PeerEndpoint, ring);
-        status = lwmsg_peer_session_connect_endpoint(session, endpoint);
-        switch (status)
+        BAIL_ON_ERROR(status = lwmsg_peer_session_connect_endpoint(session, session->endpoint));
+    }
+    else
+    {
+        for (ring = peer->connect_endpoints.next; ring != &peer->connect_endpoints; ring = ring->next)
         {
-        case LWMSG_STATUS_SUCCESS:
-            session->endpoint = endpoint;
-            goto done;
-        case LWMSG_STATUS_CONNECTION_REFUSED:
-        case LWMSG_STATUS_TIMEOUT:
-        case LWMSG_STATUS_FILE_NOT_FOUND:
-        case LWMSG_STATUS_NOT_FOUND:
-            break;
-        default:
-            BAIL_ON_ERROR(status);
+            endpoint = LWMSG_OBJECT_FROM_MEMBER(ring, PeerEndpoint, ring);
+            status = lwmsg_peer_session_connect_endpoint(session, endpoint);
+            switch (status)
+            {
+            case LWMSG_STATUS_SUCCESS:
+                goto done;
+            case LWMSG_STATUS_CONNECTION_REFUSED:
+            case LWMSG_STATUS_TIMEOUT:
+            case LWMSG_STATUS_FILE_NOT_FOUND:
+            case LWMSG_STATUS_NOT_FOUND:
+                break;
+            default:
+                BAIL_ON_ERROR(status);
+            }
         }
     }
 

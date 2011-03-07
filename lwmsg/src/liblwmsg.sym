@@ -15,5 +15,7 @@ lwmsg_peer_set_exception_function
 lwmsg_peer_add_connect_endpoint
 lwmsg_peer_connect
 lwmsg_peer_disconnect
+lwmsg_peer_connect_fd
+lwmsg_peer_accept_fd
 lwmsg_peer_acquire_call
 lwmsg_peer_set_trace_functions

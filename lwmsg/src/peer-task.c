@@ -630,7 +630,6 @@ error:
     return status;
 }
 
-static
 LWMsgStatus
 lwmsg_peer_assoc_task_new_accept(
     PeerSession* session,
@@ -878,8 +877,6 @@ lwmsg_peer_task_run_listen(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerListenTask* task = data;
     int client_fd = -1;
-    LWMsgAssoc* assoc = NULL;
-    PeerSession* session = NULL;
     LWMsgBool slot = LWMSG_FALSE;
     int err = 0;
     
@@ -890,8 +887,6 @@ lwmsg_peer_task_run_listen(
 
     while (status == LWMSG_STATUS_SUCCESS)
     {
-        assoc = NULL;
-        session = NULL;
         slot = LWMSG_FALSE;
         client_fd = -1;
         
@@ -931,20 +926,9 @@ lwmsg_peer_task_run_listen(
                 }
             } while (client_fd < 0);
             
-            BAIL_ON_ERROR(status = lwmsg_set_close_on_exec(client_fd));
-            
-            /* Create new connection with client fd, put it into task, schedule task */
-            BAIL_ON_ERROR(status = lwmsg_peer_session_new(task->peer, &session));
-            BAIL_ON_ERROR(status = lwmsg_connection_new(task->peer->context, task->peer->protocol, &assoc));
-            BAIL_ON_ERROR(status = lwmsg_connection_set_fd(assoc, LWMSG_CONNECTION_MODE_LOCAL, client_fd));
-            BAIL_ON_ERROR(status = lwmsg_assoc_set_nonblock(assoc, LWMSG_TRUE));
-            BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new_accept(session, assoc, &session->assoc_session));
-            assoc = NULL;
+            BAIL_ON_ERROR(status = lwmsg_peer_accept_fd(task->peer, LWMSG_ENDPOINT_LOCAL, client_fd));
+            client_fd = -1;
             slot = LWMSG_FALSE;
-            
-            /* Release a reference so the task will be freed immediately
-               when it is cancelled */
-            lwmsg_task_wake(session->assoc_session->event_task);
         }
         else
         {
@@ -966,21 +950,11 @@ done:
 
 error:
     
-    if (client_fd >= 0 && !assoc)
+    if (client_fd >= 0)
     {
         close(client_fd);
     }
     
-    if (assoc)
-    {
-        lwmsg_assoc_delete(assoc);
-    }
-    
-    if (session)
-    {
-        lwmsg_session_release((LWMsgSession*) session);
-    }
-
     /* If the listen task aborts, the server will be left in a state
        where it is running but cannot be contacted.  Invoke the
        exception function set on the server to give the application

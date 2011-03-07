@@ -842,6 +842,7 @@ lwmsg_peer_add_connect_endpoint(
     
     peer_endpoint->type = type;
     peer_endpoint->endpoint = strdup(endpoint);
+    peer_endpoint->fd = -1;
 
     if (!peer_endpoint->endpoint)
     {
@@ -949,4 +950,88 @@ done:
 error:
 
     goto done;
+}
+
+LWMsgStatus
+lwmsg_peer_connect_fd(
+    LWMsgPeer* peer,
+    LWMsgEndpointType type,
+    int fd,
+    LWMsgSession** session
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgBool locked = LWMSG_FALSE;
+    PeerEndpoint* endpoint = NULL;
+
+    BAIL_ON_ERROR(status = LWMSG_ALLOC(&endpoint));
+    endpoint->fd = fd;
+    endpoint->type = type;
+
+    PEER_LOCK(peer, locked);
+
+    if (peer->connect_session)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_STATE);
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_peer_session_new(peer, &peer->connect_session));
+    peer->connect_session->endpoint = endpoint;
+    endpoint = NULL;
+
+    if (session)
+    {
+        *session = (LWMsgSession*) peer->connect_session;
+    }
+
+error:
+
+    PEER_UNLOCK(peer, locked);
+
+    if (endpoint)
+    {
+        free(endpoint);
+    }
+
+    return status;
+}
+
+LWMsgStatus
+lwmsg_peer_accept_fd(
+    LWMsgPeer* peer,
+    LWMsgEndpointType type,
+    int fd
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    PeerSession* session = NULL;
+    LWMsgAssoc* assoc = NULL;
+
+    BAIL_ON_ERROR(status = lwmsg_set_close_on_exec(fd));
+    /* Create new connection with client fd, put it into task, schedule task */
+    BAIL_ON_ERROR(status = lwmsg_peer_session_new(peer, &session));
+    BAIL_ON_ERROR(status = lwmsg_connection_new(peer->context, peer->protocol, &assoc));
+    BAIL_ON_ERROR(status = lwmsg_connection_set_fd(assoc, LWMSG_CONNECTION_MODE_LOCAL, fd));
+    BAIL_ON_ERROR(status = lwmsg_assoc_set_nonblock(assoc, LWMSG_TRUE));
+    BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new_accept(session, assoc, &session->assoc_session));
+    assoc = NULL;
+
+    lwmsg_task_wake(session->assoc_session->event_task);
+
+error:
+
+    if (status)
+    {
+        if (assoc)
+        {
+            lwmsg_assoc_delete(assoc);
+        }
+
+        if (session)
+        {
+            lwmsg_session_release((LWMsgSession*) session);
+        }
+    }
+
+    return status;
 }

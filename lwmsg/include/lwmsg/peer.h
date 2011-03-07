@@ -612,6 +612,43 @@ lwmsg_peer_disconnect(
     );
 
 /**
+ * @brief Establish session on existing fd
+ *
+ * Establishes a session with a peer like #lwmsg_peer_connect(),
+ * but uses the provided pre-connected file descriptor.
+ *
+ * @param[in,out] peer the peer handle
+ * @param[in] type the endpoint type
+ * @param[in] fd the fd
+ * @param[out] session set to the created session
+ * @retval #LWMSG_STATUS_SUCCESS success
+ */
+LWMsgStatus
+lwmsg_peer_connect_fd(
+    LWMsgPeer* peer,
+    LWMsgEndpointType type,
+    int fd,
+    LWMsgSession** session
+    );
+
+/**
+ * @brief Accept session on existing fd
+ *
+ * Accepts a session on an fd that is already connected.
+ *
+ * @param[in,out] peer the peer handle
+ * @param[in] type the endpoint type
+ * @param[in] fd the fd
+ * @retval #LWMSG_STATUS_SUCCESS success
+ */
+LWMsgStatus
+lwmsg_peer_accept_fd(
+    LWMsgPeer* peer,
+    LWMsgEndpointType type,
+    int fd
+    );
+
+/**
  * @brief Acquire outgoing call handle [DEPRECATED]
  *
  * Acquire a call handle which can be used to make an outgoing call.  Peer

@@ -397,6 +397,13 @@ lwmsg_peer_assoc_task_new_connect(
     );
 
 LWMsgStatus
+lwmsg_peer_assoc_task_new_accept(
+    PeerSession* session,
+    LWMsgAssoc* assoc,
+    PeerAssocTask** task
+    );
+
+LWMsgStatus
 lwmsg_peer_listen_task_new(
     LWMsgPeer* peer,
     LWMsgEndpointType type,

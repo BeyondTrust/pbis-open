@@ -42,6 +42,8 @@
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/un.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -1191,4 +1193,44 @@ MU_TEST(client_server_indirect, client_limit_timeout)
         MU_TRY(lwmsg_connection_set_endpoint(assocs[i], LWMSG_ENDPOINT_LOCAL, TEST_ENDPOINT));
         MU_TRY(lwmsg_assoc_connect(assocs[i], NULL));
     }
+}
+
+MU_TEST(client_server_pair, basic)
+{
+    int sockets[2];
+    LWMsgSession* session = NULL;
+    LWMsgCall* call = NULL;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockets))
+    {
+        MU_FAILURE("socketpair(): %s", strerror(errno));
+    }
+
+    MU_TRY(lwmsg_context_new(NULL, &context));
+    lwmsg_context_set_log_function(context, lwmsg_test_log_function, NULL);
+
+    MU_TRY(lwmsg_protocol_new(context, &protocol));
+    MU_TRY(lwmsg_protocol_add_protocol_spec(protocol, multicall_spec));
+
+    MU_TRY(lwmsg_peer_new(context, protocol, &server));
+    MU_TRY(lwmsg_peer_add_dispatch_spec(server, multicall_dispatch));
+
+    MU_TRY(lwmsg_peer_new(NULL, protocol, &client));
+    MU_TRY(lwmsg_peer_add_dispatch_spec(client, invoke_dispatch));
+
+    MU_TRY(lwmsg_peer_accept_fd(server, LWMSG_ENDPOINT_LOCAL, sockets[0]));
+    MU_TRY(lwmsg_peer_connect_fd(server, LWMSG_ENDPOINT_LOCAL, sockets[1], &session));
+
+    in.tag = PING_REQUEST;
+
+    MU_TRY(lwmsg_session_acquire_call(session, &call));
+    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out.tag, PING_REPLY);
+
+    lwmsg_call_release(call);
+
+    MU_TRY(lwmsg_peer_disconnect(client));
+    MU_TRY(lwmsg_peer_stop_listen(server));
 }
