@@ -104,6 +104,20 @@ LsaSrvLookupSysAccessRightNameMap(
     IN BOOLEAN ResolveName
     );
 
+static
+BOOLEAN
+LsaSrvIsPrivilegeAssigned(
+    IN PLSA_ACCOUNT pAccount,
+    IN PLSA_PRIVILEGE pPrivilege
+    );
+
+static
+BOOLEAN
+LsaSrvIsSarAssigned(
+    IN PLSA_ACCOUNT pAccount,
+    IN DWORD SystemAccessRight
+    );
+
 
 DWORD
 LsaSrvPrivsEnumAccountRightsSids(
@@ -1484,4 +1498,216 @@ error:
     }
 
     return err;
+}
+
+
+DWORD
+LsaSrvPrivsEnumAccountsWithUserRight(
+    IN HANDLE hServer,
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
+    IN PWSTR UserRight,
+    OUT PSID **ppAccountSids,
+    OUT PDWORD pCount
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+    PACCESS_TOKEN accessToken = AccessToken;
+    BOOLEAN releaseAccessToken = FALSE;
+    ACCESS_MASK accessRights = LSA_ACCESS_LOOKUP_NAMES_SIDS |
+                               LSA_ACCESS_VIEW_POLICY_INFO;
+    ACCESS_MASK grantedAccess = 0;
+    GENERIC_MAPPING genericMapping = {0};
+    PSTR pszAccountRight = NULL;
+    PLSA_PRIVILEGE pPrivilege = NULL;
+    DWORD systemAccessRight = 0;
+    DWORD resume = 0;
+    DWORD preferredMaxSize = (DWORD)(-1);
+    PLSA_ACCOUNT *ppAccounts = NULL;
+    DWORD numAccounts = 0;
+    DWORD count = 0;
+    DWORD i = 0;
+    PSID *pAccountSids = NULL;
+
+    if (!accessToken)
+    {
+        err = LsaSrvPrivsGetAccessTokenFromServerHandle(
+                                hServer,
+                                &accessToken);
+        BAIL_ON_LSA_ERROR(err);
+
+        releaseAccessToken = TRUE;
+    }
+
+    if (!RtlAccessCheck(pGlobals->pPrivilegesSecDesc,
+                        accessToken,
+                        accessRights,
+                        0,
+                        &genericMapping,
+                        &grantedAccess,
+                        &ntStatus))
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    //
+    // Find out if UserRight is a privilege or system access right name
+    //
+    err = LwWc16sToMbs(UserRight,
+                       &pszAccountRight);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = LsaSrvGetPrivilegeEntryByName(
+                        pszAccountRight,
+                        &pPrivilege);
+    if (err == ERROR_NO_SUCH_PRIVILEGE)
+    {
+        err = LsaSrvAccountRightNameToSar(
+                            UserRight,
+                            &systemAccessRight);
+    }
+    BAIL_ON_LSA_ERROR(err);
+
+    err = LsaSrvPrivsGetAccountEntries(
+                        &resume,
+                        preferredMaxSize,
+                        &ppAccounts,
+                        &numAccounts);
+    BAIL_ON_LSA_ERROR(err);
+
+    //
+    // Count the number of accounts to return
+    //
+    for (i = 0; i < numAccounts; i++)
+    {
+        if ((pPrivilege &&
+             LsaSrvIsPrivilegeAssigned(
+                            ppAccounts[i],
+                            pPrivilege)) ||
+            (systemAccessRight &&
+             LsaSrvIsSarAssigned(
+                            ppAccounts[i],
+                            systemAccessRight)))
+        {
+            count++;
+        }
+    }
+
+    err = LwAllocateMemory(
+                        sizeof(pAccountSids[0]) * count,
+                        OUT_PPVOID(&pAccountSids));
+    BAIL_ON_LSA_ERROR(err);
+
+    count = 0;
+
+    //
+    // Copy the account SIDs to return
+    //
+    for (i = 0; i < numAccounts; i++)
+    {
+        DWORD sidSize = 0; 
+
+        if ((pPrivilege &&
+             LsaSrvIsPrivilegeAssigned(
+                            ppAccounts[i],
+                            pPrivilege)) ||
+            (systemAccessRight &&
+             LsaSrvIsSarAssigned(
+                            ppAccounts[i],
+                            systemAccessRight)))
+        {
+            sidSize = RtlLengthSid(ppAccounts[i]->pSid);
+
+            err = LwAllocateMemory(
+                                sidSize,
+                                OUT_PPVOID(&pAccountSids[i]));
+            BAIL_ON_LSA_ERROR(err);
+
+            ntStatus = RtlCopySid(
+                                sidSize,
+                                pAccountSids[count++],
+                                ppAccounts[i]->pSid);
+            if (ntStatus)
+            {
+                err = LwNtStatusToWin32Error(ntStatus);
+                BAIL_ON_LSA_ERROR(err);
+            }
+        }
+    }
+
+    *ppAccountSids  = pAccountSids;
+    *pCount         = count;
+
+error:
+    if (err || ntStatus)
+    {
+        for (i = 0; i < count; i++)
+        {
+            LW_SAFE_FREE_MEMORY(pAccountSids[i]);
+        }
+        LW_SAFE_FREE_MEMORY(pAccountSids);
+
+        if (ppAccountSids)
+        {
+            *ppAccountSids = NULL;
+        }
+
+        if (pCount)
+        {
+            *pCount = 0;
+        }
+    }
+
+    if (releaseAccessToken)
+    {
+        RtlReleaseAccessToken(&accessToken);
+    }
+
+    // Array elements are pointers from the database so they
+    // must not be freed here
+    LW_SAFE_FREE_MEMORY(ppAccounts);
+
+    LW_SAFE_FREE_MEMORY(pszAccountRight);
+
+    if (err == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return err;
+}
+
+
+static
+BOOLEAN
+LsaSrvIsPrivilegeAssigned(
+    IN PLSA_ACCOUNT pAccount,
+    IN PLSA_PRIVILEGE pPrivilege
+    )
+{
+    DWORD i = 0;
+
+    for (i = 0; i < pAccount->NumPrivileges; i++)
+    {
+        if (RtlEqualLuid(&pAccount->Privileges[i].Luid,
+                         &pPrivilege->Luid))
+        {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+
+static
+BOOLEAN
+LsaSrvIsSarAssigned(
+    IN PLSA_ACCOUNT pAccount,
+    IN DWORD SystemAccessRight
+    )
+{
+    return (pAccount->SystemAccessRights & SystemAccessRight);
 }

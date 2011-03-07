@@ -103,6 +103,16 @@ LsaSrvPrivsEnumAccounts(
 
 
 DWORD
+LsaSrvPrivsEnumAccountsWithUserRight(
+    IN HANDLE hServer,
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
+    IN PWSTR UserRight,
+    OUT PSID **ppAccountSids,
+    OUT PDWORD pCount
+    );
+
+
+DWORD
 LsaSrvPrivsAddAccountRights(
     IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,

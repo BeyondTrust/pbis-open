@@ -1181,7 +1181,7 @@ LsaSrvPrivsGetAccountEntries(
 {
     DWORD err = ERROR_SUCCESS;
     DWORD enumerationStatus = ERROR_SUCCESS;
-    BOOLEAN Locked = FALSE;
+    BOOLEAN accountsLocked = FALSE;
     PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
     DWORD totalSize = 0;
     DWORD entrySize = 0;
@@ -1192,7 +1192,7 @@ LsaSrvPrivsGetAccountEntries(
     LW_HASH_ENTRY* pEntry = NULL;
     PLSA_ACCOUNT pAccountEntry = NULL;
 
-    LSASRV_PRIVS_RDLOCK_RWLOCK(Locked, &pGlobals->accountsRwLock);
+    LSASRV_PRIVS_RDLOCK_RWLOCK(accountsLocked, &pGlobals->accountsRwLock);
 
     err = LwHashGetIterator(
                  pGlobals->pAccounts,
@@ -1289,7 +1289,7 @@ LsaSrvPrivsGetAccountEntries(
     *pCount       = count;
 
 error:
-    LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->accountsRwLock);
+    LSASRV_PRIVS_UNLOCK_RWLOCK(accountsLocked, &pGlobals->accountsRwLock);
 
     if (err)
     {
