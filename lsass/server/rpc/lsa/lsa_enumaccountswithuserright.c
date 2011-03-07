@@ -33,13 +33,13 @@
  *
  * Module Name:
  *
- *        lsa_enumaccounts.c
+ *        lsa_enumaccountswithuserright.c
  *
  * Abstract:
  *
  *        Remote Procedure Call (RPC) Server Interface
  *
- *        LsaEnumAccounts function
+ *        LsaEnumAccountsWithUserRight function
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
@@ -48,21 +48,19 @@
 
 
 NTSTATUS
-LsaSrvEnumAccounts(
+LsaSrvEnumAccountsWithUserRight(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ POLICY_HANDLE hPolicy,
-    /* [in, out] */ PDWORD pResume,
-    /* [out] */ PLSA_ACCOUNT_ENUM_BUFFER pBuffer,
-    /* [in] */ DWORD PreferredMaxSize
+    /* [in] */ PUNICODE_STRING pName,
+    /* [out] */ LSA_ACCOUNT_ENUM_BUFFER *pAccounts
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD err = ERROR_SUCCESS;
-    DWORD enumerationStatus = ERROR_SUCCESS;
     PPOLICY_CONTEXT pPolicyContext = (PPOLICY_CONTEXT)hPolicy;
-    DWORD resume = *pResume;
+    PWSTR userRightName = NULL;
     PSID *pAccountSids = NULL;
-    DWORD numAccounts = 0;
+    DWORD numAccountSids = 0;
     DWORD i = 0;
 
     if (pPolicyContext == NULL || pPolicyContext->Type != LsaContextPolicy)
@@ -71,67 +69,57 @@ LsaSrvEnumAccounts(
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
     }
 
-    err = LsaSrvPrivsEnumAccounts(
+    err = LwAllocateWc16StringFromUnicodeString(
+                        &userRightName,
+                        pName);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = LsaSrvPrivsEnumAccountsWithUserRight(
                         NULL,
                         pPolicyContext->pUserToken,
-                        &resume,
-                        PreferredMaxSize,
+                        userRightName,
                         &pAccountSids,
-                        &numAccounts);
-    if (err == ERROR_MORE_DATA ||
-        err == ERROR_NO_MORE_ITEMS)
-    {
-        enumerationStatus = err;
-        err = ERROR_SUCCESS;
-    }
-    else if (err != ERROR_SUCCESS)
-    {
-        BAIL_ON_LSA_ERROR(err);
-    }
+                        &numAccountSids);
+    BAIL_ON_LSA_ERROR(err);
 
     ntStatus = LsaSrvAllocateMemory(
-                        OUT_PPVOID(&pBuffer->pAccount),
-                        sizeof(pBuffer->pAccount[0]) * numAccounts);
+                        OUT_PPVOID(&pAccounts->pAccount),
+                        sizeof(pAccounts->pAccount[0]) * numAccountSids);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    for (i = 0; i < numAccounts; i++)
+    for (i = 0; i < numAccountSids; i++)
     {
         ntStatus = LsaSrvDuplicateSid(
-                            &pBuffer->pAccount[i].pSid,
+                            &pAccounts->pAccount[i].pSid,
                             pAccountSids[i]);
         BAIL_ON_NT_STATUS(ntStatus);
     }
 
-    pBuffer->NumAccounts = numAccounts;
-    *pResume = resume;
+    pAccounts->NumAccounts = numAccountSids;
 
 error:
     if (err || ntStatus)
     {
-        if (pBuffer->pAccount)
+        if (pAccounts->pAccount)
         {
-            for (i = 0; i < numAccounts; i++)
+            for (i = 0; i < numAccountSids; i++)
             {
-                LsaSrvFreeMemory(pBuffer->pAccount[i].pSid);
+                LsaSrvFreeMemory(pAccounts->pAccount[i].pSid);
             }
-            LsaSrvFreeMemory(pBuffer->pAccount);
+            LsaSrvFreeMemory(pAccounts->pAccount);
         }
 
-        pBuffer->pAccount    = NULL;
-        pBuffer->NumAccounts = 0;
-        *pResume = 0;
+        pAccounts->pAccount    = NULL;
+        pAccounts->NumAccounts = 0;
     }
 
-    for (i = 0; i < numAccounts; i++)
+    for (i = 0; i < numAccountSids; i++)
     {
         LW_SAFE_FREE_MEMORY(pAccountSids[i]);
     }
     LW_SAFE_FREE_MEMORY(pAccountSids);
 
-    if (err == ERROR_SUCCESS)
-    {
-        err = enumerationStatus;
-    }
+    LW_SAFE_FREE_MEMORY(userRightName);
 
     if (ntStatus == STATUS_SUCCESS &&
         err != ERROR_SUCCESS)

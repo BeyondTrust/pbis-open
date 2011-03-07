@@ -87,7 +87,7 @@ LsaSrvCreateAccount(
 
 NTSTATUS
 LsaSrvEnumAccounts(
-    handle_t IDL_handle,
+    handle_t b,
     POLICY_HANDLE hPolicy,
     PDWORD pResume,
     PLSA_ACCOUNT_ENUM_BUFFER pAccounts,
@@ -177,6 +177,54 @@ LsaSrvLookupPrivilegeName(
     POLICY_HANDLE hPolicy,
     PLUID pValue,
     PUNICODE_STRING *ppName
+    );
+
+
+NTSTATUS
+LsaSrvEnumAccountsWithUserRight(
+    handle_t b,
+    POLICY_HANDLE hPolicy,
+    PUNICODE_STRING pName,
+    LSA_ACCOUNT_ENUM_BUFFER *pAccounts
+    );
+
+
+NTSTATUS
+LsaSrvEnumAccountRights(
+    handle_t IDL_handle,
+    POLICY_HANDLE hPolicy,
+    PSID pAccountSid,
+    PLSA_ACCOUNT_RIGHTS pAccountRights
+    );
+
+
+NTSTATUS
+LsaSrvAddAccountRights(
+    handle_t IDL_handle,
+    POLICY_HANDLE hPolicy,
+    PSID pAccountSid,
+    PLSA_ACCOUNT_RIGHTS pAccountRights
+    );
+
+
+NTSTATUS
+LsaSrvRemoveAccountRights(
+    handle_t IDL_handle,
+    POLICY_HANDLE hPolicy,
+    PSID pAccountSid,
+    BOOLEAN RemoveAll,
+    PLSA_ACCOUNT_RIGHTS pAccountRights
+    );
+
+
+NTSTATUS
+LsaSrvAddRemoveAccountRights(
+    handle_t IDL_handle,
+    POLICY_HANDLE hPolicy,
+    PSID pAccountSid,
+    BOOLEAN Add,
+    BOOLEAN RemoveAll,
+    PLSA_ACCOUNT_RIGHTS pAccountRights
     );
 
 

@@ -503,7 +503,12 @@ NTSTATUS srv_LsaEnumAccountsWithUserRight(
     /* [out] */ LSA_ACCOUNT_ENUM_BUFFER *pAccounts
     )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvEnumAccountsWithUserRight(IDL_handle,
+                                             hPolicy,
+                                             pName,
+                                             pAccounts);
     return status;
 }
 
@@ -515,7 +520,12 @@ NTSTATUS srv_LsaEnumAccountRights(
     /* [out] */ LSA_ACCOUNT_RIGHTS *pAccountRights
     )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvEnumAccountRights(IDL_handle,
+                                     hPolicy,
+                                     pAccountSid,
+                                     pAccountRights);
     return status;
 }
 
@@ -527,7 +537,12 @@ NTSTATUS srv_LsaAddAccountRights(
     /* [in] */ LSA_ACCOUNT_RIGHTS *pAccountRights
     )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvAddAccountRights(IDL_handle,
+                                    hPolicy,
+                                    pAccountSid,
+                                    pAccountRights);
     return status;
 }
 
@@ -540,7 +555,13 @@ NTSTATUS srv_LsaRemoveAccountRights(
     /* [in] */ LSA_ACCOUNT_RIGHTS *pAccountRights
     )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvRemoveAccountRights(IDL_handle,
+                                       hPolicy,
+                                       pAccountSid,
+                                       RemoveAll,
+                                       pAccountRights);
     return status;
 }
 
