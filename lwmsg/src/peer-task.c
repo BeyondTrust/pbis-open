@@ -1234,10 +1234,7 @@ lwmsg_peer_task_run_shutdown(
         lwmsg_peer_task_set_timeout(peer, task, &peer->timeout.establish, trigger, next_trigger, next_timeout);
         break;
     default:
-        BAIL_ON_ERROR(status = lwmsg_peer_task_handle_assoc_error(
-                          peer,
-                          task,
-                          status));
+        BAIL_ON_ERROR(status);
         break;
     }
 
@@ -2010,11 +2007,6 @@ error:
         break;
     default:
         LWMSG_LOG_ERROR(peer->context, "Caught error: %s (%i)", lwmsg_error_name(status), status);
-
-        if (peer->except)
-        {
-            peer->except(peer, status, peer->except_data);
-        }
 
         task->type = PEER_TASK_DONE;
         *next_trigger = LWMSG_TASK_TRIGGER_YIELD;
