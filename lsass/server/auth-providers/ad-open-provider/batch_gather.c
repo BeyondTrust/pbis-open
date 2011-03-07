@@ -157,7 +157,17 @@ LsaAdBatchGatherSchemaModeUser(
                     pMessage,
                     AD_LDAP_GID_TAG,
                     &dwValue);
+    if (LW_ERROR_INVALID_LDAP_ATTR_VALUE == dwError)
+    {
+        SetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_DISABLED);
+        dwError = LW_ERROR_SUCCESS;
+    }
     BAIL_ON_LSA_ERROR(dwError);
+
+    if (IsSetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_DISABLED))
+    {
+        goto cleanup;
+    }
 
     if (!dwValue)
     {
