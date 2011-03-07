@@ -1064,32 +1064,16 @@ static QueryResult QueryDescriptionSetHostname(const JoinProcessOptions *options
     }
     else if(strcmp(newFqdn, oldFqdnHostname))
     {
-        if(strchr(oldFqdnHostname, '.') == NULL)
-        {
-            //The current fqdn does not match out minimal requirements
-            LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&newValue,
-"%s\n"
-"\tChange the fqdn from '%s' to '%s'. The current fqdn is invalid because it does not contain a dot in the name. Changing the fqdn could be done via DNS, but this program will change it with the following steps:\n"
-"\t\t* Making sure local comes before bind in nsswitch\n"
-"\t\t* Adding the fqdn before all entries in /etc/hosts that contain the short hostname and removing the old fqdn if it appears on the line\n"
-"\t\t* Restart nscd (if running) to flush the DNS cache",
-                required, oldFqdnHostname, newFqdn));
-            CT_SAFE_FREE_STRING(required);
-            required = newValue;
-        }
-        else
-        {
-            //The current fqdn does not match our ideal fqdn
-            LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&newValue,
+        //The current fqdn does not match our ideal fqdn
+        LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&newValue,
 "%s\n"
 "\tChange the fqdn from '%s' to '%s'. This could be done via DNS, but this program will do it with the following steps:\n"
 "\t\t* Making sure local comes before bind in nsswitch\n"
 "\t\t* Adding the fqdn before all entries in /etc/hosts that contain the short hostname and removing the old fqdn if it appears on the line\n"
 "\t\t* Restart nscd (if running) to flush the DNS cache",
-                optional, oldFqdnHostname, newFqdn));
-            CT_SAFE_FREE_STRING(optional);
-            optional = newValue;
-        }
+            optional, oldFqdnHostname, newFqdn));
+        CT_SAFE_FREE_STRING(optional);
+        optional = newValue;
         describedFqdn = TRUE;
     }
 
