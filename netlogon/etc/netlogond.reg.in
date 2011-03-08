@@ -66,7 +66,7 @@
 }
 "NetBiosUdpTimeout" = {
     default = dword:00000001
-    "range" = integer:1 - 60
+    "range" = integer:1-60
     doc = "Wait this many seconds for responses to NetBIOS broadcast queries"
 }
 "NetBiosWinsPrimary" = {
