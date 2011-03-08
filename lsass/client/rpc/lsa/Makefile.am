@@ -32,7 +32,7 @@ liblsa_la_SOURCES =                    \
     lsa_enumaccountswithuserright.c    \
     lsa_enumaccountrights.c            \
     lsa_addaccountrights.c             \
-    lsa_removeaccountrights.c"
+    lsa_removeaccountrights.c
 
 DCEIDL_PASS_INCLUDES = \
     $(CPPFLAGS)        \
