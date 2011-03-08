@@ -6,6 +6,7 @@ make()
 	lsa_cfg.c                          \
 	lsa_srv.c                          \
 	lsa_memory.c                       \
+        lsa_querysecurity.c                \
         lsa_enumprivileges.c               \
 	lsa_openpolicy2.c                  \
 	lsa_close.c                        \

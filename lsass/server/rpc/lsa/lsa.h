@@ -66,6 +66,15 @@ LsaSrvEnumPrivileges(
 
 
 NTSTATUS
+LsaSrvQuerySecurity(
+    handle_t b,
+    PVOID hObject,
+    SECURITY_INFORMATION SecurityInformation,
+    PLSA_SECURITY_DESCRIPTOR_BUFFER *ppSecurityDesc
+    );
+
+
+NTSTATUS
 LsaSrvOpenPolicy2(
     handle_t b,
     wchar16_t *system_name,

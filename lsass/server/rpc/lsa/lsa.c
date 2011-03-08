@@ -96,7 +96,12 @@ NTSTATUS srv_LsaQuerySecurity(
     /* [out] */ PLSA_SECURITY_DESCRIPTOR_BUFFER *ppSecurityDesc
     )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvQuerySecurity(IDL_handle,
+                                 hObject,
+                                 SecurityInformation,
+                                 ppSecurityDesc);
     return status;
 }
 
