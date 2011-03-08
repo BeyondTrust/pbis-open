@@ -1,7 +1,7 @@
 PKG_NEED_COMPAT=1
 PKG_NEED_FOREIGN=1
 PKG_DESC="Likewise Open"
-PKG_COMPONENTS="lwbase lwadvapi centutils openssl libiconv libuuid lwmsg lwsm popt curl lsass lwdns krb5 cyrus-sasl openldap sqlite libxml2 libschannel dcerpc lwreg lwsm eventlog netlogon lwio lwnetapi srvsvc domainjoin lwtools lwupgrade lwconfig reapsysl samba-interop"
+PKG_COMPONENTS="lwbase lwadvapi centutils openssl libiconv libuuid lwmsg lwsm popt curl lsass lwdns krb5 cyrus-sasl openldap sqlite libxml2 libschannel dcerpc lwreg lwsm eventlog netlogon lwio nfs lwnetapi srvsvc domainjoin lwtools lwupgrade lwconfig reapsysl samba-interop"
 
 MODAUTHKERB="mod-auth-kerb-2_0 mod-auth-kerb-2_2"
 
