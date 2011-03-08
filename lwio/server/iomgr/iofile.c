@@ -563,10 +563,18 @@ IopFileObjectRemoveDispatched(
 
     if (needContinueAsycClose)
     {
-        IopContinueAsyncCloseFile(
+        // This will send the close to the FSD.  Note that the callback
+        // must be called from here on a synchronous completion because
+        // there was no asynchronous IRP completion to take care of calling
+        // the callback.
+        NTSTATUS status = IopContinueAsyncCloseFile(
                 pFileObject,
                 pFileObject->Rundown.Callback,
                 pFileObject->Rundown.CallbackContext,
                 pFileObject->Rundown.pIoStatusBlock);
+        if (STATUS_PENDING != status)
+        {
+            pFileObject->Rundown.Callback(pFileObject->Rundown.CallbackContext);
+        }
     }
 }
