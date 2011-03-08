@@ -217,4 +217,15 @@ LsaSrvPrivsSetSystemAccessRights(
     );
 
 
+DWORD
+LsaSrvPrivsGetAccountSecurity(
+    IN HANDLE hServer,
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
+    IN PLSA_ACCOUNT_CONTEXT pAccountContext,
+    IN SECURITY_INFORMATION SecurityInformation,
+    OUT PSECURITY_DESCRIPTOR_RELATIVE *ppSecurityDescRelative,
+    OUT PDWORD pSecurityDescRelativeSize
+    );
+
+
 #endif /* __LSASRV_PRIVILEGE_H__ */

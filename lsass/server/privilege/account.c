@@ -1711,3 +1711,183 @@ LsaSrvIsSarAssigned(
 {
     return (pAccount->SystemAccessRights & SystemAccessRight);
 }
+
+
+DWORD
+LsaSrvPrivsGetAccountSecurity(
+    IN HANDLE hServer,
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
+    IN PLSA_ACCOUNT_CONTEXT pAccountContext,
+    IN SECURITY_INFORMATION SecurityInformation,
+    OUT PSECURITY_DESCRIPTOR_RELATIVE *ppSecurityDescRelative,
+    OUT PDWORD pSecurityDescRelativeSize
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    BOOLEAN accountLocked = FALSE;
+    PLSA_ACCOUNT pAccount = pAccountContext->pAccount;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecurityDesc = NULL;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescRelative = NULL;
+    DWORD securityDescRelativeSize = 0;
+
+    if (!(pAccountContext->grantedAccess & (LSA_ACCOUNT_VIEW |
+                                            READ_CONTROL)))
+    {
+        err = ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    err = LwAllocateMemory(
+                        SECURITY_DESCRIPTOR_ABSOLUTE_MIN_SIZE,
+                        OUT_PPVOID(&pSecurityDesc));
+    BAIL_ON_LSA_ERROR(err);
+
+    ntStatus = RtlCreateSecurityDescriptorAbsolute(
+                        pSecurityDesc,
+                        SECURITY_DESCRIPTOR_REVISION);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    LSASRV_PRIVS_RDLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
+
+    if (SecurityInformation & OWNER_SECURITY_INFORMATION)
+    {
+        PSID owner = NULL;
+        BOOLEAN defaulted = FALSE;
+
+        ntStatus = RtlGetOwnerSecurityDescriptor(
+                            pAccount->pSecurityDesc,
+                            &owner,
+                            &defaulted);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        ntStatus = RtlSetOwnerSecurityDescriptor(
+                            pSecurityDesc,
+                            owner,
+                            defaulted);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    if (SecurityInformation & GROUP_SECURITY_INFORMATION)
+    {
+        PSID group = NULL;
+        BOOLEAN defaulted = FALSE;
+
+        ntStatus = RtlGetGroupSecurityDescriptor(
+                            pAccount->pSecurityDesc,
+                            &group,
+                            &defaulted);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        ntStatus = RtlSetGroupSecurityDescriptor(
+                            pSecurityDesc,
+                            group,
+                            defaulted);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    if (SecurityInformation & DACL_SECURITY_INFORMATION)
+    {
+        PACL pDacl = NULL;
+        BOOLEAN daclPresent = FALSE;
+        BOOLEAN defaulted = FALSE;
+
+        ntStatus = RtlGetDaclSecurityDescriptor(
+                            pAccount->pSecurityDesc,
+                            &daclPresent,
+                            &pDacl,
+                            &defaulted);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        if (daclPresent)
+        {
+            ntStatus = RtlSetDaclSecurityDescriptor(
+                                pSecurityDesc,
+                                daclPresent,
+                                pDacl,
+                                defaulted);
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+    }
+
+    if (SecurityInformation & SACL_SECURITY_INFORMATION)
+    {
+        PACL pSacl = NULL;
+        BOOLEAN saclPresent = FALSE;
+        BOOLEAN defaulted = FALSE;
+
+        ntStatus = RtlGetSaclSecurityDescriptor(
+                            pAccount->pSecurityDesc,
+                            &saclPresent,
+                            &pSacl,
+                            &defaulted);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        if (saclPresent)
+        {
+            ntStatus = RtlSetSaclSecurityDescriptor(
+                                pSecurityDesc,
+                                saclPresent,
+                                pSacl,
+                                defaulted);
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+    }
+
+    ntStatus = RtlAbsoluteToSelfRelativeSD(
+                        pSecurityDesc,
+                        pSecurityDescRelative,
+                        &securityDescRelativeSize);
+    if (ntStatus == STATUS_BUFFER_TOO_SMALL)
+    {
+        ntStatus = STATUS_SUCCESS;
+    }
+    else if (ntStatus != STATUS_SUCCESS)
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    err = LwAllocateMemory(
+                        securityDescRelativeSize,
+                        OUT_PPVOID(&pSecurityDescRelative));
+    BAIL_ON_LSA_ERROR(err);
+
+    ntStatus = RtlAbsoluteToSelfRelativeSD(
+                        pSecurityDesc,
+                        pSecurityDescRelative,
+                        &securityDescRelativeSize);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    *ppSecurityDescRelative    = pSecurityDescRelative;
+    *pSecurityDescRelativeSize = securityDescRelativeSize;
+
+error:
+    LSASRV_PRIVS_UNLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
+
+    if (err || ntStatus)
+    {
+        LW_SAFE_FREE_MEMORY(pSecurityDescRelative);
+
+        if (ppSecurityDescRelative)
+        {
+            *ppSecurityDescRelative = NULL;
+        }
+
+        if (pSecurityDescRelativeSize)
+        {
+            *pSecurityDescRelativeSize = 0;
+        }
+    }
+
+    LW_SAFE_FREE_MEMORY(pSecurityDesc);
+
+    if (err == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return err;
+}
+
+
