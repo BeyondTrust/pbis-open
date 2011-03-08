@@ -1,1 +1,1 @@
-SUBDIRS = lw-lsa
+SUBDIRS = lw-lsa lw-privilege

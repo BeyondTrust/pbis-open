@@ -1,0 +1,16 @@
+make()
+{
+    LWPRIV_SOURCES="\
+        common.c \
+        privilege.c \
+        system_access_right.c \
+        security.c \
+        account.c"
+
+    mk_program \
+        PROGRAM=lw-privilege \
+        SOURCES="$LWPRIV_SOURCES" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="lwadvapi.h lw/base.h" \
+        LIBDEPS="lwadvapi lwbase lsarpc"
+}
