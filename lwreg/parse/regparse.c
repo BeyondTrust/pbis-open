@@ -965,6 +965,7 @@ RegParseTypeValue(
     PSTR pszTmp = 0;
     CHAR tokenName[256];
     REGLEX_TOKEN token = 0;
+    CHAR *pNumLastChar = NULL;
 
     dwError = RegLexGetToken(parseHandle->ioHandle,
                              parseHandle->lexHandle,
@@ -1131,66 +1132,39 @@ RegParseTypeValue(
                 {
                     return dwError;
                 }
+                if (token != REGLEX_PLAIN_TEXT)
+                {
+                    dwError = LWREG_ERROR_PARSE;
+                    return dwError;
+                }
 
                 RegLexGetAttribute(
                     parseHandle->lexHandle,
                     &attrSize,
                     &pszAttr);
                 pszTmp = pszAttr;
-                while (isdigit((int) *pszTmp))
+                parseHandle->registryEntry.regAttr.Range.RangeInteger.Min =
+                        strtoul(pszTmp, &pNumLastChar, 0);
+                pszTmp = pNumLastChar;
+                while (*pszTmp && isspace((int) *pszTmp))
                 {
                     pszTmp++;
                 }
-                if (*pszTmp)
+                if (*pNumLastChar == '\0' || *pNumLastChar != '-')
                 {
-                    dwError = LWREG_ERROR_INVALID_CONTEXT;
-                    return dwError;
-                }
-                else
-                {
-                    parseHandle->registryEntry.regAttr.Range.RangeInteger.Min =
-                        strtoul(pszAttr, NULL, 0);
-                }
-
-                dwError = RegLexGetToken(parseHandle->ioHandle,
-                                         parseHandle->lexHandle,
-                                         &token,
-                                         &eof);
-                if (eof)
-                {
-                    return dwError;
-                }
- 
-                RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
-                if (strcmp(pszAttr, "-") != 0)
-                {
-                    dwError = LWREG_ERROR_INVALID_CONTEXT;
-                    return dwError;
-                }  
-                dwError = RegLexGetToken(parseHandle->ioHandle,
-                                         parseHandle->lexHandle,
-                                         &token,
-                                         &eof);
-                if (eof)
-                {
+                    dwError = LWREG_ERROR_PARSE;
                     return dwError;
                 }
 
-                pszTmp = pszAttr;
-                while (isdigit((int) *pszTmp))
+                /* Skip over dash separator */
+                pszTmp = pNumLastChar++;
+                while (*pszTmp && isspace((int) *pszTmp))
                 {
                     pszTmp++;
                 }
-                if (*pszTmp)
-                {
-                    dwError = LWREG_ERROR_INVALID_CONTEXT;
-                    return dwError;
-                }
-                else
-                {
-                    parseHandle->registryEntry.regAttr.Range.RangeInteger.Max =
-                        strtoul(pszAttr, NULL, 0);
-                }
+                parseHandle->registryEntry.regAttr.Range.RangeInteger.Max =
+                    strtoul(pszTmp, NULL, 0);
+                
             }
 
             break;
