@@ -31,7 +31,8 @@
 #include <config.h>
 #include <lsasystem.h>
 #include <lw/base.h>
-#include <lwadvapi.h>
+#include <lwmem.h>
+#include <lwstr.h>
 #include <lwio/lwio.h>
 #include <dce/rpc.h>
 #include <lw/rpc/common.h>

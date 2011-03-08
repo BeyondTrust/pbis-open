@@ -9,6 +9,9 @@ lw_privilege_SOURCES = \
         security.c \
         account.c
 
+lw_privilege_CPPFLAGS = \
+        $(AM_CPPFLAGS)
+
 lw_privilege_LDADD = \
 	$(top_builddir)/client/rpc/liblsarpc.la \
 	-llwbase_nothr \
