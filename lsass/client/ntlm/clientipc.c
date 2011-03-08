@@ -442,7 +442,6 @@ NtlmTransactDeleteSecurityContext(
     switch(status)
     {
     case LWMSG_STATUS_SUCCESS:
-        goto error;
     case LWMSG_STATUS_PENDING:
         break;
     default:
@@ -452,25 +451,28 @@ NtlmTransactDeleteSecurityContext(
 
 cleanup:
 
-    NtlmIpcReleaseHandle((LWMsgHandle*) hContext);
+    if (status != LWMSG_STATUS_PENDING)
+    {
+        if (pCall)
+        {
+            if (pContext)
+            {
+                lwmsg_call_destroy_params(pCall, &pContext->Out);
+            }
+            lwmsg_call_release(pCall);
+        }
+
+        if (pContext)
+        {
+            LwFreeMemory(pContext);
+        }
+
+        NtlmIpcReleaseHandle((LWMsgHandle*) hContext);
+    }
 
     return dwError;
 
 error:
-
-    if (pCall)
-    {
-        if (pContext)
-        {
-            lwmsg_call_destroy_params(pCall, &pContext->Out);
-        }
-        lwmsg_call_release(pCall);
-    }
-
-    if (pContext)
-    {
-        LwFreeMemory(pContext);
-    }
 
     goto cleanup;
 }
