@@ -1,6 +1,6 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- */
+ * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -32,74 +32,33 @@
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
- *
- *        api.h
+ *        externs.h
  *
  * Abstract:
  *
- *        Registry
+ *        Likewise Registry
  *
- *        LSA Server API (Private Header)
+ *        External Variables
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
  *          Sriram Nambakam (snambakam@likewisesoftware.com)
- *          Marc Guy (mguy@likewisesoftware.com)
  */
-
-#ifndef __REG_SRV_API_H_
-#define __REG_SRV_API_H_
-
-#include "config.h"
-
-#include <sqlite3.h>
-#include <uuid/uuid.h>
-
-#include <regsystem.h>
-#include <reg/lwreg.h>
-#include <lwmsg/lwmsg.h>
-
-#include <lw/base.h>
-
-//#include <eventlog.h>
-#include <regdef.h>
-#include <regutils.h>
-#include <regserver.h>
-#include <regipc.h>
-
-#include "regsrvutils.h"
-#include "regprovspi.h"
-#include "reglog_r.h"
+#ifndef __EXTERNS_H__
+#define __EXTERNS_H__
 
 
-#include "structs_p.h"
-#include "ipc_registry_p.h"
-#include "externs_p.h"
+extern REGPROV_PROVIDER_FUNCTION_TABLE gRegMemProviderAPITable;
+extern REG_DB_HANDLE ghCacheConnection;
 
-#if defined(REG_USE_FILE)
-#include "fileprovider.h"
-#elif defined(REG_USE_SQLITE)
-#include "sqliteprovider.h"
-#elif defined(REG_USE_MEMORY)
-#include "memoryprovider.h"
+#if 0
+extern REG_SRV_MEMORY_KEYLOOKUP gActiveKeyList;
+
+extern REG_SRV_MEMORY_KEYLOOKUP gRegDbKeyList;
+
+extern const DWORD dwDefaultCacheSize;
+
+extern GENERIC_MAPPING gRegKeyGenericMapping;
 #endif
 
-#include "externs.h"
+#endif /* __EXTERNS_H__ */
 
-#endif // __REG_SRV_API_H_
-
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/

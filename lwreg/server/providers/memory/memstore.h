@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,74 +32,17 @@
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
- *
- *        api.h
+ *        memstore.h
  *
  * Abstract:
+ *        Registry memory provider data storage backend function prototypes
  *
- *        Registry
- *
- *        LSA Server API (Private Header)
- *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
- *          Marc Guy (mguy@likewisesoftware.com)
+ * Authors: Adam Bernstein (abernstein@likewise.com)
  */
-
-#ifndef __REG_SRV_API_H_
-#define __REG_SRV_API_H_
-
-#include "config.h"
-
-#include <sqlite3.h>
-#include <uuid/uuid.h>
-
-#include <regsystem.h>
-#include <reg/lwreg.h>
-#include <lwmsg/lwmsg.h>
-
-#include <lw/base.h>
-
-//#include <eventlog.h>
-#include <regdef.h>
-#include <regutils.h>
-#include <regserver.h>
-#include <regipc.h>
-
-#include "regsrvutils.h"
-#include "regprovspi.h"
-#include "reglog_r.h"
+#include "includes.h"
 
 
-#include "structs_p.h"
-#include "ipc_registry_p.h"
-#include "externs_p.h"
-
-#if defined(REG_USE_FILE)
-#include "fileprovider.h"
-#elif defined(REG_USE_SQLITE)
-#include "sqliteprovider.h"
-#elif defined(REG_USE_MEMORY)
-#include "memoryprovider.h"
-#endif
-
-#include "externs.h"
-
-#endif // __REG_SRV_API_H_
-
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
+NTSTATUS
+MemRegStoreOpen(
+    OUT PMEM_REG_STORE_HANDLE phDb
+    );

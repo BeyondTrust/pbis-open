@@ -92,6 +92,9 @@ RegSrvApiInit(
 #elif defined(REG_USE_SQLITE)
     dwError = SqliteProvider_Initialize(&gpRegProvider, ROOT_KEYS);
     BAIL_ON_REG_ERROR(dwError);
+#elif defined(REG_USE_MEMORY)
+    dwError = MemProvider_Initialize(&gpRegProvider, ROOT_KEYS);
+    BAIL_ON_REG_ERROR(dwError);
 #endif
 
     // make sure gpRegProvider is not NULL

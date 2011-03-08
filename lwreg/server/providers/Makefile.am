@@ -11,6 +11,12 @@ BACKEND=file
 
 endif
 
+if USE_MEMORY_BACKEND
+
+BACKEND=memory
+
+endif
+
 
 
 SUBDIRS = \

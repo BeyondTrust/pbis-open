@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,74 +32,42 @@
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
- *
- *        api.h
+ *        memdb.c
  *
  * Abstract:
+ *        Database implementation for registry memory provider backend
  *
- *        Registry
- *
- *        LSA Server API (Private Header)
- *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
- *          Marc Guy (mguy@likewisesoftware.com)
+ * Authors: Adam Bernstein (abernstein@likewise.com)
  */
 
-#ifndef __REG_SRV_API_H_
-#define __REG_SRV_API_H_
-
-#include "config.h"
-
-#include <sqlite3.h>
-#include <uuid/uuid.h>
-
-#include <regsystem.h>
-#include <reg/lwreg.h>
-#include <lwmsg/lwmsg.h>
-
-#include <lw/base.h>
-
-//#include <eventlog.h>
-#include <regdef.h>
-#include <regutils.h>
-#include <regserver.h>
-#include <regipc.h>
-
-#include "regsrvutils.h"
-#include "regprovspi.h"
-#include "reglog_r.h"
-
-
-#include "structs_p.h"
-#include "ipc_registry_p.h"
-#include "externs_p.h"
-
-#if defined(REG_USE_FILE)
-#include "fileprovider.h"
-#elif defined(REG_USE_SQLITE)
-#include "sqliteprovider.h"
-#elif defined(REG_USE_MEMORY)
-#include "memoryprovider.h"
-#endif
-
-#include "externs.h"
-
-#endif // __REG_SRV_API_H_
-
+#include "includes.h"
 /*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
+ * All functions that implement the memory-based registry
+ * provider are implemented in this file.
+ */
+
+
+
+NTSTATUS
+MemDbOpen(
+    OUT PREG_DB_HANDLE phDb
+    )
+{
+    NTSTATUS status = 0;
+    PREG_DB_CONNECTION pConn = NULL;
+
+    status = LW_RTL_ALLOCATE((PVOID*)&pConn, REG_DB_CONNECTION, sizeof(*pConn));
+    BAIL_ON_NT_STATUS(status);
+
+    memset(pConn, 0, sizeof(*pConn));
+    status = MemRegStoreOpen(&pConn->pMemReg);
+
+    *phDb = pConn;
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}
+

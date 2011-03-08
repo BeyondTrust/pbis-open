@@ -52,6 +52,7 @@
 
 #define SQLITE_MODE   1
 #define FILE_MODE     2
+#define MEMORY_MODE   3
 
 typedef struct _REG_SRV_API_CONFIG {
 

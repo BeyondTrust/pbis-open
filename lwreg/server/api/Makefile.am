@@ -30,6 +30,12 @@ BACKEND_LIB = \
 
 endif
 
+if USE_MEMORY_BACKEND
+BACKEND_LIB = \
+    @top_builddir@/server/providers/memory/libregserver_provider_memory.la
+
+endif
+
 libregserverapi_la_LIBADD = \
     $(BACKEND_LIB) \
     -llwbase \

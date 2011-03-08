@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,74 +32,54 @@
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
- *
- *        api.h
+ *        memstore_p.h
  *
  * Abstract:
+ *        Registry memory provider backend private structures
  *
- *        Registry
- *
- *        LSA Server API (Private Header)
- *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
- *          Marc Guy (mguy@likewisesoftware.com)
+ * Authors: Adam Bernstein (abernstein@likewise.com)
  */
+#define REGMEM_TYPE_ROOT 1
+#define REGMEM_TYPE_HIVE 2
+#define REGMEM_TYPE_KEY 3
+#define REGMEM_TYPE_VALUE 4
 
-#ifndef __REG_SRV_API_H_
-#define __REG_SRV_API_H_
+typedef struct _REMEM_VALUE_ATTRIBUTES
+{
+    PWSTR Name;
+    REG_DATA_TYPE ValueType;
+    PVOID pDefaultValue;
+    DWORD DefaultValueLen;
+    PWSTR pwszDocString;
+    LWREG_VALUE_RANGE_TYPE RangeType;
+    LWREG_VALUE_HINT Hint;
+    union {
+        LWREG_RANGE_INTEGER RangeInteger;
+        PWSTR* ppwszRangeEnumStrings;
+    } Range;
+} REMEM_VALUE_ATTRIBUTES, *PREMEM_VALUE_ATTRIBUTES;
 
-#include "config.h"
-
-#include <sqlite3.h>
-#include <uuid/uuid.h>
-
-#include <regsystem.h>
-#include <reg/lwreg.h>
-#include <lwmsg/lwmsg.h>
-
-#include <lw/base.h>
-
-//#include <eventlog.h>
-#include <regdef.h>
-#include <regutils.h>
-#include <regserver.h>
-#include <regipc.h>
-
-#include "regsrvutils.h"
-#include "regprovspi.h"
-#include "reglog_r.h"
+typedef struct _REGMEM_VALUE
+{
+    PWSTR Name;
+    DWORD Type;
+    PVOID Data;
+    DWORD DataLen;
+} REGMEM_VALUE, *PREMEM_VALUE;
 
 
-#include "structs_p.h"
-#include "ipc_registry_p.h"
-#include "externs_p.h"
+typedef struct _REGMEM_NODE
+{
+    PWSTR Name;
+    DWORD NodeType;
+    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
 
-#if defined(REG_USE_FILE)
-#include "fileprovider.h"
-#elif defined(REG_USE_SQLITE)
-#include "sqliteprovider.h"
-#elif defined(REG_USE_MEMORY)
-#include "memoryprovider.h"
-#endif
+    struct _RegMemNode *Nodes;
+    DWORD NodesLen;
 
-#include "externs.h"
+    REGMEM_VALUE *Values;
+    DWORD ValuesLen;
 
-#endif // __REG_SRV_API_H_
-
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
+    PREMEM_VALUE_ATTRIBUTES *Attributes;
+    DWORD AttributesLen;
+} REGMEM_NODE, *PREGMEM_NODE;

@@ -121,12 +121,37 @@ AC_ARG_WITH([sqlite-libs],
         [
         SQLITE_LDFLAGS="-L$withval"
         ])
-
 SQLITE_LIBS="-lsqlite3"
+
+# memory
+
+AC_ARG_WITH([memory],
+        [AC_HELP_STRING([--with-memory=<dir>], [use memory located in prefix <dir>])],
+        [
+        MEMORY_INCLUDES="-I$withval/include"
+                MEMORY_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([memory-includes],
+        [AC_HELP_STRING([--with-memory-includes=<dir>], [use memory includes located in <dir>])],
+        [
+        MEMORY_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([memory-libs],
+        [AC_HELP_STRING([--with-memory-libs=<dir>], [use memory libs located in <dir>])],
+        [
+        MEMORY_LDFLAGS="-L$withval"
+        ])
+
 
 AC_SUBST(SQLITE_INCLUDES)
 AC_SUBST(SQLITE_LDFLAGS)
 AC_SUBST(SQLITE_LIBS)
+
+AC_SUBST(MEMORY_INCLUDES)
+AC_SUBST(MEMORY_LDFLAGS)
+AC_SUBST(MEMORY_LIBS)
 
 # lwmsg
 
@@ -199,10 +224,12 @@ AC_SUBST(LIBUNISTR_LIBS)
 
 
 # backend
-
 REG_BACKEND="sqlite"
+#REG_BACKEND="memory"
+
 USE_SQLITE_BACKEND=false
 USE_FILE_BACKEND=false
+USE_MEMORY_BACKEND=false
 REG_BACKEND_DEFINES=-DREG_USE_SQLITE
 
 AC_ARG_WITH([backend],
@@ -226,6 +253,14 @@ REG_BACKEND_DEFINES=-DREG_USE_FILE
 fi
 
 AM_CONDITIONAL(USE_FILE_BACKEND, [$USE_FILE_BACKEND])
+
+if test x"$REG_BACKEND" = x"memory"
+then
+USE_MEMORY_BACKEND=true;
+REG_BACKEND_DEFINES=-DREG_USE_MEMORY
+fi
+
+AM_CONDITIONAL(USE_MEMORY_BACKEND, [$USE_MEMORY_BACKEND])
 
 AC_SUBST(REG_BACKEND)
 AC_SUBST(REG_BACKEND_DEFINES)
@@ -501,8 +536,9 @@ AC_CONFIG_FILES([Makefile
                  server/providers/Makefile
                  server/providers/sqlite/Makefile
                  server/providers/file/Makefile
+                 server/providers/memory/Makefile
                  server/lwregd/Makefile
-		         server/lwregd/lwreg.reg
+                 server/lwregd/lwreg.reg
                  ipc/Makefile
                  include/Makefile
                  client/Makefile
@@ -510,7 +546,7 @@ AC_CONFIG_FILES([Makefile
                  test/Makefile                 
                  shellutil/Makefile
                  shell/Makefile
-		         shell/lw-edit-reg.sh
+                 shell/lw-edit-reg.sh
                  logging_r/Makefile
                  common/Makefile])
 

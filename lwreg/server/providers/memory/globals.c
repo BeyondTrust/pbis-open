@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,69 +32,55 @@
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
- *
- *        api.h
+ *        globals.c
  *
  * Abstract:
+ *        Global Variables for registry memory provider backend
  *
- *        Registry
- *
- *        LSA Server API (Private Header)
- *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
- *          Marc Guy (mguy@likewisesoftware.com)
+ * Authors: Adam Bernstein (abernstein@likewise.com)
  */
+#include "includes.h"
 
-#ifndef __REG_SRV_API_H_
-#define __REG_SRV_API_H_
+REG_DB_HANDLE ghCacheConnection = {0};
 
-#include "config.h"
+const DWORD dwDefaultCacheSize = 1000;
 
-#include <sqlite3.h>
-#include <uuid/uuid.h>
+REGPROV_PROVIDER_FUNCTION_TABLE gRegMemProviderAPITable =
+{
+        &MemCreateKeyEx,
+        &MemCloseKey,
+        &MemDeleteKey,
+        &MemDeleteKeyValue,
+        &MemDeleteValue,
+        &MemDeleteTree,
+        &MemEnumKeyEx,
+        &MemEnumValue,
+        &MemGetValue,
+        &MemOpenKeyEx,
+        &MemQueryInfoKey,
+        &MemQueryMultipleValues,
+        &MemSetValueEx,
+        &MemSetKeySecurity,
+        &MemGetKeySecurity,
+        &MemSetValueAttributes,
+        &MemGetValueAttributes,
+        &MemDeleteValueAttributes
+};
 
-#include <regsystem.h>
-#include <reg/lwreg.h>
-#include <lwmsg/lwmsg.h>
+#if 0
+REG_SRV_MEMORY_KEYLOOKUP gActiveKeyList =
+    {
+            .mutex    = PTHREAD_MUTEX_INITIALIZER,
+            .pKeyList = NULL
+    };
 
-#include <lw/base.h>
-
-//#include <eventlog.h>
-#include <regdef.h>
-#include <regutils.h>
-#include <regserver.h>
-#include <regipc.h>
-
-#include "regsrvutils.h"
-#include "regprovspi.h"
-#include "reglog_r.h"
-
-
-#include "structs_p.h"
-#include "ipc_registry_p.h"
-#include "externs_p.h"
-
-#if defined(REG_USE_FILE)
-#include "fileprovider.h"
-#elif defined(REG_USE_SQLITE)
-#include "sqliteprovider.h"
-#elif defined(REG_USE_MEMORY)
-#include "memoryprovider.h"
+REG_SRV_MEMORY_KEYLOOKUP gRegDbKeyList =
+    {
+            .mutex    = PTHREAD_MUTEX_INITIALIZER,
+            .pKeyList = NULL
+    };
 #endif
 
-#include "externs.h"
-
-#endif // __REG_SRV_API_H_
-
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
 /*
 local variables:
 mode: c
