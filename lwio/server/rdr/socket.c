@@ -1401,10 +1401,14 @@ RdrSocketDispatchPacket2(
 
         LwListRemove(&pContext->Link);
         /*
-         * Make sure the response command was what we expected
+         * Make sure the response command was what we expected.
+         * Handle negotiate responses carefully as the request
+         * could have been an SMB1 packet
          */
-        if (SMB_HTOL16(pContext->Packet.pSMB2Header->command) !=
-            pPacket->pSMB2Header->command)
+        if ((pContext->Packet.protocolVer == SMB_PROTOCOL_VERSION_1 &&
+             SMB_HTOL16(pContext->Packet.pSMB2Header->command) != COM2_NEGOTIATE) ||
+            (pContext->Packet.protocolVer == SMB_PROTOCOL_VERSION_2 &&
+             SMB_HTOL16(pContext->Packet.pSMB2Header->command) != pPacket->pSMB2Header->command))
         {
             status = STATUS_INVALID_NETWORK_RESPONSE;
             BAIL_ON_NT_STATUS(status);
