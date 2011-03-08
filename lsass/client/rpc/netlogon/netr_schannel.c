@@ -135,7 +135,7 @@ NetrOpenSchannel(
     ntStatus = NetrInitBindingDefault(&hSchannelBinding,
                                       pwszHostname,
                                       pIoCreds);
-    BAIL_ON_RPC_STATUS(rpcStatus);
+    BAIL_ON_NT_STATUS(ntStatus);
 
     rpc_binding_set_auth_info(hSchannelBinding,
                               NULL,
