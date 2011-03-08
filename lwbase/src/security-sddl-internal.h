@@ -234,6 +234,17 @@
 #define SECURITY_NT_NON_PREFIX "S-1-5-21" // SIDS are not unique
 #define SECURITY_BUILTIN_DOMAIN_PREFIX "S-1-5-32" // The built-in system domain.
 
+#define SECURITY_BUILTIN_DOMAIN_PREFIX_HYPHEN "S-1-5-32-" // The built-in system domain.
+#define SECURITY_XSTRING(val) SECURITY_STRING(val)
+#define SECURITY_STRING(val) #val
+
+#define SECURITY_BUILTIN_DOMAIN_ADMIN  SECURITY_BUILTIN_DOMAIN_PREFIX_HYPHEN \
+                                       SECURITY_XSTRING(DOMAIN_ALIAS_RID_ADMINS) // "S-1-5-32-544"
+#define SECURITY_BUILTIN_DOMAIN_GUESTS SECURITY_BUILTIN_DOMAIN_PREFIX_HYPHEN \
+                                       SECURITY_XSTRING(DOMAIN_ALIAS_RID_GUESTS) // "S-1-5-32-546"
+#define SECURITY_BUILTIN_DOMAIN_USERS  SECURITY_BUILTIN_DOMAIN_PREFIX_HYPHEN \
+                                       SECURITY_XSTRING(DOMAIN_ALIAS_RID_USERS)  // "S-1-5-32-545"
+
 
 #define SDDL_ACCESS_LENGTH 57 // 28 (access masks) *2 + 1(\0)
 #define SDDL_ACEFLAG_LENGTH 15 // 7 (ace flags) *2 +1 (\0)

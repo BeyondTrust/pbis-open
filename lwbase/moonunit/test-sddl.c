@@ -60,6 +60,9 @@ static BYTE buffer[] = {
         0x20, 0x00, 0x00, 0x00, 0x20, 0x02, 0x00, 0x00
 };
 
+static const char sddl[] = "O:SYG:S-1-5-32-544D:(A;;RCKRKXNW;;;WD)(A;;RCSDWDWOKAKRKWKXNRNWNX;;;SY)";
+static const char sddl_converted[] = "O:SYG:BAD:(A;;RCKRKXNW;;;WD)(A;;RCSDWDWOKAKRKWKXNRNWNX;;;SY)";
+
 
 MU_TEST(Sddl, 0000_SddlConversion)
 {
@@ -115,6 +118,59 @@ MU_TEST(Sddl, 0000_SddlConversion)
     RTL_FREE(&pszStringSecurityDescriptor);
     RTL_FREE(&pszStringSecurityDescriptor1);
     RTL_FREE(&pSecurityDescriptor);
+}
+
+
+MU_TEST(Sddl, 0001_SddlConversion)
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PSTR pszStringSecurityDescriptor = NULL;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor = NULL;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor1 = NULL;
+    ULONG pSdLength = 0;
+    ULONG pSdLength1 = 0;
+    SECURITY_INFORMATION secInfoAll = (OWNER_SECURITY_INFORMATION |
+                                       GROUP_SECURITY_INFORMATION |
+                                       DACL_SECURITY_INFORMATION |
+                                       SACL_SECURITY_INFORMATION);
+
+    status = RtlAllocateSecurityDescriptorFromSddlCString(
+                 &pSecurityDescriptor,
+                 &pSdLength,
+                 sddl,
+                 SDDL_REVISION_1
+                 );
+    MU_ASSERT_STATUS_SUCCESS(status);
+
+    status = RtlAllocateSddlCStringFromSecurityDescriptor(
+                &pszStringSecurityDescriptor,
+                pSecurityDescriptor,
+                SDDL_REVISION_1,
+                secInfoAll);
+    MU_ASSERT_STATUS_SUCCESS(status);
+
+    MU_INFO("The converted sddl string is %s ", pszStringSecurityDescriptor);
+    // Compare originaly converted sddl string and the one that is converted from
+    // the SD we convert to
+    MU_ASSERT(!strcmp(pszStringSecurityDescriptor, sddl_converted));
+
+    MU_INFO("Sddl string is equal.");
+
+    status = RtlAllocateSecurityDescriptorFromSddlCString(
+                 &pSecurityDescriptor1,
+                 &pSdLength1,
+                 pszStringSecurityDescriptor,
+                 SDDL_REVISION_1
+                 );
+    MU_ASSERT_STATUS_SUCCESS(status);
+
+    // Compare sd buffer
+    MU_ASSERT(pSdLength == pSdLength1);
+    MU_ASSERT(LwRtlEqualMemory(pSecurityDescriptor, pSecurityDescriptor1, pSdLength));
+
+    RTL_FREE(&pszStringSecurityDescriptor);
+    RTL_FREE(&pSecurityDescriptor);
+    RTL_FREE(&pSecurityDescriptor1);
 }
 
 
