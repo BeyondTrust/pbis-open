@@ -156,6 +156,8 @@ IopFileObjectFree(
     {
         LWIO_ASSERT(LwListIsEmpty(&pFileObject->IrpList));
 
+        IopIrpFreeZctIrpList(pFileObject);
+
         IopDeviceLock(pFileObject->pDevice);
         LwListRemove(&pFileObject->DeviceLinks);
         IopDeviceUnlock(pFileObject->pDevice);
@@ -314,8 +316,6 @@ IopContinueAsyncCloseFile(
     //
     // The file was actually opened, so do rest of close cleanup.
     //
-
-    IopIrpFreeZctIrpList(FileHandle);
 
     status = IopFileObjectGetCloseIrp(FileHandle, &pIrp);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);

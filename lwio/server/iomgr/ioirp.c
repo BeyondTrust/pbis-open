@@ -797,7 +797,6 @@ IopIrpFreeZctIrpList(
     PIRP_INTERNAL irpInternal = NULL;
     PIRP pIrp = NULL;
 
-    IopFileObjectLock(pFileObject);
     while (!LwListIsEmpty(&pFileObject->ZctCompletionIrpList))
     {
         pLinks = LwListRemoveHead(&pFileObject->ZctCompletionIrpList);
@@ -809,7 +808,6 @@ IopIrpFreeZctIrpList(
 
         IopIrpDereference(&pIrp);
     }
-    IopFileObjectUnlock(pFileObject);
 }
 
 PVOID
