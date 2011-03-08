@@ -743,11 +743,13 @@ LsaSrvPrivsGetPrivilegeEntries(
     //
     if (PreferredMaxSize != (DWORD)(-1))
     {
+        pEntry = LwHashNext(&iterator);
+
         do
         {
-            pEntry = LwHashNext(&iterator);
             if (index++ < (*pResume))
             {
+                pEntry = LwHashNext(&iterator);
                 continue;
             }
             else if (!pEntry)
@@ -763,6 +765,7 @@ LsaSrvPrivsGetPrivilegeEntries(
             entrySize += sizeof(WCHAR) * strlen(pPrivilegeEntry->pszName);
 
             count++;
+            pEntry = LwHashNext(&iterator);
 
         } while (pEntry && (totalSize + entrySize < PreferredMaxSize));
 
@@ -789,12 +792,13 @@ LsaSrvPrivsGetPrivilegeEntries(
     BAIL_ON_LSA_ERROR(err);
 
     count = 0;
+    pEntry = LwHashNext(&iterator);
 
     do
     {
-        pEntry = LwHashNext(&iterator);
         if (index++ < (*pResume))
         {
+            pEntry = LwHashNext(&iterator);
             continue;
         }
         else if (!pEntry)
@@ -810,6 +814,7 @@ LsaSrvPrivsGetPrivilegeEntries(
         entrySize += sizeof(WCHAR) * strlen(pPrivilegeEntry->pszName);
 
         ppPrivileges[count++] = pPrivilegeEntry;
+        pEntry = LwHashNext(&iterator);
 
     } while (pEntry && (totalSize + entrySize < PreferredMaxSize));
 

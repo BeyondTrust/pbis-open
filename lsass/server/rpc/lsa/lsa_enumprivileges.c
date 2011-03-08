@@ -127,9 +127,23 @@ error:
     LW_SAFE_FREE_MEMORY(pPrivilegeNames);
     LW_SAFE_FREE_MEMORY(pPrivilegeValues);
 
-    if (err == ERROR_SUCCESS)
+    if (err == ERROR_SUCCESS &&
+        enumerationStatus != ERROR_SUCCESS)
     {
-        err = enumerationStatus;
+        switch (enumerationStatus)
+        {
+        case ERROR_MORE_DATA:
+            ntStatus = STATUS_MORE_ENTRIES;
+            break;
+
+        case ERROR_NO_MORE_ITEMS:
+            ntStatus = STATUS_NO_MORE_ENTRIES;
+            break;
+
+        default:
+            err = enumerationStatus;
+            break;
+        }
     }
 
     if (ntStatus == STATUS_SUCCESS &&

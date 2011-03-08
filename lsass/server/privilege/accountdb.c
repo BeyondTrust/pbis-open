@@ -1205,11 +1205,13 @@ LsaSrvPrivsGetAccountEntries(
     //
     if (PreferredMaxSize != (DWORD)(-1))
     {
+        pEntry = LwHashNext(&iterator);
+
         do
         {
-            pEntry = LwHashNext(&iterator);
             if (index++ < (*pResume))
             {
+                pEntry = LwHashNext(&iterator);
                 continue;
             }
             else if (!pEntry)
@@ -1225,6 +1227,7 @@ LsaSrvPrivsGetAccountEntries(
             entrySize += RtlLengthSid(pAccountEntry->pSid);
 
             count++;
+            pEntry = LwHashNext(&iterator);
 
         } while (pEntry && (totalSize + entrySize < PreferredMaxSize));
 
@@ -1251,12 +1254,13 @@ LsaSrvPrivsGetAccountEntries(
     BAIL_ON_LSA_ERROR(err);
 
     count = 0;
+    pEntry = LwHashNext(&iterator);
 
     do
     {
-        pEntry = LwHashNext(&iterator);
         if (index++ < (*pResume))
         {
+            pEntry = LwHashNext(&iterator);
             continue;
         }
         else if (!pEntry)
@@ -1272,6 +1276,7 @@ LsaSrvPrivsGetAccountEntries(
         entrySize += RtlLengthSid(pAccountEntry->pSid);
 
         ppAccounts[count++] = pAccountEntry;
+        pEntry = LwHashNext(&iterator);
 
     } while (pEntry && (totalSize + entrySize < PreferredMaxSize));
 
