@@ -346,7 +346,7 @@ error:
 
 DWORD
 RegShellImportFile(
-    HANDLE hReg,
+    PREGSHELL_PARSE_STATE pParseState,
     PREGSHELL_CMD_ITEM rsItem,
     REGSHELL_UTIL_IMPORT_MODE eMode)
 {
@@ -359,7 +359,7 @@ RegShellImportFile(
     dwError = RegParseOpen(rsItem->args[0], NULL, NULL, &parseH);
     BAIL_ON_REG_ERROR(dwError);
 
-    importCtx.hReg = hReg;
+    importCtx.hReg = pParseState->hReg;
     importCtx.eImportMode = eMode;
 
     dwError = RegParseInstallCallback(
@@ -381,7 +381,11 @@ error:
     RegParseGetLineNumber(parseH, &lineNum);
     sprintf(cErrorBuf, "lwregshell: import failed (line=%d)", lineNum);
     RegPrintError(cErrorBuf, dwError);
-    dwError = 0;
+    if (pParseState->eShellMode == REGSHELL_CMD_MODE_INTERACTIVE)
+    {
+        /* Only smash error when in interactive shell mode */
+        dwError = 0;
+    }
 
     goto cleanup;
 }
@@ -389,7 +393,7 @@ error:
 
 DWORD
 RegShellExportFile(
-    HANDLE hReg,
+    PREGSHELL_PARSE_STATE pParseState,
     PREGSHELL_CMD_ITEM rsItem
     )
 {
@@ -397,6 +401,7 @@ RegShellExportFile(
     DWORD dwSubKeysCount = 0;
     DWORD dwMaxSubKeyLen = 0;
     char szRegFileName[PATH_MAX + 1] = {0};
+    HANDLE hReg = NULL;
     HKEY hSubKey = NULL;
     HKEY hRootKey = NULL;
     PSTR pszFullPath = NULL;
@@ -412,6 +417,7 @@ RegShellExportFile(
     PREG_EXPORT_STATE pExportState = NULL;
     DWORD dwArgc = 0;
 
+    hReg = pParseState->hReg;
     dwError = RegAllocateMemory(sizeof(*pExportState), (LW_PVOID*)&pExportState);
     BAIL_ON_INVALID_POINTER(pExportState);
 
@@ -1085,7 +1091,7 @@ RegShellProcessCmd(
 
             case REGSHELL_CMD_IMPORT:
                 dwError = RegShellImportFile(
-                              pParseState->hReg,
+                              pParseState,
                               rsItem,
                               REGSHELL_UTIL_IMPORT_OVERWRITE);
                 BAIL_ON_REG_ERROR(dwError);
@@ -1093,7 +1099,7 @@ RegShellProcessCmd(
 
             case REGSHELL_CMD_UPGRADE:
                 dwError = RegShellImportFile(
-                              pParseState->hReg,
+                              pParseState,
                               rsItem,
                               REGSHELL_UTIL_IMPORT_UPGRADE);
                 BAIL_ON_REG_ERROR(dwError);
@@ -1101,14 +1107,14 @@ RegShellProcessCmd(
 
             case REGSHELL_CMD_CLEANUP:
                 dwError = RegShellImportFile(
-                              pParseState->hReg,
+                              pParseState,
                               rsItem,
                               REGSHELL_UTIL_IMPORT_CLEANUP);
                 BAIL_ON_REG_ERROR(dwError);
                 break;
 
             case REGSHELL_CMD_EXPORT:
-                dwError = RegShellExportFile(pParseState->hReg, rsItem);
+                dwError = RegShellExportFile(pParseState, rsItem);
                 BAIL_ON_REG_ERROR(dwError);
                 break;
 
@@ -2665,6 +2671,7 @@ int main(int argc, char *argv[])
                     BAIL_ON_REG_ERROR(dwError);
                 }
             }
+            parseState->eShellMode = REGSHELL_CMD_MODE_CMDFILE;
             dwError = RegShellProcessInteractive(readFP, parseState);
             BAIL_ON_REG_ERROR(dwError);
             if (readFP != stdin)
@@ -2692,6 +2699,7 @@ int main(int argc, char *argv[])
 
     if (argc == 1)
     {
+        parseState->eShellMode = REGSHELL_CMD_MODE_INTERACTIVE;
         dwError = RegShellProcessInteractiveEditLine(
                       readFP,
                       parseState,
@@ -2700,13 +2708,14 @@ int main(int argc, char *argv[])
     }
     else
     {
+        parseState->eShellMode = REGSHELL_CMD_MODE_CMDLINE;
         dwError = RegShellProcessCmd(parseState, argc, argv);
         BAIL_ON_REG_ERROR(dwError);
     }
 
 cleanup:
     RegShellCloseParseState(parseState);
-    return dwError;
+    return dwError ? 1 : 0;
 
 error:
     if (dwError)
