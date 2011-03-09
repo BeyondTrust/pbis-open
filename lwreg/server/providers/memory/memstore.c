@@ -43,6 +43,14 @@
 #include "memstore_p.h"
 
 
+static CHAR *gRootKeys[] = 
+{
+    HKEY_THIS_MACHINE,
+    "HKEY_CURRENT_USER", // Just for testing...
+    NULL
+};
+
+
 NTSTATUS
 MemRegStoreOpen(
     OUT PMEM_REG_STORE_HANDLE phDb)
@@ -52,6 +60,7 @@ MemRegStoreOpen(
     MEM_REG_STORE_HANDLE phReg = NULL;
     PWSTR rootKey = NULL;
     MEM_REG_STORE_HANDLE rootNode = NULL;
+    DWORD i = 0;
     
 
     status = LW_RTL_ALLOCATE(
@@ -69,18 +78,23 @@ MemRegStoreOpen(
     ghMemRegRoot = phReg;
     *phDb = phReg;
 
-    status = LwRtlWC16StringAllocateFromCString(
-                 &rootKey,
-                 HKEY_THIS_MACHINE);
-    BAIL_ON_NT_STATUS(status);
+    for (i=0; gRootKeys[i]; i++)
+    {
+        status = LwRtlWC16StringAllocateFromCString(
+                     &rootKey,
+                     gRootKeys[i]);
+        BAIL_ON_NT_STATUS(status);
 
-    status = MemRegStoreAddNode(
-                 phReg,
-                 rootKey,
-                 REGMEM_TYPE_HIVE,
-                 NULL,  // SD parameter
-                 &rootNode);
-    BAIL_ON_NT_STATUS(status);
+        status = MemRegStoreAddNode(
+                     phReg,
+                     rootKey,
+                     REGMEM_TYPE_HIVE,
+                     NULL,  // SD parameter
+                     &rootNode);
+        BAIL_ON_NT_STATUS(status);
+        LWREG_SAFE_FREE_MEMORY(rootKey);
+       
+    }
 
 cleanup:
     return status;
@@ -88,6 +102,7 @@ cleanup:
 error:
     LWREG_SAFE_FREE_MEMORY(phReg->Name);
     LWREG_SAFE_FREE_MEMORY(phReg);
+    LWREG_SAFE_FREE_MEMORY(rootKey);
     goto cleanup;
 }
 
@@ -110,6 +125,25 @@ error:
     goto cleanup;
 }
 
+#if 0
+typedef struct _REGMEM_NODE
+{
+    PWSTR Name;
+    DWORD NodeType;
+    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
+
+    struct _REGMEM_NODE **SubNodes;
+    DWORD NodesLen;
+
+    REGMEM_VALUE *Values;
+    DWORD ValuesLen;
+
+    PREMEM_VALUE_ATTRIBUTES *Attributes;
+    DWORD AttributesLen;
+} REGMEM_NODE, *PREGMEM_NODE;
+#endif
+
+
 
 NTSTATUS
 MemRegStoreAddNode(
@@ -125,10 +159,10 @@ MemRegStoreAddNode(
 
     status = NtRegReallocMemory(hDb->SubNodes, 
                                 (PVOID) &pNodesArray,
-                                hDb->NodesLen * sizeof(PREGMEM_NODE));
+                                (hDb->NodesLen + 1) * sizeof(PREGMEM_NODE));
     BAIL_ON_NT_STATUS(status);
     status = LW_RTL_ALLOCATE(
-                 (PVOID*)&pNewNode, PREGMEM_NODE, sizeof(PREGMEM_NODE));
+                 (PVOID*)&pNewNode, PREGMEM_NODE, sizeof(REGMEM_NODE));
     BAIL_ON_NT_STATUS(status);
     memset(pNewNode, 0, sizeof(*pNewNode));
   
