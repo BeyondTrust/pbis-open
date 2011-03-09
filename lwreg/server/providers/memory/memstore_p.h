@@ -39,6 +39,9 @@
  *
  * Authors: Adam Bernstein (abernstein@likewise.com)
  */
+#ifndef _MEMSTORE_P_H_
+#define _MEMSTORE_P_H_
+
 #define REGMEM_TYPE_ROOT 1
 #define REGMEM_TYPE_HIVE 2
 #define REGMEM_TYPE_KEY 3
@@ -74,7 +77,7 @@ typedef struct _REGMEM_NODE
     DWORD NodeType;
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
 
-    struct _RegMemNode *Nodes;
+    struct _REGMEM_NODE **SubNodes;
     DWORD NodesLen;
 
     REGMEM_VALUE *Values;
@@ -83,3 +86,4 @@ typedef struct _REGMEM_NODE
     PREMEM_VALUE_ATTRIBUTES *Attributes;
     DWORD AttributesLen;
 } REGMEM_NODE, *PREGMEM_NODE;
+#endif

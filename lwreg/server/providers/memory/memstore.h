@@ -46,3 +46,20 @@ NTSTATUS
 MemRegStoreOpen(
     OUT PMEM_REG_STORE_HANDLE phDb
     );
+
+
+NTSTATUS
+MemRegStoreClose(
+    IN MEM_REG_STORE_HANDLE hDb
+    );
+
+
+NTSTATUS
+MemRegStoreAddNode(
+    IN MEM_REG_STORE_HANDLE hDb,
+    IN PWSTR Name,
+    IN DWORD NodeType,
+    IN PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
+    OUT PMEM_REG_STORE_HANDLE phNode
+    );
+

@@ -45,10 +45,15 @@
  */
 #ifndef __EXTERNS_H__
 #define __EXTERNS_H__
+#include "memstore_p.h"
 
 
 extern REGPROV_PROVIDER_FUNCTION_TABLE gRegMemProviderAPITable;
+
 extern REG_DB_HANDLE ghCacheConnection;
+
+PREGMEM_NODE ghMemRegRoot;
+
 
 #if 0
 extern REG_SRV_MEMORY_KEYLOOKUP gActiveKeyList;

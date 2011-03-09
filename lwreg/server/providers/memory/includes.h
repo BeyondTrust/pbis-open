@@ -68,7 +68,6 @@
 #include "memdb_p.h"
 #include "memstore.h"
 
-//#include "structs.h"
 #include "memapi.h"
 #include "externs.h"
 

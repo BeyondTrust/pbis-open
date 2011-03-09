@@ -44,15 +44,20 @@
 
 
 NTSTATUS
-MemRegStoreOpen(OUT PMEM_REG_STORE_HANDLE phDb)
+MemRegStoreOpen(
+    OUT PMEM_REG_STORE_HANDLE phDb)
 {
 
     NTSTATUS status = 0;
     MEM_REG_STORE_HANDLE phReg = NULL;
+    PWSTR rootKey = NULL;
+    MEM_REG_STORE_HANDLE rootNode = NULL;
     
 
     status = LW_RTL_ALLOCATE(
-                 (PVOID*)&phReg, MEM_REG_STORE_HANDLE, sizeof(*phReg));
+                 (PVOID*)&phReg, 
+                 MEM_REG_STORE_HANDLE, 
+                 sizeof(*phReg));
     BAIL_ON_NT_STATUS(status);
     memset(phReg, 0, sizeof(*phReg));
 
@@ -61,7 +66,21 @@ MemRegStoreOpen(OUT PMEM_REG_STORE_HANDLE phDb)
                  &phReg->Name, "\\");
     BAIL_ON_NT_STATUS(status);
 
+    ghMemRegRoot = phReg;
     *phDb = phReg;
+
+    status = LwRtlWC16StringAllocateFromCString(
+                 &rootKey,
+                 HKEY_THIS_MACHINE);
+    BAIL_ON_NT_STATUS(status);
+
+    status = MemRegStoreAddNode(
+                 phReg,
+                 rootKey,
+                 REGMEM_TYPE_HIVE,
+                 NULL,  // SD parameter
+                 &rootNode);
+    BAIL_ON_NT_STATUS(status);
 
 cleanup:
     return status;
@@ -69,5 +88,68 @@ cleanup:
 error:
     LWREG_SAFE_FREE_MEMORY(phReg->Name);
     LWREG_SAFE_FREE_MEMORY(phReg);
+    goto cleanup;
+}
+
+
+NTSTATUS
+MemRegStoreClose(
+    IN MEM_REG_STORE_HANDLE hDb)
+{
+    NTSTATUS status = 0;
+
+    // Need to traverse memory hierarchy and free resources
+    BAIL_ON_NT_STATUS(status);
+
+    LWREG_SAFE_FREE_MEMORY(ghMemRegRoot);
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}
+
+
+NTSTATUS
+MemRegStoreAddNode(
+    IN MEM_REG_STORE_HANDLE hDb,
+    PWSTR Name,
+    DWORD NodeType,
+    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
+    OUT PMEM_REG_STORE_HANDLE phNode)
+{
+    NTSTATUS status = 0;
+    PREGMEM_NODE *pNodesArray = NULL;
+    PREGMEM_NODE pNewNode = NULL;
+
+    status = NtRegReallocMemory(hDb->SubNodes, 
+                                (PVOID) &pNodesArray,
+                                hDb->NodesLen * sizeof(PREGMEM_NODE));
+    BAIL_ON_NT_STATUS(status);
+    status = LW_RTL_ALLOCATE(
+                 (PVOID*)&pNewNode, PREGMEM_NODE, sizeof(PREGMEM_NODE));
+    BAIL_ON_NT_STATUS(status);
+    memset(pNewNode, 0, sizeof(*pNewNode));
+  
+    hDb->SubNodes = pNodesArray;
+    pNodesArray = NULL;
+    hDb->SubNodes[hDb->NodesLen] = pNewNode;
+
+    status = LwRtlWC16StringDuplicate(&pNewNode->Name, Name);
+    BAIL_ON_NT_STATUS(status);
+    pNewNode->NodeType = NodeType;
+    pNewNode->SecurityDescriptor = SecurityDescriptor;
+    hDb->NodesLen++;
+    *phNode = hDb;
+
+cleanup:
+    return status;
+
+error:
+    LWREG_SAFE_FREE_MEMORY(hDb->SubNodes);
+    LWREG_SAFE_FREE_MEMORY(pNodesArray);
+    LWREG_SAFE_FREE_MEMORY(pNewNode);
+    LWREG_SAFE_FREE_MEMORY(pNewNode->Name);
     goto cleanup;
 }

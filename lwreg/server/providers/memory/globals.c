@@ -40,8 +40,11 @@
  * Authors: Adam Bernstein (abernstein@likewise.com)
  */
 #include "includes.h"
+#include "memstore_p.h"
 
 REG_DB_HANDLE ghCacheConnection = {0};
+
+PREGMEM_NODE ghMemRegRoot;
 
 const DWORD dwDefaultCacheSize = 1000;
 
