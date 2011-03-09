@@ -19,3 +19,8 @@ NTSTATUS
 MemDbOpen(
     OUT PREG_DB_HANDLE phDb
     );
+
+NTSTATUS
+MemDbClose(
+    IN PREG_DB_HANDLE phDb);
+

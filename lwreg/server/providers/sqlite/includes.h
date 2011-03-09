@@ -78,8 +78,9 @@
 #include "sqldb_schema_p.h"
 #include "sqldb_create.h"
 #include "sqldb_create_schema.h"
-#include "sqlitecache_p.h"
+#include "sqlitehelper.h"
 #include "sqliteapi_p.h"
+#include "sqlitecache_p.h"
 #include "sqliteapi.h"
 
 #include "externs.h"

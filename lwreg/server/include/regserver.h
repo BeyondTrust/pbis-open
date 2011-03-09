@@ -57,60 +57,8 @@ typedef struct __REG_SRV_API_STATE
     HANDLE hEventLog;
 } REG_SRV_API_STATE, *PREG_SRV_API_STATE;
 
-typedef struct __REG_KEY_CONTEXT
-{
-    LONG refCount;
-
-    pthread_rwlock_t mutex;
-    pthread_rwlock_t* pMutex;
-
-    int64_t qwId;
-    PWSTR pwszKeyName;
-
-    int64_t qwSdId;
-    PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor;
-    ULONG ulSecDescLength;
-    BOOLEAN bHasSdInfo;
-
-
-    PWSTR pwszParentKeyName;
-
-    DWORD dwNumSubKeys;
-    DWORD dwNumCacheSubKeys;
-    size_t sMaxSubKeyLen;
-    PWSTR* ppwszSubKeyNames;
-    BOOLEAN bHasSubKeyInfo;
-
-    size_t sMaxValueNameLen;
-    size_t sMaxValueLen;
-
-    // keep track of the number of values that have been set by user
-    DWORD dwNumValues;
-    DWORD dwNumCacheValues;
-
-    PREG_DATA_TYPE pTypes;
-    PWSTR* ppwszValueNames;
-    PBYTE* ppValues;
-    PDWORD pdwValueLen;
-
-    BOOLEAN bHasValueInfo;
-
-    // keep track of the number of values that have not been set by user
-    // but are defined in schema as value attributes
-    DWORD dwNumDefaultValues;
-    DWORD dwNumCacheDefaultValues;
-
-    PREG_DATA_TYPE pDefaultTypes;
-    PWSTR* ppwszDefaultValueNames;
-    PBYTE* ppDefaultValues;
-    PDWORD pdwDefaultValueLen;
-
-    BOOLEAN bHasDefaultValueInfo;
-
-
-
-} REG_KEY_CONTEXT, *PREG_KEY_CONTEXT;
-
+// Incomplete type here, as the context implementation is provider specific
+typedef struct __REG_KEY_CONTEXT *PREG_KEY_CONTEXT;
 
 typedef struct __REG_KEY_HANDLE
 {
@@ -407,115 +355,6 @@ RegSrvIsValidKeyName(
     PCWSTR pwszKeyName
     );
 
-void
-RegSrvSafeFreeKeyContext(
-    IN PREG_KEY_CONTEXT pKeyResult
-    );
-
-DWORD
-RegSrvGetKeyRefCount(
-    IN PREG_KEY_CONTEXT pKeyResult
-    );
-
-void
-RegSrvResetSubKeyInfo(
-    IN OUT PREG_KEY_CONTEXT pKeyResult
-    );
-
-BOOLEAN
-RegSrvHasSubKeyInfo(
-    IN PREG_KEY_CONTEXT pKeyResult
-    );
-
-DWORD
-RegSrvSubKeyNum(
-    IN PREG_KEY_CONTEXT pKeyResult
-    );
-
-size_t
-RegSrvSubKeyNameMaxLen(
-    IN PREG_KEY_CONTEXT pKeyResult
-    );
-
-PCWSTR
-RegSrvSubKeyName(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    IN DWORD dwIndex
-    );
-
-BOOLEAN
-RegSrvHasSecurityDescriptor(
-    IN PREG_KEY_CONTEXT pKeyResult
-    );
-
-ULONG
-RegSrvGetKeySecurityDescriptorSize(
-    IN PREG_KEY_CONTEXT pKeyResult
-    );
-
-NTSTATUS
-RegSrvGetKeySecurityDescriptor_inlock(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    IN OUT PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
-    IN ULONG ulSecDescRelLen
-    );
-
-NTSTATUS
-RegSrvGetKeySecurityDescriptor(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    IN OUT PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
-    IN ULONG ulSecDescRelLen
-    );
-
-NTSTATUS
-RegSrvSetKeySecurityDescriptor_inlock(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    IN PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
-    IN ULONG ulSecDescRelLen
-    );
-
-NTSTATUS
-RegSrvSetKeySecurityDescriptor(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    IN PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
-    IN ULONG ulSecDescRelLen
-    );
-
-void
-RegSrvResetValueInfo(
-    IN OUT PREG_KEY_CONTEXT pKey
-    );
-
-BOOLEAN
-RegSrvHasValueInfo(
-    IN PREG_KEY_CONTEXT pKeyResult
-    );
-
-BOOLEAN
-RegSrvHasDefaultValueInfo(
-    IN PREG_KEY_CONTEXT pKeyResult
-    );
-
-DWORD
-RegSrvValueNum(
-    IN PREG_KEY_CONTEXT pKeyResult
-    );
-
-DWORD
-RegSrvDefaultValueNum(
-    IN PREG_KEY_CONTEXT pKeyResult
-    );
-
-size_t
-RegSrvMaxValueNameLen(
-    IN PREG_KEY_CONTEXT pKeyResult
-    );
-
-size_t
-RegSrvMaxValueLen(
-    IN PREG_KEY_CONTEXT pKeyResult
-    );
-
 //Registry ACL check
 
 NTSTATUS
@@ -547,6 +386,21 @@ RegSrvCreateDefaultSecDescRel(
     );
 
 // Registry Security related utility functions
+NTSTATUS
+RegSrvGetKeySecurityDescriptor_inlock(
+    IN PREG_KEY_CONTEXT pKeyResult,
+    IN OUT PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
+    IN ULONG ulSecDescRelLen
+    );
+
+
+NTSTATUS
+RegSrvSetKeySecurityDescriptor_inlock(
+    IN PREG_KEY_CONTEXT pKeyResult,
+    IN PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
+    IN ULONG ulSecDescRelLen
+    );
+
 VOID
 RegSrvFreeAbsoluteSecurityDescriptor(
     IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc

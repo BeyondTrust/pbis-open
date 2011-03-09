@@ -71,3 +71,19 @@ error:
     goto cleanup;
 }
 
+
+NTSTATUS
+MemDbClose(
+    IN PREG_DB_HANDLE phDb)
+{
+    NTSTATUS status = 0;
+
+    BAIL_ON_NT_STATUS(status);
+
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}

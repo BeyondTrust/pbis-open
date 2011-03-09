@@ -47,6 +47,62 @@
 #ifndef SQLITEAPI_P_H_
 #define SQLITEAPI_P_H_
 
+struct __REG_KEY_CONTEXT
+{
+    LONG refCount;
+
+    pthread_rwlock_t mutex;
+    pthread_rwlock_t* pMutex;
+
+    int64_t qwId;
+    PWSTR pwszKeyName;
+
+    int64_t qwSdId;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor;
+    ULONG ulSecDescLength;
+    BOOLEAN bHasSdInfo;
+
+
+    PWSTR pwszParentKeyName;
+
+    DWORD dwNumSubKeys;
+    DWORD dwNumCacheSubKeys;
+    size_t sMaxSubKeyLen;
+    PWSTR* ppwszSubKeyNames;
+    BOOLEAN bHasSubKeyInfo;
+
+    size_t sMaxValueNameLen;
+    size_t sMaxValueLen;
+
+    // keep track of the number of values that have been set by user
+    DWORD dwNumValues;
+    DWORD dwNumCacheValues;
+
+    PREG_DATA_TYPE pTypes;
+    PWSTR* ppwszValueNames;
+    PBYTE* ppValues;
+    PDWORD pdwValueLen;
+
+    BOOLEAN bHasValueInfo;
+
+    // keep track of the number of values that have not been set by user
+    // but are defined in schema as value attributes
+    DWORD dwNumDefaultValues;
+    DWORD dwNumCacheDefaultValues;
+
+    PREG_DATA_TYPE pDefaultTypes;
+    PWSTR* ppwszDefaultValueNames;
+    PBYTE* ppDefaultValues;
+    PDWORD pdwDefaultValueLen;
+
+    BOOLEAN bHasDefaultValueInfo;
+
+
+
+};
+
+typedef struct __REG_KEY_CONTEXT REG_KEY_CONTEXT;
+
 NTSTATUS
 SqliteGetKeyToken(
     PCWSTR pwszInputString,

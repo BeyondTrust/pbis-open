@@ -54,7 +54,7 @@ MemProvider_Initialize(
     status = MemDbOpen(&ghCacheConnection);
 
     *ppFnTable = &gRegMemProviderAPITable;
-    return 0;
+    return status;
 }
 
 
@@ -63,7 +63,11 @@ MemProvider_Shutdown(
     PREGPROV_PROVIDER_FUNCTION_TABLE pFnTable
     )
 {
+    NTSTATUS status = 0;
+
+    status = MemDbClose(&ghCacheConnection);
 }
+
 
 NTSTATUS
 MemCreateKeyEx(

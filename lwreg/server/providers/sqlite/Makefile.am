@@ -5,16 +5,17 @@ PROVIDER_LIBS = @SQLITE_LIBS@
 PROVIDER_LDFLAGS = @SQLITE_LDFLAGS@
 
 libregserver_provider_sqlite_la_SOURCES = \
-    sqliteapi.c    \
-    sqliteacl.c   \
-    sqliteapi_p.c    \
-    sqldb.c     \
-    sqldb_schema.c     \
-    sqldb_p.c     \
-    sqlitecache.c     \
-    regsqlite.c    \
-    regschema.c    \
-    globals.c           
+    sqliteapi.c \
+    sqliteacl.c \
+    sqliteapi_p.c \
+    sqldb.c \
+    sqldb_schema.c \
+    sqldb_p.c \
+    sqlitecache.c \
+    regsqlite.c \
+    regschema.c \
+    globals.c \
+    sqlitehelper.c
 
 libregserver_provider_sqlite_la_CPPFLAGS = \
     -DLW_ENABLE_THREADS=1         \

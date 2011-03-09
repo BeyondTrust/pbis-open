@@ -80,7 +80,7 @@
 #elif defined(REG_USE_SQLITE)
 #include "sqliteprovider.h"
 #elif defined(REG_USE_MEMORY)
-#include "memoryprovider.h"
+#include "memprovider.h"
 #endif
 
 #include "externs.h"

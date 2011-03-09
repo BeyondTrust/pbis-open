@@ -46,6 +46,17 @@
 #define REGMEMAPI_H_
 
 NTSTATUS
+MemProvider_Initialize(
+    PREGPROV_PROVIDER_FUNCTION_TABLE* ppFnTable,
+    const PWSTR* ppwszRootKeyNames
+    );
+
+VOID
+MemProvider_Shutdown(
+    PREGPROV_PROVIDER_FUNCTION_TABLE pFnTable
+    );
+
+NTSTATUS
 MemCreateKeyEx(
     IN HANDLE Handle,
     IN HKEY hKey,

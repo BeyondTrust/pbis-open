@@ -1,9 +1,9 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- */
+ * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software
+ * Copyright Likewise Software    2004-2008
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,19 +32,32 @@
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
- *        memdb.h
+ *
+ *        fileapi.h
  *
  * Abstract:
- *    Database implementation for registry memory provider backend prototypes
  *
- * Authors: Adam Bernstein (abernstein@likewise.com)
+ *        Registry
+ *
+ *        Inter-process communication (Server) API for Users
+ *
+ * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
+ *          Sriram Nambakam (snambakam@likewisesoftware.com)
+ *          Marc Guy (mguy@likewisesoftware.com)
  */
+#ifndef FILEAPI_H_
+#define FILEAPI_H_
 
-#include "includes.h"
 
-
-NTSTATUS
-MemDbOpen(
-    OUT HANDLE *phDb
+DWORD
+MemProvider_Initialize(
+    PREGPROV_PROVIDER_FUNCTION_TABLE* ppFnTable,
+    const PWSTR* ppwszRootKeyNames
     );
 
+VOID
+MemProvider_Shutdown(
+    PREGPROV_PROVIDER_FUNCTION_TABLE pFnTable
+    );
+
+#endif /* FILEAPI_H_ */
