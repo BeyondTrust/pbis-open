@@ -10,7 +10,8 @@ make()
         sqlitecache.c     \
         regsqlite.c    \
         regschema.c    \
-        globals.c"   
+        globals.c \
+        sqlitehelper.c"   
 
     mk_group \
         GROUP="provider-sqlite" \
