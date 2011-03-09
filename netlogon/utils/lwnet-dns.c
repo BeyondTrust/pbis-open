@@ -1213,7 +1213,7 @@ LWNetDnsQueryWithBuffer(
 #endif
     if (responseSize < 0)
     {
-        LWNET_LOG_ERROR("DNS lookup for '%s' failed with errno %d, h_errno = %d", pszQuestion, errno, h_errno);
+        LWNET_LOG_VERBOSE("DNS lookup for '%s' failed with errno %d, h_errno = %d", pszQuestion, errno, h_errno);
         dwError = DNS_ERROR_BAD_PACKET;
         BAIL_ON_LWNET_ERROR(dwError);
     }
