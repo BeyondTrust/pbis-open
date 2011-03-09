@@ -713,7 +713,7 @@ lwmsg_direct_call_complete(
 
     if (dispatched && dcall->complete)
     {
-        dcall->complete(call, status, dcall->complete_data);
+        dcall->complete(&dcall->caller, status, dcall->complete_data);
         lwmsg_direct_call_release(&dcall->caller);
     }
     else
