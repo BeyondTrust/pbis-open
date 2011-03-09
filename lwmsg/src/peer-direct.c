@@ -434,7 +434,8 @@ static
 void
 lwmsg_direct_call_invoke_complete(
     DirectCall* call,
-    LWMsgStatus status
+    LWMsgStatus status,
+    LWMsgBool do_complete
     )
 {
     LWMsgPeer* source_peer = !call->is_callback ? call->session->session->peer : call->session->endpoint->server;
@@ -450,7 +451,7 @@ lwmsg_direct_call_invoke_complete(
         target_peer->trace_end(&call->callee, call->out, status, target_peer->trace_data);
     }
 
-    if (call->complete)
+    if (do_complete && call->complete)
     {
         call->complete(&call->caller, status, call->complete_data);
     }
@@ -537,7 +538,7 @@ lwmsg_direct_call_worker(
     default:
         if (dcall->complete)
         {
-            lwmsg_direct_call_invoke_complete(dcall, status);
+            lwmsg_direct_call_invoke_complete(dcall, status, LWMSG_TRUE);
             lwmsg_direct_call_release(&dcall->caller);
         }
         else
@@ -665,7 +666,7 @@ lwmsg_direct_call_dispatch(
 
     if (status != LWMSG_STATUS_PENDING)
     {
-        lwmsg_direct_call_invoke_complete(dcall, status);
+        lwmsg_direct_call_invoke_complete(dcall, status, LWMSG_FALSE);
     }
 
 error:
