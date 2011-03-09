@@ -199,7 +199,7 @@ LwRtlSvcmLoadModule(
         pFinalDot = pModulePathA + strlen(pModulePathA);
     }
 
-    status = LW_RTL_ALLOCATE(&pBareName, CHAR, (pFinalDot - pFinalSlash));
+    status = LW_RTL_ALLOCATE(&pBareName, CHAR, (pFinalDot - pFinalSlash) + 1);
     GCOS(status);
 
     memcpy(pBareName, pFinalSlash, pFinalDot - pFinalSlash);
