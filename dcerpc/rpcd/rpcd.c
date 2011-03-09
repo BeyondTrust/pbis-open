@@ -619,10 +619,6 @@ error_status_t          *status;
 
 //#if defined(UNIX) || defined(unix)
 
-#define RPCD_PID_FILE "/var/run/dcerpcd.pid" 
-#define PID_FILE_CONTENTS_SIZE ((9 * 2) + 2)
-#define RPCD_DAEMON_NAME "dcerpcd"
-
 static
 void
 StripLeadingWhitespace(
@@ -680,170 +676,6 @@ StripWhitespace(
     StripLeadingWhitespace(str);
     StripTrailingWhitespace(str);
 }
-
-static
-int
-MatchProgramToPID(
-    const char* pszProgramName,
-    pid_t pid
-    )
-{
-    int ceError = 0;
-    char szBuf[PATH_MAX+1];
-    FILE* pFile = NULL;
-
-#if defined(__MACH__) && defined(__APPLE__)
-    sprintf(szBuf, "ps -p %d -o command= | grep %s", pid, pszProgramName);
-#else
-    sprintf(szBuf, "UNIX95=1 ps -p %ld -o comm= | grep %s", (long)pid, pszProgramName);
-#endif
-
-    pFile = popen(szBuf, "r");
-    if (pFile == NULL) {
-        ceError = errno;
-        goto error;
-    }
-
-    while (TRUE) {
-
-        if (NULL == fgets(szBuf, PATH_MAX, pFile)) {
-            if (feof(pFile))
-                break;
-            else {
-                ceError = errno;
-                goto error;
-            }
-        }
-
-        StripWhitespace(szBuf);
-        if (*szBuf) {
-            ceError = 0;
-            break;
-        }
-
-    }
-
-error:
-
-    if (pFile)
-        fclose(pFile);
-
-    return ceError;
-}
-
-static
-pid_t
-pid_from_pid_file()
-{
-    pid_t pid = 0;
-    int fd = -1;
-    int result;
-    char contents[PID_FILE_CONTENTS_SIZE];
-
-    fd = open(RPCD_PID_FILE, O_RDONLY, 0644);
-    if (fd < 0) {
-        goto error;
-    }
-
-    result = dcethread_read(fd, contents, sizeof(contents)-1);
-    if (result < 0) {
-        goto error;
-    } else if (result == 0) {
-        unlink(RPCD_PID_FILE);
-        goto error;
-    }
-    contents[result-1] = 0;
-
-    result = atoi(contents);
-    if (result < 0) {
-        result = -1;
-        goto error;
-    } else if (result == 0) {
-        unlink(RPCD_PID_FILE);
-        goto error;
-    }
-
-    pid = (pid_t) result;
-    result = kill(pid, 0);
-    if (result != 0 || errno == ESRCH) {
-        unlink(RPCD_PID_FILE);
-        pid = 0;
-    } else {
-        // Verify that the peer process is a rpc daemon
-        if (MatchProgramToPID(RPCD_DAEMON_NAME, pid) != 0) {
-            unlink(RPCD_PID_FILE);
-            pid = 0;
-        }
-    }
-
-error:
-    if (fd != -1) {
-        close(fd);
-    }
-
-    return pid;
-}
-
-static
-void
-delete_pid_file()
-{
-    pid_t pid;
-
-    pid = pid_from_pid_file();
-    if (pid == getpid()) {
-        unlink(RPCD_PID_FILE);
-    }
-}
-
-static
-void
-create_pid_file()
-{
-    int result = -1;
-    pid_t pid;
-    char contents[PID_FILE_CONTENTS_SIZE];
-    size_t len;
-    int fd = -1;
-
-    pid = pid_from_pid_file();
-    if (pid > 0) {
-        fprintf(stderr, "Daemon already running as %d", (int) pid);
-        result = -1;
-        goto error;
-    }
-
-    fd = open(RPCD_PID_FILE, O_CREAT | O_WRONLY | O_EXCL, 0644);
-    if (fd < 0) {
-        fprintf(stderr, "Could not create pid file: %s", strerror(errno));
-        result = 1;
-        goto error;
-    }
-
-    pid = getpid();
-    snprintf(contents, sizeof(contents)-1, "%d\n", (int) pid);
-    contents[sizeof(contents)-1] = 0;
-    len = strlen(contents);
-
-    result = (int) dcethread_write(fd, contents, len);
-    if ( result != (int) len ) {
-        fprintf(stderr, "Could not write to pid file: %s", strerror(errno));
-        result = -1;
-        goto error;
-    }
-
-    result = 0;
-
-error:
-    if (fd != -1) {
-        close(fd);
-    }
-
-    if (result < 0) {
-        exit(1);
-    }
-}
-
 
 static
 void
@@ -944,8 +776,6 @@ start_as_daemon(
         }
     }
 
-    atexit(delete_pid_file);
-    create_pid_file();
     attach_log_file();
 }
 
