@@ -122,16 +122,6 @@ RegSrvGetPrefixPath(
     PSTR* ppszPath
     );
 
-VOID
-RegSrvCreatePIDFile(
-    VOID
-    );
-
-pid_t
-RegSrvGetPidFromPidFile(
-    VOID
-    );
-
 DWORD
 RegSrvInitLogging(
     PCSTR pszProgramName,

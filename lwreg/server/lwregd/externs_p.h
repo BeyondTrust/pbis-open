@@ -55,10 +55,6 @@ extern pthread_t gSignalHandlerThread;
 extern pthread_t* gpSignalHandlerThread;
 
 #define DAEMON_NAME "lwregd"
-#define PID_DIR "/var/run"
-#define PID_FILE PID_DIR "/" DAEMON_NAME ".pid"
-
-#define PID_FILE_CONTENTS_SIZE ((9 * 2) + 2)
 
 #define REG_LOCK_SERVERINFO(bInLock)                  \
         if (!bInLock) {                               \
