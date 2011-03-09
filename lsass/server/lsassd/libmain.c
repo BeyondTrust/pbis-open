@@ -76,27 +76,6 @@ static LSA_STATIC_PROVIDER gStaticProviders[] =
 };
 #endif // ENABLE_STATIC_PROVIDERS
 
-#ifdef ENABLE_PIDFILE
-static
-VOID
-LsaSrvCreatePIDFile(
-    VOID
-    );
-
-static
-pid_t
-LsaSrvGetPidFromPidFile(
-    VOID
-    );
-
-static
-VOID
-LsaSrvRemovePidFile(
-    VOID
-    );
-
-#endif
-
 int
 lsassd_main(
     int argc,
@@ -156,10 +135,6 @@ lsassd_main(
 
     dwError = LsaSrvStartEventLoggingThread();
     BAIL_ON_LSA_ERROR(dwError);
-
-#ifdef ENABLE_PIDFILE
-    LsaSrvCreatePIDFile();
-#endif
 
     dwError = LwDsCacheAddPidException(getpid());
     if (dwError == LW_ERROR_FAILED_STARTUP_PREREQUISITE_CHECK)
@@ -233,10 +208,6 @@ cleanup:
     LsaShutdownLogging_r();
 
     LsaShutdownTracing_r();
-
-#ifdef ENABLE_PIDFILE
-    LsaSrvRemovePidFile();
-#endif
 
     return dwError;
 
@@ -802,113 +773,6 @@ LsaSrvGetPrefixPath(
 
     goto cleanup;
 }
-
-#ifdef ENABLE_PIDFILE
-VOID
-LsaSrvCreatePIDFile(
-    VOID
-    )
-{
-    int result = -1;
-    pid_t pid;
-    char contents[PID_FILE_CONTENTS_SIZE];
-    size_t len;
-    int fd = -1;
-
-    pid = LsaSrvGetPidFromPidFile();
-    if (pid > 0) {
-        fprintf(stderr, "Daemon already running as %d\n", (int) pid);
-        result = -1;
-        goto error;
-    }
-
-    fd = open(PID_FILE, O_CREAT | O_WRONLY | O_EXCL, 0644);
-    if (fd < 0) {
-        fprintf(stderr, "Could not create pid file: %s\n", strerror(errno));
-        result = 1;
-        goto error;
-    }
-
-    pid = getpid();
-    snprintf(contents, sizeof(contents)-1, "%d\n", (int) pid);
-    contents[sizeof(contents)-1] = 0;
-    len = strlen(contents);
-
-    result = (int) write(fd, contents, len);
-    if ( result != (int) len ) {
-        fprintf(stderr, "Could not write to pid file: %s\n", strerror(errno));
-        result = -1;
-        goto error;
-    }
-
-    result = 0;
-
- error:
-    if (fd != -1) {
-        close(fd);
-    }
-
-    if (result < 0) {
-        exit(1);
-    }
-}
-
-static
-pid_t
-LsaSrvGetPidFromPidFile(
-    VOID
-    )
-{
-    pid_t pid = 0;
-    int fd = -1;
-    int result;
-    char contents[PID_FILE_CONTENTS_SIZE];
-
-    fd = open(PID_FILE, O_RDONLY, 0644);
-    if (fd < 0) {
-        goto error;
-    }
-
-    result = read(fd, contents, sizeof(contents)-1);
-    if (result <= 0) {
-        goto error;
-    }
-    contents[result-1] = 0;
-
-    result = atoi(contents);
-    if (result <= 0) {
-        result = -1;
-        goto error;
-    }
-
-    pid = (pid_t) result;
-    result = kill(pid, 0);
-    if (result != 0 || errno == ESRCH) {
-        unlink(PID_FILE);
-        pid = 0;
-    }
-
- error:
-    if (fd != -1) {
-        close(fd);
-    }
-
-    return pid;
-}
-
-static
-VOID
-LsaSrvRemovePidFile(
-    VOID
-    )
-{
-    if (LsaSrvGetPidFromPidFile() == getpid())
-    {
-        unlink(PID_FILE);
-    }
-}
-
-#endif
 
 DWORD
 LsaBlockSelectedSignals(
