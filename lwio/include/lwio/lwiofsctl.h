@@ -96,7 +96,8 @@
              METHOD_BUFFERED,                    \
              FILE_READ_ACCESS)
 
-
+typedef ULONG IO_OPLOCK_TYPE;
+typedef ULONG IO_LEASE_STATE;
 //
 // Oplock IoFsControl Structures
 //
@@ -105,9 +106,24 @@
 #define IO_OPLOCK_REQUEST_OPLOCK_LEVEL_1    0x02
 #define IO_OPLOCK_REQUEST_OPLOCK_LEVEL_2    0x03
 
+//
+// Lease IoFsControl Structures
+//
+#define IO_OPLOCK_REQUEST_LEASE             0x04
+
+//
+// Lease state
+//
+#define IO_LEASE_STATE_NONE               0x00
+#define IO_LEASE_STATE_RWH                0x01
+#define IO_LEASE_STATE_RW                 0x02
+#define IO_LEASE_STATE_RH                 0x03
+#define IO_LEASE_STATE_R                  0x04
+
 typedef struct _IO_FSCTL_REQUEST_OPLOCK_INPUT_BUFFER
 {
-    ULONG OplockRequestType;
+    IO_OPLOCK_TYPE OplockRequestType;
+    IO_LEASE_STATE RequestLeaseState;
 
 } IO_FSCTL_OPLOCK_REQUEST_INPUT_BUFFER, 
     *PIO_FSCTL_OPLOCK_REQUEST_INPUT_BUFFER;
@@ -120,7 +136,8 @@ typedef struct _IO_FSCTL_REQUEST_OPLOCK_INPUT_BUFFER
 
 typedef struct _IO_FSCTL_OPLOCK_REQUEST_OUTPUT_BUFFER
 {
-    ULONG OplockBreakResult;
+    IO_OPLOCK_TYPE OplockBreakResult;
+    IO_LEASE_STATE NewLeaseState;
 
 } IO_FSCTL_OPLOCK_REQUEST_OUTPUT_BUFFER, 
     *PIO_FSCTL_OPLOCK_REQUEST_OUTPUT_BUFFER;
@@ -134,7 +151,8 @@ typedef struct _IO_FSCTL_OPLOCK_REQUEST_OUTPUT_BUFFER
 
 typedef struct _IO_FSCTL_OPLOCK_BREAK_ACK_INPUT_BUFFER
 {
-    ULONG Response;
+    IO_OPLOCK_TYPE Response;
+    IO_LEASE_STATE AckLeaseState;
 
 } IO_FSCTL_OPLOCK_BREAK_ACK_INPUT_BUFFER, 
     *PIO_FSCTL_OPLOCK_BREAK_ACK_INPUT_BUFFER;
