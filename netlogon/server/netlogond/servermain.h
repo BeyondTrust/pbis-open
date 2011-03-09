@@ -154,16 +154,6 @@ LWNetSrvGetPrefixPath(
     PSTR* ppszPath
     );
 
-VOID
-LWNetSrvCreatePIDFile(
-    VOID
-    );
-
-pid_t
-LWNetSrvGetPidFromPidFile(
-    VOID
-    );
-
 DWORD
 LWNetSrvInitLogging(
     PCSTR pszProgramName

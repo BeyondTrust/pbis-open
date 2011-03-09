@@ -52,10 +52,6 @@ extern LWNETSERVERINFO  gServerInfo;
 extern PLWNETSERVERINFO gpServerInfo;
 
 #define DAEMON_NAME "netlogond"
-#define PID_DIR     "/var/run"
-#define PID_FILE    PID_DIR "/" DAEMON_NAME ".pid"
-
-#define PID_FILE_CONTENTS_SIZE ((9 * 2) + 2)
 
 #define LWNET_LOCK_SERVERINFO(bInLock)               \
         if (!bInLock) {                               \
