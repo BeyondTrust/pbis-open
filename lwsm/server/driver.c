@@ -40,7 +40,7 @@
 
 typedef struct
 {
-    BOOLEAN WasStarted;
+    LONG volatile State;
     PWSTR pName;
 } DRIVER_STATE, *PDRIVER_STATE;
 
@@ -53,20 +53,17 @@ LwSmDriverStart(
     DWORD dwError = 0;
     PDRIVER_STATE pState = LwSmGetServiceObjectData(pObject);
 
-    dwError = LwNtStatusToWin32Error(LwIoLoadDriver(pState->pName));
-    BAIL_ON_ERROR(dwError);
+    LwInterlockedCompareExchange(&pState->State, LW_SERVICE_STATE_STOPPED, LW_SERVICE_STATE_DEAD);
 
-    pState->WasStarted = TRUE;
+    if (LwInterlockedCompareExchange(&pState->State, LW_SERVICE_STATE_STARTING, LW_SERVICE_STATE_STOPPED) == LW_SERVICE_STATE_STOPPED)
+    {
+        dwError = LwNtStatusToWin32Error(LwIoLoadDriver(pState->pName));
 
-    LwSmNotifyServiceObjectStateChange(pObject, LW_SERVICE_STATE_RUNNING);
+        pState->State = dwError ? LW_SERVICE_STATE_DEAD : LW_SERVICE_STATE_RUNNING;
+        LwSmNotifyServiceObjectStateChange(pObject, pState->State);
+    }
 
-cleanup:
-
-    return dwError;
-
-error:
-
-    goto cleanup;
+    return 0;
 }
 
 static
@@ -78,12 +75,14 @@ LwSmDriverStop(
     DWORD dwError = 0;
     PDRIVER_STATE pState = LwSmGetServiceObjectData(pObject);
 
-    dwError = LwNtStatusToWin32Error(LwIoUnloadDriver(pState->pName));
-    BAIL_ON_ERROR(dwError);
+    if (LwInterlockedCompareExchange(&pState->State, LW_SERVICE_STATE_STOPPING, LW_SERVICE_STATE_RUNNING) == LW_SERVICE_STATE_RUNNING)
+    {
+        dwError = LwNtStatusToWin32Error(LwIoUnloadDriver(pState->pName));
+        BAIL_ON_ERROR(dwError);
 
-    pState->WasStarted = FALSE;
-
-    LwSmNotifyServiceObjectStateChange(pObject, LW_SERVICE_STATE_STOPPED);
+        pState->State = LW_SERVICE_STATE_STOPPED;
+        LwSmNotifyServiceObjectStateChange(pObject, LW_SERVICE_STATE_STOPPED);
+    }
 
 cleanup:
 
@@ -108,55 +107,20 @@ LwSmDriverGetStatus(
     pStatus->home = LW_SERVICE_HOME_IO_MANAGER;
 
     dwError = LwNtStatusToWin32Error(LwIoGetPid(&pStatus->pid));
-    
-    if (!dwError)
-    {
-        dwError = LwNtStatusToWin32Error(
-            LwIoQueryStateDriver(
-                pState->pName,
-                &driverState));
-    }
-
     if (dwError)
     {
-        if (pState->WasStarted)
-        {
-            pStatus->state = LW_SERVICE_STATE_DEAD;
-        }
-        else
-        {
-            pStatus->state = LW_SERVICE_STATE_STOPPED;
-        }
-        dwError = 0;
+        pStatus->pid = -1;
     }
-    else switch(driverState)
+    
+    dwError = LwNtStatusToWin32Error(LwIoQueryStateDriver(pState->pName, &driverState));
+    if (dwError || driverState != LWIO_DRIVER_STATE_LOADED)
     {
-    case LWIO_DRIVER_STATE_LOADED:
-        pStatus->state = LW_SERVICE_STATE_RUNNING;
-        break;
-    case LWIO_DRIVER_STATE_UNLOADED:
-        if (pState->WasStarted)
-        {
-            pStatus->state = LW_SERVICE_STATE_DEAD;
-        }
-        else
-        {
-            pStatus->state = LW_SERVICE_STATE_STOPPED;
-        }
-        break;
-    default:
-        dwError = LW_ERROR_INTERNAL;
-        BAIL_ON_ERROR(dwError);
-        break;
+        LwInterlockedCompareExchange(&pState->State, LW_SERVICE_STATE_DEAD, LW_SERVICE_STATE_RUNNING);
     }
-    
-cleanup:
-    
-    return dwError;
 
-error:
-
-    goto cleanup;
+    pStatus->state = LwInterlockedRead(&pState->State);
+    
+    return 0;
 }
 
 static
@@ -186,6 +150,8 @@ LwSmDriverConstruct(
 
     dwError = LwSmCopyString(pInfo->pwszName, &pState->pName);
     BAIL_ON_ERROR(dwError);
+
+    pState->State = LW_SERVICE_STATE_STOPPED;
 
     *ppData = pState;
 
