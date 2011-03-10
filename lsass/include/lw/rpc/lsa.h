@@ -684,6 +684,13 @@ LsaQuerySecurity(
     );
 
 
+NTSTATUS
+LsaRpcDeleteObject(
+    IN  LSA_BINDING  hBinding,
+    IN  PVOID        hObject
+    );
+
+
 VOID
 LsaRpcFreeMemory(
     IN PVOID pPtr

@@ -492,11 +492,15 @@ NTSTATUS srv_lsa_Function21(
 }
 
 
-NTSTATUS srv_lsa_Function22(
-    /* [in] */ handle_t IDL_handle
-)
+NTSTATUS srv_LsaDeleteObject(
+    /* [in] */ handle_t IDL_handle,
+    /* [in, out] */ idl_void_p_t *phObject
+    )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaRpcSrvDeleteObject(IDL_handle,
+                                   phObject);
     return status;
 }
 

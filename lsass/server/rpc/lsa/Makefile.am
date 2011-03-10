@@ -31,6 +31,7 @@ liblsa_la_SOURCES = \
     lsa_setsystemaccessaccount.c       \
     lsa_lookupprivilegevalue.c         \
     lsa_lookupprivilegename.c          \
+    lsa_deleteobject.c                 \
     lsa_enumaccountswithuserright.c    \
     lsa_enumaccountrights.c            \
     lsa_addaccountrights.c             \

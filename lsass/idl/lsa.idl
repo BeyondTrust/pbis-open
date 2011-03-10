@@ -173,7 +173,11 @@ cpp_quote("#endif")
         );
 
     NTSTATUS lsa_Function21();
-    NTSTATUS lsa_Function22();
+
+    /* function 0x22 */
+    NTSTATUS LsaDeleteObject(
+        [in,out,context_handle] void **phObject
+        );
 
     /* function 0x23 */
     NTSTATUS LsaEnumAccountsWithUserRight(

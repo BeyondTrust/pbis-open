@@ -190,6 +190,13 @@ LsaSrvLookupPrivilegeName(
 
 
 NTSTATUS
+LsaRpcSrvDeleteObject(
+    handle_t b,
+    PVOID *phObject
+    );
+
+
+NTSTATUS
 LsaSrvEnumAccountsWithUserRight(
     handle_t b,
     POLICY_HANDLE hPolicy,

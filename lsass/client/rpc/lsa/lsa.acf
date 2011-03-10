@@ -19,6 +19,7 @@ interface lsa
         [enable_allocate] LsaSetSystemAccessAccount();
         [enable_allocate] LsaLookupPrivilegeValue();
         [enable_allocate] LsaLookupPrivilegeName();
+	[enable_allocate] LsaDeleteObject();
         [enable_allocate] LsaEnumAccountsWithUserRight();
         [enable_allocate] LsaEnumAccountRights();
         [enable_allocate] LsaAddAccountRights();
