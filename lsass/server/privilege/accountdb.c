@@ -111,6 +111,12 @@ LsaSrvGetPrivilegeNames_inlock(
     OUT PWSTR **ppPrivilegeNames
     );
 
+static
+DWORD
+LsaSrvDeleteAccount_inlock(
+    PSTR pszAccountSid
+    );
+
 
 DWORD
 LsaSrvCreateAccountsDb(
@@ -1345,6 +1351,89 @@ error:
         enumerationStatus != ERROR_SUCCESS)
     {
         err = enumerationStatus;
+    }
+
+    return err;
+}
+
+
+VOID
+LsaSrvPrivsCheckIfDeleteAccount(
+    PLSA_ACCOUNT pAccount
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    DWORD err = ERROR_SUCCESS;
+    BOOLEAN accountsLocked = FALSE;
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+    PSID accountSid = NULL;
+    PSTR pszAccountSid = NULL;
+
+    LSASRV_PRIVS_WRLOCK_RWLOCK(accountsLocked, &pGlobals->accountsRwLock);
+
+    if (!pAccount->Delete || pAccount->Refcount > 1)
+    {
+        goto error;
+    }
+
+    accountSid = pAccount->pSid;
+    ntStatus = RtlAllocateCStringFromSid(
+                        &pszAccountSid,
+                        accountSid);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    err = LwHashRemoveKey(
+                        pGlobals->pAccounts,
+                        accountSid);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = LsaSrvDeleteAccount_inlock(pszAccountSid);
+    BAIL_ON_LSA_ERROR(err);
+
+error:
+    LSASRV_PRIVS_UNLOCK_RWLOCK(accountsLocked, &pGlobals->accountsRwLock);
+
+    RTL_FREE(&pszAccountSid);
+}
+
+
+static
+DWORD
+LsaSrvDeleteAccount_inlock(
+    PSTR pszAccountSid
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    HANDLE hRegistry = NULL;
+    HKEY hAccounts = NULL;
+
+    err = RegOpenServer(&hRegistry);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = RegOpenKeyExA(
+                 hRegistry,
+                 NULL,
+                 LSA_ACCOUNTS_REG_KEY,
+                 0,
+                 KEY_WRITE | DELETE,
+                 &hAccounts);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = RegDeleteKeyA(
+                 hRegistry,
+                 hAccounts,
+                 pszAccountSid);
+    BAIL_ON_LSA_ERROR(err);
+
+error:
+    if (hAccounts)
+    {
+        RegCloseKey(hRegistry, hAccounts);
+    }
+
+    if (hRegistry)
+    {
+        RegCloseServer(hRegistry);
     }
 
     return err;

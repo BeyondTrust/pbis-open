@@ -108,4 +108,10 @@ LsaSrvPrivsAcquireAccountEntry(
     );
 
 
+VOID
+LsaSrvPrivsCheckIfDeleteAccount(
+    PLSA_ACCOUNT pAccount
+    );
+
+
 #endif /* __LSASRV_PRIVS_ACCOUNTDB_H__ */

@@ -79,6 +79,7 @@ typedef struct _LSA_ACCOUNT
 {
     pthread_rwlock_t accountRwLock;
     LONG Refcount;
+    BOOLEAN Delete;
 
     PSID pSid;
     LUID_AND_ATTRIBUTES Privileges[LSA_MAX_PRIVILEGES_COUNT];

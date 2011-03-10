@@ -228,4 +228,10 @@ LsaSrvPrivsGetAccountSecurity(
     );
 
 
+DWORD
+LsaSrvPrivsMarkAccountDeleted(
+    IN PLSA_ACCOUNT_CONTEXT pAccountContext
+    );
+
+
 #endif /* __LSASRV_PRIVILEGE_H__ */

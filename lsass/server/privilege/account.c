@@ -118,6 +118,12 @@ LsaSrvIsSarAssigned(
     IN DWORD SystemAccessRight
     );
 
+static
+VOID
+LsaSrvPrivsMarkAccountEntryDeleted_inlock(
+    PLSA_ACCOUNT pAccount
+    );
+
 
 DWORD
 LsaSrvPrivsEnumAccountRightsSids(
@@ -504,6 +510,13 @@ LsaSrvPrivsRemoveAccountRights(
         pAccountContext->Dirty = FALSE;
     }
 
+    // Delete the account if it has no account rights assigned any longer
+    if (pAccount->SystemAccessRights == 0 &&
+        pAccount->NumPrivileges == 0)
+    {
+        LsaSrvPrivsMarkAccountEntryDeleted_inlock(pAccount);
+    }
+
 error:
     LSASRV_PRIVS_UNLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
 
@@ -840,6 +853,8 @@ LsaSrvPrivsCloseAccount(
     if (accountContext == NULL) return;
 
     LsaSrvPrivsReleaseAccountEntry(accountContext->pAccount);
+    LsaSrvPrivsCheckIfDeleteAccount(accountContext->pAccount);
+
     accountContext->pAccount = NULL;
 
     if (accountContext->releaseAccessToken)
@@ -1897,3 +1912,36 @@ error:
 }
 
 
+DWORD
+LsaSrvPrivsMarkAccountDeleted(
+    IN PLSA_ACCOUNT_CONTEXT pAccountContext
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    BOOLEAN locked = FALSE;
+    PLSA_ACCOUNT pAccount = pAccountContext->pAccount;
+
+    if (!(pAccountContext->grantedAccess & DELETE))
+    {
+        err = ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    LSASRV_PRIVS_WRLOCK_RWLOCK(locked, &pAccount->accountRwLock);
+    LsaSrvPrivsMarkAccountEntryDeleted_inlock(pAccount);
+
+error:
+    LSASRV_PRIVS_UNLOCK_RWLOCK(locked, &pAccount->accountRwLock);
+
+    return err;
+}
+
+
+static
+VOID
+LsaSrvPrivsMarkAccountEntryDeleted_inlock(
+    PLSA_ACCOUNT pAccount
+    )
+{
+    pAccount->Delete = TRUE;
+}
