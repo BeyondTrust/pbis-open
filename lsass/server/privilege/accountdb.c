@@ -67,12 +67,6 @@ LsaSrvAccountDbEntryFree(
     );
 
 static
-VOID
-LsaSrvFreeAccountEntry(
-    PLSA_ACCOUNT pEntry
-    );
-
-static
 DWORD
 LsaSrvReadAccountEntry(
     IN HANDLE hRegistry,
@@ -269,7 +263,7 @@ error:
     {
         if (pAccountEntry)
         {
-            LsaSrvFreeAccountEntry(pAccountEntry);
+            LsaSrvPrivsReleaseAccountEntry(pAccountEntry);
         }
 
         LW_SAFE_FREE_MEMORY(accountSid);
@@ -348,13 +342,12 @@ LsaSrvAccountDbEntryFree(
     )
 {
     LwFreeMemory(pEntry->pKey);
-    LsaSrvFreeAccountEntry(pEntry->pValue);
+    LsaSrvPrivsReleaseAccountEntry(pEntry->pValue);
 }
 
 
-static
 VOID
-LsaSrvFreeAccountEntry(
+LsaSrvPrivsReleaseAccountEntry(
     PLSA_ACCOUNT pEntry
     )
 {
@@ -366,6 +359,12 @@ LsaSrvFreeAccountEntry(
     PACL pSacl = NULL;
     BOOLEAN defaulted = FALSE;
     BOOLEAN present = FALSE;
+
+    InterlockedDecrement(&pEntry->Refcount);
+    if (pEntry->Refcount)
+    {
+        return;
+    }
 
     LSASRV_PRIVS_WRLOCK_RWLOCK(Locked, &pEntry->accountRwLock);
 
@@ -415,6 +414,15 @@ LsaSrvFreeAccountEntry(
     pthread_rwlock_destroy(&pEntry->accountRwLock);
 
     LW_SAFE_FREE_MEMORY(pEntry);
+}
+
+
+VOID
+LsaSrvPrivsAcquireAccountEntry(
+    PLSA_ACCOUNT pEntry
+    )
+{
+    InterlockedIncrement(&pEntry->Refcount);
 }
 
 
@@ -550,6 +558,7 @@ LsaSrvReadAccountEntry(
     BAIL_ON_LSA_ERROR(err);
 
     pthread_rwlock_init(&pAccountEntry->accountRwLock, NULL);
+    pAccountEntry->Refcount = 1;
 
     accountSidSize = RtlLengthSid(AccountSid);
     err = LwAllocateMemory(
@@ -624,7 +633,7 @@ error:
     {
         if (pAccountEntry)
         {
-            LsaSrvFreeAccountEntry(pAccountEntry);
+            LsaSrvPrivsReleaseAccountEntry(pAccountEntry);
         }
 
         *ppAccountEntry = NULL;
@@ -746,6 +755,8 @@ LsaSrvGetAccountEntry(
     {
         BAIL_ON_LSA_ERROR(err);
     }
+
+    LsaSrvPrivsAcquireAccountEntry(pAccountEntry);
 
     *ppAccountEntry = pAccountEntry;
 
@@ -880,6 +891,13 @@ LsaSrvAddAccount_inlock(
                       pAccountEntry->pSecurityDesc,
                       overwrite);
     BAIL_ON_LSA_ERROR(err);
+
+    //
+    // LsaSrvAddAccount_inlock is called by LsaSrvPrivsCreateAccount so
+    // new account has to be acquired before releasing accounts database
+    // lock and making the account available for other threads.
+    //
+    LsaSrvPrivsAcquireAccountEntry(pAccountEntry);
 
 error:
     LSASRV_PRIVS_UNLOCK_RWLOCK(Locked, &pGlobals->accountsRwLock);
@@ -1191,6 +1209,7 @@ LsaSrvPrivsGetAccountEntries(
     LW_HASH_ITERATOR iterator = {0};
     LW_HASH_ENTRY* pEntry = NULL;
     PLSA_ACCOUNT pAccountEntry = NULL;
+    DWORD i = 0;
 
     LSASRV_PRIVS_RDLOCK_RWLOCK(accountsLocked, &pGlobals->accountsRwLock);
 
@@ -1269,6 +1288,8 @@ LsaSrvPrivsGetAccountEntries(
         }
 
         pAccountEntry = (PLSA_ACCOUNT)pEntry->pValue;
+        LsaSrvPrivsAcquireAccountEntry(pAccountEntry);
+
         totalSize += entrySize;
 
         // LSA_ACCOUNT_INFO includes pointer to account SID
@@ -1298,6 +1319,10 @@ error:
 
     if (err)
     {
+        for (i = 0; i < count; i++)
+        {
+            LsaSrvPrivsReleaseAccountEntry(ppAccounts[i]);
+        }
         LW_SAFE_FREE_MEMORY(ppAccounts);
 
         if (pppAccounts)

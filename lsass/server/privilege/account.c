@@ -745,6 +745,7 @@ LsaSrvPrivsCreateAccount(
     BAIL_ON_LSA_ERROR(err);
 
     pthread_rwlock_init(&pAccount->accountRwLock, NULL);
+    pAccount->Refcount = 1;
 
     sidSize = RtlLengthSid(Sid);
     err = LwAllocateMemory(
@@ -838,6 +839,7 @@ LsaSrvPrivsCloseAccount(
 
     if (accountContext == NULL) return;
 
+    LsaSrvPrivsReleaseAccountEntry(accountContext->pAccount);
     accountContext->pAccount = NULL;
 
     if (accountContext->releaseAccessToken)
@@ -1482,8 +1484,10 @@ error:
         }
     }
 
-    // Array elements are pointers from the database so they
-    // must not be freed here
+    for (i = 0; i < count; i++)
+    {
+        LsaSrvPrivsReleaseAccountEntry(ppAccounts[i]);
+    }
     LW_SAFE_FREE_MEMORY(ppAccounts);
 
     if (err == ERROR_SUCCESS &&
@@ -1664,8 +1668,10 @@ error:
         RtlReleaseAccessToken(&accessToken);
     }
 
-    // Array elements are pointers from the database so they
-    // must not be freed here
+    for (i = 0; i < numAccounts; i++)
+    {
+        LsaSrvPrivsReleaseAccountEntry(ppAccounts[i]);
+    }
     LW_SAFE_FREE_MEMORY(ppAccounts);
 
     LW_SAFE_FREE_MEMORY(pszAccountRight);

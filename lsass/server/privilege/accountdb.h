@@ -96,4 +96,16 @@ LsaSrvPrivsGetAccountEntries(
     );
 
 
+VOID
+LsaSrvPrivsReleaseAccountEntry(
+    PLSA_ACCOUNT pEntry
+    );
+
+
+VOID
+LsaSrvPrivsAcquireAccountEntry(
+    PLSA_ACCOUNT pEntry
+    );
+
+
 #endif /* __LSASRV_PRIVS_ACCOUNTDB_H__ */
