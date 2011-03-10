@@ -63,6 +63,7 @@ typedef enum _PRIVILEGE_COMMAND {
     AccountEnumerateUserRights,
     AccountAddAccountRights,
     AccountRemoveAccountRights,
+    AccountDelete
 } PRIVILEGE_COMMAND;
 
 

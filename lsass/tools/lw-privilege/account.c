@@ -71,6 +71,13 @@ ProcessAddRemoveAccountRights(
     IN PSTR AccountName
     );
 
+static
+DWORD
+ProcessDeleteAccount(
+    IN PRPC_PARAMETERS pRpcParams,
+    IN PSTR AccountName
+    );
+
 
 VOID
 ShowUsageAccount(
@@ -85,6 +92,7 @@ ShowUsageAccount(
     fprintf(stdout, "-a, --add <acct right>[,<acct right>] <account> - Add account rights to a specified account\n");
     fprintf(stdout, "--remove <acct right>[,<acct right>] <account> - Remove account rights from a specified account\n");
     fprintf(stdout, "--remove-all <account> - Remove all account rights from a specified account\n");
+    fprintf(stdout, "--delete <account> - Delete specified account\n");
 }
 
 
@@ -157,6 +165,10 @@ ProcessAccount(
             removeAll = TRUE;
             Command = AccountRemoveAccountRights;
         }
+        else if (strcmp(pszArg, "--delete") == 0)
+        {
+            Command = AccountDelete;
+        }
         else if (i + 1 == Argc)
         {
             LW_SAFE_FREE_MEMORY(accountName);
@@ -199,6 +211,13 @@ ProcessAccount(
                                 FALSE,
                                 accountRightName,
                                 removeAll,
+                                accountName);
+        BAIL_ON_LSA_ERROR(err);
+        break;
+
+    case AccountDelete:
+        err = ProcessDeleteAccount(
+                                &Params,
                                 accountName);
         BAIL_ON_LSA_ERROR(err);
         break;
@@ -764,3 +783,106 @@ error:
 
     return err;
 }
+
+
+static
+DWORD
+ProcessDeleteAccount(
+    IN PRPC_PARAMETERS pRpcParams,
+    IN PSTR AccountName
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    LSA_BINDING hLsa = NULL;
+    LW_PIO_CREDS pCreds = NULL;
+    WCHAR wszSysName[] = {'\\', '\\', '\0'};
+    DWORD policyAccessMask = LSA_ACCESS_LOOKUP_NAMES_SIDS |
+                             LSA_ACCESS_VIEW_POLICY_INFO;
+    DWORD accountAccessMask = DELETE;
+    POLICY_HANDLE hPolicy = NULL;
+    LSAR_ACCOUNT_HANDLE hAccount = NULL;
+    PSID pAccountSid = NULL;
+    
+    err = CreateRpcCredentials(pRpcParams,
+                               &pCreds);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = CreateLsaRpcBinding(pRpcParams,
+                              pCreds,
+                              &hLsa);
+    BAIL_ON_LSA_ERROR(err);
+
+    ntStatus = LsaOpenPolicy2(hLsa,
+                              wszSysName,
+                              NULL,
+                              policyAccessMask,
+                              &hPolicy);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    err = ResolveAccountNameToSid(
+                          hLsa,
+                          AccountName,
+                          &pAccountSid);
+    BAIL_ON_LSA_ERROR(err);
+
+    ntStatus = LsaOpenAccount(
+                          hLsa,
+                          hPolicy,
+                          pAccountSid,
+                          accountAccessMask,
+                          &hAccount);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    ntStatus = LsaRpcDeleteObject(
+                          hLsa,
+                          hAccount);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+error:
+    if (ntStatus || err)
+    {
+        PCSTR errName = LwNtStatusToName(ntStatus);
+        PCSTR errDescription = LwNtStatusToDescription(ntStatus);
+
+        if (ntStatus)
+        {
+            errName = LwNtStatusToName(ntStatus);
+            errDescription = LwNtStatusToDescription(ntStatus);
+        }
+        else
+        {
+            errName = LwWin32ErrorToName(err);
+            errDescription = LwWin32ErrorToDescription(err);
+        }
+
+        fprintf(stderr, "Error: %s (%s)\n",
+                LSA_SAFE_LOG_STRING(errName),
+                LSA_SAFE_LOG_STRING(errDescription));
+    }
+
+    if (hPolicy)
+    {
+        LsaClose(hLsa, hPolicy);
+    }
+
+    if (hLsa)
+    {
+        LsaFreeBinding(&hLsa);
+    }
+
+    if (pCreds)
+    {
+        LwIoDeleteCreds(pCreds);
+    }
+
+    if (err == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return err;
+}
+
+
