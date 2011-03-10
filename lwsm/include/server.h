@@ -73,8 +73,6 @@ typedef struct _SM_TABLE_ENTRY
     PLW_SERVICE_INFO pInfo;
     /* Is entry still valid? */
     BOOL volatile bValid;
-    /* Are dependencies marked? */
-    BOOL volatile bDepsMarked;
     /* Has pInfo been changed since the service was last constructed? */
     BOOL volatile bDirty;
     /* How many automatic restarts have we attempted? */
@@ -95,12 +93,6 @@ typedef struct _SM_TABLE_ENTRY
     LW_SERVICE_OBJECT object;
     /* Data */
     void* pData;
-    /* Reverse dependency count
-       
-       This is the number of other running services
-       which depend directly on us.  When it is > 0,
-       the service cannot be safely stopped */
-    DWORD volatile dwDepCount;
     /* Reference count
        
        This is the number of holders of a reference to

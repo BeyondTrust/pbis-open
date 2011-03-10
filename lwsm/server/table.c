@@ -49,18 +49,6 @@ LwSmTablePollEntry(
     );
 
 static
-DWORD
-LwSmTableVerifyAndMarkDependencies(
-    PSM_TABLE_ENTRY pEntry
-    );
-
-static
-DWORD
-LwSmTableUnmarkDependencies(
-    PSM_TABLE_ENTRY pEntry
-    );
-
-static
 VOID
 LwSmTableFreeEntry(
     PSM_TABLE_ENTRY pEntry
@@ -422,13 +410,6 @@ LwSmTableStartEntry(
         BAIL_ON_ERROR(dwError);
     }
 
-    if (!pEntry->bDepsMarked)
-    {
-        dwError = LwSmTableVerifyAndMarkDependencies(pEntry);
-        BAIL_ON_ERROR(dwError);
-        pEntry->bDepsMarked = TRUE;
-    }
-
     while (status.state != LW_SERVICE_STATE_RUNNING)
     {
         dwError = LwSmTablePollEntry(pEntry, &status);
@@ -489,96 +470,6 @@ cleanup:
 
 error:
 
-    if (pEntry->bDepsMarked)
-    {
-        LwSmTableUnmarkDependencies(pEntry);
-        pEntry->bDepsMarked = FALSE;
-    }
-
-    goto cleanup;
-}
-
-static
-DWORD
-LwSmTableVerifyAndMarkDependencies(
-    PSM_TABLE_ENTRY pEntry
-    )
-{
-    DWORD dwError = 0;
-    DWORD dwIndex = 0;
-    DWORD dwMaxIndex = 0;
-    PSM_TABLE_ENTRY pDependency = NULL;
-    LW_SERVICE_STATUS status = {.state = LW_SERVICE_STATE_DEAD};
-    BOOLEAN bLocked = FALSE;
-
-    for (dwIndex = 0; pEntry->pInfo->ppwszDependencies[dwIndex]; dwIndex++)
-    {
-        dwError = LwSmTableGetEntry(
-            pEntry->pInfo->ppwszDependencies[dwIndex],
-            &pDependency);
-        if (dwError == LW_ERROR_NO_SUCH_SERVICE)
-        {
-            dwError = LW_ERROR_SERVICE_DEPENDENCY_UNMET;
-        }
-        BAIL_ON_ERROR(dwError);
-
-        LOCK(bLocked, pDependency->pLock);
-
-        if (!pDependency->bValid)
-        {
-            dwError = LW_ERROR_SERVICE_DEPENDENCY_UNMET;
-            BAIL_ON_ERROR(dwError);
-        }
-
-        dwError = LwSmTablePollEntry(pDependency, &status);
-        BAIL_ON_ERROR(dwError);
-
-        if (status.state != LW_SERVICE_STATE_RUNNING &&
-            status.state != LW_SERVICE_STATE_PAUSED)
-        {
-            dwError = LW_ERROR_SERVICE_DEPENDENCY_UNMET;
-            BAIL_ON_ERROR(dwError);
-        }
-
-        /* Mark running dependent service */
-        pDependency->dwDepCount++;
-
-        UNLOCK(bLocked, pDependency->pLock);
-        
-        LwSmTableReleaseEntry(pDependency);
-        pDependency = NULL;
-    }
-
-cleanup:
-
-    return dwError;
-    
-error:
-
-    UNLOCK(bLocked, pDependency->pLock);
-
-    if (pDependency)
-    {
-        LwSmTableReleaseEntry(pDependency);
-    }
-
-    dwMaxIndex = dwIndex;
-
-    /* On error, unmark any services we have already marked */
-    for (dwIndex = 0; dwIndex < dwMaxIndex; dwIndex++)
-    {
-        if (LwSmTableGetEntry(
-                pEntry->pInfo->ppwszDependencies[dwIndex],
-                &pDependency) == 0)
-        {
-            LOCK(bLocked, pDependency->pLock);
-            pDependency->dwDepCount--;
-            UNLOCK(bLocked, pDependency->pLock);
-            LwSmTableReleaseEntry(pDependency);
-            pDependency = NULL;
-        }
-    }
-
     goto cleanup;
 }
 
@@ -598,12 +489,6 @@ LwSmTableStopEntry(
     if (!pEntry->bValid)
     {
         dwError = LW_ERROR_INVALID_HANDLE;
-        BAIL_ON_ERROR(dwError);
-    }
-
-    if (pEntry->dwDepCount > 0)
-    {
-        dwError = LW_ERROR_DEPENDENT_SERVICE_STILL_RUNNING;
         BAIL_ON_ERROR(dwError);
     }
 
@@ -651,13 +536,6 @@ LwSmTableStopEntry(
             BAIL_ON_ERROR(dwError);
             break;
         }
-    }
-
-    if (pEntry->bDepsMarked)
-    {
-        dwError = LwSmTableUnmarkDependencies(pEntry);
-        BAIL_ON_ERROR(dwError);
-        pEntry->bDepsMarked = FALSE;
     }
 
 cleanup:
@@ -758,90 +636,9 @@ LwSmTablePollEntry(
     LOCK(bLocked, pEntry->pLock);
     BAIL_ON_ERROR(dwError);
 
-    /* If an unannounced change in the service status occured,
-       we may need to unmark or mark dependencies */
-    if ((pStatus->state == LW_SERVICE_STATE_STOPPED ||
-         pStatus->state == LW_SERVICE_STATE_DEAD) &&
-        pEntry->bDepsMarked)
-    {
-        dwError = LwSmTableUnmarkDependencies(pEntry);
-        BAIL_ON_ERROR(dwError);
-        pEntry->bDepsMarked = FALSE;
-    }
-    else if ((pStatus->state != LW_SERVICE_STATE_STOPPED &&
-              pStatus->state != LW_SERVICE_STATE_DEAD) &&
-             !pEntry->bDepsMarked)
-    {
-        dwError = LwSmTableVerifyAndMarkDependencies(pEntry);
-        switch (dwError)
-        {
-        case LW_ERROR_SUCCESS:
-            pEntry->bDepsMarked = TRUE; 
-            break;
-        case LW_ERROR_SERVICE_DEPENDENCY_UNMET:
-            /* This means we're in an inconsistent state where
-               an active service has an inactive dependency,
-               but we should not raise an error about it
-               when merely polling status */
-            dwError = LW_ERROR_SUCCESS;
-            break;
-        default:
-            BAIL_ON_ERROR(dwError);
-            break;
-        }
-    }
-
 error:
 
     return dwError;
-}
-
-static
-DWORD
-LwSmTableUnmarkDependencies(
-    PSM_TABLE_ENTRY pEntry
-    )
-{
-    DWORD dwError = 0;
-    DWORD dwIndex = 0;
-    PSM_TABLE_ENTRY pDependency = NULL;
-    BOOLEAN bLocked = FALSE;
-
-    for (dwIndex = 0; pEntry->pInfo->ppwszDependencies[dwIndex]; dwIndex++)
-    {
-        dwError = LwSmTableGetEntry(
-            pEntry->pInfo->ppwszDependencies[dwIndex],
-            &pDependency);
-        if (dwError == LW_ERROR_NOT_MAPPED)
-        {
-            dwError = 0;
-        }
-        BAIL_ON_ERROR(dwError);
-
-        LOCK(bLocked, pDependency->pLock);
-
-        pDependency->dwDepCount--;
-
-        UNLOCK(bLocked, pDependency->pLock);
-        
-        LwSmTableReleaseEntry(pDependency);
-        pDependency = NULL;
-    }
-
-cleanup:
-
-    return dwError;
-    
-error:
-
-    UNLOCK(bLocked, pDependency->pLock);
-
-    if (pDependency)
-    {
-        LwSmTableReleaseEntry(pDependency);
-    }
-
-    goto cleanup;
 }
 
 static
