@@ -1760,7 +1760,7 @@ static BOOLEAN PamModulePrompts( const char * phase, const char * module)
 
 static BOOLEAN PamModuleUnderstandsTryFirstPass( const char * phase, const char * module)
 {
-    const char *moduleBasename = strrchr(module, "/");
+    const char *moduleBasename = strrchr(module, '/');
     char buffer[256];
 
     if (!moduleBasename)
@@ -2423,6 +2423,50 @@ cleanup:
     DJ_LOG_VERBOSE("FixPromptingModule done: line now %d", line);
 }
 
+static
+void
+AddSmartCartLine(
+    IN const DistroInfo *pDistro,
+    IN OUT struct PamConf *pConf,
+    IN const char *pPamLwidentity,
+    IN OUT struct ConfigurePamModuleState *pState,
+    IN int AddBeforeLine,
+    OUT int *pLineMovedTo,
+    OUT LWException **ppExc
+    )
+{
+    struct PamLine *lineObj = NULL;
+
+    LW_CLEANUP_CTERR(ppExc,
+            CopyLineAndUpdateSkips(pConf, AddBeforeLine, pLineMovedTo));
+    lineObj = &pConf->lines[AddBeforeLine];
+    LW_CLEANUP_CTERR(ppExc,
+            SetPamTokenValue(&lineObj->control, lineObj->phase, "requisite"));
+    LW_CLEANUP_CTERR(ppExc,
+            SetPamTokenValue(&lineObj->module, lineObj->control, pPamLwidentity));
+    lineObj->optionCount = 0;
+    LW_CLEANUP_CTERR(ppExc,
+            AddOption(pConf, AddBeforeLine, "smartcard_prompt"));
+
+    /*
+     * RHEL4 doesn't clear the old password when retrying after a
+     * failed password attempt, so we can't use try_first_pass
+     * there.  On all other platforms this makes calling into
+     * PAM with pre-populated username and password work properly.
+     */
+    if (pDistro->distro != DISTRO_RHEL || pDistro->version[0] > '4' ||
+            pDistro->version[1] != '.')
+    {
+        LW_CLEANUP_CTERR(ppExc,
+                AddOption(pConf, AddBeforeLine, "try_first_pass"));
+    }
+
+    pState->hasAddedSmartCardPrompt = TRUE;
+    pState->sawPromptingModule = FALSE;
+cleanup:
+    ;
+}
+
 static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro, struct PamConf *conf, const char *service, const char * phase, const char *pam_lwidentity, struct ConfigurePamModuleState *state, LWException **exc)
 {
     int prevLine = -1;
@@ -2629,30 +2673,16 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
         if(!state->hasAddedSmartCardPrompt && !strcmp(phase, "auth") &&
                 PamModulePrompts(phase, module))
         {
-            int newLine = -1;
-            LW_CLEANUP_CTERR(exc, CopyLineAndUpdateSkips(conf, line, &newLine));
-            LW_CLEANUP_CTERR(exc, SetPamTokenValue(&lineObj->control, lineObj->phase, "requisite"));
-            LW_CLEANUP_CTERR(exc, SetPamTokenValue(&lineObj->module, lineObj->control, pam_lwidentity));
-            lineObj->optionCount = 0;
-            LW_CLEANUP_CTERR(exc, AddOption(conf, line, "smartcard_prompt"));
-
-            /*
-             * RHEL4 doesn't clear the old password when retrying after a
-             * failed password attempt, so we can't use try_first_pass
-             * there.  On all other platforms this makes calling into
-             * PAM with pre-populated username and password work properly.
-             */
-            if (distro->distro != DISTRO_RHEL || distro->version[0] > '4' ||
-                    distro->version[1] != '.')
-            {
-                LW_CLEANUP_CTERR(exc, AddOption(conf, line, "try_first_pass"));
-            }
-
-            line = newLine;
-            lineObj = &conf->lines[newLine];
+            LW_TRY(exc, AddSmartCartLine(
+                distro,
+                conf,
+                pam_lwidentity,
+                state,
+                line,
+                &line,
+                &LW_EXC));
+            lineObj = &conf->lines[line];
             GetModuleControl(lineObj, &module, &control);
-            state->hasAddedSmartCardPrompt = TRUE;
-            state->sawPromptingModule = FALSE;
             LW_TRY(exc, FixPromptingModule(conf, service, phase, state, line, &LW_EXC));
         }
 
@@ -2971,6 +3001,19 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
              */
             DJ_LOG_INFO("Inserting pam_lwidentity at the end of the pam stack");
             LW_CLEANUP_CTERR(exc, CopyLineAndUpdateSkips(conf, prevLine, &lwidentityLine));
+        }
+
+        if (!strcmp(phase, "auth") && !state->hasAddedSmartCardPrompt)
+        {
+            LW_TRY(exc, AddSmartCartLine(
+                distro,
+                conf,
+                pam_lwidentity,
+                state,
+                lwidentityLine,
+                &lwidentityLine,
+                &LW_EXC));
+            state->sawPromptingModule = TRUE;
         }
 
         /* Fill in the correct values for lwidentityLine */
