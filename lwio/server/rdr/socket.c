@@ -1397,7 +1397,7 @@ RdrSocketDispatchPacket2(
          * could have been an SMB1 packet
          */
         if ((pContext->Packet.protocolVer == SMB_PROTOCOL_VERSION_1 &&
-             SMB_HTOL16(pContext->Packet.pSMB2Header->command) != COM2_NEGOTIATE) ||
+             pPacket->pSMB2Header->command != COM2_NEGOTIATE) ||
             (pContext->Packet.protocolVer == SMB_PROTOCOL_VERSION_2 &&
              SMB_HTOL16(pContext->Packet.pSMB2Header->command) != pPacket->pSMB2Header->command))
         {
