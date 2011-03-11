@@ -193,6 +193,15 @@ peer_free_session(
         pthread_cond_destroy(&session->event);
     }
 
+    if (session->endpoint)
+    {
+        if (session->endpoint->endpoint)
+        {
+            free(session->endpoint->endpoint);
+            free(session->endpoint);
+        }
+    }
+
     free(session);
 }
 
