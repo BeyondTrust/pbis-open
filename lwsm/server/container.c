@@ -1,0 +1,1401 @@
+/*
+ * Copyright (c) Likewise Software.  All rights Reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.  You should have received a copy of the GNU General
+ * Public License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
+ * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
+ * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
+ * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
+ * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
+ * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
+ * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
+ * license@likewisesoftware.com
+ */
+
+/*
+ * Module Name:
+ *
+ *        container.c
+ *
+ * Abstract:
+ *
+ *        Logic for managing service containers
+ *
+ * Authors: Brian Koropoff (bkoropoff@likewise.com)
+ *
+ */
+
+#include "includes.h"
+
+#define LWSMD_PATH (SBINDIR "/lwsmd")
+
+#define LWMSG_MEMBER_PWSTR(_type, _field)           \
+    LWMSG_MEMBER_POINTER_BEGIN(_type, _field),      \
+    LWMSG_UINT16(WCHAR),                            \
+    LWMSG_POINTER_END,                              \
+    LWMSG_ATTR_ZERO_TERMINATED,                     \
+    LWMSG_ATTR_ENCODING("utf-16")
+
+#define LWMSG_PWSTR                    \
+    LWMSG_POINTER_BEGIN,               \
+    LWMSG_UINT16(WCHAR),               \
+    LWMSG_POINTER_END,                 \
+    LWMSG_ATTR_ZERO_TERMINATED,        \
+    LWMSG_ATTR_ENCODING("utf-16")
+
+typedef enum _CONTAINER_TAG
+{
+    CONTAINER_RES_STATUS,
+    CONTAINER_RES_HANDLE,
+    CONTAINER_REQ_START,
+    CONTAINER_REQ_STOP,
+    CONTAINER_REQ_REFRESH,
+} CONTAINER_TAG, *PCONTAINER_TAG;
+
+typedef struct _CONTAINER_HANDLE
+{
+    PLW_SVCM_INSTANCE pInstance;
+    LWMsgCall* pCall;
+    LONG State;
+} CONTAINER_HANDLE, *PCONTAINER_HANDLE;
+
+typedef struct _CONTAINER_START_REQ
+{
+    PWSTR pName;
+    PWSTR pPath;
+    DWORD ArgCount;
+    PWSTR* ppArgs;
+    DWORD FdCount;
+    int* pFds;
+    DWORD FdLimit;
+} CONTAINER_START_REQ, *PCONTAINER_START_REQ;
+
+typedef struct _CONTAINER_STATUS_RES
+{
+    DWORD Error;
+} CONTAINER_STATUS_RES, *PCONTAINER_STATUS_RES;
+
+typedef struct _CONTAINER_KEY
+{
+    uid_t Uid;
+    gid_t Gid;
+    PWSTR pGroup;
+} CONTAINER_KEY, *PCONTAINER_KEY;
+
+typedef struct _CONTAINER
+{
+    DWORD volatile Refs;
+    int Sockets[2];
+    PLW_TASK pTask;
+    LWMsgPeer* pPeer;
+    LWMsgSession* pSession;
+    PLW_WORK_ITEM pDeleteItem;
+    pid_t Pid;
+    DWORD Error;
+    CONTAINER_KEY Key;
+    LW_HASHTABLE_NODE Node;
+    SM_LINK Instances;
+} CONTAINER, *PCONTAINER;
+
+typedef struct _CONTAINER_INSTANCE
+{
+    PLW_SERVICE_OBJECT pObject;
+    PCONTAINER pContainer;
+    LWMsgHandle* pHandle;
+    LONG volatile State;
+    PWSTR pName;
+    PWSTR pPath;
+    PWSTR* ppArgs;
+    PWSTR pGroup;
+    DWORD FdLimit;
+    LWMsgParams In;
+    LWMsgParams Out;
+    CONTAINER_START_REQ Start;
+    SM_LINK Link;
+} CONTAINER_INSTANCE, *PCONTAINER_INSTANCE;
+
+static LWMsgTypeSpec gContainerStatusSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(CONTAINER_STATUS_RES),
+    LWMSG_MEMBER_UINT32(CONTAINER_STATUS_RES, Error),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+static LWMsgTypeSpec gContainerHandleInSpec[] =
+{
+    LWMSG_HANDLE(CONTAINER_HANDLE),
+    LWMSG_ATTR_HANDLE_LOCAL_FOR_RECEIVER,
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_TYPE_END
+};
+
+static LWMsgTypeSpec gContainerHandleOutSpec[] =
+{
+    LWMSG_HANDLE(CONTAINER_HANDLE),
+    LWMSG_ATTR_HANDLE_LOCAL_FOR_SENDER,
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_TYPE_END
+};
+
+static LWMsgTypeSpec gContainerStartSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(CONTAINER_START_REQ),
+    LWMSG_MEMBER_PWSTR(CONTAINER_START_REQ, pName),
+    LWMSG_MEMBER_PWSTR(CONTAINER_START_REQ, pPath),
+    LWMSG_MEMBER_UINT32(CONTAINER_START_REQ, ArgCount),
+    LWMSG_MEMBER_POINTER_BEGIN(CONTAINER_START_REQ, ppArgs),
+    LWMSG_PWSTR,
+    LWMSG_POINTER_END,
+    LWMSG_ATTR_LENGTH_MEMBER(CONTAINER_START_REQ, ArgCount),
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_MEMBER_UINT32(CONTAINER_START_REQ, FdCount),
+    LWMSG_MEMBER_POINTER_BEGIN(CONTAINER_START_REQ, pFds),
+    LWMSG_FD,
+    LWMSG_POINTER_END,
+    LWMSG_ATTR_LENGTH_MEMBER(CONTAINER_START_REQ, FdCount),
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_MEMBER_UINT32(CONTAINER_START_REQ, FdLimit),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+static LWMsgProtocolSpec gContainerProtocol[] =
+{
+    LWMSG_MESSAGE(CONTAINER_RES_STATUS, gContainerStatusSpec),
+    LWMSG_MESSAGE(CONTAINER_RES_HANDLE, gContainerHandleOutSpec),
+    LWMSG_MESSAGE(CONTAINER_REQ_START, gContainerStartSpec),
+    LWMSG_MESSAGE(CONTAINER_REQ_STOP, gContainerHandleInSpec),
+    LWMSG_MESSAGE(CONTAINER_REQ_REFRESH, gContainerHandleInSpec),
+    LWMSG_PROTOCOL_END,
+};
+
+#define DECLARE(name) \
+    extern PLW_SVCM_MODULE LW_RTL_SVCM_ENTRY_POINT_NAME(name)(VOID)
+
+#define EMBED(name) \
+{ #name, LW_RTL_SVCM_ENTRY_POINT_NAME(name) }
+
+
+#ifdef EMBED_LWREG
+DECLARE(lwreg);
+#endif
+
+#ifdef EMBED_NETLOGON
+DECLARE(netlogon);
+#endif
+
+#ifdef EMBED_LWIO
+DECLARE(lwio);
+#endif
+
+#ifdef EMBED_LSASS
+DECLARE(lsass);
+#endif
+
+struct {
+    PCSTR pName;
+    LW_SVCM_MODULE_ENTRY_FUNCTION Entry;
+} gEmbedded[] =
+{
+#ifdef EMBED_LWREG
+    EMBED(lwreg),
+#endif
+#ifdef EMBED_NETLOGON
+    EMBED(netlogon),
+#endif
+#ifdef EMBED_LWIO
+    EMBED(lwio),
+#endif
+#ifdef EMBED_LSASS
+    EMBED(lsass),
+#endif
+    {NULL, NULL}
+};
+
+static pthread_mutex_t gContainerMutex = PTHREAD_MUTEX_INITIALIZER;
+static PLW_HASHTABLE gpContainers = NULL;
+static LWMsgProtocol* gpProtocol = NULL;
+
+static
+DWORD
+SetLimits(
+    DWORD FdLimit
+    )
+{
+    DWORD dwError = 0;
+    struct rlimit limit = {0};
+
+    pthread_mutex_lock(&gContainerMutex);
+
+    if (FdLimit)
+    {
+        (void) getrlimit(RLIMIT_NOFILE, &limit);
+
+        if (FdLimit > limit.rlim_cur)
+        {
+            limit.rlim_cur = FdLimit;
+        }
+
+        if (FdLimit > limit.rlim_max)
+        {
+            limit.rlim_max = FdLimit;
+        }
+
+        (void) setrlimit(RLIMIT_NOFILE, &limit);
+    }
+
+    pthread_mutex_unlock(&gContainerMutex);
+
+    return dwError;
+}
+
+static
+LW_PCVOID
+ContainerGetKey(
+    PLW_HASHTABLE_NODE pNode,
+    PVOID pUserData
+    )
+{
+    PCONTAINER pContainer = LW_STRUCT_FROM_FIELD(pNode, CONTAINER, Node);
+
+    return &pContainer->Key;
+}
+
+static
+ULONG
+ContainerDigest(
+    PCVOID _pKey,
+    PVOID pUserData
+    )
+{
+    PCONTAINER_KEY pKey = (PCONTAINER_KEY) _pKey;
+    ULONG digest = 0;
+
+    digest += LwRtlHashDigestPwstr(pKey->pGroup, NULL);
+    digest *= 31;
+    digest += pKey->Gid;
+    digest *= 32;
+    digest += pKey->Uid;
+
+    return digest;
+}
+
+static
+BOOLEAN
+ContainerEqual(
+    PCVOID _pKey1,
+    PCVOID _pKey2,
+    PVOID pUserData
+    )
+{
+    PCONTAINER_KEY pKey1 = (PCONTAINER_KEY) _pKey1;
+    PCONTAINER_KEY pKey2 = (PCONTAINER_KEY) _pKey2;
+
+    return (
+        LwRtlWC16StringIsEqual(pKey1->pGroup, pKey2->pGroup, TRUE) &&
+        pKey1->Uid == pKey2->Uid &&
+        pKey1->Gid == pKey2->Gid);
+}
+
+static
+VOID
+DeleteContainer(
+    PLW_WORK_ITEM pItem,
+    PVOID pData
+    )
+{
+    PCONTAINER pContainer = pData;
+
+    if (pContainer)
+    {
+        LW_SAFE_FREE_MEMORY(pContainer->Key.pGroup);
+
+        if (pContainer->Sockets[0] >= 0)
+        {
+            close(pContainer->Sockets[0]);
+        }
+
+        if (pContainer->Sockets[1] >= 0)
+        {
+            close(pContainer->Sockets[1]);
+        }
+
+        if (pContainer->pSession)
+        {
+            lwmsg_peer_disconnect(pContainer->pPeer);
+        }
+
+        if (pContainer->pPeer)
+        {
+            lwmsg_peer_delete(pContainer->pPeer);
+        }
+
+        LwRtlReleaseTask(&pContainer->pTask);
+
+        LwFreeMemory(pContainer);
+    }
+
+    LwRtlFreeWorkItem(&pItem);
+}
+
+static
+VOID
+InvalidateContainer(
+    PCONTAINER pContainer
+    )
+{
+    PSM_LINK pLink = NULL;
+    PSM_LINK pNext = NULL;
+    PCONTAINER_INSTANCE pInstance = NULL;
+
+    LwRtlHashTableRemove(gpContainers, &pContainer->Node);
+
+    for (pLink = LwSmLinkBegin(&pContainer->Instances);
+        LwSmLinkValid(&pContainer->Instances, pLink);
+        pLink = pNext)
+    {
+        pNext = LwSmLinkNext(pLink);
+        pInstance = LW_STRUCT_FROM_FIELD(pLink, CONTAINER_INSTANCE, Link);
+
+        LwSmLinkRemove(&pInstance->Link);
+        pInstance->State = LW_SERVICE_STATE_DEAD;
+        LwSmNotifyServiceObjectStateChange(pInstance->pObject, LW_SERVICE_STATE_DEAD);
+    }
+}
+
+static
+DWORD
+SpawnContainer(
+    PCONTAINER pContainer
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    pid_t pid = -1;
+    sigset_t set;
+    PSTR pName = NULL;
+
+    dwError = LwWc16sToMbs(pContainer->Key.pGroup, &pName);
+    BAIL_ON_ERROR(dwError);
+
+    sigemptyset(&set);
+
+    pid = fork();
+
+    if (pid == -1)
+    {
+        dwError = LwMapErrnoToLwError(errno);
+        BAIL_ON_ERROR(dwError);
+    }
+    else if (pid == 0)
+    {
+        /* Move socket fd to 4 if necessary */
+        if (pContainer->Sockets[1] != 4)
+        {
+            if (dup2(pContainer->Sockets[1], 4) < 0)
+            {
+                dwError = LwMapErrnoToLwError(errno);
+                BAIL_ON_ERROR(dwError);
+            }
+
+            close(pContainer->Sockets[1]);
+        }
+
+        /* Put ourselves in our own process group to dissociate from
+           the parent's controlling terminal, if any */
+        if (setpgid(getpid(), getpid()) < 0)
+        {
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_ERROR(dwError);
+        }
+
+        /* Reset the signal mask */
+        dwError = LwMapErrnoToLwError(pthread_sigmask(SIG_SETMASK, &set, NULL));
+        BAIL_ON_ERROR(dwError);
+
+        /* Set user and group ids */
+        if (pContainer->Key.Gid && setgid(pContainer->Key.Gid) < 0)
+        {
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_ERROR(dwError);
+        }
+
+        if (pContainer->Key.Uid && setuid(pContainer->Key.Uid) < 0)
+        {
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_ERROR(dwError);
+        }
+
+        /* Exec container */
+        if (execl(LWSMD_PATH, "lw-service", pName, NULL) < 0)
+        {
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_ERROR(dwError);
+        }
+    }
+    else
+    {
+        pContainer->Pid = pid;
+        close(pContainer->Sockets[1]);
+        pContainer->Sockets[1] = -1;
+    }
+
+cleanup:
+
+    LW_SAFE_FREE_MEMORY(pName);
+
+    return dwError;
+
+error:
+
+    if (pid == 0)
+    {
+        abort();
+    }
+
+    goto cleanup;
+}
+
+static
+VOID
+ReleaseContainer(
+    PCONTAINER pContainer,
+    PCONTAINER_INSTANCE pInstance
+    )
+{
+    pthread_mutex_lock(&gContainerMutex);
+
+    if (pInstance)
+    {
+        LwSmLinkRemove(&pInstance->Link);
+
+        if (pContainer->Instances.pNext == &pContainer->Instances)
+        {
+            LwRtlHashTableRemove(gpContainers, &pContainer->Node);
+            if (pContainer->pTask)
+            {
+                LwRtlCancelTask(pContainer->pTask);
+            }
+        }
+    }
+
+    if (--pContainer->Refs == 0)
+    {
+        if (pContainer->pDeleteItem)
+        {
+            LwRtlScheduleWorkItem(pContainer->pDeleteItem, 0);
+        }
+        else
+        {
+            LwFreeMemory(pContainer);
+        }
+    }
+
+    pthread_mutex_unlock(&gContainerMutex);
+}
+
+static
+VOID
+ContainerTask(
+    PLW_TASK pTask,
+    PVOID pContext,
+    LW_TASK_EVENT_MASK WakeMask,
+    PLW_TASK_EVENT_MASK pWaitMask,
+    PLONG64 pTime
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    PCONTAINER pContainer = (PCONTAINER) pContext;
+    siginfo_t siginfo;
+    int status = 0;
+
+    pthread_mutex_lock(&gContainerMutex);
+
+    if (WakeMask & LW_TASK_EVENT_INIT)
+    {
+        dwError = SpawnContainer(pContext);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = LwNtStatusToWin32Error(LwRtlSetTaskUnixSignal(pTask, SIGCHLD, TRUE));
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (WakeMask & LW_TASK_EVENT_CANCEL)
+    {
+        if (kill(pContainer->Pid, SIGTERM) < 0)
+        {
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_ERROR(dwError);
+        }
+    }
+
+    if (WakeMask & LW_TASK_EVENT_UNIX_SIGNAL)
+    {
+        while (LwRtlNextTaskUnixSignal(pTask, &siginfo))
+        {
+            if (siginfo.si_signo == SIGCHLD &&
+                waitpid(pContainer->Pid, &status, WNOHANG) == pContainer->Pid)
+            {
+                dwError = ERROR_CANCELLED;
+                BAIL_ON_ERROR(dwError);
+            }
+        }
+    }
+
+    *pWaitMask = LW_TASK_EVENT_UNIX_SIGNAL;
+
+error:
+
+    if (dwError)
+    {
+        pContainer->Error = dwError;
+        InvalidateContainer(pContainer);
+    }
+
+    pthread_mutex_unlock(&gContainerMutex);
+
+    if (dwError)
+    {
+        ReleaseContainer(pContainer, NULL);
+        LwRtlSetTaskUnixSignal(pTask, SIGCHLD, FALSE);
+        *pWaitMask = LW_TASK_EVENT_COMPLETE;
+    }
+}
+
+static
+DWORD
+CreateContainer(
+    PCONTAINER_KEY pKey,
+    PCONTAINER* ppContainer
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    PCONTAINER pContainer = NULL;
+    static const WCHAR wszDirect[] = {'d', 'i', 'r', 'e', 'c', 't', 0};
+
+    dwError = LwAllocateMemory(sizeof(*pContainer), OUT_PPVOID(&pContainer));
+    BAIL_ON_ERROR(dwError);
+
+    LwSmLinkInit(&pContainer->Instances);
+    pContainer->Pid = -1;
+    pContainer->Refs = 1;
+
+    pContainer->Key.Gid = pKey->Gid;
+    pContainer->Key.Uid = pKey->Uid;
+
+    /*
+     * Because lwmsg_peer_delete() can block on a task, we create a work item
+     * to free the container when the reference count hits 0.  This makes calling
+     * ReleaseContainer() from a task safe.
+     */
+    dwError = LwRtlCreateWorkItem(gpPool, &pContainer->pDeleteItem, DeleteContainer, pContainer);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwAllocateWc16String(&pContainer->Key.pGroup, pKey->pGroup);
+    BAIL_ON_ERROR(dwError);
+
+    if (!gpProtocol)
+    {
+        dwError = MAP_LWMSG_STATUS(lwmsg_protocol_new(NULL, &gpProtocol));
+        BAIL_ON_ERROR(dwError);
+
+        dwError = MAP_LWMSG_STATUS(lwmsg_protocol_add_protocol_spec(gpProtocol, gContainerProtocol));
+        BAIL_ON_ERROR(dwError);
+    }
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_new(NULL, gpProtocol, &pContainer->pPeer));
+    BAIL_ON_ERROR(dwError);
+
+    if (LwRtlWC16StringIsEqual(pContainer->Key.pGroup, wszDirect, TRUE))
+    {
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_connect_endpoint(
+            pContainer->pPeer,
+            LWMSG_ENDPOINT_DIRECT,
+            "Container"));
+        BAIL_ON_ERROR(dwError);
+
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_connect(pContainer->pPeer, &pContainer->pSession));
+        BAIL_ON_ERROR(dwError);
+
+        pContainer->Pid = getpid();
+        pContainer->Refs = 0;
+    }
+    else
+    {
+        dwError = LwErrnoToWin32Error(socketpair(AF_UNIX, SOCK_STREAM, 0, pContainer->Sockets));
+        BAIL_ON_ERROR(dwError);
+
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_connect_fd(
+            pContainer->pPeer,
+            LWMSG_ENDPOINT_LOCAL,
+            pContainer->Sockets[0],
+            &pContainer->pSession));
+        BAIL_ON_ERROR(dwError);
+        pContainer->Sockets[0] = -1;
+
+        dwError = LwNtStatusToWin32Error(LwRtlCreateTask(
+            gpPool,
+            &pContainer->pTask,
+            NULL,
+            ContainerTask,
+            pContainer));
+        BAIL_ON_ERROR(dwError);
+
+        LwRtlWakeTask(pContainer->pTask);
+    }
+
+cleanup:
+
+    *ppContainer = pContainer;
+
+    return dwError;
+
+error:
+
+    ReleaseContainer(pContainer, NULL);
+    pContainer = NULL;
+
+    goto cleanup;
+}
+
+static
+DWORD
+AcquireContainer(
+    PCONTAINER_KEY pKey,
+    PCONTAINER_INSTANCE pInstance,
+    PCONTAINER* ppContainer
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    PCONTAINER pContainer = NULL;
+    PLW_HASHTABLE_NODE pNode = NULL;
+
+    pthread_mutex_lock(&gContainerMutex);
+
+    if (!gpContainers)
+    {
+        dwError = LwNtStatusToWin32Error(
+            LwRtlCreateHashTable(
+                &gpContainers,
+                ContainerGetKey,
+                ContainerDigest,
+                ContainerEqual,
+                NULL,
+                11));
+        BAIL_ON_ERROR(dwError);
+    }
+
+    dwError = LwNtStatusToWin32Error(
+        LwRtlHashTableFindKey(gpContainers, &pNode, pKey));
+
+    if (dwError == ERROR_NOT_FOUND)
+    {
+        dwError = CreateContainer(pKey, &pContainer);
+        BAIL_ON_ERROR(dwError);
+
+        LwRtlHashTableInsert(gpContainers, &pContainer->Node, NULL);
+    }
+    else
+    {
+        pContainer = LW_STRUCT_FROM_FIELD(pNode, CONTAINER, Node);
+    }
+
+    pContainer->Refs++;
+
+    LwSmLinkInsertBefore(&pContainer->Instances, &pInstance->Link);
+
+    *ppContainer = pContainer;
+
+cleanup:
+
+    pthread_mutex_unlock(&gContainerMutex);
+
+    return dwError;
+
+error:
+
+    if (pContainer)
+    {
+        ReleaseContainer(pContainer, NULL);
+    }
+
+    goto cleanup;
+}
+
+static
+VOID
+ContainerDeleteInstance(
+    PCONTAINER_INSTANCE pInstance
+    )
+{
+    if (pInstance)
+    {
+        if (pInstance->pContainer)
+        {
+            ReleaseContainer(pInstance->pContainer, pInstance);
+        }
+
+        LW_SAFE_FREE_MEMORY(pInstance->pName);
+        LW_SAFE_FREE_MEMORY(pInstance->pPath);
+        LwSmFreeStringList(pInstance->ppArgs);
+
+        LwFreeMemory(pInstance);
+    }
+}
+
+static
+VOID
+ContainerStartComplete(
+    LWMsgCall* pCall,
+    LWMsgStatus status,
+    PVOID pData
+    )
+{
+    DWORD dwError = MAP_LWMSG_STATUS(status);
+    PCONTAINER_INSTANCE pInstance = (PCONTAINER_INSTANCE) pData;
+
+    BAIL_ON_ERROR(dwError);
+
+    switch (pInstance->Out.tag)
+    {
+    default:
+        dwError = ERROR_INTERNAL_ERROR;
+        BAIL_ON_ERROR(dwError);
+    case CONTAINER_RES_STATUS:
+        dwError = ((PCONTAINER_STATUS_RES) pInstance->Out.data)->Error;
+        if (!dwError)
+        {
+            dwError = ERROR_INTERNAL_ERROR;
+        }
+        BAIL_ON_ERROR(dwError);
+    case CONTAINER_RES_HANDLE:
+        pInstance->pHandle = (LWMsgHandle*) pInstance->Out.data;
+        pInstance->Out.data = NULL;
+        break;
+    }
+
+error:
+
+    pInstance->State = dwError ? LW_SERVICE_STATE_DEAD : LW_SERVICE_STATE_RUNNING;
+    LwSmNotifyServiceObjectStateChange(pInstance->pObject, pInstance->State);
+
+    lwmsg_call_destroy_params(pCall, &pInstance->Out);
+    lwmsg_call_release(pCall);
+}
+
+static
+DWORD
+ContainerStart(
+    PLW_SERVICE_OBJECT pObject
+    )
+{
+    DWORD dwError = 0;
+    PCONTAINER_INSTANCE pInstance = LwSmGetServiceObjectData(pObject);
+    ULONG ArgCount = 0;
+    LWMsgStatus status = LWMSG_STATUS_ERROR;
+    LWMsgCall* pCall = NULL;
+    CONTAINER_KEY key = {0};
+
+    LwInterlockedCompareExchange(&pInstance->State, LW_SERVICE_STATE_STOPPED, LW_SERVICE_STATE_DEAD);
+
+    if (LwInterlockedCompareExchange(&pInstance->State, LW_SERVICE_STATE_STARTING, LW_SERVICE_STATE_STOPPED) != LW_SERVICE_STATE_STOPPED)
+    {
+        goto cleanup;
+    }
+
+    key.Gid = 0;
+    key.Uid = 0;
+    key.pGroup = pInstance->pGroup;
+
+    if (pInstance->pHandle)
+    {
+        lwmsg_session_release_handle(pInstance->pContainer->pSession, pInstance->pHandle);
+        pInstance->pHandle = NULL;
+    }
+
+    if (pInstance->pContainer)
+    {
+        ReleaseContainer(pInstance->pContainer, pInstance);
+        pInstance->pContainer = NULL;
+    }
+
+    dwError = AcquireContainer(&key, pInstance, &pInstance->pContainer);
+    BAIL_ON_ERROR(dwError);
+
+    for (ArgCount = 0; pInstance->ppArgs[ArgCount]; ArgCount++);
+
+    pInstance->Start.pName = pInstance->pName;
+    pInstance->Start.pPath = pInstance->pPath;
+    pInstance->Start.ArgCount = ArgCount;
+    pInstance->Start.ppArgs = pInstance->ppArgs;
+    pInstance->Start.FdCount = 0;
+    pInstance->Start.FdLimit = pInstance->FdLimit;
+    pInstance->In.tag = CONTAINER_REQ_START;
+    pInstance->In.data = &pInstance->Start;
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pInstance->pContainer->pSession, &pCall));
+    BAIL_ON_ERROR(dwError);
+
+    status = lwmsg_call_dispatch(pCall, &pInstance->In, &pInstance->Out, ContainerStartComplete, pInstance);
+
+    switch (status)
+    {
+    case LWMSG_STATUS_SUCCESS:
+    case LWMSG_STATUS_PENDING:
+        break;
+    default:
+        dwError = MAP_LWMSG_STATUS(status);
+        BAIL_ON_ERROR(dwError);
+    }
+
+cleanup:
+
+    if (status != LWMSG_STATUS_PENDING && pCall)
+    {
+        ContainerStartComplete(pCall, status, pInstance);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+VOID
+ContainerStopComplete(
+    LWMsgCall* pCall,
+    LWMsgStatus status,
+    PVOID pData
+    )
+{
+    DWORD dwError = MAP_LWMSG_STATUS(status);
+    PCONTAINER_INSTANCE pInstance = (PCONTAINER_INSTANCE) pData;
+
+    lwmsg_session_release_handle(pInstance->pContainer->pSession, pInstance->pHandle);
+    pInstance->pHandle = NULL;
+
+    ReleaseContainer(pInstance->pContainer, pInstance);
+    pInstance->pContainer = NULL;
+
+    pInstance->State = dwError ? LW_SERVICE_STATE_DEAD : LW_SERVICE_STATE_STOPPED;
+    LwSmNotifyServiceObjectStateChange(pInstance->pObject, pInstance->State);
+
+    lwmsg_call_destroy_params(pCall, &pInstance->Out);
+    lwmsg_call_release(pCall);
+}
+
+static
+DWORD
+ContainerStop(
+    PLW_SERVICE_OBJECT pObject
+    )
+{
+    DWORD dwError = 0;
+    PCONTAINER_INSTANCE pInstance = LwSmGetServiceObjectData(pObject);
+    LWMsgStatus status = LWMSG_STATUS_ERROR;
+    LWMsgCall* pCall = NULL;
+
+    if (LwInterlockedCompareExchange(&pInstance->State, LW_SERVICE_STATE_STOPPING, LW_SERVICE_STATE_RUNNING) != LW_SERVICE_STATE_RUNNING)
+    {
+        goto cleanup;
+    }
+
+    pInstance->In.tag = CONTAINER_REQ_STOP;
+    pInstance->In.data = pInstance->pHandle;
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pInstance->pContainer->pSession, &pCall));
+    BAIL_ON_ERROR(dwError);
+
+    status = lwmsg_call_dispatch(pCall, &pInstance->In, &pInstance->Out, ContainerStopComplete, pInstance);
+
+    switch (status)
+    {
+    case LWMSG_STATUS_SUCCESS:
+    case LWMSG_STATUS_PENDING:
+        break;
+    default:
+        dwError = MAP_LWMSG_STATUS(status);
+        BAIL_ON_ERROR(dwError);
+    }
+
+cleanup:
+
+    if (status != LWMSG_STATUS_PENDING && pCall)
+    {
+        ContainerStopComplete(pCall, status, pInstance);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
+ContainerGetStatus(
+    PLW_SERVICE_OBJECT pObject,
+    PLW_SERVICE_STATUS pStatus
+    )
+{
+    DWORD dwError = 0;
+    PCONTAINER_INSTANCE pInstance = LwSmGetServiceObjectData(pObject);
+
+    pStatus->state = pInstance->State;
+    if (pInstance->pContainer)
+    {
+        pStatus->pid = pInstance->pContainer->Pid;
+        pStatus->home = pStatus->pid == getpid() ? LW_SERVICE_HOME_SERVICE_MANAGER : LW_SERVICE_HOME_CONTAINER;
+
+    }
+    else
+    {
+        pStatus->pid = -1;
+        pStatus->home = LW_SERVICE_HOME_CONTAINER;
+    }
+
+    return dwError;
+}
+
+static
+DWORD
+ContainerRefresh(
+    PLW_SERVICE_OBJECT pObject
+    )
+{
+    DWORD dwError = 0;
+    PCONTAINER_INSTANCE pInstance = LwSmGetServiceObjectData(pObject);
+    LWMsgCall* pCall = NULL;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+
+    in.tag = CONTAINER_REQ_REFRESH;
+    in.data = pInstance->pHandle;
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pInstance->pContainer->pSession, &pCall));
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_ERROR(dwError);
+
+    switch (out.tag)
+    {
+    default:
+        dwError = ERROR_INTERNAL_ERROR;
+        BAIL_ON_ERROR(dwError);
+    case CONTAINER_RES_STATUS:
+        dwError = ((PCONTAINER_STATUS_RES) pInstance->Out.data)->Error;
+        if (!dwError)
+        {
+            dwError = ERROR_INTERNAL_ERROR;
+        }
+        BAIL_ON_ERROR(dwError);
+    }
+
+cleanup:
+
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
+ContainerConstruct(
+    PLW_SERVICE_OBJECT pObject,
+    PCLW_SERVICE_INFO pInfo,
+    PVOID* ppData
+    )
+{
+    DWORD dwError = 0;
+    PCONTAINER_INSTANCE pInstance = NULL;
+
+    dwError = LwAllocateMemory(sizeof(*pInstance), OUT_PPVOID(&pInstance));
+    BAIL_ON_ERROR(dwError);
+
+    pInstance->pObject = pObject;
+    pInstance->State = LW_SERVICE_STATE_STOPPED;
+    pInstance->FdLimit = pInfo->dwFdLimit;
+
+    dwError = LwAllocateWc16String(&pInstance->pName, pInfo->pwszName);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwAllocateWc16String(&pInstance->pPath, pInfo->pwszPath);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwAllocateWc16String(&pInstance->pGroup, pInfo->pwszGroup);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmCopyStringList(pInfo->ppwszArgs, &pInstance->ppArgs);
+    BAIL_ON_ERROR(dwError);
+
+    *ppData = pInstance;
+
+error:
+
+    return dwError;
+}
+
+static
+VOID
+ContainerDestruct(
+    PLW_SERVICE_OBJECT pObject
+    )
+{
+    PCONTAINER_INSTANCE pInstance = LwSmGetServiceObjectData(pObject);
+
+    ContainerDeleteInstance(pInstance);
+}
+
+LW_SERVICE_LOADER_VTBL gContainerVtbl =
+{
+    .pfnStart = ContainerStart,
+    .pfnStop = ContainerStop,
+    .pfnGetStatus = ContainerGetStatus,
+    .pfnRefresh = ContainerRefresh,
+    .pfnConstruct = ContainerConstruct,
+    .pfnDestruct = ContainerDestruct
+};
+
+static
+VOID
+ContainerCleanupNotify(
+    PLW_SVCM_INSTANCE pInstance,
+    NTSTATUS Status,
+    PVOID pContext
+    )
+{
+    LwRtlSvcmUnload(pInstance);
+    LwFreeMemory(pContext);
+}
+
+static
+VOID
+ContainerCleanup(
+    PVOID pData
+    )
+{
+    PCONTAINER_HANDLE pHandle = pData;
+
+    if (pHandle->State == LW_SERVICE_STATE_RUNNING)
+    {
+        LwRtlSvcmStop(pHandle->pInstance, ContainerCleanupNotify, pHandle);
+    }
+    else
+    {
+        LwRtlSvcmUnload(pHandle->pInstance);
+        LwFreeMemory(pHandle);
+    }
+}
+
+static
+VOID
+ContainerStartNotify(
+    PLW_SVCM_INSTANCE pInstance,
+    NTSTATUS Status,
+    PVOID pContext
+    )
+{
+    DWORD dwError = LwNtStatusToWin32Error(Status);
+    DWORD savedError = 0;
+    PCONTAINER_HANDLE pHandle = pContext;
+    LWMsgCall* pCall = pHandle->pCall;
+    LWMsgSession* pSession = lwmsg_call_get_session(pCall);
+    LWMsgParams* pOut = lwmsg_call_get_user_data(pCall);
+    LWMsgHandle* pIpcHandle = NULL;
+    PCONTAINER_STATUS_RES pStatus = NULL;
+
+    BAIL_ON_ERROR(dwError);
+
+    pHandle->State = LW_SERVICE_STATE_RUNNING;
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_session_register_handle(
+        pSession,
+        "CONTAINER_HANDLE",
+        pHandle,
+        ContainerCleanup,
+        &pIpcHandle));
+    BAIL_ON_ERROR(dwError);
+
+    pOut->tag = CONTAINER_RES_HANDLE;
+    pOut->data = pIpcHandle;
+    lwmsg_session_retain_handle(pSession, pIpcHandle);
+    pIpcHandle = NULL;
+
+error:
+
+    if (dwError)
+    {
+        savedError = dwError;
+        dwError = LwAllocateMemory(sizeof(*pStatus), OUT_PPVOID(&pStatus));
+        if (!dwError)
+        {
+            pOut->tag = CONTAINER_RES_STATUS;
+            pOut->data = pStatus;
+            pStatus->Error = savedError;
+        }
+
+        ContainerCleanup(pHandle);
+    }
+
+    lwmsg_call_complete(pCall, dwError ? LWMSG_STATUS_ERROR : LWMSG_STATUS_SUCCESS);
+}
+
+static
+VOID
+ContainerStopNotify(
+    PLW_SVCM_INSTANCE pInstance,
+    NTSTATUS Status,
+    PVOID pContext
+    )
+{
+    PCONTAINER_HANDLE pHandle = pContext;
+    LWMsgCall* pCall = pHandle->pCall;
+    LWMsgParams* pOut = lwmsg_call_get_user_data(pCall);
+    DWORD savedError = 0;
+    DWORD dwError = LwNtStatusToWin32Error(Status);
+    PCONTAINER_STATUS_RES pStatus = NULL;
+
+    BAIL_ON_ERROR(dwError);
+
+    pHandle->State = LW_SERVICE_STATE_STOPPED;
+
+error:
+
+    savedError = dwError;
+    dwError = LwAllocateMemory(sizeof(*pStatus), OUT_PPVOID(&pStatus));
+    if (!dwError)
+    {
+        pOut->tag = CONTAINER_RES_STATUS;
+        pOut->data = pStatus;
+        pStatus->Error = savedError;
+    }
+
+    lwmsg_call_complete(pCall, dwError ? LWMSG_STATUS_ERROR : LWMSG_STATUS_SUCCESS);
+}
+
+
+static
+VOID
+ContainerRefreshNotify(
+    PLW_SVCM_INSTANCE pInstance,
+    NTSTATUS Status,
+    PVOID pContext
+    )
+{
+    DWORD dwError = LwNtStatusToWin32Error(Status);
+    DWORD savedError = 0;
+    LWMsgCall* pCall = pContext;
+    LWMsgParams* pOut = lwmsg_call_get_user_data(pCall);
+    PCONTAINER_STATUS_RES pStatus = NULL;
+
+    savedError = dwError;
+
+    dwError = LwAllocateMemory(sizeof(*pStatus), OUT_PPVOID(&pStatus));
+    BAIL_ON_ERROR(dwError);
+
+    pOut->tag = CONTAINER_RES_STATUS;
+    pOut->data = pStatus;
+    pStatus->Error = savedError;
+
+error:
+
+    lwmsg_call_complete(pCall, dwError ? LWMSG_STATUS_ERROR : LWMSG_STATUS_SUCCESS);
+}
+
+static
+LWMsgStatus
+ContainerSrvStart(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    PCONTAINER_START_REQ pReq = (PCONTAINER_START_REQ) pIn->data;
+    PCONTAINER_HANDLE pHandle = NULL;
+    LW_SVCM_MODULE_ENTRY_FUNCTION entry = NULL;
+    PSTR pName = NULL;
+    int i = 0;
+
+    lwmsg_call_set_user_data(pCall, pOut);
+
+    dwError = LwAllocateMemory(sizeof(*pHandle), OUT_PPVOID(&pHandle));
+    BAIL_ON_ERROR(dwError);
+
+    pHandle->State = LW_SERVICE_STATE_STOPPED;
+    pHandle->pCall = pCall;
+
+    dwError = LwWc16sToMbs(pReq->pName, &pName);
+    BAIL_ON_ERROR(dwError);
+
+    for (i = 0; gEmbedded[i].pName; i++)
+    {
+        if (!strcmp(gEmbedded[i].pName, pName))
+        {
+            entry = gEmbedded[i].Entry;
+            break;
+        }
+    }
+
+    if (entry)
+    {
+        dwError = LwNtStatusToWin32Error(LwRtlSvcmLoadEmbedded(pReq->pName, entry, &pHandle->pInstance));
+        BAIL_ON_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LwNtStatusToWin32Error(LwRtlSvcmLoadModule(pReq->pName, pReq->pPath, &pHandle->pInstance));
+        BAIL_ON_ERROR(dwError);
+    }
+
+    dwError = SetLimits(pReq->FdLimit);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwNtStatusToWin32Error(LwRtlSvcmStart(
+        pHandle->pInstance,
+        pReq->ArgCount,
+        pReq->ppArgs,
+        pReq->FdCount,
+        pReq->pFds,
+        ContainerStartNotify,
+        pHandle));
+    BAIL_ON_ERROR(dwError);
+    pHandle = NULL;
+
+    lwmsg_call_pend(pCall, NULL, NULL);
+    pCall = NULL;
+
+error:
+
+    LW_SAFE_FREE_MEMORY(pName);
+
+    if (pHandle)
+    {
+        if (pHandle->pInstance)
+        {
+            LwRtlSvcmUnload(pHandle->pInstance);
+        }
+
+        LwFreeMemory(pHandle);
+    }
+
+    if (pCall)
+    {
+        lwmsg_call_release(pCall);
+    }
+
+    return dwError ? LWMSG_STATUS_ERROR : LWMSG_STATUS_PENDING;
+}
+
+static
+LWMsgStatus
+ContainerSrvStop(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    LWMsgHandle* pIpcHandle = pIn->data;
+    LWMsgSession* pSession = lwmsg_call_get_session(pCall);
+    PCONTAINER_HANDLE pHandle = NULL;
+
+    lwmsg_call_set_user_data(pCall, pOut);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_session_get_handle_data(pSession, pIpcHandle, OUT_PPVOID(&pHandle)));
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_session_unregister_handle(pSession, pIpcHandle));
+    BAIL_ON_ERROR(dwError);
+
+    pHandle->pCall = pCall;
+
+    dwError = LwNtStatusToWin32Error(LwRtlSvcmStop(
+           pHandle->pInstance,
+           ContainerStopNotify,
+           pHandle));
+    BAIL_ON_ERROR(dwError);
+
+error:
+
+    return dwError ? LWMSG_STATUS_ERROR : LWMSG_STATUS_PENDING;
+}
+
+static
+LWMsgStatus
+ContainerSrvRefresh(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    LWMsgHandle* pHandle = pIn->data;
+    LWMsgSession* pSession = lwmsg_call_get_session(pCall);
+    PLW_SVCM_INSTANCE pInstance = NULL;
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_session_get_handle_data(pSession, pHandle, OUT_PPVOID(&pInstance)));
+    BAIL_ON_ERROR(dwError);
+
+    lwmsg_call_set_user_data(pCall, pOut);
+
+    dwError = LwNtStatusToWin32Error(LwRtlSvcmRefresh(pInstance, ContainerRefreshNotify, pCall));
+    BAIL_ON_ERROR(dwError);
+
+    lwmsg_call_pend(pCall, NULL, NULL);
+
+error:
+
+    return dwError ? LWMSG_STATUS_ERROR : LWMSG_STATUS_PENDING;
+}
+
+static
+LWMsgDispatchSpec gContainerDispatch[] =
+{
+    LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_START, ContainerSrvStart),
+    LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_STOP, ContainerSrvStop),
+    LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_REFRESH, ContainerSrvRefresh),
+    LWMSG_DISPATCH_END
+};
+
+LWMsgDispatchSpec*
+LwSmGetContainerDispatchSpec(
+    VOID
+    )
+{
+    return gContainerDispatch;
+}
+
+LWMsgProtocolSpec*
+LwSmGetContainerProtocolSpec(
+    VOID
+    )
+{
+    return gContainerProtocol;
+}

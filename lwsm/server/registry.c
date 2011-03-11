@@ -198,10 +198,12 @@ LwSmRegistryReadServiceInfo(
         {'D', 'e', 'p', 'e', 'n', 'd', 'e', 'n', 'c', 'i', 'e', 's', 0};
     static const WCHAR wszEnvironment[] =
         {'E', 'n', 'v', 'i', 'r', 'o', 'n', 'm', 'e', 'n', 't', 0};
+    static const WCHAR wszGroup[] =
+        {'S', 'e', 'r', 'v', 'i', 'c', 'e', 'G', 'r', 'o', 'u', 'p', 0};
     static const WCHAR wszAutostart[] =
         {'A', 'u', 't', 'o', 's', 't', 'a', 'r', 't', 0};
     static const WCHAR wszFdLimit[] =
-            {'F', 'd', 'L', 'i', 'm', 'i', 't', 0};
+        {'F', 'd', 'L', 'i', 'm', 'i', 't', 0};
 
     dwError = LwWc16sToMbs(pwszName, &pszName);
     BAIL_ON_ERROR(dwError);
@@ -302,6 +304,18 @@ LwSmRegistryReadServiceInfo(
     {
         dwError = 0;
         pInfo->dwFdLimit = 0;
+    }
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmRegistryReadString(
+        hReg,
+        pRootKey,
+        pwszParentKey,
+        wszGroup,
+        &pInfo->pwszGroup);
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        dwError = LwMbsToWc16s("likewise", &pInfo->pwszGroup);
     }
     BAIL_ON_ERROR(dwError);
 

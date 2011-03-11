@@ -50,8 +50,8 @@ server_lwsmd_SOURCES = \
 	server/main.c \
         server/executable.c \
 	server/driver.c \
-        server/svcm.c \
-        server/stub.c
+        server/stub.c \
+	server/container.c
 
 server_lwsmd_LDADD = \
 	$(top_builddir)/common/liblwsmcommon.la \

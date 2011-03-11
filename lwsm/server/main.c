@@ -43,19 +43,23 @@ PLW_THREAD_POOL gpPool;
 static struct
 {
     LWMsgContext* pIpcContext;
-    LWMsgProtocol* pIpcProtocol;
-    LWMsgPeer* pIpcServer;
+    LWMsgProtocol* pContolProtocol;
+    LWMsgPeer* pControlServer;
+    LWMsgProtocol* pContainerProtocol;
+    LWMsgPeer* pContainerServer;
     BOOLEAN bStartAsDaemon;
     BOOLEAN bNotified;
     int notifyPipe[2];
     LW_SM_LOG_LEVEL logLevel;
     PCSTR pszLogFilePath;
     BOOLEAN bSyslog;
+    BOOLEAN bContainer;
+    PCSTR pName;
 } gState = 
 {
     .pIpcContext = NULL,
-    .pIpcProtocol = NULL,
-    .pIpcServer = NULL,
+    .pContolProtocol = NULL,
+    .pControlServer = NULL,
     .bStartAsDaemon = FALSE,
     .notifyPipe = {-1, -1},
     .logLevel = LW_SM_LOG_LEVEL_WARNING,
@@ -155,7 +159,7 @@ main(
     LwSmLogInit();
 
     /* Set up logging */
-    dwError = LwSmConfigureLogging(ppszArgv[0]);
+    dwError = LwSmConfigureLogging(gState.pName);
     BAIL_ON_ERROR(dwError);
 
     /* Initialize the service table subsystem */
@@ -198,41 +202,52 @@ LwSmParseArguments(
     DWORD dwError = 0;
     int i = 0;
 
-    for (i = 1; i < argc; i++)
+    if (!strcmp(ppszArgv[0], "lw-service"))
     {
-        if (!strcmp(ppszArgv[i], "--start-as-daemon"))
-        {
-            gState.bStartAsDaemon = TRUE;
-            gState.bSyslog = TRUE;
-            gState.logLevel = LW_SM_LOG_LEVEL_INFO;
-        }
-        else if (!strcmp(ppszArgv[i], "--syslog"))
-        {
-            gState.bSyslog = TRUE;
-            gState.logLevel = LW_SM_LOG_LEVEL_INFO;
-        }
-        else if (!strcmp(ppszArgv[i], "--loglevel"))
-        {
-            if (++i >= argc)
-            {
-                dwError = LW_ERROR_INVALID_PARAMETER;
-                BAIL_ON_ERROR(dwError);
-            }
-            
-            dwError = LwSmLogLevelNameToLogLevel(
-                ppszArgv[i],
-                &gState.logLevel);
-            BAIL_ON_ERROR(dwError);
-        }
-        else if (!strcmp(ppszArgv[i], "--logfile"))
-        {
-            if (++i >= argc)
-            {
-                dwError = LW_ERROR_INVALID_PARAMETER;
-                BAIL_ON_ERROR(dwError);
-            }
+        gState.bContainer = TRUE;
+        gState.pName = ppszArgv[1];
+        gState.bSyslog = TRUE;
+    }
+    else
+    {
+        gState.pName = ppszArgv[0];
 
-            gState.pszLogFilePath = ppszArgv[i];
+        for (i = 1; i < argc; i++)
+        {
+            if (!strcmp(ppszArgv[i], "--start-as-daemon"))
+            {
+                gState.bStartAsDaemon = TRUE;
+                gState.bSyslog = TRUE;
+                gState.logLevel = LW_SM_LOG_LEVEL_INFO;
+            }
+            else if (!strcmp(ppszArgv[i], "--syslog"))
+            {
+                gState.bSyslog = TRUE;
+                gState.logLevel = LW_SM_LOG_LEVEL_INFO;
+            }
+            else if (!strcmp(ppszArgv[i], "--loglevel"))
+            {
+                if (++i >= argc)
+                {
+                    dwError = LW_ERROR_INVALID_PARAMETER;
+                    BAIL_ON_ERROR(dwError);
+                }
+
+                dwError = LwSmLogLevelNameToLogLevel(
+                    ppszArgv[i],
+                    &gState.logLevel);
+                BAIL_ON_ERROR(dwError);
+            }
+            else if (!strcmp(ppszArgv[i], "--logfile"))
+            {
+                if (++i >= argc)
+                {
+                    dwError = LW_ERROR_INVALID_PARAMETER;
+                    BAIL_ON_ERROR(dwError);
+                }
+
+                gState.pszLogFilePath = ppszArgv[i];
+            }
         }
     }
 
@@ -396,16 +411,19 @@ Startup(
 
     SM_LOG_INFO("Likewise Service Manager starting up");
 
-    /* Bootstrap ourselves by adding and starting any
-       services we need to run (e.g. registry) */
-    dwError = LwSmBootstrap();
-    BAIL_ON_ERROR(dwError);
+    if (!gState.bContainer)
+    {
+        /* Bootstrap ourselves by adding and starting any
+           services we need to run (e.g. registry) */
+        dwError = LwSmBootstrap();
+        BAIL_ON_ERROR(dwError);
+
+        /* Read configuration and populate service table */
+        dwError = LwSmPopulateTable();
+        BAIL_ON_ERROR(dwError);
+    }
     
-    /* Read configuration and populate service table */
-    dwError = LwSmPopulateTable();
-    BAIL_ON_ERROR(dwError);
-    
-    /* Start IPC server */
+    /* Start IPC servers */
     dwError = LwSmStartIpcServer();
     BAIL_ON_ERROR(dwError);
 
@@ -455,9 +473,12 @@ Shutdown(
 {
     DWORD dwError = 0;
 
-    /* Shut down all running services  */
-    dwError = LwSmShutdownServices();
-    BAIL_ON_ERROR(dwError);
+    if (!gState.bContainer)
+    {
+        /* Shut down all running services  */
+        dwError = LwSmShutdownServices();
+        BAIL_ON_ERROR(dwError);
+    }
     
     /* Stop IPC server */
     dwError = LwSmStopIpcServer();
@@ -706,34 +727,77 @@ LwSmStartIpcServer(
         LwSmLogIpc,
         NULL);
     
-    dwError = MAP_LWMSG_STATUS(lwmsg_protocol_new(gState.pIpcContext, &gState.pIpcProtocol));
+    if (!gState.bContainer)
+    {
+        dwError = MAP_LWMSG_STATUS(lwmsg_protocol_new(gState.pIpcContext, &gState.pContolProtocol));
+        BAIL_ON_ERROR(dwError);
+
+        dwError = MAP_LWMSG_STATUS(lwmsg_protocol_add_protocol_spec(
+            gState.pContolProtocol,
+            LwSmIpcGetProtocolSpec()));
+        BAIL_ON_ERROR(dwError);
+
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_new(
+            gState.pIpcContext,
+            gState.pContolProtocol,
+            &gState.pControlServer));
+        BAIL_ON_ERROR(dwError);
+
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_dispatch_spec(
+            gState.pControlServer,
+            LwSmGetDispatchSpec()));
+        BAIL_ON_ERROR(dwError);
+
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_listen_endpoint(
+            gState.pControlServer,
+            LWMSG_CONNECTION_MODE_LOCAL,
+            SM_ENDPOINT,
+            0666));
+        BAIL_ON_ERROR(dwError);
+
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_start_listen(gState.pControlServer));
+        BAIL_ON_ERROR(dwError);
+    }
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_protocol_new(gState.pIpcContext, &gState.pContainerProtocol));
     BAIL_ON_ERROR(dwError);
 
     dwError = MAP_LWMSG_STATUS(lwmsg_protocol_add_protocol_spec(
-                                   gState.pIpcProtocol,
-                                   LwSmIpcGetProtocolSpec()));
+        gState.pContainerProtocol,
+        LwSmGetContainerProtocolSpec()));
     BAIL_ON_ERROR(dwError);
 
     dwError = MAP_LWMSG_STATUS(lwmsg_peer_new(
-                                   gState.pIpcContext,
-                                   gState.pIpcProtocol,
-                                   &gState.pIpcServer));
+        gState.pIpcContext,
+        gState.pContainerProtocol,
+        &gState.pContainerServer));
     BAIL_ON_ERROR(dwError);
 
     dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_dispatch_spec(
-                                   gState.pIpcServer,
-                                   LwSmGetDispatchSpec()));
+        gState.pContainerServer,
+        LwSmGetContainerDispatchSpec()));
     BAIL_ON_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_listen_endpoint(
-                                   gState.pIpcServer,
-                                   LWMSG_CONNECTION_MODE_LOCAL,
-                                   SM_ENDPOINT,
-                                   0666));
-    BAIL_ON_ERROR(dwError);
+    if (gState.bContainer)
+    {
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_accept_fd(
+            gState.pContainerServer,
+            LWMSG_ENDPOINT_LOCAL,
+            4));
+        BAIL_ON_ERROR(dwError);
+    }
+    else
+    {
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_listen_endpoint(
+            gState.pContainerServer,
+            LWMSG_ENDPOINT_DIRECT,
+            "Container",
+            0));
+        BAIL_ON_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_peer_start_listen(gState.pIpcServer));
-    BAIL_ON_ERROR(dwError);
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_start_listen(gState.pContainerServer));
+        BAIL_ON_ERROR(dwError);
+    }
 
 cleanup:
 
@@ -752,22 +816,39 @@ LwSmStopIpcServer(
 {
     DWORD dwError = 0;
 
-    if (gState.pIpcServer)
+    if (gState.pControlServer)
     {
-        dwError = MAP_LWMSG_STATUS(lwmsg_peer_stop_listen(gState.pIpcServer));
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_stop_listen(gState.pControlServer));
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (gState.pContainerServer)
+    {
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_stop_listen(gState.pContainerServer));
         BAIL_ON_ERROR(dwError);
     }
 
 cleanup:
 
-    if (gState.pIpcServer)
+    if (gState.pControlServer)
     {
-        lwmsg_peer_delete(gState.pIpcServer);
+        lwmsg_peer_delete(gState.pControlServer);
     }
 
-    if (gState.pIpcProtocol)
+    if (gState.pContolProtocol)
     {
-        lwmsg_protocol_delete(gState.pIpcProtocol);
+        lwmsg_protocol_delete(gState.pContolProtocol);
+    }
+
+
+    if (gState.pContainerServer)
+    {
+        lwmsg_peer_delete(gState.pContainerServer);
+    }
+
+    if (gState.pContainerProtocol)
+    {
+        lwmsg_protocol_delete(gState.pContainerProtocol);
     }
 
     if (gState.pIpcContext)

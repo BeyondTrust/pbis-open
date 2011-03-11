@@ -1015,6 +1015,12 @@ LwSmInfo(
 
     printf("\n");
 
+    dwError = LwWc16sToMbs(pInfo->pwszGroup, &pszTemp);
+    BAIL_ON_ERROR(dwError);
+
+    printf("Service Group: %s\n", pszTemp);
+    LW_SAFE_FREE_MEMORY(pszTemp);
+
     if (pInfo->dwFdLimit)
     {
         printf("File descriptor limit: %lu\n", (unsigned long) pInfo->dwFdLimit);

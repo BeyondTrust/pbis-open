@@ -49,6 +49,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
+#include <sys/socket.h>
 #include <fcntl.h>
 #include <time.h>
 #include <dirent.h>

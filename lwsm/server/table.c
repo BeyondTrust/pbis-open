@@ -66,7 +66,7 @@ static PLW_SERVICE_LOADER_VTBL gLoaderTable[] =
     [LW_SERVICE_TYPE_LEGACY_EXECUTABLE] = &gExecutableVtbl,
     [LW_SERVICE_TYPE_EXECUTABLE] = &gExecutableVtbl,
     [LW_SERVICE_TYPE_DRIVER] = &gDriverVtbl,
-    [LW_SERVICE_TYPE_MODULE] = &gSvcmVtbl,
+    [LW_SERVICE_TYPE_MODULE] = &gContainerVtbl,
     [LW_SERVICE_TYPE_STUB] = &gStubVtbl
 };
 
@@ -282,6 +282,11 @@ LwSmTableUpdateEntry(
     dwError = LwSmCopyString(
         mask & LW_SERVICE_INFO_MASK_DESCRIPTION ? pInfo->pwszDescription : pEntry->pInfo->pwszDescription,
         &pUpdate->pwszDescription);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmCopyString(
+        mask & LW_SERVICE_INFO_MASK_GROUP ? pInfo->pwszGroup : pEntry->pInfo->pwszGroup,
+        &pUpdate->pwszGroup);
     BAIL_ON_ERROR(dwError);
 
     dwError = LwSmCopyStringList(

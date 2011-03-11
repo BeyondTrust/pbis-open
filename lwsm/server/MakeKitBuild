@@ -2,6 +2,7 @@ make()
 {
     COMMON_HEADERDEPS="reg/lwreg.h lwadvapi.h lwmsg/lwmsg.h lwio/lwio.h lw/base.h lwnet.h"
     SERVER_SOURCES="\
+        container.c \
         table.c \
         api.c \
         dispatch.c \
@@ -11,7 +12,6 @@ make()
         main.c \
         executable.c \
         driver.c \
-        svcm.c \
         stub.c"
     SERVER_GROUPS=""
 
