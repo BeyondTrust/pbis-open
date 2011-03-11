@@ -1356,9 +1356,7 @@ LwSmFindServiceWithPid(
         dwError = LwSmQueryServiceInfo(hHandle, &pInfo);
         BAIL_ON_ERROR(dwError);
 
-        if (status.pid == pid &&
-            (pInfo->type == LW_SERVICE_TYPE_EXECUTABLE ||
-             pInfo->type == LW_SERVICE_TYPE_LEGACY_EXECUTABLE))
+        if (status.pid == pid && pInfo->type != LW_SERVICE_TYPE_DRIVER)
         {
             *phHandle = hHandle;
             hHandle = NULL;
@@ -1434,9 +1432,9 @@ LwSmGdb(
     dwError = LwSmQueryServiceInfo(hHandle, &pInfo);
     BAIL_ON_ERROR(dwError);
 
-    if (pInfo->type != LW_SERVICE_TYPE_EXECUTABLE &&
-        pInfo->type != LW_SERVICE_TYPE_LEGACY_EXECUTABLE)
+    if (pInfo->type == LW_SERVICE_TYPE_DRIVER)
     {
+        /* Find non-driver service so we can figure out what to attach to */
         LwSmReleaseServiceHandle(hHandle);
         hHandle = NULL;
         LwSmFreeServiceInfo(pInfo);
@@ -1453,8 +1451,21 @@ LwSmGdb(
         BAIL_ON_ERROR(dwError);
     }
 
-    dwError = LwWc16sToMbs(pInfo->pwszPath, &pszExecutablePath);
-    BAIL_ON_ERROR(dwError);
+    switch (pInfo->type)
+    {
+    case LW_SERVICE_TYPE_EXECUTABLE:
+    case LW_SERVICE_TYPE_LEGACY_EXECUTABLE:
+        dwError = LwWc16sToMbs(pInfo->pwszPath, &pszExecutablePath);
+        BAIL_ON_ERROR(dwError);
+        break;
+    case LW_SERVICE_TYPE_MODULE:
+        dwError = LwAllocateString(SBINDIR "/lwsmd", &pszExecutablePath);
+        BAIL_ON_ERROR(dwError);
+        break;
+    default:
+        printf("Service type is not supported\n");
+        break;
+    }
 
     dwError = LwAllocateStringPrintf(&pszPid, "%lu", (unsigned long) status.pid);
     BAIL_ON_ERROR(dwError);
