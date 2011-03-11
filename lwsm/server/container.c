@@ -38,6 +38,9 @@
 
 #include "includes.h"
 
+#define CONTAINER_LOCK() pthread_mutex_lock(&gContainerLock)
+#define CONTAINER_UNLOCK() pthread_mutex_unlock(&gContainerLock)
+
 #define LWSMD_PATH (SBINDIR "/lwsmd")
 
 #define LWMSG_MEMBER_PWSTR(_type, _field)           \
@@ -73,7 +76,7 @@ typedef struct _CONTAINER_HANDLE
 {
     PLW_SVCM_INSTANCE pInstance;
     LWMsgCall* pCall;
-    LONG State;
+    LW_SERVICE_STATE State;
 } CONTAINER_HANDLE, *PCONTAINER_HANDLE;
 
 typedef struct _CONTAINER_START_REQ
@@ -309,7 +312,7 @@ struct {
     {NULL, NULL}
 };
 
-static pthread_mutex_t gContainerMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t gContainerLock = PTHREAD_MUTEX_INITIALIZER;
 static PLW_HASHTABLE gpContainers = NULL;
 static LWMsgProtocol* gpProtocol = NULL;
 
@@ -321,8 +324,6 @@ SetLimits(
 {
     DWORD dwError = 0;
     struct rlimit limit = {0};
-
-    pthread_mutex_lock(&gContainerMutex);
 
     if (FdLimit)
     {
@@ -340,8 +341,6 @@ SetLimits(
 
         (void) setrlimit(RLIMIT_NOFILE, &limit);
     }
-
-    pthread_mutex_unlock(&gContainerMutex);
 
     return dwError;
 }
@@ -559,8 +558,6 @@ ReleaseContainer(
     PCONTAINER_INSTANCE pInstance
     )
 {
-    pthread_mutex_lock(&gContainerMutex);
-
     if (pInstance)
     {
         LwSmLinkRemove(&pInstance->Link);
@@ -586,8 +583,6 @@ ReleaseContainer(
             DeleteContainer(NULL, pContainer);
         }
     }
-
-    pthread_mutex_unlock(&gContainerMutex);
 }
 
 static
@@ -605,7 +600,7 @@ ContainerTask(
     siginfo_t siginfo;
     int status = 0;
 
-    pthread_mutex_lock(&gContainerMutex);
+    CONTAINER_LOCK();
 
     if (WakeMask & LW_TASK_EVENT_INIT)
     {
@@ -648,7 +643,7 @@ error:
         InvalidateContainer(pContainer);
     }
 
-    pthread_mutex_unlock(&gContainerMutex);
+    CONTAINER_UNLOCK();
 
     if (dwError)
     {
@@ -767,8 +762,6 @@ AcquireContainer(
     PCONTAINER pContainer = NULL;
     PLW_HASHTABLE_NODE pNode = NULL;
 
-    pthread_mutex_lock(&gContainerMutex);
-
     if (!gpContainers)
     {
         dwError = LwNtStatusToWin32Error(
@@ -804,8 +797,6 @@ AcquireContainer(
     *ppContainer = pContainer;
 
 cleanup:
-
-    pthread_mutex_unlock(&gContainerMutex);
 
     return dwError;
 
@@ -851,6 +842,8 @@ ContainerStartComplete(
     DWORD dwError = MAP_LWMSG_STATUS(status);
     PCONTAINER_INSTANCE pInstance = (PCONTAINER_INSTANCE) pData;
 
+    CONTAINER_LOCK();
+
     BAIL_ON_ERROR(dwError);
 
     switch (pInstance->Out.tag)
@@ -874,6 +867,9 @@ ContainerStartComplete(
 error:
 
     pInstance->State = dwError ? LW_SERVICE_STATE_DEAD : LW_SERVICE_STATE_RUNNING;
+
+    CONTAINER_UNLOCK();
+
     LwSmNotifyServiceObjectStateChange(pInstance->pObject, pInstance->State);
 
     lwmsg_call_destroy_params(pCall, &pInstance->Out);
@@ -893,12 +889,19 @@ ContainerStart(
     LWMsgCall* pCall = NULL;
     CONTAINER_KEY key = {0};
 
-    LwInterlockedCompareExchange(&pInstance->State, LW_SERVICE_STATE_STOPPED, LW_SERVICE_STATE_DEAD);
+    CONTAINER_LOCK();
 
-    if (LwInterlockedCompareExchange(&pInstance->State, LW_SERVICE_STATE_STARTING, LW_SERVICE_STATE_STOPPED) != LW_SERVICE_STATE_STOPPED)
+    if (pInstance->State == LW_SERVICE_STATE_DEAD)
+    {
+        pInstance->State = LW_SERVICE_STATE_STOPPED;
+    }
+
+    if (pInstance->State != LW_SERVICE_STATE_STOPPED)
     {
         goto cleanup;
     }
+
+    pInstance->State = LW_SERVICE_STATE_STARTING;
 
     key.Gid = 0;
     key.Uid = 0;
@@ -950,6 +953,8 @@ ContainerStart(
 
 cleanup:
 
+    CONTAINER_UNLOCK();
+
     if (status != LWMSG_STATUS_PENDING && pCall)
     {
         ContainerStartComplete(pCall, status, pInstance);
@@ -973,6 +978,8 @@ ContainerStopComplete(
     DWORD dwError = MAP_LWMSG_STATUS(status);
     PCONTAINER_INSTANCE pInstance = (PCONTAINER_INSTANCE) pData;
 
+    CONTAINER_LOCK();
+
     lwmsg_session_release_handle(pInstance->pContainer->pSession, pInstance->pHandle);
     pInstance->pHandle = NULL;
 
@@ -980,6 +987,9 @@ ContainerStopComplete(
     pInstance->pContainer = NULL;
 
     pInstance->State = dwError ? LW_SERVICE_STATE_DEAD : LW_SERVICE_STATE_STOPPED;
+
+    CONTAINER_UNLOCK();
+
     LwSmNotifyServiceObjectStateChange(pInstance->pObject, pInstance->State);
 
     lwmsg_call_destroy_params(pCall, &pInstance->Out);
@@ -997,10 +1007,14 @@ ContainerStop(
     LWMsgStatus status = LWMSG_STATUS_ERROR;
     LWMsgCall* pCall = NULL;
 
-    if (LwInterlockedCompareExchange(&pInstance->State, LW_SERVICE_STATE_STOPPING, LW_SERVICE_STATE_RUNNING) != LW_SERVICE_STATE_RUNNING)
+    CONTAINER_LOCK();
+
+    if (pInstance->State != LW_SERVICE_STATE_RUNNING)
     {
         goto cleanup;
     }
+
+    pInstance->State = LW_SERVICE_STATE_STOPPING;
 
     pInstance->In.tag = CONTAINER_REQ_STOP;
     pInstance->In.data = pInstance->pHandle;
@@ -1021,6 +1035,8 @@ ContainerStop(
     }
 
 cleanup:
+
+    CONTAINER_UNLOCK();
 
     if (status != LWMSG_STATUS_PENDING && pCall)
     {
@@ -1044,6 +1060,8 @@ ContainerGetStatus(
     DWORD dwError = 0;
     PCONTAINER_INSTANCE pInstance = LwSmGetServiceObjectData(pObject);
 
+    CONTAINER_LOCK();
+
     pStatus->state = pInstance->State;
     if (pInstance->pContainer)
     {
@@ -1056,6 +1074,8 @@ ContainerGetStatus(
         pStatus->pid = -1;
         pStatus->home = LW_SERVICE_HOME_CONTAINER;
     }
+
+    CONTAINER_UNLOCK();
 
     return dwError;
 }
@@ -1071,6 +1091,8 @@ ContainerRefresh(
     LWMsgCall* pCall = NULL;
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+
+    CONTAINER_LOCK();
 
     in.tag = CONTAINER_REQ_REFRESH;
     in.data = pInstance->pHandle;
@@ -1096,6 +1118,8 @@ ContainerRefresh(
     }
 
 cleanup:
+
+    CONTAINER_UNLOCK();
 
     if (pCall)
     {
@@ -1126,7 +1150,9 @@ ContainerSetLogInfo(
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
     CONTAINER_SET_LOG_INFO_REQ req = {0};
 
-    if (LwInterlockedRead(&pInstance->State) != LW_SERVICE_STATE_RUNNING)
+    CONTAINER_LOCK();
+
+    if (pInstance->State != LW_SERVICE_STATE_RUNNING)
     {
         dwError = ERROR_NOT_READY;
         BAIL_ON_ERROR(dwError);
@@ -1163,6 +1189,8 @@ ContainerSetLogInfo(
 
 cleanup:
 
+    CONTAINER_UNLOCK();
+
     if (pCall)
     {
         lwmsg_call_destroy_params(pCall, &out);
@@ -1191,7 +1219,9 @@ ContainerSetLogLevel(
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
     CONTAINER_SET_LOG_LEVEL_REQ req = {0};
 
-    if (LwInterlockedRead(&pInstance->State) != LW_SERVICE_STATE_RUNNING)
+    CONTAINER_LOCK();
+
+    if (pInstance->State != LW_SERVICE_STATE_RUNNING)
     {
         dwError = ERROR_NOT_READY;
         BAIL_ON_ERROR(dwError);
@@ -1227,6 +1257,8 @@ ContainerSetLogLevel(
 
 cleanup:
 
+    CONTAINER_UNLOCK();
+
     if (pCall)
     {
         lwmsg_call_destroy_params(pCall, &out);
@@ -1258,7 +1290,9 @@ ContainerGetLogState(
     CONTAINER_GET_LOG_STATE_REQ req = {0};
     PCONTAINER_GET_LOG_STATE_RES pRes = NULL;
 
-    if (LwInterlockedRead(&pInstance->State) != LW_SERVICE_STATE_RUNNING)
+    CONTAINER_LOCK();
+
+    if (&pInstance->State != LW_SERVICE_STATE_RUNNING)
     {
         dwError = ERROR_NOT_READY;
         BAIL_ON_ERROR(dwError);
@@ -1297,6 +1331,8 @@ ContainerGetLogState(
     }
 
 cleanup:
+
+    CONTAINER_UNLOCK();
 
     if (pCall)
     {
@@ -1618,6 +1654,8 @@ ContainerSrvStop(
     LWMsgSession* pSession = lwmsg_call_get_session(pCall);
     PCONTAINER_HANDLE pHandle = NULL;
 
+    CONTAINER_LOCK();
+
     lwmsg_call_set_user_data(pCall, pOut);
 
     dwError = MAP_LWMSG_STATUS(lwmsg_session_get_handle_data(pSession, pIpcHandle, OUT_PPVOID(&pHandle)));
@@ -1635,6 +1673,8 @@ ContainerSrvStop(
     BAIL_ON_ERROR(dwError);
 
 error:
+
+    CONTAINER_UNLOCK();
 
     return dwError ? LWMSG_STATUS_ERROR : LWMSG_STATUS_PENDING;
 }
@@ -1759,11 +1799,11 @@ ContainerSrvRegisterCancel(
 {
     PCONTAINER pContainer = pData;
 
-    pthread_mutex_lock(&gContainerMutex);
+    CONTAINER_LOCK();
     pContainer->pSession = NULL;
     InvalidateContainer(pContainer);
-    pthread_mutex_unlock(&gContainerMutex);
     ReleaseContainer(pContainer, NULL);
+    CONTAINER_UNLOCK();
 
     lwmsg_call_complete(pCall, LWMSG_STATUS_CANCELLED);
 }
@@ -1786,7 +1826,7 @@ ContainerSrvRegister(
 
     key.pGroup = pIn->data;
 
-    pthread_mutex_lock(&gContainerMutex);
+    CONTAINER_LOCK();
 
     if (LwRtlHashTableFindKey(gpContainers, NULL, &key) == ERROR_SUCCESS)
     {
@@ -1820,8 +1860,6 @@ ContainerSrvRegister(
 
 error:
 
-    pthread_mutex_unlock(&gContainerMutex);
-
     if (dwError)
     {
         savedError = dwError;
@@ -1843,6 +1881,8 @@ error:
             ReleaseContainer(pContainer, NULL);
         }
     }
+
+    CONTAINER_UNLOCK();
 
     return status;
 }
