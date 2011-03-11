@@ -10,6 +10,7 @@ int dcethread__set_errno(int err);
 #define DCETHREAD_BEGIN_SYSCALL \
     do                                                                  \
     {                                                                   \
+        dcethread__unblock_signals();                                    \
         if (dcethread__begin_block (dcethread__self(), NULL, NULL, NULL, NULL)) \
         {                                                               \
             dcethread__dispatchinterrupt(dcethread__self());            \

@@ -125,6 +125,16 @@ dcethread__interrupt_syscall(dcethread* thread, void* data)
     return 0;
 }
 
+void dcethread__unblock_signals(void)
+{
+    sigset_t set;
+
+    sigemptyset(&set);
+    sigaddset(&set, INTERRUPT_SIGNAL);
+
+    pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+}
+
 static int
 my_clock_gettime(struct timespec* tp)
 {
