@@ -52,8 +52,14 @@ cpp_quote("#endif")
         [in] UINT32 SecurityInformation,
         [out] PLSA_SECURITY_DESCRIPTOR_BUFFER *ppSecurityDesc
         );
+    
+    /* function 0x04 */
+    NTSTATUS LsaSetSecurity(
+        [in,context_handle] void *hObject,
+        [in] UINT32 SecurityInformation,
+        [in] LSA_SECURITY_DESCRIPTOR_BUFFER *pSecurityDesc
+        );
 
-    NTSTATUS lsa_Function04();
     NTSTATUS lsa_Function05();
     NTSTATUS lsa_Function06();
 

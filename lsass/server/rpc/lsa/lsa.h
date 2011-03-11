@@ -75,6 +75,15 @@ LsaSrvQuerySecurity(
 
 
 NTSTATUS
+LsaSrvSetSecurity(
+    handle_t b,
+    PVOID hObject,
+    SECURITY_INFORMATION SecurityInformation,
+    PLSA_SECURITY_DESCRIPTOR_BUFFER pSecurityDesc
+    );
+
+
+NTSTATUS
 LsaSrvOpenPolicy2(
     handle_t b,
     wchar16_t *system_name,

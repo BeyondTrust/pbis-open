@@ -12,6 +12,7 @@ liblsa_la_SOURCES =                    \
     lsa_openpolicy2.c                  \
     lsa_close.c                        \
     lsa_querysecurity.c                \
+    lsa_setsecurity.c                  \
     lsa_lookupnames.c                  \
     lsa_lookupnames2.c                 \
     lsa_lookupnames3.c                 \

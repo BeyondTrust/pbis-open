@@ -106,11 +106,19 @@ NTSTATUS srv_LsaQuerySecurity(
 }
 
 
-NTSTATUS srv_lsa_Function04(
-    /* [in] */ handle_t IDL_handle
-)
+NTSTATUS srv_LsaSetSecurity(
+    /* [in] */ handle_t IDL_handle,
+    /* [in] */ idl_void_p_t hObject,
+    /* [in] */ UINT32 SecurityInformation,
+    /* [in] */ PLSA_SECURITY_DESCRIPTOR_BUFFER pSecurityDesc
+    )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvSetSecurity(IDL_handle,
+                               hObject,
+                               SecurityInformation,
+                               pSecurityDesc);
     return status;
 }
 

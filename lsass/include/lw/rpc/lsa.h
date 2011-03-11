@@ -685,6 +685,16 @@ LsaQuerySecurity(
 
 
 NTSTATUS
+LsaSetSecurity(
+    IN LSA_BINDING                    hBinding,
+    IN void                          *hObject,
+    IN DWORD                          SecurityInfo,
+    IN PSECURITY_DESCRIPTOR_RELATIVE  pSecDesc,
+    IN DWORD                          SecDescLen
+    );
+
+
+NTSTATUS
 LsaRpcDeleteObject(
     IN  LSA_BINDING  hBinding,
     IN  PVOID        hObject
