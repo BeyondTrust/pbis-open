@@ -260,6 +260,7 @@ S ( STATUS_INVALID_IMAGE_WIN_16, -1, NULL )
 S ( STATUS_END_OF_FILE, -1, NULL )
 S ( STATUS_DUPLICATE_NAME, -1, NULL )
 S ( STATUS_NOT_SUPPORTED_ON_SBS, -1, NULL )
+S ( STATUS_OPLOCK_SWITCHED_TO_NEW_HANDLE, -1, NULL)
 
 // Passing the value through as is in order to pass
 // through a unique RODC error that requires
