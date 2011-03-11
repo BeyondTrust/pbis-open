@@ -664,6 +664,7 @@ LsaSrvPrivsOpenAccount(
     PACCESS_TOKEN accessToken = pAccessToken;
     BOOLEAN releaseAccessToken = FALSE;
     GENERIC_MAPPING genericMapping = {0};
+    ACCESS_MASK grantedAccess = 0;
     PLSA_ACCOUNT pAccount = NULL;
     PLSA_ACCOUNT_CONTEXT accountContext = NULL;
 
@@ -682,25 +683,26 @@ LsaSrvPrivsOpenAccount(
                      &pAccount);
     BAIL_ON_LSA_ERROR(err);
 
-    err = LwAllocateMemory(
-                     sizeof(*accountContext),
-                     OUT_PPVOID(&accountContext));
-    BAIL_ON_LSA_ERROR(err);
-
     if (!RtlAccessCheck(pAccount->pSecurityDesc,
                         accessToken,
                         AccessRights,
-                        accountContext->grantedAccess,
+                        grantedAccess,
                         &genericMapping,
-                        &accountContext->grantedAccess,
+                        &grantedAccess,
                         &ntStatus))
     {
         BAIL_ON_NT_STATUS(ntStatus);
     }
                        
+    err = LwAllocateMemory(
+                     sizeof(*accountContext),
+                     OUT_PPVOID(&accountContext));
+    BAIL_ON_LSA_ERROR(err);
+
     accountContext->pAccount = pAccount;
     accountContext->accessToken = accessToken;
     accountContext->releaseAccessToken = releaseAccessToken;
+    accountContext->grantedAccess = grantedAccess;
 
     *pAccountContext = accountContext;
 
@@ -736,6 +738,7 @@ LsaSrvPrivsCreateAccount(
     PACCESS_TOKEN accessToken = pAccessToken;
     BOOLEAN releaseAccessToken = FALSE;
     GENERIC_MAPPING genericMapping = {0};
+    ACCESS_MASK grantedAccess = 0;
     PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
     PLSA_ACCOUNT pAccount = NULL;
     DWORD sidSize = 0;
@@ -788,17 +791,12 @@ LsaSrvPrivsCreateAccount(
                      &pAccount->pSecurityDesc);
     BAIL_ON_LSA_ERROR(err);
 
-    err = LwAllocateMemory(
-                     sizeof(*accountContext),
-                     OUT_PPVOID(&accountContext));
-    BAIL_ON_LSA_ERROR(err);
-
     if (!RtlAccessCheck(pAccount->pSecurityDesc,
                         accessToken,
                         AccessRights,
-                        accountContext->grantedAccess,
+                        grantedAccess,
                         &genericMapping,
-                        &accountContext->grantedAccess,
+                        &grantedAccess,
                         &ntStatus))
     {
         BAIL_ON_NT_STATUS(ntStatus);
@@ -819,6 +817,12 @@ LsaSrvPrivsCreateAccount(
         BAIL_ON_LSA_ERROR(err);
     }
 
+    err = LwAllocateMemory(
+                     sizeof(*accountContext),
+                     OUT_PPVOID(&accountContext));
+    BAIL_ON_LSA_ERROR(err);
+
+    accountContext->grantedAccess = grantedAccess;
     accountContext->pAccount = pAccount;
     accountContext->accessToken = accessToken;
     accountContext->releaseAccessToken = releaseAccessToken;
@@ -1901,6 +1905,246 @@ error:
     }
 
     LW_SAFE_FREE_MEMORY(pSecurityDesc);
+
+    if (err == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return err;
+}
+
+
+DWORD
+LsaSrvPrivsSetAccountSecurity(
+    IN HANDLE hServer,
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
+    IN PLSA_ACCOUNT_CONTEXT pAccountContext,
+    IN SECURITY_INFORMATION SecurityInformation,
+    IN PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescRelative,
+    IN DWORD SecurityDescRelativeSize
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    ACCESS_MASK requiredRights = LSA_ACCOUNT_VIEW |
+                                 READ_CONTROL |
+                                 WRITE_DAC |
+                                 WRITE_OWNER;
+    BOOLEAN accountLocked = FALSE;
+    PLSA_ACCOUNT pAccount = pAccountContext->pAccount;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecurityDesc = NULL;
+    DWORD securityDescSize = 0;
+    PSID owner = NULL;
+    DWORD ownerSize = 0;
+    PSID group = NULL;
+    DWORD groupSize = 0;
+    PACL pDacl = NULL;
+    DWORD daclSize = 0;
+    PACL pSacl = NULL;
+    DWORD saclSize = 0;
+
+    if (!(pAccountContext->grantedAccess & requiredRights))
+    {
+        err = ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    ntStatus = RtlSelfRelativeToAbsoluteSD(
+                        pSecurityDescRelative,
+                        pSecurityDesc,
+                        &securityDescSize,
+                        pDacl,
+                        &daclSize,
+                        pSacl,
+                        &saclSize,
+                        owner,
+                        &ownerSize,
+                        group,
+                        &groupSize);
+    if (ntStatus == STATUS_BUFFER_TOO_SMALL)
+    {
+        ntStatus = STATUS_SUCCESS;
+    }
+    else if (ntStatus != STATUS_SUCCESS)
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    if (securityDescSize)
+    {
+        err = LwAllocateMemory(
+                            securityDescSize,
+                            OUT_PPVOID(&pSecurityDesc));
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    if (daclSize)
+    {
+        err = LwAllocateMemory(
+                            daclSize,
+                            OUT_PPVOID(&pDacl));
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    if (saclSize)
+    {
+        err = LwAllocateMemory(
+                            saclSize,
+                            OUT_PPVOID(&pSacl));
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    if (ownerSize)
+    {
+        err = LwAllocateMemory(
+                            ownerSize,
+                            OUT_PPVOID(&owner));
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    if (groupSize)
+    {
+        err = LwAllocateMemory(
+                            groupSize,
+                            OUT_PPVOID(&group));
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    ntStatus = RtlSelfRelativeToAbsoluteSD(
+                        pSecurityDescRelative,
+                        pSecurityDesc,
+                        &securityDescSize,
+                        pDacl,
+                        &daclSize,
+                        pSacl,
+                        &saclSize,
+                        owner,
+                        &ownerSize,
+                        group,
+                        &groupSize);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    LSASRV_PRIVS_WRLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
+
+    if (SecurityInformation & OWNER_SECURITY_INFORMATION)
+    {
+        PSID oldOwner = NULL;
+        BOOLEAN defaulted = FALSE;
+
+        ntStatus = RtlGetOwnerSecurityDescriptor(
+                            pAccount->pSecurityDesc,
+                            &oldOwner,
+                            &defaulted);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        ntStatus = RtlSetOwnerSecurityDescriptor(
+                            pAccount->pSecurityDesc,
+                            owner,
+                            defaulted);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        LW_SAFE_FREE_MEMORY(oldOwner);
+        owner = NULL;
+
+        pAccountContext->Dirty = TRUE;
+    }
+
+    if (SecurityInformation & GROUP_SECURITY_INFORMATION)
+    {
+        PSID oldGroup = NULL;
+        BOOLEAN defaulted = FALSE;
+
+        ntStatus = RtlGetGroupSecurityDescriptor(
+                            pAccount->pSecurityDesc,
+                            &oldGroup,
+                            &defaulted);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        ntStatus = RtlSetGroupSecurityDescriptor(
+                            pAccount->pSecurityDesc,
+                            group,
+                            defaulted);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        LW_SAFE_FREE_MEMORY(oldGroup);
+        group = NULL;
+
+        pAccountContext->Dirty = TRUE;
+    }
+
+    if (SecurityInformation & DACL_SECURITY_INFORMATION)
+    {
+        PACL pOldDacl = NULL;
+        BOOLEAN daclPresent = FALSE;
+        BOOLEAN defaulted = FALSE;
+
+        ntStatus = RtlGetDaclSecurityDescriptor(
+                            pAccount->pSecurityDesc,
+                            &daclPresent,
+                            &pOldDacl,
+                            &defaulted);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        ntStatus = RtlSetDaclSecurityDescriptor(
+                            pAccount->pSecurityDesc,
+                            daclPresent,
+                            pDacl,
+                            defaulted);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        LW_SAFE_FREE_MEMORY(pOldDacl);
+        pDacl = NULL;
+
+        pAccountContext->Dirty = TRUE;
+    }
+
+    if (SecurityInformation & SACL_SECURITY_INFORMATION)
+    {
+        PACL pOldSacl = NULL;
+        BOOLEAN saclPresent = FALSE;
+        BOOLEAN defaulted = FALSE;
+
+        ntStatus = RtlGetDaclSecurityDescriptor(
+                            pAccount->pSecurityDesc,
+                            &saclPresent,
+                            &pOldSacl,
+                            &defaulted);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        ntStatus = RtlSetDaclSecurityDescriptor(
+                            pAccount->pSecurityDesc,
+                            saclPresent,
+                            pSacl,
+                            defaulted);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        LW_SAFE_FREE_MEMORY(pOldSacl);
+        pSacl = NULL;
+
+        pAccountContext->Dirty = TRUE;
+    }
+
+    // Save the changes (if there were any)
+    if (pAccountContext->Dirty)
+    {
+        err = LsaSrvUpdateAccount_inlock(
+                      pAccount->pSid,
+                      pAccount);
+        BAIL_ON_LSA_ERROR(err);
+
+        pAccountContext->Dirty = FALSE;
+    }
+
+error:
+    LSASRV_PRIVS_UNLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
+
+    LW_SAFE_FREE_MEMORY(pSecurityDesc);
+    LW_SAFE_FREE_MEMORY(owner);
+    LW_SAFE_FREE_MEMORY(group);
+    LW_SAFE_FREE_MEMORY(pDacl);
+    LW_SAFE_FREE_MEMORY(pSacl);
 
     if (err == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
