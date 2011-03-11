@@ -59,6 +59,7 @@ typedef enum _PRIVILEGE_COMMAND {
     PrivilegeRemoveAccountPrivs,
     SystemAccessRightGetAccount,
     SecurityGetAccountDescriptor,
+    SecuritySetAccountDescriptor,
     AccountEnumerate,
     AccountEnumerateUserRights,
     AccountAddAccountRights,

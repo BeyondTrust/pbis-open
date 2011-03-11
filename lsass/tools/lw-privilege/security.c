@@ -55,6 +55,14 @@ ProcessGetAccountSecurityDescriptor(
     IN PSTR pszAccountName
     );
 
+static
+DWORD
+ProcessSetAccountSecurityDescriptor(
+    IN PRPC_PARAMETERS pRpcParams,
+    IN PSTR pszSecurityDesc,
+    IN PSTR pszAccountName
+    );
+
 
 VOID
 ShowUsageSecurity(
@@ -64,6 +72,7 @@ ShowUsageSecurity(
     fprintf(stdout, "Usage: %s security <command> [options]\n\n", pszProgramName);
     fprintf(stdout, "command:\n");
     fprintf(stdout, "-g, --get - Get lsa account security descriptor\n");
+    fprintf(stdout, "-s, --set <secdesc> - Set lsa account security descriptor\n");
     fprintf(stdout, "options:\n");
     fprintf(stdout, "--owner - Query owner\n");
     fprintf(stdout, "--group - Query group\n");
@@ -83,7 +92,8 @@ ProcessSecurity(
     PCSTR pszArg = NULL;
     RPC_PARAMETERS Params = {0};
     PRIVILEGE_COMMAND Command = PrivilegeDoNothing;
-    PSTR pszAccountName = NULL;
+    PSTR accountName = NULL;
+    PSTR pszSecurityDesc = NULL;
     SECURITY_INFORMATION securityInfo = 0;
 
     err = ProcessRpcParameters(Argc, Argv, &Params);
@@ -96,14 +106,17 @@ ProcessSecurity(
         if ((strcmp(pszArg, "-g") == 0) ||
             (strcmp(pszArg, "--get") == 0))
         {
-            if (i + 1 < Argc)
-            {
-                pszArg = Argv[++i];
-                err = LwAllocateString(pszArg, &pszAccountName);
-                BAIL_ON_LSA_ERROR(err);
-            }
-
             Command = SecurityGetAccountDescriptor;
+        }
+        if (((strcmp(pszArg, "-s") == 0) ||
+             (strcmp(pszArg, "--set") == 0)) &&
+            (i + 1 <= Argc))
+        {
+            pszArg = Argv[++i];
+            err = LwAllocateString(pszArg, &pszSecurityDesc);
+            BAIL_ON_LSA_ERROR(err);
+
+            Command = SecuritySetAccountDescriptor;
         }
         else if (strcmp(pszArg, "--owner") == 0)
         {
@@ -121,6 +134,14 @@ ProcessSecurity(
         {
             securityInfo |= SACL_SECURITY_INFORMATION;
         }
+        else if (i + 1 == Argc)
+        {
+            LW_SAFE_FREE_MEMORY(accountName);
+
+            pszArg = Argv[i];
+            err = LwAllocateString(pszArg, &accountName);
+            BAIL_ON_LSA_ERROR(err);
+        }
     }
 
     switch (Command)
@@ -129,7 +150,15 @@ ProcessSecurity(
         err = ProcessGetAccountSecurityDescriptor(
                                 &Params,
                                 securityInfo,
-                                pszAccountName);
+                                accountName);
+        BAIL_ON_LSA_ERROR(err);
+        break;
+
+    case SecuritySetAccountDescriptor:
+        err = ProcessSetAccountSecurityDescriptor(
+                                &Params,
+                                pszSecurityDesc,
+                                accountName);
         BAIL_ON_LSA_ERROR(err);
         break;
 
@@ -139,7 +168,8 @@ ProcessSecurity(
     }
 
 error:
-    LW_SAFE_FREE_MEMORY(pszAccountName);
+    LW_SAFE_FREE_MEMORY(accountName);
+    LW_SAFE_FREE_MEMORY(pszSecurityDesc);
 
     return err;
 }
@@ -256,6 +286,222 @@ ProcessGetAccountSecurityDescriptor(
             "=================================================="
             "==============================\n");
     fprintf(stdout, "Security descriptor: %s\n", pszSecurityDescriptor);
+
+error:
+    if (ntStatus || err)
+    {
+        PCSTR errName = LwNtStatusToName(ntStatus);
+        PCSTR errDescription = LwNtStatusToDescription(ntStatus);
+
+        if (ntStatus)
+        {
+            errName = LwNtStatusToName(ntStatus);
+            errDescription = LwNtStatusToDescription(ntStatus);
+        }
+        else
+        {
+            errName = LwWin32ErrorToName(err);
+            errDescription = LwWin32ErrorToDescription(err);
+        }
+
+        fprintf(stderr, "Error: %s (%s)\n",
+                LSA_SAFE_LOG_STRING(errName),
+                LSA_SAFE_LOG_STRING(errDescription));
+    }
+
+    if (hAccount)
+    {
+        LsaClose(hLsa, hAccount);
+    }
+
+    if (hPolicy)
+    {
+        LsaClose(hLsa, hPolicy);
+    }
+
+    if (hLsa)
+    {
+        LsaFreeBinding(&hLsa);
+    }
+
+    if (pCreds)
+    {
+        LwIoDeleteCreds(pCreds);
+    }
+
+    RTL_FREE(&pAccountSid);
+
+    if (pSecurityDescRelative)
+    {
+        LsaRpcFreeMemory(pSecurityDescRelative);
+    }
+
+    RTL_FREE(&pszSecurityDescriptor);
+
+    if (err == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return err;
+}
+
+
+static
+DWORD
+ProcessSetAccountSecurityDescriptor(
+    IN PRPC_PARAMETERS pRpcParams,
+    IN PSTR pszSecurityDesc,
+    IN PSTR pszAccountName
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    LSA_BINDING hLsa = NULL;
+    LW_PIO_CREDS pCreds = NULL;
+    PSID pAccountSid = NULL;
+    WCHAR wszSysName[] = {'\\', '\\', '\0'};
+    DWORD policyAccessMask = LSA_ACCESS_LOOKUP_NAMES_SIDS;
+    POLICY_HANDLE hPolicy = NULL;
+    DWORD accountAccessMask = LSA_ACCOUNT_VIEW |
+                              READ_CONTROL |
+                              WRITE_DAC |
+                              WRITE_OWNER;
+    LSAR_ACCOUNT_HANDLE hAccount = NULL;
+    SECURITY_INFORMATION securityInformation = 0;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescRelative = NULL;
+    DWORD securityDescRelativeSize = 0;
+    PSTR pszSecurityDescriptor = NULL;
+
+    err = CreateRpcCredentials(pRpcParams,
+                               &pCreds);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = CreateLsaRpcBinding(pRpcParams,
+                              pCreds,
+                              &hLsa);
+    BAIL_ON_LSA_ERROR(err);
+
+    ntStatus = RtlAllocateSecurityDescriptorFromSddlCString(
+                        &pSecurityDescRelative,
+                        &securityDescRelativeSize,
+                        pszSecurityDesc,
+                        SDDL_REVISION);
+    if (ntStatus == STATUS_BUFFER_TOO_SMALL)
+    {
+        ntStatus = STATUS_SUCCESS;
+    }
+    else if (ntStatus != STATUS_SUCCESS)
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    err = LwAllocateMemory(
+                        securityDescRelativeSize,
+                        OUT_PPVOID(&pSecurityDescRelative));
+    BAIL_ON_LSA_ERROR(err);
+
+    ntStatus = RtlAllocateSecurityDescriptorFromSddlCString(
+                        &pSecurityDescRelative,
+                        &securityDescRelativeSize,
+                        pszSecurityDesc,
+                        SDDL_REVISION);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    ntStatus = RtlGetSecurityInformationFromSddlCString(
+                        pszSecurityDesc,
+                        &securityInformation);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    // If no account name is passed then query security descriptor
+    // of the policy server
+    if (pszAccountName)
+    {
+        err = ResolveAccountNameToSid(
+                              hLsa,
+                              pszAccountName,
+                              &pAccountSid);
+        BAIL_ON_LSA_ERROR(err);
+    }
+    else
+    {
+        // More access rights are going to be needed if we want
+        // to query lsa policy security descriptor
+        policyAccessMask |= MAXIMUM_ALLOWED;
+    }
+
+    ntStatus = LsaOpenPolicy2(hLsa,
+                              wszSysName,
+                              NULL,
+                              policyAccessMask,
+                              &hPolicy);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    if (pAccountSid)
+    {
+        ntStatus = LsaOpenAccount(hLsa,
+                                  hPolicy,
+                                  pAccountSid,
+                                  accountAccessMask,
+                                  &hAccount);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        ntStatus = LsaSetSecurity(
+                                  hLsa,
+                                  hAccount,
+                                  securityInformation,
+                                  pSecurityDescRelative,
+                                  securityDescRelativeSize);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        LW_SAFE_FREE_MEMORY(pSecurityDescRelative);
+        securityDescRelativeSize = 0;
+
+        ntStatus = LsaQuerySecurity(
+                                  hLsa,
+                                  hPolicy,
+                                  securityInformation,
+                                  &pSecurityDescRelative,
+                                  &securityDescRelativeSize);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+    else
+    {
+        ntStatus = LsaSetSecurity(
+                                  hLsa,
+                                  hPolicy,
+                                  securityInformation,
+                                  pSecurityDescRelative,
+                                  securityDescRelativeSize);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        LW_SAFE_FREE_MEMORY(pSecurityDescRelative);
+        securityDescRelativeSize = 0;
+
+        ntStatus = LsaQuerySecurity(
+                                  hLsa,
+                                  hPolicy,
+                                  securityInformation,
+                                  &pSecurityDescRelative,
+                                  &securityDescRelativeSize);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    ntStatus = RtlAllocateSddlCStringFromSecurityDescriptor(
+                              &pszSecurityDescriptor,
+                              pSecurityDescRelative,
+                              SDDL_REVISION,
+                              securityInformation);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    fprintf(stdout,
+            (pAccountSid) ? "Account: %s\n" : "LSA Policy:\n",
+            pszAccountName);
+    fprintf(stdout,
+            "=================================================="
+            "==============================\n");
+    fprintf(stdout, "Updated security descriptor: %s\n", pszSecurityDescriptor);
 
 error:
     if (ntStatus || err)
