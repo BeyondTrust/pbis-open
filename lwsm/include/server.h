@@ -481,9 +481,20 @@ LwSmGetContainerDispatchSpec(
     VOID
     );
 
+LWMsgDispatchSpec*
+LwSmGetContainerRegisterDispatchSpec(
+    VOID
+    );
+
 LWMsgProtocolSpec*
 LwSmGetContainerProtocolSpec(
     VOID
+    );
+
+DWORD
+LwSmContainerRegister(
+    LWMsgPeer* pPeer,
+    PWSTR pGroup
     );
 
 #define SM_LOG(level, ...) LwSmLogPrintf((level), NULL, __func__, __FILE__, __LINE__, __VA_ARGS__)

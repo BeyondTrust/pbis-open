@@ -92,6 +92,8 @@
 
 #define SM_ENDPOINT (CACHEDIR "/.lwsm")
 
+#define SC_ENDPOINT (CACHEDIR "/.lwsc")
+
 typedef enum _SM_IPC_TAG
 {
     SM_IPC_ERROR,

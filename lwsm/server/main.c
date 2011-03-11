@@ -54,6 +54,7 @@ static struct
     PCSTR pszLogFilePath;
     BOOLEAN bSyslog;
     BOOLEAN bContainer;
+    PWSTR pGroup;
     PCSTR pName;
 } gState = 
 {
@@ -247,6 +248,19 @@ LwSmParseArguments(
                 }
 
                 gState.pszLogFilePath = ppszArgv[i];
+            }
+            else if (!strcmp(ppszArgv[i], "--container"))
+            {
+                if (++i >= argc)
+                {
+                    dwError = LW_ERROR_INVALID_PARAMETER;
+                    BAIL_ON_ERROR(dwError);
+                }
+
+                dwError = LwMbsToWc16s(ppszArgv[i], &gState.pGroup);
+                BAIL_ON_ERROR(dwError);
+
+                gState.bContainer = TRUE;
             }
         }
     }
@@ -787,18 +801,32 @@ LwSmStartIpcServer(
         &gState.pContainerServer));
     BAIL_ON_ERROR(dwError);
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_dispatch_spec(
-        gState.pContainerServer,
-        LwSmGetContainerDispatchSpec()));
-    BAIL_ON_ERROR(dwError);
-
     if (gState.bContainer)
     {
-        dwError = MAP_LWMSG_STATUS(lwmsg_peer_accept_fd(
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_dispatch_spec(
             gState.pContainerServer,
-            LWMSG_ENDPOINT_LOCAL,
-            4));
+            LwSmGetContainerDispatchSpec()));
         BAIL_ON_ERROR(dwError);
+
+        if (!gState.pGroup)
+        {
+            dwError = MAP_LWMSG_STATUS(lwmsg_peer_accept_fd(
+                gState.pContainerServer,
+                LWMSG_ENDPOINT_LOCAL,
+                4));
+            BAIL_ON_ERROR(dwError);
+        }
+        else
+        {
+            dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_connect_endpoint(
+                gState.pContainerServer,
+                LWMSG_ENDPOINT_LOCAL,
+                SC_ENDPOINT));
+            BAIL_ON_ERROR(dwError);
+
+            dwError = LwSmContainerRegister(gState.pContainerServer, gState.pGroup);
+            BAIL_ON_ERROR(dwError);
+        }
     }
     else
     {
@@ -807,6 +835,17 @@ LwSmStartIpcServer(
             LWMSG_ENDPOINT_DIRECT,
             "Container",
             0));
+        BAIL_ON_ERROR(dwError);
+
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_listen_endpoint(
+            gState.pContainerServer,
+            LWMSG_ENDPOINT_LOCAL,
+            SC_ENDPOINT,
+            0666));
+
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_dispatch_spec(
+            gState.pContainerServer,
+            LwSmGetContainerRegisterDispatchSpec()));
         BAIL_ON_ERROR(dwError);
 
         dwError = MAP_LWMSG_STATUS(lwmsg_peer_start_listen(gState.pContainerServer));
@@ -838,8 +877,16 @@ LwSmStopIpcServer(
 
     if (gState.pContainerServer)
     {
-        dwError = MAP_LWMSG_STATUS(lwmsg_peer_stop_listen(gState.pContainerServer));
-        BAIL_ON_ERROR(dwError);
+        if (gState.pGroup)
+        {
+            dwError = MAP_LWMSG_STATUS(lwmsg_peer_disconnect(gState.pContainerServer));
+            BAIL_ON_ERROR(dwError);
+        }
+        else
+        {
+            dwError = MAP_LWMSG_STATUS(lwmsg_peer_stop_listen(gState.pContainerServer));
+            BAIL_ON_ERROR(dwError);
+        }
     }
 
 cleanup:

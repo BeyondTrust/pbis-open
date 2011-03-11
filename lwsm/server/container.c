@@ -65,7 +65,8 @@ typedef enum _CONTAINER_TAG
     CONTAINER_REQ_SET_LOG_TARGET,
     CONTAINER_REQ_SET_LOG_LEVEL,
     CONTAINER_REQ_GET_LOG_STATE,
-    CONTAINER_RES_GET_LOG_STATE
+    CONTAINER_RES_GET_LOG_STATE,
+    CONTAINER_REQ_REGISTER
 } CONTAINER_TAG, *PCONTAINER_TAG;
 
 typedef struct _CONTAINER_HANDLE
@@ -242,6 +243,12 @@ static LWMsgTypeSpec gGetLogStateResSpec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec gRegisterReqSpec[] =
+{
+    LWMSG_PWSTR,
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_TYPE_END
+};
 
 static LWMsgProtocolSpec gContainerProtocol[] =
 {
@@ -255,6 +262,7 @@ static LWMsgProtocolSpec gContainerProtocol[] =
     LWMSG_MESSAGE(CONTAINER_REQ_SET_LOG_LEVEL, gSetLogLevelSpec),
     LWMSG_MESSAGE(CONTAINER_REQ_GET_LOG_STATE, gGetLogStateReqSpec),
     LWMSG_MESSAGE(CONTAINER_RES_GET_LOG_STATE, gGetLogStateResSpec),
+    LWMSG_MESSAGE(CONTAINER_REQ_REGISTER, gRegisterReqSpec),
     LWMSG_PROTOCOL_END,
 };
 
@@ -409,7 +417,7 @@ DeleteContainer(
             close(pContainer->Sockets[1]);
         }
 
-        if (pContainer->pSession)
+        if (pContainer->pSession && pContainer->pPeer)
         {
             lwmsg_peer_disconnect(pContainer->pPeer);
         }
@@ -575,7 +583,7 @@ ReleaseContainer(
         }
         else
         {
-            LwFreeMemory(pContainer);
+            DeleteContainer(NULL, pContainer);
         }
     }
 
@@ -898,7 +906,10 @@ ContainerStart(
 
     if (pInstance->pHandle)
     {
-        lwmsg_session_release_handle(pInstance->pContainer->pSession, pInstance->pHandle);
+        if (pInstance->pContainer->pSession)
+        {
+            lwmsg_session_release_handle(pInstance->pContainer->pSession, pInstance->pHandle);
+        }
         pInstance->pHandle = NULL;
     }
 
@@ -1740,6 +1751,103 @@ error:
 }
 
 static
+VOID
+ContainerSrvRegisterCancel(
+    LWMsgCall* pCall,
+    PVOID pData
+    )
+{
+    PCONTAINER pContainer = pData;
+
+    pthread_mutex_lock(&gContainerMutex);
+    pContainer->pSession = NULL;
+    InvalidateContainer(pContainer);
+    pthread_mutex_unlock(&gContainerMutex);
+    ReleaseContainer(pContainer, NULL);
+
+    lwmsg_call_complete(pCall, LWMSG_STATUS_CANCELLED);
+}
+
+static
+LWMsgStatus
+ContainerSrvRegister(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    DWORD savedError = 0;
+    PCONTAINER_STATUS_RES pRes = NULL;
+    CONTAINER_KEY key = {0};
+    PCONTAINER pContainer = NULL;
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    key.pGroup = pIn->data;
+
+    pthread_mutex_lock(&gContainerMutex);
+
+    if (LwRtlHashTableFindKey(gpContainers, NULL, &key) == ERROR_SUCCESS)
+    {
+        dwError = ERROR_DUP_NAME;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    dwError = LwAllocateMemory(sizeof(*pContainer), OUT_PPVOID(&pContainer));
+    BAIL_ON_ERROR(dwError);
+
+    LwSmLinkInit(&pContainer->Instances);
+    pContainer->Pid = -1;
+    pContainer->Refs = 1;
+    pContainer->Sockets[0] = -1;
+    pContainer->Sockets[1] = -1;
+    pContainer->Key.Gid = key.Gid;
+    pContainer->Key.Uid = key.Uid;
+    pContainer->pSession = lwmsg_call_get_session(pCall);
+
+    dwError = LwAllocateWc16String(&pContainer->Key.pGroup, key.pGroup);
+    BAIL_ON_ERROR(dwError);
+
+    LwRtlHashTableInsert(gpContainers, &pContainer->Node, NULL);
+
+    lwmsg_call_pend(pCall, ContainerSrvRegisterCancel, pContainer);
+    pContainer = NULL;
+
+    pOut->tag = CONTAINER_RES_VOID;
+    pOut->data = NULL;
+    status = LWMSG_STATUS_PENDING;
+
+error:
+
+    pthread_mutex_unlock(&gContainerMutex);
+
+    if (dwError)
+    {
+        savedError = dwError;
+        dwError = LwAllocateMemory(sizeof(*pRes), OUT_PPVOID(&pRes));
+        if (!dwError)
+        {
+            pRes->Error = savedError;
+            pOut->tag = CONTAINER_RES_STATUS;
+            pOut->data = pRes;
+            status = LWMSG_STATUS_SUCCESS;
+        }
+        else
+        {
+            status = LWMSG_STATUS_MEMORY;
+        }
+
+        if (pContainer)
+        {
+            ReleaseContainer(pContainer, NULL);
+        }
+    }
+
+    return status;
+}
+
+static
 LWMsgDispatchSpec gContainerDispatch[] =
 {
     LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_START, ContainerSrvStart),
@@ -1751,6 +1859,13 @@ LWMsgDispatchSpec gContainerDispatch[] =
     LWMSG_DISPATCH_END
 };
 
+static
+LWMsgDispatchSpec gContainerRegisterDispatch[] =
+{
+    LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_REGISTER, ContainerSrvRegister),
+    LWMSG_DISPATCH_END
+};
+
 LWMsgDispatchSpec*
 LwSmGetContainerDispatchSpec(
     VOID
@@ -1759,10 +1874,121 @@ LwSmGetContainerDispatchSpec(
     return gContainerDispatch;
 }
 
+LWMsgDispatchSpec*
+LwSmGetContainerRegisterDispatchSpec(
+    VOID
+    )
+{
+    return gContainerRegisterDispatch;
+}
+
 LWMsgProtocolSpec*
 LwSmGetContainerProtocolSpec(
     VOID
     )
 {
     return gContainerProtocol;
+}
+
+typedef struct _REGISTER_CONTEXT
+{
+    LWMsgParams in;
+    LWMsgParams out;
+} REGISTER_CONTEXT, *PREGISTER_CONTEXT;
+
+static
+VOID
+RegisterComplete(
+    LWMsgCall* pCall,
+    LWMsgStatus Status,
+    PVOID pData
+    )
+{
+    DWORD dwError = MAP_LWMSG_STATUS(Status);
+    PREGISTER_CONTEXT pContext = pData;
+
+    BAIL_ON_ERROR(dwError);
+
+    if (pContext->out.tag == CONTAINER_RES_STATUS)
+    {
+        dwError = ((PCONTAINER_STATUS_RES) pContext->out.data)->Error;
+        BAIL_ON_ERROR(dwError);
+    }
+
+error:
+
+    if (dwError)
+    {
+        SM_LOG_ERROR("Service container unregistered: %s", LwWin32ExtErrorToName(dwError));
+    }
+    else
+    {
+        SM_LOG_INFO("Service container unregistered");
+    }
+
+    lwmsg_call_destroy_params(pCall, &pContext->out);
+    lwmsg_call_release(pCall);
+    LW_SAFE_FREE_MEMORY(pContext);
+    kill(getpid(), SIGTERM);
+}
+
+DWORD
+LwSmContainerRegister(
+    LWMsgPeer* pPeer,
+    PWSTR pGroup
+    )
+{
+    DWORD dwError = 0;
+    LWMsgSession* pSession = NULL;
+    LWMsgCall* pCall = NULL;
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    PREGISTER_CONTEXT pContext = NULL;
+    PSTR pGroupMbs = NULL;
+
+    dwError = LwWc16sToMbs(pGroup, &pGroupMbs);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwAllocateMemory(sizeof(*pContext), OUT_PPVOID(&pContext));
+    BAIL_ON_ERROR(dwError);
+
+    pContext->in.tag = CONTAINER_REQ_REGISTER;
+    pContext->in.data = pGroup;
+    pContext->out.tag = LWMSG_TAG_INVALID;
+    pContext->out.data = NULL;
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_connect(pPeer, &pSession));
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pSession, &pCall));
+    BAIL_ON_ERROR(dwError);
+
+    SM_LOG_INFO("Registering as service container for group: %s", pGroupMbs);
+
+    status = lwmsg_call_dispatch(pCall, &pContext->in, &pContext->out, RegisterComplete, pContext);
+
+    switch (status)
+    {
+    case LWMSG_STATUS_PENDING:
+        pCall = NULL;
+        pContext = NULL;
+        break;
+    case LWMSG_STATUS_SUCCESS:
+        dwError = ERROR_INTERNAL_ERROR;
+        BAIL_ON_ERROR(dwError);
+    default:
+        dwError = MAP_LWMSG_STATUS(status);
+        BAIL_ON_ERROR(dwError);
+    }
+
+error:
+
+    LW_SAFE_FREE_MEMORY(pGroupMbs);
+    LW_SAFE_FREE_MEMORY(pContext);
+
+    if (pCall)
+    {
+        lwmsg_call_release(pCall);
+    }
+
+    return dwError;
 }
