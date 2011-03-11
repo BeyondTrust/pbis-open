@@ -31,11 +31,6 @@
 #ifndef __DJPROCUTILS_H__
 #define __DJPROCUTILS_H__
 
-DWORD
-DJKillProcess(
-    PPROCINFO pProcInfo
-    );
-
 void
 FreeProcInfo(
     PPROCINFO pProcInfo
