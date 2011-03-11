@@ -16,7 +16,7 @@
 "EnabledByDefault" = {
     default = dword:00000000
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Privileges\SeBackupPrivilege]
@@ -35,7 +35,7 @@
 "EnabledByDefault" = {
     default = dword:00000000
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Privileges\SeChangeNotifyPrivilege]
@@ -54,7 +54,7 @@
 "EnabledByDefault" = {
     default = dword:00000001
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Privileges\SeCreateSymbolicLinkPrivilege]
@@ -73,7 +73,7 @@
 "EnabledByDefault" = {
     default = dword:00000000
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Privileges\SeLoadDriverPrivilege]
@@ -92,7 +92,7 @@
 "EnabledByDefault" = {
     default = dword:00000000
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Privileges\SeMachineAccountPrivilege]
@@ -111,7 +111,7 @@
 "EnabledByDefault" = {
     default = dword:00000000
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Privileges\SeManageVolumePrivilege]
@@ -130,7 +130,7 @@
 "EnabledByDefault" = {
     default = dword:00000000
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Privileges\SeRemoteShutdownPrivilege]
@@ -149,7 +149,7 @@
 "EnabledByDefault" = {
     default = dword:00000000
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Privileges\SeRestorePrivilege]
@@ -168,7 +168,7 @@
 "EnabledByDefault" = {
     default = dword:00000000
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Privileges\SeSecurityPrivilege]
@@ -187,7 +187,7 @@
 "EnabledByDefault" = {
     default = dword:00000000
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Privileges\SeShutdownPrivilege]
@@ -206,7 +206,7 @@
 "EnabledByDefault" = {
     default = dword:00000000
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Privileges\SeSystemTimePrivilege]
@@ -225,7 +225,7 @@
 "EnabledByDefault" = {
     default = dword:00000000
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Privileges\SeTakeOwnershipPrivilege]
@@ -244,7 +244,7 @@
 "EnabledByDefault" = {
     default = dword:00000000
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Privileges\SeTcbPrivilege]
@@ -263,7 +263,7 @@
 "EnabledByDefault" = {
     default = dword:00000000
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Privileges\SeTimeZonePrivilege]
@@ -282,5 +282,5 @@
 "EnabledByDefault" = {
     default = dword:00000000
     range = boolean
-    doc = "When assigned, is this privilege enabled by default ?"
+    doc = "When assigned this privilege is enabled by default"
 }
