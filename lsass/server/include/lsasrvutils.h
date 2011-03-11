@@ -219,6 +219,12 @@ typedef struct __LSA_LOGIN_NAME_INFO
         } \
     } while(0);
 
+
+#define PTHREAD_CALL_MUST_SUCCEED(Call) \
+    do { \
+        int localError = Call; \
+        LSA_ASSERT(localError == 0); \
+    } while (0)
 	
 //Convert to seconds string of form ##s, ##m, ##h, or ##d
 //where s,m,h,d = seconds, minutes, hours, days.

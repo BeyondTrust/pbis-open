@@ -68,12 +68,6 @@ typedef struct _LSA_MACHINEPWD_CACHE {
     PLSA_MACHINEPWD_CACHE_ENTRY pEntry;
 } LSA_MACHINEPWD_CACHE, *PLSA_MACHINEPWD_CACHE;
 
-#define PTHREAD_CALL_MUST_SUCCEED(Call) \
-    do { \
-        int localError = Call; \
-        LSA_ASSERT(localError == 0); \
-    } while (0)
-
 static
 DWORD
 LsaPcachepEnsurePasswordInfoAndLock(
