@@ -463,6 +463,8 @@ LwSmLogFileOpen (
             dwError = LwMapErrnoToLwError(errno);
             BAIL_ON_ERROR(dwError);
         }
+
+        setvbuf(pContext->file, NULL, _IOLBF, 0);
     }
 
 error:
