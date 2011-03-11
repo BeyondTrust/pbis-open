@@ -1823,10 +1823,32 @@ ContainerSrvRegister(
     CONTAINER_KEY key = {0};
     PCONTAINER pContainer = NULL;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgSession* pSession = lwmsg_call_get_session(pCall);
+    LWMsgSecurityToken* pToken = lwmsg_session_get_peer_security_token(pSession);
+    pid_t pid = -1;
 
     key.pGroup = pIn->data;
 
     CONTAINER_LOCK();
+
+    if (strcmp(lwmsg_security_token_get_type(pToken), "local"))
+    {
+        dwError = ERROR_ACCESS_DENIED;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    status = lwmsg_local_token_get_eid(pToken, &key.Uid, &key.Gid);
+    assert(status == LWMSG_STATUS_SUCCESS);
+
+    status = lwmsg_local_token_get_pid(pToken, &pid);
+    assert(status == LWMSG_STATUS_SUCCESS);
+
+    /* Restrict access to root for now */
+    if (key.Uid != 0)
+    {
+        dwError = ERROR_ACCESS_DENIED;
+        BAIL_ON_ERROR(dwError);
+    }
 
     if (LwRtlHashTableFindKey(gpContainers, NULL, &key) == ERROR_SUCCESS)
     {
@@ -1838,7 +1860,7 @@ ContainerSrvRegister(
     BAIL_ON_ERROR(dwError);
 
     LwSmLinkInit(&pContainer->Instances);
-    pContainer->Pid = -1;
+    pContainer->Pid = pid;
     pContainer->Refs = 1;
     pContainer->Sockets[0] = -1;
     pContainer->Sockets[1] = -1;
