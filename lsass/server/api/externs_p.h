@@ -57,25 +57,29 @@ extern pthread_rwlock_t gpAuthProviderList_rwlock;
 
 #define ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock)         \
         if (!bInLock) {                                       \
-           pthread_rwlock_rdlock(&gpAuthProviderList_rwlock); \
+           PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_rdlock(   \
+                   &gpAuthProviderList_rwlock));              \
            bInLock = TRUE;                                    \
         }
 
 #define LEAVE_AUTH_PROVIDER_LIST_READER_LOCK(bReleaseLock)    \
         if (bReleaseLock) {                                   \
-           pthread_rwlock_unlock(&gpAuthProviderList_rwlock); \
+           PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_unlock(   \
+                   &gpAuthProviderList_rwlock));              \
            bReleaseLock = FALSE;                              \
         }
 
 #define ENTER_AUTH_PROVIDER_LIST_WRITER_LOCK(bInLock)         \
         if (!bInLock) {                                       \
-           pthread_rwlock_wrlock(&gpAuthProviderList_rwlock); \
+           PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_wrlock(   \
+                   &gpAuthProviderList_rwlock));              \
            bInLock = TRUE;                                    \
         }
 
 #define LEAVE_AUTH_PROVIDER_LIST_WRITER_LOCK(bReleaseLock)    \
         if (bReleaseLock) {                                   \
-           pthread_rwlock_unlock(&gpAuthProviderList_rwlock); \
+           PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_unlock(   \
+                   &gpAuthProviderList_rwlock));              \
            bReleaseLock = FALSE;                              \
         }
 
