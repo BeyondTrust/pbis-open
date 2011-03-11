@@ -1,0 +1,8 @@
+PKG_COMPONENTS="lwadtool"
+
+function package_populate
+{
+    populate_components
+
+    strip_common
+}

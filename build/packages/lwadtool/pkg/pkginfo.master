@@ -1,0 +1,14 @@
+PKG=__PKG__
+NAME=LWADTOOL 
+ARCH=__ARCH__
+VERSION=__VERSION__
+CATEGORY=system
+VENDOR=Likewise Software
+DESC=Likewise Admin Tool 
+HOTLINE=425-378-7887
+EMAIL=support@likewise.com
+CLASSES=none
+INTONLY=1
+ISTATES="S s 1 2 3"
+RSTATES="S s 1 2 3"
+BASEDIR=__BASEDIR__
