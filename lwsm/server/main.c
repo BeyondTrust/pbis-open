@@ -62,7 +62,7 @@ static struct
     .pControlServer = NULL,
     .bStartAsDaemon = FALSE,
     .notifyPipe = {-1, -1},
-    .logLevel = LW_SM_LOG_LEVEL_WARNING,
+    .logLevel = 0,
     .pszLogFilePath = NULL,
     .bSyslog = FALSE
 };
@@ -626,6 +626,18 @@ LwSmConfigureLogging(
     DWORD dwError = 0;
 
     LwSmLoggingInit(pszProgramName);
+
+    if (gState.logLevel == 0)
+    {
+        if (gState.bStartAsDaemon || (gState.bContainer && !gState.pGroup))
+        {
+            gState.logLevel = LW_SM_LOG_LEVEL_WARNING;
+        }
+        else
+        {
+            gState.logLevel = LW_SM_LOG_LEVEL_VERBOSE;
+        }
+    }
 
     LwSmSetMaxLogLevel(NULL, gState.logLevel);
 
