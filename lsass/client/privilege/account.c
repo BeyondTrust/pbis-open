@@ -92,6 +92,7 @@ LsaPrivsEnumAccountRightsSids(
             *ppPrivileges        = pResponse->pPrivileges;
             *pNumPrivileges      = pResponse->NumPrivileges;
             *pSystemAccessRights = pResponse->SystemAccessRights;
+            out.data = NULL;
             break;
 
         case LSA2_R_ERROR:
