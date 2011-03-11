@@ -15,6 +15,28 @@ typedef struct _REG_DB_CONNECTION
     pthread_rwlock_t lock;
 } REG_DB_CONNECTION, *PREG_DB_CONNECTION;
 
+
+#if 0
+typedef struct __REG_KEY_HANDLE
+{
+        ACCESS_MASK AccessGranted;
+        PREG_KEY_CONTEXT pKey;
+} REG_KEY_HANDLE, *PREG_KEY_HANDLE;
+
+#endif
+
+
+/*
+ * Definition of structure found in context server/include/regserver.h as
+ * an incomplete type: REG_KEY_HANDLE, *PREG_KEY_HANDLE;
+ * struct __REG_KEY_HANDLE
+ */
+typedef struct __REG_KEY_CONTEXT
+{
+    MEM_REG_STORE_HANDLE hKey;
+} REG_KEY_CONTEXT;
+
+
 NTSTATUS
 MemDbOpen(
     OUT PREG_DB_HANDLE phDb
@@ -24,3 +46,9 @@ NTSTATUS
 MemDbClose(
     IN PREG_DB_HANDLE phDb);
 
+
+NTSTATUS
+MemDbOpenKey(
+    IN REG_DB_HANDLE hDb,
+    IN PCWSTR pwszFullKeyPath,
+    OUT OPTIONAL MEM_REG_STORE_HANDLE *pRegKey);

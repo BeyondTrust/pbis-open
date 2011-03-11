@@ -87,3 +87,20 @@ cleanup:
 error:
     goto cleanup;
 }
+
+NTSTATUS
+MemDbOpenKey(
+    IN REG_DB_HANDLE hDb,
+    IN PCWSTR pwszFullKeyPath,
+    OUT OPTIONAL MEM_REG_STORE_HANDLE *pRegKey)
+{
+    NTSTATUS status = 0;
+    if (!hDb)
+    {
+        status = MemRegStoreFindNode(
+                     ghMemRegRoot,
+                     pwszFullKeyPath,
+                     pRegKey);
+    }
+    return status;
+}

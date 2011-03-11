@@ -55,13 +55,13 @@ NTSTATUS
 MemRegStoreOpen(
     OUT PMEM_REG_STORE_HANDLE phDb)
 {
-
     NTSTATUS status = 0;
     MEM_REG_STORE_HANDLE phReg = NULL;
     PWSTR rootKey = NULL;
+    PWSTR subKey = NULL;
     MEM_REG_STORE_HANDLE rootNode = NULL;
+    MEM_REG_STORE_HANDLE subKeyNode = NULL;
     DWORD i = 0;
-    
 
     status = LW_RTL_ALLOCATE(
                  (PVOID*)&phReg, 
@@ -90,11 +90,74 @@ MemRegStoreOpen(
                      rootKey,
                      REGMEM_TYPE_HIVE,
                      NULL,  // SD parameter
-                     &rootNode);
+                     &rootNode,
+                     NULL);
         BAIL_ON_NT_STATUS(status);
         LWREG_SAFE_FREE_MEMORY(rootKey);
        
     }
+
+#if 1
+    /* Add a test subtree until AddKey is functional */
+    status = LwRtlWC16StringAllocateFromCString(
+                 &subKey,
+                 HKEY_THIS_MACHINE);
+    BAIL_ON_NT_STATUS(status);
+    status = MemRegStoreFindNode(
+                 phReg,
+                 subKey,
+                 &subKeyNode);
+    BAIL_ON_NT_STATUS(status);
+    LWREG_SAFE_FREE_MEMORY(subKey);
+
+    
+    status = LwRtlWC16StringAllocateFromCString(
+                 &subKey,
+                 "Services");
+    BAIL_ON_NT_STATUS(status);
+
+    status = MemRegStoreAddNode(
+                     subKeyNode,
+                     subKey,
+                     REGMEM_TYPE_KEY,
+                     NULL,  // SD parameter
+                     NULL,
+                     &rootNode);
+    BAIL_ON_NT_STATUS(status);
+    LWREG_SAFE_FREE_MEMORY(subKey);
+
+    status = LwRtlWC16StringAllocateFromCString(
+                 &subKey,
+                 "Software");
+    BAIL_ON_NT_STATUS(status);
+
+    status = MemRegStoreAddNode(
+                     subKeyNode,
+                     subKey,
+                     REGMEM_TYPE_KEY,
+                     NULL,  // SD parameter
+                     NULL,
+                     NULL);
+    BAIL_ON_NT_STATUS(status);
+    LWREG_SAFE_FREE_MEMORY(subKey);
+
+    status = LwRtlWC16StringAllocateFromCString(
+                 &subKey,
+                 "lsass");
+    BAIL_ON_NT_STATUS(status);
+
+    subKeyNode = rootNode;  // Services node
+    status = MemRegStoreAddNode(
+                     subKeyNode,
+                     subKey,
+                     REGMEM_TYPE_KEY,
+                     NULL,  // SD parameter
+                     NULL,
+                     NULL);
+    BAIL_ON_NT_STATUS(status);
+    LWREG_SAFE_FREE_MEMORY(subKey);
+
+#endif
 
 cleanup:
     return status;
@@ -103,6 +166,7 @@ error:
     LWREG_SAFE_FREE_MEMORY(phReg->Name);
     LWREG_SAFE_FREE_MEMORY(phReg);
     LWREG_SAFE_FREE_MEMORY(rootKey);
+    LWREG_SAFE_FREE_MEMORY(subKey);
     goto cleanup;
 }
 
@@ -144,6 +208,43 @@ typedef struct _REGMEM_NODE
 #endif
 
 
+NTSTATUS
+MemRegStoreFindNode(
+    IN MEM_REG_STORE_HANDLE hDb,
+    IN PCWSTR Name,
+    OUT PMEM_REG_STORE_HANDLE phNode)
+{
+    NTSTATUS status = 0;
+    DWORD nodeIndex = 0;
+    BOOLEAN bFoundNode = FALSE;
+
+    BAIL_ON_NT_STATUS(status);
+
+    if (!Name)
+    {
+        Name = (PCWSTR) L"";
+    }
+    for (nodeIndex=0; hDb->SubNodes[nodeIndex]; nodeIndex++)
+    {
+        if (LwRtlWC16StringIsEqual(Name, hDb->SubNodes[nodeIndex]->Name, FALSE))
+        {
+            bFoundNode = TRUE;
+            break;
+        }
+    }
+
+    if (bFoundNode)
+    {
+        *phNode = hDb->SubNodes[nodeIndex];
+    }
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}
+
 
 NTSTATUS
 MemRegStoreAddNode(
@@ -151,7 +252,8 @@ MemRegStoreAddNode(
     PWSTR Name,
     DWORD NodeType,
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
-    OUT PMEM_REG_STORE_HANDLE phNode)
+    OUT PMEM_REG_STORE_HANDLE phNode,
+    OUT OPTIONAL PMEM_REG_STORE_HANDLE pRetNewNode)
 {
     NTSTATUS status = 0;
     PREGMEM_NODE *pNodesArray = NULL;
@@ -175,7 +277,15 @@ MemRegStoreAddNode(
     pNewNode->NodeType = NodeType;
     pNewNode->SecurityDescriptor = SecurityDescriptor;
     hDb->NodesLen++;
-    *phNode = hDb;
+
+    if (phNode)
+    {
+        *phNode = hDb;
+    }
+    if (pRetNewNode)
+    {
+        *pRetNewNode = pNewNode;
+    }
 
 cleanup:
     return status;

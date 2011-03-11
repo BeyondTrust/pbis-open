@@ -57,9 +57,19 @@ MemRegStoreClose(
 NTSTATUS
 MemRegStoreAddNode(
     IN MEM_REG_STORE_HANDLE hDb,
-    IN PWSTR Name,
-    IN DWORD NodeType,
-    IN PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
+    PWSTR Name,
+    DWORD NodeType,
+    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
+    OUT PMEM_REG_STORE_HANDLE phNode,
+    OUT OPTIONAL PMEM_REG_STORE_HANDLE pRetNewNode
+    );
+
+
+
+NTSTATUS
+MemRegStoreFindNode(
+    IN MEM_REG_STORE_HANDLE hDb,
+    IN PCWSTR Name,
     OUT PMEM_REG_STORE_HANDLE phNode
     );
 

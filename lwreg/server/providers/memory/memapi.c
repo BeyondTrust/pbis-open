@@ -52,8 +52,10 @@ MemProvider_Initialize(
     NTSTATUS status = 0;
 
     status = MemDbOpen(&ghCacheConnection);
-
-    *ppFnTable = &gRegMemProviderAPITable;
+    if (status == 0)
+    {
+        *ppFnTable = &gRegMemProviderAPITable;
+    }
     return status;
 }
 
@@ -63,9 +65,7 @@ MemProvider_Shutdown(
     PREGPROV_PROVIDER_FUNCTION_TABLE pFnTable
     )
 {
-    NTSTATUS status = 0;
-
-    status = MemDbClose(&ghCacheConnection);
+    MemDbClose(&ghCacheConnection);
 }
 
 
@@ -98,7 +98,72 @@ MemOpenKeyEx(
     OUT PHKEY phkResult
     )
 {
-    return 0;
+    NTSTATUS status = 0;
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
+    PREG_KEY_HANDLE *phKeyResult = (PREG_KEY_HANDLE *)phkResult;
+    PREG_KEY_HANDLE phKeyResponse = NULL;
+    MEM_REG_STORE_HANDLE pSubKey = NULL;
+    PREG_KEY_CONTEXT pRetKey = NULL;
+
+    if (!hKey)
+    {
+        // Search for specified root key. If NULL, return HKTM.
+        status = MemDbOpenKey(
+                     NULL,
+                     pwszSubKey,
+                     &pSubKey);
+        BAIL_ON_NT_STATUS(status);
+    }
+    else if (pKeyHandle->pKey->hKey)
+    {
+
+#if 0
+struct _REG_DB_CONNECTION;
+typedef struct _REG_DB_CONNECTION *REG_DB_HANDLE;
+typedef REG_DB_HANDLE *PREG_DB_HANDLE;
+
+
+typedef struct _REGMEM_NODE *MEM_REG_STORE_HANDLE;
+typedef struct _REGMEM_NODE **PMEM_REG_STORE_HANDLE;
+
+
+typedef struct _REG_DB_CONNECTION
+{
+    MEM_REG_STORE_HANDLE pMemReg;
+    pthread_rwlock_t lock;
+} REG_DB_CONNECTION, *PREG_DB_CONNECTION;
+        status = MemDbOpenKey(
+                     pKeyHandle->pKey->pMemReg,
+                     pwszSubKey,
+                     &pSubKey);
+        BAIL_ON_NT_STATUS(status);
+#endif
+    }
+
+    if (phKeyResult)
+    {
+        status = LW_RTL_ALLOCATE(
+                     (PVOID*)&phKeyResponse,
+                     PREG_KEY_HANDLE,
+                     sizeof(*phKeyResponse));
+        BAIL_ON_NT_STATUS(status);
+
+        status = LW_RTL_ALLOCATE(
+                     (PVOID*)&pRetKey,
+                     REG_KEY_CONTEXT,
+                     sizeof(*pRetKey));
+        BAIL_ON_NT_STATUS(status);
+
+        pRetKey->hKey = pSubKey;
+        phKeyResponse->pKey = pRetKey;
+        *phKeyResult = phKeyResponse;
+    }
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
 }
 
 
