@@ -107,7 +107,7 @@ RegDbOpenKey_inlock(
     	BAIL_ON_NT_STATUS(status);
     }
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbOpenKey_inlock() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbOpenKey_inlock() finished");
 
     status = RegDbDuplicateDbKeyEntry(pRegKey, &pRegKeyDup);
     BAIL_ON_NT_STATUS(status);
@@ -1328,7 +1328,7 @@ RegDbUpdateRegValues_inlock(
         BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
     }
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbUpdateRegValues_inlock() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbUpdateRegValues_inlock() finished");
 
     status = sqlite3_reset(pstQueryEntry);
     BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
@@ -1372,7 +1372,7 @@ RegDbStoreRegKeys_inlock(
         // Creating a new key qwDbId should be -1
         if (pEntry->version.qwDbId != -1)
         {
-            REG_LOG_DEBUG("Registry::sqldb.c RegDbStoreRegKeys() qwDbId is -1\n");
+            REG_LOG_DEBUG("Registry::sqldb.c RegDbStoreRegKeys() qwDbId is -1");
             continue;
         }
 
@@ -1458,7 +1458,7 @@ RegDbStoreRegKeys_inlock(
         BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
     }
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbStoreRegKeys_inlock() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbStoreRegKeys_inlock() finished");
 
 cleanup:
 
@@ -1554,7 +1554,7 @@ RegDbStoreRegValues_inlock(
         BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
     }
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbStoreRegValues_inlock() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbStoreRegValues_inlock() finished");
 
     status = sqlite3_reset(pstQueryEntry);
     BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));

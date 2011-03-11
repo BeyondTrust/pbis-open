@@ -357,7 +357,7 @@ SqliteGetValueAttributes_Internal(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c SqliteGetValueAttributes_Internal() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c SqliteGetValueAttributes_Internal() finished");
 
     if (ppCurrentValue)
     {

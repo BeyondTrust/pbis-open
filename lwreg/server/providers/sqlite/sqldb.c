@@ -913,7 +913,7 @@ RegDbStoreRegValues(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbStoreRegValues() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbStoreRegValues() finished");
 
 cleanup:
 
@@ -972,7 +972,7 @@ RegDbUpdateRegValues(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbUpdateRegValues() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbUpdateRegValues() finished");
 
 cleanup:
     LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
@@ -1029,7 +1029,7 @@ RegDbOpenKey(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbOpenKey() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbOpenKey() finished");
 
 cleanup:
 
@@ -1311,7 +1311,7 @@ RegDbSetKeyValue(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbSetKeyValue() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbSetKeyValue() finished");
 
 
     if (ppRegEntry)
@@ -1399,7 +1399,7 @@ RegDbGetKeyValue(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbGetKeyValue() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbGetKeyValue() finished");
 
 cleanup:
     LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
@@ -1459,7 +1459,7 @@ RegDbDeleteKey(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbDeleteKey() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbDeleteKey() finished");
 
 cleanup:
 
@@ -1888,7 +1888,7 @@ RegDbUpdateKeyAcl(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbUpdateKeyAcl() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbUpdateKeyAcl() finished");
 
     SqliteCacheDeleteDbKeyInfo(pwszFullKeyPath);
 
@@ -1958,7 +1958,7 @@ RegDbGetKeyAclByKeyId(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbOpenKey() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbOpenKey() finished");
 
     *pqwKeyAclId = qwKeyAclId;
 
@@ -2192,7 +2192,7 @@ RegDbFixAcls(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbFixAcls() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbFixAcls() finished");
 
 
 cleanup:

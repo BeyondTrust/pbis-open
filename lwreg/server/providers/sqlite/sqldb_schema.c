@@ -331,7 +331,7 @@ RegDbStoreRegValueAttributes(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbStoreERegValues() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbStoreERegValues() finished");
 
     status = sqlite3_reset(pstQueryEntry);
     BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
@@ -535,7 +535,7 @@ RegDbUpdateRegValueAttributes(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbStoreEntries() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbStoreEntries() finished");
 
     status = sqlite3_reset(pstQueryEntry);
     BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
@@ -664,7 +664,7 @@ RegDbGetValueAttributes(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbGetValueAttributes() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbGetValueAttributes() finished");
 
 
 cleanup:
@@ -901,7 +901,7 @@ RegDbQueryDefaultValuesCount(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbQueryDefaultValuesCount() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbQueryDefaultValuesCount() finished");
 
 cleanup:
 
@@ -1056,7 +1056,7 @@ RegDbQueryDefaultValues(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c RegDbQueryDefaultValues() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbQueryDefaultValues() finished");
 
 cleanup:
 

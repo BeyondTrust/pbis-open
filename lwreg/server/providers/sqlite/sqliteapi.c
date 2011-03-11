@@ -1065,7 +1065,7 @@ SqliteDeleteValue(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c SqliteDeleteValue() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c SqliteDeleteValue() finished");
 
     // To persist the locking order. On success reset key value info
     LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
@@ -1366,7 +1366,7 @@ SqliteDeleteTree(
                     &pszError);
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
-    REG_LOG_VERBOSE("Registry::sqldb.c SqliteDeleteTree() finished\n");
+    REG_LOG_VERBOSE("Registry::sqldb.c SqliteDeleteTree() finished");
 
 cleanup:
     if (hCurrKey)
