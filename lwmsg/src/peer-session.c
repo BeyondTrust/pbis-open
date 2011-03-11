@@ -198,8 +198,8 @@ peer_free_session(
         if (session->endpoint->endpoint)
         {
             free(session->endpoint->endpoint);
-            free(session->endpoint);
         }
+        free(session->endpoint);
     }
 
     free(session);
