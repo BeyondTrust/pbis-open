@@ -647,24 +647,37 @@ LwSmDispatchSetLogInfo(
     )
 {
     DWORD dwError = 0;
-    PSM_IPC_LOG_INFO pReq = pIn->data;
+    PSM_SET_LOG_INFO_REQ pReq = pIn->data;
     uid_t uid = 0;
+    LW_SERVICE_HANDLE hHandle = NULL;
 
     dwError = LwSmGetCallUid(pCall, &uid);
     BAIL_ON_ERROR(dwError);
 
     if (uid == 0)
     {
-        switch (pReq->type)
+        if (pReq->hHandle)
+        {
+            dwError = LwSmGetHandle(pCall, pReq->hHandle, &hHandle);
+            BAIL_ON_ERROR(dwError);
+
+            dwError = LwSmTableSetEntryLogInfo(
+                hHandle->pEntry,
+                pReq->pFacility,
+                pReq->type,
+                pReq->pszTarget);
+            BAIL_ON_ERROR(dwError);
+        }
+        else switch (pReq->type)
         {
         case LW_SM_LOGGER_NONE:
-            dwError = LwSmSetLogger(NULL, NULL);
+            dwError = LwSmSetLogger(pReq->pFacility, NULL, NULL);
             break;
         case LW_SM_LOGGER_FILE:
-            dwError = LwSmSetLoggerToPath(pReq->pszTarget);
+            dwError = LwSmSetLoggerToPath(pReq->pFacility, pReq->pszTarget);
             break;
         case LW_SM_LOGGER_SYSLOG:
-            dwError = LwSmSetLoggerToSyslog("lwsmd");
+            dwError = LwSmSetLoggerToSyslog(pReq->pFacility);
             break;
         }
     }
@@ -695,7 +708,7 @@ error:
 
 static
 LWMsgStatus
-LwSmDispatchGetLogInfo(
+LwSmDispatchGetLogState(
     LWMsgCall* pCall,
     LWMsgParams* pIn,
     LWMsgParams* pOut,
@@ -703,15 +716,28 @@ LwSmDispatchGetLogInfo(
     )
 {
     DWORD dwError = 0;
-    PSM_IPC_LOG_INFO pRes = NULL;
+    PSM_GET_LOG_STATE_REQ pReq = pIn->data;
+    PSM_GET_LOG_STATE_RES pRes = NULL;
+    LW_SERVICE_HANDLE hHandle = NULL;
 
     dwError = LwAllocateMemory(sizeof(*pRes), OUT_PPVOID(&pRes));
     BAIL_ON_ERROR(dwError);
 
-    dwError = LwSmSrvGetLogInfo(&pRes->type, &pRes->pszTarget);
-    BAIL_ON_ERROR(dwError);
+    if (pReq->hHandle)
+    {
+        dwError = LwSmGetHandle(pCall, pReq->hHandle, &hHandle);
+        BAIL_ON_ERROR(dwError);
 
-    pOut->tag = SM_IPC_GET_LOG_INFO_RES;
+        dwError = LwSmTableGetEntryLogState(hHandle->pEntry, pReq->pFacility, &pRes->type, &pRes->pszTarget, &pRes->Level);
+        BAIL_ON_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LwSmGetLoggerState(pReq->pFacility, &pRes->type, &pRes->pszTarget, &pRes->Level);
+        BAIL_ON_ERROR(dwError);
+    }
+
+    pOut->tag = SM_IPC_GET_LOG_STATE_RES;
     pOut->data = pRes;
     
 cleanup:
@@ -735,15 +761,30 @@ LwSmDispatchSetLogLevel(
     )
 {
     DWORD dwError = 0;
-    PLW_SM_LOG_LEVEL pReq = pIn->data;
+    PSM_SET_LOG_LEVEL_REQ pReq = pIn->data;
     uid_t uid = 0;
+    LW_SERVICE_HANDLE hHandle = NULL;
 
     dwError = LwSmGetCallUid(pCall, &uid);
     BAIL_ON_ERROR(dwError);
 
     if (uid == 0)
     {
-        LwSmSetMaxLogLevel(*pReq);
+        if (pReq->hHandle)
+        {
+            dwError = LwSmGetHandle(pCall, pReq->hHandle, &hHandle);
+            BAIL_ON_ERROR(dwError);
+
+            dwError = LwSmTableSetEntryLogLevel(
+                hHandle->pEntry,
+                pReq->pFacility,
+                pReq->Level);
+            BAIL_ON_ERROR(dwError);
+        }
+        else
+        {
+            LwSmSetMaxLogLevel(pReq->pFacility, pReq->Level);
+        }
     }
     else
     {
@@ -770,36 +811,6 @@ error:
     goto cleanup;
 }
 
-static
-LWMsgStatus
-LwSmDispatchGetLogLevel(
-    LWMsgCall* pCall,
-    LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    PVOID pData
-    )
-{
-    DWORD dwError = 0;
-    PLW_SM_LOG_LEVEL pRes = NULL;
-
-    dwError = LwAllocateMemory(sizeof(*pRes), OUT_PPVOID(&pRes));
-    BAIL_ON_ERROR(dwError);
-
-    *pRes = LwSmGetMaxLogLevel();
-
-    pOut->tag = SM_IPC_GET_LOG_LEVEL_RES;
-    pOut->data = pRes;
-    
-cleanup:
-
-    return LwSmMapLwError(dwError);
-
-error:
-
-    LW_SAFE_FREE_MEMORY(pRes);
-
-    goto cleanup;
-}
 
 static
 LWMsgStatus
@@ -901,10 +912,9 @@ LWMsgDispatchSpec gDispatchSpec[] =
     LWMSG_DISPATCH_BLOCK(SM_IPC_QUERY_SERVICE_STATUS_REQ, LwSmDispatchGetServiceStatus),
     LWMSG_DISPATCH_BLOCK(SM_IPC_QUERY_SERVICE_INFO_REQ, LwSmDispatchGetServiceInfo),
     LWMSG_DISPATCH_NONBLOCK(SM_IPC_WAIT_SERVICE_REQ, LwSmDispatchWaitService),
-    LWMSG_DISPATCH_NONBLOCK(SM_IPC_SET_LOG_INFO_REQ, LwSmDispatchSetLogInfo),
-    LWMSG_DISPATCH_NONBLOCK(SM_IPC_GET_LOG_INFO_REQ, LwSmDispatchGetLogInfo),
-    LWMSG_DISPATCH_NONBLOCK(SM_IPC_SET_LOG_LEVEL_REQ, LwSmDispatchSetLogLevel),
-    LWMSG_DISPATCH_NONBLOCK(SM_IPC_GET_LOG_LEVEL_REQ, LwSmDispatchGetLogLevel),
+    LWMSG_DISPATCH_BLOCK(SM_IPC_SET_LOG_INFO_REQ, LwSmDispatchSetLogInfo),
+    LWMSG_DISPATCH_BLOCK(SM_IPC_GET_LOG_STATE_REQ, LwSmDispatchGetLogState),
+    LWMSG_DISPATCH_BLOCK(SM_IPC_SET_LOG_LEVEL_REQ, LwSmDispatchSetLogLevel),
     LWMSG_DISPATCH_BLOCK(SM_IPC_REFRESH_REQ, LwSmDispatchRefresh),
     LWMSG_DISPATCH_NONBLOCK(SM_IPC_SHUTDOWN_REQ, LwSmDispatchShutdown),
     LWMSG_DISPATCH_END

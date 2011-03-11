@@ -837,7 +837,9 @@ error:
 }
 
 DWORD
-LwSmSetLogInfo(
+LwSmSetServiceLogTarget(
+    LW_SERVICE_HANDLE hHandle,
+    LW_PCSTR pszFacility,
     LW_SM_LOGGER_TYPE type,
     PCSTR pszTarget
     )
@@ -846,8 +848,10 @@ LwSmSetLogInfo(
     LWMsgCall* pCall = NULL;
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
-    SM_IPC_LOG_INFO info;
+    SM_SET_LOG_INFO_REQ info = {0};
 
+    info.hHandle = (LWMsgHandle*) hHandle;
+    info.pFacility = (PSTR) pszFacility;
     info.type = type;
     info.pszTarget = (PSTR) pszTarget;
     in.tag = SM_IPC_SET_LOG_INFO_REQ;
@@ -889,19 +893,26 @@ error:
 }
 
 DWORD
-LwSmGetLogInfo(
+LwSmGetServiceLogState(
+    LW_SERVICE_HANDLE hHandle,
+    LW_PCSTR pFacility,
     PLW_SM_LOGGER_TYPE pType,
-    PSTR* ppszTarget
+    LW_PSTR* ppTarget,
+    PLW_SM_LOG_LEVEL pLevel
     )
 {
     DWORD dwError = 0;
     LWMsgCall* pCall = NULL;
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
-    PSM_IPC_LOG_INFO pInfo = NULL;
+    SM_GET_LOG_STATE_REQ req = {0};
+    PSM_GET_LOG_STATE_RES pRes = NULL;
 
-    in.tag = SM_IPC_GET_LOG_INFO_REQ;
-    in.data = NULL;
+    req.hHandle = (LWMsgHandle*) hHandle;
+    req.pFacility = (PSTR) pFacility;
+
+    in.tag = SM_IPC_GET_LOG_STATE_REQ;
+    in.data = &req;
 
     dwError = LwSmIpcAcquireCall(&pCall);
     BAIL_ON_ERROR(dwError);
@@ -911,11 +922,12 @@ LwSmGetLogInfo(
 
     switch (out.tag)
     {
-    case SM_IPC_GET_LOG_INFO_RES:
-        pInfo = out.data;
-        *pType = pInfo->type;
-        *ppszTarget = pInfo->pszTarget;
-        pInfo->pszTarget = NULL;
+    case SM_IPC_GET_LOG_STATE_RES:
+        pRes = out.data;
+        *pType = pRes->type;
+        *ppTarget = pRes->pszTarget;
+        *pLevel = pRes->Level;
+        pRes->pszTarget = NULL;
         break;
     case SM_IPC_ERROR:
         dwError = *(PDWORD) out.data;
@@ -943,7 +955,9 @@ error:
 }
 
 DWORD
-LwSmSetLogLevel(
+LwSmSetServiceLogLevel(
+    LW_SERVICE_HANDLE hHandle,
+    LW_PCSTR pFacility,
     LW_SM_LOG_LEVEL level
     )
 {
@@ -951,9 +965,14 @@ LwSmSetLogLevel(
     LWMsgCall* pCall = NULL;
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    SM_SET_LOG_LEVEL_REQ info = {0};
+
+    info.hHandle = (LWMsgHandle*) hHandle;
+    info.pFacility = (PSTR) pFacility;
+    info.Level = level;
 
     in.tag = SM_IPC_SET_LOG_LEVEL_REQ;
-    in.data = &level;
+    in.data = &info;
 
     dwError = LwSmIpcAcquireCall(&pCall);
     BAIL_ON_ERROR(dwError);
@@ -964,55 +983,6 @@ LwSmSetLogLevel(
     switch (out.tag)
     {
     case SM_IPC_SET_LOG_LEVEL_RES:
-        break;
-    case SM_IPC_ERROR:
-        dwError = *(PDWORD) out.data;
-        BAIL_ON_ERROR(dwError);
-        break;
-    default:
-        dwError = LW_ERROR_INTERNAL;
-        BAIL_ON_ERROR(dwError);
-        break;
-    }
-
-cleanup:
-
-    if (pCall)
-    {
-        lwmsg_call_destroy_params(pCall, &out);
-        lwmsg_call_release(pCall);
-    }
-
-    return dwError;
-
-error:
-
-    goto cleanup;
-}
-
-DWORD
-LwSmGetLogLevel(
-    PLW_SM_LOG_LEVEL pLevel
-    )
-{
-    DWORD dwError = 0;
-    LWMsgCall* pCall = NULL;
-    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
-    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
-
-    in.tag = SM_IPC_GET_LOG_LEVEL_REQ;
-    in.data = NULL;
-
-    dwError = LwSmIpcAcquireCall(&pCall);
-    BAIL_ON_ERROR(dwError);
-
-    dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
-    BAIL_ON_ERROR(dwError);
-
-    switch (out.tag)
-    {
-    case SM_IPC_GET_LOG_LEVEL_RES:
-        *pLevel = *(PLW_SM_LOG_LEVEL) out.data;
         break;
     case SM_IPC_ERROR:
         dwError = *(PDWORD) out.data;

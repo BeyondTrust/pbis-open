@@ -184,7 +184,7 @@ error:
     LwSmTableShutdown();
 
     /* Shut down logging */
-    LwSmSetLogger(NULL, NULL);
+    LwSmLoggingShutdown();
 
     /* Remove DS cache exception */
     LwDsCacheRemovePidException(getpid());
@@ -625,21 +625,23 @@ LwSmConfigureLogging(
 {
     DWORD dwError = 0;
 
-    LwSmSetMaxLogLevel(gState.logLevel);
+    LwSmLoggingInit(pszProgramName);
+
+    LwSmSetMaxLogLevel(NULL, gState.logLevel);
 
     if (gState.pszLogFilePath)
     {
-        dwError = LwSmSetLoggerToPath(gState.pszLogFilePath);
+        dwError = LwSmSetLoggerToPath(NULL, gState.pszLogFilePath);
         BAIL_ON_ERROR(dwError);
     }
     else if (gState.bSyslog)
     {
-        dwError = LwSmSetLoggerToSyslog(pszProgramName);
+        dwError = LwSmSetLoggerToSyslog(NULL);
         BAIL_ON_ERROR(dwError);
     }
     else
     {
-        dwError = LwSmSetLoggerToFile(stderr);
+        dwError = LwSmSetLoggerToFile(NULL, stderr);
         BAIL_ON_ERROR(dwError);
     }
 
@@ -687,7 +689,7 @@ LwSmLogIpc (
         break;
     }
 
-    if (LwSmGetMaxLogLevel() >= smLevel)
+    if (LwSmGetMaxLogLevel("lwsm-ipc") >= smLevel)
     {
         if (pszMessage)
         {

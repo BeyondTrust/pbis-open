@@ -13,10 +13,9 @@ LwSmQueryServiceInfo
 LwSmFreeServiceInfo
 LwSmQueryServiceDependencyClosure
 LwSmQueryServiceReverseDependencyClosure
-LwSmSetLogInfo
-LwSmGetLogInfo
-LwSmSetLogLevel
-LwSmGetLogLevel
+LwSmSetServiceLogTarget
+LwSmGetServiceLogState
+LwSmSetServiceLogLevel
 LwSmRefresh
 LwSmShutdown
 LwSmFreeLogTarget

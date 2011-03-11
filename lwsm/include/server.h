@@ -57,6 +57,9 @@ typedef struct _LW_SERVICE_LOADER_VTBL
     DWORD (*pfnRefresh)(PLW_SERVICE_OBJECT pObject);
     DWORD (*pfnConstruct)(PLW_SERVICE_OBJECT pObject, PCLW_SERVICE_INFO pInfo, PVOID* ppData);
     VOID  (*pfnDestruct)(PLW_SERVICE_OBJECT pObject);
+    DWORD (*pfnSetLogInfo)(PLW_SERVICE_OBJECT pObject, PCSTR pFacility, LW_SM_LOGGER_TYPE type, PCSTR pszTarget);
+    DWORD (*pfnSetLogLevel)(PLW_SERVICE_OBJECT pObject, PCSTR pFacility, LW_SM_LOG_LEVEL level);
+    DWORD (*pfnGetLogState)(PLW_SERVICE_OBJECT pObject, PCSTR pFacility, PLW_SM_LOGGER_TYPE pType, LW_PSTR* ppTarget, PLW_SM_LOG_LEVEL pLevel);
 } LW_SERVICE_LOADER_VTBL, *PLW_SERVICE_LOADER_VTBL;
 
 typedef struct _SM_ENTRY_NOTIFY
@@ -141,6 +144,7 @@ typedef struct _SM_LOGGER
     DWORD
     (*pfnLog) (
         LW_SM_LOG_LEVEL level,
+        LW_SM_LOG_LEVEL maxLevel,
         PCSTR pszFacility,
         PCSTR pszFunctionName,
         PCSTR pszSourceFile,
@@ -286,6 +290,30 @@ LwSmTableGetEntryStatus(
     );
 
 DWORD
+LwSmTableSetEntryLogInfo(
+    PSM_TABLE_ENTRY pEntry,
+    LW_PCSTR pszFacility,
+    LW_SM_LOGGER_TYPE type,
+    PCSTR pszTarget
+    );
+
+DWORD
+LwSmTableSetEntryLogLevel(
+    PSM_TABLE_ENTRY pEntry,
+    LW_PCSTR pFacility,
+    LW_SM_LOG_LEVEL level
+    );
+
+DWORD
+LwSmTableGetEntryLogState(
+    PSM_TABLE_ENTRY pEntry,
+    LW_PCSTR pFacility,
+    PLW_SM_LOGGER_TYPE pType,
+    LW_PSTR* ppTarget,
+    PLW_SM_LOG_LEVEL pLevel
+    );
+
+DWORD
 LwSmTableGetEntryDependencyClosure(
     PSM_TABLE_ENTRY pEntry,
     PWSTR** pppwszServiceList
@@ -337,6 +365,28 @@ LwSmLogInit(
     );
 
 DWORD
+LwSmLoggingInit(
+    PCSTR pProcessName
+    );
+
+DWORD
+LwSmSetLogger(
+    PCSTR pFacility,
+    PSM_LOGGER pLogger,
+    PVOID pData
+    );
+
+VOID
+LwSmLoggingShutdown(
+    VOID
+    );
+
+LW_SM_LOG_LEVEL
+LwSmGetMaxLogLevel(
+    PCSTR pFacility
+    );
+
+DWORD
 LwSmLogMessage(
     LW_SM_LOG_LEVEL level,
     PCSTR pszFacility,
@@ -369,34 +419,26 @@ LwSmLogPrintf(
     );
 
 DWORD
-LwSmSetLogger(
-    PSM_LOGGER pLogger,
-    PVOID pData
-    );
-
-VOID
 LwSmSetMaxLogLevel(
+    PCSTR pFacility,
     LW_SM_LOG_LEVEL level
-    );
-
-LW_SM_LOG_LEVEL
-LwSmGetMaxLogLevel(
-    VOID
     );
 
 DWORD
 LwSmSetLoggerToFile(
+    PCSTR pFacility,
     FILE* file
     );
 
 DWORD
 LwSmSetLoggerToPath(
+    PCSTR pFacility,
     PCSTR pszPath
     );
 
 DWORD
 LwSmSetLoggerToSyslog(
-    PCSTR pszProgramName
+    PCSTR pFacility
     );
 
 DWORD
@@ -406,9 +448,11 @@ LwSmLogLevelNameToLogLevel(
     );
 
 DWORD
-LwSmSrvGetLogInfo(
+LwSmGetLoggerState(
+    PCSTR pFacility,
     LW_SM_LOGGER_TYPE* pType,
-    PSTR* ppszTargetName
+    PSTR* ppszTargetName,
+    PLW_SM_LOG_LEVEL pLevel
     );
 
 PVOID

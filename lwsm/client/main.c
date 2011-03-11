@@ -1491,30 +1491,47 @@ LwSmSetLog(
     )
 {
     DWORD dwError = 0;
+    LW_SERVICE_HANDLE hHandle = NULL;
     LW_SM_LOGGER_TYPE type = 0;
+    PSTR pFacility = NULL;
     PSTR pszTarget = NULL;
+    PWSTR pServiceName = NULL;
 
-    if (argc < 2)
+    if (argc < 4)
     {
         dwError = LW_ERROR_INVALID_PARAMETER;
         BAIL_ON_ERROR(dwError);
     }
 
-    if (!strcasecmp(pArgv[1], "none"))
+    if (strcmp(pArgv[1], "-"))
+    {
+        dwError = LwMbsToWc16s(pArgv[1], &pServiceName);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = LwSmAcquireServiceHandle(pServiceName, &hHandle);
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (strcmp(pArgv[2], "-"))
+    {
+        pFacility = pArgv[2];
+    }
+
+    if (!strcasecmp(pArgv[3], "none"))
     {
         type = LW_SM_LOGGER_NONE;
     }
-    else if (!strcasecmp(pArgv[1], "file"))
+    else if (!strcasecmp(pArgv[3], "file"))
     {
-        if (argc < 3)
+        if (argc < 5)
         {     
             dwError = LW_ERROR_INVALID_PARAMETER;
             BAIL_ON_ERROR(dwError);
         }
         type = LW_SM_LOGGER_FILE;
-        pszTarget = pArgv[2];
+        pszTarget = pArgv[4];
     }
-    else if (!strcasecmp(pArgv[1], "syslog"))
+    else if (!strcasecmp(pArgv[3], "syslog"))
     {
         type = LW_SM_LOGGER_SYSLOG;
         pszTarget = NULL;
@@ -1525,7 +1542,7 @@ LwSmSetLog(
         BAIL_ON_ERROR(dwError);
     }
 
-    dwError = LwSmSetLogInfo(type, pszTarget);
+    dwError = LwSmSetServiceLogTarget(hHandle, pFacility, type, pszTarget);
     BAIL_ON_ERROR(dwError);
 
 error:
@@ -1541,11 +1558,35 @@ LwSmGetLog(
     )
 {
     DWORD dwError = 0;
-    LW_SM_LOGGER_TYPE type;
+    LW_SM_LOGGER_TYPE type = 0;
+    LW_SM_LOG_LEVEL level = 0;
     PSTR pszTarget = NULL;
+    PSTR pFacility = NULL;
     PCSTR pszLoggerName = NULL;
+    LW_SERVICE_HANDLE hHandle = NULL;
+    PWSTR pServiceName = NULL;
 
-    dwError = LwSmGetLogInfo(&type, &pszTarget);
+    if (argc < 3)
+    {
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (strcmp(pArgv[1], "-"))
+    {
+        dwError = LwMbsToWc16s(pArgv[1], &pServiceName);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = LwSmAcquireServiceHandle(pServiceName, &hHandle);
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (strcmp(pArgv[2], "-"))
+    {
+        pFacility = pArgv[2];
+    }
+
+    dwError = LwSmGetServiceLogState(hHandle, pFacility, &type, &pszTarget, &level);
     BAIL_ON_ERROR(dwError);
 
     switch (type)
@@ -1563,11 +1604,11 @@ LwSmGetLog(
 
     if (pszTarget)
     {
-        printf("%s: %s\n", pszLoggerName, pszTarget);
+        printf("%s: %s at %s\n", pszLoggerName, pszTarget, LwSmLogLevelToString(level));
     }
     else
     {
-        printf("%s\n", pszLoggerName);
+        printf("%s at %s\n", pszLoggerName, LwSmLogLevelToString(level));
     }
 
 error:
@@ -1588,39 +1629,36 @@ LwSmCmdSetLogLevel(
     )
 {
     DWORD dwError = 0;
-    LW_SM_LOG_LEVEL level;
+    LW_SM_LOG_LEVEL level = 0;
+    PSTR pFacility = NULL;
+    LW_SERVICE_HANDLE hHandle = NULL;
+    PWSTR pServiceName = NULL;
 
-    if (argc < 2)
+    if (argc < 4)
     {
         dwError = LW_ERROR_INVALID_PARAMETER;
         BAIL_ON_ERROR(dwError);
     }
 
-    dwError = LwSmLogLevelNameToLogLevel(pArgv[1], &level);
+    if (strcmp(pArgv[1], "-"))
+    {
+        dwError = LwMbsToWc16s(pArgv[1], &pServiceName);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = LwSmAcquireServiceHandle(pServiceName, &hHandle);
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (strcmp(pArgv[2], "-"))
+    {
+        pFacility = pArgv[2];
+    }
+
+    dwError = LwSmLogLevelNameToLogLevel(pArgv[3], &level);
     BAIL_ON_ERROR(dwError);
 
-    dwError = LwSmSetLogLevel(level);
+    dwError = LwSmSetServiceLogLevel(hHandle, pFacility, level);
     BAIL_ON_ERROR(dwError);
-
-error:
-
-    return dwError;
-}
-
-static
-DWORD
-LwSmCmdGetLogLevel(
-    int argc,
-    char** pArgv
-    )
-{
-    DWORD dwError = 0;
-    LW_SM_LOG_LEVEL level;
-
-    dwError = LwSmGetLogLevel(&level);
-    BAIL_ON_ERROR(dwError);
-
-    printf("%s\n", LwSmLogLevelToString(level));
 
 error:
 
@@ -1649,25 +1687,13 @@ LwSmUsage(
            "    proxy <service>            Act as a proxy process for a service\n"
            "    info <service>             Get information about a service\n"
            "    status <service>           Get the status of a service\n"
+           "    set-log-target <service> <facility> <type> <target>\n"
+           "                               Set log target for a given service and facility\n"
+           "    set-log-level <service> <facility> <level>\n"
+           "                               Set log level for a given service and facility\n"
            "    gdb <service>              Attach gdb to the specified running service\n\n");
     printf("Maintenance commands:\n"
-           "    refresh                    Refresh service manager configuration\n"
-           "    shutdown                   Shutdown service manager\n"
-           "    set-log <type> [<target>]  Set logging destination\n"
-           "                               Valid types:\n"
-           "                                   file (target is filename)\n"
-           "                                   syslog\n"
-           "    get-log                    Show current logging destination\n"
-           "    set-log-level <level>      Sets log level\n"
-           "                               Valid levels:\n"
-           "                                   always\n"
-           "                                   error\n"
-           "                                   warning\n"
-           "                                   info\n"
-           "                                   verbose\n"
-           "                                   debug\n"
-           "                                   trace\n"
-           "    get-log-level              Show current log level\n\n");
+           "    shutdown                   Shutdown service manager\n");
     printf("Options:\n"
            "    -q, --quiet                Suppress console output\n"
            "    -h, --help                 Show usage information\n\n");
@@ -1755,12 +1781,12 @@ main(
             dwError = LwSmGdb(argc-i, pArgv+i);
             goto error;
         }
-        else if (!strcmp(pArgv[i], "set-log"))
+        else if (!strcmp(pArgv[i], "set-log-target"))
         {
             dwError = LwSmSetLog(argc-i, pArgv+i);
             goto error;
         }
-        else if (!strcmp(pArgv[i], "get-log"))
+        else if (!strcmp(pArgv[i], "get-log-state"))
         {
             dwError = LwSmGetLog(argc-i, pArgv+i);
             goto error;
@@ -1768,11 +1794,6 @@ main(
         else if (!strcmp(pArgv[i], "set-log-level"))
         {
             dwError = LwSmCmdSetLogLevel(argc-i, pArgv+i);
-            goto error;
-        }
-        else if (!strcmp(pArgv[i], "get-log-level"))
-        {
-            dwError = LwSmCmdGetLogLevel(argc-i, pArgv+i);
             goto error;
         }
         else if (!strcmp(pArgv[i], "autostart"))

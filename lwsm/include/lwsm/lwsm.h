@@ -496,6 +496,36 @@ LwSmRefreshService(
     LW_SERVICE_HANDLE hHandle
     );
 
+
+DWORD
+LwSmSetServiceLogTarget(
+    LW_SERVICE_HANDLE hHandle,
+    LW_PCSTR pszFacility,
+    LW_SM_LOGGER_TYPE type,
+    PCSTR pszTarget
+    );
+
+DWORD
+LwSmSetServiceLogLevel(
+    LW_SERVICE_HANDLE hHandle,
+    LW_PCSTR pFacility,
+    LW_SM_LOG_LEVEL level
+    );
+
+DWORD
+LwSmGetServiceLogState(
+    LW_SERVICE_HANDLE hHandle,
+    LW_PCSTR pFacility,
+    PLW_SM_LOGGER_TYPE pType,
+    LW_PSTR* ppTarget,
+    PLW_SM_LOG_LEVEL pLevel
+    );
+
+VOID
+LwSmFreeLogTarget(
+    LW_PSTR pTarget
+    );
+
 /**
  * @brief Get service info
  *
@@ -566,28 +596,6 @@ LwSmFreeServiceInfo(
     PLW_SERVICE_INFO pInfo
     );
 
-DWORD
-LwSmSetLogInfo(
-    LW_SM_LOGGER_TYPE type,
-    PCSTR pszTarget
-    );
-
-DWORD
-LwSmGetLogInfo(
-    PLW_SM_LOGGER_TYPE pType,
-    PSTR* ppszTarget
-    );
-
-DWORD
-LwSmGetLogLevel(
-    PLW_SM_LOG_LEVEL pLevel
-    );
-
-DWORD
-LwSmSetLogLevel(
-    LW_SM_LOG_LEVEL level
-    );
-
 /**
  * @brief Refresh service manager
  *
@@ -612,11 +620,6 @@ LwSmRefresh(
 DWORD
 LwSmShutdown(
     VOID
-    );
-
-VOID
-LwSmFreeLogTarget(
-    PSTR pszTarget
     );
 
 /*@}*/

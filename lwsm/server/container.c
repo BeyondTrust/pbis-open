@@ -56,11 +56,16 @@
 
 typedef enum _CONTAINER_TAG
 {
+    CONTAINER_RES_VOID,
     CONTAINER_RES_STATUS,
     CONTAINER_RES_HANDLE,
     CONTAINER_REQ_START,
     CONTAINER_REQ_STOP,
     CONTAINER_REQ_REFRESH,
+    CONTAINER_REQ_SET_LOG_TARGET,
+    CONTAINER_REQ_SET_LOG_LEVEL,
+    CONTAINER_REQ_GET_LOG_STATE,
+    CONTAINER_RES_GET_LOG_STATE
 } CONTAINER_TAG, *PCONTAINER_TAG;
 
 typedef struct _CONTAINER_HANDLE
@@ -85,6 +90,31 @@ typedef struct _CONTAINER_STATUS_RES
 {
     DWORD Error;
 } CONTAINER_STATUS_RES, *PCONTAINER_STATUS_RES;
+
+typedef struct _CONTAINER_SET_LOG_INFO_REQ
+{
+    PSTR pFacility;
+    LW_SM_LOGGER_TYPE type;
+    PSTR pszTarget;
+} CONTAINER_SET_LOG_INFO_REQ, *PCONTAINER_SET_LOG_INFO_REQ;
+
+typedef struct _CONTAINER_IPC_SET_LOG_LEVEL_REQ
+{
+    PSTR pFacility;
+    LW_SM_LOG_LEVEL Level;
+} CONTAINER_SET_LOG_LEVEL_REQ, *PCONTAINER_SET_LOG_LEVEL_REQ;
+
+typedef struct _CONTAINER_IPC_GET_LOG_STATE_REQ
+{
+    PSTR pFacility;
+} CONTAINER_GET_LOG_STATE_REQ, *PCONTAINER_GET_LOG_STATE_REQ;
+
+typedef struct _CONTAINER_IPC_GET_LOG_STATE_RES
+{
+    LW_SM_LOGGER_TYPE type;
+    PSTR pszTarget;
+    LW_SM_LOG_LEVEL Level;
+} CONTAINER_GET_LOG_STATE_RES, *PCONTAINER_GET_LOG_STATE_RES;
 
 typedef struct _CONTAINER_KEY
 {
@@ -171,13 +201,60 @@ static LWMsgTypeSpec gContainerStartSpec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec gSetLogInfoSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(CONTAINER_SET_LOG_INFO_REQ),
+    LWMSG_MEMBER_PSTR(CONTAINER_SET_LOG_INFO_REQ, pFacility),
+    LWMSG_MEMBER_UINT8(CONTAINER_SET_LOG_INFO_REQ, type),
+    LWMSG_ATTR_RANGE(LW_SM_LOGGER_NONE, LW_SM_LOGGER_SYSLOG),
+    LWMSG_MEMBER_PSTR(CONTAINER_SET_LOG_INFO_REQ, pszTarget),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+static LWMsgTypeSpec gSetLogLevelSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(CONTAINER_SET_LOG_LEVEL_REQ),
+    LWMSG_MEMBER_PSTR(CONTAINER_SET_LOG_LEVEL_REQ, pFacility),
+    LWMSG_MEMBER_UINT8(CONTAINER_SET_LOG_LEVEL_REQ, Level),
+    LWMSG_ATTR_RANGE(LW_SM_LOG_LEVEL_ALWAYS, LW_SM_LOG_LEVEL_TRACE),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+static LWMsgTypeSpec gGetLogStateReqSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(CONTAINER_GET_LOG_STATE_REQ),
+    LWMSG_MEMBER_PSTR(CONTAINER_GET_LOG_STATE_REQ, pFacility),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+static LWMsgTypeSpec gGetLogStateResSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(CONTAINER_GET_LOG_STATE_RES),
+    LWMSG_MEMBER_UINT8(CONTAINER_GET_LOG_STATE_RES, type),
+    LWMSG_ATTR_RANGE(LW_SM_LOGGER_NONE, LW_SM_LOGGER_SYSLOG),
+    LWMSG_MEMBER_PSTR(CONTAINER_GET_LOG_STATE_RES, pszTarget),
+    LWMSG_MEMBER_UINT8(CONTAINER_GET_LOG_STATE_RES, Level),
+    LWMSG_ATTR_RANGE(LW_SM_LOG_LEVEL_ALWAYS, LW_SM_LOG_LEVEL_TRACE),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+
 static LWMsgProtocolSpec gContainerProtocol[] =
 {
+    LWMSG_MESSAGE(CONTAINER_RES_VOID, NULL),
     LWMSG_MESSAGE(CONTAINER_RES_STATUS, gContainerStatusSpec),
     LWMSG_MESSAGE(CONTAINER_RES_HANDLE, gContainerHandleOutSpec),
     LWMSG_MESSAGE(CONTAINER_REQ_START, gContainerStartSpec),
     LWMSG_MESSAGE(CONTAINER_REQ_STOP, gContainerHandleInSpec),
     LWMSG_MESSAGE(CONTAINER_REQ_REFRESH, gContainerHandleInSpec),
+    LWMSG_MESSAGE(CONTAINER_REQ_SET_LOG_TARGET, gSetLogInfoSpec),
+    LWMSG_MESSAGE(CONTAINER_REQ_SET_LOG_LEVEL, gSetLogLevelSpec),
+    LWMSG_MESSAGE(CONTAINER_REQ_GET_LOG_STATE, gGetLogStateReqSpec),
+    LWMSG_MESSAGE(CONTAINER_RES_GET_LOG_STATE, gGetLogStateResSpec),
     LWMSG_PROTOCOL_END,
 };
 
@@ -1023,6 +1100,207 @@ error:
 
 static
 DWORD
+ContainerSetLogInfo(
+    PLW_SERVICE_OBJECT pObject,
+    PCSTR pFacility,
+    LW_SM_LOGGER_TYPE type,
+    PCSTR pszTarget
+    )
+{
+    DWORD dwError = 0;
+    PCONTAINER_INSTANCE pInstance = LwSmGetServiceObjectData(pObject);
+    LWMsgCall* pCall = NULL;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    CONTAINER_SET_LOG_INFO_REQ req = {0};
+
+    if (LwInterlockedRead(&pInstance->State) != LW_SERVICE_STATE_RUNNING)
+    {
+        dwError = ERROR_NOT_READY;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    req.pFacility = (PSTR) pFacility;
+    req.type = type;
+    req.pszTarget = (PSTR) pszTarget;
+
+    in.tag = CONTAINER_REQ_SET_LOG_TARGET;
+    in.data = &req;
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pInstance->pContainer->pSession, &pCall));
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_ERROR(dwError);
+
+    switch (out.tag)
+    {
+    default:
+        dwError = ERROR_INTERNAL_ERROR;
+        BAIL_ON_ERROR(dwError);
+    case CONTAINER_RES_STATUS:
+        dwError = ((PCONTAINER_STATUS_RES) pInstance->Out.data)->Error;
+        if (!dwError)
+        {
+            dwError = ERROR_INTERNAL_ERROR;
+        }
+        BAIL_ON_ERROR(dwError);
+    case CONTAINER_RES_VOID:
+        break;
+    }
+
+cleanup:
+
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
+ContainerSetLogLevel(
+    PLW_SERVICE_OBJECT pObject,
+    PCSTR pFacility,
+    LW_SM_LOG_LEVEL Level
+    )
+{
+    DWORD dwError = 0;
+    PCONTAINER_INSTANCE pInstance = LwSmGetServiceObjectData(pObject);
+    LWMsgCall* pCall = NULL;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    CONTAINER_SET_LOG_LEVEL_REQ req = {0};
+
+    if (LwInterlockedRead(&pInstance->State) != LW_SERVICE_STATE_RUNNING)
+    {
+        dwError = ERROR_NOT_READY;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    req.pFacility = (PSTR) pFacility;
+    req.Level = Level;
+
+    in.tag = CONTAINER_REQ_SET_LOG_LEVEL;
+    in.data = &req;
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pInstance->pContainer->pSession, &pCall));
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_ERROR(dwError);
+
+    switch (out.tag)
+    {
+    default:
+        dwError = ERROR_INTERNAL_ERROR;
+        BAIL_ON_ERROR(dwError);
+    case CONTAINER_RES_STATUS:
+        dwError = ((PCONTAINER_STATUS_RES) pInstance->Out.data)->Error;
+        if (!dwError)
+        {
+            dwError = ERROR_INTERNAL_ERROR;
+        }
+        BAIL_ON_ERROR(dwError);
+    case CONTAINER_RES_VOID:
+        break;
+    }
+
+cleanup:
+
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
+ContainerGetLogState(
+    PLW_SERVICE_OBJECT pObject,
+    PCSTR pFacility,
+    PLW_SM_LOGGER_TYPE pType,
+    LW_PSTR* ppTarget,
+    PLW_SM_LOG_LEVEL pLevel
+    )
+{
+    DWORD dwError = 0;
+    PCONTAINER_INSTANCE pInstance = LwSmGetServiceObjectData(pObject);
+    LWMsgCall* pCall = NULL;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    CONTAINER_GET_LOG_STATE_REQ req = {0};
+    PCONTAINER_GET_LOG_STATE_RES pRes = NULL;
+
+    if (LwInterlockedRead(&pInstance->State) != LW_SERVICE_STATE_RUNNING)
+    {
+        dwError = ERROR_NOT_READY;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    req.pFacility = (PSTR) pFacility;
+
+    in.tag = CONTAINER_REQ_GET_LOG_STATE;
+    in.data = &req;
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pInstance->pContainer->pSession, &pCall));
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_ERROR(dwError);
+
+    switch (out.tag)
+    {
+    default:
+        dwError = ERROR_INTERNAL_ERROR;
+        BAIL_ON_ERROR(dwError);
+    case CONTAINER_RES_STATUS:
+        dwError = ((PCONTAINER_STATUS_RES) pInstance->Out.data)->Error;
+        if (!dwError)
+        {
+            dwError = ERROR_INTERNAL_ERROR;
+        }
+        BAIL_ON_ERROR(dwError);
+    case CONTAINER_RES_GET_LOG_STATE:
+        pRes = out.data;
+        *pType = pRes->type;
+        *pLevel = pRes->Level;
+        *ppTarget = pRes->pszTarget;
+        pRes->pszTarget = NULL;
+        break;
+    }
+
+cleanup:
+
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
 ContainerConstruct(
     PLW_SERVICE_OBJECT pObject,
     PCLW_SERVICE_INFO pInfo,
@@ -1076,7 +1354,10 @@ LW_SERVICE_LOADER_VTBL gContainerVtbl =
     .pfnGetStatus = ContainerGetStatus,
     .pfnRefresh = ContainerRefresh,
     .pfnConstruct = ContainerConstruct,
-    .pfnDestruct = ContainerDestruct
+    .pfnDestruct = ContainerDestruct,
+    .pfnSetLogInfo = ContainerSetLogInfo,
+    .pfnSetLogLevel = ContainerSetLogLevel,
+    .pfnGetLogState = ContainerGetLogState
 };
 
 static
@@ -1376,11 +1657,96 @@ error:
 }
 
 static
+LWMsgStatus
+ContainerSrvSetLogTarget(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    PCONTAINER_SET_LOG_INFO_REQ pReq = pIn->data;
+
+    switch (pReq->type)
+    {
+    case LW_SM_LOGGER_NONE:
+        dwError = LwSmSetLogger(pReq->pFacility, NULL, NULL);
+        break;
+    case LW_SM_LOGGER_FILE:
+        dwError = LwSmSetLoggerToPath(pReq->pFacility, pReq->pszTarget);
+        break;
+    case LW_SM_LOGGER_SYSLOG:
+        dwError = LwSmSetLoggerToSyslog(pReq->pFacility);
+        break;
+    }
+
+    pOut->tag = CONTAINER_RES_VOID;
+
+    return dwError ? LWMSG_STATUS_ERROR : LWMSG_STATUS_SUCCESS;
+}
+
+static
+LWMsgStatus
+ContainerSrvSetLogLevel(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    PCONTAINER_SET_LOG_LEVEL_REQ pReq = pIn->data;
+
+    dwError = LwSmSetMaxLogLevel(pReq->pFacility, pReq->Level);
+
+    pOut->tag = CONTAINER_RES_VOID;
+
+    return dwError ? LWMSG_STATUS_ERROR : LWMSG_STATUS_SUCCESS;
+}
+
+static
+LWMsgStatus
+ContainerSrvGetLogState(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    PCONTAINER_GET_LOG_STATE_REQ pReq = pIn->data;
+    PCONTAINER_GET_LOG_STATE_RES pRes = NULL;
+
+    dwError = LwAllocateMemory(sizeof(*pRes), OUT_PPVOID(&pRes));
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmGetLoggerState(pReq->pFacility, &pRes->type, &pRes->pszTarget, &pRes->Level);
+    BAIL_ON_ERROR(dwError);
+
+    pOut->tag = CONTAINER_RES_GET_LOG_STATE;
+    pOut->data = pRes;
+    pRes = NULL;
+
+error:
+
+    if (pRes)
+    {
+        LwFreeMemory(pRes);
+    }
+
+    return dwError ? LWMSG_STATUS_ERROR : LWMSG_STATUS_SUCCESS;
+}
+
+static
 LWMsgDispatchSpec gContainerDispatch[] =
 {
     LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_START, ContainerSrvStart),
     LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_STOP, ContainerSrvStop),
     LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_REFRESH, ContainerSrvRefresh),
+    LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_SET_LOG_TARGET, ContainerSrvSetLogTarget),
+    LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_SET_LOG_LEVEL, ContainerSrvSetLogLevel),
+    LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_GET_LOG_STATE, ContainerSrvGetLogState),
     LWMSG_DISPATCH_END
 };
 

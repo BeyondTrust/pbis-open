@@ -626,6 +626,111 @@ error:
     return dwError;
 }
 
+DWORD
+LwSmTableSetEntryLogInfo(
+    PSM_TABLE_ENTRY pEntry,
+    LW_PCSTR pszFacility,
+    LW_SM_LOGGER_TYPE type,
+    PCSTR pszTarget
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bLocked = FALSE;
+
+    LOCK(bLocked, pEntry->pLock);
+
+    if (!pEntry->bValid)
+    {
+        dwError = LW_ERROR_INVALID_HANDLE;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (!pEntry->pVtbl->pfnSetLogInfo)
+    {
+        dwError = ERROR_NOT_SUPPORTED;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    dwError = pEntry->pVtbl->pfnSetLogInfo(&pEntry->object, pszFacility, type, pszTarget);
+    BAIL_ON_ERROR(dwError);
+
+error:
+
+    UNLOCK(bLocked, pEntry->pLock);
+
+    return dwError;
+}
+
+DWORD
+LwSmTableSetEntryLogLevel(
+    PSM_TABLE_ENTRY pEntry,
+    LW_PCSTR pFacility,
+    LW_SM_LOG_LEVEL level
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bLocked = FALSE;
+
+    LOCK(bLocked, pEntry->pLock);
+
+    if (!pEntry->bValid)
+    {
+        dwError = LW_ERROR_INVALID_HANDLE;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (!pEntry->pVtbl->pfnSetLogLevel)
+    {
+        dwError = ERROR_NOT_SUPPORTED;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    dwError = pEntry->pVtbl->pfnSetLogLevel(&pEntry->object, pFacility, level);
+    BAIL_ON_ERROR(dwError);
+
+error:
+
+    UNLOCK(bLocked, pEntry->pLock);
+
+    return dwError;
+}
+
+DWORD
+LwSmTableGetEntryLogState(
+    PSM_TABLE_ENTRY pEntry,
+    LW_PCSTR pFacility,
+    PLW_SM_LOGGER_TYPE pType,
+    LW_PSTR* ppTarget,
+    PLW_SM_LOG_LEVEL pLevel
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bLocked = FALSE;
+
+    LOCK(bLocked, pEntry->pLock);
+
+    if (!pEntry->bValid)
+    {
+        dwError = LW_ERROR_INVALID_HANDLE;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (!pEntry->pVtbl->pfnGetLogState)
+    {
+        dwError = ERROR_NOT_SUPPORTED;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    dwError = pEntry->pVtbl->pfnGetLogState(&pEntry->object, pFacility, pType, ppTarget, pLevel);
+    BAIL_ON_ERROR(dwError);
+
+error:
+
+    UNLOCK(bLocked, pEntry->pLock);
+
+    return dwError;
+}
+
 static
 DWORD
 LwSmTablePollEntry(
