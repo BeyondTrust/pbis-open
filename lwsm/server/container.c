@@ -667,7 +667,8 @@ CreateContainer(
     LwSmLinkInit(&pContainer->Instances);
     pContainer->Pid = -1;
     pContainer->Refs = 1;
-
+    pContainer->Sockets[0] = -1;
+    pContainer->Sockets[1] = -1;
     pContainer->Key.Gid = pKey->Gid;
     pContainer->Key.Uid = pKey->Uid;
 
