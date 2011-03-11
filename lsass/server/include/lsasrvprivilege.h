@@ -229,6 +229,17 @@ LsaSrvPrivsGetAccountSecurity(
 
 
 DWORD
+LsaSrvPrivsSetAccountSecurity(
+    IN HANDLE hServer,
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
+    IN PLSA_ACCOUNT_CONTEXT pAccountContext,
+    IN SECURITY_INFORMATION SecurityInformation,
+    IN PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescRelative,
+    IN DWORD SecurityDescRelativeSize
+    );
+
+
+DWORD
 LsaSrvPrivsMarkAccountDeleted(
     IN PLSA_ACCOUNT_CONTEXT pAccountContext
     );
