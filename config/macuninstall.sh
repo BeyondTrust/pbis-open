@@ -42,6 +42,11 @@ gather_version_info()
             echo "This is a Snow Leopard (10.6) version of Mac OS X"
             HAVE_LAUNCHCTL_V2=1
             ;;
+        11.*)
+            IS_10_7=1
+            echo "This is a Lion (10.7) version of Mac OS X"
+            HAVE_LAUNCHCTL_V2=1
+            ;;
         *)
             echo "Unsupported Mac OS X version (uname -r = '${_get_os_version}')."
             return 1
@@ -300,7 +305,7 @@ main()
     for plugin in LWIDSPLugIn LWEDSPlugIn LWDSPlugin ; do
         path="/Library/DirectoryServices/PlugIns/${plugin}.dsplug"
         echo "Checking for installed DS plugin (${path})"
-        if [ -h "${path}" ]; then
+        if [ -d "${path}" ]; then
             $RUN rm -r "${path}"
             echo "Removed DS plugin"
         fi
