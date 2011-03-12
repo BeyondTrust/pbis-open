@@ -66,13 +66,7 @@ configure()
 
     mk_check_libraries pthread
 
-    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
-    then
-        mk_output_file OUTPUT=server/lwregd/lwreg.reg INPUT=server/lwregd/lwreg.reg.svcm.in
-    else
-        mk_output_file server/lwregd/lwreg.reg
-    fi
-
+    mk_output_file server/lwregd/lwreg.reg
     mk_output_file shell/lw-edit-reg.sh
 }
 

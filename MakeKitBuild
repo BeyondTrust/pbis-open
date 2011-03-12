@@ -83,22 +83,6 @@ option()
         VAR="LW_BUILD_ID" \
         DEFAULT="" \
         HELP="Official build id"
-
-    case "$LW_DEVICE_PROFILE" in
-        default)
-            _default_USE_SERVICE_CONTAINERS="no"
-            ;;
-        embedded)
-            _default_USE_SERVICE_CONTAINERS="yes"
-            ;;
-    esac
-
-    mk_option \
-        OPTION="use-service-containers" \
-        PARAM="yes|no" \
-        VAR="LW_USE_SERVICE_CONTAINERS" \
-        DEFAULT="$_default_USE_SERVICE_CONTAINERS" \
-        HELP="Use service containers"
 }
 
 configure()
@@ -110,13 +94,6 @@ configure()
     
     mk_msg "configuring $LW_VENDOR $LW_PRODUCT $LW_VERSION"
     mk_msg "using bundled libraries: $LW_BUNDLED"
-
-    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
-    then
-        mk_multiarch_do
-            MK_CPPFLAGS="$MK_CPPFLAGS -DLW_SERVICE_CONTAINERS"
-        mk_multiarch_done
-    fi
 
     for comp in ${LW_ALL_BUNDLED}
     do

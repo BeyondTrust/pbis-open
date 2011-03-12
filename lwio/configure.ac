@@ -868,9 +868,6 @@ AC_CONFIG_FILES([Makefile
         drivers/Makefile
         drivers/iotest/Makefile
         tools/Makefile
-        tools/lwio-refresh/Makefile
-        tools/lwio-get-log-info/Makefile
-        tools/lwio-set-log-level/Makefile
         tools/lwio-tool/Makefile
         tools/lwio-copy/Makefile
         tools/lwio-driver/Makefile

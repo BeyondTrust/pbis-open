@@ -47,11 +47,6 @@ static main_entry entry_list[] =
     {"account-rights", account_rights_main},
     {"join", JoinLeaveMain},
     {"leave", JoinLeaveMain},
-#ifndef LW_SERVICE_CONTAINERS
-    {"refresh-configuration", refresh_configuration_main},
-    {"get-log-info", get_log_info_main},
-    {"set-log-level", set_log_level_main},
-#endif
     {NULL, NULL}
 };
 

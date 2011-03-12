@@ -288,15 +288,7 @@ configure()
     mk_output_file server/store/dsapi/dirdefs.h
     mk_output_file interop/gssntlm/mech
 
-    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
-    then
-        mk_output_file \
-            INPUT=etc/lsassd.reg.svcm.in \
-            OUTPUT=etc/lsassd.reg
-    else
-        mk_output_file etc/lsassd.reg
-    fi
-
+    mk_output_file etc/lsassd.reg
     mk_output_file etc/privileges.reg
     mk_output_file etc/accounts.reg
 }

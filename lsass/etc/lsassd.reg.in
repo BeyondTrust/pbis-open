@@ -6,11 +6,11 @@
     doc = ""
 }
 "Path" = {
-    default = "@SBINDIR@/lsassd"
+    default = "@LIBDIR@/lw-svcm/lsass@MOD_EXT@"
     doc = ""
 }
 "Arguments" = {
-    default = "@SBINDIR@/lsassd --syslog"
+    default = ""
     doc = ""
 }
 "Environment" = {
@@ -26,7 +26,7 @@
     doc = ""
 }
 "Type" = {
-    default = dword:00000001
+    default = dword:00000002
     doc = ""
 }
 "Autostart" = {

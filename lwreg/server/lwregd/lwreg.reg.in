@@ -6,11 +6,11 @@
     doc = "" 
 }
 "Path" = { 
-    default = "@SBINDIR@/lwregd" 
+    default = "@LIBDIR@/lw-svcm/lwreg@MOD_EXT@" 
     doc = "" 
 }
 "Arguments" = { 
-    default = "@SBINDIR@/lwregd" 
+    default = "" 
     doc = "" 
 }
 "Environment" = { 
@@ -22,6 +22,6 @@
     doc = "" 
 }
 "Type" = { 
-    default = dword:00000001 
+    default = dword:00000002
     doc = "" 
 }

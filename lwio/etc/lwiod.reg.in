@@ -6,11 +6,11 @@
     doc = "" 
 }
 "Path" = { 
-    default = "@SBINDIR@/lwiod" 
+    default = "@LIBDIR@/lw-svcm/lwio@MOD_EXT@" 
     doc = "" 
 }
 "Arguments" = { 
-    default = "@SBINDIR@/lwiod --syslog" 
+    default = "" 
     doc = "" 
 }
 "Environment" = { 
@@ -22,7 +22,7 @@
     doc = "" 
 }
 "Type" = { 
-    default = dword:00000001 
+    default = dword:00000002
     doc = "" 
 }
 "Autostart" = {

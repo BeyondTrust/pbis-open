@@ -13,7 +13,6 @@ MODE_NAMES = \
 	find-group-by-name \
 	find-user-by-id \
 	find-user-by-name \
-	get-log-info \
 	get-metrics \
 	get-status \
 	list-groups-for-user \
@@ -21,9 +20,7 @@ MODE_NAMES = \
 	ypmatch \
 	mod-group \
 	mod-user \
-	refresh-configuration \
 	set-default-domain \
-	set-log-level \
 	set-machine-sid \
 	set-machine-name \
 	find-objects \
@@ -51,7 +48,6 @@ lw_lsa_SOURCES = \
 	find_group_by_name_main.c \
 	find_user_by_id_main.c \
 	find_user_by_name_main.c \
-	get_log_info_main.c \
 	get_metrics_main.c \
 	get_status_main.c \
 	list_groups_for_user_main.c \
@@ -61,7 +57,6 @@ lw_lsa_SOURCES = \
 	mod_user_main.c \
 	refresh_configuration_main.c \
 	set_default_domain_main.c \
-	set_log_level_main.c \
 	set_machine_sid_main.c \
 	set_machine_name_main.c \
 	trace_info_main.c \

@@ -2,15 +2,4 @@ SUBDIRS="\
         get_dc_info        \
         get_dc_list        \
         get_dc_time        \
-        export_dc_cache \
-        set_log_level \
-        get_log_info"
-
-configure()
-{
-    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
-    then
-        mk_skip_subdir set_log_level
-        mk_skip_subdir get_log_info
-    fi
-}
+        export_dc_cache"

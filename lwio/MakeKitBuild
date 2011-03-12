@@ -174,15 +174,7 @@ configure()
         mk_skip_subdir fuse
     fi
 
-    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
-    then
-        mk_output_file \
-            INPUT="etc/lwiod.reg.svcm.in" \
-            OUTPUT="etc/lwiod.reg"
-    else
-        mk_output_file "etc/lwiod.reg"
-    fi
-
+    mk_output_file etc/lwiod.reg
     mk_output_file etc/rdr.reg
     mk_output_file etc/npfs.reg
     mk_output_file etc/srv.reg

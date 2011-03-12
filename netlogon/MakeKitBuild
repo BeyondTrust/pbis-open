@@ -17,15 +17,6 @@ configure()
 
     mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
    
-    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
-    then
-        mk_output_file \
-            INPUT="etc/netlogond.reg.svcm.in" \
-            OUTPUT="etc/netlogond.reg"
-    else
-        mk_output_file "etc/netlogond.reg"
-    fi
-
     mk_check_headers \
         FAIL=yes \
         reg/lwreg.h lwadvapi.h reg/regutil.h ldap.h
@@ -55,4 +46,6 @@ configure()
         res_init res_query res_ninit res_ndestroy
 
     lw_check_pthread_once_init
+
+    mk_output_file "etc/netlogond.reg"
 }

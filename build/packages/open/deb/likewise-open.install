@@ -12,6 +12,7 @@ __PKG_PREFIX/lib*/security/*.so
 __PKG_PREFIX/lib*/engines/*.so
 __PKG_PREFIX/lib*/krb5/plugins/preauth/*.so
 __PKG_PREFIX/lib*/sasl2/lib*
+__PKG_PREFIX/lib*/lw-svcm/*.so
 __PKG_PREFIX/ssl
 __PKG_PREFIX/apache/2.0/*.so
 __PKG_PREFIX/apache/2.2/*.so

@@ -38,7 +38,6 @@
 
 #include "includes.h"
 
-#ifdef LW_SERVICE_CONTAINERS
 static SM_BOOTSTRAP_SERVICE gRegistryService =
 {
     .pszName = "lwreg",
@@ -50,20 +49,6 @@ static SM_BOOTSTRAP_SERVICE gRegistryService =
         NULL
     }
 };
-#else
-static SM_BOOTSTRAP_SERVICE gRegistryService =
-{
-    .pszName = "lwreg",
-    .type = LW_SERVICE_TYPE_EXECUTABLE,
-    .pszPath = SBINDIR "/lwregd",
-    .ppszArgs =
-    {
-        SBINDIR "/lwregd",
-        "--syslog",
-        NULL
-    }
-};
-#endif
 
 static PSM_BOOTSTRAP_SERVICE gBootstrapServices[] =
 {

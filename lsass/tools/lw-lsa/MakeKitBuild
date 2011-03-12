@@ -66,22 +66,6 @@ make()
 	common.c \
 	main.c"
 
-    STANDALONE_COMMANDS="\
-	get-log-info \
-	set-log-level \
-	refresh-configuration"
-    
-    LSA_STANDALONE_SOURCES="\
-	refresh_configuration_main.c \
-	set_log_level_main.c \
-	get_log_info_main.c"
-
-    if [ "$LW_USE_SERVICE_CONTAINERS" = "no" ]
-    then
-        COMMAND_NAMES="${COMMAND_NAMES} ${STANDALONE_COMMANDS}"
-        LSA_SOURCES="${LSA_SOURCES} ${LSA_STANDALONE_SOURCES}"
-    fi
-
     mk_program \
 	PROGRAM=lw-lsa \
 	SOURCES="$LSA_SOURCES" \

@@ -241,6 +241,7 @@ AC_DEFINE_UNQUOTED([PREFIXDIR], ["$prefix"], [Prefix directory])
 AS_AC_EXPAND(netlogonconfdir, ["$sysconfdir"])
 AS_AC_EXPAND(netlogonregdir, ["$datadir/config"])
 AS_AC_EXPAND(SBINDIR, ["${sbindir}"])
+AS_AC_EXPAND(LIBDIR, ["${libdir}"])
 
 AC_DEFINE_UNQUOTED([LWNET_CONFIG_DIR], ["$netlogonconfdir"], [Location of netlogon configuration files])
 
@@ -416,8 +417,6 @@ AC_CONFIG_FILES([Makefile
                  tools/get_dc_list/Makefile
                  tools/get_dc_time/Makefile
                  tools/export_dc_cache/Makefile
-                 tools/set_log_level/Makefile
-                 tools/get_log_info/Makefile
                  scripts/Makefile]
 )
 AC_OUTPUT
