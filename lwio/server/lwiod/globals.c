@@ -51,15 +51,8 @@
 SMBSERVERINFO gLwioServerInfo =
 {
     .pLock = NULL,                              /* Lock              */
-    .dwStartAsDaemon = 0,                       /* Start as daemon   */
-    .logTarget = LWIO_LOG_TARGET_DISABLED,      /* log disabled      */
-    .maxAllowedLogLevel = LWIO_LOG_LEVEL_ERROR, /* Max Log Level     */
-    .bEnableDebugLogs = FALSE,                  /* Enable debug logs */
-    .szLogFilePath = "",                        /* Log file path     */
     .szCachePath = "",                          /* Cache path        */
     .szPrefixPath = "",                         /* Prefix path       */
-    .bProcessShouldExit = 0,                    /* Process exit flag */
-    .dwExitCode = 0                             /* Process exit code */
 };
 
 PSMBSERVERINFO gpLwioServerInfo = &gLwioServerInfo;

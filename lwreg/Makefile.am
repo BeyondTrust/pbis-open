@@ -6,7 +6,6 @@ SUBDIRS=\
     ipc       \
     common    \
     client    \
-    logging_r \
     parse     \
     server    \
     libedit   \

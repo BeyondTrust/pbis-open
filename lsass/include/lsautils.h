@@ -118,21 +118,6 @@
  * Logging
  */
 
-typedef LW_VOID (*PFN_LSA_LOG_MESSAGE)(
-    LW_HANDLE hLog,
-    LsaLogLevel logLevel,
-    LW_PCSTR pszFormat,
-    va_list msgList
-    );
-
-extern pthread_mutex_t gLogLock;
-
-#define LSA_LOCK_LOGGER   pthread_mutex_lock(&gLogLock)
-#define LSA_UNLOCK_LOGGER pthread_mutex_unlock(&gLogLock)
-
-extern HANDLE              ghLog;
-extern PFN_LSA_LOG_MESSAGE gpfnLogger;
-
 #define LSA_SAFE_LOG_STRING(x) \
     ( (x) ? (x) : "<null>" )
 
@@ -951,50 +936,6 @@ LsaDnsFreeFQDNList(
 VOID
 LsaDnsFreeFQDN(
     PDNS_FQDN pFQDN
-    );
-
-DWORD
-LsaInitLogging(
-    PCSTR         pszProgramName,
-    LsaLogTarget  logTarget,
-    LsaLogLevel   maxAllowedLogLevel,
-    PCSTR         pszPath
-    );
-
-DWORD
-LsaLogGetInfo(
-    PLSA_LOG_INFO* ppLogInfo
-    );
-
-DWORD
-LsaLogSetInfo(
-    PLSA_LOG_INFO pLogInfo
-    );
-
-VOID
-LsaLogMessage(
-    PFN_LSA_LOG_MESSAGE pfnLogger,
-    HANDLE hLog,
-    LsaLogLevel logLevel,
-    PCSTR  pszFormat,
-    ...
-    );
-
-void
-lsass_vsyslog(
-    int priority,
-    const char *format,
-    va_list ap
-    );
-
-DWORD
-LsaShutdownLogging(
-    VOID
-    );
-
-DWORD
-LsaValidateLogLevel(
-    DWORD dwLogLevel
     );
 
 DWORD

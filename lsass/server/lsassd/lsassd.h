@@ -55,7 +55,6 @@
 #include "lsautils.h"
 #include "lsaipc.h"
 #include "ntlmipc.h"
-#include "lsalog_r.h"
 #include "lsaserver.h"
 #include "lsasrvapi.h"
 

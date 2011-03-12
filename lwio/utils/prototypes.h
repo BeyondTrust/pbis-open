@@ -47,91 +47,11 @@
  *
  */
 
-// consolelog.c
-
-DWORD
-LwioOpenConsoleLog(
-    LWIO_LOG_LEVEL maxAllowedLogLevel,
-    PHANDLE     phLog
-    );
-
-VOID
-SMBLogToConsole(
-    HANDLE      hLog,
-    LWIO_LOG_LEVEL dwLogLevel,
-    PCSTR       pszFormat,
-    va_list     msgList
-    );
-
-DWORD
-LwioCloseConsoleLog(
-    HANDLE hLog
-    );
-
-VOID
-SMBFreeConsoleLogInfo(
-    PSMB_CONSOLE_LOG pFileLog
-    );
-
-// filelog.c
-
-DWORD
-LwioOpenFileLog(
-    PCSTR       pszFilePath,
-    LWIO_LOG_LEVEL maxAllowedLogLevel,
-    PHANDLE     phLog
-    );
-
-VOID
-SMBLogToFile(
-    HANDLE      hLog,
-    LWIO_LOG_LEVEL dwLogLevel,
-    PCSTR       pszFormat,
-    va_list     msgList
-    );
-
-DWORD
-LwioGetFileLogInfo(
-    HANDLE hLog,
-    PLWIO_LOG_INFO* ppLogInfo
-    );
-
-DWORD
-LwioCloseFileLog(
-    HANDLE hLog
-    );
-
-VOID
-SMBFreeFileLogInfo(
-    PSMB_FILE_LOG pFileLog
-    );
-
-// logger.c
-
-DWORD
-LwioSetupLogging(
-    HANDLE              hLog,
-    LWIO_LOG_LEVEL         maxAllowedLogLevel,
-    PFN_LWIO_LOG_MESSAGE pfnLogger
-    );
-
-VOID
-LwioResetLogging(
-    VOID
-    );
-
 // sysfuncs.c
 
 #if !HAVE_DECL_ISBLANK
 int isblank(int c);
 #endif
-
-void
-lsmb_vsyslog(
-    int priority,
-    const char *format,
-    va_list ap
-    );
 
 #if defined(__LWI_AIX__) || defined(__LWI_HP_UX__)
 

@@ -51,22 +51,10 @@
 typedef struct {
     /* MT safety */
     pthread_mutex_t lock;
-    /* Should start as daemon */
-    DWORD dwStartAsDaemon;
-    /* where are we logging */
-    LsaLogTarget logTarget;
-    /* How much logging do you want? */
-    LsaLogLevel maxAllowedLogLevel;
-    /* log file path */
-    char szLogFilePath[PATH_MAX + 1];
     /* Cache path */
     char szCachePath[PATH_MAX+1];
     /* Prefix path */
     char szPrefixPath[PATH_MAX+1];
-    /* Process termination flag */
-    BOOLEAN  bProcessShouldExit;
-    /* Process Exit Code */
-    DWORD dwExitCode;
 } LSASERVERINFO, *PLSASERVERINFO;
 
 #endif /* __STRUCTS_H__ */

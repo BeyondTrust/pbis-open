@@ -47,18 +47,6 @@
 #ifndef __SERVERMAIN_H__
 #define __SERVERMAIN_H__
 
-int
-main(
-    int argc,
-    char* argv[]
-    );
-
-int
-lsassd_main(
-    int argc,
-    char* argv[]
-    );
-
 DWORD
 LsaSrvStartupPreCheck(
     VOID
@@ -66,28 +54,6 @@ LsaSrvStartupPreCheck(
 
 DWORD
 LsaSrvSetDefaults(
-    VOID
-    );
-
-DWORD
-LsaSrvParseArgs(
-    int argc,
-    PSTR argv[],
-    PLSASERVERINFO pLsaServerInfo
-    );
-
-PSTR
-LsaGetProgramName(
-    PSTR pszFullProgramPath
-    );
-
-VOID
-ShowUsage(
-    PCSTR pszProgramName
-    );
-
-VOID
-LsaSrvExitHandler(
     VOID
     );
 
@@ -101,26 +67,6 @@ LsaInitCacheFolders(
     VOID
     );
 
-BOOLEAN
-LsaSrvShouldStartAsDaemon(
-    VOID
-    );
-
-DWORD
-LsaSrvStartAsDaemon(
-    VOID
-    );
-
-DWORD
-LsaSrvGetProcessExitCode(
-    PDWORD pdwExitCode
-    );
-
-VOID
-LsaSrvSetProcessExitCode(
-    DWORD dwExitCode
-    );
-
 DWORD
 LsaSrvGetCachePath(
     PSTR* ppszPath
@@ -129,28 +75,6 @@ LsaSrvGetCachePath(
 DWORD
 LsaSrvGetPrefixPath(
     PSTR* ppszPath
-    );
-
-DWORD
-LsaSrvInitLogging(
-    PCSTR pszProgramName,
-    LsaLogTarget* pTarget,
-    PHANDLE phLog
-    );
-
-DWORD
-LsaBlockSelectedSignals(
-    VOID
-    );
-
-BOOLEAN
-LsaSrvShouldProcessExit(
-    VOID
-    );
-
-VOID
-LsaSrvSetProcessToExit(
-    BOOLEAN bExit
     );
 
 VOID

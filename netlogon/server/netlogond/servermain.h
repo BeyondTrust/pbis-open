@@ -55,25 +55,10 @@
 typedef struct {
     /* MT safety */
     pthread_mutex_t lock;
-    /* Should start as daemon */
-    DWORD dwStartAsDaemon;
-    /* Log to syslog if this is true or starting as a daemon without a log
-     * file. */
-    BOOLEAN bLogToSyslog;
-    /* How much logging do you want? */
-    DWORD dwLogLevel;
-    /* Enable debug logs */
-    BOOLEAN bEnableDebugLogs;
-    /* log file path */
-    char szLogFilePath[PATH_MAX + 1];
     /* Cache path */
     char szCachePath[PATH_MAX+1];
     /* Prefix path */
     char szPrefixPath[PATH_MAX+1];
-    /* Process termination flag */
-    BOOLEAN  bProcessShouldExit;
-    /* Process Exit Code */
-    DWORD dwExitCode;
 } LWNETSERVERINFO, *PLWNETSERVERINFO;
 
 int
@@ -93,28 +78,6 @@ LWNetSrvSetDefaults(
     );
 
 DWORD
-LWNetSrvParseArgs(
-    int argc,
-    PCSTR argv[],
-    PLWNETSERVERINFO pLWNetServerInfo
-    );
-
-PCSTR
-LWNetGetProgramName(
-    PCSTR pszFullProgramPath
-    );
-
-VOID
-ShowUsage(
-    PCSTR pszProgramName
-    );
-
-VOID
-LWNetSrvExitHandler(
-    VOID
-    );
-
-DWORD
 LWNetSrvInitialize(
     VOID
     );
@@ -122,26 +85,6 @@ LWNetSrvInitialize(
 DWORD
 LWNetInitCacheFolders(
     VOID
-    );
-
-BOOLEAN
-LWNetSrvShouldStartAsDaemon(
-    VOID
-    );
-
-DWORD
-LWNetSrvStartAsDaemon(
-    VOID
-    );
-
-DWORD
-LWNetSrvGetProcessExitCode(
-    PDWORD pdwExitCode
-    );
-
-VOID
-LWNetSrvSetProcessExitCode(
-    DWORD dwExitCode
     );
 
 DWORD
@@ -152,41 +95,6 @@ LWNetSrvGetCachePath(
 DWORD
 LWNetSrvGetPrefixPath(
     PSTR* ppszPath
-    );
-
-VOID
-LWNetSrvCreatePIDFile(
-    VOID
-    );
-
-pid_t
-LWNetSrvGetPidFromPidFile(
-    VOID
-    );
-
-DWORD
-LWNetSrvInitLogging(
-    PCSTR pszProgramName
-    );
-
-VOID
-LWNetClearAllSignals(
-    VOID
-    );
-
-DWORD
-LWNetBlockSelectedSignals(
-    VOID
-    );
-
-BOOLEAN
-LWNetSrvShouldProcessExit(
-    VOID
-    );
-
-VOID
-LWNetSrvSetProcessToExit(
-    BOOLEAN bExit
     );
 
 VOID

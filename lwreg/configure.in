@@ -547,7 +547,6 @@ AC_CONFIG_FILES([Makefile
                  shellutil/Makefile
                  shell/Makefile
                  shell/lw-edit-reg.sh
-                 logging_r/Makefile
                  common/Makefile])
 
 AC_OUTPUT

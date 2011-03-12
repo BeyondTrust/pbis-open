@@ -51,10 +51,6 @@
 REGSERVERINFO gLwregServerInfo =
 {
     PTHREAD_MUTEX_INITIALIZER,  /* Lock              */
-    0,                          /* Start as daemon   */
-    REG_LOG_TARGET_CONSOLE,     /* log disabled      */
-    REG_LOG_LEVEL_ERROR,        /* Max Log Level     */
-    "",                         /* Log file path     */
     "",                         /* Cache path        */
     "",                         /* Prefix path       */
     0,                          /* Process exit flag */

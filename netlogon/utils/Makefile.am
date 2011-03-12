@@ -9,7 +9,6 @@ liblwnetutils_la_SOURCES = \
 	lwnet-dns.c         \
 	lwnet-futils.c      \
 	lwnet-info.c        \
-	lwnet-logger.c      \
 	lwnet-mem.c         \
 	lwnet-paths.c       \
 	lwnet-stack.c       \

@@ -50,11 +50,4 @@
 #ifndef __EXTERNS_H__
 #define __EXTERNS_H__
 
-extern HANDLE               ghLwioLog;
-extern LWIO_LOG_LEVEL       gLwioLsaMaxLogLevel;
-extern LWIO_LOG_TARGET      gLWIO_LOG_TARGET;
-extern PFN_LWIO_LOG_MESSAGE gpfnLwioLogger;
-extern BOOLEAN              gbLwioLogDoNanoSecondTime;
-extern CHAR                 gszLwioLogTimeStampPrefix[_LWIO_LOG_TIME_STAMP_PREFIX_SIZE];
-
 #endif /* __EXTERNS_H__ */

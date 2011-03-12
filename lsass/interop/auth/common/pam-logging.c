@@ -106,30 +106,30 @@ LsaPamLogMessage(
        {
            case LSA_PAM_LOG_LEVEL_ALWAYS:
            {
-               lsass_vsyslog(LOG_INFO, pszFormat, argp);
+               LW_RTL_LOG_AT_LEVEL(LW_RTL_LOG_LEVEL_INFO, "pam-lsass", pszFormat, argp);
                break;
            }
            case LSA_PAM_LOG_LEVEL_ERROR:
            {
-               lsass_vsyslog(LOG_ERR, pszFormat, argp);
+               LW_RTL_LOG_AT_LEVEL(LW_RTL_LOG_LEVEL_ERROR, "pam-lsass", pszFormat, argp);
                break;
            }
 
            case LSA_PAM_LOG_LEVEL_WARNING:
            {
-               lsass_vsyslog(LOG_WARNING, pszFormat, argp);
+               LW_RTL_LOG_AT_LEVEL(LW_RTL_LOG_LEVEL_WARNING, "pam-lsass", pszFormat, argp);
                break;
            }
 
            case LSA_PAM_LOG_LEVEL_INFO:
            {
-               lsass_vsyslog(LOG_INFO, pszFormat, argp);
+               LW_RTL_LOG_AT_LEVEL(LW_RTL_LOG_LEVEL_INFO, "pam-lsass", pszFormat, argp);
                break;
            }
 
            default:
            {
-               lsass_vsyslog(LOG_INFO, pszFormat, argp);
+               LW_RTL_LOG_AT_LEVEL(LW_RTL_LOG_LEVEL_VERBOSE, "pam-lsass", pszFormat, argp);
                break;
            }
        }

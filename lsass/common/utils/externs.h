@@ -50,19 +50,6 @@
 #ifndef __EXTERNS_H__
 #define __EXTERNS_H__
 
-#define LW_ERROR_TAG   "ERROR"
-#define LSA_WARN_TAG    "WARNING"
-#define LSA_INFO_TAG    "INFO"
-#define LSA_VERBOSE_TAG "VERBOSE"
-#define LSA_DEBUG_TAG   "DEBUG"
-#define LSA_TRACE_TAG   "TRACE"
-
-#define LSA_LOG_TIME_FORMAT "%Y%m%d%H%M%S"
-
-extern HANDLE              ghLog;
-extern PFN_LSA_LOG_MESSAGE gpfnLogger;
-extern LsaLogTarget        gLogTarget;
-extern LsaLogLevel         gLogLevel;
 extern PLSA_BIT_VECTOR     gpTraceFlags;
 extern CHAR                gchDomainSeparator;
 

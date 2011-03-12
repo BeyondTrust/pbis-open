@@ -50,15 +50,8 @@
 LWNETSERVERINFO gLwnetServerInfo =
 {
     PTHREAD_MUTEX_INITIALIZER,  /* Lock              */
-    0,                          /* Start as daemon   */
-    FALSE,                      /* Log to syslog */
-    LWNET_LOG_LEVEL_ERROR,      /* Max Log Level     */
-    FALSE,                      /* Enable debug logs */
-    "",                         /* Log file path     */
     "",                         /* Cache path        */
     "",                         /* Prefix path       */
-    0,                          /* Process exit flag */
-    0                           /* Process exit code */
 };
 
 PLWNETSERVERINFO gpLwnetServerInfo = &gLwnetServerInfo;

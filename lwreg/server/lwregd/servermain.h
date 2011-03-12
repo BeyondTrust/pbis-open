@@ -67,21 +67,6 @@ RegSrvParseArgs(
     PREGSERVERINFO pRegServerInfo
     );
 
-PSTR
-RegGetProgramName(
-    PSTR pszFullProgramPath
-    );
-
-VOID
-ShowUsage(
-    PCSTR pszProgramName
-    );
-
-VOID
-RegSrvExitHandler(
-    VOID
-    );
-
 DWORD
 RegSrvInitialize(
     VOID
@@ -92,26 +77,6 @@ RegInitCacheFolders(
     VOID
     );
 
-BOOLEAN
-RegSrvShouldStartAsDaemon(
-    VOID
-    );
-
-DWORD
-RegSrvStartAsDaemon(
-    VOID
-    );
-
-DWORD
-RegSrvGetProcessExitCode(
-    PDWORD pdwExitCode
-    );
-
-VOID
-RegSrvSetProcessExitCode(
-    DWORD dwExitCode
-    );
-
 DWORD
 RegSrvGetCachePath(
     PSTR* ppszPath
@@ -120,38 +85,6 @@ RegSrvGetCachePath(
 DWORD
 RegSrvGetPrefixPath(
     PSTR* ppszPath
-    );
-
-VOID
-RegSrvCreatePIDFile(
-    VOID
-    );
-
-pid_t
-RegSrvGetPidFromPidFile(
-    VOID
-    );
-
-DWORD
-RegSrvInitLogging(
-    PCSTR pszProgramName,
-    RegLogTarget* pTarget,
-    PHANDLE phLog
-    );
-
-DWORD
-RegBlockSelectedSignals(
-    VOID
-    );
-
-BOOLEAN
-RegSrvShouldProcessExit(
-    VOID
-    );
-
-VOID
-RegSrvSetProcessToExit(
-    BOOLEAN bExit
     );
 
 VOID

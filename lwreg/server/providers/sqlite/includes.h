@@ -71,7 +71,6 @@
 #include "regserver.h"
 #include "regipc.h"
 #include "regprovspi.h"
-#include "reglog_r.h"
 
 #include "structs.h"
 #include "sqldb_p.h"

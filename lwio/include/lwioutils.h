@@ -1025,55 +1025,6 @@ LwioGetHostInfo(
     PSTR* ppszHostname
     );
 
-DWORD
-LwioInitLogging(
-    PCSTR         pszProgramName,
-    LWIO_LOG_TARGET  logTarget,
-    LWIO_LOG_LEVEL   maxAllowedLogLevel,
-    PCSTR         pszPath
-    );
-
-PCSTR
-LwioLogLevelGetLabel(
-    LWIO_LOG_LEVEL logLevel
-    );
-
-DWORD
-LwioLogGetInfo(
-    PLWIO_LOG_INFO* ppLogInfo
-    );
-
-DWORD
-LwioLogSetInfo(
-    PLWIO_LOG_INFO pLogInfo
-    );
-
-VOID
-LwioLogMessage(
-    PFN_LWIO_LOG_MESSAGE pfnLogger,
-    HANDLE hLog,
-    LWIO_LOG_LEVEL logLevel,
-    PCSTR  pszFormat,
-    ...
-    );
-
-void
-lsmb_vsyslog(
-    int priority,
-    const char *format,
-    va_list ap
-    );
-
-DWORD
-LwioValidateLogLevel(
-    DWORD dwLogLevel
-    );
-
-DWORD
-LwioShutdownLogging(
-    VOID
-    );
-
 #endif /* __SMBUTILS_H__ */
 
 

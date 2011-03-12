@@ -236,35 +236,6 @@ typedef enum
     REG_LOG_LEVEL_TRACE = LW_RTL_LOG_LEVEL_TRACE
 } RegLogLevel;
 
-typedef enum
-{
-    REG_LOG_TARGET_DISABLED = 0,
-    REG_LOG_TARGET_CONSOLE,
-    REG_LOG_TARGET_FILE,
-    REG_LOG_TARGET_SYSLOG
-} RegLogTarget;
-
-typedef struct __REG_LOG_INFO {
-    RegLogLevel  maxAllowedLogLevel;
-    RegLogTarget logTarget;
-    PSTR         pszPath;
-} REG_LOG_INFO, *PREG_LOG_INFO;
-
-typedef VOID (*PFN_REG_LOG_MESSAGE)(
-                    HANDLE      hLog,
-                    RegLogLevel logLevel,
-                    PCSTR       pszMessage,
-                    va_list     msgList
-                    );
-
-extern pthread_mutex_t gLogLock;
-
-#define REG_LOCK_LOGGER   pthread_mutex_lock(&gLogLock)
-#define REG_UNLOCK_LOGGER pthread_mutex_unlock(&gLogLock)
-
-extern HANDLE              ghRegLog;
-extern PFN_REG_LOG_MESSAGE gpfnRegLogger;
-
 #define REG_SAFE_LOG_STRING(x) ( (x) ? (x) : "<null>" )
 
 #define _REG_LOG_AT(Level, ...) LW_RTL_LOG_AT_LEVEL(Level, "lwreg", __VA_ARGS__)
@@ -533,37 +504,8 @@ RegGetMatchingFilePathsInFolder(
     );
 
 DWORD
-RegInitLogging(
-    PCSTR         pszProgramName,
-    RegLogTarget  logTarget,
-    RegLogLevel   maxAllowedLogLevel,
-    PCSTR         pszPath
-    );
-
-DWORD
-RegLogGetInfo(
-    PREG_LOG_INFO* ppLogInfo
-    );
-
-void
-reg_vsyslog(
-    int priority,
-    const char *format,
-    va_list ap
-    );
-
-DWORD
 RegShutdownLogging(
     VOID
-    );
-
-VOID
-RegLogMessage(
-    PFN_REG_LOG_MESSAGE pfnLogger,
-    HANDLE hLog,
-    RegLogLevel logLevel,
-    PCSTR  pszFormat,
-    ...
     );
 
 DWORD
@@ -898,43 +840,11 @@ RegStrchr(
     wchar16_t wch
     );
 
-DWORD
-RegBuildLogInfo(
-    RegLogLevel    maxAllowedLogLevel,
-    RegLogTarget   logTarget,
-    PCSTR          pszPath,
-    PREG_LOG_INFO* ppLogInfo
-    );
-
-DWORD
-RegSetLogLevel(
-    HANDLE      hRegConnection,
-    RegLogLevel logLevel
-    );
-
-DWORD
-RegGetLogInfo(
-    HANDLE         hRegConnection,
-    PREG_LOG_INFO* ppLogInfo
-    );
-
-DWORD
-RegSetLogInfo(
-    HANDLE        hRegConnection,
-    PREG_LOG_INFO pLogInfo
-    );
-
-VOID
-RegFreeLogInfo(
-    PREG_LOG_INFO pLogInfo
-    );
-
 LW_DWORD
 RegGetErrorMessageForLoggingEvent(
     LW_DWORD dwError,
     LW_PSTR* ppszErrorMsg
     );
-
 
 DWORD
 RegWC16StringArraysAllocateFromCStringArraysWithNullTerminator(

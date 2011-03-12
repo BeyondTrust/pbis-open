@@ -1,15 +1,10 @@
 make()
 {
     REGUTILS_SOURCES="\
-        consolelog.c \
-        filelog.c \
         fileutils.c \
         globals.c \
-        reglogger.c \
-        regloginfo.c \
         regmem.c \
         sysfuncs.c \
-        syslog.c \
         regtime.c \
         dlinkedlist.c \
         hashtable.c \

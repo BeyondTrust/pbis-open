@@ -720,41 +720,6 @@ error:
 }
 
 static LWMsgStatus
-LsaSrvIpcRefreshConfiguration(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    void* data
-    )
-{
-    DWORD dwError = 0;
-    PLSA_IPC_ERROR pError = NULL;
-
-    dwError = LsaSrvRefreshConfiguration(LsaSrvIpcGetSessionData(pCall));
-
-    if (!dwError)
-    {
-        pOut->tag = LSA_R_REFRESH_CONFIGURATION_SUCCESS;
-        pOut->data = NULL;
-    }
-    else
-    {
-        dwError = LsaSrvIpcCreateError(dwError, NULL, &pError);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        pOut->tag = LSA_R_REFRESH_CONFIGURATION_FAILURE;
-        pOut->data = pError;
-    }
-
-cleanup:
-    return MAP_LW_ERROR_IPC(dwError);
-
-error:
-    goto cleanup;
-}
-
-
-static LWMsgStatus
 LsaSrvIpcAddGroup2(
     LWMsgCall* pCall,
     const LWMsgParams* pIn,
@@ -869,82 +834,6 @@ error:
 }
 
 #define ZERO_STRUCT(_s_) memset((char*)&(_s_),0,sizeof(_s_))
-
-static LWMsgStatus
-LsaSrvIpcSetLogInfo(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    void* data
-    )
-{
-    DWORD dwError = 0;
-    PLSA_IPC_ERROR pError = NULL;
-
-    dwError = LsaSrvSetLogInfo(LsaSrvIpcGetSessionData(pCall),
-                                (PLSA_LOG_INFO)pIn->data);
-
-    if (!dwError)
-    {
-        pOut->tag = LSA_R_SET_LOGINFO_SUCCESS;
-        pOut->data = NULL;
-    }
-    else
-    {
-        dwError = LsaSrvIpcCreateError(dwError, NULL, &pError);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        pOut->tag = LSA_R_SET_LOGINFO_FAILURE;
-        pOut->data = pError;
-    }
-
-cleanup:
-    return MAP_LW_ERROR_IPC(dwError);
-
-error:
-    goto cleanup;
-}
-
-static LWMsgStatus
-LsaSrvIpcGetLogInfo(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    void* data
-    )
-{
-    DWORD dwError = 0;
-    PLSA_LOG_INFO pLogInfo = NULL;
-    PLSA_IPC_ERROR pError = NULL;
-
-    dwError = LsaSrvGetLogInfo(LsaSrvIpcGetSessionData(pCall),
-                               &pLogInfo);
-
-    if (!dwError)
-    {
-        pOut->tag = LSA_R_GET_LOGINFO_SUCCESS;
-        pOut->data = pLogInfo;
-        pLogInfo = NULL;
-    }
-    else
-    {
-        dwError = LsaSrvIpcCreateError(dwError, NULL, &pError);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        pOut->tag = LSA_R_GET_LOGINFO_FAILURE;
-        pOut->data = pError;
-    }
-
-cleanup:
-    if (pLogInfo)
-    {
-        LsaFreeLogInfo(pLogInfo);
-    }
-    return MAP_LW_ERROR_IPC(dwError);
-
-error:
-    goto cleanup;
-}
 
 static LWMsgStatus
 LsaSrvIpcGetMetrics(
@@ -2062,10 +1951,7 @@ static LWMsgDispatchSpec gMessageHandlers[] =
     LWMSG_DISPATCH_BLOCK(LSA_Q_OPEN_SESSION, LsaSrvIpcOpenSession),
     LWMSG_DISPATCH_BLOCK(LSA_Q_CLOSE_SESSION, LsaSrvIpcCloseSession),
     LWMSG_DISPATCH_BLOCK(LSA_Q_GET_METRICS, LsaSrvIpcGetMetrics),
-    LWMSG_DISPATCH_BLOCK(LSA_Q_SET_LOGINFO, LsaSrvIpcSetLogInfo),
-    LWMSG_DISPATCH_BLOCK(LSA_Q_GET_LOGINFO, LsaSrvIpcGetLogInfo),
     LWMSG_DISPATCH_BLOCK(LSA_Q_GET_STATUS, LsaSrvIpcGetStatus),
-    LWMSG_DISPATCH_BLOCK(LSA_Q_REFRESH_CONFIGURATION, LsaSrvIpcRefreshConfiguration),
     LWMSG_DISPATCH_BLOCK(LSA_Q_CHECK_USER_IN_LIST, LsaSrvIpcCheckUserInList),
     LWMSG_DISPATCH_BLOCK(LSA_Q_BEGIN_ENUM_NSS_ARTEFACTS, LsaSrvIpcBeginEnumNSSArtefacts),
     LWMSG_DISPATCH_BLOCK(LSA_Q_ENUM_NSS_ARTEFACTS, LsaSrvIpcEnumNSSArtefacts),

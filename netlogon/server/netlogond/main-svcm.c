@@ -143,10 +143,6 @@ LWNetSrvSetDefaults(
 {
     DWORD dwError = 0;
 
-    gpLwnetServerInfo->dwLogLevel = LWNET_LOG_LEVEL_ERROR;
-
-    *(gpLwnetServerInfo->szLogFilePath) = '\0';
-
     strcpy(gpLwnetServerInfo->szCachePath, LWNET_CACHE_DIR);
     strcpy(gpLwnetServerInfo->szPrefixPath, PREFIXDIR);
 
@@ -240,48 +236,6 @@ LWNetSrvGetPrefixPath(
     LWNET_SAFE_FREE_STRING(pszPath);
 
     *ppszPath = NULL;
-
-    goto cleanup;
-}
-
-DWORD
-LWNetSrvInitLogging(
-    PCSTR pszProgramName
-    )
-{
-    DWORD dwError = 0;
-    BOOLEAN bInLock = FALSE;
-
-    LWNET_LOCK_SERVERINFO(bInLock);
-
-    if ((gpLwnetServerInfo->dwStartAsDaemon &&
-            gpLwnetServerInfo->szLogFilePath[0] == '\0') ||
-            gpLwnetServerInfo->bLogToSyslog)
-    {
-      
-      dwError = lwnet_init_logging_to_syslog(gpLwnetServerInfo->dwLogLevel,
-                                           gpLwnetServerInfo->bEnableDebugLogs,
-                                           pszProgramName,
-                                           LOG_PID,
-                                           LOG_DAEMON);
-      BAIL_ON_LWNET_ERROR(dwError);
-      
-    } else {
-      
-      dwError = lwnet_init_logging_to_file(gpLwnetServerInfo->dwLogLevel,
-                                         gpLwnetServerInfo->bEnableDebugLogs,
-                                         gpLwnetServerInfo->szLogFilePath);
-      BAIL_ON_LWNET_ERROR(dwError);
-      
-    }
-
- cleanup:
-
-    LWNET_UNLOCK_SERVERINFO(bInLock);
-    
-    return dwError;
-
- error:
 
     goto cleanup;
 }

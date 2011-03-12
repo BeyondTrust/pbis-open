@@ -241,10 +241,6 @@ LwioSrvSetDefaults(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     LWIO_CONFIG defaultConfig;
 
-    gpLwioServerInfo->maxAllowedLogLevel = LWIO_LOG_LEVEL_ERROR;
-
-    *(gpLwioServerInfo->szLogFilePath) = '\0';
-
     strncpy(gpLwioServerInfo->szCachePath, CACHEDIR, PATH_MAX);
     gpLwioServerInfo->szCachePath[PATH_MAX] = '\0';
 

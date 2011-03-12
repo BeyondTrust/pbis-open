@@ -837,7 +837,6 @@ AC_CONFIG_FILES([Makefile
         etc/dfs.reg
         utils/Makefile
 	common/Makefile
-        logging_r/Makefile
         ipc/Makefile
         client/Makefile
         server/Makefile

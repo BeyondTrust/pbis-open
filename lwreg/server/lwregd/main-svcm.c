@@ -141,10 +141,6 @@ RegSrvSetDefaults(
 {
     DWORD dwError = 0;
 
-    gpLwregServerInfo->maxAllowedLogLevel = REG_LOG_LEVEL_ERROR;
-
-    *(gpLwregServerInfo->szLogFilePath) = '\0';
-
     strncpy(gpLwregServerInfo->szCachePath,
             CACHEDIR,
             sizeof(gpLwregServerInfo->szCachePath)-1);

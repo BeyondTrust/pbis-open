@@ -222,18 +222,6 @@ LsaSrvCloseSession(
     );
 
 DWORD
-LsaSrvGetLogInfo(
-    HANDLE hServer,
-    PLSA_LOG_INFO* ppLogInfo
-    );
-
-DWORD
-LsaSrvSetLogInfo(
-    HANDLE hServer,
-    PLSA_LOG_INFO pLogInfo
-    );
-
-DWORD
 LsaSrvSetTraceFlags(
     HANDLE          hServer,
     PLSA_TRACE_INFO pTraceFlagArray,

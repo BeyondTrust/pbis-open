@@ -111,60 +111,14 @@ typedef enum
 
 typedef enum
 {
-    LWIO_LOG_TARGET_DISABLED = 0,
-    LWIO_LOG_TARGET_CONSOLE,
-    LWIO_LOG_TARGET_FILE,
-    LWIO_LOG_TARGET_SYSLOG
-} LWIO_LOG_TARGET;
-
-typedef enum
-{
     LWIO_DRIVER_STATE_UNKNOWN,
     LWIO_DRIVER_STATE_UNLOADED,
     LWIO_DRIVER_STATE_LOADED
 } LWIO_DRIVER_STATE, *PLWIO_DRIVER_STATE;
 
-typedef VOID (*PFN_LWIO_LOG_MESSAGE)(
-                            HANDLE      hLog,
-                            LWIO_LOG_LEVEL logLevel,
-                            PCSTR       pszFormat,
-                            va_list     msgList
-                            );
-
-typedef struct __LWIO_LOG_INFO {
-    LWIO_LOG_LEVEL  maxAllowedLogLevel;
-    LWIO_LOG_TARGET logTarget;
-    PSTR         pszPath;
-} LWIO_LOG_INFO, *PLWIO_LOG_INFO;
-
 LW_NTSTATUS
 LwIoShutdown(
     VOID
-    );
-
-LW_NTSTATUS
-LwIoRefreshConfiguration(
-    VOID
-    );
-
-LW_NTSTATUS
-LwIoSetLogLevel(
-    LWIO_LOG_LEVEL logLevel
-    );
-
-LW_NTSTATUS
-LwIoGetLogInfo(
-    PLWIO_LOG_INFO* ppLogInfo
-    );
-
-LW_NTSTATUS
-LwIoSetLogInfo(
-    PLWIO_LOG_INFO pLogInfo
-    );
-
-VOID
-LwIoFreeLogInfo(
-    PLWIO_LOG_INFO pLogInfo
     );
 
 LW_NTSTATUS

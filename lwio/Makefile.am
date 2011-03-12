@@ -4,7 +4,6 @@ SUBDIRS = \
     include      \
     etc          \
     utils        \
-    logging_r    \
     ipc          \
     common       \
     libshareinfo \

@@ -113,20 +113,6 @@ LWNetTransactGetDomainController(
     );
 
 DWORD
-LWNetTransactSetLogLevel(
-    IN HANDLE hConnection,
-    IN LWNET_LOG_LEVEL LogLevel
-    );
-
-DWORD
-LWNetTransactGetLogInfo(
-    IN HANDLE hConnection,
-    OUT PLWNET_LOG_LEVEL pLogLevel,
-    OUT PLWNET_LOG_TARGET pLogTarget,
-    OUT PSTR* ppszLogPath
-    );
-
-DWORD
 LWNetTransactResolveName(
     LW_IN HANDLE hConnection,
     LW_IN LW_PCWSTR pcwszHostName,

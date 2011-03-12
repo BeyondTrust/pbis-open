@@ -1,4 +1,4 @@
-SUBDIRS=". include utils ipc common client logging_r parse server shellutil shell"
+SUBDIRS=". include utils ipc common client parse server shellutil shell"
 
 configure()
 {

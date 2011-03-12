@@ -249,20 +249,6 @@ typedef enum
     LSA_LOG_LEVEL_TRACE = LW_RTL_LOG_LEVEL_TRACE
 } LsaLogLevel;
 
-typedef enum
-{
-    LSA_LOG_TARGET_DISABLED = 0,
-    LSA_LOG_TARGET_CONSOLE,
-    LSA_LOG_TARGET_FILE,
-    LSA_LOG_TARGET_SYSLOG
-} LsaLogTarget;
-
-typedef struct __LSA_LOG_INFO {
-    LsaLogLevel maxAllowedLogLevel;
-    LsaLogTarget logTarget;
-    LW_PSTR pszPath;
-} LSA_LOG_INFO, *PLSA_LOG_INFO;
-
 /**
  * @ingroup user
  * @brief User info structure -- level 0
@@ -841,37 +827,6 @@ LsaOpenServer(
 DWORD
 LsaOpenServerThreaded(
     PHANDLE phConnection
-    );
-
-LW_DWORD
-LsaBuildLogInfo(
-    LsaLogLevel maxAllowedLogLevel,
-    LsaLogTarget logTarget,
-    LW_PCSTR pszPath,
-    PLSA_LOG_INFO* ppLogInfo
-    );
-
-LW_DWORD
-LsaSetLogLevel(
-    LW_HANDLE hLsaConnection,
-    LsaLogLevel logLevel
-    );
-
-LW_DWORD
-LsaGetLogInfo(
-    LW_HANDLE hLsaConnection,
-    PLSA_LOG_INFO* ppLogInfo
-    );
-
-LW_DWORD
-LsaSetLogInfo(
-    LW_HANDLE hLsaConnection,
-    PLSA_LOG_INFO pLogInfo
-    );
-
-LW_VOID
-LsaFreeLogInfo(
-    PLSA_LOG_INFO pLogInfo
     );
 
 LW_DWORD
@@ -1517,11 +1472,6 @@ LsaGetStatus2(
     LW_HANDLE hLsaConnection,
     LW_IN LW_PCSTR pszTargetProvider,
     PLSASTATUS* ppLsaStatus
-    );
-
-LW_DWORD
-LsaRefreshConfiguration(
-    LW_HANDLE hLsaConnection
     );
 
 LW_DWORD

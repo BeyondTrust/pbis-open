@@ -65,6 +65,5 @@
 
 #include "listener.h"
 #include "servermain.h"
-#include "sighandler.h"
 #include "externs_p.h"
 

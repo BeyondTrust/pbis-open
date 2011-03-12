@@ -49,10 +49,4 @@
 #ifndef __CONFIG_P_H__
 #define __CONFIG_P_H__
 
-LSASS_API
-DWORD
-LsaRefreshConfiguration(
-    HANDLE hLsaConnection
-    );
-
 #endif /* __CONFIG_P_H__ */

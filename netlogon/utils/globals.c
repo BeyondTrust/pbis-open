@@ -47,16 +47,5 @@
  */
 #include "includes.h"
 
-LOGINFO gLwnetLogInfo =
-{
-    PTHREAD_MUTEX_INITIALIZER,
-    LWNET_LOG_TARGET_DISABLED,
-    {"", NULL},
-    {"netlogond", LOG_PID, LOG_DAEMON},
-    0,
-    0,
-    0
-};
-
 pthread_mutex_t gLwnetResolverLock = PTHREAD_MUTEX_INITIALIZER;
 

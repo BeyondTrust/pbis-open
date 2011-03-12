@@ -1140,6 +1140,8 @@ void DJCreateComputerAccount(
 
     PSTR likewiseOSServicePack = NULL;
     HANDLE lsa = NULL;
+    LW_SERVICE_HANDLE hLsaService = NULL;
+    static WCHAR wszLsass[] = {'l','s','a','s','s','\0'};
 
     memset(&distro, 0, sizeof(distro));
 
@@ -1198,7 +1200,10 @@ void DJCreateComputerAccount(
                                          options->userDomainPrefix);
         LW_CLEANUP_LSERR(exc, dwError);
 
-        dwError = LsaRefreshConfiguration(lsa);
+        dwError = LwSmAcquireServiceHandle(wszLsass, &hLsaService);
+        LW_CLEANUP_LSERR(exc, dwError);
+
+        dwError = LwSmRefreshService(hLsaService);
         LW_CLEANUP_LSERR(exc, dwError);
     }
 
@@ -1260,6 +1265,11 @@ cleanup:
     if (lsa)
     {
         LsaCloseServer(lsa);
+    }
+
+    if (hLsaService)
+    {
+        LwSmReleaseServiceHandle(hLsaService);
     }
 
     if (exc && LW_IS_OK(*exc))

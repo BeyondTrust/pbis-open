@@ -16,7 +16,6 @@ lwreg_la_CPPFLAGS =               \
 lwreg_la_LIBADD =                             \
     @top_builddir@/server/api/libregserverapi.la \
     @top_builddir@/common/libregcommon.la     \
-    @top_builddir@/logging_r/libreglog_r.la   \
     @DS_FRAMEWORK_LDFLAGS@ \
     -llwmsg
 

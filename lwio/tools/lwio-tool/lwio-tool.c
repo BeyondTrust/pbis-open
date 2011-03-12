@@ -296,18 +296,6 @@ main(
     LwParseArgsInit(&args, argc, argv);
     pszProgramName = LwGetProgramName(LwParseArgsGetAt(&args, 0));
 
-    // TODO-clean up logging stuff used here
-    // We should really be using printf and just doing logging
-    // for diagnostics.
-    if (LwioInitLogging(pszProgramName,
-                       LWIO_LOG_TARGET_CONSOLE,
-                       LWIO_LOG_LEVEL_DEBUG,
-                       NULL))
-    {
-        fprintf(stderr, "Failed to initialize logging.\n");
-        exit(1);
-    }
-
     pszCommand = LwParseArgsNext(&args);
     if (!pszCommand)
     {

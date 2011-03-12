@@ -8,7 +8,6 @@ liblsaclient_api_la_SOURCES = \
     clientipc.c \
     config.c    \
     groups.c    \
-    logging.c   \
     metrics.c   \
     provider.c  \
     session.c   \

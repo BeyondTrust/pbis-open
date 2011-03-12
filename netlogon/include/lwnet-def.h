@@ -103,7 +103,6 @@
 
 #define IsNullOrEmptyString(str) (!(str) || !(*(str)))
 
-#define LWNET_CLIENT_PATH_FORMAT "/var/tmp/.netlogonclient_%05ld"
 #define LWNET_SERVER_FILENAME    ".netlogond"
 
 #define CT_MAX(a, b) (((a) > (b)) ? (a) : (b))
@@ -161,8 +160,6 @@
 #define LWNET_MICROSECONDS_IN_MILLISECOND (1000)
 #define LWNET_MICROSECONDS_IN_SECOND ((LWNET_MICROSECONDS_IN_MILLISECOND)*(LWNET_MILLISECONDS_IN_SECOND))
 #define LWNET_NANOSECONDS_IN_MILLISECOND (1000 * LWNET_MICROSECONDS_IN_MILLISECOND);
-
-#define LWNET_SYSLOG_MAX_LEVEL LOG_INFO
 
 #define BAIL_ON_INVALID_STRING(pszParam)             \
         if (IsNullOrEmptyString(pszParam)) {         \

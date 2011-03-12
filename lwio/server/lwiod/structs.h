@@ -54,24 +54,10 @@ typedef struct {
     /* MT safety */
     pthread_mutex_t lock;
     pthread_mutex_t *pLock;
-    /* Should start as daemon */
-    DWORD dwStartAsDaemon;
-    /* where are we logging */
-    LWIO_LOG_TARGET logTarget;
-    /* How much logging do you want? */
-    LWIO_LOG_LEVEL maxAllowedLogLevel;
-    /* Enable debug logs */
-    BOOLEAN bEnableDebugLogs;
-    /* log file path */
-    char szLogFilePath[PATH_MAX + 1];
     /* Cache path */
     char szCachePath[PATH_MAX+1];
     /* Prefix path */
     char szPrefixPath[PATH_MAX+1];
-    /* Process termination flag */
-    BOOLEAN  bProcessShouldExit;
-    /* Process Exit Code */
-    DWORD dwExitCode;
 } SMBSERVERINFO, *PSMBSERVERINFO;
 
 typedef struct __LWIO_CONFIG

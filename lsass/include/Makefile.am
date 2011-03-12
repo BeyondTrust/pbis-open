@@ -28,7 +28,6 @@ noinst_HEADERS = \
     ntlmipc.h \
     lsaaccess.h \
     lsaclient.h \
-    lsalog_r.h \
     lwmapsecurity-lsass.h
 
 lsainternaldir = $(includedir)/lsa/internal

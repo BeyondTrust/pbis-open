@@ -264,7 +264,6 @@ DJManageDaemons(
     FILE* fp = NULL;
     LWException *innerExc = NULL;
     int i;
-    PLSA_LOG_INFO pLogInfo = NULL;
     BOOLEAN bLsassContacted = FALSE;
     DWORD dwError = 0;
     LW_HANDLE hLsa = NULL;
@@ -305,7 +304,6 @@ DJManageDaemons(
                 continue;
             }
             LW_CLEANUP_CTERR(exc, dwError);
-            LW_CLEANUP_CTERR(exc, LsaGetLogInfo(hLsa, &pLogInfo));
             bLsassContacted = TRUE;
         }
         if (!bLsassContacted)
@@ -323,10 +321,7 @@ DJManageDaemons(
 
 cleanup:
     CTSafeCloseFile(&fp);
-    if (pLogInfo)
-    {
-        LsaFreeLogInfo(pLogInfo);
-    }
+
     if (hLsa)
     {
         LsaCloseServer(hLsa);

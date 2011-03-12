@@ -18,7 +18,6 @@ make()
     mk_library \
         LIB=iomgr \
         SOURCES="$IOMGR_SOURCES" \
-        GROUPS="../../logging_r/logging_r" \
         INCLUDEDIRS=". ../include ../../include" \
         HEADERDEPS="lw/base.h reg/lwreg.h reg/regutil.h lwmsg/lwmsg.h" \
         LIBDEPS="lwbase lwmsg regclient lwiocommon $LIB_DL $LIB_PTHREAD"

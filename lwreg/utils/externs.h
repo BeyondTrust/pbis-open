@@ -51,19 +51,6 @@
 #ifndef __EXTERNS_H__
 #define __EXTERNS_H__
 
-#define REG_ERROR_TAG   "ERROR"
-#define REG_WARN_TAG    "WARNING"
-#define REG_INFO_TAG    "INFO"
-#define REG_VERBOSE_TAG "VERBOSE"
-#define REG_DEBUG_TAG   "DEBUG"
-#define REG_TRACE_TAG   "TRACE"
-
-#define REG_LOG_TIME_FORMAT "%Y%m%d%H%M%S"
-
-extern HANDLE              ghRegLog;
-extern PFN_REG_LOG_MESSAGE gpfnRegLogger;
-extern RegLogTarget        gRegLogTarget;
-extern RegLogLevel         gRegLogLevel;
 extern PREG_BIT_VECTOR     gpRegTraceFlags;
 
 #endif /* __EXTERNS_H__ */

@@ -47,22 +47,6 @@
 #ifndef __IPC_DCINFO_P_H__
 #define __IPC_DCINFO_P_H__
 
-LWMsgStatus
-LWNetSrvIpcSetLogLevel(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    void* data
-    );
-
-LWMsgStatus
-LWNetSrvIpcGetLogInfo(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    void* data
-    );
-
 DWORD
 LWNetSrvIpcGetDCName(
     LWMsgCall* pCall,

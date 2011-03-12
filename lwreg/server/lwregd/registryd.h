@@ -63,11 +63,9 @@
 #include <regipc.h>
 #include <regserver.h>
 
-#include "reglog_r.h"
 #include "structs.h"
 #include "listener.h"
 #include "servermain.h"
-#include "sighandler.h"
 
 #include "externs_p.h"
 

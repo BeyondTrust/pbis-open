@@ -55,7 +55,6 @@ lw_lsa_SOURCES = \
 	lw_ypmatch_main.c \
 	mod_group_main.c \
 	mod_user_main.c \
-	refresh_configuration_main.c \
 	set_default_domain_main.c \
 	set_machine_sid_main.c \
 	set_machine_name_main.c \

@@ -48,19 +48,3 @@
  */
 
 #include "includes.h"
-
-// Note: Be careful about the items you put here
-//       This library can be exercised through
-//       threaded components.
-
-//
-// These variables are protected in MT-SAFE components
-// if LW_ENABLE_THREADS is enabled when compiling those
-// components. Also use liblsalog_r.so
-//
-HANDLE               ghLwioLog           = (HANDLE)NULL;
-LWIO_LOG_LEVEL       gLwioMaxLogLevel    = LWIO_LOG_LEVEL_ERROR;
-LWIO_LOG_TARGET      gLWIO_LOG_TARGET    = LWIO_LOG_TARGET_DISABLED;
-PFN_LWIO_LOG_MESSAGE gpfnLwioLogger      = NULL;
-BOOLEAN              gbLwioLogDoNanoSecondTime  = FALSE;
-CHAR                 gszLwioLogTimeStampPrefix[_LWIO_LOG_TIME_STAMP_PREFIX_SIZE] = { 0 };

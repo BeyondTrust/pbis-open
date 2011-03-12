@@ -49,17 +49,4 @@
 
 #include "includes.h"
 
-// Note: Be careful about the items you put here
-//       This library can be exercised through
-//       threaded components.
-
-//
-// These variables are protected in MT-SAFE components
-// if LW_ENABLE_THREADS is enabled when compiling those
-// components. Also use liblsalog_r.so
-//
-HANDLE              ghLog              = (HANDLE)NULL;
-LsaLogLevel         gLsaMaxLogLevel    = LSA_LOG_LEVEL_ERROR;
-LsaLogTarget        gLogTarget         = LSA_LOG_TARGET_DISABLED;
-PFN_LSA_LOG_MESSAGE gpfnLogger         = NULL;
 PLSA_BIT_VECTOR     gpTraceFlags       = NULL;

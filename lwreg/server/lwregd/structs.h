@@ -52,14 +52,6 @@
 typedef struct {
     /* MT safety */
     pthread_mutex_t lock;
-    /* Should start as daemon */
-    DWORD dwStartAsDaemon;
-    /* where are we logging */
-    RegLogTarget logTarget;
-    /* How much logging do you want? */
-    RegLogLevel maxAllowedLogLevel;
-    /* log file path */
-    char szLogFilePath[PATH_MAX + 1];
     /* Cache path */
     char szCachePath[PATH_MAX+1];
     /* Prefix path */

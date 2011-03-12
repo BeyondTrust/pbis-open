@@ -52,58 +52,6 @@
  * Logging
  */
 
-#define _LWIO_LOG_TIME_STAMP_PREFIX_SIZE 128
-
-extern HANDLE               ghLwioLog;
-extern PFN_LWIO_LOG_MESSAGE gpfnLwioLogger;
-extern BOOLEAN              gbLwioLogDoNanoSecondTime;
-extern CHAR                 gszLwioLogTimeStampPrefix[_LWIO_LOG_TIME_STAMP_PREFIX_SIZE];
-
-VOID
-LwioLogMessage(
-    PFN_LWIO_LOG_MESSAGE pfnLogger,
-    HANDLE hLog,
-    LWIO_LOG_LEVEL logLevel,
-    PCSTR  pszFormat,
-    ...
-    );
-
-// Logger lock must be held
-PSTR
-_LwioLogGetTimeStampPrefix(
-    VOID
-    );
-
-#if defined(LW_SUPPORT_NANOSECOND_TIMESTAMP)
-static
-inline
-PSTR
-_LwioLogGetTimeStampPrefixIf(
-    VOID
-    )
-{
-    if (gbLwioLogDoNanoSecondTime)
-    {
-        return _LwioLogGetTimeStampPrefix();
-    }
-    else
-    {
-        gszLwioLogTimeStampPrefix[0] = 0;
-        return gszLwioLogTimeStampPrefix;
-    }
-}
-#define _LWIO_LOG_PREFIX_NS(Format) \
-    "%s" Format, _LwioLogGetTimeStampPrefixIf()
-#else
-#define _LWIO_LOG_PREFIX_NS(Format) \
-    Format
-#endif
-
-extern pthread_mutex_t gLwioLogLock;
-
-#define LWIO_LOCK_LOGGER   pthread_mutex_lock(&gLwioLogLock)
-#define LWIO_UNLOCK_LOGGER pthread_mutex_unlock(&gLwioLogLock)
-
 #define LWIO_SAFE_LOG_STRING(x) \
     ( (x) ? (x) : "<null>" )
 

@@ -1,21 +1,16 @@
 noinst_LTLIBRARIES = libregutils.la
 
 libregutils_la_SOURCES = \
-    consolelog.c         \
-    filelog.c            \
     fileutils.c          \
     globals.c            \
-    reglogger.c          \
-    regloginfo.c         \
     regmem.c             \
     sysfuncs.c           \
-    syslog.c             \
     regtime.c            \
     dlinkedlist.c        \
     hashtable.c          \
     regerror.c           \
     regdatatype.c
-    
+
 noinst_HEADERS = \
     externs.h       \
     includes.h

@@ -61,11 +61,7 @@
 #include <regdef.h>
 #include <regutils.h>
 
-#include "reglogger_p.h"
 #include "sysfuncs_p.h"
-#include "filelog_p.h"
-#include "consolelog_p.h"
-#include "syslog_p.h"
 #include "regerror_p.h"
 #include "externs.h"
 #include "regparse_r.h"

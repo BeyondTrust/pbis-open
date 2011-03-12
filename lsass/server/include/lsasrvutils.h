@@ -489,4 +489,26 @@ LsaSrvFreeNameInfo(
     PLSA_LOGIN_NAME_INFO pNameInfo
     );
 
+DWORD
+LsaInitTracing_r(
+    VOID
+    );
+
+DWORD
+LsaTraceSetFlag_r(
+    DWORD   dwTraceFlag,
+    BOOLEAN bStatus
+    );
+
+DWORD
+LsaTraceGetInfo_r(
+    DWORD    dwTraceFlag,
+    PBOOLEAN pbStatus
+    );
+
+VOID
+LsaShutdownTracing_r(
+    VOID
+    );
+
 #endif /* __LSASRVUTILS_H__ */

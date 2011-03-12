@@ -68,8 +68,6 @@
 
 #include "regsrvutils.h"
 #include "regprovspi.h"
-#include "reglog_r.h"
-
 
 #include "structs_p.h"
 #include "ipc_registry_p.h"

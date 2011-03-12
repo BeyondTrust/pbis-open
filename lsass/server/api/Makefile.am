@@ -2,7 +2,6 @@ AM_CPPFLAGS = @AM_CPPFLAGS@ -I$(top_srcdir)/include
 
 ADDITIONAL_LIBS =
 NOINST_DEP_LIBS = \
-	@top_builddir@/logging_r/liblsalog_r.la \
 	@top_builddir@/server/store/dsapi/libdsapi.la \
         @top_builddir@/server/privilege/liblsaserver_privilege.la
 
@@ -34,7 +33,6 @@ liblsaserverapi_la_SOURCES = \
        lsacfg_reg.c    \
        lsaevent.c      \
        lsatime.c       \
-       loginfo.c       \
        machinepwdinfo.c \
        metrics.c       \
        pam.c           \
@@ -44,6 +42,7 @@ liblsaserverapi_la_SOURCES = \
        status.c        \
        systemcache.c   \
        traceinfo.c     \
+       tracing.c       \
        rpc_server.c    \
        svc_register.c  \
        svc_unregister.c \

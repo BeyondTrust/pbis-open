@@ -271,10 +271,6 @@ LsaSrvSetDefaults(
 {
     DWORD dwError = 0;
 
-    gpServerInfo->maxAllowedLogLevel = LSA_LOG_LEVEL_ERROR;
-
-    *(gpServerInfo->szLogFilePath) = '\0';
-
     strcpy(gpServerInfo->szCachePath, CACHEDIR);
     strcpy(gpServerInfo->szPrefixPath, PREFIXDIR);
 

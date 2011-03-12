@@ -6,7 +6,7 @@ make()
     lw_service \
 	SERVICE="lwreg" \
         SOURCES="$LWREG_SOURCES" \
-        GROUPS="../api/regserverapi ../../logging_r/reglog_r" \
+        GROUPS="../api/regserverapi" \
         CPPFLAGS="-DPREFIXDIR=\"${MK_PREFIX}\"" \
         INCLUDEDIRS="../../include ../include" \
         HEADERDEPS="lw/base.h lwmsg/lwmsg.h" \

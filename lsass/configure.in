@@ -1056,7 +1056,6 @@ AC_CONFIG_FILES([Makefile
                  client/rpc/dssetup/Makefile
                  client/rpc/krb5pac/Makefile
                  client/rpc/wkssvc/Makefile
-                 logging_r/Makefile
                  interop/Makefile
                  interop/gssntlm/Makefile
                  interop/gssntlm/mech

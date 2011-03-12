@@ -59,8 +59,4 @@
 // if LW_ENABLE_THREADS is enabled when compiling those
 // components. Also use liblsalog_r.so
 //
-HANDLE              ghRegLog              = (HANDLE)NULL;
-RegLogLevel         gRegMaxLogLevel    = REG_LOG_LEVEL_ERROR;
-RegLogTarget        gRegLogTarget         = REG_LOG_TARGET_DISABLED;
-PFN_REG_LOG_MESSAGE gpfnRegLogger         = NULL;
 PREG_BIT_VECTOR     gpRegTraceFlags       = NULL;

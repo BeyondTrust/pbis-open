@@ -3,11 +3,9 @@ AM_CPPFLAGS = @AM_CPPFLAGS@ -I$(top_srcdir)/include
 noinst_LTLIBRARIES = liblsautils.la
 
 liblsautils_la_SOURCES =       \
-       consolelog.c            \
        dcinfo.c                \
        dlinkedlist.c           \
        domaininfo.c            \
-       filelog.c               \
        fileutils.c             \
        globals.c               \
        lsacache.c              \
@@ -16,7 +14,6 @@ liblsautils_la_SOURCES =       \
        lsagroupinfo.c          \
        lsaartefactinfo.c       \
        lsabitvector.c          \
-       lsalogger.c             \
        lsamem.c                \
        lsapam.c                \
        lsapaths.c              \
@@ -26,12 +23,10 @@ liblsautils_la_SOURCES =       \
        lsastrerror.c           \
        lsasecurityidentifier.c \
        lsauserinfo.c           \
-       lsaloginfo.c            \
        machinepwdinfo-impl.c   \
        nisnicknames.c          \
        sidinfo.c               \
        sysfuncs.c              \
-       syslog.c                \
        datablob.c              \
        lsaxnet.c               \
        lsaauthex.c             \

@@ -13,7 +13,6 @@ make()
        ipc_state.c     \
        lsacfg_reg.c    \
        lsatime.c       \
-       loginfo.c       \
        machinepwdinfo.c \
        metrics.c       \
        pam.c           \
@@ -23,6 +22,7 @@ make()
        status.c        \
        systemcache.c   \
        traceinfo.c     \
+       tracing.c       \
        rpc_server.c    \
        svc_register.c  \
        svc_unregister.c \
@@ -37,7 +37,7 @@ make()
     mk_library \
 	LIB=lsaserverapi \
 	SOURCES="$API_SOURCES" \
-	GROUPS="../../logging_r/logging_r ../privilege/privilege" \
+	GROUPS="../privilege/privilege" \
 	CPPFLAGS="-DLW_ENABLE_THREADS" \
 	INCLUDEDIRS=". ../include ../../include" \
 	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h dce/rpc.h" \

@@ -141,29 +141,6 @@ typedef struct _DNS_SERVER_INFO
 // Logging
 //
 
-typedef struct _LOGFILEINFO {
-    CHAR  szLogPath[PATH_MAX+1];
-    FILE* logHandle;
-} LOGFILEINFO, *PLOGFILEINFO;
-
-typedef struct _SYSLOGINFO {
-    CHAR  szIdentifier[PATH_MAX+1];
-    DWORD dwOption;
-    DWORD dwFacility;
-} SYSLOGINFO, *PSYSLOGINFO;
-
-typedef struct _LOGINFO {
-    pthread_mutex_t lock;
-    DWORD           logTarget;
-    LOGFILEINFO     logfile;
-    SYSLOGINFO      syslog;
-    BOOLEAN         bDebug;
-    BOOLEAN         bLogToConsole;
-    BOOLEAN         bLoggingInitiated;
-} LOGINFO, *PLOGINFO;
-
-extern LOGINFO gLwnetLogInfo;
-
 #define _LWNET_LOG_AT(Level, ...) LW_RTL_LOG_AT_LEVEL(Level, "netlogon", __VA_ARGS__)
 #define LWNET_LOG_ALWAYS(...) _LWNET_LOG_AT(LW_RTL_LOG_LEVEL_ALWAYS, __VA_ARGS__)
 #define LWNET_LOG_ERROR(...) _LWNET_LOG_AT(LW_RTL_LOG_LEVEL_ERROR, __VA_ARGS__)
@@ -176,14 +153,10 @@ extern LOGINFO gLwnetLogInfo;
 #define LWNET_SAFE_LOG_STRING(x) \
     ( (x) ? (x) : "<null>" )
 
-
-
 //
 // DNS resolver library utils
 //
 extern pthread_mutex_t gLwnetResolverLock;
-
-
 
 DWORD
 LWNetAllocateMemory(
@@ -446,46 +419,6 @@ DWORD
 LWNetCrackLdapTime(
     IN PCSTR pszStrTime,
     OUT struct tm* pTm
-    );
-
-DWORD
-lwnet_init_logging_to_syslog(
-    DWORD   dwLogLevel,
-    BOOLEAN bEnableDebug,
-    PCSTR   pszIdentifier,
-    DWORD   dwOption,
-    DWORD   dwFacility
-    );
-
-DWORD
-lwnet_set_log_level(
-    DWORD dwLogLevel
-    );
-
-DWORD
-lwnet_get_log_info(
-    OUT PDWORD pdwLogLevel,
-    OUT PDWORD pdwLogTarget,
-    OUT PSTR* ppszLogPath
-    );
-
-DWORD
-lwnet_init_logging_to_file(
-    DWORD   dwLogLevel,
-    BOOLEAN bEnableDebug,
-    PSTR    pszLogFilePath
-    );
-
-void
-lwnet_log_message(
-    DWORD dwLogLevel,
-    PSTR pszFormat,
-    ...
-    );
-
-void
-lwnet_close_log(
-    void
     );
 
 #endif /* __LWNET_UTILS_H__ */

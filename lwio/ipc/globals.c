@@ -102,21 +102,6 @@ static LWMsgTypeSpec gStatusReplySpec[] =
     LWMSG_TYPE_END
 };
 
-static LWMsgTypeSpec gLogInfoSpec[] =
-{
-    /* Begin structure */
-    LWMSG_STRUCT_BEGIN(LWIO_LOG_INFO),
-    /* 32-bit unsigned integer */
-    LWMSG_MEMBER_UINT32(LWIO_LOG_INFO, maxAllowedLogLevel),
-    /* 32-bit unsigned integer */
-    LWMSG_MEMBER_UINT32(LWIO_LOG_INFO, logTarget),
-    /* path - marshal as pointer to string */
-    LWMSG_MEMBER_PSTR(LWIO_LOG_INFO, pszPath),
-    /* End structure */
-    LWMSG_STRUCT_END,
-    LWMSG_TYPE_END
-};
-
 static LWMsgTypeSpec gDriverNameSpec[] =
 {
     LWMSG_PWSTR,
@@ -139,15 +124,6 @@ static LWMsgTypeSpec gPidSpec[] =
 
 static LWMsgProtocolSpec gLwIoDaemonProtocolSpec[] =
 {
-    LWMSG_MESSAGE(LWIO_REFRESH_CONFIG,              NULL),
-    LWMSG_MESSAGE(LWIO_REFRESH_CONFIG_SUCCESS,      gStatusReplySpec),
-    LWMSG_MESSAGE(LWIO_REFRESH_CONFIG_FAILED,       gStatusReplySpec),
-    LWMSG_MESSAGE(LWIO_SET_LOG_INFO,                gLogInfoSpec),
-    LWMSG_MESSAGE(LWIO_SET_LOG_INFO_SUCCESS,        gStatusReplySpec),
-    LWMSG_MESSAGE(LWIO_SET_LOG_INFO_FAILED,         gStatusReplySpec),
-    LWMSG_MESSAGE(LWIO_GET_LOG_INFO,                NULL),
-    LWMSG_MESSAGE(LWIO_GET_LOG_INFO_SUCCESS,        gLogInfoSpec),
-    LWMSG_MESSAGE(LWIO_GET_LOG_INFO_FAILED,         gStatusReplySpec),
     LWMSG_MESSAGE(LWIO_QUERY_STATE_DRIVER,          gDriverNameSpec),
     LWMSG_MESSAGE(LWIO_QUERY_STATE_DRIVER_SUCCESS,  gDriverStateSpec),
     LWMSG_MESSAGE(LWIO_QUERY_STATE_DRIVER_FAILED,   gStatusReplySpec),

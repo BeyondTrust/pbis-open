@@ -61,7 +61,6 @@
 
 #include "lwiodef.h"
 #include "lwioutils.h"
-#include "lwiolog_r.h"
 #include "lwioipc.h"
 
 #include "defs.h"

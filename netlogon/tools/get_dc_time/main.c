@@ -131,8 +131,6 @@ main(
                     &pszTargetFQDN);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    lwnet_init_logging_to_file(LWNET_LOG_LEVEL_VERBOSE, TRUE, "");
-
     dwError = LWNetGetDCTime(
                 pszTargetFQDN,
                 &dcTime);
