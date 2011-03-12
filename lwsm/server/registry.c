@@ -315,7 +315,7 @@ LwSmRegistryReadServiceInfo(
         &pInfo->pwszGroup);
     if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
-        dwError = LwMbsToWc16s("likewise", &pInfo->pwszGroup);
+        dwError = LwAllocateWc16String(&pInfo->pwszGroup, pInfo->pwszName);
     }
     BAIL_ON_ERROR(dwError);
 

@@ -103,7 +103,7 @@ LwSmBootstrap(
         dwError = LwMbsToWc16s(pService->pszPath, &pInfo->pwszPath);
         BAIL_ON_ERROR(dwError);
 
-        dwError = LwMbsToWc16s("likewise", &pInfo->pwszGroup);
+        dwError = LwMbsToWc16s(pService->pszName, &pInfo->pwszGroup);
         BAIL_ON_ERROR(dwError);
 
         dwError = LwMbsToWc16s("Bootstrap service", &pInfo->pwszDescription);

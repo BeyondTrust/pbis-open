@@ -522,7 +522,7 @@ SpawnContainer(
         }
 
         /* Exec container */
-        if (execl(LWSMD_PATH, "lw-service", pName, NULL) < 0)
+        if (execl(LWSMD_PATH, CONTAINER_PROCESS_NAME, pName, NULL) < 0)
         {
             dwError = LwMapErrnoToLwError(errno);
             BAIL_ON_ERROR(dwError);

@@ -203,7 +203,7 @@ LwSmParseArguments(
     DWORD dwError = 0;
     int i = 0;
 
-    if (!strcmp(ppszArgv[0], "lw-service"))
+    if (!strcmp(ppszArgv[0], CONTAINER_PROCESS_NAME))
     {
         gState.bContainer = TRUE;
         gState.pName = ppszArgv[1];

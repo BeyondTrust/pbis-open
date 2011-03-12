@@ -42,6 +42,8 @@
 #include "config.h"
 #include <lwsm/lwsm.h>
 
+#define CONTAINER_PROCESS_NAME "lw-container"
+
 #define BAIL_ON_ERROR(_e_)  \
     do                      \
     {                       \
