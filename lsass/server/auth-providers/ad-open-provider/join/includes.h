@@ -58,6 +58,7 @@
 #include "lwsecurityidentifier.h"
 
 #include "lsautils.h"
+#include "lsasrvapi.h"
 
 #include "lwtime.h"
 #include "lsaldap.h"
