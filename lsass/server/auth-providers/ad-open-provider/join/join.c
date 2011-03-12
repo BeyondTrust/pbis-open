@@ -47,10 +47,6 @@
 
 #include "includes.h"
 
-#define LSA_JOIN_OU_PREFIX "OU="
-#define LSA_JOIN_CN_PREFIX "CN="
-#define LSA_JOIN_DC_PREFIX "DC="
-
 #define LSA_JOIN_MAX_ALLOWED_CLOCK_DRIFT_SECONDS 60
 
 #define MACHPASS_LEN  (16)
@@ -69,14 +65,6 @@ LsaJoinDomainInternal(
     PWSTR  pwszOsName,
     PWSTR  pwszOsVersion,
     PWSTR  pwszOsServicePack
-    );
-
-static
-DWORD
-LsaBuildOrgUnitDN(
-    PCSTR pszDomain,
-    PCSTR pszOU,
-    PSTR* ppszOU_DN
     );
 
 static
@@ -284,7 +272,6 @@ LsaJoinDomain(
     )
 {
     DWORD dwError = 0;
-    PSTR  pszOU_DN = NULL;
     PWSTR pwszHostname = NULL;
     PWSTR pwszHostDnsDomain = NULL;
     PWSTR pwszDomain = NULL;
@@ -340,16 +327,10 @@ LsaJoinDomain(
                     &pwszDomain);
     BAIL_ON_LSA_ERROR(dwError);
     
-    if (!LW_IS_NULL_OR_EMPTY_STR(pszOU)) {
-            
-        dwError = LsaBuildOrgUnitDN(
-                    pszDomain,
-                    pszOU,
-                    &pszOU_DN);
-        BAIL_ON_LSA_ERROR(dwError);
-        
+    if (!LW_IS_NULL_OR_EMPTY_STR(pszOU))
+    {
         dwError = LwMbsToWc16s(
-                    pszOU_DN,
+                    pszOU,
                     &pwszOU);
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -392,7 +373,6 @@ cleanup:
 
     LsaFreeSMBCreds(&pAccessInfo);
 
-    LW_SAFE_FREE_STRING(pszOU_DN);
     LW_SAFE_FREE_MEMORY(pwszHostname);
     LW_SAFE_FREE_MEMORY(pwszHostDnsDomain);
     LW_SAFE_FREE_MEMORY(pwszDomain);
@@ -404,178 +384,6 @@ cleanup:
     return dwError;
     
 error:
-
-    goto cleanup;
-}
-
-static
-DWORD
-LsaBuildOrgUnitDN(
-    PCSTR pszDomain,
-    PCSTR pszOU,
-    PSTR* ppszOU_DN
-    )
-{
-    DWORD dwError = 0;
-    PSTR  pszOuDN = NULL;
-    // Do not free
-    PSTR  pszOutputPos = NULL;
-    PCSTR pszInputPos = NULL;
-    PCSTR pszInputSectionEnd = NULL;
-    size_t sOutputDnLen = 0;
-    size_t sSectionLen = 0;
-    DWORD nDomainParts = 0;
-    
-    BAIL_ON_INVALID_STRING(pszDomain);
-    BAIL_ON_INVALID_STRING(pszOU);
-    
-    // Figure out the length required to write the OU DN
-    pszInputPos = pszOU;
-
-    // skip leading slashes
-    sSectionLen = strspn(pszInputPos, "/");
-    pszInputPos += sSectionLen;
-
-    while ((sSectionLen = strcspn(pszInputPos, "/")) != 0) {
-        sOutputDnLen += sizeof(LSA_JOIN_OU_PREFIX) - 1;
-        sOutputDnLen += sSectionLen;
-        // For the separating comma
-        sOutputDnLen++;
-        
-        pszInputPos += sSectionLen;
-        
-        sSectionLen = strspn(pszInputPos, "/");
-        pszInputPos += sSectionLen;
-    }
-    
-    // Figure out the length required to write the Domain DN
-    pszInputPos = pszDomain;
-    while ((sSectionLen = strcspn(pszInputPos, ".")) != 0) {
-        sOutputDnLen += sizeof(LSA_JOIN_DC_PREFIX) - 1;
-        sOutputDnLen += sSectionLen;
-        nDomainParts++;
-        
-        pszInputPos += sSectionLen;
-        
-        sSectionLen = strspn(pszInputPos, ".");
-        pszInputPos += sSectionLen;
-    }
-
-    // Add in space for the separating commas
-    if (nDomainParts > 1)
-    {
-        sOutputDnLen += nDomainParts - 1;
-    }
-    
-    dwError = LwAllocateMemory(
-                    sizeof(CHAR) * (sOutputDnLen + 1),
-                    (PVOID*)&pszOuDN);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    pszOutputPos = pszOuDN;
-    // Iterate through pszOU backwards and write to pszOuDN forwards
-    pszInputPos = pszOU + strlen(pszOU) - 1;
-
-    while(TRUE)
-    {
-        // strip trailing slashes
-        while (pszInputPos >= pszOU && *pszInputPos == '/')
-        {
-            pszInputPos--;
-        }
-
-        if (pszInputPos < pszOU)
-        {
-            break;
-        }
-
-        // Find the end of this section (so that we can copy it to
-        // the output string in forward order).
-        pszInputSectionEnd = pszInputPos;
-        while (pszInputPos >= pszOU && *pszInputPos != '/')
-        {
-            pszInputPos--;
-        }
-        sSectionLen = pszInputSectionEnd - pszInputPos;
-
-        // Only "Computers" as the first element is a CN.
-        if ((pszOutputPos ==  pszOuDN) &&
-            (sSectionLen == sizeof("Computers") - 1) &&
-            !strncasecmp(pszInputPos + 1, "Computers", sizeof("Computers") - 1))
-        {
-            // Add CN=<name>,
-            memcpy(pszOutputPos, LSA_JOIN_CN_PREFIX,
-                    sizeof(LSA_JOIN_CN_PREFIX) - 1);
-            pszOutputPos += sizeof(LSA_JOIN_CN_PREFIX) - 1;
-        }
-        else
-        {
-            // Add OU=<name>,
-            memcpy(pszOutputPos, LSA_JOIN_OU_PREFIX,
-                    sizeof(LSA_JOIN_OU_PREFIX) - 1);
-            pszOutputPos += sizeof(LSA_JOIN_OU_PREFIX) - 1;
-        }
-
-        memcpy(pszOutputPos,
-                pszInputPos + 1,
-                sSectionLen);
-        pszOutputPos += sSectionLen;
-
-        *pszOutputPos++ = ',';
-    }
-
-    // Make sure to overwrite any initial "CN=Computers" as "OU=Computers".
-    // Note that it is safe to always set "OU=" as the start of the DN
-    // unless the DN so far is exacly "CN=Computers,".
-    if (strcasecmp(pszOuDN, LSA_JOIN_CN_PREFIX "Computers,"))
-    {
-        memcpy(pszOuDN, LSA_JOIN_OU_PREFIX, sizeof(LSA_JOIN_OU_PREFIX) - 1);
-    }
-    
-    // Read the domain name foward in sections and write it back out
-    // forward.
-    pszInputPos = pszDomain;
-    while (TRUE)
-    {
-        sSectionLen = strcspn(pszInputPos, ".");
-
-        memcpy(pszOutputPos,
-                LSA_JOIN_DC_PREFIX,
-                sizeof(LSA_JOIN_DC_PREFIX) - 1);
-        pszOutputPos += sizeof(LSA_JOIN_DC_PREFIX) - 1;
-        
-        memcpy(pszOutputPos, pszInputPos, sSectionLen);
-        pszOutputPos += sSectionLen;
-        
-        pszInputPos += sSectionLen;
-        
-        sSectionLen = strspn(pszInputPos, ".");
-        pszInputPos += sSectionLen;
-
-        if (*pszInputPos != 0)
-        {
-            // Add a comma for the next entry
-            *pszOutputPos++ = ',';
-        }
-        else
-            break;
-
-    }
-    
-    assert(pszOutputPos == pszOuDN + sizeof(CHAR) * (sOutputDnLen));
-    *pszOutputPos = 0;
-
-    *ppszOU_DN = pszOuDN;
-    
-cleanup:
-
-    return dwError;
-    
-error:
-
-    *ppszOU_DN = NULL;
-    
-    LW_SAFE_FREE_STRING(pszOuDN);
 
     goto cleanup;
 }
