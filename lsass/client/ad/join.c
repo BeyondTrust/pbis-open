@@ -1,3 +1,7 @@
+/* Editor Settings: expandtabs and use 4 spaces for indentation
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * -*- mode: c, c-basic-offset: 4 -*- */
+
 /*
  * Copyright Likewise Software
  * All rights reserved.
@@ -41,6 +45,181 @@
  */
 #include "adclient.h"
 
+#define LSA_JOIN_OU_PREFIX "OU="
+#define LSA_JOIN_CN_PREFIX "CN="
+#define LSA_JOIN_DC_PREFIX "DC="
+
+DWORD
+LsaAdOuSlashToDn(
+    IN PCSTR pDomain,
+    IN PCSTR pSlashOu,
+    OUT PSTR* ppLdapOu
+    )
+{
+    DWORD dwError = 0;
+    PSTR  pLdapOu = NULL;
+    // Do not free
+    PSTR  pOutputPos = NULL;
+    PCSTR pInputPos = NULL;
+    PCSTR pszInputSectionEnd = NULL;
+    size_t sOutputDnLen = 0;
+    size_t sSectionLen = 0;
+    DWORD nDomainParts = 0;
+    
+    BAIL_ON_INVALID_STRING(pDomain);
+    BAIL_ON_INVALID_STRING(pSlashOu);
+    
+    // Figure out the length required to write the OU DN
+    pInputPos = pSlashOu;
+
+    // skip leading slashes
+    sSectionLen = strspn(pInputPos, "/");
+    pInputPos += sSectionLen;
+
+    while ((sSectionLen = strcspn(pInputPos, "/")) != 0) {
+        sOutputDnLen += sizeof(LSA_JOIN_OU_PREFIX) - 1;
+        sOutputDnLen += sSectionLen;
+        // For the separating comma
+        sOutputDnLen++;
+        
+        pInputPos += sSectionLen;
+        
+        sSectionLen = strspn(pInputPos, "/");
+        pInputPos += sSectionLen;
+    }
+    
+    // Figure out the length required to write the Domain DN
+    pInputPos = pDomain;
+    while ((sSectionLen = strcspn(pInputPos, ".")) != 0) {
+        sOutputDnLen += sizeof(LSA_JOIN_DC_PREFIX) - 1;
+        sOutputDnLen += sSectionLen;
+        nDomainParts++;
+        
+        pInputPos += sSectionLen;
+        
+        sSectionLen = strspn(pInputPos, ".");
+        pInputPos += sSectionLen;
+    }
+
+    // Add in space for the separating commas
+    if (nDomainParts > 1)
+    {
+        sOutputDnLen += nDomainParts - 1;
+    }
+    
+    dwError = LwAllocateMemory(
+                    sizeof(CHAR) * (sOutputDnLen + 1),
+                    (PVOID*)&pLdapOu);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pOutputPos = pLdapOu;
+    // Iterate through pSlashOu backwards and write to pLdapOu forwards
+    pInputPos = pSlashOu + strlen(pSlashOu) - 1;
+
+    while(TRUE)
+    {
+        // strip trailing slashes
+        while (pInputPos >= pSlashOu && *pInputPos == '/')
+        {
+            pInputPos--;
+        }
+
+        if (pInputPos < pSlashOu)
+        {
+            break;
+        }
+
+        // Find the end of this section (so that we can copy it to
+        // the output string in forward order).
+        pszInputSectionEnd = pInputPos;
+        while (pInputPos >= pSlashOu && *pInputPos != '/')
+        {
+            pInputPos--;
+        }
+        sSectionLen = pszInputSectionEnd - pInputPos;
+
+        // Only "Computers" as the first element is a CN.
+        if ((pOutputPos ==  pLdapOu) &&
+            (sSectionLen == sizeof("Computers") - 1) &&
+            !strncasecmp(pInputPos + 1, "Computers", sizeof("Computers") - 1))
+        {
+            // Add CN=<name>,
+            memcpy(pOutputPos, LSA_JOIN_CN_PREFIX,
+                    sizeof(LSA_JOIN_CN_PREFIX) - 1);
+            pOutputPos += sizeof(LSA_JOIN_CN_PREFIX) - 1;
+        }
+        else
+        {
+            // Add OU=<name>,
+            memcpy(pOutputPos, LSA_JOIN_OU_PREFIX,
+                    sizeof(LSA_JOIN_OU_PREFIX) - 1);
+            pOutputPos += sizeof(LSA_JOIN_OU_PREFIX) - 1;
+        }
+
+        memcpy(pOutputPos,
+                pInputPos + 1,
+                sSectionLen);
+        pOutputPos += sSectionLen;
+
+        *pOutputPos++ = ',';
+    }
+
+    // Make sure to overwrite any initial "CN=Computers" as "OU=Computers".
+    // Note that it is safe to always set "OU=" as the start of the DN
+    // unless the DN so far is exacly "CN=Computers,".
+    if (strcasecmp(pLdapOu, LSA_JOIN_CN_PREFIX "Computers,"))
+    {
+        memcpy(pLdapOu, LSA_JOIN_OU_PREFIX, sizeof(LSA_JOIN_OU_PREFIX) - 1);
+    }
+    
+    // Read the domain name foward in sections and write it back out
+    // forward.
+    pInputPos = pDomain;
+    while (TRUE)
+    {
+        sSectionLen = strcspn(pInputPos, ".");
+
+        memcpy(pOutputPos,
+                LSA_JOIN_DC_PREFIX,
+                sizeof(LSA_JOIN_DC_PREFIX) - 1);
+        pOutputPos += sizeof(LSA_JOIN_DC_PREFIX) - 1;
+        
+        memcpy(pOutputPos, pInputPos, sSectionLen);
+        pOutputPos += sSectionLen;
+        
+        pInputPos += sSectionLen;
+        
+        sSectionLen = strspn(pInputPos, ".");
+        pInputPos += sSectionLen;
+
+        if (*pInputPos != 0)
+        {
+            // Add a comma for the next entry
+            *pOutputPos++ = ',';
+        }
+        else
+            break;
+
+    }
+    
+    assert(pOutputPos == pLdapOu + sizeof(CHAR) * (sOutputDnLen));
+    *pOutputPos = 0;
+
+    *ppLdapOu = pLdapOu;
+    
+cleanup:
+
+    return dwError;
+    
+error:
+
+    *ppLdapOu = NULL;
+    
+    LW_SAFE_FREE_STRING(pLdapOu);
+
+    goto cleanup;
+}
+
 DWORD
 LsaAdJoinDomain(
     HANDLE hLsaConnection,
@@ -57,20 +236,69 @@ LsaAdJoinDomain(
     )
 {
     DWORD dwError = 0;
+    PSTR pLdapOu = NULL;
+
+    dwError = LsaAdOuSlashToDn(
+                    pszDomain,
+                    pszOU,
+                    &pLdapOu);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaAdJoinDomainDn(
+                    hLsaConnection,
+                    pszHostname,
+                    pszHostDnsDomain,
+                    pszDomain,
+                    pLdapOu,
+                    pszUsername,
+                    pszPassword,
+                    pszOSName,
+                    pszOSVersion,
+                    pszOSServicePack,
+                    dwFlags);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+
+    LW_SAFE_FREE_STRING(pLdapOu);
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+DWORD
+LsaAdJoinDomainDn(
+    IN HANDLE hLsaConnection,
+    IN PCSTR pHostname,
+    IN PCSTR pHostDnsDomain,
+    IN PCSTR pDomain,
+    IN PCSTR pOu,
+    IN PCSTR pUsername,
+    IN PCSTR pPassword,
+    IN PCSTR pOsName,
+    IN PCSTR pOsVersion,
+    IN PCSTR pOsServicePack,
+    IN LSA_NET_JOIN_FLAGS dwFlags
+    )
+{
+    DWORD dwError = 0;
     LWMsgDataContext* pDataContext = NULL;
     LSA_AD_IPC_JOIN_DOMAIN_REQ request;
     PVOID pBlob = NULL;
     size_t blobSize = 0;
 
-    request.pszHostname = pszHostname;
-    request.pszHostDnsDomain = pszHostDnsDomain;
-    request.pszDomain = pszDomain;
-    request.pszOU = pszOU;
-    request.pszUsername = pszUsername;
-    request.pszPassword = pszPassword;
-    request.pszOSName = pszOSName;
-    request.pszOSVersion = pszOSVersion;
-    request.pszOSServicePack = pszOSServicePack;
+    request.pszHostname = pHostname;
+    request.pszHostDnsDomain = pHostDnsDomain;
+    request.pszDomain = pDomain;
+    request.pszOU = pOu;
+    request.pszUsername = pUsername;
+    request.pszPassword = pPassword;
+    request.pszOSName = pOsName;
+    request.pszOSVersion = pOsVersion;
+    request.pszOSServicePack = pOsServicePack;
     request.dwFlags = dwFlags;
 
     dwError = MAP_LWMSG_ERROR(lwmsg_data_context_new(NULL, &pDataContext));

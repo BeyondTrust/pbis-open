@@ -123,6 +123,28 @@ LsaAdJoinDomain(
     );
 
 DWORD
+LsaAdOuSlashToDn(
+    IN PCSTR pDomain,
+    IN PCSTR pSlashOu,
+    OUT PSTR* ppLdapOu
+    );
+
+DWORD
+LsaAdJoinDomainDn(
+    IN HANDLE hLsaConnection,
+    IN PCSTR pHostname,
+    IN PCSTR pHostDnsDomain,
+    IN PCSTR pDomain,
+    IN PCSTR pOu,
+    IN PCSTR pUsername,
+    IN PCSTR pPassword,
+    IN PCSTR pOsName,
+    IN PCSTR pOsVersion,
+    IN PCSTR pOsServicePack,
+    IN LSA_NET_JOIN_FLAGS dwFlags
+    );
+
+DWORD
 LsaAdLeaveDomain(
     HANDLE hLsaConnection,
     PCSTR pszUsername,
