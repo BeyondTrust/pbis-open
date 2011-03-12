@@ -88,6 +88,20 @@ error:
     goto cleanup;
 }
 
+
+PWSTR pwstr_wcschr(PWSTR pwszHaystack, WCHAR wcNeedle)
+{
+    DWORD i = 0;
+    for (i=0; pwszHaystack[i] != '\0'; i++)
+    {
+        if (pwszHaystack[i] == wcNeedle)
+        {
+            return &pwszHaystack[i];
+        }
+    }
+    return NULL;
+}
+
 NTSTATUS
 MemDbOpenKey(
     IN REG_DB_HANDLE hDb,
@@ -95,6 +109,14 @@ MemDbOpenKey(
     OUT OPTIONAL MEM_REG_STORE_HANDLE *pRegKey)
 {
     NTSTATUS status = 0;
+    PWSTR pwszPtr = NULL;
+    PWSTR pwszSubKey = NULL;
+    PWSTR pwszTmpFullPath = NULL;
+
+    MEM_REG_STORE_HANDLE hParentKey = NULL;
+    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    BOOLEAN bEndOfString = FALSE;
+     
     if (!hDb)
     {
         status = MemRegStoreFindNode(
@@ -102,5 +124,44 @@ MemDbOpenKey(
                      pwszFullKeyPath,
                      pRegKey);
     }
+    else
+    {
+        status = LwRtlWC16StringDuplicate(&pwszTmpFullPath, pwszFullKeyPath);
+        BAIL_ON_NT_STATUS(status);
+
+        pwszSubKey = pwszTmpFullPath;
+        hParentKey = hDb->pMemReg;
+        do 
+        {
+            pwszPtr = pwstr_wcschr(pwszSubKey, L'\\');
+            if (pwszPtr)
+            {
+                *pwszPtr++ = L'\0';
+            }
+            else
+            {
+                pwszPtr = pwszSubKey;
+                bEndOfString = TRUE;
+            }
+
+      
+            /*
+             * Iterate over subkeys in \ sepearated path.
+             */
+            status = MemRegStoreFindNode(
+                         hParentKey,
+                         pwszSubKey,
+                         &hSubKey);
+            hParentKey = hSubKey;
+            pwszSubKey = pwszPtr;
+        } while (status == 0 && !bEndOfString);
+    }
+
+cleanup:
+    LWREG_SAFE_FREE_MEMORY(pwszTmpFullPath);
     return status;
+
+error:
+    LWREG_SAFE_FREE_MEMORY(pwszTmpFullPath);
+    goto cleanup;
 }

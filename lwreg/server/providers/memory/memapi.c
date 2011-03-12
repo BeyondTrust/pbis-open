@@ -104,6 +104,7 @@ MemOpenKeyEx(
     PREG_KEY_HANDLE phKeyResponse = NULL;
     MEM_REG_STORE_HANDLE pSubKey = NULL;
     PREG_KEY_CONTEXT pRetKey = NULL;
+    REG_DB_CONNECTION regDbConn = {0};
 
     if (!hKey)
     {
@@ -116,28 +117,13 @@ MemOpenKeyEx(
     }
     else if (pKeyHandle->pKey->hKey)
     {
-
-#if 0
-struct _REG_DB_CONNECTION;
-typedef struct _REG_DB_CONNECTION *REG_DB_HANDLE;
-typedef REG_DB_HANDLE *PREG_DB_HANDLE;
-
-
-typedef struct _REGMEM_NODE *MEM_REG_STORE_HANDLE;
-typedef struct _REGMEM_NODE **PMEM_REG_STORE_HANDLE;
-
-
-typedef struct _REG_DB_CONNECTION
-{
-    MEM_REG_STORE_HANDLE pMemReg;
-    pthread_rwlock_t lock;
-} REG_DB_CONNECTION, *PREG_DB_CONNECTION;
+        regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+//        regDbConn.lock = PTHREAD_MUTEX_INITIALIZER;
         status = MemDbOpenKey(
-                     pKeyHandle->pKey->pMemReg,
+                     &regDbConn,
                      pwszSubKey,
                      &pSubKey);
         BAIL_ON_NT_STATUS(status);
-#endif
     }
 
     if (phKeyResult)

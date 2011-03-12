@@ -224,7 +224,7 @@ MemRegStoreFindNode(
     {
         Name = (PCWSTR) L"";
     }
-    for (nodeIndex=0; hDb->SubNodes[nodeIndex]; nodeIndex++)
+    for (nodeIndex=0; nodeIndex<hDb->NodesLen; nodeIndex++)
     {
         if (LwRtlWC16StringIsEqual(Name, hDb->SubNodes[nodeIndex]->Name, FALSE))
         {
@@ -236,6 +236,10 @@ MemRegStoreFindNode(
     if (bFoundNode)
     {
         *phNode = hDb->SubNodes[nodeIndex];
+    }
+    else
+    {
+        status = STATUS_OBJECT_NAME_NOT_FOUND;
     }
 
 cleanup:
