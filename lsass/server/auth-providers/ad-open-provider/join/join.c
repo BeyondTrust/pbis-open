@@ -2723,12 +2723,22 @@ LsaChangeDomainGroupMembership(
                   hConnection,
                   pszTargetProvider,
                   &adminsMods);
+    if ((bEnable && dwError == ERROR_MEMBER_IN_ALIAS) ||
+        (!bEnable && dwError == ERROR_MEMBER_NOT_IN_ALIAS))
+    {
+        dwError = 0;
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaSrvModifyGroup2(
                   hConnection,
                   pszTargetProvider,
                   &usersMods);
+    if ((bEnable && dwError == ERROR_MEMBER_IN_ALIAS) ||
+        (!bEnable && dwError == ERROR_MEMBER_NOT_IN_ALIAS))
+    {
+        dwError = 0;
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
 error:

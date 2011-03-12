@@ -106,6 +106,7 @@ typedef struct _LSA_AD_CONFIG {
         DWORD           dwTrustExceptionCount;
     } DomainManager;
     BOOLEAN             bMultiTenancyEnabled;
+    BOOLEAN             bAddDomainToLocalGroupsEnabled;
 } LSA_AD_CONFIG, *PLSA_AD_CONFIG;
 
 struct _LSA_DB_CONNECTION;

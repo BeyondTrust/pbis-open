@@ -251,6 +251,11 @@
     doc = "Configure lsass to join to multiple domains"
     range = boolean
 }
+"AddDomainToLocalGroupsEnabled" = {
+    default = dword:00000001
+    doc = "Whether to add domain groups to local groups when joining a domain"
+    range = boolean
+}
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\Local]
 "Id" = {
