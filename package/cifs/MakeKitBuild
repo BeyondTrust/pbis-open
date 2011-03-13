@@ -113,15 +113,11 @@ common_files()
         "${MK_LIBDIR}/*${MK_LIB_EXT}" \
         "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lw-svcm/*${MK_DLO_EXT}" \
         "/etc/init.d/*" \
         "${MK_SYSCONFDIR}/*" \
         "/${MK_LIBDIR##*/}/security/pam_lsass${MK_DLO_EXT}" \
         "/${MK_LIBDIR##*/}/libnss_lsass${MK_DLO_EXT}.*"
-
-    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
-    then
-        mk_package_files "${MK_LIBDIR}/lw-svcm/*${MK_DLO_EXT}"
-    fi
 
     if [ "$MK_DLO_EXT" != "$MK_LIB_EXT" ]
     then
