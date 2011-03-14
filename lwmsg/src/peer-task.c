@@ -855,7 +855,6 @@ lwmsg_peer_task_handle_call_error(
     LWMsgStatus status
     )
 {
-    call->cookie = task->incoming_message.cookie;
     call->status = status;
     call->state = PEER_CALL_DISPATCHED | PEER_CALL_COMPLETED;
     call->params.incoming.out.tag = LWMSG_TAG_INVALID;
@@ -1369,6 +1368,7 @@ lwmsg_peer_task_dispatch_incoming_message(
         status = LWMSG_STATUS_SUCCESS;
         break;
     default:
+        status = lwmsg_peer_task_handle_call_error(task, call, status);
         BAIL_ON_ERROR(status);
         break;
     }
