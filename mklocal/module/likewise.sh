@@ -224,7 +224,7 @@ lw_check_pthread_once_init()
 
 lw_service()
 {
-    mk_push_vars SERVICE SOURCES GROUPS HEADERDEPS LIBDEPS INCLUDEDIRS CPPFLAGS LDFLAGS CFLAGS CXXFLAGS
+    mk_push_vars SERVICE SOURCES GROUPS HEADERDEPS LIBDEPS INCLUDEDIRS CPPFLAGS LDFLAGS CFLAGS CXXFLAGS DEPS
     mk_parse_params
 
     if [ "$LW_DEVICE_PROFILE" = "embedded" ]
@@ -239,7 +239,8 @@ lw_service()
             CPPFLAGS="$CPPFLAGS" \
             CFLAGS="$CFLAGS" \
             CXXFLAGS="$CXXFLAGS" \
-            LDFLAGS="$LDFLAGS"
+            LDFLAGS="$LDFLAGS" \
+            DEPS="$DEPS"
     else
         mk_dlo \
             INSTALLDIR="$MK_LIBDIR/lw-svcm" \
@@ -252,7 +253,8 @@ lw_service()
             CPPFLAGS="$CPPFLAGS" \
             CFLAGS="$CFLAGS" \
             CXXFLAGS="$CXXFLAGS" \
-            LDFLAGS="$LDFLAGS"
+            LDFLAGS="$LDFLAGS" \
+            DEPS="$DEPS"
     fi
 
     mk_pop_vars
