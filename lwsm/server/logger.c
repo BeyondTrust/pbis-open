@@ -332,17 +332,14 @@ LwSmLogMessage(
 
     LOCK(bLocked, &gLogLock);
 
-    if (level <= gLogInfo.MaxLevel)
-    {
-        dwError = LwSmLogMessageInLock(
-            level,
-            pszFacility,
-            pszFunctionName,
-            pszSourceFile,
-            dwLineNumber,
-            pszMessage);
-        BAIL_ON_ERROR(dwError);
-    }
+    dwError = LwSmLogMessageInLock(
+        level,
+        pszFacility,
+        pszFunctionName,
+        pszSourceFile,
+        dwLineNumber,
+        pszMessage);
+    BAIL_ON_ERROR(dwError);
 
 cleanup:
 
@@ -568,12 +565,14 @@ LwSmGetMaxLogLevel(
 
     LOCK(bLocked, &gLogLock);
 
-    if (LwSmFindLogInfo(pFacility, &pInfo) != ERROR_SUCCESS)
+    if (LwRtlHashMapFindKey(gpLogMap, OUT_PPVOID(&pInfo), pFacility) == STATUS_SUCCESS)
     {
-        return LW_SM_LOG_LEVEL_ALWAYS;
+        level = pInfo->MaxLevel;
     }
-
-    level = pInfo->MaxLevel;
+    else
+    {
+        level = gLogInfo.MaxLevel;
+    }
 
     UNLOCK(bLocked, &gLogLock);
 
