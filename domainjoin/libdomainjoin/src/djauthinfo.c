@@ -49,6 +49,8 @@
 #include <lwps/lwps.h>
 #include <lwstr.h>
 #include <lwsm/lwsm.h>
+#include <lwmem.h>
+#include <assert.h>
 
 #define DOMAINJOIN_EVENT_CATEGORY   "Domain join"
 
@@ -506,158 +508,292 @@ error:
 }
 
 static
+BOOLEAN
+IsContainer(
+    IN PCSTR pName,
+    IN size_t Len
+    )
+{
+    PCSTR ppTopLevelContainers[] = {
+        "Builtin",
+        "Computers",
+        "ForeignSecurityPrincipals",
+        "LostAndFound",
+        "NTDS Quotas",
+        "Program Data",
+        "System",
+        "Users",
+        NULL
+    };
+    DWORD index = 0;
+
+    for (index = 0; ppTopLevelContainers[index]; index++)
+    {
+        if (Len == strlen(ppTopLevelContainers[index]) &&
+                !strncasecmp(pName, ppTopLevelContainers[index], Len))
+        {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+static
 DWORD
 CanonicalizeOrganizationalUnit(
-    PSTR* pszCanonicalizedOrganizationalUnit,
-    PCSTR pszOrganizationalUnit,
-    PCSTR pszDomainName
+    PCSTR pInputOu,
+    PCSTR pDomainName,
+    PSTR* ppCanonicalOu
     )
 {
     DWORD ceError = ERROR_SUCCESS;
-    int EE = 0;
-    PSTR comma;
-    PSTR current;
-    PSTR temp = NULL;
-    PSTR result = NULL;
-    PSTR dnsDomain = NULL;
+    PCSTR pPos = NULL;
+    PCSTR pNextComponent = NULL;
+    DWORD componentCount = 1;
+    PSTR pLdapDomainSuffix = NULL;
+    // Do not free
+    PSTR pOutputPos = NULL;
+    PSTR pOutputOu = NULL;
+    // Do not free
+    PSTR pUnescapePos = NULL;
+    size_t outputSize = 0;
+    // Do not free
+    PSTR pUnescapedComponentEnd = NULL;
+    int outputEscapeSpace = 0;
 
-    if (!pszOrganizationalUnit || !pszOrganizationalUnit[0])
+    if (!pDomainName || !pDomainName[0])
     {
-        result = NULL;
-        ceError = ERROR_SUCCESS;
-        GOTO_CLEANUP_EE(EE);
+        ceError = LW_ERROR_INVALID_DOMAIN;
+        BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
-    comma = strchr(pszOrganizationalUnit, ',');
-    if (!comma)
+    pPos = pDomainName;
+    while (TRUE)
     {
-        /* already in canonical "/" format */
-        ceError = CTAllocateString(pszOrganizationalUnit, &result);
-        GOTO_CLEANUP_EE(EE);
-    }
-
-    /* create a temporary buffer in which to party */
-    ceError = CTAllocateString(pszOrganizationalUnit, &temp);
-    CLEANUP_ON_DWORD_EE(ceError, EE);
-
-    CTStripWhitespace(temp);
-
-    current = temp;
-    comma = strchr(current, ',');
-
-    while (1)
-    {
-        PSTR equalSign;
-        PSTR type;
-        PSTR component;
-        BOOLEAN isDc;
-        BOOLEAN isOu;
-
-        if (comma)
+        pNextComponent = strchr(pPos, '.');
+        if (pNextComponent == pPos)
         {
-            comma[0] = 0;
+            // Two periods in a row
+            ceError = LW_ERROR_INVALID_DOMAIN;
+            BAIL_ON_CENTERIS_ERROR(ceError);
         }
-        equalSign = strchr(current, '=');
-        if (!equalSign)
+        if (pNextComponent && pNextComponent[1])
         {
-            ceError = LW_ERROR_INVALID_OU;
-            GOTO_CLEANUP_EE(EE);
-        }
-        equalSign[0] = 0;
-
-        type = current;
-        component = equalSign + 1;
-
-        isDc = !strcasecmp("dc", type);
-        isOu = !strcasecmp("ou", type) || !strcasecmp("cn", type);
-        if (!isDc && !isOu)
-        {
-            ceError = LW_ERROR_INVALID_OU;
-            GOTO_CLEANUP_EE(EE);
-        }
-        if (!isDc)
-        {
-            if (dnsDomain)
-            {
-                ceError = LW_ERROR_INVALID_OU;
-                GOTO_CLEANUP_EE(EE);
-            }
-            if (result)
-            {
-                PSTR newResult;
-                ceError = CTAllocateStringPrintf(&newResult, "%s/%s", component, result);
-                GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
-                CT_SAFE_FREE_STRING(result);
-                result = newResult;
-            }
-            else
-            {
-                ceError = CTAllocateString(component, &result);
-                GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
-            }
+            componentCount++;
+            pPos = pNextComponent + 1;
         }
         else
         {
-            if (!result)
-            {
-                ceError = LW_ERROR_INVALID_OU;
-                GOTO_CLEANUP_EE(EE);
-            }
-            if (dnsDomain)
-            {
-                PSTR newDnsDomain;
-                ceError = CTAllocateStringPrintf(&newDnsDomain, "%s.%s", dnsDomain, component);
-                GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
-                CT_SAFE_FREE_STRING(dnsDomain);
-                dnsDomain = newDnsDomain;
-            }
-            else
-            {
-                ceError = CTAllocateString(component, &dnsDomain);
-                GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
-            }
+            break;
         }
-        if (!comma)
+    }
+
+    // Length original string - periods + strlen(",dc=") * components + null
+    // Note there is one more component than number of periods
+    ceError = LwAllocateMemory(
+                    strlen(pDomainName) +
+                        (sizeof(",dc=") - 2) * componentCount + 2,
+                    (PVOID*)&pLdapDomainSuffix);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    pOutputPos = pLdapDomainSuffix;
+    pPos = pDomainName;
+    while (TRUE)
+    {
+        pNextComponent = strchr(pPos, '.');
+        if (!pNextComponent)
+        {
+            pNextComponent = pPos + strlen(pPos);
+        }
+        memcpy(pOutputPos, ",dc=", sizeof(",dc=") - 1);
+        pOutputPos += sizeof(",dc=") - 1;
+        memcpy(pOutputPos, pPos, pNextComponent - pPos);
+        pOutputPos += pNextComponent - pPos;
+
+        if (!pNextComponent[0] || !pNextComponent[1])
         {
             break;
         }
-        current = comma + 1;
-        comma = strchr(current, ',');
+        else
+        {
+            // Skip the .
+            pPos = pNextComponent + 1;
+        }
+    }
+    pOutputPos[0] = 0;
+
+    if (strlen(pInputOu) > strlen(pLdapDomainSuffix) &&
+            !strcasecmp(pInputOu + strlen(pInputOu) -
+                strlen(pLdapDomainSuffix), pLdapDomainSuffix))
+    {
+        // The input OU is in ldap format because ends with the right domain suffix
+        ceError = LwAllocateString(pInputOu, ppCanonicalOu);
+        BAIL_ON_CENTERIS_ERROR(ceError);
+
+        goto cleanup;
     }
 
-    if (IsNullOrEmptyString(dnsDomain))
+    componentCount = 1;
+    pPos = pInputOu;
+
+    while(pPos[0])
     {
-        ceError = LW_ERROR_INVALID_OU;
-        GOTO_CLEANUP_EE(EE);
+        if (pPos[0] == '\\')
+        {
+            if (!pPos[1])
+            {
+                ceError = LW_ERROR_INVALID_OU;
+                BAIL_ON_CENTERIS_ERROR(ceError);
+            }
+            else if (pPos[1] == '/')
+            {
+                outputEscapeSpace--;
+            }
+            pPos++;
+        }
+        else if (pPos[0] == ',')
+        {
+            outputEscapeSpace++;
+        }
+        else if (pPos[0] == '/')
+        {
+            if (!pPos[1] || pPos[1] == '/')
+            {
+                ceError = LW_ERROR_INVALID_OU;
+                BAIL_ON_CENTERIS_ERROR(ceError);
+            }
+            componentCount++;
+        }
+        pPos++;
     }
 
-    if (IsNullOrEmptyString(result))
+    outputSize = strlen(pInputOu) + (sizeof("ou=") - 1) * componentCount +
+                    strlen(pLdapDomainSuffix) + outputEscapeSpace + 1;
+    ceError = LwAllocateMemory(
+                    outputSize,
+                    (PVOID*)&pOutputOu);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    pOutputPos = pOutputOu + outputSize;
+    memcpy(
+            pOutputPos - strlen(pLdapDomainSuffix) - 1,
+            pLdapDomainSuffix,
+            strlen(pLdapDomainSuffix) + 1);
+    pOutputPos -= strlen(pLdapDomainSuffix) + 1;
+    componentCount = 1;
+    pPos = pInputOu;
+
+    while (pPos[0])
     {
-        ceError = LW_ERROR_INVALID_OU;
-        GOTO_CLEANUP_EE(EE);
+        pNextComponent = pPos;
+        outputEscapeSpace = 0;
+        while(pNextComponent[0])
+        {
+            if (pNextComponent[0] == '\\')
+            {
+                if (!pNextComponent[1])
+                {
+                    ceError = LW_ERROR_INVALID_OU;
+                    BAIL_ON_CENTERIS_ERROR(ceError);
+                }
+                else if (pNextComponent[1] == '/')
+                {
+                    outputEscapeSpace--;
+                }
+                pNextComponent++;
+            }
+            else if (pNextComponent[0] == ',')
+            {
+                outputEscapeSpace++;
+            }
+            else if (pNextComponent[0] == '/')
+            {
+                break;
+            }
+            pNextComponent++;
+        }
+
+        if (componentCount > 1)
+        {
+            pOutputPos[-1] = ',';
+            pOutputPos--;
+        }
+
+        pUnescapedComponentEnd = pOutputPos;
+        pOutputPos -= (pNextComponent - pPos) + outputEscapeSpace;
+        pUnescapePos = pOutputPos;
+        while (pPos < pNextComponent)
+        {
+            if (pPos[0] == '\\')
+            {
+                if (!pPos[1])
+                {
+                    ceError = LW_ERROR_INVALID_OU;
+                    BAIL_ON_CENTERIS_ERROR(ceError);
+                }
+                else if (pPos[1] == '/')
+                {
+                    pUnescapePos[0] = pPos[1];
+                }
+                else
+                {
+                    pUnescapePos[0] = pPos[0];
+                    pUnescapePos[1] = pPos[1];
+                    pUnescapePos++;
+                }
+                pPos++;
+            }
+            else if (pPos[0] == ',')
+            {
+                pUnescapePos[0] = '\\';
+                pUnescapePos[1] = pPos[0];
+                pUnescapePos++;
+            }
+            else
+            {
+                pUnescapePos[0] = pPos[0];
+            }
+            pUnescapePos++;
+            pPos++;
+        }
+
+        if (componentCount == 1 &&
+                IsContainer(pOutputPos, pUnescapedComponentEnd - pOutputPos))
+        {
+            memcpy(pOutputPos - (sizeof("cn=") - 1), "cn=", sizeof("cn=") - 1);
+        }
+        else
+        {
+            // pOutputPos already points to the next byte to write, so back up
+            // one less byte
+            memcpy(pOutputPos - (sizeof("ou=") - 1), "ou=", sizeof("ou=") - 1);
+        }
+        pOutputPos -= (sizeof("ou=") - 1);
+        pPos = pNextComponent;
+        if (pPos[0] == '/')
+        {
+            pPos++;
+        }
+        componentCount++;
     }
 
-    if (strcasecmp(dnsDomain, pszDomainName))
-    {
-        ceError = LW_ERROR_INVALID_OU;
-        GOTO_CLEANUP_EE(EE);
-    }
+    LW_ASSERT(pOutputPos == pOutputOu);
+
+    *ppCanonicalOu = pOutputOu;
 
 cleanup:
     if (ceError)
     {
-        CT_SAFE_FREE_STRING(result);
+        *ppCanonicalOu = NULL;
+        LW_SAFE_FREE_STRING(pOutputOu);
     }
+    LW_SAFE_FREE_STRING(pLdapDomainSuffix);
 
-    CT_SAFE_FREE_STRING(dnsDomain);
-    CT_SAFE_FREE_STRING(temp);
-
-    *pszCanonicalizedOrganizationalUnit = result;
-    if (ceError)
-    {
-        DJ_LOG_VERBOSE("Error in CanonicalizeOrganizationalUnit: 0x%08x, EE = %d", ceError, EE);
-    }
     return ceError;
+
+error:
+    goto cleanup;
 }
 
 static QueryResult QueryDoJoin(const JoinProcessOptions *options, LWException **exc)
@@ -707,9 +843,10 @@ static void DoJoin(JoinProcessOptions *options, LWException **exc)
 
     if (options->ouName)
     {
-        LW_CLEANUP_CTERR(exc, CanonicalizeOrganizationalUnit(&pszCanonicalizedOU,
+        LW_CLEANUP_CTERR(exc, CanonicalizeOrganizationalUnit(
                                                  options->ouName,
-                                                 options->domainName));
+                                                 options->domainName,
+                                                 &pszCanonicalizedOU));
 
         CT_SAFE_FREE_STRING(options->ouName);
         options->ouName = pszCanonicalizedOU;
@@ -1097,7 +1234,7 @@ void DJCreateComputerAccount(
         LW_CLEANUP_LSERR(exc, dwError);
     }
 
-    dwError = LsaAdJoinDomain(
+    dwError = LsaAdJoinDomainDn(
                  lsa,
                  options->computerName,
                  dnsDomain,
