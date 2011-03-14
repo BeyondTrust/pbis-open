@@ -512,7 +512,9 @@ function do_component
 
         if [ -f "$_cache_file" ]; then
             local _rev=$(component_cache_modified "$_cache_file" "${COMP_STAGE_CACHED_EXTRACT}")
-            if [ "$_comp_modified" -gt "$_rev" ]
+            if  [ -z "$_comp_modified" ]; then
+                COMP_COPY_FILE=""
+            elif [ "$_comp_modified" -gt "$_rev" ]
             then
                 echo "Component has unbuilt modifications -- disabling caching"
                 COMP_COPY_FILE=""
