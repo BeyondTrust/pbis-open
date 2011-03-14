@@ -564,9 +564,9 @@ ReleaseContainer(
 
         if (pContainer->Instances.pNext == &pContainer->Instances)
         {
-            LwRtlHashTableRemove(gpContainers, &pContainer->Node);
             if (pContainer->pTask)
             {
+                LwRtlHashTableRemove(gpContainers, &pContainer->Node);
                 LwRtlCancelTask(pContainer->pTask);
             }
         }
@@ -1616,7 +1616,6 @@ ContainerSrvStart(
     pHandle = NULL;
 
     lwmsg_call_pend(pCall, NULL, NULL);
-    pCall = NULL;
 
 error:
 
@@ -1630,11 +1629,6 @@ error:
         }
 
         LwFreeMemory(pHandle);
-    }
-
-    if (pCall)
-    {
-        lwmsg_call_release(pCall);
     }
 
     return dwError ? LWMSG_STATUS_ERROR : LWMSG_STATUS_PENDING;
