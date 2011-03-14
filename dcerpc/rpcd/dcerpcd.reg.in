@@ -6,11 +6,11 @@
     doc = "" 
 }
 "Path" = { 
-    default = "@SBINDIR@/dcerpcd" 
+    default = "@LIBDIR@/lw-svcm/dcerpc@MOD_EXT@" 
     doc = "" 
 }
 "Arguments" = { 
-    default = "@SBINDIR@/dcerpcd -f" 
+    default = ""
     doc = "" 
 }
 "Environment" = { 

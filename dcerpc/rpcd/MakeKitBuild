@@ -6,7 +6,7 @@ make()
     RPCD_HEADERDEPS="dce/rpc.h gssapi.h"
 
     RPCD_SOURCES="\
-        dsm.c dsm_unix.c rpcd.c rpcddb.c rpcdep.c \
+        dsm.c dsm_unix.c rpcd-svcm.c rpcddb.c rpcdep.c \
         rpcdepdb.c rpcdsliv.c rpcdutil.c ep_sstub.c"
 
     lw_dceidl \
@@ -22,10 +22,10 @@ make()
         INCLUDEDIRS="$RPCD_INCLUDEDIRS" \
         IDLFLAGS="$RPCD_IDLFLAGS"
 
-    mk_program \
+    lw_service \
+        SERVICE="dcerpc" \
         PROGRAM="dcerpcd" \
         SOURCES="$RPCD_SOURCES" \
-        INSTALLDIR="${MK_SBINDIR}" \
         CPPFLAGS="$RPCD_CPPFLAGS" \
         CFLAGS="-Wall -Werror" \
         INCLUDEDIRS="$RPCD_INCLUDEDIRS" \

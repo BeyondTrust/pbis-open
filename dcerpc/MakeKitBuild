@@ -150,7 +150,7 @@ configure()
             ;;
     esac
 
-    mk_export DCERPCD_SERVICE_TYPE="dword:00000001"
+    mk_export DCERPCD_SERVICE_TYPE="dword:00000002"
 
     mk_multiarch_do
         rpc_feature_flags
@@ -159,8 +159,9 @@ configure()
     mk_export MK_CFLAGS="$MK_CFLAGS -Wall"
 
     mk_export SBINDIR="$MK_SBINDIR"
+    mk_export LIBDIR="$MK_SBINDIR"
+    mk_export MOD_EXT="$MK_DLO_EXT"
     
-
     # FIXME: need test
     mk_export OBJEXT="o"
     # FIXME: need test

@@ -12,13 +12,14 @@ AC_CONFIG_HEADER([include/config.h])
 AC_PROG_CC
 AC_CHECK_SIZEOF([long])
 
+DCERPCD_SERVICE_TYPE="dword:00000002"
+MOD_EXT=".so"
+
 # reduce target_cpu
 case $target_cpu in
 	i?86)	target_cpu="i386";;
-	hppa2.0*) target_cpu="hppa2.0";;
+	hppa2.0*) target_cpu="hppa2.0"; MOD_EXT=".sl";;
 esac
-
-DCERPCD_SERVICE_TYPE="dword:00000001"
 
 # reduce linux* to linux-gnu for target_os
 # reduce hpux11.* to hpux11.11
@@ -63,6 +64,7 @@ esac
 AC_SUBST(target_cpu)
 AC_SUBST(target_os)
 AC_SUBST(DCERPCD_SERVICE_TYPE)
+AC_SUBST(MOD_EXT)
 
 #AM_CONFIG_HEADER([include/config.h])
 
@@ -458,6 +460,7 @@ AC_CHECK_FUNCS(getpeereid)
 ## COMPONENT: rpcd
 
 AS_AC_EXPAND(SBINDIR, ["${sbindir}"])
+AS_AC_EXPAND(LIBDIR, ["${libdir}"])
 
 AC_CHECK_FUNCS(setpgrp)
 if test "$ac_cv_func_setpgrp" = "yes"; then
