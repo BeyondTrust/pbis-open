@@ -594,7 +594,7 @@ CanonicalizeOrganizationalUnit(
     ceError = LwAllocateMemory(
                     strlen(pDomainName) +
                         (sizeof(",dc=") - 2) * componentCount + 2,
-                    (PVOID*)&pLdapDomainSuffix);
+                    PPCAST(&pLdapDomainSuffix));
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     pOutputPos = pLdapDomainSuffix;
@@ -672,7 +672,7 @@ CanonicalizeOrganizationalUnit(
                     strlen(pLdapDomainSuffix) + outputEscapeSpace + 1;
     ceError = LwAllocateMemory(
                     outputSize,
-                    (PVOID*)&pOutputOu);
+                    PPCAST(&pOutputOu));
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     pOutputPos = pOutputOu + outputSize;
