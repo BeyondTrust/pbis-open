@@ -980,7 +980,10 @@ ContainerStopComplete(
 
     CONTAINER_LOCK();
 
-    lwmsg_session_release_handle(pInstance->pContainer->pSession, pInstance->pHandle);
+    if (pInstance->pContainer->pSession && pInstance->pHandle)
+    {
+        lwmsg_session_release_handle(pInstance->pContainer->pSession, pInstance->pHandle);
+    }
     pInstance->pHandle = NULL;
 
     ReleaseContainer(pInstance->pContainer, pInstance);
