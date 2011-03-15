@@ -1012,6 +1012,11 @@ ContainerStop(
 
     CONTAINER_LOCK();
 
+    if (pInstance->State == LW_SERVICE_STATE_DEAD)
+    {
+        pInstance->State = LW_SERVICE_STATE_STOPPED;
+    }
+
     if (pInstance->State != LW_SERVICE_STATE_RUNNING)
     {
         goto cleanup;
