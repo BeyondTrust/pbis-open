@@ -123,8 +123,6 @@ MemCreateKeyEx(
     REG_DB_CONNECTION regDbConn = {0};
     PWSTR pwszRootKey = NULL;
 
-
-
     if (!hKey)
     {
         status = LwRtlWC16StringAllocateFromCString(

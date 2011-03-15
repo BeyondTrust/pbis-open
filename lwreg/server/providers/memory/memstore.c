@@ -58,7 +58,6 @@ MemRegStoreOpen(
     NTSTATUS status = 0;
     MEM_REG_STORE_HANDLE phReg = NULL;
     PWSTR rootKey = NULL;
-    PWSTR subKey = NULL;
     MEM_REG_STORE_HANDLE rootNode = NULL;
     DWORD i = 0;
 
@@ -74,8 +73,6 @@ MemRegStoreOpen(
                  &phReg->Name, "\\");
     BAIL_ON_NT_STATUS(status);
 
-    ghMemRegRoot = phReg;
-    *phDb = phReg;
 
     for (i=0; gRootKeys[i]; i++)
     {
@@ -96,6 +93,9 @@ MemRegStoreOpen(
        
     }
 
+    ghMemRegRoot = phReg;
+    *phDb = phReg;
+
 cleanup:
     return status;
 
@@ -103,7 +103,6 @@ error:
     LWREG_SAFE_FREE_MEMORY(phReg->Name);
     LWREG_SAFE_FREE_MEMORY(phReg);
     LWREG_SAFE_FREE_MEMORY(rootKey);
-    LWREG_SAFE_FREE_MEMORY(subKey);
     goto cleanup;
 }
 
@@ -200,22 +199,27 @@ MemRegStoreAddNode(
     NTSTATUS status = 0;
     PREGMEM_NODE *pNodesArray = NULL;
     PREGMEM_NODE pNewNode = NULL;
+    PWSTR newNodeName = NULL;
 
     status = NtRegReallocMemory(hDb->SubNodes, 
                                 (PVOID) &pNodesArray,
                                 (hDb->NodesLen + 1) * sizeof(PREGMEM_NODE));
     BAIL_ON_NT_STATUS(status);
     status = LW_RTL_ALLOCATE(
-                 (PVOID*)&pNewNode, PREGMEM_NODE, sizeof(REGMEM_NODE));
+                 (PVOID*) &pNewNode, PREGMEM_NODE, sizeof(REGMEM_NODE));
     BAIL_ON_NT_STATUS(status);
     memset(pNewNode, 0, sizeof(*pNewNode));
+
+    status = LwRtlWC16StringDuplicate(&newNodeName, Name);
+    BAIL_ON_NT_STATUS(status);
   
     hDb->SubNodes = pNodesArray;
     pNodesArray = NULL;
-    hDb->SubNodes[hDb->NodesLen] = pNewNode;
 
-    status = LwRtlWC16StringDuplicate(&pNewNode->Name, Name);
-    BAIL_ON_NT_STATUS(status);
+    hDb->SubNodes[hDb->NodesLen] = pNewNode;
+    pNewNode->Name = newNodeName;
+    newNodeName = NULL;
+
     pNewNode->NodeType = NodeType;
     pNewNode->SecurityDescriptor = SecurityDescriptor;
     hDb->NodesLen++;
@@ -233,9 +237,8 @@ cleanup:
     return status;
 
 error:
-    LWREG_SAFE_FREE_MEMORY(hDb->SubNodes);
     LWREG_SAFE_FREE_MEMORY(pNodesArray);
     LWREG_SAFE_FREE_MEMORY(pNewNode);
-    LWREG_SAFE_FREE_MEMORY(pNewNode->Name);
+    LWREG_SAFE_FREE_MEMORY(newNodeName);
     goto cleanup;
 }
