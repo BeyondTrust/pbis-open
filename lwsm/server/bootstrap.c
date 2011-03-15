@@ -88,7 +88,11 @@ LwSmBootstrap(
         dwError = LwMbsToWc16s(pService->pszPath, &pInfo->pwszPath);
         BAIL_ON_ERROR(dwError);
 
+#ifdef SERVICE_DIRECT
+        dwError = LwMbsToWc16s("direct", &pInfo->pwszGroup);
+#else
         dwError = LwMbsToWc16s(pService->pszName, &pInfo->pwszGroup);
+#endif
         BAIL_ON_ERROR(dwError);
 
         dwError = LwMbsToWc16s("Bootstrap service", &pInfo->pwszDescription);

@@ -23,6 +23,7 @@ configure()
         mk_define EMBED_NETLOGON
         mk_define EMBED_LWIO
         mk_define EMBED_LSASS
+        mk_define SERVICE_DIRECT
     fi
 
     # Check endianness

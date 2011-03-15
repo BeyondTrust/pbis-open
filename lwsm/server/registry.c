@@ -315,7 +315,11 @@ LwSmRegistryReadServiceInfo(
         &pInfo->pwszGroup);
     if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
+#ifdef SERVICE_DIRECT
+        dwError = LwMbsToWc16s("direct", &pInfo->pwszGroup);
+#else
         dwError = LwAllocateWc16String(&pInfo->pwszGroup, pInfo->pwszName);
+#endif
     }
     BAIL_ON_ERROR(dwError);
 
