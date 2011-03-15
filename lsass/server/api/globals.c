@@ -49,7 +49,7 @@
 time_t gServerStartTime = 0;
 
 PLSA_AUTH_PROVIDER gpAuthProviderList = NULL;
-pthread_rwlock_t gpAuthProviderList_rwlock;
+LSA_SRV_RWLOCK gpAuthProviderList_rwlock;
 
 PLSA_RPC_SERVER gpRpcServerList = NULL;
 pthread_rwlock_t gpRpcServerList_rwlock;
@@ -83,7 +83,7 @@ LsaSrvApiInit(
 
     memset(&gPerfCounters[0], 0, sizeof(gPerfCounters));
 
-    pthread_rwlock_init(&gpAuthProviderList_rwlock, NULL);
+    LsaSrvInitializeLock(&gpAuthProviderList_rwlock);
 
     pthread_rwlock_init(&gpRpcServerList_rwlock, NULL);
 

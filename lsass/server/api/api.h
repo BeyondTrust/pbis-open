@@ -100,6 +100,30 @@
 #include "rpcctl-register.h"
 #include "externs.h"
 
+VOID
+LsaSrvInitializeLock(
+     PLSA_SRV_RWLOCK pLock
+     );
+
+VOID
+LsaSrvAcquireRead(
+     PLSA_SRV_RWLOCK pLock
+     );
+
+VOID
+LsaSrvAcquireWrite(
+     PLSA_SRV_RWLOCK pLock
+     );
+
+VOID
+LsaSrvReleaseRead(
+     PLSA_SRV_RWLOCK pLock
+     );
+
+VOID
+LsaSrvReleaseWrite(
+     PLSA_SRV_RWLOCK pLock
+     );
 
 /*
 local variables:

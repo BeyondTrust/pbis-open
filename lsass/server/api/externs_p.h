@@ -53,33 +53,29 @@ extern time_t gServerStartTime;
  * Auth Provider List
  */
 
-extern pthread_rwlock_t gpAuthProviderList_rwlock;
+extern LSA_SRV_RWLOCK gpAuthProviderList_rwlock;
 
 #define ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock)         \
         if (!bInLock) {                                       \
-           PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_rdlock(   \
-                   &gpAuthProviderList_rwlock));              \
+           LsaSrvAcquireRead(&gpAuthProviderList_rwlock);     \
            bInLock = TRUE;                                    \
         }
 
 #define LEAVE_AUTH_PROVIDER_LIST_READER_LOCK(bReleaseLock)    \
         if (bReleaseLock) {                                   \
-           PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_unlock(   \
-                   &gpAuthProviderList_rwlock));              \
+           LsaSrvReleaseRead(&gpAuthProviderList_rwlock);     \
            bReleaseLock = FALSE;                              \
         }
 
 #define ENTER_AUTH_PROVIDER_LIST_WRITER_LOCK(bInLock)         \
         if (!bInLock) {                                       \
-           PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_wrlock(   \
-                   &gpAuthProviderList_rwlock));              \
+           LsaSrvAcquireWrite(&gpAuthProviderList_rwlock);    \
            bInLock = TRUE;                                    \
         }
 
 #define LEAVE_AUTH_PROVIDER_LIST_WRITER_LOCK(bReleaseLock)    \
         if (bReleaseLock) {                                   \
-           PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_unlock(   \
-                   &gpAuthProviderList_rwlock));              \
+           LsaSrvReleaseWrite(&gpAuthProviderList_rwlock);    \
            bReleaseLock = FALSE;                              \
         }
 

@@ -71,6 +71,82 @@ typedef struct _LSA_SRV_MEMBER_OF_PASS
     } *pResults;
 } LSA_SRV_MEMBER_OF_PASS, *PLSA_SRV_MEMBER_OF_PASS;
 
+VOID
+LsaSrvInitializeLock(
+     PLSA_SRV_RWLOCK pLock
+     )
+{
+    int localError = 0;
+
+    localError = pthread_mutex_init(&pLock->stateMutex, NULL);
+    LSA_ASSERT(localError == 0);
+
+    localError = pthread_cond_init(&pLock->stateCond, NULL);
+    LSA_ASSERT(localError == 0);
+
+    pLock->readers = 0;
+}
+
+VOID
+LsaSrvAcquireRead(
+     PLSA_SRV_RWLOCK pLock
+     )
+{
+    int status = 0;
+
+    status = pthread_mutex_lock(&pLock->stateMutex);
+    LW_ASSERT(status == 0);
+    pLock->readers++;
+    status = pthread_mutex_unlock(&pLock->stateMutex);
+    LW_ASSERT(status == 0);
+}
+
+VOID
+LsaSrvAcquireWrite(
+     PLSA_SRV_RWLOCK pLock
+     )
+{
+    int status = 0;
+
+    status = pthread_mutex_lock(&pLock->stateMutex);
+    LW_ASSERT(status == 0);
+    while (pLock->readers)
+    {
+        pthread_cond_wait(&pLock->stateCond, &pLock->stateMutex);
+    }
+}
+
+VOID
+LsaSrvReleaseRead(
+     PLSA_SRV_RWLOCK pLock
+     )
+{
+    int status = 0;
+
+    status = pthread_mutex_lock(&pLock->stateMutex);
+    LW_ASSERT(status == 0);
+    pLock->readers--;
+    if (pLock->readers == 0)
+    {
+        pthread_cond_broadcast(&pLock->stateCond);
+    }
+    status = pthread_mutex_unlock(&pLock->stateMutex);
+    LW_ASSERT(status == 0);
+}
+
+
+VOID
+LsaSrvReleaseWrite(
+     PLSA_SRV_RWLOCK pLock
+     )
+{
+    int status = 0;
+
+    LW_ASSERT(pLock->readers == 0);
+    status = pthread_mutex_unlock(&pLock->stateMutex);
+    LW_ASSERT(status == 0);
+}
+
 static
 DWORD
 LsaSrvInitMemberOfPass(
