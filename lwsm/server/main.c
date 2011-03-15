@@ -80,6 +80,12 @@ LwSmConfigureLogging(
 
 static
 DWORD
+LwSmIpcInit(
+    VOID
+    );
+
+static
+DWORD
 LwSmStartIpcServer(
     VOID
     );
@@ -410,6 +416,10 @@ Startup(
 
     SM_LOG_INFO("Likewise Service Manager starting up");
 
+    /* Initialize IPC system and direct container endpoint */
+    dwError = LwSmIpcInit();
+    BAIL_ON_ERROR(dwError);
+
     if (!gState.bContainer)
     {
         /* Bootstrap ourselves by adding and starting any
@@ -421,7 +431,7 @@ Startup(
         dwError = LwSmPopulateTable();
         BAIL_ON_ERROR(dwError);
     }
-    
+
     /* Start IPC servers */
     dwError = LwSmStartIpcServer();
     BAIL_ON_ERROR(dwError);
@@ -724,13 +734,11 @@ LwSmLogIpc (
 
 static
 DWORD
-LwSmStartIpcServer(
+LwSmIpcInit(
     VOID
     )
 {
-    DWORD dwError = 0;
-
-    SM_LOG_VERBOSE("Starting IPC server");
+    DWORD dwError = ERROR_SUCCESS;
 
     dwError = MAP_LWMSG_STATUS(lwmsg_context_new(NULL, &gState.pIpcContext));
     BAIL_ON_ERROR(dwError);
@@ -740,6 +748,50 @@ LwSmStartIpcServer(
         LwSmLogIpc,
         NULL);
     
+    dwError = MAP_LWMSG_STATUS(lwmsg_protocol_new(gState.pIpcContext, &gState.pContainerProtocol));
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_protocol_add_protocol_spec(
+        gState.pContainerProtocol,
+        LwSmGetContainerProtocolSpec()));
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_new(
+        gState.pIpcContext,
+        gState.pContainerProtocol,
+        &gState.pDirectServer));
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_listen_endpoint(
+        gState.pDirectServer,
+        LWMSG_ENDPOINT_DIRECT,
+        "Container",
+        0));
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_dispatch_spec(
+        gState.pDirectServer,
+        LwSmGetContainerDispatchSpec()));
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_start_listen(gState.pDirectServer));
+    BAIL_ON_ERROR(dwError);
+
+error:
+
+    return dwError;
+}
+
+static
+DWORD
+LwSmStartIpcServer(
+    VOID
+    )
+{
+    DWORD dwError = 0;
+
+    SM_LOG_VERBOSE("Starting IPC server");
+
     if (!gState.bContainer)
     {
         dwError = MAP_LWMSG_STATUS(lwmsg_protocol_new(gState.pIpcContext, &gState.pContolProtocol));
@@ -771,14 +823,6 @@ LwSmStartIpcServer(
         dwError = MAP_LWMSG_STATUS(lwmsg_peer_start_listen(gState.pControlServer));
         BAIL_ON_ERROR(dwError);
     }
-
-    dwError = MAP_LWMSG_STATUS(lwmsg_protocol_new(gState.pIpcContext, &gState.pContainerProtocol));
-    BAIL_ON_ERROR(dwError);
-
-    dwError = MAP_LWMSG_STATUS(lwmsg_protocol_add_protocol_spec(
-        gState.pContainerProtocol,
-        LwSmGetContainerProtocolSpec()));
-    BAIL_ON_ERROR(dwError);
 
     dwError = MAP_LWMSG_STATUS(lwmsg_peer_new(
         gState.pIpcContext,
@@ -815,13 +859,6 @@ LwSmStartIpcServer(
     }
     else
     {
-        dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_listen_endpoint(
-            gState.pContainerServer,
-            LWMSG_ENDPOINT_DIRECT,
-            "Container",
-            0));
-        BAIL_ON_ERROR(dwError);
-
         dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_listen_endpoint(
             gState.pContainerServer,
             LWMSG_ENDPOINT_LOCAL,
@@ -874,6 +911,12 @@ LwSmStopIpcServer(
         }
     }
 
+    if (gState.pDirectServer)
+    {
+        dwError = MAP_LWMSG_STATUS(lwmsg_peer_stop_listen(gState.pDirectServer));
+        BAIL_ON_ERROR(dwError);
+    }
+
 cleanup:
 
     if (gState.pControlServer)
@@ -881,15 +924,19 @@ cleanup:
         lwmsg_peer_delete(gState.pControlServer);
     }
 
-    if (gState.pContolProtocol)
-    {
-        lwmsg_protocol_delete(gState.pContolProtocol);
-    }
-
-
     if (gState.pContainerServer)
     {
         lwmsg_peer_delete(gState.pContainerServer);
+    }
+
+    if (gState.pDirectServer)
+    {
+        lwmsg_peer_delete(gState.pDirectServer);
+    }
+
+    if (gState.pContolProtocol)
+    {
+        lwmsg_protocol_delete(gState.pContolProtocol);
     }
 
     if (gState.pContainerProtocol)

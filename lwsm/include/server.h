@@ -172,6 +172,7 @@ typedef struct _SM_GLOBAL_STATE
     LWMsgPeer* pControlServer;
     LWMsgProtocol* pContainerProtocol;
     LWMsgPeer* pContainerServer;
+    LWMsgPeer* pDirectServer;
     BOOLEAN bStartAsDaemon;
     BOOLEAN bNotified;
     int notifyPipe[2];
