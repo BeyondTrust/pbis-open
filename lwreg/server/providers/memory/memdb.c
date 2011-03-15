@@ -104,6 +104,7 @@ PWSTR pwstr_wcschr(PWSTR pwszHaystack, WCHAR wcNeedle)
 
 NTSTATUS
 MemDbOpenKey(
+    IN HANDLE Handle,
     IN REG_DB_HANDLE hDb,
     IN PCWSTR pwszFullKeyPath,
     OUT OPTIONAL MEM_REG_STORE_HANDLE *pRegKey)
@@ -170,6 +171,7 @@ error:
 
 NTSTATUS
 MemDbCreateKeyEx(
+    IN HANDLE Handle,
     IN REG_DB_HANDLE hDb,
     IN PCWSTR pcwszSubKey,
     IN DWORD dwReserved,
@@ -221,3 +223,100 @@ cleanup:
 error:
     goto cleanup;
 }
+
+
+NTSTATUS
+MemDbQueryInfoKey(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    /*
+     * A pointer to a buffer that receives the user-defined class of the key. 
+     * This parameter can be NULL.
+     */
+    OUT OPTIONAL PWSTR pClass, 
+    IN OUT OPTIONAL PDWORD pcClass,
+    IN PDWORD pdwReserved, /* This parameter is reserved and must be NULL. */
+    OUT OPTIONAL PDWORD pcSubKeys,
+    OUT OPTIONAL PDWORD pcMaxSubKeyLen,
+    OUT OPTIONAL PDWORD pcMaxClassLen, /* implement this later */
+    OUT OPTIONAL PDWORD pcValues,
+    OUT OPTIONAL PDWORD pcMaxValueNameLen,
+    OUT OPTIONAL PDWORD pcMaxValueLen,
+    OUT OPTIONAL PDWORD pcbSecurityDescriptor,
+    OUT OPTIONAL PFILETIME pftLastWriteTime /* implement this later */
+    )
+{
+    MEM_REG_STORE_HANDLE hKey = NULL;
+    NTSTATUS status = 0;
+    DWORD keyLen = 0;
+    DWORD maxKeyLen = 0;
+    DWORD valueLen = 0;
+    DWORD maxValueLen = 0;
+    DWORD indx = 0;
+
+    BAIL_ON_NT_STATUS(status);
+    
+    /*
+     * Query info about keys
+     */
+    hKey = hDb->pMemReg;
+    if (pcSubKeys)
+    {
+        *pcSubKeys = hKey->NodesLen;
+    }
+
+    if (pcMaxSubKeyLen)
+    {
+        for (indx=0, keyLen=0, maxKeyLen; indx < hKey->NodesLen; indx++)
+        {
+            keyLen = RtlWC16StringNumChars(hKey->SubNodes[indx]->Name);
+            if (keyLen > maxKeyLen)
+            {
+                maxKeyLen = keyLen;
+            }
+        
+        }
+        *pcMaxSubKeyLen = maxKeyLen;
+    }
+
+    /*
+     * Query info about values
+     */
+    if (pcValues)
+    {
+        *pcValues = hKey->ValuesLen;
+    }
+
+    if (pcMaxValueNameLen)
+    {
+        for (indx=0, valueLen=0, maxValueLen; indx < hKey->ValuesLen; indx++)
+        {
+            valueLen = RtlWC16StringNumChars(hKey->Values[indx].Name);
+            if (valueLen > maxValueLen)
+            {
+                maxValueLen = valueLen;
+            }
+        
+        }
+        *pcMaxValueNameLen = maxValueLen;
+    }
+
+    if (pcMaxValueLen)
+    {
+        for (indx=0, valueLen=0, maxValueLen; indx < hKey->ValuesLen; indx++)
+        {
+            valueLen = hKey->Values[indx].DataLen;
+            if (valueLen > maxValueLen)
+            {
+                maxValueLen = valueLen;
+            }
+        }
+    }
+
+cleanup:
+    return 0;
+
+error:
+     goto cleanup;
+}
+

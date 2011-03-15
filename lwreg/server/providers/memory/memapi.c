@@ -134,6 +134,7 @@ MemCreateKeyEx(
 
         // Search for specified root key. If NULL, return HKTM.
         status = MemDbOpenKey(
+                     Handle,
                      NULL,
                      pwszRootKey,
                      &hRootKey);
@@ -145,6 +146,7 @@ MemCreateKeyEx(
         regDbConn.pMemReg = pKeyHandle->pKey->hKey;
     }
     status = MemDbCreateKeyEx(
+                 Handle,
                  &regDbConn,
                  pSubKey,
                  0, // IN DWORD dwReserved
@@ -173,9 +175,6 @@ error:
 }
 
 
-    
-
-
 NTSTATUS
 MemOpenKeyEx(
     IN HANDLE Handle,
@@ -196,6 +195,7 @@ MemOpenKeyEx(
     {
         // Search for specified root key. If NULL, return HKTM.
         status = MemDbOpenKey(
+                     Handle,
                      NULL,
                      pwszSubKey,
                      &pSubKey);
@@ -206,6 +206,7 @@ MemOpenKeyEx(
         regDbConn.pMemReg = pKeyHandle->pKey->hKey;
 //        regDbConn.lock = PTHREAD_MUTEX_INITIALIZER;
         status = MemDbOpenKey(
+                     Handle,
                      &regDbConn,
                      pwszSubKey,
                      &pSubKey);
@@ -251,20 +252,52 @@ NTSTATUS
 MemQueryInfoKey(
     IN HANDLE Handle,
     IN HKEY hKey,
-    OUT PWSTR pClass, /*A pointer to a buffer that receives the user-defined class of the key. This parameter can be NULL.*/
+    OUT PWSTR pClass,
     IN OUT OPTIONAL PDWORD pcClass,
-    IN PDWORD pdwReserved,/*This parameter is reserved and must be NULL.*/
+    IN PDWORD pdwReserved,
     OUT OPTIONAL PDWORD pcSubKeys,
     OUT OPTIONAL PDWORD pcMaxSubKeyLen,
-    OUT OPTIONAL PDWORD pcMaxClassLen,/*implement this later*/
+    OUT OPTIONAL PDWORD pcMaxClassLen,
     OUT OPTIONAL PDWORD pcValues,
     OUT OPTIONAL PDWORD pcMaxValueNameLen,
     OUT OPTIONAL PDWORD pcMaxValueLen,
     OUT OPTIONAL PDWORD pcbSecurityDescriptor,
-    OUT OPTIONAL PFILETIME pftLastWriteTime/*implement this later*/
+    OUT OPTIONAL PFILETIME pftLastWriteTime
     )
 {
-    return 0;
+    NTSTATUS status = 0;
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
+    REG_DB_CONNECTION regDbConn = {0};
+
+    BAIL_ON_NT_STATUS(status);
+
+    regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+    // regDbConn.lock = PTHREAD_MUTEX_INITIALIZER;
+    status = MemDbQueryInfoKey(
+                 Handle,
+                 &regDbConn,
+    /*
+     * A pointer to a buffer that receives the user-defined class of the key. 
+     * This parameter can be NULL.
+     */
+                 NULL, //OUT OPTIONAL PWSTR pClass, 
+                 NULL, // IN OUT OPTIONAL PDWORD pcClass,
+                 NULL, /* This parameter is reserved and must be NULL. */
+                 pcSubKeys,
+                 pcMaxSubKeyLen,
+                 pcMaxClassLen, /* implement this later */
+                 pcValues,
+                 pcMaxValueNameLen,
+                 pcMaxValueLen,
+                 pcbSecurityDescriptor,
+                 pftLastWriteTime /* implement this later */
+                 );
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
 }
 
 

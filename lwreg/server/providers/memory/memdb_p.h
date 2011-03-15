@@ -50,6 +50,7 @@ MemDbClose(
 
 NTSTATUS
 MemDbOpenKey(
+    IN HANDLE Handle,
     IN REG_DB_HANDLE hDb,
     IN PCWSTR pwszFullKeyPath,
     OUT OPTIONAL MEM_REG_STORE_HANDLE *pRegKey
@@ -58,6 +59,7 @@ MemDbOpenKey(
 
 NTSTATUS
 MemDbCreateKeyEx(
+    IN HANDLE Handle,
     IN REG_DB_HANDLE hDb,
     IN PCWSTR pcwszSubKey,
     IN DWORD dwReserved,
@@ -70,3 +72,23 @@ MemDbCreateKeyEx(
     OUT OPTIONAL PDWORD pdwDisposition
     );
 
+NTSTATUS
+MemDbQueryInfoKey(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    /*
+     * A pointer to a buffer that receives the user-defined class of the key. 
+     * This parameter can be NULL.
+     */
+    OUT OPTIONAL PWSTR pClass, 
+    IN OUT OPTIONAL PDWORD pcClass,
+    IN PDWORD pdwReserved, /* This parameter is reserved and must be NULL. */
+    OUT OPTIONAL PDWORD pcSubKeys,
+    OUT OPTIONAL PDWORD pcMaxSubKeyLen,
+    OUT OPTIONAL PDWORD pcMaxClassLen, /* implement this later */
+    OUT OPTIONAL PDWORD pcValues,
+    OUT OPTIONAL PDWORD pcMaxValueNameLen,
+    OUT OPTIONAL PDWORD pcMaxValueLen,
+    OUT OPTIONAL PDWORD pcbSecurityDescriptor,
+    OUT OPTIONAL PFILETIME pftLastWriteTime /* implement this later */
+    );
