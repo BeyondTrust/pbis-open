@@ -40,23 +40,7 @@
 
 PLW_THREAD_POOL gpPool;
 
-static struct
-{
-    LWMsgContext* pIpcContext;
-    LWMsgProtocol* pContolProtocol;
-    LWMsgPeer* pControlServer;
-    LWMsgProtocol* pContainerProtocol;
-    LWMsgPeer* pContainerServer;
-    BOOLEAN bStartAsDaemon;
-    BOOLEAN bNotified;
-    int notifyPipe[2];
-    LW_SM_LOG_LEVEL logLevel;
-    PCSTR pszLogFilePath;
-    BOOLEAN bSyslog;
-    BOOLEAN bContainer;
-    PWSTR pGroup;
-    PCSTR pName;
-} gState = 
+SM_GLOBAL_STATE gState =
 {
     .pIpcContext = NULL,
     .pContolProtocol = NULL,
@@ -65,7 +49,8 @@ static struct
     .notifyPipe = {-1, -1},
     .logLevel = 0,
     .pszLogFilePath = NULL,
-    .bSyslog = FALSE
+    .bSyslog = FALSE,
+    .bWatchdog = TRUE
 };
 
 static

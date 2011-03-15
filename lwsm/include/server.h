@@ -165,6 +165,25 @@ typedef struct _SM_LOGGER
         );
 } SM_LOGGER, *PSM_LOGGER;
 
+typedef struct _SM_GLOBAL_STATE
+{
+    LWMsgContext* pIpcContext;
+    LWMsgProtocol* pContolProtocol;
+    LWMsgPeer* pControlServer;
+    LWMsgProtocol* pContainerProtocol;
+    LWMsgPeer* pContainerServer;
+    BOOLEAN bStartAsDaemon;
+    BOOLEAN bNotified;
+    int notifyPipe[2];
+    LW_SM_LOG_LEVEL logLevel;
+    PCSTR pszLogFilePath;
+    BOOLEAN bSyslog;
+    BOOLEAN bContainer;
+    PWSTR pGroup;
+    PCSTR pName;
+    BOOLEAN bWatchdog;
+} SM_GLOBAL_STATE, *PSM_GLOBAL_STATE;
+
 DWORD
 LwSmSrvAcquireServiceHandle(
     PCWSTR pwszName,
@@ -512,5 +531,6 @@ extern LW_SERVICE_LOADER_VTBL gDriverVtbl;
 extern LW_SERVICE_LOADER_VTBL gContainerVtbl;
 
 extern PLW_THREAD_POOL gpPool;
+extern SM_GLOBAL_STATE gState;
 
 #endif

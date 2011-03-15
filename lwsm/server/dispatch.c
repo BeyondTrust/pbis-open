@@ -901,6 +901,109 @@ error:
 }
 
 static
+LWMsgStatus
+LwSmDispatchSetGlobal(
+    LWMsgCall* pCall,
+    LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    PSM_SET_GLOBAL_REQ pReq = pIn->data;
+    uid_t uid = 0;
+
+    dwError = LwSmGetCallUid(pCall, &uid);
+    BAIL_ON_ERROR(dwError);
+
+    if (uid != 0)
+    {
+        dwError = LW_ERROR_ACCESS_DENIED;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    switch (pReq->Setting)
+    {
+    case LW_SM_GLOBAL_SETTING_WATCHDOG:
+        if (pReq->Value.Type != SM_GLOBAL_TYPE_BOOLEAN)
+        {
+            dwError = ERROR_INVALID_PARAMETER;
+            BAIL_ON_ERROR(dwError);
+        }
+
+        gState.bWatchdog = pReq->Value.Value.Boolean;
+        break;
+    default:
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    pOut->tag = SM_IPC_SET_GLOBAL_RES;
+    pOut->data = NULL;
+
+cleanup:
+
+    if (dwError)
+    {
+        dwError = LwSmSetError(pOut, dwError);
+    }
+
+    return LwSmMapLwError(dwError);
+
+error:
+
+    goto cleanup;
+}
+
+static
+LWMsgStatus
+LwSmDispatchGetGlobal(
+    LWMsgCall* pCall,
+    LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    PSM_GET_GLOBAL_REQ pReq = pIn->data;
+    PSM_GLOBAL_VALUE pValue = NULL;
+
+    dwError = LwAllocateMemory(sizeof(*pValue), OUT_PPVOID(&pValue));
+    BAIL_ON_ERROR(dwError);
+
+    switch (pReq->Setting)
+    {
+    case LW_SM_GLOBAL_SETTING_WATCHDOG:
+        pValue->Type = SM_GLOBAL_TYPE_BOOLEAN;
+        pValue->Value.Boolean = gState.bWatchdog;
+        break;
+    default:
+        /* Should not be reached */
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    pOut->tag = SM_IPC_GET_GLOBAL_RES;
+    pOut->data = pValue;
+    pValue = NULL;
+
+cleanup:
+
+    if (dwError)
+    {
+        dwError = LwSmSetError(pOut, dwError);
+    }
+
+    LW_SAFE_FREE_MEMORY(pValue);
+
+    return LwSmMapLwError(dwError);
+
+error:
+
+    goto cleanup;
+}
+
+static
 LWMsgDispatchSpec gDispatchSpec[] =
 {
     LWMSG_DISPATCH_BLOCK(SM_IPC_ACQUIRE_SERVICE_HANDLE_REQ, LwSmDispatchAcquireServiceHandle),
@@ -917,6 +1020,8 @@ LWMsgDispatchSpec gDispatchSpec[] =
     LWMSG_DISPATCH_BLOCK(SM_IPC_SET_LOG_LEVEL_REQ, LwSmDispatchSetLogLevel),
     LWMSG_DISPATCH_BLOCK(SM_IPC_REFRESH_REQ, LwSmDispatchRefresh),
     LWMSG_DISPATCH_NONBLOCK(SM_IPC_SHUTDOWN_REQ, LwSmDispatchShutdown),
+    LWMSG_DISPATCH_NONBLOCK(SM_IPC_SET_GLOBAL_REQ, LwSmDispatchSetGlobal),
+    LWMSG_DISPATCH_NONBLOCK(SM_IPC_GET_GLOBAL_REQ, LwSmDispatchGetGlobal),
     LWMSG_DISPATCH_END
 };
 

@@ -1112,3 +1112,153 @@ LwSmFreeLogTarget(
 {
     LW_SAFE_FREE_MEMORY(pszTarget);
 }
+
+DWORD
+LwSmSetGlobal(
+    LW_IN LW_SM_GLOBAL_SETTING Setting,
+    ...
+    )
+{
+    DWORD dwError = 0;
+    LWMsgCall* pCall = NULL;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    SM_SET_GLOBAL_REQ req = {0};
+    va_list ap;
+
+    req.Setting = Setting;
+
+    va_start(ap, Setting);
+    switch (Setting)
+    {
+    case LW_SM_GLOBAL_SETTING_WATCHDOG:
+        req.Value.Type = SM_GLOBAL_TYPE_BOOLEAN;
+        req.Value.Value.Boolean = va_arg(ap, int);
+        break;
+    default:
+        dwError = ERROR_INVALID_PARAMETER;
+    }
+    va_end(ap);
+    BAIL_ON_ERROR(dwError);
+
+    in.tag = SM_IPC_SET_GLOBAL_REQ;
+    in.data = &req;
+
+    dwError = LwSmIpcAcquireCall(&pCall);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_ERROR(dwError);
+
+    switch (out.tag)
+    {
+    case SM_IPC_SET_GLOBAL_RES:
+        break;
+    case SM_IPC_ERROR:
+        dwError = *(PDWORD) out.data;
+        BAIL_ON_ERROR(dwError);
+        break;
+    default:
+        dwError = LW_ERROR_INTERNAL;
+        BAIL_ON_ERROR(dwError);
+        break;
+    }
+
+cleanup:
+
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+DWORD
+LwSmGetGlobal(
+    LW_IN LW_SM_GLOBAL_SETTING Setting,
+    ...
+    )
+{
+    DWORD dwError = 0;
+    LWMsgCall* pCall = NULL;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    SM_GET_GLOBAL_REQ req = {0};
+    PSM_GLOBAL_VALUE pValue = NULL;
+    va_list ap;
+
+    req.Setting = Setting;
+
+    in.tag = SM_IPC_GET_GLOBAL_REQ;
+    in.data = &req;
+
+    dwError = LwSmIpcAcquireCall(&pCall);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_ERROR(dwError);
+
+    switch (out.tag)
+    {
+    case SM_IPC_GET_GLOBAL_RES:
+        pValue = out.data;
+        break;
+    case SM_IPC_ERROR:
+        dwError = *(PDWORD) out.data;
+        BAIL_ON_ERROR(dwError);
+        break;
+    default:
+        dwError = LW_ERROR_INTERNAL;
+        BAIL_ON_ERROR(dwError);
+        break;
+    }
+
+    va_start(ap, Setting);
+    switch (Setting)
+    {
+    case LW_SM_GLOBAL_SETTING_WATCHDOG:
+        if (pValue->Type != SM_GLOBAL_TYPE_BOOLEAN)
+        {
+            dwError = LW_ERROR_INTERNAL;
+        }
+        else
+        {
+            *(va_arg(ap, PBOOLEAN)) = pValue->Value.Boolean;
+        }
+        break;
+    default:
+        dwError = ERROR_INVALID_PARAMETER;
+        break;
+    }
+    va_end(ap);
+    BAIL_ON_ERROR(dwError);
+
+cleanup:
+
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+VOID
+LwSmFreeGlobal(
+    LW_IN LW_SM_GLOBAL_SETTING Setting,
+    ...
+    )
+{
+    return;
+}
