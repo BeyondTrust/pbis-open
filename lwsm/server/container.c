@@ -314,7 +314,6 @@ struct {
 
 static pthread_mutex_t gContainerLock = PTHREAD_MUTEX_INITIALIZER;
 static PLW_HASHTABLE gpContainers = NULL;
-static LWMsgProtocol* gpProtocol = NULL;
 
 static
 DWORD
@@ -686,16 +685,7 @@ CreateContainer(
     dwError = LwAllocateWc16String(&pContainer->Key.pGroup, pKey->pGroup);
     BAIL_ON_ERROR(dwError);
 
-    if (!gpProtocol)
-    {
-        dwError = MAP_LWMSG_STATUS(lwmsg_protocol_new(NULL, &gpProtocol));
-        BAIL_ON_ERROR(dwError);
-
-        dwError = MAP_LWMSG_STATUS(lwmsg_protocol_add_protocol_spec(gpProtocol, gContainerProtocol));
-        BAIL_ON_ERROR(dwError);
-    }
-
-    dwError = MAP_LWMSG_STATUS(lwmsg_peer_new(NULL, gpProtocol, &pContainer->pPeer));
+    dwError = MAP_LWMSG_STATUS(lwmsg_peer_new(NULL, gState.pContainerProtocol, &pContainer->pPeer));
     BAIL_ON_ERROR(dwError);
 
     if (LwRtlWC16StringIsEqual(pContainer->Key.pGroup, wszDirect, TRUE))
