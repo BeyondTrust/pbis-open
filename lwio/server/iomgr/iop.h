@@ -52,6 +52,8 @@
       (STATUS_NOTIFY_ENUM_DIR == (Status))) || \
      ((IRP_TYPE_CREATE == (IrpType)) && \
       (STATUS_OPLOCK_BREAK_IN_PROGRESS == (Status))) || \
+     ((IRP_TYPE_FS_CONTROL == (IrpType)) && \
+      (STATUS_OPLOCK_SWITCHED_TO_NEW_HANDLE == (Status))) || \
      ((IRP_TYPE_DEVICE_IO_CONTROL == (IrpType)) && \
       (STATUS_MORE_ENTRIES == (Status))))
 
