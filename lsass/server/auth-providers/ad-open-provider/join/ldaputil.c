@@ -337,6 +337,7 @@ wchar16_t **LdapAttributeGet(LDAP *ld, LDAPMessage *info, const wchar16_t *name,
 
             ldap_value_free_len(value);
             ber_free(be, 0);
+            be = NULL;
             goto cleanup;
         }
 
@@ -353,6 +354,10 @@ cleanup:
 
     LW_SAFE_FREE_MEMORY(attr_w16);
     ldap_memfree(attr);
+    if (be)
+    {
+        ber_free(be, 0);
+    }
 
     return out;
 
