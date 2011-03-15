@@ -306,15 +306,33 @@ MemEnumKeyEx(
     IN HANDLE Handle,
     IN HKEY hKey,
     IN DWORD dwIndex,
-    OUT PWSTR pName, /*buffer to hold keyName*/
-    IN OUT PDWORD pcName,/*When the function returns, the variable receives the number of characters stored in the buffer,not including the terminating null character.*/
+    OUT PWSTR pName,
+    IN OUT PDWORD pcName,
     IN PDWORD pdwReserved,
     IN OUT PWSTR pClass,
     IN OUT OPTIONAL PDWORD pcClass,
     OUT PFILETIME pftLastWriteTime
     )
 {
-    return 0;
+    NTSTATUS status = 0;
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
+    REG_DB_CONNECTION regDbConn = {0};
+
+    regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+
+    status = MemDbEnumKeyEx(
+                 Handle,
+                 &regDbConn,
+                 dwIndex,
+                 pName,
+                 pcName,
+                 pdwReserved,
+                 pClass,
+                 pcClass,
+                 pftLastWriteTime
+    );
+
+    return status;
 }
 
 

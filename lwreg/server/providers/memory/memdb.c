@@ -89,7 +89,9 @@ error:
 }
 
 
-PWSTR pwstr_wcschr(PWSTR pwszHaystack, WCHAR wcNeedle)
+static PWSTR
+pwstr_wcschr(
+    PWSTR pwszHaystack, WCHAR wcNeedle)
 {
     DWORD i = 0;
     for (i=0; pwszHaystack[i] != '\0'; i++)
@@ -318,5 +320,50 @@ cleanup:
 
 error:
      goto cleanup;
+}
+
+
+NTSTATUS
+MemDbEnumKeyEx(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    IN DWORD dwIndex,
+    OUT PWSTR pName,
+    IN OUT PDWORD pcName,
+    IN PDWORD pdwReserved,
+    IN OUT PWSTR pClass,
+    IN OUT OPTIONAL PDWORD pcClass,
+    OUT PFILETIME pftLastWriteTime
+    )
+{
+    MEM_REG_STORE_HANDLE hKey = NULL;
+    NTSTATUS status = 0;
+    DWORD keyLen = 0;
+
+    hKey = hDb->pMemReg;
+    if (dwIndex >= hKey->NodesLen)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
+    
+    /*
+     * Query info about keys
+     */
+    keyLen = RtlWC16StringNumChars(hKey->SubNodes[dwIndex]->Name);
+    if (keyLen > *pcName)
+    {
+        status = STATUS_BUFFER_TOO_SMALL;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    memcpy(pName, hKey->SubNodes[dwIndex]->Name, keyLen * sizeof(WCHAR));
+    *pcName = keyLen;
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
 }
 

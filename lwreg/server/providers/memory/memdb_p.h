@@ -92,3 +92,25 @@ MemDbQueryInfoKey(
     OUT OPTIONAL PDWORD pcbSecurityDescriptor,
     OUT OPTIONAL PFILETIME pftLastWriteTime /* implement this later */
     );
+
+
+NTSTATUS
+MemDbEnumKeyEx(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    IN DWORD dwIndex,
+    /*buffer to hold keyName*/
+    OUT PWSTR pName, 
+
+    /* 
+     * When the function returns, the variable receives the number 
+     * of characters stored in the buffer,not including the terminating null 
+     * character.
+     */
+    IN OUT PDWORD pcName,
+
+    IN PDWORD pdwReserved,
+    IN OUT PWSTR pClass,
+    IN OUT OPTIONAL PDWORD pcClass,
+    OUT PFILETIME pftLastWriteTime
+    );

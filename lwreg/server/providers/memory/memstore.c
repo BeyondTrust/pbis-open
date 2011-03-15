@@ -60,7 +60,6 @@ MemRegStoreOpen(
     PWSTR rootKey = NULL;
     PWSTR subKey = NULL;
     MEM_REG_STORE_HANDLE rootNode = NULL;
-    MEM_REG_STORE_HANDLE subKeyNode = NULL;
     DWORD i = 0;
 
     status = LW_RTL_ALLOCATE(
@@ -97,68 +96,6 @@ MemRegStoreOpen(
        
     }
 
-#if 1
-    /* Add a test subtree until AddKey is functional */
-    status = LwRtlWC16StringAllocateFromCString(
-                 &subKey,
-                 HKEY_THIS_MACHINE);
-    BAIL_ON_NT_STATUS(status);
-    status = MemRegStoreFindNode(
-                 phReg,
-                 subKey,
-                 &subKeyNode);
-    BAIL_ON_NT_STATUS(status);
-    LWREG_SAFE_FREE_MEMORY(subKey);
-
-    
-    status = LwRtlWC16StringAllocateFromCString(
-                 &subKey,
-                 "Services");
-    BAIL_ON_NT_STATUS(status);
-
-    status = MemRegStoreAddNode(
-                     subKeyNode,
-                     subKey,
-                     REGMEM_TYPE_KEY,
-                     NULL,  // SD parameter
-                     NULL,
-                     &rootNode);
-    BAIL_ON_NT_STATUS(status);
-    LWREG_SAFE_FREE_MEMORY(subKey);
-
-    status = LwRtlWC16StringAllocateFromCString(
-                 &subKey,
-                 "Software");
-    BAIL_ON_NT_STATUS(status);
-
-    status = MemRegStoreAddNode(
-                     subKeyNode,
-                     subKey,
-                     REGMEM_TYPE_KEY,
-                     NULL,  // SD parameter
-                     NULL,
-                     NULL);
-    BAIL_ON_NT_STATUS(status);
-    LWREG_SAFE_FREE_MEMORY(subKey);
-
-    status = LwRtlWC16StringAllocateFromCString(
-                 &subKey,
-                 "lsass");
-    BAIL_ON_NT_STATUS(status);
-
-    subKeyNode = rootNode;  // Services node
-    status = MemRegStoreAddNode(
-                     subKeyNode,
-                     subKey,
-                     REGMEM_TYPE_KEY,
-                     NULL,  // SD parameter
-                     NULL,
-                     NULL);
-    BAIL_ON_NT_STATUS(status);
-    LWREG_SAFE_FREE_MEMORY(subKey);
-
-#endif
-
 cleanup:
     return status;
 
@@ -190,6 +127,7 @@ error:
 }
 
 #if 0
+/* For reference, remove once done with implementation */
 typedef struct _REGMEM_NODE
 {
     PWSTR Name;
