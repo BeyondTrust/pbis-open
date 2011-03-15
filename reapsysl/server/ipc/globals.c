@@ -48,7 +48,7 @@
  */
 #include "includes.h"
 
-static LWMsgDispatchSpec gMessageHandlers[] =
+static LWMsgDispatchSpec gRSysMessageHandlers[] =
 {
     LWMSG_DISPATCH_BLOCK(RSYS_Q_SET_LOGINFO, RSysSrvIpcSetLogInfo),
     LWMSG_DISPATCH_BLOCK(RSYS_Q_GET_LOGINFO, RSysSrvIpcGetLogInfo),
@@ -60,5 +60,5 @@ RSysSrvGetDispatchSpec(
     void
     )
 {
-    return gMessageHandlers;
+    return gRSysMessageHandlers;
 }

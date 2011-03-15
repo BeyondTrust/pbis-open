@@ -63,7 +63,7 @@ main(
     dwError = RSysSrvInitialize();
     BAIL_ON_RSYS_ERROR(dwError);
 
-    dwError = RSysSrvParseArgs(argc, argv, &gServerInfo);
+    dwError = RSysSrvParseArgs(argc, argv, &gRSysServerInfo);
     BAIL_ON_RSYS_ERROR(dwError);
 
     RSYS_LOG_VERBOSE("Logging started");
@@ -392,7 +392,7 @@ RSysSrvShouldStartAsDaemon(
 
     RSYS_LOCK_SERVERINFO(bInLock);
 
-    bResult = (gpServerInfo->dwStartAsDaemon != 0);
+    bResult = (gpRSysServerInfo->dwStartAsDaemon != 0);
 
     RSYS_UNLOCK_SERVERINFO(bInLock);
 
@@ -476,7 +476,7 @@ RSysSrvGetProcessExitCode(
 
     RSYS_LOCK_SERVERINFO(bInLock);
 
-    *pdwExitCode = gpServerInfo->dwExitCode;
+    *pdwExitCode = gpRSysServerInfo->dwExitCode;
 
     RSYS_UNLOCK_SERVERINFO(bInLock);
 
@@ -492,7 +492,7 @@ RSysSrvSetProcessExitCode(
     
     RSYS_LOCK_SERVERINFO(bInLock);
 
-    gpServerInfo->dwExitCode = dwExitCode;
+    gpRSysServerInfo->dwExitCode = dwExitCode;
 
     RSYS_UNLOCK_SERVERINFO(bInLock);
 }
@@ -508,12 +508,12 @@ RSysSrvGetCachePath(
   
     RSYS_LOCK_SERVERINFO(bInLock);
     
-    if (IsNullOrEmptyString(gpServerInfo->szCachePath)) {
+    if (IsNullOrEmptyString(gpRSysServerInfo->szCachePath)) {
       dwError = RSYS_ERROR_INVALID_CACHE_PATH;
       BAIL_ON_RSYS_ERROR(dwError);
     }
     
-    dwError = RtlCStringDuplicate(&pszPath, gpServerInfo->szCachePath);
+    dwError = RtlCStringDuplicate(&pszPath, gpRSysServerInfo->szCachePath);
     BAIL_ON_RSYS_ERROR(dwError);
 
     *ppszPath = pszPath;
@@ -544,12 +544,12 @@ RSysSrvGetPrefixPath(
   
     RSYS_LOCK_SERVERINFO(bInLock);
     
-    if (IsNullOrEmptyString(gpServerInfo->szPrefixPath)) {
+    if (IsNullOrEmptyString(gpRSysServerInfo->szPrefixPath)) {
       dwError = RSYS_ERROR_INVALID_PREFIX_PATH;
       BAIL_ON_RSYS_ERROR(dwError);
     }
     
-    dwError = RtlCStringDuplicate(&pszPath, gpServerInfo->szPrefixPath);
+    dwError = RtlCStringDuplicate(&pszPath, gpRSysServerInfo->szPrefixPath);
     BAIL_ON_RSYS_ERROR(dwError);
 
     *ppszPath = pszPath;
@@ -707,7 +707,7 @@ RSysSrvShouldProcessExit(
 
     RSYS_LOCK_SERVERINFO(bInLock);
     
-    bExit = gpServerInfo->bProcessShouldExit;
+    bExit = gpRSysServerInfo->bProcessShouldExit;
 
     RSYS_UNLOCK_SERVERINFO(bInLock);
     
@@ -723,7 +723,7 @@ RSysSrvSetProcessToExit(
     
     RSYS_LOCK_SERVERINFO(bInLock);
 
-    gpServerInfo->bProcessShouldExit = bExit;
+    gpRSysServerInfo->bProcessShouldExit = bExit;
 
     RSYS_UNLOCK_SERVERINFO(bInLock);
 }

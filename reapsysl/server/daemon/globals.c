@@ -47,7 +47,7 @@
  */
 #include "includes.h"
 
-RSYS_SERVERINFO gServerInfo =
+RSYS_SERVERINFO gRSysServerInfo =
 {
     PTHREAD_MUTEX_INITIALIZER,  /* Lock              */
     0,                          /* Start as daemon   */
@@ -57,5 +57,5 @@ RSYS_SERVERINFO gServerInfo =
     0                           /* Process exit code */
 };
 
-PRSYS_SERVERINFO gpServerInfo = &gServerInfo;
+PRSYS_SERVERINFO gpRSysServerInfo = &gRSysServerInfo;
 

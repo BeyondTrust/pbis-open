@@ -48,8 +48,8 @@
 #ifndef __EXTERNS_P_H__
 #define __EXTERNS_P_H__
 
-extern RSYS_SERVERINFO  gServerInfo;
-extern PRSYS_SERVERINFO gpServerInfo;
+extern RSYS_SERVERINFO  gRSysServerInfo;
+extern PRSYS_SERVERINFO gpRSysServerInfo;
 
 #define DAEMON_NAME "reapsysld"
 #define PID_DIR     "/var/run"
@@ -59,13 +59,13 @@ extern PRSYS_SERVERINFO gpServerInfo;
 
 #define RSYS_LOCK_SERVERINFO(bInLock)               \
         if (!bInLock) {                               \
-           pthread_mutex_lock(&gpServerInfo->lock);   \
+           pthread_mutex_lock(&gpRSysServerInfo->lock);   \
            bInLock = TRUE;                            \
         }
 
 #define RSYS_UNLOCK_SERVERINFO(bInLock)             \
         if (bInLock) {                                \
-           pthread_mutex_unlock(&gpServerInfo->lock); \
+           pthread_mutex_unlock(&gpRSysServerInfo->lock); \
            bInLock = FALSE;                           \
         }
 
