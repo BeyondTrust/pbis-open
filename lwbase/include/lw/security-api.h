@@ -362,6 +362,21 @@ RtlLengthAccessDeniedAce(
     IN PSID Sid
     );
 
+///<
+/// Get size required for an SYSTEM_AUDIT_ACE.
+///
+/// This function gets the number of bytes required for an
+/// system audit ACE (SYSTEM_AUDIT_ACE) given a particular SID.
+///
+/// @param[in] Sid - SID for ACE.
+///
+/// @return Number of bytes required or 0 if Sid is invalid.
+///
+USHORT
+RtlLengthSystemAuditAce(
+    IN PSID Sid
+    );
+
 NTSTATUS
 RtlAddAccessAllowedAceEx(
     IN PACL Acl,
@@ -373,6 +388,15 @@ RtlAddAccessAllowedAceEx(
 
 NTSTATUS
 RtlAddAccessDeniedAceEx(
+    IN PACL Acl,
+    IN ULONG AceRevision,
+    IN ULONG AceFlags,
+    IN ACCESS_MASK AccessMask,
+    IN PSID Sid
+    );
+
+NTSTATUS
+RtlAddSystemAuditAceEx(
     IN PACL Acl,
     IN ULONG AceRevision,
     IN ULONG AceFlags,

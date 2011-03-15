@@ -1,3 +1,7 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
+
 /*
  * Copyright (c) Likewise Software.  All rights Reserved.
  *
@@ -454,9 +458,9 @@ cleanup:
 
 static
 NTSTATUS
-RtlpDuplicateDacl(
-    PACL *ppNewDacl,
-    PACL pSrcDacl
+RtlpDuplicateAcl(
+    OUT PACL* NewAcl,
+    IN PACL Acl
     );
 
 static
@@ -536,7 +540,7 @@ RtlpObjectSetDacl(
     if (bCreatorIsDaclPresent &&
         (CreatorSecDescControl & SE_DACL_PROTECTED))
     {
-        status = RtlpDuplicateDacl(&pFinalDacl, pCreatorDacl);
+        status = RtlpDuplicateAcl(&pFinalDacl, pCreatorDacl);
         GOTO_CLEANUP_ON_STATUS(status);
 
         bFinalIsDaclDefaulted = FALSE;
@@ -650,39 +654,40 @@ cleanup:
 
 static
 NTSTATUS
-RtlpDuplicateDacl(
-    PACL *ppNewDacl,
-    PACL pSrcDacl
+RtlpDuplicateAcl(
+    OUT PACL* NewAcl,
+    IN PACL Acl
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    PACL pDacl = NULL;
-    USHORT usDaclSize = 0;
+    PACL newAcl = NULL;
+    USHORT daclSize = 0;
 
-    usDaclSize = RtlGetAclSize(pSrcDacl);
+    daclSize = RtlGetAclSize(Acl);
 
-    status = LW_RTL_ALLOCATE(&pDacl, VOID, usDaclSize);
+    status = LW_RTL_ALLOCATE(&newAcl, VOID, daclSize);
     GOTO_CLEANUP_ON_STATUS(status);
 
-    RtlCopyMemory(pDacl, pSrcDacl, usDaclSize);
+    RtlCopyMemory(newAcl, Acl, daclSize);
 
-    *ppNewDacl = pDacl;
+    *NewAcl = newAcl;
 
 cleanup:
+
     return status;
 }
 
 static
 NTSTATUS
-RtlpObjectDaclAssignSecurity(
-    OUT PACL *ppObjectDacl,
+RtlpObjectAclAssignSecurity(
+    OUT PACL *ppObjectAcl,
     IN PACCESS_TOKEN pUserToken,
-    IN PACL pSrcDacl,
+    IN PACL pSrcAcl,
     IN PGENERIC_MAPPING pGenericMap
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    PACL pDacl = NULL;
+    PACL pAcl = NULL;
     ACCESS_MASK mask = 0;
     USHORT aclSize = 0;
     USHORT srcAclSizeUsed = 0;
@@ -690,6 +695,7 @@ RtlpObjectDaclAssignSecurity(
     PACE_HEADER aceHeader = NULL;
     PACCESS_ALLOWED_ACE aceAllow = NULL;
     PACCESS_DENIED_ACE aceDeny = NULL;
+    PSYSTEM_AUDIT_ACE aceAudit = NULL;
     PSID aceSid = NULL;
     union
     {
@@ -717,7 +723,7 @@ RtlpObjectDaclAssignSecurity(
     ULONG ulTokenPrimaryGroupLength = 0;
 
     aclSize = ACL_HEADER_SIZE +
-              (RtlGetAclAceCount(pSrcDacl) *
+              (RtlGetAclAceCount(pSrcAcl) *
                (sizeof(ACCESS_ALLOWED_ACE) + SID_MAX_SIZE));
 
     if (aclSize == 0)
@@ -758,18 +764,18 @@ RtlpObjectDaclAssignSecurity(
                  &ulTokenPrimaryGroupLength);
     GOTO_CLEANUP_ON_STATUS(status);
 
-    status = LW_RTL_ALLOCATE(&pDacl, VOID, aclSize);
+    status = LW_RTL_ALLOCATE(&pAcl, VOID, aclSize);
     GOTO_CLEANUP_ON_STATUS(status);
 
-    status = RtlCreateAcl(pDacl, aclSize, ACL_REVISION);
+    status = RtlCreateAcl(pAcl, aclSize, ACL_REVISION);
     GOTO_CLEANUP_ON_STATUS(status);
 
-    srcAclSizeUsed = RtlGetAclSizeUsed(pSrcDacl);
+    srcAclSizeUsed = RtlGetAclSizeUsed(pSrcAcl);
 
     while (TRUE)
     {
         status = RtlIterateAce(
-                     pSrcDacl,
+                     pSrcAcl,
                      srcAclSizeUsed,
                      &aceOffset,
                      &aceHeader);
@@ -799,7 +805,7 @@ RtlpObjectDaclAssignSecurity(
                 }
 
                 status = RtlAddAccessAllowedAceEx(
-                             pDacl,
+                             pAcl,
                              ACL_REVISION,
                              aceAllow->Header.AceFlags,
                              mask,
@@ -826,9 +832,36 @@ RtlpObjectDaclAssignSecurity(
                 }
 
                 status = RtlAddAccessDeniedAceEx(
-                             pDacl,
+                             pAcl,
                              ACL_REVISION,
                              aceDeny->Header.AceFlags,
+                             mask,
+                             aceSid);
+                GOTO_CLEANUP_ON_STATUS(status);
+            }
+            break;
+
+            case SYSTEM_AUDIT_ACE_TYPE:
+            {
+                aceAudit = (PSYSTEM_AUDIT_ACE)aceHeader;
+                mask = aceAudit->Mask;
+                aceSid = (PSID)&aceAudit->SidStart;
+
+                RtlMapGenericMask(&mask, pGenericMap);
+
+                if (RtlEqualSid(aceSid, &CreatorOwner.sid))
+                {
+                    aceSid = pTokenOwnerInformation->Owner;
+                }
+                else if (RtlEqualSid(aceSid, &CreatorGroup.sid))
+                {
+                    aceSid = pTokenPrimaryGroupInfo->PrimaryGroup;
+                }
+
+                status = RtlAddSystemAuditAceEx(
+                             pAcl,
+                             ACL_REVISION,
+                             aceAudit->Header.AceFlags,
                              mask,
                              aceSid);
                 GOTO_CLEANUP_ON_STATUS(status);
@@ -839,17 +872,17 @@ RtlpObjectDaclAssignSecurity(
                 // ignore
                 break;
         }
-        
     }
 
-    *ppObjectDacl = pDacl;
+    *ppObjectAcl = pAcl;
 
     status = STATUS_SUCCESS;    
 
 cleanup:
+
     if (!NT_SUCCESS(status))
     {
-        LW_RTL_FREE(&pDacl);
+        LW_RTL_FREE(&pAcl);
     }
 
     return status;
@@ -859,26 +892,27 @@ cleanup:
 static
 NTSTATUS
 RtlpObjectInheritSecurity(
-    OUT PACL *ppNewDacl,
-    OUT PBOOLEAN pbIsNewDaclDefaulted,
-    IN OPTIONAL PACL pParentDacl,
-    IN BOOLEAN bParentIsDaclDefaulted,
-    IN OPTIONAL PACL pCreatorDacl,
-    IN BOOLEAN bCreatorIsDaclDefaulted,
-    IN BOOLEAN bIsContainerObject,
-    IN PACCESS_TOKEN pUserToken,
-    IN PGENERIC_MAPPING pGenericMap
+    OUT PACL *NewAcl,
+    OUT PBOOLEAN IsNewAclDefaulted,
+    IN OPTIONAL PACL ParentAcl,
+    IN BOOLEAN ParentIsAclDefaulted,
+    IN OPTIONAL PACL CreateAcl,
+    IN BOOLEAN CreatorIsAclDefaulted,
+    IN BOOLEAN IsContainerObject,
+    IN PACCESS_TOKEN AccessToken,
+    IN PGENERIC_MAPPING GenericMap
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    PACL pDacl = NULL;
-    USHORT usDaclSize = 0;
+    PACL pAcl = NULL;
+    USHORT usAclSize = 0;
     USHORT usCreatorNumAces = 0;
     USHORT usParentNumAces = 0;
     USHORT i = 0;
     PACE_HEADER pAceHeader = NULL;
     PACCESS_ALLOWED_ACE pAllowAce = NULL;
     PACCESS_DENIED_ACE pDenyAce = NULL;
+    PSYSTEM_AUDIT_ACE pAuditAce = NULL;
     ACCESS_MASK mask = 0;
     union
     {
@@ -923,36 +957,36 @@ RtlpObjectInheritSecurity(
 
     // Case (a)
 
-    if (!pParentDacl && bCreatorIsDaclDefaulted)
+    if (!ParentAcl && CreatorIsAclDefaulted)
     {
-        status = RtlpObjectDaclAssignSecurity(
-                     &pDacl,
-                     pUserToken,
-                     pCreatorDacl,
-                     pGenericMap);
+        status = RtlpObjectAclAssignSecurity(
+                     &pAcl,
+                     AccessToken,
+                     CreateAcl,
+                     GenericMap);
         GOTO_CLEANUP_ON_STATUS(status);
 
-        *pbIsNewDaclDefaulted = TRUE;
-        *ppNewDacl = pDacl;
+        *IsNewAclDefaulted = TRUE;
+        *NewAcl = pAcl;
 
         GOTO_CLEANUP();
     }
 
-    if (pCreatorDacl)
+    if (CreateAcl)
     {
-        usDaclSize = ACL_HEADER_SIZE +
-                     (RtlGetAclAceCount(pCreatorDacl) *
-                      (sizeof(ACCESS_ALLOWED_ACE) + SID_MAX_SIZE));
+        usAclSize = ACL_HEADER_SIZE +
+                     (RtlGetAclAceCount(CreateAcl) *
+                      (sizeof(SYSTEM_AUDIT_ACE) + SID_MAX_SIZE));
     }
 
-    if (pParentDacl)
+    if (ParentAcl)
     {
-        usDaclSize += ACL_HEADER_SIZE +
-                     (RtlGetAclAceCount(pParentDacl) *
-                      (sizeof(ACCESS_ALLOWED_ACE) + SID_MAX_SIZE));
+        usAclSize += ACL_HEADER_SIZE +
+                      ((RtlGetAclAceCount(ParentAcl) * 2) *
+                       (sizeof(SYSTEM_AUDIT_ACE) + SID_MAX_SIZE));
     }
 
-    if (usDaclSize <= 0)
+    if (usAclSize <= 0)
     {
         status = STATUS_INVALID_SECURITY_DESCR;
         GOTO_CLEANUP_ON_STATUS(status);
@@ -975,7 +1009,7 @@ RtlpObjectInheritSecurity(
     GOTO_CLEANUP_ON_STATUS(status);
 
     status = RtlQueryAccessTokenInformation(
-                 pUserToken,
+                 AccessToken,
                  TokenOwner,
                  (PVOID)pTokenOwnerInformation,
                  sizeof(TokenOwnerBuffer),
@@ -983,29 +1017,29 @@ RtlpObjectInheritSecurity(
     GOTO_CLEANUP_ON_STATUS(status);
 
     status = RtlQueryAccessTokenInformation(
-                 pUserToken,
+                 AccessToken,
                  TokenPrimaryGroup,
                  (PVOID)pTokenPrimaryGroupInfo,
                  sizeof(TokenPrimaryGroupBuffer),
                  &ulTokenPrimaryGroupLength);
     GOTO_CLEANUP_ON_STATUS(status);
 
-    status = LW_RTL_ALLOCATE(&pDacl, VOID, usDaclSize);
+    status = LW_RTL_ALLOCATE(&pAcl, VOID, usAclSize);
     GOTO_CLEANUP_ON_STATUS(status);
 
-    status = RtlCreateAcl(pDacl, usDaclSize, ACL_REVISION);
+    status = RtlCreateAcl(pAcl, usAclSize, ACL_REVISION);
     GOTO_CLEANUP_ON_STATUS(status);
 
     // Case (b) - Direct ACEs first
 
-    if (pCreatorDacl)
+    if (CreateAcl)
     {
-        usCreatorNumAces = RtlGetAclAceCount(pCreatorDacl);
+        usCreatorNumAces = RtlGetAclAceCount(CreateAcl);
     }
 
     for (i=0; i<usCreatorNumAces; i++)
     {
-        status = RtlGetAce(pCreatorDacl, i, OUT_PPVOID(&pAceHeader));
+        status = RtlGetAce(CreateAcl, i, OUT_PPVOID(&pAceHeader));
         GOTO_CLEANUP_ON_STATUS(status);
 
         switch(pAceHeader->AceType)
@@ -1014,10 +1048,10 @@ RtlpObjectInheritSecurity(
             pAllowAce = (PACCESS_ALLOWED_ACE)pAceHeader;
             mask = pAllowAce->Mask;
 
-            RtlMapGenericMask(&mask, pGenericMap);
+            RtlMapGenericMask(&mask, GenericMap);
 
             status = RtlAddAccessAllowedAceEx(
-                         pDacl,
+                         pAcl,
                          ACL_REVISION,
                          pAllowAce->Header.AceFlags,
                          mask,
@@ -1029,14 +1063,29 @@ RtlpObjectInheritSecurity(
             pDenyAce = (PACCESS_DENIED_ACE)pAceHeader;
             mask = pDenyAce->Mask;
 
-            RtlMapGenericMask(&mask, pGenericMap);
+            RtlMapGenericMask(&mask, GenericMap);
 
             status = RtlAddAccessDeniedAceEx(
-                         pDacl,
+                         pAcl,
                          ACL_REVISION,
                          pDenyAce->Header.AceFlags,
                          mask,
                          (PSID)&pDenyAce->SidStart);
+            GOTO_CLEANUP_ON_STATUS(status);
+            break;
+
+        case SYSTEM_AUDIT_ACE_TYPE:
+            pAuditAce = (PSYSTEM_AUDIT_ACE)pAceHeader;
+            mask = pAuditAce->Mask;
+
+            RtlMapGenericMask(&mask, GenericMap);
+
+            status = RtlAddSystemAuditAceEx(
+                         pAcl,
+                         ACL_REVISION,
+                         pAuditAce->Header.AceFlags,
+                         mask,
+                         (PSID)&pAuditAce->SidStart);
             GOTO_CLEANUP_ON_STATUS(status);
             break;
 
@@ -1048,9 +1097,9 @@ RtlpObjectInheritSecurity(
 
     // Case (c) - Inheritable ACEs
 
-    if (pParentDacl)
+    if (ParentAcl)
     {
-        usParentNumAces = RtlGetAclAceCount(pParentDacl);
+        usParentNumAces = RtlGetAclAceCount(ParentAcl);
     }
 
     for (i=0; i<usParentNumAces; i++)
@@ -1058,14 +1107,14 @@ RtlpObjectInheritSecurity(
         UCHAR AceFlags;
         PSID pAceSid = NULL;
 
-        status = RtlGetAce(pParentDacl, i, OUT_PPVOID(&pAceHeader));
+        status = RtlGetAce(ParentAcl, i, OUT_PPVOID(&pAceHeader));
         GOTO_CLEANUP_ON_STATUS(status);
 
         // Skip if no inheritable access rights
 
-        if ((bIsContainerObject &&
+        if ((IsContainerObject &&
              !(pAceHeader->AceFlags & CONTAINER_INHERIT_ACE)) ||
-            (!bIsContainerObject &&
+            (!IsContainerObject &&
              !(pAceHeader->AceFlags & OBJECT_INHERIT_ACE)))
         {
             continue;
@@ -1080,11 +1129,11 @@ RtlpObjectInheritSecurity(
             {
                 pAllowAce = (PACCESS_ALLOWED_ACE)pAceHeader;
                 mask = pAllowAce->Mask;
-                if (bIsContainerObject &&
-                    !(pAceHeader->AceFlags & NO_PROPAGATE_INHERIT_ACE))
+                if (IsContainerObject &&
+                    !IsSetFlag(pAceHeader->AceFlags, NO_PROPAGATE_INHERIT_ACE))
                 {
                     status = RtlAddAccessAllowedAceEx(
-                                 pDacl,
+                                 pAcl,
                                  ACL_REVISION,
                                  pAllowAce->Header.AceFlags,
                                  pAllowAce->Mask,
@@ -1098,15 +1147,33 @@ RtlpObjectInheritSecurity(
             {
                 pDenyAce = (PACCESS_DENIED_ACE)pAceHeader;
                 mask = pDenyAce->Mask;
-                if (bIsContainerObject &&
-                    !(pAceHeader->AceFlags & NO_PROPAGATE_INHERIT_ACE))
+                if (IsContainerObject &&
+                    !IsSetFlag(pAceHeader->AceFlags, NO_PROPAGATE_INHERIT_ACE))
                 {
                     status = RtlAddAccessDeniedAceEx(
-                                 pDacl,
+                                 pAcl,
                                  ACL_REVISION,
                                  pDenyAce->Header.AceFlags,
                                  pDenyAce->Mask,
                                  (PSID)&pDenyAce->SidStart);
+                    GOTO_CLEANUP_ON_STATUS(status);
+                }
+            }
+            break;
+
+            case SYSTEM_AUDIT_ACE_TYPE:
+            {
+                pAuditAce = (PSYSTEM_AUDIT_ACE)pAceHeader;
+                mask = pAuditAce->Mask;
+                if (IsContainerObject &&
+                    !IsSetFlag(pAceHeader->AceFlags, NO_PROPAGATE_INHERIT_ACE))
+                {
+                    status = RtlAddSystemAuditAceEx(
+                                 pAcl,
+                                 ACL_REVISION,
+                                 pAuditAce->Header.AceFlags,
+                                 pAuditAce->Mask,
+                                 (PSID)&pAuditAce->SidStart);
                     GOTO_CLEANUP_ON_STATUS(status);
                 }
             }
@@ -1119,7 +1186,7 @@ RtlpObjectInheritSecurity(
 
         // Map the generic bits to specific bits and remove inherit flags
 
-        RtlMapGenericMask(&mask, pGenericMap);
+        RtlMapGenericMask(&mask, GenericMap);
         AceFlags = pAceHeader->AceFlags;
         AceFlags &= ~(CONTAINER_INHERIT_ACE|
                       OBJECT_INHERIT_ACE|
@@ -1145,7 +1212,7 @@ RtlpObjectInheritSecurity(
             }                
 
             status = RtlAddAccessAllowedAceEx(
-                         pDacl,
+                         pAcl,
                          ACL_REVISION,
                          AceFlags,
                          mask,
@@ -1168,7 +1235,29 @@ RtlpObjectInheritSecurity(
             }                
 
             status = RtlAddAccessDeniedAceEx(
-                         pDacl,
+                         pAcl,
+                         ACL_REVISION,
+                         AceFlags,
+                         mask,
+                         pAceSid);
+            GOTO_CLEANUP_ON_STATUS(status);
+            break;
+
+        case SYSTEM_AUDIT_ACE_TYPE:
+            pAuditAce = (PSYSTEM_AUDIT_ACE)pAceHeader;
+
+            pAceSid = (PSID)&pAuditAce->SidStart;
+            if (RtlEqualSid(pAceSid, &CreatorOwner.sid))
+            {
+                pAceSid = pTokenOwnerInformation->Owner;
+            }
+            else if (RtlEqualSid(pAceSid, &CreatorGroup.sid))
+            {
+                pAceSid = pTokenPrimaryGroupInfo->PrimaryGroup;
+            }
+
+            status = RtlAddSystemAuditAceEx(
+                         pAcl,
                          ACL_REVISION,
                          AceFlags,
                          mask,
@@ -1182,8 +1271,8 @@ RtlpObjectInheritSecurity(
         }
     }
 
-    *pbIsNewDaclDefaulted = bCreatorIsDaclDefaulted;
-    *ppNewDacl = pDacl;
+    *IsNewAclDefaulted = CreatorIsAclDefaulted;
+    *NewAcl = pAcl;
 
     status = STATUS_SUCCESS;
 
@@ -1192,38 +1281,124 @@ cleanup:
 
     if (!NT_SUCCESS(status))
     {
-        LW_RTL_FREE(&pDacl);
+        LW_RTL_FREE(&pAcl);
     }
     
     return status;
 }
 
-
 static
 NTSTATUS
 RtlpObjectSetSacl(
-    IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE pSecurityDescriptor,
-    IN OPTIONAL PSECURITY_DESCRIPTOR_ABSOLUTE pParentSecDesc,
-    IN OPTIONAL PSECURITY_DESCRIPTOR_ABSOLUTE pCreatorSecDesc,
-    IN BOOLEAN bIsContainerObject,
+    IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE SecurityDescriptor,
+    IN OPTIONAL PSECURITY_DESCRIPTOR_ABSOLUTE ParentSecDesc,
+    IN OPTIONAL PSECURITY_DESCRIPTOR_ABSOLUTE CreatorSecDesc,
+    IN BOOLEAN IsContainerObject,
     IN ULONG AutoInheritFlags,
-    IN OPTIONAL PACCESS_TOKEN pUserToken,
-    IN PGENERIC_MAPPING pGenericMap
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
+    IN PGENERIC_MAPPING GenericMap
     )
 {
-    // No SACL support currently
+    NTSTATUS status = STATUS_SUCCESS;
+    PACL parentSacl = NULL;
+    PACL creatorSacl = NULL;
+    PACL finalSacl = NULL;
+    BOOLEAN creatorIsSaclPresent = FALSE;
+    BOOLEAN creatorIsSaclDefaulted = FALSE;
+    BOOLEAN parentIsSaclPresent = FALSE;
+    BOOLEAN parentIsSaclDefaulted = FALSE;
+    BOOLEAN finalIsSaclDefaulted = FALSE;
+    SECURITY_DESCRIPTOR_CONTROL creatorSecDescControl = 0;
+    SECURITY_DESCRIPTOR_CONTROL saclControlSet = 0;
+    SECURITY_DESCRIPTOR_CONTROL saclControlChange = (SE_SACL_PROTECTED|
+                                                     SE_SACL_AUTO_INHERITED);
 
-    return STATUS_SUCCESS;
+    // Pull the DACLs so we have something to work with
+
+    if (ParentSecDesc && IsSetFlag(AutoInheritFlags, SEF_SACL_AUTO_INHERIT))
+    {
+        status = RtlGetSaclSecurityDescriptor(
+                     ParentSecDesc,
+                     &parentIsSaclPresent,
+                     &parentSacl,
+                     &parentIsSaclDefaulted);
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+    if (CreatorSecDesc)
+    {
+        status = RtlGetSaclSecurityDescriptor(
+                     CreatorSecDesc,
+                     &creatorIsSaclPresent,
+                     &creatorSacl,
+                     &creatorIsSaclDefaulted);
+        GOTO_CLEANUP_ON_STATUS(status);
+
+        status = RtlGetSecurityDescriptorControl(
+                     CreatorSecDesc,
+                     &creatorSecDescControl,
+                     NULL);
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+    if (IsSetFlag(creatorSecDescControl, SE_SACL_PROTECTED))
+    {
+        // If the creator wants to block inheritance, we are done
+        if (creatorIsSaclPresent)
+        {
+            status = RtlpDuplicateAcl(&finalSacl, creatorSacl);
+            GOTO_CLEANUP_ON_STATUS(status);
+        }
+
+        finalIsSaclDefaulted = FALSE;
+    }
+    else if (parentIsSaclPresent || creatorIsSaclPresent)
+    {
+        // Do the inheritance if we have at least one SecDesc to work with
+        status = RtlpObjectInheritSecurity(
+                     &finalSacl,
+                     &finalIsSaclDefaulted,
+                     parentIsSaclPresent ? parentSacl : NULL,
+                     parentIsSaclDefaulted,
+                     creatorIsSaclPresent ? creatorSacl : NULL,
+                     creatorIsSaclDefaulted,
+                     IsContainerObject,
+                     AccessToken,
+                     GenericMap);
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+    // Finally set the new DACL in the outgoing Seccurity Descriptor
+
+    if (creatorSecDescControl & SE_SACL_PROTECTED)
+    {
+        saclControlSet |= SE_SACL_PROTECTED;
+    }
+    else if (AutoInheritFlags & SEF_SACL_AUTO_INHERIT)
+    {
+        saclControlSet |= SE_SACL_AUTO_INHERITED;
+    }
+
+    status = RtlSetSecurityDescriptorControl(
+                 SecurityDescriptor,
+                 saclControlChange,
+                 saclControlSet);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = RtlSetSaclSecurityDescriptor(
+                 SecurityDescriptor,
+                 finalSacl ? TRUE : FALSE,
+                 finalSacl,
+                 finalIsSaclDefaulted);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+cleanup:
+
+    if (!NT_SUCCESS(status))
+    {
+        LW_RTL_FREE(&finalSacl);
+    }
+
+    return status;
 }
-
-
-
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
 

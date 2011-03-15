@@ -112,6 +112,31 @@ RtlInitializeAccessDeniedAce(
 ///   @arg STATUS_BUFFER_TOO_SMALL
 ///
 
+NTSTATUS
+RtlInitializeSystemAuditAce(
+    OUT PSYSTEM_AUDIT_ACE Ace,
+    IN ULONG AceLength,
+    IN USHORT AceFlags,
+    IN ACCESS_MASK AccessMask,
+    IN PSID Sid
+    );
+///<
+/// Initialize an SYSTEM_AUDIT_ACE buffer.
+///
+/// This function initializes an SYSTEM_AUDIT_ACE buffer.
+///
+/// @param[out] Ace - Buffer to initialize.
+/// @param[in] AceLength - Length of buffer.
+/// @param[in] AceFlags - Flags for ACE.
+/// @param[in] AccessMask - Access mask for ACE.
+/// @param[in] Sid - SID for ACE.
+///
+/// @return NTSTATUS
+///   @arg STATUS_SUCCESS on success
+///   @arg STATUS_INVALID_PARAMETER
+///   @arg STATUS_BUFFER_TOO_SMALL
+///
+
 //
 // ACL Functions
 //

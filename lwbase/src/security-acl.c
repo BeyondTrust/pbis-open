@@ -192,6 +192,15 @@ RtlLengthAccessDeniedAce(
 }
 
 USHORT
+RtlLengthSystemAuditAce(
+    IN PSID Sid
+    )
+{
+    return (LW_FIELD_OFFSET(SYSTEM_AUDIT_ACE, SidStart) +
+            RtlLengthSid(Sid));
+}
+
+USHORT
 RtlLengthAccessAuditAce(
     IN PSID Sid
     )
@@ -264,6 +273,43 @@ RtlInitializeAccessDeniedAce(
     }
 
     Ace->Header.AceType = ACCESS_DENIED_ACE_TYPE;
+    Ace->Header.AceFlags = AceFlags;
+    Ace->Header.AceSize = size;
+    Ace->Mask = AccessMask;
+    // We already know the size is sufficient
+    RtlCopyMemory(&Ace->SidStart, Sid, RtlLengthSid(Sid));
+
+cleanup:
+    return status;
+}
+
+NTSTATUS
+RtlInitializeSystemAuditAce(
+    OUT PSYSTEM_AUDIT_ACE Ace,
+    IN ULONG AceLength,
+    IN USHORT AceFlags,
+    IN ACCESS_MASK AccessMask,
+    IN PSID Sid
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    USHORT size = RtlLengthSystemAuditAce(Sid);
+
+    if (!LW_IS_VALID_FLAGS(AceFlags, VALID_ACE_FLAGS_MASK) ||
+        !LW_IS_VALID_FLAGS(AccessMask, VALID_DACL_ACCESS_MASK) ||
+        !RtlValidSid(Sid))
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GOTO_CLEANUP();
+    }
+
+    if (AceLength < size)
+    {
+        status = STATUS_BUFFER_TOO_SMALL;
+        GOTO_CLEANUP();
+    }
+
+    Ace->Header.AceType = SYSTEM_AUDIT_ACE_TYPE;
     Ace->Header.AceFlags = AceFlags;
     Ace->Header.AceSize = size;
     Ace->Mask = AccessMask;
@@ -1512,6 +1558,72 @@ RtlAddAccessDeniedAceEx(
 
     // We know we have at least aceSize bytes available.
     status = RtlInitializeAccessDeniedAce(
+                    aceLocation,
+                    aceSize,
+                    AceFlags,
+                    AccessMask,
+                    Sid);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    assert(aceSize == aceLocation->Header.AceSize);
+    sizeUsed += aceSize;
+    Acl->AceCount++;
+
+cleanup:
+    return status;
+}
+
+NTSTATUS
+RtlAddSystemAuditAceEx(
+    IN PACL Acl,
+    IN ULONG AceRevision,
+    IN ULONG AceFlags,
+    IN ACCESS_MASK AccessMask,
+    IN PSID Sid
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    USHORT sizeUsed = 0;
+    PSYSTEM_AUDIT_ACE aceLocation = NULL;
+    USHORT aceSize = 0;
+    USHORT aceOffset = 0;
+
+    if (!RtlpValidAclHeader(Acl))
+    {
+        status = STATUS_INVALID_ACL;
+        GOTO_CLEANUP();
+    }
+
+    if (!RtlpValidAclRevision(AceRevision) ||
+        (AceRevision > Acl->AclRevision))
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GOTO_CLEANUP();
+    }
+
+    if (!RtlValidSid(Sid))
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GOTO_CLEANUP();
+    }
+
+    // Add to end of list
+
+    status = RtlpGetAceLocationFromIndex(
+                 Acl,
+                 ((ULONG)-1),
+                 &sizeUsed,
+                 &aceOffset,
+                 OUT_PPVOID(&aceLocation));
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    aceSize = RtlLengthAccessDeniedAce(Sid);
+
+    status = RtlpMakeRoomForAceAtLocation(Acl, sizeUsed, aceLocation, aceSize);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    // We know we have at least aceSize bytes available.
+    status = RtlInitializeSystemAuditAce(
                     aceLocation,
                     aceSize,
                     AceFlags,
