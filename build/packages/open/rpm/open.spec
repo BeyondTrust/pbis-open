@@ -57,8 +57,8 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %endif
 %{PrefixDir}/%{_lib}/*.so
 %{PrefixDir}/%{_lib}/*.so.*
+%{PrefixDir}/%{_lib}/lw-svcm/*.so
 /%{_lib}/*.so
-/%{_lib}/lw-svcm/*.so
 /%{_lib}/*.so.*
 /%{_lib}/security/*.so
 %{INIT_DIR}/*
@@ -649,6 +649,7 @@ exit 0
 
 %{PrefixDir}/%{_lib}/*.a
 %{PrefixDir}/%{_lib}/*.la
+%{PrefixDir}/%{_lib}/lw-svcm/*.a
 %{PrefixDir}/%{_lib}/lw-svcm/*.la
 /%{_lib}/*.a
 /%{_lib}/*.la
