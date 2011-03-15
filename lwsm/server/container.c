@@ -1646,8 +1646,6 @@ ContainerSrvStop(
     LWMsgSession* pSession = lwmsg_call_get_session(pCall);
     PCONTAINER_HANDLE pHandle = NULL;
 
-    CONTAINER_LOCK();
-
     lwmsg_call_set_user_data(pCall, pOut);
 
     dwError = MAP_LWMSG_STATUS(lwmsg_session_get_handle_data(pSession, pIpcHandle, OUT_PPVOID(&pHandle)));
@@ -1665,8 +1663,6 @@ ContainerSrvStop(
     BAIL_ON_ERROR(dwError);
 
 error:
-
-    CONTAINER_UNLOCK();
 
     return dwError ? LWMSG_STATUS_ERROR : LWMSG_STATUS_PENDING;
 }
