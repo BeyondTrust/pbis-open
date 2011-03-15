@@ -154,6 +154,7 @@ MemDbOpenKey(
                          &hSubKey);
             hParentKey = hSubKey;
             pwszSubKey = pwszPtr;
+            *pRegKey = hParentKey;
         } while (status == 0 && !bEndOfString);
     }
 
@@ -163,5 +164,60 @@ cleanup:
 
 error:
     LWREG_SAFE_FREE_MEMORY(pwszTmpFullPath);
+    goto cleanup;
+}
+
+
+NTSTATUS
+MemDbCreateKeyEx(
+    IN REG_DB_HANDLE hDb,
+    IN PCWSTR pcwszSubKey,
+    IN DWORD dwReserved,
+    IN OPTIONAL PWSTR pClass,
+    IN DWORD dwOptions,
+    IN ACCESS_MASK AccessDesired,
+    IN OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
+    IN ULONG ulSecDescLength,
+    OUT PMEM_REG_STORE_HANDLE phSubKey,
+    OUT OPTIONAL PDWORD pdwDisposition
+    )
+{
+    NTSTATUS status = 0;
+    MEM_REG_STORE_HANDLE hParentKey = NULL;
+    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    
+    hParentKey = hDb->pMemReg;
+
+    /*
+     * Iterate over subkeys in \ sepearated path.
+     */
+    status = MemRegStoreFindNode(
+                 hParentKey,
+                 pcwszSubKey,
+                 &hSubKey);
+
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+        /* New node for current subkey, add it */
+        status = MemRegStoreAddNode(
+                         hParentKey,
+                         pcwszSubKey,
+                         REGMEM_TYPE_KEY,
+                         NULL,  // SD parameter
+                         NULL,
+                         &hParentKey);
+        BAIL_ON_NT_STATUS(status);
+        *phSubKey = hParentKey;
+    }
+    else
+    {
+        /* Current node exists, return subkey handle */
+        *phSubKey = hSubKey;
+    }
+
+cleanup:
+    return status;
+
+error:
     goto cleanup;
 }

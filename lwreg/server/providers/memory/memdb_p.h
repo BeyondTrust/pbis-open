@@ -44,11 +44,29 @@ MemDbOpen(
 
 NTSTATUS
 MemDbClose(
-    IN PREG_DB_HANDLE phDb);
+    IN PREG_DB_HANDLE phDb
+    );
 
 
 NTSTATUS
 MemDbOpenKey(
     IN REG_DB_HANDLE hDb,
     IN PCWSTR pwszFullKeyPath,
-    OUT OPTIONAL MEM_REG_STORE_HANDLE *pRegKey);
+    OUT OPTIONAL MEM_REG_STORE_HANDLE *pRegKey
+    );
+
+
+NTSTATUS
+MemDbCreateKeyEx(
+    IN REG_DB_HANDLE hDb,
+    IN PCWSTR pcwszSubKey,
+    IN DWORD dwReserved,
+    IN OPTIONAL PWSTR pClass,
+    IN DWORD dwOptions,
+    IN ACCESS_MASK AccessDesired,
+    IN OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
+    IN ULONG ulSecDescLength,
+    OUT PMEM_REG_STORE_HANDLE phSubKey,
+    OUT OPTIONAL PDWORD pdwDisposition
+    );
+

@@ -253,7 +253,7 @@ error:
 NTSTATUS
 MemRegStoreAddNode(
     IN MEM_REG_STORE_HANDLE hDb,
-    PWSTR Name,
+    PCWSTR Name,
     DWORD NodeType,
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
     OUT PMEM_REG_STORE_HANDLE phNode,

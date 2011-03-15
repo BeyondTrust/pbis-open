@@ -42,6 +42,38 @@
 
 #include "includes.h"
 
+static NTSTATUS
+_MemCreateHkeyReply(
+    IN MEM_REG_STORE_HANDLE pSubKey,
+    OUT PHKEY phkResult)
+{
+    NTSTATUS status = 0;
+    PREG_KEY_HANDLE phKeyResponse = NULL;
+    PREG_KEY_CONTEXT pRetKey = NULL;
+    PREG_KEY_HANDLE *phKeyResult = (PREG_KEY_HANDLE *)phkResult;
+
+    status = LW_RTL_ALLOCATE(
+                 (PVOID*)&phKeyResponse,
+                 PREG_KEY_HANDLE,
+                 sizeof(*phKeyResponse));
+    BAIL_ON_NT_STATUS(status);
+
+    status = LW_RTL_ALLOCATE(
+                 (PVOID*)&pRetKey,
+                 REG_KEY_CONTEXT,
+                 sizeof(*pRetKey));
+    BAIL_ON_NT_STATUS(status);
+
+    pRetKey->hKey = pSubKey;
+    phKeyResponse->pKey = pRetKey;
+    *phKeyResult = phKeyResponse;
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}
 
 NTSTATUS
 MemProvider_Initialize(
@@ -84,8 +116,64 @@ MemCreateKeyEx(
     OUT OPTIONAL PDWORD pdwDisposition
     )
 {
-    return 0;
+    NTSTATUS status = 0;
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
+    MEM_REG_STORE_HANDLE hRootKey = NULL;
+    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    REG_DB_CONNECTION regDbConn = {0};
+    PWSTR pwszRootKey = NULL;
+
+
+
+    if (!hKey)
+    {
+        status = LwRtlWC16StringAllocateFromCString(
+                     &pwszRootKey,
+                     HKEY_THIS_MACHINE);
+        BAIL_ON_NT_STATUS(status);
+
+        // Search for specified root key. If NULL, return HKTM.
+        status = MemDbOpenKey(
+                     NULL,
+                     pwszRootKey,
+                     &hRootKey);
+        BAIL_ON_NT_STATUS(status);
+        regDbConn.pMemReg = hRootKey;
+    }
+    else
+    {
+        regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+    }
+    status = MemDbCreateKeyEx(
+                 &regDbConn,
+                 pSubKey,
+                 0, // IN DWORD dwReserved
+                 NULL, // IN OPTIONAL PWSTR pClass
+                 0, //IN DWORD dwOptions
+                 0, // IN ACCESS_MASK AccessDesired
+                 NULL, // IN OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel
+                 0, // IN ULONG ulSecDescLength
+                 &hSubKey,
+                 pdwDisposition);
+    BAIL_ON_NT_STATUS(status);
+
+    status = _MemCreateHkeyReply(hSubKey, phkResult);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+    LWREG_SAFE_FREE_MEMORY(pwszRootKey);
+    return status;
+
+error:
+    if (hRootKey)
+    {
+        // Close open root key
+    }
+    goto cleanup;
 }
+
+
+    
 
 
 NTSTATUS
@@ -101,9 +189,7 @@ MemOpenKeyEx(
     NTSTATUS status = 0;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     PREG_KEY_HANDLE *phKeyResult = (PREG_KEY_HANDLE *)phkResult;
-    PREG_KEY_HANDLE phKeyResponse = NULL;
     MEM_REG_STORE_HANDLE pSubKey = NULL;
-    PREG_KEY_CONTEXT pRetKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
 
     if (!hKey)
@@ -128,21 +214,10 @@ MemOpenKeyEx(
 
     if (phKeyResult)
     {
-        status = LW_RTL_ALLOCATE(
-                     (PVOID*)&phKeyResponse,
-                     PREG_KEY_HANDLE,
-                     sizeof(*phKeyResponse));
+        status = _MemCreateHkeyReply(
+                     pSubKey,
+                     phkResult);
         BAIL_ON_NT_STATUS(status);
-
-        status = LW_RTL_ALLOCATE(
-                     (PVOID*)&pRetKey,
-                     REG_KEY_CONTEXT,
-                     sizeof(*pRetKey));
-        BAIL_ON_NT_STATUS(status);
-
-        pRetKey->hKey = pSubKey;
-        phKeyResponse->pKey = pRetKey;
-        *phKeyResult = phKeyResponse;
     }
 
 cleanup:
