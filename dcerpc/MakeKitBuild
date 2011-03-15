@@ -159,7 +159,7 @@ configure()
     mk_export MK_CFLAGS="$MK_CFLAGS -Wall"
 
     mk_export SBINDIR="$MK_SBINDIR"
-    mk_export LIBDIR="$MK_SBINDIR"
+    mk_export LIBDIR="$MK_LIBDIR"
     mk_export MOD_EXT="$MK_DLO_EXT"
     
     # FIXME: need test
