@@ -563,9 +563,16 @@ ReleaseContainer(
 
         if (pContainer->Instances.pNext == &pContainer->Instances)
         {
-            if (pContainer->pTask)
+            /* If this is a container we created on demand,
+             * remove it from the hash table now.
+             */
+            if (pContainer->pPeer)
             {
                 LwRtlHashTableRemove(gpContainers, &pContainer->Node);
+            }
+
+            if (pContainer->pTask)
+            {
                 LwRtlCancelTask(pContainer->pTask);
             }
         }
