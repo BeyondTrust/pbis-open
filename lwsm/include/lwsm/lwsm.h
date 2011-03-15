@@ -280,21 +280,76 @@ typedef struct _LW_SERVICE_STATUS
     pid_t pid;
 } LW_SERVICE_STATUS, *PLW_SERVICE_STATUS;
 
+/**
+ * @brief Log level
+ *
+ * Describes the level of a log message in terms
+ * of importance.
+ */
 typedef enum _LW_SM_LOG_LEVEL
 {
+    /**
+     * @brief Message that should always be logged
+     * @hideinitializer
+     */
     LW_SM_LOG_LEVEL_ALWAYS = LW_RTL_LOG_LEVEL_ALWAYS,
+    /**
+     * @brief Message that indicates an error condition
+     * @hideinitializer
+     */
     LW_SM_LOG_LEVEL_ERROR = LW_RTL_LOG_LEVEL_ERROR,
+    /**
+     * @brief Message that indicates a warning condition
+     * @hideinitializer
+     */
     LW_SM_LOG_LEVEL_WARNING = LW_RTL_LOG_LEVEL_WARNING,
+    /**
+     * @brief Message that informs the user of a normal
+     * but significant condition or event
+     * @hideinitializer
+     */
     LW_SM_LOG_LEVEL_INFO = LW_RTL_LOG_LEVEL_INFO,
+    /**
+     * @brief Message that informs the user of a normal
+     * and common event
+     * @hideinitializer
+     */
     LW_SM_LOG_LEVEL_VERBOSE = LW_RTL_LOG_LEVEL_VERBOSE,
+    /**
+     * @brief Message that is only of interest when attempting
+     * to debug improper program behavior.
+     * @hideinitializer
+     */
     LW_SM_LOG_LEVEL_DEBUG = LW_RTL_LOG_LEVEL_DEBUG,
+    /**
+     * @brief Message that tracks low-level program execution
+     * flow.
+     * @hideinitializer
+     */
     LW_SM_LOG_LEVEL_TRACE = LW_RTL_LOG_LEVEL_TRACE
 } LW_SM_LOG_LEVEL, *PLW_SM_LOG_LEVEL;
 
+/**
+ * @brief Logger type
+ *
+ * Indicates the type of logging target
+ */
 typedef enum _LW_SM_LOGGER_TYPE
 {
+    /**
+     * @brief Do not log
+     * @hideinitializer
+     */
     LW_SM_LOGGER_NONE,
+    /**
+     * @brief Log to file
+     * @hideinitializer
+     */
     LW_SM_LOGGER_FILE,
+    /**
+     * @brief Log to syslog
+     * @hideinitializer
+     */
     LW_SM_LOGGER_SYSLOG
 } LW_SM_LOGGER_TYPE, *PLW_SM_LOGGER_TYPE;
 
@@ -513,14 +568,39 @@ LwSmRefreshService(
     );
 
 
+/**
+ * @brief Sets log target for a service
+ *
+ * Sets the log target for a service.  If the service is running in a container,
+ * all services in the same container will be affected.
+ *
+ * @param[in] hHandle the service handle, or NULL to specify lwsmd itself
+ * @param[in] pFacility the facility to redirect, or NULL to set the default log target
+ * @param[in] type the type of logging target
+ * @param[in] pTarget the logging target, or NULL for target types that don't require it
+ * @retval ERROR_SUCCESS success
+ * @retval ERROR_NOT_SUPPORTED the specified service does not support setting log targets
+ */
 DWORD
 LwSmSetServiceLogTarget(
     LW_SERVICE_HANDLE hHandle,
-    LW_PCSTR pszFacility,
+    LW_PCSTR pFacility,
     LW_SM_LOGGER_TYPE type,
-    PCSTR pszTarget
+    PCSTR pTarget
     );
 
+/**
+ * @brief Set maximum log level for a service
+ *
+ * Sets the maximum log level for a service.  If the service is running in
+ * a container, all services in the same container will be affected.
+ *
+ * @param[in] hHandle the service handle, or NULL to specify lwsmd itself
+ * @param[in] pFacility the facility to set the level for, or NULL to set the default log level
+ * @param[in] level the maximum log level to set
+ * @retval ERROR_SUCCESS success
+ * @retval ERROR_NOT_SUPPORTED the specified service does not support setting log targets
+ */
 DWORD
 LwSmSetServiceLogLevel(
     LW_SERVICE_HANDLE hHandle,
@@ -528,6 +608,22 @@ LwSmSetServiceLogLevel(
     LW_SM_LOG_LEVEL level
     );
 
+/**
+ * @brief Get current logging state for a service
+ *
+ * Gets the current logging target and maximum log level for a service.
+ * If the service is running in a container, the returned values apply
+ * to all services in the same container.  The returned logging target
+ * string can be freed with #LwSmFreeLogTarget().
+ *
+ * @param[in] hHandle the service handle, or NULL to specify lwsmd itself
+ * @param[in] pFacility the facility to get state for, or NULL for the default state
+ * @param[out] pType set to the logging target type
+ * @param[out] ppTarget set to the logging target if applicable or NULL otherwise
+ * @param[out] pLevel set to the maximum log level
+ * @retval ERROR_SUCCESS
+ * @retval ERROR_NOT_SUPPORTED the specified service does not support getting log state
+ */
 DWORD
 LwSmGetServiceLogState(
     LW_SERVICE_HANDLE hHandle,
@@ -537,6 +633,14 @@ LwSmGetServiceLogState(
     PLW_SM_LOG_LEVEL pLevel
     );
 
+/**
+ * @brief Free logging target
+ *
+ * Frees a logging target string returned by a previous call to
+ * #LwSmGetServiceLogState().
+ *
+ * @param[in,out] pTarget
+ */
 VOID
 LwSmFreeLogTarget(
     LW_PSTR pTarget
