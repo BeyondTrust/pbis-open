@@ -83,6 +83,7 @@ EXTERNAL	IObjectExporter_v0_0_epv_t objex_mgr_epv;
 #include <lw/ntstatus.h>
 #include <lw/svcm.h>
 #include <lw/rtllog.h>
+#include <lw/rpcstatus.h>
 
 #define GCOS(s) \
     do \
