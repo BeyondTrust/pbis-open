@@ -50,6 +50,13 @@
 #ifndef __STRUCTS_H__
 #define __STRUCTS_H__
 
+typedef struct _LSA_SRV_RWLOCK
+{
+    pthread_mutex_t stateMutex;
+    pthread_cond_t stateCond;
+    DWORD volatile readers;
+} LSA_SRV_RWLOCK, *PLSA_SRV_RWLOCK;
+
 typedef struct __LSA_SRV_API_CONFIG
 {
     BOOLEAN bEnableEventLog;
