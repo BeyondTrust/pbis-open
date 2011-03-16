@@ -54,13 +54,12 @@
 #include "rsys-logging.h"
 #include "rsys-utils.h"
 #include "rsys-ipc.h"
-#include <lw/rtlstring.h>
+#include <lw/base.h>
 
 #include "rsys-server.h"
 #include "rsys-server-api.h"
 #include "rsys-server-reader.h"
 
-#include "listener.h"
 #include "servermain.h"
 #include "sighandler.h"
 #include "externs_p.h"

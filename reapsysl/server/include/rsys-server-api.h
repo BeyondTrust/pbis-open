@@ -77,30 +77,6 @@ RSysSrvApiShutdown(
     );
 
 DWORD
-RSysSrvOpenServer(
-    uid_t peerUID,
-    gid_t peerGID,
-    PHANDLE phServer
-    );
-
-void
-RSysSrvCloseServer(
-    HANDLE hServer
-    );
-
-DWORD
-RSysSrvGetLogInfo(
-    HANDLE hServer,
-    PRSYS_LOG_INFO* ppLogInfo
-    );
-
-DWORD
-RSysSrvSetLogInfo(
-    HANDLE hServer,
-    PRSYS_LOG_INFO pLogInfo
-    );
-
-DWORD
 RSysSrvGetEscrowTime(
     HANDLE hServer,
     DWORD* pdwEscrowTime
@@ -124,6 +100,11 @@ DWORD
 RSysSrvUnlockPatternList(
     HANDLE hServer,
     PDLINKEDLIST pPatternList
+    );
+
+DWORD
+RSysSrvRefreshConfiguration(
+    VOID
     );
 
 #endif /* __RSYS_SRVAPI_H__ */

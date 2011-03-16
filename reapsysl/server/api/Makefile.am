@@ -12,11 +12,10 @@ librsysserverapi_la_SOURCES = \
        loginfo.c
 
 librsysserverapi_la_LIBADD = \
-		@top_builddir@/logging/librsyslogging.la \
+	@top_builddir@/logging/librsyslogging.la \
         @LWREG_LIBS@\
         @LWADVAPI_LIBS@\
-		@PTHREAD_LIBS@        \
-		@top_builddir@/server/ipc/librsysserveripc.la
+	@PTHREAD_LIBS@
 
 noinst_HEADERS = \
 	config_p.h     \

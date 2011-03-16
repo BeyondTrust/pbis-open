@@ -50,11 +50,7 @@
 RSYS_SERVERINFO gRSysServerInfo =
 {
     PTHREAD_MUTEX_INITIALIZER,  /* Lock              */
-    0,                          /* Start as daemon   */
-    RSYS_CACHE_DIR,                         /* Cache path        */
-    PREFIXDIR,                         /* Prefix path       */
     0,                          /* Process exit flag */
-    0                           /* Process exit code */
 };
 
 PRSYS_SERVERINFO gpRSysServerInfo = &gRSysServerInfo;

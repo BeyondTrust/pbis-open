@@ -214,6 +214,7 @@ AS_AC_EXPAND(daemoncachedir, ["$localstatedir/lib/likewise"])
 AC_DEFINE_UNQUOTED([RSYS_CACHE_DIR], ["$daemoncachedir"], [Location of daemon cache files])
 
 AS_AC_EXPAND(SBINDIR, ["$sbindir"])
+AS_AC_EXPAND(LIBDIR, ["$libdir"])
 
 initdir='$(exec_prefix)/init'
 AC_SUBST(initdir)
@@ -340,19 +341,13 @@ AC_CONFIG_FILES([Makefile
 		 logging/Makefile
 		 logging/logging_r/Makefile
                  utils/Makefile
-                 ipc/Makefile
-                 client/Makefile
                  server/Makefile
                  server/api/Makefile
-                 server/ipc/Makefile
                  server/daemon/Makefile
                  server/reader/Makefile
                  server/etc/Makefile
 		 server/etc/reapsysl.reg
                  include/Makefile
-                 tools/Makefile
-                 tools/get_log_info/Makefile
-                 tools/set_log_level/Makefile
 		 ]
 )
 AC_OUTPUT

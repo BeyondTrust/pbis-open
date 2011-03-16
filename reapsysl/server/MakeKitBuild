@@ -1,5 +1,4 @@
-SUBDIRS="ipc       \
-         api       \
+SUBDIRS="api       \
          etc       \
          reader    \
          daemon"

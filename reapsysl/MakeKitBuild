@@ -1,4 +1,4 @@
-SUBDIRS="include logging utils ipc client server tools"
+SUBDIRS="include logging utils server"
 
 configure()
 {

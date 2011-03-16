@@ -128,16 +128,6 @@
         } \
     } while (0)
 
-DWORD
-RSysOpenServer(
-    PHANDLE phConnection
-    );
-
-DWORD
-RSysCloseServer(
-    HANDLE hConnection
-    );
-
 RSYS_API
 size_t
 RSysGetErrorString(

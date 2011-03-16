@@ -1,6 +1,5 @@
 
 SUBDIRS = \
-         ipc       \
          api       \
          etc       \
          reader    \

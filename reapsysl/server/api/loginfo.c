@@ -46,6 +46,16 @@
  */
 #include "includes.h"
 
+RSYS_API
+VOID
+RSysFreeLogInfo(
+    PRSYS_LOG_INFO pLogInfo
+    )
+{
+    RtlCStringFree(&pLogInfo->pszPath);
+    RtlMemoryFree(pLogInfo);
+}
+
 DWORD
 RSysSrvSetLogByConfig(
     )

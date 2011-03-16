@@ -1,15 +1,13 @@
 make()
 {
     REAPSYSLD_SOURCES="globals.c    \
-	listener.c   \
-	main.c       \
+	main-svcm.c \
 	sighandler.c"
 
-    mk_program \
-	PROGRAM="reapsysld" \
-	INSTALLDIR="${MK_SBINDIR}" \
+    lw_service \
+	SERVICE="reapsysl" \
 	SOURCES="$REAPSYSLD_SOURCES" \
-	GROUPS="../ipc/ipc ../api/api ../../utils/utils ../reader/reader" \
+	GROUPS="../api/api ../../utils/utils ../reader/reader" \
 	INCLUDEDIRS=". ../include ../../include" \
 	HEADERDEPS="lw/base.h lwadvapi.h" \
 	LIBDEPS="lwmsg lwmsg_nothr lwadvapi lwadvapi_nothr"

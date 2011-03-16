@@ -1,20 +1,22 @@
-sbin_PROGRAMS = reapsysld
+svcmdir = $(libdir)/lw-svcm
 
-reapsysld_CPPFLAGS = \
+svcm_LTLIBRARIES = reapsysl.la
+
+reapsysl_la_CPPFLAGS = \
         $(AM_CPPFLAGS) \
-	-I@top_srcdir@/server/include
+	-I$(top_srcdir)/server/include
 
-reapsysld_LDADD = \
-	@top_builddir@/server/api/librsysserverapi.la \
-	@top_builddir@/server/reader/librsysserverreader.la \
-	@top_builddir@/logging/librsyslogging.la \
-	@top_builddir@/logging/logging_r/librsyslogging_r.la \
-	@top_builddir@/client/librsysclientapi.la \
+reapsysl_la_LIBADD = \
+	$(top_builddir)/server/api/librsysserverapi.la \
+	$(top_builddir)/server/reader/librsysserverreader.la \
+	$(top_builddir)/logging/librsyslogging.la \
+	$(top_builddir)/logging/logging_r/librsyslogging_r.la \
 	-llwadvapi \
-	@RT_LIBS@
+	$(RT_LIBS)
 
-reapsysld_SOURCES = \
+reapsysl_la_LDFLAGS = -module -avoid-version
+
+reapsysl_la_SOURCES = \
 	globals.c    \
-	listener.c   \
-	main.c       \
+	main-svcm.c  \
 	sighandler.c

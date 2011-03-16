@@ -50,11 +50,6 @@
 #define __SIGHANDLER_H__
 
 DWORD
-RSysSrvHandleSignals(
-    VOID
-    );
-
-DWORD
 RSysSrvStopProcess(
     VOID
     );

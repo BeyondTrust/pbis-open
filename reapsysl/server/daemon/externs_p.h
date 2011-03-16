@@ -51,12 +51,6 @@
 extern RSYS_SERVERINFO  gRSysServerInfo;
 extern PRSYS_SERVERINFO gpRSysServerInfo;
 
-#define DAEMON_NAME "reapsysld"
-#define PID_DIR     "/var/run"
-#define PID_FILE    PID_DIR "/" DAEMON_NAME ".pid"
-
-#define PID_FILE_CONTENTS_SIZE ((9 * 2) + 2)
-
 #define RSYS_LOCK_SERVERINFO(bInLock)               \
         if (!bInLock) {                               \
            pthread_mutex_lock(&gpRSysServerInfo->lock);   \
