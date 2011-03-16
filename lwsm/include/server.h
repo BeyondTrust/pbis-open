@@ -517,6 +517,16 @@ LwSmContainerRegister(
     PWSTR pGroup
     );
 
+DWORD
+LwSmContainerInit(
+    VOID
+    );
+
+VOID
+LwSmContainerShutdown(
+    VOID
+    );
+
 #define SM_LOG(level, ...) LwSmLogPrintf((level), NULL, __func__, __FILE__, __LINE__, __VA_ARGS__)
 #define SM_LOG_ALWAYS(...) SM_LOG(LW_SM_LOG_LEVEL_ALWAYS, __VA_ARGS__)
 #define SM_LOG_ERROR(...) SM_LOG(LW_SM_LOG_LEVEL_ERROR, __VA_ARGS__)

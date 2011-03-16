@@ -314,6 +314,8 @@ struct {
 
 static pthread_mutex_t gContainerLock = PTHREAD_MUTEX_INITIALIZER;
 static PLW_HASHTABLE gpContainers = NULL;
+static BOOLEAN volatile gContainerShutdown = FALSE;
+static PLW_TASK_GROUP gpContainerGroup = NULL;
 
 static
 DWORD
@@ -624,6 +626,13 @@ ContainerTask(
             dwError = LwMapErrnoToLwError(errno);
             BAIL_ON_ERROR(dwError);
         }
+
+        /* We are shutting down, so don't bother waiting */
+        if (gContainerShutdown)
+        {
+            dwError = ERROR_CANCELLED;
+            BAIL_ON_ERROR(dwError);
+        }
     }
 
     if (WakeMask & LW_TASK_EVENT_UNIX_SIGNAL)
@@ -725,7 +734,7 @@ CreateContainer(
         dwError = LwNtStatusToWin32Error(LwRtlCreateTask(
             gpPool,
             &pContainer->pTask,
-            NULL,
+            gpContainerGroup,
             ContainerTask,
             pContainer));
         BAIL_ON_ERROR(dwError);
@@ -2049,4 +2058,42 @@ error:
     }
 
     return dwError;
+}
+
+DWORD
+LwSmContainerInit(
+    VOID
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+
+    dwError = LwNtStatusToWin32Error(LwRtlCreateTaskGroup(gpPool, &gpContainerGroup));
+    BAIL_ON_ERROR(dwError);
+
+error:
+
+    return dwError;
+}
+
+VOID
+LwSmContainerShutdown(
+    VOID
+    )
+{
+    CONTAINER_LOCK();
+    gContainerShutdown = TRUE;
+    CONTAINER_UNLOCK();
+
+    if (gpContainerGroup)
+    {
+        LwRtlCancelTaskGroup(gpContainerGroup);
+        LwRtlWaitTaskGroup(gpContainerGroup);
+        LwRtlFreeTaskGroup(&gpContainerGroup);
+    }
+
+    if (gpContainers)
+    {
+        /* Table should be empty at this point */
+        LwRtlFreeHashTable(&gpContainers);
+    }
 }

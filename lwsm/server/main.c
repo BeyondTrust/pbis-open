@@ -158,6 +158,10 @@ main(
     dwError = LwSmConfigureLogging(gState.pName);
     BAIL_ON_ERROR(dwError);
 
+    /* Initialize the container subsystem */
+    dwError = LwSmContainerInit();
+    BAIL_ON_ERROR(dwError);
+
     /* Initialize the service table subsystem */
     dwError = LwSmTableInit();
     BAIL_ON_ERROR(dwError);
@@ -178,6 +182,9 @@ error:
 
     /* Shut down service table */
     LwSmTableShutdown();
+
+    /* Shut down containers */
+    LwSmContainerShutdown();
 
     /* Shut down logging */
     LwSmLoggingShutdown();
