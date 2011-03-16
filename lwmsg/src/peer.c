@@ -97,6 +97,7 @@ lwmsg_peer_new(
 
     BAIL_ON_ERROR(status = lwmsg_task_acquire_manager(&peer->task_manager));
     BAIL_ON_ERROR(status = lwmsg_task_group_new(peer->task_manager, &peer->connect_tasks));
+    BAIL_ON_ERROR(status = lwmsg_task_group_new(peer->task_manager, &peer->listen_tasks));
 
     peer->max_clients = 100;
     peer->max_backlog = 8;
@@ -457,8 +458,6 @@ lwmsg_peer_startup(
     PeerEndpoint* endpoint = NULL;
     PeerListenTask* task = NULL;
     char* message = NULL;
-
-    BAIL_ON_ERROR(status = lwmsg_task_group_new(peer->task_manager, &peer->listen_tasks));
 
     for (ring = peer->listen_endpoints.next; ring != &peer->listen_endpoints; ring = ring->next)
     {
