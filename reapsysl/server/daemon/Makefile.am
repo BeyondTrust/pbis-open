@@ -9,8 +9,6 @@ reapsysl_la_CPPFLAGS = \
 reapsysl_la_LIBADD = \
 	$(top_builddir)/server/api/librsysserverapi.la \
 	$(top_builddir)/server/reader/librsysserverreader.la \
-	$(top_builddir)/logging/librsyslogging.la \
-	$(top_builddir)/logging/logging_r/librsyslogging_r.la \
 	-llwadvapi \
 	$(RT_LIBS)
 

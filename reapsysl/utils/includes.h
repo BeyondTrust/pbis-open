@@ -50,8 +50,6 @@
 
 #include "rsys-system.h"
 
-#include <rsys/rsys.h>
-
 #include "rsys-def.h"
 #include "rsys-logging.h"
 #include "rsys-utils.h"
@@ -59,10 +57,10 @@
 #include <lw/rtlstring.h>
 #include <reg/lwreg.h>
 
-#include "lwmem.h"
-#include "lwstr.h"
+#include <lwmem.h>
+#include <lwerror.h>
+#include <lwstr.h>
 
 // Local includes
 #include "rsys-cfg_p.h"
-#include "rsys-error_p.h"
 #include "rsys-sysfuncs_p.h"

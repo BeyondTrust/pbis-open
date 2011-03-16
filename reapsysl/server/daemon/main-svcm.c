@@ -121,8 +121,6 @@ RSysSvcmStop(
 
     RSYS_LOG_INFO("Reapsysl Service exiting...");
 
-    RSysCloseGlobalLog();
-
     return STATUS_SUCCESS;
 }
 

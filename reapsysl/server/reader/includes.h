@@ -55,10 +55,8 @@
 #include "rsys-def.h"
 #include <dce/rpcsts.h>
 
-#include "rsys/rsys.h"
 #include "rsys-logging.h"
 #include "rsys-utils.h"
-#include "rsys-ipc.h"
 
 #include "rsys-server.h"
 #include "rsys-server-reader.h"

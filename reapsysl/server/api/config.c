@@ -65,8 +65,6 @@ RSysSrvRefreshConfiguration(
     RSysSrvApiFreeConfig(gpAPIConfig);
     gpAPIConfig = pAPIConfig;
     pAPIConfig = NULL;
-    dwError = RSysSrvSetLogByConfig();
-    BAIL_ON_RSYS_ERROR(dwError);
 
 cleanup:
 
@@ -97,16 +95,6 @@ RSysSrvApiInitConfig(
                     sizeof(*pConfig));
     BAIL_ON_RSYS_ERROR(dwError);
 
-    dwError = RTL_ALLOCATE(
-            &pConfig->pLogInfo,
-            RSYS_LOG_INFO,
-            sizeof(*pConfig->pLogInfo));
-    BAIL_ON_RSYS_ERROR(dwError);
-
-    pConfig->pLogInfo->maxAllowedLogLevel = RSYS_LOG_LEVEL_ERROR;
-    pConfig->pLogInfo->logTarget = RSYS_LOG_TARGET_CONSOLE;
-    pConfig->pLogInfo->pszPath = NULL;
-
     pConfig->dwEscrowTime = 1 * 1000000;
     pConfig->bLogUnmatchedErrorEvents = FALSE;
     pConfig->bLogUnmatchedWarningEvents = FALSE;
@@ -135,51 +123,7 @@ RSysSrvApiReadConfig(
     BAIL_ON_RSYS_ERROR(dwError);
 
     {
-        const PCSTR ppszLogLevelNames[] = {
-            "always",
-            "error",
-            "warning",
-            "info",
-            "verbose",
-            "debug"
-        };
-        const PCSTR ppszLogTargetNames[] = {
-            "disabled",
-            "console",
-            "file",
-            "syslog",
-        };
         RSYS_CONFIG_SETTING settingsArray[] = {
-            {
-                "logging",
-                "log-level",
-                FALSE,
-                Enum,
-                RSYS_LOG_LEVEL_ALWAYS,
-                RSYS_LOG_LEVEL_DEBUG,
-                ppszLogLevelNames,
-                &pConfig->pLogInfo->maxAllowedLogLevel,
-            },
-            {
-                "logging",
-                "log-target",
-                FALSE,
-                Enum,
-                RSYS_LOG_TARGET_DISABLED,
-                RSYS_LOG_TARGET_SYSLOG,
-                ppszLogTargetNames,
-                &pConfig->pLogInfo->logTarget,
-            },
-            {
-                "logging",
-                "log-path",
-                FALSE,
-                String,
-                0,
-                -1,
-                NULL,
-                &pConfig->pLogInfo->pszPath,
-            },
             {
                 "global",
                 "EscrowMicroseconds",
@@ -261,8 +205,6 @@ RSysSrvApiFreeConfig(
 {
     if (pConfig)
     {
-        RSysFreeLogInfo(pConfig->pLogInfo);
-
         while (pConfig->pPatternHead)
         {
             PDLINKEDLIST pToDelete = pConfig->pPatternHead;

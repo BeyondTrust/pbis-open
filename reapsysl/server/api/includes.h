@@ -50,10 +50,8 @@
 #include "rsys-system.h"
 #include "rsys-def.h"
 
-#include "rsys/rsys.h"
 #include "rsys-logging.h"
 #include "rsys-utils.h"
-#include "rsys-ipc.h"
 
 #include "rsys-server.h"
 #include "rsys-server-api.h"
@@ -68,5 +66,4 @@
 #include "config_p.h"
 #include "state_p.h"
 #include "externs_p.h"
-#include "loginfo_p.h"
 

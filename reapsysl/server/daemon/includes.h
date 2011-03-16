@@ -50,10 +50,8 @@
 #include "rsys-system.h"
 #include "rsys-def.h"
 
-#include "rsys/rsys.h"
 #include "rsys-logging.h"
 #include "rsys-utils.h"
-#include "rsys-ipc.h"
 #include <lw/base.h>
 
 #include "rsys-server.h"

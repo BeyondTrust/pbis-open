@@ -338,8 +338,6 @@ CFLAGS="$saved_CFLAGS"
 
 
 AC_CONFIG_FILES([Makefile
-		 logging/Makefile
-		 logging/logging_r/Makefile
                  utils/Makefile
                  server/Makefile
                  server/api/Makefile

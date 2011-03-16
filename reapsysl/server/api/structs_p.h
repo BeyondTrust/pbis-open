@@ -56,7 +56,6 @@ typedef struct __RSYS_SRV_API_CONFIG
     BOOLEAN bLogUnmatchedErrorEvents;
     BOOLEAN bLogUnmatchedWarningEvents;
     BOOLEAN bLogUnmatchedInfoEvents;
-    PRSYS_LOG_INFO pLogInfo;
     // Items of are type RSYS_MESSAGE_PATTERN
     PDLINKEDLIST pPatternHead;
     PDLINKEDLIST pPatternTail;

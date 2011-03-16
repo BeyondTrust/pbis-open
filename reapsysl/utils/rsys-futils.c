@@ -921,7 +921,7 @@ RSysGetMatchingFilePathsInFolder(
     }
 
     if (regcomp(&rx, pszFileNameRegExp, REG_EXTENDED) != 0) {
-        dwError = RSYS_ERROR_REGEX_COMPILE_FAILED;
+        dwError = LW_ERROR_REGEX_COMPILE_FAILED;
         BAIL_ON_RSYS_ERROR(dwError);
     }
     rxAllocated = TRUE;
