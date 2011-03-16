@@ -55,6 +55,10 @@
 /* Needed for dcethread_fork() */
 #include <dce/dcethread.h>
 
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+
 #ifdef ENABLE_STATIC_PROVIDERS
 #ifdef ENABLE_AD
 extern DWORD LsaInitializeProvider_ActiveDirectory(PCSTR*, PLSA_PROVIDER_FUNCTION_TABLE_2*);
@@ -95,6 +99,118 @@ LsaSrvRemovePidFile(
     );
 
 #endif
+
+static pthread_mutex_t *gCryptoLocks = NULL;
+
+static
+VOID
+LsaCryptoLock(
+    int mode,
+    int type,
+    const char *file,
+    int line)
+{
+    if (mode & CRYPTO_LOCK)
+    {
+        pthread_mutex_lock(&gCryptoLocks[type]);
+    }
+    else
+    {
+        pthread_mutex_unlock(&gCryptoLocks[type]);
+    }
+}
+
+static
+unsigned long
+LsaGetThreadID(
+    VOID
+    )
+{
+    return (unsigned long) pthread_self();
+}
+
+//
+// Various parts of the code use OpenSSL, so we must initialize
+// it, including initializing its locking mechanism since we're
+// multithreaded.
+//
+static
+DWORD
+LsaInitOpenSSL(
+    VOID
+    )
+{
+    int i = 0;
+    int iNumLocks = 0;
+    DWORD dwError = LW_ERROR_SUCCESS;
+
+    iNumLocks = CRYPTO_num_locks();
+
+    dwError = LwAllocateMemory(
+                iNumLocks * sizeof(*gCryptoLocks),
+                (PVOID *) &gCryptoLocks);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    for (i = 0; i < iNumLocks; ++i)
+    {
+        if (pthread_mutex_init(&gCryptoLocks[i], NULL) != 0)
+        {
+            BAIL_WITH_LSA_ERROR(LwMapErrnoToLwError(errno));
+        }
+    }
+
+    CRYPTO_set_id_callback(LsaGetThreadID);
+    CRYPTO_set_locking_callback(LsaCryptoLock);
+    ERR_load_crypto_strings();
+    OpenSSL_add_all_algorithms();
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+static
+VOID
+LsaCleanupOpenSSL(
+    VOID
+    )
+{
+    /*
+     * Only call the OpenSSL cleanup functions if we got far enough
+     * during init to call their initialization counterparts.
+     */
+    if (CRYPTO_get_locking_callback() != NULL)
+    {
+        EVP_cleanup();
+        ERR_free_strings();
+        CRYPTO_set_locking_callback(NULL);
+        CRYPTO_set_id_callback(NULL);
+    }
+
+    if (gCryptoLocks)
+    {
+        /*
+         * Free the lock structures.  This function should only
+         * be called during shutdown, at which time there should
+         * only be one thread, but it's still wise to wait until
+         * after setting the locking callback function pointer to
+         * NULL to guarantee it doesn't try to access the
+         * gCryptoLocks array while it's being freed.
+         */
+        int i = 0;
+        int iNumLocks = 0;
+
+        iNumLocks = CRYPTO_num_locks();
+        for (i = 0; i < iNumLocks; ++i)
+        {
+            pthread_mutex_destroy(&gCryptoLocks[i]);
+        }
+
+        LwFreeMemory(gCryptoLocks);
+    }
+}
 
 int
 lsassd_main(
@@ -157,6 +273,9 @@ lsassd_main(
     dwError = LsaSrvStartEventLoggingThread();
     BAIL_ON_LSA_ERROR(dwError);
 #endif
+
+    dwError = LsaInitOpenSSL();
+    BAIL_ON_LSA_ERROR(dwError);
 
 #ifdef ENABLE_PIDFILE
     LsaSrvCreatePIDFile();
@@ -224,6 +343,8 @@ cleanup:
     LwIoShutdown();
 
     NtlmClientIpcShutdown();
+
+    LsaCleanupOpenSSL();
 
     LSA_LOG_INFO("LSA Service exiting...");
 
