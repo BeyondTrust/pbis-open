@@ -106,6 +106,11 @@ LwSmLoggingShutdown(
         LwRtlHashMapClear(gpLogMap, LogInfoClear, NULL);
         LwRtlFreeHashMap(&gpLogMap);
     }
+
+    if (gLogInfo.pLoggerData)
+    {
+        gLogInfo.pLogger->pfnClose(gLogInfo.pLoggerData);
+    }
 }
 
 static

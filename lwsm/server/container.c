@@ -822,6 +822,7 @@ ContainerDeleteInstance(
 
         LW_SAFE_FREE_MEMORY(pInstance->pName);
         LW_SAFE_FREE_MEMORY(pInstance->pPath);
+        LW_SAFE_FREE_MEMORY(pInstance->pGroup);
         LwSmFreeStringList(pInstance->ppArgs);
 
         LwFreeMemory(pInstance);

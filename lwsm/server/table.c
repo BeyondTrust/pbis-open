@@ -1316,11 +1316,6 @@ LwSmTableInit(
 {
     DWORD error = ERROR_SUCCESS;
 
-    error = LwNtStatusToWin32Error(LwRtlCreateThreadPool(&gpPool, NULL));
-    BAIL_ON_ERROR(error);
-
-error:
-
     return error;
 }
 
@@ -1348,5 +1343,4 @@ LwSmTableShutdown(
 
     UNLOCK(bLocked, gServiceTable.pLock);
     pthread_mutex_destroy(gServiceTable.pLock);
-    LwRtlFreeThreadPool(&gpPool);
 }
