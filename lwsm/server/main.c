@@ -201,6 +201,11 @@ LwSmParseArguments(
 
     if (!strcmp(ppszArgv[0], CONTAINER_PROCESS_NAME))
     {
+        if (argc != 2)
+        {
+            dwError = ERROR_INVALID_PARAMETER;
+            BAIL_ON_ERROR(dwError);
+        }
         gState.bContainer = TRUE;
         gState.pName = ppszArgv[1];
         gState.bSyslog = TRUE;
