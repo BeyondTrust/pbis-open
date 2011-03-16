@@ -101,8 +101,11 @@ LwSmLoggingShutdown(
     VOID
     )
 {
-    LwRtlHashMapClear(gpLogMap, LogInfoClear, NULL);
-    LwRtlFreeHashMap(&gpLogMap);
+    if (gpLogMap)
+    {
+        LwRtlHashMapClear(gpLogMap, LogInfoClear, NULL);
+        LwRtlFreeHashMap(&gpLogMap);
+    }
 }
 
 static
