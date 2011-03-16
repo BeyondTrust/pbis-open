@@ -137,6 +137,10 @@ main(
         BAIL_ON_ERROR(dwError);
     }
 
+    /* Create thread pool */
+    dwError = LwNtStatusToWin32Error(LwRtlCreateThreadPool(&gpPool, NULL));
+    BAIL_ON_ERROR(dwError);
+
     dwError = LWNetExtendEnvironmentForKrb5Affinity(FALSE);
     BAIL_ON_ERROR(dwError);
 
@@ -180,6 +184,9 @@ error:
 
     /* Remove DS cache exception */
     LwDsCacheRemovePidException(getpid());
+
+    /* Free thread pool */
+    LwRtlFreeThreadPool(&gpPool);
 
     if (dwError)
     {
@@ -602,9 +609,6 @@ LwSmMain(
     DWORD dwError = 0;
     PLW_TASK pTask = NULL;
 
-    dwError = LwNtStatusToWin32Error(LwRtlCreateThreadPool(&gpPool, NULL));
-    BAIL_ON_ERROR(dwError);
-
     dwError = LwNtStatusToWin32Error(LwRtlCreateTask(
                                          gpPool,
                                          &pTask,
@@ -626,8 +630,6 @@ cleanup:
          LwRtlWaitTask(pTask);
          LwRtlReleaseTask(&pTask);
      }
-
-     LwRtlFreeThreadPool(&gpPool);
 
      return dwError;
 
