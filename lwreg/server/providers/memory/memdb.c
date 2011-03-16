@@ -293,7 +293,7 @@ MemDbQueryInfoKey(
     {
         for (indx=0, valueLen=0, maxValueLen; indx < hKey->ValuesLen; indx++)
         {
-            valueLen = RtlWC16StringNumChars(hKey->Values[indx].Name);
+            valueLen = RtlWC16StringNumChars(hKey->Values[indx]->Name);
             if (valueLen > maxValueLen)
             {
                 maxValueLen = valueLen;
@@ -307,7 +307,7 @@ MemDbQueryInfoKey(
     {
         for (indx=0, valueLen=0, maxValueLen; indx < hKey->ValuesLen; indx++)
         {
-            valueLen = hKey->Values[indx].DataLen;
+            valueLen = hKey->Values[indx]->DataLen;
             if (valueLen > maxValueLen)
             {
                 maxValueLen = valueLen;
@@ -316,7 +316,7 @@ MemDbQueryInfoKey(
     }
 
 cleanup:
-    return 0;
+    return status;
 
 error:
      goto cleanup;
@@ -336,8 +336,8 @@ MemDbEnumKeyEx(
     OUT PFILETIME pftLastWriteTime
     )
 {
-    MEM_REG_STORE_HANDLE hKey = NULL;
     NTSTATUS status = 0;
+    MEM_REG_STORE_HANDLE hKey = NULL;
     DWORD keyLen = 0;
 
     hKey = hDb->pMemReg;
@@ -367,3 +367,159 @@ error:
     goto cleanup;
 }
 
+
+NTSTATUS
+MemDbSetValueEx(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    IN OPTIONAL PCWSTR pValueName,
+    IN DWORD dwReserved,
+    IN DWORD dwType,
+    IN const BYTE *pData,
+    DWORD cbData)
+{
+    NTSTATUS status = 0;
+    MEM_REG_STORE_HANDLE hKey = NULL;
+
+    BAIL_ON_NT_STATUS(status);
+
+    hKey = hDb->pMemReg;
+
+    status = MemRegStoreAddNodeValue(
+                 hKey,
+                 pValueName,
+                 dwReserved, // Not used?
+                 dwType,
+                 pData,
+                 cbData);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}
+
+
+NTSTATUS
+MemDbGetValue(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN OPTIONAL PCWSTR pValueName,
+    IN OPTIONAL REG_DATA_TYPE_FLAGS Flags,
+    OUT PDWORD pdwType,
+    OUT OPTIONAL PBYTE pData,
+    IN OUT OPTIONAL PDWORD pcbData)
+{
+    NTSTATUS status = 0;
+    MEM_REG_STORE_HANDLE hKey = NULL;
+    MEM_REG_STORE_HANDLE hParentKey = NULL;
+    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PREGMEM_VALUE hValue = NULL;
+
+    hKey = hDb->pMemReg;
+
+    if (pSubKey)
+    {
+        /*
+         * Find named subnode and use that to find the named value
+         */
+        hParentKey = hKey;
+        status = MemRegStoreFindNode(
+                     hParentKey,
+                     pSubKey,
+                     &hSubKey);
+        BAIL_ON_NT_STATUS(status);
+        hKey = hSubKey;
+    }
+
+
+    /*
+     * Find named value within specified node
+     */
+    status = MemRegStoreFindNodeValue(
+                 hKey,
+                 pValueName,
+                 &hValue);
+    BAIL_ON_NT_STATUS(status);
+
+    /*
+     * Return data from value node. Storage for return values is
+     * passed into this function by the caller.
+     */
+    *pdwType = hValue->Type;
+    if (pcbData)
+    {
+        *pcbData = hValue->DataLen;
+    }
+    if (pData && pcbData)
+    {
+        memcpy(pData, hValue->Data, hValue->DataLen);
+    }
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}
+
+
+NTSTATUS
+MemDbEnumValue(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    IN DWORD dwIndex,
+    OUT PWSTR pValueName,
+    IN OUT PDWORD pcchValueName,
+    IN PDWORD pdwReserved,
+    OUT OPTIONAL PDWORD pType,
+    OUT OPTIONAL PBYTE pData,
+    IN OUT OPTIONAL PDWORD pcbData)
+{
+    NTSTATUS status = 0;
+    MEM_REG_STORE_HANDLE hKey = NULL;
+    DWORD valueLen = 0;
+
+    hKey = hDb->pMemReg;
+    if (dwIndex >= hKey->ValuesLen)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
+    
+    /*
+     * Query info about indexed value
+     */
+    valueLen = RtlWC16StringNumChars(hKey->Values[dwIndex]->Name);
+    if (valueLen > *pcchValueName)
+    {
+        status = STATUS_BUFFER_TOO_SMALL;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    memcpy(pValueName, hKey->Values[dwIndex]->Name, valueLen * sizeof(WCHAR));
+    *pcchValueName = valueLen;
+    if (pType)
+    {
+        *pType = hKey->Values[dwIndex]->Type;
+    }
+    if (pcbData)
+    {
+        *pcbData = hKey->Values[dwIndex]->DataLen;
+    }
+    if (pcbData && pData)
+    {
+        memcpy(pData, 
+               hKey->Values[dwIndex]->Data,
+               hKey->Values[dwIndex]->DataLen);
+    }
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}

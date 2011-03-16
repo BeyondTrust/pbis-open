@@ -40,7 +40,7 @@
  * Authors: Adam Bernstein (abernstein@likewise.com)
  */
 #include "includes.h"
-
+#include "memstore_p.h"
 
 NTSTATUS
 MemRegStoreOpen(
@@ -65,11 +65,28 @@ MemRegStoreAddNode(
     );
 
 
-
 NTSTATUS
 MemRegStoreFindNode(
     IN MEM_REG_STORE_HANDLE hDb,
     IN PCWSTR Name,
     OUT PMEM_REG_STORE_HANDLE phNode
     );
+
+
+NTSTATUS
+MemRegStoreAddNodeValue(
+    MEM_REG_STORE_HANDLE hDb,
+    IN OPTIONAL PCWSTR pValueName,
+    IN DWORD dwReserved,
+    IN DWORD dwType,
+    IN const BYTE *pData,
+    DWORD cbData
+    );
+
+
+NTSTATUS
+MemRegStoreFindNodeValue(
+    IN MEM_REG_STORE_HANDLE hDb,
+    IN PCWSTR Name,
+    OUT PREGMEM_VALUE *phValue);
 

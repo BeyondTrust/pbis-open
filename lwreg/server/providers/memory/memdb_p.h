@@ -114,3 +114,42 @@ MemDbEnumKeyEx(
     IN OUT OPTIONAL PDWORD pcClass,
     OUT PFILETIME pftLastWriteTime
     );
+
+
+NTSTATUS
+MemDbSetValueEx(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    IN OPTIONAL PCWSTR pValueName,
+    IN DWORD dwReserved,
+    IN DWORD dwType,
+    IN const BYTE *pData,
+    DWORD cbData
+    );
+
+
+NTSTATUS
+MemDbGetValue(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN OPTIONAL PCWSTR pValueName,
+    IN OPTIONAL REG_DATA_TYPE_FLAGS Flags,
+    OUT PDWORD pdwType,
+    OUT OPTIONAL PBYTE pData,
+    IN OUT OPTIONAL PDWORD pcbData
+    );
+
+
+NTSTATUS
+MemDbEnumValue(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    IN DWORD dwIndex,
+    OUT PWSTR pValueName, /*buffer hold valueName*/
+    IN OUT PDWORD pcchValueName, /*input - buffer pValueName length*/
+    IN PDWORD pdwReserved,
+    OUT OPTIONAL PDWORD pType,
+    OUT OPTIONAL PBYTE pData,/*buffer hold value content*/
+    IN OUT OPTIONAL PDWORD pcbData /*input - buffer pData length*/
+    );

@@ -40,7 +40,6 @@
  * Authors: Adam Bernstein (abernstein@likewise.com)
  */
 #include "includes.h"
-#include "memstore_p.h"
 
 
 static CHAR *gRootKeys[] = 
@@ -125,24 +124,6 @@ error:
     goto cleanup;
 }
 
-#if 0
-/* For reference, remove once done with implementation */
-typedef struct _REGMEM_NODE
-{
-    PWSTR Name;
-    DWORD NodeType;
-    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
-
-    struct _REGMEM_NODE **SubNodes;
-    DWORD NodesLen;
-
-    REGMEM_VALUE *Values;
-    DWORD ValuesLen;
-
-    PREMEM_VALUE_ATTRIBUTES *Attributes;
-    DWORD AttributesLen;
-} REGMEM_NODE, *PREGMEM_NODE;
-#endif
 
 
 NTSTATUS
@@ -240,5 +221,149 @@ error:
     LWREG_SAFE_FREE_MEMORY(pNodesArray);
     LWREG_SAFE_FREE_MEMORY(pNewNode);
     LWREG_SAFE_FREE_MEMORY(newNodeName);
+    goto cleanup;
+}
+
+
+#if 0
+typedef struct _REGMEM_VALUE
+{
+    PWSTR Name;
+    DWORD Type;
+    PVOID Data;
+    DWORD DataLen;
+} REGMEM_VALUE, *PREGMEM_VALUE;
+
+/* For reference, remove once done with implementation */
+typedef struct _REGMEM_NODE
+{
+    PWSTR Name;
+    DWORD NodeType;
+    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
+
+    struct _REGMEM_NODE **SubNodes;
+    DWORD NodesLen;
+
+    PREGMEM_VALUE *Values;
+    DWORD ValuesLen;
+
+    PREMEM_VALUE_ATTRIBUTES *Attributes;
+    DWORD AttributesLen;
+} REGMEM_NODE, *PREGMEM_NODE;
+#endif
+
+
+NTSTATUS
+MemRegStoreFindNodeValue(
+    IN MEM_REG_STORE_HANDLE hDb,
+    IN PCWSTR Name,
+    OUT PREGMEM_VALUE *phValue)
+{
+    NTSTATUS status = 0;
+    DWORD valueIndex = 0;
+    BOOLEAN bFoundValue = FALSE;
+
+    BAIL_ON_NT_STATUS(status);
+    if (!Name)
+    {
+        Name = (PCWSTR) L"";
+    }
+    for (valueIndex=0; valueIndex<hDb->ValuesLen; valueIndex++)
+    {
+        if (LwRtlWC16StringIsEqual(Name, hDb->Values[valueIndex]->Name, FALSE))
+        {
+            bFoundValue = TRUE;
+            break;
+        }
+    }
+
+    if (bFoundValue)
+    {
+        *phValue = hDb->Values[valueIndex];
+    }
+    else
+    {
+        status = STATUS_OBJECT_NAME_NOT_FOUND;
+    }
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}
+
+
+NTSTATUS
+MemRegStoreAddNodeValue(
+    MEM_REG_STORE_HANDLE hDb,
+    IN OPTIONAL PCWSTR pValueName,
+    IN DWORD dwReserved,
+    IN DWORD dwType,
+    IN const BYTE *pData,
+    DWORD cbData)
+{
+    NTSTATUS status = 0;
+    PREGMEM_VALUE pNodeValue = NULL;
+    PWSTR pwszName = NULL;
+    WCHAR pwszNull[2] = {0};
+    BYTE *pbData = NULL;
+    PREGMEM_VALUE *newValues;
+
+    status = LW_RTL_ALLOCATE(
+                 (PVOID*) &pNodeValue, 
+                 REGMEM_VALUE, 
+                 sizeof(*pNodeValue));
+    BAIL_ON_NT_STATUS(status);
+
+    
+    if (!pValueName || *pValueName == '\0')
+    {
+        pValueName = pwszNull;
+    }
+    status = LwRtlWC16StringDuplicate(&pwszName, pValueName);
+    BAIL_ON_NT_STATUS(status);
+
+    if (cbData > 0)
+    {
+        status = LW_RTL_ALLOCATE(
+                     (PVOID*) &pbData, 
+                     BYTE, 
+                     sizeof(*pbData) * cbData);
+        BAIL_ON_NT_STATUS(status);
+        memset(pbData, 0, sizeof(*pbData) * cbData);
+        memcpy(pbData, pData, cbData);
+    }
+    else
+    {
+        status = LW_RTL_ALLOCATE(
+                     (PVOID*) &pbData, 
+                     BYTE, 
+                     1);
+        BAIL_ON_NT_STATUS(status);
+        memset(pbData, 0, 1);
+    }
+
+    status = NtRegReallocMemory(hDb->Values, 
+                                (PVOID) &newValues,
+                                (hDb->ValuesLen + 1) * sizeof(PREGMEM_VALUE));
+    BAIL_ON_NT_STATUS(status);
+
+    pNodeValue->Name = pwszName;
+    pNodeValue->Type = dwType;
+    pNodeValue->Data = pbData;
+    pNodeValue->DataLen = cbData;
+
+    hDb->Values = newValues;
+    hDb->Values[hDb->ValuesLen] = pNodeValue;
+    hDb->ValuesLen++;
+
+cleanup:
+    return status;
+
+error:
+    LWREG_SAFE_FREE_MEMORY(pNodeValue);
+    LWREG_SAFE_FREE_MEMORY(pwszName);
+    LWREG_SAFE_FREE_MEMORY(pbData);
+    LWREG_SAFE_FREE_MEMORY(newValues);
     goto cleanup;
 }

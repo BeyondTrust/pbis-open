@@ -345,7 +345,26 @@ MemSetValueEx(
     DWORD cbData
     )
 {
-    return 0;
+    NTSTATUS status = 0;
+    REG_DB_CONNECTION regDbConn = {0};
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
+
+    regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+    status = MemDbSetValueEx(
+                 Handle,
+                 &regDbConn,
+                 pValueName,
+                 dwReserved,
+                 dwType,
+                 pData,
+                 cbData);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
 }
 
 
@@ -361,7 +380,27 @@ MemGetValue(
     IN OUT OPTIONAL PDWORD pcbData
     )
 {
-    return 0;
+    NTSTATUS status = 0;
+    REG_DB_CONNECTION regDbConn = {0};
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
+    regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+
+    status = MemDbGetValue(
+                 Handle,
+                 &regDbConn,
+                 pSubKey,
+                 pValueName,
+                 Flags,
+                 pdwType,
+                 pData,
+                 pcbData);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
 }
 
 
@@ -401,7 +440,24 @@ MemEnumValue(
     IN OUT OPTIONAL PDWORD pcbData /*input - buffer pData length*/
     )
 {
-    return 0;
+    NTSTATUS status = 0;
+    REG_DB_CONNECTION regDbConn = {0};
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
+
+    regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+
+    status = MemDbEnumValue(
+                 Handle,
+                 &regDbConn,
+                 dwIndex,
+                 pValueName,
+                 pcchValueName,
+                 pdwReserved,
+                 pType,
+                 pData,
+                 pcbData);
+
+    return status;
 }
 
 

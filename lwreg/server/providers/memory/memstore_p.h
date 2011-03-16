@@ -60,7 +60,7 @@ typedef struct _REMEM_VALUE_ATTRIBUTES
         LWREG_RANGE_INTEGER RangeInteger;
         PWSTR* ppwszRangeEnumStrings;
     } Range;
-} REMEM_VALUE_ATTRIBUTES, *PREMEM_VALUE_ATTRIBUTES;
+} REMEM_VALUE_ATTRIBUTES, *PREGMEM_VALUE_ATTRIBUTES;
 
 typedef struct _REGMEM_VALUE
 {
@@ -68,7 +68,7 @@ typedef struct _REGMEM_VALUE
     DWORD Type;
     PVOID Data;
     DWORD DataLen;
-} REGMEM_VALUE, *PREMEM_VALUE;
+} REGMEM_VALUE, *PREGMEM_VALUE;
 
 
 typedef struct _REGMEM_NODE
@@ -80,10 +80,10 @@ typedef struct _REGMEM_NODE
     struct _REGMEM_NODE **SubNodes;
     DWORD NodesLen;
 
-    REGMEM_VALUE *Values;
+    PREGMEM_VALUE *Values;
     DWORD ValuesLen;
 
-    PREMEM_VALUE_ATTRIBUTES *Attributes;
+    PREGMEM_VALUE_ATTRIBUTES *Attributes;
     DWORD AttributesLen;
 } REGMEM_NODE, *PREGMEM_NODE;
 #endif
