@@ -181,6 +181,11 @@ error:
     /* Remove DS cache exception */
     LwDsCacheRemovePidException(getpid());
 
+    if (dwError)
+    {
+        fprintf(stderr, "Error: %s (%d)\n", LwWin32ExtErrorToName(dwError), (int) dwError);
+    }
+
     return dwError ? 1 : 0;
 }
 
