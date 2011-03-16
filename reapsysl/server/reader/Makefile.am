@@ -17,7 +17,6 @@ librsysserverreader_la_SOURCES = \
 	globals.c
 
 librsysserverreader_la_LDFLAGS = \
-	-static \
 	$(EVENTLOG_LDFLAGS) \
 	$(LSASS_LDFLAGS) \
 	$(AM_LDFLAGS)
