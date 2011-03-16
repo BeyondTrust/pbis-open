@@ -47,37 +47,6 @@
 
 #define ASSERT(x)   assert(x)
 
-DWORD
-RSysSrvStrndup(
-    PSTR* ppszResult,
-    PCSTR pszSrc,
-    size_t sChars
-    )
-{
-    DWORD dwError = 0;
-    PSTR pszResult = NULL;
-
-    dwError = LwNtStatusToWin32Error(
-                  LW_RTL_ALLOCATE(
-                      &pszResult,
-                      CHAR,
-                      sChars + 1));
-    BAIL_ON_RSYS_ERROR(dwError);
-
-    // Automatically null terminated from the initialization at allocation
-    memcpy(pszResult, pszSrc, sChars);
-
-    *ppszResult = pszResult;
-
-cleanup:
-    return dwError;
-
-error:
-    *ppszResult = NULL;
-    LW_RTL_FREE(&pszResult);
-    goto cleanup;
-}
-
 //Replaces double backslashes with single backslashes
 VOID
 RSysUnescapeUser(
@@ -144,11 +113,11 @@ RSysSrvCheckLineMatch(
         goto not_matched;
     }
 
-    dwError = RSysSrvStrndup(
-                    &pszUser,
+    dwError = LwStrndup(
                     pszLine + matches[ulUserMatchIndex].rm_so,
                     matches[ulUserMatchIndex].rm_eo -
-                        matches[ulUserMatchIndex].rm_so);
+                        matches[ulUserMatchIndex].rm_so,
+                    &pszUser);
     BAIL_ON_RSYS_ERROR(dwError);
 
     RSysUnescapeUser(pszUser);
@@ -308,10 +277,10 @@ RSysSrvParseLine(
         pszPos++;
     }
 
-    dwError = RSysSrvStrndup(
-        &pszHostname,
+    dwError = LwStrndup(
         pszTokenStart,
-        pszPos - pszTokenStart);
+        pszPos - pszTokenStart,
+        &pszHostname);
     BAIL_ON_RSYS_ERROR(dwError);
 
     while (isspace((int)*pszPos))
@@ -339,10 +308,10 @@ RSysSrvParseLine(
     }
     else
     {
-        dwError = RSysSrvStrndup(
-            &pszIdent,
+        dwError = LwStrndup(
             pszTokenStart,
-            pszPos - pszTokenStart);
+            pszPos - pszTokenStart,
+            &pszIdent);
         BAIL_ON_RSYS_ERROR(dwError);
 
         if (*pszPos == '[')
@@ -946,7 +915,10 @@ RSysSrvOpenPipes(
     dwError = RSysSrvGetSyslogPid(&dwSyslogPid);
     BAIL_ON_RSYS_ERROR(dwError);
 
-    dwError = RSysCheckDirectoryExists(RSYS_PIPE_DIR, &bPipeDirExists);
+    dwError = LwCheckFileTypeExists(
+                    RSYS_PIPE_DIR,
+                    LWFILE_DIRECTORY,
+                    &bPipeDirExists);
     BAIL_ON_RSYS_ERROR(dwError);
 
     if (!bPipeDirExists)

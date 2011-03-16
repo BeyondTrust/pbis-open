@@ -2,8 +2,7 @@ make()
 {
     API_SOURCES="\
        config.c          \
-       globals.c         \
-       state.c"
+       globals.c"
 
     mk_group \
         GROUP=api \

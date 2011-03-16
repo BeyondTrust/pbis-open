@@ -59,16 +59,6 @@ typedef struct __DLINKEDLIST
 
 typedef VOID (*PFN_DLINKEDLIST_FUNC)(PVOID pData, PVOID pUserData);
 
-typedef DWORD (*PFN_RSYS_FOREACH_STACK_ITEM)(PVOID pItem, PVOID pUserData);
-
-typedef struct __RSYS_STACK
-{
-    PVOID pItem;
-    
-    struct __RSYS_STACK * pNext;
-    
-} RSYS_STACK, *PRSYS_STACK;
-
 //defined flags in dwOptions
 #define RSYS_CFG_OPTION_STRIP_SECTION          0x00000001
 #define RSYS_CFG_OPTION_STRIP_NAME_VALUE_PAIR  0x00000002
@@ -88,46 +78,8 @@ typedef int64_t RSYS_UNIX_NS_TIME_T, *PRSYS_UNIX_NS_TIME_T;
 // This is in 100ns units from Jan 1, 1601:
 typedef int64_t RSYS_WINDOWS_TIME_T, *PRSYS_WINDOWS_TIME_T;
 
-/*
- * Config parsing callbacks
- */
-typedef DWORD (*PFNRSYS_CONFIG_START_SECTION)(
-                        PCSTR    pszSectionName,
-                        PVOID    pData,
-                        PBOOLEAN pbContinue
-                        );
-
-typedef DWORD (*PFNRSYS_CONFIG_COMMENT)(
-                        PCSTR    pszComment,
-                        PVOID    pData,
-                        PBOOLEAN pbContinue
-                        );
-
-typedef DWORD (*PFNRSYS_CONFIG_NAME_VALUE_PAIR)(
-                        PCSTR    pszName,
-                        PCSTR    pszValue,
-                        PVOID    pData,
-                        PBOOLEAN pbContinue
-                        );
-
-typedef DWORD (*PFNRSYS_CONFIG_END_SECTION)(
-                        PCSTR pszSectionName,
-                        PVOID    pData,
-                        PBOOLEAN pbContinue
-                        );
 
 typedef struct _RSYS_CONFIG_SETTINGS RSYS_CONFIG_SETTINGS, *PRSYS_CONFIG_SETTINGS;
-
-typedef DWORD (*PFNRSYS_CFG_START_SECTION)(
-                        PRSYS_CONFIG_SETTINGS pSettings,
-                        PCSTR pszSectionName
-                        );
-
-typedef DWORD (*PFNRSYS_CFG_UNKNOWN_VALUE)(
-                        PRSYS_CONFIG_SETTINGS pSettings,
-                        PCSTR pszName,
-                        PCSTR pszValue
-                        );
 
 typedef enum
 {
@@ -156,17 +108,6 @@ struct _RSYS_CONFIG_SETTINGS
     PRSYS_CONFIG_SETTING pSettings;
     PVOID pvUserData;
 };
-
-void
-RSysFreeStringArray(
-    PSTR * ppStringArray,
-    DWORD dwCount
-    );
-
-void
-RSysFreeNullTerminatedStringArray(
-    PSTR * ppStringArray
-    );
 
 DWORD
 RSysParseConfigFileEx(
@@ -206,164 +147,6 @@ RSysDLinkedListForEach(
 VOID
 RSysDLinkedListFree(
     PDLINKEDLIST pList
-    );
-
-DWORD
-RSysStackPush(
-    PVOID pItem,
-    PRSYS_STACK* ppStack
-    );
-
-PVOID
-RSysStackPop(
-    PRSYS_STACK* ppStack
-    );
-
-PVOID
-RSysStackPeek(
-    PRSYS_STACK pStack
-    );
-
-DWORD
-RSysStackForeach(
-    PRSYS_STACK pStack,
-    PFN_RSYS_FOREACH_STACK_ITEM pfnAction,
-    PVOID pUserData
-    );
-
-PRSYS_STACK
-RSysStackReverse(
-    PRSYS_STACK pStack
-    );
-
-VOID
-RSysStackFree(
-    PRSYS_STACK pStack
-    );
-
-DWORD
-RSysRemoveFile(
-    PCSTR pszPath
-    );
-
-DWORD
-RSysCheckFileExists(
-    PCSTR pszPath,
-    PBOOLEAN pbFileExists
-    );
-
-DWORD
-RSysCheckSockExists(
-    PCSTR pszPath,
-    PBOOLEAN pbFileExists
-    );
-
-DWORD
-RSysMoveFile(
-    PCSTR pszSrcPath,
-    PCSTR pszDstPath
-    );
-
-DWORD
-RSysChangePermissions(
-    PCSTR pszPath,
-    mode_t dwFileMode
-    );
-
-DWORD
-RSysChangeOwner(
-    PCSTR pszPath,
-    uid_t uid,
-    gid_t gid
-    );
-
-DWORD
-RSysChangeOwnerAndPermissions(
-    PCSTR pszPath,
-    uid_t uid,
-    gid_t gid,
-    mode_t dwFileMode
-    );
-
-DWORD
-RSysGetCurrentDirectoryPath(
-    PSTR* ppszPath
-    );
-
-DWORD
-RSysChangeDirectory(
-    PSTR pszPath
-    );
-
-DWORD
-RSysRemoveDirectory(
-    PCSTR pszPath
-    );
-
-DWORD
-RSysCopyDirectory(
-    PCSTR pszSourceDirPath,
-    uid_t ownerUid,
-    gid_t ownerGid,
-    PCSTR pszDestDirPath
-    );
-
-DWORD
-RSysCheckDirectoryExists(
-    PCSTR pszPath,
-    PBOOLEAN pbDirExists
-    );
-
-DWORD
-RSysCreateDirectory(
-    PCSTR pszPath,
-    mode_t dwFileMode
-    );
-
-DWORD
-RSysCopyFileWithPerms(
-    PCSTR pszSrcPath,
-    PCSTR pszDstPath,
-    mode_t dwPerms
-    );
-
-DWORD
-RSysGetOwnerAndPermissions(
-    PCSTR pszSrcPath,
-    uid_t * uid,
-    gid_t * gid,
-    mode_t * mode
-    );
-
-DWORD
-RSysCopyFileWithOriginalPerms(
-    PCSTR pszSrcPath,
-    PCSTR pszDstPath
-    );
-
-DWORD
-RSysBackupFile(
-    PCSTR pszPath
-    );
-
-DWORD
-RSysGetSymlinkTarget(
-   PCSTR pszPath,
-   PSTR* ppszTargetPath
-   );
-
-DWORD
-RSysCreateSymlink(
-   PCSTR pszOldPath,
-   PCSTR pszNewPath
-   );
-
-DWORD
-RSysGetMatchingFilePathsInFolder(
-    PCSTR pszDirPath,
-    PCSTR pszFileNameRegExp,
-    PSTR** pppszHostFilePaths,
-    PDWORD pdwNPaths
     );
 
 DWORD

@@ -67,6 +67,7 @@
 #include <eventlog.h>
 #include <lsa/lsa.h>
 #include <lwstr.h>
+#include <lwfile.h>
 
 #include "externs_p.h"
 #include "reader_p.h"

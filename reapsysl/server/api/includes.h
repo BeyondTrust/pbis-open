@@ -64,6 +64,5 @@
 
 #include "structs_p.h"
 #include "config_p.h"
-#include "state_p.h"
 #include "externs_p.h"
 

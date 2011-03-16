@@ -7,8 +7,7 @@ librsysserverapi_la_CPPFLAGS = \
 
 librsysserverapi_la_SOURCES = \
        config.c          \
-       globals.c         \
-       state.c
+       globals.c
 
 librsysserverapi_la_LIBADD = \
         @LWREG_LIBS@\
@@ -19,5 +18,4 @@ noinst_HEADERS = \
 	config_p.h     \
 	externs_p.h    \
 	includes.h     \
-	state_p.h      \
 	structs_p.h

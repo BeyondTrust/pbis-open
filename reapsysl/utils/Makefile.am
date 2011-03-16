@@ -4,8 +4,6 @@ lib_LTLIBRARIES=librsysutils.la
 librsysutils_la_SOURCES = \
 	rsys-cfg.c \
 	rsys-dlinkedlist.c \
-	rsys-futils.c \
-	rsys-mem.c \
 	rsys-sysfuncs.c
 
 noinst_HEADERS = \

@@ -1,8 +1,6 @@
 make()
 {
-    REAPSYSLD_SOURCES="globals.c    \
-	main-svcm.c \
-	sighandler.c"
+    REAPSYSLD_SOURCES="main-svcm.c"
 
     lw_service \
 	SERVICE="reapsysl" \

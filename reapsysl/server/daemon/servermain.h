@@ -52,7 +52,6 @@
 typedef struct _RSYS_SERVERINFO {
     /* MT safety */
     pthread_mutex_t lock;
-    BOOLEAN  bProcessShouldExit;
 } RSYS_SERVERINFO, *PRSYS_SERVERINFO;
 
 NTSTATUS
@@ -83,16 +82,6 @@ LWRSysSvcmStop(
 DWORD
 RSysSrvInitialize(
     VOID
-    );
-
-BOOLEAN
-RSysSrvShouldProcessExit(
-    VOID
-    );
-
-VOID
-RSysSrvSetProcessToExit(
-    BOOLEAN bExit
     );
 
 #endif /* __SERVERMAIN_H__ */

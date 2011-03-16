@@ -113,8 +113,6 @@ RSysSvcmStop(
 {
     RSYS_LOG_VERBOSE("Shutting down threads");
 
-    RSysSrvStopProcess();
-
     RSysSrvStopReaderThread();
 
     RSysSrvApiShutdown();
@@ -161,35 +159,4 @@ cleanup:
 error:
 
     goto cleanup;
-}
-
-BOOLEAN
-RSysSrvShouldProcessExit(
-    VOID
-    )
-{
-    BOOLEAN bExit = FALSE;
-    BOOLEAN bInLock = FALSE;
-
-    RSYS_LOCK_SERVERINFO(bInLock);
-    
-    bExit = gpRSysServerInfo->bProcessShouldExit;
-
-    RSYS_UNLOCK_SERVERINFO(bInLock);
-    
-    return bExit;
-}
-
-VOID
-RSysSrvSetProcessToExit(
-    BOOLEAN bExit
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    
-    RSYS_LOCK_SERVERINFO(bInLock);
-
-    gpRSysServerInfo->bProcessShouldExit = bExit;
-
-    RSYS_UNLOCK_SERVERINFO(bInLock);
 }

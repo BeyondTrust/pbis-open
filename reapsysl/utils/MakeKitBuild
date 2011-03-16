@@ -3,8 +3,6 @@ make()
     UTIL_SOURCES="\
 	rsys-cfg.c \
 	rsys-dlinkedlist.c \
-	rsys-futils.c \
-	rsys-mem.c \
 	rsys-sysfuncs.c"
 
     mk_group \

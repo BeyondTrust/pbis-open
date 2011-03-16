@@ -15,6 +15,4 @@ reapsysl_la_LIBADD = \
 reapsysl_la_LDFLAGS = -module -avoid-version
 
 reapsysl_la_SOURCES = \
-	globals.c    \
-	main-svcm.c  \
-	sighandler.c
+	main-svcm.c
