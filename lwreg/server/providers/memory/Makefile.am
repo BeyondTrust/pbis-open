@@ -1,4 +1,4 @@
-lib_LTLIBRARIES = libregserver_provider_memory.la
+noinst_LTLIBRARIES = libregserver_provider_memory.la
 
 PROVIDER_CPPFLAGS = @MEMORY_INCLUDES@
 PROVIDER_LIBS = @MEMORY_LIBS@
