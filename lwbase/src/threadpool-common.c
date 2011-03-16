@@ -75,10 +75,7 @@ static const int SignalBlacklist[] =
 
 /* Global thread pool to which tasks are usually delegated */
 static PLW_THREAD_POOL gpDelegatePool = NULL;
-/* Global work threads where work items are delegated in an emergency */
-static LW_WORK_THREADS gDelegateThreads = {0};
 static ULONG gpDelegatePoolRefCount = 0;
-static ULONG gpDelegateThreadsRefCount = 0;
 static pthread_mutex_t gpDelegateLock = PTHREAD_MUTEX_INITIALIZER;
 
 static LW_SIGNAL_MULTIPLEX gSignal =
@@ -171,57 +168,6 @@ ReleaseDelegatePool(
     {
         LwRtlFreeThreadPool(ppPool);
     }
-}
-
-static
-NTSTATUS
-AcquireDelegateThreads(
-    VOID
-    )
-{
-    NTSTATUS status = STATUS_SUCCESS;
-    LW_THREAD_POOL_ATTRIBUTES attrs =
-    {
-        .lWorkThreads = 1,
-        .ulWorkThreadStackSize = 0,
-        .ulWorkThreadTimeout = 0
-    };
-
-    pthread_mutex_lock(&gpDelegateLock);
-
-    if (gpDelegateThreadsRefCount == 0)
-    {
-        status = InitWorkThreads(&gDelegateThreads, &attrs, 1);
-        GOTO_ERROR_ON_STATUS(status);
-    }
-
-    gpDelegateThreadsRefCount++;
-
-cleanup:
-
-    pthread_mutex_unlock(&gpDelegateLock);
-
-    return status;
-
-error:
-
-    goto cleanup;
-}
-
-static
-VOID
-ReleaseDelegateThreads(
-    VOID
-    )
-{
-    pthread_mutex_lock(&gpDelegateLock);
-
-    if (--gpDelegateThreadsRefCount == 0)
-    {
-        DestroyWorkThreads(&gDelegateThreads);
-    }
-
-    pthread_mutex_unlock(&gpDelegateLock);
 }
 
 LW_NTSTATUS
@@ -364,11 +310,6 @@ InitWorkThreads(
             GOTO_ERROR_ON_STATUS(status);
         }
     }
-    else
-    {
-        status = AcquireDelegateThreads();
-        GOTO_ERROR_ON_STATUS(status);
-    }
         
 error:
 
@@ -414,11 +355,6 @@ DestroyWorkThreads(
     {
         pthread_cond_destroy(&pThreads->Event);
     }
-
-    if (pThreads->ulWorkThreadTimeout != 0)
-    {
-        ReleaseDelegateThreads();
-    }
 }
 
 static
@@ -431,30 +367,47 @@ WorkWait(
     struct timespec ts = {0};
     LONG64 llDeadline = 0;
     int err = 0;
-
-    if (pThread->pThreads->ulWorkThreadTimeout)
-    {
-        status = TimeNow(&llDeadline);
-        GOTO_ERROR_ON_STATUS(status);
-
-        llDeadline += (LONG64) 1000000000ll * pThread->pThreads->ulWorkThreadTimeout;
-        ts.tv_sec = llDeadline / 1000000000ll;
-        ts.tv_nsec = llDeadline % 1000000000ll;
-        err = pthread_cond_timedwait(&pThread->pThreads->Event, &pThread->pThreads->Lock, &ts);
-    }
-    else
-    {
-        err = pthread_cond_wait(&pThread->pThreads->Event, &pThread->pThreads->Lock);
-    }
+    BOOLEAN bLastThread = FALSE;
+    PLW_WORK_THREADS pThreads = pThread->pThreads;
     
-    switch(err)
+    while (pThreads->ulQueued == 0)
     {
-    case ETIMEDOUT:
-        status = STATUS_TIMEOUT;
-        GOTO_ERROR_ON_STATUS(status);
-    default:
-        status = LwErrnoToNtStatus(err);
-        GOTO_ERROR_ON_STATUS(status);
+        if (pThreads->bShutdown)
+        {
+            status = STATUS_CANCELLED;
+            GOTO_ERROR_ON_STATUS(status);
+        }
+
+        if (pThread->pThreads->ulWorkThreadTimeout && !bLastThread)
+        {
+            status = TimeNow(&llDeadline);
+            GOTO_ERROR_ON_STATUS(status);
+
+            llDeadline += (LONG64) 1000000000ll * pThread->pThreads->ulWorkThreadTimeout;
+            ts.tv_sec = llDeadline / 1000000000ll;
+            ts.tv_nsec = llDeadline % 1000000000ll;
+            err = pthread_cond_timedwait(&pThread->pThreads->Event, &pThread->pThreads->Lock, &ts);
+        }
+        else
+        {
+            err = pthread_cond_wait(&pThread->pThreads->Event, &pThread->pThreads->Lock);
+        }
+
+        bLastThread = pThreads->ulWorkItemCount && pThreads->ulStarted == 1;
+
+        switch(err)
+        {
+        case ETIMEDOUT:
+            if (!bLastThread)
+            {
+                status = STATUS_TIMEOUT;
+                GOTO_ERROR_ON_STATUS(status);
+            }
+            break;
+        default:
+            status = LwErrnoToNtStatus(err);
+            GOTO_ERROR_ON_STATUS(status);
+        }
     }
 
 error:
@@ -472,7 +425,6 @@ WorkLoop(
     PRING pRing = NULL;
     PLW_WORK_ITEM pItem = NULL;
     PLW_WORK_THREADS pThreads = pThread->pThreads;
-    PLW_WORK_THREADS pItemThreads = NULL;
 
     LOCK_THREADS(pThread->pThreads);
 
@@ -480,48 +432,19 @@ WorkLoop(
     {
         pThreads->ulAvailable++;
 
-        while (!pThreads->bShutdown && pThreads->ulQueued == 0)
-        {
-            status = WorkWait(pThread);
-            GOTO_ERROR_ON_STATUS(status);
-        }
-
-        if (pThreads->bShutdown)
-        {
-            break;
-        }
+        status = WorkWait(pThread);
+        GOTO_ERROR_ON_STATUS(status);
 
         RingDequeue(&pThreads->WorkItems, &pRing);
         pThreads->ulQueued--;
         pThreads->ulAvailable--;
-        pThreads->ulRunning++;
 
         UNLOCK_THREADS(pThreads);
 
         pItem = LW_STRUCT_FROM_FIELD(pRing, LW_WORK_ITEM, Ring);
-        pItemThreads = pItem->pThreads;
         pItem->pfnFunc(pItem, pItem->pContext);
-        
-        if (pItemThreads != pThreads)
-        {
-            /* Item was given to us by someone else, notify it */
-            LOCK_THREADS(pItemThreads);
-            pItemThreads->ulDelegated--;
-            if (pItemThreads->bWaiting && pItemThreads->ulDelegated == 0)
-            {
-                pthread_cond_broadcast(&pItemThreads->Event);
-            }
-            UNLOCK_THREADS(pItemThreads);
-        }
 
         LOCK_THREADS(pThreads);
-
-        pThreads->ulRunning--;
-
-        if (pItemThreads->bWaiting && pItemThreads->ulQueued == 0)
-        {
-            pthread_cond_broadcast(&pItemThreads->Event);
-        }
     }
 
 error:
@@ -618,6 +541,15 @@ CreateWorkItem(
     PLW_WORK_ITEM pItem = NULL;
     NTSTATUS status = STATUS_SUCCESS;
 
+    LOCK_THREADS(pThreads);
+
+    if (pThreads->ulStarted == 0)
+    {
+        /* Make sure at least one thread is running */
+        status = StartWorkThread(pThreads, &pThreads->pWorkThreads[0]);
+        GOTO_ERROR_ON_STATUS(status);
+    }
+
     status = LW_RTL_ALLOCATE_AUTO(&pItem);
     GOTO_ERROR_ON_STATUS(status);
 
@@ -626,7 +558,11 @@ CreateWorkItem(
     pItem->pfnFunc = pfnFunc;
     pItem->pContext = pContext;
 
+    pThreads->ulWorkItemCount++;
+
 error:
+
+    UNLOCK_THREADS(pThreads);
 
     *ppWorkItem = pItem;
 
@@ -638,6 +574,19 @@ FreeWorkItem(
     LW_IN LW_OUT PLW_WORK_ITEM* ppWorkItem
     )
 {
+    if (*ppWorkItem)
+    {
+        LOCK_THREADS((*ppWorkItem)->pThreads);
+        (*ppWorkItem)->pThreads->ulWorkItemCount--;
+        if ((*ppWorkItem)->pThreads->bWaiting ||
+            ((*ppWorkItem)->pThreads->ulWorkItemCount == 0 &&
+            (*ppWorkItem)->pThreads->ulStarted == 0))
+        {
+            pthread_cond_broadcast(&(*ppWorkItem)->pThreads->Event);
+        }
+        UNLOCK_THREADS((*ppWorkItem)->pThreads);
+    }
+
     RTL_FREE(ppWorkItem);
 }
 
@@ -657,36 +606,9 @@ ScheduleWorkItem(
 
     LOCK_THREADS(pThreads);
     
-    /* If there are not enough available threads
-       to handle the item we are about to queue,
-       and not all work threads are currently started,
-       start a thread now */
-    if (pThreads->ulAvailable < pThreads->ulQueued + 1 &&
-        pThreads->ulStarted < pThreads->ulWorkThreadCount)
-    {
-        for (i = 0; i < pThreads->ulWorkThreadCount; i++)
-        {
-            if (!pThreads->pWorkThreads[i].bStarted)
-            {
-                /* This might fail -- we'll handle that below */
-                if (StartWorkThread(pThreads, &pThreads->pWorkThreads[i]) != STATUS_SUCCESS)
-                {
-                    /* Pass the work item to the emergency work pool */
-                    ScheduleWorkItem(&gDelegateThreads, pItem, Flags);
-                    pThreads->ulDelegated++;
-                    goto error;
-                }
-                break;
-            }
-        }
-    }
-    /* Otherwise, if a thread is available, signal
-       one now so it picks up the item we are about to queue */
-    else if (pThreads->ulAvailable)
-    {
-        pthread_cond_signal(&pThreads->Event);
-    }
+    assert(pThreads->ulStarted > 0);
 
+    /* Enqueue work item */
     if (Flags & LW_SCHEDULE_HIGH_PRIORITY)
     {
         RingEnqueueFront(&pThreads->WorkItems, &pItem->Ring);
@@ -695,9 +617,37 @@ ScheduleWorkItem(
     {
         RingEnqueue(&pThreads->WorkItems, &pItem->Ring);
     }
+
     pThreads->ulQueued++;
 
-error:
+    /*
+     * If there are more pending work items than there
+     * are available threads, and not all threads are started,
+     * try to start another one to handle the additional load
+     */
+    if (pThreads->ulAvailable < pThreads->ulQueued &&
+        pThreads->ulStarted < pThreads->ulWorkThreadCount)
+    {
+        for (i = 0; i < pThreads->ulWorkThreadCount; i++)
+        {
+            if (!pThreads->pWorkThreads[i].bStarted)
+            {
+                if (StartWorkThread(pThreads, &pThreads->pWorkThreads[i]) != STATUS_SUCCESS)
+                {
+                    LW_RTL_LOG_WARNING("Could not start work item thread");
+                    /* Signal an existing thread instead */
+                    pthread_cond_signal(&pThreads->Event);
+                }
+                break;
+            }
+        }
+    }
+    else if (pThreads->ulAvailable)
+    {
+        /* Signal an existing thread */
+        pthread_cond_signal(&pThreads->Event);
+    }
+
 
     UNLOCK_THREADS(pThreads);
 }
@@ -711,7 +661,7 @@ WaitWorkItems(
 
     pThreads->bWaiting = TRUE;
 
-    while (pThreads->ulQueued || pThreads->ulDelegated || pThreads->ulRunning)
+    while (pThreads->ulWorkItemCount)
     {
         pthread_cond_wait(&pThreads->Event, &pThreads->Lock);
     }
