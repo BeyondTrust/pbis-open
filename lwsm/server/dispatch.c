@@ -821,6 +821,45 @@ error:
     goto cleanup;
 }
 
+static
+LWMsgStatus
+LwSmDispatchEnumFacilities(
+    LWMsgCall* pCall,
+    LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    LW_SERVICE_HANDLE hHandle = NULL;
+    PWSTR* ppFacilities = NULL;
+
+    if (pIn->data)
+    {
+        dwError = LwSmGetHandle(pCall, (LWMsgHandle*) pIn->data, &hHandle);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = LwSmTableGetEntryFacilityList(hHandle->pEntry, &ppFacilities);
+        BAIL_ON_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LwSmGetLogFacilityList(&ppFacilities);
+        BAIL_ON_ERROR(dwError);
+    }
+
+    pOut->tag = SM_IPC_ENUM_FACILITIES_RES;
+    pOut->data = ppFacilities;
+
+cleanup:
+
+    return LwSmMapLwError(dwError);
+
+error:
+
+    goto cleanup;
+}
+
 
 static
 LWMsgStatus
@@ -1027,6 +1066,7 @@ LWMsgDispatchSpec gDispatchSpec[] =
     LWMSG_DISPATCH_NONBLOCK(SM_IPC_WAIT_SERVICE_REQ, LwSmDispatchWaitService),
     LWMSG_DISPATCH_BLOCK(SM_IPC_SET_LOG_INFO_REQ, LwSmDispatchSetLogInfo),
     LWMSG_DISPATCH_BLOCK(SM_IPC_GET_LOG_STATE_REQ, LwSmDispatchGetLogState),
+    LWMSG_DISPATCH_BLOCK(SM_IPC_ENUM_FACILITIES_REQ, LwSmDispatchEnumFacilities),
     LWMSG_DISPATCH_BLOCK(SM_IPC_SET_LOG_LEVEL_REQ, LwSmDispatchSetLogLevel),
     LWMSG_DISPATCH_BLOCK(SM_IPC_REFRESH_REQ, LwSmDispatchRefresh),
     LWMSG_DISPATCH_NONBLOCK(SM_IPC_SHUTDOWN_REQ, LwSmDispatchShutdown),

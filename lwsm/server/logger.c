@@ -1099,3 +1099,47 @@ error:
 
     goto cleanup;
 }
+
+DWORD
+LwSmGetLogFacilityList(
+    PWSTR** pppFacilities
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bLocked = FALSE;
+    DWORD count = 0;
+    DWORD index = 0;
+    PWSTR* ppFacilities = NULL;
+    LW_HASHMAP_PAIR pair = {0};
+    LW_HASHMAP_ITER iter = LW_HASHMAP_ITER_INIT;
+
+    LOCK(bLocked, &gLogLock);
+
+    count = LwRtlHashMapGetCount(gpLogMap);
+
+    dwError = LwAllocateMemory(sizeof(*ppFacilities) * (count + 1), OUT_PPVOID(&ppFacilities));
+    BAIL_ON_ERROR(dwError);
+
+    while (LwRtlHashMapIterate(gpLogMap, &iter, &pair))
+    {
+        dwError = LwMbsToWc16s((PCSTR) pair.pKey, &ppFacilities[index++]);
+        BAIL_ON_ERROR(dwError);
+    }
+
+cleanup:
+
+    UNLOCK(bLocked, &gLogLock);
+
+    *pppFacilities = ppFacilities;
+
+    return dwError;
+
+error:
+
+    if (ppFacilities)
+    {
+        LwSmFreeStringList(ppFacilities);
+    }
+
+    goto cleanup;
+}

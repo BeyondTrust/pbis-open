@@ -657,6 +657,34 @@ LwSmFreeLogTarget(
     );
 
 /**
+ * @brief Enumerate logging facilities for a service
+ *
+ * Enumerates all logging facilities for a service that have a non-default
+ * configuration.
+ *
+ * @param[in] hHandle the service handle, or NULL to specify lwsmd itself
+ * @param[out] pppFacilities set to the list of facilities
+ * @retval ERROR_SUCCESS
+ * @retval ERROR_NOT_SUPPORTED the specified service does not support getting log state
+ */
+DWORD
+LwSmEnumerateServiceLogFacilities(
+    LW_SERVICE_HANDLE hHandle,
+    LW_PWSTR** pppFacilities
+    );
+
+/**
+ * @brief Free log facility list
+ *
+ * Frees a list of logging facilities returned by
+ * #LwSmEnumerateServiceLogFacilities().
+ */
+VOID
+LwSmFreeLogFacilityList(
+    LW_PWSTR* ppFacilities
+    );
+
+/**
  * @brief Get service info
  *
  * Gets the service info structore of the service represented by the given

@@ -731,6 +731,39 @@ error:
     return dwError;
 }
 
+DWORD
+LwSmTableGetEntryFacilityList(
+    PSM_TABLE_ENTRY pEntry,
+    PWSTR** pppFacilities
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bLocked = FALSE;
+
+    LOCK(bLocked, pEntry->pLock);
+
+    if (!pEntry->bValid)
+    {
+        dwError = LW_ERROR_INVALID_HANDLE;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (!pEntry->pVtbl->pfnGetFacilityList)
+    {
+        dwError = ERROR_NOT_SUPPORTED;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    dwError = pEntry->pVtbl->pfnGetFacilityList(&pEntry->object, pppFacilities);
+    BAIL_ON_ERROR(dwError);
+
+error:
+
+    UNLOCK(bLocked, pEntry->pLock);
+
+    return dwError;
+}
+
 static
 DWORD
 LwSmTablePollEntry(

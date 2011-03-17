@@ -60,6 +60,7 @@ typedef struct _LW_SERVICE_LOADER_VTBL
     DWORD (*pfnSetLogInfo)(PLW_SERVICE_OBJECT pObject, PCSTR pFacility, LW_SM_LOGGER_TYPE type, PCSTR pszTarget);
     DWORD (*pfnSetLogLevel)(PLW_SERVICE_OBJECT pObject, PCSTR pFacility, LW_SM_LOG_LEVEL level);
     DWORD (*pfnGetLogState)(PLW_SERVICE_OBJECT pObject, PCSTR pFacility, PLW_SM_LOGGER_TYPE pType, LW_PSTR* ppTarget, PLW_SM_LOG_LEVEL pLevel);
+    DWORD (*pfnGetFacilityList)(PLW_SERVICE_OBJECT pObject, PWSTR** pppFacilities);
 } LW_SERVICE_LOADER_VTBL, *PLW_SERVICE_LOADER_VTBL;
 
 typedef struct _SM_ENTRY_NOTIFY
@@ -334,6 +335,12 @@ LwSmTableGetEntryLogState(
     );
 
 DWORD
+LwSmTableGetEntryFacilityList(
+    PSM_TABLE_ENTRY pEntry,
+    PWSTR** pppFacilities
+    );
+
+DWORD
 LwSmTableGetEntryDependencyClosure(
     PSM_TABLE_ENTRY pEntry,
     PWSTR** pppwszServiceList
@@ -473,6 +480,11 @@ LwSmGetLoggerState(
     LW_SM_LOGGER_TYPE* pType,
     PSTR* ppszTargetName,
     PLW_SM_LOG_LEVEL pLevel
+    );
+
+DWORD
+LwSmGetLogFacilityList(
+    PWSTR** pppFacilities
     );
 
 PVOID

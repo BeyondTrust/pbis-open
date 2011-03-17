@@ -69,6 +69,8 @@ typedef enum _CONTAINER_TAG
     CONTAINER_REQ_SET_LOG_LEVEL,
     CONTAINER_REQ_GET_LOG_STATE,
     CONTAINER_RES_GET_LOG_STATE,
+    CONTAINER_REQ_GET_FACILITIES,
+    CONTAINER_RES_GET_FACILITIES,
     CONTAINER_REQ_REGISTER
 } CONTAINER_TAG, *PCONTAINER_TAG;
 
@@ -185,6 +187,16 @@ static LWMsgTypeSpec gLogTypeSpec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec gStringListSpec[] =
+{
+    LWMSG_POINTER_BEGIN,
+    LWMSG_PWSTR,
+    LWMSG_POINTER_END,
+    LWMSG_ATTR_ZERO_TERMINATED,
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_TYPE_END
+};
+
 static LWMsgTypeSpec gContainerStatusSpec[] =
 {
     LWMSG_STRUCT_BEGIN(CONTAINER_STATUS_RES),
@@ -287,6 +299,8 @@ static LWMsgProtocolSpec gContainerProtocol[] =
     LWMSG_MESSAGE(CONTAINER_REQ_SET_LOG_LEVEL, gSetLogLevelSpec),
     LWMSG_MESSAGE(CONTAINER_REQ_GET_LOG_STATE, gGetLogStateReqSpec),
     LWMSG_MESSAGE(CONTAINER_RES_GET_LOG_STATE, gGetLogStateResSpec),
+    LWMSG_MESSAGE(CONTAINER_REQ_GET_FACILITIES, NULL),
+    LWMSG_MESSAGE(CONTAINER_RES_GET_FACILITIES, gStringListSpec),
     LWMSG_MESSAGE(CONTAINER_REQ_REGISTER, gRegisterReqSpec),
     LWMSG_PROTOCOL_END,
 };
@@ -1382,6 +1396,71 @@ error:
 
 static
 DWORD
+ContainerGetFacilityList(
+    PLW_SERVICE_OBJECT pObject,
+    PWSTR** pppFacilities
+    )
+{
+    DWORD dwError = 0;
+    PCONTAINER_INSTANCE pInstance = LwSmGetServiceObjectData(pObject);
+    LWMsgCall* pCall = NULL;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+
+    CONTAINER_LOCK();
+
+    if (pInstance->State != LW_SERVICE_STATE_RUNNING)
+    {
+        dwError = ERROR_NOT_READY;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    in.tag = CONTAINER_REQ_GET_FACILITIES;
+    in.data = NULL;
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_session_acquire_call(pInstance->pContainer->pSession, &pCall));
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_ERROR(dwError);
+
+    switch (out.tag)
+    {
+    default:
+        dwError = ERROR_INTERNAL_ERROR;
+        BAIL_ON_ERROR(dwError);
+    case CONTAINER_RES_STATUS:
+        dwError = ((PCONTAINER_STATUS_RES) pInstance->Out.data)->Error;
+        if (!dwError)
+        {
+            dwError = ERROR_INTERNAL_ERROR;
+        }
+        BAIL_ON_ERROR(dwError);
+    case CONTAINER_RES_GET_FACILITIES:
+        *pppFacilities = out.data;
+        out.data = NULL;
+        break;
+    }
+
+cleanup:
+
+    CONTAINER_UNLOCK();
+
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
 ContainerConstruct(
     PLW_SERVICE_OBJECT pObject,
     PCLW_SERVICE_INFO pInfo,
@@ -1438,7 +1517,8 @@ LW_SERVICE_LOADER_VTBL gContainerVtbl =
     .pfnDestruct = ContainerDestruct,
     .pfnSetLogInfo = ContainerSetLogInfo,
     .pfnSetLogLevel = ContainerSetLogLevel,
-    .pfnGetLogState = ContainerGetLogState
+    .pfnGetLogState = ContainerGetLogState,
+    .pfnGetFacilityList = ContainerGetFacilityList
 };
 
 static
@@ -1822,6 +1902,29 @@ error:
 }
 
 static
+LWMsgStatus
+ContainerSrvGetFacilityList(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    PWSTR* ppFacilities = NULL;
+
+    dwError = LwSmGetLogFacilityList(&ppFacilities);
+    BAIL_ON_ERROR(dwError);
+
+    pOut->tag = CONTAINER_RES_GET_FACILITIES;
+    pOut->data = ppFacilities;
+
+error:
+
+    return dwError ? LWMSG_STATUS_ERROR : LWMSG_STATUS_SUCCESS;
+}
+
+static
 VOID
 ContainerSrvRegisterCancel(
     LWMsgCall* pCall,
@@ -1949,6 +2052,7 @@ LWMsgDispatchSpec gContainerDispatch[] =
     LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_SET_LOG_TARGET, ContainerSrvSetLogTarget),
     LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_SET_LOG_LEVEL, ContainerSrvSetLogLevel),
     LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_GET_LOG_STATE, ContainerSrvGetLogState),
+    LWMSG_DISPATCH_NONBLOCK(CONTAINER_REQ_GET_FACILITIES, ContainerSrvGetFacilityList),
     LWMSG_DISPATCH_END
 };
 

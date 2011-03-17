@@ -1572,43 +1572,15 @@ error:
 }
 
 static
-DWORD
-LwSmGetLog(
-    int argc,
-    char** pArgv
+VOID
+PrintLogInfo(
+    PCSTR pFacility,
+    LW_SM_LOGGER_TYPE type,
+    PCSTR pTarget,
+    LW_SM_LOG_LEVEL level
     )
 {
-    DWORD dwError = 0;
-    LW_SM_LOGGER_TYPE type = 0;
-    LW_SM_LOG_LEVEL level = 0;
-    PSTR pszTarget = NULL;
-    PSTR pFacility = NULL;
-    PCSTR pszLoggerName = NULL;
-    LW_SERVICE_HANDLE hHandle = NULL;
-    PWSTR pServiceName = NULL;
-
-    if (argc < 3)
-    {
-        dwError = LW_ERROR_INVALID_PARAMETER;
-        BAIL_ON_ERROR(dwError);
-    }
-
-    if (strcmp(pArgv[1], "-"))
-    {
-        dwError = LwMbsToWc16s(pArgv[1], &pServiceName);
-        BAIL_ON_ERROR(dwError);
-
-        dwError = LwSmAcquireServiceHandle(pServiceName, &hHandle);
-        BAIL_ON_ERROR(dwError);
-    }
-
-    if (strcmp(pArgv[2], "-"))
-    {
-        pFacility = pArgv[2];
-    }
-
-    dwError = LwSmGetServiceLogState(hHandle, pFacility, &type, &pszTarget, &level);
-    BAIL_ON_ERROR(dwError);
+    PCSTR pszLoggerName;
 
     switch (type)
     {
@@ -1626,20 +1598,107 @@ LwSmGetLog(
         break;
     }
 
-    if (pszTarget)
+    if (pTarget)
     {
-        printf("%s: %s at %s\n", pszLoggerName, pszTarget, LwSmLogLevelToString(level));
+        printf("%s: %s %s at %s\n", pFacility, pszLoggerName, pTarget, LwSmLogLevelToString(level));
     }
     else
     {
-        printf("%s at %s\n", pszLoggerName, LwSmLogLevelToString(level));
+        printf("%s: %s at %s\n", pFacility, pszLoggerName, LwSmLogLevelToString(level));
+    }
+}
+
+static
+DWORD
+LwSmGetLog(
+    int argc,
+    char** pArgv
+    )
+{
+    DWORD dwError = 0;
+    LW_SM_LOGGER_TYPE type = 0;
+    LW_SM_LOG_LEVEL level = 0;
+    PSTR pszTarget = NULL;
+    PSTR pFacility = NULL;
+    LW_SERVICE_HANDLE hHandle = NULL;
+    PWSTR pServiceName = NULL;
+    PWSTR* ppFacilities = NULL;
+    DWORD index = 0;
+
+    if (argc < 2)
+    {
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (strcmp(pArgv[1], "-"))
+    {
+        dwError = LwMbsToWc16s(pArgv[1], &pServiceName);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = LwSmAcquireServiceHandle(pServiceName, &hHandle);
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (argc == 2)
+    {
+        dwError = LwSmGetServiceLogState(hHandle, NULL, &type, &pszTarget, &level);
+        BAIL_ON_ERROR(dwError);
+
+        PrintLogInfo("<default>", type, pszTarget, level);
+
+        if (pszTarget)
+        {
+            LwSmFreeLogTarget(pszTarget);
+            pszTarget = NULL;
+        }
+
+        dwError = LwSmEnumerateServiceLogFacilities(hHandle, &ppFacilities);
+        BAIL_ON_ERROR(dwError);
+
+        for (index = 0; ppFacilities[index]; index++)
+        {
+            dwError = LwWc16sToMbs(ppFacilities[index], &pFacility);
+            BAIL_ON_ERROR(dwError);
+
+            dwError = LwSmGetServiceLogState(hHandle, pFacility, &type, &pszTarget, &level);
+            BAIL_ON_ERROR(dwError);
+
+            PrintLogInfo(pFacility, type, pszTarget, level);
+
+            if (pszTarget)
+            {
+                LwSmFreeLogTarget(pszTarget);
+                pszTarget = NULL;
+            }
+        }
+    }
+    else if (argc == 3)
+    {
+        if (strcmp(pArgv[2], "-"))
+        {
+            dwError = LwAllocateString(pArgv[2], &pFacility);
+            BAIL_ON_ERROR(dwError);
+        }
+
+        dwError = LwSmGetServiceLogState(hHandle, pFacility, &type, &pszTarget, &level);
+        BAIL_ON_ERROR(dwError);
+
+        PrintLogInfo(pFacility, type, pszTarget, level);
     }
 
 error:
 
+    LW_SAFE_FREE_MEMORY(pFacility);
+
     if (pszTarget)
     {
         LwSmFreeLogTarget(pszTarget);
+    }
+
+    if (ppFacilities)
+    {
+        LwSmFreeLogFacilityList(ppFacilities);
     }
 
     return dwError;
@@ -1785,7 +1844,9 @@ LwSmUsage(
            "    proxy <service>            Act as a proxy process for a service\n"
            "    info <service>             Get information about a service\n"
            "    status <service>           Get the status of a service\n"
-           "    set-log-target <service> <facility> <type> <target>\n"
+           "    get-log <service> [ <facility> ]\n"
+           "                               List logging state given service and optional facility\n"
+           "    set-log-target <service> <facility> <type> [ <target> ]\n"
            "                               Set log target for a given service and facility\n"
            "    set-log-level <service> <facility> <level>\n"
            "                               Set log level for a given service and facility\n"
@@ -1886,7 +1947,7 @@ main(
             dwError = LwSmSetLog(argc-i, pArgv+i);
             goto error;
         }
-        else if (!strcmp(pArgv[i], "get-log-state"))
+        else if (!strcmp(pArgv[i], "get-log"))
         {
             dwError = LwSmGetLog(argc-i, pArgv+i);
             goto error;

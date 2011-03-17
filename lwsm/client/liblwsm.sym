@@ -16,6 +16,8 @@ LwSmQueryServiceReverseDependencyClosure
 LwSmSetServiceLogTarget
 LwSmGetServiceLogState
 LwSmSetServiceLogLevel
+LwSmEnumerateServiceLogFacilities
+LwSmFreeLogFacilityList
 LwSmRefresh
 LwSmShutdown
 LwSmFreeLogTarget
