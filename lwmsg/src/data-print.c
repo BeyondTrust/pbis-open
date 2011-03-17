@@ -233,26 +233,25 @@ lwmsg_data_print_enum(
     {
         if (!var.info.kind_variant.is_mask && var.tag == res)
         {
-            if (var.meta.type_name)
-            {
-                print(info, "%s", var.meta.type_name);
-            }
-            else
-            {
-                print(info,
-                      iter->info.kind_integer.sign == LWMSG_UNSIGNED ? "%llu" : "%lli",
-                      (unsigned long long) res);
-            }
-
-            if (mask)
-            {
-                print(info, " | ");
-            }
+            break;
         }
+    }
+
+    if (lwmsg_type_valid(&var) && var.meta.type_name)
+    {
+        print(info, "%s", var.meta.type_name);
+    }
+    else
+    {
+        print(info,
+            iter->info.kind_integer.sign == LWMSG_UNSIGNED ? "%llu" : "%lli",
+                (unsigned long long) res);
     }
 
     if (mask)
     {
+        print(info, " | ");
+
         for (lwmsg_type_enter(iter, &var);
              lwmsg_type_valid(&var);
              lwmsg_type_next(&var))
@@ -278,10 +277,6 @@ lwmsg_data_print_enum(
                 }
             }
         }
-    }
-    else if (!res)
-    {
-        print(info, "0");
     }
 
 error:
