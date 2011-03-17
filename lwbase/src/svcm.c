@@ -363,7 +363,10 @@ RefreshWorkItem(
     NTSTATUS status = STATUS_SUCCESS;
     PSVCM_COMMAND_STATE pState = pContext;
 
-    status = pState->pInstance->pTable->Refresh(pState->pInstance);
+    if (pState->pInstance->pTable->Refresh)
+    {
+        status = pState->pInstance->pTable->Refresh(pState->pInstance);
+    }
 
     if (pState->Notify)
     {
