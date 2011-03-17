@@ -478,7 +478,10 @@ ProcessExportedKeyInfo(
             regItem.type = REG_SZ;
             regItem.valueName = pszValueName;
             regItem.valueType = dataType;
-            regItem.regAttr = *pValueAttributes;
+            if (pValueAttributes)
+            {
+                regItem.regAttr = *pValueAttributes;
+            }
             /* Might have to do something with MULTI_SZ */
             if (dataType == REG_SZ)
             {
