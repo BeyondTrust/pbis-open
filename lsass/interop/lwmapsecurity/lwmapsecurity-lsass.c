@@ -1044,7 +1044,7 @@ LsaMapSecurityGetAccessTokenCreateInformationFromObjectInfo(
 
     // User SID
     status = RtlCStringDuplicate(
-                &ppszPrivilegesSidList[i],
+                &ppszPrivilegesSidList[dwGroupCount + extraGidCount],
                 pszSid);
     GOTO_CLEANUP_ON_STATUS(status);
 
