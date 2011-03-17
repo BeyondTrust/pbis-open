@@ -1690,16 +1690,15 @@ ContainerSrvRefresh(
     )
 {
     DWORD dwError = 0;
-    LWMsgHandle* pHandle = pIn->data;
     LWMsgSession* pSession = lwmsg_call_get_session(pCall);
-    PLW_SVCM_INSTANCE pInstance = NULL;
+    PCONTAINER_HANDLE pHandle = NULL;
 
-    dwError = MAP_LWMSG_STATUS(lwmsg_session_get_handle_data(pSession, pHandle, OUT_PPVOID(&pInstance)));
+    dwError = MAP_LWMSG_STATUS(lwmsg_session_get_handle_data(pSession, (LWMsgHandle*) pIn->data, OUT_PPVOID(&pHandle)));
     BAIL_ON_ERROR(dwError);
 
     lwmsg_call_set_user_data(pCall, pOut);
 
-    dwError = LwNtStatusToWin32Error(LwRtlSvcmRefresh(pInstance, ContainerRefreshNotify, pCall));
+    dwError = LwNtStatusToWin32Error(LwRtlSvcmRefresh(pHandle->pInstance, ContainerRefreshNotify, pCall));
     BAIL_ON_ERROR(dwError);
 
     lwmsg_call_pend(pCall, NULL, NULL);
