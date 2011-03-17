@@ -527,7 +527,7 @@ LwRtlHashMapInsert(
 LW_NTSTATUS
 LwRtlHashMapRemove(
     LW_IN LW_OUT PLW_HASHMAP pMap,
-    LW_IN LW_PVOID pKey,
+    LW_IN LW_PCVOID pKey,
     LW_OUT LW_OPTIONAL PLW_HASHMAP_PAIR pPair
     );
 

@@ -534,7 +534,7 @@ cleanup:
 LW_NTSTATUS
 LwRtlHashMapRemove(
     LW_IN LW_OUT PLW_HASHMAP pMap,
-    LW_IN PVOID pKey,
+    LW_IN PCVOID pKey,
     LW_OUT LW_OPTIONAL PLW_HASHMAP_PAIR pPair
     )
 {
