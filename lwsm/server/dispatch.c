@@ -679,6 +679,16 @@ LwSmDispatchSetLogInfo(
         case LW_SM_LOGGER_SYSLOG:
             dwError = LwSmSetLoggerToSyslog(pReq->pFacility);
             break;
+        case LW_SM_LOGGER_DEFAULT:
+            if (!pReq->pFacility)
+            {
+                dwError = ERROR_INVALID_PARAMETER;
+            }
+            else
+            {
+                dwError = LwSmSetLoggerToDefault(pReq->pFacility);
+            }
+            break;
         }
     }
     else

@@ -123,6 +123,8 @@ LwSmLogLevelToString(
 {
     switch (level)
     {
+    case LW_SM_LOG_LEVEL_DEFAULT:
+        return "default";
     case LW_SM_LOG_LEVEL_ALWAYS:
         return "ALWAYS";
     case LW_SM_LOG_LEVEL_ERROR:
@@ -151,7 +153,11 @@ LwSmLogLevelNameToLogLevel(
 {
     DWORD dwError = 0;
 
-    if (!strcasecmp(pszName, "always"))
+    if (!strcmp(pszName, "-"))
+    {
+        *pLevel = LW_SM_LOG_LEVEL_DEFAULT;
+    }
+    else if (!strcasecmp(pszName, "always"))
     {
         *pLevel = LW_SM_LOG_LEVEL_ALWAYS;
     }
@@ -1528,7 +1534,11 @@ LwSmSetLog(
         pFacility = pArgv[2];
     }
 
-    if (!strcasecmp(pArgv[3], "none"))
+    if (!strcasecmp(pArgv[3], "-"))
+    {
+        type = LW_SM_LOGGER_DEFAULT;
+    }
+    else if (!strcasecmp(pArgv[3], "none"))
     {
         type = LW_SM_LOGGER_NONE;
     }
@@ -1610,6 +1620,9 @@ LwSmGetLog(
         break;
     case LW_SM_LOGGER_SYSLOG:
         pszLoggerName = "syslog";
+        break;
+    case LW_SM_LOGGER_DEFAULT:
+        pszLoggerName = "default";
         break;
     }
 

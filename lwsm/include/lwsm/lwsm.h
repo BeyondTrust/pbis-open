@@ -289,6 +289,11 @@ typedef struct _LW_SERVICE_STATUS
 typedef enum _LW_SM_LOG_LEVEL
 {
     /**
+     * @brief Indicates the default log level
+     * @hideinitializer
+     */
+    LW_SM_LOG_LEVEL_DEFAULT = 0,
+    /**
      * @brief Message that should always be logged
      * @hideinitializer
      */
@@ -336,6 +341,11 @@ typedef enum _LW_SM_LOG_LEVEL
  */
 typedef enum _LW_SM_LOGGER_TYPE
 {
+    /**
+     * @brief Log to the default target
+     * @hideinitializer
+     */
+    LW_SM_LOGGER_DEFAULT,
     /**
      * @brief Do not log
      * @hideinitializer

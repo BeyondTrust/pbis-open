@@ -401,11 +401,6 @@ LwSmLoggingShutdown(
     VOID
     );
 
-LW_SM_LOG_LEVEL
-LwSmGetMaxLogLevel(
-    PCSTR pFacility
-    );
-
 DWORD
 LwSmLogMessage(
     LW_SM_LOG_LEVEL level,
@@ -458,6 +453,11 @@ LwSmSetLoggerToPath(
 
 DWORD
 LwSmSetLoggerToSyslog(
+    PCSTR pFacility
+    );
+
+DWORD
+LwSmSetLoggerToDefault(
     PCSTR pFacility
     );
 

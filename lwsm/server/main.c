@@ -729,7 +729,7 @@ LwSmLogIpc (
         break;
     }
 
-    if (LwSmGetMaxLogLevel("lwsm-ipc") >= smLevel)
+    if (LwRtlLogGetLevel() >= smLevel)
     {
         if (pszMessage)
         {

@@ -45,6 +45,7 @@ typedef struct _LOGINFO
     LW_SM_LOG_LEVEL MaxLevel;
 } LOGINFO, *PLOGINFO;
 
+static SM_LOGGER gDefaultLogger = {.type = LW_SM_LOGGER_DEFAULT};
 static pthread_mutex_t gLogLock = PTHREAD_MUTEX_INITIALIZER;
 static LOGINFO gLogInfo =
 {
@@ -115,7 +116,7 @@ LwSmLoggingShutdown(
 
 static
 DWORD
-LwSmFindLogInfo(
+LwSmFindOrCreateLogInfo(
     PCSTR pFacility,
     PLOGINFO* ppInfo
     )
@@ -133,7 +134,8 @@ LwSmFindLogInfo(
         dwError = LwAllocateMemory(sizeof(*pInfo), OUT_PPVOID(&pInfo));
         BAIL_ON_ERROR(dwError);
 
-        pInfo->MaxLevel = gLogInfo.MaxLevel;
+        pInfo->pLogger = &gDefaultLogger;
+        pInfo->MaxLevel = LW_SM_LOG_LEVEL_DEFAULT;
 
         dwError = LwAllocateString(pFacility, &pDup);
         BAIL_ON_ERROR(dwError);
@@ -155,6 +157,31 @@ error:
 
     goto cleanup;
 }
+
+static
+VOID
+LwSmResolveLogInfo(
+    PCSTR pFacility,
+    PLW_SM_LOG_LEVEL pMaxLevel,
+    PLOGINFO* ppInfo
+    )
+{
+    PLOGINFO pInfo = NULL;
+    LW_SM_LOG_LEVEL maxLevel = 0;
+
+    if (!pFacility || LwRtlHashMapFindKey(gpLogMap, OUT_PPVOID(&pInfo), pFacility) != ERROR_SUCCESS)
+    {
+        pInfo = &gLogInfo;
+    }
+
+    /* Resolve defaults */
+    maxLevel = pInfo->MaxLevel == LW_SM_LOG_LEVEL_DEFAULT ? gLogInfo.MaxLevel : pInfo->MaxLevel;
+    pInfo = pInfo->pLogger == &gDefaultLogger ? &gLogInfo : pInfo;
+
+    *pMaxLevel = maxLevel;
+    *ppInfo = pInfo;
+}
+
 
 static
 VOID
@@ -199,6 +226,8 @@ LwSmLogLevelToString(
 {
     switch (level)
     {
+    case LW_SM_LOG_LEVEL_DEFAULT:
+        return "default";
     case LW_SM_LOG_LEVEL_ALWAYS:
         return "ALWAYS";
     case LW_SM_LOG_LEVEL_ERROR:
@@ -295,18 +324,16 @@ LwSmLogMessageInLock(
     )
 {
     DWORD dwError = 0;
+    LW_SM_LOG_LEVEL maxLevel = 0;
     PLOGINFO pInfo = NULL;
 
-    if (LwRtlHashMapFindKey(gpLogMap, OUT_PPVOID(&pInfo), pszFacility) != ERROR_SUCCESS)
-    {
-        pInfo = &gLogInfo;
-    }
+    LwSmResolveLogInfo(pszFacility, &maxLevel, &pInfo);
 
-    if (pInfo->pLogger && level <= pInfo->MaxLevel)
+    if (pInfo->pLogger && level <= maxLevel)
     {
         dwError = pInfo->pLogger->pfnLog(
             level,
-            pInfo->MaxLevel,
+            maxLevel,
             pszFacility,
             pszFunctionName,
             pszSourceFile,
@@ -370,10 +397,11 @@ LwSmSetLogger(
     DWORD dwError = 0;
     BOOLEAN bLocked = FALSE;
     PLOGINFO pInfo = NULL;
+    LW_HASHMAP_PAIR pair = {0};
 
     LOCK(bLocked, &gLogLock);
 
-    dwError = LwSmFindLogInfo(pFacility, &pInfo);
+    dwError = LwSmFindOrCreateLogInfo(pFacility, &pInfo);
     BAIL_ON_ERROR(dwError);
 
     if (pInfo->pLogger)
@@ -398,12 +426,25 @@ LwSmSetLogger(
                 __LINE__,
                 "Logging stopped");
         }
-        pInfo->pLogger->pfnClose(pInfo->pLoggerData);
+
+        if (pInfo->pLogger->pfnClose)
+        {
+            pInfo->pLogger->pfnClose(pInfo->pLoggerData);
+        }
+
         pInfo->pLogger = NULL;
         pInfo->pLoggerData = NULL;
     }
 
-    if (pLogger)
+    if (pLogger == &gDefaultLogger)
+    {
+        if (pInfo->MaxLevel == LW_SM_LOG_LEVEL_DEFAULT)
+        {
+            LwRtlHashMapRemove(gpLogMap, pFacility, &pair);
+            LogInfoClear(&pair, NULL);
+        }
+    }
+    else if (pLogger)
     {
         dwError = pLogger->pfnOpen(pData);
         BAIL_ON_ERROR(dwError);
@@ -526,10 +567,17 @@ LwSmSetMaxLogLevel(
 
     LOCK(bLocked, &gLogLock);
 
-    dwError = LwSmFindLogInfo(pFacility, &pInfo);
+    dwError = LwSmFindOrCreateLogInfo(pFacility, &pInfo);
     BAIL_ON_ERROR(dwError);
 
     pInfo->MaxLevel = level;
+
+    if (pInfo->MaxLevel == LW_SM_LOG_LEVEL_DEFAULT &&
+        pInfo->pLogger == &gDefaultLogger)
+    {
+        LwRtlHashMapRemove(gpLogMap, pFacility, &pair);
+        LogInfoClear(&pair, NULL);
+    }
 
     maxLevel = gLogInfo.MaxLevel;
 
@@ -560,31 +608,6 @@ error:
     UNLOCK(bLocked, &gLogLock);
 
     return dwError;
-}
-
-LW_SM_LOG_LEVEL
-LwSmGetMaxLogLevel(
-    PCSTR pFacility
-    )
-{
-    BOOLEAN bLocked = FALSE;
-    LW_SM_LOG_LEVEL level;
-    PLOGINFO pInfo = NULL;
-
-    LOCK(bLocked, &gLogLock);
-
-    if (LwRtlHashMapFindKey(gpLogMap, OUT_PPVOID(&pInfo), pFacility) == STATUS_SUCCESS)
-    {
-        level = pInfo->MaxLevel;
-    }
-    else
-    {
-        level = gLogInfo.MaxLevel;
-    }
-
-    UNLOCK(bLocked, &gLogLock);
-
-    return level;
 }
 
 typedef struct _SM_FILE_LOG_CONTEXT
@@ -659,6 +682,9 @@ LwSmLogFileLog (
 
     switch (maxLevel)
     {
+    case LW_SM_LOG_LEVEL_DEFAULT:
+        assert(FALSE);
+        break;
     case LW_SM_LOG_LEVEL_ALWAYS:
     case LW_SM_LOG_LEVEL_ERROR:
     case LW_SM_LOG_LEVEL_WARNING:
@@ -841,6 +867,9 @@ LwSmSyslogLog(
 
     switch (maxLevel)
     {
+    case LW_SM_LOG_LEVEL_DEFAULT:
+        assert(FALSE);
+        break;
     case LW_SM_LOG_LEVEL_ALWAYS:
     case LW_SM_LOG_LEVEL_ERROR:
     case LW_SM_LOG_LEVEL_WARNING:
@@ -1002,6 +1031,14 @@ LwSmSetLoggerToSyslog(
 }
 
 DWORD
+LwSmSetLoggerToDefault(
+    PCSTR pFacility
+    )
+{
+    return LwSmSetLogger(pFacility, &gDefaultLogger, NULL);
+}
+
+DWORD
 LwSmGetLoggerState(
     PCSTR pFacility,
     LW_SM_LOGGER_TYPE* pType,
@@ -1015,10 +1052,27 @@ LwSmGetLoggerState(
 
     LOCK(bLocked, &gLogLock);
 
-    dwError = LwSmFindLogInfo(pFacility, &pInfo);
-    BAIL_ON_ERROR(dwError);
-
-    if (!pInfo->pLogger)
+    if (!pFacility)
+    {
+        *pType = gLogInfo.pLogger ? gLogInfo.pLogger->type : LW_SM_LOGGER_NONE;
+        if (gLogInfo.pLogger && gLogInfo.pLogger->pfnGetTargetName)
+        {
+            dwError = gLogInfo.pLogger->pfnGetTargetName(ppszTargetName, gLogInfo.pLoggerData);
+            BAIL_ON_ERROR(dwError);
+        }
+        else
+        {
+            *ppszTargetName = NULL;
+        }
+        *pLevel = gLogInfo.MaxLevel;
+    }
+    else if (LwRtlHashMapFindKey(gpLogMap, OUT_PPVOID(&pInfo), pFacility) != ERROR_SUCCESS)
+    {
+        *pType = LW_SM_LOGGER_DEFAULT;
+        *ppszTargetName = NULL;
+        *pLevel = LW_SM_LOG_LEVEL_DEFAULT;
+    }
+    else if (!pInfo->pLogger)
     {
         *pType = LW_SM_LOGGER_NONE;
         *ppszTargetName = NULL;
@@ -1027,8 +1081,11 @@ LwSmGetLoggerState(
     else
     {
         *pType = pInfo->pLogger->type;
-        dwError = pInfo->pLogger->pfnGetTargetName(ppszTargetName, pInfo->pLoggerData);
-        BAIL_ON_ERROR(dwError);
+        if (pInfo->pLogger->pfnGetTargetName)
+        {
+            dwError = pInfo->pLogger->pfnGetTargetName(ppszTargetName, pInfo->pLoggerData);
+            BAIL_ON_ERROR(dwError);
+        }
         *pLevel = pInfo->MaxLevel;
     }
 
