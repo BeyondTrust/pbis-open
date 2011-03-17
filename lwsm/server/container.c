@@ -1124,11 +1124,7 @@ ContainerRefresh(
         dwError = ERROR_INTERNAL_ERROR;
         BAIL_ON_ERROR(dwError);
     case CONTAINER_RES_STATUS:
-        dwError = ((PCONTAINER_STATUS_RES) pInstance->Out.data)->Error;
-        if (!dwError)
-        {
-            dwError = ERROR_INTERNAL_ERROR;
-        }
+        dwError = ((PCONTAINER_STATUS_RES) out.data)->Error;
         BAIL_ON_ERROR(dwError);
     }
 
