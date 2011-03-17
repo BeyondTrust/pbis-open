@@ -210,6 +210,12 @@ typedef struct _LSA_DM_LDAP_RECONNECT_CONTEXT
 } LSA_DM_LDAP_RECONNECT_CONTEXT, *PLSA_DM_LDAP_RECONNECT_CONTEXT;
 
 static
+VOID
+LsaDmpResetTrusts(
+    IN LSA_DM_STATE_HANDLE Handle
+    );
+
+static
 DWORD
 LsaDmpLdapReconnectCallback(
     IN PCSTR pszDnsDomainOrForestName,
@@ -548,6 +554,21 @@ LsaDmCleanup(
     }
 }
 
+VOID
+LsaDmResetTrusts(
+    IN LSA_DM_STATE_HANDLE hDmState
+    )
+{
+    if (hDmState)
+    {
+        LsaDmpAcquireMutex(hDmState->pMutex);
+
+        LsaDmpResetTrusts(hDmState);
+
+        LsaDmpReleaseMutex(hDmState->pMutex);
+    }
+}
+
 static
 VOID
 LsaDmpForEachDomainDestroy(
@@ -557,6 +578,33 @@ LsaDmpForEachDomainDestroy(
 {
     PLSA_DM_DOMAIN_STATE pDomain = (PLSA_DM_DOMAIN_STATE)pData;
     LsaDmpDomainDestroy(pDomain);
+}
+
+static
+VOID
+LsaDmpResetTrusts(
+    IN LSA_DM_STATE_HANDLE Handle
+    )
+{
+    if (Handle->DomainList)
+    {
+        LsaDLinkedListForEach(Handle->DomainList, LsaDmpForEachDomainDestroy, NULL);
+        LsaDLinkedListFree(Handle->DomainList);
+        Handle->DomainList = NULL;
+        Handle->pPrimaryDomain = NULL;
+    }
+    while (!LsaListIsEmpty(&Handle->UnknownDomainSidList))
+    {
+        PLSA_LIST_LINKS pLinks = LsaListRemoveHead(&Handle->UnknownDomainSidList);
+        PLSA_DM_UNKNOWN_DOMAIN_ENTRY pEntry = LW_STRUCT_FROM_FIELD(pLinks, LSA_DM_UNKNOWN_DOMAIN_ENTRY, Links);
+        LsaDmpFreeUnknownDomainEntry(pEntry, TRUE);
+    }
+    while (!LsaListIsEmpty(&Handle->UnknownDomainNameList))
+    {
+        PLSA_LIST_LINKS pLinks = LsaListRemoveHead(&Handle->UnknownDomainNameList);
+        PLSA_DM_UNKNOWN_DOMAIN_ENTRY pEntry = LW_STRUCT_FROM_FIELD(pLinks, LSA_DM_UNKNOWN_DOMAIN_ENTRY, Links);
+        LsaDmpFreeUnknownDomainEntry(pEntry, FALSE);
+    }
 }
 
 VOID
@@ -588,23 +636,7 @@ LsaDmpStateDestroy(
         LsaDmpDestroyCond(&Handle->OnlineDetectionThread.pCondition);
         LsaDmpDestroyMutex(&Handle->OnlineDetectionThread.pMutex);
         LsaDmpDestroyMutex(&Handle->pMutex);
-        if (Handle->DomainList)
-        {
-            LsaDLinkedListForEach(Handle->DomainList, LsaDmpForEachDomainDestroy, NULL);
-            LsaDLinkedListFree(Handle->DomainList);
-        }
-        while (!LsaListIsEmpty(&Handle->UnknownDomainSidList))
-        {
-            PLSA_LIST_LINKS pLinks = LsaListRemoveHead(&Handle->UnknownDomainSidList);
-            PLSA_DM_UNKNOWN_DOMAIN_ENTRY pEntry = LW_STRUCT_FROM_FIELD(pLinks, LSA_DM_UNKNOWN_DOMAIN_ENTRY, Links);
-            LsaDmpFreeUnknownDomainEntry(pEntry, TRUE);
-        }
-        while (!LsaListIsEmpty(&Handle->UnknownDomainNameList))
-        {
-            PLSA_LIST_LINKS pLinks = LsaListRemoveHead(&Handle->UnknownDomainNameList);
-            PLSA_DM_UNKNOWN_DOMAIN_ENTRY pEntry = LW_STRUCT_FROM_FIELD(pLinks, LSA_DM_UNKNOWN_DOMAIN_ENTRY, Links);
-            LsaDmpFreeUnknownDomainEntry(pEntry, FALSE);
-        }
+        LsaDmpResetTrusts(Handle);
         LwFreeStringArray(Handle->ppszTrustExceptionList, Handle->dwTrustExceptionCount);
         LW_SAFE_FREE_MEMORY(Handle);
     }
