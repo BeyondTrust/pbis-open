@@ -22,6 +22,7 @@ libcentutils_la_LIBADD = \
     $(PROC_LIBS) \
     $(KVM_LIBS)  \
     $(RT_LIBS) \
+    $(DL_LIBS) \
     $(LWADVAPI_NOTHR_LIBS)
 
 libcentutils_la_LDFLAGS = $(LWADVAPI_LDFLAGS)

@@ -186,6 +186,15 @@ AC_CHECK_TYPES([struct psinfo], , , [
 #include <sys/procfs.h>
 #endif
 ])
+AC_CHECK_MEMBER([struct psinfo.pr_zoneid], , , [
+#if HAVE_PROCFS_H
+#include <procfs.h>
+#elif HAVE_SYS_PROCFS_H
+#include <sys/procfs.h>
+#endif
+])
+
+AC_CHECK_LIB([dl], [dlopen], [DL_LIBS="-ldl"])
 
 if test "$ac_cv_have_decl_pstat_getproc" = yes; then
 AM_CPPFLAGS="$AM_CPPFLAGS -D_PSTAT64"

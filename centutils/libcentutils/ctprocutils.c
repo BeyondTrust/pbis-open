@@ -282,6 +282,10 @@ CTGetPidOfCmdLine(
     FILE *infoFile = NULL;
     struct stat compareStat;
     BOOLEAN bFileExists;
+#if defined(__LWI_SOLARIS__)
+    int (*getzoneid)() = NULL;
+    int zoneid = -1;
+#endif
 #endif
 #if defined(HAVE_KVM_GETPROCS) && HAVE_DECL_KERN_PROC_PATHNAME
     //FreeBSD has this
@@ -381,6 +385,14 @@ CTGetPidOfCmdLine(
         GCE(ceError = LwMapErrnoToLwError(errno));
     }
 
+#if defined(__LWI_SOLARIS__)
+    getzoneid = dlsym(RTLD_DEFAULT, "getzoneid");
+    if (getzoneid)
+    {
+        zoneid = getzoneid();
+    }
+#endif
+
     while(1)
     {
         errno = 0;
@@ -415,6 +427,26 @@ CTGetPidOfCmdLine(
         {
             GCE(ceError = LwMapErrnoToLwError(errno));
         }
+
+#if defined(__LWI_SOLARIS__)
+        if (zoneid != -1)
+        {
+            int processzoneid = -1;
+
+#ifdef HAVE_STRUCT_PSINFO_PR_ZONEID
+            processzoneid = (int) infoStruct.pr_zoneid;
+#else
+            processzoneid = (int)
+                *(infoStruct.pr_filler +
+                sizeof(infoStruct.pr_filler)/sizeof(infoStruct.pr_filler[0]) -
+                3);
+#endif
+            if (zoneid != processzoneid)
+            {
+                continue;
+            }
+        }
+#endif
 
         if (owner != (uid_t)-1 && owner != infoStruct.pr_euid)
         {
