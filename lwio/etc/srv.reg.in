@@ -103,11 +103,11 @@
     doc = "" 
 }
 "GlobalCreditLimit" = { 
-    default = dword:000061A8 
+    default = dword:0003d090
     doc = "" 
 }
 "ClientCreditLimit" = { 
-    default = dword:00000005 
+    default = dword:00000080
     doc = "" 
 }
 
