@@ -1303,7 +1303,7 @@ ContainerGetLogState(
 
     CONTAINER_LOCK();
 
-    if (&pInstance->State != LW_SERVICE_STATE_RUNNING)
+    if (pInstance->State != LW_SERVICE_STATE_RUNNING)
     {
         dwError = ERROR_NOT_READY;
         BAIL_ON_ERROR(dwError);
