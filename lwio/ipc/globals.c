@@ -144,37 +144,17 @@ LwIoDaemonIpcAddProtocolSpec(
     IN OUT LWMsgProtocol* pProtocol
     )
 {
-    return LwIoDaemonIpcAddProtocolSpecEx(pProtocol, NULL);
-}
-
-NTSTATUS
-LwIoDaemonIpcAddProtocolSpecEx(
-    IN OUT LWMsgProtocol* pProtocol,
-    OUT OPTIONAL PCSTR* ppszError
-    )
-{
     NTSTATUS status = 0;
     int EE = 0;
     LWMsgStatus msgStatus = 0;
-    PCSTR pszError = NULL;
 
     msgStatus = lwmsg_protocol_add_protocol_spec(pProtocol, gLwIoDaemonProtocolSpec);
-
-    if (msgStatus && ppszError)
-    {
-        pszError = lwmsg_protocol_get_error_message(pProtocol, msgStatus);
-    }
-
     status = NtIpcLWMsgStatusToNtStatus(msgStatus);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
 cleanup:
-    if (ppszError)
-    {
-        *ppszError = pszError;
-    }
 
     LOG_LEAVE_IF_STATUS_EE(status, EE);
+
     return status;
 }
-
