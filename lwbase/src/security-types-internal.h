@@ -107,6 +107,8 @@ typedef ULONG ACCESS_TOKEN_FLAGS, *PACCESS_TOKEN_FLAGS;
 
 typedef struct _ACCESS_TOKEN {
     LONG ReferenceCount;
+    pthread_rwlock_t RwLock;
+    pthread_rwlock_t* pRwLock;
     ACCESS_TOKEN_FLAGS Flags;
     // TOKEN_USER:
     SID_AND_ATTRIBUTES User;

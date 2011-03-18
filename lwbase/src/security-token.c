@@ -42,6 +42,49 @@
 
 #include "security-includes.h"
 #include <lw/atomic.h>
+#include <lw/rtllog.h>
+#include <lw/errno.h>
+#include <pthread.h>
+#include <stdlib.h>
+
+#define EXCLUSIVE_LOCK_RWLOCK(pLock, bInLock) \
+    do { \
+        int _unixError = pthread_rwlock_wrlock(pLock); \
+        if (_unixError) \
+        { \
+            LW_RTL_LOG_ERROR("ABORTING: Failed to set exclusive lock " \
+                             "(error = %d).", _unixError); \
+            abort(); \
+        } \
+        bInLock = TRUE; \
+    } while (0)
+
+#define SHARED_LOCK_RWLOCK(pLock, bInLock) \
+    do { \
+        int _unixError = pthread_rwlock_rdlock(pLock); \
+        if (_unixError) \
+        { \
+            LW_RTL_LOG_ERROR("ABORTING: Failed to set shared lock " \
+                             "(error = %d).", _unixError); \
+            abort(); \
+        } \
+        bInLock = TRUE; \
+    } while (0)
+
+#define UNLOCK_RWLOCK(pLock, bInLock) \
+    do { \
+        if (bInLock) \
+        { \
+            int _unixError = pthread_rwlock_unlock(pLock); \
+            if (_unixError) \
+            { \
+                LW_RTL_LOG_ERROR("ABORTING: Failed to unlock rwlock " \
+                                 "(error = %d).", _unixError); \
+                abort(); \
+            } \
+            bInLock = FALSE; \
+        } \
+    } while (0)
 
 //
 // ACCESS_MASK Functions
@@ -105,6 +148,7 @@ RtlCreateAccessToken(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
+    int unixError = 0;
     ULONG requiredSize = 0;
     PACCESS_TOKEN token = NULL;
     ULONG i = 0;
@@ -218,6 +262,15 @@ RtlCreateAccessToken(
 
     token->ReferenceCount = 1;
     token->Flags = 0;
+    unixError = pthread_rwlock_init(&token->RwLock, NULL);
+    if (unixError)
+    {
+        LW_RTL_LOG_ERROR("Failed to init rwlock in access token "
+                         "(error = %d).", unixError);
+        status = LwErrnoToNtStatus(unixError);
+        GOTO_CLEANUP();
+    }
+    token->pRwLock = &token->RwLock;
 
     token->User.Attributes = User->User.Attributes;
     token->User.Sid = (PSID) location;
@@ -318,6 +371,10 @@ RtlReleaseAccessToken(
         assert(count >= 0);
         if (0 == count)
         {
+            if (accessToken->pRwLock)
+            {
+                pthread_rwlock_destroy(accessToken->pRwLock);
+            }
             RTL_FREE(AccessToken);
         }
     }
@@ -333,6 +390,7 @@ RtlQueryAccessTokenInformation(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
+    BOOLEAN isLocked = FALSE;
     ULONG requiredSize = 0;
     ULONG i = 0;
     PVOID location = NULL;
@@ -348,6 +406,8 @@ RtlQueryAccessTokenInformation(
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP();
     }
+
+    SHARED_LOCK_RWLOCK(&AccessToken->RwLock, isLocked);
 
     // Check required size
     switch (TokenInformationClass)
@@ -522,6 +582,7 @@ RtlQueryAccessTokenInformation(
     status = STATUS_SUCCESS;
 
 cleanup:
+    UNLOCK_RWLOCK(&AccessToken->RwLock, isLocked);
 
     if (ReturnedLength)
     {
@@ -538,6 +599,7 @@ RtlQueryAccessTokenUnixInformation(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
+    BOOLEAN isLocked = FALSE;
     TOKEN_UNIX tokenInfo = { 0 };
 
     if (!AccessToken)
@@ -545,6 +607,8 @@ RtlQueryAccessTokenUnixInformation(
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP();
     }
+
+    SHARED_LOCK_RWLOCK(&AccessToken->RwLock, isLocked);
 
     if (!IsSetFlag(AccessToken->Flags, ACCESS_TOKEN_FLAG_UNIX_PRESENT))
     {
@@ -559,6 +623,8 @@ RtlQueryAccessTokenUnixInformation(
     status = STATUS_SUCCESS;
 
 cleanup:
+    UNLOCK_RWLOCK(&AccessToken->RwLock, isLocked);
+
     if (!NT_SUCCESS(status))
     {
         RtlZeroMemory(&tokenInfo, sizeof(tokenInfo));
@@ -575,7 +641,10 @@ RtlIsSidMemberOfToken(
     )
 {
     BOOLEAN isMember = FALSE;
+    BOOLEAN isLocked = FALSE;
     ULONG i = 0;
+
+    SHARED_LOCK_RWLOCK(&AccessToken->RwLock, isLocked);
 
     if (RtlEqualSid(Sid, AccessToken->User.Sid))
     {
@@ -597,6 +666,8 @@ RtlIsSidMemberOfToken(
     isMember = FALSE;
 
 cleanup:
+    UNLOCK_RWLOCK(&AccessToken->RwLock, isLocked);
+
     return isMember;
 }
 
@@ -612,6 +683,7 @@ RtlAccessCheck(
     )
 {
     NTSTATUS status = STATUS_ACCESS_DENIED;
+    BOOLEAN isLocked = FALSE;
     ACCESS_MASK grantedAccess = PreviouslyGrantedAccess;
     ACCESS_MASK deniedAccess = 0;
     ACCESS_MASK desiredAccess = DesiredAccess;
@@ -663,6 +735,8 @@ RtlAccessCheck(
                                    &sidBuffer.Sid,
                                    &ulSidSize);
     GOTO_CLEANUP_ON_STATUS(status);
+
+    SHARED_LOCK_RWLOCK(&AccessToken->RwLock, isLocked);
 
     if (RtlIsSidMemberOfToken(AccessToken, &sidBuffer.Sid))
     {
@@ -837,6 +911,8 @@ RtlAccessCheck(
     status = desiredAccess ? STATUS_ACCESS_DENIED : STATUS_SUCCESS;
 
 cleanup:
+    UNLOCK_RWLOCK(&AccessToken->RwLock, isLocked);
+
     if (NT_SUCCESS(status) &&
         !LW_IS_VALID_FLAGS(grantedAccess, VALID_GRANTED_ACCESS_MASK))
     {
@@ -910,11 +986,14 @@ RtlAccessTokenRelativeSize(
     PACCESS_TOKEN pToken
     )
 {
+    BOOLEAN isLocked = FALSE;
     ULONG ulRelativeSize = 0;
     ULONG i = 0;
 
     ulRelativeSize += sizeof(ACCESS_TOKEN_SELF_RELATIVE);
     Align32(&ulRelativeSize);
+
+    SHARED_LOCK_RWLOCK(&pToken->RwLock, isLocked);
 
     ulRelativeSize += RtlLengthSid(pToken->User.Sid);
     Align32(&ulRelativeSize);
@@ -955,6 +1034,8 @@ RtlAccessTokenRelativeSize(
         Align32(&ulRelativeSize);
     }
 
+    UNLOCK_RWLOCK(&pToken->RwLock, isLocked);
+
     return ulRelativeSize;
 }
 
@@ -966,6 +1047,7 @@ RtlAccessTokenToSelfRelativeAccessToken(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
+    BOOLEAN isLocked = FALSE;
     ULONG ulRelativeSize = RtlAccessTokenRelativeSize(pToken);
     PSID_AND_ATTRIBUTES_SELF_RELATIVE pGroups = NULL;
     PBYTE pBuffer = NULL;
@@ -982,6 +1064,8 @@ RtlAccessTokenToSelfRelativeAccessToken(
 
         pBuffer = (PBYTE) pRelative;
         
+        SHARED_LOCK_RWLOCK(&pToken->RwLock, isLocked);
+
         pRelative->Flags = pToken->Flags;
         pRelative->User.Attributes = pToken->User.Attributes;
         pRelative->GroupCount = pToken->GroupCount;
@@ -1074,6 +1158,7 @@ RtlAccessTokenToSelfRelativeAccessToken(
     }
 
 cleanup:
+    UNLOCK_RWLOCK(&pToken->RwLock, isLocked);
 
     *pulSize = ulRelativeSize;
 
@@ -1272,12 +1357,15 @@ RtlPrivilegeCheck(
    )
 {
     PLUID_AND_ATTRIBUTES pPrivileges = AccessToken->Privileges;
+    BOOLEAN isLocked = FALSE;
     ULONG privilegesNeeded = 0;
     ULONG iAssigned = 0;
     ULONG iRequired = 0;
 
     privilegesNeeded = RequiredPrivileges->PrivilegeCount;
     
+    SHARED_LOCK_RWLOCK(&AccessToken->RwLock, isLocked);
+
     for (iRequired = 0;
          iRequired < RequiredPrivileges->PrivilegeCount;
          iRequired++)
@@ -1322,5 +1410,222 @@ RtlPrivilegeCheck(
     }
 
 cleanup:
+    UNLOCK_RWLOCK(&AccessToken->RwLock, isLocked);
+
     return (privilegesNeeded == 0);
+}
+
+
+static
+NTSTATUS
+RtlpAppendTokenPrivileges(
+    OUT OPTIONAL PVOID Buffer,
+    IN OPTIONAL ULONG BufferLength,
+    IN PLUID_AND_ATTRIBUTES AppendPrivilege,
+    IN ULONG Index,
+    IN PULONG pBufferUsed
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PTOKEN_PRIVILEGES pPrivileges = (PTOKEN_PRIVILEGES)Buffer;
+    ULONG bufferUsed = 0;
+
+    bufferUsed += sizeof(*pPrivileges);
+    bufferUsed += sizeof(pPrivileges->Privileges[0]) * (Index + 1);
+
+    if (bufferUsed <= BufferLength)
+    {
+        pPrivileges->Privileges[Index].Luid = AppendPrivilege->Luid;
+        pPrivileges->Privileges[Index].Attributes = AppendPrivilege->Attributes;
+
+        pPrivileges->PrivilegeCount = Index + 1;
+    }
+    else
+    {
+        status = STATUS_BUFFER_TOO_SMALL;
+    }
+
+    *pBufferUsed = bufferUsed;
+
+    return status;
+}
+
+
+NTSTATUS
+RtlAdjustTokenPrivileges(
+    IN PACCESS_TOKEN AccessToken,
+    IN BOOLEAN DisableAll,
+    IN OPTIONAL PTOKEN_PRIVILEGES NewState,
+    IN ULONG BufferLength,
+    OUT OPTIONAL PTOKEN_PRIVILEGES PreviousState,
+    OUT OPTIONAL PULONG pReturnedLength
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    BOOLEAN isLocked = FALSE;
+    PLUID_AND_ATTRIBUTES pPrivileges = AccessToken->Privileges;
+    ULONG assignedIndex = 0;
+    ULONG modIndex = 0;
+    ULONG returnedIndex = 0;
+    ULONG BufferUsed = 0;
+    ULONG adjustedCount = 0;
+
+    if (!DisableAll && !NewState)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GOTO_CLEANUP();
+    }
+
+    if (!NewState && BufferLength > 0)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GOTO_CLEANUP();
+    }
+
+    EXCLUSIVE_LOCK_RWLOCK(&AccessToken->RwLock, isLocked);
+
+    if (AccessToken->PrivilegeCount == 0)
+    {
+        status = STATUS_NOT_ALL_ASSIGNED;
+        GOTO_CLEANUP();
+    }
+
+    if (DisableAll)
+    {
+        for (assignedIndex = 0;
+             assignedIndex < AccessToken->PrivilegeCount;
+             assignedIndex++)
+        {
+            status = RtlpAppendTokenPrivileges(
+                                PreviousState,
+                                BufferLength,
+                                &pPrivileges[assignedIndex],
+                                returnedIndex++,
+                                &BufferUsed);
+            if (status == STATUS_SUCCESS)
+            {
+                ClearFlag(pPrivileges[assignedIndex].Attributes,
+                          SE_PRIVILEGE_ENABLED);
+            }
+        }
+
+        GOTO_CLEANUP();
+    }
+
+    for (modIndex = 0;
+         modIndex < NewState->PrivilegeCount;
+         modIndex++)
+    {
+        for (assignedIndex = 0;
+             assignedIndex < AccessToken->PrivilegeCount;
+             assignedIndex++)
+        {
+            if (RtlEqualLuid(&NewState->Privileges[modIndex].Luid,
+                             &pPrivileges[assignedIndex].Luid))
+            {
+                if (NewState->Privileges[modIndex].Attributes == 0)
+                {
+                    status = RtlpAppendTokenPrivileges(
+                                        PreviousState,
+                                        BufferLength,
+                                        &pPrivileges[assignedIndex],
+                                        returnedIndex++,
+                                        &BufferUsed);
+                    if (status == STATUS_SUCCESS)
+                    {
+                        ClearFlag(pPrivileges[assignedIndex].Attributes,
+                                  SE_PRIVILEGE_ENABLED);
+                        adjustedCount++;
+                    }
+                }
+
+                if (IsSetFlag(NewState->Privileges[modIndex].Attributes,
+                              SE_PRIVILEGE_ENABLED))
+                {
+                    status = RtlpAppendTokenPrivileges(
+                                        PreviousState,
+                                        BufferLength,
+                                        &pPrivileges[assignedIndex],
+                                        returnedIndex++,
+                                        &BufferUsed);
+                    if (status == STATUS_SUCCESS)
+                    {
+                        SetFlag(pPrivileges[assignedIndex].Attributes,
+                                SE_PRIVILEGE_ENABLED);
+                        adjustedCount++;
+                    }
+                }
+
+                if (IsSetFlag(NewState->Privileges[modIndex].Attributes,
+                              SE_PRIVILEGE_REMOVED))
+                {
+                    if (assignedIndex + 1 < AccessToken->PrivilegeCount)
+                    {
+                        RtlMoveMemory(
+                              &pPrivileges[assignedIndex],
+                              &pPrivileges[assignedIndex + 1],
+                              sizeof(pPrivileges[0]) * 
+                              AccessToken->PrivilegeCount - assignedIndex - 1);
+                    }
+
+                    RtlZeroMemory(
+                          &pPrivileges[AccessToken->PrivilegeCount - 1],
+                          sizeof(pPrivileges[0]));
+
+                    AccessToken->PrivilegeCount--;
+                    adjustedCount++;
+                }
+
+                break;
+            }
+        }
+    }
+
+cleanup:
+    if (PreviousState && (BufferUsed > BufferLength))
+    {
+        // There was not enough space in PreviousState buffer so roll 
+        // the changes back and return STATUS_BUFFER_TOO_SMALL
+        for (returnedIndex = 0;
+             returnedIndex < PreviousState->PrivilegeCount;
+             returnedIndex++)
+        {
+            for (assignedIndex = 0;
+                 assignedIndex < AccessToken->PrivilegeCount;
+                 assignedIndex++)
+            {
+                if (RtlEqualLuid(&PreviousState->Privileges[returnedIndex].Luid,
+                                 &pPrivileges[assignedIndex].Luid))
+                {
+                    pPrivileges[assignedIndex].Attributes
+                        = PreviousState->Privileges[returnedIndex].Attributes;
+                }
+            }
+        }
+
+        status = STATUS_BUFFER_TOO_SMALL;
+    }
+
+    UNLOCK_RWLOCK(&AccessToken->RwLock, isLocked);
+
+    if (status == STATUS_SUCCESS &&
+        !DisableAll &&
+        adjustedCount < NewState->PrivilegeCount)
+    {
+        status = STATUS_NOT_ALL_ASSIGNED;
+    }
+
+    if (pReturnedLength &&
+        (status == STATUS_SUCCESS ||
+         status == STATUS_BUFFER_TOO_SMALL ||
+         status == STATUS_NOT_ALL_ASSIGNED))
+    {
+        *pReturnedLength = BufferUsed;
+    }
+    else
+    {
+        *pReturnedLength = 0;
+    }
+
+    return status;
 }
