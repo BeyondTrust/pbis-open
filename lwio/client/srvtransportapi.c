@@ -42,6 +42,7 @@
  */
 
 #include "includes.h"
+#include <lwio/srvtransportapi.h>
 
 #define SRV_DEVICE_NAME_INITIALIZER { '\\', 's', 'r', 'v', 0 }
 
