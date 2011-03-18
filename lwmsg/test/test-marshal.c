@@ -168,6 +168,11 @@ MU_FIXTURE_SETUP(marshal)
                debug_realloc,
                NULL);
 
+    lwmsg_context_set_log_function(
+        context,
+        lwmsg_test_log_function,
+        NULL);
+
     MU_TRY(lwmsg_data_context_new(context, &dcontext));
 }
 
