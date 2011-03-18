@@ -1304,7 +1304,7 @@ RdrSmb2EncodeIoctlRequest(
 
     pHeader->usLength = SMB_HTOL16(sizeof(*pHeader) | 0x1);
     pHeader->usReserved = 0;
-    pHeader->ulFunctionCode = ulControlCode;
+    pHeader->ulFunctionCode = SMB_HTOL32(ulControlCode);
 
     if (pFid)
     {
