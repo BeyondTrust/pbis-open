@@ -29,7 +29,7 @@ Options:
 
     path                     Subset of configuration to edit (default: entire database)
     -s,--service             Specify path to edit as a service name rather than a full path
-    -e,--editor              Manually specify text editor to invoke
+    -e,--editor EDITOR       Manually specify text editor to invoke
     -h,--help                Display this help
 
 Environment variables:
@@ -58,6 +58,12 @@ EOF
     esac
 done
 
+if [ -n "$1" ]
+then
+    echo "Too many arguments"
+    exit 1
+fi
+
 if [ -z "$EDITOR" ]
 then
     for candidate in ${DEFAULT_EDITORS}
@@ -84,6 +90,8 @@ TMP_FILE="/tmp/.lw-edit-reg-$$.txt"
 #
 "${BINDIR}/lwregshell" export --legacy ${ROOT_PATH} - | \
     sed 's|$||' > "${TMP_FILE}" || exit $?
+cp "${TMP_FILE}" "${TMP_FILE}.bak"
 ${EDITOR} "${TMP_FILE}" || exit $?
-"${BINDIR}/lwregshell" import "${TMP_FILE}" || exit $?
+diff "${TMP_FILE}.bak" "${TMP_FILE}" > /dev/null || "${BINDIR}/lwregshell" import "${TMP_FILE}" || exit $?
 rm -f "${TMP_FILE}"
+rm -f "${TMP_FILE}.bak"
