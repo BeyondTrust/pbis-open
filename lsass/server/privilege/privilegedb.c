@@ -196,8 +196,6 @@ LsaSrvCreatePrivilegesDb(
     PSTR pszKey = NULL;
     PLSA_PRIVILEGE pPrivilegeEntry = NULL;
 
-    LSASRV_PRIVS_WRLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
-
     //
     // Create the database hash table
     //
@@ -209,6 +207,14 @@ LsaSrvCreatePrivilegesDb(
                  NULL,
                  &pHash);
     BAIL_ON_LSA_ERROR(err);
+
+    //
+    // Load the built-in privileges first
+    //
+    err = LsaSrvPrivsAddBuiltinPrivileges(pHash);
+    BAIL_ON_LSA_ERROR(err);
+
+    LSASRV_PRIVS_WRLOCK_RWLOCK(Locked, &pGlobals->privilegesRwLock);
 
     err = RegQueryInfoKeyA(
                  hRegistry,
@@ -660,8 +666,7 @@ LsaSrvSetPrivilegeEntry_inlock(
                          (PVOID)&pExistingEntry);
     if (err == ERROR_SUCCESS && !Overwrite)
     {
-        LSA_LOG_WARNING("Duplicate %s privilege entry found",
-                        pszPrivilegeName);
+        LSA_LOG_ERROR("Duplicate %s privilege entry found", pszPrivilegeName);
 
         err = ERROR_ALREADY_EXISTS;
         BAIL_ON_LSA_ERROR(err);

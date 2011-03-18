@@ -33,44 +33,25 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        builtin.c
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        Local Privileges (Private include)
+ *        Builtin Privileges table and database init function
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#include <config.h>
-#include <lsasystem.h>
-#include <lsadef.h>
-#include <lw/base.h>
-#include <lsa/lsa.h>
-#include <lsa/privilege.h>
-#include <reg/reg.h>
-#include <lwio/lwio.h>
-#include <lw/rpc/lsa.h>
+#ifndef _LSASRV_PRIVILEGE_BUILTIN_H_
+#define _LSASRV_PRIVILEGE_BUILTIN_H_
 
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwhash.h>
-#include <lwsid.h>
 
-#include <lsautils.h>
-#include <lsasrvutils.h>
-#include <lsaipc-common.h>
-#include <lsaipc-privilege.h>
-#include <lsasrvprivilege.h>
-#include <lsasrvprivilege-internal.h>
+DWORD
+LsaSrvPrivsAddBuiltinPrivileges(
+    PLW_HASH_TABLE pPrivileges
+    );
 
-#include "defines.h"
-#include "structs.h"
-#include "externs.h"
-#include "privilege.h"
-#include "privilegedb.h"
-#include "accountdb.h"
-#include "security.h"
-#include "builtin.h"
+
+#endif /* _LSASRV_PRIVILEGE_BUILTIN_H_ */
