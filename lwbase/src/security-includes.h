@@ -125,7 +125,7 @@ RtlpDecodeLittleEndianSid(
     OUT PSID Sid
     );
 
-VOID
+NTSTATUS
 RtlpDecodeLittleEndianAcl(
     IN PACL LittleEndianAcl,
     OUT PACL Acl

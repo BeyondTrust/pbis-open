@@ -1362,7 +1362,9 @@ RtlSelfRelativeToAbsoluteSD(
 
     if (Sacl && absHeader.Sacl)
     {
-        RtlpDecodeLittleEndianAcl(absHeader.Sacl, Sacl);
+        status = RtlpDecodeLittleEndianAcl(absHeader.Sacl, Sacl);
+        GOTO_CLEANUP_ON_STATUS(status);
+
         if (AbsoluteSecurityDescriptor)
         {
             AbsoluteSecurityDescriptor->Sacl = Sacl;
@@ -1371,7 +1373,9 @@ RtlSelfRelativeToAbsoluteSD(
 
     if (Dacl && absHeader.Dacl)
     {
-        RtlpDecodeLittleEndianAcl(absHeader.Dacl, Dacl);
+        status = RtlpDecodeLittleEndianAcl(absHeader.Dacl, Dacl);
+        GOTO_CLEANUP_ON_STATUS(status);
+
         if (AbsoluteSecurityDescriptor)
         {
             AbsoluteSecurityDescriptor->Dacl = Dacl;
