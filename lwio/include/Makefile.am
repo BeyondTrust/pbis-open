@@ -8,6 +8,7 @@ lwioinclude_HEADERS =         \
     lwio/ntfileapi.h          \
     lwio/smbfileapi.h         \
     lwio/srvshareapi.h        \
+    lwio/srvtransportapi.h    \
     lwio/lmfile.h             \
     lwio/lmsession.h          \
     lwio/lmshare.h            \

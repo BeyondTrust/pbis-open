@@ -314,6 +314,11 @@ main(
         status = IoTestMain(&args, &pszUsageError);
         GOTO_CLEANUP_ON_STATUS_EE(status, EE);
     }
+    else if (!strcmp(pszCommand, "srvtest"))
+    {
+        status = SrvTestMain(&args, &pszUsageError);
+        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    }
     else
     {
         status = RtlCStringAllocateAppendPrintf(&pszUsageError, "Invalid command '%s'\n", pszCommand);

@@ -9,6 +9,7 @@ liblwioclient_la_SOURCES = \
     ntfileapictx.c         \
     smbfileapictx.c        \
     srvshareapi.c          \
+    srvtransportapi.c      \
     thread.c               \
     win32.c
 

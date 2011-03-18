@@ -15,4 +15,10 @@ IoTestMain(
     OUT PSTR* ppszUsageError
     );
 
+NTSTATUS
+SrvTestMain(
+    IN OUT PLW_PARSE_ARGS pParseArgs,
+    OUT PSTR* ppszUsageError
+    );
+
 #endif /* __LWIO_TOOL_H__ */
