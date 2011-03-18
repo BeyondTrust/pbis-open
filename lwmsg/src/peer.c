@@ -97,7 +97,6 @@ lwmsg_peer_new(
 
     BAIL_ON_ERROR(status = lwmsg_task_acquire_manager(&peer->task_manager));
     BAIL_ON_ERROR(status = lwmsg_task_group_new(peer->task_manager, &peer->connect_tasks));
-    BAIL_ON_ERROR(status = lwmsg_task_group_new(peer->task_manager, &peer->listen_tasks));
 
     peer->max_clients = 100;
     peer->max_backlog = 8;
@@ -458,6 +457,11 @@ lwmsg_peer_startup(
     PeerEndpoint* endpoint = NULL;
     PeerListenTask* task = NULL;
     char* message = NULL;
+
+    if (!peer->listen_tasks)
+    {
+        BAIL_ON_ERROR(status = lwmsg_task_group_new(peer->task_manager, &peer->listen_tasks));
+    }
 
     for (ring = peer->listen_endpoints.next; ring != &peer->listen_endpoints; ring = ring->next)
     {
@@ -1005,6 +1009,14 @@ lwmsg_peer_accept_fd(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerSession* session = NULL;
     LWMsgAssoc* assoc = NULL;
+    LWMsgBool locked = LWMSG_FALSE;
+
+    PEER_LOCK(peer, locked);
+
+    if (!peer->listen_tasks)
+    {
+        BAIL_ON_ERROR(status = lwmsg_task_group_new(peer->task_manager, &peer->listen_tasks));
+    }
 
     BAIL_ON_ERROR(status = lwmsg_set_close_on_exec(fd));
     /* Create new connection with client fd, put it into task, schedule task */
@@ -1018,6 +1030,8 @@ lwmsg_peer_accept_fd(
     lwmsg_task_wake(session->assoc_session->event_task);
 
 error:
+
+    PEER_UNLOCK(peer, locked);
 
     if (status)
     {
