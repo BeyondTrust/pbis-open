@@ -1580,7 +1580,7 @@ PrintLogInfo(
     LW_SM_LOG_LEVEL level
     )
 {
-    PCSTR pszLoggerName;
+    PCSTR pszLoggerName = NULL;
 
     switch (type)
     {
