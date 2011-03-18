@@ -153,7 +153,6 @@ lwmsg_test_log_function(
     )
 {
     MuLogLevel mu_level = 0;
-    LWMsgBool is_error = LWMSG_FALSE;
 
     if (message)
     {
@@ -163,9 +162,8 @@ lwmsg_test_log_function(
         case LWMSG_LOGLEVEL_ERROR:
             /* MoonUnit does not have an error loglevel because errors
                are considered a test failure.  Log a warning
-               instead and change the format of the message */
+               instead */
             mu_level = MU_LEVEL_WARNING;
-            is_error = LWMSG_TRUE;
             break;
         case LWMSG_LOGLEVEL_WARNING:
             mu_level = MU_LEVEL_WARNING;
@@ -177,14 +175,14 @@ lwmsg_test_log_function(
             mu_level = MU_LEVEL_VERBOSE;
             break;
         case LWMSG_LOGLEVEL_DEBUG:
-        mu_level = MU_LEVEL_DEBUG;
+            mu_level = MU_LEVEL_DEBUG;
         break;
         case LWMSG_LOGLEVEL_TRACE:
             mu_level = MU_LEVEL_TRACE;
             break;
         }
-    
-        Mu_Interface_Event(filename, line, mu_level, is_error ? "ERROR: %s():%s" : "%s():%s", function, message);
+
+        Mu_Interface_Event(filename, line, mu_level, "%s", message);
     }
 
     return LWMSG_TRUE;
