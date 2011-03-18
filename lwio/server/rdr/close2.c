@@ -111,10 +111,10 @@ cleanup:
 
     if (status != STATUS_PENDING && pContext)
     {
+        RdrReleaseFile2(pFile);
         pIrp->IoStatusBlock.Status = STATUS_SUCCESS;
         IoIrpComplete(pIrp);
         RdrFreeContext(pContext);
-        RdrReleaseFile2(pFile);
         status = STATUS_PENDING;
     }
 
