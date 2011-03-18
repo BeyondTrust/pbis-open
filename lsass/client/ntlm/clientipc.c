@@ -819,7 +819,11 @@ NtlmTransactInitializeSecurityContext(
                 pResultList->hNewContext = NULL;
             }
 
-            NtlmIpcReleaseHandle((LWMsgHandle*) hContext);
+            if (hContext)
+            {
+                NtlmIpcReleaseHandle((LWMsgHandle*) hContext);
+                hContext = NULL;
+            }
 
             *pfContextAttr = pResultList->fContextAttr;
 

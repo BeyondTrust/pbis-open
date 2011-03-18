@@ -850,6 +850,8 @@ ntlm_gss_init_sec_context(
     DWORD dwNtlmFlags = 0;
     DWORD dwOutNtlmFlags = 0;
     OM_uint32 RetFlags = 0;
+    // Do not free
+    SEC_CHAR *pTargetNameStr = NULL;
 
     InputBuffer.cBuffers = 1;
     InputBuffer.pBuffers = &InputToken;
@@ -924,10 +926,15 @@ ntlm_gss_init_sec_context(
         dwNtlmFlags |= ISC_REQ_USE_DCE_STYLE;
     }
 
+    if (pTargetName)
+    {
+        pTargetNameStr = ((PNTLM_GSS_NAME)pTargetName)->pszName;
+    }
+
     MinorStatus = NtlmClientInitializeSecurityContext(
         &CredHandle,
         &hContext,
-        (SEC_CHAR*)pTargetName,
+        pTargetNameStr,
         dwNtlmFlags,
         0, // Reserved
         NTLM_NATIVE_DATA_REP,

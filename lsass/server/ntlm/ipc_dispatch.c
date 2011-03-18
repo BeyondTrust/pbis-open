@@ -743,7 +743,7 @@ NtlmSrvIpcInitializeSecurityContext(
         dwError = NtlmSrvIpcRegisterHandle(
             pCall,
             "NTLM_CONTEXT_HANDLE",
-            pNtlmResp->hNewContext,
+            hNewContext,
             NtlmSrvCleanupContextHandle,
             &pNtlmResp->hNewContext);
         BAIL_ON_LSA_ERROR(dwError);
