@@ -39,6 +39,7 @@
 #include <config.h>
 
 #include "data-private.h"
+#include "context-private.h"
 #include "util-private.h"
 
 #include <limits.h>
@@ -360,4 +361,81 @@ lwmsg_data_object_map_destroy(
     {
         lwmsg_hash_destroy(&map->hash_by_object);
     }
+}
+
+LWMsgStatus
+lwmsg_data_raise(
+    LWMsgDataContext* context,
+    LWMsgTypeIter* iter,
+    LWMsgStatus status,
+    const char* function,
+    const char* filename,
+    unsigned int line,
+    const char* format,
+    ...
+    )
+{
+    char* message = NULL;
+    va_list ap;
+
+    if (format)
+    {
+        va_start(ap, format);
+        message = lwmsg_formatv(format, ap);
+        va_end(ap);
+    }
+
+    if (message)
+    {
+        if (iter->meta.member_name)
+        {
+            lwmsg_context_raise(
+                context->context,
+                status,
+                function,
+                filename,
+                line,
+                ".%s: %s",
+                iter->meta.member_name,
+                message);
+        }
+        else
+        {
+            lwmsg_context_raise(
+                context->context,
+                status,
+                function,
+                filename,
+                line,
+                "%s",
+                message);
+        }
+    }
+    else
+    {
+        if (iter->meta.member_name)
+        {
+            lwmsg_context_raise(
+                context->context,
+                status,
+                function,
+                filename,
+                line,
+                ".%s",
+                iter->meta.type_name,
+                iter->meta.member_name);
+        }
+        else
+        {
+            lwmsg_context_raise(
+                context->context,
+                status,
+                function,
+                filename,
+                line,
+                NULL);
+        }
+    }
+
+    return status;
 }

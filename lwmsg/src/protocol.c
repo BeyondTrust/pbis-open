@@ -123,13 +123,10 @@ lwmsg_protocol_get_message_type(
 
     if (tag >= prot->num_types)
     {
-        RAISE_ERROR(prot->context, status = LWMSG_STATUS_NOT_FOUND,
-                    "Unknown message type");
+        BAIL_ON_ERROR(status = LWMSG_STATUS_NOT_FOUND);
     }
-    else
-    {
-        *out_type = prot->types[tag]->type;
-    }
+
+    *out_type = prot->types[tag]->type;
 
 error:
 
@@ -147,13 +144,10 @@ lwmsg_protocol_get_message_name(
 
     if (tag >= prot->num_types)
     {
-        RAISE_ERROR(prot->context, status = LWMSG_STATUS_NOT_FOUND,
-                    "Unknown message type");
+        BAIL_ON_ERROR(status = LWMSG_STATUS_NOT_FOUND);
     }
-    else
-    {
-        *name = prot->types[tag]->tag_name;
-    }
+
+    *name = prot->types[tag]->tag_name;
 
 error:
 

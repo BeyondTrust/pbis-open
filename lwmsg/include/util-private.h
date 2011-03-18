@@ -76,6 +76,15 @@ struct msghdr;
         }                                                               \
     } while (0)
 
+#define LWMSG_ASSERT_NOT_REACHED()         \
+    do                                     \
+    {                                      \
+        fprintf(stderr,                    \
+            "%s:%i: Should not be here\n", \
+            __FILE__, __LINE__);           \
+            abort();                       \
+    } while (0)
+
 #define BAIL_ON_ERROR(_x_)                      \
     do                                          \
     {                                           \

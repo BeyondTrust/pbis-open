@@ -108,7 +108,11 @@ lwmsg_data_marshal_indirect_prologue(
         {
             if (iter->attrs.flags & LWMSG_TYPE_FLAG_NOT_NULL)
             {
-                BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+                BAIL_ON_ERROR(status = DATA_RAISE(
+                    context,
+                    iter,
+                    LWMSG_STATUS_MALFORMED,
+                    "NULL passed for non-nullable pointer"));
             }
             *count = 0;
         }
@@ -183,7 +187,11 @@ lwmsg_data_marshal_indirect(
        elements to marshal */
     if (iter->attrs.flags & LWMSG_TYPE_FLAG_NOT_NULL && !object && count != 0)
     {
-        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+        BAIL_ON_ERROR(status = DATA_RAISE(
+            context,
+            iter,
+            LWMSG_STATUS_MALFORMED,
+            "NULL passed for non-nullable pointer"));
     }
 
     if ((inner_iter.kind == LWMSG_KIND_INTEGER ||
@@ -516,7 +524,11 @@ lwmsg_data_marshal_aliasable_pointer(
     }
     else if (iter->attrs.flags & LWMSG_TYPE_FLAG_NOT_NULL)
     {
-        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+        BAIL_ON_ERROR(status = DATA_RAISE(
+            context,
+            iter,
+            LWMSG_STATUS_MALFORMED,
+            "NULL passed for non-nullable pointer"));
     }
 
     BAIL_ON_ERROR(status = lwmsg_convert_integer(
@@ -664,7 +676,7 @@ lwmsg_data_marshal_internal(
                           buffer));
         break;
     default:
-        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+        LWMSG_ASSERT_NOT_REACHED();
         break;
     }
 

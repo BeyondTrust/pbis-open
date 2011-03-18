@@ -213,4 +213,19 @@ lwmsg_data_print_graph(
     LWMsgBuffer* buffer
     );
 
+LWMsgStatus
+lwmsg_data_raise(
+    LWMsgDataContext* context,
+    LWMsgTypeIter* iter,
+    LWMsgStatus status,
+    const char* function,
+    const char* filename,
+    unsigned int line,
+    const char* format,
+    ...
+    );
+
+#define DATA_RAISE(ctx, iter, status, ...) \
+    (lwmsg_data_raise((ctx), (iter), (status), __FUNCTION__, __FILE__, __LINE__, __VA_ARGS__))
+
 #endif

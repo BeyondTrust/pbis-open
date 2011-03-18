@@ -473,4 +473,6 @@ lwmsg_type_rep_map_destroy(
 
 extern LWMsgTypeSpec lwmsg_type_rep_spec[];
 
+#define ITER_FROM_ATTRS(attr) LWMSG_OBJECT_FROM_MEMBER((attr), LWMsgTypeIter, attrs)
+
 #endif

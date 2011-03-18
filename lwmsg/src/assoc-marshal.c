@@ -92,8 +92,13 @@ lwmsg_assoc_marshal_handle(
 
         switch (status)
         {
-        case LWMSG_STATUS_NOT_FOUND:
-            status = LWMSG_STATUS_INVALID_HANDLE;
+        case LWMSG_STATUS_INVALID_HANDLE:
+            status = DATA_RAISE(
+                mcontext,
+                ITER_FROM_ATTRS(attrs),
+                LWMSG_STATUS_INVALID_HANDLE,
+                "Handle 0x%lx is invalid",
+                (unsigned long) handle);
         default:
             break;
         }
@@ -103,13 +108,14 @@ lwmsg_assoc_marshal_handle(
         /* Confirm that the handle is of the expected type */
         if (strcmp((const char*) data, type))
         {
-            MARSHAL_RAISE_ERROR(mcontext, status = LWMSG_STATUS_INVALID_HANDLE,
-                        "Invalid handle 0x%lx(%lu): expected handle of type '%s', "
-                        "got '%s'",
-                        (unsigned long) handle,
-                        transmit->data.local_id,
-                        (const char*) data,
-                        type);
+            BAIL_ON_ERROR(status = DATA_RAISE(
+                mcontext,
+                ITER_FROM_ATTRS(attrs),
+                LWMSG_STATUS_INVALID_HANDLE,
+                "Handle 0x%lx has wrong data type: expected '%s', got '%s'",
+                (unsigned long) handle,
+                (const char*) data,
+                type));
         }
         
         /* Confirm that handle origin is correct according to type attributes */
@@ -118,19 +124,21 @@ lwmsg_assoc_marshal_handle(
         {
             if (transmit->type == LWMSG_HANDLE_LOCAL)
             {
-                MARSHAL_RAISE_ERROR(mcontext, status = LWMSG_STATUS_INVALID_HANDLE,
-                            "Invalid handle 0x%lx(%lu): expected handle which is "
-                            "local for the receiver",
-                            (unsigned long) handle,
-                            (unsigned long) transmit->data.local_id);
+                BAIL_ON_ERROR(status = DATA_RAISE(
+                    mcontext,
+                    ITER_FROM_ATTRS(attrs),
+                    LWMSG_STATUS_INVALID_HANDLE,
+                    "Handle 0x%lx is not local for receiver as expected",
+                    (unsigned long) handle));
             }
             else
             {
-                MARSHAL_RAISE_ERROR(mcontext, status = LWMSG_STATUS_INVALID_HANDLE,
-                            "Invalid handle 0x%lx(%lu): expected handle which is "
-                            "local for the sender",
-                            (unsigned long) handle,
-                            (unsigned long) transmit->data.local_id);
+                BAIL_ON_ERROR(status = DATA_RAISE(
+                    mcontext,
+                    ITER_FROM_ATTRS(attrs),
+                    LWMSG_STATUS_INVALID_HANDLE,
+                    "Handle 0x%lx is not local for sender as expected",
+                    (unsigned long) handle));
             }
         }
     }
@@ -139,8 +147,12 @@ lwmsg_assoc_marshal_handle(
         /* If the handle was not supposed to be NULL, raise an error */
         if (attrs->flags & LWMSG_TYPE_FLAG_NOT_NULL)
         {
-            MARSHAL_RAISE_ERROR(mcontext, status = LWMSG_STATUS_INVALID_HANDLE,
-                        "Invalid handle: expected non-null handle");
+            BAIL_ON_ERROR(status = DATA_RAISE(
+                mcontext,
+                ITER_FROM_ATTRS(attrs),
+                LWMSG_STATUS_INVALID_HANDLE,
+                "Handle is NULL where non-null expected",
+                (unsigned long) handle));
         }
 
         transmit->type = LWMSG_HANDLE_NULL;
@@ -190,19 +202,21 @@ lwmsg_assoc_unmarshal_handle(
         {
             if (location == LWMSG_HANDLE_LOCAL)
             {
-                MARSHAL_RAISE_ERROR(mcontext, status = LWMSG_STATUS_INVALID_HANDLE,
-                            "Invalid handle (%lu): expected handle which is "
-                            "local for the receiver",
-                            (unsigned long) handle,
-                            (unsigned long) transmit->data.local_id);
+                BAIL_ON_ERROR(status = DATA_RAISE(
+                    mcontext,
+                    ITER_FROM_ATTRS(attrs),
+                    LWMSG_STATUS_INVALID_HANDLE,
+                    "Handle is not local for receiver as expected",
+                    (unsigned long) handle));
             }
             else
             {
-                MARSHAL_RAISE_ERROR(mcontext, status = LWMSG_STATUS_INVALID_HANDLE,
-                            "Invalid handle (%lu): expected handle which is "
-                            "local for the sender",
-                            (unsigned long) handle,
-                            (unsigned long) transmit->data.local_id);
+                BAIL_ON_ERROR(status = DATA_RAISE(
+                     mcontext,
+                     ITER_FROM_ATTRS(attrs),
+                     LWMSG_STATUS_INVALID_HANDLE,
+                     "Handle is not local for sender as expected",
+                     (unsigned long) handle));
             }
         }
 
@@ -229,9 +243,12 @@ lwmsg_assoc_unmarshal_handle(
             }
             else
             {
-                MARSHAL_RAISE_ERROR(mcontext, status = LWMSG_STATUS_INVALID_HANDLE,
-                                    "Invalid handle (%lu)",
-                                    (unsigned long) transmit->data.local_id);
+                BAIL_ON_ERROR(status = DATA_RAISE(
+                     mcontext,
+                     ITER_FROM_ATTRS(attrs),
+                     LWMSG_STATUS_INVALID_HANDLE,
+                     "Invalid handle ID (%lu)",
+                     (unsigned long) transmit->data.local_id));
             }
             break;
         default:

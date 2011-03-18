@@ -550,7 +550,11 @@ lwmsg_data_unmarshal_aliasable_pointer(
     }
     else if (iter->attrs.flags & LWMSG_TYPE_FLAG_NOT_NULL)
     {
-        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+        BAIL_ON_ERROR(status = DATA_RAISE(
+            context,
+            iter,
+            LWMSG_STATUS_MALFORMED,
+            "NULL found in stream where non-nullable pointer expected"));
     }
 
     if (status == LWMSG_STATUS_NOT_FOUND)
