@@ -9,7 +9,8 @@ liblsaserver_privilege_la_SOURCES = \
     account.c \
     privilegedb.c \
     accountdb.c \
-    security.c
+    security.c \
+    builtin.c
 
 liblsaserver_privilege_la_CPPFLAGS = \
     $(AM_CPPFLAGS) \
