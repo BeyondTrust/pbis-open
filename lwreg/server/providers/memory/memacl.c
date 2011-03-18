@@ -50,7 +50,76 @@ MemSetKeySecurity(
     IN ULONG ulSecDescRel
     )
 {
-    return 0;
+    NTSTATUS status = STATUS_ACCESS_DENIED;
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
+    PREG_KEY_CONTEXT pKeyCtx = NULL;
+    ACCESS_MASK accessRequired = KEY_ALL_ACCESS;
+    REG_DB_CONNECTION regDbConn = {0};
+    PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)hNtRegConnection;
+
+    regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+
+
+    BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
+
+    if (SecurityInformation & OWNER_SECURITY_INFORMATION)
+    {
+        accessRequired |= WRITE_OWNER;
+    }
+
+    if (SecurityInformation & DACL_SECURITY_INFORMATION)
+    {
+        accessRequired |= WRITE_DAC;
+    }
+
+    status = RegSrvAccessCheckKey(pServerState->pToken,
+                                  pSecDescRel,
+                                  ulSecDescRel,
+                                  accessRequired,
+                                  &pKeyHandle->AccessGranted);
+    if (STATUS_NO_TOKEN == status)
+    {
+        status = 0;
+        pKeyHandle->AccessGranted = 0;
+    }
+    BAIL_ON_NT_STATUS(status);
+    
+    pKeyHandle->pKey->AccessGranted = pKeyHandle->AccessGranted;
+
+    BAIL_ON_NT_STATUS(status);
+
+    status = RegSrvAccessCheckKeyHandle(pKeyHandle, accessRequired);
+    BAIL_ON_NT_STATUS(status);
+
+    pKeyCtx = pKeyHandle->pKey;
+    //BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtx);
+
+    /* Sanity checks */
+    if (SecurityInformation == 0)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    if (!RtlValidRelativeSecurityDescriptor(pSecDescRel, ulSecDescRel, SecurityInformation))
+    {
+        status = STATUS_INVALID_SECURITY_DESCR;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    status = MemDbSetKeyAcl(
+                 hNtRegConnection,
+                 &regDbConn,
+                 pSecDescRel,
+                 ulSecDescRel);
+    BAIL_ON_NT_STATUS(status);
+
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
 }
 
 
@@ -63,6 +132,23 @@ MemGetKeySecurity(
     IN OUT PULONG pulSecDescRelLen
     )
 {
-    return 0;
+    NTSTATUS status = 0;
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
+    REG_DB_CONNECTION regDbConn = {0};
+
+    BAIL_ON_NT_INVALID_POINTER(hNtRegConnection);
+
+    regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+    status = MemDbGetKeyAcl(
+                 hNtRegConnection,
+                 &regDbConn,
+                 pSecDescRel,
+                 pulSecDescRelLen);
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
 }
 

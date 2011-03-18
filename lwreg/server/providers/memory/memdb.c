@@ -207,7 +207,8 @@ MemDbCreateKeyEx(
                          hParentKey,
                          pcwszSubKey,
                          REGMEM_TYPE_KEY,
-                         NULL,  // SD parameter
+                         pSecDescRel,  // SD parameter
+                         ulSecDescLength,
                          NULL,
                          &hParentKey);
         BAIL_ON_NT_STATUS(status);
@@ -218,6 +219,14 @@ MemDbCreateKeyEx(
         /* Current node exists, return subkey handle */
         *phSubKey = hSubKey;
     }
+
+    status = MemDbSetKeyAcl(
+                 NULL,
+                 hDb,
+                 pSecDescRel,
+                 ulSecDescLength);
+    BAIL_ON_NT_STATUS(status);
+
 
 cleanup:
     return status;
@@ -523,3 +532,76 @@ cleanup:
 error:
     goto cleanup;
 }
+
+
+NTSTATUS
+MemDbGetKeyAcl(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    OUT OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
+    OUT PULONG pSecDescLen)
+{
+    NTSTATUS status = 0;
+    MEM_REG_STORE_HANDLE hKey = NULL;
+
+    BAIL_ON_NT_INVALID_POINTER(hDb);
+    hKey = hDb->pMemReg;
+
+    if (hKey->SecurityDescriptor)
+    {
+        if (pSecDescLen)
+        {
+            *pSecDescLen = hKey->SecurityDescriptorLen;
+            if (pSecDescRel)
+            {
+                memcpy(pSecDescRel, hKey->SecurityDescriptor, *pSecDescLen);
+            }
+        }
+    }
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}
+
+
+NTSTATUS
+MemDbSetKeyAcl(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    IN PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
+    IN ULONG secDescLen)
+{
+    NTSTATUS status = 0;
+    MEM_REG_STORE_HANDLE hKey = NULL;
+
+    BAIL_ON_NT_INVALID_POINTER(hDb);
+    if (!pSecDescRel || secDescLen == 0)
+    {
+        goto cleanup;
+    }
+    BAIL_ON_NT_INVALID_POINTER(pSecDescRel);
+
+    hKey = hDb->pMemReg;
+    if ((hKey->SecurityDescriptor && 
+         memcmp(hKey->SecurityDescriptor, pSecDescRel, secDescLen) != 0) ||
+        !hKey->SecurityDescriptor)
+    {
+        status = LW_RTL_ALLOCATE((PVOID*) &hKey->SecurityDescriptor, 
+                                 BYTE, 
+                                 secDescLen);
+        BAIL_ON_NT_STATUS(status);
+
+        memcpy(hKey->SecurityDescriptor, pSecDescRel, secDescLen);
+        hKey->SecurityDescriptorLen = secDescLen;
+    }
+
+cleanup:
+    return status;
+
+error:
+    LWREG_SAFE_FREE_MEMORY(hKey->SecurityDescriptor);
+    goto cleanup;
+}
+

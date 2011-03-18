@@ -34,6 +34,8 @@ typedef struct __REG_KEY_HANDLE
 typedef struct __REG_KEY_CONTEXT
 {
     MEM_REG_STORE_HANDLE hKey;
+    ACCESS_MASK AccessGranted;
+    REG_DB_CONNECTION pConn;
 } REG_KEY_CONTEXT;
 
 
@@ -152,4 +154,22 @@ MemDbEnumValue(
     OUT OPTIONAL PDWORD pType,
     OUT OPTIONAL PBYTE pData,/*buffer hold value content*/
     IN OUT OPTIONAL PDWORD pcbData /*input - buffer pData length*/
+    );
+
+
+NTSTATUS
+MemDbSetKeyAcl(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    OUT PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
+    OUT ULONG secDescLen
+    );
+
+
+NTSTATUS
+MemDbGetKeyAcl(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    OUT PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
+    OUT PULONG pSecDescLen
     );

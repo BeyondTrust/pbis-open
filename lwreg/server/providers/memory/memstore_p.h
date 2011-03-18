@@ -76,6 +76,7 @@ typedef struct _REGMEM_NODE
     PWSTR Name;
     DWORD NodeType;
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
+    ULONG SecurityDescriptorLen;
 
     struct _REGMEM_NODE **SubNodes;
     DWORD NodesLen;

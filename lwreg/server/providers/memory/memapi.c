@@ -122,6 +122,9 @@ MemCreateKeyEx(
     MEM_REG_STORE_HANDLE hSubKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
     PWSTR pwszRootKey = NULL;
+    PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
+    ACCESS_MASK AccessGranted = 0;
+    DWORD secLen = 0;
 
     if (!hKey)
     {
@@ -143,6 +146,10 @@ MemCreateKeyEx(
     {
         regDbConn.pMemReg = pKeyHandle->pKey->hKey;
     }
+    if (ulSecDescLength > 0)
+    {
+        secLen = ulSecDescLength;
+    }
     status = MemDbCreateKeyEx(
                  Handle,
                  &regDbConn,
@@ -150,15 +157,33 @@ MemCreateKeyEx(
                  0, // IN DWORD dwReserved
                  NULL, // IN OPTIONAL PWSTR pClass
                  0, //IN DWORD dwOptions
-                 0, // IN ACCESS_MASK AccessDesired
-                 NULL, // IN OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel
-                 0, // IN ULONG ulSecDescLength
+                 AccessDesired, // IN ACCESS_MASK 
+                 pSecDescRel, // IN OPTIONAL 
+                 ulSecDescLength, // IN ULONG
                  &hSubKey,
                  pdwDisposition);
     BAIL_ON_NT_STATUS(status);
 
     status = _MemCreateHkeyReply(hSubKey, phkResult);
     BAIL_ON_NT_STATUS(status);
+
+    if (pSecDescRel)
+    {
+        status = RegSrvAccessCheckKey(pServerState->pToken,
+                                      pSecDescRel,
+                                      ulSecDescLength,
+                                      AccessDesired,
+                                      &AccessGranted);
+    }
+
+    if (STATUS_NO_TOKEN == status)
+    {
+        status = 0;
+        AccessGranted = 0;
+    }
+    BAIL_ON_NT_STATUS(status);
+    pKeyHandle->AccessGranted = AccessGranted;
+
 
 cleanup:
     LWREG_SAFE_FREE_MEMORY(pwszRootKey);
@@ -188,6 +213,8 @@ MemOpenKeyEx(
     PREG_KEY_HANDLE *phKeyResult = (PREG_KEY_HANDLE *)phkResult;
     MEM_REG_STORE_HANDLE pSubKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
+    PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
+
 
     if (!hKey)
     {
@@ -218,6 +245,16 @@ MemOpenKeyEx(
                      phkResult);
         BAIL_ON_NT_STATUS(status);
     }
+
+    if (!pServerState->pToken)
+    {
+        status = RegSrvCreateAccessToken(pServerState->peerUID,
+                                         pServerState->peerGID,
+                                         &pServerState->pToken);
+        BAIL_ON_NT_STATUS(status);
+    }
+
+
 
 cleanup:
     return status;

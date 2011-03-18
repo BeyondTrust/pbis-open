@@ -80,11 +80,13 @@ MemRegStoreOpen(
                      gRootKeys[i]);
         BAIL_ON_NT_STATUS(status);
 
+/* Probably should set default SD here */
         status = MemRegStoreAddNode(
                      phReg,
                      rootKey,
                      REGMEM_TYPE_HIVE,
                      NULL,  // SD parameter
+                     0,
                      &rootNode,
                      NULL);
         BAIL_ON_NT_STATUS(status);
@@ -174,6 +176,7 @@ MemRegStoreAddNode(
     PCWSTR Name,
     DWORD NodeType,
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
+    ULONG SecurityDescriptorLen,
     OUT PMEM_REG_STORE_HANDLE phNode,
     OUT OPTIONAL PMEM_REG_STORE_HANDLE pRetNewNode)
 {
@@ -202,7 +205,10 @@ MemRegStoreAddNode(
     newNodeName = NULL;
 
     pNewNode->NodeType = NodeType;
-    pNewNode->SecurityDescriptor = SecurityDescriptor;
+
+    /* Inherit SD from parent node if one is not provided */
+    pNewNode->SecurityDescriptor = hDb->SecurityDescriptor;
+    pNewNode->SecurityDescriptorLen = hDb->SecurityDescriptorLen;
     hDb->NodesLen++;
 
     if (phNode)

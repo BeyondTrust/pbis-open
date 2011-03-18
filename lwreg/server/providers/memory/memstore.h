@@ -60,6 +60,7 @@ MemRegStoreAddNode(
     PCWSTR Name,
     DWORD NodeType,
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
+    ULONG SecurityDescriptorLen,
     OUT PMEM_REG_STORE_HANDLE phNode,
     OUT OPTIONAL PMEM_REG_STORE_HANDLE pRetNewNode
     );
