@@ -86,7 +86,7 @@
 #define SE_SHUTDOWN_NAME \
     {'S','e','S','h','u','t','d','o','w','n','P','r','i','v','i','l','e','g','e',0}
 
-#define SE_SYSTEM_TIME_NAME \
+#define SE_SYSTEMTIME_NAME \
     {'S','e','S','y','s','t','e','m','T','i','m','e','P','r','i','v','i','l','e','g','e',0}
 
 #define SE_TAKE_OWNERSHIP_NAME \
