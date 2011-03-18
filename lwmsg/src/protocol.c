@@ -123,7 +123,7 @@ lwmsg_protocol_get_message_type(
 
     if (tag >= prot->num_types)
     {
-        RAISE_ERROR(prot, status = LWMSG_STATUS_NOT_FOUND,
+        RAISE_ERROR(prot->context, status = LWMSG_STATUS_NOT_FOUND,
                     "Unknown message type");
     }
     else
@@ -147,7 +147,7 @@ lwmsg_protocol_get_message_name(
 
     if (tag >= prot->num_types)
     {
-        RAISE_ERROR(prot, status = LWMSG_STATUS_NOT_FOUND,
+        RAISE_ERROR(prot->context, status = LWMSG_STATUS_NOT_FOUND,
                     "Unknown message type");
     }
     else
@@ -200,16 +200,6 @@ lwmsg_protocol_add_protocol_spec(LWMsgProtocol* prot, LWMsgProtocolSpec* spec)
 error:
 
     return status;
-}
-
-
-const char*
-lwmsg_protocol_get_error_message(
-    LWMsgProtocol* prot,
-    LWMsgStatus status
-    )
-{
-    return lwmsg_error_message(status, &prot->error);
 }
 
 LWMsgStatus

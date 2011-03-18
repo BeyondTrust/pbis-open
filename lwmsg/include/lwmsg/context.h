@@ -322,23 +322,6 @@ lwmsg_context_realloc(
     );
 #endif
     
-/**
- * @brief Fetch detailed error message
- *
- * Retrieves a human-readable description of the last error which occured
- * when calling a function on the context.  The returned string becomes 
- * undefined when another function called on the context returns an error.
- *
- * @param[in] context the context
- * @param[in] status the status code of the most recent error
- * @return an error string
- */
-const char*
-lwmsg_context_get_error_message(
-    LWMsgContext* context,
-    LWMsgStatus status
-    );
-
 /*@}*/
 
 #endif

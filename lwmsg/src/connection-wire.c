@@ -180,7 +180,7 @@ lwmsg_connection_recvmsg(
             status = LWMSG_STATUS_PEER_CLOSE;
             break;
         default:
-            status = lwmsg_error_map_errno(errno);
+            status = lwmsg_status_map_errno(errno);
             LWMSG_LOG_ERROR(&assoc->context, "Unexpected system error from recvmsg(): %i", errno);
             break;
         }
@@ -316,7 +316,7 @@ lwmsg_connection_sendmsg(
             status = LWMSG_STATUS_PEER_CLOSE;
             break;
         default:
-            status = lwmsg_error_map_errno(errno);
+            status = lwmsg_status_map_errno(errno);
             LWMSG_LOG_ERROR(&assoc->context, "Unexpected system error from sendmsg(): %i", errno);
             break;
         }
@@ -760,7 +760,7 @@ lwmsg_connection_begin_connect_local(
     
     if (priv->fd == -1)
     {
-        BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&assoc->context.error, errno));
+        BAIL_ON_ERROR(status = RAISE_ERRNO(&assoc->context));
     }
 
     BAIL_ON_ERROR(status = lwmsg_set_close_on_exec(priv->fd));
@@ -769,7 +769,7 @@ lwmsg_connection_begin_connect_local(
     /* Get socket flags */
     if ((opts = fcntl(priv->fd, F_GETFL, 0)) < 0)
     {
-        BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&assoc->context.error, errno));
+        BAIL_ON_ERROR(status = RAISE_ERRNO(&assoc->context));
     }
 
     if (priv->is_nonblock)
@@ -781,7 +781,7 @@ lwmsg_connection_begin_connect_local(
     /* Set socket flags */
     if (fcntl(priv->fd, F_SETFL, opts) < 0)
     {
-        BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&assoc->context.error, errno));
+        BAIL_ON_ERROR(status = RAISE_ERRNO(&assoc->context));
     }
 
     sockaddr.sun_family = AF_UNIX;
@@ -814,7 +814,7 @@ lwmsg_connection_begin_connect_local(
             status = LWMSG_STATUS_CONNECTION_REFUSED;
             break;
         default:
-            status = lwmsg_error_map_errno(errno);
+            status = lwmsg_status_map_errno(errno);
             break;
         }
         BAIL_ON_ERROR(status);
@@ -897,7 +897,7 @@ lwmsg_connection_finish_connect_socket(
         if (err < 0)
         {
             /* Select failed for some reason */
-            BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&assoc->context.error, errno));
+            BAIL_ON_ERROR(status = RAISE_ERRNO(&assoc->context));
         }
     }
     
@@ -907,7 +907,7 @@ lwmsg_connection_finish_connect_socket(
     if (getsockopt(priv->fd, SOL_SOCKET, SO_ERROR, &err, &len) < 0)
     {
         /* Getsockopt failed for some reason */
-        BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&assoc->context.error, errno));
+        BAIL_ON_ERROR(status = RAISE_ERRNO(&assoc->context));
     }
 
     switch (err)
@@ -925,7 +925,7 @@ lwmsg_connection_finish_connect_socket(
         status = LWMSG_STATUS_CONNECTION_REFUSED;
         break;
     default:
-        status = lwmsg_error_map_errno(err);
+        status = lwmsg_status_map_errno(err);
         break;
     }
 
@@ -965,7 +965,7 @@ lwmsg_connection_connect_existing(
     /* Get socket flags */
     if ((opts = fcntl(priv->fd, F_GETFL, 0)) < 0)
     {
-        BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&assoc->context.error, errno));
+        BAIL_ON_ERROR(status = RAISE_ERRNO(&assoc->context));
     }
 
     /* Set non-blocking flag */
@@ -977,7 +977,7 @@ lwmsg_connection_connect_existing(
     /* Set socket flags */
     if (fcntl(priv->fd, F_SETFL, opts) < 0)
     {
-        BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&assoc->context.error, errno));
+        BAIL_ON_ERROR(status = RAISE_ERRNO(&assoc->context));
     }
 
 error:
@@ -1039,7 +1039,7 @@ lwmsg_connection_begin_send_connect(
                 /* Send an auth fd */
                 if (pipe(fds) != 0)
                 {
-                    BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&assoc->context.error, errno));
+                    BAIL_ON_ERROR(status = RAISE_ERRNO(&assoc->context));
                 }
                 
                 BAIL_ON_ERROR(status = lwmsg_connection_queue_fd(assoc, fds[0]));
@@ -1143,7 +1143,7 @@ lwmsg_connection_finish_recv_connect(
             
             if (fstat(fd, &statbuf))
             {
-                BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&assoc->context.error, errno));
+                BAIL_ON_ERROR(status = RAISE_ERRNO(&assoc->context));
             }
             
             if (!S_ISFIFO(statbuf.st_mode) ||
@@ -1271,7 +1271,7 @@ lwmsg_connection_begin_send_accept(
                 /* Send an auth fd */
                 if (pipe(fds) != 0)
                 {
-                    BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&assoc->context.error, errno));
+                    BAIL_ON_ERROR(status = RAISE_ERRNO(&assoc->context));
                 }
                 
                 BAIL_ON_ERROR(status = lwmsg_connection_queue_fd(assoc, fds[0]));
@@ -1375,7 +1375,7 @@ lwmsg_connection_finish_recv_accept(
             
             if (fstat(fd, &statbuf))
             {
-                BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&assoc->context.error, errno));
+                BAIL_ON_ERROR(status = RAISE_ERRNO(&assoc->context));
             }
             
             if (!S_ISFIFO(statbuf.st_mode) ||
@@ -1612,7 +1612,10 @@ lwmsg_connection_finish_recv_message(
 
     if (packet->type != CONNECTION_PACKET_MESSAGE)
     {
-        RAISE_ERROR(context, LWMSG_STATUS_MALFORMED, "Did not receive message packet as expected");
+        BAIL_ON_ERROR(status = RAISE(
+            context,
+            LWMSG_STATUS_MALFORMED,
+            "Did not receive message packet as expected"));
     }
 
     if (packet->contents.msg.tag != LWMSG_TAG_INVALID)

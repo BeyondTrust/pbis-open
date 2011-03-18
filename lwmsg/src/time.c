@@ -53,7 +53,7 @@ lwmsg_time_now(
 
     if (gettimeofday(&tv, NULL))
     {
-        BAIL_ON_ERROR(status = lwmsg_error_map_errno(errno));
+        BAIL_ON_ERROR(status = lwmsg_status_map_errno(errno));
     }
 
     out->seconds = (ssize_t) tv.tv_sec;

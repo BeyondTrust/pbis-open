@@ -125,24 +125,6 @@ lwmsg_data_context_delete(
     );
 
 /**
- * @brief Get last error message
- * 
- * Get a descriptive diagnostic message for the last
- * error which occured on the specified data context.
- * The returned string will remain valid until another
- * operation uses the context.
- *
- * @param[in,out] context the data context
- * @param[in] status the status code returned from the failing function
- * @return a string describing the last error
- */
-const char*
-lwmsg_data_context_get_error_message(
-    LWMsgDataContext* context,
-    LWMsgStatus status
-    );
-
-/**
  * @brief Set byte order
  *
  * Sets the byte order which will be used for atomic data elements
@@ -189,16 +171,6 @@ const LWMsgContext*
 lwmsg_data_context_get_context(
     LWMsgDataContext* context
     );
-
-#ifndef DOXYGEN
-LWMsgStatus
-lwmsg_data_context_raise_error(
-    LWMsgDataContext* context,
-    LWMsgStatus status,
-    const char* format,
-    ...
-    );
-#endif
 
 /**
  * @brief Free in-memory data graph

@@ -162,7 +162,7 @@ lwmsg_peer_log_message(
         if (message->status != LWMSG_STATUS_SUCCESS)
         {
             status_text = lwmsg_string_without_prefix(
-                lwmsg_error_name(message->status),
+                lwmsg_status_name(message->status),
                 "LWMSG_STATUS_");
         }
 
@@ -489,7 +489,7 @@ lwmsg_peer_task_create_local_socket(
 
     if (sock == -1)
     {
-        BAIL_ON_ERROR(status = lwmsg_error_map_errno(errno));
+        BAIL_ON_ERROR(status = lwmsg_status_map_errno(errno));
     }
 
     BAIL_ON_ERROR(status = lwmsg_set_close_on_exec(sock));
@@ -506,7 +506,7 @@ lwmsg_peer_task_create_local_socket(
 
     if (bind(sock, (struct sockaddr*) &sockaddr, sizeof(sockaddr)) == -1)
     {
-        BAIL_ON_ERROR(status = lwmsg_error_map_errno(errno));
+        BAIL_ON_ERROR(status = lwmsg_status_map_errno(errno));
     }
 
     // ignore errors
@@ -547,7 +547,7 @@ lwmsg_peer_task_setup_listen(
     /* Get socket flags */
     if ((opts = fcntl(task->fd, F_GETFL, 0)) < 0)
     {
-        BAIL_ON_ERROR(status = lwmsg_error_map_errno(errno));
+        BAIL_ON_ERROR(status = lwmsg_status_map_errno(errno));
     }
     
     /* Set non-blocking flag */
@@ -556,12 +556,12 @@ lwmsg_peer_task_setup_listen(
     /* Set socket flags */
     if (fcntl(task->fd, F_SETFL, opts) < 0)
     {
-        BAIL_ON_ERROR(status = lwmsg_error_map_errno(errno));
+        BAIL_ON_ERROR(status = lwmsg_status_map_errno(errno));
     }
     
     if (listen(task->fd, task->peer->max_backlog))
     {
-        BAIL_ON_ERROR(status = lwmsg_error_map_errno(errno));
+        BAIL_ON_ERROR(status = lwmsg_status_map_errno(errno));
     }
     
     if (task->endpoint)
@@ -825,20 +825,20 @@ lwmsg_peer_task_handle_assoc_error(
     case LWMSG_STATUS_PEER_ABORT:
         LWMSG_LOG_VERBOSE(peer->context, "(assoc:0x%lx) Dropping: %s",
                           LWMSG_POINTER_AS_ULONG(task->assoc),
-                          lwmsg_assoc_get_error_message(task->assoc, status));
+                          lwmsg_status_name(status));
         task->type = PEER_TASK_DROP;
         status = LWMSG_STATUS_SUCCESS;
         break;
     case LWMSG_STATUS_TIMEOUT:
         LWMSG_LOG_VERBOSE(peer->context, "(assoc:0x%lx) Resetting: %s",
                           LWMSG_POINTER_AS_ULONG(task->assoc),
-                          lwmsg_assoc_get_error_message(task->assoc, status));
+                          lwmsg_status_name(status));
         task->type = PEER_TASK_BEGIN_RESET;
         status = LWMSG_STATUS_SUCCESS;
     default:
         LWMSG_LOG_VERBOSE(peer->context, "(assoc:0x%lx) Dropping: %s",
                           LWMSG_POINTER_AS_ULONG(task->assoc),
-                          lwmsg_assoc_get_error_message(task->assoc, status));
+                          lwmsg_status_name(status));
         task->type = PEER_TASK_BEGIN_CLOSE;
         status = LWMSG_STATUS_SUCCESS;
         break;
@@ -920,7 +920,7 @@ lwmsg_peer_task_run_listen(
                     default:
                         err = errno;
                         LWMSG_LOG_ERROR(task->peer->context, "System error on accept(): %i", err);
-                        BAIL_ON_ERROR(status = lwmsg_error_map_errno(err));
+                        BAIL_ON_ERROR(status = lwmsg_status_map_errno(err));
                     }
                 }
             } while (client_fd < 0);
@@ -1690,7 +1690,7 @@ lwmsg_peer_task_dispatch_calls(
                                       "(assoc:0x%lx >> %u) Response payload could not be sent: %s",
                                       LWMSG_POINTER_AS_ULONG(task->assoc),
                                       cookie,
-                                      lwmsg_assoc_get_error_message(task->assoc, status));
+                                      lwmsg_status_name(status));
                     lwmsg_assoc_destroy_message(task->assoc, &task->outgoing_message);
                     lwmsg_message_init(&task->outgoing_message);
                     task->outgoing_message.flags = LWMSG_MESSAGE_FLAG_REPLY | LWMSG_MESSAGE_FLAG_SYNTHETIC;
@@ -1980,7 +1980,7 @@ error:
         *next_trigger = LWMSG_TASK_TRIGGER_YIELD;
         break;
     default:
-        LWMSG_LOG_ERROR(peer->context, "Caught error: %s (%i)", lwmsg_error_name(status), status);
+        LWMSG_LOG_ERROR(peer->context, "Caught error: %s (%i)", lwmsg_status_name(status), status);
 
         task->type = PEER_TASK_DONE;
         *next_trigger = LWMSG_TASK_TRIGGER_YIELD;

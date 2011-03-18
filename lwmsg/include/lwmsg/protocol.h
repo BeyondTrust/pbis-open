@@ -211,24 +211,6 @@ lwmsg_protocol_delete(
     );
 
 /**
- * @brief Retrieve last error message
- *
- * Retrives a human-readable error message for the last error that occured
- * on the specified protocol object.  The returned string will become undefined
- * if another function called on the protocol returns an error or the protocol
- * is deleted.
- *
- * @param[in] prot the protocol object
- * @param[in] status the status code of the last error
- * @return a human-readable error string
- */
-const char*
-lwmsg_protocol_get_error_message(
-    LWMsgProtocol* prot,
-    LWMsgStatus status
-    );
-
-/**
  * @ingroup protocol
  * @brief Specify a message tag and type
  *

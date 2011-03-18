@@ -503,7 +503,7 @@ lwmsg_set_close_on_exec(
 {
     if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0)
     {
-        return lwmsg_error_map_errno(errno);
+        return lwmsg_status_map_errno(errno);
     }
     else
     {
@@ -522,7 +522,7 @@ lwmsg_set_block_sigpipe(
     
     if (setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &on, sizeof(on)) < 0)
     {
-        BAIL_ON_ERROR(status = lwmsg_error_map_errno(errno));
+        BAIL_ON_ERROR(status = lwmsg_status_map_errno(errno));
     }
 
 error:

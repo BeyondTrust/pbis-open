@@ -281,15 +281,6 @@ error:
     return status;
 }
 
-const char*
-lwmsg_assoc_get_error_message(
-    LWMsgAssoc* assoc,
-    LWMsgStatus status
-    )
-{
-    return lwmsg_context_get_error_message(&assoc->context, status);
-}
-
 LWMsgAssocState
 lwmsg_assoc_get_state(
     LWMsgAssoc* assoc

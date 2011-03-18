@@ -230,7 +230,7 @@ lwmsg_archive_open_fd(
                 archive->mode);
             if (archive->fd < 0)
             {
-                BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&archive->base.context.error, errno));
+                BAIL_ON_ERROR(status = RAISE_ERRNO(&archive->base.context));
             }
         }
         else

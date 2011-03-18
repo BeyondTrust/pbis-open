@@ -1348,7 +1348,6 @@ recv_remote_send_back_failure(LWMsgAssoc* assoc)
     send.data = handle;
     status = lwmsg_assoc_send_message(assoc, &send);
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, status, LWMSG_STATUS_INVALID_HANDLE);
-    MU_VERBOSE("%s", lwmsg_assoc_get_error_message(assoc, status));
     MU_TRY_ASSOC(assoc, lwmsg_assoc_close(assoc));
 }
 

@@ -9,7 +9,6 @@ lwmsg_assoc_reset
 lwmsg_assoc_destroy_message
 lwmsg_assoc_free_graph
 lwmsg_assoc_set_timeout
-lwmsg_assoc_get_error_message
 lwmsg_assoc_get_state
 lwmsg_assoc_get_session
 lwmsg_assoc_connect
@@ -26,9 +25,7 @@ lwmsg_connection_set_endpoint
 lwmsg_local_token_get_eid
 lwmsg_local_token_get_pid
 lwmsg_local_token_new
-lwmsg_error_message
-lwmsg_error_clear
-lwmsg_error_map_errno
+lwmsg_status_map_errno
 lwmsg_call_dispatch
 lwmsg_call_pend
 lwmsg_call_complete
@@ -45,9 +42,9 @@ lwmsg_context_set_memory_functions
 lwmsg_context_get_memory_functions
 lwmsg_context_set_data_function
 lwmsg_context_set_log_function
-lwmsg_context_get_error_message
 lwmsg_context_log
 lwmsg_context_log_printf
+lwmsg_context_raise
 lwmsg_context_would_log
 lwmsg_context_alloc
 lwmsg_context_free
@@ -56,11 +53,9 @@ lwmsg_memlist_init
 lwmsg_memlist_destroy
 lwmsg_data_context_new
 lwmsg_data_context_delete
-lwmsg_data_context_get_error_message
 lwmsg_data_context_set_byte_order
 lwmsg_data_context_get_byte_order
 lwmsg_data_context_get_context
-lwmsg_data_context_raise_error
 lwmsg_data_marshal
 lwmsg_data_marshal_flat
 lwmsg_data_marshal_flat_alloc
@@ -80,7 +75,6 @@ lwmsg_protocol_get_message_name
 lwmsg_protocol_new
 lwmsg_protocol_add_protocol_spec
 lwmsg_protocol_delete
-lwmsg_protocol_get_error_message
 lwmsg_protocol_print
 lwmsg_protocol_print_alloc
 lwmsg_time_now
@@ -93,8 +87,6 @@ lwmsg_clock_get_wall_time
 lwmsg_clock_get_monotonic_time
 lwmsg_context_setup
 lwmsg_context_cleanup
-lwmsg_error_raise
-lwmsg_error_propagate
 lwmsg_convert_integer
 lwmsg_security_token_new
 lwmsg_security_token_get_private
@@ -133,7 +125,7 @@ lwmsg_archive_read_message
 lwmsg_archive_destroy_message
 lwmsg_fd_type_class
 lwmsg_handle_type_class
-lwmsg_error_name
+lwmsg_status_name
 lwmsg_set_close_on_exec
 lwmsg_type_get_flags
 lwmsg_type_get_custom_flags

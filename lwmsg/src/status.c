@@ -83,7 +83,7 @@ static const StatusInfo status_info[] =
 };
 
 LWMsgStatus
-lwmsg_error_map_errno(
+lwmsg_status_map_errno(
     int err
     )
 {
@@ -113,154 +113,8 @@ lwmsg_error_map_errno(
     }
 }
 
-void
-lwmsg_error_clear(
-    LWMsgErrorContext* context
-    )
-{
-    if (context->message)
-    {
-        free(context->message);
-    }
-
-    context->status = LWMSG_STATUS_SUCCESS;
-}
-
-LWMsgStatus
-lwmsg_error_raise_str(
-    LWMsgErrorContext* context,
-    LWMsgStatus status,
-    const char* message
-    )
-{
-    lwmsg_error_clear(context);
-
-    context->status = status;
-
-    if (message != NULL)
-    {
-        context->message = strdup(message);
-        
-        if (!context->message)
-        {
-            /* Out of memory */
-            return LWMSG_STATUS_MEMORY;
-        }
-    }
-
-    return status;
-}
-
-LWMsgStatus
-lwmsg_error_raise_take_str(
-    LWMsgErrorContext* context,
-    LWMsgStatus status,
-    char* message
-    )
-{
-    lwmsg_error_clear(context);
-
-    context->status = status;
-    context->message = message;
-
-    return status;
-}
-
-LWMsgStatus
-lwmsg_error_raise_errno(
-    LWMsgErrorContext* context,
-    int err
-    )
-{
-    LWMsgStatus status = lwmsg_error_map_errno(err);
-    char* message = NULL;
-
-    if (lwmsg_strerror(err, &message) == LWMSG_STATUS_MEMORY)
-    {
-        lwmsg_error_clear(context);
-        status = context->status = LWMSG_STATUS_MEMORY;
-        return status;
-    }
-    else
-    {
-        return lwmsg_error_raise_take_str(context, status, message);
-    }
-}
-
-                  
-LWMsgStatus
-lwmsg_error_raise_v(
-    LWMsgErrorContext* context,
-    LWMsgStatus status,
-    const char* fmt,
-    va_list ap
-    )
-{
-    char* message = lwmsg_formatv(fmt, ap);
-    
-    if (!message)
-    {
-        return lwmsg_error_raise_str(context, LWMSG_STATUS_MEMORY, NULL);
-    }
-    else
-    {
-        lwmsg_error_clear(context);
-        context->status = status;
-        context->message = message;
-        return status;
-    }
-}
-
-LWMsgStatus
-lwmsg_error_raise(
-    LWMsgErrorContext* context,
-    LWMsgStatus status,
-    const char* fmt,
-    ...
-    )
-{
-    va_list ap;
-    char* message;
-
-    va_start(ap, fmt);
-    message = lwmsg_formatv(fmt, ap);
-    va_end(ap);
-
-    if (!message)
-    {
-        return lwmsg_error_raise_str(context, LWMSG_STATUS_MEMORY, NULL);
-    }
-    else
-    {
-        lwmsg_error_clear(context);
-        context->status = status;
-        context->message = message;
-        return status;
-    }
-}
-
 const char*
-lwmsg_error_message(
-    LWMsgStatus status,
-    LWMsgErrorContext* context
-    )
-{
-    if (context != NULL && context->message != NULL)
-    {
-        return context->message;
-    }
-    else if (status < (sizeof(status_info) / sizeof(*status_info)) && status_info[status].message)
-    {
-        return status_info[status].message;
-    }
-    else
-    {
-        return "unknown";
-    }
-}
-
-const char*
-lwmsg_error_name(
+lwmsg_status_name(
     LWMsgStatus status
     )
 {
@@ -272,22 +126,4 @@ lwmsg_error_name(
     {
         return "unknown";
     }
-}
-
-LWMsgStatus
-lwmsg_error_propagate(
-    LWMsgErrorContext* from_context,
-    LWMsgErrorContext* to_context,
-    LWMsgStatus status
-    )
-{
-    if (status != LWMSG_STATUS_SUCCESS && from_context->status == status)
-    {
-        to_context->message = from_context->message;
-        from_context->message = NULL;
-    }
-
-    to_context->status = status;
-
-    return status;
 }

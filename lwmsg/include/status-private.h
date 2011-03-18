@@ -42,76 +42,14 @@
 
 #include <lwmsg/status.h>
 
-typedef struct LWMsgErrorContext
-{
-    LWMsgStatus status;
-    char* message;
-} LWMsgErrorContext;
-
 const char*
-lwmsg_error_name(
+lwmsg_status_name(
     LWMsgStatus status
     );
 
 LWMsgStatus
-lwmsg_error_map_errno(
+lwmsg_status_map_errno(
     int err
     );
-
-void
-lwmsg_error_clear(
-    LWMsgErrorContext* context
-    );
-
-LWMsgStatus
-lwmsg_error_raise_str(
-    LWMsgErrorContext* context,
-    LWMsgStatus status,
-    const char* message
-    );
-       
-LWMsgStatus
-lwmsg_error_raise_take_str(
-    LWMsgErrorContext* context,
-    LWMsgStatus status,
-    char* message
-    );
-
-LWMsgStatus
-lwmsg_error_raise_errno(
-    LWMsgErrorContext* context,
-    int err
-    );
-           
-LWMsgStatus
-lwmsg_error_raise_v(
-    LWMsgErrorContext* context,
-    LWMsgStatus status,
-    const char* fmt,
-    va_list ap
-    );
-
-LWMsgStatus
-lwmsg_error_raise(
-    LWMsgErrorContext* context,
-    LWMsgStatus status,
-    const char* fmt,
-    ...
-    );
-                      
-const char*
-lwmsg_error_message(
-    LWMsgStatus status,
-    LWMsgErrorContext* context
-    );
-
-LWMsgStatus
-lwmsg_error_propagate(
-    LWMsgErrorContext* from_context,
-    LWMsgErrorContext* to_context,
-    LWMsgStatus status
-    );
-
-#define RAISE(ec, expr, ...) (lwmsg_error_raise((ec), (expr), __VA_ARGS__))
 
 #endif

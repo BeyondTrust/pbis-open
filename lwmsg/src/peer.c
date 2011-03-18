@@ -90,9 +90,9 @@ lwmsg_peer_new(
 
     peer->context = context;
 
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(pthread_mutex_init(&peer->lock, NULL)));
+    BAIL_ON_ERROR(status = lwmsg_status_map_errno(pthread_mutex_init(&peer->lock, NULL)));
     peer->lock_init = LWMSG_TRUE;
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(pthread_cond_init(&peer->event, NULL)));
+    BAIL_ON_ERROR(status = lwmsg_status_map_errno(pthread_cond_init(&peer->event, NULL)));
     peer->event_init = LWMSG_TRUE;
 
     BAIL_ON_ERROR(status = lwmsg_task_acquire_manager(&peer->task_manager));
@@ -151,8 +151,6 @@ lwmsg_peer_delete(
 {
     lwmsg_peer_stop_listen(peer);
     lwmsg_peer_disconnect(peer);
-
-    lwmsg_error_clear(&peer->error);
 
     if (peer->listen_tasks)
     {
@@ -220,7 +218,7 @@ lwmsg_peer_set_timeout(
     if (value != NULL &&
         (value->seconds < 0 || value->microseconds < 0))
     {
-        PEER_RAISE_ERROR(peer, status = LWMSG_STATUS_INVALID_PARAMETER,
+        PEER_RAISE_ERROR(peer->context, status = LWMSG_STATUS_INVALID_PARAMETER,
                            "Invalid (negative) timeout value");
     }
     
@@ -236,7 +234,7 @@ lwmsg_peer_set_timeout(
         target = &peer->timeout.idle;
         break;
     default:
-        PEER_RAISE_ERROR(peer, status = LWMSG_STATUS_UNSUPPORTED,
+        PEER_RAISE_ERROR(peer->context, status = LWMSG_STATUS_UNSUPPORTED,
                           "Unsupported timeout type");
     }
 

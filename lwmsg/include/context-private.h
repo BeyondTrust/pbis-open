@@ -53,7 +53,6 @@ struct LWMsgContext
     void* datafndata;
     LWMsgLogFunction logfn;
     void* logfndata;
-    LWMsgErrorContext error;
     
     const struct LWMsgContext* parent;
 };
@@ -104,6 +103,17 @@ lwmsg_context_log_printf(
     ...
     );
 
+LWMsgStatus
+lwmsg_context_raise(
+    const LWMsgContext* context,
+    LWMsgStatus status,
+    const char* function,
+    const char* filename,
+    unsigned int line,
+    const char* format,
+    ...
+    );
+
 LWMsgBool
 lwmsg_context_would_log(
     const LWMsgContext* context,
@@ -140,5 +150,10 @@ lwmsg_memlist_context(
 #define LWMSG_LOG_VERBOSE(context, ...) LWMSG_LOG(context, LWMSG_LOGLEVEL_VERBOSE, __VA_ARGS__)
 #define LWMSG_LOG_DEBUG(context, ...) LWMSG_LOG(context, LWMSG_LOGLEVEL_DEBUG, __VA_ARGS__)
 #define LWMSG_LOG_TRACE(context, ...) LWMSG_LOG(context, LWMSG_LOGLEVEL_TRACE, __VA_ARGS__)
+
+#define RAISE(context, status, ...) \
+    (lwmsg_context_raise((context), (status), __func__, __FILE__, __LINE__, __VA_ARGS__))
+
+#define RAISE_ERRNO(context) RAISE((context), lwmsg_status_map_errno(errno), NULL)
 
 #endif

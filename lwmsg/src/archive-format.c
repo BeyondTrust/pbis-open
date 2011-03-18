@@ -70,7 +70,7 @@ lwmsg_archive_write_fd(
         
         if (written < 0)
         {
-            BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&archive->base.context.error, errno));
+            BAIL_ON_ERROR(status = RAISE_ERRNO(&archive->base.context));
         }
 
         remaining -= written;
@@ -107,7 +107,7 @@ lwmsg_archive_read_fd(
         
         if (count < 0)
         {
-            BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&archive->base.context.error, errno));
+            BAIL_ON_ERROR(status = RAISE_ERRNO(&archive->base.context));
         }
         else if (count == 0)
         {
@@ -148,7 +148,7 @@ lwmsg_archive_seek_fd(
 
     if ((new_position = lseek(archive->fd, position, SEEK_SET)) == (off_t) -1)
     {
-        BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&archive->base.context.error, errno));
+        BAIL_ON_ERROR(status = RAISE_ERRNO(&archive->base.context));
     }
 
     archive->offset = new_position;

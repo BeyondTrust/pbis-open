@@ -49,7 +49,6 @@
 struct LWMsgProtocol
 {
     LWMsgContext* context;
-    LWMsgErrorContext error;
     /* Number of message types in this protocol */
     size_t num_types;
     /* Pointers to protocol spec entries indexed by message tag */

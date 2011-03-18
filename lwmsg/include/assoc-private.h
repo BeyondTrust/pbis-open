@@ -213,7 +213,7 @@ struct LWMsgAssoc
     AssocCall call;
 };
 
-#define ASSOC_RAISE_ERROR(_assoc_, ...) RAISE_ERROR(&(_assoc_)->context, __VA_ARGS__)
+#define ASSOC_RAISE_ERROR(_assoc_, ...) BAIL_ON_ERROR(status = RAISE(&(_assoc_)->context, __VA_ARGS__))
 
 /**
  * @ingroup assoc_impl

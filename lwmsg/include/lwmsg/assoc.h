@@ -355,24 +355,6 @@ lwmsg_assoc_free_graph(
 
 /**
  * @ingroup assoc
- * @brief Retrieve last error message
- *
- * Fetches the error message for the last error which occured on the specified association.
- *
- * @param[in] assoc the assocation
- * @param[in] status the status code of the last error
- * @return a human-readable string describing the error.  The string becomes undefined
- * if another function is called on the assocation and returns an error or the
- * assocation is deleted.
- */
-const char*
-lwmsg_assoc_get_error_message(
-    LWMsgAssoc* assoc,
-    LWMsgStatus status
-    );
-
-/**
- * @ingroup assoc
  * @brief Get current session
  * 
  * Gets the current session for the specified association.  The session can be used

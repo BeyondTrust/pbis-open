@@ -242,7 +242,7 @@ lwmsg_data_marshal_integer(
     if (iter->attrs.flags & LWMSG_TYPE_FLAG_RANGE)
     {
         BAIL_ON_ERROR(status = lwmsg_data_verify_range(
-                          &context->error,
+                          context->context,
                           iter,
                           object,
                           in_size));
@@ -304,7 +304,7 @@ lwmsg_data_marshal_enum(
     if (iter->attrs.flags & LWMSG_TYPE_FLAG_RANGE)
     {
         BAIL_ON_ERROR(status = lwmsg_data_verify_range(
-                          &context->error,
+                          context->context,
                           iter,
                           object,
                           in_size));

@@ -63,7 +63,6 @@ typedef struct LWMsgObjectMap
 
 struct LWMsgDataContext
 {
-    LWMsgErrorContext error;
     const LWMsgContext* context;
     LWMsgByteOrder byte_order;
 };
@@ -76,8 +75,7 @@ typedef struct LWMsgMarshalState
 
 #define MAX_INTEGER_SIZE (16)
 
-#define MARSHAL_RAISE_ERROR(hand, expr, ...) \
-    BAIL_ON_ERROR(lwmsg_data_context_raise_error((hand), (expr), __VA_ARGS__))
+#define MARSHAL_RAISE_ERROR(hand, expr, ...) BAIL_ON_ERROR(status = RAISE((hand)->context, (expr), __VA_ARGS__))
 
 typedef struct LWMsgUnmarshalState
 {
@@ -166,7 +164,7 @@ lwmsg_data_decode_enum_value(
 
 LWMsgStatus
 lwmsg_data_verify_range(
-    LWMsgErrorContext* error,
+    const LWMsgContext* context,
     LWMsgTypeIter* iter,
     void* object,
     size_t object_size

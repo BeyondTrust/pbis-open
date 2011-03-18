@@ -84,18 +84,7 @@ lwmsg_data_context_delete(
     LWMsgDataContext* context
     )
 {
-    lwmsg_error_clear(&context->error);
-
     free(context);
-}
-
-const char*
-lwmsg_data_context_get_error_message(
-    LWMsgDataContext* context,
-    LWMsgStatus status
-    )
-{
-    return lwmsg_error_message(status, &context->error);
 }
 
 void
@@ -121,25 +110,6 @@ lwmsg_data_context_get_context(
     )
 {
     return context->context;
-}
-
-LWMsgStatus
-lwmsg_data_context_raise_error(
-    LWMsgDataContext* context,
-    LWMsgStatus status,
-    const char* format,
-    ...
-    )
-{
-    va_list ap;
-
-    va_start(ap, format);
-
-    status = lwmsg_error_raise_v(&context->error, status, format, ap);
-
-    va_end(ap);
-
-    return status;
 }
 
 LWMsgStatus

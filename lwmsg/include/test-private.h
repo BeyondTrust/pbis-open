@@ -40,45 +40,6 @@
 
 #include "status-private.h"
 
-#define MU_TRY_DCONTEXT(_dcontext_, _x_)                                \
-    do                                                                  \
-    {                                                                   \
-        LWMsgStatus __status__ = (_x_);                                 \
-        if (__status__)                                                 \
-            Mu_Interface_Result(                                        \
-                __FILE__,                                               \
-                __LINE__,                                               \
-                MU_STATUS_EXCEPTION,                                    \
-                "%s",                                                   \
-                lwmsg_data_context_get_error_message(_dcontext_, __status__)); \
-    } while (0)
-
-#define MU_TRY_PROTOCOL(_context_, _x_)                                 \
-    do                                                                  \
-    {                                                                   \
-        LWMsgStatus __status__ = (_x_);                                 \
-        if (__status__)                                                 \
-            Mu_Interface_Result(                                        \
-                __FILE__,                                               \
-                __LINE__,                                               \
-                MU_STATUS_EXCEPTION,                                    \
-                "%s",                                                   \
-                lwmsg_protocol_get_error_message(_context_, __status__)); \
-    } while (0)
-
-#define MU_TRY_ASSOC(_context_, _x_)                                    \
-    do                                                                  \
-    {                                                                   \
-        LWMsgStatus __status__ = (_x_);                                 \
-        if (__status__)                                                 \
-            Mu_Interface_Result(                                        \
-                __FILE__,                                               \
-                __LINE__,                                               \
-                MU_STATUS_EXCEPTION,                                    \
-                "%s",                                                   \
-                lwmsg_assoc_get_error_message(_context_, __status__));  \
-    } while (0)
-
 #define MU_TRY(_x_)                                                     \
     do                                                                  \
     {                                                                   \
@@ -89,8 +50,12 @@
                 __LINE__,                                               \
                 MU_STATUS_EXCEPTION,                                    \
                 "%s",                                                   \
-                lwmsg_error_name(__status__));                          \
+                lwmsg_status_name(__status__));                         \
     } while (0)
+
+#define MU_TRY_DCONTEXT(_dcontext_, _x_) MU_TRY((_x_))
+#define MU_TRY_PROTOCOL(_context_, _x_) MU_TRY((_x_))
+#define MU_TRY_ASSOC(_context_, _x_) MU_TRY((_x_))
 
 #define TEST_ENDPOINT "/tmp/.lwmsg_server_test_socket"
 #define TEST_ARCHIVE "/tmp/.lwmsg_test_archive"

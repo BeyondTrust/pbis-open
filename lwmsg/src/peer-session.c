@@ -814,18 +814,18 @@ lwmsg_peer_session_new(
 
     session->refs = 1;
 
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(
+    BAIL_ON_ERROR(status = lwmsg_status_map_errno(
         pthread_mutexattr_init(&attr)));
     attr_destroy = LWMSG_TRUE;
 
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(
+    BAIL_ON_ERROR(status = lwmsg_status_map_errno(
         pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE)));
 
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(
+    BAIL_ON_ERROR(status = lwmsg_status_map_errno(
         pthread_mutex_init(&session->lock, &attr)));
     session->lock_destroy = LWMSG_TRUE;
 
-    BAIL_ON_ERROR(status = lwmsg_error_map_errno(
+    BAIL_ON_ERROR(status = lwmsg_status_map_errno(
         pthread_cond_init(&session->event, NULL)));
     session->event_destroy = LWMSG_TRUE;
 

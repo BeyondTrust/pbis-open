@@ -124,6 +124,6 @@ lwmsg_archive_read_message_fd(
     LWMsgMessage* message
     );
 
-#define ARCHIVE_RAISE_ERROR(_archive_, ...) RAISE_ERROR(&(_archive_)->base.context, __VA_ARGS__)
+#define ARCHIVE_RAISE_ERROR(_archive_, ...) BAIL_ON_ERROR(status = RAISE(&(_archive_)->base.context, __VA_ARGS__))
 
 #endif

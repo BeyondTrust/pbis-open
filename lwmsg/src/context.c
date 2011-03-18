@@ -136,7 +136,7 @@ error:
 void
 lwmsg_context_cleanup(LWMsgContext* context)
 {
-    lwmsg_error_clear(&context->error);
+    return;
 }
 
 void
@@ -159,15 +159,6 @@ lwmsg_context_set_memory_functions(
     context->free = free;
     context->realloc = realloc;
     context->memdata = data;
-}
-
-const char*
-lwmsg_context_get_error_message(
-    LWMsgContext* context,
-    LWMsgStatus status
-    )
-{
-    return lwmsg_error_message(status, &context->error);
 }
 
 void
@@ -349,6 +340,54 @@ lwmsg_context_log_printf(
             free(message);
         }
     }
+}
+
+LWMsgStatus
+lwmsg_context_raise(
+    const LWMsgContext* context,
+    LWMsgStatus status,
+    const char* function,
+    const char* filename,
+    unsigned int line,
+    const char* format,
+    ...
+    )
+{
+    char* message = NULL;
+    va_list ap;
+
+    if (format)
+    {
+        va_start(ap, format);
+        message = lwmsg_formatv(format, ap);
+        va_end(ap);
+    }
+
+    if (message)
+    {
+        lwmsg_context_log_printf(
+            context,
+            LWMSG_LOGLEVEL_ERROR,
+            function,
+            filename,
+            line,
+            "%s: %s",
+            lwmsg_status_name(status),
+            message);
+    }
+    else
+    {
+        lwmsg_context_log_printf(
+            context,
+            LWMSG_LOGLEVEL_ERROR,
+            function,
+            filename,
+            line,
+            "%s",
+            lwmsg_status_name(status));
+    }
+
+    return status;
 }
 
 LWMsgStatus

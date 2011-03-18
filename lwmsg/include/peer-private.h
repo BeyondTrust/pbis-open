@@ -266,8 +266,7 @@ struct LWMsgHandle
 
 
 struct LWMsgPeer
-{    
-    LWMsgErrorContext error;
+{
     const LWMsgContext* context;
     LWMsgProtocol* protocol;
     LWMsgTaskManager* task_manager;

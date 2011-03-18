@@ -85,26 +85,8 @@ struct msghdr;
         }                                       \
     } while (0)
 
-#define RAISE_ERROR(_context_, _status_, ...)        \
-    do                                               \
-    {                                                \
-        (void) lwmsg_error_raise(                    \
-            &(_context_)->error,                     \
-            (_status_),                              \
-            __VA_ARGS__);                            \
-        goto error;                                  \
-    } while (0)
-
-#define PROPAGATE_ERROR(_from_, _to_, _status_) \
-    do {                                        \
-        if (lwmsg_error_propagate(              \
-                &(_from_)->error,               \
-                &(_to_)->error,                 \
-                (_status_)))                    \
-        {                                       \
-            goto error;                         \
-        }                                       \
-    } while (0)
+#define RAISE_ERROR(_context_, _status_, ...) \
+    BAIL_ON_ERROR(status = RAISE((_context_), (_status_), __VA_ARGS__))
 
 #define LWMSG_ALLOC_ARRAY(_count_, _obj_) \
     ((*(_obj_) = calloc((_count_), sizeof **(_obj_))) ? LWMSG_STATUS_SUCCESS : LWMSG_STATUS_MEMORY)

@@ -234,7 +234,7 @@ lwmsg_local_token_from_socket_peer(
 #elif defined(HAVE_GETPEEREID) && HAVE_DECL_GETPEEREID
     if (getpeereid(fd, &uid, &gid))
     {
-        BAIL_ON_ERROR(status = lwmsg_error_map_errno(errno));
+        BAIL_ON_ERROR(status = lwmsg_status_map_errno(errno));
     }
 #elif defined(SO_PEERCRED)
     struct ucred creds;
@@ -242,7 +242,7 @@ lwmsg_local_token_from_socket_peer(
 
     if (getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &creds, &creds_len))
     {
-        BAIL_ON_ERROR(status = lwmsg_error_map_errno(errno));
+        BAIL_ON_ERROR(status = lwmsg_status_map_errno(errno));
     }
 
     uid = creds.uid;
@@ -271,7 +271,7 @@ lwmsg_connection_get_endpoint_owner(
 
     if (stat(endpoint, &endpoint_stat))
     {
-        BAIL_ON_ERROR(status = lwmsg_error_raise_errno(&assoc->context.error, errno));
+        BAIL_ON_ERROR(status = RAISE_ERRNO(&assoc->context));
     }
 
     if (!S_ISSOCK(endpoint_stat.st_mode))
