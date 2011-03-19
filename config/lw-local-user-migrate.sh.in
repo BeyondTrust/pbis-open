@@ -287,6 +287,8 @@ MigrateProfile()
             echo "Moving existing $DestHomeDirectory to $DestHomeDirectory.old"
             mv -f "$DestHomeDirectory" "$DestHomeDirectory".old
         fi
+        mkdir -p "$DestHomeDirectory"
+        rmdir "$DestHomeDirectory"
         echo "mv -f -v $SourceHomeDirectory $DestHomeDirectory"
         mv -f -v "$SourceHomeDirectory" "$DestHomeDirectory"
         if [ $? -ne 0 ]; then
