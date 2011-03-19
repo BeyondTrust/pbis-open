@@ -116,6 +116,9 @@ DJItfJoinDomain(
         LW_CLEANUP_CTERR(&pException, CTStrdup(pszPassword, &options.password));
     }
 
+    // Need to set the value per the UI setting
+    options.setAssumeDefaultDomain = TRUE;
+
     if (bAssumeDefaultDomain)
     {
         options.assumeDefaultDomain = TRUE;
