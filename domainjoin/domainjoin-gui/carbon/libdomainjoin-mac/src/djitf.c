@@ -117,7 +117,7 @@ DJItfJoinDomain(
     }
 
     // Need to set the value per the UI setting
-    options->setAssumeDefaultDomain = TRUE;
+    options.setAssumeDefaultDomain = TRUE;
 
     if (bAssumeDefaultDomain)
     {
