@@ -79,8 +79,11 @@ typedef struct _SM_TABLE_ENTRY
     BOOL volatile bValid;
     /* Has pInfo been changed since the service was last constructed? */
     BOOL volatile bDirty;
-    /* How many automatic restarts have we attempted? */
-    DWORD RestartAttempts;
+    /* How many times have we started the service?
+     * A count of 0 means the service should be stopped. A count of
+     * 1 or more means the service should be started.
+     */
+    DWORD StartAttempts;
     /* When did we begin the last restart period? */
     time_t LastRestartPeriod;
     /* Lock controlling access to entry */

@@ -423,9 +423,12 @@ LwSmTableStartEntry(
         switch (status.state)
         {
         case LW_SERVICE_STATE_RUNNING:
+            pEntry->StartAttempts = 1;
             break;
         case LW_SERVICE_STATE_STOPPED:
         case LW_SERVICE_STATE_DEAD:
+            pEntry->StartAttempts = 0;
+
             if (dwAttempts == 0)
             {
                 LW_SAFE_FREE_MEMORY(pszServiceName);
@@ -506,6 +509,7 @@ LwSmTableStopEntry(
         {
         case LW_SERVICE_STATE_RUNNING:
         case LW_SERVICE_STATE_DEAD:
+            pEntry->StartAttempts = 0;
             /* A service that is dead should go directly
                to the stop state when requested */
             if (dwAttempts == 0)
@@ -927,21 +931,22 @@ LwSmTableNotifyEntryStateChanged(
         error = LwWc16sToMbs(pEntry->pInfo->pwszName, &pServiceName);
         BAIL_ON_ERROR(error);
 
-        if ((now - pEntry->LastRestartPeriod) > RESTART_PERIOD)
+        if (pEntry->StartAttempts >= 1 &&
+            (now - pEntry->LastRestartPeriod) > RESTART_PERIOD)
         {
-            pEntry->RestartAttempts = 0;
+            pEntry->StartAttempts = 1;
             pEntry->LastRestartPeriod = now;
         }
 
-        if (pEntry->RestartAttempts < RESTART_LIMIT)
+        if (pEntry->StartAttempts > 0 && pEntry->StartAttempts < RESTART_LIMIT)
         {
-            pEntry->RestartAttempts++;
+            pEntry->StartAttempts++;
             pEntry->dwRefCount++;
 
             SM_LOG_WARNING(
                 "Restarting dead service: %s (attempt %u/%u)",
                 pServiceName,
-                (unsigned int) pEntry->RestartAttempts,
+                (unsigned int) pEntry->StartAttempts,
                 (unsigned int) RESTART_LIMIT);
 
 
@@ -952,13 +957,19 @@ LwSmTableNotifyEntryStateChanged(
             }
             BAIL_ON_ERROR(error);
         }
-        else
+        else if (pEntry->StartAttempts >= 1)
         {
             SM_LOG_ERROR(
                 "Service died: %s (restarted %u times in %lu seconds)",
                 pServiceName,
-                (unsigned int) pEntry->RestartAttempts,
+                (unsigned int) pEntry->StartAttempts,
                 (unsigned long) (now - pEntry->LastRestartPeriod));
+        }
+        else
+        {
+            SM_LOG_ERROR(
+                "Service failed to start: %s",
+                pServiceName);
         }
     }
 
