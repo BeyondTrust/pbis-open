@@ -641,10 +641,12 @@ RpcdSvcmStop(
     PLW_SVCM_INSTANCE pInstance
     )
 {
-    error_status_t status = 0;
+    error_status_t status = rpc_s_ok;
 
-    rpc_mgmt_stop_server_listening(NULL, &status);
-    GCOS(status);
+    /*
+     * Cancel listener thread
+     */
+    dcethread_interrupt_throw(listen_thread);
 
     /*
      * Wait for listener thread to exit
@@ -660,8 +662,6 @@ RpcdSvcmStop(
      * Join network detection thread
      */
     dcethread_join_throw(network_thread, NULL);
-
-cleanup:
 
     return LwRpcStatusToNtStatus(status);
 }
