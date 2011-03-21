@@ -205,6 +205,28 @@ error:
 
 static
 DWORD
+Usage(
+    int argc,
+    char** pArgv
+    )
+{
+    DWORD dwError = 0;
+
+    printf("Usage: %s [ options ... ]\n\n", pArgv[0]);
+    printf("Options:\n"
+           "    --start-as-daemon      Start as a background process\n"
+           "    --syslog               Log to syslog (default when starting as daemon)\n"
+           "    --logfile              Log to file\n"
+           "    --loglevel <level>     Set log level to <level>\n"
+           "                           (error, warning, info, verbose, debug, trace)\n"
+           "    --container <group>    Start as a container for service group <group>\n"
+           "    --help                 Show usage information\n");
+
+    return dwError;
+}
+
+static
+DWORD
 LwSmParseArguments(
     int argc,
     char** ppszArgv
@@ -276,6 +298,11 @@ LwSmParseArguments(
                 BAIL_ON_ERROR(dwError);
 
                 gState.bContainer = TRUE;
+            }
+            else if (!strcmp(ppszArgv[i], "--help"))
+            {
+                Usage(argc, ppszArgv);
+                exit(0);
             }
         }
     }
