@@ -81,14 +81,15 @@ INTERNAL int    psv_str_size;	/* mem alloc size for protseq strings */
 INTERNAL rpc_listener_state_t       listener_state;
 
 /*
- * Boolean indicating whether a thread has called "rpc_server_listen".
+ * Integer indicating how many threads are in "rpc_server_listen".
  */
-INTERNAL boolean                    in_server_listen;
+INTERNAL int volatile               in_server_listen;
 
 /*
- * Condition variable signalled to shutdown "rpc_server_listen" thread.
+ * Condition variable signaled to shutdown "rpc_server_listen" threads.
  */
 INTERNAL rpc_cond_t                 shutdown_cond;
+INTERNAL boolean volatile           do_shutdown;
 
 
 
@@ -332,122 +333,126 @@ PUBLIC void rpc_server_listen
     unsigned32              *status
 )
 {
-    int                     i;
-
+    int i;
+    boolean found = false;
 
     CODING_ERROR (status);
     RPC_VERIFY_INIT ();
 
     RPC_MUTEX_LOCK (listener_state.mutex);
 
-    /*
-     * Only one listener at a time, please.
-     */
-    if (in_server_listen)
+    if (in_server_listen++ == 0)
     {
-        *status = rpc_s_already_listening;
-        RPC_MUTEX_UNLOCK (listener_state.mutex);
-        return;
-    }
-                       
-    /*
-     * See if there are any server sockets.  We must add them to the real
-     * listener so it'll start select'ing on them.
-     */
-    for (i = 0; i < listener_state.high_water; i++)
-    {
-        rpc_listener_sock_p_t lsock = &listener_state.socks[i];
-
-        if (lsock->busy && lsock->is_server)
+        /*
+         * See if there are any server sockets.  We must add them to the real
+         * listener so it'll start select'ing on them.
+         */
+        for (i = 0; i < listener_state.high_water; i++)
         {
-            in_server_listen = true;
-            if (! lsock->is_active)
+            rpc_listener_sock_p_t lsock = &listener_state.socks[i];
+
+            if (lsock->busy && lsock->is_server)
             {
-                rpc__nlsn_activate_desc (&listener_state, i, status);
+                found = true;
+                if (! lsock->is_active)
+                {
+                    rpc__nlsn_activate_desc (&listener_state, i, status);
+                }
             }
         }
-    }
 
-    /*
-     * If we scanned the whole table and found no server sockets, there's
-     * no point being here.
-     */
-    if (! in_server_listen)
-    {
-        *status = rpc_s_no_protseqs_registered;
-        RPC_MUTEX_UNLOCK (listener_state.mutex);
-        return;
-    }
-                                  
-    /*
-     * Clear the status of the listener state table.
-     */
-    listener_state.status = rpc_s_ok;
+        /*
+         * If we scanned the whole table and found no server sockets, there's
+         * no point being here.
+         */
+        if (! found)
+        {
+            *status = rpc_s_no_protseqs_registered;
+            --in_server_listen;
+            RPC_MUTEX_UNLOCK (listener_state.mutex);
+            return;
+        }
 
-    /*
-     * Fire up the cthreads.
-     */
-    rpc__cthread_start_all (max_calls, status);
-    if (*status != rpc_s_ok)
-    {
-        RPC_MUTEX_UNLOCK (listener_state.mutex);
-        return;
+        /*
+         * Clear the status of the listener state table.
+         */
+        listener_state.status = rpc_s_ok;
+
+        /*
+         * Fire up the cthreads.
+         */
+        rpc__cthread_start_all (max_calls, status);
+        if (*status != rpc_s_ok)
+        {
+            --in_server_listen;
+            RPC_MUTEX_UNLOCK (listener_state.mutex);
+            return;
+        }
+
+        RPC_DBG_PRINTF (rpc_e_dbg_general, 2, ("(rpc_server_listen) cthreads started\n"));
+
+        do_shutdown = false;
     }
-    
-    RPC_DBG_PRINTF (rpc_e_dbg_general, 2, ("(rpc_server_listen) cthreads started\n"));
 
     /*
      * Wait until someone tells us to stop listening.
      */
     DCETHREAD_TRY
     {
-        RPC_COND_WAIT (shutdown_cond, listener_state.mutex);
+        while (!do_shutdown)
+        {
+            RPC_COND_WAIT (shutdown_cond, listener_state.mutex);
+        }
     }
     DCETHREAD_FINALLY
     {
         RPC_DBG_GPRINTF (("(rpc_server_listen) Shutting down...\n"));
 
-        /*
-         * Make the real listener stop listening on our server sockets now.
-         */
-    
-        for (i = 0; i < listener_state.high_water; i++)
+        if (--in_server_listen == 0)
         {
-            rpc_listener_sock_p_t lsock = &listener_state.socks[i];
-    
-            if (lsock->busy && lsock->is_server && lsock->is_active)
+            /*
+             * Make the real listener stop listening on our server sockets now.
+             */
+
+            for (i = 0; i < listener_state.high_water; i++)
             {
-                rpc__nlsn_deactivate_desc (&listener_state, i, status);
+                rpc_listener_sock_p_t lsock = &listener_state.socks[i];
+
+                if (lsock->busy && lsock->is_server && lsock->is_active)
+                {
+                    rpc__nlsn_deactivate_desc (&listener_state, i, status);
+                }
             }
+
+            /*
+             * Set return status from the value in the listener state table.
+             */
+            *status = listener_state.status;
+
+            /*
+             * Stop all the call executors (gracefully).
+             *
+             * Unlock the listener mutex while awaiting cthread termination.
+             * Failure to do this can result in deadlock (e.g. if a cthread/RPC
+             * tries to execute a "stop listening" while we're blocked with
+             * the listener's mutex held).
+             */
+
+            RPC_MUTEX_UNLOCK (listener_state.mutex);
+
+            /*
+             * Stop call threads after closing listener sockets to avoid hang
+             * if a request is received immediately after listener thread has
+             * stopped call threads (HP fix JAGad42160).
+             */
+            rpc__cthread_stop_all (status);
+
+            RPC_DBG_PRINTF (rpc_e_dbg_general, 2, ("(rpc_server_listen) cthreads stopped\n"));
         }
-    
-        in_server_listen = false;
-                    
-        /*
-         * Set return status from the value in the listener state table.
-         */
-        *status = listener_state.status;
-
-        /*
-         * Stop all the call executors (gracefully).
-         *
-         * Unlock the listener mutex while awaiting cthread termination.
-         * Failure to do this can result in deadlock (e.g. if a cthread/RPC
-         * tries to execute a "stop listening" while we're blocked with
-         * the listener's mutex held).
-         */
-
-        RPC_MUTEX_UNLOCK (listener_state.mutex);
-
-        /*
-         * Stop call threads after closing listener sockets to avoid hang
-         * if a request is received immediately after listener thread has
-         * stopped call threads (HP fix JAGad42160).
-         */
-        rpc__cthread_stop_all (status);
-
-        RPC_DBG_PRINTF (rpc_e_dbg_general, 2, ("(rpc_server_listen) cthreads stopped\n"));
-
+        else
+        {
+            *status = rpc_s_ok;
+        }
     }
     DCETHREAD_ENDTRY
 }
@@ -499,7 +504,8 @@ PRIVATE void rpc__server_stop_listening
         return;
     }
 
-    RPC_COND_SIGNAL (shutdown_cond, listener_state.mutex);
+    do_shutdown = true;
+    RPC_COND_BROADCAST(shutdown_cond, listener_state.mutex);
 
     RPC_MUTEX_UNLOCK (listener_state.mutex);
 
@@ -1716,8 +1722,9 @@ PRIVATE void rpc__network_remove_desc
      */
     if (! found_server_socket && in_server_listen)
     {
-        listener_state.status = rpc_s_no_protseqs_registered; 
-        RPC_COND_SIGNAL (shutdown_cond, listener_state.mutex);
+        listener_state.status = rpc_s_no_protseqs_registered;
+        do_shutdown = true;
+        RPC_COND_BROADCAST (shutdown_cond, listener_state.mutex);
     }
 
     /*
@@ -1788,7 +1795,7 @@ PRIVATE void rpc__network_init
     RPC_COND_INIT (listener_state.cond, listener_state.mutex);
 
     RPC_COND_INIT (shutdown_cond, listener_state.mutex);
-
+    do_shutdown = false;
 
     /*
      * Allocate a local protseq vector structure.
