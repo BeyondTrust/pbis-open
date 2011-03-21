@@ -1,6 +1,6 @@
 #!/bin/sh
 
-COMP_DEPENDENCIES="autoconf automake libtool lwmsg lwadvapi lwreg lwio"
+COMP_DEPENDENCIES="autoconf automake libtool lwmsg lwadvapi lwreg lwio dcerpc"
 COMP_SOURCES="${BUILD_ROOT}/src/linux/lwsm"
 COMP_INCREMENTAL=1
 
