@@ -57,7 +57,7 @@ server_lwsmd_LDADD = \
 	$(top_builddir)/common/liblwsmcommon.la \
 	-llwmsg -llwmsg_nothr -llwnetclientapi -llwioclient \
 	-lregclient -llwadvapi -llwadvapi_nothr -llwbase -llwbase_nothr \
-	@LIB_PTHREAD@
+	-ldcerpc @LIB_PTHREAD@
 
 bin_PROGRAMS = client/lwsm
 
