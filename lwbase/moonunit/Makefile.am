@@ -2,7 +2,18 @@ AM_CFLAGS = $(LWBASE_CFLAGS)
 AM_CPPFLAGS = $(LWBASE_CPPFLAGS) -I$(top_srcdir)/include
 AM_LDFLAGS = $(LWBASE_LDFLAGS)
 
-TEST_SOURCES = test-security.c test-atomic.c test-threadpool.c test-compare.c test-convert.c test-printf.c test-sddl.c test-hash.c
+TEST_SOURCES = \
+        test-security.c \
+        test-atomic.c \
+        test-threadpool.c \
+        test-compare.c \
+        test-convert.c \
+        test-printf.c \
+        test-sddl.c \
+        test-hash.c \
+        test-lwprintf.c \
+        test-rtlunicode-string.c \
+        test-rtlansi-string.c
 
 noinst_LTLIBRARIES = libbenchmark.la
 
@@ -21,13 +32,13 @@ lib_LTLIBRARIES += lwbase_mu.la
 endif
 
 lwbase_mu_la_SOURCES = \
-	test-stub.c \
-	$(TEST_SOURCES)
+    test-stub.c \
+    $(TEST_SOURCES)
 
 lwbase_mu_la_LIBADD = \
-	libbenchmark.la \
-	$(top_builddir)/src/liblwbase.la \
-	$(LIB_MOONUNIT)
+    libbenchmark.la \
+    $(top_builddir)/src/liblwbase.la \
+    $(LIB_MOONUNIT)
 
 lwbase_mu_la_LDFLAGS = -module -avoid-version
 

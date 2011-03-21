@@ -3,6 +3,7 @@ PUBLIC_HEADERS="\
         wchar16.h \
         wc16str.h \
         wc16printf.h \
+        lwprintf.h \
         lw/dscache.h \
         lw/errno.h \
         lw/ntstatus.h \

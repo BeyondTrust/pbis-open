@@ -39,7 +39,7 @@
  *        Base C-style String Functions
  *
  * Authors: Danilo Almeida (dalmeida@likewise.com)
- *
+ *          David Leimbach (dleimbach@likewise.com)
  */
 
 #include "includes.h"
@@ -47,6 +47,7 @@
 #include <lw/rtlmemory.h>
 #include <lw/rtlgoto.h>
 #include <wc16str.h>
+#include <lwprintf.h>
 #include <stdio.h>
 
 size_t
@@ -210,82 +211,6 @@ LwRtlCStringIsEqual(
     return LwRtlCStringCompare(pString1, pString2, bIsCaseSensitive) == 0;
 }
 
-/* Replacement for vasprintf */
-static
-char*
-my_vasprintf(
-    const char* fmt,
-    va_list ap
-    )
-{
-    int len;
-    va_list my_ap;
-    char* str, *str_new;
-
-    /* Some versions of vsnprintf won't accept
-       a null or zero-length buffer */
-    str = malloc(1);
-
-    if (!str)
-    {
-        return NULL;
-    }
-    
-    va_copy(my_ap, ap);
-    
-    len = vsnprintf(str, 1, fmt, my_ap);
-    
-    /* Some versions of vsnprintf return -1 when
-       the buffer was too small rather than the
-       number of characters that would be written,
-       so we have loop in search of a large enough
-       buffer */
-    if (len == -1)
-    {
-        int capacity = 16;
-        do
-        {
-            capacity *= 2;
-            va_copy(my_ap, ap);
-            str_new = realloc(str, capacity);
-            if (!str_new)
-            {
-                free(str);
-                return NULL;
-            }
-            str = str_new;
-        len = vsnprintf(str, capacity, fmt, my_ap);
-        } while (len == -1 || capacity <= len);
-        str[len] = '\0';
-        
-        return str;
-    }
-    else
-    {
-        va_copy(my_ap, ap);
-        
-        str_new = realloc(str, len+1);
-        
-        if (!str_new)
-        {
-            free(str);
-            return NULL;
-        }
-
-        str = str_new;
-
-        if (vsnprintf(str, len+1, fmt, my_ap) < len)
-        {
-            free(str);
-            return NULL;
-        }
-        else
-        {
-            return str;
-        }
-    }
-}
-
 NTSTATUS
 LwRtlCStringAllocatePrintfV(
     OUT PSTR* ppszString,
@@ -293,21 +218,14 @@ LwRtlCStringAllocatePrintfV(
     IN va_list Args
     )
 {
-    NTSTATUS status = 0;
-    PSTR pszNewString = NULL;
+    size_t charsWritten = 0;
 
-    // TODO -- Memory model? (currenlty using free)
-    // TODO -- Enhance with %Z, %wZ, etc.
-    pszNewString = my_vasprintf(pszFormat, Args);
-
-    if (pszNewString == NULL)
-    {
-        status = STATUS_INSUFFICIENT_RESOURCES;
-    }
-
-    *ppszString = pszNewString;
-
-    return status;
+    return LwErrnoToNtStatus(
+        LwPrintfAllocateStringV(
+        ppszString,
+        &charsWritten,
+        pszFormat,
+        Args));
 }
 
 NTSTATUS
@@ -338,24 +256,26 @@ LwRtlCStringAllocateAppendPrintfV(
     NTSTATUS status = 0;
     PSTR pszAddString = NULL;
     PSTR pszNewString = NULL;
-    PSTR pszResultString = *ppszString;
 
-    status = LwRtlCStringAllocatePrintfV(&pszAddString, pszFormat, Args);
+    status = LwRtlCStringAllocatePrintfV(
+                &pszAddString,
+                pszFormat,
+                Args);
     GOTO_CLEANUP_ON_STATUS(status);
 
-    if (pszResultString)
+    if (*ppszString)
     {
-        status = LwRtlCStringAllocatePrintf(&pszNewString, "%s%s", pszResultString, pszAddString);
+        status = LwRtlCStringAllocatePrintf(&pszNewString,
+                                            "%s%s",
+                                            *ppszString,
+                                            pszAddString);
         GOTO_CLEANUP_ON_STATUS(status);
-        LwRtlCStringFree(&pszResultString);
     }
     else
     {
         pszNewString = pszAddString;
         pszAddString = NULL;
     }
-
-    pszResultString = pszNewString;
 
 cleanup:
     if (status)
@@ -364,7 +284,8 @@ cleanup:
     }
     else
     {
-        *ppszString = pszResultString;
+        LwRtlCStringFree(ppszString);
+        *ppszString = pszNewString;
     }
 
     LwRtlCStringFree(&pszAddString);

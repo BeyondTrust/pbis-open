@@ -1,7 +1,6 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
-
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 /*
  * Copyright (c) Likewise Software.  All rights Reserved.
  *
@@ -39,7 +38,7 @@
  *        Base String API
  *
  * Authors: Danilo Almeida (dalmeida@likewise.com)
- *
+ *          David Leimbach (dleimbach@likewise.com)
  */
 
 #ifndef __RTL_STRING_H__
@@ -98,22 +97,22 @@ LwRtlCStringIsEqual(
 
 LW_NTSTATUS
 LwRtlCStringAllocatePrintf(
-    LW_OUT LW_PSTR* ppszString,
-    LW_IN LW_PCSTR pszFormat,
+    LW_OUT LW_PSTR* pNewString,
+    LW_IN LW_PCSTR Format,
     LW_IN ...
     );
 
 LW_NTSTATUS
 LwRtlCStringAllocatePrintfV(
-    LW_OUT LW_PSTR* ppszString,
-    LW_IN LW_PCSTR pszFormat,
+    LW_OUT LW_PSTR* pNewString,
+    LW_IN LW_PCSTR Format,
     LW_IN va_list Args
     );
 
 LW_NTSTATUS
 LwRtlCStringAllocateAppendPrintf(
-    LW_IN LW_OUT LW_PSTR* ppszString,
-    LW_IN LW_PCSTR pszFormat,
+    LW_IN LW_OUT LW_PSTR* pString,
+    LW_IN LW_PCSTR Format,
     ...
     );
 
@@ -166,6 +165,27 @@ LwRtlWC16StringAllocatePrintfW(
     LW_OUT LW_PWSTR* ppszString,
     LW_IN const wchar_t* pszFormat,
     LW_IN ...
+    );
+
+LW_NTSTATUS
+LwRtlWC16StringAllocatePrintf(
+    LW_OUT LW_PWSTR* pNewString,
+    LW_IN LW_PCSTR Format,
+    LW_IN ...
+    );
+
+LW_NTSTATUS
+LwRtlWC16StringAllocatePrintfV(
+    LW_OUT LW_PWSTR* pNewString,
+    LW_IN LW_PCSTR Format,
+    LW_IN va_list Args
+    );
+
+LW_NTSTATUS
+LwRtlWC16StringAllocateAppendPrintf(
+    LW_IN LW_OUT LW_PWSTR* pString,
+    LW_IN LW_PCSTR Format,
+    ...
     );
 
 // UNICODE_STRING strings
@@ -247,6 +267,27 @@ LwRtlUnicodeStringAllocatePrintfW(
     LW_IN ...
     );
 
+LW_NTSTATUS
+LwRtlUnicodeStringAllocatePrintf(
+    LW_OUT LW_PUNICODE_STRING pNewString,
+    LW_IN LW_PCSTR Format,
+    LW_IN ...
+    );
+
+LW_NTSTATUS
+LwRtlUnicodeStringAllocatePrintfV(
+    LW_OUT LW_PUNICODE_STRING pNewString,
+    LW_IN LW_PCSTR Format,
+    LW_IN va_list Args
+    );
+
+LW_NTSTATUS
+LwRtlUnicodeStringAllocateAppendPrintf(
+    LW_IN LW_OUT LW_PUNICODE_STRING pString,
+    LW_IN LW_PCSTR Format,
+    ...
+    );
+
 // ANSI strings
 
 // TODO: Deprecate in favor of Ex version
@@ -298,6 +339,27 @@ LwRtlAnsiStringParseULONG(
     LW_OUT LW_PULONG pResult,
     LW_IN LW_PANSI_STRING pString,
     LW_OUT LW_PANSI_STRING pRemainingString
+    );
+
+LW_NTSTATUS
+LwRtlAnsiStringAllocatePrintf(
+    LW_OUT LW_PANSI_STRING pNewString,
+    LW_IN LW_PCSTR Format,
+    LW_IN ...
+    );
+
+LW_NTSTATUS
+LwRtlAnsiStringAllocatePrintfV(
+    LW_OUT LW_PANSI_STRING pNewString,
+    LW_IN LW_PCSTR Format,
+    LW_IN va_list Args
+    );
+
+LW_NTSTATUS
+LwRtlAnsiStringAllocateAppendPrintf(
+    LW_IN LW_OUT LW_PANSI_STRING pString,
+    LW_IN LW_PCSTR Format,
+    ...
     );
 
 // Free helpers
@@ -353,6 +415,16 @@ LwRtlAnsiStringParseULONG(
     LwRtlWC16StringFree(String)
 #define RtlWC16StringIsEqual(String1, String2, IsCaseSensitive) \
     LwRtlWC16StringIsEqual(String1, String2, IsCaseSensitive)
+#define RtlWC16StringAllocatePrintfWV(Result, Format, Args) \
+    LwRtlWC16StringAllocatePrintfWV(Result, Format, Args)
+#define RtlWC16StringAllocatePrintfW(Result, Format, ...) \
+    LwRtlWC16StringAllocatePrintfW(Result, Format, ##  __VA_ARGS__)
+#define RtlWC16StringAllocatePrintf(Result, Format, ...) \
+    LwRtlWC16StringAllocatePrintf(Result, Format, ## __VA_ARGS__)
+#define RtlWC16StringAllocatePrintfV(Result, Format, Args) \
+    LwRtlWC16StringAllocatePrintfV(Result, Format, Args)
+#define RtlWC16StringAllocateAppendPrintf(Result, Format, ...) \
+  LwRtlWC16StringAllocateAppendPrintf(Result, Format, ## __VA_ARGS__)
 
 #define RtlUnicodeStringInit(DestinationString, SourceString) \
     LwRtlUnicodeStringInit(DestinationString, SourceString)
@@ -374,6 +446,14 @@ LwRtlAnsiStringParseULONG(
     LwRtlUnicodeStringIsPrefix(Prefix, String, IsCaseSensitive)
 #define RtlUnicdeStringParseULONG(Result, String, RemainingString) \
     LwRtlUnicodeStringParseULONG(Result, String, RemainingString)
+#define RtlUnicodeStringAllocatePrintfW(Result, Format,  ...) \
+  LwRtlUnicodeStringAllocatePrintfW(Result, Format, ## __VA_ARGS__)
+#define RtlUnicodeStringAllocatePrintf(Result, Format, ...) \
+  LwRtlUnicodeStringAllocatePrintf(Result, Format, ## __VA_ARGS__)
+#define RtlUnicodeStringAllocatePrintfV(Result, Format, ...) \
+  LwRtlUnicodeStringAllocatePrintfV(Result, Format, ## __VA_ARGS__)
+#define RtlUnicodeStringAllocateAppendPrintf(Result, Format, ...) \
+  LwRtlUnicodeStringAllocateAppendPrintf(Result, Format, ## __VA_ARGS__)
 
 #define RtlAnsiStringInit(DestinationString, SourceString) \
     LwRtlAnsiStringInit(DestinationString, SourceString)
@@ -391,6 +471,13 @@ LwRtlAnsiStringParseULONG(
     LwRtlAnsiStringIsPrefix(Prefix, String, IsCaseSensitive)
 #define RtlAnsiStringParseULONG(Result, String, RemainingString) \
     LwRtlAnsiStringParseULONG(Result, String, RemainingString)
+#define RtlAnsiStringAllocatePrintf(Result, Format, ...) \
+    LwRtlAnsiStringAllocatePrintf(Result, Format, ## __VA_ARGS__)
+#define RtlAnsiStringAllocatePrintfV(Result, Format, Args) \
+    LwRtlAnsiStringAllocatePrintfV(Result, Format, Args)
+#define RtlAnsiStringAllocateAppendPrintf(Result, Format, ...) \
+    LwRtlAnsiStringAllocateAppendPrintf(Result, Format, ## __VA_ARGS__)
+
 
 #define RTL_UNICODE_STRING_FREE(String) \
     LW_RTL_UNICODE_STRING_FREE(String)

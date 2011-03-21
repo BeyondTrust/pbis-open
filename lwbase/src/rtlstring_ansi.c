@@ -1,7 +1,6 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
-
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 /*
  * Copyright (c) Likewise Software.  All rights Reserved.
  *
@@ -39,7 +38,7 @@
  *        Base ANSI_STRING Functions
  *
  * Authors: Danilo Almeida (dalmeida@likewise.com)
- *
+ *          David Leimbach (dleimbach@likewise.com)
  */
 
 #include "includes.h"
@@ -358,3 +357,119 @@ cleanup:
 
     return status;
 }
+
+LW_NTSTATUS
+LwRtlAnsiStringAllocatePrintf(
+    LW_OUT LW_PANSI_STRING pNewString,
+    LW_IN LW_PCSTR Format,
+    LW_IN ...
+    )
+{
+    NTSTATUS status = 0;
+    va_list args;
+
+    va_start(args, Format);
+    status = LwRtlAnsiStringAllocatePrintfV(pNewString, Format, args);
+    va_end(args);
+
+    return status;
+}
+
+LW_NTSTATUS
+LwRtlAnsiStringAllocatePrintfV(
+    LW_OUT LW_PANSI_STRING pNewString,
+    LW_IN LW_PCSTR Format,
+    LW_IN va_list Args
+    )
+{
+    NTSTATUS status = 0;
+    PSTR pOutputString = NULL;
+    ANSI_STRING newString = { 0 };
+
+    status = LwRtlCStringAllocatePrintfV(
+                    &pOutputString,
+                    Format,
+                    Args);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = LwRtlAnsiStringInitEx(&newString, pOutputString);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    pOutputString = NULL;
+
+cleanup:
+    if (status)
+    {
+        RTL_ANSI_STRING_FREE(&newString);
+    }
+
+    RTL_FREE(&pOutputString);
+
+    *pNewString = newString;
+
+    return status;
+}
+
+static
+NTSTATUS
+LwRtlAnsiStringAllocateAppendPrintfV(
+    IN OUT PANSI_STRING pString,
+    IN PCSTR Format,
+    IN va_list Args
+    )
+{
+    NTSTATUS status = 0;
+    ANSI_STRING addString = { 0 };
+    ANSI_STRING newString = { 0 };
+
+    status = LwRtlAnsiStringAllocatePrintfV(&addString, Format, Args);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    if (pString->Buffer)
+    {
+        status = LwRtlAnsiStringAllocatePrintf(&newString,
+                                                "%Z%Z",
+                                                pString,
+                                                &addString);
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+    else
+    {
+        newString = addString;
+        LwRtlZeroMemory(&addString, sizeof(addString));
+    }
+
+cleanup:
+    if (status)
+    {
+        LW_RTL_ANSI_STRING_FREE(&newString);
+    }
+    else
+    {
+        LW_RTL_ANSI_STRING_FREE(pString);
+        *pString = newString;
+    }
+
+    LW_RTL_ANSI_STRING_FREE(&addString);
+
+    return status;
+}
+
+
+LW_NTSTATUS
+LwRtlAnsiStringAllocateAppendPrintf(
+    LW_IN LW_OUT LW_PANSI_STRING pString,
+    LW_IN LW_PCSTR Format,
+    ...
+    )
+{
+    NTSTATUS status = 0;
+    va_list args;
+
+    va_start(args, Format);
+    status = LwRtlAnsiStringAllocateAppendPrintfV(pString, Format, args);
+    va_end(args);
+
+    return status;
+}
+

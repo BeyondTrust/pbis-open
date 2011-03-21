@@ -1,6 +1,15 @@
 make()
 {
-    TEST_SOURCES="test-security.c test-atomic.c test-threadpool.c test-compare.c test-convert.c test-printf.c test-hash.c"
+    TEST_SOURCES="test-security.c \
+    test-atomic.c \
+    test-threadpool.c \
+    test-compare.c \
+    test-convert.c \
+    test-printf.c \
+    test-hash.c \
+    test-rtlunicode-string.c \
+    test-rtlansi-string.c \
+    test-lwprintf.c"
 
     mk_group \
         GROUP="benchmark" \

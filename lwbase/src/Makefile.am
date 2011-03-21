@@ -5,11 +5,11 @@ AM_LDFLAGS = $(LWBASE_LDFLAGS)
 lib_LTLIBRARIES = liblwbase_nothr.la liblwbase.la
 
 liblwbase_nothr_la_SOURCES = \
-	error-conv.c \
-	errno.c \
-	ntstatus.c \
-	dscache.c \
-	rpcstatus.c \
+        error-conv.c \
+        errno.c \
+        ntstatus.c \
+        dscache.c \
+        rpcstatus.c \
         rtllog.c \
         rtlmemory.c \
         rtlstring.c \
@@ -25,26 +25,27 @@ liblwbase_nothr_la_SOURCES = \
         security-acl.c \
         security-sd.c \
         security-privileges.c \
-	wc16str.c \
-	wc16printf.c
+        wc16str.c \
+        wc16printf.c \
+        lwprintf.c
 
 liblwbase_nothr_la_LIBADD = \
         @DS_FRAMEWORK_LDFLAGS@ \
         @LIBUUID_LIBS@ \
-	@LIB_ICONV@
+    @LIB_ICONV@
 
 liblwbase_la_SOURCES = \
-	atomic.c \
+    atomic.c \
     security-token.c \
     security-sd-inherit.c \
-	threadpool-common.c \
-	mapsecurity.c \
-	svcm.c
+    threadpool-common.c \
+    mapsecurity.c \
+    svcm.c
 
 liblwbase_la_LIBADD = \
     @LIB_PTHREAD@ \
-	@LIB_DL@ \
-	@LIB_RT@ \
+    @LIB_DL@ \
+    @LIB_RT@ \
     liblwbase_nothr.la
 
 if USE_EPOLL

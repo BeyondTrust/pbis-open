@@ -1,7 +1,6 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
-
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 /*
  * Copyright (c) Likewise Software.  All rights Reserved.
  *
@@ -39,7 +38,7 @@
  *        Base UNICODE_STRING Functions
  *
  * Authors: Danilo Almeida (dalmeida@likewise.com)
- *
+ *          David Leimbach (dleimbach@likewise.com)
  */
 
 #include "includes.h"
@@ -435,6 +434,121 @@ LwRtlUnicodeStringAllocatePrintfW(
 
     va_start(args, pszFormat);
     status = LwRtlUnicodeStringAllocatePrintfWV(pString, pszFormat, args);
+    va_end(args);
+
+    return status;
+}
+
+LW_NTSTATUS
+LwRtlUnicodeStringAllocatePrintf(
+    LW_OUT LW_PUNICODE_STRING pNewString,
+    LW_IN LW_PCSTR Format,
+    LW_IN ...
+    )
+{
+    NTSTATUS status = 0;
+    va_list args;
+
+    va_start(args, Format);
+    status = LwRtlUnicodeStringAllocatePrintfV(pNewString, Format, args);
+    va_end(args);
+
+    return status;
+}
+
+LW_NTSTATUS
+LwRtlUnicodeStringAllocatePrintfV(
+    LW_OUT LW_PUNICODE_STRING pNewString,
+    LW_IN LW_PCSTR Format,
+    LW_IN va_list Args
+    )
+{
+    NTSTATUS status = 0;
+    PWSTR pOutputString = NULL;
+    UNICODE_STRING newString = { 0 };
+
+    status = LwRtlWC16StringAllocatePrintfV(
+                    &pOutputString,
+                    Format,
+                    Args);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = LwRtlUnicodeStringInitEx(&newString, pOutputString);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    pOutputString = NULL;
+
+cleanup:
+    if (status)
+    {
+        RTL_UNICODE_STRING_FREE(&newString);
+    }
+
+    RTL_FREE(&pOutputString);
+
+    *pNewString = newString;
+
+    return status;
+}
+
+static
+NTSTATUS
+LwRtlUnicodeStringAllocateAppendPrintfV(
+    IN OUT PUNICODE_STRING pString,
+    IN PCSTR Format,
+    IN va_list Args
+    )
+{
+    NTSTATUS status = 0;
+    UNICODE_STRING addString = { 0 };
+    UNICODE_STRING newString = { 0 };
+
+    status = LwRtlUnicodeStringAllocatePrintfV(&addString, Format, Args);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    if (pString->Buffer)
+    {
+        status = LwRtlUnicodeStringAllocatePrintf(&newString,
+                                                 "%wZ%wZ",
+                                                  pString,
+                                                  &addString);
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+    else
+    {
+        newString = addString;
+        LwRtlZeroMemory(&addString, sizeof(addString));
+    }
+
+cleanup:
+    if (status)
+    {
+        LW_RTL_UNICODE_STRING_FREE(&newString);
+    }
+    else
+    {
+        LW_RTL_UNICODE_STRING_FREE(pString);
+        *pString = newString;
+    }
+
+    LW_RTL_UNICODE_STRING_FREE(&addString);
+
+    return status;
+}
+
+
+LW_NTSTATUS
+LwRtlUnicodeStringAllocateAppendPrintf(
+    LW_IN LW_OUT LW_PUNICODE_STRING pString,
+    LW_IN LW_PCSTR Format,
+    ...
+    )
+{
+    NTSTATUS status = 0;
+    va_list args;
+
+    va_start(args, Format);
+    status = LwRtlUnicodeStringAllocateAppendPrintfV(pString, Format, args);
     va_end(args);
 
     return status;

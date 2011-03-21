@@ -24,6 +24,7 @@ make()
         security-sddlmapping.c \
         security-privileges.c \
         wc16str.c \
+        lwprintf.c \
         wc16printf.c"
 
     BASE_SOURCES="\
@@ -35,7 +36,7 @@ make()
         mapsecurity.c"
 
     BASE_HEADER_DEPS="uuid/uuid.h iconv.h"
-       
+
     mk_multiarch_do
         mk_library \
             LIB="lwbase_nothr" \

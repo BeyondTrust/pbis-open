@@ -1,7 +1,6 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
-
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 /*
  * Copyright (c) Likewise Software.  All rights Reserved.
  *
@@ -32,13 +31,14 @@
  *
  * Module Name:
  *
- *        rtlstring_ansi.c
+ *        rtlstring_wc16string.c
  *
  * Abstract:
  *
  *        Base C-Style WCHAR String Functions
  *
  * Authors: Danilo Almeida (dalmeida@likewise.com)
+ *          David Leimbach (dleimbach@likewise.com)
  *
  */
 
@@ -47,7 +47,7 @@
 #include <lw/rtlmemory.h>
 #include <lw/rtlgoto.h>
 #include <wc16str.h>
-#include <wc16printf.h>
+#include <lwprintf.h>
 
 size_t
 LwRtlWC16StringNumChars(
@@ -225,19 +225,14 @@ LwRtlWC16StringAllocatePrintfWV(
     LW_IN va_list Args
     )
 {
-    NTSTATUS status = 0;
-    PWSTR pszNewString = NULL;
+    size_t charsWritten = 0;
 
-    pszNewString = asw16printfwv(pszFormat, Args);
-
-    if (pszNewString == NULL)
-    {
-        status = STATUS_INSUFFICIENT_RESOURCES;
-    }
-
-    *ppszString = pszNewString;
-
-    return status;
+     return LwErrnoToNtStatus(
+        LwPrintfW16AllocateStringWV(
+            ppszString,
+            &charsWritten,
+            pszFormat,
+            Args));
 }
 
 LW_NTSTATUS
@@ -252,6 +247,102 @@ LwRtlWC16StringAllocatePrintfW(
 
     va_start(args, pszFormat);
     status = LwRtlWC16StringAllocatePrintfWV(ppszString, pszFormat, args);
+    va_end(args);
+
+    return status;
+}
+
+LW_NTSTATUS
+LwRtlWC16StringAllocatePrintf(
+    LW_OUT LW_PWSTR* ppszString,
+    LW_IN LW_PCSTR pszFormat,
+    LW_IN ...
+    )
+{
+    NTSTATUS status = 0;
+    va_list args;
+
+    va_start(args, pszFormat);
+    status = LwRtlWC16StringAllocatePrintfV(ppszString, pszFormat, args);
+    va_end(args);
+
+    return status;
+}
+
+LW_NTSTATUS
+LwRtlWC16StringAllocatePrintfV(
+    LW_OUT LW_PWSTR* ppszString,
+    LW_IN LW_PCSTR pszFormat,
+    LW_IN va_list Args
+    )
+{
+    size_t writtenCount = 0;
+
+    return LwErrnoToNtStatus(
+        LwPrintfW16AllocateStringV(
+            ppszString,
+            &writtenCount,
+            pszFormat,
+            Args));
+}
+
+static
+NTSTATUS
+LwRtlWC16StringAllocateAppendPrintfV(
+    IN OUT PWSTR* ppszString,
+    IN PCSTR pszFormat,
+    IN va_list Args
+    )
+{
+    NTSTATUS status = 0;
+    PWSTR pszAddString = NULL;
+    PWSTR pszNewString = NULL;
+
+    status = LwRtlWC16StringAllocatePrintfV(&pszAddString, pszFormat, Args);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    if (*ppszString)
+    {
+        status = LwRtlWC16StringAllocatePrintf(&pszNewString,
+                                            "%ws%ws",
+                                            *ppszString,
+                                            pszAddString);
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+    else
+    {
+        pszNewString = pszAddString;
+        pszAddString = NULL;
+    }
+
+cleanup:
+    if (status)
+    {
+        LwRtlWC16StringFree(&pszNewString);
+    }
+    else
+    {
+        LwRtlWC16StringFree(ppszString);
+        *ppszString = pszNewString;
+    }
+
+    LwRtlWC16StringFree(&pszAddString);
+
+    return status;
+}
+
+LW_NTSTATUS
+LwRtlWC16StringAllocateAppendPrintf(
+    LW_IN LW_OUT LW_PWSTR* pString,
+    LW_IN LW_PCSTR Format,
+    ...
+    )
+{
+    NTSTATUS status = 0;
+    va_list args;
+
+    va_start(args, Format);
+    status = LwRtlWC16StringAllocateAppendPrintfV(pString, Format, args);
     va_end(args);
 
     return status;
