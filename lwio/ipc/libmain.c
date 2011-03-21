@@ -39,88 +39,58 @@ LwIoIPCMapLWMsgStatus(
 
     switch (status)
     {
-        case LWMSG_STATUS_SUCCESS:
-
-                dwError = LWIO_ERROR_SUCCESS;
-                break;
-
-        case LWMSG_STATUS_ERROR:
-
-                dwError = LWIO_ERROR_LWMSG_ERROR;
-                break;
-
-        case LWMSG_STATUS_AGAIN:
-
-                dwError = EAGAIN;
-                break;
-
-        case LWMSG_STATUS_MEMORY:
-
-                dwError = LWIO_ERROR_OUT_OF_MEMORY;
-                break;
-
-        case LWMSG_STATUS_MALFORMED:
-
-                dwError = LWIO_ERROR_MALFORMED_REQUEST;
-                break;
-
-        case LWMSG_STATUS_EOF:
-
-                dwError = LWIO_ERROR_LWMSG_EOF;
-                break;
-
-        case LWMSG_STATUS_NOT_FOUND:
-
-                dwError = LWIO_ERROR_NO_SUCH_ITEM;
-                break;
-
-        case LWMSG_STATUS_UNIMPLEMENTED:
-
-                dwError = LWIO_ERROR_NOT_IMPLEMENTED;
-                break;
-
-        case LWMSG_STATUS_INVALID_PARAMETER:
-
-                dwError = LWIO_ERROR_INVALID_PARAMETER;
-                break;
-
-        case LWMSG_STATUS_OVERFLOW:
-
-                dwError = LWIO_ERROR_OVERFLOW;
-                break;
-
-        case LWMSG_STATUS_UNDERFLOW:
-
-                dwError = LWIO_ERROR_UNDERFLOW;
-                break;
-
-        case LWMSG_STATUS_SYSTEM:
-
-                dwError = LWIO_ERROR_SYSTEM;
-                break;
-
-        case LWMSG_STATUS_TIMEOUT:
-
-                dwError = ETIMEDOUT;
-                break;
-
-        case LWMSG_STATUS_SECURITY:
-
-                dwError = EACCES;
-                break;
-
-        case LWMSG_STATUS_CANCELLED:
-
-                dwError = EINTR;
-                break;
-
-        default:
-
-                LWIO_LOG_ERROR("Failed to map lwmsg error [%d]", status);
-
-                dwError = LWIO_ERROR_LWMSG_ERROR;
-
-                break;
+    case LWMSG_STATUS_SUCCESS:
+        dwError = LWIO_ERROR_SUCCESS;
+        break;
+    case LWMSG_STATUS_ERROR:
+        dwError = LWIO_ERROR_LWMSG_ERROR;
+        break;
+    case LWMSG_STATUS_AGAIN:
+        dwError = STATUS_RETRY;
+        break;
+    case LWMSG_STATUS_MEMORY:
+        dwError = LWIO_ERROR_OUT_OF_MEMORY;
+        break;
+    case LWMSG_STATUS_MALFORMED:
+        dwError = LWIO_ERROR_MALFORMED_REQUEST;
+        break;
+    case LWMSG_STATUS_EOF:
+        dwError = LWIO_ERROR_LWMSG_EOF;
+        break;
+    case LWMSG_STATUS_NOT_FOUND:
+        dwError = LWIO_ERROR_NO_SUCH_ITEM;
+        break;
+    case LWMSG_STATUS_UNIMPLEMENTED:
+        dwError = LWIO_ERROR_NOT_IMPLEMENTED;
+        break;
+    case LWMSG_STATUS_INVALID_PARAMETER:
+        dwError = LWIO_ERROR_INVALID_PARAMETER;
+        break;
+    case LWMSG_STATUS_OVERFLOW:
+        dwError = LWIO_ERROR_OVERFLOW;
+        break;
+    case LWMSG_STATUS_UNDERFLOW:
+        dwError = LWIO_ERROR_UNDERFLOW;
+        break;
+    case LWMSG_STATUS_SYSTEM:
+        dwError = LWIO_ERROR_SYSTEM;
+        break;
+    case LWMSG_STATUS_TIMEOUT:
+        dwError = STATUS_IO_TIMEOUT;
+        break;
+    case LWMSG_STATUS_SECURITY:
+        dwError = STATUS_ACCESS_DENIED;
+        break;
+    case LWMSG_STATUS_CANCELLED:
+        dwError = STATUS_CANCELLED;
+        break;
+    case LWMSG_STATUS_FILE_NOT_FOUND:
+        dwError = STATUS_NOT_FOUND;
+        break;
+    default:
+        LWIO_LOG_ERROR("Failed to map lwmsg error [%d]", status);
+        dwError = LWIO_ERROR_LWMSG_ERROR;
+        break;
     }
 
     return dwError;
