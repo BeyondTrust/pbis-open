@@ -184,6 +184,7 @@ typedef struct _SM_GLOBAL_STATE
     PWSTR pGroup;
     PCSTR pName;
     BOOLEAN bWatchdog;
+    int ControlLock;
 } SM_GLOBAL_STATE, *PSM_GLOBAL_STATE;
 
 DWORD

@@ -38,6 +38,8 @@
 
 #include "includes.h"
 
+#define CONTROL_LOCK CACHEDIR "/.lwsmd-lock"
+
 PLW_THREAD_POOL gpPool;
 
 SM_GLOBAL_STATE gState =
@@ -50,7 +52,8 @@ SM_GLOBAL_STATE gState =
     .logLevel = 0,
     .pszLogFilePath = NULL,
     .bSyslog = FALSE,
-    .bWatchdog = TRUE
+    .bWatchdog = TRUE,
+    .ControlLock = -1
 };
 
 static
@@ -114,6 +117,12 @@ LwSmNotify(
     int status
     );
 
+static
+DWORD
+LwSmControlLock(
+    VOID
+    );
+
 int
 main(
     int argc,
@@ -134,6 +143,13 @@ main(
     if (gState.bStartAsDaemon)
     {
         dwError = LwSmDaemonize();
+        BAIL_ON_ERROR(dwError);
+    }
+
+    /* If we're starting as the control server, acquire lock */
+    if (!gState.bContainer)
+    {
+        dwError = LwSmControlLock();
         BAIL_ON_ERROR(dwError);
     }
 
@@ -194,6 +210,12 @@ error:
 
     /* Free thread pool */
     LwRtlFreeThreadPool(&gpPool);
+
+    /* Close control file if it is open */
+    if (gState.ControlLock >= 0)
+    {
+        close(gState.ControlLock);
+    }
 
     if (dwError)
     {
@@ -305,6 +327,48 @@ LwSmParseArguments(
                 exit(0);
             }
         }
+    }
+
+error:
+
+    return dwError;
+}
+
+static
+DWORD
+LwSmControlLock(
+    VOID
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    struct flock lock = {0};
+
+    lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
+    lock.l_pid = getpid();
+
+    if ((gState.ControlLock = open(CONTROL_LOCK, O_WRONLY | O_CREAT | O_TRUNC, 0200)) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (fcntl(gState.ControlLock, F_SETLK, &lock) < 0)
+    {
+        switch(errno)
+        {
+        case EACCES:
+        case EAGAIN:
+            dwError = ERROR_SERVICE_ALREADY_RUNNING;
+            break;
+        default:
+            dwError = LwErrnoToWin32Error(errno);
+            break;
+        }
+
+        BAIL_ON_ERROR(dwError);
     }
 
 error:
