@@ -1803,6 +1803,7 @@ NtlmBuildAnonymousResponse(
 DWORD
 NtlmGetUserNameFromResponse(
     IN PNTLM_RESPONSE_MESSAGE_V1 pRespMsg,
+    IN DWORD dwRespMsgSize,
     IN BOOLEAN bUnicode,
     OUT PSTR* ppUserName
     )
@@ -1815,6 +1816,18 @@ NtlmGetUserNameFromResponse(
     DWORD nIndex = 0;
 
     *ppUserName = NULL;
+
+    if (dwRespMsgSize < sizeof(*pRespMsg))
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    if (pSecBuffer->dwOffset + pSecBuffer->usLength > dwRespMsgSize)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwNameLength = pSecBuffer->usLength;
     pBuffer = pSecBuffer->dwOffset + (PBYTE)pRespMsg;
