@@ -114,7 +114,7 @@ LwSmShutdownService(
 static
 DWORD
 LwSmNotify(
-    int status
+    DWORD Error
     );
 
 static
@@ -193,7 +193,7 @@ error:
        of an error now */
     if (gState.bStartAsDaemon && !gState.bNotified)
     {
-        LwSmNotify(1);
+        LwSmNotify(dwError);
     }
 
     /* Shut down service table */
@@ -384,7 +384,6 @@ LwSmDaemonize(
 {
     DWORD dwError = 0;
     pid_t pid = -1;
-    char c = 1;
     int ret = 0;
     int devNull = -1;
     int i = 0;
@@ -413,14 +412,18 @@ LwSmDaemonize(
         /* Close the write end of the pipe since we don't need it */
         close(gState.notifyPipe[1]);
 
-        /* Wait until daemon process indicates it is fully started */
+        /* Wait until daemon process indicates it is fully started by sending error code */
         do
         {
-            ret = read(gState.notifyPipe[0], &c, sizeof(c));
+            ret = read(gState.notifyPipe[0], &dwError, sizeof(dwError));
         } while (ret < 0 && errno == EINTR);
 
-        /* Exit with code sent by daemon */
-        exit((int) c);
+        if (dwError)
+        {
+            fprintf(stderr, "Error: %s (%d)\n", LwWin32ExtErrorToName(dwError), (int) dwError);
+        }
+
+        exit(dwError ? 1 : 0);
     }
     
     /* We are the intermediate background process.
@@ -492,16 +495,15 @@ error:
 static
 DWORD
 LwSmNotify(
-    int status
+    DWORD Error
     )
 {
     DWORD dwError = 0;
-    char c = (char) status;
     int ret = 0;
 
     do 
     {
-        ret = write(gState.notifyPipe[1], &c, sizeof(c));
+        ret = write(gState.notifyPipe[1], &Error, sizeof(Error));
     } while (ret < 0 && errno == EINTR);
 
     if (ret < 0)
