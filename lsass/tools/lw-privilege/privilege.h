@@ -54,6 +54,7 @@ typedef enum _PRIVILEGE_COMMAND {
     PrivilegeEnumeratePrivs,
     PrivilegeLookupValues,
     PrivilegeLookupNames,
+    PrivilegeLookupDescriptions,
     PrivilegeEnumerateAccountPrivs,
     PrivilegeAddAccountPrivs,
     PrivilegeRemoveAccountPrivs,

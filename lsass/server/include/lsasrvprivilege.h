@@ -174,6 +174,18 @@ LsaSrvPrivsLookupPrivilegeName(
 
 
 DWORD
+LsaSrvPrivsLookupPrivilegeDescription(
+    IN HANDLE hServer,
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
+    IN PCWSTR PrivilegeName,
+    IN SHORT ClientLanguageId,
+    IN SHORT ClientSystemLanguageId,
+    OUT PWSTR *pPrivilegeDescription,
+    OUT PUSHORT pLanguageId
+    );
+
+
+DWORD
 LsaSrvPrivsAddPrivilegesToAccount(
     IN HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,

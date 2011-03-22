@@ -634,6 +634,18 @@ LsaLookupPrivilegeName(
 
 
 NTSTATUS
+LsaLookupPrivilegeDisplayName(
+    IN LSA_BINDING      hBinding,
+    IN POLICY_HANDLE    hPolicy,
+    IN PWSTR            pwszName,
+    IN SHORT            ClientLanguage,
+    IN SHORT            ClientSystemLanguage,
+    OUT PWSTR          *ppwszDisplayName,
+    OUT PUSHORT          pLanguage
+    );
+
+
+NTSTATUS
 LsaEnumAccountsWithUserRight(
     IN LSA_BINDING     hBinding,
     IN POLICY_HANDLE   hPolicy,

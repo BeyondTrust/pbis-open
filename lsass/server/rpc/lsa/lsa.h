@@ -199,6 +199,18 @@ LsaSrvLookupPrivilegeName(
 
 
 NTSTATUS
+LsaSrvLookupPrivilegeDisplayName(
+    handle_t b,
+    POLICY_HANDLE hPolicy,
+    PUNICODE_STRING pName,
+    INT16 ClientLang,
+    INT16 ClientSystemLanguage,
+    PUNICODE_STRING *ppDisplayName,
+    UINT16 *pLanguage
+    );
+
+
+NTSTATUS
 LsaRpcSrvDeleteObject(
     handle_t b,
     PVOID *phObject

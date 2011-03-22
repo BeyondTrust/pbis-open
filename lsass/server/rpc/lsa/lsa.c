@@ -491,11 +491,25 @@ NTSTATUS srv_LsaLookupPrivilegeName(
 }
 
 
-NTSTATUS srv_lsa_Function21(
-    /* [in] */ handle_t IDL_handle
-)
+NTSTATUS srv_LsaLookupPrivilegeDisplayName(
+    /* [in] */ handle_t IDL_handle,
+    /* [in] */ POLICY_HANDLE hPolicy,
+    /* [in] */ UNICODE_STRING *pName,
+    /* [in] */ INT16 ClientLanguage,
+    /* [in] */ INT16 ClientSystemLanguage,
+    /* [out] */ UNICODE_STRING **ppDisplayName,
+    /* [out] */ UINT16 *pLanguage
+    )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LsaSrvLookupPrivilegeDisplayName(IDL_handle,
+                                              hPolicy,
+                                              pName,
+                                              ClientLanguage,
+                                              ClientSystemLanguage,
+                                              ppDisplayName,
+                                              pLanguage);
     return status;
 }
 

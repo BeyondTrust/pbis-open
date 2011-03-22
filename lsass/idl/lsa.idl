@@ -178,7 +178,15 @@ cpp_quote("#endif")
         [out,ref] UNICODE_STRING **ppName
         );
 
-    NTSTATUS lsa_Function21();
+    /* function 0x21 */
+    NTSTATUS LsaLookupPrivilegeDisplayName(
+        [in] POLICY_HANDLE hPolicy,
+        [in] UNICODE_STRING *pName,
+        [in] INT16 ClientLang,
+        [in] INT16 ClientSystemLanguage,
+        [out] UNICODE_STRING **ppDisplayName,
+        [out] UINT16 *pLanguage
+        );
 
     /* function 0x22 */
     NTSTATUS LsaDeleteObject(

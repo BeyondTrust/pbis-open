@@ -435,7 +435,10 @@ LsaSrvFreeUnicodeString(
     PUNICODE_STRING pString
     )
 {
-    rpc_ss_free(pString->Buffer);
+    if (pString->Buffer)
+    {
+        rpc_ss_free(pString->Buffer);
+    }
 
     pString->Length        = 0;
     pString->MaximumLength = 0;

@@ -70,6 +70,13 @@ ProcessLookupPrivilegeNames(
 
 static
 DWORD
+ProcessLookupPrivilegeDescriptions(
+    IN PRPC_PARAMETERS pRpcParams,
+    IN PSTR PrivilegeNames
+    );
+
+static
+DWORD
 ProcessEnumerateAccountPrivileges(
     IN PRPC_PARAMETERS pRpcParams,
     IN PSTR pszAccountName
@@ -123,6 +130,7 @@ ShowUsagePrivileges(
     fprintf(stdout, "--remove-all <account> - Remove all privileges from account\n");
     fprintf(stdout, "--lookup <privilege>[,<privilege] - Lookup privilege values\n");
     fprintf(stdout, "--lookup-names \"<luid>,[<luid>]\" - Lookup privilege names\n");
+    fprintf(stdout, "--lookup-descriptions <privilege>[,<privilege>] - Lookup privilege descriptions\n");
     fprintf(stdout, "options:\n");
     fprintf(stdout, "--dont-create - Do not create account if not existing\n");
 }
@@ -133,6 +141,7 @@ main(const int argc, const char* argv[])
 {
     DWORD err = ERROR_SUCCESS;
     PCSTR pszMode = NULL;
+    DWORD i = 0;
 
     if (argc <= 1)
     {
@@ -141,28 +150,36 @@ main(const int argc, const char* argv[])
     }
     else
     {
-        pszMode = argv[1];
+        for (i = 1; i < argc; i++)
+        {
+            pszMode = argv[i];
 
-        if (strcmp(pszMode, "privilege") == 0)
-        {
-            err = ProcessPrivilege(argc, argv);
-        }
-        else if (strcmp(pszMode, "sar") == 0)
-        {
-            err = ProcessSystemAccessRight(argc, argv);
-        }
-        else if (strcmp(pszMode, "security") == 0)
-        {
-            err = ProcessSecurity(argc, argv);
-        }
-        else if (strcmp(pszMode, "account") == 0)
-        {
-            err = ProcessAccount(argc, argv);
-        }
-        else
-        {
-            // The default is to process the privileges
-            err = ProcessPrivilege(argc, argv);
+            if (strcmp(pszMode, "privilege") == 0)
+            {
+                err = ProcessPrivilege(argc, argv);
+                break;
+            }
+            else if (strcmp(pszMode, "sar") == 0)
+            {
+                err = ProcessSystemAccessRight(argc, argv);
+                break;
+            }
+            else if (strcmp(pszMode, "security") == 0)
+            {
+                err = ProcessSecurity(argc, argv);
+                break;
+            }
+            else if (strcmp(pszMode, "account") == 0)
+            {
+                err = ProcessAccount(argc, argv);
+                break;
+            }
+            else
+            {
+                // The default is to process the privileges
+                err = ProcessPrivilege(argc, argv);
+                break;
+            }
         }
     }
 
@@ -258,6 +275,15 @@ ProcessPrivilege(
 
             Command = PrivilegeLookupNames;
         }
+        else if ((strcmp(pszArg, "--lookup-descriptions") == 0) &&
+                 (i + 1 < Argc))
+        {
+            pszArg = Argv[++i];
+            err = LwAllocateString(pszArg, &privilegeNames);
+            BAIL_ON_LSA_ERROR(err);
+
+            Command = PrivilegeLookupDescriptions;
+        }
         else if (i + 1 == Argc)
         {
             LW_SAFE_FREE_MEMORY(accountName);
@@ -286,6 +312,13 @@ ProcessPrivilege(
         err = ProcessLookupPrivilegeNames(
                                 &Params,
                                 privilegeValues);
+        BAIL_ON_LSA_ERROR(err);
+        break;
+
+    case PrivilegeLookupDescriptions:
+        err = ProcessLookupPrivilegeDescriptions(
+                                &Params,
+                                privilegeNames);
         BAIL_ON_LSA_ERROR(err);
         break;
 
@@ -529,7 +562,7 @@ ProcessLookupPrivilegeValues(
     fprintf(stdout,
             "Privilege values:\n"
             "=================================================================="
-            "==============");
+            "==============\n");
 
     for (i = 0; i < numPrivileges; i++)
     {
@@ -653,7 +686,7 @@ ProcessLookupPrivilegeNames(
     fprintf(stdout,
             "Privilege names:\n"
             "=================================================================="
-            "==============");
+            "==============\n");
 
     for (i = 0; i < numPrivileges; i++)
     {
@@ -724,6 +757,152 @@ error:
         LsaRpcFreeMemory(pwszPrivilegeName);
     }
 
+    LW_SAFE_FREE_MEMORY(pPrivileges);
+
+    if (err == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return err;
+}
+
+
+static
+DWORD
+ProcessLookupPrivilegeDescriptions(
+    IN PRPC_PARAMETERS pRpcParams,
+    IN PSTR PrivilegeNames
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    LSA_BINDING hLsa = NULL;
+    LW_PIO_CREDS pCreds = NULL;
+    WCHAR wszSysName[] = {'\\', '\\', '\0'};
+    DWORD policyAccessMask = LSA_ACCESS_LOOKUP_NAMES_SIDS |
+                             LSA_ACCESS_VIEW_POLICY_INFO;
+    POLICY_HANDLE hPolicy = NULL;
+    PSTR *pPrivileges = NULL;
+    DWORD numPrivileges = 0;
+    PWSTR privilegeName = NULL;
+    SHORT ClientLanguage = 0;
+    SHORT ClientSystemLanguage = 0;
+    PWSTR pwszPrivilegeDescription = NULL;
+    USHORT Language = 0;
+    DWORD i = 0;
+    PSTR pszPrivilegeDescription = NULL;
+
+    err = CreateRpcCredentials(pRpcParams,
+                               &pCreds);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = CreateLsaRpcBinding(pRpcParams,
+                              pCreds,
+                              &hLsa);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = GetStringListFromString(
+                             PrivilegeNames,
+                             SEPARATOR_CHAR,
+                             &pPrivileges,
+                             &numPrivileges);
+    BAIL_ON_LSA_ERROR(err);
+
+    ntStatus = LsaOpenPolicy2(hLsa,
+                              wszSysName,
+                              NULL,
+                              policyAccessMask,
+                              &hPolicy);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    fprintf(stdout,
+            "Privilege descriptions:\n"
+            "=================================================================="
+            "==============\n");
+
+    for (i = 0; i < numPrivileges; i++)
+    {
+        err = LwMbsToWc16s(pPrivileges[i],
+                           &privilegeName);
+        BAIL_ON_LSA_ERROR(err);
+
+        ntStatus = LsaLookupPrivilegeDisplayName(
+                                  hLsa,
+                                  hPolicy,
+                                  privilegeName,
+                                  ClientLanguage,
+                                  ClientSystemLanguage,
+                                  &pwszPrivilegeDescription,
+                                  &Language);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        err = LwWc16sToMbs(pwszPrivilegeDescription,
+                           &pszPrivilegeDescription);
+        BAIL_ON_LSA_ERROR(err);
+
+        fprintf(stdout, "%s\n", pszPrivilegeDescription);
+
+        if (pwszPrivilegeDescription)
+        {
+            LsaRpcFreeMemory(pwszPrivilegeDescription);
+            pwszPrivilegeDescription = NULL;
+        }
+
+        LW_SAFE_FREE_MEMORY(privilegeName);
+        LW_SAFE_FREE_MEMORY(pszPrivilegeDescription);
+    }
+
+error:
+    if (ntStatus || err)
+    {
+        PCSTR errName = LwNtStatusToName(ntStatus);
+        PCSTR errDescription = LwNtStatusToDescription(ntStatus);
+
+        if (ntStatus)
+        {
+            errName = LwNtStatusToName(ntStatus);
+            errDescription = LwNtStatusToDescription(ntStatus);
+        }
+        else
+        {
+            errName = LwWin32ErrorToName(err);
+            errDescription = LwWin32ErrorToDescription(err);
+        }
+
+        fprintf(stderr, "Error: %s (%s)\n",
+                LSA_SAFE_LOG_STRING(errName),
+                LSA_SAFE_LOG_STRING(errDescription));
+    }
+
+    if (hPolicy)
+    {
+        LsaClose(hLsa, hPolicy);
+    }
+
+    if (hLsa)
+    {
+        LsaFreeBinding(&hLsa);
+    }
+
+    if (pCreds)
+    {
+        LwIoDeleteCreds(pCreds);
+    }
+
+    LW_SAFE_FREE_MEMORY(privilegeName);
+    LW_SAFE_FREE_MEMORY(pszPrivilegeDescription);
+
+    if (pwszPrivilegeDescription)
+    {
+        LsaRpcFreeMemory(pwszPrivilegeDescription);
+    }
+
+    for (i = 0; i < numPrivileges; i++)
+    {
+        LW_SAFE_FREE_MEMORY(pPrivileges[i]);
+    }
     LW_SAFE_FREE_MEMORY(pPrivileges);
 
     if (err == ERROR_SUCCESS &&

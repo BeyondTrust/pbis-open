@@ -202,6 +202,109 @@ error:
 }
 
 
+DWORD
+LsaSrvPrivsLookupPrivilegeDescription(
+    IN HANDLE hServer,
+    IN OPTIONAL PACCESS_TOKEN AccessToken,
+    IN PCWSTR PrivilegeName,
+    IN SHORT ClientLanguageId,
+    IN SHORT ClientSystemLanguageId,
+    OUT PWSTR *pPrivilegeDescription,
+    OUT PUSHORT pLanguageId
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PLSASRV_PRIVILEGE_GLOBALS pGlobals = &gLsaPrivilegeGlobals;
+    PACCESS_TOKEN accessToken = AccessToken;
+    BOOLEAN releaseAccessToken = FALSE;
+    ACCESS_MASK accessRights = LSA_ACCESS_VIEW_POLICY_INFO;
+    ACCESS_MASK grantedAccess = 0;
+    GENERIC_MAPPING genericMapping = {0};
+    PSTR pszPrivilegeName = NULL;
+    PLSA_PRIVILEGE pPrivilegeEntry = NULL;
+    PWSTR privilegeDescription = NULL;
+    USHORT descriptionLanguageId = 0;
+
+    if (!accessToken)
+    {
+        err = LsaSrvPrivsGetAccessTokenFromServerHandle(
+                                hServer,
+                                &accessToken);
+        BAIL_ON_LSA_ERROR(err);
+
+        releaseAccessToken = TRUE;
+    }
+
+    if (!RtlAccessCheck(pGlobals->pPrivilegesSecDesc,
+                        accessToken,
+                        accessRights,
+                        0,
+                        &genericMapping,
+                        &grantedAccess,
+                        &ntStatus))
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    if (ClientLanguageId || ClientSystemLanguageId)
+    {
+        //
+        // Right now we don't support multilingual privilege descriptions
+        // so just return 0x0409 (which means "en-US") whenever a caller
+        // requests some particular language id
+        //
+        descriptionLanguageId = 0x0409;
+    }
+
+    err = LwWc16sToMbs(PrivilegeName,
+                       &pszPrivilegeName);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = LsaSrvGetPrivilegeEntryByName(
+                       pszPrivilegeName,
+                       &pPrivilegeEntry);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = LwAllocateWc16String(
+                       &privilegeDescription,
+                       pPrivilegeEntry->pwszDescription);
+    BAIL_ON_LSA_ERROR(err);
+
+    *pPrivilegeDescription = privilegeDescription;
+    *pLanguageId           = descriptionLanguageId;
+
+error:
+    if (err || ntStatus)
+    {
+        if (pPrivilegeDescription)
+        {
+            *pPrivilegeDescription = NULL;
+        }
+
+        if (pLanguageId)
+        {
+            *pLanguageId = 0;
+        }
+    }
+
+    LW_SAFE_FREE_MEMORY(pszPrivilegeName);
+
+    if (releaseAccessToken)
+    {
+        RtlReleaseAccessToken(&accessToken);
+    }
+
+    if (err == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return err;
+}
+
+
 BOOLEAN
 LsaSrvIsPrivilegeNameValid(
     PCSTR pszPrivilegeName
