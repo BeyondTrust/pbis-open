@@ -512,21 +512,31 @@ MemRegStoreGetNodeValueAttributes(
     DWORD dwValueLen = 0;
 
     dwValueLen = hValue->DataLen;
-    if (ppCurrentValue && dwValueLen)
+    if (ppCurrentValue && dwValueLen > 0)
     {
-        status = LW_RTL_ALLOCATE((PVOID*) &pCurrentValue,
-                                 LWREG_CURRENT_VALUEINFO,
-                                 sizeof (*pCurrentValue));
-        BAIL_ON_NT_STATUS(status);
-    
-        if (dwValueLen > 0)
+         /* 
+          * Validate set value is different than default. Only return value
+          * if is different than the default.
+          */
+        if (dwValueLen != hValue->Attributes.DefaultValueLen ||
+            memcmp(hValue->Data, 
+                   hValue->Attributes.pDefaultValue,
+                   dwValueLen) != 0)
         {
-            status = LW_RTL_ALLOCATE((PVOID*) &pRetCurrentValueData,
-                                     BYTE,
-                                     dwValueLen);
+            status = LW_RTL_ALLOCATE((PVOID*) &pCurrentValue,
+                                     LWREG_CURRENT_VALUEINFO,
+                                     sizeof (*pCurrentValue));
             BAIL_ON_NT_STATUS(status);
-            memset(pRetCurrentValueData, 0, hValue->DataLen);
-            memcpy(pRetCurrentValueData, hValue->Data, dwValueLen);
+        
+            if (dwValueLen > 0)
+            {
+                status = LW_RTL_ALLOCATE((PVOID*) &pRetCurrentValueData,
+                                         BYTE,
+                                         dwValueLen);
+                BAIL_ON_NT_STATUS(status);
+                memset(pRetCurrentValueData, 0, hValue->DataLen);
+                memcpy(pRetCurrentValueData, hValue->Data, dwValueLen);
+            }
         }
     }
 
