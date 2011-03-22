@@ -47,20 +47,6 @@
 #define REGMEM_TYPE_KEY 3
 #define REGMEM_TYPE_VALUE 4
 
-typedef struct _REMEM_VALUE_ATTRIBUTES
-{
-    PWSTR Name;
-    REG_DATA_TYPE ValueType;
-    PVOID pDefaultValue;
-    DWORD DefaultValueLen;
-    PWSTR pwszDocString;
-    LWREG_VALUE_RANGE_TYPE RangeType;
-    LWREG_VALUE_HINT Hint;
-    union {
-        LWREG_RANGE_INTEGER RangeInteger;
-        PWSTR* ppwszRangeEnumStrings;
-    } Range;
-} REMEM_VALUE_ATTRIBUTES, *PREGMEM_VALUE_ATTRIBUTES;
 
 typedef struct _REGMEM_VALUE
 {
@@ -68,6 +54,7 @@ typedef struct _REGMEM_VALUE
     DWORD Type;
     PVOID Data;
     DWORD DataLen;
+    LWREG_VALUE_ATTRIBUTES Attributes;
 } REGMEM_VALUE, *PREGMEM_VALUE;
 
 
@@ -83,8 +70,5 @@ typedef struct _REGMEM_NODE
 
     PREGMEM_VALUE *Values;
     DWORD ValuesLen;
-
-    PREGMEM_VALUE_ATTRIBUTES *Attributes;
-    DWORD AttributesLen;
 } REGMEM_NODE, *PREGMEM_NODE;
 #endif

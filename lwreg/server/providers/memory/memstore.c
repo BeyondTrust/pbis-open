@@ -50,6 +50,68 @@ static CHAR *gRootKeys[] =
 };
 
 
+static VOID
+_MemDbFreeWC16Array(
+    IN PWSTR *ppwszArray)
+{
+    DWORD index = 0;
+
+    if (ppwszArray)
+    {
+        for (index=0; ppwszArray[index]; index++)
+        {
+            LWREG_SAFE_FREE_MEMORY(ppwszArray[index]);
+        }
+        LWREG_SAFE_FREE_MEMORY(ppwszArray);
+    }
+}
+
+
+static NTSTATUS
+_MemRegDuplicateWC16Array(
+    IN PWSTR *ppwszArray,
+    OUT PWSTR **pppwszCopyArray)
+{
+    NTSTATUS status = 0;
+    PWSTR *ppwszRetStrings = NULL;
+    PWSTR pwszRetString = NULL;
+    DWORD index = 0;
+
+    /* Count number of entries first */
+    for (index=0; ppwszArray[index]; index++)
+        ;
+    index++;
+
+    /* Allocate array of pointers to wide strings */
+    status = LW_RTL_ALLOCATE(
+                 (PVOID*) &ppwszRetStrings,
+                 PWSTR,
+                 sizeof(PWSTR) * index);
+    BAIL_ON_NT_STATUS(status);
+    memset(ppwszRetStrings, 0, sizeof(PWSTR) * index);
+
+    /* Duplicate the strings */
+     
+    for (index=0; ppwszArray[index]; index++)
+    {
+        status = LwRtlWC16StringDuplicate(
+                     &pwszRetString,
+                     ppwszArray[index]); 
+                     BAIL_ON_NT_STATUS(status);
+        ppwszRetStrings[index] = pwszRetString;
+        pwszRetString = NULL;
+    }
+
+    *pppwszCopyArray = ppwszRetStrings;
+cleanup:
+    return status;
+
+error:
+    LWREG_SAFE_FREE_MEMORY(ppwszRetStrings);
+    LWREG_SAFE_FREE_MEMORY(pwszRetString);
+    goto cleanup;
+}
+
 NTSTATUS
 MemRegStoreOpen(
     OUT PMEM_REG_STORE_HANDLE phDb)
@@ -231,32 +293,6 @@ error:
 }
 
 
-#if 0
-typedef struct _REGMEM_VALUE
-{
-    PWSTR Name;
-    DWORD Type;
-    PVOID Data;
-    DWORD DataLen;
-} REGMEM_VALUE, *PREGMEM_VALUE;
-
-/* For reference, remove once done with implementation */
-typedef struct _REGMEM_NODE
-{
-    PWSTR Name;
-    DWORD NodeType;
-    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
-
-    struct _REGMEM_NODE **SubNodes;
-    DWORD NodesLen;
-
-    PREGMEM_VALUE *Values;
-    DWORD ValuesLen;
-
-    PREMEM_VALUE_ATTRIBUTES *Attributes;
-    DWORD AttributesLen;
-} REGMEM_NODE, *PREGMEM_NODE;
-#endif
 
 
 NTSTATUS
@@ -356,6 +392,9 @@ MemRegStoreAddNodeValue(
 
     pNodeValue->Name = pwszName;
     pNodeValue->Type = dwType;
+
+    /* Clear out existing data before overwriting with new buffer */
+    LWREG_SAFE_FREE_MEMORY(pNodeValue->Data);
     pNodeValue->Data = pbData;
     pNodeValue->DataLen = cbData;
 
@@ -371,5 +410,199 @@ error:
     LWREG_SAFE_FREE_MEMORY(pwszName);
     LWREG_SAFE_FREE_MEMORY(pbData);
     LWREG_SAFE_FREE_MEMORY(newValues);
+    goto cleanup;
+}
+
+
+
+NTSTATUS
+MemRegStoreAddNodeAttribute(
+    PREGMEM_VALUE hValue,
+    IN PLWREG_VALUE_ATTRIBUTES pAttributes)
+{
+    NTSTATUS status = 0;
+    BYTE *pbData = NULL;
+    PWSTR *ppwszEnumStrings = NULL;
+    PWSTR pwszEnumString = NULL;
+    PWSTR pwszDocString = NULL;
+
+    /*
+     * Assign all scaler types first. Then allocate data and duplicate
+     * pointer types.
+     */
+    hValue->Attributes = *pAttributes;
+    if (pAttributes->DefaultValueLen > 0)
+    {
+        status = LW_RTL_ALLOCATE(
+                     (PVOID*) &pbData, 
+                     BYTE, 
+                     sizeof(*pbData) * pAttributes->DefaultValueLen);
+        BAIL_ON_NT_STATUS(status);
+        memset(pbData, 0, sizeof(*pbData) * pAttributes->DefaultValueLen);
+        memcpy(pbData,
+               pAttributes->pDefaultValue,
+               pAttributes->DefaultValueLen);
+    }
+
+    /*
+     * Duplicate the documentation string, if present
+     */
+    if (pAttributes->pwszDocString) { 
+        status = LwRtlWC16StringDuplicate(&pwszDocString, 
+                     pAttributes->pwszDocString);
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    /*
+     * Duplicate the multi-string range array when
+     * range type is RANGE_ENUM and the array is present.
+     */
+    if (pAttributes->RangeType == LWREG_VALUE_RANGE_TYPE_ENUM &&
+        pAttributes->Range.ppwszRangeEnumStrings)
+    {
+        status = _MemRegDuplicateWC16Array(
+                     pAttributes->Range.ppwszRangeEnumStrings,
+                     &ppwszEnumStrings);
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    /*
+     * Assign all allocated memory present in the attributes structure
+     * to the value node.
+     */
+    if (pAttributes->DefaultValueLen > 0)
+    {
+        hValue->Attributes.pDefaultValue = (PVOID) pbData;
+    }
+    hValue->Attributes.pwszDocString = pwszDocString;
+
+    if (pAttributes->RangeType == 
+            LWREG_VALUE_RANGE_TYPE_ENUM)
+    {
+        hValue->Attributes.Range.ppwszRangeEnumStrings = ppwszEnumStrings;
+    }
+
+cleanup:
+    return status;
+
+error:
+    /* Free a bunch of stuff here if something fails */
+    LWREG_SAFE_FREE_MEMORY(pbData);
+    LWREG_SAFE_FREE_MEMORY(pwszDocString);
+    LWREG_SAFE_FREE_MEMORY(pwszEnumString);
+    _MemDbFreeWC16Array(ppwszEnumStrings);
+    goto cleanup;
+}
+
+
+NTSTATUS
+MemRegStoreGetNodeValueAttributes(
+    PREGMEM_VALUE hValue,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes)
+{
+    NTSTATUS status = 0;
+    PWSTR *ppwszEnumStrings = NULL;
+    PWSTR pwszEnumString = NULL;
+    PWSTR pwszDocString = NULL;
+    PLWREG_CURRENT_VALUEINFO pCurrentValue = NULL;
+    PLWREG_VALUE_ATTRIBUTES pValueAttributes = NULL;
+    PBYTE pRetCurrentValueData = NULL;
+    PBYTE pRetAttributeValueData = NULL;
+    DWORD dwValueLen = 0;
+
+    dwValueLen = hValue->DataLen;
+    if (ppCurrentValue && dwValueLen)
+    {
+        status = LW_RTL_ALLOCATE((PVOID*) &pCurrentValue,
+                                 LWREG_CURRENT_VALUEINFO,
+                                 sizeof (*pCurrentValue));
+        BAIL_ON_NT_STATUS(status);
+    
+        if (dwValueLen > 0)
+        {
+            status = LW_RTL_ALLOCATE((PVOID*) &pRetCurrentValueData,
+                                     BYTE,
+                                     dwValueLen);
+            BAIL_ON_NT_STATUS(status);
+            memset(pRetCurrentValueData, 0, hValue->DataLen);
+            memcpy(pRetCurrentValueData, hValue->Data, dwValueLen);
+        }
+    }
+
+    if (ppValueAttributes)
+    {
+        if (hValue->Attributes.DefaultValueLen > 0)
+        {
+            status = LW_RTL_ALLOCATE(
+                         (PVOID*) &pRetAttributeValueData, 
+                         BYTE, 
+                         sizeof(BYTE) * hValue->Attributes.DefaultValueLen);
+            BAIL_ON_NT_STATUS(status);
+            memset(pRetAttributeValueData, 
+                   0, 
+                   sizeof(*pRetAttributeValueData) * 
+                       hValue->Attributes.DefaultValueLen);
+            memcpy(pRetAttributeValueData,
+                   hValue->Attributes.pDefaultValue,
+                   hValue->Attributes.DefaultValueLen);
+        }
+    
+        /*
+         * Duplicate the documentation string, if present
+         */
+        if (hValue->Attributes.pwszDocString) { 
+            status = LwRtlWC16StringDuplicate(&pwszDocString, 
+                         hValue->Attributes.pwszDocString);
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        status = LW_RTL_ALLOCATE((PVOID*) &pValueAttributes,
+                                 LWREG_VALUE_ATTRIBUTES,
+                                 sizeof (*pValueAttributes));
+        BAIL_ON_NT_STATUS(status);
+        memset(pValueAttributes, 0, sizeof(*pValueAttributes));
+
+
+        if (hValue->Attributes.RangeType == LWREG_VALUE_RANGE_TYPE_ENUM &&
+            hValue->Attributes.Range.ppwszRangeEnumStrings)
+        {
+            status = _MemRegDuplicateWC16Array(
+                         hValue->Attributes.Range.ppwszRangeEnumStrings,
+                         &ppwszEnumStrings);
+            BAIL_ON_NT_STATUS(status);
+        }
+    }
+
+    /* Assign all allocated data to return optional return structures */
+    if (pCurrentValue)
+    {
+         pCurrentValue->dwType = hValue->Type;
+         pCurrentValue->pvData = pRetCurrentValueData;
+         pCurrentValue->cbData = hValue->DataLen;
+         *ppCurrentValue = pCurrentValue;
+    }
+
+    if (pValueAttributes)
+    {
+        *pValueAttributes = hValue->Attributes;
+        pValueAttributes->pDefaultValue = pRetAttributeValueData;
+        pValueAttributes->pwszDocString = pwszDocString;
+        if (ppwszEnumStrings)
+        {
+            pValueAttributes->Range.ppwszRangeEnumStrings = ppwszEnumStrings;
+        }
+        *ppValueAttributes = pValueAttributes;
+    }
+
+cleanup:
+    return status;
+
+error:
+    /* Free a bunch of stuff here if something fails */
+    LWREG_SAFE_FREE_MEMORY(pRetAttributeValueData);
+    LWREG_SAFE_FREE_MEMORY(pwszDocString);
+    LWREG_SAFE_FREE_MEMORY(pwszEnumString);
+    _MemDbFreeWC16Array(ppwszEnumStrings);
     goto cleanup;
 }

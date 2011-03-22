@@ -173,3 +173,25 @@ MemDbGetKeyAcl(
     OUT PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     OUT PULONG pSecDescLen
     );
+
+
+NTSTATUS
+MemDbSetValueAttributes(
+    IN HANDLE hRegConnection,
+    IN REG_DB_HANDLE hDb,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN PCWSTR pValueName,
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    );
+
+
+NTSTATUS
+MemDbGetValueAttributes(
+    IN HANDLE hRegConnection,
+    IN REG_DB_HANDLE hDb,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN PCWSTR pValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    );
+

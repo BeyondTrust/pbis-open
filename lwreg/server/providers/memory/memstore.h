@@ -89,5 +89,21 @@ NTSTATUS
 MemRegStoreFindNodeValue(
     IN MEM_REG_STORE_HANDLE hDb,
     IN PCWSTR Name,
-    OUT PREGMEM_VALUE *phValue);
+    OUT PREGMEM_VALUE *phValue
+    );
+
+
+NTSTATUS
+MemRegStoreAddNodeAttribute(
+    PREGMEM_VALUE hValue,
+    IN PLWREG_VALUE_ATTRIBUTES pAttributes
+    );
+
+
+NTSTATUS
+MemRegStoreGetNodeValueAttributes(
+    PREGMEM_VALUE hValue,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    );
 

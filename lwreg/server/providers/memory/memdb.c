@@ -518,12 +518,12 @@ MemDbEnumValue(
     if (pcbData)
     {
         *pcbData = hKey->Values[dwIndex]->DataLen;
-    }
-    if (pcbData && pData)
-    {
-        memcpy(pData, 
-               hKey->Values[dwIndex]->Data,
-               hKey->Values[dwIndex]->DataLen);
+        if (pData && hKey->Values[dwIndex]->Data)
+        {
+            memcpy(pData, 
+                   hKey->Values[dwIndex]->Data,
+                   hKey->Values[dwIndex]->DataLen);
+        }
     }
 
 cleanup:
@@ -605,3 +605,123 @@ error:
     goto cleanup;
 }
 
+
+NTSTATUS
+MemDbSetValueAttributes(
+    IN HANDLE hRegConnection,
+    IN REG_DB_HANDLE hDb,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN PCWSTR pValueName,
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes)
+{
+    NTSTATUS status = 0;
+    MEM_REG_STORE_HANDLE hKey = NULL;
+    MEM_REG_STORE_HANDLE hParentKey = NULL;
+    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PREGMEM_VALUE hValue = NULL;
+
+    hKey = hDb->pMemReg;
+
+    if (pSubKey)
+    {
+        /*
+         * Find named subnode and use that to find the named value
+         */
+        hParentKey = hKey;
+        status = MemRegStoreFindNode(
+                     hParentKey,
+                     pSubKey,
+                     &hSubKey);
+        BAIL_ON_NT_STATUS(status);
+        hKey = hSubKey;
+    }
+
+    /*
+     * Find named value within specified node
+     */
+    status = MemRegStoreFindNodeValue(
+                 hKey,
+                 pValueName,
+                 &hValue);
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+        status = MemRegStoreAddNodeValue(
+                     hKey,
+                     pValueName,
+                     0, // Not used?
+                     pValueAttributes->ValueType,
+                     NULL,
+                     0);
+        BAIL_ON_NT_STATUS(status);
+    }
+    status = MemRegStoreFindNodeValue(
+                 hKey,
+                 pValueName,
+                 &hValue);
+    BAIL_ON_NT_STATUS(status);
+
+    /*
+     * Add attributes to the specified node.
+     */
+    status = MemRegStoreAddNodeAttribute(
+                 hValue,
+                 pValueAttributes);
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}
+
+
+NTSTATUS
+MemDbGetValueAttributes(
+    IN HANDLE hRegConnection,
+    IN REG_DB_HANDLE hDb,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN PCWSTR pValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes)
+{
+    NTSTATUS status = 0;
+    MEM_REG_STORE_HANDLE hKey = NULL;
+    MEM_REG_STORE_HANDLE hParentKey = NULL;
+    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PREGMEM_VALUE hValue = NULL;
+
+    hKey = hDb->pMemReg;
+    if (pSubKey)
+    {
+        /*
+         * Find named subnode and use that to find the named value
+         */
+        hParentKey = hKey;
+        status = MemRegStoreFindNode(
+                     hParentKey,
+                     pSubKey,
+                     &hSubKey);
+        BAIL_ON_NT_STATUS(status);
+        hKey = hSubKey;
+    }
+
+    /*
+     * Find named value within specified node
+     */
+    status = MemRegStoreFindNodeValue(
+                 hKey,
+                 pValueName,
+                 &hValue);
+    BAIL_ON_NT_STATUS(status);
+
+    status = MemRegStoreGetNodeValueAttributes(
+                 hValue,
+                 ppCurrentValue,
+                 ppValueAttributes);
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}

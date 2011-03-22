@@ -41,17 +41,26 @@
  */
 #include "includes.h"
 
-
 NTSTATUS
 MemSetValueAttributes(
     IN HANDLE hRegConnection,
     IN HKEY hKey,
     IN OPTIONAL PCWSTR pwszSubKey,
     IN PCWSTR pValueName,
-    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
-    )
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes)
 {
-    return 0;
+    NTSTATUS status = 0;
+    REG_DB_CONNECTION regDbConn = {0};
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
+
+    regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+    status = MemDbSetValueAttributes(
+                 hRegConnection,
+                 &regDbConn,
+                 pwszSubKey,
+                 pValueName,
+                 pValueAttributes);
+    return status;
 }
 
 
@@ -62,10 +71,22 @@ MemGetValueAttributes(
     IN OPTIONAL PCWSTR pwszSubKey,
     IN PCWSTR pValueName,
     OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
-    OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
-    )
+    OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes)
 {
-    return 0;
+    NTSTATUS status = 0;
+    REG_DB_CONNECTION regDbConn = {0};
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
+
+    regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+    status = MemDbGetValueAttributes(
+                 hRegConnection,
+                 &regDbConn,
+                 pwszSubKey,
+                 pValueName,
+                 ppCurrentValue,
+                 ppValueAttributes);
+
+    return status;
 }
 
 
@@ -74,8 +95,7 @@ MemDeleteValueAttributes(
     IN HANDLE hRegConnection,
     IN HKEY hKey,
     IN OPTIONAL PCWSTR pwszSubKey,
-    IN PCWSTR pValueName
-    )
+    IN PCWSTR pValueName)
 {
     return 0;
 }
