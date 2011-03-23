@@ -12,5 +12,5 @@ make()
         SOURCES="$LWPRIV_SOURCES" \
         INCLUDEDIRS=". ../../include" \
         HEADERDEPS="lwadvapi.h lw/base.h" \
-        LIBDEPS="lwadvapi lwbase lsarpc"
+        LIBDEPS="lwadvapi lwadvapi_nothr lwbase lwbase_nothr lsarpc lwioclient"
 }
