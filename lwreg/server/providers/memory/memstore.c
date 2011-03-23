@@ -542,6 +542,13 @@ MemRegStoreGetNodeValueAttributes(
 
     if (ppValueAttributes)
     {
+        /* Always allocate a return attributes block */
+        status = LW_RTL_ALLOCATE((PVOID*) &pValueAttributes,
+                                 LWREG_VALUE_ATTRIBUTES,
+                                 sizeof (*pValueAttributes));
+        BAIL_ON_NT_STATUS(status);
+        memset(pValueAttributes, 0, sizeof(*pValueAttributes));
+
         if (hValue->Attributes.DefaultValueLen > 0)
         {
             status = LW_RTL_ALLOCATE(
@@ -567,13 +574,6 @@ MemRegStoreGetNodeValueAttributes(
             BAIL_ON_NT_STATUS(status);
         }
 
-        status = LW_RTL_ALLOCATE((PVOID*) &pValueAttributes,
-                                 LWREG_VALUE_ATTRIBUTES,
-                                 sizeof (*pValueAttributes));
-        BAIL_ON_NT_STATUS(status);
-        memset(pValueAttributes, 0, sizeof(*pValueAttributes));
-
-
         if (hValue->Attributes.RangeType == LWREG_VALUE_RANGE_TYPE_ENUM &&
             hValue->Attributes.Range.ppwszRangeEnumStrings)
         {
@@ -596,6 +596,15 @@ MemRegStoreGetNodeValueAttributes(
     if (pValueAttributes)
     {
         *pValueAttributes = hValue->Attributes;
+        /* 
+         * The default type must always be returned by the
+         * attributes structure. Seems like a bug with value
+         * handling on the client-side.
+         */
+        if (hValue->Attributes.ValueType == 0)
+        {
+            pValueAttributes->ValueType = hValue->Type;
+        }
         pValueAttributes->pDefaultValue = pRetAttributeValueData;
         pValueAttributes->pwszDocString = pwszDocString;
         if (ppwszEnumStrings)
