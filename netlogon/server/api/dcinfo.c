@@ -1,6 +1,6 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -274,13 +274,10 @@ LWNetSrvGetDCName(
             isBackoffToWritableDc = bFailedFindWritable;
             lastBackoffToWritableDc = isBackoffToWritableDc ? now : 0;
 
-            // Will only affinitize for KDC/LDAP (i.e., not PDC/GC) and if the site is the same.
-            if (!(dwDsFlags & (DS_PDC_REQUIRED | DS_GC_SERVER_REQUIRED)) &&
-                (IsNullOrEmptyString(pszSiteName) ||
-                 !strcasecmp(pDcInfo->pszDCSiteName, pszSiteName)))
-            {
-                bUpdateKrb5Affinity = TRUE;
-            }
+            bUpdateKrb5Affinity = LWNetUpdateKrb5Affinity(
+                                      dwDsFlags,
+                                      pszSiteName, 
+                                      pDcInfo);
         }
     }
 
