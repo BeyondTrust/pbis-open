@@ -78,6 +78,13 @@ LsaAdBatchFindSingleObject(
     );
 
 DWORD
+LsaRemoveAlreadyEnumerated(
+    IN OUT PLSA_HASH_TABLE pEnumeratedSids,
+    IN OUT PDWORD pObjectsCount,
+    IN OUT PLSA_SECURITY_OBJECT* ppObjects
+    );
+
+DWORD
 LsaAdBatchEnumObjects(
     IN PAD_PROVIDER_CONTEXT pContext,
     IN OUT PLW_SEARCH_COOKIE pCookie,
