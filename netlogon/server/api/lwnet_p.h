@@ -1,6 +1,6 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -182,6 +182,13 @@ LWNetGetPreferredDcList(
     IN DWORD dwDsFlags,
     OUT PDNS_SERVER_INFO* ppServerArray,
     OUT PDWORD pdwServerCount
+    );
+
+BOOLEAN
+LWNetUpdateKrb5Affinity(
+    IN DWORD DsFlags,
+    IN PCSTR SiteName,
+    IN PLWNET_DC_INFO pDcInfo
     );
 
 #endif /* __LWNET_P_H__ */

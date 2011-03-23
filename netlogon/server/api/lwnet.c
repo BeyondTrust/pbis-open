@@ -1,6 +1,6 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -780,7 +780,6 @@ LWNetSrvGetDCNameDiscoverInternal(
     OUT OPTIONAL PDWORD pdwServerCount,
     OUT PBOOLEAN bFailedFindWritable
     );
-
 DWORD
 LWNetSrvGetDCNameDiscover(
     IN PCSTR pszDnsDomainName,
@@ -960,6 +959,30 @@ LWNetSrvGetDCNameDiscoverInternal(
     // If we got the correct site already, we are done.
     if (LWNetSrvIsInSameSite(pDcInfo))
     {
+        if (LWNetUpdateKrb5Affinity(dwDsFlags, pszSiteName, pDcInfo) &&
+            !pszSiteName &&
+            pDcInfo->pszClientSiteName)
+        {
+            dwError = pfnDCListQuery(
+                          pszDnsDomainName,
+                          pDcInfo->pszClientSiteName,
+                          dwDsFlags,
+                          &pSiteServerArray,
+                          &dwSiteServerCount);
+            if (dwError == 0)
+            {
+                // Use the site-specific DC.
+                LWNET_SAFE_FREE_MEMORY(pServerArray);
+                dwServerCount = 0;
+
+                pServerArray = pSiteServerArray;
+                dwServerCount = dwSiteServerCount;
+
+                pSiteServerArray = NULL;
+                dwSiteServerCount = 0;
+            }
+        }
+
         dwError = 0;
         goto cleanup;
     }
@@ -1346,12 +1369,24 @@ error:
     return dwError;
 }
 
+BOOLEAN
+LWNetUpdateKrb5Affinity(
+    IN DWORD DsFlags,
+    IN PCSTR SiteName,
+    IN PLWNET_DC_INFO pDcInfo
+    )
+{
+    BOOLEAN enabled = FALSE;
 
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
+    // Will only affinitize for KDC/LDAP (i.e., not PDC/GC), if the site
+    // is the same
+
+    if (!(DsFlags & (DS_PDC_REQUIRED | DS_GC_SERVER_REQUIRED)) &&
+        (IsNullOrEmptyString(SiteName) || 
+         (strcasecmp(SiteName, pDcInfo->pszDCSiteName) == 0)))
+    {
+        enabled = TRUE;
+    }
+
+    return enabled;
+}
