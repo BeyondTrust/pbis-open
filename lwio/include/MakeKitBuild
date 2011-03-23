@@ -19,6 +19,5 @@ make()
                  lwio/lwshareinfo.h \
                  lwio/iodriver.h \
                  lwio/ioapi.h \
-                 lwio/lwzct.h \
-                 lwio/utils.h"
+                 lwio/lwzct.h"
 }

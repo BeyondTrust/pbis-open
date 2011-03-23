@@ -35,7 +35,7 @@
  *
  * Module Name:
  *
- *        smbutils.h
+ *        lwioutils.h
  *
  * Abstract:
  *
@@ -47,11 +47,128 @@
  *          Sriram Nambakam (snambakam@likewisesoftware.com)
  */
 
-#ifndef __SMBUTILS_H__
-#define __SMBUTILS_H__
+#ifndef __LWIO_UTILS_H__
+#define __LWIO_UTILS_H__
 
 #include <lwio/lwio.h>
-#include <lwio/utils.h>
+
+
+#define LWIO_SAFE_LOG_STRING(x) \
+    ( (x) ? (x) : "<null>" )
+
+#define _LWIO_LOG_AT(Level, ...) LW_RTL_LOG_AT_LEVEL(Level, "lwio", __VA_ARGS__)
+#define LWIO_LOG_ALWAYS(...) _LWIO_LOG_AT(LW_RTL_LOG_LEVEL_ALWAYS, __VA_ARGS__)
+#define LWIO_LOG_ERROR(...) _LWIO_LOG_AT(LW_RTL_LOG_LEVEL_ERROR, __VA_ARGS__)
+#define LWIO_LOG_WARNING(...) _LWIO_LOG_AT(LW_RTL_LOG_LEVEL_WARNING, __VA_ARGS__)
+#define LWIO_LOG_INFO(...) _LWIO_LOG_AT(LW_RTL_LOG_LEVEL_INFO, __VA_ARGS__)
+#define LWIO_LOG_VERBOSE(...) _LWIO_LOG_AT(LW_RTL_LOG_LEVEL_VERBOSE, __VA_ARGS__)
+#define LWIO_LOG_DEBUG(...) _LWIO_LOG_AT(LW_RTL_LOG_LEVEL_DEBUG, __VA_ARGS__)
+#define LWIO_LOG_TRACE(...) _LWIO_LOG_AT(LW_RTL_LOG_LEVEL_TRACE, __VA_ARGS__)
+
+/*
+ * Registry
+ */
+
+typedef struct __LWIO_CONFIG_REG LWIO_CONFIG_REG, *PLWIO_CONFIG_REG;
+
+typedef enum
+{
+    LwIoTypeString,
+    LwIoTypeMultiString,
+    LwIoTypeDword,
+    LwIoTypeBoolean,
+    LwIoTypeChar,
+    LwIoTypeEnum
+} LWIO_CONFIG_TYPE;
+
+typedef struct __LWIO_CONFIG_TABLE
+{
+    PCSTR   pszName;
+    BOOLEAN bUsePolicy;
+    LWIO_CONFIG_TYPE Type;
+    DWORD dwMin;
+    DWORD dwMax;
+    const PCSTR *ppszEnumNames;
+    PVOID pValue;
+} LWIO_CONFIG_TABLE, *PLWIO_CONFIG_TABLE;
+
+NTSTATUS
+LwIoProcessConfig(
+    PCSTR pszConfigKey,
+    PCSTR pszPolicyKey,
+    PLWIO_CONFIG_TABLE pConfig,
+    DWORD dwConfigEntries,
+    BOOLEAN bIgnoreNotFound
+    );
+
+NTSTATUS
+LwIoOpenConfig(
+    PCSTR pszConfigKey,
+    PCSTR pszPolicyKey,
+    PLWIO_CONFIG_REG *ppReg
+    );
+
+VOID
+LwIoCloseConfig(
+    PLWIO_CONFIG_REG pReg
+    );
+
+NTSTATUS
+LwIoReadConfigString(
+    PLWIO_CONFIG_REG pReg,
+    PCSTR   pszName,
+    BOOLEAN bUsePolicy,
+    PSTR    *ppszValue
+    );
+
+NTSTATUS
+LwIoReadConfigMultiString(
+    PLWIO_CONFIG_REG pReg,
+    PCSTR   pszName,
+    BOOLEAN bUsePolicy,
+    PSTR    **pppszValue
+    );
+
+NTSTATUS
+LwIoMultiStringCopy(
+    PSTR **pppszNewStrings,
+    PCSTR *ppszOriginalStrings
+    );
+
+VOID
+LwIoMultiStringFree(
+    PSTR **pppszValue
+    );
+
+NTSTATUS
+LwIoReadConfigDword(
+    PLWIO_CONFIG_REG pReg,
+    PCSTR pszName,
+    BOOLEAN bUsePolicy,
+    DWORD   dwMin,
+    DWORD   dwMax,
+    PDWORD pdwValue
+    );
+
+NTSTATUS
+LwIoReadConfigBoolean(
+    PLWIO_CONFIG_REG pReg,
+    PCSTR pszName,
+    BOOLEAN bUsePolicy,
+    PBOOLEAN pbValue
+    );
+
+NTSTATUS
+LwIoReadConfigEnum(
+    PLWIO_CONFIG_REG pReg,
+    PCSTR pszName,
+    BOOLEAN bUsePolicy,
+    DWORD dwMin,
+    DWORD dwMax,
+    const PCSTR *ppszEnumNames,
+    PDWORD pdwValue
+    );
+
 
 #ifndef _SMB_ENDIAN_SWAP16
 
@@ -1025,7 +1142,7 @@ LwioGetHostInfo(
     PSTR* ppszHostname
     );
 
-#endif /* __SMBUTILS_H__ */
+#endif /* __LWIO_UTILS_H__ */
 
 
 
