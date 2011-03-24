@@ -322,6 +322,7 @@ MemDbQueryInfoKey(
                 maxValueLen = valueLen;
             }
         }
+        *pcMaxValueLen = maxValueLen;
     }
 
 cleanup:
@@ -517,12 +518,26 @@ MemDbEnumValue(
     }
     if (pcbData)
     {
-        *pcbData = hKey->Values[dwIndex]->DataLen;
-        if (pData && hKey->Values[dwIndex]->Data)
+        if (hKey->Values[dwIndex]->Data && hKey->Values[dwIndex]->DataLen)
         {
-            memcpy(pData, 
-                   hKey->Values[dwIndex]->Data,
-                   hKey->Values[dwIndex]->DataLen);
+            *pcbData = hKey->Values[dwIndex]->DataLen;
+            if (pData && hKey->Values[dwIndex]->Data)
+            {
+                memcpy(pData, 
+                       hKey->Values[dwIndex]->Data,
+                       hKey->Values[dwIndex]->DataLen);
+            }
+        }
+        else if (hKey->Values[dwIndex]->Attributes.pDefaultValue &&
+                 hKey->Values[dwIndex]->Attributes.DefaultValueLen > 0)
+        {
+            *pcbData = hKey->Values[dwIndex]->Attributes.DefaultValueLen;
+            if (pData && hKey->Values[dwIndex]->Attributes.pDefaultValue)
+            {
+                memcpy(pData, 
+                       hKey->Values[dwIndex]->Attributes.pDefaultValue,
+                       hKey->Values[dwIndex]->Attributes.DefaultValueLen);
+            }
         }
     }
 
