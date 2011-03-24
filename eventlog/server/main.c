@@ -1916,6 +1916,8 @@ main(
 
     EVTSetProcessExitCode(dwError);
 
+    unlink(PID_FILE);
+
     exit (dwError);
 
 error:
