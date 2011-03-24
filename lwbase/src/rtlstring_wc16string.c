@@ -162,6 +162,26 @@ LwRtlWC16StringFree(
     RTL_FREE(ppszString);
 }
 
+
+INT16
+LwRtlWC16StringCompare(
+    LW_IN LW_PCWSTR pString1,
+    LW_IN LW_PCWSTR pString2
+    )
+{
+    PCWSTR pCurrent1 = pString1;
+    PCWSTR pCurrent2 = pString2;
+
+    while (*pCurrent1 && *pCurrent2 && *pCurrent1 == *pCurrent2)
+    {
+        pCurrent1++;
+        pCurrent2++;
+    }
+
+    return *pCurrent1 - *pCurrent2;
+}
+
+
 LW_BOOLEAN
 LwRtlWC16StringIsEqual(
     LW_IN LW_PCWSTR pString1,

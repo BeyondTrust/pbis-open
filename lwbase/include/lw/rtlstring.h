@@ -153,6 +153,12 @@ LwRtlWC16StringIsEqual(
     LW_IN LW_BOOLEAN bIsCaseSensitive
     );
 
+INT16
+LwRtlWC16StringCompare(
+    LW_IN LW_PCWSTR pString1,
+    LW_IN LW_PCWSTR pString2
+    );
+
 LW_NTSTATUS
 LwRtlWC16StringAllocatePrintfWV(
     LW_OUT LW_PWSTR* ppszString,
