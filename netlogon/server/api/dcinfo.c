@@ -274,7 +274,7 @@ LWNetSrvGetDCName(
             isBackoffToWritableDc = bFailedFindWritable;
             lastBackoffToWritableDc = isBackoffToWritableDc ? now : 0;
 
-            bUpdateKrb5Affinity = LWNetUpdateKrb5Affinity(
+            bUpdateKrb5Affinity = LWNetIsUpdateKrb5AffinityEnabled(
                                       dwDsFlags,
                                       pszSiteName, 
                                       pDcInfo);

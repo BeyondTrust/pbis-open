@@ -959,7 +959,7 @@ LWNetSrvGetDCNameDiscoverInternal(
     // If we got the correct site already, we are done.
     if (LWNetSrvIsInSameSite(pDcInfo))
     {
-        if (LWNetUpdateKrb5Affinity(dwDsFlags, pszSiteName, pDcInfo) &&
+        if (LWNetIsUpdateKrb5AffinityEnabled(dwDsFlags, pszSiteName, pDcInfo) &&
             !pszSiteName &&
             pDcInfo->pszClientSiteName)
         {
@@ -1370,7 +1370,7 @@ error:
 }
 
 BOOLEAN
-LWNetUpdateKrb5Affinity(
+LWNetIsUpdateKrb5AffinityEnabled(
     IN DWORD DsFlags,
     IN PCSTR SiteName,
     IN PLWNET_DC_INFO pDcInfo
@@ -1383,7 +1383,7 @@ LWNetUpdateKrb5Affinity(
 
     if (!(DsFlags & (DS_PDC_REQUIRED | DS_GC_SERVER_REQUIRED)) &&
         (IsNullOrEmptyString(SiteName) || 
-         (strcasecmp(SiteName, pDcInfo->pszDCSiteName) == 0)))
+         (strcasecmp(SiteName, pDcInfo->pszClientSiteName) == 0)))
     {
         enabled = TRUE;
     }
