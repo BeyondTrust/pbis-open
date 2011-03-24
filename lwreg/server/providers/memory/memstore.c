@@ -380,6 +380,7 @@ MemRegStoreAddNodeValue(
     WCHAR pwszNull[2] = {0};
     BYTE *pbData = NULL;
     PREGMEM_VALUE *newValues;
+    DWORD index = 0;
 
     status = LW_RTL_ALLOCATE(
                  (PVOID*) &pNodeValue, 
@@ -419,6 +420,7 @@ MemRegStoreAddNodeValue(
                                 (PVOID) &newValues,
                                 (hDb->ValuesLen + 1) * sizeof(PREGMEM_VALUE));
     BAIL_ON_NT_STATUS(status);
+    hDb->Values = newValues;
 
     pNodeValue->Name = pwszName;
     pNodeValue->Type = dwType;
@@ -428,8 +430,33 @@ MemRegStoreAddNodeValue(
     pNodeValue->Data = pbData;
     pNodeValue->DataLen = cbData;
 
-    hDb->Values = newValues;
-    hDb->Values[hDb->ValuesLen] = pNodeValue;
+    /* Insert new value in sorted order */
+    if (hDb->ValuesLen > 0 && pValueName)
+    {
+        for (index=0;
+             index<hDb->ValuesLen &&
+             LwRtlWC16StringCompare(pValueName, hDb->Values[index]->Name)>0;
+             index++)
+        {
+            ;
+        }
+        if (index < (hDb->ValuesLen+1))
+        {
+            memmove(&hDb->Values[index+1],
+                    &hDb->Values[index],
+                    sizeof(PREGMEM_NODE) * (hDb->ValuesLen - index));
+            hDb->Values[index] = pNodeValue;
+        }
+        else
+        {
+            hDb->Values[hDb->ValuesLen] = pNodeValue;
+        }
+    }
+    else
+    {
+        hDb->Values[hDb->ValuesLen] = pNodeValue;
+    }
+
     hDb->ValuesLen++;
 
 cleanup:
