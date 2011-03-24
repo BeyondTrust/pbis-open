@@ -1,0 +1,13 @@
+Name: 		@PKG_RPM_NAME@
+Summary: 	Likewise Open Graphical Interface
+Version:        @PKG_RPM_VERSION@
+Release: 	@PKG_RPM_RELEASE@
+License: 	Likewise Proprietary
+URL: 		http://www.likewise.com/
+Group: 		System Environment/Daemons
+Prereq: grep, sh-utils
+
+AutoReq: no
+
+%description
+Likewise provides Active Directory authentication.

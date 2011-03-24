@@ -1,0 +1,49 @@
+Source: @PKG_DEB_NAME@
+Section: net
+Priority: optional
+Maintainer: Likewise Software <support@likewise.com>
+Build-Depends: dpkg-dev (>= 1.10.28), debhelper (>= 4.2), lsb-base
+Standards-Version: 3.7.2
+Homepage: http://www.likewiseopen.org/
+
+Package: @PKG_DEB_NAME@
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Provides: @PKG_DEB_NAME@
+Conflicts: @PKG_DEB_NAME@,
+ likewise-base (<< 6.2),
+ likewise-domainjoin (<< 6.2),
+ likewise-domainjoin-gui (<< 6.2),
+ likewise-eventlog (<< 6.2),
+ likewise-krb5 (<< 6.2),
+ likewise-libxml2 (<< 6.2),
+ likewise-lsass (<< 6.2),
+ likewise-lwconfig (<< 6.2),
+ likewise-lwio (<< 6.2),
+ likewise-lwreg (<< 6.2),
+ likewise-lwreskit (<< 6.2),
+ likewise-lwtools (<< 6.2),
+ likewise-lwupgrade (<< 6.2),
+ likewise-mod-auth-kerb (<< 6.2),
+ likewise-netlogon (<< 6.2),
+ likewise-openldap (<< 6.2),
+ likewise-passwd (<< 6.2),
+ likewise-pstore (<< 6.2),
+ likewise-rpc (<< 6.2),
+ likewise-sqlite (<< 6.2),
+ likewise-srvsvc (<< 6.2),
+Replaces: @PKG_DEB_NAME@
+Description: Authentication services for Active Directory domains
+ Likewise Open integrates Unix desktops and servers into an Active Directory
+ environment by joining hosts to the domain and lets Unix applications and
+ services authenticate Windows users and groups via the  PAM and Name Service
+ Switch libraries.
+
+Package: @PKG_DEB_NAME@-dev
+Section: libdevel
+Architecture: any
+#Depends: likewise_open (= ${binary:Version})
+Description: Likewise Open SDK
+ Likewise Open Software Development Kit
+
+

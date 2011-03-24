@@ -1,0 +1,91 @@
+#!/usr/bin/make -f
+
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# Set the host and build architectures for use with config.cache loading,
+# cross-building, etc.
+DEB_HOST_GNU_TYPE	:= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE	:= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+DEB_HOST_ARCH_OS	:= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
+
+export DEB_HOST_GNU_TYPE
+export DEB_BUILD_GNU_TYPE
+export DEB_HOST_ARCH_OS
+pyversio := $(shell pyversions -vd)
+
+#include /usr/share/quilt/quilt.make
+
+DESTDIR=`pwd`/debian/tmp
+PKGNAME=__PKG_NAME
+PREFIX=/opt/likewise
+
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+
+	touch configure-stamp
+
+build: build-stamp
+
+build-stamp: configure-stamp
+	dh_testdir
+
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+	dh_install --sourcedir=@MK_ROOT_DIR@/@MK_STAGE_DIR@
+
+
+# Build architecture-independent files here.
+binary-indep: build install
+# We have nothing to do by default.
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_installexamples
+#	dh_install
+#	dh_installmenu
+#	dh_installdebconf
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_python
+	dh_installinit
+#	dh_installcron
+#	dh_installinfo
+	dh_installman
+	dh_link
+	if [ "@MK_DEBUG@" = "no" ]; then dh_strip; fi
+	dh_compress
+	dh_fixperms
+#	dh_perl
+	dh_makeshlibs
+	dh_installdeb
+#	dh_shlibdeps -ldebian/likewise-open/usr/lib/likewise-open
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

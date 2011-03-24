@@ -1,0 +1,144 @@
+MODULES="package-deb package-rpm"
+
+configure()
+{
+    mk_declare -o \
+        MK_BINDIR \
+        MK_SBINDIR \
+        MK_PREFIX \
+        MK_DEBUG \
+        MK_ROOT_DIR \
+        MK_STAGE_DIR \
+        MK_HOST_ARCH \
+        LW_CACHEDIR \
+        LW_CONFIGDIR \
+        PRIMARY_LIBDIR="$MK_LIBDIR"
+
+    if mk_deb_enabled
+    then
+        mk_declare -o PKG_DEB_NAME="${LW_VENDOR}-open"
+        mk_declare -o PKG_DEB_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+        mk_declare -o PKG_DEB_DATE="`date -R`"
+    fi
+
+    if mk_rpm_enabled
+    then
+        mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-open"
+        mk_declare -o PKG_RPM_VERSION="${LW_VERSION}"
+        mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_REVISION:-0}"
+
+        PKG_RPM_COMPAT="0"
+
+        mk_compat_do
+            PKG_RPM_COMPAT="1"
+        mk_compat_done
+
+        mk_declare -o PKG_RPM_COMPAT
+    fi
+}
+
+package_deb()
+{
+    mk_deb_do \
+        PACKAGE="$PKG_DEB_NAME" \
+        VERSION="$PKG_DEB_VERSION" \
+        DEBIANFILES="deb/changelog.in deb/control.in deb/likewise-open.pam-auth-update.in \
+                     deb/likewise-open.postinst.in deb/likewise-open.postrm.in deb/compat.in \
+                     deb/likewise-open.preinst.in deb/likewise-open.prerm.in deb/rules.in"
+        
+        open_files
+        open_files_compat
+
+        mk_subpackage_do SUBPACKAGE="dev"
+            open_files_dev
+        mk_subpackage_done
+    mk_deb_done
+}
+
+package_rpm()
+{
+    mk_rpm_do \
+        PACKAGE="$PKG_RPM_NAME" \
+        VERSION="$PKG_RPM_VERSION" \
+        SPECFILE="rpm/open.spec.in"
+        
+        open_files
+
+        if [ "$PKG_RPM_COMPAT" -eq "1" ]
+        then
+            mk_subpackage_do SUBPACKAGE="compat"
+                open_files_compat
+            mk_subpackage_done
+        fi
+
+        mk_subpackage_do SUBPACKAGE="devel"
+            open_files_dev
+        mk_subpackage_done
+    mk_rpm_done
+}
+      
+make()
+{
+    OPEN_SUBDIRS="\
+        @krb5 @cyrus-sasl @openldap @libiconv @sqlite \
+        @libuuid @openssl @curl @libxml2 \
+        @lwbase @lwmsg @lwreg @lwadvapi @netlogon \
+        @lwio @nfs @libschannel @dcerpc @centutils @lwsm \
+        @eventlog @lsass @reapsysl @lwdns @srvsvc @lwnetapi \
+        @lwtools @domainjoin/libdomainjoin @domainjoin/domainjoin-cli \
+        @lwconfig @lwupgrade @samba-interop @config"
+
+    mk_deb_enabled && package_deb
+    mk_rpm_enabled && package_rpm
+}
+
+open_files()
+{
+    mk_package_patterns \
+        SUBDIRS="$OPEN_SUBDIRS" \
+        "${MK_BINDIR}/*" \
+        "${MK_SBINDIR}/*" \
+        "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
+        "${MK_LIBDIR}/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/liblsass_auth_provider_*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*" \
+        "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lw-svcm/*${MK_DLO_EXT}" \
+        "${MK_DATADIR}/*.glade" \
+        "${MK_DATADIR}/*.png" \
+        "${NSSDIR}/*" \
+        "${PAMDIR}/*" \
+        "${LW_CONFIGDIR}/*.reg" \
+        "${MK_SYSCONFDIR}/*" \
+        "${MK_SYSCONFDIR}/gss/mech" \
+        "${MK_PREFIX}/data/VERSION" \
+        "/etc/init.d/*"
+
+    mk_package_patterns SUBDIRS="@docs" "*"
+
+    mk_package_dirs \
+        "${LW_CACHEDIR}" \
+        "${LW_CACHEDIR}/db" \
+        "${LW_CACHEDIR}/rpc"
+}
+
+open_files_compat()
+{
+    mk_compat_do
+        mk_package_patterns \
+            SUBDIRS="$OPEN_SUBDIRS" \
+            "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
+            "${NSSDIR}/*" \
+            "${PAMDIR}/*"
+    mk_compat_done
+}
+
+open_files_dev()
+{
+    mk_package_patterns \
+        SUBDIRS="$OPEN_SUBDIRS" \
+        "${MK_LIBDIR}/*.la" \
+        "*.h" \
+        "*.idl"
+}

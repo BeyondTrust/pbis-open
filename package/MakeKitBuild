@@ -1,4 +1,4 @@
-SUBDIRS="cifs"
+SUBDIRS="open open-gui"
 
 make()
 {

@@ -1,0 +1,66 @@
+MODULES="package-deb package-rpm"
+
+configure()
+{
+    mk_declare -o \
+        MK_DEBUG \
+        MK_ROOT_DIR \
+        MK_STAGE_DIR
+
+    if mk_deb_enabled
+    then
+        mk_declare -o PKG_DEB_NAME="${LW_VENDOR}-open-gui"
+        mk_declare -o PKG_DEB_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+        mk_declare -o PKG_DEB_DATE="`date -R`"
+    fi
+
+    if mk_rpm_enabled
+    then
+        mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-open-gui"
+        mk_declare -o PKG_RPM_VERSION="${LW_VERSION}"
+        mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_REVISION:-0}"
+
+        PKG_RPM_COMPAT="0"
+
+        mk_compat_do
+            PKG_RPM_COMPAT="1"
+        mk_compat_done
+
+        mk_declare -o PKG_RPM_COMPAT
+    fi
+}
+
+package_rpm()
+{
+    mk_rpm_do \
+        PACKAGE="$PKG_RPM_NAME" \
+        VERSION="$PKG_RPM_VERSION" \
+        SPECFILE="rpm/open-gui.spec.in"
+        
+        gui_files
+
+    mk_rpm_done
+}
+
+package_deb()
+{
+    mk_deb_do \
+        PACKAGE="$PKG_DEB_NAME" \
+        VERSION="$PKG_DEB_VERSION" \
+        DEBIANFILES="deb/changelog.in deb/control.in deb/rules.in deb/compat.in"
+        
+        gui_files
+    
+    mk_deb_done   
+}
+
+make()
+{
+    mk_deb_enabled && package_deb
+    mk_rpm_enabled && package_rpm
+}
+
+gui_files()
+{
+    mk_package_patterns SUBDIRS="@domainjoin/domainjoin-gui" '*'
+}

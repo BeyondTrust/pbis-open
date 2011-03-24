@@ -1,0 +1,6 @@
+@PKG_DEB_NAME@ (@PKG_DEB_VERSION@) gutsy; urgency=low
+
+  * New Likewise Open release
+
+ -- Likewise Software <support@likewise.com>  @PKG_DEB_DATE@
+

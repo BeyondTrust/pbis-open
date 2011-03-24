@@ -1,0 +1,157 @@
+#!/bin/sh
+
+UPGRADEDIR=@MK_PREFIX@-upgrade
+
+LOG=/var/log/likewise-open-install.log
+TLOG=/tmp/LikewiseOpenTemp.txt
+
+PKG_ARCH="@MK_HOST_ARCH@"
+
+DAEMONS_TO_KILL="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
+
+# Display to screen and log file with a blank line between entires.
+log()
+{
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Display to screen and log file with no blank line.
+_log()
+{
+    echo $@
+    echo $@ >> $LOG
+}
+
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
+run()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err"
+        _log `cat $TLOG`
+        _log
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# Log only to file.
+run_quiet()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+    else
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    cat $TLOG >> $LOG
+    echo >> $LOG
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+run_or_fail()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log `cat $TLOG`
+        _log
+        rm -f $TLOG > /dev/null 2>&1
+        exit 1
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+check_deb_installed()
+{
+    _status="`dpkg -s "$1" 2>/dev/null | grep Status: 2>/dev/null`"
+    if [ $? -ne 0 ]
+    then
+        return 1
+    fi
+
+    if echo "$_status" | grep ' installed' >/dev/null 2>&1
+    then
+        return 0
+    fi
+
+    return 1
+}
+
+case "$1" in
+    abort-upgrade)
+        log "Package: Likewise Open preinstall [abort-upgrade] begins (`date`)"
+        log "Package: Likewise Open preinstall [abort-upgrade] finished"
+    ;;
+
+    upgrade)
+        log "Package: Likewise Open preinstall [upgrade] begins (`date`)"
+
+        if dpkg-query --show --showformat='${Version}' likewise-open | grep "ubuntu" > /dev/null 2>&1 ; then
+            log "The package likewise-open from Ubuntu has been detected."
+            log "Neither side-by-side installations nor upgrades are supported."
+            log "Please remove likewise-open before continuing."
+            exit 1
+        fi
+
+        run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable pam"
+        run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable nsswitch"
+
+        run_quiet "@MK_BINDIR@/lwsm shutdown"
+
+        for daemon in $DAEMONS_TO_KILL
+        do
+            run_quiet "pkill -KILL -x $daemon"
+        done
+
+        log "Package: Likewise Open preinstall [upgrade] finished"
+    ;;
+
+    install)
+        log "Package: Likewise Open preinstall [install] begins (`date`)"
+
+        if check_deb_installed "likewise-open5" ; then
+            log "The package likewise-open5 from Ubuntu has been detected."
+            log "Neither side-by-side installations nor upgrades are supported."
+            log "Please remove likewise-open5 before continuing."
+            exit 1
+        fi
+
+        for daemon in $DAEMONS_TO_KILL
+        do
+            run_quiet "pkill -KILL -x $daemon"
+        done
+
+        log "Package: Likewise Open preinstall [install] finished"
+        exit 0
+    ;;
+esac
