@@ -112,6 +112,7 @@ error:
     goto cleanup;
 }
 
+
 NTSTATUS
 MemRegStoreOpen(
     OUT PMEM_REG_STORE_HANDLE phDb)
@@ -246,11 +247,13 @@ MemRegStoreAddNode(
     PREGMEM_NODE *pNodesArray = NULL;
     PREGMEM_NODE pNewNode = NULL;
     PWSTR newNodeName = NULL;
+    DWORD index = 0;
 
     status = NtRegReallocMemory(hDb->SubNodes, 
                                 (PVOID) &pNodesArray,
                                 (hDb->NodesLen + 1) * sizeof(PREGMEM_NODE));
     BAIL_ON_NT_STATUS(status);
+
     status = LW_RTL_ALLOCATE(
                  (PVOID*) &pNewNode, PREGMEM_NODE, sizeof(REGMEM_NODE));
     BAIL_ON_NT_STATUS(status);
@@ -259,10 +262,37 @@ MemRegStoreAddNode(
     status = LwRtlWC16StringDuplicate(&newNodeName, Name);
     BAIL_ON_NT_STATUS(status);
   
+    pNodesArray[hDb->NodesLen] = NULL;
     hDb->SubNodes = pNodesArray;
     pNodesArray = NULL;
 
-    hDb->SubNodes[hDb->NodesLen] = pNewNode;
+    /* Insert new node in sorted order */
+    if (hDb->NodesLen > 0)
+    {
+        for (index=0; 
+             index<hDb->NodesLen &&
+             LwRtlWC16StringCompare(Name, hDb->SubNodes[index]->Name)>0;
+             index++)
+        {
+            ;
+        }
+        if (index < (hDb->NodesLen+1))
+        {
+            memmove(&hDb->SubNodes[index+1],
+                    &hDb->SubNodes[index],
+                    sizeof(PREGMEM_NODE) * (hDb->NodesLen - index));
+            hDb->SubNodes[index] = pNewNode;
+        }
+        else
+        {
+            hDb->SubNodes[hDb->NodesLen] = pNewNode;
+        }
+    }
+    else
+    {
+        hDb->SubNodes[hDb->NodesLen] = pNewNode;
+    }
+
     pNewNode->Name = newNodeName;
     newNodeName = NULL;
 
