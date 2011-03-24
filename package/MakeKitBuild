@@ -1,4 +1,4 @@
-SUBDIRS="open open-gui"
+SUBDIRS="open open-gui open-upgrade"
 
 make()
 {
