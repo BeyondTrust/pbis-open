@@ -82,8 +82,8 @@
  *    functions to handle incoming callbacks with #lwmsg_peer_add_dispatch_spec().
  * -# Register one or more endpoints to connect to with #lwmsg_peer_add_connect_endpoint().
  *    The first one which can be succefully connected to is the one which will be used.
- * -# Connect with #lwmsg_peer_connect().
- * -# Acquire a call handle with #lwmsg_peer_acquire_call() and call with #lwmsg_call_dispatch().
+ * -# Connect with #lwmsg_peer_connect() to get an #LWMsgSession.
+ * -# Acquire a call handle with #lwmsg_session_acquire_call() and call with #lwmsg_call_dispatch().
  */
 
 /*@{*/
