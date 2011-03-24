@@ -31,11 +31,4 @@
 #define _EXTERNS_H_
 
 
-extern PVOID gLsaMemoryList;
-
-extern pthread_mutex_t gLsaDataMutex;
-
-extern BOOLEAN bLsaInitialised;
-
-
 #endif /* _EXTERN_H_ */

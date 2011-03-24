@@ -45,13 +45,3 @@
  */
 
 #include "includes.h"
-
-/* This is a pointer to list of allocated pointers.
-   The list enables freeing a pointer and dependant pointers */
-PVOID gLsaMemoryList = NULL;
-
-
-/* Library initialisation guard */
-pthread_mutex_t gLsaDataMutex = PTHREAD_MUTEX_INITIALIZER;
-
-BOOLEAN bLsaInitialised = 0;
