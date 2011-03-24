@@ -1,9 +1,0 @@
-<reference xml:id="ref-core" 
-	   xmlns="http://docbook.org/ns/docbook" version="5.0"
-	   xmlns:xi="http://www.w3.org/2001/XInclude">
-  <info>
-    <title>Core Module</title>
-  </info>
-  <xi:include href="mk_target.3mk.xml"/>
-  <xi:include href="mk_resolve_target.3mk.xml"/>
-</reference>
