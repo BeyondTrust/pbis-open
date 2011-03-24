@@ -1,1 +1,10 @@
 SUBDIRS="cifs"
+
+make()
+{
+    mk_target \
+        TARGET="@package/cifs" \
+        echo "This target is obsolete.  Use 'make package'"
+
+    mk_add_phony_target "$result"
+}

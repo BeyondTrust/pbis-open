@@ -1,7 +1,79 @@
 make()
 {
+    OPENSSL_HEADERS="\
+        openssl/tmdiff.h \
+        openssl/ripemd.h \
+        openssl/md2.h \
+        openssl/hmac.h \
+        openssl/blowfish.h \
+        openssl/e_os2.h \
+        openssl/rc2.h \
+        openssl/kssl.h \
+        openssl/ssl23.h \
+        openssl/ssl.h \
+        openssl/pem2.h \
+        openssl/ui_compat.h \
+        openssl/krb5_asn.h \
+        openssl/opensslconf.h \
+        openssl/x509.h \
+        openssl/stack.h \
+        openssl/dsa.h \
+        openssl/pqueue.h \
+        openssl/rc4.h \
+        openssl/aes.h \
+        openssl/ecdsa.h \
+        openssl/md5.h \
+        openssl/comp.h \
+        openssl/pem.h \
+        openssl/sha.h \
+        openssl/des.h \
+        openssl/conf.h \
+        openssl/opensslv.h \
+        openssl/bn.h \
+        openssl/x509_vfy.h \
+        openssl/pkcs7.h \
+        openssl/lhash.h \
+        openssl/ebcdic.h \
+        openssl/ec.h \
+        openssl/ocsp.h \
+        openssl/asn1_mac.h \
+        openssl/pq_compat.h \
+        openssl/asn1t.h \
+        openssl/ui.h \
+        openssl/store.h \
+        openssl/ssl2.h \
+        openssl/objects.h \
+        openssl/buffer.h \
+        openssl/x509v3.h \
+        openssl/bio.h \
+        openssl/symhacks.h \
+        openssl/idea.h \
+        openssl/ecdh.h \
+        openssl/txt_db.h \
+        openssl/dso.h \
+        openssl/safestack.h \
+        openssl/pkcs12.h \
+        openssl/evp.h \
+        openssl/rsa.h \
+        openssl/conf_api.h \
+        openssl/crypto.h \
+        openssl/des_old.h \
+        openssl/md4.h \
+        openssl/dtls1.h \
+        openssl/asn1.h \
+        openssl/tls1.h \
+        openssl/ssl3.h \
+        openssl/dh.h \
+        openssl/obj_mac.h \
+        openssl/err.h \
+        openssl/ossl_typ.h \
+        openssl/engine.h \
+        openssl/cast.h \
+        openssl/rand.h"
+
     lw_openssl \
-        HEADERS="openssl/crypto.h openssl/md5.h openssl/rand.h openssl/hmac.h openssl/ssl.h openssl/md4.h openssl/rc4.h" \
+        HEADERS="$OPENSSL_HEADERS" \
+        VERSION="0.9.8" \
         LIBS="ssl crypto"
 }
 
@@ -12,12 +84,7 @@ _lw_openssl()
     mk_comment "OpenSSL ($MK_CANONICAL_SYSTEM)"
 
     BUILDDIR="build_${suffix}"
-    mk_resolve_target "$BUILDDIR"
-    mk_add_clean_target "$result"
-
     INSTALLDIR="install_${suffix}"
-    mk_resolve_target "$INSTALLDIR"
-    mk_add_clean_target "$result"
 
     # Emit make target to configure OpenSSL
     mk_target \
@@ -34,7 +101,7 @@ _lw_openssl()
 # OpenSSL can't be built with the usual mk_autotools stuff
 lw_openssl()
 {
-    mk_push_vars LIBS HEADERS CPPFLAGS CFLAGS LDFLAGS BUILDDIR INSTALLDIR suffix stamp item
+    mk_push_vars LIBS HEADERS CPPFLAGS CFLAGS LDFLAGS BUILDDIR INSTALLDIR VERSION suffix stamp item
     mk_parse_params
 
     if [ "$MK_SYSTEM" = "host" -a "$MK_HOST_MULTIARCH" = "combine" ]
@@ -78,16 +145,6 @@ lw_openssl()
         stamp="$result"
     fi
 
-    # Include openssl in 'make all'
-    mk_add_all_target "$stamp"
-    
-    # Allow 'make openssl'
-    mk_target \
-        TARGET="@openssl" \
-        DEPS="$stamp"
-    
-    mk_add_phony_target "$result"
-    
     # For each header/library that OpenSSL installs, we need to
     # emit a dummy target for it that depends on the build stamp file
     # in order to get make to do the right thing.  We also need to
@@ -112,6 +169,23 @@ lw_openssl()
             DEPS="$stamp" \
             la_openssl '$@'
         
+        mk_target \
+            TARGET="${MK_LIBDIR}/lib${item}${MK_LIB_EXT}" \
+            DEPS="$stamp"
+
+        case "$MK_OS" in
+            darwin)
+                mk_target \
+                    TARGET="${MK_LIBDIR}/lib${item}${VERSION}.${MK_LIB_EXT}" \
+                    DEPS="$stamp"
+                ;;
+            *)
+                mk_target \
+                    TARGET="${MK_LIBDIR}/lib${item}${MK_LIB_EXT}.${VERSION}" \
+                    DEPS="$stamp"
+                ;;
+        esac
+
         mk_declare_internal_library "$item"
     done
     

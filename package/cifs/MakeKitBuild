@@ -4,34 +4,43 @@ configure()
 {
     case "$LW_FEATURE_LEVEL" in
         auth)
-            mk_export PRIMARY_SERVICE=lsass
+            mk_declare -o PRIMARY_SERVICE=lsass
             ;;
         full)
-            mk_export PRIMARY_SERVICE=srvsvc
+            mk_declare -o PRIMARY_SERVICE=srvsvc
             ;;
     esac
 
     case "$LW_DEVICE_PROFILE" in
         embedded)
-            mk_export IS_EMBEDDED="yes"
+            mk_declare -o IS_EMBEDDED="yes"
             ;;
         *)
-            mk_export IS_EMBEDDED="no"
+            mk_declare -o IS_EMBEDDED="no"
             ;;
     esac
 
+    mk_declare -o \
+        MK_BINDIR \
+        MK_PREFIX \
+        MK_DEBUG \
+        MK_ROOT_DIR \
+        MK_STAGE_DIR \
+        LW_CACHEDIR \
+        LW_CONFIGDIR
+
     if mk_deb_enabled
     then
-        mk_export PKG_DEB_NAME="${LW_VENDOR}-${LW_PRODUCT}-cifs"
-        mk_export PKG_DEB_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
-        mk_export PKG_DEB_DATE="`date -R`"
+        mk_declare -o PKG_DEB_NAME="${LW_VENDOR}-${LW_PRODUCT}-cifs"
+        mk_declare -o PKG_DEB_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+        mk_declare -o PKG_DEB_DATE="`date -R`"
     fi
 
     if mk_rpm_enabled
     then
-        mk_export PKG_RPM_NAME="${LW_VENDOR}-${LW_PRODUCT}-cifs"
-        mk_export PKG_RPM_VERSION="${LW_VERSION}"
-        mk_export PKG_RPM_RELEASE="${LW_BUILD_REVISION:-0}"
+        mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-${LW_PRODUCT}-cifs"
+        mk_declare -o PKG_RPM_VERSION="${LW_VERSION}"
+        mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_REVISION:-0}"
 
         PKG_RPM_COMPAT="0"
 
@@ -39,7 +48,7 @@ configure()
             PKG_RPM_COMPAT="1"
         mk_compat_done
 
-        mk_export PKG_RPM_COMPAT
+        mk_declare -o PKG_RPM_COMPAT
     fi
 }
 
@@ -55,9 +64,6 @@ package_deb()
         
         common_files
         common_files_compat
-        
-        mk_package_files \
-            "${MK_DATADIR}/likewise.pam-auth-update"
 
         mk_subpackage_do SUBPACKAGE="dev"
             common_files_dev
@@ -89,6 +95,15 @@ package_rpm()
         
 make()
 {
+    COMMON_SUBDIRS="\
+        @krb5 @cyrus-sasl @openldap @libiconv @sqlite \
+        @libuuid @openssl @curl @libxml2 \
+        @lwbase @lwmsg @lwreg @lwadvapi @netlogon \
+        @lwio @libschannel @dcerpc @centutils @lwsm \
+        @eventlog @lsass @reapsysl @lwdns @srvsvc @lwnetapi \
+        @lwtools @domainjoin @lwconfig @lwupgrade @samba-interop \
+        @config"
+
     mk_deb_enabled && package_deb
     mk_rpm_enabled && package_rpm
 }
@@ -105,40 +120,28 @@ lw_use_bundled()
 
 common_files()
 {
-    mk_package_files \
+    mk_package_patterns \
+        SUBDIRS="$COMMON_SUBDIRS" \
         "${MK_BINDIR}/*" \
         "${MK_SBINDIR}/*" \
-        "${MK_PREFIX}/data/VERSION" \
-        "${LW_CONFIGDIR}/*" \
-        "${MK_LIBDIR}/*${MK_LIB_EXT}" \
         "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
+        "${MK_LIBDIR}/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/liblsass_auth_provider_*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*" \
+        "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lw-svcm/*${MK_DLO_EXT}" \
-        "/etc/init.d/*" \
+        "${MK_DATADIR}/*.glade" \
+        "${MK_DATADIR}/*.png" \
+        "${NSSDIR}/*" \
+        "${PAMDIR}/*" \
+        "${LW_CONFIGDIR}/*.reg" \
         "${MK_SYSCONFDIR}/*" \
-        "/${MK_LIBDIR##*/}/security/pam_lsass${MK_DLO_EXT}" \
-        "/${MK_LIBDIR##*/}/libnss_lsass${MK_DLO_EXT}.*"
+        "${MK_SYSCONFDIR}/gss/mech" \
+        "${MK_PREFIX}/data/VERSION" \
+        "/etc/init.d/*"
 
-    if [ "$MK_DLO_EXT" != "$MK_LIB_EXT" ]
-    then
-        mk_package_files "${MK_LIBDIR}/*${MK_DLO_EXT}"
-    fi
-
-    if lw_use_bundled cyrus-sasl
-    then
-        mk_package_files \
-            "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
-            "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*"
-    fi
-
-    mk_get_export ../../domainjoin DJ_GUI_ENABLED
-
-    if [ "$result" = yes ]
-    then
-        mk_package_files \
-            "${MK_DATADIR}/*.glade" \
-            "${MK_DATADIR}/*.png"
-    fi
+    mk_package_patterns SUBDIRS="@docs" "*"
 
     mk_package_dirs \
         "${LW_CACHEDIR}" \
@@ -149,23 +152,19 @@ common_files()
 common_files_compat()
 {
     mk_compat_do
-        mk_package_files \
-            "${MK_LIBDIR}/*${MK_LIB_EXT}" \
+        mk_package_patterns \
+            SUBDIRS="$COMMON_SUBDIRS" \
             "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
-            "/${MK_LIBDIR##*/}/security/pam_lsass${MK_DLO_EXT}" \
-            "/${MK_LIBDIR##*/}/libnss_lsass${MK_DLO_EXT}.*"
-
-        if [ "$MK_DLO_EXT" != "$MK_LIB_EXT" ]
-        then
-            mk_package_files "${MK_LIBDIR}/*${MK_DLO_EXT}"
-        fi
-   mk_compat_done
+            "${NSSDIR}/*" \
+            "${PAMDIR}/*"
+    mk_compat_done
 }
 
 common_files_dev()
 {
-    mk_package_files \
-        "${MK_INCLUDEDIR}/*" \
+    mk_package_patterns \
+        SUBDIRS="$COMMON_SUBDIRS" \
         "${MK_LIBDIR}/*.la" \
-        "${MK_LIBDIR}/*.a"
+        "*.h" \
+        "*.idl"
 }

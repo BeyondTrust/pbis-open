@@ -1,15 +1,16 @@
-SUBDIRS=". include utils ipc common client parse server shellutil shell"
+SUBDIRS="include libedit utils ipc common client parse server shellutil shell"
 
 configure()
 {
     mk_config_header 'include/config.h'
 
-    mk_export MOD_EXT="${MK_DLO_EXT}"
-    mk_export LIBDIR="${MK_LIBDIR}"
-    mk_export BINDIR="${MK_BINDIR}"
-    mk_export SBINDIR="${MK_SBINDIR}"
+    mk_declare -o \
+        MOD_EXT="${MK_DLO_EXT}" \
+        LIBDIR="${MK_LIBDIR}" \
+        BINDIR="${MK_BINDIR}" \
+        SBINDIR="${MK_SBINDIR}"
 
-    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
 
     lw_define_feature_macros
 
@@ -68,15 +69,4 @@ configure()
 
     mk_output_file server/lwregd/lwreg.reg
     mk_output_file shell/lw-edit-reg.sh
-}
-
-make()
-{
-    mk_autotools \
-        SOURCEDIR="libedit" \
-        LIBS="edit" \
-        HEADERS="editline/readline.h histedit.h" \
-        HEADERDEPS="ncurses/ncurses.h" \
-        LIBDEPS="ncurses" \
-        CFLAGS="-Wno-error"
 }

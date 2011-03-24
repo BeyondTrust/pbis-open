@@ -69,15 +69,11 @@ make()
         mk_mkdir "&'${CONTENTS_DIR}'" '%;' \
         "&process-info-plist.pl" -v "$LW_VERSION" -o '$@' "&Info.plist"
 
-    mk_add_all_target "$result"
-
     mk_target \
         TARGET="${RESOURCE_DIR}/Likewise Domain Join.rsrc" \
         DEPS="$RES_FILES" \
         mk_mkdir "&'$RESOURCE_DIR'" '%;' \
         /Developer/Tools/ResMerger -dstIs DF "&$RES_FILES" -o '$@'
-
-    mk_add_all_target "$result"
 
     mk_stage DESTDIR="${RESOURCE_DIR}" ${NEUTRAL_RESOURCES}
 

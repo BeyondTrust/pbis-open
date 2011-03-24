@@ -10,7 +10,7 @@ make()
         test-archive.c \
         test-task.c"
     
-    mk_moonunit \
+    mk_have_moonunit && mk_moonunit \
         DLO="lwmsg_mu" \
         SOURCES="$TEST_SOURCES" \
 	HEADERDEPS="lw/base.h" \

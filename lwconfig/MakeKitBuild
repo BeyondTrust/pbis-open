@@ -4,7 +4,7 @@ configure()
 {
     mk_config_header include/config.h
 
-    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -Wmissing-prototypes -fno-strict-aliasing"
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -Wmissing-prototypes -fno-strict-aliasing"
 
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
     mk_define LWCONFIG_XML "\"${LW_CACHEDIR}/lwconfig.xml\""
@@ -31,7 +31,7 @@ configure()
         mk_check_headers FAIL=yes ${LIBXML2_HEADERDEPS}
         mk_check_libraries FAIL=yes xml2
 
-        mk_export LIBXML2_INCLUDEDIRS LIBXML2_HEADERDEPS
+        mk_declare -i LIBXML2_INCLUDEDIRS LIBXML2_HEADERDEPS
     else
         mk_msg_result "no"
 

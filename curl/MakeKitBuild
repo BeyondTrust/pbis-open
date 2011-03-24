@@ -1,8 +1,20 @@
 make()
 {
+    CURL_HEADERS="\
+        curl/curl.h \
+        curl/multi.h \
+        curl/mprintf.h \
+        curl/types.h \
+        curl/typecheck-gcc.h \
+        curl/curlver.h \
+        curl/curlrules.h \
+        curl/easy.h \
+        curl/stdcheaders.h \
+        curl/curlbuild.h"
+
     mk_autotools \
-        HEADERS="curl/curl.h" \
-        LIBS="curl" \
+        HEADERS="$CURL_HEADERS" \
+        LIBS="curl:6:0:2" \
         HEADERDEPS="openssl/ssl.h" \
         LIBDEPS="ssl" \
         --disable-ldap --disable-ldaps --disable-ftp \

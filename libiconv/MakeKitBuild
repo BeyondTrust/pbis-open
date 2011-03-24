@@ -12,7 +12,7 @@ make()
 
     mk_autotools \
         HEADERS="iconv.h" \
-        LIBS="iconv" \
+        LIBS="iconv:6:0:4" \
         CPPFLAGS="$ICONV_CPPFLAGS" \
         INSTALL_PRE="$ICONV_PRE" \
         INSTALL_POST="$ICONV_POST" \
@@ -21,8 +21,7 @@ make()
 
     mk_compat_do
         mk_autotools \
-            LIBS="iconv" \
-            SELECT="${MK_LIBDIR}/*" \
+            LIBS="iconv:6:0:4" \
             CPPFLAGS="$ICONV_CPPFLAGS" \
             INSTALL_PRE="$ICONV_PRE" \
             INSTALL_POST="$ICONV_POST" \

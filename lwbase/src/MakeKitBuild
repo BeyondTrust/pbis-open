@@ -47,12 +47,12 @@ make()
             LDFLAGS="$DS_FRAMEWORK_LDFLAGS"
     mk_multiarch_done
 
-    case "$THREADPOOL_BACKEND" in
+    case "$LWBASE_THREADPOOL_BACKEND" in
         "epoll"|"kqueue"|"select"|"poll")
-            THREADPOOL_SOURCES="threadpool-${THREADPOOL_BACKEND}.c"
+            THREADPOOL_SOURCES="threadpool-${LWBASE_THREADPOOL_BACKEND}.c"
             ;;
         *)
-            mk_fail "unknown threadpool backend: $THREADPOOL_BACKEND"
+            mk_fail "unknown threadpool backend: $LWBASE_THREADPOOL_BACKEND"
             ;;
     esac
 

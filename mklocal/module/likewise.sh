@@ -51,8 +51,7 @@ configure()
     mk_msg "config dir: $LW_CONFIGDIR"
     mk_msg "developer tool dir: $LW_TOOL_DIRNAME"
 
-    mk_export LW_CACHEDIR LW_CONFIGDIR
-    mk_export LW_TOOL_DIR="@$LW_TOOL_DIRNAME"
+    LW_TOOL_DIR="@$LW_TOOL_DIRNAME"
 
     mk_add_scrub_target "$LW_TOOL_DIR"
 }

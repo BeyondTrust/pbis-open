@@ -38,6 +38,4 @@ lw_init_script()
 	    -e "s:EXECDIR:${MK_BINDIR}:g" \
 	    '%<' "&$1" '%>' '$@' '%;' \
 	chmod +x '$@'
- 
-    mk_add_all_target "$result"
 }

@@ -10,7 +10,7 @@ configure()
 
     mk_define PREFIXDIR "\"${MK_PREFIXDIR}\""
 
-    mk_export MOD_EXT="${MK_DLO_EXT}"
+    mk_declare -o MOD_EXT="${MK_DLO_EXT}"
 
     # Required headers
     mk_check_headers FAIL=yes \

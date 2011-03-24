@@ -70,8 +70,7 @@ option()
 
 configure()
 {
-    mk_export LW_VERSION="6.2.0"
-    mk_export LW_BUNDLED
+    LW_VERSION="6.2.0"
     
     mk_msg "configuring Likewise Open $LW_VERSION"
     mk_msg "using bundled libraries: $LW_BUNDLED"
@@ -167,25 +166,13 @@ lw_print_features()
     lw_print_feature "Device profile" "$LW_DEVICE_PROFILE"
     lw_print_feature "Feature level" "$LW_FEATURE_LEVEL"
     lw_print_feature "Bundled libraries" "$LW_BUNDLED"
-
-    mk_get_export lwbase THREADPOOL_BACKEND
-    lw_print_feature "Threadpool backend" "$result"
-
-    mk_get_export lwbase HAVE_PTHREAD_ATTR_SETAFFINITY_NP
-    lw_print_feature "Threadpool CPU affinity" "$result"
+    lw_print_feature "Threadpool backend" "$LWBASE_THREADPOOL_BACKEND"
 
     if [ "$LW_FEATURE_LEVEL" != "auth" ]
     then
-        mk_get_export lwio HAVE_LIB_FUSE
-        [ "$result" != "no" ] && result=yes
-        lw_print_feature "FUSE support" "$result"
-        
-        mk_get_export lwio HAVE_LIB_ATTR
-        [ "$result" != "no" ] && result=yes
-        lw_print_feature "EA support" "$result"
-
-        mk_get_export domainjoin DJ_GUI_INTERFACE
-        lw_print_feature "Domain join GUI" "$result"
+        lw_print_feature "FUSE support" "$LWIO_FUSE_ENABLED"
+        lw_print_feature "EA support" "$LWIO_EA_ENABLED"
+        lw_print_feature "Domain join GUI" "$DJ_GUI_INTERFACE"
     fi
 
     lw_print_feature "Samba interoperability" "$LW_SAMBA_INTEROP"

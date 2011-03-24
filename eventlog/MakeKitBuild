@@ -8,7 +8,7 @@ configure()
 
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
 
-    mk_export SBINDIR="$MK_SBINDIR"
+    mk_declare -o SBINDIR="$MK_SBINDIR"
 
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
     mk_define LIBDIR "\"$MK_LIBDIR\""
@@ -47,7 +47,7 @@ configure()
         mk_check_headers FAIL=yes ${LIBXML2_HEADERDEPS}
         mk_check_libraries FAIL=yes xml2
 
-        mk_export LIBXML2_INCLUDEDIRS LIBXML2_HEADERDEPS
+        mk_declare -i LIBXML2_INCLUDEDIRS LIBXML2_HEADERDEPS
     else
         mk_msg_result "no"
 

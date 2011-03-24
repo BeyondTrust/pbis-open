@@ -6,12 +6,12 @@ configure()
 
     lw_define_feature_macros
 
-    mk_export MOD_EXT="${MK_DLO_EXT}"
+    mk_declare -o MOD_EXT="${MK_DLO_EXT}"
     mk_define MOD_EXT "\"${MK_DLO_EXT}"\"
     
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
     
-    mk_export CONFIGDIR="${MK_SYSCONFDIR}"
+    mk_declare -o CONFIGDIR="${MK_SYSCONFDIR}"
     mk_define CONFIGDIR "\"${MK_SYSCONFDIR}\""
     
     mk_define PREFIXDIR "\"${MK_PREFIX}\""
@@ -61,4 +61,6 @@ configure()
         isblank
 
     mk_check_sizeofs "long long int" "long int"
+
+    mk_check_moonunit
 }

@@ -3,8 +3,8 @@ SUBDIRS="include src"
 configure()
 {
     mk_config_header include/config.h
-
-    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -Wmissing-prototypes -fno-strict-aliasing"
+    
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -Wmissing-prototypes -fno-strict-aliasing"
 
     mk_define UNICODE
 

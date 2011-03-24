@@ -1,6 +1,6 @@
 make()
 {
-    mk_moonunit \
+    mk_have_moonunit && mk_moonunit \
         DLO=centutils_mu \
         SOURCES="*.c" \
         INCLUDEDIRS=". ../include" \

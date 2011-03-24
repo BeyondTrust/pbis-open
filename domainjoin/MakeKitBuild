@@ -48,8 +48,6 @@ configure()
 
     mk_msg "GUI interface: $DJ_GUI_INTERFACE"
     
-    mk_export DJ_GUI_INTERFACE
-
     mk_check_headers \
 	signal.h
 

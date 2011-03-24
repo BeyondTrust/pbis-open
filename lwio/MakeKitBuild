@@ -62,10 +62,11 @@ configure()
 
     mk_check_endian
     
-    mk_export MOD_EXT="$MK_DLO_EXT"
-    mk_export SBINDIR="$MK_SBINDIR"
-    mk_export LIBDIR="$MK_LIBDIR"
-    mk_export providerdir="$MK_LIBDIR"
+    mk_declare -o \
+        MOD_EXT="$MK_DLO_EXT" \
+        SBINDIR="$MK_SBINDIR" \
+        LIBDIR="$MK_LIBDIR" \
+        providerdir="$MK_LIBDIR"
 
     mk_define MOD_EXT "\"$MK_DLO_EXT\""
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
@@ -137,6 +138,16 @@ configure()
         LIBDEPS="$LIB_ATTR" \
         setxattr fsetxattr getxattr fgetxattr
 
+    if [ "$HAVE_SETXATTR" = yes -a "$HAVE_GETXATTR" = yes ] ||
+       [ "$HAVE_FSETXATTR" = yes -a "$HAVE_FGETXATTR" = yes ]
+    then
+        LWIO_EA_ENABLED=yes
+    else
+        LWIO_EA_ENABLED=no
+    fi
+
+    mk_msg "EA support: $LWIO_EA_ENABLED"
+
     mk_check_functions \
         HEADERDEPS="sys/vfs.h" \
         statfs fstatfs
@@ -168,11 +179,13 @@ configure()
 
     if [ "$HAVE_FUSE_H" != "no" -a "$HAVE_LIB_FUSE" != "no" -a "$LWIO_FUSE" = "yes" ]
     then
-        mk_msg "build FUSE module: yes"
+        LWIO_FUSE_ENABLED=yes
     else
-        mk_msg "build FUSE module: no"
+        LWIO_FUSE_ENABLED=no
         mk_skip_subdir fuse
     fi
+
+    mk_msg "build FUSE module: $LWIO_FUSE_ENABLED"
 
     mk_output_file etc/lwiod.reg
     mk_output_file etc/rdr.reg

@@ -43,14 +43,16 @@ configure()
 
     lw_define_feature_macros
 
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+    MK_CXXFLAGS="$MK_CXXFLAGS -Wall -Werror"
+
     # Declare which variable vary by system (ISA)
-    mk_declare_system_var MOD_EXT
-    mk_declare_system_var PAMDIR
-    mk_declare_system_var NSSDIR
+    mk_declare -s -o MOD_EXT
+    mk_declare -s PAMDIR
+    mk_declare -s NSSDIR
+    mk_declare -o fdlimit=dword:00000400
 
-    mk_export fdlimit=dword:00000400
-
-    # Do defines/exports of system-dependent variables
+    # Set system-dependent variables
     mk_multiarch_do
         case "$MK_OS:$MK_ISA" in
             linux:*)
@@ -104,8 +106,6 @@ configure()
 
         mk_define LIBDIR "\"$MK_LIBDIR\""
         mk_define MOD_EXT "\"$MK_DLO_EXT\""
-        MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
-        MK_CXXFLAGS="$MK_CXXFLAGS -Wall -Werror"
         MOD_EXT="$MK_DLO_EXT"
 
         mk_check_endian
@@ -118,20 +118,24 @@ configure()
     mk_multiarch_done
 
     case "$MK_OS" in
-        linux|freebsd)
-            mk_export ENABLE_NSS_ENUM_DEFAULT_DWORD="00000000"
+        darwin)
+            ENABLE_NSS_ENUM_DEFAULT_DWORD="00000001"
+            ;;
+        *)
+            ENABLE_NSS_ENUM_DEFAULT_DWORD="00000001"
             ;;
     esac
 
-    mk_export providerdir="$MK_LIBDIR"
-    mk_export rpcserverdir="$MK_LIBDIR"
-    mk_export default_homedir_prefix="/home"
-    mk_export default_skeldirs="/etc/skel"
-    mk_export LIBDIR="$MK_LIBDIR"
-    mk_export SBINDIR="$MK_SBINDIR"
-    mk_export CACHEDIR="$LW_CACHEDIR"
-    mk_export MOD_EXT
-
+    mk_declare -o \
+        providerdir="$MK_LIBDIR" \
+        rpcserverdir="$MK_LIBDIR" \
+        default_homedir_prefix="/home" \
+        default_skeldirs="/etc/skel" \
+        LIBDIR="$MK_LIBDIR" \
+        SBINDIR="$MK_SBINDIR" \
+        CACHEDIR="$LW_CACHEDIR" \
+        ENABLE_NSS_ENUM_DEFAULT_DWORD
+    
     mk_define PREFIXDIR "\"$MK_PREFIX\""
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
     mk_define CONFIGDIR "\"$MK_SYSCONFDIR\""
@@ -157,7 +161,7 @@ configure()
         EXTRA_SERVICE_DEPS="$EXTRA_SERVICE_DEPS npfs"
     fi
 
-    mk_export EXTRA_SERVICE_DEPS
+    mk_declare -o EXTRA_SERVICE_DEPS
 
     # FIXME
     mk_define COMPONENT_VERSION "\"5.0.0.0\""

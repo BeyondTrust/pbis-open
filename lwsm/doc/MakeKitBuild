@@ -1,0 +1,6 @@
+make()
+{
+    mk_have_doxygen && mk_doxygen_html \
+        INSTALLDIR="${MK_HTMLDIR}/lwsm" \
+        HEADERDIRS="../include"
+}

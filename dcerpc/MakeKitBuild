@@ -150,26 +150,26 @@ configure()
             ;;
     esac
 
-    mk_export DCERPCD_SERVICE_TYPE="dword:00000002"
+    mk_declare -o DCERPCD_SERVICE_TYPE="dword:00000002"
 
     mk_multiarch_do
         rpc_feature_flags
     mk_multiarch_done
     
-    mk_export MK_CFLAGS="$MK_CFLAGS -Wall"
+    MK_CFLAGS="$MK_CFLAGS -Wall"
 
-    mk_export SBINDIR="$MK_SBINDIR"
-    mk_export LIBDIR="$MK_LIBDIR"
-    mk_export MOD_EXT="$MK_DLO_EXT"
-    
-    # FIXME: need test
-    mk_export OBJEXT="o"
-    # FIXME: need test
-    mk_export IDL_CPP="$MK_CC -E -x c-header"
-    mk_export IDL_CC="$MK_CC"
-    mk_export IDL_CFLAGS target_os target_cpu
+    mk_declare -o \
+        SBINDIR="$MK_SBINDIR" \
+        LIBDIR="$MK_LIBDIR" \
+        MOD_EXT="$MK_DLO_EXT"
 
-    mk_export ENABLE_NCACN ENABLE_NCADG
+    mk_declare -o \
+        OBJEXT="o" \
+        IDL_CPP="$MK_CC -E -x c-header" \
+        IDL_CC="$MK_CC" \
+        IDL_CFLAGS target_os target_cpu
+
+    mk_declare -i ENABLE_NCACN ENABLE_NCADG
 
     # FIXME: need test
     mk_define_always ATTRIBUTE_UNUSED "__attribute__((unused))"
@@ -276,9 +276,9 @@ configure()
     lw_check_pthread_once_init
     if [ "$result" = "yes" ]
     then
-        mk_export BROKEN_ONCE_INIT="#define __LW_BROKEN_ONCE_INIT 1"
+        mk_declare -o BROKEN_ONCE_INIT="#define __LW_BROKEN_ONCE_INIT 1"
     else
-        mk_export BROKEN_ONCE_INIT="#define __LW_BROKEN_ONCE_INIT 0"
+        mk_declare -o BROKEN_ONCE_INIT="#define __LW_BROKEN_ONCE_INIT 0"
     fi
 
     # Check for stuff for build system (needed by idl compiler)
@@ -292,6 +292,8 @@ configure()
     mk_check_program FAIL=yes gencat
     mk_check_program FAIL=yes sed
 
+    mk_check_moonunit
+
     # We build flex using mk_system "build" so that we get a version of it
     # suitable to run on the build system even if we are cross compiling.
     # Normally this would deposit it in ${MK_RUN_BINDIR}.  However, the
@@ -300,7 +302,7 @@ configure()
     # directly out of its build directory.  This is not recommended as the
     # build directory path is in implementation detail of MetaKit
     mk_resolve_file "flex-2.5.4_build_${MK_BUILD_PRIMARY_ISA}/flex"
-    mk_export FLEX="$result"
+    mk_declare -e -i FLEX="$result"
 
     # Extra files to generate
     mk_output_file include/dce/dce_error.h

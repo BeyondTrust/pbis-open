@@ -17,18 +17,18 @@ make()
         INCLUDEDIRS=". ../include" \
         LIBDEPS="lwbase lwbase_nothr"
 
-    mk_moonunit \
-        DLO="lwbase_mu" \
-        SOURCES="$TEST_SOURCES" \
-        GROUPS="benchmark" \
-        INCLUDEDIRS=". ../include"
-
     mk_program \
         PROGRAM=benchmark \
-        INSTALL=no \
+        INSTALLDIR="$LW_TOOL_DIR" \
         SOURCES="benchmark-main.c" \
         INCLUDEDIRS=". ../include" \
         GROUPS="benchmark"
 
-    mk_add_all_target "$result"
+    mk_add_subdir_target "$result"
+
+    mk_have_moonunit && mk_moonunit \
+        DLO="lwbase_mu" \
+        SOURCES="$TEST_SOURCES" \
+        GROUPS="benchmark" \
+        INCLUDEDIRS=". ../include"
 }
