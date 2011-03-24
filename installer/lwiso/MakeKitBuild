@@ -1,0 +1,25 @@
+MODULES="sfx"
+
+make()
+{
+    case "$MK_HOST_OS" in
+        linux)
+            for fmt in deb rpm
+            do
+                if mk_${fmt}_enabled
+                then
+                    lw_sfx \
+                        SFX="LikewiseOpen-${LW_VERSION}" \
+                        SCRIPT="install.sh" \
+                        FILES="COPYING README EULA LICENSES" \
+                        FORMAT="$fmt" \
+                        OBSOLETE="likewise-base likewise-base-32bit likewise-domainjoin likewise-domainjoin-gui likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lsass-32bit likewise-lwadutil likewise-lwconfig likewise-lwio likewise-lwmgmt likewise-lwnetapi likewise-lwreg likewise-lwreg-32bit likewise-lwtools likewise-lwupgrade likewise-mod-auth-kerb likewise-netlogon likewise-openldap likewise-passwd likewise-pstore likewise-reskit likewise-rpc likewise-sqlite likewise-srvsvc likewise-reapsysl likewise-samba-interop" \
+                        BASE="likewise-open" \
+                        GUI="likewise-open-gui" \
+                        likewise-open \
+                        likewise-open-gui
+                fi
+            done
+            ;;
+    esac
+}
