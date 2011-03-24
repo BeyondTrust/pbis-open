@@ -185,7 +185,7 @@ LWNetGetPreferredDcList(
     );
 
 BOOLEAN
-LWNetUpdateKrb5Affinity(
+LWNetIsUpdateKrb5AffinityEnabled(
     IN DWORD DsFlags,
     IN PCSTR SiteName,
     IN PLWNET_DC_INFO pDcInfo
