@@ -107,3 +107,11 @@ MemRegStoreGetNodeValueAttributes(
     OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     );
 
+
+NTSTATUS
+MemRegStoreChangeNodeValue(
+    IN PREGMEM_VALUE pNodeValue,
+    IN const BYTE *pData,
+    DWORD cbData
+    );
+

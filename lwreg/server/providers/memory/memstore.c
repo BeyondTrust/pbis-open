@@ -366,6 +366,37 @@ error:
 
 
 NTSTATUS
+MemRegStoreChangeNodeValue(
+    IN PREGMEM_VALUE pNodeValue,
+    IN const BYTE *pData,
+    DWORD cbData)
+{
+    NTSTATUS status = 0;
+
+    if (pNodeValue->Data)
+    {
+        LWREG_SAFE_FREE_MEMORY(pNodeValue->Data);
+        pNodeValue->DataLen = 0;
+    }
+    status = LW_RTL_ALLOCATE(
+                 (PVOID*) &pNodeValue->Data, 
+                 BYTE, 
+                 sizeof(*pData) * cbData);
+    BAIL_ON_NT_STATUS(status);
+
+    memcpy(pNodeValue->Data, pData, cbData);
+    pNodeValue->DataLen = cbData;
+
+cleanup:
+    return status;
+
+error:
+    LWREG_SAFE_FREE_MEMORY(pNodeValue->Data);
+    goto cleanup;
+}
+
+
+NTSTATUS
 MemRegStoreAddNodeValue(
     MEM_REG_STORE_HANDLE hDb,
     IN OPTIONAL PCWSTR pValueName,

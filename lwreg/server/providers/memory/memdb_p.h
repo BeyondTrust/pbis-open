@@ -195,3 +195,11 @@ MemDbGetValueAttributes(
     OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     );
 
+
+NTSTATUS
+MemDbRecurseRegistry(
+    IN HANDLE hRegConnection,
+    IN REG_DB_HANDLE hDb,
+    PVOID (*cbFunc)(REG_DB_HANDLE hDb, PVOID userContext)
+    );
+

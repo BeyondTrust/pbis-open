@@ -390,19 +390,38 @@ MemDbSetValueEx(
 {
     NTSTATUS status = 0;
     MEM_REG_STORE_HANDLE hKey = NULL;
+    PREGMEM_VALUE pRegValue = NULL;
 
     BAIL_ON_NT_STATUS(status);
 
     hKey = hDb->pMemReg;
 
-    status = MemRegStoreAddNodeValue(
+
+    status = MemRegStoreFindNodeValue(
                  hKey,
                  pValueName,
-                 dwReserved, // Not used?
-                 dwType,
-                 pData,
-                 cbData);
-    BAIL_ON_NT_STATUS(status);
+                 &pRegValue);
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+
+        status = MemRegStoreAddNodeValue(
+                     hKey,
+                     pValueName,
+                     dwReserved, // Not used?
+                     dwType,
+                     pData,
+                     cbData);
+        BAIL_ON_NT_STATUS(status);
+    }
+    else
+    {
+        /* Modify existing node value */
+        status = MemRegStoreChangeNodeValue(
+                     pRegValue,
+                     pData,
+                     cbData);
+        BAIL_ON_NT_STATUS(status);
+    }
 
 cleanup:
     return status;
@@ -462,11 +481,28 @@ MemDbGetValue(
     *pdwType = hValue->Type;
     if (pcbData)
     {
-        *pcbData = hValue->DataLen;
+        if (hValue->DataLen)
+        {
+            *pcbData = hValue->DataLen;
+        }
+        else if (hValue->Attributes.DefaultValueLen)
+        {
+            *pcbData = hValue->Attributes.DefaultValueLen;
+        }
+          
     }
     if (pData && pcbData)
     {
-        memcpy(pData, hValue->Data, hValue->DataLen);
+        if (hValue->Data && hValue->DataLen)
+        {
+            memcpy(pData, hValue->Data, hValue->DataLen);
+        }
+        else if (hValue->Attributes.pDefaultValue)
+        {
+            memcpy(pData,
+                   hValue->Attributes.pDefaultValue,
+                   hValue->Attributes.DefaultValueLen);
+        }
     }
 
 cleanup:
@@ -667,7 +703,7 @@ MemDbSetValueAttributes(
                      pValueAttributes->ValueType,
                      NULL,
                      0);
-        BAIL_ON_NT_STATUS(status);
+        BAIL_ON_NT_STATUS(status);  
     }
     status = MemRegStoreFindNodeValue(
                  hKey,
