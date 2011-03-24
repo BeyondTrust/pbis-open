@@ -144,8 +144,13 @@ then
     show mkdir -p "$DIST_DIR/package"
     show cp -r "package/"* "$DIST_DIR/package"
 fi
+
+if [ -d sfx ]
+then
+    show mkdir -p "$DIST_DIR/sfx"
+    show cp -r "sfx/"* "$DIST_DIR/sfx"
+fi
   
 show cp -f "config.log" "$DIST_DIR/config.log"
 show cd "stage"
 show tar cfv - . | gzip > "$DIST_DIR/stage-${ID}-${REVISION}.tar.gz"
-
