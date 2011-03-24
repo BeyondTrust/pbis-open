@@ -29,13 +29,3 @@
  */
 
 #include "includes.h"
-
-/* This is a pointer to list of allocated pointers.
-   The list enables freeing a pointer and dependant pointers */
-void *gSamrMemoryList = NULL;
-
-
-/* Library initialisation guard */
-pthread_mutex_t gSamrDataMutex = PTHREAD_MUTEX_INITIALIZER;
-
-int bSamrInitialised = 0;

@@ -45,7 +45,3 @@
  */
 
 #include "includes.h"
-
-
-/* Library initialisation guard */
-pthread_mutex_t gDsrDataMutex = PTHREAD_MUTEX_INITIALIZER;

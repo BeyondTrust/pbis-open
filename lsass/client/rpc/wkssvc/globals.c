@@ -45,9 +45,3 @@
  */
 
 #include "includes.h"
-
-
-/* Library initialisation guard */
-pthread_mutex_t gWkssDataMutex = PTHREAD_MUTEX_INITIALIZER;
-
-BOOLEAN bWkssInitialised = 0;

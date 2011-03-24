@@ -32,13 +32,6 @@
 #define _EXTERNS_H_
 
 
-extern void *gSamrMemoryList;
-
-extern pthread_mutex_t gSamrDataMutex;
-
-extern int bSamrInitialised;
-
-
 #define GLOBAL_DATA_LOCK(locked)                       \
     do {                                               \
         int ret = 0;                                   \

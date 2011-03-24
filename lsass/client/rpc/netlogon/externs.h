@@ -32,11 +32,4 @@
 #define _EXTERNS_H_
 
 
-extern void *gNetrMemoryList;
-
-extern pthread_mutex_t gNetrDataMutex;
-
-extern BOOLEAN bInitialised;
-
-
 #endif /* _EXTERN_H_ */

@@ -29,14 +29,3 @@
  */
 
 #include "includes.h"
-
-
-/* This is a pointer to list of allocated pointers.
-   The list enables freeing a pointer and dependant pointers */
-void *gNetrMemoryList = NULL;
-
-
-/* Library initialisation guard */
-pthread_mutex_t gNetrDataMutex = PTHREAD_MUTEX_INITIALIZER;
-
-BOOLEAN bInitialised = FALSE;

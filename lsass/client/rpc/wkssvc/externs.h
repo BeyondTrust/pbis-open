@@ -32,9 +32,4 @@
 #define _EXTERNS_H_
 
 
-extern pthread_mutex_t gWkssDataMutex;
-
-extern BOOLEAN bWkssInitialised;
-
-
 #endif /* _EXTERN_H_ */
