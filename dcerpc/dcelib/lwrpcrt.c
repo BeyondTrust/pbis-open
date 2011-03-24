@@ -544,6 +544,8 @@ RPC_STATUS LwMapDCEStatusToWinerror(
             return WSAEDISCON;
         case rpc_s_cant_create_socket:
             return ERROR_CANNOT_MAKE;
+        case rpc_s_no_name_mapping:
+            return ERROR_CANNOT_MAKE;
 
         case rpc_s_invalid_arg:
             return RPC_S_INVALID_ARG;
