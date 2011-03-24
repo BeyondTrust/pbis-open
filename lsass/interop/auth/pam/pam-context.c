@@ -171,6 +171,10 @@ LsaPamGetOptions(
         {
             pPamOptions->bSmartCardPrompt = TRUE;
         }
+        else if (!strcasecmp(argv[iArg], "disable_password_change"))
+        {
+            pPamOptions->bDisablePasswordChange = TRUE;
+        }
     }
     
     LSA_LOG_PAM_DEBUG("LsaPamGetOptions::end");

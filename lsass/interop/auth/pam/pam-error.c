@@ -86,7 +86,14 @@ LsaPamMapErrorCode(
             ret = PAM_PERM_DENIED;
             break;
         case LW_ERROR_PASSWORD_EXPIRED:
-            ret = PAM_NEW_AUTHTOK_REQD;
+            if (pPamContext && pPamContext->pamOptions.bDisablePasswordChange)
+            {
+                ret = PAM_PERM_DENIED;
+            }
+            else
+            {
+                ret = PAM_NEW_AUTHTOK_REQD;
+            }
             break;
         case LW_ERROR_USER_CANNOT_CHANGE_PASSWD:
             ret = PAM_PERM_DENIED;

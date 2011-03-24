@@ -413,10 +413,21 @@ pam_sm_authenticate(
         }
         if (dwError == LW_ERROR_PASSWORD_EXPIRED)
         {
-            // deal with this error in the
-            // next call to pam_sm_acct_mgmt
-            pPamContext->bPasswordExpired = TRUE;
-            dwError = 0;
+            if (pPamContext->pamOptions.bDisablePasswordChange)
+            {
+                LsaPamConverse(
+                    pamh,
+                    "Your password has expired",
+                    PAM_ERROR_MSG,
+                    NULL);
+            }
+            else
+            {
+                // deal with this error in the
+                // next call to pam_sm_acct_mgmt
+                pPamContext->bPasswordExpired = TRUE;
+                dwError = 0;
+            }
         }
         BAIL_ON_LSA_ERROR(dwError);
 
