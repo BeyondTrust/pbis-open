@@ -26,14 +26,6 @@ configure()
         mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-open"
         mk_declare -o PKG_RPM_VERSION="${LW_VERSION}"
         mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_REVISION:-0}"
-
-        PKG_RPM_COMPAT="0"
-
-        mk_compat_do
-            PKG_RPM_COMPAT="1"
-        mk_compat_done
-
-        mk_declare -o PKG_RPM_COMPAT
     fi
 }
 
@@ -63,13 +55,7 @@ package_rpm()
         SPECFILE="rpm/open.spec.in"
         
         open_files
-
-        if [ "$PKG_RPM_COMPAT" -eq "1" ]
-        then
-            mk_subpackage_do SUBPACKAGE="compat"
-                open_files_compat
-            mk_subpackage_done
-        fi
+        open_files_compat
 
         mk_subpackage_do SUBPACKAGE="devel"
             open_files_dev

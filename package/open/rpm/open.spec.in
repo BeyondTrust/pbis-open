@@ -15,16 +15,6 @@ AutoReq: no
 %description
 Likewise Open integrates Unix desktops and servers into an Active Directory environment by joining hosts to the domain and lets Unix applications and services authenticate MS Windows' users and groups via the PAM and Name Service Switch libraries.
 
-%if @PKG_RPM_COMPAT@
-%package compat
-Summary:        Authentication services for Active Directory domains (compat libraries)
-Group:          Development/Libraries
-Requires:       @PKG_RPM_NAME@
-
-%description compat
-This package provides 32-bit compatibility libraries for Likewise Open
-%endif
-
 %package devel
 Summary: Likewise Software Development Kit
 Group: Development/Libraries
