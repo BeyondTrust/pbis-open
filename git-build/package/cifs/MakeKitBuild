@@ -129,6 +129,8 @@ common_files()
         "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
         "${MK_LIBDIR}/*.sys${MK_DLO_EXT}" \
         "${MK_LIBDIR}/liblsass_auth_provider_*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/liblwmapsecurity*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/liblsaaccess*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*" \
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
