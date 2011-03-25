@@ -86,13 +86,10 @@ open_files()
         "${MK_SBINDIR}/*" \
         "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
         "${MK_LIBDIR}/*${MK_DLO_EXT}" \
-        "${MK_LIBDIR}/liblsass_auth_provider_*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*" \
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lw-svcm/*${MK_DLO_EXT}" \
-        "${MK_DATADIR}/*.glade" \
-        "${MK_DATADIR}/*.png" \
         "${NSSDIR}/*" \
         "${PAMDIR}/*" \
         "${LW_CONFIGDIR}/*.reg" \
@@ -100,6 +97,10 @@ open_files()
         "${MK_SYSCONFDIR}/gss/mech" \
         "${MK_PREFIX}/data/VERSION" \
         "/etc/init.d/*"
+
+    [ "$MK_DLO_EXT" != "$MK_LIB_EXT" ] && mk_package_patterns \
+        SUBDIRS="$OPEN_SUBDIRS" \
+        "${MK_LIBDIR}/*${MK_LIB_EXT}"
 
     mk_package_patterns SUBDIRS="@docs" "*"
 
