@@ -60,7 +60,7 @@ configure()
         setlinebuf 
 
     mk_check_functions \
-        HEADERDEPS="sys/types.h grp.h" \
+        HEADERDEPS="sys/types.h grp.h unistd.h" \
         initgroups
 
     mk_check_functions \
