@@ -980,6 +980,10 @@ LsaGetAccountName(
         BAIL_ON_LSA_ERROR(err);
     }
 
+    // Upper case the sam account name in case it was incorrectly created in AD
+    // by a previous version.
+    LwWc16sToUpper(samacctname);
+
     *account_name = samacctname;
 
 cleanup:
