@@ -145,6 +145,7 @@ LsaSrvPrivsEnumAccountRightsSids(
     DWORD privilegesLen = LSA_MAX_PRIVILEGES_COUNT;
     PLUID_AND_ATTRIBUTES pPrivileges = NULL;
     DWORD numPrivileges = 0;
+    DWORD systemAccessRights = 0;
     DWORD i = 0;
 
     err = LwAllocateMemory(
@@ -190,6 +191,8 @@ LsaSrvPrivsEnumAccountRightsSids(
 
         LSASRV_PRIVS_RDLOCK_RWLOCK(accountLocked, &pAccount->accountRwLock);
 
+        systemAccessRights |= pAccount->SystemAccessRights;
+
         err = LsaSrvMergePrivilegeLists(
                                 pPrivileges,
                                 numPrivileges,
@@ -222,8 +225,9 @@ LsaSrvPrivsEnumAccountRightsSids(
         }
     }
 
-    *pNumPrivileges = numPrivileges;
-    *ppPrivileges   = (numPrivileges) ? pPrivileges : NULL;
+    *pNumPrivileges      = numPrivileges;
+    *ppPrivileges        = (numPrivileges) ? pPrivileges : NULL;
+    *pSystemAccessRights = systemAccessRights;
 
 error:
     if (err || ntStatus)
@@ -238,6 +242,11 @@ error:
         if (pNumPrivileges)
         {
             *pNumPrivileges = 0;
+        }
+
+        if (pSystemAccessRights)
+        {
+            *pSystemAccessRights = 0;
         }
     }
 
@@ -979,7 +988,8 @@ LsaSrvMergePrivilegeLists(
                 BAIL_ON_LSA_ERROR(err);
             }
 
-            pMergedPrivs[numMergedPrivs++].Luid = pPrivs2[i].Luid;
+            pMergedPrivs[numMergedPrivs].Luid = pPrivs2[i].Luid;
+            pMergedPrivs[numMergedPrivs++].Attributes = pPrivs2[i].Attributes;
         }
 
         found = FALSE;
