@@ -138,6 +138,7 @@ case "$host_os:$host_cpu" in
                 nss_libdir="/usr/local/lib"
                 pam_libdir="/usr/local/lib"
                 NSS_SUBDIR="freebsd"
+                default_skeldirs="/usr/share/skel"
                 ENABLE_NSS_ENUM_DEFAULT="no"
                 AC_DEFINE([__LWI_HAS_OPENPAM__], [], [Define if OS uses OpenPAM])
                 AC_DEFINE([__LWI_FREEBSD__], [], [Define if OS is FreeBSD])

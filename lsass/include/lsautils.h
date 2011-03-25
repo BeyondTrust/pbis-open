@@ -678,7 +678,7 @@ LsaRemoveDirectory(
     );
 
 DWORD
-LsaCopyDirectory(
+LsaCopySkeletonDirectory(
     PCSTR pszSourceDirPath,
     uid_t ownerUid,
     gid_t ownerGid,

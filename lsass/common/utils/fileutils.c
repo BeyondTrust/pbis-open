@@ -917,7 +917,7 @@ LsaCreateSymlink(
 }
 
 DWORD
-LsaCopyDirectory(
+LsaCopySkeletonDirectory(
     PCSTR pszSourceDirPath,
     uid_t ownerUid,
     gid_t ownerGid,
@@ -953,7 +953,18 @@ LsaCopyDirectory(
             BAIL_ON_LSA_ERROR(dwError);
         }
 
+#ifdef __LWI_FREEBSD__
+        if (!strncmp(pDirEntry->d_name, "dot.", 4) && pDirEntry->d_name[4] != '\0' )
+        {
+            sprintf(szDstPath, "%s/%s", pszDestDirPath, pDirEntry->d_name + 3);
+        }
+        else
+        {
+            sprintf(szDstPath, "%s/%s", pszDestDirPath, pDirEntry->d_name);
+        }
+#else
         sprintf(szDstPath, "%s/%s", pszDestDirPath, pDirEntry->d_name);
+#endif
 
         if (S_ISDIR(statbuf.st_mode)) {
 
@@ -968,7 +979,7 @@ LsaCopyDirectory(
                             ownerGid);
             BAIL_ON_LSA_ERROR(dwError);
 
-            dwError = LsaCopyDirectory(
+            dwError = LsaCopySkeletonDirectory(
                             szSrcPath,
                             ownerUid,
                             ownerGid,

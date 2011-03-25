@@ -1580,7 +1580,7 @@ LocalProvisionHomeDir(
 
         if (bExists)
         {
-            dwError = LsaCopyDirectory(
+            dwError = LsaCopySkeletonDirectory(
                         pszSkelPath,
                         ownerUid,
                         ownerGid,

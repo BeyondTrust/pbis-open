@@ -2980,7 +2980,7 @@ AD_ProvisionHomeDir(
 
         if (bExists)
         {
-            dwError = LsaCopyDirectory(
+            dwError = LsaCopySkeletonDirectory(
                         pszSkelPath,
                         ownerUid,
                         ownerGid,
