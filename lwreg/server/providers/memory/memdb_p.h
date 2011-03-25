@@ -39,6 +39,21 @@ typedef struct __REG_KEY_CONTEXT
 } REG_KEY_CONTEXT;
 
 
+typedef struct _MEMDB_STACK_ENTRY
+{
+    PREGMEM_NODE pNode;
+    PWSTR pwszSubKeyPrefix;
+} MEMDB_STACK_ENTRY, *PMEMDB_STACK_ENTRY;
+
+
+typedef struct _MEMDB_STACK
+{
+    PMEMDB_STACK_ENTRY stack;
+    DWORD stackSize;
+    DWORD stackPtr;
+} MEMDB_STACK, *PMEMDB_STACK;
+
+
 NTSTATUS
 MemDbOpen(
     OUT PREG_DB_HANDLE phDb
@@ -200,6 +215,7 @@ NTSTATUS
 MemDbRecurseRegistry(
     IN HANDLE hRegConnection,
     IN REG_DB_HANDLE hDb,
-    PVOID (*cbFunc)(REG_DB_HANDLE hDb, PVOID userContext)
+    PVOID (*pfCallback)(MEM_REG_STORE_HANDLE hKey, PVOID userContext),
+    PVOID userContext
     );
 

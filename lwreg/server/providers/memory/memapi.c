@@ -498,6 +498,30 @@ MemEnumValue(
 }
 
 
+#if 1
+/* Test call back function for MemDbRecurseRegistry() */
+void *printf_func(MEM_REG_STORE_HANDLE pEntry, PVOID userContext)
+{
+    char *cString = NULL;
+    DWORD index = 0;
+
+    LwRtlCStringAllocateFromWC16String(&cString, (PWSTR) userContext);
+    printf("[%s]\n", cString);
+    LWREG_SAFE_FREE_MEMORY(cString);
+    for (index=0; index<pEntry->ValuesLen; index++)
+    {
+        LwRtlCStringAllocateFromWC16String(
+            &cString, 
+            pEntry->Values[index]->Name);
+            printf("    %s\n", cString);
+        LWREG_SAFE_FREE_MEMORY(cString);
+    }
+
+    return NULL;
+}
+
+#endif
+
 NTSTATUS
 MemDeleteTree(
     IN HANDLE Handle,
@@ -505,7 +529,19 @@ MemDeleteTree(
     IN OPTIONAL PCWSTR pSubKey
     )
 {
-    return 0;
+    NTSTATUS status = 0;
+    REG_DB_CONNECTION regDbConn = {0};
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
+
+    regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+
+
+    status = MemDbRecurseRegistry(
+                 Handle,
+                 &regDbConn,
+                 printf_func, // Replace with delete node callback function
+                 NULL);
+    return status;
 }
 
 

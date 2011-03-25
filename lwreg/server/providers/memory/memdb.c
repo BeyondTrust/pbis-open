@@ -776,3 +776,171 @@ cleanup:
 error:
     goto cleanup;
 }
+
+
+NTSTATUS
+MemDbStackInit(
+    DWORD dwSize,
+    PMEMDB_STACK *retStack)
+{
+    NTSTATUS status = 0;
+    PMEMDB_STACK newStack = NULL;
+    PMEMDB_STACK_ENTRY stackData = NULL;
+
+    status = LW_RTL_ALLOCATE((PVOID*) &newStack,
+                              MEMDB_STACK, 
+                              sizeof(PMEMDB_STACK));
+    BAIL_ON_NT_STATUS(status);
+    memset(newStack, 0, sizeof(MEMDB_STACK));
+
+    status = LW_RTL_ALLOCATE((PVOID*) &stackData,
+                              MEMDB_STACK_ENTRY,
+                              sizeof(MEMDB_STACK_ENTRY) * dwSize);
+    BAIL_ON_NT_STATUS(status);
+    memset(stackData, 0, sizeof(MEMDB_STACK_ENTRY) * dwSize);
+
+    newStack->stack = stackData;
+    newStack->stackSize = dwSize;
+    *retStack = newStack;
+
+cleanup:
+    return status;
+
+error:
+    LWREG_SAFE_FREE_MEMORY(newStack);
+    LWREG_SAFE_FREE_MEMORY(stackData);
+    goto cleanup;
+}
+
+
+VOID
+MemDbStackFinish(
+    PMEMDB_STACK hStack)
+{
+    DWORD index = 0;
+
+
+    for (index=0; index<hStack->stackSize; index++)
+    {
+        LWREG_SAFE_FREE_MEMORY(hStack->stack[index].pwszSubKeyPrefix);
+    }
+    LWREG_SAFE_FREE_MEMORY(hStack);
+}
+
+
+NTSTATUS
+MemDbStackPush(
+    PMEMDB_STACK hStack,
+    PREGMEM_NODE node,
+    PWSTR pwszPrefix)
+{
+    NTSTATUS status = 0;
+    MEMDB_STACK_ENTRY newNode = {0};
+    PWSTR pwszPathPrefix = NULL;
+
+    status = LwRtlWC16StringDuplicate(&pwszPathPrefix, pwszPrefix);
+    BAIL_ON_NT_STATUS(status);
+
+    newNode.pNode = node;
+    newNode.pwszSubKeyPrefix = pwszPathPrefix;
+
+    if (hStack->stackPtr+1 > hStack->stackSize)
+    {
+        status = ERROR_STACK_OVERFLOW;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    hStack->stack[hStack->stackPtr++] = newNode;
+
+error:
+    return status;
+}
+
+
+NTSTATUS
+MemDbStackPop(
+    PMEMDB_STACK hStack,
+    PREGMEM_NODE *pNode,
+    PWSTR *ppwszPrefix)
+{
+    NTSTATUS status = 0;
+
+    if (hStack->stackPtr == 0)
+    {
+        status = ERROR_EMPTY;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    hStack->stackPtr--;
+    *pNode = hStack->stack[hStack->stackPtr].pNode;
+    *ppwszPrefix = hStack->stack[hStack->stackPtr].pwszSubKeyPrefix;
+    hStack->stack[hStack->stackPtr].pNode = NULL;
+    hStack->stack[hStack->stackPtr].pwszSubKeyPrefix = NULL;
+
+error:
+    return status;
+}
+
+
+NTSTATUS
+MemDbRecurseRegistry(
+    IN HANDLE hRegConnection,
+    IN REG_DB_HANDLE hDb,
+    PVOID (*pfCallback)(MEM_REG_STORE_HANDLE hKey, PVOID userContext),
+    PVOID userContext)
+{
+    NTSTATUS status = 0;
+    MEM_REG_STORE_HANDLE hKey = NULL;
+    INT32 index = 0;
+    PMEMDB_STACK hStack = 0;
+    PWSTR pwszSubKeyPrefix = NULL;
+    PWSTR pwszSubKey = NULL;
+
+    status = MemDbStackInit(512, &hStack);
+    BAIL_ON_NT_STATUS(status);
+    hKey = hDb->pMemReg;
+
+    /* Initially populate stack from top level node */
+    for (index=hKey->NodesLen-1; index>=0; index--)
+    {
+        status = LwRtlWC16StringAllocatePrintf(
+                     &pwszSubKeyPrefix,
+                     "%ws", hKey->SubNodes[index]->Name);
+        BAIL_ON_NT_STATUS(status);
+        status = MemDbStackPush(
+                     hStack,
+                     hKey->SubNodes[index],
+                     pwszSubKeyPrefix);
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    do
+    {
+        status = MemDbStackPop(hStack, &hKey, &pwszSubKeyPrefix);
+        if (status == 0)
+        {
+            pfCallback(hKey, (PVOID) pwszSubKeyPrefix);
+            for (index=hKey->NodesLen-1; index>=0; index--)
+            {
+                status = LwRtlWC16StringAllocatePrintf(
+                             &pwszSubKey, 
+                             "%ws\\%ws",
+                             pwszSubKeyPrefix,
+                             hKey->SubNodes[index]->Name);
+                BAIL_ON_NT_STATUS(status);
+                status = MemDbStackPush(
+                             hStack,
+                             hKey->SubNodes[index],
+                             pwszSubKey);
+                BAIL_ON_NT_STATUS(status);
+            }
+        }
+        LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
+    } while (status != ERROR_EMPTY);
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}

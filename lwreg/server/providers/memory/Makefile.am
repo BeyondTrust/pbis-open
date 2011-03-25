@@ -24,7 +24,8 @@ libregserver_provider_memory_la_LIBADD = \
     $(PROVIDER_LIBS) \
     @PTHREAD_LIBS@ \
     @UUID_LIBS@ \
-    @LWBASE_LIBS@
+    @LWBASE_LIBS@ \
+    @LWBASE_NOTHR_LIBS@
 
 libregserver_provider_memory_la_LDFLAGS = \
     @LWBASE_LDFLAGS@ \

@@ -65,9 +65,9 @@
 #include "regprovspi.h"
 #include "reglog_r.h"
 
-#include "memdb_p.h"
 
 #include "memstore_p.h"
+#include "memdb_p.h"
 #include "memstore.h"
 
 #include "memapi.h"
