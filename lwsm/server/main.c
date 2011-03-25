@@ -927,7 +927,7 @@ LwSmStartIpcServer(
 
         dwError = MAP_LWMSG_STATUS(lwmsg_peer_add_listen_endpoint(
             gState.pControlServer,
-            LWMSG_CONNECTION_MODE_LOCAL,
+            LWMSG_ENDPOINT_LOCAL,
             SM_ENDPOINT,
             0666));
         BAIL_ON_ERROR(dwError);
@@ -953,7 +953,7 @@ LwSmStartIpcServer(
         {
             dwError = MAP_LWMSG_STATUS(lwmsg_peer_accept_fd(
                 gState.pContainerServer,
-                LWMSG_ENDPOINT_LOCAL,
+                LWMSG_ENDPOINT_PAIR,
                 4));
             BAIL_ON_ERROR(dwError);
         }

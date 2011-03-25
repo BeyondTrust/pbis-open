@@ -761,7 +761,7 @@ CreateContainer(
 
         dwError = MAP_LWMSG_STATUS(lwmsg_peer_connect_fd(
             pContainer->pPeer,
-            LWMSG_ENDPOINT_LOCAL,
+            LWMSG_ENDPOINT_PAIR,
             pContainer->Sockets[0],
             &pContainer->pSession));
         BAIL_ON_ERROR(dwError);
