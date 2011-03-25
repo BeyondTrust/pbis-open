@@ -76,7 +76,12 @@ if ${OPT_J} ; then
     if [ "${BUILD_OS_TYPE}" = 'linux' ]; then
         jflag="-j$((`cat /proc/cpuinfo | grep '^processor' | wc -l` * 2))"
     elif [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
-        local num_procs=`/usr/sbin/psrinfo | /usr/bin/wc -l`
+        num_procs=`/usr/sbin/psrinfo | /usr/bin/wc -l`
+        if [ -n "${num_procs}" ]; then
+            jflag="-j$((${num_procs} * 2))"
+        fi
+    elif [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
+        num_procs=`sysctl -n hw.ncpu`
         if [ -n "${num_procs}" ]; then
             jflag="-j$((${num_procs} * 2))"
         fi
