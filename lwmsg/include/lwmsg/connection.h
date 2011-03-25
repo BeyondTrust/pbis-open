@@ -91,17 +91,12 @@ typedef enum LWMsgConnectionMode
      * Local connection
      * @hideinitializer
      */
-    LWMSG_CONNECTION_MODE_LOCAL = 1,
-    /**
-     * Remote connection
-     * @hideinitializer
-     */
-    LWMSG_CONNECTION_MODE_REMOTE = 2,
+    LWMSG_CONNECTION_MODE_LOCAL = LWMSG_ENDPOINT_LOCAL,
     /**
      * Anonymous socket pair connection
      * @hideinitializer
      */
-    LWMSG_CONNECTION_MODE_PAIR = 3
+    LWMSG_CONNECTION_MODE_PAIR = LWMSG_ENDPOINT_PAIR
 } LWMsgConnectionMode;
 
 /**

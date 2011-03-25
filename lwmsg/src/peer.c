@@ -1020,7 +1020,7 @@ lwmsg_peer_accept_fd(
     /* Create new connection with client fd, put it into task, schedule task */
     BAIL_ON_ERROR(status = lwmsg_peer_session_new(peer, &session));
     BAIL_ON_ERROR(status = lwmsg_connection_new(peer->context, peer->protocol, &assoc));
-    BAIL_ON_ERROR(status = lwmsg_connection_set_fd(assoc, LWMSG_CONNECTION_MODE_LOCAL, fd));
+    BAIL_ON_ERROR(status = lwmsg_connection_set_fd(assoc, type, fd));
     BAIL_ON_ERROR(status = lwmsg_assoc_set_nonblock(assoc, LWMSG_TRUE));
     BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new_accept(session, assoc, &session->assoc_session));
     assoc = NULL;

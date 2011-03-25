@@ -848,9 +848,6 @@ lwmsg_connection_begin_connect_socket(
     case LWMSG_CONNECTION_MODE_LOCAL:
         BAIL_ON_ERROR(status = lwmsg_connection_begin_connect_local(assoc));
         break;
-    case LWMSG_CONNECTION_MODE_REMOTE:
-        BAIL_ON_ERROR(status = LWMSG_STATUS_UNIMPLEMENTED);
-        break;
     default:
         BAIL_ON_ERROR(status = LWMSG_STATUS_INTERNAL);
         break;

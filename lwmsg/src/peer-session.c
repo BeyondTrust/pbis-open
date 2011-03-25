@@ -870,6 +870,7 @@ lwmsg_peer_session_connect_endpoint(
         direct_session = NULL;
         break;
     case LWMSG_ENDPOINT_LOCAL:
+    case LWMSG_ENDPOINT_PAIR:
         if (!endpoint->endpoint && endpoint->fd < 0)
         {
             BAIL_ON_ERROR(status = LWMSG_STATUS_PEER_CLOSE);
