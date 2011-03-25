@@ -167,7 +167,7 @@ Wchar16sToUtf8s(
     size_t converted;
     size_t error = 0;
 
-    converted = iconv(handle, &inbuf, &cbin, &outbuf, &cbout);
+    converted = iconv(handle, (ICONV_IN_TYPE)&inbuf, &cbin, &outbuf, &cbout);
 
     if(cbout >= sizeof(dest[0]))
     {
@@ -208,7 +208,7 @@ WcharsToUtf8s(
        GOTO_CLEANUP();
     }
 
-    converted = iconv(cd, &inBuf, &sIn, &outBuf, &amountLeft);
+    converted = iconv(cd, (ICONV_IN_TYPE)&inBuf, &sIn, &outBuf, &amountLeft);
 
     if (amountLeft >= sizeof(char))
     {
@@ -261,7 +261,7 @@ AWcharsToUtf8s(
         outputPtr += inSize - remainSize;
         inputPtr = (char **) ((void *) &istr);
 
-        nonReversable = iconv(cd, inputPtr, &remainSize, &outputPtr, &iconvOut);
+        nonReversable = iconv(cd, (ICONV_IN_TYPE)inputPtr, &remainSize, &outputPtr, &iconvOut);
         if (nonReversable == (size_t) -1)
         {
             if (errno != E2BIG)
@@ -608,7 +608,7 @@ PrintfCore(
             else
             {
               char** pszEnd = (char **)&pszPos;
-              sWidth = (size_t)strtoull(pszPos, pszEnd, 10);
+              sWidth = (size_t)strtoul(pszPos, pszEnd, 10);
             }
             *pszFormatBufferPos++ = '*';
 
@@ -621,10 +621,10 @@ PrintfCore(
                     pszPos++;
                     iPrecision = va_arg(args, ssize_t);
                 }
-                else if (isdigit(*pszPos))
+                else if (isdigit((int)*pszPos))
                 {
                     char ** pszEnd = (char **)&pszPos;
-                    iPrecision = (ssize_t)strtoull(pszPos, pszEnd, 10);
+                    iPrecision = (ssize_t)strtoul(pszPos, pszEnd, 10);
                 }
             }
             *pszFormatBufferPos++ = '.';
@@ -883,10 +883,10 @@ PrintfCore(
                         sLen = snprintf(
                                       szArgBuffer,
                                       sizeof(szArgBuffer),
-                                      "%*.*"PRIxPTR,
+                                      "%*.*lx",
                                       (int)sWidth,
                                       (int)iPrecision,
-                                      (size_t)pvArg);
+                                      (unsigned long int)pvArg);
                         if (sLen > sizeof(szArgBuffer) || (ssize_t) sLen < 0)
                         {
                             error = ENOMEM;
