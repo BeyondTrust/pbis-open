@@ -6,6 +6,7 @@
 #include <lw/attrs.h>
 
 #include <lsautils.h>
+#include <lwstr.h>
 
 #include "AuthPlugin.h"
 
@@ -48,6 +49,85 @@ static const AuthorizationPluginInterface gPluginInterface = {
 
 static PLW_AUTH_MECHANISM gpAuthMechanisms;
 
+static
+VOID
+LogCallback(
+    IN OPTIONAL LW_PVOID Context,
+    IN LW_RTL_LOG_LEVEL Level,
+    IN OPTIONAL PCSTR ComponentName,
+    IN PCSTR FunctionName,
+    IN PCSTR FileName,
+    IN ULONG LineNumber,
+    IN PCSTR Format,
+    IN ...
+    )
+{
+    DWORD dwError = 0;
+    PSTR formattedMessage = NULL;
+    va_list argList;
+    PCSTR levelString = NULL;
+    size_t messageLength = 0;
+    PCSTR optionalNewLine = NULL;
+
+    va_start(argList, Format);
+    dwError = LwAllocateStringPrintfV(&formattedMessage, Format, argList);
+    va_end(argList);
+    if (dwError)
+    {
+        goto error;
+    }
+
+    switch (Level)
+    {
+        case LW_RTL_LOG_LEVEL_ALWAYS:
+            levelString = "ALWAYS";
+            break;
+        case LW_RTL_LOG_LEVEL_ERROR:
+            levelString = "ERROR";
+            break;
+        case LW_RTL_LOG_LEVEL_WARNING:
+            levelString = "WARNING";
+            break;
+        case LW_RTL_LOG_LEVEL_INFO:
+            levelString = "INFO";
+            break;
+        case LW_RTL_LOG_LEVEL_VERBOSE:
+            levelString = "VERBOSE";
+            break;
+        case LW_RTL_LOG_LEVEL_DEBUG:
+            levelString = "DEBUG";
+            break;
+        case LW_RTL_LOG_LEVEL_TRACE:
+            levelString = "TRACE";
+            break;
+        default:
+            levelString = NULL;
+            break;
+    }
+
+    messageLength = strlen(formattedMessage);
+    if (!messageLength || formattedMessage[messageLength-1] != '\n')
+    {
+        optionalNewLine = "\n";
+    }
+
+    printf("%s: [%s() %s:%d] %s%s",
+           LW_RTL_LOG_SAFE_STRING(levelString),
+           FunctionName,
+           FileName,
+           LineNumber,
+           formattedMessage,
+           optionalNewLine);
+
+error:
+    if (dwError)
+    {
+        printf("WARNING: Failed to format log message");
+    }
+
+    LW_SAFE_FREE_STRING(formattedMessage);
+}
+
 extern OSStatus
 AuthorizationPluginCreate(
     const AuthorizationCallbacks        *pAuthCallbacks,
@@ -59,12 +139,7 @@ AuthorizationPluginCreate(
     OSStatus osStatus = noErr;
     DWORD dwError = LW_ERROR_SUCCESS;
 
-    dwError = LsaInitLogging(
-                getprogname(),
-                LSA_LOG_TARGET_SYSLOG,
-                LSA_LOG_LEVEL_DEBUG,
-                NULL);
-    BAIL_ON_LSA_ERROR(dwError);
+    LwRtlLogSetCallback(LogCallback, NULL);
 
     dwError = AUTH_PLUGIN_ALLOCATE(pPlugin);
     BAIL_ON_LSA_ERROR(dwError);
