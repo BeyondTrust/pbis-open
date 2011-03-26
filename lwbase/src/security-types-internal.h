@@ -46,6 +46,7 @@
 #define __LW_SECURITY_TYPES_INTERNAL_H__
 
 #include <lw/security-types.h>
+#include <pthread.h>
 
 //
 // ACL - Access Control List
