@@ -67,7 +67,7 @@ LsaSrvFreePrivileges(
 
 DWORD
 LsaSrvPrivsOpenAccount(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PSID Sid,
     IN ACCESS_MASK AccessRights,
@@ -77,7 +77,7 @@ LsaSrvPrivsOpenAccount(
 
 DWORD
 LsaSrvPrivsCreateAccount(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PSID Sid,
     IN ACCESS_MASK AccessRights,
@@ -93,7 +93,7 @@ LsaSrvPrivsCloseAccount(
 
 DWORD
 LsaSrvPrivsEnumAccounts(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PDWORD pResume,
     IN DWORD PreferredMaxSize,
@@ -104,7 +104,7 @@ LsaSrvPrivsEnumAccounts(
 
 DWORD
 LsaSrvPrivsEnumAccountsWithUserRight(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PWSTR UserRight,
     OUT PSID **ppAccountSids,
@@ -114,7 +114,7 @@ LsaSrvPrivsEnumAccountsWithUserRight(
 
 DWORD
 LsaSrvPrivsAddAccountRights(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PSID AccountSid,
     IN PWSTR *ppwszAccountRights,
@@ -124,7 +124,7 @@ LsaSrvPrivsAddAccountRights(
 
 DWORD
 LsaSrvPrivsRemoveAccountRights(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PSID AccountSid,
     IN BOOLEAN RemoveAll,
@@ -135,7 +135,7 @@ LsaSrvPrivsRemoveAccountRights(
 
 DWORD
 LsaSrvPrivsEnumAccountRights(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PSID AccountSid,
     OUT PWSTR **ppwszAccountRights,
@@ -145,7 +145,7 @@ LsaSrvPrivsEnumAccountRights(
 
 DWORD
 LsaSrvPrivsEnumPrivileges(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PDWORD pResume,
     IN DWORD PreferredMaxSize,
@@ -157,7 +157,7 @@ LsaSrvPrivsEnumPrivileges(
 
 DWORD
 LsaSrvPrivsLookupPrivilegeValue(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PCWSTR pwszPrivilegeName,
     OUT PLUID pPrivilegeValue
@@ -166,7 +166,7 @@ LsaSrvPrivsLookupPrivilegeValue(
 
 DWORD
 LsaSrvPrivsLookupPrivilegeName(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLUID pPrivilegeValue,
     OUT PWSTR *ppwszPrivilegeName
@@ -175,7 +175,7 @@ LsaSrvPrivsLookupPrivilegeName(
 
 DWORD
 LsaSrvPrivsLookupPrivilegeDescription(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PCWSTR PrivilegeName,
     IN SHORT ClientLanguageId,
@@ -187,7 +187,7 @@ LsaSrvPrivsLookupPrivilegeDescription(
 
 DWORD
 LsaSrvPrivsAddPrivilegesToAccount(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN PPRIVILEGE_SET pPrivilegeSet
@@ -196,7 +196,7 @@ LsaSrvPrivsAddPrivilegesToAccount(
 
 DWORD
 LsaSrvPrivsRemovePrivilegesFromAccount(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN BOOLEAN RemoveAll,
@@ -213,7 +213,7 @@ LsaSrvPrivsEnumAccountPrivileges(
 
 DWORD
 LsaSrvPrivsGetSystemAccessRights(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     OUT PDWORD pSystemAccessRights
@@ -222,7 +222,7 @@ LsaSrvPrivsGetSystemAccessRights(
 
 DWORD
 LsaSrvPrivsSetSystemAccessRights(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN DWORD SystemAccessRights
@@ -231,7 +231,7 @@ LsaSrvPrivsSetSystemAccessRights(
 
 DWORD
 LsaSrvPrivsGetAccountSecurity(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN SECURITY_INFORMATION SecurityInformation,
@@ -242,7 +242,7 @@ LsaSrvPrivsGetAccountSecurity(
 
 DWORD
 LsaSrvPrivsSetAccountSecurity(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN SECURITY_INFORMATION SecurityInformation,

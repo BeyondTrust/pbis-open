@@ -49,7 +49,7 @@
 
 DWORD
 LsaSrvPrivsLookupPrivilegeValue(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PCWSTR pwszPrivilegeName,
     OUT PLUID pPrivilegeValue
@@ -127,7 +127,7 @@ error:
 
 DWORD
 LsaSrvPrivsLookupPrivilegeName(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLUID pPrivilegeValue,
     OUT PWSTR *pPrivilegeName
@@ -204,7 +204,7 @@ error:
 
 DWORD
 LsaSrvPrivsLookupPrivilegeDescription(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PCWSTR PrivilegeName,
     IN SHORT ClientLanguageId,
@@ -346,7 +346,7 @@ LsaSrvIsPrivilegeValueValid(
 
 DWORD
 LsaSrvPrivsEnumPrivileges(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PDWORD pResume,
     IN DWORD PreferredMaxSize,

@@ -269,7 +269,7 @@ error:
 
 DWORD
 LsaSrvPrivsAddAccountRights(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PSID pAccountSid,
     IN PWSTR *ppwszAccountRights,
@@ -437,7 +437,7 @@ error:
 
 DWORD
 LsaSrvPrivsRemoveAccountRights(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PSID AccountSid,
     IN BOOLEAN RemoveAll,
@@ -543,7 +543,7 @@ error:
 
 DWORD
 LsaSrvPrivsEnumAccountRights(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN pAccessToken,
     IN PSID AccountSid,
     OUT PWSTR **ppAccountRights,
@@ -661,7 +661,7 @@ error:
 
 DWORD
 LsaSrvPrivsOpenAccount(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN pAccessToken,
     IN PSID Sid,
     IN ACCESS_MASK AccessRights,
@@ -735,7 +735,7 @@ error:
 
 DWORD
 LsaSrvPrivsCreateAccount(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN pAccessToken,
     IN PSID Sid,
     IN ACCESS_MASK AccessRights,
@@ -883,7 +883,7 @@ LsaSrvPrivsCloseAccount(
 
 DWORD
 LsaSrvPrivsAddPrivilegesToAccount(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN PPRIVILEGE_SET pPrivilegeSet
@@ -1009,7 +1009,7 @@ error:
 
 DWORD
 LsaSrvPrivsRemovePrivilegesFromAccount(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN BOOLEAN RemoveAll,
@@ -1204,7 +1204,7 @@ error:
 
 DWORD
 LsaSrvPrivsGetSystemAccessRights(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     OUT PDWORD pSystemAccessRights
@@ -1233,7 +1233,7 @@ error:
 
 DWORD
 LsaSrvPrivsSetSystemAccessRights(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN DWORD SystemAccessRights
@@ -1398,7 +1398,7 @@ error:
 
 DWORD
 LsaSrvPrivsEnumAccounts(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PDWORD pResume,
     IN DWORD PreferredMaxSize,
@@ -1536,7 +1536,7 @@ error:
 
 DWORD
 LsaSrvPrivsEnumAccountsWithUserRight(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PWSTR UserRight,
     OUT PSID **ppAccountSids,
@@ -1750,7 +1750,7 @@ LsaSrvIsSarAssigned(
 
 DWORD
 LsaSrvPrivsGetAccountSecurity(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN SECURITY_INFORMATION SecurityInformation,
@@ -1928,7 +1928,7 @@ error:
 
 DWORD
 LsaSrvPrivsSetAccountSecurity(
-    IN HANDLE hServer,
+    IN OPTIONAL HANDLE hServer,
     IN OPTIONAL PACCESS_TOKEN AccessToken,
     IN PLSA_ACCOUNT_CONTEXT pAccountContext,
     IN SECURITY_INFORMATION SecurityInformation,
