@@ -215,7 +215,8 @@ NTSTATUS
 MemDbRecurseRegistry(
     IN HANDLE hRegConnection,
     IN REG_DB_HANDLE hDb,
-    PVOID (*pfCallback)(MEM_REG_STORE_HANDLE hKey, PVOID userContext),
-    PVOID userContext
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PVOID (*pfCallback)(MEM_REG_STORE_HANDLE hKey, PVOID userContext),
+    IN PVOID userContext
     );
 

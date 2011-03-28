@@ -526,7 +526,7 @@ NTSTATUS
 MemDeleteTree(
     IN HANDLE Handle,
     IN HKEY hKey,
-    IN OPTIONAL PCWSTR pSubKey
+    IN OPTIONAL PCWSTR pwszSubKey
     )
 {
     NTSTATUS status = 0;
@@ -535,14 +535,15 @@ MemDeleteTree(
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
 
-
     status = MemDbRecurseRegistry(
                  Handle,
                  &regDbConn,
+                 pwszSubKey,
                  printf_func, // Replace with delete node callback function
                  NULL);
     return status;
 }
+
 
 
 NTSTATUS

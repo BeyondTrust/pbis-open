@@ -886,8 +886,9 @@ NTSTATUS
 MemDbRecurseRegistry(
     IN HANDLE hRegConnection,
     IN REG_DB_HANDLE hDb,
-    PVOID (*pfCallback)(MEM_REG_STORE_HANDLE hKey, PVOID userContext),
-    PVOID userContext)
+    IN OPTIONAL PCWSTR pwszOptSubKey,
+    IN PVOID (*pfCallback)(MEM_REG_STORE_HANDLE hKey, PVOID userContext),
+    IN PVOID userContext)
 {
     NTSTATUS status = 0;
     MEM_REG_STORE_HANDLE hKey = NULL;
@@ -895,21 +896,51 @@ MemDbRecurseRegistry(
     PMEMDB_STACK hStack = 0;
     PWSTR pwszSubKeyPrefix = NULL;
     PWSTR pwszSubKey = NULL;
+    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    REG_DB_CONNECTION regDbConn = {0};
+
 
     status = MemDbStackInit(512, &hStack);
     BAIL_ON_NT_STATUS(status);
     hKey = hDb->pMemReg;
 
+    if (pwszOptSubKey)
+    {
+        regDbConn.pMemReg = hKey;
+        status = MemDbOpenKey(
+                     hRegConnection,
+                     &regDbConn,
+                     pwszOptSubKey,
+                     &hSubKey);
+        BAIL_ON_NT_STATUS(status);
+        hKey = hSubKey;
+    }
+
     /* Initially populate stack from top level node */
-    for (index=hKey->NodesLen-1; index>=0; index--)
+    if (!pwszOptSubKey)
+    {
+        for (index=hKey->NodesLen-1; index>=0; index--)
+        {
+            status = LwRtlWC16StringAllocatePrintf(
+                         &pwszSubKeyPrefix,
+                         "%ws", hKey->SubNodes[index]->Name);
+            BAIL_ON_NT_STATUS(status);
+            status = MemDbStackPush(
+                         hStack,
+                         hKey->SubNodes[index],
+                         pwszSubKeyPrefix);
+            BAIL_ON_NT_STATUS(status);
+        }
+    }
+    else
     {
         status = LwRtlWC16StringAllocatePrintf(
                      &pwszSubKeyPrefix,
-                     "%ws", hKey->SubNodes[index]->Name);
+                     "%ws", pwszOptSubKey);
         BAIL_ON_NT_STATUS(status);
         status = MemDbStackPush(
                      hStack,
-                     hKey->SubNodes[index],
+                     hSubKey,
                      pwszSubKeyPrefix);
         BAIL_ON_NT_STATUS(status);
     }
