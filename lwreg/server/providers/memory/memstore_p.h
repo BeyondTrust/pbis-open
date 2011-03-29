@@ -62,6 +62,12 @@ typedef struct _REGMEM_NODE
 {
     PWSTR Name;
     DWORD NodeType;
+
+    /*
+     * Back reference to parent node. Needed for some operations (delete)
+     */
+    struct _REGMEM_NODE *ParentNode;
+    
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
     ULONG SecurityDescriptorLen;
 

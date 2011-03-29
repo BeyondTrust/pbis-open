@@ -266,6 +266,15 @@ MemRegStoreAddNode(
     hDb->SubNodes = pNodesArray;
     pNodesArray = NULL;
 
+    if (NodeType > 1)
+    {
+        /*
+         * Point new node to parent, if not root. Needed by some operations
+         * that would manipulate parent structure (e.g. MemDeleteKey)
+         */
+        pNewNode->ParentNode = hDb;
+    }
+
     /* Insert new node in sorted order */
     if (hDb->NodesLen > 0)
     {
