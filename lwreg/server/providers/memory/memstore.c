@@ -249,12 +249,6 @@ MemRegStoreDeleteNode(
         BAIL_ON_NT_STATUS(status);
     }
 
-{
-CHAR *cString = NULL;
-LwRtlCStringAllocateFromWC16String(&cString, hDb->Name);
-printf("MemRegStoreDeleteNode: %s\n", cString);
-free(cString);
-}
     /* Delete memory for this node here */
 
     /* Remove this node from parent SubNodes list */
