@@ -83,9 +83,6 @@ package_freebsd()
 
 package_pkg()
 {
-    mk_stage SOURCE="pkg/UPGRADE" DESTDIR="${MK_PREFIX}/data"
-    stamp="$result"
-
     mk_pkg_do \
         PACKAGE="$PKG_PKG_NAME" \
         VERSION="$PKG_PKG_VERSION"

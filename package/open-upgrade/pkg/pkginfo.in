@@ -1,0 +1,11 @@
+PKG=LIKEopeng
+NAME=Likewise Open Upgrade Helper
+ARCH=@PKG_PKG_ARCH@
+VERSION=@PKG_PKG_VERSION@
+CATEGORY=system
+VENDOR=Likewise Software
+DESC=Preserves important state information from previous versions of the product.
+HOTLINE=425-378-7887
+EMAIL=support@likewise.com
+CLASSES=none
+VSTOCK=@PKG_PKG_NAME@
