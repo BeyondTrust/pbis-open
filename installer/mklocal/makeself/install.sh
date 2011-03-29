@@ -427,7 +427,7 @@ package_file_exists_solaris()
 
 is_package_installed_solaris()
 {
-    pkginfo $1 > /dev/null 2>&1
+    pkginfo -l | grep "VSTOCK:.*$1" > /dev/null 2>&1
     if [ $? -eq 0 ]; then
         echo $1
         return 0
@@ -450,14 +450,19 @@ package_install_solaris()
 
 package_uninstall_solaris()
 {
-    pkgList=`eval echo "$@"`
-    for pkg in $pkgList; do
-        eval "pkgrm -a ${DIRNAME}/response -n $pkg"
-        err=$?
-        if [ $err -eq 1 ]; then
-            return $ERR_PACKAGE_COULD_NOT_UNINSTALL
-        fi
+    for candidate in `pkginfo | awk '{print $2}' | grep '^LIKE' | sort -r`; do
+        mpkg=`pkginfo -l $candidate | grep VSTOCK: | awk '{print $2;}'`
+        for pkg in $@; do
+            if [ "$mpkg" = "$pkg" ]; then
+                pkgrm -a "${DIRNAME}/response" -n "$candidate"
+                err=$?
+                if [ $err -eq 1 ]; then
+                    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+                fi
+            fi
+        done
     done
+
     return 0
 }
 

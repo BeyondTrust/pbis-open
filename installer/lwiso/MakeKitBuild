@@ -12,11 +12,17 @@ make()
         freebsd)
             mk_freebsd_enabled && sfx_generic "freebsd"
             ;;
+        solaris)
+            mk_pkg_enabled && sfx_generic "pkg" "response"
+            ;;
     esac
 }
 
 sfx_generic()
 {
+    # $1 = package format
+    # $2 = extra files to include
+
     GUI_PACKAGE=""
 
     if [ "$DJ_GUI_INTERFACE" != "no" ]
@@ -26,7 +32,7 @@ sfx_generic()
 
     lw_sfx \
         SFX="LikewiseOpen-${LW_VERSION}" \
-        FILES="COPYING README EULA LICENSES" \
+        FILES="COPYING README EULA LICENSES $2" \
         FORMAT="$1" \
         PACKAGES="likewise-open likewise-open-upgrade $GUI_PACKAGE" \
         UPGRADE="likewise-open-upgrade" \

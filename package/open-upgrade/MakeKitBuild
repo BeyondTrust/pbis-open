@@ -31,6 +31,21 @@ configure()
         mk_declare -o PKG_FREEBSD_NAME="${LW_VENDOR}-open-upgrade"
         mk_declare -o PKG_FREEBSD_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
     fi
+
+    if mk_pkg_enabled
+    then
+        mk_declare -o PKG_PKG_NAME="${LW_VENDOR}-open-upgrade"
+        mk_declare -o PKG_PKG_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+        case "$MK_HOST_ARCH" in
+            x86)
+                PKG_PKG_ARCH="i386"
+                ;;
+            *)
+                PKG_PKG_ARCH="$MK_HOST_ARCH"
+                ;;
+        esac
+        mk_declare -o PKG_PKG_ARCH
+    fi
 }
 
 package_rpm()
@@ -66,9 +81,27 @@ package_freebsd()
     mk_freebsd_done
 }
 
+package_pkg()
+{
+    mk_stage SOURCE="pkg/UPGRADE" DESTDIR="${MK_PREFIX}/data"
+    stamp="$result"
+
+    mk_pkg_do \
+        PACKAGE="$PKG_PKG_NAME" \
+        VERSION="$PKG_PKG_VERSION"
+
+        mk_pkg_sub_do \
+            SUBPACKAGE="LIKEopeng" \
+            INFOFILES="pkg/pkginfo.in pkg/copyright.in pkg/depend.in pkg/postinstall.in"
+
+        mk_pkg_sub_done
+    mk_pkg_done
+}
+
 make()
 {
     mk_deb_enabled && package_deb
     mk_rpm_enabled && package_rpm
     mk_freebsd_enabled && package_freebsd
+    mk_pkg_enabled && package_pkg
 }

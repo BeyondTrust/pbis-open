@@ -1,0 +1,11 @@
+PKG=LIKEopenr
+NAME=Likewise Open (root files)
+ARCH=@PKG_PKG_ARCH@
+VERSION=@PKG_PKG_VERSION@
+CATEGORY=system
+VENDOR=Likewise Software
+DESC=Authentication services for Active Directory
+HOTLINE=425-378-7887
+EMAIL=support@likewise.com
+CLASSES=none
+VSTOCK=@PKG_PKG_NAME@

@@ -1,4 +1,4 @@
-MODULES="package-deb package-rpm package-freebsd"
+MODULES="package-deb package-rpm package-freebsd package-pkg"
 
 configure()
 {
@@ -31,6 +31,21 @@ configure()
     if mk_freebsd_enabled
     then
         mk_declare -o PKG_FREEBSD_NAME="${LW_VENDOR}-open"
+    fi
+
+    if mk_pkg_enabled
+    then
+        mk_declare -o PKG_PKG_NAME="${LW_VENDOR}-open"
+        mk_declare -o PKG_PKG_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+        case "$MK_HOST_ARCH" in
+            x86)
+                PKG_PKG_ARCH="i386"
+                ;;
+            *)
+                PKG_PKG_ARCH="$MK_HOST_ARCH"
+                ;;
+        esac
+        mk_declare -o PKG_PKG_ARCH
     fi
 }
 
@@ -82,6 +97,62 @@ package_freebsd()
         open_files_compat
     mk_freebsd_done
 }
+      
+package_pkg()
+{
+    mk_pkg_do \
+        PACKAGE="$PKG_PKG_NAME" \
+        VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+
+        mk_pkg_sub_do \
+            SUBPACKAGE="LIKEopenu" \
+            INFOFILES="pkg/u/pkginfo.in"
+        
+            open_files_usr
+            open_files_compat_usr
+        mk_pkg_sub_done
+
+        mk_pkg_sub_do \
+            SUBPACKAGE="LIKEopenr" \
+            INFOFILES="pkg/r/pkginfo.in"
+
+            open_files_root
+
+            mk_package_dirs \
+                "${MK_SYSCONFDIR}"
+            
+            mk_package_dirs \
+                "${MK_SYSCONFDIR}/gss"
+
+        mk_pkg_sub_done
+
+        
+        mk_pkg_sub_do \
+            SUBPACKAGE="LIKEopenz" \
+            INFOFILES="pkg/pkginfo.in pkg/copyright.in pkg/depend.in pkg/postinstall.in pkg/preinstall.in pkg/preremove.in"
+
+            open_files_prefix
+            open_files_compat_prefix
+            
+            # Indicate directories we own
+            mk_package_dirs \
+                "${MK_PREFIX}" \
+                "${MK_PREFIX}/data" \
+                "${MK_BINDIR}" \
+                "${MK_SBINDIR}" \
+                "${MK_DATADIR}" \
+                "${LW_CONFIGDIR}" \
+                "${MK_LIBDIR}/gss" \
+                "${MK_LIBDIR}/lw-svcm" \
+                "${MK_LIBDIR}/sasl2"
+
+            mk_multiarch_do
+                mk_package_dirs "${MK_LIBDIR}"
+            mk_multiarch_done
+
+        mk_pkg_sub_done
+    mk_pkg_done
+}
 
 make()
 {
@@ -97,9 +168,17 @@ make()
     mk_deb_enabled && package_deb
     mk_rpm_enabled && package_rpm
     mk_freebsd_enabled && package_freebsd
+    mk_pkg_enabled && package_pkg
 }
 
 open_files()
+{
+    open_files_prefix
+    open_files_usr
+    open_files_root
+}
+
+open_files_prefix()
 {
     mk_package_patterns \
         SUBDIRS="$OPEN_SUBDIRS" \
@@ -111,19 +190,31 @@ open_files()
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lw-svcm/*${MK_DLO_EXT}" \
-        "${NSSDIR}/*" \
-        "${PAMDIR}/*" \
         "${LW_CONFIGDIR}/*.reg" \
-        "${MK_SYSCONFDIR}/*" \
-        "${MK_SYSCONFDIR}/gss/mech" \
-        "${MK_PREFIX}/data/VERSION" \
-        "/etc/init.d/*"
+        "${MK_PREFIX}/data/VERSION"
 
     [ "$MK_DLO_EXT" != "$MK_LIB_EXT" ] && mk_package_patterns \
         SUBDIRS="$OPEN_SUBDIRS" \
         "${MK_LIBDIR}/*${MK_LIB_EXT}"
+}
+
+open_files_usr()
+{
+    mk_package_patterns \
+        SUBDIRS="@lsass/interop" \
+        "${NSSDIR}/*" \
+        "${PAMDIR}/*"
 
     mk_package_patterns SUBDIRS="@docs" "*"
+}
+
+open_files_root()
+{
+    mk_package_patterns \
+        SUBDIRS="$OPEN_SUBDIRS" \
+        "${MK_SYSCONFDIR}/*" \
+        "${MK_SYSCONFDIR}/gss/mech" \
+        "/etc/init.d/*"
 
     mk_package_dirs \
         "${LW_CACHEDIR}" \
@@ -133,10 +224,24 @@ open_files()
 
 open_files_compat()
 {
+    open_files_compat_prefix
+    open_files_compat_usr
+}
+
+open_files_compat_prefix()
+{
     mk_compat_do
         mk_package_patterns \
             SUBDIRS="$OPEN_SUBDIRS" \
-            "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
+            "${MK_LIBDIR}/*${MK_LIB_EXT}.*"
+    mk_compat_done
+}
+
+open_files_compat_usr()
+{
+    mk_compat_do
+        mk_package_patterns \
+            SUBDIRS="$OPEN_SUBDIRS" \
             "${NSSDIR}/*" \
             "${PAMDIR}/*"
     mk_compat_done
