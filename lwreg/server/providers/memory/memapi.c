@@ -524,6 +524,16 @@ void *printf_func(MEM_REG_STORE_HANDLE pEntry,
 
 #endif
 
+static void *pfDeleteNodeCallback(
+    MEM_REG_STORE_HANDLE pEntry, 
+    PVOID userContext,
+    PWSTR subStringPrefix)
+{
+    MemRegStoreDeleteNode(pEntry);
+
+    return NULL;
+}
+
 NTSTATUS
 MemDeleteTree(
     IN HANDLE Handle,
@@ -537,11 +547,11 @@ MemDeleteTree(
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
 
-    status = MemDbRecurseRegistry(
+    status = MemDbRecurseDepthFirstRegistry(
                  Handle,
                  &regDbConn,
                  pwszSubKey,
-                 printf_func, // Replace with delete node callback function
+                 pfDeleteNodeCallback,
                  NULL);
     return status;
 }

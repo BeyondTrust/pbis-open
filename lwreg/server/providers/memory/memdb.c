@@ -953,20 +953,134 @@ MemDbRecurseRegistry(
         if (status == 0)
         {
             pfCallback(hKey, (PVOID) userContext, pwszSubKeyPrefix);
-            for (index=hKey->NodesLen-1; index>=0; index--)
+            if (hKey->SubNodes && hKey->NodesLen > 0)
             {
-                status = LwRtlWC16StringAllocatePrintf(
-                             &pwszSubKey, 
-                             "%ws\\%ws",
-                             pwszSubKeyPrefix,
-                             hKey->SubNodes[index]->Name);
-                BAIL_ON_NT_STATUS(status);
-                status = MemDbStackPush(
-                             hStack,
-                             hKey->SubNodes[index],
-                             pwszSubKey);
-                BAIL_ON_NT_STATUS(status);
+                for (index=hKey->NodesLen-1; index>=0; index--)
+                {
+                    status = LwRtlWC16StringAllocatePrintf(
+                                 &pwszSubKey, 
+                                 "%ws\\%ws",
+                                 pwszSubKeyPrefix,
+                                 hKey->SubNodes[index]->Name);
+                    BAIL_ON_NT_STATUS(status);
+                    status = MemDbStackPush(
+                                 hStack,
+                                 hKey->SubNodes[index],
+                                 pwszSubKey);
+                    BAIL_ON_NT_STATUS(status);
+                }
             }
+        }
+        LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
+    } while (status != ERROR_EMPTY);
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}
+
+
+NTSTATUS
+MemDbRecurseDepthFirstRegistry(
+    IN HANDLE hRegConnection,
+    IN REG_DB_HANDLE hDb,
+    IN OPTIONAL PCWSTR pwszOptSubKey,
+    IN PVOID (*pfCallback)(MEM_REG_STORE_HANDLE hKey, 
+                           PVOID userContext,
+                           PWSTR pwszSubKeyPrefix),
+    IN PVOID userContext)
+{
+    NTSTATUS status = 0;
+    MEM_REG_STORE_HANDLE hKey = NULL;
+    INT32 index = 0;
+    PMEMDB_STACK hStack = 0;
+    PWSTR pwszSubKeyPrefix = NULL;
+    PWSTR pwszSubKey = NULL;
+    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    REG_DB_CONNECTION regDbConn = {0};
+
+
+    status = MemDbStackInit(512, &hStack);
+    BAIL_ON_NT_STATUS(status);
+    hKey = hDb->pMemReg;
+
+    if (pwszOptSubKey)
+    {
+        regDbConn.pMemReg = hKey;
+        status = MemDbOpenKey(
+                     hRegConnection,
+                     &regDbConn,
+                     pwszOptSubKey,
+                     &hSubKey);
+        BAIL_ON_NT_STATUS(status);
+        hKey = hSubKey;
+    }
+
+    /* Initially populate stack from top level node */
+    if (!pwszOptSubKey)
+    {
+        for (index=hKey->NodesLen-1; index>=0; index--)
+        {
+            status = LwRtlWC16StringAllocatePrintf(
+                         &pwszSubKeyPrefix,
+                         "%ws", hKey->SubNodes[index]->Name);
+            BAIL_ON_NT_STATUS(status);
+            status = MemDbStackPush(
+                         hStack,
+                         hKey->SubNodes[index],
+                         pwszSubKeyPrefix);
+            BAIL_ON_NT_STATUS(status);
+        }
+    }
+    else
+    {
+        status = LwRtlWC16StringAllocatePrintf(
+                     &pwszSubKeyPrefix,
+                     "%ws", pwszOptSubKey);
+        BAIL_ON_NT_STATUS(status);
+        status = MemDbStackPush(
+                     hStack,
+                     hSubKey,
+                     pwszSubKeyPrefix);
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    do
+    {
+        status = MemDbStackPop(hStack, &hKey, &pwszSubKeyPrefix);
+        if (status == 0)
+        {
+            if (hKey->SubNodes && hKey->NodesLen > 0)
+            {
+                /* This push should never fail */
+                status = MemDbStackPush(hStack, hKey, pwszSubKeyPrefix);
+                BAIL_ON_NT_STATUS(status);
+                for (index=hKey->NodesLen-1; index>=0; index--)
+                {
+                    status = LwRtlWC16StringAllocatePrintf(
+                                 &pwszSubKey, 
+                                 "%ws\\%ws",
+                                 pwszSubKeyPrefix,
+                                 hKey->SubNodes[index]->Name);
+                    BAIL_ON_NT_STATUS(status);
+                    status = MemDbStackPush(
+                                 hStack,
+                                 hKey->SubNodes[index],
+                                 pwszSubKey);
+                    BAIL_ON_NT_STATUS(status);
+                }
+            }
+            else
+            {
+                /* This callback must do something to break the recursion */
+                pfCallback(hKey, (PVOID) userContext, pwszSubKeyPrefix);
+            }
+        }
+        else
+        {
+            BAIL_ON_NT_STATUS(status);
         }
         LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
     } while (status != ERROR_EMPTY);

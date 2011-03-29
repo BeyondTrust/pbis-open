@@ -209,7 +209,8 @@ MemRegStoreFindNode(
     }
     for (nodeIndex=0; nodeIndex<hDb->NodesLen; nodeIndex++)
     {
-        if (LwRtlWC16StringIsEqual(Name, hDb->SubNodes[nodeIndex]->Name, FALSE))
+        if (hDb->SubNodes[nodeIndex] &&
+            LwRtlWC16StringIsEqual(Name, hDb->SubNodes[nodeIndex]->Name, FALSE))
         {
             bFoundNode = TRUE;
             break;
@@ -217,12 +218,84 @@ MemRegStoreFindNode(
     }
 
     if (bFoundNode)
-    {
+   {
         *phNode = hDb->SubNodes[nodeIndex];
     }
     else
     {
         status = STATUS_OBJECT_NAME_NOT_FOUND;
+    }
+
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}
+
+
+NTSTATUS
+MemRegStoreDeleteNode(
+    IN MEM_REG_STORE_HANDLE hDb)
+{
+    NTSTATUS status = 0;
+    DWORD index = 0;
+    BOOLEAN bNodeFound = FALSE;
+
+    BAIL_ON_NT_STATUS(status);
+    if (!hDb->ParentNode)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+{
+CHAR *cString = NULL;
+LwRtlCStringAllocateFromWC16String(&cString, hDb->Name);
+printf("MemRegStoreDeleteNode: %s\n", cString);
+free(cString);
+}
+    /* Delete memory for this node here */
+
+    /* Remove this node from parent SubNodes list */
+    for (index=0; index < hDb->ParentNode->NodesLen; index++)
+    {
+        if (hDb->ParentNode->SubNodes[index] == hDb)
+        {
+            bNodeFound = TRUE;
+            break;
+        }
+    }
+    if (bNodeFound)
+    {
+        hDb->ParentNode->SubNodes[index] = NULL;
+
+        /* Shift all pointers right of node just removed left over empty slot */
+        if (index+1 < hDb->ParentNode->NodesLen)
+        {
+            memmove(&hDb->ParentNode->SubNodes[index], 
+                    &hDb->ParentNode->SubNodes[index+1], 
+                    (hDb->ParentNode->NodesLen-index) * 
+                        sizeof(hDb->ParentNode->SubNodes[index]));
+            hDb->ParentNode->SubNodes[hDb->ParentNode->NodesLen-1] = NULL;
+            hDb->ParentNode->NodesLen--;
+
+            /* Not sure this will ever be called */
+            if (hDb->ParentNode->NodesLen == 0)
+            {
+                LWREG_SAFE_FREE_MEMORY(hDb->ParentNode->SubNodes);
+            }
+        }
+        else if (hDb->ParentNode->NodesLen == 1)
+        {
+            LWREG_SAFE_FREE_MEMORY(hDb->ParentNode->SubNodes);
+            hDb->ParentNode->NodesLen = 0;
+        }
+        else if (index+1 == hDb->ParentNode->NodesLen)
+        {
+            /* Last entry on the list. Value is nulled out, decrement len */
+            hDb->ParentNode->NodesLen--;
+        }
     }
 
 cleanup:

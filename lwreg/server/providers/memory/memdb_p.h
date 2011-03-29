@@ -221,3 +221,15 @@ MemDbRecurseRegistry(
                            PWSTR subKeyPrefix),
     IN PVOID userContext
     );
+
+
+NTSTATUS
+MemDbRecurseDepthFirstRegistry(
+    IN HANDLE hRegConnection,
+    IN REG_DB_HANDLE hDb,
+    IN OPTIONAL PCWSTR pwszOptSubKey,
+    IN PVOID (*pfCallback)(MEM_REG_STORE_HANDLE hKey, 
+                           PVOID userContext,
+                           PWSTR pwszSubKeyPrefix),
+    IN PVOID userContext
+    );

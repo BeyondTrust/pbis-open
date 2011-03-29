@@ -115,3 +115,8 @@ MemRegStoreChangeNodeValue(
     DWORD cbData
     );
 
+
+NTSTATUS
+MemRegStoreDeleteNode(
+    IN MEM_REG_STORE_HANDLE hDb
+    );
