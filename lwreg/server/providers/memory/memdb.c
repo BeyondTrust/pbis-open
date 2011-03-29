@@ -887,7 +887,9 @@ MemDbRecurseRegistry(
     IN HANDLE hRegConnection,
     IN REG_DB_HANDLE hDb,
     IN OPTIONAL PCWSTR pwszOptSubKey,
-    IN PVOID (*pfCallback)(MEM_REG_STORE_HANDLE hKey, PVOID userContext),
+    IN PVOID (*pfCallback)(MEM_REG_STORE_HANDLE hKey, 
+                           PVOID userContext,
+                           PWSTR pwszSubKeyPrefix),
     IN PVOID userContext)
 {
     NTSTATUS status = 0;
@@ -950,7 +952,7 @@ MemDbRecurseRegistry(
         status = MemDbStackPop(hStack, &hKey, &pwszSubKeyPrefix);
         if (status == 0)
         {
-            pfCallback(hKey, (PVOID) pwszSubKeyPrefix);
+            pfCallback(hKey, (PVOID) userContext, pwszSubKeyPrefix);
             for (index=hKey->NodesLen-1; index>=0; index--)
             {
                 status = LwRtlWC16StringAllocatePrintf(

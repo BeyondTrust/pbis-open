@@ -500,12 +500,14 @@ MemEnumValue(
 
 #if 1
 /* Test call back function for MemDbRecurseRegistry() */
-void *printf_func(MEM_REG_STORE_HANDLE pEntry, PVOID userContext)
+void *printf_func(MEM_REG_STORE_HANDLE pEntry, 
+                  PVOID userContext,
+                  PWSTR subStringPrefix)
 {
     char *cString = NULL;
     DWORD index = 0;
 
-    LwRtlCStringAllocateFromWC16String(&cString, (PWSTR) userContext);
+    LwRtlCStringAllocateFromWC16String(&cString, (PWSTR) subStringPrefix);
     printf("[%s]\n", cString);
     LWREG_SAFE_FREE_MEMORY(cString);
     for (index=0; index<pEntry->ValuesLen; index++)
