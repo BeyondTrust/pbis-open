@@ -107,7 +107,7 @@ make()
         reference \
             OUTPUT="reference/package.xml" -- \
             --title "Package Modules" \
-            --module package package-rpm package-deb
+            --module package package-rpm package-deb package-freebsd package-pkg
 
         reference_end
 

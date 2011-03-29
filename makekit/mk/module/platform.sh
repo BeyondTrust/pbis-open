@@ -171,7 +171,7 @@ mk_set_all_isas()
 # Certain shell variables are considered "system" variables and will have
 # their values swapped out appropriately when switching the target system,
 # e.g. <var>MK_LIBDIR</var>.  You can declare your own system variables with
-# <funcref>mk_declare_system_var</funcref>.
+# <lit><funcref>mk_declare</funcref> -s</lit>.
 #
 # This function gives fine-grained control that may not be necessary
 # if all you need is multiarchitecture support.  In this case, use
@@ -273,16 +273,6 @@ _mk_declare_system()
     fi
 }
 
-#<
-# @brief Declare system variable
-# @usage var
-#
-# Declares that the variable <var>var</var> might need to take on
-# different values when targetting different systems or ISAs.  Once
-# so declared, the value of the variable will be saved and restored
-# whenever switching the target system with <funcref>mk_system</funcref>,
-# <funcref>mk_multiarch_do</funcref>, etc.
-#>
 mk_declare_system_var()
 {
     mk_deprecated "mk_declare_system_var is deprecated; use mk_declare -s instead"

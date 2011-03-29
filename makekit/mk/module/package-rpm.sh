@@ -83,9 +83,9 @@ mk_rpm_enabled()
 #<
 # @brief Begin RPM package definition
 # @usage PACKAGE=name SPECFILE=specfile
-# @option PACKAGE=name sets the name of the package
-# @option SPECFILE=specfile designates a template
-# RPM spec file to use
+# @option PACKAGE=name Sets the name of the package.
+# @option SPECFILE=specfile Designates a template
+# RPM spec file to use.
 #
 # Begins the definition of an RPM package to be built.
 # You must provide a template spec file which contains
@@ -97,7 +97,7 @@ mk_rpm_enabled()
 # After invoking this function, you can use functions
 # such as <funcref>mk_package_targets</funcref> or
 # <funcref>mk_package_patterns</funcref> to add files
-# to the package, or <funcref>mk_subpackage_do</funcref>
+# to the package, or <funcref>mk_rpm_sub_do</funcref>
 # to define subpackages.  End the definition of the
 # package with <funcref>mk_rpm_done</funcref>.
 #>
@@ -138,26 +138,6 @@ EOF
  
     _mk_rpm_files_begin
    
-    mk_subpackage_do()
-    {
-        mk_push_vars SUBPACKAGE
-        mk_parse_params
-
-        [ -z "$SUBPACKAGE" ] && SUBPACKAGE="$1"
-        RPM_SUBPACKAGE="$SUBPACKAGE"
-        RPM_SUBPACKAGES="$RPM_SUBPACKAGES $SUBPACKAGE"
-
-        _mk_rpm_files_end
-        _mk_rpm_files_begin "$SUBPACKAGE"
-
-        mk_pop_vars
-    }
-
-    mk_subpackage_done()
-    {
-        unset RPM_SUBPACKAGE RPM_SUBINSTALLFILE RPM_SUBDIRFILE
-    }
-
     mk_package_targets()
     {
         mk_quote_list "$@"
@@ -195,10 +175,54 @@ EOF
 }
 
 #<
+# @brief Begin RPM subpackage definition
+# @usage SUBPACKAGE=name
+# @option SUBPACKAGE=name Sets the name of the subpackage
+# by itself, e.g. <lit>devel</lit>, <lit>common</lit>.
+#
+# Begins the definition of an RPM subpackage.  The template
+# spec file provided to <funcref>mk_rpm_do</funcref> must
+# provide appropriate metadata for the subpackage, but
+# the file list will be filled in automatically.
+#
+# After invoking this function, you can use functions
+# such as <funcref>mk_package_targets</funcref> or
+# <funcref>mk_package_patterns</funcref> to add files
+# to the subpackage.  End the definition of the subpackage
+# with <funcref>mk_rpm_sub_done</funcref>.
+#>
+mk_rpm_sub_do()
+{
+    mk_push_vars SUBPACKAGE
+    mk_parse_params
+    
+    [ -z "$SUBPACKAGE" ] && SUBPACKAGE="$1"
+    RPM_SUBPACKAGE="$SUBPACKAGE"
+    RPM_SUBPACKAGES="$RPM_SUBPACKAGES $SUBPACKAGE"
+    
+    _mk_rpm_files_end
+    _mk_rpm_files_begin "$SUBPACKAGE"
+    
+    mk_pop_vars
+}
+
+#<
+# @brief End RPM subpackage definition
+# @usage
+#
+# Ends an RPM subpackage definition started
+# with <funcref>mk_rpm_sub_do</funcref>.
+#>
+mk_rpm_sub_done()
+{
+    unset RPM_SUBPACKAGE RPM_SUBINSTALLFILE RPM_SUBDIRFILE
+}
+    
+#<
 # @brief End RPM package definition
 # @usage
 #
-# Ends an RPM packages definition started
+# Ends an RPM package definition started
 # with <funcref>mk_rpm_do</funcref>.
 #>
 mk_rpm_done()
@@ -213,7 +237,7 @@ mk_rpm_done()
 
     unset RPM_PACKAGE RPM_SUBPACKAGE RPM_INSTALLFILE RPM_SUBINSTALLFILE RPM_PKGDIR
     unset RPM_SUBPACKAGES
-    unset -f mk_package_files mk_package_dirs mk_subpackage_do mk_subpackage_done
+    unset -f mk_package_files mk_package_dirs
 
     mk_add_package_target "$master"
 
