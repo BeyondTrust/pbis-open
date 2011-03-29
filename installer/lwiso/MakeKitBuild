@@ -6,19 +6,29 @@ make()
         linux)
             for fmt in deb rpm
             do
-                mk_${fmt}_enabled && sfx_linux "$fmt"
+                mk_${fmt}_enabled && sfx_generic "$fmt"
             done
+            ;;
+        freebsd)
+            mk_freebsd_enabled && sfx_generic "freebsd"
             ;;
     esac
 }
 
-sfx_linux()
+sfx_generic()
 {
+    GUI_PACKAGE=""
+
+    if [ "$DJ_GUI_INTERFACE" != "no" ]
+    then
+        GUI_PACKAGE="likewise-open-gui"
+    fi
+
     lw_sfx \
         SFX="LikewiseOpen-${LW_VERSION}" \
         FILES="COPYING README EULA LICENSES" \
         FORMAT="$1" \
-        PACKAGES="likewise-open likewise-open-gui likewise-open-upgrade" \
+        PACKAGES="likewise-open likewise-open-upgrade $GUI_PACKAGE" \
         UPGRADE="likewise-open-upgrade" \
         OBSOLETE="likewise-base likewise-base-32bit likewise-domainjoin \
                   likewise-domainjoin-gui likewise-eventlog likewise-krb5 \
@@ -30,5 +40,5 @@ sfx_linux()
                   likewise-pstore likewise-reskit likewise-rpc likewise-sqlite \
                   likewise-srvsvc likewise-reapsysl likewise-samba-interop" \
         BASE="likewise-open" \
-        GUI="likewise-open-gui"
+        GUI="$GUI_PACKAGE"
 }

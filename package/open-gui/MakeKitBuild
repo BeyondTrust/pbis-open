@@ -1,4 +1,4 @@
-MODULES="package-deb package-rpm"
+MODULES="package-deb package-rpm package-freebsd"
 
 configure()
 {
@@ -28,6 +28,12 @@ configure()
 
         mk_declare -o PKG_RPM_COMPAT
     fi
+
+    if mk_freebsd_enabled
+    then
+        mk_declare -o PKG_FREEBSD_NAME="${LW_VENDOR}-open-gui"
+        mk_declare -o PKG_FREEBSD_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+    fi
 }
 
 package_rpm()
@@ -54,10 +60,25 @@ package_deb()
     mk_deb_done   
 }
 
+package_freebsd()
+{
+    mk_freebsd_do \
+        PACKAGE="$PKG_FREEBSD_NAME" \
+        VERSION="$PKG_FREEBSD_VERSION" \
+        SHORT="-Likewise Open Graphical Interface $PKG_FREEBSD_VERSION" \
+        LONG="-Allows you to join Active Directory using a graphical interface"
+
+        gui_files
+    
+    mk_freebsd_done   
+}
+
+
 make()
 {
     mk_deb_enabled && package_deb
     mk_rpm_enabled && package_rpm
+    mk_freebsd_enabled && package_freebsd
 }
 
 gui_files()

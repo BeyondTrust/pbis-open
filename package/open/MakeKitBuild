@@ -1,4 +1,4 @@
-MODULES="package-deb package-rpm"
+MODULES="package-deb package-rpm package-freebsd"
 
 configure()
 {
@@ -26,6 +26,11 @@ configure()
         mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-open"
         mk_declare -o PKG_RPM_VERSION="${LW_VERSION}"
         mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_REVISION:-0}"
+    fi
+
+    if mk_freebsd_enabled
+    then
+        mk_declare -o PKG_FREEBSD_NAME="${LW_VENDOR}-open"
     fi
 }
 
@@ -63,6 +68,21 @@ package_rpm()
     mk_rpm_done
 }
       
+package_freebsd()
+{
+    mk_freebsd_do \
+        PACKAGE="$PKG_FREEBSD_NAME" \
+        VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}" \
+        SHORT="-Likewise Open ${LW_VERSION}" \
+        LONG="-Likewise Open joins your machine into Active Directory" \
+        PREINST="freebsd/preinstall.in" \
+        POSTINST="freebsd/postinstall.in"
+        
+        open_files
+        open_files_compat
+    mk_freebsd_done
+}
+
 make()
 {
     OPEN_SUBDIRS="\
@@ -76,6 +96,7 @@ make()
 
     mk_deb_enabled && package_deb
     mk_rpm_enabled && package_rpm
+    mk_freebsd_enabled && package_freebsd
 }
 
 open_files()
