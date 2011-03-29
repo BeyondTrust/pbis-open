@@ -41,9 +41,9 @@ package_deb()
         open_files
         open_files_compat
 
-        mk_subpackage_do SUBPACKAGE="dev"
+        mk_deb_sub_do SUBPACKAGE="dev"
             open_files_dev
-        mk_subpackage_done
+        mk_deb_sub_done
     mk_deb_done
 }
 
@@ -57,9 +57,9 @@ package_rpm()
         open_files
         open_files_compat
 
-        mk_subpackage_do SUBPACKAGE="devel"
+        mk_rpm_sub_do SUBPACKAGE="devel"
             open_files_dev
-        mk_subpackage_done
+        mk_rpm_sub_done
     mk_rpm_done
 }
       

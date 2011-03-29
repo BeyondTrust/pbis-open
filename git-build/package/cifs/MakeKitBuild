@@ -67,9 +67,9 @@ package_deb()
         common_files
         common_files_compat
         
-        mk_subpackage_do SUBPACKAGE="dev"
+        mk_deb_sub_do SUBPACKAGE="dev"
             common_files_dev
-        mk_subpackage_done
+        mk_deb_sub_done
     mk_deb_done   
 }
         
@@ -89,9 +89,9 @@ package_rpm()
             mk_subpackage_done
         fi
 
-        mk_subpackage_do SUBPACKAGE="devel"
+        mk_rpm_sub_do SUBPACKAGE="devel"
             common_files_dev
-        mk_subpackage_done
+        mk_rpm_sub_done
     mk_rpm_done
 }
         
