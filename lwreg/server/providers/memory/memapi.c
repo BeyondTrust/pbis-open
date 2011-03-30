@@ -60,7 +60,7 @@ _MemCreateHkeyReply(
 
     status = LW_RTL_ALLOCATE(
                  (PVOID*)&pRetKey,
-                 REG_KEY_CONTEXT,
+                 PREG_KEY_CONTEXT,
                  sizeof(*pRetKey));
     BAIL_ON_NT_STATUS(status);
 
@@ -72,6 +72,8 @@ cleanup:
     return status;
 
 error:
+    LWREG_SAFE_FREE_MEMORY(pRetKey);
+    LWREG_SAFE_FREE_MEMORY(phKeyResponse);
     goto cleanup;
 }
 
@@ -269,6 +271,13 @@ MemCloseKey(
     IN HKEY hKey
     )
 {
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
+    
+    if (hKey)
+    {
+        LWREG_SAFE_FREE_MEMORY(pKeyHandle->pKey);
+        LWREG_SAFE_FREE_MEMORY(pKeyHandle);
+    }
 }
 
 

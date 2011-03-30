@@ -70,6 +70,7 @@ typedef struct _REGMEM_NODE
     
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
     ULONG SecurityDescriptorLen;
+    BOOLEAN SecurityDescriptorAllocated;
 
     struct _REGMEM_NODE **SubNodes;
     DWORD NodesLen;

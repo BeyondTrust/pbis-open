@@ -250,6 +250,22 @@ MemRegStoreDeleteNode(
     }
 
     /* Delete memory for this node here */
+    for (index=0; index < hDb->ValuesLen; index++)
+    {
+        LWREG_SAFE_FREE_MEMORY(hDb->Values[index]->Name);
+        LWREG_SAFE_FREE_MEMORY(hDb->Values[index]->Data);
+        hDb->Values[index]->DataLen = 0;
+        LWREG_SAFE_FREE_MEMORY(hDb->Values[index]->Attributes.pDefaultValue);
+        LWREG_SAFE_FREE_MEMORY(hDb->Values[index]->Attributes.pwszDocString);
+        if (hDb->Values[index]->Attributes.RangeType == 
+            LWREG_VALUE_RANGE_TYPE_ENUM)
+        {
+            _MemDbFreeWC16Array(
+                hDb->Values[index]->Attributes.Range.ppwszRangeEnumStrings);
+        }
+        LWREG_SAFE_FREE_MEMORY(hDb->Values[index]);
+    }
+    LWREG_SAFE_FREE_MEMORY(hDb->Values);
 
     /* Remove this node from parent SubNodes list */
     for (index=0; index < hDb->ParentNode->NodesLen; index++)
@@ -291,6 +307,12 @@ MemRegStoreDeleteNode(
             hDb->ParentNode->NodesLen--;
         }
     }
+    if (hDb->SecurityDescriptorAllocated)
+    {
+        LWREG_SAFE_FREE_MEMORY(hDb->SecurityDescriptor);
+    }
+    LWREG_SAFE_FREE_MEMORY(hDb->Name);
+    LWREG_SAFE_FREE_MEMORY(hDb);
 
 cleanup:
     return status;

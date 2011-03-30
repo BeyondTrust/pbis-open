@@ -646,6 +646,7 @@ MemDbSetKeyAcl(
 
         memcpy(hKey->SecurityDescriptor, pSecDescRel, secDescLen);
         hKey->SecurityDescriptorLen = secDescLen;
+        hKey->SecurityDescriptorAllocated = TRUE;
     }
 
 cleanup:
@@ -788,13 +789,13 @@ MemDbStackInit(
     PMEMDB_STACK_ENTRY stackData = NULL;
 
     status = LW_RTL_ALLOCATE((PVOID*) &newStack,
-                              MEMDB_STACK, 
-                              sizeof(PMEMDB_STACK));
+                              PMEMDB_STACK, 
+                              sizeof(MEMDB_STACK));
     BAIL_ON_NT_STATUS(status);
     memset(newStack, 0, sizeof(MEMDB_STACK));
 
     status = LW_RTL_ALLOCATE((PVOID*) &stackData,
-                              MEMDB_STACK_ENTRY,
+                              PMEMDB_STACK_ENTRY,
                               sizeof(MEMDB_STACK_ENTRY) * dwSize);
     BAIL_ON_NT_STATUS(status);
     memset(stackData, 0, sizeof(MEMDB_STACK_ENTRY) * dwSize);
@@ -824,6 +825,7 @@ MemDbStackFinish(
     {
         LWREG_SAFE_FREE_MEMORY(hStack->stack[index].pwszSubKeyPrefix);
     }
+    LWREG_SAFE_FREE_MEMORY(hStack->stack);
     LWREG_SAFE_FREE_MEMORY(hStack);
 }
 
@@ -975,6 +977,7 @@ MemDbRecurseRegistry(
     } while (status != ERROR_EMPTY);
 
 cleanup:
+    MemDbStackFinish(hStack);
     return status;
 
 error:
@@ -1032,6 +1035,7 @@ MemDbRecurseDepthFirstRegistry(
                          hKey->SubNodes[index],
                          pwszSubKeyPrefix);
             BAIL_ON_NT_STATUS(status);
+            LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
         }
     }
     else
@@ -1045,6 +1049,7 @@ MemDbRecurseDepthFirstRegistry(
                      hSubKey,
                      pwszSubKeyPrefix);
         BAIL_ON_NT_STATUS(status);
+        LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
     }
 
     do
@@ -1070,24 +1075,29 @@ MemDbRecurseDepthFirstRegistry(
                                  hKey->SubNodes[index],
                                  pwszSubKey);
                     BAIL_ON_NT_STATUS(status);
+                    LWREG_SAFE_FREE_MEMORY(pwszSubKey);
+                    LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
                 }
             }
             else
             {
                 /* This callback must do something to break the recursion */
                 pfCallback(hKey, (PVOID) userContext, pwszSubKeyPrefix);
+                LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
             }
         }
         else
         {
             BAIL_ON_NT_STATUS(status);
         }
-        LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
     } while (status != ERROR_EMPTY);
 
 cleanup:
+    MemDbStackFinish(hStack);
     return status;
 
 error:
+    LWREG_SAFE_FREE_MEMORY(pwszSubKey);
+    LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
     goto cleanup;
 }
