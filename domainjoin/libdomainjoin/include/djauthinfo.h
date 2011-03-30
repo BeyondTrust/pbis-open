@@ -81,7 +81,6 @@ DJGetMachineSID(
 
 DWORD
 DJOpenEventLog(
-    PSTR pszCategoryType,
     PHANDLE phEventLog
     );
 

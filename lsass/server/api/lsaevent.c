@@ -524,13 +524,8 @@ LsaSrvSendQueue(
 
     if (*phEventLog == NULL)
     {
-        dwError = LWIOpenEventLogEx(
+        dwError = LWIOpenEventLog(
                       NULL,             // Server name (defaults to local computer eventlogd)
-                      "System",         // Table Category ID (Security, System, ...)
-                      "Likewise LSASS", // Source
-                      0,                // Source Event ID
-                      "SYSTEM",         // User
-                      NULL,             // Computer (defaults to assigning local hostname)
                       phEventLog);
         BAIL_ON_LSA_ERROR(dwError);
     }

@@ -107,17 +107,6 @@ LWIOpenEventLog(
     );
 
 DWORD
-LWIOpenEventLogEx(
-    PCSTR pszServerName,
-    PCSTR pszEventTableCategoryId,
-    PCSTR pszSource,
-    DWORD dwEventSourceId,
-    PCSTR pszUser,
-    PCSTR pszComputer,
-    PHANDLE phEventLog
-    );
-
-DWORD
 LWIReadEventLog(
     HANDLE hEventLog,
     DWORD dwLastRecordId,
@@ -135,43 +124,6 @@ LWICountEventLog(
     );
 
 DWORD
-LWISetEventLogTableCategoryId(
-    HANDLE hEventLog,
-    PCSTR pszEventTableCategoryId
-    );
-
-DWORD
-LWISetEventLogType(
-    HANDLE hEventLog,
-    PCSTR pszEventType
-    );
-
-DWORD
-LWISetEventLogSource(
-    HANDLE hEventLog,
-    PCSTR pszEventSource,
-    DWORD dwEventSourceId
-    );
-
-DWORD
-LWISetEventLogTableCategory(
-    HANDLE hEventLog,
-    PCSTR pszEventCategory
-    );
-
-DWORD
-LWISetEventLogUser(
-    HANDLE hEventLog,
-    PCSTR pszUser
-    );
-
-DWORD
-LWISetEventLogComputer(
-    HANDLE hEventLog,
-    PCSTR pszComputer
-    );
-
-DWORD
 LWIWriteEventLogBase(
     HANDLE hEventLog,
     EVENT_LOG_RECORD eventRecord
@@ -182,15 +134,6 @@ LWIWriteEventLogRecords(
     HANDLE hEventLog,
     DWORD cRecords,
     PEVENT_LOG_RECORD pEventRecords 
-    );
-
-DWORD
-LWIWriteEventLog(
-    HANDLE hEventLog,
-    PCSTR eventType,
-    PCSTR eventCategory,
-    PCSTR eventDescription,
-    PCSTR eventData
     );
 
 DWORD

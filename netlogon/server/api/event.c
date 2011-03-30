@@ -118,7 +118,7 @@ LWNetSrvInitEventlogInterface(
 #if defined (__LWI_DARWIN__)
     sprintf(szEventLogLibPath, "%s/libeventlog-mac.so", pszLibDirPath);
 #else
-    sprintf(szEventLogLibPath, "%s/libeventlog.%s", pszLibDirPath, MOD_EXT);
+    sprintf(szEventLogLibPath, "%s/libeventlog%s", pszLibDirPath, MOD_EXT);
 #endif
     
     dwError = LwCheckFileTypeExists(
@@ -166,14 +166,14 @@ LWNetSrvInitEventlogInterface(
     }
 
     dlerror();
-    pFuncTable->pfnOpenEventLogEx = (PFN_OPEN_EVENT_LOG_EX)dlsym(
+    pFuncTable->pfnOpenEventLog = (PFN_OPEN_EVENT_LOG)dlsym(
                                 pLibHandle, 
-                                EVENTAPI_OPEN_EVENT_LOG_EX_FUNCTION);
-    if (pFuncTable->pfnOpenEventLogEx == NULL) {
+                                EVENTAPI_OPEN_EVENT_LOG_FUNCTION);
+    if (pFuncTable->pfnOpenEventLog == NULL) {
         pszError = dlerror();
         
         LWNET_LOG_ERROR("Error: Failed to lookup symbol %s in Eventlog Module [%s]",
-                      EVENTAPI_OPEN_EVENT_LOG_EX_FUNCTION,
+                      EVENTAPI_OPEN_EVENT_LOG_FUNCTION,
                       IsNullOrEmptyString(pszError) ? "" : pszError);
         
         dwError = ERROR_BAD_DLL_ENTRYPOINT;
@@ -254,7 +254,7 @@ LWNetSrvValidateEventlogInterface(
     if (!pFuncTable ||
         !pFuncTable->pfnCloseEventLog ||
         !pFuncTable->pfnFreeEventRecord ||
-        !pFuncTable->pfnOpenEventLogEx ||
+        !pFuncTable->pfnOpenEventLog ||
         !pFuncTable->pfnWriteEventLogBase)
     {
        dwError = ERROR_EVENTLOG_CANT_START;
@@ -288,7 +288,6 @@ LWNetSrvShutdownEventlogInterface(
 
 DWORD
 LWNetSrvOpenEventLog(
-    PSTR    pszCategoryType,
     PHANDLE phEventLog
     )
 {
@@ -305,13 +304,8 @@ LWNetSrvOpenEventLog(
     
     pEventLogItf = (PEVENTLOG_INTERFACE)ghEventLogItf;
 
-    dwError = pEventLogItf->pFuncTable->pfnOpenEventLogEx(
+    dwError = pEventLogItf->pFuncTable->pfnOpenEventLog(
                    NULL,            // Server name (defaults to local computer eventlogd)
-                   pszCategoryType, // Table Category ID (Security, System, ...),
-                   "Likewise NETLOGON", // Source
-                   0,
-                   "SYSTEM",
-                   NULL,
                    phEventLog);
     BAIL_ON_LWNET_ERROR(dwError);
 
@@ -374,7 +368,7 @@ LWNetSrvLogEvent(
     
     pEventLogItf = (PEVENTLOG_INTERFACE)ghEventLogItf;
 
-    dwError = LWNetSrvOpenEventLog("System", &hEventLog);
+    dwError = LWNetSrvOpenEventLog(&hEventLog);
     BAIL_ON_LWNET_ERROR(dwError); 
 
     dwError = pEventLogItf->pFuncTable->pfnWriteEventLogBase(
@@ -406,13 +400,13 @@ LWNetSrvLogInformationEvent(
     EVENT_LOG_RECORD event = {0};
 
     event.dwEventRecordId = 0;
-    event.pszEventTableCategoryId = NULL;
+    event.pszEventTableCategoryId = "System";
     event.pszEventType = INFORMATION_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = NULL;
+    event.pszEventSource = "Likewise NETLOGON";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
-    event.pszUser = NULL;
+    event.pszUser = "SYSTEM";
     event.pszComputer = NULL;
     event.pszDescription = (PSTR) pszDescription;
     event.pszData = (PSTR) pszData;
@@ -431,13 +425,13 @@ LWNetSrvLogWarningEvent(
     EVENT_LOG_RECORD event = {0};
 
     event.dwEventRecordId = 0;
-    event.pszEventTableCategoryId = NULL;
+    event.pszEventTableCategoryId = "System";
     event.pszEventType = WARNING_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = NULL;
+    event.pszEventSource = "Likewise NETLOGON";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
-    event.pszUser = NULL;
+    event.pszUser = "SYSTEM";
     event.pszComputer = NULL;
     event.pszDescription = (PSTR) pszDescription;
     event.pszData = (PSTR) pszData;
@@ -456,13 +450,13 @@ LWNetSrvLogErrorEvent(
     EVENT_LOG_RECORD event = {0};
 
     event.dwEventRecordId = 0;
-    event.pszEventTableCategoryId = NULL;
+    event.pszEventTableCategoryId = "System";
     event.pszEventType = ERROR_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = NULL;
+    event.pszEventSource = "Likewise NETLOGON";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
-    event.pszUser = NULL;
+    event.pszUser = "SYSTEM";
     event.pszComputer = NULL;
     event.pszDescription = (PSTR) pszDescription;
     event.pszData = (PSTR) pszData;

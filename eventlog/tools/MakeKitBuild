@@ -1,1 +1,1 @@
-SUBDIRS="cli addevent"
+SUBDIRS="cli"

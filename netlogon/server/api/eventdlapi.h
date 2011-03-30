@@ -58,13 +58,8 @@ typedef VOID  (*PFN_FREE_EVENT_RECORD)(
 			PEVENT_LOG_RECORD pEventRecord
 			);
 
-typedef DWORD (*PFN_OPEN_EVENT_LOG_EX) (
+typedef DWORD (*PFN_OPEN_EVENT_LOG) (
                         PCSTR   pszServerName,
-                        PCSTR   pszEventTableCategoryId,
-                        PCSTR   pszSource,
-                        DWORD   dwEventSourceId,
-                        PCSTR   pszUser,
-                        PCSTR   pszComputer,
                         PHANDLE phEventLog
                         );
 
@@ -80,14 +75,14 @@ typedef DWORD (*PFN_WRITE_EVENT_LOG_BASE)(
 typedef struct __EVENTAPIFUNCTIONTABLE
 {
 	PFN_FREE_EVENT_RECORD      pfnFreeEventRecord;
-	PFN_OPEN_EVENT_LOG_EX      pfnOpenEventLogEx;
+	PFN_OPEN_EVENT_LOG         pfnOpenEventLog;
 	PFN_CLOSE_EVENT_LOG        pfnCloseEventLog;
 	PFN_WRITE_EVENT_LOG_BASE   pfnWriteEventLogBase;
 
 } EVENTAPIFUNCTIONTABLE, *PEVENTAPIFUNCTIONTABLE;
 
 #define EVENTAPI_FREE_EVENT_RECORD_FUNCTION     "LWIFreeEventRecord"
-#define EVENTAPI_OPEN_EVENT_LOG_EX_FUNCTION     "LWIOpenEventLogEx"
+#define EVENTAPI_OPEN_EVENT_LOG_FUNCTION     "LWIOpenEventLog"
 #define EVENTAPI_CLOSE_EVENT_LOG_FUNCTION       "LWICloseEventLog"
 #define EVENTAPI_WRITE_EVENT_LOG_BASE_FUNCTION  "LWIWriteEventLogBase"
 

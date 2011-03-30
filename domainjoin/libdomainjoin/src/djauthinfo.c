@@ -1395,19 +1395,13 @@ DJSetMachineSID(
 
 DWORD
 DJOpenEventLog(
-    PSTR pszCategoryType,
     PHANDLE phEventLog
     )
 {
 #if defined(MINIMAL_JOIN)
     return 0;
 #else
-    return LWIOpenEventLogEx(
-                  NULL,             // Server name (defaults to local computer eventlogd)
-                  pszCategoryType,  // Table Category ID (Security, System, ...)
-                  "Likewise DomainJoin", // Source
-                  0,                // Source Event ID
-                  "SYSTEM",         // User
+    return LWIOpenEventLog(
                   NULL,             // Computer (defaults to assigning local hostname)
                   phEventLog);
 #endif
@@ -1441,13 +1435,20 @@ DJLogInformationEvent(
     EVENT_LOG_RECORD event = {0};
 
     event.dwEventRecordId = 0;
-    event.pszEventTableCategoryId = NULL;
+    event.pszEventTableCategoryId = "System";
     event.pszEventType = INFORMATION_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = NULL;
+    event.pszEventSource = "Likewise DomainJoin";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
-    event.pszUser = (PSTR) pszUser;
+    if (pszUser == NULL)
+    {
+        event.pszUser = "SYSTEM";
+    }
+    else
+    {
+        event.pszUser = (PSTR) pszUser;
+    }
     event.pszComputer = NULL;
     event.pszDescription = (PSTR) pszDescription;
     event.pszData = (PSTR) pszData;
@@ -1474,13 +1475,20 @@ DJLogWarningEvent(
     EVENT_LOG_RECORD event = {0};
 
     event.dwEventRecordId = 0;
-    event.pszEventTableCategoryId = NULL;
+    event.pszEventTableCategoryId = "System";
     event.pszEventType = WARNING_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = NULL;
+    event.pszEventSource = "Likewise DomainJoin";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
-    event.pszUser = (PSTR) pszUser;
+    if (pszUser == NULL)
+    {
+        event.pszUser = "SYSTEM";
+    }
+    else
+    {
+        event.pszUser = (PSTR) pszUser;
+    }
     event.pszComputer = NULL;
     event.pszDescription = (PSTR) pszDescription;
     event.pszData = (PSTR) pszData;
@@ -1507,13 +1515,20 @@ DJLogErrorEvent(
     EVENT_LOG_RECORD event = {0};
 
     event.dwEventRecordId = 0;
-    event.pszEventTableCategoryId = NULL;
+    event.pszEventTableCategoryId = "System";
     event.pszEventType = ERROR_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = NULL;
+    event.pszEventSource = "Likewise DomainJoin";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
-    event.pszUser = (PSTR) pszUser;
+    if (pszUser == NULL)
+    {
+        event.pszUser = "SYSTEM";
+    }
+    else
+    {
+        event.pszUser = (PSTR) pszUser;
+    }
     event.pszComputer = NULL;
     event.pszDescription = (PSTR) pszDescription;
     event.pszData = (PSTR) pszData;
@@ -1537,7 +1552,7 @@ DJLogDomainJoinSucceededEvent(
     PSTR pszDescription = NULL;
     PSTR pszData = NULL;
 
-    ceError = DJOpenEventLog("System", &hEventLog);
+    ceError = DJOpenEventLog(&hEventLog);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     ceError = CTAllocateStringPrintf(
@@ -1597,7 +1612,7 @@ DJLogDomainJoinFailedEvent(
     PSTR pszDescription = NULL;
     PSTR pszData = NULL;
 
-    ceError = DJOpenEventLog("System", &hEventLog);
+    ceError = DJOpenEventLog(&hEventLog);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     ceError = CTAllocateStringPrintf(
@@ -1659,7 +1674,7 @@ DJLogDomainLeaveSucceededEvent(
     PSTR pszDescription = NULL;
     PSTR pszData = NULL;
 
-    ceError = DJOpenEventLog("System", &hEventLog);
+    ceError = DJOpenEventLog(&hEventLog);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     ceError = CTAllocateStringPrintf(
@@ -1706,7 +1721,7 @@ DJLogDomainLeaveFailedEvent(
     PSTR pszDescription = NULL;
     PSTR pszData = NULL;
 
-    ceError = DJOpenEventLog("System", &hEventLog);
+    ceError = DJOpenEventLog(&hEventLog);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     ceError = CTAllocateStringPrintf(

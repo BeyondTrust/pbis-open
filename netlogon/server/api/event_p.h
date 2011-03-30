@@ -75,7 +75,6 @@ LWNetSrvShutdownEventlogInterface(
 
 DWORD
 LWNetSrvOpenEventLog(
-    PSTR    pszCategoryType,
     PHANDLE phEventLog
     );
 

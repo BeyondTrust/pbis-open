@@ -417,7 +417,6 @@ AC_CONFIG_FILES([Makefile
                  client/Makefile
                  server/Makefile
                  tools/Makefile
-                 tools/addevent/Makefile
                  tools/cli/Makefile
                  ])
 AC_OUTPUT
