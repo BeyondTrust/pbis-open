@@ -1,9 +1,0 @@
-This utility helps to import data from Microsoft Event Viewer.
-
-IMPORTANT: Please make sure you right click on the category within the left pane and
-select "Save Log File As..."  when saving the events. 
-This will save the Description field.
-
-If you choose to use "Export List..." from the Action menu it will not save the Description field.
-
-This program requires the Description fields at the current time.
