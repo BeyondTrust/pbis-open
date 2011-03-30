@@ -99,7 +99,6 @@ MemProvider_Shutdown(
     PREGPROV_PROVIDER_FUNCTION_TABLE pFnTable
     )
 {
-    MemDbClose(&ghCacheConnection);
 }
 
 

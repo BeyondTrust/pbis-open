@@ -123,6 +123,7 @@ MemRegStoreOpen(
     MEM_REG_STORE_HANDLE rootNode = NULL;
     DWORD i = 0;
 
+    /* This is the ROOT node (\) of the registry */
     status = LW_RTL_ALLOCATE(
                  (PVOID*)&phReg, 
                  MEM_REG_STORE_HANDLE, 
@@ -136,6 +137,7 @@ MemRegStoreOpen(
     BAIL_ON_NT_STATUS(status);
 
 
+    /* Populate the subkeys under the root node */
     for (i=0; gRootKeys[i]; i++)
     {
         status = LwRtlWC16StringAllocateFromCString(
@@ -176,10 +178,24 @@ MemRegStoreClose(
     IN MEM_REG_STORE_HANDLE hDb)
 {
     NTSTATUS status = 0;
+    DWORD index = 0;
 
-    // Need to traverse memory hierarchy and free resources
-    BAIL_ON_NT_STATUS(status);
-
+    /*
+     * MemRegStoreOpen() allocates these nodes:
+     * REMEM_TYPE_ROOT (\)
+     * REGMEM_TYPE_HIVE (HKTM/HKCU/...)
+     *
+     * All subkeys are created under one of the canonical
+     * hive names. Free these data structures created in
+     * MemRegStoreOpen() here.
+     */
+ 
+    for (index=0; index < ghMemRegRoot->NodesLen; index++)
+    {
+        status = MemRegStoreDeleteNode(ghMemRegRoot->SubNodes[index]);
+        BAIL_ON_NT_STATUS(status);
+    }
+    LWREG_SAFE_FREE_MEMORY(ghMemRegRoot->Name);
     LWREG_SAFE_FREE_MEMORY(ghMemRegRoot);
 
 cleanup:

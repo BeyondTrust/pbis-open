@@ -61,7 +61,7 @@ MemDbOpen(
 
 NTSTATUS
 MemDbClose(
-    IN PREG_DB_HANDLE phDb
+    IN REG_DB_HANDLE hDb
     );
 
 
