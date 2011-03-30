@@ -116,7 +116,7 @@ LwAutoEnrollCurlSoapRequest(
 
     soapResult = OpenSOAPEnvelopeGetCharEncodingString(
                     pSoapRequest,
-                    NULL,
+                    "UTF-8",
                     pSoapRequestBuffer);
     BAIL_ON_SOAP_ERROR(soapResult);
 
@@ -206,7 +206,7 @@ LwAutoEnrollCurlSoapRequest(
     // of the response.
     //
     soapResult = OpenSOAPEnvelopeCreateCharEncoding(
-                    NULL,
+                    "UTF-8",
                     pSoapReplyBuffer,
                     &pSoapReply);
 
