@@ -29,7 +29,6 @@ make()
         CPPFLAGS="$RPCD_CPPFLAGS" \
         CFLAGS="-Wall -Werror" \
         INCLUDEDIRS="$RPCD_INCLUDEDIRS" \
-        GROUPS="../uuid/uuid" \
         DEPS="dsm.h ep.h" \
         HEADERDEPS="$RPCD_HEADERDEPS" \
         LIBDEPS="dcerpc $LIB_PTHREAD"
