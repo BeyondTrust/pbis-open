@@ -1,0 +1,16 @@
+configure()
+{
+    mk_declare -o \
+        expanded_bindir="$MK_BINDIR" \
+        expanded_libexecdir="$MK_LIBEXECDIR"
+
+    mk_output_file ConfigureLogin
+}
+
+make()
+{
+    mk_stage \
+        SOURCE="ConfigureLogin" \
+        DESTDIR="${MK_BINDIR}" \
+        MODE="0755"
+}

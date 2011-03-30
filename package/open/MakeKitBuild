@@ -163,7 +163,7 @@ make()
         @lwio @nfs @libschannel @dcerpc @centutils @lwsm \
         @eventlog @lsass @reapsysl @lwdns @srvsvc @lwnetapi \
         @lwtools @domainjoin/libdomainjoin @domainjoin/domainjoin-cli \
-        @lwconfig @lwupgrade @samba-interop @config"
+        @domainjoin/scripts @lwconfig @lwupgrade @samba-interop @config"
 
     mk_deb_enabled && package_deb
     mk_rpm_enabled && package_rpm
