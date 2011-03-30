@@ -1,0 +1,32 @@
+#!/bin/sh
+make()
+{
+    BUNDLE_DIR="${MK_LIBDIR}/SecurityAgentPlugins/Likewise.bundle"
+    CONTENTS_DIR="${BUNDLE_DIR}/Contents"
+    MACOS_DIR="${CONTENTS_DIR}/MacOS"
+
+    LWAUTHPLUGIN_SOURCES="\
+        AuthPlugin.c"
+
+#        INCLUDEDIRS=". ../../include" \
+#        LIBDEPS="lwnetclientapi lwioclient lwadvapi ldap_r krb5 lsacommon lsaclient" \
+#        HEADERDEPS="lwio/lwio.h lwnet.h lwadvapi.h ldap.h krb5.h" \
+#        HEADERDEPS="lsautils.h" \
+
+    mk_dlo \
+        DLO="Likewise" \
+        EXT="" \
+        INSTALLDIR="${MACOS_DIR}" \
+        SOURCES="$LWAUTHPLUGIN_SOURCES" \
+        INCLUDEDIRS="../../include" \
+        HEADERDEPS="lwadvapi.h lwerror.h lwmem.h lwstr.h" \
+        LIBDEPS="lwadvapi lsaclient" \
+        LDFLAGS="-framework CoreFoundation"
+
+    mk_target \
+        TARGET="${CONTENTS_DIR}/Info.plist" \
+        DEPS="Info.plist.in ../dsplugin/process-info-plist.pl" \
+        mk_mkdir "&'${CONTENTS_DIR}'" '%;' \
+        mk_msg_format "generate" "${CONTENTS_DIR}/Info.plist" '%;' \
+        "&../dsplugin/process-info-plist.pl" -v "$LW_VERSION" -o '$@' '&Info.plist.in'
+}
