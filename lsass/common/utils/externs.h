@@ -50,7 +50,6 @@
 #ifndef __EXTERNS_H__
 #define __EXTERNS_H__
 
-extern PLSA_BIT_VECTOR     gpTraceFlags;
 extern CHAR                gchDomainSeparator;
 
 #endif /* __EXTERNS_H__ */

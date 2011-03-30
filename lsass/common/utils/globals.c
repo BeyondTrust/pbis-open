@@ -48,5 +48,3 @@
  */
 
 #include "includes.h"
-
-PLSA_BIT_VECTOR     gpTraceFlags       = NULL;
