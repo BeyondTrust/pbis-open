@@ -2085,6 +2085,22 @@ RegExportEntry(
     )
 {
     DWORD dwError = 0;
+    PSTR keyString = NULL;
+    PSTR valueNameString = NULL;
+    PSTR valueString = NULL;
+
+    if (valueType == REG_WSZ)
+    {
+        dwError = LwRtlCStringAllocateFromWC16String(
+                      &valueNameString,
+                      (PWSTR) valueName);
+        if (dwError)
+        {
+            goto cleanup;
+        }
+        valueName = valueNameString;
+    }
+
     switch (type)
     {
         case REG_BINARY:
@@ -2125,10 +2141,43 @@ RegExportEntry(
                                       dumpStringLen);
             break;
 
+        /* Input values are PSTR, so convert to C string first */
+        case REG_WKEY:
+            dwError = LwRtlCStringAllocateFromWC16String(
+                           &keyString,
+                           (PWSTR) keyName);
+            
+            if (dwError)
+            {
+                break;
+            }
+            dwError = RegExportRegKey(
+                          keyString,
+                          pszSddlCString,
+                          dumpString,
+                          dumpStringLen);
+            break;
+
         case REG_SZ:
             dwError = RegExportString(valueType,
                                       valueName,
                                       value,
+                                      dumpString,
+                                      dumpStringLen);
+            break;
+
+        case REG_WSZ:
+            /* Input values are PSTR, so convert to C string first */
+            dwError = LwRtlCStringAllocateFromWC16String(
+                          &valueString,
+                          value);
+            if (dwError)
+            {
+                break;
+            }
+            dwError = RegExportString(valueType,
+                                      valueName,
+                                      valueString,
                                       dumpString,
                                       dumpStringLen);
             break;
@@ -2139,6 +2188,11 @@ RegExportEntry(
                                         dumpString,
                                         dumpStringLen);
     }
+
+cleanup:
+    LWREG_SAFE_FREE_MEMORY(keyString);
+    LWREG_SAFE_FREE_MEMORY(valueNameString);
+    LWREG_SAFE_FREE_MEMORY(valueString);
     return dwError;
 }
 

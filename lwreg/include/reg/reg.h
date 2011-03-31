@@ -83,6 +83,8 @@ typedef DWORD *PREG_DATA_TYPE;
 #define REG_PLAIN_TEXT                     23 // A string without "" around it
 #define REG_SZA                            24 // Alias for REG_MULTI_SZ
 #define REG_ATTRIBUTES                     25 // Registry schema type
+#define REG_WSZ                            26 // String in PWSTR format
+#define REG_WKEY                           27 // Key in PWSTR format
 
 
 typedef DWORD REG_DATA_TYPE_FLAGS;
