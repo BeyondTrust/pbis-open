@@ -280,71 +280,6 @@ error:
 
 static
 DWORD
-mkdir_recursive(PSTR pszPath, mode_t mode)
-{
-    DWORD dwError = 0;
-    struct stat statbuf;
-    PSTR pszSlash = NULL;
-
-    for(pszSlash = strchr(pszPath, '/'); pszSlash; pszSlash = strchr(pszSlash + 1, '/'))
-    {
-        if (pszSlash == pszPath)
-        {
-            continue;
-        }
-
-        *pszSlash = '\0';
-
-        if (stat(pszPath, &statbuf) == 0)
-        {
-            /* Make sure its a directory */
-            if (!S_ISDIR(statbuf.st_mode))
-            {
-                dwError = ENOENT;
-                BAIL_ON_EVT_ERROR(dwError);
-            }
-        }
-        else
-        {
-            /* Create it */
-            if (mkdir(pszPath, mode))
-            {
-                dwError = errno;
-                BAIL_ON_EVT_ERROR(dwError);
-            }
-        }
-
-        *pszSlash = '/';
-    }
-
-    if (stat(pszPath, &statbuf) == 0)
-    {
-        /* Make sure its a directory */
-        if (!S_ISDIR(statbuf.st_mode))
-        {
-            dwError = ENOENT;
-            BAIL_ON_EVT_ERROR(dwError);
-            }
-    }
-    else
-    {
-        /* Create it */
-        if (mkdir(pszPath, mode))
-        {
-                dwError = errno;
-                BAIL_ON_EVT_ERROR(dwError);
-        }
-    }  
-    
-error:
-    if (pszSlash)
-        *pszSlash = '/';
-
-    return dwError;
-}
-
-static
-DWORD
 prepare_domain_socket(PCSTR pszPath)
 {
     DWORD dwError = 0;
@@ -352,18 +287,16 @@ prepare_domain_socket(PCSTR pszPath)
     PSTR pszDirname = NULL;
     PSTR pszBasename = NULL;
 
-    pszPathCopy = strdup(pszPath);
-    if (!pszPathCopy)
-    {
-        dwError = ENOMEM;
-        BAIL_ON_EVT_ERROR(dwError);
-    }
+    dwError = LwAllocateString(
+                    pszPath,
+                    &pszPathCopy);
+    BAIL_ON_EVT_ERROR(dwError);
     
     pszBasename = strrchr(pszPathCopy, '/');
     
     if (!pszBasename)
     {
-        dwError = EINVAL;
+        dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_EVT_ERROR(dwError);
     }
 
@@ -371,13 +304,12 @@ prepare_domain_socket(PCSTR pszPath)
 
     pszDirname = pszPathCopy;
     
-    dwError = mkdir_recursive(pszDirname, 0655);
+    dwError = LwCreateDirectory(pszDirname, 0655);
     BAIL_ON_EVT_ERROR(dwError);
     
 error:
     
-    if (pszPathCopy)
-        free(pszPathCopy);
+    LW_SAFE_FREE_STRING(pszPathCopy);
 
     return dwError;
 }

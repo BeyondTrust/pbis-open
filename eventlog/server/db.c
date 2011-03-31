@@ -278,7 +278,7 @@ SrvCheckSqlFilter(
                 switch (pszFilter[dwIndex])
                 {
                     case ';':
-                        dwError = EINVAL;
+                        dwError = ERROR_INVALID_PARAMETER;
                         BAIL_ON_EVT_ERROR(dwError);
                         break;
                     case '\'':
@@ -322,7 +322,7 @@ SrvCheckSqlFilter(
 
     if (mode != COMMAND)
     {
-        dwError = EINVAL;
+        dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_EVT_ERROR(dwError);
     }
 
@@ -380,7 +380,7 @@ SrvEventLogCount(
     else
     {
         EVT_LOG_VERBOSE("Could not find count of event logs in database");
-        dwError = EINVAL;
+        dwError = ERROR_BADDB;
         BAIL_ON_EVT_ERROR(dwError);
     }
 
@@ -926,7 +926,7 @@ SrvLimitDatabaseSize(
         }
         else
         {
-            dwError = EINVAL;
+            dwError = ERROR_BADDB;
             BAIL_ON_EVT_ERROR(dwError);
         }
 
@@ -1070,7 +1070,7 @@ SrvQueryEventLog(
     INT numColsLocal = 0;
 
     if (!hDB) {
-        dwError = EINVAL;
+        dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_EVT_ERROR(dwError);
     }
 

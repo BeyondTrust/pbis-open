@@ -53,7 +53,7 @@ RPCAllocateMemory(
 
     pMemory = RPC_SS_ALLOCATE(dwSize);
     if (!pMemory){
-        dwError = ENOMEM;
+        dwError = ERROR_OUTOFMEMORY;
         *ppMemory = NULL;
     }else {
         memset(pMemory,0, dwSize);
@@ -82,7 +82,7 @@ RPCAllocateString(
     char * pszOutputString = NULL;
 
     if (!pszInputString || !*pszInputString){
-        dwError = EINVAL;
+        dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_EVT_ERROR(dwError);
     }
     dwLen = (DWORD)strlen(pszInputString);
