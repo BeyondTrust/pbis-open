@@ -244,7 +244,7 @@ LWIReadEventLog(
         BAIL_ON_EVT_ERROR(dwError);
     }
 
-    dwError = EVTLpwStrToLpStr(sqlFilter, (PSTR*)(&sqlFilterChar));
+    dwError = LwWc16sToMbs(sqlFilter, &sqlFilterChar);
     BAIL_ON_EVT_ERROR(dwError);
 
     EVT_LOG_VERBOSE("client::eventlog.c ReadEventLog() sqlFilterChar=\"%s\"\n", sqlFilterChar);
@@ -298,7 +298,7 @@ LWICountEventLog(
         BAIL_ON_EVT_ERROR(dwError);
     }
 
-    dwError = EVTLpwStrToLpStr((PWSTR)sqlFilter, (PSTR*)(&sqlFilterChar));
+    dwError = LwWc16sToMbs(sqlFilter, &sqlFilterChar);
 
     BAIL_ON_EVT_ERROR(dwError);
 
@@ -442,7 +442,7 @@ LWIDeleteFromEventLog(
     PEVENT_LOG_HANDLE pEventLogHandle = (PEVENT_LOG_HANDLE) hEventLog;
     PSTR sqlFilterChar = NULL;
 
-    dwError = EVTLpwStrToLpStr(sqlFilter, &sqlFilterChar);
+    dwError = LwWc16sToMbs(sqlFilter, &sqlFilterChar);
     BAIL_ON_EVT_ERROR(dwError);
 
     TRY
