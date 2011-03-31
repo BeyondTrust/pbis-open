@@ -550,7 +550,7 @@
 		<string>/</string>
 		<string>@LIKEWISE_VERSION@, Copyright © Likewise Software, Inc.</string>
 		<integer>1</integer>
-		<string>com.likewisesoftware.base</string>
+		<string>com.likewisesoftware.open</string>
 		<integer>0</integer>
 		<string>@LIKEWISE_VERSION@</string>
 		<dict>
@@ -585,7 +585,7 @@
 		<string>description</string>
 		<string>title</string>
 		<string>Likewise Support Libraries</string>
-		<string>likewise-base-@LIKEWISE_VERSION@</string>
+		<string>likewise-open-@LIKEWISE_VERSION@</string>
 		<string>/Users/glennc/centeris/Sapphire_dist/darwin/i386/packages/DMG/likewise-enterprise-@LIKEWISE_VERSION@.pkg</string>
 		<dict>
 			<key>$class</key>
