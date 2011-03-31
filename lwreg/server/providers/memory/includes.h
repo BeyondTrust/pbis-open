@@ -58,6 +58,8 @@
 #include <regdef.h>
 
 #include "regutils.h"
+#include "regparse_r.h"
+#include "rsutils.h"
 #include "regsrvutils.h"
 
 #include "regserver.h"
