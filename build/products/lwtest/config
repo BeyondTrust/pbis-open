@@ -4,7 +4,7 @@ DESCRIPTION="Validate proper operation of Likewise Identity."
 _BITROCK_DESCRIPTION="Tests to validate proper operation of Likewise Identity." # unused
 _MAC_DESCRIPTION="Tests to validate proper operation of Likewise Identify." # unused
 FILES="COPYING README EULA"
-SCRIPT="../install.sh"
+SCRIPT="./install.sh"
 
 PACKAGES="\
     lwtest
