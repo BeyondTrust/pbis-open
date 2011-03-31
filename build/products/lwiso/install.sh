@@ -436,9 +436,15 @@ is_package_installed_solaris()
 
 package_install_solaris()
 {
+    EXTRA_OPTIONS=""
+
+    if [ "${OPT_SOLARIS_CURRENT_ZONE}" = "yes" ]; then
+        EXTRA_OPTIONS="$EXTRA_OPTIONS -G"
+    fi
+
     pkgList=`eval echo "$@"`
     for pkgFile in $pkgList; do
-        eval "pkgadd -a ${DIRNAME}/response -d $pkgFile all"
+        eval "pkgadd ${EXTRA_OPTIONS} -a ${DIRNAME}/response -d $pkgFile all"
         err=$?
         if [ $err -eq 1 ]; then
             return $ERR_PACKAGE_COULD_NOT_INSTALL
@@ -512,11 +518,6 @@ package_uninstall()
 {
     package_uninstall_${PKGTYPE} "$@"
     return $?
-}
-
-get_prefix_dir()
-{
-    echo "${PREFIX}"
 }
 
 do_install()
@@ -616,59 +617,43 @@ do_install()
 
 do_postinstall_messages()
 {
-    domainjoin_gui=`get_prefix_dir`/bin/domainjoin-gui
-    run_join_gui=true
+    RUN_JOIN_GUI="1"
     guimsg=""
 
     if [ "$1" != 'interactive' ]; then
-        run_join_gui=false
+        RUN_JOIN_GUI=""
     fi
 
-    if [ -x "$domainjoin_gui" ]; then
+    if [ -x "/opt/likewise/bin/domainjoin-gui" ]; then
         guimsg="domainjoin-gui or "
     else
-        run_join_gui=false
+        RUN_JOIN_GUI=""
     fi
 
-    if $OPT_DONT_JOIN
-    then
-        run_join_gui=false
+    if [ -n "$OPT_DONT_JOIN" ]; then
+        RUN_JOIN_GUI=""
     fi
 
-    if [ -n "${UPGRADING}" ]; then
+    domain=`/opt/likewise/bin/lw-lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
+
+    if [ -n "$domain" ]; then
         log_info ""
-        log_info "Likewise Open has been successfully upgraded."
+        log_info "This computer is joined to $domain"
+    fi
+
+    log_info ""
+    log_info "New libraries and configurations have been installed for PAM and NSS."
+    log_info "Please reboot so that all processes pick up the new versions."
+    log_info ""
+
+    if [ -z "$domain" ]; then
+        log_info "As root, run ${guimsg}domainjoin-cli to join a domain so you can log on"
+        log_info "with Active Directory credentials. Example:"
+        log_info "domainjoin-cli join likewisedemo.com ADadminAccount"
         log_info ""
 
-        command="`get_prefix_dir`/bin/lw-get-current-domain"
-        domain=`$command 2>/dev/null`
-        if [ $? -eq 0 ]; then
-            domain=`echo $domain | sed -e 's/^Current Domain = //'`
-            log_info "This computer is joined to $domain"
-            log_info ""
-        fi
-
-        log_info "The nsswitch file has been modified."
-        log_info "Please reboot so that all processes pick up the new copy."
-        log_info ""
-    else
-        command="`get_prefix_dir`/bin/lw-get-current-domain"
-        domain=`$command 2>/dev/null`
-        if [ $? -eq 0 ]; then
-            domain=`echo $domain | sed -e 's/^Current Domain = //'`
-            log_info "This computer is joined to $domain"
-            log_info ""
-        else
-            log_info ""
-            log_info "As root, run ${guimsg}domainjoin-cli to join a domain so you can log on"
-            log_info "with Active Directory credentials. Example:"
-            log_info "domainjoin-cli join likewisedemo.com ADadminAccount"
-            log_info ""
-
-            if $run_join_gui
-            then
-                $domainjoin_gui >/dev/null 2>&1 &
-            fi
+        if [ -n "$RUN_JOIN_GUI" ]; then
+            /opt/likewise/bin/domainjoin-gui >/dev/null 2>&1 &
         fi
     fi
 }
@@ -713,7 +698,7 @@ do_purge()
     log_info "Purge uninstall started"
     log_info ""
 
-    domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
+    domainjoin_cli=/opt/likewise/bin/domainjoin-cli
     if [ -x "$domainjoin_cli" ]; then
         $domainjoin_cli leave > /dev/null 2>&1
     fi
@@ -816,10 +801,10 @@ do_interactive()
     prompt_yes_no "Would you like to install now?"
     if [ "x$answer" != "xyes" ]; then
         do_info
+        exit 0
     else
         do_install
     fi
-    exit 0
 }
 
 # must check before shift to avoid shift error on some sh versions.
@@ -835,13 +820,26 @@ check_arg_present()
 
 usage()
 {
+    localOS_TYPE=`uname`
+    case "${localOS_TYPE}" in
+        SunOS)
+            localOS_TYPE=solaris
+            ;;
+    esac
+
     echo "usage: install.sh [options] [command]"
     echo ""
     echo "  where options:"
     echo ""
     echo "    --dir <DIR>      base directory where this script is located"
     echo "    --echo-dir <DIR> prefix to output for packages directory (w/info command)"
-    echo "    --devel          install development packages"
+    echo "    --dont-join      do not run the domainjoin GUI tool after install completes (default: auto)"
+
+    if [ "${localOS_TYPE}" = "solaris" ]; then
+        echo "    --all-zones      install to all zones (default)"
+        echo "    --current-zone   install only to the current zone"
+    fi
+
     echo ""
     echo "  where command is one of:"
     echo ""
@@ -858,7 +856,8 @@ usage()
 
 main_install()
 {
-    OPT_DEVEL=false
+    OPT_DONT_JOIN=""
+    OPT_SOLARIS_CURRENT_ZONE=""
 
     ECHO_DIRNAME=""
     PKGTYPE=""
@@ -876,8 +875,28 @@ main_install()
                 ECHO_DIRNAME="$2"
                 shift 2
                 ;;
-            --devel)
-                OPT_DEVEL=true
+            --current-zone)
+                if [ -n "${OPT_SOLARIS_CURRENT_ZONE}" ]; then
+                    if [ "${OPT_SOLARIS_CURRENT_ZONE}" != "yes" ]; then
+                        echo "Cannot use $1 with --all-zones"
+                        usage
+                    fi
+                fi
+                OPT_SOLARIS_CURRENT_ZONE="yes"
+                shift 1
+                ;;
+            --all-zones)
+                if [ -n "${OPT_SOLARIS_CURRENT_ZONE}" ]; then
+                    if [ "${OPT_SOLARIS_CURRENT_ZONE}" != "no" ]; then
+                        echo "Cannot use $1 with --current-zone"
+                        usage
+                    fi
+                fi
+                OPT_SOLARIS_CURRENT_ZONE="no"
+                shift 1
+                ;;
+            --dont-join)
+                OPT_DONT_JOIN="1"
                 shift 1
                 ;;
             *)
@@ -920,7 +939,7 @@ main_install()
         interactive)
             do_setup
             do_interactive
-            do_postinstall_messages
+            do_postinstall_messages 'interactive'
             ;;
         *)
             usage
