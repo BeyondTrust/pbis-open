@@ -356,11 +356,6 @@ EVTGetFileSize(
 	PDWORD pdwFileSize
 	);
 
-DWORD
-EVTGetHostname(
-    PSTR* ppszHostname
-    );
-
 extern FILE*   gBasicLogStreamFD;
 extern DWORD   gLogLevel;
 extern LOGINFO gEvtLogInfo;

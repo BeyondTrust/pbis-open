@@ -3,7 +3,6 @@ make()
     UTILS_SOURCES="\
         evtcfg.c    \
 	evtfutils.c \
-	evthost.c   \
 	evtlogger.c \
 	evtmem.c    \
 	evtrpcmem.c \

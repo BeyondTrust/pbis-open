@@ -5,7 +5,6 @@ lib_LTLIBRARIES = libeventlogutils.la
 libeventlogutils_la_SOURCES = \
     evtcfg.c    \
     evtfutils.c \
-    evthost.c   \
     evtlogger.c \
     evtmem.c    \
     evtrpcmem.c \

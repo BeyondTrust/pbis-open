@@ -101,7 +101,6 @@ LWIOpenEventLog(
 {
     volatile DWORD dwError = 0;
     PEVENT_LOG_HANDLE pEventLogHandle = NULL;
-    char serverNameLocal[1024];
 
     handle_t eventBindingLocal = 0;
 
@@ -118,27 +117,6 @@ LWIOpenEventLog(
     dwError = EVTAllocateMemory(sizeof(EVENT_LOG_HANDLE), (PVOID*) &pEventLogHandle);
     BAIL_ON_EVT_ERROR(dwError);
     
-    if (IsNullOrEmptyString(pszServerName))
-    {
-        PSTR pszDefaultHostName = NULL;
-        
-        dwError = EVTGetHostname(&pszDefaultHostName);
-        BAIL_ON_EVT_ERROR(dwError);
-        
-        strncpy((char *)serverNameLocal,
-                 pszDefaultHostName,
-                 sizeof(serverNameLocal));
-        
-        EVT_SAFE_FREE_STRING(pszDefaultHostName);
-    }
-    else
-    {
-        strncpy((char *)serverNameLocal,
-                pszServerName,
-                sizeof(serverNameLocal));
-    }
-    
-
     TRY
     {
         dwError = LWICreateEventLogRpcBinding(pszServerName,
@@ -155,8 +133,8 @@ LWIOpenEventLog(
     TRY
     {
         dwError = RpcLWIOpenEventLog(eventBindingLocal,
-                                     (idl_char*)serverNameLocal,
-                                     (idl_char*)serverNameLocal);
+                                     "unused",
+                                     "unused");
     }
     CATCH (rpc_x_auth_method)
     {
