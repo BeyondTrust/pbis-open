@@ -1,3 +1,3 @@
 NAME="__PKG_NAME__"
 VERSION="__PKG_VERSION__.0"
-DESCRIPTION="Likewise Open Version=__PKG_VERSION__ Release=__PKG_RELEASE__"
+DESCRIPTION="Likewise Open Upgrade Version=__PKG_VERSION__ Release=__PKG_RELEASE__"
