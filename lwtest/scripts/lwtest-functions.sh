@@ -134,13 +134,13 @@ lwt_join() {
 
 #check whether lsass crashed because of test
 lwt_check_lsass() {
-    REST=`sudo -u $LWT_USER /etc/init.d/lsassd status`
+    REST=`sudo -u $LWT_USER $LIKEWISE_BIN/lwsm status lsass`
     rrrr=$?
     if [ "$rrrr" -eq 1 ]
     then
         lwt_fail_msg  "lwtest crashed lsassd."
 
-        REST=`sudo -u $LWT_USER /etc/init.d/lsassd start`
+        REST=`sudo -u $LWT_USER $LIKEWISE_BIN/lwsm start lsass`
         rrrr=$?
         if [ "$rrrr" -eq 0 ]
         then
