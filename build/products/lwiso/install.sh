@@ -352,7 +352,7 @@ is_package_installed_linux_rpm()
 
 package_install_linux_rpm()
 {
-    eval "rpm ${RPM_INSTALL_OPTIONS} $@"
+    rpm ${RPM_INSTALL_OPTIONS} "'$@'"
     if [ $? -eq 0 ]; then
         return 0
     fi
@@ -563,7 +563,7 @@ do_install()
     if [ -n "$INSTALL_UPGRADE_PACKAGE" ]; then
         pkgName=`is_package_installed $INSTALL_UPGRADE_PACKAGE`
         if [ $? -eq 0 ]; then
-            package_uninstall $pkgName
+            package_uninstall "$pkgName"
             err=$?
             if [ $err -ne 0 ]; then
                 log_info "Error uninstalling $pkgName"
