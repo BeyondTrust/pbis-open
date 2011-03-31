@@ -381,7 +381,7 @@ package_file_exists_linux_deb()
 
 is_package_installed_linux_deb()
 {
-    _status="`dpkg -s "$1" 2>/dev/null | grep Status: 2>/dev/null`"
+    _status="`dpkg -s '$1' 2>/dev/null | grep Status: 2>/dev/null`"
     if [ $? -eq 0 ]
     then
         if echo "$_status" | grep ' installed' >/dev/null 2>&1
@@ -396,7 +396,7 @@ is_package_installed_linux_deb()
 
 package_install_linux_deb()
 {
-    eval "dpkg ${DPKG_INSTALL_OPTIONS} $@"
+    eval "dpkg ${DPKG_INSTALL_OPTIONS} '$@'"
     if [ $? -eq 0 ]; then
         return 0;
     fi
@@ -1040,9 +1040,9 @@ main()
     fi
 
     if [ "$BASENAME" = "uninstall.sh" ]; then
-        main_uninstall $@
+        main_uninstall "$@"
     else
-        main_install $@
+        main_install "$@"
     fi
 
     return 0
