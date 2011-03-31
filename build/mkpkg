@@ -529,11 +529,11 @@ function freebsd_packing_list
     (
         source "${PKG_DIR}/config"
         
-        echo "@name ${PKG_NAME}-${PKG_VERSION}.${PKG_RELEASE}"
+        echo "@name ${PKG_NAME}-${PKG_VERSION}.${PKG_FULL_RELEASE}"
 
         for dep in $DEPENDS
         do
-          echo "@pkgdep ${dep}-${PKG_VERSION}.${PKG_RELEASE}"
+          echo "@pkgdep ${dep}-${PKG_VERSION}.${PKG_FULL_RELEASE}"
         done
 
         echo "@cwd /"
@@ -602,7 +602,7 @@ function package_freebsd
     find ${PKG_POPULATE_ROOT} -name '*.a' -print0 | xargs -0 rm
     find ${PKG_POPULATE_ROOT} -name '*.h' -print0 | xargs -0 rm
 
-    local OUT_FILE=${PKG_PACKAGE_ROOT}/${PKG_NAME}-${PKG_VERSION}.${PKG_RELEASE}-${BUILD_OS_ARCH}.tbz
+    local OUT_FILE=${PKG_PACKAGE_ROOT}/${PKG_NAME}-${PKG_VERSION}.${PKG_FULL_RELEASE}-${BUILD_OS_ARCH}.tbz
 
     mkdir -p ${PKG_PACKAGE_ROOT}
     exit_on_error $?
