@@ -1386,7 +1386,7 @@ EVTCreateAccessDescriptor(
                 &ppWriteList);
     BAIL_ON_EVT_ERROR(dwError);
 
-    if (dwReadCount < dwCount)
+    if (dwWriteCount < dwCount)
     {
         bFullyResolved = FALSE;
     }
@@ -1410,7 +1410,7 @@ EVTCreateAccessDescriptor(
                 &ppDeleteList);
     BAIL_ON_EVT_ERROR(dwError);
 
-    if (dwReadCount < dwCount)
+    if (dwDeleteCount < dwCount)
     {
         bFullyResolved = FALSE;
     }
