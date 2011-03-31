@@ -1157,14 +1157,13 @@ RegParseTypeValue(
                 }
 
                 /* Skip over dash separator */
-                pszTmp = pNumLastChar++;
+                pszTmp = ++pNumLastChar;
                 while (*pszTmp && isspace((int) *pszTmp))
                 {
                     pszTmp++;
                 }
                 parseHandle->registryEntry.regAttr.Range.RangeInteger.Max =
                     strtoul(pszTmp, NULL, 0);
-                
             }
 
             break;
