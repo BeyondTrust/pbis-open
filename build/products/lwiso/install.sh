@@ -818,6 +818,7 @@ check_arg_present()
             echo "Missing argument for $2"
         fi
         usage
+        exit 1
     fi
 }
 
@@ -854,7 +855,6 @@ usage()
     echo ""
     echo "  If not command is given, interactive mode is used."
     echo ""
-    exit 1
 }
 
 main_install()
@@ -883,6 +883,7 @@ main_install()
                     if [ "${OPT_SOLARIS_CURRENT_ZONE}" != "yes" ]; then
                         echo "Cannot use $1 with --all-zones"
                         usage
+                        exit 1
                     fi
                 fi
                 OPT_SOLARIS_CURRENT_ZONE="yes"
@@ -893,6 +894,7 @@ main_install()
                     if [ "${OPT_SOLARIS_CURRENT_ZONE}" != "no" ]; then
                         echo "Cannot use $1 with --current-zone"
                         usage
+                        exit 1
                     fi
                 fi
                 OPT_SOLARIS_CURRENT_ZONE="no"
@@ -917,6 +919,7 @@ main_install()
 
     if [ -n "$1" ]; then
         usage
+        exit 1
     fi
 
     case "${VERB}" in
@@ -944,8 +947,13 @@ main_install()
             do_interactive
             do_postinstall_messages 'interactive'
             ;;
+        help)
+            usage
+            exit 0
+            ;;
         *)
             usage
+            exit 1
             ;;
     esac
 
@@ -962,8 +970,6 @@ usage_uninstall()
     echo "    purge         silent purge uninstall (same as uninstall but will unjoin domain"
     echo "                  and delete all generated files)"
     echo ""
-    exit 1
-
 }
 
 main_uninstall()
@@ -988,6 +994,7 @@ main_uninstall()
     case "${VERB}" in
         help)
             usage_uninstall
+            exit 0
             ;;
         uninstall)
             do_uninstall
@@ -999,6 +1006,7 @@ main_uninstall()
             ;;
         *)
             usage_uninstall
+            exit 1
             ;;
     esac
 }
