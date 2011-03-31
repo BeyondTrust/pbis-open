@@ -274,6 +274,9 @@ package_install_freebsd()
 {
     pkg_add $@ > /dev/null 2>&1
     if [ $? -eq 0 ]; then
+        pkgName=`basename $@ | sed -e 's/-x86_64\.tbz$//' | sed -e 's/-i386\.tbz$//'`
+        # We don't want to be updated by the port system (bug 11833)
+        touch "/var/db/pkg/$pkgName/+IGNOREME" >/dev/null 2>&1
         return 0
     fi
     return $ERR_PACKAGE_NOT_INSTALLED
