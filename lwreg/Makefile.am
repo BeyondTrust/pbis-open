@@ -7,8 +7,8 @@ SUBDIRS=\
     common    \
     client    \
     parse     \
+    shellutil \
     server    \
     libedit   \
-    shellutil \
     shell     \
     test

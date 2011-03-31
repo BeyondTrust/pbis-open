@@ -1,4 +1,4 @@
-SUBDIRS="include libedit utils ipc common client parse server shellutil shell"
+SUBDIRS="include libedit utils ipc common client parse shellutil server shell"
 
 configure()
 {
