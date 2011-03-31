@@ -70,6 +70,8 @@ REGPROV_PROVIDER_FUNCTION_TABLE gRegMemProviderAPITable =
         &MemDeleteValueAttributes
 };
 
+pthread_mutex_t gMemRegDbMutex = PTHREAD_MUTEX_INITIALIZER;
+
 #if 0
 REG_SRV_MEMORY_KEYLOOKUP gActiveKeyList =
     {

@@ -93,12 +93,65 @@ MemProvider_Initialize(
     return status;
 }
 
+static void *pfDeleteNodeCallback(
+    MEM_REG_STORE_HANDLE pEntry, 
+    PVOID userContext,
+    PWSTR subStringPrefix)
+{
+    MemRegStoreDeleteNode(pEntry);
+
+    return NULL;
+}
+
 
 VOID
 MemProvider_Shutdown(
     PREGPROV_PROVIDER_FUNCTION_TABLE pFnTable
     )
 {
+    MEM_REG_STORE_HANDLE regKey = NULL;
+    REG_DB_CONNECTION regDbConn = {0};
+    NTSTATUS status = 0;
+    BOOLEAN bLocked = FALSE;
+    PWSTR pwszRootKey = NULL;
+
+    pthread_mutex_lock(&gMemRegDbMutex);
+    bLocked = TRUE;
+
+    status = LwRtlWC16StringAllocateFromCString(
+                 &pwszRootKey,
+                 HKEY_THIS_MACHINE);
+    if (status)
+    {
+        goto cleanup;
+    }
+
+    status = MemRegStoreFindNode(
+                 ghMemRegRoot,
+                 pwszRootKey,
+                 &regKey);
+    if (status)
+    {
+        goto cleanup;
+    }
+
+    // Possibility registry could change between FindNode() and this call below
+    // Need _inlock version of FindNode() function?
+    regDbConn.pMemReg = regKey;
+    MemDbRecurseDepthFirstRegistry(
+                 NULL,
+                 &regDbConn,
+                 NULL,
+                 pfDeleteNodeCallback,
+                 NULL);
+    ghMemRegRoot = NULL;
+
+cleanup:
+    if (bLocked)
+    {
+        pthread_mutex_unlock(&gMemRegDbMutex);
+    }
+    LWREG_SAFE_FREE_MEMORY(pwszRootKey);
 }
 
 
@@ -506,230 +559,6 @@ MemEnumValue(
 }
 
 
-#if 1
-
-void *
-pfMemRegExportToFile(
-    MEM_REG_STORE_HANDLE pEntry, 
-    PVOID userContext,
-    PWSTR subStringPrefix)
-{
-    DWORD dwError = 0;
-    PSTR pDumpString = NULL;
-    PSTR pszValueName = NULL;
-    PSTR pszEnumValue = NULL;
-    DWORD dwDumpStringLen = 0;
-    DWORD index = 0;
-    DWORD enumIndex = 0;
-    DWORD valueType = 0;
-    PREGMEM_VALUE Value = NULL;
-    PLWREG_VALUE_ATTRIBUTES Attr = NULL;
-
-    /* Format key first */
-    dwError = RegExportEntry(
-                  (PSTR) subStringPrefix,
-                  "", // PCSTR pszSddlCString,
-                  0, //     REG_DATA_TYPE valueType,
-                  NULL, //     PCSTR valueName,
-                  REG_WKEY, // DWORD Type
-                  NULL, // LW_PVOID value,
-                  0, //     DWORD valueLen,
-                  &pDumpString,
-                  &dwDumpStringLen);
-    /* Map to NT error status ? */
-    BAIL_ON_NT_STATUS(dwError);
-
-    printf("%.*s\n", dwDumpStringLen, pDumpString);
-    LWREG_SAFE_FREE_STRING(pDumpString);
-
-    if (pEntry->Values)
-    {
-        /* Iterate through all values */
-        for (index=0; index<pEntry->ValuesLen; index++)
-        {
-            Value = pEntry->Values[index];
-
-            /* Fix up string type, as value is PWSTR */
-            if (Value->Type == REG_SZ)
-            {
-                valueType = REG_WSZ;
-            }
-            else
-            {
-                valueType = Value->Type;
-            }
-            LwRtlCStringAllocateFromWC16String(
-                &pszValueName, 
-                Value->Name);
-            printf("\"%s\" = {\n", pszValueName);
-            LWREG_SAFE_FREE_STRING(pszValueName);
-      
-            /* Deal with an override value first */
-            if (Value->Data && Value->DataLen)
-            {
-                dwError = RegExportEntry(
-                              NULL,
-                              "", // PCSTR pszSddlCString
-                              REG_SZ, // valueName type
-                              "value",
-                              valueType,
-                              Value->Data,
-                              Value->DataLen,
-                              &pDumpString,
-                              &dwDumpStringLen);
-                /* Map to NT error status ? */
-                BAIL_ON_NT_STATUS(dwError);
-
-                printf("\t%.*s\n", dwDumpStringLen, pDumpString);
-                LWREG_SAFE_FREE_MEMORY(pDumpString);
-            }
-
-            /* Deal with default values now */
-            Attr = &Value->Attributes;
-            if (Attr->pDefaultValue && Attr->DefaultValueLen)
-            {
-                dwError = RegExportEntry(
-                              NULL,
-                              "", // PCSTR pszSddlCString
-                              REG_SZ, // valueName type
-                              "default",
-                              valueType,
-                              Attr->pDefaultValue,
-                              Attr->DefaultValueLen,
-                              &pDumpString,
-                              &dwDumpStringLen);
-                /* Map to NT error status ? */
-                BAIL_ON_NT_STATUS(dwError);
-    
-                printf("\t%.*s\n", dwDumpStringLen, pDumpString);
-                LWREG_SAFE_FREE_MEMORY(pDumpString);
-            }
- 
-            if (Attr->pwszDocString &&
-                LwRtlWC16StringNumChars(Attr->pwszDocString))
-            {
-                dwError = RegExportEntry(
-                              NULL,
-                              "", // PCSTR pszSddlCString
-                              REG_SZ, // valueName type
-                              "doc",
-                              REG_WSZ,
-                              Attr->pwszDocString,
-                              LwRtlWC16StringNumChars(Attr->pwszDocString),
-                              &pDumpString,
-                              &dwDumpStringLen);
-                /* Map to NT error status ? */
-                BAIL_ON_NT_STATUS(dwError);
-    
-                printf("\t%.*s\n", dwDumpStringLen, pDumpString);
-                LWREG_SAFE_FREE_MEMORY(pDumpString);
-            }
-
-            switch (Attr->RangeType)
-            {
-                case LWREG_VALUE_RANGE_TYPE_BOOLEAN:
-                    printf("\t\"range\" = boolean\n");
-                    break;
-
-                case LWREG_VALUE_RANGE_TYPE_ENUM:
-                    printf("\trange=string:");
-                    for (enumIndex=0; 
-                         Attr->Range.ppwszRangeEnumStrings[enumIndex];
-                         enumIndex++)
-                    {
-                        LwRtlCStringAllocateFromWC16String(
-                             &pszEnumValue,
-                             Attr->Range.ppwszRangeEnumStrings[enumIndex]);
-                        printf("%s\"%s\"", 
-                               enumIndex == 0 ? "" : "\t\t", 
-                               pszEnumValue);
-                        LWREG_SAFE_FREE_MEMORY(pszEnumValue);
-
-                        if (Attr->Range.ppwszRangeEnumStrings[enumIndex+1])
-                        {
-                            printf(" \\\n");
-                        }
-                    }
-                    printf("\n");
-                    break;
-
-                case LWREG_VALUE_RANGE_TYPE_INTEGER:
-                    printf("\t\"range\" = integer:%d-%d\n",
-                        Attr->Range.RangeInteger.Min,
-                        Attr->Range.RangeInteger.Max);
-                           
-                    break;
-                default:
-                    break;
-            }
-
-            LWREG_SAFE_FREE_MEMORY(pDumpString);
-            printf("}\n");
-        }
-    }
-    printf("\n");
-cleanup:
-    return NULL;
-
-error:
-    goto cleanup;
-}
-
-
-#if 0
-DWORD
-RegExportEntry(
-    PCSTR keyName,
-    PCSTR pszSddlCString,
-    REG_DATA_TYPE valueType,
-    PCSTR valueName,
-    REG_DATA_TYPE type,
-    LW_PVOID value,
-    DWORD valueLen,
-    PSTR *dumpString,
-    PDWORD dumpStringLen
-    )
-#endif
-
-/* Test call back function for MemDbRecurseRegistry() */
-void *printf_func(MEM_REG_STORE_HANDLE pEntry, 
-                  PVOID userContext,
-                  PWSTR subStringPrefix)
-{
-    char *cString = NULL;
-    DWORD index = 0;
-
-    LwRtlCStringAllocateFromWC16String(&cString, (PWSTR) subStringPrefix);
-    printf("[%s]\n", cString);
-    LWREG_SAFE_FREE_MEMORY(cString);
-    for (index=0; index<pEntry->ValuesLen; index++)
-    {
-        LwRtlCStringAllocateFromWC16String(
-            &cString, 
-            pEntry->Values[index]->Name);
-            printf("    %s\n", cString);
-        LWREG_SAFE_FREE_MEMORY(cString);
-    }
-
-    return NULL;
-}
-
-#endif
-
-
-#if 0 /* KEEP! Only testing export  */
-static void *pfDeleteNodeCallback(
-    MEM_REG_STORE_HANDLE pEntry, 
-    PVOID userContext,
-    PWSTR subStringPrefix)
-{
-    MemRegStoreDeleteNode(pEntry);
-
-    return NULL;
-}
-#endif
-
-
 NTSTATUS
 MemDeleteTree(
     IN HANDLE Handle,
@@ -740,23 +569,21 @@ MemDeleteTree(
     NTSTATUS status = 0;
     REG_DB_CONNECTION regDbConn = {0};
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
+    BOOLEAN bLocked = FALSE;
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
-#if 1
-    status = MemDbRecurseRegistry(
-                 Handle,
-                 &regDbConn,
-                 pwszSubKey,
-                 pfMemRegExportToFile,
-                 NULL);
-#else
+    pthread_mutex_lock(&gMemRegDbMutex);
+    bLocked = TRUE;
     status = MemDbRecurseDepthFirstRegistry(
                  Handle,
                  &regDbConn,
                  pwszSubKey,
                  pfDeleteNodeCallback,
                  NULL);
-#endif
+    if (bLocked)
+    {
+        pthread_mutex_unlock(&gMemRegDbMutex);
+    }
     return status;
 }
 

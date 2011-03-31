@@ -62,6 +62,7 @@ MemDbOpen(
     memset(pConn, 0, sizeof(*pConn));
     status = MemRegStoreOpen(&pConn->pMemReg);
 
+    MemDbStartExportToFileThread();
     *phDb = pConn;
 
 cleanup:
@@ -71,12 +72,293 @@ error:
     goto cleanup;
 }
 
+static void *pfDeleteNodeCallback(
+    MEM_REG_STORE_HANDLE pEntry,
+    PVOID userContext,
+    PWSTR subStringPrefix)
+{
+    MemRegStoreDeleteNode(pEntry);
+
+    return NULL;
+}
+
+
+void *
+pfMemRegExportToFile(
+    MEM_REG_STORE_HANDLE pEntry, 
+    PVOID userContext,
+    PWSTR subStringPrefix)
+{
+    DWORD dwError = 0;
+    PSTR pDumpString = NULL;
+    PSTR pszValueName = NULL;
+    PSTR pszEnumValue = NULL;
+    DWORD dwDumpStringLen = 0;
+    DWORD index = 0;
+    DWORD enumIndex = 0;
+    DWORD valueType = 0;
+    PREGMEM_VALUE Value = NULL;
+    PLWREG_VALUE_ATTRIBUTES Attr = NULL;
+    PMEMDB_FILE_EXPORT_CTX exportCtx = (PMEMDB_FILE_EXPORT_CTX) userContext;
+    FILE *wfp = exportCtx->wfp;
+
+    /* Format key first */
+    dwError = RegExportEntry(
+                  (PSTR) subStringPrefix,
+                  "", // PCSTR pszSddlCString,
+                  0, //     REG_DATA_TYPE valueType,
+                  NULL, //     PCSTR valueName,
+                  REG_WKEY, // DWORD Type
+                  NULL, // LW_PVOID value,
+                  0, //     DWORD valueLen,
+                  &pDumpString,
+                  &dwDumpStringLen);
+    /* Map to NT error status ? */
+    BAIL_ON_NT_STATUS(dwError);
+
+    fprintf(wfp, "%.*s\n", dwDumpStringLen, pDumpString);
+    LWREG_SAFE_FREE_STRING(pDumpString);
+
+    if (pEntry->Values)
+    {
+        /* Iterate through all values */
+        for (index=0; index<pEntry->ValuesLen; index++)
+        {
+            Value = pEntry->Values[index];
+
+            /* Fix up string type, as value is PWSTR */
+            if (Value->Type == REG_SZ)
+            {
+                valueType = REG_WSZ;
+            }
+            else
+            {
+                valueType = Value->Type;
+            }
+            LwRtlCStringAllocateFromWC16String(
+                &pszValueName, 
+                Value->Name);
+            fprintf(wfp, "\"%s\" = {\n", pszValueName);
+            LWREG_SAFE_FREE_STRING(pszValueName);
+      
+            /* Deal with an override value first */
+            if (Value->Data && Value->DataLen)
+            {
+                dwError = RegExportEntry(
+                              NULL,
+                              "", // PCSTR pszSddlCString
+                              REG_SZ, // valueName type
+                              "value",
+                              valueType,
+                              Value->Data,
+                              Value->DataLen,
+                              &pDumpString,
+                              &dwDumpStringLen);
+                /* Map to NT error status ? */
+                BAIL_ON_NT_STATUS(dwError);
+
+                fprintf(wfp, "\t%.*s\n", dwDumpStringLen, pDumpString);
+                LWREG_SAFE_FREE_MEMORY(pDumpString);
+            }
+
+            /* Deal with default values now */
+            Attr = &Value->Attributes;
+            if (Attr->pDefaultValue && Attr->DefaultValueLen)
+            {
+                dwError = RegExportEntry(
+                              NULL,
+                              "", // PCSTR pszSddlCString
+                              REG_SZ, // valueName type
+                              "default",
+                              valueType,
+                              Attr->pDefaultValue,
+                              Attr->DefaultValueLen,
+                              &pDumpString,
+                              &dwDumpStringLen);
+                /* Map to NT error status ? */
+                BAIL_ON_NT_STATUS(dwError);
+    
+                fprintf(wfp, "\t%.*s\n", dwDumpStringLen, pDumpString);
+                LWREG_SAFE_FREE_MEMORY(pDumpString);
+            }
+ 
+            if (Attr->pwszDocString &&
+                LwRtlWC16StringNumChars(Attr->pwszDocString))
+            {
+                dwError = RegExportEntry(
+                              NULL,
+                              "", // PCSTR pszSddlCString
+                              REG_SZ, // valueName type
+                              "doc",
+                              REG_WSZ,
+                              Attr->pwszDocString,
+                              LwRtlWC16StringNumChars(Attr->pwszDocString),
+                              &pDumpString,
+                              &dwDumpStringLen);
+                /* Map to NT error status ? */
+                BAIL_ON_NT_STATUS(dwError);
+    
+                fprintf(wfp, "\t%.*s\n", dwDumpStringLen, pDumpString);
+                LWREG_SAFE_FREE_MEMORY(pDumpString);
+            }
+
+            switch (Attr->RangeType)
+            {
+                case LWREG_VALUE_RANGE_TYPE_BOOLEAN:
+                    fprintf(wfp, "\t\"range\" = boolean\n");
+                    break;
+
+                case LWREG_VALUE_RANGE_TYPE_ENUM:
+                    fprintf(wfp, "\trange=string:");
+                    for (enumIndex=0; 
+                         Attr->Range.ppwszRangeEnumStrings[enumIndex];
+                         enumIndex++)
+                    {
+                        LwRtlCStringAllocateFromWC16String(
+                             &pszEnumValue,
+                             Attr->Range.ppwszRangeEnumStrings[enumIndex]);
+                        fprintf(wfp, "%s\"%s\"", 
+                               enumIndex == 0 ? "" : "\t\t", 
+                               pszEnumValue);
+                        LWREG_SAFE_FREE_MEMORY(pszEnumValue);
+
+                        if (Attr->Range.ppwszRangeEnumStrings[enumIndex+1])
+                        {
+                            fprintf(wfp, " \\\n");
+                        }
+                    }
+                    fprintf(wfp, "\n");
+                    break;
+
+                case LWREG_VALUE_RANGE_TYPE_INTEGER:
+                    fprintf(wfp, "\t\"range\" = integer:%d-%d\n",
+                        Attr->Range.RangeInteger.Min,
+                        Attr->Range.RangeInteger.Max);
+                           
+                    break;
+                default:
+                    break;
+            }
+
+            LWREG_SAFE_FREE_MEMORY(pDumpString);
+            fprintf(wfp, "}\n");
+        }
+    }
+    fprintf(wfp, "\n");
+cleanup:
+    return NULL;
+
+error:
+    goto cleanup;
+}
+
+
+PVOID
+MemDbExportToFileThread(
+    PVOID ctx)
+{
+    PMEMDB_FILE_EXPORT_CTX exportCtx = (PMEMDB_FILE_EXPORT_CTX) ctx;
+    struct timespec timeOut = {0};
+    pthread_mutex_t mx = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t cv = PTHREAD_COND_INITIALIZER;
+    REG_DB_CONNECTION regDbConn = {0};
+
+    regDbConn.pMemReg = exportCtx->hKey;
+    do
+    {
+        if (ghMemRegRoot)
+        {
+            exportCtx->wfp = fopen(MEMDB_EXPORT_FILE, "w");
+            if (!exportCtx->wfp)
+            {
+                // Log error could not open file
+            }
+            else
+            {
+                pthread_mutex_lock(&gMemRegDbMutex);
+                MemDbRecurseRegistry(
+                             NULL,
+                             &regDbConn,
+                             NULL,
+                             pfMemRegExportToFile,
+                             exportCtx);
+                pthread_mutex_unlock(&gMemRegDbMutex);
+                fclose(exportCtx->wfp);
+            }
+        }
+        clock_gettime(CLOCK_REALTIME, &timeOut);
+        timeOut.tv_sec += 30;
+        pthread_cond_timedwait(&cv, &mx, &timeOut);
+    } while (!exportCtx->bStopThread);
+    
+    return NULL;
+
+}
+
+VOID
+MemDbStartExportToFileThread(VOID)
+{
+    NTSTATUS status = 0;
+    PMEMDB_FILE_EXPORT_CTX exportCtx = {0};
+    PWSTR pwszRootKey = NULL;
+    MEM_REG_STORE_HANDLE regKey;
+    pthread_t hThread;
+
+    
+    status = LW_RTL_ALLOCATE(
+                 (PVOID*) &exportCtx,
+                 PMEMDB_FILE_EXPORT_CTX,
+                 sizeof(MEMDB_FILE_EXPORT_CTX));
+    if (status)
+    {
+        goto cleanup;
+    }
+
+    memset(&hThread, 0, sizeof(hThread));
+    status = LwRtlWC16StringAllocateFromCString(
+                 &pwszRootKey,
+                 HKEY_THIS_MACHINE);
+    if (status)
+    {
+        goto cleanup;
+    }
+    status = MemRegStoreFindNode(
+                 ghMemRegRoot,
+                 pwszRootKey,
+                 &regKey);
+    if (status)
+    {
+        goto cleanup;
+    }
+    exportCtx->hKey = regKey;
+    
+    pthread_create(&hThread, NULL, MemDbExportToFileThread, (PVOID) exportCtx);
+    pthread_detach(hThread);
+
+cleanup:
+    if (status)
+    {
+        LWREG_SAFE_FREE_MEMORY(exportCtx);
+    }
+    LWREG_SAFE_FREE_MEMORY(pwszRootKey);
+    return;
+}
+
+
 
 NTSTATUS
 MemDbClose(
     IN REG_DB_HANDLE hDb)
 {
     NTSTATUS status = 0;
+
+    status = MemDbRecurseDepthFirstRegistry(
+                 NULL,
+                 hDb,
+                 NULL,
+                 pfDeleteNodeCallback,
+                 NULL);
+    BAIL_ON_NT_STATUS(status);
 
     status = MemRegStoreClose(hDb->pMemReg);
     BAIL_ON_NT_STATUS(status);
@@ -264,12 +546,16 @@ MemDbQueryInfoKey(
     DWORD valueLen = 0;
     DWORD maxValueLen = 0;
     DWORD indx = 0;
+    BOOLEAN bLocked = FALSE;
 
     BAIL_ON_NT_STATUS(status);
     
     /*
      * Query info about keys
      */
+    pthread_mutex_lock(&gMemRegDbMutex);
+    bLocked = TRUE;
+
     hKey = hDb->pMemReg;
     if (pcSubKeys)
     {
@@ -326,10 +612,14 @@ MemDbQueryInfoKey(
     }
 
 cleanup:
+    if (bLocked)
+    {
+        pthread_mutex_unlock(&gMemRegDbMutex);
+    }
     return status;
 
 error:
-     goto cleanup;
+    goto cleanup;
 }
 
 
@@ -349,6 +639,10 @@ MemDbEnumKeyEx(
     NTSTATUS status = 0;
     MEM_REG_STORE_HANDLE hKey = NULL;
     DWORD keyLen = 0;
+    BOOLEAN bLocked = FALSE;
+
+    pthread_mutex_lock(&gMemRegDbMutex);
+    bLocked = TRUE;
 
     hKey = hDb->pMemReg;
     if (dwIndex >= hKey->NodesLen)
@@ -371,6 +665,10 @@ MemDbEnumKeyEx(
     *pcName = keyLen;
 
 cleanup:
+    if (bLocked)
+    {
+        pthread_mutex_unlock(&gMemRegDbMutex);
+    }
     return status;
 
 error:
@@ -528,6 +826,7 @@ MemDbEnumValue(
     NTSTATUS status = 0;
     MEM_REG_STORE_HANDLE hKey = NULL;
     DWORD valueLen = 0;
+    BOOLEAN bLocked = FALSE;
 
     hKey = hDb->pMemReg;
     if (dwIndex >= hKey->ValuesLen)
@@ -545,6 +844,9 @@ MemDbEnumValue(
         status = STATUS_BUFFER_TOO_SMALL;
         BAIL_ON_NT_STATUS(status);
     }
+
+    pthread_mutex_lock(&gMemRegDbMutex);
+    bLocked = TRUE;
 
     memcpy(pValueName, hKey->Values[dwIndex]->Name, valueLen * sizeof(WCHAR));
     *pcchValueName = valueLen;
@@ -578,6 +880,10 @@ MemDbEnumValue(
     }
 
 cleanup:
+    if (bLocked)
+    {
+        pthread_mutex_unlock(&gMemRegDbMutex);
+    }
     return status;
 
 error:
@@ -594,10 +900,13 @@ MemDbGetKeyAcl(
 {
     NTSTATUS status = 0;
     MEM_REG_STORE_HANDLE hKey = NULL;
+    BOOLEAN bLocked = FALSE;
 
     BAIL_ON_NT_INVALID_POINTER(hDb);
     hKey = hDb->pMemReg;
 
+    pthread_mutex_lock(&gMemRegDbMutex);
+    bLocked = TRUE;
     if (hKey->SecurityDescriptor)
     {
         if (pSecDescLen)
@@ -610,6 +919,10 @@ MemDbGetKeyAcl(
         }
     }
 cleanup:
+    if (bLocked)
+    {
+        pthread_mutex_unlock(&gMemRegDbMutex);
+    }
     return status;
 
 error:
@@ -626,6 +939,7 @@ MemDbSetKeyAcl(
 {
     NTSTATUS status = 0;
     MEM_REG_STORE_HANDLE hKey = NULL;
+    BOOLEAN bLocked = FALSE;
 
     BAIL_ON_NT_INVALID_POINTER(hDb);
     if (!pSecDescRel || secDescLen == 0)
@@ -635,6 +949,9 @@ MemDbSetKeyAcl(
     BAIL_ON_NT_INVALID_POINTER(pSecDescRel);
 
     hKey = hDb->pMemReg;
+    pthread_mutex_lock(&gMemRegDbMutex);
+    bLocked = TRUE;
+
     if ((hKey->SecurityDescriptor && 
          memcmp(hKey->SecurityDescriptor, pSecDescRel, secDescLen) != 0) ||
         !hKey->SecurityDescriptor)
@@ -650,6 +967,10 @@ MemDbSetKeyAcl(
     }
 
 cleanup:
+    if (bLocked)
+    {
+        pthread_mutex_unlock(&gMemRegDbMutex);
+    }
     return status;
 
 error:

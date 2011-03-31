@@ -54,6 +54,7 @@ extern REG_DB_HANDLE ghCacheConnection;
 
 PREGMEM_NODE ghMemRegRoot;
 
+extern pthread_mutex_t gMemRegDbMutex;
 
 #if 0
 extern REG_SRV_MEMORY_KEYLOOKUP gActiveKeyList;

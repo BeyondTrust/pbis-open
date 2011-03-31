@@ -25,6 +25,14 @@ typedef struct __REG_KEY_HANDLE
 
 #endif
 
+typedef struct _MEMDB_FILE_EXPORT_CTX
+{
+    FILE *wfp;
+    MEM_REG_STORE_HANDLE hKey;
+    BOOLEAN bStopThread;
+} MEMDB_FILE_EXPORT_CTX, *PMEMDB_FILE_EXPORT_CTX;
+
+#define MEMDB_EXPORT_FILE "/var/lib/likewise/db/memprovider.exp"
 
 /*
  * Definition of structure found in context server/include/regserver.h as
@@ -233,3 +241,6 @@ MemDbRecurseDepthFirstRegistry(
                            PWSTR pwszSubKeyPrefix),
     IN PVOID userContext
     );
+
+VOID MemDbStartExportToFileThread(VOID);
+

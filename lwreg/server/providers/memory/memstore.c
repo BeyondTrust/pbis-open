@@ -223,6 +223,7 @@ MemRegStoreFindNode(
     {
         Name = (PCWSTR) L"";
     }
+
     for (nodeIndex=0; nodeIndex<hDb->NodesLen; nodeIndex++)
     {
         if (hDb->SubNodes[nodeIndex] &&
@@ -234,7 +235,7 @@ MemRegStoreFindNode(
     }
 
     if (bFoundNode)
-   {
+    {
         *phNode = hDb->SubNodes[nodeIndex];
     }
     else
@@ -632,7 +633,6 @@ MemRegStoreAddNodeAttribute(
      * Assign all scaler types first. Then allocate data and duplicate
      * pointer types.
      */
-    hValue->Attributes = *pAttributes;
     if (pAttributes->DefaultValueLen > 0)
     {
         status = LW_RTL_ALLOCATE(
@@ -672,6 +672,7 @@ MemRegStoreAddNodeAttribute(
      * Assign all allocated memory present in the attributes structure
      * to the value node.
      */
+    hValue->Attributes = *pAttributes;
     if (pAttributes->DefaultValueLen > 0)
     {
         hValue->Attributes.pDefaultValue = (PVOID) pbData;
