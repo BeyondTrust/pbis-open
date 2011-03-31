@@ -384,7 +384,7 @@ package_file_exists_linux_deb()
 
 is_package_installed_linux_deb()
 {
-    _status="`dpkg -s '$1' 2>/dev/null | grep Status: 2>/dev/null`"
+    _status="`dpkg -s $1 2>/dev/null | grep Status: 2>/dev/null`"
     if [ $? -eq 0 ]
     then
         if echo "$_status" | grep ' installed' >/dev/null 2>&1
