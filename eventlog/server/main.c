@@ -109,11 +109,14 @@ EVTExitHandler(
 
     sprintf(szErrCodeFilePath, "%s/eventlogd.err", pszCachePath);
 
-    dwError = EVTCheckFileExists(szErrCodeFilePath, &bFileExists);
+    dwError = LwCheckFileTypeExists(
+                    szErrCodeFilePath,
+                    LWFILE_REGULAR,
+                    &bFileExists);
     BAIL_ON_EVT_ERROR(dwError);
 
     if (bFileExists) {
-        dwError = EVTRemoveFile(szErrCodeFilePath);
+        dwError = LwRemoveFile(szErrCodeFilePath);
         BAIL_ON_EVT_ERROR(dwError);
     }
 

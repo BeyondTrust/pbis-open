@@ -59,4 +59,5 @@
 #include <lwstr.h>
 #include <lwmem.h>
 #include <lwsid.h>
+#include <lwfile.h>
 #include <lw/mapsecurity.h>

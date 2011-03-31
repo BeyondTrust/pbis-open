@@ -351,75 +351,10 @@ EVTReadConfigEnum(
     );
 
 DWORD
-EVTRemoveFile(
-    PCSTR pszPath
-    );
-
-DWORD
-EVTCheckFileExists(
-    PCSTR    pszPath,
-    PBOOLEAN pbFileExists
-    );
-
-DWORD
-EVTMoveFile(
-    PCSTR pszSrcPath,
-    PCSTR pszDstPath
-    );
-
-DWORD
-EVTChangePermissions(
-    PCSTR pszPath,
-    mode_t dwFileMode
-    );
-
-DWORD
-EVTChangeOwner(
-    PCSTR pszPath,
-    uid_t uid,
-    gid_t gid
-    );
-
-DWORD
-EVTChangeOwnerAndPermissions(
-    PCSTR pszPath,
-    uid_t uid,
-    gid_t gid,
-    mode_t dwFileMode
-    );
-
-DWORD
-EVTGetCurrentDirectoryPath(
-    PSTR* ppszPath
-    );
-
-DWORD
-EVTChangeDirectory(
-    PCSTR pszPath
-    );
-
-DWORD
-EVTRemoveDirectory(
-    PCSTR pszPath
-    );
-
-DWORD
 EVTGetFileSize(
 	PCSTR pszPath,
 	PDWORD pdwFileSize
 	);
-
-DWORD
-EVTCheckDirectoryExists(
-    PCSTR pszPath,
-    PBOOLEAN pbDirExists
-    );
-
-DWORD
-EVTCreateDirectory(
-    PCSTR pszPath,
-    mode_t dwFileMode
-    );
 
 DWORD
 EVTGetHostname(

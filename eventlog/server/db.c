@@ -1307,22 +1307,28 @@ SrvCreateDB(BOOLEAN replaceDB)
 
     CHAR szQuery[1024];
 
-    dwError = EVTCheckFileExists(EVENTLOG_DB, &bExists);
+    dwError = LwCheckFileTypeExists(EVENTLOG_DB, LWFILE_REGULAR, &bExists);
     BAIL_ON_EVT_ERROR(dwError);
 
-    if (bExists) {
-    if (replaceDB) {
-        dwError = EVTRemoveFile(EVENTLOG_DB);
-        BAIL_ON_EVT_ERROR(dwError);
-    }
-    else return 0;
+    if (bExists)
+    {
+        if (replaceDB)
+        {
+            dwError = LwRemoveFile(EVENTLOG_DB);
+            BAIL_ON_EVT_ERROR(dwError);
+        }
+        else return 0;
     }
 
-    dwError = EVTCheckDirectoryExists(EVENTLOG_DB_DIR, &bExists);
+    dwError = LwCheckFileTypeExists(
+                    EVENTLOG_DB_DIR,
+                    LWFILE_DIRECTORY,
+                    &bExists);
     BAIL_ON_EVT_ERROR(dwError);
 
-    if (!bExists) {
-        dwError = EVTCreateDirectory(EVENTLOG_DB_DIR, S_IRWXU);
+    if (!bExists)
+    {
+        dwError = LwCreateDirectory(EVENTLOG_DB_DIR, S_IRWXU);
         BAIL_ON_EVT_ERROR(dwError);
     }
 
