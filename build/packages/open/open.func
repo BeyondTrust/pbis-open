@@ -77,6 +77,11 @@ function package_populate
         mkdir -p "${POPULATE_PREFIX_DIR}/bin"
         rsync -a "${BUILD_ROOT}/src/linux/config/macuninstall.sh" "${POPULATE_PREFIX_DIR}/bin/."
         populate_component domainjoin-mac
+    else
+        if [ -d "${POPULATE_PREFIX_DIR}/bin" ]
+        then
+            rsync -a "${BUILD_ROOT}/src/linux/build/products/lwiso/install.sh" "${POPULATE_PREFIX_DIR}/bin/uninstall.sh"
+        fi
     fi
 
     # Install generic init script routines

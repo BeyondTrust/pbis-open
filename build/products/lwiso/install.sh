@@ -995,7 +995,7 @@ main_uninstall()
     setup_os_vars
 
     if [ -f /var/lib/likewise/uninstall/MANIFEST ]; then
-        . /var/lib/likewise/uninstall/MANFIEST
+        . /var/lib/likewise/uninstall/MANIFEST
     else
         echo "The file /var/lib/likewise/uninstall/MANIFEST cannot be found and"
         echo "is required for this uninstall procedure."
