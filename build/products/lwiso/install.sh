@@ -519,45 +519,9 @@ get_prefix_dir()
     echo "${PREFIX}"
 }
 
-uninstall_darwin()
-{
-    # No easy way to uninstall individual packages on Mac OS X
-    if [ -x /opt/likewise/bin/lwi-uninstall.sh ]; then
-       /opt/likewise/bin/lwi-uninstall.sh
-
-        if [ -d /opt/likewise ]; then
-            /bin/rm -rf /opt/likewise
-        fi
-    fi
-    return 0
-}
-
-install_darwin()
-{
-    uninstall_darwin
-
-    for pkg in $INSTALL_BASE_PACKAGES ; do
-        file=`echo ${PKGDIR}/${pkg}-[0-9]*.dmg`
-        hdiutil attach "${file}"
-        exit_on_error $? "Failed to attach ${file}"
-        name=`basename "${file}" | sed -e 's/^\(.*\)\.dmg$/\1/'`
-        exit_on_error $? "Failed to get package name from ${file}"
-        installer -pkg /Volumes/${name}/${name}.mpkg -target /
-        exit_on_error $? "Failed to install ${name} package"
-        hdiutil detach /Volumes/${name}
-        exit_on_error $? "Failed to detach /Volumes/${name}"
-    done
-    return 0
-}
-
 do_install()
 {
     log_info "Installing packages"
-
-    if [ "$PKGTYPE" = 'darwin' ]; then
-        install_darwin
-        return $?
-    fi
 
     # Install upgrade helper package.
     if [ -n "$INSTALL_UPGRADE_PACKAGE" ]; then
@@ -730,11 +694,6 @@ scrub_prefix()
 do_uninstall()
 {
     log_info "Uninstall started"
-
-    if [ "$PKGTYPE" = "darwin" ]; then
-        uninstall_darwin
-        return $?
-    fi
 
     pkgList=""
     for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_BASE_PACKAGE;
