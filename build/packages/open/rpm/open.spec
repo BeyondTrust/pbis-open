@@ -499,6 +499,31 @@ pre_install()
 {
     log "Package: Likewise Open [pre install] begins (`date`)"
 
+    logfile "Checking SELinux"
+    if [ -x "/usr/sbin/selinuxenabled" -a -x "/usr/sbin/getenforce" ]; then
+        logfile "/usr/sbin/selinuxenabled and /usr/sbin/getenforce are present"
+        if /usr/sbin/selinuxenabled >/dev/null 2>&1; then
+            logfile "selinuxenabled indicates SELinux is enabled"
+            if /usr/sbin/getenforce 2>&1 | grep -v 'Permissive' >/dev/null 2>&1; then
+                if [ -f /etc/selinux/config ]; then
+                    log "SELinux found to be present, enabled, and enforcing.
+SELinux must be disabled or set to permissive mode by editing the file
+/etc/selinux/config and rebooting.
+For instructions on how to edit the file to disable SELinux, see the SELinux man page."
+                else
+                    log "SELinux found to be present, enabled, and enforcing.
+SELinux must be disabled or set to permissive mode.
+Check your system's documentation for details."
+                fi
+                exit 1
+            else
+                logfile "getenforce indicates permissive (which is ok)"
+            fi
+        else
+            logfile "selinuxenabled indicates SELinux is not enabled"
+        fi
+    fi
+
     for daemon in $DAEMONS_TO_HALT
     do
         run_quiet "pkill -KILL -x $daemon"
