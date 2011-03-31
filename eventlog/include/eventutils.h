@@ -122,24 +122,6 @@ typedef struct __EVT_CONFIG_TABLE
 } EVT_CONFIG_TABLE, *PEVT_CONFIG_TABLE;
 
 DWORD
-EVTAllocateMemory(
-    DWORD  dwSize,
-    PVOID* ppMemory
-    );
-
-DWORD
-EVTReallocMemory(
-    PVOID  pMemory,
-    PVOID* ppNewMemory,
-    DWORD  dwSize
-    );
-
-VOID
-EVTFreeMemory(
-    PVOID pMemory
-    );
-
-DWORD
 RPCAllocateMemory(
     DWORD dwSize,
     PVOID * ppMemory
@@ -160,24 +142,6 @@ RPCAllocateString(
 VOID
 RPCFreeString(
     PSTR pszString
-    );
-
-DWORD
-EVTAllocateString(
-    PCSTR pszInputString,
-    PSTR *ppszOutputString
-    );
-
-
-VOID
-EVTFreeString(
-    PSTR pszString
-    );
-
-VOID
-EVTFreeStringArray(
-    PSTR* ppStringArray,
-    DWORD dwCount
     );
 
 DWORD

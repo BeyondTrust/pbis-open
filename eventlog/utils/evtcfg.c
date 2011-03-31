@@ -143,13 +143,13 @@ EVTOpenConfig(
 
     PEVT_CONFIG_REG pReg = NULL;
 
-    dwError = EVTAllocateMemory(sizeof(EVT_CONFIG_REG), (PVOID*)&pReg);
+    dwError = LwAllocateMemory(sizeof(EVT_CONFIG_REG), (PVOID*)&pReg);
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwError = EVTAllocateString(pszConfigKey, &(pReg->pszConfigKey));
+    dwError = LwAllocateString(pszConfigKey, &(pReg->pszConfigKey));
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwError = EVTAllocateString(pszPolicyKey, &(pReg->pszPolicyKey));
+    dwError = LwAllocateString(pszPolicyKey, &(pReg->pszPolicyKey));
     BAIL_ON_EVT_ERROR(dwError);
 
     dwError = RegOpenServer(&(pReg->hConnection));
@@ -193,9 +193,9 @@ EVTCloseConfig(
 {
     if ( pReg )
     {
-        EVT_SAFE_FREE_STRING(pReg->pszConfigKey);
+        LW_SAFE_FREE_STRING(pReg->pszConfigKey);
 
-        EVT_SAFE_FREE_STRING(pReg->pszPolicyKey);
+        LW_SAFE_FREE_STRING(pReg->pszPolicyKey);
         if ( pReg->hConnection )
         {
             if ( pReg->hKey )
@@ -207,7 +207,7 @@ EVTCloseConfig(
             pReg->hConnection = NULL;
         }
 
-        EVT_SAFE_FREE_MEMORY(pReg);
+        LW_SAFE_FREE_MEMORY(pReg);
     }
 }
 
@@ -263,10 +263,10 @@ EVTReadConfigString(
  
     if (bGotValue)
     {
-        dwError = EVTAllocateString(szValue, &pszValue);
+        dwError = LwAllocateString(szValue, &pszValue);
         BAIL_ON_EVT_ERROR(dwError);
 
-        EVT_SAFE_FREE_STRING(*ppszValue);
+        LW_SAFE_FREE_STRING(*ppszValue);
         *ppszValue = pszValue;
         pszValue = NULL;
     }
@@ -274,7 +274,7 @@ EVTReadConfigString(
     dwError = 0;
     
 cleanup: 
-    EVT_SAFE_FREE_STRING(pszValue);
+    LW_SAFE_FREE_STRING(pszValue);
 
     return dwError;
 
@@ -416,7 +416,7 @@ EVTReadConfigEnum(
     }
 
 cleanup:
-    EVT_SAFE_FREE_STRING(pszValue);
+    LW_SAFE_FREE_STRING(pszValue);
     return dwError;
 
 error:

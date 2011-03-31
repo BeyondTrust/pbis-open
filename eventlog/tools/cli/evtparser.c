@@ -99,17 +99,17 @@ ExportEventRecord (
     strftime(eventTime, 255, "%r", localtime(&eventTimeStruct));
 
     fprintf(fpExport, "%s,%s,%s,%s,%s,%s,%d,%s,%s,\"%s\",\"%s\"\n",
-        IsNullOrEmptyString(pRecord->pszEventTableCategoryId) ? "<null>" : (PSTR)pRecord->pszEventTableCategoryId,
+        LW_IS_NULL_OR_EMPTY_STR(pRecord->pszEventTableCategoryId) ? "<null>" : (PSTR)pRecord->pszEventTableCategoryId,
         eventDate, //PSTR
         eventTime, //PSTR
-        IsNullOrEmptyString(pRecord->pszEventSource) ? "<null>" : (PSTR)pRecord->pszEventSource,
-        IsNullOrEmptyString(pRecord->pszEventType) ? "<null>" : (PSTR)pRecord->pszEventType,
-        IsNullOrEmptyString(pRecord->pszEventCategory) ? "<null>" : (PSTR)pRecord->pszEventCategory,
+        LW_IS_NULL_OR_EMPTY_STR(pRecord->pszEventSource) ? "<null>" : (PSTR)pRecord->pszEventSource,
+        LW_IS_NULL_OR_EMPTY_STR(pRecord->pszEventType) ? "<null>" : (PSTR)pRecord->pszEventType,
+        LW_IS_NULL_OR_EMPTY_STR(pRecord->pszEventCategory) ? "<null>" : (PSTR)pRecord->pszEventCategory,
         pRecord->dwEventSourceId, //DWORD
-        IsNullOrEmptyString(pRecord->pszUser) ? "<null>" : (PSTR)pRecord->pszUser,
-        IsNullOrEmptyString(pRecord->pszComputer) ? "<null>" : (PSTR)pRecord->pszComputer,
-        IsNullOrEmptyString(pRecord->pszDescription) ? "<null>" : (PSTR)pRecord->pszDescription,
-        IsNullOrEmptyString(pRecord->pszData) ? "<null>" : (PSTR)pRecord->pszData);
+        LW_IS_NULL_OR_EMPTY_STR(pRecord->pszUser) ? "<null>" : (PSTR)pRecord->pszUser,
+        LW_IS_NULL_OR_EMPTY_STR(pRecord->pszComputer) ? "<null>" : (PSTR)pRecord->pszComputer,
+        LW_IS_NULL_OR_EMPTY_STR(pRecord->pszDescription) ? "<null>" : (PSTR)pRecord->pszDescription,
+        LW_IS_NULL_OR_EMPTY_STR(pRecord->pszData) ? "<null>" : (PSTR)pRecord->pszData);
 
     return dwError;
 }
@@ -146,7 +146,7 @@ PrintEventRecordTableRow (
     sprintf(buf,                  "%d", pRecord->dwEventRecordId);
 
     sprintf(buf+TABLOC_TYPE,     "%s%s", TABLOC_BORDER,
-        IsNullOrEmptyString(pRecord->pszEventType) ? "<null>" : (PSTR)pRecord->pszEventType);
+        LW_IS_NULL_OR_EMPTY_STR(pRecord->pszEventType) ? "<null>" : (PSTR)pRecord->pszEventType);
 
     sprintf(buf+TABLOC_DATE,     "%s%s", TABLOC_BORDER,
         eventDate);
@@ -155,16 +155,16 @@ PrintEventRecordTableRow (
         eventTime);
 
     sprintf(buf+TABLOC_SOURCE,   "%s%s", TABLOC_BORDER,
-        IsNullOrEmptyString(pRecord->pszEventSource) ? "<null>" : (PSTR)pRecord->pszEventSource);
+        LW_IS_NULL_OR_EMPTY_STR(pRecord->pszEventSource) ? "<null>" : (PSTR)pRecord->pszEventSource);
 
     sprintf(buf+TABLOC_CATEGORY, "%s%s", TABLOC_BORDER,
-        IsNullOrEmptyString(pRecord->pszEventCategory) ? "<null>" : (PSTR)pRecord->pszEventCategory);
+        LW_IS_NULL_OR_EMPTY_STR(pRecord->pszEventCategory) ? "<null>" : (PSTR)pRecord->pszEventCategory);
     
     sprintf(buf+TABLOC_SOURCE_ID, "%s%d", TABLOC_BORDER,
         pRecord->dwEventSourceId);
     
     sprintf(buf+TABLOC_USER, "%s%s", TABLOC_BORDER,
-        IsNullOrEmptyString(pRecord->pszUser) ? "<null>" : (PSTR)pRecord->pszUser);
+        LW_IS_NULL_OR_EMPTY_STR(pRecord->pszUser) ? "<null>" : (PSTR)pRecord->pszUser);
 
     for (i = 0; i <= TABLOC_USER; i++)
     {
@@ -207,24 +207,24 @@ PrintEventRecords(
     printf("========================================\n");
     printf("Event Record ID......... %d\n", pRecord->dwEventRecordId);
     printf("Event Table Category.... %s\n",
-            IsNullOrEmptyString(pRecord->pszEventSource) ? "<null>" : (char*) (pRecord->pszEventTableCategoryId));
+            LW_IS_NULL_OR_EMPTY_STR(pRecord->pszEventSource) ? "<null>" : (char*) (pRecord->pszEventTableCategoryId));
     printf("Event Type.............. %s\n",
-            IsNullOrEmptyString(pRecord->pszEventSource) ? "<null>" : (char*) (pRecord->pszEventType));
+            LW_IS_NULL_OR_EMPTY_STR(pRecord->pszEventSource) ? "<null>" : (char*) (pRecord->pszEventType));
     printf("Event Date.............. %s\n", eventDate);
     printf("Event Time.............. %s\n", eventTime);
     printf("Event Source............ %s\n",
-            IsNullOrEmptyString(pRecord->pszEventSource) ? "<null>" : (char*) (pRecord->pszEventSource));
+            LW_IS_NULL_OR_EMPTY_STR(pRecord->pszEventSource) ? "<null>" : (char*) (pRecord->pszEventSource));
     printf("Event Category.......... %s\n",
-            IsNullOrEmptyString(pRecord->pszEventSource) ? "<null>" : (char*) (pRecord->pszEventCategory));
+            LW_IS_NULL_OR_EMPTY_STR(pRecord->pszEventSource) ? "<null>" : (char*) (pRecord->pszEventCategory));
     printf("Event Source ID......... %d\n", pRecord->dwEventSourceId);
     printf("Event User.............. %s\n",
-            IsNullOrEmptyString(pRecord->pszUser) ? "<null>" : (char*) (pRecord->pszUser));
+            LW_IS_NULL_OR_EMPTY_STR(pRecord->pszUser) ? "<null>" : (char*) (pRecord->pszUser));
     printf("Event Computer.......... %s\n",
-            IsNullOrEmptyString(pRecord->pszComputer) ? "<null>" : (char*) (pRecord->pszComputer));
+            LW_IS_NULL_OR_EMPTY_STR(pRecord->pszComputer) ? "<null>" : (char*) (pRecord->pszComputer));
     printf("Event Description....... %s\n",
-            IsNullOrEmptyString(pRecord->pszDescription) ? "<null>" : (char*) (pRecord->pszDescription));
+            LW_IS_NULL_OR_EMPTY_STR(pRecord->pszDescription) ? "<null>" : (char*) (pRecord->pszDescription));
     printf("Event Data.............. %s\n",
-            IsNullOrEmptyString(pRecord->pszData) ? "<null>" : (char*) (pRecord->pszData));
+            LW_IS_NULL_OR_EMPTY_STR(pRecord->pszData) ? "<null>" : (char*) (pRecord->pszData));
     printf("========================================\n");
 
     }
@@ -343,7 +343,7 @@ ReadAndExportEvents(
 
     RPCFreeMemory(records);
 
-    EVTFreeMemory(records);
+    LwFreeMemory(records);
 
     return dwError;
 

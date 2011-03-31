@@ -90,7 +90,7 @@ EVTStrndup(
     if (copylen > size)
         copylen = size;
 
-    dwError = EVTAllocateMemory(copylen+1, (PVOID *)&pszOutputString);
+    dwError = LwAllocateMemory(copylen+1, (PVOID *)&pszOutputString);
     BAIL_ON_EVT_ERROR(dwError);
 
     memcpy(pszOutputString, pszInputString, copylen);
@@ -202,7 +202,7 @@ EVTLpwStrToLpStr(
 
     pszwStringLen = wc16slen(pszwString);
 
-    dwError = EVTAllocateMemory(pszwStringLen+1, (PVOID*)ppszString);
+    dwError = LwAllocateMemory(pszwStringLen+1, (PVOID*)ppszString);
     BAIL_ON_EVT_ERROR(dwError);
 
     pszString = *ppszString;
@@ -339,14 +339,14 @@ EVTEscapeString(
     }
 
     if (!nQuotes) {
-         dwError = EVTAllocateString(pszOrig, &pszNew);
+         dwError = LwAllocateString(pszOrig, &pszNew);
          BAIL_ON_EVT_ERROR(dwError);
     } else {
          /*
             * We are going to escape each single quote and enclose it in two other
             * single-quotes
             */
-         dwError = EVTAllocateMemory( strlen(pszOrig)+3*nQuotes+1, (PVOID*)&pszNew );
+         dwError = LwAllocateMemory( strlen(pszOrig)+3*nQuotes+1, (PVOID*)&pszNew );
          BAIL_ON_EVT_ERROR(dwError);
 
          pszTmp = pszOrig;
@@ -374,120 +374,8 @@ EVTEscapeString(
 error:
 
     if (pszNew) {
-        EVTFreeMemory(pszNew);
+        LwFreeMemory(pszNew);
     }
 
     return dwError;
 }
-
-DWORD
-EVTAllocateStringPrintf(
-    PSTR* ppszOutputString,
-    PCSTR pszFormat,
-    ...
-    )
-{
-    DWORD dwError = 0;
-    va_list args;
-
-    va_start(args, pszFormat);
-
-    dwError = EVTAllocateStringPrintfV(
-                      ppszOutputString,
-                      pszFormat,
-                      args);
-
-    va_end(args);
-
-    return dwError;
-}
-
-DWORD
-EVTAllocateStringPrintfV(
-    PSTR*   ppszOutputString,
-    PCSTR   pszFormat,
-    va_list args
-    )
-{
-    DWORD dwError = 0;
-    PSTR  pszSmallBuffer = NULL;
-    DWORD dwBufsize = 0;
-    INT   requiredLength = 0;
-    INT   nNewRequiredLength = 0;
-    PSTR  pszOutputString = NULL;
-    va_list args2;
-
-    va_copy(args2, args);
-
-    dwBufsize = 4;
-    /* Use a small buffer in case libc does not like NULL */
-    do
-    {
-        dwError = EVTAllocateMemory(
-                        dwBufsize,
-                        (PVOID*) &pszSmallBuffer);
-        BAIL_ON_EVT_ERROR(dwError);
-
-        requiredLength = vsnprintf(
-                              pszSmallBuffer,
-                              dwBufsize,
-                              pszFormat,
-                              args);
-        if (requiredLength < 0)
-        {
-            dwBufsize *= 2;
-        }
-        EVTFreeMemory(pszSmallBuffer);
-        pszSmallBuffer = NULL;
-
-    } while (requiredLength < 0);
-
-    if (requiredLength >= (UINT32_MAX - 1))
-    {
-        dwError = ENOMEM;
-        BAIL_ON_EVT_ERROR(dwError);
-    }
-
-    dwError = EVTAllocateMemory(
-                    requiredLength + 2,
-                    (PVOID*)&pszOutputString);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    nNewRequiredLength = vsnprintf(
-                            pszOutputString,
-                            requiredLength + 1,
-                            pszFormat,
-                            args2);
-    if (nNewRequiredLength < 0)
-    {
-        dwError = errno;
-        BAIL_ON_EVT_ERROR(dwError);
-    }
-    else if (nNewRequiredLength > requiredLength)
-    {
-        /* unexpected, ideally should log something, or use better error code */
-        dwError = ENOMEM;
-        BAIL_ON_EVT_ERROR(dwError);
-    }
-    else if (nNewRequiredLength < requiredLength)
-    {
-        /* unexpected, ideally should log something -- do not need an error, though */
-    }
-
-    *ppszOutputString = pszOutputString;
-
-cleanup:
-
-    va_end(args2);
-
-    return dwError;
-
-error:
-
-    EVT_SAFE_FREE_MEMORY(pszOutputString);
-
-    *ppszOutputString = NULL;
-
-    goto cleanup;
-}
-

@@ -81,13 +81,13 @@ evt_sys_vsyslog(
     DWORD dwError;
     PSTR buffer = NULL;
 
-    dwError = EVTAllocateStringPrintfV(&buffer, format, ap);
+    dwError = LwAllocateStringPrintfV(&buffer, format, ap);
     if (!dwError)
     {
         syslog(priority, "%s", buffer);
     }
 
-    EVT_SAFE_FREE_STRING(buffer);
+    LW_SAFE_FREE_STRING(buffer);
 #endif /* ! HAVE_VSYSLOG */
 }
 

@@ -68,7 +68,7 @@ LWIIsLocalHost(
     }
 
     dwError = gethostname(localHost, sizeof(localHost) - 1);
-    if ( !IsNullOrEmptyString(localHost) )
+    if ( !LW_IS_NULL_OR_EMPTY_STR(localHost) )
     {
         dwError = getaddrinfo(localHost, NULL, NULL, &localInfo);
         if ( dwError )
@@ -180,7 +180,7 @@ LWICreateEventLogRpcBinding(
         /* Set up authentication if we are connecting to a remote host */
         hostPrincipalSize = strlen(hostname) + 6;
         
-        dwError = EVTAllocateMemory(hostPrincipalSize, (PVOID*)&hostPrincipal);
+        dwError = LwAllocateMemory(hostPrincipalSize, (PVOID*)&hostPrincipal);
         BAIL_ON_EVT_ERROR(dwError);
         
         ret = snprintf(hostPrincipal, hostPrincipalSize, "host/%s", hostname);
@@ -211,7 +211,7 @@ LWICreateEventLogRpcBinding(
 cleanup:
     if (hostPrincipal)
     {
-        EVTFreeMemory(hostPrincipal);
+        LwFreeMemory(hostPrincipal);
     }
 
     if (pszBindingString)

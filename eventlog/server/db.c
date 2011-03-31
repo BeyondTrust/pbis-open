@@ -213,7 +213,7 @@ SrvOpenEventDatabase(
     dwError = sqlite3_open(EVENTLOG_DB, &pSqliteHandle);
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwError = EVTAllocateMemory(sizeof(EVENTLOG_CONTEXT),
+    dwError = LwAllocateMemory(sizeof(EVENTLOG_CONTEXT),
                                 (PVOID*)&pEventLogCtx);
     BAIL_ON_EVT_ERROR(dwError);
 
@@ -230,7 +230,7 @@ SrvOpenEventDatabase(
         sqlite3_close(pSqliteHandle);
 
     if (pEventLogCtx)
-        EVTFreeMemory(pEventLogCtx);
+        LwFreeMemory(pEventLogCtx);
 
     return dwError;
 }
@@ -249,7 +249,7 @@ SrvCloseEventDatabase(
             sqlite3_close(pContext->pDbHandle);
         }
         EVT_LOG_VERBOSE("Freeing the context.................");
-        EVTFreeMemory(pContext);
+        LwFreeMemory(pContext);
     }
 
     return dwError;
@@ -349,7 +349,7 @@ SrvEventLogCount(
     ENTER_RW_READER_LOCK;
 
     if (sqlFilter == NULL) {
-        dwError = EVTAllocateStringPrintf(
+        dwError = LwAllocateStringPrintf(
                         &pszQuery,
                         DB_QUERY_COUNT_ALL);
         BAIL_ON_EVT_ERROR(dwError);
@@ -358,7 +358,7 @@ SrvEventLogCount(
         dwError = SrvCheckSqlFilter(sqlFilter);
         BAIL_ON_EVT_ERROR(dwError);
 
-        dwError = EVTAllocateStringPrintf(
+        dwError = LwAllocateStringPrintf(
                         &pszQuery,
                         DB_QUERY_COUNT,
                         sqlFilter);
@@ -388,7 +388,7 @@ SrvEventLogCount(
     if (ppszResult) {
         sqlite3_free_table(ppszResult);
     }
-    EVT_SAFE_FREE_STRING(pszQuery);
+    LW_SAFE_FREE_STRING(pszQuery);
 
     LEAVE_RW_READER_LOCK;
     return dwError;
@@ -416,8 +416,8 @@ SrvReadEventLog(
     PSTR* ppszResult = NULL;
     ENTER_RW_READER_LOCK;
 
-    if (IsNullOrEmptyString(sqlFilter)) {
-        dwError = EVTAllocateStringPrintf(
+    if (LW_IS_NULL_OR_EMPTY_STR(sqlFilter)) {
+        dwError = LwAllocateStringPrintf(
                         &pszQuery,
                         DB_QUERY_ALL_WITH_LIMIT,
                         (long)nRecordsPerPage,
@@ -429,7 +429,7 @@ SrvReadEventLog(
         dwError = SrvCheckSqlFilter(sqlFilter);
         BAIL_ON_EVT_ERROR(dwError);
 
-        dwError = EVTAllocateStringPrintf(
+        dwError = LwAllocateStringPrintf(
                         &pszQuery,
                         DB_QUERY_WITH_LIMIT,
                         sqlFilter,
@@ -461,7 +461,7 @@ SrvReadEventLog(
     if (ppszResult) {
         sqlite3_free_table(ppszResult);
     }
-    EVT_SAFE_FREE_STRING(pszQuery);
+    LW_SAFE_FREE_STRING(pszQuery);
     LEAVE_RW_READER_LOCK;
     return dwError;
  error:
@@ -820,7 +820,7 @@ SrvDeleteFromEventLog(
     dwError = SrvCheckSqlFilter(sqlFilter);
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwError = EVTAllocateStringPrintf(
+    dwError = LwAllocateStringPrintf(
                     &pszQuery,
                     DB_QUERY_DELETE,
                     sqlFilter);
@@ -833,7 +833,7 @@ SrvDeleteFromEventLog(
     if (ppszResult) {
         sqlite3_free_table(ppszResult);
     }
-    EVT_SAFE_FREE_STRING(pszQuery);
+    LW_SAFE_FREE_STRING(pszQuery);
     LEAVE_RW_WRITER_LOCK;
     return dwError;
  error:
@@ -1093,7 +1093,7 @@ SrvQueryEventLog(
                                 );
 
     if (dwError) {
-        if (!IsNullOrEmptyString(pszError)) {
+        if (!LW_IS_NULL_OR_EMPTY_STR(pszError)) {
             EVT_LOG_ERROR(pszError);
         }
         BAIL_ON_EVT_ERROR(dwError);
@@ -1131,7 +1131,7 @@ BuildEventLogRecordList(
         return -1;
     }
 
-    if (ppszResult == NULL || IsNullOrEmptyString(ppszResult[0])) {
+    if (ppszResult == NULL || LW_IS_NULL_OR_EMPTY_STR(ppszResult[0])) {
         return -1;
     }
 
@@ -1152,7 +1152,7 @@ BuildEventLogRecordList(
             {
                 case EventTableCategoryId:
                 {
-                    if (IsNullOrEmptyString(ppszResult[iVal]))
+                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
                     {
                         pRecord->pszEventTableCategoryId = NULL;
                     }
@@ -1171,7 +1171,7 @@ BuildEventLogRecordList(
                 break;
                 case EventType:
                 {
-                    if (IsNullOrEmptyString(ppszResult[iVal]))
+                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
                     {
                         pRecord->pszEventType = NULL;
                     }
@@ -1191,7 +1191,7 @@ BuildEventLogRecordList(
                 case EventSource:
                 {
 
-                    if (IsNullOrEmptyString(ppszResult[iVal]))
+                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
                     {
                         pRecord->pszEventSource = NULL;
                     }
@@ -1205,7 +1205,7 @@ BuildEventLogRecordList(
                 break;
                 case EventCategory:
                 {
-                    if (IsNullOrEmptyString(ppszResult[iVal]))
+                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
                     {
                         pRecord->pszEventCategory = NULL;
                     }
@@ -1224,7 +1224,7 @@ BuildEventLogRecordList(
                 break;
                 case User:
                 {
-                    if (IsNullOrEmptyString(ppszResult[iVal]))
+                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
                     {
                         pRecord->pszUser = NULL;
                     }
@@ -1238,7 +1238,7 @@ BuildEventLogRecordList(
                 break;
                 case Computer:
                 {
-                    if (IsNullOrEmptyString(ppszResult[iVal]))
+                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
                     {
                         pRecord->pszComputer = NULL;
                     }
@@ -1253,7 +1253,7 @@ BuildEventLogRecordList(
                 break;
                 case Description:
                 {
-                    if (IsNullOrEmptyString(ppszResult[iVal]))
+                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
                     {
                         pRecord->pszDescription = NULL;
                     }
@@ -1268,7 +1268,7 @@ BuildEventLogRecordList(
                 break;
                 case Data:
                 {
-                    if (IsNullOrEmptyString(ppszResult[iVal]))
+                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
                     {
                         pRecord->pszData = NULL;
                     }
@@ -1377,7 +1377,7 @@ cleanup:
 
 error:
 
-    if (!IsNullOrEmptyString(pszError))
+    if (!LW_IS_NULL_OR_EMPTY_STR(pszError))
         EVT_LOG_ERROR(pszError);
 
     goto cleanup;

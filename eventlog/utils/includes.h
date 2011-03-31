@@ -4,6 +4,9 @@
 
 #include <reg/lwreg.h>
 
+#include <lwmem.h>
+#include <lwstr.h>
+
 #include <eventdefs.h>
 #include <eventlog.h>
 

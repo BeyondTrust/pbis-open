@@ -135,7 +135,7 @@ EVTExitHandler(
 error:
 
     if (pszCachePath) {
-        EVTFreeString(pszCachePath);
+        LwFreeString(pszCachePath);
     }
 
     if (fp != NULL) {
@@ -230,7 +230,7 @@ EVTGetCachePath(
 
     EVT_LOCK_SERVERINFO;
 
-    dwError = EVTAllocateString(gServerInfo.szCachePath, ppszPath);
+    dwError = LwAllocateString(gServerInfo.szCachePath, ppszPath);
 
     EVT_UNLOCK_SERVERINFO;
 
@@ -441,7 +441,7 @@ EVTGetPrefixPath(
 
     EVT_LOCK_SERVERINFO;
 
-    dwError = EVTAllocateString(gServerInfo.szPrefixPath, ppszPath);
+    dwError = LwAllocateString(gServerInfo.szPrefixPath, ppszPath);
 
     EVT_UNLOCK_SERVERINFO;
 
@@ -992,7 +992,7 @@ EVTLogConfigReload(
     DWORD dwError = 0;
     PSTR pszDescription = NULL;
 
-    dwError = EVTAllocateStringPrintf(
+    dwError = LwAllocateStringPrintf(
                  &pszDescription,
                  "     Current config settings are...\r\n" \
                  "     Max Disk Usage :                 %d\r\n" \
@@ -1021,7 +1021,7 @@ EVTLogConfigReload(
 
 cleanup:
 
-    EVT_SAFE_FREE_STRING(pszDescription);
+    LW_SAFE_FREE_STRING(pszDescription);
 
     return;
 
@@ -1051,7 +1051,7 @@ EVTStringSplit(
     }
     dwCount++;
 
-    dwError = EVTAllocateMemory(
+    dwError = LwAllocateMemory(
                   (dwCount+1)*sizeof(PCSTR),
                   (PVOID *)&ppszArray);
 
@@ -1551,9 +1551,9 @@ EVTReadEventLogConfigSettings()
 
 cleanup:
 
-    EVT_SAFE_FREE_STRING(gpszAllowReadTo);
-    EVT_SAFE_FREE_STRING(gpszAllowWriteTo);
-    EVT_SAFE_FREE_STRING(gpszAllowDeleteTo);
+    LW_SAFE_FREE_STRING(gpszAllowReadTo);
+    LW_SAFE_FREE_STRING(gpszAllowWriteTo);
+    LW_SAFE_FREE_STRING(gpszAllowDeleteTo);
 
     if (bLocked)
     {

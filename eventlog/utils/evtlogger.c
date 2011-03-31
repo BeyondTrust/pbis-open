@@ -142,7 +142,7 @@ EVTInitLoggingToFile(
     dwError = EVTValidateLogLevel(dwLogLevel);
     BAIL_ON_EVT_ERROR(dwError);
 
-    if (IsNullOrEmptyString(pszLogFilePath))
+    if (LW_IS_NULL_OR_EMPTY_STR(pszLogFilePath))
     {
         gEvtLogInfo.logTarget = LOG_TO_CONSOLE;
         gEvtLogInfo.data.logfile.szLogPath[0] = '\0';

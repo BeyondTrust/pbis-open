@@ -619,7 +619,7 @@ main(
     if (eventRecords)
     {
         RPCFreeMemory(eventRecords);
-        EVTFreeMemory(eventRecords);
+        LwFreeMemory(eventRecords);
     }
     poptFreeContext(optCon);
     if (fpExport)

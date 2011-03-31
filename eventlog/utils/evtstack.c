@@ -61,7 +61,7 @@ EVTStackPush(
         BAIL_ON_EVT_ERROR(dwError);
     }
 
-    dwError = EVTAllocateMemory(
+    dwError = LwAllocateMemory(
                     sizeof(EVT_STACK),
                     (PVOID*)&pStack);
     BAIL_ON_EVT_ERROR(dwError);
@@ -78,7 +78,7 @@ cleanup:
 error:
 
     if (pStack) {
-        EVTFreeMemory(pStack);
+        LwFreeMemory(pStack);
     }
 
     goto cleanup;
@@ -98,7 +98,7 @@ EVTStackPop(
 
         pItem = pTop->pItem;
 
-        EVTFreeMemory(pTop);
+        LwFreeMemory(pTop);
     }
 
     return pItem;
@@ -171,6 +171,6 @@ EVTStackFree(
 
         pStack = pStack->pNext;
 
-        EVTFreeMemory(pTmp);
+        LwFreeMemory(pTmp);
     }
 }

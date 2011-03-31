@@ -33,6 +33,9 @@
 #include "eventlog.h"
 #include "eventdefs.h"
 
+#include <lwmem.h>
+#include <lwstr.h>
+
 #include "eventutils.h"
 
 #include "eventlog_h.h"

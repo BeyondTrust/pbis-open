@@ -55,14 +55,14 @@ LWIFreeEventRecordContents(
     PEVENT_LOG_RECORD pEventRecord
     )
 {
-    EVT_SAFE_FREE_STRING(pEventRecord->pszEventTableCategoryId);
-    EVT_SAFE_FREE_STRING(pEventRecord->pszEventType);
-    EVT_SAFE_FREE_STRING(pEventRecord->pszEventSource);
-    EVT_SAFE_FREE_STRING(pEventRecord->pszEventCategory);
-    EVT_SAFE_FREE_STRING(pEventRecord->pszUser);
-    EVT_SAFE_FREE_STRING(pEventRecord->pszComputer);
-    EVT_SAFE_FREE_STRING(pEventRecord->pszDescription);
-    EVT_SAFE_FREE_MEMORY(pEventRecord->pszData);
+    LW_SAFE_FREE_STRING(pEventRecord->pszEventTableCategoryId);
+    LW_SAFE_FREE_STRING(pEventRecord->pszEventType);
+    LW_SAFE_FREE_STRING(pEventRecord->pszEventSource);
+    LW_SAFE_FREE_STRING(pEventRecord->pszEventCategory);
+    LW_SAFE_FREE_STRING(pEventRecord->pszUser);
+    LW_SAFE_FREE_STRING(pEventRecord->pszComputer);
+    LW_SAFE_FREE_STRING(pEventRecord->pszDescription);
+    LW_SAFE_FREE_MEMORY(pEventRecord->pszData);
 }
 
 VOID
@@ -78,7 +78,7 @@ LWIFreeEventRecordList(
         LWIFreeEventRecordContents(&pEventRecordList[dwIndex]);
     }
 
-    EVTFreeMemory(pEventRecordList);
+    LwFreeMemory(pEventRecordList);
 }
 
 void
@@ -90,7 +90,7 @@ LWIFreeEventLogHandle(
     PEVENT_LOG_HANDLE pEventLogHandle = (PEVENT_LOG_HANDLE) hEventLog;
 
     LWIFreeEventLogRpcBinding(pEventLogHandle->bindingHandle);
-    EVT_SAFE_FREE_MEMORY(pEventLogHandle);
+    LW_SAFE_FREE_MEMORY(pEventLogHandle);
 }
 
 DWORD
@@ -114,7 +114,7 @@ LWIOpenEventLog(
     EVT_LOG_VERBOSE("client::eventlog.c OpenEventLog(*phEventLog=%.16X, server=%s)\n",
             *phEventLog, pszServerName);
 
-    dwError = EVTAllocateMemory(sizeof(EVENT_LOG_HANDLE), (PVOID*) &pEventLogHandle);
+    dwError = LwAllocateMemory(sizeof(EVENT_LOG_HANDLE), (PVOID*) &pEventLogHandle);
     BAIL_ON_EVT_ERROR(dwError);
     
     TRY
@@ -249,7 +249,7 @@ LWIReadEventLog(
 
     EVT_LOG_VERBOSE("client::eventlog.c ReadEventLog() sqlFilterChar=\"%s\"\n", sqlFilterChar);
 
-    EVTAllocateMemory(nRecordsPerPage * sizeof(EVENT_LOG_RECORD), (PVOID*)(eventRecords));
+    LwAllocateMemory(nRecordsPerPage * sizeof(EVENT_LOG_RECORD), (PVOID*)(eventRecords));
 
     TRY
     {
@@ -271,7 +271,7 @@ LWIReadEventLog(
 
 
 cleanup:
-    EVT_SAFE_FREE_STRING(sqlFilterChar);
+    LW_SAFE_FREE_STRING(sqlFilterChar);
     return dwError;
 
 error:
@@ -318,7 +318,7 @@ LWICountEventLog(
     BAIL_ON_EVT_ERROR(dwError);
 
 cleanup:
-    EVT_SAFE_FREE_STRING(sqlFilterChar);
+    LW_SAFE_FREE_STRING(sqlFilterChar);
     return dwError;
 
 error:
@@ -372,7 +372,7 @@ LWIWriteEventLogBase(
     EVENT_LOG_RECORD  eventRecordLocal = eventRecord;
 
     EVT_LOG_VERBOSE("client::eventlog.c WriteEventLog(pEventLogHandle=%.16X, computer=%s)\n",
-        pEventLogHandle, (IsNullOrEmptyString(eventRecord.pszComputer) ? "" : eventRecord.pszComputer));
+        pEventLogHandle, (LW_IS_NULL_OR_EMPTY_STR(eventRecord.pszComputer) ? "" : eventRecord.pszComputer));
 
     TRY
     {

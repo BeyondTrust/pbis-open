@@ -104,25 +104,6 @@ void __RPC_USER midl_user_free(void __RPC_FAR * p);
 #define RPC_BINDING_FREE(pBindingHandle, pStatus) \
     *pStatus = RpcBindingFree(pBindingHandle)
 
-#define EVT_SAFE_FREE_MEMORY(mem) \
-        do {                      \
-           if (mem) {             \
-              EVTFreeMemory(mem); \
-              (mem) = NULL;       \
-           }                      \
-        } while(0);
-
-#define IsNullOrEmptyString(pszStr)     \
-    (pszStr == NULL || *pszStr == '\0')
-
-#define EVT_SAFE_FREE_STRING(str) \
-    do {                          \
-        if (str) {                \
-            EVTFreeString(str);   \
-            (str) = NULL;         \
-        }                         \
-    } while(0);
-
 #define EVT_LOG_ALWAYS(szFmt...)                     \
     EVTLogMessage(LOG_LEVEL_ALWAYS, ## szFmt);
 
