@@ -70,10 +70,6 @@ interface eventlog {
 	hyper bindingHandle;
 	[unique, string] char * pszBindingString;
 
-	unsigned short int bDefaultActive;
-
-	EVENT_LOG_RECORD defaultEventLogRecord;
-
     } EVENT_LOG_HANDLE, *PEVENT_LOG_HANDLE;
     cpp_quote("#endif")
 

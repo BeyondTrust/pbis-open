@@ -451,17 +451,6 @@ EVTUnlockServerInfo()
     EVT_UNLOCK_SERVERINFO;
 }
 
-void
-EVTFreeAllowData(
-    PEVTALLOWEDDATA pAllowData
-    )
-{
-    EVT_SAFE_FREE_STRING(pAllowData->configData);
-    EVTAccessFreeData(pAllowData->pAllowedTo);
-    pAllowData->configData = NULL;
-    pAllowData->pAllowedTo = NULL;
-}
-
 static
 void
 ShowUsage(
@@ -1754,9 +1743,6 @@ main(
     dwError = EVTSetServerDefaults();
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwError = EVTLoadLsaLibrary();
-    BAIL_ON_EVT_ERROR(dwError);
-
     dwError = EVTParseArgs(
                     argc,
                     argv,
@@ -1908,8 +1894,6 @@ main(
     EVTSetConfigDefaults();
     EVTFreeSecurityDescriptor(gServerInfo.pAccess);
     gServerInfo.pAccess = NULL;
-
-    EVTUnloadLsaLibrary();
 
     EVTSetProcessExitCode(dwError);
 

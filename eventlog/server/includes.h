@@ -55,9 +55,6 @@
 #include "db_p.h"
 #include "externs.h"
 
-#include "lsaaccess.h"
-#include "access_p.h"
-
 #include <lwerror.h>
 #include <lwstr.h>
 #include <lwmem.h>

@@ -88,10 +88,8 @@ LWIFreeEventLogHandle(
 {
 
     PEVENT_LOG_HANDLE pEventLogHandle = (PEVENT_LOG_HANDLE) hEventLog;
-    PEVENT_LOG_RECORD pEventRecord = &(pEventLogHandle->defaultEventLogRecord);
 
     LWIFreeEventLogRpcBinding(pEventLogHandle->bindingHandle);
-    LWIFreeEventRecordContents(pEventRecord);
     EVT_SAFE_FREE_MEMORY(pEventLogHandle);
 }
 
@@ -120,8 +118,6 @@ LWIOpenEventLog(
     dwError = EVTAllocateMemory(sizeof(EVENT_LOG_HANDLE), (PVOID*) &pEventLogHandle);
     BAIL_ON_EVT_ERROR(dwError);
     
-    pEventLogHandle->bDefaultActive = FALSE;
-
     if (IsNullOrEmptyString(pszServerName))
     {
         PSTR pszDefaultHostName = NULL;
@@ -350,38 +346,6 @@ cleanup:
 error:
     EVT_LOG_ERROR("Failed to count event log. Error code [%d]\n", dwError);
     goto cleanup;
-}
-
-
-DWORD
-LWISetEventLogComputer(
-    HANDLE hEventLog,
-    PCSTR pszComputer
-    )
-{
-    DWORD dwError = 0;
-    PEVENT_LOG_HANDLE pEventLogHandle = (PEVENT_LOG_HANDLE) hEventLog;
-    PEVENT_LOG_RECORD pEventRecord = &(pEventLogHandle->defaultEventLogRecord);
-
-    if (IsNullOrEmptyString(pszComputer)) {
-#ifndef _WIN32
-        char currentHost[129];
-        dwError = gethostname(currentHost, 128);
-        if (!IsNullOrEmptyString(currentHost)) {
-            dwError = EVTAllocateString(currentHost, (&pEventRecord->pszComputer));
-            BAIL_ON_EVT_ERROR(dwError);
-            pEventLogHandle->bDefaultActive = TRUE;
-        }
-#endif
-    }
-    else {
-        dwError = EVTAllocateString(pszComputer, (&pEventRecord->pszComputer));
-        BAIL_ON_EVT_ERROR(dwError);
-        pEventLogHandle->bDefaultActive = TRUE;
-    }
-    
-error:
-    return dwError;
 }
 
 

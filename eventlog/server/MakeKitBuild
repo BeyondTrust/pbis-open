@@ -1,7 +1,6 @@
 make()
 {
     EVENTLOGD_SOURCES="\
-	access.c         \
 	db.c             \
 	eventlog_sstub.c \
 	globals.c        \

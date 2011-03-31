@@ -92,10 +92,6 @@ typedef struct _EVENT_LOG_HANDLE
 {
     HANDLE bindingHandle;
 
-    short  bDefaultActive;
-
-    EVENT_LOG_RECORD defaultEventLogRecord;
-
 } EVENT_LOG_HANDLE, *PEVENT_LOG_HANDLE;
 
 #endif /* EVENT_LOG_HANDLE_DEFINED */

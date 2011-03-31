@@ -42,13 +42,6 @@
 #ifndef __MAIN_P_H__
 #define __MAIN_P_H__
 
-typedef struct {
-    /* Data as read from configuration */
-    PSTR  configData;
-    /* Data as parsed using LSASS */
-    PVOID pAllowedTo;
-} EVTALLOWEDDATA, *PEVTALLOWEDDATA;
-
 /* This structure captures the arguments that must be
  * sent to the Group Policy Service
  */
@@ -156,17 +149,6 @@ EVTGetRemoveEventsFlag(
 
 void
 EVTUnlockServerInfo();
-
-void
-EVTFreeAllowData(
-    PEVTALLOWEDDATA pAllowData
-    );
-
-DWORD
-EVTSetAllowData(
-    PCSTR   pszValue,
-    PEVTALLOWEDDATA ppAllowData
-    );
 
 BOOLEAN
 EVTProcessShouldExit();
