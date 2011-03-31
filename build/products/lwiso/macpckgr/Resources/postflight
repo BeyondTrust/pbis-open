@@ -1,131 +1,142 @@
 #!/bin/bash
 
-log_info()
+UPGRADEDIR=/opt/likewise-upgrade
+# PKG_ARCH="__PKG_ARCH"
+
+LOG=/var/log/likewise-open-install.log
+TLOG=/tmp/LikewiseOpenTemp.txt
+
+DAEMONS_TO_KILL="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
+
+# Display to screen and log file with a blank line between entires.
+log()
 {
-    echo "$@" 1>&2
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Display to screen and log file with no blank line.
+_log()
+{
+    echo $@
+    echo $@ >> $LOG
+}
+
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
+run()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err"
+        _log `cat $TLOG`
+        _log
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# Log only to file.
+run_quiet()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+    else
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    cat $TLOG >> $LOG
+    echo >> $LOG
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+run_or_fail()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log `cat $TLOG`
+        _log
+        rm -f $TLOG > /dev/null 2>&1
+        exit 1
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
 }
 
 ConfigureDirectoryOwners()
 {
-    echo "Prepare common installation and dependant directories used by Likewise"
+    log "Prepare common installation and dependant directories used by Likewise"
 
-    OPT="/opt"
-    OPT_LW="/opt/likewise"
-    USR="/usr"
-    USR_LIB="/usr/lib"
-    ETC="/etc"
+    CHOWN_0_80="/opt/ /opt/likewise /etc/ /etc/likewise /var/ /var/lib/ /var/lib/likewise"
+    CHOWN_0_0="/usr/ /usr/lib/"
+
     ETC_LW="/etc/likewise"
-    VAR="/var"
-    VAR_LIB="/var/lib"
-    VAR_LIB_LW="/var/lib/likewise"
-    VAR_LIB_LW_LWREG="/var/lib/likewise/lwreg"
-    VAR_LIB_LW_NETLOGON="/var/lib/likewise/netlogon"
-    VAR_LIB_LW_LSASS="/var/lib/likewise/lsass"
 
-    if test -d $OPT; then
-        echo "setting $OPT directory owner to 0:80"
-        chown 0:80 "$OPT"
-    else
-        echo "creating $OPT directory and setting owner to 0:80"
-        mkdir "$OPT"
-        chown 0:80 "$OPT"
-    fi
+    for f in $CHOWN_0_80; do
+        case $f in
+            */)
+                 CHOWNFLAGS=''
+                 ;;
+             *)
+                 CHOWNFLAGS='-R'
+                 ;;
+        esac
 
-    if test -d $OPT_LW; then
-        echo "setting $OPT_LW directory owner to 0:80"
-        chown -R 0:80 "$OPT_LW"
-    else
-        echo "creating $OPT_LW directory and setting owner to 0:80"
-        mkdir "$OPT_LW"
-        chown -R 0:80 "$OPT_LW"
-    fi
+        if [ -d $f ]; then
+            #log "setting $f directory owner to 0:80"
+            run_or_fail "chown $CHOWNFLAGS 0:80 $f"
+        else
+            #log "creating $f directory and setting owner to 0:80"
+            run_or_fail "mkdir $f"
+            run_or_fail "chown $CHOWNFLAGS 0:80 $f"
+        fi
+    done
 
-    if test -d $USR; then
-        echo "setting $USR directory owner to 0:0"
-        chown 0:0 "$USR"
-    else
-        echo "creating $USR directory and setting owner to 0:0"
-        mkdir "$USR"
-        chown 0:0 "$USR"
-    fi
-
-    if test -d $USR_LIB; then
-        echo "setting $USR_LIB directory owner to 0:0"
-        chown 0:0 "$USR_LIB"
-    else
-        echo "creating $USR_LIB directory and setting owner to 0:0"
-        mkdir "$USR_LIB"
-        chown -R 0:0 "$USR_LIB"
-    fi
-
-    if test -d $ETC; then
-        echo "setting $ETC directory owner to 0:80"
-        chown 0:80 "$ETC"
-    else
-        echo "creating $ETC directory and setting owner to 0:80"
-        mkdir "$ETC"
-        chown 0:80 "$ETC"
-    fi
-
-    if test -d $VAR; then
-        echo "setting $VAR directory owner to 0:80"
-        chown 0:80 "$VAR"
-    else
-        echo "creating $VAR directory and setting owner to 0:80"
-        mkdir "$VAR"
-        chown 0:80 "$VAR"
-    fi
-
-    if test -d $VAR_LIB; then
-        echo "setting $VAR_LIB directory owner to 0:80"
-        chown 0:80 "$VAR_LIB"
-    else
-        echo "creating $VAR_LIB directory and setting owner to 0:80"
-        mkdir "$VAR_LIB"
-        chown 0:80 "$VAR_LIB"
-    fi
-
-    if test -d $VAR_LIB_LW; then
-        echo "setting $VAR_LIB_LW directory owner to 0:80"
-        chown -R 0:80 "$VAR_LIB_LW"
-    else
-        echo "creating $VAR_LIB_LW directory and setting owner to 0:80"
-        mkdir "$VAR_LIB_LW"
-        chown -R 0:80 "$VAR_LIB_LW"
-    fi
-
-    if test -d $VAR_LIB_LW_LWREG; then
-        echo "setting $VAR_LIB_LW_LWREG directory owner to 0:80"
-        chown -R 0:80 "$VAR_LIB_LW_LWREG"
-        chmod -R 0755 "$VAR_LIB_LW_LWREG"
-    else
-        echo "creating $VAR_LIB_LW_LWREG directory and setting owner to 0:80"
-        mkdir "$VAR_LIB_LW_LWREG"
-        chown -R 0:80 "$VAR_LIB_LW_LWREG"
-        chmod -R 0755 "$VAR_LIB_LW_LWREG"
-    fi
-
-    if test -d $VAR_LIB_LW_NETLOGON; then
-        echo "setting $VAR_LIB_NETLOGON directory owner to 0:80"
-        chown -R 0:80 "$VAR_LIB_LW_NETLOGON"
-        chmod -R 0755 "$VAR_LIB_LW_NETLOGON"
-    else
-        echo "creating $VAR_LIB_LW_NETLOGON directory and setting owner to 0:80"
-        mkdir "$VAR_LIB_LW_NETLOGON"
-        chown -R 0:80 "$VAR_LIB_LW_NETLOGON"
-        chmod -R 0755 "$VAR_LIB_LW_NETLOGON"
-    fi
-
-    if test -d $VAR_LIB_LW_LSASS; then
-        echo "setting $VAR_LIB_LW_LSASS directory owner to 0:80"
-        chown -R 0:80 "$VAR_LIB_LW_LSASS"
-        chmod -R 0755 "$VAR_LIB_LW_LSASS"
-    else
-        echo "creating $VAR_LIB_LW_LSASS directory and setting owner to 0:80"
-        mkdir "$VAR_LIB_LW_LSASS"
-        chown -R 0:80 "$VAR_LIB_LW_LSASS"
-        chmod -R 0755 "$VAR_LIB_LW_LSASS"
-    fi
+    for f in $CHOWN_0_0; do
+        case $f in
+            */)
+                 CHOWNFLAGS=''
+                 ;;
+             *)
+                 CHOWNFLAGS='-R'
+                 ;;
+        esac
+        if [ -d $f ]; then
+            #log "setting $f directory owner to 0:0"
+            run_or_fail "chown 0:0 $f"
+        else
+            #log "creating $f directory and setting owner to 0:0"
+            run_or_fail "mkdir $f"
+            run_or_fail "chown 0:0 $f"
+        fi
+    done
 }
 
 wait_for_lwsm_running_status()
@@ -138,7 +149,7 @@ wait_for_lwsm_running_status()
         sleep 1
     done
 
-    echo "Service lwsmd running"
+    log "Service lwsmd running"
 }
 
 wait_for_service_running_status()
@@ -152,7 +163,7 @@ wait_for_service_running_status()
         sleep 1
     done
 
-    echo "Service $SERVICE running"
+    log "Service $SERVICE running"
 }
 
 configure_and_start_lwsmd()
@@ -163,103 +174,40 @@ configure_and_start_lwsmd()
 
     if [ -f $SERVICE_DAEMON_INSTALL ]; then
         echo "Configuring and starting lwsmd service with launchctl"
-        cp $SERVICE_DAEMON_INSTALL $SERVICE_DAEMON
-        launchctl load $SERVICE_DAEMON > /dev/null 2>&1
-        launchctl start $SERVICE_NAME > /dev/null 2>&1
+        run_or_fail "cp $SERVICE_DAEMON_INSTALL $SERVICE_DAEMON"
+        run_or_fail "launchctl load $SERVICE_DAEMON"
+        run_or_fail "launchctl start $SERVICE_NAME"
         wait_for_lwsm_running_status
     fi
-}
-
-restart_lwsmd()
-{
-    SERVICE_NAME=com.likewisesoftware.lwsmd
-
-    echo "Restarting lwsmd service with launchctl"
-    launchctl stop $SERVICE_NAME > /dev/null 2>&1
-    sleep 3
-    launchctl start $SERVICE_NAME > /dev/null 2>&1
-    wait_for_lwsm_running_status
-}
-
-configure_and_start_service()
-{
-    SERVICE=$1
-
-    /opt/likewise/bin/lwregshell set_value [HKEY_THIS_MACHINE\\Services\\$SERVICE] Autostart 1 > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        /opt/likewise/bin/lwregshell add_value [HKEY_THIS_MACHINE\\Services\\$SERVICE] Autostart REG_DWORD 1 2>&1 || exit 1
-    fi
-
-    echo "Starting $SERVICE service with Likewise Service Manager"
-    /opt/likewise/bin/lwsm start $SERVICE > /dev/null 2>&1 || exit 1
-    wait_for_service_running_status $SERVICE
-}
-
-restore_daemon()
-{
-    SERVICE=$1
-
-    if [ -f /tmp/${SERVICE}.restart ]; then
-        configure_and_restart_service $SERVICE
-        rm /tmp/${SERVICE}.restart
-    fi
-}
-
-autostart_daemons()
-{
-    daemon=""
-    for daemon in ${AUTOSTART}
-    do
-        echo "Auto-configuring Likewise ${daemon} service"
-        configure_and_start_service "${daemon}"
-        if [ -f /tmp/${daemon}.restart ]; then
-            rm /tmp/${daemon}.restart
-        fi
-    done
-}
-
-restore_daemons()
-{
-    daemon=""
-    for daemon in ${DAEMONS}
-    do
-        echo "Restoring Likewise ${daemon} service"
-        restore_daemon "${daemon}"
-    done
 }
 
 enable_plugin()
 {
     PLUGIN_DIR=LWDSPlugin.dsplug
-    PLUGIN_DIR_OPEN=LWIDSPlugin.dsplug
-    PLUGIN_DIR_ENT=LWEDSPlugin.dsplug
     SRC_DIR=/opt/likewise/lib
     FRAMEWORK_DIR="/System/Library/Frameworks/DirectoryService.framework/Resources/Plugins"
     LIBRARY_DS_DIR="/Library/DirectoryServices/PlugIns"
 
-    # Cleanup old former plugin links
-    if [ -h $FRAMEWORK_DIR/$PLUGIN_DIR_OPEN ]; then
-        /bin/rm -f $FRAMEWORK_DIR/$PLUGIN_DIR_OPEN
-    fi
-    if [ -h $FRAMEWORK_DIR/$PLUGIN_DIR_ENT ]; then
-        /bin/rm -f $FRAMEWORK_DIR/$PLUGIN_DIR_ENT
-    fi
+    for plugin in LWIDSPlugIn LWEDSPlugIn LWDSPlugin ; do
+        path="$FRAMEWORK_DIR/${plugin}.dsplug"
+        if [ -h "${path}" ]; then
+            run_or_fail "rm -fv ${path}"
+        fi
+    done
 
-    # Cleanup prior plugin link
-    if [ -h $FRAMEWORK_DIR/$PLUGIN_DIR ]; then
-        /bin/rm -f $FRAMEWORK_DIR/$PLUGIN_DIR
-    fi
-
-    if [ -h $LIBRARY_DS_DIR/$PLUGIN_DIR ]; then
-        /bin/rm -r $LIBRARY_DS_DIR/$PLUGIN_DIR
-    fi
+    for plugin in LWIDSPlugIn LWEDSPlugIn LWDSPlugin ; do
+        path="$LIBRARY_DS_DIR/${plugin}.dsplug"
+        if [ -d "${path}" ]; then
+            run_or_fail "rm -r ${path}"
+        fi
+    done
 
     # Install new plugin
-    mkdir -p $LIBRARY_DS_DIR
-    cp -r $SRC_DIR/$PLUGIN_DIR $LIBRARY_DS_DIR/$PLUGIN_DIR
+    run_or_fail "mkdir -p $LIBRARY_DS_DIR"
+    run_or_fail "cp -r $SRC_DIR/$PLUGIN_DIR $LIBRARY_DS_DIR/$PLUGIN_DIR"
 
     if [ -f /usr/bin/setfile ]; then
-        setfile -a "V" /opt
+        run_or_fail "/usr/bin/setfile -a V /opt"
     else
         grep opt /.hidden > /dev/null
         if [ $? -ne 0 ]; then
@@ -268,8 +216,8 @@ enable_plugin()
     fi
 
     killall DirectoryService
+    sleep 5
 
-    sleep 3
 }
 
 configure_logon_message_application()
@@ -280,6 +228,18 @@ configure_logon_message_application()
         defaults write /Library/Preferences/loginwindow AutoLaunchedApplicationDictionary -array-add '{ "Path" = "/opt/likewise/bin/Likewise Logon Message.app"; "Hide" = "0"; }'
     else
         echo "Likewise Logon Message application already configured"
+    fi
+}
+
+configure_agent()
+{
+    agent_name="$1"
+    AGENT_PLIST=/Library/LaunchAgents/$agent_name.plist
+    AGENT_PLIST_INSTALL=/etc/likewise/LaunchAgents/$agent_name.plist
+
+    if [ -f $AGENT_PLIST_INSTALL ]; then
+        #log "Installing login agent $agent_name"
+        run_or_fail "cp $AGENT_PLIST_INSTALL $AGENT_PLIST"
     fi
 }
 
@@ -294,230 +254,363 @@ import_5_0123_file()
     DEST=$3
 
     if [ -f $SOURCE ]; then
-        $CONVERT $COMMAND $SOURCE $DEST > /dev/null 2>&1
+        run_quiet "$CONVERT $COMMAND $SOURCE $DEST"
         if [ $? -ne 0 ]; then
-            log_info "Error converting ${SOURCE} to new format."
+            log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE."
             return 1
         fi
 
         if [ -n "$DEST" -a -f "$DEST" ]; then
-            $REGIMPORT $DEST > /dev/null 2>&1
+            run_quiet "$REGIMPORT $DEST"
             if [ $? -ne 0 ]; then
-                log_info "Error importing ${DEST} into the registry."
+                log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE and $DEST."
                 return 1
             fi
         fi
-        return 0
     fi
-    log_info "Unable to find ${SOURCE}."
-    return 1
+    return 0
 }
 
 restore_5_0123_configuration()
 {
     CONVERT="/opt/likewise/bin/conf2reg"
 
-    if test -d $UPGRADEDIR5; then
-        echo "Finalizing upgrade process"
-    else
-        return 0;
+    if [ -z "$UPGRADING_FROM_5_0123" ]; then
+        return 0
     fi
 
-    echo "Converting former lsassd.conf settings for Likewise Registry"
-    import_5_0123_file "--lsass" "${UPGRADEDIR5}/lsassd.conf" \
-        "${UPGRADEDIR5}/lsassd.conf.reg"
+    import_5_0123_file "--lsass" "${UPGRADEDIR}/lsassd.conf" \
+        "${UPGRADEDIR}/lsassd.conf.reg"
 
-    echo "Converting former netlogond.conf settings for Likewise Registry"
-    import_5_0123_file "--netlogon" "${UPGRADEDIR5}/netlogon.conf" \
-        "${UPGRADEDIR5}/netlogon.conf.reg"
+    import_5_0123_file "--netlogon" "${UPGRADEDIR}/netlogon.conf" \
+        "${UPGRADEDIR}/netlogon.conf.reg"
 
-    echo "Converting former eventlogd.conf settings for Likewise Registry"
-    import_5_0123_file "--eventlog" "${UPGRADEDIR5}/eventlogd.conf" \
-        "${UPGRADEDIR5}/eventlogd.conf.reg"
+    import_5_0123_file "--eventlog" "${UPGRADEDIR}/eventlogd.conf" \
+        "${UPGRADEDIR}/eventlogd.conf.reg"
 
-    echo "Converting former password store database for Likewise Registry"
-    import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR5}/pstore.db"
-
-    rm -r "${UPGRADEDIR5}"
+    import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR}/pstore.db"
 }
 
 restore_6_0_configuration()
 {
-    if test -d $UPGRADEDIR6; then
-        echo "Finalizing upgrade process"
-    else
-        return 0;
+    if [ -z "$UPGRADING_FROM_6_0" ]; then
+        return 0
     fi
 
-    if [ -f "${UPGRADEDIR6}/registry.db" ]; then
-        echo "Restoring /var/lib/likewise/db/registry.db"
-        cp "${UPGRADEDIR6}/registry.db" "/var/lib/likewise/db/registry.db"
-        chmod 700 "/var/lib/likewise/db/registry.db"
+    if [ -f "${UPGRADEDIR}/registry.db" ]; then
+        #log "Restoring /var/lib/likewise/db/registry.db"
+        run_or_fail "mkdir -p /var/lib/likewise/db"
+        run_or_fail "chmod 700 /var/lib/likewise/db"
+        run_or_fail "chown 0:80 /var/lib/likewise/db"
+
+        run_or_fail "cp ${UPGRADEDIR}/registry.db /var/lib/likewise/db/registry.db"
+        run_or_fail "chmod 700 /var/lib/likewise/db/registry.db"
     fi
 
-    if [ -f "${UPGRADEDIR6}/sam.db" ]; then
-        echo "Restoring /var/lib/likewise/db/sam.db"
-        cp "${UPGRADEDIR6}/sam.db" "/var/lib/likewise/db/sam.db"
-        chmod 700 "/var/lib/likewise/db/sam.db"
+    if [ -f "${UPGRADEDIR}/sam.db" ]; then
+        #log "Restoring /var/lib/likewise/db/sam.db"
+        run_or_fail "mkdir -p /var/lib/likewise/db"
+        run_or_fail "chmod 700 /var/lib/likewise/db"
+        run_or_fail "chown 0:80 /var/lib/likewise/db"
+
+        run_or_fail "cp ${UPGRADEDIR}/sam.db /var/lib/likewise/db/sam.db"
+        run_or_fail "chmod 700 /var/lib/likewise/db/sam.db"
     fi
 
-    if [ -f "${UPGRADEDIR6}/lwi_events.db" ]; then
-        echo "Restoring /var/lib/likewise/db/lwi_events.db"
-        cp "${UPGRADEDIR6}/lwi_events.db" "/var/lib/likewise/db/lwi_events.db"
-        chmod 700 "/var/lib/likewise/db/lwi_events.db"
+    if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
+        #log "Restoring /var/lib/likewise/db/lwi_events.db"
+        run_or_fail "mkdir -p /var/lib/likewise/db"
+        run_or_fail "chmod 700 /var/lib/likewise/db"
+        run_or_fail "chown 0:80 /var/lib/likewise/db"
+
+        run_or_fail "cp ${UPGRADEDIR}/lwi_events.db /var/lib/likewise/db/lwi_events.db"
+        run_or_fail "chmod 700 /var/lib/likewise/db/lwi_events.db"
     fi
 
-    if [ -f "${UPGRADEDIR6}/lsass-adcache.db" ]; then
-        echo "Restoring /var/lib/likewise/db/lsass-adcache.db"
-        cp "${UPGRADEDIR6}/lsass-adcache.db" "/var/lib/likewise/db/lsass-adcache.db"
-        chmod 700 "/var/lib/likewise/db/lsass-adcache.db"
+    if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
+        #log "Restoring /var/lib/likewise/db/lsass-adcache.db"
+        run_or_fail "mkdir -p /var/lib/likewise/db"
+        run_or_fail "chmod 700 /var/lib/likewise/db"
+        run_or_fail "chown 0:80 /var/lib/likewise/db"
+
+        run_or_fail "cp ${UPGRADEDIR}/lsass-adcache.db /var/lib/likewise/db/lsass-adcache.db"
+        run_or_fail "chmod 700 /var/lib/likewise/db/lsass-adcache.db"
     fi
 
-    rm -r "${UPGRADEDIR6}"
+    run_quiet "rm -r ${UPGRADEDIR}"
 }
 
-import_registry()
+restore_6_1_configuration()
 {
-    REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg lwdsplugin.reg lwiod.reg rdr.reg npfs.reg srv.reg pvfs.reg dfs.reg srvsvcd.reg nfs.reg reapsysl.reg dcerpcd.reg"
-    REGFILES_IMPORT="lsassd-import.reg"
-    REGUPGRADE="/opt/likewise/bin/lwregshell upgrade"
+    if [ -z "$UPGRADING_FROM_6_1" ]; then
+        return 0
+    fi
+
+    if [ -f "${UPGRADEDIR}/registry.db" ]; then
+        #log "Restoring /var/lib/likewise/db/registry.db"
+        run_or_fail "mkdir -p /var/lib/likewise/db"
+        run_or_fail "chmod 700 /var/lib/likewise/db"
+        run_or_fail "chown 0:80 /var/lib/likewise/db"
+
+        run_or_fail "cp ${UPGRADEDIR}/registry.db /var/lib/likewise/db/registry.db"
+        run_or_fail "chmod 700 /var/lib/likewise/db/registry.db"
+    fi
+
+    if [ -f "${UPGRADEDIR}/sam.db" ]; then
+        #log "Restoring /var/lib/likewise/db/sam.db"
+        run_or_fail "mkdir -p /var/lib/likewise/db"
+        run_or_fail "chmod 700 /var/lib/likewise/db"
+        run_or_fail "chown 0:80 /var/lib/likewise/db"
+
+        run_or_fail "cp ${UPGRADEDIR}/sam.db /var/lib/likewise/db/sam.db"
+        run_or_fail "chmod 700 /var/lib/likewise/db/sam.db"
+    fi
+
+    if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
+        #log "Restoring /var/lib/likewise/db/lwi_events.db"
+        run_or_fail "mkdir -p /var/lib/likewise/db"
+        run_or_fail "chmod 700 /var/lib/likewise/db"
+        run_or_fail "chown 0:80 /var/lib/likewise/db"
+
+        run_or_fail "cp ${UPGRADEDIR}/lwi_events.db /var/lib/likewise/db/lwi_events.db"
+        run_or_fail "chmod 700 /var/lib/likewise/db/lwi_events.db"
+    fi
+
+    if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
+        #log "Restoring /var/lib/likewise/db/lsass-adcache.db"
+        run_or_fail "mkdir -p /var/lib/likewise/db"
+        run_or_fail "chmod 700 /var/lib/likewise/db"
+        run_or_fail "chown 0:80 /var/lib/likewise/db"
+
+        run_or_fail "cp ${UPGRADEDIR}/lsass-adcache.db /var/lib/likewise/db/lsass-adcache.db"
+        run_or_fail "chmod 700 /var/lib/likewise/db/lsass-adcache.db"
+    fi
+
+    run_quiet "rm -r ${UPGRADEDIR}"
+}
+
+import_registry_configurations()
+{
+    REGIMPORT='/opt/likewise/bin/lwregshell import'
+
+    log "Importing registry..."
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/dcerpcd.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/eventlogd.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/lsassd.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/lwiod.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/lwreg.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/netlogond.reg"
+    run_or_fail "$REGIMPORT /opt/likewise/share/config/lwdsplugin.reg"
+}
+
+determine_upgrade_type()
+{
+    PRESERVEDVERSIONFILE="${UPGRADEDIR}/VERSION"
+
+    if [ -f $PRESERVEDVERSIONFILE ]; then
+        run_or_fail "cat $PRESERVEDVERSIONFILE"
+        if [ -n "`grep '^VERSION=5.0' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_5_0123=1
+            log "Upgrading from Likewise Identity Services Open 5.0"
+        elif [ -n "`grep '^VERSION=5.1' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_5_0123=1
+            log "Upgrading from Likewise Identity Services Open 5.1."
+        elif [ -n "`grep '^VERSION=5.2' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_5_0123=1
+            log "Upgrading from Likewise Identity Services Open 5.2."
+        elif [ -n "`grep '^VERSION=5.3' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_5_0123=1
+            log "Upgrading from Likewise Identity Services Open 5.3."
+        elif [ -n "`grep '^VERSION=6.0' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_6_0=1
+            log "Upgrading from Likewise Open 6.0."
+        elif [ -n "`grep '^VERSION=6.1' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_6_1=1
+            log "Upgrading from Likewise Open 6.1."
+        fi
+    fi
+}
+
+import_5_0123_file()
+{
+    CONVERT="/opt/likewise/bin/conf2reg"
     REGIMPORT="/opt/likewise/bin/lwregshell import"
 
-    for regfile in ${REGFILES}
-    do
-        FILEPATH="/opt/likewise/share/config/${regfile}"
-        if [ -f ${FILEPATH} ]
-        then
-            echo "Upgrading registry settings from (${FILEPATH})"
-            ${REGUPGRADE} ${FILEPATH} > /dev/null 2>&1
-            exitcode=$?
+    COMMAND=$1
+    SOURCE=$2
+    # DEST is not necessary for some commands.
+    DEST=$3
 
-            if [ $exitcode -ne '0' ]
-            then
-                echo "There was an error importing ${FILEPATH} into the registry."
+    if [ -f $SOURCE ]; then
+        run_quiet "$CONVERT $COMMAND $SOURCE $DEST"
+        if [ $? -ne 0 ]; then
+            log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE."
+            return 1
+        fi
+
+        if [ -n "$DEST" -a -f "$DEST" ]; then
+            run_quiet "$REGIMPORT $DEST"
+            if [ $? -ne 0 ]; then
+                log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE and $DEST."
+                return 1
             fi
         fi
-    done
-    for regfile in ${REGFILES_IMPORT}
-    do
-        FILEPATH="/opt/likewise/share/config/${regfile}"
-        if [ -f ${FILEPATH} ]
-        then
-            echo "Importing registry settings from (${FILEPATH})"
-            ${REGIMPORT} ${FILEPATH} > /dev/null 2>&1
-            exitcode=$?
-
-            if [ $exitcode -ne '0' ]
-            then
-                echo "There was an error importing ${FILEPATH} into the registry."
-            fi
-        fi
-    done
+    fi
+    return 0
 }
 
-restore_configuration()
+restore_5_0123_configuration()
 {
-    domainjoin_cli=/opt/likewise/bin/domainjoin-cli
-    get_current_domain=/opt/likewise/bin/lw-get-current-domain
+    CONVERT="/opt/likewise/bin/conf2reg"
 
-    # This starts all needed likewise services
-    if [ -x "$domainjoin_cli" ]; then
-        $domainjoin_cli query > /dev/null 2>&1
+    if [ -z "$UPGRADING_FROM_5_0123" ]; then
+        return 0
     fi
 
-    if [ -x "$get_current_domain" ]; then
-        $get_current_domain > /dev/null 2>&1
-        if [ $? -eq 0 ]; then
-            if [ -x "$domainjoin_cli" ]; then
-                $domainjoin_cli configure --enable pam > /dev/null 2>&1
-                $domainjoin_cli configure --enable nsswitch > /dev/null 2>&1
-            fi
+    import_5_0123_file "--lsass" "${UPGRADEDIR}/lsassd.conf" \
+        "${UPGRADEDIR}/lsassd.conf.reg"
+
+    import_5_0123_file "--netlogon" "${UPGRADEDIR}/netlogon.conf" \
+        "${UPGRADEDIR}/netlogon.conf.reg"
+
+    import_5_0123_file "--eventlog" "${UPGRADEDIR}/eventlogd.conf" \
+        "${UPGRADEDIR}/eventlogd.conf.reg"
+
+    import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR}/pstore.db"
+}
+
+relocate_domain_separator()
+{
+    DomainSeparator=`/opt/likewise/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+
+    if [ -n "${DomainSeparator}" ]; then
+        if [ "$DomainSeparator" = "\\\\" ]; then
+            DomainSeparator="\\"
         fi
+
+        run_quiet /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
     fi
 }
 
+relocate_space_replacement()
+{
+    SpaceReplacement=`/opt/likewise/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+
+    if [ -n "${SpaceReplacement}" ]; then
+        run_quiet /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
+    fi
+}
+
+fix_60_registry()
+{
+    REGCLEANUP="/opt/likewise/bin/lwregshell cleanup"
+
+    if [ -z "$UPGRADING_FROM_6_0" ]; then
+        return 0
+    fi
+
+    # Migrate pstore entries from default to joined domain
+    run "/opt/likewise/bin/regupgr61.sh --install"
+
+    # Migrate some other entries
+    relocate_domain_separator
+    relocate_space_replacement
+
+    run_or_fail "${REGCLEANUP} /opt/likewise/share/config/dcerpcd.reg"
+    run_or_fail "${REGCLEANUP} /opt/likewise/share/config/eventlogd.reg"
+    run_or_fail "${REGCLEANUP} /opt/likewise/share/config/lsassd.reg"
+    run_or_fail "${REGCLEANUP} /opt/likewise/share/config/lwiod.reg"
+    run_or_fail "${REGCLEANUP} /opt/likewise/share/config/lwreg.reg"
+    run_or_fail "${REGCLEANUP} /opt/likewise/share/config/netlogond.reg"
+}
+
+switch_to_open_provider()
+{
+    _value='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
+    _path='/opt/likewise/lib/liblsass_auth_provider_ad_open.so'
+
+    run_quiet "/opt/likewise/bin/lwregshell set_value $_value Path $_path"
+}
 
 ##
 ## Main
 ##
 
-UPGRADEDIR5=/tmp/lw-upgrade-5
-UPGRADEDIR6=/tmp/lw-upgrade-6
-AUTOSTART="netlogon lwio dcerpc eventlog lsass"
-DAEMONS=""
+log "Finalizing Likewise installation process"
 
-echo "Finalizing Likewise installation process"
+ConfigureDirectoryOwners
 
-# Start service manager for registry import
-configure_and_start_lwsmd
+determine_upgrade_type
 
-# Import configuration files and the old pstore into the registry
-restore_5_0123_configuration
 restore_6_0_configuration
 
-# Populate registry
-import_registry
+restore_6_1_configuration
 
-# Stop/start service manager after registry import
-restart_lwsmd
+run_or_fail "/opt/likewise/sbin/lwsmd --start-as-daemon --loglevel debug"
 
-# Start any automatically-started daemons
-autostart_daemons
+restore_5_0123_configuration
 
-# Restore the daemon state
-restore_daemons
+import_registry_configurations
 
-# Restore configuration if still joined to a domain
-restore_configuration
+fix_60_registry
+
+switch_to_open_provider
+
+run_or_fail "/opt/likewise/bin/lwsm shutdown"
+
+configure_and_start_lwsmd
+
+run "/opt/likewise/bin/domainjoin-cli configure --enable pam"
+run "/opt/likewise/bin/domainjoin-cli configure --enable nsswitch"
 
 # Configure Likewise DS plugin
 enable_plugin
 
 # Add Likewise DS Plugin to Search list
-/usr/bin/dscl /Search -create / SearchPolicy CSPSearchPath
-/usr/bin/dscl /Search -append / CSPSearchPath "/Likewise - Active Directory"
+run "/usr/bin/dscl /Search -create / SearchPolicy CSPSearchPath"
+run "/usr/bin/dscl /Search -append / CSPSearchPath '/Likewise - Active Directory'"
 
 # Create Global Login Item entry for Likewise Logon Message.app
 # to display licensing and password expiration warning messages on
 # user logon activity.
 configure_logon_message_application
 
+# Add the ticketcopy login agent
+configure_agent com.likewisesoftware.ticketcopy
+
 # Add Likewise Utilities folder to Applications location in Finder. Shortcut
 # the Likewise Domain Join application to here.
-if test -d /Applications/Likewise\ Utilities; then
-    echo "Likewise Utilities folder already exists"
+if [ -d '/Applications/Likewise Utilities' ]; then
+    _log "Likewise Utilities folder already exists"
 else
-    mkdir -p /Applications/Likewise\ Utilities
-    if test -f /Applications/Likewise\Utilities/Likewise\ Domain\ Join; then
-        echo "Likewise Domain Join application already created in utilities folder"
-    else
-        ln -s /opt/likewise/bin/Likewise\ Domain\ Join.app /Applications/Likewise\ Utilities/.
-    fi
+    run "mkdir -p '/Applications/Likewise Utilities'"
 fi
 
-if /opt/likewise/bin/lw-get-current-domain > /dev/null 2>&1; then
-    JOINED="yes"
-fi
-
-if test -d $UPGRADEDIR5; then
-    log_info "Your former Likewise 5.X software has been successfully upgraded."
-fi
-
-if test -d $UPGRADEDIR6; then
-    log_info "Your former Likewise 6.X software has been successfully upgraded."
-fi
-
-if [ -z "$JOINED" ]; then
-    log_info ""
-    log_info "Use the domainjoin-cli program to join your computer to an Active "
-    log_info "Directory domain which will enable logons to your system with Active Directory "
-    log_info "user accounts."
-    open -a /opt/likewise/bin/Likewise\ Domain\ Join.app/Contents/MacOS/Likewise\ Domain\ Join&
+if [ -f '/Applications/Likewise Utilities/Likewise Domain Join.app' ]; then
+    _log "Likewise Domain Join application already created in utilities folder"
 else
-    log_info ""
-    log_info "Your computer is joined to the following domain:"
-    domainjoin_cli=/opt/likewise/bin/domainjoin-cli
-    log_info "`$domainjoin_cli query`"
+    run "ln -s '/opt/likewise/bin/Likewise Domain Join.app' '/Applications/Likewise Utilities/Likewise Domain Join.app'"
 fi
 
+domain=`/opt/likewise/bin/lw-lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
 
+if [ -n "$UPGRADING_FROM_5_0123" ]; then
+    log "Likewise Identity Services Open 5.X has been successfully upgraded."
+fi
+
+if [ -n "$UPGRADING_FROM_6_0" ]; then
+    log "Likewise Open 6.0 has been successfully upgraded."
+fi
+
+if [ -z "$domain" ]; then
+    _log ""
+    _log "Use the domainjoin-cli program to join your computer to an Active "
+    _log "Directory domain which will enable logons to your system with Active Directory "
+    _log "user accounts."
+    open -a '/opt/likewise/bin/Likewise Domain Join.app/Contents/MacOS/Likewise Domain Join'&
+else
+    _log ""
+    _log "Your computer is joined to $domain"
+fi
+
+exit 0
