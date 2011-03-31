@@ -5,7 +5,6 @@ make()
 	evtfutils.c \
 	evtlogger.c \
 	evtrpcmem.c \
-	evtstack.c  \
 	evtstr.c    \
 	globals.c   \
 	sysfuncs.c"

@@ -211,53 +211,6 @@ EVTEscapeString(
     );
 
 DWORD
-EVTAllocateStringPrintf(
-    PSTR* ppszOutputString,
-    PCSTR pszFormat,
-    ...
-    );
-
-DWORD
-EVTAllocateStringPrintfV(
-    PSTR*   ppszOutputString,
-    PCSTR   pszFormat,
-    va_list args
-    );
-
-DWORD
-EVTStackPush(
-    PVOID pItem,
-    PEVT_STACK* ppStack
-    );
-
-PVOID
-EVTStackPop(
-    PEVT_STACK* ppStack
-    );
-
-PVOID
-EVTStackPeek(
-    PEVT_STACK pStack
-    );
-
-DWORD
-EVTStackForeach(
-    PEVT_STACK pStack,
-    PFN_EVT_FOREACH_STACK_ITEM pfnAction,
-    PVOID pUserData
-    );
-
-PEVT_STACK
-EVTStackReverse(
-    PEVT_STACK pStack
-    );
-
-VOID
-EVTStackFree(
-    PEVT_STACK pStack
-    );
-
-DWORD
 EVTProcessConfig(
     PCSTR pszConfigKey,
     PCSTR pszPolicyKey,
