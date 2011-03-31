@@ -3,6 +3,10 @@ PKG_COMPONENTS=""
 function package_populate
 {
    mkdir -p ${POPULATE_ROOT_DIR}
-   mkdir -p ${POPULATE_PREFIX_DIR}
+   mkdir -p ${POPULATE_PREFIX_DIR}-upgrade
+
+   if [ "${BUILD_OS_TYPE}" = "aix" ]; then
+       echo "This file makes the package likewise.open.upgrade work." > ${POPULATE_PREFIX_DIR}-upgrade/LikewiseOpenUpgrade.README
+   fi
    return 0
 }

@@ -5,7 +5,7 @@ UPGRADEDIR=/opt/likewise-upgrade
 LOG=/var/log/likewise-open-install.log
 TLOG=/tmp/LikewiseOpenTemp.txt
 
-DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open likewise-winbindd centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
+DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open likewise-winbindd centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd"
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -94,15 +94,15 @@ determine_upgrade_type()
     VERSIONFILE=/opt/likewise/data/VERSION
     ENTERPRISE_VERSIONFILE=/opt/likewise/data/ENTERPRISE_VERSION
 
-    if [ -f $ENTERPRISE_VERSIONFILE ]; then
-        log "$ENTERPRISE_VERSIONFILE exists: Uninstall Likewise Enterprise before proceeding."
-        exit 1
-    elif [ -f /opt/likewise/sbin/gpagentd ]; then
-        log "/opt/likewise/sbin/gpagentd exists: Uninstall Likewise Enterprise before proceeding."
-        exit 1
-    fi
+#    if [ -f $ENTERPRISE_VERSIONFILE ]; then
+#        log "$ENTERPRISE_VERSIONFILE exists: Uninstall Likewise Enterprise before proceeding."
+#        exit 1
+#    elif [ -f /opt/likewise/sbin/gpagentd ]; then
+#        log "/opt/likewise/sbin/gpagentd exists: Uninstall Likewise Enterprise before proceeding."
+#        exit 1
+#    fi
 
-    if [ -f $VERSIONFILE ]; then
+    if [ -f "$VERSIONFILE" ]; then
         run_or_fail "mkdir -p ${UPGRADEDIR}"
         run_or_fail "cp $VERSIONFILE ${UPGRADEDIR}"
 
@@ -175,7 +175,7 @@ postinstall()
             run_quiet "/etc/rc.d/init.d/$daemon stop"
         fi
         PIDS=`ps -eaf | grep $daemon | grep -v grep | awk '{ print $2 }'`
-        if [ -n $PIDS ]; then
+        if [ -n "$PIDS" ]; then
             run_quiet "kill -KILL $PIDS"
         fi
     done
