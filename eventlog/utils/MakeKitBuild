@@ -12,6 +12,6 @@ make()
 	LIB=eventlogutils \
 	SOURCES="$UTILS_SOURCES" \
 	INCLUDEDIRS="../include" \
-	HEADERDEPS="dce/rpc.h reg/lwreg.h" \
+	HEADERDEPS="dce/rpc.h reg/lwreg.h lwmem.h lwstr.h" \
 	LIBDEPS="dcerpc regclient"
 }

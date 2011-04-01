@@ -9,7 +9,7 @@ make()
 	LIB=eventlog \
 	SOURCES="binding.c eventlog.c eventlog_cstub.c" \
 	INCLUDEDIRS=". ../include" \
-	HEADERDEPS="dce/rpc.h lwrpcrt/lwrpcrt.h" \
+	HEADERDEPS="dce/rpc.h lwrpcrt/lwrpcrt.h lwmem.h lwstr.h" \
 	DEPS="eventlog_h.h" \
 	LIBDEPS="dcerpc eventlogutils lwbase_nothr"
 }
