@@ -1322,6 +1322,11 @@ MemDbRecurseRegistry(
     } while (status != ERROR_EMPTY);
 
 cleanup:
+    if (status == ERROR_EMPTY)
+    {
+        status = 0;
+    }
+
     MemDbStackFinish(hStack);
     return status;
 
@@ -1438,6 +1443,11 @@ MemDbRecurseDepthFirstRegistry(
     } while (status != ERROR_EMPTY);
 
 cleanup:
+    if (status == ERROR_EMPTY)
+    {
+        status = 0;
+    }
+
     MemDbStackFinish(hStack);
     return status;
 
