@@ -90,9 +90,14 @@ pfMemRegExportToFile(
     PWSTR subStringPrefix)
 {
     DWORD dwError = 0;
-    PSTR pDumpString = NULL;
+    PSTR pszDumpString = NULL;
     PSTR pszValueName = NULL;
     PSTR pszEnumValue = NULL;
+    PSTR pszStringSecurityDescriptor = NULL;
+    SECURITY_INFORMATION SecInfoAll = OWNER_SECURITY_INFORMATION
+                                     |GROUP_SECURITY_INFORMATION
+                                     |DACL_SECURITY_INFORMATION
+                                     |SACL_SECURITY_INFORMATION;
     DWORD dwDumpStringLen = 0;
     DWORD index = 0;
     DWORD enumIndex = 0;
@@ -111,13 +116,28 @@ pfMemRegExportToFile(
                   REG_WKEY, // DWORD Type
                   NULL, // LW_PVOID value,
                   0, //     DWORD valueLen,
-                  &pDumpString,
+                  &pszDumpString,
                   &dwDumpStringLen);
     /* Map to NT error status ? */
     BAIL_ON_NT_STATUS(dwError);
 
-    fprintf(wfp, "%.*s\n", dwDumpStringLen, pDumpString);
-    LWREG_SAFE_FREE_STRING(pDumpString);
+    fprintf(wfp, "%.*s\n", dwDumpStringLen, pszDumpString);
+    LWREG_SAFE_FREE_STRING(pszDumpString);
+
+    if (pEntry->NodeType == REGMEM_TYPE_KEY &&
+        pEntry->SecurityDescriptorAllocated)
+    {
+        dwError = RegNtStatusToWin32Error(
+                     RtlAllocateSddlCStringFromSecurityDescriptor(
+                         &pszStringSecurityDescriptor,
+                         //(PSECURITY_DESCRIPTOR_RELATIVE)
+                         pEntry->SecurityDescriptor,
+                         SDDL_REVISION_1,
+                         SecInfoAll));
+        BAIL_ON_NT_STATUS(dwError);
+        fprintf(wfp, "@security=%s\n", pszStringSecurityDescriptor);
+        LWREG_SAFE_FREE_STRING(pszStringSecurityDescriptor);
+    }
 
     if (pEntry->Values)
     {
@@ -152,13 +172,13 @@ pfMemRegExportToFile(
                               valueType,
                               Value->Data,
                               Value->DataLen,
-                              &pDumpString,
+                              &pszDumpString,
                               &dwDumpStringLen);
                 /* Map to NT error status ? */
                 BAIL_ON_NT_STATUS(dwError);
 
-                fprintf(wfp, "\t%.*s\n", dwDumpStringLen, pDumpString);
-                LWREG_SAFE_FREE_MEMORY(pDumpString);
+                fprintf(wfp, "\t%.*s\n", dwDumpStringLen, pszDumpString);
+                LWREG_SAFE_FREE_STRING(pszDumpString);
             }
 
             /* Deal with default values now */
@@ -173,13 +193,13 @@ pfMemRegExportToFile(
                               valueType,
                               Attr->pDefaultValue,
                               Attr->DefaultValueLen,
-                              &pDumpString,
+                              &pszDumpString,
                               &dwDumpStringLen);
                 /* Map to NT error status ? */
                 BAIL_ON_NT_STATUS(dwError);
     
-                fprintf(wfp, "\t%.*s\n", dwDumpStringLen, pDumpString);
-                LWREG_SAFE_FREE_MEMORY(pDumpString);
+                fprintf(wfp, "\t%.*s\n", dwDumpStringLen, pszDumpString);
+                LWREG_SAFE_FREE_STRING(pszDumpString);
             }
  
             if (Attr->pwszDocString &&
@@ -193,13 +213,13 @@ pfMemRegExportToFile(
                               REG_WSZ,
                               Attr->pwszDocString,
                               LwRtlWC16StringNumChars(Attr->pwszDocString),
-                              &pDumpString,
+                              &pszDumpString,
                               &dwDumpStringLen);
                 /* Map to NT error status ? */
                 BAIL_ON_NT_STATUS(dwError);
     
-                fprintf(wfp, "\t%.*s\n", dwDumpStringLen, pDumpString);
-                LWREG_SAFE_FREE_MEMORY(pDumpString);
+                fprintf(wfp, "\t%.*s\n", dwDumpStringLen, pszDumpString);
+                LWREG_SAFE_FREE_STRING(pszDumpString);
             }
 
             switch (Attr->RangeType)
@@ -240,12 +260,16 @@ pfMemRegExportToFile(
                     break;
             }
 
-            LWREG_SAFE_FREE_MEMORY(pDumpString);
+            LWREG_SAFE_FREE_STRING(pszDumpString);
             fprintf(wfp, "}\n");
         }
     }
     fprintf(wfp, "\n");
 cleanup:
+    LWREG_SAFE_FREE_STRING(pszStringSecurityDescriptor);
+    LWREG_SAFE_FREE_STRING(pszDumpString);
+    LWREG_SAFE_FREE_STRING(pszValueName);
+    LWREG_SAFE_FREE_MEMORY(pszEnumValue);
     return NULL;
 
 error:
