@@ -133,8 +133,8 @@ LWIOpenEventLog(
     TRY
     {
         dwError = RpcLWIOpenEventLog(eventBindingLocal,
-                                     "unused",
-                                     "unused");
+                                     (idl_char *)"unused",
+                                     (idl_char *)"unused");
     }
     CATCH (rpc_x_auth_method)
     {
