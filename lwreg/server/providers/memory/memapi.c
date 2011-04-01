@@ -510,7 +510,40 @@ MemDeleteKeyValue(
     IN OPTIONAL PCWSTR pValueName
     )
 {
-    return 0;
+    NTSTATUS status = 0;
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
+    PREGMEM_VALUE pRegValue = NULL;
+    MEM_REG_STORE_HANDLE hSubKey = NULL;
+
+    hSubKey = pKeyHandle->pKey->hKey;
+    if (pSubKey)
+    {
+        status = MemRegStoreFindNode(
+                     hSubKey,
+                     pSubKey,
+                     &hSubKey);
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    status = MemRegStoreFindNodeValue(
+                 hSubKey,
+                 pValueName,
+                 &pRegValue);
+    BAIL_ON_NT_STATUS(status);
+
+    if (!pRegValue->Data)
+    {
+        status = STATUS_CANNOT_DELETE;
+        BAIL_ON_NT_STATUS(status);
+    }
+    LWREG_SAFE_FREE_MEMORY(pRegValue->Data);
+    pRegValue->DataLen = 0;
+   
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
 }
 
 
@@ -521,7 +554,29 @@ MemDeleteValue(
     IN OPTIONAL PCWSTR pValueName
     )
 {
-    return 0;
+    NTSTATUS status = 0;
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
+    PREGMEM_VALUE pRegValue = NULL;
+
+    status = MemRegStoreFindNodeValue(
+                 pKeyHandle->pKey->hKey,
+                 pValueName,
+                 &pRegValue);
+    BAIL_ON_NT_STATUS(status);
+
+    if (!pRegValue->Data)
+    {
+        status = STATUS_CANNOT_DELETE;
+        BAIL_ON_NT_STATUS(status);
+    }
+    LWREG_SAFE_FREE_MEMORY(pRegValue->Data);
+    pRegValue->DataLen = 0;
+   
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
 }
 
 
