@@ -50,7 +50,7 @@ LWIIsLocalHost(
 {
     DWORD            dwError = 0;
     BOOLEAN          bResult = FALSE;
-    char             localHost[256];
+    char             localHost[256] = {0};
     struct addrinfo* localInfo = NULL;
     struct addrinfo* remoteInfo = NULL;
     PCSTR            pcszLocalHost = NULL;
@@ -68,7 +68,7 @@ LWIIsLocalHost(
     }
 
     dwError = gethostname(localHost, sizeof(localHost) - 1);
-    if ( !LW_IS_NULL_OR_EMPTY_STR(localHost) )
+    if (!LW_IS_EMPTY_STR(localHost))
     {
         dwError = getaddrinfo(localHost, NULL, NULL, &localInfo);
         if ( dwError )
