@@ -13,5 +13,5 @@ make()
 	SOURCES="$UTILS_SOURCES" \
 	INCLUDEDIRS="../include" \
 	HEADERDEPS="dce/rpc.h reg/lwreg.h lwmem.h lwstr.h" \
-	LIBDEPS="dcerpc regclient"
+	LIBDEPS="dcerpc regclient lwadvapi_nothr"
 }
