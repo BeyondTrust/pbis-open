@@ -55,6 +55,7 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 /lib/*.so.*
 /lib/security/*.so
 %endif
+/usr/bin/domainjoin-cli
 %{PrefixDir}/%{_lib}/*.so
 %{PrefixDir}/%{_lib}/*.so.*
 %{PrefixDir}/%{_lib}/lw-svcm/*.so
