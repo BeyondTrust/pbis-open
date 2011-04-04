@@ -290,6 +290,10 @@ MemDbExportToFileThread(
     regDbConn.pMemReg = exportCtx->hKey;
     do
     {
+        clock_gettime(CLOCK_REALTIME, &timeOut);
+        timeOut.tv_sec += 300;  // Make configurable in the registry :/
+        pthread_cond_timedwait(&cv, &mx, &timeOut);
+
         if (ghMemRegRoot)
         {
             exportCtx->wfp = fopen(MEMDB_EXPORT_FILE, "w");
@@ -310,13 +314,9 @@ MemDbExportToFileThread(
                 fclose(exportCtx->wfp);
             }
         }
-        clock_gettime(CLOCK_REALTIME, &timeOut);
-        timeOut.tv_sec += 30;
-        pthread_cond_timedwait(&cv, &mx, &timeOut);
     } while (!exportCtx->bStopThread);
     
     return NULL;
-
 }
 
 VOID
@@ -366,6 +366,108 @@ cleanup:
     }
     LWREG_SAFE_FREE_MEMORY(pwszRootKey);
     return;
+}
+
+
+DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
+{
+    NTSTATUS status = 0;
+    MEM_REG_STORE_HANDLE hRootKey = NULL;
+    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    REG_DB_CONNECTION regDbConn = {0};
+    PWSTR pwszSubKey = NULL;
+
+    if (pItem->type == REG_KEY)
+    {
+        // Stick hRootKey in userContext...
+        status = MemDbOpenKey(
+                      NULL,
+                      NULL,
+                      NULL,
+                      &hRootKey);
+        BAIL_ON_NT_STATUS(status);
+        regDbConn.pMemReg = hRootKey;
+
+        // Open subkeys that exist
+        status = LwRtlWC16StringAllocateFromCString(
+                     &pwszSubKey,
+                     pItem->keyName);
+        BAIL_ON_NT_STATUS(status);
+        status = MemDbOpenKey(
+                      NULL,
+                      &regDbConn,
+                      pwszSubKey,
+                      &hSubKey);
+        if (status == 0)
+        {
+            regDbConn.pMemReg = hSubKey;
+        }
+
+        if (status == 0 || status == STATUS_OBJECT_NAME_NOT_FOUND)
+        {
+            status = MemDbCreateKeyEx(
+                         NULL,
+                         &regDbConn,
+                         pwszSubKey,
+                         0, // IN DWORD dwReserved,
+                         NULL,  // IN OPTIONAL PWSTR pClass,
+                         0, // IN DWORD dwOptions,
+                         0, // IN ACCESS_MASK 
+                         NULL, // IN OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE 
+                         0, // IN ULONG ulSecDescLength,
+                         &hSubKey,
+                         NULL); // OUT OPTIONAL PDWORD pdwDisposition
+            BAIL_ON_NT_STATUS(status);
+        }
+        else
+        {
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        printf("pfImportFile: type=%d valueName=%s\n",
+                pItem->type,
+                pItem->keyName);
+    }
+    else
+    {
+        printf("pfImportFile: type=%d valueName=%s\n",
+                pItem->type,
+                pItem->valueName ? pItem->valueName : "");
+    }
+cleanup:
+    return status;
+error:
+    goto cleanup;
+}
+
+NTSTATUS
+MemDbImportFromFile(
+    PSTR pszImportFile,
+    PFN_REG_CALLBACK pfCallback,
+    HANDLE userContext)
+{
+    DWORD dwError = 0;
+    HANDLE parseH = NULL;
+
+    if (access(pszImportFile, R_OK) == -1)
+    {
+        return 0;
+    }
+    dwError = RegParseOpen(
+                  pszImportFile,
+                  pfCallback,
+                  userContext,
+                  &parseH);
+    dwError = RegParseRegistry(parseH);
+    BAIL_ON_REG_ERROR(dwError);
+
+    RegParseClose(parseH);
+
+cleanup:
+    return 0;
+
+error:
+    goto cleanup;
 }
 
 
@@ -428,10 +530,27 @@ MemDbOpenKey(
      
     if (!hDb)
     {
+        if (pwszFullKeyPath)
+        {
+            status = LwRtlWC16StringDuplicate(
+                         &pwszTmpFullPath,
+                         pwszFullKeyPath);
+            BAIL_ON_NT_STATUS(status);
+        }
+        else
+        {
+            status = LwRtlWC16StringAllocateFromCString(
+                         &pwszTmpFullPath,
+                         HKEY_THIS_MACHINE);
+            BAIL_ON_NT_STATUS(status);
+        }
+ 
         status = MemRegStoreFindNode(
                      ghMemRegRoot,
-                     pwszFullKeyPath,
+                     pwszTmpFullPath,
                      pRegKey);
+        LWREG_SAFE_FREE_MEMORY(pwszTmpFullPath);
+        BAIL_ON_NT_STATUS(status);
     }
     else
     {
@@ -495,43 +614,75 @@ MemDbCreateKeyEx(
     NTSTATUS status = 0;
     MEM_REG_STORE_HANDLE hParentKey = NULL;
     MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PWSTR pwszTmpFullPath = NULL;
+    PWSTR pwszSubKey = NULL;
+    PWSTR pwszPtr = NULL;
+    BOOLEAN bFirstKey = TRUE;
+    BOOLEAN bEndOfString = FALSE;
     
-    hParentKey = hDb->pMemReg;
-
+    
     /*
      * Iterate over subkeys in \ sepearated path.
      */
-    status = MemRegStoreFindNode(
-                 hParentKey,
-                 pcwszSubKey,
-                 &hSubKey);
-
-    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
-    {
-        /* New node for current subkey, add it */
-        status = MemRegStoreAddNode(
-                         hParentKey,
-                         pcwszSubKey,
-                         REGMEM_TYPE_KEY,
-                         pSecDescRel,  // SD parameter
-                         ulSecDescLength,
-                         NULL,
-                         &hParentKey);
-        BAIL_ON_NT_STATUS(status);
-        *phSubKey = hParentKey;
-    }
-    else
-    {
-        /* Current node exists, return subkey handle */
-        *phSubKey = hSubKey;
-    }
-
-    status = MemDbSetKeyAcl(
-                 NULL,
-                 hDb,
-                 pSecDescRel,
-                 ulSecDescLength);
+    status = LwRtlWC16StringDuplicate(&pwszTmpFullPath, pcwszSubKey);
     BAIL_ON_NT_STATUS(status);
+
+    pwszSubKey = pwszTmpFullPath;
+    hParentKey = hDb->pMemReg;
+    do 
+    {
+        pwszPtr = pwstr_wcschr(pwszSubKey, L'\\');
+        if (pwszPtr)
+        {
+            *pwszPtr++ = L'\0';
+        }
+        else
+        {
+            pwszPtr = pwszSubKey;
+            bEndOfString = TRUE;
+        }
+
+        /*
+         * Iterate over subkeys in \ sepearated path.
+         */
+        status = MemRegStoreFindNode(
+                     hParentKey,
+                     pwszSubKey,
+                     &hSubKey);
+        if (status == 0)
+        {
+            hParentKey = hSubKey;
+            *phSubKey = hParentKey;
+        }
+        pwszSubKey = pwszPtr;
+
+        if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+        {
+            /* New node for current subkey, add it */
+            status = MemRegStoreAddNode(
+                             hParentKey,
+                             pwszSubKey,
+                             REGMEM_TYPE_KEY,
+                             pSecDescRel,  // SD parameter
+                             ulSecDescLength,
+                             NULL,
+                             &hParentKey);
+            BAIL_ON_NT_STATUS(status);
+            *phSubKey = hParentKey;
+        }
+    
+        if (pSecDescRel && ulSecDescLength && bFirstKey)
+        {
+            /* Only to this on the first key in path, rest are inherited */
+            status = MemDbSetKeyAcl(
+                         NULL,
+                         hDb,
+                         pSecDescRel,
+                         ulSecDescLength);
+            BAIL_ON_NT_STATUS(status);
+            bFirstKey = FALSE;
+        }
+    } while (status == 0 && !bEndOfString);
 
 
 cleanup:

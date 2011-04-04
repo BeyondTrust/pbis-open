@@ -16,6 +16,7 @@ libregserver_provider_memory_la_SOURCES = \
 libregserver_provider_memory_la_CPPFLAGS = \
     -DLW_ENABLE_THREADS=1         \
     $(AM_CPPFLAGS)                \
+    -I@top_srcdir@ \
     -I@top_srcdir@/server/include \
     -I@top_srcdir@/shellutil \
     @LWBASE_INCLUDES@             \
@@ -23,6 +24,7 @@ libregserver_provider_memory_la_CPPFLAGS = \
 
 libregserver_provider_memory_la_LIBADD = \
     @top_builddir@/shellutil/librsutils.la \
+    @top_builddir@/parse/libregparse.la \
     $(PROVIDER_LIBS) \
     @PTHREAD_LIBS@ \
     @UUID_LIBS@ \

@@ -90,6 +90,12 @@ MemProvider_Initialize(
     {
         *ppFnTable = &gRegMemProviderAPITable;
     }
+
+    MemDbImportFromFile(
+       MEMDB_EXPORT_FILE, 
+       parseCallback,
+       NULL);
+
     return status;
 }
 

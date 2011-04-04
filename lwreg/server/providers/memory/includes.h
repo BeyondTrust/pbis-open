@@ -57,6 +57,7 @@
 #include <reg/lwntreg.h>
 #include <regdef.h>
 
+#include <parse/includes.h>
 #include "regutils.h"
 #include "regparse_r.h"
 #include "rsutils.h"

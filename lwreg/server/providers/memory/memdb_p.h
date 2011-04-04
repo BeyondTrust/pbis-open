@@ -244,3 +244,14 @@ MemDbRecurseDepthFirstRegistry(
 
 VOID MemDbStartExportToFileThread(VOID);
 
+
+NTSTATUS
+MemDbImportFromFile(
+    IN PSTR pszImportFile,
+    IN PFN_REG_CALLBACK parseCallback,
+    IN HANDLE userContext
+    );
+
+
+DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext);
+
