@@ -93,7 +93,7 @@ MemProvider_Initialize(
 
     MemDbImportFromFile(
        MEMDB_EXPORT_FILE, 
-       parseCallback,
+       pfImportFile,
        NULL);
 
     return status;

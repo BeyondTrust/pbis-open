@@ -32,6 +32,12 @@ typedef struct _MEMDB_FILE_EXPORT_CTX
     BOOLEAN bStopThread;
 } MEMDB_FILE_EXPORT_CTX, *PMEMDB_FILE_EXPORT_CTX;
 
+typedef struct _MEMDB_IMPORT_FILE_CTX
+{
+    MEM_REG_STORE_HANDLE hRootKey;
+    MEM_REG_STORE_HANDLE hSubKey;
+} MEMDB_IMPORT_FILE_CTX;
+
 #define MEMDB_EXPORT_FILE "/var/lib/likewise/db/memprovider.exp"
 
 /*
@@ -253,5 +259,4 @@ MemDbImportFromFile(
     );
 
 
-DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext);
-
+DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext);
