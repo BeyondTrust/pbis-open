@@ -49,6 +49,18 @@ typedef const struct
     BOOLEAN bRegistrationRequired;
 } ENDPOINT, *PENDPOINT;
 
+struct _RPC_LW_EVENTLOG_CONNECTION
+{
+    // This value is initialized to &RpcEvtOpen and checked at the beginning of
+    // RPC functions to verify the user did not mix up handle types.
+    PVOID pMagic;
+
+    PACCESS_TOKEN pUserToken;
+    BOOLEAN ReadAllowed;
+    BOOLEAN WriteAllowed;
+    BOOLEAN DeleteAllowed;
+};
+
 DWORD
 EVTRegisterInterface(
     VOID

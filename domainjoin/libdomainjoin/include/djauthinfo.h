@@ -94,6 +94,7 @@ DJLogInformationEvent(
     HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser, // NULL defaults to SYSTEM
+    PCSTR  pszComputer,
     PCSTR  pszCategory,
     PCSTR  pszDescription,
     PCSTR  pszData
@@ -104,6 +105,7 @@ DJLogWarningEvent(
     HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser, // NULL defaults to SYSTEM
+    PCSTR  pszComputer,
     PCSTR  pszCategory,
     PCSTR  pszDescription,
     PCSTR  pszData
@@ -114,6 +116,7 @@ DJLogErrorEvent(
     HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser, // NULL defaults to SYSTEM
+    PCSTR  pszComputer,
     PCSTR  pszCategory,
     PCSTR  pszDescription,
     PCSTR  pszData

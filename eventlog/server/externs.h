@@ -52,11 +52,49 @@ extern PVOID     pgSignalHandlerThread;
 extern pthread_rwlock_t g_dbLock;
 extern DWORD gdwNewEventCount;
 
-#define ENTER_RW_READER_LOCK pthread_rwlock_rdlock(&g_dbLock)
-#define LEAVE_RW_READER_LOCK pthread_rwlock_unlock(&g_dbLock)
+#define ENTER_RW_READER_LOCK(inLock) \
+    do \
+    { \
+        if (!inLock) \
+        { \
+            pthread_rwlock_rdlock(&g_dbLock); \
+            inLock = TRUE; \
+        } \
+    } \
+    while (FALSE)
 
-#define ENTER_RW_WRITER_LOCK pthread_rwlock_wrlock(&g_dbLock)
-#define LEAVE_RW_WRITER_LOCK pthread_rwlock_unlock(&g_dbLock)
+#define LEAVE_RW_READER_LOCK(inLock) \
+    do \
+    { \
+        if (inLock) \
+        { \
+            pthread_rwlock_unlock(&g_dbLock); \
+            inLock = FALSE; \
+        } \
+    } \
+    while (FALSE)
+
+#define ENTER_RW_WRITER_LOCK(inLock) \
+    do \
+    { \
+        if (!inLock) \
+        { \
+            pthread_rwlock_wrlock(&g_dbLock); \
+            inLock = TRUE; \
+        } \
+    } \
+    while (FALSE)
+
+#define LEAVE_RW_WRITER_LOCK(inLock) \
+    do \
+    { \
+        if (inLock) \
+        { \
+            pthread_rwlock_unlock(&g_dbLock); \
+            inLock = FALSE; \
+        } \
+    } \
+    while (FALSE)
 
 #define EVENTLOG_DB_DIR CACHEDIR "/db"
 #define EVENTLOG_DB EVENTLOG_DB_DIR "/lwi_events.db"

@@ -64,93 +64,88 @@ typedef enum
 } EventDbColumnType;
 
 DWORD
-SrvInitEventDatabase();
+LwEvtDbInitEventDatabase();
 
 DWORD
-SrvShutdownEventDatabase();
+LwEvtDbShutdownEventDatabase();
 
 //database actions
 DWORD
-SrvOpenEventDatabase(
-    PHANDLE phDB
+LwEvtDbOpen(
+    sqlite3** ppDb
     );
 
 DWORD
-SrvCloseEventDatabase(
-    HANDLE hDB
+LwEvtDbClose(
+    sqlite3* pDb
     );
 
 DWORD
-SrvEventLogCount(
-    HANDLE hDB,
-    PSTR  sqlFilter,
-    PDWORD pdwNumMatched
+LwEvtDbGetRecordCount(
+    sqlite3 *pDb,
+    WCHAR * pSqlFilter,
+    DWORD * pNumMatched
+    );
+
+VOID
+LwEvtDbFreeRecord(
+    IN VOID (*pFree)(PVOID),
+    IN PLW_EVENTLOG_RECORD pRecord
     );
 
 DWORD
-SrvReadEventLog(
-    HANDLE hDB,
-    DWORD  dwStartingRowId,
-    DWORD  nRecordsPerPage,
-    PSTR  sqlFilter,
-    PDWORD pdwNumReturned,
-    EVENT_LOG_RECORD** eventRecords
+LwEvtDbReadRecords(
+    DWORD (*pAllocate)(DWORD, PVOID*),
+    VOID (*pFree)(PVOID),
+    sqlite3 *pDb,
+    DWORD MaxResults,
+    PCWSTR pSqlFilter,
+    PDWORD pCount,
+    PLW_EVENTLOG_RECORD* ppRecords
     );
 
 DWORD
-SrvWriteEventLog(
-    HANDLE hDB,
-    DWORD cRecords,
-    PEVENT_LOG_RECORD pEventRecords
+LwEvtDbWriteRecords(
+    sqlite3 *pDb,
+    DWORD Count,
+    const LW_EVENTLOG_RECORD* pRecords 
     );
 
 DWORD
-SrvWriteToDB(
-    HANDLE hDB,
-    DWORD cRecords,
-    PEVENT_LOG_RECORD pEventRecords
+LwEvtDbDeleteRecords(
+    sqlite3 *pDb,
+    PCWSTR pSqlFilter
     );
 
 DWORD
-SrvClearEventLog(
-    HANDLE hDB
-    );
-
-DWORD
-SrvDeleteFromEventLog(
-    HANDLE hDB,
-    PSTR   sqlFilter
-    );
-
-DWORD
-SrvEventLogCountOlderThan(
-    HANDLE hDB,
+LwEvtDbEventLogCountOlderThan(
+    sqlite3 *pDb,
     DWORD  dwOlderThan,
     PDWORD pdwNumMatched
     );
 
 DWORD
-SrvLimitDatabaseSize(
-    HANDLE hDB,
+LwEvtDbLimitDatabaseSize(
+    sqlite3 *pDb,
     DWORD dwMaxLogSize
     );
 
 DWORD
-SrvDeleteIfCountExceeds(
-    HANDLE hDB,
+LwEvtDbDeleteIfCountExceeds(
+    sqlite3 *pDb,
     DWORD  dwOlderThan
     );
 
 DWORD
-SrvDeleteOlderThanCurDate(
-    HANDLE hDB,
+LwEvtDbDeleteOlderThanCurDate(
+    sqlite3 *pDb,
     DWORD  dwOlderThan
     ); 
 
 //helper functions
 DWORD
-SrvQueryEventLog(
-    HANDLE hDB,
+LwEvtDbQueryEventLog(
+    sqlite3 *pDb,
     PSTR   szQuery,
     PDWORD pdwNumRows,
     PDWORD pdwNumCols,
@@ -158,7 +153,7 @@ SrvQueryEventLog(
     );
 
 DWORD
-SrvCreateDB(
+LwEvtDbCreateDB(
     BOOLEAN replaceDB
     );
 

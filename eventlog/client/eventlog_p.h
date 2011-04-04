@@ -42,6 +42,11 @@
 #ifndef __EVENTLOG_P_H__
 #define __EVENTLOG_P_H__
 
+struct _LW_EVENTLOG_CONNECTION
+{
+    RPC_LW_EVENTLOG_HANDLE Handle;
+};
+
 DWORD
 EVTGetRpcError(
     dcethread_exc* exCatch

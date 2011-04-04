@@ -16,10 +16,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 //file: eventlog.acf
-[
-    explicit_handle
-] 
-interface eventlog
+interface LwEventlog
 {
 }
-

@@ -52,10 +52,6 @@
 #define ACTION_LAST 7
 #define ACTION_LIST 8
 
-#define TRY DCETHREAD_TRY
-#define CATCH_ALL DCETHREAD_CATCH_ALL(THIS_CATCH)
-#define ENDTRY DCETHREAD_ENDTRY
-
 static
 void
 ShowUsage()
@@ -102,16 +98,6 @@ ShowUsage()
 "    Description   (TEXT))\n"
 "    Data          (varchar(128))\n\n",
     stdout);
-}
-
-
-DWORD
-AddEventRecord(
-    PEVENT_LOG_HANDLE pEventLogHandle,
-    EVENT_LOG_RECORD eventRecord
-    )
-{
-    return LWIWriteEventLogBase((HANDLE)pEventLogHandle, eventRecord);
 }
 
 DWORD
@@ -272,9 +258,10 @@ main(
     )
 {
     DWORD dwError = 0;
-    PEVENT_LOG_HANDLE pEventLogHandle = NULL;
-    EVENT_LOG_RECORD* eventRecords = NULL;
+    PLW_EVENTLOG_CONNECTION pEventLogHandle = NULL;
+    PLW_EVENTLOG_RECORD pEventRecords = NULL;
     DWORD nRecords = 0;
+    UINT64 startRecordId = 0;
     DWORD currentRecord = 0;
     DWORD nRecordsPerPage = 500;
 
@@ -293,6 +280,7 @@ main(
     DWORD dwHoursForFilter = 0;
     DWORD dwMinutesForFilter = 0;
     DWORD dwSecondsForFilter = 0;
+    PWSTR pFilter = NULL;
 
     struct poptOption optionsTable[] =
     {
@@ -504,7 +492,9 @@ main(
     }
 
 
-    dwError = LWIOpenEventLog(pszHostname, (PHANDLE)&pEventLogHandle);
+    dwError = LwEvtOpenEventlog(
+                    pszHostname,
+                    &pEventLogHandle);
     BAIL_ON_EVT_ERROR(dwError);
 
     if (dwMinutesForFilter != 0)
@@ -551,51 +541,86 @@ main(
     }
     else if (dwFinalAction == ACTION_COUNT)
     {
-        dwError = LWICountEventLog((HANDLE)pEventLogHandle,
+        dwError = LwEvtGetRecordCount(
+                        pEventLogHandle,
                         pwszSqlFilter,
                         &nRecords);
-
-
         BAIL_ON_EVT_ERROR(dwError);
+
         printf("%d records found in database\n", nRecords);
     }
     else if (dwFinalAction == ACTION_SHOW)
     {
-        do {
-
-            dwError = LWIReadEventLog((HANDLE)pEventLogHandle,
-                            currentRecord,
-                            nRecordsPerPage,
+        do
+        {
+            LW_SAFE_FREE_MEMORY(pFilter);
+            dwError = LwAllocateWc16sPrintfW(
+                            &pFilter,
+                            L"(%ws) AND EventRecordId >= %llu",
                             pwszSqlFilter,
-                            &nRecords,
-                            &eventRecords);
-
+                            (long long unsigned)startRecordId);
             BAIL_ON_EVT_ERROR(dwError);
 
-            PrintEventRecords(stdout, eventRecords, nRecords, &currentRecord);
+            if (pEventRecords)
+            {
+                LwEvtFreeRecordArray(
+                    nRecords,
+                    pEventRecords);
+                pEventRecords = NULL;
+            }
+            dwError = LwEvtReadRecords(
+                        pEventLogHandle,
+                        nRecordsPerPage,
+                        pFilter,
+                        &nRecords,
+                        &pEventRecords);
+            BAIL_ON_EVT_ERROR(dwError);
+
+            PrintEventRecords(stdout, pEventRecords, nRecords, &currentRecord);
+            if (nRecords > 0)
+            {
+                startRecordId = pEventRecords[nRecords - 1].EventRecordId;
+            }
         } while (nRecords == nRecordsPerPage && nRecords > 0);
     }
     else if (dwFinalAction == ACTION_TABLE)
     {
-        do {
-
-            dwError = LWIReadEventLog((HANDLE)pEventLogHandle,
-                            currentRecord,
-                            nRecordsPerPage,
+        do
+        {
+            LW_SAFE_FREE_MEMORY(pFilter);
+            dwError = LwAllocateWc16sPrintfW(
+                            &pFilter,
+                            L"(%ws) AND EventRecordId >= %llu",
                             pwszSqlFilter,
-                            &nRecords,
-                            &eventRecords);
-
+                            (long long unsigned)startRecordId);
             BAIL_ON_EVT_ERROR(dwError);
 
-            PrintEventRecordsTable(stdout, eventRecords, nRecords, &currentRecord);
+            if (pEventRecords)
+            {
+                LwEvtFreeRecordArray(
+                    nRecords,
+                    pEventRecords);
+                pEventRecords = NULL;
+            }
+            dwError = LwEvtReadRecords(
+                        pEventLogHandle,
+                        nRecordsPerPage,
+                        pFilter,
+                        &nRecords,
+                        &pEventRecords);
+            BAIL_ON_EVT_ERROR(dwError);
 
+            PrintEventRecordsTable(stdout, pEventRecords, nRecords, &currentRecord);
+            if (nRecords > 0)
+            {
+                startRecordId = pEventRecords[nRecords - 1].EventRecordId;
+            }
         } while (nRecords == nRecordsPerPage && nRecords > 0);
     }
     else if (dwFinalAction == ACTION_DELETE)
     {
-        dwError = LWIDeleteFromEventLog(
-                        (HANDLE)pEventLogHandle,
+        dwError = LwEvtDeleteRecords(
+                        pEventLogHandle,
                         pwszSqlFilter);
         BAIL_ON_EVT_ERROR(dwError);
     }
@@ -612,14 +637,17 @@ main(
         EVT_LOG_ERROR("The operation failed with error code [%d]\n", dwError);
     }
     LW_SAFE_FREE_MEMORY(pwszSqlFilter);
+    LW_SAFE_FREE_MEMORY(pFilter);
     if (pEventLogHandle)
     {
-        LWICloseEventLog((HANDLE)pEventLogHandle);
+        LwEvtCloseEventlog(pEventLogHandle);
     }
-    if (eventRecords)
+    if (pEventRecords)
     {
-        RPCFreeMemory(eventRecords);
-        LwFreeMemory(eventRecords);
+        LwEvtFreeRecordArray(
+            nRecords,
+            pEventRecords);
+        pEventRecords = NULL;
     }
     poptFreeContext(optCon);
     if (fpExport)

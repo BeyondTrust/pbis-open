@@ -1,13 +1,14 @@
 make()
 {
     lw_dceidl \
+	INCLUDEDIRS=". ../include" \
 	IDL="../idl/eventlog.idl" \
 	CSTUB="eventlog_cstub.c" \
 	HEADER="eventlog_h.h"
 
     mk_library \
 	LIB=eventlog \
-	SOURCES="binding.c eventlog.c eventlog_cstub.c" \
+	SOURCES="binding.c eventlog.c legacy.c eventlog_cstub.c" \
 	INCLUDEDIRS=". ../include" \
 	HEADERDEPS="dce/rpc.h lwrpcrt/lwrpcrt.h lwmem.h lwstr.h" \
 	DEPS="eventlog_h.h" \

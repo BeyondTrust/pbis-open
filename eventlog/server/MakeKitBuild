@@ -5,7 +5,6 @@ make()
 	eventlog_sstub.c \
 	globals.c        \
 	main.c           \
-	security.c       \
 	server.c"
 
     lw_dceidl \

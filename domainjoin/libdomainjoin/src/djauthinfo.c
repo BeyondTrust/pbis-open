@@ -1424,6 +1424,7 @@ DJLogInformationEvent(
     HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser, // NULL defaults to SYSTEM
+    PCSTR  pszComputer,
     PCSTR  pszCategory,
     PCSTR  pszDescription,
     PCSTR  pszData
@@ -1449,7 +1450,7 @@ DJLogInformationEvent(
     {
         event.pszUser = (PSTR) pszUser;
     }
-    event.pszComputer = NULL;
+    event.pszComputer = (PSTR)pszComputer;
     event.pszDescription = (PSTR) pszDescription;
     event.pszData = (PSTR) pszData;
 
@@ -1464,6 +1465,7 @@ DJLogWarningEvent(
     HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser, // NULL defaults to SYSTEM
+    PCSTR  pszComputer,
     PCSTR  pszCategory,
     PCSTR  pszDescription,
     PCSTR  pszData
@@ -1489,7 +1491,7 @@ DJLogWarningEvent(
     {
         event.pszUser = (PSTR) pszUser;
     }
-    event.pszComputer = NULL;
+    event.pszComputer = (PSTR)pszComputer;
     event.pszDescription = (PSTR) pszDescription;
     event.pszData = (PSTR) pszData;
 
@@ -1504,6 +1506,7 @@ DJLogErrorEvent(
     HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser, // NULL defaults to SYSTEM
+    PCSTR  pszComputer,
     PCSTR  pszCategory,
     PCSTR  pszDescription,
     PCSTR  pszData
@@ -1529,7 +1532,7 @@ DJLogErrorEvent(
     {
         event.pszUser = (PSTR) pszUser;
     }
-    event.pszComputer = NULL;
+    event.pszComputer = (PSTR)pszComputer;
     event.pszDescription = (PSTR) pszDescription;
     event.pszData = (PSTR) pszData;
 
@@ -1584,6 +1587,7 @@ DJLogDomainJoinSucceededEvent(
                     hEventLog,
                     DOMAINJOIN_EVENT_INFO_JOINED_DOMAIN,
                     JoinOptions->username,
+                    JoinOptions->computerName,
                     DOMAINJOIN_EVENT_CATEGORY,
                     pszDescription,
                     pszData);
@@ -1650,6 +1654,7 @@ DJLogDomainJoinFailedEvent(
                     hEventLog,
                     DOMAINJOIN_EVENT_ERROR_DOMAIN_JOIN_FAILURE,
                     JoinOptions->username,
+                    JoinOptions->computerName,
                     DOMAINJOIN_EVENT_CATEGORY,
                     pszDescription,
                     pszData);
@@ -1696,6 +1701,7 @@ DJLogDomainLeaveSucceededEvent(
                     hEventLog,
                     DOMAINJOIN_EVENT_INFO_LEFT_DOMAIN,
                     JoinOptions->username,
+                    JoinOptions->computerName,
                     DOMAINJOIN_EVENT_CATEGORY,
                     pszDescription,
                     pszData);
@@ -1749,6 +1755,7 @@ DJLogDomainLeaveFailedEvent(
                     hEventLog,
                     DOMAINJOIN_EVENT_ERROR_DOMAIN_LEAVE_FAILURE,
                     JoinOptions->username,
+                    JoinOptions->computerName,
                     DOMAINJOIN_EVENT_CATEGORY,
                     pszDescription,
                     pszData);

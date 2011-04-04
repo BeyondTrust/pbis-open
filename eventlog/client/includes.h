@@ -35,6 +35,8 @@
 
 #include <lwmem.h>
 #include <lwstr.h>
+#include <lwdef.h>
+#include <lwerror.h>
 
 #include "eventutils.h"
 

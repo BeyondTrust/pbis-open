@@ -43,13 +43,13 @@
 #define __EVENTLOGBINDING_H__
 
 DWORD
-LWICreateEventLogRpcBinding(
+LwEvtCreateEventlogRpcBinding(
     const char * hostname,
     handle_t *   event_binding
     );
 
 DWORD
-LWIFreeEventLogRpcBinding(
+LwEvtFreeEventlogRpcBinding(
     handle_t event_binding
     );
 

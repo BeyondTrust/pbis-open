@@ -35,91 +35,66 @@
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
  *          Sriram Nambakam (snambakam@likewisesoftware.com)
+ *          Kyle Stemen <kstemen@likewise.com>
  *
  * Eventlog Client API
  *
  */
 #include "includes.h"
 
-
 VOID
-LWIFreeEventRecord(
-    PEVENT_LOG_RECORD pEventRecord
+LwEvtFreeRecord(
+    IN PLW_EVENTLOG_RECORD pRecord
     )
 {
-    LWIFreeEventRecordList(1, pEventRecord);
+    LwEvtFreeRecordArray(1, pRecord);
 }
 
 VOID
-LWIFreeEventRecordContents(
-    PEVENT_LOG_RECORD pEventRecord
+LwEvtFreeRecordArray(
+    IN DWORD Count,
+    IN PLW_EVENTLOG_RECORD pRecords
     )
 {
-    LW_SAFE_FREE_STRING(pEventRecord->pszEventTableCategoryId);
-    LW_SAFE_FREE_STRING(pEventRecord->pszEventType);
-    LW_SAFE_FREE_STRING(pEventRecord->pszEventSource);
-    LW_SAFE_FREE_STRING(pEventRecord->pszEventCategory);
-    LW_SAFE_FREE_STRING(pEventRecord->pszUser);
-    LW_SAFE_FREE_STRING(pEventRecord->pszComputer);
-    LW_SAFE_FREE_STRING(pEventRecord->pszDescription);
-    LW_SAFE_FREE_MEMORY(pEventRecord->pszData);
-}
+    DWORD index = 0;
 
-VOID
-LWIFreeEventRecordList(
-    DWORD dwRecords,
-    PEVENT_LOG_RECORD pEventRecordList
-    )
-{
-    DWORD dwIndex = 0;
-
-    for (dwIndex = 0; dwIndex < dwRecords; dwIndex++)
+    if (pRecords)
     {
-        LWIFreeEventRecordContents(&pEventRecordList[dwIndex]);
+        for (index = 0; index < Count; index++)
+        {
+            LW_SAFE_FREE_MEMORY(pRecords[index].pLogname);
+            LW_SAFE_FREE_MEMORY(pRecords[index].pEventType);
+            LW_SAFE_FREE_MEMORY(pRecords[index].pEventSource);
+            LW_SAFE_FREE_MEMORY(pRecords[index].pEventCategory);
+            LW_SAFE_FREE_MEMORY(pRecords[index].pUser);
+            LW_SAFE_FREE_MEMORY(pRecords[index].pComputer);
+            LW_SAFE_FREE_MEMORY(pRecords[index].pDescription);
+            LW_SAFE_FREE_MEMORY(pRecords[index].pData);
+        }
+
+        LW_SAFE_FREE_MEMORY(pRecords);
     }
-
-    LwFreeMemory(pEventRecordList);
-}
-
-void
-LWIFreeEventLogHandle(
-    HANDLE hEventLog
-    )
-{
-
-    PEVENT_LOG_HANDLE pEventLogHandle = (PEVENT_LOG_HANDLE) hEventLog;
-
-    LWIFreeEventLogRpcBinding(pEventLogHandle->bindingHandle);
-    LW_SAFE_FREE_MEMORY(pEventLogHandle);
 }
 
 DWORD
-LWIOpenEventLog(
-    PCSTR pszServerName,
-    PHANDLE phEventLog
+LwEvtOpenEventlog(
+    IN OPTIONAL PCSTR pServerName,
+    OUT PLW_EVENTLOG_CONNECTION* ppConn
     )
 {
     volatile DWORD dwError = 0;
-    PEVENT_LOG_HANDLE pEventLogHandle = NULL;
-
+    PLW_EVENTLOG_CONNECTION pConn = NULL;
     handle_t eventBindingLocal = 0;
 
-#ifdef _WIN32
-    if (gBasicLogStreamFD == NULL) {
-        dwError = init_basic_log_stream("evtrpcclient_dll.log");
-        BAIL_ON_EVT_ERROR(dwError);
-    }
-#endif //!_WIN32
+    EVT_LOG_VERBOSE("client::eventlog.c OpenEventlog server=%s)\n",
+            LW_SAFE_LOG_STRING(pServerName));
 
-    EVT_LOG_VERBOSE("client::eventlog.c OpenEventLog(*phEventLog=%.16X, server=%s)\n",
-            *phEventLog, pszServerName);
-
-    dwError = LwAllocateMemory(sizeof(EVENT_LOG_HANDLE), (PVOID*) &pEventLogHandle);
+    dwError = LwAllocateMemory(sizeof(*pConn), (PVOID*) &pConn);
     BAIL_ON_EVT_ERROR(dwError);
     
     TRY
     {
-        dwError = LWICreateEventLogRpcBinding(pszServerName,
+        dwError = LwEvtCreateEventlogRpcBinding(pServerName,
                                               &eventBindingLocal);
     }
     CATCH_ALL
@@ -132,9 +107,8 @@ LWIOpenEventLog(
 
     TRY
     {
-        dwError = RpcLWIOpenEventLog(eventBindingLocal,
-                                     (idl_char *)"unused",
-                                     (idl_char *)"unused");
+        dwError = RpcEvtOpen(eventBindingLocal,
+                                &pConn->Handle);
     }
     CATCH (rpc_x_auth_method)
     {
@@ -148,58 +122,42 @@ LWIOpenEventLog(
 
     BAIL_ON_EVT_ERROR(dwError);
 
-    pEventLogHandle->bindingHandle = eventBindingLocal;
-    *phEventLog = (HANDLE)pEventLogHandle;
-
+    *ppConn = pConn;
 
 cleanup:
     return dwError;
 
 error:
-    switch(dwError)
+    if (pConn)
     {
-        case ERROR_ACCESS_DENIED:
-            EVT_LOG_ERROR("Failed to open event log. Access is denied.\n");
-            break;
-        default:
-            EVT_LOG_ERROR("Failed to open event log. Error code [%d]\n", dwError);
-            break;
-    }
-
-    if (pEventLogHandle)
-    {
-        LWIFreeEventLogHandle((HANDLE)pEventLogHandle);
+        LwEvtCloseEventlog(pConn);
     }
 
     if (eventBindingLocal)
     {
-        LWIFreeEventLogRpcBinding(eventBindingLocal);
+        LwEvtFreeEventlogRpcBinding(eventBindingLocal);
     }
 
-    *phEventLog = (HANDLE) NULL;
-
+    *ppConn = NULL;
     goto cleanup;
-
 }
 
 DWORD
-LWICloseEventLog(
-    HANDLE hEventLog
+LwEvtCloseEventlog(
+    IN PLW_EVENTLOG_CONNECTION pConn
     )
 {
     volatile DWORD dwError = 0;
-    PEVENT_LOG_HANDLE pEventLogHandle = (PEVENT_LOG_HANDLE) hEventLog;
 
-    if (pEventLogHandle == NULL) {
-        EVT_LOG_ERROR("LWICloseEventLog() called with pEventLogHandle=NULL");
-        return -1;
+    if (pConn == NULL)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_EVT_ERROR(dwError);
     }
 
     TRY
     {
-        dwError = RpcLWICloseEventLog(
-            (handle_t) pEventLogHandle->bindingHandle
-            );
+        dwError = RpcEvtClose(&pConn->Handle);
     }
     CATCH_ALL
     {
@@ -210,9 +168,13 @@ LWICloseEventLog(
     BAIL_ON_EVT_ERROR(dwError);
 
 cleanup:
-    if (pEventLogHandle)
+    if (pConn)
     {
-        LWIFreeEventLogHandle((HANDLE)pEventLogHandle);
+        if (pConn->Handle != NULL)
+        {
+            RpcSsDestroyClientContext(&pConn->Handle);
+        }
+        LW_SAFE_FREE_MEMORY(pConn);
     }
 
     return dwError;
@@ -220,94 +182,172 @@ cleanup:
 error:
 
     EVT_LOG_ERROR("Failed to close event log. Error code [%d]\n", dwError);
-
     goto cleanup;
 }
 
+static
+idl_void_p_t
+LwEvtRpcAllocateMemory(
+    idl_size_t Size
+    )
+{
+    idl_void_p_t pResult = NULL;
+    if ((idl_size_t)(DWORD)Size != Size)
+    {
+        // Overflow
+        return NULL;
+    }
+
+    if (LwAllocateMemory((DWORD)Size, &pResult))
+    {
+        // Error
+        return NULL;
+    }
+
+    return pResult;
+}
+
+static
+VOID
+LwEvtRpcFreeMemory(
+    idl_void_p_t pMem
+    )
+{
+    LwFreeMemory(pMem);
+}
 
 DWORD
-LWIReadEventLog(
-    HANDLE hEventLog,
-    DWORD dwLastRecordId,
-    DWORD nRecordsPerPage,
-    PCWSTR sqlFilter,
-    DWORD* pdwNumReturned,
-    EVENT_LOG_RECORD** eventRecords
+LwEvtReadRecords(
+    IN PLW_EVENTLOG_CONNECTION pConn,
+    IN DWORD MaxResults,
+    IN PCWSTR pSqlFilter,
+    OUT PDWORD pCount,
+    OUT PLW_EVENTLOG_RECORD* ppRecords
     )
 {
     volatile DWORD dwError = 0;
-    char* sqlFilterChar = NULL;
-    PEVENT_LOG_HANDLE pEventLogHandle = (PEVENT_LOG_HANDLE) hEventLog;
-
-    if (sqlFilter == NULL) {
-        dwError = ERROR_INTERNAL_ERROR;
-        BAIL_ON_EVT_ERROR(dwError);
-    }
-
-    dwError = LwWc16sToMbs(sqlFilter, &sqlFilterChar);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    EVT_LOG_VERBOSE("client::eventlog.c ReadEventLog() sqlFilterChar=\"%s\"\n", sqlFilterChar);
-
-    LwAllocateMemory(nRecordsPerPage * sizeof(EVENT_LOG_RECORD), (PVOID*)(eventRecords));
+    LW_EVENTLOG_RECORD_LIST records = { 0 };
+    // These are function pointers initialized to NULL
+    idl_void_p_t (*pOldMalloc)(idl_size_t) = NULL;
+    void (*pOldFree)(idl_void_p_t) = NULL;
 
     TRY
     {
-        dwError = RpcLWIReadEventLog(
-                    (handle_t) pEventLogHandle->bindingHandle,
-                    dwLastRecordId, 
-                    nRecordsPerPage,
-                    (idl_char*)sqlFilterChar, 
-                    (unsigned32*)pdwNumReturned, 
-                    *eventRecords);
+        rpc_ss_swap_client_alloc_free(
+                    LwEvtRpcAllocateMemory,
+                    LwEvtRpcFreeMemory,
+                    &pOldMalloc,
+                    &pOldFree);
+
+        dwError = RpcEvtReadRecords(
+                    pConn->Handle,
+                    MaxResults, 
+                    (PWSTR)pSqlFilter, 
+                    &records);
     }
     CATCH_ALL
     {
         dwError = EVTGetRpcError(THIS_CATCH);
     }
+    FINALLY
+    {
+        rpc_ss_set_client_alloc_free(
+                    pOldMalloc,
+                    pOldFree);
+    }
     ENDTRY;
 
     BAIL_ON_EVT_ERROR(dwError);
 
+    *pCount = records.Count;
+    *ppRecords = records.pRecords;
 
 cleanup:
-    LW_SAFE_FREE_STRING(sqlFilterChar);
     return dwError;
 
 error:
     EVT_LOG_ERROR("Failed to read event log. Error code [%d]\n", dwError);
+
+    LwEvtFreeRecordArray(records.Count, records.pRecords);
+    *pCount = 0;
+    *ppRecords = NULL;
     goto cleanup;
 }
 
 
 DWORD
-LWICountEventLog(
-    HANDLE hEventLog,
-    PCWSTR sqlFilter,
-    DWORD* pdwNumMatched
+LwEvtGetRecordCount(
+    IN PLW_EVENTLOG_CONNECTION pConn,
+    IN PCWSTR pSqlFilter,
+    OUT PDWORD pNumMatched
     )
 {
     volatile DWORD dwError = 0;
-    char* sqlFilterChar = NULL;
-
-    PEVENT_LOG_HANDLE pEventLogHandle = (PEVENT_LOG_HANDLE) hEventLog;
-
-    if (sqlFilter == NULL) {
-        EVT_LOG_VERBOSE("CountEventLog(): sqlFilter == NULL\n");
-        dwError = ERROR_INTERNAL_ERROR;
-        BAIL_ON_EVT_ERROR(dwError);
-    }
-
-    dwError = LwWc16sToMbs(sqlFilter, &sqlFilterChar);
-
-    BAIL_ON_EVT_ERROR(dwError);
+    DWORD numMatched = 0;
 
     TRY
     {
-        dwError = RpcLWIEventLogCount(
-                    (handle_t) pEventLogHandle->bindingHandle,
-                    (idl_char*)sqlFilterChar,
-                    (unsigned32*)pdwNumMatched);
+        dwError = RpcEvtGetRecordCount(
+                    pConn->Handle,
+                    (PWSTR)pSqlFilter, 
+                    &numMatched);
+    }
+    CATCH_ALL
+    {
+        dwError = EVTGetRpcError(THIS_CATCH);
+    }
+    ENDTRY;
+
+    BAIL_ON_EVT_ERROR(dwError);
+
+    *pNumMatched = numMatched;
+
+cleanup:
+    return dwError;
+
+error:
+    EVT_LOG_ERROR("Failed to get record count. Error code [%d]\n", dwError);
+
+    *pNumMatched = 0;
+    goto cleanup;
+}
+
+
+DWORD
+LwEvtWriteRecords(
+    IN PLW_EVENTLOG_CONNECTION pConn,
+    IN DWORD Count,
+    IN PLW_EVENTLOG_RECORD pRecords 
+    )
+{
+    volatile DWORD dwError = 0;
+    char pszHostname[1024];
+    PWSTR pwszHostname = NULL;
+    DWORD index = 0;
+
+    for (index = 0; index < Count; index++)
+    {
+        if (pRecords[index].pComputer == NULL)
+        {
+            if (!pwszHostname)
+            {
+                dwError = LwMapErrnoToLwError(
+                            gethostname(pszHostname, sizeof(pszHostname)));
+                BAIL_ON_EVT_ERROR(dwError);
+
+                dwError = LwMbsToWc16s(pszHostname, &pwszHostname);
+                BAIL_ON_EVT_ERROR(dwError);
+            }
+            pRecords[index].pComputer = pwszHostname;
+        }
+    }
+
+    TRY
+    {
+        dwError = RpcEvtWriteRecords(
+                    pConn->Handle,
+                    Count,
+                    pRecords);
     }
     CATCH_ALL
     {
@@ -318,166 +358,35 @@ LWICountEventLog(
     BAIL_ON_EVT_ERROR(dwError);
 
 cleanup:
-    LW_SAFE_FREE_STRING(sqlFilterChar);
+    for (index = 0; index < Count; index++)
+    {
+        if (pRecords[index].pComputer == pwszHostname)
+        {
+            pwszHostname = NULL;
+        }
+    }
+    LW_SAFE_FREE_MEMORY(pwszHostname);
     return dwError;
 
 error:
-    EVT_LOG_ERROR("Failed to count event log. Error code [%d]\n", dwError);
-    goto cleanup;
-}
+    EVT_LOG_ERROR("Failed to write records. Error code [%d]\n", dwError);
 
-
-DWORD
-LWIWriteEventLogRecords(
-    HANDLE hEventLog,
-    DWORD cRecords,
-    PEVENT_LOG_RECORD pEventRecords 
-    )
-{
-    volatile DWORD dwError = 0;
-    PEVENT_LOG_HANDLE pEventLogHandle = (PEVENT_LOG_HANDLE) hEventLog;
-
-    TRY
-    {
-        dwError = RpcLWIWriteEventLogRecords(
-                        (handle_t) pEventLogHandle->bindingHandle,
-                        cRecords,
-                        pEventRecords);
-    }
-    CATCH_ALL
-    {
-        dwError = EVTGetRpcError(THIS_CATCH);        
-    }
-    ENDTRY;
-
-    BAIL_ON_EVT_ERROR(dwError);
-
-cleanup:
-
-    return dwError;
-    
-error:
-    EVT_LOG_ERROR("Failed to write event log. Error code [%d]\n", dwError);
     goto cleanup;
 }
 
 DWORD
-LWIWriteEventLogBase(
-    HANDLE hEventLog,
-    EVENT_LOG_RECORD eventRecord
+LwEvtDeleteRecords(
+    IN PLW_EVENTLOG_CONNECTION pConn,
+    IN OPTIONAL PCWSTR pSqlFilter
     )
 {
     volatile DWORD dwError = 0;
-    PEVENT_LOG_HANDLE pEventLogHandle = (PEVENT_LOG_HANDLE) hEventLog;
-    EVENT_LOG_RECORD  eventRecordLocal = eventRecord;
-
-    EVT_LOG_VERBOSE("client::eventlog.c WriteEventLog(pEventLogHandle=%.16X, computer=%s)\n",
-        pEventLogHandle, (LW_IS_NULL_OR_EMPTY_STR(eventRecord.pszComputer) ? "" : eventRecord.pszComputer));
 
     TRY
     {
-        dwError = RpcLWIWriteEventLogRecords(
-                        (handle_t) pEventLogHandle->bindingHandle,
-                        1,
-                        &eventRecordLocal);
-    }
-    CATCH_ALL
-    {
-        dwError = EVTGetRpcError(THIS_CATCH);        
-    }
-    ENDTRY;
-
-    BAIL_ON_EVT_ERROR(dwError);
-
-cleanup:
-
-    return dwError;
-    
-error:
-    EVT_LOG_ERROR("Failed to write event log. Error code [%d]\n", dwError);
-    goto cleanup;
-}
-
-DWORD
-LWIWriteEventLog(
-    HANDLE hEventLog,
-    PCSTR eventType,
-    PCSTR eventCategory,
-    PCSTR eventDescription,
-    PCSTR eventData
-    )
-{
-
-    DWORD dwError = 0;
-
-    EVENT_LOG_RECORD eventRecord;
-
-    eventRecord.dwEventRecordId = 0;
-    eventRecord.pszEventTableCategoryId = NULL;
-    eventRecord.pszEventType = (PSTR)eventType;
-    eventRecord.dwEventDateTime = (DWORD) time(NULL);
-    eventRecord.pszEventSource = NULL;
-    eventRecord.pszEventCategory = (PSTR)eventCategory;
-    eventRecord.dwEventSourceId = 0;
-    eventRecord.pszUser = NULL;
-    eventRecord.pszComputer = NULL;
-    eventRecord.pszDescription = (PSTR)eventDescription;   
-    eventRecord.pszData = (PSTR)eventData;
-
-    dwError = LWIWriteEventLogBase( hEventLog,
-    							    eventRecord );
-
-    return dwError;
-
-}
-
-
-DWORD
-LWIDeleteFromEventLog(
-    HANDLE hEventLog,
-    PCWSTR sqlFilter
-    )
-{
-    volatile DWORD dwError = 0;
-    PEVENT_LOG_HANDLE pEventLogHandle = (PEVENT_LOG_HANDLE) hEventLog;
-    PSTR sqlFilterChar = NULL;
-
-    dwError = LwWc16sToMbs(sqlFilter, &sqlFilterChar);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    TRY
-    {
-        dwError = RpcLWIDeleteFromEventLog( (handle_t) pEventLogHandle->bindingHandle,
-                                            (idl_char*)sqlFilterChar);
-    }
-    CATCH_ALL
-    {
-        dwError = EVTGetRpcError(THIS_CATCH);
-    }
-    ENDTRY;
-
-    BAIL_ON_EVT_ERROR(dwError);
-
-
-cleanup:
-    return dwError;
-
-error:
-    EVT_LOG_ERROR("Failed to delete entry from event log. Error code [%d]\n", dwError);
-    goto cleanup;
-}
-
-DWORD
-LWIClearEventLog(
-    HANDLE hEventLog
-    )
-{
-    volatile DWORD dwError = 0;
-    PEVENT_LOG_HANDLE pEventLogHandle = (PEVENT_LOG_HANDLE) hEventLog;
-
-    TRY
-    {
-        dwError = RpcLWIClearEventLog( (handle_t) pEventLogHandle->bindingHandle);
+        dwError = RpcEvtDeleteRecords(
+                        pConn->Handle,
+                        (PWSTR)pSqlFilter);
     }
     CATCH_ALL
     {
@@ -491,9 +400,9 @@ cleanup:
     return dwError;
 
 error:
-    EVT_LOG_ERROR("Failed to clear event log. Error code [%d]\n", dwError);
-    goto cleanup;
+    EVT_LOG_ERROR("Failed to delete records. Error code [%d]\n", dwError);
 
+    goto cleanup;
 }
 
 DWORD

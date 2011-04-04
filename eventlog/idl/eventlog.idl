@@ -1,3 +1,7 @@
+/* Editor Settings: expandtabs and use 4 spaces for indentation
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * -*- mode: c, c-basic-offset: 4 -*- */
+
 /*
  * Copyright (C) Centeris Corporation 2004-2007
  * Copyright (C) Likewise Software 2007
@@ -5,6 +9,7 @@
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
  *          Sriram Nambakam (snambakam@likewisesoftware.com)
+ *          Kyle Stemen <kstemen@likewise.com>
  *
  * Eventlog IDL
  *
@@ -19,17 +24,22 @@
 #ifndef __EVENTLOG_IDL__
 #define __EVENTLOG_IDL__
 
+#ifdef _WIN32
+import "wtypes.idl";
+#endif
 [
-    uuid(ba209999-0c6c-11d2-97cf-00c04f8eea45),
-    pointer_default(unique),
+    uuid(9956a31b-ec79-4818-9c63-c112689ae827),
+    pointer_default(unique), 
     version(1.0)
 ]
 
 
-interface eventlog {
+interface LwEventlog {
 
     cpp_quote("#ifndef __EVENTLOG_IDL__")
     cpp_quote("#define __EVENTLOG_IDL__")
+
+#ifndef _DCE_IDL_
 
     cpp_quote("#ifdef _WIN32")
 
@@ -39,90 +49,84 @@ interface eventlog {
     cpp_quote("#if !(TARGET_IS_NT50_OR_LATER)")
     cpp_quote("#undef TARGET_IS_NT50_OR_LATER")
     cpp_quote("#define TARGET_IS_NT50_OR_LATER TRUE")
-    cpp_quote("#endif") // false TARGET_IS_NT50_OR_LATER
-    cpp_quote("#endif") // undefined TARGET_IS_NT50_OR_LATER
+    cpp_quote("#endif // false TARGET_IS_NT50_OR_LATER")
+    cpp_quote("#endif // undefined TARGET_IS_NT50_OR_LATER")
 
-    cpp_quote("#endif") //_WIN32, !_WIN32
+    cpp_quote("#endif //_WIN32, !_WIN32")
 
-    cpp_quote("#ifndef EVENT_LOG_RECORD_DEFINED")
-    cpp_quote("#define EVENT_LOG_RECORD_DEFINED 1")
-    typedef struct _EVENT_LOG_RECORD 
+    typedef [string] WCHAR* PWSTR;
+
+#else //_DCE_IDL_
+
+    cpp_quote("#if 0")
+    #include <lw/types.h>
+    cpp_quote("#else")
+    cpp_quote("#include <lw/types.h>")
+    cpp_quote("#endif //_0")
+
+#endif //_DCE_IDL_
+
+    cpp_quote("#if 0")
+    #include "eventlog-record.h"
+    cpp_quote("#else")
+    cpp_quote("#include <eventlog-record.h>")
+    cpp_quote("#endif //_0")
+
+    typedef struct _LW_EVENTLOG_RECORD_LIST
     {
-	unsigned32              dwEventRecordId;
-	[unique, string] char * pszEventTableCategoryId;
-	[unique, string] char * pszEventType;
-	unsigned32              dwEventDateTime;
-	[unique, string] char * pszEventSource;
-	[unique, string] char * pszEventCategory;
-	unsigned32              dwEventSourceId;
-	[unique, string] char * pszUser;
-	[unique, string] char * pszComputer;
-	[unique, string] char * pszDescription;
-	[unique, string] char * pszData;
-	
-    } EVENT_LOG_RECORD, *PEVENT_LOG_RECORD;
-    cpp_quote("#endif /* EVENT_LOG_RECORD_DEFINED */")
+	DWORD Count;
+	[size_is(Count)] LW_EVENTLOG_RECORD* pRecords;
+    } LW_EVENTLOG_RECORD_LIST, *PLW_EVENTLOG_RECORD_LIST;
 
-    cpp_quote("#ifndef EVENT_LOG_HANDLE_DEFINED")
-    cpp_quote("#define EVENT_LOG_HANDLE_DEFINED 1")
-    typedef struct _EVENT_LOG_HANDLE
-    {
-	hyper bindingHandle;
-	[unique, string] char * pszBindingString;
+    cpp_quote("#ifndef RPC_LW_EVENTLOG_HANDLE_DEFINED")
+#ifndef RPC_LW_EVENTLOG_HANDLE_DEFINED
+#define RPC_LW_EVENTLOG_HANDLE_DEFINED
+    typedef [context_handle] struct _RPC_LW_EVENTLOG_CONNECTION *RPC_LW_EVENTLOG_HANDLE;
+#endif
+    cpp_quote("#define RPC_LW_EVENTLOG_HANDLE_DEFINED")
+    cpp_quote("#endif //RPC_LW_EVENTLOG_HANDLE_DEFINED")
 
-    } EVENT_LOG_HANDLE, *PEVENT_LOG_HANDLE;
-    cpp_quote("#endif")
+    DWORD
+    RpcEvtOpen(
+        [in] handle_t BindingHandle,
+        [out] RPC_LW_EVENTLOG_HANDLE *phEventlog
+        );
 
-
-    long
-    RpcLWIOpenEventLog(
-	[in] handle_t bindingHandle,
-	[in, string] char * szServerName,
-	[in, string] char * szEventLog
-	);
-
-    long
-    RpcLWICloseEventLog(
-	[in] handle_t bindingHandle
-	);
+    DWORD
+    RpcEvtClose(
+        [in, out] RPC_LW_EVENTLOG_HANDLE *phEventlog
+        );
     
-    long
-    RpcLWIEventLogCount(
-	[in] handle_t bindingHandle,
-	[in, string] char * sqlFilter,
-	[out] unsigned32 * pdwNumMatched
-	);
+    DWORD
+    RpcEvtGetRecordCount(
+        [in] RPC_LW_EVENTLOG_HANDLE hEventlog,
+        [in, string] WCHAR * pSqlFilter,
+        [out] DWORD * pNumMatched
+        );
 
-    long
-    RpcLWIReadEventLog(
-	[in] handle_t bindingHandle,
-	[in] unsigned32 dwIndex,
-        [in] unsigned32 nRecordsPerPage,
-	[in, string] char* sqlFilter,
-	[out] unsigned32 * pdwNumReturned,
-	[out, size_is(nRecordsPerPage), length_is(*pdwNumReturned)] EVENT_LOG_RECORD* eventRecords
-	);
+    DWORD
+    RpcEvtReadRecords(
+        [in] RPC_LW_EVENTLOG_HANDLE hEventlog,
+        [in] DWORD MaxResults,
+        [in, string] WCHAR * pSqlFilter,
+        [out] LW_EVENTLOG_RECORD_LIST *pRecords
+        );
 
-    long
-    RpcLWIWriteEventLogRecords(
-        [in] handle_t bindingHandle,
-	[in] unsigned32 cRecords,
-  	[in, size_is(cRecords)] EVENT_LOG_RECORD* pEventRecords 
-	);
+    DWORD
+    RpcEvtWriteRecords(
+        [in] RPC_LW_EVENTLOG_HANDLE hEventlog,
+        [in] DWORD Count,
+        [in, size_is(Count)] LW_EVENTLOG_RECORD* pRecords 
+        );
 
-    long
-    RpcLWIClearEventLog(
-        [in] handle_t bindingHandle
-	);
+    DWORD
+    RpcEvtDeleteRecords(
+        [in] RPC_LW_EVENTLOG_HANDLE hEventlog,
+        [in, string] WCHAR *pSqlFilter
+        );
 
-    long
-    RpcLWIDeleteFromEventLog(
-        [in] handle_t bindingHandle,
-	[in, string] char* sqlFilter
-	);
-
-    cpp_quote("#endif /* __EVENTLOG_IDL__ */")
+    cpp_quote("#endif /* __LW_EVENTLOG_IDL__ */")
 }
 
-#endif /* __EVENTLOG_IDL__ */
+#endif /* __LW_EVENTLOG_IDL__ */
 

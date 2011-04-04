@@ -42,6 +42,17 @@
 
 #include "includes.h"
 
+#define BAIL_ON_SQLITE3_ERROR(dwError, pszError) \
+    do { \
+        if (dwError) \
+        { \
+           EVT_LOG_DEBUG("Sqlite3 error '%s' (code = %u)", \
+                         LW_SAFE_LOG_STRING(pszError), dwError); \
+           dwError = ERROR_BADDB; \
+           BAIL_ON_EVT_ERROR(dwError); \
+        } \
+    } while (0)
+
 #define DB_QUERY_CREATE_EVENTS_TABLE "CREATE TABLE lwievents               \
                          (EventRecordId integer PRIMARY KEY AUTOINCREMENT, \
                             EventTableCategoryId   varchar(128),            \
@@ -61,7 +72,7 @@
 
 #define DB_QUERY_CREATE_INDEX "CREATE INDEX lwindex_%s ON lwievents(%s)"
 
-#define DB_QUERY_ALL_WITH_LIMIT "SELECT EventRecordId,    \
+#define DB_QUERY_ALL_WITH_LIMIT L"SELECT EventRecordId,    \
                                     EventTableCategoryId, \
                                     EventType,            \
                                     EventDateTime,        \
@@ -74,11 +85,11 @@
                                     Data                  \
                              FROM     lwievents           \
                              ORDER BY EventRecordId ASC  \
-                             LIMIT %ld OFFSET %ld"
+                             LIMIT %ld"
 
 
 
-#define DB_QUERY_WITH_LIMIT "SELECT EventRecordId,        \
+#define DB_QUERY_WITH_LIMIT L"SELECT EventRecordId,        \
                                     EventTableCategoryId, \
                                     EventType,            \
                                     EventDateTime,        \
@@ -90,23 +101,23 @@
                                     Description,          \
                                     Data                  \
                              FROM     lwievents           \
-                             WHERE  (%s)                  \
+                             WHERE  (%ws)                  \
                              ORDER BY EventRecordId ASC  \
-                             LIMIT %ld OFFSET %ld"
+                             LIMIT %ld"
 
-#define DB_QUERY_COUNT_ALL  "SELECT COUNT(*)  \
+#define DB_QUERY_COUNT_ALL  L"SELECT COUNT(*)  \
                              FROM     lwievents"
 
-#define DB_QUERY_COUNT      "SELECT COUNT(*)  \
+#define DB_QUERY_COUNT      L"SELECT COUNT(*)  \
                              FROM     lwievents           \
-                             WHERE  (%s)"
+                             WHERE  (%ws)"
 
 #define DB_QUERY_DROP_EVENTS_TABLE "DROP TABLE lwievents"
 
-#define DB_QUERY_DELETE     "DELETE FROM     lwievents    \
-                             WHERE  (%s)"
+#define DB_QUERY_DELETE     L"DELETE FROM     lwievents    \
+                             WHERE  (%ws)"
 
-#define DB_QUERY_DELETE_ALL     "DELETE FROM     lwievents"
+#define DB_QUERY_DELETE_ALL     L"DELETE FROM     lwievents"
 
 #define DB_QUERY_INSERT_EVENT "INSERT INTO lwievents         \
                                      (                         \
@@ -171,94 +182,82 @@
 #define DB_QUERY_GET_OLDER_THAN  "SELECT (*) FROM  lwievents    \
                                     WHERE  (EventDateTime < strftime('%%s', 'now','-%d day'))"
 //Function prototype
+
 static
 DWORD
-BuildEventLogRecordList(
-    PSTR *,
-    DWORD ,
-    DWORD ,
-    EVENT_LOG_RECORD** 
+LwEvtDbCheckSqlFilter(
+    PCWSTR pFilter
     );
 
 static
 DWORD
-SrvCheckSqlFilter(
-    PSTR pszFilter
+LwEvtDbMaintainDB(
+    sqlite3 *pDb
     );
 
 //public interface
 
 DWORD
-SrvInitEventDatabase()
+LwEvtDbInitEventDatabase()
 {
     pthread_rwlock_init(&g_dbLock, NULL);
     return 0;
 }
 
 DWORD
-SrvShutdownEventDatabase()
+LwEvtDbShutdownEventDatabase()
 {
     return 0;
 }
 
 DWORD
-SrvOpenEventDatabase(
-    PHANDLE phDB
+LwEvtDbOpen(
+    sqlite3** ppDb
     )
 {
     DWORD dwError = 0;
-    PEVENTLOG_CONTEXT pEventLogCtx = NULL;
-    sqlite3* pSqliteHandle = NULL;
+    sqlite3* pDb = NULL;
 
-    dwError = sqlite3_open(EVENTLOG_DB, &pSqliteHandle);
+    dwError = sqlite3_open(EVENTLOG_DB, &pDb);
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwError = LwAllocateMemory(sizeof(EVENTLOG_CONTEXT),
-                                (PVOID*)&pEventLogCtx);
-    BAIL_ON_EVT_ERROR(dwError);
+    *ppDb = pDb;
 
-    pEventLogCtx->pDbHandle = pSqliteHandle;
-    pSqliteHandle = NULL;
-
-    *phDB = (HANDLE)pEventLogCtx;
-
+cleanup:
     return dwError;
 
-    error:
-
-    if (pSqliteHandle)
-        sqlite3_close(pSqliteHandle);
-
-    if (pEventLogCtx)
-        LwFreeMemory(pEventLogCtx);
-
-    return dwError;
+error:
+    if (pDb)
+    {
+        sqlite3_close(pDb);
+    }
+    *ppDb = NULL;
+    goto cleanup;
 }
 
 DWORD
-SrvCloseEventDatabase(
-    HANDLE hDB
+LwEvtDbClose(
+    sqlite3* pDb
     )
 {
-    DWORD dwError =0;
-    PEVENTLOG_CONTEXT pContext = (PEVENTLOG_CONTEXT)(hDB);
+    DWORD dwError = 0;
 
-    if (pContext) {
-
-        if (pContext->pDbHandle != NULL) {
-            sqlite3_close(pContext->pDbHandle);
-        }
-        EVT_LOG_VERBOSE("Freeing the context.................");
-        LwFreeMemory(pContext);
+    if (pDb)
+    {
+        dwError = sqlite3_close(pDb);
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
     }
 
+cleanup:
     return dwError;
+error:
+    goto cleanup;
 }
 
 static
 DWORD
-SrvCheckSqlFilter(
-    PSTR pszFilter
+LwEvtDbCheckSqlFilter(
+    PCWSTR pFilter
     )
 {
     enum {
@@ -270,12 +269,12 @@ SrvCheckSqlFilter(
     DWORD dwError = 0;
     DWORD dwIndex = 0;
 
-    while (pszFilter[dwIndex])
+    while (pFilter[dwIndex])
     {
         switch(mode)
         {
             case COMMAND:
-                switch (pszFilter[dwIndex])
+                switch (pFilter[dwIndex])
                 {
                     case ';':
                         dwError = ERROR_INVALID_PARAMETER;
@@ -293,7 +292,7 @@ SrvCheckSqlFilter(
                 }
                 break;
             case SINGLE_QUOTE:
-                switch (pszFilter[dwIndex])
+                switch (pFilter[dwIndex])
                 {
                     case '\'':
                         mode = COMMAND;
@@ -301,7 +300,7 @@ SrvCheckSqlFilter(
                 }
                 break;
             case DOUBLE_QUOTE:
-                switch (pszFilter[dwIndex])
+                switch (pFilter[dwIndex])
                 {
                     case '\"':
                         mode = COMMAND;
@@ -309,7 +308,7 @@ SrvCheckSqlFilter(
                 }
                 break;
             case BACK_QUOTE:
-                switch (pszFilter[dwIndex])
+                switch (pFilter[dwIndex])
                 {
                     case '`':
                         mode = COMMAND;
@@ -334,308 +333,616 @@ error:
 }
 
 DWORD
-SrvEventLogCount(
-    HANDLE hDB,
-    PSTR sqlFilter,
-    PDWORD pdwNumMatched
+LwEvtDbGetRecordCount(
+    sqlite3 *pDb,
+    WCHAR * pSqlFilter,
+    DWORD * pNumMatched
     )
 {
-
     DWORD dwError = 0;
-    PSTR  pszQuery = NULL;
-    DWORD nRows = 0;
-    DWORD nCols = 0;
-    PSTR* ppszResult = NULL;
-    ENTER_RW_READER_LOCK;
+    PWSTR pQuery = NULL;
+    sqlite3_stmt *pStatement = NULL;
+    BOOLEAN inLock = FALSE;
+    sqlite3_int64 recordCount = 0;
 
-    if (sqlFilter == NULL) {
-        dwError = LwAllocateStringPrintf(
-                        &pszQuery,
+    if (pSqlFilter == NULL)
+    {
+        dwError = LwAllocateWc16sPrintfW(
+                        &pQuery,
                         DB_QUERY_COUNT_ALL);
         BAIL_ON_EVT_ERROR(dwError);
     }
-    else {
-        dwError = SrvCheckSqlFilter(sqlFilter);
-        BAIL_ON_EVT_ERROR(dwError);
-
-        dwError = LwAllocateStringPrintf(
-                        &pszQuery,
-                        DB_QUERY_COUNT,
-                        sqlFilter);
-        BAIL_ON_EVT_ERROR(dwError);
-    }
-
-    dwError = SrvQueryEventLog(
-                    hDB,
-                    pszQuery,
-                    &nRows,
-                    &nCols,
-                    &ppszResult);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    if (nRows == 1)
-    {
-        *pdwNumMatched = (DWORD) atoi(ppszResult[1]);
-    }
     else
+    {
+        dwError = LwEvtDbCheckSqlFilter(pSqlFilter);
+        BAIL_ON_EVT_ERROR(dwError);
+
+        dwError = LwAllocateWc16sPrintfW(
+                        &pQuery,
+                        DB_QUERY_COUNT,
+                        pSqlFilter);
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+    dwError = sqlite3_prepare16_v2(
+                    pDb,
+                    pQuery,
+                    -1,
+                    &pStatement,
+                    NULL);
+    BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
+
+    ENTER_RW_READER_LOCK(inLock);
+
+    dwError = sqlite3_step(pStatement);
+    if (dwError == SQLITE_ROW)
+    {
+        dwError = 0;
+        if (sqlite3_column_count(pStatement) != 1)
+        {
+            dwError = ERROR_INVALID_DATA;
+            BAIL_ON_EVT_ERROR(dwError);
+        }
+        recordCount = sqlite3_column_int64(pStatement, 0);
+    }
+    else if (dwError == SQLITE_DONE || dwError == SQLITE_OK)
     {
         EVT_LOG_VERBOSE("Could not find count of event logs in database");
         dwError = ERROR_BADDB;
         BAIL_ON_EVT_ERROR(dwError);
     }
-
- cleanup:
-    if (ppszResult) {
-        sqlite3_free_table(ppszResult);
+    else
+    {
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
     }
-    LW_SAFE_FREE_STRING(pszQuery);
 
-    LEAVE_RW_READER_LOCK;
+    if ((DWORD)recordCount != recordCount)
+    {
+        dwError = ERROR_ARITHMETIC_OVERFLOW;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+    *pNumMatched = (DWORD)recordCount;
+
+cleanup:
+    // sqlite3 API docs say passing NULL is okay
+    sqlite3_finalize(pStatement);
+    LEAVE_RW_READER_LOCK(inLock);
+
+    LW_SAFE_FREE_MEMORY(pQuery);
+
     return dwError;
 
- error:
-    *pdwNumMatched = 0;
+error:
+    *pNumMatched = 0;
+    goto cleanup;
+}
+
+static
+DWORD
+LwEvtDbReadString(
+    IN DWORD (*pAllocate)(DWORD, PVOID*),
+    IN VOID (*pFree)(PVOID),
+    IN sqlite3_stmt *pStatement,
+    IN int ColumnPos,
+    IN PCSTR pColumnName,
+    OUT PWSTR *ppResult
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    //Do not free
+    PCWSTR pColumnValue = (PCWSTR)sqlite3_column_text16(pStatement, ColumnPos);
+    PWSTR pResult = NULL;
+
+    if (strcmp(sqlite3_column_name(pStatement, ColumnPos), pColumnName))
+    {
+        dwError = ERROR_INVALID_DATA;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+    if (pColumnValue)
+    {
+        dwError = LwAllocateWc16String(
+                        &pResult,
+                        pColumnValue);
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+    *ppResult = pResult;
+
+cleanup:
+    return dwError;
+
+error:
+    *ppResult = NULL;
+    pFree(pResult);
+    goto cleanup;
+}
+
+static
+DWORD
+LwEvtDbReadBlob(
+    IN DWORD (*pAllocate)(DWORD, PVOID*),
+    IN VOID (*pFree)(PVOID),
+    IN sqlite3_stmt *pStatement,
+    IN int ColumnPos,
+    IN PCSTR pColumnName,
+    OUT PDWORD pLen,
+    OUT PBYTE* ppData
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    //Do not free
+    const BYTE *pColumnValue = sqlite3_column_blob(pStatement, ColumnPos);
+    PBYTE pResult = NULL;
+    int len = 0;
+
+    if (strcmp(sqlite3_column_name(pStatement, ColumnPos), pColumnName))
+    {
+        dwError = ERROR_INVALID_DATA;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+    len = sqlite3_column_bytes(pStatement, ColumnPos);
+    if ((DWORD)len != len)
+    {
+        dwError = ERROR_ARITHMETIC_OVERFLOW;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+    dwError = pAllocate(
+                    sizeof(pResult[0]) * len,
+                    (PVOID*)&pResult);
+    BAIL_ON_EVT_ERROR(dwError);
+    memcpy(pResult, pColumnValue, sizeof(pResult[0]) * len);
+
+    *pLen = len;
+    *ppData = pResult;
+
+cleanup:
+    return dwError;
+
+error:
+    *pLen = 0;
+    *ppData = NULL;
+    pFree(pResult);
+    goto cleanup;
+}
+
+VOID
+LwEvtDbFreeRecord(
+    IN VOID (*pFree)(PVOID),
+    IN PLW_EVENTLOG_RECORD pRecord
+    )
+{
+    PVOID* ppPointers[] = {
+        (PVOID *)&pRecord->pLogname,
+        (PVOID *)&pRecord->pEventType,
+        (PVOID *)&pRecord->pEventSource,
+        (PVOID *)&pRecord->pEventCategory,
+        (PVOID *)&pRecord->pUser,
+        (PVOID *)&pRecord->pComputer,
+        (PVOID *)&pRecord->pDescription,
+        (PVOID *)&pRecord->pData,
+    };
+    DWORD index = 0;
+
+    for (index = 0; index < sizeof(ppPointers)/sizeof(ppPointers[0]); index++)
+    {
+        if (*ppPointers[index])
+        {
+            pFree(*ppPointers[index]);
+            *ppPointers[index] = NULL;
+        }
+    }
+}
+
+static
+DWORD
+LwEvtDbUnpackRecord(
+    IN DWORD (*pAllocate)(DWORD, PVOID*),
+    IN VOID (*pFree)(PVOID),
+    IN sqlite3_stmt *pStatement,
+    OUT PLW_EVENTLOG_RECORD pRecord
+    )
+{
+    int column = 0;
+    DWORD dwError = LW_ERROR_SUCCESS;
+
+    pRecord->EventRecordId = sqlite3_column_int64(pStatement, column++);
+
+    dwError = LwEvtDbReadString(
+                    pAllocate,
+                    pFree,
+                    pStatement,
+                    column++,
+                    "EventTableCategoryId",
+                    &pRecord->pLogname);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = LwEvtDbReadString(
+                    pAllocate,
+                    pFree,
+                    pStatement,
+                    column++,
+                    "EventType",
+                    &pRecord->pEventType);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    pRecord->EventDateTime = sqlite3_column_int64(pStatement, column++);
+
+    dwError = LwEvtDbReadString(
+                    pAllocate,
+                    pFree,
+                    pStatement,
+                    column++,
+                    "EventSource",
+                    &pRecord->pEventSource);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = LwEvtDbReadString(
+                    pAllocate,
+                    pFree,
+                    pStatement,
+                    column++,
+                    "EventCategory",
+                    &pRecord->pEventCategory);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    pRecord->EventSourceId = sqlite3_column_int(pStatement, column++);
+
+    dwError = LwEvtDbReadString(
+                    pAllocate,
+                    pFree,
+                    pStatement,
+                    column++,
+                    "User",
+                    &pRecord->pUser);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = LwEvtDbReadString(
+                    pAllocate,
+                    pFree,
+                    pStatement,
+                    column++,
+                    "Computer",
+                    &pRecord->pComputer);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = LwEvtDbReadString(
+                    pAllocate,
+                    pFree,
+                    pStatement,
+                    column++,
+                    "Description",
+                    &pRecord->pDescription);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = LwEvtDbReadBlob(
+                    pAllocate,
+                    pFree,
+                    pStatement,
+                    column++,
+                    "Data",
+                    &pRecord->DataLen,
+                    &pRecord->pData);
+    BAIL_ON_EVT_ERROR(dwError);
+
+cleanup:
+    return dwError;
+
+error:
+    LwEvtDbFreeRecord(pFree, pRecord);
     goto cleanup;
 }
 
 DWORD
-SrvReadEventLog(
-    HANDLE hDB,
-    DWORD  dwStartingRowId,
-    DWORD  nRecordsPerPage,
-    PSTR   sqlFilter,
-    PDWORD  pdwNumReturned,
-    EVENT_LOG_RECORD** eventRecords
+LwEvtDbReadRecords(
+    DWORD (*pAllocate)(DWORD, PVOID*),
+    VOID (*pFree)(PVOID),
+    sqlite3 *pDb,
+    DWORD MaxResults,
+    PCWSTR pSqlFilter,
+    PDWORD pCount,
+    PLW_EVENTLOG_RECORD* ppRecords
     )
 {
-
     DWORD dwError = 0;
-    PSTR  pszQuery = NULL;
-    DWORD nRows = 0;
-    DWORD nCols = 0;
-    PSTR* ppszResult = NULL;
-    ENTER_RW_READER_LOCK;
+    PLW_EVENTLOG_RECORD pRecords = NULL;
+    PLW_EVENTLOG_RECORD pNewRecords = NULL;
+    DWORD count = 0;
+    DWORD capacity = 0;
+    sqlite3_stmt *pStatement = NULL;
+    PWSTR pQuery = NULL;
+    BOOLEAN inLock = FALSE;
 
-    if (LW_IS_NULL_OR_EMPTY_STR(sqlFilter)) {
-        dwError = LwAllocateStringPrintf(
-                        &pszQuery,
+    if (pSqlFilter == NULL)
+    {
+        dwError = LwAllocateWc16sPrintfW(
+                        &pQuery,
                         DB_QUERY_ALL_WITH_LIMIT,
-                        (long)nRecordsPerPage,
-                        (long)dwStartingRowId);
+                        MaxResults);
         BAIL_ON_EVT_ERROR(dwError);
     }
     else
     {
-        dwError = SrvCheckSqlFilter(sqlFilter);
+        dwError = LwEvtDbCheckSqlFilter(pSqlFilter);
         BAIL_ON_EVT_ERROR(dwError);
 
-        dwError = LwAllocateStringPrintf(
-                        &pszQuery,
+        dwError = LwAllocateWc16sPrintfW(
+                        &pQuery,
                         DB_QUERY_WITH_LIMIT,
-                        sqlFilter,
-                        (long)nRecordsPerPage,
-                        (long)dwStartingRowId);
+                        pSqlFilter,
+                        MaxResults);
         BAIL_ON_EVT_ERROR(dwError);
     }
 
-    dwError = SrvQueryEventLog(hDB, pszQuery, &nRows, &nCols, &ppszResult);
-    BAIL_ON_EVT_ERROR(dwError);
+    dwError = sqlite3_prepare16_v2(
+                    pDb,
+                    pQuery,
+                    -1,
+                    &pStatement,
+                    NULL);
+    BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
 
-    if (nRows > 0) {
+    ENTER_RW_READER_LOCK(inLock);
 
-        dwError = BuildEventLogRecordList(ppszResult,
-                                            nRows,
-                                            nCols,
-                                            eventRecords);
+    while (1)
+    {
+        dwError = sqlite3_step(pStatement);
+        if (dwError == SQLITE_DONE || dwError == SQLITE_OK)
+        {
+            dwError = 0;
+            break;
+        }
+        else if (dwError == SQLITE_ROW)
+        {
+            dwError = 0;
+        }
+        else
+        {
+            BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
+        }
+
+        // Resize array if necessary
+        if (count >= capacity)
+        {
+            capacity = (count + 10) * 2;
+            if (capacity > MaxResults)
+            {
+                capacity = MaxResults;
+            }
+            if (count >= capacity)
+            {
+                dwError = ERROR_ARITHMETIC_OVERFLOW;
+                BAIL_ON_EVT_ERROR(dwError);
+            }
+
+            dwError = pAllocate(
+                            sizeof(pRecords[0]) * capacity,
+                            (PVOID*)&pNewRecords);
+            BAIL_ON_EVT_ERROR(dwError);
+
+            memcpy(pNewRecords, pRecords, sizeof(pRecords[0]) * count);
+            pFree(pRecords);
+            pRecords = pNewRecords;
+            pNewRecords = NULL;
+        }
+
+        dwError = LwEvtDbUnpackRecord(
+                        pAllocate,
+                        pFree,
+                        pStatement,
+                        &pRecords[count]);
         BAIL_ON_EVT_ERROR(dwError);
-
-
-    } else {
-
-        EVT_LOG_VERBOSE("No event logs found in the database");
+        count++;
     }
-    *pdwNumReturned = nRows;
 
+    *pCount = count;
+    *ppRecords = pRecords;
 
- cleanup:
-    if (ppszResult) {
-        sqlite3_free_table(ppszResult);
-    }
-    LW_SAFE_FREE_STRING(pszQuery);
-    LEAVE_RW_READER_LOCK;
+cleanup:
+    // sqlite3 API docs say passing NULL is okay
+    sqlite3_finalize(pStatement);
+    LEAVE_RW_READER_LOCK(inLock);
+
+    LW_SAFE_FREE_MEMORY(pQuery);
+    pFree(pNewRecords);
     return dwError;
- error:
-    *pdwNumReturned = 0;
-    *eventRecords = NULL; 
-    goto cleanup;
 
+error:
+    *pCount = 0;
+    *ppRecords = NULL;
+    while (count)
+    {
+        count--;
+        LwEvtDbFreeRecord(pFree, &pRecords[count]);
+    }
+    pFree(pRecords);
+    goto cleanup;
 }
 
 
 DWORD
-SrvWriteEventLog(
-    HANDLE hDB,
-    DWORD cRecords,
-    PEVENT_LOG_RECORD pEventRecords
+LwEvtDbWriteRecords(
+    sqlite3 *pDb,
+    DWORD Count,
+    const LW_EVENTLOG_RECORD *pRecords 
     )
 {
     DWORD dwError = 0;
-    sqlite3_stmt *pstQuery = NULL;
-    PEVENTLOG_CONTEXT pContext = (PEVENTLOG_CONTEXT)hDB;
+    sqlite3_stmt *pStatement = NULL;
     int iColumnPos = 1;
-    const EVENT_LOG_RECORD* pRecord = NULL;
-    DWORD dwIndex = 0;
-    PSTR pszError = NULL;
+    const LW_EVENTLOG_RECORD* pRecord = NULL;
+    DWORD index = 0;
+    PSTR pError = NULL;
+    BOOLEAN inLock = FALSE;
+    BOOLEAN removeAsNeeded = FALSE;
 
-    EVT_LOG_VERBOSE("server::evtdb.c Writing %u records (hDB=%.16X)\n",
-                    cRecords, hDB);
+    EVT_LOG_VERBOSE("server::evtdb.c Writing %u records (pDb=%.16X)\n",
+                    Count, pDb);
 
-    ENTER_RW_WRITER_LOCK;
+    ENTER_RW_WRITER_LOCK(inLock);
 
     dwError = sqlite3_prepare_v2(
-                    pContext->pDbHandle,
-                    TEXT(DB_QUERY_INSERT_EVENT),
+                    pDb,
+                    DB_QUERY_INSERT_EVENT,
                     -1, //search for null termination in szQuery to get length
-                    &pstQuery,
+                    &pStatement,
                     NULL);
-    BAIL_ON_EVT_ERROR(dwError);
+    BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
 
     dwError = sqlite3_exec(
-                    pContext->pDbHandle,
+                    pDb,
                     "begin;",
                     NULL,
                     NULL,
-                    &pszError);
-    BAIL_ON_EVT_ERROR(dwError);
+                    &pError);
+    BAIL_ON_SQLITE3_ERROR(dwError, pError);
 
-    for (dwIndex = 0; dwIndex < cRecords; dwIndex++)
+    for (index = 0; index < Count; index++)
     {
-        pRecord = &pEventRecords[dwIndex];
+        pRecord = &pRecords[index];
         iColumnPos = 1;
 
-        dwError = sqlite3_reset(pstQuery);
-        BAIL_ON_EVT_ERROR(dwError);
+        dwError = sqlite3_reset(pStatement);
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
 
-        dwError = sqlite3_bind_text(
-            pstQuery,
+        dwError = sqlite3_bind_text16(
+            pStatement,
             iColumnPos,
-            pRecord->pszEventTableCategoryId,
+            pRecord->pLogname,
             -1,
             SQLITE_STATIC);
-        BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
         iColumnPos++;
 
-        dwError = sqlite3_bind_text(
-            pstQuery,
+        dwError = sqlite3_bind_text16(
+            pStatement,
             iColumnPos,
-            pRecord->pszEventType,
+            pRecord->pEventType,
             -1,
             SQLITE_STATIC);
-        BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
         iColumnPos++;
 
         dwError = sqlite3_bind_int64(
-            pstQuery,
+            pStatement,
             iColumnPos,
-            pRecord->dwEventDateTime);
-        BAIL_ON_EVT_ERROR(dwError);
+            pRecord->EventDateTime);
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
         iColumnPos++;
 
-        dwError = sqlite3_bind_text(
-            pstQuery,
+        dwError = sqlite3_bind_text16(
+            pStatement,
             iColumnPos,
-            pRecord->pszEventSource,
+            pRecord->pEventSource,
             -1,
             SQLITE_STATIC);
-        BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
         iColumnPos++;
 
-        dwError = sqlite3_bind_text(
-            pstQuery,
+        dwError = sqlite3_bind_text16(
+            pStatement,
             iColumnPos,
-            pRecord->pszEventCategory,
+            pRecord->pEventCategory,
             -1,
             SQLITE_STATIC);
-        BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
         iColumnPos++;
 
         dwError = sqlite3_bind_int64(
-            pstQuery,
+            pStatement,
             iColumnPos,
-            pRecord->dwEventSourceId);
-        BAIL_ON_EVT_ERROR(dwError);
+            pRecord->EventSourceId);
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
         iColumnPos++;
 
-        dwError = sqlite3_bind_text(
-            pstQuery,
+        dwError = sqlite3_bind_text16(
+            pStatement,
             iColumnPos,
-            pRecord->pszUser,
+            pRecord->pUser,
             -1,
             SQLITE_STATIC);
-        BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
         iColumnPos++;
 
-        dwError = sqlite3_bind_text(
-            pstQuery,
+        dwError = sqlite3_bind_text16(
+            pStatement,
             iColumnPos,
-            pRecord->pszComputer,
+            pRecord->pComputer,
             -1,
             SQLITE_STATIC);
-        BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
         iColumnPos++;
 
-        dwError = sqlite3_bind_text(
-            pstQuery,
+        dwError = sqlite3_bind_text16(
+            pStatement,
             iColumnPos,
-            pRecord->pszDescription,
+            pRecord->pDescription,
             -1,
             SQLITE_STATIC);
-        BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
         iColumnPos++;
 
-        dwError = sqlite3_bind_text(
-            pstQuery,
+        dwError = sqlite3_bind_blob(
+            pStatement,
             iColumnPos,
-            pRecord->pszData,
-            -1,
+            pRecord->pData,
+            pRecord->DataLen,
             SQLITE_STATIC);
-        BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
         iColumnPos++;
 
-        dwError = (DWORD)sqlite3_step(pstQuery);
+        dwError = (DWORD)sqlite3_step(pStatement);
         if (dwError == SQLITE_DONE)
         {
             dwError = 0;
         }
-        BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
     }
 
     dwError = sqlite3_exec(
-                    pContext->pDbHandle,
+                    pDb,
                     "end",
                     NULL,
                     NULL,
-                    &pszError);
-    BAIL_ON_EVT_ERROR(dwError);
+                    &pError);
+    BAIL_ON_SQLITE3_ERROR(dwError, pError);
 
-    EVT_LOG_VERBOSE("server::evtdb.c SrvWriteEventLog() finished\n");
+    EVT_LOG_VERBOSE("Write finished");
+
+    gdwNewEventCount += Count;
+    if (gdwNewEventCount >= EVT_MAINTAIN_EVENT_COUNT)
+    {
+        dwError = EVTGetRemoveAsNeeded(&removeAsNeeded);
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+    if (removeAsNeeded)
+    {
+        //Trim the DB
+        dwError = LwEvtDbMaintainDB(pDb);
+        BAIL_ON_EVT_ERROR(dwError);
+
+        gdwNewEventCount = 0;
+    }
 
  cleanup:
-    if (pstQuery)
+    if (pStatement)
     {
-        sqlite3_finalize(pstQuery);
+        sqlite3_finalize(pStatement);
     }
-    LEAVE_RW_WRITER_LOCK;
+    LEAVE_RW_WRITER_LOCK(inLock);
     return dwError;
 
  error:
 
-    if (pszError)
+    if (pError)
     {
-        sqlite3_free(pszError);
+        sqlite3_free(pError);
     }
     sqlite3_exec(
-                    pContext->pDbHandle,
+                    pDb,
                     "rollback",
                     NULL,
                     NULL,
@@ -647,8 +954,8 @@ SrvWriteEventLog(
 /* A routine to trim the database*/
 static
 DWORD
-SrvMaintainDB(
-    HANDLE hDB
+LwEvtDbMaintainDB(
+    sqlite3 *pDb
     )
 {
     DWORD dwError = 0;
@@ -671,11 +978,11 @@ SrvMaintainDB(
     BAIL_ON_EVT_ERROR(dwError);
 
     //Get the count of the records
-    dwError = SrvEventLogCount(hDB, NULL, &dwRecordCount);
+    dwError = LwEvtDbGetRecordCount(pDb, NULL, &dwRecordCount);
     BAIL_ON_EVT_ERROR(dwError);
 
     //Get the count of the records which are older than 'n' days
-    dwError = SrvEventLogCountOlderThan(hDB, dwMaxAge, &dwCountOlderThan);
+    dwError = LwEvtDbEventLogCountOlderThan(pDb, dwMaxAge, &dwCountOlderThan);
     BAIL_ON_EVT_ERROR(dwError);
 
     //Get the File size
@@ -692,11 +999,11 @@ SrvMaintainDB(
     //Regular house keeping
     if (dwCountOlderThan) {
         EVT_LOG_VERBOSE("Deleting the record as older than current date");
-        dwError = SrvDeleteOlderThanCurDate(hDB, dwMaxAge);
+        dwError = LwEvtDbDeleteOlderThanCurDate(pDb, dwMaxAge);
         BAIL_ON_EVT_ERROR(dwError);
 
         //Since already some records got deleted get the latest record count
-        dwError = SrvEventLogCount(hDB, NULL, &dwRecordCount);
+        dwError = LwEvtDbGetRecordCount(pDb, NULL, &dwRecordCount);
         BAIL_ON_EVT_ERROR(dwError);
     }
 
@@ -708,14 +1015,14 @@ SrvMaintainDB(
         EVT_LOG_VERBOSE("Going to trim DB.........");
 
         //If records not aged out,then delete the records above Max Records
-        dwError = SrvDeleteIfCountExceeds(hDB, dwMaxRecords);
+        dwError = LwEvtDbDeleteIfCountExceeds(pDb, dwMaxRecords);
         BAIL_ON_EVT_ERROR(dwError);
     }
 
     if (dwActualSize >= dwMaxLogSize)
     {
         EVT_LOG_VERBOSE("Log Size is exceeds the maximum limit set");
-        dwError = SrvLimitDatabaseSize(hDB, dwMaxLogSize);
+        dwError = LwEvtDbLimitDatabaseSize(pDb, dwMaxLogSize);
         BAIL_ON_EVT_ERROR(dwError);
     }
 	
@@ -729,122 +1036,77 @@ error:
 }
 
 DWORD
-SrvWriteToDB(
-    HANDLE hDB,
-    DWORD cRecords,
-    PEVENT_LOG_RECORD pEventRecords
+LwEvtDbDeleteRecords(
+    sqlite3 *pDb,
+    PCWSTR pSqlFilter
     )
 {
     DWORD dwError = 0;
-    BOOLEAN bRemoveAsNeeded = FALSE;
-    BOOLEAN bInLock = FALSE;
+    PWSTR pQuery = NULL;
+    sqlite3_stmt *pStatement = NULL;
+    BOOLEAN inLock = FALSE;
 
-    //Write the eventlog
-    dwError = SrvWriteEventLog(
-                    hDB,
-                    cRecords,
-                    pEventRecords);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    ENTER_RW_WRITER_LOCK;
-    bInLock = TRUE;
-    gdwNewEventCount += cRecords;
-    if (gdwNewEventCount >= EVT_MAINTAIN_EVENT_COUNT)
+    if (pSqlFilter == NULL)
     {
-        dwError = EVTGetRemoveAsNeeded(&bRemoveAsNeeded);
-        BAIL_ON_EVT_ERROR(dwError);
-
-        gdwNewEventCount = 0;
-    }
-    LEAVE_RW_WRITER_LOCK;
-    bInLock = FALSE;
-
-    if (bRemoveAsNeeded)
-    {
-        //Trim the DB
-        EVT_LOG_VERBOSE("Going to trim database .....");
-        dwError = SrvMaintainDB(hDB);
+        dwError = LwAllocateWc16sPrintfW(
+                        &pQuery,
+                        DB_QUERY_DELETE_ALL);
         BAIL_ON_EVT_ERROR(dwError);
     }
+    else
+    {
+        dwError = LwEvtDbCheckSqlFilter(pSqlFilter);
+        BAIL_ON_EVT_ERROR(dwError);
+
+        dwError = LwAllocateWc16sPrintfW(
+                        &pQuery,
+                        DB_QUERY_DELETE,
+                        pSqlFilter);
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+    dwError = sqlite3_prepare16_v2(
+                    pDb,
+                    pQuery,
+                    -1,
+                    &pStatement,
+                    NULL);
+    BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
+
+    ENTER_RW_READER_LOCK(inLock);
+
+    dwError = sqlite3_step(pStatement);
+    if (dwError == SQLITE_ROW)
+    {
+        dwError = ERROR_BADDB;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+    else if (dwError == SQLITE_DONE || dwError == SQLITE_OK)
+    {
+        dwError = 0;
+    }
+    else
+    {
+        BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
+    }
+
+cleanup:
+    // sqlite3 API docs say passing NULL is okay
+    sqlite3_finalize(pStatement);
+    LEAVE_RW_READER_LOCK(inLock);
+
+    LW_SAFE_FREE_MEMORY(pQuery);
+
+    return dwError;
 
 error:
-    if (bInLock)
-    {
-        LEAVE_RW_WRITER_LOCK;
-    }
-    return dwError;
-}
-
-
-DWORD
-SrvClearEventLog(
-    HANDLE hDB
-    )
-{
-    DWORD dwError = 0;
-    DWORD nRows = 0;
-    DWORD nCols = 0;
-    PSTR* ppszResult = NULL;
-    ENTER_RW_WRITER_LOCK;
-
-    dwError = SrvQueryEventLog(hDB, DB_QUERY_DELETE_ALL, &nRows, &nCols, &ppszResult);
-    BAIL_ON_EVT_ERROR(dwError);
-
- cleanup:
-    if (ppszResult) {
-        sqlite3_free_table(ppszResult);
-    }
-    LEAVE_RW_WRITER_LOCK;
-    return dwError;
- error:
     goto cleanup;
 }
 
+//To get count of records that are older than 'n' days.
 DWORD
-SrvDeleteFromEventLog(
-    HANDLE hDB,
-    PSTR sqlFilter
-    )
-{
-    DWORD dwError = 0;
-    PSTR  pszQuery = NULL;
-    DWORD nRows = 0;
-    DWORD nCols = 0;
-    PSTR* ppszResult = NULL;
-    ENTER_RW_WRITER_LOCK;
-
-    if (sqlFilter == NULL) {
-        goto cleanup;
-    }
-
-    dwError = SrvCheckSqlFilter(sqlFilter);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    dwError = LwAllocateStringPrintf(
-                    &pszQuery,
-                    DB_QUERY_DELETE,
-                    sqlFilter);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    dwError = SrvQueryEventLog(hDB, pszQuery, &nRows, &nCols, &ppszResult);
-    BAIL_ON_EVT_ERROR(dwError);
-
- cleanup:
-    if (ppszResult) {
-        sqlite3_free_table(ppszResult);
-    }
-    LW_SAFE_FREE_STRING(pszQuery);
-    LEAVE_RW_WRITER_LOCK;
-    return dwError;
- error:
-    goto cleanup;
-
-}
-
-//To get count of records that are older  than 'n' days.
-DWORD
-SrvEventLogCountOlderThan(
-    HANDLE hDB,
+LwEvtDbEventLogCountOlderThan(
+    sqlite3 *pDb,
     DWORD dwOlderThan,
     PDWORD pdwNumMatched
     )
@@ -855,11 +1117,13 @@ SrvEventLogCountOlderThan(
     DWORD nRows = 0;
     DWORD nCols = 0;
     PSTR* ppszResult = NULL;
-    ENTER_RW_READER_LOCK;
+    BOOLEAN inLock = FALSE;
+
+    ENTER_RW_READER_LOCK(inLock);
 
     sprintf(szQuery, DB_QUERY_COUNT_OLDER_THAN, dwOlderThan);
 
-    dwError = SrvQueryEventLog(hDB, szQuery, &nRows, &nCols, &ppszResult);
+    dwError = LwEvtDbQueryEventLog(pDb, szQuery, &nRows, &nCols, &ppszResult);
 
     if (nRows == 1) {
         *pdwNumMatched = (DWORD) atoi(ppszResult[1]);
@@ -873,7 +1137,7 @@ SrvEventLogCountOlderThan(
     if (ppszResult) {
         sqlite3_free_table(ppszResult);
     }
-    LEAVE_RW_READER_LOCK;
+    LEAVE_RW_READER_LOCK(inLock);
     return dwError;
  error:
     goto cleanup;
@@ -881,8 +1145,8 @@ SrvEventLogCountOlderThan(
 }
 
 DWORD
-SrvLimitDatabaseSize(
-    HANDLE hDB,
+LwEvtDbLimitDatabaseSize(
+    sqlite3 *pDb,
     DWORD dwMaxLogSize
     )
 {
@@ -894,8 +1158,9 @@ SrvLimitDatabaseSize(
     DWORD dwCurrentCount = 0;
     DWORD dwActualSize = 0;
     DWORD dwDeleteCount = 0;
+    BOOLEAN inLock = FALSE;
 
-    ENTER_RW_WRITER_LOCK;
+    ENTER_RW_WRITER_LOCK(inLock);
 
     while (1)
     {
@@ -912,23 +1177,11 @@ SrvLimitDatabaseSize(
             sqlite3_free_table(ppszResult);
         }
 
-        dwError = SrvQueryEventLog(
-                        hDB,
-                        DB_QUERY_COUNT_ALL,
-                        &nRows,
-                        &nCols,
-                        &ppszResult);
+        dwError = LwEvtDbGetRecordCount(
+                        pDb,
+                        NULL,
+                        &dwCurrentCount);
         BAIL_ON_EVT_ERROR(dwError);
-
-        if (nRows == 1)
-        {
-            dwCurrentCount = (DWORD) atoi(ppszResult[1]);
-        }
-        else
-        {
-            dwError = ERROR_BADDB;
-            BAIL_ON_EVT_ERROR(dwError);
-        }
 
         if (dwCurrentCount == 0)
         {
@@ -955,14 +1208,14 @@ SrvLimitDatabaseSize(
         }
         sprintf(szQuery, DB_QUERY_DELETE_COUNT, (unsigned long)dwDeleteCount);
 
-        dwError = SrvQueryEventLog(hDB, szQuery, &nRows, &nCols, &ppszResult);
+        dwError = LwEvtDbQueryEventLog(pDb, szQuery, &nRows, &nCols, &ppszResult);
         BAIL_ON_EVT_ERROR(dwError);
 
         // Run the vacuum command so the filesize actually shrinks
         if (ppszResult) {
             sqlite3_free_table(ppszResult);
         }
-        dwError = SrvQueryEventLog(hDB, "VACUUM", &nRows, &nCols, &ppszResult);
+        dwError = LwEvtDbQueryEventLog(pDb, "VACUUM", &nRows, &nCols, &ppszResult);
         BAIL_ON_EVT_ERROR(dwError);
     }
 
@@ -970,7 +1223,7 @@ cleanup:
     if (ppszResult) {
         sqlite3_free_table(ppszResult);
     }
-    LEAVE_RW_WRITER_LOCK;
+    LEAVE_RW_WRITER_LOCK(inLock);
     return dwError;
 
 error:
@@ -979,8 +1232,8 @@ error:
 
 //Delete the record over 'n' entries
 DWORD
-SrvDeleteIfCountExceeds(
-    HANDLE hDB,
+LwEvtDbDeleteIfCountExceeds(
+    sqlite3 *pDb,
     DWORD dwOlderThan
     )
 {
@@ -990,8 +1243,9 @@ SrvDeleteIfCountExceeds(
     DWORD nRows = 0;
     DWORD nCols = 0;
     PSTR* ppszResult = NULL;
+    BOOLEAN inLock = FALSE;
 
-    ENTER_RW_WRITER_LOCK;
+    ENTER_RW_WRITER_LOCK(inLock);
 
     // Delete 10 extra records so we only need to trim on 1/10 of the runs.
     if (dwOlderThan > 10)
@@ -1001,14 +1255,14 @@ SrvDeleteIfCountExceeds(
 
     sprintf(szQuery, DB_QUERY_DELETE_AT_LIMIT, (unsigned long)dwOlderThan);
 
-    dwError = SrvQueryEventLog(hDB, szQuery, &nRows, &nCols, &ppszResult);
+    dwError = LwEvtDbQueryEventLog(pDb, szQuery, &nRows, &nCols, &ppszResult);
     BAIL_ON_EVT_ERROR(dwError);
 
  cleanup:
     if (ppszResult) {
         sqlite3_free_table(ppszResult);
     }
-    LEAVE_RW_WRITER_LOCK;
+    LEAVE_RW_WRITER_LOCK(inLock);
     return dwError;
  error:
     goto cleanup;
@@ -1017,8 +1271,8 @@ SrvDeleteIfCountExceeds(
 
 //To delete records 'n' days older than current date.
 DWORD
-SrvDeleteOlderThanCurDate(
-    HANDLE hDB,
+LwEvtDbDeleteOlderThanCurDate(
+    sqlite3 *pDb,
     DWORD dwOlderThan
     )
 {
@@ -1027,19 +1281,20 @@ SrvDeleteOlderThanCurDate(
     DWORD nRows = 0;
     DWORD nCols = 0;
     PSTR* ppszResult = NULL;
+    BOOLEAN inLock = FALSE;
 
-    ENTER_RW_WRITER_LOCK;
+    ENTER_RW_WRITER_LOCK(inLock);
 
     sprintf(szQuery, DB_QUERY_DELETE_OLDER_THAN, dwOlderThan);
 
-    dwError = SrvQueryEventLog(hDB, szQuery, &nRows, &nCols, &ppszResult);
+    dwError = LwEvtDbQueryEventLog(pDb, szQuery, &nRows, &nCols, &ppszResult);
     BAIL_ON_EVT_ERROR(dwError);
 
  cleanup:
     if (ppszResult) {
         sqlite3_free_table(ppszResult);
     }
-    LEAVE_RW_WRITER_LOCK;
+    LEAVE_RW_WRITER_LOCK(inLock);
     return dwError;
  error:
     goto cleanup;
@@ -1054,8 +1309,8 @@ SrvDeleteOlderThanCurDate(
  * function call, within the critical section.
  */
 DWORD
-SrvQueryEventLog(
-    HANDLE hDB,
+LwEvtDbQueryEventLog(
+    sqlite3* pDb,
     PSTR szQuery,
     PDWORD pdwNumRows,
     PDWORD pdwNumCols,
@@ -1063,28 +1318,21 @@ SrvQueryEventLog(
     )
 {
     DWORD dwError = 0;
-    PEVENTLOG_CONTEXT pContext = NULL;
     PSTR  pszError = NULL;
 
     INT numRowsLocal = 0;
     INT numColsLocal = 0;
 
-    if (!hDB) {
+    if (!pDb) {
         dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_EVT_ERROR(dwError);
     }
 
-    pContext = (PEVENTLOG_CONTEXT)((long)hDB);
-    if (!pContext->pDbHandle) {
-        dwError = ERROR_INVALID_HANDLE;
-        BAIL_ON_EVT_ERROR(dwError);
-    }
-
-    EVT_LOG_INFO("evtdb: SrvQueryEventLog: query={%s}\n\n", szQuery);
+    EVT_LOG_INFO("evtdb: LwEvtDbQueryEventLog: query={%s}\n\n", szQuery);
 
 
 
-    dwError = sqlite3_get_table(pContext->pDbHandle,
+    dwError = sqlite3_get_table(pDb,
                                 szQuery,
                                 pppszResult,
                                 (INT*) &numRowsLocal,
@@ -1108,197 +1356,8 @@ SrvQueryEventLog(
 
 }
 
-static
 DWORD
-BuildEventLogRecordList(
-    PSTR * ppszResult,
-    DWORD  nRows,
-    DWORD  nCols,
-    EVENT_LOG_RECORD** eventLogRecords
-    )
-{
-    DWORD dwError = 0;
-    EVENT_LOG_RECORD* pRecord = NULL;
-    INT iCol = 0;
-    INT iRow = 0;
-    INT iVal = 0;
-
-    if (eventLogRecords == NULL) {
-        return -1;
-    }
-
-    if (nRows < 1) {
-        return -1;
-    }
-
-    if (ppszResult == NULL || LW_IS_NULL_OR_EMPTY_STR(ppszResult[0])) {
-        return -1;
-    }
-
-    EVENT_LOG_RECORD* records = *eventLogRecords;
-
-    for (iVal = 0; iVal < EVENT_DB_COL_SENTINEL; iVal++) {
-        //TODO: find something useful to do with the header information.
-        EVT_LOG_DEBUG("evtdb.c: BuildEventLogRecordList: HEADER col=%d str=%s\n", iVal, ppszResult[iVal]);
-    }
-
-    for (iRow = 0; iRow < nRows; iRow++)
-    {
-        pRecord = &(records[iRow]);
-
-        for (iCol = 0; iCol < nCols; iCol++)
-        {
-            switch(iCol)
-            {
-                case EventTableCategoryId:
-                {
-                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
-                    {
-                        pRecord->pszEventTableCategoryId = NULL;
-                    }
-                    else
-                    {
-                        dwError = RPCAllocateString( ppszResult[iVal],
-                                      (PSTR*)(&pRecord->pszEventTableCategoryId));
-                        BAIL_ON_EVT_ERROR(dwError);
-                    }
-                }
-                break;
-                case EventRecordId:
-                {
-                    pRecord->dwEventRecordId = atoi(ppszResult[iVal]);
-                }
-                break;
-                case EventType:
-                {
-                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
-                    {
-                        pRecord->pszEventType = NULL;
-                    }
-                    else
-                    {
-                        dwError = RPCAllocateString( ppszResult[iVal],
-                                      (PSTR*)(&pRecord->pszEventType));
-                        BAIL_ON_EVT_ERROR(dwError);
-                    }
-                }
-                break;
-                case EventDateTime:
-                {
-                    pRecord->dwEventDateTime = atoi(ppszResult[iVal]);
-                }
-                break;
-                case EventSource:
-                {
-
-                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
-                    {
-                        pRecord->pszEventSource = NULL;
-                    }
-                    else
-                    {
-                        dwError = RPCAllocateString( ppszResult[iVal],
-                                      (PSTR*)(&pRecord->pszEventSource));
-                        BAIL_ON_EVT_ERROR(dwError);
-                    }
-                }
-                break;
-                case EventCategory:
-                {
-                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
-                    {
-                        pRecord->pszEventCategory = NULL;
-                    }
-                    else
-                    {
-                        dwError = RPCAllocateString( ppszResult[iVal],
-                                      (PSTR*)(&pRecord->pszEventCategory));
-                        BAIL_ON_EVT_ERROR(dwError);
-                    }
-                }
-                break;
-                case EventSourceId:
-                {
-                    pRecord->dwEventSourceId = atoi(ppszResult[iVal]);
-                }
-                break;
-                case User:
-                {
-                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
-                    {
-                        pRecord->pszUser = NULL;
-                    }
-                    else
-                    {
-                        dwError = RPCAllocateString( ppszResult[iVal],
-                                      (PSTR*)(&pRecord->pszUser));
-                        BAIL_ON_EVT_ERROR(dwError);
-                    }
-                }
-                break;
-                case Computer:
-                {
-                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
-                    {
-                        pRecord->pszComputer = NULL;
-                    }
-                    else
-                    {
-                        dwError = RPCAllocateString( ppszResult[iVal],
-                                      (PSTR*)(&pRecord->pszComputer));
-
-                        BAIL_ON_EVT_ERROR(dwError);
-                    }
-                }
-                break;
-                case Description:
-                {
-                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
-                    {
-                        pRecord->pszDescription = NULL;
-                    }
-                    else
-                    {
-                        dwError = RPCAllocateString( ppszResult[iVal],
-                                      (PSTR*)(&pRecord->pszDescription));
-
-                        BAIL_ON_EVT_ERROR(dwError);
-                    }
-                }
-                break;
-                case Data:
-                {
-                    if (LW_IS_NULL_OR_EMPTY_STR(ppszResult[iVal]))
-                    {
-                        pRecord->pszData = NULL;
-                    }
-                    else
-                    {
-                        dwError = RPCAllocateString( ppszResult[iVal],
-                                      (PSTR*)(&pRecord->pszData));
-
-                        BAIL_ON_EVT_ERROR(dwError);
-                    }
-                }
-                break;
-            }
-            iVal++;
-        }
-    }
-
-
-    EVT_LOG_VERBOSE("server::evtdb.c BuildEventLogRecordList() finished, nRows=%d, dwError=%d\n",
-            nRows, dwError);
-
-error:
-
-    return dwError;
-}
-
-
-
-DWORD
-SrvCreateDB(BOOLEAN replaceDB)
+LwEvtDbCreateDB(BOOLEAN replaceDB)
 {
     DWORD dwError = 0;
     sqlite3* pSqliteHandle = NULL;

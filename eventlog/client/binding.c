@@ -125,7 +125,7 @@ cleanup:
 }
 
 DWORD
-LWICreateEventLogRpcBinding(
+LwEvtCreateEventlogRpcBinding(
     const char * hostname,
     handle_t *   event_binding
     )
@@ -155,7 +155,7 @@ LWICreateEventLogRpcBinding(
         endpoint = NULL;
     }
 
-    EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventLogRpcBinding() hostname=%s, *event_binding=%.16X\n",
+    EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventlogRpcBinding() hostname=%s, *event_binding=%.16X\n",
                     hostname, *event_binding);
 
     RPC_STRING_BINDING_COMPOSE((char*) protocol, (char*) hostname, (char*) endpoint, &pszBindingString, &winerror);
@@ -165,13 +165,13 @@ LWICreateEventLogRpcBinding(
         BAIL_ON_DCE_ERROR(dwError, RPC_S_INVALID_STRING_BINDING);
     }
 
-    EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventLogRpcBinding() pszBindingString=%s, running rbfsb\n",
+    EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventlogRpcBinding() pszBindingString=%s, running rbfsb\n",
                     pszBindingString);
 
     RPC_BINDING_FROM_STRING_BINDING(pszBindingString, &eventBinding_local, &winerror);
     BAIL_ON_DCE_ERROR(dwError, winerror);
 
-    EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventLogRpcBinding() eventBinding_local=%.16X, finished rbfsb\n",
+    EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventlogRpcBinding() eventBinding_local=%.16X, finished rbfsb\n",
                     eventBinding_local);
 
 
@@ -188,7 +188,7 @@ LWICreateEventLogRpcBinding(
             BAIL_ON_EVT_ERROR(ERROR_INSUFFICIENT_BUFFER);
         }
         
-        EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventLogRpcBinding() using host principal [%s]\n",
+        EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventlogRpcBinding() using host principal [%s]\n",
                         hostPrincipal);
         
         winerror = RpcBindingSetAuthInfo(eventBinding_local,
@@ -199,14 +199,14 @@ LWICreateEventLogRpcBinding(
                                   rpc_c_authz_name);
         BAIL_ON_DCE_ERROR(dwError, winerror);
         
-        EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventLogRpcBinding() eventBinding_local=%.16X, auth info set"
+        EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventlogRpcBinding() eventBinding_local=%.16X, auth info set"
                         "winerror=0x%08x\n", eventBinding_local, winerror);
         
     }
 
     *event_binding = eventBinding_local;
 
-    EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventLogRpcBinding() finished successfully\n");
+    EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventlogRpcBinding() finished successfully\n");
 
 cleanup:
     if (hostPrincipal)
@@ -223,7 +223,7 @@ cleanup:
     return dwError;
 
 error:
-    EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventLogRpcBinding() label error: winerror=%d\n",
+    EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventlogRpcBinding() label error: winerror=%d\n",
                     winerror);
 
     goto cleanup;
@@ -231,7 +231,7 @@ error:
 
 
 DWORD
-LWIFreeEventLogRpcBinding(
+LwEvtFreeEventlogRpcBinding(
     handle_t event_binding
     )
 {

@@ -60,13 +60,67 @@
 #define PATH_MAX 1024
 #endif
 
-#ifndef HOST_NAME_MAX
-#define HOST_NAME_MAX 255
-#endif
+#include <eventlog-record.h>
 
-#ifndef EVENT_LOG_RECORD_DEFINED
-#define EVENT_LOG_RECORD_DEFINED 1
+struct _LW_EVENTLOG_CONNECTION;
+typedef struct _LW_EVENTLOG_CONNECTION
+    LW_EVENTLOG_CONNECTION, *PLW_EVENTLOG_CONNECTION;
 
+DWORD
+LwEvtOpenEventlog(
+    IN OPTIONAL PCSTR pServerName,
+    OUT PLW_EVENTLOG_CONNECTION* ppConn
+    );
+
+// Returns an error if there was a problem safely closing the connection, but
+// always frees the handle (meaning do not use the handle anymore).
+DWORD
+LwEvtCloseEventlog(
+    IN PLW_EVENTLOG_CONNECTION pConn
+    );
+
+DWORD
+LwEvtGetRecordCount(
+    IN PLW_EVENTLOG_CONNECTION pConn,
+    IN PCWSTR pSqlFilter,
+    OUT PDWORD pNumMatched
+    );
+
+DWORD
+LwEvtReadRecords(
+    IN PLW_EVENTLOG_CONNECTION pConn,
+    IN DWORD MaxResults,
+    IN PCWSTR pSqlFilter,
+    OUT PDWORD pCount,
+    OUT PLW_EVENTLOG_RECORD* ppRecords
+    );
+
+DWORD
+LwEvtWriteRecords(
+    IN PLW_EVENTLOG_CONNECTION pConn,
+    IN DWORD Count,
+    IN PLW_EVENTLOG_RECORD pRecords 
+    );
+
+DWORD
+LwEvtDeleteRecords(
+    IN PLW_EVENTLOG_CONNECTION pConn,
+    IN OPTIONAL PCWSTR pSqlFilter
+    );
+
+VOID
+LwEvtFreeRecord(
+    IN PLW_EVENTLOG_RECORD pRecord
+    );
+
+VOID
+LwEvtFreeRecordArray(
+    IN DWORD Count,
+    IN PLW_EVENTLOG_RECORD pRecords
+    );
+
+// Legacy API. Do not use this for new applications
+#if 1
 typedef struct _EVENT_LOG_RECORD
 {
     DWORD   dwEventRecordId;
@@ -82,19 +136,6 @@ typedef struct _EVENT_LOG_RECORD
     PSTR    pszData;
 
 } EVENT_LOG_RECORD, *PEVENT_LOG_RECORD;
-
-#endif /* EVENT_LOG_RECORD_DEFINED */
-
-#ifndef EVENT_LOG_HANDLE_DEFINED
-#define EVENT_LOG_HANDLE_DEFINED 1
-
-typedef struct _EVENT_LOG_HANDLE
-{
-    HANDLE bindingHandle;
-
-} EVENT_LOG_HANDLE, *PEVENT_LOG_HANDLE;
-
-#endif /* EVENT_LOG_HANDLE_DEFINED */
 
 DWORD
 LWIOpenEventLog(
@@ -139,11 +180,6 @@ LWIDeleteFromEventLog(
     );
 
 DWORD
-LWIClearEventLog(
-    HANDLE hEventLog
-    );
-
-DWORD
 LWICloseEventLog(
     HANDLE hEventLog
     );
@@ -163,11 +199,6 @@ LWIFreeEventRecordList(
     DWORD dwRecords,
     PEVENT_LOG_RECORD pEventRecordList
     );
-
-VOID
-LWIFreeEventLogHandle(
-    HANDLE hEventLog
-    );
+#endif
 
 #endif /* __EVENTLOG_H__ */
-

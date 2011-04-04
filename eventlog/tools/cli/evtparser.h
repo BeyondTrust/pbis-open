@@ -42,21 +42,10 @@
 #ifndef __EVTPARSER_H__
 #define __EVTPARSER_H__
 
-typedef DWORD (*PFNEventRecordProcessor)(
-                    PEVENT_LOG_HANDLE pEventLogHandle,
-                    EVENT_LOG_RECORD  eventRecord
-                    );
-
-DWORD
-ParseEvents(
-    PSTR pszFilePath,
-    PFNEventRecordProcessor eventRecordProcessor
-    );
-
 DWORD
 PrintEventRecords(
     FILE* output, 
-    EVENT_LOG_RECORD* eventRecords, 
+    PLW_EVENTLOG_RECORD eventRecords, 
     DWORD nRecords,
     PDWORD totalRecords
     );
@@ -64,14 +53,14 @@ PrintEventRecords(
 DWORD
 PrintEventRecordsTable(
     FILE* output, 
-    EVENT_LOG_RECORD* eventRecords, 
+    PLW_EVENTLOG_RECORD eventRecords, 
     DWORD nRecords,
     PDWORD totalRecords
     );
 
 DWORD
 ReadAndExportEvents(
-    PEVENT_LOG_HANDLE pEventLogHandle,
+    PLW_EVENTLOG_CONNECTION pEventLogHandle,
     PCWSTR pwszSqlFilter,
     FILE* fpExport
     );

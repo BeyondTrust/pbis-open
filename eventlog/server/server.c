@@ -42,239 +42,323 @@
  */
 #include "includes.h"
 
-
-
-idl_long_int
-RpcLWIOpenEventLog(
+DWORD
+RpcEvtOpen(
     handle_t bindingHandle,
-    idl_char * pszServerName,
-    idl_char * pszEventLog
+    RPC_LW_EVENTLOG_HANDLE *phEventlog
     )
 {
     DWORD dwError = 0;
+    DWORD rpcError = 0;
+    struct _RPC_LW_EVENTLOG_CONNECTION *pConn = NULL;
 
-    dwError = LWICheckSecurity(
-                  bindingHandle,
-                  EVENTLOG_READ_RECORD);
+    dwError = LwAllocateMemory(
+                    sizeof(*pConn),
+                    (PVOID *)&pConn);
 
-    EVTUnlockServerInfo();
+    pConn->pMagic = &RpcEvtOpen;
 
-    if ( dwError )
+    TRY
     {
-        dwError = LWICheckSecurity(
-                      bindingHandle,
-                      EVENTLOG_WRITE_RECORD);
-
-        EVTUnlockServerInfo();
+        rpc_binding_inq_access_token_caller(
+            bindingHandle,
+            &pConn->pUserToken,
+            (unsigned32*)&rpcError);
     }
-
-    if ( dwError )
+    CATCH_ALL
     {
-        dwError = LWICheckSecurity(
-                      bindingHandle,
-                      EVENTLOG_DELETE_RECORD);
+        rpcError = dcethread_exc_getstatus (THIS_CATCH);
+    }
+    ENDTRY;
 
-        EVTUnlockServerInfo();
+    BAIL_ON_DCE_ERROR(dwError, rpcError);
+
+    dwError = EVTCheckAllowed(
+                pConn->pUserToken, 
+                EVENTLOG_READ_RECORD,
+                &pConn->ReadAllowed);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = EVTCheckAllowed(
+                pConn->pUserToken, 
+                EVENTLOG_WRITE_RECORD,
+                &pConn->WriteAllowed);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = EVTCheckAllowed(
+                pConn->pUserToken, 
+                EVENTLOG_DELETE_RECORD,
+                &pConn->DeleteAllowed);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    if (!pConn->ReadAllowed &&
+        !pConn->WriteAllowed &&
+        !pConn->DeleteAllowed)
+    {
+        dwError = ERROR_ACCESS_DENIED;
+        BAIL_ON_EVT_ERROR(dwError);
     }
 
-    return dwError;
-}
-
-idl_long_int
-RpcLWICloseEventLog(handle_t bindingHandle)
-{
-    DWORD     dwError = 0;
-
-    /* We support the notion of a connect, but we currently don't do much here */
-    /* Someday RPC connection cleanup  may be required here */
-
-    return dwError;
-}
-
-idl_long_int
-RpcLWIEventLogCount(
-    handle_t bindingHandle,
-    idl_char* sqlFilter,
-    unsigned32* pdwNumMatched
-    )
-{
-    DWORD  dwError = 0;
-    HANDLE hDB = (HANDLE)NULL;
-
-    dwError = LWICheckSecurity(
-                  bindingHandle,
-                  EVENTLOG_READ_RECORD);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    dwError =  SrvOpenEventDatabase(&hDB);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    dwError =  SrvEventLogCount(
-                    hDB,
-                    (PSTR) sqlFilter,
-                    (PDWORD)pdwNumMatched);
-    BAIL_ON_EVT_ERROR(dwError);
+    *phEventlog = pConn;
 
 cleanup:
-
-    if (hDB != (HANDLE)NULL) {
-        SrvCloseEventDatabase(hDB);
-    }
-
     return dwError;
 
 error:
+    *phEventlog = NULL;
 
+    if (pConn)
+    {
+        if (pConn->pUserToken)
+        {
+            RtlReleaseAccessToken(&pConn->pUserToken);
+        }
+        LW_SAFE_FREE_MEMORY(pConn);
+    }
     goto cleanup;
 }
 
-idl_long_int
-RpcLWIReadEventLog(
-    handle_t    bindingHandle,
-    unsigned32  startingRowId,
-    unsigned32  nRecordsPerPage,
-    idl_char*   sqlFilter,
-    unsigned32* pdwNumReturned,
-    EVENT_LOG_RECORD* eventRecords
+DWORD
+RpcEvtClose(
+    RPC_LW_EVENTLOG_HANDLE *phEventlog
     )
 {
-    DWORD  dwError = 0;
-    HANDLE hDB = (HANDLE)NULL;
+    DWORD dwError = 0;
+    struct _RPC_LW_EVENTLOG_CONNECTION *pConn = NULL;
 
-    dwError = LWICheckSecurity(
-                  bindingHandle,
-                  EVENTLOG_READ_RECORD);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    dwError =  SrvOpenEventDatabase(&hDB);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    dwError = SrvReadEventLog(
-                    hDB,
-                    startingRowId,
-                    nRecordsPerPage,
-                    (PSTR) sqlFilter,
-                    (PDWORD)pdwNumReturned,
-                    &eventRecords);
-
-    BAIL_ON_EVT_ERROR(dwError);
-
-cleanup:
-
-    if (hDB != (HANDLE)NULL) {
-        SrvCloseEventDatabase(hDB);
+    if (phEventlog == NULL)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+    pConn = *phEventlog;
+    if (pConn == NULL || pConn->pMagic != &RpcEvtOpen)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_EVT_ERROR(dwError);
     }
 
+    if (pConn->pUserToken)
+    {
+        RtlReleaseAccessToken(&pConn->pUserToken);
+    }
+    LW_SAFE_FREE_MEMORY(pConn);
+
+    *phEventlog = NULL;
+
+cleanup:
     return dwError;
 
 error:
+    goto cleanup;
+}
 
-    *pdwNumReturned = 0;
+void
+RPC_LW_EVENTLOG_HANDLE_rundown(
+    rpc_ss_context_t context_handle
+    )
+{
+    RpcEvtClose((RPC_LW_EVENTLOG_HANDLE*)&context_handle);
+}
 
+DWORD
+RpcEvtGetRecordCount(
+    RPC_LW_EVENTLOG_HANDLE pConn,
+    WCHAR * pSqlFilter,
+    DWORD * pNumMatched
+    )
+{
+    DWORD  dwError = 0;
+    sqlite3 *pDb = NULL;
+
+    if (pConn == NULL || pConn->pMagic != &RpcEvtOpen)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+    if (!pConn->ReadAllowed)
+    {
+        dwError = ERROR_INVALID_ACCESS;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+    dwError = LwEvtDbOpen(&pDb);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError =  LwEvtDbGetRecordCount(
+                    pDb,
+                    pSqlFilter,
+                    pNumMatched);
+    BAIL_ON_EVT_ERROR(dwError);
+
+cleanup:
+    if (pDb != NULL)
+    {
+        LwEvtDbClose(pDb);
+    }
+    return dwError;
+
+error:
+    *pNumMatched = 0;
+    goto cleanup;
+}
+
+static
+DWORD
+RpcAllocate(
+    DWORD Len,
+    PVOID* ppData
+    )
+{
+    PVOID pData = NULL;
+    idl_ulong_int status = 0;
+
+    pData = rpc_sm_allocate(Len, &status);
+
+    *ppData = pData;
+    return LwNtStatusToWin32Error(LwRpcStatusToNtStatus(status));
+}
+
+static
+VOID
+RpcFree(
+    PVOID pData
+    )
+{
+    idl_ulong_int status = 0;
+
+    rpc_sm_free(pData, &status);
+
+    LW_ASSERT(status == 0);
+}
+
+DWORD
+RpcEvtReadRecords(
+    RPC_LW_EVENTLOG_HANDLE pConn,
+    DWORD MaxResults,
+    WCHAR * pSqlFilter,
+    LW_EVENTLOG_RECORD_LIST *pRecords
+    )
+{
+    DWORD  dwError = 0;
+    sqlite3 *pDb = NULL;
+
+    if (pConn == NULL || pConn->pMagic != &RpcEvtOpen)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+    if (!pConn->ReadAllowed)
+    {
+        dwError = ERROR_INVALID_ACCESS;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+    dwError = LwEvtDbOpen(&pDb);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = LwEvtDbReadRecords(
+                    RpcAllocate,
+                    RpcFree,
+                    pDb,
+                    MaxResults,
+                    pSqlFilter,
+                    &pRecords->Count,
+                    &pRecords->pRecords);
+    BAIL_ON_EVT_ERROR(dwError);
+
+cleanup:
+    if (pDb != NULL)
+    {
+        LwEvtDbClose(pDb);
+    }
+    return dwError;
+
+error:
+    pRecords->Count = 0;
+    pRecords->pRecords = NULL;
     goto cleanup;
 }
 
 
-idl_long_int
-RpcLWIWriteEventLogRecords(
-    handle_t bindingHandle,
-    unsigned32 cRecords,
-    EVENT_LOG_RECORD* pEventRecords 
+DWORD
+RpcEvtWriteRecords(
+    RPC_LW_EVENTLOG_HANDLE pConn,
+    DWORD Count,
+    LW_EVENTLOG_RECORD* pRecords 
     )
 {
     DWORD  dwError = 0;
-    HANDLE hDB = (HANDLE)NULL;
+    sqlite3 *pDb = NULL;
 
-    dwError = LWICheckSecurity(
-                  bindingHandle,
-                  EVENTLOG_WRITE_RECORD);
+    if (pConn == NULL || pConn->pMagic != &RpcEvtOpen)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+    if (!pConn->WriteAllowed)
+    {
+        dwError = ERROR_INVALID_ACCESS;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+    dwError = LwEvtDbOpen(&pDb);
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwError =  SrvOpenEventDatabase(&hDB);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    dwError = SrvWriteToDB(
-                    hDB,
-                    cRecords,
-                    pEventRecords);
+    dwError = LwEvtDbWriteRecords(
+                    pDb,
+                    Count,
+                    pRecords);
     BAIL_ON_EVT_ERROR(dwError);
 
 cleanup:
-
-    if (hDB != (HANDLE)NULL) {
-        SrvCloseEventDatabase(hDB);
+    if (pDb != NULL)
+    {
+        LwEvtDbClose(pDb);
     }
-
     return dwError;
 
 error:
-
     goto cleanup;
 }
 
-idl_long_int
-RpcLWIClearEventLog(handle_t bindingHandle)
-{
-    DWORD  dwError = 0;
-    HANDLE hDB = (HANDLE)NULL;
-
-    dwError = LWICheckSecurity(
-                  bindingHandle,
-                  EVENTLOG_DELETE_RECORD);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    dwError =  SrvOpenEventDatabase(&hDB);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    dwError = SrvClearEventLog(hDB);
-    BAIL_ON_EVT_ERROR(dwError);
-
-cleanup:
-
-    if (hDB != (HANDLE)NULL) {
-        SrvCloseEventDatabase(hDB);
-    }
-
-    return dwError;
-
-error:
-
-    goto cleanup;
-}
-
-
-idl_long_int
-RpcLWIDeleteFromEventLog(
-    handle_t bindingHandle,
-    idl_char* sqlFilter
+DWORD
+RpcEvtDeleteRecords(
+    RPC_LW_EVENTLOG_HANDLE pConn,
+    WCHAR *pSqlFilter
     )
 {
-    DWORD  dwError = 0;
-    HANDLE hDB = (HANDLE)NULL;
+    DWORD dwError = 0;
+    sqlite3 *pDb = NULL;
 
-    dwError = LWICheckSecurity(
-                  bindingHandle,
-                  EVENTLOG_DELETE_RECORD);
+    if (pConn == NULL || pConn->pMagic != &RpcEvtOpen)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+    if (!pConn->DeleteAllowed)
+    {
+        dwError = ERROR_INVALID_ACCESS;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+    dwError = LwEvtDbOpen(&pDb);
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwError =  SrvOpenEventDatabase(&hDB);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    dwError = SrvDeleteFromEventLog(
-                    hDB,
-                    (PSTR) sqlFilter);
+    dwError = LwEvtDbDeleteRecords(
+                    pDb,
+                    pSqlFilter);
     BAIL_ON_EVT_ERROR(dwError);
 
 cleanup:
-
-    if (hDB != (HANDLE)NULL) {
-        SrvCloseEventDatabase(hDB);
+    if (pDb != NULL)
+    {
+        LwEvtDbClose(pDb);
     }
-
     return dwError;
 
 error:
-
     goto cleanup;
 }
 
@@ -366,7 +450,7 @@ EVTRegisterInterface(
 
     TRY
     {
-        rpc_server_register_if (eventlog_v1_0_s_ifspec,
+        rpc_server_register_if (LwEventlog_v1_0_s_ifspec,
                                 NULL,
                                 NULL,
                                 (unsigned32*)&dwRpcStatus);
@@ -401,7 +485,7 @@ EVTRegisterEndpoint(
     TRY
     {
         dwError = bind_server(&pServerBinding,
-                              eventlog_v1_0_s_ifspec,
+                              LwEventlog_v1_0_s_ifspec,
                               pEndpoint);
     }
     CATCH_ALL
@@ -417,7 +501,7 @@ EVTRegisterEndpoint(
 
     TRY
     {
-        rpc_ep_register(eventlog_v1_0_s_ifspec,
+        rpc_ep_register(LwEventlog_v1_0_s_ifspec,
                         pServerBinding,
                         NULL,
                         (idl_char*)pszServiceName,
@@ -565,7 +649,7 @@ EVTUnregisterAllEndpoints(
 
         if (dwRpcStatus == rpc_s_ok)
         {
-            rpc_ep_unregister(eventlog_v1_0_s_ifspec,
+            rpc_ep_unregister(LwEventlog_v1_0_s_ifspec,
                               serverBindings,
                               NULL,
                               (unsigned32*)&dwRpcStatus);

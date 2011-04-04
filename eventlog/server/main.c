@@ -240,7 +240,8 @@ EVTGetCachePath(
 DWORD
 EVTCheckAllowed(
     PACCESS_TOKEN pUserToken,
-    ACCESS_MASK dwAccessMask
+    ACCESS_MASK dwAccessMask,
+    BOOLEAN* pAllowed
     )
 {
     DWORD dwError = 0;
@@ -255,6 +256,7 @@ EVTCheckAllowed(
     GENERIC_MAPPING GenericMapping = {0};
     NTSTATUS ntStatus = STATUS_SUCCESS;
     ACCESS_MASK dwGrantedAccess = 0;
+    BOOLEAN allowed = FALSE;
 
     EVT_LOCK_SERVERINFO;
     bLocked = TRUE;
@@ -317,8 +319,18 @@ EVTCheckAllowed(
                         &ntStatus))
     {
         dwError = LwNtStatusToWin32Error(ntStatus);
+        if (dwError == ERROR_ACCESS_DENIED)
+        {
+            dwError = 0;
+        }
         BAIL_ON_EVT_ERROR(dwError);
     }
+    else
+    {
+        allowed = TRUE;
+    }
+
+    *pAllowed = allowed;
 
 cleanup:
     if (bLocked)
@@ -1754,7 +1766,7 @@ main(
     BAIL_ON_EVT_ERROR(dwError);
 
 
-    dwError = SrvCreateDB(gServerInfo.bReplaceDB);
+    dwError = LwEvtDbCreateDB(gServerInfo.bReplaceDB);
     BAIL_ON_EVT_ERROR(dwError);
 
     if (gServerInfo.bReplaceDB) {
@@ -1789,7 +1801,7 @@ main(
     dwError = EVTGetRegisterTcpIp(&bRegisterTcpIp);
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwError = SrvInitEventDatabase();
+    dwError = LwEvtDbInitEventDatabase();
     BAIL_ON_EVT_ERROR(dwError);
 
     dwError = EVTRegisterInterface();
@@ -1892,7 +1904,7 @@ main(
 
     EVTCloseLog();
 
-    SrvShutdownEventDatabase();
+    LwEvtDbShutdownEventDatabase();
 
     EVTSetConfigDefaults();
     EVTFreeSecurityDescriptor(gServerInfo.pAccess);

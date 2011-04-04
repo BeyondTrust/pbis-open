@@ -119,7 +119,8 @@ EVTGetPrefixPath(
 DWORD
 EVTCheckAllowed(
     PACCESS_TOKEN pUserToken,
-    ACCESS_MASK dwAccessMask
+    ACCESS_MASK dwAccessMask,
+    BOOLEAN* pAllowed
     );
 
 DWORD

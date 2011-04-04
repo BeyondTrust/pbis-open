@@ -48,16 +48,18 @@
 
 #include "sqlite3.h"
 
-#include "eventlog_h.h"
-#include "main_p.h"
-#include "server_p.h"
-#include "security_p.h"
-#include "db_p.h"
-#include "externs.h"
-
+#include <lw/types.h>
 #include <lwerror.h>
 #include <lwstr.h>
 #include <lwmem.h>
 #include <lwsid.h>
 #include <lwfile.h>
 #include <lw/mapsecurity.h>
+#include <lwdef.h>
+#include <assert.h>
+
+#include "eventlog_h.h"
+#include "main_p.h"
+#include "server_p.h"
+#include "db_p.h"
+#include "externs.h"

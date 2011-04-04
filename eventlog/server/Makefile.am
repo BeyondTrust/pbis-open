@@ -9,7 +9,6 @@ eventlogd_SOURCES = \
     eventlog_sstub.c \
     globals.c        \
     main.c           \
-    security.c       \
     server.c
 
 eventlogd_CPPFLAGS = \
@@ -41,5 +40,5 @@ CLEANFILES = \
 BUILT_SOURCES = eventlog_h.h
 
 eventlog_h.h eventlog_sstub.c: $(idl_srcdir)/eventlog.idl
-	$(IDL) $(IDLFLAGS) -keep c_source -header eventlog_h.h -I$(idl_srcdir) $<
+	$(IDL) $(IDLFLAGS) -keep c_source -header eventlog_h.h -I$(idl_srcdir) -I$(top_srcdir)/include $<
 
