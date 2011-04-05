@@ -14,7 +14,7 @@ make()
         sasl/prop.h \
         sasl/saslutil.h"
 
-    case "$MK_OS" in
+    case "$MK_OS:$MK_ARCH" in
         freebsd)
             SASL_EXTRA_TARGETS="\
                 ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT}.2 \
@@ -33,6 +33,17 @@ make()
                 ${MK_LIBDIR}/sasl2/libgssspnego${MK_DLO_EXT} \
                 ${MK_LIBDIR}/sasl2/libgssspnego.la"
             ;;
+        hpux)
+            SASL_EXTRA_TARGETS="\
+                ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT}.2.23 \
+                ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT}.2 \
+                ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT} \
+                ${MK_LIBDIR}/sasl2/libgssapiv2.la \
+                ${MK_LIBDIR}/sasl2/libgssspnego${MK_DLO_EXT}.2.23 \
+                ${MK_LIBDIR}/sasl2/libgssspnego${MK_DLO_EXT}.2 \
+                ${MK_LIBDIR}/sasl2/libgssspnego${MK_DLO_EXT} \
+                ${MK_LIBDIR}/sasl2/libgssspnego.la"
+            ;;
         *)
             SASL_EXTRA_TARGETS="\
                 ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT}.2.0.23 \
@@ -48,7 +59,7 @@ make()
 
     mk_autotools \
         HEADERS="$SASL_HEADERS" \
-        LIBS='sasl2:2.0.23' \
+        LIBS='sasl2:2:23:0' \
         TARGETS="$SASL_EXTRA_TARGETS" \
 	HEADERDEPS="gssapi.h" \
 	LIBDEPS="gssapi_krb5" \
