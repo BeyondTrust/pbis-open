@@ -521,6 +521,9 @@ LWNetSrvIpcResolveDnsName(
     }
     else
     {
+        LWNET_LOG_VERBOSE("Error code %d from looking up %s in DNS",
+                addrinfoResult,
+                LWNET_SAFE_LOG_STRING(pszHostName));
         dwError = ERROR_BAD_NET_NAME;
         BAIL_ON_LWNET_ERROR(dwError);
     }
