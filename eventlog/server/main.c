@@ -1729,7 +1729,6 @@ main(
     int notifyFd = -1;
     char notifyCode = 0;
     int ret = 0;
-    dcethread* listenThread = NULL;
     dcethread* networkThread = NULL;
     BOOLEAN bExitNow = FALSE;
     BOOLEAN bRegisterTcpIp = TRUE;
@@ -1839,9 +1838,6 @@ main(
         dwError = LwMapErrnoToLwError(dcethread_interrupt(networkThread));
         BAIL_ON_EVT_ERROR(dwError);
     }
-
-    dwError = LwMapErrnoToLwError(dcethread_join(listenThread, NULL));
-    BAIL_ON_EVT_ERROR(dwError);
 
     if (bRegisterTcpIp)
     {
