@@ -315,7 +315,7 @@ build_openssl()
     esac
 
     # Build it
-    mk_run_quiet_or_fail ${3} MAKE="$3" CC="${CC}" SHARED_LDFLAGS="$SHARED_LDFLAGS"
+    mk_run_quiet_or_fail ${3} MAKE="$3" CC="${CC} ${MK_ISA_CFLAGS}" SHARED_LDFLAGS="$SHARED_LDFLAGS"
 
     # Touch stamp file
     mk_cd_or_fail "$old_pwd"
