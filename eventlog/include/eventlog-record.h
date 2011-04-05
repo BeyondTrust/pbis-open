@@ -9,8 +9,8 @@
  * Eventlog definitions
  *
  */
-#ifndef __EVTRECORD_H__
-#define __EVTRECORD_H__
+#ifndef __EVENTLOG_RECORD_H__
+#define __EVENTLOG_RECORD_H__
 
 typedef struct _LW_EVENTLOG_RECORD
 {
@@ -33,4 +33,4 @@ typedef struct _LW_EVENTLOG_RECORD
     BYTE *pData;
 } LW_EVENTLOG_RECORD, *PLW_EVENTLOG_RECORD;
 
-#endif /* __EVTRECORD_H__ */
+#endif /* __EVENTLOG_RECORD_H__ */
