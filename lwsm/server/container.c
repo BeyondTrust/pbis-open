@@ -1545,7 +1545,7 @@ ContainerCleanup(
     {
         LwRtlSvcmStop(pHandle->pInstance, ContainerCleanupNotify, pHandle);
     }
-    else
+    else if (pHandle->pInstance)
     {
         LwRtlSvcmUnload(pHandle->pInstance);
         LwFreeMemory(pHandle);
@@ -1625,6 +1625,9 @@ ContainerStopNotify(
     pHandle->State = LW_SERVICE_STATE_STOPPED;
 
 error:
+
+    LwRtlSvcmUnload(pHandle->pInstance);
+    pHandle->pInstance = NULL;
 
     savedError = dwError;
     dwError = LwAllocateMemory(sizeof(*pStatus), OUT_PPVOID(&pStatus));
