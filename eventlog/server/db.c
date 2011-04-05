@@ -364,6 +364,10 @@ LwEvtDbGetRecordCount(
         BAIL_ON_EVT_ERROR(dwError);
     }
 
+    ENTER_RW_READER_LOCK(inLock);
+
+    // This statement needs to be in the lock because it can fail with
+    // SQLITE_BUSY if some other thread is accessing the database.
     dwError = sqlite3_prepare16_v2(
                     pDb,
                     pQuery,
@@ -371,8 +375,6 @@ LwEvtDbGetRecordCount(
                     &pStatement,
                     NULL);
     BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
-
-    ENTER_RW_READER_LOCK(inLock);
 
     dwError = sqlite3_step(pStatement);
     if (dwError == SQLITE_ROW)
@@ -676,6 +678,10 @@ LwEvtDbReadRecords(
         BAIL_ON_EVT_ERROR(dwError);
     }
 
+    ENTER_RW_READER_LOCK(inLock);
+
+    // This statement needs to be in the lock because it can fail with
+    // SQLITE_BUSY if some other thread is accessing the database.
     dwError = sqlite3_prepare16_v2(
                     pDb,
                     pQuery,
@@ -683,8 +689,6 @@ LwEvtDbReadRecords(
                     &pStatement,
                     NULL);
     BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
-
-    ENTER_RW_READER_LOCK(inLock);
 
     while (1)
     {
@@ -783,6 +787,8 @@ LwEvtDbWriteRecords(
 
     ENTER_RW_WRITER_LOCK(inLock);
 
+    // This statement needs to be in the lock because it can fail with
+    // SQLITE_BUSY if some other thread is accessing the database.
     dwError = sqlite3_prepare_v2(
                     pDb,
                     DB_QUERY_INSERT_EVENT,
@@ -1065,6 +1071,10 @@ LwEvtDbDeleteRecords(
         BAIL_ON_EVT_ERROR(dwError);
     }
 
+    ENTER_RW_READER_LOCK(inLock);
+
+    // This statement needs to be in the lock because it can fail with
+    // SQLITE_BUSY if some other thread is accessing the database.
     dwError = sqlite3_prepare16_v2(
                     pDb,
                     pQuery,
@@ -1072,8 +1082,6 @@ LwEvtDbDeleteRecords(
                     &pStatement,
                     NULL);
     BAIL_ON_SQLITE3_ERROR(dwError, sqlite3_errmsg(pDb));
-
-    ENTER_RW_READER_LOCK(inLock);
 
     dwError = sqlite3_step(pStatement);
     if (dwError == SQLITE_ROW)
