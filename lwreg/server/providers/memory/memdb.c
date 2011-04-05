@@ -360,8 +360,11 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
     REG_DB_CONNECTION regDbConn = {0};
     PWSTR pwszSubKey = NULL;
     PWSTR pwszValueName = NULL;
+    PWSTR pwszStringData = NULL;
     PMEMDB_IMPORT_FILE_CTX pImportCtx = (PMEMDB_IMPORT_FILE_CTX) userContext;
     DWORD dataType = 0;
+    PVOID pData = NULL;
+    DWORD dwDataLen = 0;
 
     if (pItem->type == REG_KEY)
     {
@@ -430,26 +433,46 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
                      pItem->valueName);
         BAIL_ON_NT_STATUS(status);
 
-        dataType = pItem->regAttr.ValueType ? 
-                       pItem->regAttr.ValueType : pItem->type;
+        if (pItem->regAttr.ValueType)
+        {
+            dataType = pItem->regAttr.ValueType;
+            pData = pItem->regAttr.pDefaultValue;
+            dwDataLen = pItem->regAttr.DefaultValueLen;
+        }
+        else
+        {
+            dataType = pItem->type;
+            pData = pItem->value;
+            dwDataLen = pItem->valueLen;
+        }
+        if (dataType == REG_SZ)
+        {
+            status = LwRtlWC16StringAllocateFromCString(
+                         &pwszStringData,
+                         pData);
+            BAIL_ON_NT_STATUS(status);
+            pData = pwszStringData;
+            dwDataLen = wc16slen(pwszStringData) * 2 + 2;
+        }
         status = MemRegStoreAddNodeValue(
                      pImportCtx->hSubKey,
                      pwszValueName,
                      0, // Not used?
                      dataType,
-                     pItem->value,
-                     pItem->valueLen);
+                     pData,
+                     dwDataLen);
         BAIL_ON_NT_STATUS(status);
 
-char *subKey;
+char *subKey = NULL;
 LwRtlCStringAllocateFromWC16String(&subKey, pImportCtx->hSubKey->Name);
         printf("pfImportFile: type=%d subkey=[%s] valueName=%s\n",
                 pItem->type,
                 subKey,
                 pItem->valueName ? pItem->valueName : "");
-free(subKey);
+LWREG_SAFE_FREE_STRING(subKey);
     }
 cleanup:
+    LWREG_SAFE_FREE_MEMORY(pwszStringData);
     return status;
 error:
     goto cleanup;
