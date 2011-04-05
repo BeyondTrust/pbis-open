@@ -110,7 +110,6 @@ ParseFilter(
 {
     DWORD dwError = 0;
     PWSTR pwszSqlFilter = NULL;
-    PCSTR pszSqlFilterDefault = "eventRecordId >= 0";
 
     PSTR pszXmlSqlFilter = NULL;
     PSTR pszUserFilter = NULL;
@@ -175,12 +174,15 @@ ParseFilter(
             *pszPseudoSqlFilter == '\0' ||
             strcmp(pszPseudoSqlFilter, "-") == 0)
     {
-        dwError = LwAllocateWc16sPrintfW(
-                    &pwszSqlFilter,
-                    L"%s%s",
-                    pszSqlFilterDefault,
-                    pszFinalFilter);
-        BAIL_ON_EVT_ERROR(dwError);
+        if (pszFinalFilter[0] != 0)
+        {
+            dwError = LwAllocateWc16sPrintfW(
+                        &pwszSqlFilter,
+                        L"1%s",
+                        pszFinalFilter);
+            BAIL_ON_EVT_ERROR(dwError);
+        }
+        pwszSqlFilter = NULL;
     }
     else
     {

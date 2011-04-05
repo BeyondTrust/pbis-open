@@ -100,7 +100,7 @@ interface LwEventlog {
     DWORD
     RpcEvtGetRecordCount(
         [in] RPC_LW_EVENTLOG_HANDLE hEventlog,
-        [in, string] WCHAR * pSqlFilter,
+        [in, unique, string] WCHAR * pSqlFilter,
         [out] DWORD * pNumMatched
         );
 
