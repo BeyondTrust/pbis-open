@@ -179,7 +179,7 @@ VERSION_NUMBER=[`cat $srcdir/VERSION \
                 | awk '{printf "%d%03d%03d",$1,$2,$3}'`]
 AC_MSG_NOTICE(Version number set to $VERSION_NUMBER)
 AC_SUBST(VERSION_NUMBER)
-SOURCE_ID=[`date ; cat $srcdir/manifest.uuid `]
+SOURCE_ID=[`cat $srcdir/manifest.uuid`]
 AC_MSG_NOTICE(Source id set to $SOURCE_ID)
 AC_SUBST(SOURCE_ID)
 
