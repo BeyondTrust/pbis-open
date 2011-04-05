@@ -14,7 +14,7 @@ make()
         sasl/prop.h \
         sasl/saslutil.h"
 
-    case "$MK_OS:$MK_ARCH" in
+    case "$MK_OS" in
         freebsd)
             SASL_EXTRA_TARGETS="\
                 ${MK_LIBDIR}/sasl2/libgssapiv2${MK_DLO_EXT}.2 \
