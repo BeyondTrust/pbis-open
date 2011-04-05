@@ -414,6 +414,7 @@ AC_CONFIG_FILES([Makefile
                  etc/Makefile
                  include/Makefile
                  utils/Makefile
+                 ipc/Makefile
                  client/Makefile
                  server/Makefile
                  tools/Makefile

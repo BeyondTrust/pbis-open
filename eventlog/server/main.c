@@ -1665,27 +1665,6 @@ error:
 
 static
 void*
-EVTListenThread(
-    void* pArg
-    )
-{
-    DWORD dwError = 0;
-
-    dwError = EVTListen();
-    BAIL_ON_EVT_ERROR(dwError);
-
-error:
-
-    if (dwError)
-    {
-        raise(SIGTERM);
-    }
-
-    return NULL;
-}
-
-static
-void*
 EVTNetworkThread(
     void* pArg
     )
@@ -1731,6 +1710,12 @@ EVTNetworkThread(
         }
     }
 
+    dwError = EVTListen();
+
+    if (dwError)
+    {
+        raise(SIGTERM);
+    }
     return NULL;
 }
 
@@ -1744,14 +1729,8 @@ main(
     int notifyFd = -1;
     char notifyCode = 0;
     int ret = 0;
-    DWORD i = 0;
     dcethread* listenThread = NULL;
     dcethread* networkThread = NULL;
-    static ENDPOINT localEndpoints[] =
-    {
-        {"ncalrpc", CACHEDIR "/.eventlog", FALSE},
-        {NULL, NULL}
-    };
     BOOLEAN bExitNow = FALSE;
     BOOLEAN bRegisterTcpIp = TRUE;
 
@@ -1804,34 +1783,10 @@ main(
     dwError = LwEvtDbInitEventDatabase();
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwError = EVTRegisterInterface();
+    dwError = LwmEvtSrvStartListenThread();
     BAIL_ON_EVT_ERROR(dwError);
 
-    for (i = 0; localEndpoints[i].protocol; i++)
-    {
-        dwError = EVTRegisterEndpoint("Likewise Eventlog Service",
-                                      &localEndpoints[i]);
-        BAIL_ON_EVT_ERROR(dwError);
-
-        if (localEndpoints[i].endpoint)
-        {
-            EVT_LOG_VERBOSE("Listening on %s:[%s]",
-                            localEndpoints[i].protocol,
-                            localEndpoints[i].endpoint);
-        }
-        else
-        {
-            EVT_LOG_VERBOSE("Listening on %s",
-                            localEndpoints[i].protocol,
-                            localEndpoints[i].endpoint);
-        }
-    }
-
-    dwError = LwMapErrnoToLwError(dcethread_create(
-                                      &listenThread,
-                                      NULL,
-                                      EVTListenThread,
-                                      NULL));
+    dwError = EVTRegisterInterface();
     BAIL_ON_EVT_ERROR(dwError);
 
     if (bRegisterTcpIp)
@@ -1842,10 +1797,6 @@ main(
                                       EVTNetworkThread,
                                       &bExitNow));
         BAIL_ON_EVT_ERROR(dwError);
-    }
-
-    while (!EVTIsListening())
-    {
     }
 
     if ((pszSmNotify = getenv("LIKEWISE_SM_NOTIFY")) != NULL)
@@ -1878,6 +1829,9 @@ main(
     BAIL_ON_EVT_ERROR(dwError);
 
     dwError = EVTStopListen();
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = LwmEvtSrvStopListenThread();
     BAIL_ON_EVT_ERROR(dwError);
     
     if (bRegisterTcpIp)

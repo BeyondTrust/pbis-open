@@ -76,6 +76,88 @@ LwEvtFreeRecordArray(
     }
 }
 
+static
+BOOLEAN
+LwEvtIsLocalHost(
+    const char * hostname
+    )
+{
+    DWORD            dwError = 0;
+    BOOLEAN          bResult = FALSE;
+    char             localHost[256] = {0};
+    struct addrinfo* localInfo = NULL;
+    struct addrinfo* remoteInfo = NULL;
+    PCSTR            pcszLocalHost = NULL;
+    PCSTR            pcszRemoteHost = NULL;
+    CHAR             canonNameLocal[NI_MAXHOST] = "";
+    CHAR             canonNameRemote[NI_MAXHOST] = "";
+
+    memset(localHost, 0, sizeof(localHost));
+
+    if ( !strcasecmp(hostname, "localhost") ||
+         !strcmp(hostname, "127.0.0.1") )
+    {
+        bResult = TRUE;
+        goto cleanup;
+    }
+
+    dwError = gethostname(localHost, sizeof(localHost) - 1);
+    if (!LW_IS_EMPTY_STR(localHost))
+    {
+        dwError = getaddrinfo(localHost, NULL, NULL, &localInfo);
+        if ( dwError )
+        {
+            pcszLocalHost = localHost;
+        }
+        else
+        {
+            dwError = getnameinfo(localInfo->ai_addr, localInfo->ai_addrlen, canonNameLocal, NI_MAXHOST, NULL, 0, 0);
+
+            if(dwError || !canonNameLocal[0]) {
+                pcszLocalHost = localHost;
+            }
+            else {
+                pcszLocalHost = canonNameLocal;
+            }
+        }
+
+        dwError = getaddrinfo(hostname, NULL, NULL, &remoteInfo);
+        if ( dwError )
+        {
+            pcszRemoteHost = hostname;
+        }
+        else
+        {
+            dwError = getnameinfo(remoteInfo->ai_addr, remoteInfo->ai_addrlen, canonNameRemote, NI_MAXHOST, NULL, 0, 0);
+
+            if(dwError || !canonNameRemote[0]) {
+                pcszRemoteHost = hostname;
+            }
+            else {
+                pcszRemoteHost = canonNameRemote;
+            }
+        }
+
+        if ( !strcasecmp(pcszLocalHost, pcszRemoteHost) )
+        {
+            bResult = TRUE;
+        }
+    }
+
+cleanup:
+
+    if (localInfo)
+    {
+        freeaddrinfo(localInfo);
+    }
+    if (remoteInfo)
+    {
+        freeaddrinfo(remoteInfo);
+    }
+
+    return bResult;
+}
+
 DWORD
 LwEvtOpenEventlog(
     IN OPTIONAL PCSTR pServerName,
@@ -91,36 +173,45 @@ LwEvtOpenEventlog(
 
     dwError = LwAllocateMemory(sizeof(*pConn), (PVOID*) &pConn);
     BAIL_ON_EVT_ERROR(dwError);
-    
-    TRY
-    {
-        dwError = LwEvtCreateEventlogRpcBinding(pServerName,
-                                              &eventBindingLocal);
-    }
-    CATCH_ALL
-    {
-        dwError = EVTGetRpcError(THIS_CATCH);
-    }
-    ENDTRY
 
-    BAIL_ON_EVT_ERROR(dwError);
+    if (pServerName == NULL || LwEvtIsLocalHost(pServerName))
+    {
+        // If no host is specified, connect via lwmsg
+        dwError = LwmEvtOpenServer(&pConn->Local);
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+    else
+    {
+        TRY
+        {
+            dwError = LwEvtCreateEventlogRpcBinding(pServerName,
+                                                  &eventBindingLocal);
+        }
+        CATCH_ALL
+        {
+            dwError = EVTGetRpcError(THIS_CATCH);
+        }
+        ENDTRY
 
-    TRY
-    {
-        dwError = RpcEvtOpen(eventBindingLocal,
-                                &pConn->Handle);
-    }
-    CATCH (rpc_x_auth_method)
-    {
-        dwError = ERROR_ACCESS_DENIED;
-    }
-    CATCH_ALL
-    {
-        dwError = EVTGetRpcError(THIS_CATCH);
-    }
-    ENDTRY
+        BAIL_ON_EVT_ERROR(dwError);
 
-    BAIL_ON_EVT_ERROR(dwError);
+        TRY
+        {
+            dwError = RpcEvtOpen(eventBindingLocal,
+                                    &pConn->Remote);
+        }
+        CATCH (rpc_x_auth_method)
+        {
+            dwError = ERROR_ACCESS_DENIED;
+        }
+        CATCH_ALL
+        {
+            dwError = EVTGetRpcError(THIS_CATCH);
+        }
+        ENDTRY
+
+        BAIL_ON_EVT_ERROR(dwError);
+    }
 
     *ppConn = pConn;
 
@@ -155,24 +246,32 @@ LwEvtCloseEventlog(
         BAIL_ON_EVT_ERROR(dwError);
     }
 
-    TRY
+    if (pConn->Local)
     {
-        dwError = RpcEvtClose(&pConn->Handle);
+        dwError = LwmEvtCloseServer(pConn->Local);
+        BAIL_ON_EVT_ERROR(dwError);
     }
-    CATCH_ALL
+    if (pConn->Remote)
     {
-        dwError = EVTGetRpcError(THIS_CATCH);
-    }
-    ENDTRY;
+        TRY
+        {
+            dwError = RpcEvtClose(&pConn->Remote);
+        }
+        CATCH_ALL
+        {
+            dwError = EVTGetRpcError(THIS_CATCH);
+        }
+        ENDTRY;
 
-    BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_EVT_ERROR(dwError);
+    }
 
 cleanup:
     if (pConn)
     {
-        if (pConn->Handle != NULL)
+        if (pConn->Remote != NULL)
         {
-            RpcSsDestroyClientContext(&pConn->Handle);
+            RpcSsDestroyClientContext(&pConn->Remote);
         }
         LW_SAFE_FREE_MEMORY(pConn);
     }
@@ -231,33 +330,46 @@ LwEvtReadRecords(
     idl_void_p_t (*pOldMalloc)(idl_size_t) = NULL;
     void (*pOldFree)(idl_void_p_t) = NULL;
 
-    TRY
+    if (pConn->Local)
     {
-        rpc_ss_swap_client_alloc_free(
-                    LwEvtRpcAllocateMemory,
-                    LwEvtRpcFreeMemory,
-                    &pOldMalloc,
-                    &pOldFree);
+        dwError = LwmEvtReadRecords(
+                        pConn->Local,
+                        MaxResults,
+                        pSqlFilter,
+                        &records.Count,
+                        &records.pRecords);
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+    else
+    {
+        TRY
+        {
+            rpc_ss_swap_client_alloc_free(
+                        LwEvtRpcAllocateMemory,
+                        LwEvtRpcFreeMemory,
+                        &pOldMalloc,
+                        &pOldFree);
 
-        dwError = RpcEvtReadRecords(
-                    pConn->Handle,
-                    MaxResults, 
-                    (PWSTR)pSqlFilter, 
-                    &records);
-    }
-    CATCH_ALL
-    {
-        dwError = EVTGetRpcError(THIS_CATCH);
-    }
-    FINALLY
-    {
-        rpc_ss_set_client_alloc_free(
-                    pOldMalloc,
-                    pOldFree);
-    }
-    ENDTRY;
+            dwError = RpcEvtReadRecords(
+                        pConn->Remote,
+                        MaxResults, 
+                        (PWSTR)pSqlFilter, 
+                        &records);
+        }
+        CATCH_ALL
+        {
+            dwError = EVTGetRpcError(THIS_CATCH);
+        }
+        FINALLY
+        {
+            rpc_ss_set_client_alloc_free(
+                        pOldMalloc,
+                        pOldFree);
+        }
+        ENDTRY;
 
-    BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_EVT_ERROR(dwError);
+    }
 
     *pCount = records.Count;
     *ppRecords = records.pRecords;
@@ -285,20 +397,31 @@ LwEvtGetRecordCount(
     volatile DWORD dwError = 0;
     DWORD numMatched = 0;
 
-    TRY
+    if (pConn->Local)
     {
-        dwError = RpcEvtGetRecordCount(
-                    pConn->Handle,
-                    (PWSTR)pSqlFilter, 
-                    &numMatched);
+        dwError = LwmEvtGetRecordCount(
+                        pConn->Local,
+                        pSqlFilter,
+                        &numMatched);
+        BAIL_ON_EVT_ERROR(dwError);
     }
-    CATCH_ALL
+    else
     {
-        dwError = EVTGetRpcError(THIS_CATCH);
-    }
-    ENDTRY;
+        TRY
+        {
+            dwError = RpcEvtGetRecordCount(
+                        pConn->Remote,
+                        (PWSTR)pSqlFilter, 
+                        &numMatched);
+        }
+        CATCH_ALL
+        {
+            dwError = EVTGetRpcError(THIS_CATCH);
+        }
+        ENDTRY;
 
-    BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_EVT_ERROR(dwError);
+    }
 
     *pNumMatched = numMatched;
 
@@ -342,20 +465,31 @@ LwEvtWriteRecords(
         }
     }
 
-    TRY
+    if (pConn->Local)
     {
-        dwError = RpcEvtWriteRecords(
-                    pConn->Handle,
-                    Count,
-                    pRecords);
+        dwError = LwmEvtWriteRecords(
+                        pConn->Local,
+                        Count,
+                        pRecords);
+        BAIL_ON_EVT_ERROR(dwError);
     }
-    CATCH_ALL
+    else
     {
-        dwError = EVTGetRpcError(THIS_CATCH);
-    }
-    ENDTRY;
+        TRY
+        {
+            dwError = RpcEvtWriteRecords(
+                        pConn->Remote,
+                        Count,
+                        pRecords);
+        }
+        CATCH_ALL
+        {
+            dwError = EVTGetRpcError(THIS_CATCH);
+        }
+        ENDTRY;
 
-    BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_EVT_ERROR(dwError);
+    }
 
 cleanup:
     for (index = 0; index < Count; index++)
@@ -382,19 +516,29 @@ LwEvtDeleteRecords(
 {
     volatile DWORD dwError = 0;
 
-    TRY
+    if (pConn->Local)
     {
-        dwError = RpcEvtDeleteRecords(
-                        pConn->Handle,
-                        (PWSTR)pSqlFilter);
+        dwError = LwmEvtDeleteRecords(
+                        pConn->Local,
+                        pSqlFilter);
+        BAIL_ON_EVT_ERROR(dwError);
     }
-    CATCH_ALL
+    else
     {
-        dwError = EVTGetRpcError(THIS_CATCH);
-    }
-    ENDTRY;
+        TRY
+        {
+            dwError = RpcEvtDeleteRecords(
+                            pConn->Remote,
+                            (PWSTR)pSqlFilter);
+        }
+        CATCH_ALL
+        {
+            dwError = EVTGetRpcError(THIS_CATCH);
+        }
+        ENDTRY;
 
-    BAIL_ON_EVT_ERROR(dwError);
+        BAIL_ON_EVT_ERROR(dwError);
+    }
 
 cleanup:
     return dwError;

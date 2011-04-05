@@ -9,6 +9,8 @@ eventlogd_SOURCES = \
     eventlog_sstub.c \
     globals.c        \
     main.c           \
+    listener-lwmsg.c \
+    server-lwmsg.c   \
     server.c
 
 eventlogd_CPPFLAGS = \
@@ -18,6 +20,8 @@ eventlogd_CPPFLAGS = \
 
 eventlogd_LDADD = \
     @top_builddir@/utils/libeventlogutils.la \
+    $(top_builddir)/ipc/liblwevtipc.la \
+    $(top_builddir)/client/libeventlog.la \
     @GSSAPI_LIBS@ \
     @SQLITE_LIBS@ \
     @PTHREAD_LIBS@ \

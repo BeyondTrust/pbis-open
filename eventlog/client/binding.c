@@ -42,88 +42,6 @@
  */
 #include "includes.h"
 
-static
-BOOLEAN
-LWIIsLocalHost(
-    const char * hostname
-    )
-{
-    DWORD            dwError = 0;
-    BOOLEAN          bResult = FALSE;
-    char             localHost[256] = {0};
-    struct addrinfo* localInfo = NULL;
-    struct addrinfo* remoteInfo = NULL;
-    PCSTR            pcszLocalHost = NULL;
-    PCSTR            pcszRemoteHost = NULL;
-    CHAR             canonNameLocal[NI_MAXHOST] = "";
-    CHAR             canonNameRemote[NI_MAXHOST] = "";
-
-    memset(localHost, 0, sizeof(localHost));
-
-    if ( !strcasecmp(hostname, "localhost") ||
-         !strcmp(hostname, "127.0.0.1") )
-    {
-        bResult = TRUE;
-        goto cleanup;
-    }
-
-    dwError = gethostname(localHost, sizeof(localHost) - 1);
-    if (!LW_IS_EMPTY_STR(localHost))
-    {
-        dwError = getaddrinfo(localHost, NULL, NULL, &localInfo);
-        if ( dwError )
-        {
-            pcszLocalHost = localHost;
-        }
-        else
-        {
-            dwError = getnameinfo(localInfo->ai_addr, localInfo->ai_addrlen, canonNameLocal, NI_MAXHOST, NULL, 0, 0);
-
-            if(dwError || !canonNameLocal[0]) {
-                pcszLocalHost = localHost;
-            }
-            else {
-                pcszLocalHost = canonNameLocal;
-            }
-        }
-
-        dwError = getaddrinfo(hostname, NULL, NULL, &remoteInfo);
-        if ( dwError )
-        {
-            pcszRemoteHost = hostname;
-        }
-        else
-        {
-            dwError = getnameinfo(remoteInfo->ai_addr, remoteInfo->ai_addrlen, canonNameRemote, NI_MAXHOST, NULL, 0, 0);
-
-            if(dwError || !canonNameRemote[0]) {
-                pcszRemoteHost = hostname;
-            }
-            else {
-                pcszRemoteHost = canonNameRemote;
-            }
-        }
-
-        if ( !strcasecmp(pcszLocalHost, pcszRemoteHost) )
-        {
-            bResult = TRUE;
-        }
-    }
-
-cleanup:
-
-    if (localInfo)
-    {
-        freeaddrinfo(localInfo);
-    }
-    if (remoteInfo)
-    {
-        freeaddrinfo(remoteInfo);
-    }
-
-    return bResult;
-}
-
 DWORD
 LwEvtCreateEventlogRpcBinding(
     const char * hostname,
@@ -141,19 +59,9 @@ LwEvtCreateEventlogRpcBinding(
     handle_t eventBinding_local = 0;
     BOOLEAN bLocalHost = FALSE;
 
-    if (hostname == NULL || LWIIsLocalHost(hostname))
-    {
-        /* If no host is specified, connect to the local host over ncalrpc */
-        bLocalHost = TRUE;
-        protocol = "ncalrpc";
-        endpoint = CACHEDIR "/.eventlog";
-    }
-    else
-    {
-        /* Connect using tcp */
-        protocol = "ncacn_ip_tcp";
-        endpoint = NULL;
-    }
+    /* Connect using tcp */
+    protocol = "ncacn_ip_tcp";
+    endpoint = NULL;
 
     EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventlogRpcBinding() hostname=%s, *event_binding=%.16X\n",
                     hostname, *event_binding);

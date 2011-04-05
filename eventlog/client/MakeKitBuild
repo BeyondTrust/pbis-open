@@ -8,7 +8,12 @@ make()
 
     mk_library \
 	LIB=eventlog \
-	SOURCES="binding.c eventlog.c legacy.c eventlog_cstub.c" \
+	SOURCES="binding.c \
+		eventlog.c \
+		legacy.c \
+		eventlog_cstub.c \
+		lwmsg-client.c" \
+	GROUPS="../ipc/ipc" \
 	INCLUDEDIRS=". ../include" \
 	HEADERDEPS="dce/rpc.h lwrpcrt/lwrpcrt.h lwmem.h lwstr.h" \
 	DEPS="eventlog_h.h" \

@@ -1,4 +1,4 @@
-SUBDIRS="include utils client server tools etc"
+SUBDIRS="include utils ipc client server tools etc"
 
 configure()
 {

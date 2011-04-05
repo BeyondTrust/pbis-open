@@ -5,6 +5,8 @@ make()
 	eventlog_sstub.c \
 	globals.c        \
 	main.c           \
+	listener-lwmsg.c   \
+	server-lwmsg.c   \
 	server.c"
 
     lw_dceidl \
@@ -18,6 +20,6 @@ make()
 	INSTALLDIR="$MK_SBINDIR" \
 	INCLUDEDIRS=". ../include" \
 	HEADERDEPS="gssapi.h dce/rpc.h sqlite3.h lwadvapi.h lw/base.h" \
-	LIBDEPS="lwadvapi lwadvapi_nothr sqlite3 gssapi_krb5 dcerpc eventlogutils lwbase lwbase_nothr $LIB_PTHREAD $LIB_DL" \
+	LIBDEPS="lwadvapi lwadvapi_nothr sqlite3 gssapi_krb5 dcerpc eventlogutils eventlog lwbase lwbase_nothr $LIB_PTHREAD $LIB_DL" \
 	DEPS="eventlog_h.h"
 }

@@ -37,11 +37,14 @@
 #include <lwstr.h>
 #include <lwdef.h>
 #include <lwerror.h>
+#include <lwmsg/lwmsg.h>
 
 #include "eventutils.h"
+#include "eventlog-ipc.h"
 
 #include "eventlog_h.h"
 #include "binding_p.h"
+#include "lwmsg-client.h"
 #include "eventlog_p.h"
 
 #ifndef   NI_MAXHOST

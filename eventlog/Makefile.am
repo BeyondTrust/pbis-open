@@ -4,7 +4,8 @@ SUBDIRS=    \
     etc     \
     include \
     utils   \
-    server  \
+    ipc     \
     client  \
+    server  \
     tools
 

@@ -335,7 +335,7 @@ error:
 DWORD
 LwEvtDbGetRecordCount(
     sqlite3 *pDb,
-    WCHAR * pSqlFilter,
+    const WCHAR * pSqlFilter,
     DWORD * pNumMatched
     )
 {

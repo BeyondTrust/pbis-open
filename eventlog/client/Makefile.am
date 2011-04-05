@@ -7,11 +7,13 @@ idl_srcdir=$(top_srcdir)/idl
 libeventlog_la_SOURCES = \
     binding.c  \
     eventlog.c \
+    lwmsg-client.c \
     legacy.c \
     eventlog_cstub.c
 
 libeventlog_la_LIBADD = \
-    @top_builddir@/utils/libeventlogutils.la
+    $(top_builddir)/utils/libeventlogutils.la \
+    $(top_builddir)/ipc/liblwevtipc.la
 
 libeventlog_la_CPPFLAGS = \
     $(AM_CPPFLAGS) \

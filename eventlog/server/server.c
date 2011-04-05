@@ -687,7 +687,6 @@ error:
     goto cleanup;
 }
 
-
 /*
 local variables:
 mode: c

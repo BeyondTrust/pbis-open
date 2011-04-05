@@ -45,8 +45,11 @@
 #include "eventdefs.h"
 
 #include "eventutils.h"
+#include "eventlog-ipc.h"
 
 #include "sqlite3.h"
+
+#include <lwmsg/lwmsg.h>
 
 #include <lw/types.h>
 #include <lwerror.h>
@@ -61,5 +64,7 @@
 #include "eventlog_h.h"
 #include "main_p.h"
 #include "server_p.h"
+#include "server-lwmsg.h"
+#include "listener-lwmsg.h"
 #include "db_p.h"
 #include "externs.h"
