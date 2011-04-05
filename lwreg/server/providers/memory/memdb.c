@@ -124,7 +124,8 @@ pfMemRegExportToFile(
     fprintf(wfp, "%.*s\n", dwDumpStringLen, pszDumpString);
     LWREG_SAFE_FREE_STRING(pszDumpString);
 
-    if (pEntry->NodeType == REGMEM_TYPE_KEY &&
+    if ((pEntry->NodeType == REGMEM_TYPE_KEY ||
+        pEntry->NodeType == REGMEM_TYPE_HIVE) &&
         pEntry->SecurityDescriptorAllocated)
     {
         dwError = RegNtStatusToWin32Error(
@@ -225,7 +226,7 @@ pfMemRegExportToFile(
             switch (Attr->RangeType)
             {
                 case LWREG_VALUE_RANGE_TYPE_BOOLEAN:
-                    fprintf(wfp, "\t\"range\" = boolean\n");
+                    fprintf(wfp, "\t\"range\"=boolean\n");
                     break;
 
                 case LWREG_VALUE_RANGE_TYPE_ENUM:
@@ -291,7 +292,7 @@ MemDbExportToFileThread(
     do
     {
         clock_gettime(CLOCK_REALTIME, &timeOut);
-        timeOut.tv_sec += 300;  // Make configurable in the registry :/
+        timeOut.tv_sec += 30;  // Make configurable in the registry :/
         pthread_cond_timedwait(&cv, &mx, &timeOut);
 
         if (ghMemRegRoot)
@@ -319,16 +320,15 @@ MemDbExportToFileThread(
     return NULL;
 }
 
+
 VOID
 MemDbStartExportToFileThread(VOID)
 {
     NTSTATUS status = 0;
     PMEMDB_FILE_EXPORT_CTX exportCtx = {0};
     PWSTR pwszRootKey = NULL;
-    MEM_REG_STORE_HANDLE regKey;
     pthread_t hThread;
 
-    
     status = LW_RTL_ALLOCATE(
                  (PVOID*) &exportCtx,
                  PMEMDB_FILE_EXPORT_CTX,
@@ -338,24 +338,7 @@ MemDbStartExportToFileThread(VOID)
         goto cleanup;
     }
 
-    memset(&hThread, 0, sizeof(hThread));
-    status = LwRtlWC16StringAllocateFromCString(
-                 &pwszRootKey,
-                 HKEY_THIS_MACHINE);
-    if (status)
-    {
-        goto cleanup;
-    }
-    status = MemRegStoreFindNode(
-                 ghMemRegRoot,
-                 pwszRootKey,
-                 &regKey);
-    if (status)
-    {
-        goto cleanup;
-    }
-    exportCtx->hKey = regKey;
-    
+    exportCtx->hKey = ghMemRegRoot;
     pthread_create(&hThread, NULL, MemDbExportToFileThread, (PVOID) exportCtx);
     pthread_detach(hThread);
 
@@ -376,16 +359,27 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
     MEM_REG_STORE_HANDLE hSubKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
     PWSTR pwszSubKey = NULL;
+    PWSTR pwszValueName = NULL;
+    PMEMDB_IMPORT_FILE_CTX pImportCtx = (PMEMDB_IMPORT_FILE_CTX) userContext;
+    DWORD dataType = 0;
 
     if (pItem->type == REG_KEY)
     {
-        // Stick hRootKey in userContext...
-        status = MemDbOpenKey(
-                      NULL,
-                      NULL,
-                      NULL,
-                      &hRootKey);
-        BAIL_ON_NT_STATUS(status);
+        if (pImportCtx->hRootKey)
+        {
+            hRootKey = pImportCtx->hRootKey;
+        }
+        else
+        {
+            // Stick hRootKey in userContext...
+            status = MemDbOpenKey(
+                          NULL,
+                          NULL,
+                          NULL,
+                          &hRootKey);
+            BAIL_ON_NT_STATUS(status);
+            pImportCtx->hRootKey = hRootKey;
+        }
         regDbConn.pMemReg = hRootKey;
 
         // Open subkeys that exist
@@ -418,6 +412,7 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
                          &hSubKey,
                          NULL); // OUT OPTIONAL PDWORD pdwDisposition
             BAIL_ON_NT_STATUS(status);
+            pImportCtx->hSubKey = hSubKey;
         }
         else
         {
@@ -430,9 +425,29 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
     }
     else
     {
-        printf("pfImportFile: type=%d valueName=%s\n",
+        status = LwRtlWC16StringAllocateFromCString(
+                     &pwszValueName,
+                     pItem->valueName);
+        BAIL_ON_NT_STATUS(status);
+
+        dataType = pItem->regAttr.ValueType ? 
+                       pItem->regAttr.ValueType : pItem->type;
+        status = MemRegStoreAddNodeValue(
+                     pImportCtx->hSubKey,
+                     pwszValueName,
+                     0, // Not used?
+                     dataType,
+                     pItem->value,
+                     pItem->valueLen);
+        BAIL_ON_NT_STATUS(status);
+
+char *subKey;
+LwRtlCStringAllocateFromWC16String(&subKey, pImportCtx->hSubKey->Name);
+        printf("pfImportFile: type=%d subkey=[%s] valueName=%s\n",
                 pItem->type,
+                subKey,
                 pItem->valueName ? pItem->valueName : "");
+free(subKey);
     }
 cleanup:
     return status;

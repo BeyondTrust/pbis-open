@@ -84,6 +84,7 @@ MemProvider_Initialize(
     )
 {
     NTSTATUS status = 0;
+    MEMDB_IMPORT_FILE_CTX importCtx = {0};
 
     status = MemDbOpen(&ghCacheConnection);
     if (status == 0)
@@ -94,7 +95,7 @@ MemProvider_Initialize(
     MemDbImportFromFile(
        MEMDB_EXPORT_FILE, 
        pfImportFile,
-       NULL);
+       &importCtx);
 
     return status;
 }

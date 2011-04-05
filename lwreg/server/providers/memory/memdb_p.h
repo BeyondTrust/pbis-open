@@ -36,7 +36,7 @@ typedef struct _MEMDB_IMPORT_FILE_CTX
 {
     MEM_REG_STORE_HANDLE hRootKey;
     MEM_REG_STORE_HANDLE hSubKey;
-} MEMDB_IMPORT_FILE_CTX;
+} MEMDB_IMPORT_FILE_CTX, *PMEMDB_IMPORT_FILE_CTX;
 
 #define MEMDB_EXPORT_FILE "/var/lib/likewise/db/memprovider.exp"
 

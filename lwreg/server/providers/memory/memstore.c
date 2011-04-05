@@ -550,7 +550,10 @@ MemRegStoreAddNodeValue(
                      sizeof(*pbData) * cbData);
         BAIL_ON_NT_STATUS(status);
         memset(pbData, 0, sizeof(*pbData) * cbData);
-        memcpy(pbData, pData, cbData);
+        if (pData)
+        {
+            memcpy(pbData, pData, cbData);
+        }
     }
     else
     {
