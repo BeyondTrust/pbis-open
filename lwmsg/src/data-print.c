@@ -211,6 +211,7 @@ lwmsg_data_print_enum(
     uint64_t mask = 0;
     uint64_t res = 0;
     LWMsgTypeIter var;
+    LWMsgBool mask_only = LWMSG_TRUE;
 
     BAIL_ON_ERROR(status = lwmsg_convert_integer(
                       object,
@@ -231,27 +232,40 @@ lwmsg_data_print_enum(
          lwmsg_type_valid(&var);
          lwmsg_type_next(&var))
     {
-        if (!var.info.kind_variant.is_mask && var.tag == res)
+        if (!var.info.kind_variant.is_mask)
         {
-            break;
+            mask_only = LWMSG_FALSE;
+
+            if (var.tag == res)
+            {
+                break;
+            }
         }
     }
 
     if (lwmsg_type_valid(&var) && var.meta.type_name)
     {
         print(info, "%s", var.meta.type_name);
+
+        if (mask)
+        {
+            print(info, " | ");
+        }
     }
-    else
+    else if (!mask_only || !mask)
     {
         print(info,
             iter->info.kind_integer.sign == LWMSG_UNSIGNED ? "%llu" : "%lli",
                 (unsigned long long) res);
+
+        if (mask)
+        {
+            print(info, " | ");
+        }
     }
 
     if (mask)
     {
-        print(info, " | ");
-
         for (lwmsg_type_enter(iter, &var);
              lwmsg_type_valid(&var);
              lwmsg_type_next(&var))
