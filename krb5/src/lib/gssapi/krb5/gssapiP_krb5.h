@@ -892,6 +892,12 @@ krb5_gss_export_name_composite(OM_uint32 *minor_status,
                                gss_name_t name,
                                gss_buffer_t exp_composite_name);
 
+krb5_error_code
+kg_get_principal_name_from_keytab(krb5_context     context,
+                                  krb5_keytab      kt,
+                                  krb5_flags       flags,
+                                  krb5_gss_name_t* dst);
+
 OM_uint32
 krb5_gss_map_name_to_any(OM_uint32 *minor_status,
                          gss_name_t name,
