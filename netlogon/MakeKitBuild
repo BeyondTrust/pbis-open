@@ -18,6 +18,8 @@ configure()
 
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
    
+    mk_check_endian
+
     mk_check_headers \
         FAIL=yes \
         reg/lwreg.h lwadvapi.h reg/regutil.h ldap.h
