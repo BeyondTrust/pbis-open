@@ -56,6 +56,7 @@ fix_locale()
             eval "`lookup_user_locale`"
         elif [ -f /etc/default/locale ]; then
             . /etc/default/locale
+            export LANG
         fi
     fi
 }
