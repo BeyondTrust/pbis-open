@@ -605,7 +605,7 @@ GetUserName(
             break;
     }
     
-    if ( !IsNullOrEmpty(pszUserName) )
+    if ( IsNullOrEmpty(pszUserName) )
     {
         dwError = LW_ERROR_TEST_FAILED ;
     }

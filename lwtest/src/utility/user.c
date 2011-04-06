@@ -51,6 +51,7 @@ FreeUser(
         LwFreeMemory((PVOID)(*ppUser)->pszUnixHomeDirectory);
         LwFreeMemory((PVOID)(*ppUser)->pszOriginalUnixHomeDirectory);
         LwFreeMemory((PVOID )*ppUser);
+        *ppUser = NULL;
     }
 }
 

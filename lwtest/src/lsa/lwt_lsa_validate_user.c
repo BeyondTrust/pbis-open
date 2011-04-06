@@ -608,7 +608,7 @@ ValidateUserNULLData(
                         hLsaConnection, 
                         NULL, 
                         NULL);
-    if ( dwLocalError != LW_ERROR_NO_SUCH_USER )
+    if ( dwLocalError != LW_ERROR_INVALID_PARAMETER )
     {
         dwError = LW_ERROR_TEST_FAILED;
         snprintf( 
