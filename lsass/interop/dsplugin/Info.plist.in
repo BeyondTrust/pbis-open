@@ -48,6 +48,17 @@
         </dict>
         <key>CFPluginNameString</key>
         <string>Likewise - Active Directory</string>
+        <key>DSNodesToRegister</key>
+        <array>
+                <dict>
+                        <key>DSNodeToRegisterType</key>
+                        <integer>1</integer>
+                        <key>DSNodeToRegisterPath</key>
+                        <array>
+				<string>/Likewise - Active Directory</string>
+			</array>
+		</dict>
+	</array>
         <key>DSPluginPrefix</key>
         <string>Likewise - Active Directory</string>
         <key>DSServerSignature</key>
