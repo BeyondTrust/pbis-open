@@ -720,3 +720,55 @@ krb5_gss_display_name_ext(OM_uint32 *minor_status,
 }
 #endif
 
+krb5_error_code
+kg_get_principal_name_from_keytab(krb5_context     context,
+                                  krb5_keytab      kt,
+                                  krb5_flags       flags,
+                                  krb5_gss_name_t* dst)
+{
+    krb5_error_code    code;
+    krb5_kt_cursor     cursor;
+    krb5_keytab_entry  entry;
+    krb5_keytab_entry* pEntry = NULL;
+    krb5_gss_name_t    name;
+    int                end_seq = 0;
+
+    code = krb5_kt_start_seq_get(context, kt, &cursor);
+    if (code != 0)
+    {
+        goto cleanup;
+    }
+
+    end_seq = 1;
+
+    code = krb5_kt_next_entry(context, kt, &entry, &cursor);
+    if (code != 0)
+    {
+        goto cleanup;
+    }
+
+    pEntry = &entry;
+
+    code = kg_init_name(context, entry.principal, NULL, flags, &name);
+    if (code != 0)
+    {
+        goto cleanup;
+    }
+
+    *dst = name;
+
+cleanup:
+
+    if (pEntry)
+    {
+        (void) krb5_free_keytab_entry_contents(context, pEntry);
+    }
+
+    if (end_seq)
+    {
+        (void) krb5_kt_end_seq_get(context, kt, &cursor);
+    }
+
+    return code;
+}
+
