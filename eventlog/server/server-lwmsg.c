@@ -101,6 +101,8 @@ LwmEvtSrvConstructSession(
 {
     DWORD dwError = 0;
     PLWMSG_LW_EVENTLOG_CONNECTION pConn = NULL;
+    uid_t uid = 0;
+    gid_t gid = 0;
 
     if (strcmp(lwmsg_security_token_get_type(pToken), "local"))
     {
@@ -116,9 +118,12 @@ LwmEvtSrvConstructSession(
 
     dwError = MAP_LWMSG_ERROR(lwmsg_local_token_get_eid(
                 pToken,
-                &pConn->Uid,
-                &pConn->Gid));
+                &uid,
+                &gid));
     BAIL_ON_EVT_ERROR(dwError);
+
+    pConn->Uid = uid;
+    pConn->Gid = gid;
 
     *ppSessionData = pConn;
 
