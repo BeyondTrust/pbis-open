@@ -355,7 +355,6 @@ cleanup:
 DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
 {
     NTSTATUS status = 0;
-    MEM_REG_STORE_HANDLE hRootKey = NULL;
     MEM_REG_STORE_HANDLE hSubKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
     PWSTR pwszSubKey = NULL;
@@ -368,22 +367,7 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
 
     if (pItem->type == REG_KEY)
     {
-        if (pImportCtx->hRootKey)
-        {
-            hRootKey = pImportCtx->hRootKey;
-        }
-        else
-        {
-            // Stick hRootKey in userContext...
-            status = MemDbOpenKey(
-                          NULL,
-                          NULL,
-                          NULL,
-                          &hRootKey);
-            BAIL_ON_NT_STATUS(status);
-            pImportCtx->hRootKey = hRootKey;
-        }
-        regDbConn.pMemReg = hRootKey;
+        regDbConn.pMemReg = ghMemRegRoot;
 
         // Open subkeys that exist
         status = LwRtlWC16StringAllocateFromCString(
@@ -400,7 +384,7 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
             regDbConn.pMemReg = hSubKey;
         }
 
-        if (status == 0 || status == STATUS_OBJECT_NAME_NOT_FOUND)
+        if (status == STATUS_OBJECT_NAME_NOT_FOUND)
         {
             status = MemDbCreateKeyEx(
                          NULL,
@@ -425,6 +409,11 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
         printf("pfImportFile: type=%d valueName=%s\n",
                 pItem->type,
                 pItem->keyName);
+    }
+    else if (pItem->valueType == REG_KEY_DEFAULT &&
+             !strcmp(pItem->valueName, "@security"))
+    {
+        /* Add security descriptor to current key node */
     }
     else
     {
@@ -463,6 +452,7 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
                      dwDataLen);
         BAIL_ON_NT_STATUS(status);
 
+#if 1 /* Debug printf output */
 char *subKey = NULL;
 LwRtlCStringAllocateFromWC16String(&subKey, pImportCtx->hSubKey->Name);
         printf("pfImportFile: type=%d subkey=[%s] valueName=%s\n",
@@ -470,6 +460,7 @@ LwRtlCStringAllocateFromWC16String(&subKey, pImportCtx->hSubKey->Name);
                 subKey,
                 pItem->valueName ? pItem->valueName : "");
 LWREG_SAFE_FREE_STRING(subKey);
+#endif
     }
 cleanup:
     LWREG_SAFE_FREE_MEMORY(pwszStringData);
