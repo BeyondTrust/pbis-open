@@ -131,7 +131,6 @@ pfMemRegExportToFile(
         dwError = RegNtStatusToWin32Error(
                      RtlAllocateSddlCStringFromSecurityDescriptor(
                          &pszStringSecurityDescriptor,
-                         //(PSECURITY_DESCRIPTOR_RELATIVE)
                          pEntry->SecurityDescriptor,
                          SDDL_REVISION_1,
                          SecInfoAll));
@@ -382,6 +381,7 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
         if (status == 0)
         {
             regDbConn.pMemReg = hSubKey;
+            pImportCtx->hSubKey = hSubKey;
         }
 
         if (status == STATUS_OBJECT_NAME_NOT_FOUND)
@@ -413,7 +413,19 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
     else if (pItem->valueType == REG_KEY_DEFAULT &&
              !strcmp(pItem->valueName, "@security"))
     {
+        hSubKey = pImportCtx->hSubKey;
+
         /* Add security descriptor to current key node */
+        if (pItem->value && pItem->valueLen)
+        {
+            status = RtlAllocateSecurityDescriptorFromSddlCString(
+                         &hSubKey->SecurityDescriptor,
+                         &hSubKey->SecurityDescriptorLen,
+                         pItem->value,
+                         SDDL_REVISION_1);
+            BAIL_ON_NT_STATUS(status);
+            hSubKey->SecurityDescriptorAllocated = TRUE;
+        }
     }
     else
     {
