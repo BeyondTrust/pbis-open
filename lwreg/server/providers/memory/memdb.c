@@ -43,7 +43,7 @@
 #include "includes.h"
 #if 0
 #define __MEMDB_PRINTF__ 1
-#eneif
+#endif
 /*
  * All functions that implement the memory-based registry
  * provider are implemented in this file.
@@ -545,7 +545,7 @@ error:
 }
 
 
-static PWSTR
+PWSTR
 pwstr_wcschr(
     PWSTR pwszHaystack, WCHAR wcNeedle)
 {

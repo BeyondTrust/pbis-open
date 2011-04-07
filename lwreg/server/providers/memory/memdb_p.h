@@ -260,3 +260,9 @@ MemDbImportFromFile(
 
 
 DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext);
+
+PWSTR
+pwstr_wcschr(
+    PWSTR pwszHaystack, WCHAR wcNeedle
+    );
+
