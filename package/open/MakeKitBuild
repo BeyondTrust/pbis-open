@@ -1,4 +1,4 @@
-MODULES="package-deb package-rpm package-freebsd package-pkg"
+MODULES="package-deb package-rpm package-freebsd package-pkg package-lpp"
 
 configure()
 {
@@ -155,6 +155,41 @@ package_pkg()
     mk_pkg_done
 }
 
+package_lpp()
+{
+    mk_lpp_do \
+        PACKAGE="${LW_VENDOR}-open" \
+        VERSION="${LW_VERSION}.0"
+    
+        mk_lpp_sub_do \
+            SUBPACKAGE="root" \
+            DESCRIPTION="Likewise Open" \
+            PREIN="lpp/root.pre_i.in" \
+            CONFIG="lpp/root.config.in" \
+            UNCONFIG="lpp/root.unconfig.in" \
+            REQUISITES="lpp/requisites.in" \
+            UPSIZE="/opt 204800"
+
+            open_files
+            open_files_compat
+            
+            # Indicate directories we own
+            mk_package_dirs \
+                "${MK_PREFIX}" \
+                "${MK_PREFIX}/data" \
+                "${MK_BINDIR}" \
+                "${MK_SBINDIR}" \
+                "${MK_DATADIR}" \
+                "${LW_CONFIGDIR}" \
+                "${MK_LIBDIR}/gss" \
+                "${MK_LIBDIR}/lw-svcm" \
+                "${MK_LIBDIR}/sasl2"
+
+        mk_lpp_sub_done
+
+    mk_lpp_done
+}
+
 make()
 {
     OPEN_SUBDIRS="\
@@ -170,6 +205,7 @@ make()
     mk_rpm_enabled && package_rpm
     mk_freebsd_enabled && package_freebsd
     mk_pkg_enabled && package_pkg
+    mk_lpp_enabled && package_lpp
 }
 
 open_files()
@@ -201,10 +237,7 @@ open_files_prefix()
 
 open_files_usr()
 {
-    mk_package_patterns \
-        SUBDIRS="@lsass/interop" \
-        "${NSSDIR}/*" \
-        "${PAMDIR}/*"
+    open_files_interop
 
     mk_package_patterns SUBDIRS="@docs" "*"
 }
@@ -241,10 +274,7 @@ open_files_compat_prefix()
 open_files_compat_usr()
 {
     mk_compat_do
-        mk_package_patterns \
-            SUBDIRS="$OPEN_SUBDIRS" \
-            "${NSSDIR}/*" \
-            "${PAMDIR}/*"
+        open_files_interop
     mk_compat_done
 }
 
@@ -255,4 +285,28 @@ open_files_dev()
         "${MK_LIBDIR}/*.la" \
         "*.h" \
         "*.idl"
+}
+
+open_files_interop()
+{
+    case "$MK_HOST_OS:$MK_ISA" in
+        aix:ppc32)
+            mk_package_targets \
+                "@${MK_STAGE_DIR}/usr/lib/security/pam_lsass.so" \
+                "@${MK_STAGE_DIR}/usr/lib/security/LSASS" \
+                "@${MK_STAGE_DIR}/usr/lib/netsvc/dynload/lsass.so"
+            ;;
+        aix:ppc64)
+            mk_package_targets \
+                "@${MK_STAGE_DIR}/usr/lib/security/64/pam_lsass.so" \
+                "@${MK_STAGE_DIR}/usr/lib/security/LSASS_64" \
+                "@${MK_STAGE_DIR}/usr/lib/netsvc/dynload/lsass_64.so"
+            ;;
+        *)
+            mk_package_patterns \
+                SUBDIRS="@lsass/interop" \
+                "${NSSDIR}/*" \
+                "${PAMDIR}/*"
+            ;;
+    esac
 }

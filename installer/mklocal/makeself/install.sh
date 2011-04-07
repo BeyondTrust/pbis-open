@@ -176,7 +176,7 @@ do_setup()
 
 package_file_exists_aix_bff()
 {
-    pkgFile=${PKGDIR}/$1-*.bff
+    pkgFile=${PKGDIR}/$1.*.bff
     if [ -f $pkgFile ]; then
         echo "I:$1"
         return 0
@@ -186,7 +186,7 @@ package_file_exists_aix_bff()
 
 is_package_installed_aix_bff()
 {
-    lslpp -L $1 > /dev/null 2>&1
+    lslpp -L "$1.*" > /dev/null 2>&1
     if [ $? -eq 0 ]; then
         echo $1
         return 0

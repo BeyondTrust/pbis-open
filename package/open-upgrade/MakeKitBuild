@@ -95,10 +95,27 @@ package_pkg()
     mk_pkg_done
 }
 
+package_lpp()
+{
+    mk_lpp_do \
+        PACKAGE="${LW_VENDOR}-open-upgrade" \
+        VERSION="${LW_VERSION}.0"
+    
+        mk_lpp_sub_do \
+            SUBPACKAGE="root" \
+            PREIN="lpp/root.pre_i.in" \
+            REQUISITES="lpp/requisites.in"
+        
+        mk_lpp_sub_done
+
+    mk_lpp_done
+}
+
 make()
 {
     mk_deb_enabled && package_deb
     mk_rpm_enabled && package_rpm
     mk_freebsd_enabled && package_freebsd
     mk_pkg_enabled && package_pkg
+    mk_lpp_enabled && package_lpp
 }

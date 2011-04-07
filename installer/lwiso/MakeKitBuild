@@ -15,6 +15,9 @@ make()
         solaris)
             mk_pkg_enabled && sfx_generic "pkg" "response"
             ;;
+        aix)
+            mk_lpp_enabled && sfx_generic "lpp"
+            ;;
     esac
 }
 

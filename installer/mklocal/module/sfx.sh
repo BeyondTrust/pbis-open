@@ -44,9 +44,33 @@ make()
 
 ### section build
 
+_lw_package_native_name()
+{
+    case "$FORMAT" in
+        lpp)
+            result=`echo "$1" | tr '-' '.'`
+            ;;
+        *)
+            result="$1"
+            ;;
+    esac
+}
+
+_lw_package_native_list()
+{
+    _list=""
+    for _name
+    do
+        _lw_package_native_name "$_name"
+        _list="$_list $result"
+    done
+
+    result="${_list# }"
+}
+
 _lw_sfx()
 {
-    mk_push_vars FILES SCRIPT SFX LABEL
+    mk_push_vars FILES SCRIPT SFX LABEL BASE FORMAT OBSOLETE GUI
     mk_parse_params
 
     mk_msg_domain "sfx"
@@ -94,10 +118,14 @@ _lw_sfx()
 
     {
         echo "PREFIX=\"$MK_PREFIX\""
-        echo "INSTALL_UPGRADE_PACKAGE=\"$UPGRADE\""
-        echo "INSTALL_OBSOLETE_PACKAGES=\"$OBSOLETE\""
-        echo "INSTALL_BASE_PACKAGE=\"$BASE\""
-        echo "INSTALL_GUI_PACKAGE=\"$GUI\""
+        _lw_package_native_list ${UPGRADE}
+        echo "INSTALL_UPGRADE_PACKAGE=\"$result\""
+        _lw_package_native_list ${OBSOLETE}
+        echo "INSTALL_OBSOLETE_PACKAGES=\"$result\""
+        _lw_package_native_list ${BASE}
+        echo "INSTALL_BASE_PACKAGE=\"$result\""
+        _lw_package_native_list ${GUI}
+        echo "INSTALL_GUI_PACKAGE=\"$result\""
     } > "$TEMP_DIR/$LABEL/MANIFEST" || mk_fail "could not write manifest"
     
     mk_mkdirname "$SFX"

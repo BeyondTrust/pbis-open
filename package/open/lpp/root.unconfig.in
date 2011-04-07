@@ -1,0 +1,123 @@
+#!/bin/sh
+
+UPGRADEDIR=@MK_PREFIX@-upgrade
+
+LOG=/var/log/likewise-open-install.log
+TLOG=/tmp/LikewiseOpenTemp.txt
+
+DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
+
+# Display to screen and log file with a blank line between entires.
+log()
+{
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Display to screen and log file with no blank line.
+_log()
+{
+    echo $@
+    echo $@ >> $LOG
+}
+
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
+run()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err"
+        _log `cat $TLOG`
+        _log
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# Log only to file.
+run_quiet()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+    else
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    cat $TLOG >> $LOG
+    echo >> $LOG
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+run_or_fail()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log `cat $TLOG`
+        _log
+        rm -f $TLOG > /dev/null 2>&1
+        exit 1
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+preremove()
+{
+    log "Package: Likewise Open preremove begins (`date`)"
+    log "Logging all operations to $LOG"
+
+    run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable pam"
+    run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable nsswitch"
+
+    run_quiet "rm /etc/rc.d/rc2.d/K08lwsmd"
+    run_quiet "rm /etc/rc.d/rc2.d/S17lwsmd"
+    run_quiet "rm /etc/rc.d/rc2.d/K07likewise"
+    run_quiet "rm /etc/rc.d/rc2.d/S18likewise"
+
+    # Stop all daemons; none should be needed anymore.
+    run_quiet "@MK_BINDIR@/lwsm shutdown"
+    for daemon in $DAEMONS_TO_HALT
+    do
+        PIDS=`ps -eaf | grep $daemon | grep -v grep | awk '{ print $2 }'`
+        if [ -n "$PIDS" ]; then
+            run_quiet "kill -KILL $PIDS"
+        fi
+    done
+
+    log "Package: Likewise Open preremove finished"
+    exit 0
+}
+
+if [ -n "$INUCLIENTS" ]; then
+    return 0
+fi
+
+preremove
