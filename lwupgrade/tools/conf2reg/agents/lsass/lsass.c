@@ -131,7 +131,6 @@ PrintRegFile(
     )
 {
     DWORD dwError = 0;
-    PCSTR pszLoad = NULL;
 
     dwError = PrintLsaConfig(fp, &pConfig->LsaConfig);
     BAIL_ON_UP_ERROR(dwError);
@@ -147,26 +146,7 @@ PrintRegFile(
     }
     BAIL_ON_UP_ERROR(dwError);
 
-    if (pConfig->bSawProviderAD && pConfig->bSawProviderLocal)
-        pszLoad = "ActiveDirectory\0Local\0";
-    else if (pConfig->bSawProviderAD)
-        pszLoad = "ActiveDirectory\0";
-    else if (pConfig->bSawProviderLocal)
-        pszLoad = "Local\0";
-    else
-        pszLoad = "";
-
-    dwError = UpPrintMultiString(fp, "LoadOrder", pszLoad);
-    if (fputs("\n", fp) < 0)
-    {
-        dwError = LwMapErrnoToLwError(errno);
-    }
-    BAIL_ON_UP_ERROR(dwError);
-
     dwError = UpAdPrintConfig(fp, &pConfig->ADConfig);
-    BAIL_ON_UP_ERROR(dwError);
-
-    dwError = UpLocalPrintConfig(fp, &pConfig->LocalConfig);
     BAIL_ON_UP_ERROR(dwError);
 
 error:
