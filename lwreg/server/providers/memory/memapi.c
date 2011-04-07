@@ -86,6 +86,7 @@ MemProvider_Initialize(
     NTSTATUS status = 0;
     MEMDB_IMPORT_FILE_CTX importCtx = {0};
 
+    mkdir("/var/lib/likewise/db", 0755);
     status = MemDbOpen(&ghCacheConnection);
     if (status == 0)
     {
