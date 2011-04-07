@@ -11,6 +11,6 @@ make()
         PROGRAM=lw-privilege \
         SOURCES="$LWPRIV_SOURCES" \
         INCLUDEDIRS=". ../../include" \
-        HEADERDEPS="lwadvapi.h lw/base.h" \
+        HEADERDEPS="lwadvapi.h lw/base.h dce/rpc.h" \
         LIBDEPS="lwadvapi lwadvapi_nothr lwbase lwbase_nothr lsarpc lwioclient"
 }

@@ -77,4 +77,6 @@ configure()
 	strtol strtoll __strtoll strtoul strtoull __strtoull
 
     mk_output_file "etc/eventlogd.reg"
+
+    MK_HEADERDEPS="$MK_HEADERDEPS lwrpcrt/lwrpcrt.h"
 }
