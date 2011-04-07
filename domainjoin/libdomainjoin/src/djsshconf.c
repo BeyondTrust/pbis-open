@@ -32,6 +32,8 @@
 #include "ctarray.h"
 #include "djstr.h"
 #include "djsshconf.h"
+#include <lwstr.h>
+#include <lwfile.h>
 
 struct SshLine
 {
@@ -55,6 +57,14 @@ static int FindOption(struct SshConf *conf, int startLine, const char *name);
 static DWORD SetOption(struct SshConf *conf, const char *name, const char *value);
 
 static DWORD WriteSshConfiguration(const char *rootPrefix, struct SshConf *conf);
+
+static
+DWORD
+CombinePaths(
+    IN DWORD Count,
+    IN PSTR* ppPaths,
+    OUT PSTR* ppResult
+    );
 
 static void UpdatePublicLines(struct SshConf *conf)
 {
@@ -432,72 +442,198 @@ error:
     return ceError;
 }
 
-BOOLEAN FindSshAndConfig(PCSTR rootPrefix, PCSTR sshOrSshd,
-        PSTR *sshBinary, PSTR *sshConfig, LWException **exc)
+static
+DWORD
+CombinePaths(
+    IN DWORD Count,
+    IN PSTR* ppPaths,
+    OUT PSTR* ppResult
+    )
 {
+    DWORD dwError = 0;
+    PSTR pResult = NULL;
+    PSTR pNewResult = NULL;
+    DWORD index = 0;
+
+    if (Count == 0)
+    {
+        dwError = LwAllocateStringPrintf(
+                    &pResult,
+                    "{nowhere}");
+        BAIL_ON_CENTERIS_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LwAllocateStringPrintf(
+                    &pResult,
+                    "{%s",
+                    ppPaths[0]);
+        BAIL_ON_CENTERIS_ERROR(dwError);
+
+        for (index = 1; index < Count; index++)
+        {
+            dwError = LwAllocateStringPrintf(
+                        &pNewResult,
+                        "%s, %s",
+                        pResult,
+                        ppPaths[index]);
+            BAIL_ON_CENTERIS_ERROR(dwError);
+            LW_SAFE_FREE_STRING(pResult);
+            pResult = pNewResult;
+        }
+
+        dwError = LwAllocateStringPrintf(
+                    &pNewResult,
+                    "%s}",
+                    pResult);
+        BAIL_ON_CENTERIS_ERROR(dwError);
+        LW_SAFE_FREE_STRING(pResult);
+        pResult = pNewResult;
+    }
+
+    *ppResult = pResult;
+
+cleanup:
+    return dwError;
+
+error:
+    *ppResult = NULL;
+    goto cleanup;
+}
+
+BOOLEAN FindSshAndConfig(
+        PCSTR pSshOrSshd,
+        PSTR *ppSshBinary,
+        PSTR *ppSshConfig,
+        LWException **ppExc)
+{
+    DWORD ceError = ERROR_SUCCESS;
     /* Mac OS X stores the configuration in /etc */
     /* CSW ssh on Solaris uses /opt/csw/etc/ssh */
-    const char *sshConfigPath = "/etc/ssh:/opt/ssh/etc:/usr/local/etc:/etc:/etc/openssh:/usr/openssh/etc:/opt/csw/etc/ssh";
+    const PCSTR ppSshConfigPaths[] = {
+        "/etc/ssh",
+        "/opt/ssh/etc",
+        "/usr/local/etc",
+        "/etc",
+        "/etc/openssh",
+        "/usr/openssh/etc",
+        "/opt/csw/etc/ssh",
+        NULL
+    };
+    DWORD foundConfigCount = 0;
+    PSTR* ppFoundConfigs = NULL;
 
     /* Solaris Sparc 10 stores sshd in /usr/lib/ssh */
     /* Experian says their sshd is at /usr/openssh/sbin/sshd */
     /* CSW ssh on Solaris uses /opt/csw/sbin/sshd */
-    const char *sshBinaryPath = "/usr/sbin:/opt/ssh/sbin:/usr/local/sbin:/usr/bin:/opt/ssh/bin:/usr/local/bin:/usr/lib/ssh:/usr/openssh/sbin:/usr/openssh/bin:/opt/csw/sbin:/opt/csw/bin";
+    const PCSTR ppSshBinaryPaths[] = {
+        "/usr/sbin",
+        "/opt/ssh/sbin",
+        "/usr/local/sbin",
+        "/usr/bin",
+        "/opt/ssh/bin",
+        "/usr/local/bin",
+        "/usr/lib/ssh",
+        "/usr/openssh/sbin",
+        "/usr/openssh/bin",
+        "/opt/csw/sbin",
+        "/opt/csw/bin",
+        NULL
+    };
+    DWORD foundBinaryCount = 0;
+    PSTR* ppFoundBinaries = NULL;
+    PSTR pConfigFilename = NULL;
+    PSTR pBinaryFilename = NULL;
+    PSTR pFoundConfigList = NULL;
+    PSTR pFoundBinaryList = NULL;
 
-    DWORD ceError = ERROR_SUCCESS;
-    PSTR configFilename = NULL;
-    PSTR binaryFilename = NULL;
+    *ppSshBinary = NULL;
+    *ppSshConfig = NULL;
 
-    *sshBinary = NULL;
-    *sshConfig = NULL;
+    LW_CLEANUP_CTERR(ppExc, CTAllocateStringPrintf(
+        &pConfigFilename, "%s_config", pSshOrSshd));
+    LW_CLEANUP_CTERR(ppExc, CTAllocateStringPrintf(
+        &pBinaryFilename, "%s", pSshOrSshd));
 
-    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
-        &configFilename, "%s_config", sshOrSshd));
-    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
-        &binaryFilename, "%s", sshOrSshd));
+    ceError = LwFindFilesInPaths(
+                    pConfigFilename,
+                    LWFILE_REGULAR,
+                    ppSshConfigPaths,
+                    &foundConfigCount,
+                    &ppFoundConfigs);
+    LW_CLEANUP_CTERR(ppExc, ceError);
 
-    ceError = CTFindInPath(rootPrefix, configFilename, sshConfigPath, sshConfig);
-    if(ceError == ERROR_FILE_NOT_FOUND)
-        ceError = ERROR_SUCCESS;
-    else if(ceError == ERROR_SUCCESS)
-        DJ_LOG_INFO("Found config file %s", *sshConfig);
-    LW_CLEANUP_CTERR(exc, ceError);
+    ceError = LwFindFilesInPaths(
+                    pBinaryFilename,
+                    LWFILE_REGULAR,
+                    ppSshBinaryPaths,
+                    &foundBinaryCount,
+                    &ppFoundBinaries);
+    LW_CLEANUP_CTERR(ppExc, ceError);
 
-    ceError = CTFindInPath(rootPrefix, binaryFilename, sshBinaryPath, sshBinary);
-    if(ceError == ERROR_FILE_NOT_FOUND)
-        ceError = ERROR_SUCCESS;
-    else if(ceError == ERROR_SUCCESS)
-        DJ_LOG_INFO("Found binary %s", *sshBinary);
-    LW_CLEANUP_CTERR(exc, ceError);
-
-    if(*sshConfig != NULL && *sshBinary == NULL)
+    if ((foundConfigCount | foundBinaryCount) > 0 && foundConfigCount != foundBinaryCount)
     {
-        LW_RAISE_EX(exc, ERROR_FILE_NOT_FOUND,
+        ceError = CombinePaths(
+                        foundConfigCount,
+                        ppFoundConfigs,
+                        &pFoundConfigList);
+        LW_CLEANUP_CTERR(ppExc, ceError);
+
+        ceError = CombinePaths(
+                        foundBinaryCount,
+                        ppFoundBinaries,
+                        &pFoundBinaryList);
+        LW_CLEANUP_CTERR(ppExc, ceError);
+
+        if ((foundConfigCount | foundBinaryCount) == 1)
+        {
+            ceError = ERROR_FILE_NOT_FOUND;
+        }
+        else
+        {
+            ceError = ERROR_DUPLICATE_SERVICE_NAME;
+        }
+
+        LW_RAISE_EX(ppExc, ceError,
                 "Unable to find ssh binary",
-"A %s config file was found at '%s', which indicates that %s is installed on your system. However the %s binary could not be found in the search path '%s'. In order to configure %s, please either symlink the %s binary into an existing search path, or ask Likewise support to extend the search path."
-                , sshOrSshd, *sshConfig, sshOrSshd,
-                sshOrSshd, sshBinaryPath, sshOrSshd, sshOrSshd);
-        goto cleanup;
+"A %s config file was at %s, and a %s binary file was found at %s. Exactly one config file and one binary must exist on the system in a standard location. Uninstall any unused copies of ssh.",
+                pSshOrSshd,
+                pFoundConfigList,
+                pSshOrSshd,
+                pFoundBinaryList);
     }
-    else if(*sshConfig == NULL && *sshBinary != NULL)
+
+    if (foundConfigCount == 1)
     {
-        LW_RAISE_EX(exc, ERROR_FILE_NOT_FOUND,
-                "Unable to find ssh config",
-"A %s binary was found at '%s', which indicates that %s is installed on your system. However the %s config could not be found in the search path '%s'. In order to configure %s, please either symlink the %s config file into an existing search path, or ask Likewise support to extend the search path."
-                , sshOrSshd, *sshBinary, sshOrSshd,
-                sshOrSshd, sshConfigPath, sshOrSshd, sshOrSshd);
-        goto cleanup;
+        DJ_LOG_INFO("Found config file %s", ppFoundConfigs[0]);
+        *ppSshConfig = ppFoundConfigs[0];
+        ppFoundConfigs[0] = NULL;
+    }
+    if (foundBinaryCount == 1)
+    {
+        DJ_LOG_INFO("Found binary %s", ppFoundBinaries[0]);
+        *ppSshBinary = ppFoundBinaries[0];
+        ppFoundBinaries[0] = NULL;
     }
 
 cleanup:
-    if((*sshConfig == NULL) != (*sshBinary == NULL))
+    if (ppFoundConfigs)
     {
-        CT_SAFE_FREE_STRING(*sshConfig);
-        CT_SAFE_FREE_STRING(*sshBinary);
+        LwFreeStringArray(
+                ppFoundConfigs,
+                foundConfigCount);
     }
-    CT_SAFE_FREE_STRING(configFilename);
-    CT_SAFE_FREE_STRING(binaryFilename);
-    return *sshConfig != NULL;
+    if (ppFoundBinaries)
+    {
+        LwFreeStringArray(
+                ppFoundBinaries,
+                foundBinaryCount);
+    }
+    LW_SAFE_FREE_STRING(pConfigFilename);
+    LW_SAFE_FREE_STRING(pBinaryFilename);
+    LW_SAFE_FREE_STRING(pFoundConfigList);
+    LW_SAFE_FREE_STRING(pFoundBinaryList);
+    return (foundConfigCount == 1);
 }
 
 static BOOLEAN TestOption(PCSTR rootPrefix, struct SshConf *conf, PCSTR binary, PCSTR testFlag, PCSTR optionName, LWException **exc)
@@ -984,7 +1120,6 @@ cleanup:
 }
 
 void DJConfigureSshForADLogin(
-    const char * testPrefix,
     BOOLEAN enable,
     JoinProcessOptions *options,
     LWException **exc
@@ -996,22 +1131,20 @@ void DJConfigureSshForADLogin(
     BOOLEAN exists;
     pid_t sshdPid;
 
-    if(testPrefix == NULL)
-        testPrefix = "";
     memset(&conf, 0, sizeof(conf));
 
-    LW_TRY(exc, exists = FindSshAndConfig(testPrefix, "sshd",
+    LW_TRY(exc, exists = FindSshAndConfig("sshd",
         &binaryPath, &configPath, &LW_EXC));
 
     if(exists)
     {
-        LW_CLEANUP_CTERR(exc, ReadSshFile(&conf, testPrefix, configPath));
-        LW_TRY(exc, UpdateSshdConf(&conf, testPrefix,
+        LW_CLEANUP_CTERR(exc, ReadSshFile(&conf, "", configPath));
+        LW_TRY(exc, UpdateSshdConf(&conf, "",
             binaryPath, enable, NULL, options, &LW_EXC));
 
         if(conf.modified)
         {
-            WriteSshConfiguration(testPrefix, &conf);
+            WriteSshConfiguration("", &conf);
             LW_CLEANUP_CTERR(exc, CTIsProgramRunning("/var/run/sshd.pid",
                     "sshd", &sshdPid, NULL));
             if(sshdPid != -1)
@@ -1027,16 +1160,16 @@ void DJConfigureSshForADLogin(
 
     CT_SAFE_FREE_STRING(configPath);
     CT_SAFE_FREE_STRING(binaryPath);
-    LW_TRY(exc, exists = FindSshAndConfig(testPrefix, "ssh",
+    LW_TRY(exc, exists = FindSshAndConfig("ssh",
         &binaryPath, &configPath, &LW_EXC));
     if(exists)
     {
-        LW_CLEANUP_CTERR(exc, ReadSshFile(&conf, testPrefix, configPath));
-        LW_TRY(exc, UpdateSshConf(&conf, testPrefix,
+        LW_CLEANUP_CTERR(exc, ReadSshFile(&conf, "", configPath));
+        LW_TRY(exc, UpdateSshConf(&conf, "",
             binaryPath, enable, NULL, &LW_EXC));
 
         if(conf.modified)
-            WriteSshConfiguration(testPrefix, &conf);
+            WriteSshConfiguration("", &conf);
         else
             DJ_LOG_INFO("ssh_config not modified");
         FreeSshConfContents(&conf);
@@ -1049,7 +1182,7 @@ cleanup:
 }
 
 static QueryResult QueryDescriptionConfigSsh(const JoinProcessOptions *options,
-        PCSTR testPrefix, PSTR *changeDescription, LWException **exc)
+        PSTR *changeDescription, LWException **exc)
 {
     struct SshConf conf;
     char *configPath = NULL;
@@ -1061,13 +1194,11 @@ static QueryResult QueryDescriptionConfigSsh(const JoinProcessOptions *options,
     LWException *caught = NULL;
     QueryResult result1 = FullyConfigured, result2 = FullyConfigured;
 
-    if(testPrefix == NULL)
-        testPrefix = "";
     memset(&conf, 0, sizeof(conf));
 
     LW_CLEANUP_CTERR(exc, CTStrdup("", &message));
 
-    exists = FindSshAndConfig(testPrefix, "sshd",
+    exists = FindSshAndConfig("sshd",
         &binaryPath, &configPath, &caught);
     if(caught != NULL && caught->code == ERROR_FILE_NOT_FOUND)
     {
@@ -1084,8 +1215,8 @@ static QueryResult QueryDescriptionConfigSsh(const JoinProcessOptions *options,
 
     if(exists)
     {
-        LW_CLEANUP_CTERR(exc, ReadSshFile(&conf, testPrefix, configPath));
-        LW_TRY(exc, result1 = UpdateSshdConf(&conf, testPrefix,
+        LW_CLEANUP_CTERR(exc, ReadSshFile(&conf, "", configPath));
+        LW_TRY(exc, result1 = UpdateSshdConf(&conf, "",
             binaryPath, options->joiningDomain, &subDescription, options, &LW_EXC));
         temp = message;
         message = NULL;
@@ -1096,7 +1227,7 @@ static QueryResult QueryDescriptionConfigSsh(const JoinProcessOptions *options,
         FreeSshConfContents(&conf);
     }
 
-    exists = FindSshAndConfig(testPrefix, "ssh",
+    exists = FindSshAndConfig("ssh",
         &binaryPath, &configPath, &caught);
     if(caught != NULL && caught->code == ERROR_FILE_NOT_FOUND)
     {
@@ -1113,8 +1244,8 @@ static QueryResult QueryDescriptionConfigSsh(const JoinProcessOptions *options,
 
     if(exists)
     {
-        LW_CLEANUP_CTERR(exc, ReadSshFile(&conf, testPrefix, configPath));
-        LW_TRY(exc, result2 = UpdateSshConf(&conf, testPrefix,
+        LW_CLEANUP_CTERR(exc, ReadSshFile(&conf, "", configPath));
+        LW_TRY(exc, result2 = UpdateSshConf(&conf, "",
             binaryPath, options->joiningDomain, &subDescription, &LW_EXC));
         temp = message;
         message = NULL;
@@ -1152,19 +1283,19 @@ cleanup:
 
 static QueryResult QuerySsh(const JoinProcessOptions *options, LWException **exc)
 {
-    return QueryDescriptionConfigSsh(options, NULL, NULL, exc);
+    return QueryDescriptionConfigSsh(options, NULL, exc);
 }
 
 static PSTR GetSshDescription(const JoinProcessOptions *options, LWException **exc)
 {
     PSTR ret = NULL;
-    QueryDescriptionConfigSsh(options, NULL, &ret, exc);
+    QueryDescriptionConfigSsh(options, &ret, exc);
     return ret;
 }
 
 static void DoSsh(JoinProcessOptions *options, LWException **exc)
 {
-    DJConfigureSshForADLogin(NULL, options->joiningDomain, options, exc);
+    DJConfigureSshForADLogin(options->joiningDomain, options, exc);
 }
 
 const JoinModule DJSshModule = { TRUE, "ssh", "configure ssh and sshd", QuerySsh, DoSsh, GetSshDescription };
