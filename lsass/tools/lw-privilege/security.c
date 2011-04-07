@@ -279,9 +279,14 @@ ProcessGetAccountSecurityDescriptor(
                               securityInformation);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    fprintf(stdout,
-            (pAccountSid) ? "Account: %s\n" : "LSA Policy:\n",
-            pszAccountName);
+    if (pAccountSid)
+    {
+        fprintf(stdout, "Account: %s\n", pszAccountName);
+    }
+    else
+    {
+        fprintf(stdout, "LSA Policy:\n");
+    }
     fprintf(stdout,
             "=================================================="
             "==============================\n");
@@ -495,9 +500,14 @@ ProcessSetAccountSecurityDescriptor(
                               securityInformation);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    fprintf(stdout,
-            (pAccountSid) ? "Account: %s\n" : "LSA Policy:\n",
-            pszAccountName);
+    if (pAccountSid)
+    {
+        fprintf(stdout, "Account: %s\n", pszAccountName);
+    }
+    else
+    {
+        fprintf(stdout, "LSA Policy:\n");
+    }
     fprintf(stdout,
             "=================================================="
             "==============================\n");
