@@ -243,6 +243,9 @@ configure_openssl()
         hpux-ia64_64)
             host_string="hpux64-ia64-gcc"
             ;;
+        linux-ppc32)
+            host_string="linux-ppc"
+            ;;
         *)
             host_string=""
             ;;
