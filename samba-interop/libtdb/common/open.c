@@ -67,7 +67,7 @@ static int tdb_new_database(struct tdb_context *tdb, int hash_size)
 		tdb->map_ptr = (char *)newdb;
 		memcpy(&tdb->header, newdb, sizeof(tdb->header));
 		/* Convert the `ondisk' version if asked. */
-		CONVERT(*newdb);
+		(void) CONVERT(*newdb);
 		return 0;
 	}
 	if (lseek(tdb->fd, 0, SEEK_SET) == -1)
@@ -77,7 +77,7 @@ static int tdb_new_database(struct tdb_context *tdb, int hash_size)
 		goto fail;
 
 	/* This creates an endian-converted header, as if read from disk */
-	CONVERT(*newdb);
+	(void) CONVERT(*newdb);
 	memcpy(&tdb->header, newdb, sizeof(tdb->header));
 	/* Don't endian-convert the magic food! */
 	memcpy(newdb->magic_food, TDB_MAGIC_FOOD, strlen(TDB_MAGIC_FOOD)+1);

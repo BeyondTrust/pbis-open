@@ -657,7 +657,7 @@ static int tdb_recovery_allocate(struct tdb_context *tdb,
 
 	/* write the recovery header offset and sync - we can sync without a race here
 	   as the magic ptr in the recovery record has not been set */
-	CONVERT(recovery_head);
+	(void) CONVERT(recovery_head);
 	if (methods->tdb_write(tdb, TDB_RECOVERY_HEAD, 
 			       &recovery_head, sizeof(tdb_off_t)) == -1) {
 		TDB_LOG((tdb, TDB_DEBUG_FATAL, "tdb_recovery_allocate: failed to write recovery head\n"));
@@ -704,7 +704,7 @@ static int transaction_setup_recovery(struct tdb_context *tdb,
 	rec->data_len = recovery_size;
 	rec->rec_len  = recovery_max_size;
 	rec->key_len  = old_map_size;
-	CONVERT(rec);
+	(void) CONVERT(rec);
 
 	/* build the recovery data into a single blob to allow us to do a single
 	   large write, which should be more efficient */
@@ -738,7 +738,7 @@ static int transaction_setup_recovery(struct tdb_context *tdb,
 	/* and the tailer */
 	tailer = sizeof(*rec) + recovery_max_size;
 	memcpy(p, &tailer, 4);
-	CONVERT(p);
+	(void) CONVERT(p);
 
 	/* write the recovery data to the recovery area */
 	if (methods->tdb_write(tdb, recovery_offset, data, sizeof(*rec) + recovery_size) == -1) {
@@ -759,7 +759,7 @@ static int transaction_setup_recovery(struct tdb_context *tdb,
 	free(data);
 
 	magic = TDB_RECOVERY_MAGIC;
-	CONVERT(magic);
+	(void) CONVERT(magic);
 
 	*magic_offset = recovery_offset + offsetof(struct list_struct, magic);
 
