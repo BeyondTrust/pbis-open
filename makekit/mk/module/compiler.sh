@@ -33,6 +33,199 @@ DEPENDS="core platform path"
 #
 ##
 
+#<
+# @var MK_CC
+# @brief C compiler
+# @export
+# @system
+#
+# Set to the executable and arguments used to invoke the C compiler.
+# Note that this variable is system-dependent and may have separate
+# values for each target system and ISA.
+#>
+
+#<
+# @var MK_CXX
+# @brief C++ compiler
+# @export
+# @system
+#
+# Set to the executable and arguments used to invoke the C++ compiler.
+# Note that this variable is system-dependent and may have separate
+# values for each target system and ISA.
+#>
+
+#<
+# @var MK_CPPFLAGS
+# @brief Global C preprocessor flags
+# @export
+# @inherit
+#
+# The flags in this variable will be passed to any compiler operation
+# involving the C or C++ preprocessor.
+#>
+
+#<
+# @var MK_CFLAGS
+# @brief Global C compiler flags
+# @export
+# @inherit
+#
+# The flags in this variable will be passed to any compiler operation
+# involving C source code.
+#>
+
+#<
+# @var MK_CXXFLAGS
+# @brief Global C++ compiler flags
+# @export
+# @inherit
+#
+# The flags in this variable will be passed to any compiler operation
+# involving C++ source code.
+#>
+
+#<
+# @var MK_LDFLAGS
+# @brief Global linker compiler flags
+# @export
+# @inherit
+#
+# The flags in this variable will be passed to any compiler operation
+# involving linking an executable, library, or dynamically-loadable object.
+#>
+
+#<
+# @var MK_ISA_CPPFLAGS
+# @brief Per-ISA C preprocessor flags
+# @export
+# @inherit
+# @system
+#
+# The flags in this variable will be passed to any compiler operation
+# involving the C or C++ preprocessor.  Because it is a system-dependent
+# variable, it may be used to set flags that apply to only one particular
+# target system and ISA.
+#>
+
+#<
+# @var MK_ISA_CFLAGS
+# @brief Per-ISA C compiler flags
+# @export
+# @inherit
+# @system
+#
+# The flags in this variable will be passed to any compiler operation
+# involving C source code.  Because it is a system-dependent
+# variable, it may be used to set flags that apply to only one particular
+# target system and ISA.
+#>
+
+#<
+# @var MK_ISA_CXXFLAGS
+# @brief Per-ISA C++ compiler flags
+# @export
+# @inherit
+# @system
+#
+# The flags in this variable will be passed to any compiler operation
+# involving C++ source code.  Because it is a system-dependent
+# variable, it may be used to set flags that apply to only one particular
+# target system and ISA.
+#>
+
+#<
+# @var MK_ISA_LDFLAGS
+# @brief Per-ISA linker flags
+# @export
+# @inherit
+# @system
+#
+# The flags in this variable will be passed to any compiler operation
+# involving linking an executable, library, or dynamically-loadable object.
+# Because it is a system-dependent variable, it may be used to set flags
+# that apply to only one particular target system and ISA.
+#>
+
+#<
+# @var MK_CC_STYLE
+# @brief Style of C compiler
+# @export
+# @system
+# @value gcc The C compiler is gcc or gcc-compatible
+# @value unknown The C compiler style is unknown
+#
+# Defines the style of the C compiler.  This does not indicate the precise
+# vendor of the compiler but is an abstract classification of its supported
+# parameters, extensions, etc.  For example, <lit>clang</lit> is highly
+# compatible with <lit>gcc</lit> and would be classified as the same style.
+#>
+
+#<
+# @var MK_CXX_STYLE
+# @brief Style of C++ compiler
+# @export
+# @system
+# @value gcc The C++ compiler is g++ or g++-compatible
+# @value unknown The C++ compiler style is unknown
+#
+# Like <varref>MK_CC_STYLE</varref>, but for the C++ compiler.
+#>
+
+#<
+# @var MK_CC_LD_STYLE
+# @brief Linker style for C
+# @export
+# @system
+# @value gnu GNU ld or compatible
+# @value native Native OS linker
+#
+# Defines the style of the linker used for linking objects
+# derived from C code.  This is an abstract classification which
+# encompasses the behavior and supported parameters of the linker.
+#>
+
+#<
+# @var MK_CXX_LD_STYLE
+# @brief Linker style for C++
+# @export
+# @system
+# @value gnu GNU ld or compatible
+# @value native Native OS linker
+#
+# Like <varref>MK_CC_LD_STYLE</varref>, but for C++-derived objects.
+#>
+
+#<
+# @var MK_HEADERDEPS
+# @brief Common header dependencies
+# @inherit
+#
+# All headers listed in this variable will be implicitly added to the
+# <lit>HEADERDEPS</lit> list of compiler functions such as
+# <funcref>mk_program</funcref>.  It does not affect configure tests.
+#
+# This helps avoid repetition of consistently-used header dependencies
+# across a larger project.  Care should be taken to avoid abusing it,
+# however, as bloated dependency lists needlessly slow down
+# <lit>make</lit>.
+#>
+
+#<
+# @var MK_LIBDEPS
+# @brief Common library dependencies
+# @inherit
+#
+# All libraries listed in this variable will be implicitly added to the
+# <lit>LIBDEPS</lit> list of compiler functions such as
+# <funcref>mk_program</funcref>.  It does not affect configure tests.
+#
+# This can help avoid repetition when building multiple libraries, programs,
+# etc. that share common library dependencies.  Take special care to
+# avoid abusing it as linking extraneous libraries slows down the linker
+# and incurs startup time and memory overhead at runtime.
+#>
+
 ### section configure
 
 #
@@ -209,11 +402,22 @@ _mk_process_symfile_gnu_ld()
     DEPS="$DEPS @$__output"
 }
 
+_mk_process_symfile_aix()
+{
+    mk_resolve_file "$SYMFILE"
+
+    LDFLAGS="$LDFLAGS -Wl,-bexport:$result"
+    DEPS="$DEPS @$result"
+}
+
 _mk_process_symfile()
 {
-    case "$MK_OS" in
-        linux)
+    case "$MK_OS:$MK_CC_LD_STYLE" in
+        *:gnu)
             _mk_process_symfile_gnu_ld "$@"
+            ;;
+        aix:native)
+            _mk_process_symfile_aix
             ;;
         *)
             ;;
@@ -248,6 +452,11 @@ _mk_library_process_version()
                 _rest="${_rest#*:}"
                 _age="${_rest%:}"
                 case "$MK_OS" in
+                    hpux)
+                        MAJOR="$_cur"
+                        MINOR="$_rev"
+                        MICRO=""
+                        ;;
                     freebsd)
                         MAJOR="$_cur"
                         MINOR=""
@@ -275,6 +484,9 @@ _mk_library_process_version()
                 case "$MK_OS" in
                     freebsd|darwin)
                         MINOR=""
+                        MICRO=""
+                        ;;
+                    hpux)
                         MICRO=""
                         ;;
                 esac
@@ -2082,11 +2294,11 @@ _mk_compiler_check()
 configure()
 {
     mk_declare -i MK_CONFIG_HEADER="" MK_HEADERDEPS="" MK_LIBDEPS=""
+    mk_declare -s -e \
+        MK_CC MK_CXX MK_CC_STYLE MK_CC_LD_STYLE MK_CXX_STYLE MK_CXX_LD_STYLE
     mk_declare -i -e MK_CPPFLAGS MK_CFLAGS MK_CXXFLAGS MK_LDFLAGS
     mk_declare -s -i -e \
-        MK_CC MK_CXX \
-        MK_ISA_CPPFLAGS MK_ISA_CFLAGS MK_ISA_CXXFLAGS MK_ISA_LDFLAGS \
-        MK_CC_STYLE MK_CC_LD_STYLE MK_CXX_STYLE MK_CXX_LD_STYLE
+        MK_ISA_CPPFLAGS MK_ISA_CFLAGS MK_ISA_CXXFLAGS MK_ISA_LDFLAGS
     mk_declare -s MK_INTERNAL_LIBS
 
     mk_msg "default C compiler: $MK_DEFAULT_CC"

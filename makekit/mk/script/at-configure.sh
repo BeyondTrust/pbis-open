@@ -136,6 +136,18 @@ then
     export PATH
 fi
 
+# If the build system supports the host ISA we will build for,
+# pretend that the build system is the same.  This avoids making
+# autoconf believe we are cross compiling and failing any run
+# tests.
+if [ "$MK_HOST_OS" = "$MK_BUILD_OS" ] && _mk_contains "$MK_ISA" ${MK_BUILD_ISAS}
+then
+    _build_string="$MK_AT_HOST_STRING"
+else
+    _build_string="$MK_AT_BUILD_STRING"
+fi
+
+
 cd "${MK_OBJECT_DIR}${MK_SUBDIR}/$BUILDDIR" && \
 mk_at_log_command "$dirname" "configure" "${_src_dir}/configure" \
     CC="$MK_CC" \
@@ -144,7 +156,7 @@ mk_at_log_command "$dirname" "configure" "${_src_dir}/configure" \
     CFLAGS="$MK_ISA_CFLAGS $MK_CFLAGS $CFLAGS" \
     CXXFLAGS="$MK_ISA_CXXFLAGS $MK_CXXFLAGS $CXXFLAGS" \
     LDFLAGS="$MK_ISA_LDFLAGS $MK_LDFLAGS $LDFLAGS ${_ldflags}" \
-    --build="${MK_AT_BUILD_STRING}" \
+    --build="${_build_string}" \
     --host="${MK_AT_HOST_STRING}" \
     --prefix="${_prefix}" \
     --libdir="${_libdir}" \

@@ -30,6 +30,8 @@ BEGIN {
     in_doc = 0;
     saved_len = 0;
     explicit = 0;
+    explicit_func = 0;
+    explicit_var = 0;
 }
 
 /^#</ {
@@ -43,7 +45,10 @@ BEGIN {
         if (explicit_func) {
             process_func(explicit_func);
             explicit_func = 0;
-        }
+        } else if (explicit_var) {
+            process_var(explicit_var);
+            explicit_var = 0;
+        }       
         explicit = 0;
         saved_len = 0;
     }
@@ -57,6 +62,14 @@ BEGIN {
          explicit_func = $0;
     }
     next;
+}
+
+/^# ?@var/ {
+    if (in_doc) {
+         sub(/^# ?@var */, "");
+         explicit = 1;
+         explicit_var = $0;
+    }
 }
 
 /^#/ {
@@ -166,4 +179,77 @@ function process_func(func_name) {
         printf("</example>\n");;
     }
     printf("</function>\n");
+}
+
+
+function process_var(var_name) {
+    brief=""
+    usage_len = 0;
+    desc_len = 0;
+    value_len = 0;
+    is_exported = 0;
+    is_inherited = 0;
+    is_system = 0;
+    is_output = 0;
+    for (i = 0; i < saved_len; i++) {
+        line = saved[i];
+        if (line ~ /^@brief/) {
+            sub("^@brief *", "", line);
+            brief = line;
+        } else if (line ~ /^@value/) {
+            sub("^@value *", "", line)
+            while (i+1 < saved_len && saved[i+1] != "" && !(saved[i+1] ~ /^@/))
+                line = line " " saved[++i];
+            value[value_len++] = line;
+        } else if (line ~ /^@export/) {
+            is_exported = 1;
+        } else if (line ~ /^@inherit/) {
+            is_inherited = 1;
+        } else if (line ~ /^@system/) {
+            is_system = 1;
+        } else if (line ~ /^@output/) {
+            is_output = 1;
+        } else {
+            desc[desc_len++] = line;
+        }
+    }
+
+    printf("<variable name=\"%s\" brief=\"%s\"", var_name, quote(brief));
+    if (is_exported) {
+        printf(" export=\"true\"");
+    }
+    if (is_inherited) {
+        printf(" inherit=\"true\"");
+    }
+    if (is_system) {
+        printf(" system=\"true\"");
+    }
+    if (is_output) {
+        printf(" output=\"true\"");
+    }
+    printf(">\n");
+    for (i = 0; i < value_len; i++) {
+         split(value[i], parts);
+         printf("<value val=\"%s\">\n", quote(parts[1]))
+         text = value[i];
+         sub("[^ ]* ", "", text);
+         print text;
+         printf("</value>\n");
+    }
+    printf("<description>\n<para>\n");
+    for (i = 0; i < desc_len && desc[i] == ""; i++);
+    new_para = 0;
+    for (; i < desc_len; i++) {
+        if (desc[i] == "") {
+            new_para = 1;
+        } else {
+            if (new_para) {
+                printf("</para>\n<para>\n");
+                new_para = 0;
+            }
+            print desc[i];
+        }
+    }
+    printf("</para>\n</description>\n");
+    printf("</variable>\n");
 }

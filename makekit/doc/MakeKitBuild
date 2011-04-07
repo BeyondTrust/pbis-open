@@ -78,7 +78,7 @@ make()
 
         reference \
             OUTPUT="reference/core.xml" -- \
-            --title "Core Functions" \
+            --title "Core Functionality" \
             --file "${MK_HOME}/mk.sh" "${MK_HOME}/command/configure.sh" \
             --module core platform path program \
             --docbook mk_target.3mk.xml mk_resolve_target.3mk.xml
@@ -107,7 +107,8 @@ make()
         reference \
             OUTPUT="reference/package.xml" -- \
             --title "Package Modules" \
-            --module package package-rpm package-deb package-freebsd package-pkg
+            --module package package-rpm package-deb \
+            package-freebsd package-pkg package-lpp
 
         reference_end
 

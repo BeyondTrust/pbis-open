@@ -7,7 +7,7 @@
   <xsl:template match="/reference">
     <reference>
       <info>
-	<title><xsl:value-of select="@title"/></title>
+        <title><xsl:value-of select="@title"/></title>
       </info>
       <xsl:apply-templates>
 	<xsl:sort select="@name"/>
@@ -110,6 +110,56 @@
     </replaceable>
   </xsl:template>
 
+<xsl:template match="variable">
+    <refentry version="5.0">
+      <xsl:attribute name="xml:id">
+	<xsl:value-of select="@name"/>
+      </xsl:attribute>
+      <refmeta>
+	<refentrytitle><xsl:value-of select="@name"/></refentrytitle>
+	<manvolnum>3mk</manvolnum>
+	<refmiscinfo class="manual">MakeKit Reference</refmiscinfo>
+      </refmeta>
+      <refnamediv>
+	<refname><xsl:value-of select="@name"/></refname>
+	<refpurpose><xsl:value-of select="@brief"/></refpurpose>
+      </refnamediv>
+      <refsynopsisdiv>
+	<title>Synopsis</title>
+	<synopsis>
+	  <function><xref linkend="mk_declare">mk_declare</xref></function>
+	  <xsl:if test="@export">
+	    <xsl:text> </xsl:text><literal>-e</literal>
+	  </xsl:if>
+	  <xsl:if test="@inherit">
+	    <xsl:text> </xsl:text><literal>-i</literal>
+	  </xsl:if>
+	  <xsl:if test="@output">
+	    <xsl:text> </xsl:text><literal>-o</literal>
+	  </xsl:if>
+	  <xsl:if test="@system">
+	    <xsl:text> </xsl:text><literal>-s</literal>
+	  </xsl:if>
+	  <xsl:text> </xsl:text>
+	  <varname><xsl:value-of select="@name"/></varname>
+	</synopsis>
+      </refsynopsisdiv>
+      <xsl:if test="value">
+	<refsection><info><title>Values</title></info>
+	  <variablelist>
+	    <xsl:for-each select="value">
+	      <varlistentry>
+		<term><literal><xsl:value-of select="@val"/></literal></term>
+		<listitem><para><xsl:apply-templates/></para></listitem>
+	      </varlistentry>
+	    </xsl:for-each>
+	  </variablelist>
+	</refsection>
+      </xsl:if>
+      <xsl:apply-templates mode="function" select="description"/>
+    </refentry>
+  </xsl:template>
+
   <xsl:template match="var">
     <varname>
       <xsl:apply-templates/>
@@ -155,6 +205,17 @@
 	<xsl:apply-templates/>
       </xref>
     </function>
+  </xsl:template>
+
+  <xsl:template match="varref">
+    <varname>
+      <xref>
+	<xsl:attribute name="linkend">
+	  <xsl:value-of select="."/>
+	</xsl:attribute>
+	<xsl:apply-templates/>
+      </xref>
+    </varname>
   </xsl:template>
 
   <xsl:template match="topicref">

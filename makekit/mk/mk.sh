@@ -1013,3 +1013,68 @@ _mk_reverse()
 
     result="${result% }"
 }
+
+mk_read_line()
+{
+    _IFS="$IFS"
+    IFS=""
+    read -r result
+    _res="$?"
+    IFS="$_IFS"
+    return "$_res"
+}
+
+mk_get_file_mode()
+{
+    # $1 = path
+    _res=0
+    _extra=0
+    _mode=`ls -ld "$1"` || mk_fail "could not read mode for file: $1"
+    _mode="${_mode%% *}"
+    # Strip off file type
+    _mode="${_mode#?}"
+
+    
+    while [ -n "$_mode" ]
+    do
+        _rest="${_mode#?}"
+        _bit="${_mode%$_rest}"
+        _mode="${_rest}"
+        case "$_bit" in
+            r|w|x)
+                _res=$(($_res * 2 + 1))
+                ;;
+            S|s)
+                if [ "${#_mode}" -ge 6 ]
+                then
+                    # setuid
+                    _extra=$(($_extra + 04000))
+                else
+                    # setgid
+                    _extra=$(($_extra + 02000))
+                fi
+
+                if [ "$_bit" = "s" ]
+                then
+                    _res=$(($_res * 2 + 1))
+                else
+                    _res=$(($_res * 2))
+                fi
+                ;;
+            T|t)
+                _extra=$(($_extra + 01000))
+                if [ "$_bit" = "t" ]
+                then
+                    _res=$(($_res * 2 + 1))
+                else
+                    _res=$(($_res * 2))
+                fi
+                ;;
+            -)
+                _res=$(($_res * 2))
+                ;;
+        esac
+    done
+
+    result=`printf "0%o" "$_res"`
+}

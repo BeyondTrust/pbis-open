@@ -36,6 +36,178 @@
 
 DEPENDS="platform"
 
+#<
+# @var MK_PREFIX
+# @brief Install prefix for architecture-independent files
+# @export
+# 
+# The filesystem prefix for architecture-indepenent files.
+# Used to construct the default install directories for
+# headers, shared data files, configuration files, etc.
+#>
+
+#<
+# @var MK_EPREFIX
+# @brief Install prefix for architecture-dependent files
+# @export
+# 
+# The filesystem prefix for architecture-depenent files.
+# Used to construct the default install directories for
+# executables, libraries, etc.
+#
+# Defaults to <lit>$<varref>MK_PREFIX</varref></lit>.
+#>
+
+#<
+# @var MK_INCLUDEDIR
+# @brief Install directory for header files
+# @export
+# 
+# The directory where public header files are installed.
+#
+# Defaults to <lit>$<varref>MK_PREFIX</varref>/include</lit>.
+#>
+
+#<
+# @var MK_BINDIR
+# @brief Install directory for user executables
+# @export
+# 
+# The directory where programs intended for use
+# by users are installed.
+#
+# Defaults to <lit>$<varref>MK_EPREFIX</varref>/bin</lit>.
+#>
+
+#<
+# @var MK_SBINDIR
+# @brief Install directory for system executables
+# @export
+# 
+# The directory where programs intended for use
+# by the operating system or root user are installed.
+#
+# Defaults to <lit>$<varref>MK_EPREFIX</varref>/sbin</lit>.
+#>
+
+#<
+# @var MK_LIBEXECDIR
+# @brief Install directory for program executables
+# @export
+# 
+# The directory where programs intended for internal
+# use by other programs or libraries are installed.
+#
+# Defaults to <lit>$<varref>MK_EPREFIX</varref>/libexec</lit>.
+#>
+
+#<
+# @var MK_BASELIBDIR
+# @brief Base install directory for libraries
+# @export
+# 
+# This path name is used as a template to construct the actual
+# install directory paths for libraries (<varref>MK_LIBDIR</varref>).
+# This distinction is important on multiarchitecture systems where
+# there may be more than one library directory.
+#
+# Defaults to <lit>$<varref>MK_EPREFIX</varref>/lib</lit>.
+#>
+
+#<
+# @var MK_LIBDIR
+# @brief Install directory for libraries
+# @export
+# @system
+# 
+# The directory where libraries are installed.  On multiarchitecture
+# systems that do not use "fat" binaries, this is a system-dependent
+# variable that has separate values for each ISA.  For example, on
+# a Debian-like x86_64 Linux system, it defaults to <lit>$<varref>MK_BASELIBDIR</varref></lit>
+# for the x86_64 ISA and <lit>${<varref>MK_BASELIBDIR</varref>}32</lit> for the
+# x86_32 ISA.
+#
+# On systems that use "fat" binaries, such as Darwin, it is equivalent
+# to <varref>MK_BASELIBDIR</varref>.
+#>
+
+#<
+# @var MK_SYSCONFDIR
+# @brief System configuration directory
+# @export
+#
+# The directory where configuration files are installed.
+#
+# Defaults to <lit>$<varref>MK_PREFIX</varref>/etc</lit>,
+# unless <varref>MK_PREFIX</varref> is <lit>/usr</lit>,
+# in which case it defaults to <lit>/etc</lit>.
+#>
+
+#<
+# @var MK_LOCALSTATEDIR
+# @brief Local state directory
+# @export
+#
+# The directory where programs should store machine-local
+# state information.
+#
+# Defaults to <lit>$<varref>MK_PREFIX</varref>/var</lit>,
+# unless <varref>MK_PREFIX</varref> is <lit>/usr</lit>,
+# in which case it defaults to <lit>/var</lit>.
+#>
+
+#<
+# @var MK_DATAROOTDIR
+# @brief Root shared data directory
+# @export
+#
+# The directory where architecture-independent data files
+# are installed.
+#
+# Defaults to <lit>$<varref>MK_PREFIX</varref>/share</lit>.
+#>
+
+#<
+# @var MK_DATADIR
+# @brief Shared data directory
+# @export
+#
+# The directory where architecture-independent data files
+# are installed for the current project.
+#
+# Defaults to <lit>$<varref>MK_DATAROOTDIR</varref>/$PROJECT_NAME</lit>.
+#>
+
+#<
+# @var MK_DOCDIR
+# @brief Documentation directory
+# @export
+#
+# The directory where documentation is installed.
+#
+# Defaults to <lit>$<varref>MK_DATAROOTDIR</varref>/doc/$PROJECT_NAME</lit>.
+#>
+
+#<
+# @var MK_HTMLDIR
+# @brief HTML documentation directory
+# @export
+#
+# The directory where HTML documentation is installed.
+#
+# Defaults to <lit>$<varref>MK_DOCDIR</varref>/html</lit>.
+#>
+
+#<
+# @var MK_MANDIR
+# @brief UNIX man page directory
+# @export
+#
+# The directory where UNIX man pages are installed.
+#
+# Defaults to <lit>$<varref>MK_DATAROOTDIR</varref>/man</lit>.
+#>
+
 option()
 {
     mk_option \

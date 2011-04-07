@@ -98,7 +98,7 @@ _mk_at_system_string()
                     __arch="powerpc-ibm"
                     ;;
                 *)
-                    __arch="ppc-unknown"
+                    __arch="powerpc-unknown"
                     ;;
             esac
             ;;
@@ -111,7 +111,7 @@ _mk_at_system_string()
                     __arch="powerpc-ibm"
                     ;;
                 *)
-                    __arch="ppc64-unknown"
+                    __arch="powerpc-unknown"
                     ;;
             esac
             ;;
@@ -478,17 +478,7 @@ option()
         _var="MK_AT_HOST_STRING_$result"
         _option="at-host-string-$(echo $_isa | tr '_' '-')"
 
-        # If the build system supports the ISA,
-        # make the host string match the build string.
-        # This avoids triggering the 'cross compiling'
-        # check in many projects when building x86_32
-        # on x86_64, etc.
-        if [ "$MK_HOST_OS" = "$MK_BUILD_OS" ] && _mk_contains "$_isa" ${MK_BUILD_ISAS}
-        then
-            result="$MK_AT_BUILD_STRING"
-        else
-            _mk_at_system_string HOST "$_isa"
-        fi
+        _mk_at_system_string HOST "$_isa"
 
         mk_option \
             OPTION="$_option" \

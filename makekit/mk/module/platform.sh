@@ -399,6 +399,9 @@ option()
                 x86_64|amd64)
                     _default_MK_BUILD_ARCH="x86_64"
                     ;;
+                ppc)
+                    _default_MK_BUILD_ARCH="powerpc"
+                    ;;
                 *)
                     mk_fail "unknown architecture: `uname -m`"
                     ;;
@@ -449,6 +452,12 @@ option()
                         # To make it even more fun, the description contains
                         # extraneous double quotes
                         _default_MK_BUILD_DISTRO="`lsb_release -sd | sed 's/\"//g' | awk '{print $1;}' | tr 'A-Z' 'a-z'`"
+                        ;;
+                    "RedHatEnterprise"*)
+                        _default_MK_BUILD_DISTRO="rhel"
+                        ;;           
+                    "FedoraCore")
+                        _default_MK_BUILD_DISTRO="fedora"
                         ;;
                     *)
                         _default_MK_BUILD_DISTRO="`lsb_release -si | awk '{print $1;}' | tr 'A-Z' 'a-z'`"
