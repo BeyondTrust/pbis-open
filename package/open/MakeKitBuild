@@ -12,6 +12,7 @@ configure()
         MK_HOST_ARCH \
         LW_CACHEDIR \
         LW_CONFIGDIR \
+        LW_INITDIR \
         PRIMARY_LIBDIR="$MK_LIBDIR"
 
     if mk_deb_enabled
@@ -214,7 +215,7 @@ open_files_root()
         SUBDIRS="$OPEN_SUBDIRS" \
         "${MK_SYSCONFDIR}/*" \
         "${MK_SYSCONFDIR}/gss/mech" \
-        "/etc/init.d/*"
+        "${LW_INITDIR}/*"
 
     mk_package_dirs \
         "${LW_CACHEDIR}" \

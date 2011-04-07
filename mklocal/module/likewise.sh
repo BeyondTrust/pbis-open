@@ -9,6 +9,18 @@ option()
 
     [ "${MK_LOCALSTATEDIR}" = "/var" ] && _default_cachedir="/var/lib/likewise"
 
+    case "$MK_HOST_OS" in
+        aix)
+            _default_initdir="/etc/rc.d/init.d"
+            ;;
+        hpux)
+            _default_initdir="/sbin/rc.d"
+            ;;
+        *)
+            _default_initdir="/etc/init.d"
+            ;;
+    esac
+
     mk_option \
         OPTION=lw-tool-dir \
         PARAM="name" \
@@ -31,6 +43,13 @@ option()
         HELP="Location of registry files"
 
     mk_option \
+        OPTION=lw-initdir \
+        PARAM="path" \
+        VAR=LW_INITDIR \
+        DEFAULT="${_default_initdir}" \
+        HELP="Location where init scripts should be installed"
+
+    mk_option \
         OPTION=lw-device-profile \
         VAR=LW_DEVICE_PROFILE \
         PARAM="profile" \
@@ -49,6 +68,7 @@ configure()
 {
     mk_msg "cache dir: $LW_CACHEDIR"
     mk_msg "config dir: $LW_CONFIGDIR"
+    mk_msg "init script dir: $LW_INITDIR"
     mk_msg "developer tool dir: $LW_TOOL_DIRNAME"
 
     LW_TOOL_DIR="@$LW_TOOL_DIRNAME"

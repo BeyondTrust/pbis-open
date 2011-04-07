@@ -36,7 +36,7 @@ make()
 lw_init_script()
 {
     mk_target \
-	TARGET="/etc/init.d/$1" \
+	TARGET="${LW_INITDIR}/$1" \
 	DEPS="$1" \
         _lw_install_init_script '$@' "&$1"
 
