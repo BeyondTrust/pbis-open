@@ -142,13 +142,23 @@ SetBooleanRegistryValue(
 
 cleanup:
 
-    RegCloseKey(hReg, pNodeKey);
-    pNodeKey = NULL;
-    RegCloseKey(hReg, pRootKey);
-    pRootKey = NULL;
+    if (hReg)
+    {
+        if (pNodeKey)
+        {
+            RegCloseKey(hReg, pNodeKey);
+            pNodeKey = NULL;
+        }
 
-    RegCloseServer(hReg);
-    hReg = NULL;
+        if (pRootKey)
+        {
+            RegCloseKey(hReg, pRootKey);
+            pRootKey = NULL;
+        }
+
+        RegCloseServer(hReg);
+        hReg = NULL;
+    }
 
     return(ceError);
 
@@ -219,13 +229,23 @@ SetDwordRegistryValue(
 
 cleanup:
 
-    RegCloseKey(hReg, pNodeKey);
-    pNodeKey = NULL;
-    RegCloseKey(hReg, pRootKey);
-    pRootKey = NULL;
+    if (hReg)
+    {
+        if (pNodeKey)
+        {
+            RegCloseKey(hReg, pNodeKey);
+            pNodeKey = NULL;
+        }
 
-    RegCloseServer(hReg);
-    hReg = NULL;
+        if (pRootKey)
+        {
+            RegCloseKey(hReg, pRootKey);
+            pRootKey = NULL;
+        }
+
+        RegCloseServer(hReg);
+        hReg = NULL;
+    }
 
     return(ceError);
 
@@ -297,13 +317,23 @@ SetStringRegistryValue(
 
 cleanup:
 
-    RegCloseKey(hReg, pNodeKey);
-    pNodeKey = NULL;
-    RegCloseKey(hReg, pRootKey);
-    pRootKey = NULL;
+    if (hReg)
+    {
+        if (pNodeKey)
+        {
+            RegCloseKey(hReg, pNodeKey);
+            pNodeKey = NULL;
+        }
 
-    RegCloseServer(hReg);
-    hReg = NULL;
+        if (pRootKey)
+        {
+            RegCloseKey(hReg, pRootKey);
+            pRootKey = NULL;
+        }
+
+        RegCloseServer(hReg);
+        hReg = NULL;
+    }
 
     return(ceError);
 
