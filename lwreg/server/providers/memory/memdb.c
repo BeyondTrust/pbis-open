@@ -41,6 +41,9 @@
  */
 
 #include "includes.h"
+#if 0
+#define __MEMDB_PRINTF__ 1
+#eneif
 /*
  * All functions that implement the memory-based registry
  * provider are implemented in this file.
@@ -406,9 +409,13 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
             BAIL_ON_NT_STATUS(status);
         }
 
-        printf("pfImportFile: type=%d valueName=%s\n",
-                pItem->type,
-                pItem->keyName);
+
+
+#ifdef __MEMDB_PRINTF__ /* Debugging only */
+printf("pfImportFile: type=%d valueName=%s\n",
+       pItem->type,
+       pItem->keyName);
+#endif
     }
     else if (pItem->valueType == REG_KEY_DEFAULT &&
              !strcmp(pItem->valueName, "@security"))
@@ -464,7 +471,7 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
                      dwDataLen);
         BAIL_ON_NT_STATUS(status);
 
-#if 1 /* Debug printf output */
+#ifdef __MEMDB_PRINTF__  /* Debug printf output */
 char *subKey = NULL;
 LwRtlCStringAllocateFromWC16String(&subKey, pImportCtx->hSubKey->Name);
         printf("pfImportFile: type=%d subkey=[%s] valueName=%s\n",
