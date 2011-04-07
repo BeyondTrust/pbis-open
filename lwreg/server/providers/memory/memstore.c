@@ -122,6 +122,9 @@ MemRegStoreOpen(
     PWSTR rootKey = NULL;
     MEM_REG_STORE_HANDLE rootNode = NULL;
     DWORD i = 0;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel = NULL;
+    ULONG ulSecDescLen = 0;
+    PACCESS_TOKEN pToken = NULL;
 
     /* This is the ROOT node (\) of the registry */
     status = LW_RTL_ALLOCATE(
@@ -136,6 +139,16 @@ MemRegStoreOpen(
                  &phReg->Name, "\\");
     BAIL_ON_NT_STATUS(status);
 
+    /* Get this information from the Handle */
+    status = RegSrvCreateAccessToken(0, // pServerState->peerUID,
+                                     0, // pServerState->peerGID,
+                                     &pToken);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RegSrvCreateDefaultSecDescRel(
+                 &pSecDescRel,
+                 &ulSecDescLen);
+    BAIL_ON_NT_STATUS(status);
 
     /* Populate the subkeys under the root node */
     for (i=0; gRootKeys[i]; i++)
@@ -145,13 +158,12 @@ MemRegStoreOpen(
                      gRootKeys[i]);
         BAIL_ON_NT_STATUS(status);
 
-/* Probably should set default SD here */
         status = MemRegStoreAddNode(
                      phReg,
                      rootKey,
                      REGMEM_TYPE_HIVE,
-                     NULL,  // SD parameter
-                     0,
+                     pSecDescRel,  // SD parameter
+                     ulSecDescLen,
                      &rootNode,
                      NULL);
         BAIL_ON_NT_STATUS(status);
@@ -166,6 +178,7 @@ cleanup:
     return status;
 
 error:
+    LWREG_SAFE_FREE_MEMORY(pSecDescRel);
     LWREG_SAFE_FREE_MEMORY(phReg->Name);
     LWREG_SAFE_FREE_MEMORY(phReg);
     LWREG_SAFE_FREE_MEMORY(rootKey);
@@ -413,9 +426,24 @@ MemRegStoreAddNode(
 
     pNewNode->NodeType = NodeType;
 
-    /* Inherit SD from parent node if one is not provided */
-    pNewNode->SecurityDescriptor = hDb->SecurityDescriptor;
-    pNewNode->SecurityDescriptorLen = hDb->SecurityDescriptorLen;
+    if (SecurityDescriptor && SecurityDescriptorLen)
+    {
+        status = LW_RTL_ALLOCATE(
+                 (PVOID*) &pNewNode->SecurityDescriptor,
+                 PSECURITY_DESCRIPTOR_RELATIVE,
+                 SecurityDescriptorLen);
+        BAIL_ON_NT_STATUS(status);
+        memcpy(pNewNode->SecurityDescriptor,
+               SecurityDescriptor,
+               SecurityDescriptorLen);
+        pNewNode->SecurityDescriptorLen = SecurityDescriptorLen;
+    }
+    else
+    {
+        /* Inherit SD from parent node if one is not provided */
+        pNewNode->SecurityDescriptor = hDb->SecurityDescriptor;
+        pNewNode->SecurityDescriptorLen = hDb->SecurityDescriptorLen;
+    }
     hDb->NodesLen++;
 
     if (phNode)
