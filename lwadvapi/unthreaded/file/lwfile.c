@@ -205,6 +205,74 @@ error:
 }
 
 DWORD
+LwFindFilesInPaths(
+    IN PCSTR pszName,
+    IN LWFILE_TYPE type,
+    IN const PCSTR* ppszSearchPaths,
+    OUT PDWORD pdwFoundCount,
+    OUT PSTR** pppszFoundPaths
+    )
+{
+    DWORD dwError = 0;
+    DWORD dwIndex = 0;
+    PSTR pszTestPath = NULL;
+    DWORD dwFoundCount = 0;
+    PSTR* ppszFoundPaths = NULL;
+    PSTR* ppszNewFoundPaths = NULL;
+    BOOLEAN bExists = FALSE;
+
+    for (dwIndex = 0; ppszSearchPaths[dwIndex]; dwIndex++)
+    {
+        LW_SAFE_FREE_STRING(pszTestPath);
+
+        dwError = LwAllocateStringPrintf(
+                        &pszTestPath,
+                        "%s/%s",
+                        ppszSearchPaths[dwIndex],
+                        pszName);
+        BAIL_ON_LW_ERROR(dwError);
+
+        dwError = LwCheckFileTypeExists(
+                        pszTestPath,
+                        type,
+                        &bExists);
+        BAIL_ON_LW_ERROR(dwError);
+
+        if (bExists)
+        {
+            dwError = LwReallocMemory(
+                            ppszFoundPaths,
+                            (PVOID*)&ppszNewFoundPaths,
+                            (dwFoundCount + 1) * sizeof(ppszFoundPaths[0]));
+            BAIL_ON_LW_ERROR(dwError);
+            ppszFoundPaths = ppszNewFoundPaths;
+
+            ppszFoundPaths[dwFoundCount] = pszTestPath;
+            pszTestPath = NULL;
+            dwFoundCount++;
+        }
+    }
+
+    *pdwFoundCount = dwFoundCount;
+    *pppszFoundPaths = ppszFoundPaths;
+    
+cleanup:
+    return dwError;
+
+error:
+    *pdwFoundCount = 0;
+    *pppszFoundPaths = NULL;
+
+    if (ppszFoundPaths)
+    {
+        LwFreeStringArray(
+                ppszFoundPaths,
+                dwFoundCount);
+    }
+    goto cleanup;
+}
+
+DWORD
 LwCheckFileTypeExists(
     PCSTR pszPath,
     LWFILE_TYPE type,

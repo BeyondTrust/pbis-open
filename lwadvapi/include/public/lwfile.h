@@ -102,6 +102,15 @@ LwGetOwnerAndPermissions(
     );
 
 DWORD
+LwFindFilesInPaths(
+    IN PCSTR pszName,
+    IN LWFILE_TYPE type,
+    IN const PCSTR* ppszSearchPaths,
+    OUT PDWORD pdwFoundCount,
+    OUT PSTR** pppszFoundPaths
+    );
+
+DWORD
 LwCheckFileTypeExists(
     PCSTR pszPath,
     LWFILE_TYPE type,
