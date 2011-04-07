@@ -977,7 +977,7 @@ MemDbGetValue(
          * Find named subnode and use that to find the named value
          */
         hParentKey = hKey;
-        status = MemRegStoreFindNode(
+        status = MemRegStoreFindNodeSubkey(
                      hParentKey,
                      pSubKey,
                      &hSubKey);

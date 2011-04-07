@@ -75,6 +75,14 @@ MemRegStoreFindNode(
 
 
 NTSTATUS
+MemRegStoreFindNodeSubkey(
+    IN MEM_REG_STORE_HANDLE hDb,
+    IN PCWSTR pwszSubKeyPath,
+    OUT PMEM_REG_STORE_HANDLE phNode
+    );
+
+
+NTSTATUS
 MemRegStoreAddNodeValue(
     MEM_REG_STORE_HANDLE hDb,
     IN OPTIONAL PCWSTR pValueName,
@@ -120,3 +128,5 @@ NTSTATUS
 MemRegStoreDeleteNode(
     IN MEM_REG_STORE_HANDLE hDb
     );
+
+

@@ -221,6 +221,70 @@ error:
 
 
 NTSTATUS
+MemRegStoreFindNodeSubkey(
+    IN MEM_REG_STORE_HANDLE hDb,
+    IN PCWSTR pwszSubKeyPath,
+    OUT PMEM_REG_STORE_HANDLE phNode)
+{
+    NTSTATUS status = 0;
+    PWSTR pwszTmpFullPath = NULL;
+    PWSTR pwszSubKey = NULL;
+    PWSTR pwszPtr = NULL;
+    MEM_REG_STORE_HANDLE hParentKey = NULL;
+    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    BOOLEAN bEndOfString = FALSE;
+
+
+    BAIL_ON_NT_STATUS(status);
+
+    if (!pwszSubKeyPath)
+    {
+        pwszSubKeyPath = (PCWSTR) L"";
+    }
+
+
+    status = LwRtlWC16StringDuplicate(&pwszTmpFullPath, pwszSubKeyPath);
+    BAIL_ON_NT_STATUS(status);
+
+    hParentKey = hDb;
+    pwszSubKey = pwszTmpFullPath;
+    do
+    {
+        pwszPtr = pwstr_wcschr(pwszSubKey, L'\\');
+        if (pwszPtr)
+        {
+            *pwszPtr++ = L'\0';
+        }
+        else
+        {
+            pwszPtr = pwszSubKey;
+            bEndOfString = TRUE;
+        }
+
+        /*
+         * Iterate over subkeys in \ sepearated path.
+         */
+        status = MemRegStoreFindNode(
+                     hParentKey,
+                     pwszSubKey,
+                     &hSubKey);
+        hParentKey = hSubKey;
+        pwszSubKey = pwszPtr;
+    } while (status == 0 && !bEndOfString);
+    if (status == 0)
+    {
+        *phNode = hParentKey;
+    }
+
+cleanup:
+    LWREG_SAFE_FREE_MEMORY(pwszTmpFullPath);
+    return status;
+error:
+    goto cleanup;
+}
+
+
+NTSTATUS
 MemRegStoreFindNode(
     IN MEM_REG_STORE_HANDLE hDb,
     IN PCWSTR Name,
