@@ -57,7 +57,7 @@ DWORD
 GetUserName( 
     PLWTUSER pUserInfoFromAD,
     DWORD dwUser,
-    PSTR pszUserName
+    PSTR *ppszUserName
     );
 
 /*
@@ -286,7 +286,7 @@ ProcessUserGroupInfo(
     {
         dwLocalError = GetUserName( pUserInfoFromAD,
                                     dwUser,
-                                    pszUserName);
+                                    &pszUserName);
 
         if ( LW_ERROR_SUCCESS == dwLocalError )
         {
@@ -647,30 +647,30 @@ DWORD
 GetUserName( 
     PLWTUSER pUserInfo,
     DWORD dwUser,
-    PSTR  pszUserName
+    PSTR  *ppszUserName
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     switch ( dwUser )
     {
         case 0:
-            pszUserName = pUserInfo->pszNTName;
+            *ppszUserName = pUserInfo->pszNTName;
             break;
 
         case 1:
-            pszUserName = pUserInfo->pszAlias;
+            *ppszUserName = pUserInfo->pszAlias;
             break;
 
         case 2:
-            pszUserName = pUserInfo->pszUserPrincipalName;
+            *ppszUserName = pUserInfo->pszUserPrincipalName;
             break;
 
         case 3:
-            pszUserName = pUserInfo->pszSamAccountName;
+            *ppszUserName = pUserInfo->pszSamAccountName;
             break;
     }
 
-    if ( !IsNullOrEmpty(pszUserName) )
+    if ( IsNullOrEmpty(*ppszUserName) )
     {
         dwError = LW_ERROR_TEST_FAILED ;
     }

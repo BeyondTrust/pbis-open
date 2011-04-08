@@ -631,7 +631,7 @@ CheckForInvalidParams(
         )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
-    DWORD dwLocalError = LW_ERROR_SUCCESS;
+//    DWORD dwLocalError = LW_ERROR_SUCCESS;
     PCSTR pszTestAPIs = "LsaValidateUser";
     PCSTR pszTestDescription = "Validation rejects bad parameters.";
     char szTestMsg[256] = { 0 };
@@ -646,7 +646,7 @@ CheckForInvalidParams(
         snprintf( szTestMsg, 
                   sizeof(szTestMsg), 
                   "Validation returned invalid error code %lu for invalid %s. Username: %s", 
-                  (unsigned long)dwLocalError,
+                  (unsigned long)dwError,
                   pszMessage,
                   pInvalidData->pszUserName); 
         

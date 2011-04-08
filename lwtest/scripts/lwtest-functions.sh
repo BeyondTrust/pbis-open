@@ -29,6 +29,9 @@ lwt_init() {
         --groups)   shift
                     LWT_FILE_GROUPS=$1
                     ;;
+        --invalid)  shift
+                    LWT_FILE_INVALID=$1
+                    ;;
         --logfile)  shift
                     LWT_LOG_FILE=$1
                     ;;
@@ -36,7 +39,7 @@ lwt_init() {
                     LWT_LOG_LEVEL=$1
                     ;;
         *)          echo
-                    echo "Usage: lwtest-functions.sh [--users users.csv] [--groups groups.csv] [--loglevel <0-2>] [--logfile apitest.log]"
+                    echo "Usage: lwtest-functions.sh [--users users.csv] [--groups groups.csv] [--invalid invalid.csv] [--loglevel <0-2>] [--logfile apitest.log]"
                     echo 
                     echo "      If no options are given takes default arguements as follows"
                     echo "      --users=/opt/likewise/bin/domain.com.ou.users.csv"
@@ -181,6 +184,7 @@ fi
 
 LWT_FILE_USERS=$LIKEWISE_BIN/$DOMAIN.${OU}.users.csv
 LWT_FILE_GROUPS=$LIKEWISE_BIN/$DOMAIN.${OU}.groups.csv
+LWT_FILE_INVALID=$LIKEWISE_BIN/$DOMAIN.${OU}.invalid.csv
 LWT_LOG_FILE=/tmp/$DOMAIN.$OU.api
 
 lwt_init $@
@@ -204,6 +208,11 @@ fi
 if [ -n "$LWT_FILE_GROUPS" ]
 then
     ARGUMENTS="${ARGUMENTS} --groups ${LWT_FILE_GROUPS}"
+fi
+
+if [ -n "$LWT_FILE_INVALID" ]
+then
+    ARGUMENTS="${ARGUMENTS} --invalid ${LWT_FILE_INVALID}"
 fi
 
 if [ -n "$LWT_LOG_FILE" ]

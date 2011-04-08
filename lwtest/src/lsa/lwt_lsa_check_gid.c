@@ -113,7 +113,7 @@ DWORD
 GetUserName( 
     PLWTUSER pUserInfoFromAD,
     DWORD dwUser,
-    PSTR pszUserName
+    PSTR *ppszUserName
     );
 
 /*
@@ -262,7 +262,7 @@ ValidateCheckGidByUser(
     {
         dwLocalError = GetUserName( pUserInfoFromAD,
                                     dwUser,
-                                    pszUserName);
+                                    &pszUserName);
 
         if ( LW_ERROR_SUCCESS != dwLocalError )
         {
@@ -585,7 +585,7 @@ DWORD
 GetUserName( 
     PLWTUSER pUserInfoFromAD,
     DWORD dwUser,
-    PSTR pszUserName
+    PSTR *ppszUserName
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
@@ -593,19 +593,19 @@ GetUserName(
     switch ( dwUser )
     {
         case 0:
-            pszUserName = pUserInfoFromAD->pszNTName; 
+            *ppszUserName = pUserInfoFromAD->pszNTName; 
             break;
 
         case 1:
-            pszUserName = pUserInfoFromAD->pszAlias;
+            *ppszUserName = pUserInfoFromAD->pszAlias;
             break;
 
         case 2:
-            pszUserName = pUserInfoFromAD->pszUserPrincipalName;
+            *ppszUserName = pUserInfoFromAD->pszUserPrincipalName;
             break;
     }
     
-    if ( IsNullOrEmpty(pszUserName) )
+    if ( IsNullOrEmpty(*ppszUserName) )
     {
         dwError = LW_ERROR_TEST_FAILED ;
     }
