@@ -242,7 +242,7 @@ LwFindFilesInPaths(
         {
             dwError = LwReallocMemory(
                             ppszFoundPaths,
-                            (PVOID*)&ppszNewFoundPaths,
+                            OUT_PPVOID(&ppszNewFoundPaths),
                             (dwFoundCount + 1) * sizeof(ppszFoundPaths[0]));
             BAIL_ON_LW_ERROR(dwError);
             ppszFoundPaths = ppszNewFoundPaths;
