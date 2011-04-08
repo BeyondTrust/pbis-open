@@ -634,6 +634,59 @@ cleanup:
     return status;
 }
 
+NTSTATUS
+LwMapSecurityGetNameFromSid(
+    IN PLW_MAP_SECURITY_CONTEXT Context,
+    OUT PSTR* Domain,
+    OUT PSTR* Name,
+    OUT PBOOLEAN IsUser,
+    IN PSID Sid
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    BOOLEAN isUser = FALSE;
+    PSTR name = NULL;
+    PSTR domain = NULL;
+
+    status = Context->PluginInterface->GetNameFromSid(
+                    Context->PluginContext,
+                    &domain,
+                    &name,
+                    &isUser,
+                    Sid);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+cleanup:
+    if (!NT_SUCCESS(status))
+    {
+        isUser = FALSE;
+
+        if (name)
+        {
+            Context->PluginInterface->FreeCString(
+                Context->PluginContext,
+                &name);
+            name = NULL;
+        }
+ 
+       if (domain)
+        {
+            Context->PluginInterface->FreeCString(
+                Context->PluginContext,
+                &domain);
+            domain = NULL;
+        }
+
+    }
+
+    *Domain = domain;
+    *Name = name;
+    *IsUser =isUser;
+
+    return status;
+}
+
+
 VOID
 LwMapSecurityFreeSid(
     IN PLW_MAP_SECURITY_CONTEXT Context,
@@ -645,6 +698,20 @@ LwMapSecurityFreeSid(
         Context->PluginInterface->FreeSid(
             Context->PluginContext,
             Sid);
+    }
+}
+
+VOID
+LwMapSecurityFreeCString(
+    IN PLW_MAP_SECURITY_CONTEXT Context,
+    IN OUT PSTR* String
+    )
+{
+    if (*String)
+    {
+        Context->PluginInterface->FreeCString(
+            Context->PluginContext,
+            String);
     }
 }
 

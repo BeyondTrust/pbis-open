@@ -4,6 +4,6 @@ make()
 	DLO=liblwmapsecurity_lsass \
 	SOURCES="lwmapsecurity-lsass.c" \
 	INCLUDEDIRS="../../include" \
-	HEADERDEPS="lw/base.h lwadvapi.h lwio/lwio.h" \
+	HEADERDEPS="lw/base.h lw/mapsecurity.h lwadvapi.h lwio/lwio.h" \
 	LIBDEPS="lsarpc lsaclientthr lwbase"
 }

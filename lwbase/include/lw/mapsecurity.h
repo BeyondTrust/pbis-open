@@ -1,3 +1,7 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
+
 /*
  * Copyright (c) Likewise Software.  All rights Reserved.
  *
@@ -89,10 +93,25 @@ LwMapSecurityGetSidFromName(
     IN PCSTR Name
     );
 
+NTSTATUS
+LwMapSecurityGetNameFromSid(
+    IN PLW_MAP_SECURITY_CONTEXT Context,
+    OUT PSTR* Domain,
+    OUT PSTR* Name,
+    OUT PBOOLEAN IsUser,
+    IN PSID Sid
+    );
+
 VOID
 LwMapSecurityFreeSid(
     IN PLW_MAP_SECURITY_CONTEXT Context,
     IN OUT PSID* Sid
+    );
+
+VOID
+LwMapSecurityFreeCString(
+    IN PLW_MAP_SECURITY_CONTEXT Context,
+    IN OUT PSTR* String
     );
 
 NTSTATUS

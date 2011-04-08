@@ -64,6 +64,11 @@
 #include "lsautils.h"
 #include <assert.h>
 
+#ifndef SAFE_LOG_STRING
+#define SAFE_LOG_STRING(String) \
+    ( (String) ? (String) : "<null>" )
+#endif
+
 typedef struct _LW_MAP_SECURITY_PLUGIN_CONTEXT {
     // TODO-Add connection caching using TLS, a connection pool,
     // or somesuch.  It may be useful to change the calls to LSASS to
@@ -607,6 +612,16 @@ LsaMapSecurityFreeSid(
 }
 
 static
+VOID
+LsaMapSecurityFreeCString(
+    IN PLW_MAP_SECURITY_PLUGIN_CONTEXT Context,
+    IN OUT PSTR* String
+    )
+{
+    LwRtlCStringFree(String);
+}
+
+static
 NTSTATUS
 LsaMapSecurityGetIdFromSid(
     IN PLW_MAP_SECURITY_PLUGIN_CONTEXT Context,
@@ -691,6 +706,109 @@ cleanup:
     LsaMapSecurityFreeObjectInfo(&objectInfo);
 
     *Sid = sid;
+
+    return status;
+}
+
+static
+NTSTATUS
+LsaMapSecurityGetNameFromSid(
+    IN PLW_MAP_SECURITY_PLUGIN_CONTEXT Context,
+    OUT PSTR* Domain,
+    OUT PSTR* Name,
+    OUT PBOOLEAN IsUser,
+    IN PSID Sid
+    )
+{
+    DWORD error = ERROR_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
+    PSTR name = NULL;
+    PSTR domain = NULL;
+    HANDLE hConnection = NULL;
+    PLSA_SECURITY_OBJECT* ppObjects = NULL;
+    LSA_QUERY_LIST queryList;
+    LSA_OBJECT_TYPE objectType = LSA_OBJECT_TYPE_UNDEFINED;
+    PSTR sidString = NULL;
+    BOOLEAN isUser = FALSE;
+
+    if (!Sid)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+    status = LsaMapSecurityOpenConnection(Context, &hConnection);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = RtlAllocateCStringFromSid(&sidString, Sid);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    queryList.ppszStrings = (PCSTR*) &sidString;
+
+    error = LsaFindObjects(
+                hConnection,
+                NULL,
+                0,
+                objectType,
+                LSA_QUERY_TYPE_BY_SID,
+                1,
+                queryList,
+                &ppObjects);
+    if (error == LW_ERROR_SUCCESS && (ppObjects[0] == NULL || !ppObjects[0]->enabled))
+    {
+        error = LW_ERROR_NO_SUCH_OBJECT;
+    }
+    status = LsaLsaErrorToNtStatus(error);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    switch (ppObjects[0]->type)
+    {
+        case LSA_OBJECT_TYPE_USER:
+        case LSA_OBJECT_TYPE_COMPUTER:
+            isUser = TRUE;
+            break;
+
+        case LSA_OBJECT_TYPE_GROUP:
+            isUser = FALSE;
+            break;
+
+        default:
+            status = LsaLsaErrorToNtStatus(LW_ERROR_NO_SUCH_OBJECT);
+            GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+    status = LwRtlCStringDuplicate(
+                 &domain,
+                 SAFE_LOG_STRING(ppObjects[0]->pszNetbiosDomainName));
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = LwRtlCStringDuplicate(
+                 &name,
+                 SAFE_LOG_STRING(ppObjects[0]->pszSamAccountName));
+    GOTO_CLEANUP_ON_STATUS(status);
+
+cleanup:
+
+    if (!NT_SUCCESS(status))
+    {
+        isUser = FALSE;
+
+        if (domain)
+        {
+            LwRtlCStringFree(&domain);
+            name = NULL;
+        }
+
+        if (name)
+        {
+            LwRtlCStringFree(&name);
+            name = NULL;
+        }
+    }
+
+    *Domain = domain;
+    *Name = name;
+    *IsUser = isUser;
 
     return status;
 }
@@ -2181,8 +2299,10 @@ static LW_MAP_SECURITY_PLUGIN_INTERFACE gLsaMapSecurityPluginInterface = {
     .GetIdFromSid = LsaMapSecurityGetIdFromSid,
     .GetSidFromId = LsaMapSecurityGetSidFromId,
     .GetSidFromName = LsaMapSecurityGetSidFromName,
+    .GetNameFromSid = LsaMapSecurityGetNameFromSid,
     .DuplicateSid = LsaMapSecurityDuplicateSid,
     .FreeSid = LsaMapSecurityFreeSid,
+    .FreeCString = LsaMapSecurityFreeCString,
     .GetAccessTokenCreateInformationFromUid = LsaMapSecurityGetAccessTokenCreateInformationFromUid,
     .GetAccessTokenCreateInformationFromUsername = LsaMapSecurityGetAccessTokenCreateInformationFromUsername,
     .GetAccessTokenCreateInformationFromGssContext = LsaMapSecurityGetAccessTokenCreateInformationFromGssContext,
