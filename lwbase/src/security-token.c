@@ -671,6 +671,8 @@ cleanup:
     return isMember;
 }
 
+////////////////////////////////////////////////////////////////////////
+
 BOOLEAN
 RtlAccessCheck(
     IN PSECURITY_DESCRIPTOR_ABSOLUTE SecurityDescriptor,
@@ -678,6 +680,32 @@ RtlAccessCheck(
     IN ACCESS_MASK DesiredAccess,
     IN ACCESS_MASK PreviouslyGrantedAccess,
     IN PGENERIC_MAPPING GenericMapping,
+    OUT PACCESS_MASK GrantedAccess,
+    OUT PNTSTATUS AccessStatus
+    )
+{
+    return RtlAccessCheckEx(
+               SecurityDescriptor,
+               AccessToken,
+               DesiredAccess,
+               PreviouslyGrantedAccess,
+               GenericMapping,
+               NULL,
+               GrantedAccess,
+               AccessStatus);
+}
+
+
+////////////////////////////////////////////////////////////////////////
+
+BOOLEAN
+RtlAccessCheckEx(
+    IN PSECURITY_DESCRIPTOR_ABSOLUTE SecurityDescriptor,
+    IN PACCESS_TOKEN AccessToken,
+    IN ACCESS_MASK DesiredAccess,
+    IN ACCESS_MASK PreviouslyGrantedAccess,
+    IN PGENERIC_MAPPING GenericMapping,
+    OUT PACCESS_MASK RemainingDesiredAccess,
     OUT PACCESS_MASK GrantedAccess,
     OUT PNTSTATUS AccessStatus
     )
@@ -753,16 +781,33 @@ RtlAccessCheck(
         GOTO_CLEANUP();
     }
 
-    if (IsSetFlag(desiredAccess, ACCESS_SYSTEM_SECURITY))
+    if (wantMaxAllowed || IsSetFlag(desiredAccess, ACCESS_SYSTEM_SECURITY))
     {
         // TODO-Handle ACCESS_SYSTEM_SECURITY by checking SE_SECURITY_NAME
         // privilege.  For now, requesting ACCESS_SYSTEM_SECURITY is not
         // allowed.
-        status = STATUS_PRIVILEGE_NOT_HELD;
-        GOTO_CLEANUP();
+
+        ulSidSize = sizeof(sidBuffer);
+        status = RtlCreateWellKnownSid(
+                     WinBuiltinAdministratorsSid,
+                     NULL,
+                     &sidBuffer.Sid,
+                     &ulSidSize);
+        GOTO_CLEANUP_ON_STATUS(status);
+
+        if (RtlIsSidMemberOfToken(AccessToken, &sidBuffer.Sid))
+        {
+            SetFlag(grantedAccess, ACCESS_SYSTEM_SECURITY);
+            ClearFlag(desiredAccess, ACCESS_SYSTEM_SECURITY);
+        }
+        else if (IsSetFlag(desiredAccess, ACCESS_SYSTEM_SECURITY))
+        {
+            status = STATUS_PRIVILEGE_NOT_HELD;
+            GOTO_CLEANUP();
+        }
     }
 
-    if (IsSetFlag(desiredAccess, WRITE_OWNER))
+    if (wantMaxAllowed || IsSetFlag(desiredAccess, WRITE_OWNER))
     {
         // TODO-Allow WRITE_OWNER if have SE_TAKE_OWNERSHIP_NAME regardless
         // of DACL.
@@ -921,6 +966,11 @@ cleanup:
     if (!NT_SUCCESS(status))
     {
         grantedAccess = PreviouslyGrantedAccess;
+    }
+
+    if (RemainingDesiredAccess)
+    {
+        *RemainingDesiredAccess = desiredAccess;
     }
 
     *GrantedAccess = grantedAccess;

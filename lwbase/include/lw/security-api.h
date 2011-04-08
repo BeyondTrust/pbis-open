@@ -687,6 +687,22 @@ RtlAccessCheck(
     OUT PNTSTATUS AccessStatus
     );
 
+BOOLEAN
+RtlAccessCheckEx(
+    IN PSECURITY_DESCRIPTOR_ABSOLUTE SecurityDescriptor,
+    IN PACCESS_TOKEN AccessToken,
+    IN ACCESS_MASK DesiredAccess,
+    IN ACCESS_MASK PreviouslyGrantedAccess,
+#if 0
+    OUT OPTIONAL PPRIVILEGE_SET* Privileges,
+#endif
+    IN PGENERIC_MAPPING GenericMapping,
+    OUT PACCESS_MASK RemainingDesiredAccess,
+    OUT PACCESS_MASK GrantedAccess,
+    OUT PNTSTATUS AccessStatus
+    );
+
+
 NTSTATUS
 RtlAccessTokenToSelfRelativeAccessToken(
     IN PACCESS_TOKEN pToken,
