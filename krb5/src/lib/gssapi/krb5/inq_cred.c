@@ -145,29 +145,14 @@ krb5_gss_inquire_cred(minor_status, cred_handle, name, lifetime_ret,
         lifetime = GSS_C_INDEFINITE;
 
     if (name) {
-        if (cred->name)
-        {
-           if (code = kg_duplicate_name(context, cred->name,
-                                          KG_INIT_NAME_INTERN, &ret_name)) {
-                k5_mutex_unlock(&cred->lock);
-                *minor_status = code;
-                save_error_info(*minor_status, context);
-                ret = GSS_S_FAILURE;
-                goto fail;
-           }
-        }
-        else if ((cred->usage == GSS_C_ACCEPT ||cred->usage == GSS_C_BOTH) &&
-                 cred->keytab != NULL)
-        {
-            if (code = kg_get_principal_name_from_keytab(context, cred->keytab,
-                                                    KG_INIT_NAME_INTERN,
-                                                    &ret_name)) {
-                 k5_mutex_unlock(&cred->lock);
-                 *minor_status = code;
-                 save_error_info(*minor_status, context);
-                 ret = GSS_S_FAILURE;
-                 goto fail;
-            }
+        if (cred->name &&
+            (code = kg_duplicate_name(context, cred->name,
+                                      KG_INIT_NAME_INTERN, &ret_name))) {
+            k5_mutex_unlock(&cred->lock);
+            *minor_status = code;
+            save_error_info(*minor_status, context);
+            ret = GSS_S_FAILURE;
+            goto fail;
         }
     }
 
