@@ -14,6 +14,7 @@ lwioinclude_HEADERS =         \
     lwio/lmshare.h            \
     lwio/lmconnection.h       \
     lwio/lwfileinfo.h         \
+    lwio/lwiofsctl.h          \
     lwio/lwiodevctl.h         \
     lwio/lwsessioninfo.h      \
     lwio/lwshareinfo.h        \
