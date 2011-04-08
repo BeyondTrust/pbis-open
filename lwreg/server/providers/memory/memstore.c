@@ -649,6 +649,7 @@ MemRegStoreAddNodeValue(
     }
     else
     {
+        /* Is this really necessary? */
         status = LW_RTL_ALLOCATE(
                      (PVOID*) &pbData, 
                      BYTE, 
@@ -799,7 +800,7 @@ MemRegStoreGetNodeValueAttributes(
     OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
     OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes)
 {
-    NTSTATUS status = 0;
+    NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
     PWSTR *ppwszEnumStrings = NULL;
     PWSTR pwszEnumString = NULL;
     PWSTR pwszDocString = NULL;
@@ -810,7 +811,8 @@ MemRegStoreGetNodeValueAttributes(
     DWORD dwValueLen = 0;
 
     dwValueLen = hValue->DataLen;
-    if (ppCurrentValue && dwValueLen > 0)
+    if (ppCurrentValue && dwValueLen > 0 &&
+        hValue->Attributes.DefaultValueLen > 0)
     {
          /* 
           * Validate set value is different than default. Only return value
@@ -838,7 +840,7 @@ MemRegStoreGetNodeValueAttributes(
         }
     }
 
-    if (ppValueAttributes)
+    if (ppValueAttributes && hValue->Attributes.DefaultValueLen > 0)
     {
         /* Always allocate a return attributes block */
         status = LW_RTL_ALLOCATE((PVOID*) &pValueAttributes,
