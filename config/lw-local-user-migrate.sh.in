@@ -178,7 +178,7 @@ ChangeOwnerViaSpotlight()
         IFS=$'\n'
         # Need to put semicolons after every line as we're setting IFS now...
         for item in $(mdfind -onlyin /Users/${OldOwnerUIDName} "kMDItemFSOwnerUserID == ${OldOwnerUID}" | sed 's/\ /\\\ /g');
-            do chown -v ${NewOwnerUID}:${NewOwnerGID} $item;
+            do chown -v "${NewOwnerUID}":"${NewOwnerGID}" "$item";
         done;
 
         if [ $? -ne 0 ]; then
