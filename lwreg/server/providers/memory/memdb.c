@@ -363,9 +363,11 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
     PWSTR pwszValueName = NULL;
     PWSTR pwszStringData = NULL;
     PMEMDB_IMPORT_FILE_CTX pImportCtx = (PMEMDB_IMPORT_FILE_CTX) userContext;
-    DWORD dataType = 0;
     PVOID pData = NULL;
     DWORD dwDataLen = 0;
+    PREGMEM_VALUE pRegValue = NULL;
+    DWORD dataType = 0;
+    LWREG_VALUE_ATTRIBUTES tmpAttr = {0};
 
     if (pItem->type == REG_KEY)
     {
@@ -376,6 +378,7 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
                      &pwszSubKey,
                      pItem->keyName);
         BAIL_ON_NT_STATUS(status);
+
         status = MemDbOpenKey(
                       NULL,
                       &regDbConn,
@@ -409,8 +412,6 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
             BAIL_ON_NT_STATUS(status);
         }
 
-
-
 #ifdef __MEMDB_PRINTF__ /* Debugging only */
 printf("pfImportFile: type=%d valueName=%s\n",
        pItem->type,
@@ -434,42 +435,89 @@ printf("pfImportFile: type=%d valueName=%s\n",
             hSubKey->SecurityDescriptorAllocated = TRUE;
         }
     }
-    else
+    else 
     {
         status = LwRtlWC16StringAllocateFromCString(
                      &pwszValueName,
                      pItem->valueName);
         BAIL_ON_NT_STATUS(status);
-
-        if (pItem->regAttr.ValueType)
+        if (pItem->type == REG_SZ || pItem->type == REG_DWORD ||
+            pItem->type == REG_BINARY || pItem->type == REG_MULTI_SZ)
+        {
+    
+            if (pItem->type == REG_SZ)
+            {
+                status = LwRtlWC16StringAllocateFromCString(
+                             &pwszStringData,
+                             pItem->value);
+                BAIL_ON_NT_STATUS(status);
+                pData = pwszStringData;
+                dwDataLen = wc16slen(pwszStringData) * 2 + 2;
+                dataType = REG_SZ;
+            }
+            else
+            {
+                pData = pItem->value,
+                dwDataLen = pItem->valueLen;
+                dataType = pItem->type;
+            }
+            status = MemRegStoreAddNodeValue(
+                         pImportCtx->hSubKey,
+                         pwszValueName,
+                         0, // Not used?
+                         dataType,
+                         pData,
+                         dwDataLen);
+            BAIL_ON_NT_STATUS(status);
+        }
+        else if (pItem->type == REG_ATTRIBUTES)
         {
             dataType = pItem->regAttr.ValueType;
-            pData = pItem->regAttr.pDefaultValue;
-            dwDataLen = pItem->regAttr.DefaultValueLen;
-        }
-        else
-        {
-            dataType = pItem->type;
-            pData = pItem->value;
-            dwDataLen = pItem->valueLen;
-        }
-        if (dataType == REG_SZ)
-        {
-            status = LwRtlWC16StringAllocateFromCString(
-                         &pwszStringData,
-                         pData);
+            if (pItem->value && pItem->valueLen)
+            {
+                pData = pItem->value;
+                dwDataLen = pItem->valueLen;
+
+                if (dataType == REG_SZ)
+                {
+                    LWREG_SAFE_FREE_MEMORY(pwszStringData);
+                    status = LwRtlWC16StringAllocateFromCString(
+                                     &pwszStringData,
+                                     pData);
+                    BAIL_ON_NT_STATUS(status);
+                    dwDataLen = wc16slen(pwszStringData) * 2 + 2;
+                    pData = pwszStringData;
+                }
+            }
+            status = MemRegStoreAddNodeValue(
+                         pImportCtx->hSubKey,
+                         pwszValueName,
+                         0, // Not used?
+                         dataType,
+                         pData,
+                         dwDataLen);
             BAIL_ON_NT_STATUS(status);
-            pData = pwszStringData;
-            dwDataLen = wc16slen(pwszStringData) * 2 + 2;
+            status = MemRegStoreFindNodeValue(
+                         pImportCtx->hSubKey,
+                         pwszValueName,
+                         &pRegValue);
+            BAIL_ON_NT_STATUS(status);
+            tmpAttr = pItem->regAttr;
+            if (tmpAttr.ValueType == REG_SZ)
+            {
+                status = LwRtlWC16StringAllocateFromCString(
+                                     &pwszStringData,
+                                 pItem->regAttr.pDefaultValue);
+                BAIL_ON_NT_STATUS(status);
+                tmpAttr.pDefaultValue = (PVOID) pwszStringData;
+                tmpAttr.DefaultValueLen = wc16slen(tmpAttr.pDefaultValue) * 2 + 2;
+            }
+            status = MemRegStoreAddNodeAttribute(
+                         pRegValue,
+                         &tmpAttr);
+            BAIL_ON_NT_STATUS(status);
         }
-        status = MemRegStoreAddNodeValue(
-                     pImportCtx->hSubKey,
-                     pwszValueName,
-                     0, // Not used?
-                     dataType,
-                     pData,
-                     dwDataLen);
-        BAIL_ON_NT_STATUS(status);
+    }
 
 #ifdef __MEMDB_PRINTF__  /* Debug printf output */
 char *subKey = NULL;
@@ -480,9 +528,10 @@ LwRtlCStringAllocateFromWC16String(&subKey, pImportCtx->hSubKey->Name);
                 pItem->valueName ? pItem->valueName : "");
 LWREG_SAFE_FREE_STRING(subKey);
 #endif
-    }
+
 cleanup:
     LWREG_SAFE_FREE_MEMORY(pwszStringData);
+    LWREG_SAFE_FREE_MEMORY(pwszSubKey);
     return status;
 error:
     goto cleanup;
