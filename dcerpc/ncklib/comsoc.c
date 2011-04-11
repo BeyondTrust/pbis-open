@@ -37,7 +37,7 @@ rpc__socket_open (
 {
     int err = RPC_C_SOCKET_OK;
 
-    *sock = malloc(sizeof(**sock));
+    *sock = calloc(1, sizeof(**sock));
 
     if (!*sock)
     {
@@ -63,6 +63,7 @@ error:
     if (*sock)
     {
         free(*sock);
+        *sock = NULL;
     }
 
     goto done;
