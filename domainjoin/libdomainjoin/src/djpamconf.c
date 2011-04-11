@@ -37,6 +37,7 @@
 #include "djdistroinfo.h"
 #include "djpamconf.h"
 #include <libgen.h>
+#include <lwstr.h>
 
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
@@ -356,6 +357,67 @@ static void FreePamLineContents(struct PamLine *line)
     line->optionCount = 0;
 }
 
+static
+PCSTR
+SkipBlankSpace(
+    PCSTR pPos
+    )
+{
+    BOOLEAN keepSkipping = TRUE;
+    // do not skip unescaped newlines
+    while (keepSkipping)
+    {
+        switch (pPos[0])
+        {
+            case '\\':
+                if (pPos[1] == '\r' && pPos[2] == '\n')
+                {
+                    pPos += 3;
+                }
+                else if (pPos[1] == '\n')
+                {
+                    pPos += 2;
+                }
+                break;
+            case ' ':
+            case '\t':
+                pPos++;
+                break;
+            default:
+                keepSkipping = FALSE;
+        }
+    }
+
+    return pPos;
+}
+
+BOOLEAN
+IsWhitespace(
+    PCSTR pPos
+    )
+{
+    switch (pPos[0])
+    {
+        case '\\':
+            if (pPos[1] == '\r' && pPos[2] == '\n')
+            {
+                return TRUE;
+            }
+            else if (pPos[1] == '\n')
+            {
+                return TRUE;
+            }
+            return FALSE;
+        case ' ':
+        case '\r':
+        case '\n':
+        case '\t':
+            return TRUE;
+        default:
+            return FALSE;
+    }
+}
+
 static DWORD ParsePamLine(struct PamLine *lineObj, const char *filename, const char *linestr, const char **endptr)
 {
     DWORD ceError = ERROR_SUCCESS;
@@ -369,7 +431,7 @@ static DWORD ParsePamLine(struct PamLine *lineObj, const char *filename, const c
 
     /* Find the leading whitespace in the line */
     token_start = pos;
-    while(isblank(*pos)) pos++;
+    pos = SkipBlankSpace(pos);
     BAIL_ON_CENTERIS_ERROR(ceError = CTStrndup(token_start, pos - token_start, &lineObj->leadingWhiteSpace));
 
     /* Create an array of white space separated tokens */
@@ -377,11 +439,11 @@ static DWORD ParsePamLine(struct PamLine *lineObj, const char *filename, const c
      * makes sure that pos is not pointing to '\n' or '\r'. pos will not be
      * pointing to a space or tab anyway.
      */
-    while(!isspace((int)*pos) && *pos != '\0' && *pos != '#')
+    while(!IsWhitespace(pos) && *pos != '\0' && *pos != '#')
     {
         CTParseToken token;
         token_start = pos;
-        while(!isspace((int)*pos) && *pos != '\0' && *pos != '#')
+        while(!IsWhitespace(pos) && *pos != '\0' && *pos != '#')
         {
             if(*pos == '[')
             {
@@ -402,7 +464,7 @@ static DWORD ParsePamLine(struct PamLine *lineObj, const char *filename, const c
         BAIL_ON_CENTERIS_ERROR(ceError = CTStrndup(token_start, pos - token_start, &token.value));
 
         token_start = pos;
-        while(isblank(*pos)) pos++;
+        pos = SkipBlankSpace(pos);
         BAIL_ON_CENTERIS_ERROR(ceError = CTStrndup(token_start, pos - token_start, &token.trailingSeparator));
         BAIL_ON_CENTERIS_ERROR(ceError = CTArrayAppend(&tokens, sizeof(CTParseToken), &token, 1));
     }
@@ -890,6 +952,8 @@ static DWORD ReadPamFile(struct PamConf *conf, const char *rootPrefix, const cha
     FILE *loginMapFile = NULL;
     // Do no free
     char *defaultInclude = NULL;
+    PSTR pCombinedLine = NULL;
+    PSTR pNextLine = NULL;
 
     BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateStringPrintf(
             &fullPath, "%s%s", rootPrefix, filename));
@@ -914,6 +978,34 @@ static DWORD ReadPamFile(struct PamConf *conf, const char *rootPrefix, const cha
         BAIL_ON_CENTERIS_ERROR(ceError = CTReadNextLine(file, &buffer, &endOfFile));
         if(endOfFile)
             break;
+
+        // A backslash followed by a newline seems to be treated as whitespace.
+        // Two backslashes followed by a newline turns into one backslash then
+        // whitespace. 
+        while (CTStrEndsWith(buffer, "\\\n") || CTStrEndsWith(buffer,
+                    "\\\r\n"))
+        {
+            LW_SAFE_FREE_STRING(pNextLine);
+            ceError = CTReadNextLine(file, &pNextLine, &endOfFile);
+            BAIL_ON_CENTERIS_ERROR(ceError);
+
+            if (endOfFile)
+            {
+                break;
+            }
+
+            ceError = LwAllocateStringPrintf(
+                            &pCombinedLine,
+                            "%s%s",
+                            buffer,
+                            pNextLine);
+            BAIL_ON_CENTERIS_ERROR(ceError);
+
+            LW_SAFE_FREE_STRING(buffer);
+            LW_SAFE_FREE_STRING(pNextLine);
+            buffer = pCombinedLine;
+            pCombinedLine = NULL;
+        }
         BAIL_ON_CENTERIS_ERROR(ceError = AddFormattedLine(conf, filename, buffer, NULL));
 
         // If the line is a pam_per_user, determine what the default include
@@ -965,6 +1057,8 @@ error:
     CTSafeCloseFile(&loginMapFile);
     CT_SAFE_FREE_STRING(fullPath);
     CT_SAFE_FREE_STRING(buffer);
+    LW_SAFE_FREE_STRING(pCombinedLine);
+    LW_SAFE_FREE_STRING(pNextLine);
     return ceError;
 }
 
@@ -1743,6 +1837,9 @@ static BOOLEAN PamModulePrompts( const char * phase, const char * module)
     // Used on Mandriva 2009 as an alternative to pam_unix
     if (!strcmp(buffer, "pam_tcb"))
         return TRUE;
+    // From FoxT BoKS
+    if (!strcmp(buffer, "pam_boks"))
+        return TRUE;
 
     /* pam_lwidentity will only prompt for domain users during the password phase. All in all, it doesn't store passwords for subsequent modules in the password phase. */
     if(PamModuleIsLwidentity(phase, module) && !strcmp(phase, "auth"))
@@ -1791,6 +1888,9 @@ static BOOLEAN PamModuleUnderstandsTryFirstPass( const char * phase, const char 
      * option. The man page also says it is not supported. No distros that use
      * pam_unix2 are currently known to suport it. */
     if (!strcmp(buffer, "pam_unix2"))
+        return FALSE;
+
+    if (!strcmp(buffer, "pam_boks"))
         return FALSE;
 
     return TRUE;
