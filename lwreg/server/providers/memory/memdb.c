@@ -625,63 +625,43 @@ MemDbOpenKey(
     MEM_REG_STORE_HANDLE hSubKey = NULL;
     BOOLEAN bEndOfString = FALSE;
      
+    status = LwRtlWC16StringDuplicate(&pwszTmpFullPath, pwszFullKeyPath);
+    BAIL_ON_NT_STATUS(status);
+
     if (!hDb)
     {
-        if (pwszFullKeyPath)
-        {
-            status = LwRtlWC16StringDuplicate(
-                         &pwszTmpFullPath,
-                         pwszFullKeyPath);
-            BAIL_ON_NT_STATUS(status);
-        }
-        else
-        {
-            status = LwRtlWC16StringAllocateFromCString(
-                         &pwszTmpFullPath,
-                         HKEY_THIS_MACHINE);
-            BAIL_ON_NT_STATUS(status);
-        }
- 
-        status = MemRegStoreFindNode(
-                     ghMemRegRoot,
-                     pwszTmpFullPath,
-                     pRegKey);
-        LWREG_SAFE_FREE_MEMORY(pwszTmpFullPath);
-        BAIL_ON_NT_STATUS(status);
+        hParentKey = ghMemRegRoot;
     }
     else
     {
-        status = LwRtlWC16StringDuplicate(&pwszTmpFullPath, pwszFullKeyPath);
-        BAIL_ON_NT_STATUS(status);
-
-        pwszSubKey = pwszTmpFullPath;
         hParentKey = hDb->pMemReg;
-        do 
-        {
-            pwszPtr = pwstr_wcschr(pwszSubKey, L'\\');
-            if (pwszPtr)
-            {
-                *pwszPtr++ = L'\0';
-            }
-            else
-            {
-                pwszPtr = pwszSubKey;
-                bEndOfString = TRUE;
-            }
-
-      
-            /*
-             * Iterate over subkeys in \ sepearated path.
-             */
-            status = MemRegStoreFindNode(
-                         hParentKey,
-                         pwszSubKey,
-                         &hSubKey);
-            hParentKey = hSubKey;
-            pwszSubKey = pwszPtr;
-            *pRegKey = hParentKey;
-        } while (status == 0 && !bEndOfString);
     }
+    pwszSubKey = pwszTmpFullPath;
+    do 
+    {
+        pwszPtr = pwstr_wcschr(pwszSubKey, L'\\');
+        if (pwszPtr)
+        {
+            *pwszPtr++ = L'\0';
+        }
+        else
+        {
+            pwszPtr = pwszSubKey;
+            bEndOfString = TRUE;
+        }
+
+  
+        /*
+         * Iterate over subkeys in \ sepearated path.
+         */
+        status = MemRegStoreFindNode(
+                     hParentKey,
+                     pwszSubKey,
+                     &hSubKey);
+        hParentKey = hSubKey;
+        pwszSubKey = pwszPtr;
+        *pRegKey = hParentKey;
+    } while (status == 0 && !bEndOfString);
 
 cleanup:
     LWREG_SAFE_FREE_MEMORY(pwszTmpFullPath);
