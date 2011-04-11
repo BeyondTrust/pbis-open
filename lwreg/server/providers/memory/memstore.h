@@ -94,6 +94,13 @@ MemRegStoreAddNodeValue(
 
 
 NTSTATUS
+MemRegStoreDeleteNodeValue(
+    IN MEM_REG_STORE_HANDLE hDb,
+    IN PCWSTR Name
+    );
+
+
+NTSTATUS
 MemRegStoreFindNodeValue(
     IN MEM_REG_STORE_HANDLE hDb,
     IN PCWSTR Name,

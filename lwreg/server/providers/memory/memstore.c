@@ -713,6 +713,53 @@ error:
 }
 
 
+NTSTATUS
+MemRegStoreDeleteNodeValue(
+    IN MEM_REG_STORE_HANDLE hDb,
+    IN PCWSTR Name)
+{
+    NTSTATUS status = 0;
+    BOOLEAN bFoundValue = FALSE;
+    DWORD valueIndex = 0;
+
+    if (!Name)
+    {
+        Name = (PCWSTR) L"";
+    }
+    for (valueIndex=0; valueIndex<hDb->ValuesLen; valueIndex++)
+    {
+        if (LwRtlWC16StringIsEqual(Name, hDb->Values[valueIndex]->Name, FALSE))
+        {
+            bFoundValue = TRUE;
+            break;
+        }
+    }
+    if (bFoundValue)
+    {
+        LWREG_SAFE_FREE_MEMORY(hDb->Values[valueIndex]->Data);
+        hDb->Values[valueIndex]->DataLen = 0;
+    
+        if (valueIndex+1 < hDb->ValuesLen)
+        {
+            memmove(&hDb->Values[valueIndex],
+                    &hDb->Values[valueIndex+1],
+                    hDb->ValuesLen - valueIndex);
+        }
+        hDb->Values[hDb->ValuesLen-1] = NULL;
+        hDb->ValuesLen--;
+        if (hDb->ValuesLen == 0)
+        {
+            LWREG_SAFE_FREE_MEMORY(hDb->Values);
+            hDb->Values = NULL;
+        }
+    }
+    else
+    {
+        status = STATUS_OBJECT_NAME_NOT_FOUND;
+    }
+    return status;
+}
+
 
 NTSTATUS
 MemRegStoreAddNodeAttribute(

@@ -553,10 +553,10 @@ MemDeleteKeyValue(
 {
     NTSTATUS status = 0;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
-    PREGMEM_VALUE pRegValue = NULL;
     MEM_REG_STORE_HANDLE hSubKey = NULL;
 
     hSubKey = pKeyHandle->pKey->hKey;
+
     if (pSubKey)
     {
         status = MemRegStoreFindNode(
@@ -566,25 +566,11 @@ MemDeleteKeyValue(
         BAIL_ON_NT_STATUS(status);
     }
 
-    status = MemRegStoreFindNodeValue(
+    status = MemRegStoreDeleteNodeValue(
                  hSubKey,
-                 pValueName,
-                 &pRegValue);
-    BAIL_ON_NT_STATUS(status);
-
-    if (!pRegValue->Data)
-    {
-        status = STATUS_CANNOT_DELETE;
-        BAIL_ON_NT_STATUS(status);
-    }
-    LWREG_SAFE_FREE_MEMORY(pRegValue->Data);
-    pRegValue->DataLen = 0;
-   
-cleanup:
-    return status;
-
+                 pValueName);
 error:
-    goto cleanup;
+    return status;
 }
 
 
@@ -695,5 +681,6 @@ MemQueryMultipleValues(
     OUT OPTIONAL PDWORD pdwTotalsize
     )
 {
+    /* Not implemented yet, no one calls this function */
     return 0;
 }
