@@ -810,6 +810,16 @@ cleanup:
     *Name = name;
     *IsUser = isUser;
 
+    if (sidString)
+    {
+        LwRtlCStringFree(&sidString);
+    }
+
+    if (ppObjects)
+    {
+        LsaUtilFreeSecurityObjectList(1, ppObjects);
+    }
+
     return status;
 }
 
