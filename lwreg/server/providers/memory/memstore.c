@@ -743,7 +743,7 @@ MemRegStoreDeleteNodeValue(
         {
             memmove(&hDb->Values[valueIndex],
                     &hDb->Values[valueIndex+1],
-                    hDb->ValuesLen - valueIndex);
+                    (hDb->ValuesLen - valueIndex - 1) * sizeof (PREGMEM_VALUE));
         }
         hDb->Values[hDb->ValuesLen-1] = NULL;
         hDb->ValuesLen--;
