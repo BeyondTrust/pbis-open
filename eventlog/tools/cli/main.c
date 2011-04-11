@@ -556,12 +556,23 @@ main(
         do
         {
             LW_SAFE_FREE_MEMORY(pFilter);
-            dwError = LwAllocateWc16sPrintfW(
-                            &pFilter,
-                            L"(%ws) AND EventRecordId >= %llu",
-                            pwszSqlFilter,
-                            (long long unsigned)startRecordId);
-            BAIL_ON_EVT_ERROR(dwError);
+            if (pwszSqlFilter)
+            {
+                dwError = LwAllocateWc16sPrintfW(
+                                &pFilter,
+                                L"(%ws) AND EventRecordId >= %llu",
+                                pwszSqlFilter,
+                                (long long unsigned)startRecordId);
+                BAIL_ON_EVT_ERROR(dwError);
+            }
+            else
+            {
+                dwError = LwAllocateWc16sPrintfW(
+                                &pFilter,
+                                L"EventRecordId >= %llu",
+                                (long long unsigned)startRecordId);
+                BAIL_ON_EVT_ERROR(dwError);
+            }
 
             if (pEventRecords)
             {
@@ -590,12 +601,23 @@ main(
         do
         {
             LW_SAFE_FREE_MEMORY(pFilter);
-            dwError = LwAllocateWc16sPrintfW(
-                            &pFilter,
-                            L"(%ws) AND EventRecordId >= %llu",
-                            pwszSqlFilter,
-                            (long long unsigned)startRecordId);
-            BAIL_ON_EVT_ERROR(dwError);
+            if (pwszSqlFilter)
+            {
+                dwError = LwAllocateWc16sPrintfW(
+                                &pFilter,
+                                L"(%ws) AND EventRecordId >= %llu",
+                                pwszSqlFilter,
+                                (long long unsigned)startRecordId);
+                BAIL_ON_EVT_ERROR(dwError);
+            }
+            else
+            {
+                dwError = LwAllocateWc16sPrintfW(
+                                &pFilter,
+                                L"EventRecordId >= %llu",
+                                (long long unsigned)startRecordId);
+                BAIL_ON_EVT_ERROR(dwError);
+            }
 
             if (pEventRecords)
             {
