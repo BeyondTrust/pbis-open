@@ -17,7 +17,7 @@ BUILD_PLATFORM_PRODUCTS="lwiso"
 
 case "${BUILD_OS_TYPE}" in
     linux)
-        BUILD_PRODUCTS="$BUILD_PRODUCTS"
+        BUILD_PRODUCTS="$BUILD_PRODUCTS eventlog"
         ;;
     freebsd | solaris)
         ;;
