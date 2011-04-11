@@ -348,7 +348,40 @@ MemDeleteKey(
     IN PCWSTR pSubKey
     )
 {
-    return 0;
+    NTSTATUS status = 0;
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
+    MEM_REG_STORE_HANDLE hParentKey = NULL;
+    MEM_REG_STORE_HANDLE hRegKey = NULL;
+
+    if (hKey)
+    {
+        hParentKey = pKeyHandle->pKey->hKey;
+    }
+    else
+    {
+        hParentKey = ghMemRegRoot;
+    }
+    status = MemRegStoreFindNode(
+                 hParentKey,
+                 pSubKey,
+                 &hRegKey);
+    BAIL_ON_NT_STATUS(status);
+
+    /* Don't delete this node if it has subkeys */
+    if (hRegKey->NodesLen > 0)
+    {
+        status = STATUS_KEY_HAS_CHILDREN;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    status = MemRegStoreDeleteNode(hRegKey);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+    return status;
+error:
+    goto cleanup;
+
 }
 
 
