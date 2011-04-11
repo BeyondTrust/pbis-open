@@ -40,6 +40,6 @@ make()
 	GROUPS="../privilege/privilege" \
 	CPPFLAGS="-DLW_ENABLE_THREADS" \
 	INCLUDEDIRS=". ../include ../../include" \
-	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h dce/rpc.h eventlog.h" \
+	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h dce/rpc.h eventlog.h eventlog-record.h" \
 	LIBDEPS="uuid lwadvapi_nothr lsacommon $LIB_EVENTLOG $LIB_PTHREAD $LIB_RT"
 }
