@@ -694,9 +694,7 @@ MemDbCreateKeyEx(
     PWSTR pwszTmpFullPath = NULL;
     PWSTR pwszSubKey = NULL;
     PWSTR pwszPtr = NULL;
-    BOOLEAN bFirstKey = TRUE;
     BOOLEAN bEndOfString = FALSE;
-    
     
     /*
      * Iterate over subkeys in \ sepearated path.
@@ -747,20 +745,7 @@ MemDbCreateKeyEx(
             BAIL_ON_NT_STATUS(status);
             *phSubKey = hParentKey;
         }
-    
-        if (pSecDescRel && ulSecDescLength && bFirstKey)
-        {
-            /* Only to this on the first key in path, rest are inherited */
-            status = MemDbSetKeyAcl(
-                         NULL,
-                         hDb,
-                         pSecDescRel,
-                         ulSecDescLength);
-            BAIL_ON_NT_STATUS(status);
-            bFirstKey = FALSE;
-        }
     } while (status == 0 && !bEndOfString);
-
 
 cleanup:
     return status;
@@ -861,6 +846,10 @@ MemDbQueryInfoKey(
             }
         }
         *pcMaxValueLen = maxValueLen;
+    }
+    if (pcbSecurityDescriptor)
+    {
+        *pcbSecurityDescriptor = hKey->SecurityDescriptorLen;
     }
 
 cleanup:

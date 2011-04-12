@@ -490,7 +490,11 @@ MemRegStoreAddNode(
 
     pNewNode->NodeType = NodeType;
 
-    if (SecurityDescriptor && SecurityDescriptorLen)
+    if (SecurityDescriptor && SecurityDescriptorLen &&
+        (hDb->SecurityDescriptorLen != SecurityDescriptorLen ||
+         memcmp(hDb->SecurityDescriptor, 
+                SecurityDescriptor,
+                SecurityDescriptorLen) != 0))
     {
         status = LW_RTL_ALLOCATE(
                  (PVOID*) &pNewNode->SecurityDescriptor,
@@ -501,6 +505,7 @@ MemRegStoreAddNode(
                SecurityDescriptor,
                SecurityDescriptorLen);
         pNewNode->SecurityDescriptorLen = SecurityDescriptorLen;
+        pNewNode->SecurityDescriptorAllocated = TRUE;
     }
     else
     {
