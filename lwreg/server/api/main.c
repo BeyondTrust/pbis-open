@@ -131,6 +131,8 @@ RegSrvApiShutdown(
     FileProvider_Shutdown(gpRegProvider);
 #elif defined(REG_USE_SQLITE)
     SqliteProvider_Shutdown(gpRegProvider);
+#elif defined(REG_USE_MEMORY)
+    MemProvider_Shutdown(gpRegProvider);
 #endif
 
     LwMapSecurityFreeContext(&gpRegLwMapSecurityCtx);
