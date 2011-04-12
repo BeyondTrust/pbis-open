@@ -102,7 +102,7 @@ preinstall()
 
     for daemon in $DAEMONS_TO_KILL; do
         PIDS=`ps -eaf | grep $daemon | grep -v grep | awk '{ print $2 }'`
-        if [ -n $PIDS ]; then
+        if [ -n "$PIDS" ]; then
             run_quiet "kill -KILL $PIDS"
         fi
     done
