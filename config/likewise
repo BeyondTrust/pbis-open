@@ -10,7 +10,7 @@
 #LWI_STARTUP_TYPE_REDHAT#
 #LWI_STARTUP_TYPE_SUSE### BEGIN INIT INFO
 #LWI_STARTUP_TYPE_SUSE# Provides: likewise
-#LWI_STARTUP_TYPE_SUSE# Required-Start: $network $remote_fs
+#LWI_STARTUP_TYPE_SUSE# Required-Start: $network $remote_fs lwsmd
 #LWI_STARTUP_TYPE_SUSE# Required-Stop:
 #LWI_STARTUP_TYPE_SUSE# Default-Start: 3 5
 #LWI_STARTUP_TYPE_SUSE# Default-Stop:
