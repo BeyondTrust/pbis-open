@@ -131,10 +131,12 @@ void rpc_ss_xmit_iovec_if_necess
         rpc_call_transmit( (rpc_call_handle_t)IDL_msp->IDL_call_h,
                            (rpc_iovector_p_t)&IDL_msp->IDL_iovec, 
                            (unsigned32 *)&IDL_msp->IDL_status );
+        /* rpc_call_transmit() will always assume ownership of the
+         * iovector elements, even on error, so empty it now */
+        IDL_msp->IDL_elts_in_use = 0;
         if (IDL_msp->IDL_status != error_status_ok)
             DCETHREAD_RAISE(rpc_x_ss_pipe_comm_error);
-        /* And re-initialize the iovector */
-        IDL_msp->IDL_elts_in_use = 0;
+
         /* If there is a stack packet, mark it as reusable */
         if (IDL_msp->IDL_stack_packet_addr != NULL)
             IDL_msp->IDL_stack_packet_status = IDL_stack_packet_unused_k;
