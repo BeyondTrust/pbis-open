@@ -126,6 +126,12 @@ MemProvider_Shutdown(
     pthread_mutex_lock(&gMemRegDbMutex);
     bLocked = TRUE;
 
+    status = MemDbExportToFile(MEMDB_EXPORT_FILE);
+    if (status)
+    {
+        goto cleanup;
+    }
+
     status = LwRtlWC16StringAllocateFromCString(
                  &pwszRootKey,
                  HKEY_THIS_MACHINE);

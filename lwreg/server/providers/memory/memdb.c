@@ -323,6 +323,42 @@ MemDbExportToFileThread(
 }
 
 
+NTSTATUS
+MemDbExportToFile(
+    PSTR exportFile)
+{
+    NTSTATUS status = 0;
+    MEMDB_FILE_EXPORT_CTX exportCtx = {0};
+    REG_DB_CONNECTION regDbConn = {0};
+
+    exportCtx.hKey = ghMemRegRoot;
+    exportCtx.wfp = fopen(exportFile, "w");
+    regDbConn.pMemReg = exportCtx.hKey;
+    if (!exportCtx.wfp)
+    {
+        status = STATUS_OPEN_FAILED;
+        BAIL_ON_NT_STATUS(status);
+    }
+    
+    status = MemDbRecurseRegistry(
+                 NULL,
+                 &regDbConn,
+                 NULL,
+                 pfMemRegExportToFile,
+                 &exportCtx);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+    if (exportCtx.wfp)
+    {
+        fclose(exportCtx.wfp);
+    }
+error:
+    goto cleanup;
+
+}
+
+
 VOID
 MemDbStartExportToFileThread(VOID)
 {

@@ -259,6 +259,13 @@ MemDbImportFromFile(
     );
 
 
+
+NTSTATUS
+MemDbExportToFile(
+    PSTR exportFile
+    );
+
+
 DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext);
 
 PWSTR
