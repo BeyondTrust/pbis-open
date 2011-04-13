@@ -4,9 +4,9 @@ SUBDIRS=\
     utils     \
     include   \
     ipc       \
+    parse     \
     common    \
     client    \
-    parse     \
     shellutil \
     server    \
     libedit   \

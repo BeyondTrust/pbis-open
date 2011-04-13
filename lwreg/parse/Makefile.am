@@ -11,7 +11,5 @@ libregparse_la_CPPFLAGS = \
     @LWBASE_INCLUDES@   \
     @LWMSG_INCLUDES@
 
-libregparse_la_LIBADD = \
-    @top_builddir@/common/libregcommon.la
 
 libregparse_la_LDFLAGS = @LWBASE_LDFLAGS@

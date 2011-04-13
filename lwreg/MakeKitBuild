@@ -22,6 +22,7 @@ configure()
     esac
 
     mk_define REG_USE_SQLITE
+    #mk_define REG_USE_MEMORY
 
     mk_check_headers \
         stdlib.h \

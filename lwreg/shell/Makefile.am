@@ -11,7 +11,7 @@ lwregshell_SOURCES = \
 lwregshell_LDADD = \
         @top_builddir@/client/libregclient.la \
         @top_builddir@/shellutil/librsutils.la \
-        @top_builddir@/parse/libregparse.la \
+        @top_builddir@/common/libregcommon.la \
         @top_builddir@/libedit/src/libedit.la
 
 lwregshell_CPPFLAGS = \

@@ -7,6 +7,13 @@ make()
         regserver.c           \
         regsecurity.c"
 
+#    mk_group \
+#        GROUP="regserverapi" \
+#        INCLUDEDIRS="../../include ../include" \
+#        SOURCES="$API_SOURCES" \
+#        GROUPDEPS="../providers/memory/provider-memory" \
+#        LIBDEPS="regcommon uuid lwbase $LIB_PTHREAD" \
+#        HEADERDEPS="lw/base.h sqlite3.h lwmsg/lwmsg.h"
     mk_group \
         GROUP="regserverapi" \
         INCLUDEDIRS="../../include ../include" \
