@@ -49,38 +49,8 @@
 #define __LSA_H__
 
 /**
- * @file lsa.h
+ * @file lsa/lsa.h
  * @brief LSASS Public Client API
- */
-
-/**
- * @defgroup public Public API
- *
- */
-
-/**
- * @defgroup connection Connections
- * @ingroup public
- */
-
-/**
- * @defgroup user Users
- * @ingroup public
- */
-
-/**
- * @defgroup group Groups
- * @ingroup public
- */
-
-/**
- * @defgroup artifacts Artifacts
- * @ingroup public
- */
-
-/**
- * @defgroup utility Utility
- * @ingroup public
  */
 
 #include <inttypes.h>
@@ -90,6 +60,13 @@
 
 #include <lwerror.h>
 
+
+/**
+ * @defgroup lsa Core client API
+ * @brief Core client API
+ */
+
+/*@{*/
 
 typedef LW_DWORD LSA_DS_FLAGS, *PLSA_DS_FLAGS;
 
@@ -126,15 +103,15 @@ typedef LW_DWORD LSA_DM_DOMAIN_FLAGS, *PLSA_DM_DOMAIN_FLAGS;
 
 typedef LW_DWORD LSA_DM_STATE_FLAGS, *PLSA_DM_STATE_FLAGS;
 
-/// Controls whether to enable offline reporting.
-/// Offline state is always tracked internally,
-/// but this controls whether to honor that state.
+// Controls whether to enable offline reporting.
+// Offline state is always tracked internally,
+// but this controls whether to honor that state.
 #define LSA_DM_STATE_FLAG_OFFLINE_ENABLED        0x00000001
-/// Whether forced globally offline (by user).
+// Whether forced globally offline (by user).
 #define LSA_DM_STATE_FLAG_FORCE_OFFLINE          0x00000002
-/// Whether globally offline due to media sense.
+// Whether globally offline due to media sense.
 #define LSA_DM_STATE_FLAG_MEDIA_SENSE_OFFLINE    0x00000004
-/// Whether to ignore trusts.
+// Whether to ignore trusts.
 #define LSA_DM_STATE_FLAG_IGNORE_ALL_TRUSTS      0x00000008
 
 #define LSA_DM_STATE_FLAGS_VALID_MASK \
@@ -196,11 +173,36 @@ typedef LW_DWORD LSA_NIS_MAP_QUERY_FLAGS;
 #define LSA_NIS_MAP_QUERY_VALUES     0x00000002
 #define LSA_NIS_MAP_QUERY_ALL        (LSA_NIS_MAP_QUERY_KEYS | LSA_NIS_MAP_QUERY_VALUES)
 
+/**
+ * @brief Find flags
+ *
+ * Flags that can be used to change the behavior of query processing
+ */
 typedef LW_DWORD LSA_FIND_FLAGS, *PLSA_FIND_FLAGS;
 
+/**
+ * @brief Query with NSS semantics
+ *
+ * Indicates that the query is to fulfill an NSS (name service switch)
+ * request.  This hint may be used to omit irrelevant results or avoid
+ * unduly expensive network operations.
+ * @hideinitializer
+ */
 #define LSA_FIND_FLAGS_NSS        0x00000001
+/**
+ * @brief Query only for local objects
+ *
+ * Indicates that only objects in local databases should be queried.
+ * @hideinitializer
+ */
 #define LSA_FIND_FLAGS_LOCAL      0x00000002
-// Only supported by the LsaFindObjects function
+/**
+ * @brief Query only for cached objects
+ *
+ * Indicates that only cached objects should be queried
+ * (avoiding network operations).
+ * @hideinitializer
+ */
 #define LSA_FIND_FLAGS_CACHE_ONLY 0x00000004
 
 typedef struct __LW_LSA_DATA_BLOB
@@ -249,50 +251,24 @@ typedef enum
     LSA_LOG_LEVEL_TRACE = LW_RTL_LOG_LEVEL_TRACE
 } LsaLogLevel;
 
-/**
- * @ingroup user
- * @brief User info structure -- level 0
- *
- * Describes the basic attributes of a user,
- * particularly those which are present in the
- * classic UNIX passwd structure.
- */
 typedef struct __LSA_USER_INFO_0
 {
-    /** @brief User ID */
     uid_t uid;
-    /** @brief Primary group ID */
     gid_t gid;
-    /** @brief Username (alias) */
     LW_PSTR pszName;
-    /** @brief Password (may be NULL) */
     LW_PSTR pszPasswd;
-    /** @brief Comment */
     LW_PSTR pszGecos;
-    /** @brief Login shell path */
     LW_PSTR pszShell;
-    /** @brief Home directory path */
     LW_PSTR pszHomedir;
-    /** @brief Windows SID in string form (may be NULL) */
     LW_PSTR pszSid;
 } LSA_USER_INFO_0, *PLSA_USER_INFO_0;
 
-/**
- * @ingroup user
- * @brief User info structure -- level 1
- *
- * Describes everything about a user included in #__LSA_USER_INFO_0
- * in addition to several attributes which tend to be applicable
- * only in Windows network environments.
- */
 typedef struct __LSA_USER_INFO_1
 {
-#ifndef DOXYGEN
     union
     {
         struct
         {
-#endif
             uid_t uid;
             gid_t gid;
             LW_PSTR pszName;
@@ -301,45 +277,25 @@ typedef struct __LSA_USER_INFO_1
             LW_PSTR pszShell;
             LW_PSTR pszHomedir;
             LW_PSTR pszSid;
-#ifndef DOXYGEN
         };
         LSA_USER_INFO_0 info0;
     };
-#endif
-    /** @brief User object DN */
     LW_PSTR pszDN;
-    /** @brief User's Kerberos UPN */
     LW_PSTR pszUPN;
-    /** @brief Whether the UPN is explicit or implicit */
     LW_DWORD bIsGeneratedUPN;
-    /** @brief Whether the user is from a local account database */
     LW_DWORD bIsLocalUser;
-    /** @brief LM hash of the user's password */
     LW_PBYTE pLMHash;
-    /** @brief Length of the LM hash */
     LW_DWORD dwLMHashLen;
-    /** @brief NT hash of the user's password */
     LW_PBYTE pNTHash;
-    /** @brief Length of the NT hash */
     LW_DWORD dwNTHashLen;
 } LSA_USER_INFO_1, *PLSA_USER_INFO_1;
 
-/**
- * @ingroup user
- * @brief User info structure -- level 2
- *
- * Describes everything about a user included in #__LSA_USER_INFO_1
- * in addition to attributes which describe the password expiry
- * and account status of the user.
- */
 typedef struct __LSA_USER_INFO_2
 {
-#ifndef DOXYGEN
     union
     {
         struct
         {
-#endif
             uid_t uid;
             gid_t gid;
             LW_PSTR pszName;
@@ -356,26 +312,16 @@ typedef struct __LSA_USER_INFO_2
             LW_DWORD dwLMHashLen;
             LW_PBYTE pNTHash;
             LW_DWORD dwNTHashLen;
-#ifndef DOXYGEN
         };
         LSA_USER_INFO_1 info1;
     };
-#endif
-    /** @brief Number of days until the user's password will expire */
     LW_DWORD dwDaysToPasswordExpiry;
-    /** @brief Whether the user's password has expired */
     LW_BOOLEAN bPasswordExpired;
-    /** @brief Whether the user's password will never expire */
     LW_BOOLEAN bPasswordNeverExpires;
-    /** @brief Whether the user should be prompted to change password */
     LW_BOOLEAN bPromptPasswordChange;
-    /** @brief Whether the user can change password */
     LW_BOOLEAN bUserCanChangePassword;
-    /** @brief Whether the account is disabled */
     LW_BOOLEAN bAccountDisabled;
-    /** @brief Whether the account is expired */
     LW_BOOLEAN bAccountExpired;
-    /** @brief Whether the account is locked */
     LW_BOOLEAN bAccountLocked;
 } LSA_USER_INFO_2, *PLSA_USER_INFO_2;
 
@@ -795,15 +741,14 @@ typedef struct _LSA_PAM_CONFIG
 } LSA_PAM_CONFIG, *PLSA_PAM_CONFIG;
 
 /**
- * @ingroup connection
- * @brief Open connection to local LSASS server
+ * @brief Open connection to local lsass server
  *
- * Creates a connection handle to the local LSASS server.
+ * Creates a connection handle to the local lsass server.
  *
  * @param[out] phConnection the created connection handle
  * @retval LW_ERROR_SUCCESS success
- * @retval ECONNREFUSED the connection was refused
- * @retval ENOENT the local domain socket was not present
+ * @retval LW_ERROR_ERRNO_ECONNREFUSED the connection was refused
+ * @retval LW_ERROR_ERRNO_ENOENT the lsass domain socket was not found
  */
 LW_DWORD
 LsaOpenServer(
@@ -812,17 +757,17 @@ LsaOpenServer(
 
 /**
  * @ingroup connection
- * @brief Open connection to local LSASS server (thread-safe)
+ * @brief Open connection to local lsass server (thread-safe)
  *
- * Creates a connection handle to the local LSASS server.
+ * Creates a connection handle to the local lsass server.
  * The handle may safely be used by multiple threads.
  * This function is only available when linking with
  * lsaclientthr
  *
  * @param[out] phConnection the created connection handle
  * @retval LW_ERROR_SUCCESS success
- * @retval ECONNREFUSED the connection was refused
- * @retval ENOENT the local domain socket was not present
+ * @retval LW_ERROR_ERRNO_ECONNREFUSED the connection was refused
+ * @retval LW_ERROR_ERRNO_ENOENT the lsass domain socket was not found
  */
 DWORD
 LsaOpenServerThreaded(
@@ -850,18 +795,6 @@ LsaGetTraceFlag(
     PLSA_TRACE_INFO* ppTraceFlag
     );
 
-/**
- * @ingroup group
- * @brief Create new group
- *
- * Creates a new group in the local account database.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in] pGroupInfo a group info structure
- * @param[in] dwGroupInfoLevel the info level of the provided group info structure
- * @retval LW_ERROR_SUCCESS success
- * @retval EPERM the owner of the current process is not authorized to create groups
- */
 LW_DWORD
 LsaAddGroup(
     LW_HANDLE hLsaConnection,
@@ -875,55 +808,18 @@ LsaModifyGroup(
     PLSA_GROUP_MOD_INFO pGroupModInfo
     );
 
-/**
- * @ingroup group
- * @brief Delete a group by ID
- *
- * Deletes a group from the local account database based on its UNIX group ID
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in] gid the group ID of the group to delete
- * @retval LW_ERROR_SUCCESS success
- * @retval EPERM the owner of the current process is not authorized to delete groups
- * @retval LW_ERROR_NO_SUCH_GROUP the specified group ID did not match any local group
- */
 LW_DWORD
 LsaDeleteGroupById(
     LW_HANDLE hLsaConnection,
     gid_t gid
     );
 
-/**
- * @ingroup group
- * @brief Delete a group by name
- *
- * Deletes a group from the local account database based on its name
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in] pszName the name of the group to delete
- * @retval LW_ERROR_SUCCESS success
- * @retval EPERM the owner of the current process is not authorized to delete groups
- * @retval LW_ERROR_NO_SUCH_GROUP the specified group name did not match any local group
- */
 LW_DWORD
 LsaDeleteGroupByName(
     LW_HANDLE hLsaConnection,
     LW_PCSTR pszName
     );
 
-/**
- * @ingroup user
- * @brief Look up group IDs by username
- *
- * Looks up the group IDs for the groups which a user is a member of based on the user's login name.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in] pszUserName the login name of the user
- * @param[out] pdwGroupFound the number of groups find
- * @param[out] ppGidResults a heap-allocated list of group IDs
- * @retval LW_ERROR_SUCCESS success
- * @retval LW_ERROR_NO_SUCH_USER the specified user name did not match any known user
- */
 LW_DWORD
 LsaGetGidsForUserByName(
     LW_HANDLE hLsaConnection,
@@ -932,21 +828,6 @@ LsaGetGidsForUserByName(
     gid_t** ppGidResults
     );
 
-/**
- * @ingroup user
- * @brief Look up groups by user ID
- *
- * Looks up information on groups which a user is a member of based on user's login name.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in] pszUserName the login name of the user
- * @param[in] FindFlags options for the lookup operation
- * @param[in] dwGroupInfoLevel the desired info level for the returned group info structures
- * @param[out] pdwGroupsFound the number of groups find
- * @param[out] pppGroupInfoList a heap-allocated list of group info structures
- * @retval LW_ERROR_SUCCESS success
- * @retval LW_ERROR_NO_SUCH_USER the specified user ID did not match any known user
- */
 LW_DWORD
 LsaGetGroupsForUserByName(
     LW_IN LW_HANDLE hLsaConnection,
@@ -957,21 +838,6 @@ LsaGetGroupsForUserByName(
     LW_OUT LW_PVOID** pppGroupInfoList
     );
 
-/**
- * @ingroup user
- * @brief Look up groups by user ID
- *
- * Looks up information on groups which a user is a member of based on user ID.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in] uid the user ID of the user
- * @param[in] FindFlags options for the lookup operation
- * @param[in] dwGroupInfoLevel the desired info level for the returned group info structures
- * @param[out] pdwGroupsFound the number of groups find
- * @param[out] pppGroupInfoList a heap-allocated list of group info structures
- * @retval LW_ERROR_SUCCESS success
- * @retval LW_ERROR_NO_SUCH_USER the specified user ID did not match any known user
- */
 LW_DWORD
 LsaGetGroupsForUserById(
     LW_HANDLE hLsaConnection,
@@ -982,20 +848,6 @@ LsaGetGroupsForUserById(
     LW_PVOID** pppGroupInfoList
     );
 
-/**
- * @ingroup group
- * @brief Look up group by name
- *
- * Looks up information on a group by its name.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in] pszGroupName the name of the group
- * @param[in] FindFlags options for the lookup operation
- * @param[in] dwGroupInfoLevel the desired info level for the returned group info structure
- * @param[out] ppGroupInfo a heap-allocated group info structure for the found group
- * @retval LW_ERROR_SUCCESS success
- * @retval LW_ERROR_NO_SUCH_GROUP the specified name did not match any known group
- */
 LW_DWORD
 LsaFindGroupByName(
     LW_HANDLE hLsaConnection,
@@ -1005,20 +857,6 @@ LsaFindGroupByName(
     LW_PVOID* ppGroupInfo
     );
 
-/**
- * @ingroup group
- * @brief Look up group by ID
- *
- * Looks up information on a group by its group ID.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in] gid the group ID of the group
- * @param[in] FindFlags options for the lookup operation
- * @param[in] dwGroupInfoLevel the desired info level for the returned group info structure
- * @param[out] ppGroupInfo a heap-allocated group info structure for the found group
- * @retval LW_ERROR_SUCCESS success
- * @retval LW_ERROR_NO_SUCH_GROUP the specified group ID did not match any known group
- */
 LW_DWORD
 LsaFindGroupById(
     LW_HANDLE hLsaConnection,
@@ -1028,26 +866,6 @@ LsaFindGroupById(
     LW_PVOID* ppGroupInfo
     );
 
-/**
- * @ingroup group
- * @brief Begin group enumeration
- *
- * Begins an enumeration of all known groups.  This function returns an
- * enumeration handle which can be used with #LsaEnumGroups() to fetch
- * lists of groups in increments of up to dwMaxNumGroups.
- *
- * You must call #LsaEndEnumGroups() on the enumeration handle when
- * finished with the enumeration.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in] dwGroupInfoLevel the desired info level for the group info structures
- * returned during the enumeration
- * @param[in] dwMaxNumGroups the maximum number of group info structures to
- * return in each subsequent call to #LsaEnumGroups()
- * @param[in] FindFlags options for the lookup operation
- * @param[out] phResume the created enumeration handle
- * @retval #LW_ERROR_SUCCESS success
- */
 LW_DWORD
 LsaBeginEnumGroups(
     LW_HANDLE hLsaConnection,
@@ -1057,32 +875,6 @@ LsaBeginEnumGroups(
     LW_PHANDLE phResume
     );
 
-/**
- * @ingroup group
- * @brief Begin group enumeration with online check option
- *
- * Begins an enumeration of all known groups.  This function returns an
- * enumeration handle which can be used with #LsaEnumGroups() to fetch
- * lists of groups in increments of up to dwMaxNumGroups.  Compared to
- * #LsaBeginEnumGroups(), it supports an extra option that allows the
- * query to be restricted to groups that are local or cached, avoiding
- * excess traffic when large numbers of groups are present in a networked
- * identity database (e.g. AD).
- *
- * You must call #LsaEndEnumGroups() on the enumeration handle when
- * finished with the enumeration.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in] dwGroupInfoLevel the desired info level for the group info structures
- * returned during the enumeration
- * @param[in] dwMaxNumGroups the maximum number of group info structures to
- * return in each subsequent call to #LsaEnumGroups()
- * @param[in] bCheckGroupMembersOnline TRUE if networked databases should be
- * consulted, FALSE if only local databases or caches should be searched
- * @param[in] FindFlags options for the lookup operation
- * @param[out] phResume the created enumeration handle
- * @retval #LW_ERROR_SUCCESS success
- */
 LW_DWORD
 LsaBeginEnumGroupsWithCheckOnlineOption(
     LW_HANDLE hLsaConnection,
@@ -1093,20 +885,6 @@ LsaBeginEnumGroupsWithCheckOnlineOption(
     LW_PHANDLE phResume
     );
 
-/**
- * @ingroup group
- * @brief Retrieve next list of groups during enumeration
- *
- * Retrieves the next list of groups for an in-progress enumeration.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in] hResume the enumeration handle
- * @param[out] pdsNumGroupsFound the number of groups returned
- * @param[out] pppGroupInfoList a heap-allocated list of group info structures
- * of the level specified in the call to #LsaBeginEnumGroups().  It should be
- * freed with #LsaFreeGroupInfoList().
- * @retval #LW_ERROR_SUCCESS success
- */
 LW_DWORD
 LsaEnumGroups(
     LW_HANDLE hLsaConnection,
@@ -1115,32 +893,12 @@ LsaEnumGroups(
     LW_PVOID** pppGroupInfoList
     );
 
-/**
- * @ingroup group
- * @brief End group enumeration
- *
- * Ends a group enumeration, releasing any associated resources.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in,out] hResume the enumeration handle
- * @retval #LW_ERROR_SUCCESS success
- */
 LW_DWORD
 LsaEndEnumGroups(
     LW_HANDLE hLsaConnection,
     LW_HANDLE hResume
     );
 
-/**
- * @ingroup group
- * @brief Free a list of group info structures
- *
- * Frees a list of group info structures of the specified level.
- *
- * @param[in] dwLevel the info level of the structures
- * @param[in,out] pGroupInfoList the info list
- * @param[dwNumGroups] dwNumGroups the number of elements in the list
- */
 LW_VOID
 LsaFreeGroupInfoList(
     LW_DWORD dwLevel,
@@ -1148,23 +906,11 @@ LsaFreeGroupInfoList(
     LW_DWORD dwNumGroups
     );
 
-/**
- * @ingroup group
- * @brief Free a group info structure
- *
- * Frees a single group info structure of the specified level.
- *
- * @param[in] dwLevel the info level of the structures
- * @param[in,out] pGroupInfo the info structure
- */
 LW_VOID
 LsaFreeGroupInfo(
     LW_DWORD dwLevel,
     LW_PVOID pGroupInfo
     );
-
-/* FIXME: should these be public? */
-#ifndef DOXYGEN
 
 LW_VOID
 LsaFreeEnumObjectsInfo(
@@ -1177,7 +923,6 @@ LsaFreeNSSArtefactInfoList(
     LW_PVOID* pNSSArtefactInfoList,
     LW_DWORD dwNumNSSArtefacts
     );
-#endif
 
 LW_VOID
 LsaFreeNSSArtefactInfo(
@@ -1210,20 +955,6 @@ LsaDeleteUserByName(
     LW_PCSTR pszName
     );
 
-/**
- * @ingroup user
- * @brief Look up user by name
- *
- * Looks up information on a user by its name.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in] pszGroupName the name of the user
- * @param[in] FindFlags options for the lookup operation
- * @param[in] dwUserInfoLevel the desired info level for the returned user info structure
- * @param[out] ppGroupInfo a heap-allocated group info structure for the found group
- * @retval LW_ERROR_SUCCESS success
- * @retval LW_ERROR_NO_SUCH_USER the specified name did not match any known user
- */
 LW_DWORD
 LsaFindUserByName(
     LW_HANDLE hLsaConnection,
@@ -1232,20 +963,6 @@ LsaFindUserByName(
     LW_PVOID* ppUserInfo
     );
 
-/**
- * @ingroup user
- * @brief Look up user by ID
- *
- * Looks up information on a user by its user ID.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in] uid the user ID of the user
- * @param[in] FindFlags options for the lookup operation
- * @param[in] dwUserInfoLevel the desired info level for the returned user info structure
- * @param[out] ppUserInfo a heap-allocated user info structure for the found user
- * @retval LW_ERROR_SUCCESS success
- * @retval LW_ERROR_NO_SUCH_USER the specified user ID did not match any known user
- */
 LW_DWORD
 LsaFindUserById(
     LW_HANDLE hLsaConnection,
@@ -1274,26 +991,6 @@ LsaFreeSIDInfo(
     PLSA_SID_INFO pSIDInfo
     );
 
-/**
- * @ingroup user
- * @brief Begin user enumeration
- *
- * Begins an enumeration of all known users.  This function returns an
- * enumeration handle which can be used with #LsaEnumUsers() to fetch
- * lists of users in increments of up to dwMaxNumUsers.
- *
- * You must call #LsaEndEnumUsers() on the enumeration handle when
- * finished with the enumeration.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in] dwUserInfoLevel the desired info level for the user info structures
- * returned during the enumeration
- * @param[in] dwMaxNumUsers the maximum number of user info structures to
- * return in each subsequent call to #LsaEnumUsers()
- * @param[in] FindFlags options for the lookup operation
- * @param[out] phResume the created enumeration handle
- * @retval #LW_ERROR_SUCCESS success
- */
 LW_DWORD
 LsaBeginEnumUsers(
     LW_HANDLE hLsaConnection,
@@ -1303,21 +1000,6 @@ LsaBeginEnumUsers(
     LW_PHANDLE phResume
     );
 
-/**
- * @ingroup user
- * @brief Retrieve next list of users during enumeration
- *
- * Retrieves the next list of users for an in-progress enumeration.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in,out] hResume the enumeration handle
- * @param[out] pdwNumUsers the number of users returned
- * @param[out] pppUserInfoList a heap-allocated list of user info structures
- * of the level specified in the call to #LsaBeginEnumUsers(). It should be
- * freed with #LsaFreeUserInfoList().
- *
- * @retval #LW_ERROR_SUCCESS success
- */
 LW_DWORD
 LsaEnumUsers(
     LW_HANDLE hLsaConnection,
@@ -1326,32 +1008,12 @@ LsaEnumUsers(
     LW_PVOID** pppUserInfoList
     );
 
-/**
- * @ingroup user
- * @brief End user enumeration
- *
- * Ends a user enumeration, releasing any associated resources.
- *
- * @param[in] hLsaConnection the connection handle
- * @param[in,out] hResume the enumeration handle
- * @retval #LW_ERROR_SUCCESS success
- */
 LW_DWORD
 LsaEndEnumUsers(
     LW_HANDLE hLsaConnection,
     LW_HANDLE hResume
     );
 
-/**
- * @ingroup user
- * @brief Free a list of user info structures
- *
- * Frees a list of user info structures of the specified level.
- *
- * @param[in] dwLevel the info level of the structures
- * @param[in,out] pUserInfoList the info list
- * @param[dwNumUsers] dwNumUsers the number of elements in the list
- */
 LW_VOID
 LsaFreeUserInfoList(
     LW_DWORD dwLevel,
@@ -1359,16 +1021,6 @@ LsaFreeUserInfoList(
     LW_DWORD dwNumUsers
     );
 
-
-/**
- * @ingroup user
- * @brief Free a user info structure
- *
- * Frees a single user info structure of the specified level.
- *
- * @param[in] dwLevel the info level of the structures
- * @param[in,out] pUserInfo the info structure
- */
 LW_VOID
 LsaFreeUserInfo(
     LW_DWORD dwLevel,
@@ -1470,7 +1122,7 @@ LsaGetStatus(
 LW_DWORD
 LsaGetStatus2(
     LW_HANDLE hLsaConnection,
-    LW_IN LW_PCSTR pszTargetProvider,
+    PCSTR pszStr,
     PLSASTATUS* ppLsaStatus
     );
 
@@ -1497,14 +1149,13 @@ LsaReadVersionFile(
     );
 
 /**
- * @ingroup connection
- * @brief Closes connection to LSASS server
+ * @brief Closes connection to lsass server
  *
- * Closes a connection handle opened with #LsaOpenServer().
+ * Closes a connection handle opened with #LsaOpenServer()
+ * or #LsaOpenServerThreaded().
  *
  * @param[in,out] hConnection the connection handle to close
  * @retval LW_ERROR_SUCCESS success
- * @retval EINVAL the handle was invalid
  */
 LW_DWORD
 LsaCloseServer(
@@ -1512,17 +1163,15 @@ LsaCloseServer(
     );
 
 /**
- * @ingroup connection
- * @brief Frees a connection to LSASS server
+ * @brief Frees a connection to lsass server
  *
- * This frees the local resources associated with a connection, but does not
- * explicitly notify the server. The server will discover the connection is
- * closed when it tries to read from the socket. In general, LsaCloseServer is
- * a cleaner way to close a connection.
+ * This frees the local resources associated with a connection handle
+ * opened by #LsaOpenServer(), but does not explicitly terminate
+ * the session with the server.  This is important to prevent a
+ * child process from interfering with its parent after a fork().
  *
  * @param[in,out] hConnection the connection handle to close
  * @retval LW_ERROR_SUCCESS success
- * @retval EINVAL the handle was invalid
  */
 LW_DWORD
 LsaDropServer(
@@ -1534,7 +1183,6 @@ LsaGetErrorMessageForLoggingEvent(
     LW_DWORD dwError,
     LW_PSTR* ppszErrorMsg
     );
-
 
 /*
  * LW_LSA_DATA_BLOB access functions and methods
@@ -1639,29 +1287,90 @@ LsaFreePamConfig(
     LW_IN PLSA_PAM_CONFIG pPamConfig
     );
 
+/**
+ * @brief Query type enumeration
+ *
+ * Specifies the type of key used when querying
+ */
 enum _LSA_QUERY_TYPE
 {
+    /**
+     * @brief Undefined
+     * @hideinitializer
+     */
 	LSA_QUERY_TYPE_UNDEFINED     = 0,
+	/**
+	 * @brief Query by distinguished name
+	 * @hideinitializer
+	 */
 	LSA_QUERY_TYPE_BY_DN         = 1,
+	/**
+	 * @brief Query by SID
+	 * @hideinitializer
+	 */
 	LSA_QUERY_TYPE_BY_SID        = 2,
+	/**
+	 * @brief Query by NT4-style name
+	 * @hideinitializer
+	 */
 	LSA_QUERY_TYPE_BY_NT4        = 3,
+	/**
+	 * @brief Query by User Principal Name
+	 * @hideinitializer
+	 */
 	LSA_QUERY_TYPE_BY_UPN        = 4,
+	/**
+	 * @brief Query by alias
+	 * @hideinitializer
+	 */
 	LSA_QUERY_TYPE_BY_ALIAS      = 5,
+	/**
+	 * @brief Query by uid or gid
+	 * @hideinitializer
+	 */
 	LSA_QUERY_TYPE_BY_UNIX_ID    = 6,
+	/**
+	 * @brief Query by generic name
+	 * @hideinitializer
+	 */
 	LSA_QUERY_TYPE_BY_NAME       = 7
 };
+
+/**
+ * @brief Query type
+ */
 typedef LW_UINT8 LSA_QUERY_TYPE, *PLSA_QUERY_TYPE;
 
+/**
+ * @brief Object type enumeration
+ *
+ * Designates the type of a security object or the
+ * desired type in a query.
+ */
 enum _LSA_OBJECT_TYPE
 {
+    /**
+     * @brief Undefined
+     * @hideinitializer
+     */
     LSA_OBJECT_TYPE_UNDEFINED = 0,
+    /**
+     * @brief Group object
+     * @hideinitializer
+     */
     LSA_OBJECT_TYPE_GROUP     = 1,
+    /**
+     * @brief User object
+     * @hideinitializer
+     */
     LSA_OBJECT_TYPE_USER      = 2,
+#ifndef DOXYGEN
     LSA_OBJECT_TYPE_DOMAIN    = 3,
     LSA_OBJECT_TYPE_COMPUTER  = 4
+#endif
 };
-typedef LW_UINT8 LSA_OBJECT_TYPE, *PLSA_OBJECT_TYPE;
 
+typedef LW_UINT8 LSA_OBJECT_TYPE, *PLSA_OBJECT_TYPE;
 
 typedef struct __LSA_SECURITY_OBJECT_VERSION_INFO
 {
@@ -1677,91 +1386,313 @@ typedef struct __LSA_SECURITY_OBJECT_VERSION_INFO
     float fWeight;
 } LSA_SECURITY_OBJECT_VERSION_INFO, *PLSA_SECURITY_OBJECT_VERSION_INFO;
 
+/**
+ * @brief User object info
+ *
+ * Information about a user in a user object
+ */
 typedef struct _LSA_SECURITY_OBJECT_USER_INFO
 {
     /* Windows-like attributes */
+    /**
+     * @brief Primary group SID
+     *
+     * The user's primary group SID in string form
+     */
     LW_PSTR pszPrimaryGroupSid;
+    /**
+     * @brief UPN
+     *
+     * The user's User Principal Name
+     */
     LW_PSTR pszUPN;
+    /**
+     * @brief Alias
+     *
+     * The user's alias
+     */
     LW_PSTR pszAliasName;
+    /**
+     * @brief Password last set time
+     *
+     * The last time the user's password was set
+     * as an NT time.
+     */
     uint64_t qwPwdLastSet;
+    /**
+     * @brief Password age
+     *
+     * The maximum password age as an NT time
+     */
     uint64_t qwMaxPwdAge;
+    /**
+     * @brief Password expiry time
+     *
+     * When the user's password will expire as an
+     * NT time.
+     */
     uint64_t qwPwdExpires;
+    /**
+     * @brief Account expiry time
+     *
+     * When the users's account will expire
+     * as an NT time.
+     */
     uint64_t qwAccountExpires;
 
+    /**
+     * @brief Is UPN generated?
+     *
+     * Set to TRUE if the user's UPN was synthesized from the NT4 name
+     */
     LW_BOOLEAN bIsGeneratedUPN;
+    /**
+     * @brief Is account info known?
+     *
+     * Set to TRUE if the following BOOLEAN field have well-defined values.
+     */
     LW_BOOLEAN bIsAccountInfoKnown;
-    // Calculated from userAccountControl, accountExpires, and pwdExpires
-    // attributes from AD.
+    /**
+     * @brief Is the password expired?
+     */
     LW_BOOLEAN bPasswordExpired;
+    /**
+     * @brief Does the password never expire?
+     */
     LW_BOOLEAN bPasswordNeverExpires;
+    /**
+     * @brief Should the user be asked to change password?
+     */
     LW_BOOLEAN bPromptPasswordChange;
+    /**
+     * @brief Can the user change password?
+     */
     LW_BOOLEAN bUserCanChangePassword;
+    /**
+     * @brief Is the account disabled?
+     */
     LW_BOOLEAN bAccountDisabled;
+    /**
+     * @brief Is the account expired?
+     */
     LW_BOOLEAN bAccountExpired;
+    /**
+     * @brief Is the account locked?
+     */
     LW_BOOLEAN bAccountLocked;
 
+#ifndef DOXYGEN
     LW_DWORD dwLmHashLen;
     LW_PBYTE pLmHash;
     LW_DWORD dwNtHashLen;
     LW_PBYTE pNtHash;
+#endif
 
     /* UNIX-like attributes */
+    /**
+     * @brief UNIX UID
+     */
     uid_t uid;
+    /**
+     * @brief UNIX primary GID
+     */
     gid_t gid;
+    /**
+     * @brief UNIX account name
+     */
     LW_PSTR pszUnixName;
+    /**
+     * @brief UNIX password
+     *
+     * This field will usually contain no value
+     */
     LW_PSTR pszPasswd;
+    /**
+     * @brief UNIX GECOS field
+     */
     LW_PSTR pszGecos;
+    /**
+     * @brief UNIX shell
+     */
     LW_PSTR pszShell;
+    /**
+     * @brief UNIX home directory
+     */
     LW_PSTR pszHomedir;
-} LSA_SECURITY_OBJECT_USER_INFO, *PLSA_SECURITY_OBJECT_USER_INFO;
+} LSA_SECURITY_OBJECT_USER_INFO;
 
+typedef LSA_SECURITY_OBJECT_USER_INFO *PLSA_SECURITY_OBJECT_USER_INFO;
+
+/**
+ * @brief User object info
+ *
+ * Information about a user in a user object
+ */
 typedef struct _LSA_SECURITY_OBJECT_GROUP_INFO
 {
+    /**
+     * @brief UNIX GID
+     */
     gid_t gid;
+    /**
+     * @brief Group alias
+     */
     LW_PSTR pszAliasName;
+    /**
+     * @brief UNIX group name
+     */
     LW_PSTR pszUnixName;
+    /**
+     * @brief UNIX password
+     *
+     * This field usually contains no value.
+     */
     LW_PSTR pszPasswd;
-} LSA_SECURITY_OBJECT_GROUP_INFO, *PLSA_SECURITY_OBJECT_GROUP_INFO;
+} LSA_SECURITY_OBJECT_GROUP_INFO;
 
+typedef LSA_SECURITY_OBJECT_GROUP_INFO *PLSA_SECURITY_OBJECT_GROUP_INFO;
+
+/**
+ * @brief Security object
+ *
+ * Represents a user or group, including all its UNIX-like (uid, gid...) and Windows-like
+ * (SAM name, SID...) properties.
+ */
 typedef struct __LSA_SECURITY_OBJECT
 {
+#ifndef DOXYGEN
     LSA_SECURITY_OBJECT_VERSION_INFO version;
+#endif
+    /**
+     * @brief Object distinguished name
+     */
     LW_PSTR    pszDN;
-    // The object SID is stored in printed form
+    /**
+     * @brief Object SID as a printed string
+     */
     LW_PSTR    pszObjectSid;
-    //This is false if the object has not been enabled in the cell
+    /**
+     * @brief Is object enabled?
+     *
+     * Set to true if the object is enabled for use on Linux
+     * and UNIX systems.  Disabled objects lack meaningful values
+     * for their UNIX properties such as UID and GID.
+     */
     LW_BOOLEAN enabled;
+    /**
+     * @brief Is object local?
+     *
+     * Set to true if the object originates from a local account store,
+     * such as the local provider.
+     */
     LW_BOOLEAN bIsLocal;
 
+    /**
+     * @brief NetBIOS domain name
+     *
+     * The name of the object's NetBIOS domain.
+     */
     LW_PSTR    pszNetbiosDomainName;
+    /**
+     * @brief SAM account name
+     *
+     * The SAM account name of the object.  An NT4-style
+     * name consists of the NetBIOS domain name followed by
+     * a backslash and the SAM account name.
+     */
     LW_PSTR    pszSamAccountName;
 
+    /**
+     * @brief Object type
+     *
+     * Presently, only user and group object types are actually
+     * returned by lsass APIs.
+     */
     LSA_OBJECT_TYPE type;
 
-    // These fields are only set if the object is enabled base on the type.
     union
     {
+        /**
+         * @brief User attributes
+         *
+         * Attributes that are set if the object type is
+         * #LSA_OBJECT_TYPE_USER.
+         */
         LSA_SECURITY_OBJECT_USER_INFO userInfo;
+        /**
+         * @brief Group attributes
+         *
+         * Attributes that are set if the object type is
+         * #LSA_OBJECT_TYPE_GROUP.
+         */
         LSA_SECURITY_OBJECT_GROUP_INFO groupInfo;
+#ifndef DOXYGEN
         union
         {
             LSA_SECURITY_OBJECT_USER_INFO userInfo;
             LSA_SECURITY_OBJECT_GROUP_INFO groupInfo;
         } typeInfo;
+#endif
     };
-} LSA_SECURITY_OBJECT, *PLSA_SECURITY_OBJECT;
+} LSA_SECURITY_OBJECT;
 
-typedef const LSA_SECURITY_OBJECT * PCLSA_SECURITY_OBJECT;
+/**
+ * @brief Security object pointer
+ */
+typedef LSA_SECURITY_OBJECT *PLSA_SECURITY_OBJECT;
 
+/**
+ * @brief Constant security object pointer
+ */
+typedef const LSA_SECURITY_OBJECT *PCLSA_SECURITY_OBJECT;
+
+/**
+ * @brief Query item
+ *
+ * A key used to query for an object.
+ */
 typedef union _LSA_QUERY_ITEM {
+    /**
+     * @brief String key
+     *
+     * This arm of the union should be used when querying by
+     * keys that are strings, such as SID or UPN.
+     */
     LW_PCSTR pszString;
+    /**
+     * @brief Number key
+     *
+     * This arm of the union should be used when querying by
+     * keys that are numbers, such as UID or GID.
+     */
     LW_DWORD dwId;
-} LSA_QUERY_ITEM, *PLSA_QUERY_ITEM;
+} LSA_QUERY_ITEM;
 
+typedef LSA_QUERY_ITEM *PLSA_QUERY_ITEM;
+
+/**
+ * @brief Query list
+ *
+ * A list of key used to query for objects.
+ */
 typedef union _LSA_QUERY_LIST {
+    /**
+     * @brief String keys
+     *
+     * This arm of the union should be used when querying by
+     * keys that are strings, such as SID or UPN.
+     */
     LW_PCSTR* ppszStrings;
+    /**
+     * @brief Number key
+     *
+     * This arm of the union should be used when querying by
+     * keys that are numbers, such as UID or GID.
+     */
     LW_PDWORD pdwIds;
-} LSA_QUERY_LIST, *PLSA_QUERY_LIST;
+} LSA_QUERY_LIST;
+
+typedef LSA_QUERY_LIST *PLSA_QUERY_LIST;
 
 typedef struct __LSA_USER_MOD_INFO_2
 {
@@ -1834,6 +1765,25 @@ typedef struct _LSA_GROUP_ADD_INFO
     LW_PSTR* ppszMemberSids;
 } LSA_GROUP_ADD_INFO, *PLSA_GROUP_ADD_INFO;
 
+/**
+ * @brief Resolve security objects
+ *
+ * Resolves a homogeneous list of keys to a list of security objects of equal length.
+ * The returned list should be freed with #LsaFreeSecurityObjectList().
+ *
+ * @param[in] hLsa a connection handle
+ * @param[in] pszTargetProvider an optional provider name.  If provided, only that provider
+ * will be queried.  Otherwise, all providers will be queried
+ * @param[in] FindFlags flags that can modify query behavior
+ * @param[in] ObjectType the type of object to return.  If #LSA_OBJECT_TYPE_UNDEFINED,
+ * any type of object matching the query will be returned.
+ * @param[in] QueryType the type of key to query by
+ * @param[in] dwCount the number of keys to search for
+ * @param[in] QueryList a list of keys to search for
+ * @param[out] pppObjects on success, set to an array of security object pointers equal in
+ * length to the query list.  Each element of the array may be NULL if the key could not be found.
+ * @retval LW_ERROR_SUCCESS success
+ */
 LW_DWORD
 LsaFindObjects(
     LW_IN LW_HANDLE hLsa,
@@ -1846,6 +1796,24 @@ LsaFindObjects(
     LW_OUT PLSA_SECURITY_OBJECT** pppObjects
     );
 
+/**
+ * @brief Begin object enumeration
+ *
+ * Returns a handle that can be used to enumerate all security objects
+ * matching the query criteria.  The handle should be freed with
+ * #LsaCloseEnum().
+ *
+ * @param[in] hLsa a connection handle
+ * @param[in] pszTargetProvider an optional provider name.  If provided, only that provider
+ * will be queried.  Otherwise, all providers will be queried
+ * @param[out] phEnum set to a handle which can be subsequently used with #LsaEnumObjects()
+ * to retrieve results.
+ * @param[in] FindFlags flags that can modify query behavior
+ * @param[in] ObjectType the type of object to enumerate.  If #LSA_OBJECT_TYPE_UNDEFINED,
+ * all enumerable objects will be returned.
+ * @param[in] pszDomainName an optional domain name to further filter results
+ * @retval LW_ERROR_SUCCESS success
+ */
 LW_DWORD
 LsaOpenEnumObjects(
     LW_IN LW_HANDLE hLsa,
@@ -1856,6 +1824,20 @@ LsaOpenEnumObjects(
     LW_IN LW_OPTIONAL LW_PCSTR pszDomainName
     );
 
+/**
+ * @brief Enumerate objects
+ *
+ * Returns objects from an in-progress enumeration.  The returned list
+ * should be freed with #LsaFreeSecurityObjectList().
+ *
+ * @param[in] hLsa a connection handle
+ * @param[in] hEnum an enumeration handle from #LsaOpenEnumObjects()
+ * @param[in] dwMaxObjectsCount the maximum number of objects to return
+ * @param[out] pdwObjectsCount set to the length of the returned list
+ * @param[out] pppObjects set to a list of returned security objects.
+ * Unlike #LsaFindObjects(), entries will not be NULL.
+ * @retval LW_ERROR_SUCCESS success
+ */
 LW_DWORD
 LsaEnumObjects(
     LW_IN LW_HANDLE hLsa,
@@ -1865,6 +1847,23 @@ LsaEnumObjects(
     LW_OUT PLSA_SECURITY_OBJECT** pppObjects
     );
 
+/**
+ * @brief Begin member enumeration
+ *
+ * Returns a handle that can be used to enumerate all direct members of a group.
+ * The returned SIDs may represent users or other groups.
+ * The handle should be freed with #LsaCloseEnum().
+ *
+ * @param[in] hLsa a connection handle
+ * @param[in] pszTargetProvider an optional provider name.  If provided, only that provider
+ * will be queried.  Otherwise, all providers will be queried
+ * @param[out] phEnum set to a handle which can be subsequently used with #LsaEnumMembers()
+ * to retrieve results.
+ * @param[in] FindFlags flags that can modify query behavior
+ * @param[in] pszSid the SID of the group to enumerate as a printed string
+ * @retval LW_ERROR_SUCCESS success
+ * @retval LW_ERROR_NO_SUCH_GROUP a group with the specified SID did not exist
+ */
 LW_DWORD
 LsaOpenEnumMembers(
     LW_IN LW_HANDLE hLsa,
@@ -1874,6 +1873,20 @@ LsaOpenEnumMembers(
     LW_IN LW_PCSTR pszSid
     );
 
+/**
+ * @brief Enumerate members
+ *
+ * Returns member SIDs from an in-progress member enumeration.
+ * The returned list should be freed with #LsaFreeSidList().
+ *
+ * @param[in] hLsa a connection handle
+ * @param[in] hEnum an enumeration handle from #LsaOpenEnumMembers()
+ * @param[in] dwMaxObjectsCount the maximum number of SIDs to return
+ * @param[out] pdwObjectsCount set to the length of the returned list
+ * @param[out] pppszMember set to a list of returned member SIDs in
+ * printed form
+ * @retval LW_ERROR_SUCCESS success
+ */
 LW_DWORD
 LsaEnumMembers(
     LW_IN LW_HANDLE hLsa,
@@ -1883,6 +1896,22 @@ LsaEnumMembers(
     LW_OUT LW_PSTR** pppszMember
     );
 
+/**
+ * @brief Query group membership of objects
+ *
+ * Given a list of object SIDs, returns a list of group SIDs
+ * of which the specified objects are direct or transitive members.
+ *
+ * @param[in] hLsa a connection handle
+ * @param[in] pszTargetProvider an optional provider name.  If provided, only that provider
+ * will be queried.  Otherwise, all providers will be queried
+ * @param[in] FindFlags flags that can modify query behavior
+ * @param[in] dwSidCount the number of SIDs passed
+ * @param[in] ppszSids the list of SIDs
+ * @param[out] pdwGroupSidCount set to the number of group SIDs returned
+ * @param[out] pppszGroupSids set to an array containing group SIDs in printed form
+ * @retval LW_ERROR_SUCCESS success
+ */
 LW_DWORD
 LsaQueryMemberOf(
     LW_IN LW_HANDLE hLsa,
@@ -1894,29 +1923,81 @@ LsaQueryMemberOf(
     LW_OUT LW_PSTR** pppszGroupSids
     );
 
+/**
+ * @brief Close enumeration handle
+ *
+ * Closes any enumeration handle opened with an enumeration function.
+ *
+ * @param[in] hLsa a connection handle
+ * @param[in,out] hEnum the enum handle to close
+ * @retval LW_ERROR_SUCCESS success
+ */
 LW_DWORD
 LsaCloseEnum(
     LW_IN LW_HANDLE hLsa,
     LW_IN LW_OUT LW_HANDLE hEnum
     );
 
+/**
+ * @brief Free SID list
+ *
+ * Frees a list of SID strings returned from a previous API call.
+ *
+ * @param[in] dwSidCount the number of SIDs in the array
+ * @param[in,out] ppszSids the array to free
+ */
 LW_VOID
 LsaFreeSidList(
     LW_IN LW_DWORD dwSidCount,
     LW_IN LW_OUT LW_PSTR* ppszSids
     );
 
+/**
+ * @brief Free security object list
+ *
+ * Frees a list of security objects returned from a previous API call.
+ * @param[in] dwObjectCount the number of objects in the array
+ * @param[in,out] ppObjects the array to free
+ */
 LW_VOID
 LsaFreeSecurityObjectList(
     LW_IN LW_DWORD dwObjectCount,
     LW_IN LW_OUT PLSA_SECURITY_OBJECT* ppObjects
     );
 
+/**
+ * @brief Free security object
+ *
+ * Frees a single security object
+ * @param[in,out] pObject the object to free
+ */
 LW_VOID
 LsaFreeSecurityObject(
     LW_IN LW_OUT PLSA_SECURITY_OBJECT pObject
     );
 
+/**
+ * @brief Query expanded group membership
+ *
+ * Returns a list of security objects of all transitive members
+ * of a group.  This is equivalent to recursive calls to
+ * #LsaOpenEnumMembers()/#LsaEnumMembers()/#LsaCloseEnum()
+ * and #LsaFindObjects(), but avoids some of the overheard of processing
+ * the intermediate results.  The returned list should be freed
+ * with #LsaFreeSecurityObjectList().
+ *
+ * @param[in] hLsa a connection handle
+ * @param[in] pszTargetProvider an optional provider name.  If provided, only that provider
+ * will be queried.  Otherwise, all providers will be queried
+ * @param[in] FindFlags flags that can modify query behavior
+ * @param[in] ObjectType the type of member to return. If #LSA_OBJECT_TYPE_UNDEFINED, all
+ * members are returned
+ * @param[in] pszSid the SID of the group to expand as a printed string
+ * @param[out] pdwMemberCount set to the number of returned members
+ * @param[out] pppMembers set to the list of returned members
+ * @retval LW_ERROR_SUCCESS success
+ * @retval LW_ERROR_NO_SUCH_GROUP a group with the specified SID did not exist
+ */
 LW_DWORD
 LsaQueryExpandedGroupMembers(
     LW_IN LW_HANDLE hLsa,
@@ -1928,6 +2009,28 @@ LsaQueryExpandedGroupMembers(
     LW_OUT PLSA_SECURITY_OBJECT** pppMembers
     );
 
+/**
+ * @brief Find group and its expanded membership list
+ *
+ * Returns a security object for a group along with a list
+ * of its expanded members.  This is equivalent to #LsaFindObjects()
+ * followed by #LsaQueryExpandedGroupMembers() of the resulting SID,
+ * but with reduced overhead. The returned group security object should
+ * be freed with #LsaFreeSecurityObject(), and the returned member
+ * list should be freed with #LsaFreeSecurityObjectList().
+ *
+ * @param[in] hLsa a connection handle
+ * @param[in] pszTargetProvider an optional provider name.  If provided, only that provider
+ * will be queried.  Otherwise, all providers will be queried
+ * @param[in] FindFlags flags that can modify query behavior
+ * @param[in] QueryType the type of key to query by
+ * @param[in] QueryItem the key to query by
+ * @param[out] ppGroupObject set to the security object for the group
+ * @param[out] pdwMemberObjectCount set to the number of returned members
+ * @param[out] pppMemberObjects set to the list of returned members
+ * @retval LW_ERROR_SUCCESS success
+ * @retval LW_ERROR_NO_SUCH_GROUP the group was not found
+ */
 LW_DWORD
 LsaFindGroupAndExpandedMembers(
     LW_IN LW_HANDLE hLsa,
@@ -1988,6 +2091,8 @@ LsaGetSmartCardUserObject(
 
 #define LSA_PROVIDER_TAG_LOCAL "lsa-local-provider"
 #define LSA_PROVIDER_TAG_AD "lsa-activedirectory-provider"
+
+/*@}*/
 
 #endif /* __LSA_H__ */
 

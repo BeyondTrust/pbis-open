@@ -42,9 +42,37 @@
 #ifndef __LSA_AD_TYPES_H__
 #define __LSA_AD_TYPES_H__
 
-typedef DWORD LSA_NET_JOIN_FLAGS, *PLSA_NET_JOIN_FLAGS;
+/**
+ * @ingroup ad
+ */
 
+/*@{*/
+
+/**
+ * @brief Domain join flags
+ *
+ * Encodes additional options when joining a domain
+ */
+typedef DWORD LSA_NET_JOIN_FLAGS;
+typedef DWORD *PLSA_NET_JOIN_FLAGS;
+
+/**
+ * @brief Do not synchronize time with DC
+ *
+ * Ordinarily, the AD provider first synchronizes the time
+ * with the domain controller as this is necessary for Kerberos
+ * to function.  This flag disables this behavior.
+ * @hideinitializer
+ */
 #define LSA_NET_JOIN_DOMAIN_NOTIMESYNC         (0x00000001)
+/**
+ * @brief Join multiple domains
+ *
+ * Attempting to join another domain while already joined
+ * usually leaves the current domain.  If this flags is specified,
+ * both will be joined simultaneously.
+ * @hideinitializer
+ */
 #define LSA_NET_JOIN_DOMAIN_MULTIPLE           (0x00000002)
 // The following settings are not implemented
 #define LSA_NET_JOIN_DOMAIN_ACCT_CREATE        (0x00000004)
@@ -57,5 +85,7 @@ typedef DWORD LSA_NET_JOIN_FLAGS, *PLSA_NET_JOIN_FLAGS;
 
 // The following setting is not implemented
 #define LSA_NET_LEAVE_DOMAIN_ACCT_DELETE       (0x00000001)
+
+/*@}*/
 
 #endif /* __LSA_AD_TYPES_H__ */

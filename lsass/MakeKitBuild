@@ -1,4 +1,4 @@
-SUBDIRS="include common pstore client interop server tools etc"
+SUBDIRS="include common pstore client interop server tools etc docs"
 
 option()
 {
@@ -286,6 +286,8 @@ configure()
     fi
 
     lw_check_pthread_once_init
+
+    mk_check_doxygen
 
     mk_output_file include/lsaregdef.h
     mk_output_file server/auth-providers/local-provider/lpdefs.h

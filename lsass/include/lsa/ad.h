@@ -35,7 +35,7 @@
  *
  * Module Name:
  *
- *        lsaadclient.h
+ *        ad.h
  *
  * Abstract:
  *
@@ -48,10 +48,25 @@
 #ifndef __LSACLIENT_AD_H__
 #define __LSACLIENT_AD_H__
 
+/**
+ * @file lsa/ad.h
+ * @brief LSASS AD Provider Public Client API
+ */
+
 #include <lsa/lsa.h>
 #include <sys/types.h>
 #include <lsa/ad-types.h>
 #include <lsa/lsapstore-types.h>
+
+/**
+ * @defgroup ad AD Provider client API
+ * @brief AD Provider client API
+ *
+ * This module provides functions to communicate directory with the lsass
+ * Active Directory provider.
+ */
+
+/*@{*/
 
 DWORD
 LsaAdEmptyCache(
@@ -107,6 +122,32 @@ LsaAdEnumGroupsFromCache(
     OUT PLSA_SECURITY_OBJECT** pppObjects
     );
 
+/**
+ * @brief Join an Active Directory domain
+ *
+ * Instructs the AD provider to join the computer to
+ * an Active Directory domain.  If already joined,
+ * and #LW_NET_JOIN_DOMAIN_MULTIPLE is not specified,
+ * the AD provider will first leave the default domain.
+ *
+ * @param[in] hLsaConnection a connection handle
+ * @param[in] pszHostname the computer name to join with
+ * @param[in] pszHostDnsDomain the DNS domain name of the computer
+ * @param[in] pszDomain the fully-qualified domain name to join
+ * @param[in] pszOU an optional OU (organizational unit) to join, specified
+ * as forward-slash separated components
+ * @param[in] pszUsername the name of an AD user with permission with
+ * permission to join computers to the target domain
+ * @param[in] pszPassword the password for the user
+ * @param[in] pszOSName the operating system name to set on
+ * the computer object
+ * @param[in] pszOSVersion the operating system version to set on
+ * the computer object
+ * @param[in] pszOSServicePack the service pack level to set on
+ * the computer object
+ * @param[in] dwFlags additional flags to control join behavior
+ * @retval LW_ERROR_SUCCESS success
+ */
 DWORD
 LsaAdJoinDomain(
     HANDLE hLsaConnection,
@@ -129,6 +170,30 @@ LsaAdOuSlashToDn(
     OUT PSTR* ppLdapOu
     );
 
+/**
+ * @brief Join Active Directory domain with alternate OU syntax
+ *
+ * Identical to #LsaAdJoinDomain(), but accepts a raw LDAP DN
+ * (distinguished name) for the OU to join.
+ *
+ * @param[in] hLsaConnection a connection handle
+ * @param[in] pHostname the computer name to join with
+ * @param[in] pHostDnsDomain the DNS domain name of the computer
+ * @param[in] pDomain the fully-qualified domain name to join
+ * @param[in] pOo an optional OU (organizational unit) to join
+ * specified as a DN.
+ * @param[in] pUsername the name of an AD user with permission with
+ * permission to join computers to the target domain
+ * @param[in] pPassword the password for the user
+ * @param[in] pOSName the operating system name to set on
+ * the computer object
+ * @param[in] pOSVersion the operating system version to set on
+ * the computer object
+ * @param[in] pOSServicePack the service pack level to set on
+ * the computer object
+ * @param[in] dwFlags additional flags to control join behavior
+ * @retval LW_ERROR_SUCCESS success
+ */
 DWORD
 LsaAdJoinDomainDn(
     IN HANDLE hLsaConnection,
@@ -144,6 +209,17 @@ LsaAdJoinDomainDn(
     IN LSA_NET_JOIN_FLAGS dwFlags
     );
 
+/**
+ * @brief Leave default Active Directory domain
+ *
+ * Leaves the currently-joined default AD domain.
+ *
+ * @param[in] hLsaConnection a connection handle
+ * @param[in] pszUsername an optional name of a user with permissions to
+ * disable the machine account in AD
+ * @param[in] pszPassword an optional password for the provided user
+ * @retval LW_ERROR_SUCCESS success
+ */
 DWORD
 LsaAdLeaveDomain(
     HANDLE hLsaConnection,
@@ -151,6 +227,21 @@ LsaAdLeaveDomain(
     PCSTR pszPassword
     );
 
+/**
+ * @brief Leave Active Directory domain
+ *
+ * Leaves a currently-joined AD domain.  This function supports
+ * leaving a specific domain when multiple domains are joined
+ * and additional flags to control leave behavior.
+ *
+ * @param[in] hLsaConnection a connection handle
+ * @param[in] pszUsername an optional name of a user with permissions to
+ * disable the machine account in AD
+ * @param[in] pszPassword an optional password for the provided user
+ * @param[in] pszDomain the domain to leave
+ * @param[in] dwFlags additional leave flags
+ * @retval LW_ERROR_SUCCESS success
+ */
 DWORD
 LsaAdLeaveDomain2(
     HANDLE hLsaConnection,
@@ -160,12 +251,34 @@ LsaAdLeaveDomain2(
     LSA_NET_JOIN_FLAGS dwFlags
     );
 
+/**
+ * @brief Set default Active Directory domain
+ *
+ * Sets the default AD domain.
+ *
+ * @param[in] hLsaConnection a connection handle
+ * @param[in] pszUsername an optional name of a user with permissions to
+ * @param[in] pszDomain the domain
+ * @param[in] dwFlags additional leave flags
+ * @retval LW_ERROR_SUCCESS success
+ */
 DWORD
 LsaAdSetDefaultDomain(
     IN HANDLE hLsaConnection,
     IN PCSTR pszDomain
     );
 
+/**
+ * @brief Get joined domain list
+ *
+ * Gets a list of joined domains.  Free the result with
+ * LwFreeStringArray().
+ *
+ * @param[in] hLsaConnection a connection handle
+ * @param[out] pdwNumDomainsFound set to the number of joined domains
+ * @param[out] pppszJoinedDomains set to the list of joined domains
+ * @retval LW_ERROR_SUCCESS success
+ */
 DWORD
 LsaAdGetJoinedDomains(
     IN HANDLE hLsaConnection,
@@ -203,5 +316,7 @@ LsaAdGetComputerDn(
     LW_IN LW_OPTIONAL LW_PCSTR pszDnsDomainName,
     LW_OUT LW_PSTR* ppszComputerDn
     );
+
+/*@}*/
 
 #endif /* __LSACLIENT_AD_H__ */
