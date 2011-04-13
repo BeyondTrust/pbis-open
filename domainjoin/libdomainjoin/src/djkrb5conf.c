@@ -1776,6 +1776,8 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
     PSTR currentTarget = NULL;
     Krb5Entry conf;
     PSTR trueLocation;
+    PSTR trueLocationPath = NULL;
+    PSTR pszPtr = NULL;
 
     if(description)
         *description = NULL;
@@ -1846,6 +1848,20 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
         goto nochanges;
     }
 
+    LW_CLEANUP_CTERR(exc, CTDupOrNullStr(trueLocation, &trueLocationPath));
+    pszPtr = strrchr(trueLocationPath, '/');
+    if(pszPtr)
+    {
+        *pszPtr = '\0';
+    }
+    LW_CLEANUP_CTERR(exc, CTCheckDirectoryExists(trueLocationPath, &exists));
+    if(!exists)
+    {
+        ceError = ERROR_BAD_FORMAT;
+        LW_RAISE_EX(exc, ceError, "Value for default_keytab_name in /etc/krb5.conf invalid", "The directory specified by default_keytab_name in /etc/krb5.conf does not exist. Correct this error and re-run domainjoin-cli.");
+        goto cleanup;
+    }
+
     LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists(trueLocation, &exists));
     if(!exists)
     {
@@ -1857,18 +1873,6 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
                     default_keytab_name->value.value, "/etc/krb5.keytab",
                     trueLocation));
         }
-        if(makeChanges)
-        {
-            LW_CLEANUP_CTERR(exc, SetNodeValue(libdefaults,
-                        "default_keytab_name", "/etc/krb5.keytab"));
-            LW_CLEANUP_CTERR(exc, WriteKrb5Configuration(tempDir,
-                        "/etc/krb5.conf", &conf, NULL));
-        }
-        else
-        {
-            result = NotConfigured;
-        }
-        goto cleanup;
     }
 
     ceError = CTGetSymLinkTarget("/etc/krb5.keytab", &currentTarget);
@@ -1933,6 +1937,7 @@ cleanup:
         CT_SAFE_FREE_STRING(tempDir);
     }
     FreeKrb5EntryContents(&conf);
+    CT_SAFE_FREE_STRING(trueLocationPath);
     return result;
 
 nochanges:
