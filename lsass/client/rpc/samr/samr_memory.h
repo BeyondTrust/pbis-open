@@ -153,6 +153,11 @@
                                       (ptr),                    \
                                       pdwSize);
 
+#define LWBUF_ALIGN_SIZE(size)                                      \
+    (((size) % sizeof(PVOID)) ?                                     \
+        ((size) + sizeof(PVOID) - ((size) % sizeof(PVOID))) :       \
+        (size))
+
 #define LWBUF_ALIGN(offset_ptr, size_ptr, space_ptr)                \
     {                                                               \
         DWORD dwAlign = (*(offset_ptr)) % sizeof(long int);         \
@@ -190,7 +195,7 @@
 
 #define LWBUF_TARGET_PTR(buffer_ptr, target_size, space_ptr)        \
     ((pCursor = (buffer_ptr) + (*pdwOffset)),                       \
-     ((pCursor + (*(space_ptr))) - (target_size)))
+     ((pCursor + (*(space_ptr))) - LWBUF_ALIGN_SIZE(target_size)))
 
 
 NTSTATUS

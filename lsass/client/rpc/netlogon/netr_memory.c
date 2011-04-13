@@ -530,14 +530,14 @@ NetrAllocateChallengeResponse(
 
         ppRespData       = (PBYTE*)pCursor;
         *ppRespData      = pRespData;
-        (*pdwSpaceLeft) -= (pRespData) ? dwResponseSize : 0;
+        (*pdwSpaceLeft) -= (pRespData) ? LWBUF_ALIGN_SIZE(dwResponseSize) : 0;
 
         /* recalculate space after setting the pointer */
         (*pdwSpaceLeft)  -= sizeof(PBYTE);
     }
     else
     {
-        (*pdwSize) += dwResponseSize;
+        (*pdwSize) += LWBUF_ALIGN_SIZE(dwResponseSize);
     }
 
     /* include size of the pointer */
@@ -726,14 +726,14 @@ NetrAllocateRidWithAttributeArray(
 
         ppRids           = (PRID_WITH_ATTRIBUTE*)pCursor;
         *ppRids          = (PRID_WITH_ATTRIBUTE)pRids;
-        (*pdwSpaceLeft) -= (pRids) ? dwRidsSize : 0;
+        (*pdwSpaceLeft) -= (pRids) ? LWBUF_ALIGN_SIZE(dwRidsSize) : 0;
 
         /* recalculate space after setting the pointer */
         (*pdwSpaceLeft)  -= sizeof(PRID_WITH_ATTRIBUTE);
     }
     else
     {
-        (*pdwSize) += dwRidsSize;
+        (*pdwSize) += LWBUF_ALIGN_SIZE(dwRidsSize);
     }
 
     /* include size of the pointer */
@@ -871,14 +871,14 @@ NetrAllocateSamInfo3(
 
         ppSids           = (NetrSidAttr**)pCursor;
         *ppSids          = (NetrSidAttr*)pSids;
-        (*pdwSpaceLeft) -= (pSids) ? dwSidsSize : 0;
+        (*pdwSpaceLeft) -= (pSids) ? LWBUF_ALIGN_SIZE(dwSidsSize) : 0;
 
         /* recalculate space after setting the pointer */
         (*pdwSpaceLeft)  -= sizeof(NetrSidAttr*);
     }
     else
     {
-        (*pdwSize) += dwSidsSize;
+        (*pdwSize) += LWBUF_ALIGN_SIZE(dwSidsSize);
     }
 
     /* include size of the pointer */
@@ -1137,14 +1137,14 @@ NetrAllocateValidationInfo(
 
         ppInfo           = pCursor;
         *ppInfo          = pInfo;
-        (*pdwSpaceLeft) -= (pInfo) ? dwInfoSize : 0;
+        (*pdwSpaceLeft) -= (pInfo) ? LWBUF_ALIGN_SIZE(dwInfoSize) : 0;
 
         /* recalculate space after setting the pointer */
         (*pdwSpaceLeft)  -= sizeof(PVOID);
     }
     else
     {
-        (*pdwSize) += dwInfoSize;
+        (*pdwSize) += LWBUF_ALIGN_SIZE(dwInfoSize);
     }
 
     /* include size of the pointer */
@@ -1259,14 +1259,14 @@ NetrAllocateDomainInfo(
 
         ppInfo           = (NetrDomainInfo1**)pCursor;
         *ppInfo          = (NetrDomainInfo1*)pInfo;
-        (*pdwSpaceLeft) -= (pInfo) ? dwInfoSize : 0;
+        (*pdwSpaceLeft) -= (pInfo) ? LWBUF_ALIGN_SIZE(dwInfoSize) : 0;
 
         /* recalculate space after setting the pointer */
         (*pdwSpaceLeft)  -= sizeof(NetrDomainInfo1*);
     }
     else
     {
-        (*pdwSize) += dwInfoSize;
+        (*pdwSize) += LWBUF_ALIGN_SIZE(dwInfoSize);
     }
 
     /* include size of the pointer */
@@ -1372,14 +1372,14 @@ NetrAllocateDomainInfo1(
 
         ppTrusts         = (NetrDomainTrustInfo**)pCursor;
         *ppTrusts        = (NetrDomainTrustInfo*)pTrusts;
-        (*pdwSpaceLeft) -= (pTrusts) ? dwTrustsSize : 0;
+        (*pdwSpaceLeft) -= (pTrusts) ? LWBUF_ALIGN_SIZE(dwTrustsSize) : 0;
 
         /* recalculate space after setting the pointer */
         (*pdwSpaceLeft)  -= sizeof(NetrDomainTrustInfo*);
     }
     else
     {
-        (*pdwSize) += dwTrustsSize;
+        (*pdwSize) += LWBUF_ALIGN_SIZE(dwTrustsSize);
     }
 
     /* include size of the pointer */
