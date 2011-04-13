@@ -170,6 +170,12 @@ RPC_STATUS DceErrorInqTextW(
 #define RpcBindingSetAuthInfo RpcBindingSetAuthInfoA
 #define RpcSsDestroyClientContext(x) rpc_ss_destroy_client_context((rpc_ss_context_t *)x)
 
+#define RPC_C_AUTHN_LEVEL_DEFAULT rpc_c_protect_level_default
+#define RPC_C_AUTHN_LEVEL_NONE rpc_c_protect_level_none
+#define RPC_C_AUTHN_LEVEL_CONNECT rpc_c_protect_level_connect
+#define RPC_C_AUTHN_LEVEL_CALL rpc_c_protect_level_call
+#define RPC_C_AUTHN_LEVEL_PKT rpc_c_protect_level_pkt
+#define RPC_C_AUTHN_LEVEL_PKT_INTEGRITY rpc_c_protect_level_pkt_integ
 #define RPC_C_AUTHN_LEVEL_PKT_PRIVACY rpc_c_protect_level_pkt_privacy
 
 #define RPC_C_AUTHN_GSS_NEGOTIATE   rpc_c_authn_gss_negotiate
