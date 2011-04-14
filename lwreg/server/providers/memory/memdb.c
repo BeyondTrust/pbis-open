@@ -280,22 +280,71 @@ error:
 }
 
 
+VOID
+MemDbExportEntryChanged(
+    VOID)
+{
+    pthread_mutex_lock(&gExportMutex);
+    gbValueChanged = TRUE;
+    pthread_mutex_unlock(&gExportMutex);
+    pthread_cond_signal(&gExportCond);
+}
+
+
 PVOID
 MemDbExportToFileThread(
     PVOID ctx)
 {
     PMEMDB_FILE_EXPORT_CTX exportCtx = (PMEMDB_FILE_EXPORT_CTX) ctx;
     struct timespec timeOut = {0};
-    pthread_mutex_t mx = PTHREAD_MUTEX_INITIALIZER;
-    pthread_cond_t cv = PTHREAD_COND_INITIALIZER;
+    struct timespec timeOutForced = {0};
+    struct timespec *pTimeOutForced = NULL;
     REG_DB_CONNECTION regDbConn = {0};
+    int sts = 0;
 
     regDbConn.pMemReg = exportCtx->hKey;
     do
     {
         clock_gettime(CLOCK_REALTIME, &timeOut);
-        timeOut.tv_sec += 30;  // Make configurable in the registry :/
-        pthread_cond_timedwait(&cv, &mx, &timeOut);
+        timeOut.tv_sec += MEMDB_DEFAULT_EXPORT_TIMEOUT;
+        while (!gbValueChanged)
+        {
+            sts = pthread_cond_timedwait(
+                      &gExportCond, 
+                      &gExportMutex, 
+                      &timeOut);
+            if (sts == ETIMEDOUT)
+            {
+                break;
+            }
+
+            if (gbValueChanged)
+            {
+                /*
+                 * The idea here is to delay when a change is 
+                 * actually committed to disc, so if a lot of changes
+                 * are happening sequentially, each change won't cause
+                 * a flush to disc. However, force a flush after
+                 * MEMDB_DEFAULT_EXPORT_TIMEOUT has expired, so if changes
+                 * are occurring periodically, they will still be written 
+                 * to disc.
+                 */
+                gbValueChanged = FALSE;
+                clock_gettime(CLOCK_REALTIME, &timeOut);
+                timeOut.tv_sec += MEMDB_CHANGED_EXPORT_TIMEOUT;
+                if (!pTimeOutForced)
+                {
+                    clock_gettime(CLOCK_REALTIME, &timeOutForced);
+                    timeOutForced.tv_sec += MEMDB_DEFAULT_EXPORT_TIMEOUT;
+                    pTimeOutForced = &timeOutForced;
+                }
+                if (pTimeOutForced && timeOut.tv_sec > pTimeOutForced->tv_sec)
+                {
+                    pTimeOutForced = NULL;
+                    break;
+                }
+            }
+        }
 
         if (ghMemRegRoot)
         {

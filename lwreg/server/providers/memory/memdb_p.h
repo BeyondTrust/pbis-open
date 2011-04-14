@@ -38,7 +38,10 @@ typedef struct _MEMDB_IMPORT_FILE_CTX
     MEM_REG_STORE_HANDLE hSubKey;
 } MEMDB_IMPORT_FILE_CTX, *PMEMDB_IMPORT_FILE_CTX;
 
-#define MEMDB_EXPORT_FILE "/var/lib/likewise/db/memprovider.exp"
+#define MEMDB_DEFAULT_EXPORT_TIMEOUT (60*10) // 10 Minutes
+#define MEMDB_CHANGED_EXPORT_TIMEOUT 5 // 5 seconds
+#define MEMDB_EXPORT_DIR "/var/lib/likewise/db"
+#define MEMDB_EXPORT_FILE MEMDB_EXPORT_DIR "/memprovider.exp"
 
 /*
  * Definition of structure found in context server/include/regserver.h as
@@ -263,6 +266,11 @@ MemDbImportFromFile(
 NTSTATUS
 MemDbExportToFile(
     PSTR exportFile
+    );
+
+VOID
+MemDbExportEntryChanged(
+    VOID
     );
 
 

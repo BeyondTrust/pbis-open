@@ -86,7 +86,7 @@ MemProvider_Initialize(
     NTSTATUS status = 0;
     MEMDB_IMPORT_FILE_CTX importCtx = {0};
 
-    mkdir("/var/lib/likewise/db", 0755);
+    mkdir(MEMDB_EXPORT_DIR, 0700);
     status = MemDbOpen(&ghCacheConnection);
     if (status == 0)
     {
@@ -252,6 +252,7 @@ MemCreateKeyEx(
     BAIL_ON_NT_STATUS(status);
     pKeyHandle->AccessGranted = AccessGranted;
 
+    MemDbExportEntryChanged();
 
 cleanup:
     LWREG_SAFE_FREE_MEMORY(pwszRootKey);
@@ -383,6 +384,7 @@ MemDeleteKey(
     status = MemRegStoreDeleteNode(hRegKey);
     BAIL_ON_NT_STATUS(status);
 
+    MemDbExportEntryChanged();
 cleanup:
     return status;
 error:
@@ -505,6 +507,7 @@ MemSetValueEx(
                  cbData);
     BAIL_ON_NT_STATUS(status);
 
+    MemDbExportEntryChanged();
 cleanup:
     return status;
 
@@ -575,6 +578,7 @@ MemDeleteKeyValue(
     status = MemRegStoreDeleteNodeValue(
                  hSubKey,
                  pValueName);
+    MemDbExportEntryChanged();
 error:
     return status;
 }
@@ -605,6 +609,7 @@ MemDeleteValue(
     LWREG_SAFE_FREE_MEMORY(pRegValue->Data);
     pRegValue->DataLen = 0;
    
+    MemDbExportEntryChanged();
 cleanup:
     return status;
 
@@ -672,6 +677,7 @@ MemDeleteTree(
     {
         pthread_mutex_unlock(&gMemRegDbMutex);
     }
+    MemDbExportEntryChanged();
     return status;
 }
 

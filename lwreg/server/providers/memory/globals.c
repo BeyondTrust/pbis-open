@@ -72,6 +72,10 @@ REGPROV_PROVIDER_FUNCTION_TABLE gRegMemProviderAPITable =
 
 pthread_mutex_t gMemRegDbMutex = PTHREAD_MUTEX_INITIALIZER;
 
+pthread_mutex_t gExportMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t gExportCond = PTHREAD_COND_INITIALIZER;
+BOOLEAN gbValueChanged;
+
 #if 0
 REG_SRV_MEMORY_KEYLOOKUP gActiveKeyList =
     {
