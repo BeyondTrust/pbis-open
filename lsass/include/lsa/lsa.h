@@ -1656,14 +1656,14 @@ typedef union _LSA_QUERY_ITEM {
      * @brief String key
      *
      * This arm of the union should be used when querying by
-     * keys that are strings, such as SID or UPN.
+     * a key that is a strings, such as SID or UPN.
      */
     LW_PCSTR pszString;
     /**
      * @brief Number key
      *
      * This arm of the union should be used when querying by
-     * keys that are numbers, such as UID or GID.
+     * a key that is a number, such as UID or GID.
      */
     LW_DWORD dwId;
 } LSA_QUERY_ITEM;
@@ -1673,21 +1673,23 @@ typedef LSA_QUERY_ITEM *PLSA_QUERY_ITEM;
 /**
  * @brief Query list
  *
- * A list of key used to query for objects.
+ * A list of keys used to query for objects.
  */
 typedef union _LSA_QUERY_LIST {
     /**
      * @brief String keys
      *
-     * This arm of the union should be used when querying by
-     * keys that are strings, such as SID or UPN.
+     * This arm of the union is an array of strings that
+     * should be used when querying by keys that are strings,
+     * such as SID or UPN.
      */
     LW_PCSTR* ppszStrings;
     /**
-     * @brief Number key
+     * @brief Number keys
      *
-     * This arm of the union should be used when querying by
-     * keys that are numbers, such as UID or GID.
+     * This arm of the union is an array of DWORDs that
+     * should be used when querying by keys that are numbers,
+     * such as UID or GID.
      */
     LW_PDWORD pdwIds;
 } LSA_QUERY_LIST;
