@@ -125,6 +125,15 @@ package_pkg()
             mk_package_dirs \
                 "${MK_SYSCONFDIR}/gss"
 
+            mk_package_dirs \
+                "${MK_SYSCONFDIR}/krb5"
+
+            mk_package_dirs \
+                "${MK_SYSCONFDIR}/krb5/plugins"
+
+            mk_package_dirs \
+                "${MK_SYSCONFDIR}/krb5/plugins/libkrb5"
+
         mk_pkg_sub_done
 
         
@@ -144,6 +153,9 @@ package_pkg()
                 "${MK_DATADIR}" \
                 "${LW_CONFIGDIR}" \
                 "${MK_LIBDIR}/gss" \
+                "${MK_LIBDIR}/krb5" \
+                "${MK_LIBDIR}/krb5/plugins" \
+                "${MK_LIBDIR}/krb5/plugins/libkrb5" \
                 "${MK_LIBDIR}/lw-svcm" \
                 "${MK_LIBDIR}/sasl2"
 
@@ -182,6 +194,9 @@ package_lpp()
                 "${MK_DATADIR}" \
                 "${LW_CONFIGDIR}" \
                 "${MK_LIBDIR}/gss" \
+                "${MK_LIBDIR}/krb5" \
+                "${MK_LIBDIR}/krb5/plugins" \
+                "${MK_LIBDIR}/krb5/plugins/libkrb5" \
                 "${MK_LIBDIR}/lw-svcm" \
                 "${MK_LIBDIR}/sasl2"
 
@@ -226,6 +241,7 @@ open_files_prefix()
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*" \
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/krb5/plugins/libkrb5/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lw-svcm/*${MK_DLO_EXT}" \
         "${LW_CONFIGDIR}/*.reg" \
         "${MK_PREFIX}/data/VERSION"
