@@ -284,9 +284,11 @@ VOID
 MemDbExportEntryChanged(
     VOID)
 {
-    pthread_mutex_lock(&gExportMutex);
+    BOOLEAN bInLock = FALSE;
+
+    LWREG_LOCK_MUTEX(bInLock, &gExportMutex);
     gbValueChanged = TRUE;
-    pthread_mutex_unlock(&gExportMutex);
+    LWREG_UNLOCK_MUTEX(bInLock, &gExportMutex);
     pthread_cond_signal(&gExportCond);
 }
 
@@ -301,25 +303,38 @@ MemDbExportToFileThread(
     struct timespec *pTimeOutForced = NULL;
     REG_DB_CONNECTION regDbConn = {0};
     int sts = 0;
+    BOOLEAN bInLock = FALSE;
 
     regDbConn.pMemReg = exportCtx->hKey;
     do
     {
-        clock_gettime(CLOCK_REALTIME, &timeOut);
-        timeOut.tv_sec += MEMDB_DEFAULT_EXPORT_TIMEOUT;
+        LWREG_LOCK_MUTEX(bInLock, &gExportMutex);
         while (!gbValueChanged)
         {
-            sts = pthread_cond_timedwait(
-                      &gExportCond, 
-                      &gExportMutex, 
-                      &timeOut);
+            if (!pTimeOutForced)
+            {
+                sts = pthread_cond_wait(
+                          &gExportCond, 
+                          &gExportMutex);
+            }
+            else
+            {
+                sts = pthread_cond_timedwait(
+                          &gExportCond, 
+                          &gExportMutex,
+                          &timeOut);
+            }
+        
             if (sts == ETIMEDOUT)
             {
+                pTimeOutForced = NULL;
                 break;
             }
 
             if (gbValueChanged)
             {
+                gbValueChanged = FALSE;
+
                 /*
                  * The idea here is to delay when a change is 
                  * actually committed to disc, so if a lot of changes
@@ -329,13 +344,13 @@ MemDbExportToFileThread(
                  * are occurring periodically, they will still be written 
                  * to disc.
                  */
-                gbValueChanged = FALSE;
                 clock_gettime(CLOCK_REALTIME, &timeOut);
-                timeOut.tv_sec += MEMDB_CHANGED_EXPORT_TIMEOUT;
+                timeOut.tv_sec += MEMDB_CHANGED_EXPORT_TIMEOUT; //5s
+
                 if (!pTimeOutForced)
                 {
                     clock_gettime(CLOCK_REALTIME, &timeOutForced);
-                    timeOutForced.tv_sec += MEMDB_DEFAULT_EXPORT_TIMEOUT;
+                    timeOutForced.tv_sec += MEMDB_DEFAULT_EXPORT_TIMEOUT; //10m
                     pTimeOutForced = &timeOutForced;
                 }
                 if (pTimeOutForced && timeOut.tv_sec > pTimeOutForced->tv_sec)
@@ -345,6 +360,7 @@ MemDbExportToFileThread(
                 }
             }
         }
+        LWREG_UNLOCK_MUTEX(bInLock, &gExportMutex);
 
         if (ghMemRegRoot)
         {
@@ -355,14 +371,14 @@ MemDbExportToFileThread(
             }
             else
             {
-                pthread_mutex_lock(&gMemRegDbMutex);
+                LWREG_LOCK_MUTEX(bInLock, &gExportMutex);
                 MemDbRecurseRegistry(
                              NULL,
                              &regDbConn,
                              NULL,
                              pfMemRegExportToFile,
                              exportCtx);
-                pthread_mutex_unlock(&gMemRegDbMutex);
+                LWREG_UNLOCK_MUTEX(bInLock, &gExportMutex);
                 fclose(exportCtx->wfp);
             }
         }
