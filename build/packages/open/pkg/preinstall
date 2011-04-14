@@ -3,7 +3,7 @@
 LOG=/var/log/likewise-open-install.log
 TLOG=/tmp/LikewiseOpenTemp.txt
 
-DAEMONS_TO_KILL="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
+DAEMONS_TO_KILL="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd reapsysld lsassd lwiod netlogond eventlogd dcerpcd lwregd lwsmd"
 
 # Display to screen and log file with a blank line between entires.
 log()
@@ -33,7 +33,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -52,7 +52,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -70,7 +70,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG

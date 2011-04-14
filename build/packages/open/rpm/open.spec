@@ -112,7 +112,7 @@ for daemon in %{initScriptPathList}; do
     fi
 done
 
-DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
+DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd centeris.com-gpagentd reapsysld lsassd lwiod netlogond dcerpcd eventlogd lwregd lwsmd"
 
 UPGRADEDIR=/opt/likewise-upgrade
 
@@ -148,7 +148,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -167,7 +167,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -185,7 +185,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -351,6 +351,22 @@ switch_to_open_provider()
     run_quiet "/opt/likewise/bin/lwregshell set_value $_value Path $_path"
 }
 
+wait_for_lwsm_shutdown()
+{
+    LWSMD_WAIT_TIME=$1
+
+    while [ "$LWSMD_WAIT_TIME" -ne 0 ]; do
+        sleep 1
+        run_quiet "/opt/likewise/bin/lwsm list"
+        if [ $? -ne 0 ]; then
+            return 0
+        fi
+        LWSMD_WAIT_TIME=`expr $LWSMD_WAIT_TIME - 1`
+    done
+
+    return 1
+}
+
 postinstall()
 {
     log "Package: Likewise Open postinstall begins (`date`)"
@@ -369,6 +385,7 @@ postinstall()
     switch_to_open_provider
 
     run_or_fail "/opt/likewise/bin/lwsm shutdown"
+    wait_for_lwsm_shutdown 60
 
     run "/sbin/chkconfig --add lwsmd"
     run "/sbin/chkconfig --add likewise"
@@ -388,8 +405,7 @@ postinstall()
 postinstall
 
 %pre
-DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
-
+DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd centeris.com-gpagentd reapsysld lsassd lwiod netlogond dcerpcd eventlogd lwregd lwsmd"
 UPGRADEDIR=/opt/likewise-upgrade
 
 LOG=/var/log/likewise-open-install.log
@@ -425,7 +441,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -444,7 +460,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -462,7 +478,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -479,6 +495,24 @@ run_or_fail()
     return $err
 }
 
+wait_for_lwsm_shutdown()
+{
+    LWSMD_WAIT_TIME=$1
+
+    while [ "$LWSMD_WAIT_TIME" -ne 0 ]; do
+        sleep 1
+
+        run_quiet "/opt/likewise/bin/lwsm list"
+        if [ $? -ne 0 ]; then
+            return 0
+        fi
+
+        LWSMD_WAIT_TIME=`expr $LWSMD_WAIT_TIME - 1`
+    done
+
+    return 1
+}
+
 pre_upgrade()
 {
     log "Package: Likewise Open [pre upgrade] begins (`date`)"
@@ -486,7 +520,9 @@ pre_upgrade()
     run_quiet "/opt/likewise/bin/domainjoin-cli configure --disable pam"
     run_quiet "/opt/likewise/bin/domainjoin-cli configure --disable nsswitch"
 
+    # Stop any Likewise daemons
     run_quiet "/opt/likewise/bin/lwsm shutdown"
+    wait_for_lwsm_shutdown 60
 
     for daemon in $DAEMONS_TO_HALT
     do
@@ -579,7 +615,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -598,7 +634,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -616,7 +652,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -633,6 +669,24 @@ run_or_fail()
     return $err
 }
 
+wait_for_lwsm_shutdown()
+{
+    LWSMD_WAIT_TIME=$1
+
+    while [ "$LWSMD_WAIT_TIME" -ne 0 ]; do
+        sleep 1
+
+        run_quiet "/opt/likewise/bin/lwsm list"
+        if [ $? -ne 0 ]; then
+            return 0
+        fi
+
+        LWSMD_WAIT_TIME=`expr $LWSMD_WAIT_TIME - 1`
+    done
+
+    return 1
+}
+
 preuninstall_remove()
 {
     log "Package: Likewise Open [preun remove] begins (`date`)"
@@ -646,7 +700,8 @@ preuninstall_remove()
                               --disable krb5
 
     # Stop all daemons; none should be needed anymore.
-    run_quiet /opt/likewise/bin/lwsm shutdown
+    run_quiet "/opt/likewise/bin/lwsm shutdown"
+    wait_for_lwsm_shutdown 60
     for daemon in $DAEMONS_TO_HALT
     do
         run_quiet "pkill -KILL -x $daemon"

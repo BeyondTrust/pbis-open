@@ -242,6 +242,22 @@ switch_to_open_provider()
     run_quiet "/opt/likewise/bin/lwregshell set_value $_value Path $_path"
 }
 
+wait_for_lwsm_shutdown()
+{
+    LWSMD_WAIT_TIME=$1
+
+    while [ "$LWSMD_WAIT_TIME" -ne 0 ]; do
+        sleep 1
+        run_quiet "/opt/likewise/bin/lwsm list"
+        if [ $? -ne 0 ]; then
+            return 0
+        fi
+        LWSMD_WAIT_TIME=`expr $LWSMD_WAIT_TIME - 1`
+    done
+
+    return 1
+}
+
 postinstall()
 {
     log "Package: Likewise Open postinstall [configure] begins (`date`)"
@@ -260,6 +276,7 @@ postinstall()
     switch_to_open_provider
 
     run_or_fail "/opt/likewise/bin/lwsm shutdown"
+    wait_for_lwsm_shutdown 60
 
     run "/usr/sbin/update-rc.d -f lwsmd defaults 17 8"
     run "/usr/sbin/update-rc.d -f likewise defaults 18 7"
