@@ -709,6 +709,11 @@ do_uninstall()
             pkgList="$pkgList $pkgName"
         fi
     done
+
+    if [ -z "$pkgList" ]; then
+        log_info "Nothing to uninstall"
+        exit 0
+    fi
     package_uninstall $pkgList
 
     scrub_prefix
