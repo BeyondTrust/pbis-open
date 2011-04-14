@@ -89,6 +89,7 @@ krb5_gss_inquire_cred(minor_status, cred_handle, name, lifetime_ret,
     krb5_timestamp now;
     krb5_deltat lifetime;
     krb5_gss_name_t ret_name;
+    krb5_principal princ;
     gss_OID_set mechs;
     OM_uint32 ret;
 

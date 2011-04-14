@@ -2700,6 +2700,9 @@ krb5_error_code KRB5_CALLCONV krb5_kt_free_entry
 	(krb5_context,
 		krb5_keytab_entry * );
 
+krb5_error_code k5_kt_get_principal(krb5_context context, krb5_keytab keytab,
+                                    krb5_principal *princ_out);
+
 krb5_error_code krb5_principal2salt_norealm
 	(krb5_context,
 		krb5_const_principal, krb5_data *);
