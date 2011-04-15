@@ -299,7 +299,7 @@ kg_compose_deleg_cred(OM_uint32 *minor_status,
     if (GSS_ERROR(major_status))
         goto cleanup;
 
-    cred->tgt_expire = impersonator_cred->tgt_expire;
+    cred->tgt_expire = subject_creds->times.endtime;
 
     code = kg_init_name(context, subject_creds->client, NULL, 0, &cred->name);
     if (code != 0)
