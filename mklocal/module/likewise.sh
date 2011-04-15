@@ -14,7 +14,7 @@ option()
             _default_initdir="/etc/rc.d/init.d"
             ;;
         hpux)
-            _default_initdir="/sbin/rc.d"
+            _default_initdir="/sbin/init.d"
             ;;
         *)
             _default_initdir="/etc/init.d"
