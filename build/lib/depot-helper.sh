@@ -92,6 +92,18 @@ depot_generate_psf()
     local file="${2}"
     local pkgname="`package_native_name ${pkg}`"
 
+    if [ -f "${PKG_DIR}/postinstall" ]; then
+        postinstall="postinstall    ./postinstall"
+    fi
+
+    if [ -f "${PKG_DIR}/preinstall" ]; then
+        preinstall="preinstall    ./preinstall"
+    fi
+
+    if [ -f "${PKG_DIR}/preremove" ]; then
+        preremove="preremove    ./preremove"
+    fi
+
     cat <<HEADER >"${file}"
 product
     tag            ${pkgname}
@@ -99,6 +111,9 @@ product
     os_name        HP-UX
     os_release	   ?.11.??
     os_version	   *
+    ${postinstall}
+    ${preinstall}
+    ${preremove}
 HEADER
 
     depot_generate_psf_fileset prefix "${BUILD_PREFIX}" ""                >>"${file}"
