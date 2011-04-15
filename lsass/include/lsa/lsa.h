@@ -1984,8 +1984,7 @@ LsaFreeSecurityObject(
  * Returns a list of security objects of all transitive members
  * of a group.  This is equivalent to recursive calls to
  * #LsaOpenEnumMembers()/#LsaEnumMembers()/#LsaCloseEnum()
- * and #LsaFindObjects(), but avoids some of the overheard of processing
- * the intermediate results.  The returned list should be freed
+ * and #LsaFindObjects().  The returned list should be freed
  * with #LsaFreeSecurityObjectList().
  *
  * @param[in] hLsa a connection handle
