@@ -98,7 +98,7 @@ if [ -n "$TOOLS" ]
 then
     PATH="${TOOLS}/bin:$PATH"
     EXTRA_CPPFLAGS="-I${TOOLS}/include"
-    EXTRA_LDFLAGS="-L${TOOLS}/lib"
+    EXTRA_LDFLAGS="-L$(dirname $(find "${TOOLS}" -name 'libmoonunit.*' -print -quit))"
 
     if [ -x "${TOOLS}/bin/dash" ]
     then
