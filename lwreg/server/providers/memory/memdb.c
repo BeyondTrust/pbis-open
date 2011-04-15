@@ -775,6 +775,53 @@ error:
 
 
 NTSTATUS
+MemDbAccessCheckKey(
+    IN HANDLE Handle,
+    IN REG_DB_HANDLE hDb,
+    IN ACCESS_MASK AccessDesired,
+    IN OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
+    IN ULONG ulSecDescLength)
+{
+    NTSTATUS status = 0;
+    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor = NULL;
+    DWORD SecurityDescriptorLen = 0;
+    ACCESS_MASK AccessGranted = 0;
+    PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
+
+    if (pSecDescRel)
+    {
+        SecurityDescriptor = pSecDescRel;
+        SecurityDescriptorLen = ulSecDescLength;
+    }
+    else
+    {
+        SecurityDescriptor = hDb->pMemReg->SecurityDescriptor;
+        SecurityDescriptorLen = hDb->pMemReg->SecurityDescriptorLen;
+    }
+
+    if (pServerState && pServerState->pToken)
+    {
+        status = RegSrvAccessCheckKey(pServerState->pToken,
+                                      SecurityDescriptor,
+                                      SecurityDescriptorLen,
+                                      AccessDesired,
+                                      &AccessGranted);
+        if (STATUS_NO_TOKEN == status)
+        {
+            status = 0;
+            AccessGranted = 0;
+        }
+        BAIL_ON_NT_STATUS(status);
+    }
+cleanup:
+    return status;
+
+error:
+    goto cleanup;
+}
+
+
+NTSTATUS
 MemDbCreateKeyEx(
     IN HANDLE Handle,
     IN REG_DB_HANDLE hDb,
@@ -797,6 +844,14 @@ MemDbCreateKeyEx(
     PWSTR pwszPtr = NULL;
     BOOLEAN bEndOfString = FALSE;
     
+    status = MemDbAccessCheckKey(
+                 Handle,
+                 hDb,
+                 AccessDesired,
+                 pSecDescRel,
+                 ulSecDescLength);
+    BAIL_ON_NT_STATUS(status);
+
     /*
      * Iterate over subkeys in \ sepearated path.
      */
@@ -1306,7 +1361,7 @@ MemDbSetKeyAcl(
         memcpy(hKey->SecurityDescriptor, pSecDescRel, secDescLen);
         hKey->SecurityDescriptorLen = secDescLen;
         hKey->SecurityDescriptorAllocated = TRUE;
-    }
+      }
 
 cleanup:
     if (bLocked)

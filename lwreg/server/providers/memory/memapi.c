@@ -191,8 +191,11 @@ MemCreateKeyEx(
     REG_DB_CONNECTION regDbConn = {0};
     PWSTR pwszRootKey = NULL;
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
+#if 0
     ACCESS_MASK AccessGranted = 0;
-    DWORD secLen = 0;
+    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor = NULL;
+    DWORD SecurityDescriptorLen = 0;
+#endif
 
     if (!hKey)
     {
@@ -214,12 +217,17 @@ MemCreateKeyEx(
     {
         regDbConn.pMemReg = pKeyHandle->pKey->hKey;
     }
-    if (ulSecDescLength > 0)
+
+    if (!pServerState->pToken)
     {
-        secLen = ulSecDescLength;
+        status = RegSrvCreateAccessToken(pServerState->peerUID,
+                                         pServerState->peerGID,
+                                         &pServerState->pToken);
+        BAIL_ON_NT_STATUS(status);
     }
+
     status = MemDbCreateKeyEx(
-                 Handle,
+                 Handle,  // Access token is on this handle
                  &regDbConn,
                  pSubKey,
                  0, // IN DWORD dwReserved
@@ -235,11 +243,23 @@ MemCreateKeyEx(
     status = _MemCreateHkeyReply(hSubKey, phkResult);
     BAIL_ON_NT_STATUS(status);
 
+#if 0
     if (pSecDescRel)
     {
+        SecurityDescriptor = pSecDescRel;
+        SecurityDescriptorLen = ulSecDescLength;
+    }
+    else
+    {
+        SecurityDescriptor = pKeyHandle->pKey->hKey->SecurityDescriptor;
+        SecurityDescriptorLen = pKeyHandle->pKey->hKey->SecurityDescriptorLen;
+    }
+
+    if (SecurityDescriptor)
+    {
         status = RegSrvAccessCheckKey(pServerState->pToken,
-                                      pSecDescRel,
-                                      ulSecDescLength,
+                                      SecurityDescriptor,
+                                      SecurityDescriptorLen,
                                       AccessDesired,
                                       &AccessGranted);
     }
@@ -251,6 +271,7 @@ MemCreateKeyEx(
     }
     BAIL_ON_NT_STATUS(status);
     pKeyHandle->AccessGranted = AccessGranted;
+#endif
 
     MemDbExportEntryChanged();
 
@@ -359,6 +380,12 @@ MemDeleteKey(
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
     MEM_REG_STORE_HANDLE hParentKey = NULL;
     MEM_REG_STORE_HANDLE hRegKey = NULL;
+
+#if 0
+/* AccessGranted isn't know here */
+    status = RegSrvAccessCheckKeyHandle(pKeyHandle, DELETE);
+    BAIL_ON_NT_STATUS(status);
+#endif
 
     if (hKey)
     {

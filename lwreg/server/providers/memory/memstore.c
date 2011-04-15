@@ -124,7 +124,6 @@ MemRegStoreOpen(
     DWORD i = 0;
     PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel = NULL;
     ULONG ulSecDescLen = 0;
-    PACCESS_TOKEN pToken = NULL;
 
     /* This is the ROOT node (\) of the registry */
     status = LW_RTL_ALLOCATE(
@@ -137,12 +136,6 @@ MemRegStoreOpen(
     phReg->NodeType = REGMEM_TYPE_ROOT;
     status = LwRtlWC16StringAllocateFromCString(
                  &phReg->Name, "\\");
-    BAIL_ON_NT_STATUS(status);
-
-    /* Get this information from the Handle */
-    status = RegSrvCreateAccessToken(0, // pServerState->peerUID,
-                                     0, // pServerState->peerGID,
-                                     &pToken);
     BAIL_ON_NT_STATUS(status);
 
     status = RegSrvCreateDefaultSecDescRel(
