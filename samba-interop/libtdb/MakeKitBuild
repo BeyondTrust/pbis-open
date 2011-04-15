@@ -83,4 +83,15 @@ configure()
     mk_check_functions \
         HEADERDEPS="stdarg.h" \
         va_copy __va_copy
+
+    # We need to declare if we have C99-compliant vsnprintf or
+    # not, but we can't actually try running a program as
+    # that is not cross-compiling-friendly.  This hard-coded
+    # list of operating systems with good implementations is
+    # barely preferable.
+    case "$MK_HOST_OS:$MK_HOST_DISTRO_VERSION" in
+        linux:*|darwin:*)
+            mk_define HAVE_C99_VSNPRINTF 1
+            ;;
+    esac
 }
