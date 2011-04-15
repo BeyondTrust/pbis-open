@@ -1504,7 +1504,7 @@ AD_GetCachedPasswordHash(
 
     MD4(
         (UCHAR *)pwszPassword,
-        strlen(pszPassword) * sizeof(wchar16_t),
+        wc16slen(pwszPassword) * sizeof(wchar16_t),
         pbPrehashedVerifier);
 
     // Append the username in UCS-2 encoding to the NT hash
