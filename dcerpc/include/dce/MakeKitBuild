@@ -11,9 +11,12 @@ make()
         rpcexc.h dce_utils.h sec_authn.h dce.h dce_error.h marshall.h ndr_rep.h ndrtypes.h \
         dcethread.h"
 
-    PLAT_HEADERS="\
-        $target_cpu/ndrtypes.h $target_cpu/ndr_rep.h $target_cpu/marshall.h \
-        $target_os/dce_error.h $target_os/dce.h"
+    PLAT_HEADERS="$target_os/dce_error.h $target_os/dce.h"
+    
+    for cpu in ${target_cpu}
+    do
+        PLAT_HEADERS="$PLAT_HEADERS $cpu/ndrtypes.h $cpu/ndr_rep.h $cpu/marshall.h"
+    done
 
     COMMON_IDL="codesets.idl conv.idl convc.idl ep.idl \
 	iovector.idl lbase.idl mgmt.idl nbase.idl ncastat.idl \

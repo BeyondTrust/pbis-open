@@ -126,29 +126,44 @@ configure()
             ;;
     esac
 
-    case "$MK_ISA" in
-        x86_32)
-            target_cpu="i386"
-            ;;
-        x86_64)
-            target_cpu="x86_64"
-            ;;
-        sparc_32)
-            target_cpu="sparc"
-            ;;
-        ppc32)
-            target_cpu="powerpc"
-            ;;
-        ppc64)
-            target_cpu="powerpc64"
-            ;;
-        hppa32)
-            target_cpu="hppa2.0"
-            ;;
-        ia64_32)
-            target_cpu="ia64"
-            ;;
-    esac
+
+    if [ "$MK_HOST_MULTIARCH" = "combine" ]
+    then
+        _isa_list="${MK_HOST_ISAS}"
+    else
+        _isa_list="${MK_HOST_PRIMARY_ISA}"
+    fi
+
+    target_cpu=""
+
+    for _isa in ${_isa_list}
+    do
+        case "$_isa" in
+            x86_32)
+                target_cpu="$target_cpu i386"
+                ;;
+            x86_64)
+                target_cpu="$target_cpu x86_64"
+                ;;
+            sparc_32)
+                target_cpu="$target_cpu sparc"
+                ;;
+            ppc32)
+                target_cpu="$target_cpu powerpc"
+                ;;
+            ppc64)
+                target_cpu="$target_cpu powerpc64"
+                ;;
+            hppa32)
+                target_cpu="$target_cpu hppa2.0"
+                ;;
+            ia64_32)
+                target_cpu="$target_cpu ia64"
+                ;;
+        esac
+    done
+
+    target_cpu="${target_cpu# }"
 
     mk_declare -o DCERPCD_SERVICE_TYPE="dword:00000002"
 
