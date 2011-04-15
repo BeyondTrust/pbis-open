@@ -247,6 +247,7 @@ LsaNssGetSupportedAttrs(
         {S_PGRP, AL_USERATTR, SEC_CHAR},
         {S_GROUPS, AL_USERATTR, SEC_LIST},
         {S_GROUPSIDS, AL_USERATTR, SEC_LIST},
+        {S_AUDITCLASSES, AL_USERATTR, SEC_LIST},
         {S_LOCKED, AL_USERATTR, SEC_BOOL},
         {"SID", AL_USERATTR, SEC_CHAR},
         {"UPN", AL_USERATTR, SEC_CHAR},
@@ -271,6 +272,7 @@ LsaNssGetSupportedAttrs(
         &pList[16],
         &pList[17],
         &pList[18],
+        &pList[19],
         NULL
     };
 
