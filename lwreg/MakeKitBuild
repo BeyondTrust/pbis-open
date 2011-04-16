@@ -1,5 +1,16 @@
 SUBDIRS="include libedit utils ipc common client parse shellutil server shell"
 
+option()
+{
+    mk_option \
+        OPTION=registry-backend \
+        PARAM='value' \
+        VAR=LWREG_REGISTRY_BACKEND \
+        DEFAULT="sqlite" \
+        HELP="Registry backend (sqlite | memory)"
+}
+
+
 configure()
 {
     mk_config_header 'include/config.h'
@@ -21,8 +32,10 @@ configure()
         little) mk_define LW_LITTLE_ENDIAN;;
     esac
 
-    mk_define REG_USE_SQLITE
-    #mk_define REG_USE_MEMORY
+    case "$LWREG_REGISTRY_BACKEND" in
+        "memory") mk_define REG_USE_MEMORY;;
+        "sqlite") mk_define REG_USE_SQLITE;;
+    esac
 
     mk_check_headers \
         stdlib.h \

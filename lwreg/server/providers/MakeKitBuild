@@ -1,2 +1,4 @@
-SUBDIRS='sqlite'
-#SUBDIRS='memory'
+case "$LWREG_REGISTRY_BACKEND" in
+    memory) SUBDIRS='memory';;
+    sqlite) SUBDIRS='sqlite';;
+esac
