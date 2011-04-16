@@ -176,7 +176,7 @@ lw_openssl()
         case "$MK_OS" in
             darwin)
                 mk_target \
-                    TARGET="${MK_LIBDIR}/lib${item}${VERSION}.${MK_LIB_EXT}" \
+                    TARGET="${MK_LIBDIR}/lib${item}.${VERSION}${MK_LIB_EXT}" \
                     DEPS="$stamp"
                 ;;
             *)
