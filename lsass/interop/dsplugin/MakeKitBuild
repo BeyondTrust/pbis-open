@@ -62,4 +62,6 @@ make()
         DEPS="Info.plist.in process-info-plist.pl" \
         mk_mkdir "&'${CONTENTS_DIR}'" '%;' \
         "&process-info-plist.pl" -v "$LW_VERSION" -o '$@' '&Info.plist.in'
+
+    mk_stage DEST="${LW_CONFIGDIR}/lwdsplugin.reg" SOURCE="etc/lwdsplugin.reg"
 }
