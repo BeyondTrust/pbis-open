@@ -1,0 +1,114 @@
+#!/bin/sh
+
+LOG=/var/adm/likewise-open-install.log
+TLOG=/tmp/LikewiseOpenTemp.txt
+
+DAEMONS_TO_KILL="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd reapsysld lsassd lwiod netlogond eventlogd dcerpcd lwregd lwsmd"
+
+# Display to screen and log file with a blank line between entires.
+log()
+{
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Display to screen and log file with no blank line.
+_log()
+{
+    echo $@
+    echo $@ >> $LOG
+}
+
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
+run()
+{
+    eval "$@" > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err"
+        _log `cat $TLOG`
+        _log
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# Log only to file.
+run_quiet()
+{
+    eval "$@" > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+    else
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    cat $TLOG >> $LOG
+    echo >> $LOG
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+run_or_fail()
+{
+    eval "$@" > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log `cat $TLOG`
+        _log
+        rm -f $TLOG > /dev/null 2>&1
+        exit 1
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+preinstall()
+{
+    log "Package: Likewise Open preinstall begins (`date`)"
+    log "Logging all operations to $LOG"
+
+    if [ -f @MK_SBINDIR@/gpagentd ]; then
+        log "@MK_SBINDIR@/gpagentd exists: Uninstall Likewise Enterprise before installing Likewise Open."
+        exit 1
+    elif [ -f @MK_PREFIX@/data/VERSION ]; then
+        log "@MK_PREFIX@/data/VERSION exists: Uninstall previous version of Likewise Open before proceeding with the install."
+        exit 1
+    fi
+
+    for daemon in $DAEMONS_TO_KILL; do
+        PIDS=`UNIX95= ps -C $daemon -o pid=`
+        if [ -n "$PIDS" ]; then
+            run_quiet "kill -KILL $PIDS"
+        fi
+    done
+
+    log "Package: Likewise Open preinstall finished"
+    exit 0
+}
+
+preinstall

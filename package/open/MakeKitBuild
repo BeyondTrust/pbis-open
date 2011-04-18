@@ -1,4 +1,4 @@
-MODULES="package-deb package-rpm package-freebsd package-pkg package-lpp"
+MODULES="package-deb package-rpm package-freebsd package-pkg package-lpp package-depot"
 
 configure()
 {
@@ -47,6 +47,12 @@ configure()
                 ;;
         esac
         mk_declare -o PKG_PKG_ARCH
+    fi
+
+    if mk_depot_enabled
+    then
+        mk_declare -o PKG_DEPOT_NAME="${LW_VENDOR}-open"
+        mk_declare -o PKG_DEPOT_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
     fi
 }
 
@@ -205,6 +211,28 @@ package_lpp()
     mk_lpp_done
 }
 
+package_depot()
+{
+    mk_depot_do \
+        PACKAGE="${PKG_DEPOT_NAME}" \
+        VERSION="${PKG_DEPOT_VERSION}" \
+        PSF="depot/open.psf.in" \
+        CONTROLFILES="depot/copyright.in depot/depend.in depot/postinstall.in \
+                      depot/preinstall.in depot/preremove.in"
+    
+        mk_depot_sub_do SUBPACKAGE=prefix
+            open_files_prefix
+            open_files_compat_prefix
+        mk_depot_sub_done
+        
+        mk_depot_sub_do SUBPACKAGE=root
+            open_files_root
+            open_files_usr
+            open_files_compat_usr
+        mk_depot_sub_done
+    mk_depot_done
+}
+
 make()
 {
     OPEN_SUBDIRS="\
@@ -221,6 +249,7 @@ make()
     mk_freebsd_enabled && package_freebsd
     mk_pkg_enabled && package_pkg
     mk_lpp_enabled && package_lpp
+    mk_depot_enabled && package_depot
 }
 
 open_files()
