@@ -619,63 +619,6 @@ error_status_t          *status;
 
 //#if defined(UNIX) || defined(unix)
 
-static
-void
-StripLeadingWhitespace(
-    char* str
-    )
-{
-    char* pszNew = str;
-    char* pszTmp = str;
-
-    if (!str || !*str || !isspace((int)*str)) {
-        return;
-    }
-
-    while (pszTmp != NULL && *pszTmp != '\0' && isspace((int)*pszTmp)) {
-        pszTmp++;
-    }
-
-    while (pszTmp != NULL && *pszTmp != '\0') {
-        *pszNew++ = *pszTmp++;
-    }
-    *pszNew = '\0';
-}
-
-static
-void
-StripTrailingWhitespace(
-    char* str
-    )
-{
-    char* pszLastSpace = NULL;
-    char* pszTmp = str;
-
-    if (!str || !*str) {
-        return;
-    }
-
-    while (pszTmp != NULL && *pszTmp != '\0') {
-        pszLastSpace = (isspace((int)*pszTmp) ? (pszLastSpace ? pszLastSpace : pszTmp) : NULL);
-        pszTmp++;
-    }
-
-    if (pszLastSpace != NULL) {
-        *pszLastSpace = '\0';
-    }
-}
-
-static
-void
-StripWhitespace(
-    char* str
-    )
-{
-    if (!str || !*str)
-       return;
-    StripLeadingWhitespace(str);
-    StripTrailingWhitespace(str);
-}
 
 static
 void

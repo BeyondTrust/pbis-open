@@ -140,10 +140,8 @@ configure()
 
     mk_export DCERPCD_SERVICE_TYPE="dword:00000001"
 
-    mk_multiarch_do
-        rpc_feature_flags
-    mk_multiarch_done
-    
+    rpc_feature_flags
+
     mk_export MK_CFLAGS="$MK_CFLAGS -Wall"
 
     mk_export SBINDIR="$MK_SBINDIR"
