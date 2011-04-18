@@ -42,6 +42,13 @@ make()
        pwdcache.c                \
        ioctl.c"
 
+    FRAMEWORK_FLAGS=""
+
+    if [ "$MK_HOST_OS" = "darwin" ]
+    then
+        FRAMEWORK_FLAGS="-framework CoreFoundation -framework SystemConfiguration"
+    fi
+
     if [ "$LSA_BUILTIN_PROVIDERS" = "yes" ]
     then
         mk_group \
@@ -51,7 +58,8 @@ make()
 	    INCLUDEDIRS="join/include ../../include ../../../include" \
 	    HEADERDEPS="lw/base.h lwadvapi.h lwnet.h uuid/uuid.h openssl/rc4.h reg/regutil.h" \
 	    LIBDEPS="lsacommon lsapstore lsaserverapi sqlite3 $LIB_KVM" \
-	    GROUPDEPS="join/lsajoin"
+            GROUPDEPS="join/lsajoin" \
+            LDFLAGS="$FRAMEWORK_FLAGS"
     else
         mk_dlo \
 	    DLO=liblsass_auth_provider_ad_open \
@@ -60,6 +68,7 @@ make()
 	    INCLUDEDIRS="join/include ../../include ../../../include" \
 	    HEADERDEPS="lw/base.h lwadvapi.h lwnet.h uuid/uuid.h openssl/rc4.h reg/regutil.h" \
 	    LIBDEPS="lsacommon lsapstore lsaserverapi sqlite3 $LIB_KVM" \
-	    GROUPS="join/lsajoin"
+	    GROUPS="join/lsajoin" \
+            LDFLAGS="$FRAMEWORK_FLAGS"
     fi
 }
