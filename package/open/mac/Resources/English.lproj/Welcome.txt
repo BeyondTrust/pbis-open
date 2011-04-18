@@ -1,0 +1,5 @@
+Likewise Open
+
+Interoperability software to allow non-Windows systems to use Microsoft Active Directory.
+
+This program installs the Likewise Open software suite in order to enable AD authentication, single sign-on, and other features.

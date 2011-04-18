@@ -1,4 +1,4 @@
-MODULES="package-deb package-rpm package-freebsd package-pkg package-lpp package-depot"
+MODULES="package-deb package-rpm package-freebsd package-pkg package-lpp package-depot package-mac"
 
 configure()
 {
@@ -53,6 +53,12 @@ configure()
     then
         mk_declare -o PKG_DEPOT_NAME="${LW_VENDOR}-open"
         mk_declare -o PKG_DEPOT_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+    fi
+
+    if mk_macpkg_enabled
+    then
+        mk_declare -o PKG_MACPKG_NAME="${LW_VENDOR}-open"
+        mk_declare -o PKG_MACPKG_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
     fi
 }
 
@@ -233,6 +239,28 @@ package_depot()
     mk_depot_done
 }
 
+package_mac()
+{
+    mk_macpkg_do \
+        PACKAGE="${PKG_MACPKG_NAME}" \
+        VERSION="${PKG_MACPKG_VERSION}" \
+        PMDOC="mac/likewise-open.pmdoc" \
+        RESOURCES="mac/Resources/postflight mac/Resources/preflight \
+                   mac/Resources/English.lproj/Welcome.txt \
+                   mac/Resources/English.lproj/ReadMe.txt \
+                   mac/Resources/English.lproj/License.txt" \
+        BINRESOURCES="mac/Resources/English.lproj/background.gif"
+    
+        mk_macpkg_sub_do SUBPACKAGE=image
+            open_files
+            # No separate GUI package
+            mk_package_patterns SUBDIRS="@domainjoin/domainjoin-gui"
+        mk_macpkg_sub_done
+
+    mk_macpkg_done
+}
+
+
 make()
 {
     OPEN_SUBDIRS="\
@@ -250,6 +278,7 @@ make()
     mk_pkg_enabled && package_pkg
     mk_lpp_enabled && package_lpp
     mk_depot_enabled && package_depot
+    mk_macpkg_enabled && package_mac
 }
 
 open_files()
@@ -293,6 +322,7 @@ open_files_root()
         SUBDIRS="$OPEN_SUBDIRS" \
         "${MK_SYSCONFDIR}/*" \
         "${MK_SYSCONFDIR}/gss/mech" \
+        "${MK_SYSCONFDIR}/LaunchDaemons/*" \
         "${LW_INITDIR}/*"
 
     mk_package_dirs \
@@ -346,6 +376,11 @@ open_files_interop()
                 "@${MK_STAGE_DIR}/usr/lib/security/64/pam_lsass.so" \
                 "@${MK_STAGE_DIR}/usr/lib/security/LSASS_64" \
                 "@${MK_STAGE_DIR}/usr/lib/netsvc/dynload/lsass_64.so"
+            ;;
+        darwin:*)
+            mk_package_patterns \
+                SUBDIRS="@lsass/interop/dsplugin @lsass/interop/auth/pam" \
+                "*"
             ;;
         *)
             mk_package_patterns \
