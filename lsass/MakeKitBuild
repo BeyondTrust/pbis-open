@@ -102,6 +102,9 @@ configure()
                 NSSDIR="/usr/lib/hpux64"
                 PAMDIR="/usr/lib/security/hpux64"
                 ;;
+            darwin:*)
+                PAMDIR="/usr/lib/pam"
+                ;;
         esac
 
         mk_define LIBDIR "\"$MK_LIBDIR\""
