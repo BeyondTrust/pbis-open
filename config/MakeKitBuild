@@ -30,6 +30,8 @@ make()
     then
         mk_stage DEST="${MK_BINDIR}/lw-local-user-migrate.sh" SOURCE="lw-local-user-migrate.sh.in"
         mk_stage DEST="${MK_BINDIR}/macuninstall.sh" SOURCE="macuninstall.sh"
+
+        mk_stage DESTDIR="${MK_SYSCONFDIR}/LaunchDaemons" com.likewisesoftware.lwsmd.plist
     fi
 }
 
