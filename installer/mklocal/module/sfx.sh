@@ -50,6 +50,19 @@ _lw_package_native_name()
         lpp)
             result=`echo "$1" | tr '-' '.'`
             ;;
+        depot)
+            _IFS="$IFS"
+            IFS="-"
+            set -- $1
+            IFS="$_IFS"
+            result=""
+            for part
+            do
+                rest="${part#?}"
+                first=`echo "${part%$rest}" | tr '[:lower:]' '[:upper:]'`
+                result="$result$first$rest"
+            done
+            ;;
         *)
             result="$1"
             ;;

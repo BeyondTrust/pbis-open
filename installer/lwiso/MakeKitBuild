@@ -18,6 +18,9 @@ make()
         aix)
             mk_lpp_enabled && sfx_generic "lpp"
             ;;
+        hpux)
+            mk_depot_enabled && sfx_generic "depot"
+            ;;
     esac
 }
 
