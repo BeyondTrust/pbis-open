@@ -1,4 +1,4 @@
-MODULES="sfx"
+MODULES="sfx dmg"
 
 make()
 {
@@ -20,6 +20,13 @@ make()
             ;;
         hpux)
             mk_depot_enabled && sfx_generic "depot"
+            ;;
+        darwin)
+            mk_macpkg_enabled && lw_dmg \
+                DMG="likewise-open-${LW_VERSION}" \
+                VOLNAME="LikewiseOpen" \
+                TEMPLATE="dmg-template.tar.bz2" \
+                PACKAGES="likewise-open"
             ;;
     esac
 }
