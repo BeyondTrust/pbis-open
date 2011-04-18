@@ -368,13 +368,33 @@ mk_fail()
     exit 1
 }
 
-##
+#<
+# @brief Print warning
+# @usage message...
 #
-# mk_function_exists
+# Prints <param>message</param> to the user.  If fail-on-warn
+# is turned on, this will abort the current operation.  Otherwise,
+# this function will pause for 1 second to catch the user's
+# attention.
+#>
+mk_warn()
+{
+    if [ "$MK_FAIL_ON_WARN" = "yes" ]
+    then
+        mk_fail "$@"
+    else
+        mk_msg "WARNING: $*"
+        sleep 1
+    fi
+}
+
+#<
+# @brief Check if a function is defined
+# @usage name
 #
-# Returns 0 if the function "$1" is defined, non-zero otherwise
-#
-##
+# Returns 0 (logical true) if a function named <param>name</param>
+# if defined or 1 otherwise.
+#>
 mk_function_exists()
 {
     # To avoid detecting a program in the path with the same name,
@@ -839,22 +859,19 @@ _mk_fnmatch_transform()
     unset __tmp __i
 }
 
-##
+#>
+# @brief Perform glob matching on path
+# @usage path pattern
 #
-# mk_fnmatch
+# Performs glob matching on a path.  Unlike
+# the shell's <lit>case</lit> syntax, wildcards
+# will not match across path separators.
 #
-# Performs fnmatch-like glob matching in that
-# * will not match across a path separator.
-# As an extra feature, a pattern containing no
-# path separators will match just the base filename:
+# Returns 0 (logical true) if <param>pattern</param>
+# matches <param>path</param>, or 1 otherwise.
 #
-# mk_fnmatch /usr/lib/foobar.so /usr/lib/*.so -> true
-# mk_fnmatch /usr/lib/subdir/foobar.so /usr/lib/*.so -> false
-# mk_fnmatch /usr/lib/subdir/foobar.so *.so -> true
-#
-# This function avoids clobbering $result
-#
-##
+# This function does not change <var>result</var>.
+#>
 mk_fnmatch()
 {
     # $1 = path
@@ -909,16 +926,16 @@ mk_fnmatch_filter()
     unset __patterns __results __pattern __path
 }
 
-##
+#<
+# @brief Normalize path
+# @usage path
 #
-# mk_normalize_path
-#
-# Normalizes the path specified as $1 by attempting to remove all
+# Normalizes <param>path</param> by attempting to remove all
 # '.' and '..' components.  '..' components which attempt to escape
-# the current directory or / are left in place, but this is easy
-# to check for.
-#
-##
+# the current directory or / are left in place, but are guaranteed
+# to occur at the beginning of the string where they can be
+# easily checked.  Sets <var>result</var> to the result.
+#>
 mk_normalize_path()
 {
     __path_IFS="$IFS"
@@ -1014,6 +1031,112 @@ _mk_reverse()
     result="${result% }"
 }
 
+#<
+# @brief Strip last component from filename
+# @usage filename
+#
+# Strips the last component from a filename,
+# leaving the name of the directory containing
+# the file, and sets <var>result</var> to the
+# result.
+#>
+mk_dirname()
+{
+    result="."
+    case "$1" in
+        */*)
+            result="${1%/*}"
+    esac
+}
+
+#<
+# @brief Strip leading directory from filename
+# @usage filename
+#
+# Strips the leading directory components
+# from a filename and sets <var>result</var>
+# to the result.
+#>
+mk_basename()
+{
+    result="${1##*/}"
+}
+
+#<
+# @brief Create leading directories for filename
+# @usage filename
+#
+# Creates all leading directory components
+# for a filename.
+#>
+mk_mkdirname()
+{
+    _result="$result"
+    mk_dirname "$1"
+    mk_mkdir "$result"
+    result="$_result"
+}
+
+#<
+# @brief Run a command and abort on failure
+# @usage command...
+# 
+# Runs the specified command.  If it fails,
+# the current operation will be aborted with
+# an error message detailing the command that
+# was run.
+#>
+mk_run_or_fail()
+{
+    mk_quote_list "$@"
+    mk_msg_verbose "+ $result"
+    
+    if ! "$@"
+    then
+        mk_msg "FAILED: $result"
+        exit 1
+    fi
+}
+
+#<
+# @brief Run a command quietly and abort on failure
+# @usage command...
+# 
+# Like <funcref>mk_run_or_fail</funcref>, but suppresses
+# all command output if the command succeeds.  On failure,
+# the output is displayed.
+#>
+mk_run_quiet_or_fail()
+{
+    mk_quote_list "$@"
+    mk_msg_verbose "+(q) $result"
+    
+    __log="`"$@" 2>&1`"
+
+    if [ "$?" -ne 0 ]
+    then
+        echo "$__log" >&2
+        mk_msg "FAILED: $result"
+        exit 1
+    fi
+}
+
+mk_cd_or_fail()
+{
+    mk_quote "$1"
+    mk_msg_verbose "+ 'cd' $result"
+    cd "$1" || mk_fail "FAILED: 'cd' $result"
+}
+
+#<
+# @brief Read a line from stdin
+# @usage
+#
+# Reads a single line from stdin and sets <var>result</var>
+# to result.  If a line was read, this function returns 0
+# (logical true).  If a line could not be read (e.g. due to end
+# of file), 1 is returned.
+#>
 mk_read_line()
 {
     _IFS="$IFS"
@@ -1024,6 +1147,14 @@ mk_read_line()
     return "$_res"
 }
 
+#<
+# @brief Get mode of file or directory in octal
+# @usage path
+#
+# Sets <var>result</var> to the mode of <param>file</param>
+# in octal.  If the mode could not be read, this function
+# aborts via <funcref>mk_fail</funcref>.
+#>
 mk_get_file_mode()
 {
     # $1 = path

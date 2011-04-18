@@ -32,6 +32,62 @@
 #
 ##
 
+#<
+# @var MK_HOME
+# @brief MakeKit home directory
+#
+# The directory where MakeKit lives.
+#>
+
+#<
+# @var MK_SHELL
+# @brief POSIX-compliant shell
+#
+# The path to the POSIX-compliant shell which MakeKit
+# is using.
+#>
+
+#<
+# @var MK_ROOT_DIR
+# @brief Root build directory
+#
+# The root build directory as an absolute path.
+# This is where the user ran configure.
+#>
+
+#<
+# @var MK_SOURCE_DIR
+# @brief Source directory
+#
+# The root source directory where the top-level
+# MakeKitBuild is located.  If relative, the
+# path is taken to be relative to <varref>MK_ROOT_DIR</varref>.
+#>
+
+#<
+# @var MK_OBJECT_DIR
+# @brief Intermediate file directory
+#
+# The subdirectory of <varref>MK_ROOT_DIR</varref> where
+# intermediate build results are collected.  Usually <lit>object</lit>.
+#>
+
+#<
+# @var MK_STAGE_DIR
+# @brief Staging directory
+#
+# The subdirectory of <varref>MK_ROOT_DIR</varref> where
+# build end products are collected.  Usually <lit>stage</lit>.
+#>
+
+#<
+# @var MK_RUN_DIR
+# @brief Run directory
+#
+# The subdirectory of <varref>MK_ROOT_DIR</varref> where programs
+# used subsequently in the build process are placed.  Usually <lit>run</lit>.
+#>
+
 BASIC_VARIABLES="\
     MK_HOME MK_SHELL MK_ROOT_DIR MK_SOURCE_DIR MK_OBJECT_DIR MK_STAGE_DIR \
     MK_RUN_DIR MK_OPTIONS MK_SEARCH_DIRS MK_MODULE_LIST MK_MODULE_FILES"

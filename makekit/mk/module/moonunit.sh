@@ -133,7 +133,7 @@ mk_check_moonunit()
     mk_check_headers moonunit/moonunit.h
     mk_check_libraries moonunit
     
-    if [ -n "$MOONUNIT_STUB" -a "$HAVE_MOONUNIT_MOONUNIT_H" != no -a "$HAVE_LIB_MOOUNIT" != no ]
+    if [ -n "$MOONUNIT_STUB" -a "$HAVE_MOONUNIT_MOONUNIT_H" != no -a "$HAVE_LIB_MOONUNIT" != no ]
     then
         HAVE_MOONUNIT=yes
     else

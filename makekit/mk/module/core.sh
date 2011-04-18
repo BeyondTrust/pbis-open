@@ -275,57 +275,6 @@ mk_get_clean_targets()
     mk_pop_vars
 }
 
-#<
-# @brief Run a command and abort on failure
-# @usage command...
-# 
-# Runs the specified command.  If it fails,
-# the current operation will be aborted with
-# an error message detailing the command that
-# was run.
-#>
-mk_run_or_fail()
-{
-    mk_quote_list "$@"
-    mk_msg_verbose "+ $result"
-    
-    if ! "$@"
-    then
-        mk_msg "FAILED: $result"
-        exit 1
-    fi
-}
-
-#<
-# @brief Run a command quietly and abort on failure
-# @usage command...
-# 
-# Like <funcref>mk_run_or_fail</funcref>, but suppresses
-# all command output if the command succeeds.  On failure,
-# the output is displayed.
-#>
-mk_run_quiet_or_fail()
-{
-    mk_quote_list "$@"
-    mk_msg_verbose "+(q) $result"
-    
-    __log="`"$@" 2>&1`"
-
-    if [ "$?" -ne 0 ]
-    then
-        echo "$__log" >&2
-        mk_msg "FAILED: $result"
-        exit 1
-    fi
-}
-
-mk_cd_or_fail()
-{
-    mk_quote "$1"
-    mk_msg_verbose "+ 'cd' $result"
-    cd "$1" || mk_fail "FAILED: 'cd' $result"
-}
-
 mk_safe_rm()
 {
     if [ -z "${MK_ROOT_DIR}" -o "$PWD" != "${MK_ROOT_DIR}" ]
@@ -342,72 +291,6 @@ mk_safe_rm()
     esac
 
     mk_run_or_fail rm -rf -- "$result"
-}
-
-#<
-# @brief Strip last component from filename
-# @usage filename
-#
-# Strips the last component from a filename,
-# leaving the name of the directory containing
-# the file, and sets <var>result</var> to the
-# result.
-#>
-mk_dirname()
-{
-    result="."
-    case "$1" in
-        */*)
-            result="${1%/*}"
-    esac
-}
-
-#<
-# @brief Strip leading directory from filename
-# @usage filename
-#
-# Strips the leading directory components
-# from a filename and sets <var>result</var>
-# to the result.
-#>
-mk_basename()
-{
-    result="${1##*/}"
-}
-
-#<
-# @brief Create leading directories for filename
-# @usage filename
-#
-# Creates all leading directory components
-# for a filename.
-#>
-mk_mkdirname()
-{
-    _result="$result"
-    mk_dirname "$1"
-    mk_mkdir "$result"
-    result="$_result"
-}
-
-#<
-# @brief Print warning
-# @usage message...
-#
-# Prints <param>message</param> to the user.  If fail-on-warn
-# is turned on, this will abort the current operation.  Otherwise,
-# this function will pause for 1 second to catch the user's
-# attention.
-#>
-mk_warn()
-{
-    if [ "$MK_FAIL_ON_WARN" = "yes" ]
-    then
-        mk_fail "$@"
-    else
-        mk_msg "WARNING: $*"
-        sleep 1
-    fi
 }
 
 #<
