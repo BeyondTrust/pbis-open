@@ -6,7 +6,7 @@ configure()
 make()
 {
     mk_install_files \
-	FILES="init-base.sh init-lwsm.sh" \
+	FILES="init-base.sh init-lwsm.sh init-likewise.sh" \
 	INSTALLDIR="${MK_BINDIR}"
 
     mk_install_file \
