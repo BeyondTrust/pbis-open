@@ -33,6 +33,16 @@ make()
 
         mk_stage DESTDIR="${MK_SYSCONFDIR}/LaunchDaemons" com.likewisesoftware.lwsmd.plist
     fi
+
+    if [ "$MK_HOST_OS" = "solaris" ]
+    then
+        for i in lwsmd.xml likewise.xml
+        do
+            mk_stage \
+                SOURCE="svcs-solaris/$i" \
+                DEST="${MK_SYSCONFDIR}/svcs-solaris/$i"
+        done
+    fi
 }
 
 lw_init_script()

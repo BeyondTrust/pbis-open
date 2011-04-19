@@ -323,6 +323,7 @@ open_files_root()
         "${MK_SYSCONFDIR}/*" \
         "${MK_SYSCONFDIR}/gss/mech" \
         "${MK_SYSCONFDIR}/LaunchDaemons/*" \
+        "${MK_SYSCONFDIR}/svcs-solaris/*" \
         "${LW_INITDIR}/*"
 
     mk_package_dirs \
