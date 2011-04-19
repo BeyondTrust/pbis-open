@@ -463,9 +463,29 @@ mk_source_or_fail()
 #>
 mk_mkdir()
 {
-    for __dir in "$@"
+    for __dir
     do
-        mkdir -p "$__dir" || mk_fail "Could not create directory: $__dir"
+        if ! mkdir -p -- "$__dir" >/dev/null 2>&1
+        then
+            # Back off and try to create components individually
+            # This works around race conditions in some mkdir
+            # implementations
+            _IFS="$IFS"
+            IFS="/"
+            set -- ${__dir}
+            IFS="$_IFS"
+            __dir=""
+            for __comp
+            do
+                __dir="$__dir/$__comp"
+                [ -n "${__dir#/}" ] || continue
+                __err=`mkdir -p -- "${__dir#/}" 2>&1`
+                # If we succeeded or the directory was created
+                # by someone else (race condition), keep going
+                [ "$?" -eq 0 -o -d "${__dir#/}" ] && continue
+                mk_fail "$__err"
+            done
+        fi
     done
 }
 
