@@ -1,0 +1,13 @@
+product
+    tag LikewiseOpenUpgrade
+    revision @PKG_DEPOT_VERSION@
+    os_name HP-UX
+    os_release ?.11.??
+    os_version *
+    postinstall @DEPOT_CONTROL@/postinstall
+
+    fileset
+        tag prefix
+        @DEPOT_FILESET_PREFIX@
+    end
+end
