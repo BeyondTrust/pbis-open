@@ -130,6 +130,6 @@ configure()
             INPUT="etc/lwiod.reg.svcm.in" \
             OUTPUT="etc/lwiod.reg"
     else
-        mk_output_file "etc/lwiod.reg"
+        mk_output_file "etc/lwiod-srv.reg"
     fi
 }
