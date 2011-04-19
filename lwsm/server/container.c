@@ -946,8 +946,8 @@ ContainerStart(
 
     pInstance->State = LW_SERVICE_STATE_STARTING;
 
-    key.Gid = 0;
-    key.Uid = 0;
+    key.Gid = getgid();
+    key.Uid = getuid();
     key.pGroup = pInstance->pGroup;
 
     if (pInstance->pHandle)
