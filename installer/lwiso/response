@@ -1,0 +1,18 @@
+#
+# Copyright 2004 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident	"@(#)default	1.7	04/12/21 SMI"
+#
+mail=
+instance=unique
+partial=quit
+runlevel=quit
+idepend=quit
+rdepend=nocheck
+space=quit
+setuid=quit
+conflict=nocheck
+action=nocheck
+proxy=
+basedir=default
