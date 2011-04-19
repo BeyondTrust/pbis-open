@@ -6,9 +6,9 @@ umask 022
 
 . ${BUILD_ROOT}/build/lib/VARS
 
-COMP_ALL="${__COMP_LIST} lwio-fuse"
-SUPPORT_DIRS="build config packaging lwupgrade"
-SUPPORT_FILES="README LICENSE"
+COMP_ALL="${__COMP_LIST}"
+SUPPORT_DIRS="git-build build config package mk makekit mklocal"
+SUPPORT_FILES="README LICENSE configure MakeKitBuild"
 
 DIRS="${COMP_ALL} ${SUPPORT_DIRS}"
 DIRS="`echo ${DIRS} | sed 's/libcrypto/openssl/g'`"
