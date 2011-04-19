@@ -21,7 +21,7 @@ make()
         FILE="VERSION" \
         INSTALLDIR="${MK_PREFIX}/data"
 
-    for i in dcerpcd eventlogd lsassd lwiod lwregd lwsmd netlogond srvsvcd
+    for i in lwsmd likewise
     do
 	lw_init_script "$i"
     done
