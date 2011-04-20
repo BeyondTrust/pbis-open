@@ -203,7 +203,7 @@ LsaPamGetLoginId(
                     PAM_USER,
                     (PAM_GET_ITEM_TYPE)&pszPamId);
     dwError = LsaPamUnmapErrorCode(iPamError);
-#if HAVE_DECL_PAM_BAD_ITEM
+#if defined(HAVE_DECL_PAM_BAD_ITEM) || defined(PAM_BAD_ITEM)
     if (dwError == LsaPamUnmapErrorCode(PAM_BAD_ITEM))
     {
         pszPamId = NULL;
