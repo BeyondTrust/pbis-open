@@ -202,7 +202,32 @@ copy_openssl()
     mk_msg "openssl ($MK_CANONICAL_SYSTEM)"
 
     mk_safe_rm "$1"
-    mk_run_or_fail cp -r "$2" "$1"
+
+    case "$MK_BUILD_OS" in
+        solaris)
+            # Yuck
+            { cd "$2" && find .; } | while mk_read_line
+            do
+                if [ -d "$2/$result" ]
+                then
+                    mk_mkdir "$1/$result"
+                elif [ -h "$2/$result" ]
+                then
+                    _target=`file -h "$2/$result"`
+                    _target=${_target#*"symbolic link to "}
+                    mk_run_or_fail ln -s -- "$_target" "$1/$result"
+                else
+                    mk_run_or_fail cp -- "$2/$result" "$1/$result"
+                fi
+            done
+            ;;
+        hpux)
+            mk_run_or_fail cp -R -- "$2" "$1"
+            ;;
+        *)
+            mk_run_or_fail cp -RP -- "$2" "$1"
+            ;;
+    esac
 }
 
 configure_openssl()
