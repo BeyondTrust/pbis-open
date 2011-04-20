@@ -248,22 +248,13 @@ LwIoReadConfigEnum(
 #define SMB_LTOH32_INPLACE(x) ((x) = SMB_LTOH32(x))
 #define SMB_LTOH64_INPLACE(x) ((x) = SMB_LTOH64(x))
 
-#define BAIL_ON_LWIO_ERROR(dwError)                \
-    if ((dwError)) {                              \
-       LWIO_LOG_DEBUG("Error at %s:%d [code: %d]", \
-                     __FILE__,                    \
-                     __LINE__,                    \
-                     dwError);                    \
-       goto error;                                \
-    }
+#define BAIL_ON_LWIO_ERROR(dwError) BAIL_ON_NT_STATUS(dwError)
 
 #define BAIL_ON_NT_STATUS(ntStatus)                \
     if ((ntStatus)) {                              \
-       LWIO_LOG_DEBUG("Error at %s:%d [status: %s = 0x%08X (%d)]", \
-                     __FILE__,                     \
-                     __LINE__,                     \
-                     LwNtStatusToName(ntStatus), \
-                     ntStatus, ntStatus);          \
+       LWIO_LOG_DEBUG("status: %s = 0x%08X (%d)",  \
+           LwNtStatusToName(ntStatus),             \
+           ntStatus, ntStatus);                    \
        goto error;                                 \
     }
 
