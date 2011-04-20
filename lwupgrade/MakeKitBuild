@@ -6,6 +6,8 @@ configure()
 
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -Wmissing-prototypes -fno-strict-aliasing"
 
+    lw_define_feature_macros
+
     mk_check_headers \
         FAIL=yes \
         lwadvapi.h reg/lwreg.h reg/regutil.h sqlite3.h
