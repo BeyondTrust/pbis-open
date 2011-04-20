@@ -330,19 +330,27 @@ NtlmCreateNegotiateMessage(
     OUT PNTLM_NEGOTIATE_MESSAGE_V1* ppNegMsg
     );
 
-VOID
+DWORD
+NtlmAddTargetInfoBuffer(
+    IN SHORT InfoType,
+    IN PWSTR pInput,
+    IN OUT PBYTE* ppBufferPos
+    );
+
+DWORD
 NtlmCopyStringToSecBuffer(
-    IN PCSTR pszInput,
-    IN DWORD dwFlags,
+    IN PVOID pInput,
+    IN DWORD Length,
     IN PBYTE pBufferStart,
     IN OUT PBYTE* ppBufferPos,
     OUT PNTLM_SEC_BUFFER pSec
     );
 
 DWORD
-NtlmGetStringProtocolSize(
-    DWORD dwFlags,
-    PCSTR pszString
+NtlmGetCStringFromUnicodeBuffer(
+    IN PBYTE pBuffer,
+    IN DWORD Length,
+    OUT PSTR *ppString
     );
 
 DWORD
