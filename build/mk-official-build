@@ -150,6 +150,12 @@ then
     show mkdir -p "$DIST_DIR/sfx"
     show cp -r "sfx/"* "$DIST_DIR/sfx"
 fi
+
+if [ -d dmg ]
+then
+    show mkdir -p "$DIST_DIR/dmg"
+    show cp -r "sfx/"* "$DIST_DIR/dmg"
+fi
   
 show cp -f "config.log" "$DIST_DIR/config.log"
 show cd "stage"
