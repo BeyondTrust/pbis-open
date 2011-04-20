@@ -13,6 +13,8 @@ Help()
     echo "      this helps if space is limited."
     echo "    * --delete option will remove the former local account from the computer,"
     echo "      this prevents continued use of the local account now replaced by an AD account."
+    echo "    * --keep-admin option will add the AD account to the local admin group"
+    echo "      if the local account was a member."
 }
 
 DisplayStatus()
@@ -93,6 +95,10 @@ DisplayStatus()
             echo "Failed to remove the former local account from the computer."
             ;;
 
+        50)
+            echo "Failed to add the AD account to the admin group."
+            ;;
+
         # Default case error
         *)
             echo "Error: Unknown error occurred."
@@ -102,6 +108,11 @@ DisplayStatus()
     echo ""
 }
 
+run()
+{
+    ( set -x ; "$@" )
+}
+
 GetOsType()
 {
     /opt/likewise/bin/domainjoin-cli get_os_type
@@ -109,30 +120,38 @@ GetOsType()
 
 RemoveAccount()
 {
-    IsLeopard=1
+    if dscl ${LocalNode} -read "/Users/$LocalUserAccount" > /dev/null; then
+        echo "Removing local account for user '$LocalUserAccount'"
+        run dscl ${LocalNode} delete "/Users/$LocalUserAccount"
 
-    dscl /Local/Default list / | grep Users > /dev/null
-    if [ $? -ne 0 ]; then
-        IsLeopard=0
-    fi
-
-    echo "Removing local account for user '$LocalUserAccount'"
-    if [ $IsLeopard -eq 1 ]; then
-        echo "dscl /Local/Default delete /Users/$LocalUserAccount"
-        dscl /Local/Default delete /Users/"$LocalUserAccount"
+        if [ $? -ne 0 ]; then
+            rc="40"
+        else
+            echo ""
+            rc="0"
+        fi
     else
-        echo "dscl /NetInfo/root delete /Users/$LocalUserAccount"
-        dscl /NetInfo/root delete /Users/"$LocalUserAccount"
-    fi
-    if [ $? -ne 0 ]; then
-        rc="40"
-        return $rc
-    else
+        # The user must already be in AD.
         rc="0"
     fi
-    echo ""
 
-    return 0;
+    return $rc
+}
+
+PreserveAdminRights()
+{
+    if id "$LocalUserAccount" | egrep -q '[=,]80\(admin\)'; then
+        echo "Local user $LocalUserAccount is an admin; adding $AdUserAccount to group 'admin'."
+        run dscl ${LocalNode} -merge /Groups/admin GroupMembership "$AdUserAccount"
+        if [ $? -ne 0 ]; then
+            rc="50"
+        else
+            rc="0"
+            echo
+        fi
+    fi
+
+    return $rc
 }
 
 ChangeOwner()
@@ -330,16 +349,6 @@ MigrateProfile()
         return $rc
     fi
 
-    #
-    # Now call RemoveAccount function to delete the former local account.
-    #
-    if [ $DeleteOption -eq 1 ]; then
-        RemoveAccount
-        if [ $rc -ne 0 ]; then
-            return $rc
-        fi
-    fi
-
     return 0
 }
 
@@ -381,16 +390,6 @@ ChownProfile()
         return $rc
     fi
 
-    #
-    # Now call RemoveAccount function to delete the former local account.
-    #
-    if [ $DeleteOption -eq 1 ]; then
-        RemoveAccount
-        if [ $rc -ne 0 ]; then
-            return $rc
-        fi
-    fi
-
     return 0
 }
 
@@ -400,8 +399,7 @@ ChownProfile()
 #
 MoveOption=0
 DeleteOption=0
-LogOption=0
-LogFile=""
+KeepAdminOption=0
 DestHomeDirectory=""
 NewOwnerUID=""
 NewOwnerGID=""
@@ -423,10 +421,37 @@ fi
 #
 LocalUserAccount="$1"
 AdUserAccount="$2"
-Option1="$3"
-Option2="$4"
-Option3="$5"
-Option4="$6"
+shift 2
+
+while [ "$1" ]
+do
+    case "$1" in
+        --delete)
+            DeleteOption=1
+            ;;
+
+        --keep-admin-rights|--keep-admin)
+            KeepAdminOption=1
+            ;;
+
+        --log)
+            exec > "$2" 2>&1
+            shift
+            ;;
+
+        --move)
+            MoveOption=1
+            ;;
+
+        *)
+            rc="1"
+            Help
+            exit $rc
+            ;;
+    esac
+
+    shift
+done
 
 echo ""
 
@@ -446,35 +471,13 @@ if [ -z "$AdUserAccount" ]; then
     exit $rc
 fi
 
-if [ "--move" == "$Option1" ]; then
-    MoveOption=1
-fi
-
-if [ "--move" == "$Option2" ]; then
-    MoveOption=1
-fi
-
-if [ "--delete" == "$Option1" ]; then
-    DeleteOption=1
-fi
-
-if [ "--delete" == "$Option2" ]; then
-    DeleteOption=1
-fi
-
-if [ "--log" == "$Option1" ]; then
-    LogOption=1
-    LogFile="$Option2"
-fi
-
-if [ "--log" == "$Option2" ]; then
-    LogOption=1
-    LogFile="$Option3"
-fi
-
-if [ "--log" == "$Option3" ]; then
-    LogOption=1
-    LogFile="$Option4"
+#
+# Determine local node.
+#
+if dscl /Local/Default list / 2> /dev/null | grep -q Users; then
+    LocalNode=/Local/Default
+else
+    LocalNode=/NetInfo/root
 fi
 
 #
@@ -518,33 +521,31 @@ if [ -z "$NewOwnerGID" ]; then
     exit $rc
 fi
 
-if [ $LogOption -eq 1 ]; then
-    # Call script again with redirect to log file
-    if [ $MoveOption -eq 1 ]; then
-        if [ $DeleteOption -eq 1 ]; then
-            "$0" "$LocalUserAccount" "$AdUserAccount" --move --delete > "$LogFile" 2>&1
-        else
-            "$0" "$LocalUserAccount" "$AdUserAccount" --move > "$LogFile" 2>&1
-        fi
-    else
-        if [ $DeleteOption -eq 1 ]; then
-            "$0" "$LocalUserAccount" "$AdUserAccount" --delete > "$LogFile" 2>&1
-        else
-            "$0" "$LocalUserAccount" "$AdUserAccount" > "$LogFile" 2>&1
-        fi
-    fi
-    rc=$?
+# Perform the migration...
+if [ "$SourceHomeDirectory" == "$DestHomeDirectory" ]; then
+    ChownProfile
 else
-    # Perform the migration...
-    if [ "$SourceHomeDirectory" == "$DestHomeDirectory" ]; then
-        ChownProfile
-    else
-        MigrateProfile
-    fi
-    if [ $rc -eq 0 ]; then
-        echo "Profile migration completed successfully"
-        echo ""
-    fi
+    MigrateProfile
+fi
+
+#
+# Now call PreserveAdminRights function to add the AD account to the
+# admin group if the local account is a member.
+#
+if [ $rc -eq 0 -a $KeepAdminOption -eq 1 ]; then
+    PreserveAdminRights
+fi
+
+#
+# Now call RemoveAccount function to delete the former local account.
+#
+if [ $rc -eq 0 -a $DeleteOption -eq 1 ]; then
+    RemoveAccount
+fi
+
+if [ $rc -eq 0 ]; then
+    echo "Profile migration completed successfully"
+    echo ""
 fi
 
 DisplayStatus
