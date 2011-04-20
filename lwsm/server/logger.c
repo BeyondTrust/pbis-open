@@ -253,6 +253,20 @@ LwSmBasename(
     PCSTR pszFilename
     )
 {
+#if defined(TOP_SRCDIR) && defined(TOP_OBJDIR)
+    if (!strncmp(pszFilename, TOP_SRCDIR "/", strlen(TOP_SRCDIR "/")))
+    {
+        return pszFilename + strlen(TOP_SRCDIR "/");
+    }
+    else if (!strncmp(pszFilename, TOP_OBJDIR "/", strlen(TOP_OBJDIR "/")))
+    {
+        return pszFilename + strlen(TOP_OBJDIR "/");
+    }
+    else
+    {
+        return pszFilename;
+    }
+#else
     PSTR pszSlash = strrchr(pszFilename, '/');
 
     if (pszSlash)
@@ -263,6 +277,7 @@ LwSmBasename(
     {
         return pszFilename;
     }
+#endif
 }
 
 DWORD
