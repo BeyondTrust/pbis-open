@@ -238,11 +238,14 @@ LsaAdJoinDomain(
     DWORD dwError = 0;
     PSTR pLdapOu = NULL;
 
-    dwError = LsaAdOuSlashToDn(
-                    pszDomain,
-                    pszOU,
-                    &pLdapOu);
-    BAIL_ON_LSA_ERROR(dwError);
+    if (pszOU)
+    {
+        dwError = LsaAdOuSlashToDn(
+                        pszDomain,
+                        pszOU,
+                        &pLdapOu);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LsaAdJoinDomainDn(
                     hLsaConnection,
