@@ -93,48 +93,43 @@ LsaPamLogMessage(
     PSTR pszFormat, ...
     )
 {
+    DWORD dwError = 0;
+    int pri = 0;
+    PSTR pMessage = NULL;
+    va_list ap;
+
     if ((gdwLogLevel != LSA_PAM_LOG_LEVEL_DISABLED) &&
         (gdwLogLevel >= dwLogLevel))
     {
-       va_list argp;
-
-       va_start(argp, pszFormat);
-
        LsaPamInitLog();
 
-       switch (dwLogLevel)
+       switch(dwLogLevel)
        {
-           case LSA_PAM_LOG_LEVEL_ALWAYS:
-           {
-               LW_RTL_LOG_AT_LEVEL(LW_RTL_LOG_LEVEL_INFO, "pam-lsass", pszFormat, argp);
-               break;
-           }
-           case LSA_PAM_LOG_LEVEL_ERROR:
-           {
-               LW_RTL_LOG_AT_LEVEL(LW_RTL_LOG_LEVEL_ERROR, "pam-lsass", pszFormat, argp);
-               break;
-           }
-
-           case LSA_PAM_LOG_LEVEL_WARNING:
-           {
-               LW_RTL_LOG_AT_LEVEL(LW_RTL_LOG_LEVEL_WARNING, "pam-lsass", pszFormat, argp);
-               break;
-           }
-
-           case LSA_PAM_LOG_LEVEL_INFO:
-           {
-               LW_RTL_LOG_AT_LEVEL(LW_RTL_LOG_LEVEL_INFO, "pam-lsass", pszFormat, argp);
-               break;
-           }
-
-           default:
-           {
-               LW_RTL_LOG_AT_LEVEL(LW_RTL_LOG_LEVEL_VERBOSE, "pam-lsass", pszFormat, argp);
-               break;
-           }
+       case LSA_PAM_LOG_LEVEL_ALWAYS:
+           pri = LOG_NOTICE;
+       case LSA_PAM_LOG_LEVEL_ERROR:
+           pri = LOG_ERR;
+       case LSA_PAM_LOG_LEVEL_WARNING:
+           pri = LOG_WARNING;
+       case LSA_PAM_LOG_LEVEL_INFO:
+           pri = LOG_INFO;
+       case LSA_PAM_LOG_LEVEL_VERBOSE:
+       case LSA_PAM_LOG_LEVEL_DEBUG:
+           pri = LOG_DEBUG;
+       default:
+           pri = LOG_ERR;
        }
 
-       va_end(argp);
+       va_start(ap, pszFormat);
+       dwError = LwAllocateStringPrintfV(&pMessage, pszFormat, ap);
+       va_end(ap);
+
+       if (dwError == ERROR_SUCCESS)
+       {
+           syslog(pri | LOG_AUTHPRIV, "[lsass-pam] %s", pMessage);
+       }
+
+       LW_SAFE_FREE_STRING(pMessage);
     }
 }
 
