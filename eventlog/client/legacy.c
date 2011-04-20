@@ -51,6 +51,21 @@ LWIOpenEventLog(
                 (PLW_EVENTLOG_CONNECTION*)phEventLog);
 }
 
+static
+PCWSTR
+EvtEmptyWc16sForNull(
+    PCWSTR pInput
+    )
+{
+    static const WCHAR pEmpty[] = { 0 };
+
+    if (pInput == NULL)
+    {
+        return pEmpty;
+    }
+    return pInput;
+}
+
 DWORD
 LWIReadEventLog(
     HANDLE hEventLog,
@@ -91,41 +106,41 @@ LWIReadEventLog(
         pLegacyRecords[index].dwEventRecordId = pRecords[index].EventRecordId;
 
         dwError = LwWc16sToMbs(
-                        pRecords[index].pLogname,
+                        EvtEmptyWc16sForNull(pRecords[index].pLogname),
                         &pLegacyRecords[index].pszEventTableCategoryId);
         BAIL_ON_EVT_ERROR(dwError);
 
         dwError = LwWc16sToMbs(
-                        pRecords[index].pEventType,
+                        EvtEmptyWc16sForNull(pRecords[index].pEventType),
                         &pLegacyRecords[index].pszEventType);
         BAIL_ON_EVT_ERROR(dwError);
 
         pLegacyRecords[index].dwEventDateTime = pRecords[index].EventDateTime;
 
         dwError = LwWc16sToMbs(
-                        pRecords[index].pEventSource,
+                        EvtEmptyWc16sForNull(pRecords[index].pEventSource),
                         &pLegacyRecords[index].pszEventSource);
         BAIL_ON_EVT_ERROR(dwError);
 
         dwError = LwWc16sToMbs(
-                        pRecords[index].pEventCategory,
+                        EvtEmptyWc16sForNull(pRecords[index].pEventCategory),
                         &pLegacyRecords[index].pszEventCategory);
         BAIL_ON_EVT_ERROR(dwError);
 
         pLegacyRecords[index].dwEventSourceId = pRecords[index].EventSourceId;
 
         dwError = LwWc16sToMbs(
-                        pRecords[index].pUser,
+                        EvtEmptyWc16sForNull(pRecords[index].pUser),
                         &pLegacyRecords[index].pszUser);
         BAIL_ON_EVT_ERROR(dwError);
 
         dwError = LwWc16sToMbs(
-                        pRecords[index].pComputer,
+                        EvtEmptyWc16sForNull(pRecords[index].pComputer),
                         &pLegacyRecords[index].pszComputer);
         BAIL_ON_EVT_ERROR(dwError);
 
         dwError = LwWc16sToMbs(
-                        pRecords[index].pDescription,
+                        EvtEmptyWc16sForNull(pRecords[index].pDescription),
                         &pLegacyRecords[index].pszDescription);
         BAIL_ON_EVT_ERROR(dwError);
 
