@@ -563,12 +563,22 @@ BOOLEAN FindSshAndConfig(
                     &ppFoundConfigs);
     LW_CLEANUP_CTERR(ppExc, ceError);
 
+    ceError = LwRemoveDuplicateInodes(
+                    &foundConfigCount,
+                    ppFoundConfigs);
+    LW_CLEANUP_CTERR(ppExc, ceError);
+
     ceError = LwFindFilesInPaths(
                     pBinaryFilename,
                     LWFILE_REGULAR,
                     ppSshBinaryPaths,
                     &foundBinaryCount,
                     &ppFoundBinaries);
+    LW_CLEANUP_CTERR(ppExc, ceError);
+
+    ceError = LwRemoveDuplicateInodes(
+                    &foundBinaryCount,
+                    ppFoundBinaries);
     LW_CLEANUP_CTERR(ppExc, ceError);
 
     if ((foundConfigCount | foundBinaryCount) > 0 && foundConfigCount != foundBinaryCount)
