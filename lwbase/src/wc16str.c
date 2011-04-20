@@ -37,6 +37,9 @@
 #include <locale.h>
 #include <wc16str.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <ctype.h>
 #include <errno.h>
 #ifdef HAVE_WCTYPE_H
@@ -70,8 +73,10 @@
  */
 #if defined(WORDS_BIGENDIAN)
 #define WINDOWS_ENCODING "UCS-2BE"
+#define UTF32_ENCODING "UTF-32BE"
 #else
 #define WINDOWS_ENCODING "UCS-2LE"
+#define UTF32_ENCODING "UTF-32LE"
 #endif
 
 #ifndef ULLONG_MAX
@@ -79,6 +84,7 @@
 #endif
 
 typedef int (*caseconv)(int c);
+typedef wint_t (*wcaseconv)(wint_t c);
 
 // Returns the integer value of a digit character for a given base. If the
 // character is not a valid digit, -1 is returned.
@@ -566,102 +572,50 @@ size_t wc16stowcs(wchar_t *dest, const wchar16_t *src, size_t cchcopy)
 
 size_t wc16stowc16les(wchar16_t *dest, const wchar16_t *src, size_t cchcopy)
 {
-#ifdef WCHAR16_IS_WCHAR
-    size_t sPos = 0;
+    size_t cbin = wc16snlen(src, cchcopy) * sizeof(src[0]);
+    size_t cbout = wc16snlen(src, cchcopy);
 
-    for (sPos = 0; sPos < cchcopy; sPos++)
+    if (cbout < cchcopy)
     {
-        wchar16_t wcCurrent = src[sPos];
-        ((char*)&dest[sPos])[0] = wcCurrent & 0xFF;
-        ((char*)&dest[sPos])[1] = (wcCurrent >> 8) & 0xFF;
-        
-        if (!wcCurrent)
-        {
-            // return the number of non-null characters that were copied (even
-            // though the null was copied).
-            break;
-        }
+        cbout++;
     }
 
-    return sPos;
+#if defined(WORDS_BIGENDIAN)
+    swab(src, dest, cbin);
 #else
-    iconv_t handle = iconv_open(WINDOWS_ENCODING, "UCS-2LE");
-    char *inbuf = (char *)src;
-    char *outbuf = (char *)dest;
-    size_t cbin = wc16slen(src) * sizeof(src[0]);
-    size_t cbout = cchcopy * sizeof(dest[0]);
-    size_t converted = iconv(handle, (ICONV_IN_TYPE) &inbuf, &cbin, &outbuf, &cbout);
-
-    if(cbout >= sizeof(dest[0]))
-        *(wchar16_t *)outbuf = 0;
-    iconv_close(handle);
-    if(converted == (size_t)-1 && cbout != 0)
-        return (size_t)-1;
-    else
-        return cchcopy - cbout/sizeof(dest[0]);
+    memcpy(dest, src, cbin);
 #endif
+
+    if (src[cbout - 1] == 0)
+    {
+        cbout--;
+    }
+
+    return cbout;
 }
 
 size_t wc16lestowc16s(wchar16_t *dest, const wchar16_t *src, size_t cchcopy)
 {
-#ifdef WCHAR16_IS_WCHAR
-    size_t sPos = 0;
-    wchar16_t wcCurrent = 0;
+    size_t cbin = wc16snlen(src, cchcopy) * sizeof(src[0]);
+    size_t cbout = wc16snlen(src, cchcopy);
 
-    for (sPos = 0; sPos < cchcopy; sPos++)
+    if (cbout < cchcopy)
     {
-        wcCurrent  = ((char*)&src[sPos])[0];
-        wcCurrent |= ((char*)&src[sPos])[1] << 8;
-        dest[sPos] = wcCurrent;
-
-        if (!wcCurrent)
-        {
-            // return the number of non-null characters that were copied (even
-            // though the null was copied).
-            break;
-        }
+        cbout++;
     }
 
-    return sPos;
+#if defined(WORDS_BIGENDIAN)
+    swab(src, dest, cbin);
 #else
-    iconv_t handle = iconv_open("UCS-2LE", WINDOWS_ENCODING);
-    char *inbuf = (char *)src;
-    char *outbuf = (char *)dest;
-    size_t cbin = 0;
-    size_t cbout = cchcopy * sizeof(dest[0]);
-    size_t converted = 0;
-    size_t i = 0;
-
-    /* "endian safe" version of wc16slen since
-       BigEndian(0) == LittleEndian(0) */
-    if (src)
-    {
-        for (i = 0; src[i] != 0; i++);
-        cbin = i * sizeof(src[0]);
-    }
-    else
-    {
-        cbin = 0;
-    }
-
-    converted = iconv(handle, (ICONV_IN_TYPE) &inbuf, &cbin, &outbuf, &cbout);
-
-    if(cbout >= sizeof(dest[0]))
-    {
-        *(wchar16_t *)outbuf = 0;
-    }
-
-    iconv_close(handle);
-
-    if(converted == (size_t)-1 && cbout != 0)
-    {
-        return (size_t)-1;
-    }
-    else
-    {
-        return cchcopy - cbout/sizeof(dest[0]);
-    }
+    memcpy(dest, src, cbin);
 #endif
+
+    if (src[cbout - 1] == 0)
+    {
+        cbout--;
+    }
+
+    return cbout;
 }
 
 wchar16_t *ambstowc16s(const char *input)
@@ -724,7 +678,7 @@ size_t mbstowc16les(wchar16_t *dest, const char *src, size_t cchcopy)
     cchcopy = wc16stowc16les(dest, dest, cchcopy);
     return cchcopy;
 #else
-    iconv_t handle = iconv_open("UCS-2LE", "");
+    iconv_t handle = iconv_open("UTF-16LE", "");
     char *inbuf;
     char *outbuf;
     size_t cbin;
@@ -921,26 +875,34 @@ size_t wc16stombs(char *dest, const wchar16_t *src, size_t cbcopy)
 }
 
 /*
-  These case conversions aren't exactly right, because toupper
-  and tolower functions depend on locale settingsand not on
-  unicode maps.
-  TODO: Find better case conversion function for unicode
+  We probably ought to be doing this for multi-byte
+  strings also.  Note that the case conversion for
+  some characters depends on context which this
+  doesn't handle.
 */
+static void wc16scaseconv(wcaseconv fconv, wchar16_t *s)
+{
+    size_t len;
+    size_t i;
+
+    if (fconv == NULL || s == NULL) return;
+
+    len = wc16slen(s);
+
+    for (i = 0; i < len; i++)
+    {
+        wint_t c = s[i];
+        s[i] = (wchar16_t)fconv(c);
+    }
+}
+
 
 void
 wc16supper(
     wchar16_t * pwszStr
     )
 {
-    while (pwszStr && *pwszStr)
-    {
-        // TODO: Add new mappings
-        if (*pwszStr >= 0x61 && *pwszStr <= 0x7A)
-        {
-            *pwszStr -= 0x20;
-        }
-        pwszStr++;
-    }
+    wc16scaseconv(towupper, pwszStr);
 }
 
 
@@ -949,18 +911,16 @@ wc16slower(
     wchar16_t * pwszStr
     )
 {
-    while (pwszStr && *pwszStr)
-    {
-        // TODO: Add new mappings
-        if (*pwszStr >= 0x41 && *pwszStr <= 0x5A)
-        {
-            *pwszStr += 0x20;
-        }
-        pwszStr++;
-    }
+    wc16scaseconv(towlower, pwszStr);
 }
 
 
+/*
+  These case conversions aren't exactly right, because toupper
+  and tolower functions depend on locale settingsand not on
+  unicode maps.
+  TODO: Find better case conversion function for unicode
+*/
 static void strcaseconv(caseconv fconv, char *s)
 {
     size_t len;
