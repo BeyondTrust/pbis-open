@@ -425,3 +425,80 @@ error:
     goto cleanup;
 }
 
+DWORD
+LwRemoveDuplicateInodes(
+    IN OUT PDWORD pdwFoundCount,
+    IN OUT PSTR* ppszFoundPaths
+    )
+{
+    DWORD dwError = 0;
+    DWORD foundCount = *pdwFoundCount;
+    DWORD outputIndex = 0;
+    struct stat *pStats = NULL;
+    DWORD index = 0;
+    DWORD index2 = 0;
+
+    dwError = LwAllocateMemory(
+                    foundCount * sizeof(pStats[0]),
+                    OUT_PPVOID(&pStats));
+    BAIL_ON_LW_ERROR(dwError);
+
+    for (index = 0; index < foundCount; index++)
+    {
+        if (stat(ppszFoundPaths[index], &pStats[index]) < 0)
+        {
+            switch (errno)
+            {
+                case ELOOP:
+                case ENOENT:
+                case ENOTDIR:
+                    // These errors indicate a bad symlink. Treat the path as
+                    // unique from all others.
+                    pStats[index].st_dev = (dev_t)-1;
+                    pStats[index].st_ino = (ino_t)-1;
+                    break;
+                default:
+                    dwError = LwMapErrnoToLwError(errno);
+                    BAIL_ON_LW_ERROR(dwError);
+            }
+        }
+    }
+
+    if (foundCount > 0)
+    {
+        // Even if the first index is a duplicate, we take that value over
+        // another.
+        outputIndex = 1;
+    }
+    for (index = 1; index < foundCount; index++)
+    {
+        // See if ppszFoundPaths[index] is a duplicate of any paths with a
+        // lower index.
+        if (pStats[index].st_ino != (ino_t)-1)
+        {
+            for (index2 = 0; index2 < index; index2++)
+            {
+                if (pStats[index].st_dev == pStats[index2].st_dev &&
+                    pStats[index].st_ino == pStats[index2].st_ino)
+                {
+                    LW_SAFE_FREE_STRING(ppszFoundPaths[index]);
+                    break;
+                }
+            }
+        }
+        if (ppszFoundPaths[index] != NULL)
+        {
+            ppszFoundPaths[outputIndex] = ppszFoundPaths[index];
+            outputIndex++;
+        }
+    }
+
+    *pdwFoundCount = outputIndex;
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pStats);
+    return dwError;
+
+error:
+    goto cleanup;
+}

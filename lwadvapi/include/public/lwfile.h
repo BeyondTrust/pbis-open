@@ -123,6 +123,12 @@ LwCreateDirectory(
     mode_t dwFileMode
     );
 
+DWORD
+LwRemoveDuplicateInodes(
+    IN OUT PDWORD pdwFoundCount,
+    IN OUT PSTR* ppszFoundPaths
+    );
+
 LW_END_EXTERN_C
 
 
