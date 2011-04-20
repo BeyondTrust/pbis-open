@@ -6,6 +6,8 @@ configure()
     
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -Wmissing-prototypes -fno-strict-aliasing"
 
+    lw_define_feature_macros
+
     mk_define UNICODE
 
     mk_check_headers \
