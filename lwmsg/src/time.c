@@ -35,6 +35,8 @@
  * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
  *
  */
+
+#include "config.h"
 #include <sys/time.h>
 #include <time.h>
 #include <errno.h>

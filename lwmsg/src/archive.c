@@ -37,6 +37,7 @@
  *
  */
 
+#include "config.h"
 #include "archive-private.h"
 #include "util-private.h"
 
