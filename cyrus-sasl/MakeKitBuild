@@ -63,6 +63,7 @@ make()
         TARGETS="$SASL_EXTRA_TARGETS" \
 	HEADERDEPS="gssapi.h" \
 	LIBDEPS="gssapi_krb5" \
+        CPPFLAGS="-D_REENTRANT -D_THREAD_SAFE" \
         -- \
         --with-configdir="${MK_LIBDIR}/sasl2" \
         --with-plugindir="${MK_LIBDIR}/sasl2" \
