@@ -164,7 +164,7 @@ lwmsg_data_decode_enum_value(
 
 LWMsgStatus
 lwmsg_data_verify_range(
-    const LWMsgContext* context,
+    LWMsgDataContext* context,
     LWMsgTypeIter* iter,
     void* object,
     size_t object_size

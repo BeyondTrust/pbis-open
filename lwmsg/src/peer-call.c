@@ -328,43 +328,40 @@ lwmsg_peer_call_complete_outgoing(
 
     lwmsg_hash_remove_entry(&call->task->outgoing_calls, call);
 
-    if (call->state & PEER_CALL_RELEASED)
+    call->status = incoming_message->status;
+    call->params.outgoing.out->tag = incoming_message->tag;
+    call->params.outgoing.out->data = incoming_message->data;
+    call->state |= PEER_CALL_COMPLETED;
+
+    lwmsg_message_init(incoming_message);
+
+    /* Trace call completion */
+    if (call->task->session->peer->trace_end)
     {
-        lwmsg_assoc_destroy_message(call->task->assoc, incoming_message);
-        lwmsg_peer_call_delete(call);
+        call->task->session->peer->trace_end(
+            LWMSG_CALL(call),
+            call->params.outgoing.out,
+            call->status,
+            call->task->session->peer->trace_data);
+    }
+
+    if (call->params.outgoing.complete)
+    {
+        call->params.outgoing.complete(
+            LWMSG_CALL(call),
+            call->status,
+            call->params.outgoing.complete_data);
     }
     else
     {
-        call->status = incoming_message->status;
-        call->params.outgoing.out->tag = incoming_message->tag;
-        call->params.outgoing.out->data = incoming_message->data;
-        call->state |= PEER_CALL_COMPLETED;
-
-        lwmsg_message_init(incoming_message);
-
-        /* Trace call completion */
-        if (call->task->session->peer->trace_end)
-        {
-            call->task->session->peer->trace_end(
-                LWMSG_CALL(call),
-                call->params.outgoing.out,
-                call->status,
-                call->task->session->peer->trace_data);
-        }
-
-        if (call->params.outgoing.complete)
-        {
-            call->params.outgoing.complete(
-                LWMSG_CALL(call),
-                call->status,
-                call->params.outgoing.complete_data);
-        }
-        else
-        {
-            pthread_cond_broadcast(&call->task->session->event);
-        }
+        pthread_cond_broadcast(&call->task->session->event);
     }
-    
+
+    if (call->state & PEER_CALL_RELEASED)
+    {
+        lwmsg_peer_call_delete(call);
+    }
+
     return status;
 }
 

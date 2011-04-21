@@ -389,15 +389,31 @@ lwmsg_data_raise(
     {
         if (iter->meta.member_name)
         {
-            lwmsg_context_raise(
-                context->context,
-                status,
-                function,
-                filename,
-                line,
-                ".%s: %s",
-                iter->meta.member_name,
-                message);
+            if (iter->meta.container_name)
+            {
+                lwmsg_context_raise(
+                    context->context,
+                    status,
+                    function,
+                    filename,
+                    line,
+                    "%s.%s: %s",
+                    iter->meta.container_name,
+                    iter->meta.member_name,
+                    message);
+            }
+            else
+            {
+                lwmsg_context_raise(
+                    context->context,
+                    status,
+                    function,
+                    filename,
+                    line,
+                    ".%s: %s",
+                    iter->meta.member_name,
+                    message);
+            }
         }
         else
         {
@@ -415,15 +431,31 @@ lwmsg_data_raise(
     {
         if (iter->meta.member_name)
         {
-            lwmsg_context_raise(
-                context->context,
-                status,
-                function,
-                filename,
-                line,
-                ".%s",
-                iter->meta.type_name,
-                iter->meta.member_name);
+            if (iter->meta.container_name)
+            {
+                lwmsg_context_raise(
+                    context->context,
+                    status,
+                    function,
+                    filename,
+                    line,
+                    "%s.%s",
+                    iter->meta.container_name,
+                    iter->meta.type_name,
+                    iter->meta.member_name);
+            }
+            else
+            {
+                lwmsg_context_raise(
+                    context->context,
+                    status,
+                    function,
+                    filename,
+                    line,
+                    ".%s",
+                    iter->meta.type_name,
+                    iter->meta.member_name);
+            }
         }
         else
         {

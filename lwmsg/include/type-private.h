@@ -149,6 +149,7 @@ typedef struct LWMsgTypeIter
     {
         const char* type_name;
         const char* member_name;
+        const char* container_name;
     } meta;
     
     /* Optional debug info - file and line number where type appears */
@@ -372,9 +373,12 @@ lwmsg_type_next(
     LWMsgTypeIter* iter
     )
 {
+    const char* container = iter->meta.container_name;
+
     if (iter->next)
     {
         lwmsg_type_iterate(iter->next, iter);
+        iter->meta.container_name = container;
     }
     else
     {
@@ -394,6 +398,10 @@ lwmsg_type_enter(
         lwmsg_type_iterate(iter->inner, new_iter);
 
         new_iter->dom_object = iter->dom_object;
+        if (iter->kind == LWMSG_KIND_STRUCT || iter->kind == LWMSG_KIND_UNION)
+        {
+            new_iter->meta.container_name = iter->meta.type_name;
+        }
     }
     else
     {
