@@ -417,6 +417,18 @@ lwmsg_data_raise(
                         message);
                 }
             }
+            else if (iter->meta.type_name)
+            {
+                lwmsg_context_raise(
+                    context->context,
+                    status,
+                    function,
+                    filename,
+                    line,
+                    "%s: %s",
+                    iter->meta.type_name,
+                    message);
+            }
             else
             {
                 lwmsg_context_raise(
@@ -458,6 +470,17 @@ lwmsg_data_raise(
                         iter->meta.type_name,
                         iter->meta.member_name);
                 }
+            }
+            else if (iter->meta.type_name)
+            {
+                lwmsg_context_raise(
+                    context->context,
+                    status,
+                    function,
+                    filename,
+                    line,
+                    "%s",
+                    iter->meta.type_name);
             }
             else
             {
