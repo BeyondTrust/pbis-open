@@ -184,7 +184,7 @@ MU_FIXTURE_TEARDOWN(marshal)
 typedef struct basic_struct
 {
     short foo;
-    unsigned int len;
+    size_t len;
     long *long_ptr;
 } basic_struct;
 
@@ -209,12 +209,14 @@ basic_verify_foo(
     }
 }
 
+#define LEN_MAX ((size_t) -1)
+
 
 static LWMsgTypeSpec basic_spec[] =
 {
     LWMSG_STRUCT_BEGIN(basic_struct),
     LWMSG_MEMBER_INT16(basic_struct, foo), LWMSG_ATTR_VERIFY(basic_verify_foo, NULL),
-    LWMSG_MEMBER_UINT32(basic_struct, len), LWMSG_ATTR_RANGE(1, 8),
+    LWMSG_MEMBER_UINT64(basic_struct, len), LWMSG_ATTR_RANGE(1, LEN_MAX / 2),
     LWMSG_MEMBER_POINTER(basic_struct, long_ptr, LWMSG_INT64(long)), LWMSG_ATTR_NOT_NULL,
     LWMSG_ATTR_LENGTH_MEMBER(basic_struct, len),
     LWMSG_STRUCT_END,
@@ -228,7 +230,7 @@ MU_TEST(marshal, basic)
         /* -42 */
         0xFF, 0xD6,
         /* 2 */
-        0x00, 0x00, 0x00, 0x02,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
         /* 1234 */
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xD2,
         /* 4321 */
@@ -270,7 +272,7 @@ MU_TEST(marshal, basic_into)
         /* -42 */
         0xFF, 0xD6,
         /* 2 */
-        0x00, 0x00, 0x00, 0x02,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
         /* 1234 */
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xD2,
         /* 4321 */
@@ -335,12 +337,10 @@ MU_TEST(marshal, basic_verify_unmarshal_failure)
 {
     static const unsigned char bytes[] =
     {
-        /* Implicit pointer set value */
-        0xFF,
         /* 12 */
         0x00, 0x0C,
         /* 2 */
-        0x00, 0x00, 0x00, 0x02,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
         /* 1234 */
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xD2,
         /* 4321 */
@@ -360,14 +360,14 @@ MU_TEST(marshal, basic_verify_unmarshal_failure)
         LWMSG_STATUS_MALFORMED);
 }
 
-MU_TEST(marshal, basic_verify_range_failure)
+MU_TEST(marshal, basic_verify_range_failure_low)
 {
     static const unsigned char bytes[] =
     {
         /* -42 */
         0xFF, 0xD6,
-        /* 9 */
-        0x00, 0x00, 0x00, 0x09,
+        /* 0 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         /* pointer */
         0xFF,
         /* 1234 */
@@ -389,6 +389,36 @@ MU_TEST(marshal, basic_verify_range_failure)
         LWMSG_STATUS_MALFORMED);
 }
 
+MU_TEST(marshal, basic_verify_range_failure_high)
+{
+    static const unsigned char bytes[] =
+    {
+        /* -42 */
+        0xFF, 0xD6,
+        /* a lot */
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        /* pointer */
+        0xFF,
+        /* 1234 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xD2,
+        /* 4321 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0xE1
+    };
+
+    LWMsgTypeSpec* type = basic_spec;
+    LWMsgBuffer buffer = {0};
+    basic_struct *out;
+
+    buffer.base = buffer.cursor = (void*) bytes;
+    buffer.end = buffer.base + sizeof(bytes);
+
+    MU_ASSERT_EQUAL(
+        MU_TYPE_INTEGER,
+        lwmsg_data_unmarshal(dcontext, type, &buffer, (void**) (void*) &out),
+        LWMSG_STATUS_MALFORMED);
+}
+
+
 MU_TEST(marshal, basic_verify_null_failure)
 {
     static const unsigned char bytes[] =
@@ -396,7 +426,7 @@ MU_TEST(marshal, basic_verify_null_failure)
         /* -42 */
         0xFF, 0xD6,
         /* 2 */
-        0x00, 0x00, 0x00, 0x02,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
     };
 
     LWMsgTypeSpec* type = basic_spec;
@@ -410,6 +440,38 @@ MU_TEST(marshal, basic_verify_null_failure)
         MU_TYPE_INTEGER,
         lwmsg_data_unmarshal(dcontext, type, &buffer, (void**) (void*) &out),
         LWMSG_STATUS_EOF);
+}
+
+MU_TEST(marshal, basic_verify_overflow_failure)
+{
+    static const unsigned char bytes_64[] =
+    {
+        /* -42 */
+        0xFF, 0xD6,
+        /* max size_t / 2 */
+        0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+    };
+
+    static const unsigned char bytes_32[] =
+    {
+        /* -42 */
+        0xFF, 0xD6,
+        /* max size_t / 2 */
+        0x00, 0x00, 0x00, 0x00, 0x7F, 0xFF, 0xFF, 0xFF
+    };
+
+    const unsigned char* bytes = sizeof(size_t) == 8 ? bytes_64 : bytes_32;
+    LWMsgTypeSpec* type = basic_spec;
+    LWMsgBuffer buffer = {0};
+    basic_struct *out;
+
+    buffer.base = buffer.cursor = (void*) bytes;
+    buffer.end = buffer.base + sizeof(bytes_32);
+
+    MU_ASSERT_EQUAL(
+        MU_TYPE_INTEGER,
+        lwmsg_data_unmarshal(dcontext, type, &buffer, (void**) (void*) &out),
+        LWMSG_STATUS_OVERFLOW);
 }
 
 typedef struct alias_struct
