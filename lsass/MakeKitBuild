@@ -50,7 +50,12 @@ configure()
     mk_declare -s -o MOD_EXT
     mk_declare -s PAMDIR
     mk_declare -s NSSDIR
-    mk_declare -o fdlimit=dword:00000400
+
+    # Default registry settings
+    mk_declare -o \
+        fdlimit=dword:00000400 \
+        default_homedir_prefix="/home" \
+        default_skeldirs="/etc/skel"
 
     # Set system-dependent variables
     mk_multiarch_do
@@ -67,16 +72,19 @@ configure()
                 NSSDIR="/usr/lib"
                 PAMDIR="/usr/lib/security"
 		fdlimit=dword:00000100
+	        default_homedir_prefix="/export/home"
                 ;;
             solaris:x86_64)
                 NSSDIR="/usr/lib/64"
                 PAMDIR="/usr/lib/security/64"
 		fdlimit=dword:00000100
+	        default_homedir_prefix="/export/home"
                 ;;
             solaris:sparc_64)
                 NSSDIR="/usr/lib/sparcv9"
                 PAMDIR="/usr/lib/security/sparcv9"
 		fdlimit=dword:00000100
+	        default_homedir_prefix="/export/home"
                 ;;
             aix:ppc32)
                 NSSDIR="/usr/lib/security"
@@ -104,6 +112,8 @@ configure()
                 ;;
             darwin:*)
                 PAMDIR="/usr/lib/pam"
+                default_skeldirs="System/Library/User Template/Non_localized, /System/Library/User Template/English.lproj"
+                default_homedir_prefix="/Users"
                 ;;
         esac
 
@@ -132,8 +142,6 @@ configure()
     mk_declare -o \
         providerdir="$MK_LIBDIR" \
         rpcserverdir="$MK_LIBDIR" \
-        default_homedir_prefix="/home" \
-        default_skeldirs="/etc/skel" \
         LIBDIR="$MK_LIBDIR" \
         SBINDIR="$MK_SBINDIR" \
         CACHEDIR="$LW_CACHEDIR" \
