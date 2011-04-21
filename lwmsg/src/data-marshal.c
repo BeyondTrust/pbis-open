@@ -256,13 +256,22 @@ lwmsg_data_marshal_integer(
                           in_size));
     }
 
-    BAIL_ON_ERROR(status = lwmsg_convert_integer(in,
-                                                 in_size,
-                                                 LWMSG_NATIVE_ENDIAN,
-                                                 out,
-                                                 out_size,
-                                                 context->byte_order,
-                                                 iter->info.kind_integer.sign));
+    status = lwmsg_convert_integer(
+        in,
+        in_size,
+        LWMSG_NATIVE_ENDIAN,
+        out,
+        out_size,
+        context->byte_order,
+        iter->info.kind_integer.sign);
+    BAIL_ON_ERROR(status = DATA_RAISE(
+        context,
+        iter,
+        status,
+        "Integer overflow converting from %s %lu-bit to %lu-bit",
+        iter->info.kind_integer.sign == LWMSG_UNSIGNED ? "unsigned" : "signed",
+        (unsigned long) in_size * 8,
+        (unsigned long) out_size * 8));
     
     BAIL_ON_ERROR(status = lwmsg_buffer_write(buffer, out, out_size));
 
@@ -293,16 +302,25 @@ lwmsg_data_marshal_enum(
     in_size = iter->size;
 
     /* Make sure we can decode the value */
-    BAIL_ON_ERROR(status = lwmsg_convert_integer(
+    status = lwmsg_convert_integer(
                       in,
                       in_size,
                       LWMSG_NATIVE_ENDIAN,
                       &value,
                       sizeof(value),
                       LWMSG_NATIVE_ENDIAN,
-                      iter->info.kind_integer.sign));
+                      iter->info.kind_integer.sign);
+    BAIL_ON_ERROR(status = DATA_RAISE(
+        context,
+        iter,
+        status,
+        "Integer overflow converting from %s %lu-bit to %lu-bit",
+        iter->info.kind_integer.sign == LWMSG_UNSIGNED ? "unsigned" : "signed",
+        (unsigned long) in_size * 8,
+        (unsigned long) out_size * 8));
 
     BAIL_ON_ERROR(status = lwmsg_data_decode_enum_value(
+                      context,
                       iter,
                       value,
                       &mask,

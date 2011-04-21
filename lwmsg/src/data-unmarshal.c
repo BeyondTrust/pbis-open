@@ -134,14 +134,22 @@ lwmsg_data_unmarshal_integer(
 
     BAIL_ON_ERROR(status = lwmsg_buffer_read(buffer, temp, in_size));
 
-    BAIL_ON_ERROR(status = lwmsg_convert_integer(
-                      temp,
-                      in_size,
-                      context->byte_order,
-                      object,
-                      out_size,
-                      LWMSG_NATIVE_ENDIAN,
-                      iter->info.kind_integer.sign));
+    status = lwmsg_convert_integer(
+        temp,
+        in_size,
+        context->byte_order,
+        object,
+        out_size,
+        LWMSG_NATIVE_ENDIAN,
+        iter->info.kind_integer.sign);
+    BAIL_ON_ERROR(status = DATA_RAISE(
+        context,
+        iter,
+        status,
+        "Integer overflow converting from %s %lu-bit to %lu-bit",
+        iter->info.kind_integer.sign == LWMSG_UNSIGNED ? "unsigned" : "signed",
+        (unsigned long) in_size * 8,
+        (unsigned long) out_size * 8));
 
     /* If a valid range is defined, check value against it */
     if (iter->attrs.flags & LWMSG_TYPE_FLAG_RANGE)
@@ -181,16 +189,25 @@ lwmsg_data_unmarshal_enum(
     BAIL_ON_ERROR(status = lwmsg_buffer_read(buffer, temp, in_size));
 
     /* Make sure we can decode the value */
-    BAIL_ON_ERROR(status = lwmsg_convert_integer(
-                      temp,
-                      in_size,
-                      context->byte_order,
-                      &value,
-                      sizeof(value),
-                      LWMSG_NATIVE_ENDIAN,
-                      iter->info.kind_integer.sign));
+    status = lwmsg_convert_integer(
+        temp,
+        in_size,
+        context->byte_order,
+        &value,
+        sizeof(value),
+        LWMSG_NATIVE_ENDIAN,
+        iter->info.kind_integer.sign);
+    BAIL_ON_ERROR(status = DATA_RAISE(
+        context,
+        iter,
+        status,
+        "Integer overflow converting from %s %lu-bit to %lu-bit",
+        iter->info.kind_integer.sign == LWMSG_UNSIGNED ? "unsigned" : "signed",
+        (unsigned long) in_size * 8,
+        (unsigned long) out_size * 8));
 
     BAIL_ON_ERROR(status = lwmsg_data_decode_enum_value(
+                      context,
                       iter,
                       value,
                       &mask,

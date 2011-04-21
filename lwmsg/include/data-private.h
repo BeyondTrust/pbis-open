@@ -156,6 +156,7 @@ lwmsg_data_extract_active_arm(
 
 LWMsgStatus
 lwmsg_data_decode_enum_value(
+    LWMsgDataContext* context,
     LWMsgTypeIter* iter,
     uint64_t value,
     uint64_t* mask,

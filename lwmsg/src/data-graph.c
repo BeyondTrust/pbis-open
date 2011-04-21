@@ -232,6 +232,7 @@ error:
 
 LWMsgStatus
 lwmsg_data_decode_enum_value(
+    LWMsgDataContext* context,
     LWMsgTypeIter* iter,
     uint64_t value,
     uint64_t* mask,
@@ -240,6 +241,7 @@ lwmsg_data_decode_enum_value(
 {
     LWMsgTypeIter var;
     LWMsgBool found_value = LWMSG_FALSE;
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
 
     *mask = 0;
 
@@ -265,7 +267,7 @@ lwmsg_data_decode_enum_value(
 
             if (*res == var.tag)
             {
-                return LWMSG_STATUS_SUCCESS;
+                goto done;
             }
         }
     }
@@ -273,15 +275,28 @@ lwmsg_data_decode_enum_value(
     if (*res == 0 && !found_value)
     {
         /* A residual of 0 is ok when the enum is a pure mask */
-        return LWMSG_STATUS_SUCCESS;
+        goto done;
     }
     else
     {
-        *res = 0;
-        *mask = 0;
-
-        return LWMSG_STATUS_MALFORMED;
+        BAIL_ON_ERROR(status = DATA_RAISE(
+            context,
+            iter,
+            LWMSG_STATUS_MALFORMED,
+            "invalid enum value %lu",
+            (unsigned long) *res));
     }
+
+done:
+
+    return status;
+
+error:
+
+    *res = 0;
+    *mask = 0;
+
+    goto done;
 }
 
 LWMsgStatus

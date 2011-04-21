@@ -223,6 +223,7 @@ lwmsg_data_print_enum(
                       iter->info.kind_integer.sign));
 
     BAIL_ON_ERROR(status = lwmsg_data_decode_enum_value(
+                      info->context,
                       iter,
                       value,
                       &mask,
