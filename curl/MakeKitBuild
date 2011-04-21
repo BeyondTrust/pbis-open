@@ -12,11 +12,20 @@ make()
         curl/stdcheaders.h \
         curl/curlbuild.h"
 
+    CURL_LDFLAGS=""
+
+    if [ "$MK_HOST_OS" = "freebsd" ]
+    then
+        # Temporary hack to make libcurl have correct RPATH
+        CURL_LDFLAGS="-Wl,-rpath,$MK_LIBDIR"
+    fi
+
     mk_autotools \
         HEADERS="$CURL_HEADERS" \
         LIBS="curl:6:0:2" \
         HEADERDEPS="openssl/ssl.h" \
         LIBDEPS="ssl" \
+        LDFLAGS="$CURL_LDFLAGS" \
         --without-libidn \
         --disable-ldap --disable-ldaps --disable-ftp \
         --disable-rtsp --disable-dict --disable-telnet \
