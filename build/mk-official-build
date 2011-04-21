@@ -154,7 +154,7 @@ fi
 if [ -d dmg ]
 then
     show mkdir -p "$DIST_DIR/dmg"
-    show cp -r "sfx/"* "$DIST_DIR/dmg"
+    show cp -r "dmg/"* "$DIST_DIR/dmg"
 fi
   
 show cp -f "config.log" "$DIST_DIR/config.log"
