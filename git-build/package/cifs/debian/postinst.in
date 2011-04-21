@@ -7,28 +7,32 @@ export PATH
 
 case "$1" in
     abort-upgrade)
-	;;
-    
+        ;;
+
     configure)
-	domainjoin-cli configure --enable pam >/dev/null
-	domainjoin-cli configure --enable nsswitch >/dev/null
-	
-	if [ -z "`pidof lwsmd`" ]; then
-            /etc/init.d/lwsmd start
-	else
-            /etc/init.d/lwsmd stop
-            sleep 1
-            /etc/init.d/lwsmd start
-	fi
-	lwsm start lwreg
-	for file in "@LW_CONFIGDIR@/"*.reg; do
-	    echo "Importing $file..."
-            lwregshell upgrade $file >/dev/null
-	done
-	/etc/init.d/lwsmd reload
+
+        /etc/init.d/lwsmd stop >/dev/null 2>&1
         sleep 2
-	lwsm start srvsvc
-	;;
+
+        domainjoin-cli configure --enable pam >/dev/null
+        domainjoin-cli configure --enable nsswitch >/dev/null
+
+        @MK_SBINDIR@/lwsmd --start-as-daemon
+
+        for file in "@LW_CONFIGDIR@/"*.reg; do
+            echo "Importing $file..."
+            lwregshell import $file >/dev/null
+        done
+
+        lwsm shutdown
+        sleep 2
+
+        /usr/sbin/update-rc.d -f lwsmd defaults 17 8 > /dev/null
+        /usr/sbin/update-rc.d -f likewise defaults 18 7 > /dev/null
+
+        /etc/init.d/lwsmd start
+        /etc/init.d/likewise start
+        ;;
 esac
 
 #DEBHELPER#
