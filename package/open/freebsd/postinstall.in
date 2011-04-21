@@ -33,7 +33,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -52,7 +52,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -70,7 +70,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    $@ > $TLOG 2>&1
+    eval "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -236,6 +236,22 @@ switch_to_open_provider()
     run_quiet "@MK_BINDIR@/lwregshell set_value $_value Path $_path"
 }
 
+wait_for_lwsm_shutdown()
+{
+    LWSMD_WAIT_TIME=$1
+
+    while [ "$LWSMD_WAIT_TIME" -ne 0 ]; do
+        sleep 1
+        run_quiet "@MK_BINDIR@/lwsm list"
+        if [ $? -ne 0 ]; then
+            return 0
+        fi
+        LWSMD_WAIT_TIME=`expr $LWSMD_WAIT_TIME - 1`
+    done
+
+    return 1
+}
+
 postinstall()
 {
     log "Package: Likewise Open postinstall begins (`date`)"
@@ -254,6 +270,7 @@ postinstall()
     switch_to_open_provider
 
     run_or_fail "@MK_BINDIR@/lwsm shutdown"
+    wait_for_lwsm_shutdown 60
 
     run "/etc/rc.d/lwsmd start"
     run "/etc/rc.d/likewise start"
