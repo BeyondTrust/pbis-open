@@ -6,6 +6,7 @@ configure()
         MK_BINDIR \
         MK_SBINDIR \
         MK_PREFIX \
+        MK_DATADIR \
         MK_DEBUG \
         MK_ROOT_DIR \
         MK_STAGE_DIR \
@@ -67,7 +68,7 @@ package_deb()
     mk_deb_do \
         PACKAGE="$PKG_DEB_NAME" \
         VERSION="$PKG_DEB_VERSION" \
-        DEBIANFILES="deb/changelog.in deb/control.in deb/likewise-open.pam-auth-update.in \
+        DEBIANFILES="deb/changelog.in deb/control.in  \
                      deb/likewise-open.postinst.in deb/likewise-open.postrm.in deb/compat.in \
                      deb/likewise-open.preinst.in deb/likewise-open.prerm.in deb/rules.in"
         
@@ -301,6 +302,7 @@ open_files_prefix()
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/krb5/plugins/libkrb5/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lw-svcm/*${MK_DLO_EXT}" \
+        "${MK_DATADIR}/likewise.pam-auth-update" \
         "${LW_CONFIGDIR}/*.reg" \
         "${MK_PREFIX}/data/VERSION"
 
