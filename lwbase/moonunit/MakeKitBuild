@@ -18,13 +18,13 @@ make()
         LIBDEPS="lwbase lwbase_nothr"
 
     mk_program \
-        PROGRAM=benchmark \
+        PROGRAM=benchmark_threadpool \
         INSTALLDIR="$LW_TOOL_DIR" \
         SOURCES="benchmark-main.c" \
         INCLUDEDIRS=". ../include" \
         GROUPS="benchmark"
 
-    mk_add_subdir_target "$result"
+    lw_add_tool_target "$result"
 
     mk_have_moonunit && mk_moonunit \
         DLO="lwbase_mu" \

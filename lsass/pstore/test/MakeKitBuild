@@ -7,4 +7,6 @@ make()
 	INCLUDEDIRS=". ../../include ../../tools/lw-lsa" \
         HEADERDEPS="lwadvapi.h" \
         LIBDEPS="lsapstore lwadvapi lwadvapi_nothr lwbase lwbase_nothr"
+
+    lw_add_tool_target "$result"
 }

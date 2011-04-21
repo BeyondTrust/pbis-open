@@ -20,4 +20,6 @@ make()
                     lw/srvsvc.h lw/rpc/common.h lw/rpc/samr.h lw/rpc/lsa.h lw/rpc/wkssvc.h \
                     lwnet.h ntlm/gssntlm.h ntlm/sspintlm.h lsa/ad.h" \
 	LIBDEPS="srvsvc lwnetclientapi lwadvapi lwbase lsarpc dcerpc lwnetapi lsaclient"
+
+    lw_add_tool_target "$result"
 }

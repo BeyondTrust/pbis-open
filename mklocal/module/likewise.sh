@@ -72,8 +72,16 @@ configure()
     mk_msg "developer tool dir: $LW_TOOL_DIRNAME"
 
     LW_TOOL_DIR="@$LW_TOOL_DIRNAME"
+    _LW_TOOL_TARGETS=""
+}
 
-    mk_add_scrub_target "$LW_TOOL_DIR"
+lw_add_tool_target()
+{
+    mk_push_vars result
+    mk_resolve_target "$1"
+    mk_quote "$result"
+    _LW_TOOL_TARGETS="$_LW_TOOL_TARGETS $result"
+    mk_pop_vars
 }
 
 lw_define_feature_macros()
@@ -277,4 +285,14 @@ lw_service()
     fi
 
     mk_pop_vars
+}
+
+make()
+{
+    mk_target \
+        TARGET="${LW_TOOL_DIR}" \
+        DEPS="$_LW_TOOL_TARGETS"
+
+    mk_add_phony_target "$result"
+    mk_add_scrub_target "$result"
 }
