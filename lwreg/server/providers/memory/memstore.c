@@ -394,9 +394,10 @@ MemRegStoreDeleteNode(
             hDb->ParentNode->NodesLen--;
         }
     }
-    if (hDb->SecurityDescriptorAllocated)
+    if (hDb->pNodeSd && hDb->pNodeSd->SecurityDescriptorAllocated)
     {
-        LWREG_SAFE_FREE_MEMORY(hDb->SecurityDescriptor);
+        LWREG_SAFE_FREE_MEMORY(hDb->pNodeSd->SecurityDescriptor);
+        LWREG_SAFE_FREE_MEMORY(hDb->pNodeSd);
     }
     LWREG_SAFE_FREE_MEMORY(hDb->Name);
     LWREG_SAFE_FREE_MEMORY(hDb);
@@ -411,7 +412,7 @@ error:
 
 NTSTATUS
 MemRegStoreAddNode(
-    IN MEM_REG_STORE_HANDLE hDb,
+    IN MEM_REG_STORE_HANDLE hParentNode,
     PCWSTR Name,
     DWORD NodeType,
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
@@ -424,10 +425,12 @@ MemRegStoreAddNode(
     PREGMEM_NODE pNewNode = NULL;
     PWSTR newNodeName = NULL;
     DWORD index = 0;
+    PREGMEM_NODE_SD pUpdatedNodeSd = NULL;
 
-    status = NtRegReallocMemory(hDb->SubNodes, 
-                                (PVOID) &pNodesArray,
-                                (hDb->NodesLen + 1) * sizeof(PREGMEM_NODE));
+    status = NtRegReallocMemory(
+                 hParentNode->SubNodes, 
+                 (PVOID) &pNodesArray,
+                 (hParentNode->NodesLen + 1) * sizeof(PREGMEM_NODE));
     BAIL_ON_NT_STATUS(status);
 
     status = LW_RTL_ALLOCATE(
@@ -438,8 +441,8 @@ MemRegStoreAddNode(
     status = LwRtlWC16StringDuplicate(&newNodeName, Name);
     BAIL_ON_NT_STATUS(status);
   
-    pNodesArray[hDb->NodesLen] = NULL;
-    hDb->SubNodes = pNodesArray;
+    pNodesArray[hParentNode->NodesLen] = NULL;
+    hParentNode->SubNodes = pNodesArray;
     pNodesArray = NULL;
 
     if (NodeType > 1)
@@ -448,34 +451,34 @@ MemRegStoreAddNode(
          * Point new node to parent, if not root. Needed by some operations
          * that would manipulate parent structure (e.g. MemDeleteKey)
          */
-        pNewNode->ParentNode = hDb;
+        pNewNode->ParentNode = hParentNode;
     }
 
     /* Insert new node in sorted order */
-    if (hDb->NodesLen > 0)
+    if (hParentNode->NodesLen > 0)
     {
         for (index=0; 
-             index<hDb->NodesLen &&
-             LwRtlWC16StringCompare(Name, hDb->SubNodes[index]->Name)>0;
+             index<hParentNode->NodesLen &&
+             LwRtlWC16StringCompare(Name, hParentNode->SubNodes[index]->Name)>0;
              index++)
         {
             ;
         }
-        if (index < (hDb->NodesLen+1))
+        if (index < (hParentNode->NodesLen+1))
         {
-            memmove(&hDb->SubNodes[index+1],
-                    &hDb->SubNodes[index],
-                    sizeof(PREGMEM_NODE) * (hDb->NodesLen - index));
-            hDb->SubNodes[index] = pNewNode;
+            memmove(&hParentNode->SubNodes[index+1],
+                    &hParentNode->SubNodes[index],
+                    sizeof(PREGMEM_NODE) * (hParentNode->NodesLen - index));
+            hParentNode->SubNodes[index] = pNewNode;
         }
         else
         {
-            hDb->SubNodes[hDb->NodesLen] = pNewNode;
+            hParentNode->SubNodes[hParentNode->NodesLen] = pNewNode;
         }
     }
     else
     {
-        hDb->SubNodes[hDb->NodesLen] = pNewNode;
+        hParentNode->SubNodes[hParentNode->NodesLen] = pNewNode;
     }
 
     pNewNode->Name = newNodeName;
@@ -483,34 +486,19 @@ MemRegStoreAddNode(
 
     pNewNode->NodeType = NodeType;
 
-    if (SecurityDescriptor && SecurityDescriptorLen &&
-        (hDb->SecurityDescriptorLen != SecurityDescriptorLen ||
-         memcmp(hDb->SecurityDescriptor, 
-                SecurityDescriptor,
-                SecurityDescriptorLen) != 0))
-    {
-        status = LW_RTL_ALLOCATE(
-                 (PVOID*) &pNewNode->SecurityDescriptor,
-                 PSECURITY_DESCRIPTOR_RELATIVE,
-                 SecurityDescriptorLen);
-        BAIL_ON_NT_STATUS(status);
-        memcpy(pNewNode->SecurityDescriptor,
-               SecurityDescriptor,
-               SecurityDescriptorLen);
-        pNewNode->SecurityDescriptorLen = SecurityDescriptorLen;
-        pNewNode->SecurityDescriptorAllocated = TRUE;
-    }
-    else
-    {
-        /* Inherit SD from parent node if one is not provided */
-        pNewNode->SecurityDescriptor = hDb->SecurityDescriptor;
-        pNewNode->SecurityDescriptorLen = hDb->SecurityDescriptorLen;
-    }
-    hDb->NodesLen++;
+    status = MemRegStoreCreateSecurityDescriptor(
+                 hParentNode->pNodeSd,
+                 SecurityDescriptor,
+                 SecurityDescriptorLen,
+                 &pUpdatedNodeSd);
+    BAIL_ON_NT_STATUS(status);
+    pNewNode->pNodeSd = pUpdatedNodeSd;
+
+    hParentNode->NodesLen++;
 
     if (phNode)
     {
-        *phNode = hDb;
+        *phNode = hParentNode;
     }
     if (pRetNewNode)
     {
@@ -540,7 +528,6 @@ MemRegStoreFindNodeValue(
     DWORD valueIndex = 0;
     BOOLEAN bFoundValue = FALSE;
 
-    BAIL_ON_NT_STATUS(status);
     if (!Name)
     {
         Name = (PCWSTR) L"";
@@ -562,11 +549,9 @@ MemRegStoreFindNodeValue(
     {
         status = STATUS_OBJECT_NAME_NOT_FOUND;
     }
-cleanup:
+
     return status;
 
-error:
-    goto cleanup;
 }
 
 
@@ -741,7 +726,7 @@ MemRegStoreDeleteNodeValue(
         {
             memmove(&hDb->Values[valueIndex],
                     &hDb->Values[valueIndex+1],
-                    (hDb->ValuesLen - valueIndex - 1) * sizeof (PREGMEM_VALUE));
+                    (hDb->ValuesLen - valueIndex - 1) * sizeof(PREGMEM_VALUE));
         }
         hDb->Values[hDb->ValuesLen-1] = NULL;
         hDb->ValuesLen--;
@@ -870,7 +855,7 @@ MemRegStoreGetNodeValueAttributes(
         {
             status = LW_RTL_ALLOCATE((PVOID*) &pCurrentValue,
                                      LWREG_CURRENT_VALUEINFO,
-                                     sizeof (*pCurrentValue));
+                                     sizeof(*pCurrentValue));
             BAIL_ON_NT_STATUS(status);
         
             if (dwValueLen > 0)
@@ -890,7 +875,7 @@ MemRegStoreGetNodeValueAttributes(
         /* Always allocate a return attributes block */
         status = LW_RTL_ALLOCATE((PVOID*) &pValueAttributes,
                                  LWREG_VALUE_ATTRIBUTES,
-                                 sizeof (*pValueAttributes));
+                                 sizeof(*pValueAttributes));
         BAIL_ON_NT_STATUS(status);
         memset(pValueAttributes, 0, sizeof(*pValueAttributes));
 
@@ -968,5 +953,115 @@ error:
     LWREG_SAFE_FREE_MEMORY(pwszDocString);
     LWREG_SAFE_FREE_MEMORY(pwszEnumString);
     _MemDbFreeWC16Array(ppwszEnumStrings);
+    goto cleanup;
+}
+
+
+NTSTATUS
+MemRegStoreCreateNodeSdFromSddl(
+    IN PSTR SecurityDescriptor,
+    IN ULONG SecurityDescriptorLen,
+    PREGMEM_NODE_SD *ppRetNodeSd)
+{
+    NTSTATUS status = 0;
+    PREGMEM_NODE_SD pNodeSd = NULL;
+
+    if (!SecurityDescriptor || SecurityDescriptorLen == 0)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
+    
+    status = LW_RTL_ALLOCATE((PVOID*) &pNodeSd,
+                                      PREGMEM_NODE_SD,
+                                      sizeof(*pNodeSd));
+    BAIL_ON_NT_STATUS(status);
+
+    /* Add security descriptor to current key node */
+    status = RtlAllocateSecurityDescriptorFromSddlCString(
+                 &pNodeSd->SecurityDescriptor,
+                 &pNodeSd->SecurityDescriptorLen,
+                 SecurityDescriptor,
+                 SDDL_REVISION_1);
+    BAIL_ON_NT_STATUS(status);
+    pNodeSd->SecurityDescriptorAllocated = TRUE;
+  
+    *ppRetNodeSd = pNodeSd;
+
+cleanup:
+    return status;
+
+error:
+    LWREG_SAFE_FREE_MEMORY(pNodeSd->SecurityDescriptor);
+    LWREG_SAFE_FREE_MEMORY(pNodeSd);
+    goto cleanup;
+}
+
+
+NTSTATUS
+MemRegStoreCreateSecurityDescriptor(
+    PREGMEM_NODE_SD pParentSd,
+    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
+    ULONG SecurityDescriptorLen,
+    PREGMEM_NODE_SD *ppUpdatedNodeSd)
+{
+    NTSTATUS status = 0;
+    PSECURITY_DESCRIPTOR_RELATIVE NewSecurityDescriptor = NULL;
+    PREGMEM_NODE_SD pNodeSd = NULL;
+    PREGMEM_NODE_SD pNewNodeSd = NULL;
+    BOOLEAN bInheritParent = FALSE;
+
+    if (pParentSd)
+    {
+        if (SecurityDescriptor && SecurityDescriptorLen)
+        {
+            if (pParentSd->SecurityDescriptorLen == SecurityDescriptorLen &&
+            memcmp(pParentSd->SecurityDescriptor,
+                   SecurityDescriptor,
+                   SecurityDescriptorLen) == 0)
+            {
+                bInheritParent = TRUE;
+            }
+        }
+        else
+        {
+            bInheritParent = TRUE;
+        }
+    }
+
+    status = LW_RTL_ALLOCATE(
+                 (PVOID *) &pNodeSd,
+                 PREGMEM_NODE_SD,
+                 sizeof(*pNewNodeSd));
+    BAIL_ON_NT_STATUS(status);
+
+    if (bInheritParent)
+    {
+        /* Inherit SD from parent node if one is not provided */
+        pNodeSd->SecurityDescriptor = pParentSd->SecurityDescriptor;
+        pNodeSd->SecurityDescriptorLen = pParentSd->SecurityDescriptorLen;
+    }
+    else
+    {
+        status = LW_RTL_ALLOCATE((PVOID *) &NewSecurityDescriptor,
+                                 PSECURITY_DESCRIPTOR_RELATIVE,
+                                 SecurityDescriptorLen);
+        BAIL_ON_NT_STATUS(status);
+    
+        pNodeSd->SecurityDescriptor = NewSecurityDescriptor;
+        memcpy(pNodeSd->SecurityDescriptor,
+               SecurityDescriptor,
+               SecurityDescriptorLen);
+        pNodeSd->SecurityDescriptorLen = SecurityDescriptorLen;
+        pNodeSd->SecurityDescriptorAllocated = TRUE;
+    }
+
+    *ppUpdatedNodeSd = pNodeSd;
+cleanup:
+    return status;
+
+error:
+    LWREG_SAFE_FREE_MEMORY(pNodeSd);
+    LWREG_SAFE_FREE_MEMORY(NewSecurityDescriptor);
     goto cleanup;
 }

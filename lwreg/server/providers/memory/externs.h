@@ -55,8 +55,12 @@ extern REG_DB_HANDLE ghCacheConnection;
 PREGMEM_NODE ghMemRegRoot;
 
 extern pthread_mutex_t gMemRegDbMutex;
+extern BOOLEAN gbInLockDbMutex;
+
 extern pthread_mutex_t gExportMutex;
+extern BOOLEAN gbInLockExportMutex;
 extern pthread_cond_t gExportCond;
+
 extern BOOLEAN gbValueChanged;
 
 #if 0

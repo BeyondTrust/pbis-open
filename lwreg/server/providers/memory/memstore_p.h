@@ -58,6 +58,14 @@ typedef struct _REGMEM_VALUE
 } REGMEM_VALUE, *PREGMEM_VALUE;
 
 
+typedef struct _REGMEM_NODE_SD
+{
+    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
+    ULONG SecurityDescriptorLen;
+    BOOLEAN SecurityDescriptorAllocated;
+} REGMEM_NODE_SD, *PREGMEM_NODE_SD;
+
+
 typedef struct _REGMEM_NODE
 {
     PWSTR Name;
@@ -68,9 +76,7 @@ typedef struct _REGMEM_NODE
      */
     struct _REGMEM_NODE *ParentNode;
     
-    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
-    ULONG SecurityDescriptorLen;
-    BOOLEAN SecurityDescriptorAllocated;
+    PREGMEM_NODE_SD pNodeSd;
 
     struct _REGMEM_NODE **SubNodes;
     DWORD NodesLen;
@@ -78,4 +84,5 @@ typedef struct _REGMEM_NODE
     PREGMEM_VALUE *Values;
     DWORD ValuesLen;
 } REGMEM_NODE, *PREGMEM_NODE;
+
 #endif

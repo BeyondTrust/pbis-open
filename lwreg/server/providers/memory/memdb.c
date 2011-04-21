@@ -129,12 +129,12 @@ pfMemRegExportToFile(
 
     if ((pEntry->NodeType == REGMEM_TYPE_KEY ||
         pEntry->NodeType == REGMEM_TYPE_HIVE) &&
-        pEntry->SecurityDescriptorAllocated)
+        pEntry->pNodeSd && pEntry->pNodeSd->SecurityDescriptorAllocated)
     {
         dwError = RegNtStatusToWin32Error(
                      RtlAllocateSddlCStringFromSecurityDescriptor(
                          &pszStringSecurityDescriptor,
-                         pEntry->SecurityDescriptor,
+                         pEntry->pNodeSd->SecurityDescriptor,
                          SDDL_REVISION_1,
                          SecInfoAll));
         BAIL_ON_NT_STATUS(dwError);
@@ -284,11 +284,9 @@ VOID
 MemDbExportEntryChanged(
     VOID)
 {
-    BOOLEAN bInLock = FALSE;
-
-    LWREG_LOCK_MUTEX(bInLock, &gExportMutex);
+    LWREG_LOCK_MUTEX(gbInLockExportMutex, &gExportMutex);
     gbValueChanged = TRUE;
-    LWREG_UNLOCK_MUTEX(bInLock, &gExportMutex);
+    LWREG_UNLOCK_MUTEX(gbInLockExportMutex, &gExportMutex);
     pthread_cond_signal(&gExportCond);
 }
 
@@ -303,12 +301,11 @@ MemDbExportToFileThread(
     struct timespec *pTimeOutForced = NULL;
     REG_DB_CONNECTION regDbConn = {0};
     int sts = 0;
-    BOOLEAN bInLock = FALSE;
 
     regDbConn.pMemReg = exportCtx->hKey;
     do
     {
-        LWREG_LOCK_MUTEX(bInLock, &gExportMutex);
+        pthread_mutex_lock(&gExportMutex);
         while (!gbValueChanged)
         {
             if (!pTimeOutForced)
@@ -360,7 +357,7 @@ MemDbExportToFileThread(
                 }
             }
         }
-        LWREG_UNLOCK_MUTEX(bInLock, &gExportMutex);
+        pthread_mutex_unlock(&gExportMutex);
 
         if (ghMemRegRoot)
         {
@@ -371,14 +368,14 @@ MemDbExportToFileThread(
             }
             else
             {
-                LWREG_LOCK_MUTEX(bInLock, &gExportMutex);
+                LWREG_LOCK_MUTEX(gbInLockExportMutex, &gExportMutex);
                 MemDbRecurseRegistry(
                              NULL,
                              &regDbConn,
                              NULL,
                              pfMemRegExportToFile,
                              exportCtx);
-                LWREG_UNLOCK_MUTEX(bInLock, &gExportMutex);
+                LWREG_UNLOCK_MUTEX(gbInLockExportMutex, &gExportMutex);
                 fclose(exportCtx->wfp);
             }
         }
@@ -469,6 +466,10 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
     PREGMEM_VALUE pRegValue = NULL;
     DWORD dataType = 0;
     LWREG_VALUE_ATTRIBUTES tmpAttr = {0};
+    PREGMEM_NODE_SD pNodeSd = NULL;
+#ifdef __MEMDB_PRINTF__ 
+FILE *dbgfp = fopen("/tmp/lwregd-import.txt", "w");
+#endif
 
     if (pItem->type == REG_KEY)
     {
@@ -514,7 +515,7 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
         }
 
 #ifdef __MEMDB_PRINTF__ /* Debugging only */
-printf("pfImportFile: type=%d valueName=%s\n",
+fprintf(dbgfp, "pfImportFile: type=%d valueName=%s\n",
        pItem->type,
        pItem->keyName);
 #endif
@@ -523,18 +524,12 @@ printf("pfImportFile: type=%d valueName=%s\n",
              !strcmp(pItem->valueName, "@security"))
     {
         hSubKey = pImportCtx->hSubKey;
-
-        /* Add security descriptor to current key node */
-        if (pItem->value && pItem->valueLen)
-        {
-            status = RtlAllocateSecurityDescriptorFromSddlCString(
-                         &hSubKey->SecurityDescriptor,
-                         &hSubKey->SecurityDescriptorLen,
-                         pItem->value,
-                         SDDL_REVISION_1);
-            BAIL_ON_NT_STATUS(status);
-            hSubKey->SecurityDescriptorAllocated = TRUE;
-        }
+        status = MemRegStoreCreateNodeSdFromSddl(
+                     (PSTR) pItem->value,
+                     pItem->valueLen,
+                     &pNodeSd);
+        BAIL_ON_NT_STATUS(status);
+        hSubKey->pNodeSd = pNodeSd;
     }
     else 
     {
@@ -611,7 +606,8 @@ printf("pfImportFile: type=%d valueName=%s\n",
                                  pItem->regAttr.pDefaultValue);
                 BAIL_ON_NT_STATUS(status);
                 tmpAttr.pDefaultValue = (PVOID) pwszStringData;
-                tmpAttr.DefaultValueLen = wc16slen(tmpAttr.pDefaultValue) * 2 + 2;
+                tmpAttr.DefaultValueLen = 
+                    wc16slen(tmpAttr.pDefaultValue) * 2 + 2;
             }
             status = MemRegStoreAddNodeAttribute(
                          pRegValue,
@@ -623,7 +619,7 @@ printf("pfImportFile: type=%d valueName=%s\n",
 #ifdef __MEMDB_PRINTF__  /* Debug printf output */
 char *subKey = NULL;
 LwRtlCStringAllocateFromWC16String(&subKey, pImportCtx->hSubKey->Name);
-        printf("pfImportFile: type=%d subkey=[%s] valueName=%s\n",
+        fprintf(dbgfp, "pfImportFile: type=%d subkey=[%s] valueName=%s\n",
                 pItem->type,
                 subKey,
                 pItem->valueName ? pItem->valueName : "");
@@ -631,6 +627,9 @@ LWREG_SAFE_FREE_STRING(subKey);
 #endif
 
 cleanup:
+#ifdef __MEMDB_PRINTF__ 
+    fclose(dbgfp);
+#endif
     LWREG_SAFE_FREE_MEMORY(pwszStringData);
     LWREG_SAFE_FREE_MEMORY(pwszSubKey);
     return status;
@@ -795,8 +794,15 @@ MemDbAccessCheckKey(
     }
     else
     {
-        SecurityDescriptor = hDb->pMemReg->SecurityDescriptor;
-        SecurityDescriptorLen = hDb->pMemReg->SecurityDescriptorLen;
+        LWREG_LOCK_MUTEX(gbInLockDbMutex, &gMemRegDbMutex);
+        if (hDb->pMemReg && hDb->pMemReg->pNodeSd)
+        {
+            SecurityDescriptor =
+                hDb->pMemReg->pNodeSd->SecurityDescriptor;
+            SecurityDescriptorLen =
+                hDb->pMemReg->pNodeSd->SecurityDescriptorLen;
+        }
+        LWREG_UNLOCK_MUTEX(gbInLockDbMutex, &gMemRegDbMutex);
     }
 
     if (pServerState && pServerState->pToken)
@@ -939,15 +945,13 @@ MemDbQueryInfoKey(
     DWORD valueLen = 0;
     DWORD maxValueLen = 0;
     DWORD indx = 0;
-    BOOLEAN bLocked = FALSE;
 
     BAIL_ON_NT_STATUS(status);
     
     /*
      * Query info about keys
      */
-    pthread_mutex_lock(&gMemRegDbMutex);
-    bLocked = TRUE;
+    LWREG_LOCK_MUTEX(gbInLockDbMutex, &gMemRegDbMutex);
 
     hKey = hDb->pMemReg;
     if (pcSubKeys)
@@ -1005,14 +1009,11 @@ MemDbQueryInfoKey(
     }
     if (pcbSecurityDescriptor)
     {
-        *pcbSecurityDescriptor = hKey->SecurityDescriptorLen;
+        *pcbSecurityDescriptor = hKey->pNodeSd->SecurityDescriptorLen;
     }
 
 cleanup:
-    if (bLocked)
-    {
-        pthread_mutex_unlock(&gMemRegDbMutex);
-    }
+    LWREG_UNLOCK_MUTEX(gbInLockDbMutex, &gMemRegDbMutex);
     return status;
 
 error:
@@ -1297,29 +1298,26 @@ MemDbGetKeyAcl(
 {
     NTSTATUS status = 0;
     MEM_REG_STORE_HANDLE hKey = NULL;
-    BOOLEAN bLocked = FALSE;
 
     BAIL_ON_NT_INVALID_POINTER(hDb);
     hKey = hDb->pMemReg;
 
-    pthread_mutex_lock(&gMemRegDbMutex);
-    bLocked = TRUE;
-    if (hKey->SecurityDescriptor)
+    LWREG_LOCK_MUTEX(gbInLockDbMutex, &gMemRegDbMutex);
+    if (hKey->pNodeSd)
     {
         if (pSecDescLen)
         {
-            *pSecDescLen = hKey->SecurityDescriptorLen;
+            *pSecDescLen = hKey->pNodeSd->SecurityDescriptorLen;
             if (pSecDescRel)
             {
-                memcpy(pSecDescRel, hKey->SecurityDescriptor, *pSecDescLen);
+                memcpy(pSecDescRel,
+                       hKey->pNodeSd->SecurityDescriptor,
+                       *pSecDescLen);
             }
         }
     }
 cleanup:
-    if (bLocked)
-    {
-        pthread_mutex_unlock(&gMemRegDbMutex);
-    }
+    LWREG_UNLOCK_MUTEX(gbInLockDbMutex, &gMemRegDbMutex);
     return status;
 
 error:
@@ -1336,7 +1334,9 @@ MemDbSetKeyAcl(
 {
     NTSTATUS status = 0;
     MEM_REG_STORE_HANDLE hKey = NULL;
-    BOOLEAN bLocked = FALSE;
+    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor = NULL;
+    PREGMEM_NODE_SD pNodeSd = NULL;
+    
 
     BAIL_ON_NT_INVALID_POINTER(hDb);
     if (!pSecDescRel || secDescLen == 0)
@@ -1346,32 +1346,45 @@ MemDbSetKeyAcl(
     BAIL_ON_NT_INVALID_POINTER(pSecDescRel);
 
     hKey = hDb->pMemReg;
-    pthread_mutex_lock(&gMemRegDbMutex);
-    bLocked = TRUE;
+    LWREG_LOCK_MUTEX(gbInLockDbMutex, &gMemRegDbMutex);
 
-    if ((hKey->SecurityDescriptor && 
-         memcmp(hKey->SecurityDescriptor, pSecDescRel, secDescLen) != 0) ||
-        !hKey->SecurityDescriptor)
+    if ((hKey->pNodeSd &&
+         memcmp(hKey->pNodeSd->SecurityDescriptor,
+                pSecDescRel,
+                secDescLen) != 0) ||
+        !hKey->pNodeSd)
     {
-        status = LW_RTL_ALLOCATE((PVOID*) &hKey->SecurityDescriptor, 
+        if (!hKey->pNodeSd)
+        {
+            status = LW_RTL_ALLOCATE((PVOID*) &pNodeSd,
+                                              PREGMEM_NODE_SD,
+                                              sizeof(*pNodeSd));
+            BAIL_ON_NT_STATUS(status);
+            hKey->pNodeSd = pNodeSd;
+        }
+        else
+        {
+            LWREG_SAFE_FREE_MEMORY(hKey->pNodeSd->SecurityDescriptor);
+        }
+        status = LW_RTL_ALLOCATE((PVOID*) &SecurityDescriptor, 
                                  BYTE, 
                                  secDescLen);
         BAIL_ON_NT_STATUS(status);
 
-        memcpy(hKey->SecurityDescriptor, pSecDescRel, secDescLen);
-        hKey->SecurityDescriptorLen = secDescLen;
-        hKey->SecurityDescriptorAllocated = TRUE;
-      }
+        hKey->pNodeSd->SecurityDescriptor = SecurityDescriptor;
+        memcpy(hKey->pNodeSd->SecurityDescriptor, pSecDescRel, secDescLen);
+
+        hKey->pNodeSd->SecurityDescriptorLen = secDescLen;
+        hKey->pNodeSd->SecurityDescriptorAllocated = TRUE;
+    }
 
 cleanup:
-    if (bLocked)
-    {
-        pthread_mutex_unlock(&gMemRegDbMutex);
-    }
+    LWREG_UNLOCK_MUTEX(gbInLockDbMutex, &gMemRegDbMutex);
     return status;
 
 error:
-    LWREG_SAFE_FREE_MEMORY(hKey->SecurityDescriptor);
+    LWREG_SAFE_FREE_MEMORY(pNodeSd);
+    LWREG_SAFE_FREE_MEMORY(SecurityDescriptor);
     goto cleanup;
 }
 

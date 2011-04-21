@@ -137,3 +137,18 @@ MemRegStoreDeleteNode(
     );
 
 
+NTSTATUS
+MemRegStoreCreateNodeSdFromSddl(
+    IN PSTR SecurityDescriptor,
+    IN ULONG SecurityDescriptorLen,
+    PREGMEM_NODE_SD *ppRetNodeSd
+    );
+
+
+NTSTATUS
+MemRegStoreCreateSecurityDescriptor(
+    PREGMEM_NODE_SD pNodeSd,
+    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
+    ULONG SecurityDescriptorLen,
+    PREGMEM_NODE_SD *ppUpdatedNodeSd
+    );

@@ -71,8 +71,10 @@ REGPROV_PROVIDER_FUNCTION_TABLE gRegMemProviderAPITable =
 };
 
 pthread_mutex_t gMemRegDbMutex = PTHREAD_MUTEX_INITIALIZER;
+BOOLEAN gbInLockDbMutex;
 
 pthread_mutex_t gExportMutex = PTHREAD_MUTEX_INITIALIZER;
+BOOLEAN gbInLockExportMutex;
 pthread_cond_t gExportCond = PTHREAD_COND_INITIALIZER;
 BOOLEAN gbValueChanged;
 
