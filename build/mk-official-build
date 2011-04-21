@@ -160,10 +160,10 @@ fi
 if [ -d tools ]
 then
     show cd tools
-    show tar cfv - . | gzip > "$DIST_DIR/tools-${ID}-${REVISION}.tar.gz"
+    show tar cf - . | gzip > "$DIST_DIR/tools-${ID}-${REVISION}.tar.gz"
     show cd ..
 fi
 
 show cp -f "config.log" "$DIST_DIR/config.log"
 show cd "stage"
-show tar cfv - . | gzip > "$DIST_DIR/stage-${ID}-${REVISION}.tar.gz"
+show tar cf - . | gzip > "$DIST_DIR/stage-${ID}-${REVISION}.tar.gz"
