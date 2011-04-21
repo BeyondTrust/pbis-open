@@ -1,4 +1,4 @@
-SUBDIRS="include src"
+SUBDIRS="include src test"
 
 configure()
 {
@@ -20,4 +20,8 @@ configure()
 	dce/rpc.h lw/srvsvc.h lw/rpc/samr.h lw/rpc/lsa.h lw/rpc/wkssvc.h lwnet.h
 
     mk_check_sizeofs "long int"
+
+    mk_check_functions \
+        HEADERDEPS="string.h" \
+        strndup
 }
