@@ -33,23 +33,23 @@ package_deb()
                      debian/control.in debian/postinst.in \
                      debian/postrm.in debian/preinst.in \
                      debian/prerm.in debian/rules.in"
-        
+
         common_files
         common_files_compat
-        
+
         mk_subpackage_do SUBPACKAGE="dev"
             common_files_dev
         mk_subpackage_done
-    mk_deb_done   
+    mk_deb_done
 }
-        
+
 package_rpm()
 {
     mk_rpm_do \
         PACKAGE="$PKG_RPM_NAME" \
         VERSION="$PKG_RPM_VERSION" \
         SPECFILE="rpm/cifs.spec"
-        
+
         common_files
 
         if [ "$PKG_RPM_COMPAT" -eq "1" ]
@@ -64,7 +64,7 @@ package_rpm()
         mk_subpackage_done
     mk_rpm_done
 }
-        
+
 make()
 {
     mk_deb_enabled && package_deb
@@ -88,6 +88,7 @@ common_files()
         "${MK_SBINDIR}/*" \
         "${MK_PREFIX}/data/VERSION" \
         "${LW_CONFIGDIR}/*" \
+        "${MK_DATADIR}/likewise.pam-auth-update" \
         "${MK_LIBDIR}/*${MK_LIB_EXT}" \
         "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
