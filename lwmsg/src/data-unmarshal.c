@@ -449,7 +449,11 @@ lwmsg_data_unmarshal_pointees(
         if (iter->info.kind_indirect.term == LWMSG_TERM_ZERO)
         {
             /* If the referent is zero-terminated, we need to allocate an extra element */
-            BAIL_ON_ERROR(status = lwmsg_add_unsigned(count, 1, &full_count));
+            BAIL_ON_ERROR(status = DATA_RAISE(
+                context,
+                iter,
+                lwmsg_add_unsigned(count, 1, &full_count),
+                "Integer overflow in pointer referent length"));
         }
         else
         {
@@ -457,7 +461,11 @@ lwmsg_data_unmarshal_pointees(
         }
 
         /* Calculate the referent size */
-        BAIL_ON_ERROR(status = lwmsg_multiply_unsigned(full_count, inner.size, &referent_size));
+        BAIL_ON_ERROR(status = DATA_RAISE(
+            context,
+            iter,
+            lwmsg_multiply_unsigned(full_count, inner.size, &referent_size),
+            "Integer overflow in referent size"));
 
         if (iter->attrs.flags & LWMSG_TYPE_FLAG_ALIASABLE &&
             referent_size < sizeof(void*))
@@ -469,7 +477,12 @@ lwmsg_data_unmarshal_pointees(
         /* Enforce MAX_ALLOC attribute */
         if (iter->attrs.max_alloc && referent_size > iter->attrs.max_alloc)
         {
-            BAIL_ON_ERROR(status = LWMSG_STATUS_OVERFLOW);
+            BAIL_ON_ERROR(status = DATA_RAISE(
+                context,
+                iter,
+                LWMSG_STATUS_OVERFLOW,
+                "Pointer referent exceeded max allocation size of %lu",
+                (unsigned long) iter->attrs.max_alloc));
         }
 
         /* Allocate the referent */
@@ -800,7 +813,12 @@ lwmsg_data_unmarshal_struct_pointee(
     /* Enforce MAX_ALLOC attribute */
     if (pointer_iter->attrs.max_alloc && base_size > pointer_iter->attrs.max_alloc)
     {
-        BAIL_ON_ERROR(status = LWMSG_STATUS_OVERFLOW);
+        BAIL_ON_ERROR(status = DATA_RAISE(
+                     context,
+                     pointer_iter,
+                     LWMSG_STATUS_OVERFLOW,
+                     "Pointer referent exceeded max allocation size of %lu",
+                     (unsigned long) pointer_iter->attrs.max_alloc));
     }
 
     /* Allocate enough memory to hold the base of the object */
@@ -854,7 +872,11 @@ lwmsg_data_unmarshal_struct_pointee(
         if (flex_iter.info.kind_indirect.term == LWMSG_TERM_ZERO)
         {
             /* If the referent is zero-terminated, we need to allocate an extra element */
-            BAIL_ON_ERROR(status = lwmsg_add_unsigned(count, 1, &full_count));
+            BAIL_ON_ERROR(status = DATA_RAISE(
+                            context,
+                            pointer_iter,
+                            lwmsg_add_unsigned(count, 1, &full_count),
+                            "Integer overflow in pointer referent length"));
         }
         else
         {
@@ -862,10 +884,18 @@ lwmsg_data_unmarshal_struct_pointee(
         }
 
         /* Calculate the size of the flexible member */
-        BAIL_ON_ERROR(status = lwmsg_multiply_unsigned(full_count, inner_iter.size, &flexible_size));
+        BAIL_ON_ERROR(status = DATA_RAISE(
+                        context,
+                        pointer_iter,
+                        lwmsg_multiply_unsigned(full_count, inner_iter.size, &flexible_size),
+                        "Integer overflow in pointer referent size"));
 
         /* Calculate the size of the full structure */
-        BAIL_ON_ERROR(status = lwmsg_add_unsigned(struct_iter->size, flexible_size, &full_size));
+        BAIL_ON_ERROR(status = DATA_RAISE(
+                        context,
+                        pointer_iter,
+                        lwmsg_add_unsigned(struct_iter->size, flexible_size, &full_size),
+                        "Integer overflow in pointer referent size"));
 
         if (pointer_iter->attrs.flags & LWMSG_TYPE_FLAG_ALIASABLE &&
             full_size < sizeof(void*))
@@ -876,7 +906,12 @@ lwmsg_data_unmarshal_struct_pointee(
         /* Enforce MAX_ALLOC attribute */
         if (pointer_iter->attrs.max_alloc && full_size > pointer_iter->attrs.max_alloc)
         {
-            BAIL_ON_ERROR(status = LWMSG_STATUS_OVERFLOW);
+            BAIL_ON_ERROR(status = DATA_RAISE(
+                         context,
+                         pointer_iter,
+                         LWMSG_STATUS_OVERFLOW,
+                         "Pointer referent exceeded max allocation size of %lu",
+                         (unsigned long) pointer_iter->attrs.max_alloc));
         }
 
         /* Allocate the full object */
