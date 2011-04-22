@@ -12,7 +12,7 @@ make()
         test_wkssvc.c"                \
 
     mk_program \
-        PROGRAM=netapitest \
+        PROGRAM=rpctest \
         SOURCES="$RPCTEST_SOURCES" \
         INSTALLDIR="$LW_TOOL_DIR" \
         INCLUDEDIRS="../include" \
