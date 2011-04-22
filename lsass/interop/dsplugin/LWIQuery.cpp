@@ -363,106 +363,6 @@ LWIQuery::BuildGeneratedGID(gid_t gid, char** ppszGID)
 }
 
 long
-LWIQuery::GetAuthString(
-    IN const PLWIUSER pUser,
-    OUT char** AuthString
-    )
-{
-    long macError;
-    char* guidString = NULL;
-    char* upn = NULL;
-    char* generatedUpn = NULL;
-    char* userSamAccount = NULL;
-    char* userDomain = NULL;
-    char* authString = NULL;
-    char* temp = NULL;
-
-    macError = BuildGeneratedUID(pUser->pw_uid, &guidString);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
-    macError = GetUserPrincipalNames(pUser->pw_name, &upn, &userSamAccount, &userDomain);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
-    if (userDomain != NULL)
-    {
-        // Convert the userDomain to a REALM
-        temp = userDomain;
-        while (*temp != '\0'){
-            *temp = toupper(*temp);
-            temp++;
-        }
-    }
-
-    if (userSamAccount != NULL &&
-        userDomain != NULL)
-    {
-        asprintf(&generatedUpn, "%s@%s", userSamAccount, userDomain);
-    }
-    else
-    {
-        if (upn != NULL)
-        {
-            asprintf(&generatedUpn, "%s", upn);
-        }
-        else
-        {
-            asprintf(&generatedUpn, "%s@%s", pUser->pw_name, "domain.not.online");
-        }
-    }
-
-    if (!generatedUpn)
-    {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP();
-    }
-
-    asprintf(&authString, "1.0;Kerberosv5;%s;%s;%s;", guidString, generatedUpn, userDomain);
-    if (!authString)
-    {
-        macError = eDSAllocationFailed;
-        GOTO_CLEANUP();
-    }
-
-cleanup:
-
-    if (guidString)
-    {
-        LW_SAFE_FREE_STRING(guidString);
-    }
-
-    if (generatedUpn)
-    {
-        LW_SAFE_FREE_STRING(generatedUpn);
-    }
-
-    if (upn)
-    {
-        LW_SAFE_FREE_STRING(upn);
-    }
-
-    if (userSamAccount)
-    {
-        LW_SAFE_FREE_STRING(userSamAccount);
-    }
-
-    if (userDomain)
-    {
-        LW_SAFE_FREE_STRING(userDomain);
-    }
-
-    if (macError)
-    {
-        if (authString)
-        {
-            free(authString);
-            authString = NULL;
-        }
-    }
-    *AuthString = authString;
-    return macError;
-}
-
-long
 LWIQuery::ProcessUserAttributes(
     IN OUT PDSRECORD pRecord,
     IN OPTIONAL const char* pszName,
@@ -638,21 +538,12 @@ LWIQuery::ProcessUserAttributes(
 
                     if (bSetValue)
                     {
-                        /* Try our best, but try not fail if we cannot get the auth string */
-                        if (!authString)
-                        {
-                            macError = GetAuthString(pUser, &authString);
-                        }
-                        if (authString)
-                        {
-                            macError = SetAttributeValue(pAttribute, authString);
-                            GOTO_CLEANUP_ON_MACERROR(macError);
-                        }
-                        else
-                        {
-                            macError = SetAttributeValue(pAttribute, kDSValueAuthAuthorityDefault);
-                            GOTO_CLEANUP_ON_MACERROR(macError);
-                        }
+                        /*
+                         * Always set the auth string to the default.
+                         * Lsass handles getting kerberos tickets for the user.
+                         */
+                        macError = SetAttributeValue(pAttribute, kDSValueAuthAuthorityDefault);
+                        GOTO_CLEANUP_ON_MACERROR(macError);
                     }
                     break;
                 case LWIAttrLookup::idx_kDSNAttrGroupMembership:

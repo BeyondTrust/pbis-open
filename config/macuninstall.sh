@@ -159,6 +159,16 @@ launchctl_delete_daemons()
     done
 }
 
+launchctl_delete_agents()
+{
+    for _plist in \
+        /System/Library/LaunchAgents/com.likewisesoftware.*.plist \
+        /Library/LaunchAgents/com.likewisesoftware.*.plist \
+        ; do
+        $RUN rm -f "${_plist}"
+    done
+}
+
 get_running_daemons()
 {
     running=""
@@ -271,6 +281,7 @@ main()
     # Just to make sure everything is as expected
     launchctl_view_daemons
     launchctl_delete_daemons
+    launchctl_delete_agents
 
     for pkgName in `pkg_list_likewise` ; do
         pkg_uninstall "${pkgName}"

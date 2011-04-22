@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+        <string>com.likewise.ticketcopy</string>
+	<key>ProgramArguments</key>
+        <array>
+            <string>/opt/likewise/libexec/ticketcopy</string>
+        </array>
+	<key>RunAtLoad</key>
+        <true/>
+	<key>KeepAlive</key>
+        <dict>
+            <!--
+                The ticketcopy program exits 0 for non-AD users.
+                Only restart the program in other cases (crashes or
+                errors).
+            -->
+            <key>SuccessfulExit</key>
+            <false/>
+        </dict>
+	<key>ServiceIPC</key>
+        <false/>
+	<key>EnableTransactions</key>
+        <false/>
+</dict>
+</plist>
