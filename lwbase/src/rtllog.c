@@ -56,6 +56,23 @@ LwRtlLogSetCallback(
 }
 
 LW_VOID
+LwRtlLogGetCallback(
+    LW_OUT LW_OPTIONAL LW_RTL_LOG_CALLBACK *Callback,
+    LW_OUT LW_OPTIONAL LW_PVOID *Context
+    )
+{
+    if (Callback)
+    {
+        *Callback = _LwRtlLogControl.Callback;
+    }
+
+    if (Context)
+    {
+        *Context = _LwRtlLogControl.Context;
+    }
+}
+
+LW_VOID
 LwRtlLogSetLevel(
     LW_IN LW_RTL_LOG_LEVEL Level
     )

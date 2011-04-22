@@ -99,6 +99,21 @@ typedef LW_VOID (*LW_RTL_LOG_CALLBACK)(
 ///
 
 LW_VOID
+LwRtlLogGetCallback(
+    LW_OUT LW_OPTIONAL LW_RTL_LOG_CALLBACK *Callback,
+    LW_OUT LW_OPTIONAL LW_PVOID *Context
+    );
+///<
+/// Get the logging callback/context.
+///
+/// @param[out] Callback - If specified, will return the logging callback.
+/// @param[out] Context - If specified, will return the logging callback
+///     context.
+///
+/// @return N/A
+///
+
+LW_VOID
 LwRtlLogSetCallback(
     LW_IN LW_OPTIONAL LW_RTL_LOG_CALLBACK Callback,
     LW_IN LW_OPTIONAL LW_PVOID Context
@@ -124,7 +139,7 @@ LwRtlLogSetLevel(
 ///<
 /// Set the log level at which to log.
 ///
-/// @param[in] Level - Level at which to log.  Any log messges
+/// @param[in] Level - Level at which to log.  Any log messages
 ///     at a level greater than or equal to this will invoke
 ///     the logging callback (if one is set).
 ///
