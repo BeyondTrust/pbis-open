@@ -28,70 +28,199 @@
  * license@likewisesoftware.com
  */
 
-#include <lw/rtlstring.h>
+#include <lw/rtlgoto.h>
+#include <lw/errno.h>
 #include <lsa/ad.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <termios.h>
 #include <sys/utsname.h>
+#include <errno.h>
+#include <lwstr.h>
+#include <lwmem.h>
+#include "common.h"
+#include <assert.h>
 
-#define BAIL_ON_DJ_ERROR(err) \
-    do { \
-        if ((err) != STATUS_SUCCESS) { \
-            goto error; \
-        } \
-    } while (0);
+//
+// Common parse/usage stuff
+//
 
-#define LWDJ_SAFE_FREE_STRING(str) \
-        do {                         \
-           if (str) {                \
-              LwRtlCStringFree(&str); \
-              (str) = NULL;          \
-           }                         \
-        } while(0);
+static
+VOID
+ShowJoinUsage(
+    IN PCSTR pszProgramName,
+    IN int ExitCode
+    );
 
+static
+VOID
+ShowLeaveUsage(
+    IN PCSTR pszProgramName,
+    IN int ExitCode
+    );
 
-typedef enum DJ_ACTIONS
+static
+PCSTR
+PopNextOption(
+    IN OUT PLW_ARGV_CURSOR Cursor
+    )
 {
-    DJ_JOIN,
-    DJ_LEAVE,
-} DJ_ACTIONS;
+    PCSTR option = LwArgvCursorPeek(Cursor);
 
-
-typedef struct LwDjArgs
-{
-    DJ_ACTIONS eAction;
-    PSTR pszDcDomain;
-    PSTR pszDnsDomain;
-    PSTR pszOU;
-    PSTR pszAdministrator;
-    PSTR pszPassword;
-
-    /* Host specific information */
-    PSTR pszHostname;
-    PSTR pszOsIdentifier;
-    PSTR pszRelease;
-    PSTR pszVersion;
-} LwDjArgs, *PLwDjArgs;
-
-
-void printError(PSTR msg, DWORD dwError)
-{
-    CHAR cError[256] = {0};
-    PSTR pszError = (PSTR) cError;
-    LwGetErrorString(dwError, cError, sizeof(cError));
-    if (!strncmp(cError, "Unknown", 7))
+    if (option)
     {
-        pszError = (PSTR) LwWin32ExtErrorToName(dwError);
+        if (!strcmp("--", option))
+        {
+            option = NULL;
+            LwArgvCursorPop(Cursor);
+        }
+        else if (strncmp("-", option, 1))
+        {
+            option = NULL;
+        }
+        else
+        {
+            LwArgvCursorPop(Cursor);
+        }
     }
-    printf("%s (%u) %s\n", msg ? msg : "", dwError, pszError);
+
+    return option;
+}
+
+static
+BOOLEAN
+IsHelpOption(
+    IN PCSTR Option
+    )
+{
+    return (!strcmp(Option, "--help") ||
+            !strcmp(Option, "-h") ||
+            !strcmp(Option, "-?"));
+}
+
+typedef VOID (*SHOW_USAGE_CALLBACK)(IN PCSTR pszProgramName);
+
+static
+VOID
+ShowJoinUsageError(
+    IN PCSTR pszProgramName
+    )
+{
+    ShowJoinUsage(pszProgramName, 1);
+}
+
+static
+VOID
+ShowJoinUsageHelp(
+    IN PCSTR pszProgramName
+    )
+{
+    ShowJoinUsage(pszProgramName, 0);
+}
+
+static
+VOID
+ShowLeaveUsageError(
+    IN PCSTR pszProgramName
+    )
+{
+    ShowLeaveUsage(pszProgramName, 1);
+}
+
+static
+VOID
+ShowLeaveUsageHelp(
+    IN PCSTR pszProgramName
+    )
+{
+    ShowLeaveUsage(pszProgramName, 0);
+}
+
+//
+// Specfic to this utility
+//
+
+typedef struct _JOIN_ARGS {
+    PSTR pszDomain;
+    PSTR pszUsername;
+    PSTR pszPassword;
+    PSTR pszMachineName;
+    PSTR pszDnsSuffix;
+    PSTR pszOu;
+    PSTR pszOsName;
+    PSTR pszOsVersion;
+    PSTR pszOsServicePack;
+} JOIN_ARGS, *PJOIN_ARGS;
+
+typedef struct _LEAVE_ARGS {
+    PSTR pszDomain;
+    PSTR pszUsername;
+    PSTR pszPassword;
+} LEAVE_ARGS, *PLEAVE_ARGS;
+
+static
+VOID
+FreeJoinArgsContents(
+    IN OUT PJOIN_ARGS pArgs
+    )
+{
+    LW_SAFE_FREE_MEMORY(pArgs->pszDomain);
+    LW_SAFE_FREE_MEMORY(pArgs->pszUsername);
+    LW_SAFE_FREE_MEMORY(pArgs->pszPassword);
+    LW_SAFE_FREE_MEMORY(pArgs->pszMachineName);
+    LW_SAFE_FREE_MEMORY(pArgs->pszDnsSuffix);
+    LW_SAFE_FREE_MEMORY(pArgs->pszOu);
+    LW_SAFE_FREE_MEMORY(pArgs->pszOsName);
+    LW_SAFE_FREE_MEMORY(pArgs->pszOsVersion);
+    LW_SAFE_FREE_MEMORY(pArgs->pszOsServicePack);
+}
+
+static
+VOID
+FreeLeaveArgsContents(
+    IN OUT PLEAVE_ARGS pArgs
+    )
+{
+    LW_SAFE_FREE_MEMORY(pArgs->pszDomain);
+    LW_SAFE_FREE_MEMORY(pArgs->pszUsername);
+    LW_SAFE_FREE_MEMORY(pArgs->pszPassword);
+}
+
+static
+PCSTR
+GetErrorString(
+    IN DWORD dwError
+    )
+{
+    PCSTR pszError = LwWin32ExtErrorToDescription(dwError);
+    if (!pszError)
+    {
+        pszError = LwWin32ExtErrorToName(dwError);
+    }
+    if (!pszError)
+    {
+        pszError = "UNKNOWN";
+    }
+    return pszError;
+}
+
+static
+VOID
+PrintError(
+    IN DWORD dwError
+    )
+{
+    PCSTR pszError = GetErrorString(dwError);
+    fprintf(stderr, "ERROR: %s (%d) (0x%08x)\n",
+            pszError, dwError, dwError);
 }
 
 static
 DWORD
-LwDjGetCurrentDomain(
+GetCurrentDomain(
     OUT PSTR* ppszDnsDomainName
     )
 {
@@ -101,20 +230,20 @@ LwDjGetCurrentDomain(
     PSTR pszDnsDomainName = NULL;
 
     dwError = LsaOpenServer(&hLsa);
-    BAIL_ON_DJ_ERROR(dwError);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
 
     dwError = LsaAdGetMachineAccountInfo(hLsa, NULL, &pAccountInfo);
-    BAIL_ON_DJ_ERROR(dwError);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
 
-    dwError = LwRtlCStringDuplicate(
-                    &pszDnsDomainName,
-                    pAccountInfo->DnsDomainName);
-    BAIL_ON_DJ_ERROR(dwError);
+    dwError = LwAllocateString(
+                    pAccountInfo->DnsDomainName,
+                    &pszDnsDomainName);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
 
-error:
+cleanup:
     if (dwError)
     {
-        LWDJ_SAFE_FREE_STRING(pszDnsDomainName);
+        LW_SAFE_FREE_MEMORY(pszDnsDomainName);
     }
 
     if (hLsa)
@@ -132,299 +261,766 @@ error:
     return dwError;
 }
 
+static
 DWORD
-LwDjJoinDomain(
-    IN PSTR pszDnsDomain,
-    IN PSTR pszDcDomain,
-    IN PSTR pszOU,
-    IN PSTR pszAdministrator,
-    IN PSTR pszPassword,
-    IN PSTR pszHostname,
-    IN PSTR pszOsIdentifier,
-    IN PSTR pszRelease,
-    IN PSTR pszVersion)
+GetHostname(
+    OUT PSTR* ppszHostname
+    )
 {
     DWORD dwError = 0;
-    HANDLE hLsa = NULL;
+    CHAR buffer[1024] = { 0 };
+    PSTR dot = NULL;
+    PSTR pszHostname = NULL;
 
-    dwError = LsaOpenServer(&hLsa);
-    if (dwError)
+    if (gethostname(buffer, sizeof(buffer) - 1) == -1)
     {
-        return dwError;
+        dwError = LwErrnoToWin32Error(errno);
+        assert(dwError);
+        GOTO_CLEANUP();
     }
 
-    dwError = LsaAdJoinDomain(
-                 hLsa,
-                 pszHostname,
-                 pszDnsDomain,
-                 pszDcDomain,
-                 pszOU,
-                 pszAdministrator,
-                 pszPassword,
-                 pszOsIdentifier ? pszOsIdentifier : "Unknown OS",
-                 pszRelease ? pszRelease : "Unknown Release",
-                 pszVersion ? pszVersion : "1",
-                 0);
+    dot = strchr(buffer, '.');
+    if (dot)
+    {
+        *dot = 0;
+    }
+
+    dwError = LwAllocateString(buffer, &pszHostname);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
+
+cleanup:
     if (dwError)
     {
-        return dwError;
+        LW_SAFE_FREE_STRING(pszHostname);
     }
-    LsaCloseServer(hLsa);
 
-    return 0;
+    *ppszHostname = pszHostname;
+
+    return dwError;
 }
 
-
+static
 DWORD
-LwDjLeaveDomain(
-    PCSTR username,
-    PCSTR password)
+GetOsInfo(
+    OUT OPTIONAL PSTR* ppszOsName,
+    OUT OPTIONAL PSTR* ppszOsVersion,
+    OUT OPTIONAL PSTR* ppszOsServicePack
+    )
 {
-    HANDLE hLsa = NULL;
     DWORD dwError = 0;
+    struct utsname utsBuffer = { { 0 } };
+    PSTR pszOsName = NULL;
+    PSTR pszOsVersion = NULL;
+    PSTR pszOsServicePack = NULL;
+    
+    if (uname(&utsBuffer) == -1)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        assert(dwError);
+        GOTO_CLEANUP();
+    }
+
+    if (ppszOsName)
+    {
+        dwError = LwAllocateString(utsBuffer.sysname, &pszOsName);
+        GOTO_CLEANUP_ON_WINERROR(dwError);
+    }
+
+    if (ppszOsVersion)
+    {
+        if (!strcmp(utsBuffer.sysname, "AIX"))
+        {
+            dwError = LwAllocateStringPrintf(
+                            &pszOsVersion,
+                            "%s.%s",
+                            utsBuffer.version, utsBuffer.release);
+            GOTO_CLEANUP_ON_WINERROR(dwError);
+        }
+        else
+        {
+            dwError = LwAllocateString(utsBuffer.release, &pszOsVersion);
+            GOTO_CLEANUP_ON_WINERROR(dwError);
+        }
+    }
+
+    if (ppszOsServicePack)
+    {
+        if (!strcmp(utsBuffer.sysname, "AIX"))
+        {
+            dwError = LwAllocateString("", &pszOsServicePack);
+            GOTO_CLEANUP_ON_WINERROR(dwError);
+        }
+        else
+        {
+            dwError = LwAllocateString(utsBuffer.version, &pszOsServicePack);
+            GOTO_CLEANUP_ON_WINERROR(dwError);
+        }
+    }
+
+cleanup:
+    if (dwError)
+    {
+        LW_SAFE_FREE_STRING(pszOsName);
+        LW_SAFE_FREE_STRING(pszOsVersion);
+        LW_SAFE_FREE_STRING(pszOsServicePack);
+    }
+
+    if (ppszOsName)
+    {
+        *ppszOsName = pszOsName;
+    }
+    if (ppszOsVersion)
+    {
+        *ppszOsVersion = pszOsVersion;
+    }
+    if (ppszOsServicePack)
+    {
+        *ppszOsServicePack = pszOsServicePack;
+    }
+
+    return dwError;
+}
+
+static
+DWORD
+DoJoinDomain(
+    IN PCSTR pszDomain,
+    IN PCSTR pszUsername,
+    IN PCSTR pszPassword,
+    IN PCSTR pszMachineName,
+    IN PCSTR pszDnsSuffix,
+    IN OPTIONAL PCSTR pszOu,
+    IN PCSTR pszOsName,
+    IN PCSTR pszOsVersion,
+    IN PCSTR pszOsServicePack
+    )
+{
+    DWORD dwError = 0;
+    HANDLE hLsa = NULL;
+    PSTR pszCurrentDomain = NULL;
+
+    assert(pszDomain);
+    assert(pszUsername);
+    assert(pszPassword);
+    assert(pszMachineName);
+    assert(pszDnsSuffix);
+    assert(pszOsName);
+    assert(pszOsVersion);
+    assert(pszOsServicePack);
+
+    printf("Joining to AD Domain: %s\n"
+           "With Computer DNS Name: %s.%s\n\n",
+           pszDomain,
+           pszMachineName,
+           pszDnsSuffix);
 
     dwError = LsaOpenServer(&hLsa);
-    BAIL_ON_DJ_ERROR(dwError);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
 
-    dwError = LsaAdLeaveDomain(hLsa, username, password);
-    BAIL_ON_DJ_ERROR(dwError);
+    dwError = LsaAdJoinDomain(
+                    hLsa,
+                    pszMachineName,
+                    pszDnsSuffix,
+                    pszDomain,
+                    pszOu,
+                    pszUsername,
+                    pszPassword,
+                    pszOsName,
+                    pszOsVersion,
+                    pszOsServicePack,
+                    0);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
+
+    printf("SUCCESS!\n");
+
+    dwError = GetCurrentDomain(&pszCurrentDomain);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
+
+    printf("Your computer is now joined to '%s'\n", pszCurrentDomain);
 
 cleanup:
     if (hLsa)
     {
         LsaCloseServer(hLsa);
     }
-    return dwError;
 
-error:
-    goto cleanup;
+    LW_SAFE_FREE_MEMORY(pszCurrentDomain);
+
+    return dwError;
 }
 
-void
-LwDjUsage(
-    PSTR pszMessage
+static
+DWORD
+DoLeaveDomain(
+    IN PCSTR pszDomain,
+    IN OPTIONAL PCSTR pszUsername,
+    IN OPTIONAL PCSTR pszPassword
     )
 {
-    if (pszMessage)
+    HANDLE hLsa = NULL;
+    DWORD dwError = 0;
+
+    assert(pszDomain);
+
+    printf("Leaving AD Domain: %s\n", pszDomain);
+
+    dwError = LsaOpenServer(&hLsa);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
+
+    dwError = LsaAdLeaveDomain(hLsa, pszUsername, pszPassword);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
+
+    printf("SUCCESS\n");
+
+cleanup:
+    if (hLsa)
     {
-        fprintf(stderr, "       ERROR: %s\n", pszMessage);
+        LsaCloseServer(hLsa);
     }
-    fprintf(stderr,
-            "Usage: join [--ou OU] DOMAIN User [passwd] |\n"
-            "       leave User [passwd]\n");
-    exit(1);
+
+    return dwError;
 }
 
+
+static
 DWORD
-LwDjParseArgs(int argc, char *argv[], PLwDjArgs pDjArgs)
+CleanupUsername(
+    IN PCSTR pszDomain,
+    IN OUT PSTR* ppszUsername
+    )
 {
     DWORD dwError = 0;
-    DWORD dwArgIndx = 0;
-    PSTR pszPwdPrompt = NULL;
-    int i = 0;
-    struct utsname utsbuf;
+    PSTR pszOldUsername = *ppszUsername;
+    PSTR pszNewUsername = NULL;
 
-    if (argc < 1)
+    // Fix up username and prompt for password, if needed.
+    if (pszOldUsername)
     {
-        LwDjUsage(NULL);
-    }
+        PSTR at = NULL;
 
-    /*
-     * Parse action
-     */
-    if (dwArgIndx<argc && !strcasecmp(argv[dwArgIndx], "join"))
-    {
-        pDjArgs->eAction = DJ_JOIN;
-    }
-    else if (dwArgIndx<argc && !strcasecmp(argv[dwArgIndx], "leave"))
-    {
-        pDjArgs->eAction = DJ_LEAVE;
-    }
-    else
-    {
-        LwDjUsage("Action must be 'join' or 'leave'");
-    }
-    dwArgIndx++;
-
-    if (dwArgIndx<argc && 
-        (!strcasecmp(argv[dwArgIndx], "--help") ||
-         !strcasecmp(argv[dwArgIndx], "-h")))
-    {
-        LwDjUsage(NULL);
-    }
-                      
-    if (pDjArgs->eAction == DJ_JOIN)
-    {
-        if (dwArgIndx<argc && !strcmp("--ou", argv[dwArgIndx]))
+        if (strchr(pszOldUsername, '\\'))
         {
-            dwArgIndx++;
-            if (dwArgIndx<argc)
-            {
-                pDjArgs->pszOU = strdup((char *) argv[dwArgIndx++]);
-            }
-            else
-            {
-                LwDjUsage("--ou requires an argument");
-            }
+            fprintf(stderr,
+                    "The USERNAME (%s) is not allowed to contain a backslash.\n",
+                    pszOldUsername);
+            exit(1);
         }
 
-        /*
-         * Parse Windows Domain to join
-         */
-        if (dwArgIndx<argc)
+        at = strchr(pszOldUsername, '@');
+        if (at)
         {
-            dwError = LwRtlCStringAllocatePrintf(
-                          &pDjArgs->pszDcDomain,
-                          "%s",
-                          argv[dwArgIndx]);
-            BAIL_ON_DJ_ERROR(dwError);
-            dwError = LwRtlCStringAllocatePrintf(
-                          &pDjArgs->pszDnsDomain,
-                          "%s",
-                          argv[dwArgIndx]);
-            BAIL_ON_DJ_ERROR(dwError);
-            dwArgIndx++;
-    
-            for (i=0; pDjArgs->pszDcDomain[i]; i++)
+            LwStrToUpper(at);
+        }
+        else
+        {
+            dwError = LwAllocateStringPrintf(
+                            &pszNewUsername,
+                            "%s@%s",
+                            pszOldUsername,
+                            pszDomain);
+            GOTO_CLEANUP_ON_WINERROR(dwError);
+        }
+    }
+
+cleanup:
+    if (dwError)
+    {
+        LW_SAFE_FREE_MEMORY(pszNewUsername);
+    }
+
+    if (pszNewUsername)
+    {
+        LW_SAFE_FREE_MEMORY(*ppszUsername);
+        *ppszUsername = pszNewUsername;
+    }
+
+    return dwError;
+}
+
+static
+DWORD
+GetPassword(
+    OUT PSTR* ppszPassword
+    )
+{
+    DWORD dwError = 0;
+    CHAR buffer[129] = { 0 };
+    int i = 0;
+    BOOLEAN needReset = FALSE;
+    struct termios oldAttributes;
+    struct termios newAttributes;
+    PSTR pszPassword = NULL;
+
+    if (tcgetattr(0, &oldAttributes) == -1)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        assert(dwError);
+        GOTO_CLEANUP();
+    }
+
+    newAttributes = oldAttributes;
+    ClearFlag(newAttributes.c_lflag, ECHO);
+
+    if (tcsetattr(0, TCSANOW, &newAttributes) == -1)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        assert(dwError);
+        GOTO_CLEANUP();
+    }
+
+    needReset = TRUE;
+
+    for (i = 0; i < (sizeof(buffer) - 1); i++)
+    {
+        if (read(0, &buffer[i], 1))
+        {
+            if (buffer[i] == '\n')
             {
-                pDjArgs->pszDcDomain[i] = toupper(pDjArgs->pszDcDomain[i]);
+                buffer[i] = 0;
+                break;
             }
         }
         else
         {
-            LwDjUsage("Name of Windows Domain to join must be specified");
+            dwError = LwErrnoToWin32Error(errno);
+            assert(dwError);
+            GOTO_CLEANUP();
+        }
+    }
+
+    if (i == (sizeof(buffer) - 1))
+    {
+        dwError = LwErrnoToWin32Error(ENOBUFS);
+        assert(dwError);
+        GOTO_CLEANUP();
+    }
+
+    dwError = LwAllocateString(buffer, &pszPassword);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
+
+cleanup:
+    if (dwError)
+    {
+        LW_SAFE_FREE_MEMORY(pszPassword);
+    }
+
+    if (needReset)
+    {
+        if (tcsetattr(0, TCSANOW, &oldAttributes) == -1)
+        {
+            assert(0);
+        }
+    }
+
+    *ppszPassword = pszPassword;
+
+    return dwError;
+}
+
+static
+DWORD
+PromptPassword(
+    IN PCSTR pszUsername,
+    OUT PSTR* ppszPassword
+    )
+{
+    DWORD dwError = 0;
+    fprintf(stdout, "%s's password: ", pszUsername);
+    fflush(stdout);
+    dwError = GetPassword(ppszPassword);
+    fprintf(stdout, "\n");
+    return dwError;
+}
+
+static
+DWORD
+GetOptionValue(
+    IN PCSTR pszProgramName,
+    IN SHOW_USAGE_CALLBACK ShowUsageError,
+    IN OUT PLW_ARGV_CURSOR pCursor,
+    IN PCSTR pszOptionName,
+    OUT PSTR* ppszOptionValue
+    )
+{
+    PCSTR value = LwArgvCursorPop(pCursor);
+    if (!value)
+    {
+        fprintf(stderr, "Missing argument for option: %s\n", pszOptionName);
+        ShowUsageError(pszProgramName);
+    }
+    return LwAllocateString(value, ppszOptionValue);
+}
+
+static
+DWORD
+GetArgumentValue(
+    IN PCSTR pszProgramName,
+    IN SHOW_USAGE_CALLBACK ShowUsageError,
+    IN OUT PLW_ARGV_CURSOR pCursor,
+    IN OPTIONAL PCSTR pszArgumentName,
+    OUT PSTR* ppszArgumentValue
+    )
+{
+    DWORD dwError = 0;
+    PSTR result = NULL;
+    PCSTR value = LwArgvCursorPop(pCursor);
+
+    if (!value)
+    {
+        if (pszArgumentName)
+        {
+            fprintf(stderr, "Missing %s argument.\n", pszArgumentName);
+            ShowUsageError(pszProgramName);
         }
     }
     else
     {
-        dwError = LwDjGetCurrentDomain(&pDjArgs->pszDcDomain);
-        BAIL_ON_DJ_ERROR(dwError);
+        dwError = LwAllocateString(value, &result);
+        GOTO_CLEANUP_ON_WINERROR(dwError);
     }
-
-    /*
-     * Parse user account used for authentication
-     */
-    if (dwArgIndx<argc)
-    {
-        dwError = LwRtlCStringAllocatePrintf(
-                      &pDjArgs->pszAdministrator,
-                      "%s@%s",
-                      argv[dwArgIndx++],
-                      pDjArgs->pszDcDomain);
-        BAIL_ON_DJ_ERROR(dwError);
-    }
-    else
-    {
-        LwDjUsage("Domain administrator username must be specified");
-    }
-
-    /*
-     * Parse password if present, otherwise prompt for one
-     */
-    if (dwArgIndx<argc)
-    {
-        dwError = LwRtlCStringAllocatePrintf(
-                      &pDjArgs->pszPassword,
-                      "%s",
-                      argv[dwArgIndx++]);
-        BAIL_ON_DJ_ERROR(dwError);
-    }
-    else
-    {
-        dwError = LwRtlCStringAllocatePrintf(
-                      &pszPwdPrompt,
-                      "%s's password: ",
-                      pDjArgs->pszAdministrator);
-        BAIL_ON_DJ_ERROR(dwError);
-
-        dwError = LwRtlCStringAllocatePrintf(
-                      &pDjArgs->pszPassword,
-                      "%s",
-                      getpass(pszPwdPrompt));
-        BAIL_ON_DJ_ERROR(dwError);
-    }
-
-
-    memset(&utsbuf, 0, sizeof(utsbuf));
-    if (uname(&utsbuf) == -1)
-    {
-        dwError = LW_STATUS_INVALID_HANDLE;
-        BAIL_ON_DJ_ERROR(dwError);
-    }
-    pDjArgs->pszHostname = strdup((char *) utsbuf.nodename);
-    pDjArgs->pszOsIdentifier = strdup((char *) utsbuf.sysname);
-    pDjArgs->pszRelease = strdup((char *) utsbuf.release);
-    pDjArgs->pszVersion = strdup((char *) utsbuf.version);
 
 cleanup:
-    LWDJ_SAFE_FREE_STRING(pszPwdPrompt);
-    
+    if (dwError)
+    {
+        LW_SAFE_FREE_MEMORY(result);
+    }
+
+    *ppszArgumentValue = result;
 
     return dwError;
+}
 
-error:
-    goto cleanup;
+static
+DWORD
+ParseJoinArgs(
+    IN int argc,
+    IN const char *argv[],
+    OUT PJOIN_ARGS pArgs
+    )
+{
+    DWORD dwError = 0;
+    PCSTR programName = NULL;
+    PCSTR option = NULL;
+    LW_ARGV_CURSOR cursor;
+    SHOW_USAGE_CALLBACK ShowUsageHelp = ShowJoinUsageHelp;
+    SHOW_USAGE_CALLBACK ShowUsageError = ShowJoinUsageError;
+
+    LwArgvCursorInit(&cursor, argc, argv);
+    programName = LwArgvCursorPop(&cursor);
+
+    // Process options:
+    for (;;)
+    {
+        option = PopNextOption(&cursor);
+        if (!option)
+        {
+            break;
+        }
+        else if (IsHelpOption(option))
+        {
+            ShowUsageHelp(programName);
+        }
+        else if (!strcmp("--name", option))
+        {
+            dwError = GetOptionValue(programName, ShowUsageError, &cursor, option,
+                                     &pArgs->pszMachineName);
+            GOTO_CLEANUP_ON_WINERROR(dwError);
+        }
+        else if (!strcmp("--dnssuffix", option))
+        {
+            dwError = GetOptionValue(programName, ShowUsageError, &cursor, option,
+                                     &pArgs->pszDnsSuffix);
+            GOTO_CLEANUP_ON_WINERROR(dwError);
+        }
+        else if (!strcmp("--ou", option))
+        {
+            dwError = GetOptionValue(programName, ShowUsageError, &cursor, option,
+                                     &pArgs->pszOu);
+            GOTO_CLEANUP_ON_WINERROR(dwError);
+        }
+        else if (!strcmp("--osname", option))
+        {
+            dwError = GetOptionValue(programName, ShowUsageError, &cursor, option,
+                                     &pArgs->pszOsName);
+            GOTO_CLEANUP_ON_WINERROR(dwError);
+        }
+        else if (!strcmp("--osversion", option))
+        {
+            dwError = GetOptionValue(programName, ShowUsageError, &cursor, option,
+                                     &pArgs->pszOsVersion);
+            GOTO_CLEANUP_ON_WINERROR(dwError);
+        }
+        else if (!strcmp("--osservicepack", option))
+        {
+            dwError = GetOptionValue(programName, ShowUsageError, &cursor, option,
+                                     &pArgs->pszOsServicePack);
+            GOTO_CLEANUP_ON_WINERROR(dwError);
+        }
+        else
+        {
+            fprintf(stderr, "Unrecognized option: %s\n", option);
+            ShowUsageError(programName);
+        }
+    }
+
+    // Process arguments:
+    dwError = GetArgumentValue(programName, ShowUsageError, &cursor, "DOMAIN",
+                               &pArgs->pszDomain);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
+
+    LwStrToUpper(pArgs->pszDomain);
+
+    dwError = GetArgumentValue(programName, ShowUsageError, &cursor, "USERNAME",
+                               &pArgs->pszUsername);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
+
+    // Optional argument
+    dwError = GetArgumentValue(programName, ShowUsageError, &cursor, NULL,
+                               &pArgs->pszPassword);
+    assert(!dwError);
+
+    if (LwArgvCursorRemaining(&cursor))
+    {
+        fprintf(stderr, "Too many arguments.\n");
+        ShowUsageError(programName);
+    }
+
+    // Initialize missing options as needed
+
+    if (!pArgs->pszDnsSuffix)
+    {
+        dwError = LwAllocateString(pArgs->pszDomain, &pArgs->pszDnsSuffix);
+        GOTO_CLEANUP_ON_WINERROR(dwError);
+    }
+    LwStrToLower(pArgs->pszDnsSuffix);
+
+    if (!pArgs->pszMachineName)
+    {
+        dwError = GetHostname(&pArgs->pszMachineName);
+        GOTO_CLEANUP_ON_WINERROR(dwError);
+    }
+
+    if (!pArgs->pszOsName ||
+        !pArgs->pszOsVersion ||
+        !pArgs->pszOsServicePack)
+    {
+        dwError = GetOsInfo(
+                        pArgs->pszOsName ? NULL : &pArgs->pszOsName,
+                        pArgs->pszOsVersion ? NULL : &pArgs->pszOsVersion,
+                        pArgs->pszOsServicePack ? NULL : &pArgs->pszOsServicePack);
+        GOTO_CLEANUP_ON_WINERROR(dwError);
+    }
+
+    dwError = CleanupUsername(pArgs->pszDomain, &pArgs->pszUsername);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
+
+    if (!pArgs->pszPassword)
+    {
+        dwError = PromptPassword(pArgs->pszUsername, &pArgs->pszPassword);
+        GOTO_CLEANUP_ON_WINERROR(dwError);
+    }
+
+cleanup:
+    if (dwError)
+    {
+        FreeJoinArgsContents(pArgs);
+    }
+
+    return dwError;
+}
+
+static
+DWORD
+ParseLeaveArgs(
+    IN int argc,
+    IN const char *argv[],
+    OUT PLEAVE_ARGS pArgs
+    )
+{
+    DWORD dwError = 0;
+    PCSTR programName = NULL;
+    PCSTR option = NULL;
+    LW_ARGV_CURSOR cursor;
+    SHOW_USAGE_CALLBACK ShowUsageHelp = ShowLeaveUsageHelp;
+    SHOW_USAGE_CALLBACK ShowUsageError = ShowLeaveUsageError;
+
+    LwArgvCursorInit(&cursor, argc, argv);
+    programName = LwArgvCursorPop(&cursor);
+
+    // Process options:
+    for (;;)
+    {
+        option = PopNextOption(&cursor);
+        if (!option)
+        {
+            break;
+        }
+        else if (IsHelpOption(option))
+        {
+            ShowUsageHelp(programName);
+        }
+        else
+        {
+            fprintf(stderr, "Unrecognized option: %s\n", option);
+            ShowUsageError(programName);
+        }
+    }
+
+    // Optional arguments
+    dwError = GetArgumentValue(programName, ShowUsageError, &cursor, NULL,
+                               &pArgs->pszUsername);
+    assert(!dwError);
+    dwError = GetArgumentValue(programName, ShowUsageError, &cursor, NULL,
+                               &pArgs->pszPassword);
+    assert(!dwError);
+
+    if (LwArgvCursorRemaining(&cursor))
+    {
+        fprintf(stderr, "Too many arguments.\n");
+        ShowUsageError(programName);
+    }
+
+    // Initialize implit domain argument.
+    dwError = GetCurrentDomain(&pArgs->pszDomain);
+    if (NERR_SetupNotJoined == dwError)
+    {
+        fprintf(stderr, "The computer is not joined to a domain.\n");
+        exit(1);
+    }
+    GOTO_CLEANUP_ON_WINERROR(dwError);
+
+    // If USERNAME was specified, clean it up and get password
+    // as needed.
+    if (pArgs->pszUsername)
+    {
+        dwError = CleanupUsername(pArgs->pszDomain, &pArgs->pszUsername);
+        GOTO_CLEANUP_ON_WINERROR(dwError);
+
+        if (!pArgs->pszPassword)
+        {
+            dwError = PromptPassword(pArgs->pszUsername, &pArgs->pszPassword);
+            GOTO_CLEANUP_ON_WINERROR(dwError);
+        }
+    }
+
+cleanup:
+    if (dwError)
+    {
+        FreeLeaveArgsContents(pArgs);
+    }
+
+    return dwError;
+}
+
+static
+VOID
+ShowJoinUsage(
+    IN PCSTR pszProgramName,
+    IN int ExitCode
+    )
+{
+    FILE* file = ExitCode ? stderr : stdout;
+
+    fprintf(file,
+            "Usage: %s [options] DOMAIN USERNAME [PASSWORD]\n"
+            "\n"
+            "  options:\n"
+            "\n"
+            "    --name MACHINE     -- Machine name to join as.  Default is hostname.\n"
+            "    --dnssuffix SUFFIX -- DNS suffix to set for machine in AD.  Default is\n"
+            "                          AD domain.\n"
+            "    --ou OU            -- OU to join.\n"
+            "    --osname STRING    -- OS name to set in AD.\n"
+            "    --osversion STRING -- OS version to set in AD .\n"
+            "    --osservicepack STRING -- OS service pack to set in AD.\n"
+            "\n"
+            "  notes:\n"
+            "\n"
+            "    If any OS option is not specified, its value from from uname.  If the\n"
+            "    empty string is passed in for an OS option, the value in AD for the\n"
+            "    attribute is preserved.\n"
+            "",
+            pszProgramName);
+
+    exit(ExitCode);
+}
+
+static
+VOID
+ShowLeaveUsage(
+    IN PCSTR pszProgramName,
+    IN int ExitCode
+    )
+{
+    FILE* file = ExitCode ? stderr : stdout;
+
+    fprintf(file,
+            "Usage: %s [USERNAME [PASSWORD]]\n",
+            pszProgramName);
+
+    exit(ExitCode);
 }
 
 int
-JoinLeaveMain(int argc, char** argv)
+JoinMain(
+    int argc,
+    const char** argv
+    )
 {
     DWORD dwError = 0;
-    PSTR pszCurrentDomain = NULL;
-    LwDjArgs djArgs = {0};
-    int rsts = 0;
+    JOIN_ARGS args = { 0 };
 
-    dwError = LwDjParseArgs(argc, argv, &djArgs);
-    BAIL_ON_DJ_ERROR(dwError);
+    dwError = ParseJoinArgs(argc, argv, &args);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
 
-    switch (djArgs.eAction)
-    {
-        case DJ_JOIN:
-            printf("Joining to AD Domain: %s\n"
-                   "With Computer DNS Name: %s.%s\n\n",
-                   djArgs.pszDcDomain,
-                   djArgs.pszHostname,
-                   djArgs.pszDnsDomain);
-
-            dwError = LwDjJoinDomain(
-                          djArgs.pszDnsDomain,
-                          djArgs.pszDcDomain,
-                          djArgs.pszOU,
-                          djArgs.pszAdministrator,
-                          djArgs.pszPassword,
-                          djArgs.pszHostname,
-                          djArgs.pszOsIdentifier,
-                          djArgs.pszRelease,
-                          djArgs.pszVersion);
-            BAIL_ON_DJ_ERROR(dwError);
-
-            dwError = LwDjGetCurrentDomain(&pszCurrentDomain);
-            BAIL_ON_DJ_ERROR(dwError);
-
-            printf("SUCCESS!\nYour computer is now joined to '%s'\n",
-                   pszCurrentDomain);
-                   
-            break;
-
-        case DJ_LEAVE:
-            dwError = LwDjGetCurrentDomain(&pszCurrentDomain);
-            BAIL_ON_DJ_ERROR(dwError);
-
-            printf("Leaving AD Domain: %s\n", pszCurrentDomain);
-
-            dwError = LwDjLeaveDomain(
-                    djArgs.pszAdministrator,
-                    djArgs.pszPassword);
-            BAIL_ON_DJ_ERROR(dwError);
-            printf("SUCCESS\n");
-            break;
-    }
+    dwError = DoJoinDomain(
+                    args.pszDomain,
+                    args.pszUsername,
+                    args.pszPassword,
+                    args.pszMachineName,
+                    args.pszDnsSuffix,
+                    args.pszOu,
+                    args.pszOsName,
+                    args.pszOsVersion,
+                    args.pszOsServicePack);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
 
 cleanup:
-    return rsts;
+    if (dwError)
+    {
+        PrintError(dwError);
+    }
 
-error:
-    printError("LwDjJoinDomain", dwError);
-    rsts = 1;
-    goto cleanup;
+    FreeJoinArgsContents(&args);
+
+    return dwError ? 1 : 0;
+}
+
+int
+LeaveMain(
+    int argc,
+    const char** argv
+    )
+{
+    DWORD dwError = 0;
+    LEAVE_ARGS args = { 0 };
+
+    dwError = ParseLeaveArgs(argc, argv, &args);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
+
+    dwError = DoLeaveDomain(
+                    args.pszDomain,
+                    args.pszUsername,
+                    args.pszPassword);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
+
+cleanup:
+    if (dwError)
+    {
+        PrintError(dwError);
+    }
+
+    FreeLeaveArgsContents(&args);
+
+    return dwError ? 1 : 0;
 }

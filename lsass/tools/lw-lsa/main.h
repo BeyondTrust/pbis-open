@@ -209,7 +209,13 @@ account_rights_main(
     );
 
 int
-JoinLeaveMain(
+JoinMain(
+    int argc,
+    char** argv
+    );
+
+int
+LeaveMain(
     int argc,
     char** argv
     );
