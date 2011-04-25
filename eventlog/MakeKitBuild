@@ -71,6 +71,8 @@ configure()
 	HEADERDEPS="stdlib.h" \
 	strtol strtoll __strtoll strtoul strtoull __strtoull
 
+    lw_check_pthread_once_init
+
     mk_output_file "etc/eventlogd.reg"
 
     MK_HEADERDEPS="$MK_HEADERDEPS lwrpcrt/lwrpcrt.h"
