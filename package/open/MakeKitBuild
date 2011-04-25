@@ -133,18 +133,10 @@ package_pkg()
             open_files_root
 
             mk_package_dirs \
-                "${MK_SYSCONFDIR}"
-            
-            mk_package_dirs \
-                "${MK_SYSCONFDIR}/gss"
-
-            mk_package_dirs \
-                "${MK_SYSCONFDIR}/krb5"
-
-            mk_package_dirs \
-                "${MK_SYSCONFDIR}/krb5/plugins"
-
-            mk_package_dirs \
+                "${MK_SYSCONFDIR}" \
+                "${MK_SYSCONFDIR}/gss" \
+                "${MK_SYSCONFDIR}/krb5" \
+                "${MK_SYSCONFDIR}/krb5/plugins" \
                 "${MK_SYSCONFDIR}/krb5/plugins/libkrb5"
 
         mk_pkg_sub_done
