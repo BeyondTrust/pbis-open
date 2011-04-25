@@ -84,6 +84,7 @@ do
         --id) ID="$2"; shift 2;;
         --config) CONFIG="$2"; shift 2;;
         --tools) TOOLS="$2"; shift 2;;
+        --archive) ARCHIVE="$2"; shift 2;;
         --clean) CLEAN="1"; shift;;
         --bootstrap) BOOTSTRAP="1"; CLEAN="1"; shift;;
         --help) usage;;
@@ -114,6 +115,7 @@ echo "+ PATH=$PATH"
 [ -n "$CONFIG" ] && CONFIG_PARAM="@$SOURCE_DIR/build/mk-config/$CONFIG"
 [ -n "$REVISION" ] && REVISION_PARAM="--build-revision=$REVISION"
 [ -n "$ID" ] && ID_PARAM="--build-id=$ID"
+[ -n "$ARCHIVE" ] && ARCHIVE_PARAM="--unpack-archive=$ARCHIVE"
 
 if [ -n "$CLEAN" -a -d "$BUILD_DIR" ]
 then
@@ -123,9 +125,12 @@ fi
 show mkdir -p "${BUILD_DIR}"
 show cd "$BUILD_DIR"
 
-show "${SOURCE_DIR}/configure" \
-    ${CONFIG_PARAM} ${REVISION_PARAM} ${ID_PARAM} \
-    CPPFLAGS="$EXTRA_CPPFLAGS" LDFLAGS="$EXTRA_LDFLAGS"
+if [ ! -f "Makefile" ]
+then
+    show "${SOURCE_DIR}/configure" \
+        ${CONFIG_PARAM} ${REVISION_PARAM} ${ID_PARAM} ${ARCHIVE_PARAM} \
+        CPPFLAGS="$EXTRA_CPPFLAGS" LDFLAGS="$EXTRA_LDFLAGS"
+fi
 
 if [ -n "$BOOTSTRAP" ]
 then
