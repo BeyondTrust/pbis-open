@@ -2382,116 +2382,6 @@ error:
     goto cleanup;
 }
 
-static
-DWORD
-AD_CombineCacheObjectsRemoveDuplicates(
-    IN OUT size_t* psFromObjectsCount1,
-    IN OUT PLSA_SECURITY_OBJECT* ppFromObjects1,
-    IN OUT size_t* psFromObjectsCount2,
-    IN OUT PLSA_SECURITY_OBJECT* ppFromObjects2,
-    OUT size_t* psCombinedObjectsCount,
-    OUT PLSA_SECURITY_OBJECT** pppCombinedObjects
-    )
-{
-    DWORD dwError = 0;
-    PLSA_SECURITY_OBJECT* ppCombinedObjects = NULL;
-    size_t sCombinedObjectsCount = 0;
-    PLW_HASH_TABLE pHashTable = NULL;
-    size_t i = 0;
-    LW_HASH_ITERATOR hashIterator;
-    LW_HASH_ENTRY* pHashEntry = NULL;
-
-    dwError = LwHashCreate(
-                20,
-                AD_CompareObjectSids,
-                AD_HashObjectSid,
-                NULL,
-                NULL,
-                &pHashTable);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    for (i = 0; i < *psFromObjectsCount1; i++)
-    {
-        if (!LwHashExists(pHashTable, ppFromObjects1[i]))
-        {
-            dwError = LwHashSetValue(
-                            pHashTable,
-                            ppFromObjects1[i],
-                            ppFromObjects1[i]);
-            BAIL_ON_LSA_ERROR(dwError);
-            ppFromObjects1[i] = NULL;
-        }
-    }
-
-    for (i = 0; i < *psFromObjectsCount2; i++)
-    {
-        if (!LwHashExists(pHashTable, ppFromObjects2[i]))
-        {
-            dwError = LwHashSetValue(
-                            pHashTable,
-                            ppFromObjects2[i],
-                            ppFromObjects2[i]);
-            BAIL_ON_LSA_ERROR(dwError);
-            ppFromObjects2[i] = NULL;
-        }
-    }
-
-    sCombinedObjectsCount = pHashTable->sCount;
-    dwError = LwAllocateMemory(
-                    sizeof(*ppCombinedObjects) * sCombinedObjectsCount,
-                    (PVOID*)&ppCombinedObjects);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwHashGetIterator(pHashTable, &hashIterator);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    for (i = 0; (pHashEntry = LwHashNext(&hashIterator)) != NULL; i++)
-    {
-        PLSA_SECURITY_OBJECT pObject = (PLSA_SECURITY_OBJECT) pHashEntry->pKey;
-
-        dwError = LwHashRemoveKey(pHashTable, pObject);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        ppCombinedObjects[i] = pObject;
-    }
-
-    if (i != sCombinedObjectsCount)
-    {
-        dwError = LW_ERROR_INTERNAL;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    *pppCombinedObjects = ppCombinedObjects;
-    *psCombinedObjectsCount = sCombinedObjectsCount;
-
-cleanup:
-    if (pHashTable)
-    {
-        pHashTable->fnFree = AD_FreeHashObject;
-        LwHashSafeFree(&pHashTable);
-    }
-    // Free any remaining objects.
-    for (i = 0; i < *psFromObjectsCount1; i++)
-    {
-        ADCacheSafeFreeObject(&ppFromObjects1[i]);
-    }
-    *psFromObjectsCount1 = 0;
-    for (i = 0; i < *psFromObjectsCount2; i++)
-    {
-        ADCacheSafeFreeObject(&ppFromObjects2[i]);
-    }
-    *psFromObjectsCount2 = 0;
-    return dwError;
-
-error:
-    *pppCombinedObjects = NULL;
-    *psCombinedObjectsCount = 0;
-
-    ADCacheSafeFreeObjectList(sCombinedObjectsCount, &ppCombinedObjects);
-    sCombinedObjectsCount = 0;
-    goto cleanup;
-}
-
 void
 AD_FilterNullEntries(
     IN OUT PLSA_SECURITY_OBJECT* ppEntries,
@@ -2514,209 +2404,6 @@ AD_FilterNullEntries(
     }
 
     *psCount = sOutput;
-}
-
-DWORD
-AD_OnlineGetUserGroupObjectMembership(
-    IN PAD_PROVIDER_CONTEXT pContext,
-    IN PLSA_SECURITY_OBJECT pUserInfo,
-    IN BOOLEAN bIsCacheOnlyMode,
-    OUT size_t* psCount,
-    OUT PLSA_SECURITY_OBJECT** pppResults
-    )
-{
-    DWORD dwError = LW_ERROR_SUCCESS;
-    size_t sMembershipCount = 0;
-    PLSA_GROUP_MEMBERSHIP* ppMemberships = NULL;
-    BOOLEAN bExpired = FALSE;
-    BOOLEAN bIsComplete = FALSE;
-    BOOLEAN bUseCache = FALSE;
-    size_t sUnexpirableResultsCount = 0;
-    PLSA_SECURITY_OBJECT* ppUnexpirableResults = NULL;
-    size_t sResultsCount = 0;
-    PLSA_SECURITY_OBJECT* ppResults = NULL;
-    size_t sFilteredResultsCount = 0;
-    PLSA_SECURITY_OBJECT* ppFilteredResults = NULL;
-    // Only free top level array, do not free string pointers.
-    PSTR* ppszSids = NULL;
-    PCSTR pszSid = NULL;
-    int iPrimaryGroupIndex = -1;
-
-    pszSid = pUserInfo->pszObjectSid;
-
-    dwError = ADCacheGetGroupsForUser(
-                    pContext->pState->hCacheConnection,
-                    pszSid,
-                    AD_GetTrimUserMembershipEnabled(pContext->pState),
-                    &sMembershipCount,
-                    &ppMemberships);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = AD_CheckExpiredMemberships(
-                    pContext->pState,
-                    sMembershipCount,
-                    ppMemberships,
-                    TRUE,
-                    &bExpired,
-                    &bIsComplete);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (bExpired)
-    {
-        LSA_LOG_VERBOSE(
-            "Cache entry for user's group membership for sid %s is expired",
-            pszSid);
-    }
-    else if (!bIsComplete)
-    {
-        LSA_LOG_VERBOSE(
-            "Cache entry for user's group membership for sid %s is incomplete",
-            pszSid);
-    }
-
-    if (bExpired || !bIsComplete)
-    {
-        LSA_TRUST_DIRECTION dwTrustDirection = LSA_TRUST_DIRECTION_UNKNOWN;
-
-        dwError = AD_DetermineTrustModeandDomainName(
-                        pContext->pState,
-                        pUserInfo->pszNetbiosDomainName,
-                        &dwTrustDirection,
-                        NULL,
-                        NULL,
-                        NULL);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        if (dwTrustDirection == LSA_TRUST_DIRECTION_ONE_WAY)
-        {
-            bUseCache = TRUE;
-        }
-    }
-    else
-    {
-        bUseCache = TRUE;
-    }
-
-    if (!bUseCache && bIsCacheOnlyMode)
-    {
-        dwError = AD_FilterExpiredMemberships(
-                      pContext->pState,
-                      &sMembershipCount,
-                      ppMemberships);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        bUseCache = TRUE;
-    }
-
-    if (!bUseCache)
-    {
-        // Get the complete object for the unexpirable entries (the ones
-        // that we can't get through regular LDAP queries).  Later on, this
-        // list will be appended to the list we get from LDAP.
-
-        dwError = AD_GatherSidsFromGroupMemberships(
-                        TRUE,
-                        AD_IncludeOnlyUnexpirableGroupMembershipsCallback,
-                        sMembershipCount,
-                        ppMemberships,
-                        &sUnexpirableResultsCount,
-                        &ppszSids);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = AD_FindObjectsBySidList(
-                        pContext,
-                        sUnexpirableResultsCount,
-                        ppszSids,
-                        &sUnexpirableResultsCount,
-                        &ppUnexpirableResults);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        LW_SAFE_FREE_MEMORY(ppszSids);
-        ADCacheSafeFreeGroupMembershipList(sMembershipCount, &ppMemberships);
-
-        dwError = ADLdap_GetObjectGroupMembership(
-                         pContext,
-                         pUserInfo,
-                         &iPrimaryGroupIndex,
-                         &sResultsCount,
-                         &ppResults);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        AD_FilterNullEntries(ppResults, &sResultsCount);
-
-        dwError = AD_CacheMembershipFromRelatedObjects(
-                        pContext->pState->hCacheConnection,
-                        pszSid,
-                        iPrimaryGroupIndex,
-                        FALSE,
-                        sResultsCount,
-                        ppResults);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        // Combine and filter out duplicates.
-        dwError = AD_CombineCacheObjectsRemoveDuplicates(
-                        &sResultsCount,
-                        ppResults,
-                        &sUnexpirableResultsCount,
-                        ppUnexpirableResults,
-                        &sFilteredResultsCount,
-                        &ppFilteredResults);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-    else
-    {
-        /* If the cache is valid, get the rest of the object info with
-         * AD_FindObjectsBySidList.
-         */
-        LSA_LOG_VERBOSE(
-              "Using cached user's group membership for sid %s",
-              pszSid);
-
-        dwError = AD_GatherSidsFromGroupMemberships(
-                        TRUE,
-                        NULL,
-                        sMembershipCount,
-                        ppMemberships,
-                        &sResultsCount,
-                        &ppszSids);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = AD_FindObjectsBySidList(
-                        pContext,
-                        sResultsCount,
-                        ppszSids,
-                        &sFilteredResultsCount,
-                        &ppFilteredResults);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    *psCount = sFilteredResultsCount;
-    *pppResults = ppFilteredResults;
-
-cleanup:
-    LW_SAFE_FREE_MEMORY(ppszSids);
-    ADCacheSafeFreeGroupMembershipList(sMembershipCount, &ppMemberships);
-    ADCacheSafeFreeObjectList(sResultsCount, &ppResults);
-    ADCacheSafeFreeObjectList(sUnexpirableResultsCount, &ppUnexpirableResults);
-
-    return dwError;
-
-error:
-    *psCount = 0;
-    *pppResults = NULL;
-
-    if ( dwError != LW_ERROR_DOMAIN_IS_OFFLINE && pUserInfo )
-    {
-        LSA_LOG_ERROR("Failed to find memberships for user '%s\\%s' (error = %u)",
-                      pUserInfo->pszNetbiosDomainName,
-                      pUserInfo->pszSamAccountName,
-                      dwError);
-    }
-
-    ADCacheSafeFreeObjectList(sFilteredResultsCount, &ppFilteredResults);
-    sFilteredResultsCount = 0;
-
-    goto cleanup;
 }
 
 DWORD
@@ -5011,6 +4698,50 @@ AD_OnlineFreeMemberOfHashEntry(
 }
 
 DWORD
+AD_MoveHashValuesToArray(
+    IN OUT PLW_HASH_TABLE pHash,
+    OUT PDWORD pCount,
+    OUT PVOID** pppValues
+    )
+{
+    LW_HASH_ITERATOR hashIterator = {0};
+    DWORD count = (DWORD) LwHashGetKeyCount(pHash);
+    DWORD index = 0;
+    DWORD dwError = 0;
+    PVOID* ppValues = NULL;
+    LW_HASH_ENTRY*   pHashEntry = NULL;
+    
+    if (count)
+    {
+        dwError = LwAllocateMemory(
+            sizeof(ppValues[0]) * count,
+            OUT_PPVOID(&ppValues));
+        BAIL_ON_LSA_ERROR(dwError);
+    
+        dwError = LwHashGetIterator(pHash, &hashIterator);
+        BAIL_ON_LSA_ERROR(dwError);
+        
+        for (index = 0; (pHashEntry = LwHashNext(&hashIterator)) != NULL; index++)
+        {
+            ppValues[index] = pHashEntry->pValue;
+            pHashEntry->pValue = NULL;
+        }
+    }
+
+    *pCount = count;
+    *pppValues = ppValues;
+
+cleanup:
+    return dwError;
+
+error:
+    *pCount = 0;
+    *pppValues = NULL;
+    LW_SAFE_FREE_MEMORY(ppValues);
+    goto cleanup;
+}
+
+DWORD
 AD_OnlineQueryMemberOf(
     IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
@@ -5023,8 +4754,6 @@ AD_OnlineQueryMemberOf(
     DWORD dwError = 0;
     DWORD dwIndex = 0;
     PLW_HASH_TABLE   pGroupHash = NULL;
-    LW_HASH_ITERATOR hashIterator = {0};
-    LW_HASH_ENTRY*   pHashEntry = NULL;
     DWORD dwGroupSidCount = 0;
     PSTR* ppszGroupSids = NULL;
 
@@ -5052,24 +4781,11 @@ AD_OnlineQueryMemberOf(
         BAIL_ON_LSA_ERROR(dwError);
     }
     
-    dwGroupSidCount = (DWORD) LwHashGetKeyCount(pGroupHash);
-    
-    if (dwGroupSidCount)
-    {
-        dwError = LwAllocateMemory(
-            sizeof(*ppszGroupSids) * dwGroupSidCount,
-            OUT_PPVOID(&ppszGroupSids));
-        BAIL_ON_LSA_ERROR(dwError);
-    
-        dwError = LwHashGetIterator(pGroupHash, &hashIterator);
-        BAIL_ON_LSA_ERROR(dwError);
-        
-        for(dwIndex = 0; (pHashEntry = LwHashNext(&hashIterator)) != NULL; dwIndex++)
-        {
-            ppszGroupSids[dwIndex] = (PSTR) pHashEntry->pValue;
-            pHashEntry->pValue = NULL;
-        }
-    }
+    dwError = AD_MoveHashValuesToArray(
+                    pGroupHash,
+                    &dwGroupSidCount,
+                    (PVOID**)(PVOID)&ppszGroupSids);
+    BAIL_ON_LSA_ERROR(dwError);
 
     *pdwGroupSidCount = dwGroupSidCount;
     *pppszGroupSids = ppszGroupSids;

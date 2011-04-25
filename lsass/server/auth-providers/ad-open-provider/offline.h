@@ -72,14 +72,6 @@ AD_OfflineEnumUsers(
     );
 
 DWORD
-AD_OfflineGetUserGroupObjectMembership(
-    IN PAD_PROVIDER_CONTEXT pContext,
-    IN PLSA_SECURITY_OBJECT pUserInfo,
-    OUT size_t* psNumGroupsFound,
-    OUT PLSA_SECURITY_OBJECT** pppResult
-    );
-
-DWORD
 AD_OfflineEnumGroups(
     PAD_PROVIDER_CONTEXT pContext,
     HANDLE  hResume,
