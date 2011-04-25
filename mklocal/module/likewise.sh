@@ -13,6 +13,9 @@ option()
         aix)
             _default_initdir="/etc/rc.d/init.d"
             ;;
+        freebsd)
+            _default_initdir="/etc/rc.d"
+            ;;
         hpux)
             _default_initdir="/sbin/init.d"
             ;;
