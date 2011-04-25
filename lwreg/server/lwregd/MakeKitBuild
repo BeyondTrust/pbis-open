@@ -15,4 +15,15 @@ make()
     mk_stage \
         SOURCE=lwreg.reg \
         DESTDIR="${LW_CONFIGDIR}"
+
+    if [ "$LWREG_LWREGD_SERVER" = "yes" ]; then
+        mk_check_libraries \
+            pthread dl
+
+        mk_program \
+            PROGRAM="lwregd" \
+            SOURCES="lwregd.c" \
+            LIBDEPS="pthread dl" \
+            INSTALLDIR="${MK_SBINDIR}"
+    fi
 }
