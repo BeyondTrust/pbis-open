@@ -10,6 +10,14 @@ option()
         DEFAULT=""
 }
 
+configure()
+{
+    if [ -n "$LW_UNPACK_ARCHIVE" ]
+    then
+        mk_msg "unpacking additional staging targets from $LW_UNPACK_ARCHIVE"
+    fi
+}
+
 make()
 {
     if [ -n "$LW_UNPACK_ARCHIVE" ]
