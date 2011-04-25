@@ -138,6 +138,35 @@ make()
 
     mk_add_phony_target "$result"
 
+    case "$MK_HOST_OS:$MK_HOST_ARCH" in
+        hpux:ia64|solaris:x86)
+            # Add target to build everything without attempting to
+            # unpack staging archive from other build machine
+
+            _local_targets=""
+            mk_unquote_list "$SUBDIRS"
+            for subdir
+            do
+                [ "$subdir" != "package" -a "$subdir" != "installer" ] &&
+                    _local_targets="$_local_targets @$subdir"
+            done
+            
+            mk_target \
+                TARGET="@all-local" \
+                DEPS="$_local_targets"
+
+            mk_add_phony_target "$result"
+            ;;
+        solaris:x86_64)
+            # Add target to build only compat bits
+            mk_target \
+                TARGET="@compat" \
+                DEPS="/usr/lib/64/nss_lsass.la /usr/lib/security/64/pam_lsass.la"
+
+            mk_add_phony_target "$result"
+            ;;
+    esac
+
     lw_print_features
 }
 
