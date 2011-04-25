@@ -558,18 +558,20 @@ LsaGetNamesBySidList(
         &ppObjects);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (ppObjects[0] == NULL)
-    {
-        dwError = LW_ERROR_NO_SUCH_OBJECT;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
     dwError = LwAllocateMemory(sizeof(*pSidInfo) * sCount, OUT_PPVOID(&pSidInfo));
     BAIL_ON_LSA_ERROR(dwError);
 
     for (dwIndex = 0; dwIndex < sCount; dwIndex++)
     {
-        pSidInfo[dwIndex].accountType = ppObjects[dwIndex]->type;
+        if (ppObjects[dwIndex] == NULL)
+        {
+            pSidInfo[dwIndex].accountType = AccountType_NotFound;
+            continue;
+        }
+        else
+        {
+            pSidInfo[dwIndex].accountType = ppObjects[dwIndex]->type;
+        }
 
         if (pSidInfo[dwIndex].accountType != AccountType_NotFound)
         {

@@ -3201,13 +3201,14 @@ AD_FindObjectsByList(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_AD_PROVIDER_STATE pState = pContext->pState;
+    PLSA_SECURITY_OBJECT* ppCachedResults = NULL;
     PLSA_SECURITY_OBJECT* ppResults = NULL;
     size_t sResultsCount = 0;
     size_t sFoundInCache = 0;
     size_t sFoundInAD = 0;
     DWORD  dwFoundInAD = 0;
     size_t sRemainNumsToFoundInAD = 0;
-    size_t sIndex;
+    size_t sIndex = 0;
     time_t now = 0;
     // Do not free the strings that ppszRemainSidsList point to
     PSTR* ppszRemainingList = NULL;
@@ -3215,6 +3216,7 @@ AD_FindObjectsByList(
 
     dwError = LsaGetCurrentTimeSeconds(&now);
     BAIL_ON_LSA_ERROR(dwError);
+
     /*
      * Lookup as many objects as possible from the cache.
      */
@@ -3222,35 +3224,35 @@ AD_FindObjectsByList(
                     pState->hCacheConnection,
                     sCount,
                     ppszList,
-                    &ppResults);
+                    &ppCachedResults);
     BAIL_ON_LSA_ERROR(dwError);
     sResultsCount = sCount;
 
     dwError = LwAllocateMemory(
                     sCount*sizeof(*ppszRemainingList),
-                    (PVOID*)&ppszRemainingList);
+                    OUT_PPVOID(&ppszRemainingList));
     BAIL_ON_LSA_ERROR(dwError);
 
     for (sFoundInCache = 0, sRemainNumsToFoundInAD = 0, sIndex = 0;
          sIndex < sCount;
          sIndex++)
     {
-        if ((ppResults[sIndex] != NULL) &&
-            (ppResults[sIndex]->version.tLastUpdated >= 0) &&
-            (ppResults[sIndex]->version.tLastUpdated +
+        if ((ppCachedResults[sIndex] != NULL) &&
+            (ppCachedResults[sIndex]->version.tLastUpdated >= 0) &&
+            (ppCachedResults[sIndex]->version.tLastUpdated +
             AD_GetCacheEntryExpirySeconds(pState) <= now))
         {
             switch (QueryType)
             {
                 case LSA_AD_BATCH_QUERY_TYPE_BY_SID:
                     LSA_LOG_VERBOSE("Cache entry for Sid %s is expired",
-                         LSA_SAFE_LOG_STRING(ppResults[sIndex]->pszObjectSid));
+                         LSA_SAFE_LOG_STRING(ppCachedResults[sIndex]->pszObjectSid));
 
                     break;
 
                 case LSA_AD_BATCH_QUERY_TYPE_BY_DN:
                     LSA_LOG_VERBOSE("Cache entry for DN %s is expired",
-                         LSA_SAFE_LOG_STRING(ppResults[sIndex]->pszDN));
+                         LSA_SAFE_LOG_STRING(ppCachedResults[sIndex]->pszDN));
 
                     break;
 
@@ -3259,10 +3261,10 @@ AD_FindObjectsByList(
                     dwError = LW_ERROR_INVALID_PARAMETER;
                     BAIL_ON_LSA_ERROR(dwError);
             }
-            ADCacheSafeFreeObject(&ppResults[sIndex]);
+            ADCacheSafeFreeObject(&ppCachedResults[sIndex]);
         }
 
-        if (ppResults[sIndex] != NULL)
+        if (ppCachedResults[sIndex] != NULL)
         {
             sFoundInCache++;
             continue;
@@ -3270,40 +3272,80 @@ AD_FindObjectsByList(
         ppszRemainingList[sRemainNumsToFoundInAD++] = ppszList[sIndex];
     }
 
-    AD_FilterNullEntries(ppResults, &sResultsCount);
+    AD_FilterNullEntries(ppCachedResults, &sResultsCount);
     assert(sResultsCount == sFoundInCache);
 
-    if (!sRemainNumsToFoundInAD)
+    if (sRemainNumsToFoundInAD)
     {
-        goto cleanup;
+        dwError = pFindByListBatchedCallback(
+                        pContext,
+                        QueryType,
+                        sRemainNumsToFoundInAD,
+                        ppszRemainingList,
+                        &dwFoundInAD,
+                        &ppRemainingObjectsResults);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        sFoundInAD = dwFoundInAD;
+
+        dwError = ADCacheStoreObjectEntries(
+                        pState->hCacheConnection,
+                        sFoundInAD,
+                        ppRemainingObjectsResults);
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = pFindByListBatchedCallback(
-                     pContext,
-                     QueryType,
-                     sRemainNumsToFoundInAD,
-                     ppszRemainingList,
-                     &dwFoundInAD,
-                     &ppRemainingObjectsResults);
+    if (sFoundInCache == 0 && sFoundInAD == 0)
+    {
+        dwError = LW_ERROR_NO_SUCH_OBJECT;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LwAllocateMemory(
+                    sCount * sizeof(*ppResults),
+                    OUT_PPVOID(&ppResults));
     BAIL_ON_LSA_ERROR(dwError);
 
-    sFoundInAD = dwFoundInAD;
+    for (sIndex = 0; sIndex < sCount; sIndex++)
+    {
+        PSTR pszSid = ppszList[sIndex];
+        size_t sCacheIndex = 0;
+        size_t sFoundIndex = 0;
 
-    dwError = ADCacheStoreObjectEntries(
-                    pState->hCacheConnection,
-                    sFoundInAD,
-                    ppRemainingObjectsResults);
-    BAIL_ON_LSA_ERROR(dwError);
+        for (sCacheIndex = 0;
+             sCacheIndex < sFoundInCache;
+             sCacheIndex++)
+        {
+            if (ppCachedResults[sCacheIndex] &&
+                LwRtlCStringIsEqual(
+                         pszSid,
+                         ppCachedResults[sCacheIndex]->pszObjectSid,
+                         FALSE))
+            {
+                ppResults[sIndex] = ppCachedResults[sCacheIndex];
+                ppCachedResults[sCacheIndex] = NULL;
+                break;
+            }
+        }
 
-    // Filtering the null entries created enough space to append the
-    // entries looked up through AD.
-    memcpy(ppResults + sFoundInCache,
-           ppRemainingObjectsResults,
-           sizeof(*ppRemainingObjectsResults) * sFoundInAD);
-    memset(ppRemainingObjectsResults,
-           0,
-           sizeof(*ppRemainingObjectsResults) * sFoundInAD);
-    sResultsCount += sFoundInAD;
+        for (sFoundIndex = 0;
+             sFoundIndex < sFoundInAD;
+             sFoundIndex++)
+        {
+            if (ppRemainingObjectsResults[sFoundIndex] &&
+                LwRtlCStringIsEqual(
+                         pszSid,
+                         ppRemainingObjectsResults[sFoundIndex]->pszObjectSid,
+                         FALSE))
+            {
+                ppResults[sIndex] = ppRemainingObjectsResults[sFoundIndex];
+                ppRemainingObjectsResults[sFoundIndex] = NULL;
+                break;
+            }
+        }
+    }
+
+    sResultsCount = sIndex;
 
 cleanup:
 
@@ -3311,12 +3353,10 @@ cleanup:
     // because there is a goto cleanup above.
     if (dwError)
     {
-        ADCacheSafeFreeObjectList(sResultsCount, &ppResults);
+        ADCacheSafeFreeObjectList(sFoundInCache, &ppCachedResults);
+        ADCacheSafeFreeObjectList(sFoundInAD, &ppRemainingObjectsResults);
+        LW_SAFE_FREE_MEMORY(ppResults);
         sResultsCount = 0;
-    }
-    else
-    {
-        assert(sResultsCount == (sFoundInCache + sFoundInAD));
     }
 
     *pppResults = ppResults;
@@ -3325,8 +3365,10 @@ cleanup:
         *psResultsCount = sResultsCount;
     }
 
-    ADCacheSafeFreeObjectList(sFoundInAD, &ppRemainingObjectsResults);
     LW_SAFE_FREE_MEMORY(ppszRemainingList);
+    LW_SAFE_FREE_MEMORY(ppCachedResults);
+    LW_SAFE_FREE_MEMORY(ppRemainingObjectsResults);
+
 
     return dwError;
 
@@ -3952,7 +3994,9 @@ AD_OnlineDistributeObjects(
 
     for (dwObjectIndex = 0; dwObjectIndex < dwObjectCount; dwObjectIndex++)
     {
-        for (dwKeyIndex = 0; dwKeyIndex < dwKeyCount; dwKeyIndex++)
+        for (dwKeyIndex = 0;
+             ppObjects[dwObjectIndex] != NULL && dwKeyIndex < dwKeyCount;
+             dwKeyIndex++)
         {
             if (ppDistObjects[dwKeyIndex] == NULL &&
                 !strcmp(bByDn ? 

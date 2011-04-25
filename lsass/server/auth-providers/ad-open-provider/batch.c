@@ -3600,6 +3600,7 @@ LsaAdBatchProcessRealObject(
     LSA_AD_BATCH_OBJECT_TYPE desiredObjectType = 0;
     PLSA_LIST_LINKS pLinks = NULL;
     PLSA_AD_BATCH_ITEM pFoundItem = NULL;
+    PSTR pszSid = NULL;
 
     // Get compare string
 
@@ -3645,8 +3646,26 @@ LsaAdBatchProcessRealObject(
 
         if (!strcasecmp(pItem->pszQueryMatchTerm, pszCompare))
         {
+            PSTR *ppszSid = NULL;
+
+            if (LSA_AD_BATCH_QUERY_TYPE_BY_SID == QueryType)
+            {
+                dwError = LwAllocateString(pszCompare, &pszSid);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                ppszSid = &pszSid;
+            }
+
             pFoundItem = pItem;
-            break;
+
+            dwError = LsaAdBatchGatherRealObject(
+                        pProviderData,
+                        pFoundItem,
+                        objectType,
+                        ppszSid,
+                        hDirectory,
+                        pMessage);
+            BAIL_ON_LSA_ERROR(dwError);
         }
     }
 
@@ -3659,17 +3678,9 @@ LsaAdBatchProcessRealObject(
         goto cleanup;
     }
 
-    dwError = LsaAdBatchGatherRealObject(
-                    pProviderData,
-                    pFoundItem,
-                    objectType,
-                    (LSA_AD_BATCH_QUERY_TYPE_BY_SID == QueryType) ? &pszCompare : NULL,
-                    hDirectory,
-                    pMessage);
-    BAIL_ON_LSA_ERROR(dwError);
-
 cleanup:
     LW_SAFE_FREE_STRING(pszCompare);
+    LW_SAFE_FREE_STRING(pszSid);
 
     return dwError;
 
