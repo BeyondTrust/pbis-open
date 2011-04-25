@@ -214,16 +214,6 @@ AD_Activate(
     );
 
 static
-DWORD
-AD_GetUserGroupObjectMembership(
-    IN PAD_PROVIDER_CONTEXT pContext,
-    IN PLSA_SECURITY_OBJECT pUserInfo,
-    IN BOOLEAN bIsCacheOnlyMode,
-    OUT size_t* psNumGroupsFound,
-    OUT PLSA_SECURITY_OBJECT** pppResult
-    );
-
-static
 VOID
 AD_DestroyStateList(
     VOID
@@ -1668,8 +1658,8 @@ AD_CheckUserInList(
 {
     DWORD  dwError = 0;
     PAD_PROVIDER_CONTEXT pContext = NULL;
-    size_t  sNumGroupsFound = 0;
-    PLSA_SECURITY_OBJECT* ppGroupList = NULL;
+    DWORD  numGroupsFound = 0;
+    PSTR* ppGroupSids = NULL;
     PLSA_SECURITY_OBJECT pUserInfo = NULL;
     size_t  iGroup = 0;
     PLW_HASH_TABLE pAllowedMemberList = NULL;
@@ -1703,18 +1693,19 @@ AD_CheckUserInList(
         goto cleanup;
     }
 
-    dwError = AD_GetUserGroupObjectMembership(
-                    pContext,
-                    pUserInfo,
-                    FALSE,
-                    &sNumGroupsFound,
-                    &ppGroupList);
+    dwError = AD_QueryMemberOf(
+                    hProvider,
+                    0,
+                    1,
+                    &pUserInfo->pszObjectSid,
+                    &numGroupsFound,
+                    &ppGroupSids);
     BAIL_ON_LSA_ERROR(dwError);
 
-    for (; iGroup < sNumGroupsFound; iGroup++)
+    for (; iGroup < numGroupsFound; iGroup++)
     {
         if (AD_IsMemberAllowed(pContext->pState,
-                               ppGroupList[iGroup]->pszObjectSid,
+                               ppGroupSids[iGroup],
                                pAllowedMemberList))
         {
             goto cleanup;
@@ -1728,7 +1719,10 @@ cleanup:
 
     AD_ClearProviderState(pContext);
 
-    ADCacheSafeFreeObjectList(sNumGroupsFound, &ppGroupList);
+    if (ppGroupSids)
+    {
+        LwFreeStringArray(ppGroupSids, numGroupsFound);
+    }
     ADCacheSafeFreeObject(&pUserInfo);
     LwHashSafeFree(&pAllowedMemberList);
 
@@ -3088,44 +3082,6 @@ cleanup:
 
 error:
     goto cleanup;
-}
-
-static
-DWORD
-AD_GetUserGroupObjectMembership(
-    IN PAD_PROVIDER_CONTEXT pContext,
-    IN PLSA_SECURITY_OBJECT pUserInfo,
-    IN BOOLEAN bIsCacheOnlyMode,
-    OUT size_t* psNumGroupsFound,
-    OUT PLSA_SECURITY_OBJECT** pppResult
-    )
-{
-    DWORD dwError = 0;
-
-    if (AD_IsOffline(pContext->pState))
-    {
-        dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
-    }
-    else
-    {
-        dwError = AD_OnlineGetUserGroupObjectMembership(
-            pContext,
-            pUserInfo,
-            bIsCacheOnlyMode,
-            psNumGroupsFound,
-            pppResult);
-    }
-
-    if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
-    {
-        dwError = AD_OfflineGetUserGroupObjectMembership(
-            pContext,
-            pUserInfo,
-            psNumGroupsFound,
-            pppResult);
-    }
-
-    return dwError;
 }
 
 DWORD

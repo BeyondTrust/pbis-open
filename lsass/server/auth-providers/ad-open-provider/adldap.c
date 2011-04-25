@@ -1655,9 +1655,16 @@ ADLdap_GetObjectGroupMembership(
     PLSA_SECURITY_OBJECT* ppGroupInfoList = NULL;
     size_t sNumGroupsFound = 0;
     int    iPrimaryGroupIndex = -1;
-    DWORD dwSidCount = 0;
-    PSTR *ppszLDAPValues = NULL;
-    PSTR *ppszTempLDAPValues = NULL;
+    DWORD gcMembershipCount = 0;
+    PSTR* ppGcMembershipList = NULL;
+    DWORD dcMembershipCount = 0;
+    PSTR* ppDcMembershipList = NULL;
+    PLW_HASH_TABLE pGroupHash = NULL;
+    LSA_TRUST_DIRECTION trustDirection = LSA_TRUST_DIRECTION_UNKNOWN;
+    LSA_TRUST_MODE trustMode = LSA_TRUST_MODE_UNKNOWN;
+    DWORD index = 0;
+    DWORD totalSidCount = 0;
+    PSTR* ppTotalSidList = NULL;
 
     // If we cannot get dn, then we cannot get DN information for this objects, hence BAIL
     if (LW_IS_NULL_OR_EMPTY_STR(pObject->pszDN))
@@ -1671,6 +1678,47 @@ ADLdap_GetObjectGroupMembership(
                  &pszFullDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
+    // Note that this function is called only for 2-way trusts.  However,
+    // the trust could be an external trust or a forest trust.  We can only
+    // query the GC if there is a forest trust.
+
+    dwError = AD_DetermineTrustModeandDomainName(
+                    pContext->pState,
+                    pszFullDomainName,
+                    &trustDirection,
+                    &trustMode,
+                    NULL,
+                    NULL);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LSA_ASSERT(LSA_TRUST_DIRECTION_TWO_WAY == trustDirection ||
+            LSA_TRUST_DIRECTION_SELF == trustDirection);
+
+    if (trustMode != LSA_TRUST_MODE_EXTERNAL)
+    {
+        // Get forest info from domain's GC since there is a forest trust.
+        // This will only include universal group information.  (The domain
+        // global groups will not include membership info in the GC.)
+        dwError = LsaDmLdapOpenGc(
+                      pContext,
+                      pszFullDomainName,
+                      &pConn);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = ADLdap_GetAttributeValuesList(
+                        pConn,
+                        pObject->pszDN,
+                        AD_LDAP_MEMBEROF_TAG,
+                        TRUE,
+                        TRUE,
+                        &gcMembershipCount,
+                        &ppGcMembershipList);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        LsaDmLdapClose(pConn);
+        pConn = NULL;
+    }
+
     dwError = LsaDmLdapOpenDc(
                   pContext,
                   pszFullDomainName,
@@ -1683,36 +1731,62 @@ ADLdap_GetObjectGroupMembership(
                     AD_LDAP_MEMBEROF_TAG,
                     TRUE,
                     TRUE,
-                    &dwSidCount,
-                    &ppszLDAPValues);
+                    &dcMembershipCount,
+                    &ppDcMembershipList);
     BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwHashCreate(
+                    (dcMembershipCount + gcMembershipCount + 1) * 2,
+                    LwHashCaselessStringCompare,
+                    LwHashCaselessStringHash,
+                    NULL,
+                    NULL,
+                    &pGroupHash);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    for (index = 0; index < gcMembershipCount; index++)
+    {
+        PSTR pSid = ppGcMembershipList[index];
+        if (!LwHashExists(pGroupHash, pSid));
+        {
+            dwError = LwHashSetValue(pGroupHash, pSid, pSid);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
+
+    for (index = 0; index < dcMembershipCount; index++)
+    {
+        PSTR pSid = ppDcMembershipList[index];
+        if (!LwHashExists(pGroupHash, pSid));
+        {
+            dwError = LwHashSetValue(pGroupHash, pSid, pSid);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
 
     if (pObject->type == LSA_OBJECT_TYPE_USER && pObject->userInfo.pszPrimaryGroupSid)
     {
-        dwError = LwReallocMemory(
-            ppszLDAPValues,
-            (PVOID*)&ppszTempLDAPValues,
-            (dwSidCount+1)*sizeof(*ppszLDAPValues));
-        BAIL_ON_LSA_ERROR(dwError);
-        
-        // Do not free "ppszTempLDAPValues"
-        ppszLDAPValues = ppszTempLDAPValues;
-        
-        // Append the pszPrimaryGroupSID entry to the results list
-        dwError = LwAllocateString(
-            pObject->userInfo.pszPrimaryGroupSid,
-            &ppszLDAPValues[dwSidCount]);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwSidCount++;
+        // Add the pszPrimaryGroupSID entry to the hash
+        PSTR pSid = pObject->userInfo.pszPrimaryGroupSid;
+        if (!LwHashExists(pGroupHash, pSid));
+        {
+            dwError = LwHashSetValue(pGroupHash, pSid, pSid);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
     }
+
+    dwError = AD_MoveHashValuesToArray(
+                    pGroupHash,
+                    &totalSidCount,
+                    (PVOID**)(PVOID)&ppTotalSidList);
+    BAIL_ON_LSA_ERROR(dwError);
     
     dwError = AD_FindObjectsBySidList(
-        pContext,
-        dwSidCount,
-        ppszLDAPValues,
-        &sNumGroupsFound,
-        &ppGroupInfoList);
+                    pContext,
+                    totalSidCount,
+                    ppTotalSidList,
+                    &sNumGroupsFound,
+                    &ppGroupInfoList);
     BAIL_ON_LSA_ERROR(dwError);
 
     // Determine primary group index
@@ -1723,7 +1797,6 @@ ADLdap_GetObjectGroupMembership(
     {
         for (i = (INT)sNumGroupsFound - 1; i >= 0; i--)
         {
-            // ppszLDAPValues[dwSidCount-1] stores user's primiary group Sid
             if (!strcmp(ppGroupInfoList[i]->pszObjectSid, pObject->userInfo.pszPrimaryGroupSid))
             {
                 iPrimaryGroupIndex = i;
@@ -1737,9 +1810,13 @@ ADLdap_GetObjectGroupMembership(
     *piPrimaryGroupIndex = iPrimaryGroupIndex;
 
 cleanup:
-
+    LwHashSafeFree(&pGroupHash);
     LW_SAFE_FREE_STRING(pszFullDomainName);
-    LwFreeStringArray(ppszLDAPValues, dwSidCount);
+    LwFreeStringArray(ppGcMembershipList, gcMembershipCount);
+    LwFreeStringArray(ppDcMembershipList, dcMembershipCount);
+    // Do not free the string pointers inside. They are borrowed from the
+    // hashes.
+    LW_SAFE_FREE_MEMORY(ppTotalSidList);
 
     LsaDmLdapClose(pConn);
 
