@@ -35,7 +35,7 @@
 #define LDAP_QUERY "(objectClass=certificationAuthority)"
 #define LDAP_BASE "cn=NTAuthCertificates,cn=Public Key Services,cn=Services,cn=Configuration"
 #define TRUSTED_CERT_DIR            CACHEDIR "/trusted_certs"
-#define LSASS_CREDS_CACHE           CACHEDIR "/krb5cc_lsass"
+#define KRB5_CACHE                  "MEMORY:lwcertd_krb5_cc"
 #define TRUSTED_CERT_PATH_MAX       (sizeof(TRUSTED_CERT_DIR) + NAME_MAX + 2)
 
 /* Markers for cert files that are found/not found in AD. */
@@ -65,8 +65,12 @@ GetTrustedCertificates(
 {
     HANDLE lsaConnection = (HANDLE) NULL;
     HANDLE ldapConnection = (HANDLE) NULL;
-    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
+    PSTR machineUPN = NULL;
     PSTR domainDn = NULL;
+    krb5_context krb5context = NULL;
+    krb5_ccache krb5ccache = NULL;
+    krb5_principal krb5principal = NULL;
     LDAP *pLdap = NULL;
     LDAPMessage *pLdapResults = NULL;
     LDAPMessage *pLdapResult = NULL;
@@ -77,14 +81,13 @@ GetTrustedCertificates(
     DIR* pDir = NULL;
     struct dirent*  pDirEntry = NULL;
     LW_BOOL downloadedCerts = LW_FALSE;
+    int ret;
     DWORD error = LW_ERROR_SUCCESS;
 
     if (!initialized)
     {
-        int ret;
-
         /* Use lsass' kerberos credentials cache (machine credentials). */
-        error = LwKrb5SetProcessDefaultCachePath(LSASS_CREDS_CACHE);
+        error = LwKrb5SetProcessDefaultCachePath(KRB5_CACHE);
         BAIL_ON_LW_ERROR(error);
 
         /* Make sure the trusted certificate directory exists. */
@@ -122,14 +125,44 @@ GetTrustedCertificates(
     error = LsaOpenServer(&lsaConnection);
     BAIL_ON_LW_ERROR(error);
 
-    error = LsaAdGetMachineAccountInfo(lsaConnection, NULL, &pAccountInfo);
+    error = LsaAdGetMachinePasswordInfo(lsaConnection, NULL, &pPasswordInfo);
     BAIL_ON_LW_ERROR(error);
 
-    error = LwLdapConvertDomainToDN(pAccountInfo->DnsDomainName, &domainDn);
+    error = LwLdapConvertDomainToDN(
+                pPasswordInfo->Account.DnsDomainName,
+                &domainDn);
+    BAIL_ON_LW_ERROR(error);
+
+    error = LwAllocateStringPrintf(
+                &machineUPN,
+                "%s@%s",
+                pPasswordInfo->Account.SamAccountName,
+                pPasswordInfo->Account.DnsDomainName);
+    BAIL_ON_LW_ERROR(error);
+
+    LwStrToUpper(machineUPN);
+
+    ret = krb5_init_context(&krb5context);
+    BAIL_ON_KRB_ERROR(ret, krb5context);
+
+    ret = krb5_parse_name(krb5context, machineUPN, &krb5principal);
+    BAIL_ON_KRB_ERROR(ret, krb5context);
+
+    ret = krb5_cc_resolve(krb5context, KRB5_CACHE, &krb5ccache);
+    BAIL_ON_KRB_ERROR(ret, krb5context);
+
+    ret = krb5_cc_initialize(krb5context, krb5ccache, krb5principal);
+    BAIL_ON_KRB_ERROR(ret, krb5context);
+
+    error = LwKrb5InitializeCredentials(
+                machineUPN,
+                pPasswordInfo->Password,
+                KRB5_CACHE,
+                NULL);
     BAIL_ON_LW_ERROR(error);
 
     error = LwAutoEnrollLdapConnect(
-                pAccountInfo->DnsDomainName,
+                pPasswordInfo->Account.DnsDomainName,
                 &ldapConnection);
     BAIL_ON_LW_ERROR(error);
 
@@ -340,9 +373,9 @@ cleanup:
         LsaCloseServer(lsaConnection);
     }
 
-    if (pAccountInfo)
+    if (pPasswordInfo)
     {
-        LsaAdFreeMachineAccountInfo(pAccountInfo);
+        LsaAdFreeMachinePasswordInfo(pPasswordInfo);
     }
 
     if (ldapConnection != (HANDLE) NULL)
@@ -375,7 +408,23 @@ cleanup:
         LwHashSafeFree(&pCertFiles);
     }
 
+    if (krb5context)
+    {
+        if (krb5principal)
+        {
+            krb5_free_principal(krb5context, krb5principal);
+        }
+
+        if (krb5ccache)
+        {
+            krb5_cc_close(krb5context, krb5ccache);
+        }
+
+        krb5_free_context(krb5context);
+    }
+
     LW_SAFE_FREE_STRING(domainDn);
+    LW_SAFE_FREE_STRING(machineUPN);
 
     return error;
 }
