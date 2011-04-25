@@ -262,16 +262,6 @@ AD_FreeHashObject(
     );
 
 DWORD
-AD_OnlineGetGroupMembers(
-    IN PAD_PROVIDER_CONTEXT pContext,
-    IN PCSTR pszDomainName,
-    IN PCSTR pszSid,
-    IN BOOLEAN bIsCacheOnlyMode,
-    OUT size_t* psCount,
-    OUT PLSA_SECURITY_OBJECT** pppResults
-    );
-
-DWORD
 AD_FindObjectsByDNList(
     IN PAD_PROVIDER_CONTEXT pContext,
     IN size_t sCount,
