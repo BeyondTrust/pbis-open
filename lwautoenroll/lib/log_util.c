@@ -73,6 +73,7 @@ static struct LwAutoenrollLogLevel {
     { "info",           LW_RTL_LOG_LEVEL_INFO,    LOG_INFO, },
     { "verbose",        LW_RTL_LOG_LEVEL_VERBOSE, LOG_INFO, },
     { "debug",          LW_RTL_LOG_LEVEL_DEBUG,   LOG_INFO, },
+    { "trace",          LW_RTL_LOG_LEVEL_TRACE,   LOG_INFO, },
     { NULL,             0,                    0, }
 };
 
