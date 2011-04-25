@@ -1,4 +1,4 @@
-SUBDIRS="open open-gui open-upgrade"
+SUBDIRS="unpack open open-gui open-upgrade"
 
 configure()
 {

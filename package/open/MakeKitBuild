@@ -124,6 +124,13 @@ package_pkg()
         
             open_files_usr
             open_files_compat_usr
+
+            if [ "$MK_HOST_ARCH" = "x86" ]
+            then
+                mk_package_patterns SUBDIRS="@package/unpack" \
+                    "/usr/lib/64/*" \
+                    "/usr/lib/security/64/*"
+            fi
         mk_pkg_sub_done
 
         mk_pkg_sub_do \
@@ -167,6 +174,15 @@ package_pkg()
             mk_multiarch_do
                 mk_package_dirs "${MK_LIBDIR}"
             mk_multiarch_done
+
+            if [ "$MK_HOST_ARCH" = "x86" ]
+            then
+                mk_package_patterns SUBDIRS="@package/unpack" \
+                    "$MK_PREFIX/lib/64/*"
+
+                mk_package_dirs \
+                    "$MK_PREFIX/lib/64"
+            fi
 
         mk_pkg_sub_done
     mk_pkg_done
@@ -222,12 +238,28 @@ package_depot()
         mk_depot_sub_do SUBPACKAGE=prefix
             open_files_prefix
             open_files_compat_prefix
+            
+            if [ "$MK_HOST_ARCH" = "ia64" ]
+            then
+                mk_package_patterns SUBDIRS="@package/unpack" \
+                    "$MK_PREFIX/lib/*" \
+                    "$MK_PREFIX/lib/pa20_64/*"
+            fi
         mk_depot_sub_done
         
         mk_depot_sub_do SUBPACKAGE=root
             open_files_root
             open_files_usr
             open_files_compat_usr
+
+            if [ "$MK_HOST_ARCH" = "ia64" ]
+            then
+                mk_package_patterns SUBDIRS="@package/unpack" \
+                    "/usr/lib/*" \
+                    "/usr/lib/pa20_64/*" \
+                    "/usr/lib/security/*" \
+                    "/usr/lib/security/pa20_64/*"
+            fi
         mk_depot_sub_done
     mk_depot_done
 }
