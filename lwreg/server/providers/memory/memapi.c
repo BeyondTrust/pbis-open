@@ -191,11 +191,9 @@ MemCreateKeyEx(
     REG_DB_CONNECTION regDbConn = {0};
     PWSTR pwszRootKey = NULL;
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
-#if 0
     ACCESS_MASK AccessGranted = 0;
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor = NULL;
     DWORD SecurityDescriptorLen = 0;
-#endif
 
     if (!hKey)
     {
@@ -209,6 +207,7 @@ MemCreateKeyEx(
                      Handle,
                      NULL,
                      pwszRootKey,
+                     AccessDesired,
                      &hRootKey);
         BAIL_ON_NT_STATUS(status);
         regDbConn.pMemReg = hRootKey;
@@ -243,7 +242,6 @@ MemCreateKeyEx(
     status = _MemCreateHkeyReply(hSubKey, phkResult);
     BAIL_ON_NT_STATUS(status);
 
-#if 0
     if (pSecDescRel)
     {
         SecurityDescriptor = pSecDescRel;
@@ -251,8 +249,10 @@ MemCreateKeyEx(
     }
     else
     {
-        SecurityDescriptor = pKeyHandle->pKey->hKey->SecurityDescriptor;
-        SecurityDescriptorLen = pKeyHandle->pKey->hKey->SecurityDescriptorLen;
+        SecurityDescriptor =
+            pKeyHandle->pKey->hKey->pNodeSd->SecurityDescriptor;
+        SecurityDescriptorLen =
+            pKeyHandle->pKey->hKey->pNodeSd->SecurityDescriptorLen;
     }
 
     if (SecurityDescriptor)
@@ -271,7 +271,6 @@ MemCreateKeyEx(
     }
     BAIL_ON_NT_STATUS(status);
     pKeyHandle->AccessGranted = AccessGranted;
-#endif
 
     MemDbExportEntryChanged();
 
@@ -305,6 +304,13 @@ MemOpenKeyEx(
     REG_DB_CONNECTION regDbConn = {0};
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
 
+    if (!pServerState->pToken)
+    {
+        status = RegSrvCreateAccessToken(pServerState->peerUID,
+                                         pServerState->peerGID,
+                                         &pServerState->pToken);
+        BAIL_ON_NT_STATUS(status);
+    }
 
     if (!hKey)
     {
@@ -313,17 +319,18 @@ MemOpenKeyEx(
                      Handle,
                      NULL,
                      pwszSubKey,
+                     AccessDesired,
                      &pSubKey);
         BAIL_ON_NT_STATUS(status);
     }
     else if (pKeyHandle->pKey->hKey)
     {
         regDbConn.pMemReg = pKeyHandle->pKey->hKey;
-//        regDbConn.lock = PTHREAD_MUTEX_INITIALIZER;
         status = MemDbOpenKey(
                      Handle,
                      &regDbConn,
                      pwszSubKey,
+                     AccessDesired,
                      &pSubKey);
         BAIL_ON_NT_STATUS(status);
     }
@@ -335,15 +342,6 @@ MemOpenKeyEx(
                      phkResult);
         BAIL_ON_NT_STATUS(status);
     }
-
-    if (!pServerState->pToken)
-    {
-        status = RegSrvCreateAccessToken(pServerState->peerUID,
-                                         pServerState->peerGID,
-                                         &pServerState->pToken);
-        BAIL_ON_NT_STATUS(status);
-    }
-
 
 
 cleanup:
@@ -380,12 +378,34 @@ MemDeleteKey(
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
     MEM_REG_STORE_HANDLE hParentKey = NULL;
     MEM_REG_STORE_HANDLE hRegKey = NULL;
+    PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor = NULL;
+    DWORD SecurityDescriptorLen = 0;
+    PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
+    ACCESS_MASK AccessGranted = 0;
 
-#if 0
-/* AccessGranted isn't know here */
-    status = RegSrvAccessCheckKeyHandle(pKeyHandle, DELETE);
+    if (pKeyHandle && pKeyHandle->pKey->hKey->pNodeSd)
+    {
+        SecurityDescriptor = 
+            pKeyHandle->pKey->hKey->pNodeSd->SecurityDescriptor;
+        SecurityDescriptorLen =
+            pKeyHandle->pKey->hKey->pNodeSd->SecurityDescriptorLen;
+    }
+
+    if (SecurityDescriptor && pServerState && pServerState->pToken)
+    {
+        status = RegSrvAccessCheckKey(pServerState->pToken,
+                                      SecurityDescriptor,
+                                      SecurityDescriptorLen,
+                                      KEY_WRITE,
+                                      &AccessGranted);
+    }
+
+    if (STATUS_NO_TOKEN == status)
+    {
+        status = 0;
+        AccessGranted = 0;
+    }
     BAIL_ON_NT_STATUS(status);
-#endif
 
     if (hKey)
     {

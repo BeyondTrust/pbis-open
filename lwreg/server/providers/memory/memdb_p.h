@@ -87,6 +87,7 @@ MemDbOpenKey(
     IN HANDLE Handle,
     IN REG_DB_HANDLE hDb,
     IN PCWSTR pwszFullKeyPath,
+    IN ACCESS_MASK AccessDesired,
     OUT OPTIONAL MEM_REG_STORE_HANDLE *pRegKey
     );
 

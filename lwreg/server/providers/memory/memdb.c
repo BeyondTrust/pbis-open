@@ -414,7 +414,10 @@ cleanup:
     if (exportCtx.wfp)
     {
         fclose(exportCtx.wfp);
+        exportCtx.wfp = NULL;
     }
+    return status;
+
 error:
     goto cleanup;
 
@@ -485,6 +488,7 @@ FILE *dbgfp = fopen("/tmp/lwregd-import.txt", "w");
                       NULL,
                       &regDbConn,
                       pwszSubKey,
+                      KEY_ALL_ACCESS,
                       &hSubKey);
         if (status == 0)
         {
@@ -714,6 +718,7 @@ MemDbOpenKey(
     IN HANDLE Handle,
     IN REG_DB_HANDLE hDb,
     IN PCWSTR pwszFullKeyPath,
+    IN ACCESS_MASK AccessDesired,
     OUT OPTIONAL MEM_REG_STORE_HANDLE *pRegKey)
 {
     NTSTATUS status = 0;
@@ -724,6 +729,8 @@ MemDbOpenKey(
     MEM_REG_STORE_HANDLE hParentKey = NULL;
     MEM_REG_STORE_HANDLE hSubKey = NULL;
     BOOLEAN bEndOfString = FALSE;
+    PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
+    ACCESS_MASK AccessGranted = 0;
      
     status = LwRtlWC16StringDuplicate(&pwszTmpFullPath, pwszFullKeyPath);
     BAIL_ON_NT_STATUS(status);
@@ -749,7 +756,6 @@ MemDbOpenKey(
             pwszPtr = pwszSubKey;
             bEndOfString = TRUE;
         }
-
   
         /*
          * Iterate over subkeys in \ sepearated path.
@@ -762,13 +768,24 @@ MemDbOpenKey(
         pwszSubKey = pwszPtr;
         *pRegKey = hParentKey;
     } while (status == 0 && !bEndOfString);
+    BAIL_ON_NT_STATUS(status);
+
+    if (pServerState && hSubKey->pNodeSd)
+    {
+        status = RegSrvAccessCheckKey(
+                     pServerState->pToken,
+                     hSubKey->pNodeSd->SecurityDescriptor,
+                     hSubKey->pNodeSd->SecurityDescriptorLen,
+                     AccessDesired,
+                     &AccessGranted);
+        BAIL_ON_NT_STATUS(status);
+    }
 
 cleanup:
     LWREG_SAFE_FREE_MEMORY(pwszTmpFullPath);
     return status;
 
 error:
-    LWREG_SAFE_FREE_MEMORY(pwszTmpFullPath);
     goto cleanup;
 }
 
@@ -805,7 +822,8 @@ MemDbAccessCheckKey(
         LWREG_UNLOCK_MUTEX(gbInLockDbMutex, &gMemRegDbMutex);
     }
 
-    if (pServerState && pServerState->pToken)
+    if (pServerState && pServerState->pToken &&
+        SecurityDescriptor && SecurityDescriptorLen>0)
     {
         status = RegSrvAccessCheckKey(pServerState->pToken,
                                       SecurityDescriptor,
@@ -1087,12 +1105,22 @@ MemDbSetValueEx(
     NTSTATUS status = 0;
     MEM_REG_STORE_HANDLE hKey = NULL;
     PREGMEM_VALUE pRegValue = NULL;
+    PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
+    ACCESS_MASK AccessGranted = 0;
 
     BAIL_ON_NT_STATUS(status);
 
     hKey = hDb->pMemReg;
-
-
+    if (hKey->pNodeSd)
+    {
+        status = RegSrvAccessCheckKey(
+                     pServerState->pToken,
+                     hKey->pNodeSd->SecurityDescriptor,
+                     hKey->pNodeSd->SecurityDescriptorLen,
+                     KEY_WRITE,
+                     &AccessGranted);
+        BAIL_ON_NT_STATUS(status);
+    }
     status = MemRegStoreFindNodeValue(
                  hKey,
                  pValueName,
@@ -1646,6 +1674,7 @@ MemDbRecurseRegistry(
                      hRegConnection,
                      &regDbConn,
                      pwszOptSubKey,
+                     KEY_READ,
                      &hSubKey);
         BAIL_ON_NT_STATUS(status);
         hKey = hSubKey;
@@ -1752,6 +1781,7 @@ MemDbRecurseDepthFirstRegistry(
                      hRegConnection,
                      &regDbConn,
                      pwszOptSubKey,
+                     KEY_ALL_ACCESS,
                      &hSubKey);
         BAIL_ON_NT_STATUS(status);
         hKey = hSubKey;
