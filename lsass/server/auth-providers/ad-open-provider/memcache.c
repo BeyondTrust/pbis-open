@@ -1488,23 +1488,26 @@ MemCacheRemoveObjectByHashKey(
                     pObject->pszObjectSid);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (pObject->enabled && pObject->type == LSA_OBJECT_TYPE_USER)
+    if (pObject->type == LSA_OBJECT_TYPE_USER)
     {
-        dwError = LwHashRemoveKey(
-                        pConn->pUIDToSecurityObject,
-                        (PVOID)(size_t)pObject->userInfo.uid);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        if (pObject->userInfo.pszAliasName != NULL &&
-                pObject->userInfo.pszAliasName[0])
+        if (pObject->enabled)
         {
             dwError = LwHashRemoveKey(
-                            pConn->pUserAliasToSecurityObject,
-                            pObject->userInfo.pszAliasName);
+                            pConn->pUIDToSecurityObject,
+                            (PVOID)(size_t)pObject->userInfo.uid);
             BAIL_ON_LSA_ERROR(dwError);
+
+            if (pObject->userInfo.pszAliasName != NULL &&
+                    pObject->userInfo.pszAliasName[0])
+            {
+                dwError = LwHashRemoveKey(
+                                pConn->pUserAliasToSecurityObject,
+                                pObject->userInfo.pszAliasName);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
         }
 
-        if (pObject->userInfo.pszUPN != NULL && pObject->userInfo.pszUPN[0])
+        if (!LW_IS_NULL_OR_EMPTY_STR(pObject->userInfo.pszUPN))
         {
             dwError = LwHashRemoveKey(
                             pConn->pUPNToSecurityObject,
@@ -1596,64 +1599,67 @@ MemCacheClearExistingObjectKeys(
                     pObject->pszObjectSid);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (pObject->enabled && pObject->type == LSA_OBJECT_TYPE_USER)
+    if (pObject->type == LSA_OBJECT_TYPE_USER)
     {
-        dwError = LwHashGetValue(
-                        pConn->pUIDToSecurityObject,
-                        (PVOID)(size_t)pObject->userInfo.uid,
-                        (PVOID*)&pListEntry);
-        if (dwError == ERROR_NOT_FOUND)
+        if (pObject->enabled)
         {
-            // The key does not exist
-            dwError = 0;
-        }
-        else
-        {
-            char oldTimeBuf[128] = { 0 };
-            char newTimeBuf[128] = { 0 };
-            struct tm oldTmBuf = { 0 };
-            struct tm newTmBuf = { 0 };
-            PLSA_SECURITY_OBJECT pDuplicateObject = NULL;
+            dwError = LwHashGetValue(
+                            pConn->pUIDToSecurityObject,
+                            (PVOID)(size_t)pObject->userInfo.uid,
+                            (PVOID*)&pListEntry);
+            if (dwError == ERROR_NOT_FOUND)
+            {
+                // The key does not exist
+                dwError = 0;
+            }
+            else
+            {
+                char oldTimeBuf[128] = { 0 };
+                char newTimeBuf[128] = { 0 };
+                struct tm oldTmBuf = { 0 };
+                struct tm newTmBuf = { 0 };
+                PLSA_SECURITY_OBJECT pDuplicateObject = NULL;
 
+                BAIL_ON_LSA_ERROR(dwError);
+
+                pDuplicateObject = (PLSA_SECURITY_OBJECT)pListEntry->pItem;
+                localtime_r(&pDuplicateObject->version.tLastUpdated, &oldTmBuf);
+                localtime_r(&pObject->version.tLastUpdated, &newTmBuf);
+                strftime(
+                        oldTimeBuf,
+                        sizeof(oldTimeBuf),
+                        "%Y/%m/%d %H:%M:%S",
+                        &oldTmBuf);
+                strftime(
+                        newTimeBuf,
+                        sizeof(newTimeBuf),
+                        "%Y/%m/%d %H:%M:%S",
+                        &newTmBuf);
+
+                LSA_LOG_ERROR("Conflict discovered for UID %d. User %s\\%s had this UID at time %s, but now (%s) user %s\\%s has the UID. Please check that these users are not currently conflicting in Active Directory. This could also happen (safely) if the UIDs were swapped between these users.",
+                            (int)pObject->userInfo.uid,
+                            LSA_SAFE_LOG_STRING(
+                                pDuplicateObject->pszNetbiosDomainName),
+                            LSA_SAFE_LOG_STRING(
+                                pDuplicateObject->pszSamAccountName),
+                            oldTimeBuf,
+                            newTimeBuf,
+                            LSA_SAFE_LOG_STRING(pObject->pszNetbiosDomainName),
+                            LSA_SAFE_LOG_STRING(pObject->pszSamAccountName));
+            }
+
+            dwError = MemCacheRemoveObjectByHashKey(
+                            pConn,
+                            pConn->pUIDToSecurityObject,
+                            (PVOID)(size_t)pObject->userInfo.uid);
             BAIL_ON_LSA_ERROR(dwError);
 
-            pDuplicateObject = (PLSA_SECURITY_OBJECT)pListEntry->pItem;
-            localtime_r(&pDuplicateObject->version.tLastUpdated, &oldTmBuf);
-            localtime_r(&pObject->version.tLastUpdated, &newTmBuf);
-            strftime(
-                    oldTimeBuf,
-                    sizeof(oldTimeBuf),
-                    "%Y/%m/%d %H:%M:%S",
-                    &oldTmBuf);
-            strftime(
-                    newTimeBuf,
-                    sizeof(newTimeBuf),
-                    "%Y/%m/%d %H:%M:%S",
-                    &newTmBuf);
-
-            LSA_LOG_ERROR("Conflict discovered for UID %d. User %s\\%s had this UID at time %s, but now (%s) user %s\\%s has the UID. Please check that these users are not currently conflicting in Active Directory. This could also happen (safely) if the UIDs were swapped between these users.",
-                        (int)pObject->userInfo.uid,
-                        LSA_SAFE_LOG_STRING(
-                            pDuplicateObject->pszNetbiosDomainName),
-                        LSA_SAFE_LOG_STRING(
-                            pDuplicateObject->pszSamAccountName),
-                        oldTimeBuf,
-                        newTimeBuf,
-                        LSA_SAFE_LOG_STRING(pObject->pszNetbiosDomainName),
-                        LSA_SAFE_LOG_STRING(pObject->pszSamAccountName));
+            dwError = MemCacheRemoveObjectByHashKey(
+                            pConn,
+                            pConn->pUserAliasToSecurityObject,
+                            pObject->userInfo.pszAliasName);
+            BAIL_ON_LSA_ERROR(dwError);
         }
-
-        dwError = MemCacheRemoveObjectByHashKey(
-                        pConn,
-                        pConn->pUIDToSecurityObject,
-                        (PVOID)(size_t)pObject->userInfo.uid);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = MemCacheRemoveObjectByHashKey(
-                        pConn,
-                        pConn->pUserAliasToSecurityObject,
-                        pObject->userInfo.pszAliasName);
-        BAIL_ON_LSA_ERROR(dwError);
 
         dwError = MemCacheRemoveObjectByHashKey(
                         pConn,
@@ -2642,37 +2648,66 @@ MemCacheStoreObjectEntryInLock(
     switch(pObject->type)
     {
         case LSA_OBJECT_TYPE_GROUP:
-            sObjectSize += HASH_ENTRY_SPACE;
-            dwError = LwHashSetValue(
-                            pConn->pGIDToSecurityObject,
-                            (PVOID)(size_t)pObject->groupInfo.gid,
-                            pConn->pObjects);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            if (pObject->groupInfo.pszAliasName &&
-                    pObject->groupInfo.pszAliasName[0])
+            if (pObject->enabled)
             {
                 sObjectSize += HASH_ENTRY_SPACE;
                 dwError = LwHashSetValue(
-                                pConn->pGroupAliasToSecurityObject,
-                                pObject->groupInfo.pszAliasName,
+                                pConn->pGIDToSecurityObject,
+                                (PVOID)(size_t)pObject->groupInfo.gid,
                                 pConn->pObjects);
                 BAIL_ON_LSA_ERROR(dwError);
 
-                sObjectSize += MemCacheGetStringSpace(pObject->groupInfo.pszAliasName);
-            }
+                if (pObject->groupInfo.pszAliasName &&
+                        pObject->groupInfo.pszAliasName[0])
+                {
+                    sObjectSize += HASH_ENTRY_SPACE;
+                    dwError = LwHashSetValue(
+                                    pConn->pGroupAliasToSecurityObject,
+                                    pObject->groupInfo.pszAliasName,
+                                    pConn->pObjects);
+                    BAIL_ON_LSA_ERROR(dwError);
 
-            sObjectSize += MemCacheGetStringSpace(pObject->groupInfo.pszPasswd);
+                    sObjectSize += MemCacheGetStringSpace(
+                            pObject->groupInfo.pszAliasName);
+                }
+
+                sObjectSize += MemCacheGetStringSpace(
+                        pObject->groupInfo.pszPasswd);
+            }
             break;
         case LSA_OBJECT_TYPE_USER:
-            sObjectSize += HASH_ENTRY_SPACE;
-            dwError = LwHashSetValue(
-                            pConn->pUIDToSecurityObject,
-                            (PVOID)(size_t)pObject->userInfo.uid,
-                            pConn->pObjects);
-            BAIL_ON_LSA_ERROR(dwError);
+            if (pObject->enabled)
+            {
+                sObjectSize += HASH_ENTRY_SPACE;
+                dwError = LwHashSetValue(
+                                pConn->pUIDToSecurityObject,
+                                (PVOID)(size_t)pObject->userInfo.uid,
+                                pConn->pObjects);
+                BAIL_ON_LSA_ERROR(dwError);
 
-            if (pObject->userInfo.pszUPN)
+                if (!LW_IS_NULL_OR_EMPTY_STR(pObject->userInfo.pszAliasName))
+                {
+                    sObjectSize += MemCacheGetStringSpace(
+                            pObject->userInfo.pszAliasName);
+                    sObjectSize += HASH_ENTRY_SPACE;
+                    dwError = LwHashSetValue(
+                                    pConn->pUserAliasToSecurityObject,
+                                    pObject->userInfo.pszAliasName,
+                                    pConn->pObjects);
+                    BAIL_ON_LSA_ERROR(dwError);
+                }
+
+                sObjectSize += MemCacheGetStringSpace(
+                        pObject->userInfo.pszPasswd);
+                sObjectSize += MemCacheGetStringSpace(
+                        pObject->userInfo.pszGecos);
+                sObjectSize += MemCacheGetStringSpace(
+                        pObject->userInfo.pszShell);
+                sObjectSize += MemCacheGetStringSpace(
+                        pObject->userInfo.pszHomedir);
+            }
+
+            if (!LW_IS_NULL_OR_EMPTY_STR(pObject->userInfo.pszUPN))
             {
                 sObjectSize += MemCacheGetStringSpace(pObject->userInfo.pszUPN);
                 sObjectSize += HASH_ENTRY_SPACE;
@@ -2682,23 +2717,6 @@ MemCacheStoreObjectEntryInLock(
                                 pConn->pObjects);
                 BAIL_ON_LSA_ERROR(dwError);
             }
-
-            if (pObject->userInfo.pszAliasName &&
-                    pObject->userInfo.pszAliasName[0])
-            {
-                sObjectSize += MemCacheGetStringSpace(pObject->userInfo.pszAliasName);
-                sObjectSize += HASH_ENTRY_SPACE;
-                dwError = LwHashSetValue(
-                                pConn->pUserAliasToSecurityObject,
-                                pObject->userInfo.pszAliasName,
-                                pConn->pObjects);
-                BAIL_ON_LSA_ERROR(dwError);
-            }
-
-            sObjectSize += MemCacheGetStringSpace(pObject->userInfo.pszPasswd);
-            sObjectSize += MemCacheGetStringSpace(pObject->userInfo.pszGecos);
-            sObjectSize += MemCacheGetStringSpace(pObject->userInfo.pszShell);
-            sObjectSize += MemCacheGetStringSpace(pObject->userInfo.pszHomedir);
             break;
     }
 
