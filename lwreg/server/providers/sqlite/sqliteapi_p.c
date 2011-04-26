@@ -208,7 +208,7 @@ cleanup:
     return status;
 
 error:
-    RegSrvSafeFreeKeyContext(pKeyResult);
+    SqliteSafeFreeKeyContext(pKeyResult);
     *ppKeyResult = NULL;
 
     goto cleanup;

@@ -189,7 +189,7 @@ SqliteCacheResetParentKeySubKeyInfo(
     {
         // Todo: we can reflect activeKey to have the most current information,
         // For now, set the bHasSubKeyInfo to false to force it grab information from db
-        RegSrvResetSubKeyInfo(pKeyResult);
+        SqliteResetSubKeyInfo(pKeyResult);
     }
 
     SqliteReleaseKeyContext(pKeyResult);
@@ -208,7 +208,7 @@ SqliteCacheResetParentKeySubKeyInfo_inlock(
     {
         // Todo: we can reflect activeKey to have the most current information,
         // For now, set the bHasSubKeyInfo to false to force it grab information from db
-        RegSrvResetSubKeyInfo(pKeyResult);
+        SqliteResetSubKeyInfo(pKeyResult);
     }
 
     SqliteReleaseKeyContext_inlock(pKeyResult);
@@ -227,7 +227,7 @@ SqliteCacheResetKeyValueInfo(
     {
         // Todo: we can reflect activeKey to have the most current information,
         // For now, set the bHasSubKeyInfo to false to force it grab information from db
-        RegSrvResetValueInfo(pKeyResult);
+        SqliteResetValueInfo(pKeyResult);
     }
 
     SqliteReleaseKeyContext(pKeyResult);
@@ -246,7 +246,7 @@ SqliteCacheResetKeyValueInfo_inlock(
     {
         // Todo: we can reflect activeKey to have the most current information,
         // For now, set the bHasSubKeyInfo to false to force it grab information from db
-        RegSrvResetValueInfo(pKeyResult);
+        SqliteResetValueInfo(pKeyResult);
     }
 
     SqliteReleaseKeyContext_inlock(pKeyResult);
@@ -321,7 +321,7 @@ SqliteCacheFreeKeyCtxHashEntry(
 
     if (pKeyResult)
     {
-    	RegSrvSafeFreeKeyContext(pKeyResult);
+    	SqliteSafeFreeKeyContext(pKeyResult);
     }
 }
 
@@ -469,7 +469,7 @@ SqliteCacheKeySecurityDescriptor_inlock(
 	   	                           &ulSecDescRelLen);
 	BAIL_ON_NT_STATUS(status);
 
-    status = RegSrvSetKeySecurityDescriptor_inlock(pKeyResult, 
+    status = SqliteSetKeySecurityDescriptor_inlock(pKeyResult, 
                                                    pSecurityDescriptor,
                                                    ulSecDescRelLen);
     BAIL_ON_NT_STATUS(status);

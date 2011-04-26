@@ -122,7 +122,7 @@ SqliteSetKeySecurity(
     	    status = LW_RTL_ALLOCATE((PVOID*)&pCurrSecDescRel, VOID, pKeyCtx->ulSecDescLength);
     	    BAIL_ON_NT_STATUS(status);
 
-        	status = RegSrvGetKeySecurityDescriptor_inlock(pKeyCtx,
+        	status = SqliteGetKeySecurityDescriptor_inlock(pKeyCtx,
        							            pCurrSecDescRel,
     							            pKeyCtx->ulSecDescLength);
     	    BAIL_ON_NT_STATUS(status);
@@ -160,7 +160,7 @@ SqliteSetKeySecurity(
 							   ulSecDescToSetLen);
 	BAIL_ON_NT_STATUS(status);
 
-	status = RegSrvSetKeySecurityDescriptor_inlock(pKeyCtx, pSecDescRelToSet, ulSecDescToSetLen);
+	status = SqliteSetKeySecurityDescriptor_inlock(pKeyCtx, pSecDescRelToSet, ulSecDescToSetLen);
 	BAIL_ON_NT_STATUS(status);
 
 cleanup:

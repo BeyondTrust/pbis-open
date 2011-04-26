@@ -3,7 +3,7 @@
 
 // Key Context (key handle) helper utility functions
 void
-RegSrvSafeFreeKeyContext(
+SqliteSafeFreeKeyContext(
     IN PREG_KEY_CONTEXT pKeyResult
     )
 {
@@ -35,25 +35,8 @@ RegSrvSafeFreeKeyContext(
     }
 }
 
-DWORD
-RegSrvGetKeyRefCount(
-    IN PREG_KEY_CONTEXT pKeyResult
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    DWORD refCount = 0;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    refCount = pKeyResult->refCount;
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return refCount;
-}
-
 void
-RegSrvResetSubKeyInfo(
+SqliteResetSubKeyInfo(
     IN OUT PREG_KEY_CONTEXT pKeyResult
     )
 {
@@ -74,111 +57,8 @@ RegSrvResetSubKeyInfo(
     return;
 }
 
-BOOLEAN
-RegSrvHasSubKeyInfo(
-    IN PREG_KEY_CONTEXT pKeyResult
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    BOOLEAN bHasSubKeyInfo = FALSE;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    bHasSubKeyInfo = pKeyResult->bHasSubKeyInfo;
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return bHasSubKeyInfo;
-}
-
-DWORD
-RegSrvSubKeyNum(
-    IN PREG_KEY_CONTEXT pKeyResult
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    DWORD dwSubKeyCount = 0;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    dwSubKeyCount = pKeyResult->dwNumSubKeys;
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return dwSubKeyCount;
-}
-
-size_t
-RegSrvSubKeyNameMaxLen(
-    IN PREG_KEY_CONTEXT pKeyResult
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    size_t sSubKeyNameMaxLen = 0;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    sSubKeyNameMaxLen = pKeyResult->sMaxSubKeyLen;
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return sSubKeyNameMaxLen;
-}
-
-PCWSTR
-RegSrvSubKeyName(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    IN DWORD dwIndex
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    PCWSTR pwszSubKeyName = NULL;
-
-    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &pKeyResult->mutex);
-
-    pwszSubKeyName = pKeyResult->ppwszSubKeyNames[dwIndex];
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return pwszSubKeyName;
-}
-
-BOOLEAN
-RegSrvHasSecurityDescriptor(
-    IN PREG_KEY_CONTEXT pKeyResult
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    BOOLEAN bHasSdInfo = FALSE;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    bHasSdInfo = pKeyResult->bHasSdInfo;
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return bHasSdInfo;
-}
-
-ULONG
-RegSrvGetKeySecurityDescriptorSize(
-    IN PREG_KEY_CONTEXT pKeyResult
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    ULONG ulSecDescRelLen = 0;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    ulSecDescRelLen = pKeyResult->ulSecDescLength;
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return ulSecDescRelLen;
-}
-
 NTSTATUS
-RegSrvGetKeySecurityDescriptor_inlock(
+SqliteGetKeySecurityDescriptor_inlock(
     IN PREG_KEY_CONTEXT pKeyResult,
     IN OUT PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
     IN ULONG ulSecDescRelLen
@@ -202,33 +82,8 @@ error:
     goto cleanup;
 }
 
-
 NTSTATUS
-RegSrvGetKeySecurityDescriptor(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    IN OUT PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
-    IN ULONG ulSecDescRelLen
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    NTSTATUS status = 0;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    status = RegSrvGetKeySecurityDescriptor_inlock(pKeyResult, pSecurityDescriptor, ulSecDescRelLen);
-    BAIL_ON_NT_STATUS(status);
-
-cleanup:
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return status;
-
-error:
-    goto cleanup;
-}
-
-NTSTATUS
-RegSrvSetKeySecurityDescriptor_inlock(
+SqliteSetKeySecurityDescriptor_inlock(
     IN PREG_KEY_CONTEXT pKeyResult,
     IN PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
     IN ULONG ulSecDescRelLen
@@ -257,36 +112,8 @@ error:
     goto cleanup;
 }
 
-
-NTSTATUS
-RegSrvSetKeySecurityDescriptor(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    IN PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
-    IN ULONG ulSecDescRelLen
-    )
-{
-    NTSTATUS status = 0;
-	BOOLEAN bInLock = FALSE;
-
-    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &pKeyResult->mutex);
-
-    status = RegSrvSetKeySecurityDescriptor_inlock(pKeyResult, pSecurityDescriptor,ulSecDescRelLen);
-    BAIL_ON_NT_STATUS(status);
-
-cleanup:
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return status;
-
-error:
-    pKeyResult->bHasSdInfo = FALSE;
-
-    goto cleanup;
-}
-
 void
-RegSrvResetValueInfo(
+SqliteResetValueInfo(
     IN OUT PREG_KEY_CONTEXT pKeyResult
     )
 {
@@ -319,107 +146,4 @@ RegSrvResetValueInfo(
     pKeyResult->dwNumCacheValues = 0;
 
     LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-}
-
-BOOLEAN
-RegSrvHasValueInfo(
-    IN PREG_KEY_CONTEXT pKeyResult
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    BOOLEAN bHasValueInfo = FALSE;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    bHasValueInfo = pKeyResult->bHasValueInfo;
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return bHasValueInfo;
-}
-
-BOOLEAN
-RegSrvHasDefaultValueInfo(
-    IN PREG_KEY_CONTEXT pKeyResult
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    BOOLEAN bHasDefaultValueInfo = FALSE;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    bHasDefaultValueInfo = pKeyResult->bHasDefaultValueInfo;
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return bHasDefaultValueInfo;
-}
-
-
-DWORD
-RegSrvValueNum(
-    IN PREG_KEY_CONTEXT pKeyResult
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    DWORD dwValueCount = 0;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    dwValueCount = pKeyResult->dwNumValues;
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return dwValueCount;
-}
-
-DWORD
-RegSrvDefaultValueNum(
-    IN PREG_KEY_CONTEXT pKeyResult
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    DWORD dwValueCount = 0;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    dwValueCount = pKeyResult->dwNumDefaultValues;
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return dwValueCount;
-}
-
-size_t
-RegSrvMaxValueNameLen(
-    IN PREG_KEY_CONTEXT pKeyResult
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    size_t sMaxValueNameLen = 0;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    sMaxValueNameLen = pKeyResult->sMaxValueNameLen;
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return sMaxValueNameLen;
-}
-
-size_t
-RegSrvMaxValueLen(
-    IN PREG_KEY_CONTEXT pKeyResult
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    size_t sMaxValueLen = 0;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    sMaxValueLen = pKeyResult->sMaxValueLen;
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return sMaxValueLen;
 }

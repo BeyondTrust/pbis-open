@@ -385,22 +385,6 @@ RegSrvCreateDefaultSecDescRel(
     IN OUT PULONG pulSecDescLength
     );
 
-// Registry Security related utility functions
-NTSTATUS
-RegSrvGetKeySecurityDescriptor_inlock(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    IN OUT PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
-    IN ULONG ulSecDescRelLen
-    );
-
-
-NTSTATUS
-RegSrvSetKeySecurityDescriptor_inlock(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    IN PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
-    IN ULONG ulSecDescRelLen
-    );
-
 VOID
 RegSrvFreeAbsoluteSecurityDescriptor(
     IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
