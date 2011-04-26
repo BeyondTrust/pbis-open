@@ -329,7 +329,6 @@ MemRegStoreDeleteNode(
     DWORD index = 0;
     BOOLEAN bNodeFound = FALSE;
 
-    BAIL_ON_NT_STATUS(status);
     if (!hDb->ParentNode)
     {
         status = STATUS_INVALID_PARAMETER;

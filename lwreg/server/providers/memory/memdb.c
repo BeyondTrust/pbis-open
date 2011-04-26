@@ -618,6 +618,7 @@ fprintf(dbgfp, "pfImportFile: type=%d valueName=%s\n",
                          &tmpAttr);
             BAIL_ON_NT_STATUS(status);
         }
+        LWREG_SAFE_FREE_MEMORY(pwszValueName);
     }
 
 #ifdef __MEMDB_PRINTF__  /* Debug printf output */
@@ -628,12 +629,11 @@ LwRtlCStringAllocateFromWC16String(&subKey, pImportCtx->hSubKey->Name);
                 subKey,
                 pItem->valueName ? pItem->valueName : "");
 LWREG_SAFE_FREE_STRING(subKey);
+fclose(dbgfp);
 #endif
 
 cleanup:
-#ifdef __MEMDB_PRINTF__ 
-    fclose(dbgfp);
-#endif
+    LWREG_SAFE_FREE_MEMORY(pwszValueName);
     LWREG_SAFE_FREE_MEMORY(pwszStringData);
     LWREG_SAFE_FREE_MEMORY(pwszSubKey);
     return status;
@@ -928,6 +928,7 @@ MemDbCreateKeyEx(
     } while (status == 0 && !bEndOfString);
 
 cleanup:
+    LWREG_SAFE_FREE_MEMORY(pwszTmpFullPath);
     return status;
 
 error:
@@ -1730,6 +1731,7 @@ MemDbRecurseRegistry(
                                  hKey->SubNodes[index],
                                  pwszSubKey);
                     BAIL_ON_NT_STATUS(status);
+                    LWREG_SAFE_FREE_MEMORY(pwszSubKey);
                 }
             }
         }
@@ -1743,6 +1745,7 @@ cleanup:
     }
 
     MemDbStackFinish(hStack);
+    LWREG_SAFE_FREE_MEMORY(pwszSubKey);
     return status;
 
 error:
