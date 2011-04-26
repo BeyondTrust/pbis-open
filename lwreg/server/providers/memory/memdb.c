@@ -625,6 +625,7 @@ fprintf(dbgfp, "pfImportFile: type=%d valueName=%s\n",
             tmpAttr = pItem->regAttr;
             if (tmpAttr.ValueType == REG_SZ)
             {
+                LWREG_SAFE_FREE_MEMORY(pwszStringData);
                 status = LwRtlWC16StringAllocateFromCString(
                                      &pwszStringData,
                                  pItem->regAttr.pDefaultValue);
@@ -682,9 +683,9 @@ MemDbImportFromFile(
     dwError = RegParseRegistry(parseH);
     BAIL_ON_REG_ERROR(dwError);
 
-    RegParseClose(parseH);
 
 cleanup:
+    RegParseClose(parseH);
     return 0;
 
 error:
@@ -1704,6 +1705,7 @@ MemDbRecurseRegistry(
     {
         for (index=hKey->NodesLen-1; index>=0; index--)
         {
+            LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
             status = LwRtlWC16StringAllocatePrintf(
                          &pwszSubKeyPrefix,
                          "%ws", hKey->SubNodes[index]->Name);
@@ -1727,6 +1729,7 @@ MemDbRecurseRegistry(
                      pwszSubKeyPrefix);
         BAIL_ON_NT_STATUS(status);
     }
+    LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
 
     do
     {
