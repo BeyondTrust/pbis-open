@@ -76,8 +76,12 @@ BOOLEAN gbInLockDbMutex;
 pthread_mutex_t gExportMutex = PTHREAD_MUTEX_INITIALIZER;
 BOOLEAN gbInLockExportMutex;
 pthread_cond_t gExportCond = PTHREAD_COND_INITIALIZER;
+
 BOOLEAN gbValueChanged;
 PMEMDB_FILE_EXPORT_CTX gExportCtx;
+
+pthread_mutex_t gExportMutexStop = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t gExportCondStop = PTHREAD_COND_INITIALIZER;
 
 
 #if 0

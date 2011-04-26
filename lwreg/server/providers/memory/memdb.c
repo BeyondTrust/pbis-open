@@ -299,6 +299,14 @@ MemDbStopExportToFileThread(
     gExportCtx->bStopThread = TRUE;
     LWREG_UNLOCK_MUTEX(gbInLockExportMutex, &gExportMutex);
     pthread_cond_signal(&gExportCond);
+
+    pthread_mutex_lock(&gExportMutexStop);
+    while (gExportCtx->bStopThread)
+    {
+        pthread_cond_wait(&gExportCondStop, &gExportMutexStop);
+    }
+    pthread_mutex_unlock(&gExportMutexStop);
+    LWREG_SAFE_FREE_MEMORY(gExportCtx);
 }
 
 
@@ -397,7 +405,10 @@ MemDbExportToFileThread(
             }
         }
     } while (!exportCtx->bStopThread);
-    LWREG_SAFE_FREE_MEMORY(exportCtx);
+    pthread_mutex_lock(&gExportMutexStop);
+    exportCtx->bStopThread = FALSE;
+    pthread_mutex_unlock(&gExportMutexStop);
+    pthread_cond_signal(&gExportCondStop);
     
     return NULL;
 }
@@ -491,7 +502,7 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
     LWREG_VALUE_ATTRIBUTES tmpAttr = {0};
     PREGMEM_NODE_SD pNodeSd = NULL;
 #ifdef __MEMDB_PRINTF__ 
-FILE *dbgfp = fopen("/tmp/lwregd-import.txt", "w");
+FILE *dbgfp = fopen("/tmp/lwregd-import.txt", "a");
 #endif
 
     if (pItem->type == REG_KEY)
@@ -553,7 +564,15 @@ fprintf(dbgfp, "pfImportFile: type=%d valueName=%s\n",
                      pItem->valueLen,
                      &pNodeSd);
         BAIL_ON_NT_STATUS(status);
-        hSubKey->pNodeSd = pNodeSd;
+
+        /* 
+         * Replace SD created during registry bootstrap with the value
+         * imported from the save file. The only trick here is to replace
+         * the SD, but not its container, which everyone is pointing at.
+         */
+        LWREG_SAFE_FREE_MEMORY(hSubKey->pNodeSd->SecurityDescriptor);
+        hSubKey->pNodeSd->SecurityDescriptor = pNodeSd->SecurityDescriptor;
+        LWREG_SAFE_FREE_MEMORY(pNodeSd);
     }
     else 
     {

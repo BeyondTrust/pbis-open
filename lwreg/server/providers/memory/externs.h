@@ -64,6 +64,10 @@ extern pthread_cond_t gExportCond;
 extern BOOLEAN gbValueChanged;
 extern PMEMDB_FILE_EXPORT_CTX gExportCtx;
 
+extern pthread_mutex_t gExportMutexStop;
+extern pthread_cond_t gExportCondStop;
+
+
 
 #if 0
 extern REG_SRV_MEMORY_KEYLOOKUP gActiveKeyList;

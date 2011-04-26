@@ -161,7 +161,6 @@ MemRegStoreOpen(
                      NULL);
         BAIL_ON_NT_STATUS(status);
         LWREG_SAFE_FREE_MEMORY(rootKey);
-       
     }
 
     ghMemRegRoot = phReg;
@@ -450,6 +449,10 @@ MemRegStoreAddNode(
                  SecurityDescriptorLen,
                  &pUpdatedNodeSd);
     BAIL_ON_NT_STATUS(status);
+    if (pNewNode->pNodeSd)
+    {
+        LWREG_SAFE_FREE_MEMORY(pNewNode->pNodeSd->SecurityDescriptor);
+    }
     LWREG_SAFE_FREE_MEMORY(pNewNode->pNodeSd);
     pNewNode->pNodeSd = pUpdatedNodeSd;
 
