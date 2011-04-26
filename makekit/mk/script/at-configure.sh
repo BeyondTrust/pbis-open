@@ -35,6 +35,17 @@ hack_libtool()
                 sed \
                     -e 's/^hardcode_direct=no/hardcode_direct=yes/' \
                     -e 's/^hardcode_direct_absolute=no/hardcode_direct_absolute=yes/' \
+                    -e 's/^hardcode_libdir_flag_spec=.*/hardcode_libdir_flag_spec=""/' \
+                    < libtool > libtool.new
+                mv -f libtool.new libtool
+                chmod +x libtool
+            fi
+            ;;
+        *)
+            if [ -x libtool ]
+            then
+                sed \
+                    -e 's/^hardcode_libdir_flag_spec=.*/hardcode_libdir_flag_spec=""/' \
                     < libtool > libtool.new
                 mv -f libtool.new libtool
                 chmod +x libtool
@@ -130,6 +141,25 @@ case "$MK_OS" in
         ;;
 esac
 
+# We disable libtool setting the rpath, so do it ourselves
+case "${MK_OS}:${MK_CC_LD_STYLE}" in
+    *:gnu)
+        _rpath_flags="-Wl,-rpath,${_libdir}"
+        ;;
+    solaris:native)
+        _rpath_flags="-Wl,-R${_libdir}"
+        ;;
+    aix:native)
+        _rpath_flags="-Wl,-blibpath:${_libdir}:/usr/lib:/lib"
+        ;;
+    hpux:native)
+        _rpath_flags="-Wl,+b,${_libdir}"
+        ;;
+    *)
+        _rpath_flags=""
+        ;;
+esac
+
 if [ -d "$MK_RUN_BINDIR" ]
 then
     PATH="`cd $MK_RUN_BINDIR && pwd`:$PATH"
@@ -155,7 +185,7 @@ mk_at_log_command "$dirname" "configure" "${_src_dir}/configure" \
     CPPFLAGS="-I${_include_dir} $_cppflags $CPPFLAGS" \
     CFLAGS="$MK_ISA_CFLAGS $MK_CFLAGS $CFLAGS" \
     CXXFLAGS="$MK_ISA_CXXFLAGS $MK_CXXFLAGS $CXXFLAGS" \
-    LDFLAGS="$MK_ISA_LDFLAGS $MK_LDFLAGS $LDFLAGS ${_ldflags}" \
+    LDFLAGS="$MK_ISA_LDFLAGS $MK_LDFLAGS $LDFLAGS ${_ldflags} ${_rpath_flags}" \
     --build="${_build_string}" \
     --host="${MK_AT_HOST_STRING}" \
     --prefix="${_prefix}" \
@@ -165,6 +195,7 @@ mk_at_log_command "$dirname" "configure" "${_src_dir}/configure" \
     --sysconfdir="${_sysconfdir}" \
     --localstatedir="${_localstatedir}" \
     --enable-fast-install \
+    --disable-rpath \
     "$@"
 
 # Does what it says
