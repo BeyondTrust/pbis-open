@@ -29,7 +29,7 @@
 hack_libtool()
 {
     case "$MK_OS:$MK_ARCH" in
-        hpux:ia64|darwin:*)
+        hpux:ia64|darwin:*|freebsd:*)
             if [ -x libtool ]
             then
                 sed \
