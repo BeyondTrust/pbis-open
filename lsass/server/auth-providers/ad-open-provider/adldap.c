@@ -1789,6 +1789,10 @@ ADLdap_GetObjectGroupMembership(
                     &ppGroupInfoList);
     BAIL_ON_LSA_ERROR(dwError);
 
+    AD_FilterNullEntries(
+            ppGroupInfoList,
+            &sNumGroupsFound);
+
     // Determine primary group index
     if (pObject->type == LSA_OBJECT_TYPE_USER &&
         pObject->userInfo.pszPrimaryGroupSid &&
