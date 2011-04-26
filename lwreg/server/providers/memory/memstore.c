@@ -168,49 +168,15 @@ MemRegStoreOpen(
     *phDb = phReg;
 
 cleanup:
+    LWREG_SAFE_FREE_MEMORY(pSecDescRel);
     return status;
 
 error:
-    LWREG_SAFE_FREE_MEMORY(pSecDescRel);
     LWREG_SAFE_FREE_MEMORY(phReg->Name);
     LWREG_SAFE_FREE_MEMORY(phReg);
     LWREG_SAFE_FREE_MEMORY(rootKey);
     goto cleanup;
 }
-
-
-NTSTATUS
-MemRegStoreClose(
-    IN MEM_REG_STORE_HANDLE hDb)
-{
-    NTSTATUS status = 0;
-    DWORD index = 0;
-
-    /*
-     * MemRegStoreOpen() allocates these nodes:
-     * REMEM_TYPE_ROOT (\)
-     * REGMEM_TYPE_HIVE (HKTM/HKCU/...)
-     *
-     * All subkeys are created under one of the canonical
-     * hive names. Free these data structures created in
-     * MemRegStoreOpen() here.
-     */
- 
-    for (index=0; index < ghMemRegRoot->NodesLen; index++)
-    {
-        status = MemRegStoreDeleteNode(ghMemRegRoot->SubNodes[index]);
-        BAIL_ON_NT_STATUS(status);
-    }
-    LWREG_SAFE_FREE_MEMORY(ghMemRegRoot->Name);
-    LWREG_SAFE_FREE_MEMORY(ghMemRegRoot);
-
-cleanup:
-    return status;
-
-error:
-    goto cleanup;
-}
-
 
 
 NTSTATUS
@@ -390,8 +356,8 @@ MemRegStoreDeleteNode(
     if (hDb->pNodeSd && hDb->pNodeSd->SecurityDescriptorAllocated)
     {
         LWREG_SAFE_FREE_MEMORY(hDb->pNodeSd->SecurityDescriptor);
-        LWREG_SAFE_FREE_MEMORY(hDb->pNodeSd);
     }
+    LWREG_SAFE_FREE_MEMORY(hDb->pNodeSd);
     LWREG_SAFE_FREE_MEMORY(hDb->Name);
     LWREG_SAFE_FREE_MEMORY(hDb);
 
@@ -474,10 +440,9 @@ MemRegStoreAddNode(
         hParentNode->SubNodes[hParentNode->NodesLen] = pNewNode;
     }
 
+    pNewNode->NodeType = NodeType;
     pNewNode->Name = newNodeName;
     newNodeName = NULL;
-
-    pNewNode->NodeType = NodeType;
 
     status = MemRegStoreCreateSecurityDescriptor(
                  hParentNode->pNodeSd,
@@ -485,6 +450,7 @@ MemRegStoreAddNode(
                  SecurityDescriptorLen,
                  &pUpdatedNodeSd);
     BAIL_ON_NT_STATUS(status);
+    LWREG_SAFE_FREE_MEMORY(pNewNode->pNodeSd);
     pNewNode->pNodeSd = pUpdatedNodeSd;
 
     hParentNode->NodesLen++;

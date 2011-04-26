@@ -291,6 +291,17 @@ MemDbExportEntryChanged(
 }
 
 
+VOID
+MemDbStopExportToFileThread(
+    VOID)
+{
+    LWREG_LOCK_MUTEX(gbInLockExportMutex, &gExportMutex);
+    gExportCtx->bStopThread = TRUE;
+    LWREG_UNLOCK_MUTEX(gbInLockExportMutex, &gExportMutex);
+    pthread_cond_signal(&gExportCond);
+}
+
+
 PVOID
 MemDbExportToFileThread(
     PVOID ctx)
@@ -322,6 +333,11 @@ MemDbExportToFileThread(
                           &timeOut);
             }
         
+            if (exportCtx->bStopThread)
+            {
+                break;
+            }
+
             if (sts == ETIMEDOUT)
             {
                 pTimeOutForced = NULL;
@@ -359,7 +375,7 @@ MemDbExportToFileThread(
         }
         pthread_mutex_unlock(&gExportMutex);
 
-        if (ghMemRegRoot)
+        if (ghMemRegRoot && !exportCtx->bStopThread)
         {
             exportCtx->wfp = fopen(MEMDB_EXPORT_FILE, "w");
             if (!exportCtx->wfp)
@@ -377,9 +393,11 @@ MemDbExportToFileThread(
                              exportCtx);
                 LWREG_UNLOCK_MUTEX(gbInLockExportMutex, &gExportMutex);
                 fclose(exportCtx->wfp);
+                exportCtx->wfp = NULL;
             }
         }
     } while (!exportCtx->bStopThread);
+    LWREG_SAFE_FREE_MEMORY(exportCtx);
     
     return NULL;
 }
@@ -442,6 +460,8 @@ MemDbStartExportToFileThread(VOID)
     }
 
     exportCtx->hKey = ghMemRegRoot;
+
+    gExportCtx = exportCtx;
     pthread_create(&hThread, NULL, MemDbExportToFileThread, (PVOID) exportCtx);
     pthread_detach(hThread);
 
@@ -687,9 +707,7 @@ MemDbClose(
                  NULL);
     BAIL_ON_NT_STATUS(status);
 
-    status = MemRegStoreClose(hDb->pMemReg);
-    BAIL_ON_NT_STATUS(status);
-
+    MemDbStopExportToFileThread();
 cleanup:
     return status;
 

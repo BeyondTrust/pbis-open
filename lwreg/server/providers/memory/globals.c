@@ -77,6 +77,8 @@ pthread_mutex_t gExportMutex = PTHREAD_MUTEX_INITIALIZER;
 BOOLEAN gbInLockExportMutex;
 pthread_cond_t gExportCond = PTHREAD_COND_INITIALIZER;
 BOOLEAN gbValueChanged;
+PMEMDB_FILE_EXPORT_CTX gExportCtx;
+
 
 #if 0
 REG_SRV_MEMORY_KEYLOOKUP gActiveKeyList =

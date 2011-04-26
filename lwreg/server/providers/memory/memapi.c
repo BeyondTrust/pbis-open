@@ -117,14 +117,11 @@ MemProvider_Shutdown(
     PREGPROV_PROVIDER_FUNCTION_TABLE pFnTable
     )
 {
-    MEM_REG_STORE_HANDLE regKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
     NTSTATUS status = 0;
-    BOOLEAN bLocked = FALSE;
     PWSTR pwszRootKey = NULL;
 
-    pthread_mutex_lock(&gMemRegDbMutex);
-    bLocked = TRUE;
+    LWREG_LOCK_MUTEX(gbInLockDbMutex, &gMemRegDbMutex);
 
     status = MemDbExportToFile(MEMDB_EXPORT_FILE);
     if (status)
@@ -132,39 +129,15 @@ MemProvider_Shutdown(
         goto cleanup;
     }
 
-    status = LwRtlWC16StringAllocateFromCString(
-                 &pwszRootKey,
-                 HKEY_THIS_MACHINE);
+    regDbConn.pMemReg = ghMemRegRoot;
+    status = MemDbClose(&regDbConn);
     if (status)
     {
         goto cleanup;
     }
-
-    status = MemRegStoreFindNode(
-                 ghMemRegRoot,
-                 pwszRootKey,
-                 &regKey);
-    if (status)
-    {
-        goto cleanup;
-    }
-
-    // Possibility registry could change between FindNode() and this call below
-    // Need _inlock version of FindNode() function?
-    regDbConn.pMemReg = regKey;
-    MemDbRecurseDepthFirstRegistry(
-                 NULL,
-                 &regDbConn,
-                 NULL,
-                 pfDeleteNodeCallback,
-                 NULL);
-    ghMemRegRoot = NULL;
 
 cleanup:
-    if (bLocked)
-    {
-        pthread_mutex_unlock(&gMemRegDbMutex);
-    }
+    LWREG_UNLOCK_MUTEX(gbInLockDbMutex, &gMemRegDbMutex);
     LWREG_SAFE_FREE_MEMORY(pwszRootKey);
 }
 
@@ -464,7 +437,6 @@ MemQueryInfoKey(
     BAIL_ON_NT_STATUS(status);
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
-    // regDbConn.lock = PTHREAD_MUTEX_INITIALIZER;
     status = MemDbQueryInfoKey(
                  Handle,
                  &regDbConn,

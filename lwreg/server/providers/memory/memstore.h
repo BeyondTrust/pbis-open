@@ -49,12 +49,6 @@ MemRegStoreOpen(
 
 
 NTSTATUS
-MemRegStoreClose(
-    IN MEM_REG_STORE_HANDLE hDb
-    );
-
-
-NTSTATUS
 MemRegStoreAddNode(
     IN MEM_REG_STORE_HANDLE hDb,
     PCWSTR Name,
