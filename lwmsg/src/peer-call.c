@@ -331,7 +331,6 @@ lwmsg_peer_call_complete_outgoing(
     call->status = incoming_message->status;
     call->params.outgoing.out->tag = incoming_message->tag;
     call->params.outgoing.out->data = incoming_message->data;
-    call->state |= PEER_CALL_COMPLETED;
 
     lwmsg_message_init(incoming_message);
 
@@ -360,6 +359,10 @@ lwmsg_peer_call_complete_outgoing(
     if (call->state & PEER_CALL_RELEASED)
     {
         lwmsg_peer_call_delete(call);
+    }
+    else
+    {
+        call->state |= PEER_CALL_COMPLETED;
     }
 
     return status;
