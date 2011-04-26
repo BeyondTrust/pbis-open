@@ -372,16 +372,10 @@ MemRegStoreDeleteNode(
         {
             memmove(&hDb->ParentNode->SubNodes[index], 
                     &hDb->ParentNode->SubNodes[index+1], 
-                    (hDb->ParentNode->NodesLen-index) * 
+                    (hDb->ParentNode->NodesLen-index-1) * 
                         sizeof(hDb->ParentNode->SubNodes[index]));
             hDb->ParentNode->SubNodes[hDb->ParentNode->NodesLen-1] = NULL;
             hDb->ParentNode->NodesLen--;
-
-            /* Not sure this will ever be called */
-            if (hDb->ParentNode->NodesLen == 0)
-            {
-                LWREG_SAFE_FREE_MEMORY(hDb->ParentNode->SubNodes);
-            }
         }
         else if (hDb->ParentNode->NodesLen == 1)
         {
