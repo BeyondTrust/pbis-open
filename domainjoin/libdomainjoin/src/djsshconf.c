@@ -538,6 +538,7 @@ BOOLEAN FindSshAndConfig(
         "/usr/openssh/bin",
         "/opt/csw/sbin",
         "/opt/csw/bin",
+        "/opt/ssh/hpux64/sbin",
         NULL
     };
     DWORD foundBinaryCount = 0;
@@ -546,6 +547,7 @@ BOOLEAN FindSshAndConfig(
     PSTR pBinaryFilename = NULL;
     PSTR pFoundConfigList = NULL;
     PSTR pFoundBinaryList = NULL;
+    DWORD index = 0;
 
     *ppSshBinary = NULL;
     *ppSshConfig = NULL;
@@ -575,6 +577,36 @@ BOOLEAN FindSshAndConfig(
                     &foundBinaryCount,
                     &ppFoundBinaries);
     LW_CLEANUP_CTERR(ppExc, ceError);
+
+    // Ssh version A.04.40.005 on HP-UX Itanimum has these paths:
+    //  /opt/ssh/hpux64/sbin/sshd (ELF-64 IA64)
+    //  /opt/ssh/sbin/sshd (ELF-32 IA64)
+    //  /usr/sbin/sshd (symlink to /opt/ssh/hpux64/sbin/sshd)
+    //
+    // Both files point to the same config path. We have to add an exception
+    // for this case since the inodes are different for the two architectures.
+    
+    for (index = 0; index < foundBinaryCount; index++)
+    {
+        if (!strcmp(ppFoundBinaries[index], "/opt/ssh/hpux64/sbin/sshd"))
+        {
+            // Remove /opt/ssh/sbin/sshd if it is in the list
+            for (index = 0; index < foundBinaryCount; index++)
+            {
+                if (!strcmp(ppFoundBinaries[index], "/opt/ssh/sbin/sshd"))
+                {
+                    LW_SAFE_FREE_STRING(ppFoundBinaries[index]);
+                    memmove(&ppFoundBinaries[index],
+                            &ppFoundBinaries[index+1],
+                            (foundBinaryCount - index - 1) *
+                                sizeof(ppFoundBinaries[index]));
+                    foundBinaryCount--;
+                    break;
+                }
+            }
+            break;
+        }
+    }
 
     ceError = LwRemoveDuplicateInodes(
                     &foundBinaryCount,
