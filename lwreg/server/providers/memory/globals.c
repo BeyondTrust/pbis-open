@@ -42,7 +42,7 @@
 #include "includes.h"
 #include "memstore_p.h"
 
-REG_DB_HANDLE ghCacheConnection = {0};
+PREG_DB_CONNECTION ghCacheConnection;
 
 PREGMEM_NODE ghMemRegRoot;
 

@@ -44,7 +44,7 @@
 
 static NTSTATUS
 _MemCreateHkeyReply(
-    IN MEM_REG_STORE_HANDLE pSubKey,
+    IN PMEMREG_STORE_NODE pSubKey,
     OUT PHKEY phkResult)
 {
     NTSTATUS status = 0;
@@ -102,7 +102,7 @@ MemProvider_Initialize(
 }
 
 static void *pfDeleteNodeCallback(
-    MEM_REG_STORE_HANDLE pEntry, 
+    PMEMREG_STORE_NODE pEntry, 
     PVOID userContext,
     PWSTR subStringPrefix)
 {
@@ -159,8 +159,8 @@ MemCreateKeyEx(
 {
     NTSTATUS status = 0;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
-    MEM_REG_STORE_HANDLE hRootKey = NULL;
-    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PMEMREG_STORE_NODE hRootKey = NULL;
+    PMEMREG_STORE_NODE hSubKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
     PWSTR pwszRootKey = NULL;
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
@@ -273,7 +273,7 @@ MemOpenKeyEx(
     NTSTATUS status = 0;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     PREG_KEY_HANDLE *phKeyResult = (PREG_KEY_HANDLE *)phkResult;
-    MEM_REG_STORE_HANDLE pSubKey = NULL;
+    PMEMREG_STORE_NODE pSubKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
 
@@ -349,8 +349,8 @@ MemDeleteKey(
 {
     NTSTATUS status = 0;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
-    MEM_REG_STORE_HANDLE hParentKey = NULL;
-    MEM_REG_STORE_HANDLE hRegKey = NULL;
+    PMEMREG_STORE_NODE hParentKey = NULL;
+    PMEMREG_STORE_NODE hRegKey = NULL;
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor = NULL;
     DWORD SecurityDescriptorLen = 0;
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
@@ -581,7 +581,7 @@ MemDeleteKeyValue(
 {
     NTSTATUS status = 0;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
-    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PMEMREG_STORE_NODE hSubKey = NULL;
 
     hSubKey = pKeyHandle->pKey->hKey;
 

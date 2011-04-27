@@ -1,17 +1,10 @@
 #include "includes.h"
 
-struct _REG_DB_CONNECTION;
-typedef struct _REG_DB_CONNECTION *REG_DB_HANDLE;
-typedef REG_DB_HANDLE *PREG_DB_HANDLE;
-
-
-typedef struct _REGMEM_NODE *MEM_REG_STORE_HANDLE;
-typedef struct _REGMEM_NODE **PMEM_REG_STORE_HANDLE;
-
+typedef struct _REGMEM_NODE *PMEMREG_STORE_NODE;
 
 typedef struct _REG_DB_CONNECTION
 {
-    MEM_REG_STORE_HANDLE pMemReg;
+    PMEMREG_STORE_NODE pMemReg;
     pthread_rwlock_t lock;
 } REG_DB_CONNECTION, *PREG_DB_CONNECTION;
 
@@ -28,14 +21,14 @@ typedef struct __REG_KEY_HANDLE
 typedef struct _MEMDB_FILE_EXPORT_CTX
 {
     FILE *wfp;
-    MEM_REG_STORE_HANDLE hKey;
+    PMEMREG_STORE_NODE hKey;
     BOOLEAN bStopThread;
 } MEMDB_FILE_EXPORT_CTX, *PMEMDB_FILE_EXPORT_CTX;
 
 typedef struct _MEMDB_IMPORT_FILE_CTX
 {
-    MEM_REG_STORE_HANDLE hRootKey;
-    MEM_REG_STORE_HANDLE hSubKey;
+    PMEMREG_STORE_NODE hRootKey;
+    PMEMREG_STORE_NODE hSubKey;
 } MEMDB_IMPORT_FILE_CTX, *PMEMDB_IMPORT_FILE_CTX;
 
 #define MEMDB_DEFAULT_EXPORT_TIMEOUT (60*10) // 10 Minutes
@@ -50,9 +43,9 @@ typedef struct _MEMDB_IMPORT_FILE_CTX
  */
 typedef struct __REG_KEY_CONTEXT
 {
-    MEM_REG_STORE_HANDLE hKey;
+    PMEMREG_STORE_NODE hKey;
     ACCESS_MASK AccessGranted;
-    REG_DB_CONNECTION pConn;
+    PREG_DB_CONNECTION pConn;
 } REG_KEY_CONTEXT;
 
 
@@ -73,29 +66,29 @@ typedef struct _MEMDB_STACK
 
 NTSTATUS
 MemDbOpen(
-    OUT PREG_DB_HANDLE phDb
+    OUT PREG_DB_CONNECTION *pphDb
     );
 
 NTSTATUS
 MemDbClose(
-    IN REG_DB_HANDLE hDb
+    IN PREG_DB_CONNECTION hDb
     );
 
 
 NTSTATUS
 MemDbOpenKey(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN PCWSTR pwszFullKeyPath,
     IN ACCESS_MASK AccessDesired,
-    OUT OPTIONAL MEM_REG_STORE_HANDLE *pRegKey
+    OUT OPTIONAL PMEMREG_STORE_NODE *pRegKey
     );
 
 
 NTSTATUS
 MemDbCreateKeyEx(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN PCWSTR pcwszSubKey,
     IN DWORD dwReserved,
     IN OPTIONAL PWSTR pClass,
@@ -103,14 +96,14 @@ MemDbCreateKeyEx(
     IN ACCESS_MASK AccessDesired,
     IN OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     IN ULONG ulSecDescLength,
-    OUT PMEM_REG_STORE_HANDLE phSubKey,
+    OUT PMEMREG_STORE_NODE *pphSubKey,
     OUT OPTIONAL PDWORD pdwDisposition
     );
 
 NTSTATUS
 MemDbQueryInfoKey(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     /*
      * A pointer to a buffer that receives the user-defined class of the key. 
      * This parameter can be NULL.
@@ -132,7 +125,7 @@ MemDbQueryInfoKey(
 NTSTATUS
 MemDbEnumKeyEx(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN DWORD dwIndex,
     /*buffer to hold keyName*/
     OUT PWSTR pName, 
@@ -154,7 +147,7 @@ MemDbEnumKeyEx(
 NTSTATUS
 MemDbSetValueEx(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pValueName,
     IN DWORD dwReserved,
     IN DWORD dwType,
@@ -166,7 +159,7 @@ MemDbSetValueEx(
 NTSTATUS
 MemDbGetValue(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pSubKey,
     IN OPTIONAL PCWSTR pValueName,
     IN OPTIONAL REG_DATA_TYPE_FLAGS Flags,
@@ -179,7 +172,7 @@ MemDbGetValue(
 NTSTATUS
 MemDbEnumValue(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN DWORD dwIndex,
     OUT PWSTR pValueName, /*buffer hold valueName*/
     IN OUT PDWORD pcchValueName, /*input - buffer pValueName length*/
@@ -193,7 +186,7 @@ MemDbEnumValue(
 NTSTATUS
 MemDbSetKeyAcl(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     OUT PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     OUT ULONG secDescLen
     );
@@ -202,7 +195,7 @@ MemDbSetKeyAcl(
 NTSTATUS
 MemDbGetKeyAcl(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     OUT PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     OUT PULONG pSecDescLen
     );
@@ -211,7 +204,7 @@ MemDbGetKeyAcl(
 NTSTATUS
 MemDbSetValueAttributes(
     IN HANDLE hRegConnection,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pSubKey,
     IN PCWSTR pValueName,
     IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
@@ -221,7 +214,7 @@ MemDbSetValueAttributes(
 NTSTATUS
 MemDbGetValueAttributes(
     IN HANDLE hRegConnection,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pSubKey,
     IN PCWSTR pValueName,
     OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
@@ -232,9 +225,9 @@ MemDbGetValueAttributes(
 NTSTATUS
 MemDbRecurseRegistry(
     IN HANDLE hRegConnection,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pwszSubKey,
-    IN PVOID (*pfCallback)(MEM_REG_STORE_HANDLE hKey, 
+    IN PVOID (*pfCallback)(PMEMREG_STORE_NODE hKey, 
                            PVOID userContext,
                            PWSTR subKeyPrefix),
     IN PVOID userContext
@@ -244,9 +237,9 @@ MemDbRecurseRegistry(
 NTSTATUS
 MemDbRecurseDepthFirstRegistry(
     IN HANDLE hRegConnection,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pwszOptSubKey,
-    IN PVOID (*pfCallback)(MEM_REG_STORE_HANDLE hKey, 
+    IN PVOID (*pfCallback)(PMEMREG_STORE_NODE hKey, 
                            PVOID userContext,
                            PWSTR pwszSubKeyPrefix),
     IN PVOID userContext

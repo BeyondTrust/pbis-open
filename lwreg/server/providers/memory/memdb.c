@@ -53,7 +53,7 @@
 
 NTSTATUS
 MemDbOpen(
-    OUT PREG_DB_HANDLE phDb
+    OUT PREG_DB_CONNECTION *pphDb
     )
 {
     NTSTATUS status = 0;
@@ -66,7 +66,7 @@ MemDbOpen(
     status = MemRegStoreOpen(&pConn->pMemReg);
 
     MemDbStartExportToFileThread();
-    *phDb = pConn;
+    *pphDb = pConn;
 
 cleanup:
     return status;
@@ -76,7 +76,7 @@ error:
 }
 
 static void *pfDeleteNodeCallback(
-    MEM_REG_STORE_HANDLE pEntry,
+    PMEMREG_STORE_NODE pEntry,
     PVOID userContext,
     PWSTR subStringPrefix)
 {
@@ -88,7 +88,7 @@ static void *pfDeleteNodeCallback(
 
 void *
 pfMemRegExportToFile(
-    MEM_REG_STORE_HANDLE pEntry, 
+    PMEMREG_STORE_NODE pEntry, 
     PVOID userContext,
     PWSTR subStringPrefix)
 {
@@ -489,7 +489,7 @@ cleanup:
 DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
 {
     NTSTATUS status = 0;
-    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PMEMREG_STORE_NODE hSubKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
     PWSTR pwszSubKey = NULL;
     PWSTR pwszValueName = NULL;
@@ -722,7 +722,7 @@ error:
 
 NTSTATUS
 MemDbClose(
-    IN REG_DB_HANDLE hDb)
+    IN PREG_DB_CONNECTION hDb)
 {
     NTSTATUS status = 0;
 
@@ -761,18 +761,18 @@ pwstr_wcschr(
 NTSTATUS
 MemDbOpenKey(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN PCWSTR pwszFullKeyPath,
     IN ACCESS_MASK AccessDesired,
-    OUT OPTIONAL MEM_REG_STORE_HANDLE *pRegKey)
+    OUT OPTIONAL PMEMREG_STORE_NODE *pRegKey)
 {
     NTSTATUS status = 0;
     PWSTR pwszPtr = NULL;
     PWSTR pwszSubKey = NULL;
     PWSTR pwszTmpFullPath = NULL;
 
-    MEM_REG_STORE_HANDLE hParentKey = NULL;
-    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PMEMREG_STORE_NODE hParentKey = NULL;
+    PMEMREG_STORE_NODE hSubKey = NULL;
     BOOLEAN bEndOfString = FALSE;
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
     ACCESS_MASK AccessGranted = 0;
@@ -838,7 +838,7 @@ error:
 NTSTATUS
 MemDbAccessCheckKey(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN ACCESS_MASK AccessDesired,
     IN OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     IN ULONG ulSecDescLength)
@@ -893,7 +893,7 @@ error:
 NTSTATUS
 MemDbCreateKeyEx(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN PCWSTR pcwszSubKey,
     IN DWORD dwReserved,
     IN OPTIONAL PWSTR pClass,
@@ -901,13 +901,13 @@ MemDbCreateKeyEx(
     IN ACCESS_MASK AccessDesired,
     IN OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     IN ULONG ulSecDescLength,
-    OUT PMEM_REG_STORE_HANDLE phSubKey,
+    OUT PMEMREG_STORE_NODE *pphSubKey,
     OUT OPTIONAL PDWORD pdwDisposition
     )
 {
     NTSTATUS status = 0;
-    MEM_REG_STORE_HANDLE hParentKey = NULL;
-    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PMEMREG_STORE_NODE hParentKey = NULL;
+    PMEMREG_STORE_NODE hSubKey = NULL;
     PWSTR pwszTmpFullPath = NULL;
     PWSTR pwszSubKey = NULL;
     PWSTR pwszPtr = NULL;
@@ -952,7 +952,7 @@ MemDbCreateKeyEx(
         if (status == 0)
         {
             hParentKey = hSubKey;
-            *phSubKey = hParentKey;
+            *pphSubKey = hParentKey;
         }
         pwszSubKey = pwszPtr;
 
@@ -968,7 +968,7 @@ MemDbCreateKeyEx(
                              NULL,
                              &hParentKey);
             BAIL_ON_NT_STATUS(status);
-            *phSubKey = hParentKey;
+            *pphSubKey = hParentKey;
         }
     } while (status == 0 && !bEndOfString);
 
@@ -984,7 +984,7 @@ error:
 NTSTATUS
 MemDbQueryInfoKey(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     /*
      * A pointer to a buffer that receives the user-defined class of the key. 
      * This parameter can be NULL.
@@ -1002,7 +1002,7 @@ MemDbQueryInfoKey(
     OUT OPTIONAL PFILETIME pftLastWriteTime /* implement this later */
     )
 {
-    MEM_REG_STORE_HANDLE hKey = NULL;
+    PMEMREG_STORE_NODE hKey = NULL;
     NTSTATUS status = 0;
     DWORD keyLen = 0;
     DWORD maxKeyLen = 0;
@@ -1088,7 +1088,7 @@ error:
 NTSTATUS
 MemDbEnumKeyEx(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN DWORD dwIndex,
     OUT PWSTR pName,
     IN OUT PDWORD pcName,
@@ -1099,7 +1099,7 @@ MemDbEnumKeyEx(
     )
 {
     NTSTATUS status = 0;
-    MEM_REG_STORE_HANDLE hKey = NULL;
+    PMEMREG_STORE_NODE hKey = NULL;
     DWORD keyLen = 0;
     BOOLEAN bLocked = FALSE;
 
@@ -1141,7 +1141,7 @@ error:
 NTSTATUS
 MemDbSetValueEx(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pValueName,
     IN DWORD dwReserved,
     IN DWORD dwType,
@@ -1149,7 +1149,7 @@ MemDbSetValueEx(
     DWORD cbData)
 {
     NTSTATUS status = 0;
-    MEM_REG_STORE_HANDLE hKey = NULL;
+    PMEMREG_STORE_NODE hKey = NULL;
     PREGMEM_VALUE pRegValue = NULL;
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
     ACCESS_MASK AccessGranted = 0;
@@ -1204,7 +1204,7 @@ error:
 NTSTATUS
 MemDbGetValue(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pSubKey,
     IN OPTIONAL PCWSTR pValueName,
     IN OPTIONAL REG_DATA_TYPE_FLAGS Flags,
@@ -1213,9 +1213,9 @@ MemDbGetValue(
     IN OUT OPTIONAL PDWORD pcbData)
 {
     NTSTATUS status = 0;
-    MEM_REG_STORE_HANDLE hKey = NULL;
-    MEM_REG_STORE_HANDLE hParentKey = NULL;
-    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PMEMREG_STORE_NODE hKey = NULL;
+    PMEMREG_STORE_NODE hParentKey = NULL;
+    PMEMREG_STORE_NODE hSubKey = NULL;
     PREGMEM_VALUE hValue = NULL;
 
     hKey = hDb->pMemReg;
@@ -1286,7 +1286,7 @@ error:
 NTSTATUS
 MemDbEnumValue(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN DWORD dwIndex,
     OUT PWSTR pValueName,
     IN OUT PDWORD pcchValueName,
@@ -1296,7 +1296,7 @@ MemDbEnumValue(
     IN OUT OPTIONAL PDWORD pcbData)
 {
     NTSTATUS status = 0;
-    MEM_REG_STORE_HANDLE hKey = NULL;
+    PMEMREG_STORE_NODE hKey = NULL;
     DWORD valueLen = 0;
     BOOLEAN bLocked = FALSE;
 
@@ -1366,12 +1366,12 @@ error:
 NTSTATUS
 MemDbGetKeyAcl(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     OUT OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     OUT PULONG pSecDescLen)
 {
     NTSTATUS status = 0;
-    MEM_REG_STORE_HANDLE hKey = NULL;
+    PMEMREG_STORE_NODE hKey = NULL;
 
     BAIL_ON_NT_INVALID_POINTER(hDb);
     hKey = hDb->pMemReg;
@@ -1402,12 +1402,12 @@ error:
 NTSTATUS
 MemDbSetKeyAcl(
     IN HANDLE Handle,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     IN ULONG secDescLen)
 {
     NTSTATUS status = 0;
-    MEM_REG_STORE_HANDLE hKey = NULL;
+    PMEMREG_STORE_NODE hKey = NULL;
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor = NULL;
     PREGMEM_NODE_SD pNodeSd = NULL;
     
@@ -1466,15 +1466,15 @@ error:
 NTSTATUS
 MemDbSetValueAttributes(
     IN HANDLE hRegConnection,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pSubKey,
     IN PCWSTR pValueName,
     IN PLWREG_VALUE_ATTRIBUTES pValueAttributes)
 {
     NTSTATUS status = 0;
-    MEM_REG_STORE_HANDLE hKey = NULL;
-    MEM_REG_STORE_HANDLE hParentKey = NULL;
-    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PMEMREG_STORE_NODE hKey = NULL;
+    PMEMREG_STORE_NODE hParentKey = NULL;
+    PMEMREG_STORE_NODE hSubKey = NULL;
     PREGMEM_VALUE hValue = NULL;
 
     hKey = hDb->pMemReg;
@@ -1535,16 +1535,16 @@ error:
 NTSTATUS
 MemDbGetValueAttributes(
     IN HANDLE hRegConnection,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pSubKey,
     IN PCWSTR pValueName,
     OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
     OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes)
 {
     NTSTATUS status = 0;
-    MEM_REG_STORE_HANDLE hKey = NULL;
-    MEM_REG_STORE_HANDLE hParentKey = NULL;
-    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PMEMREG_STORE_NODE hKey = NULL;
+    PMEMREG_STORE_NODE hParentKey = NULL;
+    PMEMREG_STORE_NODE hSubKey = NULL;
     PREGMEM_VALUE hValue = NULL;
 
     hKey = hDb->pMemReg;
@@ -1692,20 +1692,20 @@ error:
 NTSTATUS
 MemDbRecurseRegistry(
     IN HANDLE hRegConnection,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pwszOptSubKey,
-    IN PVOID (*pfCallback)(MEM_REG_STORE_HANDLE hKey, 
+    IN PVOID (*pfCallback)(PMEMREG_STORE_NODE hKey, 
                            PVOID userContext,
                            PWSTR pwszSubKeyPrefix),
     IN PVOID userContext)
 {
     NTSTATUS status = 0;
-    MEM_REG_STORE_HANDLE hKey = NULL;
+    PMEMREG_STORE_NODE hKey = NULL;
     INT32 index = 0;
     PMEMDB_STACK hStack = 0;
     PWSTR pwszSubKeyPrefix = NULL;
     PWSTR pwszSubKey = NULL;
-    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PMEMREG_STORE_NODE hSubKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
 
 
@@ -1803,20 +1803,20 @@ error:
 NTSTATUS
 MemDbRecurseDepthFirstRegistry(
     IN HANDLE hRegConnection,
-    IN REG_DB_HANDLE hDb,
+    IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pwszOptSubKey,
-    IN PVOID (*pfCallback)(MEM_REG_STORE_HANDLE hKey, 
+    IN PVOID (*pfCallback)(PMEMREG_STORE_NODE hKey, 
                            PVOID userContext,
                            PWSTR pwszSubKeyPrefix),
     IN PVOID userContext)
 {
     NTSTATUS status = 0;
-    MEM_REG_STORE_HANDLE hKey = NULL;
+    PMEMREG_STORE_NODE hKey = NULL;
     INT32 index = 0;
     PMEMDB_STACK hStack = 0;
     PWSTR pwszSubKeyPrefix = NULL;
     PWSTR pwszSubKey = NULL;
-    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PMEMREG_STORE_NODE hSubKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
 
 

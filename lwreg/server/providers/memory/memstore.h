@@ -44,41 +44,41 @@
 
 NTSTATUS
 MemRegStoreOpen(
-    OUT PMEM_REG_STORE_HANDLE phDb
+    OUT PMEMREG_STORE_NODE * phDb
     );
 
 
 NTSTATUS
 MemRegStoreAddNode(
-    IN MEM_REG_STORE_HANDLE hDb,
+    IN PMEMREG_STORE_NODE hDb,
     PCWSTR Name,
     DWORD NodeType,
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
     ULONG SecurityDescriptorLen,
-    OUT PMEM_REG_STORE_HANDLE phNode,
-    OUT OPTIONAL PMEM_REG_STORE_HANDLE pRetNewNode
+    OUT PMEMREG_STORE_NODE * phNode,
+    OUT OPTIONAL PMEMREG_STORE_NODE * pRetNewNode
     );
 
 
 NTSTATUS
 MemRegStoreFindNode(
-    IN MEM_REG_STORE_HANDLE hDb,
+    IN PMEMREG_STORE_NODE hDb,
     IN PCWSTR Name,
-    OUT PMEM_REG_STORE_HANDLE phNode
+    OUT PMEMREG_STORE_NODE * phNode
     );
 
 
 NTSTATUS
 MemRegStoreFindNodeSubkey(
-    IN MEM_REG_STORE_HANDLE hDb,
+    IN PMEMREG_STORE_NODE hDb,
     IN PCWSTR pwszSubKeyPath,
-    OUT PMEM_REG_STORE_HANDLE phNode
+    OUT PMEMREG_STORE_NODE *pphNode
     );
 
 
 NTSTATUS
 MemRegStoreAddNodeValue(
-    MEM_REG_STORE_HANDLE hDb,
+    PMEMREG_STORE_NODE hDb,
     IN OPTIONAL PCWSTR pValueName,
     IN DWORD dwReserved,
     IN DWORD dwType,
@@ -89,16 +89,16 @@ MemRegStoreAddNodeValue(
 
 NTSTATUS
 MemRegStoreDeleteNodeValue(
-    IN MEM_REG_STORE_HANDLE hDb,
+    IN PMEMREG_STORE_NODE hDb,
     IN PCWSTR Name
     );
 
 
 NTSTATUS
 MemRegStoreFindNodeValue(
-    IN MEM_REG_STORE_HANDLE hDb,
+    IN PMEMREG_STORE_NODE hDb,
     IN PCWSTR Name,
-    OUT PREGMEM_VALUE *phValue
+    OUT PREGMEM_VALUE *pphValue
     );
 
 
@@ -127,7 +127,7 @@ MemRegStoreChangeNodeValue(
 
 NTSTATUS
 MemRegStoreDeleteNode(
-    IN MEM_REG_STORE_HANDLE hDb
+    IN PMEMREG_STORE_NODE hDb
     );
 
 

@@ -50,7 +50,7 @@
 
 extern REGPROV_PROVIDER_FUNCTION_TABLE gRegMemProviderAPITable;
 
-extern REG_DB_HANDLE ghCacheConnection;
+extern PREG_DB_CONNECTION ghCacheConnection;
 
 PREGMEM_NODE ghMemRegRoot;
 

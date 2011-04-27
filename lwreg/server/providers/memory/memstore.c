@@ -115,12 +115,12 @@ error:
 
 NTSTATUS
 MemRegStoreOpen(
-    OUT PMEM_REG_STORE_HANDLE phDb)
+    OUT PMEMREG_STORE_NODE *pphDb)
 {
     NTSTATUS status = 0;
-    MEM_REG_STORE_HANDLE phReg = NULL;
+    PMEMREG_STORE_NODE phReg = NULL;
     PWSTR rootKey = NULL;
-    MEM_REG_STORE_HANDLE rootNode = NULL;
+    PMEMREG_STORE_NODE rootNode = NULL;
     DWORD i = 0;
     PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel = NULL;
     ULONG ulSecDescLen = 0;
@@ -128,7 +128,7 @@ MemRegStoreOpen(
     /* This is the ROOT node (\) of the registry */
     status = LW_RTL_ALLOCATE(
                  (PVOID*)&phReg, 
-                 MEM_REG_STORE_HANDLE, 
+                 PMEMREG_STORE_NODE, 
                  sizeof(*phReg));
     BAIL_ON_NT_STATUS(status);
     memset(phReg, 0, sizeof(*phReg));
@@ -164,7 +164,7 @@ MemRegStoreOpen(
     }
 
     ghMemRegRoot = phReg;
-    *phDb = phReg;
+    *pphDb = phReg;
 
 cleanup:
     LWREG_SAFE_FREE_MEMORY(pSecDescRel);
@@ -180,16 +180,16 @@ error:
 
 NTSTATUS
 MemRegStoreFindNodeSubkey(
-    IN MEM_REG_STORE_HANDLE hDb,
+    IN PMEMREG_STORE_NODE hDb,
     IN PCWSTR pwszSubKeyPath,
-    OUT PMEM_REG_STORE_HANDLE phNode)
+    OUT PMEMREG_STORE_NODE * phNode)
 {
     NTSTATUS status = 0;
     PWSTR pwszTmpFullPath = NULL;
     PWSTR pwszSubKey = NULL;
     PWSTR pwszPtr = NULL;
-    MEM_REG_STORE_HANDLE hParentKey = NULL;
-    MEM_REG_STORE_HANDLE hSubKey = NULL;
+    PMEMREG_STORE_NODE hParentKey = NULL;
+    PMEMREG_STORE_NODE hSubKey = NULL;
     BOOLEAN bEndOfString = FALSE;
 
 
@@ -244,9 +244,9 @@ error:
 
 NTSTATUS
 MemRegStoreFindNode(
-    IN MEM_REG_STORE_HANDLE hDb,
+    IN PMEMREG_STORE_NODE hDb,
     IN PCWSTR Name,
-    OUT PMEM_REG_STORE_HANDLE phNode)
+    OUT PMEMREG_STORE_NODE *pphNode)
 {
     NTSTATUS status = 0;
     DWORD nodeIndex = 0;
@@ -271,7 +271,7 @@ MemRegStoreFindNode(
 
     if (bFoundNode)
     {
-        *phNode = hDb->SubNodes[nodeIndex];
+        *pphNode = hDb->SubNodes[nodeIndex];
     }
     else
     {
@@ -288,7 +288,7 @@ error:
 
 NTSTATUS
 MemRegStoreDeleteNode(
-    IN MEM_REG_STORE_HANDLE hDb)
+    IN PMEMREG_STORE_NODE hDb)
 {
     NTSTATUS status = 0;
     DWORD index = 0;
@@ -370,13 +370,13 @@ error:
 
 NTSTATUS
 MemRegStoreAddNode(
-    IN MEM_REG_STORE_HANDLE hParentNode,
+    IN PMEMREG_STORE_NODE hParentNode,
     PCWSTR Name,
     DWORD NodeType,
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
     ULONG SecurityDescriptorLen,
-    OUT PMEM_REG_STORE_HANDLE phNode,
-    OUT OPTIONAL PMEM_REG_STORE_HANDLE pRetNewNode)
+    OUT PMEMREG_STORE_NODE * phNode,
+    OUT OPTIONAL PMEMREG_STORE_NODE *ppRetNewNode)
 {
     NTSTATUS status = 0;
     PREGMEM_NODE *pNodesArray = NULL;
@@ -462,9 +462,9 @@ MemRegStoreAddNode(
     {
         *phNode = hParentNode;
     }
-    if (pRetNewNode)
+    if (ppRetNewNode)
     {
-        *pRetNewNode = pNewNode;
+        *ppRetNewNode = pNewNode;
     }
 
 cleanup:
@@ -482,7 +482,7 @@ error:
 
 NTSTATUS
 MemRegStoreFindNodeValue(
-    IN MEM_REG_STORE_HANDLE hDb,
+    IN PMEMREG_STORE_NODE hDb,
     IN PCWSTR Name,
     OUT PREGMEM_VALUE *phValue)
 {
@@ -550,7 +550,7 @@ error:
 
 NTSTATUS
 MemRegStoreAddNodeValue(
-    MEM_REG_STORE_HANDLE hDb,
+    PMEMREG_STORE_NODE hDb,
     IN OPTIONAL PCWSTR pValueName,
     IN DWORD dwReserved,
     IN DWORD dwType,
@@ -660,7 +660,7 @@ error:
 
 NTSTATUS
 MemRegStoreDeleteNodeValue(
-    IN MEM_REG_STORE_HANDLE hDb,
+    IN PMEMREG_STORE_NODE hDb,
     IN PCWSTR Name)
 {
     NTSTATUS status = 0;
