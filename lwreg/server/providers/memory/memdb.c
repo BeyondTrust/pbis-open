@@ -565,6 +565,7 @@ fprintf(dbgfp, "pfImportFile: type=%d valueName=%s\n",
                      &pNodeSd);
         BAIL_ON_NT_STATUS(status);
 
+#if 0
         /* 
          * Replace SD created during registry bootstrap with the value
          * imported from the save file. The only trick here is to replace
@@ -573,6 +574,7 @@ fprintf(dbgfp, "pfImportFile: type=%d valueName=%s\n",
         LWREG_SAFE_FREE_MEMORY(hSubKey->pNodeSd->SecurityDescriptor);
         hSubKey->pNodeSd->SecurityDescriptor = pNodeSd->SecurityDescriptor;
         LWREG_SAFE_FREE_MEMORY(pNodeSd);
+#endif
     }
     else 
     {
