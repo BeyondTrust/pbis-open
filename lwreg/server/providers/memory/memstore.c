@@ -163,7 +163,6 @@ MemRegStoreOpen(
         LWREG_SAFE_FREE_MEMORY(rootKey);
     }
 
-    ghMemRegRoot = phReg;
     *pphDb = phReg;
 
 cleanup:

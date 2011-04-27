@@ -110,7 +110,11 @@ MemProvider_Initialize(
     ghCacheConnection = pConn;
     ghMemRegRoot = pDbRoot;
 
-    *ppFnTable = &gRegMemProviderAPITable;
+    /*
+     * Start export to save file thread
+     */
+    status = MemDbStartExportToFileThread();
+    BAIL_ON_NT_STATUS(status);
 
     status = MemDbImportFromFile(
                  MEMDB_EXPORT_FILE, 
@@ -118,6 +122,7 @@ MemProvider_Initialize(
                  &importCtx);
     BAIL_ON_NT_STATUS(status);
 
+    *ppFnTable = &gRegMemProviderAPITable;
 cleanup:
     return status;
 

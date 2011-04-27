@@ -62,9 +62,6 @@ MemDbOpen(
     status = MemRegStoreOpen(&pDbRoot);
     BAIL_ON_NT_STATUS(status);
 
-    status = MemDbStartExportToFileThread();
-    BAIL_ON_NT_STATUS(status);
-
     *ppDbRoot = pDbRoot;
 
 cleanup:
