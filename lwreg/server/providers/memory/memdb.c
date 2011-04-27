@@ -565,16 +565,21 @@ fprintf(dbgfp, "pfImportFile: type=%d valueName=%s\n",
                      &pNodeSd);
         BAIL_ON_NT_STATUS(status);
 
-#if 0
         /* 
          * Replace SD created during registry bootstrap with the value
          * imported from the save file. The only trick here is to replace
          * the SD, but not its container, which everyone is pointing at.
          */
-        LWREG_SAFE_FREE_MEMORY(hSubKey->pNodeSd->SecurityDescriptor);
-        hSubKey->pNodeSd->SecurityDescriptor = pNodeSd->SecurityDescriptor;
+        if (hSubKey->pNodeSd->SecurityDescriptorAllocated)
+        {
+            LWREG_SAFE_FREE_MEMORY(hSubKey->pNodeSd->SecurityDescriptor);
+        }
+        hSubKey->pNodeSd->SecurityDescriptor =
+            pNodeSd->SecurityDescriptor;
+        hSubKey->pNodeSd->SecurityDescriptorLen =
+            pNodeSd->SecurityDescriptorLen;
+        hSubKey->pNodeSd->SecurityDescriptorAllocated = TRUE;
         LWREG_SAFE_FREE_MEMORY(pNodeSd);
-#endif
     }
     else 
     {
