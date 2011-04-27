@@ -66,7 +66,7 @@ typedef struct _MEMDB_STACK
 
 NTSTATUS
 MemDbOpen(
-    OUT PREG_DB_CONNECTION *pphDb
+    OUT PREGMEM_NODE *ppDbRoot
     );
 
 NTSTATUS
@@ -245,7 +245,9 @@ MemDbRecurseDepthFirstRegistry(
     IN PVOID userContext
     );
 
-VOID MemDbStartExportToFileThread(VOID);
+NTSTATUS
+MemDbStartExportToFileThread(
+    VOID);
 
 
 NTSTATUS
@@ -259,7 +261,7 @@ MemDbImportFromFile(
 
 NTSTATUS
 MemDbExportToFile(
-    PSTR exportFile
+    IN PSTR exportFile
     );
 
 VOID
@@ -268,7 +270,10 @@ MemDbExportEntryChanged(
     );
 
 
-DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext);
+DWORD 
+pfImportFile(
+    PREG_PARSE_ITEM pItem,
+    HANDLE userContext);
 
 PWSTR
 pwstr_wcschr(

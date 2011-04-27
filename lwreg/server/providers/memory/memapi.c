@@ -85,20 +85,44 @@ MemProvider_Initialize(
 {
     NTSTATUS status = 0;
     MEMDB_IMPORT_FILE_CTX importCtx = {0};
+    PREG_DB_CONNECTION pConn = NULL;
+    PMEMREG_STORE_NODE pDbRoot = NULL;
 
+    status = LW_RTL_ALLOCATE(
+                 (PVOID*)&pConn,
+                 REG_DB_CONNECTION,
+                 sizeof(*pConn));
+    BAIL_ON_NT_STATUS(status);
+    memset(pConn, 0, sizeof(*pConn));
+
+    /* This may not exist after install. If exists don't care this fails */
     mkdir(MEMDB_EXPORT_DIR, 0700);
-    status = MemDbOpen(&ghCacheConnection);
-    if (status == 0)
-    {
-        *ppFnTable = &gRegMemProviderAPITable;
-    }
 
-    MemDbImportFromFile(
-       MEMDB_EXPORT_FILE, 
-       pfImportFile,
-       &importCtx);
+    status = MemDbOpen(&pDbRoot);
+    BAIL_ON_NT_STATUS(status);
 
+    /* 
+     * This is the pointer that holds the memory database
+     * Is probably redundant with ghCache
+     * ghMemRegRoot may be redundant with ghCacheConnection.
+     */
+    pConn->pMemReg = pDbRoot;
+    ghCacheConnection = pConn;
+    ghMemRegRoot = pDbRoot;
+
+    *ppFnTable = &gRegMemProviderAPITable;
+
+    status = MemDbImportFromFile(
+                 MEMDB_EXPORT_FILE, 
+                 pfImportFile,
+                 &importCtx);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
     return status;
+
+error:
+    goto cleanup;
 }
 
 static void *pfDeleteNodeCallback(

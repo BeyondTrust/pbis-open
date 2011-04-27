@@ -53,20 +53,19 @@
 
 NTSTATUS
 MemDbOpen(
-    OUT PREG_DB_CONNECTION *pphDb
+    OUT PREGMEM_NODE *ppDbRoot
     )
 {
     NTSTATUS status = 0;
-    PREG_DB_CONNECTION pConn = NULL;
+    PREGMEM_NODE pDbRoot = NULL;
 
-    status = LW_RTL_ALLOCATE((PVOID*)&pConn, REG_DB_CONNECTION, sizeof(*pConn));
+    status = MemRegStoreOpen(&pDbRoot);
     BAIL_ON_NT_STATUS(status);
 
-    memset(pConn, 0, sizeof(*pConn));
-    status = MemRegStoreOpen(&pConn->pMemReg);
+    status = MemDbStartExportToFileThread();
+    BAIL_ON_NT_STATUS(status);
 
-    MemDbStartExportToFileThread();
-    *pphDb = pConn;
+    *ppDbRoot = pDbRoot;
 
 cleanup:
     return status;
@@ -453,7 +452,7 @@ error:
 }
 
 
-VOID
+NTSTATUS
 MemDbStartExportToFileThread(VOID)
 {
     NTSTATUS status = 0;
@@ -482,7 +481,7 @@ cleanup:
         LWREG_SAFE_FREE_MEMORY(exportCtx);
     }
     LWREG_SAFE_FREE_MEMORY(pwszRootKey);
-    return;
+    return status;
 }
 
 
