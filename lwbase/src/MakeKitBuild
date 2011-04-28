@@ -45,24 +45,24 @@ make()
             HEADERDEPS="$BASE_HEADER_DEPS" \
             LIBDEPS="uuid $LIB_ICONV $LIB_XNET" \
             LDFLAGS="$DS_FRAMEWORK_LDFLAGS"
+
+        case "$LWBASE_THREADPOOL_BACKEND" in
+            "epoll"|"kqueue"|"select"|"poll")
+                THREADPOOL_SOURCES="threadpool-${LWBASE_THREADPOOL_BACKEND}.c"
+                ;;
+            *)
+                mk_fail "unknown threadpool backend: $LWBASE_THREADPOOL_BACKEND"
+                ;;
+        esac
+        
+        mk_library \
+            LIB="lwbase" \
+            SOURCES="$BASE_SOURCES $THREADPOOL_SOURCES" \
+            CPPFLAGS="$BASE_CPPFLAGS" \
+            INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
+            HEADERDEPS="$BASE_HEADER_DEPS" \
+            LIBDEPS="lwbase_nothr $LIB_PTHREAD $LIB_DL $LIB_RT"
     mk_multiarch_done
-
-    case "$LWBASE_THREADPOOL_BACKEND" in
-        "epoll"|"kqueue"|"select"|"poll")
-            THREADPOOL_SOURCES="threadpool-${LWBASE_THREADPOOL_BACKEND}.c"
-            ;;
-        *)
-            mk_fail "unknown threadpool backend: $LWBASE_THREADPOOL_BACKEND"
-            ;;
-    esac
-
-    mk_library \
-        LIB="lwbase" \
-        SOURCES="$BASE_SOURCES $THREADPOOL_SOURCES" \
-        CPPFLAGS="$BASE_CPPFLAGS" \
-        INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
-        HEADERDEPS="$BASE_HEADER_DEPS" \
-        LIBDEPS="lwbase_nothr $LIB_PTHREAD $LIB_DL $LIB_RT"
 
     mk_program \
         PROGRAM="lw-svcm-wrap" \
