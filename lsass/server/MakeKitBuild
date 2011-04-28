@@ -1,4 +1,4 @@
-SUBDIRS="api ntlm store auth-providers rpc privilege lsassd"
+SUBDIRS="include api ntlm store auth-providers rpc privilege lsassd"
 
 configure()
 {
