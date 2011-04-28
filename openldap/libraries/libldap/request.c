@@ -734,8 +734,8 @@ ldap_free_connection( LDAP *ld, LDAPConn *lc, int force, int unbind )
 		}
 
 		if ( lc->lconn_ber != NULL ) {
-			lc->lconn_ber = NULL;
 			ber_free( lc->lconn_ber, 1 );
+			lc->lconn_ber = NULL;
 		}
 
 		ldap_int_sasl_close( ld, lc );
