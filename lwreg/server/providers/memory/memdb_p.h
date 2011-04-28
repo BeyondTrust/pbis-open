@@ -1,22 +1,11 @@
 #include "includes.h"
 
+#define MEMDB_DEFAULT_EXPORT_TIMEOUT (60*10) // 10 Minutes
+#define MEMDB_CHANGED_EXPORT_TIMEOUT 5 // 5 seconds
+#define MEMDB_EXPORT_DIR "/var/lib/likewise/db"
+#define MEMDB_EXPORT_FILE MEMDB_EXPORT_DIR "/memprovider.exp"
+
 typedef struct _REGMEM_NODE *PMEMREG_STORE_NODE;
-
-typedef struct _REG_DB_CONNECTION
-{
-    PMEMREG_STORE_NODE pMemReg;
-    pthread_rwlock_t Mutex;
-} REG_DB_CONNECTION, *PREG_DB_CONNECTION;
-
-
-#if 0
-typedef struct __REG_KEY_HANDLE
-{
-        ACCESS_MASK AccessGranted;
-        PREG_KEY_CONTEXT pKey;
-} REG_KEY_HANDLE, *PREG_KEY_HANDLE;
-
-#endif
 
 typedef struct _MEMDB_FILE_EXPORT_CTX
 {
@@ -25,16 +14,25 @@ typedef struct _MEMDB_FILE_EXPORT_CTX
     BOOLEAN bStopThread;
 } MEMDB_FILE_EXPORT_CTX, *PMEMDB_FILE_EXPORT_CTX;
 
+
+typedef struct _REG_DB_CONNECTION
+{
+    PMEMREG_STORE_NODE pMemReg;
+    pthread_rwlock_t Mutex;
+    pthread_mutex_t ExportMutex;
+    pthread_mutex_t ExportMutexStop;
+    pthread_cond_t ExportCond;
+    pthread_cond_t ExportCondStop;
+    BOOLEAN bValueChanged;
+    PMEMDB_FILE_EXPORT_CTX ExportCtx;
+} REG_DB_CONNECTION, *PREG_DB_CONNECTION;
+
 typedef struct _MEMDB_IMPORT_FILE_CTX
 {
     PMEMREG_STORE_NODE hRootKey;
     PMEMREG_STORE_NODE hSubKey;
 } MEMDB_IMPORT_FILE_CTX, *PMEMDB_IMPORT_FILE_CTX;
 
-#define MEMDB_DEFAULT_EXPORT_TIMEOUT (60*10) // 10 Minutes
-#define MEMDB_CHANGED_EXPORT_TIMEOUT 5 // 5 seconds
-#define MEMDB_EXPORT_DIR "/var/lib/likewise/db"
-#define MEMDB_EXPORT_FILE MEMDB_EXPORT_DIR "/memprovider.exp"
 
 /*
  * Definition of structure found in context server/include/regserver.h as

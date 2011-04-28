@@ -40,12 +40,8 @@
  * Authors: Adam Bernstein (abernstein@likewise.com)
  */
 #include "includes.h"
-#include "memstore_p.h"
 
 PREG_DB_CONNECTION gMemRegRoot;
-
-
-const DWORD dwDefaultCacheSize = 1000;
 
 REGPROV_PROVIDER_FUNCTION_TABLE gRegMemProviderAPITable =
 {
@@ -69,33 +65,6 @@ REGPROV_PROVIDER_FUNCTION_TABLE gRegMemProviderAPITable =
         &MemDeleteValueAttributes
 };
 
-pthread_mutex_t gMemRegDbMutex = PTHREAD_MUTEX_INITIALIZER;
-BOOLEAN gbInLockDbMutex;
-
-pthread_mutex_t gExportMutex = PTHREAD_MUTEX_INITIALIZER;
-BOOLEAN gbInLockExportMutex;
-pthread_cond_t gExportCond = PTHREAD_COND_INITIALIZER;
-
-BOOLEAN gbValueChanged;
-PMEMDB_FILE_EXPORT_CTX gExportCtx;
-
-pthread_mutex_t gExportMutexStop = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t gExportCondStop = PTHREAD_COND_INITIALIZER;
-
-
-#if 0
-REG_SRV_MEMORY_KEYLOOKUP gActiveKeyList =
-    {
-            .mutex    = PTHREAD_MUTEX_INITIALIZER,
-            .pKeyList = NULL
-    };
-
-REG_SRV_MEMORY_KEYLOOKUP gRegDbKeyList =
-    {
-            .mutex    = PTHREAD_MUTEX_INITIALIZER,
-            .pKeyList = NULL
-    };
-#endif
 
 /*
 local variables:

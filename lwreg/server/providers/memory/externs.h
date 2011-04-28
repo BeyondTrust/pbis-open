@@ -47,35 +47,8 @@
 #define __EXTERNS_H__
 #include "memstore_p.h"
 
-
 extern REGPROV_PROVIDER_FUNCTION_TABLE gRegMemProviderAPITable;
 
 extern PREG_DB_CONNECTION gMemRegRoot;
 
-extern pthread_mutex_t gMemRegDbMutex;
-extern BOOLEAN gbInLockDbMutex;
-
-extern pthread_mutex_t gExportMutex;
-extern BOOLEAN gbInLockExportMutex;
-extern pthread_cond_t gExportCond;
-
-extern BOOLEAN gbValueChanged;
-extern PMEMDB_FILE_EXPORT_CTX gExportCtx;
-
-extern pthread_mutex_t gExportMutexStop;
-extern pthread_cond_t gExportCondStop;
-
-
-
-#if 0
-extern REG_SRV_MEMORY_KEYLOOKUP gActiveKeyList;
-
-extern REG_SRV_MEMORY_KEYLOOKUP gRegDbKeyList;
-
-extern const DWORD dwDefaultCacheSize;
-
-extern GENERIC_MAPPING gRegKeyGenericMapping;
-#endif
-
 #endif /* __EXTERNS_H__ */
-

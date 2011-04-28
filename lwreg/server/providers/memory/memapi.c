@@ -108,6 +108,14 @@ MemProvider_Initialize(
     gMemRegRoot = pConn;
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
         pthread_rwlock_init(&pConn->Mutex, NULL)));
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
+        pthread_mutex_init(&pConn->ExportMutex, NULL)));
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
+        pthread_mutex_init(&pConn->ExportMutexStop, NULL)));
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
+        pthread_cond_init(&pConn->ExportCond, NULL)));
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
+        pthread_cond_init(&pConn->ExportCondStop, NULL)));
 
     /*
      * Start export to save file thread
@@ -149,8 +157,7 @@ MemProvider_Shutdown(
     NTSTATUS status = 0;
     PWSTR pwszRootKey = NULL;
 
-    LWREG_LOCK_MUTEX(gbInLockDbMutex, &gMemRegDbMutex);
-
+    pthread_rwlock_wrlock(&gMemRegRoot->Mutex);
     status = MemDbExportToFile(MEMDB_EXPORT_FILE);
     if (status)
     {
@@ -165,7 +172,7 @@ MemProvider_Shutdown(
     }
 
 cleanup:
-    LWREG_UNLOCK_MUTEX(gbInLockDbMutex, &gMemRegDbMutex);
+    pthread_rwlock_unlock(&gMemRegRoot->Mutex);
     LWREG_SAFE_FREE_MEMORY(pwszRootKey);
 }
 
@@ -709,21 +716,16 @@ MemDeleteTree(
     NTSTATUS status = 0;
     REG_DB_CONNECTION regDbConn = {0};
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
-    BOOLEAN bLocked = FALSE;
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
-    pthread_mutex_lock(&gMemRegDbMutex);
-    bLocked = TRUE;
+    pthread_rwlock_wrlock(&gMemRegRoot->Mutex);
     status = MemDbRecurseDepthFirstRegistry(
                  Handle,
                  &regDbConn,
                  pwszSubKey,
                  pfDeleteNodeCallback,
                  NULL);
-    if (bLocked)
-    {
-        pthread_mutex_unlock(&gMemRegDbMutex);
-    }
+    pthread_rwlock_unlock(&gMemRegRoot->Mutex);
     MemDbExportEntryChanged();
     return status;
 }
