@@ -103,12 +103,11 @@ MemProvider_Initialize(
 
     /* 
      * This is the pointer that holds the memory database
-     * Is probably redundant with ghCache
-     * ghMemRegRoot may be redundant with ghCacheConnection.
      */
     pConn->pMemReg = pDbRoot;
-    ghCacheConnection = pConn;
-    ghMemRegRoot = pDbRoot;
+    gMemRegRoot = pConn;
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
+        pthread_rwlock_init(&pConn->Mutex, NULL)));
 
     /*
      * Start export to save file thread
@@ -158,7 +157,7 @@ MemProvider_Shutdown(
         goto cleanup;
     }
 
-    regDbConn.pMemReg = ghMemRegRoot;
+    regDbConn.pMemReg = gMemRegRoot->pMemReg;
     status = MemDbClose(&regDbConn);
     if (status)
     {
@@ -415,7 +414,7 @@ MemDeleteKey(
     }
     else
     {
-        hParentKey = ghMemRegRoot;
+        hParentKey = gMemRegRoot->pMemReg;
     }
     status = MemRegStoreFindNode(
                  hParentKey,

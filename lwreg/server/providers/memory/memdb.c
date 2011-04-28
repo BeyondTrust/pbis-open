@@ -379,7 +379,7 @@ MemDbExportToFileThread(
         }
         pthread_mutex_unlock(&gExportMutex);
 
-        if (ghMemRegRoot && !exportCtx->bStopThread)
+        if (gMemRegRoot->pMemReg && !exportCtx->bStopThread)
         {
             exportCtx->wfp = fopen(MEMDB_EXPORT_FILE, "w");
             if (!exportCtx->wfp)
@@ -418,7 +418,7 @@ MemDbExportToFile(
     MEMDB_FILE_EXPORT_CTX exportCtx = {0};
     REG_DB_CONNECTION regDbConn = {0};
 
-    exportCtx.hKey = ghMemRegRoot;
+    exportCtx.hKey = gMemRegRoot->pMemReg;
     exportCtx.wfp = fopen(exportFile, "w");
     regDbConn.pMemReg = exportCtx.hKey;
     if (!exportCtx.wfp)
@@ -466,7 +466,7 @@ MemDbStartExportToFileThread(VOID)
         goto cleanup;
     }
 
-    exportCtx->hKey = ghMemRegRoot;
+    exportCtx->hKey = gMemRegRoot->pMemReg;
 
     gExportCtx = exportCtx;
     pthread_create(&hThread, NULL, MemDbExportToFileThread, (PVOID) exportCtx);
@@ -503,7 +503,7 @@ FILE *dbgfp = fopen("/tmp/lwregd-import.txt", "a");
 
     if (pItem->type == REG_KEY)
     {
-        regDbConn.pMemReg = ghMemRegRoot;
+        regDbConn.pMemReg = gMemRegRoot->pMemReg;
 
         // Open subkeys that exist
         status = LwRtlWC16StringAllocateFromCString(
@@ -778,7 +778,7 @@ MemDbOpenKey(
 
     if (!hDb)
     {
-        hParentKey = ghMemRegRoot;
+        hParentKey = gMemRegRoot->pMemReg;
     }
     else
     {

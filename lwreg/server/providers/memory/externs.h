@@ -50,9 +50,7 @@
 
 extern REGPROV_PROVIDER_FUNCTION_TABLE gRegMemProviderAPITable;
 
-extern PREG_DB_CONNECTION ghCacheConnection;
-
-PREGMEM_NODE ghMemRegRoot;
+extern PREG_DB_CONNECTION gMemRegRoot;
 
 extern pthread_mutex_t gMemRegDbMutex;
 extern BOOLEAN gbInLockDbMutex;

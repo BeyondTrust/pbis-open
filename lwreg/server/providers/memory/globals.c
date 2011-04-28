@@ -42,9 +42,8 @@
 #include "includes.h"
 #include "memstore_p.h"
 
-PREG_DB_CONNECTION ghCacheConnection;
+PREG_DB_CONNECTION gMemRegRoot;
 
-PREGMEM_NODE ghMemRegRoot;
 
 const DWORD dwDefaultCacheSize = 1000;
 

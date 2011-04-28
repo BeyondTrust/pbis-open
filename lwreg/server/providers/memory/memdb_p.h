@@ -5,7 +5,7 @@ typedef struct _REGMEM_NODE *PMEMREG_STORE_NODE;
 typedef struct _REG_DB_CONNECTION
 {
     PMEMREG_STORE_NODE pMemReg;
-    pthread_rwlock_t lock;
+    pthread_rwlock_t Mutex;
 } REG_DB_CONNECTION, *PREG_DB_CONNECTION;
 
 
