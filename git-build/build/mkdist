@@ -23,11 +23,11 @@ mkdir $BUILD_ROOT/../${TARGET} || exit 1
 for dir in ${DIRS}; do
     echo "Copying ${dir}..."
     rsync -a --exclude=.git* --exclude=.svn --exclude=*~ --exclude=*bak \
-	${BUILD_ROOT}/${dir} ${BUILD_ROOT}/../${TARGET}/ || exit 1
+        ${BUILD_ROOT}/${dir} ${BUILD_ROOT}/../${TARGET}/ || exit 1
 done
 
 for file in ${FILES}; do
-    cp -p ${file} ${BUILD_ROOT}/../${TARGET}/ || exit 1
+    cp -p ${BUILD_ROOT}/${file} ${BUILD_ROOT}/../${TARGET}/ || exit 1
 done
 
 cd $BUILD_ROOT/..
