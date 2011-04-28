@@ -6,3 +6,5 @@ I never knew you could use function pointers in shell script.
 Why are my ping times over 1 sec?
 Workloads, like people, are rarely objective.
 No one cares about performance until it's not there.
+It does work. I unfortunately did not just create this program for fun...
+MakeKitBuild: Proof recursive make considered harmful.
