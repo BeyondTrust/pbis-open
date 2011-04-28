@@ -55,18 +55,19 @@ make()
             LIBDEPS="$LIB_ICONV $LIB_DL $LIB_XNET" \
             HEADERDEPS="$LWMSG_HEADER_DEPS" \
             SYMFILE="liblwmsg_nothr.sym"
-    mk_multiarch_done        
 
-    mk_library \
-        LIB=lwmsg \
-        CPPFLAGS="$LWMSG_CPPFLAGS" \
-        CFLAGS="$LWMSG_CFLAGS" \
-        LDFLAGS="$LWMSG_LDFLAGS" \
-        SOURCES="$LWMSG_SOURCES" \
-        INCLUDEDIRS="../include" \
-        LIBDEPS="lwmsg_nothr lwbase $LIB_RT $LIB_PTHREAD $LIB_XNET" \
-        HEADERDEPS="$LWMSG_HEADER_DEPS" \
-        SYMFILE="liblwmsg.sym"
+        mk_library \
+            LIB=lwmsg \
+            CPPFLAGS="$LWMSG_CPPFLAGS" \
+            CFLAGS="$LWMSG_CFLAGS" \
+            LDFLAGS="$LWMSG_LDFLAGS" \
+            SOURCES="$LWMSG_SOURCES" \
+            INCLUDEDIRS="../include" \
+            LIBDEPS="lwmsg_nothr lwbase $LIB_RT $LIB_PTHREAD $LIB_XNET" \
+            HEADERDEPS="$LWMSG_HEADER_DEPS" \
+            SYMFILE="liblwmsg.sym"
+
+    mk_multiarch_done
         
     mk_program \
         PROGRAM=lwma \
