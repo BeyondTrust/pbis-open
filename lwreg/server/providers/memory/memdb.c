@@ -631,13 +631,15 @@ fprintf(dbgfp, "pfImportFile: type=%d valueName=%s\n",
                     pData = pwszStringData;
                 }
             }
+
+            /* Add empty placeholder node to contain attributes added below */
             status = MemRegStoreAddNodeValue(
                          pImportCtx->hSubKey,
                          pwszValueName,
                          0, // Not used?
                          dataType,
-                         pData,
-                         dwDataLen);
+                         NULL, 
+                         0);
             BAIL_ON_NT_STATUS(status);
             status = MemRegStoreFindNodeValue(
                          pImportCtx->hSubKey,
