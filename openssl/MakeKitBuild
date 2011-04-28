@@ -71,8 +71,18 @@ make()
         openssl/cast.h \
         openssl/rand.h"
 
+    OPENSSL_MISC="/
+        ${MK_PREFIX}/ssl/openssl.cnf \
+        ${MK_PREFIX}/ssl/misc/CA.pl \
+        ${MK_PREFIX}/ssl/misc/CA.sh \
+        ${MK_PREFIX}/ssl/misc/c_info \
+        ${MK_PREFIX}/ssl/misc/c_issuer \
+        ${MK_PREFIX}/ssl/misc/c_name \
+        ${MK_PREFIX}/ssl/misc/c_hash"
+
     lw_openssl \
         HEADERS="$OPENSSL_HEADERS" \
+        TARGETS="$OPENSSL_MISC" \
         VERSION="0.9.8" \
         LIBS="ssl crypto"
 }
@@ -101,7 +111,7 @@ _lw_openssl()
 # OpenSSL can't be built with the usual mk_autotools stuff
 lw_openssl()
 {
-    mk_push_vars LIBS HEADERS CPPFLAGS CFLAGS LDFLAGS BUILDDIR INSTALLDIR VERSION suffix stamp item
+    mk_push_vars TARGETS LIBS HEADERS CPPFLAGS CFLAGS LDFLAGS BUILDDIR INSTALLDIR VERSION suffix stamp item
     mk_parse_params
 
     if [ "$MK_SYSTEM" = "host" -a "$MK_HOST_MULTIARCH" = "combine" ]
@@ -152,7 +162,7 @@ lw_openssl()
     # checks for it succeed.
 
     mk_unquote_list "$HEADERS"
-    for item in "$@"
+    for item
     do
         mk_target \
             TARGET="${MK_INCLUDEDIR}/$item" \
@@ -162,7 +172,7 @@ lw_openssl()
     done
     
     mk_unquote_list "$LIBS"
-    for item in "$@"
+    for item
     do
         mk_target \
             TARGET="${MK_LIBDIR}/lib${item}.la" \
@@ -187,6 +197,14 @@ lw_openssl()
         esac
 
         mk_declare_internal_library "$item"
+    done
+
+    mk_unquote_list "$TARGETS"
+    for item
+    do
+        mk_target \
+            TARGET="$item" \
+            DEPS="$stamp"
     done
     
     mk_pop_vars
@@ -387,7 +405,11 @@ stage_openssl()
 
     mk_mkdir "${2}${MK_INCLUDEDIR}/openssl"
     mk_run_or_fail mv -f "${3}/.install${MK_PREFIX}/include/openssl/"* "${2}${MK_INCLUDEDIR}/openssl"
-    
+
+    mk_mkdir "${2}${MK_PREFIX}/ssl/misc"
+    mk_run_or_fail mv -f "${3}/.install${MK_PREFIX}/ssl/openssl.cnf" "${2}${MK_PREFIX}/ssl/"
+    mk_run_or_fail mv -f "${3}/.install${MK_PREFIX}/ssl/misc/"* "${2}${MK_PREFIX}/ssl/misc/"
+  
     # Touch stamp file
     mk_run_or_fail touch "$1"
 
