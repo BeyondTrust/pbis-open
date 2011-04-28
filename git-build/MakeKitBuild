@@ -5,7 +5,7 @@ LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv \
 SUBDIRS="$LW_ALL_BUNDLED \
          lwbase lwmsg lwreg lwadvapi netlogon \
          lwio libschannel dcerpc centutils lwsm eventlog lsass lwdns \
-         srvsvc lwnetapi lwtools domainjoin config package"
+         srvsvc lwnetapi lwtools domainjoin lwconfig config package"
 
 
 defaults()
@@ -39,7 +39,7 @@ option()
     _LW_BUNDLED="$LW_BUNDLED"
 
     unset LW_BUNDLED
-    
+
     for i in ${_LW_BUNDLED}
     do
         case "$i" in
@@ -62,7 +62,7 @@ configure()
 {
     mk_export LW_VERSION="6.1.0"
     mk_export LW_BUNDLED
-    
+
     mk_msg "configuring Likewise Open $LW_VERSION"
     mk_msg "using bundled libraries: $LW_BUNDLED"
 
@@ -80,7 +80,7 @@ make()
     do
         lw_use_bundled "$comp" && bundled_targets="$bundled_targets @$comp"
     done
-            
+
     mk_target \
         TARGET="@bundled" \
         DEPS="$bundled_targets @lwreg/libedit @dcerpc/flex-2.5.4"
@@ -125,7 +125,7 @@ lw_print_features()
     printf -- "\n---\nConfiguration summary\n---\n\n"
 
     set -- ${MK_HOST_ISAS}
-    
+
     if [ "$#" -gt 1 -a "$MK_HOST_MULTIARCH" != "none" ]
     then
         lw_print_feature "Host system" "$MK_HOST_OS ($MK_HOST_MULTIARCH $MK_HOST_ISAS)"
