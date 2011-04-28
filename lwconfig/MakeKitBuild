@@ -49,4 +49,6 @@ configure()
         lwadvapi.h \
         reg/lwreg.h \
         reg/regutil.h
+
+    mk_output_file etc/lwconfig.xml
 }
