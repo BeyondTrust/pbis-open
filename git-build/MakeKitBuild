@@ -5,7 +5,7 @@ LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv \
 SUBDIRS="$LW_ALL_BUNDLED \
          lwbase lwmsg lwreg lwadvapi netlogon \
          lwio libschannel dcerpc centutils lwsm eventlog lsass lwdns \
-         srvsvc lwnetapi lwtools domainjoin lwconfig config package"
+         srvsvc lwnetapi lwtools domainjoin lwconfig samba-interop config package"
 
 
 defaults()
