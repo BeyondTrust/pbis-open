@@ -3295,12 +3295,6 @@ AD_FindObjectsByList(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (sFoundInCache == 0 && sFoundInAD == 0)
-    {
-        dwError = LW_ERROR_NO_SUCH_OBJECT;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
     dwError = LwAllocateMemory(
                     sCount * sizeof(*ppResults),
                     OUT_PPVOID(&ppResults));
