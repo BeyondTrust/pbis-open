@@ -296,8 +296,9 @@ configure()
 
     # Check for stuff for build system (needed by idl compiler)
     mk_system build
-        rpc_feature_flags
         mk_check_headers nl_types.h
+        # Turn off warning about idl filenames
+        mk_define DISABLE_SYSIDL_WARNING 1
     mk_system host
 
     # Programs

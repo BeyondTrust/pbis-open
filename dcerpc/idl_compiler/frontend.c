@@ -899,6 +899,7 @@ static boolean parse_idl        /* Returns true on success */
         FILE_parse(file_name, NULL, file_name_part, file_type_part);
         strcat(file_name_part, file_type_part);
 
+#ifndef DISABLE_SYSIDL_WARNING
         /*
          * Issue a warning on any system IDL files a user might
          * accidentally chose one of those name and get strange behavior.
@@ -913,6 +914,7 @@ static boolean parse_idl        /* Returns true on success */
         else if (!strcmp(file_name_part,"rpctypes.idl")) name_warning = true;
         else if (!strcmp(file_name_part,"twr.idl")) name_warning = true;
         else if (!strcmp(file_name_part,"uuid.idl")) name_warning = true;
+#endif
 
         if (name_warning)
             message_print(NIDL_SYSIDLNAME,file_name);
