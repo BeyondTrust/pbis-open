@@ -11,6 +11,7 @@ make()
 
     lw_dceidl \
 	IDL="../idl/eventlog.idl" \
+	IDLFLAGS="-sstub_pref Srv" \
         INCLUDEDIRS=". ../include" \
 	SSTUB="eventlog_sstub.c" \
 	HEADER="eventlog_h.h"

@@ -43,7 +43,7 @@
 #include "includes.h"
 
 DWORD
-RpcEvtOpen(
+SrvRpcEvtOpen(
     handle_t bindingHandle,
     RPC_LW_EVENTLOG_HANDLE *phEventlog
     )
@@ -56,7 +56,7 @@ RpcEvtOpen(
                     sizeof(*pConn),
                     (PVOID *)&pConn);
 
-    pConn->pMagic = &RpcEvtOpen;
+    pConn->pMagic = &SrvRpcEvtOpen;
 
     TRY
     {
@@ -119,7 +119,7 @@ error:
 }
 
 DWORD
-RpcEvtClose(
+SrvRpcEvtClose(
     RPC_LW_EVENTLOG_HANDLE *phEventlog
     )
 {
@@ -132,7 +132,7 @@ RpcEvtClose(
         BAIL_ON_EVT_ERROR(dwError);
     }
     pConn = *phEventlog;
-    if (pConn == NULL || pConn->pMagic != &RpcEvtOpen)
+    if (pConn == NULL || pConn->pMagic != &SrvRpcEvtOpen)
     {
         dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_EVT_ERROR(dwError);
@@ -158,11 +158,11 @@ RPC_LW_EVENTLOG_HANDLE_rundown(
     rpc_ss_context_t context_handle
     )
 {
-    RpcEvtClose((RPC_LW_EVENTLOG_HANDLE*)&context_handle);
+    SrvRpcEvtClose((RPC_LW_EVENTLOG_HANDLE*)&context_handle);
 }
 
 DWORD
-RpcEvtGetRecordCount(
+SrvRpcEvtGetRecordCount(
     RPC_LW_EVENTLOG_HANDLE pConn,
     WCHAR * pSqlFilter,
     DWORD * pNumMatched
@@ -171,7 +171,7 @@ RpcEvtGetRecordCount(
     DWORD  dwError = 0;
     sqlite3 *pDb = NULL;
 
-    if (pConn == NULL || pConn->pMagic != &RpcEvtOpen)
+    if (pConn == NULL || pConn->pMagic != &SrvRpcEvtOpen)
     {
         dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_EVT_ERROR(dwError);
@@ -234,7 +234,7 @@ RpcFree(
 }
 
 DWORD
-RpcEvtReadRecords(
+SrvRpcEvtReadRecords(
     RPC_LW_EVENTLOG_HANDLE pConn,
     DWORD MaxResults,
     WCHAR * pSqlFilter,
@@ -244,7 +244,7 @@ RpcEvtReadRecords(
     DWORD  dwError = 0;
     sqlite3 *pDb = NULL;
 
-    if (pConn == NULL || pConn->pMagic != &RpcEvtOpen)
+    if (pConn == NULL || pConn->pMagic != &SrvRpcEvtOpen)
     {
         dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_EVT_ERROR(dwError);
@@ -283,7 +283,7 @@ error:
 
 
 DWORD
-RpcEvtWriteRecords(
+SrvRpcEvtWriteRecords(
     RPC_LW_EVENTLOG_HANDLE pConn,
     DWORD Count,
     LW_EVENTLOG_RECORD* pRecords 
@@ -292,7 +292,7 @@ RpcEvtWriteRecords(
     DWORD  dwError = 0;
     sqlite3 *pDb = NULL;
 
-    if (pConn == NULL || pConn->pMagic != &RpcEvtOpen)
+    if (pConn == NULL || pConn->pMagic != &SrvRpcEvtOpen)
     {
         dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_EVT_ERROR(dwError);
@@ -324,7 +324,7 @@ error:
 }
 
 DWORD
-RpcEvtDeleteRecords(
+SrvRpcEvtDeleteRecords(
     RPC_LW_EVENTLOG_HANDLE pConn,
     WCHAR *pSqlFilter
     )
@@ -332,7 +332,7 @@ RpcEvtDeleteRecords(
     DWORD dwError = 0;
     sqlite3 *pDb = NULL;
 
-    if (pConn == NULL || pConn->pMagic != &RpcEvtOpen)
+    if (pConn == NULL || pConn->pMagic != &SrvRpcEvtOpen)
     {
         dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_EVT_ERROR(dwError);

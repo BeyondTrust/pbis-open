@@ -44,5 +44,5 @@ CLEANFILES = \
 BUILT_SOURCES = eventlog_h.h
 
 eventlog_h.h eventlog_sstub.c: $(idl_srcdir)/eventlog.idl
-	$(IDL) $(IDLFLAGS) -keep c_source -header eventlog_h.h -I$(idl_srcdir) -I$(top_srcdir)/include $<
+	$(IDL) $(IDLFLAGS) -keep c_source -header eventlog_h.h -sstub_pref Srv -I$(idl_srcdir) -I$(top_srcdir)/include $<
 
