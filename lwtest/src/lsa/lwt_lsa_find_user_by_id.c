@@ -462,7 +462,7 @@ ValidateForInvalidParams(
                                 &pUserInfo
                                 );
 
-            if ( LW_ERROR_INVALID_PARAMETER != dwLocalError )
+            if ( pInvalidData->dwErrorCode != dwLocalError )
             {
                 dwError = LW_ERROR_TEST_FAILED;
                 snprintf( szTestMsg, 

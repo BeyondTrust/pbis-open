@@ -218,7 +218,7 @@ ValidateForInvalidParams(
                                     pInvalidData->pszUserName,
                                     NULL);
 
-            if ( LW_ERROR_NO_SUCH_USER != dwLocalError )
+            if ( pInvalidData->dwErrorCode != dwLocalError )
             {
                 dwError = LW_ERROR_TEST_FAILED;
                 snprintf( 
