@@ -88,6 +88,7 @@ common_files()
         "${MK_SBINDIR}/*" \
         "${MK_PREFIX}/data/VERSION" \
         "${LW_CONFIGDIR}/*" \
+        "${LW_CACHEDIR}/*" \
         "${MK_DATADIR}/likewise.pam-auth-update" \
         "${MK_LIBDIR}/*${MK_LIB_EXT}" \
         "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
