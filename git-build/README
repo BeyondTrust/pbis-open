@@ -150,12 +150,12 @@ utility.
   Arguments: 'lsassd' '--syslog'
   Dependencies: netlogon lwio lwreg rdr
 
-  $ lwsm stop-all lsass
+  $ lwsm stop lsass
   Stopping service reverse dependency: srvsvc
   Stopping service reverse dependency: srv
   Stopping service: lsass
 
-  $ lwsm start-all srvsvc
+  $ lwsm start srvsvc
   Starting service dependency: lsass
   Starting service dependency: srv
   Starting service: srvsvc
