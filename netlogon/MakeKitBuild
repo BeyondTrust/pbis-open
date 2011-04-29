@@ -22,11 +22,11 @@ configure()
 
     mk_check_headers \
         FAIL=yes \
-        reg/lwreg.h lwadvapi.h reg/regutil.h ldap.h
+        reg/lwreg.h lwadvapi.h reg/regutil.h ldap.h krb5.h krb5/locate_plugin.h
 
     mk_check_libraries \
         FAIL=yes \
-        rsutils regclient lwadvapi ldap_r
+        rsutils regclient lwadvapi ldap_r krb5 k5crypto
 
     mk_check_headers \
         sys/types.h netinet/in.h netinet/in6.h arpa/nameser.h
