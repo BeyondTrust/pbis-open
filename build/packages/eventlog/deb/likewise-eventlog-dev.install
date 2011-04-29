@@ -1,2 +1,0 @@
-__PKG_PREFIX/include
-__PKG_PREFIX/lib*/{*.a,*.la}

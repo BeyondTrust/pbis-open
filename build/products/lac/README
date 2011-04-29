@@ -1,6 +1,0 @@
-Likewise
---------
-
-To launch the Likewise Administration Console from a command-line interface, run:
-
-	/opt/likewise/bin/lacconsole

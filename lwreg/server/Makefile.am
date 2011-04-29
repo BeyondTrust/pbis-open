@@ -1,5 +1,0 @@
-SUBDIRS =             \
-    providers         \
-    api               \
-    lwregd 
-

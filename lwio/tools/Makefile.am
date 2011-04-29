@@ -1,5 +1,0 @@
-SUBDIRS = \
-    lwio-driver \
-    lwio-cli \
-    lwio-copy \
-    lwio-tool

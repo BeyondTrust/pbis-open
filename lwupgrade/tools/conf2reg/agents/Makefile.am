@@ -1,8 +1,0 @@
-SUBDIRS = \
-    eventlog \
-    lsass \
-    netlogon \
-    pstore-sqlite \
-    testparse \
-    testsambaparse
-

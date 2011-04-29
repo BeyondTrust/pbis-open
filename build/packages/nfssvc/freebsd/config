@@ -1,2 +1,0 @@
-DESCRIPTION="Likewise NFS Service"
-DEPENDS="likewise-base"

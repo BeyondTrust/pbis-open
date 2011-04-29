@@ -1,5 +1,0 @@
-BUILD_VENDOR="bluecoat"
-BUILD_PREFIX="/opt/likewise"
-BUILD_SYSCONFDIR="/etc/likewise"
-BUILD_LOCALSTATEDIR="/var"
-BUILD_PRODUCTS="lwibc"

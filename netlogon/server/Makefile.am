@@ -1,5 +1,0 @@
-
-SUBDIRS = \
-         ipc       \
-         api       \
-         netlogond

@@ -1,9 +1,0 @@
-#!/bin/sh
-
-# if this is a local deinstall, stop the Likewise NFS Service daemon
-if [ -z "$PKG_INSTALL_ROOT" ]
-then
-   LWNFSSVCD=`ps -e -o pid,comm | grep nfssvcd | awk '{print $1}'`
-   [ ! -z "$LWNFSSVCD" ] && kill -TERM $LWNFSSVCD
-   sleep 2
-fi

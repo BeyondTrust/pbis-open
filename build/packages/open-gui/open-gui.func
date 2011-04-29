@@ -1,9 +1,0 @@
-PKG_DESC="Likewise Open GUI"
-PKG_COMPONENTS="domainjoin"
-
-function package_populate
-{
-    populate_component domainjoin-gtk
-
-    strip_common
-}
