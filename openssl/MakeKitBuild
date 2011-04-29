@@ -340,7 +340,7 @@ build_openssl()
     unset MAKE MFLAGS MAKEFLAGS
     export MAKE MFLAGS MAKEFLAGS
     
-    case "$MK_HOST_OS" in
+    case "$MK_OS" in
         linux)
             # Ensure executable stack bit is not set in resulting library
             CC="$MK_CC -Wa,--noexecstack"
@@ -357,6 +357,21 @@ build_openssl()
         *)
             CC="$MK_CC"
             SHARED_LDFLAGS="-shared"
+            ;;
+    esac
+
+    case "${MK_OS}:${MK_CC_LD_STYLE}" in
+        *:gnu)
+            SHARED_LDFLAGS="$SHARED_LDFLAGS -Wl,-rpath,$MK_LIBDIR"
+            ;;
+        solaris:native)
+            SHARED_LDFLAGS="$SHARED_LDFLAGS -Wl,-R$MK_LIBDIR"
+            ;;
+        aix:native)
+            SHARED_LDFLAGS="$SHARED_LDFLAGS -Wl,-blibpath:$MK_LIBDIR:/usr/lib:/lib"
+            ;;
+        hpux:native)
+            SHARED_LDFLAGS="$SHARED_LDFLAGS -Wl,+b,$MK_LIBDIR"
             ;;
     esac
 
