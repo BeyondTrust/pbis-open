@@ -654,6 +654,7 @@ MemRegStoreDeleteNodeValue(
 {
     NTSTATUS status = 0;
     BOOLEAN bFoundValue = FALSE;
+    BOOLEAN bValueDeleted = FALSE;
     DWORD valueIndex = 0;
 
     if (!Name)
@@ -674,6 +675,7 @@ MemRegStoreDeleteNodeValue(
         {
             LWREG_SAFE_FREE_MEMORY(hDb->Values[valueIndex]->Data);
             hDb->Values[valueIndex]->DataLen = 0;
+            bValueDeleted = TRUE;
         }
 
         if (hDb->Values[valueIndex]->Attributes.ValueType == 0)
@@ -695,7 +697,10 @@ MemRegStoreDeleteNodeValue(
         }
         else
         {
-            status = STATUS_CANNOT_DELETE;
+            if (!bValueDeleted)
+            {
+                status = STATUS_CANNOT_DELETE;
+            }
         }
     }
     else
