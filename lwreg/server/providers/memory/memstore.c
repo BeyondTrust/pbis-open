@@ -653,29 +653,56 @@ MemRegStoreDeleteNodeValue(
     IN PCWSTR Name)
 {
     NTSTATUS status = 0;
-    PREGMEM_VALUE nodeValue = NULL;
+    BOOLEAN bFoundValue = FALSE;
+    DWORD valueIndex = 0;
 
-    status = MemRegStoreFindNodeValue(
-                 hDb,
-                 Name,
-                 &nodeValue);
-    BAIL_ON_NT_STATUS(status);
-   
-    if (nodeValue->Data)
+    if (!Name)
     {
-        LWREG_SAFE_FREE_MEMORY(nodeValue->Data);
-        nodeValue->DataLen = 0;
+        Name = (PCWSTR) L"";
+    }
+    for (valueIndex=0; valueIndex<hDb->ValuesLen; valueIndex++)
+    {
+        if (LwRtlWC16StringIsEqual(Name, hDb->Values[valueIndex]->Name, FALSE))
+        {
+            bFoundValue = TRUE;
+            break;
+        }
+    }
+    if (bFoundValue)
+    {
+        if (hDb->Values[valueIndex]->Data)
+        {
+            LWREG_SAFE_FREE_MEMORY(hDb->Values[valueIndex]->Data);
+            hDb->Values[valueIndex]->DataLen = 0;
+        }
+
+        if (hDb->Values[valueIndex]->Attributes.ValueType == 0)
+        {
+            if (valueIndex+1 < hDb->ValuesLen)
+            {
+                memmove(
+                    &hDb->Values[valueIndex],
+                    &hDb->Values[valueIndex+1],
+                    (hDb->ValuesLen - valueIndex - 1) * sizeof(PREGMEM_VALUE));
+            }
+            hDb->Values[hDb->ValuesLen-1] = NULL;
+            hDb->ValuesLen--;
+            if (hDb->ValuesLen == 0)
+            {
+                LWREG_SAFE_FREE_MEMORY(hDb->Values);
+                hDb->Values = NULL;
+            }
+        }
+        else
+        {
+            status = STATUS_CANNOT_DELETE;
+        }
     }
     else
     {
-        status = STATUS_CANNOT_DELETE;
+        status = STATUS_OBJECT_NAME_NOT_FOUND;
     }
-
-cleanup:
     return status;
-
-error:
-    goto cleanup;
 }
 
 
