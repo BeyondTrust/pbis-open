@@ -904,6 +904,7 @@ MemDbCreateKeyEx(
     )
 {
     NTSTATUS status = 0;
+    DWORD dwDisposition = 0;
     PMEMREG_STORE_NODE hParentKey = NULL;
     PMEMREG_STORE_NODE hSubKey = NULL;
     PWSTR pwszTmpFullPath = NULL;
@@ -966,9 +967,20 @@ MemDbCreateKeyEx(
                              NULL,
                              &hParentKey);
             BAIL_ON_NT_STATUS(status);
+            dwDisposition = REG_CREATED_NEW_KEY;
+            *pphSubKey = hParentKey;
+        }
+        else if (bEndOfString)
+        {
+            dwDisposition = REG_OPENED_EXISTING_KEY;
             *pphSubKey = hParentKey;
         }
     } while (status == 0 && !bEndOfString);
+
+    if (pdwDisposition)
+    {
+        *pdwDisposition = dwDisposition;
+    }
 
 cleanup:
     LWREG_SAFE_FREE_MEMORY(pwszTmpFullPath);
