@@ -415,7 +415,7 @@ ValidateForNullParams(
                                             &dwNumGroups, 
                                             &pGid);
 
-    if ( LW_ERROR_INVALID_LSA_CONNECTION != dwLocalError ) 
+    if ( LW_ERROR_INVALID_PARAMETER != dwLocalError ) 
     {
         dwError = LW_ERROR_TEST_FAILED;    
         snprintf( szTestMsg, 

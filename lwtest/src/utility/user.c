@@ -140,6 +140,17 @@ GetUser(
         free(pszStr);
         pszStr = NULL;
     }
+    
+    dwError = Lwt_LsaTestGetValue(pLwtData, "PasswordExpired", &pszStr);
+    if (dwError && dwError != LW_ERROR_CSV_NO_SUCH_FIELD)
+        goto error;
+    
+    if (pszStr)
+    {
+        pUser->dwPasswordExpired = atoi(pszStr);
+        free(pszStr);
+        pszStr = NULL;
+    }
 
     dwError = Lwt_LsaTestGetValue(pLwtData, "UnixUid", &pUser->pszUnixUid);
     if (dwError && dwError != LW_ERROR_CSV_NO_SUCH_FIELD)
