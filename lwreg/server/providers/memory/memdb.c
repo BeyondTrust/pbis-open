@@ -388,14 +388,14 @@ MemDbExportToFileThread(
             }
             else
             {
-                pthread_rwlock_rdlock(&gMemRegRoot->Mutex);
+                pthread_rwlock_rdlock(&gMemRegRoot->lock);
                 MemDbRecurseRegistry(
                              NULL,
                              &regDbConn,
                              NULL,
                              pfMemRegExportToFile,
                              exportCtx);
-                pthread_rwlock_unlock(&gMemRegRoot->Mutex);
+                pthread_rwlock_unlock(&gMemRegRoot->lock);
                 fclose(exportCtx->wfp);
                 exportCtx->wfp = NULL;
             }
@@ -854,7 +854,6 @@ MemDbAccessCheckKey(
     }
     else
     {
-        pthread_rwlock_rdlock(&gMemRegRoot->Mutex);
         if (hDb->pMemReg && hDb->pMemReg->pNodeSd)
         {
             SecurityDescriptor =
@@ -862,7 +861,6 @@ MemDbAccessCheckKey(
             SecurityDescriptorLen =
                 hDb->pMemReg->pNodeSd->SecurityDescriptorLen;
         }
-        pthread_rwlock_unlock(&gMemRegRoot->Mutex);
     }
 
     if (pServerState && pServerState->pToken &&
@@ -1025,7 +1023,6 @@ MemDbQueryInfoKey(
     /*
      * Query info about keys
      */
-    pthread_rwlock_rdlock(&gMemRegRoot->Mutex);
 
     hKey = hDb->pMemReg;
     if (pcSubKeys)
@@ -1087,7 +1084,6 @@ MemDbQueryInfoKey(
     }
 
 cleanup:
-    pthread_rwlock_unlock(&gMemRegRoot->Mutex);
     return status;
 
 error:
@@ -1112,7 +1108,6 @@ MemDbEnumKeyEx(
     PMEMREG_STORE_NODE hKey = NULL;
     DWORD keyLen = 0;
 
-    pthread_rwlock_rdlock(&gMemRegRoot->Mutex);
 
     hKey = hDb->pMemReg;
     if (dwIndex >= hKey->NodesLen)
@@ -1135,7 +1130,6 @@ MemDbEnumKeyEx(
     *pcName = keyLen;
 
 cleanup:
-    pthread_rwlock_unlock(&gMemRegRoot->Mutex);
     return status;
 
 error:
@@ -1321,7 +1315,6 @@ MemDbEnumValue(
         BAIL_ON_NT_STATUS(status);
     }
 
-    pthread_rwlock_rdlock(&gMemRegRoot->Mutex);
 
     memcpy(pValueName, hKey->Values[dwIndex]->Name, valueLen * sizeof(WCHAR));
     *pcchValueName = valueLen;
@@ -1355,7 +1348,6 @@ MemDbEnumValue(
     }
 
 cleanup:
-    pthread_rwlock_unlock(&gMemRegRoot->Mutex);
     return status;
 
 error:
@@ -1376,7 +1368,6 @@ MemDbGetKeyAcl(
     BAIL_ON_NT_INVALID_POINTER(hDb);
     hKey = hDb->pMemReg;
 
-    pthread_rwlock_rdlock(&gMemRegRoot->Mutex);
     if (hKey->pNodeSd)
     {
         if (pSecDescLen)
@@ -1391,7 +1382,6 @@ MemDbGetKeyAcl(
         }
     }
 cleanup:
-    pthread_rwlock_unlock(&gMemRegRoot->Mutex);
     return status;
 
 error:
@@ -1420,7 +1410,6 @@ MemDbSetKeyAcl(
     BAIL_ON_NT_INVALID_POINTER(pSecDescRel);
 
     hKey = hDb->pMemReg;
-    pthread_rwlock_wrlock(&gMemRegRoot->Mutex);
 
     if ((hKey->pNodeSd &&
          memcmp(hKey->pNodeSd->SecurityDescriptor,
@@ -1453,7 +1442,6 @@ MemDbSetKeyAcl(
     }
 
 cleanup:
-    pthread_rwlock_unlock(&gMemRegRoot->Mutex);
     return status;
 
 error:

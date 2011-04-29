@@ -107,7 +107,7 @@ MemProvider_Initialize(
     pConn->pMemReg = pDbRoot;
     gMemRegRoot = pConn;
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
-        pthread_rwlock_init(&pConn->Mutex, NULL)));
+        pthread_rwlock_init(&pConn->lock, NULL)));
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
         pthread_mutex_init(&pConn->ExportMutex, NULL)));
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
@@ -156,8 +156,9 @@ MemProvider_Shutdown(
     REG_DB_CONNECTION regDbConn = {0};
     NTSTATUS status = 0;
     PWSTR pwszRootKey = NULL;
+    BOOLEAN bInLock = FALSE;
 
-    pthread_rwlock_wrlock(&gMemRegRoot->Mutex);
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gMemRegRoot->lock);
     status = MemDbExportToFile(MEMDB_EXPORT_FILE);
     if (status)
     {
@@ -172,7 +173,7 @@ MemProvider_Shutdown(
     }
 
 cleanup:
-    pthread_rwlock_unlock(&gMemRegRoot->Mutex);
+    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
     LWREG_SAFE_FREE_MEMORY(pwszRootKey);
 }
 
@@ -202,7 +203,9 @@ MemCreateKeyEx(
     ACCESS_MASK AccessGranted = 0;
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor = NULL;
     DWORD SecurityDescriptorLen = 0;
+    BOOLEAN bInLock = FALSE;
 
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gMemRegRoot->lock);
     if (!hKey)
     {
         status = LwRtlWC16StringAllocateFromCString(
@@ -283,6 +286,7 @@ MemCreateKeyEx(
     MemDbExportEntryChanged();
 
 cleanup:
+    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
     LWREG_SAFE_FREE_MEMORY(pwszRootKey);
     return status;
 
@@ -311,6 +315,7 @@ MemOpenKeyEx(
     PMEMREG_STORE_NODE pSubKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
+    BOOLEAN bInLock = FALSE;
 
     if (!pServerState->pToken)
     {
@@ -320,6 +325,7 @@ MemOpenKeyEx(
         BAIL_ON_NT_STATUS(status);
     }
 
+    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &gMemRegRoot->lock);
     if (!hKey)
     {
         // Search for specified root key. If NULL, return HKTM.
@@ -353,6 +359,7 @@ MemOpenKeyEx(
 
 
 cleanup:
+    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
     return status;
 
 error:
@@ -390,6 +397,7 @@ MemDeleteKey(
     DWORD SecurityDescriptorLen = 0;
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
     ACCESS_MASK AccessGranted = 0;
+    BOOLEAN bInLock = FALSE;
 
     if (pKeyHandle && pKeyHandle->pKey->hKey->pNodeSd)
     {
@@ -423,6 +431,8 @@ MemDeleteKey(
     {
         hParentKey = gMemRegRoot->pMemReg;
     }
+
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gMemRegRoot->lock);
     status = MemRegStoreFindNode(
                  hParentKey,
                  pSubKey,
@@ -441,6 +451,7 @@ MemDeleteKey(
 
     MemDbExportEntryChanged();
 cleanup:
+    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
     return status;
 error:
     goto cleanup;
@@ -468,10 +479,13 @@ MemQueryInfoKey(
     NTSTATUS status = 0;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     REG_DB_CONNECTION regDbConn = {0};
+    BOOLEAN bInLock = FALSE;
 
     BAIL_ON_NT_STATUS(status);
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+
+    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &gMemRegRoot->lock);
     status = MemDbQueryInfoKey(
                  Handle,
                  &regDbConn,
@@ -493,6 +507,7 @@ MemQueryInfoKey(
                  );
 
 cleanup:
+    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
     return status;
 
 error:
@@ -516,9 +531,11 @@ MemEnumKeyEx(
     NTSTATUS status = 0;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     REG_DB_CONNECTION regDbConn = {0};
+    BOOLEAN bInLock = FALSE;
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
 
+    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &gMemRegRoot->lock);
     status = MemDbEnumKeyEx(
                  Handle,
                  &regDbConn,
@@ -530,6 +547,7 @@ MemEnumKeyEx(
                  pcClass,
                  pftLastWriteTime
     );
+    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
 
     return status;
 }
@@ -549,8 +567,10 @@ MemSetValueEx(
     NTSTATUS status = 0;
     REG_DB_CONNECTION regDbConn = {0};
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
+    BOOLEAN bInLock = FALSE;
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gMemRegRoot->lock);
     status = MemDbSetValueEx(
                  Handle,
                  &regDbConn,
@@ -563,6 +583,7 @@ MemSetValueEx(
 
     MemDbExportEntryChanged();
 cleanup:
+    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
     return status;
 
 error:
@@ -586,7 +607,9 @@ MemGetValue(
     REG_DB_CONNECTION regDbConn = {0};
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+    BOOLEAN bInLock = FALSE;
 
+    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &gMemRegRoot->lock);
     status = MemDbGetValue(
                  Handle,
                  &regDbConn,
@@ -599,6 +622,7 @@ MemGetValue(
     BAIL_ON_NT_STATUS(status);
 
 cleanup:
+    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
     return status;
 
 error:
@@ -617,9 +641,11 @@ MemDeleteKeyValue(
     NTSTATUS status = 0;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
     PMEMREG_STORE_NODE hSubKey = NULL;
+    BOOLEAN bInLock = FALSE;
 
     hSubKey = pKeyHandle->pKey->hKey;
 
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gMemRegRoot->lock);
     if (pSubKey)
     {
         status = MemRegStoreFindNode(
@@ -634,6 +660,7 @@ MemDeleteKeyValue(
                  pValueName);
     MemDbExportEntryChanged();
 error:
+    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
     return status;
 }
 
@@ -648,7 +675,9 @@ MemDeleteValue(
     NTSTATUS status = 0;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
     PREGMEM_VALUE pRegValue = NULL;
+    BOOLEAN bInLock = FALSE;
 
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gMemRegRoot->lock);
     status = MemRegStoreFindNodeValue(
                  pKeyHandle->pKey->hKey,
                  pValueName,
@@ -664,7 +693,9 @@ MemDeleteValue(
     pRegValue->DataLen = 0;
    
     MemDbExportEntryChanged();
+
 cleanup:
+    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
     return status;
 
 error:
@@ -688,9 +719,11 @@ MemEnumValue(
     NTSTATUS status = 0;
     REG_DB_CONNECTION regDbConn = {0};
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
+    BOOLEAN bInLock = FALSE;
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
 
+    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &gMemRegRoot->lock);
     status = MemDbEnumValue(
                  Handle,
                  &regDbConn,
@@ -702,6 +735,7 @@ MemEnumValue(
                  pData,
                  pcbData);
 
+    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
     return status;
 }
 
@@ -716,17 +750,18 @@ MemDeleteTree(
     NTSTATUS status = 0;
     REG_DB_CONNECTION regDbConn = {0};
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
+    BOOLEAN bInLock = FALSE;
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
-    pthread_rwlock_wrlock(&gMemRegRoot->Mutex);
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gMemRegRoot->lock);
     status = MemDbRecurseDepthFirstRegistry(
                  Handle,
                  &regDbConn,
                  pwszSubKey,
                  pfDeleteNodeCallback,
                  NULL);
-    pthread_rwlock_unlock(&gMemRegRoot->Mutex);
     MemDbExportEntryChanged();
+    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
     return status;
 }
 
