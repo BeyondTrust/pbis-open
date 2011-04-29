@@ -5,6 +5,6 @@ make()
         SOURCES="conf2reg.c" \
         GROUPS="../agents/eventlog/confeventlog ../agents/lsass/conflsass ../agents/netlogon/confnetlogon ../agents/pstore-sqlite/confpstore-sqlite ../agents/testparse/conftestparse ../agents/testsambaparse/conftestsambaparse ../../../utils/upgradeutils" \
         INCLUDEDIRS=". ../../../include $SQLITE_INCLUDES" \
-        HEADERDEPS="" \
+        HEADERDEPS="lwerror.h lwstr.h lwmem.h" \
         LIBDEPS="lsapstore sqlite3"
 }

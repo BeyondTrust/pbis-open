@@ -4,6 +4,6 @@ make()
         GROUP=confnetlogon \
         SOURCES="netlogon.c" \
         INCLUDEDIRS="../../../../include" \
-        HEADERDEPS="" \
+        HEADERDEPS="lwerror.h lwstr.h lwmem.h" \
         LIBDEPS=""
 }

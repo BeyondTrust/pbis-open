@@ -41,8 +41,8 @@
 #include <lwerror.h>
 #include <lwstr.h>
 #include <lwmem.h>
-#include <lw/base.h>
-#include <reg/reg.h>
+
+#include <errno.h>
 
 #include "defs.h"
 #include "addef.h"

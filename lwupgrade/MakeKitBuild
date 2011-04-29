@@ -8,18 +8,16 @@ configure()
 
     mk_check_headers \
         FAIL=yes \
-        lwadvapi.h \
-        reg/lwreg.h \
-        reg/regutil.h
+        lwadvapi.h reg/lwreg.h reg/regutil.h sqlite3.h
+
+    mk_check_libraries \
+        FAIL=yes \
+        lwadvapi lwadvapi_nothr regclient rsutils sqlite3
 
     mk_check_headers \
-        stdlib.h sys\varargs.h strings.h unistd.h
+        stdlib.h sys/varargs.h strings.h unistd.h inttypes.h
 
     mk_check_functions \
-        HEADERDEPS="stdlib.h" \
-        strtol strtoll __strtoll
-
-    mk_check_functions \
-        HEADERDEPS="inttypes.h" \
-        __strtoll __strtoull
+        HEADERDEPS="stdlib.h inttypes.h" \
+        strtol strtoll __strtoll __strtoull
 }

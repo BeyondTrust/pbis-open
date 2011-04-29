@@ -4,6 +4,6 @@ make()
         GROUP=confeventlog \
         SOURCES="eventlog.c" \
         INCLUDEDIRS="../../../../include" \
-        HEADERDEPS="" \
+        HEADERDEPS="lwerror.h lwstr.h lwmem.h" \
         LIBDEPS=""
 }
