@@ -892,6 +892,7 @@ static LWMsgTypeSpec string_array_spec[] =
     LWMSG_STRUCT_BEGIN(string_array_struct),
     LWMSG_MEMBER_POINTER_BEGIN(string_array_struct, strings),
     LWMSG_PSTR,
+    LWMSG_ATTR_NOT_NULL,
     LWMSG_POINTER_END,
     LWMSG_ATTR_ZERO_TERMINATED,
     LWMSG_STRUCT_END,
@@ -906,14 +907,10 @@ MU_TEST(marshal, string_array)
         0xFF,
         /* (implicit) length of "strings" = 2 */
         0x00, 0x00, 0x00, 0x02,
-        /* strings[0] = set */
-        0xFF,
         /* strings[0] len */
         0x00, 0x00, 0x00, 0x03,
         /* strings[0] value */
         'f', 'o', 'o',
-        /* strings[1] = set */
-        0xFF,
         /* strings[1] len */
         0x00, 0x00, 0x00, 0x03,
         /* strings[1] value */
