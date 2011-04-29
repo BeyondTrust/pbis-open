@@ -29,9 +29,12 @@ make()
        parse_name.c    \
        svc_listen.c"
 
+    API_HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h dce/rpc.h"
+
     if [ "$HAVE_LIB_EVENTLOG" != "no" -a "$HAVE_EVENTLOG_H" != "no" ]
     then
         API_SOURCES="$API_SOURCES event.c lsaevent.c"
+        API_HEADERDEPS="$API_HEADERDEPS eventlog.h eventlog-record.h"
     fi
 
     mk_library \
@@ -40,6 +43,6 @@ make()
 	GROUPS="../privilege/privilege" \
 	CPPFLAGS="-DLW_ENABLE_THREADS" \
 	INCLUDEDIRS=". ../include ../../include" \
-	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h dce/rpc.h eventlog.h eventlog-record.h" \
+	HEADERDEPS="$API_HEADERDEPS" \
 	LIBDEPS="uuid lwadvapi_nothr lsacommon $LIB_EVENTLOG $LIB_PTHREAD $LIB_RT"
 }
