@@ -52,28 +52,50 @@ rewrite_la()
     mv "$LA.new" "$LA"
 }
 
-IMAGE="$1"
+print_help()
+{
+    echo "Usage: mk-image [ image_dir ]"
+    echo ""
+    echo "If not using buildenv, run this from your MakeKit build directory"
+    echo "If image_dir is not specified, ../Platform.image will be used"
+    
+    exit
+}
+
+IMAGE=""
+
+while [ "$#" -gt 0 ]
+do
+    case "$1" in
+        -h|--help) print_help;;
+        *) IMAGE="$1"; break;;
+    esac
+    
+    shift
+done
 
 [ -z "$IMAGE" ] && IMAGE="../Platform.image"
 
-if [ -z "${BUILD_MKOUT_ROOT}" ]
+if [ -n "${BUILD_MKOUT_ROOT}" ]
 then
-    BUILD_MKOUT_ROOT="`pwd`"
-fi
-
-if [ -n "${BUILD_DEBUG}" ]; then
-    TYPE=debug
+    if [ -n "${BUILD_DEBUG}" ]
+    then
+        TYPE=debug
+    else
+        TYPE=release
+    fi
+    BUILD_DIR="$BUILD_MKOUT_ROOT/$TYPE"
 else
-    TYPE=release
+    BUILD_DIR="`pwd`"
 fi
 
-[ -f "$BUILD_MKOUT_ROOT/$TYPE/Makefile" ] || fail "Please run from your MakeKit build directory or set BUILD_MKOUT_ROOT"
+[ -f "$BUILD_DIR/Makefile" ] || fail "Please run from your MakeKit build directory or set BUILD_MKOUT_ROOT"
 
 mkdir -p "$IMAGE/install"
 
 DESTDIR=`cd "$IMAGE/install" && pwd`
 
-( cd "$BUILD_MKOUT_ROOT/$TYPE" && make DESTDIR="$DESTDIR" install )
+( cd "$BUILD_DIR" && make DESTDIR="$DESTDIR" install )
 
 find "$IMAGE/install" -name '*.la' | while read_line
 do
