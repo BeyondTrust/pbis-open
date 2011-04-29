@@ -71,7 +71,7 @@ make()
         openssl/cast.h \
         openssl/rand.h"
 
-    OPENSSL_MISC="/
+    OPENSSL_MISC="\
         ${MK_PREFIX}/ssl/openssl.cnf \
         ${MK_PREFIX}/ssl/misc/CA.pl \
         ${MK_PREFIX}/ssl/misc/CA.sh \
