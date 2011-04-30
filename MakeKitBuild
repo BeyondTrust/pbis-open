@@ -1,7 +1,7 @@
 PROJECT_NAME="platform"
 MODULES="core compiler autotools moonunit pkg-config likewise dceidl fortune"
 LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv popt \
-                libuuid sqlite openssl curl libxml2 fuse"
+                libuuid sqlite openssl curl libxml2 fuse libedit"
 SUBDIRS="$LW_ALL_BUNDLED \
          lwbase lwmsg lwreg lwadvapi netlogon \
          lwio nfs libschannel dcerpc centutils lwsm eventlog lsass reapsysl lwdns \
@@ -25,13 +25,13 @@ option()
 {
     case "${MK_HOST_OS}-${LW_FEATURE_LEVEL}" in
         *-auth)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl popt"
+            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl popt libedit"
             ;;
         linux-*)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt fuse"
+            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt fuse libedit"
             ;;
         *)
-            default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2"
+            default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2 libedit"
             ;;
     esac
 

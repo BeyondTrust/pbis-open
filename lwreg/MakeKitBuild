@@ -1,4 +1,4 @@
-SUBDIRS="include libedit utils ipc common client parse shellutil server shell"
+SUBDIRS="include utils ipc common client parse shellutil server shell"
 
 option()
 {
@@ -69,22 +69,15 @@ configure()
         HEADERDEPS='ctype.h stdlib.h inttypes.h' \
         isblank strtoll __strtoll strtoull __strtoull
 
-    if [ "$HAVE_ISBLANK" = "yes" ]
-    then
-        mk_define HAVE_DECL_ISBLANK 1
-    else
-        mk_define HAVE_DECL_ISBLANK 0
-    fi
-
     lw_check_iconv
 
     mk_check_headers \
 	FAIL=yes \
-	sqlite3.h uuid/uuid.h
+	sqlite3.h uuid/uuid.h histedit.h
     
     mk_check_libraries \
 	FAIL=yes \
-	sqlite3 uuid
+	sqlite3 uuid edit
 
     mk_check_libraries pthread
 
