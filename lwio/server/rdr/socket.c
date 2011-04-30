@@ -647,6 +647,7 @@ RdrSocketTransceive(
     LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
 
     status = RdrSocketAcquireMid(pSocket, &usMid);
+    BAIL_ON_NT_STATUS(status);
 
     switch(pPacket->protocolVer)
     {
