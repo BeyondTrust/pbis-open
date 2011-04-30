@@ -39,7 +39,7 @@ option()
         OPTION=samba-interop \
         PARAM="yes|no" \
         VAR="LW_SAMBA_INTEROP" \
-        DEFAULT="no" \
+        DEFAULT="yes" \
         HELP="Build samba interop libraries"
 
     mk_option \
