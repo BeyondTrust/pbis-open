@@ -1563,11 +1563,7 @@ MemDbGetValueAttributes(
                  hValue,
                  ppCurrentValue,
                  ppValueAttributes);
-    if (*ppCurrentValue == NULL && status == STATUS_OBJECT_NAME_NOT_FOUND)
-    {
-        /* It is alright to not have a user-set value */
-        status = 0;
-    }
+    BAIL_ON_NT_STATUS(status);
 
 cleanup:
     return status;
