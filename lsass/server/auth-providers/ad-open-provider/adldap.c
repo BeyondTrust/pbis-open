@@ -1747,7 +1747,7 @@ ADLdap_GetObjectGroupMembership(
     for (index = 0; index < gcMembershipCount; index++)
     {
         PSTR pSid = ppGcMembershipList[index];
-        if (!LwHashExists(pGroupHash, pSid));
+        if (!LwHashExists(pGroupHash, pSid))
         {
             dwError = LwHashSetValue(pGroupHash, pSid, pSid);
             BAIL_ON_LSA_ERROR(dwError);
@@ -1757,7 +1757,7 @@ ADLdap_GetObjectGroupMembership(
     for (index = 0; index < dcMembershipCount; index++)
     {
         PSTR pSid = ppDcMembershipList[index];
-        if (!LwHashExists(pGroupHash, pSid));
+        if (!LwHashExists(pGroupHash, pSid))
         {
             dwError = LwHashSetValue(pGroupHash, pSid, pSid);
             BAIL_ON_LSA_ERROR(dwError);
@@ -1768,7 +1768,7 @@ ADLdap_GetObjectGroupMembership(
     {
         // Add the pszPrimaryGroupSID entry to the hash
         PSTR pSid = pObject->userInfo.pszPrimaryGroupSid;
-        if (!LwHashExists(pGroupHash, pSid));
+        if (!LwHashExists(pGroupHash, pSid))
         {
             dwError = LwHashSetValue(pGroupHash, pSid, pSid);
             BAIL_ON_LSA_ERROR(dwError);
