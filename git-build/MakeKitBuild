@@ -3,7 +3,7 @@ MODULES="core compiler autotools moonunit pkg-config likewise dceidl fortune"
 LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv \
                 sqlite libuuid openssl curl libxml2"
 SUBDIRS="$LW_ALL_BUNDLED \
-         lwbase lwmsg lwreg lwadvapi netlogon \
+         lwbase lwmsg libedit lwreg lwadvapi netlogon \
          lwio libschannel dcerpc centutils lwsm eventlog lsass lwdns \
          srvsvc lwnetapi lwtools domainjoin lwconfig lwupgrade samba-interop config package"
 
@@ -22,13 +22,13 @@ option()
 {
     case "${MK_HOST_OS}-${LW_FEATURE_LEVEL}" in
         *-auth)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl"
+            default_bundled="libedit libuuid krb5 cyrus-sasl openldap sqlite openssl"
             ;;
         linux-*)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl"
+            default_bundled="libedit libuuid krb5 cyrus-sasl openldap sqlite openssl curl"
             ;;
         *)
-            default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl libxml2"
+            default_bundled="libedit libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl libxml2"
             ;;
     esac
 
