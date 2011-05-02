@@ -2,7 +2,7 @@
 tmpreg=/tmp/regup-$$.txt
 BIN_DIR=/opt/likewise/bin
 LWREGSHELL=$BIN_DIR/lwregshell
-PSTORE_UPGRADE=$BIN_DIR/reg61sed.sh
+PSTORE_UPGRADE=/opt/likewise/libexec/reg61sed.sh
 
 if [ "$1" != "--install" ]; then
   echo "WARNING: This tool is called during system installation"

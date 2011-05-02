@@ -1,6 +1,7 @@
 make()
 {
     mk_program \
+        INSTALLDIR="${MK_LIBEXECDIR}" \
         PROGRAM=conf2reg \
         SOURCES="conf2reg.c" \
         GROUPS="../agents/eventlog/confeventlog ../agents/lsass/conflsass ../agents/netlogon/confnetlogon ../agents/pstore-sqlite/confpstore-sqlite ../agents/testparse/conftestparse ../agents/testsambaparse/conftestsambaparse ../../../utils/upgradeutils" \
