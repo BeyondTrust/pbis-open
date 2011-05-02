@@ -138,7 +138,7 @@ determine_upgrade_type()
 
 import_5_0123_file()
 {
-    CONVERT="@MK_BINDIR@/conf2reg"
+    CONVERT="@MK_LIBEXECDIR@/conf2reg"
     REGIMPORT="@MK_BINDIR@/lwregshell import"
 
     COMMAND=$1
@@ -166,7 +166,7 @@ import_5_0123_file()
 
 restore_5_0123_configuration()
 {
-    CONVERT="@MK_BINDIR@/conf2reg"
+    CONVERT="@MK_LIBEXECDIR@/conf2reg"
 
     if [ -z "$UPGRADING_FROM_5_0123" ]; then
         return 0
@@ -215,7 +215,7 @@ fix_60_registry()
     fi
 
     # Migrate pstore entries from default to joined domain
-    run "@MK_BINDIR@/regupgr61.sh --install"
+    run "@MK_LIBEXECDIR@/regupgr61.sh --install"
 
     # Migrate some other entries
     relocate_domain_separator
