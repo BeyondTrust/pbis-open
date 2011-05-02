@@ -797,7 +797,7 @@ MemRegStoreGetNodeValueAttributes(
     OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
     OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes)
 {
-    NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
+    NTSTATUS status = 0;
     PWSTR *ppwszEnumStrings = NULL;
     PWSTR pwszEnumString = NULL;
     PWSTR pwszDocString = NULL;
@@ -832,6 +832,7 @@ MemRegStoreGetNodeValueAttributes(
             memset(pRetCurrentValueData, 0, dwValueLen);
             memcpy(pRetCurrentValueData, hValue->Data, dwValueLen);
         }
+        status = STATUS_OBJECT_NAME_NOT_FOUND;
     }
 
     if (ppValueAttributes && hValue->Attributes.DefaultValueLen > 0)
@@ -876,6 +877,10 @@ MemRegStoreGetNodeValueAttributes(
                          &ppwszEnumStrings);
             BAIL_ON_NT_STATUS(status);
         }
+    }
+    else
+    {
+        status = STATUS_OBJECT_NAME_NOT_FOUND;
     }
 
     /* Assign all allocated data to return optional return structures */
