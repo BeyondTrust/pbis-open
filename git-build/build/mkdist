@@ -33,13 +33,32 @@ done
 cd $BUILD_ROOT/..
 
 find ${TARGET} -name "*.sh" | xargs chmod u+x
-(cd ${TARGET} && \
-    for f in `find . -name autogen.sh | grep -v "packaging/scripts"`; \
-    do \
-        echo "Running autogen.sh in `dirname $f`..."; \
-	(cd `dirname $f` && ./autogen.sh); \
-        echo " "; \
-    done)
+(
+    cd ${TARGET}
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi
+
+    for f in `find . -name autogen.sh | grep -v "packaging/scripts"`;
+    do
+        case $f in
+            */libiconv/*)
+                echo "Skipping autogen.sh for $f"
+                ;;
+            *)
+                echo "Running autogen.sh in `dirname $f`...";
+                (cd `dirname $f` && ./autogen.sh);
+                if [ $? -ne 0 ]; then
+                    exit 1
+                fi
+                echo " ";
+                ;;
+        esac
+    done
+)
+if [ $? -ne 0 ]; then
+    exit 1
+fi
 
 (cd ${TARGET} && \
     sed "s/^LIKEWISE_OPEN_REVISION=.*/LIKEWISE_OPEN_REVISION=${LIKEWISE_OPEN_REVISION}/g" build/lib/VARS > build/lib/VARS.new; \
