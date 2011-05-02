@@ -65,7 +65,7 @@ configure()
                 NSSDIR="/${MK_LIBDIR##*/}"
                 ;;
             freebsd:*)
-                PAMDIR="/usr/local/${MK_LIBDIR##*/}/security"
+                PAMDIR="/usr/local/${MK_LIBDIR##*/}"
                 NSSDIR="/usr/local/${MK_LIBDIR##*/}"
                 ;;
             solaris:sparc_32|solaris:x86_32)
