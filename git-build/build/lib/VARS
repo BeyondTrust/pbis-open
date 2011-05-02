@@ -20,11 +20,11 @@ case `uname -s` in
 esac
 
 ## List of all components necessary 
-__COMP_LIST="krb5 cyrus-sasl openldap libcrypto curl ${_UUID} ${_ICONV} lwbase \
-    lwmsg sqlite lwreg pstore \
+__COMP_LIST="krb5 cyrus-sasl openldap libcrypto curl libuuid libiconv lwbase \
+    lwmsg sqlite lwreg \
     lwadvapi centutils netlogon lwio lwsm libschannel \
     dcerpc eventlog lsass srvsvc \
-    lwdns domainjoin lwnetapi lwtools \
+    lwdns domainjoin lwnetapi lwtools lwconfig lwupgrade samba-interop \
 "
 
 function LikewiseOpenVersion
