@@ -1563,6 +1563,11 @@ MemDbGetValueAttributes(
                  hValue,
                  ppCurrentValue,
                  ppValueAttributes);
+    if (hValue && status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+        /* Object exists, but not inquiring either value or attributes */
+        status = 0;
+    }
     BAIL_ON_NT_STATUS(status);
 
 cleanup:
