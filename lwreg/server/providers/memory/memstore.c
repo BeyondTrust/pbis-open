@@ -808,32 +808,29 @@ MemRegStoreGetNodeValueAttributes(
     DWORD dwValueLen = 0;
 
     dwValueLen = hValue->DataLen;
-    if (ppCurrentValue && dwValueLen > 0 &&
-        hValue->Attributes.DefaultValueLen > 0)
+    if (ppCurrentValue)
     {
-         /* 
-          * Validate set value is different than default. Only return value
-          * if is different than the default.
-          */
-        if (dwValueLen != hValue->Attributes.DefaultValueLen ||
-            memcmp(hValue->Data, 
-                   hValue->Attributes.pDefaultValue,
-                   dwValueLen) != 0)
+        if ((dwValueLen > 0 && hValue->Data &&
+            hValue->Attributes.DefaultValueLen &&
+            hValue->Attributes.pDefaultValue && 
+            (dwValueLen != hValue->Attributes.DefaultValueLen ||
+             memcmp(hValue->Data,
+                    hValue->Attributes.pDefaultValue,
+                    dwValueLen))) ||
+             (dwValueLen > 0 && hValue->Data))
         {
             status = LW_RTL_ALLOCATE((PVOID*) &pCurrentValue,
                                      LWREG_CURRENT_VALUEINFO,
                                      sizeof(*pCurrentValue));
             BAIL_ON_NT_STATUS(status);
-        
-            if (dwValueLen > 0)
-            {
-                status = LW_RTL_ALLOCATE((PVOID*) &pRetCurrentValueData,
-                                         BYTE,
-                                         dwValueLen);
-                BAIL_ON_NT_STATUS(status);
-                memset(pRetCurrentValueData, 0, hValue->DataLen);
-                memcpy(pRetCurrentValueData, hValue->Data, dwValueLen);
-            }
+
+
+            status = LW_RTL_ALLOCATE((PVOID*) &pRetCurrentValueData,
+                                     BYTE,
+                                     dwValueLen);
+            BAIL_ON_NT_STATUS(status);
+            memset(pRetCurrentValueData, 0, dwValueLen);
+            memcpy(pRetCurrentValueData, hValue->Data, dwValueLen);
         }
     }
 
@@ -886,7 +883,7 @@ MemRegStoreGetNodeValueAttributes(
     {
          pCurrentValue->dwType = hValue->Type;
          pCurrentValue->pvData = pRetCurrentValueData;
-         pCurrentValue->cbData = hValue->DataLen;
+         pCurrentValue->cbData = dwValueLen;
          *ppCurrentValue = pCurrentValue;
     }
 
