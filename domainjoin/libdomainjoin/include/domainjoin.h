@@ -53,7 +53,7 @@
 #endif
 
 #ifndef SCRIPTDIR
-#define SCRIPTDIR  PREFIXDIR"/bin"
+#define SCRIPTDIR  PREFIXDIR"/libexec"
 #endif
 
 #ifndef SIZE_MAX
