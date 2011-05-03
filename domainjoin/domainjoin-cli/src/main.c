@@ -40,20 +40,6 @@
 
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
-DWORD ParseUInt(PCSTR in, unsigned int *out)
-{
-    DWORD ceError = ERROR_SUCCESS;
-    PSTR endPtr;
-    *out = strtoul(in, &endPtr, 10);
-    if(*endPtr != '\0')
-    {
-        GCE(ceError = ERROR_INVALID_PARAMETER);
-    }
-
-cleanup:
-    return ceError;
-}
-
 static
 void
 ShowUsage()
