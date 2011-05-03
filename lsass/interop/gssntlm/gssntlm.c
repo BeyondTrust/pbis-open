@@ -109,7 +109,7 @@ typedef struct _GSS_MECH_CONFIG
         );
 
     OM_uint32
-    (*gss_init_sec_cred)(
+    (*gss_init_sec_context)(
         OM_uint32*,
         gss_cred_id_t,
         gss_ctx_id_t*,
@@ -896,7 +896,7 @@ ntlm_gss_init_sec_context(
             CredHandle;
         if (CredHandle == NULL)
         {
-            // This means ntlm_gss_acquire_cred was called, but not default
+            // This means ntlm_gss_acquire_cred was called, but no default
             // credentials were available. The user should have called
             // ntlm_gssspi_set_cred_option to supply a password, but they did
             // not.
