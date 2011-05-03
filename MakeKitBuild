@@ -16,6 +16,12 @@ defaults()
     MK_DATADIR="/opt/likewise/share"
     MK_DOCDIR="/opt/likewise/share/doc"
     MK_MANDIR="/usr/share/man"
+
+    if [ "`uname`" = "Darwin" ]
+    then
+        MK_LOCALSTATEDIR="/private/var"
+        MK_SYSCONFDIR="/private/etc/likewise"
+    fi
     
     # Fail on warnings
     MK_FAIL_ON_WARN=yes
