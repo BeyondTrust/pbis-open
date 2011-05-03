@@ -806,6 +806,7 @@ MemRegStoreGetNodeValueAttributes(
     PBYTE pRetCurrentValueData = NULL;
     PBYTE pRetAttributeValueData = NULL;
     DWORD dwValueLen = 0;
+    BOOLEAN bHasAttributes = FALSE;
 
     dwValueLen = hValue->DataLen;
     if (ppCurrentValue)
@@ -832,10 +833,9 @@ MemRegStoreGetNodeValueAttributes(
             memset(pRetCurrentValueData, 0, dwValueLen);
             memcpy(pRetCurrentValueData, hValue->Data, dwValueLen);
         }
-        status = STATUS_OBJECT_NAME_NOT_FOUND;
     }
 
-    if (ppValueAttributes && hValue->Attributes.DefaultValueLen > 0)
+    if (ppValueAttributes)
     {
         /* Always allocate a return attributes block */
         status = LW_RTL_ALLOCATE((PVOID*) &pValueAttributes,
@@ -858,6 +858,7 @@ MemRegStoreGetNodeValueAttributes(
             memcpy(pRetAttributeValueData,
                    hValue->Attributes.pDefaultValue,
                    hValue->Attributes.DefaultValueLen);
+            bHasAttributes = TRUE;
         }
     
         /*
@@ -867,6 +868,7 @@ MemRegStoreGetNodeValueAttributes(
             status = LwRtlWC16StringDuplicate(&pwszDocString, 
                          hValue->Attributes.pwszDocString);
             BAIL_ON_NT_STATUS(status);
+            bHasAttributes = TRUE;
         }
 
         if (hValue->Attributes.RangeType == LWREG_VALUE_RANGE_TYPE_ENUM &&
@@ -876,11 +878,14 @@ MemRegStoreGetNodeValueAttributes(
                          hValue->Attributes.Range.ppwszRangeEnumStrings,
                          &ppwszEnumStrings);
             BAIL_ON_NT_STATUS(status);
+            bHasAttributes = TRUE;
         }
     }
-    else
+
+    if (!bHasAttributes && ppValueAttributes)
     {
         status = STATUS_OBJECT_NAME_NOT_FOUND;
+        BAIL_ON_NT_STATUS(status);
     }
 
     /* Assign all allocated data to return optional return structures */
@@ -918,6 +923,10 @@ cleanup:
 
 error:
     /* Free a bunch of stuff here if something fails */
+
+    LWREG_SAFE_FREE_MEMORY(pValueAttributes);
+    LWREG_SAFE_FREE_MEMORY(pCurrentValue);
+    LWREG_SAFE_FREE_MEMORY(pRetCurrentValueData);
     LWREG_SAFE_FREE_MEMORY(pRetAttributeValueData);
     LWREG_SAFE_FREE_MEMORY(pwszDocString);
     LWREG_SAFE_FREE_MEMORY(pwszEnumString);
