@@ -9,6 +9,21 @@ option()
 
     [ "${MK_LOCALSTATEDIR}" = "/var" ] && _default_cachedir="/var/lib/likewise"
 
+    case "$MK_HOST_OS" in
+        aix)
+            _default_initdir="/etc/rc.d/init.d"
+            ;;
+        freebsd)
+            _default_initdir="/etc/rc.d"
+            ;;
+        hpux)
+            _default_initdir="/sbin/init.d"
+            ;;
+        *)
+            _default_initdir="/etc/init.d"
+            ;;
+    esac
+
     mk_option \
         OPTION=lw-tool-dir \
         PARAM="name" \
@@ -29,18 +44,47 @@ option()
         VAR=LW_CONFIGDIR \
         DEFAULT="${_default_configdir}" \
         HELP="Location of registry files"
+
+    mk_option \
+        OPTION=lw-initdir \
+        PARAM="path" \
+        VAR=LW_INITDIR \
+        DEFAULT="${_default_initdir}" \
+        HELP="Location where init scripts should be installed"
+
+    mk_option \
+        OPTION=lw-device-profile \
+        VAR=LW_DEVICE_PROFILE \
+        PARAM="profile" \
+        DEFAULT="default" \
+        HELP="Device profile (default, embedded)"
+
+    mk_option \
+        OPTION=lw-feature-level \
+        VAR=LW_FEATURE_LEVEL \
+        PARAM="level" \
+        DEFAULT="full" \
+        HELP="Feature level (full, auth)"
 }
 
 configure()
 {
     mk_msg "cache dir: $LW_CACHEDIR"
     mk_msg "config dir: $LW_CONFIGDIR"
+    mk_msg "init script dir: $LW_INITDIR"
     mk_msg "developer tool dir: $LW_TOOL_DIRNAME"
 
-    mk_export LW_CACHEDIR LW_CONFIGDIR
-    mk_export LW_TOOL_DIR="@$LW_TOOL_DIRNAME"
+    LW_TOOL_DIR="@$LW_TOOL_DIRNAME"
+    _LW_TOOL_TARGETS=""
+}
 
-    mk_add_scrub_target "$LW_TOOL_DIR"
+lw_add_tool_target()
+{
+    mk_push_vars result
+    mk_resolve_target "$1"
+    mk_quote "$result"
+    _LW_TOOL_TARGETS="$_LW_TOOL_TARGETS $result"
+    mk_pop_vars
 }
 
 lw_define_feature_macros()
@@ -75,6 +119,10 @@ lw_define_feature_macros()
             mk_define _HPUX_SOURCE 1
             mk_define _REENTRANT
             mk_define _XOPEN_SOURCE_EXTENDED 1
+            if [ "$MK_ARCH" = "ia64" ]
+            then
+                mk_define _XOPEN_SOURCE 500
+            fi
             # HACK HACK HACK
             mk_write_config_header "union mpinfou {};"
             ;;
@@ -202,4 +250,52 @@ lw_check_pthread_once_init()
     fi
 
     result="$HAVE_BROKEN_ONCE_INIT"
+}
+
+lw_service()
+{
+    mk_push_vars SERVICE SOURCES GROUPS HEADERDEPS LIBDEPS INCLUDEDIRS CPPFLAGS LDFLAGS CFLAGS CXXFLAGS DEPS
+    mk_parse_params
+
+    if [ "$LW_DEVICE_PROFILE" = "embedded" ]
+    then
+        mk_group \
+            GROUP="$SERVICE" \
+            SOURCES="$SOURCES" \
+            GROUPDEPS="$GROUPS" \
+            HEADERDEPS="$HEADERDEPS" \
+            LIBDEPS="$LIBDEPS" \
+            INCLUDEDIRS="$INCLUDEDIRS" \
+            CPPFLAGS="$CPPFLAGS" \
+            CFLAGS="$CFLAGS" \
+            CXXFLAGS="$CXXFLAGS" \
+            LDFLAGS="$LDFLAGS" \
+            DEPS="$DEPS"
+    else
+        mk_dlo \
+            INSTALLDIR="$MK_LIBDIR/lw-svcm" \
+            DLO="$SERVICE" \
+            SOURCES="$SOURCES" \
+            GROUPS="$GROUPS" \
+            HEADERDEPS="$HEADERDEPS" \
+            LIBDEPS="$LIBDEPS" \
+            INCLUDEDIRS="$INCLUDEDIRS" \
+            CPPFLAGS="$CPPFLAGS" \
+            CFLAGS="$CFLAGS" \
+            CXXFLAGS="$CXXFLAGS" \
+            LDFLAGS="$LDFLAGS" \
+            DEPS="$DEPS"
+    fi
+
+    mk_pop_vars
+}
+
+make()
+{
+    mk_target \
+        TARGET="${LW_TOOL_DIR}" \
+        DEPS="$_LW_TOOL_TARGETS"
+
+    mk_add_phony_target "$result"
+    mk_add_scrub_target "$result"
 }
