@@ -8,7 +8,7 @@ configure()
 
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
 
-    mk_export SBINDIR="$MK_SBINDIR"
+    mk_declare -o SBINDIR="$MK_SBINDIR"
 
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
     mk_define LIBDIR "\"$MK_LIBDIR\""
@@ -18,10 +18,12 @@ configure()
     mk_define LWREPORT_XML "\"${LW_CACHEDIR}/lwreport.xml\""
 
     mk_check_headers FAIL=yes \
-        popt.h
+        popt.h sqlite3.h gssapi.h
 
     mk_check_libraries FAIL=yes \
-        popt
+        popt sqlite3 gssapi_krb5
+
+    mk_check_libraries pthread dl
 
     # libxml2 puts headers in non-standard locations
     # Figure out if we build it ourselves
@@ -45,7 +47,7 @@ configure()
         mk_check_headers FAIL=yes ${LIBXML2_HEADERDEPS}
         mk_check_libraries FAIL=yes xml2
 
-        mk_export LIBXML2_INCLUDEDIRS LIBXML2_HEADERDEPS
+        mk_declare -i LIBXML2_INCLUDEDIRS LIBXML2_HEADERDEPS
     else
         mk_msg_result "no"
 
@@ -61,18 +63,17 @@ configure()
     mk_check_headers \
 	limits.h sys/limits.h sys/syslimits.h wc16str.h
 
-    if mk_check_function \
-	FUNCTION=isblank \
-	HEADERDEPS="ctype.h"
-    then
-	mk_define HAVE_DECL_ISBLANK 1
-    else
-	mk_define HAVE_DECL_ISBLANK 0
-    fi
+    mk_check_functions \
+	HEADERDEPS="ctype.h" \
+        isblank
 
     mk_check_functions \
 	HEADERDEPS="stdlib.h" \
 	strtol strtoll __strtoll strtoul strtoull __strtoull
 
+    lw_check_pthread_once_init
+
     mk_output_file "etc/eventlogd.reg"
+
+    MK_HEADERDEPS="$MK_HEADERDEPS lwrpcrt/lwrpcrt.h"
 }
