@@ -5,22 +5,22 @@ configure()
 
 make()
 {
-    mk_install_files \
-        FILES="init-base.sh init-lwsm.sh init-likewise.sh" \
-        INSTALLDIR="${MK_BINDIR}"
+    mk_stage \
+        DESTDIR="${MK_BINDIR}" \
+        init-base.sh init-lwsm.sh init-likewise.sh
 
-    mk_install_file \
-        FILE="krb5.conf.default" \
-        INSTALLDIR="/etc"
+    mk_stage \
+        SOURCE="krb5.conf.default" \
+        DESTDIR="/etc"
 
-    mk_install_file \
-        FILE="likewise-krb5-ad.conf" \
-        INSTALLDIR="${MK_SYSCONFDIR}"
-
-    mk_install_file \
-        FILE="VERSION" \
-        INSTALLDIR="${MK_PREFIX}/data"
-
+    mk_stage \
+        SOURCE="likewise-krb5-ad.conf" \
+        DESTDIR="${MK_SYSCONFDIR}"
+    
+    mk_stage \
+        SOURCE="VERSION" \
+        DESTDIR="${MK_PREFIX}/data"
+    
     mk_stage \
         DESTDIR="${MK_DATADIR}" \
         SOURCE="likewise.pam-auth-update"
@@ -34,14 +34,24 @@ make()
 lw_init_script()
 {
     mk_target \
-	TARGET="/etc/init.d/$1" \
-	DEPS="$1" \
-	mk_mkdir "&/etc/init.d" '%;' \
-	sed \
-	    -e "s:PREFIX_DIR:${MK_PREFIX}:g" \
-	    -e "s:EXECDIR:${MK_BINDIR}:g" \
-	    '%<' "&$1" '%>' '$@' '%;' \
-	chmod +x '$@'
- 
+        TARGET="${LW_INITDIR}/$1" \
+        DEPS="$1" \
+        _lw_install_init_script '$@' "&$1"
+
     mk_add_all_target "$result"
+}
+
+_lw_install_init_script()
+{
+    mk_msg_domain init
+
+    mk_msg "${1#$MK_STAGE_DIR}"
+
+    mk_mkdir "${1%/*}"
+
+    mk_run_or_fail sed \
+        -e "s:PREFIX_DIR:${MK_PREFIX}:g" \
+        -e "s:EXECDIR:${MK_LIBEXECDIR}:g" \
+        < "$2" > "$1"
+    mk_run_or_fail chmod +x "$1"
 }

@@ -375,8 +375,19 @@ daemon_start() {
             ;;
         HP-UX | SOLARIS | FREEBSD | ESXI)
             echo -n "Starting $PROG_DESC"
-            ${PROG_BIN} ${PROG_ARGS}
-            status=$?
+            if type svcadm >/dev/null 2>&1 ; then
+                # Use the solaris service manager
+
+                # This will start the program again if it was in maintenance
+                # mode.
+                svcadm clear "$SCRIPTNAME" 2>/dev/null
+                # This will start the program again if it was disabled.
+                svcadm enable "$SCRIPTNAME"
+                status=$?
+            else
+                ${PROG_BIN} ${PROG_ARGS}
+                status=$?
+            fi
             if [ $status -eq 0 ]; then
                 status=1
                 for i in `seq 5`; do

@@ -64,4 +64,4 @@ fix_locale()
     fi
 }
 
-. EXECDIR/init-base.sh
+. PREFIX_DIR/bin/init-base.sh

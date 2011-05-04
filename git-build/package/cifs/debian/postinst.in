@@ -14,8 +14,11 @@ case "$1" in
         /etc/init.d/lwsmd stop >/dev/null 2>&1
         sleep 2
 
-        domainjoin-cli configure --enable pam >/dev/null
-        domainjoin-cli configure --enable nsswitch >/dev/null
+        if [ "@IS_EMBEDDED@" = "no" ]
+        then
+            domainjoin-cli configure --enable pam >/dev/null
+            domainjoin-cli configure --enable nsswitch >/dev/null
+        fi
 
         @MK_SBINDIR@/lwsmd --start-as-daemon
 
