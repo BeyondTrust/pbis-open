@@ -10,15 +10,15 @@ configure()
 
     mk_define PREFIXDIR "\"${MK_PREFIXDIR}\""
 
-    mk_export MOD_EXT="${MK_DLO_EXT}"
+    mk_declare -o MOD_EXT="${MK_DLO_EXT}"
 
     # Required headers
     mk_check_headers FAIL=yes \
-        lwnet.h krb5.h lw/base.h \
+        lwnet.h krb5.h lw/base.h uuid/uuid.h gssapi.h
         
     # Required libraries
     mk_check_libraries FAIL=yes \
-        lwnetclientapi krb5 lsaclient lwbase
+        lwnetclientapi krb5 lsaclient lwbase uuid gssapi_krb5
 
     # Optional headers
     mk_check_headers \
