@@ -1,11 +1,11 @@
-SUBDIRS='include src moonunit'
+SUBDIRS='include src moonunit doc'
 
 option()
 {
     mk_option \
         OPTION=threadpool-backend \
         PARAM='value' \
-        VAR=THREADPOOL_BACKEND \
+        VAR=LWBASE_THREADPOOL_BACKEND \
         DEFAULT="autodetect" \
         HELP="Threadpool backend"
 }
@@ -15,6 +15,8 @@ configure()
     mk_config_header 'include/config.h'
 
     lw_define_feature_macros
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
 
     # lwbase libraries are built in compat mode as well, so we
     # need to peform configure checks for all instruction set
@@ -37,7 +39,6 @@ configure()
 
         mk_define MOD_EXT "\"$MK_DLO_EXT\""
         mk_define LIBDIR "\"$MK_LIBDIR\""
-        MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
 
         if [ "$MK_HOST_OS" = "darwin" ]
         then
@@ -53,7 +54,7 @@ configure()
         esac
     mk_multiarch_done
 
-    mk_export DS_FRAMEWORK_LDFLAGS
+    mk_declare -i DS_FRAMEWORK_LDFLAGS
 
     mk_check_libraries \
         xnet \
@@ -122,18 +123,25 @@ configure()
         HEADERDEPS="sys/types.h sys/event.h sys/time.h" \
         kqueue
 
-    if [ "$THREADPOOL_BACKEND" = "autodetect" ]
+    if [ "$LWBASE_THREADPOOL_BACKEND" = "autodetect" ]
     then
         if [ "$HAVE_EPOLL_CREATE" = "yes" ]
         then
-            THREADPOOL_BACKEND="epoll"
+            LWBASE_THREADPOOL_BACKEND="epoll"
         elif [ "$HAVE_KQUEUE" = "yes"  ]
         then
-            THREADPOOL_BACKEND="kqueue"
+            LWBASE_THREADPOOL_BACKEND="kqueue"
         else
-            THREADPOOL_BACKEND="poll"
+            LWBASE_THREADPOOL_BACKEND="poll"
         fi
     fi
 
-    mk_msg "threadpool backend: $THREADPOOL_BACKEND"
+    mk_msg "threadpool backend: $LWBASE_THREADPOOL_BACKEND"
+
+    mk_check_moonunit
+    mk_check_doxygen
+    
+    mk_declare -o ENABLE_INTERNAL_DOCS=no
+
+    mk_output_file doc/Doxyfile
 }
