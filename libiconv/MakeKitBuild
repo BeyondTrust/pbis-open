@@ -3,6 +3,7 @@ make()
     ICONV_CPPFLAGS="-D_REENTRANT -D_THREAD_SAFE"
     ICONV_PRE=""
     ICONV_POST=""
+    ICONV_VIS=""
 
     if [ "$MK_HOST_OS" = "aix" ]
     then
@@ -10,24 +11,30 @@ make()
         ICONV_POST="iconv_aix_post"
     fi
 
+    if [ "$MK_HOST_OS" = "solaris" ]
+    then
+        ICONV_VIS="gl_cv_cc_visibility=no"
+    fi
+
     mk_autotools \
         HEADERS="iconv.h" \
-        LIBS="iconv" \
+        LIBS="iconv:7:0:5" \
         CPPFLAGS="$ICONV_CPPFLAGS" \
         INSTALL_PRE="$ICONV_PRE" \
         INSTALL_POST="$ICONV_POST" \
         -- \
-        --disable-nls
+        --disable-nls \
+        ${ICONV_VIS}
 
     mk_compat_do
         mk_autotools \
-            LIBS="iconv" \
-            SELECT="${MK_LIBDIR}/*" \
+            LIBS="iconv:7:0:5" \
             CPPFLAGS="$ICONV_CPPFLAGS" \
             INSTALL_PRE="$ICONV_PRE" \
             INSTALL_POST="$ICONV_POST" \
             -- \
-            --disable-nls
+            --disable-nls \
+            ${ICONV_VIS}
     mk_compat_done
 }
 
@@ -43,3 +50,4 @@ iconv_aix_post()
 {
     mk_run_or_fail rm -f "$1${MK_LIBDIR}/libiconv.a"
 }
+
