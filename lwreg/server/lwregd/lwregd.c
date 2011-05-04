@@ -66,11 +66,12 @@ unsigned long (*pfRegSvcmStop)
     (void *dummy);
 
 
-int main(void)
+int main(int argc, char *argv[])
 {
     sigset_t sigs;
     sigset_t cursigs;
     int caught = 0;
+    char *libname = _LWREG_SO;
 
     sigemptyset(&sigs);
     sigemptyset(&cursigs);
@@ -78,8 +79,12 @@ int main(void)
     sigaddset(&sigs, SIGINT);
     sigaddset(&sigs, SIGHUP);
     sigprocmask(SIG_BLOCK, &sigs, &cursigs);
+    if (argc > 1)
+    {
+        libname = argv[1];
+    }
 
-    void *dlregistry = dlopen(_LWREG_SO, RTLD_LAZY);
+    void *dlregistry = dlopen(libname, RTLD_LAZY);
     if (!dlregistry)
     {
         printf("dlopen(%s)\n", dlerror());
@@ -105,5 +110,6 @@ int main(void)
 
     printf("Shutting down lwregd (sig=%d)\n", caught);
     pfRegSvcmStop(NULL);
+    dlclose(dlregistry);
     return 0;
 }

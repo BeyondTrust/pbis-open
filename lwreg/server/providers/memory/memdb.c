@@ -733,6 +733,8 @@ MemDbClose(
     BAIL_ON_NT_STATUS(status);
 
     MemDbStopExportToFileThread();
+
+    MemRegStoreClose(hDb->pMemReg);
 cleanup:
     return status;
 

@@ -176,6 +176,32 @@ error:
     goto cleanup;
 }
 
+NTSTATUS
+MemRegStoreClose(
+    IN PMEMREG_STORE_NODE hRootNode)
+{
+    NTSTATUS status = 0;
+
+    /* Validate is actually root of registry */
+    if (!hRootNode || hRootNode->NodeType != 1)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    if (hRootNode->Name)
+    {
+        LWREG_SAFE_FREE_MEMORY(hRootNode->Name);
+    }
+
+    LWREG_SAFE_FREE_MEMORY(hRootNode);
+cleanup:
+    return status;
+
+error: 
+    goto cleanup;
+}
+
 
 NTSTATUS
 MemRegStoreFindNodeSubkey(

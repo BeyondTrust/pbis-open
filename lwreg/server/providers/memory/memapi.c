@@ -172,9 +172,26 @@ MemProvider_Shutdown(
         goto cleanup;
     }
 
-cleanup:
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
+        pthread_mutex_destroy(&gMemRegRoot->ExportMutex)));
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
+        pthread_mutex_destroy(&gMemRegRoot->ExportMutexStop)));
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
+        pthread_cond_destroy(&gMemRegRoot->ExportCond)));
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
+        pthread_cond_destroy(&gMemRegRoot->ExportCondStop)));
+
     LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
+        pthread_rwlock_destroy(&gMemRegRoot->lock)));
+
+cleanup:
+    LWREG_SAFE_FREE_MEMORY(gMemRegRoot);
     LWREG_SAFE_FREE_MEMORY(pwszRootKey);
+    return;
+  
+error:
+    goto cleanup;
 }
 
 
