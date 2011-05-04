@@ -1,7 +1,6 @@
 make()
 {
-    mk_install_file \
-        FILE="lwiod-srv.reg" \
-        INSTALLDIR="${LW_CONFIGDIR}" \
-        MODE=0644
+    mk_stage \
+        DESTDIR="${LW_CONFIGDIR}" \
+        lwiod.reg
 }

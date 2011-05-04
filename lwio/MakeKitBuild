@@ -1,5 +1,49 @@
 SUBDIRS="include utils ipc logging_r common libshareinfo client server tools fuse etc tests"
 
+option()
+{
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            _default_BUILTIN_DRIVERS="yes"
+            ;;
+        *)
+            _default_BUILTIN_DRIVERS="no"
+            ;;
+    esac
+
+    case "$LW_FEATURE_LEVEL" in
+        auth)
+            _default_DRIVERS="rdr"
+            _default_FUSE="no"
+            ;;
+        *)
+            _default_DRIVERS="rdr npfs pvfs srv"
+            _default_FUSE="yes"
+            ;;
+    esac  
+
+    mk_option \
+        OPTION=lwio-fuse \
+        VAR=LWIO_FUSE \
+        PARAM="yes|no" \
+        DEFAULT="$_default_FUSE" \
+        HELP="Enable building fuse module"
+
+    mk_option \
+        OPTION=lwio-drivers \
+        VAR=LWIO_DRIVERS \
+        PARAM=... \
+        DEFAULT="$_default_DRIVERS" \
+        HELP="Enabled drivers"
+
+    mk_option \
+        OPTION=lwio-builtin-drivers \
+        VAR=LWIO_BUILTIN_DRIVERS \
+        PARAM="yes|no" \
+        DEFAULT="$_default_BUILTIN_DRIVERS" \
+        HELP="Build drivers directly into service"
+}
+
 configure()
 {
     mk_config_header \
@@ -18,10 +62,11 @@ configure()
 
     mk_check_endian
     
-    mk_export MOD_EXT="$MK_DLO_EXT"
-    mk_export SBINDIR="$MK_SBINDIR"
-    mk_export LIBDIR="$MK_LIBDIR"
-    mk_export providerdir="$MK_LIBDIR"
+    mk_declare -o \
+        MOD_EXT="$MK_DLO_EXT" \
+        SBINDIR="$MK_SBINDIR" \
+        LIBDIR="$MK_LIBDIR" \
+        providerdir="$MK_LIBDIR"
 
     mk_define MOD_EXT "\"$MK_DLO_EXT\""
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
@@ -47,12 +92,12 @@ configure()
 
     mk_check_libraries \
         FAIL="yes" \
-        regclient lwbase krb5 gssapi_krb5 crypto lwnetclientapi
+        regclient lwbase krb5 gssapi_krb5 crypto lwnetclientapi uuid
 
     mk_check_headers \
         FAIL="yes" \
         reg/reg.h lw/base.h krb5.h gssapi.h openssl/crypto.h wc16str.h \
-        openssl/md5.h openssl/hmac.h openssl/rand.h
+        openssl/md5.h openssl/hmac.h openssl/rand.h uuid/uuid.h
 
     mk_check_headers \
         inttypes.h stdlib.h sys/varargs.h dlfcn.h pthread.h \
@@ -72,20 +117,26 @@ configure()
         sys/sysctl.h sys/user.h
 
     mk_check_types \
-        HEADERDEPS="procfs.h sys/procfs.h" \
-        "struct psinfo"
-
-    mk_check_types \
         HEADERDEPS="sys/types.h sys/socket.h" \
         "socklen_t"
 
     mk_check_libraries \
-        attr pthread nsl socket fuse
+        attr pthread nsl socket fuse dl
 
     mk_check_functions \
         HEADERDEPS="stdlib.h attr/xattr.h" \
         LIBDEPS="$LIB_ATTR" \
         setxattr fsetxattr getxattr fgetxattr
+
+    if [ "$HAVE_SETXATTR" = yes -a "$HAVE_GETXATTR" = yes ] ||
+       [ "$HAVE_FSETXATTR" = yes -a "$HAVE_FGETXATTR" = yes ]
+    then
+        LWIO_EA_ENABLED=yes
+    else
+        LWIO_EA_ENABLED=no
+    fi
+
+    mk_msg "EA support: $LWIO_EA_ENABLED"
 
     mk_check_functions \
         HEADERDEPS="sys/vfs.h" \
@@ -124,12 +175,5 @@ configure()
         mk_skip_subdir fuse
     fi
 
-    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
-    then
-        mk_output_file \
-            INPUT="etc/lwiod.reg.svcm.in" \
-            OUTPUT="etc/lwiod.reg"
-    else
-        mk_output_file "etc/lwiod-srv.reg"
-    fi
+    mk_output_file "etc/lwiod.reg"
 }

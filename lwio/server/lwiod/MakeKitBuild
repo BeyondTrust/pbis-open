@@ -4,22 +4,11 @@ make()
     LWIOD_SOURCES="$COMMON_SOURCES libmain.c proc.c main.c"
     LWIO_SOURCES="$COMMON_SOURCES main-svcm.c"
 
-    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
-    then
-        mk_dlo \
-            DLO="lwio" \
-            INSTALLDIR="${MK_LIBDIR}/lw-svcm" \
-            SOURCES="$LWIO_SOURCES" \
-            INCLUDEDIRS=". ../include ../../include" \
-            HEADERDEPS="reg/lwntreg.h lwadvapi.h lw/base.h" \
-            LIBDEPS="iomgr lwnetclientapi lwmsg lwmsg_nothr lwbase lwbase_nothr lwadvapi lwadvapi_nothr regclient lwiocommon $LIB_PTHREAD"
-    else
-        mk_program \
-            PROGRAM=lwiod \
-            INSTALLDIR="${MK_SBINDIR}" \
-            SOURCES="$LWIOD_SOURCES" \
-            INCLUDEDIRS=". ../include ../../include" \
-            HEADERDEPS="reg/lwntreg.h lwadvapi.h lw/base.h" \
-            LIBDEPS="iomgr lwnetclientapi lwmsg lwmsg_nothr lwbase lwbase_nothr lwadvapi lwadvapi_nothr regclient lwiocommon $LIB_PTHREAD"
-    fi
+    mk_program \
+        PROGRAM=lwiod \
+        INSTALLDIR="${MK_SBINDIR}" \
+        SOURCES="$LWIOD_SOURCES" \
+        INCLUDEDIRS=". ../include ../../include" \
+        HEADERDEPS="reg/lwntreg.h lwadvapi.h lw/base.h" \
+        LIBDEPS="iomgr lwnetclientapi lwmsg lwmsg_nothr lwbase lwbase_nothr lwadvapi lwadvapi_nothr regclient lwiocommon $LIB_PTHREAD"
 }
