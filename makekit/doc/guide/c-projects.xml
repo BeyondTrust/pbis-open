@@ -286,7 +286,7 @@ make()
       appropriate dependencies to the generated <filename>Makefile</filename>.
     </para>
   </section>
-  <section>
+  <section id="c-projects-object-groups" xreflabel="Object Groups">
     <title>Object Groups</title>
     <para>
       When a library or program grows large enough, it is often prudent to break its

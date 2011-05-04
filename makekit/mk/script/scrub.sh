@@ -28,11 +28,40 @@
 
 MK_MSG_DOMAIN="scrub"
 
-for _target in "$@"
+SUBDIR="$1"
+shift
+
+if [ -z "$SUBDIR" ]
+then
+    mk_quote_list "$@"
+    EXTRA_TARGETS="$result"
+fi
+
+mk_get_stage_targets "@$SUBDIR"
+mk_unquote_list "$result $EXTRA_TARGETS"
+
+for _target
 do
-    if [ -e "$_target" ]
+    if [ -e "${_target#@}" -o -h "${_target#@}" ]
     then
-        mk_msg "${_target}"
-        mk_safe_rm "$_target"
+        mk_msg "${_target#@$MK_STAGE_DIR}"
+        mk_safe_rm "${_target#@}"
     fi
 done
+
+if [ -d "$MK_STAGE_DIR" ]
+then
+    find "${MK_STAGE_DIR}" -type d | sed '1!G;h;$!d' |
+    while read -r _dir
+    do
+        if rmdir -- "$_dir" >/dev/null 2>&1
+        then
+            if [ "$_dir" = "$MK_STAGE_DIR" ]
+            then
+                mk_msg "${_dir}"
+            else
+                mk_msg "${_dir#$MK_STAGE_DIR}"
+            fi
+        fi
+    done
+fi

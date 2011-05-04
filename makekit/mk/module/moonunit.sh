@@ -50,6 +50,8 @@ _mk_invoke_moonunit_stub()
     mk_msg "${__output#${MK_OBJECT_DIR}/}"
 
     if ! ${MOONUNIT_STUB} \
+        CPP="$MK_CC -E" \
+        CXXCPP="$MK_CXX -E" \
         CPPFLAGS="$MK_CPPFLAGS $CPPFLAGS -I${MK_STAGE_DIR}${MK_INCLUDEDIR}" \
         -o "$__output" \
         "$@"
@@ -65,10 +67,7 @@ _mk_invoke_moonunit_stub()
 
 mk_moonunit()
 {
-    if [ "$HAVE_MOONUNIT" = no ]
-    then
-        return 0
-    fi
+    mk_have_moonunit || mk_fail "mk_moonunit: moonunit unavailable"
 
     mk_push_vars DLO SOURCES CPPFLAGS CFLAGS LDFLAGS HEADERS LIBDIRS INCLUDEDIRS LIBDEPS HEADERDEPS GROUPS DEPS
     mk_parse_params
@@ -94,12 +93,12 @@ mk_moonunit()
     mk_target \
         TARGET="$_stub" \
         DEPS="$SOURCES $_deps" \
-        _mk_invoke_moonunit_stub CPPFLAGS="$_CPPFLAGS $CPPFLAGS $MK_CPPFLAGS" '$@' "&$SOURCES"
+        _mk_invoke_moonunit_stub CPPFLAGS="$_CPPFLAGS $CPPFLAGS" '$@' "&$SOURCES"
     
     SOURCES="$SOURCES $_stub"
 
     mk_dlo \
-        INSTALL="no" \
+        INSTALLDIR="@$MK_MOONUNIT_DIR" \
         DLO="$DLO" \
         SOURCES="$SOURCES" \
         HEADERS="$HEADERS" \
@@ -108,7 +107,7 @@ mk_moonunit()
         LDFLAGS="$LDFLAGS" \
         LIBDIRS="$LIBDIRS" \
         INCLUDEDIRS="$INCLUDEDIRS" \
-        LIBDEPS="$LIBDEPS" \
+        LIBDEPS="$LIBDEPS moonunit" \
         HEADERDEPS="$HEADERDEPS" \
         GROUPS="$GROUPS" \
         DEPS="$DEPS"
@@ -118,33 +117,52 @@ mk_moonunit()
     mk_pop_vars
 }
 
-configure()
+option()
 {
-    if [ "${MK_BUILD_OS}-${MK_BUILD_ARCH}" != "${MK_HOST_OS}-${MK_HOST_ARCH}" ]
+    mk_option \
+        OPTION="moonunit-dir" \
+        VAR="MK_MOONUNIT_DIR" \
+        PARAM="dir" \
+        DEFAULT="mu" \
+        HELP="Directory where MoonUnit tests are placed"
+}
+
+mk_check_moonunit()
+{
+    mk_check_program moonunit-stub
+    mk_check_headers moonunit/moonunit.h
+    mk_check_libraries moonunit
+    
+    if [ -n "$MOONUNIT_STUB" -a "$HAVE_MOONUNIT_MOONUNIT_H" != no -a "$HAVE_LIB_MOONUNIT" != no ]
     then
-        mk_msg "moonunit unavailable when cross-compiling"
-        HAVE_MOONUNIT=no
+        HAVE_MOONUNIT=yes
     else
-        mk_check_program moonunit
-        mk_check_program moonunit-stub
-        mk_check_headers moonunit/moonunit.h
-        
-        if [ -n "$MOONUNIT" -a -n "$MOONUNIT_STUB" -a "$HAVE_MOONUNIT_MOONUNIT_H" != no ]
-        then
-            HAVE_MOONUNIT=yes
-        else
-            HAVE_MOONUNIT=no
-        fi
+        HAVE_MOONUNIT=no
     fi
     
     mk_msg "moonunit available: $HAVE_MOONUNIT"
 
-    mk_export HAVE_MOONUNIT
+    mk_declare -i HAVE_MOONUNIT
+}
+
+mk_have_moonunit()
+{
+    [ "$HAVE_MOONUNIT" = "yes" ]
+}
+
+configure()
+{
+    if [ "$MK_CROSS_COMPILING" = yes ]
+    then
+        mk_msg "cross compiling -- tests cannot be run"
+    else
+        mk_check_program moonunit
+    fi
 }
 
 make()
 {
-    if [ "$HAVE_MOONUNIT" = yes ]
+    if [ -n "$MOONUNIT" -a -n "$MK_MOONUNIT_TESTS" -a "$MK_CROSS_COMPILING" = no ]
     then
         mk_target \
             TARGET="@test" \
@@ -152,5 +170,7 @@ make()
             mk_run_script moonunit "*${MK_MOONUNIT_TESTS}"
 
         mk_add_phony_target "$result"
+
+        mk_add_clean_target "@${MK_MOONUNIT_DIR}"
     fi
 }

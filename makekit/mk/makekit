@@ -61,21 +61,17 @@ else
     exit 1
 fi
 
-SHELL_CANDIDATES="$MK_SHELL"
-
 if test "`uname`" = "FreeBSD"
 then
     # FreeBSD /bin/sh is POSIX-compliant and fast,
     # so only prefer dash over it
     SHELL_CANDIDATES="\
-        $SHELL_CANDIDATES \
         /usr/local/bin/dash \
         /bin/sh"
 else
     # Try dash, then bash, then xpg4 sh, then /bin/sh
     # as a last resort
     SHELL_CANDIDATES="\
-        $MK_SHELL \
         /bin/dash \
         /usr/local/bin/dash \
         /bin/bash \
@@ -85,14 +81,17 @@ else
         /bin/sh"
 fi
 
-for _shell in ${SHELL_CANDIDATES}
-do
-    if [ -x "$_shell" ]
-    then
-	MK_SHELL="$_shell"
-	break
-    fi
-done
+if test "x$MK_SHELL" = "x"
+then
+    for _shell in ${SHELL_CANDIDATES}
+    do
+        if [ -x "$_shell" ]
+        then
+	    MK_SHELL="$_shell"
+	    break
+        fi
+    done
+fi
 
 if test -z "$MK_SHELL"
 then

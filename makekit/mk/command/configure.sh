@@ -32,6 +32,62 @@
 #
 ##
 
+#<
+# @var MK_HOME
+# @brief MakeKit home directory
+#
+# The directory where MakeKit lives.
+#>
+
+#<
+# @var MK_SHELL
+# @brief POSIX-compliant shell
+#
+# The path to the POSIX-compliant shell which MakeKit
+# is using.
+#>
+
+#<
+# @var MK_ROOT_DIR
+# @brief Root build directory
+#
+# The root build directory as an absolute path.
+# This is where the user ran configure.
+#>
+
+#<
+# @var MK_SOURCE_DIR
+# @brief Source directory
+#
+# The root source directory where the top-level
+# MakeKitBuild is located.  If relative, the
+# path is taken to be relative to <varref>MK_ROOT_DIR</varref>.
+#>
+
+#<
+# @var MK_OBJECT_DIR
+# @brief Intermediate file directory
+#
+# The subdirectory of <varref>MK_ROOT_DIR</varref> where
+# intermediate build results are collected.  Usually <lit>object</lit>.
+#>
+
+#<
+# @var MK_STAGE_DIR
+# @brief Staging directory
+#
+# The subdirectory of <varref>MK_ROOT_DIR</varref> where
+# build end products are collected.  Usually <lit>stage</lit>.
+#>
+
+#<
+# @var MK_RUN_DIR
+# @brief Run directory
+#
+# The subdirectory of <varref>MK_ROOT_DIR</varref> where programs
+# used subsequently in the build process are placed.  Usually <lit>run</lit>.
+#>
+
 BASIC_VARIABLES="\
     MK_HOME MK_SHELL MK_ROOT_DIR MK_SOURCE_DIR MK_OBJECT_DIR MK_STAGE_DIR \
     MK_RUN_DIR MK_OPTIONS MK_SEARCH_DIRS MK_MODULE_LIST MK_MODULE_FILES"
@@ -48,10 +104,11 @@ _mk_emitf()
     printf "$@" >&6
 }
 
-_mk_find_module_imports_recursive()
+_mk_find_resources_recursive()
 {
     unset MODULES SUBDIRS
-   
+    MKLOCAL=mklocal
+
     if ! [ -e "${MK_SOURCE_DIR}${1}/MakeKitBuild" ]
     then
         return 0
@@ -59,13 +116,21 @@ _mk_find_module_imports_recursive()
 
     mk_safe_source "${MK_SOURCE_DIR}${1}/MakeKitBuild" || mk_fail "Could not read MakeKitBuild in ${MK_SOURCE_DIR}${1}"
 
-    result="$result $MODULES"
+    _MK_MODULES="$_MK_MODULES $MODULES"
+
+    for _dir in ${MKLOCAL}
+    do
+        if [ -d "${MK_SOURCE_DIR}${1}/$_dir" ]
+        then
+            MK_SEARCH_DIRS="$MK_SEARCH_DIRS ${MK_SOURCE_DIR}${1}/$_dir"
+        fi
+    done
     
     for _dir in ${SUBDIRS}
     do
         if [ "$_dir" != "." ]
         then
-            _mk_find_module_imports_recursive "$1/${_dir}"
+            _mk_find_resources_recursive "$1/${_dir}"
         fi
     done
 }
@@ -79,10 +144,11 @@ _mk_set_defaults()
     [ -z "$PROJECT_NAME" ] && PROJECT_NAME="$(cd "${MK_SOURCE_DIR}" && basename "$(pwd)")"
 }
 
-_mk_find_module_imports()
+_mk_find_resources()
 {
-    result=""
-    _mk_find_module_imports_recursive ""
+    _MK_MODULES=""
+    _mk_find_resources_recursive ""
+    _mk_module_list $_MK_MODULES
 }
 
 _mk_modules_rec()
@@ -113,7 +179,6 @@ _mk_process_build_module()
     _mk_find_resource "module/$1.sh"
 
     MK_CURRENT_FILE="$result"
-    MK_BUILD_FILES="$MK_BUILD_FILES $MK_CURRENT_FILE"
 
     unset -f option configure make
     unset SUBDIRS
@@ -134,7 +199,6 @@ _mk_process_build_configure()
     unset -f option configure make
 
     MK_CURRENT_FILE="${MK_SOURCE_DIR}$1/MakeKitBuild"
-    MK_BUILD_FILES="$MK_BUILD_FILES $MK_CURRENT_FILE"
 
     mk_safe_source "$MK_CURRENT_FILE" || mk_fail "Could not read MakeKitBuild in ${MK_SOURCE_DIR}${1}"
     
@@ -157,7 +221,6 @@ _mk_process_build_make()
     SUBDIRS="$_backup_SUBDIRS"
     
     MK_SUBDIR="$1"
-    mk_msg_verbose "emitting make rules"
     _mk_make_prehooks
     mk_function_exists make && make
     _mk_make_posthooks
@@ -190,8 +253,9 @@ _mk_process_build_recursive()
             _preorder_make=yes
             _mk_process_build_make "$1"
         else
+            _mk_push_inherited
             _mk_process_build_recursive "$1/${_dir}"
-            _mk_restore_exports "${MK_OBJECT_DIR}${1}/.MakeKitExports"
+            _mk_pop_inherited
         fi
     done
 
@@ -223,6 +287,29 @@ _mk_process_build()
     MK_SUBDIR=":"
 }
 
+#<
+# @brief Define an option
+# @usage OPTION=option VAR=var
+# @usage VAR=var
+# @option DEFAULT=default If the option is not specified
+# by the user, <param>var</param> will be set to <param>default</param>.
+# @option PARAM=name A short descriptive name of the option value
+# which will show up in the help text.
+# @option HELP=text A short snippet of text describing the option
+#
+# Declares an option that can be passed by the user when configuring
+# the project and stored in <param>var</param>.  If the first form is used,
+# the option can be specified with --<param>option</param>=... on the
+# command line.  In either case, it may also be set by passing
+# <param>var</param>=... on the command line, or setting the variable
+# in the environment or in a configuration file passed with @filename.
+#
+# If <param>name</param> and <param>text</param> are provided, they will
+# be displayed in the output of --help.
+#
+# This function can only be used within the option function in
+# MakeKitBuild.
+#>
 mk_option()
 {
     unset _found
@@ -319,29 +406,51 @@ _mk_write_exports()
     } >"$1"
 }
 
-_mk_restore_exports()
-{
-    unset ${MK_EXPORTS}
+_MK_INHERIT_DEPTH="0"
 
-    . "$1"
+_mk_push_inherited()
+{
+    for _var in ${_MK_INHERITED_VARS} _MK_INHERITED_VARS
+    do
+        eval "_INHERIT_${_MK_INHERIT_DEPTH}_${_var}=\$$_var"
+    done
+
+    _MK_INHERIT_DEPTH=$(($_MK_INHERIT_DEPTH + 1))
 }
 
-mk_export()
+_mk_pop_inherited()
 {
-    for _export in "$@"
+    _MK_INHERIT_DEPTH=$(($_MK_INHERIT_DEPTH - 1))
+
+    unset ${_MK_INHERITED_VARS}
+    for _var in ${_MK_INHERITED_VARS} _MK_INHERITED_VARS
     do
-        case "$_export" in
-            *"="*)
-                _val="${_export#*=}"
-                _name="${_export%%=*}"
-                mk_set "$_name" "$_val"
-                _mk_contains "$_name" ${MK_EXPORTS} || MK_EXPORTS="$MK_EXPORTS $_name"
-                ;;
-            *)
-                _mk_contains "$_export" ${MK_EXPORTS} || MK_EXPORTS="$MK_EXPORTS $_export"
-                ;;
-        esac
+        eval "${_var}=\$_INHERIT_${_MK_INHERIT_DEPTH}_${_var}"
     done
+}
+
+_MK_INHERITED_VARS="MK_EXPORTS"
+
+_mk_declare_inherited()
+{
+    case " $_MK_INHERITED_VARS " in
+        *" $1 "*)
+            return 0
+            ;;
+    esac
+
+    _MK_INHERITED_VARS="$_MK_INHERITED_VARS $1"
+}
+
+_mk_declare_exported()
+{
+    case " $MK_EXPORTS " in
+        *" $1 "*)
+            return 0
+            ;;
+    esac
+
+    MK_EXPORTS="$MK_EXPORTS $1"
 }
 
 mk_add_configure_prehook()
@@ -450,29 +559,6 @@ _mk_emit_make_footer()
             _mk_make_posthooks
         fi
     done
-
-    _mk_emit ""
-    _mk_emit "Makefile:${MK_BUILD_FILES}${MK_CONFIGURE_INPUTS}"
-    _mk_emitf '\t@$(MK_CONTEXT) :; mk_msg "regenerating Makefile"; set -- %s; . %s; exit 0\n\n' "$MK_OPTIONS" "'${MK_HOME}/command/configure.sh'"
-
-    for _target in ${MK_CONFIGURE_OUTPUTS}
-    do
-        _mk_emit "${_target}: Makefile"
-        _mk_emit ""
-    done
-
-    _mk_emit "sinclude .MakeKitDeps/*.dep"
-    _mk_emit ""
-}
-
-mk_add_configure_output()
-{
-    MK_CONFIGURE_OUTPUTS="$MK_CONFIGURE_OUTPUTS $1"
-}
-
-mk_add_configure_input()
-{
-    MK_CONFIGURE_INPUTS="$MK_CONFIGURE_INPUTS $1"
 }
 
 mk_help_recursive()
@@ -658,15 +744,8 @@ _basic_options
 
 MK_SEARCH_DIRS="${MK_HOME}"
 
-# Look for local modules and scripts in source directory
-if [ -d "${MK_SOURCE_DIR}/mklocal" ]
-then
-    MK_SEARCH_DIRS="${MK_SEARCH_DIRS} ${MK_SOURCE_DIR}/mklocal"
-fi
-
-# Find all required modules
-_mk_find_module_imports
-_mk_module_list ${result}
+# Find all required resources
+_mk_find_resources
 
 # Allow top-level MakeKitBuild to set default settings
 _mk_set_defaults
@@ -709,11 +788,11 @@ _mk_emit_make_header
 # Process build files
 _mk_process_build
 
-# Run completion hooks
-_mk_complete_hooks
-
 # Emit Makefile footer
 _mk_emit_make_footer
+
+# Run completion hooks
+_mk_complete_hooks
 
 # Close and atomically replace Makefile
 exec 6>&-

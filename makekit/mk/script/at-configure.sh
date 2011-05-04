@@ -29,12 +29,23 @@
 hack_libtool()
 {
     case "$MK_OS:$MK_ARCH" in
-        hpux:ia64)
+        hpux:ia64|darwin:*|freebsd:*)
             if [ -x libtool ]
             then
                 sed \
                     -e 's/^hardcode_direct=no/hardcode_direct=yes/' \
                     -e 's/^hardcode_direct_absolute=no/hardcode_direct_absolute=yes/' \
+                    -e 's/^hardcode_libdir_flag_spec=.*/hardcode_libdir_flag_spec=""/' \
+                    < libtool > libtool.new
+                mv -f libtool.new libtool
+                chmod +x libtool
+            fi
+            ;;
+        *)
+            if [ -x libtool ]
+            then
+                sed \
+                    -e 's/^hardcode_libdir_flag_spec=.*/hardcode_libdir_flag_spec=""/' \
                     < libtool > libtool.new
                 mv -f libtool.new libtool
                 chmod +x libtool
@@ -130,21 +141,52 @@ case "$MK_OS" in
         ;;
 esac
 
+# We disable libtool setting the rpath, so do it ourselves
+case "${MK_OS}:${MK_CC_LD_STYLE}" in
+    *:gnu)
+        _rpath_flags="-Wl,-rpath,${_libdir}"
+        ;;
+    solaris:native)
+        _rpath_flags="-Wl,-R${_libdir}"
+        ;;
+    aix:native)
+        _rpath_flags="-Wl,-blibpath:${_libdir}:/usr/lib:/lib"
+        ;;
+    hpux:native)
+        _rpath_flags="-Wl,+b,${_libdir}"
+        ;;
+    *)
+        _rpath_flags=""
+        ;;
+esac
+
 if [ -d "$MK_RUN_BINDIR" ]
 then
     PATH="`cd $MK_RUN_BINDIR && pwd`:$PATH"
     export PATH
 fi
 
+# If the build system supports the host ISA we will build for,
+# pretend that the build system is the same.  This avoids making
+# autoconf believe we are cross compiling and failing any run
+# tests.
+if [ "$MK_HOST_OS" = "$MK_BUILD_OS" ] && _mk_contains "$MK_ISA" ${MK_BUILD_ISAS}
+then
+    _build_string="$MK_AT_HOST_STRING"
+else
+    _build_string="$MK_AT_BUILD_STRING"
+fi
+
+
 cd "${MK_OBJECT_DIR}${MK_SUBDIR}/$BUILDDIR" && \
-mk_run_quiet_or_fail "${_src_dir}/configure" \
+mk_at_log_command "$dirname" "configure" "${_src_dir}/configure" \
     CC="$MK_CC" \
     CXX="$MK_CXX" \
     CPPFLAGS="-I${_include_dir} $_cppflags $CPPFLAGS" \
-    CFLAGS="$MK_CFLAGS $CFLAGS" \
-    CXXFLAGS="$MK_CXXFLAGS $CXXFLAGS" \
-    LDFLAGS="${_ldflags} $MK_LDFLAGS $LDFLAGS" \
-    --build="${MK_AT_BUILD_STRING}" \
+    CFLAGS="$MK_ISA_CFLAGS $MK_CFLAGS $CFLAGS" \
+    CXXFLAGS="$MK_ISA_CXXFLAGS $MK_CXXFLAGS $CXXFLAGS" \
+    LDFLAGS="$MK_ISA_LDFLAGS $MK_LDFLAGS $LDFLAGS ${_ldflags} ${_rpath_flags}" \
+    --build="${_build_string}" \
     --host="${MK_AT_HOST_STRING}" \
     --prefix="${_prefix}" \
     --libdir="${_libdir}" \
@@ -153,6 +195,7 @@ mk_run_quiet_or_fail "${_src_dir}/configure" \
     --sysconfdir="${_sysconfdir}" \
     --localstatedir="${_localstatedir}" \
     --enable-fast-install \
+    --disable-rpath \
     "$@"
 
 # Does what it says

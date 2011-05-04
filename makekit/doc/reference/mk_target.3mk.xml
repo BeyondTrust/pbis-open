@@ -1,7 +1,8 @@
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="mk_target">
+<refentry version="5.0" xml:id="mk_target">
   <refmeta>
     <refentrytitle>mk_target</refentrytitle>
     <manvolnum>3mk</manvolnum>
+    <refmiscinfo class="manual">MakeKit Reference</refmiscinfo>
   </refmeta>
   <refnamediv>
     <refname>mk_target</refname>
@@ -135,6 +136,16 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><literal>#</literal><replaceable>params</replaceable></term>
+	<listitem>
+	  <para>
+	    Indicates that the parameter should be interpreted as a space-separated,
+	    internally-quoted list.  The list will be expanded into multiple parameters,
+	    but no further processing will occur.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><command>make</command> macro forms</term>
 	<listitem>
 	  <para>
@@ -173,16 +184,6 @@ mk_target \
     cat "&*.txt" "%>" "&all.txt"
 ]]></programlisting>
   </refsection>
-  <refsection><info><title>Copyright</title></info>
-    <para>Copyright (c) Brian Koropoff.  All rights reserved.</para>
-    
-    <para>
-      Redistribution in source and binary form is permitted under
-      the terms of the 3-clause BSD license.  See COPYING in the
-      documentation or source distribution for details.
-    </para>
-  </refsection>
-  
   <refsection><info><title>See also</title></info>
     <para>
       <citerefentry><refentrytitle>mk_resolve_target</refentrytitle><manvolnum>3mk</manvolnum></citerefentry>,

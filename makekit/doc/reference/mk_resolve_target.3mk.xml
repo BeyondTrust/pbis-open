@@ -2,6 +2,7 @@
   <refmeta>
     <refentrytitle>mk_resolve_target</refentrytitle>
     <manvolnum>3mk</manvolnum>
+    <refmiscinfo class="manual">MakeKit Reference</refmiscinfo>
   </refmeta>
   <refnamediv>
     <refname>mk_resolve_target</refname>
@@ -101,20 +102,5 @@
       # Example result: @stage/usr/bin/foobar
       mk_resolve_target "${MK_BINDIR}/foobar"
     </programlisting>
-  </refsection>
-  <refsection><info><title>Copyright</title></info>
-    <para>Copyright (c) Brian Koropoff.  All rights reserved.</para>
-    
-    <para>
-      Redistribution in source and binary form is permitted under
-      the terms of the 3-clause BSD license.  See COPYING in the
-      documentation or source distribution for details.
-    </para>
-  </refsection>
-  
-  <refsection><info><title>See also</title></info>
-    <para>
-      <citerefentry><refentrytitle>mk_resolve_file</refentrytitle><manvolnum>3mk</manvolnum></citerefentry>
-    </para>
   </refsection>
 </refentry>

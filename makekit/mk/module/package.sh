@@ -62,17 +62,93 @@
 # API overview
 #
 # mk_{PACKAGE_TYPE}_do
-#   mk_package_files
+#   mk_package_patterns
+#   mk_package_targets
 #   mk_package_dirs
-#   mk_subpackage_do
-#     mk_package_files
-#     mk_package_dirs
-#   mk_subpackage_done
 # mk_{PACKAGE_TYPE}_done
 
 ### section configure
 
 DEPENDS="core"
+
+#<
+# @function mk_package_targets
+# @brief Include specified targets in current package
+# @usage targets...
+#
+# Includes the specified targets in the current package
+# or subpackage.  The targets must be specified in
+# fully-qualified form.
+#>
+
+#<
+# @function mk_package_dirs
+# @brief Specify inclusion of directory in current package
+# @usage dirs...
+#
+# Explicitly adds a set of directories to the current package.
+# This is useful for including empty directories or controlling
+# directory attributes.
+#>
+
+#<
+# @brief Package targets matching a set of patterns
+# @usage patterns...
+# @option SUBDIRS=subdir_list A list of subdirectories
+# relative to the current MakeKitBuild file from which
+# to select targets.  Targets will be selected from all
+# of the specified directories and their transitive
+# subdirectories.  A directory in the list may begin
+# with <lit>@</lit> to indicate that it is relative
+# to the top source directory of the project.  Defaults
+# to the entire project.
+#
+# Packages all targets in the staging area matching any
+# of the file patterns in <param>patterns</param>.
+# The selected targets may be limited to those within
+# certain subsets of the current project by using
+# the <param>subdir_list</param> option.
+#>
+mk_package_patterns()
+{
+    mk_push_vars SUBDIRS="@" SELECT PATTERN TARGET
+    mk_parse_params
+
+    if [ "$#" = 0 ]
+    then
+        SELECT="*"
+    else
+        for PATTERN
+        do
+            case "$PATTERN" in
+                /*)
+                    mk_quote "@${MK_STAGE_DIR}${PATTERN}"
+                    SELECT="$SELECT $result"
+                    ;;
+                *)
+                    mk_quote "$PATTERN"
+                    SELECT="$SELECT $result"
+                    ;;
+            esac
+        done
+    fi
+
+    mk_unquote_list "$SUBDIRS"
+    mk_get_stage_targets SELECT="$SELECT" "$@"
+    mk_unquote_list "$result"
+    mk_package_targets "$@"
+    
+    mk_pop_vars
+}
+
+mk_add_package_target()
+{
+    mk_push_vars result
+    mk_resolve_target "$1"
+    mk_quote "$result"
+    _MK_PACKAGE_TARGETS="$_MK_PACKAGE_TARGETS $result"
+    mk_pop_vars
+}
 
 option()
 {
@@ -84,9 +160,13 @@ option()
         HELP="Subdirectory for built packages"
 }
 
-configure()
+make()
 {
-    mk_export MK_PACKAGE_DIR
+    mk_target \
+        TARGET="@package" \
+        DEPS="$_MK_PACKAGE_TARGETS"
 
+    mk_add_phony_target "$result"
+    
     mk_add_scrub_target "@package"
 }

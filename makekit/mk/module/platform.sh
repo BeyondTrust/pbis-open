@@ -34,9 +34,67 @@
 
 ### section common
 
+#<
+# @function mk_multiarch_do
+# @brief Execute commands for multiple ISAs
+# @usage
+# 
+# Executes a set of commands beginning with <funcref>mk_multiarch_do</funcref>
+# and ending with <funcref>mk_multiarch_done</funcref> for each ISA of the
+# host system.  During the configure phase, this allows running tests
+# or maniuplating variables for each ISA where the results might differ
+# between them (e.g. pointer size, system library directory, library file extension).
+# During the make phase, it allows building multiple versions of a binary for
+# each ISA.  On systems that use "fat" binaries, this function is a no-op
+# during the make phase.
+#
+# @example
+# configure()
+# {
+#     mk_config_header "include/config.h"
+#
+#     mk_multiarch_do
+#         mk_check_sizeofs HEADERDEPS="stdlib.h" "void*" "size_t"
+#         mk_define MY_LIB_DIR "\"$MK_LIBDIR/foobar\""
+#     mk_multiarch_done
+# }
+#
+# make()
+# {
+#     mk_multiarch_do
+#         mk_library LIB="foobarclient" SOURCES="foobar.c"
+#     mk_multiarch_done
+# }
+# @endexample
+#>
 alias mk_multiarch_do='for __sys in ${_MK_MULTIARCH_SYS}; do mk_system "$__sys"'
+
+#<
+# @function mk_multiarch_done
+# @brief End mk_multiarch_do
+# @usage
+#
+# Used to terminate <funcref>mk_multiarch_do</funcref>.
+#>
 alias mk_multiarch_done='done; mk_system "host"'
+
+#<
+# @function mk_compat_do
+# @brief Execute commands for alternate ISAs
+# @usage
+#
+# Behaves like <funcref>mk_multiarch_do</funcref>, but skips
+# the primary ISA for the host system.
+#>
 alias mk_compat_do='for __sys in ${_MK_COMPAT_SYS}; do mk_system "$__sys"'
+
+#<
+# @function mk_compat_done
+# @brief End mk_compat_do
+# @usage
+#
+# Used to terminate <funcref>mk_compat_do</funcref>.
+#>
 alias mk_compat_done='done; mk_system "host"'
 
 mk_get_system_var()
@@ -86,6 +144,39 @@ mk_set_all_isas()
     fi
 }
 
+#<
+# @brief Set target system
+# @usage sys
+# 
+# Sets the system which will be the target of subsequent configure tests
+# or build products.  This is important for cross-compiling or multiarchitecture
+# builds.  The parameter <param>sys</param> may be either "host" to target
+# the host system (the system that will run the end product of the build),
+# or "build" to target the build system (the system running MakeKit).
+#
+# Each system may support several ISAs (instruction set architectures)
+# which can be targetted individually by suffixing /<var>isa</var> to the
+# end of <param>sys</param>, e.g. build/x86_64 or host/ppc64.  This allows
+# exact control over which ISA is used for a configure test or a program
+# or library.
+#
+# When targetting "host" or "build" rather than a specific ISA, the behavior
+# is more complicated.  During the configure phase, tests will target
+# the primary ISA for the system but assume that the result applies to all
+# ISAs for the sake of speed.  During the make phase, the behavior varies
+# by OS.  On systems that use "fat" or "universal" binaries, a multiarchitecture
+# binary targetting all ISAs will be produced.  On other systems, the
+# primary ISA will be targetted.
+#
+# Certain shell variables are considered "system" variables and will have
+# their values swapped out appropriately when switching the target system,
+# e.g. <var>MK_LIBDIR</var>.  You can declare your own system variables with
+# <lit><funcref>mk_declare</funcref> -s</lit>.
+#
+# This function gives fine-grained control that may not be necessary
+# if all you need is multiarchitecture support.  In this case, use
+# <funcref>mk_multiarch_do</funcref>.
+#>
 mk_system()
 {
     mk_push_vars suffix canon var
@@ -153,31 +244,54 @@ mk_run_with_extended_library_path()
 
 ### section configure
 
+_mk_declare_system()
+{
+    case " $MK_SYSTEM_VARS " in
+        " $1 ")
+            return 0
+            ;;
+    esac
+           
+    MK_SYSTEM_VARS="$MK_SYSTEM_VARS $1"
+
+    if ${_inherited}
+    then
+        for __target in ${MK_ALL_SYSTEMS}
+        do
+            _mk_define_name "$__target"
+            _mk_declare_inherited "$1_$result"
+        done
+    fi
+
+    if ${_exported}
+    then
+        for __target in ${MK_ALL_SYSTEMS}
+        do
+            _mk_define_name "$__target"
+            _mk_declare_exported "$1_$result"
+        done        
+    fi
+}
+
 mk_declare_system_var()
 {
+    mk_deprecated "mk_declare_system_var is deprecated; use mk_declare -s instead"
+
     mk_push_vars EXPORT
     mk_parse_params
 
-    for __var in "$@"
+    _inherited=true
+    _exported=true
+
+    if [ "$EXPORT" = "no" ]
+    then
+        _inherited=false
+        _exported=false
+    fi
+
+    for __var
     do
-        if ! _mk_contains "$__var" ${MK_SYSTEM_VARS}
-        then
-            MK_SYSTEM_VARS="$MK_SYSTEM_VARS $__var"
-            if [ "$EXPORT" != "no" ]
-            then
-                for __isa in ${MK_HOST_ISAS}
-                do
-                    _mk_define_name "host/${__isa}"
-                    mk_export "${__var}_$result"
-                done
-                
-                for __isa in ${MK_BUILD_ISAS}
-                do
-                    _mk_define_name "build/${__isa}"
-                    mk_export "${__var}_$result"
-                done
-            fi
-        fi
+        _mk_declare_system "$__var"
     done
 
     mk_pop_vars
@@ -285,6 +399,9 @@ option()
                 x86_64|amd64)
                     _default_MK_BUILD_ARCH="x86_64"
                     ;;
+                ppc)
+                    _default_MK_BUILD_ARCH="powerpc"
+                    ;;
                 *)
                     mk_fail "unknown architecture: `uname -m`"
                     ;;
@@ -336,6 +453,12 @@ option()
                         # extraneous double quotes
                         _default_MK_BUILD_DISTRO="`lsb_release -sd | sed 's/\"//g' | awk '{print $1;}' | tr 'A-Z' 'a-z'`"
                         ;;
+                    "RedHatEnterprise"*)
+                        _default_MK_BUILD_DISTRO="rhel"
+                        ;;           
+                    "FedoraCore")
+                        _default_MK_BUILD_DISTRO="fedora"
+                        ;;
                     *)
                         _default_MK_BUILD_DISTRO="`lsb_release -si | awk '{print $1;}' | tr 'A-Z' 'a-z'`"
                         ;;
@@ -366,7 +489,7 @@ option()
         freebsd)
             __release="`uname -r`"
             _default_MK_BUILD_DISTRO="`uname -s | tr 'A-Z' 'a-z'`"
-            _default_MK_BUILD_DISTRO_VERSION="${__release%-*}"
+            _default_MK_BUILD_DISTRO_VERSION="${__release%%-*}"
             _default_MK_BUILD_MULTIARCH="separate"
             ;;
         solaris)
@@ -500,7 +623,7 @@ option()
         HELP="Host operating system distribution version"
 
     case "$MK_HOST_DISTRO" in
-        centos|redhat|fedora)
+        centos|redhat|fedora|rhel)
             _distro_archetype="redhat"
             ;;
         debian|ubuntu)
@@ -524,17 +647,47 @@ option()
     MK_HOST_PRIMARY_ISA="${MK_HOST_ISAS%% *}"
 }
 
+_mk_platform_set_ext()
+{
+    case "$1:${2#*/}" in
+        darwin:*)
+            mk_set_system_var SYSTEM="$2" MK_LIB_EXT ".dylib"
+            mk_set_system_var SYSTEM="$2" MK_DLO_EXT ".so"
+            ;;
+        hpux:hppa*)
+            mk_set_system_var SYSTEM="$2" MK_LIB_EXT ".sl"
+            mk_set_system_var SYSTEM="$2" MK_DLO_EXT ".sl"
+            ;;
+        *)
+            mk_set_system_var SYSTEM="$2" MK_LIB_EXT ".so"
+            mk_set_system_var SYSTEM="$2" MK_LIB_EXT ".so"
+            mk_set_system_var SYSTEM="$2" MK_DLO_EXT ".so"
+            ;;
+    esac   
+}
+
 configure()
 {
-    mk_export \
+    for _isa in ${MK_BUILD_ISAS}
+    do
+        MK_ALL_SYSTEMS="$MK_ALL_SYSTEMS build/$_isa"
+    done
+
+    for _isa in ${MK_HOST_ISAS}
+    do
+        MK_ALL_SYSTEMS="$MK_ALL_SYSTEMS host/$_isa"
+    done
+
+    mk_declare -e \
         MK_BUILD_OS MK_BUILD_DISTRO MK_BUILD_DISTRO_VERSION \
         MK_BUILD_DISTRO_ARCHETYPE MK_BUILD_ARCH MK_BUILD_ISAS \
         MK_BUILD_PRIMARY_ISA MK_HOST_OS MK_HOST_DISTRO \
         MK_HOST_DISTRO_VERSION MK_HOST_DISTRO_ARCHETYPE \
         MK_HOST_ARCH MK_HOST_ISAS MK_HOST_PRIMARY_ISA \
-        MK_SYSTEM_VARS MK_HOST_MULTIARCH MK_BUILD_MULTIARCH
+        MK_SYSTEM_VARS MK_HOST_MULTIARCH MK_BUILD_MULTIARCH \
+        MK_ALL_SYSTEMS
 
-    mk_declare_system_var \
+    mk_declare -s -e \
         MK_OS MK_DISTRO MK_DISTRO_VERSION MK_DISTRO_ARCHETYPE \
         MK_ARCH MK_ISAS MK_MULTIARCH MK_ISA MK_DLO_EXT MK_LIB_EXT
 
@@ -548,6 +701,7 @@ configure()
         mk_set_system_var SYSTEM="build/$_isa" MK_ISAS "$MK_BUILD_ISAS"
         mk_set_system_var SYSTEM="build/$_isa" MK_MULTIARCH "$MK_BUILD_MULTIARCH"
         mk_set_system_var SYSTEM="build/$_isa" MK_ISA "$_isa"
+        _mk_platform_set_ext "$MK_BUILD_OS" "build/$_isa"
     done
 
     for _isa in ${MK_HOST_ISAS}
@@ -560,30 +714,13 @@ configure()
         mk_set_system_var SYSTEM="host/$_isa" MK_MULTIARCH "$MK_HOST_MULTIARCH"
         mk_set_system_var SYSTEM="host/$_isa" MK_ISAS "$MK_HOST_ISAS"
         mk_set_system_var SYSTEM="host/$_isa" MK_ISA "$_isa"
+        _mk_platform_set_ext "$MK_HOST_OS" "host/$_isa"
     done
 
     for _sys in build host
     do
         mk_system "$_sys"
-        
-        for _isa in $MK_ISAS
-        do
-            case "$MK_OS-$_isa" in
-                darwin-*)
-                    mk_set_system_var SYSTEM="$_sys/$_isa" MK_LIB_EXT ".dylib"
-                    mk_set_system_var SYSTEM="$_sys/$_isa" MK_DLO_EXT ".so"
-                    ;;
-                hpux-hppa*)
-                    mk_set_system_var SYSTEM="$_sys/$_isa" MK_LIB_EXT ".sl"
-                    mk_set_system_var SYSTEM="$_sys/$_isa" MK_DLO_EXT ".sl"
-                    ;;
-                *)
-                    mk_set_system_var SYSTEM="$_sys/$_isa" MK_LIB_EXT ".so"
-                    mk_set_system_var SYSTEM="$_sys/$_isa" MK_DLO_EXT ".so"
-                    ;;
-            esac
-        done
-        
+
         mk_msg "$_sys operating system: $MK_OS"
         mk_msg "$_sys distribution: $MK_DISTRO"
         mk_msg "$_sys distribution version: $MK_DISTRO_VERSION"
@@ -630,7 +767,7 @@ configure()
     set -- ${_MK_MULTIARCH_SYS_MAKE}; shift
     _MK_MULTIARCH_COMPAT_MAKE="$*"
 
-    mk_export MK_CROSS_COMPILING
+    mk_declare -e MK_CROSS_COMPILING
 
     mk_msg "cross compiling: $MK_CROSS_COMPILING"
 

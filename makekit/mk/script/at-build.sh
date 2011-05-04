@@ -63,7 +63,7 @@ case "$MK_OS:$MK_ISA" in
 esac
 
 cd "${MK_OBJECT_DIR}${MK_SUBDIR}/$BUILDDIR" || mk_fail "could not change directory"
-mk_run_quiet_or_fail ${MAKE} ${MFLAGS} ${MAKE_BUILD_TARGET}
+mk_at_log_command "$dirname" "build" ${MAKE} ${MFLAGS} ${MAKE_BUILD_TARGET}
 cd "${MK_ROOT_DIR}"
 mk_run_or_fail touch "$_stamp"
 mk_msg "end ${__msg}"

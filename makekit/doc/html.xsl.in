@@ -13,7 +13,6 @@
   <xsl:param name="callout.graphics.extension" select="'.png'"/>
   <xsl:param name="generate.toc">
     book toc
-    reference toc
   </xsl:param>
   <xsl:param name="toc.section.depth" select="2"/>
   <xsl:param name="reference.autolabel">loweralpha</xsl:param>
@@ -22,4 +21,3 @@
     <xsl:value-of select="db:refentrytitle"/><xsl:text>.html</xsl:text>
   </xsl:template>
 </xsl:stylesheet>
-

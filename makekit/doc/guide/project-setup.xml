@@ -78,8 +78,6 @@ option() <co xml:id="co.mkb.option" linkends="mkb.option"/>
 configure() <co xml:id="co.mkb.configure" linkends="mkb.configure"/>
 {
     mk_msg "configuration file: $CONFIG_FILE"
-
-    mk_export CONFIG_FILE
 }
 
 make() <co xml:id="co.mkb.make" linkends="mkb.make"/>

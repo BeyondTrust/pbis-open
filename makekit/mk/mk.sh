@@ -46,15 +46,22 @@ fi
 # Aliases are expanded within functions when they are
 # defined, so we set up aliases first
 
-##
+#<
+# @function mk_unquote_list
+# @brief Unquote list into positional parameters
+# @usage quoted...
 #
-# mk_unquote_list
+# Unquotes an internally quoted list, such as one
+# produced by <funcref>mk_quote_list</funcref>, placing
+# each item in the list into the positional parameters
+# (<var>$1</var>, <var>$2</var>, etc.).
 #
-# Unquotes an internally quoted list, placing the elements
-# in the positional parameters.  For example,
-# mk_unquote_list "'hello world' 'foo' 'bar'" sets
-# $1 to "hello world", $2 to "foo" and $3 to "bar".
-##
+# @example
+# # This is a no-op
+# mk_quote_list "$@"
+# mk_unquote_list "$result"
+# @endexample
+#>
 alias mk_unquote_list='eval set --'
 
 ##
@@ -90,6 +97,49 @@ alias mk_unquote_list='eval set --'
 #
 #     mk_pop_vars
 # }
+
+#<
+# @function mk_push_vars
+# @brief Save variables
+# @usage vars..
+# @usage var=value...
+# 
+# Saves each variable in <param>vars</param> to a safe location
+# and then sets it to the empty string, or if the second form is used,
+# to <param>value</param>.  This provides a mechanism for "local
+# variables" that works in any POSIX-compliant shell.
+#
+# This should only be used once per function, perferably near the top.
+# When used, you must ensure that <funcref>mk_pop_vars</funcref> appears
+# near the end of the function, and that it is always reached in any
+# code path.
+#>
+
+#<
+# @function mk_pop_vars
+# @brief Restore variables
+# @usage
+# 
+# Restores the variables previously saved by <funcref>mk_push_vars</funcref>.
+# This function must be called precisely once near the end of any function
+# that uses <funcref>mk_push_vars</funcref>, and you must ensure that it is
+# reached in all code paths.
+#>
+
+#<
+# @function mk_parse_params
+# @brief Parse keyword parameters
+# @usage
+# 
+# Consumes any positional parameters of the form var=value and
+# sets variables appropriately.  The parameters will be shifted
+# such that <var>$1</var> becomes the first non-keyword parameter,
+# or the first parameter after "--".
+#
+# This should be used in combination with <funcref>mk_push_vars</funcref>
+# and <funcref>mk_pop_vars</funcref> to ensure all variables are set
+# only for the duration of the function.
+#>
 
 if [ -n "$BASH_VERSION" ]
 then
@@ -228,20 +278,13 @@ mk_msg_format_end()
     printf "%s\n" "$1"
 }
 
-##
+#<
+# @brief Print message to the user
+# @usage message...
 #
-# mk_msg
+# Prints <param>message</param> to the user.
 #
-# This is the preferred way to present a message to the user.
-# The message is prefixed with the current $MK_MSG_DOMAIN, which
-# is typically one of the following:
-#
-# - The name of the module being processed
-# - The subdirectory of the MakeKitBuild file being processed
-# - The name of the build command or script being run (e.g.
-#   'compile' or 'link'
-#
-##
+#>
 mk_msg()
 {
     mk_log "$@"
@@ -308,29 +351,50 @@ mk_log_verbose()
     [ -n "${MK_VERBOSE}" ] && mk_log "$@"
 }
 
-##
+#<
+# @brief Print error message and abort
+# @usage message..
 #
-# mk_fail
+# Prints <param>message</param> to the user and aborts the current
+# operation.
 #
-# Prints an error message and immediately exits the shell.
-# Since MakeKit avoids subshell usage as much as possible,
-# this is usually sufficient to stop a configure/make invocation
-# dead.
+# Note that if this function is used from a subshell, it will only
+# cause the subshell to exit.
 #
-##
+#>
 mk_fail()
 {
     mk_msg "ERROR: $@" >&2
     exit 1
 }
 
-##
+#<
+# @brief Print warning
+# @usage message...
 #
-# mk_function_exists
+# Prints <param>message</param> to the user.  If fail-on-warn
+# is turned on, this will abort the current operation.  Otherwise,
+# this function will pause for 1 second to catch the user's
+# attention.
+#>
+mk_warn()
+{
+    if [ "$MK_FAIL_ON_WARN" = "yes" ]
+    then
+        mk_fail "$@"
+    else
+        mk_msg "WARNING: $*"
+        sleep 1
+    fi
+}
+
+#<
+# @brief Check if a function is defined
+# @usage name
 #
-# Returns 0 if the function "$1" is defined, non-zero otherwise
-#
-##
+# Returns 0 (logical true) if a function named <param>name</param>
+# if defined or 1 otherwise.
+#>
 mk_function_exists()
 {
     # To avoid detecting a program in the path with the same name,
@@ -390,45 +454,61 @@ mk_source_or_fail()
     mk_safe_source "$1" || mk_fail "could not source file: $1"
 }
 
-##
+#<
+# @brief Recursively create directories
+# @usage dirs...
 #
-# mk_mkdir
+# Attempts to recursively create each directory in <param>dirs</param>.
 #
-# Attempts to recursively create a directory tree for each parameter.
-# If certain platforms lack a functional mkdir -p, this would be the
-# place to work around it.
-#
-##
+#>
 mk_mkdir()
 {
-    for __dir in "$@"
+    for __dir
     do
-        mkdir -p "$__dir" || mk_fail "Could not create directory: $__dir"
+        if ! mkdir -p -- "$__dir" >/dev/null 2>&1
+        then
+            # Back off and try to create components individually
+            # This works around race conditions in some mkdir
+            # implementations
+            _IFS="$IFS"
+            IFS="/"
+            set -- ${__dir}
+            IFS="$_IFS"
+            __dir=""
+            for __comp
+            do
+                __dir="$__dir/$__comp"
+                [ -n "${__dir#/}" ] || continue
+                __err=`mkdir -p -- "${__dir#/}" 2>&1`
+                # If we succeeded or the directory was created
+                # by someone else (race condition), keep going
+                [ "$?" -eq 0 -o -d "${__dir#/}" ] && continue
+                mk_fail "$__err"
+            done
+        fi
     done
 }
 
-##
+#<
+# @brief Get value of variable
+# @usage var
 #
-# mk_get
+# Gets the value of the variable <param>var</param> and
+# places it in <var>result</var>.
 #
-# Gets the value of the variable whose name is $1 and sets
-# the variable 'result' to it.  This is useful for getting
-# variables with programmatically constructed names.
-#
-##
+#>
 mk_get()
 {
     eval result="\"\$$1\""
 }
 
-##
+#<
+# @brief Set value of variable
+# @usage var value
 #
-# mk_set
+# Sets the variable <param>var</param> to <param>value</param>.
 #
-# Sets the variable whose name is $1 to the value $2.
-# This is useful for the same reasons as mk_get
-#
-##
+#>
 mk_set()
 {
     eval "${1}=\${2}"
@@ -532,8 +612,6 @@ _mk_slashless_name()
 
 ##
 #
-# mk_quote
-#
 # Possibly the most important function in MakeKit, this quotes a string
 # so it can safely be read back in by the shell.  This is done by surrounding
 # the string with single quotes, and replacing all single quotes within
@@ -541,9 +619,22 @@ _mk_slashless_name()
 # uses only shell builtins to be as fast as possible.
 #
 ##
+
+#<
+#
+# @brief Quote string for the shell
+# @usage str
+#
+# Quotes <param>str</param> so that it can be safely reintepreted by the shell
+# and sets <var>result</var> to the result.
+#
+# @example
+# # Sets result to: 'hello '\'' world'
+# mk_quote "hello ' world"
+#>
 mk_quote()
 {
-    result=""
+    result="'"
     __rem="$1"
     while true
     do
@@ -566,25 +657,19 @@ mk_quote()
         fi
     done
 
-    # Affix enclosing single quotes
-    result="'${result}'"
+    # Add end quote
+    result="${result}'"
 }
 
-##
+#<
+# @brief Quote list of strings for the shell
+# @usage strings..
 #
-# mk_quote_list
+# Quotes each string in <param>strings</param> as by
+# <funcref>mk_quote</funcref> and sets <var>result</var>
+# to the space-separated concatenation.
 #
-# Quotes each parameter with mk_quote and concatenates them
-# into a space-separated list.  The inverse of this operation
-# is mk_unquote_list, such that the following sequence is a no-op
-#
-# mk_quote_list "$@"
-# mk_unquote_list "$result"
-#
-# This means you can save parameter lists and recover them later
-# without messing with IFS.
-#
-##
+#>
 mk_quote_list()
 {
     ___result=""
@@ -794,22 +879,19 @@ _mk_fnmatch_transform()
     unset __tmp __i
 }
 
-##
+#>
+# @brief Perform glob matching on path
+# @usage path pattern
 #
-# mk_fnmatch
+# Performs glob matching on a path.  Unlike
+# the shell's <lit>case</lit> syntax, wildcards
+# will not match across path separators.
 #
-# Performs fnmatch-like glob matching in that
-# * will not match across a path separator.
-# As an extra feature, a pattern containing no
-# path separators will match just the base filename:
+# Returns 0 (logical true) if <param>pattern</param>
+# matches <param>path</param>, or 1 otherwise.
 #
-# mk_fnmatch /usr/lib/foobar.so /usr/lib/*.so -> true
-# mk_fnmatch /usr/lib/subdir/foobar.so /usr/lib/*.so -> false
-# mk_fnmatch /usr/lib/subdir/foobar.so *.so -> true
-#
-# This function avoids clobbering $result
-#
-##
+# This function does not change <var>result</var>.
+#>
 mk_fnmatch()
 {
     # $1 = path
@@ -864,16 +946,16 @@ mk_fnmatch_filter()
     unset __patterns __results __pattern __path
 }
 
-##
+#<
+# @brief Normalize path
+# @usage path
 #
-# mk_normalize_path
-#
-# Normalizes the path specified as $1 by attempting to remove all
+# Normalizes <param>path</param> by attempting to remove all
 # '.' and '..' components.  '..' components which attempt to escape
-# the current directory or / are left in place, but this is easy
-# to check for.
-#
-##
+# the current directory or / are left in place, but are guaranteed
+# to occur at the beginning of the string where they can be
+# easily checked.  Sets <var>result</var> to the result.
+#>
 mk_normalize_path()
 {
     __path_IFS="$IFS"
@@ -914,7 +996,7 @@ _mk_find_resource()
     for __dir in ${MK_SEARCH_DIRS}
     do
         __file="${__dir}/$1"
-        if [ -f "$__file" ]   
+        if [ -e "$__file" ]   
         then
             result="$__file"
             return 0
@@ -922,6 +1004,24 @@ _mk_find_resource()
     done
 
     return 1
+}
+
+#<
+# @brief Find resource in search path
+# @usage relpath
+#
+# Locates a resource by searching the resource path
+# list and sets <var>result</var> to the result.
+# If the resource is not found, this function will abort.
+#
+# The resource path list includes any directories specified
+# by the <var>MKLOCAL</var> variable in <lit>MakeKitBuild</lit>
+# files in the current project, as well as the MakeKit home
+# directory.
+#>
+mk_resolve_resource()
+{
+    _mk_find_resource "$1" || mk_fail "could not resolve resource: $1"
 }
 
 _mk_contains()
@@ -949,4 +1049,183 @@ _mk_reverse()
     done
 
     result="${result% }"
+}
+
+#<
+# @brief Strip last component from filename
+# @usage filename
+#
+# Strips the last component from a filename,
+# leaving the name of the directory containing
+# the file, and sets <var>result</var> to the
+# result.
+#>
+mk_dirname()
+{
+    result="."
+    case "$1" in
+        */*)
+            result="${1%/*}"
+    esac
+}
+
+#<
+# @brief Strip leading directory from filename
+# @usage filename
+#
+# Strips the leading directory components
+# from a filename and sets <var>result</var>
+# to the result.
+#>
+mk_basename()
+{
+    result="${1##*/}"
+}
+
+#<
+# @brief Create leading directories for filename
+# @usage filename
+#
+# Creates all leading directory components
+# for a filename.
+#>
+mk_mkdirname()
+{
+    _result="$result"
+    mk_dirname "$1"
+    mk_mkdir "$result"
+    result="$_result"
+}
+
+#<
+# @brief Run a command and abort on failure
+# @usage command...
+# 
+# Runs the specified command.  If it fails,
+# the current operation will be aborted with
+# an error message detailing the command that
+# was run.
+#>
+mk_run_or_fail()
+{
+    mk_quote_list "$@"
+    mk_msg_verbose "+ $result"
+    
+    if ! "$@"
+    then
+        mk_msg "FAILED: $result"
+        exit 1
+    fi
+}
+
+#<
+# @brief Run a command quietly and abort on failure
+# @usage command...
+# 
+# Like <funcref>mk_run_or_fail</funcref>, but suppresses
+# all command output if the command succeeds.  On failure,
+# the output is displayed.
+#>
+mk_run_quiet_or_fail()
+{
+    mk_quote_list "$@"
+    mk_msg_verbose "+(q) $result"
+    
+    __log="`"$@" 2>&1`"
+
+    if [ "$?" -ne 0 ]
+    then
+        echo "$__log" >&2
+        mk_msg "FAILED: $result"
+        exit 1
+    fi
+}
+
+mk_cd_or_fail()
+{
+    mk_quote "$1"
+    mk_msg_verbose "+ 'cd' $result"
+    cd "$1" || mk_fail "FAILED: 'cd' $result"
+}
+
+#<
+# @brief Read a line from stdin
+# @usage
+#
+# Reads a single line from stdin and sets <var>result</var>
+# to result.  If a line was read, this function returns 0
+# (logical true).  If a line could not be read (e.g. due to end
+# of file), 1 is returned.
+#>
+mk_read_line()
+{
+    _IFS="$IFS"
+    IFS=""
+    read -r result
+    _res="$?"
+    IFS="$_IFS"
+    return "$_res"
+}
+
+#<
+# @brief Get mode of file or directory in octal
+# @usage path
+#
+# Sets <var>result</var> to the mode of <param>file</param>
+# in octal.  If the mode could not be read, this function
+# aborts via <funcref>mk_fail</funcref>.
+#>
+mk_get_file_mode()
+{
+    # $1 = path
+    _res=0
+    _extra=0
+    _mode=`ls -ld "$1"` || mk_fail "could not read mode for file: $1"
+    _mode="${_mode%% *}"
+    # Strip off file type
+    _mode="${_mode#?}"
+
+    
+    while [ -n "$_mode" ]
+    do
+        _rest="${_mode#?}"
+        _bit="${_mode%$_rest}"
+        _mode="${_rest}"
+        case "$_bit" in
+            r|w|x)
+                _res=$(($_res * 2 + 1))
+                ;;
+            S|s)
+                if [ "${#_mode}" -ge 6 ]
+                then
+                    # setuid
+                    _extra=$(($_extra + 04000))
+                else
+                    # setgid
+                    _extra=$(($_extra + 02000))
+                fi
+
+                if [ "$_bit" = "s" ]
+                then
+                    _res=$(($_res * 2 + 1))
+                else
+                    _res=$(($_res * 2))
+                fi
+                ;;
+            T|t)
+                _extra=$(($_extra + 01000))
+                if [ "$_bit" = "t" ]
+                then
+                    _res=$(($_res * 2 + 1))
+                else
+                    _res=$(($_res * 2))
+                fi
+                ;;
+            -)
+                _res=$(($_res * 2))
+                ;;
+        esac
+    done
+
+    result=`printf "0%o" "$_res"`
 }

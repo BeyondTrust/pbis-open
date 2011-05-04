@@ -19,11 +19,12 @@ _mk_autotools_combine_darwin()
 
     for file
     do
-        case `file "$primary/$file"` in
+        case `file -h "$primary/$file"` in
             *": directory" )
                 mk_mkdir "${MK_STAGE_DIR}/${file}"
                 ;;
             *"Mach-O"*)
+                mk_msg "${file#.}"
                 mk_quote "$MK_STAGE_DIR/$file"
                 command="lipo -create -output $result"
                 mk_unquote_list "$dirs"
@@ -37,7 +38,8 @@ _mk_autotools_combine_darwin()
                 mk_run_or_fail "$@"
                 ;;
             *)
-                mk_run_or_fail cp -p "$primary/$file" "${MK_STAGE_DIR}/${file}"
+                mk_msg "${file#.}"
+                mk_run_or_fail cp -RpPf -- "$primary/$file" "${MK_STAGE_DIR}/${file}"
                 ;;
         esac
     done
@@ -49,7 +51,7 @@ mk_msg_domain combine
 
 if [ -n "$SOURCEDIR" ]
 then
-    dirname="${MK_SUBDIR#/}/$SOURCEDIR"
+    dirname="${MK_SUBDIR:+${MK_SUBDIR#/}/}$SOURCEDIR"
 elif [ -n "$MK_SUBDIR" ]
 then
     dirname="${MK_SUBDIR#/}"

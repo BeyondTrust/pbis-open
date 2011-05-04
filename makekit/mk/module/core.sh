@@ -34,8 +34,155 @@
 
 DEPENDS="platform program"
 
+#<
+# @var MK_DEBUG
+# @brief Controls debug mode
+# @export
+# @value yes Debug mode is turned on
+# @value no Debug mode is turned off
+#
+# Decides whether build products should be created
+# in "debug" mode.  This is an abstract setting which
+# is respected by other modules in whatever way is appropriate.
+# For example, when debug mode is on the compiler module
+# turns off optimization compiler flags and the package-deb
+# module builds .deb package with unstripped binaries.
+#>
+
 ### section common
 
+_mk_declare_output()
+{
+    case " $_MK_OUTPUT_VARS " in
+        *" $1 "*)
+            return 0
+            ;;
+    esac
+
+    _MK_OUTPUT_VARS="$_MK_OUTPUT_VARS $1"
+}
+
+#<
+# @brief Declare special variables
+# @usage [-i] [-e] [-s] [-o] vars...
+# @usage [-i] [-e] [-s] [-o] var=value...
+# @option -i Marks all listed variables as inherited by subdirectories.
+#            Each subdirectory may override the variable by setting it
+#            to a new value; the original value will be restored upon
+#            returning to the parent directory.
+# @option -e Mark all listed variables as exported.  Their values
+#            will be available when the user runs <cmd>make</cmd>.
+# @option -s Mark all listed variables as system-dependent.  The
+#            variables may have different values for each target system.
+#            The values will be swapped out when the target system is
+#            changed with <funcref>mk_system</funcref>.
+# @option -o Mark all listed variables as output variables.  Their
+#            values will be substituted when processing a file with
+#            <funcref>mk_output_file</funcref>.
+#
+# Marks each variable in the list with the above attributes.
+# If the second form is used for a variable, it will also be assigned
+# <param>value</param> at the same time.
+#
+# @example
+# configure()
+# {
+#     mk_declare -e FOO="foo"
+#     BAR="bar"
+# }
+#
+# make()
+# {
+#     mk_target TARGET="foobar" my_custom_function '$@'
+# }
+#
+# my_custom_function()
+# {
+#     # The value of FOOBAR is available here because it was exported
+#     echo "$FOOBAR" > "$1"
+#     # The value of BAR is not available, so this will not print "bar"
+#     mk_msg "BAR=$BAR"
+# }
+#>
+mk_declare()
+{
+    _inherited=false
+    _exported=false
+    _system=false
+    _output=false
+
+    while [ "$#" -gt 0 ]
+    do
+        case "$1" in
+            '-e') _exported=true;;
+            '-i') _inherited=true;;
+            '-s') _system=true;;
+            '-o') _output=true;;
+            *'='*)
+                _name="${1%%=*}"
+                _val="${1#*=}"
+                mk_set "$_name" "$_val"
+                if $_system
+                then
+                    _mk_declare_system "$_name"
+                    $_output && _mk_declare_output "$_name"
+                else
+                    $_inherited && _mk_declare_inherited "$_name"
+                    $_exported && _mk_declare_exported "$_name"
+                    $_output && _mk_declare_output "$_name"
+                fi
+                ;;
+            *)
+                if $_system
+                then
+                    _mk_declare_system "$1"
+                    $_output && _mk_declare_output "$1"
+                else
+                    $_inherited && _mk_declare_inherited "$1"
+                    $_exported && _mk_declare_exported "$1"
+                    $_output && _mk_declare_output "$1"
+                fi
+                ;;
+        esac
+        shift
+    done
+}
+
+mk_export()
+{
+    mk_deprecated "mk_export is deprecated; use mk_declare -e instead"
+
+    for _export
+    do
+        case "$_export" in
+            *"="*)
+                _val="${_export#*=}"
+                _name="${_export%%=*}"
+                mk_set "$_name" "$_val"
+                _mk_declare_exported "$_name"
+                _mk_declare_inherited "$_name"
+                ;;
+            *)
+                _mk_declare_exported "$_export"
+                _mk_declare_inherited "$_export"
+                ;;
+        esac
+    done
+}
+
+#<
+# @brief Get value of exported variable
+# @usage dir var
+# 
+# Gets the value of the exported variable
+# <param>var</param> in the directory 
+# <param>dir</param> (relative to the directory
+# containing the current MakeKitBuild).  The
+# specified directory must have been previously
+# processed.
+#
+# The value is placed in <var>result</var>.
+#>
 mk_get_export()
 {
     # $1 = directory (relative to MK_SUBDIR)
@@ -72,7 +219,7 @@ mk_get_stage_targets()
 {
     mk_push_vars \
         SELECT="*" \
-        SUBDIRS STAGE_TARGETS DIR SUBDIR TARGETS # temporaries
+        SUBDIRS CLEAN_TARGETS STAGE_TARGETS DIR SUBDIR TARGETS # temporaries
     mk_parse_params
 
     for DIR
@@ -91,38 +238,41 @@ mk_get_stage_targets()
     mk_pop_vars
 }
 
-mk_run_or_fail()
+_mk_get_clean_targets_rec()
 {
-    mk_quote_list "$@"
-    mk_msg_verbose "+ $result"
-    
-    if ! "$@"
+    mk_push_vars DIR="$1"
+    if mk_safe_source "$DIR/.MakeKitTargets"
     then
-        mk_msg "FAILED: $result"
-        exit 1
+        TARGETS="$TARGETS $CLEAN_TARGETS"
+        mk_unquote_list "$SUBDIRS"
+        for SUBDIR
+        do
+            [ "$SUBDIR" != "." ] && _mk_get_clean_targets_rec "$DIR/$SUBDIR"
+        done
     fi
+    mk_pop_vars
 }
 
-mk_run_quiet_or_fail()
+mk_get_clean_targets()
 {
-    mk_quote_list "$@"
-    mk_msg_verbose "+(q) $result"
-    
-    __log="`"$@" 2>&1`"
+    mk_push_vars \
+        SUBDIRS CLEAN_TARGETS STAGE_TARGETS DIR SUBDIR TARGETS # temporaries
+    mk_parse_params
 
-    if [ "$?" -ne 0 ]
-    then
-        echo "$__log" >&2
-        mk_msg "FAILED: $result"
-        exit 1
-    fi
-}
+    for DIR
+    do
+        case "$DIR" in
+            "@"*)
+                _mk_get_clean_targets_rec "${MK_OBJECT_DIR}/${DIR#@}"
+                ;;
+            *)
+                _mk_get_clean_targets_rec "${MK_OBJECT_DIR}${MK_SUBDIR}/${DIR}"
+                ;;
+        esac
+    done
 
-mk_cd_or_fail()
-{
-    mk_quote "$1"
-    mk_msg_verbose "+ 'cd' $result"
-    cd "$1" || mk_fail "FAILED: 'cd' $result"
+    result="${TARGETS# }"
+    mk_pop_vars
 }
 
 mk_safe_rm()
@@ -143,17 +293,14 @@ mk_safe_rm()
     mk_run_or_fail rm -rf -- "$result"
 }
 
-mk_warn()
-{
-    if [ "$MK_FAIL_ON_WARN" = "yes" ]
-    then
-        mk_fail "$@"
-    else
-        mk_msg "WARNING: $*"
-        sleep 1
-    fi
-}
-
+#<
+# @brief Note deprecated function usage
+# @usage message...
+#
+# If warn-on-deprecated is on, warns the user about deprecated
+# function usage by passing <param>message</param> to
+# <funcref>mk_warn</funcref>.
+#>
 mk_deprecated()
 {
     [ "$MK_WARN_DEPRECATED" = "yes" ] && mk_warn "$@"
@@ -281,10 +428,7 @@ mk_skip_subdir()
 
 mk_comment()
 {
-    _mk_emit ""
-    _mk_emit "#"
-    _mk_emit "# $*"
-    _mk_emit "#"
+    _mk_emitf "\n#\n# %s\n#\n" "$*"
 }
 
 _mk_rule()
@@ -304,7 +448,7 @@ _mk_rule()
 
 _mk_build_command()
 {
-    for __param in "$@"
+    for __param
     do
         case "$__param" in
             "%<"|"%>"|"%<<"|"%>>"|"%;")
@@ -326,6 +470,9 @@ _mk_build_command()
                     mk_quote "${__param#%}=$result"
                     __command="$__command $result"
                 fi
+                ;;
+            "#"*)
+                __command="$__command ${__param#?}"
                 ;;
             "*"*)
                 _mk_build_command_expand "${__param#?}"
@@ -398,8 +545,6 @@ mk_install_file()
         DEPS="'$_resolved' $*" \
         mk_run_script install %MODE '$@' "$_resolved"
 
-    mk_add_all_target "$result"
-
     mk_pop_vars
 }
 
@@ -425,6 +570,23 @@ mk_install_files()
     mk_pop_vars
 }
 
+#<
+# @brief Create symlink in staging area
+# @usage TARGET=target LINK=link
+#
+# @option DEPS=deps
+# Specify additional dependencies of <param>link</param>
+# other than <param>target</param>
+#
+# Creates a symlink at <param>link</param> which points to
+# <param>target</param>.
+#
+# @example
+# # Make symlink /etc/foobar.conf that points to foobar.conf.default
+#
+# mk_symlink LINK=/etc/foobar.conf TARGET=foobar.conf.default
+# @endexample
+#>
 mk_symlink()
 {
     mk_push_vars TARGET LINK DEPS
@@ -454,11 +616,46 @@ mk_symlink()
         DEPS="$DEPS" \
         _mk_core_symlink "$TARGET" "&$LINK"
 
-    mk_add_all_target "$result"
-
     mk_pop_vars
 }
 
+#<
+# @brief Install files or directories into staging area
+#
+# @usage SOURCE=source_path DEST=dest_path
+# @usage SOURCE=source_path DESTDIR=dest_dir
+# @usage DESTDIR=dest_dir sources...
+#
+# @option MODE=mode
+# Specifies the UNIX mode of the destination files
+# or directories
+# @option DEPS=deps
+# Specifies additional dependencies of the destination
+# files or directories other than the sources.
+#
+# Defines targets that copy one or more files or directories into
+# the staging area.  In the first form, a single file or directory
+# is copied, with the <param>dest_path</param> specifying the complete
+# destination path.  In the second form, the <param>dest_dir</param>
+# parameter specifies the directory into which the source will be
+# copied; the name of the source will be preserved.  In the third form,
+# multiple sources are copied into <param>dest_dir</param>.
+#
+# @example
+# # Copy a single file or directory
+# mk_stage SOURCE=foobar.conf.example DEST=/etc/foobar.conf
+# mk_stage SOURCE=foobar.d.example DEST=/etc/foobar.d
+#
+# # Copy a single file or directory, specifying destination directory
+# Source filename is preserved
+# mk_stage SOURCE=foobar.conf DESTDIR=/etc
+# mk_stage SOURCE=foobar.d DESTDIR=/etc
+#
+# # Copy multiple files and directories to destination directory
+# Source filenames are preserved
+# mk_stage DESTDIR=/etc foo.conf bar.conf
+# @endexample
+#>
 mk_stage()
 {
     mk_push_vars SOURCE DEST SOURCEDIR DESTDIR RESULTS MODE DEPS
@@ -473,7 +670,6 @@ mk_stage()
             TARGET="$DEST" \
             DEPS="$SOURCE $DEPS" \
             _mk_core_stage "&$result" "&$SOURCE" "$MODE"
-        mk_add_all_target "$result"
     elif [ -n "$SOURCE" -a -n "$DESTDIR" ]
     then
         mk_stage \
@@ -501,6 +697,25 @@ mk_stage()
     mk_pop_vars
 }
 
+#<
+# @brief Output a file with variable substitutions
+#
+# @usage INPUT=source_path DEST=dest_path
+# @usage dest_path
+#
+# Processes the given <param>source_path</param>, substituting
+# anything of the form <lit>@<var>VAR</var>@</lit> with the value
+# of <var>VAR</var>, where <var>VAR</var> is an output variable
+# as declared by <cmd><funcref>mk_declare</funcref> -o</cmd>.
+#
+# Both paths are resolved according to the usual target notation
+# (see <funcref>mk_resolve_target</funcref>).  In the most common
+# usage, the source will be in the source directory and the
+# destination will be in the object directory.
+#
+# If the second form is used, the input file is assumed to be
+# the same as the output file suffixed with <lit>.in</lit>.
+#>
 mk_output_file()
 {
     mk_push_vars INPUT OUTPUT
@@ -513,7 +728,7 @@ mk_output_file()
     {
         echo "{"
         
-        for _export in ${MK_EXPORTS}
+        for _export in ${_MK_OUTPUT_VARS}
         do
             mk_get "$_export"
             mk_quote_c_string "$result"
@@ -547,8 +762,8 @@ mk_output_file()
         mk_run_or_fail mv "${_output}.new" "${_output}"
     fi
 
-    mk_add_configure_output "${_output}"
-    mk_add_configure_input "${_input}"
+    mk_add_configure_output "@${_output}"
+    mk_add_configure_input "@${_input}"
 
     result="@$_output"
 
@@ -566,7 +781,7 @@ mk_add_clean_target()
 mk_add_scrub_target()
 {
     mk_push_vars result
-    mk_quote "${1#@}"
+    mk_quote "$1"
     MK_SCRUB_TARGETS="$MK_SCRUB_TARGETS $result"
     mk_pop_vars
 }
@@ -603,6 +818,24 @@ mk_add_subdir_target()
     mk_pop_vars
 }
 
+mk_add_configure_output()
+{
+    mk_push_vars result
+    mk_resolve_target "$1"
+    mk_quote "$result"
+    MK_CONFIGURE_OUTPUTS="$MK_CONFIGURE_OUTPUTS $result"
+    mk_pop_vars
+}
+
+mk_add_configure_input()
+{
+    mk_push_vars result
+    mk_resolve_target "$1"
+    mk_quote "$result"
+    MK_CONFIGURE_INPUTS="$MK_CONFIGURE_INPUTS $result"
+    mk_pop_vars
+}
+
 mk_msg_checking()
 {
     if [ "$MK_SYSTEM" = "host" ]
@@ -618,9 +851,19 @@ mk_msg_result()
     mk_msg_end "$*"
 }
 
+#<
+# @brief Check for cached test result
+# @usage var
+#
+# Checks if a variable has been previously
+# cached by <funcref>mk_cache</funcref>.  On success,
+# both <param>var</param> and <var>result</var> are
+# set the the cached value, and true is returned.
+# Otherwise, false is returned.
+#>
 mk_check_cache()
 {
-    mk_declare_system_var "$1"
+    mk_declare -s -i "$1"
 
     _mk_define_name "CACHED_$MK_CANONICAL_SYSTEM"
     if mk_is_set "${1}__${result}"
@@ -640,6 +883,13 @@ mk_check_cache()
     fi
 }
 
+#<
+# @brief Cache test result
+# @usage var value
+#
+# Sets <param>var</param> to <param>value</param> and
+# stores the result in the cache.
+#>
 mk_cache()
 {
     __systems=""
@@ -684,6 +934,13 @@ _mk_load_cache()
 option()
 {
     mk_option \
+        OPTION="log-dir" \
+        VAR="MK_LOG_DIR" \
+        PARAM="dir" \
+        DEFAULT="log" \
+        HELP="Directory where misc. logs should be placed"
+
+    mk_option \
         OPTION="warn-deprecated" \
         VAR="MK_WARN_DEPRECATED" \
         PARAM="yes|no" \
@@ -707,17 +964,25 @@ option()
 
 configure()
 {
+    mk_declare -i _MK_OUTPUT_VARS
+    mk_declare -e MK_LOG_DIR MK_DEBUG
+
     # Check for best possible awk
     mk_check_program VAR=AWK FAIL=yes gawk awk
 
-    # Default clean targets
-    MK_CLEAN_TARGETS="@${MK_RUN_DIR}"
+    MK_CLEAN_TARGETS=""
+    MK_SCRUB_TARGETS=""
+    MK_NUKE_TARGETS=""    
+    MK_BUILD_FILES=""
 
-    # Default scrub targets
-    MK_SCRUB_TARGETS="${MK_STAGE_DIR}"
+    for _module in ${MK_MODULE_LIST}
+    do
+        _mk_find_resource "module/${_module}.sh" || mk_fail "internal error"
+        mk_quote "@$result"
+        MK_BUILD_FILES="$MK_BUILD_FILES $result"
+    done
 
-    # Default nuke targets (scrub targets implicitly included)
-    MK_NUKE_TARGETS="${MK_OBJECT_DIR} ${MK_RUN_DIR} Makefile config.log .MakeKitCache .MakeKitBuild .MakeKitExports .MakeKitDeps .MakeKitClean"
+    mk_add_configure_prehook _mk_core_configure_pre
 
     # Add a post-make() hook to write out a rule
     # to build all relevant targets in that subdirectory
@@ -740,52 +1005,88 @@ configure()
 
 make()
 {
-    mk_target \
-        TARGET="@all" \
-        DEPS="$MK_ALL_TARGETS"
-
-    mk_add_phony_target "$result"
-
-    mk_unquote_list "$MK_CLEAN_TARGETS"
-    for _clean
-    do
-        echo "${_clean#@}"
-    done > .MakeKitClean || mk_fail "could not write .MakeKitClean"
+    MK_CLEAN_TARGETS="$MK_CLEAN_TARGETS @$MK_LOG_DIR @$MK_RUN_DIR"
+    MK_NUKE_TARGETS="$MK_NUKE_TARGETS $MK_OBJECT_DIR Makefile config.log .MakeKitCache .MakeKitBuild .MakeKitExports .MakeKitDeps"
 
     mk_target \
         TARGET="@clean" \
-        mk_run_script clean '$(SUBDIR)'
+        mk_run_script clean '$(SUBDIR)' "*$MK_CLEAN_TARGETS"
 
     mk_add_phony_target "$result"
 
     mk_target \
         TARGET="@scrub" \
         DEPS="@clean" \
-        mk_run_script scrub "*$MK_SCRUB_TARGETS"
+        mk_run_script scrub '$(SUBDIR)' "*$MK_SCRUB_TARGETS"
 
     mk_add_phony_target "$result"
 
     mk_target \
         TARGET="@nuke" \
-        mk_run_script nuke "*$MK_SCRUB_TARGETS" "*$MK_NUKE_TARGETS"
+        mk_run_script nuke "*$MK_CLEAN_TARGETS" "*$MK_SCRUB_TARGETS" "*$MK_NUKE_TARGETS"
 
     mk_add_phony_target "$result"
 
     mk_target \
         TARGET="@install" \
+        DEPS="@all" \
         _mk_core_install '$(DESTDIR)'
+    
+    mk_add_phony_target "$result"
+
+    mk_target \
+        TARGET="@uninstall" \
+        _mk_core_uninstall
+    
+    mk_add_phony_target "$result"
 
     mk_target \
         TARGET="@.PHONY" \
         DEPS="$MK_PHONY_TARGETS"
 
+    mk_comment "Rule to regenerate Makefile"
+
+    mk_target \
+        TARGET="@Makefile" \
+        DEPS="$MK_BUILD_FILES $MK_CONFIGURE_INPUTS" \
+        mk_msg "regenerating Makefile" '%;' \
+        export MK_HOME MK_SHELL MK_SOURCE_DIR PATH '%;' \
+        "$MK_SHELL" "$MK_HOME/command/configure.sh" "#$MK_OPTIONS" '%;' \
+        exit 0
+
+    mk_comment "Dummy targets for files needed by configure"
+
+    mk_unquote_list "$MK_BUILD_FILES" "$MK_CONFIGURE_INPUTS"
+    for _target
+    do
+        mk_target TARGET="$_target"
+    done
+
+    mk_comment "Targets for files output by configure"
+
+    mk_unquote_list "$MK_CONFIGURE_OUTPUTS"
+    for _target
+    do
+        mk_target TARGET="$_target" DEPS="@Makefile"
+    done
+
+    _mk_emit ""
+    _mk_emit "sinclude .MakeKitDeps/*.dep"
+    _mk_emit ""
+
     # Save configure check cache
     _mk_save_cache
 }
 
+_mk_core_configure_pre()
+{
+    mk_quote "@$MK_CURRENT_FILE"
+    MK_BUILD_FILES="$MK_BUILD_FILES $result"
+}
+
 _mk_core_write_subdir_rule()
 {
-    if [ "$MK_SUBDIR" != ":" -a "$MK_SUBDIR" != "" ]
+    if [ "$MK_SUBDIR" != ":" ]
     then
         _targets=""
         mk_unquote_list "$SUBDIRS"
@@ -793,15 +1094,29 @@ _mk_core_write_subdir_rule()
         do
             if [ "$__subdir" != "." ]
             then
-                mk_quote "@${MK_SUBDIR#/}/$__subdir"
+                mk_quote "@${MK_OBJECT_DIR}${MK_SUBDIR}/$__subdir/.subdir_stamp"
                 _targets="$_targets $result"
             fi
         done
         mk_comment "virtual target for subdir ${MK_SUBDIR#/}"
 
         mk_target \
-            TARGET="@${MK_SUBDIR#/}" \
-            DEPS="$MK_SUBDIR_TARGETS $_targets"
+            TARGET=".subdir_stamp" \
+            DEPS="$MK_SUBDIR_TARGETS $_targets" \
+            mk_run_or_fail touch "&.subdir_stamp"
+
+        if [ "$MK_SUBDIR" = "" ]
+        then
+            _target="@all"
+        else
+            _target="@${MK_SUBDIR#/}"
+        fi
+
+        mk_quote "$result"
+
+        mk_target \
+            TARGET="$_target" \
+            DEPS="$result"
 
         mk_add_phony_target "$result"
     fi
@@ -818,33 +1133,80 @@ _mk_core_write_targets_file()
             echo "SUBDIRS=$result"
             mk_quote "$MK_STAGE_TARGETS"
             echo "STAGE_TARGETS=$result"
+            mk_quote "$MK_CLEAN_TARGETS"
+            echo "CLEAN_TARGETS=$result"
         } > "${MK_OBJECT_DIR}${MK_SUBDIR}/.MakeKitTargets" ||
         mk_fail "could not write ${MK_OBJECT_DIR}${MK_SUBDIR}/.MakeKitTargets"
-    fi
 
-    unset MK_STAGE_TARGETS
+        unset MK_STAGE_TARGETS MK_CLEAN_TARGETS
+    fi
 }
 
 ### section build
+
+_mk_core_copy()
+{
+    mk_mkdir "${DESTDIR}${1%/*}"
+    
+    if [ -d "${MK_STAGE_DIR}${1}" ]
+    then
+        find "${MK_STAGE_DIR}${1}" -type f -o -type l |
+        while read -r _file
+        do
+            _mk_core_copy "${_file#$MK_STAGE_DIR}"
+        done || exit 1
+    else
+        mk_msg "$1"
+        if [ -f "${DESTDIR}${1}" -o -h "${DESTDIR}${1}" ]
+        then
+            mk_run_or_fail rm -f -- "${DESTDIR}${1}"
+        fi
+        mk_mkdirname "${DESTDIR}${1}"
+        ${CP_CMD} "${MK_STAGE_DIR}${1}" "${DESTDIR}${1}"
+    fi
+}
+
+_mk_core_solaris_cp()
+{
+    if [ -h "$1" ]
+    then
+        _dest=`file -h "$1"`
+        _dest=${_dest#*"symbolic link to "}
+        mk_run_or_fail ln -s -- "$_dest" "$2"
+    else
+        mk_run_or_fail cp -f -- "$1" "$2"
+    fi
+}
 
 _mk_core_install()
 {
     DESTDIR="${1%/}"
 
+    # We need to select a command that will preserve symlinks
+    case "$MK_BUILD_OS" in
+        hpux)
+            # HP-UX does not support -P, but behaves correctly by default
+            CP_CMD="mk_run_or_fail cp -Rf --"
+            ;;
+        solaris)
+            # Solaris cp cannot preserve symlinks, so improvise
+            CP_CMD="_mk_core_solaris_cp"
+            ;;
+        *)
+            # This is works if cp is POSIX-comliant
+            CP_CMD="mk_run_or_fail cp -RPf --"
+            ;;
+    esac
+
     mk_msg_domain "install"
+
+    mk_get_stage_targets SELECT="*" "@"
+    mk_unquote_list "$result"
    
-    [ -d "${MK_STAGE_DIR}" ] || return 0
-
-    find "${MK_STAGE_DIR}" -type f -o -type l |
-    while read -r _file
+    for _target
     do
-        _file="${_file#$MK_STAGE_DIR}"
-        mk_msg "$_file"
-        mk_mkdir "${DESTDIR}${_file%/*}"
-        mk_run_or_fail cp -pPf "${MK_STAGE_DIR}${_file}" "${DESTDIR}${_file}"
+        _mk_core_copy "${_target#@$MK_STAGE_DIR}"
     done
-
-    return 0
 }
 
 _mk_core_symlink()
@@ -869,10 +1231,56 @@ _mk_core_stage()
 
     mk_msg "${1#$MK_STAGE_DIR}"
     mk_mkdir "${1%/*}"
+    [ -d "$1" ] && mk_safe_rm "$1"
     mk_run_or_fail cp -r "$2" "$1"
+    mk_run_or_fail touch "$1"
 
     if [ -n "$3" ]
     then
         mk_run_or_fail chmod "$3" "$1"
     fi
+}
+
+_mk_core_confirm_uninstall()
+{
+    response=""
+
+    while true
+    do
+        printf "Remove directory %s (y/n): " "$1"
+        read response
+        case "$response" in
+            y)
+                return 0
+                ;;
+            n)
+                return 1
+                ;;
+        esac
+    done
+}
+
+_mk_core_uninstall()
+{
+    mk_msg_domain "uninstall"
+
+    mk_get_stage_targets "@$1"
+    mk_unquote_list "$result"
+
+    for _target
+    do
+        _file="${_target#@$MK_STAGE_DIR}"
+        if [ -d "$_file" ]
+        then
+            if _mk_core_confirm_uninstall "$_file"
+            then
+                mk_msg "$_file"
+                rm -rf "$_file"
+            fi
+        elif [ -e "$_file" -o -h "$_file" ]
+        then
+            mk_msg "$_file"
+            rm -f "$_file"
+        fi
+    done
 }

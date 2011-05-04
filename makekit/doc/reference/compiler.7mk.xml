@@ -1,7 +1,8 @@
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="compiler">
+<refentry version="5.0" xml:id="compiler">
   <refmeta>
     <refentrytitle>compiler</refentrytitle>
     <manvolnum>7mk</manvolnum>
+    <refmiscinfo class="manual">MakeKit Reference</refmiscinfo>
   </refmeta>
   <refnamediv>
     <refname>compiler</refname>
@@ -172,23 +173,6 @@ MODULES="compiler <replaceable>...</replaceable>"
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><literal>INSTALL=</literal><replaceable>yes|no</replaceable></term>
-        <listitem>
-          <para>
-	    If specified as <literal>no</literal>, the resulting binary will not
-	    be installed; it can be found in the object directory instead. 
-	    This is sometimes useful for one-off test programs, etc. Defaults to
-	    <literal>yes</literal>.
-          </para>
-	  <para>
-	    Applicable functions: 
-	    <function><xref linkend="mk_program"/></function>,
-	    <function>mk_library</function>,
-	    <function>mk_dlo</function>
-	  </para>
-        </listitem>
-      </varlistentry>
- <varlistentry>
         <term><literal>EXT=</literal><replaceable>extension</replaceable></term>
         <listitem>
           <para>

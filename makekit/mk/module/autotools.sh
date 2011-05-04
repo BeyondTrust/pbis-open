@@ -98,7 +98,7 @@ _mk_at_system_string()
                     __arch="powerpc-ibm"
                     ;;
                 *)
-                    __arch="ppc-unknown"
+                    __arch="powerpc-unknown"
                     ;;
             esac
             ;;
@@ -111,15 +111,18 @@ _mk_at_system_string()
                     __arch="powerpc-ibm"
                     ;;
                 *)
-                    __arch="ppc64-unknown"
+                    __arch="powerpc-unknown"
                     ;;
             esac
             ;;
         sparc*)
             __arch="sparc-sun"
             ;;
-        hppa*)
+        hppa32)
             __arch="hppa2.0-hp"
+            ;;
+        hppa64)
+            __arch="hppa64-hp"
             ;;
         ia64*)
             case "$__os" in
@@ -187,7 +190,7 @@ _mk_autotools()
         at-configure \
         %SOURCEDIR %BUILDDIR %CPPFLAGS %CFLAGS %CXXFLAGS %LDFLAGS \
 	%SET_LIBRARY_PATH \
-        DIR="$dir" '$@' "$@" "*$_MK_AT_PASS_VARS"
+        DIR="$dir" '$@' "*$PARAMS" "*$_MK_AT_PASS_VARS"
 
     __configure_stamp="$result"
 
@@ -201,17 +204,144 @@ _mk_autotools()
         MAKE='$(MAKE)' MFLAGS='$(MFLAGS)' '$@'
 }
 
+#<
+# @brief Build autotools source component
+# @usage options... -- configure_params...
+# @option SOURCEDIR=dir Specifies where the autotools source
+# component is.  Defaults to the directory containing
+# MakeKitBuild.
+# @option HEADERS=headers Specifies system headers installed
+# by the component
+# @option LIBS=libs Specifies libraries installed by the component
+# Each library should be specified as its base name with no
+# file extension or <lit>lib</lit> prefix.  Each name should be
+# followed by a colon (<lit>:</lit>) and a version
+# number of the form
+# <param>major</param><lit>.</lit><param>minor</param><lit>.</lit><param>micro</param>.
+# This allows all of the version links associated
+# with the library to be found and properly installed to the staging area.
+# If a version number is omitted, only the <lit>.la</lit> file
+# (e.g. <lit>libfoo.la</lit>) and the version-less library file
+# name (e.g. <lit>libfoo.so</lit>) will be installed.
+# @option TARGETS=targets Specifies additional targets which
+# are installed by the component
+# @option LIBDEPS=libdeps Specifies libraries the component
+# depends on
+# @option HEADERDEPS=headerdeps Specifies headers the component
+# depends on
+# @option DEPS=deps Specifies additional dependencies of the
+# component
+# @option MAKE_BUILD_TARGET=name The target name to pass to make
+# when building the component.  Defaults to nothing (e.g. the
+# default target in the Makefile, usually "all").
+# @option MAKE_INSTALL_TARGET=name The target name to pass to make
+# when installing the component.  Defaults to "install".
+# @option CPPFLAGS=flags Additional C preprocessor flags
+# @option CFLAGS=flags Additional C compiler flags
+# @option CXXFLAGS=flags Additional C++ compiler flags
+# @option LDFLAGS=flags Additional linker flags
+# @option INSTALL_PRE=func Specifies a custom function to run
+# before installing the component into a temporary directory
+# The function is passed the path to the temporary install
+# directory as the first argument.
+# @option INSTALL_POST=func Specifies a custom function to
+# run after installing the component into a temporary directory.
+# The function is passed the path to the temporary install
+# directory as the first arguments
+# @option configure_params Additional parameters to pass to
+# the component's configure script.
+#
+# Builds and installs an autotools (autoconf, automake, libtool) source
+# component as part of the MakeKit project.  The component is taken through
+# the usual <lit>configure</lit>, <lit>make</lit>, <lit>make install</lit>
+# procedure to install it into a temporary location.  All files indicated
+# by the <param>libs</param>, <param>headers</param>, and
+# <param>targets</param> parameters are then moved into the staging area.
+#
+# For each library specified in <param>libs</param>, a <lit>.la</lit> file
+# will be synthesized if the component did not create one itself.
+#
+# The remaining positional arguments to this function are passed verbatim
+# to the configure script of the component.  In addition, flags such as
+# <lit>--prefix</lit> are passed automatically according to how the
+# MakeKit project was configured.
+#
+# @example
+# make()
+# {
+#     # Build popt in the popt-1.15 directory
+#     mk_autotools \
+#         SOURCEDIR="popt-1.15" HEADERS="popt.h" LIBS="popt" -- \
+#         --disable-nls
+# }
+# @endexample
+#>
 mk_autotools()
 {
     mk_push_vars \
         SOURCEDIR HEADERS LIBS PROGRAMS LIBDEPS HEADERDEPS \
-        CPPFLAGS CFLAGS CXXFLAGS LDFLAGS INSTALL TARGETS SELECT \
+        CPPFLAGS CFLAGS CXXFLAGS LDFLAGS INSTALL TARGETS \
         BUILDDIR DEPS SYSTEM="$MK_SYSTEM" CANONICAL_SYSTEM \
         INSTALL_PRE INSTALL_POST SET_LIBRARY_PATH=yes \
 	MAKE_BUILD_TARGET="" MAKE_INSTALL_TARGET="install" \
-        prefix dirname
+        VERSION MAJOR MINOR MICRO LINKS LIB SONAME EXT="$MK_LIB_EXT" \
+        PARAMS EXTRA_TARGETS prefix dirname
     mk_parse_params
-    
+
+    mk_quote_list "$@"
+    PARAMS="$result"
+
+    # Process and merge targets
+    for _header in ${HEADERS}
+    do
+        MK_INTERNAL_HEADERS="$MK_INTERNAL_HEADERS $_header"
+
+        mk_resolve_header "$_header"
+        mk_quote "$result"
+
+        TARGETS="$TARGETS $result"
+    done
+
+    for LIB in ${LIBS}
+    do
+        MK_INTERNAL_LIBS="$MK_INTERNAL_LIBS ${LIB%%:*}"
+
+        mk_resolve_target "${MK_LIBDIR}/lib${LIB%%:*}.la"
+        EXTRA_TARGETS="$EXTRA_TARGETS $result"
+
+        case "$LIB" in
+            *:*)
+                VERSION="${LIB#*:}"
+                LIB="${LIB%%:*}"
+                _mk_library_process_version
+                ;;
+            *)
+                mk_quote "lib${LIB%%:*}${MK_LIB_EXT}"
+                LINKS="$result"
+                ;;
+        esac
+        
+        mk_unquote_list "$LINKS"
+
+        for link
+        do
+            mk_quote "${MK_LIBDIR}/$link"
+            TARGETS="$TARGETS $result"
+        done
+    done
+
+    for _program in ${PROGRAMS}
+    do
+        MK_INTERNAL_PROGRAMS="$MK_INTERNAL_PROGRAMS $_program"
+       
+        mk_quote "@${MK_OBJECT_DIR}/build-run/bin/${_program}"
+        
+        TARGETS="$TARGETS $result"
+    done
+
+    mk_resolve_targets "$TARGETS"
+    TARGETS="$result"
+
     if ! [ -d "${MK_SOURCE_DIR}${MK_SUBDIR}/$SOURCEDIR" ]
     then
         mk_quote "$SOURCEDIR"
@@ -220,14 +350,22 @@ mk_autotools()
     then
         if [ -f "${MK_SOURCE_DIR}${MK_SUBDIR}/${SOURCEDIR}/autogen.sh" ]
         then
-            mk_msg "running autogen.sh for ${dirname}"
-            cd "${MK_SOURCE_DIR}${MK_SUBDIR}/${SOURCEDIR}" && mk_run_or_fail "./autogen.sh"
-            cd "${MK_ROOT_DIR}"
+            _command="./autogen.sh"
+            _msg="running autogen.sh"
         else
-            mk_msg "running autoreconf for ${dirname}"
-            cd "${MK_SOURCE_DIR}${MK_SUBDIR}/${SOURCEDIR}" && mk_run_or_fail autoreconf -fi
-            cd "${MK_ROOT_DIR}"
+            _command="autoreconf -fi"
+            _msg="running autoreconf"
         fi
+
+        if [ -n "$SOURCEDIR" ]
+        then
+            _msg="$_msg for $SOURCEDIR"
+        fi
+
+        mk_msg "$_msg"
+        mk_cd_or_fail "${MK_SOURCE_DIR}${MK_SUBDIR}/${SOURCEDIR}"
+        mk_run_or_fail ${_command}
+        mk_cd_or_fail "${MK_ROOT_DIR}"
     fi
     
     if [ "$MK_SYSTEM" = "host" -a "$MK_HOST_MULTIARCH" = "combine" ]
@@ -253,8 +391,8 @@ mk_autotools()
                 mk_run_script \
                 at-install \
                 DESTDIR="$DESTDIR" \
-                %SOURCEDIR %BUILDDIR %INSTALL %SELECT %INSTALL_PRE %INSTALL_POST %MAKE_INSTALL_TARGET \
-                MAKE='$(MAKE)' MFLAGS='$(MFLAGS)' '$@'
+                %SOURCEDIR %BUILDDIR %INSTALL %INSTALL_PRE %INSTALL_POST %MAKE_INSTALL_TARGET \
+                MAKE='$(MAKE)' MFLAGS='$(MFLAGS)' '$@' "*$TARGETS $EXTRA_TARGETS"
             mk_quote "$result"
             parts="$parts $result"
         done
@@ -282,54 +420,33 @@ mk_autotools()
                 mk_run_script \
                 at-install \
                 DESTDIR="${MK_STAGE_DIR}" \
-                %SOURCEDIR %BUILDDIR %INSTALL %SELECT %INSTALL_PRE %INSTALL_POST %MAKE_INSTALL_TARGET \
-                MAKE='$(MAKE)' MFLAGS='$(MFLAGS)' '$@'
+                %SOURCEDIR %BUILDDIR %INSTALL %INSTALL_PRE %INSTALL_POST %MAKE_INSTALL_TARGET \
+                MAKE='$(MAKE)' MFLAGS='$(MFLAGS)' '$@' "*$TARGETS $EXTRA_TARGETS"
         fi
         stamp="$result"
     fi
 
-    mk_add_all_target "$stamp"
+    mk_add_subdir_target "$stamp"
 
-    # Add dummy rules for target built by this component
-    for _header in ${HEADERS}
-    do
-        mk_resolve_header "$_header"
-        
-        mk_target \
-            TARGET="$result" \
-            DEPS="'$stamp'"
+    mk_quote "$stamp"
+    quote_stamp="$result"
 
-        mk_add_all_target "$result"
+    mk_unquote_list "$TARGETS"
 
-        MK_INTERNAL_HEADERS="$MK_INTERNAL_HEADERS $_header"
-    done
-
-    for _lib in ${LIBS}
-    do
-        mk_target \
-            TARGET="${MK_LIBDIR}/lib${_lib}.la" \
-            DEPS="'$stamp'" \
-            mk_at_la '$@'
-
-        mk_add_all_target "$result"
-
-        MK_INTERNAL_LIBS="$MK_INTERNAL_LIBS $_lib"
-    done
-
-    for _program in ${PROGRAMS}
-    do
-        mk_target \
-            TARGET="@${MK_OBJECT_DIR}/build-run/bin/${_program}" \
-            DEPS="'$stamp'"
-
-        MK_INTERNAL_PROGRAMS="$MK_INTERNAL_PROGRAMS $_program"
-    done
-
-    for _target in ${TARGETS}
+    for _target
     do
         mk_target \
             TARGET="$_target" \
-            DEPS="'$stamp'"
+            DEPS="$quote_stamp"
+    done
+
+    # Ensure we get .la files for all libraries
+    for _lib in ${LIBS}
+    do
+        mk_target \
+            TARGET="${MK_LIBDIR}/lib${_lib%%:*}.la" \
+            DEPS="$quote_stamp" \
+            mk_at_la '$@'
     done
 
     if [ -n "$SOURCEDIR" ]
@@ -361,17 +478,7 @@ option()
         _var="MK_AT_HOST_STRING_$result"
         _option="at-host-string-$(echo $_isa | tr '_' '-')"
 
-        # If the build system supports the ISA,
-        # make the host string match the build string.
-        # This avoids triggering the 'cross compiling'
-        # check in many projects when building x86_32
-        # on x86_64, etc.
-        if [ "$MK_HOST_OS" = "$MK_BUILD_OS" ] && _mk_contains "$_isa" ${MK_BUILD_ISAS}
-        then
-            result="$MK_AT_BUILD_STRING"
-        else
-            _mk_at_system_string HOST "$_isa"
-        fi
+        _mk_at_system_string HOST "$_isa"
 
         mk_option \
             OPTION="$_option" \
@@ -391,9 +498,8 @@ configure()
 {
     mk_msg "build system string: $MK_AT_BUILD_STRING"
 
-    mk_export MK_AT_BUILD_STRING
-
-    mk_declare_system_var MK_AT_HOST_STRING
+    mk_declare -e MK_AT_BUILD_STRING
+    mk_declare -s -e MK_AT_HOST_STRING
     
     for _isa in ${MK_HOST_ISAS}
     do
@@ -421,5 +527,37 @@ mk_at_la()
     then
         mk_run_script link \
             MODE=la EXT="${MK_LIB_EXT}" "$1"
+    else
+        mk_run_or_fail touch "$1"
+    fi
+}
+
+mk_at_log_command()
+{
+    # $1 = source directory
+    # $2 = step
+
+    _mk_slashless_name "$1_$2_$MK_CANONICAL_SYSTEM"
+    _log="${MK_ROOT_DIR}/${MK_LOG_DIR}/${result}.log"
+
+    shift 2
+
+    mk_mkdir "${MK_ROOT_DIR}/${MK_LOG_DIR}"
+
+    if [ -n "$MK_VERBOSE" ]
+    then
+        mk_quote_list "$@"
+        mk_msg_verbose "+ $result"
+    fi
+
+    if ! "$@" >"$_log" 2>&1
+    then
+        mk_quote_list "$@"
+        mk_msg "FAILED: $result"
+        echo ""
+        echo "Last 100 lines of ${_log#$MK_ROOT_DIR/}:"
+        echo ""
+        tail -100 "$_log"
+        exit 1
     fi
 }

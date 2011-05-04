@@ -44,17 +44,17 @@ mk_pkg_config()
         do
             libs="$libs ${__lib#-l}"
             _mk_define_name "HAVE_LIB_${__lib#-l}"
-            mk_export "$result=external"
+            mk_declare -i "$result=external"
         done
         
         mk_msg_verbose "${VARPREFIX} C preprocessor flags: ${cppflags}"
         mk_msg_verbose "${VARPREFIX} compiler flags: $cflags"
         mk_msg_verbose "${VARPREFIX} linker flags: $ldflags"
         mk_msg_verbose "${VARPREFIX} libs: ${libs# }"
-        mk_export "${VARPREFIX}_CPPFLAGS"="${cppflags}"
-        mk_export "${VARPREFIX}_CFLAGS"="$cflags"
-        mk_export "${VARPREFIX}_LDFLAGS"="$ldflags"
-        mk_export "${VARPREFIX}_LIBS"="${libs# }"
+        mk_declare -i "${VARPREFIX}_CPPFLAGS"="${cppflags}"
+        mk_declare -i "${VARPREFIX}_CFLAGS"="$cflags"
+        mk_declare -i "${VARPREFIX}_LDFLAGS"="$ldflags"
+        mk_declare -i "${VARPREFIX}_LIBS"="${libs# }"
 
         __ret=0
     else

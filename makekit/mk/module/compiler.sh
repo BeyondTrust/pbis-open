@@ -33,6 +33,199 @@ DEPENDS="core platform path"
 #
 ##
 
+#<
+# @var MK_CC
+# @brief C compiler
+# @export
+# @system
+#
+# Set to the executable and arguments used to invoke the C compiler.
+# Note that this variable is system-dependent and may have separate
+# values for each target system and ISA.
+#>
+
+#<
+# @var MK_CXX
+# @brief C++ compiler
+# @export
+# @system
+#
+# Set to the executable and arguments used to invoke the C++ compiler.
+# Note that this variable is system-dependent and may have separate
+# values for each target system and ISA.
+#>
+
+#<
+# @var MK_CPPFLAGS
+# @brief Global C preprocessor flags
+# @export
+# @inherit
+#
+# The flags in this variable will be passed to any compiler operation
+# involving the C or C++ preprocessor.
+#>
+
+#<
+# @var MK_CFLAGS
+# @brief Global C compiler flags
+# @export
+# @inherit
+#
+# The flags in this variable will be passed to any compiler operation
+# involving C source code.
+#>
+
+#<
+# @var MK_CXXFLAGS
+# @brief Global C++ compiler flags
+# @export
+# @inherit
+#
+# The flags in this variable will be passed to any compiler operation
+# involving C++ source code.
+#>
+
+#<
+# @var MK_LDFLAGS
+# @brief Global linker compiler flags
+# @export
+# @inherit
+#
+# The flags in this variable will be passed to any compiler operation
+# involving linking an executable, library, or dynamically-loadable object.
+#>
+
+#<
+# @var MK_ISA_CPPFLAGS
+# @brief Per-ISA C preprocessor flags
+# @export
+# @inherit
+# @system
+#
+# The flags in this variable will be passed to any compiler operation
+# involving the C or C++ preprocessor.  Because it is a system-dependent
+# variable, it may be used to set flags that apply to only one particular
+# target system and ISA.
+#>
+
+#<
+# @var MK_ISA_CFLAGS
+# @brief Per-ISA C compiler flags
+# @export
+# @inherit
+# @system
+#
+# The flags in this variable will be passed to any compiler operation
+# involving C source code.  Because it is a system-dependent
+# variable, it may be used to set flags that apply to only one particular
+# target system and ISA.
+#>
+
+#<
+# @var MK_ISA_CXXFLAGS
+# @brief Per-ISA C++ compiler flags
+# @export
+# @inherit
+# @system
+#
+# The flags in this variable will be passed to any compiler operation
+# involving C++ source code.  Because it is a system-dependent
+# variable, it may be used to set flags that apply to only one particular
+# target system and ISA.
+#>
+
+#<
+# @var MK_ISA_LDFLAGS
+# @brief Per-ISA linker flags
+# @export
+# @inherit
+# @system
+#
+# The flags in this variable will be passed to any compiler operation
+# involving linking an executable, library, or dynamically-loadable object.
+# Because it is a system-dependent variable, it may be used to set flags
+# that apply to only one particular target system and ISA.
+#>
+
+#<
+# @var MK_CC_STYLE
+# @brief Style of C compiler
+# @export
+# @system
+# @value gcc The C compiler is gcc or gcc-compatible
+# @value unknown The C compiler style is unknown
+#
+# Defines the style of the C compiler.  This does not indicate the precise
+# vendor of the compiler but is an abstract classification of its supported
+# parameters, extensions, etc.  For example, <lit>clang</lit> is highly
+# compatible with <lit>gcc</lit> and would be classified as the same style.
+#>
+
+#<
+# @var MK_CXX_STYLE
+# @brief Style of C++ compiler
+# @export
+# @system
+# @value gcc The C++ compiler is g++ or g++-compatible
+# @value unknown The C++ compiler style is unknown
+#
+# Like <varref>MK_CC_STYLE</varref>, but for the C++ compiler.
+#>
+
+#<
+# @var MK_CC_LD_STYLE
+# @brief Linker style for C
+# @export
+# @system
+# @value gnu GNU ld or compatible
+# @value native Native OS linker
+#
+# Defines the style of the linker used for linking objects
+# derived from C code.  This is an abstract classification which
+# encompasses the behavior and supported parameters of the linker.
+#>
+
+#<
+# @var MK_CXX_LD_STYLE
+# @brief Linker style for C++
+# @export
+# @system
+# @value gnu GNU ld or compatible
+# @value native Native OS linker
+#
+# Like <varref>MK_CC_LD_STYLE</varref>, but for C++-derived objects.
+#>
+
+#<
+# @var MK_HEADERDEPS
+# @brief Common header dependencies
+# @inherit
+#
+# All headers listed in this variable will be implicitly added to the
+# <lit>HEADERDEPS</lit> list of compiler functions such as
+# <funcref>mk_program</funcref>.  It does not affect configure tests.
+#
+# This helps avoid repetition of consistently-used header dependencies
+# across a larger project.  Care should be taken to avoid abusing it,
+# however, as bloated dependency lists needlessly slow down
+# <lit>make</lit>.
+#>
+
+#<
+# @var MK_LIBDEPS
+# @brief Common library dependencies
+# @inherit
+#
+# All libraries listed in this variable will be implicitly added to the
+# <lit>LIBDEPS</lit> list of compiler functions such as
+# <funcref>mk_program</funcref>.  It does not affect configure tests.
+#
+# This can help avoid repetition when building multiple libraries, programs,
+# etc. that share common library dependencies.  Take special care to
+# avoid abusing it as linking extraneous libraries slows down the linker
+# and incurs startup time and memory overhead at runtime.
+#>
+
 ### section configure
 
 #
@@ -92,7 +285,7 @@ _mk_compile()
     
     unset _header_deps
 
-    for _header in ${HEADERDEPS}
+    for _header in ${HEADERDEPS} ${MK_HEADERDEPS}
     do
         if _mk_contains "$_header" ${MK_INTERNAL_HEADERS}
         then
@@ -117,7 +310,7 @@ _mk_compile_detect()
 {
     # Invokes _mk_compile after autodetecting COMPILER
     case "${SOURCE##*.}" in
-        c)
+        c|s)
             COMPILER="c"
             ;;
         [cC][pP]|[cC][pP][pP]|[cC][xX][xX]|[cC][cC]|C)
@@ -127,7 +320,7 @@ _mk_compile_detect()
             mk_fail "unsupport source file type: .${SOURCE##*.}"
             ;;
     esac
-
+    
     _mk_compile
 }
 
@@ -202,18 +395,29 @@ _mk_process_symfile_gnu_ld()
         rm -f "$__output.new"
     fi
 
-    mk_add_configure_input "$__input"
-    mk_add_configure_output "$__output"
+    mk_add_configure_input "@$__input"
+    mk_add_configure_output "@$__output"
 
     LDFLAGS="$LDFLAGS -Wl,-version-script,$__output"
     DEPS="$DEPS @$__output"
 }
 
+_mk_process_symfile_aix()
+{
+    mk_resolve_file "$SYMFILE"
+
+    LDFLAGS="$LDFLAGS -Wl,-bexport:$result"
+    DEPS="$DEPS @$result"
+}
+
 _mk_process_symfile()
 {
-    case "$MK_OS" in
-        linux)
+    case "$MK_OS:$MK_CC_LD_STYLE" in
+        *:gnu)
             _mk_process_symfile_gnu_ld "$@"
+            ;;
+        aix:native)
+            _mk_process_symfile_aix
             ;;
         *)
             ;;
@@ -227,10 +431,10 @@ _mk_library_form_name()
     # $3 = ext
     case "$MK_OS" in
         darwin)
-            result="lib${1}.${2}${3}"
+            result="lib${1}${2:+.$2}${3}"
             ;;
         *)
-            result="lib${1}${3}.${2}"
+            result="lib${1}${3}${2:+.$2}"
             ;;
     esac
 }
@@ -239,17 +443,61 @@ _mk_library_process_version()
 {
     if [ "$VERSION" != "no" ]
     then
-        _rest="${VERSION}."
-        MAJOR="${_rest%%.*}"
-        _rest="${_rest#*.}"
-        MINOR="${_rest%%.*}"
-        _rest="${_rest#*.}"
-        MICRO="${_rest%%.*}"
+        case "$VERSION" in
+            *:*)
+                _rest="${VERSION}:"
+                _cur="${_rest%%:*}"
+                _rest="${_rest#*:}"
+                _rev="${_rest%%:*}"
+                _rest="${_rest#*:}"
+                _age="${_rest%:}"
+                case "$MK_OS" in
+                    hpux)
+                        MAJOR="$_cur"
+                        MINOR="$_rev"
+                        MICRO=""
+                        ;;
+                    freebsd)
+                        MAJOR="$_cur"
+                        MINOR=""
+                        MICRO=""
+                        ;;
+                    darwin)
+                        MAJOR="$(($_cur - $_age))"
+                        MINOR=""
+                        MICRO=""
+                        ;;
+                    *)
+                        MAJOR="$(($_cur - $_age))"
+                        MINOR="$(($_age))"
+                        MICRO="$_rev"
+                        ;;
+                esac
+                ;;
+            *)
+                _rest="${VERSION}."
+                MAJOR="${_rest%%.*}"
+                _rest="${_rest#*.}"
+                MINOR="${_rest%%.*}"
+                _rest="${_rest#*.}"
+                MICRO="${_rest%.}"
+                case "$MK_OS" in
+                    freebsd|darwin)
+                        MINOR=""
+                        MICRO=""
+                        ;;
+                    hpux)
+                        MICRO=""
+                        ;;
+                esac
+                ;;
+        esac
     fi
 
-    SONAME=""
-    LINKS="lib${LIB}${EXT}"
-    
+    _mk_library_form_name "$LIB" "" "$EXT"
+    SONAME="$result"
+    LINKS="$result"
+
     if [ -n "$MAJOR" ]
     then
         _mk_library_form_name "$LIB" "$MAJOR" "$EXT"
@@ -260,14 +508,7 @@ _mk_library_process_version()
     
     if [ -n "$MINOR" ]
     then
-        _mk_library_form_name "$LIB" "$MAJOR.$MINOR" "$EXT"
-        mk_quote "$result"
-        LINKS="$result $LINKS"
-    fi
-    
-    if [ -n "$MICRO" ]
-    then
-        _mk_library_form_name "$LIB" "$MAJOR.$MINOR.$MICRO" "$EXT"
+        _mk_library_form_name "$LIB" "$MAJOR.$MINOR${MICRO:+.$MICRO}" "$EXT"
         mk_quote "$result"
         LINKS="$result $LINKS"
     fi
@@ -303,7 +544,7 @@ _mk_library()
         _deps="$_deps $result"
     done
     
-    for result in ${LIBDEPS}
+    for result in ${LIBDEPS} ${MK_LIBDEPS}
     do
         if _mk_contains "$result" ${MK_INTERNAL_LIBS}
         then
@@ -320,15 +561,40 @@ _mk_library()
         DEPS="${_deps}" \
         mk_run_script link \
         MODE=library \
-        %GROUPS %LIBDEPS %LIBDIRS %LDFLAGS %SONAME %EXT %COMPILER \
+        %GROUPS LIBDEPS="$LIBDEPS $MK_LIBDEPS" %LIBDIRS %LDFLAGS %SONAME %EXT %COMPILER \
         '$@' "*${OBJECTS} ${_objects}"
 }
 
+#<
+# @brief Build a library
+# @usage LIB=name options...
+# @option VERSION=major.minor.micro Sets the version
+# information on the created library.  ABI compatibility
+# should be maintained within a given major version,
+# backwards compatibility should be maintained between
+# minor versions, and micro versions should involve
+# only a change in implementation, not interface.  Defaults
+# to 0.0.0
+# @option SYMFILE=file Specifies a file which contains a list
+# of symbol names, one per line, which should be exported by
+# the library.  If this is option is not used, it defaults
+# to the behavior of the compiler and linker, which typically
+# export all non-static symbols.  This option will be silently
+# ignored on platforms where it is not supported.
+# 
+# Defines a target to build a C/C++ shared library.
+# See <topicref ref="compiler"/> for a list of common
+# options.
+#
+# A libtool-compatible .la file will also be generated.
+# This is actually the canonical representation of a library
+# in MakeKit and is the target which is placed in <var>result</var>.
+#>
 mk_library()
 {
     mk_push_vars \
         INSTALLDIR="$MK_LIBDIR" LIB SOURCES SOURCE GROUPS CPPFLAGS CFLAGS CXXFLAGS LDFLAGS LIBDEPS \
-        HEADERDEPS LIBDIRS INCLUDEDIRS VERSION=0.0.0 DEPS OBJECTS \
+        HEADERDEPS LIBDIRS INCLUDEDIRS VERSION=0:0:0 DEPS OBJECTS \
         SYMFILE SONAME LINKS COMPILER=c IS_CXX=false EXT="${MK_LIB_EXT}" PIC=yes \
         SYSTEM="$MK_SYSTEM" CANONICAL_SYSTEM TARGET
     mk_parse_params
@@ -338,8 +604,8 @@ mk_library()
 
     [ "$COMPILER" = "c++" ] && IS_CXX=true
     
-    _mk_verify_libdeps "lib$LIB${EXT}" "$LIBDEPS"
-    _mk_verify_headerdeps "lib$LIB${EXT}" "$HEADERDEPS"
+    _mk_verify_libdeps "lib$LIB${EXT}" "$LIBDEPS $MK_LIBDEPS"
+    _mk_verify_headerdeps "lib$LIB${EXT}" "$HEADERDEPS $MK_HEADERDEPS"
 
     if [ -n "$SYMFILE" ]
     then
@@ -375,27 +641,27 @@ mk_library()
     fi
 
     mk_unquote_list "$LINKS"
-    _last="$1"
+    _lib="$1"
+    _links=""
     shift
     
     for _link
     do
         mk_symlink \
-            TARGET="$_last" \
-            LINK="${MK_LIBDIR}/$_link"
-        _last="$_link"
+            TARGET="$_lib" \
+            LINK="${INSTALLDIR}/$_link"
+        mk_quote "$result"
+        _links="$_links $result"
     done
     
-    mk_quote "$result"
+    mk_quote "$INSTALLDIR/$_lib"
 
     mk_target \
-        TARGET="${MK_LIBDIR}/lib${LIB}.la" \
-        DEPS="$result" \
+        TARGET="${INSTALLDIR}/lib${LIB}.la" \
+        DEPS="$_links $result" \
         mk_run_script link MODE=la \
-        %LIBDEPS %LIBDIRS %GROUPS %COMPILER %LINKS %SONAME %EXT \
+        LIBDEPS="$LIBDEPS $MK_LIBDEPS" %LIBDIRS %GROUPS %COMPILER %LINKS %SONAME %EXT \
         '$@'
-
-    mk_add_all_target "$result"
 
     MK_INTERNAL_LIBS="$MK_INTERNAL_LIBS $LIB"
     
@@ -432,11 +698,12 @@ _mk_dlo()
         _deps="$_deps $result"
     done
     
-    for _lib in ${LIBDEPS}
+    for _lib in ${LIBDEPS} ${MK_LIBDEPS}
     do
         if _mk_contains "$_lib" ${MK_INTERNAL_LIBS}
         then
-            _deps="$_deps '${MK_LIBDIR}/lib${_lib}.la'"
+            mk_quote "${MK_LIBDIR}/lib${_lib}.la"
+            _deps="$_deps $result"
         fi
     done
     
@@ -448,14 +715,29 @@ _mk_dlo()
         DEPS="$_deps" \
         mk_run_script link \
         MODE=dlo \
-        %GROUPS %LIBDEPS %LIBDIRS %LDFLAGS %EXT %COMPILER \
+        %GROUPS LIBDEPS="$LIBDEPS $MK_LIBDEPS" %LIBDIRS %LDFLAGS %EXT %COMPILER \
         '$@' "*${OBJECTS} ${_objects}"
 }
 
+#<
+# @brief Build a dynamically loadable object
+# @usage DLO=name options...
+# @option SYMFILE=file Specifies an exported symbol file
+# in the same manner as <funcref>mk_library</funcref>.
+# 
+# Defines a target to build a C/C++ dynamically loadable object --
+# that is, an object suitable for loading with dlopen() or similar
+# functions at runtime.  On some systems, Darwin in particular, this
+# is not the same thing as a shared library.  See
+# <topicref ref="compiler"/> for a list of common options.
+#
+# A libtool-compatible .la file will also be generated and is
+# the target which is placed in <var>result</var>.
+#>
 mk_dlo()
 {
     mk_push_vars \
-        INSTALL DLO SOURCES SOURCE GROUPS CPPFLAGS CFLAGS CXXFLAGS \
+        DLO SOURCES SOURCE GROUPS CPPFLAGS CFLAGS CXXFLAGS \
         LDFLAGS LIBDEPS HEADERDEPS LIBDIRS INCLUDEDIRS VERSION \
         OBJECTS DEPS INSTALLDIR EXT="${MK_DLO_EXT}" SYMFILE COMPILER=c \
         IS_CXX=false OSUFFIX PIC=yes SYSTEM="$MK_SYSTEM" CANONICAL_SYSTEM
@@ -468,8 +750,8 @@ mk_dlo()
 
     [ "$COMPILER" = "c++" ] && IS_CXX=true
     
-    _mk_verify_libdeps "$DLO${EXT}" "$LIBDEPS"
-    _mk_verify_headerdeps "$DLO${EXT}" "$HEADERDEPS"
+    _mk_verify_libdeps "$DLO${EXT}" "$LIBDEPS $MK_LIBDEPS"
+    _mk_verify_headerdeps "$DLO${EXT}" "$HEADERDEPS $MK_HEADERDEPS"
 
     if [ -n "$SYMFILE" ]
     then
@@ -481,17 +763,9 @@ mk_dlo()
         _mk_do_fat "$DLO" "$EXT" _mk_dlo "$@"
         _PARTS="$result"
 
-        case "$INSTALL" in
-            no)
-                TARGET="${DLO}${EXT}"
-                ;;
-            *)
-                TARGET="${INSTALLDIR:+$INSTALLDIR/}${DLO}${EXT}"
-                ;;
-        esac
-
         mk_comment "library ${LIB} (host) from ${MK_SUBDIR#/}"
 
+        TARGET="${INSTALLDIR:+$INSTALLDIR/}${DLO}${EXT}"
         mk_resolve_target "$TARGET"
 
         mk_target \
@@ -499,14 +773,7 @@ mk_dlo()
             DEPS="$_PARTS" \
             _mk_compiler_multiarch_combine "$result" "*$_PARTS"
     else
-        case "$INSTALL" in
-            no)
-                TARGET="${DLO}${EXT}"
-                ;;
-            *)
-                TARGET="${INSTALLDIR:+$INSTALLDIR/}${DLO}${EXT}"
-                ;;
-        esac
+        TARGET="${INSTALLDIR:+$INSTALLDIR/}${DLO}${EXT}"
 
         mk_canonical_system "$SYSTEM"
         CANONICAL_SYSTEM="$result"
@@ -520,16 +787,9 @@ mk_dlo()
         TARGET="${INSTALLDIR}/${DLO}.la" \
         DEPS="$result" \
         mk_run_script link MODE=la \
-        %LIBDEPS %LIBDIRS %GROUPS %COMPILER %EXT \
+        LIBDEPS="$LIBDEPS $MK_LIBDEPS" %LIBDIRS %GROUPS %COMPILER %EXT \
         '$@'
 
-    mk_add_all_target "$result"
-
-    if [ "$INSTALL" != "no" ]
-    then
-        mk_add_all_target "$result"
-    fi
-    
     mk_pop_vars
 }
 
@@ -563,11 +823,12 @@ _mk_group()
         _deps="$_deps $result"
     done
     
-    for _lib in ${LIBDEPS}
+    for _lib in ${LIBDEPS} ${MK_LIBDEPS}
     do
         if _mk_contains "$_lib" ${MK_INTERNAL_LIBS}
         then
-            _deps="$_deps '${MK_LIBDIR}/lib${_lib}.la'"
+            mk_quote "${MK_LIBDIR}/lib${_lib}.la"
+            _deps="$_deps $result"
         fi
     done
     
@@ -577,9 +838,22 @@ _mk_group()
         SYSTEM="$SYSTEM" \
         TARGET="$TARGET" \
         DEPS="$_deps" \
-        mk_run_script group %GROUPDEPS %LIBDEPS %LIBDIRS %LDFLAGS %COMPILER '$@' "*${OBJECTS} ${_objects}"    
+        mk_run_script group %GROUPDEPS LIBDEPS="$LIBDEPS $MK_LIBDEPS" \
+        %LIBDIRS %LDFLAGS %COMPILER '$@' "*${OBJECTS} ${_objects}"    
 }
 
+#<
+# @brief Build an object group
+# @usage GROUP=name options...
+#
+# Defines a target to build a C/C++ "object group", which combines sources
+# files and other object groups into a logical unit which can be referenced
+# from <funcref>mk_program</funcref> and friends.  This feature is
+# similar to "convenience libraries" with GNU libtool.
+#
+# See <topicref ref="compiler"/> for common options or <topicref
+# ref="c-projects-object-groups"/> in the MakeKit guide for usage examples.
+#>
 mk_group()
 {
     mk_push_vars \
@@ -606,8 +880,8 @@ mk_group()
         _mk_group "$@"
     fi
 
-    _mk_verify_libdeps "$GROUP" "$LIBDEPS"
-    _mk_verify_headerdeps "$GROUP" "$HEADERDEPS"
+    _mk_verify_libdeps "$GROUP" "$LIBDEPS $MK_LIBDEPS"
+    _mk_verify_headerdeps "$GROUP" "$HEADERDEPS $MK_HEADERDEPS"
 
     mk_pop_vars
 }
@@ -649,11 +923,12 @@ _mk_program()
         _deps="$_deps $result"
     done
     
-    for _lib in ${LIBDEPS}
+    for _lib in ${LIBDEPS} ${MK_LIBDEPS}
     do
         if _mk_contains "$_lib" ${MK_INTERNAL_LIBS}
         then
-            _deps="$_deps '${_libdir}/lib${_lib}.la'"
+            mk_quote "${_libdir}/lib${_lib}.la"
+            _deps="$_deps $result"
         fi
     done
 
@@ -663,9 +938,18 @@ _mk_program()
         SYSTEM="$SYSTEM" \
         TARGET="$TARGET" \
         DEPS="$_deps" \
-        mk_run_script link MODE=program %GROUPS %LIBDEPS %LDFLAGS %COMPILER '$@' "*${OBJECTS} ${_objects}"
+        mk_run_script link MODE=program %GROUPS LIBDEPS="$LIBDEPS $MK_LIBDEPS" \
+        %LDFLAGS %COMPILER '$@' "*${OBJECTS} ${_objects}"
 }
 
+#<
+# @brief Build a program
+# @usage PROGRAM=name options...
+# 
+# Defines a target to build a C/C++ executable program.
+# See <topicref ref="compiler"/> for a list of common
+# options.
+#>
 mk_program()
 {
     mk_push_vars \
@@ -688,8 +972,8 @@ mk_program()
 
     [ "$COMPILER" = "c++" ] && IS_CXX=true
 
-    _mk_verify_libdeps "$PROGRAM" "$LIBDEPS"
-    _mk_verify_headerdeps "$PROGRAM" "$HEADERDEPS"
+    _mk_verify_libdeps "$PROGRAM" "$LIBDEPS $MK_LIBDEPS"
+    _mk_verify_headerdeps "$PROGRAM" "$HEADERDEPS $MK_HEADERDEPS"
 
     if _mk_is_fat
     then
@@ -713,26 +997,39 @@ mk_program()
     if [ "${MK_CANONICAL_SYSTEM%/*}" = "build" ]
     then
         MK_INTERNAL_PROGRAMS="$MK_INTERNAL_PROGRAMS $PROGRAM"
-    else
-        mk_add_all_target "$result"
     fi
-    
+
     mk_pop_vars
 }
 
+#<
+# @brief Install headers
+# @usage headers...
+# @usage MASTER=master headers...
+# @option INSTALLDIR=dir Specifies the location to install
+# the headers.  By default, this is <var>MK_INCLUDEDIR</var>.
+# @option ... See <topicref ref="compiler"/> for common options.
+#
+# Installs each header in <param>headers</param> into the system
+# header directory.  If <param>master</param> is specified, it is
+# also installed and marked as depending on all the other headers
+# in the list.  This is useful when using HEADERDEPS elsewhere in
+# the project, as depending on <param>master</param> will depend
+# on all of the listed headers.
+#>
 mk_headers()
 {
     mk_push_vars HEADERS MASTER INSTALLDIR HEADERDEPS DEPS
     INSTALLDIR="${MK_INCLUDEDIR}"
     mk_parse_params
     
-    _mk_verify_headerdeps "header" "$HEADERDEPS"
+    _mk_verify_headerdeps "header" "$HEADERDEPS $MK_HEADERDEPS"
 
     unset _all_headers
     
     mk_comment "headers from ${MK_SUBDIR#/}"
     
-    for _header in ${HEADERDEPS}
+    for _header in ${HEADERDEPS} ${MK_HEADERDEPS}
     do
         if _mk_contains "$_header" ${MK_INTERNAL_HEADERS}
         then
@@ -802,6 +1099,14 @@ mk_declare_internal_library()
 # Helper functions for configure() stage
 # 
 
+#<
+# @brief Define a macro in config header
+# @usage def value
+#
+# Defines the C preprocessor macro <param>def</param> to
+# <param>value</param> in the current config
+# header created by <funcref>mk_config_header</funcref>.
+#>
 mk_define()
 {
     mk_push_vars cond
@@ -871,7 +1176,16 @@ EOF
         MK_LAST_CONFIG_HEADER=""
     fi
 }
-    
+
+#<
+# @brief Create config header
+# @usage header
+#
+# Creates a config header named <param>header</param>.
+# Any subsequent definitions made by <funcref>mk_define</funcref>
+# or various configuration tests will be placed in the header
+# most recently created with this function.
+#>
 mk_config_header()
 {
     mk_push_vars HEADER
@@ -883,7 +1197,6 @@ mk_config_header()
     
     MK_CONFIG_HEADER="${MK_OBJECT_DIR}${MK_SUBDIR}/${HEADER}"
     MK_LAST_CONFIG_HEADER="$MK_CONFIG_HEADER"
-    MK_CONFIG_HEADERS="$MK_CONFIG_HEADERS '$MK_CONFIG_HEADER'"
     
     mkdir -p "${MK_CONFIG_HEADER%/*}"
     
@@ -899,7 +1212,7 @@ mk_config_header()
 
 EOF
     
-    mk_add_configure_output "$MK_CONFIG_HEADER"
+    mk_add_configure_output "@$MK_CONFIG_HEADER"
     
     mk_pop_vars
 }
@@ -1004,12 +1317,29 @@ EOF
 
     _mk_build_test compile ".check.c"
     _ret="$?"
+    mk_safe_rm .check.c
 
     mk_pop_vars
 
     return "$_ret"
 }
 
+#<
+# @brief Check for a header
+# @usage HEADER=header
+# @option HEADERDEPS=headers Specifies additional headers
+# which might be needed in order for <param>header</param>
+# to be compilable.  If a header has been determined to be
+# unavailable by a previous <funcref>mk_check_headers</funcref>,
+# it will be silently omitted from this list as a convenience.
+#
+# Checks for the availability of a system header and sets
+# <var>result</var> to the result.  If the header was found
+# on the system, the result will be "external".  If the header
+# is provided by <funcref>mk_headers</funcref> within the current
+# project, the result will be "internal".  Otherwise, the result
+# will be "no".
+#>
 mk_check_header()
 {
     mk_push_vars HEADER HEADERDEPS CPPFLAGS CFLAGS
@@ -1053,6 +1383,16 @@ EOF
     [ "$result" != "no" ]
 }
 
+#<
+# @brief Check for headers
+# @usage headers...
+#
+# For each header in <param>headers</param>, <funcref>mk_check_header</funcref>
+# is invoked to check for its availability.  <var>HAVE_<varname>header</varname></var>
+# is set to the result, and if the header was available, <def>HAVE_<varname>header</varname></def>
+# is defined in the current config header.  A message is printed indicating the result
+# of each test.
+#>
 mk_check_headers()
 {
     mk_push_vars HEADERDEPS FAIL CPPFLAGS CFLAGS DEFNAME HEADER
@@ -1105,6 +1445,26 @@ mk_might_have_header()
     [ "$result" != "no" ]
 }
 
+#<
+# @brief Check for a function
+# @usage FUNCTION=func
+#
+# @option HEADERDEPS=headers Specifies any headers
+# which might be needed in order for a prototype of
+# the function to be available.  Unlike autoconf, MakeKit
+# checks that both the function prototype and symbol are
+# available, so specifying this option correctly is vital.
+# @option LIBDEPS=deps Specifies any libraries which
+# might be needed for the function to be available.
+#
+# Checks for the availability of a function, setting
+# <var>result</var> to the result ("yes" or "no").
+# If <param>func</param> is specified as a full function prototype,
+# the test will only succeed if the function which was found
+# had the same prototype.  If <param>func</param> is specified as
+# a simple name, the test will succeed as long as the function
+# has an available prototype and symbol.
+#>
 mk_check_function()
 {
     mk_push_vars LIBDEPS FUNCTION HEADERDEPS CPPFLAGS LDFLAGS CFLAGS FAIL PROTOTYPE
@@ -1170,6 +1530,17 @@ EOF
     [ "$result" != "no" ]
 }
 
+#<
+# @brief Check for functions
+# @usage funcs...
+#
+# For each function in <param>funcs</param>, <funcref>mk_check_function</funcref>
+# is invoked to check for its availability.  <var>HAVE_<varname>header</varname></var>
+# is set to the result, and if the function was available, <def>HAVE_<varname>func</varname></def>
+# is defined in the current config header.  <def>HAVE_DECL_<varname>func</varname></def>
+# is defined to 1 if the function was available and 0 otherwise.  A message is printed indicating
+# the result of each test.
+#>
 mk_check_functions()
 {
     mk_push_vars \
@@ -1214,6 +1585,24 @@ mk_check_functions()
     mk_pop_vars
 }
 
+#<
+# @brief Check for a library
+# @usage LIB=lib
+#
+# @option LIBDEPS=headers Specifies any additional
+# libraries might be needed in order to link against
+# <param>lib</param>.  Note that MakeKit will respect
+# .la files when checking for linkability, so
+# this is generally not necessary if the library in
+# question was produced with MakeKit or libtool.
+#
+# Checks for the availability of a library, setting
+# <var>result</var> to the result.  If the library
+# was found on the system, the result will be "external".
+# If it is produced by <funcref>mk_library</funcref> within
+# the current project, the result will be "internal".
+# Otherwise, the result will be "no".
+#>
 mk_check_library()
 {
     mk_push_vars LIBDEPS LIB CPPFLAGS LDFLAGS CFLAGS
@@ -1250,7 +1639,17 @@ EOF
     [ "$result" != "no" ]
 }
 
-
+#<
+# @brief Check for libraries
+# @usage libs...
+#
+# For each library in <param>libs</param>, <funcref>mk_check_library</funcref>
+# is invoked to check for its availability.  <var>HAVE_<varname>lib</varname></var>
+# is set to the result.  If the library was available, <def>HAVE_LIB_<varname>lib</varname></def>
+# is defined in the current config header and <var>LIB_<varname>lib</varname></var> is
+# set to <param>lib</param> (this is useful for conditionally linking to the library
+# with LIBDEPS= later on).  A message is printed indicating the result of each test.
+#>
 mk_check_libraries()
 {
     mk_push_vars LIBS LIBDEPS CPPFLAGS LDFLAGS CFLAGS FAIL LIB DEFNAME
@@ -1261,7 +1660,7 @@ mk_check_libraries()
         _mk_define_name "$LIB"
         DEFNAME="$result"
 
-        mk_declare_system_var "LIB_$DEFNAME"
+        mk_declare -s -i "LIB_$DEFNAME"
 
         mk_msg_checking "library $LIB"
 
@@ -1321,6 +1720,15 @@ EOF
     [ "$result" != "no" ]
 }
 
+#<
+# @brief Check for a type
+# @usage TYPE=type
+# @option HEADERDEPS=headers Specifies any headers that
+# are necessary to find a declaration of the type.
+#
+# Checks if the specified type is declared and sets <var>result</var>
+# to the result ("yes" or "no").
+#>
 mk_check_type()
 {
     mk_push_vars TYPE HEADERDEPS CPPFLAGS CFLAGS
@@ -1336,6 +1744,16 @@ mk_check_type()
     [ "$result" != "no" ]
 }
 
+#<
+# @brief Check for types
+# @usage typess...
+#
+# For each type in <param>types</param>, <funcref>mk_check_type</funcref>
+# is invoked to check for its availability.  <var>HAVE_<varname>type</varname></var>
+# is set to the result.  If the type was available, <def>HAVE_<varname>type</varname></def>
+# is defined in the current config header. A messsage is printed indicating the result of
+# each test.
+#>
 mk_check_types()
 {
     mk_push_vars TYPES HEADERDEPS CPPFLAGS CFLAGS TYPE FAIL DEFNAME
@@ -1429,6 +1847,16 @@ _mk_check_sizeof()
     unset upper lower mid
 }
 
+#<
+# @brief Check size of a type
+#
+# @usage TYPE=type
+# @usage type
+#
+# Runs a test for the size of <param>type</param> and sets
+# <var>result</var> to the result.  If the type cannot be
+# found at all, configuration will be aborted.
+#>
 mk_check_sizeof()
 {
     mk_push_vars TYPE HEADERDEPS CPPFLAGS LDFLAGS CFLAGS LIBDEPS
@@ -1444,6 +1872,16 @@ mk_check_sizeof()
     mk_pop_vars
 }
 
+#<
+# @brief Check sizes of several types
+#
+# @usage types...
+#
+# Runs <funcref>mk_check_sizeof</funcref> on each type in <param>types</param>.
+# For each type, the variable <var>SIZEOF_<varname>type</varname></var> will be
+# set to the result, and <def>SIZEOF_<varname>type</varname></def> will be
+# similarly defined in the current config header.
+#>
 mk_check_sizeofs()
 {
     mk_push_vars HEADERDEPS CPPFLAGS LDFLAGS CFLAGS LIBDEPS
@@ -1474,6 +1912,15 @@ mk_check_sizeofs()
     mk_pop_vars
 }
 
+#<
+# @brief Check endianness of system
+# @usage
+#
+# Checks the endianness of the current system and sets the variable
+# <var>ENDIANNESS</var> to the result ("little" or "big").  If the
+# result was "big", it also defines <def>WORDS_BIGENDIAN</def> in
+# the current config header.
+#>
 mk_check_endian()
 {
     mk_push_vars CPPFLAGS LDFLAGS CFLAGS LIBDEPS
@@ -1543,6 +1990,13 @@ EOF
     mk_pop_vars
 }
 
+#<
+# @brief Set language for configure checks
+# @usage lang
+#
+# Sets the language used for subsequent configuration checks.
+# Valid values are "c" and "c++".
+#>
 mk_check_lang()
 {
     MK_CHECK_LANG="$1"
@@ -1577,33 +2031,33 @@ option()
         VAR="CPPFLAGS" \
         PARAM="flags" \
         DEFAULT="" \
-        HELP="Default C preprocessor flags"
+        HELP="C preprocessor flags"
 
-    MK_DEFAULT_CPPFLAGS="$CPPFLAGS"
+    MK_CPPFLAGS="$CPPFLAGS"
 
     mk_option \
         VAR="CFLAGS" \
         PARAM="flags" \
         DEFAULT="$_default_OPTFLAGS" \
-        HELP="Default C compiler flags"
+        HELP="C compiler flags"
 
-    MK_DEFAULT_CFLAGS="$CFLAGS"
+    MK_CFLAGS="$CFLAGS"
 
     mk_option \
         VAR="CXXFLAGS" \
         PARAM="flags" \
         DEFAULT="$_default_OPTFLAGS" \
-        HELP="Default C++ compiler flags"
+        HELP="C++ compiler flags"
 
-    MK_DEFAULT_CXXFLAGS="$CXXFLAGS"
+    MK_CXXFLAGS="$CXXFLAGS"
 
     mk_option \
         VAR="LDFLAGS" \
         PARAM="flags" \
-        DEFAULT="$_default_OPTFLAGS" \
-        HELP="Default linker flags"
+        DEFAULT="" \
+        HELP="Linker flags"
 
-    MK_DEFAULT_LDFLAGS="$LDFLAGS"
+    MK_LDFLAGS="$LDFLAGS"
 
     unset CC CXX CPPFLAGS CFLAGS CXXFLAGS LDFLAGS
 
@@ -1620,58 +2074,61 @@ option()
             _mk_define_name "MK_${_sys}_OS"
             mk_get "$result"
             
+            _default_cc="$MK_DEFAULT_CC"
+            _default_cxx="$MK_DEFAULT_CXX"
+
             case "${MK_DEFAULT_CC}-${result}-${_isa}" in
                 *-darwin-x86_32)
-                    _default_cc="$MK_DEFAULT_CC -arch i386"
-                    _default_cxx="$MK_DEFAULT_CXX -arch i386"
+                    _default_cflags="-arch i386"
+                    _default_cxxflags="-arch i386"
                     ;;
                 *-darwin-x86_64)
-                    _default_cc="$MK_DEFAULT_CC -arch x86_64"
-                    _default_cxx="$MK_DEFAULT_CXX -arch x86_64"
+                    _default_cflags="-arch x86_64"
+                    _default_cxxflags="-arch x86_64"
                     ;;
                 *-darwin-ppc32)
-                    _default_cc="$MK_DEFAULT_CC -arch ppc"
-                    _default_cxx="$MK_DEFAULT_CXX -arch ppc"
+                    _default_cflags="-arch ppc"
+                    _default_cxxflags="-arch ppc"
                     ;;
                 *-darwin-ppc64)
-                    _default_cc="$MK_DEFAULT_CC -arch ppc64"
-                    _default_cxx="$MK_DEFAULT_CXX -arch ppc64"
+                    _default_cflags="-arch ppc64"
+                    _default_cxxflags="-arch ppc64"
                     ;;
                 *-*-x86_32)
-                    _default_cc="$MK_DEFAULT_CC -m32"
-                    _default_cxx="$MK_DEFAULT_CXX -m32"
+                    _default_cflags="-m32"
+                    _default_cxxflags="-m32"
                     ;;
                 *-*-x86_64)
-                    _default_cc="$MK_DEFAULT_CC -m64"
-                    _default_cxx="$MK_DEFAULT_CXX -m64"
+                    _default_cflags="-m64"
+                    _default_cxxflags="-m64"
                     ;;
                 *-*-sparc_32)
-                    _default_cc="$MK_DEFAULT_CC -m32"
-                    _default_cxx="$MK_DEFAULT_CXX -m32"
+                    _default_cflags="-m32"
+                    _default_cxxflags="-m32"
                     ;;
                 *-*-sparc_64)
-                    _default_cc="$MK_DEFAULT_CC -m64"
-                    _default_cxx="$MK_DEFAULT_CXX -m64"
+                    _default_cflags="-m64"
+                    _default_cxxflags="-m64"
                     ;;
                 *-aix-ppc32)
-                    _default_cc="$MK_DEFAULT_CC -maix32"
-                    _default_cxx="$MK_DEFAULT_CXX -maix32"
+                    _default_cflags="-maix32"
+                    _default_cxxflags="-maix32"
                     ;;
                 *-aix-ppc64)
-                    _default_cc="$MK_DEFAULT_CC -maix64"
-                    _default_cxx="$MK_DEFAULT_CXX -maix64"
+                    _default_cflags="-maix64"
+                    _default_cxxflags="-maix64"
                     ;;
                 *-hpux-ia64_32)
-                    _default_cc="$MK_DEFAULT_CC -milp32"
-                    _default_cxx="$MK_DEFAULT_CXX -milp32"
+                    _default_cflags="-milp32"
+                    _default_cxxflags="-milp32"
                     ;;
                 *-hpux-ia64_64)
-                    _default_cc="$MK_DEFAULT_CC -mlp64"
-                    _default_cxx="$MK_DEFAULT_CXX -mlp64"
+                    _default_cflags="-mlp64"
+                    _default_cxxflags="-mlp64"
                     ;;
                 *)
-                    _default_cc="$MK_DEFAULT_CC"
-                    _default_cxx="$MK_DEFAULT_CXX"
+                    _default_cflags=""
+                    _default_cxxflags=""
                     ;;
             esac
             
@@ -1690,25 +2147,25 @@ option()
             mk_option \
                 VAR="${_def}_CPPFLAGS" \
                 PARAM="flags" \
-                DEFAULT="$MK_DEFAULT_CPPFLAGS" \
+                DEFAULT="" \
                 HELP="C preprocessor flags ($_sys/$_isa)"
             
             mk_option \
                 VAR="${_def}_CFLAGS" \
                 PARAM="flags" \
-                DEFAULT="$MK_DEFAULT_CFLAGS" \
+                DEFAULT="$_default_cflags" \
                 HELP="C compiler flags ($_sys/$_isa)"
 
             mk_option \
                 VAR="${_def}_CXXFLAGS" \
                 PARAM="flags" \
-                DEFAULT="$MK_DEFAULT_CXXFLAGS" \
+                DEFAULT="$_default_cxxflags" \
                 HELP="C++ compiler flags ($_sys/$_isa)"
             
             mk_option \
                 VAR="${_def}_LDFLAGS" \
                 PARAM="flags" \
-                DEFAULT="$MK_DEFAULT_LDFLAGS" \
+                DEFAULT="" \
                 HELP="Linker flags ($_sys/$_isa)"
         done
     done
@@ -1836,11 +2293,13 @@ _mk_compiler_check()
 
 configure()
 {
-    mk_export MK_CONFIG_HEADER=""
-    mk_declare_system_var \
-        MK_CC MK_CXX MK_CPPFLAGS MK_CFLAGS MK_CXXFLAGS MK_LDFLAGS \
-        MK_CC_STYLE MK_CC_LD_STYLE MK_CXX_STYLE MK_CXX_LD_STYLE
-    mk_declare_system_var EXPORT=no MK_INTERNAL_LIBS
+    mk_declare -i MK_CONFIG_HEADER="" MK_HEADERDEPS="" MK_LIBDEPS=""
+    mk_declare -s -e \
+        MK_CC MK_CXX MK_CC_STYLE MK_CC_LD_STYLE MK_CXX_STYLE MK_CXX_LD_STYLE
+    mk_declare -i -e MK_CPPFLAGS MK_CFLAGS MK_CXXFLAGS MK_LDFLAGS
+    mk_declare -s -i -e \
+        MK_ISA_CPPFLAGS MK_ISA_CFLAGS MK_ISA_CXXFLAGS MK_ISA_LDFLAGS
+    mk_declare -s MK_INTERNAL_LIBS
 
     mk_msg "default C compiler: $MK_DEFAULT_CC"
     mk_msg "default C++ compiler: $MK_DEFAULT_CXX"
@@ -1869,19 +2328,19 @@ configure()
 
             mk_get "${_def}_CPPFLAGS"
             mk_msg "C preprocessor flags ($_sys/$_isa): $result"
-            mk_set_system_var SYSTEM="$_sys/$_isa" MK_CPPFLAGS "$result"
+            mk_set_system_var SYSTEM="$_sys/$_isa" MK_ISA_CPPFLAGS "$result"
 
             mk_get "${_def}_CFLAGS"
             mk_msg "C compiler flags ($_sys/$_isa): $result"
-            mk_set_system_var SYSTEM="$_sys/$_isa" MK_CFLAGS "$result"
+            mk_set_system_var SYSTEM="$_sys/$_isa" MK_ISA_CFLAGS "$result"
 
             mk_get "${_def}_CXXFLAGS"
             mk_msg "C++ compiler flags ($_sys/$_isa): $result"
-            mk_set_system_var SYSTEM="$_sys/$_isa" MK_CXXFLAGS "$result"
+            mk_set_system_var SYSTEM="$_sys/$_isa" MK_ISA_CXXFLAGS "$result"
 
             mk_get "${_def}_LDFLAGS"
             mk_msg "linker flags ($_sys/$_isa): $result"
-            mk_set_system_var SYSTEM="$_sys/$_isa" MK_LDFLAGS "$result"
+            mk_set_system_var SYSTEM="$_sys/$_isa" MK_ISA_LDFLAGS "$result"
         done
     done
 

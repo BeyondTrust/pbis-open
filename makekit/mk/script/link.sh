@@ -30,7 +30,7 @@ combine_libtool_flags()
 {
     for _lib in ${COMBINED_LIBDEPS}
     do
-        for _path in ${COMBINED_LDFLAGS} ${MK_LDFLAGS} -L/usr/lib -L/lib
+        for _path in ${COMBINED_LDFLAGS} -L/usr/lib -L/lib
         do
             case "$_path" in
                 "-L"*)
@@ -109,6 +109,8 @@ create_libtool_archive()
         mk_quote "$result"
         echo "libdir=$result"
     } > "$object" || mk_fail "could not write $object"
+
+    mk_run_or_fail touch "$object"
 }
 
 object="$1"
@@ -129,7 +131,7 @@ else
 fi
 
 COMBINED_LIBDEPS="$LIBDEPS"
-COMBINED_LDFLAGS="$LDFLAGS"
+COMBINED_LDFLAGS="$MK_ISA_LDFLAGS $MK_LDFLAGS $LDFLAGS"
 COMBINED_LIBDIRS="$LIBDIRS"
 
 [ -d "$LINK_LIBDIR" ] && COMBINED_LDFLAGS="$COMBINED_LDFLAGS -L${LINK_LIBDIR}"
@@ -174,10 +176,12 @@ case "$COMPILER" in
     c)
         CPROG="$MK_CC"
         LD_STYLE="$MK_CC_LD_STYLE"
+        COMBINED_LDFLAGS="$COMBINED_LDFLAGS $MK_ISA_CFLAGS $MK_CFLAGS $CFLAGS"
         ;;
     c++)
         CPROG="$MK_CXX"
         LD_STYLE="$MK_CXX_LD_STYLE"
+        COMBINED_LDFLAGS="$COMBINED_LDFLAGS $MK_ISA_CXXFLAGS $MK_CXXFLAGS $CXXFLAGS"
         ;;
 esac
 
@@ -208,9 +212,9 @@ case "${MK_OS}:${LD_STYLE}" in
         COMBINED_LDFLAGS="$COMBINED_LDFLAGS -Wl,-undefined -Wl,dynamic_lookup -Wl,-single_module -Wl,-arch_errors_fatal"
         ;;
     aix:native)
-        DLO_LINK="-shared"
+        DLO_LINK="-shared -Wl,-berok"
         LIB_LINK="-shared"
-        COMBINED_LDFLAGS="$COMBINED_LDFLAGS -Wl,-brtl"
+        COMBINED_LDFLAGS="$COMBINED_LDFLAGS -Wl,-brtl -Wl,-blibpath:${RPATH_LIBDIR}:/usr/lib:/lib"
 
         if [ "$MODE" = "library" -o "$MODE" = "dlo" ]
         then
@@ -244,17 +248,17 @@ case "$MODE" in
     library)
         mk_msg_domain "link"
         mk_msg "${object#${MK_STAGE_DIR}} ($MK_CANONICAL_SYSTEM)"
-        mk_run_or_fail ${CPROG} ${LIB_LINK} -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} -fPIC ${_LIBS}
+        mk_run_or_fail ${CPROG} ${LIB_LINK} -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} -fPIC ${_LIBS}
         ;;
     dlo)
         mk_msg_domain "link"
         mk_msg "${object#${MK_STAGE_DIR}} ($MK_CANONICAL_SYSTEM)"
-        mk_run_or_fail ${CPROG} ${DLO_LINK} -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} -fPIC ${_LIBS}
+        mk_run_or_fail ${CPROG} ${DLO_LINK} -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} -fPIC ${_LIBS}
         ;;
     program)
         mk_msg_domain "link"
         mk_msg "${object#${MK_STAGE_DIR}} ($MK_CANONICAL_SYSTEM)"
-        mk_run_or_fail ${CPROG} -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} ${_LIBS}
+        mk_run_or_fail ${CPROG} -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${_LIBS}
         ;;
     la)
         mk_msg_domain "la"

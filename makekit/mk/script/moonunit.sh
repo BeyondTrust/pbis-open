@@ -27,7 +27,17 @@
 #
 
 MK_MSG_DOMAIN="test"
+LIBS=""
+
+for la
+do
+    mk_quote "${la%.la}${MK_DLO_EXT}"
+    LIBS="$LIBS $result"
+done
+
+mk_unquote_list "$LIBS"
 
 mk_msg "moonunit"
-env LD_LIBRARY_PATH="${MK_STAGE_DIR}${MK_LIBDIR}" \
-    ${MOONUNIT} "$@" || mk_fail "unit tests failed"
+mk_run_or_fail \
+    env LD_LIBRARY_PATH="${MK_STAGE_DIR}${MK_LIBDIR}" \
+    ${MOONUNIT} "$@"

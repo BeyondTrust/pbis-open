@@ -29,36 +29,35 @@
 _object="$1"
 _source="$2"
 
-_mk_define_name "$MK_CANONICAL_SYSTEM"
-EXTRA_CPPFLAGS="-I${MK_STAGE_DIR}${MK_INCLUDEDIR} -DHAVE_CONFIG_H -D_MK_$result"
-_mk_define_name "${MK_CANONICAL_SYSTEM%/*}"
-EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS -D_MK_$result"
-INCLUDE_CPPFLAGS=""
-
-case "$COMPILER" in
-    c)
-        CPROG="$MK_CC"
-        FLAGS="$CFLAGS"
-        MK_FLAGS="$MK_CFLAGS"
-        ;;
-    c++)
-        CPROG="$MK_CXX"
-        FLAGS="$CXXFLAGS"
-        MK_FLAGS="$MK_CXXFLAGS"
-        ;;
-esac
+IFLAGS=""
 
 for _dir in ${INCLUDEDIRS}
 do
     case "$_dir" in
         /*)
-            INCLUDE_CPPFLAGS="$INCLUDE_CPPFLAGS -I${MK_STAGE_DIR}$_dir"
+            IFLAGS="$IFLAGS -I${MK_STAGE_DIR}$_dir"
             ;;
         *)
-            INCLUDE_CPPFLAGS="$INCLUDE_CPPFLAGS -I${MK_SOURCE_DIR}${MK_SUBDIR}/$_dir -I${MK_OBJECT_DIR}${MK_SUBDIR}/$_dir"
+            IFLAGS="$IFLAGS -I${MK_SOURCE_DIR}${MK_SUBDIR}/$_dir -I${MK_OBJECT_DIR}${MK_SUBDIR}/$_dir"
             ;;
     esac
 done
+
+case "$COMPILER" in
+    c)
+        CPROG="$MK_CC"
+        FLAGS="$MK_ISA_CFLAGS $MK_CFLAGS $CFLAGS $IFLAGS $MK_ISA_CPPFLAGS $MK_CPPFLAGS $CPPFLAGS"
+        ;;
+    c++)
+        CPROG="$MK_CXX"
+        FLAGS="$MK_ISA_CXXFLAGS $MK_CXXFLAGS $CXXFLAGS $IFLAGS $MK_ISA_CPPFLAGS $MK_CPPFLAGS $CPPFLAGS"
+        ;;
+esac
+
+_mk_define_name "$MK_CANONICAL_SYSTEM"
+FLAGS="$FLAGS -I${MK_STAGE_DIR}${MK_INCLUDEDIR} -DHAVE_CONFIG_H -D_MK_$result"
+_mk_define_name "${MK_CANONICAL_SYSTEM%/*}"
+FLAGS="$FLAGS -D_MK_$result"
 
 MK_MSG_DOMAIN="compile"
 
@@ -72,12 +71,12 @@ fi
 
 if [ "$PIC" = "yes" ]
 then
-    EXTRA_FLAGS="$EXTRA_FLAGS -fPIC"
+    FLAGS="$FLAGS -fPIC"
 fi
 
 case "$MK_OS" in
     darwin)
-        EXTRA_FLAGS="$EXTRA_FLAGS -fno-common"
+        FLAGS="$FLAGS -fno-common"
         ;;
 esac
 
@@ -87,8 +86,7 @@ mk_mkdir "`dirname "$_object"`"
 
 mk_unquote_list "$DEP_FLAGS"
 mk_run_or_fail ${CPROG} \
-    ${INCLUDE_CPPFLAGS} ${MK_CPPFLAGS} ${CPPFLAGS} ${EXTRA_CPPFLAGS} \
-    ${MK_FLAGS} ${FLAGS} ${EXTRA_FLAGS} \
+    ${FLAGS} \
     "$@" \
     -o "$_object" \
     -c "$_source"
