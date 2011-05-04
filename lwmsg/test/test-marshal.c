@@ -391,7 +391,7 @@ MU_TEST(marshal, basic_verify_range_failure_low)
 
 MU_TEST(marshal, basic_verify_range_failure_high)
 {
-    static const unsigned char bytes[] =
+    static const unsigned char bytes_64[] =
     {
         /* -42 */
         0xFF, 0xD6,
@@ -405,12 +405,27 @@ MU_TEST(marshal, basic_verify_range_failure_high)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0xE1
     };
 
+    static const unsigned char bytes_32[] =
+    {
+        /* -42 */
+        0xFF, 0xD6,
+        /* a lot */
+        0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
+        /* pointer */
+        0xFF,
+        /* 1234 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xD2,
+        /* 4321 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0xE1
+    };
+    const unsigned char* bytes = sizeof(size_t) == 8 ? bytes_64 : bytes_32;
+
     LWMsgTypeSpec* type = basic_spec;
     LWMsgBuffer buffer = {0};
     basic_struct *out;
 
     buffer.base = buffer.cursor = (void*) bytes;
-    buffer.end = buffer.base + sizeof(bytes);
+    buffer.end = buffer.base + sizeof(bytes_64);
 
     MU_ASSERT_EQUAL(
         MU_TYPE_INTEGER,
