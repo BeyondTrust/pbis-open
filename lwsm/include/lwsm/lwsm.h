@@ -258,7 +258,7 @@ typedef struct _LW_SERVICE_INFO
     /** @brief Name of service group */
     LW_PWSTR pwszGroup;
     /** @brief Is this service automatically started? */
-    LW_BOOL bAutostart;
+    LW_BOOLEAN bAutostart;
     /** @brief Desired file descriptor limit for the process */
     LW_DWORD dwFdLimit;
 } LW_SERVICE_INFO, *PLW_SERVICE_INFO;
