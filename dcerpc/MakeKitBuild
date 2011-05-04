@@ -314,7 +314,7 @@ configure()
     # flex Makefile was hacked to not install the binary on "make install"
     # to work around autoconf limitations.  This hack lets us run it
     # directly out of its build directory.  This is not recommended as the
-    # build directory path is in implementation detail of MetaKit
+    # build directory path is in implementation detail of MakeKit
     mk_resolve_file "flex-2.5.4_build_${MK_BUILD_PRIMARY_ISA}/flex"
     mk_declare -e -i FLEX="$result"
 
