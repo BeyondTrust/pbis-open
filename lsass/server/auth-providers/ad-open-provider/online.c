@@ -3339,7 +3339,7 @@ AD_FindObjectsByList(
         }
     }
 
-    sResultsCount = sIndex;
+    sResultsCount = sFoundInCache + sFoundInAD;
 
 cleanup:
 
