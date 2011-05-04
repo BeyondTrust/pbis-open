@@ -1,15 +1,16 @@
-SUBDIRS=". include utils ipc common client logging_r parse server shellutil shell"
+SUBDIRS="include libedit utils ipc common client logging_r parse server shellutil shell"
 
 configure()
 {
     mk_config_header 'include/config.h'
 
-    mk_export MOD_EXT="${MK_DLO_EXT}"
-    mk_export LIBDIR="${MK_LIBDIR}"
-    mk_export BINDIR="${MK_BINDIR}"
-    mk_export SBINDIR="${MK_SBINDIR}"
+    mk_declare -o \
+        MOD_EXT="${MK_DLO_EXT}" \
+        LIBDIR="${MK_LIBDIR}" \
+        BINDIR="${MK_BINDIR}" \
+        SBINDIR="${MK_SBINDIR}"
 
-    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
 
     lw_define_feature_macros
 
@@ -47,41 +48,19 @@ configure()
         HEADERDEPS='ctype.h stdlib.h inttypes.h' \
         isblank strtoll __strtoll strtoull __strtoull
 
-    if [ "$HAVE_ISBLANK" = "yes" ]
-    then
-        mk_define HAVE_DECL_ISBLANK 1
-    else
-        mk_define HAVE_DECL_ISBLANK 0
-    fi
-
     lw_check_iconv
 
     mk_check_headers \
 	FAIL=yes \
-	sqlite3.h
+	sqlite3.h uuid/uuid.h
     
-
     mk_check_libraries \
 	FAIL=yes \
-	sqlite3
+	sqlite3 uuid
 
-    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
-    then
-        mk_output_file OUTPUT=server/lwregd/lwreg.reg INPUT=server/lwregd/lwreg.reg.svcm.in
-    else
-        mk_output_file server/lwregd/lwreg.reg
-    fi
+    mk_check_libraries pthread
 
+    mk_output_file server/lwregd/lwreg.reg
     mk_output_file shell/lw-edit-reg.sh
 }
 
-make()
-{
-    mk_autotools \
-        SOURCEDIR="libedit" \
-        LIBS="edit" \
-        HEADERS="editline/readline.h histedit.h" \
-        HEADERDEPS="ncurses/ncurses.h" \
-        LIBDEPS="ncurses" \
-        CFLAGS="-Wno-error"
-}

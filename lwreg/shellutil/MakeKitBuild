@@ -8,6 +8,6 @@ make()
         LIB=rsutils \
         SOURCES="$RSUTILS_SOURCES" \
         INCLUDEDIRS=". ../include" \
-        LIBDEPS="regclient" \
+        LIBDEPS="regclient regcommon lwbase_nothr" \
         HEADERDEPS="lw/base.h lwmsg/lwmsg.h"
 }

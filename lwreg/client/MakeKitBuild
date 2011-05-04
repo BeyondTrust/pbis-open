@@ -9,6 +9,6 @@ make()
         LIB=regclient \
         SOURCES="$CLIENT_SOURCES" \
         INCLUDEDIRS=". ../include" \
-        LIBDEPS="regcommon" \
+        LIBDEPS="regcommon lwmsg lwmsg_nothr" \
         HEADERDEPS="lw/base.h lwmsg/lwmsg.h"
 }
