@@ -34,7 +34,7 @@ make()
         HEADERDEPS="$RPCD_HEADERDEPS" \
         LIBDEPS="dcerpc $LIB_PTHREAD"
 
-    mk_install_file \
-	FILE=dcerpcd.reg \
-	INSTALLDIR="${LW_CONFIGDIR}"
+    mk_stage \
+	SOURCE=dcerpcd.reg \
+	DESTDIR="${LW_CONFIGDIR}"
 }
