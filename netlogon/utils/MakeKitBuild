@@ -19,5 +19,5 @@ make()
         SOURCES="$UTIL_SOURCES" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="lwadvapi.h reg/lwreg.h" \
-        LIBDEPS="lwadvapi lwadvapi_nothr regclient $LIB_RT"
+        LIBDEPS="lwadvapi_nothr regclient $LIB_RT $LIB_RESOLV"
 }
