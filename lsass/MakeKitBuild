@@ -1,19 +1,65 @@
 SUBDIRS="include common pstore logging_r client interop server tools etc"
 
+option()
+{
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            _default_BUILTIN="yes"
+            _default_PROVIDERS="ad"
+            _default_RPC="no"
+            ;;
+        *)
+            _default_BUILTIN="no"
+            _default_PROVIDERS="ad local"
+            _default_RPC="yes"
+            ;;
+    esac
+
+    mk_option \
+        OPTION=lsa-builtin-providers \
+        VAR=LSA_BUILTIN_PROVIDERS \
+        PARAM="yes|no" \
+        DEFAULT="$_default_BUILTIN" \
+        HELP="Build providers directly into service"
+
+    mk_option \
+        OPTION=lsa-providers \
+        VAR=LSA_PROVIDERS \
+        PARAM="..." \
+        DEFAULT="$_default_PROVIDERS" \
+        HELP="Enabled providers (ad, local)"
+
+    mk_option \
+        OPTION=lsa-rpc-servers \
+        VAR=LSA_RPC_SERVERS \
+        PARAM="yes|no" \
+        DEFAULT="$_default_RPC" \
+        HELP="Enable RPC servers"
+}
+
 configure()
 {
     mk_config_header "include/config.h"
 
     lw_define_feature_macros
 
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+    MK_CXXFLAGS="$MK_CXXFLAGS -Wall -Werror"
+
     # Declare which variable vary by system (ISA)
-    mk_declare_system_var MOD_EXT
-    mk_declare_system_var PAMDIR
-    mk_declare_system_var NSSDIR
+    mk_declare -s -o MOD_EXT
+    mk_declare -s PAMDIR
+    mk_declare -s NSSDIR
 
     mk_export fdlimit=dword:00000400
 
-    # Do defines/exports of system-dependent variables
+    # Default registry settings
+    mk_declare -o \
+        fdlimit=dword:00000400 \
+        default_homedir_prefix="/home" \
+        default_skeldirs="/etc/skel"
+
+    # Set system-dependent variables
     mk_multiarch_do
         case "$MK_OS:$MK_ISA" in
             linux:*)
@@ -21,23 +67,26 @@ configure()
                 NSSDIR="/${MK_LIBDIR##*/}"
                 ;;
             freebsd:*)
-                PAMDIR="/usr/local/${MK_LIBDIR##*/}/security"
+                PAMDIR="/usr/local/${MK_LIBDIR##*/}"
                 NSSDIR="/usr/local/${MK_LIBDIR##*/}"
                 ;;
             solaris:sparc_32|solaris:x86_32)
                 NSSDIR="/usr/lib"
                 PAMDIR="/usr/lib/security"
 		fdlimit=dword:00000100
+	        default_homedir_prefix="/export/home"
                 ;;
             solaris:x86_64)
                 NSSDIR="/usr/lib/64"
                 PAMDIR="/usr/lib/security/64"
 		fdlimit=dword:00000100
+	        default_homedir_prefix="/export/home"
                 ;;
             solaris:sparc_64)
                 NSSDIR="/usr/lib/sparcv9"
                 PAMDIR="/usr/lib/security/sparcv9"
 		fdlimit=dword:00000100
+	        default_homedir_prefix="/export/home"
                 ;;
             aix:ppc32)
                 NSSDIR="/usr/lib/security"
@@ -63,12 +112,15 @@ configure()
                 NSSDIR="/usr/lib/hpux64"
                 PAMDIR="/usr/lib/security/hpux64"
                 ;;
+            darwin:*)
+                PAMDIR="/usr/lib/pam"
+                default_skeldirs="System/Library/User Template/Non_localized, /System/Library/User Template/English.lproj"
+                default_homedir_prefix="/Users"
+                ;;
         esac
 
         mk_define LIBDIR "\"$MK_LIBDIR\""
         mk_define MOD_EXT "\"$MK_DLO_EXT\""
-        MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
-        MK_CXXFLAGS="$MK_CXXFLAGS -Wall -Werror"
         MOD_EXT="$MK_DLO_EXT"
 
         mk_check_endian
@@ -81,23 +133,48 @@ configure()
     mk_multiarch_done
 
     case "$MK_OS" in
-        linux|freebsd)
-            mk_export ENABLE_NSS_ENUM_DEFAULT_DWORD="00000000"
+        darwin)
+            ENABLE_NSS_ENUM_DEFAULT_DWORD="00000001"
+            ;;
+        *)
+            ENABLE_NSS_ENUM_DEFAULT_DWORD="00000000"
             ;;
     esac
 
-    mk_export providerdir="$MK_LIBDIR"
-    mk_export rpcserverdir="$MK_LIBDIR"
-    mk_export default_homedir_prefix="/home"
-    mk_export default_skeldirs="/etc/skel"
-    mk_export LIBDIR="$MK_LIBDIR"
-    mk_export SBINDIR="$MK_SBINDIR"
-    mk_export CACHEDIR="$LW_CACHEDIR"
-    mk_export MOD_EXT
-
+    mk_declare -o \
+        providerdir="$MK_LIBDIR" \
+        rpcserverdir="$MK_LIBDIR" \
+        LIBDIR="$MK_LIBDIR" \
+        SBINDIR="$MK_SBINDIR" \
+        CACHEDIR="$LW_CACHEDIR" \
+        ENABLE_NSS_ENUM_DEFAULT_DWORD
+    
     mk_define PREFIXDIR "\"$MK_PREFIX\""
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
     mk_define CONFIGDIR "\"$MK_SYSCONFDIR\""
+
+    if [ "$LSA_BUILTIN_PROVIDERS" = "yes" ]
+    then
+        mk_define ENABLE_STATIC_PROVIDERS
+        for _prov in ${LSA_PROVIDERS}
+        do
+            case "$_prov" in
+                "ad") mk_define ENABLE_AD;;
+                "local") mk_define ENABLE_LOCAL;;
+            esac
+        done
+    fi
+
+    EXTRA_SERVICE_DEPS=""
+
+    if [ "$LSA_RPC_SERVERS" = "no" ]
+    then
+        mk_define DISABLE_RPC_SERVERS
+    else
+        EXTRA_SERVICE_DEPS="$EXTRA_SERVICE_DEPS npfs"
+    fi
+
+    mk_declare -o EXTRA_SERVICE_DEPS
 
     # FIXME
     mk_define COMPONENT_VERSION "\"5.0.0.0\""
@@ -121,20 +198,24 @@ configure()
     mk_check_headers \
 	FAIL=yes \
 	gssapi.h ldap.h lw/base.h lwadvapi.h openssl/md4.h \
-        openssl/rc4.h
+        openssl/rc4.h openssl/rand.h openssl/md5.h krb5.h uuid/uuid.h \
+        sqlite3.h
 
     mk_check_types \
         HEADERDEPS="procfs.h sys/procfs.h" \
         "struct psinfo"
 
-    mk_check_sizeofs \
-        HEADERDEPS="time.h" \
-        time_t
+    mk_multiarch_do
+        mk_check_sizeofs \
+            HEADERDEPS="time.h" \
+            time_t
+    mk_multiarch_done
 
     mk_check_libraries \
 	FAIL=yes \
 	lwbase_nothr lwbase lwadvapi_nothr lwadvapi \
-	lwmsg_nothr lwmsg pam sqlite3
+	lwmsg_nothr lwmsg pam sqlite3 crypto krb5 gssapi_krb5 \
+        uuid ldap_r
 
     mk_check_functions \
 	HEADERDEPS="ctype.h" \
@@ -182,8 +263,12 @@ configure()
         mk_msg_result "void**"
     fi
 
+    mk_check_types \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h security/pam_modules.h pam/pam_modules.h" \
+        "struct pam_repository"
+
     mk_check_libraries \
-        proc kvm sec
+        proc kvm sec pthread
 
     mk_check_functions \
         HEADERDEPS="kvm.h sys/param.h sys/sysctl.h sys/user.h" \
@@ -206,17 +291,14 @@ configure()
         mk_msg_result "no"
     fi
 
+    lw_check_pthread_once_init
+
+    mk_check_doxygen
+
     mk_output_file include/lsaregdef.h
     mk_output_file server/auth-providers/local-provider/lpdefs.h
     mk_output_file server/store/dsapi/dirdefs.h
     mk_output_file interop/gssntlm/mech
 
-    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
-    then
-        mk_output_file \
-            INPUT=etc/lsassd.reg.svcm.in \
-            OUTPUT=etc/lsassd.reg
-    else
-        mk_output_file etc/lsassd.reg
-    fi
+    mk_output_file etc/lsassd.reg
 }

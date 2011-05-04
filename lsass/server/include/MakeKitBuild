@@ -1,0 +1,7 @@
+make()
+{
+    mk_headers \
+        INSTALLDIR="$MK_INCLUDEDIR/lsa/internal" \
+        HEADERDEPS="lsa/lsa.h lsa/provider.h" \
+        lsasrvapi.h lsasrvutils.h
+}

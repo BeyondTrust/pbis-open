@@ -1,7 +1,6 @@
 make()
 {
-    mk_install_file \
-	FILE="lsassd.reg" \
-	INSTALLDIR="${LW_CONFIGDIR}" \
-	MODE=0644
+    mk_stage \
+        DESTDIR="${LW_CONFIGDIR}" \
+        lsassd.reg
 }

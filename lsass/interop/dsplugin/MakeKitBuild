@@ -63,5 +63,5 @@ make()
         mk_mkdir "&'${CONTENTS_DIR}'" '%;' \
         "&process-info-plist.pl" -v "$LW_VERSION" -o '$@' '&Info.plist.in'
 
-    mk_add_all_target "$result"
+    mk_stage DEST="${LW_CONFIGDIR}/lwdsplugin.reg" SOURCE="etc/lwdsplugin.reg"
 }

@@ -38,5 +38,5 @@ make()
 	CPPFLAGS="-DLW_ENABLE_THREADS" \
 	INCLUDEDIRS=". ../include ../../include" \
 	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h dce/rpc.h" \
-	LIBDEPS="uuid eventlog $LIB_PTHREAD $LIB_RT"
+	LIBDEPS="uuid lwadvapi_nothr lsacommon eventlog $LIB_PTHREAD $LIB_RT"
 }

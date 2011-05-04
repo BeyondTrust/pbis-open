@@ -1,22 +1,24 @@
 make()
 {
-    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
+    PROVIDER_GROUPS=""
+
+    if [ "$LSA_BUILTIN_PROVIDERS" = "yes" ]
     then
-        mk_dlo \
-	    DLO=lsass \
-	    INSTALLDIR="${MK_LIBDIR}/lw-svcm" \
-	    SOURCES="main-svcm.c globals.c listener.c" \
-	    INCLUDEDIRS=". ../include ../../include" \
-	    HEADERDEPS="lwadvapi.h lwio/lwio.h" \
-	    LIBDEPS="lsaserverapi lsacommon ntlmserver lsaclient_ntlm lwnetclientapi lwnetcommon lwioclient lwiocommon lwmsg lwmsg_nothr lwadvapi lwadvapi_nothr dcerpc pthread"
-    else
-        mk_program \
-	    PROGRAM=lsassd \
-	    INSTALLDIR="${MK_SBINDIR}" \
-	    SOURCES="main.c globals.c listener.c libmain.c backtrace.c sighandler.c" \
-	    INCLUDEDIRS=". ../include ../../include" \
-	    HEADERDEPS="lwadvapi.h lwio/lwio.h" \
-	    LIBDEPS="lsaserverapi lsacommon ntlmserver lsaclient_ntlm lwnetclientapi lwnetcommon lwioclient lwiocommon lwmsg lwmsg_nothr lwadvapi lwadvapi_nothr dcerpc pthread"
+        for _prov in ${LSA_PROVIDERS}
+        do
+            case "$_prov" in
+                "ad") PROVIDER_GROUPS="$PROVIDER_GROUPS ../auth-providers/ad-open-provider/ad";;
+                "local") PROVIDER_GROUPS="$PROVIDER_GROUPS ../auth-providers/local-provider/local";;
+            esac
+        done
     fi
+
+    mk_program \
+        PROGRAM=lsassd \
+        INSTALLDIR="${MK_SBINDIR}" \
+        SOURCES="main.c globals.c listener.c libmain.c backtrace.c sighandler.c" \
+        INCLUDEDIRS=". ../include ../../include" \
+        HEADERDEPS="lwadvapi.h lwio/lwio.h" \
+        LIBDEPS="lsaserverapi lsacommon ntlmserver lsaclient_ntlm lwnetclientapi lwnetcommon lwioclient lwiocommon lwmsg lwmsg_nothr lwadvapi lwadvapi_nothr lwbase_nothr dcerpc pthread"
 }
 

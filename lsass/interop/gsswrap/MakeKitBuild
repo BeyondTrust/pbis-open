@@ -10,6 +10,6 @@ make()
     SOURCES="$GSSWRAP_SOURCES" \
     CPPFLAGS="-DLW_ENABLE_THREADS" \
     INCLUDEDIRS=". ../include ../../include" \
-    HEADERDEPS="lwadvapi.h gssapi.h krb5.h" \
-    LIBDEPS="lsaclient krb5 gssapi_krb5 $LIB_PTHREAD $LIB_RT"
+    HEADERDEPS="lwadvapi.h gssapi.h krb5.h lw/base.h" \
+    LIBDEPS="lsaclient krb5 gssapi_krb5 lwbase $LIB_PTHREAD $LIB_RT"
 }
