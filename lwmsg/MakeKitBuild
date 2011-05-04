@@ -1,4 +1,14 @@
-SUBDIRS='include src test'
+MODULES="compiler doxygen"
+SUBDIRS='include src test example doc'
+
+option()
+{
+    mk_option \
+        OPTION=lwmsg-examples \
+        VAR="LWMSG_BUILD_EXAMPLES" \
+        DEFAULT="no" \
+        HELP="Build and install example programs"
+}
 
 configure()
 {
@@ -6,9 +16,7 @@ configure()
 
     lw_define_feature_macros
 
-    mk_multiarch_do
-        MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
-    mk_multiarch_done
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -Wmissing-prototypes"
 
     mk_check_headers \
         string.h \
@@ -33,5 +41,11 @@ configure()
 
     mk_multiarch_do
         mk_define "MOD_EXT" "${MK_DLO_EXT}"
+        mk_check_endian
     mk_multiarch_done
+
+    mk_check_doxygen
+    mk_check_moonunit
+    
+    [ "$LWMSG_BUILD_EXAMPLES" = "yes" ] || mk_skip_subdir example
 }
