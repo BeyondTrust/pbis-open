@@ -14,7 +14,7 @@ make()
 	HEADERDEPS="ctbase.h" \
 	LIBDEPS="centutils domainjoin lwadvapi lwadvapi_nothr lwsm $GTK_LIBS"
 
-    mk_install_files \
-	FILES="domainjoin-gtk.glade likewise-logo.png domainjoin-logo.png" \
-	INSTALLDIR="${MK_DATADIR}"
+    mk_stage \
+        DESTDIR="${MK_DATADIR}" \
+	domainjoin-gtk.glade likewise-logo.png domainjoin-logo.png
 }

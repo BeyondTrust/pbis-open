@@ -1,4 +1,4 @@
-SUBDIRS="libdomainjoin domainjoin-cli domainjoin-gui"
+SUBDIRS="libdomainjoin domainjoin-cli domainjoin-gui scripts"
 
 option()
 {
