@@ -765,6 +765,15 @@ MemRegStoreAddNodeAttribute(
      * Assign all allocated memory present in the attributes structure
      * to the value node.
      */
+    if (pbData)
+    {
+        LWREG_SAFE_FREE_MEMORY(hValue->Attributes.pDefaultValue);
+    }
+    if (pwszDocString)
+    {
+         LWREG_SAFE_FREE_MEMORY(hValue->Attributes.pwszDocString);
+    }
+
     hValue->Attributes = *pAttributes;
     if (pAttributes->DefaultValueLen > 0)
     {
