@@ -41,7 +41,7 @@ make()
         HEADERDEPS="$COMMON_HEADERDEPS" \
         LIBDEPS="lwsmloader" \
         INSTALLDIR="${MK_LIBDIR}/lwsm-loader"
-    
+
     mk_program \
         PROGRAM=lwsmd \
         SOURCES="\

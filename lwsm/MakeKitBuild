@@ -14,8 +14,8 @@ configure()
     mk_define LIBDIR "\"$MK_LIBDIR\""
     mk_define LOADERDIR "\"$MK_LIBDIR/lwsm-loader\""
     mk_define MOD_EXT "\"$MK_DLO_EXT\""
-
-    mk_export MOD_EXT="$MK_DLO_EXT"
+    
+    mk_declare -o MOD_EXT="$MK_DLO_EXT"
 
     # Check endianness
     mk_check_endian
@@ -39,4 +39,10 @@ configure()
         pthread dl
 
     lw_check_pthread_once_init
+
+    mk_check_doxygen
+
+    mk_declare -o ENABLE_INTERNAL_DOCS=no
+
+    mk_output_file doc/Doxyfile
 }

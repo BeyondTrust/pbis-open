@@ -7,7 +7,7 @@ make()
         SOURCES="client.c call.c" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="$COMMON_HEADERDEPS" \
-        LIBDEPS="lwsmcommon" \
+        LIBDEPS="lwsmcommon lwmsg lwmsg_nothr" \
         SYMFILE="liblwsm.sym"
 
     mk_program \
