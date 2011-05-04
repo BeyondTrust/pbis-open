@@ -3,6 +3,7 @@ make()
     mk_headers \
         MASTER="lwio/lwio.h" \
         HEADERS="lwio/io-types.h \
+                 lwio/io-types-posix.h \
                  lwio/iortl.h     \
                  lwio/ntfileapi.h     \
                  lwio/smbfileapi.h    \
