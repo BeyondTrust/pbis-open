@@ -76,7 +76,7 @@ then
         unalias _test_alias
         unalias aliastest
         # Resource this script
-        . /opt/likewise/bin/init-base.sh
+        . /opt/likewise/libexec/init-base.sh
         exit $?
     fi
 
