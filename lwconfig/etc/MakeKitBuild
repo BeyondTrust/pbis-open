@@ -1,6 +1,6 @@
 make()
 {
-    mk_install_file \
-        FILE=lwconfig.xml \
-        INSTALLDIR="${LW_CACHEDIR}"
+    mk_stage \
+        DESTDIR="${LW_CACHEDIR}" \
+        lwconfig.xml
 }
