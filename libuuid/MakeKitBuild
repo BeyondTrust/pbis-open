@@ -9,6 +9,12 @@ configure()
     mk_multiarch_do
         MK_CPPFLAGS="$MK_CPPFLAGS -U_XOPEN_SOURCE_EXTENDED"
         MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+        case "$MK_OS:$MK_ISA" in
+            hpux:hppa64)
+                # Work around broken system headers
+                MK_CPPFLAGS="$MK_CPPFLAGS -D_NET_IF6_INCLUDED"
+                ;;
+        esac
     mk_multiarch_done
 
     mk_check_headers \
