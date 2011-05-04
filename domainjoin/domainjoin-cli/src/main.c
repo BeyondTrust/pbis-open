@@ -837,7 +837,7 @@ int main(
 {
     LWException *exc = NULL;
     int columns;
-    PSTR pszLogFilePath = "/tmp/lwidentity.join.log";
+    PSTR pszLogFilePath = "/var/log/likewise-join.log";
     BOOLEAN bNoLog = FALSE;
     PSTR logLevel = "warning";
     DWORD dwLogLevel;
