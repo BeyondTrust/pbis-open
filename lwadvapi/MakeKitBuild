@@ -6,9 +6,7 @@ configure()
 
     lw_define_feature_macros
 
-    mk_multiarch_do
-        MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
-    mk_multiarch_done
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
 
     mk_check_headers \
         FAIL=yes \
