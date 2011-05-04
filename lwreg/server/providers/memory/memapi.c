@@ -105,7 +105,6 @@ MemProvider_Initialize(
      * This is the pointer that holds the memory database
      */
     pConn->pMemReg = pDbRoot;
-    gMemRegRoot = pConn;
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
         pthread_rwlock_init(&pConn->lock, NULL)));
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
@@ -116,6 +115,9 @@ MemProvider_Initialize(
         pthread_cond_init(&pConn->ExportCond, NULL)));
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
         pthread_cond_init(&pConn->ExportCondStop, NULL)));
+
+    /* Must initialize database root here, as it is used in export thread */
+    MemRegRootInit(pConn);
 
     /*
      * Start export to save file thread
@@ -157,15 +159,16 @@ MemProvider_Shutdown(
     NTSTATUS status = 0;
     PWSTR pwszRootKey = NULL;
     BOOLEAN bInLock = FALSE;
+    PREG_DB_CONNECTION pMemRegRoot = MemRegRoot();
 
-    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gMemRegRoot->lock);
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &MemRegRoot()->lock);
     status = MemDbExportToFile(MEMDB_EXPORT_FILE);
     if (status)
     {
         goto cleanup;
     }
 
-    regDbConn.pMemReg = gMemRegRoot->pMemReg;
+    regDbConn.pMemReg = MemRegRoot()->pMemReg;
     status = MemDbClose(&regDbConn);
     if (status)
     {
@@ -173,20 +176,20 @@ MemProvider_Shutdown(
     }
 
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
-        pthread_mutex_destroy(&gMemRegRoot->ExportMutex)));
+        pthread_mutex_destroy(&MemRegRoot()->ExportMutex)));
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
-        pthread_mutex_destroy(&gMemRegRoot->ExportMutexStop)));
+        pthread_mutex_destroy(&MemRegRoot()->ExportMutexStop)));
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
-        pthread_cond_destroy(&gMemRegRoot->ExportCond)));
+        pthread_cond_destroy(&MemRegRoot()->ExportCond)));
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
-        pthread_cond_destroy(&gMemRegRoot->ExportCondStop)));
+        pthread_cond_destroy(&MemRegRoot()->ExportCondStop)));
 
-    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
+    LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
-        pthread_rwlock_destroy(&gMemRegRoot->lock)));
+        pthread_rwlock_destroy(&MemRegRoot()->lock)));
 
 cleanup:
-    LWREG_SAFE_FREE_MEMORY(gMemRegRoot);
+    LWREG_SAFE_FREE_MEMORY(pMemRegRoot);
     LWREG_SAFE_FREE_MEMORY(pwszRootKey);
     return;
   
@@ -222,7 +225,7 @@ MemCreateKeyEx(
     DWORD SecurityDescriptorLen = 0;
     BOOLEAN bInLock = FALSE;
 
-    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gMemRegRoot->lock);
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &MemRegRoot()->lock);
     if (!hKey)
     {
         status = LwRtlWC16StringAllocateFromCString(
@@ -303,7 +306,7 @@ MemCreateKeyEx(
     MemDbExportEntryChanged();
 
 cleanup:
-    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
+    LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
     LWREG_SAFE_FREE_MEMORY(pwszRootKey);
     return status;
 
@@ -342,7 +345,7 @@ MemOpenKeyEx(
         BAIL_ON_NT_STATUS(status);
     }
 
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &gMemRegRoot->lock);
+    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &MemRegRoot()->lock);
     if (!hKey)
     {
         // Search for specified root key. If NULL, return HKTM.
@@ -376,7 +379,7 @@ MemOpenKeyEx(
 
 
 cleanup:
-    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
+    LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
     return status;
 
 error:
@@ -446,10 +449,10 @@ MemDeleteKey(
     }
     else
     {
-        hParentKey = gMemRegRoot->pMemReg;
+        hParentKey = MemRegRoot()->pMemReg;
     }
 
-    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gMemRegRoot->lock);
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &MemRegRoot()->lock);
     status = MemRegStoreFindNode(
                  hParentKey,
                  pSubKey,
@@ -468,7 +471,7 @@ MemDeleteKey(
 
     MemDbExportEntryChanged();
 cleanup:
-    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
+    LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
     return status;
 error:
     goto cleanup;
@@ -502,7 +505,7 @@ MemQueryInfoKey(
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
 
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &gMemRegRoot->lock);
+    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &MemRegRoot()->lock);
     status = MemDbQueryInfoKey(
                  Handle,
                  &regDbConn,
@@ -524,7 +527,7 @@ MemQueryInfoKey(
                  );
 
 cleanup:
-    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
+    LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
     return status;
 
 error:
@@ -552,7 +555,7 @@ MemEnumKeyEx(
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
 
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &gMemRegRoot->lock);
+    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &MemRegRoot()->lock);
     status = MemDbEnumKeyEx(
                  Handle,
                  &regDbConn,
@@ -564,7 +567,7 @@ MemEnumKeyEx(
                  pcClass,
                  pftLastWriteTime
     );
-    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
+    LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
 
     return status;
 }
@@ -587,7 +590,7 @@ MemSetValueEx(
     BOOLEAN bInLock = FALSE;
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
-    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gMemRegRoot->lock);
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &MemRegRoot()->lock);
     status = MemDbSetValueEx(
                  Handle,
                  &regDbConn,
@@ -600,7 +603,7 @@ MemSetValueEx(
 
     MemDbExportEntryChanged();
 cleanup:
-    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
+    LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
     return status;
 
 error:
@@ -626,7 +629,7 @@ MemGetValue(
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
     BOOLEAN bInLock = FALSE;
 
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &gMemRegRoot->lock);
+    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &MemRegRoot()->lock);
     status = MemDbGetValue(
                  Handle,
                  &regDbConn,
@@ -639,7 +642,7 @@ MemGetValue(
     BAIL_ON_NT_STATUS(status);
 
 cleanup:
-    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
+    LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
     return status;
 
 error:
@@ -662,7 +665,7 @@ MemDeleteKeyValue(
 
     hSubKey = pKeyHandle->pKey->hKey;
 
-    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gMemRegRoot->lock);
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &MemRegRoot()->lock);
     if (pSubKey)
     {
         status = MemRegStoreFindNode(
@@ -677,7 +680,7 @@ MemDeleteKeyValue(
                  pValueName);
     MemDbExportEntryChanged();
 error:
-    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
+    LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
     return status;
 }
 
@@ -694,7 +697,7 @@ MemDeleteValue(
     PREGMEM_VALUE pRegValue = NULL;
     BOOLEAN bInLock = FALSE;
 
-    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gMemRegRoot->lock);
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &MemRegRoot()->lock);
     status = MemRegStoreFindNodeValue(
                  pKeyHandle->pKey->hKey,
                  pValueName,
@@ -712,7 +715,7 @@ MemDeleteValue(
     MemDbExportEntryChanged();
 
 cleanup:
-    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
+    LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
     return status;
 
 error:
@@ -740,7 +743,7 @@ MemEnumValue(
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
 
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &gMemRegRoot->lock);
+    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &MemRegRoot()->lock);
     status = MemDbEnumValue(
                  Handle,
                  &regDbConn,
@@ -752,7 +755,7 @@ MemEnumValue(
                  pData,
                  pcbData);
 
-    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
+    LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
     return status;
 }
 
@@ -770,7 +773,7 @@ MemDeleteTree(
     BOOLEAN bInLock = FALSE;
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
-    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gMemRegRoot->lock);
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &MemRegRoot()->lock);
     status = MemDbRecurseDepthFirstRegistry(
                  Handle,
                  &regDbConn,
@@ -778,7 +781,7 @@ MemDeleteTree(
                  pfDeleteNodeCallback,
                  NULL);
     MemDbExportEntryChanged();
-    LWREG_UNLOCK_RWMUTEX(bInLock, &gMemRegRoot->lock);
+    LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
     return status;
 }
 

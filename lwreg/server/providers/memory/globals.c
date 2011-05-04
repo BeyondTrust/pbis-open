@@ -41,7 +41,24 @@
  */
 #include "includes.h"
 
-PREG_DB_CONNECTION gMemRegRoot;
+static PREG_DB_CONNECTION gMemRegRoot;
+
+inline
+PREG_DB_CONNECTION 
+MemRegRoot(
+    VOID)
+{
+    return gMemRegRoot;
+}
+
+inline VOID
+MemRegRootInit(
+    PREG_DB_CONNECTION hMemRegRoot
+    )
+{
+    gMemRegRoot = hMemRegRoot;
+}
+
 
 REGPROV_PROVIDER_FUNCTION_TABLE gRegMemProviderAPITable =
 {

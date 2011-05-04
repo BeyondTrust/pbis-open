@@ -280,10 +280,10 @@ VOID
 MemDbExportEntryChanged(
     VOID)
 {
-    pthread_mutex_lock(&gMemRegRoot->ExportMutex);
-    gMemRegRoot->bValueChanged = TRUE;
-    pthread_mutex_unlock(&gMemRegRoot->ExportMutex);
-    pthread_cond_signal(&gMemRegRoot->ExportCond);
+    pthread_mutex_lock(&MemRegRoot()->ExportMutex);
+    MemRegRoot()->bValueChanged = TRUE;
+    pthread_mutex_unlock(&MemRegRoot()->ExportMutex);
+    pthread_cond_signal(&MemRegRoot()->ExportCond);
 }
 
 
@@ -291,18 +291,18 @@ VOID
 MemDbStopExportToFileThread(
     VOID)
 {
-    pthread_mutex_lock(&gMemRegRoot->ExportMutex);
-    pthread_mutex_lock(&gMemRegRoot->ExportMutexStop);
-    gMemRegRoot->ExportCtx->bStopThread = TRUE;
-    pthread_cond_signal(&gMemRegRoot->ExportCond);
-    pthread_mutex_unlock(&gMemRegRoot->ExportMutex);
+    pthread_mutex_lock(&MemRegRoot()->ExportMutex);
+    pthread_mutex_lock(&MemRegRoot()->ExportMutexStop);
+    MemRegRoot()->ExportCtx->bStopThread = TRUE;
+    pthread_cond_signal(&MemRegRoot()->ExportCond);
+    pthread_mutex_unlock(&MemRegRoot()->ExportMutex);
 
-    while (gMemRegRoot->ExportCtx->bStopThread)
+    while (MemRegRoot()->ExportCtx->bStopThread)
     {
-        pthread_cond_wait(&gMemRegRoot->ExportCondStop, &gMemRegRoot->ExportMutexStop);
+        pthread_cond_wait(&MemRegRoot()->ExportCondStop, &MemRegRoot()->ExportMutexStop);
     }
-    pthread_mutex_unlock(&gMemRegRoot->ExportMutexStop);
-    LWREG_SAFE_FREE_MEMORY(gMemRegRoot->ExportCtx);
+    pthread_mutex_unlock(&MemRegRoot()->ExportMutexStop);
+    LWREG_SAFE_FREE_MEMORY(MemRegRoot()->ExportCtx);
 }
 
 
@@ -320,20 +320,20 @@ MemDbExportToFileThread(
     regDbConn.pMemReg = exportCtx->hKey;
     do
     {
-        pthread_mutex_lock(&gMemRegRoot->ExportMutex);
-        while (!gMemRegRoot->bValueChanged)
+        pthread_mutex_lock(&MemRegRoot()->ExportMutex);
+        while (!MemRegRoot()->bValueChanged)
         {
             if (!pTimeOutForced)
             {
                 sts = pthread_cond_wait(
-                          &gMemRegRoot->ExportCond, 
-                          &gMemRegRoot->ExportMutex);
+                          &MemRegRoot()->ExportCond, 
+                          &MemRegRoot()->ExportMutex);
             }
             else
             {
                 sts = pthread_cond_timedwait(
-                          &gMemRegRoot->ExportCond, 
-                          &gMemRegRoot->ExportMutex,
+                          &MemRegRoot()->ExportCond, 
+                          &MemRegRoot()->ExportMutex,
                           &timeOut);
             }
         
@@ -348,9 +348,9 @@ MemDbExportToFileThread(
                 break;
             }
 
-            if (gMemRegRoot->bValueChanged)
+            if (MemRegRoot()->bValueChanged)
             {
-                gMemRegRoot->bValueChanged = FALSE;
+                MemRegRoot()->bValueChanged = FALSE;
 
                 /*
                  * The idea here is to delay when a change is 
@@ -377,9 +377,9 @@ MemDbExportToFileThread(
                 }
             }
         }
-        pthread_mutex_unlock(&gMemRegRoot->ExportMutex);
+        pthread_mutex_unlock(&MemRegRoot()->ExportMutex);
 
-        if (gMemRegRoot->pMemReg && !exportCtx->bStopThread)
+        if (MemRegRoot()->pMemReg && !exportCtx->bStopThread)
         {
             exportCtx->wfp = fopen(MEMDB_EXPORT_FILE, "w");
             if (!exportCtx->wfp)
@@ -388,23 +388,23 @@ MemDbExportToFileThread(
             }
             else
             {
-                pthread_rwlock_rdlock(&gMemRegRoot->lock);
+                pthread_rwlock_rdlock(&MemRegRoot()->lock);
                 MemDbRecurseRegistry(
                              NULL,
                              &regDbConn,
                              NULL,
                              pfMemRegExportToFile,
                              exportCtx);
-                pthread_rwlock_unlock(&gMemRegRoot->lock);
+                pthread_rwlock_unlock(&MemRegRoot()->lock);
                 fclose(exportCtx->wfp);
                 exportCtx->wfp = NULL;
             }
         }
     } while (!exportCtx->bStopThread);
-    pthread_mutex_lock(&gMemRegRoot->ExportMutexStop);
+    pthread_mutex_lock(&MemRegRoot()->ExportMutexStop);
     exportCtx->bStopThread = FALSE;
-    pthread_mutex_unlock(&gMemRegRoot->ExportMutexStop);
-    pthread_cond_signal(&gMemRegRoot->ExportCondStop);
+    pthread_mutex_unlock(&MemRegRoot()->ExportMutexStop);
+    pthread_cond_signal(&MemRegRoot()->ExportCondStop);
     
     return NULL;
 }
@@ -418,7 +418,7 @@ MemDbExportToFile(
     MEMDB_FILE_EXPORT_CTX exportCtx = {0};
     REG_DB_CONNECTION regDbConn = {0};
 
-    exportCtx.hKey = gMemRegRoot->pMemReg;
+    exportCtx.hKey = MemRegRoot()->pMemReg;
     exportCtx.wfp = fopen(exportFile, "w");
     regDbConn.pMemReg = exportCtx.hKey;
     if (!exportCtx.wfp)
@@ -466,9 +466,9 @@ MemDbStartExportToFileThread(VOID)
         goto cleanup;
     }
 
-    exportCtx->hKey = gMemRegRoot->pMemReg;
+    exportCtx->hKey = MemRegRoot()->pMemReg;
 
-    gMemRegRoot->ExportCtx = exportCtx;
+    MemRegRoot()->ExportCtx = exportCtx;
     pthread_create(&hThread, NULL, MemDbExportToFileThread, (PVOID) exportCtx);
     pthread_detach(hThread);
 
@@ -503,7 +503,7 @@ FILE *dbgfp = fopen("/tmp/lwregd-import.txt", "a");
 
     if (pItem->type == REG_KEY)
     {
-        regDbConn.pMemReg = gMemRegRoot->pMemReg;
+        regDbConn.pMemReg = MemRegRoot()->pMemReg;
 
         // Open subkeys that exist
         status = LwRtlWC16StringAllocateFromCString(
@@ -782,7 +782,7 @@ MemDbOpenKey(
 
     if (!hDb)
     {
-        hParentKey = gMemRegRoot->pMemReg;
+        hParentKey = MemRegRoot()->pMemReg;
     }
     else
     {

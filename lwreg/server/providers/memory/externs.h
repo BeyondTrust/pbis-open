@@ -49,6 +49,15 @@
 
 extern REGPROV_PROVIDER_FUNCTION_TABLE gRegMemProviderAPITable;
 
-extern PREG_DB_CONNECTION gMemRegRoot;
+inline
+PREG_DB_CONNECTION 
+MemRegRoot(
+    VOID
+    );
+
+inline VOID
+MemRegRootInit(
+    PREG_DB_CONNECTION hMemRegRoot;
+    );
 
 #endif /* __EXTERNS_H__ */
