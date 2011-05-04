@@ -1427,7 +1427,10 @@ MemDbSetKeyAcl(
         }
         else
         {
-            LWREG_SAFE_FREE_MEMORY(hKey->pNodeSd->SecurityDescriptor);
+            if (hKey->pNodeSd->SecurityDescriptorAllocated)
+            {
+                LWREG_SAFE_FREE_MEMORY(hKey->pNodeSd->SecurityDescriptor);
+            }
         }
         status = LW_RTL_ALLOCATE((PVOID*) &SecurityDescriptor, 
                                  BYTE, 
