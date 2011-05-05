@@ -93,22 +93,22 @@ import_registry_configurations()
     REGIMPORT='@MK_BINDIR@/lwregshell import'
 
     log "Importing registry..."
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/dcerpcd.reg"
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/eventlogd.reg"
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/lsassd.reg"
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/privileges.reg"
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/accounts.reg"
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/lwiod.reg"
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/lwreg.reg"
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/netlogond.reg"
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/rdr.reg"
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/npfs.reg"
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/srv.reg"
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/pvfs.reg"
-    #run_or_fail "$REGIMPORT @LW_CACHEDIR@/dfs.reg"
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/srvsvcd.reg"
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/nfs.reg"
-    run_or_fail "$REGIMPORT @LW_CACHEDIR@/reapsysl.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/dcerpcd.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/eventlogd.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/lsassd.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/privileges.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/accounts.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/lwiod.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/lwreg.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/netlogond.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/rdr.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/npfs.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/srv.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/pvfs.reg"
+    #run_or_fail "$REGIMPORT @LW_CONFIGDIR@/dfs.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/srvsvcd.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/nfs.reg"
+    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/reapsysl.reg"
 }
 
 determine_upgrade_type()
@@ -221,12 +221,12 @@ fix_60_registry()
     relocate_domain_separator
     relocate_space_replacement
 
-    run_or_fail "${REGCLEANUP} @LW_CACHEDIR@/dcerpcd.reg"
-    run_or_fail "${REGCLEANUP} @LW_CACHEDIR@/eventlogd.reg"
-    run_or_fail "${REGCLEANUP} @LW_CACHEDIR@/lsassd.reg"
-    run_or_fail "${REGCLEANUP} @LW_CACHEDIR@/lwiod.reg"
-    run_or_fail "${REGCLEANUP} @LW_CACHEDIR@/lwreg.reg"
-    run_or_fail "${REGCLEANUP} @LW_CACHEDIR@/netlogond.reg"
+    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/dcerpcd.reg"
+    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/eventlogd.reg"
+    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/lsassd.reg"
+    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/lwiod.reg"
+    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/lwreg.reg"
+    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/netlogond.reg"
 }
 
 switch_to_open_provider()
