@@ -1104,20 +1104,66 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
 
         if (bEnableDcerpcd == FALSE)
         {
-	    DJ_LOG_VERBOSE("Disable eventlog dependency on dcerpc service");
+            // Deconfigure RPC use with eventlog and dcerpc services
+
+            DJ_LOG_VERBOSE("Stop running instance of eventlog service");
+            LW_TRY(exc, DJStopService("eventlog"));
+
+            DJ_LOG_VERBOSE("Stop running instance of dcerpc service");
+            LW_TRY(exc, DJStopService("dcerpc"));
+
+            DJ_LOG_VERBOSE("Disable eventlog dependency on dcerpc service");
             LW_TRY(exc, SetStringRegistryValue("Services\\eventlog",
                                                "Dependencies",
                                                ""));
 
-	    DJ_LOG_VERBOSE("Disable dcerpc service from starting at reboot");
+            DJ_LOG_VERBOSE("Prevent eventlogd from registering RPC end point");
+            LW_TRY(exc, SetBooleanRegistryValue("Services\\eventlog\\Parameters",
+                                                "RegisterTcpIp",
+                                                FALSE));
+
+            DJ_LOG_VERBOSE("Disable dcerpc service from starting at reboot");
             LW_TRY(exc, SetBooleanRegistryValue("Services\\dcerpc",
                                                 "Autostart",
                                                 FALSE));
 
             LW_TRY(exc, LwSmRefresh());
 
-	    DJ_LOG_VERBOSE("Stop running instance of dcerpc service");
+            DJ_LOG_VERBOSE("Start eventlog service");
+            LW_TRY(exc, DJStartService("eventlog"));
+        }
+        else
+        {
+            // Configure RPC use with eventlog and dcerpc services
+
+            DJ_LOG_VERBOSE("Stop running instance of eventlog service");
+            LW_TRY(exc, DJStopService("eventlog"));
+
+            DJ_LOG_VERBOSE("Stop running instance of dcerpc service");
             LW_TRY(exc, DJStopService("dcerpc"));
+
+            DJ_LOG_VERBOSE("Enabled eventlog dependency on dcerpc service");
+            LW_TRY(exc, SetStringRegistryValue("Services\\eventlog",
+                                               "Dependencies",
+                                               "dcerpc"));
+
+            DJ_LOG_VERBOSE("Configure eventlogd to register RPC end point");
+            LW_TRY(exc, SetBooleanRegistryValue("Services\\eventlog\\Parameters",
+                                                "RegisterTcpIp",
+                                                TRUE));
+
+            DJ_LOG_VERBOSE("Enable dcerpc service to start at reboot");
+            LW_TRY(exc, SetBooleanRegistryValue("Services\\dcerpc",
+                                                "Autostart",
+                                                TRUE));
+
+            LW_TRY(exc, LwSmRefresh());
+
+            DJ_LOG_VERBOSE("Start dcerpc service");
+            LW_TRY(exc, DJStartService("dcerpc"));
+
+            DJ_LOG_VERBOSE("Start eventlog service");
+            LW_TRY(exc, DJStartService("eventlog"));
         }
 
         LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists("/usr/sbin/svcadm", &exists));
