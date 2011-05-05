@@ -281,7 +281,7 @@ MemDbExportEntryChanged(
     VOID)
 {
     pthread_mutex_lock(&MemRegRoot()->ExportMutex);
-    MemRegRoot()->bValueChanged = TRUE;
+    MemRegRoot()->valueChangeCount++;
     pthread_mutex_unlock(&MemRegRoot()->ExportMutex);
     pthread_cond_signal(&MemRegRoot()->ExportCond);
 }
@@ -291,121 +291,218 @@ VOID
 MemDbStopExportToFileThread(
     VOID)
 {
-    pthread_mutex_lock(&MemRegRoot()->ExportMutex);
     pthread_mutex_lock(&MemRegRoot()->ExportMutexStop);
     MemRegRoot()->ExportCtx->bStopThread = TRUE;
     pthread_cond_signal(&MemRegRoot()->ExportCond);
-    pthread_mutex_unlock(&MemRegRoot()->ExportMutex);
 
     while (MemRegRoot()->ExportCtx->bStopThread)
     {
-        pthread_cond_wait(&MemRegRoot()->ExportCondStop, &MemRegRoot()->ExportMutexStop);
+        pthread_cond_wait(&MemRegRoot()->ExportCondStop, 
+                          &MemRegRoot()->ExportMutexStop);
     }
     pthread_mutex_unlock(&MemRegRoot()->ExportMutexStop);
     LWREG_SAFE_FREE_MEMORY(MemRegRoot()->ExportCtx);
 }
 
 
+/*
+ * Export thread is a big state machine. This is the order of states:
+ * MEMDB_EXPORT_START = 1,
+ * MEMDB_EXPORT_CHECK_CHANGES,
+ * MEMDB_EXPORT_INIT_TO_INFINITE,
+ * MEMDB_EXPORT_INIT_TO_SHORT,
+ * MEMDB_EXPORT_WAIT,
+ * MEMDB_EXPORT_TEST_CHANGE,
+ * MEMDB_EXPORT_TEST_MAX_TIMEOUT,
+ * MEMDB_EXPORT_UPDATE_SHORT_TIMEOUT,
+ * MEMDB_EXPORT_WRITE_CHANGES,
+ *
+ * State machine below removes MEMDB_EXPORT_ prefix for states.
+ * _TO_ is abbreviation for Time Out
+ * (state change) denotes a state transition
+ *
+ *   +-----<--------------------<------------------------------<-+
+ *   |                                                           |
+ *   |                                                           |
+ *   v                                                           |
+ * START -> CHECK_CHANGES -> INIT_TO_INFINITE                    |
+ *                |                 |                            |
+ *                |                 |                            |
+ *           (change pending)       |                            |
+ *                |                 |                            |
+ *                |                 |                            |
+ *                v             (T.O. 30days)                    |
+ *           INIT_TO_SHORT          |                            |
+ *             ^    |               v                            ^
+ *             |    +-(5sec)-> EXPORT_WAIT ----(TIMEOUT)--> WRITE_CHANGES
+ *             |                    |   ^                        ^
+ *             |               (change) |                        |
+ *             |                    |   +-----------+            |
+ *             |                    v               |            |
+ *             +----(changed)----TEST_CHANGE        |            |
+ *                                  |               |            |
+ *                                  |           (T.O. 5sec)      |
+ *                            (max timeout?)        |            |
+ *                                  |               |            |
+ *                                  |   UPDATE_SHORT_TIMEOUT     |
+ *                                  |      ^                     |
+ *                                  |      |                     |
+ *                                  |    (no)                    |
+ *                                  v      |                     |
+ *                             TEST_MAX_TIMEOUT >----(yes)-------+
+ */
+ 
 PVOID
 MemDbExportToFileThread(
     PVOID ctx)
 {
+    NTSTATUS status = 0;
+    MEMDB_EXPORT_STATE state = MEMDB_EXPORT_START;
     PMEMDB_FILE_EXPORT_CTX exportCtx = (PMEMDB_FILE_EXPORT_CTX) ctx;
-    struct timespec timeOut = {0};
-    struct timespec timeOutForced = {0};
-    struct timespec *pTimeOutForced = NULL;
-    REG_DB_CONNECTION regDbConn = {0};
+    struct timespec timeOutShort = {0};
+    struct timespec timeOutMax = {0};
+    struct timespec *pTimeOutMax = NULL;
+    BOOLEAN bTimeOutInfinite = FALSE;
+    DWORD changeCountInit = 0;
     int sts = 0;
 
-    regDbConn.pMemReg = exportCtx->hKey;
+    REG_LOG_INFO("MemDbExportToFileThread: Thread started.");
     do
     {
-        pthread_mutex_lock(&MemRegRoot()->ExportMutex);
-        while (!MemRegRoot()->bValueChanged)
+        switch (state)
         {
-            if (!pTimeOutForced)
-            {
-                sts = pthread_cond_wait(
-                          &MemRegRoot()->ExportCond, 
-                          &MemRegRoot()->ExportMutex);
-            }
-            else
-            {
+            case MEMDB_EXPORT_START:
+                pthread_mutex_lock(&MemRegRoot()->ExportMutex);
+                changeCountInit = MemRegRoot()->valueChangeCount;
+                state = MEMDB_EXPORT_CHECK_CHANGES;
+                break;
+       
+            case MEMDB_EXPORT_CHECK_CHANGES:
+                if (changeCountInit == 0)
+                {
+                    state = MEMDB_EXPORT_INIT_TO_INFINITE;
+                }
+                else
+                {
+                    state = MEMDB_EXPORT_INIT_TO_SHORT;
+                }
+                break;
+
+            case MEMDB_EXPORT_INIT_TO_INFINITE:
+                /* No changes pending, so wait "forever", 30 days */
+                clock_gettime(CLOCK_REALTIME, &timeOutShort);
+                timeOutShort.tv_sec += MEMDB_FOREVER_EXPORT_TIMEOUT; // 1month
+                bTimeOutInfinite = TRUE;
+                state = MEMDB_EXPORT_WAIT;
+                break;
+
+            case MEMDB_EXPORT_INIT_TO_SHORT:
+                clock_gettime(CLOCK_REALTIME, &timeOutShort);
+                timeOutShort.tv_sec += MEMDB_CHANGED_EXPORT_TIMEOUT; // 5s
+                if (!pTimeOutMax)
+                {
+                    timeOutMax = timeOutShort;
+                    timeOutMax.tv_sec += MEMDB_MAX_EXPORT_TIMEOUT; // 10m
+                    pTimeOutMax = &timeOutMax;
+                }
+                bTimeOutInfinite = FALSE;
+                state = MEMDB_EXPORT_WAIT;
+                break;
+
+            case MEMDB_EXPORT_WAIT:
                 sts = pthread_cond_timedwait(
                           &MemRegRoot()->ExportCond, 
                           &MemRegRoot()->ExportMutex,
-                          &timeOut);
-            }
-        
-            if (exportCtx->bStopThread)
-            {
-                break;
-            }
-
-            if (sts == ETIMEDOUT)
-            {
-                pTimeOutForced = NULL;
-                break;
-            }
-
-            if (MemRegRoot()->bValueChanged)
-            {
-                MemRegRoot()->bValueChanged = FALSE;
-
-                /*
-                 * The idea here is to delay when a change is 
-                 * actually committed to disc, so if a lot of changes
-                 * are happening sequentially, each change won't cause
-                 * a flush to disc. However, force a flush after
-                 * MEMDB_DEFAULT_EXPORT_TIMEOUT has expired, so if changes
-                 * are occurring periodically, they will still be written 
-                 * to disc.
-                 */
-                clock_gettime(CLOCK_REALTIME, &timeOut);
-                timeOut.tv_sec += MEMDB_CHANGED_EXPORT_TIMEOUT; //5s
-
-                if (!pTimeOutForced)
+                          &timeOutShort);
+                if (exportCtx->bStopThread)
                 {
-                    clock_gettime(CLOCK_REALTIME, &timeOutForced);
-                    timeOutForced.tv_sec += MEMDB_DEFAULT_EXPORT_TIMEOUT; //10m
-                    pTimeOutForced = &timeOutForced;
-                }
-                if (pTimeOutForced && timeOut.tv_sec > pTimeOutForced->tv_sec)
-                {
-                    pTimeOutForced = NULL;
+                    pthread_mutex_unlock(&MemRegRoot()->ExportMutex);
                     break;
                 }
-            }
-        }
-        pthread_mutex_unlock(&MemRegRoot()->ExportMutex);
+                else if (changeCountInit > 0 &&
+                         changeCountInit == MemRegRoot()->valueChangeCount)
+                {
+                    /* False wakeup? */
+                    state = MEMDB_EXPORT_WAIT;
+                }
+                else if (sts == ETIMEDOUT)
+                {
+                    changeCountInit = MemRegRoot()->valueChangeCount;
+                    state = MEMDB_EXPORT_WRITE_CHANGES;
+                }
+                else 
+                {
+                    state = MEMDB_EXPORT_TEST_CHANGE;
+                }
+                pthread_mutex_unlock(&MemRegRoot()->ExportMutex);
+                break;
 
-        if (MemRegRoot()->pMemReg && !exportCtx->bStopThread)
-        {
-            exportCtx->wfp = fopen(MEMDB_EXPORT_FILE, "w");
-            if (!exportCtx->wfp)
-            {
-                // Log error could not open file
-            }
-            else
-            {
+            case MEMDB_EXPORT_TEST_CHANGE:
+                if (bTimeOutInfinite)
+                {
+                    state = MEMDB_EXPORT_INIT_TO_SHORT;
+                }
+                else
+                {
+                    state = MEMDB_EXPORT_TEST_MAX_TIMEOUT;
+                }
+                break;
+
+            case MEMDB_EXPORT_TEST_MAX_TIMEOUT:
+                if (pTimeOutMax && timeOutShort.tv_sec > pTimeOutMax->tv_sec)
+                {
+                    REG_LOG_DEBUG("MemDbExportToFileThread: Forced timeout "
+                                  "expired, Exporting registry to save file");
+                    pTimeOutMax = NULL;
+                    state = MEMDB_EXPORT_WRITE_CHANGES;
+                }
+                else
+                {
+                    state = MEMDB_EXPORT_UPDATE_SHORT_TIMEOUT;
+                }
+                break;
+
+            case MEMDB_EXPORT_UPDATE_SHORT_TIMEOUT:
+                clock_gettime(CLOCK_REALTIME, &timeOutShort);
+                timeOutShort.tv_sec += MEMDB_CHANGED_EXPORT_TIMEOUT; //5s
+                state = MEMDB_EXPORT_WAIT;
+                pthread_mutex_lock(&MemRegRoot()->ExportMutex);
+                break;
+
+            case MEMDB_EXPORT_WRITE_CHANGES:
+                REG_LOG_DEBUG("MemDbExportToFileThread: "
+                              "Exporting registry to save file...");
                 pthread_rwlock_rdlock(&MemRegRoot()->lock);
-                MemDbRecurseRegistry(
-                             NULL,
-                             &regDbConn,
-                             NULL,
-                             pfMemRegExportToFile,
-                             exportCtx);
+                status = MemDbExportToFile(MEMDB_EXPORT_FILE);
                 pthread_rwlock_unlock(&MemRegRoot()->lock);
-                fclose(exportCtx->wfp);
-                exportCtx->wfp = NULL;
-            }
+                REG_LOG_ERROR("MemDbExportToFileThread: "
+                              "Exporting registry to save file completed.");
+                if (status)
+                {
+                    REG_LOG_DEBUG("Failed exporting registry to %s",
+                                  MEMDB_EXPORT_FILE);
+                }
+
+                pthread_mutex_lock(&MemRegRoot()->ExportMutex);
+                if (MemRegRoot()->valueChangeCount == changeCountInit)
+                {
+                    changeCountInit = 0;
+                    MemRegRoot()->valueChangeCount  = 0;
+                }
+                pthread_mutex_unlock(&MemRegRoot()->ExportMutex);
+            
+                state = MEMDB_EXPORT_START;
+                break;
         }
     } while (!exportCtx->bStopThread);
+
+    REG_LOG_INFO("MemDbExportToFileThread: Thread is terminating!!!");
     pthread_mutex_lock(&MemRegRoot()->ExportMutexStop);
     exportCtx->bStopThread = FALSE;
     pthread_mutex_unlock(&MemRegRoot()->ExportMutexStop);
     pthread_cond_signal(&MemRegRoot()->ExportCondStop);
-    
+
+    /* This is the return type for a function running as a thread */
     return NULL;
 }
 

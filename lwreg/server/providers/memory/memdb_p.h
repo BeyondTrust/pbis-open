@@ -1,7 +1,8 @@
 #include "includes.h"
 
-#define MEMDB_DEFAULT_EXPORT_TIMEOUT (60*10) // 10 Minutes
+#define MEMDB_MAX_EXPORT_TIMEOUT (60*10) // 10 Minutes
 #define MEMDB_CHANGED_EXPORT_TIMEOUT 5 // 5 seconds
+#define MEMDB_FOREVER_EXPORT_TIMEOUT (30 * 24 * 3600) // 1 month
 #define MEMDB_EXPORT_DIR "/var/lib/likewise/db"
 #define MEMDB_EXPORT_FILE MEMDB_EXPORT_DIR "/memprovider.exp"
 
@@ -23,7 +24,7 @@ typedef struct _REG_DB_CONNECTION
     pthread_mutex_t ExportMutexStop;
     pthread_cond_t ExportCond;
     pthread_cond_t ExportCondStop;
-    BOOLEAN bValueChanged;
+    DWORD valueChangeCount;
     PMEMDB_FILE_EXPORT_CTX ExportCtx;
 } REG_DB_CONNECTION, *PREG_DB_CONNECTION;
 
@@ -61,6 +62,18 @@ typedef struct _MEMDB_STACK
     DWORD stackPtr;
 } MEMDB_STACK, *PMEMDB_STACK;
 
+typedef enum _MEMDB_EXPORT_STATE
+{
+   MEMDB_EXPORT_START = 1,
+   MEMDB_EXPORT_CHECK_CHANGES,
+   MEMDB_EXPORT_INIT_TO_INFINITE,
+   MEMDB_EXPORT_INIT_TO_SHORT,
+   MEMDB_EXPORT_WAIT,
+   MEMDB_EXPORT_TEST_CHANGE,
+   MEMDB_EXPORT_TEST_MAX_TIMEOUT,
+   MEMDB_EXPORT_UPDATE_SHORT_TIMEOUT,
+   MEMDB_EXPORT_WRITE_CHANGES,
+} MEMDB_EXPORT_STATE;
 
 NTSTATUS
 MemDbOpen(
