@@ -33,4 +33,4 @@
 PREFIX="PREFIX_DIR"
 SERVICE_NAME="likewise"
 
-. PREFIX_DIR/libexec/init-likewise.sh
+. LIBEXECDIR/init-likewise.sh

@@ -20,7 +20,7 @@ case "$1" in
             domainjoin-cli configure --enable nsswitch >/dev/null
         fi
 
-        @MK_SBINDIR@/lwsmd --start-as-daemon
+	/etc/init.d/lwsmd start
 
         for file in "@LW_CONFIGDIR@/"*.reg; do
             echo "Importing $file..."

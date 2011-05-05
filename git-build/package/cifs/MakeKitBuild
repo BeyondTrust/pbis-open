@@ -137,6 +137,7 @@ common_files()
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lw-svcm/*${MK_DLO_EXT}" \
+        "${MK_LIBEXECDIR}/*" \
         "${MK_DATADIR}/*.glade" \
         "${MK_DATADIR}/*.png" \
         "${NSSDIR}/*" \
