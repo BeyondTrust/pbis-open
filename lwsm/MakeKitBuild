@@ -29,7 +29,9 @@ configure()
     fi
 
     # Check endianness
-    mk_check_endian
+    mk_multiarch_do
+        mk_check_endian
+    mk_multiarch_done
 
     # Required headers
     mk_check_headers \

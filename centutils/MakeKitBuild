@@ -17,7 +17,9 @@ configure()
     mk_define PREFIXDIR "\"${MK_PREFIX}\""
     mk_define LIBDIR "\"${MK_LIBDIR}\""
 
-    mk_check_endian
+    mk_multiarch_do
+        mk_check_endian
+    mk_multiarch_done
 
     # Headers
     mk_check_headers \

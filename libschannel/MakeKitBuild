@@ -6,12 +6,14 @@ configure()
     
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
     
-    mk_check_endian
+    mk_multiarch_do
+        mk_check_endian
 
-    case "$ENDIANNESS" in
-        big) mk_define LW_BIG_ENDIAN;;
-        little) mk_define LW_LITTLE_ENDIAN;;
-    esac
+        case "$ENDIANNESS" in
+            big) mk_define LW_BIG_ENDIAN;;
+            little) mk_define LW_LITTLE_ENDIAN;;
+        esac
+    mk_multiarch_done
 
     # Necessary headers
     mk_check_headers FAIL=yes \

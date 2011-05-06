@@ -34,12 +34,14 @@ configure()
 
     lw_define_feature_macros
 
-    mk_check_endian
-
-    case "$ENDIANNESS" in
-        big) mk_define LW_BIG_ENDIAN;;
-        little) mk_define LW_LITTLE_ENDIAN;;
-    esac
+    mk_multiarch_do
+        mk_check_endian
+    
+        case "$ENDIANNESS" in
+            big) mk_define LW_BIG_ENDIAN;;
+            little) mk_define LW_LITTLE_ENDIAN;;
+        esac
+    mk_multiarch_done
 
     case "$LWREG_REGISTRY_BACKEND" in
         "memory") mk_define REG_USE_MEMORY;;
