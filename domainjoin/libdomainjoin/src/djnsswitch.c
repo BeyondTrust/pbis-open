@@ -549,11 +549,12 @@ ReadNsswitchConf(NsswitchConf *conf, const char *testPrefix,
             ceError = ReadNsswitchFile(conf, testPrefix, NSSWITCH_LWIDEFAULTS);
             GCE(ceError);
             CT_SAFE_FREE_STRING(conf->filename);
-            GCE(ceError = CTStrdup(NSSWITCH_CONF_PATH, &conf->filename));
             conf->modified = TRUE;
 
             if(allowFileCreate)
             {
+                GCE(ceError = CTStrdup(NSSWITCH_CONF_PATH, &conf->filename));
+
                 /* Copy over the original file. This way the user can more
                  * clearly see what we changed by comparing nsswitch.conf with
                  * nsswitch.conf.lwidentity.orig. Also, the permissions will be
@@ -564,6 +565,10 @@ ReadNsswitchConf(NsswitchConf *conf, const char *testPrefix,
                     &copyDestPath, "%s%s", testPrefix, NSSWITCH_CONF_PATH));
                 ceError = CTCopyFileWithOriginalPerms(defaultFilePath, copyDestPath);
                 GCE(ceError);
+            }
+            else
+            {
+                GCE(ceError = CTStrdup(NSSWITCH_LWIDEFAULTS, &conf->filename));
             }
         }
     }
