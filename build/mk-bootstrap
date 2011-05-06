@@ -1,0 +1,52 @@
+#!/bin/bash
+
+BLACKLIST="libiconv templatedriver mod_auth_kerb"
+
+fail()
+{
+    echo "$@"
+    exit 1
+}
+
+blacklisted()
+{
+    for bad in ${BLACKLIST}
+    do
+        [ "$bad" = "${1#$SRC_ROOT/}" ] && return 0
+    done
+
+    return 1
+}
+
+if [ -n "$BUILD_ROOT" ]
+then
+    SRC_ROOT="$BUILD_ROOT/src/linux"
+else
+    SRC_ROOT="`pwd`"
+fi
+
+[ -x "$SRC_ROOT/build/mk-bootstrap" ] || fail "Please run from Platform/src/linux"
+
+for dir in "$SRC_ROOT"/*
+do
+    if [ -f "$dir/configure.ac" -o -f "$dir/configure.in" ]
+    then
+        if blacklisted "$dir"
+        then
+            echo "Skipping ${dir#$SRC_ROOT/}"
+            continue
+        fi
+
+        cd "$dir"
+        
+        echo "Bootstrapping ${dir#$SRC_ROOT/}"
+        if [ -x autogen.sh ]
+        then
+            ./autogen.sh || fail "could not run autogen.sh in $dir"
+        else
+            autoreconf -fi || fail "could not run autoreconf in $dir"
+        fi
+    fi
+done
+
+        
