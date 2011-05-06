@@ -303,7 +303,7 @@ MarshallTreeConnectResponseData(
         bufferAvailable--;
     }
 
-    wstrlen = (pwszNativeFileSystem ? wc16slen(pwszNativeFileSystem) : 1);
+    wstrlen = (pwszNativeFileSystem ? (wc16slen(pwszNativeFileSystem) + 1) : 1);
     if (bufferAvailable < (wstrlen * sizeof(wchar16_t)))
     {
         ntStatus = STATUS_INVALID_BUFFER_SIZE;
