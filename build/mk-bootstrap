@@ -1,6 +1,7 @@
 #!/bin/bash
 
 BLACKLIST="libiconv templatedriver mod_auth_kerb fuse opensoap popt"
+EXTRA="krb5/src"
 
 fail()
 {
@@ -18,17 +19,9 @@ blacklisted()
     return 1
 }
 
-if [ -n "$BUILD_ROOT" ]
-then
-    SRC_ROOT="$BUILD_ROOT/src/linux"
-else
-    SRC_ROOT="`pwd`"
-fi
-
-[ -x "$SRC_ROOT/build/mk-bootstrap" ] || fail "Please run from Platform/src/linux"
-
-for dir in "$SRC_ROOT"/*
-do
+bootstrap()
+{
+    dir="$1"
     if [ -f "$dir/configure.ac" -o -f "$dir/configure.in" ]
     then
         if blacklisted "$dir"
@@ -47,6 +40,25 @@ do
             autoreconf -fi || fail "could not run autoreconf in $dir"
         fi
     fi
+}
+
+if [ -n "$BUILD_ROOT" ]
+then
+    SRC_ROOT="$BUILD_ROOT/src/linux"
+else
+    SRC_ROOT="`pwd`"
+fi
+
+[ -x "$SRC_ROOT/build/mk-bootstrap" ] || fail "Please run from Platform/src/linux"
+
+for dir in "$SRC_ROOT"/*
+do
+    bootstrap "$dir"
+done
+
+for extra in ${EXTRA}
+do
+    bootstrap "$SRC_ROOT/$extra"
 done
 
         
