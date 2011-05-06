@@ -586,7 +586,7 @@ size_t wc16stowc16les(wchar16_t *dest, const wchar16_t *src, size_t cchcopy)
     memcpy(dest, src, cbin);
 #endif
 
-    if (src[cbout - 1] == 0)
+    if (cbout > 0 && src[cbout - 1] == 0)
     {
         cbout--;
     }
@@ -610,7 +610,7 @@ size_t wc16lestowc16s(wchar16_t *dest, const wchar16_t *src, size_t cchcopy)
     memcpy(dest, src, cbin);
 #endif
 
-    if (src[cbout - 1] == 0)
+    if (cbout > 0 && src[cbout - 1] == 0)
     {
         cbout--;
     }
