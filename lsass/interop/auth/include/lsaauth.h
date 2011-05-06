@@ -197,6 +197,19 @@ extern DWORD gdwLogLevel;
         } \
     } while (0)
 
+#ifdef BAIL_ON_LSA_ERROR
+#undef BAIL_ON_LSA_ERROR
+#endif
+
+#define BAIL_ON_LSA_ERROR(err)                      \
+    do {                                            \
+        if ((err))                                  \
+        {                                           \
+            LSA_LOG_PAM_DEBUG("error %d", (err));   \
+            goto error;                             \
+        }                                           \
+    } while (0)
+
 void
 LsaPamLogMessage(
     DWORD dwLogLevel,
