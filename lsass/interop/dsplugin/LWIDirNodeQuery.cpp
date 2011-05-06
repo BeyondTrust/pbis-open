@@ -265,7 +265,8 @@ static
 long
 CheckAccountPolicy(
     BOOLEAN bLogAll,
-    PCSTR username
+    PCSTR username,
+    tDataBufferPtr policyBuffer
     )
 {
     long macError = eDSNoErr;
@@ -278,6 +279,7 @@ CheckAccountPolicy(
     BOOLEAN bPromptForPasswordChange = FALSE;
     BOOLEAN bUserCanChangePassword = FALSE;
     BOOLEAN bLogonRestriction = FALSE;
+    UInt32 length;
 
     LOG("Going to check account policy for user %s",
         username ? username : "<null>");
@@ -313,6 +315,20 @@ CheckAccountPolicy(
         LOG("User can change password:   %s", bUserCanChangePassword ? "YES" : "NO");
         LOG("Logon restriction:          %s", bLogonRestriction ? "YES" : "NO");
     }
+
+    length = snprintf(
+                policyBuffer->fBufferData + sizeof(UInt32),
+                (int) policyBuffer->fBufferSize - sizeof(UInt32),
+                "newPasswordRequired=%d",
+                bPasswordExpired);
+    if (length > policyBuffer->fBufferSize)
+    {
+        macError = eDSBufferTooSmall;
+        goto exit;
+    }
+
+    *((UInt32 *) policyBuffer->fBufferData) = length;
+    policyBuffer->fBufferLength = length + sizeof(UInt32);
 
     if (bLocked)
     {
@@ -714,7 +730,20 @@ LWIDirNodeQuery::DoDirNodeAuth(
 
     if (isGetPolicy)
     {
-        macError = CheckAccountPolicy(TRUE, username);
+        if (!pDoDirNodeAuth->fOutAuthStepDataResponse)
+        {
+            macError = eDSNullDataBuff;
+            GOTO_CLEANUP_EE(EE);
+        }
+
+        macError = CheckAccountPolicy(
+                        TRUE,
+                        username,
+                        pDoDirNodeAuth->fOutAuthStepDataResponse);
+        if (macError == eDSAuthPasswordExpired)
+        {
+            macError = eDSNoErr;
+        }
         GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
     }
     else if (isChangePassword)
@@ -743,7 +772,10 @@ LWIDirNodeQuery::DoDirNodeAuth(
         }
 
         // Also test to see if the logon should be rejected due to account policies
-        macError = CheckAccountPolicy(FALSE, username);
+        macError = CheckAccountPolicy(
+                        TRUE,
+                        username,
+                        pDoDirNodeAuth->fOutAuthStepDataResponse);
         GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
         
         macError = GetUserPrincipalNames(username, &pszUPN, &pszUserSamAccount, &pszUserDomainFQDN);
