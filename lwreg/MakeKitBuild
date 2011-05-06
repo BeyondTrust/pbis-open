@@ -8,13 +8,6 @@ option()
         VAR=LWREG_REGISTRY_BACKEND \
         DEFAULT="sqlite" \
         HELP="Registry backend (sqlite | memory)"
-
-    mk_option \
-        OPTION=with-lwregd \
-        PARAM='yes|no' \
-        VAR=LWREG_LWREGD_SERVER \
-        DEFAULT="no" \
-        HELP="Build lwregd as stand-alone program"
 }
 
 
