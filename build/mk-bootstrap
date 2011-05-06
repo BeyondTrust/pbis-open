@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BLACKLIST="libiconv templatedriver mod_auth_kerb fuse opensoap popt"
-EXTRA="krb5/src"
+EXTRA="krb5/src dcerpc/flex-2.5.4"
 
 fail()
 {
