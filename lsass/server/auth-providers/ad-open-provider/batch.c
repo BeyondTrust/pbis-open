@@ -1767,6 +1767,7 @@ LsaAdBatchResolveRpcObjects(
     DWORD i = 0;
     PLSA_LIST_LINKS pLinks = NULL;
     PLSA_LIST_LINKS pNextLinks = NULL;
+    PLSA_LIST_LINKS pMatchLinks = NULL;
 
     for (pLinks = pBatchItemList->Next;
          pLinks != pBatchItemList;
@@ -1836,21 +1837,23 @@ LsaAdBatchResolveRpcObjects(
             continue;
         }
 
+        pMatchLinks = pLinks;
         for (i = 0; i < dwQueryCount; i++)
         {
-            if (!ppTranslatedNames[i])
+            if (ppTranslatedNames[i])
             {
-                continue;
-            }
+                PLSA_AD_BATCH_ITEM pItem = LW_STRUCT_FROM_FIELD(pMatchLinks,
+								LSA_AD_BATCH_ITEM,
+								BatchItemListLinks);
+                dwError = LsaAdBatchProcessRpcObject(
+                                QueryType,
+                                pItem,
+                                ppszQueryList[i],
+                                ppTranslatedNames[i]);
+                BAIL_ON_LSA_ERROR(dwError);
+	    }
 
-            XXX; // speed up by using a parallel list for direct a lookup.
-            dwError = LsaAdBatchProcessRpcObject(
-                            QueryType,
-                            pLinks,
-                            pNextLinks,
-                            ppszQueryList[i],
-                            ppTranslatedNames[i]);
-            BAIL_ON_LSA_ERROR(dwError);
+	    pMatchLinks = pMatchLinks->Next;
         }
     }
 
@@ -2842,7 +2845,7 @@ LsaAdBatchResolvePseudoObjectsInternalDefaultOrCell(
          pLinks = pNextLinks)
     {
         DWORD dwQueryCount = 0;
-        DWORD dwCount = 0;
+        DWORD dwFoundCount = 0;
         LDAPMessage* pCurrentMessage = NULL;
 
         pNextLinks = NULL;
@@ -2884,23 +2887,23 @@ LsaAdBatchResolvePseudoObjectsInternalDefaultOrCell(
 
         pLd = LwLdapGetSession(hDirectory);
 
-        dwCount = ldap_count_entries(pLd, pMessage);
+        dwFoundCount = ldap_count_entries(pLd, pMessage);
         // In Default Non-schema mode, we might get entries in non-default cells due to the GC search
         // Hence, dwCount can be more than dwQueryCount
         if (!(NonSchemaMode == adMode && bDoGCSearch) &&
-             dwCount > dwQueryCount)
+             dwFoundCount > dwQueryCount)
         {
             LSA_LOG_ERROR("Too many results returned (got %u, expected %u)",
-                          dwCount, dwQueryCount);
+                          dwFoundCount, dwQueryCount);
             dwError = LW_ERROR_LDAP_ERROR;
             BAIL_ON_LSA_ERROR(dwError);
         }
-        else if (dwCount == 0)
+        else if (dwFoundCount == 0)
         {
             continue;
         }
 
-        dwCount = 0;
+        dwFoundCount = 0;
 
         pCurrentMessage = ldap_first_entry(pLd, pMessage);
         while (pCurrentMessage)
@@ -2932,17 +2935,17 @@ LsaAdBatchResolvePseudoObjectsInternalDefaultOrCell(
                             QueryType,
                             pLinks,
                             pNextLinks,
+                            &dwFoundCount,
                             bDoGCSearch,
                             (adMode == SchemaMode),
                             hDirectory,
                             pCurrentMessage);
             BAIL_ON_LSA_ERROR(dwError);
-            dwCount++;
 
             pCurrentMessage = ldap_next_entry(pLd, pCurrentMessage);
         }
 
-        dwTotalItemFoundCount += dwCount;
+        dwTotalItemFoundCount += dwFoundCount;
     }
 
     if (pdwTotalItemFoundCount)
@@ -3451,9 +3454,7 @@ static
 DWORD
 LsaAdBatchProcessRpcObject(
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
-    // List of PLSA_AD_BATCH_ITEM
-    IN OUT PLSA_LIST_LINKS pStartBatchItemListLinks,
-    IN PLSA_LIST_LINKS pEndBatchItemListLinks,
+    IN PLSA_AD_BATCH_ITEM pItem,
     IN PSTR pszObjectNT4NameOrSid,
     IN PLSA_TRANSLATED_NAME_OR_SID pTranslatedName
     )
@@ -3466,8 +3467,6 @@ LsaAdBatchProcessRpcObject(
     PCSTR pszCompare = NULL;
     LSA_AD_BATCH_OBJECT_TYPE objectType = 0;
     LSA_AD_BATCH_OBJECT_TYPE desiredObjectType = 0;
-    PLSA_LIST_LINKS pLinks = NULL;
-    PLSA_AD_BATCH_ITEM pFoundItem = NULL;
 
     switch (QueryType)
     {
@@ -3541,21 +3540,17 @@ LsaAdBatchProcessRpcObject(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    for (pLinks = pStartBatchItemListLinks;
-         pLinks != pEndBatchItemListLinks;
-         pLinks = pLinks->Next)
+    if (pItem->pszQueryMatchTerm &&
+	LwRtlCStringIsEqual(pItem->pszQueryMatchTerm, pszCompare, FALSE))
     {
-        PLSA_AD_BATCH_ITEM pItem = LW_STRUCT_FROM_FIELD(pLinks, LSA_AD_BATCH_ITEM, BatchItemListLinks);
-
-        if (pItem->pszQueryMatchTerm &&
-            !strcasecmp(pItem->pszQueryMatchTerm, pszCompare))
-        {
-            pFoundItem = pItem;
-            break;
-        }
+        dwError = LsaAdBatchGatherRpcObject(
+                        pItem,
+                        objectType,
+                        &pszSid,
+                        &pszSamAccountName);
+        BAIL_ON_LSA_ERROR(dwError);
     }
-
-    if (!pFoundItem)
+    else
     {
         PCSTR pszType = LsaAdBatchGetQueryTypeAsString(QueryType);
         LSA_LOG_DEBUG("Did not find batch item for message for %s '%s'",
@@ -3563,13 +3558,6 @@ LsaAdBatchProcessRpcObject(
         dwError = 0;
         goto cleanup;
     }
-
-    dwError = LsaAdBatchGatherRpcObject(
-                    pFoundItem,
-                    objectType,
-                    &pszSid,
-                    &pszSamAccountName);
-    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
     LW_SAFE_FREE_STRING(pszSid);
@@ -3599,7 +3587,7 @@ LsaAdBatchProcessRealObject(
     LSA_AD_BATCH_OBJECT_TYPE objectType = 0;
     LSA_AD_BATCH_OBJECT_TYPE desiredObjectType = 0;
     PLSA_LIST_LINKS pLinks = NULL;
-    PLSA_AD_BATCH_ITEM pFoundItem = NULL;
+    BOOLEAN bFoundItem = FALSE;
     PSTR pszSid = NULL;
 
     // Get compare string
@@ -3644,7 +3632,9 @@ LsaAdBatchProcessRealObject(
         XXX; // may want to just skip if no query term...hmm...
         LSA_ASSERT(pItem->pszQueryMatchTerm);
 
-        if (!strcasecmp(pItem->pszQueryMatchTerm, pszCompare))
+        if (LwRtlCStringIsEqual(pItem->pszQueryMatchTerm,
+				pszCompare,
+				FALSE))
         {
             PSTR *ppszSid = NULL;
 
@@ -3656,11 +3646,11 @@ LsaAdBatchProcessRealObject(
                 ppszSid = &pszSid;
             }
 
-            pFoundItem = pItem;
+            bFoundItem = TRUE;
 
             dwError = LsaAdBatchGatherRealObject(
                         pProviderData,
-                        pFoundItem,
+                        pItem,
                         objectType,
                         ppszSid,
                         hDirectory,
@@ -3669,7 +3659,7 @@ LsaAdBatchProcessRealObject(
         }
     }
 
-    if (!pFoundItem)
+    if (!bFoundItem)
     {
         PCSTR pszType = LsaAdBatchGetQueryTypeAsString(QueryType);
         LSA_LOG_DEBUG("Did not find batch item for message for %s '%s'",
@@ -3696,6 +3686,7 @@ LsaAdBatchProcessPseudoObject(
     // List of PLSA_AD_BATCH_ITEM
     IN OUT PLSA_LIST_LINKS pStartBatchItemListLinks,
     IN PLSA_LIST_LINKS pEndBatchItemListLinks,
+    OUT PDWORD pdwFoundCount,
     IN BOOLEAN bIsGcSearch,
     IN BOOLEAN bIsSchemaMode,
     IN HANDLE hDirectory,
@@ -3711,7 +3702,7 @@ LsaAdBatchProcessPseudoObject(
     LSA_AD_BATCH_OBJECT_TYPE objectType = 0;
     LSA_AD_BATCH_OBJECT_TYPE desiredObjectType = 0;
     PLSA_LIST_LINKS pLinks = NULL;
-    PLSA_AD_BATCH_ITEM pFoundItem = NULL;
+    DWORD dwFoundCount = 0;
 
     dwError = LwLdapIsValidADEntry(
                     hDirectory,
@@ -3806,12 +3797,37 @@ LsaAdBatchProcessPseudoObject(
 
         if (!strcasecmp(pItem->pszQueryMatchTerm, pszCompare))
         {
-            pFoundItem = pItem;
-            break;
-        }
+            if (bIsGcSearch)
+            {
+                dwError = LsaAdBatchGatherPseudoObjectSidFromGc(
+                                pProviderData,
+                                pItem,
+                                objectType,
+                                dwKeywordValuesCount,
+                                ppszKeywordValues,
+                                hDirectory,
+                                pMessage);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+            else
+            {
+                dwError = LsaAdBatchGatherPseudoObject(
+                                pProviderData,
+                                pItem,
+                                objectType,
+                                bIsSchemaMode,
+                                dwKeywordValuesCount,
+                                ppszKeywordValues,
+                                hDirectory,
+                                pMessage);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+
+	    dwFoundCount++;
+	}
     }
 
-    if (!pFoundItem)
+    if (dwFoundCount == 0)
     {
         PCSTR pszType = LsaAdBatchGetQueryTypeAsString(QueryType);
         LSA_LOG_DEBUG("Did not find batch item for message for %s '%s'",
@@ -3820,35 +3836,11 @@ LsaAdBatchProcessPseudoObject(
         goto cleanup;
     }
 
-    if (bIsGcSearch)
-    {
-        dwError = LsaAdBatchGatherPseudoObjectSidFromGc(
-                        pProviderData,
-                        pFoundItem,
-                        objectType,
-                        dwKeywordValuesCount,
-                        ppszKeywordValues,
-                        hDirectory,
-                        pMessage);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-    else
-    {
-        dwError = LsaAdBatchGatherPseudoObject(
-                        pProviderData,
-                        pFoundItem,
-                        objectType,
-                        bIsSchemaMode,
-                        dwKeywordValuesCount,
-                        ppszKeywordValues,
-                        hDirectory,
-                        pMessage);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
 cleanup:
     LwFreeStringArray(ppszKeywordValues, dwKeywordValuesCount);
     LW_SAFE_FREE_STRING(pszFreeCompare);
+
+    *pdwFoundCount = dwFoundCount;
 
     return dwError;
 
@@ -3872,7 +3864,8 @@ LsaAdBatchProcessPseudoObjectDefaultSchema(
     LSA_AD_BATCH_OBJECT_TYPE objectType = 0;
     LSA_AD_BATCH_OBJECT_TYPE desiredObjectType = 0;
     PLSA_LIST_LINKS pLinks = NULL;
-    PLSA_AD_BATCH_ITEM pFoundItem = NULL;
+    BOOLEAN bFoundItem = FALSE;
+    PSTR pszSid = NULL;
 
     // Get compare string
     dwError = LsaAdBatchGetCompareStringFromPseudoObjectDefaultSchema(
@@ -3925,16 +3918,33 @@ LsaAdBatchProcessPseudoObjectDefaultSchema(
             continue;
         }
 
-
-
-        if (!strcasecmp(pItem->pszQueryMatchTerm, pszCompare))
+        if (LwRtlCStringIsEqual(pItem->pszQueryMatchTerm,
+				pszCompare,
+				FALSE))
         {
-            pFoundItem = pItem;
-            break;
+            PSTR *ppszSid = NULL;
+
+            if (LSA_AD_BATCH_QUERY_TYPE_BY_SID == QueryType)
+            {
+                dwError = LwAllocateString(pszCompare, &pszSid);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                ppszSid = &pszSid;
+            }
+
+	    bFoundItem = TRUE;
+
+            dwError = LsaAdBatchGatherPseudoObjectDefaultSchema(
+                         pItem,
+                         objectType,
+                         ppszSid,
+                         hDirectory,
+                         pMessage);
+            BAIL_ON_LSA_ERROR(dwError);
         }
     }
 
-    if (!pFoundItem)
+    if (!bFoundItem)
     {
         PCSTR pszType = LsaAdBatchGetQueryTypeAsString(QueryType);
         LSA_LOG_DEBUG("Did not find batch item for message for %s '%s'",
@@ -3943,16 +3953,10 @@ LsaAdBatchProcessPseudoObjectDefaultSchema(
         goto cleanup;
     }
 
-    dwError = LsaAdBatchGatherPseudoObjectDefaultSchema(
-                    pFoundItem,
-                    objectType,
-                    (LSA_AD_BATCH_QUERY_TYPE_BY_SID == QueryType) ? &pszCompare : NULL,
-                    hDirectory,
-                    pMessage);
-    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
     LW_SAFE_FREE_STRING(pszCompare);
+    LW_SAFE_FREE_STRING(pszSid);
 
     return dwError;
 

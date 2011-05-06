@@ -164,10 +164,8 @@ static
 DWORD
 LsaAdBatchProcessRpcObject(
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
-    // List of PLSA_AD_BATCH_ITEM
-    IN OUT PLSA_LIST_LINKS pStartBatchItemListLinks,
-    IN PLSA_LIST_LINKS pEndBatchItemListLinks,
-    IN PSTR pszObjectSid,
+    IN PLSA_AD_BATCH_ITEM pItem,
+    IN PSTR pszObjectNT4NameOrSid,
     IN PLSA_TRANSLATED_NAME_OR_SID pTranslatedName
     );
 
@@ -191,6 +189,7 @@ LsaAdBatchProcessPseudoObject(
     // List of PLSA_AD_BATCH_ITEM
     IN OUT PLSA_LIST_LINKS pStartBatchItemListLinks,
     IN PLSA_LIST_LINKS pEndBatchItemListLinks,
+    OUT PDWORD pdwFoundCount,
     IN BOOLEAN bIsGcSearch,
     IN BOOLEAN bIsSchemaMode,
     IN HANDLE hDirectory,
