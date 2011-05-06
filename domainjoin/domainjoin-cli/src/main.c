@@ -829,7 +829,7 @@ int main(
 {
     LWException *exc = NULL;
     int columns;
-    PSTR pszLogFilePath = "/var/log/likewise-join.log";
+    PSTR pszLogFilePath = NULL;
     BOOLEAN bNoLog = FALSE;
     PSTR logLevel = "warning";
     DWORD dwLogLevel;
@@ -839,6 +839,7 @@ int main(
     int remainingArgs = argc;
     char **argPos = argv;
     int i;
+    BOOLEAN directoryExists = FALSE;
 
     if(CTGetTerminalWidth(fileno(stdout), &columns))
         columns = -1;
@@ -903,16 +904,37 @@ int main(
         LW_CLEANUP_CTERR(&exc, LW_ERROR_INVALID_LOG_LEVEL);
     }
 
+    if (pszLogFilePath == NULL)
+    {
+        // Determine the default log path
+        LW_CLEANUP_CTERR(&exc,
+                CTCheckDirectoryExists("/var/log", &directoryExists));
+        if (directoryExists)
+        {
+            pszLogFilePath = "/var/log/likewise-join.log";
+        }
+        else
+        {
+            pszLogFilePath = "/var/adm/likewise-join.log";
+        }
+    }
+
     if (bNoLog) {
         LW_CLEANUP_CTERR(&exc, dj_disable_logging());
-    } else if (pszLogFilePath == NULL ||
-               !strcmp(pszLogFilePath, ".")) {
+    } else if (!strcmp(pszLogFilePath, ".")) {
         LW_CLEANUP_CTERR(&exc, dj_init_logging_to_console(dwLogLevel));
     } else {
         DWORD ceError = dj_init_logging_to_file(dwLogLevel, pszLogFilePath);
         if(ceError == ERROR_ACCESS_DENIED)
         {
             fprintf(stderr, "Warning: insufficient permissions to log to %s. To enable logging, please specify a different filename with --logfile <file>.\n",
+                    pszLogFilePath);
+            ceError = ERROR_SUCCESS;
+            LW_CLEANUP_CTERR(&exc, dj_disable_logging());
+        }
+        else if (ceError == ERROR_FILE_NOT_FOUND)
+        {
+            fprintf(stderr, "Warning: parent directory of log file %s does not exist. To enable logging, please specify a different filename with --logfile <file>.\n",
                     pszLogFilePath);
             ceError = ERROR_SUCCESS;
             LW_CLEANUP_CTERR(&exc, dj_disable_logging());
