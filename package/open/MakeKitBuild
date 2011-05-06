@@ -12,6 +12,7 @@ configure()
         MK_ROOT_DIR \
         MK_STAGE_DIR \
         MK_HOST_ARCH \
+        MK_SYSCONFDIR \
         LW_CACHEDIR \
         LW_CONFIGDIR \
         LW_INITDIR \
