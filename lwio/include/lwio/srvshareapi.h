@@ -157,4 +157,15 @@ LwIoSrvShareFreeInfo(
     LW_PVOID pInfo
     );
 
+/**
+ * @brief Reload shares configuration
+ * 
+ * Allows reloading shares configuration in cases the sharedb 
+ * content was changed. 
+ */
+LW_NTSTATUS
+LwIoSrvShareReloadConfiguration(
+    LW_VOID
+    );
+
 #endif

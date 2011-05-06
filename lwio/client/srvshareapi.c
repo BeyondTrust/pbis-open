@@ -611,3 +611,35 @@ LwIoSrvShareFreeInfo(
 {
     return LwShareInfoFree(Level, Count, pInfo);
 }
+
+NTSTATUS
+LwIoSrvShareReloadConfiguration(
+    VOID
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    IO_FILE_HANDLE hFile = NULL;
+    IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    static const ULONG ioControlCode = SRV_DEVCTL_RELOAD_SHARES;
+
+    ntStatus = NtCreateFile(&hFile, NULL, &ioStatusBlock, &gSrvDriverFilename,
+                            NULL, NULL, 0, 0, 0, 0, 0, 0, NULL, 0, NULL, NULL);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    ntStatus = NtDeviceIoControlFile(hFile, NULL, &ioStatusBlock, ioControlCode,
+                                     NULL, 0, NULL, 0);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+cleanup:
+
+    if (hFile)
+    {
+        NtCloseFile(hFile);
+    }
+
+    return ntStatus;
+
+error:
+
+    goto cleanup;
+}
