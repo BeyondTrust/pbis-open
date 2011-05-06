@@ -57,7 +57,7 @@ MemRegRoot(
 
 inline VOID
 MemRegRootInit(
-    PREG_DB_CONNECTION hMemRegRoot;
+    PREG_DB_CONNECTION hMemRegRoot
     );
 
 #endif /* __EXTERNS_H__ */
