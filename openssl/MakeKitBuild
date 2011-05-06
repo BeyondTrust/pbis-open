@@ -416,7 +416,7 @@ stage_openssl()
 
     # Move bits we want into staging area
     mk_mkdir "${2}${MK_LIBDIR}"
-    mk_run_or_fail mv -f "${3}/.install${MK_PREFIX}/lib/"*.* "${2}${MK_LIBDIR}"
+    mk_run_or_fail mv -f "${3}/.install${MK_PREFIX}/lib/"*"${MK_LIB_EXT}"* "${2}${MK_LIBDIR}"
 
     mk_mkdir "${2}${MK_INCLUDEDIR}/openssl"
     mk_run_or_fail mv -f "${3}/.install${MK_PREFIX}/include/openssl/"* "${2}${MK_INCLUDEDIR}/openssl"
