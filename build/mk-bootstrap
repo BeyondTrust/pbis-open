@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BLACKLIST="libiconv templatedriver mod_auth_kerb fuse opensoap"
+BLACKLIST="libiconv templatedriver mod_auth_kerb fuse opensoap popt"
 
 fail()
 {
