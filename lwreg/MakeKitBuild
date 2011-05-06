@@ -2,11 +2,20 @@ SUBDIRS="include utils ipc common client parse shellutil server shell"
 
 option()
 {
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            _default_backend="memory"
+            ;;
+        *)
+            _default_backend="sqlite"
+            ;;
+    esac
+
     mk_option \
         OPTION=registry-backend \
         PARAM='value' \
         VAR=LWREG_REGISTRY_BACKEND \
-        DEFAULT="sqlite" \
+        DEFAULT="$_default_backend" \
         HELP="Registry backend (sqlite | memory)"
 }
 
