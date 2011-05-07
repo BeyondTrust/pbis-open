@@ -266,7 +266,7 @@ error:
 DWORD
 Usage(VOID)
 {
-    fprintf(stderr, "Usage: gssclient [-port port] [-d] [-seq] [-noreplay]\n");
+    fprintf(stderr, "Usage: gsssimple-client [-port port] [-d] [-seq] [-noreplay]\n");
     fprintf(stderr, "  [-nomutual] [-spnego] [-anon] [-h host] \n");
     fprintf(stderr, "  [-c user password domain] [-m message]\n");
     fprintf(stderr, "\n");

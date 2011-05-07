@@ -155,7 +155,7 @@ error:
 DWORD
 Usage(void)
 {
-    fprintf(stderr, "Usage: gssserver [-port port] [-once]\n");
+    fprintf(stderr, "Usage: gsssimple-server [-port port] [-once]\n");
     return EINVAL;
 }
 
@@ -1022,7 +1022,7 @@ PrintHexDump(
     DWORD i,count,index;
     CHAR rgbDigits[]="0123456789abcdef";
     CHAR rgbLine[100];
-    CHAR cbLine;
+    UCHAR cbLine;
     PBYTE pToken = (PBYTE)pBuffer;
     PBYTE pLine = (PBYTE)pBuffer;
 
@@ -1036,39 +1036,39 @@ PrintHexDump(
 
         for (i=0;i<count;i++)
         {
-            rgbLine[((int)cbLine)++] = rgbDigits[pLine[i] >> 4];
-            rgbLine[((int)cbLine)++] = rgbDigits[pLine[i] & 0x0f];
+            rgbLine[cbLine++] = rgbDigits[pLine[i] >> 4];
+            rgbLine[cbLine++] = rgbDigits[pLine[i] & 0x0f];
             if (i == 7)
             {
-                rgbLine[((int)cbLine)++] = ':';
+                rgbLine[cbLine++] = ':';
             }
             else
             {
-                rgbLine[((int)cbLine)++] = ' ';
+                rgbLine[cbLine++] = ' ';
             }
         }
         for (; i < 16; i++)
         {
-            rgbLine[((int)cbLine)++] = ' ';
-            rgbLine[((int)cbLine)++] = ' ';
-            rgbLine[((int)cbLine)++] = ' ';
+            rgbLine[cbLine++] = ' ';
+            rgbLine[cbLine++] = ' ';
+            rgbLine[cbLine++] = ' ';
         }
 
-        rgbLine[((int)cbLine)++] = ' ';
+        rgbLine[cbLine++] = ' ';
 
         for (i = 0; i < count; i++)
         {
             if (pLine[i] < 32 || pLine[i] > 126)
             {
-                rgbLine[((int)cbLine)++] = '.';
+                rgbLine[cbLine++] = '.';
             }
             else
             {
-                rgbLine[((int)cbLine)++] = pLine[i];
+                rgbLine[cbLine++] = pLine[i];
             }
         }
 
-        rgbLine[((int)cbLine)++] = 0;
+        rgbLine[cbLine++] = 0;
         printf("%s\n", rgbLine);
     }
 
