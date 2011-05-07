@@ -3302,7 +3302,7 @@ AD_FindObjectsByList(
 
     for (sIndex = 0; sIndex < sCount; sIndex++)
     {
-        PSTR pszSid = ppszList[sIndex];
+        PSTR pszQueryTerm = ppszList[sIndex];
         size_t sCacheIndex = 0;
         size_t sFoundIndex = 0;
 
@@ -3310,15 +3310,35 @@ AD_FindObjectsByList(
              sCacheIndex < sFoundInCache;
              sCacheIndex++)
         {
-            if (ppCachedResults[sCacheIndex] &&
-                LwRtlCStringIsEqual(
-                         pszSid,
-                         ppCachedResults[sCacheIndex]->pszObjectSid,
-                         FALSE))
+            if (ppCachedResults[sCacheIndex])
             {
-                ppResults[sIndex] = ppCachedResults[sCacheIndex];
-                ppCachedResults[sCacheIndex] = NULL;
-                break;
+                PSTR pszCachedTerm = NULL;
+
+                switch (QueryType)
+                {
+                    case LSA_AD_BATCH_QUERY_TYPE_BY_DN:
+                        pszCachedTerm = ppCachedResults[sCacheIndex]->pszDN;
+                        break;
+
+                    case LSA_AD_BATCH_QUERY_TYPE_BY_SID:
+                        pszCachedTerm = ppCachedResults[sCacheIndex]->pszObjectSid;
+                        break;
+
+                    default:
+                        LSA_ASSERT(FALSE);
+                        dwError = ERROR_INVALID_PARAMETER;
+                        BAIL_ON_LSA_ERROR(dwError);
+                }
+
+                if (LwRtlCStringIsEqual(
+                             pszQueryTerm,
+                             pszCachedTerm,
+                             FALSE))
+                {
+                    ppResults[sIndex] = ppCachedResults[sCacheIndex];
+                    ppCachedResults[sCacheIndex] = NULL;
+                    break;
+                }
             }
         }
 
@@ -3326,15 +3346,35 @@ AD_FindObjectsByList(
              sFoundIndex < sFoundInAD;
              sFoundIndex++)
         {
-            if (ppRemainingObjectsResults[sFoundIndex] &&
-                LwRtlCStringIsEqual(
-                         pszSid,
-                         ppRemainingObjectsResults[sFoundIndex]->pszObjectSid,
-                         FALSE))
+            if (ppRemainingObjectsResults[sFoundIndex])
             {
-                ppResults[sIndex] = ppRemainingObjectsResults[sFoundIndex];
-                ppRemainingObjectsResults[sFoundIndex] = NULL;
-                break;
+                PSTR pszFoundTerm = NULL;
+
+                switch (QueryType)
+                {
+                    case LSA_AD_BATCH_QUERY_TYPE_BY_DN:
+                        pszFoundTerm = ppRemainingObjectsResults[sFoundIndex]->pszDN;
+                        break;
+
+                    case LSA_AD_BATCH_QUERY_TYPE_BY_SID:
+                        pszFoundTerm = ppRemainingObjectsResults[sFoundIndex]->pszObjectSid;
+                        break;
+
+                    default:
+                        LSA_ASSERT(FALSE);
+                        dwError = ERROR_INVALID_PARAMETER;
+                        BAIL_ON_LSA_ERROR(dwError);
+                }
+
+                if (LwRtlCStringIsEqual(
+                             pszQueryTerm,
+                             pszFoundTerm,
+                             FALSE))
+                {
+                    ppResults[sIndex] = ppRemainingObjectsResults[sFoundIndex];
+                    ppRemainingObjectsResults[sFoundIndex] = NULL;
+                    break;
+                }
             }
         }
     }
@@ -3349,20 +3389,19 @@ cleanup:
     {
         ADCacheSafeFreeObjectList(sFoundInCache, &ppCachedResults);
         ADCacheSafeFreeObjectList(sFoundInAD, &ppRemainingObjectsResults);
-        LW_SAFE_FREE_MEMORY(ppResults);
+        ADCacheSafeFreeObjectList(sCount, &ppResults);
         sResultsCount = 0;
     }
+
+    ADCacheSafeFreeObjectList(sFoundInCache, &ppCachedResults);
+    ADCacheSafeFreeObjectList(sFoundInAD, &ppRemainingObjectsResults);
+    LW_SAFE_FREE_MEMORY(ppszRemainingList);
 
     *pppResults = ppResults;
     if (psResultsCount)
     {
         *psResultsCount = sResultsCount;
     }
-
-    LW_SAFE_FREE_MEMORY(ppszRemainingList);
-    LW_SAFE_FREE_MEMORY(ppCachedResults);
-    LW_SAFE_FREE_MEMORY(ppRemainingObjectsResults);
-
 
     return dwError;
 
@@ -3965,57 +4004,6 @@ error:
     goto cleanup;
 }
 
-static
-DWORD
-AD_OnlineDistributeObjects(
-    BOOLEAN bByDn,
-    IN DWORD dwKeyCount,
-    IN PSTR* ppszKeys,
-    IN DWORD dwObjectCount,
-    IN PLSA_SECURITY_OBJECT* ppObjects,
-    OUT PLSA_SECURITY_OBJECT** pppObjects
-    )
-{
-    DWORD dwError = 0;
-    DWORD dwKeyIndex = 0;
-    DWORD dwObjectIndex = 0;
-    PLSA_SECURITY_OBJECT* ppDistObjects = NULL;
-
-    dwError = LwAllocateMemory(
-        sizeof(*ppDistObjects) * dwKeyCount,
-        OUT_PPVOID(&ppDistObjects));
-    BAIL_ON_LSA_ERROR(dwError);
-
-    for (dwObjectIndex = 0; dwObjectIndex < dwObjectCount; dwObjectIndex++)
-    {
-        for (dwKeyIndex = 0;
-             ppObjects[dwObjectIndex] != NULL && dwKeyIndex < dwKeyCount;
-             dwKeyIndex++)
-        {
-            if (ppDistObjects[dwKeyIndex] == NULL &&
-                !strcmp(bByDn ? 
-                        ppObjects[dwObjectIndex]->pszDN :
-                        ppObjects[dwObjectIndex]->pszObjectSid,
-                        ppszKeys[dwKeyIndex]))
-            {
-                ppDistObjects[dwKeyIndex] = ppObjects[dwObjectIndex];
-                ppObjects[dwObjectIndex] = NULL;
-                break;
-            }
-        }
-    }
-
-    *pppObjects = ppDistObjects;
-    
-cleanup:
-
-    return dwError;
-
-error:
-
-    goto cleanup;
-}
-
 
 DWORD
 AD_OnlineFindObjects(
@@ -4043,15 +4031,6 @@ AD_OnlineFindObjects(
             dwCount,
             (PSTR*) QueryList.ppszStrings,
             &sObjectCount,
-            &ppUnorderedObjects);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = AD_OnlineDistributeObjects(
-            FALSE,
-            dwCount,
-            (PSTR*) QueryList.ppszStrings,
-            (DWORD) sObjectCount,
-            ppUnorderedObjects,
             &ppObjects);
         BAIL_ON_LSA_ERROR(dwError);
         break;
@@ -4061,17 +4040,8 @@ AD_OnlineFindObjects(
             dwCount,
             (PSTR*) QueryList.ppszStrings,
             &sObjectCount,
-            &ppUnorderedObjects);
-         BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = AD_OnlineDistributeObjects(
-            TRUE,
-            dwCount,
-            (PSTR*) QueryList.ppszStrings,
-            (DWORD) sObjectCount,
-            ppUnorderedObjects,
             &ppObjects);
-        BAIL_ON_LSA_ERROR(dwError);
+         BAIL_ON_LSA_ERROR(dwError);
          break;
     case LSA_QUERY_TYPE_BY_NT4:
     case LSA_QUERY_TYPE_BY_UPN:
