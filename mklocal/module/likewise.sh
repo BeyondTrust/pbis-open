@@ -186,6 +186,50 @@ lw_check_iconv()
     mk_define ICONV_IN_TYPE "$ICONV_IN_TYPE"
 }
 
+lw_check_libxml2()
+{
+    # libxml2 puts headers in non-standard locations
+    # Figure out if we build it ourselves
+    XML_INCDIR="${MK_INCLUDEDIR}/libxml2"
+
+    mk_msg_checking "internal libxml2"
+
+    if mk_check_header \
+        HEADER="${XML_INCDIR}/libxml/tree.h" &&
+        [ "$result" = "internal" ]
+    then
+        mk_msg_result "yes"
+        # Look for the headers in our own staging area
+        LIBXML2_INCLUDEDIRS="${XML_INCDIR}"
+        LIBXML2_HEADERDEPS="${XML_INCDIR}/libxml/tree.h \
+                            ${XML_INCDIR}/libxml/xpath.h \
+                            ${XML_INCDIR}/libxml/parser.h \
+                            ${XML_INCDIR}/libxml/xpathInternals.h"
+        
+        # Go through the usual checks
+        mk_check_headers FAIL=yes ${LIBXML2_HEADERDEPS}
+        mk_check_libraries FAIL=yes xml2
+
+        mk_declare -i LIBXML2_INCLUDEDIRS LIBXML2_HEADERDEPS
+    else
+        mk_msg_result "no"
+
+        # Let pkg-config figure it out
+        if ! mk_pkg_config \
+	    VARPREFIX=LIBXML2 \
+            libxml-2.0
+        then
+            # One last try
+            mk_declare -i LIBXML2_CPPFLAGS="-I/usr/include/libxml2"
+            mk_check_headers \
+                FAIL=yes \
+                CPPFLAGS="$LIBXML2_CPPFLAGS" \
+                libxml/tree.h libxml/xpath.h libxml/parser.h libxml/xpathInternals.h
+            mk_check_libraries FAIL=yes xml2
+        fi
+    fi
+}
+
 lw_check_strerror_r()
 {
     mk_msg_checking "return type of strerror_r"

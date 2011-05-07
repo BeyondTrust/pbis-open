@@ -25,40 +25,7 @@ configure()
 
     mk_check_libraries pthread dl
 
-    # libxml2 puts headers in non-standard locations
-    # Figure out if we build it ourselves
-    XML_INCDIR="${MK_INCLUDEDIR}/libxml2"
-
-    mk_msg_checking "internal libxml2"
-
-    if mk_check_header \
-        HEADER="${XML_INCDIR}/libxml/tree.h" &&
-        [ "$result" = "internal" ]
-    then
-        mk_msg_result "yes"
-        # Look for the headers in our own staging area
-        LIBXML2_INCLUDEDIRS="${XML_INCDIR}"
-        LIBXML2_HEADERDEPS="${XML_INCDIR}/libxml/tree.h \
-                            ${XML_INCDIR}/libxml/xpath.h \
-                            ${XML_INCDIR}/libxml/parser.h \
-                            ${XML_INCDIR}/libxml/xpathInternals.h"
-        
-        # Go through the usual checks
-        mk_check_headers FAIL=yes ${LIBXML2_HEADERDEPS}
-        mk_check_libraries FAIL=yes xml2
-
-        mk_declare -i LIBXML2_INCLUDEDIRS LIBXML2_HEADERDEPS
-    else
-        mk_msg_result "no"
-
-        # Let pkg-config figure it out
-        if ! mk_pkg_config \
-	    VARPREFIX=LIBXML2 \
-            libxml-2.0
-        then
-            mk_fail "libxml2 not found"
-        fi
-    fi       
+    lw_check_libxml2
 
     mk_check_headers \
 	limits.h sys/limits.h sys/syslimits.h wc16str.h
