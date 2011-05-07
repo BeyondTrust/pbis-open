@@ -114,6 +114,7 @@ configure()
             mk_skip_subdir lwnetapi
             mk_skip_subdir lwtools
             mk_skip_subdir nfs
+            mk_skip_subdir pvfs2
             ;;
     esac
 
