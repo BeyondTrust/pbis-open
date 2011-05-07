@@ -6,7 +6,7 @@ SUBDIRS="$LW_ALL_BUNDLED \
          lwbase lwmsg lwreg lwadvapi netlogon \
          lwio nfs pvfs2 libschannel dcerpc centutils lwsm eventlog lsass reapsysl lwdns \
          srvsvc lwnetapi lwtools domainjoin lwconfig lwupgrade samba-interop config docs \
-         package installer qatools"
+         package installer qatools gssapps"
 
 defaults()
 {
