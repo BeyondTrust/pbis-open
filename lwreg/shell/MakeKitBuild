@@ -4,7 +4,7 @@ make()
         PROGRAM=lwregshell \
         SOURCES="cmdparse.c regshell.c import.c export.c" \
         INCLUDEDIRS=". ../include ../shellutil" \
-        LIBDEPS="regcommon regclient rsutils edit" \
+        LIBDEPS="regcommon regclient rsutils lwbase_nothr edit" \
         HEADERDEPS="lw/base.h lwmsg/lwmsg.h histedit.h"
 
     mk_stage \
