@@ -1027,8 +1027,8 @@ SMBPacketAppendUnicodeString(
                                  bytesNeeded / sizeof(pwszString[0]));
 
     // Verify that expected write length was returned.  Note that the
-    // returned length does not include the NULL and the NULL is NOT
-    // written out by wc16stowc16les.
+    // returned length does not include the NULL though the NULL gets
+    // written out.
     if (writeLength == (size_t) -1)
     {
         ntStatus = STATUS_BUFFER_TOO_SMALL;
@@ -1039,7 +1039,6 @@ SMBPacketAppendUnicodeString(
         ntStatus = STATUS_BUFFER_TOO_SMALL;
         BAIL_ON_NT_STATUS(ntStatus);
     }
-    pOutputBuffer[writeLength] = '\0';
 
     bufferUsed += bytesNeeded;
 
