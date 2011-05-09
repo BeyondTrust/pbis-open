@@ -572,7 +572,7 @@ size_t wc16stowcs(wchar_t *dest, const wchar16_t *src, size_t cchcopy)
 
 size_t wc16stowc16les(wchar16_t *dest, const wchar16_t *src, size_t cchcopy)
 {
-    size_t cbin = wc16snlen(src, cchcopy) * sizeof(src[0]);
+    size_t cbin = cchcopy * sizeof(src[0]);
     size_t cbout = wc16snlen(src, cchcopy);
 
     if (cbout < cchcopy)
@@ -596,7 +596,7 @@ size_t wc16stowc16les(wchar16_t *dest, const wchar16_t *src, size_t cchcopy)
 
 size_t wc16lestowc16s(wchar16_t *dest, const wchar16_t *src, size_t cchcopy)
 {
-    size_t cbin = wc16snlen(src, cchcopy) * sizeof(src[0]);
+    size_t cbin = cchcopy * sizeof(src[0]);
     size_t cbout = wc16snlen(src, cchcopy);
 
     if (cbout < cchcopy)
