@@ -2,7 +2,7 @@ SUBDIRS="unpack open open-gui open-upgrade"
 
 configure()
 {
-    [ "$DJ_GUI_INTERFACE" = "no" ] && mk_skip_subdir open-gui
+    [ "$DJ_GUI_INTERFACE" = "gtk" ] || mk_skip_subdir open-gui
 }
 
 make()
