@@ -360,7 +360,6 @@ open_files_root()
 
     mk_package_dirs \
         "${LW_CACHEDIR}" \
-        "${LW_CACHEDIR}/db" \
         "${LW_CACHEDIR}/rpc"
 }
 
