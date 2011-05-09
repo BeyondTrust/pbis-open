@@ -147,24 +147,19 @@ run_or_fail()
 import_registry_configurations()
 {
     REGIMPORT='@MK_BINDIR@/lwregshell import'
+    REGLIST="dcerpcd.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg \
+             lwiod.reg lwreg.reg netlogond.reg rdr.reg npfs.reg srv.reg pvfs.reg \
+             dfs.reg srvsvcd.reg nfs.reg reapsysl.reg"
 
     log "Importing registry..."
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/dcerpcd.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/eventlogd.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/lsassd.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/privileges.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/accounts.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/lwiod.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/lwreg.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/netlogond.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/rdr.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/npfs.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/srv.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/pvfs.reg"
-    #run_or_fail "$REGIMPORT @LW_CONFIGDIR@/dfs.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/srvsvcd.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/nfs.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/reapsysl.reg"
+    for i in ${REGLIST}
+    do
+        if [ -f "@LW_CONFIGDIR@/$i" ]
+        then
+            log "$i"
+            run_or_fail "$REGIMPORT @LW_CONFIGDIR@/$i"
+        fi
+    done
 }
 
 determine_upgrade_type()
