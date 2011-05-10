@@ -179,6 +179,10 @@ lwmsg_connection_recvmsg(
         case ECONNRESET:
             status = LWMSG_STATUS_PEER_CLOSE;
             break;
+        case EINVAL:
+        case EBADF:
+            /* bug */
+            LWMSG_ASSERT_NOT_REACHED();
         default:
             status = lwmsg_status_map_errno(errno);
             LWMSG_LOG_ERROR(&assoc->context, "Unexpected system error from recvmsg(): %i", errno);
@@ -315,6 +319,10 @@ lwmsg_connection_sendmsg(
         case ECONNRESET:
             status = LWMSG_STATUS_PEER_CLOSE;
             break;
+        case EINVAL:
+        case EBADF:
+            /* bug */
+            LWMSG_ASSERT_NOT_REACHED();
         default:
             status = lwmsg_status_map_errno(errno);
             LWMSG_LOG_ERROR(&assoc->context, "Unexpected system error from sendmsg(): %i", errno);
