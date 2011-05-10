@@ -66,6 +66,7 @@ make()
 
     mk_program \
         PROGRAM="lw-svcm-wrap" \
+        INSTALLDIR="${MK_SBINDIR}" \
         SOURCES="svcm-wrap.c" \
         INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
         HEADERDEPS="$BASE_HEADER_DEPS" \

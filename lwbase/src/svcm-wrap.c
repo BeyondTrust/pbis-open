@@ -40,6 +40,8 @@
 #include <lw/rtlgoto.h>
 #include <lw/svcm.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define GCOS(s) GOTO_CLEANUP_ON_STATUS(s)
 
@@ -73,6 +75,11 @@ static struct
     .pService = NULL
 };
 
+static void Help()
+{
+    printf("Usage: lw-svcm-wrap <service name> <service module path>\n");
+}
+
 int main(
     int ArgCount,
     char** ppArgs
@@ -80,6 +87,19 @@ int main(
 {
     NTSTATUS status = STATUS_SUCCESS;
     ULONG i = 0;
+
+    if (ArgCount < 3)
+    {
+        Help();
+        exit(1);
+
+    }
+
+    if (!strcmp(ppArgs[1], "--help") || !strcmp(ppArgs[1], "-h"))
+    {
+        Help();
+        exit(0);
+    }
 
     status = LwRtlWC16StringAllocateFromCString(
         &gState.pServiceName,
