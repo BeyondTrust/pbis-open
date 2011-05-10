@@ -23,10 +23,12 @@ configure()
     mk_check_types \
         HEADERDEPS="stdbool.h sys/wait.h signal.h stdlib.h" \
         comparison_fn_t bool Bool sig_atomic_t
-   
-    mk_check_sizeofs \
-        HEADERDEPS="stdlib.h" \
-        off_t size_t ssize_t
+
+    mk_multiarch_do
+        mk_check_sizeofs \
+            HEADERDEPS="stdlib.h" \
+            off_t size_t ssize_t
+    mk_multiarch_done
 
     mk_check_libraries dl
 
