@@ -160,35 +160,39 @@ MemProvider_Shutdown(
     PWSTR pwszRootKey = NULL;
     BOOLEAN bInLock = FALSE;
     PREG_DB_CONNECTION pMemRegRoot = MemRegRoot();
+    MEMDB_FILE_EXPORT_CTX exportCtx = {0};
 
-    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &MemRegRoot()->lock);
-    status = MemDbExportToFile(MEMDB_EXPORT_FILE);
-    if (status)
-    {
-        goto cleanup;
-    }
+    exportCtx.hKey = pMemRegRoot->pMemReg;
+    exportCtx.wfp = pMemRegRoot->ExportCtx->wfp;
 
-    regDbConn.pMemReg = MemRegRoot()->pMemReg;
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &pMemRegRoot->lock);
+    fseek(exportCtx.wfp, 0, SEEK_SET);
+    status = MemDbExportToFile(&exportCtx);
+    BAIL_ON_REG_ERROR(status);
+
+    regDbConn.pMemReg = pMemRegRoot->pMemReg;
     status = MemDbClose(&regDbConn);
-    if (status)
-    {
-        goto cleanup;
-    }
+    BAIL_ON_REG_ERROR(status);
 
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
-        pthread_mutex_destroy(&MemRegRoot()->ExportMutex)));
+        pthread_mutex_destroy(&pMemRegRoot->ExportMutex)));
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
-        pthread_mutex_destroy(&MemRegRoot()->ExportMutexStop)));
+        pthread_mutex_destroy(&pMemRegRoot->ExportMutexStop)));
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
-        pthread_cond_destroy(&MemRegRoot()->ExportCond)));
+        pthread_cond_destroy(&pMemRegRoot->ExportCond)));
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
-        pthread_cond_destroy(&MemRegRoot()->ExportCondStop)));
+        pthread_cond_destroy(&pMemRegRoot->ExportCondStop)));
 
-    LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
+    LWREG_UNLOCK_RWMUTEX(bInLock, &pMemRegRoot->lock);
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
-        pthread_rwlock_destroy(&MemRegRoot()->lock)));
+        pthread_rwlock_destroy(&pMemRegRoot->lock)));
 
 cleanup:
+    if (exportCtx.wfp)
+    {
+        fclose(exportCtx.wfp);
+    }
+    LWREG_SAFE_FREE_MEMORY(pMemRegRoot->ExportCtx);
     LWREG_SAFE_FREE_MEMORY(pMemRegRoot);
     LWREG_SAFE_FREE_MEMORY(pwszRootKey);
     return;

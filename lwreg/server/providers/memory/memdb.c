@@ -301,7 +301,6 @@ MemDbStopExportToFileThread(
                           &MemRegRoot()->ExportMutexStop);
     }
     pthread_mutex_unlock(&MemRegRoot()->ExportMutexStop);
-    LWREG_SAFE_FREE_MEMORY(MemRegRoot()->ExportCtx);
 }
 
 
@@ -473,7 +472,7 @@ MemDbExportToFileThread(
                 REG_LOG_DEBUG("MemDbExportToFileThread: "
                               "Exporting registry to save file...");
                 pthread_rwlock_rdlock(&MemRegRoot()->lock);
-                status = MemDbExportToFile(MEMDB_EXPORT_FILE);
+                status = MemDbExportToFile(exportCtx);
                 pthread_rwlock_unlock(&MemRegRoot()->lock);
                 REG_LOG_ERROR("MemDbExportToFileThread: "
                               "Exporting registry to save file completed.");
@@ -509,35 +508,25 @@ MemDbExportToFileThread(
 
 NTSTATUS
 MemDbExportToFile(
-    PSTR exportFile)
+    PMEMDB_FILE_EXPORT_CTX pExportCtx)
 {
     NTSTATUS status = 0;
-    MEMDB_FILE_EXPORT_CTX exportCtx = {0};
     REG_DB_CONNECTION regDbConn = {0};
 
-    exportCtx.hKey = MemRegRoot()->pMemReg;
-    exportCtx.wfp = fopen(exportFile, "w");
-    regDbConn.pMemReg = exportCtx.hKey;
-    if (!exportCtx.wfp)
-    {
-        status = STATUS_OPEN_FAILED;
-        BAIL_ON_NT_STATUS(status);
-    }
-    
+    regDbConn.ExportCtx = pExportCtx;
+    regDbConn.pMemReg = pExportCtx->hKey;
     status = MemDbRecurseRegistry(
                  NULL,
                  &regDbConn,
                  NULL,
                  pfMemRegExportToFile,
-                 &exportCtx);
+                 pExportCtx);
     BAIL_ON_NT_STATUS(status);
 
+    fflush(pExportCtx->wfp);
+    fseek(pExportCtx->wfp, 0, SEEK_SET);
+
 cleanup:
-    if (exportCtx.wfp)
-    {
-        fclose(exportCtx.wfp);
-        exportCtx.wfp = NULL;
-    }
     return status;
 
 error:
@@ -553,16 +542,22 @@ MemDbStartExportToFileThread(VOID)
     PMEMDB_FILE_EXPORT_CTX exportCtx = {0};
     PWSTR pwszRootKey = NULL;
     pthread_t hThread;
+    int fd = -1;
 
     status = LW_RTL_ALLOCATE(
                  (PVOID*) &exportCtx,
                  PMEMDB_FILE_EXPORT_CTX,
                  sizeof(MEMDB_FILE_EXPORT_CTX));
-    if (status)
-    {
-        goto cleanup;
-    }
+    BAIL_ON_NT_STATUS(status);
 
+    fd = open(MEMDB_EXPORT_FILE, O_RDWR | O_CREAT, 0600);
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError((fd == -1) ? errno : 0));
+    exportCtx->wfp = fdopen(fd, "w+");
+    if (!exportCtx->wfp)
+    {
+        status = STATUS_OPEN_FAILED;
+        BAIL_ON_NT_STATUS(status);
+    }
     exportCtx->hKey = MemRegRoot()->pMemReg;
 
     MemRegRoot()->ExportCtx = exportCtx;
@@ -576,6 +571,10 @@ cleanup:
     }
     LWREG_SAFE_FREE_MEMORY(pwszRootKey);
     return status;
+
+error:
+    LWREG_SAFE_FREE_MEMORY(exportCtx);
+    goto cleanup;
 }
 
 
@@ -898,7 +897,6 @@ MemDbOpenKey(
             pwszPtr = pwszSubKey;
             bEndOfString = TRUE;
         }
-  
         /*
          * Iterate over subkeys in \ sepearated path.
          */
@@ -1798,8 +1796,7 @@ MemDbRecurseRegistry(
     PWSTR pwszSubKey = NULL;
     PMEMREG_STORE_NODE hSubKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
-
-
+    
     status = MemDbStackInit(512, &hStack);
     BAIL_ON_NT_STATUS(status);
     hKey = hDb->pMemReg;

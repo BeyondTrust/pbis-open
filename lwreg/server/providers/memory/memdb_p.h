@@ -269,11 +269,11 @@ MemDbImportFromFile(
     );
 
 
-
 NTSTATUS
 MemDbExportToFile(
-    IN PSTR exportFile
+    PMEMDB_FILE_EXPORT_CTX pExportCtx
     );
+
 
 VOID
 MemDbExportEntryChanged(
