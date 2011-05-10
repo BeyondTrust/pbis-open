@@ -4220,6 +4220,17 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
         goto cleanup;
     }
 
+    LW_TRY(exc, CheckForPamAuthUpdate(NULL, &bPamAuthUpdateSupported, &bPamAuthUpdateLikewiseEnabled, &LW_EXC));
+    if (bPamAuthUpdateSupported)
+    {
+        if ((options->joiningDomain && bPamAuthUpdateLikewiseEnabled) ||
+            (!options->joiningDomain && !bPamAuthUpdateLikewiseEnabled))
+        {
+            result = FullyConfigured;
+        }
+        goto cleanup;
+    }
+
     LW_CLEANUP_CTERR(exc, CTCreateTempDirectory(&tempDir));
     LW_CLEANUP_CTERR(exc, DJCopyPamToRootDir(NULL, tempDir));
     ceError = ReadPamConfiguration(tempDir, &conf);
@@ -4229,8 +4240,6 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
         goto cleanup;
     }
     LW_CLEANUP_CTERR(exc, ceError);
-
-    LW_TRY(exc, CheckForPamAuthUpdate(NULL, &bPamAuthUpdateSupported, &bPamAuthUpdateLikewiseEnabled, &LW_EXC));
 
     if(!options->joiningDomain)
     {
@@ -4301,7 +4310,7 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
         LW_HANDLE(&nestedException);
     }
     LW_CLEANUP(exc, nestedException);
-    if(!bPamAuthUpdateSupported && conf.modified)
+    if(conf.modified)
         goto cleanup;
 
     result = FullyConfigured;
@@ -4333,8 +4342,19 @@ static PSTR GetPamDescription(const JoinProcessOptions *options, LWException **e
     PSTR ret = NULL;
     PSTR diff = NULL;
     struct PamConf conf;
+    BOOLEAN bPamAuthUpdateSupported = FALSE;
+    BOOLEAN bPamAuthUpdateLikewiseEnabled = FALSE;
 
     memset(&conf, 0, sizeof(conf));
+    
+    LW_TRY(exc, CheckForPamAuthUpdate(NULL, &bPamAuthUpdateSupported, &bPamAuthUpdateLikewiseEnabled, &LW_EXC));
+    if (bPamAuthUpdateSupported)
+    {
+        LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
+            &ret, "PAM is managed by the system utility pam-auth-update."));
+
+        goto cleanup;
+    }
 
     LW_CLEANUP_CTERR(exc, CTCreateTempDirectory(&tempDir));
     LW_CLEANUP_CTERR(exc, DJCopyPamToRootDir(NULL, tempDir));
