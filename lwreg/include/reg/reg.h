@@ -238,6 +238,7 @@ RegValidValueAttributes(
 #define LWREG_ERROR_INVALID_SECURITY_DESCR                    40711
 #define LWREG_ERROR_INVALID_ACCESS_TOKEN                      40712
 #define LWREG_ERROR_DELETE_DEFAULT_VALUE_NOT_ALLOWED          40713
+#define LWREG_ERROR_TOO_MANY_ENTRIES                          40714
 
 
 #define LWREG_ERROR_INVALID_CACHE_PATH                        40720 //LWERROR VALUE 40001

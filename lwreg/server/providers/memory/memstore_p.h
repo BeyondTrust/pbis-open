@@ -47,6 +47,7 @@
 #define REGMEM_TYPE_KEY 3
 #define REGMEM_TYPE_VALUE 4
 
+#define REGMEM_MAX_SUBNODES 512
 
 typedef struct _REGMEM_VALUE
 {
@@ -70,6 +71,11 @@ typedef struct _REGMEM_NODE
 {
     PWSTR Name;
     DWORD NodeType;
+
+    /*
+     * Needed to limit maximum number of subkeys to 255
+     */
+    DWORD SubNodeDepth;
 
     /*
      * Back reference to parent node. Needed for some operations (delete)

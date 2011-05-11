@@ -410,6 +410,11 @@ MemRegStoreAddNode(
     DWORD index = 0;
     PREGMEM_NODE_SD pUpdatedNodeSd = NULL;
 
+    if (hParentNode->SubNodeDepth == REGMEM_MAX_SUBNODES)
+    {
+        status = STATUS_TOO_MANY_NAMES;
+        BAIL_ON_NT_STATUS(status);
+    }
     status = NtRegReallocMemory(
                  hParentNode->SubNodes, 
                  (PVOID) &pNodesArray,
@@ -482,6 +487,7 @@ MemRegStoreAddNode(
     pNewNode->pNodeSd = pUpdatedNodeSd;
 
     hParentNode->NodesLen++;
+    pNewNode->SubNodeDepth = hParentNode->SubNodeDepth+1;
 
     if (phNode)
     {
