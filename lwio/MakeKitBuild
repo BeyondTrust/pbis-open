@@ -1,5 +1,21 @@
 SUBDIRS="include utils ipc common libshareinfo client server drivers tools fuse etc tests"
 
+_in_list()
+{
+    _needle="$1"
+    shift
+    for _item in $@
+    do
+        [ "$_needle" = "$_item" ] && return 0
+    done
+    return 1
+}
+
+lwio_driver_enabled()
+{
+    _in_list "$1" ${LWIO_DRIVERS}
+}
+
 option()
 {
     case "$LW_DEVICE_PROFILE" in
@@ -185,6 +201,14 @@ configure()
     else
         LWIO_FUSE_ENABLED=no
         mk_skip_subdir fuse
+    fi
+
+    # srvstat can only be enabled if srv enabled
+    if lwio_driver_enabled srv
+    then
+        LWIO_SRVSTAT_ENABLED=yes
+    else
+        LWIO_SRVSTAT_ENABLED=no
     fi
 
     mk_msg "build FUSE module: $LWIO_FUSE_ENABLED"
