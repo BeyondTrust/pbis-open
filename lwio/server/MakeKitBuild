@@ -1,5 +1,5 @@
 DRIVERS="rdr npfs pvfs srv"
-SUBDIRS="iomgr smbcommon $DRIVERS lwiod"
+SUBDIRS="iomgr smbcommon $DRIVERS lwiod srvstat"
 
 driver_enabled()
 {
@@ -18,4 +18,3 @@ configure()
         driver_enabled "$_driver" || mk_skip_subdir "$_driver"
     done
 }
-
