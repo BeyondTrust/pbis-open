@@ -365,7 +365,7 @@ LsaSqliteBindInt64(
     IN int64_t Value
     )
 {
-    return sqlite3_bind_int64(pstQuery, Index, (sqlite3_int64)Value);
+    return sqlite3_bind_int64(pstQuery, Index, (sqlite_int64)Value);
 }
 
 DWORD

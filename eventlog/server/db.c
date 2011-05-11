@@ -343,7 +343,7 @@ LwEvtDbGetRecordCount(
     PWSTR pQuery = NULL;
     sqlite3_stmt *pStatement = NULL;
     BOOLEAN inLock = FALSE;
-    sqlite3_int64 recordCount = 0;
+    sqlite_int64 recordCount = 0;
 
     if (pSqlFilter == NULL)
     {

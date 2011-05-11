@@ -73,7 +73,7 @@ RegSqliteBindInt64(
     IN int64_t Value
     )
 {
-    return (NTSTATUS)sqlite3_bind_int64(pstQuery, Index, (sqlite3_int64)Value);
+    return (NTSTATUS)sqlite3_bind_int64(pstQuery, Index, (sqlite_int64)Value);
 }
 
 NTSTATUS
