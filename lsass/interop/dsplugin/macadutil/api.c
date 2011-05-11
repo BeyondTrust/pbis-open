@@ -37,80 +37,256 @@
 //time_t                       gdwKrbTicketExpiryTime = 0;
 //const double                 gdwExpiryGraceSeconds = (60 * 60);
 
-static void *                gpLsaAccessLibHandle = (void*)NULL;
-
-static PFNLSAACCESSGETDATA   gpfnLsaAccessGetData = NULL;
-static PFNLSAACCESSCHECKDATA gpfnLsaAccessCheckData = NULL;
-static PFNLSAACCESSFREEDATA  gpfnLsaAccessFreeData = NULL;
-
-#define LSAACCESS_LIBPATH    LIBDIR "/" "liblsaaccess" MOD_EXT
-
+static
 DWORD
-LWLoadLsaAccessLibrary(
-    void
+LsaAccessFreeData(
+    PVOID pAccessData
+    );
+
+typedef struct {
+    DWORD   dwUidCount;
+    uid_t * pUids;
+    DWORD   dwGidCount;
+    gid_t * pGids;
+} LSA_ACCESS_DATA, *PLSA_ACCESS_DATA;
+
+static
+DWORD
+LsaAccessGetData(
+    PCSTR * pczConfigData,
+    PVOID * ppAccessData
     )
 {
-    DWORD dwError = 0;
-    PCSTR pszError = NULL;
+    DWORD            dwError = 0;
+    PLSA_ACCESS_DATA pAccessData = NULL;
+    DWORD            dwAllocUid = 0;
+    DWORD            dwAllocGid = 0;
+    DWORD            dwCount = 0;
+    HANDLE           hLsaConnection = (HANDLE)NULL;
+    DWORD            dwInfoLevel = 0;
+    PVOID            pUserInfo = NULL;
+    PVOID            pGroupInfo = NULL;
 
-    if ( gpLsaAccessLibHandle )
+    if ( pczConfigData == NULL )
     {
+        *ppAccessData = NULL;
         goto cleanup;
     }
 
-    dlerror();
+    dwError = LwAllocateMemory(sizeof(LSA_ACCESS_DATA),
+                  (PVOID*)&pAccessData);
+    BAIL_ON_MAC_ERROR(dwError);
 
-    gpLsaAccessLibHandle = dlopen(LSAACCESS_LIBPATH, RTLD_NOW | RTLD_GLOBAL);
-    if ( gpLsaAccessLibHandle == NULL )
+    dwAllocUid = 8;
+    dwError = LwAllocateMemory(sizeof(uid_t) * dwAllocUid,
+                  (PVOID*)&pAccessData->pUids);
+    BAIL_ON_MAC_ERROR(dwError);
+
+    dwAllocGid = 16;
+    dwError = LwAllocateMemory(sizeof(uid_t) * dwAllocGid,
+                  (PVOID*)&pAccessData->pGids);
+    BAIL_ON_MAC_ERROR(dwError);
+
+    dwError = LsaOpenServer(&hLsaConnection);
+    BAIL_ON_MAC_ERROR(dwError);
+
+    for ( dwCount = 0 ; pczConfigData[dwCount] ; dwCount++ )
     {
-        pszError = dlerror();
-        dwError = MAC_AD_ERROR_LOAD_LIBRARY_FAILED;
-        LOG_ERROR("Failed to load library [%s]. Error [%s]", LSAACCESS_LIBPATH, (IsNullOrEmptyString(pszError) ? "" : pszError));
-        BAIL_ON_MAC_ERROR(dwError);
+        dwError = LsaFindGroupByName(
+                      hLsaConnection,
+                      pczConfigData[dwCount],
+                      0,
+                      dwInfoLevel,
+                      &pGroupInfo);
+        if ( !dwError )
+        {
+            if ( pAccessData->dwGidCount == dwAllocGid )
+            {
+                dwAllocGid *= 2;
+                dwError = LwReallocMemory(
+                              (PVOID)pAccessData->pGids,
+                              (PVOID *)&pAccessData->pGids,
+                              dwAllocGid * sizeof(gid_t) );
+                BAIL_ON_MAC_ERROR(dwError);
+            }
+
+            pAccessData->pGids[pAccessData->dwGidCount++] =
+                ((PLSA_GROUP_INFO_0)pGroupInfo)->gid;
+
+            LsaFreeGroupInfo(
+                dwInfoLevel,
+                pGroupInfo);
+            pGroupInfo = NULL;
+        }
+        else
+        {
+            dwError = LsaFindUserByName(
+                          hLsaConnection,
+                          pczConfigData[dwCount],
+                          dwInfoLevel,
+                          &pUserInfo);
+            if ( dwError )
+            {
+                continue;
+            }
+            if ( pAccessData->dwUidCount == dwAllocUid )
+            {
+                dwAllocUid *= 2;
+                dwError = LwReallocMemory(
+                              (PVOID)pAccessData->pUids,
+                              (PVOID *)&pAccessData->pUids,
+                              dwAllocUid * sizeof(uid_t) );
+                BAIL_ON_MAC_ERROR(dwError);
+            }
+
+            pAccessData->pUids[pAccessData->dwUidCount++] =
+                ((PLSA_USER_INFO_0)pUserInfo)->uid;
+
+            LsaFreeUserInfo(
+                dwInfoLevel,
+                pUserInfo);
+            pUserInfo = NULL;
+        }
     }
 
-    gpfnLsaAccessGetData = (PFNLSAACCESSGETDATA)dlsym(gpLsaAccessLibHandle, LSA_SYMBOL_NAME_ACCESS_GET_DATA);
-    if ( gpfnLsaAccessGetData == NULL )
+    *ppAccessData = pAccessData;
+
+cleanup:
+    if ( pUserInfo )
     {
-        LOG_ERROR("Unable to find LSA Access API - %s", LSA_SYMBOL_NAME_ACCESS_GET_DATA);
-        dwError = MAC_AD_ERROR_LOOKUP_SYMBOL_FAILED;
-        BAIL_ON_MAC_ERROR(dwError);
+        LsaFreeUserInfo(
+            dwInfoLevel,
+            pUserInfo);
+    }
+    if ( pGroupInfo )
+    {
+        LsaFreeGroupInfo(
+            dwInfoLevel,
+            pGroupInfo);
+    }
+    if ( hLsaConnection != (HANDLE)NULL )
+    {
+        LsaCloseServer(hLsaConnection);
     }
 
-    gpfnLsaAccessCheckData = (PFNLSAACCESSCHECKDATA)dlsym(gpLsaAccessLibHandle, LSA_SYMBOL_NAME_ACCESS_CHECK_DATA);
-    if ( gpfnLsaAccessCheckData == NULL )
+    return dwError;
+
+error:
+    if ( pAccessData )
+        LsaAccessFreeData( (PVOID)pAccessData );
+
+    goto cleanup;
+}
+
+static
+DWORD
+LsaAccessCheckData(
+    PCSTR pczUserName,
+    PCVOID pAccessData
+    )
+{
+    DWORD dwError = 0;
+    PLSA_ACCESS_DATA pAccessDataLocal = NULL;
+    HANDLE           hLsaConnection = (HANDLE)NULL;
+    DWORD            dwInfoLevel = 0;
+    PVOID            pUserInfo = NULL;
+    gid_t *          pGid = NULL;
+    DWORD            dwNumGroups = 0;
+    DWORD            dwCount = 0;
+    DWORD            dwCount2 = 0;
+    BOOLEAN          bUserIsOK = FALSE;
+
+    if ( !pAccessData )
     {
-        LOG_ERROR("Unable to find LSA Access API - %s", LSA_SYMBOL_NAME_ACCESS_CHECK_DATA);
-        dwError = MAC_AD_ERROR_LOOKUP_SYMBOL_FAILED;
-        BAIL_ON_MAC_ERROR(dwError);
+        dwError = LW_ERROR_AUTH_ERROR;
+    }
+    BAIL_ON_MAC_ERROR(dwError);
+
+    pAccessDataLocal = (PLSA_ACCESS_DATA)pAccessData;
+
+    dwError = LsaOpenServer(&hLsaConnection);
+    BAIL_ON_MAC_ERROR(dwError);
+
+    dwError = LsaFindUserByName(
+                  hLsaConnection,
+                  pczUserName,
+                  dwInfoLevel,
+                  &pUserInfo);
+    BAIL_ON_MAC_ERROR(dwError);
+    
+    for ( dwCount = 0 ; dwCount < pAccessDataLocal->dwUidCount ; dwCount++ )
+    {
+        if ( ((PLSA_USER_INFO_0)pUserInfo)->uid == pAccessDataLocal->pUids[dwCount] )
+        {
+            bUserIsOK = TRUE;
+            break;
+        }
     }
 
-    gpfnLsaAccessFreeData = (PFNLSAACCESSFREEDATA)dlsym(gpLsaAccessLibHandle, LSA_SYMBOL_NAME_ACCESS_FREE_DATA);
-    if ( gpfnLsaAccessGetData == NULL )
+    if ( !bUserIsOK )
     {
-        LOG_ERROR("Unable to find LSA Access API - %s", LSA_SYMBOL_NAME_ACCESS_FREE_DATA); dwError = MAC_AD_ERROR_LOOKUP_SYMBOL_FAILED;
+        dwError = LsaGetGidsForUserByName(
+                      hLsaConnection,
+                      pczUserName,
+                      &dwNumGroups,
+                      &pGid);
         BAIL_ON_MAC_ERROR(dwError);
+
+        for ( dwCount = 0 ; (dwCount < dwNumGroups) && !bUserIsOK ; dwCount++ )
+        {
+            for ( dwCount2 = 0 ; dwCount2 < pAccessDataLocal->dwGidCount ; dwCount2++ )
+            {
+                if ( pAccessDataLocal->pGids[dwCount2] == pGid[dwCount] )
+                {
+                    bUserIsOK = TRUE;
+                    break;
+                }
+            }
+        }
+    }
+
+    if ( !bUserIsOK )
+    {
+        dwError = LW_ERROR_AUTH_ERROR;
     }
 
 cleanup:
+    LW_SAFE_FREE_MEMORY(pGid);
 
-    return LWGetMacError(dwError);
+    if ( pUserInfo )
+    {
+        LsaFreeUserInfo(
+            dwInfoLevel,
+            pUserInfo);
+    }
+    if ( hLsaConnection != (HANDLE)NULL )
+    {
+        LsaCloseServer(hLsaConnection);
+    }
+
+    return dwError;
 
 error:
 
     goto cleanup;
 }
 
-void
-LWUnloadLsaAccessLibrary(
-    void
+static
+DWORD
+LsaAccessFreeData(
+    PVOID pAccessData
     )
 {
-    if ( gpLsaAccessLibHandle )
+    DWORD dwError = 0;
+
+    if ( pAccessData )
     {
-        dlclose(gpLsaAccessLibHandle);
-        gpLsaAccessLibHandle = NULL;
+        LW_SAFE_FREE_MEMORY(((PLSA_ACCESS_DATA)pAccessData)->pUids);
+        LW_SAFE_FREE_MEMORY(((PLSA_ACCESS_DATA)pAccessData)->pGids);
+        LW_SAFE_FREE_MEMORY(pAccessData);
     }
+
+    return dwError;
 }
 
 LONG
@@ -2358,14 +2534,7 @@ GetAccessCheckData(
         goto cleanup;
     }
 
-    if (gpfnLsaAccessGetData)
-    {
-        dwError = gpfnLsaAccessGetData((PCSTR *)ppczStrArray, &pAccessData);
-    }
-    else
-    {
-        dwError = MAC_AD_ERROR_LOOKUP_SYMBOL_FAILED;
-    }
+    dwError = LsaAccessGetData((PCSTR *)ppczStrArray, &pAccessData);
     BAIL_ON_MAC_ERROR(dwError);
 
     *ppAccessData = pAccessData;
@@ -2400,14 +2569,7 @@ CheckUserForAccess(
 {
     DWORD dwError = MAC_AD_ERROR_SUCCESS;
 
-    if (gpfnLsaAccessCheckData)
-    {
-        dwError = gpfnLsaAccessCheckData(pszUsername, pAccessData);
-    }
-    else
-    {
-        dwError = MAC_AD_ERROR_LOOKUP_SYMBOL_FAILED;
-    }
+    dwError = LsaAccessCheckData(pszUsername, pAccessData);
 
     return LWGetMacError(dwError);
 }
@@ -2419,14 +2581,7 @@ FreeAccessCheckData(
 {
     DWORD dwError = MAC_AD_ERROR_SUCCESS;
 
-    if (gpfnLsaAccessFreeData)
-    {
-        dwError = gpfnLsaAccessFreeData(pAccessData);
-    }
-    else
-    {
-        dwError = MAC_AD_ERROR_LOOKUP_SYMBOL_FAILED;
-    }
+    dwError = LsaAccessFreeData(pAccessData);
 
     return LWGetMacError(dwError);
 }

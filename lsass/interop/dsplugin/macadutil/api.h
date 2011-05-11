@@ -34,35 +34,6 @@
 
 /* Function signatures for lsa access library */
 
-typedef DWORD (*PFNLSAACCESSGETDATA)(
-    PCSTR * pczConfigData,
-    PVOID * ppAccessData
-    );
-
-typedef DWORD (*PFNLSAACCESSCHECKDATA)(
-    PCSTR pczUserName,
-    PCVOID pAccessData
-    );
-
-typedef DWORD (*PFNLSAACCESSFREEDATA)(
-    PVOID pAccessData
-    );
-
-#define LSA_SYMBOL_NAME_ACCESS_GET_DATA "LsaAccessGetData"
-#define LSA_SYMBOL_NAME_ACCESS_CHECK_DATA "LsaAccessCheckData"
-#define LSA_SYMBOL_NAME_ACCESS_FREE_DATA "LsaAccessFreeData"
-
-
-DWORD
-LWLoadLsaAccessLibrary(
-    void
-    );
-
-void
-LWUnloadLsaAccessLibrary(
-    void
-    );
-
 LONG
 GetCurrentDomain(
     OUT PSTR* ppszDnsDomainName

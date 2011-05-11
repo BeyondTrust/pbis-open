@@ -391,10 +391,6 @@ long PlugInShell_Initialize(void)
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
 
-    /* Get the LSA Access check API loaded */
-    macError = LWLoadLsaAccessLibrary();
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
     /* Get the network adpater details - We only care about the ENetAddress info */
     macError = LWGetNetAdapterList(true, &GlobalState.pNetAdapterList);
     GOTO_CLEANUP_ON_MACERROR(macError);
@@ -1220,9 +1216,6 @@ long PlugInShell_Shutdown(void)
     LWIDirNodeQuery::Cleanup();
     LWIRecTypeLookup::Cleanup();
     LWIAttrLookup::Cleanup();
-
-    /* Free the LSA Access check API */
-    LWUnloadLsaAccessLibrary();
 
     if (GlobalState.IsPeriodicTaskMutexInitialized)
     {
