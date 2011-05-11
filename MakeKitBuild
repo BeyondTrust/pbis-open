@@ -36,6 +36,9 @@ option()
         linux-*)
             default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt fuse libedit"
             ;;
+        darwin-*)
+            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2 libedit"
+            ;;
         *)
             default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2 libedit"
             ;;
