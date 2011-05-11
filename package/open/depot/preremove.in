@@ -118,7 +118,10 @@ preremove()
     wait_for_lwsm_shutdown 60
     for daemon in $DAEMONS_TO_HALT
     do
-        run_quiet "kill -KILL `UNIX95= ps -C $daemon -o pid=`"
+        PIDS=`UNIX95= ps -C $daemon -o pid=`
+        if [ -n "$PIDS" ]; then
+            run_quiet "kill -KILL $PIDS"
+        fi
     done
 
     log "Package: Likewise Open preremove finished"
