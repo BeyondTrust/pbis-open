@@ -77,6 +77,8 @@ ValidateAdtAddToRemoveFromGroupAction(IN AdtActionTP action, IN BOOL isRemove)
         dwError = OpenADSearchConnectionDomain(action, &(action->addToGroup.user));
         ADT_BAIL_ON_ERROR_NP(dwError);
 
+        SwitchToMatchingConnection(action, &(action->addToGroup.user));
+
         dwError = LocateADUser(appContext, &(action->addToGroup.user));
         ADT_BAIL_ON_ERROR_NP(dwError);
     }
@@ -87,6 +89,8 @@ ValidateAdtAddToRemoveFromGroupAction(IN AdtActionTP action, IN BOOL isRemove)
         dwError = OpenADSearchConnectionDomain(action, &(action->addToGroup.group));
         ADT_BAIL_ON_ERROR_NP(dwError);
 
+        SwitchToMatchingConnection(action, &(action->addToGroup.group));
+
         dwError = LocateADGroup(appContext, &(action->addToGroup.group));
         ADT_BAIL_ON_ERROR_NP(dwError);
     }
@@ -94,12 +98,10 @@ ValidateAdtAddToRemoveFromGroupAction(IN AdtActionTP action, IN BOOL isRemove)
     dwError = ProcessDash(&(action->addToGroup.targetGroup));
     ADT_BAIL_ON_ERROR_NP(dwError);
 
-    SwitchToModifyConnection(action);
+    SwitchToMatchingConnection(action, &(action->addToGroup.targetGroup));
 
     dwError = LocateADGroup(appContext, &(action->addToGroup.targetGroup));
     ADT_BAIL_ON_ERROR_NP(dwError);
-
-    SwitchToSearchConnection(action);
 
     cleanup:
         return dwError;
@@ -147,17 +149,9 @@ ExecuteAdtAddToRemoveFromGroupAction(IN AdtActionTP action, IN BOOL isRemove)
 
     if(isRemove) {
         dwError = ModifyADObject(appContext, action->addToGroup.targetGroup, avpGrp, 1);
-        if(dwError) {
-            SwitchToModifyConnection(action);
-            dwError = ModifyADObject(appContext, action->addToGroup.targetGroup, avpGrp, 1);
-        }
     }
     else {
         dwError = ModifyADObject(appContext, action->addToGroup.targetGroup, avpGrp, 0);
-        if(dwError) {
-            SwitchToModifyConnection(action);
-            dwError = ModifyADObject(appContext, action->addToGroup.targetGroup, avpGrp, 0);
-        }
     }
     ADT_BAIL_ON_ERROR_NP(dwError);
 

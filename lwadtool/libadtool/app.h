@@ -389,6 +389,14 @@ extern DWORD OpenADSearchConnectionDomain(IN AdtActionTP action, IN OUT PSTR *na
 extern DWORD OpenADSearchConnectionDN(IN AdtActionTP action, IN OUT PSTR *name);
 
 /**
+ * Switch to connection that matches user's or group's UPN.
+ *
+ * @param action Action reference.
+ * @param name Domain name or DN/RDN.
+ */
+extern VOID SwitchToMatchingConnection(IN AdtActionTP action, IN OUT PSTR *name);
+
+/**
  * Start using search connection.
  *
  * @param action Action reference.

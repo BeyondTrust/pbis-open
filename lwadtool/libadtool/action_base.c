@@ -129,15 +129,24 @@ DWORD OpenADSearchConnectionDN(IN AdtActionTP action, IN OUT PSTR *name)
         LwStrToLower(tmp);
         p = strstr((PCSTR) tmp, "dc=");
 
-        if(p && !DoesStrEndWith(*name, appContext->modifyConn.defaultNC, 1)) {
-            dwError = GetDomainFromDN(*name, &domain);
-            ADT_BAIL_ON_ERROR_NP(dwError);
+        //if(p && !DoesStrEndWith(*name, appContext->modifyConn.defaultNC, 1)) {
+        if(p) {
+            if (
+                !DoesStrEndWith(*name, appContext->modifyConn.defaultNC, 1) ||
+                (strlen(appContext->modifyConn.defaultNC) != strlen(*name))
+            ) {
+                dwError = GetDomainFromDN(*name, &domain);
+                ADT_BAIL_ON_ERROR_NP(dwError);
 
-            dwError = ProcessConnectArgs(appContext, NULL, appContext->copts.port, domain);
-            ADT_BAIL_ON_ERROR_NP(dwError);
+                dwError = ProcessConnectArgs(appContext,
+                                             NULL,
+                                             appContext->copts.port,
+                                             domain);
+                ADT_BAIL_ON_ERROR_NP(dwError);
 
-            dwError = ConnectAD(appContext);
-            ADT_BAIL_ON_ERROR_NP(dwError);
+                dwError = ConnectAD(appContext);
+                ADT_BAIL_ON_ERROR_NP(dwError);
+            }
         }
     }
 
@@ -146,6 +155,106 @@ DWORD OpenADSearchConnectionDN(IN AdtActionTP action, IN OUT PSTR *name)
         LW_SAFE_FREE_MEMORY(domain);
         appContext->workConn = & (appContext->modifyConn);
         return dwError;
+
+    error:
+        goto cleanup;
+}
+
+/**
+ * Switch to connection that matches user's or group's UPN.
+ *
+ * @param action Action reference.
+ * @param name Domain name or DN/RDN.
+ */
+VOID SwitchToMatchingConnection(IN AdtActionTP action, IN OUT PSTR *name)
+{
+    DWORD dwError = ERROR_SUCCESS;
+    AppContextTP appContext = (AppContextTP) ((AdtActionBaseTP) action)->opaque;
+    PSTR domain = NULL;
+    PSTR domainComp = NULL;
+    PSTR tmp = NULL;
+    PSTR p = NULL;
+    INT len = 0;
+
+    if (IsUPN(*name)) {
+        domain = GetRealmComp(*name);
+        ADT_BAIL_ON_ALLOC_FAILURE_NP(domain);
+
+        if(domain == NULL) {
+            dwError = LwStrDupOrNull(*name, &domain);
+            ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+        }
+
+        if (DoesStrStartWith(domain, appContext->modifyConn.domainName, 1)) {
+            appContext->workConn = &(appContext->modifyConn);
+        }
+        else {
+            appContext->workConn = &(appContext->searchConn);
+        }
+    }
+    else {
+        if (IsBackSlashPresent(*name)) {
+            p = strstr((PCSTR) *name, "\\");
+
+            if (p) {
+                len = p - *name;
+                dwError = LwAllocateMemory(sizeof(CHAR) * (len + 1),
+                                           (PVOID *) &domainComp);
+                ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+
+                strncpy(domainComp, (PCSTR) *name, len);
+            }
+
+            if (!IsDotPresent(domainComp)) {
+                p = strstr((PCSTR) appContext->modifyConn.domainName, ".");
+
+                dwError
+                        = LwAllocateStringPrintf(&domain, "%s%s", domainComp, p);
+                ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+            }
+            else {
+                dwError = LwStrDupOrNull((PCSTR) domainComp, &domain);
+                ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+            }
+
+            if (DoesStrStartWith(domain, appContext->modifyConn.domainName, 1)) {
+                appContext->workConn = &(appContext->modifyConn);
+            }
+            else {
+                appContext->workConn = &(appContext->searchConn);
+            }
+        }
+        else {
+            if(IsDNComp(*name)) {
+                dwError = LwStrDupOrNull((PCSTR) *name, &tmp);
+                ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+
+                LwStrToLower(tmp);
+                p = strstr((PCSTR) tmp, "dc=");
+
+                if(p) {
+                    dwError = GetDomainFromDN(*name, &domain);
+                    ADT_BAIL_ON_ERROR_NP(dwError);
+
+                    if (DoesStrStartWith(domain, appContext->modifyConn.domainName, 1)) {
+                        appContext->workConn = &(appContext->modifyConn);
+                    }
+                    else {
+                        appContext->workConn = &(appContext->searchConn);
+                    }
+                }
+            }
+            else {
+                appContext->workConn = &(appContext->modifyConn);
+            }
+        }
+    }
+
+    cleanup:
+        LW_SAFE_FREE_MEMORY(tmp);
+        LW_SAFE_FREE_MEMORY(domain);
+        LW_SAFE_FREE_MEMORY(domainComp);
+        return;
 
     error:
         goto cleanup;
@@ -539,7 +648,7 @@ DWORD AdtAddGroupToCellS(IN AdtActionTP action,
     }
     else {
         if(!appContext->gopts.isQuiet) {
-            PrintResult(appContext, LogLevelNone, "Group %s has been added to Likewise cell\n", action->addToCell.group);
+            PrintResult(appContext, LogLevelNone, "Group has been added to Likewise cell\n");
         }
     }
 
@@ -612,7 +721,7 @@ DWORD AdtAddGroupToCellNS(IN AdtActionTP action,
     }
     else {
         if(!appContext->gopts.isQuiet) {
-            PrintResult(appContext, LogLevelNone, "Group %s has been added to Likewise cell\n", action->addToCell.group);
+            PrintResult(appContext, LogLevelNone, "Group has been added to Likewise cell\n");
         }
     }
 
