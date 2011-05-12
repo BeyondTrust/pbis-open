@@ -1,4 +1,4 @@
-SUBDIRS="include utils ipc common client parse shellutil server shell"
+SUBDIRS="include utils ipc common client parse shellutil server shell test"
 
 option()
 {
