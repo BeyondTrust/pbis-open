@@ -61,12 +61,12 @@ The easiest way to begin a build is to run:
 
   $ mkdir debug && cd debug
   $ ../configure --debug
-  $ make -jXX package/cifs  ## where XX is 2x CPU cores
+  $ make -jXX package  ## where XX is 2x CPU cores
 
 This will build the necessary binaries and libraries and package them up into
 DEBs or RPMs in the likewise-open/debug/package/ directory.
 
-You may view the complete set of configure options by running 
+You may view the complete set of configure options by running
 
   $ ../configure --help
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+#set -e
 
 PATH=$PATH:@MK_BINDIR@
 export PATH
@@ -11,30 +11,30 @@ case "$1" in
 
     configure)
 
-        /etc/init.d/lwsmd stop >/dev/null 2>&1
+        /etc/init.d/lwsmd stop
         sleep 2
 
         if [ "@IS_EMBEDDED@" = "no" ]
         then
-            domainjoin-cli configure --enable pam >/dev/null
-            domainjoin-cli configure --enable nsswitch >/dev/null
+            domainjoin-cli configure --enable pam
+            domainjoin-cli configure --enable nsswitch
         fi
 
-        @MK_SBINDIR@/lwsmd --start-as-daemon
+        @MK_SBINDIR@/lwsmd --start-as-daemon || exit 1
 
         for file in "@LW_CONFIGDIR@/"*.reg; do
             echo "Importing $file..."
-            lwregshell import $file >/dev/null
+            lwregshell import $file || exit 1
         done
 
-        lwsm shutdown
+        lwsm shutdown || exit 1
         sleep 2
 
-        /usr/sbin/update-rc.d -f lwsmd defaults 17 8 > /dev/null
-        /usr/sbin/update-rc.d -f likewise defaults 18 7 > /dev/null
+        /usr/sbin/update-rc.d -f lwsmd defaults 17 8
+        /usr/sbin/update-rc.d -f likewise defaults 18 7
 
         /etc/init.d/lwsmd start
-        /etc/init.d/likewise start
+        /etc/init.d/likewise star
         ;;
 esac
 
