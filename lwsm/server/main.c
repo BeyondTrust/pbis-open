@@ -355,6 +355,12 @@ LwSmControlLock(
         BAIL_ON_ERROR(dwError);
     }
 
+    if (fcntl(gState.ControlLock, F_SETFD, FD_CLOEXEC) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_ERROR(dwError);
+    }
+
     if (fcntl(gState.ControlLock, F_SETLK, &lock) < 0)
     {
         switch(errno)
