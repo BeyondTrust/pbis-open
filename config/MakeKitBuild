@@ -1,5 +1,10 @@
 configure()
 {
+    mk_declare -o \
+        VERSION="$LW_VERSION" \
+        BUILD="${LW_BUILD_ID:-0}" \
+        REVISION="${LW_BUILD_REVISION:-0}"
+
     mk_output_file VERSION
 }
 
