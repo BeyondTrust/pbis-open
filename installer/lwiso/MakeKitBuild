@@ -38,7 +38,7 @@ sfx_generic()
 
     GUI_PACKAGE=""
 
-    if [ "$DJ_GUI_INTERFACE" != "no" ]
+    if [ "$DJ_GUI_INTERFACE" = "gtk" ]
     then
         GUI_PACKAGE="likewise-open-gui"
     fi
