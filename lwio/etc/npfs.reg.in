@@ -4,7 +4,7 @@
     doc = "" 
 }
 "Path" = { 
-    default = "@providerdir@/libnpfs.sys@MOD_EXT@" 
+    default = "@providerdir@/npfs.sys@MOD_EXT@" 
     doc = "" 
 }
 "Arguments" = { 
@@ -26,6 +26,6 @@
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\npfs]
 "Path" = { 
-    default = "@providerdir@/libnpfs.sys@MOD_EXT@" 
+    default = "@providerdir@/npfs@MOD_EXT@" 
     doc = "" 
 }

@@ -32,7 +32,8 @@ make()
 	LIBDEPS="dcerpc"
 
     mk_dlo \
-	DLO=libwkssvc_srv \
+	DLO=wkssvc \
+        INSTALLDIR="${rpcserverdir}" \
 	SOURCES="$WKSSVC_SOURCES" \
 	GROUPS="wkssvc_stub" \
 	INCLUDEDIRS=". ../../include ../../api ../../../include" \

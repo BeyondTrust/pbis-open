@@ -28,7 +28,8 @@ make()
 	LIBDEPS="dcerpc"
 
     mk_dlo \
-	DLO=libdssetup_srv \
+	DLO=dssetup \
+        INSTALLDIR="${rpcserverdir}" \
 	SOURCES="$DSSETUP_SOURCES" \
 	GROUPS="dssetup_stub" \
 	INCLUDEDIRS=". ../../include ../../api ../../../include" \

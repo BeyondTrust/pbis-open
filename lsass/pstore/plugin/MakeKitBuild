@@ -1,7 +1,8 @@
 make()
 {
     mk_dlo \
-        DLO=liblsapstore_plugin_test \
+        DLO=test \
+        INSTALLDIR="${MK_LIBDIR}/lw-pstore" \
         SOURCES="lsapstore-plugin-test.c" \
         CPPFLAGS="-DLW_ENABLE_THREADS=1" \
         INCLUDEDIRS="../../include" \

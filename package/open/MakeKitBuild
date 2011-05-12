@@ -172,7 +172,11 @@ package_pkg()
                 "${MK_LIBDIR}/krb5/plugins" \
                 "${MK_LIBDIR}/krb5/plugins/libkrb5" \
                 "${MK_LIBDIR}/lw-svcm" \
-                "${MK_LIBDIR}/sasl2"
+                "${MK_LIBDIR}/sasl2" \
+                "${MK_LIBDIR}/lsa-provider" \
+                "${MK_LIBDIR}/lsa-rpc" \
+                "${MK_LIBDIR}/lwio-driver" \
+                "${MK_LIBDIR}/lw-map-sec"
 
             mk_multiarch_do
                 mk_package_dirs "${MK_LIBDIR}"
@@ -209,6 +213,14 @@ package_lpp()
             open_files
             open_files_compat
             
+            # Because AIX SysV-compatible shared libraries do
+            # not have an SONAME mechanism, we need to keep
+            # the plain .so symlinks in addition to the .so.*
+            # files.
+            mk_package_patterns \
+                SUBDIRS="$OPEN_SUBDIRS" \
+                "${MK_LIBDIR}/*${MK_LIB_EXT}"
+
             # Indicate directories we own
             mk_package_dirs \
                 "${MK_PREFIX}" \
@@ -223,7 +235,11 @@ package_lpp()
                 "${MK_LIBDIR}/krb5/plugins" \
                 "${MK_LIBDIR}/krb5/plugins/libkrb5" \
                 "${MK_LIBDIR}/lw-svcm" \
-                "${MK_LIBDIR}/sasl2"
+                "${MK_LIBDIR}/sasl2" \
+                "${MK_LIBDIR}/lsa-provider" \
+                "${MK_LIBDIR}/lsa-rpc" \
+                "${MK_LIBDIR}/lwio-driver" \
+                "${MK_LIBDIR}/lw-map-sec"
 
         mk_lpp_sub_done
 
@@ -325,19 +341,19 @@ open_files_prefix()
         "${MK_SBINDIR}/*" \
         "${MK_LIBEXECDIR}/*" \
         "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
-        "${MK_LIBDIR}/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/*.*${MK_LIB_EXT}" \
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*" \
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/krb5/plugins/libkrb5/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lw-svcm/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lsa-provider/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lsa-rpc/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lwio-driver/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lw-map-sec/*${MK_DLO_EXT}" \
         "${MK_DATADIR}/likewise.pam-auth-update" \
         "${LW_CONFIGDIR}/*.reg" \
         "${MK_PREFIX}/data/VERSION"
-
-    [ "$MK_DLO_EXT" != "$MK_LIB_EXT" ] && mk_package_patterns \
-        SUBDIRS="$OPEN_SUBDIRS" \
-        "${MK_LIBDIR}/*${MK_LIB_EXT}"
 }
 
 open_files_usr()
@@ -389,9 +405,15 @@ open_files_dev()
 {
     mk_package_patterns \
         SUBDIRS="$OPEN_SUBDIRS" \
-        "${MK_LIBDIR}/*.la" \
         "*.h" \
         "*.idl"
+
+    mk_multiarch_do
+       mk_package_patterns \
+           SUBDIRS="$OPEN_SUBDIRS" \
+           "${MK_LIBDIR}/*.la" \
+           "${MK_LIBDIR}/*[!0-9]${MK_LIB_EXT}"
+    mk_multiarch_done
 }
 
 open_files_interop()

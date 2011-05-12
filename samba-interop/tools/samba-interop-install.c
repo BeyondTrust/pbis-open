@@ -78,7 +78,7 @@
         goto cleanup;                                                     \
     }
 
-#define PLUGIN_PATH (LIBDIR "/libsamba-pstore-plugin" MOD_EXT)
+#define PLUGIN_PATH (LIBDIR "/lw-pstore/samba" MOD_EXT)
 
 static
 VOID

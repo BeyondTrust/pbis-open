@@ -1,7 +1,8 @@
 make()
 {
     mk_dlo \
-	DLO=liblwmapsecurity_lsass \
+	DLO=lsass \
+        INSTALLDIR="${MK_LIBDIR}/lw-map-sec" \
 	SOURCES="lwmapsecurity-lsass.c" \
 	INCLUDEDIRS="../../include" \
 	HEADERDEPS="lw/base.h lw/mapsecurity.h lwadvapi.h lwio/lwio.h" \

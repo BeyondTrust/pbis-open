@@ -62,7 +62,8 @@ make()
             LDFLAGS="$FRAMEWORK_FLAGS"
     else
         mk_dlo \
-	    DLO=liblsass_auth_provider_ad_open \
+	    DLO=ad_open \
+            INSTALLDIR="${MK_LIBDIR}/lsa-provider" \
 	    SOURCES="$AD_SOURCES" \
 	    CPPFLAGS="-DLW_ENABLE_THREADS=1" \
 	    INCLUDEDIRS="join/include ../../include ../../../include" \

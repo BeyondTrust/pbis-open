@@ -4,7 +4,7 @@
     doc = "" 
 }
 "Path" = { 
-    default = "@providerdir@/libdfs.sys@MOD_EXT@" 
+    default = "@providerdir@/dfs@MOD_EXT@" 
     doc = "" 
 }
 "Arguments" = { 
@@ -26,6 +26,6 @@
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\dfs]
 "Path" = { 
-    default = "@providerdir@/libdfs.sys@MOD_EXT@" 
+    default = "@providerdir@/dfs@MOD_EXT@" 
     doc = "" 
 }

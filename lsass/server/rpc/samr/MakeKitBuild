@@ -70,7 +70,8 @@ make()
 	LIBDEPS="dcerpc"
 
     mk_dlo \
-	DLO=libsamr_srv \
+	DLO=samr \
+        INSTALLDIR="${rpcserverdir}" \
 	SOURCES="$SAMR_SOURCES" \
 	GROUPS="samr_stub" \
 	INCLUDEDIRS=". ../../include ../../api ../../../include" \

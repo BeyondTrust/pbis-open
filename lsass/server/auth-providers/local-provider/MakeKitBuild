@@ -17,7 +17,8 @@ make()
         lpsecurity.c"
 
     mk_dlo \
-	DLO=liblsass_auth_provider_local \
+	DLO=local \
+        INSTALLDIR="${MK_LIBDIR}/lsa-provider" \
 	SOURCES="$LOCAL_SOURCES" \
 	CPPFLAGS="-DLW_ENABLE_THREADS=1" \
 	INCLUDEDIRS=". ../../include ../../../include" \

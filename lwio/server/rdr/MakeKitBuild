@@ -48,7 +48,8 @@ make()
             LIBDEPS="lwiosmbcommon iomgr lwnetclientapi"
     else
         mk_dlo \
-            DLO=librdr.sys \
+            DLO=rdr \
+            INSTALLDIR="$providerdir" \
             SOURCES="$RDR_SOURCES" \
             INCLUDEDIRS=". ../include ../../include" \
             HEADERDEPS="openssl/md5.h lw/base.h lwnet.h" \

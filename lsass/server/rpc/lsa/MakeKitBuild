@@ -57,7 +57,8 @@ make()
 	LIBDEPS="dcerpc"
 
     mk_dlo \
-	DLO=liblsa_srv \
+	DLO=lsa \
+        INSTALLDIR="${rpcserverdir}" \
 	SOURCES="$LSA_SOURCES" \
 	GROUPS="lsa_stub" \
 	INCLUDEDIRS=". ../samr ../../include ../../api ../../../include" \

@@ -103,7 +103,7 @@
         } \
     } while (0)
 
-#define LW_MAP_SECURITY_PLUGIN_PATH LIBDIR "/liblwmapsecurity_lsass" MOD_EXT
+#define LW_MAP_SECURITY_PLUGIN_PATH LIBDIR "/lw-map-sec/lsass" MOD_EXT
 
 //
 // Unmapped Unix User and Group SIDs

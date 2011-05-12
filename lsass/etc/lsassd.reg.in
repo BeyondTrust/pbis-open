@@ -114,7 +114,7 @@
     doc = ""
 }
 "Path" = {
-    default = "@providerdir@/liblsass_auth_provider_ad_open@MOD_EXT@"
+    default = "@providerdir@/ad_open@MOD_EXT@"
     doc = ""
 }
 "LogNetworkConnectionEvents" = {
@@ -263,7 +263,7 @@
     doc = ""
 }
 "Path" = {
-    default = "@providerdir@/liblsass_auth_provider_local@MOD_EXT@"
+    default = "@providerdir@/local@MOD_EXT@"
     doc = ""
 }
 "LoginShellTemplate" = {
@@ -333,7 +333,7 @@
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\lsarpc]
 "Path" = {
-    default = "@rpcserverdir@/liblsa_srv@MOD_EXT@"
+    default = "@rpcserverdir@/lsa@MOD_EXT@"
     doc = ""
 }
 "LpcSocketPath" = {
@@ -347,7 +347,7 @@
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\samr]
 "Path" = {
-    default = "@rpcserverdir@/libsamr_srv@MOD_EXT@"
+    default = "@rpcserverdir@/samr@MOD_EXT@"
     doc = ""
 }
 "LpcSocketPath" = {
@@ -373,7 +373,7 @@
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\dssetup]
 "Path" = {
-    default = "@rpcserverdir@/libdssetup_srv@MOD_EXT@"
+    default = "@rpcserverdir@/dssetup@MOD_EXT@"
     doc = ""
 }
 "LpcSocketPath" = {
@@ -387,7 +387,7 @@
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\wkssvc]
 "Path" = {
-    default = "@rpcserverdir@/libwkssvc_srv@MOD_EXT@"
+    default = "@rpcserverdir@/wkssvc@MOD_EXT@"
     doc = ""
 }
 "LpcSocketPath" = {

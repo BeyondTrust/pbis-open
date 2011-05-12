@@ -84,7 +84,7 @@ configure()
         MOD_EXT="$MK_DLO_EXT" \
         SBINDIR="$MK_SBINDIR" \
         LIBDIR="$MK_LIBDIR" \
-        providerdir="$MK_LIBDIR"
+        providerdir="$MK_LIBDIR/lwio-driver"
 
     mk_define MOD_EXT "\"$MK_DLO_EXT\""
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
