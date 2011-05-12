@@ -70,6 +70,8 @@ lwmsg_data_print_graph
 lwmsg_data_print_graph_alloc
 lwmsg_data_alloc_memory
 lwmsg_data_free_memory
+lwmsg_format
+lwmsg_formatv
 lwmsg_protocol_get_message_type
 lwmsg_protocol_get_message_name
 lwmsg_protocol_new
@@ -94,6 +96,7 @@ lwmsg_security_token_get_type
 lwmsg_security_token_equal
 lwmsg_security_token_can_access
 lwmsg_security_token_copy
+lwmsg_security_token_to_string
 lwmsg_security_token_delete
 lwmsg_session_generate_cookie
 lwmsg_session_get_id

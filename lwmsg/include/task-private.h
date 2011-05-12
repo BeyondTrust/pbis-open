@@ -60,6 +60,7 @@ typedef LONG64 LWMsgTaskTime;
 #define LWMSG_TASK_TRIGGER_FD_WRITABLE  LW_TASK_EVENT_FD_WRITABLE
 #define LWMSG_TASK_TRIGGER_FD_EXCEPTION LW_TASK_EVENT_FD_EXCEPTION
 #define LWMSG_TASK_TRIGGER_YIELD        LW_TASK_EVENT_YIELD
+#define LWMSG_TASK_TRIGGER_UNIX_SIGNAL  LW_TASK_EVENT_UNIX_SIGNAL
 
 typedef LW_TASK_FUNCTION LWMsgTaskFunction;
 typedef LW_WORK_ITEM_FUNCTION_COMPAT LWMsgWorkItemFunction;
@@ -163,6 +164,27 @@ lwmsg_task_unset_trigger_fd(
             0));
 }
 
+static inline
+LWMsgBool
+lwmsg_task_set_unix_signal(
+    LWMsgTask* task,
+    int sig,
+    LWMsgBool disp
+    )
+{
+    return __MAP_NTSTATUS(
+        LwRtlSetTaskUnixSignal(task, sig, disp));
+}
+
+static inline
+LWMsgBool
+lwmsg_task_next_unix_signal(
+    LWMsgTask* task,
+    siginfo_t* info
+    )
+{
+    return LwRtlNextTaskUnixSignal(task, info);
+}
 
 static inline
 void

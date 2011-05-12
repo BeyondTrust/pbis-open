@@ -104,6 +104,23 @@ lwmsg_local_token_hash(
 }
 
 static
+LWMsgStatus
+lwmsg_local_token_to_string(
+    LWMsgSecurityToken* token,
+    LWMsgBuffer* buffer
+    )
+{
+    LocalTokenPrivate* priv = lwmsg_security_token_get_private(token);
+
+    return lwmsg_buffer_print(
+        buffer,
+        "<local euid:%ld egid:%ld pid:%ld>",
+        (long) priv->euid,
+        (long) priv->egid,
+        (long) priv->pid);
+}
+
+static
 LWMsgBool
 lwmsg_local_token_can_access(
     LWMsgSecurityToken* token,
@@ -188,7 +205,8 @@ static LWMsgSecurityTokenClass local_class =
     .equal = lwmsg_local_token_equal,
     .can_access = lwmsg_local_token_can_access,
     .copy = lwmsg_local_token_copy,
-    .hash = lwmsg_local_token_hash
+    .hash = lwmsg_local_token_hash,
+    .to_string = lwmsg_local_token_to_string
 };
 
 LWMsgStatus

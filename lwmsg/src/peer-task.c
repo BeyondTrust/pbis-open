@@ -41,6 +41,8 @@
 #include "assoc-private.h"
 #include "session-private.h"
 #include "connection-private.h"
+#include "buffer-private.h"
+#include "security-private.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -279,6 +281,181 @@ lwmsg_peer_log_connect(
     }
 
     return LWMSG_STATUS_SUCCESS;
+}
+
+static
+LWMsgStatus
+realloc_wrap(
+    LWMsgBuffer* buffer,
+    size_t count
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    size_t offset = buffer->cursor - buffer->base;
+    size_t length = buffer->end - buffer->base;
+    size_t new_length = 0;
+    unsigned char* new_buffer = NULL;
+
+    if (count)
+    {
+        if (length == 0)
+        {
+            new_length = 256;
+        }
+        else
+        {
+            new_length = length * 2;
+        }
+
+        new_buffer = realloc(buffer->base, new_length);
+        if (!new_buffer)
+        {
+            BAIL_ON_ERROR(status = LWMSG_STATUS_MEMORY);
+        }
+
+        buffer->base = new_buffer;
+        buffer->end = new_buffer + new_length;
+        buffer->cursor = new_buffer + offset;
+    }
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_peer_log_call(
+    PeerAssocTask* task,
+    PeerCall* call,
+    LWMsgBuffer* buffer,
+    LWMsgBool incoming
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgMessage message = LWMSG_MESSAGE_INITIALIZER;
+    char* rep = NULL;
+
+    if (incoming)
+    {
+        BAIL_ON_ERROR(status = lwmsg_buffer_print(
+            buffer,
+            "    call %lu >> ",
+            (unsigned long) call->cookie));
+        message.tag = call->params.incoming.in.tag;
+        message.data = call->params.incoming.in.data;
+    }
+    else
+    {
+        BAIL_ON_ERROR(status = lwmsg_buffer_print(
+            buffer,
+            "    call %lu << ",
+            (unsigned long) call->cookie));
+        message.tag = call->params.outgoing.in->tag;
+        message.data = call->params.outgoing.in->data;
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_assoc_print_message_alloc(
+        task->assoc,
+        &message,
+        &rep));
+
+    BAIL_ON_ERROR(status = lwmsg_buffer_write(
+        buffer,
+        (unsigned char*) rep,
+        strlen(rep)));
+
+error:
+
+    if (rep)
+    {
+        lwmsg_context_free(task->session->peer->context, rep);
+    }
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_peer_log_state(
+    PeerAssocTask* task
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgBuffer buffer = {.wrap = realloc_wrap};
+    LWMsgSessionString sess;
+    LWMsgHashIter iter = {0};
+    PeerCall* call = NULL;
+    static const unsigned char nul = '\0';
+    LWMsgSecurityToken* token = NULL;
+
+    if (!lwmsg_context_would_log(task->session->peer->context, LWMSG_LOGLEVEL_TRACE))
+    {
+        goto error;
+    }
+
+    lwmsg_session_id_to_string(
+        lwmsg_session_get_id((LWMsgSession*) task->session),
+        sess);
+
+    token = lwmsg_session_get_peer_security_token((LWMsgSession*) task->session);
+
+    BAIL_ON_ERROR(status = lwmsg_buffer_print(&buffer, "lwmsg session %s:\n", sess));
+
+    if (task->session->endpoint_str)
+    {
+        BAIL_ON_ERROR(status = lwmsg_buffer_print(
+            &buffer,
+            "    endpoint: %s\n", task->session->endpoint_str));
+    }
+
+    if (token)
+    {
+        BAIL_ON_ERROR(status = lwmsg_buffer_print(
+            &buffer,
+            "    %s: ",
+            task->session->is_outgoing ? "connected" : "accepted"));
+        BAIL_ON_ERROR(status = lwmsg_security_token_to_string(token, &buffer));
+        BAIL_ON_ERROR(status = lwmsg_buffer_print(
+             &buffer,
+             "\n"));
+    }
+
+    lwmsg_hash_iter_begin(&task->incoming_calls, &iter);
+    while ((call = lwmsg_hash_iter_next(&task->incoming_calls, &iter)))
+    {
+        BAIL_ON_ERROR(status = lwmsg_peer_log_call(
+            task,
+            call,
+            &buffer,
+            LWMSG_TRUE));
+        BAIL_ON_ERROR(status = lwmsg_buffer_print(&buffer, "\n"));
+    }
+    lwmsg_hash_iter_end(&task->incoming_calls, &iter);
+    lwmsg_hash_iter_begin(&task->outgoing_calls, &iter);
+    while ((call = lwmsg_hash_iter_next(&task->outgoing_calls, &iter)))
+    {
+        BAIL_ON_ERROR(status = lwmsg_peer_log_call(
+            task,
+            call,
+            &buffer,
+            LWMSG_FALSE));
+        BAIL_ON_ERROR(status = lwmsg_buffer_print(&buffer, "\n"));
+    }
+    lwmsg_hash_iter_end(&task->outgoing_calls, &iter);
+
+    BAIL_ON_ERROR(status = lwmsg_buffer_write(&buffer, &nul, 1));
+
+    LWMSG_LOG_TRACE(task->session->peer->context, "%s", buffer.base);
+
+error:
+
+    if (buffer.base)
+    {
+        free(buffer.base);
+    }
+
+    return status;
 }
 
 static
@@ -925,7 +1102,11 @@ lwmsg_peer_task_run_listen(
                 }
             } while (client_fd < 0);
             
-            BAIL_ON_ERROR(status = lwmsg_peer_accept_fd(task->peer, LWMSG_ENDPOINT_LOCAL, client_fd));
+            BAIL_ON_ERROR(status = lwmsg_peer_accept_fd_internal(
+                task->peer,
+                LWMSG_ENDPOINT_LOCAL,
+                client_fd,
+                task->endpoint));
             client_fd = -1;
             slot = LWMSG_FALSE;
         }
@@ -993,11 +1174,6 @@ lwmsg_peer_task_run_accept(
 
     /* We already have the fd when accepting a connection, so set it up for events now */
     BAIL_ON_ERROR(status = lwmsg_task_set_trigger_fd(task->event_task, CONNECTION_PRIVATE(task->assoc)->fd));
-
-    if (!task->session)
-    {
-        BAIL_ON_ERROR(status = lwmsg_peer_session_new(peer, &task->session));
-    }
 
     status = lwmsg_assoc_accept(task->assoc, (LWMsgSession*) task->session);
 
@@ -1870,11 +2046,33 @@ lwmsg_peer_task_run(
     PeerAssocTask* task = (PeerAssocTask*) data;
     LWMsgPeer* peer = task->session->peer;
     LWMsgTime my_timeout = {-1, -1};
+    siginfo_t siginfo = {0};
 
     if (*next_timeout >= 0)
     {
         my_timeout.seconds = *next_timeout / 1000000000ll;
         my_timeout.microseconds = (*next_timeout % 1000000000ll) / 1000;
+    }
+
+    if (trigger & LWMSG_TASK_TRIGGER_INIT)
+    {
+        BAIL_ON_ERROR(status = lwmsg_task_set_unix_signal(
+            _task,
+            SIGUSR1,
+            LWMSG_TRUE));
+    }
+
+    if (trigger & LWMSG_TASK_TRIGGER_UNIX_SIGNAL)
+    {
+        while (lwmsg_task_next_unix_signal(_task, &siginfo))
+        {
+            if (siginfo.si_signo == SIGUSR1 && task->assoc)
+            {
+                pthread_mutex_lock(&task->session->lock);
+                BAIL_ON_ERROR(status = lwmsg_peer_log_state(task));
+                pthread_mutex_unlock(&task->session->lock);
+            }
+        }
     }
 
     if (trigger & LWMSG_TASK_TRIGGER_FD_READABLE)

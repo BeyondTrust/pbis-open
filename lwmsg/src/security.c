@@ -134,6 +134,15 @@ lwmsg_security_token_copy(
 }
 
 
+LWMsgStatus
+lwmsg_security_token_to_string(
+    LWMsgSecurityToken* token,
+    LWMsgBuffer* buffer
+    )
+{
+    return token->tclass->to_string(token, buffer);
+}
+
 void
 lwmsg_security_token_delete(
     LWMsgSecurityToken* token

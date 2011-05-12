@@ -860,9 +860,18 @@ lwmsg_peer_session_connect_endpoint(
     DirectSession* direct_session = NULL;
     PeerAssocTask* assoc_session = NULL;
 
+    if (session->endpoint_str)
+    {
+        free(session->endpoint_str);
+        session->endpoint_str = NULL;
+    }
+
+    session->is_outgoing = LWMSG_TRUE;
+
     switch (endpoint->type)
     {
     case LWMSG_ENDPOINT_DIRECT:
+        session->endpoint_str = lwmsg_format("<direct %s>", endpoint->endpoint);
         BAIL_ON_ERROR(status = lwmsg_direct_session_new(session, &direct_session));
         session->refs++;
         BAIL_ON_ERROR(status = lwmsg_direct_connect(endpoint->endpoint, direct_session));
@@ -878,11 +887,13 @@ lwmsg_peer_session_connect_endpoint(
         BAIL_ON_ERROR(status = lwmsg_connection_new(peer->context, peer->protocol, &assoc));
         if (endpoint->fd >= 0)
         {
+            session->endpoint_str = lwmsg_format("<local fd:%d>", endpoint->fd);
             BAIL_ON_ERROR(status = lwmsg_connection_set_fd(assoc, endpoint->type, endpoint->fd));
             endpoint->fd = -1;
         }
         else
         {
+            session->endpoint_str = lwmsg_format("<local socket:%s>", endpoint->endpoint);
             BAIL_ON_ERROR(status = lwmsg_connection_set_endpoint(assoc, endpoint->type, endpoint->endpoint));
         }
         BAIL_ON_ERROR(status = lwmsg_assoc_set_nonblock(assoc, LWMSG_TRUE));

@@ -998,10 +998,11 @@ error:
 }
 
 LWMsgStatus
-lwmsg_peer_accept_fd(
+lwmsg_peer_accept_fd_internal(
     LWMsgPeer* peer,
     LWMsgEndpointType type,
-    int fd
+    int fd,
+    const char* endpoint
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
@@ -1019,6 +1020,21 @@ lwmsg_peer_accept_fd(
     BAIL_ON_ERROR(status = lwmsg_set_close_on_exec(fd));
     /* Create new connection with client fd, put it into task, schedule task */
     BAIL_ON_ERROR(status = lwmsg_peer_session_new(peer, &session));
+    switch (type)
+    {
+    case LWMSG_ENDPOINT_LOCAL:
+        if (endpoint)
+        {
+            session->endpoint_str = lwmsg_format("<local socket:%s>", endpoint);
+        }
+        else
+        {
+            session->endpoint_str = lwmsg_format("<local fd:%d>", fd);
+        }
+        break;
+    default:
+        break;
+    }
     BAIL_ON_ERROR(status = lwmsg_connection_new(peer->context, peer->protocol, &assoc));
     BAIL_ON_ERROR(status = lwmsg_connection_set_fd(assoc, type, fd));
     BAIL_ON_ERROR(status = lwmsg_assoc_set_nonblock(assoc, LWMSG_TRUE));
@@ -1045,4 +1061,14 @@ error:
     }
 
     return status;
+}
+
+LWMsgStatus
+lwmsg_peer_accept_fd(
+    LWMsgPeer* peer,
+    LWMsgEndpointType type,
+    int fd
+    )
+{
+    return lwmsg_peer_accept_fd_internal(peer, type, fd, NULL);
 }

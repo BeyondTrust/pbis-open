@@ -39,6 +39,7 @@
 #define __LWMSG_SECURITY_PRIVATE_H__
 
 #include <lwmsg/security.h>
+#include <lwmsg/buffer.h>
 
 typedef struct LWMsgSecurityTokenClass
 {
@@ -138,6 +139,7 @@ typedef struct LWMsgSecurityTokenClass
      * @return a hash code
      */
     size_t (*hash)(LWMsgSecurityToken* token);
+    LWMsgStatus (*to_string)(LWMsgSecurityToken* token, LWMsgBuffer* buffer);
 } LWMsgSecurityTokenClass;
 
 /**
@@ -175,6 +177,12 @@ lwmsg_security_token_new(
 void*
 lwmsg_security_token_get_private(
     LWMsgSecurityToken* token
+    );
+
+LWMsgStatus
+lwmsg_security_token_to_string(
+    LWMsgSecurityToken* token,
+    LWMsgBuffer* buffer
     );
 
 struct LWMsgSecurityToken

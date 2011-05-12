@@ -243,7 +243,12 @@ typedef struct PeerSession
     DirectSession* direct_session;
     /* Assoc session */
     PeerAssocTask* assoc_session;
+    /* Explicit endpoint to connect to in lieu of list in peer */
     PeerEndpoint* endpoint;
+    /* String representation of connected endpoint */
+    char* endpoint_str;
+    /* Is session outgoing? */
+    unsigned is_outgoing:1;
 } PeerSession;
 
 struct LWMsgHandle
@@ -435,6 +440,14 @@ lwmsg_peer_release_client_slot(
 size_t
 lwmsg_peer_get_num_clients(
     LWMsgPeer* peer
+    );
+
+LWMsgStatus
+lwmsg_peer_accept_fd_internal(
+    LWMsgPeer* peer,
+    LWMsgEndpointType type,
+    int fd,
+    const char* endpoint
     );
 
 void
