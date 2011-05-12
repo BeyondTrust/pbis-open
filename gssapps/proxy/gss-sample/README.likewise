@@ -1,0 +1,5 @@
+This is the MIT Kerberos 1.3.6 GSS sample programs.  It is a copy of
+krb5-1.3.6/src/appl/gss-sample.  It contains a Makefile that has been
+generated with configufre and then modified slightly to use the Kerberos
+headers and libraries in /usr/include and /usr/lib instead of the ones in the
+krb5 1.3.6 tree so that it can be built stand-alone.
