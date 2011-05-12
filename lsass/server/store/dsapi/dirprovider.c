@@ -155,56 +155,19 @@ DirectoryLoadProvider(
 
     dlerror();
 
+#ifdef DSAPI_INTERNAL_PROVIDER
+    pProvider->pLibHandle = NULL;
+    pfnInitProvider = DirectoryInitializeProvider;
+    pProvider->pfnShutdown = DirectoryShutdownProvider;
+#else
     pProvider->pLibHandle = dlopen(pProviderInfo->pszProviderPath,
-				   RTLD_NOW | RTLD_GLOBAL);
+        RTLD_NOW | RTLD_GLOBAL);
     if (pProvider->pLibHandle == NULL)
     {
         PCSTR pszError = NULL;
 
         DIRECTORY_LOG_ERROR("Failed to open directory provider at path [%s]",
-			    pProviderInfo->pszProviderPath);
-
-        pszError = dlerror();
-        if (!LW_IS_NULL_OR_EMPTY_STR(pszError))
-        {
-          DIRECTORY_LOG_ERROR("%s", pszError);
-        }
-
-        dwError = LW_ERROR_INVALID_AUTH_PROVIDER;
-        BAIL_ON_DIRECTORY_ERROR(dwError);
-    }
-
-    dlerror();
-    pfnInitProvider = (PFNINITIALIZEDIRPROVIDER)dlsym(
-                                        pProvider->pLibHandle,
-                                        DIRECTORY_SYMBOL_NAME_INITIALIZE_PROVIDER);
-    if (pfnInitProvider == NULL)
-    {
-        PCSTR pszError = NULL;
-
-        DIRECTORY_LOG_ERROR("Invalid directory provider at path [%s]",
-			    pProviderInfo->pszProviderPath);
-
-        pszError = dlerror();
-        if (!LW_IS_NULL_OR_EMPTY_STR(pszError))
-        {
-          DIRECTORY_LOG_ERROR("%s", pszError);
-        }
-
-        dwError = LW_ERROR_INVALID_AUTH_PROVIDER;
-        BAIL_ON_DIRECTORY_ERROR(dwError);
-    }
-
-    dlerror();
-    pProvider->pfnShutdown = (PFNSHUTDOWNDIRPROVIDER)dlsym(
-                                        pProvider->pLibHandle,
-                                        DIRECTORY_SYMBOL_NAME_SHUTDOWN_PROVIDER);
-    if (pProvider->pfnShutdown == NULL)
-    {
-        PCSTR pszError = NULL;
-
-        DIRECTORY_LOG_ERROR("Invalid directory provider at path [%s]",
-			    pProviderInfo->pszProviderPath);
+            pProviderInfo->pszProviderPath);
 
         pszError = dlerror();
         if (!LW_IS_NULL_OR_EMPTY_STR(pszError))
@@ -215,6 +178,49 @@ DirectoryLoadProvider(
         dwError = LW_ERROR_INVALID_AUTH_PROVIDER;
         BAIL_ON_DIRECTORY_ERROR(dwError);
     }
+
+    dlerror();
+    pfnInitProvider = (PFNINITIALIZEDIRPROVIDER)dlsym(
+        pProvider->pLibHandle,
+        DIRECTORY_SYMBOL_NAME_INITIALIZE_PROVIDER);
+    if (pfnInitProvider == NULL)
+    {
+        PCSTR pszError = NULL;
+
+        DIRECTORY_LOG_ERROR("Invalid directory provider at path [%s]",
+            pProviderInfo->pszProviderPath);
+
+        pszError = dlerror();
+        if (!LW_IS_NULL_OR_EMPTY_STR(pszError))
+        {
+            DIRECTORY_LOG_ERROR("%s", pszError);
+        }
+
+        dwError = LW_ERROR_INVALID_AUTH_PROVIDER;
+        BAIL_ON_DIRECTORY_ERROR(dwError);
+    }
+
+    dlerror();
+    pProvider->pfnShutdown = (PFNSHUTDOWNDIRPROVIDER)dlsym(
+        pProvider->pLibHandle,
+        DIRECTORY_SYMBOL_NAME_SHUTDOWN_PROVIDER);
+    if (pProvider->pfnShutdown == NULL)
+    {
+        PCSTR pszError = NULL;
+
+        DIRECTORY_LOG_ERROR("Invalid directory provider at path [%s]",
+            pProviderInfo->pszProviderPath);
+
+        pszError = dlerror();
+        if (!LW_IS_NULL_OR_EMPTY_STR(pszError))
+        {
+            DIRECTORY_LOG_ERROR("%s", pszError);
+        }
+
+        dwError = LW_ERROR_INVALID_AUTH_PROVIDER;
+        BAIL_ON_DIRECTORY_ERROR(dwError);
+    }
+#endif
 
     dwError = pfnInitProvider(
                     &pProvider->pszProviderName,

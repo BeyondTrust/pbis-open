@@ -1,1 +1,1 @@
-SUBDIRS="dsapi samdb"
+SUBDIRS="samdb dsapi"

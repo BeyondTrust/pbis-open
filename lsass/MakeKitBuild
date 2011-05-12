@@ -181,6 +181,9 @@ configure()
     mk_define AD_DEFAULT_HOMEDIR_PREFIX '"/home"'
     mk_define AD_DEFAULT_SKELDIRS '"/etc/skel"'
 
+    # Build samdb directly into dsapi
+    mk_define DSAPI_INTERNAL_PROVIDER
+
     mk_check_headers \
 	stdlib.h sys/varargs.h time.h strings.h stdbool.h \
 	unistd.h sys/systeminfo.h sys/utsname.h sys/socket.h \

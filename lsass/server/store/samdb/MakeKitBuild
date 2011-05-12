@@ -21,11 +21,10 @@ make()
         samdbuser.c       \
         samdbsecurity.c"
 
-    mk_dlo \
-	DLO=libsamdb \
+    mk_group \
+	GROUP=samdb \
 	SOURCES="$SAMDB_SOURCES" \
 	INCLUDEDIRS=". ../include ../../include ../../../include" \
 	HEADERDEPS="sqlite3.h openssl/md4.h uuid/uuid.h lw/base.h lwio/lwio.h lwadvapi.h" \
-	LIBDEPS="uuid lwbase sqlite3 crypto dsapi" \
-        SYMFILE="samdb.sym"
+	LIBDEPS="uuid lwbase sqlite3 crypto"
 }

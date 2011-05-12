@@ -18,6 +18,7 @@ make()
     mk_library \
 	LIB=dsapi \
 	SOURCES="$DSAPI_SOURCES" \
+        GROUPS="../samdb/samdb" \
 	INCLUDEDIRS=". ../include ../../include ../../../include" \
 	HEADERDEPS="lw/base.h lwadvapi.h" \
 	LIBDEPS="lwbase lwadvapi lsacommon"

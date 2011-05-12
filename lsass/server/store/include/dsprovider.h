@@ -129,4 +129,16 @@ typedef DWORD (*PFNSHUTDOWNDIRPROVIDER)(
                     PDIRECTORY_PROVIDER_FUNCTION_TABLE pFnTable
                     );
 
+DWORD
+DirectoryInitializeProvider(
+    PSTR* ppszProviderName,
+    PDIRECTORY_PROVIDER_FUNCTION_TABLE* ppFnTable
+    );
+
+DWORD
+DirectoryShutdownProvider(
+    PSTR pszProviderName,
+    PDIRECTORY_PROVIDER_FUNCTION_TABLE pFnTable
+    );
+
 #endif /* DSPROVIDER_H_ */
