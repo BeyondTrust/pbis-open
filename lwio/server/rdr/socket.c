@@ -223,13 +223,14 @@ RdrSocketCreate(
     LwListInit(&pSocket->PendingResponse);
     LwListInit(&pSocket->StateWaiters);
 
+    pSocket->fd = -1;
+
     pthread_mutex_init(&pSocket->mutex, NULL);
     bDestroyMutex = TRUE;
 
     /* Assume SMBv1 to start */
     pSocket->version = SMB_PROTOCOL_VERSION_1;
     pSocket->refCount = 1;
-    pSocket->fd = -1;
 
     /* Hostname is trusted */
     ntStatus = LwRtlWC16StringDuplicate(&pSocket->pwszHostname, pwszHostname);
