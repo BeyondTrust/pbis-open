@@ -1,6 +1,6 @@
 _dcerpc_flex_build()
 {
-    mk_push_vars NAMESPACE FLEX BISON
+    mk_push_vars NAMESPACE BISON
     unset _flex _namespace
     mk_parse_params
 
@@ -9,11 +9,11 @@ _dcerpc_flex_build()
         _namespace="-P${NAMESPACE}"
     fi
 
-    MK_MSG_DOMAIN="flex"
+    MK_MSG_DOMAIN="dceflex"
     mk_msg "${2#${MK_SOURCE_DIR}/}"
 
     mk_mkdir "`dirname "$1"`"
-    mk_run_or_fail ${FLEX} -o"$1" ${_namespace} "$2"
+    mk_run_or_fail "$MK_RUN_BINDIR/dceflex" -o"$1" ${_namespace} "$2"
 }
 
 dcerpc_flex()
@@ -31,7 +31,7 @@ dcerpc_flex()
 
     mk_target \
         TARGET="$OUTPUT" \
-        DEPS="'$_source' '@$FLEX'" \
+        DEPS="'$_source' '@$MK_RUN_BINDIR/dceflex'" \
         _dcerpc_flex_build %FLEX %NAMESPACE '$@' "$_source"
 
     mk_pop_vars

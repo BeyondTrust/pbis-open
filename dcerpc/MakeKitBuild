@@ -1,4 +1,4 @@
-SUBDIRS=". libdcethread idl_compiler include uuid idl_lib ncklib dcelib rpcd"
+SUBDIRS="dceflex libdcethread idl_compiler include uuid idl_lib ncklib dcelib rpcd"
 
 option()
 {
@@ -296,9 +296,11 @@ configure()
 
     # Check for stuff for build system (needed by idl compiler)
     mk_system build
-        mk_check_headers nl_types.h
+        mk_check_headers nl_types.h string.h malloc.h sys/types.h stdlib.h
         # Turn off warning about idl filenames
         mk_define DISABLE_SYSIDL_WARNING 1
+        # Make dceflex happy
+        mk_define STDC_HEADERS
     mk_system host
 
     # Programs
@@ -307,16 +309,6 @@ configure()
     mk_check_program FAIL=yes sed
 
     mk_check_moonunit
-
-    # We build flex using mk_system "build" so that we get a version of it
-    # suitable to run on the build system even if we are cross compiling.
-    # Normally this would deposit it in ${MK_RUN_BINDIR}.  However, the
-    # flex Makefile was hacked to not install the binary on "make install"
-    # to work around autoconf limitations.  This hack lets us run it
-    # directly out of its build directory.  This is not recommended as the
-    # build directory path is in implementation detail of MakeKit
-    mk_resolve_file "flex-2.5.4_build_${MK_BUILD_PRIMARY_ISA}/flex"
-    mk_declare -e -i FLEX="$result"
 
     # Extra files to generate
     mk_output_file include/dce/dce_error.h
@@ -333,14 +325,4 @@ configure()
     then
         mk_skip_subdir rpcd
     fi
-}
-
-make()
-{
-    mk_system "build"
-
-    mk_autotools \
-        SOURCEDIR=flex-2.5.4 \
-        TARGETS="flex-2.5.4_build_${MK_BUILD_PRIMARY_ISA}/flex" \
-        INSTALL=no
 }

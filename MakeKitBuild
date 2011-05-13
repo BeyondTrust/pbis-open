@@ -147,7 +147,7 @@ make()
             
     mk_target \
         TARGET="@bundled" \
-        DEPS="$bundled_targets @dcerpc/flex-2.5.4"
+        DEPS="$bundled_targets"
 
     mk_add_phony_target "$result"
 

@@ -1,0 +1,5 @@
+This is a stripped-down version of flex 2.5.4.  The IDL compiler
+unfortunately depends on a very specific version of flex to
+function, so it has been bundled as part of the distribution.
+
+See the COPYING file for copyright details.
