@@ -43,6 +43,7 @@
  * or implied warranty.
  */
 
+#include <config.h>
 #include <stdio.h>
 #ifdef _WIN32
 #include <windows.h>
@@ -71,7 +72,7 @@
 
 static void usage(void)
 {
-    fprintf(stderr, "Usage: gss-server [-port port] [-verbose] [-once]\n");
+    fprintf(stderr, "Usage: gssproxy-server [-port port] [-verbose] [-once]\n");
     fprintf(stderr, "       [-inetd] [-export] [-logfile file] service_name\n");
     exit(1);
 }

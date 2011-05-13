@@ -43,6 +43,7 @@
  * or implied warranty.
  */
 
+#include <config.h>
 #include <stdio.h>
 #ifdef _WIN32
 #include <windows.h>
@@ -80,7 +81,7 @@ static void usage(void);
 
 static void usage(void)
 {
-    fprintf(stderr, "Usage: gss-proxy [-port port] [-mech mechanism]\n");
+    fprintf(stderr, "Usage: gssproxy-proxy [-port port] [-mech mechanism]\n");
     fprintf(stderr, "       [-forceclientmech mechanism]\n");
     fprintf(stderr, "       [-domain domain]\n");
     fprintf(stderr, "       [-verbose] [-once] [-inetd] [-export] [-logfile file]\n");

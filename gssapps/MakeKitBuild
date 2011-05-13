@@ -1,4 +1,4 @@
-SUBDIRS=simple
+SUBDIRS="simple proxy"
 
 configure()
 {
@@ -10,5 +10,5 @@ configure()
 
     mk_check_headers \
         FAIL=yes \
-        stdlib.h
+        stdlib.h string.h unistd.h sys/time.h
 }

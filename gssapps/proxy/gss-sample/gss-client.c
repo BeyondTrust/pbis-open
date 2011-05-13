@@ -43,6 +43,7 @@
  * or implied warranty.
  */
 
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,8 +73,8 @@ static int verbose = 1;
 
 static void usage(void)
 {
-    fprintf(stderr, "Usage: gss-client [-port port] [-mech mechanism] [-d]\n");
-    fprintf(stderr, "       [-iov message_sequence]\n");
+    fprintf(stderr, "Usage: gssproxy-client [-port port] [-mech mechanism]\n");
+    fprintf(stderr, "       [-d] [-iov message_sequence]\n");
     fprintf(stderr, "       [-ntlmcred user password domain]\n");
     fprintf(stderr, "       [-seq] [-noreplay] [-nomutual]\n");
     fprintf(stderr, "       [-f] [-q] [-ccount count] [-mcount count]\n");
