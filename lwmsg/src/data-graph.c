@@ -83,6 +83,7 @@ lwmsg_data_extract_length(
 
 LWMsgStatus
 lwmsg_data_extract_active_arm(
+    LWMsgDataContext* context,
     LWMsgTypeIter* iter,
     unsigned char* dominating_struct,
     LWMsgTypeIter* active_iter
@@ -106,7 +107,18 @@ lwmsg_data_extract_active_arm(
         }
     }
 
-    BAIL_ON_ERROR(status = LWMSG_STATUS_NOT_FOUND);
+    if (context)
+    {
+        BAIL_ON_ERROR(status = DATA_RAISE(
+            context,
+            iter,
+            LWMSG_STATUS_MALFORMED,
+            "No arm with tag %" PRIdMAX " found in union"));
+    }
+    else
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+    }
     
 done:
 
@@ -404,6 +416,7 @@ lwmsg_data_visit_graph_children(
     case LWMSG_KIND_UNION:
         /* Find the active arm */
         BAIL_ON_ERROR(status = lwmsg_data_extract_active_arm(
+                          NULL,
                           iter,
                           iter->dom_object,
                           &inner));

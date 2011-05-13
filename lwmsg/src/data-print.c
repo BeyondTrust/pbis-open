@@ -655,6 +655,7 @@ lwmsg_data_print_graph_visit(
         {
         case LWMSG_KIND_UNION:
             BAIL_ON_ERROR(status = lwmsg_data_extract_active_arm(
+                info->context,
                 iter,
                 iter->dom_object,
                 &arm));

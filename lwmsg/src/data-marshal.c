@@ -479,13 +479,19 @@ error:
 }
 
 static LWMsgStatus
-lwmsg_data_marshal_union(LWMsgDataContext* context, LWMsgMarshalState* state, LWMsgTypeIter* iter, unsigned char* object, LWMsgBuffer* buffer)
+lwmsg_data_marshal_union(
+    LWMsgDataContext* context,
+    LWMsgMarshalState* state,
+    LWMsgTypeIter* iter,
+    unsigned char* object,
+    LWMsgBuffer* buffer)
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgTypeIter arm;
 
     /* Find the active arm */
     BAIL_ON_ERROR(status = lwmsg_data_extract_active_arm(
+                      context,
                       iter,
                       state->dominating_object,
                       &arm));

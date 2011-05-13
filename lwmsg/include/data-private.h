@@ -149,6 +149,7 @@ lwmsg_data_extract_length(
 
 LWMsgStatus
 lwmsg_data_extract_active_arm(
+    LWMsgDataContext* context,
     LWMsgTypeIter* iter,
     unsigned char* dominating_struct,
     LWMsgTypeIter* active_iter

@@ -997,6 +997,7 @@ lwmsg_data_unmarshal_union(
 
     /* Find the active arm */
     BAIL_ON_ERROR(status = lwmsg_data_extract_active_arm(
+                      context,
                       iter,
                       state->dominating_object,
                       &arm));
