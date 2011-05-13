@@ -60,7 +60,9 @@ configure()
             ;;
     esac
 
-    mk_check_endian
+    mk_multiarch_do
+        mk_check_endian
+    mk_multiarch_done
     
     mk_declare -o \
         MOD_EXT="$MK_DLO_EXT" \
@@ -72,6 +74,16 @@ configure()
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
     mk_define LIBDIR "\"${MK_LIBDIR}\""
     mk_define PREFIXDIR "\"${MK_PREFIX}\""
+
+    if [ "$LWIO_BUILTIN_DRIVERS" = "yes" ]
+    then
+        mk_define ENABLE_STATIC_DRIVERS
+        
+        for _driver in ${LWIO_DRIVERS}
+        do
+            mk_define "ENABLE_`echo $_driver | tr 'a-z' 'A-Z'`"
+        done
+    fi
 
     # FIXME: do a real configure test here
     mk_define HAVE_SOCKLEN_T 1
@@ -167,13 +179,15 @@ configure()
 
     lw_check_pthread_once_init
 
-    if [ "$HAVE_FUSE_H" != "no" -a "$HAVE_LIB_FUSE" != "no" ]
+    if [ "$HAVE_FUSE_H" != "no" -a "$HAVE_LIB_FUSE" != "no" -a "$LWIO_FUSE" = "yes" ]
     then
-        mk_msg "build FUSE module: yes"
+        LWIO_FUSE_ENABLED=yes
     else
-        mk_msg "build FUSE module: no"
+        LWIO_FUSE_ENABLED=no
         mk_skip_subdir fuse
     fi
+
+    mk_msg "build FUSE module: $LWIO_FUSE_ENABLED"
 
     mk_output_file "etc/lwiod.reg"
 }
