@@ -127,14 +127,13 @@ common_files()
         "${MK_BINDIR}/*" \
         "${MK_SBINDIR}/*" \
         "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
-        "${MK_LIBDIR}/*.sys${MK_DLO_EXT}" \
-        "${MK_LIBDIR}/liblsass_auth_provider_*${MK_DLO_EXT}" \
-        "${MK_LIBDIR}/liblwmapsecurity*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/liblsaaccess*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/libedit${MK_DLO_EXT}" \
         "${MK_LIBDIR}/libedit${MK_DLO_EXT}.*" \
-        "${MK_LIBDIR}/lib*_srv${MK_DLO_EXT}" \
-        "${MK_LIBDIR}/libsamdb${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lwio-driver/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lw-map-sec/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lsa-provider/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lsa-rpc/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*" \
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
