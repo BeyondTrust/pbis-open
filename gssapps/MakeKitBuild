@@ -10,5 +10,10 @@ configure()
 
     mk_check_headers \
         FAIL=yes \
-        stdlib.h string.h unistd.h sys/time.h
+        stdlib.h string.h unistd.h sys/time.h \
+        lw/base.h krb5.h gssapi.h ntlm/sspintlm.h
+
+    mk_check_libraries \
+        FAIL=yes \
+        lwbase_nothr gssapi_krb5 krb5 k5crypto krb5support com_err
 }
