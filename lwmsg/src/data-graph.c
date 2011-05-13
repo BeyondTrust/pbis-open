@@ -113,7 +113,7 @@ lwmsg_data_extract_active_arm(
             context,
             iter,
             LWMSG_STATUS_MALFORMED,
-            "No arm with tag %" PRIdMAX " found in union"));
+            "No arm with tag %" PRIu32 " found in union"));
     }
     else
     {
