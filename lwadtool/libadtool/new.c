@@ -521,6 +521,21 @@ DWORD ValidateAdtNewGroupAction(IN AdtActionTP action)
     PSTR name = NULL;
     PSTR tmp = NULL;
 
+    if (action->newGroup.scope) {
+        if(
+           !IsEqual(action->newGroup.scope, GROUP_TYPE_NAME_DOMAIN_LOCAL, 1) &&
+           !IsEqual(action->newGroup.scope, GROUP_TYPE_NAME_GLOBAL, 1) &&
+           !IsEqual(action->newGroup.scope, GROUP_TYPE_NAME_UNIVERSAL, 1)
+        ) {
+            dwError = ADT_ERR_INVALID_GROUP_SCOPE;
+            ADT_BAIL_ON_ERROR_NP(dwError);
+        }
+    }
+    else {
+        dwError = LwAllocateStringPrintf(&(action->newGroup.scope), GROUP_TYPE_NAME_GLOBAL);
+        ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
+    }
+
     dwError = OpenADSearchConnectionDN(action, &(action->newGroup.dn));
     ADT_BAIL_ON_ERROR_NP(dwError);
 
@@ -578,13 +593,6 @@ DWORD ValidateAdtNewGroupAction(IN AdtActionTP action)
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
     }
 
-    /*
-    if((action->newGroup.scope < 0) || (action->newGroup.scope > 2)) {
-        dwError = ADT_ERR_INVALID_GROUP_SCOPE;
-        ADT_BAIL_ON_ERROR_NP(dwError);
-    }
-    */
-
     dn = NULL;
     name = NULL;
 
@@ -603,6 +611,7 @@ DWORD ExecuteAdtNewGroupAction(IN AdtActionTP action)
 {
     DWORD dwError = 0;
     AppContextTP appContext = (AppContextTP) ((AdtActionBaseTP) action)->opaque;
+
 
     PSTR desc[] = {
         action->newGroup.desc,
@@ -624,17 +633,35 @@ DWORD ExecuteAdtNewGroupAction(IN AdtActionTP action)
         NULL
     };
 
+    PSTR gType[] = {
+        NULL,
+        NULL
+    };
+
     AttrValsT avp[] = {
         { "objectClass", GetObjectClassVals(ObjectClassGroup) },
         { "name", name },
         { "cn", cn },
         { "sAMAccountName", samAccountName },
         { "description", desc },
+        { "groupType", gType },
         { NULL, NULL }
     };
 
     PrintStderr(appContext, LogLevelVerbose, "%s: Creating group %s ...\n",
                 appContext->actionName, action->newGroup.dn);
+
+    if(IsEqual(action->newGroup.scope, GROUP_TYPE_NAME_DOMAIN_LOCAL, 1)) {
+        gType[0] = GROUP_TYPE_DOMAIN_LOCAL;
+    }
+    else {
+        if(IsEqual(action->newGroup.scope, GROUP_TYPE_NAME_GLOBAL, 1)) {
+            gType[0] = GROUP_TYPE_GLOBAL;
+        }
+        else {
+            gType[0] = GROUP_TYPE_UNIVERSAL;
+        }
+    }
 
     dwError = CreateADObject(appContext, action->newGroup.dn, avp);
     ADT_BAIL_ON_ERROR_NP(dwError);

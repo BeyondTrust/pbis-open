@@ -65,6 +65,14 @@
 
 #define ADT_KRB5_DEFAULT_TKT_LIFE (12 * 60 * 60)
 
+#define GROUP_TYPE_DOMAIN_LOCAL "-2147483644"
+#define GROUP_TYPE_GLOBAL       "-2147483646"
+#define GROUP_TYPE_UNIVERSAL    "-2147483640"
+
+#define GROUP_TYPE_NAME_DOMAIN_LOCAL "domain-local"
+#define GROUP_TYPE_NAME_GLOBAL       "global"
+#define GROUP_TYPE_NAME_UNIVERSAL    "universal"
+
 #ifndef LW_ENDIAN_SWAP16
 
 #define LW_ENDIAN_SWAP16(wX)                     \

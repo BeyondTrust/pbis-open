@@ -110,6 +110,46 @@ ValidateAdtAddToRemoveFromGroupAction(IN AdtActionTP action, IN BOOL isRemove)
         goto cleanup;
 }
 
+static DWORD
+ValidateGroupType(IN AdtActionTP action)
+{
+    DWORD dwError = 0;
+    AppContextTP appContext = (AppContextTP) ((AdtActionBaseTP) action)->opaque;
+    INT i, j;
+    AttrValsT *avp = NULL;
+
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), (PVOID) &avp);
+    ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
+
+    avp[0].attr = "groupType";
+
+    dwError = GetObjectAttrs(appContext, action->addToGroup.targetGroup, avp);
+    ADT_BAIL_ON_ERROR_NP(dwError);
+
+    if(IsEqual(avp[0].vals[0], GROUP_TYPE_GLOBAL, 1)) {
+        dwError = ADT_ERR_FAILED_GTYPE_CHECK;
+        ADT_BAIL_ON_ERROR_NP(dwError);
+    }
+
+    cleanup:
+        if (avp) {
+            for (i = 0; avp[i].vals; ++i) {
+                for (j = 0; avp[i].vals[j]; ++j) {
+                    LW_SAFE_FREE_MEMORY(avp[i].vals[j]);
+                }
+
+                LW_SAFE_FREE_MEMORY(avp[i].vals);
+            }
+
+            LW_SAFE_FREE_MEMORY(avp);
+        }
+
+        return dwError;
+
+    error:
+        goto cleanup;
+}
+
 /**
  * Shared add/remove to/from group execute method.
  * @param action Action reference.
@@ -151,6 +191,9 @@ ExecuteAdtAddToRemoveFromGroupAction(IN AdtActionTP action, IN BOOL isRemove)
         dwError = ModifyADObject(appContext, action->addToGroup.targetGroup, avpGrp, 1);
     }
     else {
+        dwError = ValidateGroupType(action);
+        ADT_BAIL_ON_ERROR_NP(dwError);
+
         dwError = ModifyADObject(appContext, action->addToGroup.targetGroup, avpGrp, 0);
     }
     ADT_BAIL_ON_ERROR_NP(dwError);

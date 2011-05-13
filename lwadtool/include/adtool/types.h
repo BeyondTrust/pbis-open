@@ -161,6 +161,7 @@ typedef struct AdtActionRemoveFromCell {
     PSTR dn;      /* OU containing the cell (DN/RDN) */
     PSTR user;    /* User to be removed from the cell (DN/RDN, UPN, or SamAccountName) */
     PSTR group;   /* Group to be removed from the cell (DN/RDN, or CN) */
+    INT isUnsetAttrs; /* Unset values of uidNumber, gidNumber, loginShell, and unixHomeDirectory attributes when operating on a default LW cell. */
 } AdtActionRemoveFromCellT, *AdtActionRemoveFromCellTP;
 
 typedef struct AdtActionLinkCell {
@@ -323,7 +324,7 @@ typedef struct AdtActionNewGroup {
     PSTR name;           /* Name */
     PSTR desc;           /* Description */
     PSTR namePreWin2000; /* Pre Windows-2000 name (samAccountName) */
-    INT scope;           /* Group scope: 0-Global (default), 1-Universal, 2-Domain local */
+    PSTR scope;           /* domain-local, global, universal */
 } AdtActionNewGroupT, *AdtActionNewGroupTP;
 
 typedef struct AdtActionNewComputer {

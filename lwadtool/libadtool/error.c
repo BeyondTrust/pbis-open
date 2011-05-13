@@ -123,6 +123,10 @@ static AdtErrorMapT AdtErrorMap[] = {
         "Failed to get default naming context"
     },
     {
+        ADT_ERR_FAILED_GTYPE_CHECK,
+        "Cannot add user/group from a different domain to a Global group. Group type must either be \"Domain Local\" or \"Universal\""
+    },
+    {
         ADT_ERR_ARG_MISSING_UPN_FOR_KEYTAB,
         "Must specify user principal name when using krb5 keytab file"
     },
@@ -268,7 +272,7 @@ static AdtErrorMapT AdtErrorMap[] = {
     },
     {
         ADT_ERR_INVALID_GROUP_SCOPE,
-        "Invalid group scope. Acceptable values are 0 (default), 1, and 2."
+        "Invalid group type. Acceptable values: domain-local, global, universal. Default: global"
     },
     {
         ADT_ERR_MULTIPLE_USERS,
