@@ -28,7 +28,8 @@ configure()
         MOD_EXT="${MK_DLO_EXT}" \
         LIBDIR="${MK_LIBDIR}" \
         BINDIR="${MK_BINDIR}" \
-        SBINDIR="${MK_SBINDIR}"
+        SBINDIR="${MK_SBINDIR}" \
+        CACHEDIR="$LW_CACHEDIR"
 
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
 
