@@ -61,6 +61,7 @@ static LWMsgTypeSpec gNtlmSecBufferSpec[] =
     LWMSG_MEMBER_UINT32(SecBuffer, BufferType),
     LWMSG_MEMBER_POINTER(SecBuffer, pvBuffer, LWMSG_UINT8(CHAR)),
     LWMSG_ATTR_LENGTH_MEMBER(SecBuffer, cbBuffer),
+    LWMSG_ATTR_ENCODING("hex+ascii"),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
@@ -131,6 +132,7 @@ static LWMsgTypeSpec gNtlmSecWinntAuthIdSpec[] =
         LWMSG_UINT8(CHAR)
         ),
     LWMSG_ATTR_LENGTH_MEMBER(SEC_WINNT_AUTH_IDENTITY, PasswordLength),
+    LWMSG_ATTR_SENSITIVE,
 
     LWMSG_MEMBER_UINT32(SEC_WINNT_AUTH_IDENTITY, Flags),
 
@@ -189,7 +191,7 @@ static LWMsgTypeSpec gNtlmSecPkgContextSessionKeySpec[] =
         pSessionKey,
         LWMSG_UINT8(CHAR)),
     LWMSG_ATTR_LENGTH_MEMBER(SecPkgContext_SessionKey, SessionKeyLength),
-
+    LWMSG_ATTR_SENSITIVE,
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
@@ -209,7 +211,7 @@ static LWMsgTypeSpec gNtlmSecPkgContextPacLogonInfoSpec[] =
         pLogonInfo,
         LWMSG_UINT8(CHAR)),
     LWMSG_ATTR_LENGTH_MEMBER(SecPkgContext_PacLogonInfo, LogonInfoLength),
-    LWMSG_ATTR_SENSITIVE,
+    LWMSG_ATTR_ENCODING("hex+ascii"),
 
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
@@ -435,6 +437,7 @@ static LWMsgTypeSpec gNtlmDecryptMsgRespSpec[] =
         Message,
         gNtlmSecBufferDescSpec
         ),
+    LWMSG_ATTR_SENSITIVE,
 
     LWMSG_MEMBER_UINT32(NTLM_IPC_DECRYPT_MSG_RESPONSE, bEncrypted),
 
@@ -477,6 +480,7 @@ static LWMsgTypeSpec gNtlmEncryptMsgSpec[] =
     LWMSG_MEMBER_POINTER_BEGIN(NTLM_IPC_ENCRYPT_MSG_REQ, pMessage),
     LWMSG_TYPESPEC(gNtlmSecBufferDescSpec),
     LWMSG_POINTER_END,
+    LWMSG_ATTR_SENSITIVE,
 
     LWMSG_MEMBER_UINT32(NTLM_IPC_ENCRYPT_MSG_REQ, MessageSeqNo),
 
