@@ -38,6 +38,7 @@
 
 #include <config.h>
 
+#include <inttypes.h>
 #include <lwmsg/common.h>
 #include "convert-private.h"
 #include "context-private.h"
@@ -50,7 +51,7 @@ LWMsgStatus
 lwmsg_data_extract_discrim_tag(
     LWMsgTypeIter* iter,
     unsigned char* dominating_struct,
-    intmax_t* tag
+    uint32_t* tag
     )
 {
     return lwmsg_convert_integer(
@@ -60,7 +61,7 @@ lwmsg_data_extract_discrim_tag(
         tag,
         sizeof(*tag),
         LWMSG_NATIVE_ENDIAN,
-        LWMSG_SIGNED);
+        LWMSG_UNSIGNED);
 }
 
 LWMsgStatus
@@ -88,7 +89,7 @@ lwmsg_data_extract_active_arm(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    intmax_t tag;
+    uint32_t tag;
 
     BAIL_ON_ERROR(status = lwmsg_data_extract_discrim_tag(
                       iter,

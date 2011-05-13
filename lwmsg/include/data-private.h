@@ -137,7 +137,7 @@ LWMsgStatus
 lwmsg_data_extract_discrim_tag(
     LWMsgTypeIter* iter,
     unsigned char* dominating_struct,
-    intmax_t* tag
+    uint32_t* tag
     );
 
 LWMsgStatus
