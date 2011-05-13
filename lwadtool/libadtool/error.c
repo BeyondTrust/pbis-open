@@ -124,7 +124,7 @@ static AdtErrorMapT AdtErrorMap[] = {
     },
     {
         ADT_ERR_FAILED_GTYPE_CHECK,
-        "Cannot add user/group from a different domain to a Global group. Group type must either be \"Domain Local\" or \"Universal\""
+        "Users/groups from other domains cannot be added to a Global group. Group type must either be \"Domain Local\" or \"Universal\""
     },
     {
         ADT_ERR_ARG_MISSING_UPN_FOR_KEYTAB,
