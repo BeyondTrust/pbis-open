@@ -400,11 +400,6 @@ default_unregister_handle(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     DefaultSession* my_session = DEFAULT_SESSION(session);
 
-    if (!my_session)
-    {
-        BAIL_ON_ERROR(status = LWMSG_STATUS_NOT_FOUND);
-    }
-
     if (!handle->valid)
     {
         BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_HANDLE);
