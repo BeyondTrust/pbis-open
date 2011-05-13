@@ -260,23 +260,6 @@ MemCreateKeyEx(
         BAIL_ON_NT_STATUS(status);
     }
 
-    status = MemDbCreateKeyEx(
-                 Handle,  // Access token is on this handle
-                 &regDbConn,
-                 pSubKey,
-                 0, // IN DWORD dwReserved
-                 NULL, // IN OPTIONAL PWSTR pClass
-                 0, //IN DWORD dwOptions
-                 AccessDesired, // IN ACCESS_MASK 
-                 pSecDescRel, // IN OPTIONAL 
-                 ulSecDescLength, // IN ULONG
-                 &hSubKey,
-                 pdwDisposition);
-    BAIL_ON_NT_STATUS(status);
-
-    status = _MemCreateHkeyReply(hSubKey, phkResult);
-    BAIL_ON_NT_STATUS(status);
-
     if (pSecDescRel)
     {
         SecurityDescriptor = pSecDescRel;
@@ -305,7 +288,26 @@ MemCreateKeyEx(
         AccessGranted = 0;
     }
     BAIL_ON_NT_STATUS(status);
+
+    status = MemDbCreateKeyEx(
+                 Handle,  // Access token is on this handle
+                 &regDbConn,
+                 pSubKey,
+                 0, // IN DWORD dwReserved
+                 NULL, // IN OPTIONAL PWSTR pClass
+                 0, //IN DWORD dwOptions
+                 AccessDesired, // IN ACCESS_MASK 
+                 pSecDescRel, // IN OPTIONAL 
+                 ulSecDescLength, // IN ULONG
+                 &hSubKey,
+                 pdwDisposition);
+    BAIL_ON_NT_STATUS(status);
+
+    status = _MemCreateHkeyReply(hSubKey, phkResult);
+    BAIL_ON_NT_STATUS(status);
+
     pKeyHandle->AccessGranted = AccessGranted;
+    hSubKey->NodeRefCount++;
 
     MemDbExportEntryChanged();
 
@@ -397,9 +399,16 @@ MemCloseKey(
     )
 {
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
+    BOOLEAN bInLock = FALSE;
     
     if (hKey)
     {
+        LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &MemRegRoot()->lock);
+        if (pKeyHandle->pKey->hKey->NodeRefCount >= 1)
+        {
+            pKeyHandle->pKey->hKey->NodeRefCount--;
+        }
+        LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
         LWREG_SAFE_FREE_MEMORY(pKeyHandle->pKey);
         LWREG_SAFE_FREE_MEMORY(pKeyHandle);
     }
@@ -457,6 +466,7 @@ MemDeleteKey(
     }
 
     LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &MemRegRoot()->lock);
+
     status = MemRegStoreFindNode(
                  hParentKey,
                  pSubKey,
@@ -470,13 +480,22 @@ MemDeleteKey(
         BAIL_ON_NT_STATUS(status);
     }
 
+    /* Don't delete this node if there are still open handles to it */
+    if (hRegKey->NodeRefCount >= 1)
+    {
+        status = STATUS_RESOURCE_IN_USE;
+        BAIL_ON_NT_STATUS(status);
+    }
+
     status = MemRegStoreDeleteNode(hRegKey);
     BAIL_ON_NT_STATUS(status);
 
     MemDbExportEntryChanged();
+
 cleanup:
     LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
     return status;
+
 error:
     goto cleanup;
 
@@ -778,6 +797,11 @@ MemDeleteTree(
 
     regDbConn.pMemReg = pKeyHandle->pKey->hKey;
     LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &MemRegRoot()->lock);
+
+#if 1
+    /* Add ref count checking here, or in the pfDeleteNodeCallback function */
+#endif
+
     status = MemDbRecurseDepthFirstRegistry(
                  Handle,
                  &regDbConn,

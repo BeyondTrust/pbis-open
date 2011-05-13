@@ -906,7 +906,6 @@ MemDbOpenKey(
                      &hSubKey);
         hParentKey = hSubKey;
         pwszSubKey = pwszPtr;
-        *pRegKey = hParentKey;
     } while (status == 0 && !bEndOfString);
     BAIL_ON_NT_STATUS(status);
 
@@ -920,6 +919,8 @@ MemDbOpenKey(
                      &AccessGranted);
         BAIL_ON_NT_STATUS(status);
     }
+    hParentKey->NodeRefCount++;
+    *pRegKey = hParentKey;
 
 cleanup:
     LWREG_SAFE_FREE_MEMORY(pwszTmpFullPath);

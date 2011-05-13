@@ -78,6 +78,12 @@ typedef struct _REGMEM_NODE
     DWORD SubNodeDepth;
 
     /*
+     * Key reference count. This is the number of open connections
+     * to the current node (Name), not any SubNodes referenced in this node.
+     */
+    DWORD NodeRefCount;
+
+    /*
      * Back reference to parent node. Needed for some operations (delete)
      */
     struct _REGMEM_NODE *ParentNode;
