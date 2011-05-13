@@ -8,6 +8,7 @@ make()
 	IDL="../../../idl/krb5pac.idl" \
 	CSTUB="krb5pac_cstub.c" \
 	HEADER="krb5pac_h.h" \
+        HEADERDEPS="lw/base.h" \
 	INCLUDEDIRS=". ../../../include"
 
     mk_group \
