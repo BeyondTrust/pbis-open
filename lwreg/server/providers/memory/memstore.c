@@ -115,27 +115,27 @@ error:
 
 NTSTATUS
 MemRegStoreOpen(
-    OUT PMEMREG_STORE_NODE *pphDb)
+    OUT PMEMREG_NODE *pphDbNode)
 {
     NTSTATUS status = 0;
-    PMEMREG_STORE_NODE phReg = NULL;
+    PMEMREG_NODE hRegNode = NULL;
     PWSTR rootKey = NULL;
-    PMEMREG_STORE_NODE rootNode = NULL;
+    PMEMREG_NODE hRootNode = NULL;
     DWORD i = 0;
     PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel = NULL;
     ULONG ulSecDescLen = 0;
 
     /* This is the ROOT node (\) of the registry */
     status = LW_RTL_ALLOCATE(
-                 (PVOID*)&phReg, 
-                 PMEMREG_STORE_NODE, 
-                 sizeof(*phReg));
+                 (PVOID*)&hRegNode, 
+                 PMEMREG_NODE, 
+                 sizeof(*hRegNode));
     BAIL_ON_NT_STATUS(status);
-    memset(phReg, 0, sizeof(*phReg));
+    memset(hRegNode, 0, sizeof(*hRegNode));
 
-    phReg->NodeType = REGMEM_TYPE_ROOT;
+    hRegNode->NodeType = MEMREG_TYPE_ROOT;
     status = LwRtlWC16StringAllocateFromCString(
-                 &phReg->Name, "\\");
+                 &hRegNode->Name, "\\");
     BAIL_ON_NT_STATUS(status);
 
     status = RegSrvCreateDefaultSecDescRel(
@@ -152,33 +152,33 @@ MemRegStoreOpen(
         BAIL_ON_NT_STATUS(status);
 
         status = MemRegStoreAddNode(
-                     phReg,
+                     hRegNode,
                      rootKey,
-                     REGMEM_TYPE_HIVE,
+                     MEMREG_TYPE_HIVE,
                      pSecDescRel,  // SD parameter
                      ulSecDescLen,
-                     &rootNode,
+                     &hRootNode,
                      NULL);
         BAIL_ON_NT_STATUS(status);
         LWREG_SAFE_FREE_MEMORY(rootKey);
     }
 
-    *pphDb = phReg;
+    *pphDbNode = hRegNode;
 
 cleanup:
     LWREG_SAFE_FREE_MEMORY(pSecDescRel);
     return status;
 
 error:
-    LWREG_SAFE_FREE_MEMORY(phReg->Name);
-    LWREG_SAFE_FREE_MEMORY(phReg);
+    LWREG_SAFE_FREE_MEMORY(hRegNode->Name);
+    LWREG_SAFE_FREE_MEMORY(hRegNode);
     LWREG_SAFE_FREE_MEMORY(rootKey);
     goto cleanup;
 }
 
 NTSTATUS
 MemRegStoreClose(
-    IN PMEMREG_STORE_NODE hRootNode)
+    IN PMEMREG_NODE hRootNode)
 {
     NTSTATUS status = 0;
 
@@ -205,16 +205,16 @@ error:
 
 NTSTATUS
 MemRegStoreFindNodeSubkey(
-    IN PMEMREG_STORE_NODE hDb,
+    IN PMEMREG_NODE hDbNode,
     IN PCWSTR pwszSubKeyPath,
-    OUT PMEMREG_STORE_NODE * phNode)
+    OUT PMEMREG_NODE * phNode)
 {
     NTSTATUS status = 0;
     PWSTR pwszTmpFullPath = NULL;
     PWSTR pwszSubKey = NULL;
     PWSTR pwszPtr = NULL;
-    PMEMREG_STORE_NODE hParentKey = NULL;
-    PMEMREG_STORE_NODE hSubKey = NULL;
+    PMEMREG_NODE hParentKey = NULL;
+    PMEMREG_NODE hSubKey = NULL;
     BOOLEAN bEndOfString = FALSE;
 
 
@@ -229,7 +229,7 @@ MemRegStoreFindNodeSubkey(
     status = LwRtlWC16StringDuplicate(&pwszTmpFullPath, pwszSubKeyPath);
     BAIL_ON_NT_STATUS(status);
 
-    hParentKey = hDb;
+    hParentKey = hDbNode;
     pwszSubKey = pwszTmpFullPath;
     do
     {
@@ -269,9 +269,9 @@ error:
 
 NTSTATUS
 MemRegStoreFindNode(
-    IN PMEMREG_STORE_NODE hDb,
+    IN PMEMREG_NODE hDbNode,
     IN PCWSTR Name,
-    OUT PMEMREG_STORE_NODE *pphNode)
+    OUT PMEMREG_NODE *pphNode)
 {
     NTSTATUS status = 0;
     DWORD nodeIndex = 0;
@@ -284,10 +284,10 @@ MemRegStoreFindNode(
         Name = (PCWSTR) L"";
     }
 
-    for (nodeIndex=0; nodeIndex<hDb->NodesLen; nodeIndex++)
+    for (nodeIndex=0; nodeIndex<hDbNode->NodesLen; nodeIndex++)
     {
-        if (hDb->SubNodes[nodeIndex] &&
-            LwRtlWC16StringIsEqual(Name, hDb->SubNodes[nodeIndex]->Name, FALSE))
+        if (hDbNode->SubNodes[nodeIndex] &&
+            LwRtlWC16StringIsEqual(Name, hDbNode->SubNodes[nodeIndex]->Name, FALSE))
         {
             bFoundNode = TRUE;
             break;
@@ -296,7 +296,7 @@ MemRegStoreFindNode(
 
     if (bFoundNode)
     {
-        *pphNode = hDb->SubNodes[nodeIndex];
+        *pphNode = hDbNode->SubNodes[nodeIndex];
     }
     else
     {
@@ -313,40 +313,40 @@ error:
 
 NTSTATUS
 MemRegStoreDeleteNode(
-    IN PMEMREG_STORE_NODE hDb)
+    IN PMEMREG_NODE hDbNode)
 {
     NTSTATUS status = 0;
     DWORD index = 0;
     BOOLEAN bNodeFound = FALSE;
 
-    if (!hDb->ParentNode)
+    if (!hDbNode->ParentNode)
     {
         status = STATUS_INVALID_PARAMETER;
         BAIL_ON_NT_STATUS(status);
     }
 
     /* Delete memory for this node here */
-    for (index=0; index < hDb->ValuesLen; index++)
+    for (index=0; index < hDbNode->ValuesLen; index++)
     {
-        LWREG_SAFE_FREE_MEMORY(hDb->Values[index]->Name);
-        LWREG_SAFE_FREE_MEMORY(hDb->Values[index]->Data);
-        hDb->Values[index]->DataLen = 0;
-        LWREG_SAFE_FREE_MEMORY(hDb->Values[index]->Attributes.pDefaultValue);
-        LWREG_SAFE_FREE_MEMORY(hDb->Values[index]->Attributes.pwszDocString);
-        if (hDb->Values[index]->Attributes.RangeType == 
+        LWREG_SAFE_FREE_MEMORY(hDbNode->Values[index]->Name);
+        LWREG_SAFE_FREE_MEMORY(hDbNode->Values[index]->Data);
+        hDbNode->Values[index]->DataLen = 0;
+        LWREG_SAFE_FREE_MEMORY(hDbNode->Values[index]->Attributes.pDefaultValue);
+        LWREG_SAFE_FREE_MEMORY(hDbNode->Values[index]->Attributes.pwszDocString);
+        if (hDbNode->Values[index]->Attributes.RangeType == 
             LWREG_VALUE_RANGE_TYPE_ENUM)
         {
             _MemDbFreeWC16Array(
-                hDb->Values[index]->Attributes.Range.ppwszRangeEnumStrings);
+                hDbNode->Values[index]->Attributes.Range.ppwszRangeEnumStrings);
         }
-        LWREG_SAFE_FREE_MEMORY(hDb->Values[index]);
+        LWREG_SAFE_FREE_MEMORY(hDbNode->Values[index]);
     }
-    LWREG_SAFE_FREE_MEMORY(hDb->Values);
+    LWREG_SAFE_FREE_MEMORY(hDbNode->Values);
 
     /* Remove this node from parent SubNodes list */
-    for (index=0; index < hDb->ParentNode->NodesLen; index++)
+    for (index=0; index < hDbNode->ParentNode->NodesLen; index++)
     {
-        if (hDb->ParentNode->SubNodes[index] == hDb)
+        if (hDbNode->ParentNode->SubNodes[index] == hDbNode)
         {
             bNodeFound = TRUE;
             break;
@@ -354,36 +354,36 @@ MemRegStoreDeleteNode(
     }
     if (bNodeFound)
     {
-        hDb->ParentNode->SubNodes[index] = NULL;
+        hDbNode->ParentNode->SubNodes[index] = NULL;
 
         /* Shift all pointers right of node just removed left over empty slot */
-        if (index+1 < hDb->ParentNode->NodesLen)
+        if (index+1 < hDbNode->ParentNode->NodesLen)
         {
-            memmove(&hDb->ParentNode->SubNodes[index], 
-                    &hDb->ParentNode->SubNodes[index+1], 
-                    (hDb->ParentNode->NodesLen-index-1) * 
-                        sizeof(hDb->ParentNode->SubNodes[index]));
-            hDb->ParentNode->SubNodes[hDb->ParentNode->NodesLen-1] = NULL;
-            hDb->ParentNode->NodesLen--;
+            memmove(&hDbNode->ParentNode->SubNodes[index], 
+                    &hDbNode->ParentNode->SubNodes[index+1], 
+                    (hDbNode->ParentNode->NodesLen-index-1) * 
+                        sizeof(hDbNode->ParentNode->SubNodes[index]));
+            hDbNode->ParentNode->SubNodes[hDbNode->ParentNode->NodesLen-1] = NULL;
+            hDbNode->ParentNode->NodesLen--;
         }
-        else if (hDb->ParentNode->NodesLen == 1)
+        else if (hDbNode->ParentNode->NodesLen == 1)
         {
-            LWREG_SAFE_FREE_MEMORY(hDb->ParentNode->SubNodes);
-            hDb->ParentNode->NodesLen = 0;
+            LWREG_SAFE_FREE_MEMORY(hDbNode->ParentNode->SubNodes);
+            hDbNode->ParentNode->NodesLen = 0;
         }
-        else if (index+1 == hDb->ParentNode->NodesLen)
+        else if (index+1 == hDbNode->ParentNode->NodesLen)
         {
             /* Last entry on the list. Value is nulled out, decrement len */
-            hDb->ParentNode->NodesLen--;
+            hDbNode->ParentNode->NodesLen--;
         }
     }
-    if (hDb->pNodeSd && hDb->pNodeSd->SecurityDescriptorAllocated)
+    if (hDbNode->pNodeSd && hDbNode->pNodeSd->SecurityDescriptorAllocated)
     {
-        LWREG_SAFE_FREE_MEMORY(hDb->pNodeSd->SecurityDescriptor);
+        LWREG_SAFE_FREE_MEMORY(hDbNode->pNodeSd->SecurityDescriptor);
     }
-    LWREG_SAFE_FREE_MEMORY(hDb->pNodeSd);
-    LWREG_SAFE_FREE_MEMORY(hDb->Name);
-    LWREG_SAFE_FREE_MEMORY(hDb);
+    LWREG_SAFE_FREE_MEMORY(hDbNode->pNodeSd);
+    LWREG_SAFE_FREE_MEMORY(hDbNode->Name);
+    LWREG_SAFE_FREE_MEMORY(hDbNode);
 
 cleanup:
     return status;
@@ -395,22 +395,22 @@ error:
 
 NTSTATUS
 MemRegStoreAddNode(
-    IN PMEMREG_STORE_NODE hParentNode,
+    IN PMEMREG_NODE hParentNode,
     PCWSTR Name,
     DWORD NodeType,
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
     ULONG SecurityDescriptorLen,
-    OUT PMEMREG_STORE_NODE * phNode,
-    OUT OPTIONAL PMEMREG_STORE_NODE *ppRetNewNode)
+    OUT PMEMREG_NODE *phRetParentNode,
+    OUT OPTIONAL PMEMREG_NODE *ppRetNewNode)
 {
     NTSTATUS status = 0;
-    PREGMEM_NODE *pNodesArray = NULL;
-    PREGMEM_NODE pNewNode = NULL;
+    PMEMREG_NODE *pNodesArray = NULL;
+    PMEMREG_NODE pNewNode = NULL;
     PWSTR newNodeName = NULL;
     DWORD index = 0;
-    PREGMEM_NODE_SD pUpdatedNodeSd = NULL;
+    PMEMREG_NODE_SD pUpdatedNodeSd = NULL;
 
-    if (hParentNode->SubNodeDepth == REGMEM_MAX_SUBNODES)
+    if (hParentNode->SubNodeDepth == MEMREG_MAX_SUBNODES)
     {
         status = STATUS_TOO_MANY_NAMES;
         BAIL_ON_NT_STATUS(status);
@@ -418,11 +418,11 @@ MemRegStoreAddNode(
     status = NtRegReallocMemory(
                  hParentNode->SubNodes, 
                  (PVOID) &pNodesArray,
-                 (hParentNode->NodesLen + 1) * sizeof(PREGMEM_NODE));
+                 (hParentNode->NodesLen + 1) * sizeof(PMEMREG_NODE));
     BAIL_ON_NT_STATUS(status);
 
     status = LW_RTL_ALLOCATE(
-                 (PVOID*) &pNewNode, PREGMEM_NODE, sizeof(REGMEM_NODE));
+                 (PVOID*) &pNewNode, PMEMREG_NODE, sizeof(MEMREG_NODE));
     BAIL_ON_NT_STATUS(status);
     memset(pNewNode, 0, sizeof(*pNewNode));
 
@@ -456,7 +456,7 @@ MemRegStoreAddNode(
         {
             memmove(&hParentNode->SubNodes[index+1],
                     &hParentNode->SubNodes[index],
-                    sizeof(PREGMEM_NODE) * (hParentNode->NodesLen - index));
+                    sizeof(PMEMREG_NODE) * (hParentNode->NodesLen - index));
             hParentNode->SubNodes[index] = pNewNode;
         }
         else
@@ -489,9 +489,9 @@ MemRegStoreAddNode(
     hParentNode->NodesLen++;
     pNewNode->SubNodeDepth = hParentNode->SubNodeDepth+1;
 
-    if (phNode)
+    if (phRetParentNode)
     {
-        *phNode = hParentNode;
+        *phRetParentNode = hParentNode;
     }
     if (ppRetNewNode)
     {
@@ -513,9 +513,9 @@ error:
 
 NTSTATUS
 MemRegStoreFindNodeValue(
-    IN PMEMREG_STORE_NODE hDb,
+    IN PMEMREG_NODE hDbNode,
     IN PCWSTR Name,
-    OUT PREGMEM_VALUE *phValue)
+    OUT PMEMREG_VALUE *phValue)
 {
     NTSTATUS status = 0;
     DWORD valueIndex = 0;
@@ -525,9 +525,9 @@ MemRegStoreFindNodeValue(
     {
         Name = (PCWSTR) L"";
     }
-    for (valueIndex=0; valueIndex<hDb->ValuesLen; valueIndex++)
+    for (valueIndex=0; valueIndex<hDbNode->ValuesLen; valueIndex++)
     {
-        if (LwRtlWC16StringIsEqual(Name, hDb->Values[valueIndex]->Name, FALSE))
+        if (LwRtlWC16StringIsEqual(Name, hDbNode->Values[valueIndex]->Name, FALSE))
         {
             bFoundValue = TRUE;
             break;
@@ -536,7 +536,7 @@ MemRegStoreFindNodeValue(
 
     if (bFoundValue)
     {
-        *phValue = hDb->Values[valueIndex];
+        *phValue = hDbNode->Values[valueIndex];
     }
     else
     {
@@ -550,7 +550,7 @@ MemRegStoreFindNodeValue(
 
 NTSTATUS
 MemRegStoreChangeNodeValue(
-    IN PREGMEM_VALUE pNodeValue,
+    IN PMEMREG_VALUE pNodeValue,
     IN const BYTE *pData,
     DWORD cbData)
 {
@@ -581,7 +581,7 @@ error:
 
 NTSTATUS
 MemRegStoreAddNodeValue(
-    PMEMREG_STORE_NODE hDb,
+    PMEMREG_NODE hDbNode,
     IN OPTIONAL PCWSTR pValueName,
     IN DWORD dwReserved,
     IN DWORD dwType,
@@ -589,16 +589,16 @@ MemRegStoreAddNodeValue(
     DWORD cbData)
 {
     NTSTATUS status = 0;
-    PREGMEM_VALUE pNodeValue = NULL;
+    PMEMREG_VALUE pNodeValue = NULL;
     PWSTR pwszName = NULL;
     WCHAR pwszNull[2] = {0};
     BYTE *pbData = NULL;
-    PREGMEM_VALUE *newValues;
+    PMEMREG_VALUE *newValues;
     DWORD index = 0;
 
     status = LW_RTL_ALLOCATE(
                  (PVOID*) &pNodeValue, 
-                 REGMEM_VALUE, 
+                 MEMREG_VALUE, 
                  sizeof(*pNodeValue));
     BAIL_ON_NT_STATUS(status);
 
@@ -624,11 +624,11 @@ MemRegStoreAddNodeValue(
         }
     }
 
-    status = NtRegReallocMemory(hDb->Values, 
+    status = NtRegReallocMemory(hDbNode->Values, 
                                 (PVOID) &newValues,
-                                (hDb->ValuesLen + 1) * sizeof(PREGMEM_VALUE));
+                                (hDbNode->ValuesLen + 1) * sizeof(PMEMREG_VALUE));
     BAIL_ON_NT_STATUS(status);
-    hDb->Values = newValues;
+    hDbNode->Values = newValues;
 
     pNodeValue->Name = pwszName;
     pNodeValue->Type = dwType;
@@ -639,33 +639,33 @@ MemRegStoreAddNodeValue(
     pNodeValue->DataLen = cbData;
 
     /* Insert new value in sorted order */
-    if (hDb->ValuesLen > 0 && pValueName)
+    if (hDbNode->ValuesLen > 0 && pValueName)
     {
         for (index=0;
-             index<hDb->ValuesLen &&
-             LwRtlWC16StringCompare(pValueName, hDb->Values[index]->Name)>0;
+             index<hDbNode->ValuesLen &&
+             LwRtlWC16StringCompare(pValueName, hDbNode->Values[index]->Name)>0;
              index++)
         {
             ;
         }
-        if (index < (hDb->ValuesLen+1))
+        if (index < (hDbNode->ValuesLen+1))
         {
-            memmove(&hDb->Values[index+1],
-                    &hDb->Values[index],
-                    sizeof(PREGMEM_NODE) * (hDb->ValuesLen - index));
-            hDb->Values[index] = pNodeValue;
+            memmove(&hDbNode->Values[index+1],
+                    &hDbNode->Values[index],
+                    sizeof(PMEMREG_NODE) * (hDbNode->ValuesLen - index));
+            hDbNode->Values[index] = pNodeValue;
         }
         else
         {
-            hDb->Values[hDb->ValuesLen] = pNodeValue;
+            hDbNode->Values[hDbNode->ValuesLen] = pNodeValue;
         }
     }
     else
     {
-        hDb->Values[hDb->ValuesLen] = pNodeValue;
+        hDbNode->Values[hDbNode->ValuesLen] = pNodeValue;
     }
 
-    hDb->ValuesLen++;
+    hDbNode->ValuesLen++;
 
 cleanup:
     return status;
@@ -681,7 +681,7 @@ error:
 
 NTSTATUS
 MemRegStoreDeleteNodeValue(
-    IN PMEMREG_STORE_NODE hDb,
+    IN PMEMREG_NODE hDbNode,
     IN PCWSTR Name)
 {
     NTSTATUS status = 0;
@@ -693,9 +693,9 @@ MemRegStoreDeleteNodeValue(
     {
         Name = (PCWSTR) L"";
     }
-    for (valueIndex=0; valueIndex<hDb->ValuesLen; valueIndex++)
+    for (valueIndex=0; valueIndex<hDbNode->ValuesLen; valueIndex++)
     {
-        if (LwRtlWC16StringIsEqual(Name, hDb->Values[valueIndex]->Name, FALSE))
+        if (LwRtlWC16StringIsEqual(Name, hDbNode->Values[valueIndex]->Name, FALSE))
         {
             bFoundValue = TRUE;
             break;
@@ -703,28 +703,28 @@ MemRegStoreDeleteNodeValue(
     }
     if (bFoundValue)
     {
-        if (hDb->Values[valueIndex]->Data)
+        if (hDbNode->Values[valueIndex]->Data)
         {
-            LWREG_SAFE_FREE_MEMORY(hDb->Values[valueIndex]->Data);
-            hDb->Values[valueIndex]->DataLen = 0;
+            LWREG_SAFE_FREE_MEMORY(hDbNode->Values[valueIndex]->Data);
+            hDbNode->Values[valueIndex]->DataLen = 0;
             bValueDeleted = TRUE;
         }
 
-        if (hDb->Values[valueIndex]->Attributes.ValueType == 0)
+        if (hDbNode->Values[valueIndex]->Attributes.ValueType == 0)
         {
-            if (valueIndex+1 < hDb->ValuesLen)
+            if (valueIndex+1 < hDbNode->ValuesLen)
             {
                 memmove(
-                    &hDb->Values[valueIndex],
-                    &hDb->Values[valueIndex+1],
-                    (hDb->ValuesLen - valueIndex - 1) * sizeof(PREGMEM_VALUE));
+                    &hDbNode->Values[valueIndex],
+                    &hDbNode->Values[valueIndex+1],
+                    (hDbNode->ValuesLen - valueIndex - 1) * sizeof(PMEMREG_VALUE));
             }
-            hDb->Values[hDb->ValuesLen-1] = NULL;
-            hDb->ValuesLen--;
-            if (hDb->ValuesLen == 0)
+            hDbNode->Values[hDbNode->ValuesLen-1] = NULL;
+            hDbNode->ValuesLen--;
+            if (hDbNode->ValuesLen == 0)
             {
-                LWREG_SAFE_FREE_MEMORY(hDb->Values);
-                hDb->Values = NULL;
+                LWREG_SAFE_FREE_MEMORY(hDbNode->Values);
+                hDbNode->Values = NULL;
             }
         }
         else
@@ -745,7 +745,7 @@ MemRegStoreDeleteNodeValue(
 
 NTSTATUS
 MemRegStoreAddNodeAttribute(
-    PREGMEM_VALUE hValue,
+    PMEMREG_VALUE hValue,
     IN PLWREG_VALUE_ATTRIBUTES pAttributes)
 {
     NTSTATUS status = 0;
@@ -834,7 +834,7 @@ error:
 
 NTSTATUS
 MemRegStoreGetNodeValueAttributes(
-    PREGMEM_VALUE hValue,
+    PMEMREG_VALUE hValue,
     OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
     OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes)
 {
@@ -980,10 +980,10 @@ NTSTATUS
 MemRegStoreCreateNodeSdFromSddl(
     IN PSTR SecurityDescriptor,
     IN ULONG SecurityDescriptorLen,
-    PREGMEM_NODE_SD *ppRetNodeSd)
+    PMEMREG_NODE_SD *ppRetNodeSd)
 {
     NTSTATUS status = 0;
-    PREGMEM_NODE_SD pNodeSd = NULL;
+    PMEMREG_NODE_SD pNodeSd = NULL;
 
     if (!SecurityDescriptor || SecurityDescriptorLen == 0)
     {
@@ -992,7 +992,7 @@ MemRegStoreCreateNodeSdFromSddl(
     }
     
     status = LW_RTL_ALLOCATE((PVOID*) &pNodeSd,
-                                      PREGMEM_NODE_SD,
+                                      PMEMREG_NODE_SD,
                                       sizeof(*pNodeSd));
     BAIL_ON_NT_STATUS(status);
 
@@ -1019,15 +1019,15 @@ error:
 
 NTSTATUS
 MemRegStoreCreateSecurityDescriptor(
-    PREGMEM_NODE_SD pParentSd,
+    PMEMREG_NODE_SD pParentSd,
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
     ULONG SecurityDescriptorLen,
-    PREGMEM_NODE_SD *ppUpdatedNodeSd)
+    PMEMREG_NODE_SD *ppUpdatedNodeSd)
 {
     NTSTATUS status = 0;
     PSECURITY_DESCRIPTOR_RELATIVE NewSecurityDescriptor = NULL;
-    PREGMEM_NODE_SD pNodeSd = NULL;
-    PREGMEM_NODE_SD pNewNodeSd = NULL;
+    PMEMREG_NODE_SD pNodeSd = NULL;
+    PMEMREG_NODE_SD pNewNodeSd = NULL;
     BOOLEAN bInheritParent = FALSE;
 
     if (pParentSd)
@@ -1050,7 +1050,7 @@ MemRegStoreCreateSecurityDescriptor(
 
     status = LW_RTL_ALLOCATE(
                  (PVOID *) &pNodeSd,
-                 PREGMEM_NODE_SD,
+                 PMEMREG_NODE_SD,
                  sizeof(*pNewNodeSd));
     BAIL_ON_NT_STATUS(status);
 

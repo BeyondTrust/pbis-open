@@ -44,47 +44,47 @@
 
 NTSTATUS
 MemRegStoreOpen(
-    OUT PMEMREG_STORE_NODE * phDb
+    OUT PMEMREG_NODE * phDb
     );
 
 
 NTSTATUS
 MemRegStoreClose(
-    IN PMEMREG_STORE_NODE hDb
+    IN PMEMREG_NODE hDb
     );
 
 
 NTSTATUS
 MemRegStoreAddNode(
-    IN PMEMREG_STORE_NODE hDb,
+    IN PMEMREG_NODE hDb,
     PCWSTR Name,
     DWORD NodeType,
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
     ULONG SecurityDescriptorLen,
-    OUT PMEMREG_STORE_NODE * phNode,
-    OUT OPTIONAL PMEMREG_STORE_NODE * pRetNewNode
+    OUT PMEMREG_NODE * phNode,
+    OUT OPTIONAL PMEMREG_NODE * pRetNewNode
     );
 
 
 NTSTATUS
 MemRegStoreFindNode(
-    IN PMEMREG_STORE_NODE hDb,
+    IN PMEMREG_NODE hDb,
     IN PCWSTR Name,
-    OUT PMEMREG_STORE_NODE * phNode
+    OUT PMEMREG_NODE * phNode
     );
 
 
 NTSTATUS
 MemRegStoreFindNodeSubkey(
-    IN PMEMREG_STORE_NODE hDb,
+    IN PMEMREG_NODE hDb,
     IN PCWSTR pwszSubKeyPath,
-    OUT PMEMREG_STORE_NODE *pphNode
+    OUT PMEMREG_NODE *pphNode
     );
 
 
 NTSTATUS
 MemRegStoreAddNodeValue(
-    PMEMREG_STORE_NODE hDb,
+    PMEMREG_NODE hDb,
     IN OPTIONAL PCWSTR pValueName,
     IN DWORD dwReserved,
     IN DWORD dwType,
@@ -95,29 +95,29 @@ MemRegStoreAddNodeValue(
 
 NTSTATUS
 MemRegStoreDeleteNodeValue(
-    IN PMEMREG_STORE_NODE hDb,
+    IN PMEMREG_NODE hDb,
     IN PCWSTR Name
     );
 
 
 NTSTATUS
 MemRegStoreFindNodeValue(
-    IN PMEMREG_STORE_NODE hDb,
+    IN PMEMREG_NODE hDb,
     IN PCWSTR Name,
-    OUT PREGMEM_VALUE *pphValue
+    OUT PMEMREG_VALUE *pphValue
     );
 
 
 NTSTATUS
 MemRegStoreAddNodeAttribute(
-    PREGMEM_VALUE hValue,
+    PMEMREG_VALUE hValue,
     IN PLWREG_VALUE_ATTRIBUTES pAttributes
     );
 
 
 NTSTATUS
 MemRegStoreGetNodeValueAttributes(
-    PREGMEM_VALUE hValue,
+    PMEMREG_VALUE hValue,
     OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
     OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     );
@@ -125,7 +125,7 @@ MemRegStoreGetNodeValueAttributes(
 
 NTSTATUS
 MemRegStoreChangeNodeValue(
-    IN PREGMEM_VALUE pNodeValue,
+    IN PMEMREG_VALUE pNodeValue,
     IN const BYTE *pData,
     DWORD cbData
     );
@@ -133,7 +133,7 @@ MemRegStoreChangeNodeValue(
 
 NTSTATUS
 MemRegStoreDeleteNode(
-    IN PMEMREG_STORE_NODE hDb
+    IN PMEMREG_NODE hDb
     );
 
 
@@ -141,14 +141,14 @@ NTSTATUS
 MemRegStoreCreateNodeSdFromSddl(
     IN PSTR SecurityDescriptor,
     IN ULONG SecurityDescriptorLen,
-    PREGMEM_NODE_SD *ppRetNodeSd
+    PMEMREG_NODE_SD *ppRetNodeSd
     );
 
 
 NTSTATUS
 MemRegStoreCreateSecurityDescriptor(
-    PREGMEM_NODE_SD pNodeSd,
+    PMEMREG_NODE_SD pNodeSd,
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
     ULONG SecurityDescriptorLen,
-    PREGMEM_NODE_SD *ppUpdatedNodeSd
+    PMEMREG_NODE_SD *ppUpdatedNodeSd
     );

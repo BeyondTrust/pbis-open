@@ -57,7 +57,7 @@ MemSetKeySecurity(
     REG_DB_CONNECTION regDbConn = {0};
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)hNtRegConnection;
 
-    regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+    regDbConn.pMemReg = pKeyHandle->pKey->hNode;
 
 
     BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
@@ -138,7 +138,7 @@ MemGetKeySecurity(
 
     BAIL_ON_NT_INVALID_POINTER(hNtRegConnection);
 
-    regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+    regDbConn.pMemReg = pKeyHandle->pKey->hNode;
     status = MemDbGetKeyAcl(
                  hNtRegConnection,
                  &regDbConn,

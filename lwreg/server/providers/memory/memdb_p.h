@@ -6,19 +6,19 @@
 #define MEMDB_EXPORT_DIR "/var/lib/likewise/db"
 #define MEMDB_EXPORT_FILE MEMDB_EXPORT_DIR "/memprovider.exp"
 
-typedef struct _REGMEM_NODE *PMEMREG_STORE_NODE;
+typedef struct _MEMREG_NODE *PMEMREG_NODE;
 
 typedef struct _MEMDB_FILE_EXPORT_CTX
 {
     FILE *wfp;
-    PMEMREG_STORE_NODE hKey;
+    PMEMREG_NODE hNode;
     BOOLEAN bStopThread;
 } MEMDB_FILE_EXPORT_CTX, *PMEMDB_FILE_EXPORT_CTX;
 
 
 typedef struct _REG_DB_CONNECTION
 {
-    PMEMREG_STORE_NODE pMemReg;
+    PMEMREG_NODE pMemReg;
     pthread_rwlock_t lock;
     pthread_mutex_t ExportMutex;
     pthread_mutex_t ExportMutexStop;
@@ -30,8 +30,8 @@ typedef struct _REG_DB_CONNECTION
 
 typedef struct _MEMDB_IMPORT_FILE_CTX
 {
-    PMEMREG_STORE_NODE hRootKey;
-    PMEMREG_STORE_NODE hSubKey;
+    PMEMREG_NODE hRootKey;
+    PMEMREG_NODE hSubKey;
 } MEMDB_IMPORT_FILE_CTX, *PMEMDB_IMPORT_FILE_CTX;
 
 
@@ -42,7 +42,7 @@ typedef struct _MEMDB_IMPORT_FILE_CTX
  */
 typedef struct __REG_KEY_CONTEXT
 {
-    PMEMREG_STORE_NODE hKey;
+    PMEMREG_NODE hNode;
     ACCESS_MASK AccessGranted;
     PREG_DB_CONNECTION pConn;
 } REG_KEY_CONTEXT;
@@ -50,7 +50,7 @@ typedef struct __REG_KEY_CONTEXT
 
 typedef struct _MEMDB_STACK_ENTRY
 {
-    PREGMEM_NODE pNode;
+    PMEMREG_NODE pNode;
     PWSTR pwszSubKeyPrefix;
 } MEMDB_STACK_ENTRY, *PMEMDB_STACK_ENTRY;
 
@@ -77,7 +77,7 @@ typedef enum _MEMDB_EXPORT_STATE
 
 NTSTATUS
 MemDbOpen(
-    OUT PREGMEM_NODE *ppDbRoot
+    OUT PMEMREG_NODE *ppDbRoot
     );
 
 NTSTATUS
@@ -92,7 +92,7 @@ MemDbOpenKey(
     IN PREG_DB_CONNECTION hDb,
     IN PCWSTR pwszFullKeyPath,
     IN ACCESS_MASK AccessDesired,
-    OUT OPTIONAL PMEMREG_STORE_NODE *pRegKey
+    OUT OPTIONAL PMEMREG_NODE *pRegKey
     );
 
 
@@ -107,7 +107,7 @@ MemDbCreateKeyEx(
     IN ACCESS_MASK AccessDesired,
     IN OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     IN ULONG ulSecDescLength,
-    OUT PMEMREG_STORE_NODE *pphSubKey,
+    OUT PMEMREG_NODE *pphSubKey,
     OUT OPTIONAL PDWORD pdwDisposition
     );
 
@@ -238,7 +238,7 @@ MemDbRecurseRegistry(
     IN HANDLE hRegConnection,
     IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pwszSubKey,
-    IN PVOID (*pfCallback)(PMEMREG_STORE_NODE hKey, 
+    IN PVOID (*pfCallback)(PMEMREG_NODE hNode, 
                            PVOID userContext,
                            PWSTR subKeyPrefix),
     IN PVOID userContext
@@ -250,7 +250,7 @@ MemDbRecurseDepthFirstRegistry(
     IN HANDLE hRegConnection,
     IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pwszOptSubKey,
-    IN PVOID (*pfCallback)(PMEMREG_STORE_NODE hKey, 
+    IN PVOID (*pfCallback)(PMEMREG_NODE hNode, 
                            PVOID userContext,
                            PWSTR pwszSubKeyPrefix),
     IN PVOID userContext

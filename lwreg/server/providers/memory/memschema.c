@@ -53,7 +53,7 @@ MemSetValueAttributes(
     REG_DB_CONNECTION regDbConn = {0};
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
 
-    regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+    regDbConn.pMemReg = pKeyHandle->pKey->hNode;
     status = MemDbSetValueAttributes(
                  hRegConnection,
                  &regDbConn,
@@ -77,7 +77,7 @@ MemGetValueAttributes(
     REG_DB_CONNECTION regDbConn = {0};
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
 
-    regDbConn.pMemReg = pKeyHandle->pKey->hKey;
+    regDbConn.pMemReg = pKeyHandle->pKey->hNode;
     status = MemDbGetValueAttributes(
                  hRegConnection,
                  &regDbConn,

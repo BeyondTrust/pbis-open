@@ -42,32 +42,32 @@
 #ifndef _MEMSTORE_P_H_
 #define _MEMSTORE_P_H_
 
-#define REGMEM_TYPE_ROOT 1
-#define REGMEM_TYPE_HIVE 2
-#define REGMEM_TYPE_KEY 3
-#define REGMEM_TYPE_VALUE 4
+#define MEMREG_TYPE_ROOT 1
+#define MEMREG_TYPE_HIVE 2
+#define MEMREG_TYPE_KEY 3
+#define MEMREG_TYPE_VALUE 4
 
-#define REGMEM_MAX_SUBNODES 512
+#define MEMREG_MAX_SUBNODES 512
 
-typedef struct _REGMEM_VALUE
+typedef struct _MEMREG_VALUE
 {
     PWSTR Name;
     DWORD Type;
     PVOID Data;
     DWORD DataLen;
     LWREG_VALUE_ATTRIBUTES Attributes;
-} REGMEM_VALUE, *PREGMEM_VALUE;
+} MEMREG_VALUE, *PMEMREG_VALUE;
 
 
-typedef struct _REGMEM_NODE_SD
+typedef struct _MEMREG_NODE_SD
 {
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
     ULONG SecurityDescriptorLen;
     BOOLEAN SecurityDescriptorAllocated;
-} REGMEM_NODE_SD, *PREGMEM_NODE_SD;
+} MEMREG_NODE_SD, *PMEMREG_NODE_SD;
 
 
-typedef struct _REGMEM_NODE
+typedef struct _MEMREG_NODE
 {
     PWSTR Name;
     DWORD NodeType;
@@ -86,15 +86,15 @@ typedef struct _REGMEM_NODE
     /*
      * Back reference to parent node. Needed for some operations (delete)
      */
-    struct _REGMEM_NODE *ParentNode;
+    struct _MEMREG_NODE *ParentNode;
     
-    PREGMEM_NODE_SD pNodeSd;
+    PMEMREG_NODE_SD pNodeSd;
 
-    struct _REGMEM_NODE **SubNodes;
+    struct _MEMREG_NODE **SubNodes;
     DWORD NodesLen;
 
-    PREGMEM_VALUE *Values;
+    PMEMREG_VALUE *Values;
     DWORD ValuesLen;
-} REGMEM_NODE, *PREGMEM_NODE;
+} MEMREG_NODE;
 
 #endif

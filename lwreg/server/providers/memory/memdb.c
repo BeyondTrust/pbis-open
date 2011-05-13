@@ -53,11 +53,11 @@
 
 NTSTATUS
 MemDbOpen(
-    OUT PREGMEM_NODE *ppDbRoot
+    OUT PMEMREG_NODE *ppDbRoot
     )
 {
     NTSTATUS status = 0;
-    PREGMEM_NODE pDbRoot = NULL;
+    PMEMREG_NODE pDbRoot = NULL;
 
     status = MemRegStoreOpen(&pDbRoot);
     BAIL_ON_NT_STATUS(status);
@@ -72,7 +72,7 @@ error:
 }
 
 static void *pfDeleteNodeCallback(
-    PMEMREG_STORE_NODE pEntry,
+    PMEMREG_NODE pEntry,
     PVOID userContext,
     PWSTR subStringPrefix)
 {
@@ -84,7 +84,7 @@ static void *pfDeleteNodeCallback(
 
 void *
 pfMemRegExportToFile(
-    PMEMREG_STORE_NODE pEntry, 
+    PMEMREG_NODE pEntry, 
     PVOID userContext,
     PWSTR subStringPrefix)
 {
@@ -101,7 +101,7 @@ pfMemRegExportToFile(
     DWORD index = 0;
     DWORD enumIndex = 0;
     DWORD valueType = 0;
-    PREGMEM_VALUE Value = NULL;
+    PMEMREG_VALUE Value = NULL;
     PLWREG_VALUE_ATTRIBUTES Attr = NULL;
     PMEMDB_FILE_EXPORT_CTX exportCtx = (PMEMDB_FILE_EXPORT_CTX) userContext;
     FILE *wfp = exportCtx->wfp;
@@ -123,8 +123,8 @@ pfMemRegExportToFile(
     fprintf(wfp, "%.*s\n", dwDumpStringLen, pszDumpString);
     LWREG_SAFE_FREE_STRING(pszDumpString);
 
-    if ((pEntry->NodeType == REGMEM_TYPE_KEY ||
-        pEntry->NodeType == REGMEM_TYPE_HIVE) &&
+    if ((pEntry->NodeType == MEMREG_TYPE_KEY ||
+        pEntry->NodeType == MEMREG_TYPE_HIVE) &&
         pEntry->pNodeSd && pEntry->pNodeSd->SecurityDescriptorAllocated)
     {
         dwError = RegNtStatusToWin32Error(
@@ -514,7 +514,7 @@ MemDbExportToFile(
     REG_DB_CONNECTION regDbConn = {0};
 
     regDbConn.ExportCtx = pExportCtx;
-    regDbConn.pMemReg = pExportCtx->hKey;
+    regDbConn.pMemReg = pExportCtx->hNode;
     status = MemDbRecurseRegistry(
                  NULL,
                  &regDbConn,
@@ -558,7 +558,7 @@ MemDbStartExportToFileThread(VOID)
         status = STATUS_OPEN_FAILED;
         BAIL_ON_NT_STATUS(status);
     }
-    exportCtx->hKey = MemRegRoot()->pMemReg;
+    exportCtx->hNode = MemRegRoot()->pMemReg;
 
     MemRegRoot()->ExportCtx = exportCtx;
     pthread_create(&hThread, NULL, MemDbExportToFileThread, (PVOID) exportCtx);
@@ -581,7 +581,7 @@ error:
 DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
 {
     NTSTATUS status = 0;
-    PMEMREG_STORE_NODE hSubKey = NULL;
+    PMEMREG_NODE hSubKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
     PWSTR pwszSubKey = NULL;
     PWSTR pwszValueName = NULL;
@@ -589,10 +589,10 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
     PMEMDB_IMPORT_FILE_CTX pImportCtx = (PMEMDB_IMPORT_FILE_CTX) userContext;
     PVOID pData = NULL;
     DWORD dwDataLen = 0;
-    PREGMEM_VALUE pRegValue = NULL;
+    PMEMREG_VALUE pRegValue = NULL;
     DWORD dataType = 0;
     LWREG_VALUE_ATTRIBUTES tmpAttr = {0};
-    PREGMEM_NODE_SD pNodeSd = NULL;
+    PMEMREG_NODE_SD pNodeSd = NULL;
 #ifdef __MEMDB_PRINTF__ 
 FILE *dbgfp = fopen("/tmp/lwregd-import.txt", "a");
 #endif
@@ -860,15 +860,15 @@ MemDbOpenKey(
     IN PREG_DB_CONNECTION hDb,
     IN PCWSTR pwszFullKeyPath,
     IN ACCESS_MASK AccessDesired,
-    OUT OPTIONAL PMEMREG_STORE_NODE *pRegKey)
+    OUT OPTIONAL PMEMREG_NODE *pRegKey)
 {
     NTSTATUS status = 0;
     PWSTR pwszPtr = NULL;
     PWSTR pwszSubKey = NULL;
     PWSTR pwszTmpFullPath = NULL;
 
-    PMEMREG_STORE_NODE hParentKey = NULL;
-    PMEMREG_STORE_NODE hSubKey = NULL;
+    PMEMREG_NODE hParentKey = NULL;
+    PMEMREG_NODE hSubKey = NULL;
     BOOLEAN bEndOfString = FALSE;
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
     ACCESS_MASK AccessGranted = 0;
@@ -995,14 +995,14 @@ MemDbCreateKeyEx(
     IN ACCESS_MASK AccessDesired,
     IN OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     IN ULONG ulSecDescLength,
-    OUT PMEMREG_STORE_NODE *pphSubKey,
+    OUT PMEMREG_NODE *pphSubKey,
     OUT OPTIONAL PDWORD pdwDisposition
     )
 {
     NTSTATUS status = 0;
     DWORD dwDisposition = 0;
-    PMEMREG_STORE_NODE hParentKey = NULL;
-    PMEMREG_STORE_NODE hSubKey = NULL;
+    PMEMREG_NODE hParentKey = NULL;
+    PMEMREG_NODE hSubKey = NULL;
     PWSTR pwszTmpFullPath = NULL;
     PWSTR pwszSubKey = NULL;
     PWSTR pwszPtr = NULL;
@@ -1057,7 +1057,7 @@ MemDbCreateKeyEx(
             status = MemRegStoreAddNode(
                              hParentKey,
                              pwszSubKey,
-                             REGMEM_TYPE_KEY,
+                             MEMREG_TYPE_KEY,
                              pSecDescRel,  // SD parameter
                              ulSecDescLength,
                              NULL,
@@ -1108,7 +1108,7 @@ MemDbQueryInfoKey(
     OUT OPTIONAL PFILETIME pftLastWriteTime /* implement this later */
     )
 {
-    PMEMREG_STORE_NODE hKey = NULL;
+    PMEMREG_NODE hKeyNode = NULL;
     NTSTATUS status = 0;
     DWORD keyLen = 0;
     DWORD maxKeyLen = 0;
@@ -1122,17 +1122,17 @@ MemDbQueryInfoKey(
      * Query info about keys
      */
 
-    hKey = hDb->pMemReg;
+    hKeyNode = hDb->pMemReg;
     if (pcSubKeys)
     {
-        *pcSubKeys = hKey->NodesLen;
+        *pcSubKeys = hKeyNode->NodesLen;
     }
 
     if (pcMaxSubKeyLen)
     {
-        for (indx=0, keyLen=0, maxKeyLen; indx < hKey->NodesLen; indx++)
+        for (indx=0, keyLen=0, maxKeyLen; indx < hKeyNode->NodesLen; indx++)
         {
-            keyLen = RtlWC16StringNumChars(hKey->SubNodes[indx]->Name);
+            keyLen = RtlWC16StringNumChars(hKeyNode->SubNodes[indx]->Name);
             if (keyLen > maxKeyLen)
             {
                 maxKeyLen = keyLen;
@@ -1147,14 +1147,14 @@ MemDbQueryInfoKey(
      */
     if (pcValues)
     {
-        *pcValues = hKey->ValuesLen;
+        *pcValues = hKeyNode->ValuesLen;
     }
 
     if (pcMaxValueNameLen)
     {
-        for (indx=0, valueLen=0, maxValueLen; indx < hKey->ValuesLen; indx++)
+        for (indx=0, valueLen=0, maxValueLen; indx < hKeyNode->ValuesLen; indx++)
         {
-            valueLen = RtlWC16StringNumChars(hKey->Values[indx]->Name);
+            valueLen = RtlWC16StringNumChars(hKeyNode->Values[indx]->Name);
             if (valueLen > maxValueLen)
             {
                 maxValueLen = valueLen;
@@ -1166,9 +1166,9 @@ MemDbQueryInfoKey(
 
     if (pcMaxValueLen)
     {
-        for (indx=0, valueLen=0, maxValueLen; indx < hKey->ValuesLen; indx++)
+        for (indx=0, valueLen=0, maxValueLen; indx < hKeyNode->ValuesLen; indx++)
         {
-            valueLen = hKey->Values[indx]->DataLen;
+            valueLen = hKeyNode->Values[indx]->DataLen;
             if (valueLen > maxValueLen)
             {
                 maxValueLen = valueLen;
@@ -1178,7 +1178,7 @@ MemDbQueryInfoKey(
     }
     if (pcbSecurityDescriptor)
     {
-        *pcbSecurityDescriptor = hKey->pNodeSd->SecurityDescriptorLen;
+        *pcbSecurityDescriptor = hKeyNode->pNodeSd->SecurityDescriptorLen;
     }
 
 cleanup:
@@ -1203,12 +1203,12 @@ MemDbEnumKeyEx(
     )
 {
     NTSTATUS status = 0;
-    PMEMREG_STORE_NODE hKey = NULL;
+    PMEMREG_NODE hKeyNode = NULL;
     DWORD keyLen = 0;
 
 
-    hKey = hDb->pMemReg;
-    if (dwIndex >= hKey->NodesLen)
+    hKeyNode = hDb->pMemReg;
+    if (dwIndex >= hKeyNode->NodesLen)
     {
         status = STATUS_INVALID_PARAMETER;
         BAIL_ON_NT_STATUS(status);
@@ -1217,14 +1217,14 @@ MemDbEnumKeyEx(
     /*
      * Query info about keys
      */
-    keyLen = RtlWC16StringNumChars(hKey->SubNodes[dwIndex]->Name);
+    keyLen = RtlWC16StringNumChars(hKeyNode->SubNodes[dwIndex]->Name);
     if (keyLen > *pcName)
     {
         status = STATUS_BUFFER_TOO_SMALL;
         BAIL_ON_NT_STATUS(status);
     }
 
-    memcpy(pName, hKey->SubNodes[dwIndex]->Name, keyLen * sizeof(WCHAR));
+    memcpy(pName, hKeyNode->SubNodes[dwIndex]->Name, keyLen * sizeof(WCHAR));
     *pcName = keyLen;
 
 cleanup:
@@ -1246,33 +1246,33 @@ MemDbSetValueEx(
     DWORD cbData)
 {
     NTSTATUS status = 0;
-    PMEMREG_STORE_NODE hKey = NULL;
-    PREGMEM_VALUE pRegValue = NULL;
+    PMEMREG_NODE hKeyNode = NULL;
+    PMEMREG_VALUE pRegValue = NULL;
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
     ACCESS_MASK AccessGranted = 0;
 
     BAIL_ON_NT_STATUS(status);
 
-    hKey = hDb->pMemReg;
-    if (hKey->pNodeSd)
+    hKeyNode = hDb->pMemReg;
+    if (hKeyNode->pNodeSd)
     {
         status = RegSrvAccessCheckKey(
                      pServerState->pToken,
-                     hKey->pNodeSd->SecurityDescriptor,
-                     hKey->pNodeSd->SecurityDescriptorLen,
+                     hKeyNode->pNodeSd->SecurityDescriptor,
+                     hKeyNode->pNodeSd->SecurityDescriptorLen,
                      KEY_WRITE,
                      &AccessGranted);
         BAIL_ON_NT_STATUS(status);
     }
     status = MemRegStoreFindNodeValue(
-                 hKey,
+                 hKeyNode,
                  pValueName,
                  &pRegValue);
     if (status == STATUS_OBJECT_NAME_NOT_FOUND)
     {
 
         status = MemRegStoreAddNodeValue(
-                     hKey,
+                     hKeyNode,
                      pValueName,
                      dwReserved, // Not used?
                      dwType,
@@ -1310,25 +1310,25 @@ MemDbGetValue(
     IN OUT OPTIONAL PDWORD pcbData)
 {
     NTSTATUS status = 0;
-    PMEMREG_STORE_NODE hKey = NULL;
-    PMEMREG_STORE_NODE hParentKey = NULL;
-    PMEMREG_STORE_NODE hSubKey = NULL;
-    PREGMEM_VALUE hValue = NULL;
+    PMEMREG_NODE hKeyNode = NULL;
+    PMEMREG_NODE hParentKey = NULL;
+    PMEMREG_NODE hSubKey = NULL;
+    PMEMREG_VALUE hValue = NULL;
 
-    hKey = hDb->pMemReg;
+    hKeyNode = hDb->pMemReg;
 
     if (pSubKey)
     {
         /*
          * Find named subnode and use that to find the named value
          */
-        hParentKey = hKey;
+        hParentKey = hKeyNode;
         status = MemRegStoreFindNodeSubkey(
                      hParentKey,
                      pSubKey,
                      &hSubKey);
         BAIL_ON_NT_STATUS(status);
-        hKey = hSubKey;
+        hKeyNode = hSubKey;
     }
 
 
@@ -1336,7 +1336,7 @@ MemDbGetValue(
      * Find named value within specified node
      */
     status = MemRegStoreFindNodeValue(
-                 hKey,
+                 hKeyNode,
                  pValueName,
                  &hValue);
     BAIL_ON_NT_STATUS(status);
@@ -1393,11 +1393,11 @@ MemDbEnumValue(
     IN OUT OPTIONAL PDWORD pcbData)
 {
     NTSTATUS status = 0;
-    PMEMREG_STORE_NODE hKey = NULL;
+    PMEMREG_NODE hKeyNode = NULL;
     DWORD valueLen = 0;
 
-    hKey = hDb->pMemReg;
-    if (dwIndex >= hKey->ValuesLen)
+    hKeyNode = hDb->pMemReg;
+    if (dwIndex >= hKeyNode->ValuesLen)
     {
         status = STATUS_INVALID_PARAMETER;
         BAIL_ON_NT_STATUS(status);
@@ -1406,7 +1406,7 @@ MemDbEnumValue(
     /*
      * Query info about indexed value
      */
-    valueLen = RtlWC16StringNumChars(hKey->Values[dwIndex]->Name);
+    valueLen = RtlWC16StringNumChars(hKeyNode->Values[dwIndex]->Name);
     if (valueLen > *pcchValueName)
     {
         status = STATUS_BUFFER_TOO_SMALL;
@@ -1414,33 +1414,33 @@ MemDbEnumValue(
     }
 
 
-    memcpy(pValueName, hKey->Values[dwIndex]->Name, valueLen * sizeof(WCHAR));
+    memcpy(pValueName, hKeyNode->Values[dwIndex]->Name, valueLen * sizeof(WCHAR));
     *pcchValueName = valueLen;
     if (pType)
     {
-        *pType = hKey->Values[dwIndex]->Type;
+        *pType = hKeyNode->Values[dwIndex]->Type;
     }
     if (pcbData)
     {
-        if (hKey->Values[dwIndex]->Data && hKey->Values[dwIndex]->DataLen)
+        if (hKeyNode->Values[dwIndex]->Data && hKeyNode->Values[dwIndex]->DataLen)
         {
-            *pcbData = hKey->Values[dwIndex]->DataLen;
-            if (pData && hKey->Values[dwIndex]->Data)
+            *pcbData = hKeyNode->Values[dwIndex]->DataLen;
+            if (pData && hKeyNode->Values[dwIndex]->Data)
             {
                 memcpy(pData, 
-                       hKey->Values[dwIndex]->Data,
-                       hKey->Values[dwIndex]->DataLen);
+                       hKeyNode->Values[dwIndex]->Data,
+                       hKeyNode->Values[dwIndex]->DataLen);
             }
         }
-        else if (hKey->Values[dwIndex]->Attributes.pDefaultValue &&
-                 hKey->Values[dwIndex]->Attributes.DefaultValueLen > 0)
+        else if (hKeyNode->Values[dwIndex]->Attributes.pDefaultValue &&
+                 hKeyNode->Values[dwIndex]->Attributes.DefaultValueLen > 0)
         {
-            *pcbData = hKey->Values[dwIndex]->Attributes.DefaultValueLen;
-            if (pData && hKey->Values[dwIndex]->Attributes.pDefaultValue)
+            *pcbData = hKeyNode->Values[dwIndex]->Attributes.DefaultValueLen;
+            if (pData && hKeyNode->Values[dwIndex]->Attributes.pDefaultValue)
             {
                 memcpy(pData, 
-                       hKey->Values[dwIndex]->Attributes.pDefaultValue,
-                       hKey->Values[dwIndex]->Attributes.DefaultValueLen);
+                       hKeyNode->Values[dwIndex]->Attributes.pDefaultValue,
+                       hKeyNode->Values[dwIndex]->Attributes.DefaultValueLen);
             }
         }
     }
@@ -1461,20 +1461,20 @@ MemDbGetKeyAcl(
     OUT PULONG pSecDescLen)
 {
     NTSTATUS status = 0;
-    PMEMREG_STORE_NODE hKey = NULL;
+    PMEMREG_NODE hKeyNode = NULL;
 
     BAIL_ON_NT_INVALID_POINTER(hDb);
-    hKey = hDb->pMemReg;
+    hKeyNode = hDb->pMemReg;
 
-    if (hKey->pNodeSd)
+    if (hKeyNode->pNodeSd)
     {
         if (pSecDescLen)
         {
-            *pSecDescLen = hKey->pNodeSd->SecurityDescriptorLen;
+            *pSecDescLen = hKeyNode->pNodeSd->SecurityDescriptorLen;
             if (pSecDescRel)
             {
                 memcpy(pSecDescRel,
-                       hKey->pNodeSd->SecurityDescriptor,
+                       hKeyNode->pNodeSd->SecurityDescriptor,
                        *pSecDescLen);
             }
         }
@@ -1495,9 +1495,9 @@ MemDbSetKeyAcl(
     IN ULONG secDescLen)
 {
     NTSTATUS status = 0;
-    PMEMREG_STORE_NODE hKey = NULL;
+    PMEMREG_NODE hKeyNode = NULL;
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor = NULL;
-    PREGMEM_NODE_SD pNodeSd = NULL;
+    PMEMREG_NODE_SD pNodeSd = NULL;
     
 
     BAIL_ON_NT_INVALID_POINTER(hDb);
@@ -1507,27 +1507,27 @@ MemDbSetKeyAcl(
     }
     BAIL_ON_NT_INVALID_POINTER(pSecDescRel);
 
-    hKey = hDb->pMemReg;
+    hKeyNode = hDb->pMemReg;
 
-    if ((hKey->pNodeSd &&
-         memcmp(hKey->pNodeSd->SecurityDescriptor,
+    if ((hKeyNode->pNodeSd &&
+         memcmp(hKeyNode->pNodeSd->SecurityDescriptor,
                 pSecDescRel,
                 secDescLen) != 0) ||
-        !hKey->pNodeSd)
+        !hKeyNode->pNodeSd)
     {
-        if (!hKey->pNodeSd)
+        if (!hKeyNode->pNodeSd)
         {
             status = LW_RTL_ALLOCATE((PVOID*) &pNodeSd,
-                                              PREGMEM_NODE_SD,
+                                              PMEMREG_NODE_SD,
                                               sizeof(*pNodeSd));
             BAIL_ON_NT_STATUS(status);
-            hKey->pNodeSd = pNodeSd;
+            hKeyNode->pNodeSd = pNodeSd;
         }
         else
         {
-            if (hKey->pNodeSd->SecurityDescriptorAllocated)
+            if (hKeyNode->pNodeSd->SecurityDescriptorAllocated)
             {
-                LWREG_SAFE_FREE_MEMORY(hKey->pNodeSd->SecurityDescriptor);
+                LWREG_SAFE_FREE_MEMORY(hKeyNode->pNodeSd->SecurityDescriptor);
             }
         }
         status = LW_RTL_ALLOCATE((PVOID*) &SecurityDescriptor, 
@@ -1535,11 +1535,11 @@ MemDbSetKeyAcl(
                                  secDescLen);
         BAIL_ON_NT_STATUS(status);
 
-        hKey->pNodeSd->SecurityDescriptor = SecurityDescriptor;
-        memcpy(hKey->pNodeSd->SecurityDescriptor, pSecDescRel, secDescLen);
+        hKeyNode->pNodeSd->SecurityDescriptor = SecurityDescriptor;
+        memcpy(hKeyNode->pNodeSd->SecurityDescriptor, pSecDescRel, secDescLen);
 
-        hKey->pNodeSd->SecurityDescriptorLen = secDescLen;
-        hKey->pNodeSd->SecurityDescriptorAllocated = TRUE;
+        hKeyNode->pNodeSd->SecurityDescriptorLen = secDescLen;
+        hKeyNode->pNodeSd->SecurityDescriptorAllocated = TRUE;
     }
 
 cleanup:
@@ -1561,38 +1561,38 @@ MemDbSetValueAttributes(
     IN PLWREG_VALUE_ATTRIBUTES pValueAttributes)
 {
     NTSTATUS status = 0;
-    PMEMREG_STORE_NODE hKey = NULL;
-    PMEMREG_STORE_NODE hParentKey = NULL;
-    PMEMREG_STORE_NODE hSubKey = NULL;
-    PREGMEM_VALUE hValue = NULL;
+    PMEMREG_NODE hKeyNode = NULL;
+    PMEMREG_NODE hParentKey = NULL;
+    PMEMREG_NODE hSubKey = NULL;
+    PMEMREG_VALUE hValue = NULL;
 
-    hKey = hDb->pMemReg;
+    hKeyNode = hDb->pMemReg;
 
     if (pSubKey)
     {
         /*
          * Find named subnode and use that to find the named value
          */
-        hParentKey = hKey;
+        hParentKey = hKeyNode;
         status = MemRegStoreFindNode(
                      hParentKey,
                      pSubKey,
                      &hSubKey);
         BAIL_ON_NT_STATUS(status);
-        hKey = hSubKey;
+        hKeyNode = hSubKey;
     }
 
     /*
      * Find named value within specified node
      */
     status = MemRegStoreFindNodeValue(
-                 hKey,
+                 hKeyNode,
                  pValueName,
                  &hValue);
     if (status == STATUS_OBJECT_NAME_NOT_FOUND)
     {
         status = MemRegStoreAddNodeValue(
-                     hKey,
+                     hKeyNode,
                      pValueName,
                      0, // Not used?
                      pValueAttributes->ValueType,
@@ -1601,7 +1601,7 @@ MemDbSetValueAttributes(
         BAIL_ON_NT_STATUS(status);  
     }
     status = MemRegStoreFindNodeValue(
-                 hKey,
+                 hKeyNode,
                  pValueName,
                  &hValue);
     BAIL_ON_NT_STATUS(status);
@@ -1631,31 +1631,31 @@ MemDbGetValueAttributes(
     OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes)
 {
     NTSTATUS status = 0;
-    PMEMREG_STORE_NODE hKey = NULL;
-    PMEMREG_STORE_NODE hParentKey = NULL;
-    PMEMREG_STORE_NODE hSubKey = NULL;
-    PREGMEM_VALUE hValue = NULL;
+    PMEMREG_NODE hKeyNode = NULL;
+    PMEMREG_NODE hParentKey = NULL;
+    PMEMREG_NODE hSubKey = NULL;
+    PMEMREG_VALUE hValue = NULL;
 
-    hKey = hDb->pMemReg;
+    hKeyNode = hDb->pMemReg;
     if (pSubKey)
     {
         /*
          * Find named subnode and use that to find the named value
          */
-        hParentKey = hKey;
+        hParentKey = hKeyNode;
         status = MemRegStoreFindNode(
                      hParentKey,
                      pSubKey,
                      &hSubKey);
         BAIL_ON_NT_STATUS(status);
-        hKey = hSubKey;
+        hKeyNode = hSubKey;
     }
 
     /*
      * Find named value within specified node
      */
     status = MemRegStoreFindNodeValue(
-                 hKey,
+                 hKeyNode,
                  pValueName,
                  &hValue);
     BAIL_ON_NT_STATUS(status);
@@ -1728,7 +1728,7 @@ MemDbStackFinish(
 NTSTATUS
 MemDbStackPush(
     PMEMDB_STACK hStack,
-    PREGMEM_NODE node,
+    PMEMREG_NODE node,
     PWSTR pwszPrefix)
 {
     NTSTATUS status = 0;
@@ -1757,7 +1757,7 @@ error:
 NTSTATUS
 MemDbStackPop(
     PMEMDB_STACK hStack,
-    PREGMEM_NODE *pNode,
+    PMEMREG_NODE *pNode,
     PWSTR *ppwszPrefix)
 {
     NTSTATUS status = 0;
@@ -1784,27 +1784,27 @@ MemDbRecurseRegistry(
     IN HANDLE hRegConnection,
     IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pwszOptSubKey,
-    IN PVOID (*pfCallback)(PMEMREG_STORE_NODE hKey, 
+    IN PVOID (*pfCallback)(PMEMREG_NODE hKeyNode, 
                            PVOID userContext,
                            PWSTR pwszSubKeyPrefix),
     IN PVOID userContext)
 {
     NTSTATUS status = 0;
-    PMEMREG_STORE_NODE hKey = NULL;
+    PMEMREG_NODE hKeyNode = NULL;
     INT32 index = 0;
     PMEMDB_STACK hStack = 0;
     PWSTR pwszSubKeyPrefix = NULL;
     PWSTR pwszSubKey = NULL;
-    PMEMREG_STORE_NODE hSubKey = NULL;
+    PMEMREG_NODE hSubKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
     
     status = MemDbStackInit(512, &hStack);
     BAIL_ON_NT_STATUS(status);
-    hKey = hDb->pMemReg;
+    hKeyNode = hDb->pMemReg;
 
     if (pwszOptSubKey)
     {
-        regDbConn.pMemReg = hKey;
+        regDbConn.pMemReg = hKeyNode;
         status = MemDbOpenKey(
                      hRegConnection,
                      &regDbConn,
@@ -1812,22 +1812,22 @@ MemDbRecurseRegistry(
                      KEY_READ,
                      &hSubKey);
         BAIL_ON_NT_STATUS(status);
-        hKey = hSubKey;
+        hKeyNode = hSubKey;
     }
 
     /* Initially populate stack from top level node */
     if (!pwszOptSubKey)
     {
-        for (index=hKey->NodesLen-1; index>=0; index--)
+        for (index=hKeyNode->NodesLen-1; index>=0; index--)
         {
             LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
             status = LwRtlWC16StringAllocatePrintf(
                          &pwszSubKeyPrefix,
-                         "%ws", hKey->SubNodes[index]->Name);
+                         "%ws", hKeyNode->SubNodes[index]->Name);
             BAIL_ON_NT_STATUS(status);
             status = MemDbStackPush(
                          hStack,
-                         hKey->SubNodes[index],
+                         hKeyNode->SubNodes[index],
                          pwszSubKeyPrefix);
             BAIL_ON_NT_STATUS(status);
         }
@@ -1848,23 +1848,23 @@ MemDbRecurseRegistry(
 
     do
     {
-        status = MemDbStackPop(hStack, &hKey, &pwszSubKeyPrefix);
+        status = MemDbStackPop(hStack, &hKeyNode, &pwszSubKeyPrefix);
         if (status == 0)
         {
-            pfCallback(hKey, (PVOID) userContext, pwszSubKeyPrefix);
-            if (hKey->SubNodes && hKey->NodesLen > 0)
+            pfCallback(hKeyNode, (PVOID) userContext, pwszSubKeyPrefix);
+            if (hKeyNode->SubNodes && hKeyNode->NodesLen > 0)
             {
-                for (index=hKey->NodesLen-1; index>=0; index--)
+                for (index=hKeyNode->NodesLen-1; index>=0; index--)
                 {
                     status = LwRtlWC16StringAllocatePrintf(
                                  &pwszSubKey, 
                                  "%ws\\%ws",
                                  pwszSubKeyPrefix,
-                                 hKey->SubNodes[index]->Name);
+                                 hKeyNode->SubNodes[index]->Name);
                     BAIL_ON_NT_STATUS(status);
                     status = MemDbStackPush(
                                  hStack,
-                                 hKey->SubNodes[index],
+                                 hKeyNode->SubNodes[index],
                                  pwszSubKey);
                     BAIL_ON_NT_STATUS(status);
                     LWREG_SAFE_FREE_MEMORY(pwszSubKey);
@@ -1894,28 +1894,28 @@ MemDbRecurseDepthFirstRegistry(
     IN HANDLE hRegConnection,
     IN PREG_DB_CONNECTION hDb,
     IN OPTIONAL PCWSTR pwszOptSubKey,
-    IN PVOID (*pfCallback)(PMEMREG_STORE_NODE hKey, 
+    IN PVOID (*pfCallback)(PMEMREG_NODE hKeyNode, 
                            PVOID userContext,
                            PWSTR pwszSubKeyPrefix),
     IN PVOID userContext)
 {
     NTSTATUS status = 0;
-    PMEMREG_STORE_NODE hKey = NULL;
+    PMEMREG_NODE hKeyNode = NULL;
     INT32 index = 0;
     PMEMDB_STACK hStack = 0;
     PWSTR pwszSubKeyPrefix = NULL;
     PWSTR pwszSubKey = NULL;
-    PMEMREG_STORE_NODE hSubKey = NULL;
+    PMEMREG_NODE hSubKey = NULL;
     REG_DB_CONNECTION regDbConn = {0};
 
 
     status = MemDbStackInit(512, &hStack);
     BAIL_ON_NT_STATUS(status);
-    hKey = hDb->pMemReg;
+    hKeyNode = hDb->pMemReg;
 
     if (pwszOptSubKey)
     {
-        regDbConn.pMemReg = hKey;
+        regDbConn.pMemReg = hKeyNode;
         status = MemDbOpenKey(
                      hRegConnection,
                      &regDbConn,
@@ -1923,21 +1923,21 @@ MemDbRecurseDepthFirstRegistry(
                      KEY_ALL_ACCESS,
                      &hSubKey);
         BAIL_ON_NT_STATUS(status);
-        hKey = hSubKey;
+        hKeyNode = hSubKey;
     }
 
     /* Initially populate stack from top level node */
     if (!pwszOptSubKey)
     {
-        for (index=hKey->NodesLen-1; index>=0; index--)
+        for (index=hKeyNode->NodesLen-1; index>=0; index--)
         {
             status = LwRtlWC16StringAllocatePrintf(
                          &pwszSubKeyPrefix,
-                         "%ws", hKey->SubNodes[index]->Name);
+                         "%ws", hKeyNode->SubNodes[index]->Name);
             BAIL_ON_NT_STATUS(status);
             status = MemDbStackPush(
                          hStack,
-                         hKey->SubNodes[index],
+                         hKeyNode->SubNodes[index],
                          pwszSubKeyPrefix);
             BAIL_ON_NT_STATUS(status);
             LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
@@ -1959,25 +1959,25 @@ MemDbRecurseDepthFirstRegistry(
 
     do
     {
-        status = MemDbStackPop(hStack, &hKey, &pwszSubKeyPrefix);
+        status = MemDbStackPop(hStack, &hKeyNode, &pwszSubKeyPrefix);
         if (status == 0)
         {
-            if (hKey->SubNodes && hKey->NodesLen > 0)
+            if (hKeyNode->SubNodes && hKeyNode->NodesLen > 0)
             {
                 /* This push should never fail */
-                status = MemDbStackPush(hStack, hKey, pwszSubKeyPrefix);
+                status = MemDbStackPush(hStack, hKeyNode, pwszSubKeyPrefix);
                 BAIL_ON_NT_STATUS(status);
-                for (index=hKey->NodesLen-1; index>=0; index--)
+                for (index=hKeyNode->NodesLen-1; index>=0; index--)
                 {
                     status = LwRtlWC16StringAllocatePrintf(
                                  &pwszSubKey, 
                                  "%ws\\%ws",
                                  pwszSubKeyPrefix,
-                                 hKey->SubNodes[index]->Name);
+                                 hKeyNode->SubNodes[index]->Name);
                     BAIL_ON_NT_STATUS(status);
                     status = MemDbStackPush(
                                  hStack,
-                                 hKey->SubNodes[index],
+                                 hKeyNode->SubNodes[index],
                                  pwszSubKey);
                     BAIL_ON_NT_STATUS(status);
                     LWREG_SAFE_FREE_MEMORY(pwszSubKey);
@@ -1987,7 +1987,7 @@ MemDbRecurseDepthFirstRegistry(
             else
             {
                 /* This callback must do something to break the recursion */
-                pfCallback(hKey, (PVOID) userContext, pwszSubKeyPrefix);
+                pfCallback(hKeyNode, (PVOID) userContext, pwszSubKeyPrefix);
                 LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
             }
         }

@@ -42,8 +42,8 @@
  * Authors: Adam Bernstein (abernstein@likewise.com)
  */
 
-#ifndef REGMEMAPI_H_
-#define REGMEMAPI_H_
+#ifndef MEMREGAPI_H_
+#define MEMREGAPI_H_
 
 NTSTATUS
 MemProvider_Initialize(
@@ -266,4 +266,4 @@ MemQueryMultipleValues(
     OUT PDWORD pdwTotalsize
     );
 
-#endif /* REGMEMAPI_H_ */
+#endif /* MEMREGAPI_H_ */
