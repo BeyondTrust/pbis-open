@@ -77,7 +77,7 @@ static void usage(void)
     exit(1);
 }
 
-FILE *log;
+FILE *log_file;
 
 int verbose = 0;
 
@@ -197,8 +197,8 @@ static int server_establish_context(
 
     if (! (token_flags & TOKEN_NOOP))
     {
-        if (log)
-            fprintf(log, "Expected NOOP token, got %d token instead\n",
+        if (log_file)
+            fprintf(log_file, "Expected NOOP token, got %d token instead\n",
                     token_flags);
         ret = -1;
         goto error;
@@ -214,9 +214,9 @@ static int server_establish_context(
                 goto error;
             }
 
-            if (verbose && log)
+            if (verbose && log_file)
             {
-                fprintf(log, "Received token (size=%d): \n", (int) recv_tok.length);
+                fprintf(log_file, "Received token (size=%d): \n", (int) recv_tok.length);
                 print_token(&recv_tok);
             }
 
@@ -241,17 +241,17 @@ static int server_establish_context(
 
             if (send_tok.length != 0)
             {
-                if (verbose && log)
+                if (verbose && log_file)
                 {
-                    fprintf(log,
+                    fprintf(log_file,
                             "Sending accept_sec_context token (size=%d):\n",
                             (int) send_tok.length);
                     print_token(&send_tok);
                 }
                 if (send_token(s, TOKEN_CONTEXT, &send_tok) < 0)
                 {
-                    if (log)
-                        fprintf(log, "failure sending token\n");
+                    if (log_file)
+                        fprintf(log_file, "failure sending token\n");
                     ret = -1;
                     goto error;
                 }
@@ -267,20 +267,20 @@ static int server_establish_context(
                 goto error;
             }
 
-            if (verbose && log)
+            if (verbose && log_file)
             {
                 if (maj_stat == GSS_S_CONTINUE_NEEDED)
-                    fprintf(log, "continue needed...\n");
+                    fprintf(log_file, "continue needed...\n");
                 else
-                    fprintf(log, "\n");
-                fflush(log);
+                    fprintf(log_file, "\n");
+                fflush(log_file);
             }
         } while (maj_stat == GSS_S_CONTINUE_NEEDED);
 
         /* display the flags */
         display_ctx_flags(*ret_flags);
 
-        if (verbose && log)
+        if (verbose && log_file)
         {
             maj_stat = gss_oid_to_str(&min_stat, doid, &oid_name);
             if (maj_stat != GSS_S_COMPLETE)
@@ -289,7 +289,7 @@ static int server_establish_context(
                 ret = -1;
                 goto error;
             }
-            fprintf(log, "Accepted connection using mechanism OID %.*s.\n",
+            fprintf(log_file, "Accepted connection using mechanism OID %.*s.\n",
                     (int) oid_name.length, (char *) oid_name.value);
         }
 
@@ -305,8 +305,8 @@ static int server_establish_context(
     {
         client_name->length = *ret_flags = 0;
 
-        if (log)
-            fprintf(log, "Accepted unauthenticated connection.\n");
+        if (log_file)
+            fprintf(log_file, "Accepted unauthenticated connection.\n");
     }
 
 error:
@@ -415,9 +415,9 @@ static int test_import_export_context(
     }
 
     gettimeofday(&tm2, (struct timezone *)0);
-    if (verbose && log)
+    if (verbose && log_file)
     {
-        fprintf(log, "Exported context: %d bytes, %7.4f seconds\n",
+        fprintf(log_file, "Exported context: %d bytes, %7.4f seconds\n",
                 (int) context_token.length,
                 timeval_subtract(&tm2, &tm1));
     }
@@ -426,8 +426,8 @@ static int test_import_export_context(
     copied_token.value = malloc(context_token.length);
     if (copied_token.value == 0)
      {
-        if (log)
-            fprintf(log, "Couldn't allocate memory to copy context token.\n");
+        if (log_file)
+            fprintf(log_file, "Couldn't allocate memory to copy context token.\n");
         ret = 1;
         goto error;
     }
@@ -444,9 +444,9 @@ static int test_import_export_context(
     free(copied_token.value);
 
     gettimeofday(&tm1, (struct timezone *)0);
-    if (verbose && log)
+    if (verbose && log_file)
     {
-        fprintf(log, "Importing context: %7.4f seconds\n",
+        fprintf(log_file, "Importing context: %7.4f seconds\n",
                 timeval_subtract(&tm1, &tm2));
     }
 
@@ -470,9 +470,9 @@ static int process_non_iov_message(
     int conf_state = 0;
     char *cp = NULL;
 
-    if (verbose && log)
+    if (verbose && log_file)
     {
-        fprintf(log, "Message token (flags=%d):\n", token_flags);
+        fprintf(log_file, "Message token (flags=%d):\n", token_flags);
         print_token(&xmit_buf);
     }
 
@@ -501,18 +501,18 @@ static int process_non_iov_message(
         stop = 1;
     }
 
-    if (log) {
-        fprintf(log, "Received message: ");
+    if (log_file) {
+        fprintf(log_file, "Received message: ");
         cp = msg_buf.value;
         if ((isprint((int) cp[0]) || isspace((int) cp[0])) &&
             (isprint((int) cp[1]) || isspace((int) cp[1])))
         {
-            fprintf(log, "\"%.*s\"\n", (int) msg_buf.length,
+            fprintf(log_file, "\"%.*s\"\n", (int) msg_buf.length,
                     (char *) msg_buf.value);
         }
         else
         {
-            fprintf(log, "\n");
+            fprintf(log_file, "\n");
             print_token(&msg_buf);
         }
     }
@@ -560,9 +560,9 @@ static int process_iov_message(
     gss_iov_buffer_desc wrap_bufs[21];
     unsigned char lenbuf[4];
 
-    if (verbose && log)
+    if (verbose && log_file)
     {
-        fprintf(log, "Message iov token (flags=%d):\n", token_flags);
+        fprintf(log_file, "Message iov token (flags=%d):\n", token_flags);
         print_token(&xmit_buf);
     }
 
@@ -644,19 +644,19 @@ static int process_iov_message(
             msg_buf = wrap_bufs[i].buffer;
             fprintf(stderr, "Buffer type %u, %u\n", wrap_bufs[i].type, (unsigned int)msg_buf.length);
 
-            if (log)
+            if (log_file)
             {
-                fprintf(log, "Received message: ");
+                fprintf(log_file, "Received message: ");
                 cp = msg_buf.value;
                 if ((isprint((int) cp[0]) || isspace((int) cp[0])) &&
                      (isprint((int) cp[1]) || isspace((int) cp[1])))
                 {
-                    fprintf(log, "\"%.*s\"\n", (int) msg_buf.length, 
+                    fprintf(log_file, "\"%.*s\"\n", (int) msg_buf.length, 
                             (char *) msg_buf.value);
                 }
                 else
                 {
-                    fprintf(log, "\n");
+                    fprintf(log_file, "\n");
                     print_token(&msg_buf);
                 }
             }
@@ -720,8 +720,8 @@ static int sign_server(
     gss_ctx_id_t context = GSS_C_NO_CONTEXT;
     OM_uint32 min_stat = 0;
     int i = 0;
-    int ret_flags = 0;
-    unsigned int token_flags = 0;
+    OM_uint32 ret_flags = 0;
+    OM_uint32 token_flags = 0;
 
     /* Establish a context with the client */
     if (server_establish_context(s, server_creds, &context,
@@ -764,8 +764,8 @@ static int sign_server(
 
         if (token_flags & TOKEN_NOOP)
         {
-            if (log)
-                fprintf(log, "NOOP token\n");
+            if (log_file)
+                fprintf(log_file, "NOOP token\n");
             if(xmit_buf.value)
             {
                 free(xmit_buf.value);
@@ -777,8 +777,8 @@ static int sign_server(
         if ((context == GSS_C_NO_CONTEXT) &&
             (    token_flags & (TOKEN_WRAPPED|TOKEN_ENCRYPTED|TOKEN_SEND_MIC)))
         {
-            if (log)
-                fprintf(log,
+            if (log_file)
+                fprintf(log_file,
                         "Unauthenticated client requested authenticated services!\n");
             ret = -1;
             goto error;
@@ -852,8 +852,8 @@ error:
     gss_delete_sec_context(&min_stat, &context, NULL);
     (void) gss_release_buffer(&min_stat, &client_name);
 
-    if (log)
-        fflush(log);
+    if (log_file)
+        fflush(log_file);
 
     return ret;
 }
@@ -874,7 +874,7 @@ main(
     int do_inetd = 0;
     int export = 0;
 
-    log = stdout;
+    log_file = stdout;
     display_file = stdout;
     argc--; argv++;
     while (argc)
@@ -911,13 +911,13 @@ main(
                to /dev/null. */
             if (! strcmp(*argv, "/dev/null"))
             {
-                log = display_file = NULL;
+                log_file = display_file = NULL;
             }
             else
             {
-                log = fopen(*argv, "a");
-                display_file = log;
-                if (!log)
+                log_file = fopen(*argv, "a");
+                display_file = log_file;
+                if (!log_file)
                 {
                     perror(*argv);
                     exit(1);

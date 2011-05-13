@@ -357,7 +357,7 @@ int recv_token(
     unsigned char flagbuf[4];
     unsigned char lenbuf[4];
 
-    ret = read_all(s, flagbuf, 4);
+    ret = read_all(s, (char*) flagbuf, 4);
     if (ret < 0)
     {
         perror("reading token flags");
@@ -380,7 +380,7 @@ int recv_token(
         *pFlags = flags;
     }
 
-    ret = read_all(s, lenbuf, 4);
+    ret = read_all(s, (char*) lenbuf, 4);
     if (ret < 0)
     {
         perror("reading token length");
