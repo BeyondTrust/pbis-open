@@ -818,48 +818,6 @@ error:
     return status;
 }
 
-static
-LWMsgStatus
-realloc_wrap(
-    LWMsgBuffer* buffer,
-    size_t count
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    const LWMsgContext* context = buffer->data;
-    size_t offset = buffer->cursor - buffer->base;
-    size_t length = buffer->end - buffer->base;
-    size_t new_length = 0;
-    unsigned char* new_buffer = NULL;
-
-    if (count)
-    {
-        if (length == 0)
-        {
-            new_length = 256;
-        }
-        else
-        {
-            new_length = length * 2;
-        }
-        
-        BAIL_ON_ERROR(status = lwmsg_context_realloc(
-                          context,
-                          buffer->base,
-                          length,
-                          new_length,
-                          (void**) (void*) &new_buffer));
-        
-        buffer->base = new_buffer;
-        buffer->end = new_buffer + new_length;
-        buffer->cursor = new_buffer + offset;
-    }
-
-error:
-
-    return status;
-}
-
 LWMsgStatus
 lwmsg_data_print_graph_alloc(
     LWMsgDataContext* context,
@@ -872,7 +830,7 @@ lwmsg_data_print_graph_alloc(
     LWMsgBuffer buffer = {0};
     unsigned char nul = 0;
 
-    buffer.wrap = realloc_wrap;
+    buffer.wrap = lwmsg_buffer_realloc_wrap;
     buffer.data = (void*) context->context;
 
     BAIL_ON_ERROR(status = lwmsg_data_print_graph(

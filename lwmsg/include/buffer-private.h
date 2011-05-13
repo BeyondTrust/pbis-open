@@ -151,4 +151,10 @@ lwmsg_buffer_finish(
     }
 }
 
+LWMsgStatus
+lwmsg_buffer_realloc_wrap(
+    LWMsgBuffer* buffer,
+    size_t count
+    );
+
 #endif

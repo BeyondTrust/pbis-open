@@ -84,81 +84,64 @@ lwmsg_peer_session_string_for_session(
 }
 
 static
-void
-lwmsg_peer_session_string_for_assoc(
-    LWMsgAssoc* assoc,
-    LWMsgSessionString string
-    )
-{
-    LWMsgSession* session = NULL;
-
-    if (lwmsg_assoc_get_session(assoc, &session) == LWMSG_STATUS_SUCCESS)
-    {
-        lwmsg_peer_session_string_for_session(session, string);
-    }
-    else
-    {
-        strncpy(string, "<null session>", sizeof (string));
-    }
-}
-
-static
 LWMsgStatus
 lwmsg_peer_log_message(
-    LWMsgPeer* peer,
-    LWMsgAssoc* assoc,
+    PeerAssocTask* task,
     LWMsgMessage* message,
     LWMsgBool is_outgoing
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    const char* data_direction = NULL;
+    const char* call_direction = NULL;
     const char* message_direction = NULL;
     const char* message_type = NULL;
     char* msg_text = NULL;
     const char* status_text = NULL;
+    LWMsgSessionString sessid = {0};
 
-    if (lwmsg_context_would_log(peer->context, LWMSG_LOGLEVEL_TRACE))
+    if (lwmsg_context_would_log(task->session->peer->context, LWMSG_LOGLEVEL_TRACE))
     {
+        lwmsg_peer_session_string_for_session((LWMsgSession*) task->session, sessid);
+
         if (message->flags & LWMSG_MESSAGE_FLAG_REPLY)
         {
             if (message->flags & LWMSG_MESSAGE_FLAG_SYNTHETIC)
             {
-                message_direction = "SRS";
+                message_direction = "srs";
             }
             else
             {
-                message_direction = "RES";
+                message_direction = "res";
             }
         }
         else
         {
             if (message->flags & LWMSG_MESSAGE_FLAG_SYNTHETIC)
             {
-                message_direction = "SRQ";
+                message_direction = "srq";
             }
             else
             {
-                message_direction = "REQ";
+                message_direction = "req";
             }
         }
 
         if (message->flags & LWMSG_MESSAGE_FLAG_CONTROL)
         {
-            message_type = "CTRL";
+            message_type = "ctrl";
         }
         else
         {
-            message_type = "CALL";
+            message_type = "call";
         }
 
         if (is_outgoing)
         {
-            data_direction = "<<";
+            call_direction = "<<";
         }
         else
         {
-            data_direction = ">>";
+            call_direction = ">>";
         }
     
         if (message->status != LWMSG_STATUS_SUCCESS)
@@ -170,7 +153,7 @@ lwmsg_peer_log_message(
 
         if (message->tag != LWMSG_TAG_INVALID)
         {
-            BAIL_ON_ERROR(lwmsg_assoc_print_message_alloc(assoc, message, &msg_text));
+            BAIL_ON_ERROR(lwmsg_assoc_print_message_alloc(task->assoc, message, &msg_text));
         }
 
         if (msg_text)
@@ -178,10 +161,10 @@ lwmsg_peer_log_message(
             if (status_text)
             {
                 LWMSG_LOG_TRACE(
-                    peer->context,
-                    "(assoc:0x%lx %s %u) %s %s [%s] %s",
-                    LWMSG_POINTER_AS_ULONG(assoc),
-                    data_direction,
+                    task->session->peer->context,
+                    "(session:%s %s %u) %s %s [%s] %s",
+                    sessid,
+                    call_direction,
                     message->cookie,
                     message_type,
                     message_direction,
@@ -191,10 +174,10 @@ lwmsg_peer_log_message(
             else
             {
                 LWMSG_LOG_TRACE(
-                    peer->context,
-                    "(assoc:0x%lx %s %u) %s %s %s",
-                    LWMSG_POINTER_AS_ULONG(assoc),
-                    data_direction,
+                    task->session->peer->context,
+                    "(session:%s %s %u) %s %s %s",
+                    sessid,
+                    call_direction,
                     message->cookie,
                     message_type,
                     message_direction,
@@ -206,10 +189,10 @@ lwmsg_peer_log_message(
             if (status_text)
             {
                 LWMSG_LOG_TRACE(
-                    peer->context,
-                    "(assoc:0x%lx %s %u) %s %s [%s]",
-                    LWMSG_POINTER_AS_ULONG(assoc),
-                    data_direction,
+                    task->session->peer->context,
+                    "(session:%s %s %u) %s %s [%s]",
+                    sessid,
+                    call_direction,
                     message->cookie,
                     message_type,
                     message_direction,
@@ -218,10 +201,10 @@ lwmsg_peer_log_message(
             else
             {
                 LWMSG_LOG_TRACE(
-                    peer->context,
-                    "(assoc:0x%lx %s %u) %s %s",
-                    LWMSG_POINTER_AS_ULONG(assoc),
-                    data_direction,
+                    task->session->peer->context,
+                    "(session:%s %s %u) %s %s",
+                    sessid,
+                    call_direction,
                     message->cookie,
                     message_type,
                     message_direction);
@@ -233,7 +216,7 @@ cleanup:
 
     if (msg_text)
     {
-        lwmsg_context_free(peer->context, msg_text);
+        lwmsg_context_free(task->session->peer->context, msg_text);
     }
 
     return status;
@@ -246,79 +229,91 @@ error:
 static
 LWMsgStatus
 lwmsg_peer_log_accept(
-    LWMsgPeer* peer,
-    LWMsgAssoc* assoc
+    PeerAssocTask* task
     )
 {
-    LWMsgSessionString buffer;
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgSessionString sessid;
+    LWMsgBuffer buffer = {.wrap = lwmsg_buffer_realloc_wrap};
+    const char* peerid = NULL;
+    unsigned char nul = 0;
+    LWMsgSecurityToken* token = lwmsg_session_get_peer_security_token((LWMsgSession*) task->session);
 
-    if (lwmsg_context_would_log(peer->context, LWMSG_LOGLEVEL_VERBOSE))
+    if (lwmsg_context_would_log(task->session->peer->context, LWMSG_LOGLEVEL_VERBOSE))
     {
-        lwmsg_peer_session_string_for_assoc(assoc, buffer);
-            
-        LWMSG_LOG_VERBOSE(peer->context, "(session:%s) Accepted association 0x%lx",
-                          buffer, (unsigned long) (size_t) assoc);
+        lwmsg_peer_session_string_for_session((LWMsgSession*) task->session, sessid);
+        if (token)
+        {
+            BAIL_ON_ERROR(status = lwmsg_security_token_to_string(
+                token,
+                &buffer));
+            BAIL_ON_ERROR(status = lwmsg_buffer_write(&buffer, &nul, 1));
+            peerid = (const char*) buffer.base;
+        }
+        else
+        {
+            peerid = "<anonymous>";
+        }
+
+        LWMSG_LOG_VERBOSE(
+            task->session->peer->context,
+            "(session:%s) Accepted %s",
+            sessid,
+            peerid);
     }
 
-    return LWMSG_STATUS_SUCCESS;
+error:
+
+    if (buffer.base)
+    {
+        free(buffer.base);
+    }
+
+    return status;
 }
 
 static
 LWMsgStatus
 lwmsg_peer_log_connect(
-    LWMsgPeer* peer,
-    LWMsgAssoc* assoc
-    )
-{
-    LWMsgSessionString buffer;
-
-    if (lwmsg_context_would_log(peer->context, LWMSG_LOGLEVEL_VERBOSE))
-    {
-        lwmsg_peer_session_string_for_assoc(assoc, buffer);
-            
-        LWMSG_LOG_VERBOSE(peer->context, "(session:%s) Connected association 0x%lx",
-                          buffer, (unsigned long) (size_t) assoc);
-    }
-
-    return LWMSG_STATUS_SUCCESS;
-}
-
-static
-LWMsgStatus
-realloc_wrap(
-    LWMsgBuffer* buffer,
-    size_t count
+    PeerAssocTask* task
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    size_t offset = buffer->cursor - buffer->base;
-    size_t length = buffer->end - buffer->base;
-    size_t new_length = 0;
-    unsigned char* new_buffer = NULL;
+    LWMsgSessionString sessid;
+    LWMsgBuffer buffer = {.wrap = lwmsg_buffer_realloc_wrap};
+    const char* peerid = NULL;
+    unsigned char nul = 0;
+    LWMsgSecurityToken* token = lwmsg_session_get_peer_security_token((LWMsgSession*) task->session);
 
-    if (count)
+    if (lwmsg_context_would_log(task->session->peer->context, LWMSG_LOGLEVEL_VERBOSE))
     {
-        if (length == 0)
+        lwmsg_peer_session_string_for_session((LWMsgSession*) task->session, sessid);
+        if (token)
         {
-            new_length = 256;
+            BAIL_ON_ERROR(status = lwmsg_security_token_to_string(
+                token,
+                &buffer));
+            BAIL_ON_ERROR(status = lwmsg_buffer_write(&buffer, &nul, 1));
+            peerid = (const char*) buffer.base;
         }
         else
         {
-            new_length = length * 2;
+            peerid = "<anonymous>";
         }
 
-        new_buffer = realloc(buffer->base, new_length);
-        if (!new_buffer)
-        {
-            BAIL_ON_ERROR(status = LWMSG_STATUS_MEMORY);
-        }
-
-        buffer->base = new_buffer;
-        buffer->end = new_buffer + new_length;
-        buffer->cursor = new_buffer + offset;
+        LWMSG_LOG_VERBOSE(
+            task->session->peer->context,
+            "(session:%s) Connected %s",
+            sessid,
+            peerid);
     }
 
 error:
+
+    if (buffer.base)
+    {
+        free(buffer.base);
+    }
 
     return status;
 }
@@ -340,7 +335,7 @@ lwmsg_peer_log_call(
     {
         BAIL_ON_ERROR(status = lwmsg_buffer_print(
             buffer,
-            "    call %lu >> ",
+            "    call >> %lu ",
             (unsigned long) call->cookie));
         message.tag = call->params.incoming.in.tag;
         message.data = call->params.incoming.in.data;
@@ -349,7 +344,7 @@ lwmsg_peer_log_call(
     {
         BAIL_ON_ERROR(status = lwmsg_buffer_print(
             buffer,
-            "    call %lu << ",
+            "    call << %lu ",
             (unsigned long) call->cookie));
         message.tag = call->params.outgoing.in->tag;
         message.data = call->params.outgoing.in->data;
@@ -382,7 +377,7 @@ lwmsg_peer_log_state(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    LWMsgBuffer buffer = {.wrap = realloc_wrap};
+    LWMsgBuffer buffer = {.wrap = lwmsg_buffer_realloc_wrap};
     LWMsgSessionString sess;
     LWMsgHashIter iter = {0};
     PeerCall* call = NULL;
@@ -985,6 +980,10 @@ lwmsg_peer_task_handle_assoc_error(
     LWMsgStatus status
     )
 {
+    LWMsgSessionString sessid = {0};
+
+    lwmsg_peer_session_string_for_session((LWMsgSession*) task->session, sessid);
+
     if (status)
     {
         pthread_mutex_lock(&task->session->lock);
@@ -1000,21 +999,21 @@ lwmsg_peer_task_handle_assoc_error(
     case LWMSG_STATUS_PEER_CLOSE:
     case LWMSG_STATUS_PEER_RESET:
     case LWMSG_STATUS_PEER_ABORT:
-        LWMSG_LOG_VERBOSE(peer->context, "(assoc:0x%lx) Dropping: %s",
-                          LWMSG_POINTER_AS_ULONG(task->assoc),
+        LWMSG_LOG_VERBOSE(peer->context, "(session:%s) Dropping: %s",
+                          sessid,
                           lwmsg_status_name(status));
         task->type = PEER_TASK_DROP;
         status = LWMSG_STATUS_SUCCESS;
         break;
     case LWMSG_STATUS_TIMEOUT:
-        LWMSG_LOG_VERBOSE(peer->context, "(assoc:0x%lx) Resetting: %s",
-                          LWMSG_POINTER_AS_ULONG(task->assoc),
+        LWMSG_LOG_VERBOSE(peer->context, "(session:%s) Resetting: %s",
+                          sessid,
                           lwmsg_status_name(status));
         task->type = PEER_TASK_BEGIN_RESET;
         status = LWMSG_STATUS_SUCCESS;
     default:
-        LWMSG_LOG_VERBOSE(peer->context, "(assoc:0x%lx) Dropping: %s",
-                          LWMSG_POINTER_AS_ULONG(task->assoc),
+        LWMSG_LOG_VERBOSE(peer->context, "(session:%s) Dropping: %s",
+                          sessid,
                           lwmsg_status_name(status));
         task->type = PEER_TASK_BEGIN_CLOSE;
         status = LWMSG_STATUS_SUCCESS;
@@ -1181,7 +1180,7 @@ lwmsg_peer_task_run_accept(
     {
     case LWMSG_STATUS_SUCCESS:
         task->type = PEER_TASK_DISPATCH;
-        BAIL_ON_ERROR(status = lwmsg_peer_log_accept(peer, task->assoc));
+        BAIL_ON_ERROR(status = lwmsg_peer_log_accept(task));
         break;
     case LWMSG_STATUS_PENDING:
         task->type = PEER_TASK_FINISH_ACCEPT;
@@ -1222,7 +1221,7 @@ lwmsg_peer_task_run_connect(
     {
     case LWMSG_STATUS_SUCCESS:
         task->type = PEER_TASK_DISPATCH;
-        BAIL_ON_ERROR(status = lwmsg_peer_log_connect(peer, task->assoc));
+        BAIL_ON_ERROR(status = lwmsg_peer_log_connect(task));
         /* Set up the fd the assoc just created for events */
         BAIL_ON_ERROR(status = lwmsg_task_set_trigger_fd(task->event_task, CONNECTION_PRIVATE(task->assoc)->fd));
         break;
@@ -1409,7 +1408,7 @@ lwmsg_peer_task_cancel_call(
 
     if (call)
     {
-        lwmsg_peer_log_message(task->session->peer, task->assoc, &task->incoming_message, LWMSG_FALSE);
+        lwmsg_peer_log_message(task, &task->incoming_message, LWMSG_FALSE);
         lwmsg_peer_call_cancel_incoming(call);
     }
 }
@@ -1427,7 +1426,7 @@ lwmsg_peer_task_complete_call(
 
     if (call)
     {
-        lwmsg_peer_log_message(task->session->peer, task->assoc, &task->incoming_message, LWMSG_TRUE);
+        lwmsg_peer_log_message(task, &task->incoming_message, LWMSG_TRUE);
         lwmsg_peer_call_complete_outgoing(call, &task->incoming_message);
     }
 }
@@ -1468,7 +1467,7 @@ lwmsg_peer_task_dispatch_incoming_message(
         }
     }
 
-    lwmsg_peer_log_message(peer, task->assoc, &task->incoming_message, LWMSG_FALSE);
+    lwmsg_peer_log_message(task, &task->incoming_message, LWMSG_FALSE);
 
     /* Check if this cookie is already in use */
     if (lwmsg_hash_find_key(&task->incoming_calls, &task->incoming_message.cookie))
@@ -1619,11 +1618,11 @@ lwmsg_peer_task_run_finish(
             switch (task->type)
             {
             case PEER_TASK_FINISH_ACCEPT:
-                BAIL_ON_ERROR(status = lwmsg_peer_log_accept(peer, task->assoc));
+                BAIL_ON_ERROR(status = lwmsg_peer_log_accept(task));
                 task->type = PEER_TASK_DISPATCH;
                 break;
             case PEER_TASK_FINISH_CONNECT:
-                BAIL_ON_ERROR(status = lwmsg_peer_log_connect(peer, task->assoc));
+                BAIL_ON_ERROR(status = lwmsg_peer_log_connect(task));
                 task->type = PEER_TASK_DISPATCH;
                 break;
             case PEER_TASK_FINISH_CLOSE:
@@ -1693,7 +1692,7 @@ lwmsg_peer_task_finish_transceive(
             }
             else if (message == &task->outgoing_message)
             {
-                lwmsg_peer_log_message(task->session->peer, task->assoc, &task->outgoing_message, LWMSG_FALSE);
+                lwmsg_peer_log_message(task, &task->outgoing_message, LWMSG_FALSE);
                 task->outgoing = LWMSG_FALSE;
                 if (task->destroy_outgoing)
                 {
@@ -1727,6 +1726,7 @@ lwmsg_peer_task_dispatch_calls(
     LWMsgMessage message = LWMSG_MESSAGE_INITIALIZER;
     LWMsgRing* ring = NULL;
     LWMsgRing* next = NULL;
+    LWMsgSessionString sessid = {0};
 
     for (ring = task->active_outgoing_calls.next;
          ring != &task->active_outgoing_calls;
@@ -1748,7 +1748,7 @@ lwmsg_peer_task_dispatch_calls(
             task->outgoing_message.cookie = call->cookie;
             task->outgoing_message.status = call->status;
             
-            lwmsg_peer_log_message(task->session->peer, task->assoc, &task->outgoing_message, LWMSG_TRUE);
+            lwmsg_peer_log_message(task, &task->outgoing_message, LWMSG_TRUE);
             status = lwmsg_assoc_send_message(task->assoc, &task->outgoing_message);
             switch (status)
             {
@@ -1784,7 +1784,7 @@ lwmsg_peer_task_dispatch_calls(
             task->outgoing_message.status = LWMSG_STATUS_CANCELLED;
             task->outgoing_message.cookie = call->cookie;
             
-            lwmsg_peer_log_message(task->session->peer, task->assoc, &task->outgoing_message, LWMSG_TRUE);
+            lwmsg_peer_log_message(task, &task->outgoing_message, LWMSG_TRUE);
             status = lwmsg_assoc_send_message(task->assoc, &task->outgoing_message);
             switch (status)
             {
@@ -1847,7 +1847,7 @@ lwmsg_peer_task_dispatch_calls(
                 switch (status)
                 {
                 case LWMSG_STATUS_SUCCESS:
-                    lwmsg_peer_log_message(task->session->peer, task->assoc, &task->outgoing_message, LWMSG_FALSE);
+                    lwmsg_peer_log_message(task, &task->outgoing_message, LWMSG_FALSE);
                     lwmsg_assoc_destroy_message(task->assoc, &task->outgoing_message);
                     break;
                 case LWMSG_STATUS_PENDING:
@@ -1862,9 +1862,10 @@ lwmsg_peer_task_dispatch_calls(
                     /* Our reply could not be sent because the dispatch function gave us
                        bogus response parameters.  Send a synthetic reply instead so the
                        caller at least knows the call is complete */
+                    lwmsg_peer_session_string_for_session((LWMsgSession*) task->session, sessid);
                     LWMSG_LOG_WARNING(task->session->peer->context,
-                                      "(assoc:0x%lx >> %u) Response payload could not be sent: %s",
-                                      LWMSG_POINTER_AS_ULONG(task->assoc),
+                                      "(session:%s >> %u) Response payload could not be sent: %s",
+                                      sessid,
                                       cookie,
                                       lwmsg_status_name(status));
                     lwmsg_assoc_destroy_message(task->assoc, &task->outgoing_message);

@@ -18,6 +18,7 @@ lwmsg_assoc_set_nonblock
 lwmsg_assoc_print_message_alloc
 lwmsg_assoc_acquire_call
 lwmsg_buffer_print
+lwmsg_buffer_realloc_wrap
 lwmsg_connection_new
 lwmsg_connection_set_packet_size
 lwmsg_connection_set_fd

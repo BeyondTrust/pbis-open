@@ -7,6 +7,7 @@ make()
         assoc-marshal.c \
         assoc-session.c \
         assoc-call.c \
+        buffer.c \
         call.c \
         convert.c \
         connection.c \
