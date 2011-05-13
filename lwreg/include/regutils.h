@@ -56,8 +56,7 @@
 #define BAIL_ON_REG_PARSE_ERROR(dwError)              \
 	if ((dwError != LW_ERROR_SUCCESS) &&             \
 	    (dwError != REG_ERROR_INSUFFICIENT_BUFFER)) { \
-		REG_LOG_DEBUG("Error at %s:%d [code: %d]",    \
-			      __FILE__, __LINE__, dwError);       \
+		REG_LOG_DEBUG("Error: %d", dwError);       \
 		goto error;                                   \
 	}
 
@@ -65,18 +64,16 @@
 #ifndef BAIL_ON_NT_STATUS
 #define BAIL_ON_NT_STATUS(status)                \
     if ((status) != STATUS_SUCCESS) {                              \
-       REG_LOG_DEBUG("Error at %s:%d [status: %s = 0x%08X (%d)]", \
-                     __FILE__,                     \
-                     __LINE__,                     \
-                     RegNtStatusToName(status), \
-                     status, status);          \
-       goto error;                                 \
+        REG_LOG_DEBUG("Status: %s = 0x%08X (%d)]", \
+        RegNtStatusToName(status), \
+        status, status);          \
+        goto error;                                 \
     }
 #endif
 
 #define BAIL_ON_REG_ERROR(dwError)                                              \
     if (dwError) {                                                              \
-       REG_LOG_DEBUG("Error at %s:%d [code: %d]", __FILE__, __LINE__, dwError); \
+       REG_LOG_DEBUG("Error: %d", dwError); \
        goto error;                                                              \
     }
 

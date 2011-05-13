@@ -60,7 +60,7 @@
 
 #define BAIL_ON_LWNET_ERROR(dwError) \
     if (dwError) {                    \
-       LWNET_LOG_DEBUG("Error at %s:%d [code: %d]", __FILE__, __LINE__, dwError); \
+       LWNET_LOG_DEBUG("Error: %d", dwError); \
        goto error;                    \
     }
 

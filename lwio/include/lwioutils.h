@@ -252,7 +252,7 @@ LwIoReadConfigEnum(
 
 #define BAIL_ON_NT_STATUS(ntStatus)                \
     if ((ntStatus)) {                              \
-       LWIO_LOG_DEBUG("status: %s = 0x%08X (%d)",  \
+       LWIO_LOG_DEBUG("Status: %s = 0x%08X (%d)",  \
            LwNtStatusToName(ntStatus),             \
            ntStatus, ntStatus);                    \
        goto error;                                 \
