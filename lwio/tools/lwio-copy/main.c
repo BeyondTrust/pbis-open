@@ -794,7 +794,7 @@ ShowUsage(
     printf("\t-h Show help\n");
     // printf("\t-r Recurse when copying a directory\n");
     printf("\t-k kerberos cache path\n");
-    printf("Usage: lwio-copy -r //imgserver.abc.com/public/apple.jpg .\n");
+    printf("Usage: lwio-copy //imgserver.abc.com/public/apple.jpg ./apple.jpg\n");
 }
 
 
