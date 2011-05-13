@@ -1,4 +1,4 @@
-SUBDIRS="libtdb wbclient lwicompat pstore-plugin tools"
+SUBDIRS="wbclient lwicompat pstore-plugin tools"
 
 configure()
 {
@@ -22,11 +22,11 @@ configure()
    
     mk_check_headers \
         FAIL=yes \
-        reg/lwreg.h lwadvapi.h reg/regutil.h
+        reg/lwreg.h lwadvapi.h reg/regutil.h tdb.h
 
     mk_check_libraries \
         FAIL=yes \
-        rsutils regclient lwadvapi lsaclient lwbase_nothr lwnetclientapi
+        rsutils regclient lwadvapi lsaclient lwbase_nothr lwnetclientapi tdb
 
     mk_check_headers \
         unistd.h stdint.h string.h stdbool.h

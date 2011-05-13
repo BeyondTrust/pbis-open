@@ -1,7 +1,10 @@
 PROJECT_NAME="platform"
 MODULES="core compiler autotools moonunit pkg-config likewise dceidl fortune"
+
 LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv popt \
-                libuuid sqlite openssl curl libxml2 fuse libedit"
+                libuuid sqlite openssl curl libxml2 fuse \
+                libedit libtdb"
+
 SUBDIRS="$LW_ALL_BUNDLED \
          lwbase lwmsg lwreg lwadvapi netlogon \
          lwio nfs pvfs2 libschannel dcerpc centutils lwsm eventlog lsass reapsysl lwdns \
@@ -37,13 +40,13 @@ option()
             default_samba_interop="no"
             ;;
         linux-*)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt fuse libedit"
+            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt fuse libedit libtdb"
             ;;
         darwin-*)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2 libedit"
+            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2 libedit libtdb"
             ;;
         *)
-            default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2 libedit"
+            default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2 libedit libtdb"
             ;;
     esac
 

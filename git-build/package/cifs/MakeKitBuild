@@ -99,7 +99,7 @@ make()
 {
     COMMON_SUBDIRS="\
         @krb5 @cyrus-sasl @openldap @libiconv @sqlite \
-        @libuuid @openssl @curl @libxml2 \
+        @libuuid @openssl @curl @libxml2 @libtdb \
         @lwbase @lwmsg @libedit @lwreg @lwadvapi @netlogon \
         @lwio @libschannel @dcerpc @centutils @lwsm \
         @eventlog @lsass @reapsysl @lwdns @srvsvc @lwnetapi \
