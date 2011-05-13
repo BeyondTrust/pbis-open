@@ -29,9 +29,12 @@ defaults()
 
 option()
 {
+    default_samba_interop="yes"
+
     case "${MK_HOST_OS}-${LW_FEATURE_LEVEL}" in
         *-auth)
             default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl popt libedit"
+            default_samba_interop="no"
             ;;
         linux-*)
             default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt fuse libedit"
@@ -48,7 +51,7 @@ option()
         OPTION=samba-interop \
         PARAM="yes|no" \
         VAR="LW_SAMBA_INTEROP" \
-        DEFAULT="yes" \
+        DEFAULT="$default_samba_interop" \
         HELP="Build samba interop libraries"
 
     mk_option \
