@@ -95,6 +95,10 @@ MemDbOpenKey(
     OUT OPTIONAL PMEMREG_NODE *pRegKey
     );
 
+VOID
+MemDbCloseKey(
+    IN HKEY hKey
+    );
 
 NTSTATUS
 MemDbCreateKeyEx(
@@ -252,7 +256,8 @@ MemDbRecurseDepthFirstRegistry(
     IN OPTIONAL PCWSTR pwszOptSubKey,
     IN PVOID (*pfCallback)(PMEMREG_NODE hNode, 
                            PVOID userContext,
-                           PWSTR pwszSubKeyPrefix),
+                           PWSTR pwszSubKeyPrefix,
+                           NTSTATUS *pStatus),
     IN PVOID userContext
     );
 

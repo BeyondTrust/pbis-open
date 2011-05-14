@@ -42,7 +42,7 @@
 
 #include "includes.h"
 
-static NTSTATUS
+NTSTATUS
 _MemCreateHkeyReply(
     IN PMEMREG_NODE pSubKey,
     OUT PHKEY phkResult)
@@ -142,11 +142,22 @@ error:
 static void *pfDeleteNodeCallback(
     PMEMREG_NODE pEntry, 
     PVOID userContext,
-    PWSTR subStringPrefix)
+    PWSTR subStringPrefix,
+    NTSTATUS *pStatus)
 {
-    MemRegStoreDeleteNode(pEntry);
+    /* Check current node ref count, and bail if it isn't 0 */
+    if (pEntry->NodeRefCount >= 1)
+    {
+        *pStatus = STATUS_RESOURCE_IN_USE;
+        BAIL_ON_REG_ERROR(*pStatus);
+    }
+    *pStatus = MemRegStoreDeleteNode(pEntry);
 
+cleanup:
     return NULL;
+
+error:
+    goto cleanup;
 }
 
 
@@ -398,19 +409,13 @@ MemCloseKey(
     IN HKEY hKey
     )
 {
-    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     BOOLEAN bInLock = FALSE;
     
     if (hKey)
     {
         LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &MemRegRoot()->lock);
-        if (pKeyHandle->pKey->hNode->NodeRefCount >= 1)
-        {
-            pKeyHandle->pKey->hNode->NodeRefCount--;
-        }
+        MemDbCloseKey(hKey);
         LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
-        LWREG_SAFE_FREE_MEMORY(pKeyHandle->pKey);
-        LWREG_SAFE_FREE_MEMORY(pKeyHandle);
     }
 }
 

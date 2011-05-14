@@ -46,6 +46,12 @@
 #define MEMREGAPI_H_
 
 NTSTATUS
+_MemCreateHkeyReply(
+    IN PMEMREG_NODE pSubKey,
+    OUT PHKEY phkResult
+    );
+
+NTSTATUS
 MemProvider_Initialize(
     PREGPROV_PROVIDER_FUNCTION_TABLE* ppFnTable,
     const PWSTR* ppwszRootKeyNames

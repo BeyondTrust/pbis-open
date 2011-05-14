@@ -74,9 +74,16 @@ error:
 static void *pfDeleteNodeCallback(
     PMEMREG_NODE pEntry,
     PVOID userContext,
-    PWSTR subStringPrefix)
+    PWSTR subStringPrefix,
+    NTSTATUS *pStatus)
 {
-    MemRegStoreDeleteNode(pEntry);
+    NTSTATUS status = 0;
+
+    status = MemRegStoreDeleteNode(pEntry);
+    if (pStatus)
+    {
+        *pStatus = status;
+    }
 
     return NULL;
 }
@@ -928,6 +935,24 @@ cleanup:
 
 error:
     goto cleanup;
+}
+
+
+VOID
+MemDbCloseKey(
+    IN HKEY hKey)
+{
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
+
+    if (hKey)
+    {
+        if (pKeyHandle->pKey->hNode->NodeRefCount >= 1)
+        {
+            pKeyHandle->pKey->hNode->NodeRefCount--;
+        }
+        LWREG_SAFE_FREE_MEMORY(pKeyHandle->pKey);
+        LWREG_SAFE_FREE_MEMORY(pKeyHandle);
+    }
 }
 
 
@@ -1896,18 +1921,18 @@ MemDbRecurseDepthFirstRegistry(
     IN OPTIONAL PCWSTR pwszOptSubKey,
     IN PVOID (*pfCallback)(PMEMREG_NODE hKeyNode, 
                            PVOID userContext,
-                           PWSTR pwszSubKeyPrefix),
+                           PWSTR pwszSubKeyPrefix,
+                           NTSTATUS *status),
     IN PVOID userContext)
 {
     NTSTATUS status = 0;
+    NTSTATUS statusCallback = 0;
     PMEMREG_NODE hKeyNode = NULL;
     INT32 index = 0;
     PMEMDB_STACK hStack = 0;
     PWSTR pwszSubKeyPrefix = NULL;
     PWSTR pwszSubKey = NULL;
     PMEMREG_NODE hSubKey = NULL;
-    REG_DB_CONNECTION regDbConn = {0};
-
 
     status = MemDbStackInit(512, &hStack);
     BAIL_ON_NT_STATUS(status);
@@ -1915,12 +1940,9 @@ MemDbRecurseDepthFirstRegistry(
 
     if (pwszOptSubKey)
     {
-        regDbConn.pMemReg = hKeyNode;
-        status = MemDbOpenKey(
-                     hRegConnection,
-                     &regDbConn,
+        status = MemRegStoreFindNodeSubkey(
+                     hKeyNode,
                      pwszOptSubKey,
-                     KEY_ALL_ACCESS,
                      &hSubKey);
         BAIL_ON_NT_STATUS(status);
         hKeyNode = hSubKey;
@@ -1987,8 +2009,13 @@ MemDbRecurseDepthFirstRegistry(
             else
             {
                 /* This callback must do something to break the recursion */
-                pfCallback(hKeyNode, (PVOID) userContext, pwszSubKeyPrefix);
+                pfCallback(hKeyNode, (PVOID) userContext, 
+                           pwszSubKeyPrefix, &statusCallback);
                 LWREG_SAFE_FREE_MEMORY(pwszSubKeyPrefix);
+
+                /* Bail if callback returns an error */
+                status = statusCallback;
+                BAIL_ON_NT_STATUS(status);
             }
         }
         else
