@@ -117,7 +117,7 @@ RdrFinishTreeConnect(
     PRDR_TREE pTree = pContext->State.TreeConnect.pTree;
     PSMB_PACKET pResponsePacket = pParam;
     BOOLEAN bTreeLocked = FALSE;
-    PTREE_CONNECT_RESPONSE_HEADER pHeader = NULL;
+    PTREE_CONNECT_EXT_RESPONSE_HEADER pHeader = NULL;
 
     LWIO_LOCK_MUTEX(bTreeLocked, &pTree->mutex);
 
@@ -129,7 +129,7 @@ RdrFinishTreeConnect(
     pTree->tid = pResponsePacket->pSMBHeader->tid;
     pTree->state = RDR_TREE_STATE_READY;
 
-    status = UnmarshallTreeConnectResponse(
+    status = UnmarshallTreeConnectExtResponse(
         pResponsePacket->pParams,
         pResponsePacket->bufferUsed - (pResponsePacket->pParams - pResponsePacket->pRawBuffer),
         pResponsePacket->pParams - pResponsePacket->pRawBuffer,

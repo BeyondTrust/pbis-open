@@ -326,20 +326,20 @@ error:
 }
 
 NTSTATUS
-UnmarshallTreeConnectResponse(
+UnmarshallTreeConnectExtResponse(
     const uint8_t    *pBuffer,
     uint32_t          bufferLen,
     uint8_t           messageAlignment,
-    TREE_CONNECT_RESPONSE_HEADER **ppHeader
+    TREE_CONNECT_EXT_RESPONSE_HEADER **ppHeader
     )
 {
-    PTREE_CONNECT_RESPONSE_HEADER pHeader = NULL;
+    PTREE_CONNECT_EXT_RESPONSE_HEADER pHeader = NULL;
     /* NOTE: The buffer format cannot be trusted! */
     uint32_t bufferUsed = sizeof(TREE_CONNECT_RESPONSE_HEADER);
     if (bufferLen < bufferUsed)
         return STATUS_INVALID_NETWORK_RESPONSE;
 
-    pHeader = (PTREE_CONNECT_RESPONSE_HEADER) pBuffer;
+    pHeader = (PTREE_CONNECT_EXT_RESPONSE_HEADER) pBuffer;
     SMB_HTOL16_INPLACE(pHeader->optionalSupport);
     SMB_HTOL32_INPLACE(pHeader->maximalShareAccessMask);
     SMB_HTOL32_INPLACE(pHeader->guestMaximalShareAccessMask);

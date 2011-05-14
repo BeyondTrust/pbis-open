@@ -499,6 +499,12 @@ typedef USHORT SMB_CSC_FLAGS;
 #define SMB_CSC_FLAG_CACHE_VDO          0x0008
 #define SMB_CSC_FLAG_CACHE_NONE         0x000C
 
+typedef USHORT SMB_TREE_CONNECT_FLAGS;
+
+#define SMB_TREE_CONNECT_DISCONNECT_TID    0x0001
+#define SMB_TREE_CONNECT_EXT_SIGNATURES    0x0004
+#define SMB_TREE_CONNECT_EXT_RESPONSE      0x0008
+
 typedef enum
 {
     FLAG_OBSOLETE_1     = 0x1,  /* Reserved for obsolescent requests
@@ -1288,13 +1294,29 @@ typedef struct
                                 /* Exclusive search bits */
                                 /*      ("MUST HAVE BITS") supported */
                                 /*      SMB_SHARE_IS_IN_DFS = 0x0002 */
-    uint32_t  maximalShareAccessMask;
-    uint32_t  guestMaximalShareAccessMask;
     uint16_t  byteCount;        /* Count of data bytes; min = 3 */
 
     /* Data immediately follows */
 }  __attribute__((__packed__))  TREE_CONNECT_RESPONSE_HEADER,
                                *PTREE_CONNECT_RESPONSE_HEADER;
+
+typedef struct
+{
+    /* wordCount and byteCount are handled at a higher layer */
+    /* AndX chains will be handled at a higher layer */
+
+    uint16_t  optionalSupport;  /* Optional support bits */
+                                /*      SMB_SUPPORT_SEARCH_BITS = 0x0001 */
+                                /* Exclusive search bits */
+                                /*      ("MUST HAVE BITS") supported */
+                                /*      SMB_SHARE_IS_IN_DFS = 0x0002 */
+    uint32_t  maximalShareAccessMask;
+    uint32_t  guestMaximalShareAccessMask;
+    uint16_t  byteCount;        /* Count of data bytes; min = 3 */
+
+    /* Data immediately follows */
+}  __attribute__((__packed__))  TREE_CONNECT_EXT_RESPONSE_HEADER,
+                               *PTREE_CONNECT_EXT_RESPONSE_HEADER;
 
 typedef struct
 {
@@ -2372,11 +2394,11 @@ MarshallTreeConnectResponseData(
     );
 
 NTSTATUS
-UnmarshallTreeConnectResponse(
+UnmarshallTreeConnectExtResponse(
     const uint8_t    *pBuffer,
     uint32_t          bufferLen,
     uint8_t           messageAlignment,
-    TREE_CONNECT_RESPONSE_HEADER **ppHeader
+    TREE_CONNECT_EXT_RESPONSE_HEADER **ppHeader
     );
 
 NTSTATUS
