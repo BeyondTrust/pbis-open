@@ -1015,6 +1015,8 @@ typedef struct
 } __attribute__((__packed__)) SMB_FIND_NEXT2_RESPONSE_PARAMETERS,
                              *PSMB_FIND_NEXT2_RESPONSE_PARAMETERS;
 
+#define SMB_CREATE_REQUEST_EXT_RESPONSE 0x00000010
+
 typedef struct {
     /* wordCount and byteCount are handled at a higher layer */
     /* AndX chains will be handled at a higher layer */
@@ -1024,7 +1026,8 @@ typedef struct {
     uint32_t flags;              /* Create bit set:
                                     0x02 - Request an oplock
                                     0x04 - Request a batch oplock
-                                    0x08 - Target of open must be directory */
+                                    0x08 - Target of open must be directory
+                                    0x10 - Request an extended response */
     uint32_t rootDirectoryFid;   /* If non-zero, open is relative to this
                                     directory */
     uint32_t desiredAccess;      /* Access desired (See Section 3.8 for an
@@ -1105,6 +1108,40 @@ typedef struct
 
 }  __attribute__((__packed__))  CREATE_RESPONSE_HEADER,
                                *PCREATE_RESPONSE_HEADER;
+
+typedef struct
+{
+    /* wordCount and byteCount are handled at a higher layer */
+    /* AndX chains will be handled at a higher layer */
+
+    uint8_t  oplockLevel;       /* The oplock level granted:
+                                        0 - No oplock granted
+                                        1 - Exclusive oplock granted
+                                        2 - Batch oplock granted
+                                        3 - Level II oplock granted */
+    uint16_t fid;               /* The file ID */
+    uint32_t createAction;      /* The action taken */
+    int64_t  creationTime;      /* The time the file was created */
+    int64_t  lastAccessTime;    /* The time the file was accessed */
+    int64_t  lastWriteTime;     /* The time the file was last written */
+    int64_t  changeTime;        /* The time the file was last changed */
+    uint32_t extFileAttributes; /* The file attributes */
+    int64_t  allocationSize;    /* The number of byes allocated */
+    int64_t  endOfFile;         /* The end of file offset */
+    uint16_t fileType;
+    uint16_t deviceState;       /* State of IPC device (e.g. pipe) */
+    uint8_t  isDirectory;       /* TRUE if this is a directory */
+    BYTE     volumeGUID[16];    /* GUID which uniquely identifies the volume */
+    uint64_t fileID;            /* 64-bit value that identifies this file on
+                                   a volume */
+    uint32_t MaximalAccessRights; /* The maximum access rights that the user
+                                     opening the file has been granted for
+                                     this open */
+    uint32_t GuestMaximalAccessRights;
+    uint16_t byteCount;         /* = 0 */
+
+}  __attribute__((__packed__))  CREATE_RESPONSE_EXT_HEADER,
+                               *PCREATE_RESPONSE_EXT_HEADER;
 
 typedef struct
 {
