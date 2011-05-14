@@ -1220,8 +1220,8 @@ MU_TEST(client_server_pair, basic)
     MU_TRY(lwmsg_peer_new(NULL, protocol, &client));
     MU_TRY(lwmsg_peer_add_dispatch_spec(client, invoke_dispatch));
 
-    MU_TRY(lwmsg_peer_accept_fd(server, LWMSG_ENDPOINT_LOCAL, sockets[0]));
-    MU_TRY(lwmsg_peer_connect_fd(server, LWMSG_ENDPOINT_LOCAL, sockets[1], &session));
+    MU_TRY(lwmsg_peer_accept_fd(server, LWMSG_ENDPOINT_PAIR, sockets[0]));
+    MU_TRY(lwmsg_peer_connect_fd(server, LWMSG_ENDPOINT_PAIR, sockets[1], &session));
 
     in.tag = PING_REQUEST;
 
