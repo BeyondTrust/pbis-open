@@ -206,6 +206,12 @@ WireSMBUTimetoNTTime(
     struct tm stTime = {0};
     time_t tSmbUTime = ulSmbUTime;
 
+    if (tSmbUTime == 0)
+    {
+        *pllNTTime = 0;
+        goto cleanup;
+    }
+
     if (bAdjustToLocalTimeZone == TRUE)
     {
         tSmbUTime -= (tSmbUTime - mktime(gmtime_r(&tSmbUTime, &stTime)));
@@ -217,6 +223,7 @@ WireSMBUTimetoNTTime(
     *pllNTTime = (tSmbUTime + WIRE_NTTIME_EPOCH_DIFFERENCE_SECS) *
                                     WIRE_FACTOR_SECS_TO_HUNDREDS_OF_NANOSECS;
 
+ cleanup:
     return ntStatus;
 }
 

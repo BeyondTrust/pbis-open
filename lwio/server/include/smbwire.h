@@ -1622,8 +1622,7 @@ typedef struct
     /* AndX chains will be handled at a higher layer */
 
     USHORT   usFileAttributes;
-    SMB_DATE lastWriteDate;
-    SMB_TIME lastWriteTime;
+    ULONG    ulLastWriteTime;
     USHORT   reserved[5];
     USHORT   usByteCount;
 
@@ -1754,6 +1753,16 @@ typedef struct _TRANS2_FILE_SMB_STANDARD_INFORMATION {
     // ULONG EaSize;    Listed in the SNIA ref but not seen from WinXP
 } __attribute__((__packed__)) TRANS2_FILE_SMB_STANDARD_INFORMATION,
                              *PTRANS2_FILE_SMB_STANDARD_INFORMATION;
+
+typedef struct _TRANS2_FILE_SMB_INFO_STANDARD_SET {
+    SMB_DATE CreationDate;
+    SMB_TIME CreationTime;
+    SMB_DATE LastAccessDate;
+    SMB_TIME LastAccessTime;
+    SMB_DATE LastWriteDate;
+    SMB_TIME LastWriteTime;
+} __attribute__((__packed__)) TRANS2_FILE_SMB_INFO_STANDARD_SET,
+                             *PTRANS2_FILE_SMB_INFO_STANDARD_SET;
 
 typedef struct _TRANS2_FILE_BASIC_INFORMATION {
     LONG64 CreationTime;
