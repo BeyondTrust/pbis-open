@@ -37,7 +37,7 @@ configure()
         mmap pread pwrite
 
     mk_check_functions \
-        HEADERDEPS="stdlib.h" \
+        HEADERDEPS="stdlib.h unistd.h" \
         setenv unsetenv strtoul strtoull mkdtemp
 
     mk_check_functions \
