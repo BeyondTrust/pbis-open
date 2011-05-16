@@ -11,6 +11,6 @@ make()
 {
     mk_stage \
         SOURCE="ConfigureLogin" \
-        DESTDIR="${MK_BINDIR}" \
+        DESTDIR="${MK_LIBEXECDIR}" \
         MODE="0755"
 }

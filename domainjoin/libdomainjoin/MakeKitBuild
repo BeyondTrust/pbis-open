@@ -1,5 +1,10 @@
 SUBDIRS="include"
 
+configure()
+{
+    MK_CPPFLAGS="$MK_CPPFLAGS -DSCRIPTDIR=\"$MK_LIBEXECDIR\""
+}
+
 make()
 {
     DJ_SOURCES="\

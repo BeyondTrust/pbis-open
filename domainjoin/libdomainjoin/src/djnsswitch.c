@@ -38,6 +38,10 @@
 #define NSSWITCH_CONF_PATH "/etc/nsswitch.conf"
 #define NSSWITCH_LWIDEFAULTS "/etc/nsswitch.lwi_defaults"
 
+#ifndef SCRIPTDIR
+#define SCRIPTDIR  PREFIXDIR"/bin"
+#endif
+
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
 typedef struct
