@@ -374,10 +374,12 @@ SamrSrvDecodePasswordBuffer(
      * Copied password is a 2-byte little-endian string. Make
      * sure we return a string in native endianness
      */
-    wc16lestowc16s(pwszPassword, pwszPasswordLE, dwPasswordLen);
+    wc16lestowc16s(pwszPassword,
+                   pwszPasswordLE,
+                   (dwPasswordLen/sizeof(pwszPassword[0])) + 1);
 
     *ppwszPassword  = pwszPassword;
-    *pdwPasswordLen = dwPasswordLen / 2;
+    *pdwPasswordLen = dwPasswordLen / sizeof(pwszPassword[0]);
 
 cleanup:
     LW_SECURE_FREE_WSTRING(pwszPasswordLE);
