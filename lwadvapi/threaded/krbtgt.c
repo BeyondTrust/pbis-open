@@ -296,7 +296,10 @@ cleanup:
             krb5_free_principal(ctx, client);
         }
         
-        krb5_cc_close(ctx, cc);
+        if (cc)
+        {
+            krb5_cc_close(ctx, cc);
+        }
 
         krb5_free_cred_contents(ctx, &creds);
         
