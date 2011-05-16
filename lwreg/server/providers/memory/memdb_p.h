@@ -10,7 +10,7 @@ typedef struct _MEMREG_NODE *PMEMREG_NODE;
 
 typedef struct _MEMDB_FILE_EXPORT_CTX
 {
-    FILE *wfp;
+    int wfd;
     PMEMREG_NODE hNode;
     BOOLEAN bStopThread;
 } MEMDB_FILE_EXPORT_CTX, *PMEMDB_FILE_EXPORT_CTX;

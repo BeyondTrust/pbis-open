@@ -192,10 +192,8 @@ MemProvider_Shutdown(
     MEMDB_FILE_EXPORT_CTX exportCtx = {0};
 
     exportCtx.hNode = pMemRegRoot->pMemReg;
-    exportCtx.wfp = pMemRegRoot->ExportCtx->wfp;
 
     LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &pMemRegRoot->lock);
-    fseek(exportCtx.wfp, 0, SEEK_SET);
     status = MemDbExportToFile(&exportCtx);
     BAIL_ON_REG_ERROR(status);
 
@@ -217,10 +215,6 @@ MemProvider_Shutdown(
         pthread_rwlock_destroy(&pMemRegRoot->lock)));
 
 cleanup:
-    if (exportCtx.wfp)
-    {
-        fclose(exportCtx.wfp);
-    }
     LWREG_SAFE_FREE_MEMORY(pMemRegRoot->ExportCtx);
     LWREG_SAFE_FREE_MEMORY(pMemRegRoot);
     LWREG_SAFE_FREE_MEMORY(pwszRootKey);

@@ -112,7 +112,8 @@ pfMemRegExportToFile(
     PMEMREG_VALUE Value = NULL;
     PLWREG_VALUE_ATTRIBUTES Attr = NULL;
     PMEMDB_FILE_EXPORT_CTX exportCtx = (PMEMDB_FILE_EXPORT_CTX) userContext;
-    FILE *wfp = exportCtx->wfp;
+    char fmtbuf[64]; // Way longer than needed for data format
+    int wfd = exportCtx->wfd;
 
     /* Format key first */
     dwError = RegExportEntry(
@@ -127,8 +128,8 @@ pfMemRegExportToFile(
                   &dwDumpStringLen);
     /* Map to NT error status ? */
     BAIL_ON_NT_STATUS(dwError);
-
-    fprintf(wfp, "%.*s\n", dwDumpStringLen, pszDumpString);
+    write(wfd, pszDumpString, dwDumpStringLen);
+    write(wfd, "\n", 1);
     LWREG_SAFE_FREE_STRING(pszDumpString);
 
     if ((pEntry->NodeType == MEMREG_TYPE_KEY ||
@@ -142,7 +143,9 @@ pfMemRegExportToFile(
                          SDDL_REVISION_1,
                          SecInfoAll));
         BAIL_ON_NT_STATUS(dwError);
-        fprintf(wfp, "@security=%s\n", pszStringSecurityDescriptor);
+        write(wfd, "@security=", 10);
+        write(wfd, pszStringSecurityDescriptor, strlen(pszStringSecurityDescriptor));
+        write(wfd, "\n", 1);
         LWREG_SAFE_FREE_STRING(pszStringSecurityDescriptor);
     }
 
@@ -165,7 +168,10 @@ pfMemRegExportToFile(
             LwRtlCStringAllocateFromWC16String(
                 &pszValueName, 
                 Value->Name);
-            fprintf(wfp, "\"%s\" = {\n", pszValueName);
+            write(wfd, "\"", 1);
+            write(wfd, pszValueName, strlen(pszValueName));
+            write(wfd, "\" = {\n", 6);
+             
             LWREG_SAFE_FREE_STRING(pszValueName);
       
             /* Deal with an override value first */
@@ -184,7 +190,9 @@ pfMemRegExportToFile(
                 /* Map to NT error status ? */
                 BAIL_ON_NT_STATUS(dwError);
 
-                fprintf(wfp, "\t%.*s\n", dwDumpStringLen, pszDumpString);
+                write(wfd, "\t", 1);
+                write(wfd, pszDumpString, strlen(pszDumpString));
+                write(wfd, "\n", 1);
                 LWREG_SAFE_FREE_STRING(pszDumpString);
             }
 
@@ -205,7 +213,9 @@ pfMemRegExportToFile(
                 /* Map to NT error status ? */
                 BAIL_ON_NT_STATUS(dwError);
     
-                fprintf(wfp, "\t%.*s\n", dwDumpStringLen, pszDumpString);
+                write(wfd, "\t", 1);
+                write(wfd, pszDumpString, strlen(pszDumpString));
+                write(wfd, "\n", 1);
                 LWREG_SAFE_FREE_STRING(pszDumpString);
             }
  
@@ -225,18 +235,20 @@ pfMemRegExportToFile(
                 /* Map to NT error status ? */
                 BAIL_ON_NT_STATUS(dwError);
     
-                fprintf(wfp, "\t%.*s\n", dwDumpStringLen, pszDumpString);
+                write(wfd, "\t", 1);
+                write(wfd, pszDumpString, strlen(pszDumpString));
+                write(wfd, "\n", 1);
                 LWREG_SAFE_FREE_STRING(pszDumpString);
             }
 
             switch (Attr->RangeType)
             {
                 case LWREG_VALUE_RANGE_TYPE_BOOLEAN:
-                    fprintf(wfp, "\t\"range\"=boolean\n");
+                    write(wfd, "\t\"range\"=boolean\n", 17);
                     break;
 
                 case LWREG_VALUE_RANGE_TYPE_ENUM:
-                    fprintf(wfp, "\trange=string:");
+                    write(wfd, "\trange=string:", 14);
                     for (enumIndex=0; 
                          Attr->Range.ppwszRangeEnumStrings[enumIndex];
                          enumIndex++)
@@ -244,34 +256,42 @@ pfMemRegExportToFile(
                         LwRtlCStringAllocateFromWC16String(
                              &pszEnumValue,
                              Attr->Range.ppwszRangeEnumStrings[enumIndex]);
-                        fprintf(wfp, "%s\"%s\"", 
-                               enumIndex == 0 ? "" : "\t\t", 
-                               pszEnumValue);
+                        if (enumIndex)
+                        {
+                            write(wfd, "\t\t\"", 3);
+                        }
+                        else
+                        {
+                            write(wfd, "\"", 1);
+                        } 
+                        write(wfd, pszEnumValue, strlen(pszEnumValue));
+                        write(wfd, "\"", 1);
                         LWREG_SAFE_FREE_MEMORY(pszEnumValue);
 
                         if (Attr->Range.ppwszRangeEnumStrings[enumIndex+1])
                         {
-                            fprintf(wfp, " \\\n");
+                            write(wfd, " \\\n", 3);
                         }
                     }
-                    fprintf(wfp, "\n");
+                    write(wfd, "\n", 1);
                     break;
 
                 case LWREG_VALUE_RANGE_TYPE_INTEGER:
-                    fprintf(wfp, "\t\"range\" = integer:%d-%d\n",
+                    sprintf(fmtbuf, "\t\"range\" = integer:%d-%d\n",
                         Attr->Range.RangeInteger.Min,
                         Attr->Range.RangeInteger.Max);
-                           
-                    break;
+                    write(wfd, fmtbuf, strlen(fmtbuf)); 
+                break;
+
                 default:
                     break;
             }
 
             LWREG_SAFE_FREE_STRING(pszDumpString);
-            fprintf(wfp, "}\n");
+            write(wfd, "}\n", 2);
         }
     }
-    fprintf(wfp, "\n");
+    write(wfd, "\n", 1);
 cleanup:
     LWREG_SAFE_FREE_STRING(pszStringSecurityDescriptor);
     LWREG_SAFE_FREE_STRING(pszDumpString);
@@ -520,6 +540,11 @@ MemDbExportToFile(
 {
     NTSTATUS status = 0;
     REG_DB_CONNECTION regDbConn = {0};
+    int wfd = -1;
+
+    wfd = open(MEMDB_EXPORT_FILE ".tmp", O_RDWR | O_CREAT | O_TRUNC, 0600);
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError((wfd == -1) ? errno : 0));
+    pExportCtx->wfd = wfd;
 
     regDbConn.ExportCtx = pExportCtx;
     regDbConn.pMemReg = pExportCtx->hNode;
@@ -531,13 +556,29 @@ MemDbExportToFile(
                  pExportCtx);
     BAIL_ON_NT_STATUS(status);
 
-    fflush(pExportCtx->wfp);
-    fseek(pExportCtx->wfp, 0, SEEK_SET);
+    status = fsync(wfd);
+    if (status == -1)
+    {
+        BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(errno));
+    }
+    status = close(wfd);
+    if (status == -1)
+    {
+        BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(errno));
+    }
+    wfd = -1;
+
+    status = rename(MEMDB_EXPORT_FILE ".tmp", MEMDB_EXPORT_FILE);
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(errno));
 
 cleanup:
     return status;
 
 error:
+    if (wfd != -1)
+    {
+        close(wfd);
+    }
     goto cleanup;
 
 }
@@ -550,7 +591,6 @@ MemDbStartExportToFileThread(VOID)
     PMEMDB_FILE_EXPORT_CTX exportCtx = {0};
     PWSTR pwszRootKey = NULL;
     pthread_t hThread;
-    int fd = -1;
 
     status = LW_RTL_ALLOCATE(
                  (PVOID*) &exportCtx,
@@ -558,14 +598,6 @@ MemDbStartExportToFileThread(VOID)
                  sizeof(MEMDB_FILE_EXPORT_CTX));
     BAIL_ON_NT_STATUS(status);
 
-    fd = open(MEMDB_EXPORT_FILE, O_RDWR | O_CREAT, 0600);
-    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError((fd == -1) ? errno : 0));
-    exportCtx->wfp = fdopen(fd, "w+");
-    if (!exportCtx->wfp)
-    {
-        status = STATUS_OPEN_FAILED;
-        BAIL_ON_NT_STATUS(status);
-    }
     exportCtx->hNode = MemRegRoot()->pMemReg;
 
     MemRegRoot()->ExportCtx = exportCtx;
