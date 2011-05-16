@@ -93,7 +93,8 @@ void *
 pfMemRegExportToFile(
     PMEMREG_NODE pEntry, 
     PVOID userContext,
-    PWSTR subStringPrefix)
+    PWSTR subStringPrefix,
+    NTSTATUS *pstatus)
 {
     DWORD dwError = 0;
     PSTR pszDumpString = NULL;
@@ -1811,17 +1812,18 @@ MemDbRecurseRegistry(
     IN OPTIONAL PCWSTR pwszOptSubKey,
     IN PVOID (*pfCallback)(PMEMREG_NODE hKeyNode, 
                            PVOID userContext,
-                           PWSTR pwszSubKeyPrefix),
+                           PWSTR pwszSubKeyPrefix,
+                           NTSTATUS *status),
     IN PVOID userContext)
 {
     NTSTATUS status = 0;
+    NTSTATUS statusCallback = 0;
     PMEMREG_NODE hKeyNode = NULL;
     INT32 index = 0;
     PMEMDB_STACK hStack = 0;
     PWSTR pwszSubKeyPrefix = NULL;
     PWSTR pwszSubKey = NULL;
     PMEMREG_NODE hSubKey = NULL;
-    REG_DB_CONNECTION regDbConn = {0};
     
     status = MemDbStackInit(512, &hStack);
     BAIL_ON_NT_STATUS(status);
@@ -1829,12 +1831,9 @@ MemDbRecurseRegistry(
 
     if (pwszOptSubKey)
     {
-        regDbConn.pMemReg = hKeyNode;
-        status = MemDbOpenKey(
-                     hRegConnection,
-                     &regDbConn,
+        status = MemRegStoreFindNodeSubkey(
+                     hKeyNode,
                      pwszOptSubKey,
-                     KEY_READ,
                      &hSubKey);
         BAIL_ON_NT_STATUS(status);
         hKeyNode = hSubKey;
@@ -1876,7 +1875,13 @@ MemDbRecurseRegistry(
         status = MemDbStackPop(hStack, &hKeyNode, &pwszSubKeyPrefix);
         if (status == 0)
         {
-            pfCallback(hKeyNode, (PVOID) userContext, pwszSubKeyPrefix);
+            pfCallback(hKeyNode,
+                       (PVOID) userContext,
+                       pwszSubKeyPrefix,
+                       &statusCallback);
+            /* Bail if callback returns an error */
+            status = statusCallback;
+            BAIL_ON_NT_STATUS(status);
             if (hKeyNode->SubNodes && hKeyNode->NodesLen > 0)
             {
                 for (index=hKeyNode->NodesLen-1; index>=0; index--)

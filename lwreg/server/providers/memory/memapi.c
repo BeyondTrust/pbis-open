@@ -139,6 +139,25 @@ error:
     goto cleanup;
 }
 
+
+/*
+ * Function to determine if any node in a subtree has a non-zero refcount.
+ */
+void *
+pfMemRegSubTreeRefCount(
+    PMEMREG_NODE pEntry, 
+    PVOID userContext,
+    PWSTR subStringPrefix,
+    NTSTATUS *pStatus)
+{
+    if (pEntry && pStatus && pEntry->NodeRefCount >= 1)
+    {
+        *pStatus = STATUS_RESOURCE_IN_USE;
+    }
+    return NULL;
+}
+
+
 static void *pfDeleteNodeCallback(
     PMEMREG_NODE pEntry, 
     PVOID userContext,
@@ -155,7 +174,6 @@ static void *pfDeleteNodeCallback(
 
 cleanup:
     return NULL;
-
 error:
     goto cleanup;
 }
@@ -803,10 +821,19 @@ MemDeleteTree(
     regDbConn.pMemReg = pKeyHandle->pKey->hNode;
     LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &MemRegRoot()->lock);
 
-#if 1
-    /* Add ref count checking here, or in the pfDeleteNodeCallback function */
-#endif
-
+    /*
+     * First determine if any subkey has a non-zero refcount. Refuse
+     * to delete the tree if this is true.
+     */
+    status = MemDbRecurseRegistry(
+                 Handle,
+                 &regDbConn,
+                 pwszSubKey,
+                 pfMemRegSubTreeRefCount,
+                 NULL);
+    BAIL_ON_NT_STATUS(status);
+                 
+    /* No keys are open, so proceed with the deletion of the subtree. */
     status = MemDbRecurseDepthFirstRegistry(
                  Handle,
                  &regDbConn,
@@ -814,8 +841,12 @@ MemDeleteTree(
                  pfDeleteNodeCallback,
                  NULL);
     MemDbExportEntryChanged();
+
+cleanup:
     LWREG_UNLOCK_RWMUTEX(bInLock, &MemRegRoot()->lock);
     return status;
+error:
+    goto cleanup;
 }
 
 

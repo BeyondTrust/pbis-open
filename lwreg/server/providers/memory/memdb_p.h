@@ -244,7 +244,8 @@ MemDbRecurseRegistry(
     IN OPTIONAL PCWSTR pwszSubKey,
     IN PVOID (*pfCallback)(PMEMREG_NODE hNode, 
                            PVOID userContext,
-                           PWSTR subKeyPrefix),
+                           PWSTR subKeyPrefix,
+                           NTSTATUS *pstatus),
     IN PVOID userContext
     );
 
