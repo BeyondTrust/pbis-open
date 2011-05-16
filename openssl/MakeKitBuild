@@ -289,6 +289,12 @@ configure_openssl()
         linux-ppc32)
             host_string="linux-ppc"
             ;;
+        linux-x86_32)
+            host_string="linux-elf"
+            ;;
+        linux-x86_64)
+            host_string="linux-x86_64"
+            ;;
         *)
             host_string=""
             ;;
