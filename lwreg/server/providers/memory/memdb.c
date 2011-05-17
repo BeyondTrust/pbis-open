@@ -541,6 +541,10 @@ MemDbExportToFile(
     NTSTATUS status = 0;
     REG_DB_CONNECTION regDbConn = {0};
     int wfd = -1;
+    int dfd = -1;
+
+    dfd = open(MEMDB_EXPORT_DIR, O_RDONLY);
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError((dfd == -1) ? errno : 0));
 
     wfd = open(MEMDB_EXPORT_FILE ".tmp", O_RDWR | O_CREAT | O_TRUNC, 0600);
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError((wfd == -1) ? errno : 0));
@@ -557,21 +561,24 @@ MemDbExportToFile(
     BAIL_ON_NT_STATUS(status);
 
     status = fsync(wfd);
-    if (status == -1)
-    {
-        BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(errno));
-    }
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError((status == -1) ? errno : 0));
+
     status = close(wfd);
-    if (status == -1)
-    {
-        BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(errno));
-    }
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError((status == -1) ? errno : 0));
     wfd = -1;
 
     status = rename(MEMDB_EXPORT_FILE ".tmp", MEMDB_EXPORT_FILE);
-    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(errno));
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError((status == -1) ? errno : 0));
+
+    status = fsync(dfd);
+    BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError((status == -1) ? errno : 0));
 
 cleanup:
+    if (dfd != -1)
+    {
+        close(dfd);
+    }
+    
     return status;
 
 error:
@@ -580,7 +587,6 @@ error:
         close(wfd);
     }
     goto cleanup;
-
 }
 
 
