@@ -96,6 +96,32 @@ error:
 }
 
 static
+VOID
+__attribute__((destructor))
+__LwSmIpcCallShutdown(
+    VOID
+    )
+{
+    if (gpSession)
+    {
+        lwmsg_peer_disconnect(gpClient);
+        gpSession = NULL;
+    }
+
+    if (gpClient)
+    {
+        lwmsg_peer_delete(gpClient);
+        gpClient = NULL;
+    }
+
+    if (gpProtocol)
+    {
+        lwmsg_protocol_delete(gpProtocol);
+        gpProtocol = NULL;
+    }
+}
+
+static
 DWORD
 LwSmIpcCallInit(
     VOID
