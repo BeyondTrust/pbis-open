@@ -209,6 +209,10 @@ WcharsToUtf8s(
     }
 
     converted = iconv(cd, (ICONV_IN_TYPE)&inBuf, &sIn, &outBuf, &amountLeft);
+    if (converted == (size_t) -1)
+    {
+        GOTO_CLEANUP();
+    }
 
     if (amountLeft >= sizeof(char))
     {
