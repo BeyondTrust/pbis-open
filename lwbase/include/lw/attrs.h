@@ -51,6 +51,12 @@
 #define LW_END_EXTERN_C
 #endif
 
+#ifdef __GNUC__
+#define LW_UNUSED __attribute__((unused))
+#else
+#define LW_UNUSED
+#endif
+
 #ifndef LW_STRICT_NAMESPACE
 
 #define OPTIONAL LW_OPTIONAL
