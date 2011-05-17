@@ -1904,6 +1904,8 @@ pfnRegShellCompleteCallback(
                     else
                     {
                         LWREG_SAFE_FREE_STRING(pParseState->pszFullRootKeyName);
+                        pParseState->pszFullRootKeyName = 
+                            strdup(HKEY_THIS_MACHINE);
                     }
                 }
 
