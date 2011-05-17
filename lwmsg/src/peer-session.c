@@ -202,6 +202,11 @@ peer_free_session(
         free(session->endpoint);
     }
 
+    if (session->endpoint_str)
+    {
+        free(session->endpoint_str);
+    }
+
     free(session);
 }
 
