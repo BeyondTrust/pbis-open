@@ -1023,6 +1023,14 @@ RegShellProcessCmd(
                     }
                     else
                     {
+                        if (dwOpenRootKeyError ==
+                            LWREG_ERROR_NO_SUCH_KEY_OR_VALUE &&
+                            !pParseState->pszDefaultRootKeyName)
+                        {
+                            pParseState->pszDefaultRootKeyName = 
+                                strdup(HKEY_THIS_MACHINE);
+                        }
+                              
                         dwError = RegShellIsValidKey(
                                       pParseState->hReg,
                                       pParseState->pszDefaultRootKeyName,
