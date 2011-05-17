@@ -96,7 +96,7 @@
              METHOD_BUFFERED,                    \
              FILE_READ_ACCESS)
 
-typedef ULONG IO_LEASE_STATE; // Combination of R|W|H
+typedef ULONG IO_LEASE_STATE, *PIO_LEASE_STATE; // Combination of R|W|H
 //
 // Lease state flags
 //
@@ -136,6 +136,7 @@ typedef ULONG IO_OPLOCK_REQUEST_OUTPUT_TYPE;
 typedef struct _IO_FSCTL_OPLOCK_REQUEST_OUTPUT_BUFFER
 {
     IO_OPLOCK_REQUEST_OUTPUT_TYPE OplockBreakResult;
+    IO_LEASE_STATE CurrentLeaseState;
     IO_LEASE_STATE NewLeaseState;
 
 } IO_FSCTL_OPLOCK_REQUEST_OUTPUT_BUFFER, 
