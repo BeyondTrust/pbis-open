@@ -998,7 +998,7 @@ LWNetDnsGetAddressForServer(
 
     if (IsNullOrEmptyString(pszAddress))
     {
-        LWNET_LOG_ERROR("Unable to get IP address for '%s'", pszHostname);
+        LWNET_LOG_WARNING("Unable to get IP address for '%s'", pszHostname);
         dwError = ERROR_NOT_FOUND;
         BAIL_ON_LWNET_ERROR(dwError);
     }
