@@ -1460,12 +1460,9 @@ RdrSocketDispatchPacket1(
 {
     NTSTATUS ntStatus = 0;
     USHORT usMid = 0;
-    ULONG ulFlags = 0;
     BOOLEAN bLocked = TRUE;
     BOOLEAN bKeep = FALSE;
     PRDR_OP_CONTEXT pContext = NULL;
-
-    ulFlags = pPacket->pSMBHeader->flags;
 
     if (!(pPacket->pSMBHeader->flags & FLAG_RESPONSE))
     {
