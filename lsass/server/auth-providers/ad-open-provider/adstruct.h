@@ -236,6 +236,7 @@ typedef struct __AD_ENUM_HANDLE
     LSA_OBJECT_TYPE ObjectType;
     LSA_OBJECT_TYPE CurrentObjectType;
     LW_SEARCH_COOKIE Cookie;
+    PSTR pszDomainName;
     PSTR* ppszSids;
     DWORD dwSidCount;
     DWORD dwSidIndex;

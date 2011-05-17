@@ -900,6 +900,7 @@ LsaAdBatchEnumObjects(
     IN PAD_PROVIDER_CONTEXT pContext,
     IN OUT PLW_SEARCH_COOKIE pCookie,
     IN LSA_OBJECT_TYPE AccountType,
+    IN OPTIONAL PCSTR pszDomainName,
     IN DWORD dwMaxObjectsCount,
     OUT PDWORD pdwObjectsCount,
     OUT PLSA_SECURITY_OBJECT** pppObjects
@@ -913,6 +914,8 @@ LsaAdBatchEnumObjects(
     PAD_CELL_COOKIE_DATA pCookieData = NULL;
     DWORD dwTotalObjectsCount = 0;
     PLSA_SECURITY_OBJECT* ppTotalObjects = NULL;
+    PCSTR pszEnumDomain = (pszDomainName) ? pszDomainName : 
+                                            pState->pProviderData->szDomain;
 
     objectType = LsaAdBatchGetObjectTypeFromAccountType(AccountType);
     if (!LsaAdBatchIsUserOrGroupObjectType(objectType))
@@ -969,7 +972,7 @@ LsaAdBatchEnumObjects(
             {
                 dwError = LsaDmLdapOpenDc(
                                 pContext,
-                                pState->pProviderData->szDomain,
+                                pszEnumDomain,
                                 &pCookieData->pLdapConn);
                 BAIL_ON_LSA_ERROR(dwError);
             }
@@ -982,7 +985,7 @@ LsaAdBatchEnumObjects(
                             objectType,
                             pState->pProviderData->dwDirectoryMode,
                             pState->pProviderData->adConfigurationMode,
-                            pState->pProviderData->szDomain,
+                            pszEnumDomain,
                             pState->pProviderData->cell.szCellDN,
                             dwMaxObjectsCount - dwTotalObjectsCount,
                             &dwObjectsCount,

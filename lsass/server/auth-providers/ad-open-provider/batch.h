@@ -89,6 +89,7 @@ LsaAdBatchEnumObjects(
     IN PAD_PROVIDER_CONTEXT pContext,
     IN OUT PLW_SEARCH_COOKIE pCookie,
     IN LSA_OBJECT_TYPE AccountType,
+    IN OPTIONAL PCSTR pszDomainName,
     IN DWORD dwMaxObjectsCount,
     OUT PDWORD pdwObjectsCount,
     OUT PLSA_SECURITY_OBJECT** pppObjects

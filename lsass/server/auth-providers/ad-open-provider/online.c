@@ -4150,6 +4150,7 @@ AD_OnlineEnumObjects(
                 pContext,
                 &pEnum->Cookie,
                 LSA_OBJECT_TYPE_USER,
+                pEnum->pszDomainName,
                 dwMaxObjectsCount,
                 pdwObjectsCount,
                 pppObjects);
@@ -4159,6 +4160,7 @@ AD_OnlineEnumObjects(
                 pContext,
                 &pEnum->Cookie,
                 LSA_OBJECT_TYPE_GROUP,
+                pEnum->pszDomainName,
                 dwMaxObjectsCount,
                 pdwObjectsCount,
                 pppObjects);

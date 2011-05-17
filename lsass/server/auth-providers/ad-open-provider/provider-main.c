@@ -4616,6 +4616,17 @@ AD_OpenEnumObjects(
     pEnum->FindFlags = FindFlags;
     pEnum->ObjectType = ObjectType;
 
+    if (pszDomainName)
+    {
+        // Get fully qualified domain name for enumeration
+        dwError = LsaDmWrapGetDomainName(
+                        pContext->pState->hDmState,
+                        pszDomainName,
+                        &pEnum->pszDomainName,
+                        NULL);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     if (ObjectType == LSA_OBJECT_TYPE_UNDEFINED)
     {
         pEnum->CurrentObjectType = LSA_OBJECT_TYPE_USER;
@@ -4941,6 +4952,10 @@ AD_CloseEnum(
         AD_ResolveProviderState(pEnum->pProviderContext, &pContext);
 
         LwFreeCookieContents(&pEnum->Cookie);
+        if (pEnum->pszDomainName)
+        {
+            LwFreeString(pEnum->pszDomainName);
+        }
         if (pEnum->ppszSids)
         {
             LwFreeStringArray(pEnum->ppszSids, pEnum->dwSidCount);
