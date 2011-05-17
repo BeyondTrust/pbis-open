@@ -843,6 +843,11 @@ error:
         peer_free_session(session);
     }
 
+    if (attr_destroy)
+    {
+        pthread_mutexattr_destroy(&attr);
+    }
+
     goto done;
 }
 
