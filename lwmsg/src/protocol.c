@@ -357,13 +357,9 @@ lwmsg_protocol_is_protocol_rep_compatible(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    LWMsgTypeSpecMap specmap = {0};
-    struct LWMsgProtocolSpec *spec = NULL;
     LWMsgTypeSpec* existing_type = NULL;
     LWMsgTypeRep* existing_rep = NULL;
     size_t i = 0;
-
-    BAIL_ON_ERROR(status = LWMSG_CONTEXT_ALLOC_ARRAY(specmap.context, rep->message_count + 1, &spec));
 
     for (i = 0; i < rep->message_count; i++)
     {
