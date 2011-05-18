@@ -51,6 +51,24 @@ RdrIoctlSetDomainHints(
     ULONG ulLength
     );
 
+static
+NTSTATUS
+RdrIoctl1GetPhysicalPath(
+    PRDR_CCB pFile,
+    PIRP pIrp,
+    PBYTE pOut,
+    ULONG OutLength
+    );
+
+static
+NTSTATUS
+RdrIoctl2GetPhysicalPath(
+    PRDR_CCB2 pFile,
+    PIRP pIrp,
+    PBYTE pOut,
+    ULONG OutLength
+    );
+
 NTSTATUS
 RdrCreateRoot(
     IO_DEVICE_HANDLE IoDeviceHandle,
@@ -99,7 +117,7 @@ RdrCloseRoot(
 }
 
 NTSTATUS
-RdrIoctl(
+RdrIoctlRoot(
     IO_DEVICE_HANDLE IoDeviceHandle,
     PIRP pIrp
     )
@@ -235,4 +253,170 @@ cleanup:
 error:
 
     goto cleanup;
+}
+
+NTSTATUS
+RdrIoctl1(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PRDR_CCB pFile = IoFileGetContext(pIrp->FileHandle);
+
+    switch (pIrp->Args.IoFsControl.ControlCode)
+    {
+    case RDR_DEVCTL_GET_PHYSICAL_PATH:
+        status = RdrIoctl1GetPhysicalPath(
+            pFile,
+            pIrp,
+            pIrp->Args.IoFsControl.OutputBuffer,
+            pIrp->Args.IoFsControl.OutputBufferLength);
+        BAIL_ON_NT_STATUS(status);
+        break;
+    default:
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+cleanup:
+
+    pIrp->IoStatusBlock.Status = status;
+
+    return status;
+
+error:
+
+    goto cleanup;
+}
+
+static
+NTSTATUS
+RdrIoctl1GetPhysicalPath(
+    PRDR_CCB pFile,
+    PIRP pIrp,
+    PBYTE pOut,
+    ULONG OutLength
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    ULONG PathLen = 0;
+    PWSTR pPath = NULL;
+
+    status = LwRtlWC16StringAllocatePrintf(
+        &pPath,
+        "%ws%ws",
+        pFile->pTree->pwszPath + 1,
+        pFile->pwszPath);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    if (pPath[LwRtlWC16StringNumChars(pPath) - 1] == '\\')
+    {
+        pPath[LwRtlWC16StringNumChars(pPath) - 1] = '\0';
+    }
+
+    PathLen = LwRtlWC16StringNumChars(pPath) * sizeof(WCHAR);
+
+    if (PathLen > OutLength)
+    {
+        status = STATUS_BUFFER_TOO_SMALL;
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+#ifdef WORDS_BIGENDIAN
+    swab(pPath, pOut, PathLen);
+#else
+    memcpy(pOut, pPath, PathLen);
+#endif
+
+    pIrp->IoStatusBlock.BytesTransferred = PathLen;
+
+cleanup:
+
+    RTL_FREE(&pPath);
+
+    return status;
+}
+
+NTSTATUS
+RdrIoctl2(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PRDR_CCB2 pFile = IoFileGetContext(pIrp->FileHandle);
+
+    switch (pIrp->Args.IoFsControl.ControlCode)
+    {
+    case RDR_DEVCTL_GET_PHYSICAL_PATH:
+        status = RdrIoctl2GetPhysicalPath(
+            pFile,
+            pIrp,
+            pIrp->Args.IoFsControl.OutputBuffer,
+            pIrp->Args.IoFsControl.OutputBufferLength);
+        BAIL_ON_NT_STATUS(status);
+        break;
+    default:
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+cleanup:
+
+    pIrp->IoStatusBlock.Status = status;
+
+    return status;
+
+error:
+
+    goto cleanup;
+}
+
+static
+NTSTATUS
+RdrIoctl2GetPhysicalPath(
+    PRDR_CCB2 pFile,
+    PIRP pIrp,
+    PBYTE pOut,
+    ULONG OutLength
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    ULONG PathLen = 0;
+    PWSTR pPath = NULL;
+
+    status = LwRtlWC16StringAllocatePrintf(
+        &pPath,
+        "%ws%ws",
+        pFile->pTree->pwszPath + 1,
+        pFile->pwszPath);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    if (pPath[LwRtlWC16StringNumChars(pPath) - 1] == '\\')
+    {
+        pPath[LwRtlWC16StringNumChars(pPath) - 1] = '\0';
+    }
+
+    PathLen = LwRtlWC16StringNumChars(pPath) * sizeof(WCHAR);
+
+    if (PathLen > OutLength)
+    {
+        status = STATUS_BUFFER_TOO_SMALL;
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+#ifdef WORDS_BIGENDIAN
+    swab(pPath, pOut, PathLen);
+#else
+    memcpy(pOut, pPath, PathLen);
+#endif
+
+    pIrp->IoStatusBlock.BytesTransferred = PathLen;
+
+cleanup:
+
+    RTL_FREE(&pPath);
+
+    return status;
 }

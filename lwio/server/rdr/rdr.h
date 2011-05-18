@@ -414,7 +414,19 @@ RdrCloseRoot(
     );
 
 NTSTATUS
-RdrIoctl(
+RdrIoctlRoot(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    );
+
+NTSTATUS
+RdrIoctl1(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    );
+
+NTSTATUS
+RdrIoctl2(
     IO_DEVICE_HANDLE IoDeviceHandle,
     PIRP pIrp
     );

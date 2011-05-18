@@ -105,7 +105,7 @@ RdrDriverDispatch1(
         status = RdrWrite(DeviceHandle, pIrp);
         break;
     case IRP_TYPE_DEVICE_IO_CONTROL:
-        status = STATUS_NOT_IMPLEMENTED;
+        status = RdrIoctl1(DeviceHandle, pIrp);
         break;
     case IRP_TYPE_FS_CONTROL:
         status = RdrFsctl(DeviceHandle, pIrp);
@@ -164,7 +164,7 @@ RdrDriverDispatch2(
         status = RdrWrite2(DeviceHandle, pIrp);
         break;
     case IRP_TYPE_DEVICE_IO_CONTROL:
-        status = STATUS_NOT_IMPLEMENTED;
+        status = RdrIoctl2(DeviceHandle, pIrp);
         break;
     case IRP_TYPE_FS_CONTROL:
         status = RdrFsctl2(DeviceHandle, pIrp);
@@ -217,7 +217,7 @@ RdrDriverDispatchRoot(
         status = RdrCloseRoot(DeviceHandle, pIrp);
         break;
     case IRP_TYPE_DEVICE_IO_CONTROL:
-        status = RdrIoctl(DeviceHandle, pIrp);
+        status = RdrIoctlRoot(DeviceHandle, pIrp);
         break;
     default:
         status = STATUS_NOT_SUPPORTED;

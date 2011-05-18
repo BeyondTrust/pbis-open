@@ -76,4 +76,15 @@ LwIoSetRdrDomainHints(
     ULONG ulCount
     );
 
+LW_NTSTATUS
+LwIoRdrGetPhysicalPath(
+    IO_FILE_HANDLE File,
+    LW_PWSTR* ppResolved
+    );
+
+VOID
+LwIoRdrFreePhysicalPath(
+    LW_PWSTR pResolved
+    );
+
 #endif /* !__LW_IO_SMBFILEAPI_H__ */

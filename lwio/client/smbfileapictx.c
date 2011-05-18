@@ -41,6 +41,7 @@
 
 #define MAX_KEY_LENGTH (1024*10)
 #define ACCESS_TOKEN_LENGTH (8192)
+#define RESOLVED_PATH_LENGTH (512)
 
 LW_NTSTATUS
 LwIoGetSessionKey(
@@ -298,4 +299,80 @@ cleanup:
 error:
 
     goto cleanup;
+}
+
+LW_NTSTATUS
+LwIoRdrGetPhysicalPath(
+    IO_FILE_HANDLE File,
+    LW_PWSTR* ppResolved
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    IO_STATUS_BLOCK ioStatus;
+    ULONG length = RESOLVED_PATH_LENGTH;
+    PBYTE pBuffer = NULL;
+    PBYTE pNewBuffer = NULL;
+    PWSTR pResolved = NULL;
+
+    status = RTL_ALLOCATE(&pBuffer, BYTE, length);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    do
+    {
+        status =
+            LwNtDeviceIoControlFile(
+                File,
+                NULL,
+                &ioStatus,
+                RDR_DEVCTL_GET_PHYSICAL_PATH,
+                NULL,
+                0,
+                pBuffer,
+                length);
+
+        if (status == STATUS_BUFFER_TOO_SMALL)
+        {
+            length *= 2;
+            pNewBuffer = LwRtlMemoryRealloc(pBuffer, length);
+            if (!pNewBuffer)
+            {
+                status = STATUS_INSUFFICIENT_RESOURCES;
+                GOTO_CLEANUP_ON_STATUS(status);
+            }
+            pBuffer = pNewBuffer;
+        }
+    } while (status == STATUS_BUFFER_TOO_SMALL);
+
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    if (ioStatus.BytesTransferred > 0)
+    {
+        status = LW_RTL_ALLOCATE(
+            &pResolved,
+            WCHAR,
+            ioStatus.BytesTransferred + sizeof(WCHAR));
+        GOTO_CLEANUP_ON_STATUS(status);
+
+#ifdef WORDS_BIGENDIAN
+        swab(pBuffer, pResolved, ioStatus.BytesTransferred);
+#else
+        memcpy(pResolved, pBuffer, ioStatus.BytesTransferred);
+#endif
+    }
+
+cleanup:
+
+    *ppResolved = pResolved;
+
+    RTL_FREE(&pBuffer);
+
+    return status;
+}
+
+VOID
+LwIoRdrFreePhysicalPath(
+    LW_PWSTR pResolved
+    )
+{
+    RTL_FREE(&pResolved);
 }
