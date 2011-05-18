@@ -1143,7 +1143,7 @@ LWMsgStatus
 lwmsg_type_spec_buffer_ensure_capacity(
     LWMsgTypeSpecMap* map,
     LWMsgTypeSpecBuffer* buffer,
-    unsigned int additional
+    size_t additional
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
@@ -1181,7 +1181,7 @@ lwmsg_type_spec_buffer_append(
     BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_ensure_capacity(
                       map,
                       buffer,
-                      count));
+                      count * sizeof(size_t)));
 
     memcpy(buffer->buffer + buffer->buffer_size,
            values,
