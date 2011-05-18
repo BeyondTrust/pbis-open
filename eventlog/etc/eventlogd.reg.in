@@ -18,7 +18,7 @@
     doc = "" 
 }
 "Dependencies" = { 
-    default = "dcerpc" 
+    default = "" 
     doc = "" 
 }
 "Type" = { 
@@ -60,7 +60,7 @@
     doc = "" 
 }
 "RegisterTcpIp" = { 
-    default = dword:00000001 
+    default = dword:00000000 
     doc = ""
     range = boolean
 }
