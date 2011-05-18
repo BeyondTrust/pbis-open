@@ -58,7 +58,8 @@ ParseArgs(
     PSTR*    ppszPrincipal,
     PSTR*    ppszDomain,
     PSTR*    ppszPassword,
-    PBOOLEAN pbCopyRecursive
+    PBOOLEAN pbCopyRecursive,
+    PBOOLEAN pbResolve
     );
 
 static
@@ -129,6 +130,7 @@ main(
     BOOLEAN bRevertThreadCreds = FALSE;
     BOOLEAN bDestroyKrb5Cache = FALSE;
     BOOLEAN bCopyRecursive = FALSE;
+    BOOLEAN bResolve = FALSE;
 
     if (atexit(LwIoExitHandler) < 0)
     {
@@ -145,7 +147,8 @@ main(
                 &pszPrincipal,
                 &pszDomain,
                 &pszPassword,
-                &bCopyRecursive);
+                &bCopyRecursive,
+                &bResolve);
     BAIL_ON_NT_STATUS(ntStatus);
 
     if (!IsNullOrEmptyString(pszPrincipal))
@@ -210,8 +213,16 @@ main(
         bRevertThreadCreds = TRUE;
     }
 
-    ntStatus = CopyFile(pszSourcePath, pszTargetPath, bCopyRecursive);
-    BAIL_ON_NT_STATUS(ntStatus);
+    if (bResolve)
+    {
+        ntStatus = ResolveFile(pszSourcePath);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+    else
+    {
+        ntStatus = CopyFile(pszSourcePath, pszTargetPath, bCopyRecursive);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
 
 cleanup:
 
@@ -237,9 +248,6 @@ cleanup:
     LWIO_SAFE_FREE_STRING(pszDomain);
     LWIO_SAFE_FREE_STRING(pszPassword);
 
-    if(ntStatus == STATUS_SUCCESS)
-        fprintf(stdout,"copy succeed\n");
-
     return (ntStatus);
 
 error:
@@ -260,7 +268,8 @@ ParseArgs(
     PSTR*    ppszPrincipal,
     PSTR*    ppszDomain,
     PSTR*    ppszPassword,
-    PBOOLEAN pbCopyRecursive
+    PBOOLEAN pbCopyRecursive,
+    PBOOLEAN pbResolve
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -288,6 +297,7 @@ ParseArgs(
     PSTR pszPassword = NULL;
     LwioCopyKrb5Spec krb5Spec = LWIO_COPY_KRB5_NO_SPEC;
     BOOLEAN bCopyRecursive = FALSE;
+    BOOLEAN bResolve = FALSE;
 
     for (iArg = 1; iArg < argc; iArg++)
     {
@@ -305,6 +315,10 @@ ParseArgs(
                 else if (!strcasecmp(pszArg, "-r"))
                 {
                     bCopyRecursive = TRUE;
+                }
+                else if (!strcasecmp(pszArg, "--resolve"))
+                {
+                    bResolve = TRUE;
                 }
                 else if (!strcasecmp(pszArg, "-k"))
                 {
@@ -476,7 +490,7 @@ ParseArgs(
         ntStatus = STATUS_INVALID_PARAMETER;
         BAIL_ON_NT_STATUS(ntStatus);
     }
-    if(!pszTargetPath)
+    if(!pszTargetPath && !bResolve)
     {
         fprintf(stderr, "Missing the path to be passed\n");
         ntStatus = STATUS_INVALID_PARAMETER;
@@ -490,6 +504,7 @@ ParseArgs(
     *ppszDomain = pszDomain;
     *ppszPassword  = pszPassword;
     *pbCopyRecursive = bCopyRecursive;
+    *pbResolve = bResolve;
 
 cleanup:
 

@@ -48,6 +48,41 @@
 #include "includes.h"
 
 NTSTATUS
+ResolveFile(
+    PCSTR pszPath
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PWSTR pPhysicalPath = NULL;
+    IO_FILE_HANDLE pHandle = NULL;
+    size_t dummy = 0;
+
+    status = LwioRemoteOpenFile(
+        pszPath,
+        FILE_READ_ATTRIBUTES, /* Desired access mask */
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,     /* Share access */
+        FILE_OPEN,           /* Create disposition */
+        0, /* Create options */
+        &pHandle);
+
+    status = LwIoRdrGetPhysicalPath(pHandle, &pPhysicalPath);
+    BAIL_ON_NT_STATUS(status);
+
+    LwPrintfStdout(&dummy, "%ws\n", pPhysicalPath);
+
+error:
+
+    LwIoRdrFreePhysicalPath(pPhysicalPath);
+
+    if (pHandle)
+    {
+        LwNtCloseFile(pHandle);
+    }
+
+    return status;
+}
+
+NTSTATUS
 CopyFile(
     PCSTR   pszSrcPath,
     PCSTR   pszDestPath,

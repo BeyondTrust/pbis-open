@@ -10,6 +10,11 @@ CopyFile(
     );
 
 NTSTATUS
+ResolveFile(
+    PCSTR pszPath
+    );
+
+NTSTATUS
 LwioCopyFileFromRemote(
     IN PCSTR pszSourcePath,
     IN PCSTR pszTargetPath

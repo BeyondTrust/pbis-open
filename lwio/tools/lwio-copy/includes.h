@@ -7,6 +7,7 @@
 #include "lwioutils.h"
 #include "lwio/ntfileapi.h"
 #include <lwio/win32fileapi.h>
+#include <lwprintf.h>
 #include <krb5/krb5.h>
 #include "copyutil.h"
 #include "lwiocopy.h"
