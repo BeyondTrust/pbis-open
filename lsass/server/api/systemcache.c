@@ -104,6 +104,7 @@ LsaSrvFlushSystemCache(
     }
 
 cleanup:
+    LSA_LOG_VERBOSE("Finished flushing the Mac DirectoryService cache");
 #endif
     return dwError;
 
