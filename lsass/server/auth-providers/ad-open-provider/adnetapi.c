@@ -1679,10 +1679,15 @@ AD_NetlogonAuthenticationUserEx(
     BOOLEAN bChangedToken = FALSE;
     BOOLEAN bResetSchannel = FALSE;
     PLSA_AUTH_USER_INFO pUserInfo = NULL;
+    BOOLEAN passwordLocked = FALSE;
 
     pthread_mutex_lock(pSchannelState->pSchannelLock);
 
     /* Grab the machine password and account info */
+
+    AD_LOCK_MACHINE_PASSWORD(
+                    pState->hMachinePwdState,
+                    passwordLocked);
 
     dwError = LsaPcacheGetMachinePasswordInfoW(
                   pState->pPcache,
@@ -1809,6 +1814,10 @@ AD_NetlogonAuthenticationUserEx(
 
         pSchannelState->pSchannelCreds = &pSchannelState->SchannelCreds;
     }
+    AD_UNLOCK_MACHINE_PASSWORD(
+                    pState->hMachinePwdState,
+                    passwordLocked);
+
 
     /* Time to do the authentication */
 
@@ -1923,6 +1932,9 @@ AD_NetlogonAuthenticationUserEx(
 
 cleanup:
 
+    AD_UNLOCK_MACHINE_PASSWORD(
+                    pState->hMachinePwdState,
+                    passwordLocked);
     LsaPcacheReleaseMachinePasswordInfoW(pMachinePasswordInfo);
 
     if (netr_b)
