@@ -324,7 +324,14 @@ ADSyncMachinePasswordThreadRoutine(
 
         if ((dwReapingAge > 0) && (dwCurrentPasswordAge >= dwReapingAge))
         {
+            PTHREAD_CALL_MUST_SUCCEED(
+                    pthread_rwlock_wrlock(pMachinePwdState->pDataLock));
+
             dwError = ADChangeMachinePasswordInThreadLock(pState);
+
+            PTHREAD_CALL_MUST_SUCCEED(
+                    pthread_rwlock_unlock(pMachinePwdState->pDataLock));
+
             if (dwError)
             {
                 dwError = 0;
@@ -466,6 +473,24 @@ error:
     LSA_LOG_ERROR("Failed to sync system time [error code: %u]", dwError);
 
     goto cleanup;
+}
+
+VOID
+ADLockMachinePassword(
+    IN LSA_MACHINEPWD_STATE_HANDLE hMachinePwdState
+    )
+{
+    PTHREAD_CALL_MUST_SUCCEED(
+            pthread_rwlock_rdlock(hMachinePwdState->pDataLock));
+}
+
+VOID
+ADUnlockMachinePassword(
+    IN LSA_MACHINEPWD_STATE_HANDLE hMachinePwdState
+    )
+{
+    PTHREAD_CALL_MUST_SUCCEED(
+            pthread_rwlock_unlock(hMachinePwdState->pDataLock));
 }
 
 VOID

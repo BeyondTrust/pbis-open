@@ -64,6 +64,36 @@ ADSyncTimeToDC(
     PCSTR pszDomainFQDN
     );
 
+#define AD_LOCK_MACHINE_PASSWORD(handle, locked) \
+            do \
+            { \
+                if (!(locked)) \
+                { \
+                    ADLockMachinePassword(handle); \
+                    (locked) = TRUE; \
+                } \
+            } while(0)
+
+VOID
+ADLockMachinePassword(
+    IN LSA_MACHINEPWD_STATE_HANDLE hMachinePwdState
+    );
+
+#define AD_UNLOCK_MACHINE_PASSWORD(handle, locked) \
+            do \
+            { \
+                if (locked) \
+                { \
+                    ADLockMachinePassword(handle); \
+                    (locked) = FALSE; \
+                } \
+            } while(0)
+
+VOID
+ADUnlockMachinePassword(
+    IN LSA_MACHINEPWD_STATE_HANDLE hMachinePwdState
+    );
+
 VOID
 ADShutdownMachinePasswordSync(
     IN OUT LSA_MACHINEPWD_STATE_HANDLE* phMachinePwdState
