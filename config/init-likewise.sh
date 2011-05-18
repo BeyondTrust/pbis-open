@@ -54,6 +54,12 @@ service_start()
             ;;
         SUSE)
             printf "%s" "Starting `service_description`"
+            for i in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+                if [ -e "/var/lib/likewise/.lwsm" ]; then
+                    break;
+                fi
+                sleep 1
+            done
             ${LWSM} -q autostart
             status=$?
             if [ $status -eq 0 ]
