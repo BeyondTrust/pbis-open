@@ -107,7 +107,9 @@ package_freebsd()
         SHORT="-Likewise Open ${LW_VERSION}" \
         LONG="-Likewise Open joins your machine into Active Directory" \
         PREINST="freebsd/preinstall.in" \
-        POSTINST="freebsd/postinstall.in"
+        POSTINST="freebsd/postinstall.in" \
+        PRERM="freebsd/preuninstall.in" \
+        POSTRM="freebsd/postuninstall.in"
         
         open_files
         open_files_compat
