@@ -629,6 +629,11 @@ MemSetValueEx(
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE) hKey;
     BOOLEAN bInLock = FALSE;
 
+    if (pValueName && wc16slen(pValueName) > MEMREG_MAX_VALUENAME_LEN)
+    {
+        status = STATUS_INVALID_BLOCK_LENGTH;
+        BAIL_ON_NT_STATUS(status);
+    }
     regDbConn.pMemReg = pKeyHandle->pKey->hNode;
     LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &MemRegRoot()->lock);
     status = MemDbSetValueEx(

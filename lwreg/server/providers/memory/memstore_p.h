@@ -48,6 +48,7 @@
 #define MEMREG_TYPE_VALUE 4
 
 #define MEMREG_MAX_SUBNODES 512
+#define MEMREG_MAX_VALUENAME_LEN 255
 
 typedef struct _MEMREG_VALUE
 {
@@ -73,7 +74,7 @@ typedef struct _MEMREG_NODE
     DWORD NodeType;
 
     /*
-     * Needed to limit maximum number of subkeys to 255
+     * Needed to limit maximum number of subkeys
      */
     DWORD SubNodeDepth;
 

@@ -1863,7 +1863,7 @@ MemDbRecurseRegistry(
     PWSTR pwszSubKey = NULL;
     PMEMREG_NODE hSubKey = NULL;
     
-    status = MemDbStackInit(512, &hStack);
+    status = MemDbStackInit(MEMREG_MAX_SUBNODES * 2, &hStack);
     BAIL_ON_NT_STATUS(status);
     hKeyNode = hDb->pMemReg;
 
@@ -1977,7 +1977,7 @@ MemDbRecurseDepthFirstRegistry(
     PWSTR pwszSubKey = NULL;
     PMEMREG_NODE hSubKey = NULL;
 
-    status = MemDbStackInit(512, &hStack);
+    status = MemDbStackInit(MEMREG_MAX_SUBNODES * 2, &hStack);
     BAIL_ON_NT_STATUS(status);
     hKeyNode = hDb->pMemReg;
 
