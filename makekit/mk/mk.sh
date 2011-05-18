@@ -640,7 +640,7 @@ mk_quote()
     do
         # Get the largest prefix of the remaining string that
         # does not contain any single quotes
-        __prefix="${__rem%%\'*}"
+        __prefix=${__rem%%"'"*}
 
         # If this was not the remainder of the string itself,
         # we still have work to do...
@@ -649,7 +649,7 @@ mk_quote()
             # Append the prefix along with the escape sequence for a single quote
             result="${result}${__prefix}'\\''"
             # Strip the single quote from the remaining string
-            __rem="${__rem#*\'}"
+            __rem=${__rem#*"'"}
         else
             # We are done!
             result="${result}${__rem}"
