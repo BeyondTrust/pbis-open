@@ -64,6 +64,8 @@
 #include "lsautils.h"
 #include <assert.h>
 
+#define LSA_MAP_SECURITY_MAP_TO_GUEST_RID   DOMAIN_USER_RID_GUEST
+
 #ifndef SAFE_LOG_STRING
 #define SAFE_LOG_STRING(String) \
     ( (String) ? (String) : "<null>" )
@@ -104,6 +106,13 @@ NTSTATUS
 LsaMapSecurityCreateTokenDefaultDacl(
     PACL *ppDacl,
     PSID pOwnerSid
+    );
+
+static
+NTSTATUS
+LsapMapSecurityGetLocalGuestAccountSid(
+    IN HANDLE hLsaConnection,
+    OUT PSID* ppGuestSid
     );
 
 
@@ -1977,6 +1986,39 @@ LsaMapSecurityFreeNtlmLogonResult(
 
 static
 NTSTATUS
+LsaMapSecurityGetLocalGuestAccountSid(
+    IN PLW_MAP_SECURITY_PLUGIN_CONTEXT pContext,
+    OUT PSID* ppGuestSid
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    HANDLE hLsaConnection = NULL;
+    PSID pGuestSid = NULL;
+
+    status = LsaMapSecurityOpenConnection(pContext, &hLsaConnection);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = LsapMapSecurityGetLocalGuestAccountSid(
+                    hLsaConnection,
+                    &pGuestSid);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+cleanup:
+
+    if (!NT_SUCCESS(status))
+    {
+        LsaMapSecurityFreeSid(pContext, &pGuestSid);
+    }
+
+    LsaMapSecurityCloseConnection(pContext, &hLsaConnection);
+
+    *ppGuestSid = pGuestSid;
+
+    return status;
+}
+
+static
+NTSTATUS
 LsaMapSecurityGetGuestAuthUserInfo(
     IN HANDLE hLsaConnection,
     OUT PLSA_AUTH_USER_INFO* ppUserInfo
@@ -1984,8 +2026,9 @@ LsaMapSecurityGetGuestAuthUserInfo(
 {
     NTSTATUS status = STATUS_SUCCESS;
     DWORD dwError = LW_ERROR_SUCCESS;
-    PSTR pszQueryName = "Guest";
-    LSA_QUERY_LIST QueryList = {0};
+    PSID pGuestSid = NULL;
+    PSTR pszGuestSid = NULL;
+    LSA_QUERY_LIST queryList = {0};
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     DWORD dwGroupCount = 0;
     PSTR* ppszGroupSids = NULL;
@@ -1995,16 +2038,24 @@ LsaMapSecurityGetGuestAuthUserInfo(
     PSID pDomainSid = NULL;
     int i = 0;
 
-    QueryList.ppszStrings = (PCSTR*)&pszQueryName;
+    status = LsapMapSecurityGetLocalGuestAccountSid(
+                    hLsaConnection,
+                    &pGuestSid);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = RtlAllocateCStringFromSid(&pszGuestSid, pGuestSid);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    queryList.ppszStrings = (PCSTR*)&pszGuestSid;
 
     dwError = LsaFindObjects(
                   hLsaConnection,
                   LSA_PROVIDER_TAG_LOCAL,
                   0,
                   LSA_OBJECT_TYPE_USER,
-                  LSA_QUERY_TYPE_BY_NAME,
+                  LSA_QUERY_TYPE_BY_SID,
                   1,
-                  QueryList,
+                  queryList,
                   &ppObjects);
     status = LsaLsaErrorToNtStatus(dwError);
     GOTO_CLEANUP_ON_STATUS(status);
@@ -2124,6 +2175,8 @@ cleanup:
 
     RTL_FREE(&pSid);
     RTL_FREE(&pDomainSid);
+    RTL_FREE(&pGuestSid);
+    RTL_FREE(&pszGuestSid);
     LwFreeStringArray(ppszGroupSids, dwGroupCount);
     LsaUtilFreeSecurityObjectList(1, ppObjects);
 
@@ -2183,6 +2236,10 @@ LsaMapSecurityGetAccessTokenCreateInformationFromNtlmLogon(
     lsaUserParams.pass.chap.pLM_resp = &LMResp;
     lsaUserParams.pass.chap.pNT_resp = &NTResp;
 
+    status = RTL_ALLOCATE(&pNtlmResult, LW_MAP_SECURITY_NTLM_LOGON_RESULT, 
+                          sizeof(*pNtlmResult));
+    GOTO_CLEANUP_ON_STATUS(status);
+
     // Authenticate
     dwError = LsaAuthenticateUserEx(
                   hLsaConnection,
@@ -2193,6 +2250,7 @@ LsaMapSecurityGetAccessTokenCreateInformationFromNtlmLogon(
     {
         // Attempt to fallback to Guest access
         status = LsaMapSecurityGetGuestAuthUserInfo(hLsaConnection, &pUserInfo);
+        pNtlmResult->bMappedToGuest = TRUE;
     }
     else
     {
@@ -2201,10 +2259,6 @@ LsaMapSecurityGetAccessTokenCreateInformationFromNtlmLogon(
     GOTO_CLEANUP_ON_STATUS(status);
 
     // Copy data to the result struct
-    status = RTL_ALLOCATE(&pNtlmResult, LW_MAP_SECURITY_NTLM_LOGON_RESULT, 
-                          sizeof(*pNtlmResult));
-    GOTO_CLEANUP_ON_STATUS(status);
-
     if (pUserInfo->pszUserPrincipalName)
     {
         status = LwRtlCStringDuplicate(
@@ -2224,9 +2278,6 @@ LsaMapSecurityGetAccessTokenCreateInformationFromNtlmLogon(
                   pUserInfo->pSessionKey->pData, 
                   NTLM_SESSION_KEY_SIZE);
 
-    pNtlmResult->bMappedToGuest = 
-        (pUserInfo->dwUserRid == DOMAIN_USER_RID_GUEST) ? TRUE : FALSE;
-    
     // Create CreateInformation
     status = LsaMapSecurityResolveObjectInfoFromAuthUserInfo(
                 hLsaConnection,
@@ -2319,6 +2370,7 @@ static LW_MAP_SECURITY_PLUGIN_INTERFACE gLsaMapSecurityPluginInterface = {
     .FreeAccessTokenCreateInformation = LsaMapSecurityFreeAccessTokenCreateInformation,
     .GetAccessTokenCreateInformationFromNtlmLogon = LsaMapSecurityGetAccessTokenCreateInformationFromNtlmLogon,
     .FreeNtlmLogonResult = LsaMapSecurityFreeNtlmLogonResult,
+    .GetLocalGuestAccountSid = LsaMapSecurityGetLocalGuestAccountSid,
 };
 
 NTSTATUS
@@ -2391,6 +2443,66 @@ cleanup:
     return status;
 }
 
+static
+NTSTATUS
+LsapMapSecurityGetLocalGuestAccountSid(
+    IN HANDLE hLsaConnection,
+    OUT PSID* ppGuestSid
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    DWORD dwError = LW_ERROR_SUCCESS;
+    PLSASTATUS pLsaStatus = NULL;
+    PSID pGuestSid = NULL;
+    PSID pDomainSid = NULL;
+    ULONG guestSidSize = 
+            RtlLengthRequiredSid(1 + SECURITY_NT_NON_UNIQUE_SUB_AUTH_COUNT + 1);
+
+    dwError = LsaGetStatus2(
+                    hLsaConnection,
+                    LSA_PROVIDER_TAG_LOCAL,
+                    &pLsaStatus);
+    status = LsaLsaErrorToNtStatus(dwError);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    if (!pLsaStatus->pAuthProviderStatusList->pszDomainSid)
+    {
+        status = STATUS_INTERNAL_ERROR;
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+    status = RTL_ALLOCATE(&pGuestSid, SID, guestSidSize);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = RtlAllocateSidFromCString(
+                    &pDomainSid,
+                    pLsaStatus->pAuthProviderStatusList->pszDomainSid);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = RtlCopySid(guestSidSize, pGuestSid, pDomainSid);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = RtlAppendRidSid(
+                    guestSidSize,
+                    pGuestSid,
+                    LSA_MAP_SECURITY_MAP_TO_GUEST_RID);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+cleanup:
+
+    if (!NT_SUCCESS(status))
+    {
+        RTL_FREE(&pGuestSid);
+    }
+
+    RTL_FREE(&pDomainSid);
+    LsaFreeStatus(pLsaStatus);
+    pLsaStatus = NULL;
+
+    *ppGuestSid = pGuestSid;
+
+    return status;
+}
 
 
 /*

@@ -48,6 +48,14 @@
 #include "ntlmsrvapi.h"
 #include "lsasrvapi.h"
 
+
+static
+DWORD
+NtlmGetLocalGuestAccountSid(
+    OUT PSTR* ppszGuestSid
+    );
+
+
 DWORD
 NtlmServerAcceptSecurityContext(
     IN HANDLE Handle,
@@ -285,9 +293,9 @@ NtlmCreateGuestContext(
     DWORD dwError = LW_ERROR_SUCCESS;
     PNTLM_CONTEXT pNtlmContext = NULL;
     HANDLE hConnection = (HANDLE)NULL;
-    LSA_QUERY_LIST QueryList = {0};
+    LSA_QUERY_LIST queryList = {0};
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
-    PSTR pszQueryName = "Guest";
+    PSTR pszGuestSid = NULL;
 
     *ppNtlmContext = NULL;
 
@@ -308,18 +316,27 @@ NtlmCreateGuestContext(
     dwError = LsaSrvOpenServer(0, 0, getpid(), &hConnection);
     BAIL_ON_LSA_ERROR(dwError);
 
-    QueryList.ppszStrings = (PCSTR*)&pszQueryName;
+    dwError = NtlmGetLocalGuestAccountSid(&pszGuestSid);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    queryList.ppszStrings = (PCSTR*)&pszGuestSid;
 
     dwError = LsaSrvFindObjects(
                   hConnection,
                   LSA_PROVIDER_TAG_LOCAL,
                   0,
                   LSA_OBJECT_TYPE_USER,
-                  LSA_QUERY_TYPE_BY_NAME,
+                  LSA_QUERY_TYPE_BY_SID,
                   1,
-                  QueryList,
+                  queryList,
                   &ppObjects);
     BAIL_ON_LSA_ERROR(dwError);
+
+    if (!ppObjects[0])
+    {
+        dwError = LW_ERROR_NO_SUCH_USER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     if (ppObjects[0]->userInfo.bAccountDisabled)
     {
@@ -337,6 +354,7 @@ NtlmCreateGuestContext(
     memset(pNtlmContext->SessionKey, 0x0, NTLM_SESSION_KEY_SIZE);
     pNtlmContext->cbSessionKeyLen = NTLM_SESSION_KEY_SIZE;
     pNtlmContext->bInitiatedSide = FALSE;
+    pNtlmContext->MappedToGuest = TRUE;
 
 cleanup:
 
@@ -346,6 +364,8 @@ cleanup:
     {
         LsaSrvCloseServer(hConnection);
     }
+
+    LW_SAFE_FREE_STRING(pszGuestSid);
 
     *ppNtlmContext = pNtlmContext;
 
@@ -936,6 +956,50 @@ cleanup:
     return dwError;
 error:
     LW_SAFE_FREE_STRING(pName);
+    goto cleanup;
+}
+
+
+static
+DWORD
+NtlmGetLocalGuestAccountSid(
+    OUT PSTR* ppszGuestSid
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PLW_MAP_SECURITY_CONTEXT pContext = NULL;
+    PSID pGuestSid = NULL;
+    PSTR pszGuestSid = NULL;
+
+    ntStatus = LwMapSecurityCreateContext(&pContext);
+    dwError = LwNtStatusToWin32Error(ntStatus);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = LwMapSecurityGetLocalGuestAccountSid(pContext, &pGuestSid);
+    dwError = LwNtStatusToWin32Error(ntStatus);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlAllocateCStringFromSid(&pszGuestSid, pGuestSid);
+    dwError = LwNtStatusToWin32Error(ntStatus);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+
+    if (pContext && pGuestSid)
+    {
+        LwMapSecurityFreeSid(pContext, &pGuestSid);
+    }
+    LwMapSecurityFreeContext(&pContext);
+
+    *ppszGuestSid = pszGuestSid;
+
+    return dwError;
+
+error:
+
+    LW_SAFE_FREE_STRING(pszGuestSid);
+
     goto cleanup;
 }
 

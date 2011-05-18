@@ -238,5 +238,12 @@ LsaTransactGetSmartCardUserObject(
     PSTR* ppszSmartCardReader
     );
 
+DWORD
+LsaTransactGetStatus(
+    IN HANDLE hLsa,
+    IN PCSTR pszTargetProvider,
+    OUT PLSASTATUS* ppLsaStatus
+    );
+
 #endif /* __CLIENTIPC_P_H__ */
 

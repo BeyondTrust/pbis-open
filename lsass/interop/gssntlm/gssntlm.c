@@ -2510,7 +2510,6 @@ ntlm_gss_get_name_attribute(
 {
     OM_uint32 MajorStatus = GSS_S_COMPLETE;
     OM_uint32 MinorStatus = LW_ERROR_SUCCESS;
-    SecPkgContext_PacLogonInfo LogonInfo = {0};
     PNTLM_GSS_NAME pUserName = (PNTLM_GSS_NAME) pName;
 
     if (pMore && *pMore != -1)
@@ -2523,6 +2522,8 @@ ntlm_gss_get_name_attribute(
     {
         if (pValue)
         {
+            SecPkgContext_PacLogonInfo LogonInfo = {0};
+
             MinorStatus = NtlmClientQueryContextAttributes(
                 &pUserName->hContext,
                 SECPKG_ATTR_PAC_LOGON_INFO,
@@ -2532,26 +2533,50 @@ ntlm_gss_get_name_attribute(
             pValue->value = LogonInfo.pLogonInfo;
             pValue->length = LogonInfo.LogonInfoLength;
         }
+    }
+    else if (!strncmp("urn:likewise:mapped-to-guest", (char*) pAttr->value,
+                      pAttr->length))
+    {
+        if (pValue)
+        {
+            SecPkgContext_MappedToGuest mappedToGuest = { 0 };
 
-        if (pAuthenticate)
-        {
-            *pAuthenticate = 1;
-        }
-        
-        if (pComplete)
-        {
-            *pComplete = 1;
-        }
+            MinorStatus = NtlmClientQueryContextAttributes(
+                            &pUserName->hContext,
+                            SECPKG_ATTR_CUSTOM_MAPPED_TO_GUEST,
+                            &mappedToGuest);
+            BAIL_ON_LSA_ERROR(MinorStatus);
 
-        if (pMore)
-        {
-            *pMore = 0;
+            MinorStatus = LwAllocateMemory(
+                            sizeof(mappedToGuest.MappedToGuest),
+                            OUT_PPVOID(&pValue->value));
+            BAIL_ON_LSA_ERROR(MinorStatus);
+
+            memcpy(pValue->value, &mappedToGuest.MappedToGuest,
+                   sizeof(mappedToGuest.MappedToGuest));
+
+            pValue->length = sizeof(mappedToGuest.MappedToGuest);
         }
     }
     else
     {
         MinorStatus = LW_ERROR_NO_SUCH_ATTRIBUTE;
         BAIL_ON_LSA_ERROR(MinorStatus);
+    }
+
+    if (pAuthenticate)
+    {
+        *pAuthenticate = 1;
+    }
+    
+    if (pComplete)
+    {
+        *pComplete = 1;
+    }
+
+    if (pMore)
+    {
+        *pMore = 0;
     }
 
 cleanup:

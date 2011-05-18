@@ -1015,6 +1015,10 @@ NtlmTransactQueryContextAttributes(
                 ((PSecPkgContext_Flags)pBuffer)->Flags =
                     pResultList->Buffer.pFlags->Flags;
                 break;
+            case SECPKG_ATTR_CUSTOM_MAPPED_TO_GUEST:
+                ((PSecPkgContext_MappedToGuest)pBuffer)->MappedToGuest =
+                    pResultList->Buffer.pMappedToGuest->MappedToGuest;
+                break;
             default:
                 dwError = LW_ERROR_INVALID_PARAMETER;
                 BAIL_ON_LSA_ERROR(dwError);

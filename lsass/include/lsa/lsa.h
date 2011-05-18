@@ -579,6 +579,7 @@ typedef struct __LSA_AUTH_PROVIDER_STATUS
     LsaAuthProviderSubMode subMode;
     LsaAuthProviderStatus status;
     LW_PSTR pszDomain;
+    LW_PSTR pszDomainSid;
     LW_PSTR pszForest;
     LW_PSTR pszSite;
     LW_PSTR pszCell;

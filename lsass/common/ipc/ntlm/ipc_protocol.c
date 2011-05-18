@@ -230,6 +230,16 @@ static LWMsgTypeSpec gNtlmSecPkgContextFlagsSpec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec gNtlmSecPkgContextMappedToGuestSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(SecPkgContext_MappedToGuest),
+
+    LWMSG_MEMBER_UINT8(SecPkgContext_MappedToGuest, MappedToGuest),
+
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
 /******************************************************************************/
 
 static LWMsgTypeSpec gNtlmSecPkgContextSizesSpec[] =
@@ -815,6 +825,11 @@ static LWMsgTypeSpec gNtlmQueryCtxtRespSpec[] =
     LWMSG_TYPESPEC(gNtlmSecPkgContextFlagsSpec),
     LWMSG_POINTER_END,
     LWMSG_ATTR_TAG(SECPKG_ATTR_FLAGS),
+
+    LWMSG_MEMBER_POINTER_BEGIN(SecPkgContext, pMappedToGuest),
+    LWMSG_TYPESPEC(gNtlmSecPkgContextMappedToGuestSpec),
+    LWMSG_POINTER_END,
+    LWMSG_ATTR_TAG(SECPKG_ATTR_CUSTOM_MAPPED_TO_GUEST),
 
     LWMSG_UNION_END,
     LWMSG_ATTR_DISCRIM(NTLM_IPC_QUERY_CTXT_RESPONSE, ulAttribute),

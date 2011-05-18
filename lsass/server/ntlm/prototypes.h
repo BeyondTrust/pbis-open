@@ -242,7 +242,8 @@ NtlmGetContextInfo(
     OUT OPTIONAL PNTLM_STATE pNtlmState,
     OUT OPTIONAL PDWORD pNegotiatedFlags,
     OUT OPTIONAL PBYTE* ppSessionKey,
-    OUT OPTIONAL PNTLM_CRED_HANDLE pCredHandle
+    OUT OPTIONAL PNTLM_CRED_HANDLE pCredHandle,
+    OUT OPTIONAL PBOOLEAN pMappedToGuest
     );
 
 DWORD

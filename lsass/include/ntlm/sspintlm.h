@@ -104,6 +104,11 @@ typedef struct _SecPkgContext_Flags
     ULONG Flags;
 } SecPkgContext_Flags, *PSecPkgContext_Flags;
 
+typedef struct _SecPkgContext_MappedToGuest
+{
+    BOOLEAN MappedToGuest;
+} SecPkgContext_MappedToGuest, *PSecPkgContext_MappedToGuest;
+
 typedef union _SecPkgContext
 {
     PSecPkgContext_Names pNames;
@@ -111,6 +116,7 @@ typedef union _SecPkgContext
     PSecPkgContext_Sizes pSizes;
     PSecPkgContext_PacLogonInfo pLogonInfo;
     PSecPkgContext_Flags pFlags;
+    PSecPkgContext_MappedToGuest pMappedToGuest;
 } SecPkgContext, *PSecPkgContext;
 
 typedef struct _SecPkgCred_Names
@@ -303,6 +309,8 @@ typedef struct
 #define SECPKG_ATTR_SUPPORTED_PROTOCOLS         22
 #define SECPKG_ATTR_PAC_LOGON_INFO              100
 #define SECPKG_CRED_ATTR_DOMAIN_NAME            101
+
+#define SECPKG_ATTR_CUSTOM_MAPPED_TO_GUEST      (0x80000000 | 1)
 
 //******************************************************************************
 //

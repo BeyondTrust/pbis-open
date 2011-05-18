@@ -404,28 +404,21 @@ PrintStatus(
         printf("\tStatus:        %s\n", GetStatusString(pProviderStatus->status));
         printf("\tMode:          %s\n", GetModeString(pProviderStatus->mode));
 
-        switch (pProviderStatus->mode)
+        if (pProviderStatus->mode != LSA_PROVIDER_MODE_UNKNOWN)
         {
-            case LSA_PROVIDER_MODE_LOCAL_SYSTEM:
-                printf("\tDomain:        %s\n", LW_IS_NULL_OR_EMPTY_STR(pProviderStatus->pszDomain) ? "" : pProviderStatus->pszDomain);
-                break;
-            
-            case LSA_PROVIDER_MODE_UNPROVISIONED:
-            case LSA_PROVIDER_MODE_DEFAULT_CELL:
-            case LSA_PROVIDER_MODE_NON_DEFAULT_CELL:
-                
-                printf("\tDomain:        %s\n", LW_IS_NULL_OR_EMPTY_STR(pProviderStatus->pszDomain) ? "" : pProviderStatus->pszDomain);
-                printf("\tForest:        %s\n", LW_IS_NULL_OR_EMPTY_STR(pProviderStatus->pszForest) ? "" : pProviderStatus->pszForest);
-                printf("\tSite:          %s\n", LW_IS_NULL_OR_EMPTY_STR(pProviderStatus->pszSite) ? "" : pProviderStatus->pszSite);
-                printf("\tOnline check interval:  %u seconds\n", pProviderStatus->dwNetworkCheckInterval);
-
-                break;
-                
-            default:
-                
-                break;
+            printf("\tDomain:        %s\n", LW_IS_NULL_OR_EMPTY_STR(pProviderStatus->pszDomain) ? "" : pProviderStatus->pszDomain);
+            printf("\tDomain SID:    %s\n", LW_IS_NULL_OR_EMPTY_STR(pProviderStatus->pszDomainSid) ? "" : pProviderStatus->pszDomainSid);
         }
-        
+
+        if (pProviderStatus->mode == LSA_PROVIDER_MODE_UNPROVISIONED ||
+            pProviderStatus->mode == LSA_PROVIDER_MODE_DEFAULT_CELL ||
+            pProviderStatus->mode == LSA_PROVIDER_MODE_NON_DEFAULT_CELL)
+        {
+            printf("\tForest:        %s\n", LW_IS_NULL_OR_EMPTY_STR(pProviderStatus->pszForest) ? "" : pProviderStatus->pszForest);
+            printf("\tSite:          %s\n", LW_IS_NULL_OR_EMPTY_STR(pProviderStatus->pszSite) ? "" : pProviderStatus->pszSite);
+            printf("\tOnline check interval:  %u seconds\n", pProviderStatus->dwNetworkCheckInterval);
+        }
+
         switch (pProviderStatus->mode)
         {
             case LSA_PROVIDER_MODE_DEFAULT_CELL:

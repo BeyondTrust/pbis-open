@@ -167,8 +167,14 @@ LwMapSecurityCreateAccessTokenFromNtlmLogon(
 
 VOID
 LwMapSecurityFreeNtlmLogonResult(
-    IN PLW_MAP_SECURITY_CONTEXT                 Context,
-    IN OUT PLW_MAP_SECURITY_NTLM_LOGON_RESULT*  pNtlmResult
+    IN PLW_MAP_SECURITY_CONTEXT Context,
+    IN OUT PLW_MAP_SECURITY_NTLM_LOGON_RESULT* pNtlmResult
+    );
+
+NTSTATUS
+LwMapSecurityGetLocalGuestAccountSid(
+    IN PLW_MAP_SECURITY_CONTEXT pContext,
+    OUT PSID* ppSid
     );
 
 LW_END_EXTERN_C

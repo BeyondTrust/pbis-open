@@ -1469,6 +1469,68 @@ error:
     goto cleanup;
 }
 
+DWORD
+LsaTransactGetStatus(
+    IN HANDLE hLsa,
+    IN PCSTR pszTargetProvider,
+    OUT PLSASTATUS* ppLsaStatus
+    )
+{
+    DWORD dwError = 0;
+    PLSA_IPC_ERROR pError = NULL;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* pCall = NULL;
+    PLSASTATUS pLsaStatus = NULL;
+
+    dwError = LsaIpcAcquireCall(hLsa, &pCall);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    in.tag = LSA_Q_GET_STATUS;
+    in.data = (PVOID)pszTargetProvider;
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    switch (out.tag)
+    {
+        case LSA_R_GET_STATUS_SUCCESS:
+            pLsaStatus = (PLSASTATUS)out.data;
+            out.data = NULL;
+            break;
+        case LSA_R_GET_STATUS_FAILURE:
+            pError = (PLSA_IPC_ERROR) out.data;
+            dwError = pError->dwError;
+            BAIL_ON_LSA_ERROR(dwError);
+            break;
+        default:
+            dwError = LW_ERROR_INTERNAL;
+            BAIL_ON_LSA_ERROR(dwError);
+    }
+
+cleanup:
+
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    *ppLsaStatus = pLsaStatus;
+
+    return dwError;
+
+error:
+
+    if (pLsaStatus)
+    {
+        LsaFreeStatus(pLsaStatus);
+        pLsaStatus = NULL;
+    }
+
+    goto cleanup;
+}
+
 
 /*
 local variables:

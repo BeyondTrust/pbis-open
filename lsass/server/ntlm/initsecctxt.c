@@ -132,6 +132,7 @@ NtlmServerInitializeSecurityContext(
             NULL,
             pfContextAttr,
             NULL,
+            NULL,
             NULL);
      }
 

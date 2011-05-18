@@ -935,6 +935,7 @@ LocalGetStatus(
     )
 {
     DWORD dwError = 0;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     PLSA_AUTH_PROVIDER_STATUS pProviderStatus = NULL;
     BOOLEAN bInLock = FALSE;
 
@@ -956,6 +957,12 @@ LocalGetStatus(
     dwError = LwAllocateString(
                     gLPGlobals.pszLocalDomain,
                     &pProviderStatus->pszDomain);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlAllocateCStringFromSid(
+                    &pProviderStatus->pszDomainSid,
+                    gLPGlobals.pLocalDomainSID);
+    dwError = LwNtStatusToWin32Error(ntStatus);
     BAIL_ON_LSA_ERROR(dwError);
 
     *ppProviderStatus = pProviderStatus;
@@ -1021,6 +1028,7 @@ LocalFreeStatus(
 {
     LW_SAFE_FREE_STRING(pProviderStatus->pszId);
     LW_SAFE_FREE_STRING(pProviderStatus->pszDomain);
+    LW_SAFE_FREE_STRING(pProviderStatus->pszDomainSid);
     LW_SAFE_FREE_STRING(pProviderStatus->pszForest);
     LW_SAFE_FREE_STRING(pProviderStatus->pszSite);
     LW_SAFE_FREE_STRING(pProviderStatus->pszCell);

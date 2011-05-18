@@ -251,6 +251,16 @@ LsaSrvCopyProviderStatus(
                         &pTargetStatus->pszDomain);
         BAIL_ON_LSA_ERROR(dwError);
     }
+
+    LW_SAFE_FREE_STRING(pTargetStatus->pszDomainSid);
+    
+    if (!LW_IS_NULL_OR_EMPTY_STR(pProviderOwnedStatus->pszDomainSid))
+    {
+        dwError = LwAllocateString(
+                        pProviderOwnedStatus->pszDomainSid,
+                        &pTargetStatus->pszDomainSid);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
     
     LW_SAFE_FREE_STRING(pTargetStatus->pszForest);
     

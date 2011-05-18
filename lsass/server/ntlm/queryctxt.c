@@ -69,6 +69,13 @@ NtlmServerQueryCtxtFlagsAttribute(
     OUT PSecPkgContext_Flags *ppFlagsInfo
     );
 
+static
+DWORD
+NtlmServerQueryCtxtMappedToGuestAttribute(
+    IN PNTLM_CONTEXT_HANDLE phContext,
+    OUT PSecPkgContext_MappedToGuest* ppMappedToGuestInfo
+    );
+
 DWORD
 NtlmServerQueryContextAttributes(
     IN PNTLM_CONTEXT_HANDLE phContext,
@@ -109,6 +116,12 @@ NtlmServerQueryContextAttributes(
         dwError = NtlmServerQueryCtxtFlagsAttribute(
             phContext,
             &pContext->pFlags);
+        BAIL_ON_LSA_ERROR(dwError);
+        break;
+    case SECPKG_ATTR_CUSTOM_MAPPED_TO_GUEST:
+        dwError = NtlmServerQueryCtxtMappedToGuestAttribute(
+            phContext,
+            &pContext->pMappedToGuest);
         BAIL_ON_LSA_ERROR(dwError);
         break;
     case SECPKG_ATTR_ACCESS_TOKEN:
@@ -199,6 +212,7 @@ NtlmServerQueryCtxtSessionKeyAttribute(
         &State,
         NULL,
         &pKey,
+        NULL,
         NULL);
 
     if(State != NtlmStateResponse)
@@ -250,6 +264,7 @@ NtlmServerQueryCtxtPacLogonInfoAttribute(
         &State,
         NULL,
         &pKey,
+        NULL,
         NULL);
 
     if (State != NtlmStateResponse)
@@ -306,6 +321,7 @@ NtlmServerQueryCtxtFlagsAttribute(
         *phContext,
         NULL,
         &(pFlagsInfo->Flags),
+        NULL,
         NULL,
         NULL);
 
@@ -545,6 +561,40 @@ error:
 
     *pdwEncodedPacSize = 0;
     *ppEncodedPac = NULL;
+
+    goto cleanup;
+}
+
+static
+DWORD
+NtlmServerQueryCtxtMappedToGuestAttribute(
+    IN PNTLM_CONTEXT_HANDLE phContext,
+    OUT PSecPkgContext_MappedToGuest* ppMappedToGuestInfo
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    PSecPkgContext_MappedToGuest pMappedToGuestInfo = NULL;
+
+    dwError = LwAllocateMemory(sizeof(*pMappedToGuestInfo),
+                               OUT_PPVOID(&pMappedToGuestInfo));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    NtlmGetContextInfo(
+        *phContext,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        &pMappedToGuestInfo->MappedToGuest);
+
+    *ppMappedToGuestInfo = pMappedToGuestInfo;
+
+cleanup:
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pMappedToGuestInfo);
+    *ppMappedToGuestInfo = NULL;
 
     goto cleanup;
 }

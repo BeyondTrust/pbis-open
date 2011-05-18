@@ -61,6 +61,7 @@ LsaFreeStatus(
 
        LW_SAFE_FREE_STRING(pStatus->pszId);
        LW_SAFE_FREE_STRING(pStatus->pszDomain);
+       LW_SAFE_FREE_STRING(pStatus->pszDomainSid);
        LW_SAFE_FREE_STRING(pStatus->pszForest);
        LW_SAFE_FREE_STRING(pStatus->pszSite);
        LW_SAFE_FREE_STRING(pStatus->pszCell);

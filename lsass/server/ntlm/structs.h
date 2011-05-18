@@ -237,6 +237,8 @@ typedef struct _NTLM_CONTEXT
     // unique.
     DWORD *pdwSendMsgSeq;
     DWORD *pdwRecvMsgSeq;
+
+    BOOLEAN MappedToGuest;
 } NTLM_CONTEXT, *PNTLM_CONTEXT;
 
 typedef struct _NTLM_CREDENTIALS

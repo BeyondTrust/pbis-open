@@ -3709,6 +3709,14 @@ AD_GetStatus(
         }
     }
 
+    if (!LW_IS_NULL_OR_EMPTY_STR(pContext->pState->pszDomainSID))
+    {
+        dwError = LwAllocateString(
+                        pContext->pState->pszDomainSID,
+                        &pProviderStatus->pszDomainSid);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     dwError = AD_GetTrustedDomainInfo(
                     pContext->pState->hDmState,
                     &pProviderStatus->pTrustedDomainInfoArray,
@@ -4031,6 +4039,7 @@ AD_FreeStatus(
 {
     LW_SAFE_FREE_STRING(pProviderStatus->pszId);
     LW_SAFE_FREE_STRING(pProviderStatus->pszDomain);
+    LW_SAFE_FREE_STRING(pProviderStatus->pszDomainSid);
     LW_SAFE_FREE_STRING(pProviderStatus->pszForest);
     LW_SAFE_FREE_STRING(pProviderStatus->pszSite);
     LW_SAFE_FREE_STRING(pProviderStatus->pszCell);

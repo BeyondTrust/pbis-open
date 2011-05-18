@@ -52,7 +52,7 @@ LsaGetStatus(
     PLSASTATUS* ppLsaStatus
     )
 {
-    return LsaGetStatus2(
+    return LsaTransactGetStatus(
                hLsaConnection,
                NULL,
                ppLsaStatus);
@@ -65,48 +65,9 @@ LsaGetStatus2(
     PLSASTATUS* ppLsaStatus
     )
 {
-    DWORD dwError = 0;
-    PLSA_CLIENT_CONNECTION_CONTEXT pContext =
-                     (PLSA_CLIENT_CONNECTION_CONTEXT)hLsaConnection;
-    PLSA_IPC_ERROR pError = NULL;
-
-    LWMsgMessage request = LWMSG_MESSAGE_INITIALIZER;
-    LWMsgMessage response = LWMSG_MESSAGE_INITIALIZER;
-
-    request.tag = LSA_Q_GET_STATUS;
-    request.object = (PVOID)pszTargetProvider;
-
-    dwError = MAP_LWMSG_ERROR(lwmsg_assoc_send_message_transact(
-                              pContext->pAssoc,
-                              &request,
-                              &response));
-    BAIL_ON_LSA_ERROR(dwError);
-
-    switch (response.tag)
-    {
-        case LSA_R_GET_STATUS_SUCCESS:
-            *ppLsaStatus = (PLSASTATUS)response.object;
-            break;
-        case LSA_R_GET_STATUS_FAILURE:
-            pError = (PLSA_IPC_ERROR) response.object;
-            dwError = pError->dwError;
-            BAIL_ON_LSA_ERROR(dwError);
-            break;
-        default:
-            dwError = LW_ERROR_UNEXPECTED_MESSAGE;
-            BAIL_ON_LSA_ERROR(dwError);
-    }
-
-cleanup:
-
-    return dwError;
-
-error:
-    if (response.object)
-    {
-        lwmsg_assoc_free_message(pContext->pAssoc, &response);
-    }
-    *ppLsaStatus  = NULL;
-
-    goto cleanup;
+    return LsaTransactGetStatus(
+                hLsaConnection,
+                pszTargetProvider,
+                ppLsaStatus
+                );
 }
