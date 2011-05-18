@@ -39,8 +39,7 @@ packages (depending on your Linux distro):
                            Likewise CIFS server (experimental)
        o 32bit development tools and libraries for compatibility packages
          when building on x86_64
-         - glibc-devel.i686, libuuid-devel.i686, libgcc.i686,
-           pam-devel.i686
+         - glibc-devel.i686, libgcc.i686, pam-devel.i686
 
   * Ubuntu - build-essential, fakeroot, devscripts, debhelper,
     autoconf, automake, libtool, libncurses5-dev,
@@ -66,7 +65,7 @@ The easiest way to begin a build is to run:
 
   $ mkdir debug && cd debug
   $ ../configure --debug
-  $ make -jXX package/cifs  ## where XX is 2x CPU cores
+  $ make -jXX package  ## where XX is 2x CPU cores
 
 This will build the necessary binaries and libraries and package them up into
 DEBs or RPMs in the likewise-open/debug/package/ directory.
