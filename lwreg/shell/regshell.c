@@ -1291,6 +1291,30 @@ void RegShellFreeStrList(
     }
 }
 
+static char *RegShellStrCaseStr(char *haystack, char *needle)
+{
+    char *h = haystack;
+    char *hret = h;
+    char *n = needle;
+
+    while (*h && *n)
+    {
+        if ((*h == *n) || (toupper((int) *h) == toupper((int) *n)))
+        {
+            h++;
+            n++;
+        }
+        else
+        {
+            h++;
+            hret = h;
+            n = needle;
+        }
+    }
+    return *n ? NULL : hret;
+}
+
+
     
 
 DWORD
@@ -1359,7 +1383,7 @@ RegShellCompletionMatch(
         pszPtr = NULL;
         if (pszMatchStr && *pszMatchStr)
         {
-            pszPtr = strstr(pszTmpSubKey, pszMatchStr);
+            pszPtr = RegShellStrCaseStr(pszTmpSubKey, pszMatchStr);
         }
         if (pszPtr && pszPtr == pszTmpSubKey)
         {
@@ -1463,6 +1487,31 @@ void RegShellSetSubStringInputLine(
         dwLenAppended = strlen(pszSubString);
     }
     *pdwLenAppended = dwLenAppended;
+}
+
+
+VOID
+RegShellPrependStringInput(EditLine *inel, PSTR pszPrefix, PSTR pszCursor)
+{
+    PSTR pszTmp = NULL;
+    PSTR pszSaveCursor = NULL;
+    LineInfo *el = (LineInfo *) el_line(inel);
+
+    if (pszCursor && *pszCursor)
+    {
+        pszTmp = strstr(el->buffer, pszCursor);
+    }
+    if (pszTmp)
+    {
+        pszSaveCursor = pszTmp;
+        el->cursor = pszTmp;
+    }
+    el_insertstr(inel, pszPrefix);
+
+    if (pszTmp)
+    {
+        el->cursor += strlen(el->cursor);
+    }
 }
 
 
@@ -1901,12 +1950,6 @@ pfnRegShellCompleteCallback(
                         bProcessingCommand = FALSE;
                         pParseState->dwTabPressCount = 0;
                     }
-                    else
-                    {
-                        LWREG_SAFE_FREE_STRING(pParseState->pszFullRootKeyName);
-                        pParseState->pszFullRootKeyName = 
-                            strdup(HKEY_THIS_MACHINE);
-                    }
                 }
 
                 /* First, check for valid root key in pParseState */
@@ -1918,6 +1961,35 @@ pfnRegShellCompleteCallback(
                     /* Root key is valid, move to the next level... */
                     pParseState->tabState.eTabState = REGSHELL_TAB_SUBKEY;
                     bHasRootKey = TRUE;
+                }
+                else
+                {
+                    /*
+                     * No root key was provided, so prefix one onto the
+                     * existing command line. Must re-read the line from
+                     * libedit and parse cmd/args after this modification.
+                     */
+                    LWREG_SAFE_FREE_STRING(pParseState->pszFullRootKeyName);
+                    pParseState->pszFullRootKeyName = 
+                        strdup(HKEY_THIS_MACHINE);
+                    pszTmp = (pszParam[0] == '\\') ?
+                        HKEY_THIS_MACHINE : HKEY_THIS_MACHINE "\\";
+                    RegShellPrependStringInput(
+                        el, 
+                        pszTmp,
+                        pszParam);
+                    LWREG_SAFE_FREE_STRING(pszInLine);
+                    dwError = RegShellCompleteGetInput(el, &pszInLine);
+                    BAIL_ON_REG_ERROR(dwError);
+                    LWREG_SAFE_FREE_STRING(pszCommand);
+                    LWREG_SAFE_FREE_STRING(pszParam);
+                    
+                    dwError = RegShellSplitCmdParam(
+                              pszInLine,
+                              &pszCommand,
+                              &pszParam);
+                    BAIL_ON_REG_ERROR(dwError);
+                    pParseState->tabState.pszCommand = pszCommand;
                 }
     
                 /* 
@@ -1997,6 +2069,7 @@ pfnRegShellCompleteCallback(
                             pszRootKey = ppMatchArgs[0];
                         }
                         bProcessingCommand = FALSE;
+
                     }
     
                     /* Fill in matching root key on command line */
@@ -2023,10 +2096,6 @@ pfnRegShellCompleteCallback(
                 dwError = RegShellCompleteGetInput(el, &pszInLine);
                 BAIL_ON_REG_ERROR(dwError);
                 pParseState->tabState.eTabState = REGSHELL_TAB_SUBKEY;
-                if ((!pszParam || !pszParam[0]) && !bHasRootKey)
-                {
-                    bProcessingCommand = FALSE;
-                }
                 break;
     
             case REGSHELL_TAB_SUBKEY:
