@@ -9,13 +9,24 @@ To build the tools:
 
   1.  Extract the tarball and change to the resulting build-tools
       directory.
-  2.  Run the "official-build" scripts, supplying options to the
-      --source, --build, and --install command line options.
+  2.  Pick an installation directory, e.g:
+      
+      $ BT_PREFIX="${HOME}/build-tools-install"
+  
+  3.  Create a build directory, configure, build, install
+  
+      $ mkdir build && cd build
+      $ ../configure --prefix="$BT_PREFIX"
+      $ make -j4
+      $ make install
 
-      $ ./official-build \
-        --source `pwd` \
-        --build /tmp/build-tools.aux \
-        --install $HOME/build-tools.dist
-  3.  Add $HOME/build-tools.dist/bin firsth in your local PATH
+  4.  Set PATH so the updated tools can be found
+      
+      $ export PATH="${BT_PREFIX}/bin:$PATH"
+
+  5.  Set MK_SHELL so the likewise-open build will use
+      it in preference to the system shell.
+  
+      $ export MK_SHELL="${BT_PREFIX}/bin/dash"
 
 
