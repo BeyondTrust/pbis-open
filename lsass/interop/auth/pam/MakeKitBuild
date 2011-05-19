@@ -12,8 +12,13 @@ make()
        pam-notify.c"
 
     mk_multiarch_do
+        case "$MK_HOST_OS" in
+            hpux) PAMEXT=.sl ;;
+            *) PAMEXT="$MK_DLO_EXT" ;;
+        esac
         mk_dlo \
 	    DLO=pam_lsass \
+	    EXT="$PAMEXT" \
 	    INSTALLDIR="$PAMDIR" \
 	    SOURCES="$PAM_SOURCES" \
 	    INCLUDEDIRS="../include ../../../include" \
