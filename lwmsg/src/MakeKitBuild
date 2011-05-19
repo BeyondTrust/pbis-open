@@ -43,7 +43,8 @@ make()
         peer-task.c \
         peer-call.c \
         peer-session.c \
-        peer-direct.c"
+        peer-direct.c \
+        peer-log.c"
 
     mk_multiarch_do
         mk_library \

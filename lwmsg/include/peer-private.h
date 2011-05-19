@@ -521,4 +521,32 @@ lwmsg_direct_call_new(
     DirectCall** call
     );
 
+void
+lwmsg_peer_session_string_for_session(
+    LWMsgSession* session,
+    LWMsgSessionString string
+    );
+
+LWMsgStatus
+lwmsg_peer_log_message(
+    PeerAssocTask* task,
+    LWMsgMessage* message,
+    LWMsgBool is_outgoing
+    );
+
+LWMsgStatus
+lwmsg_peer_log_accept(
+    PeerAssocTask* task
+    );
+
+LWMsgStatus
+lwmsg_peer_log_connect(
+    PeerAssocTask* task
+    );
+
+LWMsgStatus
+lwmsg_peer_log_state(
+    PeerAssocTask* task
+    );
+
 #endif
