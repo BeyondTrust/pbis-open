@@ -1,6 +1,6 @@
 make()
 {
-    LWMSG_HEADER_DEPS="iconv.h lw/base.h"
+    MK_HEADERDEPS="iconv.h lw/base.h"
 
     LWMSG_NOTHR_SOURCES="\
         assoc.c \
@@ -49,24 +49,16 @@ make()
     mk_multiarch_do
         mk_library \
             LIB=lwmsg_nothr \
-            CPPFLAGS="$LWMSG_CPPFLAGS" \
-            CFLAGS="$LWMSG_CFLAGS" \
-            LDFLAGS="$LWMSG_LDFLAGS" \
             SOURCES="$LWMSG_NOTHR_SOURCES" \
             INCLUDEDIRS="../include" \
             LIBDEPS="$LIB_ICONV $LIB_DL $LIB_XNET" \
-            HEADERDEPS="$LWMSG_HEADER_DEPS" \
             SYMFILE="liblwmsg_nothr.sym"
 
         mk_library \
             LIB=lwmsg \
-            CPPFLAGS="$LWMSG_CPPFLAGS" \
-            CFLAGS="$LWMSG_CFLAGS" \
-            LDFLAGS="$LWMSG_LDFLAGS" \
             SOURCES="$LWMSG_SOURCES" \
             INCLUDEDIRS="../include" \
             LIBDEPS="lwmsg_nothr lwbase $LIB_RT $LIB_PTHREAD $LIB_XNET" \
-            HEADERDEPS="$LWMSG_HEADER_DEPS" \
             SYMFILE="liblwmsg.sym"
 
     mk_multiarch_done
@@ -74,10 +66,6 @@ make()
     mk_program \
         PROGRAM=lwma \
         SOURCES="lwma-main.c" \
-        CPPFLAGS="$LWMSG_CPPFLAGS" \
-        CFLAGS="$LWMSG_CFLAGS" \
-        LDFLAGS="$LWMSG_LDFLAGS" \
         INCLUDEDIRS="../include" \
-        LIBDEPS="lwmsg_nothr" \
-        HEADERDEPS="$LWMSG_HEADER_DEPS"
+        LIBDEPS="lwmsg_nothr"
 }
