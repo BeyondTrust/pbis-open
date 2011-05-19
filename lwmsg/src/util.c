@@ -65,6 +65,7 @@
 #include <pthread.h>
 #endif
 #include <signal.h>
+#include <poll.h>
 
 char* lwmsg_formatv(const char* fmt, va_list ap)
 {
@@ -618,7 +619,6 @@ error:
     return ret;
 }
 
-#if defined(__hpux__) || defined(__APPLE__) || defined(sun)
 ssize_t
 lwmsg_recvmsg_timeout(
     int sock,
@@ -627,8 +627,8 @@ lwmsg_recvmsg_timeout(
     LWMsgTime* time
     )
 {
-    struct timeval timeout;
-    fd_set fds;
+    int timeout = -1;
+    struct pollfd pfd = {0};
     int ret = 0;
 
 #ifdef MSG_NOSIGNAL
@@ -637,13 +637,12 @@ lwmsg_recvmsg_timeout(
 
     if (time && lwmsg_time_is_positive(time))
     {
-        timeout.tv_sec = time->seconds;
-        timeout.tv_usec = time->microseconds;
+        timeout = time->seconds * 1000 + time->microseconds / 1000;
 
-        FD_ZERO(&fds);
-        FD_SET(sock, &fds);
+        pfd.fd = sock;
+        pfd.events = POLLIN;
 
-        ret = select(sock + 1, &fds, NULL, NULL, &timeout);
+        ret = poll(&pfd, 1, timeout);
         if (ret < 0)
         {
             return ret;
@@ -666,8 +665,8 @@ lwmsg_sendmsg_timeout(
     LWMsgTime* time
     )
 {
-    struct timeval timeout;
-    fd_set fds;
+    int timeout = -1;
+    struct pollfd pfd = {0};
     int ret = 0;
     sigset_t original;
     LWMsgBool unblock = LWMSG_FALSE;
@@ -679,14 +678,12 @@ lwmsg_sendmsg_timeout(
 
     if (time && lwmsg_time_is_positive(time))
     {
-        timeout.tv_sec = time->seconds;
-        timeout.tv_usec = time->microseconds;
+        timeout = time->seconds * 1000 + time->microseconds / 1000;
 
-        FD_ZERO(&fds);
-        FD_SET(sock, &fds);
+        pfd.fd = sock;
+        pfd.events = POLLOUT;
 
-        ret = select(sock + 1, NULL, &fds, NULL, &timeout);
-            
+        ret = poll(&pfd, 1, timeout);
         if (ret < 0)
         {
             return ret;
@@ -714,90 +711,6 @@ lwmsg_sendmsg_timeout(
     errno = err;
     return ret;
 }
-
-#else
-ssize_t
-lwmsg_recvmsg_timeout(
-    int sock,
-    struct msghdr* msg,
-    int flags,
-    LWMsgTime* time
-    )
-{
-    struct timeval timeout;
-
-#ifdef MSG_NOSIGNAL
-    flags |= MSG_NOSIGNAL;
-#endif
-    
-    if (time && lwmsg_time_is_positive(time))
-    {
-        timeout.tv_sec = time->seconds;
-        timeout.tv_usec = time->microseconds;
-    }
-    else
-    {
-        memset(&timeout, 0, sizeof(timeout));
-    }
-
-    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)))
-    {
-        return -1;
-    }
-
-    return recvmsg(sock, msg, flags);
-}
-
-ssize_t
-lwmsg_sendmsg_timeout(
-    int sock,
-    const struct msghdr* msg,
-    int flags,
-    LWMsgTime* time
-    )
-{
-    struct timeval timeout;
-    int ret = 0;
-    int err = 0;
-    sigset_t original;
-    LWMsgBool unblock = LWMSG_FALSE;
-    
-#ifdef MSG_NOSIGNAL
-    flags |= MSG_NOSIGNAL;
-#endif
-
-    if (time && lwmsg_time_is_positive(time))
-    {
-        timeout.tv_sec = time->seconds;
-        timeout.tv_usec = time->microseconds;
-    }
-    else
-    {
-        memset(&timeout, 0, sizeof(timeout));
-    }
-
-    if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)))
-    {
-        return -1;
-    }
-
-    if (lwmsg_begin_ignore_sigpipe(&unblock, &original) < 0)
-    {
-        return -1;
-    }
-
-    ret = sendmsg(sock, msg, flags);
-    err = errno;
-
-    if (lwmsg_end_ignore_sigpipe(&unblock, &original) < 0)
-    {
-        return -1;
-    }
-
-    errno = err;
-    return ret;
-}
-#endif
 
 static
 LWMsgRing*
