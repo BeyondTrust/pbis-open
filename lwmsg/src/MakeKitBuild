@@ -51,7 +51,7 @@ make()
             LIB=lwmsg_nothr \
             SOURCES="$LWMSG_NOTHR_SOURCES" \
             INCLUDEDIRS="../include" \
-            LIBDEPS="$LIB_ICONV $LIB_DL $LIB_XNET" \
+            LIBDEPS="$LIB_ICONV $LIB_DL $LIB_RT $LIB_XNET" \
             SYMFILE="liblwmsg_nothr.sym"
 
         mk_library \
