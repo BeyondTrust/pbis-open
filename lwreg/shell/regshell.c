@@ -1510,7 +1510,7 @@ RegShellPrependStringInput(EditLine *inel, PSTR pszPrefix, PSTR pszCursor)
 
     if (pszTmp)
     {
-        el->cursor += strlen(el->cursor);
+        el->cursor = el->lastchar;
     }
 }
 
@@ -1962,35 +1962,6 @@ pfnRegShellCompleteCallback(
                     pParseState->tabState.eTabState = REGSHELL_TAB_SUBKEY;
                     bHasRootKey = TRUE;
                 }
-                else
-                {
-                    /*
-                     * No root key was provided, so prefix one onto the
-                     * existing command line. Must re-read the line from
-                     * libedit and parse cmd/args after this modification.
-                     */
-                    LWREG_SAFE_FREE_STRING(pParseState->pszFullRootKeyName);
-                    pParseState->pszFullRootKeyName = 
-                        strdup(HKEY_THIS_MACHINE);
-                    pszTmp = (pszParam[0] == '\\') ?
-                        HKEY_THIS_MACHINE : HKEY_THIS_MACHINE "\\";
-                    RegShellPrependStringInput(
-                        el, 
-                        pszTmp,
-                        pszParam);
-                    LWREG_SAFE_FREE_STRING(pszInLine);
-                    dwError = RegShellCompleteGetInput(el, &pszInLine);
-                    BAIL_ON_REG_ERROR(dwError);
-                    LWREG_SAFE_FREE_STRING(pszCommand);
-                    LWREG_SAFE_FREE_STRING(pszParam);
-                    
-                    dwError = RegShellSplitCmdParam(
-                              pszInLine,
-                              &pszCommand,
-                              &pszParam);
-                    BAIL_ON_REG_ERROR(dwError);
-                    pParseState->tabState.pszCommand = pszCommand;
-                }
     
                 /* 
                  * Determine if valid root key was provided in input
@@ -2062,14 +2033,45 @@ pfnRegShellCompleteCallback(
                                 printf("%s\t", ppMatchArgs[i]);
                             }
                             printf("\n");
+                            bProcessingCommand = FALSE;
                             break;
+                        }
+                        else if (dwMatchArgsLen == 1)
+                        {
+                         
+                            pszRootKey = ppMatchArgs[0];
+                            bProcessingCommand = FALSE;
                         }
                         else
                         {
-                            pszRootKey = ppMatchArgs[0];
+                            /*
+                             * No root key was provided, so prefix one onto the
+                             * existing command line. Must re-read the line from
+                             * libedit and parse cmd/args after this modification.
+                             */
+                            LWREG_SAFE_FREE_STRING(pParseState->pszFullRootKeyName);
+                            pParseState->pszFullRootKeyName = 
+                                strdup(HKEY_THIS_MACHINE);
+                            pszTmp = (pszParam[0] == '\\') ?
+                                HKEY_THIS_MACHINE : HKEY_THIS_MACHINE "\\";
+                            RegShellPrependStringInput(
+                                el, 
+                                pszTmp,
+                                pszParam);
+                            LWREG_SAFE_FREE_STRING(pszInLine);
+                            dwError = RegShellCompleteGetInput(el, &pszInLine);
+                            BAIL_ON_REG_ERROR(dwError);
+                            LWREG_SAFE_FREE_STRING(pszCommand);
+                            LWREG_SAFE_FREE_STRING(pszParam);
+                            
+                            dwError = RegShellSplitCmdParam(
+                                      pszInLine,
+                                      &pszCommand,
+                                      &pszParam);
+                            BAIL_ON_REG_ERROR(dwError);
+                            pParseState->tabState.pszCommand = pszCommand;
+                            continue;  // ick, get rid of this.
                         }
-                        bProcessingCommand = FALSE;
-
                     }
     
                     /* Fill in matching root key on command line */
