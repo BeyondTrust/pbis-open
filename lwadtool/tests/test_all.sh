@@ -18,7 +18,7 @@ ROOT_OU_NON_SCHEMA=${ROOT_OU}NS
 #
 ADT_CONN_SERVER=
 ADT_CONN_PORT=
-ADT_CONN_DOMAIN="-s CORPQA-DC2.corpqa.centeris.com"
+ADT_CONN_DOMAIN="-s CORPQA-DC3.corpqa.centeris.com"
 
 #
 # OPERATIONAL MODE
@@ -841,7 +841,7 @@ Main()
 Cleanup
 
 TestCreateOUs
-#TestCreateCells
+TestCreateCells
 TestCreateUsers
 TestCreateGroups
 TestCreateComputers
@@ -850,12 +850,12 @@ TestEnableDisableUser
 TestPasswordReset
 TestGroupMembership
 TestMoveObject
-#TestCellMembership
-#TestSearchCells
-#TestLinkCells
-#TestChangeLookupCellProperties
-#TestChangeLookupCellUserProperties
-#TestChangeLookupCellGroupProperties
+TestCellMembership
+TestSearchCells
+TestLinkCells
+TestChangeLookupCellProperties
+TestChangeLookupCellUserProperties
+TestChangeLookupCellGroupProperties
 TestSearchAndPageResults
 }
 
@@ -868,7 +868,7 @@ Main
 # Now run the test in non-schema mode
 #
 Cleanup
-#ROOT_OU=$ROOT_OU_NON_SCHEMA
+ROOT_OU=$ROOT_OU_NON_SCHEMA
 
-#Main
+Main
 

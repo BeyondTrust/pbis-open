@@ -191,8 +191,14 @@ ExecuteAdtAddToRemoveFromGroupAction(IN AdtActionTP action, IN BOOL isRemove)
         dwError = ModifyADObject(appContext, action->addToGroup.targetGroup, avpGrp, 1);
     }
     else {
-        dwError = ValidateGroupType(action);
-        ADT_BAIL_ON_ERROR_NP(dwError);
+        if(
+           appContext->modifyConn.conn && 
+           appContext->searchConn.conn &&
+           !IsEqual(appContext->searchConn.defaultNC, appContext->modifyConn.defaultNC, 1)
+        ) {
+           dwError = ValidateGroupType(action);
+           ADT_BAIL_ON_ERROR_NP(dwError);
+        }
 
         dwError = ModifyADObject(appContext, action->addToGroup.targetGroup, avpGrp, 0);
     }

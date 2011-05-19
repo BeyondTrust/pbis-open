@@ -930,6 +930,7 @@ DWORD ProcessDash(IN PSTR * str) {
     DWORD dwError = 0;
     PSTR buf = NULL;
     INT len = 129;
+    INT nLen = 0;
 
     if(str && *str && !strcmp((PCSTR) *str, "-")) {
         LW_SAFE_FREE_MEMORY(*str);
@@ -938,6 +939,12 @@ DWORD ProcessDash(IN PSTR * str) {
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
         *str = fgets(buf, len - 1, stdin);
+        
+        nLen = strlen(*str);
+        
+        if((nLen > 1) && ((*str)[nLen - 1] == '\n')) {
+            (*str)[nLen - 1] = (char) 0;
+        }
     }
 
     cleanup:

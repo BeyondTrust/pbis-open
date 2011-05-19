@@ -129,12 +129,9 @@ DWORD OpenADSearchConnectionDN(IN AdtActionTP action, IN OUT PSTR *name)
         LwStrToLower(tmp);
         p = strstr((PCSTR) tmp, "dc=");
 
-        //if(p && !DoesStrEndWith(*name, appContext->modifyConn.defaultNC, 1)) {
         if(p) {
-            if (
-                !DoesStrEndWith(*name, appContext->modifyConn.defaultNC, 1) ||
-                (strlen(appContext->modifyConn.defaultNC) != strlen(*name))
-            ) {
+            //if(!DoesStrEndWith(*name, appContext->modifyConn.defaultNC, 1)) {
+            if(!IsEqual(p, appContext->modifyConn.defaultNC, 1)) {
                 dwError = GetDomainFromDN(*name, &domain);
                 ADT_BAIL_ON_ERROR_NP(dwError);
 
