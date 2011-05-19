@@ -1,0 +1,21 @@
+The build-tools.tar.gz archive is a complete set of the supported
+vcersions of autoconf, libtool, moonunit, dash, m4, automake, 
+and other tools necessary for building the 3rd party components such
+as cyrus-sasl, openldap, and krb5.  These tools are provided to
+help devleopers working on older Linux environments or commercial Unix
+operating systems whithout a current toolchain.
+
+To build the tools:
+
+  1.  Extract the tarball and change to the resulting build-tools
+      directory.
+  2.  Run the "official-build" scripts, supplying options to the
+      --source, --build, and --install command line options.
+
+      $ ./official-build \
+        --source `pwd` \
+        --build /tmp/build-tools.aux \
+        --install $HOME/build-tools.dist
+  3.  Add $HOME/build-tools.dist/bin firsth in your local PATH
+
+
