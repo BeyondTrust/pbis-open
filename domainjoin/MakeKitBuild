@@ -62,4 +62,8 @@ configure()
     mk_check_functions \
 	HEADERDEPS="stdlib.h" \
 	strtol strtoll __strtoll strtoul strtoull __strtoull
+
+    mk_check_functions \
+        HEADERDEPS="unistd.h" \
+        sysconf
 }
