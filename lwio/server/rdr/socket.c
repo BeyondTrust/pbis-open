@@ -913,6 +913,7 @@ RdrSocketTaskConnect(
         else if (WakeMask & LW_TASK_EVENT_TIME)
         {
             /* We timed out */
+            pSocket->AddressIndex++;
             status = STATUS_IO_TIMEOUT;
         }
 
