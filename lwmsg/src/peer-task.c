@@ -2173,6 +2173,8 @@ error:
         {
             *next_trigger |= LWMSG_TASK_TRIGGER_YIELD;
         }
+
+        *next_trigger |= LWMSG_TASK_TRIGGER_UNIX_SIGNAL;
         break;
     case LWMSG_STATUS_CANCELLED:
         task->type = PEER_TASK_DONE;
