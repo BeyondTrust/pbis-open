@@ -108,6 +108,8 @@ lwmsg_status_map_errno(
         return LWMSG_STATUS_PEER_RESET;
     case ECONNABORTED:
         return LWMSG_STATUS_PEER_ABORT;
+    case ETIMEDOUT:
+        return LWMSG_STATUS_TIMEOUT;
     default:
         return LWMSG_STATUS_SYSTEM;
     }
