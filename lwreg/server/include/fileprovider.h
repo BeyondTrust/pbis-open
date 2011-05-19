@@ -50,7 +50,7 @@
 
 
 DWORD
-FileProvider_Intialize(
+FileProvider_Initalize(
     PREGPROV_PROVIDER_FUNCTION_TABLE* ppFnTable
     );
 
