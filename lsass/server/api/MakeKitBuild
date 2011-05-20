@@ -31,7 +31,7 @@ make()
 
     API_HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h dce/rpc.h"
 
-    if [ "$HAVE_LIB_EVENTLOG" != "no" -a "$HAVE_EVENTLOG_H" != "no"  -a "$LW_DEVICE_PROFILE" != "embedded" ]
+    if [ "$HAVE_LIB_EVENTLOG" != "no" -a "$HAVE_EVENTLOG_H" != "no" ]
     then
         API_SOURCES="$API_SOURCES event.c lsaevent.c"
         API_HEADERDEPS="$API_HEADERDEPS eventlog.h eventlog-record.h"
