@@ -45,8 +45,8 @@
  *          Sriram Nambakam (snambakam@likewisesoftware.com)
  *          Marc Guy (mguy@likewisesoftware.com)
  */
-#ifndef FILEAPI_H_
-#define FILEAPI_H_
+#ifndef MEMREGAPI_H_
+#define MEMREGAPI_H_
 
 
 DWORD
@@ -60,4 +60,4 @@ MemProvider_Shutdown(
     PREGPROV_PROVIDER_FUNCTION_TABLE pFnTable
     );
 
-#endif /* FILEAPI_H_ */
+#endif /* MEMREGAPI_H_ */
