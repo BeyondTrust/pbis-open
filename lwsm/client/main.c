@@ -1823,6 +1823,229 @@ error:
 }
 
 static
+VOID
+LogTapper(
+    PLW_TASK pTask,
+    PVOID pContext,
+    LW_TASK_EVENT_MASK WakeMask,
+    LW_TASK_EVENT_MASK* pWaitMask,
+    LONG64* pllTime
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    int FifoFd = *(int*) pContext;
+    siginfo_t info = {0};
+    char buffer[2048] = {0};
+    ssize_t count = 0;
+
+    if (WakeMask & LW_TASK_EVENT_INIT)
+    {
+        status = LwRtlSetTaskUnixSignal(pTask, SIGINT, TRUE);
+        BAIL_ON_ERROR(status);
+
+        status = LwRtlSetTaskUnixSignal(pTask, SIGTERM, TRUE);
+        BAIL_ON_ERROR(status);
+
+        status = LwRtlSetTaskFd(pTask, FifoFd, LW_TASK_EVENT_FD_READABLE);
+        BAIL_ON_ERROR(status);
+    }
+
+    if (WakeMask & LW_TASK_EVENT_CANCEL)
+    {
+        status = STATUS_CANCELLED;
+        BAIL_ON_ERROR(status);
+    }
+
+    if (WakeMask & LW_TASK_EVENT_UNIX_SIGNAL)
+    {
+        while (LwRtlNextTaskUnixSignal(pTask, &info))
+        {
+            if (info.si_signo == SIGINT || info.si_signo == SIGTERM)
+            {
+                status = STATUS_CANCELLED;
+                BAIL_ON_ERROR(status);
+            }
+        }
+    }
+
+    if (WakeMask & LW_TASK_EVENT_FD_READABLE ||
+        WakeMask & LW_TASK_EVENT_INIT)
+    {
+        do
+        {
+            do
+            {
+                count = read(FifoFd, buffer, sizeof(buffer));
+            } while (count < 0 && errno == EINTR);
+
+            if (count == 0)
+            {
+                status = STATUS_END_OF_FILE;
+                BAIL_ON_ERROR(status);
+            }
+            else if (count > 0)
+            {
+                count = write(1, buffer, count);
+                if (count < 0)
+                {
+                    status = LwErrnoToNtStatus(errno);
+                    BAIL_ON_ERROR(status);
+                }
+            }
+            else if (errno != EAGAIN)
+            {
+                status = LwErrnoToNtStatus(errno);
+                BAIL_ON_ERROR(status);
+            }
+        } while (count > 0);
+    }
+
+    *pWaitMask = LW_TASK_EVENT_FD_READABLE | LW_TASK_EVENT_UNIX_SIGNAL;
+
+cleanup:
+
+    return;
+
+error:
+
+    *pWaitMask = LW_TASK_EVENT_COMPLETE;
+    LwRtlSetTaskFd(pTask, FifoFd, 0);
+    LwRtlExitMain(status);
+
+    goto cleanup;
+}
+
+static
+DWORD
+LwSmCmdTapLog(
+    int argc,
+    char** pArgv
+    )
+{
+    DWORD error = ERROR_SUCCESS;
+    PLW_THREAD_POOL pPool = NULL;
+    PLW_TASK pTask = NULL;
+    BOOLEAN bResetLogger = FALSE;
+    BOOLEAN bRmPipe = FALSE;
+    LW_SM_LOGGER_TYPE oldLogger = 0;
+    PSTR pOldTarget = NULL;
+    LW_SM_LOG_LEVEL oldLevel = 0;
+    LW_SM_LOG_LEVEL newLevel = 0;
+    PSTR pFacility = NULL;
+    LW_SERVICE_HANDLE hHandle = NULL;
+    PWSTR pServiceName = NULL;
+    PSTR pFifo = NULL;
+    int FifoFd = -1;
+
+    LwRtlBlockSignals();
+
+    if (argc < 4)
+    {
+        error = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_ERROR(error);
+    }
+
+    if (strcmp(pArgv[1], "-"))
+    {
+        error = LwMbsToWc16s(pArgv[1], &pServiceName);
+        BAIL_ON_ERROR(error);
+
+        error = LwSmAcquireServiceHandle(pServiceName, &hHandle);
+        BAIL_ON_ERROR(error);
+    }
+
+    if (strcmp(pArgv[2], "-"))
+    {
+        pFacility = pArgv[2];
+    }
+
+    error = LwSmLogLevelNameToLogLevel(pArgv[3], &newLevel);
+    BAIL_ON_ERROR(error);
+
+    error = LwSmGetServiceLogState(hHandle, pFacility, &oldLogger, &pOldTarget, &oldLevel);
+    BAIL_ON_ERROR(error);
+    bResetLogger = TRUE;
+
+    error = LwAllocateStringPrintf(&pFifo, "/tmp/.lwsm-log-tap-%lu", (unsigned long) getpid());
+    BAIL_ON_ERROR(error);
+
+    if (mknod(pFifo, S_IRUSR | S_IWUSR | S_IFIFO, 0) < 0)
+    {
+        error = LwErrnoToWin32Error(errno);
+        BAIL_ON_ERROR(error);
+    }
+    bRmPipe = TRUE;
+
+    if ((FifoFd = open(pFifo, O_RDONLY | O_NONBLOCK)) < 0)
+    {
+        error = LwErrnoToWin32Error(errno);
+        BAIL_ON_ERROR(error);
+    }
+
+    if (fcntl(FifoFd, F_SETFL, O_NONBLOCK) < 0)
+    {
+        error = LwErrnoToWin32Error(errno);
+        BAIL_ON_ERROR(error);
+    }
+
+    error = LwSmSetServiceLogTarget(hHandle, pFacility, LW_SM_LOGGER_FILE, pFifo);
+    BAIL_ON_ERROR(error);
+
+    error = LwSmSetServiceLogLevel(hHandle, pFacility, newLevel);
+    BAIL_ON_ERROR(error);
+
+    error = LwNtStatusToWin32Error(LwRtlCreateThreadPool(&pPool, NULL));
+    BAIL_ON_ERROR(error);
+
+    error = LwNtStatusToWin32Error(LwRtlCreateTask(pPool, &pTask, NULL, LogTapper, &FifoFd));
+    BAIL_ON_ERROR(error);
+
+    LwRtlWakeTask(pTask);
+
+    error = LwNtStatusToWin32Error(LwRtlMain());
+    BAIL_ON_ERROR(error);
+
+error:
+
+    if (pTask)
+    {
+        LwRtlCancelTask(pTask);
+        LwRtlWaitTask(pTask);
+        LwRtlReleaseTask(&pTask);
+    }
+
+    LwRtlFreeThreadPool(&pPool);
+
+    if (bResetLogger)
+    {
+        error = LwSmSetServiceLogLevel(hHandle, pFacility, oldLevel);
+        BAIL_ON_ERROR(error);
+
+        error = LwSmSetServiceLogTarget(hHandle, pFacility, oldLogger, pOldTarget);
+        BAIL_ON_ERROR(error);
+    }
+
+    if (pOldTarget)
+    {
+        LwSmFreeLogTarget(pOldTarget);
+    }
+
+    if (FifoFd >= 0)
+    {
+        close(FifoFd);
+    }
+
+    if (bRmPipe)
+    {
+        unlink(pFifo);
+    }
+
+    LW_SAFE_FREE_MEMORY(pFifo);
+
+    return error;
+}
+
+static
 DWORD
 LwSmUsage(
     int argc,
@@ -1850,6 +2073,9 @@ LwSmUsage(
            "                               Set log target for a given service and facility\n"
            "    set-log-level <service> <facility> <level>\n"
            "                               Set log level for a given service and facility\n"
+           "    tap-log <service> <facility> <level>\n"
+           "                               Temporarily redirect logging for the given service and\n"
+           "                               facility to stdout with the given log level\n"
            "    gdb <service>              Attach gdb to the specified running service\n\n");
     printf("Maintenance commands:\n"
            "    shutdown                   Shutdown service manager\n"
@@ -1955,6 +2181,11 @@ main(
         else if (!strcmp(pArgv[i], "set-log-level"))
         {
             dwError = LwSmCmdSetLogLevel(argc-i, pArgv+i);
+            goto error;
+        }
+        else if (!strcmp(pArgv[i], "tap-log"))
+        {
+            dwError = LwSmCmdTapLog(argc-i, pArgv+i);
             goto error;
         }
         else if (!strcmp(pArgv[i], "autostart"))
