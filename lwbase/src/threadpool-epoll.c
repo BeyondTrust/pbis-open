@@ -873,13 +873,13 @@ LwRtlSetTaskFd(
     {
         if (Mask == 0)
         {
-            if (epoll_ctl(pTask->pThread->EpollFd, EPOLL_CTL_DEL, pTask->Fd, &event) < 0)
+            pTask->Fd = -1;
+
+            if (epoll_ctl(pTask->pThread->EpollFd, EPOLL_CTL_DEL, Fd, &event) < 0)
             {
-                status = LwErrnoToNtStatus(status);
+                status = LwErrnoToNtStatus(errno);
                 GOTO_ERROR_ON_STATUS(status);
             }
-
-            pTask->Fd = -1;
         }
     }
     else if (Mask)
@@ -891,14 +891,14 @@ LwRtlSetTaskFd(
             GOTO_ERROR_ON_STATUS(status);
         }
 
-        pTask->Fd = Fd;
-        pTask->EventLastWait = 0;
-
-        if (epoll_ctl(pTask->pThread->EpollFd, EPOLL_CTL_ADD, pTask->Fd, &event) < 0)
+        if (epoll_ctl(pTask->pThread->EpollFd, EPOLL_CTL_ADD, Fd, &event) < 0)
         {
-            status = LwErrnoToNtStatus(status);
+            status = LwErrnoToNtStatus(errno);
             GOTO_ERROR_ON_STATUS(status);
         }
+
+        pTask->Fd = Fd;
+        pTask->EventLastWait = 0;
     }
 
 error:
