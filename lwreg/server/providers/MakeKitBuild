@@ -1,4 +1,4 @@
-case "$LWREG_REGISTRY_BACKEND" in
-    memory) SUBDIRS='memory';;
-    sqlite) SUBDIRS='sqlite';;
+case "$LW_DEVICE_PROFILE" in
+    "embedded") SUBDIRS="memory";;
+    *) SUBDIRS="memory sqlite";;
 esac

@@ -44,11 +44,6 @@ configure()
         esac
     mk_multiarch_done
 
-    case "$LWREG_REGISTRY_BACKEND" in
-        "memory") mk_define REG_USE_MEMORY;;
-        "sqlite") mk_define REG_USE_SQLITE;;
-    esac
-
     mk_check_headers \
         stdlib.h \
         sys/varargs.h \

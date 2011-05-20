@@ -7,21 +7,32 @@ make()
         regserver.c           \
         regsecurity.c"
 
-    case "$LWREG_REGISTRY_BACKEND" in
-        "memory") mk_group \
-                GROUP="regserverapi" \
+    case "$LW_DEVICE_PROFILE" in
+        "embedded")
+            mk_group \
+                GROUP="regserverapi-mem" \
+                CPPFLAGS="-DREG_USE_MEMORY" \
                 INCLUDEDIRS="../../include ../include" \
                 SOURCES="$API_SOURCES" \
-                GROUPDEPS="../providers/memory/provider-memory" \
                 LIBDEPS="regcommon uuid lwbase $LIB_PTHREAD" \
-                HEADERDEPS="lw/base.h lwmsg/lwmsg.h";;
-         
-        "sqlite") mk_group \
-                  GROUP="regserverapi" \
+                HEADERDEPS="lw/base.h lwmsg/lwmsg.h"
+                ;;
+        *)
+            mk_group \
+                GROUP="regserverapi-mem" \
+                CPPFLAGS="-DREG_USE_MEMORY" \
+                INCLUDEDIRS="../../include ../include" \
+                SOURCES="$API_SOURCES" \
+                LIBDEPS="regcommon uuid lwbase $LIB_PTHREAD" \
+                HEADERDEPS="lw/base.h lwmsg/lwmsg.h"
+
+            mk_group \
+                  GROUP="regserverapi-sql" \
+                  CPPFLAGS="-DREG_USE_SQLITE" \
                   INCLUDEDIRS="../../include ../include" \
                   SOURCES="$API_SOURCES" \
-                  GROUPDEPS="../providers/sqlite/provider-sqlite" \
                   LIBDEPS="regcommon uuid lwbase $LIB_PTHREAD" \
-                  HEADERDEPS="lw/base.h sqlite3.h lwmsg/lwmsg.h";;
+                  HEADERDEPS="lw/base.h sqlite3.h lwmsg/lwmsg.h"
+                  ;;
     esac
 }
