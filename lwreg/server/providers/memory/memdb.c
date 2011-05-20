@@ -417,14 +417,16 @@ MemDbExportToFileThread(
 
             case MEMDB_EXPORT_INIT_TO_INFINITE:
                 /* No changes pending, so wait "forever", 30 days */
-                clock_gettime(CLOCK_REALTIME, &timeOutShort);
+                timeOutShort.tv_sec = time(NULL);
+                timeOutShort.tv_nsec = 0;
                 timeOutShort.tv_sec += MEMDB_FOREVER_EXPORT_TIMEOUT; // 1month
                 bTimeOutInfinite = TRUE;
                 state = MEMDB_EXPORT_WAIT;
                 break;
 
             case MEMDB_EXPORT_INIT_TO_SHORT:
-                clock_gettime(CLOCK_REALTIME, &timeOutShort);
+                timeOutShort.tv_sec = time(NULL);
+                timeOutShort.tv_nsec = 0;
                 timeOutShort.tv_sec += MEMDB_CHANGED_EXPORT_TIMEOUT; // 5s
                 if (!pTimeOutMax)
                 {
@@ -490,7 +492,8 @@ MemDbExportToFileThread(
                 break;
 
             case MEMDB_EXPORT_UPDATE_SHORT_TIMEOUT:
-                clock_gettime(CLOCK_REALTIME, &timeOutShort);
+                timeOutShort.tv_sec = time(NULL);
+                timeOutShort.tv_nsec = 0;
                 timeOutShort.tv_sec += MEMDB_CHANGED_EXPORT_TIMEOUT; //5s
                 state = MEMDB_EXPORT_WAIT;
                 pthread_mutex_lock(&MemRegRoot()->ExportMutex);

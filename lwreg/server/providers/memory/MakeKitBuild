@@ -14,5 +14,5 @@ make()
         INCLUDEDIRS=". ../../.. ../../../include ../../../server/include \
             ../../../shellutil" \
         LIBDEPS="uuid lwbase lwbase_nothr $LIB_PTHREAD rsutils regcommon" \
-        HEADERDEPS="uuid/uuid.h lw/base.h lwmsg/lwmsg.h"
+        HEADERDEPS="uuid/uuid.h lw/base.h lwmsg/lwmsg.h iconv.h"
 }
