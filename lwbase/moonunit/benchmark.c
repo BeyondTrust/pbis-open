@@ -73,6 +73,8 @@ Transceiver(
         pSocket->Iteration >= gpSettings->ulIterations)
     {
         *pWaitMask = 0;
+        ASSERT_SUCCESS(
+            LwRtlSetTaskFd(pTask, pSocket->Fd, 0));
         close(pSocket->Fd);
         pSocket->Fd = -1;
         return;
