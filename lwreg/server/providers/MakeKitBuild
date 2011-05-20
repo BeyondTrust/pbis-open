@@ -1,4 +1,9 @@
-case "$LW_DEVICE_PROFILE" in
-    "embedded") SUBDIRS="memory";;
-    *) SUBDIRS="memory sqlite";;
-esac
+SUBDIRS="memory sqlite"
+
+configure()
+{
+    if [ "$LW_DEVICE_PROFILE" = "embedded" ]
+    then
+        mk_skip_subdir sqlite
+    fi
+}
