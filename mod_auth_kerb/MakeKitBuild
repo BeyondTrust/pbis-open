@@ -1,0 +1,83 @@
+option()
+{
+    mk_option \
+        OPTION='apache2.0-prefix' \
+        VAR="AP20_PREFIX" \
+        PARAM="path" \
+        DEFAULT="" \
+        HELP="Path to apache 2.0 headers and libraries"
+
+    mk_option \
+        OPTION='apache2.2-prefix' \
+        VAR="AP22_PREFIX" \
+        PARAM="path" \
+        DEFAULT="" \
+        HELP="Path to apache 2.2 headers and libraries"
+}
+
+configure()
+{
+    mk_config_header config.h
+
+    mk_define KRB5
+
+    mk_check_headers \
+        limits.h netdb.h stddef.h stdlib.h string.h unistd.h
+
+    mk_check_libraries \
+        resolv dl
+}
+
+make()
+{
+    MOD_SOURCES="\
+        spnegokrb5/asn1_MechType.c         \
+        spnegokrb5/asn1_MechTypeList.c     \
+        spnegokrb5/asn1_ContextFlags.c     \
+        spnegokrb5/asn1_NegTokenInit.c     \
+        spnegokrb5/asn1_NegTokenTarg.c     \
+        spnegokrb5/der_get.c               \
+        spnegokrb5/der_put.c               \
+        spnegokrb5/der_free.c              \
+        spnegokrb5/der_length.c            \
+        spnegokrb5/der_copy.c              \
+        spnegokrb5/timegm.c                \
+        spnegokrb5/init_sec_context.c      \
+        spnegokrb5/accept_sec_context.c    \
+        spnegokrb5/encapsulate.c           \
+        spnegokrb5/decapsulate.c           \
+        spnegokrb5/external.c              \
+        src/mod_auth_kerb.c"
+
+    for AP_VER in 2.0 2.2
+    do
+        mk_get "AP${AP_VER%.*}${AP_VER#*.}_PREFIX"
+        AP_PREFIX="$result"
+        
+        case "$AP_VER" in
+            2.0)
+                AP_ABI=0
+                ;;
+            2.2)
+                AP_ABI=1
+                ;;
+        esac
+
+        if [ -n "$AP_PREFIX" ]
+        then
+            mk_group \
+                GROUP="mod${AP_VER}" \
+                SOURCES="$MOD_SOURCES" \
+                INCLUDEDIRS=". spnegokrb5" \
+                CPPFLAGS="-I${AP_PREFIX}/include" \
+                HEADERDEPS="krb5.h gssapi.h" \
+                LIBDEPS="gssapi_krb5 $LIB_DL $LIB_RESOLV" \
+                LDFLAGS="-L${AP_PREFIX}/lib -lapr-${AP_ABI} -laprutil-${AP_ABI}"
+            
+            mk_dlo \
+                DLO="mod_auth_kerb" \
+                INSTALLDIR="${MK_LIBDIR}/apache${AP_VER}" \
+                GROUPS="mod${AP_VER}"
+        fi
+    done
+}

@@ -178,7 +178,9 @@ package_pkg()
                 "${MK_LIBDIR}/lsa-provider" \
                 "${MK_LIBDIR}/lsa-rpc" \
                 "${MK_LIBDIR}/lwio-driver" \
-                "${MK_LIBDIR}/lw-map-sec"
+                "${MK_LIBDIR}/lw-map-sec" \
+                "${MK_LIBDIR}/apache2.0" \
+                "${MK_LIBDIR}/apache2.2" \
 
             mk_multiarch_do
                 mk_package_dirs "${MK_LIBDIR}"
@@ -353,6 +355,8 @@ open_files_prefix()
         "${MK_LIBDIR}/lsa-rpc/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lwio-driver/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lw-map-sec/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/apache2.0/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/apache2.2/*${MK_DLO_EXT}" \
         "${MK_DATADIR}/likewise.pam-auth-update" \
         "${LW_CONFIGDIR}/*.reg" \
         "${MK_PREFIX}/data/VERSION"

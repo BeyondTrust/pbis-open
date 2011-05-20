@@ -8,7 +8,7 @@ LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv popt \
 SUBDIRS="$LW_ALL_BUNDLED \
          lwbase lwmsg lwreg lwadvapi netlogon \
          lwio nfs pvfs2 libschannel dcerpc centutils lwsm eventlog lsass reapsysl lwdns \
-         srvsvc lwnetapi lwtools domainjoin lwconfig lwupgrade samba-interop config docs \
+         srvsvc lwnetapi lwtools domainjoin lwconfig lwupgrade samba-interop mod_auth_kerb config docs \
          package installer qatools gssapps"
 
 defaults()
