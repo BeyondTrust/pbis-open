@@ -684,6 +684,7 @@ lwmsg_peer_task_run_listen(
         
         if (trigger & LWMSG_TASK_TRIGGER_CANCEL)
         {
+            lwmsg_task_unset_trigger_fd(task->event_task, task->fd);
             lwmsg_peer_listen_task_delete_self(task);
             *next_trigger = 0;
             goto done;
