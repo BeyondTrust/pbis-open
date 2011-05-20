@@ -1023,7 +1023,7 @@ LwRtlSetTaskFd(
             ShrinkCommands(&pTask->pThread->Commands);
         }
     }
-    else 
+    else if (Mask)
     {
         if (pTask->Fd >= 0)
         {

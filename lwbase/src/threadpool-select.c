@@ -729,7 +729,7 @@ LwRtlSetTaskFd(
             pTask->FdWaitMask = Mask;
         }
     }
-    else 
+    else if (Mask)
     {
         if (pTask->Fd >= 0)
         {

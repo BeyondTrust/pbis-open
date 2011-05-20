@@ -882,7 +882,7 @@ LwRtlSetTaskFd(
             pTask->Fd = -1;
         }
     }
-    else 
+    else if (Mask)
     {
         if (pTask->Fd >= 0)
         {

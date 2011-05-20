@@ -945,7 +945,7 @@ LwRtlSetTaskFd(
             pTask->PollIndex = 0;
         }
     }
-    else 
+    else if (Mask)
     {
         if (pTask->Fd >= 0)
         {
