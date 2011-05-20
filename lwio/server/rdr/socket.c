@@ -1215,6 +1215,12 @@ RdrSocketTask(
 
     if (WakeMask & LW_TASK_EVENT_CANCEL)
     {
+        /* Unregister the fd from the task */
+        if (pSocket->fd >= 0)
+        {
+            LwRtlSetTaskFd(pTask, pSocket->fd, 0);
+        }
+
         /* The task holds the last implicit reference to a socket,
            so we can now clean up and free the structure */
         LWIO_LOCK_MUTEX(bGlobalLock, &gRdrRuntime.Lock);
