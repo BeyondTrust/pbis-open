@@ -46,7 +46,6 @@
 EVTSERVERINFO gServerInfo =
 {
     PTHREAD_MUTEX_INITIALIZER,  /* Lock              */
-    "",                         /* Config file path  */
     "",                         /* Cache path        */
     "",                         /* Prefix path       */
     0,                          /* Process exit flag */
@@ -360,8 +359,6 @@ EVTSetServerDefaults()
 
     EVT_LOCK_SERVERINFO;
 
-    memset(gServerInfo.szConfigFilePath, 0, PATH_MAX+1);
-    strncpy(gServerInfo.szConfigFilePath, DEFAULT_CONFIG_FILE_PATH, PATH_MAX);
     strcpy(gServerInfo.szCachePath, CACHEDIR);
     strcpy(gServerInfo.szPrefixPath, PREFIXDIR);
 

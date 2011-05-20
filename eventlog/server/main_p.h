@@ -48,8 +48,6 @@
 typedef struct {
     /* MT safety */
     pthread_mutex_t lock;
-    /* config file path */
-    char szConfigFilePath[PATH_MAX + 1];
     /* Cache path */
     char szCachePath[PATH_MAX+1];
     /* Prefix path */
@@ -90,11 +88,6 @@ extern EVTSERVERINFO gServerInfo;
 VOID
 EVTFreeSecurityDescriptor(
     PSECURITY_DESCRIPTOR_ABSOLUTE pDescriptor
-    );
-
-DWORD
-EVTGetConfigPath(
-    PSTR* ppszPath
     );
 
 DWORD
