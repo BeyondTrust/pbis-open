@@ -512,10 +512,11 @@ DomainMigrateWindow::ConfirmMigration(
     {
         msgStrRef = CFStringCreateWithFormat(NULL,
                                              NULL,
-                                             CFSTR("Are you sure you want to migrate the profile?\n\tFrom local user: %s\n\tTo AD user: %s\n\nLocal account will %s after migration completes\n\nSince the two profiles share the same home directory path, the contents of '%s' will be reassigned to the new owner (UID: %s, GID: %s)"),
+                                             CFSTR("Are you sure you want to migrate the profile?\n\tFrom local user: %s\n\tTo AD user: %s\n\nLocal account will %s after migration completes\nLocal administration rights will %sbe retained\n\nSince the two profiles share the same home directory path, the contents of '%s' will be reassigned to the new owner (UID: %s, GID: %s)"),
                                              localUserName.c_str(),
                                              adUserName.c_str(),
                                              bDeleteAccount ? "be deleted" : "remain available",
+                                             bKeepAdmin ? "" : "not ",
                                              localUserHomeDir.c_str(),
                                              adUserUID.c_str(),
                                              adUserGID.c_str());
@@ -524,7 +525,7 @@ DomainMigrateWindow::ConfirmMigration(
     {
         msgStrRef = CFStringCreateWithFormat(NULL,
                                              NULL,
-                                             CFSTR("Are you sure you want to migrate the profile?\n\tFrom local user: %s\n\tTo AD user: %s\n\nLocal account will %s after migration completes\n\nContents from '%s' will be %s to '%s'.\nOwnership will be asssigned to (UID: %s, GID: %s)\n\nPLEASE NOTE: Migration operation can take a long time for a very large user profile. Be prepared to wait for migration to complete\n\nClick Yes to start the migration..."),
+                                             CFSTR("Are you sure you want to migrate the profile?\n\tFrom local user: %s\n\tTo AD user: %s\n\nLocal account will %s after migration completes\n\nContents from '%s' will be %s to '%s'.\nOwnership will be asssigned to (UID: %s, GID: %s)\nLocal administration rights will %sbe retained\n\nPLEASE NOTE: Migration operation can take a long time for a very large user profile. Be prepared to wait for migration to complete\n\nClick Yes to start the migration..."),
                                              localUserName.c_str(),
                                              adUserName.c_str(),
                                              bDeleteAccount ? "be deleted" : "remain available",
@@ -532,7 +533,8 @@ DomainMigrateWindow::ConfirmMigration(
                                              bMoveProfile ? "moved" : "copied",
                                              adUserHomeDir.c_str(),
                                              adUserUID.c_str(),
-                                             adUserGID.c_str());
+                                             adUserGID.c_str(),
+                                             bKeepAdmin ? "" : "not ");
     }
 
     err = CreateStandardAlert(kAlertStopAlert,
