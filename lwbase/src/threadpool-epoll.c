@@ -187,6 +187,7 @@ UpdateEventWait(
 
         if (epoll_ctl(EpollFd, EPOLL_CTL_MOD, pTask->Fd, &event) < 0)
         {
+            ABORT_ON_FATAL_ERRNO(errno);
             status = LwErrnoToNtStatus(errno);
             GOTO_ERROR_ON_STATUS(status);
         }
@@ -360,6 +361,7 @@ Poll(
 
     if (ready < 0)
     {
+        ABORT_ON_FATAL_ERRNO(errno);
         status = LwErrnoToNtStatus(errno);
         GOTO_ERROR_ON_STATUS(status);
     }
@@ -654,7 +656,17 @@ EventThread(
     PVOID pContext
     )
 {
-    EventLoop((PEPOLL_THREAD) pContext);
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = EventLoop((PEPOLL_THREAD) pContext);
+    if (!NT_SUCCESS(status))
+    {
+        LW_RTL_LOG_ERROR(
+            "Task thread exiting with fatal error: %s (0x%x)",
+            LwNtStatusToName(status),
+            status);
+        abort();
+    }
 
     return NULL;
 }
@@ -877,6 +889,7 @@ LwRtlSetTaskFd(
 
             if (epoll_ctl(pTask->pThread->EpollFd, EPOLL_CTL_DEL, Fd, &event) < 0)
             {
+                ABORT_ON_FATAL_ERRNO(errno);
                 status = LwErrnoToNtStatus(errno);
                 GOTO_ERROR_ON_STATUS(status);
             }
@@ -893,6 +906,7 @@ LwRtlSetTaskFd(
 
         if (epoll_ctl(pTask->pThread->EpollFd, EPOLL_CTL_ADD, Fd, &event) < 0)
         {
+            ABORT_ON_FATAL_ERRNO(errno);
             status = LwErrnoToNtStatus(errno);
             GOTO_ERROR_ON_STATUS(status);
         }
@@ -1220,6 +1234,7 @@ InitEventThread(
     
     if (epoll_ctl(pThread->EpollFd, EPOLL_CTL_ADD, pThread->SignalFds[0], &event) < 0)
     {
+        ABORT_ON_FATAL_ERRNO(errno);
         status = LwErrnoToNtStatus(errno);
         GOTO_ERROR_ON_STATUS(status);
     }

@@ -144,6 +144,20 @@ typedef struct _LW_SIGNAL_MULTIPLEX
 /* Mask of fd-related events */
 #define FD_EVENTS (LW_TASK_EVENT_FD_READABLE | LW_TASK_EVENT_FD_WRITABLE | LW_TASK_EVENT_FD_EXCEPTION)
 
+#define ABORT_ON_FATAL_ERRNO(err) \
+    do \
+    { \
+        switch ((err)) \
+        { \
+        case EBADF: \
+            LW_RTL_LOG_ERROR("Received fatal errno from syscall: %d", ((err))); \
+            abort(); \
+        default: \
+            break; \
+        } \
+    } while (0)
+
+
 /* Ring functions */
 static inline
 VOID

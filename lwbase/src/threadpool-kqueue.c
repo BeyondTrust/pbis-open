@@ -771,7 +771,17 @@ EventThread(
     PVOID pContext
     )
 {
-    EventLoop((PKQUEUE_THREAD) pContext);
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = EventLoop((PKQUEUE_THREAD) pContext);
+    if (!NT_SUCCESS(status))
+    {
+        LW_RTL_LOG_ERROR(
+            "Task thread exiting with fatal error: %s (0x%x)",
+            LwNtStatusToName(status),
+            status);
+        abort();
+    }
 
     return NULL;
 }
