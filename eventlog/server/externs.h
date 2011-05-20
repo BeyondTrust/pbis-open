@@ -47,8 +47,6 @@
 #ifndef __SERVER_EXTERNS_H__
 #define __SERVER_EXTERNS_H__
 
-extern pthread_t gSignalHandlerThread;
-extern PVOID     pgSignalHandlerThread;
 extern pthread_rwlock_t g_dbLock;
 extern DWORD gdwNewEventCount;
 

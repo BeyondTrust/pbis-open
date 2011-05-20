@@ -48,12 +48,3 @@
  */
 #include "includes.h"
 
-LOGINFO gEvtLogInfo =
-{
-    PTHREAD_MUTEX_INITIALIZER,
-    LOG_LEVEL_ERROR,
-    LOG_DISABLED,
-    {{"", NULL}},
-    0
-};
-

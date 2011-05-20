@@ -72,6 +72,7 @@ LwmEvtSrvLogIpc (
     )
 {
     DWORD dwLevel = 0;
+    LWMsgBool result;
 
     switch (level)
     {
@@ -98,12 +99,13 @@ LwmEvtSrvLogIpc (
         break;
     }
 
-    if (gEvtLogInfo.dwLogLevel >= dwLevel)
+    result = LwRtlLogGetLevel() >= dwLevel;
+    if (pszMessage && result)
     {
-        EVTLogMessage(dwLevel, "eventlog ipc: %s:%d (%s) %s", pszFilename, line, pszFunction, pszMessage);
-        return 1;
+        LW_RTL_LOG_RAW(dwLevel, "eventlog-ipc", pszFunction, pszFilename, line, "%s", pszMessage);
     }
-    return 0;
+
+    return result;
 }
 
 DWORD

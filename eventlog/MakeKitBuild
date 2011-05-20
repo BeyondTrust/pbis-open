@@ -8,11 +8,11 @@ configure()
 
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
 
-    mk_declare -o SBINDIR="$MK_SBINDIR"
+    mk_declare -o \
+        MOD_EXT="$MK_DLO_EXT" \
+        LIBDIR="$MK_LIBDIR"
 
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
-    mk_define LIBDIR "\"$MK_LIBDIR\""
-    mk_define MOD_EXT "\"$MK_DLO_EXT\""
     mk_define PREFIXDIR "\"$MK_PREFIX\""
     mk_define CONFIGDIR "\"$MK_SYSCONFDIR\""
     mk_define LWREPORT_XML "\"${LW_CACHEDIR}/lwreport.xml\""
@@ -40,7 +40,9 @@ configure()
 
     lw_check_pthread_once_init
 
-    mk_output_file "etc/eventlogd.reg"
+    mk_output_file etc/eventlogd.reg
+    mk_output_file etc/lwreport.xml
 
     MK_HEADERDEPS="$MK_HEADERDEPS lwrpcrt/lwrpcrt.h"
+
 }

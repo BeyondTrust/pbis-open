@@ -6,11 +6,11 @@
     doc = "" 
 }
 "Path" = { 
-    default = "@SBINDIR@/eventlogd" 
+    default = "@LIBDIR@/lw-svcm/eventlog@MOD_EXT@" 
     doc = "" 
 }
 "Arguments" = { 
-    default = "@SBINDIR@/eventlogd --syslog" 
+    default = "" 
     doc = "" 
 }
 "Environment" = { 
@@ -22,7 +22,7 @@
     doc = "" 
 }
 "Type" = { 
-    default = dword:00000001 
+    default = dword:00000002 
     doc = "" 
 }
 "Autostart" = {

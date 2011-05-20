@@ -49,9 +49,4 @@
 #ifndef __EXTERNS_H__
 #define __EXTERNS_H__
 
-extern LOGINFO gEvtLogInfo;
-
-#define EVT__LOCK_LOGGER   pthread_mutex_lock(&gEvtLogInfo.lock)
-#define EVT__UNLOCK_LOGGER pthread_mutex_unlock(&gEvtLogInfo.lock)
-
 #endif /* __EXTERNS_H__ */

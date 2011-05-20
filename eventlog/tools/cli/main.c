@@ -400,10 +400,6 @@ main(
 
     poptSetOtherOptionHelp(optCon, "[OPTION] <hostname>");
 
-    dwError = EVTInitLoggingToFile( LOG_LEVEL_ERROR,
-                                    NULL);
-    BAIL_ON_EVT_ERROR(dwError);
-
     while( (action = poptGetNextOpt(optCon)) != -1)
     {
         switch (action)
@@ -465,7 +461,7 @@ main(
 
     if (dwFinalAction == 0)
     {
-        EVT_LOG_VERBOSE("Must have one of -s, -t, -c, -d, -e, or --list\n");
+        fprintf(stderr, "Must have one of -s, -t, -c, -d, -e, or --list\n");
         ShowUsage();
         exit(1);
     }
@@ -537,7 +533,7 @@ main(
         else
         {
             dwError = -1;
-            EVT_LOG_VERBOSE("Unable to open file %s for writing.\n", pszExportPath);
+            fprintf(stderr, "Unable to open file %s for writing.\n", pszExportPath);
         }
         BAIL_ON_EVT_ERROR(dwError);
     }
@@ -650,7 +646,7 @@ main(
     }
     else
     {
-        EVT_LOG_VERBOSE("Invalid action: %d\n", action);
+        fprintf(stderr, "Invalid action: %d\n", action);
         ShowUsage();
         exit(0);
     }
@@ -658,7 +654,7 @@ main(
  error:
     if (dwError != 0)
     {
-        EVT_LOG_ERROR("The operation failed with error code [%d]\n", dwError);
+        fprintf(stderr, "The operation failed with error code [%d]\n", dwError);
     }
     LW_SAFE_FREE_MEMORY(pwszSqlFilter);
     LW_SAFE_FREE_MEMORY(pFilter);

@@ -48,15 +48,6 @@
 typedef struct {
     /* MT safety */
     pthread_mutex_t lock;
-    /* Should start as daemon */
-    DWORD dwStartAsDaemon;
-    /* Log to syslog if this is true or starting as a daemon without a log
-     * file. */
-    BOOLEAN bLogToSyslog;
-    /* How much logging do you want? */
-    DWORD dwLogLevel;
-    /* log file path */
-    char szLogFilePath[PATH_MAX + 1];
     /* config file path */
     char szConfigFilePath[PATH_MAX + 1];
     /* Cache path */

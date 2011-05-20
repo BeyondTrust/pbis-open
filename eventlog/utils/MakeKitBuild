@@ -3,7 +3,6 @@ make()
     UTILS_SOURCES="\
         evtcfg.c    \
 	evtfutils.c \
-	evtlogger.c \
 	evtrpcmem.c \
 	globals.c   \
 	sysfuncs.c"

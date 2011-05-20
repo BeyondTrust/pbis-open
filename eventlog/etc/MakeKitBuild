@@ -1,6 +1,10 @@
 make()
 {
     mk_stage \
-	SOURCE=eventlogd.reg \
-	DESTDIR="${LW_CONFIGDIR}"
+        DESTDIR="${LW_CONFIGDIR}" \
+        eventlogd.reg
+
+    mk_stage \
+        DESTDIR="${LW_CACHEDIR}" \
+        lwreport.xml
 }

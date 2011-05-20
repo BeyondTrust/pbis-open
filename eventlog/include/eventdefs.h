@@ -105,33 +105,15 @@ void __RPC_USER midl_user_free(void __RPC_FAR * p);
 #define RPC_BINDING_FREE(pBindingHandle, pStatus) \
     *pStatus = RpcBindingFree(pBindingHandle)
 
-#define EVT_LOG_ALWAYS(szFmt...)                     \
-    EVTLogMessage(LOG_LEVEL_ALWAYS, ## szFmt);
+#define _EVT_LOG_AT(Level, ...) LW_RTL_LOG_AT_LEVEL(Level, "eventlog", __VA_ARGS__)
 
-#define EVT_LOG_ERROR(szFmt...)                         \
-    if (gEvtLogInfo.dwLogLevel >= LOG_LEVEL_ERROR) {    \
-        EVTLogMessage(LOG_LEVEL_ERROR, ## szFmt);       \
-    }
-
-#define EVT_LOG_WARNING(szFmt...)                       \
-    if (gEvtLogInfo.dwLogLevel >= LOG_LEVEL_WARNING) {  \
-        EVTLogMessage(LOG_LEVEL_WARNING, ## szFmt);     \
-    }
-
-#define EVT_LOG_INFO(szFmt...)                          \
-    if (gEvtLogInfo.dwLogLevel >= LOG_LEVEL_INFO)    {  \
-        EVTLogMessage(LOG_LEVEL_INFO, ## szFmt);        \
-    }
-
-#define EVT_LOG_VERBOSE(szFmt...)                       \
-    if (gEvtLogInfo.dwLogLevel >= LOG_LEVEL_VERBOSE) {  \
-        EVTLogMessage(LOG_LEVEL_VERBOSE, ## szFmt);     \
-    }
-
-#define EVT_LOG_DEBUG(szFmt...)                         \
-    if (gEvtLogInfo.dwLogLevel >= LOG_LEVEL_VERBOSE) {  \
-        EVTLogMessage(LOG_LEVEL_VERBOSE, ## szFmt);     \
-    }
+#define EVT_LOG_ALWAYS(...) _EVT_LOG_AT(LW_RTL_LOG_LEVEL_ALWAYS, __VA_ARGS__)
+#define EVT_LOG_ERROR(...) _EVT_LOG_AT(LW_RTL_LOG_LEVEL_ERROR, __VA_ARGS__)
+#define EVT_LOG_WARNING(...) _EVT_LOG_AT(LW_RTL_LOG_LEVEL_WARNING, __VA_ARGS__)
+#define EVT_LOG_INFO(...) _EVT_LOG_AT(LW_RTL_LOG_LEVEL_INFO, __VA_ARGS__)
+#define EVT_LOG_VERBOSE(...) _EVT_LOG_AT(LW_RTL_LOG_LEVEL_VERBOSE, __VA_ARGS__)
+#define EVT_LOG_DEBUG(...) _EVT_LOG_AT(LW_RTL_LOG_LEVEL_DEBUG, __VA_ARGS__)
+#define EVT_LOG_TRACE(...) _EVT_LOG_AT(LW_RTL_LOG_LEVEL_TRACE, __VA_ARGS__)
 
 #define BAIL_ON_EVT_ERROR(dwError) \
     if (dwError) {                 \

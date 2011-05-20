@@ -47,8 +47,6 @@
 
 #include "includes.h"
 
-pthread_t gSignalHandlerThread;
-PVOID     pgSignalHandlerThread = NULL;
 pthread_rwlock_t g_dbLock;
 DWORD gdwNewEventCount = 0;
 

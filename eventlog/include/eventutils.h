@@ -77,28 +77,6 @@ typedef struct __EVT_STACK
 } EVT_STACK, *PEVT_STACK;
 
 
-typedef struct _LOGFILEINFO {
-    CHAR szLogPath[PATH_MAX+1];
-    FILE* logHandle;
-} LOGFILEINFO, *PLOGFILEINFO;
-
-typedef struct _SYSLOGINFO {
-    CHAR szIdentifier[PATH_MAX+1];
-    DWORD dwOption;
-    DWORD dwFacility;
-} SYSLOGINFO, *PSYSLOGINFO;
-
-typedef struct _LOGINFO {
-    pthread_mutex_t lock;
-    DWORD dwLogLevel;
-    DWORD logTarget;
-    union _logdata {
-        LOGFILEINFO logfile;
-        SYSLOGINFO syslog;
-    } data;
-    BOOLEAN  bLoggingInitiated;
-} LOGINFO, *PLOGINFO;
-
 typedef struct __EVT_CONFIG_REG EVT_CONFIG_REG, *PEVT_CONFIG_REG;
 
 typedef enum
@@ -206,40 +184,5 @@ EVTGetFileSize(
 	PCSTR pszPath,
 	PDWORD pdwFileSize
 	);
-
-extern FILE*   gBasicLogStreamFD;
-extern DWORD   gLogLevel;
-extern LOGINFO gEvtLogInfo;
-
-VOID
-EVTLogMessage(
-    DWORD dwLogLevel,
-    PCSTR pszFormat,
-    ...
-    );
-
-DWORD
-EVTInitLoggingToSyslog(
-    DWORD dwLogLevel,
-    PCSTR pszIdentifier,
-    DWORD dwOption,
-    DWORD dwFacility
-    );
-
-DWORD
-EVTSetLogLevel(
-    DWORD dwLogLevel
-    );
-
-DWORD
-EVTInitLoggingToFile(
-    DWORD dwLogLevel,
-    PCSTR pszLogFilePath
-    );
-
-VOID
-EVTCloseLog(
-    VOID
-    );
 
 #endif /* __EVENTUTILS_H__ */

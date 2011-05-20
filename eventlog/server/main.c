@@ -46,10 +46,6 @@
 EVTSERVERINFO gServerInfo =
 {
     PTHREAD_MUTEX_INITIALIZER,  /* Lock              */
-    0,                          /* Start as daemon   */
-    FALSE,                      /* Log to syslog */
-    LOG_LEVEL_ERROR,            /* Max Log Level     */
-    "",                         /* Log file path     */
     "",                         /* Config file path  */
     "",                         /* Cache path        */
     "",                         /* Prefix path       */
@@ -81,145 +77,9 @@ EVTCreateAccessDescriptor(
 
 static
 DWORD
-EVTGetProcessExitCode(
-    PDWORD pdwExitCode
-    );
-
-static
-DWORD
 EVTGetRegisterTcpIp(
     PBOOLEAN pbRegisterTcpIp
     );
-
-static
-void
-EVTExitHandler(
-    void
-    )
-{
-    DWORD dwError = 0;
-    DWORD dwExitCode = 0;
-    CHAR  szErrCodeFilePath[PATH_MAX+1];
-    PSTR  pszCachePath = NULL;
-    BOOLEAN  bFileExists = 0;
-    FILE* fp = NULL;
-
-    dwError = EVTGetCachePath(&pszCachePath);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    sprintf(szErrCodeFilePath, "%s/eventlogd.err", pszCachePath);
-
-    dwError = LwCheckFileTypeExists(
-                    szErrCodeFilePath,
-                    LWFILE_REGULAR,
-                    &bFileExists);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    if (bFileExists) {
-        dwError = LwRemoveFile(szErrCodeFilePath);
-        BAIL_ON_EVT_ERROR(dwError);
-    }
-
-    dwError = EVTGetProcessExitCode(&dwExitCode);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    if (dwExitCode) {
-        fp = fopen(szErrCodeFilePath, "w");
-        if (fp == NULL) {
-            dwError = errno;
-            BAIL_ON_EVT_ERROR(dwError);
-        }
-        fprintf(fp, "%d\n", dwExitCode);
-    }
-
-error:
-
-    if (pszCachePath) {
-        LwFreeString(pszCachePath);
-    }
-
-    if (fp != NULL) {
-        fclose(fp);
-    }
-}
-
-static
-PSTR
-get_program_name(
-    PSTR pszFullProgramPath
-    )
-{
-    if (pszFullProgramPath == NULL || *pszFullProgramPath == '\0') {
-        return NULL;
-    }
-
-    // start from end of the string
-    PSTR pszNameStart = pszFullProgramPath + strlen(pszFullProgramPath);
-    do {
-        if (*(pszNameStart - 1) == '/') {
-            break;
-        }
-
-        pszNameStart--;
-
-    } while (pszNameStart != pszFullProgramPath);
-
-    return pszNameStart;
-}
-
-BOOLEAN
-EVTProcessShouldExit()
-{
-    BOOLEAN bResult = 0;
-
-    EVT_LOCK_SERVERINFO;
-
-    bResult = gServerInfo.bProcessShouldExit;
-
-    EVT_UNLOCK_SERVERINFO;
-
-    return bResult;
-}
-
-void
-EVTSetProcessShouldExit(
-    BOOLEAN val
-    )
-{
-    EVT_LOCK_SERVERINFO;
-
-    gServerInfo.bProcessShouldExit = val;
-
-    EVT_UNLOCK_SERVERINFO;
-}
-
-DWORD
-EVTGetProcessExitCode(
-    PDWORD pdwExitCode
-    )
-{
-    DWORD dwError = 0;
-
-    EVT_LOCK_SERVERINFO;
-
-    *pdwExitCode = gServerInfo.dwExitCode;
-
-    EVT_UNLOCK_SERVERINFO;
-
-    return (dwError);
-}
-
-void
-EVTSetProcessExitCode(
-    DWORD dwExitCode
-    )
-{
-    EVT_LOCK_SERVERINFO;
-
-    gServerInfo.dwExitCode = dwExitCode;
-
-    EVT_UNLOCK_SERVERINFO;
-}
 
 DWORD
 EVTGetCachePath(
@@ -466,358 +326,6 @@ EVTUnlockServerInfo()
     EVT_UNLOCK_SERVERINFO;
 }
 
-static
-void
-ShowUsage(
-    const PSTR pszProgramName
-    )
-{
-    printf("Usage: %s [--start-as-daemon]\n"
-            "          [--syslog]\n"
-            "          [--logfile logFilePath]\n"
-            "          [--replacedb]\n"
-            "          [--loglevel {error, warning, info, verbose, debug}]\n"
-            "          [--configfile configfilepath]\n", pszProgramName);
-}
-
-void
-get_server_info_r(
-    PEVTSERVERINFO pServerInfo
-    )
-{
-    if (pServerInfo == NULL) {
-        return;
-    }
-
-    EVT_LOCK_SERVERINFO;
-
-    memcpy(pServerInfo, &gServerInfo, sizeof(EVTSERVERINFO));
-
-    pthread_mutex_init(&pServerInfo->lock, NULL);
-
-    EVT_UNLOCK_SERVERINFO;
-}
-
-static
-DWORD
-EVTParseArgs(
-    int argc,
-    PSTR argv[],
-    PEVTSERVERINFO pEVTServerInfo
-    )
-{
-    typedef enum {
-        PARSE_MODE_OPEN = 0,
-        PARSE_MODE_CONFIGFILE,
-        PARSE_MODE_LOGFILE,
-        PARSE_MODE_LOGLEVEL
-    } ParseMode;
-
-    ParseMode parseMode = PARSE_MODE_OPEN;
-    int iArg = 1;
-    PSTR pArg = NULL;
-    DWORD dwLogLevel = 0;
-
-    do
-    {
-        pArg = argv[iArg++];
-        if (pArg == NULL || *pArg == '\0') {
-            break;
-        }
-
-        switch(parseMode)
-        {
-            case PARSE_MODE_OPEN:
-            {
-                if (strcmp(pArg, "--logfile") == 0)    {
-                    parseMode = PARSE_MODE_LOGFILE;
-                }
-                else if ((strcmp(pArg, "--help") == 0) ||
-                         (strcmp(pArg, "-h") == 0)) {
-                    ShowUsage(get_program_name(argv[0]));
-                    exit(0);
-                }
-                else if (strcmp(pArg, "--start-as-daemon") == 0) {
-                    pEVTServerInfo->dwStartAsDaemon = 1;
-                }
-                else if (strcmp(pArg, "--configfile") == 0) {
-                    parseMode = PARSE_MODE_CONFIGFILE;
-                }
-                else if (strcmp(pArg, "--syslog") == 0)
-                {
-                    pEVTServerInfo->bLogToSyslog = TRUE;
-                }
-                else if (strcmp(pArg, "--loglevel") == 0) {
-                    parseMode = PARSE_MODE_LOGLEVEL;
-                }
-                else if (strcmp(pArg, "--replacedb") == 0) {
-                    pEVTServerInfo->bReplaceDB = TRUE;
-                } else {
-                    EVT_LOG_ERROR("Unrecognized command line option [%s]",
-                                    pArg);
-                    ShowUsage(get_program_name(argv[0]));
-                    exit(1);
-                }
-            }
-            break;
-            case PARSE_MODE_LOGFILE:
-            {
-                strncpy(pEVTServerInfo->szLogFilePath, pArg, PATH_MAX);
-                *(pEVTServerInfo->szLogFilePath+PATH_MAX) = '\0';
-                parseMode = PARSE_MODE_OPEN;
-            }
-            break;
-            case PARSE_MODE_LOGLEVEL:
-            {
-                if (!strcasecmp(pArg, "always"))
-                {
-                    dwLogLevel = LOG_LEVEL_ALWAYS;
-                }
-                else if (!strcasecmp(pArg, "error"))
-                {
-                    dwLogLevel = LOG_LEVEL_ERROR;
-                }
-                else if (!strcasecmp(pArg, "warning"))
-                {
-                    dwLogLevel = LOG_LEVEL_WARNING;
-                }
-                else if (!strcasecmp(pArg, "info"))
-                {
-                    dwLogLevel = LOG_LEVEL_INFO;
-                }
-                else if (!strcasecmp(pArg, "verbose"))
-                {
-                    dwLogLevel = LOG_LEVEL_VERBOSE;
-                }
-                else if (!strcasecmp(pArg, "debug"))
-                {
-                    dwLogLevel = LOG_LEVEL_DEBUG;
-                }
-                else
-                {
-                    dwLogLevel = atoi(pArg);
-
-                    if (dwLogLevel < LOG_LEVEL_ALWAYS ||
-                        dwLogLevel > LOG_LEVEL_DEBUG)
-                    {
-
-                        EVT_LOG_ERROR(
-                                "Error: Invalid log level [%d]",
-                                dwLogLevel);
-                        ShowUsage(get_program_name(argv[0]));
-                        exit(1);
-                    }
-                }
-
-                pEVTServerInfo->dwLogLevel = dwLogLevel;
-
-                parseMode = PARSE_MODE_OPEN;
-            }
-            break;
-            case PARSE_MODE_CONFIGFILE:
-            {
-                strncpy(pEVTServerInfo->szConfigFilePath, pArg, PATH_MAX);
-                *(pEVTServerInfo->szConfigFilePath+PATH_MAX) = '\0';
-                parseMode = PARSE_MODE_OPEN;
-
-            }
-            break;
-        }
-    } while (iArg < argc);
-
-    return 0;
-}
-
-static
-void
-EVTSrvNOPHandler(
-    int unused
-    )
-{
-}
-
-DWORD
-EVTSrvIgnoreSIGHUP(
-    VOID
-    )
-{
-    DWORD dwError = 0;
-
-    // Instead of ignoring the signal by passing SIG_IGN, we install a nop
-    // signal handler. This way if we later decide to catch it with sigwait,
-    // the signal will still get delivered to the process.
-    if (signal(SIGHUP, EVTSrvNOPHandler) < 0) {
-        dwError = errno;
-        BAIL_ON_EVT_ERROR(dwError);
-    }
-
-cleanup:
-    return dwError;
-
-error:
-    goto cleanup;
-}
-
-static
-DWORD
-EVTStartAsDaemon()
-{
-    DWORD dwError = 0;
-    pid_t pid;
-    int fd = 0;
-    int iFd = 0;
-
-    /* Use dcethread_fork() rather than fork() because we link with DCE/RPC */
-    if ((pid = dcethread_fork()) != 0) {
-        // Parent terminates
-        exit (0);
-    }
-
-    // Let the first child be a session leader
-    setsid();
-
-    // Ignore SIGHUP, because when the first child terminates
-    // it would be a session leader, and thus all processes in
-    // its session would receive the SIGHUP signal. By ignoring
-    // this signal, we are ensuring that our second child will
-    // ignore this signal and will continue execution.
-    dwError = EVTSrvIgnoreSIGHUP();
-    BAIL_ON_EVT_ERROR(dwError);
-
-    // Spawn a second child
-    if ((pid = fork()) != 0) {
-        // Let the first child terminate
-        // This will ensure that the second child cannot be a session leader
-        // Therefore, the second child cannot hold a controlling terminal
-        exit(0);
-    }
-
-    // This is the second child executing
-    dwError = chdir("/");
-    BAIL_ON_EVT_ERROR(dwError);
-
-    // Clear our file mode creation mask
-    umask(0);
-
-    for (iFd = 0; iFd < 3; iFd++)
-        close(iFd);
-
-    for (iFd = 0; iFd < 3; iFd++)    {
-
-        fd = open("/dev/null", O_RDWR, 0);
-        if (fd < 0) {
-            fd = open("/dev/null", O_WRONLY, 0);
-        }
-        if (fd < 0) {
-            exit(1);
-        }
-        if (fd != iFd) {
-            exit(1);
-        }
-    }
-
-    return (dwError);
-
- error:
-
-    return (dwError);
-}
-
-#define DAEMON_NAME "eventlogd"
-#define PID_DIR "/var/run"
-#define PID_FILE PID_DIR "/" DAEMON_NAME ".pid"
-
-#define PID_FILE_CONTENTS_SIZE ((9 * 2) + 2)
-
-static
-pid_t
-pid_from_pid_file()
-{
-    pid_t pid = 0;
-    int fd = -1;
-    int result;
-    char contents[PID_FILE_CONTENTS_SIZE];
-
-    fd = open(PID_FILE, O_RDONLY, 0644);
-    if (fd < 0) {
-        goto error;
-    }
-
-    result = read(fd, contents, sizeof(contents)-1);
-    if (result <= 0) {
-        goto error;
-    }
-    contents[result-1] = 0;
-
-    result = atoi(contents);
-    if (result <= 0) {
-        result = -1;
-        goto error;
-    }
-
-    pid = (pid_t) result;
-    result = kill(pid, 0);
-    if (result != 0 || errno == ESRCH) {
-        unlink(PID_FILE);
-        pid = 0;
-    }
-
- error:
-    if (fd != -1) {
-        close(fd);
-    }
-
-    return pid;
-}
-
-static
-void
-EVTCreatePIDFile()
-{
-    int result = -1;
-    pid_t pid;
-    char contents[PID_FILE_CONTENTS_SIZE];
-    size_t len;
-    int fd = -1;
-
-    pid = pid_from_pid_file();
-    if (pid > 0) {
-        fprintf(stderr, "Daemon already running as %d\n", (int) pid);
-        result = -1;
-        goto error;
-    }
-
-    fd = open(PID_FILE, O_CREAT | O_WRONLY | O_EXCL, 0644);
-    if (fd < 0) {
-        fprintf(stderr, "Could not create pid file: %s\n", strerror(errno));
-        result = 1;
-        goto error;
-    }
-
-    pid = getpid();
-    snprintf(contents, sizeof(contents)-1, "%d\n", (int) pid);
-    contents[sizeof(contents)-1] = 0;
-    len = strlen(contents);
-
-    result = (int) write(fd, contents, len);
-    if ( result != (int) len ) {
-        fprintf(stderr, "Could not write to pid file: %s\n", strerror(errno));
-        result = -1;
-        goto error;
-    }
-
-    result = 0;
-
- error:
-    if (fd != -1) {
-        close(fd);
-    }
-
-    if (result < 0) {
-        exit(1);
-    }
-}
-
 
 static
 DWORD
@@ -852,10 +360,6 @@ EVTSetServerDefaults()
 
     EVT_LOCK_SERVERINFO;
 
-    gServerInfo.dwLogLevel = LOG_LEVEL_ERROR;
-
-    *(gServerInfo.szLogFilePath) = '\0';
-
     memset(gServerInfo.szConfigFilePath, 0, PATH_MAX+1);
     strncpy(gServerInfo.szConfigFilePath, DEFAULT_CONFIG_FILE_PATH, PATH_MAX);
     strcpy(gServerInfo.szCachePath, CACHEDIR);
@@ -868,45 +372,6 @@ EVTSetServerDefaults()
     return dwError;
 }
 
-static
-void
-EVTBlockSelectedSignals()
-{
-    sigset_t default_signal_mask;
-    sigset_t old_signal_mask;
-
-    sigemptyset(&default_signal_mask);
-    sigaddset(&default_signal_mask, SIGINT);
-    sigaddset(&default_signal_mask, SIGTERM);
-    sigaddset(&default_signal_mask, SIGHUP);
-    sigaddset(&default_signal_mask, SIGQUIT);
-    sigaddset(&default_signal_mask, SIGPIPE);
-
-    pthread_sigmask(SIG_BLOCK,  &default_signal_mask, &old_signal_mask);
-}
-
-static
-DWORD
-EVTInitLogging(
-    PSTR pszProgramName
-    )
-{
-    if ((gServerInfo.dwStartAsDaemon &&
-            gServerInfo.szLogFilePath[0] == '\0') ||
-            gServerInfo.bLogToSyslog)
-    {
-
-        return EVTInitLoggingToSyslog(gServerInfo.dwLogLevel,
-                                      pszProgramName,
-                                      LOG_PID,
-                                      LOG_DAEMON);
-    }
-    else
-    {
-        return EVTInitLoggingToFile(gServerInfo.dwLogLevel,
-                                    gServerInfo.szLogFilePath);
-    }
-}
 
 static PSTR gpszAllowReadTo;
 static PSTR gpszAllowWriteTo;
@@ -1578,90 +1043,6 @@ error:
     goto cleanup;
 }
 
-static
-VOID
-EVTInterruptHandler(
-    int Signal
-    )
-{
-    if (Signal == SIGINT)
-    {
-        raise(SIGTERM);
-    }
-}
-
-static
-DWORD
-EVTHandleSignals(
-    void
-    )
-{
-    DWORD dwError = 0;
-    struct sigaction action;
-    sigset_t catch_signal_mask;
-    int which_signal = 0;
-    int sysRet = 0;
-
-    // After starting up threads, we now want to handle SIGINT async
-    // instead of using sigwait() on it.  The reason for this is so
-    // that a debugger (such as gdb) can break in properly.
-    // See http://sourceware.org/ml/gdb/2007-03/msg00145.html and
-    // http://bugzilla.kernel.org/show_bug.cgi?id=9039.
-
-    memset(&action, 0, sizeof(action));
-    action.sa_handler = EVTInterruptHandler;
-
-    sysRet = sigaction(SIGINT, &action, NULL);
-    dwError = (sysRet != 0) ? errno : 0;
-    BAIL_ON_EVT_ERROR(dwError);
-
-    // Unblock SIGINT
-    sigemptyset(&catch_signal_mask);
-    sigaddset(&catch_signal_mask, SIGINT);
-
-    dwError = pthread_sigmask(SIG_UNBLOCK, &catch_signal_mask, NULL);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    // These should already be blocked...
-    sigemptyset(&catch_signal_mask);
-    sigaddset(&catch_signal_mask, SIGTERM);
-    sigaddset(&catch_signal_mask, SIGQUIT);
-    sigaddset(&catch_signal_mask, SIGHUP);
-    sigaddset(&catch_signal_mask, SIGPIPE);
-
-    while (1)
-    {
-        /* Wait for a signal to arrive */
-        sigwait(&catch_signal_mask, &which_signal);
-
-        switch (which_signal)
-        {
-            case SIGINT:
-            case SIGQUIT:
-            case SIGTERM:
-            {
-                goto error;
-            }
-            case SIGPIPE:
-            {
-                EVT_LOG_DEBUG("Handled SIGPIPE");
-
-                break;
-            } 
-            case SIGHUP:
-            {
-                dwError = EVTReadEventLogConfigSettings();
-                BAIL_ON_EVT_ERROR(dwError);
-
-                break;
-            }
-        }
-    }
-
-error:
-
-    return dwError;
-}
 
 static
 void*
@@ -1719,30 +1100,41 @@ EVTNetworkThread(
     return NULL;
 }
 
-int
-main(
-    int argc,
-    char* argv[])
+NTSTATUS
+EVTSvcmInit(
+    PCWSTR pServiceName,
+    PLW_SVCM_INSTANCE pInstance
+    )
+{
+    return STATUS_SUCCESS;
+}
+
+VOID
+EVTSvcmDestroy(
+    PLW_SVCM_INSTANCE pInstance
+    )
+{
+    return;
+}
+
+static BOOLEAN gbRegisteredTcpIp = FALSE;
+static BOOLEAN gbExitNow = FALSE;
+static dcethread* gNetworkThread = NULL;
+
+NTSTATUS
+EVTSvcmStart(
+    PLW_SVCM_INSTANCE pInstance,
+    ULONG ArgCount,
+    PWSTR* ppArgs,
+    ULONG FdCount,
+    int* pFds
+    )
 {
     DWORD dwError = 0;
-    PCSTR pszSmNotify = NULL;
-    int notifyFd = -1;
-    char notifyCode = 0;
-    int ret = 0;
-    dcethread* networkThread = NULL;
-    BOOLEAN bExitNow = FALSE;
     BOOLEAN bRegisterTcpIp = TRUE;
 
     dwError = EVTSetServerDefaults();
     BAIL_ON_EVT_ERROR(dwError);
-
-    dwError = EVTParseArgs(
-                    argc,
-                    argv,
-                    &gServerInfo
-                 );
-    BAIL_ON_EVT_ERROR(dwError);
-
 
     dwError = LwEvtDbCreateDB(gServerInfo.bReplaceDB);
     BAIL_ON_EVT_ERROR(dwError);
@@ -1750,24 +1142,6 @@ main(
     if (gServerInfo.bReplaceDB) {
         goto cleanup;
     }
-
-    if (gServerInfo.dwStartAsDaemon) {
-
-        dwError = EVTStartAsDaemon();
-        BAIL_ON_EVT_ERROR(dwError);
-    }
-
-    if (atexit(EVTExitHandler) < 0) {
-        dwError = errno;
-        BAIL_ON_EVT_ERROR(dwError);
-    }
-
-    EVTCreatePIDFile();
-
-    dwError = EVTInitLogging(get_program_name(argv[0]));
-    BAIL_ON_EVT_ERROR(dwError);
-
-    EVTBlockSelectedSignals();
 
     dwError = EVTReadEventLogConfigSettings();
     if (dwError != 0)
@@ -1791,68 +1165,55 @@ main(
     if (bRegisterTcpIp)
     {
         dwError = LwMapErrnoToLwError(dcethread_create(
-                                      &networkThread,
+                                      &gNetworkThread,
                                       NULL,
                                       EVTNetworkThread,
-                                      &bExitNow));
+                                      &gbExitNow));
         BAIL_ON_EVT_ERROR(dwError);
+
+        gbRegisteredTcpIp = TRUE;
     }
 
-    if ((pszSmNotify = getenv("LIKEWISE_SM_NOTIFY")) != NULL)
-    {
-        notifyFd = atoi(pszSmNotify);
-        
-        do
-        {
-            ret = write(notifyFd, &notifyCode, sizeof(notifyCode));
-        } while(ret != sizeof(notifyCode) && errno == EINTR);
+cleanup:
+    return LwWin32ErrorToNtStatus(dwError);
 
-        if (ret < 0)
-        {
-            EVT_LOG_ERROR("Could not notify service manager: %s (%i)", strerror(errno), errno);
-            dwError = LwMapErrnoToLwError(errno);
-            BAIL_ON_EVT_ERROR(dwError);
-        }
+error:
+    goto cleanup;
+}
 
-        close(notifyFd);
-    }
-
-    dwError = EVTHandleSignals();
-    BAIL_ON_EVT_ERROR(dwError);
+NTSTATUS
+EVTSvcmStop(
+    PLW_SVCM_INSTANCE pInstance
+    )
+{
+    DWORD dwError = 0;
 
     EVT_LOG_INFO("Eventlog Service exiting...");
 
-    bExitNow = TRUE;
+    gbExitNow = TRUE;
 
-    dwError = EVTUnregisterAllEndpoints();
-    BAIL_ON_EVT_ERROR(dwError);
-
-    dwError = EVTStopListen();
-    BAIL_ON_EVT_ERROR(dwError);
-
-    dwError = LwmEvtSrvStopListenThread();
-    BAIL_ON_EVT_ERROR(dwError);
-    
-    if (bRegisterTcpIp)
+    if (gbRegisteredTcpIp)
     {
-        dwError = LwMapErrnoToLwError(dcethread_interrupt(networkThread));
+        dwError = EVTUnregisterAllEndpoints();
+        BAIL_ON_EVT_ERROR(dwError);
+
+        dwError = EVTStopListen();
         BAIL_ON_EVT_ERROR(dwError);
     }
 
-    if (bRegisterTcpIp)
+    dwError = LwmEvtSrvStopListenThread();
+    BAIL_ON_EVT_ERROR(dwError);
+
+    if (gbRegisteredTcpIp)
     {
-        dwError = LwMapErrnoToLwError(dcethread_join(networkThread, NULL));
+        dwError = LwMapErrnoToLwError(dcethread_interrupt(gNetworkThread));
+        BAIL_ON_EVT_ERROR(dwError);
+
+        dwError = LwMapErrnoToLwError(dcethread_join(gNetworkThread, NULL));
         BAIL_ON_EVT_ERROR(dwError);
     }
 
  cleanup:
-
-    /*
-     * Indicate that the process is exiting
-     */
-    EVTSetProcessShouldExit(TRUE);
-
-    EVTCloseLog();
 
     LwEvtDbShutdownEventDatabase();
 
@@ -1860,9 +1221,7 @@ main(
     EVTFreeSecurityDescriptor(gServerInfo.pAccess);
     gServerInfo.pAccess = NULL;
 
-    EVTSetProcessExitCode(dwError);
-
-    exit (dwError);
+    return LwWin32ErrorToNtStatus(dwError);
 
 error:
 
@@ -1870,3 +1229,23 @@ error:
 
     goto cleanup;
 }
+
+static LW_SVCM_MODULE gService =
+{
+    .Size = sizeof(gService),
+    .Init = EVTSvcmInit,
+    .Destroy = EVTSvcmDestroy,
+    .Start = EVTSvcmStart,
+    .Stop = EVTSvcmStop
+};
+
+#define SVCM_ENTRY_POINT LW_RTL_SVCM_ENTRY_POINT_NAME(eventlog)
+
+PLW_SVCM_MODULE
+SVCM_ENTRY_POINT(
+    VOID
+    )
+{
+    return &gService;
+}
+

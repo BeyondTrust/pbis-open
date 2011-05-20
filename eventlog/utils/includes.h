@@ -14,5 +14,4 @@
 #include "eventutils.h"
 
 #include "sysfuncs_p.h"
-#include "evtlogger_p.h"
 #include "externs.h"
