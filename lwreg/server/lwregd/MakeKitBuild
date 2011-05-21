@@ -5,48 +5,48 @@ make()
 
     case "$LW_DEVICE_PROFILE" in
         "embedded")
-        lw_service \
-          SERVICE="lwreg" \
-          SOURCES="$LWREG_SOURCES" \
-          GROUPS="../api/regserverapi-mem ../providers/memory/provider-memory" \
-          CPPFLAGS="-DPREFIXDIR=\"${MK_PREFIX}\"" \
-          INCLUDEDIRS="../../include ../include" \
-          HEADERDEPS="lw/base.h lwmsg/lwmsg.h" \
-          LIBDEPS="lwmsg lwmsg_nothr"
-          ;;
+            lw_service \
+                SERVICE="lwreg" \
+                SOURCES="$LWREG_SOURCES" \
+                GROUPS="../api/regserverapi-mem ../providers/memory/provider-memory" \
+                CPPFLAGS="-DPREFIXDIR=\"${MK_PREFIX}\"" \
+                INCLUDEDIRS="../../include ../include" \
+                HEADERDEPS="lw/base.h lwmsg/lwmsg.h" \
+                LIBDEPS="lwmsg lwmsg_nothr"
+            ;;
 
         *)
-        lw_service \
-          SERVICE="lwreg-sqlite" \
-          SOURCES="$LWREG_SOURCES" \
-          GROUPS="../api/regserverapi-sql ../providers/sqlite/provider-sqlite" \
-          CPPFLAGS="-DPREFIXDIR=\"${MK_PREFIX}\"" \
-          INCLUDEDIRS="../../include ../include" \
-          HEADERDEPS="lw/base.h lwmsg/lwmsg.h" \
-          LIBDEPS="lwmsg lwmsg_nothr"
+            lw_service \
+                SERVICE="lwreg-sqlite" \
+                SOURCES="$LWREG_SOURCES" \
+                GROUPS="../api/regserverapi-sql ../providers/sqlite/provider-sqlite" \
+                CPPFLAGS="-DPREFIXDIR=\"${MK_PREFIX}\"" \
+                INCLUDEDIRS="../../include ../include" \
+                HEADERDEPS="lw/base.h lwmsg/lwmsg.h" \
+                LIBDEPS="lwmsg lwmsg_nothr"
 
-        lw_service \
-          SERVICE="lwreg-memory" \
-          SOURCES="$LWREG_SOURCES" \
-          GROUPS="../api/regserverapi-mem ../providers/memory/provider-memory" \
-          CPPFLAGS="-DPREFIXDIR=\"${MK_PREFIX}\"" \
-          INCLUDEDIRS="../../include ../include" \
-          HEADERDEPS="lw/base.h lwmsg/lwmsg.h" \
-          LIBDEPS="lwmsg lwmsg_nothr"
+            lw_service \
+                SERVICE="lwreg-memory" \
+                SOURCES="$LWREG_SOURCES" \
+                GROUPS="../api/regserverapi-mem ../providers/memory/provider-memory" \
+                CPPFLAGS="-DPREFIXDIR=\"${MK_PREFIX}\"" \
+                INCLUDEDIRS="../../include ../include" \
+                HEADERDEPS="lw/base.h lwmsg/lwmsg.h" \
+                LIBDEPS="lwmsg lwmsg_nothr"
 
-        case $LWREG_REGISTRY_BACKEND in
-        "memory")
-            mk_symlink \
-              LINK="$MK_LIBDIR/lw-svcm/lwreg${MK_DLO_EXT}" \
-              TARGET="$MK_LIBDIR/lw-svcm/lwreg-memory${MK_DLO_EXT}"
-              ;;
+            case $LWREG_REGISTRY_BACKEND in
+                "memory")
+                    mk_symlink \
+                        LINK="$MK_LIBDIR/lw-svcm/lwreg${MK_DLO_EXT}" \
+                        TARGET="lwreg-memory${MK_DLO_EXT}"
+                    ;;
 
-        *)
-            mk_symlink \
-              LINK="$MK_LIBDIR/lw-svcm/lwreg${MK_DLO_EXT}" \
-              TARGET="$MK_LIBDIR/lw-svcm/lwreg-sqlite${MK_DLO_EXT}"
-              ;;
-        esac
+                *)
+                    mk_symlink \
+                        LINK="$MK_LIBDIR/lw-svcm/lwreg${MK_DLO_EXT}" \
+                        TARGET="lwreg-sqlite${MK_DLO_EXT}"
+                    ;;
+            esac
     esac
 
     mk_stage \
