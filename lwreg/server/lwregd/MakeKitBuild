@@ -52,4 +52,8 @@ make()
     mk_stage \
         SOURCE=lwreg.reg \
         DESTDIR="${LW_CONFIGDIR}"
+
+    mk_stage \
+        SOURCE="lwreg-backend" \
+        DESTDIR="${MK_LIBEXECDIR}"
 }

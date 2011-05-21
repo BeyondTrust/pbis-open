@@ -1,0 +1,169 @@
+#!/bin/sh
+#
+# Change registry provider backends between the available choices.
+#
+PROVIDER_DIR="/opt/likewise/lib/lw-svcm"
+ARGV0=`basename $0`
+TMPEXPORT="/tmp/$ARGV0.$$"
+
+usage()
+{
+  backends=`list_backends`
+  if [ -n "$1" ]; then
+    echo "$1"
+  fi
+  echo 
+  echo "usage: $ARGV0 --list | --status | --help | -h | [backend-name]"
+  echo "       [backend-name] is one of the following: $backends"
+  exit 1
+}
+
+
+list_backends()
+{
+    ret_be=""
+    for i in $PROVIDER_DIR/lwreg*-*.so; do
+      be=`echo $i | sed -e 's|.*/||' -e 's|lwreg-||' -e 's|\..*$||'`
+      ret_be="$ret_be $be"
+    done
+    unset i
+    unset be
+    echo "$ret_be"
+}
+
+
+current_backend()
+{
+  backend=`ls -l $PROVIDER_DIR/lwreg.* | sed -e 's|.*-> ||' -e 's|.*/||' -e 's|lwreg-||' -e 's|\..*||'`
+  echo $backend
+}
+
+
+is_current_backend()
+{
+  backend=`ls -l $PROVIDER_DIR/lwreg.* | sed -e 's|.*-> ||' -e 's|.*/||' -e 's|lwreg-||' -e 's|\..*||'`
+  if [ "$backend" = "$2" ]; then
+    unset backend
+    return 1
+  fi
+  unset backend
+  return 0
+}
+
+export_registry()
+{
+  /etc/init.d/lwsmd stop > /dev/null
+  /etc/init.d/lwsmd start > /dev/null
+  /opt/likewise/bin/lwregshell export "$1"
+  /etc/init.d/lwsmd stop > /dev/null
+  [ ! -s "$1" ] && return 1
+  return 0
+}
+
+import_registry()
+{
+  /etc/init.d/lwsmd start > /dev/null
+  /opt/likewise/bin/lwregshell import $1
+  [ $? -ne 0 ] && return 1
+  
+  /etc/init.d/lwsmd stop > /dev/null
+  /etc/init.d/lwsmd start > /dev/null
+  /opt/likewise/bin/lwsm start lsass > /dev/null
+  [ $? -ne 0 ] && return 1
+  return 0
+}
+
+switch_backend()
+{
+#echo switch_backend backend=$1
+  DLEXT=`ls -1 $PROVIDER_DIR/lwreg.* | sed 's|.*\.||'`
+  rm -f "$PROVIDER_DIR/lwreg.$DLEXT"
+  { cd $PROVIDER_DIR
+    ln -s "lwreg-${1}.${DLEXT}" "lwreg.${DLEXT}"
+  }
+  [ ! -s "$PROVIDER_DIR/lwreg.$DLEXT" ] && return 1
+  [ ! -s "$PROVIDER_DIR/lwreg.$DLEXT" ] && return 1
+  return 0
+}
+
+
+select_backend()
+{
+  new_backend=$1
+  backend=`echo $PROVIDER_DIR/lwreg-$new_backend.*`
+  if [ ! -s $backend ]; then
+    usage "ERROR: invalid backend specified '$new_backend'"
+  fi
+
+  is_current_backend "$backend" "$new_backend"
+  if [ $? -eq 1 ]; then
+    echo "'$new_backend' is currently configured backend, no action taken"
+    exit 0
+  fi
+
+  echo "Exporting registry..."
+  export_registry $TMPEXPORT
+  if [ $? -eq 1 ]; then
+    rm -f $TMPEXPORT
+    usage "ERROR: Exporting registry failed, bailing!"
+  fi
+
+  echo "Switching to $new_backend backend..."
+  switch_backend "$new_backend"
+  if [ $? -eq 1 ]; then
+    usage "Failed switching provider backend"
+  fi
+
+  echo "Importing registry..."
+  import_registry $TMPEXPORT
+  if [ $? -eq 1 ]; then
+    usage "Failed to import registry into backend: $backend"
+  fi
+  echo "Done."
+  rm -f $TMPEXPORT
+  echo
+  echo "$new_backend backend is now running."
+  echo
+}
+
+
+main()
+{
+  if [ `id -u` -ne 0 ]; then
+    usage "ERROR: This utility must be run as root"
+  fi
+  while [ -n "$1" ]; do
+    case $1 in
+      "--help" | "-h")
+        usage
+        ;;
+
+      "--status")
+        backend=`current_backend`
+        echo "Current backend: $backend"
+        exit 0
+        ;;
+
+      "--list")
+        shift
+        val=`list_backends`
+        echo "Available backends: $val"
+        exit 0
+        ;;
+
+      --*)
+        usage "ERROR: Unknown option '$1'"
+        exit 1
+        ;;
+      *)
+        backend=$1
+        shift
+    esac
+  done
+  if [ -z "$backend" ]; then
+    usage
+  fi
+  select_backend $backend
+}
+
+main "$@"
