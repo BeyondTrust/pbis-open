@@ -7,8 +7,10 @@ make()
 	nss-pruser.c"
 
     mk_multiarch_do
+        NSSEXT=.1
         mk_dlo \
             DLO=libnss_lsass \
+            EXT="$NSSEXT" \
             INSTALLDIR="$NSSDIR" \
             SOURCES="$NSS_SOURCES" \
             GROUPS="../common/common" \
