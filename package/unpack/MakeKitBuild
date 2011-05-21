@@ -75,8 +75,8 @@ make()
                     $MK_PREFIX/lib/pa20_64/liblsaauth.sl \
                     /usr/lib/security/pam_lsass.sl \
                     /usr/lib/security/pa20_64/pam_lsass.sl \
-                    /usr/lib/libnss_lsass.sl \
-                    /usr/lib/pa20_64/libnss_lsass.sl"
+                    /usr/lib/libnss_lsass.1 \
+                    /usr/lib/pa20_64/libnss_lsass.1"
                     ;;
             solaris:x86)
                 LW_UNPACK_TARGETS="\

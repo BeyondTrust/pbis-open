@@ -7,7 +7,10 @@ make()
 	nss-pruser.c"
 
     mk_multiarch_do
-        NSSEXT=.1
+        case "$MK_ISA" in
+            hppa*) NSSEXT=.1 ;;
+            ia64*) NSSEXT=.so.1 ;;
+        esac
         mk_dlo \
             DLO=libnss_lsass \
             EXT="$NSSEXT" \
