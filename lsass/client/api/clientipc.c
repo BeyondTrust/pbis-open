@@ -53,7 +53,7 @@ LsaOpenServer(
 {
     DWORD dwError = 0;
     PLSA_CLIENT_CONNECTION_CONTEXT pContext = NULL;
-    static LWMsgTime connectTimeout = {2, 0};
+    static LWMsgTime connectTimeout = {10, 0};
 
     BAIL_ON_INVALID_POINTER(phConnection);
 
