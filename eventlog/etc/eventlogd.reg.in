@@ -59,6 +59,11 @@
     default = dword:00000001 
     doc = "" 
 }
+"RemoveAsNeeded" = { 
+    default = dword:00000001 
+    doc = ""
+    range = boolean
+}
 "RegisterTcpIp" = { 
     default = dword:00000000 
     doc = ""

@@ -55,8 +55,8 @@ EVTSERVERINFO gServerInfo =
     0,                          /* Max records */
     0,                          /* Remove records older than*/
     0,                          /* Purge records at interval*/
-    0,                          /* Enable/disable Remove records a boolean value TRUE or FALSE*/
-    TRUE,                       /* Register TCP/IP RPC endpoints*/
+    TRUE,                          /* Enable/disable Remove records a boolean value TRUE or FALSE*/
+    FALSE,                       /* Register TCP/IP RPC endpoints*/
     NULL,
 };
 
@@ -338,6 +338,8 @@ EVTSetConfigDefaults()
     gServerInfo.dwMaxRecords =  EVT_DEFAULT_MAX_RECORDS;
     gServerInfo.dwMaxAge = EVT_DEFAULT_MAX_AGE;
     gServerInfo.dwPurgeInterval = EVT_DEFAULT_PURGE_INTERVAL;
+    gServerInfo.bRemoveAsNeeded = EVT_DEFAULT_BOOL_REMOVE_RECORDS_AS_NEEDED;
+    gServerInfo.bRegisterTcpIp = EVT_DEFAULT_BOOL_REGISTER_TCP_IP;
 
     EVTFreeSecurityDescriptor(gServerInfo.pAccess);
     gServerInfo.pAccess = NULL;
