@@ -92,7 +92,7 @@ LsaIpcClientCreate(
 {
     DWORD dwError = 0;
     PLSA_IPC_CLIENT pClient = NULL;
-    static LWMsgTime connectTimeout = {2, 0};
+    static LWMsgTime connectTimeout = {10, 0};
 
     dwError = LwAllocateMemory(sizeof(*pClient), OUT_PPVOID(&pClient));
     BAIL_ON_LSA_ERROR(dwError);
