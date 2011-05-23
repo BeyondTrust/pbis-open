@@ -288,7 +288,7 @@
         <name>All</name>
         <description>Displays all events recorded for the specified computer</description>
         <query
-            sql=""
+            sql="(EventRecordID &gt;= '0')"
             >
         </query>
     </report>
