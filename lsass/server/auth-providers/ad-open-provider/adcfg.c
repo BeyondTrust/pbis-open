@@ -993,6 +993,8 @@ AD_GetUserDomainPrefix(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    LwStrToUpper(pszValue);
+
     *ppszPath = pszValue;
 
 cleanup:
