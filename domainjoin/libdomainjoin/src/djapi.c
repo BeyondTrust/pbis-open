@@ -44,13 +44,10 @@ DJInit(
 {
     DWORD dwError = 0;
     LWException *exc = NULL; 
-    BOOLEAN bEnableDcerpcd = FALSE;
 
     setlocale(LC_ALL, "");
 
     LW_CLEANUP_CTERR(&exc, dj_disable_logging());
-
-    LW_TRY(&exc, DJNetInitialize(bEnableDcerpcd, &LW_EXC));
 
 cleanup:
 
@@ -244,8 +241,6 @@ DJShutdown(
     VOID
     )
 {
-     DJNetShutdown(NULL);
-
      return 0;
 }
 

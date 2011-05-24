@@ -426,6 +426,7 @@ do_join(JoinDialog* dialog, LWException** exc)
             info.options.ouName = NULL;
         info.options.domainName = safe_strdup(join_state.domain);
         info.options.joiningDomain = TRUE;
+        info.options.setAssumeDefaultDomain = TRUE;
         info.options.assumeDefaultDomain = join_state.prefix != NULL;
         info.options.userDomainPrefix = safe_strdup(join_state.prefix);
 
@@ -603,8 +604,6 @@ main(int argc, char** argv)
 
     gtk_init(&argc, &argv);
 
-    LW_TRY(&exc, DJNetInitialize(TRUE, &LW_EXC));
-
     do
     {
         char* computer = NULL;
@@ -650,19 +649,12 @@ main(int argc, char** argv)
 
     } while (!quit);
 
-    // Try to shutdown the net api and report any failures
-    LW_TRY(&exc, DJNetShutdown(&LW_EXC));
-
 cleanup:
 
     if (exc)
     {
         show_error_dialog(NULL, exc);
     }
-
-    // Shutdown the net api without reporting failures (it is ok if
-    // DJNetShutdown is called twice).
-    DJNetShutdown(NULL);
 
     close_stale_dialogs(NULL);
 

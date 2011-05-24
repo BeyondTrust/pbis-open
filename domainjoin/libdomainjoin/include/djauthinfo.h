@@ -34,10 +34,6 @@
 void
 DJGetComputerDN(PSTR *dn, LWException **exc);
 
-void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc);
-
-void DJNetShutdown(LWException **exc);
-
 void DJCreateComputerAccount(
                 PSTR *shortDomainName,
                 JoinProcessOptions *options,

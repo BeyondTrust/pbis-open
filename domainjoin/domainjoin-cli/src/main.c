@@ -52,9 +52,6 @@ ShowUsage()
                     "                                               to console).\n");
     fprintf(stdout, "    --loglevel {error|warning|info|verbose}    Adjusts how much logging is\n"
                     "                                               produced by domainjoin.\n");
-    fprintf(stdout, "    --nodcerpcd                                prevents dcerpcd from being\n"
-                    "                                               started, along with any daemons\n"
-                    "                                               that depend on it.\n");
     fprintf(stdout, "\n");
     fprintf(stdout, "  and commands are:\n\n");
     fprintf(stdout, "    query\n");
@@ -843,7 +840,6 @@ int main(
     DWORD dwLogLevel;
     BOOLEAN showHelp = FALSE;
     BOOLEAN showInternalHelp = FALSE;
-    BOOLEAN bEnableDcerpcd = TRUE;
     int remainingArgs = argc;
     char **argPos = argv;
     int i;
@@ -879,8 +875,6 @@ int main(
             logLevel = (++argPos)[0];
             remainingArgs--;
         }
-        else if (!strcmp(argPos[0], "--nodcerpcd"))
-            bEnableDcerpcd = FALSE;
         else
             break;
         remainingArgs--;
@@ -977,26 +971,22 @@ int main(
             goto cleanup;
         }
         //Needed so that DJGetMachineSid does not call winbind
-        LW_TRY(&exc, DJNetInitialize(bEnableDcerpcd, &LW_EXC));
         LW_TRY(&exc, DJSetComputerName(argPos[0], NULL, &LW_EXC));
     }
     else if(!strcmp(argPos[0], "join"))
     {
         argPos++;
         remainingArgs--;
-        LW_TRY(&exc, DJNetInitialize(bEnableDcerpcd, &LW_EXC));
         LW_TRY(&exc, DoJoin(remainingArgs, argPos, columns, &LW_EXC));
     }
     else if(!strcmp(argPos[0], "leave"))
     {
         argPos++;
         remainingArgs--;
-        LW_TRY(&exc, DJNetInitialize(bEnableDcerpcd, &LW_EXC));
         LW_TRY(&exc, DoLeaveNew(remainingArgs, argPos, columns, &LW_EXC));
     }
     else if(!strcmp(argPos[0], "query"))
     {
-        LW_TRY(&exc, DJNetInitialize(bEnableDcerpcd, &LW_EXC));
         LW_TRY(&exc, DoQuery(&LW_EXC));
     }
     else if(!strcmp(argPos[0], "fixfqdn"))
@@ -1041,7 +1031,6 @@ cleanup:
         return 1;
     }
 
-    DJNetShutdown(NULL);
     dj_close_log();
 
     return 0;
