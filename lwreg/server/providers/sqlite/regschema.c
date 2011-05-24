@@ -100,12 +100,6 @@ SqliteSetValueAttributes(
     pKeyCtxInUse = pKeyHandleInUse->pKey;
     BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtxInUse);
 
-    if (MAX_VALUE_LENGTH < pValueAttributes->DefaultValueLen)
-    {
-        status = STATUS_INVALID_BLOCK_LENGTH;
-        BAIL_ON_NT_STATUS(status);
-    }
-
     status = LwRtlWC16StringDuplicate(&pwszValueName, !pValueName ? wszEmptyValueName : pValueName);
     BAIL_ON_NT_STATUS(status);
 

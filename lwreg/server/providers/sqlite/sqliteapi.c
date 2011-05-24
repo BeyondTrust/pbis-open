@@ -764,12 +764,6 @@ SqliteSetValueEx(
     pKeyCtx = pKeyHandle->pKey;
     BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtx);
 
-    if (MAX_VALUE_LENGTH < cbData)
-    {
-    	status = STATUS_INVALID_BLOCK_LENGTH;
-    	BAIL_ON_NT_STATUS(status);
-    }
-
     status = LwRtlWC16StringDuplicate(&pwszValueName, !pValueName ? wszEmptyValueName : pValueName);
     BAIL_ON_NT_STATUS(status);
 
