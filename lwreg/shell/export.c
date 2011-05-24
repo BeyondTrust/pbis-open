@@ -295,6 +295,7 @@ ProcessExportedKeyInfo(
     REG_DATA_TYPE dataType = REG_NONE;
     BYTE *value = NULL;
     DWORD dwValueLen = 0;
+    DWORD dwValueLenMax = 0;
     int iCount = 0;
     DWORD dwValuesCount = 0;
     PVOID pValue = NULL;
@@ -305,9 +306,6 @@ ProcessExportedKeyInfo(
     REG_PARSE_ITEM regItem = {0};
     FILE *fp = pExportState->fp;
     BOOLEAN bValueSet = FALSE;
-
-    dwError = RegAllocateMemory(MAX_VALUE_LENGTH * 2, (PVOID*)&value);
-    BAIL_ON_REG_ERROR(dwError);
 
     dwError = PrintToRegFile(
                           fp,
@@ -333,7 +331,7 @@ ProcessExportedKeyInfo(
         NULL,
         &dwValuesCount,
         NULL,
-        NULL,
+        &dwValueLenMax,
         NULL,
         NULL);
     BAIL_ON_REG_ERROR(dwError);
@@ -343,12 +341,15 @@ ProcessExportedKeyInfo(
         goto cleanup;
     }
 
+    dwError = RegAllocateMemory(dwValueLenMax, (PVOID*)&value);
+    BAIL_ON_REG_ERROR(dwError);
+
     for (iCount = 0; iCount < dwValuesCount; iCount++)
     {
         memset(pwszValueName, 0, MAX_KEY_LENGTH);
         dwValueNameLen = MAX_KEY_LENGTH;
-        memset(value, 0, MAX_VALUE_LENGTH * 2);
-        dwValueLen = MAX_VALUE_LENGTH;
+        memset(value, 0, dwValueLenMax);
+        dwValueLen = dwValueLenMax;
         RegSafeFreeCurrentValueInfo(&pCurrValueInfo);
 
         dwError = RegEnumValueW((HANDLE)hReg,
@@ -540,7 +541,7 @@ cleanup:
     LWREG_SAFE_FREE_STRING(pszValue);
     LWREG_SAFE_FREE_STRING(regItem.regAttr.pDefaultValue);
     RegSafeFreeCurrentValueInfo(&pCurrValueInfo);
-    memset(value, 0 , MAX_KEY_LENGTH);
+    memset(value, 0, dwValueLenMax);
     LWREG_SAFE_FREE_MEMORY(value);
 
     return dwError;

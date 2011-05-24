@@ -195,6 +195,9 @@ NtRegCreateKeyExW(
 
     BAIL_ON_NT_INVALID_POINTER(pSubKey);
 
+    // This is enforced on the server-side,
+    // but performing this check here prevents extra
+    // work from being done that will fail on the server side.
     if (wc16slen(pSubKey) > MAX_KEY_LENGTH)
     {
     	status = STATUS_INVALID_BLOCK_LENGTH;
@@ -587,11 +590,6 @@ NtRegEnumValueA(
     	status = RtlSafeMultiplyULONG(&cTempData, *pcbData, sizeof(WCHAR));
     	BAIL_ON_NT_STATUS(status);
 
-    	if (cTempData > MAX_VALUE_LENGTH)
-    	{
-    		cTempData = MAX_VALUE_LENGTH;
-    	}
-
     	if (cTempData)
     	{
             status = LW_RTL_ALLOCATE(&pTempData, VOID, cTempData);
@@ -779,12 +777,6 @@ NtRegGetValueA(
     if (pvData && pcbData)
     {
     	cTempData = (*pcbData)*sizeof(WCHAR);
-
-    	if (cTempData > MAX_VALUE_LENGTH)
-    	{
-    		cTempData = MAX_VALUE_LENGTH;
-    	}
-
 	    status = LW_RTL_ALLOCATE(&pTempData, VOID, cTempData*sizeof(WCHAR));
 	    BAIL_ON_NT_STATUS(status);
     }
