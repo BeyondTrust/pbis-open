@@ -55,5 +55,5 @@ make()
 
     mk_stage \
         SOURCE="lwreg-backend" \
-        DESTDIR="${MK_LIBEXECDIR}"
+        DESTDIR="${MK_BINDIR}"
 }
