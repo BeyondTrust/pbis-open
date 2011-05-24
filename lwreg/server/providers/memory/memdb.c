@@ -1178,8 +1178,10 @@ MemDbQueryInfoKey(
     PMEMREG_NODE hKeyNode = NULL;
     NTSTATUS status = 0;
     DWORD keyLen = 0;
-    DWORD maxKeyLen = 0;
     DWORD valueLen = 0;
+    DWORD valueNameLen = 0;
+    DWORD maxKeyLen = 0;
+    DWORD maxValueNameLen = 0;
     DWORD maxValueLen = 0;
     DWORD indx = 0;
 
@@ -1219,23 +1221,32 @@ MemDbQueryInfoKey(
 
     if (pcMaxValueNameLen)
     {
-        for (indx=0, valueLen=0, maxValueLen; indx < hKeyNode->ValuesLen; indx++)
+        for (indx=0, valueNameLen=0, maxValueLen=0; indx < hKeyNode->ValuesLen; indx++)
         {
-            valueLen = RtlWC16StringNumChars(hKeyNode->Values[indx]->Name);
-            if (valueLen > maxValueLen)
+            valueNameLen = RtlWC16StringNumChars(hKeyNode->Values[indx]->Name);
+            if (valueNameLen > maxValueNameLen)
             {
-                maxValueLen = valueLen;
+                maxValueNameLen = valueNameLen;
             }
         
         }
-        *pcMaxValueNameLen = maxValueLen;
+        *pcMaxValueNameLen = maxValueNameLen;
     }
 
     if (pcMaxValueLen)
     {
-        for (indx=0, valueLen=0, maxValueLen; indx < hKeyNode->ValuesLen; indx++)
+        for (indx=0, valueLen=0, maxValueLen=0; indx < hKeyNode->ValuesLen; indx++)
         {
-            valueLen = hKeyNode->Values[indx]->DataLen;
+            if (hKeyNode->Values[indx]->DataLen > 
+                hKeyNode->Values[indx]->Attributes.DefaultValueLen)
+            {
+                valueLen = hKeyNode->Values[indx]->DataLen;
+            }
+            else
+            {
+                valueLen = hKeyNode->Values[indx]->Attributes.DefaultValueLen;
+            }
+
             if (valueLen > maxValueLen)
             {
                 maxValueLen = valueLen;
@@ -1243,6 +1254,7 @@ MemDbQueryInfoKey(
         }
         *pcMaxValueLen = maxValueLen;
     }
+
     if (pcbSecurityDescriptor)
     {
         *pcbSecurityDescriptor = hKeyNode->pNodeSd->SecurityDescriptorLen;
