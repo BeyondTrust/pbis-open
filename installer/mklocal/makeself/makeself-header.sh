@@ -166,9 +166,9 @@ GetMount()
 UnTAR()
 {
     if [ "\`uname -s\`" = "AIX" ]; then
-	FreeSpace=\`df . | grep / | xargs echo | cut -f3 -d' '\`
-	if [ $ORG_SIZE -gt \$FreeSpace ]; then
-	    Need_Space=\`expr $ORG_SIZE - \$FreeSpace\` 
+	FreeSpace=\`df -k . | grep / | xargs echo | cut -f3 -d' '\`
+	if [ $USIZE -gt \$FreeSpace ]; then
+	    Need_Space=\`expr "(" $USIZE - \$FreeSpace ")" "*" 2\`
 	    MntPoint=\`GetMount\`
             chfs -a size=+\$Need_Space \$MntPoint
 	fi
