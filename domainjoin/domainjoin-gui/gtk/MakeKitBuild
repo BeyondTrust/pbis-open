@@ -5,7 +5,7 @@ make()
        statusdialog.c joinauth.c joinerror.c main.c"
 
     mk_program \
-	PROGRAM=domainjoin-gtk \
+	PROGRAM=domainjoin-gui \
 	SOURCES="$GTK_SOURCES" \
 	INCLUDEDIRS=". ../../include ../../libdomainjoin/include" \
 	CPPFLAGS="$GTK_CPPFLAGS" \
