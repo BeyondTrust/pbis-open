@@ -142,7 +142,7 @@ PreserveAdminRights()
 {
     if id "$LocalUserAccount" | egrep -q '[=,]80\(admin\)'; then
         echo "Local user $LocalUserAccount is an admin; adding $AdUserAccount to group 'admin'."
-        run dscl ${LocalNode} -merge /Groups/admin GroupMembership "$AdUserAccount"
+        run dseditgroup -o edit -a "$AdUserAccount" admin
         if [ $? -ne 0 ]; then
             rc="50"
         else
