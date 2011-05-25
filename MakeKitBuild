@@ -13,17 +13,17 @@ SUBDIRS="$LW_ALL_BUNDLED \
 
 defaults()
 {
-    MK_PREFIX="/opt/likewise"
-    MK_SYSCONFDIR="/etc/likewise"
-    MK_LOCALSTATEDIR="/var"
-    MK_DATADIR="/opt/likewise/share"
-    MK_DOCDIR="/opt/likewise/share/doc"
-    MK_MANDIR="/usr/share/man"
+    PREFIX="/opt/likewise"
+    SYSCONFDIR="/etc/likewise"
+    LOCALSTATEDIR="/var"
+    DATADIR="/opt/likewise/share"
+    DOCDIR="/opt/likewise/share/doc"
+    MANDIR="/usr/share/man"
 
     if [ "`uname`" = "Darwin" ]
     then
-        MK_LOCALSTATEDIR="/private/var"
-        MK_SYSCONFDIR="/private/etc/likewise"
+        LOCALSTATEDIR="/private/var"
+        SYSCONFDIR="/private/etc/likewise"
     fi
     
     # Fail on warnings
