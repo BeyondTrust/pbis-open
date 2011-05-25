@@ -110,6 +110,10 @@
     default = dword:00000080
     doc = "" 
 }
+"ClientCreditMinimum" = {
+    default = dword:00000004
+    doc = "Minimum threshold of credits granted per client connection"
+}
 
 [HKEY_THIS_MACHINE\Software\Likewise\lwiosrvstat]
 "Target" = { 
