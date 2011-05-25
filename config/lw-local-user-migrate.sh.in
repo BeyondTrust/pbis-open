@@ -323,6 +323,13 @@ MigrateProfile()
             echo "Failed to remove the original source homedir"
             rc="0"
         fi
+
+        echo "ln -s $DestHomeDirectory $SourceHomeDirectory"
+        ln -s "$DestHomeDirectory" "$SourceHomeDirectory"
+        if [ $? -ne 0 ]; then
+            echo "Failed to create a symbolic link from the source to the destnation home directory"
+            rc="0"
+        fi
     else
         if [ -d $DestHomeDirectory ]; then
             echo "$DestHomeDirectory exists, continuing migration"
