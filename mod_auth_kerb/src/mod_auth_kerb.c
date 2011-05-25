@@ -42,7 +42,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if 0
 #ident "$Id: mod_auth_kerb.c,v 1.131.2.1 2006/11/22 10:32:58 kouril Exp $"
+#endif
 
 #include "config.h"
 
@@ -62,6 +64,7 @@
 #include <http_log.h>
 #include <http_protocol.h>
 #include <http_request.h>
+#include <http_connection.h>
 
 #ifdef STANDARD20_MODULE_STUFF
 #include <apr_strings.h>
@@ -1327,7 +1330,7 @@ get_gss_creds(request_rec *r,
    /* match any prinicipal name from the krb5.keytab */
    if ( !conf->krb_service_name )
    {
-       server_creds = GSS_C_NO_CREDENTIAL;
+       *server_creds = GSS_C_NO_CREDENTIAL;
        return 0;
    }
 
@@ -1343,7 +1346,7 @@ get_gss_creds(request_rec *r,
    token.length = strlen(buf) + 1;
 
    major_status = gss_import_name(&minor_status, &token,
-	 			  (have_server_princ) ? GSS_KRB5_NT_PRINCIPAL_NAME : GSS_C_NT_HOSTBASED_SERVICE,
+	 			  (gss_OID) ((have_server_princ) ? GSS_KRB5_NT_PRINCIPAL_NAME : GSS_C_NT_HOSTBASED_SERVICE),
 				  &server_name);
    memset(&token, 0, sizeof(token));
    if (GSS_ERROR(major_status)) {
@@ -1450,7 +1453,6 @@ authenticate_user_gss(request_rec *r, kerb_auth_config *conf,
 			 gss_name_t *, gss_OID *, gss_buffer_t, OM_uint32 *,
 			 OM_uint32 *, gss_cred_id_t *);
   gss_OID_desc spnego_oid;
-  gss_ctx_id_t context = GSS_C_NO_CONTEXT;
   gss_cred_id_t server_creds = GSS_C_NO_CREDENTIAL;
   char* tmp = NULL;
   krb5_context kcontext = NULL;
@@ -1786,6 +1788,9 @@ kerb_authenticate_user(request_rec *r)
 
    return ret;
 }
+
+krb5_error_code krb5_rc_resolve_full (krb5_context,krb5_rcache *,char *);
+krb5_error_code krb5_rc_destroy (krb5_context, krb5_rcache);
 
 int
 have_rcache_type(const char *type)

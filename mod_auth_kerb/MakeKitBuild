@@ -21,6 +21,8 @@ configure()
 
     mk_define KRB5
 
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+
     mk_check_headers \
         limits.h netdb.h stddef.h stdlib.h string.h unistd.h
 
