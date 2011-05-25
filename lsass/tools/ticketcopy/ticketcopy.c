@@ -254,6 +254,7 @@ main(int argc, const char **argv)
         LSA_LOG_DEBUG(
             "uid %lu is not an AD user; exiting",
             (unsigned long) uid);
+        dwError = LW_ERROR_SUCCESS;
         goto cleanup;
     }
     BAIL_ON_LSA_ERROR(dwError);
