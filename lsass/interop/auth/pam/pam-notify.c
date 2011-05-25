@@ -190,7 +190,7 @@ error:
     }
     else
     {
-        LSA_LOG_PAM_ERROR("LsaPamNotifyUserLogoff error [error code:%u]", dwError);
+        LSA_LOG_PAM_INFO("LsaPamNotifyUserLogoff error [error code:%u]", dwError);
     }
 
     goto cleanup;
