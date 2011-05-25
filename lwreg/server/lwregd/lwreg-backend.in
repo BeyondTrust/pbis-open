@@ -2,7 +2,8 @@
 #
 # Change registry provider backends between the available choices.
 #
-PROVIDER_DIR="/opt/likewise/lib/lw-svcm"
+PROVIDER_DIR=@SVCM_DIR@
+ETC_INIT_DIR=@INIT_DIR@
 ARGV0=`basename $0`
 TMPEXPORT="/tmp/$ARGV0.$$"
 
@@ -52,22 +53,22 @@ is_current_backend()
 
 export_registry()
 {
-  /etc/init.d/lwsmd stop > /dev/null
-  /etc/init.d/lwsmd start > /dev/null
+  $ETC_INIT_DIR/lwsmd stop > /dev/null
+  $ETC_INIT_DIR/lwsmd start > /dev/null
   /opt/likewise/bin/lwregshell export "$1"
-  /etc/init.d/lwsmd stop > /dev/null
+  $ETC_INIT_DIR/lwsmd stop > /dev/null
   [ ! -s "$1" ] && return 1
   return 0
 }
 
 import_registry()
 {
-  /etc/init.d/lwsmd start > /dev/null
+  $ETC_INIT_DIR/lwsmd start > /dev/null
   /opt/likewise/bin/lwregshell import $1
   [ $? -ne 0 ] && return 1
   
-  /etc/init.d/lwsmd stop > /dev/null
-  /etc/init.d/lwsmd start > /dev/null
+  $ETC_INIT_DIR/lwsmd stop > /dev/null
+  $ETC_INIT_DIR/lwsmd start > /dev/null
   /opt/likewise/bin/lwsm start lsass > /dev/null
   [ $? -ne 0 ] && return 1
   return 0

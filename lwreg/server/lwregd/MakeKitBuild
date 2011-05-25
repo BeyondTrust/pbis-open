@@ -1,3 +1,10 @@
+configure()
+{
+            mk_declare -o SVCM_DIR="$MK_LIBDIR/lw-svcm"
+            mk_declare -o INIT_DIR="$LW_INITDIR"
+            mk_output_file lwreg-backend
+}
+
 make()
 {
     COMMON_SOURCES="globals.c listener.c"
@@ -47,13 +54,14 @@ make()
                         TARGET="lwreg-sqlite${MK_DLO_EXT}"
                     ;;
             esac
+
+            mk_stage \
+                SOURCE="lwreg-backend" \
+                DESTDIR="${LW_TOOL_DIR}"
+            lw_add_tool_target "$result"
     esac
 
     mk_stage \
         SOURCE=lwreg.reg \
         DESTDIR="${LW_CONFIGDIR}"
-
-    mk_stage \
-        SOURCE="lwreg-backend" \
-        DESTDIR="${MK_BINDIR}"
 }
