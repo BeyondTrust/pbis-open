@@ -23,6 +23,7 @@ const int DomainMigrateWindow::AD_USER_GID_ID      = 505;
 const int DomainMigrateWindow::COPY_RADIO_ID       = 506;
 const int DomainMigrateWindow::MOVE_RADIO_ID       = 507;
 const int DomainMigrateWindow::DELETE_ACCOUNT_ID   = 508;
+const int DomainMigrateWindow::KEEP_ADMIN_ID       = 509;
 const int DomainMigrateWindow::CANCEL_ID           = 511;
 const int DomainMigrateWindow::MIGRATE_ID          = 512;
 const int DomainMigrateWindow::VALIDATE_ID         = 513;
@@ -155,6 +156,12 @@ bool
 DomainMigrateWindow::IsDeleteOptionSelected()
 {
     return IsRadioButtonSet(DELETE_ACCOUNT_ID);
+}
+
+bool
+DomainMigrateWindow::IsKeepAdminOptionSelected()
+{
+    return IsRadioButtonSet(KEEP_ADMIN_ID);
 }
 
 void
@@ -482,7 +489,8 @@ DomainMigrateWindow::ConfirmMigration(
     const std::string& adUserUID,
     const std::string& adUserGID,
     bool bMoveProfile,
-    bool bDeleteAccount
+    bool bDeleteAccount,
+    bool bKeepAdmin
     )
 {
     AlertStdCFStringAlertParamRec params;
@@ -560,6 +568,7 @@ DomainMigrateWindow::CallMigrateCommand(
     const std::string& logFileName,
     bool bMoveProfile,
     bool bDeleteAccount,
+    bool bKeepAdmin,
     char ** ppszOutput
     )
 {
@@ -571,6 +580,7 @@ DomainMigrateWindow::CallMigrateCommand(
         adUserName.c_str(),
         bMoveProfile ? "--move" : " ",
         bDeleteAccount ? "--delete" : " ",
+        bKeepAdmin ? "--keep-admin" : " ",
         "--log",
         logFileName.c_str(),
         (char *) NULL };
@@ -646,10 +656,11 @@ DomainMigrateWindow::HandleMigration()
         std::string adUserGID = GetADUserGID();
         bool bMoveProfile = IsMoveOptionSelected();
         bool bDeleteAccount = IsDeleteOptionSelected();
+        bool bKeepAdmin = IsKeepAdminOptionSelected();
         
         ShowMigrateProgressBar();
         
-        if (ConfirmMigration(localUserName, localUserHomeDir, adUserName, adUserHomeDir, adUserUID, adUserGID, bMoveProfile, bDeleteAccount))
+        if (ConfirmMigration(localUserName, localUserHomeDir, adUserName, adUserHomeDir, adUserUID, adUserGID, bMoveProfile, bDeleteAccount, bKeepAdmin))
         {
             int ret = 0;
             char szLogFileName[256] = { 0 };
@@ -658,7 +669,7 @@ DomainMigrateWindow::HandleMigration()
             sprintf(szLogFileName, "/tmp/lw-migrate.%s.log", localUserName.c_str());
             
             // Migrate user with the parameters we have determined...
-            ret = CallMigrateCommand(localUserName, adUserName, szLogFileName, bMoveProfile, bDeleteAccount, &pszErrorMessage);
+            ret = CallMigrateCommand(localUserName, adUserName, szLogFileName, bMoveProfile, bDeleteAccount, bKeepAdmin, &pszErrorMessage);
             
             HideMigrateProgressBar();
             

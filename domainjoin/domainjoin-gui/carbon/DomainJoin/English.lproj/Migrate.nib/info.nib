@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>IBFramework Version</key>
-	<string>732</string>
+	<string>851</string>
 	<key>IBLastKnownRelativeProjectPath</key>
 	<string>../DomainJoin.xcodeproj</string>
 	<key>IBOldestOS</key>
@@ -13,7 +13,7 @@
 		<integer>214</integer>
 	</array>
 	<key>IBSystem Version</key>
-	<string>10B504</string>
+	<string>10J869</string>
 	<key>targetFramework</key>
 	<string>IBCarbonFramework</string>
 </dict>
