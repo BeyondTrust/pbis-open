@@ -462,6 +462,10 @@ do
             MoveOption=1
             ;;
 
+        " ")
+            : The GUI uses a space in place of options it does not want.
+            ;;
+
         *)
             rc="1"
             Help
