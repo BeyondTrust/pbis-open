@@ -1,0 +1,210 @@
+<refentry version="5.0" xml:id="compiler">
+  <refmeta>
+    <refentrytitle>compiler</refentrytitle>
+    <manvolnum>7mk</manvolnum>
+    <refmiscinfo class="manual">MakeKit Reference</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname>compiler</refname>
+    <refpurpose>Interface with the C compiler</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <programlisting>
+MODULES="compiler <replaceable>...</replaceable>"
+</programlisting>
+  </refsynopsisdiv>
+  <refsection><info><title>Description</title></info>
+    <para>
+      <literal>compiler</literal> is the standard MakeKit module which provides an interface
+      to the system C compiler.  It contains functions to check for available headers, libraries,
+      functions, types, and system and compiler characteristics, and to build programs, libraries,
+      and dynamically-loadable objects from C source code.
+    </para>
+    <para>
+      Most <literal>compiler</literal> functions support a set of common parameters which are
+      listed here rather than duplicated in the references for every individual function.
+    </para>
+  </refsection>
+  
+  <refsection><info><title>Build Function Parameters</title></info>
+    <variablelist>
+      <varlistentry>
+        <term><literal>DEPS=</literal><replaceable>targets</replaceable></term>
+        <listitem>
+          <para>
+	    Specifies additional arbitrary dependencies in MakeKit target notation.  This is useful,
+	    for example, if one of your source files depends on a header file which you generate on
+	    the fly (e.g. from <command>yacc</command> or <command>lex</command>).
+	    Alternatively, you could specify dependencies for individual source files using
+	    <function><xref linkend="mk_target"/></function> with an empty command.
+	  </para>
+	  <para>
+	    Applicable to all functions.
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>INCLUDEDIRS=</literal><replaceable>paths</replaceable></term>
+        <listitem>
+          <para>
+	    A space-separated list of relative paths where the compiler should search for header files.
+	    Even if you only use header files in the same directory as <filename>MakeKitBuild</filename>,
+	    you must explicitly specify <filename>.</filename>.
+	  </para>
+	  <para>
+	    Applicable functions: 
+	    <function>mk_compile</function>,
+	    <function><xref linkend="mk_program"/></function>,
+	    <function>mk_group</function>,
+	    <function>mk_library</function>,
+	    <function>mk_dlo</function>
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>HEADERDEPS=</literal><replaceable>headers</replaceable></term>
+	<listitem>
+          <para>
+	    A space-separated list of public header files (e.g. in <filename>/usr/local/include</filename>)
+	    that one or more source files depend on.  You only need to specify header files installed by other
+	    MakeKit projects.  If you are careful about specifying dependencies in this way, it allows you
+	    to structure your larger project as multiple subprojects which can be configured and built either
+	    individually or together.  When building individually, <literal>HEADERDEPS</literal> ensures sure you
+	    are performing configure checks for the headers.  When building together, <literal>HEADERDEPS</literal>
+	    ensures source files are compiled only once the header files they need have been installed.
+	  </para>
+	  <para>
+	    Applicable functions: 
+	    <function>mk_compile</function>,
+	    <function><xref linkend="mk_program"/></function>,
+	    <function>mk_group</function>,
+	    <function>mk_library</function>,
+	    <function>mk_dlo</function>
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>LIBDEPS=</literal><replaceable>libs</replaceable></term>
+	<listitem>
+          <para>
+	    A space-separated list of library names to link into the resulting binary,
+	    without filename extensions or <literal>lib</literal> prefixed to the name.
+	  </para>
+	  <para>
+	    Applicable functions: 
+	    <function><xref linkend="mk_program"/></function>,
+	    <function>mk_group</function>,
+	    <function>mk_library</function>,
+	    <function>mk_dlo</function>
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>LIBDIRS=</literal><replaceable>paths</replaceable></term>
+	<listitem>
+          <para>
+	    A space-separated list of additional directories to look for libraries
+	    when linking.  The paths should be absolute (e.g. <filename>/usr/foobar/lib</filename>),
+	    but they are taken to reference the staging directory.  This is only useful
+	    if you need to install and link against a library in a location other than
+	    <varname>$MK_LIBDIR</varname>.  To look for system libaries in non-standard locations,
+	    use <literal>LDFLAGS</literal> or <varname>MK_LDFLAGS</varname>, or a helper
+	    module like <literal>pkg-config</literal> when possible.
+	  </para>
+	  <para>
+	    Applicable functions: 
+	    <function><xref linkend="mk_program"/></function>,
+	    <function>mk_group</function>,
+	    <function>mk_library</function>,
+	    <function>mk_dlo</function>
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>GROUPS=</literal><replaceable>groups</replaceable></term>
+	<listitem>
+          <para>
+	    A space-separated list of object file groups which should be merged
+	    into the resulting binary.
+	  </para>
+	  <para>
+	    Applicable functions: 
+	    <function><xref linkend="mk_program"/></function>,
+	    <function>mk_library</function>,
+	    <function>mk_dlo</function>
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>OBJECTS=</literal><replaceable>objects</replaceable></term>
+	<listitem>
+          <para>
+	    A space-separated list of additional object files to link into the resulting
+	    binary.  This is useful if you use <function>mk_compile</function> to control
+	    compiler flags on a per-source-file basis and need to combine the resulting
+	    objects into a binary, or if you have object files without source code that
+	    you need to link.  If this parameter is specified, you do not need to
+	    specify <literal>SOURCES</literal>, but you may.
+	  </para>
+	  <para>
+	    Applicable functions: 
+	    <function><xref linkend="mk_program"/></function>,
+	    <function>mk_group</function>,
+	    <function>mk_library</function>,
+	    <function>mk_dlo</function>
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>INSTALLDIR=</literal><replaceable>path</replaceable></term>
+        <listitem>
+          <para>
+	    If specified, changes the location where the resulting binary will
+	    be installed in the filesystem.  Defaults to what you would expect for the
+	    kind of binary being produced, e.g. program executables go in
+	    <varname>$MK_BINDIR</varname>, usually <filename>/usr/local/bin</filename>.
+          </para>
+	  <para>
+	    Applicable functions: 
+	    <function><xref linkend="mk_program"/></function>,
+	    <function>mk_library</function>,
+	    <function>mk_dlo</function>
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>EXT=</literal><replaceable>extension</replaceable></term>
+        <listitem>
+          <para>
+	    Overrides the extension of the resulting file.
+          </para>
+	  <para>
+	    Applicable functions: 
+	    <function>mk_library</function>,
+	    <function>mk_dlo</function>
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>CPPFLAGS=</literal><replaceable>flags</replaceable></term>
+	<term><literal>CFLAGS=</literal><replaceable>flags</replaceable></term>
+	<term><literal>LDFLAGS=</literal><replaceable>flags</replaceable></term>
+        <listitem>
+          <para>
+	    Specifies additional flags passed to the compiler when preprocessing,
+	    compiling, and linking, respectively.  These parameters are added to
+	    and do not override those in the <varname>MK_CPPFLAGS</varname>,
+	    <varname>MK_CFLAGS</varname>, and <varname>MK_LDFLAGS</varname>
+	    variables.  All default to being empty.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+  <refsection><info><title>See also</title></info>
+    <para>
+      <function><xref linkend="mk_program"/></function>,
+      <function><xref linkend="mk_target"/></function>
+    </para>
+  </refsection>
+</refentry>

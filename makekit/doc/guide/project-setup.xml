@@ -1,0 +1,421 @@
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="project-setup">
+  <info>
+    <title>Setting Up Your Project</title>
+  </info>
+  <para>
+    This chapter will walk you through the basics of setting up a
+    <productname>MakeKit</productname> project.  It will assume a C language project,
+    the finer details of which are covered in <xref linkend="c-projects"/>.
+    However, the steps here remain the same for any sort of project.
+  </para>
+
+  <section>
+    <title>Directory Layout</title>
+    <para>
+      All <productname>MakeKit</productname> rules are placed in <filename>MakeKitBuild</filename>.
+      You can opt to use a single such file in the top level directory of your project, or split
+      your build logic into smaller <filename>MakeKitBuild</filename> files in each subdirectory
+      of your project, or some intermediate arrangement.  A typical project opting for multiple
+      small files might look like the following:
+    </para>
+    <itemizedlist>
+      <title><filename>project-name/</filename></title>
+      <listitem><para><filename>MakeKitBuild</filename></para></listitem>
+      <listitem><para><filename>default.conf</filename></para></listitem>
+      <listitem>
+	<para><filename>include/</filename></para>
+	<itemizedlist>
+	  <listitem><para><filename>MakeKitBuild</filename></para></listitem>
+	  <listitem><para><filename>project-name.h</filename></para></listitem>
+	</itemizedlist>
+      </listitem>
+      <listitem>
+	<para><filename>src/</filename></para>
+	<itemizedlist>
+	  <listitem><para><filename>MakeKitBuild</filename></para></listitem>
+	  <listitem><para><filename>project-name.c</filename></para></listitem>
+	</itemizedlist>
+      </listitem>
+      <listitem>
+	<para><filename>doc/</filename></para>
+	<itemizedlist>
+	  <listitem><para><filename>MakeKitBuild</filename></para></listitem>
+	  <listitem><para><filename>readme.txt</filename></para></listitem>
+	</itemizedlist>
+      </listitem>
+    </itemizedlist>
+  </section>
+  <section>
+    <title>Build Files</title>
+    <para>
+      Once you've decided where to place your <filename>MakeKitBuild</filename> files, you'll
+      need to put something in them.  Each file is an ordinary POSIX shell script, but it should
+      adhere to a particular structure which <productname>MakeKit</productname> expects.
+      The following shows what the top-level <filename>MakeKitBuild</filename> might
+      look like for our example project layout:
+    </para>
+    <informalexample>
+<programlisting>
+SUBDIRS="include src doc" <co xml:id="co.mkb.subdirs" linkends="mkb.subdirs"/>
+MODULES="core compiler" <co xml:id="co.mkb.modules" linkends="mkb.modules"/>
+PROJECT_NAME="project-name" <co xml:id="co.mkb.project_name" linkends="mkb.project_name"/>
+
+defaults() <co xml:id="co.mkb.defaults" linkends="mkb.defaults"/>
+{
+    PREFIX=/opt/project-name
+}
+
+option() <co xml:id="co.mkb.option" linkends="mkb.option"/>
+{
+    mk_option \
+        OPTION="config-file" \
+        VAR="CONFIG_FILE" \
+        PARAM="path" \
+        DEFAULT="${MK_SYSCONFDIR}/project-name.conf" \
+        HELP="Configuration file path"
+}
+
+configure() <co xml:id="co.mkb.configure" linkends="mkb.configure"/>
+{
+    mk_msg "configuration file: $CONFIG_FILE"
+}
+
+make() <co xml:id="co.mkb.make" linkends="mkb.make"/>
+{
+    mk_stage SOURCE="default.conf" DEST="$CONFIG_FILE"
+}
+</programlisting>
+    </informalexample>
+    <calloutlist>
+      <callout xml:id="mkb.subdirs" arearefs="co.mkb.subdirs">
+	<para>
+	  The <varname>SUBDIRS</varname> variable specifies a list of subdirectories
+	  where <productname>MakeKit</productname> should look for further
+	  <filename>MakeKitBuild</filename> files.  This line can be omitted if
+	  there are no subdirectories to specify.
+	</para>
+      </callout>
+      <callout xml:id="mkb.modules" arearefs="co.mkb.modules">
+	<para>
+	  The <varname>MODULES</varname> variable specifies which
+	  <productname>MakeKit</productname> modules you will be using.
+          Each module adds additional functionality on top of the core
+	  build engine.  For example, the <literal>compiler</literal>
+	  module gives you access to functions for configure and building
+	  C language programs and libraries.
+	</para>
+      </callout>
+      <callout xml:id="mkb.project_name" arearefs="co.mkb.project_name">
+         <para>
+           The <varname>PROJECT_NAME</varname> variable specified
+           the name of the project.  If unspecified, the name of the directory
+           of the <filename>MakeKitBuild</filename> file is used instead.
+         </para>
+      </callout>
+      <callout xml:id="mkb.defaults" arearefs="co.mkb.defaults">
+         <para>
+           The <function>defaults</function> function allows you to set default
+	   values for options that are usually specified by the user when configuring
+	   the project to be built, such as the installation prefix.
+         </para>
+      </callout>
+      <callout xml:id="mkb.option" arearefs="co.mkb.option">
+	<para>
+	  The <function>option</function> function is where you can define
+	  configuration options for your project which can be passed on the
+	  command line.  Each option is declared with with <function>mk_option</function>
+	  function, which specifies the option name as passed on the command line
+	  (<parameter>OPTION</parameter>), the shell variable to store the setting in
+	  (<parameter>VAR</parameter>), a one-word description of the parameter
+	  that should be passed to the option (<parameter>PARAM</parameter>), a default
+	  value to use if the option isn't specified (<parameter>DEFAULT</parameter>),
+	  and a help message descriping the option (<parameter>HELP</parameter>).
+	  This particular example allows customizing the location of a configuration file.
+	</para>
+      </callout>
+      <callout xml:id="mkb.configure" arearefs="co.mkb.configure">
+	<para>
+	  The <function>configure</function> function is where you can perform any
+	  configuration for your project.  Typical operations performed here include
+	  processing any options which were specified and testing that the system meets
+	  any prerequisites for building.  Messages are usually printed to the user
+	  summarizing what is being done.
+	</para>
+      </callout>
+      <callout xml:id="mkb.make" arearefs="co.mkb.make">
+	<para>
+	  The <function>make</function> function is the meat of your build system.
+	  This is where you should define the build rules for your project that produce
+	  its actual end products.  The example above installs a default configuration
+	  file into the location that was specified with the <parameter>config-file</parameter>
+	  parameter.
+	</para>
+      </callout>
+    </calloutlist>
+    <para>
+      All of these elements are optional.  It is not unusual for subdirectories that
+      act only as organizational elements to contain a <filename>MakeKitBuild</filename>
+      with only a <varname>SUBDIRS</varname> line.
+    </para>
+  </section>
+  <section>
+    <title>Installing <productname>MakeKit</productname></title>
+    <para>
+      Once your build files are in place, you're ready to install a copy of
+      <productname>MakeKit</productname> into your project directory.  This step makes
+      your build system self-contained and ready to distribute to other people.  Simply
+      run the following in your shell:
+    </para>
+<screen>
+$ makekit init
+</screen>
+    <para>
+      This will install a copy of <productname>MakeKit</productname> into the
+      <filename>mk</filename> subdirectory, and create an executable
+      <filename>configure</filename> script which can be run to configure your
+      project.
+    </para>
+    <para>
+      You can see additional options to the <command>makekit init</command> command
+      by specifying the <option>-h</option> option:
+    </para>
+<screen>
+$ makekit init -h
+makekit init -- install MakeKit files into current directory
+
+Usage: makekit init [ options ]
+
+Options:
+
+  -h,--help         Show this help
+  -s                Symlink files instead of copying them
+  -f                Overwrite existing files
+</screen>
+  </section>
+  <section>
+    <title>Configuring</title>
+    <para>
+      Once <productname>MakeKit</productname> has been installed, you are
+      ready to run <filename>configure</filename> to generate a <filename>Makefile</filename>
+      for your project.  You should always configure from a directory other than
+      your project directory to avoid cluttering it with generated files.  This also
+      allows you to have multiple build areas with different settings (e.g. debug
+      versus release).
+    </para>
+    <para>
+      For example, the following sequence of commands demonstrates creating a build
+      area called <filename>build</filename> and the result of running <filename>configure</filename>
+      from within it.
+    </para>
+<screen>
+$ mkdir build
+$ cd build
+$ ../configure
+           [makekit] initializing
+          [platform] build operating system: linux
+          [platform] build distribution: ubuntu
+          [platform] build distribution version: 10.10
+          [platform] build processor architecture: x86
+          [platform] build instruction set architectures: x86_32
+          [platform] host operating system: linux
+          [platform] host distribution: ubuntu
+          [platform] host distribution version: 10.10
+          [platform] host processor architecture: x86
+          [platform] host instruction set architectures: x86_32
+              [path] prefix: /opt/project-name
+              [path] exec prefix: /opt/project-name
+              [path] library dir (x86_32): /opt/project-name/lib
+              [path] include dir: /opt/project-name/include
+              [path] binary dir: /opt/project-name/bin
+              [path] system binary dir: /opt/project-name/sbin
+              [path] system config dir: /opt/project-name/etc
+              [path] local state dir: /opt/project-name/var
+              [path] data root dir: /opt/project-name/share
+              [path] data dir: /opt/project-name/share/project-name
+              [path] documenation dir: /opt/project-name/share/doc/project-name
+              [path] HTML documentation dir: /opt/project-name/share/doc/project-name/html
+              [path] manpage dir: /opt/project-name/share/man
+          [compiler] default C compiler: gcc
+          [compiler] default C preprocessor flags: 
+          [compiler] default C compiler flags: -O2 -g
+          [compiler] default linker flags: -O2 -g
+          [compiler] C compiler (build/x86_32): gcc -m32
+          [compiler] C preprocessor flags (build/x86_32): 
+          [compiler] C compiler flags (build/x86_32): -O2 -g
+          [compiler] linker flags (build/x86_32): -O2 -g
+          [compiler] C compiler (host/x86_32): gcc -m32
+          [compiler] C preprocessor flags (host/x86_32): 
+          [compiler] C compiler flags (host/x86_32): -O2 -g
+          [compiler] linker flags (host/x86_32): -O2 -g
+      [project-name] configuration file: /opt/project-name/etc/project-name.conf
+</screen>
+    <para>
+      You can see the full set of options to <filename>configure</filename> by passing
+      <parameter>--help</parameter>:
+    </para>
+<screen>
+$ ../configure --help
+Usage: makekit configure [ option | @settings_file ] ...
+Options:
+  --sourcedir=path            Source directory [.]
+  --objectdir=path            Intermediate file directory [object]
+  --stagedir=path             Staging directory [stage]
+  --rundir=path               Build tool install directory [run]
+  --show-vars=yes|no          Always show options as variable names in help
+                              output [no]
+  --help=yes|no               Show this help [yes]
+
+Options (platform):
+  --build-os=value            Build operating system [linux]
+  --build-arch=value          Build CPU architecture [x86]
+  --build-isas=value          Build instruction set architectures [x86_32]
+  --build-distro=value        Build operating system distribution [ubuntu]
+  --build-distro-version=value
+                              Build operating system distribution version
+                              [10.10]
+  --build-distro-archetype=value
+                              Build operating system distribution archetype
+                              [debian]
+  --host-os=value             Host operating system [linux]
+  --host-arch=value           Host CPU architecture [x86]
+  --host-isas=value           Host instruction set architectures [x86_32]
+  --host-distro=value         Host operating system distribution [ubuntu]
+  --host-distro-version=value Host operating system distribution version [10.10]
+  --host-distro-archetype=value
+                              Host operating system distribution archetype
+                              [debian]
+
+Options (core):
+  --fail-on-warn=yes|no       Fail on warnings [no]
+  --debug=yes|no              Build in debug mode [no]
+
+Options (path):
+  --prefix=path               Architecture-independent installation prefix
+                              [/opt/project-name]
+  --exec-prefix=path          Architecture-dependent installation prefix
+                              [/opt/project-name]
+  --libdir=path               Library directory (x86_32) [/opt/project-name/lib]
+  --includedir=path           Header file directory [/opt/project-name/include]
+  --bindir=path               User executable directory [/opt/project-name/bin]
+  --sbindir=path              System executable directory
+                              [/opt/project-name/sbin]
+  --libexecdir=path           Program executable directory
+                              [/opt/project-name/libexec]
+  --sysconfdir=path           System configuration directory
+                              [/opt/project-name/etc]
+  --localstatedir=path        Local state directory [/opt/project-name/var]
+  --datarootdir=path          Root data directory [/opt/project-name/share]
+  --datadir=path              Data directory
+                              [/opt/project-name/share/project-name]
+  --docdir=path               Documentation directory
+                              [/opt/project-name/share/doc/project-name]
+  --htmldir=path              HTML documentation directory
+                              [/opt/project-name/share/doc/project-name/html]
+  --mandir=path               UNIX man page directory
+                              [/opt/project-name/share/man]
+
+Options (compiler):
+  CC=program                  Default C compiler [gcc]
+  CPPFLAGS=flags              Default C preprocessor flags []
+  CFLAGS=flags                Default C compiler flags [-O2 -g]
+  LDFLAGS=flags               Default linker flags [-O2 -g]
+  BUILD_X86_32_CC=program     C compiler (build/x86_32) [gcc -m32]
+  BUILD_X86_32_CPPFLAGS=flags C preprocessor flags (build/x86_32) []
+  BUILD_X86_32_CFLAGS=flags   C compiler flags (build/x86_32) [-O2 -g]
+  BUILD_X86_32_LDFLAGS=flags  Linker flags (build/x86_32) [-O2 -g]
+  HOST_X86_32_CC=program      C compiler (host/x86_32) [gcc -m32]
+  HOST_X86_32_CPPFLAGS=flags  C preprocessor flags (host/x86_32) []
+  HOST_X86_32_CFLAGS=flags    C compiler flags (host/x86_32) [-O2 -g]
+  HOST_X86_32_LDFLAGS=flags   Linker flags (host/x86_32) [-O2 -g]
+
+Options (project-name):
+  --config-file=path          Configuration file path
+                              [/opt/project-name/etc/project-name.conf]
+</screen>
+    <para>
+      Note that this includes options for <productname>MakeKit</productname> itself, all
+      modules which were used (either directly or indirectly), and finally options from
+      the project.
+    </para>
+  </section>
+  <section>
+    <title>Building</title>
+    <para>
+      At this point, the project is ready to be built by running <command>make</command>.
+      When complete, all end products will have been placed in the <filename>stage</filename>
+      directory, which has an internal structure mirroring the UNIX root filesystem.  From here,
+      the products can be copied into place or packaged up using your favorite packaging format.
+      <productname>MakeKit</productname> also generates the following set of convenience targets
+      to aid in your workflow:
+    </para>
+    <variablelist>
+      <varlistentry>
+	<term><command>make <replaceable>subdir</replaceable></command></term>
+	<listitem>
+	  <para>
+	    Builds products only from <replaceable>subdir</replaceable> and any of its
+	    transitive subdirectories.  For example, <command>make <filename>doc</filename></command>
+	    or <command>make <filename>src</filename></command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>make clean</command></term>
+	<listitem>
+	  <para>
+	    Removes all built intermediate products while leaving end products
+	    (anything in <filename>stage</filename>) untouched.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>make SUBDIR=<replaceable>subdir</replaceable> clean</command></term>
+	<listitem>
+	  <para>
+	    Removes all built intermediate products only from
+	    <replaceable>subdir</replaceable> and any of its transitive subdirectories.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>make scrub</command></term>
+	<listitem>
+	  <para>
+	    Removes everything that <command>make clean</command> removes, plus
+	    all end products in the <filename>stage</filename> directory.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>make nuke</command></term>
+	<listitem>
+	  <para>
+	    Completely removes all generated files from the build area, including
+	    all intermediate and end products and anything generated by running
+	    <filename>configure</filename>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>make install</command></term>
+	<listitem>
+	  <para>
+	    Installs all end products built so far into their final locations
+	    on the filesystem.  You will generally need root permissions to do this.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><command>make DESTDIR=<replaceable>dest</replaceable> install</command></term>
+	<listitem>
+	  <para>
+	    Installs all end products built so far into <replaceable>dest</replaceable>
+	    rather than <filename>/</filename>.  This might be useful for creating a package
+	    or binary tarball.  Of course, you could just tar up <filename>stage</filename>
+	    directly...
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </section>
+</chapter>

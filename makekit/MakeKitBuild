@@ -1,0 +1,26 @@
+SUBDIRS=". doc"
+MODULES="core path"
+
+make()
+{
+    mk_stage \
+        DEST="${MK_DATADIR}/mk" \
+	SOURCE="mk"
+
+    mk_target \
+	TARGET="${MK_BINDIR}/makekit" \
+	DEPS="mk/makekit" \
+	install_bin_makekit "&${MK_BINDIR}/makekit" "&mk/makekit"
+}
+
+install_bin_makekit()
+{
+    mk_msg_domain "stage"
+    mk_msg "${1#$MK_STAGE_DIR}"
+    mk_mkdir "${1%/*}"
+    sed "s:@MK_DEFAULT_HOME@:${MK_DATADIR}/mk:" \
+	< "$2" \
+	> "$1" \
+	|| mk_fail "sed failed"
+    mk_run_or_fail chmod +x "$1"
+}

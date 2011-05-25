@@ -1,0 +1,147 @@
+#!/bin/sh
+#
+# Copyright (c) Brian Koropoff
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of the MakeKit project nor the names of its
+#       contributors may be used to endorse or promote products derived
+#       from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS''
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+# THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+##
+#
+# makekit -- main script
+#
+# This script is merely a wrapper over the individual commands
+# in the mk/command subdirectory.  Its job is to:
+# 
+# - Find the mk directory
+# - Set MK_SHELL to a fast, POSIX-compliant shell
+# - Set PATH to include POSIX-compliant utilities
+# - Run the actual command
+##
+
+MK_DEFAULT_HOME="@MK_DEFAULT_HOME@"
+MK_SOURCE_DIR="`dirname "$0"`"
+MK_COMMAND="`basename "$0"`"
+
+fail()
+{
+    echo "error: $1"
+    exit 1
+}
+
+find_shell()
+{
+    if test "`uname`" = "FreeBSD"
+    then
+        # Look for dash in the path
+        # /bin/sh is an ancestor of dash on FreeBSD, so
+        # fall back on it and don't bother with bash
+        SHELL_CANDIDATES="dash"
+        SHELL_FALLBACKS="/bin/sh"
+    else
+        # Look for dash or bash in the path
+        # Fall back on xpg4 sh (Solaris) or /bin/sh
+        SHELL_CANDIDATES="dash bash"
+        SHELL_FALLBACKS="/usr/xpg4/bin/sh /bin/sh"
+    fi
+
+    if test "x$MK_SHELL" != "x"
+    then
+        return 0
+    fi
+
+    for _shell in ${SHELL_CANDIDATES}
+    do
+        _IFS="$IFS"
+        IFS=":"
+        for _dir in ${PATH}
+        do
+            if [ -x "$_dir/$_shell" ]
+            then
+	        MK_SHELL="$_dir/$_shell"
+	        return 0
+            fi
+        done
+        IFS="$_IFS"
+    done
+    
+    for _shell in ${SHELL_FALLBACKS}
+    do
+        if [ -x "$_shell" ]
+        then
+            MK_SHELL="$_shell"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+if test -d "$MK_HOME"
+then
+    :
+elif test -d "$MK_DEFAULT_HOME"
+then
+    MK_HOME="${MK_DEFAULT_HOME}"
+elif test -d "${MK_SOURCE_DIR}/mk"
+then
+    MK_HOME="${MK_SOURCE_DIR}/mk"
+elif test -x "${MK_SOURCE_DIR}/makekit"
+then
+    MK_HOME="${MK_SOURCE_DIR}"
+else
+    echo "ERROR: could not find valid MK_HOME"
+    exit 1
+fi
+
+# Find a shell
+find_shell || fail "could not find a usable shell"
+
+# If the system has /usr/xpg4/bin, add it to the path
+# so we get POSIX-compliant utilities
+if test -d "/usr/xpg4/bin"
+then
+    PATH="/usr/xpg4/bin:$PATH"
+fi
+
+export MK_HOME MK_SHELL MK_SOURCE_DIR PATH
+
+if test -n "$MK_TRACE"
+then
+    _trace="-x"
+fi
+
+if test x"$MK_COMMAND" = x"makekit"
+then
+    MK_COMMAND="$1"
+    shift
+fi
+
+if test -f "${MK_HOME}/command/${MK_COMMAND}.sh"
+then
+    exec $MK_SHELL ${_trace} "${MK_HOME}/command/${MK_COMMAND}.sh" "$@"
+else
+    echo "Unknown command: $MK_COMMAND"
+    exit 1
+fi
