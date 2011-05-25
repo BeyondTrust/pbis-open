@@ -38,20 +38,12 @@ DJInitJoinInterface(
     PDJ_API_FUNCTION_TABLE* ppFuncTable
     )
 {
-    LWException* pException = NULL;
     PSTR pszLogFilePath = "/tmp/lwidentity.join.log";
     DWORD ceError = 0;
 
     ceError = dj_init_logging_to_file(LOG_LEVEL_VERBOSE, pszLogFilePath);
 
     *ppFuncTable = gpDJApiFunctionTable;
-
-cleanup:
-
-    if (pException)
-    {
-       ceError = pException->code;
-    }
 
     return ceError;
 }
