@@ -99,6 +99,10 @@ DisplayStatus()
             echo "Failed to add the AD account to the admin group."
             ;;
 
+        51)
+            echo "Failed to remove the local account from the admin group."
+            ;;
+
         # Default case error
         *)
             echo "Error: Unknown error occurred."
@@ -121,6 +125,22 @@ GetOsType()
 RemoveAccount()
 {
     if dscl ${LocalNode} -read "/Users/$LocalUserAccount" > /dev/null; then
+        if [ $LocalIsAdmin -eq 1 ]; then
+            echo "Removing '$LocalUserAccount' from admin group."
+            run dseditgroup -o edit -d "$LocalUserAccount" -t user admin
+
+            #
+            # Failure should only abort the migration if
+            # it will leave the AD user as an admin when
+            # the user didn't check the "keep admin rights"
+            # box.
+            #
+            if [ $? -ne 0 -a "$LocalUserAccount" = "$AdUserAccount" ]; then
+                rc="51"
+                return $rc
+            fi
+        fi
+
         echo "Removing local account for user '$LocalUserAccount'"
         run dscl ${LocalNode} delete "/Users/$LocalUserAccount"
 
@@ -140,17 +160,31 @@ RemoveAccount()
 
 PreserveAdminRights()
 {
-    if id "$LocalUserAccount" | egrep -q '[=,]80\(admin\)'; then
-        echo "Local user $LocalUserAccount is an admin; adding $AdUserAccount to group 'admin'."
-        run dseditgroup -o edit -a "$AdUserAccount" admin
+    #
+    # Add the AD user to the admin group. Since the local account
+    # name might be the same, we have to use the GUID to add the
+    # AD user.
+    #
+    local tmp=($(dscl "/Likewise - Active Directory" -read "/Users/$AdUserAccount" GeneratedUID))
+    local guid="${tmp[1]}"
+
+    echo "Local user $LocalUserAccount is an admin; adding $AdUserAccount to group 'admin'."
+    rc="0"
+
+    run dscl . -merge /Groups/admin GroupMembership "$AdUserAccount"
+    if [ $? -ne 0 ]; then
+        rc="50"
+    fi
+
+    if [ $rc -eq 0 ]
+    then
+        run dscl . -merge /Groups/admin GroupMembers "$guid"
         if [ $? -ne 0 ]; then
             rc="50"
-        else
-            rc="0"
-            echo
         fi
     fi
 
+    echo
     return $rc
 }
 
@@ -423,6 +457,7 @@ DestHomeDirectory=""
 NewOwnerUID=""
 NewOwnerGID=""
 SourceHomeDirectory=""
+LocalIsAdmin=0
 
 # Verify that we have at least the 2 required arguments
 if [ $# -lt 2 ]; then
@@ -454,7 +489,7 @@ do
             ;;
 
         --log)
-            exec > "$2" 2>&1
+            exec >> "$2" 2>&1
             shift
             ;;
 
@@ -501,6 +536,13 @@ if dscl /Local/Default list / 2> /dev/null | grep -q Users; then
     LocalNode=/Local/Default
 else
     LocalNode=/NetInfo/root
+fi
+
+#
+# Determine whether the local user is an admin.
+#
+if id "$LocalUserAccount" | egrep -q '[=,]80\(admin\)'; then
+    LocalIsAdmin=1
 fi
 
 #
@@ -552,18 +594,18 @@ else
 fi
 
 #
-# Now call PreserveAdminRights function to add the AD account to the
-# admin group if the local account is a member.
-#
-if [ $rc -eq 0 -a $KeepAdminOption -eq 1 ]; then
-    PreserveAdminRights
-fi
-
-#
 # Now call RemoveAccount function to delete the former local account.
 #
 if [ $rc -eq 0 -a $DeleteOption -eq 1 ]; then
     RemoveAccount
+fi
+
+#
+# Now call PreserveAdminRights function to add the AD account to the
+# admin group if the local account is a member.
+#
+if [ $rc -eq 0 -a $LocalIsAdmin -eq 1 -a $KeepAdminOption -eq 1 ]; then
+    PreserveAdminRights
 fi
 
 if [ $rc -eq 0 ]; then
