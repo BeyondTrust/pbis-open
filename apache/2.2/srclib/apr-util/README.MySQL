@@ -1,5 +1,0 @@
-As of apr-util version 1.2.11, MySQL DBD driver is shipped as part of the
-distribution.  However, to avoid licensing incompatibilities, it is not
-built by default.  To enable MySQL support, use the --with-mysql option,
-but be aware that the MySQL license may introduce licensing implications
-for your compiled code.
