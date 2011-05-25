@@ -208,9 +208,10 @@ RegParseReAllocateData(
 
     BAIL_ON_INVALID_POINTER(parseHandle);
 
-    if ((parseHandle->binaryDataLen+dwAppendLen) >= parseHandle->binaryDataAllocLen)
+    if ((parseHandle->binaryDataLen + dwAppendLen) >= 
+         parseHandle->binaryDataAllocLen)
     {
-        newValueSize = parseHandle->binaryDataAllocLen * 2;
+        newValueSize = parseHandle->binaryDataAllocLen * 2 + dwAppendLen;
         dwError = RegReallocMemory(
                       parseHandle->binaryData,
                       &pNewMemory,
@@ -412,7 +413,9 @@ RegParseAppendData(
     BAIL_ON_INVALID_POINTER(parseHandle);
 
     RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
-    dwError = RegParseReAllocateData(parseHandle, 0);
+
+    /* Realloc internal buffer if worst case size (4 bytes) isn't available */
+    dwError = RegParseReAllocateData(parseHandle, 4);
     BAIL_ON_REG_ERROR(dwError);
 
     switch(parseHandle->dataType)
@@ -753,12 +756,12 @@ RegParseTypeStringArrayValue(
             }
 
             dwStrLen = wc16slen(pwszString) * 2 + 2;
-            while ((parseHandle->binaryDataLen + dwStrLen) >
-                   parseHandle->binaryDataAllocLen)
-            {
-                dwError = RegParseReAllocateData(parseHandle, dwStrLen);
-                BAIL_ON_REG_ERROR(dwError);
-            }
+            /* 
+             * This tests if current buffer is big enough and allocates more 
+             * space if needed.
+             */
+            dwError = RegParseReAllocateData(parseHandle, dwStrLen);
+            BAIL_ON_REG_ERROR(dwError);
             memcpy(&parseHandle->binaryData[parseHandle->binaryDataLen],
                    pwszString,
                    dwStrLen);
