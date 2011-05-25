@@ -157,15 +157,27 @@ PreserveAdminRights()
 ChangeOwner()
 {
     echo "Changing profile content ownership for directory '$DestHomeDirectory'"
-    echo "chown -v -R $NewOwnerUID:$NewOwnerGID $DestHomeDirectory"
-    chown -v -R "$NewOwnerUID":"$NewOwnerGID" "$DestHomeDirectory"
+    echo "chown -f -R $NewOwnerUID:$NewOwnerGID $DestHomeDirectory"
+    chown -f -R "$NewOwnerUID":"$NewOwnerGID" "$DestHomeDirectory"
     if [ $? -ne 0 ]; then
         rc="20"
         return $rc
     else
         rc="0"
     fi
-    echo ""
+    # Get UID number ownership of users home directory
+    HOMEDIRUIDNUMBER=`stat -f %u $DestHomeDirectory`
+    HOMEDIRGIDNUMBER=`stat -f %g $DestHomeDirectory`
+    if [ $NewOwnerUID -ne $HOMEDIRUIDNUMBER ]; then
+        echo "Failed to change ownership of users home directory."
+        rc="20"
+        return $rc
+    elif [ $NewOwnerGID -ne $HOMEDIRGIDNUMBER ]; then
+        echo "Failed to change group ownership of users home directory."
+        rc="20"
+        return $rc
+    fi
+    echo "Finished changing ownership for directory '$DestHomeDirectory'"
 
     return 0;
 }
