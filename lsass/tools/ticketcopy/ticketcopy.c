@@ -273,7 +273,7 @@ main(int argc, const char **argv)
         "FILE:/tmp/krb5cc_%lu",
         (unsigned long) uid);
 
-    while (1)
+    while (1) /* Forever (or until an error occurs) */
     {
         while ((event.ident = open(krb5FileCachePath + 5, O_RDONLY)) == -1)
         {
@@ -291,29 +291,21 @@ main(int argc, const char **argv)
                         &krb5FileCache);
         BAIL_ON_KRB5_ERROR(krb5Context, krb5Error, dwError);
 
-        /*
-         * Turn off KRB5_TC_OPENCLOSE so the file will be opened once
-         * and kept open.  This causes it to actually attempt to open
-         * the file, so this is where we check for the file not
-         * existing and retry after sleeping a bit.
-         */
-        krb5Error = krb5_cc_set_flags(krb5Context, krb5FileCache, 0);
-        if (krb5Error == KRB5_FCC_NOFILE)
+        while (1) /* While the file continues to exist. */
         {
-            close(event.ident);
-            continue;
-        }
+            /*
+             * Turn off KRB5_TC_OPENCLOSE so the file will be opened once
+             * and kept open.  This causes it to actually attempt to open
+             * the file, so this is where we check for the file not
+             * existing and retry after sleeping a bit.
+             */
+            krb5Error = krb5_cc_set_flags(krb5Context, krb5FileCache, 0);
+            if (krb5Error == KRB5_FCC_NOFILE)
+            {
+                break;
+            }
+            BAIL_ON_KRB5_ERROR(krb5Context, krb5Error, dwError);
 
-        BAIL_ON_KRB5_ERROR(krb5Context, krb5Error, dwError);
-
-        krb5Error = krb5_cc_get_principal(
-                        krb5Context,
-                        krb5FileCache,
-                        &krb5Principal);
-        BAIL_ON_KRB5_ERROR(krb5Context, krb5Error, dwError);
-
-        while (1)
-        {
             /* Copy all credentials from the file to the memory cache. */
             krb5Error = krb5_cc_start_seq_get(
                             krb5Context,
@@ -333,20 +325,27 @@ main(int argc, const char **argv)
                                 &krb5Credentials);
                 if (krb5Error == KRB5_FCC_NOFILE)
                 {
+                    krb5Error = krb5_cc_get_principal(
+                                    krb5Context,
+                                    krb5FileCache,
+                                    &krb5Principal);
+                    BAIL_ON_KRB5_ERROR(krb5Context, krb5Error, dwError);
+
                     /* The memory cache was destroyed; re-create it. */
                     krb5Error = krb5_cc_initialize(
                                     krb5Context,
                                     krb5MemoryCache,
                                     krb5Principal);
-
                     BAIL_ON_KRB5_ERROR(krb5Context, krb5Error, dwError);
+
+                    krb5_free_principal(krb5Context, krb5Principal);
+                    krb5Principal = NULL;
 
                     krb5Error = krb5_cc_store_cred(
                                     krb5Context,
                                     krb5MemoryCache,
                                     &krb5Credentials);
                 }
-
                 BAIL_ON_KRB5_ERROR(krb5Context, krb5Error, dwError);
 
                 krb5_free_cred_contents(krb5Context, &krb5Credentials);
@@ -362,6 +361,17 @@ main(int argc, const char **argv)
                             krb5FileCache,
                             &krb5Cursor);
             krb5Cursor = NULL;
+            BAIL_ON_KRB5_ERROR(krb5Context, krb5Error, dwError);
+
+            /*
+             * Turn KRB5_TC_OPENCLOSE back on; this will cause
+             * the file to be closed and any locks to be
+             * released.
+             */
+            krb5Error = krb5_cc_set_flags(
+                            krb5Context,
+                            krb5FileCache,
+                            KRB5_TC_OPENCLOSE);
             BAIL_ON_KRB5_ERROR(krb5Context, krb5Error, dwError);
 
             /*
@@ -413,6 +423,11 @@ cleanup:
     if (krb5FileCache)
     {
         krb5_cc_close(krb5Context, krb5FileCache);
+    }
+
+    if (krb5Principal)
+    {
+        krb5_free_principal(krb5Context, krb5Principal);
     }
 
     if (krb5Context)
