@@ -270,6 +270,29 @@ configure()
         mk_msg_result "void**"
     fi
 
+    mk_msg_checking "pam_conv argument type"
+
+    if mk_try_compile \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h security/pam_modules.h pam/pam_modules.h stdlib.h" \
+        CODE='
+struct pam_conv conversation =
+{
+   (int (*)(int,const struct pam_message**,struct pam_response**,void*))NULL,
+   NULL
+};
+
+return (int) (size_t) conversation.conv;
+'
+    then
+        result="const struct pam_message"
+    else
+        result="struct pam_message"
+    fi
+
+    mk_msg_result "$result"
+    mk_define CONST_PAM_MESSAGE "$result"
+
+
     mk_check_types \
         HEADERDEPS="security/pam_appl.h pam/pam_appl.h security/pam_modules.h pam/pam_modules.h" \
         "struct pam_repository"

@@ -1,8 +1,6 @@
-SUBDIRS="lw-lsa lw-privilege ticketcopy"
+SUBDIRS="lw-lsa lw-privilege ticketcopy passwd"
 
 configure()
 {
-    if [ "$MK_HOST_OS" != "darwin" ]; then
-        mk_skip_subdir ticketcopy
-    fi
+    [ "$MK_HOST_OS" != "darwin" ] && mk_skip_subdir ticketcopy
 }
