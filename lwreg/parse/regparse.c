@@ -196,9 +196,10 @@ RegParseTypeNone(
     return dwError;
 }
 
-DWORD
+static DWORD
 RegParseReAllocateData(
-    PREGPARSE_HANDLE parseHandle
+    PREGPARSE_HANDLE parseHandle,
+    DWORD dwAppendLen
     )
 {
     DWORD dwError = 0;
@@ -207,7 +208,7 @@ RegParseReAllocateData(
 
     BAIL_ON_INVALID_POINTER(parseHandle);
 
-    if (parseHandle->binaryDataLen >= parseHandle->binaryDataAllocLen)
+    if ((parseHandle->binaryDataLen+dwAppendLen) >= parseHandle->binaryDataAllocLen)
     {
         newValueSize = parseHandle->binaryDataAllocLen * 2;
         dwError = RegReallocMemory(
@@ -411,7 +412,7 @@ RegParseAppendData(
     BAIL_ON_INVALID_POINTER(parseHandle);
 
     RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
-    dwError = RegParseReAllocateData(parseHandle);
+    dwError = RegParseReAllocateData(parseHandle, 0);
     BAIL_ON_REG_ERROR(dwError);
 
     switch(parseHandle->dataType)
@@ -752,9 +753,10 @@ RegParseTypeStringArrayValue(
             }
 
             dwStrLen = wc16slen(pwszString) * 2 + 2;
-            while (parseHandle->binaryDataAllocLen < dwStrLen)
+            while ((parseHandle->binaryDataLen + dwStrLen) >
+                   parseHandle->binaryDataAllocLen)
             {
-                dwError = RegParseReAllocateData(parseHandle);
+                dwError = RegParseReAllocateData(parseHandle, dwStrLen);
                 BAIL_ON_REG_ERROR(dwError);
             }
             memcpy(&parseHandle->binaryData[parseHandle->binaryDataLen],
