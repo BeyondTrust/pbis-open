@@ -51,6 +51,14 @@ make()
                 DEST="${MK_SYSCONFDIR}/svcs-solaris/$i"
         done
     fi
+
+    if [ "$MK_HOST_OS" = "hpux" ]
+    then
+        mk_stage \
+            SOURCE="nsswitch.lwi_defaults" \
+            DESTDIR="/etc" \
+            MODE="0644"
+    fi
 }
 
 lw_init_script()
