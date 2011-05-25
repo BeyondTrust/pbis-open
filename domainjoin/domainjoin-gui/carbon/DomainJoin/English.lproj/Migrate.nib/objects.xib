@@ -73,6 +73,7 @@
               <string name="bounds">229 34 247 253 </string>
             </object>
             <object class="IBCarbonCheckBox" id="229">
+              <ostype name="controlSignature">CnTs</ostype>
               <int name="controlID">509</int>
               <int name="fontStyle">-2</int>
               <string name="title">Retain local account&apos;s admin rights</string>
