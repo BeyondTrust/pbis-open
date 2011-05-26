@@ -944,7 +944,7 @@ apply_httpd_mapping( request_rec *r,
 			if ( *tmp == '$' ) {
 			    tmp++;
 			    i = 0;
-			    while ( isdigit( *tmp ) && (i < (sizeof( arg )-1))  ) {
+			    while ( isdigit( (int) *tmp ) && (i < (sizeof( arg )-1))  ) {
 				arg[i++] = *tmp;
 				tmp++;
 			    }
