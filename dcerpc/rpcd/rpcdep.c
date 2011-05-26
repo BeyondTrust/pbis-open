@@ -96,7 +96,7 @@ INTERNAL int is_unpriv_handle( handle_t h, error_status_t *st )
 
     rpc_binding_inq_prot_seq(h, &prot_seq, &status);
 
-    if (! STATUS_OK(&status))
+    if (status != rpc_s_ok)
     {
         *st = status;
         return(1);
@@ -106,7 +106,7 @@ INTERNAL int is_unpriv_handle( handle_t h, error_status_t *st )
     {
         rpc_binding_inq_transport_info(h, &info, &status);
 
-        if (! STATUS_OK(&status))
+        if (status != rpc_s_ok)
         {
             *st = status;
             return(1);
@@ -122,14 +122,14 @@ INTERNAL int is_unpriv_handle( handle_t h, error_status_t *st )
 /* Get client network address from binding handle (client_netaddr) */
 
     rpc_binding_server_from_client(h,&binding,&status);
-    if (! STATUS_OK(&status))
+    if (status != rpc_s_ok)
     {
         *st = status;
         return(1);
     }
     rpc_binding_to_string_binding(binding,&stb,&status);
 
-    if (! STATUS_OK(&status))
+    if (status != rpc_s_ok)
     {
         rpc_binding_free(&binding,&status1);
         *st = status;
@@ -138,7 +138,7 @@ INTERNAL int is_unpriv_handle( handle_t h, error_status_t *st )
     rpc_binding_free(&binding,&status1);
 
     rpc_string_binding_parse(stb,NULL,NULL,&client_netaddr,NULL,NULL,&status);
-    if (! STATUS_OK(&status))
+    if (status != rpc_s_ok)
     {
         rpc_string_free(&stb,&status1);
         *st = status;
@@ -153,7 +153,7 @@ INTERNAL int is_unpriv_handle( handle_t h, error_status_t *st )
     if (addr_count == 0)
     {
         rpc_server_inq_bindings(&bv,&status);
-        if (! STATUS_OK(&status))
+        if (status != rpc_s_ok)
         {
             rpc_string_free(&client_netaddr,&status1);
             *st = status;
@@ -174,7 +174,7 @@ INTERNAL int is_unpriv_handle( handle_t h, error_status_t *st )
         for ( i=0; i < bv->count; i++ ) 
         {
             rpc_binding_to_string_binding(bv->binding_h[i],&stb,&status);
-            if (! STATUS_OK(&status))
+            if (status != rpc_s_ok)
             {
                 rpc_binding_vector_free(&bv,&status1);
                 rpc_string_free(&client_netaddr,&status1);
@@ -183,7 +183,7 @@ INTERNAL int is_unpriv_handle( handle_t h, error_status_t *st )
             }
             rpc_string_binding_parse(stb,NULL,NULL,
                                      &our_netaddr,NULL,NULL,&status);
-            if (! STATUS_OK(&status))
+            if (status != rpc_s_ok)
             {
                 rpc_binding_vector_free(&bv,&status1);
                 rpc_string_free(&stb,&status1);

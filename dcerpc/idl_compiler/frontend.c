@@ -701,7 +701,6 @@ AST_interface_n_t *FE_parse_import
 
 	 /* Saved interface attributes */
 	 AST_interface_n_t *saved_interface;
-	 int saved_op_count;
 
 	 /*
 	  * Return now, if the file is already imported.
@@ -736,7 +735,6 @@ AST_interface_n_t *FE_parse_import
 	  */
 
 	 saved_interface = the_interface;
-	 saved_op_count = the_interface ? the_interface->op_count : 0;
 
 	 /*
 	  * Initialize interface attributes

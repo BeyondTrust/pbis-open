@@ -1759,6 +1759,7 @@ static void param_type
 )
 
 {
+#if 0
     AST_type_n_t        *btype_p;       /* Base type */
 
     /*
@@ -1770,7 +1771,6 @@ static void param_type
 
     btype_p = ASTP_chase_ptr_to_kind(top_type_p, AST_disc_union_k);
 
-#if 0
     if (btype_p != NULL
         &&  btype_p->kind == AST_disc_union_k
         &&  btype_p->type_structure.disc_union->discrim_name == NAMETABLE_NIL_ID
@@ -2645,11 +2645,14 @@ static void param_first_handle
 
 {
     AST_operation_n_t   *op_p;          /* Operation containing the parameter */
+#if 0
     AST_type_n_t        *top_type_p;    /* Top-level parameter type */
+#endif
     AST_type_n_t        *type_p;        /* Param type (deref'd if necess.) */
 
     op_p = param_p->uplink;
 
+#if 0
     /*
      * If the parameter type has a top-level '*' which indicates passing
      * mechanism only, follow the pointer to the data of interest.
@@ -2657,6 +2660,7 @@ static void param_first_handle
      *      type_p      = possibly dereferenced parameter type
      */
     top_type_p = param_p->type;
+#endif
     type_p = param_follow_ref_ptr(param_p, CHK_follow_any);
 
     /* No binding handle parameter for 'operation' - auto_handle assumed. */

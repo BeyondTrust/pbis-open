@@ -384,7 +384,6 @@ INTERNAL void rpc__ntlmauth_free_info
 )
 {
 	rpc_ntlmauth_info_p_t ntlmauth_info = NULL;
-	const char *info_type = NULL;
 	unsigned32 st = 0;
 	OM_uint32 minor_status = 0;
 
@@ -398,7 +397,6 @@ INTERNAL void rpc__ntlmauth_free_info
 	}
 
 	ntlmauth_info = (rpc_ntlmauth_info_p_t)(*info);
-	info_type = ntlmauth_info->auth_info.is_server ? "server" : "client";
 
 	if (ntlmauth_info->auth_info.server_princ_name)
 	{
@@ -424,7 +422,7 @@ INTERNAL void rpc__ntlmauth_free_info
 
 	RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
 		("(rpc__ntlmauth_free_info) freeing %s auth_info (now %d active).\n",
-		info_type, rpc_g_ntlmauth_alloc_count - rpc_g_ntlmauth_free_count));
+		ntlmauth_info->auth_info.is_server ? "server" : "client", rpc_g_ntlmauth_alloc_count - rpc_g_ntlmauth_free_count));
 
 	*info = NULL;
 }

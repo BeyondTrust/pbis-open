@@ -595,7 +595,6 @@ PRIVATE void rpc__dg_network_fork_handler
 )
 { 
     rpc_dg_sock_pool_elt_p_t eltp, neltp;
-    rpc_socket_error_t serr;
 
     switch ((int)stage)
     {
@@ -616,7 +615,7 @@ PRIVATE void rpc__dg_network_fork_handler
             for (eltp = rpc_g_dg_sock_pool.private_sockets; eltp != NULL;
                  eltp = neltp)
             {
-                serr = RPC_SOCKET_CLOSE(eltp->sock);
+                (void) RPC_SOCKET_CLOSE(eltp->sock);
                 neltp = eltp->next;
                 RPC_MEM_FREE(eltp, RPC_C_MEM_DG_SOCK_POOL_ELT);
             }
@@ -625,7 +624,7 @@ PRIVATE void rpc__dg_network_fork_handler
             for (eltp = rpc_g_dg_sock_pool.shared_sockets; eltp != NULL;
                  eltp = neltp)
             {
-                serr = RPC_SOCKET_CLOSE(eltp->sock);
+                (void) RPC_SOCKET_CLOSE(eltp->sock);
                 neltp = eltp->next;
                 RPC_MEM_FREE(eltp, RPC_C_MEM_DG_SOCK_POOL_ELT);
             }

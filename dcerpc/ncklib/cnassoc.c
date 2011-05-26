@@ -5650,7 +5650,6 @@ PRIVATE rpc_cn_local_id_t rpc__cn_assoc_grp_lkup_by_id
 
 PRIVATE void rpc__cn_assoc_grp_tbl_init (void)
 {
-    rpc_cn_local_id_t   grp_id;
     unsigned32          st;
     unsigned32          server_disc_time = 0;
     unsigned32          client_disc_time = 0;
@@ -5709,7 +5708,7 @@ PRIVATE void rpc__cn_assoc_grp_tbl_init (void)
      * Put some association groups in the table so this doesn't have
      * to be done on the first RPC.
      */
-    grp_id = rpc__cn_assoc_grp_create (&st); 
+    (void) rpc__cn_assoc_grp_create (&st);
 }       
 
 
@@ -5761,7 +5760,7 @@ PRIVATE unsigned32     rpc__cn_grp_sm_protocol_error
   pointer_t       sm ATTRIBUTE_UNUSED
 )
 {
-    rpc_cn_assoc_grp_t  *assoc_grp;
+    rpc_cn_assoc_grp_t  *assoc_grp ATTRIBUTE_UNUSED;
 
     RPC_CN_DBG_RTN_PRINTF(rpc__cn_grp_sm_protocol_error);
     assoc_grp = (rpc_cn_assoc_grp_t *) spc_struct;

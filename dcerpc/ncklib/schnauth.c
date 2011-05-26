@@ -248,13 +248,10 @@ PRIVATE void rpc__schnauth_free_info
 )
 {
     rpc_schnauth_info_p_t schnauth_info = (rpc_schnauth_info_p_t)*info ;
-    char *info_type;
     unsigned32 tst;
 
     RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_ROUTINE_TRACE,
 		   ("(rpc__schnauth_free_info)\n"));
-
-    info_type = (*info)->is_server?"server":"client";
 
     RPC_MUTEX_DELETE(schnauth_info->lock);
 
@@ -285,7 +282,7 @@ PRIVATE void rpc__schnauth_free_info
     rpc_g_schnauth_free_count++;
     RPC_DBG_PRINTF(rpc_e_dbg_auth, 1, (
         "(rpc__schnauth_release) freeing %s auth_info (now %d active).\n", 
-        info_type, rpc_g_schnauth_alloc_count - rpc_g_schnauth_free_count));
+        (*info)->is_server ? "server" : "client", rpc_g_schnauth_alloc_count - rpc_g_schnauth_free_count));
     *info = NULL;
 }
 

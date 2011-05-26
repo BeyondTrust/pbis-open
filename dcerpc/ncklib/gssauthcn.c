@@ -1412,7 +1412,6 @@ INTERNAL void rpc__gssauth_cn_wrap_packet
 	int conf_req = (int)seal;
 	int conf_state = 0;
 	gss_iov_buffer_desc output_iov[2] = {{0}};
-	gss_buffer_desc pdu_buffer = {0};
 	gss_buffer_desc auth_buffer = {0};
 
 	CODING_ERROR(st);
@@ -1516,7 +1515,6 @@ INTERNAL void rpc__gssauth_cn_wrap_packet
 		goto cleanup;
 	}
 
-	pdu_buffer  = output_iov[1].buffer;
 	auth_buffer = output_iov[0].buffer;
 	auth_len    = auth_buffer.length;
 

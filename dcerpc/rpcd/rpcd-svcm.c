@@ -520,7 +520,7 @@ rpcd_network_thread(
                 &status);
         }
 
-        if (!STATUS_OK(&status))
+        if (status != rpc_s_ok)
         {
             printf("(rpcd) Could not listen on %s: %lx.  Retrying in %i seconds\n",
                    network_protseqs[index], (long) status, (int) retry_interval.tv_sec);

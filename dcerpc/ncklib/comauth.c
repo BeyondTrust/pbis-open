@@ -438,17 +438,15 @@ PRIVATE void rpc__auth_info_release
 )
 {
     rpc_auth_info_p_t auth_info = *info;
-    char *info_type;
     
     if (auth_info == NULL)
     {
         return;
     }
 
-    info_type = auth_info->is_server?"server":"client";
     RPC_DBG_PRINTF(rpc_e_dbg_auth, 3, ("(rpc__auth_info_release) %x: dropping %s refcount (was %d, now %d)\n",
         auth_info,
-        info_type,
+        auth_info->is_server ? "server" : "client",
         auth_info->refcount,
         auth_info->refcount-1 ));
     assert(auth_info->refcount >= 1);
@@ -1559,8 +1557,6 @@ INTERNAL void rpc__auth_info_cache_remove
   rpc_auth_info_p_t       auth_info
 )
 {
-    char *info_type;
-
     assert (!auth_info->is_server);
 
     RPC_MUTEX_LOCK (auth_info_cache_mutex);
@@ -1572,10 +1568,9 @@ INTERNAL void rpc__auth_info_cache_remove
     if (auth_info->refcount == 1)
     {
         RPC_LIST_REMOVE (auth_info_cache, auth_info);
-        info_type = auth_info->is_server?"server":"client";
         RPC_DBG_PRINTF(rpc_e_dbg_auth, 3, ("(rpc__auth_info_release) %x: dropping %s refcount (was %d, now %d)\n",
                                            auth_info,
-                                           info_type,
+                                           auth_info->is_server ? "server" : "client",
                                            auth_info->refcount,
                                            auth_info->refcount-1 ));
         assert(auth_info->refcount >= 1);

@@ -572,7 +572,6 @@ INTERNAL pointer_t rpc__cn_network_init_desc
     rpc_addr_p_t        rpc_addr;
     unsigned_char_t     *endpoint;
     rpc_socket_error_t  serr;
-    rpc_cn_assoc_t      *assoc;
     unsigned32          temp_status;
     unsigned32          ssize, rsize;
     
@@ -715,7 +714,7 @@ INTERNAL pointer_t rpc__cn_network_init_desc
          * block which comes back will have all mutexes and condition
          * variables created. Also the receiver thread will be created.
          */
-        assoc = rpc__cn_assoc_listen (connected_desc, endpoint, status);
+        (void) rpc__cn_assoc_listen (connected_desc, endpoint, status);
         if (*status != rpc_s_ok)
         {
             rpc_string_free (&endpoint, &temp_status);
@@ -848,7 +847,6 @@ PRIVATE void rpc__cn_network_select_dispatch
 )
 {
     rpc_socket_t        newdesc;
-    rpc_cn_assoc_t      *assoc;
     rpc_socket_error_t  serr;
     
     RPC_CN_DBG_RTN_PRINTF (rpc__cn_network_select_dispatch);
@@ -997,9 +995,9 @@ PRIVATE void rpc__cn_network_select_dispatch
              * condition variables created. Also the receiver thread
              * will be created.
              */
-            assoc = rpc__cn_assoc_listen (newdesc, 
-                                          (unsigned_char_t *) priv_info, 
-                                          st);
+            (void) rpc__cn_assoc_listen (newdesc,
+                                         (unsigned_char_t *) priv_info,
+                                         st);
             if (*st != rpc_s_ok)
             {
                 /* 

@@ -377,7 +377,7 @@ rpc__http_raw_send(
 
 error:
 
-    return 0;
+    return serr;
 }
 
 INTERNAL

@@ -465,12 +465,9 @@ INTERNAL void rpc__gssauth_free_info
 )
 {
 	rpc_gssauth_info_p_t gssauth_info = (rpc_gssauth_info_p_t)*info ;
-	const char *info_type;
 
 	RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_ROUTINE_TRACE,
 		("(rpc__gssauth_free_info)\n"));
-
-	info_type = (*info)->is_server?"server":"client";
 
 	if (gssauth_info->auth_info.server_princ_name) {
 		unsigned32 st;
@@ -490,7 +487,7 @@ INTERNAL void rpc__gssauth_free_info
 
 	RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
 		("(rpc__gssauth_free_info) freeing %s auth_info (now %d active).\n",
-		info_type, rpc_g_gssauth_alloc_count - rpc_g_gssauth_free_count));
+		(*info)->is_server ? "server" : "client", rpc_g_gssauth_alloc_count - rpc_g_gssauth_free_count));
 
 	*info = NULL;
 }
