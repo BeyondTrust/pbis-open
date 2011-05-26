@@ -106,6 +106,11 @@ then
         MK_SHELL="${TOOLS}/bin/dash"
         export MK_SHELL
     fi
+
+    for ver in 2.0 2.2
+    do
+        [ -d "${TOOLS}/apache${ver}" ] && APACHE_PARAMS="$APACHE_PARAMS --apache${ver}-prefix=${TOOLS}/apache${ver}"
+    done
 fi
   
 export PATH
@@ -128,7 +133,7 @@ show cd "$BUILD_DIR"
 if [ ! -f "Makefile" ]
 then
     show "${SOURCE_DIR}/configure" \
-        ${CONFIG_PARAM} ${REVISION_PARAM} ${ID_PARAM} ${ARCHIVE_PARAM} \
+        ${CONFIG_PARAM} ${REVISION_PARAM} ${ID_PARAM} ${ARCHIVE_PARAM} ${APACHE_PARAMS} \
         CPPFLAGS="$EXTRA_CPPFLAGS" LDFLAGS="$EXTRA_LDFLAGS"
 fi
 
