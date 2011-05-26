@@ -11,5 +11,6 @@ make()
         PROGRAM="$PASSWD_NAME" \
         SOURCES="main.c" \
         INCLUDEDIRS="../../include" \
+        HEADERDEPS="lwerror.h" \
         LIBDEPS="pam lsaclient lwadvapi"
 }
