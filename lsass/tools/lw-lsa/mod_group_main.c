@@ -63,14 +63,16 @@ DWORD
 ParseArgs(
     int argc,
     char* argv[],
-    PSTR* ppszLoginId,
+    PSTR* ppszGid,
+    PSTR* ppszGroupName,
     PDLINKEDLIST* ppTaskList
     );
 
 static
 BOOLEAN
 ValidateArgs(
-    PCSTR        pszLoginId,
+    PCSTR        pszGid,
+    PCSTR        pszGroupName,
     PDLINKEDLIST pTaskList
     );
 
@@ -102,7 +104,8 @@ ShowUsage(
 static
 DWORD
 ModifyGroup(
-    PSTR pszLoginId,
+    PCSTR pszGid,
+    PCSTR pszGroupName,
     PDLINKEDLIST pTaskList
     );
 
@@ -145,7 +148,8 @@ LsaModGroupMain(
 {
     DWORD dwError = 0;
     PDLINKEDLIST pTaskList = NULL;
-    PSTR pszLoginId = NULL;
+    PSTR pszGid = NULL;
+    PSTR pszGroupName = NULL;
     size_t dwErrorBufferSize = 0;
     BOOLEAN bPrintOrigError = TRUE;
 
@@ -155,11 +159,17 @@ LsaModGroupMain(
          BAIL_ON_LSA_ERROR(dwError);
      }
 
-     dwError = ParseArgs(argc, argv, &pszLoginId, &pTaskList);
+     dwError = ParseArgs(
+                     argc,
+                     argv,
+                     &pszGid,
+                     &pszGroupName,
+                     &pTaskList);
      BAIL_ON_LSA_ERROR(dwError);
 
      dwError = ModifyGroup(
-                     pszLoginId,
+                     pszGid,
+                     pszGroupName,
                      pTaskList);
      BAIL_ON_LSA_ERROR(dwError);
 
@@ -170,7 +180,8 @@ LsaModGroupMain(
          LsaDLinkedListFree(pTaskList);
      }
 
-     LW_SAFE_FREE_STRING(pszLoginId);
+     LW_SAFE_FREE_STRING(pszGid);
+     LW_SAFE_FREE_STRING(pszGroupName);
 
      return dwError;
 
@@ -218,11 +229,13 @@ LsaModGroupMain(
      goto cleanup;
 }
 
+static
 DWORD
 ParseArgs(
     int   argc,
     char* argv[],
-    PSTR* ppszLoginId,
+    PSTR* ppszGid,
+    PSTR* ppszGroupName,
     PDLINKEDLIST* ppTaskList
     )
 {
@@ -230,6 +243,7 @@ ParseArgs(
         PARSE_MODE_OPEN = 0,
         PARSE_MODE_ADD_TO_GROUPS,
         PARSE_MODE_REMOVE_FROM_GROUPS,
+        PARSE_MODE_GID,
         PARSE_MODE_DONE
     } ParseMode;
 
@@ -239,7 +253,8 @@ ParseArgs(
     PSTR pArg = NULL;
     PDLINKEDLIST pTaskList = NULL;
     PGROUP_MOD_TASK pTask = NULL;
-    PSTR pszLoginId = NULL;
+    PSTR pszGid = NULL;
+    PSTR pszGroupName = NULL;
     PSTR pszAddMembers = NULL;
     PSTR pszRemoveMembers = NULL;
 
@@ -266,9 +281,13 @@ ParseArgs(
                 {
                     parseMode = PARSE_MODE_REMOVE_FROM_GROUPS;
                 }
+                else if (!strcmp(pArg, "--gid"))
+                {
+                    parseMode = PARSE_MODE_GID;
+                }
                 else
                 {
-                    dwError = LwAllocateString(pArg, &pszLoginId);
+                    dwError = LwAllocateString(pArg, &pszGroupName);
                     BAIL_ON_LSA_ERROR(dwError);
                     parseMode = PARSE_MODE_DONE;
                 }
@@ -315,6 +334,23 @@ ParseArgs(
                  break;
             }
 
+            case PARSE_MODE_GID:
+            {
+                if (!IsUnsignedInteger(pArg))
+                {
+                    fprintf(stderr, "Please specifiy a gid that is an unsigned integer\n");
+                    ShowUsage(GetProgramName(argv[0]));
+                    exit(1);
+                }
+
+                dwError = LwAllocateString(pArg, &pszGid);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                parseMode = PARSE_MODE_OPEN;
+
+                break;
+            }
+
             case PARSE_MODE_DONE:
             {
 
@@ -331,12 +367,13 @@ ParseArgs(
         exit(1);
     }
 
-    if (!ValidateArgs(pszLoginId, pTaskList)) {
+    if (!ValidateArgs(pszGid, pszGroupName, pTaskList)) {
         ShowUsage(GetProgramName(argv[0]));
         exit(1);
     }
 
-    *ppszLoginId = pszLoginId;
+    *ppszGid = pszGid;
+    *ppszGroupName = pszGroupName;
     *ppTaskList = pTaskList;
 
 cleanup:
@@ -356,14 +393,17 @@ error:
         FreeTask(pTask);
     }
 
-    LW_SAFE_FREE_STRING(pszLoginId);
+    LW_SAFE_FREE_STRING(pszGid);
+    LW_SAFE_FREE_STRING(pszGroupName);
 
     goto cleanup;
 }
 
+static
 BOOLEAN
 ValidateArgs(
-    PCSTR        pszLoginId,
+    PCSTR        pszGid,
+    PCSTR        pszGroupName,
     PDLINKEDLIST pTaskList
     )
 {
@@ -383,7 +423,9 @@ ValidateArgs(
         }
     }
 
-    if (LW_IS_NULL_OR_EMPTY_STR(pszLoginId)) {
+    if (LW_IS_NULL_OR_EMPTY_STR(pszGid) &&
+        LW_IS_NULL_OR_EMPTY_STR(pszGroupName))
+    {
         fprintf(stderr, "Error: A valid group id or group name must be specified.\n");
         goto cleanup;
     }
@@ -395,6 +437,7 @@ cleanup:
     return bValid;
 }
 
+static
 VOID
 FreeTasksInList(
     PVOID pTask,
@@ -406,6 +449,7 @@ FreeTasksInList(
     }
 }
 
+static
 VOID
 FreeTask(
     PGROUP_MOD_TASK pTask
@@ -417,6 +461,7 @@ FreeTask(
     LwFreeMemory(pTask);
 }
 
+static
 PSTR
 GetProgramName(
     PSTR pszFullProgramPath
@@ -440,12 +485,13 @@ GetProgramName(
     return pszNameStart;
 }
 
+static
 VOID
 ShowUsage(
     PCSTR pszProgramName
     )
 {
-    fprintf(stdout, "Usage: %s {modification options} ( group name | gid )\n\n", pszProgramName);
+    fprintf(stdout, "Usage: %s {modification options} ( <group name> | --gid <gid> )\n\n", pszProgramName);
 
     fprintf(stdout, "\nModification options:\n");
     fprintf(stdout, "{ --help }\n");
@@ -453,9 +499,11 @@ ShowUsage(
     fprintf(stdout, "{ --remove-members nt4-style-name }\n");
 }
 
+static
 DWORD
 ModifyGroup(
-    PSTR pszGroupId,
+    PCSTR pszGid,
+    PCSTR pszGroupName,
     PDLINKEDLIST pTaskList
     )
 {
@@ -468,17 +516,24 @@ ModifyGroup(
     DWORD dwGroupInfoLevel = 0;
     HANDLE hLsaConnection = (HANDLE)NULL;
 
-    BAIL_ON_INVALID_STRING(pszGroupId);
-
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
 
-    nRead = sscanf(pszGroupId, "%u", (unsigned int*)&gid);
-    if ((nRead == EOF) || (nRead == 0)) {
+    if (!LW_IS_NULL_OR_EMPTY_STR(pszGid))
+    {
+        nRead = sscanf(pszGid, "%u", (unsigned int*)&gid);
+        if ((nRead == EOF) || (nRead == 0)) {
+            fprintf(stderr, "An invalid group id [%s] was specified.", pszGid);
 
+            dwError = LW_ERROR_INVALID_PARAMETER;
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
+    else if (!LW_IS_NULL_OR_EMPTY_STR(pszGroupName))
+    {
        dwError = LsaFindGroupByName(
                        hLsaConnection,
-                       pszGroupId,
+                       pszGroupName,
                        dwFindFlags,
                        dwGroupInfoLevel,
                        &pGroupInfo);
@@ -488,6 +543,11 @@ ModifyGroup(
 
        LsaFreeGroupInfo(dwGroupInfoLevel, pGroupInfo);
        pGroupInfo = NULL;
+    }
+    else
+    {
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
     dwError = ResolveNames(
@@ -506,7 +566,9 @@ ModifyGroup(
                     pGroupModInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    fprintf(stdout, "Successfully modified group %s\n", pszGroupId);
+    fprintf(stdout,
+            "Successfully modified group %s\n",
+            pszGroupName ? pszGroupName : pszGid);
 
 cleanup:
 
@@ -529,6 +591,7 @@ error:
     goto cleanup;
 }
 
+static
 DWORD
 ResolveNames(
     HANDLE hLsaConnection,
@@ -634,6 +697,7 @@ error:
     goto cleanup;
 }
 
+static
 DWORD
 BuildGroupModInfo(
     gid_t        gid,

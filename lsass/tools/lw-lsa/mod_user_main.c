@@ -60,7 +60,8 @@ MapErrorCode(
 static
 DWORD
 ModifyUser(
-    PSTR pszLoginId,
+    PCSTR pszUid,
+    PCSTR pszLoginId,
     PDLINKEDLIST pTaskList
     );
 
@@ -69,6 +70,7 @@ DWORD
 ParseArgs(
     int   argc,
     char* argv[],
+    PSTR* ppszUid,
     PSTR* ppszLoginId,
     PDLINKEDLIST* ppTaskList
     );
@@ -101,7 +103,8 @@ ShowUsage(
 static
 BOOLEAN
 ValidateArgs(
-    PCSTR        pszLoginId,
+    PCSTR pszUid,
+    PCSTR pszLoginId,
     PDLINKEDLIST pTaskList
     );
 
@@ -122,6 +125,7 @@ LsaModUserMain(
 {
     DWORD dwError = 0;
     PDLINKEDLIST pTaskList = NULL;
+    PSTR pszUid = NULL;
     PSTR pszLoginId = NULL;
     size_t dwErrorBufferSize = 0;
     BOOLEAN bPrintOrigError = TRUE;
@@ -132,10 +136,16 @@ LsaModUserMain(
          BAIL_ON_LSA_ERROR(dwError);
      }
 
-     dwError = ParseArgs(argc, argv, &pszLoginId, &pTaskList);
+     dwError = ParseArgs(
+                     argc,
+                     argv,
+                     &pszUid,
+                     &pszLoginId,
+                     &pTaskList);
      BAIL_ON_LSA_ERROR(dwError);
 
      dwError = ModifyUser(
+                     pszUid,
                      pszLoginId,
                      pTaskList);
      BAIL_ON_LSA_ERROR(dwError);
@@ -147,6 +157,7 @@ LsaModUserMain(
          LsaDLinkedListFree(pTaskList);
      }
 
+     LW_SAFE_FREE_STRING(pszUid);
      LW_SAFE_FREE_STRING(pszLoginId);
 
      return dwError;
@@ -200,6 +211,7 @@ DWORD
 ParseArgs(
     int   argc,
     char* argv[],
+    PSTR* ppszUid,
     PSTR* ppszLoginId,
     PDLINKEDLIST* ppTaskList
     )
@@ -216,6 +228,7 @@ ParseArgs(
         PARSE_MODE_SET_HOMEDIR,
         PARSE_MODE_SET_SHELL,
         PARSE_MODE_SET_GECOS,
+        PARSE_MODE_UID,
         PARSE_MODE_DONE
     } ParseMode;
 
@@ -225,6 +238,7 @@ ParseArgs(
     PSTR pArg = NULL;
     PDLINKEDLIST pTaskList = NULL;
     PUSER_MOD_TASK pTask = NULL;
+    PSTR    pszUid = NULL;
     PSTR    pszLoginId = NULL;
     PSTR    pszPassword = NULL;
 
@@ -352,6 +366,9 @@ ParseArgs(
                 else if (!strcmp(pArg, "--set-primary-group"))
                 {
                     parseMode = PARSE_MODE_SET_PRIMARY_GROUP;
+                }
+                else if (!strcmp(pArg, "--uid")) {
+                    parseMode = PARSE_MODE_UID;
                 }
                 else
                 {
@@ -542,6 +559,23 @@ ParseArgs(
                 break;
             }
 
+            case PARSE_MODE_UID:
+            {
+                if (!IsUnsignedInteger(pArg))
+                {
+                    fprintf(stderr, "Please specifiy a uid that is an unsigned integer\n");
+                    ShowUsage(GetProgramName(argv[0]));
+                    exit(1);
+                }
+
+                dwError = LwAllocateString(pArg, &pszUid);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                parseMode = PARSE_MODE_OPEN;
+
+                break;
+            }
+
             case PARSE_MODE_DONE:
             {
 
@@ -558,11 +592,12 @@ ParseArgs(
         exit(1);
     }
 
-    if (!ValidateArgs(pszLoginId, pTaskList)) {
+    if (!ValidateArgs(pszUid, pszLoginId, pTaskList)) {
         ShowUsage(GetProgramName(argv[0]));
         exit(1);
     }
 
+    *ppszUid = pszUid;
     *ppszLoginId = pszLoginId;
     *ppTaskList = pTaskList;
 
@@ -585,6 +620,7 @@ error:
         FreeTask(pTask);
     }
 
+    LW_SAFE_FREE_STRING(pszUid);
     LW_SAFE_FREE_STRING(pszLoginId);
 
     goto cleanup;
@@ -593,7 +629,8 @@ error:
 static
 BOOLEAN
 ValidateArgs(
-    PCSTR        pszLoginId,
+    PCSTR pszUid,
+    PCSTR pszLoginId,
     PDLINKEDLIST pTaskList
     )
 {
@@ -668,7 +705,9 @@ ValidateArgs(
         goto cleanup;
     }
 
-    if (LW_IS_NULL_OR_EMPTY_STR(pszLoginId)) {
+    if (LW_IS_NULL_OR_EMPTY_STR(pszLoginId) &&
+        LW_IS_NULL_OR_EMPTY_STR(pszUid))
+    {
         fprintf(stderr, "Error: A valid user id or user login id must be specified.\n");
         goto cleanup;
     }
@@ -760,7 +799,7 @@ ShowUsage(
     PCSTR pszProgramName
     )
 {
-    fprintf(stdout, "Usage: %s {modification options} ( user login id | uid )\n\n", pszProgramName);
+    fprintf(stdout, "Usage: %s {modification options} ( <user login id> | --uid <uid> )\n\n", pszProgramName);
 
     fprintf(stdout, "\nModification options:\n");
     fprintf(stdout, "{ --help }\n");
@@ -792,7 +831,8 @@ ShowUsage(
 static
 DWORD
 ModifyUser(
-    PSTR pszLoginId,
+    PCSTR pszUid,
+    PCSTR pszLoginId,
     PDLINKEDLIST pTaskList
     )
 {
@@ -804,25 +844,37 @@ ModifyUser(
     DWORD dwUserInfoLevel = 0;
     HANDLE hLsaConnection = (HANDLE)NULL;
 
-    BAIL_ON_INVALID_STRING(pszLoginId);
-
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
 
-    nRead = sscanf(pszLoginId, "%u", (unsigned int*)&uid);
-    if ((nRead == EOF) || (nRead == 0)) {
+    if (!LW_IS_NULL_OR_EMPTY_STR(pszUid))
+    {
+        nRead = sscanf(pszUid, "%u", (unsigned int*)&uid);
+        if ((nRead == EOF) || (nRead == 0)) {
+            fprintf(stderr, "An invalid user id [%s] was specified.", pszUid);
 
-       dwError = LsaFindUserByName(
-                       hLsaConnection,
-                       pszLoginId,
-                       dwUserInfoLevel,
-                       &pUserInfo);
-       BAIL_ON_LSA_ERROR(dwError);
+            dwError = LW_ERROR_INVALID_PARAMETER;
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
+    else if (!LW_IS_NULL_OR_EMPTY_STR(pszLoginId))
+    {
+           dwError = LsaFindUserByName(
+                           hLsaConnection,
+                           pszLoginId,
+                           dwUserInfoLevel,
+                           &pUserInfo);
+           BAIL_ON_LSA_ERROR(dwError);
 
        uid = ((PLSA_USER_INFO_0)pUserInfo)->uid;
 
        LsaFreeUserInfo(dwUserInfoLevel, pUserInfo);
        pUserInfo = NULL;
+    }
+    else
+    {
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
     dwError = BuildUserModInfo(
@@ -836,7 +888,9 @@ ModifyUser(
                     pUserModInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    fprintf(stdout, "Successfully modified user %s\n", pszLoginId);
+    fprintf(stdout,
+            "Successfully modified user %s\n",
+            pszLoginId ? pszLoginId : pszUid);
 
 cleanup:
 

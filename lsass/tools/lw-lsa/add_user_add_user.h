@@ -54,6 +54,7 @@
 
 #include "lsaclient.h"
 #include "lsaipc.h"
+#include "common.h"
 
 DWORD
 LsaAddUserMain(

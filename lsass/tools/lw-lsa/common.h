@@ -63,4 +63,9 @@ PrintErrorMessage(
     IN DWORD ErrorCode
     );
 
+BOOLEAN
+IsUnsignedInteger(
+    PCSTR pszIntegerCandidate
+    );
+
 #endif
