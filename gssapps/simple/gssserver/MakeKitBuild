@@ -6,7 +6,7 @@ make()
         SOURCES="gss-server.c" \
         INCLUDEDIRS=". ../../include" \
         HEADERDEPS="lw/base.h krb5.h gssapi.h ntlm/sspintlm.h" \
-        LIBDEPS="lwbase_nothr gssapi_krb5 krb5 k5crypto"
+        LIBDEPS="lwbase_nothr gssapi_krb5 krb5 k5crypto $LIB_SOCKET $LIB_NSL"
 
     lw_add_tool_target "$result"
 }

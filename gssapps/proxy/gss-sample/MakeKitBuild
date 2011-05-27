@@ -6,7 +6,7 @@ make()
         SOURCES="gss-client.c gss-misc.c" \
         INCLUDEDIRS=". ../../include" \
         HEADERDEPS="krb5.h gssapi.h ntlm/sspintlm.h" \
-        LIBDEPS="gssapi_krb5 krb5 k5crypto com_err krb5support $LIB_SOCKET"
+        LIBDEPS="gssapi_krb5 krb5 k5crypto com_err krb5support $LIB_SOCKET $LIB_NSL"
 
     lw_add_tool_target "$result"
 
@@ -16,7 +16,7 @@ make()
         SOURCES="gss-server.c gss-misc.c" \
         INCLUDEDIRS=". ../../include" \
         HEADERDEPS="krb5.h gssapi.h ntlm/sspintlm.h" \
-        LIBDEPS="gssapi_krb5 krb5 k5crypto com_err krb5support $LIB_SOCKET"
+        LIBDEPS="gssapi_krb5 krb5 k5crypto com_err krb5support $LIB_SOCKET $LIB_NSL"
 
     lw_add_tool_target "$result"
 
@@ -26,7 +26,7 @@ make()
         SOURCES="gss-proxy.c gss-misc.c" \
         INCLUDEDIRS=". ../../include" \
         HEADERDEPS="krb5.h gssapi.h ntlm/sspintlm.h" \
-        LIBDEPS="gssapi_krb5 krb5 k5crypto com_err krb5support $LIB_SOCKET"
+        LIBDEPS="gssapi_krb5 krb5 k5crypto com_err krb5support $LIB_SOCKET $LIB_NSL"
 
     lw_add_tool_target "$result"
 }

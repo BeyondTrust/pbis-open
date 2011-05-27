@@ -17,5 +17,5 @@ configure()
         FAIL=yes \
         lwbase_nothr gssapi_krb5 krb5 k5crypto krb5support com_err
 
-    mk_check_libraries socket
+    mk_check_libraries socket nsl
 }
