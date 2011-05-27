@@ -2260,6 +2260,9 @@ SamDbFixLocalAccounts(
                                         pwszUserObjectDN,
                                         Mods);
             BAIL_ON_SAMDB_ERROR(dwError);
+
+            iMod = 0;
+            memset(&Mods, 0, sizeof(Mods));
         }
     }
 
