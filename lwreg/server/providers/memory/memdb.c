@@ -811,6 +811,8 @@ fprintf(dbgfp, "pfImportFile: type=%d valueName=%s\n",
         else if (pItem->type == REG_ATTRIBUTES)
         {
             dataType = pItem->regAttr.ValueType;
+            pData = NULL;
+            dwDataLen = 0;
             if (pItem->value && pItem->valueLen)
             {
                 pData = pItem->value;
@@ -828,14 +830,13 @@ fprintf(dbgfp, "pfImportFile: type=%d valueName=%s\n",
                 }
             }
 
-            /* Add empty placeholder node to contain attributes added below */
             status = MemRegStoreAddNodeValue(
                          pImportCtx->hSubKey,
                          pwszValueName,
                          0, // Not used?
                          dataType,
-                         NULL, 
-                         0);
+                         pData, 
+                         dwDataLen);
             BAIL_ON_NT_STATUS(status);
             status = MemRegStoreFindNodeValue(
                          pImportCtx->hSubKey,

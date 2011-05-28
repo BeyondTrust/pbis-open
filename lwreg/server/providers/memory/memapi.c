@@ -119,16 +119,16 @@ MemProvider_Initialize(
     /* Must initialize database root here, as it is used in export thread */
     MemRegRootInit(pConn);
 
-    /*
-     * Start export to save file thread
-     */
-    status = MemDbStartExportToFileThread();
-    BAIL_ON_NT_STATUS(status);
-
     status = MemDbImportFromFile(
                  MEMDB_EXPORT_FILE, 
                  pfImportFile,
                  &importCtx);
+    BAIL_ON_NT_STATUS(status);
+
+    /*
+     * Start export to save file thread
+     */
+    status = MemDbStartExportToFileThread();
     BAIL_ON_NT_STATUS(status);
 
     *ppFnTable = &gRegMemProviderAPITable;
