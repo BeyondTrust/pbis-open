@@ -1,8 +1,9 @@
 configure()
 {
-            mk_declare -o SVCM_DIR="$MK_LIBDIR/lw-svcm"
-            mk_declare -o INIT_DIR="$LW_INITDIR"
-            mk_output_file lwreg-backend
+    mk_declare -o SVCM_DIR="$MK_LIBDIR/lw-svcm"
+    mk_declare -o INIT_DIR="$LW_INITDIR"
+    mk_declare -o BIN_DIR="$MK_BINDIR"
+    mk_output_file lwreg-backend
 }
 
 make()

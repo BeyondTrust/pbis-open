@@ -4,6 +4,7 @@
 #
 PROVIDER_DIR=@SVCM_DIR@
 ETC_INIT_DIR=@INIT_DIR@
+BIN_DIR=@BIN_DIR@
 ARGV0=`basename $0`
 TMPEXPORT="/tmp/$ARGV0.$$"
 
@@ -55,7 +56,7 @@ export_registry()
 {
   $ETC_INIT_DIR/lwsmd stop > /dev/null
   $ETC_INIT_DIR/lwsmd start > /dev/null
-  /opt/likewise/bin/lwregshell export "$1"
+  $BIN_DIR/lwregshell export "$1"
   $ETC_INIT_DIR/lwsmd stop > /dev/null
   [ ! -s "$1" ] && return 1
   return 0
@@ -64,12 +65,12 @@ export_registry()
 import_registry()
 {
   $ETC_INIT_DIR/lwsmd start > /dev/null
-  /opt/likewise/bin/lwregshell import $1
+  $BIN_DIR/lwregshell import $1
   [ $? -ne 0 ] && return 1
   
   $ETC_INIT_DIR/lwsmd stop > /dev/null
   $ETC_INIT_DIR/lwsmd start > /dev/null
-  /opt/likewise/bin/lwsm start lsass > /dev/null
+  $BIN_DIR/lwsm start lsass > /dev/null
   [ $? -ne 0 ] && return 1
   return 0
 }
@@ -118,6 +119,13 @@ select_backend()
   echo "Importing registry..."
   import_registry $TMPEXPORT
   if [ $? -eq 1 ]; then
+    #
+    # Restore current backend if import fails, and restart services
+    #
+    $ETC_INIT_DIR/lwsmd stop > /dev/null
+    switch_backend $CUR_BACKEND
+    $ETC_INIT_DIR/lwsmd start > /dev/null
+    $BIN_DIR/lwsm start lsass > /dev/null
     usage "Failed to import registry into backend: $backend"
   fi
   echo "Done."
@@ -162,7 +170,9 @@ main()
     esac
   done
   if [ -z "$backend" ]; then
-    usage
+    CUR_BACKEND=`current_backend`
+    echo "Current backend: $CUR_BACKEND"
+    exit 0
   fi
   select_backend $backend
 }
