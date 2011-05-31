@@ -10,12 +10,12 @@ SUBDIRS="$LW_ALL_BUNDLED \
 
 defaults()
 {
-    MK_PREFIX="/opt/likewise"
-    MK_SYSCONFDIR="/etc/likewise"
-    MK_LOCALSTATEDIR="/var"
-    MK_DATADIR="/opt/likewise/share"
-    MK_DOCDIR="/usr/share/doc/likewise"
-    MK_MANDIR="/usr/share/man"
+    PREFIX="/opt/likewise"
+    SYSCONFDIR="/etc/likewise"
+    LOCALSTATEDIR="/var"
+    DATADIR="/opt/likewise/share"
+    DOCDIR="/usr/share/doc/likewise"
+    MANDIR="/usr/share/man"
 }
 
 option()
