@@ -173,6 +173,24 @@ do_setup()
         exit_on_error 1 "The installer does not support this OS (${OS_TYPE}) and architecture (${OS_ARCH})."
     fi
 
+    libdir=/opt/likewise/lib
+    if [ -x /opt/likewise/lib64 ]; then
+        libdir=/opt/likewise/lib64
+    fi
+    for i in "$LD_LIBRARY_PATH" "$LIBPATH" "$SHLIB_PATH"; do
+        if [ -n "$i" ]; then
+            expr "$i" : "^$libdir:" >/dev/null
+            if [ $? -ne 0 ]; then
+                exit_on_error 1 "LD_LIBRARY_PATH, LIBPATH, and SHLIB_PATH must be unset or list $libdir as the first directory. See the \"Requirements for the Agent\" section of the Likewise manual for more information."
+            fi
+        fi
+    done
+    for i in "$LD_PRELOAD"; do
+        if [ -n "$i" ]; then
+            exit_on_error 1 "LD_PRELOAD must be unset. See the \"Requirements for the Agent\" section of the Likewise manual for more information."
+        fi
+    done
+
     if [ -x "/usr/sbin/selinuxenabled" -a -x "/usr/sbin/getenforce" ]; then
         if /usr/sbin/selinuxenabled >/dev/null 2>&1; then
             if /usr/sbin/getenforce 2>&1 | grep -v 'Permissive' >/dev/null 2>&1; then
