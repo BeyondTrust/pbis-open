@@ -153,12 +153,14 @@ typedef struct _JOIN_ARGS {
     PSTR pszOsName;
     PSTR pszOsVersion;
     PSTR pszOsServicePack;
+    LSA_NET_JOIN_FLAGS JoinFlags;
 } JOIN_ARGS, *PJOIN_ARGS;
 
 typedef struct _LEAVE_ARGS {
     PSTR pszDomain;
     PSTR pszUsername;
     PSTR pszPassword;
+    LSA_NET_JOIN_FLAGS JoinFlags;
 } LEAVE_ARGS, *PLEAVE_ARGS;
 
 static
@@ -176,6 +178,7 @@ FreeJoinArgsContents(
     LW_SAFE_FREE_MEMORY(pArgs->pszOsName);
     LW_SAFE_FREE_MEMORY(pArgs->pszOsVersion);
     LW_SAFE_FREE_MEMORY(pArgs->pszOsServicePack);
+    pArgs->JoinFlags = 0;
 }
 
 static
@@ -187,6 +190,7 @@ FreeLeaveArgsContents(
     LW_SAFE_FREE_MEMORY(pArgs->pszDomain);
     LW_SAFE_FREE_MEMORY(pArgs->pszUsername);
     LW_SAFE_FREE_MEMORY(pArgs->pszPassword);
+    pArgs->JoinFlags = 0;
 }
 
 static
@@ -392,7 +396,8 @@ DoJoinDomain(
     IN OPTIONAL PCSTR pszOu,
     IN PCSTR pszOsName,
     IN PCSTR pszOsVersion,
-    IN PCSTR pszOsServicePack
+    IN PCSTR pszOsServicePack,
+    IN LSA_NET_JOIN_FLAGS JoinFlags
     )
 {
     DWORD dwError = 0;
@@ -428,7 +433,7 @@ DoJoinDomain(
                     pszOsName,
                     pszOsVersion,
                     pszOsServicePack,
-                    0);
+                    JoinFlags);
     GOTO_CLEANUP_ON_WINERROR(dwError);
 
     printf("SUCCESS!\n");
@@ -454,11 +459,13 @@ DWORD
 DoLeaveDomain(
     IN PCSTR pszDomain,
     IN OPTIONAL PCSTR pszUsername,
-    IN OPTIONAL PCSTR pszPassword
+    IN OPTIONAL PCSTR pszPassword,
+    IN LSA_NET_JOIN_FLAGS JoinFlags
     )
 {
     HANDLE hLsa = NULL;
     DWORD dwError = 0;
+    PCSTR pszUseDomain = IsSetFlag(JoinFlags, LSA_NET_JOIN_DOMAIN_MULTIPLE) ? pszDomain : NULL;
 
     assert(pszDomain);
 
@@ -467,7 +474,7 @@ DoLeaveDomain(
     dwError = LsaOpenServer(&hLsa);
     GOTO_CLEANUP_ON_WINERROR(dwError);
 
-    dwError = LsaAdLeaveDomain(hLsa, pszUsername, pszPassword);
+    dwError = LsaAdLeaveDomain2(hLsa, pszUsername, pszPassword, pszUseDomain, JoinFlags);
     GOTO_CLEANUP_ON_WINERROR(dwError);
 
     printf("SUCCESS\n");
@@ -705,6 +712,8 @@ ParseJoinArgs(
     SHOW_USAGE_CALLBACK ShowUsageHelp = ShowJoinUsageHelp;
     SHOW_USAGE_CALLBACK ShowUsageError = ShowJoinUsageError;
 
+    memset(pArgs, 0, sizeof(*pArgs));
+
     LwArgvCursorInit(&cursor, argc, argv);
     programName = LwArgvCursorPop(&cursor);
 
@@ -755,6 +764,15 @@ ParseJoinArgs(
             dwError = GetOptionValue(programName, ShowUsageError, &cursor, option,
                                      &pArgs->pszOsServicePack);
             GOTO_CLEANUP_ON_WINERROR(dwError);
+        }
+        else if (!strcmp("--notimesync", option))
+        {
+            SetFlag(pArgs->JoinFlags, LSA_NET_JOIN_DOMAIN_NOTIMESYNC);
+        }
+        else if (!strcmp("--multiple", option))
+        {
+            SetFlag(pArgs->JoinFlags, LSA_NET_JOIN_DOMAIN_NOTIMESYNC);
+            SetFlag(pArgs->JoinFlags, LSA_NET_JOIN_DOMAIN_MULTIPLE);
         }
         else
         {
@@ -844,6 +862,8 @@ ParseLeaveArgs(
     SHOW_USAGE_CALLBACK ShowUsageHelp = ShowLeaveUsageHelp;
     SHOW_USAGE_CALLBACK ShowUsageError = ShowLeaveUsageError;
 
+    memset(pArgs, 0, sizeof(*pArgs));
+
     LwArgvCursorInit(&cursor, argc, argv);
     programName = LwArgvCursorPop(&cursor);
 
@@ -858,6 +878,16 @@ ParseLeaveArgs(
         else if (IsHelpOption(option))
         {
             ShowUsageHelp(programName);
+        }
+        else if (!strcmp("--multiple", option))
+        {
+            SetFlag(pArgs->JoinFlags, LSA_NET_JOIN_DOMAIN_MULTIPLE);
+
+            dwError = GetOptionValue(programName, ShowUsageError, &cursor, option,
+                                     &pArgs->pszDomain);
+            GOTO_CLEANUP_ON_WINERROR(dwError);
+
+            LwStrToUpper(pArgs->pszDomain);
         }
         else
         {
@@ -880,14 +910,17 @@ ParseLeaveArgs(
         ShowUsageError(programName);
     }
 
-    // Initialize implit domain argument.
-    dwError = GetCurrentDomain(&pArgs->pszDomain);
-    if (NERR_SetupNotJoined == dwError)
+    // Initialize implicit domain argument.
+    if (!pArgs->pszDomain)
     {
-        fprintf(stderr, "The computer is not joined to a domain.\n");
-        exit(1);
+        dwError = GetCurrentDomain(&pArgs->pszDomain);
+        if (NERR_SetupNotJoined == dwError)
+        {
+            fprintf(stderr, "The computer is not joined to a domain.\n");
+            exit(1);
+        }
+        GOTO_CLEANUP_ON_WINERROR(dwError);
     }
-    GOTO_CLEANUP_ON_WINERROR(dwError);
 
     // If USERNAME was specified, clean it up and get password
     // as needed.
@@ -933,6 +966,8 @@ ShowJoinUsage(
             "    --osname STRING    -- OS name to set in AD.\n"
             "    --osversion STRING -- OS version to set in AD .\n"
             "    --osservicepack STRING -- OS service pack to set in AD.\n"
+            "    --notimesync       -- Do not synchronize time to domain.\n"
+            "    --multiple         -- Do multi-domain join.\n"
             "\n"
             "  notes:\n"
             "\n"
@@ -955,7 +990,12 @@ ShowLeaveUsage(
     FILE* file = ExitCode ? stderr : stdout;
 
     fprintf(file,
-            "Usage: %s [USERNAME [PASSWORD]]\n",
+            "Usage: %s [options] [USERNAME [PASSWORD]]\n"
+            "\n"
+            "  options:\n"
+            "\n"
+            "    --multiple DOMAIN  -- Leave a specific domain (multi-domain mode).\n"
+            "",
             pszProgramName);
 
     exit(ExitCode);
@@ -982,7 +1022,8 @@ JoinMain(
                     args.pszOu,
                     args.pszOsName,
                     args.pszOsVersion,
-                    args.pszOsServicePack);
+                    args.pszOsServicePack,
+                    args.JoinFlags);
     GOTO_CLEANUP_ON_WINERROR(dwError);
 
 cleanup:
@@ -1011,7 +1052,8 @@ LeaveMain(
     dwError = DoLeaveDomain(
                     args.pszDomain,
                     args.pszUsername,
-                    args.pszPassword);
+                    args.pszPassword,
+                    args.JoinFlags);
     GOTO_CLEANUP_ON_WINERROR(dwError);
 
 cleanup:
