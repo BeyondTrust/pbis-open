@@ -1,0 +1,50 @@
+SUBDIRS="include libadtool adtool"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    MK_CPPFLAGS="$MK_CPPFLAGS -DLWSM_DISABLE_DEPRECATED"
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+
+    lw_define_feature_macros
+
+    # Check endianness
+    mk_multiarch_do
+        mk_check_endian
+
+        case "$ENDIANNESS" in
+            big) 
+               mk_define WORDS_BIGENDIAN
+               mk_define LW_BIG_ENDIAN
+               ;;
+            little) 
+               mk_define WORDS_LITTLEENDIAN
+               mk_define LW_LITTLE_ENDIAN
+               ;;
+        esac
+
+    mk_multiarch_done
+
+    # Required headers
+    mk_check_headers \
+        FAIL=yes \
+        popt.h lw/types.h lw/attrs.h lwstr.h lwmem.h lwerror.h lwldap.h lwtime.h lwsecurityidentifier.h krb5.h lw/lmaccess.h lw/lmmem.h lw/lmcreds.h lsa/lsa.h lwnet.h
+    
+    # Optional headers
+    mk_check_headers \
+        stdio.h stdlib.h string.h ctype.h termios.h unistd.h errno.h limits.h time.h uuid/uuid.h pthread.h strings.h
+
+    # Required libraries
+    mk_check_libraries \
+        FAIL=yes \
+        lwadvapi lwbase krb5 gssapi_krb5 k5crypto ldap_r lber lwnetapi popt 
+
+    # Optional libraries
+    mk_check_libraries \
+        pthread dl
+
+    lw_check_pthread_once_init
+
+    mk_check_sizeofs "long int"
+}

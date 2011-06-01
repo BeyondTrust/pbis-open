@@ -1,0 +1,34 @@
+make()
+{
+    COMMON_HEADERDEPS="adtool/types.h popt.h lw/types.h lw/attrs.h \
+ lwstr.h lwmem.h lwerror.h lwldap.h lwtime.h lwsecurityidentifier.h krb5.h \
+ lw/lmaccess.h lw/lmmem.h lw/lmcreds.h lsa/lsa.h lwnet.h"
+
+    LIBADTOOL_SOURCES="\
+	api.c \
+	cli.c \
+	auth.c \
+	connect.c \
+	delete.c \
+	utils.c \
+	enable.c \
+	unlock.c \
+	lookup.c \
+	members.c \
+	move.c \
+	new.c \
+	reset_pwd.c \
+	search.c \
+	error.c \
+	ldap_ops.c \
+	action_base.c \
+	ids.c \
+	net.c"
+
+    mk_library \
+	LIB=adtool \
+	SOURCES="$LIBADTOOL_SOURCES" \
+	INCLUDEDIRS=". ../include" \
+	HEADERDEPS="$COMMON_HEADERDEPS" \
+	LIBDEPS="lwbase krb5 gssapi_krb5 k5crypto ldap_r lber lwnetapi popt lwadvapi"
+}

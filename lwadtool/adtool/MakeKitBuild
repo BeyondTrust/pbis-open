@@ -1,0 +1,9 @@
+make()
+{
+    mk_program \
+        PROGRAM=lw-adtool \
+        SOURCES="main.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="adtool/types.h popt.h lw/types.h lw/attrs.h lwstr.h lwmem.h lwerror.h " \
+        LIBDEPS="adtool"
+}
