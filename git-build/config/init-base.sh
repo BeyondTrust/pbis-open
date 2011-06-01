@@ -324,6 +324,34 @@ generic_pid()
     fi
 }
 
+check_load_path()
+{
+    libdir=/opt/likewise/lib
+    if [ -x /opt/likewise/lib64 ]; then
+        libdir=/opt/likewise/lib64
+    fi
+    for name in LD_LIBRARY_PATH LIBPATH SHLIB_PATH; do
+        eval value=\$$name
+        if [ -n "$value" ]; then
+            expr "$value" : "^$libdir:" >/dev/null
+            if [ $? -ne 0 ]; then
+                if type logger >/dev/null 2>&1; then
+                    logger -p daemon.error "LD_LIBRARY_PATH, LIBPATH, and SHLIB_PATH must be unset or list $libdir as the first directory. Likewise daemons will automatically unset the variable, but this variable still must be changed for the rest of your system. See the \"Requirements for the Agent\" section of the Likewise manual for more information."
+                fi
+                unset $name
+                export $name
+            fi
+        fi
+    done
+    if [ -n "$LD_PRELOAD" ]; then
+        if type logger >/dev/null 2>&1; then
+            logger -p daemon.error "LD_PRELOAD must be unset. Likewise daemons will automatically unset the variable, but this variable still must be changed for the rest of your system. See the \"Requirements for the Agent\" section of the Likewise manual for more information."
+        fi
+        unset LD_PRELOAD
+        export LD_PRELOAD
+    fi
+}
+
 daemon_start() {
 
     if [ -f "${PROG_ERR}" ]; then
@@ -333,6 +361,8 @@ daemon_start() {
     if [ -n "${STARTHOOK}" ]; then
 	${STARTHOOK}
     fi
+
+    check_load_path
 
     case "${PLATFORM}" in 
         REDHAT)
@@ -579,6 +609,7 @@ if type run_rc_command >/dev/null 2>&1; then
 
     load_rc_config "$name"
     [ "$1" = "start" -a -n "${STARTHOOK}" ] && ${STARTHOOK}
+    check_load_path
     run_rc_command "$1" || exit $?
     [ "$1" = "start" -a -n "${POSTSTARTHOOK}" ] && ${POSTSTARTHOOK}
     exit 0

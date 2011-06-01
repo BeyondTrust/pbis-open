@@ -42,11 +42,25 @@
 
         <exec_method type='method' name='start'
                 exec='/opt/likewise/sbin/lwsmd --start-as-daemon'
-                timeout_seconds='60' />
+                timeout_seconds='60'>
+                <method_context>
+                        <method_environment>
+                                <envvar name="LD_LIBRARY_PATH" value=""/>
+                                <envvar name="LD_PRELOAD" value=""/>
+                        </method_environment>
+                </method_context>
+        </exec>
 
         <exec_method type='method' name='stop'
                 exec='/opt/likewise/bin/lwsm shutdown'
-                timeout_seconds='60' />
+                timeout_seconds='60'>
+                <method_context>
+                        <method_environment>
+                                <envvar name="LD_LIBRARY_PATH" value=""/>
+                                <envvar name="LD_PRELOAD" value=""/>
+                        </method_environment>
+                </method_context>
+        </exec>
 
         <stability value='Unstable' />
 
