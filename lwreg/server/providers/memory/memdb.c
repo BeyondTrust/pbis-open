@@ -678,7 +678,10 @@ error:
 }
 
 
-DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
+DWORD
+pfImportFile(
+    PREG_PARSE_ITEM pItem,
+    HANDLE userContext)
 {
     NTSTATUS status = 0;
     PMEMREG_NODE hSubKey = NULL;
@@ -689,13 +692,25 @@ DWORD pfImportFile(PREG_PARSE_ITEM pItem, HANDLE userContext)
     PMEMDB_IMPORT_FILE_CTX pImportCtx = (PMEMDB_IMPORT_FILE_CTX) userContext;
     PVOID pData = NULL;
     DWORD dwDataLen = 0;
+    DWORD dwLineNum = 0;
     PMEMREG_VALUE pRegValue = NULL;
     DWORD dataType = 0;
     LWREG_VALUE_ATTRIBUTES tmpAttr = {0};
     PMEMREG_NODE_SD pNodeSd = NULL;
+
 #ifdef __MEMDB_PRINTF__ 
 FILE *dbgfp = fopen("/tmp/lwregd-import.txt", "a");
 #endif
+
+    if (pItem->status == LWREG_ERROR_INVALID_CONTEXT)
+    {
+        RegParseGetLineNumber(pImportCtx->parseHandle, &dwLineNum);
+        REG_LOG_ERROR(
+            "WARNING: Inconsistent data/type/range found importing file "
+            "%s: line=%d",
+            pImportCtx->fileName,
+            dwLineNum);
+    }
 
     if (pItem->type == REG_KEY)
     {
@@ -887,7 +902,7 @@ NTSTATUS
 MemDbImportFromFile(
     PSTR pszImportFile,
     PFN_REG_CALLBACK pfCallback,
-    HANDLE userContext)
+    PMEMDB_IMPORT_FILE_CTX userContext)
 {
     DWORD dwError = 0;
     DWORD dwLineNum = 0;
@@ -902,6 +917,9 @@ MemDbImportFromFile(
                   pfCallback,
                   userContext,
                   &parseH);
+    BAIL_ON_REG_ERROR(dwError);
+
+    userContext->parseHandle = parseH;
     dwError = RegParseRegistry(parseH);
     BAIL_ON_REG_ERROR(dwError);
 

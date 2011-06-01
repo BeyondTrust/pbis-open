@@ -116,11 +116,13 @@ MemProvider_Initialize(
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
         pthread_cond_init(&pConn->ExportCondStop, NULL)));
 
-    /* Must initialize database root here, as it is used in export thread */
+    /* Must initialize database root here; used by following import/export */
     MemRegRootInit(pConn);
 
+    /* Initialize memory registry from data previously saved to file */
+    importCtx.fileName = MEMDB_EXPORT_FILE;
     status = MemDbImportFromFile(
-                 MEMDB_EXPORT_FILE, 
+                 MEMDB_EXPORT_FILE,
                  pfImportFile,
                  &importCtx);
     BAIL_ON_NT_STATUS(status);

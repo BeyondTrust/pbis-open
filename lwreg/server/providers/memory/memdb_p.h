@@ -32,6 +32,8 @@ typedef struct _MEMDB_IMPORT_FILE_CTX
 {
     PMEMREG_NODE hRootKey;
     PMEMREG_NODE hSubKey;
+    HANDLE parseHandle;
+    PSTR fileName;
 } MEMDB_IMPORT_FILE_CTX, *PMEMDB_IMPORT_FILE_CTX;
 
 
@@ -271,7 +273,7 @@ NTSTATUS
 MemDbImportFromFile(
     IN PSTR pszImportFile,
     IN PFN_REG_CALLBACK parseCallback,
-    IN HANDLE userContext
+    PMEMDB_IMPORT_FILE_CTX userContext
     );
 
 
@@ -290,7 +292,8 @@ MemDbExportEntryChanged(
 DWORD 
 pfImportFile(
     PREG_PARSE_ITEM pItem,
-    HANDLE userContext);
+    HANDLE userContext 
+    );
 
 PWSTR
 pwstr_wcschr(
