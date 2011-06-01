@@ -706,10 +706,12 @@ FILE *dbgfp = fopen("/tmp/lwregd-import.txt", "a");
     {
         RegParseGetLineNumber(pImportCtx->parseHandle, &dwLineNum);
         REG_LOG_ERROR(
-            "WARNING: Inconsistent data/type/range found importing file "
-            "%s: line=%d",
+            "WARNING: Inconsistent data/type/range found importing "
+            "from file %s: line=%d [%s] -> %s",
             pImportCtx->fileName,
-            dwLineNum);
+            dwLineNum,
+            pItem->keyName,
+            pItem->valueName);
     }
 
     if (pItem->type == REG_KEY)
