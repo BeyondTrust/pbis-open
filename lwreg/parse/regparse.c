@@ -1344,6 +1344,7 @@ RegParseCheckAttributes(
     
            
     BAIL_ON_INVALID_HANDLE(parseHandle);
+    parseHandle->registryEntry.status = 0;
     /*
      * Perform semantic consistency check of the data present in the
      * LWREG_VALUE_ATTRIBUTES structure. Only individual valueName=dataValue
@@ -1393,8 +1394,7 @@ RegParseCheckAttributes(
     if (parseHandle->registryEntry.regAttr.pDefaultValue &&
         regDataType != parseHandle->registryEntry.regAttr.ValueType)
     {
-        dwError = LWREG_ERROR_PARSE;
-        BAIL_ON_REG_ERROR(dwError);
+        parseHandle->registryEntry.status = LWREG_ERROR_INVALID_CONTEXT;
     }
     
     /*
@@ -1409,8 +1409,7 @@ RegParseCheckAttributes(
         {
             if (parseHandle->registryEntry.regAttr.ValueType != REG_DWORD)
             {
-                dwError = LWREG_ERROR_PARSE;
-                BAIL_ON_REG_ERROR(dwError);
+                parseHandle->registryEntry.status = LWREG_ERROR_INVALID_CONTEXT;
             }
     
             if (parseHandle->registryEntry.value)
@@ -1428,8 +1427,7 @@ RegParseCheckAttributes(
             dwMax = parseHandle->registryEntry.regAttr.Range.RangeInteger.Max;
             if (dwValue < dwMin || dwValue > dwMax)
             {
-                dwError = LWREG_ERROR_PARSE;
-                BAIL_ON_REG_ERROR(dwError);
+                parseHandle->registryEntry.status = LWREG_ERROR_INVALID_CONTEXT;
             }
         }
         if (parseHandle->registryEntry.regAttr.RangeType ==
@@ -1446,8 +1444,7 @@ RegParseCheckAttributes(
             }
             if (dwValue != 0 && dwValue != 1)
             {
-                dwError = LWREG_ERROR_PARSE;
-                BAIL_ON_REG_ERROR(dwError);
+                parseHandle->registryEntry.status = LWREG_ERROR_INVALID_CONTEXT;
             }
         }
     }
@@ -1456,14 +1453,12 @@ RegParseCheckAttributes(
     {
         if (!parseHandle->registryEntry.regAttr.Range.ppwszRangeEnumStrings)
         {
-                dwError = LWREG_ERROR_PARSE;
-                BAIL_ON_REG_ERROR(dwError);
+            parseHandle->registryEntry.status = LWREG_ERROR_INVALID_CONTEXT;
         }
         if ((parseHandle->registryEntry.regAttr.ValueType &&
              parseHandle->registryEntry.regAttr.ValueType != REG_SZ))
         {
-                dwError = LWREG_ERROR_PARSE;
-                BAIL_ON_REG_ERROR(dwError);
+            parseHandle->registryEntry.status = LWREG_ERROR_INVALID_CONTEXT;
         }
     }
 
@@ -1472,8 +1467,7 @@ RegParseCheckAttributes(
       case LWREG_VALUE_HINT_SECONDS:
         if (parseHandle->registryEntry.regAttr.ValueType != REG_DWORD)
         {
-            dwError = LWREG_ERROR_PARSE;
-            BAIL_ON_REG_ERROR(dwError);
+            parseHandle->registryEntry.status = LWREG_ERROR_INVALID_CONTEXT;
         }
         break;
 
@@ -1481,8 +1475,7 @@ RegParseCheckAttributes(
       case LWREG_VALUE_HINT_ACCOUNT:
         if (parseHandle->registryEntry.regAttr.ValueType != REG_SZ)
         {
-            dwError = LWREG_ERROR_PARSE;
-            BAIL_ON_REG_ERROR(dwError);
+            parseHandle->registryEntry.status = LWREG_ERROR_INVALID_CONTEXT;
         }
         break;
 

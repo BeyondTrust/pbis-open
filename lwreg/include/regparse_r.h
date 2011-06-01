@@ -59,6 +59,7 @@ typedef struct _REG_PARSE_ITEM
     DWORD lineNumber;
     void *value;
     DWORD valueLen;
+    DWORD status;             /* status of data consistency check */
 
     /* valid when type = REG_ATTRIBUTES. */
     LWREG_VALUE_ATTRIBUTES regAttr;
