@@ -890,6 +890,7 @@ MemDbImportFromFile(
     HANDLE userContext)
 {
     DWORD dwError = 0;
+    DWORD dwLineNum = 0;
     HANDLE parseH = NULL;
 
     if (access(pszImportFile, R_OK) == -1)
@@ -907,9 +908,15 @@ MemDbImportFromFile(
 
 cleanup:
     RegParseClose(parseH);
-    return 0;
+    return dwError;
 
 error:
+    if (dwError == LWREG_ERROR_PARSE)
+    {
+        RegParseGetLineNumber(parseH, &dwLineNum);
+        REG_LOG_ERROR("Error parsing file %s: line=%d",
+                      pszImportFile, dwLineNum);
+    }
     goto cleanup;
 }
 
@@ -921,6 +928,10 @@ MemDbClose(
 {
     NTSTATUS status = 0;
 
+    if (!hDb || !hDb->pMemReg)
+    {
+        goto cleanup;
+    }
     status = MemDbRecurseDepthFirstRegistry(
                  NULL,
                  hDb,

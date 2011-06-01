@@ -133,9 +133,15 @@ MemProvider_Initialize(
 
     *ppFnTable = &gRegMemProviderAPITable;
 cleanup:
+    if (status == LWREG_ERROR_PARSE)
+    {
+        status = LW_STATUS_FILE_CORRUPT_ERROR;
+    }
     return status;
 
 error:
+    MemDbClose(pConn);
+    MemRegRootInit(NULL);
     goto cleanup;
 }
 
