@@ -197,7 +197,7 @@ DWORD Sid2Id(IN PVOID s, OUT PDWORD out)
 
     size = sid->SubAuthorityCount * sizeof(DWORD);
 
-    dwError = LwAllocateMemory(size, (PVOID*) &subs);
+    dwError = LwAllocateMemory(size, OUT_PPVOID(&subs));
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
     memcpy((PVOID)subs, (PVOID) sid->SubAuthority, size);

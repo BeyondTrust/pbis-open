@@ -242,7 +242,7 @@ PSTR GetNameComp(IN PSTR logonName) {
 
     for(i = 0; i < strlen(logonName); ++i) {
         if(logonName[i] == '/') {
-            dwError = LwAllocateMemory(sizeof(CHAR) * (i + 1), (PVOID *) &name);
+            dwError = LwAllocateMemory(sizeof(CHAR) * (i + 1), OUT_PPVOID(&name));
             ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
             strncpy(name, (PCSTR) logonName, i);
@@ -277,7 +277,7 @@ PSTR GetDomainCompFromUserName(IN PSTR logonName) {
 
     for(i = 0; i < strlen(logonName); ++i) {
         if(logonName[i] == '\\') {
-            dwError = LwAllocateMemory(sizeof(CHAR) * (i + 1), (PVOID *) &name);
+            dwError = LwAllocateMemory(sizeof(CHAR) * (i + 1), OUT_PPVOID(&name));
             ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
             strncpy(name, (PCSTR) logonName, i);
@@ -287,7 +287,7 @@ PSTR GetDomainCompFromUserName(IN PSTR logonName) {
 
     for(i = 0; i < strlen(logonName); ++i) {
         if(logonName[i] == '@') {
-            dwError = LwAllocateMemory(sizeof(CHAR) * (i + 1), (PVOID *) &name);
+            dwError = LwAllocateMemory(sizeof(CHAR) * (i + 1), OUT_PPVOID(&name));
             ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
             strncpy(name, (PCSTR) logonName, i);
@@ -297,7 +297,7 @@ PSTR GetDomainCompFromUserName(IN PSTR logonName) {
 
     for(i = 0; i < strlen(logonName); ++i) {
         if(logonName[i] == '.') {
-            dwError = LwAllocateMemory(sizeof(CHAR) * (i + 1), (PVOID *) &name);
+            dwError = LwAllocateMemory(sizeof(CHAR) * (i + 1), OUT_PPVOID(&name));
             ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
             strncpy(name, (PCSTR) logonName, i);
@@ -338,7 +338,7 @@ PSTR GetRealmComp(IN PSTR logonName) {
 
     for(i = 0; i < strlen(logonName); ++i) {
         if(logonName[i] == '/') {
-            dwError = LwAllocateMemory(sizeof(CHAR) * (i + 1), (PVOID *) &name);
+            dwError = LwAllocateMemory(sizeof(CHAR) * (i + 1), OUT_PPVOID(&name));
             ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
             strncpy(name, (PCSTR) logonName, i);
@@ -440,7 +440,7 @@ DWORD GetDomainFromDN(IN PSTR dn, OUT PSTR *domain)
 
     LwStrToLower(ndn);
 
-    dwError = LwAllocateMemory(sizeof(CHAR) * (strlen(ndn) + 1), (PVOID *) &buf);
+    dwError = LwAllocateMemory(sizeof(CHAR) * (strlen(ndn) + 1), OUT_PPVOID(&buf));
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
     bufp = buf;
@@ -724,10 +724,10 @@ DWORD SplitStr(IN PSTR s, IN CHAR separator, OUT PSTR **out)
         }
     }
 
-    dwError = LwAllocateMemory(sizeof(PSTR) * (count + 2), (PVOID *) out);
+    dwError = LwAllocateMemory(sizeof(PSTR) * (count + 2), OUT_PPVOID(out));
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
-    dwError = LwAllocateMemory(sizeof(INT) * (count + 2), (PVOID *) &len);
+    dwError = LwAllocateMemory(sizeof(INT) * (count + 2), OUT_PPVOID(&len));
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
     for(ind = 0, i = 0, j = 0; s[i] != 0; ++i) {
@@ -864,7 +864,7 @@ DWORD StrArray2StrExcluding(IN PSTR *s, IN INT ind, OUT PSTR *out)
 
     ++len;
 
-    dwError = LwAllocateMemory(sizeof(CHAR) * len, (PVOID *) out);
+    dwError = LwAllocateMemory(sizeof(CHAR) * len, OUT_PPVOID(out));
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
     for(i = 0, k = 0; s && s[i]; ++i) {
@@ -935,7 +935,7 @@ DWORD ProcessDash(IN PSTR * str) {
     if(str && *str && !strcmp((PCSTR) *str, "-")) {
         LW_SAFE_FREE_MEMORY(*str);
 
-        dwError = LwAllocateMemory(len, (PVOID *) &buf);
+        dwError = LwAllocateMemory(len, OUT_PPVOID(&buf));
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
         *str = fgets(buf, len - 1, stdin);
@@ -1018,7 +1018,7 @@ PrintMessage(IN AppContextTP appContext, IN FILE *dst, IN LogLevelT level, IN PC
         len += strlen(addStr);
         len += strlen(str);
 
-        dwError = LwAllocateMemory(len + 1, (PVOID *) &retStr);
+        dwError = LwAllocateMemory(len + 1, OUT_PPVOID(&retStr));
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
         res = retStr;

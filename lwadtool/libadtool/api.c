@@ -330,7 +330,7 @@ DWORD AdtOpen(OUT HANDLE *context)
     DWORD dwError = 0;
     AppContextTP appContext; /* application context. */
 
-    dwError = LwAllocateMemory(sizeof(AppContextT), (PVOID *) &appContext);
+    dwError = LwAllocateMemory(sizeof(AppContextT), OUT_PPVOID(&appContext));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
     appContext->gopts.logLevel = LogLevelWarning;
 

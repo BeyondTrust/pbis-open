@@ -84,11 +84,11 @@ static struct poptOption**
 MakeOptions(IN INT howMany) {
     struct poptOption **opts = NULL;
 
-    if(LwAllocateMemory(sizeof(struct poptOption *), (void **) &opts) != 0) {
+    if(LwAllocateMemory(sizeof(struct poptOption *), OUT_PPVOID(&opts)) != 0) {
         return NULL;
     }
 
-    if(LwAllocateMemory(howMany * sizeof(struct poptOption), (void **) opts) != 0) {
+    if(LwAllocateMemory(howMany * sizeof(struct poptOption), OUT_PPVOID(&opts)) != 0) {
         return NULL;
     }
 

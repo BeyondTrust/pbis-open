@@ -494,7 +494,7 @@ SearchForObject(IN AppContextTP appContext, IN ObjectClassT class, IN INT scope,
         goto cleanup;
     }
 
-    dwError = LwAllocateMemory((count + 1) * sizeof(PSTR), (PVOID *) &child);
+    dwError = LwAllocateMemory((count + 1) * sizeof(PSTR), OUT_PPVOID(&child));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     for (i = 0, e = ldap_first_entry(ld, res); e != NULL; e = ldap_next_entry(ld, e), ++i) {
@@ -1284,7 +1284,7 @@ DWORD CreateADObject(IN AppContextTP appContext, IN PSTR dn, IN AttrValsT *avp)
      * Construct the array of LDAPMod structures representing the attributes
      * of the new entry.
      **/
-    dwError = LwAllocateMemory((length + 1) * sizeof(LDAPMod *), (PVOID *) &mods);
+    dwError = LwAllocateMemory((length + 1) * sizeof(LDAPMod *), OUT_PPVOID(&mods));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     for (i = 0; i < length; ++i) {
@@ -1355,7 +1355,7 @@ ModifyADObject(IN AppContextTP appContext, IN PSTR dn, IN AttrValsT *avp, IN INT
      * Construct the array of LDAPMod structures representing the attributes
      * of the new entry.
      **/
-    dwError = LwAllocateMemory((length + 1) * sizeof(LDAPMod *), (PVOID *) &mods);
+    dwError = LwAllocateMemory((length + 1) * sizeof(LDAPMod *), OUT_PPVOID(&mods));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     for (i = 0; i < length; ++i) {

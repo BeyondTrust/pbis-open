@@ -196,7 +196,7 @@ VOID SwitchToMatchingConnection(IN AdtActionTP action, IN OUT PSTR *name)
             if (p) {
                 len = p - *name;
                 dwError = LwAllocateMemory(sizeof(CHAR) * (len + 1),
-                                           (PVOID *) &domainComp);
+                                           OUT_PPVOID(&domainComp));
                 ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
                 strncpy(domainComp, (PCSTR) *name, len);
@@ -309,7 +309,7 @@ DWORD OpenADSearchConnectionDomain(IN AdtActionTP action, IN OUT PSTR *name)
             if (p) {
                 len = p - *name;
                 dwError = LwAllocateMemory(sizeof(CHAR) * (len + 1),
-                                           (PVOID *) &domainComp);
+                                           OUT_PPVOID(&domainComp));
                 ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
                 strncpy(domainComp, (PCSTR) *name, len);
