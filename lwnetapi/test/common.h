@@ -61,6 +61,7 @@ FreeRpcBinding(
 DWORD
 GetMachinePassword(
     OUT OPTIONAL PWSTR* ppwszDnsDomainName,
+    OUT OPTIONAL PWSTR* ppwszDomainName,
     OUT OPTIONAL PWSTR* ppwszMachineSamAccountName,
     OUT OPTIONAL PWSTR* ppwszMachinePassword,
     OUT OPTIONAL PWSTR* ppwszComputerName

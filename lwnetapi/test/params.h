@@ -79,7 +79,12 @@ struct param_errstr_map param_errstr_maps[] = {
 const char *param_errstr(enum param_err perr);
 
 
-#define perr_is_ok(perr_code)  ((perr_code) == perr_success)
+#define perr_is_ok(perr_code) ((perr_code) == perr_success)
+
+#define perr_is_err(perr_code) \
+    (!((perr_code) == perr_success || \
+       (perr_code) == perr_not_found))
+
 #define perr_fail(perr_code) { \
 	printf("Parameter error: %s\n", param_errstr(perr_code)); \
 	return false; \

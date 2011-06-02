@@ -313,6 +313,67 @@ TEST_LOOKUP DomainNames[] = {
 
 
 static
+TEST_LOOKUP DuplicateNames[] = {
+    {
+        .pszDomainName  = NULL,
+        .pszName        = "Administrator",
+        .pszSid         = NULL,
+        .dwRid          = DOMAIN_USER_RID_ADMIN,
+        .dwType         = SID_TYPE_USER,
+    },
+    {
+        .pszDomainName  = NULL,
+        .pszName        = "Administrator",
+        .pszSid         = NULL,
+        .dwRid          = DOMAIN_USER_RID_ADMIN,
+        .dwType         = SID_TYPE_USER,
+    },
+    {
+        .pszDomainName  = NULL,
+        .pszName        = "Domain Users",
+        .pszSid         = NULL,
+        .dwRid          = DOMAIN_GROUP_RID_ADMINS,
+        .dwType         = SID_TYPE_DOM_GRP,
+    },
+    {
+        .pszDomainName  = NULL,
+        .pszName        = "Administrator",
+        .pszSid         = NULL,
+        .dwRid          = DOMAIN_USER_RID_ADMIN,
+        .dwType         = SID_TYPE_USER,
+    },
+    {
+        .pszDomainName  = NULL,
+        .pszName        = "Domain Users",
+        .pszSid         = NULL,
+        .dwRid          = DOMAIN_GROUP_RID_ADMINS,
+        .dwType         = SID_TYPE_DOM_GRP,
+    },
+    {
+        .pszDomainName  = NULL,
+        .pszName        = "Domain Users",
+        .pszSid         = NULL,
+        .dwRid          = DOMAIN_GROUP_RID_ADMINS,
+        .dwType         = SID_TYPE_DOM_GRP,
+    },
+    {
+        .pszDomainName  = "BUILTIN",
+        .pszName        = "_NotExisting",
+        .pszSid         = NULL,
+        .dwRid          = 0,
+        .dwType         = SID_TYPE_UNKNOWN,
+    },
+    {
+        .pszDomainName  = "BUILTIN",
+        .pszName        = "_NotExisting",
+        .pszSid         = NULL,
+        .dwRid          = 0,
+        .dwType         = SID_TYPE_UNKNOWN,
+    },
+};
+
+
+static
 DWORD
 TestLsaOpenPolicy(
     PTEST         pTest,
@@ -453,6 +514,13 @@ TestGetLookupTestSet(
         pTestSet = DomainNames;
         dwNumNames = (sizeof(DomainNames)
                       /sizeof(DomainNames[0]));
+    }
+    else if (strcmp(pszTestSetName, "duplicate") == 0 ||
+             strcmp(pszTestSetName, "DUPLICATE") == 0)
+    {
+        pTestSet = DuplicateNames;
+        dwNumNames = (sizeof(DuplicateNames)
+                      /sizeof(DuplicateNames[0]));
     }
     else
     {

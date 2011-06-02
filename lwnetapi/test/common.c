@@ -363,6 +363,7 @@ FreeRpcBinding(
 DWORD
 GetMachinePassword(
     OUT OPTIONAL PWSTR* ppwszDnsDomainName,
+    OUT OPTIONAL PWSTR* ppwszDomainName,
     OUT OPTIONAL PWSTR* ppwszMachineSamAccountName,
     OUT OPTIONAL PWSTR* ppwszMachinePassword,
     OUT OPTIONAL PWSTR* ppwszComputerName
@@ -370,6 +371,7 @@ GetMachinePassword(
 {
     DWORD dwError = 0;
     PWSTR pwszDnsDomainName = NULL;
+    PWSTR pwszDomainName = NULL;
     PWSTR pwszMachineSamAccountName = NULL;
     PWSTR pwszMachinePassword = NULL;
     PWSTR pwszComputerName = NULL;
@@ -388,6 +390,13 @@ GetMachinePassword(
     {
         dwError = LwMbsToWc16s(pPasswordInfo->Account.DnsDomainName,
                                &pwszDnsDomainName);
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+
+    if (ppwszDomainName)
+    {
+        dwError = LwMbsToWc16s(pPasswordInfo->Account.NetbiosDomainName,
+                               &pwszDomainName);
         BAIL_ON_WIN_ERROR(dwError);
     }
 
@@ -419,6 +428,7 @@ error:
     if (dwError)
     {
         LW_SAFE_FREE_MEMORY(pwszDnsDomainName);
+        LW_SAFE_FREE_MEMORY(pwszDomainName);
         LW_SAFE_FREE_MEMORY(pwszMachineSamAccountName);
         LW_SECURE_FREE_WSTRING(pwszMachinePassword);
         LW_SAFE_FREE_MEMORY(pwszComputerName);
@@ -436,18 +446,27 @@ error:
 
     if (ppwszDnsDomainName)
     {
+        LW_SAFE_FREE_MEMORY(*ppwszDnsDomainName);
         *ppwszDnsDomainName = pwszDnsDomainName;
+    }
+    if (ppwszDomainName)
+    {
+        LW_SAFE_FREE_MEMORY(*ppwszDomainName);
+        *ppwszDomainName = pwszDomainName;
     }
     if (ppwszMachineSamAccountName)
     {
+        LW_SAFE_FREE_MEMORY(*ppwszMachineSamAccountName);
         *ppwszMachineSamAccountName = pwszMachineSamAccountName;
     }
     if (ppwszMachinePassword)
     {
+        LW_SAFE_FREE_MEMORY(*ppwszMachinePassword);
         *ppwszMachinePassword = pwszMachinePassword;
     }
     if (ppwszComputerName)
     {
+        LW_SAFE_FREE_MEMORY(*ppwszComputerName);
         *ppwszComputerName = pwszComputerName;
     }
 

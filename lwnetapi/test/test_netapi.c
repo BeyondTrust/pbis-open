@@ -474,7 +474,7 @@ EnsureUserAccount(
     {
         *pbCreated = TRUE;
     }
-    else if (err == ERROR_USER_EXISTS)
+    else if (err == NERR_UserExists)
     {
         *pbCreated = FALSE;
         err = ERROR_SUCCESS;
@@ -526,7 +526,7 @@ EnsureLocalGroup(
     {
         *pbCreated = TRUE;
     }
-    else if (err == ERROR_ALIAS_EXISTS)
+    else if (err == NERR_GroupExists)
     {
         *pbCreated = FALSE;
         err = ERROR_SUCCESS;
@@ -3454,6 +3454,7 @@ TestNetJoinDomain(
     PWSTR username = NULL;
     PWSTR password = NULL;
     PWSTR domain_name = NULL;
+    PWSTR dnsDomainName = NULL;
     PWSTR accountou = NULL;
     PWSTR joined_domain_name = NULL;
     PWSTR machine_account = NULL;
@@ -3507,10 +3508,12 @@ TestNetJoinDomain(
                                    username, password, opts));
     if (err != 0) netapi_fail(err);
 
-    err = GetMachinePassword(&joined_domain_name,
-                             &machine_account,
-                             &machine_password,
-                             NULL);
+    err = GetMachinePassword(
+                    &dnsDomainName,
+                    &joined_domain_name,
+                    &machine_account,
+                    &machine_password,
+                    NULL);
     if (err != 0) netapi_fail(err);
 
     RESULT_WSTR(joined_domain_name);
