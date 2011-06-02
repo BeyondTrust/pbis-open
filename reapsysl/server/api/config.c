@@ -492,9 +492,6 @@ cleanup:
     return(dwError);
 
 error:
-
-    RSysSrvApiFreeConfig(pConfig);
-
     goto cleanup;
 }
 
