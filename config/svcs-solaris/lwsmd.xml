@@ -49,7 +49,7 @@
                                 <envvar name="LD_PRELOAD" value=""/>
                         </method_environment>
                 </method_context>
-        </exec>
+        </exec_method>
 
         <exec_method type='method' name='stop'
                 exec='/opt/likewise/bin/lwsm shutdown'
@@ -60,7 +60,7 @@
                                 <envvar name="LD_PRELOAD" value=""/>
                         </method_environment>
                 </method_context>
-        </exec>
+        </exec_method>
 
         <stability value='Unstable' />
 
