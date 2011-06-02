@@ -276,14 +276,6 @@ fix_60_registry()
     run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/reapsysl.reg"
 }
 
-switch_to_open_provider()
-{
-    _value='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
-    _path='@PRIMARY_LIBDIR@/liblsass_auth_provider_ad_open.so'
-
-    run_quiet "@MK_BINDIR@/lwregshell set_value $_value Path $_path"
-}
-
 postinstall()
 {
     log "Package: Likewise Open postinstall begins (`date`)"
@@ -298,8 +290,6 @@ postinstall()
     import_registry_configurations
 
     fix_60_registry
-
-    switch_to_open_provider
 
     run_or_fail "@MK_BINDIR@/lwsm shutdown"
 

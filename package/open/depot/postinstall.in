@@ -229,19 +229,6 @@ fix_60_registry()
     run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/netlogond.reg"
 }
 
-switch_to_open_provider()
-{
-    _value='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
-    _path='@PRIMARY_LIBDIR@/liblsass_auth_provider_ad_open.so'
-    case "${PKG_ARCH}" in
-      hppa*)
-        _path='@PRIMARY_LIBDIR@/liblsass_auth_provider_ad_open.sl'
-        ;;
-    esac
-
-    run_quiet "@MK_BINDIR@/lwregshell set_value $_value Path $_path"
-}
-
 wait_for_lwsm_shutdown()
 {
     LWSMD_WAIT_TIME=$1
@@ -272,8 +259,6 @@ postinstall()
     import_registry_configurations
 
     fix_60_registry
-
-    switch_to_open_provider
 
     run_or_fail "@MK_BINDIR@/lwsm shutdown"
     wait_for_lwsm_shutdown 60
