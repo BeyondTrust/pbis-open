@@ -310,10 +310,11 @@ error:
 static
 DWORD
 WriteHostnameToSunFiles(
-    PSTR pOldShortHostname,
-    PSTR pNewShortHostname,
-    PSTR pOldFqdnHostname,
-    PSTR pNewFqdnHostname
+    PCSTR pOldShortHostname,
+    PCSTR pNewShortHostname,
+    PCSTR pDnsDomainName,
+    PCSTR pOldFqdnHostname,
+    PCSTR pNewFqdnHostname
     )
 {
     DWORD ceError = ERROR_SUCCESS;
@@ -321,8 +322,8 @@ WriteHostnameToSunFiles(
     PSTR* ppszHostfilePaths = NULL;
     DWORD nPaths = 0;
     DWORD iPath = 0;
-    PSTR pNodename = NULL;
-    PSTR pTempNodename = NULL;
+    PSTR pRealPath = NULL;
+    PSTR pTempPath = NULL;
     PSTR pOldEscapedShortHostname = NULL;
     PSTR pOldEscapedFqdnHostname = NULL;
     PSTR pOldSedExpression = NULL;
@@ -333,12 +334,12 @@ WriteHostnameToSunFiles(
 
     ceError = CTGetFileTempPath(
                         "/etc/nodename",
-                        &pNodename,
-                        &pTempNodename);
+                        &pRealPath,
+                        &pTempPath);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     ceError = CTOpenFile(
-            pTempNodename,
+            pTempPath,
             "w",
             &fp);
     BAIL_ON_CENTERIS_ERROR(ceError);
@@ -349,17 +350,52 @@ WriteHostnameToSunFiles(
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     ceError = CTFileContentsSame(
-                    pTempNodename,
-                    pNodename,
+                    pTempPath,
+                    pRealPath,
                     &isSame);
     BAIL_ON_CENTERIS_ERROR(ceError);
     if (isSame)
     {
-        BAIL_ON_CENTERIS_ERROR(ceError = CTRemoveFile(pTempNodename));
+        BAIL_ON_CENTERIS_ERROR(ceError = CTRemoveFile(pTempPath));
     }
     else
     {
-        ceError = CTSafeReplaceFile(pNodename, pTempNodename);
+        ceError = CTSafeReplaceFile(pRealPath, pTempPath);
+        BAIL_ON_CENTERIS_ERROR(ceError);
+    }
+
+    CT_SAFE_FREE_STRING(pRealPath);
+    CT_SAFE_FREE_STRING(pTempPath);
+
+    ceError = CTGetFileTempPath(
+                        "/etc/defaultdomain",
+                        &pRealPath,
+                        &pTempPath);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    ceError = CTOpenFile(
+            pTempPath,
+            "w",
+            &fp);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    fprintf(fp, "%s\n", pDnsDomainName);
+
+    ceError = CTSafeCloseFile(&fp);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    ceError = CTFileContentsSame(
+                    pTempPath,
+                    pRealPath,
+                    &isSame);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+    if (isSame)
+    {
+        BAIL_ON_CENTERIS_ERROR(ceError = CTRemoveFile(pTempPath));
+    }
+    else
+    {
+        ceError = CTSafeReplaceFile(pRealPath, pTempPath);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -424,8 +460,8 @@ error:
         fclose(fp);
     }
 
-    CT_SAFE_FREE_STRING(pNodename);
-    CT_SAFE_FREE_STRING(pTempNodename);
+    CT_SAFE_FREE_STRING(pRealPath);
+    CT_SAFE_FREE_STRING(pTempPath);
     CT_SAFE_FREE_STRING(pOldEscapedShortHostname);
     CT_SAFE_FREE_STRING(pOldEscapedFqdnHostname);
     CT_SAFE_FREE_STRING(pOldSedExpression);
@@ -1395,6 +1431,7 @@ DJSetComputerName(
             LW_CLEANUP_CTERR(exc, WriteHostnameToSunFiles(
                         oldShortHostname,
                         pszComputerName_lower,
+                        pszDnsDomainName,
                         oldFqdnHostname,
                         pNewFqdnHostname
                         ));
