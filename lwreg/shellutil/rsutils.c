@@ -1632,15 +1632,10 @@ RegShellUtilEscapeString(
             pszRetValue[dwLen++] = '\\';
             pszRetValue[dwLen++] = 'n';
         }
-        if (pszValue[i] == '\r')
+        else if (pszValue[i] == '\r')
         {
             pszRetValue[dwLen++] = '\\';
             pszRetValue[dwLen++] = 'r';
-        }
-        else if (pszValue[i] == '"')
-        {
-            pszRetValue[dwLen++] = '\\';
-            pszRetValue[dwLen++] = '"';
         }
         else if (pszValue[i] == '\t')
         {
@@ -1662,10 +1657,12 @@ RegShellUtilEscapeString(
             pszRetValue[dwLen++] = '\\';
             pszRetValue[dwLen++] = 'f';
         }
-        else if (pszValue[i] == '\\')
+        else if (pszValue[i] == '\\' && pszValue[i+1] == '\\')
         {
+            /* Look ahead at next character and emit escaped \ if match */
             pszRetValue[dwLen++] = '\\';
             pszRetValue[dwLen++] = '\\';
+            i++;
         }
         else
         {

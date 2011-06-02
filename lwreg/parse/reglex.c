@@ -646,7 +646,37 @@ RegLexParseBackslash(
         dwError = RegIOGetChar(ioHandle, &inC, &eof);
         if (!eof)
         {
-            RegLexAppendChar(lexHandle, inC);
+            switch(inC)
+            {
+              case 'n':
+                RegLexAppendChar(lexHandle, '\n');
+                break;
+
+              case 'r':
+                RegLexAppendChar(lexHandle, '\r');
+                break;
+
+              case 't':
+                RegLexAppendChar(lexHandle, '\t');
+                break;
+
+              case 'a':
+                RegLexAppendChar(lexHandle, '\a');
+                break;
+
+              case 'v':
+                RegLexAppendChar(lexHandle, '\v');
+                break;
+
+              case 'f':
+                RegLexAppendChar(lexHandle, '\f');
+                break;
+
+              default:
+                RegLexAppendChar(lexHandle, '\\');
+                RegLexAppendChar(lexHandle, inC);
+                break;
+            }
         }
     }
     else if (lexHandle->state == REGLEX_STATE_IN_KEY)
