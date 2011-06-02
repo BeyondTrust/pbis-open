@@ -447,6 +447,8 @@ pam_sm_authenticate(
                         NULL);
         if (dwError)
         {
+            LSA_LOG_PAM_ERROR("User %s is denied access because they are not in the 'require membership of' list",
+                              LSA_SAFE_LOG_STRING(pszLoginId));
             if (!LW_IS_NULL_OR_EMPTY_STR(pConfig->pszAccessDeniedMessage))
             {
                 LsaPamConverse(pamh,
