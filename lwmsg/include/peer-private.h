@@ -89,7 +89,8 @@ typedef struct PeerCall
         PEER_CALL_PENDED = 0x2,
         PEER_CALL_COMPLETED = 0x4,
         PEER_CALL_CANCELLED = 0x8,
-        PEER_CALL_RELEASED = 0x10
+        PEER_CALL_RELEASED = 0x10,
+        PEER_CALL_WAITING = 0x20
     } volatile state;
 
     LWMsgCookie cookie;
@@ -199,7 +200,8 @@ typedef struct DirectCall
     {
         DIRECT_CALL_DISPATCHED = 0x1,
         DIRECT_CALL_CANCELED = 0x2,
-        DIRECT_CALL_COMPLETED = 0x4
+        DIRECT_CALL_COMPLETED = 0x4,
+        DIRECT_CALL_WAITING = 0x8
     } state;
 
     const LWMsgParams* in;

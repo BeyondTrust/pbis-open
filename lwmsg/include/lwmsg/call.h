@@ -235,6 +235,19 @@ lwmsg_call_cancel(
     );
 
 /**
+ * @brief Wait for pending call
+ *
+ * Waits for the given pending call to complete and returns the status it
+ * completed with.
+ * @param[in] call the call handle
+ * @return the status the call completed with
+ */
+LWMsgStatus
+lwmsg_call_wait(
+    LWMsgCall* call
+    );
+
+/**
  * @brief Release call handle
  *
  * Releases the given call handle.  This function should be used by the caller

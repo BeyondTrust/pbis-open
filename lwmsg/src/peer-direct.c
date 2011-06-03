@@ -507,6 +507,7 @@ lwmsg_direct_call_worker(
     LWMsgPeer* target_peer = NULL;
     LWMsgBool completed = LWMSG_FALSE;
     LWMsgBool canceled = LWMSG_FALSE;
+    LWMsgBool waiting = LWMSG_FALSE;
 
     target_peer = dcall->is_callback ? session->session->peer : endpoint->server;
     func = target_peer->dispatch.vector[dcall->in->tag]->data;
@@ -516,6 +517,7 @@ lwmsg_direct_call_worker(
     LOCK_SESSION(session);
     completed = dcall->state & DIRECT_CALL_COMPLETED;
     canceled = dcall->state & DIRECT_CALL_CANCELED;
+    waiting = dcall->state & DIRECT_CALL_WAITING;
     dcall->state |= DIRECT_CALL_DISPATCHED;
     if (completed || status != LWMSG_STATUS_PENDING)
     {
@@ -541,7 +543,8 @@ lwmsg_direct_call_worker(
             lwmsg_direct_call_invoke_complete(dcall, status, LWMSG_TRUE);
             lwmsg_direct_call_release(&dcall->caller);
         }
-        else
+
+        if (waiting)
         {
             pthread_cond_broadcast(&dcall->session->session->event);
         }
@@ -635,6 +638,8 @@ lwmsg_direct_call_dispatch(
         /* If sync call, we have to wait for completion */
         if (!dcall->complete)
         {
+            dcall->state |= DIRECT_CALL_WAITING;
+
             while (!completed)
             {
                 pthread_cond_wait(&session->session->event, &session->session->lock);
@@ -704,11 +709,13 @@ lwmsg_direct_call_complete(
 {
     DirectCall* dcall = LWMSG_OBJECT_FROM_MEMBER(call, DirectCall, callee);
     LWMsgBool dispatched = LWMSG_FALSE;
+    LWMsgBool waiting = LWMSG_FALSE;
 
     LOCK_SESSION(dcall->session);
     dcall->state |= DIRECT_CALL_COMPLETED;
     dcall->status = status;
     dispatched = dcall->state & DIRECT_CALL_DISPATCHED;
+    waiting = dcall->state & DIRECT_CALL_WAITING;
     lwmsg_direct_call_remove_in_lock(dcall);
     UNLOCK_SESSION(dcall->session);
 
@@ -717,7 +724,8 @@ lwmsg_direct_call_complete(
         dcall->complete(&dcall->caller, status, dcall->complete_data);
         lwmsg_direct_call_release(&dcall->caller);
     }
-    else
+
+    if (waiting)
     {
         pthread_cond_broadcast(&dcall->session->session->event);
     }
@@ -748,7 +756,32 @@ lwmsg_direct_call_cancel(
     UNLOCK_SESSION(dcall->session);
 
     return LWMSG_STATUS_SUCCESS;
+
 }
+
+static
+LWMsgStatus
+lwmsg_direct_call_wait(
+    LWMsgCall* call
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    DirectCall* dcall = LWMSG_OBJECT_FROM_MEMBER(call, DirectCall, caller);
+
+    LOCK_SESSION(dcall->session);
+    dcall->state |= DIRECT_CALL_WAITING;
+
+    while (!(dcall->state & DIRECT_CALL_COMPLETED))
+    {
+        pthread_cond_wait(&dcall->session->session->event, &dcall->session->session->lock);
+    }
+    status = dcall->status;
+
+    UNLOCK_SESSION(dcall->session);
+
+    return status;
+}
+
 
 static
 LWMsgStatus
@@ -809,6 +842,7 @@ static LWMsgCallClass direct_caller_class =
     .release = lwmsg_direct_call_release,
     .dispatch = lwmsg_direct_call_dispatch,
     .cancel = lwmsg_direct_call_cancel,
+    .wait = lwmsg_direct_call_wait,
     .destroy_params = lwmsg_direct_call_destroy_params,
     .get_session = lwmsg_direct_call_get_session_caller
 };

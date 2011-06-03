@@ -79,6 +79,14 @@ lwmsg_call_cancel(
     call->vtbl->cancel(call);
 }
 
+LWMsgStatus
+lwmsg_call_wait(
+    LWMsgCall* call
+    )
+{
+    return call->vtbl->wait(call);
+}
+
 void
 lwmsg_call_release(
     LWMsgCall* call

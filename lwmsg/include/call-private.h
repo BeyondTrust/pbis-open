@@ -128,6 +128,10 @@ typedef struct LWMsgCallClass
     LWMsgStatus (*cancel)(
         LWMsgCall* call
         );
+
+    LWMsgStatus (*wait)(
+        LWMsgCall* call
+        );
     /**
      * @brief Destroy call parameters (virtual)
      *

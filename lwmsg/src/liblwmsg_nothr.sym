@@ -32,6 +32,7 @@ lwmsg_call_pend
 lwmsg_call_complete
 lwmsg_call_cancel
 lwmsg_call_release
+lwmsg_call_wait
 lwmsg_call_destroy_params
 lwmsg_call_get_session
 lwmsg_call_get_direction
