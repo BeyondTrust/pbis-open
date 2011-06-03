@@ -295,6 +295,9 @@ configure_openssl()
         linux-x86_64)
             host_string="linux-x86_64"
             ;;
+        linux-arm*)
+            host_string="linux-generic32"
+            ;;
         *)
             host_string=""
             ;;
