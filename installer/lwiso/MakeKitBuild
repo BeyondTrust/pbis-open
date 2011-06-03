@@ -57,7 +57,8 @@ sfx_generic()
                   likewise-lwtools likewise-lwupgrade likewise-mod-auth-kerb \
                   likewise-netlogon likewise-openldap likewise-passwd \
                   likewise-pstore likewise-reskit likewise-rpc likewise-sqlite \
-                  likewise-srvsvc likewise-reapsysl likewise-samba-interop" \
+                  likewise-srvsvc likewise-reapsysl likewise-samba-interop \
+                  likewise-smbclient" \
         BASE="likewise-open" \
         GUI="$GUI_PACKAGE"
 }
