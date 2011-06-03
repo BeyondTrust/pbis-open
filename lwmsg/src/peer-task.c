@@ -146,7 +146,6 @@ lwmsg_peer_task_delete(
 
     if (task->assoc)
     {
-        lwmsg_peer_release_client_slot(task->session->peer);
         lwmsg_assoc_destroy_message(task->assoc, &task->incoming_message);
         if (task->destroy_outgoing)
         {
@@ -162,6 +161,11 @@ lwmsg_peer_task_delete(
 
     if (task->session)
     {
+        if (!task->session->is_outgoing)
+        {
+            lwmsg_peer_release_client_slot(task->session->peer);
+        }
+
         lwmsg_peer_session_release(task->session);
     }
 
