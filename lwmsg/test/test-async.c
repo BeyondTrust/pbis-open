@@ -163,6 +163,7 @@ async_response_thread(
 
 done:
 
+    pthread_mutex_unlock(&request->lock);
     pthread_mutex_destroy(&request->lock);
     pthread_cond_destroy(&request->event);
     free(request);
