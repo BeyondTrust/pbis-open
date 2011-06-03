@@ -1,6 +1,6 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -55,7 +55,12 @@ extern DWORD gdwNewEventCount;
     { \
         if (!inLock) \
         { \
-            pthread_rwlock_rdlock(&g_dbLock); \
+            int thr_err = pthread_rwlock_rdlock(&g_dbLock); \
+            if (thr_err)\
+            { \
+                EVT_LOG_ERROR("Failed to acquire shared lock on global rwmutex.  Aborting program....\n"); \
+                abort(); \
+            } \
             inLock = TRUE; \
         } \
     } \
@@ -66,7 +71,12 @@ extern DWORD gdwNewEventCount;
     { \
         if (inLock) \
         { \
-            pthread_rwlock_unlock(&g_dbLock); \
+            int thr_err = pthread_rwlock_unlock(&g_dbLock);       \
+            if (thr_err)\
+            { \
+                EVT_LOG_ERROR("Failed to release shared lock on global rwmutex.  Aborting program....\n"); \
+                abort(); \
+            } \
             inLock = FALSE; \
         } \
     } \
@@ -77,7 +87,12 @@ extern DWORD gdwNewEventCount;
     { \
         if (!inLock) \
         { \
-            pthread_rwlock_wrlock(&g_dbLock); \
+            int thr_err = pthread_rwlock_wrlock(&g_dbLock);       \
+            if (thr_err)\
+            { \
+                EVT_LOG_ERROR("Failed to acquire exclusive lock on global rwmutex.  Aborting program....\n"); \
+                abort(); \
+            } \
             inLock = TRUE; \
         } \
     } \
@@ -88,7 +103,12 @@ extern DWORD gdwNewEventCount;
     { \
         if (inLock) \
         { \
-            pthread_rwlock_unlock(&g_dbLock); \
+            int thr_err = pthread_rwlock_unlock(&g_dbLock);       \
+            if (thr_err)\
+            { \
+                EVT_LOG_ERROR("Failed to release exclusive lock on global rwmutex.  Aborting program....\n"); \
+                abort(); \
+            } \
             inLock = FALSE; \
         } \
     } \
