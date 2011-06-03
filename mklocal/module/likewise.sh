@@ -4,8 +4,8 @@ DEPENDS="path"
 
 option()
 {
-    _default_cachedir="${MK_LOCALSTATEDIR}/lib"
-    _default_configdir="${MK_DATADIR}/config"
+    _default_cachedir="${LOCALSTATEDIR}/lib"
+    _default_configdir="${DATADIR}/config"
 
     [ "${MK_LOCALSTATEDIR}" = "/var" ] && _default_cachedir="/var/lib/likewise"
 
