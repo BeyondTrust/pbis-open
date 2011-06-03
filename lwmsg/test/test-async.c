@@ -402,8 +402,9 @@ test_disconnect(
         lwmsg_call_dispatch(call, &in, &out, async_dummy_complete, NULL),
         LWMSG_STATUS_PENDING);
     nanosleep(&ts, NULL);
-    lwmsg_call_release(call);
     MU_TRY(lwmsg_peer_disconnect(client));
+    lwmsg_call_wait(call);
+    lwmsg_call_release(call);
 
     async_wait_cancelled();
 }
@@ -432,6 +433,7 @@ test_shutdown(
 
     async_wait_cancelled();
 
+    lwmsg_call_wait(call);
     lwmsg_call_release(call);
 }
 
@@ -460,6 +462,7 @@ test_cancel(
     async_wait_cancelled();
     async_wait_cancel_received();
 
+    lwmsg_call_wait(call);
     lwmsg_call_release(call);
 }
 
