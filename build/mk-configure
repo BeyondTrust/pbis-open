@@ -81,8 +81,5 @@ mkdir -p "${DIR}"
 set -x -e
 cd "${DIR}"
 exec "${BUILD_ROOT}/src/linux/configure" \
-    --prefix=/opt/likewise \
-    --sysconfdir=/etc/likewise \
-    --localstatedir=/var \
     ${OPT_DEBUG} \
     "$@"
