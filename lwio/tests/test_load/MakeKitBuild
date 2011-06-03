@@ -9,5 +9,6 @@ make()
         INCLUDEDIRS=". ../../include" \
         HEADERDEPS="lw/base.h lw/rtlgoto.h lwio/lwio.h" \
         LIBDEPS="lwioclient lwbase lwbase_nothr $LIB_PTHREAD"
-}
 
+    lw_add_tool_target "$result"
+}
