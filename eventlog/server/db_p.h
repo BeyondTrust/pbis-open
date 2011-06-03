@@ -117,31 +117,6 @@ LwEvtDbDeleteRecords(
     PCWSTR pSqlFilter
     );
 
-DWORD
-LwEvtDbEventLogCountOlderThan(
-    sqlite3 *pDb,
-    DWORD  dwOlderThan,
-    PDWORD pdwNumMatched
-    );
-
-DWORD
-LwEvtDbLimitDatabaseSize(
-    sqlite3 *pDb,
-    DWORD dwMaxLogSize
-    );
-
-DWORD
-LwEvtDbDeleteIfCountExceeds(
-    sqlite3 *pDb,
-    DWORD  dwOlderThan
-    );
-
-DWORD
-LwEvtDbDeleteOlderThanCurDate(
-    sqlite3 *pDb,
-    DWORD  dwOlderThan
-    ); 
-
 //helper functions
 DWORD
 LwEvtDbQueryEventLog(

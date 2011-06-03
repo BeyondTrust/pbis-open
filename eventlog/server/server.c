@@ -197,6 +197,7 @@ cleanup:
     {
         LwEvtDbClose(pDb);
     }
+
     return dwError;
 
 error:

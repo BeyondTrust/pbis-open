@@ -1,6 +1,6 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -191,8 +191,37 @@ LwEvtDbCheckSqlFilter(
 
 static
 DWORD
-LwEvtDbMaintainDB(
+LwEvtDbMaintainDB_inlock(
     sqlite3 *pDb
+    );
+
+static
+DWORD
+LwEvtDbEventLogCountOlderThan_inlock(
+    sqlite3 *pDb,
+    DWORD dwOlderThan,
+    PDWORD pdwNumMatched
+    );
+
+static
+DWORD
+LwEvtDbLimitDatabaseSize_inlock(
+    sqlite3 *pDb,
+    DWORD dwMaxLogSize
+    );
+
+static
+DWORD
+LwEvtDbDeleteOlderThanCurDate_inlock(
+    sqlite3 *pDb,
+    DWORD dwOlderThan
+    );
+
+static
+DWORD
+LwEvtDbDeleteIfCountExceeds_inlock(
+    sqlite3 *pDb,
+    DWORD dwOlderThan
     );
 
 //public interface
@@ -339,10 +368,33 @@ LwEvtDbGetRecordCount(
     DWORD * pNumMatched
     )
 {
+    DWORD error = 0;
+    BOOLEAN inLock = FALSE;
+
+    ENTER_RW_READER_LOCK(inLock);
+
+    error = LwEvtDbGetRecordCount(
+                pDb,
+                pSqlFilter,
+                pNumMatched);
+
+    LEAVE_RW_READER_LOCK(inLock);
+
+    return error;
+}
+
+
+static
+DWORD
+LwEvtDbGetRecordCount_inlock(
+    sqlite3 *pDb,
+    const WCHAR * pSqlFilter,
+    DWORD * pNumMatched
+    )
+{
     DWORD dwError = 0;
     PWSTR pQuery = NULL;
     sqlite3_stmt *pStatement = NULL;
-    BOOLEAN inLock = FALSE;
     sqlite_int64 recordCount = 0;
 
     if (pSqlFilter == NULL)
@@ -363,8 +415,6 @@ LwEvtDbGetRecordCount(
                         pSqlFilter);
         BAIL_ON_EVT_ERROR(dwError);
     }
-
-    ENTER_RW_READER_LOCK(inLock);
 
     // This statement needs to be in the lock because it can fail with
     // SQLITE_BUSY if some other thread is accessing the database.
@@ -408,7 +458,6 @@ LwEvtDbGetRecordCount(
 cleanup:
     // sqlite3 API docs say passing NULL is okay
     sqlite3_finalize(pStatement);
-    LEAVE_RW_READER_LOCK(inLock);
 
     LW_SAFE_FREE_MEMORY(pQuery);
 
@@ -927,7 +976,7 @@ LwEvtDbWriteRecords(
     if (removeAsNeeded)
     {
         //Trim the DB
-        dwError = LwEvtDbMaintainDB(pDb);
+        dwError = LwEvtDbMaintainDB_inlock(pDb);
         BAIL_ON_EVT_ERROR(dwError);
 
         gdwNewEventCount = 0;
@@ -960,7 +1009,7 @@ LwEvtDbWriteRecords(
 /* A routine to trim the database*/
 static
 DWORD
-LwEvtDbMaintainDB(
+LwEvtDbMaintainDB_inlock(
     sqlite3 *pDb
     )
 {
@@ -984,11 +1033,14 @@ LwEvtDbMaintainDB(
     BAIL_ON_EVT_ERROR(dwError);
 
     //Get the count of the records
-    dwError = LwEvtDbGetRecordCount(pDb, NULL, &dwRecordCount);
+    dwError = LwEvtDbGetRecordCount_inlock(pDb, NULL, &dwRecordCount);
     BAIL_ON_EVT_ERROR(dwError);
 
     //Get the count of the records which are older than 'n' days
-    dwError = LwEvtDbEventLogCountOlderThan(pDb, dwMaxAge, &dwCountOlderThan);
+    dwError = LwEvtDbEventLogCountOlderThan_inlock(
+                  pDb,
+                  dwMaxAge,
+                  &dwCountOlderThan);
     BAIL_ON_EVT_ERROR(dwError);
 
     //Get the File size
@@ -1005,11 +1057,11 @@ LwEvtDbMaintainDB(
     //Regular house keeping
     if (dwCountOlderThan) {
         EVT_LOG_VERBOSE("Deleting the record as older than current date");
-        dwError = LwEvtDbDeleteOlderThanCurDate(pDb, dwMaxAge);
+        dwError = LwEvtDbDeleteOlderThanCurDate_inlock(pDb, dwMaxAge);
         BAIL_ON_EVT_ERROR(dwError);
 
         //Since already some records got deleted get the latest record count
-        dwError = LwEvtDbGetRecordCount(pDb, NULL, &dwRecordCount);
+        dwError = LwEvtDbGetRecordCount_inlock(pDb, NULL, &dwRecordCount);
         BAIL_ON_EVT_ERROR(dwError);
     }
 
@@ -1021,14 +1073,14 @@ LwEvtDbMaintainDB(
         EVT_LOG_VERBOSE("Going to trim DB.........");
 
         //If records not aged out,then delete the records above Max Records
-        dwError = LwEvtDbDeleteIfCountExceeds(pDb, dwMaxRecords);
+        dwError = LwEvtDbDeleteIfCountExceeds_inlock(pDb, dwMaxRecords);
         BAIL_ON_EVT_ERROR(dwError);
     }
 
     if (dwActualSize >= dwMaxLogSize)
     {
         EVT_LOG_VERBOSE("Log Size is exceeds the maximum limit set");
-        dwError = LwEvtDbLimitDatabaseSize(pDb, dwMaxLogSize);
+        dwError = LwEvtDbLimitDatabaseSize_inlock(pDb, dwMaxLogSize);
         BAIL_ON_EVT_ERROR(dwError);
     }
 	
@@ -1071,7 +1123,7 @@ LwEvtDbDeleteRecords(
         BAIL_ON_EVT_ERROR(dwError);
     }
 
-    ENTER_RW_READER_LOCK(inLock);
+    ENTER_RW_WRITER_LOCK(inLock);
 
     // This statement needs to be in the lock because it can fail with
     // SQLITE_BUSY if some other thread is accessing the database.
@@ -1101,7 +1153,7 @@ LwEvtDbDeleteRecords(
 cleanup:
     // sqlite3 API docs say passing NULL is okay
     sqlite3_finalize(pStatement);
-    LEAVE_RW_READER_LOCK(inLock);
+    LEAVE_RW_WRITER_LOCK(inLock);
 
     LW_SAFE_FREE_MEMORY(pQuery);
 
@@ -1112,8 +1164,9 @@ error:
 }
 
 //To get count of records that are older than 'n' days.
+static
 DWORD
-LwEvtDbEventLogCountOlderThan(
+LwEvtDbEventLogCountOlderThan_inlock(
     sqlite3 *pDb,
     DWORD dwOlderThan,
     PDWORD pdwNumMatched
@@ -1125,9 +1178,6 @@ LwEvtDbEventLogCountOlderThan(
     DWORD nRows = 0;
     DWORD nCols = 0;
     PSTR* ppszResult = NULL;
-    BOOLEAN inLock = FALSE;
-
-    ENTER_RW_READER_LOCK(inLock);
 
     sprintf(szQuery, DB_QUERY_COUNT_OLDER_THAN, dwOlderThan);
 
@@ -1145,15 +1195,16 @@ LwEvtDbEventLogCountOlderThan(
     if (ppszResult) {
         sqlite3_free_table(ppszResult);
     }
-    LEAVE_RW_READER_LOCK(inLock);
+
     return dwError;
  error:
     goto cleanup;
 
 }
 
+static
 DWORD
-LwEvtDbLimitDatabaseSize(
+LwEvtDbLimitDatabaseSize_inlock(
     sqlite3 *pDb,
     DWORD dwMaxLogSize
     )
@@ -1166,9 +1217,6 @@ LwEvtDbLimitDatabaseSize(
     DWORD dwCurrentCount = 0;
     DWORD dwActualSize = 0;
     DWORD dwDeleteCount = 0;
-    BOOLEAN inLock = FALSE;
-
-    ENTER_RW_WRITER_LOCK(inLock);
 
     while (1)
     {
@@ -1185,7 +1233,7 @@ LwEvtDbLimitDatabaseSize(
             sqlite3_free_table(ppszResult);
         }
 
-        dwError = LwEvtDbGetRecordCount(
+        dwError = LwEvtDbGetRecordCount_inlock(
                         pDb,
                         NULL,
                         &dwCurrentCount);
@@ -1231,7 +1279,7 @@ cleanup:
     if (ppszResult) {
         sqlite3_free_table(ppszResult);
     }
-    LEAVE_RW_WRITER_LOCK(inLock);
+
     return dwError;
 
 error:
@@ -1239,8 +1287,9 @@ error:
 }
 
 //Delete the record over 'n' entries
+static
 DWORD
-LwEvtDbDeleteIfCountExceeds(
+LwEvtDbDeleteIfCountExceeds_inlock(
     sqlite3 *pDb,
     DWORD dwOlderThan
     )
@@ -1251,9 +1300,6 @@ LwEvtDbDeleteIfCountExceeds(
     DWORD nRows = 0;
     DWORD nCols = 0;
     PSTR* ppszResult = NULL;
-    BOOLEAN inLock = FALSE;
-
-    ENTER_RW_WRITER_LOCK(inLock);
 
     // Delete 10 extra records so we only need to trim on 1/10 of the runs.
     if (dwOlderThan > 10)
@@ -1270,7 +1316,7 @@ LwEvtDbDeleteIfCountExceeds(
     if (ppszResult) {
         sqlite3_free_table(ppszResult);
     }
-    LEAVE_RW_WRITER_LOCK(inLock);
+
     return dwError;
  error:
     goto cleanup;
@@ -1278,8 +1324,9 @@ LwEvtDbDeleteIfCountExceeds(
 }
 
 //To delete records 'n' days older than current date.
+static
 DWORD
-LwEvtDbDeleteOlderThanCurDate(
+LwEvtDbDeleteOlderThanCurDate_inlock(
     sqlite3 *pDb,
     DWORD dwOlderThan
     )
@@ -1289,9 +1336,6 @@ LwEvtDbDeleteOlderThanCurDate(
     DWORD nRows = 0;
     DWORD nCols = 0;
     PSTR* ppszResult = NULL;
-    BOOLEAN inLock = FALSE;
-
-    ENTER_RW_WRITER_LOCK(inLock);
 
     sprintf(szQuery, DB_QUERY_DELETE_OLDER_THAN, dwOlderThan);
 
@@ -1302,7 +1346,7 @@ LwEvtDbDeleteOlderThanCurDate(
     if (ppszResult) {
         sqlite3_free_table(ppszResult);
     }
-    LEAVE_RW_WRITER_LOCK(inLock);
+
     return dwError;
  error:
     goto cleanup;
