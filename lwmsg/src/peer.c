@@ -171,12 +171,6 @@ lwmsg_peer_delete(
         lwmsg_task_release_manager(peer->task_manager);
     }
 
-    if (peer->connect_session)
-    {
-        lwmsg_peer_session_disconnect(peer->connect_session);
-        lwmsg_peer_session_release(peer->connect_session);
-    }
-
     if (peer->lock_init)
     {
         pthread_mutex_destroy(&peer->lock);
