@@ -4,6 +4,9 @@
 
 #define REGEXPORT_LINE_WIDTH 80
 
+#define REGSHELLUTIL_NO_ESC_BACKSLASH 0x0
+#define REGSHELLUTIL_ESC_BACKSLASH 0x1
+
 typedef struct _REGSHELL_UTIL_VALUE
 {
     REG_DATA_TYPE type;
@@ -145,8 +148,24 @@ RegShellUtilGetValue(
     OUT OPTIONAL PDWORD pdwValueLen
     );
 
+
+DWORD
+RegShellUtilEscapeStringExt(
+    PCSTR pszValue,
+    PSTR *ppszRetValue,
+    PDWORD pdwEscapeValueLen,
+    DWORD flags
+    );
+
 DWORD
 RegShellUtilEscapeString(
+    PCSTR pszValue,
+    PSTR *ppszRetValue,
+    PDWORD pdwEscapeValueLen
+    );
+
+DWORD
+RegShellUtilEscapeMultiString(
     PCSTR pszValue,
     PSTR *ppszRetValue,
     PDWORD pdwEscapeValueLen

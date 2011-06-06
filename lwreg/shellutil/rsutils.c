@@ -1593,20 +1593,27 @@ error:
 
 
 DWORD
-RegShellUtilEscapeString(
+RegShellUtilEscapeStringExt(
     PCSTR pszValue,
     PSTR *ppszRetValue,
-    PDWORD pdwEscapeValueLen)
+    PDWORD pdwEscapeValueLen,
+    DWORD flags)
 {
     DWORD i = 0;
     DWORD dwError = 0;
     DWORD dwLen = 0;
     DWORD dwEscapeValueLen = 0;
     PSTR pszRetValue = NULL;
+    BOOLEAN bEscapeBackSlash = FALSE;
 
     BAIL_ON_INVALID_POINTER(pszValue);
     BAIL_ON_INVALID_POINTER(ppszRetValue);
     BAIL_ON_INVALID_POINTER(pdwEscapeValueLen);
+
+    if (flags & REGSHELLUTIL_ESC_BACKSLASH)
+    {
+        bEscapeBackSlash = TRUE;
+    }
 
     /* Count number of \ found in string to escape */
     for (i=0; pszValue[i]; i++)
@@ -1657,6 +1664,16 @@ RegShellUtilEscapeString(
             pszRetValue[dwLen++] = '\\';
             pszRetValue[dwLen++] = 'f';
         }
+        else if (pszValue[i] == '\\' && bEscapeBackSlash)
+        {
+            pszRetValue[dwLen++] = '\\';
+            pszRetValue[dwLen++] = '\\';
+        }
+        else if (pszValue[i] == '"' && bEscapeBackSlash)
+        {
+            pszRetValue[dwLen++] = '\\';
+            pszRetValue[dwLen++] = '"';
+        }
         else if (pszValue[i] == '\\' && pszValue[i+1] == '\\')
         {
             /* Look ahead at next character and emit escaped \ if match */
@@ -1679,6 +1696,34 @@ cleanup:
 error:
     goto cleanup;
 }
+
+DWORD
+RegShellUtilEscapeString(
+    PCSTR pszValue,
+    PSTR *ppszRetValue,
+    PDWORD pdwEscapeValueLen)
+{
+    return RegShellUtilEscapeStringExt(
+               pszValue,
+               ppszRetValue,
+               pdwEscapeValueLen,
+               REGSHELLUTIL_NO_ESC_BACKSLASH);
+}
+
+
+DWORD
+RegShellUtilEscapeMultiString(
+    PCSTR pszValue,
+    PSTR *ppszRetValue,
+    PDWORD pdwEscapeValueLen)
+{
+    return RegShellUtilEscapeStringExt(
+               pszValue,
+               ppszRetValue,
+               pdwEscapeValueLen,
+               REGSHELLUTIL_ESC_BACKSLASH);
+}
+
 
 DWORD
 RegExportBinaryTypeToString(
@@ -2030,7 +2075,7 @@ RegExportMultiStringArray(
         BAIL_ON_REG_ERROR(dwError);
 
         LWREG_SAFE_FREE_STRING(pszEscapedValue);
-        dwError = RegShellUtilEscapeString(
+        dwError = RegShellUtilEscapeMultiString(
                       pszString,
                       &pszEscapedValue,
                       &dwEscapedValueLen);
