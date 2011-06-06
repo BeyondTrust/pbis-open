@@ -62,6 +62,7 @@ typedef struct _MEMDB_STACK
     PMEMDB_STACK_ENTRY stack;
     DWORD stackSize;
     DWORD stackPtr;
+    DWORD stackSizeMax;
 } MEMDB_STACK, *PMEMDB_STACK;
 
 typedef enum _MEMDB_EXPORT_STATE

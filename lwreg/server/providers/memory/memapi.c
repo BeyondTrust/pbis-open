@@ -136,7 +136,7 @@ MemProvider_Initialize(
 
     *ppFnTable = &gRegMemProviderAPITable;
 cleanup:
-    if (status == LWREG_ERROR_PARSE)
+    if (status == LWREG_ERROR_PARSE || status == LWREG_ERROR_SYNTAX)
     {
         status = LW_STATUS_FILE_CORRUPT_ERROR;
     }

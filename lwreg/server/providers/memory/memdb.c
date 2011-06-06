@@ -370,6 +370,10 @@ VOID
 MemDbStopExportToFileThread(
     VOID)
 {
+    if (!MemRegRoot() || !MemRegRoot()->ExportCtx)
+    {
+        return;
+    }
     pthread_mutex_lock(&MemRegRoot()->ExportMutexStop);
     MemRegRoot()->ExportCtx->bStopThread = TRUE;
     pthread_cond_signal(&MemRegRoot()->ExportCond);
@@ -931,7 +935,7 @@ cleanup:
     return dwError;
 
 error:
-    if (dwError == LWREG_ERROR_PARSE)
+    if (dwError == LWREG_ERROR_PARSE || dwError == LWREG_ERROR_SYNTAX)
     {
         RegParseGetLineNumber(parseH, &dwLineNum);
         REG_LOG_ERROR("Error parsing file %s: line=%d",
@@ -1906,10 +1910,17 @@ MemDbStackPush(
     if (hStack->stackPtr+1 > hStack->stackSize)
     {
         status = ERROR_STACK_OVERFLOW;
+        REG_LOG_ERROR("MemDbStackPush: Stack overflow %d", hStack->stackSize);
         BAIL_ON_NT_STATUS(status);
     }
 
     hStack->stack[hStack->stackPtr++] = newNode;
+    if (hStack->stackPtr > hStack->stackSizeMax)
+    {
+        hStack->stackSizeMax = hStack->stackPtr;
+        REG_LOG_DEBUG("MemDbStackPush: Max stack depth %d", 
+            hStack->stackSizeMax);
+    }
 
 error:
     return status;
@@ -1961,7 +1972,7 @@ MemDbRecurseRegistry(
     PWSTR pwszSubKey = NULL;
     PMEMREG_NODE hSubKey = NULL;
     
-    status = MemDbStackInit(MEMREG_MAX_SUBNODES * 2, &hStack);
+    status = MemDbStackInit(MEMREG_MAX_SUBNODE_STACK, &hStack);
     BAIL_ON_NT_STATUS(status);
     hKeyNode = hDb->pMemReg;
 
@@ -2075,7 +2086,7 @@ MemDbRecurseDepthFirstRegistry(
     PWSTR pwszSubKey = NULL;
     PMEMREG_NODE hSubKey = NULL;
 
-    status = MemDbStackInit(MEMREG_MAX_SUBNODES * 2, &hStack);
+    status = MemDbStackInit(MEMREG_MAX_SUBNODE_STACK, &hStack);
     BAIL_ON_NT_STATUS(status);
     hKeyNode = hDb->pMemReg;
 
