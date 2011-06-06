@@ -301,6 +301,8 @@ error:
         *pNumAccountRights   = 0;
     }
 
+    RTL_FREE(&request.pszSid);
+
     if (pCall)
     {
         lwmsg_call_destroy_params(pCall, &out);
