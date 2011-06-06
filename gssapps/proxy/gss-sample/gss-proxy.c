@@ -213,6 +213,7 @@ static int server_establish_context(
         };
     gss_OID GssCredOptionDomainOid = &GssCredOptionDomainOidDesc;
     gss_buffer_desc domain_tok = GSS_C_EMPTY_BUFFER;
+    char *tmp_name = NULL;
 
     if (recv_token(s, &token_flags, &recv_tok) < 0)
     {
@@ -447,12 +448,28 @@ static int server_establish_context(
         if (offset < client_name.length && *suffix == '\\')
         {
             gss_buffer_desc name_tok;
+            size_t len = 0;
 
             suffix++;
             offset++;
 
-            name_tok.value = suffix;
-            name_tok.length = client_name.length - offset;
+            if (domain)
+            {
+                len += strlen(suffix) + strlen(domain) + 2;
+                tmp_name = malloc(len);
+                if (tmp_name == NULL)
+                {
+                    if (log_file)
+                        fprintf(log_file, "Couldn't allocate memory for name.\n");
+                    ret = 1;
+                    goto error;
+                }
+                snprintf(tmp_name, len, "%s@%s", suffix, domain);
+            }
+
+            name_tok.value = tmp_name ? tmp_name : suffix;
+            name_tok.length = tmp_name ? strlen(tmp_name) :
+                                         client_name.length - offset;
             maj_stat = gss_import_name(&min_stat, &name_tok,
                                        (gss_OID) gss_nt_user_name,
                                        ret_client);
@@ -486,6 +503,11 @@ error:
     (void) gss_release_buffer(&min_stat, &client_name);
     (void) gss_release_buffer(&min_stat, &oid_name);
     (void) gss_release_oid_set(&min_stat, &desired_mechs);
+
+    if (tmp_name)
+    {
+        free(tmp_name);
+    }
 
     return ret;
 }
