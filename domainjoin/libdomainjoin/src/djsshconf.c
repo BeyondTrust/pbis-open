@@ -580,22 +580,38 @@ BOOLEAN FindSshAndConfig(
                     &ppFoundBinaries);
     LW_CLEANUP_CTERR(ppExc, ceError);
 
+    ceError = LwRemoveDuplicateInodes(
+                    &foundBinaryCount,
+                    ppFoundBinaries);
+    LW_CLEANUP_CTERR(ppExc, ceError);
+
     // Ssh version A.04.40.005 on HP-UX Itanimum has these paths:
     //  /opt/ssh/hpux64/sbin/sshd (ELF-64 IA64)
     //  /opt/ssh/sbin/sshd (ELF-32 IA64)
     //  /usr/sbin/sshd (symlink to /opt/ssh/hpux64/sbin/sshd)
     //
-    // Both files point to the same config path. We have to add an exception
-    // for this case since the inodes are different for the two architectures.
+    // Ssh version A.04.30.007 on HP-UX Itanimum has these paths:
+    //  /opt/ssh/hpux64/sbin/sshd (ELF-64 IA64)
+    //  /opt/ssh/sbin/sshd (ELF-32 IA64)
+    //  /usr/sbin/sshd (symlink to /opt/ssh/sbin/sshd)
+    //
+    // Both files point to the same config path. An exception must exist for
+    // this case since the inodes are different for the two architectures.
+    //
+    // The symlink at /usr/sbin/sshd wins the duplication removal process. So
+    // if it is found, the other path must be removed.
     
     for (index = 0; index < foundBinaryCount; index++)
     {
-        if (!strcmp(ppFoundBinaries[index], "/opt/ssh/hpux64/sbin/sshd"))
+        if (!strcmp(ppFoundBinaries[index], "/usr/sbin/sshd"))
         {
-            // Remove /opt/ssh/sbin/sshd if it is in the list
+            // Remove /opt/ssh/sbin/sshd or /opt/ssh/hpux64/sbin/sshd if they
+            // are in the list
             for (index = 0; index < foundBinaryCount; index++)
             {
-                if (!strcmp(ppFoundBinaries[index], "/opt/ssh/sbin/sshd"))
+                if (!strcmp(ppFoundBinaries[index], "/opt/ssh/sbin/sshd") ||
+                    !strcmp(ppFoundBinaries[index],
+                        "/opt/ssh/hpux64/sbin/sshd"))
                 {
                     LW_SAFE_FREE_STRING(ppFoundBinaries[index]);
                     memmove(&ppFoundBinaries[index],
@@ -609,11 +625,6 @@ BOOLEAN FindSshAndConfig(
             break;
         }
     }
-
-    ceError = LwRemoveDuplicateInodes(
-                    &foundBinaryCount,
-                    ppFoundBinaries);
-    LW_CLEANUP_CTERR(ppExc, ceError);
 
     if ((foundConfigCount | foundBinaryCount) > 0 && foundConfigCount != foundBinaryCount)
     {
