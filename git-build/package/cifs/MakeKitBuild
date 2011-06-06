@@ -84,9 +84,9 @@ package_rpm()
 
         if [ "$PKG_RPM_COMPAT" -eq "1" ]
         then
-            mk_subpackage_do SUBPACKAGE="compat"
+            mk_rpm_sub_do SUBPACKAGE="compat"
                 common_files_compat
-            mk_subpackage_done
+            mk_rpm_sub_done
         fi
 
         mk_rpm_sub_do SUBPACKAGE="devel"
