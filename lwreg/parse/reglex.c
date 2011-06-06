@@ -432,7 +432,8 @@ RegLexParseAt(
     BOOLEAN eof = FALSE;
     BOOLEAN bHasSecurity = FALSE;
 
-    if (lexHandle->state != REGLEX_STATE_IN_QUOTE)
+    if (lexHandle->state != REGLEX_STATE_IN_QUOTE &&
+        lexHandle->state != REGLEX_STATE_IN_KEY)
     {
         /* Default value for a registry key */
         lexHandle->isToken = TRUE;
@@ -513,6 +514,15 @@ RegLexParseDash(
     DWORD dwError = 0;
     BOOLEAN eof = FALSE;
     BOOLEAN isDash = FALSE;
+
+    /* Ignore dash when any of these contexts */
+    if (lexHandle->state == REGLEX_STATE_IN_QUOTE ||
+        lexHandle->state == REGLEX_STATE_IN_KEY ||
+        lexHandle->eValueNameType == REGLEX_VALUENAME_SECURITY)
+    {
+        RegLexAppendChar(lexHandle, '-');
+        return dwError;
+    }
 
     if (lexHandle->curToken.pszValue[lexHandle->curToken.valueCursor] == '-')
     {
