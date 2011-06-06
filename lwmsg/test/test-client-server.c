@@ -778,6 +778,7 @@ test_call_restart_call(
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* call = NULL;
+    struct timespec ts = {0, 50000000};
 
     in.tag = PING_REQUEST;
 
@@ -791,6 +792,8 @@ test_call_restart_call(
 
     MU_TRY(lwmsg_peer_stop_listen(server));
     MU_TRY(lwmsg_peer_start_listen(server));
+
+    nanosleep(&ts, NULL);
 
     MU_TRY(lwmsg_peer_acquire_call(client, &call));
     MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
