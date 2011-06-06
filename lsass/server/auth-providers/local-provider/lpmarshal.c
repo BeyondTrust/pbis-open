@@ -755,6 +755,7 @@ LocalMarshalEntryToSecurityObject(
     LONG64 llPasswordLastSet = 0;
     DWORD  dwUid = 0;
     DWORD  dwGid = 0;
+    BOOLEAN enableUnixIds = TRUE;
 
     dwError = LocalMarshalAttrToInteger(
                     pEntry,
@@ -768,7 +769,11 @@ LocalMarshalEntryToSecurityObject(
     BAIL_ON_LSA_ERROR(dwError);
 
     pObject->bIsLocal = TRUE;
-    pObject->enabled = TRUE;
+
+    dwError = LocalCfgGetEnableUnixIds(&enableUnixIds);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pObject->enabled = enableUnixIds;
 
     switch (dwObjectClass)
     {

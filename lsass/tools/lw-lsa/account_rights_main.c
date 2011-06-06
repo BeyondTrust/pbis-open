@@ -102,7 +102,7 @@ ShowUsage(
 static
 DWORD
 ProcessAccountRights(
-    PSTR pszId,
+    PCSTR pszId,
     PDLINKEDLIST pTaskList
     );
 
@@ -548,13 +548,16 @@ FreeTask(
     PACCOUNT_RIGHTS_DATA pData = pTask->pData;
     DWORD i = 0;
 
-    if (!pData) return;
-
-    for (i = 0; i < pData->NumAccountRights; i++)
+    if (pData)
     {
-        LW_SAFE_FREE_MEMORY(pData->ppwszAccountRights[i]);
+        for (i = 0; i < pData->NumAccountRights; i++)
+        {
+            LW_SAFE_FREE_MEMORY(pData->ppwszAccountRights[i]);
+        }
+        LW_SAFE_FREE_MEMORY(pData->ppwszAccountRights);
     }
-    LW_SAFE_FREE_MEMORY(pData->ppwszAccountRights);
+
+    LW_SAFE_FREE_MEMORY(pTask);
 }
 
 PSTR
@@ -597,7 +600,7 @@ ShowUsage(
 static
 DWORD
 ProcessAccountRights(
-    PSTR pszId,
+    PCSTR pszId,
     PDLINKEDLIST pTaskList
     )
 {
@@ -606,11 +609,9 @@ ProcessAccountRights(
     HANDLE hLsaConnection = (HANDLE)NULL;
     PSID pSid = NULL;
     PSID pAccountSid = NULL;
-    LSA_FIND_FLAGS dwFindFlags = LSA_FIND_FLAGS_NSS;
-    PVOID pUserInfo = NULL;
-    DWORD dwUserInfoLevel = 1;
-    PVOID pGroupInfo = NULL;
-    DWORD dwGroupInfoLevel = 1;
+    LSA_FIND_FLAGS findFlags = 0;
+    LSA_QUERY_LIST Query = {0};
+    PLSA_SECURITY_OBJECT* ppObjects = NULL;
     PSTR pszAccountSid = NULL;
     PDLINKEDLIST pListNode = NULL;
     DWORD i = 0;
@@ -633,42 +634,51 @@ ProcessAccountRights(
     }
     else
     {
-        dwError = LsaFindUserByName(
+        Query.ppszStrings = &pszId;
+
+        dwError = LsaFindObjects(
                        hLsaConnection,
-                       pszId,
-                       dwUserInfoLevel,
-                       &pUserInfo);
-        if (dwError == LW_ERROR_NO_SUCH_USER)
-        {
-            dwError = LsaFindGroupByName(
-                           hLsaConnection,
-                           pszId,
-                           dwFindFlags,
-                           dwGroupInfoLevel,
-                           &pGroupInfo);
-            BAIL_ON_LSA_ERROR(dwError);
+                       NULL,
+                       findFlags,
+                       LSA_OBJECT_TYPE_USER,
+                       LSA_QUERY_TYPE_BY_NAME,
+                       1,
+                       Query,
+                       &ppObjects);
+        BAIL_ON_LSA_ERROR(dwError);
 
-            dwError = LwAllocateString(
-                           ((PLSA_GROUP_INFO_1)pGroupInfo)->pszSid,
-                           &pszAccountSid);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            LsaFreeGroupInfo(dwGroupInfoLevel, pGroupInfo);
-            pGroupInfo = NULL;
-        }
-        else if (dwError == ERROR_SUCCESS)
+        if (ppObjects[0])
         {
             dwError = LwAllocateString(
-                           ((PLSA_USER_INFO_1)pUserInfo)->pszSid,
+                           ppObjects[0]->pszObjectSid,
                            &pszAccountSid);
             BAIL_ON_LSA_ERROR(dwError);
-
-            LsaFreeUserInfo(dwUserInfoLevel, pUserInfo);
-            pUserInfo = NULL;
         }
         else
         {
+            dwError = LsaFindObjects(
+                           hLsaConnection,
+                           NULL,
+                           findFlags,
+                           LSA_OBJECT_TYPE_GROUP,
+                           LSA_QUERY_TYPE_BY_NAME,
+                           1,
+                           Query,
+                           &ppObjects);
             BAIL_ON_LSA_ERROR(dwError);
+
+            if (ppObjects[0])
+            {
+                dwError = LwAllocateString(
+                               ppObjects[0]->pszObjectSid,
+                               &pszAccountSid);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+            else
+            {
+                dwError = ERROR_INVALID_ACCOUNT_NAME;
+                BAIL_ON_LSA_ERROR(dwError);
+            }
         }
     }
 
@@ -762,8 +772,14 @@ cleanup:
         LsaCloseServer(hLsaConnection);
     }
 
+    if (ppObjects)
+    {
+        LsaFreeSecurityObjectList(1, ppObjects);
+    }
+
     RTL_FREE(&pSid);
     RTL_FREE(&pAccountSid);
+    LW_SAFE_FREE_MEMORY(pszAccountSid);
     LW_SAFE_FREE_MEMORY(pszAccountRight);
 
     for (i = 0; ppwszAccountRights && i < numAccountRights; i++)

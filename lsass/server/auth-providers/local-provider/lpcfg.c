@@ -107,6 +107,7 @@ LocalCfgInitialize(
     pConfig->bCreateHomedir = LOCAL_CFG_DEFAULT_CREATE_HOMEDIR;
     pConfig->bAcceptNTLMv1 = LOCAL_CFG_DEFAULT_ACCEPT_NTLMV1;
     pConfig->dwHomedirUMask = LOCAL_CFG_DEFAULT_HOMEDIR_UMASK;
+    pConfig->EnableUnixIds = LOCAL_CFG_DEFAULT_ENABLE_UNIX_IDS;
 
     dwError = LwAllocateString(
                     pszDefaultSkelDirs,
@@ -434,6 +435,22 @@ error:
     goto cleanup;
 }
 
+DWORD
+LocalCfgGetEnableUnixIds(
+    PBOOLEAN pbResult
+    )
+{
+    BOOLEAN bInLock = FALSE;
+
+    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
+
+    *pbResult = gLPGlobals.cfg.EnableUnixIds;
+
+    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
+
+    return 0;
+}
+
 VOID
 LocalCfgFree(
     PLOCAL_CONFIG pConfig
@@ -536,6 +553,16 @@ LocalCfgReadRegistry(
             MAXDWORD,
             NULL,
             &StagingConfig.bAcceptNTLMv1,
+            NULL
+        },
+        {
+            "EnableUnixIds",
+            TRUE,
+            LsaTypeBoolean,
+            0,
+            MAXDWORD,
+            NULL,
+            &StagingConfig.EnableUnixIds,
             NULL
         },
     };

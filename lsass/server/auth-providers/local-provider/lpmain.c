@@ -772,6 +772,12 @@ LocalOpenSession(
         &pObject);
     BAIL_ON_LSA_ERROR(dwError);
     
+    if (pObject && !pObject->enabled)
+    {
+        dwError = ERROR_NO_SUCH_USER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     // Allow directory creation only if this is
     //
     if ((pContext->uid != 0) &&
@@ -842,6 +848,12 @@ LocalCloseSession(
         pszLoginId,
         &pObject);
     BAIL_ON_LSA_ERROR(dwError);
+
+    if (pObject && !pObject->enabled)
+    {
+        dwError = ERROR_NO_SUCH_USER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LwGetNtTime((PULONG64)&llLastLogoffTime);
     BAIL_ON_LSA_ERROR(dwError);

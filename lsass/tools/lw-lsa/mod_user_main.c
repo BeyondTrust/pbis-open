@@ -840,9 +840,10 @@ ModifyUser(
     PLSA_USER_MOD_INFO pUserModInfo = NULL;
     uid_t uid = 0;
     int   nRead = 0;
-    PVOID pUserInfo = NULL;
-    DWORD dwUserInfoLevel = 0;
+    LSA_FIND_FLAGS findFlags = 0;
     HANDLE hLsaConnection = (HANDLE)NULL;
+    LSA_QUERY_LIST Query = {0};
+    PLSA_SECURITY_OBJECT* ppObjects = NULL;
 
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
@@ -859,17 +860,26 @@ ModifyUser(
     }
     else if (!LW_IS_NULL_OR_EMPTY_STR(pszLoginId))
     {
-           dwError = LsaFindUserByName(
-                           hLsaConnection,
-                           pszLoginId,
-                           dwUserInfoLevel,
-                           &pUserInfo);
-           BAIL_ON_LSA_ERROR(dwError);
+        Query.ppszStrings = &pszLoginId;
 
-       uid = ((PLSA_USER_INFO_0)pUserInfo)->uid;
+        dwError = LsaFindObjects(
+                       hLsaConnection,
+                       NULL,
+                       findFlags,
+                       LSA_OBJECT_TYPE_USER,
+                       LSA_QUERY_TYPE_BY_NAME,
+                       1,
+                       Query,
+                       &ppObjects);
+        BAIL_ON_LSA_ERROR(dwError);
 
-       LsaFreeUserInfo(dwUserInfoLevel, pUserInfo);
-       pUserInfo = NULL;
+        if (ppObjects[0] == NULL)
+        {
+            dwError = LW_ERROR_NO_SUCH_USER;
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+
+        uid = ppObjects[0]->userInfo.uid;
     }
     else
     {
@@ -898,8 +908,9 @@ cleanup:
         LsaFreeUserModInfo(pUserModInfo);
     }
 
-    if (pUserInfo) {
-       LsaFreeUserInfo(dwUserInfoLevel, pUserInfo);
+    if (ppObjects)
+    {
+        LsaFreeSecurityObjectList(1, ppObjects);
     }
 
     if (hLsaConnection != (HANDLE)NULL) {
