@@ -294,6 +294,10 @@
     default = dword:00000001
     doc = ""
 }
+"EnableUnixIds" = {
+    default = dword:00000001
+    doc = "Globally enables or disables assigning unix identity (uid/gid) to local accounts"
+}
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\SAM]
 "MinPasswordAge" = {

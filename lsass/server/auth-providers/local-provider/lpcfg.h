@@ -131,6 +131,11 @@ LocalCfgGetSkeletonDirs(
     PSTR* ppszSkelDirs
     );
 
+DWORD
+LocalCfgGetEnableUnixIds(
+    PBOOLEAN pbResult
+    );
+
 VOID
 LocalCfgFree(
     PLOCAL_CONFIG pConfig

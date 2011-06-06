@@ -55,6 +55,7 @@
 #define LOCAL_CFG_DEFAULT_CREATE_HOMEDIR          TRUE
 #define LOCAL_CFG_DEFAULT_HOMEDIR_UMASK           022
 #define LOCAL_CFG_MAX_GROUP_NESTING_LEVEL_DEFAULT (5)
+#define LOCAL_CFG_DEFAULT_ENABLE_UNIX_IDS         TRUE
 
 #define LOCAL_LOCK_MUTEX(bInLock, pMutex)  \
         if (!bInLock) {                    \
