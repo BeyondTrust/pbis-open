@@ -52,6 +52,7 @@
 
 #include "lsaclient.h"
 #include "lsaipc.h"
+#include "common.h"
 
 #define LW_PRINTF_STRING(x) ((x) ? (x) : "<null>")
 
@@ -83,12 +84,6 @@ static
 DWORD
 MapErrorCode(
     DWORD dwError
-    );
-
-static
-BOOLEAN
-IsUnsignedInteger(
-    PCSTR pszIntegerCandidate
     );
 
 int
@@ -336,79 +331,3 @@ MapErrorCode(
     
     return dwError2;
 }
-
-BOOLEAN
-IsUnsignedInteger(
-    PCSTR pszIntegerCandidate
-    )
-{
-    typedef enum {
-        PARSE_MODE_LEADING_SPACE = 0,
-        PARSE_MODE_INTEGER,
-        PARSE_MODE_TRAILING_SPACE
-    } ParseMode;
-
-    ParseMode parseMode = PARSE_MODE_LEADING_SPACE;
-    BOOLEAN bIsUnsignedInteger = TRUE;
-    INT iLength = 0;
-    INT iCharIdx = 0;
-    CHAR cNext = '\0';
-    
-    if (LW_IS_NULL_OR_EMPTY_STR(pszIntegerCandidate))
-    {
-        bIsUnsignedInteger = FALSE;
-        goto error;
-    }
-    
-    iLength = strlen(pszIntegerCandidate);
-    
-    do {
-
-      cNext = pszIntegerCandidate[iCharIdx++];
-      
-      switch(parseMode) {
-
-          case PARSE_MODE_LEADING_SPACE:
-          {
-              if (isdigit((int)cNext))
-              {
-                  parseMode = PARSE_MODE_INTEGER;
-              }
-              else if (!isspace((int)cNext))
-              {
-                  bIsUnsignedInteger = FALSE;
-              }
-              break;
-          }
-          
-          case PARSE_MODE_INTEGER:
-          {
-              if (isspace((int)cNext))
-              {
-                  parseMode = PARSE_MODE_TRAILING_SPACE;
-              }
-              else if (!isdigit((int)cNext))
-              {
-                  bIsUnsignedInteger = FALSE;
-              }
-              break;
-          }
-          
-          case PARSE_MODE_TRAILING_SPACE:
-          {
-              if (!isspace((int)cNext))
-              {
-                  bIsUnsignedInteger = FALSE;
-              }
-              break;
-          }    
-      }
-
-    } while (iCharIdx < iLength && bIsUnsignedInteger == TRUE);
-
-    
-error:
-
-    return bIsUnsignedInteger;   
-}
-

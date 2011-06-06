@@ -53,6 +53,7 @@
 #include "lsa/lsa.h"
 #include "lsaclient.h"
 #include "lsaipc.h"
+#include "common.h"
 
 DWORD
 LsaDelGroupMain(

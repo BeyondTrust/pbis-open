@@ -54,4 +54,5 @@
 #include "lwstr.h"
 #include "lwsecurityidentifier.h"
 #include "lsautils.h"
+#include "common.h"
 #include "mod_user_moduser.h"

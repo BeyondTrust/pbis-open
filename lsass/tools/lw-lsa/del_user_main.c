@@ -53,6 +53,7 @@
 #include "lsa/lsa.h"
 #include "lsaclient.h"
 #include "lsaipc.h"
+#include "common.h"
 
 #define LW_PRINTF_STRING(x) ((x) ? (x) : "<null>")
 
@@ -91,48 +92,112 @@ MapErrorCode(
     );
 
 static
-BOOLEAN
-IsUnsignedInteger(
-    PCSTR pszIntegerCandidate
-    );
-
-VOID
+DWORD
 ParseArgs(
     int argc,
-    char* argv[]
+    char* argv[],
+    PSTR* ppUid,
+    PSTR* ppLoginId
     )
 {
-    int iArg = 1;
-    const char* pArg = NULL;
+    typedef enum {
+        PARSE_MODE_OPEN = 0,
+        PARSE_MODE_UID,
+        PARSE_MODE_DONE
+    } ParseMode;
 
-    if (argc != 2)
+    DWORD dwError = 0;
+    ParseMode parseMode = PARSE_MODE_OPEN;
+    int iArg = 1;
+    PSTR pArg = NULL;
+    PSTR pUid = NULL;
+    PSTR pLoginId = NULL;
+
+    do {
+
+      pArg = argv[iArg++];
+
+      if (pArg == NULL || *pArg == '\0') {
+        break;
+      }
+
+      switch(parseMode) {
+
+          case PARSE_MODE_OPEN:
+          {
+              if ((strcmp(pArg, "--help") == 0) ||
+                     (strcmp(pArg, "-h") == 0)) {
+                ShowUsage(GetProgramName(argv[0]));
+                exit(0);
+              }
+              else if (strcmp(pArg, "--uid") == 0) {
+                parseMode = PARSE_MODE_UID;
+              }
+              else {
+                  dwError = LwAllocateString(pArg, &pLoginId);
+                  BAIL_ON_LSA_ERROR(dwError);
+                  parseMode = PARSE_MODE_DONE;
+              }
+
+              break;
+          }
+
+          case PARSE_MODE_UID:
+          {
+              if (!IsUnsignedInteger(pArg))
+              {
+                fprintf(stderr, "Please specifiy a uid that is an unsigned integer\n");
+                ShowUsage(GetProgramName(argv[0]));
+                exit(1);
+              }
+
+              dwError = LwAllocateString(pArg, &pUid);
+              BAIL_ON_LSA_ERROR(dwError);
+
+              parseMode = PARSE_MODE_OPEN;
+
+              break;
+          }
+
+          case PARSE_MODE_DONE:
+          {
+              ShowUsage(GetProgramName(argv[0]));
+              exit(1);
+          }
+      }
+
+    } while (iArg < argc);
+
+    if (parseMode != PARSE_MODE_OPEN && parseMode != PARSE_MODE_DONE)
     {
         ShowUsage(GetProgramName(argv[0]));
         exit(1);
     }
 
-    while (iArg < argc)
+    if (!pUid && !pLoginId)
     {
-        pArg = argv[iArg++];
-        if (pArg[0] == '-')
-        {
-            if ( (strcmp(pArg, "--help") == 0) ||
-                 (strcmp(pArg, "-h") == 0))
-            {
-                ShowUsage(GetProgramName(argv[0]));
-                exit(0);
-            }
-            else
-            {
-                fprintf(stderr, "Error: Invalid option \n");
-                ShowUsage(GetProgramName(argv[0]));
-                exit(1);
-            }
-        }
+        ShowUsage(GetProgramName(argv[0]));
+        exit(1);
     }
-    
+
+    *ppUid = pUid;
+    *ppLoginId = pLoginId;
+cleanup:
+
+    return dwError;
+
+error:
+
+    LW_SAFE_FREE_STRING(pUid);
+    LW_SAFE_FREE_STRING(pLoginId);
+
+    *ppUid = NULL;
+    *ppLoginId = NULL;
+
+    goto cleanup;
 }
 
+static
 DWORD
 LsaDelUserMain(
     int argc,
@@ -140,11 +205,11 @@ LsaDelUserMain(
     )
 {
     DWORD dwError = 0;
-    uid_t uid = 0;
-    int   nRead = 0;
     HANDLE hLsaConnection = (HANDLE)NULL;
     size_t dwErrorBufferSize = 0;
     BOOLEAN bPrintOrigError = TRUE;
+    PSTR pUid = NULL;
+    PSTR pLoginId = NULL;
     
     if (geteuid() != 0) {
         fprintf(stderr, "This program requires super-user privileges.\n");
@@ -152,30 +217,46 @@ LsaDelUserMain(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    ParseArgs(argc,argv);
+    dwError = ParseArgs(
+                    argc,
+                    argv,
+                    &pUid,
+                    &pLoginId);
+    BAIL_ON_LSA_ERROR(dwError);
     
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
-    
-    nRead = sscanf(argv[1], "%u", (unsigned int*)&uid);
-    if ((EOF == nRead) || (0 == nRead)) {
-        dwError = LsaDeleteUserByName(
-                        hLsaConnection,
-                        argv[1]);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-    else if (!IsUnsignedInteger(argv[1]))
+
+    if (!LW_IS_NULL_OR_EMPTY_STR(pUid))
     {
-        fprintf(stderr, "Please use a UID which is an unsigned integer.\n");
-        ShowUsage(GetProgramName(argv[0]));
-        exit(0);
-    }
-    else
-    {
+        uid_t uid = 0;
+        int   nRead = 0;
+
+        nRead = sscanf(pUid, "%u", (unsigned int*)&uid);
+        if ((EOF == nRead) || (0 == nRead)) {
+            fprintf(stderr, "An invalid user id [%s] was specified.", pUid);
+
+            dwError = LW_ERROR_INVALID_PARAMETER;
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+
         dwError = LsaDeleteUserById(
                         hLsaConnection,
                         uid);
         BAIL_ON_LSA_ERROR(dwError);
+    }
+    else if (!LW_IS_NULL_OR_EMPTY_STR(pLoginId))
+    {
+
+        dwError = LsaDeleteUserByName(
+                        hLsaConnection,
+                        pLoginId);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        ShowUsage(GetProgramName(argv[0]));
+        exit(1);
     }
     
     fprintf(stdout, "The user has been deleted successfully.\n");
@@ -185,6 +266,9 @@ cleanup:
     if (hLsaConnection != (HANDLE)NULL) {
         LsaCloseServer(hLsaConnection);
     }
+
+    LW_SAFE_FREE_STRING(pUid);
+    LW_SAFE_FREE_STRING(pLoginId);
 
     return dwError;
 
@@ -262,7 +346,7 @@ ShowUsage(
     PCSTR pszProgramName
     )
 {
-    fprintf(stdout, "Usage: %s ( <user login id> | <uid> )\n", pszProgramName);
+    fprintf(stdout, "Usage: %s ( <user login id> | --uid <uid> )\n", pszProgramName);
 }
 
 static
@@ -289,80 +373,4 @@ MapErrorCode(
     }
     
     return dwError2;
-}
-
-static
-BOOLEAN
-IsUnsignedInteger(
-    PCSTR pszIntegerCandidate
-    )
-{
-    typedef enum {
-        PARSE_MODE_LEADING_SPACE = 0,
-        PARSE_MODE_INTEGER,
-        PARSE_MODE_TRAILING_SPACE
-    } ParseMode;
-
-    ParseMode parseMode = PARSE_MODE_LEADING_SPACE;
-    BOOLEAN bIsUnsignedInteger = TRUE;
-    INT iLength = 0;
-    INT iCharIdx = 0;
-    CHAR cNext = '\0';
-    
-    if (LW_IS_NULL_OR_EMPTY_STR(pszIntegerCandidate))
-    {
-        bIsUnsignedInteger = FALSE;
-        goto error;
-    }
-    
-    iLength = strlen(pszIntegerCandidate);
-    
-    do {
-
-      cNext = pszIntegerCandidate[iCharIdx++];
-      
-      switch(parseMode) {
-
-          case PARSE_MODE_LEADING_SPACE:
-          {
-              if (isdigit((int)cNext))
-              {
-                  parseMode = PARSE_MODE_INTEGER;
-              }
-              else if (!isspace((int)cNext))
-              {
-                  bIsUnsignedInteger = FALSE;
-              }
-              break;
-          }
-          
-          case PARSE_MODE_INTEGER:
-          {
-              if (isspace((int)cNext))
-              {
-                  parseMode = PARSE_MODE_TRAILING_SPACE;
-              }
-              else if (!isdigit((int)cNext))
-              {
-                  bIsUnsignedInteger = FALSE;
-              }
-              break;
-          }
-          
-          case PARSE_MODE_TRAILING_SPACE:
-          {
-              if (!isspace((int)cNext))
-              {
-                  bIsUnsignedInteger = FALSE;
-              }
-              break;
-          }    
-      }
-
-    } while (iCharIdx < iLength && bIsUnsignedInteger == TRUE);
-
-    
-error:
-
-    return bIsUnsignedInteger;   
 }
