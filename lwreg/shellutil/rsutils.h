@@ -1,7 +1,6 @@
 #ifndef _RSUTILS_H
 #define _RSUTILS_H
 
-
 #define REGEXPORT_LINE_WIDTH 80
 
 #define REGSHELLUTIL_NO_ESC_BACKSLASH 0x0
