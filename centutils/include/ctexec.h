@@ -57,8 +57,8 @@
 #ifndef __CT_EXEC_H__
 #define __CT_EXEC_H__
 
-#include "ctbase.h"
-#include "lwexc.h"
+#include <ctbase.h>
+#include <lwexc.h>
 
 /**
  * @defgroup CTExec Unix program interaction

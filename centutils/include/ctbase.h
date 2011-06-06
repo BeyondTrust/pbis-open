@@ -61,18 +61,18 @@
 #include <lw/attrs.h>
 #include <lwerror.h>
 
-#include "ctsys.h"
-#include "ctdef.h"
-#include "ctmem.h"
-#include "ctrwlock.h"
-#include "ctstrutils.h"
-#include "ctfileutils.h"
-#include "ctsysfuncs.h"
-#include "ctprocutils.h"
-#include "cthash.h"
-#include "ctexec.h"
-#include "ctuser.h"
-#include "cttext.h"
+#include <ctsys.h>
+#include <ctdef.h>
+#include <ctmem.h>
+#include <ctrwlock.h>
+#include <ctstrutils.h>
+#include <ctfileutils.h>
+#include <ctsysfuncs.h>
+#include <ctprocutils.h>
+#include <cthash.h>
+#include <ctexec.h>
+#include <ctuser.h>
+#include <cttext.h>
 
 #endif /* __CTBASE_H__ */
 

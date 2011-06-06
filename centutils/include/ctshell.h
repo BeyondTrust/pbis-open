@@ -57,7 +57,7 @@
 #ifndef __CTSHELL_H__
 #define __CTSHELL_H__
 
-#include "ctbase.h"
+#include <ctbase.h>
 
 typedef struct CTShellVar
 {

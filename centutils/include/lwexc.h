@@ -57,8 +57,8 @@
 #ifndef __LW_EXCEPTION_H__
 #define __LW_EXCEPTION_H__
 
-#include "ctsys.h"
-#include "ctdef.h"
+#include <ctsys.h>
+#include <ctdef.h>
 
 typedef struct _LWStackFrame
 {

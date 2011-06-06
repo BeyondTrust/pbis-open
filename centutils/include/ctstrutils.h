@@ -57,7 +57,7 @@
 #ifndef __CTSTRUTILS_H__
 #define __CTSTRUTILS_H__
 
-#include "ctarray.h"
+#include <ctarray.h>
 
 
 LW_BEGIN_EXTERN_C
