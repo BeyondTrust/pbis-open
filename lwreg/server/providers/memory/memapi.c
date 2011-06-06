@@ -88,6 +88,7 @@ MemProvider_Initialize(
     PREG_DB_CONNECTION pConn = NULL;
     PMEMREG_NODE pDbRoot = NULL;
 
+    setlocale(LC_ALL, "");
     status = LW_RTL_ALLOCATE(
                  (PVOID*)&pConn,
                  REG_DB_CONNECTION,
