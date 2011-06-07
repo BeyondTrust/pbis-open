@@ -43,10 +43,10 @@
 #ifndef INCLUDES_H_
 #define INCLUDES_H_
 
-#include <locale.h>
 #include "config.h"
 
 #include "regsystem.h"
+#include <locale.h>
 #include <uuid/uuid.h>
 #include <lw/base.h>
 #include <lw/ntstatus.h>
