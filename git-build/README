@@ -88,7 +88,7 @@ you will need to start lwsmd and import registry files manually:
 
   $ sudo /etc/init.d/lwsmd start
   $ sudo bash -c 'for file in /opt/likewise/share/config/*.reg; do \
-      /opt/likewise/bin/regshell import $file; \
+      /opt/likewise/bin/lwregshell import $file; \
     done'
   $ sudo /etc/init.d/lwmsd reload
 
@@ -97,10 +97,10 @@ Likewise Registry Service
 
 The Likewise Registry Service (lwregd) is the configuration data store
 used by all Likewise services.  You can view and modify the registry
-settings by running /opt/likewise/bin/regshell as the root user.  For
+settings by running /opt/likewise/bin/lwregshell as the root user.  For
 example:
 
-  $ sudo /opt/likewise/bin/regshell
+  $ sudo /opt/likewise/bin/lwregshell
   > cd hkey_this_machine\\services
 
   hkey_this_machine\services> dir
