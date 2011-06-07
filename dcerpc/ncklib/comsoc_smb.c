@@ -697,14 +697,15 @@ rpc__smb_socket_bind(
 }
 
 INTERNAL
-rpc_socket_error_t
+void
 rpc__smb_socket_connect(
     rpc_socket_t sock,
     rpc_addr_p_t addr,
-    rpc_cn_assoc_t *assoc ATTRIBUTE_UNUSED
+    rpc_cn_assoc_t *assoc ATTRIBUTE_UNUSED,
+    unsigned32 *st
     )
 {
-    rpc_socket_error_t serr = RPC_C_SOCKET_OK;
+    NTSTATUS status = STATUS_SUCCESS;
     rpc_smb_socket_p_t smb = (rpc_smb_socket_p_t) sock->data.pointer;
     char *netaddr = NULL;
     char *endpoint = NULL;
@@ -736,59 +737,55 @@ rpc__smb_socket_connect(
     }
     else
     {
-        serr = EINVAL;
+        status = STATUS_INVALID_PARAMETER;
         goto error;
     }
 
-    serr = NtStatusToErrno(
-        LwRtlCStringAllocatePrintf(
-            &smbpath, 
-            "/rdr/%s/IPC$/%s",
-            (char*) netaddr,
-            (char*) pipename));
-    if (serr)
+    status = LwRtlCStringAllocatePrintf(
+                &smbpath, 
+                "/rdr/%s/IPC$/%s",
+                (char*) netaddr,
+                (char*) pipename);
+    if (status)
     {
         goto error;
     }
     
-    serr = NtStatusToErrno(
-        LwRtlUnicodeStringAllocateFromCString(
-            &smb->filename.Name,
-            smbpath));
-    if (serr)
+    status = LwRtlUnicodeStringAllocateFromCString(
+                &smb->filename.Name,
+                smbpath);
+    if (status)
     {
         goto error;
     }
 
-    serr = NtStatusToErrno(
-        NtCreateFile(
-            &smb->np,                                /* Created handle */
-            NULL,                                    /* Async control block */
-            &io_status,                              /* Status block */
-            &smb->filename,                          /* Filename */
-            NULL,                                    /* Security descriptor */
-            NULL,                                    /* Security QOS */
-            pipeAccess,                              /* Access mode */
-            0,                                       /* Allocation size */
-            0,                                       /* File attributes */
-            FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,      /* Sharing mode */
-            FILE_OPEN,                               /* Create disposition */
-            FILE_NON_DIRECTORY_FILE | FILE_OPEN_NO_RECALL,             /* Create options */
-            NULL,                                    /* EA buffer */
-            0,                                       /* EA buffer length */
-            NULL,                                    /* ECP List */
-            smb->info.creds));                       /* Security token */
-    if (serr)
+    status = NtCreateFile(
+                &smb->np,                                /* Created handle */
+                NULL,                                    /* Async control block */
+                &io_status,                              /* Status block */
+                &smb->filename,                          /* Filename */
+                NULL,                                    /* Security descriptor */
+                NULL,                                    /* Security QOS */
+                pipeAccess,                              /* Access mode */
+                0,                                       /* Allocation size */
+                0,                                       /* File attributes */
+                FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,      /* Sharing mode */
+                FILE_OPEN,                               /* Create disposition */
+                FILE_NON_DIRECTORY_FILE | FILE_OPEN_NO_RECALL,             /* Create options */
+                NULL,                                    /* EA buffer */
+                0,                                       /* EA buffer length */
+                NULL,                                    /* ECP List */
+                smb->info.creds);                       /* Security token */
+    if (status)
     {
         goto error;
     }
 
-    serr = NtStatusToErrno(
-        LwIoGetSessionKey(
-            smb->np,
-            &sesskeylen,
-            &sesskey));
-    if (serr)
+    status = LwIoGetSessionKey(
+                smb->np,
+                &sesskeylen,
+                &sesskey);
+    if (status)
     {
         goto error;
     }
@@ -797,7 +794,7 @@ rpc__smb_socket_connect(
     smb->info.session_key.data = malloc(sesskeylen);
     if (!smb->info.session_key.data)
     {
-        serr = ENOMEM;
+        status = STATUS_NO_MEMORY;
         goto error;
     }
     memcpy(smb->info.session_key.data, sesskey, sesskeylen);
@@ -807,6 +804,8 @@ rpc__smb_socket_connect(
 
     /* Since we did a connect, we will be sending first */
     smb->state = SMB_STATE_SEND;
+
+    *st = rpc_s_ok;
 
 done:
 
@@ -826,10 +825,11 @@ done:
     rpc_string_free((unsigned_char_t**) &netaddr, &dbg_status);
     rpc_string_free((unsigned_char_t**) &endpoint, &dbg_status);
 
-    return serr;
+    return;
 
 error:
 
+    *st = NtStatusToRpcStatus(status);
     goto done;
 }
 

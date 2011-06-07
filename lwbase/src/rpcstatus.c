@@ -804,3 +804,59 @@ LwRpcStatusToNtStatus(
             return LW_STATUS_UNSUCCESSFUL;
     }
 }
+
+LW_DWORD
+LwNtStatusToRpcStatus(
+    LW_IN LW_NTSTATUS status
+    )
+{
+    switch(status)
+    {
+        case LW_STATUS_SUCCESS:
+            return 0;
+        case LW_STATUS_ADDRESS_NOT_ASSOCIATED:
+            return LW_ERROR_RPC_S_CANT_BIND_SOCKET;
+        case LW_STATUS_REMOTE_NOT_LISTENING:
+            return LW_ERROR_RPC_S_RPCD_COMM_FAILURE;
+        case LW_STATUS_CONNECTION_INVALID:
+            return LW_ERROR_RPC_S_COMM_FAILURE;
+        case LW_STATUS_INVALID_CONNECTION:
+            return LW_ERROR_RPC_S_CANNOT_CONNECT;
+        case LW_STATUS_CONNECTION_ABORTED:
+            return LW_ERROR_RPC_S_CONNECTION_ABORTED;
+        case LW_STATUS_IO_TIMEOUT:
+            return LW_ERROR_RPC_S_CONNECT_TIMED_OUT;
+        case LW_STATUS_CONNECTION_REFUSED:
+            return LW_ERROR_RPC_S_CONNECT_REJECTED;
+        case LW_STATUS_NO_MEMORY:
+            return LW_ERROR_RPC_S_NO_MEMORY;
+        case LW_STATUS_TRANSACTION_TIMED_OUT:
+            return LW_ERROR_RPC_S_CALL_TIMEOUT;
+        case LW_STATUS_ADDRESS_ALREADY_EXISTS:
+            return LW_ERROR_RPC_S_ADDR_IN_USE;
+        case LW_STATUS_TOO_MANY_ADDRESSES:
+            return LW_ERROR_RPC_S_TOO_MANY_SOCKETS;
+        case LW_STATUS_ACCESS_DENIED:
+            return LW_ERROR_RPC_S_INVALID_CREDENTIALS;
+        case LW_STATUS_KDC_CERT_REVOKED:
+            return LW_ERROR_RPC_S_AUTH_TKT_EXPIRED;
+        case LW_STATUS_TIME_DIFFERENCE_AT_DC:
+            return LW_ERROR_RPC_S_AUTH_SKEW;
+        case LW_STATUS_NETWORK_UNREACHABLE:
+            return LW_ERROR_RPC_S_NETWORK_UNREACHABLE;
+        case LW_STATUS_INSUFFICIENT_RESOURCES:
+            return LW_ERROR_RPC_S_CONNECT_NO_RESOURCES;
+        case LW_STATUS_HOST_UNREACHABLE:
+            return LW_ERROR_RPC_S_HOST_UNREACHABLE;
+        case LW_STATUS_CONNECTION_RESET:
+            return LW_ERROR_RPC_S_CONNECT_CLOSED_BY_REM;
+        case LW_STATUS_BAD_NETWORK_NAME:
+        case LW_STATUS_OBJECT_NAME_NOT_FOUND:
+        case LW_STATUS_NO_SUCH_FILE:
+            return LW_ERROR_RPC_S_NO_NAME_MAPPING;
+
+        case LW_STATUS_UNSUCCESSFUL:
+        default:
+             return LW_ERROR_RPC_S_UNKNOWN_STATUS_CODE;
+    }
+}

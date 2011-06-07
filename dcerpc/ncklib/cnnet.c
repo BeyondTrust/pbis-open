@@ -84,10 +84,6 @@ INTERNAL void rpc__cn_network_desc_inq_ep (
     unsigned_char_p_t       * /*endpoint*/,
     unsigned32              *status);
 
-INTERNAL void rpc__cn_network_serr_to_status (
-    rpc_socket_error_t       /*serr*/,
-    unsigned32              *st);
-
 INTERNAL pointer_t rpc__cn_network_init_desc (
     rpc_socket_t                * /*desc*/,
     boolean32                    /*spawned*/,
@@ -1246,8 +1242,8 @@ PRIVATE void rpc__cn_network_req_connect
                 dcethread_enableasync_throw(1);
 	        dcethread_checkinterrupt();
 #endif /* NON_CANCELLABLE_IO */
-                serr = rpc__socket_connect (assoc->cn_ctlblk.cn_sock, rpc_addr,
-					    assoc);
+                rpc__socket_connect (assoc->cn_ctlblk.cn_sock, rpc_addr,
+					    assoc, st);
 
 #ifdef NON_CANCELLABLE_IO
                 dcethread_enableasync_throw(0);
@@ -1296,24 +1292,12 @@ PRIVATE void rpc__cn_network_req_connect
          */
         RPC_CN_LOCK ();
 
-        /*
-         * This is not an error.   We are already connected.
-         * This happens because the underlying threads package
-         * uses non-blocking I/O.
-         */
-	if (serr == RPC_C_SOCKET_EISCONN)
-	{
-	    serr = RPC_C_SOCKET_OK;
-	}
-
-        if (RPC_SOCKET_IS_ERR(serr))
+        if (*st != rpc_s_ok)
         {
             RPC_DBG_PRINTF (rpc_e_dbg_general, RPC_C_CN_DBG_ERRORS,
                             ("(rpc__cn_network_req_connect) desc->%x rpc__socket_connect failed, error = %d\n",
                              assoc->cn_ctlblk.cn_sock, 
-                             RPC_SOCKET_ETOI(serr)));
-            
-            rpc__cn_network_serr_to_status (serr, st);
+                             *st));
             
             /*
              * The connect request failed. Close the socket just created
@@ -1917,7 +1901,7 @@ unsigned32              st
 **--
 **/
 
-INTERNAL void rpc__cn_network_serr_to_status 
+PRIVATE void rpc__cn_network_serr_to_status 
 (
   rpc_socket_error_t      serr,
   unsigned32              *st
@@ -2007,7 +1991,7 @@ INTERNAL void rpc__cn_network_serr_to_status
         *st = rpc_s_cannot_connect;
         break;
     }
-}    
+}
 
 
 /*

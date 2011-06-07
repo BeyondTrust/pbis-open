@@ -11,6 +11,7 @@
 #include <cnp.h>
 #include <httpnaf.h>
 #include <stddef.h>
+#include <cnnet.h>
 /* This is a huge hack to work around curl being stupid
    on multiarch systems */
 #define __CURL_CURLRULES_H
@@ -1197,11 +1198,12 @@ rpc__http_socket_bind(
 }
 
 INTERNAL
-rpc_socket_error_t
+void
 rpc__http_socket_connect(
     rpc_socket_t sock,
     rpc_addr_p_t addr,
-    rpc_cn_assoc_t *assoc ATTRIBUTE_UNUSED
+    rpc_cn_assoc_t *assoc ATTRIBUTE_UNUSED,
+    unsigned32 *st
     )
 {
     rpc_socket_error_t serr = 0;
@@ -1249,7 +1251,14 @@ rpc__http_socket_connect(
 
 error:
 
-    return serr;
+    if (serr)
+    {
+        rpc__cn_network_serr_to_status (serr, st);
+    }
+    else
+    {
+        *st = rpc_s_ok;
+    }
 }
 
 INTERNAL

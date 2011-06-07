@@ -186,6 +186,11 @@ PRIVATE void rpc__cn_network_close_connect (
 PRIVATE boolean32 rpc__cn_network_connect_fail (unsigned32);
 
 
+PRIVATE void rpc__cn_network_serr_to_status (
+    rpc_socket_error_t       /*serr*/,
+    unsigned32              */* st */);
+
+
 /*
  * These two are internal API's so you can tweak the TCP buffering.
  */

@@ -96,14 +96,15 @@ rpc__socket_bind (
 }
 
 /* Connect the socket */
-rpc_socket_error_t
+void
 rpc__socket_connect (
     rpc_socket_t sock,
     rpc_addr_p_t addr,
-    rpc_cn_assoc_t* assoc
+    rpc_cn_assoc_t* assoc,
+    unsigned32 *st
     )
 {
-    return sock->vtbl->socket_connect(sock, addr, assoc);
+    return sock->vtbl->socket_connect(sock, addr, assoc, st);
 }
 
 /* Accept a connection on a listen socket */

@@ -55,6 +55,7 @@
 #include <sys/socket.h>
 #include <cnp.h>
 #include <lw/base.h>
+#include <cnnet.h>
 
 #if defined(__hpux)
 #include "xnet-private.h"
@@ -740,11 +741,12 @@ INTERNAL rpc_socket_error_t rpc__bsd_socket_recvsession_key
  * (see BSD UNIX connect(2)).
  */
 
-INTERNAL rpc_socket_error_t rpc__bsd_socket_connect
+INTERNAL void rpc__bsd_socket_connect
 (
     rpc_socket_t        sock,
     rpc_addr_p_t        addr,
-    rpc_cn_assoc_t      *assoc ATTRIBUTE_UNUSED
+    rpc_cn_assoc_t      *assoc ATTRIBUTE_UNUSED,
+    unsigned32 *st
 )
 {
     rpc_socket_error_t  serr;
@@ -806,13 +808,23 @@ connect_again:
         lrpc->info.session_key.length = session_key_len;
     }
 
+    *st = rpc_s_ok;
+
 cleanup:
     rpc_string_free (&netaddr, &dbg_status);
     rpc_string_free (&endpoint, &dbg_status);
 
-    return serr;
+    return;
 
 error:
+    if (serr == RPC_C_SOCKET_EISCONN)
+    {
+        *st = rpc_s_ok;
+    }
+    else
+    {
+        rpc__cn_network_serr_to_status (serr, st);
+    }
     goto cleanup;
 }
 

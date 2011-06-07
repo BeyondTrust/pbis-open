@@ -118,11 +118,12 @@ typedef struct rpc_socket_vtbl_s
         rpc_addr_p_t addr
         );
     /* Connect the socket */
-    rpc_socket_error_t
+    void
     (*socket_connect) (
         rpc_socket_t sock,
         rpc_addr_p_t addr,
-        rpc_cn_assoc_t* assoc
+        rpc_cn_assoc_t* assoc,
+        unsigned32 *st
         );
     /* Accept a connection on a listen socket */
     rpc_socket_error_t
@@ -371,10 +372,11 @@ PRIVATE rpc_socket_error_t rpc__socket_bind (
  * (see BSD UNIX connect(2)).
  */
 
-PRIVATE rpc_socket_error_t rpc__socket_connect (
+PRIVATE void rpc__socket_connect (
         rpc_socket_t  /*sock*/,
         rpc_addr_p_t /*addr*/,
-	rpc_cn_assoc_t* /*assoc*/
+	rpc_cn_assoc_t* /*assoc*/,
+        unsigned32* /*st*/
     );
 
 

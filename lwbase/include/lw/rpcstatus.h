@@ -49,8 +49,14 @@ LwRpcStatusToNtStatus(
     LW_IN LW_DWORD status
     );
 
+LW_DWORD
+LwNtStatusToRpcStatus(
+    LW_IN LW_NTSTATUS status
+    );
+
 #ifndef LW_STRICT_NAMESPACE
 #define RpcStatusToNtStatus(code)    LwRpcStatusToNtStatus(code)
+#define NtStatusToRpcStatus(code) LwNtStatusToRpcStatus(code)
 #endif /* LW_STRICT_NAMESPACE */
 
 LW_END_EXTERN_C
