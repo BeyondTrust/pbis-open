@@ -386,8 +386,6 @@ LsaMapSecurityResolveObjectInfoBySid(
     assert(STATUS_NOT_FOUND != status);
     GOTO_CLEANUP_ON_STATUS(status);
 
-    LsaMapSecurityCloseConnection(Context, &hConnection);
-
     if (ppObjects[0]->type == LSA_OBJECT_TYPE_USER)
     {
         SetFlag(objectInfo.Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_IS_USER);
@@ -411,6 +409,8 @@ LsaMapSecurityResolveObjectInfoBySid(
     }
 
 cleanup:
+
+    LsaMapSecurityCloseConnection(Context, &hConnection);
 
     if (!NT_SUCCESS(status))
     {
