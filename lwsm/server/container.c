@@ -90,6 +90,9 @@ typedef struct _CONTAINER_START_REQ
     DWORD FdCount;
     int* pFds;
     DWORD FdLimit;
+    LW_SM_LOGGER_TYPE LogType;
+    LW_SM_LOG_LEVEL LogLevel;
+    PWSTR pLogTarget;
 } CONTAINER_START_REQ, *PCONTAINER_START_REQ;
 
 typedef struct _CONTAINER_STATUS_RES
@@ -155,6 +158,9 @@ typedef struct _CONTAINER_INSTANCE
     PWSTR* ppArgs;
     PWSTR pGroup;
     DWORD FdLimit;
+    LW_SM_LOGGER_TYPE LogType;
+    LW_SM_LOG_LEVEL LogLevel;
+    PWSTR pLogTarget;
     LWMsgParams In;
     LWMsgParams Out;
     CONTAINER_START_REQ Start;
@@ -239,6 +245,9 @@ static LWMsgTypeSpec gContainerStartSpec[] =
     LWMSG_ATTR_LENGTH_MEMBER(CONTAINER_START_REQ, FdCount),
     LWMSG_ATTR_NOT_NULL,
     LWMSG_MEMBER_UINT32(CONTAINER_START_REQ, FdLimit),
+    LWMSG_MEMBER_TYPESPEC(CONTAINER_START_REQ, LogType, gLogTypeSpec),
+    LWMSG_MEMBER_PWSTR(CONTAINER_START_REQ, pLogTarget),
+    LWMSG_MEMBER_TYPESPEC(CONTAINER_START_REQ, LogLevel, gLogLevelSpec),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
@@ -868,6 +877,7 @@ ContainerDeleteInstance(
         LW_SAFE_FREE_MEMORY(pInstance->pName);
         LW_SAFE_FREE_MEMORY(pInstance->pPath);
         LW_SAFE_FREE_MEMORY(pInstance->pGroup);
+        LW_SAFE_FREE_MEMORY(pInstance->pLogTarget);
         LwSmFreeStringList(pInstance->ppArgs);
 
         LwFreeMemory(pInstance);
@@ -976,6 +986,9 @@ ContainerStart(
     pInstance->Start.ppArgs = pInstance->ppArgs;
     pInstance->Start.FdCount = 0;
     pInstance->Start.FdLimit = pInstance->FdLimit;
+    pInstance->Start.LogType = pInstance->LogType;
+    pInstance->Start.LogLevel = pInstance->LogLevel;
+    pInstance->Start.pLogTarget = pInstance->pLogTarget;
     pInstance->In.tag = CONTAINER_REQ_START;
     pInstance->In.data = &pInstance->Start;
 
@@ -1476,6 +1489,8 @@ ContainerConstruct(
     pInstance->pObject = pObject;
     pInstance->State = LW_SERVICE_STATE_STOPPED;
     pInstance->FdLimit = pInfo->dwFdLimit;
+    pInstance->LogType = pInfo->DefaultLogType;
+    pInstance->LogLevel = pInfo->DefaultLogLevel;
 
     dwError = LwAllocateWc16String(&pInstance->pName, pInfo->pwszName);
     BAIL_ON_ERROR(dwError);
@@ -1484,6 +1499,9 @@ ContainerConstruct(
     BAIL_ON_ERROR(dwError);
 
     dwError = LwAllocateWc16String(&pInstance->pGroup, pInfo->pwszGroup);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmCopyString(pInfo->pDefaultLogTarget, &pInstance->pLogTarget);
     BAIL_ON_ERROR(dwError);
 
     dwError = LwSmCopyStringList(pInfo->ppwszArgs, &pInstance->ppArgs);
@@ -1685,6 +1703,7 @@ ContainerSrvStart(
     LW_SVCM_MODULE_ENTRY_FUNCTION entry = NULL;
     PSTR pName = NULL;
     int i = 0;
+    PSTR pLogTarget = NULL;
 
     lwmsg_call_set_user_data(pCall, pOut);
 
@@ -1693,6 +1712,35 @@ ContainerSrvStart(
 
     pHandle->State = LW_SERVICE_STATE_STOPPED;
     pHandle->pCall = pCall;
+
+    switch (pReq->LogType)
+    {
+    case LW_SM_LOGGER_DEFAULT:
+        break;
+    case LW_SM_LOGGER_NONE:
+        dwError = LwSmSetLogger(NULL, NULL, NULL);
+        BAIL_ON_ERROR(dwError);
+        break;
+    case LW_SM_LOGGER_FILE:
+        dwError = LwWc16sToMbs(pReq->pLogTarget, &pLogTarget);
+        BAIL_ON_ERROR(dwError);
+        dwError = LwSmSetLoggerToPath(NULL, pLogTarget);
+        BAIL_ON_ERROR(dwError);
+        break;
+    case LW_SM_LOGGER_SYSLOG:
+        dwError = LwSmSetLoggerToSyslog(NULL);
+        BAIL_ON_ERROR(dwError);
+        break;
+    }
+
+    switch (pReq->LogLevel)
+    {
+    case 0:
+        break;
+    default:
+        dwError = LwSmSetMaxLogLevel(NULL, pReq->LogLevel);
+        BAIL_ON_ERROR(dwError);
+    }
 
     dwError = LwWc16sToMbs(pReq->pName, &pName);
     BAIL_ON_ERROR(dwError);
@@ -1736,6 +1784,7 @@ ContainerSrvStart(
 error:
 
     LW_SAFE_FREE_MEMORY(pName);
+    LW_SAFE_FREE_MEMORY(pLogTarget);
 
     if (pHandle)
     {

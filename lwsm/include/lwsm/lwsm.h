@@ -66,6 +66,89 @@
 typedef struct _LW_SERVICE_HANDLE *LW_SERVICE_HANDLE, **PLW_SERVICE_HANDLE;
 
 /**
+ * @brief Log level
+ *
+ * Describes the level of a log message in terms
+ * of importance.
+ */
+typedef enum _LW_SM_LOG_LEVEL
+{
+    /**
+     * @brief Indicates the default log level
+     * @hideinitializer
+     */
+    LW_SM_LOG_LEVEL_DEFAULT = 0,
+    /**
+     * @brief Message that should always be logged
+     * @hideinitializer
+     */
+    LW_SM_LOG_LEVEL_ALWAYS = LW_RTL_LOG_LEVEL_ALWAYS,
+    /**
+     * @brief Message that indicates an error condition
+     * @hideinitializer
+     */
+    LW_SM_LOG_LEVEL_ERROR = LW_RTL_LOG_LEVEL_ERROR,
+    /**
+     * @brief Message that indicates a warning condition
+     * @hideinitializer
+     */
+    LW_SM_LOG_LEVEL_WARNING = LW_RTL_LOG_LEVEL_WARNING,
+    /**
+     * @brief Message that informs the user of a normal
+     * but significant condition or event
+     * @hideinitializer
+     */
+    LW_SM_LOG_LEVEL_INFO = LW_RTL_LOG_LEVEL_INFO,
+    /**
+     * @brief Message that informs the user of a normal
+     * and common event
+     * @hideinitializer
+     */
+    LW_SM_LOG_LEVEL_VERBOSE = LW_RTL_LOG_LEVEL_VERBOSE,
+    /**
+     * @brief Message that is only of interest when attempting
+     * to debug improper program behavior.
+     * @hideinitializer
+     */
+    LW_SM_LOG_LEVEL_DEBUG = LW_RTL_LOG_LEVEL_DEBUG,
+    /**
+     * @brief Message that tracks low-level program execution
+     * flow.
+     * @hideinitializer
+     */
+    LW_SM_LOG_LEVEL_TRACE = LW_RTL_LOG_LEVEL_TRACE
+} LW_SM_LOG_LEVEL, *PLW_SM_LOG_LEVEL;
+
+/**
+ * @brief Logger type
+ *
+ * Indicates the type of logging target
+ */
+typedef enum _LW_SM_LOGGER_TYPE
+{
+    /**
+     * @brief Log to the default target
+     * @hideinitializer
+     */
+    LW_SM_LOGGER_DEFAULT,
+    /**
+     * @brief Do not log
+     * @hideinitializer
+     */
+    LW_SM_LOGGER_NONE,
+    /**
+     * @brief Log to file
+     * @hideinitializer
+     */
+    LW_SM_LOGGER_FILE,
+    /**
+     * @brief Log to syslog
+     * @hideinitializer
+     */
+    LW_SM_LOGGER_SYSLOG
+} LW_SM_LOGGER_TYPE, *PLW_SM_LOGGER_TYPE;
+
+/**
  * @brief State of a service
  *
  * Represents the state of a service (running, stopped, etc.)
@@ -227,10 +310,14 @@ typedef enum _LW_SERVICE_INFO_MASK
      */
     LW_SERVICE_INFO_MASK_GROUP        = 0x200,
     /**
+     * @brief Update service log settings
+     */
+    LW_SERVICE_INFO_MASK_LOG          = 0x400,
+    /**
      * @brief Update all flags
      * @hideinitializer
      */
-    LW_SERVICE_INFO_MASK_ALL          = 0x3FF
+    LW_SERVICE_INFO_MASK_ALL          = 0x7FF
 } LW_SERVICE_INFO_MASK, *PLW_SERVICE_INFO_MASK;
 
 /**
@@ -261,6 +348,12 @@ typedef struct _LW_SERVICE_INFO
     LW_BOOLEAN bAutostart;
     /** @brief Desired file descriptor limit for the process */
     LW_DWORD dwFdLimit;
+    /** @brief Default log type */
+    LW_SM_LOGGER_TYPE DefaultLogType;
+    /** @brief Default log target */
+    LW_PWSTR pDefaultLogTarget;
+    /** @brief Default log level */
+    LW_SM_LOG_LEVEL DefaultLogLevel;
 } LW_SERVICE_INFO, *PLW_SERVICE_INFO;
 
 typedef const LW_SERVICE_INFO* PCLW_SERVICE_INFO;
@@ -279,89 +372,6 @@ typedef struct _LW_SERVICE_STATUS
     /** Brief Process ID of service home */
     pid_t pid;
 } LW_SERVICE_STATUS, *PLW_SERVICE_STATUS;
-
-/**
- * @brief Log level
- *
- * Describes the level of a log message in terms
- * of importance.
- */
-typedef enum _LW_SM_LOG_LEVEL
-{
-    /**
-     * @brief Indicates the default log level
-     * @hideinitializer
-     */
-    LW_SM_LOG_LEVEL_DEFAULT = 0,
-    /**
-     * @brief Message that should always be logged
-     * @hideinitializer
-     */
-    LW_SM_LOG_LEVEL_ALWAYS = LW_RTL_LOG_LEVEL_ALWAYS,
-    /**
-     * @brief Message that indicates an error condition
-     * @hideinitializer
-     */
-    LW_SM_LOG_LEVEL_ERROR = LW_RTL_LOG_LEVEL_ERROR,
-    /**
-     * @brief Message that indicates a warning condition
-     * @hideinitializer
-     */
-    LW_SM_LOG_LEVEL_WARNING = LW_RTL_LOG_LEVEL_WARNING,
-    /**
-     * @brief Message that informs the user of a normal
-     * but significant condition or event
-     * @hideinitializer
-     */
-    LW_SM_LOG_LEVEL_INFO = LW_RTL_LOG_LEVEL_INFO,
-    /**
-     * @brief Message that informs the user of a normal
-     * and common event
-     * @hideinitializer
-     */
-    LW_SM_LOG_LEVEL_VERBOSE = LW_RTL_LOG_LEVEL_VERBOSE,
-    /**
-     * @brief Message that is only of interest when attempting
-     * to debug improper program behavior.
-     * @hideinitializer
-     */
-    LW_SM_LOG_LEVEL_DEBUG = LW_RTL_LOG_LEVEL_DEBUG,
-    /**
-     * @brief Message that tracks low-level program execution
-     * flow.
-     * @hideinitializer
-     */
-    LW_SM_LOG_LEVEL_TRACE = LW_RTL_LOG_LEVEL_TRACE
-} LW_SM_LOG_LEVEL, *PLW_SM_LOG_LEVEL;
-
-/**
- * @brief Logger type
- *
- * Indicates the type of logging target
- */
-typedef enum _LW_SM_LOGGER_TYPE
-{
-    /**
-     * @brief Log to the default target
-     * @hideinitializer
-     */
-    LW_SM_LOGGER_DEFAULT,
-    /**
-     * @brief Do not log
-     * @hideinitializer
-     */
-    LW_SM_LOGGER_NONE,
-    /**
-     * @brief Log to file
-     * @hideinitializer
-     */
-    LW_SM_LOGGER_FILE,
-    /**
-     * @brief Log to syslog
-     * @hideinitializer
-     */
-    LW_SM_LOGGER_SYSLOG
-} LW_SM_LOGGER_TYPE, *PLW_SM_LOGGER_TYPE;
 
 typedef enum _LW_SM_GLOBAL_SETTING
 {

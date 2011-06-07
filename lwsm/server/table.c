@@ -289,6 +289,11 @@ LwSmTableUpdateEntry(
         &pUpdate->pwszGroup);
     BAIL_ON_ERROR(dwError);
 
+    dwError = LwSmCopyString(
+        mask & LW_SERVICE_INFO_MASK_LOG ? pInfo->pDefaultLogTarget : pEntry->pInfo->pDefaultLogTarget,
+        &pUpdate->pDefaultLogTarget);
+    BAIL_ON_ERROR(dwError);
+
     dwError = LwSmCopyStringList(
         mask & LW_SERVICE_INFO_MASK_ARGS ? pInfo->ppwszArgs : pEntry->pInfo->ppwszArgs,
         &pUpdate->ppwszArgs);
@@ -307,6 +312,8 @@ LwSmTableUpdateEntry(
     pUpdate->type = mask & LW_SERVICE_INFO_MASK_TYPE ? pInfo->type : pEntry->pInfo->type;
     pUpdate->bAutostart = mask & LW_SERVICE_INFO_MASK_AUTOSTART ? pInfo->bAutostart : pEntry->pInfo->bAutostart;
     pUpdate->dwFdLimit = mask & LW_SERVICE_INFO_MASK_AUTOSTART ? pInfo->dwFdLimit : pEntry->pInfo->dwFdLimit;
+    pUpdate->DefaultLogType = mask & LW_SERVICE_INFO_MASK_LOG ? pInfo->DefaultLogType : pEntry->pInfo->DefaultLogType;
+    pUpdate->DefaultLogLevel = mask & LW_SERVICE_INFO_MASK_LOG ? pInfo->DefaultLogLevel : pEntry->pInfo->DefaultLogLevel;
 
     /* Atomically replace previous info structure */
     LwSmCommonFreeServiceInfo(pEntry->pInfo);

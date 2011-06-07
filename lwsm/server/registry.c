@@ -204,6 +204,12 @@ LwSmRegistryReadServiceInfo(
         {'A', 'u', 't', 'o', 's', 't', 'a', 'r', 't', 0};
     static const WCHAR wszFdLimit[] =
         {'F', 'd', 'L', 'i', 'm', 'i', 't', 0};
+    static const WCHAR wszDefaultLogType[] =
+        {'D', 'e', 'f', 'a', 'u', 'l', 't', 'L', 'o', 'g', 'T', 'y', 'p', 'e', 0};
+    static const WCHAR wszDefaultLogTarget[] =
+            {'D', 'e', 'f', 'a', 'u', 'l', 't', 'L', 'o', 'g', 'T', 'a', 'r', 'g', 'e', 't', 0};
+    static const WCHAR wszDefaultLogLevel[] =
+            {'D', 'e', 'f', 'a', 'u', 'l', 't', 'L', 'o', 'g', 'L', 'e', 'v', 'e', 'l', 0};
 
     dwError = LwWc16sToMbs(pwszName, &pszName);
     BAIL_ON_ERROR(dwError);
@@ -320,6 +326,53 @@ LwSmRegistryReadServiceInfo(
 #else
         dwError = LwAllocateWc16String(&pInfo->pwszGroup, pInfo->pwszName);
 #endif
+    }
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmRegistryReadDword(
+        hReg,
+        pRootKey,
+        pwszParentKey,
+        wszDefaultLogType,
+        &pInfo->DefaultLogType);
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        dwError = 0;
+        pInfo->DefaultLogType = LW_SM_LOGGER_DEFAULT;
+    }
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmRegistryReadDword(
+        hReg,
+        pRootKey,
+        pwszParentKey,
+        wszDefaultLogLevel,
+        &pInfo->DefaultLogLevel);
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        dwError = 0;
+        pInfo->DefaultLogLevel = 0;
+    }
+    BAIL_ON_ERROR(dwError);
+
+
+    dwError = LwSmRegistryReadString(
+        hReg,
+        pRootKey,
+        pwszParentKey,
+        wszDefaultLogTarget,
+        &pInfo->pDefaultLogTarget);
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        switch (pInfo->DefaultLogType)
+        {
+        case LW_SM_LOGGER_SYSLOG:
+            dwError = LwMbsToWc16s("LOG_DAEMON", &pInfo->pDefaultLogTarget);
+            break;
+        default:
+            dwError = 0;
+            break;
+        }
     }
     BAIL_ON_ERROR(dwError);
 

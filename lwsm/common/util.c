@@ -235,6 +235,8 @@ LwSmCopyServiceInfo(
     pCopy->type = pInfo->type;
     pCopy->bAutostart = pInfo->bAutostart;
     pCopy->dwFdLimit = pInfo->dwFdLimit;
+    pCopy->DefaultLogType = pInfo->DefaultLogType;
+    pCopy->DefaultLogLevel = pInfo->DefaultLogLevel;
     
     dwError = LwSmCopyString(pInfo->pwszPath, &pCopy->pwszPath);
     BAIL_ON_ERROR(dwError);
@@ -255,6 +257,9 @@ LwSmCopyServiceInfo(
     BAIL_ON_ERROR(dwError);
 
     dwError = LwSmCopyStringList(pInfo->ppwszDependencies, &pCopy->ppwszDependencies);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmCopyString(pInfo->pDefaultLogTarget, &pCopy->pDefaultLogTarget);
     BAIL_ON_ERROR(dwError);
 
     *ppCopy = pCopy;
@@ -298,6 +303,11 @@ LwSmCommonFreeServiceInfo(
         if (pInfo->pwszGroup)
         {
             LwFreeMemory(pInfo->pwszGroup);
+        }
+
+        if (pInfo->pDefaultLogTarget)
+        {
+            LwFreeMemory(pInfo->pDefaultLogTarget);
         }
 
         LwSmFreeStringList(pInfo->ppwszArgs);
