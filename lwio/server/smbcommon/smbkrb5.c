@@ -469,6 +469,15 @@ SMBGSSContextNegotiate(
                 case ((DWORD) KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN):
                     dwError = STATUS_ACCESS_DENIED;
                     break;
+                case ((DWORD) KRB5KDC_ERR_POLICY):
+                    // The KDC will reply with this error code when the machine
+                    // is blocked from communicating to the DC over CIFS
+                    // through the 'Selective authentication' setting on the
+                    // trust. The PA-PW-SALT field of the KRB-ERROR contains NT
+                    // status 0xc0000413
+                    // (STATUS_AUTHENTICATION_FIREWALL_FAILED).
+                    dwError = STATUS_AUTHENTICATION_FIREWALL_FAILED;
+                    break;
                 default:
                     dwError = LWIO_ERROR_GSS;
             }
