@@ -413,7 +413,8 @@ pre_upgrade()
     run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable pam"
     run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable nsswitch"
 
-    run_quiet "@MK_BINDIR@/lwsm shutdown"
+    run_quiet "/etc/init.d/likewise stop"
+    run_quiet "/etc/init.d/lwsmd stop"
 
     for daemon in $DAEMONS_TO_HALT
     do
@@ -451,6 +452,9 @@ Check your system's documentation for details."
             logfile "selinuxenabled indicates SELinux is not enabled"
         fi
     fi
+
+    run_quiet "/etc/init.d/likewise stop"
+    run_quiet "/etc/init.d/lwsmd stop"
 
     for daemon in $DAEMONS_TO_HALT
     do
@@ -572,8 +576,12 @@ preuninstall_remove()
                               --short `hostname --short` \
                               --disable krb5
 
-    # Stop all daemons; none should be needed anymore.
-    run_quiet @MK_BINDIR@/lwsm shutdown
+    run_quiet "/etc/init.d/likewise stop"
+    run_quiet "/etc/init.d/lwsmd stop"
+
+    run_quiet "/sbin/chkconfig likewise off"
+    run_quiet "/sbin/chkconfig lwsmd off"
+
     for daemon in $DAEMONS_TO_HALT
     do
         run_quiet "pkill -KILL -x $daemon"
