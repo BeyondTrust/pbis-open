@@ -1806,12 +1806,11 @@ rpc__smb_socket_transport_inq_access_token(
     )
 {
     rpc_smb_transport_info_p_t smb_info = (rpc_smb_transport_info_p_t) info;
-    NTSTATUS status = STATUS_SUCCESS;
     
     RtlReferenceAccessToken(smb_info->access_token);
     *token = smb_info->access_token;
 
-    return LwNtStatusToErrno(status);
+    return 0;
 }
 
 rpc_socket_vtbl_t rpc_g_smb_socket_vtbl =
