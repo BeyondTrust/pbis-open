@@ -249,9 +249,17 @@ extern LWMsgTypeClass lwmsg_fd_type_class;
  * @brief Define a file descriptor
  *
  * Defines a file descriptor type within a type specification.
- * The corresponding C type should be <tt>int</tt>.  When
- * marshalled, the value must either be a valid file descriptor
- * or -1 (indicating that no descriptor should be transmitted).
+ * The corresponding C type should be <tt>int</tt>.
+ * The value must either be a valid file descriptor
+ * greater than 0, or a value less than or equal to 0
+ * (indicating that no descriptor should be transmitted).
+ *
+ * The reason that 0 is not considered a valid file descriptor is
+ * so that allocating zeroed memory is sufficient to initialize
+ * any file descriptors contained in the block.
+ *
+ * If you must transmit file descriptor 0, first use dup() to acquire
+ * a new descriptor with a non-zero value and transmit that.
  * @hideinitializer
  */
 #define LWMSG_FD LWMSG_CUSTOM(int, &lwmsg_fd_type_class, NULL)
@@ -260,9 +268,7 @@ extern LWMsgTypeClass lwmsg_fd_type_class;
  * @brief Define a file descriptor as a member
  *
  * Defines a file descriptor as a member of a containing type.
- * The corresponding C type should be <tt>int</tt>.  When
- * marshalled, the value must either be a valid file descriptor
- * or -1 (indicating that no descriptor should be transmitted).
+ * The corresponding C type should be <tt>int</tt>.
  *
  * @param type the containing type
  * @param field the field of the containing type

@@ -46,6 +46,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 static LWMsgStatus
 lwmsg_connection_marshal_fd(
@@ -66,7 +67,7 @@ lwmsg_connection_marshal_fd(
                       "assoc",
                       (void**) (void*) &assoc));
 
-    if (fd >= 0)
+    if (fd > 0)
     {
         indicator = 0xFF;
         BAIL_ON_ERROR(status = lwmsg_connection_queue_fd(assoc, fd));
@@ -95,6 +96,7 @@ lwmsg_connection_unmarshal_fd(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     unsigned char flag = *(unsigned char*) transmit_object;
     int fd = -1;
+    int fd2 = -1;
     LWMsgAssoc* assoc = NULL;
 
     BAIL_ON_ERROR(status = lwmsg_context_get_data(
@@ -107,9 +109,26 @@ lwmsg_connection_unmarshal_fd(
         BAIL_ON_ERROR(status = lwmsg_connection_dequeue_fd(assoc, &fd));
     }
 
+    if (fd == 0)
+    {
+        fd2 = dup(fd);
+        if (fd2 < 0)
+        {
+            BAIL_ON_ERROR(status = lwmsg_status_map_errno(errno));
+        }
+        close(fd);
+        fd = fd2;
+    }
+
     *(int*) natural_object = fd;
+    fd = -1;
 
 error:
+
+    if (fd >= 0)
+    {
+        close(fd);
+    }
 
     return status;
 }
@@ -125,7 +144,7 @@ lwmsg_connection_free_fd(
 {
     int fd = *(int*) object;
 
-    if (fd >= 0)
+    if (fd > 0)
     {
         close(fd);
     }
