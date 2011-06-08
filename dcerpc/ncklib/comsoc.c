@@ -104,7 +104,7 @@ rpc__socket_connect (
     unsigned32 *st
     )
 {
-    return sock->vtbl->socket_connect(sock, addr, assoc, st);
+    sock->vtbl->socket_connect(sock, addr, assoc, st);
 }
 
 /* Accept a connection on a listen socket */
