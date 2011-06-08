@@ -320,7 +320,10 @@ LsaPamUpdatePassword(
     PSTR   pszOldPassword = NULL;
     PSTR   pszPassword = NULL;
     PSTR   pszLoginId = NULL;
+    PCSTR  pszConstLoginId = NULL;
     HANDLE hLsaConnection = (HANDLE)NULL;
+    LSA_QUERY_LIST query = { NULL };
+    PLSA_SECURITY_OBJECT* ppUser = NULL;
 
     LSA_LOG_PAM_DEBUG("LsaPamUpdatePassword::begin");
 
@@ -346,6 +349,26 @@ LsaPamUpdatePassword(
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
 
+    // Verify the user is known to lsass
+    pszConstLoginId = pszLoginId;
+    query.ppszStrings = &pszConstLoginId;
+    dwError = LsaFindObjects(
+                    hLsaConnection,
+                    NULL,
+                    LSA_FIND_FLAGS_NSS,
+                    LSA_OBJECT_TYPE_USER,
+                    LSA_QUERY_TYPE_BY_NAME,
+                    1,
+                    query,
+                    &ppUser);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (!ppUser[0])
+    {
+        dwError = LW_ERROR_NO_SUCH_USER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     dwError = LsaPamGetOldPassword(
                    pamh,
                    pPamContext,
@@ -370,6 +393,12 @@ cleanup:
     LW_SECURE_FREE_STRING(pszPassword);
     LW_SECURE_FREE_STRING(pszOldPassword);
     LW_SAFE_FREE_STRING(pszLoginId);
+    if (ppUser)
+    {
+        LsaFreeSecurityObjectList(
+            1,
+            ppUser);
+    }
 
     if (hLsaConnection != (HANDLE)NULL)
     {
