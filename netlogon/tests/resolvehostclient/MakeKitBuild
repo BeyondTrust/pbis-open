@@ -1,0 +1,13 @@
+make()
+{
+    mk_program \
+        PROGRAM=resolvehost \
+        SOURCES="main.c" \
+        INSTALLDIR="$LW_TOOL_DIR/netlogon" \
+        INCLUDEDIRS="../.. ../../include" \
+        HEADERDEPS="reg/lwreg.h reg/regutil.h" \
+        LIBDEPS="lwnetclientapi" \
+        GROUPS="../../server/api/api ../../server/ipc/ipc"
+
+    lw_add_tool_target "$result"
+}

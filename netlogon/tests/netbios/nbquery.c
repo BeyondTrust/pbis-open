@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     memset(&pollfds, 0, sizeof(pollfds));
     if (argc == 1)
     {
-        printf("usage %s NetBIOS_name\n", argv[0]);
+        printf("usage %s NetBIOS_name [queryType]\n", argv[0]);
         return 1;
     }
 

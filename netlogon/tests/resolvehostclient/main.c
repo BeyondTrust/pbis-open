@@ -104,8 +104,6 @@ main(
     DWORD ipAddrFamily = 0;
     PBYTE pIpAddr = NULL;
 
-    lwnet_init_logging_to_file(LWNET_LOG_LEVEL_VERBOSE, TRUE, "");
-
     ParseArgs(argc, argv);
 
     if (argc == 1)
