@@ -113,7 +113,7 @@ LsaNtStatusToLsaError(
         case STATUS_INVALID_SID:
             return LW_ERROR_INVALID_SID;
         default:
-            return LwNtStatusToErrno(Status);
+            return LwNtStatusToWin32Error(Status);
     }
 }
 
@@ -131,6 +131,9 @@ LsaLsaErrorToNtStatus(
         case LW_ERROR_INVALID_SID:
             return STATUS_INVALID_SID;
         default:
-            return STATUS_UNSUCCESSFUL;
+        {
+            NTSTATUS status = LwWin32ErrorToNtStatus(LsaError);
+            return (status != (NTSTATUS)-1) ? status : STATUS_UNSUCCESSFUL;
+        }
     }
 }

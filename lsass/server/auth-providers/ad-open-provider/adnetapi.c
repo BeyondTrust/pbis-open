@@ -459,8 +459,8 @@ AD_NetLookupObjectSidsByNames(
     BAIL_ON_LSA_ERROR(dwError);
     bChangedToken = TRUE;
 
-	status = LwIoGetThreadCreds(&pCreds);
-	dwError = LwNtStatusToErrno(status);
+    status = LwIoGetThreadCreds(&pCreds);
+    dwError = LwNtStatusToWin32Error(status);
     BAIL_ON_LSA_ERROR(dwError);
 
     status = LsaInitBindingDefault(&lsa_binding, pwcHost, pCreds);
@@ -827,7 +827,7 @@ AD_NetLookupObjectNamesBySids(
     bChangedToken = TRUE;
 
     status = LwIoGetThreadCreds(&pCreds);
-    dwError = LwNtStatusToErrno(status);
+    dwError = LwNtStatusToWin32Error(status);
     BAIL_ON_LSA_ERROR(dwError);
 
     status = LsaInitBindingDefault(&lsa_binding, pwcHost, pCreds);
@@ -1157,7 +1157,7 @@ AD_DsEnumerateDomainTrusts(
     bChangedToken = TRUE;
 
     status = LwIoGetThreadCreds(&pCreds);
-    dwError = LwNtStatusToErrno(status);
+    dwError = LwNtStatusToWin32Error(status);
     BAIL_ON_LSA_ERROR(dwError);
 
     status = NetrInitBindingDefault(&netr_b,
@@ -1285,7 +1285,7 @@ AD_DsGetDcName(
     bChangedToken = TRUE;
 
     status = LwIoGetThreadCreds(&pCreds);
-    dwError = LwNtStatusToErrno(status);
+    dwError = LwNtStatusToWin32Error(status);
     BAIL_ON_LSA_ERROR(dwError);
 
     status = NetrInitBindingDefault(&netr_b,
@@ -1755,7 +1755,7 @@ AD_NetlogonAuthenticationUserEx(
         bChangedToken = TRUE;
 
         status = LwIoGetThreadCreds(&pCreds);
-        dwError = LwNtStatusToErrno(status);
+        dwError = LwNtStatusToWin32Error(status);
         BAIL_ON_LSA_ERROR(dwError);
 
         status = NetrInitBindingDefault(&netr_b, pwszDomainController, pCreds);
