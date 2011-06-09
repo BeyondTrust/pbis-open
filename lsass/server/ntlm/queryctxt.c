@@ -250,7 +250,6 @@ NtlmServerQueryCtxtPacLogonInfoAttribute(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     NTLM_STATE State = NtlmStateBlank;
-    PBYTE pKey = NULL;
     PSecPkgContext_PacLogonInfo pLogonInfo = NULL;
     PLSA_AUTH_USER_INFO pUserInfo = ((PNTLM_CONTEXT) *phContext)->pUserInfo;
 
@@ -263,7 +262,7 @@ NtlmServerQueryCtxtPacLogonInfoAttribute(
         *phContext,
         &State,
         NULL,
-        &pKey,
+        NULL,
         NULL,
         NULL);
 

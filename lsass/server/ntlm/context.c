@@ -111,6 +111,7 @@ NtlmGetContextInfo(
 
     if (pCredHandle)
     {
+        NtlmReferenceCredential(pContext->CredHandle);
         *pCredHandle = pContext->CredHandle;
     }
 
