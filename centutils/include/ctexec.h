@@ -57,7 +57,7 @@
 #ifndef __CT_EXEC_H__
 #define __CT_EXEC_H__
 
-#include <ctbase.h>
+#include <lw/attrs.h>
 #include <lwexc.h>
 
 /**
