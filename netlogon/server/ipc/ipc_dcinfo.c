@@ -284,9 +284,12 @@ error:
     goto cleanup;
 }
 
+
+
 static DWORD
-LWNetSrvIpcResolveNetBiosName(
+LWNetSrvIpcResolveTypeNetBiosName(
     PSTR pszHostName,
+    UINT16 resolveType,
     LWMsgParams* pOut)
 {
     struct in_addr *nbAddrs = {0};
@@ -304,16 +307,14 @@ LWNetSrvIpcResolveNetBiosName(
 
     dwError = LWNetNbResolveName(
                   pszHostName,
-                  LWNB_NETBIOS_FLAGS_RESOLVE_FILE_SERVICE |
-                      LWNB_NETBIOS_FLAGS_MODE_HYBRID,
+                  LWNB_NETBIOS_FLAGS_RESOLVE_FILE_SERVICE | resolveType,
                   &nbAddrs,
                   &nbAddrsLen);
     if (dwError)
     {
         dwError = LWNetNbResolveName(
                       pszHostName,
-                      LWNB_NETBIOS_FLAGS_RESOLVE_DC |
-                          LWNB_NETBIOS_FLAGS_MODE_HYBRID,
+                      LWNB_NETBIOS_FLAGS_RESOLVE_DC | resolveType,
                       &nbAddrs,
                       &nbAddrsLen);
     }
@@ -363,6 +364,29 @@ error:
     LWNET_SAFE_FREE_MEMORY(ppResAddr);
     LWNET_SAFE_FREE_MEMORY(pRes);
     goto cleanup;
+}
+
+
+static DWORD
+LWNetSrvIpcResolveNetBiosName(
+    PSTR pszHostName,
+    LWMsgParams* pOut)
+{
+    return LWNetSrvIpcResolveTypeNetBiosName(
+               pszHostName,
+               LWNB_NETBIOS_FLAGS_MODE_BROADCAST,
+               pOut);
+}
+
+static DWORD
+LWNetSrvIpcResolveNetBiosWinsName(
+    PSTR pszHostName,
+    LWMsgParams* pOut)
+{
+    return LWNetSrvIpcResolveTypeNetBiosName(
+               pszHostName,
+               LWNB_NETBIOS_FLAGS_MODE_WINS,
+               pOut);
 }
 
 static DWORD
@@ -492,27 +516,70 @@ LWNetSrvIpcResolveName(
     PWSTR pwszHostName = NULL;
     PSTR pszHostName = NULL;
     PWSTR pwszCanonName = NULL;
+    PDWORD resolveNameOrder = NULL;
+    DWORD resolveNameOrderLen = 0;
+    DWORD i = 0;
+    BOOLEAN bResolved = FALSE;
 
     /* Convert hostname to resolve from WC to C string */
     pwszHostName = pReq->pwszHostName;
     dwError = LwRtlCStringAllocateFromWC16String(&pszHostName, pwszHostName);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    dwError = LWNetSrvIpcResolveDnsName(
-                  pszHostName,
-                  pOut);
-    if (dwError)
+    dwError = LWNetConfigResolveNameOrder(
+                  &resolveNameOrder,
+                  &resolveNameOrderLen);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    while (i<resolveNameOrderLen && !bResolved)
     {
-        dwError = LWNetSrvIpcResolveNetBiosName(
-                  pszHostName,
-                  pOut);
-    }
-    if (dwError)
-    {
-        dwError = LWNetSrvIpcCreateError(dwError, "DNS Lookup Failed", &pError);
+        switch (resolveNameOrder[i++])
+        {
+            case LWNET_RESOLVE_HOST_DNS:
+                LWNET_LOG_DEBUG("LWNetSrvIpcResolveName: DNS %s", pszHostName);
+                dwError = LWNetSrvIpcResolveDnsName(
+                              pszHostName,
+                              pOut);
+                if (dwError)
+                {
+                    continue;
+                }
+                bResolved = TRUE;
+                break;
+
+            case LWNET_RESOLVE_HOST_NETBIOS:
+                LWNET_LOG_DEBUG("LWNetSrvIpcResolveName: NETBIOS %s",
+                                pszHostName);
+                dwError = LWNetSrvIpcResolveNetBiosName(
+                          pszHostName,
+                          pOut);
+                if (dwError)
+                {
+                    continue;
+                }
+                bResolved = TRUE;
+                break;
+
+            case LWNET_RESOLVE_HOST_WINS:
+                LWNET_LOG_DEBUG("LWNetSrvIpcResolveName: WINS %s", pszHostName);
+                dwError = LWNetSrvIpcResolveNetBiosWinsName(
+                          pszHostName,
+                          pOut);
+                if (dwError)
+                {
+                    continue;
+                }
+                bResolved = TRUE;
+                break;
+        }
     }
 
 cleanup:
+    if (!bResolved)
+    {
+        LWNET_LOG_DEBUG("LWNetSrvIpcResolveName: Not resolved");
+        dwError = LWNetSrvIpcCreateError(dwError, "DNS Lookup Failed", &pError);
+    }
     LWNET_SAFE_FREE_STRING(pszHostName);
 
     if (pError)
@@ -525,5 +592,6 @@ cleanup:
 
 error:
     LWNET_SAFE_FREE_MEMORY(pwszCanonName);
+    LWNET_SAFE_FREE_MEMORY(resolveNameOrder);
     goto cleanup;
 }

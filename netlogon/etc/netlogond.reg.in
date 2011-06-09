@@ -77,3 +77,7 @@
     default = ""
     doc = "IP address of secondary WINS server used for name resolution"
 }
+"ResolveNameOrder" = {
+    default = "DNS"
+    doc = "Enable name resolution type and order; DNS/NETBIOS/WINS"
+}

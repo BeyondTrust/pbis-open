@@ -339,6 +339,7 @@ LWNetNbResolveNameUdp(
     PSTR pszHostName,
     PSTR winsServer,
     UINT8 queryType,
+    DWORD commType,
     OUT struct in_addr **retAddrs,
     OUT PDWORD retAddrsLen)
 {
@@ -355,8 +356,8 @@ LWNetNbResolveNameUdp(
     DWORD i = 0;
     DWORD resAddrsLen = 0;
     DWORD resAddrsAllocLen = 128;
-    DWORD commType = 0;
     BOOLEAN bLocked = FALSE;
+    BOOLEAN bHaveQuery = FALSE;
 
     dwError = LWNetAllocateMemory(
                   LWNB_NETBIOS_UDP_MAX,
@@ -367,7 +368,8 @@ LWNetNbResolveNameUdp(
     dgAddr.sin_family = AF_INET;
     dgAddr.sin_port = htons(137);
 
-    if (winsServer && *winsServer)
+                      
+    if (commType == LWNB_QUERY_WINS && winsServer && *winsServer)
     {
         sts = inet_aton(winsServer, &dgAddr.sin_addr);
         if (sts == -1)
@@ -376,7 +378,6 @@ LWNetNbResolveNameUdp(
             BAIL_ON_LWNET_ERROR(dwError);
         }
    
-        commType = LWNB_QUERY_WINS;
         dwError = LWNetNbConstructNameQuery(
                       pszHostName,
                       commType,
@@ -385,8 +386,9 @@ LWNetNbResolveNameUdp(
                       NetBiosQuery,
                       &NetBiosQueryLen);
         BAIL_ON_LWNET_ERROR(dwError);
+        bHaveQuery = TRUE;
     }
-    else
+    else if (commType == LWNB_QUERY_BROADCAST)
     {
         dgAddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
         commType = LWNB_QUERY_BROADCAST;
@@ -398,8 +400,14 @@ LWNetNbResolveNameUdp(
                       NetBiosQuery,
                       &NetBiosQueryLen);
         BAIL_ON_LWNET_ERROR(dwError);
+        bHaveQuery = TRUE;
     }
 
+    if (!bHaveQuery)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LWNET_ERROR(dwError);
+    }
 
     // If this is not enough memory, realloc below fixes that
     dwError = LWNetAllocateMemory(
@@ -544,6 +552,7 @@ LWNetNbResolveName(
                       pszHostName,
                       winsPrimary,
                       queryType,
+                      LWNB_QUERY_WINS,
                       retAddrs,
                       retAddrsLen);
         if (dwError)
@@ -552,19 +561,25 @@ LWNetNbResolveName(
                           pszHostName,
                           winsSecondary,
                           queryType,
+                          LWNB_QUERY_WINS,
                           retAddrs,
                           retAddrsLen);
         }
     }
-
-    if (dwError && (flags & LWNB_NETBIOS_FLAGS_MODE_BROADCAST))
+    else if (flags & LWNB_NETBIOS_FLAGS_MODE_BROADCAST)
     {
         dwError = LWNetNbResolveNameUdp(
                       pszHostName,
                       NULL,
                       queryType,
+                      LWNB_QUERY_BROADCAST,
                       retAddrs,
                       retAddrsLen);
+    }
+    else
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LWNET_ERROR(dwError);
     }
 
 cleanup:

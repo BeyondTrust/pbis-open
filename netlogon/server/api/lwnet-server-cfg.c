@@ -65,6 +65,7 @@ typedef struct _LWNET_SERVER_CONFIG {
     DWORD dwNetBiosUdpTimeout;
     PSTR pszWinsPrimaryServer;
     PSTR pszWinsSecondaryServer;
+    PSTR pszResolveNameOrder;
 } LWNET_SERVER_CONFIG, *PLWNET_SERVER_CONFIG;
 
 #define LWNET_PING_AGAIN_TIMEOUT_SECONDS (15 * 60)
@@ -196,7 +197,16 @@ LWNET_CONFIG gConfig[] =
         60,
         NULL,
         &gLWNetServerConfig.pszWinsSecondaryServer
-    }
+    },
+    {
+        "ResolveNameOrder",
+        FALSE, /* Don't look at policy. */
+        LWNetTypeString,
+        0,
+        -1,
+        NULL,
+        &gLWNetServerConfig.pszResolveNameOrder
+    },
 };
 
 //
@@ -289,8 +299,100 @@ LWNetConfigIsNetBiosEnabled(
     VOID
     )
 {
-    return gLWNetServerConfig.dwNetBiosEnabled;
+    BOOLEAN bNetBiosEnabled = FALSE;
+
+    if (!gLWNetServerConfig.pszResolveNameOrder)
+    {
+        bNetBiosEnabled = FALSE;
+    }
+    else
+    {
+        bNetBiosEnabled |= RtlCStringFindSubstring(
+                               gLWNetServerConfig.pszResolveNameOrder,
+                               "WINS",
+                               FALSE,
+                               NULL);
+        bNetBiosEnabled |= RtlCStringFindSubstring(
+                               gLWNetServerConfig.pszResolveNameOrder,
+                               "NETBIOS",
+                               FALSE,
+                               NULL);
+    }
+    return bNetBiosEnabled;
 }
+
+
+DWORD
+LWNetConfigResolveNameOrder(
+    PDWORD *nameOrder,
+    PDWORD nameOrderLen
+    )
+{
+    DWORD dwError = 0;
+    PDWORD retNameOrder = NULL;
+    DWORD i = 0;
+    PSTR tmpNameOrder = NULL;
+    PSTR strtokPtr = NULL;
+    PSTR strToken = NULL;
+    BOOLEAN bHasDns = FALSE;
+
+    if (!gLWNetServerConfig.pszResolveNameOrder ||
+        !gLWNetServerConfig.pszResolveNameOrder[0])
+    {
+        dwError = LwRtlCStringDuplicate(
+                      &gLWNetServerConfig.pszResolveNameOrder,
+                      "DNS");
+        BAIL_ON_LWNET_ERROR(dwError);
+    }
+
+    dwError = LWNetAllocateMemory(3, (PVOID*)&retNameOrder);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    dwError = LwRtlCStringDuplicate(&tmpNameOrder, 
+                                    gLWNetServerConfig.pszResolveNameOrder);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    strtokPtr = tmpNameOrder;
+    do
+    {
+        strToken = strtok_r(strtokPtr, " ", &strtokPtr);
+        if (strToken && i < 3)
+        {
+            if (!LwRtlCStringCompare(strToken, "DNS", FALSE))
+            {
+                retNameOrder[i++] = LWNET_RESOLVE_HOST_DNS;
+                bHasDns = TRUE;
+            }
+            else if (!LwRtlCStringCompare(strToken, "NETBIOS", FALSE))
+            {
+                retNameOrder[i++] = LWNET_RESOLVE_HOST_NETBIOS;
+            }
+            else if (!LwRtlCStringCompare(strToken, "WINS", FALSE))
+            {
+                retNameOrder[i++] = LWNET_RESOLVE_HOST_WINS;
+            }
+        }
+    } while (strToken);
+
+    if (!bHasDns)
+    {
+        /* Must resolve against DNS for lwio/lsass to function */
+        retNameOrder[i++] = LWNET_RESOLVE_HOST_DNS;
+    }
+
+    *nameOrder = retNameOrder;
+    *nameOrderLen = i;
+    
+cleanup:
+    return dwError;
+
+error:
+    LWNET_SAFE_FREE_STRING(tmpNameOrder);
+    LWNET_SAFE_FREE_MEMORY(retNameOrder);
+
+    goto cleanup;
+}
+
 
 DWORD
 LWNetConfigIsNetBiosUdpTimeout(

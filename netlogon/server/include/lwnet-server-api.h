@@ -51,6 +51,11 @@
 
 #include "lwnet.h"
 
+#define LWNET_RESOLVE_HOST_NONE 0
+#define LWNET_RESOLVE_HOST_DNS 1
+#define LWNET_RESOLVE_HOST_NETBIOS 2
+#define LWNET_RESOLVE_HOST_WINS 4
+
 DWORD
 LWNetSrvApiInit(
     VOID
@@ -168,6 +173,12 @@ DWORD LWNetNbResolveName(
 VOID
 LWNetNbAddressListFree(
     IN struct in_addr *retAddrs
+    );
+
+DWORD
+LWNetConfigResolveNameOrder(
+    PDWORD *nameOrder,
+    PDWORD nameOrderLen
     );
 
 #endif /* __LWNETSRVAPI_H__ */
