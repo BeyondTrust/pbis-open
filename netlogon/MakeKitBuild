@@ -1,4 +1,4 @@
-SUBDIRS="include utils ipc common client server service_locator tools etc tests"
+SUBDIRS="include utils ipc common client server service_locator tools etc"
 
 configure()
 {
