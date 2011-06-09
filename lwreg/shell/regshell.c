@@ -1292,31 +1292,6 @@ void RegShellFreeStrList(
     }
 }
 
-static char *RegShellStrCaseStr(char *haystack, char *needle)
-{
-    char *h = haystack;
-    char *hret = h;
-    char *n = needle;
-
-    while (*h && *n)
-    {
-        if ((*h == *n) || (toupper((int) *h) == toupper((int) *n)))
-        {
-            h++;
-            n++;
-        }
-        else
-        {
-            h++;
-            hret = h;
-            n = needle;
-        }
-    }
-    return *n ? NULL : hret;
-}
-
-
-    
 
 DWORD
 RegShellCompletionMatch(
@@ -1344,7 +1319,7 @@ RegShellCompletionMatch(
     PSTR pszTmpSubKey = NULL;
 
     PSTR *ppMatchArgs = NULL;
-    PSTR pszPtr = NULL;
+    PCSTR pszPtr = NULL;
 
 
     BAIL_ON_INVALID_POINTER(pszMatchStr);
@@ -1384,7 +1359,7 @@ RegShellCompletionMatch(
         pszPtr = NULL;
         if (pszMatchStr && *pszMatchStr)
         {
-            pszPtr = RegShellStrCaseStr(pszTmpSubKey, pszMatchStr);
+            RtlCStringFindSubstring(pszTmpSubKey, pszMatchStr, FALSE, &pszPtr);
         }
         if (pszPtr && pszPtr == pszTmpSubKey)
         {
