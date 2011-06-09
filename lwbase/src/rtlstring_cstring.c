@@ -228,6 +228,47 @@ LwRtlCStringAllocatePrintfV(
         Args));
 }
 
+
+/* Implement both strstr() and strcasestr() portably */
+BOOLEAN
+LwRtlCStringFindSubstring(
+    LW_IN LW_PCSTR pHaystack,
+    LW_IN LW_PCSTR pNeedle,
+    LW_IN LW_BOOLEAN isCaseSensitive,
+    LW_OUT LW_OPTIONAL LW_PCSTR *ppSubString
+    )
+{
+    LW_PCSTR pRetStr = NULL;
+    LW_PCSTR h = pHaystack;
+    LW_PCSTR hret = h;
+    LW_PCSTR n = pNeedle;
+
+    /* strcasestr() functionality */
+    while (*h && *n)
+    {
+        if ((*h == *n) || 
+            (!isCaseSensitive && toupper((int) *h) == toupper((int) *n)))
+        {
+            h++;
+            n++;
+        }
+        else
+        {
+            h++;
+            hret = h;
+            n = pNeedle;
+        }
+    }
+    pRetStr = *n ? NULL : hret;
+
+    if (ppSubString)
+    {
+        *ppSubString = pRetStr;
+    }
+    return pRetStr ? TRUE : FALSE;
+}
+
+
 NTSTATUS
 LwRtlCStringAllocatePrintf(
     OUT PSTR* ppszString,

@@ -48,6 +48,7 @@
 #include <lw/rtlgoto.h>
 #include <wc16str.h>
 #include <lwprintf.h>
+#include <wctype.h>
 
 size_t
 LwRtlWC16StringNumChars(
@@ -236,6 +237,46 @@ LwRtlWC16StringIsEqual(
 
 cleanup:
     return bIsEqual;
+}
+
+/* Implement both wc16strstr() and wc16strcasestr() portably */
+BOOLEAN
+LwRtlWC16StringFindSubstring(
+    LW_IN LW_PCWSTR pHaystack,
+    LW_IN LW_PCWSTR pNeedle,
+    LW_IN LW_BOOLEAN isCaseSensitive,
+    LW_OUT LW_OPTIONAL LW_PCWSTR *ppSubString
+    )
+{
+    LW_PCWSTR pRetStr = NULL;
+    LW_PCWSTR h = pHaystack;
+    LW_PCWSTR hret = h;
+    LW_PCWSTR n = pNeedle;
+
+    /* strcasestr() functionality */
+    while (*h && *n)
+    {
+        if ((*h == *n) ||
+            (!isCaseSensitive &&
+             towupper((wchar16_t) *h) == towupper((wchar16_t) *n)))
+        {
+            h++;
+            n++;
+        }
+        else
+        {
+            h++;
+            hret = h;
+            n = pNeedle;
+        }
+    }
+    pRetStr = *n ? NULL : hret;
+
+    if (ppSubString)
+    {
+        *ppSubString = pRetStr;
+    }
+    return pRetStr ? TRUE : FALSE;
 }
 
 LW_NTSTATUS

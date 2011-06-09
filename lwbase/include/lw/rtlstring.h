@@ -95,6 +95,14 @@ LwRtlCStringIsEqual(
     LW_IN LW_BOOLEAN bIsCaseSensitive
     );
 
+BOOLEAN
+LwRtlCStringFindSubstring(
+    LW_IN LW_PCSTR pHaystack,
+    LW_IN LW_PCSTR pNeedle,
+    LW_IN LW_BOOLEAN isCaseSensitive,
+    LW_OUT LW_PCSTR *ppSubstring
+    );
+
 LW_NTSTATUS
 LwRtlCStringAllocatePrintf(
     LW_OUT LW_PSTR* pNewString,
@@ -157,6 +165,14 @@ INT16
 LwRtlWC16StringCompare(
     LW_IN LW_PCWSTR pString1,
     LW_IN LW_PCWSTR pString2
+    );
+
+BOOLEAN
+LwRtlWC16StringFindSubstring(
+    LW_IN LW_PCWSTR pHaystack,
+    LW_IN LW_PCWSTR pNeedle,
+    LW_IN LW_BOOLEAN isCaseSensitive,
+    LW_OUT LW_OPTIONAL LW_PCWSTR *ppSubString
     );
 
 LW_NTSTATUS
@@ -402,6 +418,8 @@ LwRtlAnsiStringAllocateAppendPrintf(
     LwRtlCStringCompare(String1, String2, IsCaseSensitive)
 #define RtlCStringIsEqual(String1, String2, IsCaseSensitive) \
     LwRtlCStringIsEqual(String1, String2, IsCaseSensitive)
+#define RtlCStringFindSubstring(Needle, Haystack, IsCaseSensitive, Substring) \
+    LwRtlCStringFindSubstring(Needle, Haystack, IsCaseSensitive, Substring)
 #define RtlCStringAllocatePrintf(String, Format, ...) \
     LwRtlCStringAllocatePrintf(String, Format, ## __VA_ARGS__)
 #define RtlCStringAllocatePrintfV(String, Format, args) \
@@ -421,6 +439,8 @@ LwRtlAnsiStringAllocateAppendPrintf(
     LwRtlWC16StringFree(String)
 #define RtlWC16StringIsEqual(String1, String2, IsCaseSensitive) \
     LwRtlWC16StringIsEqual(String1, String2, IsCaseSensitive)
+#define RtlWC16StringFindSubstring(Haystack, Needle, IsCaseSensitive, SubStr) \
+    LwRtlWC16StringFindSubstring(Haystack, Needle, IsCaseSensitive, SubStr
 #define RtlWC16StringAllocatePrintfWV(Result, Format, Args) \
     LwRtlWC16StringAllocatePrintfWV(Result, Format, Args)
 #define RtlWC16StringAllocatePrintfW(Result, Format, ...) \
