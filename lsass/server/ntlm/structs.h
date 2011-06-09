@@ -257,6 +257,7 @@ typedef struct _NTLM_CREDENTIALS
     DWORD dwCredDirection;
     PSTR pszDomainName;
     LONG nRefCount;
+    pthread_mutex_t Mutex;
 } NTLM_CREDENTIALS, *PNTLM_CREDENTIALS;
 
 typedef struct _NTLM_CONFIG

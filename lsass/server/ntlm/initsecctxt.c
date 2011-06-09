@@ -70,6 +70,7 @@ NtlmServerInitializeSecurityContext(
     PSTR pDomain = NULL;
     PNTLM_CHALLENGE_MESSAGE pMessage = NULL;
     DWORD dwMessageSize = 0;
+    BOOLEAN bInLock = FALSE;
 
     pOutput->pvBuffer = NULL;
 
@@ -80,14 +81,30 @@ NtlmServerInitializeSecurityContext(
 
     if (!pNtlmContext)
     {
-        dwError = NtlmGetNameInformation(
-                pCred ? pCred->pszDomainName : NULL,
-                &pWorkstation,
-                &pDomain,
-                NULL,
-                NULL);
-        BAIL_ON_LSA_ERROR(dwError);
+        if (pCred)
+        {
+            NTLM_LOCK_MUTEX(bInLock, &pCred->Mutex);
 
+            dwError = NtlmGetNameInformation(
+                    pCred->pszDomainName,
+                    &pWorkstation,
+                    &pDomain,
+                    NULL,
+                    NULL);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            NTLM_UNLOCK_MUTEX(bInLock, &pCred->Mutex);
+        }
+        else
+        {
+            dwError = NtlmGetNameInformation(
+                    NULL,
+                    &pWorkstation,
+                    &pDomain,
+                    NULL,
+                    NULL);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
 
         // If we start with a NULL context, create a negotiate message
         dwError = NtlmCreateNegotiateContext(
@@ -138,13 +155,21 @@ NtlmServerInitializeSecurityContext(
 
 
 cleanup:
+    if (pCred)
+    {
+        NTLM_UNLOCK_MUTEX(bInLock, &pCred->Mutex);
+    }
+
     LW_SAFE_FREE_STRING(pWorkstation);
     LW_SAFE_FREE_STRING(pDomain);
+
     return dwError;
+
 error:
     LW_SAFE_FREE_MEMORY(pOutput->pvBuffer);
     pOutput->cbBuffer = 0;
     pOutput->BufferType = 0;
+
     // If this function has already succeed once, we MUST make sure phNewContext
     // is set so the caller can cleanup whatever context is remaining.  It
     // could be the original negotiate context or a new response context but

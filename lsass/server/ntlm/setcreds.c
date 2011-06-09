@@ -96,6 +96,8 @@ NtlmServerSetCredDomainNameAttribute(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PNTLM_CREDENTIALS pNtlmCreds = (PNTLM_CREDENTIALS)hCred;
+    BOOLEAN bInLock = FALSE;
+    PSTR pName = NULL;
 
     if (!hCred || !pDomainName || !pDomainName->pName)
     {
@@ -103,14 +105,19 @@ NtlmServerSetCredDomainNameAttribute(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    LW_SAFE_FREE_STRING(pNtlmCreds->pszDomainName);
+    NTLM_LOCK_MUTEX(bInLock, &pNtlmCreds->Mutex);
 
     dwError = LwAllocateString(
                   pDomainName->pName,
-                  &pNtlmCreds->pszDomainName);
+                  &pName);
     BAIL_ON_LSA_ERROR(dwError);
 
+    LW_SAFE_FREE_STRING(pNtlmCreds->pszDomainName);
+    pNtlmCreds->pszDomainName = pName;
+
 error:
+
+    NTLM_UNLOCK_MUTEX(bInLock, &pNtlmCreds->Mutex);
 
     return dwError;
 }

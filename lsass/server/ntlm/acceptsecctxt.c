@@ -223,19 +223,37 @@ NtlmCreateChallengeContext(
     PSTR pDomainName = NULL;
     PSTR pDnsServerName = NULL;
     PSTR pDnsDomainName = NULL;
+    BOOLEAN bInLock = FALSE;
 
     *ppNtlmContext = NULL;
 
     dwError = NtlmCreateContext(hCred, &pNtlmContext);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = NtlmGetNameInformation(
-        pCred ? pCred->pszDomainName : NULL,
-        &pServerName,
-        &pDomainName,
-        &pDnsServerName,
-        &pDnsDomainName);
-    BAIL_ON_LSA_ERROR(dwError);
+    if (pCred)
+    {
+        NTLM_LOCK_MUTEX(bInLock, &pCred->Mutex);
+
+        dwError = NtlmGetNameInformation(
+            pCred->pszDomainName,
+            &pServerName,
+            &pDomainName,
+            &pDnsServerName,
+            &pDnsDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        NTLM_UNLOCK_MUTEX(bInLock, &pCred->Mutex);
+    }
+    else
+    {
+        dwError = NtlmGetNameInformation(
+            NULL,
+            &pServerName,
+            &pDomainName,
+            &pDnsServerName,
+            &pDnsDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = NtlmGetRandomBuffer(
         pNtlmContext->Challenge,
@@ -265,10 +283,17 @@ NtlmCreateChallengeContext(
 
 cleanup:
     *ppNtlmContext = pNtlmContext;
+
     LW_SAFE_FREE_STRING(pServerName);
     LW_SAFE_FREE_STRING(pDomainName);
     LW_SAFE_FREE_STRING(pDnsServerName);
     LW_SAFE_FREE_STRING(pDnsDomainName);
+
+    if (pCred)
+    {
+        NTLM_UNLOCK_MUTEX(bInLock, &pCred->Mutex);
+    }
+
     return dwError;
 
 error:
@@ -664,6 +689,7 @@ NtlmValidateResponse(
     PSTR pDomainInstance = NULL;
     BYTE sessionNonce[MD5_DIGEST_LENGTH];
     BYTE sessionHashUntrunc[MD5_DIGEST_LENGTH];
+    BOOLEAN bInLock = FALSE;
 
     memset(&Params, 0, sizeof(Params));
     memset(&Challenge, 0, sizeof(Challenge));
@@ -788,13 +814,20 @@ NtlmValidateResponse(
 
     Params.pszWorkstation = pWorkstation;
 
-    if (pCred && pCred->pszDomainName)
+    if (pCred)
     {
-        dwError = LwAllocateStringPrintf(
-                      &pDomainInstance,
-                      ":%s",
-                      pCred->pszDomainName);
-        BAIL_ON_LSA_ERROR(dwError);
+        NTLM_LOCK_MUTEX(bInLock, &pCred->Mutex);
+
+        if (pCred->pszDomainName)
+        {
+            dwError = LwAllocateStringPrintf(
+                          &pDomainInstance,
+                          ":%s",
+                          pCred->pszDomainName);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+
+        NTLM_UNLOCK_MUTEX(bInLock, &pCred->Mutex);
     }
 
     dwError = LsaSrvAuthenticateUserEx(
@@ -828,6 +861,11 @@ NtlmValidateResponse(
     pUserInfo = NULL;
 
 cleanup:
+
+    if (pCred)
+    {
+        NTLM_UNLOCK_MUTEX(bInLock, &pCred->Mutex);
+    }
 
     if (pUserInfo)
     {
