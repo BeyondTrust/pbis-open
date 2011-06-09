@@ -2,10 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
 #include <poll.h>
 #include <ctype.h>
 
@@ -16,6 +12,10 @@
 #include "lwnet-utils.h"
 #include "lwnet-netbios.h"
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
 
 void HexDumpBuf(UINT8 *buf, int len);
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
                           sizeof(NetBiosReply),
                           0,  /* flags */
                           (struct sockaddr *) &dgaddr,
-                          &NetBiosReplyAddrLen);
+                          (void *) &NetBiosReplyAddrLen);
             if (respLen > 0)
             {
 //              printf("recvfrom got %d bytes\n", respLen);
