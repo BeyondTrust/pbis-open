@@ -43,6 +43,7 @@
 #include <lwsm/lwsm.h>
 
 #define CONTAINER_PROCESS_NAME "lw-container"
+#define CONTROL_LOCK CACHEDIR "/.lwsmd-lock"
 
 #define BAIL_ON_ERROR(_e_)  \
     do                      \

@@ -1116,6 +1116,52 @@ error:
     goto cleanup;
 }
 
+static
+DWORD
+LwSmWaitControlLock(
+    VOID
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    struct flock lock = {0};
+    int fd = -1;
+    int res = 0;
+
+    lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
+    lock.l_pid = getpid();
+
+    if ((fd = open(CONTROL_LOCK, O_WRONLY | O_CREAT | O_TRUNC, 0200)) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_ERROR(dwError);
+    }
+
+    do
+    {
+        res = fcntl(fd, F_SETLKW, &lock);
+
+    } while (res < 0 && errno == EAGAIN);
+
+    if (res < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_ERROR(dwError);
+    }
+
+error:
+
+    if (fd >= 0)
+    {
+        close(fd);
+    }
+
+    return dwError;
+}
+
+
 DWORD
 LwSmShutdown(
     VOID
@@ -1138,6 +1184,7 @@ LwSmShutdown(
     switch (out.tag)
     {
     case SM_IPC_SHUTDOWN_RES:
+        LwSmWaitControlLock();
         break;
     case SM_IPC_ERROR:
         dwError = *(PDWORD) out.data;

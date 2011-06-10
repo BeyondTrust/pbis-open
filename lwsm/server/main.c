@@ -38,8 +38,6 @@
 
 #include "includes.h"
 
-#define CONTROL_LOCK CACHEDIR "/.lwsmd-lock"
-
 PLW_THREAD_POOL gpPool;
 
 SM_GLOBAL_STATE gState =
