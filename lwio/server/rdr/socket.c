@@ -1584,18 +1584,14 @@ RdrSocketTimeout(
     PRDR_SOCKET pSocket = pContext;
     BOOLEAN bInLock = FALSE;
 
-    if (WakeMask & LW_TASK_EVENT_CANCEL)
-    {
-        *pWaitMask = LW_TASK_EVENT_COMPLETE;
-    }
-    else if (WakeMask & LW_TASK_EVENT_INIT)
+    if (WakeMask & LW_TASK_EVENT_INIT)
     {
         *pWaitMask = LW_TASK_EVENT_TIME;
         *pllTime = gRdrRuntime.config.usIdleTimeout * 1000000000ll;
     }
 
     if ((WakeMask & LW_TASK_EVENT_TIME) ||
-        ((WakeMask & LW_TASK_EVENT_EXPLICIT) && RdrIsShutdownSet()))
+        ((WakeMask & LW_TASK_EVENT_CANCEL) && RdrIsShutdownSet()))
     {
         LWIO_LOCK_MUTEX(bInLock, &gRdrRuntime.Lock);
 
@@ -1612,6 +1608,10 @@ RdrSocketTimeout(
         }
 
         LWIO_UNLOCK_MUTEX(bInLock, &gRdrRuntime.Lock);
+    }
+    else if (WakeMask & LW_TASK_EVENT_CANCEL)
+    {
+        *pWaitMask = LW_TASK_EVENT_COMPLETE;
     }
 }
 

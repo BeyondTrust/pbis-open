@@ -401,32 +401,27 @@ RdrShutdown(
     NTSTATUS status = STATUS_SUCCESS;
 
     /* We need to run down all cached tress/session/sockets sitting around.
-     * Set the global shutdown flag, then notify and wait for each task group
-     * in turn.  Note that we do not cancel them because cancellation indicates
-     * our intention to revive the object.
+     * Set the global shutdown flag, then cancel and wait for each task group
+     * in turn.
      */
-
     RdrSetShutdown();
 
     if (gRdrRuntime.pTreeTimerGroup)
     {
-        LwRtlWakeTaskGroup(gRdrRuntime.pTreeTimerGroup);
+        LwRtlCancelTaskGroup(gRdrRuntime.pTreeTimerGroup);
         LwRtlWaitTaskGroup(gRdrRuntime.pTreeTimerGroup);
-        LwRtlFreeTaskGroup(&gRdrRuntime.pTreeTimerGroup);
     }
 
     if (gRdrRuntime.pSessionTimerGroup)
     {
-        LwRtlWakeTaskGroup(gRdrRuntime.pSessionTimerGroup);
+        LwRtlCancelTaskGroup(gRdrRuntime.pSessionTimerGroup);
         LwRtlWaitTaskGroup(gRdrRuntime.pSessionTimerGroup);
-        LwRtlFreeTaskGroup(&gRdrRuntime.pSessionTimerGroup);
     }
 
     if (gRdrRuntime.pSocketTimerGroup)
     {
-        LwRtlWakeTaskGroup(gRdrRuntime.pSocketTimerGroup);
+        LwRtlCancelTaskGroup(gRdrRuntime.pSocketTimerGroup);
         LwRtlWaitTaskGroup(gRdrRuntime.pSocketTimerGroup);
-        LwRtlFreeTaskGroup(&gRdrRuntime.pSocketTimerGroup);
     }
 
     /* All socket tasks should have been canceled by this point,
@@ -435,13 +430,14 @@ RdrShutdown(
     if (gRdrRuntime.pSocketTaskGroup)
     {
         LwRtlWaitTaskGroup(gRdrRuntime.pSocketTaskGroup);
-        LwRtlFreeTaskGroup(&gRdrRuntime.pSocketTaskGroup);
     }
 
-    /* All sockets are now gone, so free the socket hash */
+    /* Now we can free everything */
+    LwRtlFreeTaskGroup(&gRdrRuntime.pTreeTimerGroup);
+    LwRtlFreeTaskGroup(&gRdrRuntime.pSessionTimerGroup);
+    LwRtlFreeTaskGroup(&gRdrRuntime.pSocketTimerGroup);
+    LwRtlFreeTaskGroup(&gRdrRuntime.pSocketTaskGroup);
     SMBHashSafeFree(&gRdrRuntime.pSocketHashByName);
-
-    /* Free the thread pool */
     LwRtlFreeThreadPool(&gRdrRuntime.pThreadPool);
 
     /* Free the global mutex */

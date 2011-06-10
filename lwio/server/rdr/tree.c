@@ -232,18 +232,14 @@ RdrTreeTimeout(
     BOOLEAN bLocked = FALSE;
     PRDR_OP_CONTEXT pContext = NULL;
 
-    if (WakeMask & LW_TASK_EVENT_CANCEL)
-    {
-        *pWaitMask = LW_TASK_EVENT_COMPLETE;
-    }
-    else if (WakeMask & LW_TASK_EVENT_INIT)
+    if (WakeMask & LW_TASK_EVENT_INIT)
     {
         *pWaitMask = LW_TASK_EVENT_TIME;
         *pllTime = gRdrRuntime.config.usIdleTimeout * 1000000000ll;
     }
 
     if ((WakeMask & LW_TASK_EVENT_TIME) ||
-        ((WakeMask & LW_TASK_EVENT_EXPLICIT) && RdrIsShutdownSet()))
+        ((WakeMask & LW_TASK_EVENT_CANCEL) && RdrIsShutdownSet()))
     {
         LWIO_LOCK_MUTEX(bLocked, &pTree->pSession->mutex);
 
@@ -271,6 +267,10 @@ RdrTreeTimeout(
             *pWaitMask = LW_TASK_EVENT_TIME;
             *pllTime = gRdrRuntime.config.usIdleTimeout * 1000000000ll;
         }
+    }
+    else if (WakeMask & LW_TASK_EVENT_CANCEL)
+    {
+        *pWaitMask = LW_TASK_EVENT_COMPLETE;
     }
 
     LWIO_UNLOCK_MUTEX(bLocked, &pTree->pSession->mutex);
