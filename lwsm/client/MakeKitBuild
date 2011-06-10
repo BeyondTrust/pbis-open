@@ -15,5 +15,5 @@ make()
         SOURCES="main.c" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="$COMMON_HEADERDEPS" \
-        LIBDEPS="lwsm lwsmcommon lwadvapi lwadvapi_nothr $LIB_PTHREAD"
+        LIBDEPS="lwsm lwsmcommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr $LIB_PTHREAD"
 }
