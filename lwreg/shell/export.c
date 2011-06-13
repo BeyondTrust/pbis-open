@@ -291,10 +291,12 @@ ProcessExportedKeyInfo(
     DWORD dwValueNameLen = MAX_KEY_LENGTH;
     WCHAR pwszValueName[MAX_KEY_LENGTH];   // buffer for subkey name WCHAR format
     PSTR  pszValueName = NULL; // buffer for subkey name
+    PSTR  pszValueNameEscaped = NULL; // buffer for subkey name
     PSTR pszValue = NULL;
     REG_DATA_TYPE dataType = REG_NONE;
     BYTE *value = NULL;
     DWORD dwValueLen = 0;
+    DWORD dwValueNameEscapedLen = 0;
     DWORD dwValueLenMax = 0;
     int iCount = 0;
     DWORD dwValuesCount = 0;
@@ -363,9 +365,15 @@ ProcessExportedKeyInfo(
                                 &dwValueLen);
         BAIL_ON_REG_ERROR(dwError);
         LWREG_SAFE_FREE_STRING(pszValueName);
+        LWREG_SAFE_FREE_STRING(pszValueNameEscaped);
         dwError = RegCStringAllocateFromWC16String(
                       &pszValueName,
                       pwszValueName);
+        BAIL_ON_REG_ERROR(dwError);
+        dwError = RegShellUtilEscapeString(
+                      pszValueName,
+                      &pszValueNameEscaped,
+                      &dwValueNameEscapedLen);
         BAIL_ON_REG_ERROR(dwError);
 
         if (dataType == REG_SZ)
@@ -400,7 +408,7 @@ ProcessExportedKeyInfo(
                                   pszFullKeyName,
                                   NULL,
                                   REG_SZ,
-                                  pszValueName,
+                                  pszValueNameEscaped,
                                   dataType,
                                   bValueSet,
                                   pValue,
@@ -415,7 +423,7 @@ ProcessExportedKeyInfo(
             {
                 memset(&regItem, 0, sizeof(regItem));
                 regItem.type = REG_SZ;
-                regItem.valueName = pszValueName;
+                regItem.valueName = pszValueNameEscaped;
                 if (pCurrValueInfo)
                 {
                     dataType = pCurrValueInfo->dwType;
@@ -455,7 +463,7 @@ ProcessExportedKeyInfo(
                                       pszFullKeyName,
                                       NULL,
                                       REG_SZ,
-                                      pszValueName,
+                                      pszValueNameEscaped,
                                       dataType,
                                       FALSE,
                                       pValue,
@@ -477,7 +485,7 @@ ProcessExportedKeyInfo(
             /* Export value and attribute information */
             memset(&regItem, 0, sizeof(regItem));
             regItem.type = REG_SZ;
-            regItem.valueName = pszValueName;
+            regItem.valueName = pszValueNameEscaped;
             regItem.valueType = dataType;
             if (pValueAttributes)
             {
@@ -519,7 +527,7 @@ ProcessExportedKeyInfo(
              */
             memset(&regItem, 0, sizeof(regItem));
             regItem.type = REG_SZ;
-            regItem.valueName = pszValueName;
+            regItem.valueName = pszValueNameEscaped;
             regItem.valueType = dataType;
             regItem.regAttr.ValueType = dataType;
             regItem.value = pValue;
@@ -538,6 +546,7 @@ cleanup:
     LWREG_SAFE_FREE_MEMORY(pszAttrDump);
     LWREG_SAFE_FREE_MEMORY(pszValue);
     LWREG_SAFE_FREE_STRING(pszValueName);
+    LWREG_SAFE_FREE_STRING(pszValueNameEscaped);
     LWREG_SAFE_FREE_STRING(pszValue);
     LWREG_SAFE_FREE_STRING(regItem.regAttr.pDefaultValue);
     RegSafeFreeCurrentValueInfo(&pCurrValueInfo);

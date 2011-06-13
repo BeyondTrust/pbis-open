@@ -149,22 +149,7 @@ RegShellUtilGetValue(
 
 
 DWORD
-RegShellUtilEscapeStringExt(
-    PCSTR pszValue,
-    PSTR *ppszRetValue,
-    PDWORD pdwEscapeValueLen,
-    DWORD flags
-    );
-
-DWORD
 RegShellUtilEscapeString(
-    PCSTR pszValue,
-    PSTR *ppszRetValue,
-    PDWORD pdwEscapeValueLen
-    );
-
-DWORD
-RegShellUtilEscapeMultiString(
     PCSTR pszValue,
     PSTR *ppszRetValue,
     PDWORD pdwEscapeValueLen

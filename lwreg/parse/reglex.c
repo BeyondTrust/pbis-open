@@ -682,6 +682,14 @@ RegLexParseBackslash(
                 RegLexAppendChar(lexHandle, '\f');
                 break;
 
+              case '\\':
+                RegLexAppendChar(lexHandle, '\\');
+                break;
+
+              case '"':
+                RegLexAppendChar(lexHandle, '"');
+                break;
+
               default:
                 RegLexAppendChar(lexHandle, '\\');
                 RegLexAppendChar(lexHandle, inC);

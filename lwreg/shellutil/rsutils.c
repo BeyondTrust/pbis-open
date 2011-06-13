@@ -1593,27 +1593,20 @@ error:
 
 
 DWORD
-RegShellUtilEscapeStringExt(
+RegShellUtilEscapeString(
     PCSTR pszValue,
     PSTR *ppszRetValue,
-    PDWORD pdwEscapeValueLen,
-    DWORD flags)
+    PDWORD pdwEscapeValueLen)
 {
     DWORD i = 0;
     DWORD dwError = 0;
     DWORD dwLen = 0;
     DWORD dwEscapeValueLen = 0;
     PSTR pszRetValue = NULL;
-    BOOLEAN bEscapeBackSlash = FALSE;
 
     BAIL_ON_INVALID_POINTER(pszValue);
     BAIL_ON_INVALID_POINTER(ppszRetValue);
     BAIL_ON_INVALID_POINTER(pdwEscapeValueLen);
-
-    if (flags & REGSHELLUTIL_ESC_BACKSLASH)
-    {
-        bEscapeBackSlash = TRUE;
-    }
 
     /* Count number of \ found in string to escape */
     for (i=0; pszValue[i]; i++)
@@ -1629,7 +1622,9 @@ RegShellUtilEscapeStringExt(
     }
     dwEscapeValueLen++;
 
-    dwError = RegAllocateMemory(sizeof(*pszRetValue)* dwEscapeValueLen, (PVOID*)&pszRetValue);
+    dwError = RegAllocateMemory(
+                  sizeof(*pszRetValue)* dwEscapeValueLen,
+                  (PVOID*)&pszRetValue);
     BAIL_ON_REG_ERROR(dwError);
 
     for (i=0; pszValue[i]; i++)
@@ -1664,22 +1659,15 @@ RegShellUtilEscapeStringExt(
             pszRetValue[dwLen++] = '\\';
             pszRetValue[dwLen++] = 'f';
         }
-        else if (pszValue[i] == '\\' && bEscapeBackSlash)
+        else if (pszValue[i] == '\\')
         {
             pszRetValue[dwLen++] = '\\';
             pszRetValue[dwLen++] = '\\';
         }
-        else if (pszValue[i] == '"' && bEscapeBackSlash)
+        else if (pszValue[i] == '"')
         {
             pszRetValue[dwLen++] = '\\';
             pszRetValue[dwLen++] = '"';
-        }
-        else if (pszValue[i] == '\\' && pszValue[i+1] == '\\')
-        {
-            /* Look ahead at next character and emit escaped \ if match */
-            pszRetValue[dwLen++] = '\\';
-            pszRetValue[dwLen++] = '\\';
-            i++;
         }
         else
         {
@@ -1698,39 +1686,9 @@ error:
 }
 
 DWORD
-RegShellUtilEscapeString(
-    PCSTR pszValue,
-    PSTR *ppszRetValue,
-    PDWORD pdwEscapeValueLen)
-{
-    return RegShellUtilEscapeStringExt(
-               pszValue,
-               ppszRetValue,
-               pdwEscapeValueLen,
-               REGSHELLUTIL_NO_ESC_BACKSLASH);
-}
-
-
-DWORD
-RegShellUtilEscapeMultiString(
-    PCSTR pszValue,
-    PSTR *ppszRetValue,
-    PDWORD pdwEscapeValueLen)
-{
-    return RegShellUtilEscapeStringExt(
-               pszValue,
-               ppszRetValue,
-               pdwEscapeValueLen,
-               REGSHELLUTIL_ESC_BACKSLASH);
-}
-
-
-DWORD
 RegExportBinaryTypeToString(
     REG_DATA_TYPE token,
-    PSTR tokenStr,
-    BOOLEAN dumpFormat
-    )
+    PSTR tokenStr, BOOLEAN dumpFormat)
 {
     DWORD dwError = 0;
     static char *typeStrs[][2] = {
@@ -1801,12 +1759,20 @@ RegExportAttributeEntries(
     PSTR pszString = NULL;
     DWORD dwAttrStringLen = 0;
     PSTR pszIndentChar = " ";
+    PSTR pszValueNameEsc = NULL;
+    DWORD dwValueNameEscLen = 0;
     PWSTR *ppwszRangeEnumStrings = NULL;
     DWORD dwIndentLevel = 4;
 
     BAIL_ON_INVALID_POINTER(pItem);
     BAIL_ON_INVALID_POINTER(ppszDumpString);
     BAIL_ON_INVALID_POINTER(pdwDumpStringLen);
+
+    dwError = RegShellUtilEscapeString(
+                  pItem->valueName,
+                  &pszValueNameEsc,
+                  &dwValueNameEscLen);
+    BAIL_ON_REG_ERROR(dwError);
 
     dwError = RtlCStringAllocateAppendPrintf(
                   &pszDumpString, "\"%s\" = {\n",
@@ -1992,6 +1958,7 @@ cleanup:
 error:
     LWREG_SAFE_FREE_STRING(pszString);
     LWREG_SAFE_FREE_STRING(pszDumpString);
+    LWREG_SAFE_FREE_STRING(pszValueNameEsc);
     goto cleanup;
 }
 
@@ -2055,16 +2022,24 @@ RegExportMultiStringArray(
     PSTR pszString = NULL;
     PSTR pszDumpString = NULL;
     PSTR pszEscapedValue = NULL;
+    PSTR pszEscapedValueName = NULL;
     DWORD dwEscapedValueLen = 0;
+    DWORD dwEscapedValueNameLen = 0;
 
     BAIL_ON_INVALID_POINTER(pszValueName);
     BAIL_ON_INVALID_POINTER(pValue);
+
+    dwError = RegShellUtilEscapeString(
+                  pszValueName,
+                  &pszEscapedValueName,
+                  &dwEscapedValueNameLen);
+    BAIL_ON_REG_ERROR(dwError);
 
     pwszValue = (PWSTR) pValue;
     dwError = RegCStringAllocatePrintf(
                   &pszDumpString,
                   "\"%s\"=sza:",
-                  pszValueName);
+                  pszEscapedValueName);
     BAIL_ON_REG_ERROR(dwError);
 
     while (*pwszValue)
@@ -2075,7 +2050,7 @@ RegExportMultiStringArray(
         BAIL_ON_REG_ERROR(dwError);
 
         LWREG_SAFE_FREE_STRING(pszEscapedValue);
-        dwError = RegShellUtilEscapeMultiString(
+        dwError = RegShellUtilEscapeString(
                       pszString,
                       &pszEscapedValue,
                       &dwEscapedValueLen);
@@ -2102,6 +2077,7 @@ RegExportMultiStringArray(
 
 cleanup:
     LWREG_SAFE_FREE_STRING(pszEscapedValue);
+    LWREG_SAFE_FREE_STRING(pszEscapedValueName);
     *ppszDumpString = pszDumpString;
     *pdwDumpStringLen = strlen(pszDumpString);
     return dwError;
@@ -2338,7 +2314,8 @@ RegExportString(
 {
     DWORD bufLen = 0;
     PSTR dumpBuf = NULL;
-    PSTR valueEscName = NULL;
+    PSTR valueEsc = NULL;
+    PSTR valueNameEsc = NULL;
     DWORD dwError = 0;
     DWORD dumpStringLen = 0;
     DWORD dwEscapeStringLen = 0;
@@ -2348,8 +2325,13 @@ RegExportString(
     BAIL_ON_INVALID_POINTER(retDumpStringLen);
 
     dwError = RegShellUtilEscapeString(
+                  valueName,
+                  &valueNameEsc,
+                  &dwEscapeStringLen);
+    BAIL_ON_REG_ERROR(dwError);
+    dwError = RegShellUtilEscapeString(
                   value,
-                  &valueEscName,
+                  &valueEsc,
                   &dwEscapeStringLen);
     BAIL_ON_REG_ERROR(dwError);
 
@@ -2361,16 +2343,17 @@ RegExportString(
     if (valueType == REG_KEY_DEFAULT)
     {
         dumpStringLen = sprintf(dumpBuf, "%s=\"%s\"",
-                            valueName,
-                            valueEscName);
+                            valueNameEsc,
+                            valueEsc);
     }
     else
     {
         dumpStringLen = sprintf(dumpBuf, "\"%s\"=\"%s\"",
                             valueName,
-                            valueEscName);
+                            valueEsc);
     }
-    LWREG_SAFE_FREE_MEMORY(valueEscName);
+    LWREG_SAFE_FREE_MEMORY(valueEsc);
+    LWREG_SAFE_FREE_MEMORY(valueNameEsc);
     *retDumpStringLen = dumpStringLen;
     *dumpString = dumpBuf;
 

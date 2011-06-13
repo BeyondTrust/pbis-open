@@ -71,6 +71,7 @@ error:
     goto cleanup;
 }
 
+
 static void *pfDeleteNodeCallback(
     PMEMREG_NODE pEntry,
     PVOID userContext,
@@ -99,6 +100,8 @@ pfMemRegExportToFile(
     DWORD dwError = 0;
     PSTR pszDumpString = NULL;
     PSTR pszValueName = NULL;
+    PSTR pszValueNameEsc = NULL;
+    DWORD dwValueNameEscLen = 0;
     PSTR pszEnumValue = NULL;
     PSTR pszStringSecurityDescriptor = NULL;
     SECURITY_INFORMATION SecInfoAll = OWNER_SECURITY_INFORMATION
@@ -117,6 +120,7 @@ pfMemRegExportToFile(
     int sts = 0;
 
     /* Format key first */
+    LWREG_SAFE_FREE_STRING(pszDumpString);
     dwError = RegExportEntry(
                   (PSTR) subStringPrefix,
                   "", // PCSTR pszSddlCString,
@@ -133,7 +137,6 @@ pfMemRegExportToFile(
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(sts == -1 ? errno : 0));
     sts = write(wfd, "\n", 1);
     BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(sts == -1 ? errno : 0));
-    LWREG_SAFE_FREE_STRING(pszDumpString);
 
     if ((pEntry->NodeType == MEMREG_TYPE_KEY ||
         pEntry->NodeType == MEMREG_TYPE_HIVE) &&
@@ -173,21 +176,29 @@ pfMemRegExportToFile(
             {
                 valueType = Value->Type;
             }
-            LwRtlCStringAllocateFromWC16String(
-                &pszValueName, 
-                Value->Name);
+            LWREG_SAFE_FREE_STRING(pszValueName);
+            LWREG_SAFE_FREE_STRING(pszValueNameEsc);
+            dwError = LwRtlCStringAllocateFromWC16String(
+                          &pszValueName, 
+                          Value->Name);
+            BAIL_ON_REG_ERROR(dwError);
+            dwError = RegShellUtilEscapeString(
+                          pszValueName,
+                          &pszValueNameEsc,
+                          &dwValueNameEscLen);
+            BAIL_ON_REG_ERROR(dwError);
             sts = write(wfd, "\"", 1);
             BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(sts == -1 ? errno : 0));
-            sts = write(wfd, pszValueName, strlen(pszValueName));
+            sts = write(wfd, pszValueNameEsc, dwValueNameEscLen);
             BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(sts == -1 ? errno : 0));
             sts = write(wfd, "\" = {\n", 6);
             BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(sts == -1 ? errno : 0));
              
-            LWREG_SAFE_FREE_STRING(pszValueName);
       
             /* Deal with an override value first */
             if (Value->Data && Value->DataLen)
             {
+                LWREG_SAFE_FREE_STRING(pszDumpString);
                 dwError = RegExportEntry(
                               NULL,
                               "", // PCSTR pszSddlCString
@@ -210,13 +221,13 @@ pfMemRegExportToFile(
                 sts = write(wfd, "\n", 1);
                 BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
                     sts == -1 ? errno : 0));
-                LWREG_SAFE_FREE_STRING(pszDumpString);
             }
 
             /* Deal with default values now */
             Attr = &Value->Attributes;
             if (Attr->pDefaultValue && Attr->DefaultValueLen)
             {
+                LWREG_SAFE_FREE_STRING(pszDumpString);
                 dwError = RegExportEntry(
                               NULL,
                               "", // PCSTR pszSddlCString
@@ -239,12 +250,12 @@ pfMemRegExportToFile(
                 sts = write(wfd, "\n", 1);
                 BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
                     sts == -1 ? errno : 0));
-                LWREG_SAFE_FREE_STRING(pszDumpString);
             }
  
             if (Attr->pwszDocString &&
                 LwRtlWC16StringNumChars(Attr->pwszDocString))
             {
+                LWREG_SAFE_FREE_STRING(pszDumpString);
                 dwError = RegExportEntry(
                               NULL,
                               "", // PCSTR pszSddlCString
@@ -267,7 +278,6 @@ pfMemRegExportToFile(
                 sts = write(wfd, "\n", 1);
                 BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
                     sts == -1 ? errno : 0));
-                LWREG_SAFE_FREE_STRING(pszDumpString);
             }
 
             switch (Attr->RangeType)
@@ -286,6 +296,7 @@ pfMemRegExportToFile(
                          Attr->Range.ppwszRangeEnumStrings[enumIndex];
                          enumIndex++)
                     {
+                        LWREG_SAFE_FREE_MEMORY(pszEnumValue);
                         LwRtlCStringAllocateFromWC16String(
                              &pszEnumValue,
                              Attr->Range.ppwszRangeEnumStrings[enumIndex]);
@@ -307,7 +318,6 @@ pfMemRegExportToFile(
                         sts = write(wfd, "\"", 1);
                         BAIL_ON_REG_ERROR(RegMapErrnoToLwRegError(
                             sts == -1 ? errno : 0));
-                        LWREG_SAFE_FREE_MEMORY(pszEnumValue);
 
                         if (Attr->Range.ppwszRangeEnumStrings[enumIndex+1])
                         {
@@ -347,6 +357,7 @@ cleanup:
     LWREG_SAFE_FREE_STRING(pszStringSecurityDescriptor);
     LWREG_SAFE_FREE_STRING(pszDumpString);
     LWREG_SAFE_FREE_STRING(pszValueName);
+    LWREG_SAFE_FREE_STRING(pszValueNameEsc);
     LWREG_SAFE_FREE_MEMORY(pszEnumValue);
     return NULL;
 

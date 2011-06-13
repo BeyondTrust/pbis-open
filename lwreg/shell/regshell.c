@@ -655,6 +655,8 @@ RegShellListValues(
     PSTR pszEscapedValue = NULL;
     PBYTE pData = NULL;
     PREGSHELL_UTIL_VALUE pValues = NULL;
+    PSTR pszValueNameEscaped = NULL;
+    DWORD dwValueNameEscapedLen = 0;
 
     dwError = RegShellUtilGetValues(
                   pParseState->hReg,
@@ -680,17 +682,22 @@ RegShellListValues(
         if (dwError == 0)
         {
             LWREG_SAFE_FREE_STRING(pszValueName);
+            LWREG_SAFE_FREE_STRING(pszValueNameEscaped);
 
             dwError = LwRtlCStringAllocateFromWC16String(
                           &pszValueName,
                           pValues[i].pValueName);
             BAIL_ON_REG_ERROR(dwError);
+            dwError = RegShellUtilEscapeString(
+                          pszValueName,
+                          &pszValueNameEscaped,
+                          &dwValueNameEscapedLen);
 #ifdef _LW_DEBUG
-            printf("ListValues: value='%s\n", pszValueName);
+            printf("ListValues: value='%s\n", pszValueNameEscaped);
             printf("ListValues: dataLen='%d'\n", pValues[i].dwDataLen);
 #endif
 
-            if (strcmp(pszValueName, "@") == 0 &&
+            if (strcmp(pszValueNameEscaped, "@") == 0 &&
                 *((PSTR) pValues[i].pData) == '\0')
             {
                 continue;
@@ -698,8 +705,8 @@ RegShellListValues(
             dwValuesListed++;
             printf("%c  \"%s\"%*s",
                    pValues[i].bValueSet ? '+' : ' ',
-                   pszValueName,
-                   (int) (strlen(pszValueName)-dwValueNameLenMax),
+                   pszValueNameEscaped,
+                   (int) (strlen(pszValueNameEscaped)-dwValueNameLenMax),
                    "");
 
             switch (pValues[i].type)
@@ -784,6 +791,7 @@ cleanup:
         *pdwValuesListed = dwValuesListed;
     }
     LWREG_SAFE_FREE_STRING(pszValueName);
+    LWREG_SAFE_FREE_STRING(pszValueNameEscaped);
     return dwError;
 
 error:
