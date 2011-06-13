@@ -574,6 +574,30 @@
             <apply command="/opt/likewise/bin/lwsm refresh lsass" />
         </registry>
     </capability>
+    <capability>
+        <name>SmartcardEnabled</name>
+        <description>Smartcard services will not be used when disabled</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\SmartCardEnabled"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\SmartCardEnabled" >
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>SmartcardRequiredForLogin</name>
+        <description>Smartcard will be required for login</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\SmartCardRequiredForLogin"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\SmartCardRequiredForLogin" >
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
 </section>
 <section section="Lsass - Local provider">
     <capability>
