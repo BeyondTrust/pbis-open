@@ -770,7 +770,7 @@ error:
     LW_SAFE_FREE_STRING(pszNT4Name);
     *pObjectType = LSA_OBJECT_TYPE_UNDEFINED;
 
-    LSA_LOG_ERROR("Failed to find user, group, or domain by sid (sid = '%s', searched host = '%s') -> error = %u, symbol = %s",
+    LSA_LOG_INFO("Failed to find user, group, or domain by sid (sid = '%s', searched host = '%s') -> error = %u, symbol = %s",
             LSA_SAFE_LOG_STRING(pszObjectSid),
             LSA_SAFE_LOG_STRING(pszHostname),
             dwError,
