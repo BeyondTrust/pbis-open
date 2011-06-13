@@ -1350,7 +1350,7 @@ DJSetComputerName(
     PSTR pszComputerName_lower = NULL;
     PSTR pNewFqdnHostname = NULL;
     PSTR ppszHostfilePaths[] = { "/etc/hostname", "/etc/HOSTNAME", NULL };
-    DistroInfo distro;
+    LwDistroInfo distro;
 
     memset(&distro, 0, sizeof(distro));
 

@@ -294,7 +294,7 @@ static int FindEntry(const NsswitchConf *conf, int startLine, const char *name)
     return -1;
 }
 
-static DWORD AddEntry(NsswitchConf *conf, const DistroInfo *distro,
+static DWORD AddEntry(NsswitchConf *conf, const LwDistroInfo *distro,
         int *addedIndex, const char *name)
 {
     DWORD ceError = ERROR_SUCCESS;
@@ -337,7 +337,7 @@ cleanup:
     return ceError;
 }
 
-const char * GetModuleSeparator(NsswitchConf *conf, const DistroInfo *distro)
+const char * GetModuleSeparator(NsswitchConf *conf, const LwDistroInfo *distro)
 {
     int line;
     const NsswitchEntry *copy;
@@ -377,7 +377,7 @@ static int FindModuleOnLine(const NsswitchConf *conf, int line, const char *name
     return -1;
 }
 
-static DWORD InsertModule(NsswitchConf *conf, const DistroInfo *distro,
+static DWORD InsertModule(NsswitchConf *conf, const LwDistroInfo *distro,
         int line, int insertIndex, const char *name)
 {
     DWORD ceError = ERROR_SUCCESS;
@@ -581,7 +581,7 @@ cleanup:
 
 static QueryResult RemoveCompat(NsswitchConf *conf, PSTR *description, LWException **exc)
 {
-    DistroInfo distro;
+    LwDistroInfo distro;
     int compatLine;
     int noncompatLine;
     int compatModIndex;
@@ -724,7 +724,7 @@ DWORD
 UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
 {
     DWORD ceError = ERROR_SUCCESS;
-    DistroInfo distro;
+    LwDistroInfo distro;
     int line;
     int lwiIndex;
     static const char* moduleName = "lsass";
@@ -841,7 +841,7 @@ cleanup:
     return ceError;
 }
 
-const char *GetNameOfHostsByFile(const NsswitchConf *conf, const DistroInfo *distro)
+const char *GetNameOfHostsByFile(const NsswitchConf *conf, const LwDistroInfo *distro)
 {
     int line = FindEntry(conf, 0, "hosts");
 
@@ -857,7 +857,7 @@ const char *GetNameOfHostsByFile(const NsswitchConf *conf, const DistroInfo *dis
         return "files";
 }
 
-const char *GetNameOfHostsByDns(const NsswitchConf *conf, const DistroInfo *distro)
+const char *GetNameOfHostsByDns(const NsswitchConf *conf, const LwDistroInfo *distro)
 {
     int line = FindEntry(conf, 0, "hosts");
 
@@ -880,7 +880,7 @@ DJConfigureHostsEntry(const char *testPrefix)
 {
     DWORD ceError = ERROR_SUCCESS;
     NsswitchConf conf;
-    DistroInfo distro;
+    LwDistroInfo distro;
     int line;
     const char *hostsByFile;
     const char *hostsByDns;
@@ -1069,7 +1069,7 @@ static DWORD UnsupportedSeLinuxEnabled(BOOLEAN *hasBadSeLinux)
     BOOLEAN hasSeLinux;
     DWORD ceError = ERROR_SUCCESS;
     PSTR output = NULL;
-    DistroInfo distro;
+    LwDistroInfo distro;
 
     *hasBadSeLinux = FALSE;
     memset(&distro, 0, sizeof(distro));
@@ -1241,7 +1241,7 @@ static void RestartDtloginIfRunning(JoinProcessOptions *options, LWException **e
     BOOLEAN doRestart;
     BOOLEAN inX;
     LWException *inner = NULL;
-    DistroInfo distro;
+    LwDistroInfo distro;
 
     memset(&distro, 0, sizeof(distro));
 
