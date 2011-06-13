@@ -48,7 +48,7 @@ static PCSTR ubuntuSedExpr = "s/^\\([ \t]*\\)PROMPT_COMMAND=\'echo -ne \"\\\\033
 
 static QueryResult QueryBash(const JoinProcessOptions *options, LWException **exc)
 {
-    DistroInfo distro;
+    LwDistroInfo distro;
     BOOLEAN exists;
     BOOLEAN changes;
     QueryResult result = SufficientlyConfigured;
@@ -128,7 +128,7 @@ cleanup:
 
 static void DoBash(JoinProcessOptions *options, LWException **exc)
 {
-    DistroInfo distro;
+    LwDistroInfo distro;
     BOOLEAN exists;
 
     memset(&distro, 0, sizeof(distro));
@@ -186,7 +186,7 @@ cleanup:
 
 static PSTR GetBashDescription(const JoinProcessOptions *options, LWException **exc)
 {
-    DistroInfo distro;
+    LwDistroInfo distro;
     QueryResult currentStatus;
     PSTR result = NULL;
 

@@ -51,7 +51,7 @@ configure()
     mk_export DJ_GUI_INTERFACE
 
     mk_check_headers \
-	signal.h
+	signal.h CoreFoundation/CoreFoundation.h
 
     mk_check_functions \
 	HEADERDEPS="signal.h" \

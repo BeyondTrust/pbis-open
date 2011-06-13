@@ -585,7 +585,7 @@ DJConfigureForDaemonRestart(
     )
 {
     BOOLEAN bFileExists = FALSE;
-    DistroInfo distro;
+    LwDistroInfo distro;
     PSTR symlinkTarget = NULL;
     PSTR symlinkName = NULL;
     long status = 0;

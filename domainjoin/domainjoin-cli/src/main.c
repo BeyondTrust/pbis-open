@@ -795,7 +795,7 @@ void DoGetDistroInfo(int argc, char **argv, LWException **exc)
     PSTR str = NULL;
     PCSTR requestType = argv[0];
     PCSTR testPrefix = NULL;
-    DistroInfo distro = {0};
+    LwDistroInfo distro = {0};
 
     argc--;
     argv++;
