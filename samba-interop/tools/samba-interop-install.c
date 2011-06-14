@@ -1567,7 +1567,7 @@ main(
                         &pFoundSmbdPath);
         if (error == ERROR_FILE_NOT_FOUND)
         {
-            LW_LOG_ERROR("The smbd file could not be automatically found on your system. The search path was '%s'. Pass the correct location as the last argument to this program.", pSearchPath);
+            LW_RTL_LOG_ERROR("The smbd file could not be automatically found on your system. The search path was '%s'. Pass the correct location as the last argument to this program.", pSearchPath);
         }
         BAIL_ON_LSA_ERROR(error);
         pSmbdPath = pFoundSmbdPath;
@@ -1590,7 +1590,7 @@ main(
 
     if (!smbdExists)
     {
-        LW_LOG_ERROR("Smbd file not found at path '%s'", pSmbdPath);
+        LW_RTL_LOG_ERROR("Smbd file not found at path '%s'", pSmbdPath);
     }
 
     error = CheckSambaVersion(pSmbdPath);
