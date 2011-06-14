@@ -1206,7 +1206,7 @@ void DJCreateComputerAccount(
                 JoinProcessOptions *options,
                 LWException **exc)
 {
-    DistroInfo distro;
+    LwDistroInfo distro;
     PSTR osName = NULL;
     PSTR tempDir = NULL;
     PSTR shortHostname = NULL;

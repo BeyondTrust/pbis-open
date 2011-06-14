@@ -1935,7 +1935,7 @@ static BOOLEAN PamModuleDenies( const char * phase, const char * module)
 
 /* returns true if the pam module will always return an error code for a domain user (assuming that a local account by the same name doesn't exist)
  */
-static BOOLEAN PamModuleAlwaysDeniesDomainLogins( const char * phase, const char * module, const DistroInfo *distro)
+static BOOLEAN PamModuleAlwaysDeniesDomainLogins( const char * phase, const char * module, const LwDistroInfo *distro)
 {
     char buffer[256];
     NormalizeModuleName( buffer, module, sizeof(buffer));
@@ -2400,7 +2400,7 @@ error:
 static DWORD FindPamDenyLikeModule(const char *testPrefix, char **modulePath, char **moduleOption)
 {
     DWORD ceError = ERROR_SUCCESS;
-    DistroInfo distro;
+    LwDistroInfo distro;
     memset(&distro, 0, sizeof(distro));
     *modulePath = NULL;
     *moduleOption = NULL;
@@ -2526,7 +2526,7 @@ cleanup:
 static
 void
 AddSmartCartLine(
-    IN const DistroInfo *pDistro,
+    IN const LwDistroInfo *pDistro,
     IN OUT struct PamConf *pConf,
     IN const char *pPamLwidentity,
     IN OUT struct ConfigurePamModuleState *pState,
@@ -2567,7 +2567,7 @@ cleanup:
     ;
 }
 
-static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro, struct PamConf *conf, const char *service, const char * phase, const char *pam_lwidentity, struct ConfigurePamModuleState *state, LWException **exc)
+static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *distro, struct PamConf *conf, const char *service, const char * phase, const char *pam_lwidentity, struct ConfigurePamModuleState *state, LWException **exc)
 {
     int prevLine = -1;
     int line = NextLineForService(conf, -1, service, phase);
@@ -3616,7 +3616,7 @@ void DJUpdatePamConf(const char *testPrefix,
     const char *phases[] = {"auth", "account", "password", "session", NULL};
     int serviceCount;
     char **services = NULL;
-    DistroInfo distro;
+    LwDistroInfo distro;
     LWException *nestedException = NULL;
     DWORD moduleFlags = 0;
 
@@ -3945,7 +3945,7 @@ void DJNewConfigurePamForADLogin(
     DWORD ceError = ERROR_SUCCESS;
     struct PamConf conf;
     char *pam_lwidentityconf = NULL;
-    DistroInfo distro;
+    LwDistroInfo distro;
     BOOLEAN bPamAuthUpdateSupported = FALSE;
     BOOLEAN bPamAuthUpdateLikewiseEnabled = FALSE;
     memset(&conf, 0, sizeof(conf));
@@ -4041,7 +4041,7 @@ static DWORD IsLwidentityEnabled(struct PamConf *conf, const char *service, cons
     const char *control;
     char *includeService = NULL;
     BOOLEAN sawNonincludeLine = FALSE;
-    DistroInfo distro;
+    LwDistroInfo distro;
 
     memset(&distro, 0, sizeof(distro));
     *configured = FALSE;
@@ -4205,7 +4205,7 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
     BOOLEAN configured;
     PCSTR services[] = {"ssh", "sshd", "login", "su", "other"};
     int i;
-    DistroInfo distro;
+    LwDistroInfo distro;
     BOOLEAN bPamAuthUpdateSupported = FALSE;
     BOOLEAN bPamAuthUpdateLikewiseEnabled = FALSE;
 

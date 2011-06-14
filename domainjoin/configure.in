@@ -512,7 +512,7 @@ AC_CHECK_LIB([dl], [dlopen])
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdlib.h string sys/socket.h syslog.h unistd.h sys/types.h fcntl.h sys/stat.h sys/systeminfo.h time.h sys/time.h])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdlib.h string sys/socket.h syslog.h unistd.h sys/types.h fcntl.h sys/stat.h sys/systeminfo.h time.h sys/time.h CoreFoundation/CoreFoundation.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST

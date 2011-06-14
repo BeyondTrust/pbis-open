@@ -42,7 +42,7 @@ typedef enum
     OS_HPUX,
     OS_LINUX,
     OS_FREEBSD,
-} OSType;
+} LwOSType;
 
 typedef enum
 {
@@ -63,7 +63,7 @@ typedef enum
     DISTRO_DEBIAN,
     DISTRO_FREEBSD,
     DISTRO_ESX,
-} DistroType;
+} LwDistroType;
 
 typedef enum
 {
@@ -74,31 +74,31 @@ typedef enum
     ARCH_IA64,
     ARCH_SPARC,
     ARCH_POWERPC,
-} ArchType;
+} LwArchType;
 
 typedef struct
 {
-    OSType os;
-    DistroType distro;
-    ArchType arch;
+    LwOSType os;
+    LwDistroType distro;
+    LwArchType arch;
     char *version;
-} DistroInfo;
+} LwDistroInfo;
 
-OSType DJGetOSFromString(const char *str);
-DistroType DJGetDistroFromString(const char *str);
-ArchType DJGetArchFromString(const char * str);
+LwOSType DJGetOSFromString(const char *str);
+LwDistroType DJGetDistroFromString(const char *str);
+LwArchType DJGetArchFromString(const char * str);
 
-DWORD DJGetOSString(OSType type, char **result);
-DWORD DJGetDistroString(DistroType type, char **result);
-DWORD DJGetArchString(ArchType type, char **result);
+DWORD DJGetOSString(LwOSType type, char **result);
+DWORD DJGetDistroString(LwDistroType type, char **result);
+DWORD DJGetArchString(LwArchType type, char **result);
 
 //Fills in fields with correct values
 DWORD
-DJGetDistroInfo(const char *testPrefix, DistroInfo *info);
+DJGetDistroInfo(const char *testPrefix, LwDistroInfo *info);
 
 //Safe to call after DJGetDistroInfo has been called, or the structure has
 //been zeroed out.
-void DJFreeDistroInfo(DistroInfo *info);
+void DJFreeDistroInfo(LwDistroInfo *info);
 
 DWORD
 DJGetLikewiseVersion(

@@ -119,7 +119,7 @@ cleanup:
 static QueryResult QueryPamMode(const JoinProcessOptions *options, LWException **exc)
 {
     BOOLEAN bFileExists = FALSE;
-    DistroInfo distro;
+    LwDistroInfo distro;
     QueryResult result = NotApplicable;
     FILE* fp = NULL;
     DynamicArray lines;

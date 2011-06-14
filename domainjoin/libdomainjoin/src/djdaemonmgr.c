@@ -217,7 +217,7 @@ DJGetBaseDaemonPriorities(
     int *stopLaterOffset
     )
 {
-    DistroInfo distro;
+    LwDistroInfo distro;
     DWORD ceError = ERROR_SUCCESS;
 
     memset(&distro, 0, sizeof(distro));

@@ -39,10 +39,197 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <lwstr.h>
+#include <lwmem.h>
+#include <lwdef.h>
+#ifdef HAVE_COREFOUNDATION_COREFOUNDATION_H
+#include <CoreFoundation/CoreFoundation.h>
+#endif
 
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
-DWORD DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
+#ifdef __LWI_MACOSX__
+
+static
+DWORD
+GetPstrFromStringRef(
+    CFStringRef pIn,
+    PSTR *ppOut
+    )
+{
+    size_t len = 0;
+    PSTR pOut = NULL;
+    DWORD error = 0;
+
+    len = CFStringGetMaximumSizeForEncoding(
+                CFStringGetLength(pIn),
+                CFStringGetSystemEncoding());
+
+    error = LwAllocateMemory(
+                len + 1,
+                (PVOID*)&pOut);
+    GCE(error);
+
+    if (!CFStringGetCString(
+                pIn,
+                pOut,
+                len + 1,
+                CFStringGetSystemEncoding()))
+    {
+        error = ERROR_ILLEGAL_CHARACTER;
+        GCE(error);
+    }
+
+    *ppOut = pOut;
+
+cleanup:
+    if (error)
+    {
+        LW_SAFE_FREE_STRING(pOut);
+    }
+    return error;
+}
+
+static
+DWORD
+UrlErrorToLwError(
+    SInt32 urlError
+    )
+{
+    switch(urlError)
+    {
+        default:
+        case kCFURLUnknownError:
+            return ERROR_GEN_FAILURE;
+        case kCFURLUnknownSchemeError:
+            return ERROR_PROTOCOL_UNREACHABLE;
+        case kCFURLResourceNotFoundError:
+            return ERROR_NOT_FOUND;
+        case kCFURLResourceAccessViolationError:
+            return ERROR_ACCESS_DENIED;
+        case kCFURLRemoteHostUnavailableError:
+            return ERROR_HOST_UNREACHABLE;
+        case kCFURLImproperArgumentsError:
+            return ERROR_BAD_ARGUMENTS;
+        case kCFURLUnknownPropertyKeyError:
+            return ERROR_UNKNOWN_PROPERTY;
+        case kCFURLPropertyKeyUnavailableError:
+            return ERROR_INVALID_ACCESS;
+        case kCFURLTimeoutError:
+            return ERROR_TIMEOUT;
+    }
+}
+
+static
+DWORD
+DJGetPListVersion(
+    PSTR* ppVersion
+    )
+{
+    DWORD error = 0;
+    CFURLRef pURL = NULL;
+    CFDataRef pContents = NULL;
+    SInt32 urlError = 0;
+    CFStringRef pVers = NULL;
+    CFStringRef pError = NULL;
+    PSTR pVersionString = NULL;
+    CFPropertyListRef pPList = NULL;
+    PSTR pErrorString = NULL;
+
+    pURL = CFURLCreateWithFileSystemPath(
+                    kCFAllocatorDefault,
+                    CFSTR("/System/Library/CoreServices/SystemVersion.plist"),
+                    kCFURLPOSIXPathStyle,
+                    false);
+    
+    if (!pURL)
+    {
+        error = ERROR_NOT_ENOUGH_MEMORY;
+        GCE(error);
+    }
+
+    if (!CFURLCreateDataAndPropertiesFromResource(
+            kCFAllocatorDefault,
+            pURL,
+            &pContents,
+            NULL,
+            NULL,
+            &urlError))
+    {
+        error = UrlErrorToLwError(urlError);
+        GCE(error);
+    }
+
+    pPList = CFPropertyListCreateFromXMLData(
+                    kCFAllocatorDefault,
+                    pContents,
+                    kCFPropertyListImmutable,
+                    &pError);
+    if (!pPList)
+    {
+        GetPstrFromStringRef(pError, &pErrorString);
+        DJ_LOG_ERROR("Error '%s' parsing OS X version file",
+                LW_SAFE_LOG_STRING(pErrorString));
+        error = ERROR_PRODUCT_VERSION;
+        GCE(error);
+    }
+
+    pVers = (CFStringRef)CFDictionaryGetValue(
+                (CFDictionaryRef)pPList,
+                CFSTR("ProductVersion"));
+    if (!pVers)
+    {
+        error = ERROR_PRODUCT_VERSION;
+        GCE(error);
+    }
+
+    error = GetPstrFromStringRef(
+                pVers,
+                &pVersionString);
+    GCE(error);
+
+    *ppVersion = pVersionString;
+
+cleanup:
+    if (error)
+    {
+        LW_SAFE_FREE_STRING(pVersionString);
+    }
+    if (pVers)
+    {
+        CFRelease(pVers);
+    }
+    if (pError)
+    {
+        CFRelease(pError);
+    }
+    LW_SAFE_FREE_STRING(pErrorString);
+    if (pURL)
+    {
+        CFRelease(pURL);
+    }
+    if (pContents)
+    {
+        CFRelease(pContents);
+    }
+    if (pPList)
+    {
+        CFRelease(pPList);
+    }
+    return error;
+}
+#else
+static
+DWORD
+DJGetPListVersion(
+    PSTR* ppVersion
+    )
+{
+    return LwAllocateString("Unknown", ppVersion);
+}
+#endif
+
+DWORD DJGetDistroInfo(const char *testPrefix, LwDistroInfo *info)
 {
     BOOLEAN exists;
     DWORD ceError = ERROR_SUCCESS;
@@ -108,7 +295,7 @@ DWORD DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
     {
         struct
         {
-            DistroType matchDistro;
+            LwDistroType matchDistro;
             const char *searchFile;
             const char *matchRegex;
             int versionMatchNum;
@@ -348,8 +535,8 @@ DWORD DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
             break;
         case OS_DARWIN:
             info->distro = DISTRO_DARWIN;
-            GCE(ceError = CTCaptureOutput("sw_vers -productVersion",
-                    &info->version));
+            ceError = DJGetPListVersion(&info->version);
+            GCE(ceError);
             CTStripWhitespace(info->version);
             break;
         case OS_HPUX:
@@ -511,7 +698,7 @@ cleanup:
 
 struct
 {
-    OSType value;
+    LwOSType value;
     const char *name;
 } static const osList[] = 
 {
@@ -525,7 +712,7 @@ struct
     { OS_FREEBSD, "FreeBSD" },
 };
 
-OSType DJGetOSFromString(const char *str)
+LwOSType DJGetOSFromString(const char *str)
 {
     int i;
     for(i = 0; i < sizeof(osList)/sizeof(osList[0]); i++)
@@ -536,7 +723,7 @@ OSType DJGetOSFromString(const char *str)
     return OS_UNKNOWN;
 }
 
-DWORD DJGetOSString(OSType type, char **result)
+DWORD DJGetOSString(LwOSType type, char **result)
 {
     int i;
     for(i = 0; i < sizeof(osList)/sizeof(osList[0]); i++)
@@ -549,7 +736,7 @@ DWORD DJGetOSString(OSType type, char **result)
 
 struct
 {
-    DistroType value;
+    LwDistroType value;
     const char *name;
 } static const distroList[] = 
 {
@@ -572,7 +759,7 @@ struct
     { DISTRO_ESX, "VMware ESX" },
 };
 
-DistroType DJGetDistroFromString(const char *str)
+LwDistroType DJGetDistroFromString(const char *str)
 {
     int i;
     for(i = 0; i < sizeof(distroList)/sizeof(distroList[0]); i++)
@@ -583,7 +770,7 @@ DistroType DJGetDistroFromString(const char *str)
     return DISTRO_UNKNOWN;
 }
 
-DWORD DJGetDistroString(DistroType type, char **result)
+DWORD DJGetDistroString(LwDistroType type, char **result)
 {
     int i;
     for(i = 0; i < sizeof(distroList)/sizeof(distroList[0]); i++)
@@ -596,7 +783,7 @@ DWORD DJGetDistroString(DistroType type, char **result)
 
 struct
 {
-    ArchType value;
+    LwArchType value;
     const char *name;
 } static const archList[] = 
 {
@@ -615,7 +802,7 @@ struct
     { ARCH_POWERPC, "ppc" },
 };
 
-ArchType DJGetArchFromString(const char * str)
+LwArchType DJGetArchFromString(const char * str)
 {
     int i;
     for(i = 0; i < sizeof(archList)/sizeof(archList[0]); i++)
@@ -626,7 +813,7 @@ ArchType DJGetArchFromString(const char * str)
     return ARCH_UNKNOWN;
 }
 
-DWORD DJGetArchString(ArchType type, char **result)
+DWORD DJGetArchString(LwArchType type, char **result)
 {
     int i;
     for(i = 0; i < sizeof(archList)/sizeof(archList[0]); i++)
@@ -637,7 +824,7 @@ DWORD DJGetArchString(ArchType type, char **result)
     return CTStrdup("unknown", result);
 }
 
-void DJFreeDistroInfo(DistroInfo *info)
+void DJFreeDistroInfo(LwDistroInfo *info)
 {
     if(info != NULL)
         CT_SAFE_FREE_STRING(info->version);
