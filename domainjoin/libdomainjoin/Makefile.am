@@ -42,6 +42,7 @@ libdomainjoin_la_LIBADD = \
 	$(ADDITIONAL_LIBS) \
 	$(LSASS_LDFLAGS) \
 	$(LSASS_LIBS) \
+	$(CF_FRAMEWORK_LDFLAGS) \
         -llwsm \
     $(LWADVAPI_LDFLAGS) \
     $(LWADVAPI_LIBS) \
