@@ -1429,14 +1429,23 @@ ShowUsage(
     PCSTR pProgramName
     )
 {
-    fprintf(stderr, "Usage: %s --help | --check-version | --install | \n",
-            pProgramName);
-    fprintf(stderr, "         --uninstall [smbd path] [--loglevel <error | warning | info |\n");
-    fprintf(stderr, "             verbose | debug>]\n");
+    fprintf(stderr, "Usage: %s {options} [smbd path]\n", pProgramName);
     fprintf(stderr, "\n");
-    fprintf(stderr, "Installs the Likewise-Samba interop libraries into the\n"
-            "directories used by Samba, and copies over the machine password\n"
-            "from Likewise's database to Samba's.\n");
+    fprintf(stderr, "Installs the Likewise-Samba interop libraries into the directories used by\n");
+    fprintf(stderr, "Samba, and copies over the machine password from Likewise's database to Samba's.\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Options are:\n");
+    fprintf(stderr, "    --help               Show this help message\n");
+    fprintf(stderr, "    --install            Configure smbd to interface with Likewise\n");
+    fprintf(stderr, "    --uninstall          Deconfigure smbd from talking to Likewise\n");
+    fprintf(stderr, "    --check-version      Ensure the version of smbd is supported\n");
+    fprintf(stderr, "    --loglevel {level}   Set the logging to error (default), warning, info,\n");
+    fprintf(stderr, "                         verbose, or debug\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "One of the options, --install, --uninstall, or --check-version must be passed.\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "The last argument is the path to smbd. If not specified, it will be\n");
+    fprintf(stderr, "automatically detected.\n");
 }
 
 int
@@ -1459,6 +1468,7 @@ main(
     DWORD argIndex = 0;
     LW_RTL_LOG_LEVEL logLevel = LW_RTL_LOG_LEVEL_ERROR;
     PCSTR pErrorSymbol = NULL;
+    BOOLEAN smbdExists = FALSE;
 
     for (argIndex = 1; argIndex < argc; argIndex++)
     {
@@ -1531,7 +1541,7 @@ main(
         }
         else if (argIndex == argc - 1)
         {
-            pSmbdPath = argv[2];
+            pSmbdPath = argv[argIndex];
         }
         else
         {
@@ -1550,12 +1560,37 @@ main(
 
     if (pSmbdPath == NULL)
     {
+        PCSTR pSearchPath = "/usr/sbin:/usr/local/sbin:/usr/local/samba/sbin:/opt/csw/samba/sbin:/opt/sfw/samba/sbin:/opt/csw/bin:/usr/local/bin";
         error = FindFileInPath(
                         "smbd",
-                        "/usr/sbin",
+                        pSearchPath,
                         &pFoundSmbdPath);
+        if (error == ERROR_FILE_NOT_FOUND)
+        {
+            LW_LOG_ERROR("The smbd file could not be automatically found on your system. The search path was '%s'. Pass the correct location as the last argument to this program.", pSearchPath);
+        }
         BAIL_ON_LSA_ERROR(error);
         pSmbdPath = pFoundSmbdPath;
+    }
+
+    error = LwCheckFileTypeExists(
+                pSmbdPath,
+                LWFILE_REGULAR,
+                &smbdExists);
+    BAIL_ON_LSA_ERROR(error);
+    
+    if (!smbdExists)
+    {
+        error = LwCheckFileTypeExists(
+                    pSmbdPath,
+                    LWFILE_SYMLINK,
+                    &smbdExists);
+        BAIL_ON_LSA_ERROR(error);
+    }
+
+    if (!smbdExists)
+    {
+        LW_LOG_ERROR("Smbd file not found at path '%s'", pSmbdPath);
     }
 
     error = CheckSambaVersion(pSmbdPath);
