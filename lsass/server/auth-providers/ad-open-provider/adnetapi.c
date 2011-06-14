@@ -1899,6 +1899,9 @@ AD_NetlogonAuthenticationUserEx(
     case STATUS_PASSWORD_EXPIRED:
         dwError = LW_ERROR_PASSWORD_EXPIRED;
         break;
+    case STATUS_PASSWORD_MUST_CHANGE:
+        dwError = ERROR_PASSWORD_MUST_CHANGE;
+        break;
     case STATUS_WRONG_PASSWORD:
         dwError = LW_ERROR_INVALID_PASSWORD;
         break;
