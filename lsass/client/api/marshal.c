@@ -1086,7 +1086,6 @@ error:
     if (pAddInfo)
     {
         LsaFreeUserAddInfo(pAddInfo);
-        LW_SAFE_FREE_MEMORY(pAddInfo);
     }
 
     goto cleanup;
