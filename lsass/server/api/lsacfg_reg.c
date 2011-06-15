@@ -154,7 +154,7 @@ LsaOpenConfig(
     if ( dwError || (pReg->hConnection == NULL))
     {
         LSA_LOG_WARNING("Couldn't open the registry handle. Error: %s (%u)",
-                        LwWin32ExtErrorToName(dwError),
+                        LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError)),
                         dwError);
         dwError = 0;
         goto error;
@@ -170,7 +170,7 @@ LsaOpenConfig(
     if (dwError)
     {
         LSA_LOG_WARNING("Couldn't open HKEY_THIS_MACHINE key. Error: %s (%u)",
-                        LwWin32ExtErrorToName(dwError),
+                        LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError)),
                         dwError);
         dwError = 0;
         goto error;
@@ -261,7 +261,7 @@ LsaReadConfigString(
                             "registry key [%s]. Error: %s (%u)",
                             pszName,
                             pReg->pszPolicyKey,
-                            LwWin32ExtErrorToName(dwError),
+                            LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError)),
                             dwError);
         }
     }
@@ -295,7 +295,7 @@ LsaReadConfigString(
                             "registry key [%s]. Error: %s (%u)",
                             pszName,
                             pReg->pszConfigKey,
-                            LwWin32ExtErrorToName(dwError),
+                            LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError)),
                             dwError);
         }
     }
@@ -372,7 +372,7 @@ LsaReadConfigMultiString(
                             "registry key [%s]. Error: %s (%d)",
                             pszName,
                             pReg->pszPolicyKey,
-                            LwWin32ExtErrorToName(dwError),
+                            LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError)),
                             dwError);
         }
     }
@@ -405,7 +405,7 @@ LsaReadConfigMultiString(
                             "registry key [%s]. Error: %s (%d)",
                             pszName,
                             pReg->pszConfigKey,
-                            LwWin32ExtErrorToName(dwError),
+                            LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError)),
                             dwError);
         }
     }
@@ -485,7 +485,7 @@ LsaReadConfigDword(
                             "registry key [%s]. Error: %s (%u)",
                             pszName,
                             pReg->pszPolicyKey,
-                            LwWin32ExtErrorToName(dwError),
+                            LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError)),
                             dwError);
         }
     }
@@ -519,7 +519,7 @@ LsaReadConfigDword(
                             "registry key [%s]. Error: %s (%u)",
                             pszName,
                             pReg->pszConfigKey,
-                            LwWin32ExtErrorToName(dwError),
+                            LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError)),
                             dwError);
         }
     }
