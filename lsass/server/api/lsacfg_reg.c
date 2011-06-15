@@ -1,6 +1,6 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*-
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ * Editor Settings: expandtabs and use 4 spaces for indentation */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -153,6 +153,9 @@ LsaOpenConfig(
     dwError = RegOpenServer(&(pReg->hConnection));
     if ( dwError || (pReg->hConnection == NULL))
     {
+        LSA_LOG_WARNING("Couldn't open the registry handle. Error: %s (%u)",
+                        LwWin32ExtErrorToName(dwError),
+                        dwError);
         dwError = 0;
         goto error;
     }
@@ -166,6 +169,9 @@ LsaOpenConfig(
             &(pReg->hKey));
     if (dwError)
     {
+        LSA_LOG_WARNING("Couldn't open HKEY_THIS_MACHINE key. Error: %s (%u)",
+                        LwWin32ExtErrorToName(dwError),
+                        dwError);
         dwError = 0;
         goto error;
     }
@@ -240,7 +246,24 @@ LsaReadConfigString(
                     szValue,
                     &dwSize);
         if (!dwError)
+        {
             bGotValue = TRUE;
+
+            LSA_LOG_VERBOSE("String value [%s] = \"%s\" read from "
+                            "registry key [%s].",
+                            pszName,
+                            szValue,
+                            pReg->pszPolicyKey);
+        }
+        else
+        {
+            LSA_LOG_VERBOSE("Couldn't read string value [%s] from "
+                            "registry key [%s]. Error: %s (%u)",
+                            pszName,
+                            pReg->pszPolicyKey,
+                            LwWin32ExtErrorToName(dwError),
+                            dwError);
+        }
     }
 
     if (!bGotValue )
@@ -257,7 +280,24 @@ LsaReadConfigString(
                     szValue,
                     &dwSize);
         if (!dwError)
+        {
             bGotValue = TRUE;
+
+            LSA_LOG_VERBOSE("String value [%s] = \"%s\" read from "
+                            "registry key [%s].",
+                            pszName,
+                            szValue,
+                            pReg->pszConfigKey);
+        }
+        else
+        {
+            LSA_LOG_WARNING("Couldn't read string value [%s] from "
+                            "registry key [%s]. Error: %s (%u)",
+                            pszName,
+                            pReg->pszConfigKey,
+                            LwWin32ExtErrorToName(dwError),
+                            dwError);
+        }
     }
 
     if (bGotValue)
@@ -318,7 +358,23 @@ LsaReadConfigMultiString(
                     szValue,
                     &dwSize);
         if (!dwError)
+        {
             bGotValue = TRUE;
+
+            LSA_LOG_VERBOSE("Multistring value [%s] read from "
+                            "registry key [%s].",
+                            pszName,
+                            pReg->pszPolicyKey);
+        }
+        else
+        {
+            LSA_LOG_VERBOSE("Couldn't read multistring value [%s] from "
+                            "registry key [%s]. Error: %s (%d)",
+                            pszName,
+                            pReg->pszPolicyKey,
+                            LwWin32ExtErrorToName(dwError),
+                            dwError);
+        }
     }
 
     if (!bGotValue )
@@ -335,7 +391,23 @@ LsaReadConfigMultiString(
                     szValue,
                     &dwSize);
         if (!dwError)
+        {
             bGotValue = TRUE;
+
+            LSA_LOG_VERBOSE("Multistring value [%s] read from "
+                            "registry key [%s].",
+                            pszName,
+                            pReg->pszConfigKey);
+        }
+        else
+        {
+            LSA_LOG_WARNING("Couldn't read multistring value [%s] from "
+                            "registry key [%s]. Error: %s (%d)",
+                            pszName,
+                            pReg->pszConfigKey,
+                            LwWin32ExtErrorToName(dwError),
+                            dwError);
+        }
     }
 
     if (bGotValue)
@@ -399,6 +471,22 @@ LsaReadConfigDword(
         if (!dwError)
         {
             bGotValue = TRUE;
+
+            LSA_LOG_VERBOSE("DWORD value [%s] = 0x%08x (%u) read from "
+                            "registry key [%s].",
+                            pszName,
+                            dwValue,
+                            dwValue,
+                            pReg->pszPolicyKey);
+        }
+        else
+        {
+            LSA_LOG_VERBOSE("Couldn't read DWORD value [%s] from "
+                            "registry key [%s]. Error: %s (%u)",
+                            pszName,
+                            pReg->pszPolicyKey,
+                            LwWin32ExtErrorToName(dwError),
+                            dwError);
         }
     }
 
@@ -417,6 +505,22 @@ LsaReadConfigDword(
         if (!dwError)
         {
             bGotValue = TRUE;
+
+            LSA_LOG_VERBOSE("DWORD value [%s] = 0x%08x (%u) read from "
+                            "registry key [%s].",
+                            pszName,
+                            dwValue,
+                            dwValue,
+                            pReg->pszConfigKey);
+        }
+        else
+        {
+            LSA_LOG_WARNING("Couldn't read DWORD value [%s] from "
+                            "registry key [%s]. Error: %s (%u)",
+                            pszName,
+                            pReg->pszConfigKey,
+                            LwWin32ExtErrorToName(dwError),
+                            dwError);
         }
     }
 
@@ -508,4 +612,3 @@ cleanup:
 error:
     goto cleanup;    
 }
-
