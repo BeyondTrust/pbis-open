@@ -100,13 +100,48 @@ pam_sm_authenticate(
                 (PAM_GET_ITEM_TYPE)&currentRepository);
         if (currentRepository == NULL)
         {
-            struct pam_repository files = { "files", NULL, 0 };
-            iPamError = pam_set_item(pamh, PAM_REPOSITORY, &files);
-            dwError = LsaPamUnmapErrorCode(iPamError);
-            if (dwError)
+            dwError = LsaPamGetLoginId(
+                            pamh,
+                            pPamContext,
+                            &pszLoginId,
+                            TRUE);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            dwError = LsaOpenServer(&hLsaConnection);
+
+            if (dwError == ERROR_SUCCESS)
             {
-                LSA_LOG_PAM_WARNING("pam_sm_authenticate: warning unable to set pam repository [error code: %u]. This will cause password changes on login to fail, and it may cause password changes in general to fail.", dwError);
-                BAIL_ON_LSA_ERROR(dwError);
+                dwError = LsaFindUserByName(
+                                hLsaConnection,
+                                pszLoginId,
+                                dwUserInfoLevel,
+                                (PVOID*)&pUserInfo);
+                if (dwError == LW_ERROR_NO_SUCH_USER ||
+                        dwError == LW_ERROR_NOT_HANDLED)
+                {
+                    LSA_LOG_PAM_INFO("Not setting pam repository for unknown user %s", LSA_SAFE_LOG_STRING(pszLoginId));
+                    dwError = 0;
+                }
+                else
+                {
+                    LSA_LOG_PAM_INFO("Error %d looking up user %s", dwError, LSA_SAFE_LOG_STRING(pszLoginId));
+                    dwError = 0;
+                }
+            }
+            else
+            {
+                dwError = 0;
+            }
+            if (pUserInfo)
+            {
+                struct pam_repository files = { "files", NULL, 0 };
+                iPamError = pam_set_item(pamh, PAM_REPOSITORY, &files);
+                dwError = LsaPamUnmapErrorCode(iPamError);
+                if (dwError)
+                {
+                    LSA_LOG_PAM_WARNING("pam_sm_authenticate: warning unable to set pam repository [error code: %u]. This will cause password changes on login to fail, and it may cause password changes in general to fail.", dwError);
+                    BAIL_ON_LSA_ERROR(dwError);
+                }
             }
         }
 
