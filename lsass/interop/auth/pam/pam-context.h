@@ -58,6 +58,7 @@ typedef struct _PAMOPTIONS
     BOOLEAN bUseAuthTok;
     BOOLEAN bRememberChPass;
     BOOLEAN bSetDefaultRepository;
+    BOOLEAN bLsassUsersOnly;
     BOOLEAN bUnknownOK;
     BOOLEAN bSmartCardPrompt;
     BOOLEAN bPromptGecos;

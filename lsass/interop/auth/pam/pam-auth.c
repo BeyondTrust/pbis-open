@@ -93,12 +93,59 @@ pam_sm_authenticate(
     if (pPamContext->pamOptions.bSetDefaultRepository)
     {
 #ifdef HAVE_STRUCT_PAM_REPOSITORY
+        BOOLEAN bChangeRepository = FALSE;
         struct pam_repository *currentRepository = NULL;
         pam_get_item(
                 pamh,
                 PAM_REPOSITORY,
                 (PAM_GET_ITEM_TYPE)&currentRepository);
         if (currentRepository == NULL)
+        {
+            if (!pPamContext->pamOptions.bLsassUsersOnly)
+            {
+                bChangeRepository = TRUE;
+            }
+            else
+            {
+                dwError = LsaPamGetLoginId(
+                                pamh,
+                                pPamContext,
+                                &pszLoginId,
+                                TRUE);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                dwError = LsaOpenServer(&hLsaConnection);
+
+                if (dwError == ERROR_SUCCESS)
+                {
+                    dwError = LsaFindUserByName(
+                                    hLsaConnection,
+                                    pszLoginId,
+                                    dwUserInfoLevel,
+                                    (PVOID*)&pUserInfo);
+                    if (dwError == ERROR_SUCCESS)
+                    {
+                        bChangeRepository = FALSE;
+                    }
+                    if (dwError == LW_ERROR_NO_SUCH_USER ||
+                            dwError == LW_ERROR_NOT_HANDLED)
+                    {
+                        LSA_LOG_PAM_INFO("Not setting pam repository for unknown user %s", LSA_SAFE_LOG_STRING(pszLoginId));
+                        dwError = 0;
+                    }
+                    else
+                    {
+                        LSA_LOG_PAM_INFO("Error %d looking up user %s", dwError, LSA_SAFE_LOG_STRING(pszLoginId));
+                        dwError = 0;
+                    }
+                }
+                else
+                {
+                    dwError = 0;
+                }
+            }
+        }
+        if (bChangeRepository)
         {
             struct pam_repository files = { "files", NULL, 0 };
             iPamError = pam_set_item(pamh, PAM_REPOSITORY, &files);
