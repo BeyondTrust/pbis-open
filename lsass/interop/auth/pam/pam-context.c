@@ -167,6 +167,10 @@ LsaPamGetOptions(
         {
             pPamOptions->bSetDefaultRepository = TRUE;
         }
+        else if (!strcasecmp(argv[iArg], "lsass_users_only"))
+        {
+            pPamOptions->bLsassUsersOnly = TRUE;
+        }
         else if (!strcasecmp(argv[iArg], "smartcard_prompt"))
         {
             pPamOptions->bSmartCardPrompt = TRUE;
