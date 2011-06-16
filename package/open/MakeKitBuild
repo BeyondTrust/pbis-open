@@ -313,7 +313,7 @@ package_mac()
 make()
 {
     OPEN_SUBDIRS="\
-        @krb5 @cyrus-sasl @openldap @libiconv @sqlite \
+        @krb5 @cyrus-sasl @openldap @libiconv @popt @sqlite \
         @libuuid @openssl @curl @libxml2 @fuse @libedit \
         @libtdb @lwbase @lwmsg @lwreg @lwadvapi @netlogon \
         @lwio @nfs @libschannel @dcerpc @centutils @lwsm \
