@@ -280,12 +280,14 @@ int main(int argc, const char *argv[])
 
     xmlInitParser();
 
-    doc = xmlParseFile(LWCONFIG_XML);
+    doc = xmlReadFile(LWCONFIG_XML, NULL, XML_PARSE_NOWARNING |
+            XML_PARSE_NOERROR);
     if (!doc)
     {
         dwError = APP_ERROR_BAD_XML;
         BAIL_ON_ERROR(dwError);
     }
+    xmlXIncludeProcessFlags(doc, XML_PARSE_NOWARNING | XML_PARSE_NOERROR);
 
     if (argc < 2)
     {
