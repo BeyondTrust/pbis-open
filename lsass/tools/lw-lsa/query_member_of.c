@@ -332,7 +332,7 @@ ResolveGroups(
 
     dwError = LsaFindObjects(
         hLsa,
-        NULL, //gState.pszTargetProvider,
+        gState.pszTargetProvider,
         gState.FindFlags,
         LSA_OBJECT_TYPE_GROUP,
         LSA_QUERY_TYPE_BY_SID,
@@ -358,7 +358,6 @@ QueryMemberOf(
 {
     DWORD dwError = 0;
     HANDLE hLsa = NULL;
-    PSTR* ppszMembers = NULL;
     DWORD dwIndex = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     PSTR pszSid = NULL;
@@ -420,7 +419,7 @@ QueryMemberOf(
         else
         {
             printf("Unresolvable SID [%u of %u] (%s)\n\n",
-                   dwIndex + 1, dwGroupSidCount, ppszMembers[dwIndex]);
+                   dwIndex + 1, dwGroupSidCount, ppszGroupSids[dwIndex]);
         }
     }
 
