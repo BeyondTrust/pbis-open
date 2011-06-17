@@ -21,5 +21,6 @@ make()
                  lwio/lwshareinfo.h \
                  lwio/iodriver.h \
                  lwio/ioapi.h \
-                 lwio/lwzct.h"
+                 lwio/lwzct.h" \
+        HEADERDEPS="lw/base.h"
 }
