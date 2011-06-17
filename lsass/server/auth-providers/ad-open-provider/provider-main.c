@@ -1291,12 +1291,6 @@ AD_Deactivate(
 
     AD_MachineCredentialsCacheClear(pState);
 
-    if (pState->pProviderData)
-    {
-        ADProviderFreeProviderData(pState->pProviderData);
-        pState->pProviderData = NULL;
-    }
-
     if (pState->MediaSenseHandle)
     {
         MediaSenseStop(&pState->MediaSenseHandle);
@@ -1314,6 +1308,12 @@ AD_Deactivate(
     pState->pPcache = NULL;
 
     ADCacheSafeClose(&pState->hCacheConnection);
+
+    if (pState->pProviderData)
+    {
+        ADProviderFreeProviderData(pState->pProviderData);
+        pState->pProviderData = NULL;
+    }
 
     return dwError;
 }
