@@ -1433,7 +1433,8 @@ LsaDmpMustFindDomain(
     pFoundDomain = LsaDmpFindDomain(Handle, pszDomainName);
     if (!pFoundDomain)
     {
-        LSA_LOG_DEBUG("Do not know about domain '%s'", pszDomainName);
+        LSA_LOG_DEBUG("Do not know about domain '%s'", 
+                 LSA_SAFE_LOG_STRING(pszDomainName));
         dwError = LW_ERROR_NO_SUCH_DOMAIN;
     }
     *ppFoundDomain = pFoundDomain;
@@ -4439,7 +4440,7 @@ ADLogDomainOnlineEvent(
                  "     Authentication provider:   %s\r\n\r\n" \
                  "     Domain:                    %s",
                  LSA_SAFE_LOG_STRING(gpszADProviderName),
-                 pszDomainName);
+                 LSA_SAFE_LOG_STRING(pszDomainName));
     BAIL_ON_LSA_ERROR(dwError);
 
     LsaSrvLogServiceSuccessEvent(
@@ -4476,7 +4477,7 @@ ADLogDomainOfflineEvent(
                      "     Authentication provider:   %s\r\n\r\n" \
                      "     Forest:                    %s",
                      LSA_SAFE_LOG_STRING(gpszADProviderName),
-                     pszDomainName);
+                     LSA_SAFE_LOG_STRING(pszDomainName));
         BAIL_ON_LSA_ERROR(dwError);
     }
     else
@@ -4487,7 +4488,7 @@ ADLogDomainOfflineEvent(
                      "     Authentication provider:   %s\r\n\r\n" \
                      "     Domain:                    %s",
                      LSA_SAFE_LOG_STRING(gpszADProviderName),
-                     pszDomainName);
+                     LSA_SAFE_LOG_STRING(pszDomainName));
         BAIL_ON_LSA_ERROR(dwError);
     }
 
