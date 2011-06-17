@@ -1,7 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?> <capabilities>
-<!--new sections front-->
+<?xml version="1.0" encoding="utf-8"?>
+<capabilities xmlns:xi="http://www.w3.org/2001/XInclude">
+    <xi:include href="file:///var/lib/likewise/lwconfig_front.xml">
+       <xi:fallback></xi:fallback>
+    </xi:include>
 <section section="Eventlog">
-    <!--new capability front Eventlog -->
     <capability>
         <name>AllowDeleteTo</name>
         <description>List of users that can delete entries from log</description>
@@ -95,10 +97,11 @@
             <apply command="/opt/likewise/bin/lwsm restart eventlog" />
         </registry>
     </capability>
-    <!--new capability end Eventlog -->
+    <xi:include href="file:///var/lib/likewise/lwconfig_eventlog.xml">
+       <xi:fallback></xi:fallback>
+    </xi:include>
   </section>
 <section section="Lsass">
-    <!--new capability front Lsass -->
     <capability>
         <name>DomainSeparator</name>
         <description>Character used to designate the domain name separator</description>
@@ -159,10 +162,11 @@
             <apply command="/opt/likewise/bin/lwsm refresh lsass" />
         </registry>
     </capability>
-    <!--new capability end Lsass -->
+    <xi:include href="file:///var/lib/likewise/lwconfig_lsass.xml">
+       <xi:fallback></xi:fallback>
+    </xi:include>
 </section>
 <section section="Lsass - PAM">
-    <!--new capability front Lsass - PAM -->
     <capability>
         <name>DisplayMotd</name>
         <description>Display message of the day</description>
@@ -207,10 +211,11 @@
             <apply command="/opt/likewise/bin/lwsm refresh lsass" />
         </registry>
     </capability>
-    <!--new capability end Lsass - PAM -->
+    <xi:include href="file:///var/lib/likewise/lwconfig_lsass_pam.xml">
+       <xi:fallback></xi:fallback>
+    </xi:include>
 </section>
 <section section="Lsass - Active Directory provider">
-    <!--new capability front Lsass - Active Directory provider -->
     <capability>
         <name>AssumeDefaultDomain</name>
         <description>Apply domain name prefix to account name at logon</description>
@@ -605,10 +610,11 @@
             <apply command="/opt/likewise/bin/lwsm refresh lsass" />
         </registry>
     </capability>
-    <!--new capability end Lsass -- Active Directory provider -->
+    <xi:include href="file:///var/lib/likewise/lwconfig_lsass_ad.xml">
+       <xi:fallback></xi:fallback>
+    </xi:include>
 </section>
 <section section="Lsass - Local provider">
-    <!--new capability front Lsass -- Local provider -->
     <capability>
         <name>Local_AcceptNTLMv1</name>
         <description></description>
@@ -673,10 +679,11 @@
             <apply command="/opt/likewise/bin/lwsm refresh lsass" />
         </registry>
     </capability>
-    <!--new capability end Lsass -- Local provider-->
+    <xi:include href="file:///var/lib/likewise/lwconfig_lsass_local.xml">
+       <xi:fallback></xi:fallback>
+    </xi:include>
   </section>
   <section section="System Initialization">
-    <!--new capability front System Initialization-->
     <capability>
         <name>LsassAutostart</name>
         <description>Start lsassd when lwsmd starts.</description>
@@ -707,9 +714,13 @@
             </default>
         </registry>
     </capability>
-    <!--new capability end System Initialization-->
+    <xi:include href="file:///var/lib/likewise/lwconfig_system.xml">
+       <xi:fallback></xi:fallback>
+    </xi:include>
   </section>
-<!--new sections end-->
+  <xi:include href="file:///var/lib/likewise/lwconfig_end.xml">
+     <xi:fallback></xi:fallback>
+  </xi:include>
 </capabilities>
 
 <!--
