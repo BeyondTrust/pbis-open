@@ -579,8 +579,8 @@ preuninstall_remove()
     run_quiet "/etc/init.d/likewise stop"
     run_quiet "/etc/init.d/lwsmd stop"
 
-    run_quiet "/sbin/chkconfig likewise off"
-    run_quiet "/sbin/chkconfig lwsmd off"
+    run_quiet "/sbin/chkconfig --del likewise"
+    run_quiet "/sbin/chkconfig --del lwsmd"
 
     for daemon in $DAEMONS_TO_HALT
     do
