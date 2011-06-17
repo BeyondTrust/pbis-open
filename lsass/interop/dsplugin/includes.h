@@ -75,6 +75,7 @@
 #include <lw/winerror.h>
 #include <lsa/lsa.h>
 #include <lsa/ad.h>
+#include <lwldap.h>
 #include <lwmem.h>
 #include <lwfile.h>
 #include <lwstr.h>
