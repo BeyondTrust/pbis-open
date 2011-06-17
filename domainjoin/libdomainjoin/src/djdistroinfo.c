@@ -130,6 +130,8 @@ DJGetPListVersion(
     CFURLRef pURL = NULL;
     CFDataRef pContents = NULL;
     SInt32 urlError = 0;
+    // Do not free. This is returned by a mac function following the "get"
+    // rule.
     CFStringRef pVers = NULL;
     CFStringRef pError = NULL;
     PSTR pVersionString = NULL;
@@ -194,10 +196,6 @@ cleanup:
     if (error)
     {
         LW_SAFE_FREE_STRING(pVersionString);
-    }
-    if (pVers)
-    {
-        CFRelease(pVers);
     }
     if (pError)
     {
