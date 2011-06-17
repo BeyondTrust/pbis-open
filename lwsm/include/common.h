@@ -42,6 +42,8 @@
 #include "config.h"
 #include <lwsm/lwsm.h>
 
+#define CONTROL_LOCK CACHEDIR "/.lwsmd-lock"
+
 #define BAIL_ON_ERROR(_e_)  \
     do                      \
     {                       \

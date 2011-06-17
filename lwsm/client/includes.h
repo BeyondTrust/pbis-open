@@ -47,6 +47,8 @@
 #ifdef HAVE_STRINGS_H
    #include <strings.h>
 #endif
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include <lw/winerror.h>
 #include <lwerror.h>

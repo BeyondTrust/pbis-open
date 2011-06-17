@@ -50,6 +50,7 @@ static struct
     LW_SM_LOG_LEVEL logLevel;
     PCSTR pszLogFilePath;
     BOOLEAN bSyslog;
+    int ControlLock;
 } gState = 
 {
     .pPool = NULL,
@@ -60,7 +61,8 @@ static struct
     .notifyPipe = {-1, -1},
     .logLevel = LW_SM_LOG_LEVEL_WARNING,
     .pszLogFilePath = NULL,
-    .bSyslog = FALSE
+    .bSyslog = FALSE,
+    .ControlLock = -1
 };
 
 static
@@ -118,6 +120,12 @@ LwSmNotify(
     int status
     );
 
+static
+DWORD
+LwSmControlLock(
+    VOID
+    );
+
 int
 main(
     int argc,
@@ -140,6 +148,9 @@ main(
         dwError = LwSmDaemonize();
         BAIL_ON_ERROR(dwError);
     }
+
+    dwError = LwSmControlLock();
+    BAIL_ON_ERROR(dwError);
 
     dwError = LWNetExtendEnvironmentForKrb5Affinity(FALSE);
     BAIL_ON_ERROR(dwError);
@@ -235,6 +246,55 @@ LwSmParseArguments(
 
             gState.pszLogFilePath = ppszArgv[i];
         }
+    }
+
+error:
+
+    return dwError;
+}
+
+static
+DWORD
+LwSmControlLock(
+    VOID
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    struct flock lock = {0};
+
+    lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 0;
+    lock.l_pid = getpid();
+
+    if ((gState.ControlLock = open(CONTROL_LOCK, O_WRONLY | O_CREAT | O_TRUNC,
+                    0200)) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (fcntl(gState.ControlLock, F_SETFD, FD_CLOEXEC) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (fcntl(gState.ControlLock, F_SETLK, &lock) < 0)
+    {
+        switch(errno)
+        {
+        case EACCES:
+        case EAGAIN:
+            dwError = ERROR_SERVICE_ALREADY_RUNNING;
+            break;
+        default:
+            dwError = LwErrnoToWin32Error(errno);
+            break;
+        }
+
+        BAIL_ON_ERROR(dwError);
     }
 
 error:
@@ -881,3 +941,4 @@ error:
 
     goto cleanup;
 }
+
