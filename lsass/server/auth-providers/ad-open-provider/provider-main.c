@@ -1269,6 +1269,12 @@ error:
 
     ADShutdownMachinePasswordSync(&pState->hMachinePwdState);
 
+    if (pState->MediaSenseHandle != NULL)
+    {
+        MediaSenseStop(&pState->MediaSenseHandle);
+        pState->MediaSenseHandle = NULL;
+    }
+
     LsaDmCleanup(pState->hDmState);
 
     if (pState->bIsDefault)
