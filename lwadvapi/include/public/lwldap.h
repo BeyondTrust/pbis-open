@@ -284,6 +284,22 @@ LwLdapGetStringsWithExtDnResult(
     );
 
 DWORD
+LwLdapPutString(
+    HANDLE hDirectory,
+    PCSTR  pszDN,
+    PCSTR  pszFieldName,
+    PSTR   pszValue
+    );
+
+DWORD
+LwLdapPutUInt32(
+    HANDLE hDirectory,
+    PCSTR  pszDN,
+    PCSTR  pszFieldName,
+    DWORD  dwValue
+    );
+
+DWORD
 LwLdapEscapeString(
     PSTR *ppszResult,
     PCSTR pszInput

@@ -1616,6 +1616,70 @@ error:
     goto cleanup;
 }
 
+DWORD
+LwLdapPutString(
+    HANDLE hDirectory,
+    PCSTR  pszDN,
+    PCSTR  pszFieldName,
+    PSTR   pszValue
+    )
+{
+    DWORD dwError = 0;
+    PLW_LDAP_DIRECTORY_CONTEXT pDirectory = NULL;
+    PSTR modvals[2];
+    LDAPMod  mod;
+    LDAPMod* mods[2];
+
+    pDirectory = (PLW_LDAP_DIRECTORY_CONTEXT)hDirectory;
+
+    modvals[0] = pszValue;
+    modvals[1] = NULL;
+    
+    mod.mod_op = LDAP_MOD_REPLACE;
+    mod.mod_type = (PSTR)pszFieldName;
+    mod.mod_values = modvals;
+    
+    mods[0] = &mod;
+    mods[1] = NULL;
+    
+    dwError = ldap_modify_s(pDirectory->ld, pszDN, mods);
+    if (dwError)
+    {
+        LW_LOG_ERROR("Failed to update LDAP object attribute string with error: %d, errno: %d", dwError, errno);
+    }
+    BAIL_ON_LW_ERROR(dwError);
+    
+error:
+
+    return dwError;
+}
+
+DWORD
+LwLdapPutUInt32(
+    HANDLE hDirectory,
+    PCSTR  pszDN,
+    PCSTR  pszFieldName,
+    DWORD  dwValue
+    )
+{
+    DWORD dwError = 0;
+    char szValue[256];
+
+    memset(szValue, 0, sizeof(szValue));
+    sprintf(szValue, "%u", dwValue);
+    
+    dwError = LwLdapPutString(hDirectory, pszDN, pszFieldName, szValue);
+    if (dwError)
+    {
+        LW_LOG_ERROR("Failed to update LDAP object attribute integer with error: %d, errno: %d", dwError, errno);
+    }
+    BAIL_ON_LW_ERROR(dwError);
+
+error:
+
+    return dwError;
+}
+
 /* Escapes a string according to the directions given in RFC 2254. */
 DWORD
 LwLdapEscapeString(
