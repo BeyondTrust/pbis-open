@@ -224,6 +224,14 @@ LwEvtDbDeleteIfCountExceeds_inlock(
     DWORD dwOlderThan
     );
 
+static
+DWORD
+LwEvtDbGetRecordCount_inlock(
+    sqlite3 *pDb,
+    const WCHAR * pSqlFilter,
+    DWORD * pNumMatched
+    );
+
 //public interface
 
 DWORD
@@ -373,7 +381,7 @@ LwEvtDbGetRecordCount(
 
     ENTER_RW_READER_LOCK(inLock);
 
-    error = LwEvtDbGetRecordCount(
+    error = LwEvtDbGetRecordCount_inlock(
                 pDb,
                 pSqlFilter,
                 pNumMatched);
