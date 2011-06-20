@@ -73,6 +73,12 @@ AD_NtStatusIsConnectionError(
 
 static
 BOOLEAN
+AD_NtStatusIsNetlogonAuthConnectionError(
+    NTSTATUS status
+    );
+
+static
+BOOLEAN
 AD_WinErrorIsTgtRevokedError(
     WINERROR winError
     );
@@ -1658,8 +1664,10 @@ AD_NetlogonAuthenticationUserEx(
     PWSTR pwszShortDomain = NULL;
     PWSTR pwszPrimaryShortDomain = NULL;
     PWSTR pwszPrimaryFqdn = NULL;
+    PWSTR machineName = NULL;
+    size_t machineNameLength = 0;
     PWSTR pwszUsername = NULL;
-    PWSTR pwszComputer = NULL;
+    PWSTR userWorkstationName = NULL;
     NTSTATUS status = 0;
     NETR_BINDING netr_b = NULL;
     PLSA_MACHINE_PASSWORD_INFO_W pMachinePasswordInfo = NULL;
@@ -1713,15 +1721,16 @@ AD_NetlogonAuthenticationUserEx(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    pwszComputer = wc16sdup(pMachinePasswordInfo->Account.SamAccountName);
-    if (!pwszComputer)
-    {
-        dwError = LW_ERROR_OUT_OF_MEMORY;
-    }
+    dwError = LwAllocateWc16String(
+                     &machineName,
+                     pMachinePasswordInfo->Account.SamAccountName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwWc16sLen(machineName, &machineNameLength);
     BAIL_ON_LSA_ERROR(dwError);
 
     // Remove $ from account name
-    pwszComputer[wc16slen(pwszComputer) - 1] = 0;
+    machineName[machineNameLength - 1] = 0;
 
     if (pSchannelState->pszSchannelServer && strcasecmp(pSchannelState->pszSchannelServer, pszDomainController))
     {
@@ -1776,7 +1785,7 @@ AD_NetlogonAuthenticationUserEx(
                                      pwszServerName,
                                      pwszPrimaryShortDomain,
                                      pwszPrimaryFqdn,
-                                     pwszComputer,
+                                     machineName,
                                      pMachinePasswordInfo->Password,
                                      &pSchannelState->SchannelCreds,
                                      &pSchannelState->hSchannelBinding);
@@ -1827,6 +1836,9 @@ AD_NetlogonAuthenticationUserEx(
     dwError = LwMbsToWc16s(pUserParams->pszAccountName, &pwszUsername);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LwMbsToWc16s(pUserParams->pszWorkstation, &userWorkstationName);
+    BAIL_ON_LSA_ERROR(dwError);
+
     /* Get the data blob buffers */
 
     if (pUserParams->pass.chap.pChallenge)
@@ -1845,7 +1857,7 @@ AD_NetlogonAuthenticationUserEx(
     nt_status = NetrSamLogonNetworkEx(pSchannelState->hSchannelBinding,
                                       pwszServerName,
                                       pwszShortDomain,
-                                      pwszComputer,
+                                      userWorkstationName,
                                       pwszUsername,
                                       pChal,
                                       pLMResp,
@@ -1872,7 +1884,7 @@ AD_NetlogonAuthenticationUserEx(
         }
         else
         {
-            if (AD_NtStatusIsConnectionError(nt_status))
+            if (AD_NtStatusIsNetlogonAuthConnectionError(nt_status))
             {
                 bIsNetworkError = TRUE;
             }
@@ -1908,11 +1920,17 @@ AD_NetlogonAuthenticationUserEx(
     case STATUS_INVALID_ACCOUNT_NAME:
         dwError = ERROR_INVALID_ACCOUNT_NAME;
         break;
+    case STATUS_INVALID_WORKSTATION:
+        dwError = ERROR_INVALID_WORKSTATION;
+        break;
     case STATUS_ACCOUNT_RESTRICTION:
     case STATUS_LOGON_FAILURE:
     case STATUS_NOLOGON_WORKSTATION_TRUST_ACCOUNT:
     case STATUS_NOLOGON_SERVER_TRUST_ACCOUNT:
         dwError = LW_ERROR_LOGON_FAILURE;
+        break;
+    case STATUS_ACCESS_DENIED:
+        dwError = ERROR_ACCESS_DENIED;
         break;
     case STATUS_UNHANDLED_EXCEPTION:
     default:
@@ -1974,7 +1992,8 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszShortDomain);
     LW_SAFE_FREE_MEMORY(pwszPrimaryShortDomain);
     LW_SAFE_FREE_MEMORY(pwszPrimaryFqdn);
-    LW_SAFE_FREE_MEMORY(pwszComputer);
+    LW_SAFE_FREE_MEMORY(machineName);
+    LW_SAFE_FREE_MEMORY(userWorkstationName);
 
     pthread_mutex_unlock(pSchannelState->pSchannelLock);
 
@@ -2054,6 +2073,29 @@ AD_NtStatusIsConnectionError(
     case STATUS_CONNECTION_RESET:
     case STATUS_IO_TIMEOUT:
     case STATUS_ACCESS_DENIED:
+    case STATUS_TIME_DIFFERENCE_AT_DC:
+    case STATUS_INVALID_CONNECTION:
+    case STATUS_PIPE_DISCONNECTED:
+    case STATUS_BAD_NETWORK_NAME:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+static
+BOOLEAN
+AD_NtStatusIsNetlogonAuthConnectionError(
+    NTSTATUS status
+    )
+{
+    switch (status)
+    {
+    case STATUS_CONNECTION_ABORTED:
+    case STATUS_CONNECTION_DISCONNECTED:
+    case STATUS_CONNECTION_REFUSED:
+    case STATUS_CONNECTION_RESET:
+    case STATUS_IO_TIMEOUT:
     case STATUS_TIME_DIFFERENCE_AT_DC:
     case STATUS_INVALID_CONNECTION:
     case STATUS_PIPE_DISCONNECTED:
