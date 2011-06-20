@@ -240,10 +240,6 @@ LWGetMacError(
             macError = eDSReceiveFailed;
             break;
 
-        case MAC_AD_ERROR_LDAP_NO_VALUE_FOUND:
-            macError = eDSOperationFailed;
-            break;
-
         case eDSReceiveFailed:
             macError = eDSReceiveFailed;
             break;

@@ -40,23 +40,20 @@ GetUserAttributes(
     )
 {
     DWORD dwError = MAC_AD_ERROR_SUCCESS;
-    PADU_DIRECTORY_CONTEXT pDirectory = NULL;
     PSTR pszDirectoryRoot = NULL;
-    PCSTR szAttributeList[] = {"*", NULL};
+    PSTR szAttributeList[] = {"*", NULL};
     CHAR szQuery[1024];
     LDAPMessage *pUserMessage = NULL;
     LDAPMessage *pDomainMessage = NULL;
     DWORD dwCount = 0;
     PGPUSER_AD_ATTRS pUserADAttrs = NULL;
 
-    pDirectory = (PADU_DIRECTORY_CONTEXT)hDirectory;
-
     dwError = ADUConvertDomainToDN(pszDomainName, &pszDirectoryRoot);
     BAIL_ON_MAC_ERROR(dwError);
 
     sprintf(szQuery, "(objectsid=%s)", pszUserSID);
 
-    dwError = ADUDirectorySearch(
+    dwError = LwLdapDirectorySearch(
         hDirectory,
         pszDirectoryRoot,
         LDAP_SCOPE_SUBTREE,
@@ -65,10 +62,13 @@ GetUserAttributes(
         &pUserMessage);
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwCount = ldap_count_entries(
-        pDirectory->ld,
-        pUserMessage
+    dwError = LwLdapCountEntries(
+        hDirectory,
+        pUserMessage,
+        &dwCount
         );
+    BAIL_ON_MAC_ERROR(dwError);
+
     if (dwCount < 0) {
         dwError = MAC_AD_ERROR_INVALID_NAME;
     } else if (dwCount == 0) {
@@ -78,7 +78,7 @@ GetUserAttributes(
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUDirectorySearch(
+    dwError = LwLdapDirectorySearch(
         hDirectory,
         pszDirectoryRoot,
         LDAP_SCOPE_BASE,
@@ -87,10 +87,13 @@ GetUserAttributes(
         &pDomainMessage);
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwCount = ldap_count_entries(
-        pDirectory->ld,
-        pDomainMessage
+    dwError = LwLdapCountEntries(
+        hDirectory,
+        pDomainMessage,
+        &dwCount
         );
+    BAIL_ON_MAC_ERROR(dwError);
+
     if (dwCount < 0) {
         dwError = MAC_AD_ERROR_INVALID_NAME;
     } else if (dwCount == 0) {
@@ -106,282 +109,282 @@ GetUserAttributes(
     dwError = LwAllocateString(pszDomainName, &pUserADAttrs->pszADDomain);
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "displayName",
-                               &pUserADAttrs->pszDisplayName);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "displayName",
+                              &pUserADAttrs->pszDisplayName);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "givenName",
-                               &pUserADAttrs->pszFirstName);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "givenName",
+                              &pUserADAttrs->pszFirstName);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "sn",
-                               &pUserADAttrs->pszLastName);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "sn",
+                              &pUserADAttrs->pszLastName);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "userPrincipalName",
-                               &pUserADAttrs->pszKerberosPrincipal);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "userPrincipalName",
+                              &pUserADAttrs->pszKerberosPrincipal);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "mail",
-                               &pUserADAttrs->pszEMailAddress);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "mail",
+                              &pUserADAttrs->pszEMailAddress);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "msExchHomeServerName",
-                               &pUserADAttrs->pszMSExchHomeServerName);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "msExchHomeServerName",
+                              &pUserADAttrs->pszMSExchHomeServerName);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "homeMDB",
-                               &pUserADAttrs->pszMSExchHomeMDB);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "homeMDB",
+                              &pUserADAttrs->pszMSExchHomeMDB);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "telephoneNumber",
-                               &pUserADAttrs->pszTelephoneNumber);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "telephoneNumber",
+                              &pUserADAttrs->pszTelephoneNumber);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "facsimileTelephoneNumber",
-                               &pUserADAttrs->pszFaxTelephoneNumber);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "facsimileTelephoneNumber",
+                              &pUserADAttrs->pszFaxTelephoneNumber);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "mobile",
-                               &pUserADAttrs->pszMobileTelephoneNumber);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "mobile",
+                              &pUserADAttrs->pszMobileTelephoneNumber);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "streetAddress",
-                               &pUserADAttrs->pszStreetAddress);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "streetAddress",
+                              &pUserADAttrs->pszStreetAddress);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "postOfficeBox",
-                               &pUserADAttrs->pszPostOfficeBox);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "postOfficeBox",
+                              &pUserADAttrs->pszPostOfficeBox);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "l",
-                               &pUserADAttrs->pszCity);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "l",
+                              &pUserADAttrs->pszCity);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "st",
-                               &pUserADAttrs->pszState);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "st",
+                              &pUserADAttrs->pszState);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "postalCode",
-                               &pUserADAttrs->pszPostalCode);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "postalCode",
+                              &pUserADAttrs->pszPostalCode);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "co",
-                               &pUserADAttrs->pszCountry);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "co",
+                              &pUserADAttrs->pszCountry);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "title",
-                               &pUserADAttrs->pszTitle);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "title",
+                              &pUserADAttrs->pszTitle);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "company",
-                               &pUserADAttrs->pszCompany);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "company",
+                              &pUserADAttrs->pszCompany);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "department",
-                               &pUserADAttrs->pszDepartment);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "department",
+                              &pUserADAttrs->pszDepartment);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "homeDirectory",
-                               &pUserADAttrs->pszHomeDirectory);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "homeDirectory",
+                              &pUserADAttrs->pszHomeDirectory);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "homeDrive",
-                               &pUserADAttrs->pszHomeDrive);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "homeDrive",
+                              &pUserADAttrs->pszHomeDrive);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "pwdLastSet",
-                               &pUserADAttrs->pszPasswordLastSet);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "pwdLastSet",
+                              &pUserADAttrs->pszPasswordLastSet);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pUserMessage,
-                               "userAccountControl",
-                               &pUserADAttrs->pszUserAccountControl);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pUserMessage,
+                              "userAccountControl",
+                              &pUserADAttrs->pszUserAccountControl);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
     /* The settings below are found on the domain container for the user */
-    dwError = ADUGetLDAPString(hDirectory,
-                               pDomainMessage,
-                               "maxPwdAge",
-                               &pUserADAttrs->pszMaxMinutesUntilChangePassword);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pDomainMessage,
+                              "maxPwdAge",
+                              &pUserADAttrs->pszMaxMinutesUntilChangePassword);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pDomainMessage,
-                               "minPwdAge",
-                               &pUserADAttrs->pszMinMinutesUntilChangePassword);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pDomainMessage,
+                              "minPwdAge",
+                              &pUserADAttrs->pszMinMinutesUntilChangePassword);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pDomainMessage,
-                               "lockoutThreshhold",
-                               &pUserADAttrs->pszMaxFailedLoginAttempts);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pDomainMessage,
+                              "lockoutThreshhold",
+                              &pUserADAttrs->pszMaxFailedLoginAttempts);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pDomainMessage,
-                               "pwdHistoryLength",
-                               &pUserADAttrs->pszAllowedPasswordHistory);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pDomainMessage,
+                              "pwdHistoryLength",
+                              &pUserADAttrs->pszAllowedPasswordHistory);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
-                               pDomainMessage,
-                               "minPwdLength",
-                               &pUserADAttrs->pszMinCharsAllowedInPassword);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    dwError = LwLdapGetString(hDirectory,
+                              pDomainMessage,
+                              "minPwdLength",
+                              &pUserADAttrs->pszMinCharsAllowedInPassword);
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = MAC_AD_ERROR_SUCCESS;
     }
@@ -934,7 +937,7 @@ CollectCurrentADAttributesForUser(
 
         bDeactivateCredContext = TRUE;
 
-        dwError = ADUOpenDirectory(pszUserDomain, &hDirectory);
+        dwError = ADUOpenLwLdapDirectory(pszUserDomain, &hDirectory);
         BAIL_ON_MAC_ERROR(dwError);
 
         dwError = GetUserAttributes(hDirectory,
@@ -972,7 +975,7 @@ cleanup:
 
     if (hDirectory != (HANDLE)NULL)
     {
-        ADUCloseDirectory(hDirectory);
+        LwLdapCloseDirectory(hDirectory);
     }
 
     if (pCredContext)

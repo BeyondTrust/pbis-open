@@ -108,7 +108,6 @@ LWGetMacError(
 #define MAC_AD_ERROR_CREATE_FAILED                          0xC01B // 49179
 #define MAC_AD_ERROR_WRITE_FAILED                           0xC01C // 49180
 #define MAC_AD_ERROR_READ_FAILED                            0xC01D // 49181
-#define MAC_AD_ERROR_LDAP_NO_VALUE_FOUND                    0xC01E // 49182
 
 #define MAC_AD_ERROR_MASK(_e_)                              (_e_ & 0xC000)
 
