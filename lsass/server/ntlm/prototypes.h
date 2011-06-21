@@ -89,11 +89,6 @@ NtlmServerDecryptMessage(
     );
 
 DWORD
-NtlmServerDeleteSecurityContext(
-    IN PNTLM_CONTEXT_HANDLE phContext
-    );
-
-DWORD
 NtlmServerEncryptMessage(
     IN PNTLM_CONTEXT_HANDLE phContext,
     IN BOOLEAN bEncrypt,

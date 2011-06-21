@@ -7,7 +7,6 @@ make()
 	crc32.c \
 	credentials.c \
 	decryptmsg.c \
-	delsecctxt.c \
 	encryptmsg.c \
 	exportsecctxt.c \
 	freecreds.c \
