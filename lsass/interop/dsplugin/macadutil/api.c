@@ -198,7 +198,7 @@ EnumWorkgroupManagerEnabledGPOs(
 
     bDeactivateCredContext = TRUE;
 
-    dwError = ADUOpenDirectory(pszDomainName, &hDirectory);
+    dwError = ADUOpenLwLdapDirectory(pszDomainName, &hDirectory);
     BAIL_ON_MAC_ERROR(dwError);
 
     dwError = ADUConvertDomainToDN(pszDomainName, &pszDomainDN);
@@ -223,7 +223,7 @@ cleanup:
 
     if (hDirectory != (HANDLE)NULL)
     {
-        ADUCloseDirectory(hDirectory);
+        LwLdapCloseDirectory(hDirectory);
     }
 
     LW_SAFE_FREE_STRING(pszDomainDN);
@@ -386,7 +386,7 @@ GetSpecificGPO_authenticated(
         pszDomain = pszDomainLocal;
     }
 
-    dwError = ADUOpenDirectory(pszDomain, &hDirectory);
+    dwError = ADUOpenLwLdapDirectory(pszDomain, &hDirectory);
     BAIL_ON_MAC_ERROR(dwError);
 
     dwError = ADUConvertDomainToDN(pszDomain, &pszDomainDN);
@@ -417,7 +417,7 @@ cleanup:
 
     if (hDirectory != (HANDLE)NULL)
     {
-        ADUCloseDirectory(hDirectory);
+        LwLdapCloseDirectory(hDirectory);
     }
 
     LW_SAFE_FREE_STRING(pszDomainDN);

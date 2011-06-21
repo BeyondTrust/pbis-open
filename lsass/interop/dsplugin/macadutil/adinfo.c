@@ -39,18 +39,15 @@ ADUGetAllMCXPolicies(
     )
 {
     DWORD dwError = MAC_AD_ERROR_SUCCESS;
-    PCSTR szAttributeList[] = { "distinguishedName", NULL };
+    PSTR szAttributeList[] = { "distinguishedName", NULL };
     PGROUP_POLICY_OBJECT pGPObjectList = NULL;
     PGROUP_POLICY_OBJECT pGPObject = NULL;
     LDAPMessage* pMessage = NULL;
     LDAPMessage* pLDAPMessage = NULL;
-    PADU_DIRECTORY_CONTEXT pDirectory = NULL;
     DWORD dwCount = 0;
     PSTR pszValue = NULL;
 
-    pDirectory = (PADU_DIRECTORY_CONTEXT)hDirectory;
-
-    dwError = ADUDirectorySearch(
+    dwError = LwLdapDirectorySearch(
         hDirectory,
         pszDN,
         LDAP_SCOPE_ONELEVEL,
@@ -59,19 +56,21 @@ ADUGetAllMCXPolicies(
         &pMessage);
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwCount = ldap_count_entries(
-        pDirectory->ld,
-        pMessage
+    dwError = LwLdapCountEntries(
+        hDirectory,
+        pMessage,
+        &dwCount
         );
+    BAIL_ON_MAC_ERROR(dwError);
 
     if (dwCount > 0)
     {
-        pLDAPMessage = ADUFirstLDAPEntry(hDirectory, pMessage);
+        pLDAPMessage = LwLdapFirstEntry(hDirectory, pMessage);
     }
 
     while(pLDAPMessage != NULL)
     {
-        dwError = ADUGetLDAPString(hDirectory,
+        dwError = LwLdapGetString(hDirectory,
                                    pLDAPMessage,
                                    "distinguishedName",
                                    &pszValue);
@@ -95,7 +94,7 @@ ADUGetAllMCXPolicies(
 
         pGPObject = NULL;
 
-        pLDAPMessage = ADUNextLDAPEntry(hDirectory, pLDAPMessage);
+        pLDAPMessage = LwLdapNextEntry(hDirectory, pLDAPMessage);
     }
 
     if (*ppGroupPolicyObjects != NULL)
@@ -154,19 +153,16 @@ ADUGetMCXPolicy(
     )
 {
     DWORD dwError = MAC_AD_ERROR_SUCCESS;
-    PCSTR szAttributeList[] = { "distinguishedName", NULL };
+    PSTR szAttributeList[] = { "distinguishedName", NULL };
     char szQuery[512] = {0};
     PGROUP_POLICY_OBJECT pGPObject = NULL;
     LDAPMessage* pMessage = NULL;
-    PADU_DIRECTORY_CONTEXT pDirectory = NULL;
     DWORD dwCount = 0;
     PSTR pszValue = NULL;
 
-    pDirectory = (PADU_DIRECTORY_CONTEXT)hDirectory;
-
     sprintf(szQuery, "(&(objectclass=groupPolicyContainer)(%s=%s))", ADU_DISPLAY_NAME_ATTR, pszGPOName);
 
-    dwError = ADUDirectorySearch(
+    dwError = LwLdapDirectorySearch(
         hDirectory,
         pszDN,
         LDAP_SCOPE_ONELEVEL,
@@ -175,10 +171,12 @@ ADUGetMCXPolicy(
         &pMessage);
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwCount = ldap_count_entries(
-        pDirectory->ld,
-        pMessage
+    dwError = LwLdapCountEntries(
+        hDirectory,
+        pMessage,
+        &dwCount
         );
+    BAIL_ON_MAC_ERROR(dwError);
 
     if (dwCount < 0) {
         dwError = MAC_AD_ERROR_NO_SUCH_POLICY;
@@ -189,7 +187,7 @@ ADUGetMCXPolicy(
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
+    dwError = LwLdapGetString(hDirectory,
                                pMessage,
                                "distinguishedName",
                                &pszValue);
@@ -530,7 +528,7 @@ ADUGetPolicyInformation(
     )
 {
     DWORD dwError = MAC_AD_ERROR_SUCCESS;
-    PCSTR szAttributeList[] =
+    PSTR szAttributeList[] =
         {ADU_DISPLAY_NAME_ATTR,
          ADU_FLAGS_ATTR,
          ADU_FILESYS_PATH_ATTR,
@@ -545,9 +543,8 @@ ADUGetPolicyInformation(
     DWORD dwCount = 0;
     PSTR  pszValue = NULL;
     DWORD dwValue = 0;
-    PADU_DIRECTORY_CONTEXT pDirectory = (PADU_DIRECTORY_CONTEXT)hDirectory;
 
-    dwError = ADUDirectorySearch(
+    dwError = LwLdapDirectorySearch(
         hDirectory,
         pszPolicyDN,
         LDAP_SCOPE_BASE,
@@ -556,10 +553,12 @@ ADUGetPolicyInformation(
         &pMessage);
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwCount = ldap_count_entries(
-        pDirectory->ld,
-        pMessage
+    dwError = LwLdapCountEntries(
+        hDirectory,
+        pMessage,
+        &dwCount
         );
+    BAIL_ON_MAC_ERROR(dwError);
 
     if (dwCount < 0) {
         dwError = MAC_AD_ERROR_NO_SUCH_POLICY;
@@ -570,7 +569,7 @@ ADUGetPolicyInformation(
     }
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUGetLDAPString(hDirectory,
+    dwError = LwLdapGetString(hDirectory,
                                pMessage,
                                ADU_DISPLAY_NAME_ATTR,
                                &pszValue);
@@ -578,14 +577,14 @@ ADUGetPolicyInformation(
     pGroupPolicyObject->pszDisplayName = pszValue;
     pszValue = NULL;
 
-    dwError = ADUGetLDAPUInt32(hDirectory,
+    dwError = LwLdapGetUInt32(hDirectory,
                                pMessage,
                                ADU_FLAGS_ATTR,
                                &dwValue);
     BAIL_ON_MAC_ERROR(dwError);
     pGroupPolicyObject->dwFlags = dwValue;
 
-    dwError = ADUGetLDAPString(hDirectory,
+    dwError = LwLdapGetString(hDirectory,
                                pMessage,
                                ADU_FILESYS_PATH_ATTR,
                                &pszValue);
@@ -593,18 +592,18 @@ ADUGetPolicyInformation(
     pGroupPolicyObject->pszgPCFileSysPath = pszValue;
     pszValue = NULL;
 
-    dwError = ADUGetLDAPUInt32(hDirectory,
+    dwError = LwLdapGetUInt32(hDirectory,
                                pMessage,
                                ADU_FUNCTIONALITY_VERSION_ATTR,
                                &dwValue);
     BAIL_ON_MAC_ERROR(dwError);
     pGroupPolicyObject->gPCFunctionalityVersion = dwValue;
 
-    dwError = ADUGetLDAPString(hDirectory,
+    dwError = LwLdapGetString(hDirectory,
                                pMessage,
                                ADU_MACHINE_EXTENSION_NAMES_ATTR,
                                &pszValue);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = 0;
     }
@@ -612,11 +611,11 @@ ADUGetPolicyInformation(
     pGroupPolicyObject->pszgPCMachineExtensionNames = pszValue;
     pszValue = NULL;
 
-    dwError = ADUGetLDAPString(hDirectory,
+    dwError = LwLdapGetString(hDirectory,
                                pMessage,
                                ADU_USER_EXTENSION_NAMES_ATTR,
                                &pszValue);
-    if (dwError == MAC_AD_ERROR_LDAP_NO_VALUE_FOUND)
+    if (dwError == LW_ERROR_INVALID_LDAP_ATTR_VALUE)
     {
         dwError = 0;
     }
@@ -624,7 +623,7 @@ ADUGetPolicyInformation(
     pGroupPolicyObject->pszgPCUserExtensionNames = pszValue;
     pszValue = NULL;
 
-    dwError = ADUGetLDAPUInt32(hDirectory,
+    dwError = LwLdapGetUInt32(hDirectory,
                                pMessage,
                                ADU_VERSION_NUMBER_ATTR,
                                &dwValue);
@@ -665,10 +664,10 @@ ADUSetPolicyVersionInAD(
                                     &pszPolicyIdentifier);
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUOpenDirectory(pszDomainName, &hDirectory);
+    dwError = ADUOpenLwLdapDirectory(pszDomainName, &hDirectory);
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = ADUPutLDAPUInt32(hDirectory, pGPO->pszPolicyDN, ADU_VERSION_NUMBER_ATTR, dwVersion);
+    dwError = LwLdapPutUInt32(hDirectory, pGPO->pszPolicyDN, ADU_VERSION_NUMBER_ATTR, dwVersion);
     BAIL_ON_MAC_ERROR(dwError);
 
 cleanup:
@@ -678,7 +677,7 @@ cleanup:
     LW_SAFE_FREE_STRING(pszPolicyIdentifier);
 
     if (hDirectory)
-        ADUCloseDirectory(hDirectory);
+        LwLdapCloseDirectory(hDirectory);
 
     return dwError;
 
