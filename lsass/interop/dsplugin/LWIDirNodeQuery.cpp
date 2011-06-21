@@ -733,13 +733,15 @@ LWIDirNodeQuery::DoDirNodeAuth(
 
         if (pDirNode->fPlugInRootConnection)
         {
-            LOG("Logon successful for user: %s. Message: %s",
-                username, pszMessage ? pszMessage : "<none>");   
+            LOG("%sline logon successful for user: %s. Message: %s",
+                (isOnlineLogon) ? "On" : "Off", username,
+                pszMessage ? pszMessage : "<none>");   
         }
         else
         {
-            LOG("Authentication successful for administrator: %s. Message: %s",
-                username, pszMessage ? pszMessage : "<none>");   
+            LOG("%sline authentication successful for administrator: %s. Message: %s",
+                (isOnlineLogon) ? "On" : "Off", username,
+                pszMessage ? pszMessage : "<none>");   
         }
 
         // Also test to see if the logon should be rejected due to account policies
