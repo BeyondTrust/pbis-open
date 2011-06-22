@@ -2200,6 +2200,10 @@ typedef struct _SMB_RENAME_RESPONSE_HEADER
 } __attribute__((__packed__)) SMB_RENAME_RESPONSE_HEADER,
                              *PSMB_RENAME_RESPONSE_HEADER;
 
+#define SMB_NT_RENAME_SET_LINK_INFO    0x0103
+#define SMB_NT_RENAME_RENAME_FILE      0x0104
+#define SMB_NT_RENAME_MOVE_FILE        0x0105
+
 typedef struct _SMB_NT_RENAME_REQUEST_HEADER
 {
     SMB_FILE_ATTRIBUTES usSearchAttributes;
