@@ -105,9 +105,6 @@ configure()
     mk_define HAVE_SOCKLEN_T 1
     mk_define GETSOCKNAME_TAKES_SOCKLEN_T 1
 
-    # FIXME: make this an option
-    mk_define LW_USE_SHARE_REPOSITORY_REGISTRY 1
-
     mk_define UNICODE 1
     mk_define _FILE_OFFSET_BITS 64
 
