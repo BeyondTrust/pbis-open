@@ -150,7 +150,7 @@ case "${MK_OS}:${MK_CC_LD_STYLE}" in
         _rpath_flags="-Wl,-rpath,${_libdir}"
         ;;
     solaris:native)
-        _rpath_flags="-Wl,-R${_libdir}"
+        _rpath_flags="-R${_libdir}"
         ;;
     aix:native)
         _rpath_flags="-Wl,-blibpath:${_libdir}:/usr/lib:/lib"
