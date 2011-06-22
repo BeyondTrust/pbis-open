@@ -1215,7 +1215,7 @@ void DJCreateComputerAccount(
     {
         switch(dwError)
         {
-            case ERROR_FILE_NOT_FOUND:
+            case LW_ERROR_LDAP_NO_SUCH_OBJECT:
                 LW_RAISE_EX(exc, LW_ERROR_INVALID_OU, "Lsass Error", "The OU is invalid.");
                 break;
             case ERROR_CRC:
