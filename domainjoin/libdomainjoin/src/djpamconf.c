@@ -1987,6 +1987,20 @@ static BOOLEAN PamModuleAlwaysDeniesDomainLogins( const char * phase, const char
     if(!strcmp(buffer, "pam_mount") || !strcmp(buffer, "pam_afpmount"))
         return FALSE;
 
+    /* The pam_opendirectory module on OS X uses lsass to authenticate
+     * the user, so it won't deny domain logins.  Returning TRUE for
+     * that module when editing the account phase causes pam_lsass to
+     * be inserted too early in the screensaver module's configuration,
+     * which ends up allowing any domain user to unlock the screensaver
+     * for any other user (local or domain).
+     *
+     * Doing this check for the auth phase, however, causes domainjoin
+     * to complain about falling off the bottom of the auth stack and
+     * fail to configure pam.
+     */
+    if(strcmp(phase, "auth") != 0 && !strcmp(buffer, "pam_opendirectory"))
+        return FALSE;
+
     /* pam_hpsec on HP-UX blocks only for auth and session.  It is a no-op for
      * account and password.  The issue is that it returns unknown user because
      * it does not use nsswitch and only looks at local accounts. */
