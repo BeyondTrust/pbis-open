@@ -477,22 +477,25 @@ pam_sm_authenticate(
             pPamContext->bOnlineLogon = TRUE;
         }
 
-        dwError = LsaCheckUserInList(
-                        hLsaConnection,
-                        pszLoginId,
-                        NULL);
-        if (dwError)
+        if (!pPamContext->pamOptions.bNoRequireMembership)
         {
-            LSA_LOG_PAM_ERROR("User %s is denied access because they are not in the 'require membership of' list",
-                              LSA_SAFE_LOG_STRING(pszLoginId));
-            if (!LW_IS_NULL_OR_EMPTY_STR(pConfig->pszAccessDeniedMessage))
+            dwError = LsaCheckUserInList(
+                            hLsaConnection,
+                            pszLoginId,
+                            NULL);
+            if (dwError)
             {
-                LsaPamConverse(pamh,
-                               pConfig->pszAccessDeniedMessage,
-                               PAM_TEXT_INFO,
-                               NULL);
+                LSA_LOG_PAM_ERROR("User %s is denied access because they are not in the 'require membership of' list",
+                                  LSA_SAFE_LOG_STRING(pszLoginId));
+                if (!LW_IS_NULL_OR_EMPTY_STR(pConfig->pszAccessDeniedMessage))
+                {
+                    LsaPamConverse(pamh,
+                                   pConfig->pszAccessDeniedMessage,
+                                   PAM_TEXT_INFO,
+                                   NULL);
+                }
+                BAIL_ON_LSA_ERROR(dwError);
             }
-            BAIL_ON_LSA_ERROR(dwError);
         }
 
         /* On Centos, the pam_console module will grab the username from pam

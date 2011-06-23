@@ -62,6 +62,7 @@ typedef struct _PAMOPTIONS
     BOOLEAN bUnknownOK;
     BOOLEAN bSmartCardPrompt;
     BOOLEAN bPromptGecos;
+    BOOLEAN bNoRequireMembership;
     
 } PAMOPTIONS, *PPAMOPTIONS;
 
