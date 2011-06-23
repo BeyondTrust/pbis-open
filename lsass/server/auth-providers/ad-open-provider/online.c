@@ -2436,6 +2436,12 @@ AD_OnlineChangePassword(
                     NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = AD_OnlineCachePasswordVerifier(
+                    pContext->pState,
+                    pCachedUser,
+                    pszPassword);
+    BAIL_ON_LSA_ERROR(dwError);
+
 cleanup:
     LWNET_SAFE_FREE_DC_INFO(pDcInfo);
 
