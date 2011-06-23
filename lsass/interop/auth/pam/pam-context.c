@@ -179,6 +179,10 @@ LsaPamGetOptions(
         {
             pPamOptions->bDisablePasswordChange = TRUE;
         }
+        else if (!strcasecmp(argv[iArg], "no_require_membership"))
+        {
+            pPamOptions->bNoRequireMembership = TRUE;
+        }
     }
     
     LSA_LOG_PAM_DEBUG("LsaPamGetOptions::end");
