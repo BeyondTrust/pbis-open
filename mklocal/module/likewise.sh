@@ -7,7 +7,14 @@ option()
     _default_cachedir="${LOCALSTATEDIR}/lib"
     _default_configdir="${DATADIR}/config"
 
-    [ "${MK_LOCALSTATEDIR}" = "/var" ] && _default_cachedir="/var/lib/likewise"
+    case "$LOCALSTATEDIR" in
+        "/var")
+            _default_cachedir="/var/lib/likewise"
+            ;;
+        "/private/var")
+            _default_cachedir="/private/var/lib/likewise"
+            ;;
+    esac
 
     case "$MK_HOST_OS" in
         aix)
