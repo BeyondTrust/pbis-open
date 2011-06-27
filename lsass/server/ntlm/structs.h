@@ -51,14 +51,16 @@ typedef struct _NTLM_OS_VERSION
     BYTE MinorVersion;
     WORD BuildNumber;
     DWORD Unknown; // Must be 0x0000000F
-} NTLM_OS_VERSION, *PNTLM_OS_VERSION;
+} __attribute__((__packed__))
+NTLM_OS_VERSION, *PNTLM_OS_VERSION;
 
 typedef struct _NTLM_NEGOTIATE_MESSAGE_V1
 {
     UCHAR NtlmSignature[NTLM_NETWORK_SIGNATURE_SIZE];
     DWORD MessageType;
     DWORD NtlmFlags;
-} NTLM_NEGOTIATE_MESSAGE_V1, *PNTLM_NEGOTIATE_MESSAGE_V1;
+} __attribute__((__packed__))
+NTLM_NEGOTIATE_MESSAGE_V1, *PNTLM_NEGOTIATE_MESSAGE_V1;
 
 typedef struct _NTLM_NEGOTIATE_MESSAGE_V2
 {
@@ -76,7 +78,8 @@ typedef struct _NTLM_NEGOTIATE_MESSAGE_V2
     // want to authenticate with.
     NTLM_SEC_BUFFER ClientDomain;
     NTLM_SEC_BUFFER ClientWorkstation;
-} NTLM_NEGOTIATE_MESSAGE_V2, *PNTLM_NEGOTIATE_MESSAGE_V2;
+} __attribute__((__packed__))
+NTLM_NEGOTIATE_MESSAGE_V2, *PNTLM_NEGOTIATE_MESSAGE_V2;
 
 typedef struct _NTLM_NEGOTIATE_MESSAGE_V3
 {
@@ -103,7 +106,8 @@ typedef struct _NTLM_NEGOTIATE_MESSAGE_V3
     };
     NTLM_OS_VERSION Version;
     // Optional Data
-} NTLM_NEGOTIATE_MESSAGE_V3, *PNTLM_NEGOTIATE_MESSAGE_V3;
+} __attribute__((__packed__))
+NTLM_NEGOTIATE_MESSAGE_V3, *PNTLM_NEGOTIATE_MESSAGE_V3;
 
 typedef struct _NTLM_CHALLENGE_MESSAGE
 {
@@ -116,7 +120,8 @@ typedef struct _NTLM_CHALLENGE_MESSAGE
     // Optional Target Information NTLM_SEC_BUFFER
     // Optional OS Version 8 bytes
     // Optional Data
-} NTLM_CHALLENGE_MESSAGE, *PNTLM_CHALLENGE_MESSAGE;
+} __attribute__((__packed__))
+NTLM_CHALLENGE_MESSAGE, *PNTLM_CHALLENGE_MESSAGE;
 
 typedef struct _NTLM_RESPONSE_MESSAGE_V1
 {
@@ -128,7 +133,8 @@ typedef struct _NTLM_RESPONSE_MESSAGE_V1
     NTLM_SEC_BUFFER UserName;
     NTLM_SEC_BUFFER Workstation;
     // Optional Data
-} NTLM_RESPONSE_MESSAGE_V1, *PNTLM_RESPONSE_MESSAGE_V1;
+} __attribute__((__packed__))
+NTLM_RESPONSE_MESSAGE_V1, *PNTLM_RESPONSE_MESSAGE_V1;
 
 typedef struct _NTLM_RESPONSE_MESSAGE_V2
 {
@@ -149,7 +155,8 @@ typedef struct _NTLM_RESPONSE_MESSAGE_V2
     NTLM_SEC_BUFFER SessionKey;
     DWORD Flags;
     // Optional Data
-} NTLM_RESPONSE_MESSAGE_V2, *PNTLM_RESPONSE_MESSAGE_V2;
+} __attribute__((__packed__))
+NTLM_RESPONSE_MESSAGE_V2, *PNTLM_RESPONSE_MESSAGE_V2;
 
 typedef struct _NTLM_RESPONSE_MESSAGE_V3
 {
@@ -178,7 +185,8 @@ typedef struct _NTLM_RESPONSE_MESSAGE_V3
     };
     NTLM_OS_VERSION Version;
     // Optional Data
-} NTLM_RESPONSE_MESSAGE_V3, *PNTLM_RESPONSE_MESSAGE_V3;
+} __attribute__((__packed__))
+NTLM_RESPONSE_MESSAGE_V3, *PNTLM_RESPONSE_MESSAGE_V3;
 
 typedef struct _NTLM_BLOB
 {
@@ -189,14 +197,16 @@ typedef struct _NTLM_BLOB
     DWORD Reserved2;
     // Target information block
     // DWORD Reserved3
-} NTLM_BLOB, *PNTLM_BLOB;
+} __attribute__((__packed__))
+NTLM_BLOB, *PNTLM_BLOB;
 
 typedef struct _NTLM_TARGET_INFO_BLOCK
 {
     SHORT sType;
     SHORT sLength;
     //BYTE  Contents[0];
-} NTLM_TARGET_INFO_BLOCK, *PNTLM_TARGET_INFO_BLOCK;
+} __attribute__((__packed__))
+NTLM_TARGET_INFO_BLOCK, *PNTLM_TARGET_INFO_BLOCK;
 
 typedef enum
 {

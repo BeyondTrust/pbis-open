@@ -156,7 +156,8 @@ typedef struct _NTLM_SEC_BUFFER
     USHORT usLength;
     USHORT usMaxLength;
     DWORD dwOffset;
-} NTLM_SEC_BUFFER, *PNTLM_SEC_BUFFER;
+} __attribute__((__packed__))
+NTLM_SEC_BUFFER, *PNTLM_SEC_BUFFER;
 
 typedef struct _WIN_VERSION_INFO
 {
@@ -164,7 +165,8 @@ typedef struct _WIN_VERSION_INFO
     BYTE bMinor;
     SHORT sBuild;
     DWORD dwReserved;
-} WIN_VERSION_INFO, *PWIN_VERSION_INFO;
+} __attribute__((__packed__))
+WIN_VERSION_INFO, *PWIN_VERSION_INFO;
 
 struct _NTLM_CONTEXT;
 typedef struct _NTLM_CONTEXT *NTLM_CONTEXT_HANDLE, **PNTLM_CONTEXT_HANDLE;
@@ -202,7 +204,8 @@ typedef struct
             DWORD dwMsgSeqNum;
         } v2;
     };
-} NTLM_SIGNATURE, *PNTLM_SIGNATURE;
+} __attribute__((__packed__))
+NTLM_SIGNATURE, *PNTLM_SIGNATURE;
 
 //******************************************************************************
 //
