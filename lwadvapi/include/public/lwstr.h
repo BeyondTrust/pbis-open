@@ -53,6 +53,8 @@
 
 #define LW_IS_NULL_OR_EMPTY_STR(str) (!(str) || !(*(str)))
 
+#define LW_IS_EMPTY_STR(str) ((str)[0] == 0)
+
 #define LW_SECURE_FREE_STRING(str) \
     do { \
        if (str) \
