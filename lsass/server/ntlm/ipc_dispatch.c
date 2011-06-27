@@ -693,11 +693,6 @@ NtlmSrvIpcInitializeSecurityContext(
         dwError = NtlmSrvIpcCreateError(dwError, &pError);
         BAIL_ON_LSA_ERROR(dwError);
 
-        LW_SAFE_FREE_MEMORY(pNtlmResp);
-
-        dwError = NtlmSrvIpcCreateError(dwError, &pError);
-        BAIL_ON_LSA_ERROR(dwError);
-
         pOut->tag = NTLM_R_GENERIC_FAILURE;
         pOut->data = pError;
     }
