@@ -20,6 +20,7 @@
 #include <lsa/lsa.h>
 #include <lsautils.h>
 
+#include <lwdef.h>
 #include <lwerror.h>
 #include <lwkrb5.h>
 
@@ -35,12 +36,15 @@
     do {                                                        \
         if (_krb5_err)                                          \
         {                                                       \
-            _error = LwTranslateKrb5Error(                      \
-                        (_ctx),                                 \
-                        (_krb5_err),                            \
-                        __FUNCTION__,                           \
-                        __FILE__,                               \
-                        __LINE__);                              \
+            PCSTR _err_string;                                  \
+            _err_string = krb5_get_error_message(_ctx,          \
+                    _krb5_err);                                 \
+            LSA_LOG_ERROR(                                      \
+                "kerberos error: %s (%d) @ %s:%d (%s)",         \
+                LW_SAFE_LOG_STRING(_err_string),                \
+                _krb5_err, __FILE__, __LINE__, __FUNCTION__);   \
+            krb5_free_error_message(_ctx, _err_string);         \
+            _error = LwMapKrb5ErrorToLwError(_krb5_err);        \
             goto error;                                         \
         }                                                       \
     } while (0)
@@ -161,6 +165,8 @@ LogOptionCallback(
             {
                 LwRtlLogSetCallback(LogToSyslog, NULL);
             }
+
+            LwRtlLogSetLevel(LW_RTL_LOG_LEVEL_ERROR);
             break;
 
         case POPT_CALLBACK_REASON_OPTION:
