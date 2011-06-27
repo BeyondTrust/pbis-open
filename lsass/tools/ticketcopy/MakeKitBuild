@@ -9,10 +9,10 @@ make()
 	SOURCES="$TICKETCOPY_SOURCES" \
         INSTALLDIR="${MK_LIBEXECDIR}" \
 	INCLUDEDIRS="../../include" \
-	HEADERDEPS="lw/attrs.h lw/types.h lsa/lsa.h lwerror.h lwkrb5.h"
-	LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr"
+	HEADERDEPS="lw/attrs.h lw/types.h lsa/lsa.h lwerror.h lwkrb5.h" \
+	LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr popt"
 
     mk_stage \
-        DESTDIR="${LW_SYSCONFDIR}/LaunchAgents" \
+        DESTDIR="${SYSCONFDIR}/LaunchAgents" \
         com.likewisesoftware.ticketcopy.plist
 }
