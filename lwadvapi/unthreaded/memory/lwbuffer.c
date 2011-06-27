@@ -57,6 +57,12 @@
 #endif
 
 
+#define LWBUF_ALIGN_SIZE(size)                                      \
+    (((size) % sizeof(PVOID)) ?                                     \
+        ((size) + sizeof(PVOID) - ((size) % sizeof(PVOID))) :       \
+        (size))
+
+
 #define LWBUF_ALIGN_TYPE(offset, size, left, type)                      \
     {                                                                   \
         DWORD dwAlign = (offset) % sizeof(type);                        \
@@ -92,7 +98,7 @@
 
 #define LWBUF_TARGET_PTR(buffer_ptr, target_size, space)                \
     ((pCursor = (buffer_ptr) + dwOffset),                               \
-     ((pCursor + (space)) - (target_size)))
+     ((pCursor + (space)) - LWBUF_ALIGN_SIZE(target_size)))
 
 
 
@@ -417,7 +423,7 @@ LwBufferAllocWC16String(
         /* recalculate space after copying the string */
         ppwszDest     = (PWSTR*)pCursor;
         *ppwszDest    = (PWSTR)pStr;
-        dwSpaceLeft  -= (pStr) ? dwStrSize : 0;
+        dwSpaceLeft  -= (pStr) ? LWBUF_ALIGN_SIZE(dwStrSize) : 0;
 
         /* recalculate space after setting the string pointer */
         dwSpaceLeft  -= sizeof(PWSTR);
@@ -427,7 +433,7 @@ LwBufferAllocWC16String(
 
     /* include size of the pointer */
     dwOffset += sizeof(PWSTR);
-    dwSize   += (dwStrSize + sizeof(PWSTR));
+    dwSize   += (LWBUF_ALIGN_SIZE(dwStrSize) + sizeof(PWSTR));
 
     if (pdwOffset)
     {
@@ -524,8 +530,8 @@ LwBufferAllocUnicodeString(
         /* recalculate space after copying the string */
         ppwszDest     = (PWSTR*)pCursor;
         *ppwszDest    = (PWSTR)pStr;
-        dwSpaceLeft  -= (pStr) ? dwStrSize : 0;
-        dwSize       += (pStr) ? dwStrSize : 0;
+        dwSpaceLeft  -= (pStr) ? LWBUF_ALIGN_SIZE(dwStrSize) : 0;
+        dwSize       += (pStr) ? LWBUF_ALIGN_SIZE(dwStrSize) : 0;
 
         /* recalculate space after setting the string pointer */
         dwSpaceLeft  -= sizeof(PWSTR);
@@ -534,7 +540,7 @@ LwBufferAllocUnicodeString(
     }
     else
     {
-        dwSize += dwStrSize;
+        dwSize += LWBUF_ALIGN_SIZE(dwStrSize);
     }
 
     /* include size of the pointer */
@@ -628,8 +634,8 @@ LwBufferAllocAnsiString(
         /* recalculate space after copying the string */
         ppszDest     = (PSTR*)pCursor;
         *ppszDest    = (PSTR)pStr;
-        dwSpaceLeft -= dwStrSize;
-        dwSize      += dwStrSize;
+        dwSpaceLeft -= LWBUF_ALIGN_SIZE(dwStrSize);
+        dwSize      += LWBUF_ALIGN_SIZE(dwStrSize);
 
         /* recalculate space after setting the string pointer */
         dwSpaceLeft  -= sizeof(PSTR);
@@ -673,7 +679,7 @@ LwBufferAllocAnsiString(
         dwOffset += 2 * sizeof(USHORT);
 
         LWBUF_ALIGN(dwOffset, dwSize, dwSpaceLeft);
-        dwSize += dwStrSize;
+        dwSize += LWBUF_ALIGN_SIZE(dwStrSize);
     }
 
     /* include size of the pointer */
@@ -756,7 +762,7 @@ LwBufferAllocWC16StringFromUnicodeString(
         /* recalculate space after copying the string */
         ppwszDest     = (PWSTR*)pCursor;
         *ppwszDest    = (PWSTR)pStr;
-        dwSpaceLeft  -= dwSize;
+        dwSpaceLeft  -= LWBUF_ALIGN_SIZE(dwSize);
 
         /* recalculate space after setting the string pointer */
         dwSpaceLeft  -= sizeof(PWSTR);
@@ -784,7 +790,7 @@ LwBufferAllocWC16StringFromUnicodeString(
 
     if (pdwSize)
     {
-        *pdwSize += dwSize;
+        *pdwSize += LWBUF_ALIGN_SIZE(dwSize);
     }
 
 cleanup:
@@ -1041,7 +1047,7 @@ LwBufferAllocSid(
         /* recalculate size and space after copying the SID */
         ppDest        = (PSID*)pCursor;
         *ppDest       = pSourceSid ? (PSID)pSid : NULL;
-        dwSpaceLeft  -= dwSidSize;
+        dwSpaceLeft  -= LWBUF_ALIGN_SIZE(dwSidSize);
 
         /* recalculate size and space after setting the SID pointer */
         dwSpaceLeft  -= sizeof(PSID);
@@ -1051,7 +1057,7 @@ LwBufferAllocSid(
 
     /* include size of the pointer */
     dwOffset += sizeof(PSID);
-    dwSize   += (dwSidSize + sizeof(PSID));
+    dwSize   += (LWBUF_ALIGN_SIZE(dwSidSize) + sizeof(PSID));
 
     if (pdwOffset)
     {
