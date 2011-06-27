@@ -396,16 +396,11 @@ NtlmWeakenSessionKey(
     );
 
 DWORD
-NtlmGetAuthTargetNameFromChallenge(
-    IN PNTLM_CHALLENGE_MESSAGE pChlngMsg,
-    OUT PCHAR* ppAuthTargetName
-    );
-
-DWORD
 NtlmBuildResponse(
     IN PNTLM_CHALLENGE_MESSAGE pChlngMsg,
     IN PCSTR pUserName,
     IN PCSTR pPassword,
+    IN PCSTR pTarget,
     IN DWORD dwResponseType,
     OUT PDWORD pdwBufferSize,
     OUT PBYTE pUserSessionKey,
@@ -435,6 +430,7 @@ NtlmBuildNtlmV2Response(
     IN PNTLM_CHALLENGE_MESSAGE pChlngMsg,
     IN PCSTR pUserName,
     IN PCSTR pPassword,
+    IN PCSTR pTarget,
     OUT PDWORD pdwResponseSize,
     OUT PBYTE pUserSessionKey,
     OUT PBYTE* ppResponse

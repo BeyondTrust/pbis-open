@@ -1128,6 +1128,7 @@ NtlmCreateResponseMessage(
             pChlngMsg,
             pUserName,
             pPassword,
+            NULL,
             dwLmRespType,
             &dwLmMsgSize,
             pLmUserSessionKey,
@@ -1139,6 +1140,7 @@ NtlmCreateResponseMessage(
             pChlngMsg,
             pUserName,
             pPassword,
+            pDomainName,
             dwNtRespType,
             &dwNtMsgSize,
             pNtlmUserSessionKey,
@@ -1360,53 +1362,11 @@ NtlmWeakenSessionKey(
 
 /******************************************************************************/
 DWORD
-NtlmGetAuthTargetNameFromChallenge(
-    IN PNTLM_CHALLENGE_MESSAGE pChlngMsg,
-    OUT PCHAR* ppAuthTargetName
-    )
-{
-    DWORD dwError = LW_ERROR_SUCCESS;
-    PCHAR pName = NULL;
-    DWORD dwNameLength = 0;
-    // The following pointers point into pChlngMsg and will not be freed
-    PBYTE pBuffer = NULL;
-    PNTLM_SEC_BUFFER pTargetSecBuffer = &pChlngMsg->Target;
-
-    *ppAuthTargetName = NULL;
-
-    dwNameLength = LW_LTOH16(pTargetSecBuffer->usLength);
-    pBuffer = LW_LTOH32(pTargetSecBuffer->dwOffset) + (PBYTE)pChlngMsg;
-
-    if (LW_LTOH32(pChlngMsg->NtlmFlags) & NTLM_FLAG_OEM)
-    {
-        dwError = LwAllocateMemory(dwNameLength + 1, OUT_PPVOID(&pName));
-        BAIL_ON_LSA_ERROR(dwError);
-
-        memcpy(pName, pBuffer, dwNameLength);
-    }
-    else
-    {
-        dwError = NtlmGetCStringFromUnicodeBuffer(
-                      pBuffer,
-                      dwNameLength,
-                      &pName);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-cleanup:
-    *ppAuthTargetName = pName;
-    return dwError;
-error:
-    LW_SAFE_FREE_STRING(pName);
-    goto cleanup;
-}
-
-/******************************************************************************/
-DWORD
 NtlmBuildResponse(
     IN PNTLM_CHALLENGE_MESSAGE pChlngMsg,
     IN PCSTR pUserName,
     IN PCSTR pPassword,
+    IN PCSTR pTarget,
     IN DWORD dwResponseType,
     OUT PDWORD pdwBufferSize,
     OUT PBYTE pUserSessionKey,
@@ -1452,6 +1412,7 @@ NtlmBuildResponse(
             pChlngMsg,
             pUserName,
             pPassword,
+            pTarget,
             pdwBufferSize,
             pUserSessionKey,
             ppBuffer
@@ -1684,6 +1645,7 @@ NtlmBuildNtlmV2Response(
     IN PNTLM_CHALLENGE_MESSAGE pChlngMsg,
     IN PCSTR pUserName,
     IN PCSTR pPassword,
+    IN PCSTR pTarget,
     OUT PDWORD pdwResponseSize,
     OUT PBYTE pUserSessionKey,
     OUT PBYTE* ppResponse
@@ -1692,7 +1654,6 @@ NtlmBuildNtlmV2Response(
     DWORD dwError = LW_ERROR_SUCCESS;
     BYTE NtlmHashV1[MD4_DIGEST_LENGTH] = {0};
     BYTE NtlmHashV2[MD4_DIGEST_LENGTH] = {0};
-    PSTR pTarget = NULL;
     DWORD dwKeyLen = NTLM_HASH_SIZE;
     PBYTE pResponse = NULL;
     DWORD dwResponseSize = 0;
@@ -1700,9 +1661,6 @@ NtlmBuildNtlmV2Response(
     memset(pUserSessionKey, 0, NTLM_SESSION_KEY_SIZE);
 
     dwError = NtlmCreateNtlmV1Hash(pPassword, NtlmHashV1);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = NtlmGetAuthTargetNameFromChallenge(pChlngMsg, &pTarget);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = NtlmCreateNtlmV2Hash(pUserName, pTarget, NtlmHashV1, NtlmHashV2);
@@ -1726,8 +1684,6 @@ NtlmBuildNtlmV2Response(
     *ppResponse = pResponse;
 
 cleanup:
-    LW_SAFE_FREE_MEMORY(pTarget);
-
     return dwError;
 error:
     *pdwResponseSize = 0;
@@ -2106,21 +2062,29 @@ NtlmCreateNtlmV2Hash(
     // remember that the user name is converted to upper case
     wc16supper(pwszUserName);
 
-    dwError = RtlWC16StringAllocateFromCString(
-                  &pwszDomain,
-                  pDomain);
-    BAIL_ON_LSA_ERROR(dwError);
+    dwTempBufferSize = wc16slen(pwszUserName) * sizeof(WCHAR);
 
-    dwTempBufferSize = (wc16slen(pwszUserName) +
-                        wc16slen(pwszDomain)) * sizeof(WCHAR);
+    if (pDomain)
+    {
+        dwError = RtlWC16StringAllocateFromCString(
+                      &pwszDomain,
+                      pDomain);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwTempBufferSize += wc16slen(pwszDomain) * sizeof(WCHAR);
+    }
 
     dwError = LwAllocateMemory(dwTempBufferSize + sizeof(WCHAR), OUT_PPVOID(&pTempBuffer));
     BAIL_ON_LSA_ERROR(dwError);
 
     pTrav = pTempBuffer;
     wc16stowc16les(pTrav, pwszUserName, wc16slen(pwszUserName));
-    pTrav += wc16slen(pwszUserName);
-    wc16stowc16les(pTrav, pwszDomain, wc16slen(pwszDomain));
+
+    if (pDomain)
+    {
+        pTrav += wc16slen(pwszUserName);
+        wc16stowc16les(pTrav, pwszDomain, wc16slen(pwszDomain));
+    }
 
     HMAC(
         EVP_md5(),
