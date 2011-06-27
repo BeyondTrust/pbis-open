@@ -10,7 +10,8 @@ make()
         INSTALLDIR="${MK_LIBEXECDIR}" \
 	INCLUDEDIRS="../../include" \
 	HEADERDEPS="lw/attrs.h lw/types.h lsa/lsa.h lwerror.h lwkrb5.h" \
-	LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr popt"
+	LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr popt" \
+        LDFLAGS="-framework Kerberos"
 
     mk_stage \
         DESTDIR="${SYSCONFDIR}/LaunchAgents" \
