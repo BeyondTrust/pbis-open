@@ -5,12 +5,14 @@ configure()
         expanded_libexecdir="$MK_LIBEXECDIR"
 
     mk_output_file ConfigureLogin
+
+    mk_output_file gpcron
 }
 
 make()
 {
     mk_stage \
-        SOURCE="ConfigureLogin" \
         DESTDIR="${MK_LIBEXECDIR}" \
-        MODE="0755"
+        MODE="0755" \
+        ConfigureLogin gpcron
 }
