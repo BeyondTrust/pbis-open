@@ -14,6 +14,6 @@ make()
         LDFLAGS="-framework Kerberos"
 
     mk_stage \
-        DESTDIR="${SYSCONFDIR}/LaunchAgents" \
+        DESTDIR="${MK_SYSCONFDIR}/LaunchAgents" \
         com.likewisesoftware.ticketcopy.plist
 }
