@@ -506,14 +506,14 @@ SamrAllocateLogonHours(
 
         ppLogonHours     = (PVOID*)pCursor;
         *ppLogonHours    = pLogonHours;
-        (*pdwSpaceLeft) -= (pLogonHours) ? dwLogonHoursSize : 0;
+        (*pdwSpaceLeft) -= (pLogonHours) ? LWBUF_ALIGN_SIZE(dwLogonHoursSize) : 0;
 
         /* recalculate space after setting the pointer */
         (*pdwSpaceLeft) -= sizeof(PVOID);
     }
     else
     {
-        (*pdwSize) += dwLogonHoursSize;
+        (*pdwSize) += LWBUF_ALIGN_SIZE(dwLogonHoursSize);
     }
 
     /* include size of the pointer */
@@ -1024,14 +1024,14 @@ SamrAllocateUserInfo21(
 
         ppBufBlob        = (PVOID*)pCursor;
         *ppBufBlob       = pBufBlob;
-        (*pdwSpaceLeft) -= (pBufBlob) ? dwBufBlobSize : 0;
+        (*pdwSpaceLeft) -= (pBufBlob) ? LWBUF_ALIGN_SIZE(dwBufBlobSize) : 0;
 
         /* recalculate space after setting the pointer */
         (*pdwSpaceLeft) -= sizeof(PVOID);
     }
     else
     {
-        (*pdwSize) += dwBufBlobSize;
+        (*pdwSize) += LWBUF_ALIGN_SIZE(dwBufBlobSize);
     }
 
     /* include size of the pointer */

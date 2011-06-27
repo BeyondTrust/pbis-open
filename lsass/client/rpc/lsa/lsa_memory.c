@@ -318,14 +318,14 @@ LsaAllocateRefDomainList(
 
         ppDomains        = (PVOID*)pCursor;
         *ppDomains       = (PVOID)pDomains;
-        (*pdwSpaceLeft) -= (pDomains) ? dwDomainsSize : 0;
+        (*pdwSpaceLeft) -= (pDomains) ? LWBUF_ALIGN_SIZE(dwDomainsSize) : 0;
 
         /* recalculate space after setting the pointer */
         (*pdwSpaceLeft) -= sizeof(PVOID);
     }
     else
     {
-        (*pdwSize) += dwDomainsSize;
+        (*pdwSize) += LWBUF_ALIGN_SIZE(dwDomainsSize);
     }
 
     /* include size of the pointer */
@@ -606,14 +606,14 @@ LsaAllocateAuditEventsInfo(
 
         ppBlob           = (PVOID*)pCursor;
         *ppBlob          = (PVOID)pBlob;
-        (*pdwSpaceLeft) -= (pBlob) ? dwBlobSize : 0;
+        (*pdwSpaceLeft) -= (pBlob) ? LWBUF_ALIGN_SIZE(dwBlobSize) : 0;
 
         /* recalculate space after setting the pointer */
         (*pdwSpaceLeft) -= sizeof(PVOID);
     }
     else
     {
-        (*pdwSize) += dwBlobSize;
+        (*pdwSize) += LWBUF_ALIGN_SIZE(dwBlobSize);
     }
 
     /* include size of the pointer */
