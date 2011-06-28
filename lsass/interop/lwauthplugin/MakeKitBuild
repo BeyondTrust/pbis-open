@@ -1,5 +1,5 @@
 #!/bin/sh
-SUBDIRS="lib tools"
+SUBDIRS="lib tools ticketcopy"
 
 configure()
 {
