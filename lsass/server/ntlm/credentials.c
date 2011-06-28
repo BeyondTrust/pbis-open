@@ -98,6 +98,10 @@ NtlmCreateCredential(
     pCreds->nRefCount = 1;
     pCreds->dwCredDirection = dwDirection;
 
+    dwError = LwMapErrnoToLwError(pthread_mutex_init(&pCreds->Mutex, NULL));
+    BAIL_ON_LSA_ERROR(dwError);
+    pCreds->pMutex = &pCreds->Mutex;
+
 cleanup:
     *ppNtlmCreds = pCreds;
     return dwError;
@@ -173,6 +177,10 @@ NtlmFreeCredential(
 {
     LsaReleaseCredential(&pCreds->CredHandle);
     LW_SAFE_FREE_STRING(pCreds->pszDomainName);
+    if (pCreds->pMutex)
+    {
+        pthread_mutex_destroy(pCreds->pMutex);
+    }
     LW_SAFE_FREE_MEMORY(pCreds);
 }
 
