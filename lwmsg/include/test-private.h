@@ -45,7 +45,7 @@
     {                                                                   \
         LWMsgStatus __status__ = (_x_);                                 \
         if (__status__)                                                 \
-            mu_interface_result(                                        \
+            Mu_Interface_Result(                                        \
                 __FILE__,                                               \
                 __LINE__,                                               \
                 MU_STATUS_EXCEPTION,                                    \
