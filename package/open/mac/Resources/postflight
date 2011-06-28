@@ -219,6 +219,25 @@ enable_plugin()
 
 }
 
+enable_auth_plugin()
+{
+    PLUGIN_DIR=com.likewise.bundle
+    SRC_DIR="@PRIMARY_LIBDIR@/SecurityAgentPlugins"
+    LIBRARY_PLUGIN_DIR="/Library/Security/SecurityAgentPlugins"
+
+    # Install auth plugin
+    echo "Installing auth plugin"
+    run_or_fail "mkdir -p $LIBRARY_PLUGIN_DIR"
+    run_or_fail "cp -r $SRC_DIR/$PLUGIN_DIR $LIBRARY_PLUGIN_DIR/$PLUGIN_DIR"
+
+    for module in /opt/likewise/lib/AuthMechanisms/*.so
+    do
+        mechanism=`basename "$module" .so`
+        echo "Enabling auth mechanism '$mechanism'"
+        /opt/likewise/libexec/authmechanism enable "$mechanism"
+    done
+}
+
 configure_logon_message_application()
 {
     /usr/bin/defaults read /Library/Preferences/loginwindow | grep 'Likewise Logon Message.app' > /dev/null 2>&1
@@ -573,7 +592,11 @@ run "@MK_BINDIR@/domainjoin-cli configure --enable pam"
 # Configure Likewise DS plugin
 enable_plugin
 
+# Configure Likewise Auth plugin
+enable_auth_plugin
+
 # Add Likewise DS Plugin to Search list
+log "Adding DS plugin to search list"
 run "/usr/bin/dscl /Search -create / SearchPolicy CSPSearchPath"
 run "/usr/bin/dscl /Search -append / CSPSearchPath '/Likewise - Active Directory'"
 

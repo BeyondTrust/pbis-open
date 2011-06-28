@@ -439,7 +439,7 @@ open_files_interop()
             ;;
         darwin:*)
             mk_package_patterns \
-                SUBDIRS="@lsass/interop/dsplugin @lsass/interop/auth/pam" \
+                SUBDIRS="@lsass/interop/dsplugin @lsass/interop/auth/pam @lsass/interop/lwauthplugin @lsass/tools/ticketcopy" \
                 "*"
             ;;
         *)

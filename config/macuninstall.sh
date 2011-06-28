@@ -283,11 +283,18 @@ main()
     launchctl_delete_daemons
     launchctl_delete_agents
 
+    for module in /opt/likewise/lib/AuthMechanisms/*.so
+    do
+        mechanism=`basename "$module" .so`
+        echo "Disabling auth mechanism '$mechanism'"
+        $RUN /opt/likewise/libexec/authmechanism disable "$mechanism"
+    done
+
     for pkgName in `pkg_list_likewise` ; do
         pkg_uninstall "${pkgName}"
     done
 
-    $RUN rm -rfv /opt/likewise /etc/likewise /var/log/likewise /var/lib/likewise /var/cache/likewise "/Applications/Likewise Utilities"
+    $RUN rm -rfv /opt/likewise /etc/likewise /var/log/likewise /var/lib/likewise /var/cache/likewise "/Applications/Likewise Utilities" "/Library/Security/SecurityAgentPlugins/Likewise.bundle"
 
     for file in /etc/* /etc/pam.d/* /etc/krb5.conf /etc/hosts /etc/sshd_config /etc/ssh_config ; do
         orig="$file.lwidentity.orig"
