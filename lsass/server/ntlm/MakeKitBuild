@@ -8,10 +8,9 @@ make()
 	credentials.c \
 	decryptmsg.c \
 	encryptmsg.c \
-	exportsecctxt.c \
+	expimpsecctxt.c \
 	freecreds.c \
 	globals.c \
-	importsecctxt.c \
 	initsecctxt.c \
 	ipc_dispatch.c \
 	makesign.c \

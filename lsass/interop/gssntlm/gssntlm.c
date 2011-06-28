@@ -271,14 +271,14 @@ typedef struct _GSS_MECH_CONFIG
 
     OM_uint32
     (*gss_export_sec_context)(
-        OM_uint32,
+        OM_uint32*,
         gss_ctx_id_t*,
         gss_buffer_t
         );
 
     OM_uint32
     (*gss_import_sec_context)(
-        OM_uint32,
+        OM_uint32*,
         gss_buffer_t,
         gss_ctx_id_t*
         );
@@ -603,8 +603,8 @@ static GSS_MECH_CONFIG gNtlmMech =
     ntlm_gss_release_name,
     ntlm_gss_inquire_cred,
     NULL, //ntlm_gss_add_cred,
-    NULL, //ntlm_gss_export_sec_context,
-    NULL, //ntlm_gss_import_sec_context,
+    ntlm_gss_export_sec_context,
+    ntlm_gss_import_sec_context,
     NULL, //ntlm_gss_inquire_cred_by_mech,
     NULL, //ntlm_gss_inquire_names_for_mech,
     ntlm_gss_inquire_context,
@@ -2298,6 +2298,85 @@ ntlm_gss_inquire_cred(
     }
 
     return GSS_S_COMPLETE;
+}
+
+OM_uint32
+ntlm_gss_export_sec_context(
+    OM_uint32 *pMinorStatus,
+    gss_ctx_id_t* pGssCtxtHandle,
+    gss_buffer_t pInterprocessToken
+   )
+{
+    OM_uint32 MajorStatus = GSS_S_COMPLETE;
+    OM_uint32 MinorStatus = LW_ERROR_SUCCESS;
+    PNTLM_CONTEXT_HANDLE pContextHandle = (PNTLM_CONTEXT_HANDLE) pGssCtxtHandle;
+    SecBuffer Token = {0};
+
+    MinorStatus = NtlmClientExportSecurityContext(
+                      pContextHandle,
+                      SECPKG_CONTEXT_EXPORT_DELETE_OLD,
+                      &Token);
+    BAIL_ON_LSA_ERROR(MinorStatus);
+
+cleanup:
+
+    *pMinorStatus = MinorStatus;
+    
+    if (pInterprocessToken)
+    {
+        pInterprocessToken->length = Token.cbBuffer;
+        pInterprocessToken->value = Token.pvBuffer;
+    }
+
+    return MajorStatus;
+
+error:
+
+    if (MajorStatus == GSS_S_COMPLETE)
+    {
+        MajorStatus = GSS_S_FAILURE;
+    }
+
+    goto cleanup;
+}
+
+OM_uint32
+ntlm_gss_import_sec_context(
+    OM_uint32 *pMinorStatus,
+    gss_buffer_t pInterprocessToken,
+    gss_ctx_id_t* pGssCtxtHandle
+    )
+{
+    OM_uint32 MajorStatus = GSS_S_COMPLETE;
+    OM_uint32 MinorStatus = LW_ERROR_SUCCESS;
+    NTLM_CONTEXT_HANDLE NewContext =  NULL;
+    SecBuffer Token = {0};
+
+    Token.BufferType = SECBUFFER_TOKEN;
+    Token.cbBuffer = pInterprocessToken->length;
+    Token.pvBuffer = pInterprocessToken->value;
+
+    MinorStatus = NtlmClientImportSecurityContext(
+                      &Token,
+                      &NewContext);
+    BAIL_ON_LSA_ERROR(MinorStatus);
+
+cleanup:
+
+    *pMinorStatus = MinorStatus;
+
+    *pGssCtxtHandle = (gss_ctx_id_t)NewContext;    
+
+    return MajorStatus;
+
+error:
+
+    if (MajorStatus == GSS_S_COMPLETE)
+    {
+        MajorStatus = GSS_S_FAILURE;
+    }
+
+    goto cleanup;
 }
 
 OM_uint32

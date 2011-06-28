@@ -180,7 +180,6 @@ typedef struct __NTLM_IPC_EXPORT_SEC_CTXT_REQ
 typedef struct __NTLM_IPC_EXPORT_SEC_CTXT_RESPONSE
 {
     SecBuffer PackedContext;
-    LWMsgHandle* hToken;
 } NTLM_IPC_EXPORT_SEC_CTXT_RESPONSE, *PNTLM_IPC_EXPORT_SEC_CTXT_RESPONSE;
 
 /******************************************************************************/
@@ -196,9 +195,7 @@ typedef struct __NTLM_IPC_FREE_CREDS_REQ
 
 typedef struct __NTLM_IPC_IMPORT_SEC_CTXT_REQ
 {
-    PSECURITY_STRING *pszPackage;
     PSecBuffer pPackedContext;
-    HANDLE pToken;
 } NTLM_IPC_IMPORT_SEC_CTXT_REQ, *PNTLM_IPC_IMPORT_SEC_CTXT_REQ;
 
 typedef struct __NTLM_IPC_IMPORT_SEC_CTXT_RESPONSE

@@ -150,13 +150,6 @@ typedef INT64 SECURITY_INTEGER, *PSECURITY_INTEGER;
 
 typedef SECURITY_INTEGER TimeStamp, *PTimeStamp;
 
-typedef struct _SECURITY_STRING
-{
-    USHORT Length;
-    USHORT MaximumLength;
-    PUSHORT Buffer;
-} SECURITY_STRING, * PSECURITY_STRING;
-
 typedef struct _NTLM_SEC_BUFFER
 {
     USHORT usLength;
@@ -315,6 +308,10 @@ NTLM_SIGNATURE, *PNTLM_SIGNATURE;
 
 #define SECPKG_ATTR_CUSTOM_MAPPED_TO_GUEST      (0x80000000 | 1)
 
+#define SECPKG_CONTEXT_EXPORT_RESET_NEW         1
+#define SECPKG_CONTEXT_EXPORT_DELETE_OLD        2
+#define SECPKG_CONTEXT_EXPORT_TO_KERNEL         4
+
 //******************************************************************************
 //
 // E X T E R N S
@@ -374,8 +371,7 @@ DWORD
 NtlmClientExportSecurityContext(
     IN PNTLM_CONTEXT_HANDLE phContext,
     IN DWORD fFlags,
-    OUT PSecBuffer pPackedContext,
-    OUT OPTIONAL HANDLE *pToken
+    OUT PSecBuffer pPackedContext
     );
 
 DWORD
@@ -385,9 +381,7 @@ NtlmClientFreeCredentialsHandle(
 
 DWORD
 NtlmClientImportSecurityContext(
-    IN PSECURITY_STRING *pszPackage,
     IN PSecBuffer pPackedContext,
-    IN OPTIONAL HANDLE pToken,
     OUT PNTLM_CONTEXT_HANDLE phContext
     );
 

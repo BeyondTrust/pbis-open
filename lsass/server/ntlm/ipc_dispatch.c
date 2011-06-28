@@ -550,7 +550,6 @@ error:
     goto cleanup;
 }
 
-#if 0
 LWMsgStatus
 NtlmSrvIpcExportSecurityContext(
     LWMsgCall* pCall,
@@ -563,22 +562,34 @@ NtlmSrvIpcExportSecurityContext(
     PNTLM_IPC_EXPORT_SEC_CTXT_REQ pReq = pIn->data;
     PNTLM_IPC_EXPORT_SEC_CTXT_RESPONSE pNtlmResp = NULL;
     PNTLM_IPC_ERROR pError = NULL;
+    NTLM_CONTEXT_HANDLE hContext = NULL;
 
     dwError = LwAllocateMemory(
         sizeof(NTLM_IPC_EXPORT_SEC_CTXT_RESPONSE),
         OUT_PPVOID(&pNtlmResp));
     BAIL_ON_LSA_ERROR(dwError);
 
+    if (pReq->hContext)
+    {
+        dwError = NtlmSrvIpcGetContextHandle(pCall, pReq->hContext, &hContext);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     dwError = NtlmServerExportSecurityContext(
-        &pReq->hContext,
+        &hContext,
         pReq->fFlags,
-        &pNtlmResp->PackedContext,
-        &(pNtlmResp->hToken));
+        &pNtlmResp->PackedContext);
 
     if (!dwError)
     {
         pOut->tag = NTLM_R_EXPORT_SEC_CTXT_SUCCESS;
         pOut->data = pNtlmResp;
+
+        if (pReq->fFlags & SECPKG_CONTEXT_EXPORT_DELETE_OLD)
+        {
+            dwError = NtlmSrvIpcUnregisterHandle(pCall, pReq->hContext);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
     }
     else
     {
@@ -596,7 +607,6 @@ cleanup:
 error:
     goto cleanup;
 }
-#endif
 
 static
 LWMsgStatus
@@ -631,7 +641,6 @@ error:
     goto cleanup;
 }
 
-#if 0
 LWMsgStatus
 NtlmSrvIpcImportSecurityContext(
     LWMsgCall* pCall,
@@ -644,7 +653,7 @@ NtlmSrvIpcImportSecurityContext(
     PNTLM_IPC_IMPORT_SEC_CTXT_REQ pReq = pIn->data;
     PNTLM_IPC_IMPORT_SEC_CTXT_RESPONSE pNtlmResp = NULL;
     PNTLM_IPC_ERROR pError = NULL;
-
+    NTLM_CONTEXT_HANDLE hNewContext = NULL;
 
     dwError = LwAllocateMemory(
         sizeof(NTLM_IPC_IMPORT_SEC_CTXT_RESPONSE),
@@ -652,15 +661,23 @@ NtlmSrvIpcImportSecurityContext(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = NtlmServerImportSecurityContext(
-        pReq->pszPackage,
         pReq->pPackedContext,
-        pReq->pToken,
-        &(pNtlmResp->hContext));
+        &hNewContext);
 
     if (!dwError)
     {
+        dwError = NtlmSrvIpcRegisterHandle(
+                      pCall,
+                      "NTLM_CONTEXT_HANDLE",
+                      hNewContext,
+                      NtlmSrvCleanupContextHandle,
+                      &pNtlmResp->hContext);
+        BAIL_ON_LSA_ERROR(dwError);
+
         pOut->tag = NTLM_R_IMPORT_SEC_CTXT_SUCCESS;
         pOut->data = pNtlmResp;
+
+        NtlmSrvIpcRetainHandle(pCall, pNtlmResp->hContext);
     }
     else
     {
@@ -678,7 +695,6 @@ cleanup:
 error:
     goto cleanup;
 }
-#endif
 
 static
 LWMsgStatus
@@ -1048,13 +1064,9 @@ static LWMsgDispatchSpec gMessageHandlers[] =
     LWMSG_DISPATCH_BLOCK(NTLM_Q_DECRYPT_MSG, NtlmSrvIpcDecryptMessage),
     LWMSG_DISPATCH_BLOCK(NTLM_Q_DELETE_SEC_CTXT, NtlmSrvIpcDeleteSecurityContext),
     LWMSG_DISPATCH_BLOCK(NTLM_Q_ENCRYPT_MSG, NtlmSrvIpcEncryptMessage),
-#if 0
     LWMSG_DISPATCH_BLOCK(NTLM_Q_EXPORT_SEC_CTXT, NtlmSrvIpcExportSecurityContext),
-#endif
     LWMSG_DISPATCH_BLOCK(NTLM_Q_FREE_CREDS, NtlmSrvIpcFreeCredentialsHandle),
-#if 0
     LWMSG_DISPATCH_BLOCK(NTLM_Q_IMPORT_SEC_CTXT, NtlmSrvIpcImportSecurityContext),
-#endif
     LWMSG_DISPATCH_BLOCK(NTLM_Q_INIT_SEC_CTXT, NtlmSrvIpcInitializeSecurityContext),
     LWMSG_DISPATCH_BLOCK(NTLM_Q_MAKE_SIGN, NtlmSrvIpcMakeSignature),
     LWMSG_DISPATCH_BLOCK(NTLM_Q_QUERY_CREDS, NtlmSrvIpcQueryCredentialsAttributes),

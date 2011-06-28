@@ -51,39 +51,19 @@ DWORD
 NtlmClientExportSecurityContext(
     IN PNTLM_CONTEXT_HANDLE phContext,
     IN DWORD fFlags,
-    OUT PSecBuffer pPackedContext,
-    OUT OPTIONAL HANDLE *pToken
+    OUT PSecBuffer pPackedContext
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
 
     BAIL_ON_INVALID_POINTER(phContext);
 
-    // We don't want to zero out the SecBuffers, but we may want to initialize
-    // some of their members to zero.
-    // In the long run, I don't think we need this token...
-    if (pToken)
-    {
-        *pToken = NULL;
-    }
-
     dwError = NtlmTransactExportSecurityContext(
         *phContext,
         fFlags,
-        pPackedContext,
-        pToken);
+        pPackedContext);
     BAIL_ON_LSA_ERROR(dwError);
 
-cleanup:
-    return(dwError);
 error:
-    // we may not want to clear the IN OUT params on error
-    // also, I don't think we're going to be using this token, but put this
-    // clean up code in for now... note the missing "CloseHandle" call we
-    // would normally want here.
-    if (pToken)
-    {
-        *pToken = NULL;
-    }
-    goto cleanup;
+    return(dwError);
 }

@@ -49,20 +49,19 @@
 
 DWORD
 NtlmClientImportSecurityContext(
-    IN PSECURITY_STRING *pszPackage,
     IN PSecBuffer pPackedContext,
-    IN OPTIONAL HANDLE pToken,
     OUT PNTLM_CONTEXT_HANDLE phContext
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
 
+    BAIL_ON_INVALID_POINTER(pPackedContext);
+    BAIL_ON_INVALID_POINTER(phContext);
+
     *phContext = NULL;
 
     dwError = NtlmTransactImportSecurityContext(
-        pszPackage,
         pPackedContext,
-        pToken,
         phContext
         );
 

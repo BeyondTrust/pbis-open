@@ -1269,6 +1269,14 @@ LsaIPCGetProtocolSpec(
     return gLsaIPCSpec;
 }
 
+LWMsgTypeSpec*
+LsaIPCGetAuthUserInfoSpec(
+    void
+    )
+{
+    return gLsaAuthUserInfoSpec;
+}
+
 /*
 local variables:
 mode: c

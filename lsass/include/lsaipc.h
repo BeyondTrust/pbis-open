@@ -257,6 +257,11 @@ LsaIPCGetProtocolSpec(
     void
     );
 
+LWMsgTypeSpec*
+LsaIPCGetAuthUserInfoSpec(
+    void
+    );
+
 DWORD
 LsaOpenServer(
     PHANDLE phConnection

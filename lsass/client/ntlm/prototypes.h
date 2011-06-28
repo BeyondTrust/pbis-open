@@ -97,8 +97,7 @@ DWORD
 NtlmTransactExportSecurityContext(
     IN NTLM_CONTEXT_HANDLE hContext,
     IN DWORD fFlags,
-    OUT PSecBuffer pPackedContext,
-    OUT OPTIONAL HANDLE *pToken
+    OUT PSecBuffer pPackedContext
     );
 
 DWORD
@@ -108,9 +107,7 @@ NtlmTransactFreeCredentialsHandle(
 
 DWORD
 NtlmTransactImportSecurityContext(
-    IN PSECURITY_STRING *pszPackage,
     IN PSecBuffer pPackedContext,
-    IN OPTIONAL HANDLE pToken,
     OUT PNTLM_CONTEXT_HANDLE phContext
     );
 

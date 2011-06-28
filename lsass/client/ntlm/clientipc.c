@@ -551,8 +551,7 @@ DWORD
 NtlmTransactExportSecurityContext(
     IN NTLM_CONTEXT_HANDLE hContext,
     IN DWORD fFlags,
-    OUT PSecBuffer pPackedContext,
-    OUT OPTIONAL HANDLE *pToken
+    OUT PSecBuffer pPackedContext
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
@@ -587,10 +586,12 @@ NtlmTransactExportSecurityContext(
             pPackedContext->cbBuffer = pResultList->PackedContext.cbBuffer;
             pPackedContext->BufferType = pResultList->PackedContext.BufferType;
             pPackedContext->pvBuffer = pResultList->PackedContext.pvBuffer;
+            pResultList->PackedContext.pvBuffer = NULL;
 
-            if (pToken)
+            if (fFlags & SECPKG_CONTEXT_EXPORT_DELETE_OLD)
             {
-                *pToken = (HANDLE) pResultList->hToken;
+                NtlmIpcReleaseHandle((LWMsgHandle*) hContext);
+                hContext = NULL;
             }
 
             break;
@@ -677,9 +678,7 @@ error:
 
 DWORD
 NtlmTransactImportSecurityContext(
-    IN PSECURITY_STRING *pszPackage,
     IN PSecBuffer pPackedContext,
-    IN OPTIONAL HANDLE pToken,
     OUT PNTLM_CONTEXT_HANDLE phContext
     )
 {
@@ -697,9 +696,7 @@ NtlmTransactImportSecurityContext(
 
     memset(&ImportSecCtxtReq, 0, sizeof(ImportSecCtxtReq));
 
-    ImportSecCtxtReq.pszPackage = pszPackage;
     ImportSecCtxtReq.pPackedContext = pPackedContext;
-    ImportSecCtxtReq.pToken = (LWMsgHandle*) pToken;
 
     In.tag = NTLM_Q_IMPORT_SEC_CTXT;
     In.data = &ImportSecCtxtReq;

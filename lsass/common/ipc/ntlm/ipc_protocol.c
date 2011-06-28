@@ -142,27 +142,6 @@ static LWMsgTypeSpec gNtlmSecWinntAuthIdSpec[] =
 
 /******************************************************************************/
 
-static LWMsgTypeSpec gNtlmSecurityStringSpec[] =
-{
-    // USHORT      Length;
-    // USHORT      MaximumLength;
-    // PUSHORT     Buffer;
-
-    LWMSG_STRUCT_BEGIN(SECURITY_STRING),
-
-    LWMSG_MEMBER_UINT16(SECURITY_STRING, Length),
-
-    LWMSG_MEMBER_UINT16(SECURITY_STRING, MaximumLength),
-
-    LWMSG_MEMBER_POINTER(SECURITY_STRING, Buffer, LWMSG_INT64(USHORT)),
-    LWMSG_ATTR_LENGTH_MEMBER(SECURITY_STRING, Length),
-
-    LWMSG_STRUCT_END,
-    LWMSG_TYPE_END
-};
-
-/******************************************************************************/
-
 static LWMsgTypeSpec gNtlmSecPkgContextNamesSpec[] =
 {
     // SEC_CHAR *pUserName;
@@ -545,8 +524,6 @@ static LWMsgTypeSpec gNtlmExportSecCtxtRespSpec[] =
         gNtlmSecBufferSpec
         ),
 
-    LWMSG_MEMBER_INT64(NTLM_IPC_EXPORT_SEC_CTXT_RESPONSE, hToken),
-
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
@@ -572,22 +549,12 @@ static LWMsgTypeSpec gNtlmFreeCredsSpec[] =
 
 static LWMsgTypeSpec gNtlmImportSecCtxtSpec[] =
 {
-    // PSECURITY_STRING *pszPackage;
     // PSecBuffer pPackedContext;
-    // HANDLE pToken;
 
     LWMSG_STRUCT_BEGIN(NTLM_IPC_IMPORT_SEC_CTXT_REQ),
 
-    LWMSG_MEMBER_POINTER_BEGIN(NTLM_IPC_IMPORT_SEC_CTXT_REQ, pszPackage),
-    LWMSG_TYPESPEC(gNtlmSecurityStringSpec),
-    LWMSG_POINTER_END,
-
     LWMSG_MEMBER_POINTER_BEGIN(NTLM_IPC_IMPORT_SEC_CTXT_REQ, pPackedContext),
     LWMSG_TYPESPEC(gNtlmSecBufferSpec),
-    LWMSG_POINTER_END,
-
-    LWMSG_MEMBER_POINTER_BEGIN(NTLM_IPC_IMPORT_SEC_CTXT_REQ, pToken),
-    LWMSG_INT64(VOID),
     LWMSG_POINTER_END,
 
     LWMSG_STRUCT_END,

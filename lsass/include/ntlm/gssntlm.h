@@ -269,6 +269,20 @@ ntlm_gss_inquire_cred(
     );
 
 OM_uint32
+ntlm_gss_export_sec_context(
+    OM_uint32 *pMinorStatus,
+    gss_ctx_id_t* pContextHandle,
+    gss_buffer_t InterprocessToken
+    );
+
+OM_uint32
+ntlm_gss_import_sec_context(
+    OM_uint32 * pMinorStatus,
+    gss_buffer_t InterprocessToken,
+    gss_ctx_id_t* pContextHandle
+    );
+
+OM_uint32
 ntlm_gss_inquire_context(
     OM_uint32* pMinorStatus,
     gss_ctx_id_t GssCtxtHandle,

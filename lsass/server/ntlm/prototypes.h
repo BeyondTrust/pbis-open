@@ -119,8 +119,7 @@ DWORD
 NtlmServerExportSecurityContext(
     IN PNTLM_CONTEXT_HANDLE phContext,
     IN DWORD fFlags,
-    OUT PSecBuffer pPackedContext,
-    OUT OPTIONAL HANDLE *pToken
+    OUT PSecBuffer pPackedContext
     );
 
 DWORD
@@ -130,9 +129,7 @@ NtlmServerFreeCredentialsHandle(
 
 DWORD
 NtlmServerImportSecurityContext(
-    IN PSECURITY_STRING *pszPackage,
     IN PSecBuffer pPackedContext,
-    IN OPTIONAL HANDLE pToken,
     OUT PNTLM_CONTEXT_HANDLE phContext
     );
 
