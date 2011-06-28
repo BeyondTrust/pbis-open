@@ -58,6 +58,10 @@ IopIoFlagsToIrpIoFlags(
     {
         SetFlag(flags, IRP_IO_FLAG_PAGING_IO);
     }
+    if (IsSetFlag(IoFlags, IO_FLAG_WRITE_THROUGH))
+    {
+        SetFlag(flags, IRP_IO_FLAG_WRITE_THROUGH);
+    }
 
     return flags;
 }
@@ -73,9 +77,11 @@ IOP_ASSERT_VALID_READ_WRITE_IO_FLAGS(
     // Ensure valid I/O flags.
     LWIO_ASSERT(!IsSetFlag(IoFlags, ~IO_FLAGS_VALID_MASK));
     // Only certain flags are currently valid for read/write.
-    LWIO_ASSERT(!IsSetFlag(IoFlags, ~IO_FLAG_PAGING_IO));
+    LWIO_ASSERT(!IsSetFlag(IoFlags, ~(IO_FLAG_PAGING_IO | IO_FLAG_WRITE_THROUGH)));
     // Paging I/O is currently only valid for read.
     LWIO_ASSERT(!(IsWrite && IsSetFlag(IoFlags, IO_FLAG_PAGING_IO)));
+    // Write through is only valid for write.
+    LWIO_ASSERT(!(!IsWrite && IsSetFlag(IoFlags, IO_FLAG_WRITE_THROUGH)));
 }
 
 // Need to add a way to cancel operation from outside IRP layer.

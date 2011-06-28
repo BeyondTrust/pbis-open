@@ -54,10 +54,13 @@ typedef ULONG IO_FLAGS, *PIO_FLAGS;
 #define IO_FLAG_PAGING_IO           0x00000001
 // no access check is not yet valid.
 #define IO_FLAG_NO_ACCESS_CHECK     0x00000002
+// The write operation should not return until write is stable.
+#define IO_FLAG_WRITE_THROUGH       0x00000004
 
 #define IO_FLAGS_VALID_MASK ( \
     IO_FLAG_PAGING_IO | \
     IO_FLAG_NO_ACCESS_CHECK | \
+    IO_FLAG_WRITE_THROUGH | \
     0 )
 
 //
