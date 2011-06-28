@@ -110,6 +110,7 @@ LwListTraverse(
     IN PLW_LIST_LINKS Cursor
     );
 
+#define LW_LIST_INITIALIZER(var) {&var,&var}
 
 #define LwListInsertHead LwListInsertAfter
 #define LwListInsertTail LwListInsertBefore
