@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>Likewise</string>
+	<string>com.likewise</string>
 	<key>CFBundleIdentifier</key>
         <string>com.likewise.AuthPlugin</string>
 	<key>CFBundleInfoDictionaryVersion</key>

@@ -9,7 +9,7 @@ configure()
 
 make()
 {
-    BUNDLE_DIR="${MK_LIBDIR}/SecurityAgentPlugins/Likewise.bundle"
+    BUNDLE_DIR="${MK_LIBDIR}/SecurityAgentPlugins/com.likewise.bundle"
     CONTENTS_DIR="${BUNDLE_DIR}/Contents"
     MACOS_DIR="${CONTENTS_DIR}/MacOS"
 
@@ -17,7 +17,7 @@ make()
         AuthPlugin.c"
 
     mk_dlo \
-        DLO="Likewise" \
+        DLO="com.likewise" \
         EXT="" \
         INSTALLDIR="${MACOS_DIR}" \
         SOURCES="$LWAUTHPLUGIN_SOURCES" \
