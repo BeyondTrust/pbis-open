@@ -222,7 +222,7 @@ configure()
         uuid ldap_r
 
     mk_check_libraries \
-        eventlog
+        eventlog dl
 
     mk_check_functions \
 	HEADERDEPS="ctype.h" \
