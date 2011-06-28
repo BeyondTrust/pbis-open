@@ -825,6 +825,14 @@ static LWMsgTypeSpec gLsaFindFlagsSpec[] =
     LWMSG_ENUM_END,
     LWMSG_TYPE_END
 };
+ 
+static LWMsgTypeSpec gLsaSecurityObjectVersionInfoSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(LSA_SECURITY_OBJECT_VERSION_INFO),
+    LWMSG_MEMBER_UINT64(LSA_SECURITY_OBJECT_VERSION_INFO, tLastUpdated),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
 
 static LWMsgTypeSpec gLsaSecurityObjectUserInfoSpec[] =
 {
@@ -871,6 +879,7 @@ static LWMsgTypeSpec gLsaSecurityObjectGroupInfoSpec[] =
 LWMsgTypeSpec gLsaSecurityObjectSpec[] =
 {
     LWMSG_STRUCT_BEGIN(LSA_SECURITY_OBJECT),
+    LWMSG_MEMBER_TYPESPEC(LSA_SECURITY_OBJECT, version, gLsaSecurityObjectVersionInfoSpec),
     LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT, pszDN),
     LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT, pszObjectSid),
     LSA_MEMBER_BOOLEAN(LSA_SECURITY_OBJECT, enabled),
