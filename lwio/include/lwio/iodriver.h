@@ -88,6 +88,14 @@ typedef ULONG IRP_TYPE;
 #define IRP_TYPE_UNLINK                   26
 #endif
 
+// IRP_IO_FLAGS may include flags related to IO_FLAGS flags as
+// well as flags that are specific to specific parameters for
+// a given IRP type.  Never mix IO_FLAGS and IRP_IO_FLAGS values.
+
+typedef ULONG IRP_IO_FLAGS;
+
+#define IRP_IO_FLAG_PAGING_IO           0x00000001
+
 typedef ULONG IO_LOCK_CONTROL;
 
 #define IO_LOCK_CONTROL_LOCK              1
@@ -130,7 +138,6 @@ typedef struct _IRP_ARGS_READ_WRITE {
     IN ULONG Length;
     IN OPTIONAL PULONG64 ByteOffset;
     IN OPTIONAL PULONG Key;
-    IN BOOLEAN IsPagingIo;
     // For ZCT read/write
     IN IRP_ZCT_OPERATION ZctOperation;
     IN OUT PVOID ZctCompletionContext;
@@ -217,6 +224,7 @@ typedef struct _IRP_ARGS_SET_QUOTA {
 
 typedef struct _IRP {
     IN IRP_TYPE Type;
+    IN IRP_IO_FLAGS Flags;
     OUT IO_STATUS_BLOCK IoStatusBlock;
     IN IO_DRIVER_HANDLE DriverHandle;
     IN IO_DEVICE_HANDLE DeviceHandle;

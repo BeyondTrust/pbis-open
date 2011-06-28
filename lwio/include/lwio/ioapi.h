@@ -55,6 +55,11 @@ typedef ULONG IO_FLAGS, *PIO_FLAGS;
 // no access check is not yet valid.
 #define IO_FLAG_NO_ACCESS_CHECK     0x00000002
 
+#define IO_FLAGS_VALID_MASK ( \
+    IO_FLAG_PAGING_IO | \
+    IO_FLAG_NO_ACCESS_CHECK | \
+    0 )
+
 //
 // Asynchoronous I/O Support
 //
@@ -137,6 +142,7 @@ IoReadFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
+    IN IO_FLAGS IoFlags,
     IN PVOID Buffer,
     IN ULONG Length,
     IN OPTIONAL PULONG64 ByteOffset,
@@ -148,18 +154,8 @@ IoWriteFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
+    IN IO_FLAGS IoFlags,
     IN PVOID Buffer,
-    IN ULONG Length,
-    IN OPTIONAL PULONG64 ByteOffset,
-    IN OPTIONAL PULONG Key
-    );
-
-NTSTATUS
-IoPagingReadFile(
-    IN IO_FILE_HANDLE FileHandle,
-    IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    OUT PVOID Buffer,
     IN ULONG Length,
     IN OPTIONAL PULONG64 ByteOffset,
     IN OPTIONAL PULONG Key

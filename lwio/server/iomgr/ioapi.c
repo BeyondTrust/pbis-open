@@ -45,6 +45,38 @@
 #include "iop.h"
 #include <lwio/ioapi.h>
 
+static
+inline
+IRP_IO_FLAGS
+IopIoFlagsToIrpIoFlags(
+    IN IO_FLAGS IoFlags
+    )
+{
+    IRP_IO_FLAGS flags = 0;
+
+    if (IsSetFlag(IoFlags, IO_FLAG_PAGING_IO))
+    {
+        SetFlag(flags, IRP_IO_FLAG_PAGING_IO);
+    }
+
+    return flags;
+}
+
+static
+inline
+VOID
+IOP_ASSERT_VALID_READ_WRITE_IO_FLAGS(
+    IN BOOLEAN IsWrite,
+    IN IO_FLAGS IoFlags
+    )
+{
+    // Ensure valid I/O flags.
+    LWIO_ASSERT(!IsSetFlag(IoFlags, ~IO_FLAGS_VALID_MASK));
+    // Only certain flags are currently valid for read/write.
+    LWIO_ASSERT(!IsSetFlag(IoFlags, ~IO_FLAG_PAGING_IO));
+    // Paging I/O is currently only valid for read.
+    LWIO_ASSERT(!(IsWrite && IsSetFlag(IoFlags, IO_FLAG_PAGING_IO)));
+}
 
 // Need to add a way to cancel operation from outside IRP layer.
 // Probably requires something in IO_ASYNC_CONTROL_BLOCK.
@@ -287,8 +319,8 @@ IopReadWriteFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
+    IN IO_FLAGS IoFlags,
     IN BOOLEAN bIsWrite,
-    IN BOOLEAN bIsPagingIo,
     IN OUT PVOID Buffer,
     IN ULONG Length,
     IN OPTIONAL PULONG64 ByteOffset,
@@ -302,6 +334,7 @@ IopReadWriteFile(
     IRP_TYPE irpType = bIsWrite ? IRP_TYPE_WRITE : IRP_TYPE_READ;
 
     LWIO_ASSERT(IoStatusBlock);
+    IOP_ASSERT_VALID_READ_WRITE_IO_FLAGS(bIsWrite, IoFlags);
 
     if (!FileHandle)
     {
@@ -315,17 +348,16 @@ IopReadWriteFile(
         GOTO_CLEANUP_EE(EE);
     }
 
-    LWIO_ASSERT(!(bIsWrite && bIsPagingIo));
-
     status = IopIrpCreate(&pIrp, irpType, FileHandle);
     ioStatusBlock.Status = status;
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    pIrp->Flags = IopIoFlagsToIrpIoFlags(IoFlags);
 
     pIrp->Args.ReadWrite.Buffer = Buffer;
     pIrp->Args.ReadWrite.Length = Length;
     pIrp->Args.ReadWrite.ByteOffset = ByteOffset;
     pIrp->Args.ReadWrite.Key = Key;
-    pIrp->Args.ReadWrite.IsPagingIo = bIsPagingIo;
 
     status = IopIrpDispatch(
                     pIrp,
@@ -354,6 +386,7 @@ IoReadFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
+    IN IO_FLAGS IoFlags,
     OUT PVOID Buffer,
     IN ULONG Length,
     IN OPTIONAL PULONG64 ByteOffset,
@@ -364,7 +397,7 @@ IoReadFile(
                 FileHandle,
                 AsyncControlBlock,
                 IoStatusBlock,
-                FALSE,
+                IoFlags,
                 FALSE,
                 Buffer,
                 Length,
@@ -377,6 +410,7 @@ IoWriteFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
+    IN IO_FLAGS IoFlags,
     IN PVOID Buffer,
     IN ULONG Length,
     IN OPTIONAL PULONG64 ByteOffset,
@@ -387,30 +421,7 @@ IoWriteFile(
                 FileHandle,
                 AsyncControlBlock,
                 IoStatusBlock,
-                TRUE,
-                FALSE,
-                Buffer,
-                Length,
-                ByteOffset,
-                Key);
-}
-
-NTSTATUS
-IoPagingReadFile(
-    IN IO_FILE_HANDLE FileHandle,
-    IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
-    OUT PIO_STATUS_BLOCK IoStatusBlock,
-    OUT PVOID Buffer,
-    IN ULONG Length,
-    IN OPTIONAL PULONG64 ByteOffset,
-    IN OPTIONAL PULONG Key
-    )
-{
-    return IopReadWriteFile(
-                FileHandle,
-                AsyncControlBlock,
-                IoStatusBlock,
-                FALSE,
+                IoFlags,
                 TRUE,
                 Buffer,
                 Length,
@@ -447,13 +458,13 @@ IopPrepareZctReadWriteFile(
     int EE = 0;
     PIRP pIrp = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
-    BOOLEAN bIsPagingIo = IsSetFlag(IoFlags, IO_FLAG_PAGING_IO);
     IRP_TYPE irpType = bIsWrite ? IRP_TYPE_WRITE : IRP_TYPE_READ;
     LW_ZCT_ENTRY_MASK mask = 0;
     PVOID completionContext = NULL;
     PIRP pCompletionIrp = NULL;
 
     LWIO_ASSERT(IoStatusBlock);
+    IOP_ASSERT_VALID_READ_WRITE_IO_FLAGS(bIsWrite, IoFlags);
     LWIO_ASSERT(CompletionContext);
 
     if (!FileHandle || !Zct)
@@ -461,8 +472,6 @@ IopPrepareZctReadWriteFile(
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
     }
-
-    LWIO_ASSERT(!(bIsWrite && bIsPagingIo));
 
     //
     // Ensure that the FSD can handle ZCT I/O.
@@ -485,6 +494,8 @@ IopPrepareZctReadWriteFile(
     ioStatusBlock.Status = status;
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
+    pIrp->Flags = IopIoFlagsToIrpIoFlags(IoFlags);
+
     pIrp->Args.ReadWrite.Zct = Zct;
     pIrp->Args.ReadWrite.Length = Length;
     if (ByteOffset)
@@ -497,7 +508,6 @@ IopPrepareZctReadWriteFile(
         pIrp->Args.ReadWrite.Storage.Key = *Key;
         pIrp->Args.ReadWrite.Key = &pIrp->Args.ReadWrite.Storage.Key;
     }
-    pIrp->Args.ReadWrite.IsPagingIo = bIsPagingIo;
     pIrp->Args.ReadWrite.ZctOperation = IRP_ZCT_OPERATION_PREPARE;
 
     pCompletionIrp->Args.ReadWrite = pIrp->Args.ReadWrite;
@@ -564,20 +574,17 @@ IopCompleteZctReadWriteFile(
     int EE = 0;
     PIRP pIrp = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
-    BOOLEAN bIsPagingIo = IsSetFlag(IoFlags, IO_FLAG_PAGING_IO);
     IRP_TYPE irpType = bIsWrite ? IRP_TYPE_WRITE : IRP_TYPE_READ;
 
     LWIO_ASSERT(IoStatusBlock);
+    IOP_ASSERT_VALID_READ_WRITE_IO_FLAGS(bIsWrite, IoFlags);
+    LWIO_ASSERT(!BytesTransferred || bIsWrite);
 
     if (!FileHandle || !CompletionContext)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
     }
-
-    LWIO_ASSERT(!(bIsWrite && bIsPagingIo));
-
-    LWIO_ASSERT(!BytesTransferred || bIsWrite);
 
     pIrp = IopIrpLoadZctIrp(FileHandle, CompletionContext);
     LWIO_ASSERT(pIrp);
@@ -588,7 +595,7 @@ IopCompleteZctReadWriteFile(
 
     LWIO_ASSERT(FileHandle == pIrp->FileHandle);
     LWIO_ASSERT(irpType == pIrp->Type);
-    LWIO_ASSERT(bIsPagingIo == pIrp->Args.ReadWrite.IsPagingIo);
+    LWIO_ASSERT(IopIoFlagsToIrpIoFlags(IoFlags) == pIrp->Flags);
 
     pIrp->Args.ReadWrite.Zct = NULL;
     pIrp->Args.ReadWrite.ZctOperation = IRP_ZCT_OPERATION_COMPLETE;
