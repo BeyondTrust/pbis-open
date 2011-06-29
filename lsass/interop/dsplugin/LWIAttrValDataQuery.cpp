@@ -178,7 +178,7 @@ LWIAttrValDataQuery::QueryUserInformation(LWIQuery* pQuery, char* pszAttribute, 
             GOTO_CLEANUP_ON_MACERROR(macError);
             break;
         default:
-#ifdef SHOW_DEBUG_SPEW
+#if SHOW_DEBUG_SPEW
             LOG("Unsupported search attribute for user - %s", pszAttribute);
 #endif
             macError = eDSNoErr;
@@ -231,7 +231,7 @@ LWIAttrValDataQuery::QueryGroupInformation(LWIQuery* pQuery, char* pszAttribute,
             GOTO_CLEANUP_ON_MACERROR(macError);
             break;
         default:
-#ifdef SHOW_DEBUG_SPEW
+#if SHOW_DEBUG_SPEW
             LOG("Unsupported search attribute for group - %s", pszAttribute);
 #endif
             macError = eDSNoErr;
@@ -264,7 +264,7 @@ LWIAttrValDataQuery::QueryComputerListInformation(LWIQuery* pQuery, char* pszAtt
                 break;
             }
         default:
-#ifdef SHOW_DEBUG_SPEW
+#if SHOW_DEBUG_SPEW
             LOG("Unsupported search attribute for group - %s", pszAttribute);
 #endif
             macError = eDSNoErr;
@@ -322,7 +322,7 @@ LWIAttrValDataQuery::QueryComputerGroupInformation(LWIQuery* pQuery, char* pszAt
                 break;
             }
         default:
-#ifdef SHOW_DEBUG_SPEW
+#if SHOW_DEBUG_SPEW
             LOG("Unsupported search attribute for group - %s", pszAttribute);
 #endif
             macError = eDSNoErr;
@@ -365,7 +365,7 @@ LWIAttrValDataQuery::QueryComputerInformation(LWIQuery* pQuery, char* pszAttribu
             GOTO_CLEANUP_ON_MACERROR(macError);
             break;
         default:
-#ifdef SHOW_DEBUG_SPEW
+#if SHOW_DEBUG_SPEW
             LOG("Unsupported search attribute for group - %s", pszAttribute);
 #endif
             macError = eDSNoErr;
