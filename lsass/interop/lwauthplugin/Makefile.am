@@ -1,8 +1,10 @@
-bundledir=$(libdir)/SecurityAgentPlugins/Likewise.bundle
+SUBDIRS = lib tools ticketcopy
+
+bundledir=$(libdir)/SecurityAgentPlugins/com.likewise.bundle
 contentsdir=$(bundledir)/Contents
 macosdir = $(contentsdir)/MacOS
 
-macos_LTLIBRARIES = Likewise.la
+macos_LTLIBRARIES = com.likewise.la
 contents_DATA = Info.plist
 
 AM_CFLAGS=@AM_CFLAGS@ \
@@ -12,19 +14,18 @@ AM_CFLAGS=@AM_CFLAGS@ \
 
 INFO=Info.plist
 
-Likewise_la_SOURCES = \
+com_likewise_la_SOURCES = \
 	AuthPlugin.c
 
-Likewise_la_CFLAGS = $(AM_CFLAGS)
+com_likewise_la_CFLAGS = $(AM_CFLAGS)
 
-Likewise_la_CPPFLAGS = @AM_CPPFLAGS@
+com_likewise_la_CPPFLAGS = @AM_CPPFLAGS@
 
-Likewise_la_LDFLAGS = \
-     -module -shrext '' -avoid-version \
-     -framework CoreFoundation \
-     -framework Kerberos
+com_likewise_la_LDFLAGS = \
+     -module -shrext '' -avoid-version
 
-Likewise_la_LIBADD = @top_builddir@/common/liblsacommon.la
+com_likewise_la_LIBADD = \
+    @top_builddir@/interop/lwauthplugin/lib/libauthplugin.la
 
 Info.plist: Info.plist.in
 	$(srcdir)/../dsplugin/process-info-plist.pl -v $(MAIN_VERSION) \

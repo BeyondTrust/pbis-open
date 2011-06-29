@@ -1,4 +1,4 @@
-SUBDIRS="include common pstore logging_r client interop server tools etc"
+SUBDIRS="include common pstore client interop server tools etc docs"
 
 option()
 {
@@ -50,8 +50,6 @@ configure()
     mk_declare -s -o MOD_EXT
     mk_declare -s PAMDIR
     mk_declare -s NSSDIR
-
-    mk_export fdlimit=dword:00000400
 
     # Default registry settings
     mk_declare -o \
@@ -137,13 +135,13 @@ configure()
             ENABLE_NSS_ENUM_DEFAULT_DWORD="00000001"
             ;;
         *)
-            ENABLE_NSS_ENUM_DEFAULT_DWORD="00000000"
+            ENABLE_NSS_ENUM_DEFAULT_DWORD="00000001"
             ;;
     esac
 
     mk_declare -o \
-        providerdir="$MK_LIBDIR" \
-        rpcserverdir="$MK_LIBDIR" \
+        providerdir="$MK_LIBDIR/lsa-provider" \
+        rpcserverdir="$MK_LIBDIR/lsa-rpc" \
         LIBDIR="$MK_LIBDIR" \
         SBINDIR="$MK_SBINDIR" \
         CACHEDIR="$LW_CACHEDIR" \
@@ -183,6 +181,9 @@ configure()
     mk_define AD_DEFAULT_HOMEDIR_PREFIX '"/home"'
     mk_define AD_DEFAULT_SKELDIRS '"/etc/skel"'
 
+    # Build samdb directly into dsapi
+    mk_define DSAPI_INTERNAL_PROVIDER
+
     mk_check_headers \
 	stdlib.h sys/varargs.h time.h strings.h stdbool.h \
 	unistd.h sys/systeminfo.h sys/utsname.h sys/socket.h \
@@ -201,6 +202,9 @@ configure()
         openssl/rc4.h openssl/rand.h openssl/md5.h krb5.h uuid/uuid.h \
         sqlite3.h
 
+    mk_check_headers \
+        eventlog.h
+
     mk_check_types \
         HEADERDEPS="procfs.h sys/procfs.h" \
         "struct psinfo"
@@ -216,6 +220,9 @@ configure()
 	lwbase_nothr lwbase lwadvapi_nothr lwadvapi \
 	lwmsg_nothr lwmsg pam sqlite3 crypto krb5 gssapi_krb5 \
         uuid ldap_r
+
+    mk_check_libraries \
+        eventlog dl
 
     mk_check_functions \
 	HEADERDEPS="ctype.h" \
@@ -263,6 +270,29 @@ configure()
         mk_msg_result "void**"
     fi
 
+    mk_msg_checking "pam_conv argument type"
+
+    if mk_try_compile \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h security/pam_modules.h pam/pam_modules.h stdlib.h" \
+        CODE='
+struct pam_conv conversation =
+{
+   (int (*)(int,const struct pam_message**,struct pam_response**,void*))NULL,
+   NULL
+};
+
+return (int) (size_t) conversation.conv;
+'
+    then
+        result="const struct pam_message"
+    else
+        result="struct pam_message"
+    fi
+
+    mk_msg_result "$result"
+    mk_define CONST_PAM_MESSAGE "$result"
+
+
     mk_check_types \
         HEADERDEPS="security/pam_appl.h pam/pam_appl.h security/pam_modules.h pam/pam_modules.h" \
         "struct pam_repository"
@@ -291,6 +321,11 @@ configure()
         mk_msg_result "no"
     fi
 
+    if [ "$HAVE_LIB_EVENTLOG" != "no" -a "$HAVE_EVENTLOG_H" != "no" ]
+    then
+        mk_define ENABLE_EVENTLOG
+    fi
+
     lw_check_pthread_once_init
 
     mk_check_doxygen
@@ -301,4 +336,6 @@ configure()
     mk_output_file interop/gssntlm/mech
 
     mk_output_file etc/lsassd.reg
+    mk_output_file etc/privileges.reg
+    mk_output_file etc/accounts.reg
 }

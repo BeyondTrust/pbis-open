@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <CoreServices/CoreServices.h>
 
 #include <Security/AuthorizationPlugin.h>
@@ -7,35 +9,46 @@
 
 #include <lsautils.h>
 
+#include <dlfcn.h>
+#include <glob.h>
+
 #include "AuthPlugin.h"
+
+typedef struct _AUTH_MECHANISM_MODULE
+{
+    struct _AUTH_MECHANISM_MODULE       *pNextModule;
+    PVOID                               pMemory;
+} AUTH_MECHANISM_MODULE, *PAUTH_MECHANISM_MODULE;
+
+static PAUTH_MECHANISM_MODULE gAuthMechanismModules;
 
 static OSStatus
 AuthPluginDestroy(
-        IN AuthorizationPluginRef pPluginRef
-        );
+    IN AuthorizationPluginRef pPluginRef
+    );
 
 static OSStatus
 AuthMechanismCreate(
-        IN AuthorizationPluginRef pPluginRef,
-        IN AuthorizationEngineRef pEngineRef,
-        IN AuthorizationMechanismId mechanismId,
-        OUT AuthorizationMechanismRef *ppMechanismRef
-        );
+    IN AuthorizationPluginRef pPluginRef,
+    IN AuthorizationEngineRef pEngineRef,
+    IN AuthorizationMechanismId mechanismId,
+    OUT AuthorizationMechanismRef *ppMechanismRef
+    );
 
 static OSStatus
 AuthMechanismInvoke(
-        IN AuthorizationMechanismRef pMechanismRef
-        );
+    IN AuthorizationMechanismRef pMechanismRef
+    );
 
 static OSStatus
 AuthMechanismDeactivate(
-        IN AuthorizationMechanismRef pMechanismRef
-        );
+    IN AuthorizationMechanismRef pMechanismRef
+    );
 
 static OSStatus
 AuthMechanismDestroy(
-        IN AuthorizationMechanismRef pMechanismRef
-        );
+    IN AuthorizationMechanismRef pMechanismRef
+    );
 
 static const AuthorizationPluginInterface gPluginInterface = {
     .version             = kAuthorizationPluginInterfaceVersion,
@@ -46,8 +59,6 @@ static const AuthorizationPluginInterface gPluginInterface = {
     .MechanismDestroy    = AuthMechanismDestroy,
 };
 
-static PLW_AUTH_MECHANISM gpAuthMechanisms;
-
 extern OSStatus
 AuthorizationPluginCreate(
     const AuthorizationCallbacks        *pAuthCallbacks,
@@ -57,17 +68,54 @@ AuthorizationPluginCreate(
 {
     LW_AUTH_PLUGIN *pPlugin = NULL;
     OSStatus osStatus = noErr;
+    PAUTH_MECHANISM_MODULE pModule;
+    PVOID pMemory;
+    glob_t gl = { 0 };
+    int result;
     DWORD dwError = LW_ERROR_SUCCESS;
 
-    dwError = LsaInitLogging(
-                getprogname(),
-                LSA_LOG_TARGET_SYSLOG,
-                LSA_LOG_LEVEL_DEBUG,
-                NULL);
-    BAIL_ON_LSA_ERROR(dwError);
+    result = glob(AUTH_MECHANISM_DIR "/*.so", GLOB_NOSORT, NULL, &gl);
+    BAIL_ON_UNIX_ERROR(
+        result != 0 && result != GLOB_NOMATCH,
+        "glob(\"%s\" failed", AUTH_MECHANISM_DIR "/*.so");
+
+    if (result != GLOB_NOMATCH)
+    {
+        int i;
+
+        for (i = 0; i < gl.gl_pathc; ++i)
+        {
+            VOID (*pRegisterFunction)(VOID);
+
+            if ((pMemory = dlopen(gl.gl_pathv[i], RTLD_NOW | RTLD_LOCAL)) ==
+                    NULL)
+            {
+                AUTH_LOG_ERROR("%s", dlerror());
+                continue;
+            }
+
+            pRegisterFunction = dlsym(pMemory, "Register");
+            if (pRegisterFunction == NULL)
+            {
+                AUTH_LOG_ERROR("%s", dlerror());
+                dlclose(pMemory);
+                pMemory = NULL;
+                continue;
+            }
+
+            pRegisterFunction();
+
+            dwError = AUTH_PLUGIN_ALLOCATE(pModule);
+            BAIL_ON_AUTH_ERROR(dwError);
+
+            pModule->pMemory = pMemory;
+            pModule->pNextModule = gAuthMechanismModules;
+            gAuthMechanismModules = pModule;
+        }
+    }
 
     dwError = AUTH_PLUGIN_ALLOCATE(pPlugin);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_AUTH_ERROR(dwError);
 
     pPlugin->pAuthCallbacks = pAuthCallbacks;
 
@@ -78,6 +126,12 @@ cleanup:
     return osStatus;
 
 error:
+    if (pMemory)
+    {
+        dlclose(pMemory);
+    }
+
+    LW_SAFE_FREE_MEMORY(pModule);
     LW_SAFE_FREE_MEMORY(pPlugin);
 
     /*
@@ -93,17 +147,29 @@ AuthPluginDestroy(
         IN AuthorizationPluginRef pPluginRef
         )
 {
+    PAUTH_MECHANISM_MODULE pModule;
+    PAUTH_MECHANISM_MODULE pNextModule;
+
+    for (pModule = gAuthMechanismModules;
+                pModule != NULL;
+                pModule = pNextModule)
+    {
+        VOID (*pUnRegisterFunction)(VOID);
+
+        pUnRegisterFunction = dlsym(pModule->pMemory, "UnRegister");
+        if (pUnRegisterFunction != NULL)
+        {
+            pUnRegisterFunction();
+        }
+
+        dlclose(pModule->pMemory);
+
+        pNextModule = pModule->pNextModule;
+        LwFreeMemory(pModule);
+    }
+
     LW_SAFE_FREE_MEMORY(pPluginRef);
     return noErr;
-}
-
-VOID
-AuthMechanismRegister(
-        PLW_AUTH_MECHANISM pAuthMechanism
-        )
-{
-    pAuthMechanism->pNext = gpAuthMechanisms;
-    gpAuthMechanisms = pAuthMechanism;
 }
 
 static OSStatus
@@ -119,26 +185,16 @@ AuthMechanismCreate(
     OSStatus osStatus = noErr;
     DWORD dwError = LW_ERROR_SUCCESS;
 
-    LSA_LOG_DEBUG("Creating auth mechanism Likewise:%s", mechanismId);
-
-    for (pAuthMechanism = gpAuthMechanisms;
-            pAuthMechanism != NULL;
-            pAuthMechanism = pAuthMechanism->pNext)
-    {
-        if (!strcmp(pAuthMechanism->name, mechanismId))
-        {
-            break;
-        }
-    }
+    pAuthMechanism = AuthMechanismFind(mechanismId);
 
     if (pAuthMechanism == NULL)
     {
-        LSA_LOG_DEBUG("Auth mechanism Likewise:%s not found", mechanismId);
+        AUTH_LOG_ERROR("Auth mechanism %s not found", mechanismId);
         goto error;
     }
 
     dwError = AUTH_PLUGIN_ALLOCATE(pMechanismInstance);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_AUTH_ERROR(dwError);
 
     pMechanismInstance->pAuthPlugin = pPluginRef;
     pMechanismInstance->pAuthEngine = pEngineRef;
@@ -147,13 +203,17 @@ AuthMechanismCreate(
 
     if (pAuthMechanism->Create)
     {
+        gMechanismName = pAuthMechanism->name;
+
         if (pAuthMechanism->Create(pMechanismInstance) != noErr)
         {
+            AUTH_LOG_ERROR("Create failed");
             goto error;
         }
     }
 
 cleanup:
+    gMechanismName = NULL;
     *ppMechanismRef = pMechanismInstance;
     return osStatus;
 
@@ -183,37 +243,35 @@ AuthMechanismInvoke(
         )
 {
     PLW_AUTH_MECHANISM_INSTANCE pMechanismInstance = pMechanismRef;
+    PLW_AUTH_MECHANISM pAuthMechanism;
     OSStatus osStatus = noErr;
+    DWORD dwError;
 
     if (pMechanismInstance == NULL)
     {
-        LSA_LOG_DEBUG(
-            "Likewise auth plugin called with NULL mechanism instance");
+        AUTH_LOG_ERROR(
+            "AuthMechanismInvoke called with NULL mechanism instance");
         goto error;
     }
 
-    if (pMechanismInstance->pAuthMechanism == NULL)
+    pAuthMechanism = pMechanismInstance->pAuthMechanism;
+    if (pAuthMechanism == NULL)
     {
-        LSA_LOG_DEBUG(
-            "Likewise auth plugin called with NULL mechanism pointer");
+        AUTH_LOG_ERROR(
+            "AuthMechanismInvoke called with NULL mechanism pointer");
         goto error;
     }
 
-    LSA_LOG_DEBUG(
-        "Invoking auth mechanism Likewise:%s",
-        pMechanismInstance->pAuthMechanism->name);
-
-    if (pMechanismInstance->pAuthMechanism->Invoke != NULL &&
-                pMechanismInstance->pAuthMechanism->Invoke(
-                    pMechanismInstance) != noErr)
+    if (pAuthMechanism->Invoke != NULL)
     {
-        LSA_LOG_DEBUG(
-            "Invoking auth mechanism Likewise:%s failed",
-            pMechanismInstance->pAuthMechanism->name);
-        goto error;
+        gMechanismName = pAuthMechanism->name;
+
+        dwError = pAuthMechanism->Invoke(pMechanismInstance);
+        BAIL_ON_AUTH_ERROR(dwError);
     }
 
 cleanup:
+    gMechanismName = NULL;
     return osStatus;
 
 error:
@@ -231,37 +289,35 @@ AuthMechanismDeactivate(
         )
 {
     PLW_AUTH_MECHANISM_INSTANCE pMechanismInstance = pMechanismRef;
+    PLW_AUTH_MECHANISM pAuthMechanism;
     OSStatus osStatus = noErr;
+    DWORD dwError;
 
     if (pMechanismInstance == NULL)
     {
-        LSA_LOG_DEBUG(
-            "Likewise auth plugin called with NULL mechanism instance");
+        AUTH_LOG_ERROR(
+            "AuthMechanismDeactivate called with NULL mechanism instance");
         goto error;
     }
 
-    if (pMechanismInstance->pAuthMechanism == NULL)
+    pAuthMechanism = pMechanismInstance->pAuthMechanism;
+    if (pAuthMechanism == NULL)
     {
-        LSA_LOG_DEBUG(
-            "Likewise auth plugin called with NULL mechanism pointer");
+        AUTH_LOG_ERROR(
+            "AuthMechanismDeactivate called with NULL mechanism pointer");
         goto error;
     }
 
-    LSA_LOG_DEBUG(
-        "Deactivating auth mechanism Likewise:%s",
-        pMechanismInstance->pAuthMechanism->name);
-
-    if (pMechanismInstance->pAuthMechanism->Deactivate != NULL &&
-                pMechanismInstance->pAuthMechanism->Deactivate(
-                    pMechanismInstance) != noErr)
+    if (pAuthMechanism->Deactivate != NULL)
     {
-        LSA_LOG_DEBUG(
-            "Deactivating auth mechanism Likewise:%s failed",
-            pMechanismInstance->pAuthMechanism->name);
-        goto error;
+        gMechanismName = pAuthMechanism->name;
+
+        dwError = pAuthMechanism->Deactivate(pMechanismInstance);
+        BAIL_ON_AUTH_ERROR(dwError);
     }
 
 cleanup:
+    gMechanismName = NULL;
     return osStatus;
 
 error:
@@ -279,34 +335,31 @@ AuthMechanismDestroy(
         )
 {
     PLW_AUTH_MECHANISM_INSTANCE pMechanismInstance = pMechanismRef;
+    PLW_AUTH_MECHANISM pAuthMechanism;
     OSStatus osStatus = noErr;
+    DWORD dwError;
 
     if (pMechanismInstance == NULL)
     {
-        LSA_LOG_DEBUG(
-            "Likewise auth plugin called with NULL mechanism instance");
+        AUTH_LOG_ERROR(
+            "AuthMechanismDestroy called with NULL mechanism instance");
         goto error;
     }
 
-    if (pMechanismInstance->pAuthMechanism == NULL)
+    pAuthMechanism = pMechanismInstance->pAuthMechanism;
+    if (pAuthMechanism == NULL)
     {
-        LSA_LOG_DEBUG(
-            "Likewise auth plugin called with NULL mechanism pointer");
+        AUTH_LOG_ERROR(
+            "AuthMechanismDestroy called with NULL mechanism pointer");
         goto error;
     }
 
-    LSA_LOG_DEBUG(
-        "Destroying auth mechanism Likewise:%s",
-        pMechanismInstance->pAuthMechanism->name);
-
-    if (pMechanismInstance->pAuthMechanism->Destroy != NULL &&
-                pMechanismInstance->pAuthMechanism->Destroy(
-                    pMechanismInstance) != noErr)
+    if (pAuthMechanism->Destroy != NULL)
     {
-        LSA_LOG_DEBUG(
-            "Destroying auth mechanism Likewise:%s failed",
-            pMechanismInstance->pAuthMechanism->name);
-        goto error;
+        gMechanismName = pAuthMechanism->name;
+
+        dwError = pAuthMechanism->Destroy(pMechanismInstance);
+        BAIL_ON_AUTH_ERROR(dwError);
     }
 
 cleanup:
