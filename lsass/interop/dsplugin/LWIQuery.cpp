@@ -4530,7 +4530,7 @@ LWIQuery::SetMetaNodeLocation(PDSRECORD pRecord, PSTR pszPath, bool bSetValue)
 /*!
  * @defined kDS1AttrTimeToLive
  * @discussion Attribute recommending how long to cache the record's attribute values.
- * Format is an unsigned 32 bit representing seconds. ie. 300 is 5 minutes.
+ * Format is a decimal string number of seconds (e.g. "300" is 5 minutes).
  */
 long
 LWIQuery::SetTimeToLive(PDSRECORD pRecord, bool bSetValue)
@@ -4540,9 +4540,11 @@ LWIQuery::SetTimeToLive(PDSRECORD pRecord, bool bSetValue)
 
     if (bSetValue)
     {
+        char number[10];
+
+        snprintf(number, sizeof(number), "%u", DEFAULT_ATTRIBUTE_TTL_SECONDS);
         macError = AddAttributeAndValue(kDS1AttrTimeToLive,
-                                        (const char*)&DEFAULT_ATTRIBUTE_TTL_SECONDS,
-                                        sizeof(DEFAULT_ATTRIBUTE_TTL_SECONDS),
+                                        number,
                                         pRecord,
                                         &pAttribute);
     }
