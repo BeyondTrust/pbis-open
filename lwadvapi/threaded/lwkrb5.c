@@ -794,9 +794,7 @@ LwTranslateKrb5Error(
     DWORD dwLine
     )
 {
-    DWORD dwError = LW_ERROR_SUCCESS;
     PCSTR pszKrb5Error = NULL;
-    unsigned int i = 0;
 
     if (ctx)
     {
@@ -820,6 +818,22 @@ LwTranslateKrb5Error(
                 krbError);
     }
 
+    if (pszKrb5Error)
+    {
+        krb5_free_error_message(ctx, pszKrb5Error);
+    }
+
+    return LwMapKrb5ErrorToLwError(krbError);
+}
+
+DWORD
+LwMapKrb5ErrorToLwError(
+    krb5_error_code krbError
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    unsigned int i = 0;
+
     switch (krbError)
     {
         case ENOENT:
@@ -842,10 +856,6 @@ LwTranslateKrb5Error(
             break;
     }
 
-    if (pszKrb5Error)
-    {
-        krb5_free_error_message(ctx, pszKrb5Error);
-    }
     return dwError;
 }
 

@@ -126,6 +126,11 @@ LwKrb5DestroyCache(
      0)
 
 DWORD
+LwMapKrb5ErrorToLwError(
+    krb5_error_code krbError
+    );
+
+DWORD
 LwTranslateKrb5Error(
     krb5_context ctx,
     krb5_error_code krbError,
