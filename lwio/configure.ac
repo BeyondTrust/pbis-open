@@ -299,8 +299,8 @@ AM_CONDITIONAL(ENABLE_SHARE_REPOSITORY_REGISTRY, test x"$share_repository" = x"r
 
 AC_SUBST(SHARE_REPOSITORY_TYPE_DEFINES)
 
-AC_ARG_WITH([drivers], [AC_HELP_STRING([--with-drivers], [list of drivers to build (npfs pvfs dfs srv rdr)])],
-		       [], [with_drivers="npfs pvfs srv rdr"])
+AC_ARG_WITH([drivers], [AC_HELP_STRING([--with-drivers], [list of drivers to build (rdr)])],
+		       [], [with_drivers="rdr"])
 
 _IFS="${IFS}"
 IFS=" ,"
@@ -824,11 +824,9 @@ AC_CONFIG_FILES([Makefile
         tools/lwio-cli/Makefile
         tests/Makefile
         tests/moonunit/Makefile
-        tests/test_pvfs/Makefile
 	tests/test_load/Makefile
         scripts/Makefile
         scripts/lwnet
-        libshareinfo/Makefile
 	])
 
 AC_OUTPUT

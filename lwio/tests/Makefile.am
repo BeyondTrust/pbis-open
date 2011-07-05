@@ -1,1 +1,1 @@
-SUBDIRS = moonunit test_pvfs test_load
+SUBDIRS = moonunit test_load
