@@ -1,4 +1,4 @@
-SUBDIRS="include common pstore client interop server tools etc docs"
+SUBDIRS="include common logging_r pstore client interop server tools etc"
 
 option()
 {
@@ -336,6 +336,4 @@ return (int) (size_t) conversation.conv;
     mk_output_file interop/gssntlm/mech
 
     mk_output_file etc/lsassd.reg
-    mk_output_file etc/privileges.reg
-    mk_output_file etc/accounts.reg
 }

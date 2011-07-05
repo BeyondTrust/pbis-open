@@ -37,6 +37,6 @@ make()
 	GROUPS="../../interop/lwmapsecurity/lwmapsecurity_internal ../../logging_r/logging_r" \
 	CPPFLAGS="-DLW_ENABLE_THREADS" \
 	INCLUDEDIRS=". ../include ../../include" \
-	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h dce/rpc.h" \
+	HEADERDEPS="eventlog.h lwmsg/lwmsg.h lwadvapi.h dce/rpc.h" \
 	LIBDEPS="uuid lwadvapi_nothr lsacommon eventlog $LIB_PTHREAD $LIB_RT"
 }
