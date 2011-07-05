@@ -316,18 +316,6 @@ then
 	AC_DEFINE([ENABLE_RDR], [], [Define if rdr driver should be built])
 fi
 
-AM_CONDITIONAL(ENABLE_SRV, test x"$enable_srv" = x"yes")
-if test x"$enable_srv" = x"yes"
-then
-	AC_DEFINE([ENABLE_SRV], [], [Define if srv driver should be built])
-fi
-
-AM_CONDITIONAL(ENABLE_PVFS, test x"$enable_pvfs" = x"yes")
-if test x"$enable_pvfs" = x"yes"
-then
-	AC_DEFINE([ENABLE_PVFS], [], [Define if pvfs driver should be built])
-fi
-
 AM_CONDITIONAL(ENABLE_DFS, test x"$enable_dfs" = x"yes")
 if test x"$enable_dfs" = x"yes"
 then
@@ -642,22 +630,6 @@ AC_SUBST(LWBASE_LDFLAGS)
 AC_SUBST(LWBASE_NOTHR_LIBS)
 AC_SUBST(LWBASE_LIBS)
 
-saved_CPPFLAGS="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS -D_FILE_OFFSET_BITS=64"
-AC_CHECK_HEADER([fuse.h], [HAVE_FUSE_H=true], [HAVE_FUSE_H=false])
-CPPFLAGS="$saved_CPPFLAGS"
-
-AC_CHECK_LIB(fuse, fuse_new, [HAVE_FUSE_LIB=true], [HAVE_FUSE_LIB=false])
-
-if test x"$HAVE_FUSE_H" = x"true" -a x"$HAVE_FUSE_LIB" = x"true"
-then
-	HAVE_FUSE=true
-else
-	HAVE_FUSE=false
-fi
-
-AM_CONDITIONAL(ENABLE_FUSE, test x"$HAVE_FUSE" = x"true")
-
 AC_CHECK_TYPES([socklen_t], [], [], [AC_INCLUDES_DEFAULT
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -839,26 +811,6 @@ AC_CONFIG_FILES([Makefile
         server/rdr/Makefile
         server/smbcommon/Makefile
         server/iomgr/Makefile
-        server/srv/Makefile
-        server/srv/utils/Makefile
-        server/srv/statistics/Makefile
-        server/srv/shares/Makefile
-        server/srv/shares/lwshare/Makefile
-        server/srv/shares/regshare/Makefile
-        server/srv/shares/api/Makefile
-        server/srv/elements/Makefile
-        server/srv/protocols/Makefile
-        server/srv/protocols/api/Makefile
-        server/srv/protocols/smb1/Makefile
-        server/srv/protocols/smb2/Makefile
-        server/srv/transport/Makefile
-        server/srv/transport/threadpool/Makefile
-        server/srv/oem/Makefile
-        server/srv/driver/Makefile
-        server/srvstat/Makefile
-        server/npfs/Makefile
-        server/pvfs/Makefile
-        server/dfs/Makefile
         server/lwiod/Makefile
         drivers/Makefile
         drivers/iotest/Makefile
@@ -877,6 +829,6 @@ AC_CONFIG_FILES([Makefile
         scripts/Makefile
         scripts/lwnet
         libshareinfo/Makefile
-	fuse/Makefile])
+	])
 
 AC_OUTPUT

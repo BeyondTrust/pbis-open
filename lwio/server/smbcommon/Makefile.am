@@ -1,10 +1,6 @@
 if ENABLE_STATIC_DRIVERS
 if ENABLE_RDR
-if !ENABLE_SRV
 noinst_LTLIBRARIES = liblwiosmbcommon.la
-else
-lib_LTLIBRARIES = liblwiosmbcommon.la
-endif
 else
 lib_LTLIBRARIES = liblwiosmbcommon.la
 endif

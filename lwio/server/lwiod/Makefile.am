@@ -25,18 +25,6 @@ if ENABLE_RDR
 MAIN_LIBS += $(top_builddir)/server/rdr/librdr.sys.la
 endif
 
-if ENABLE_SRV
-MAIN_LIBS += $(top_builddir)/server/srv/libsrv.sys.la
-endif
-
-if ENABLE_PVFS
-MAIN_LIBS += $(top_builddir)/server/pvfs/libpvfs.sys.la
-endif
-
-if ENABLE_NPFS
-MAIN_LIBS += $(top_builddir)/server/npfs/libnpfs.sys.la
-endif
-
 endif
 
 liblwiomain_la_SOURCES = \
