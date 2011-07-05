@@ -2,7 +2,6 @@ lib_LTLIBRARIES = liblwnetapi.la
 
 liblwnetapi_la_SOURCES = \
     libmain.c                     \
-    srvsvc.c                      \
     globals.c                     \
     net_connection.c              \
     net_memory.c                  \
@@ -10,7 +9,6 @@ liblwnetapi_la_SOURCES = \
     net_groupinfo.c               \
     net_memberinfo.c              \
     net_displayinfo.c             \
-    net_serverinfo.c              \
     net_crypto.c                  \
     net_userenum.c                \
     net_useradd.c                 \
@@ -34,7 +32,6 @@ liblwnetapi_la_SOURCES = \
     net_unjoindomain.c            \
     net_querydisplayinformation.c \
     net_wkstauserenum.c           \
-    net_serverenum.c              \
     net_credentials.c
 
 liblwnetapi_la_CPPFLAGS =    \
@@ -51,14 +48,12 @@ liblwnetapi_la_CFLAGS =      \
     -Wmissing-prototypes
 
 liblwnetapi_la_LDFLAGS =     \
-    $(SRVSVC_LDFLAGS)        \
     $(LSASS_LDFLAGS)         \
     $(LWADVAPI_LDFLAGS)      \
     $(DCERPC_LDFLAGS)        \
     $(NETLOGON_LDFLAGS)
 
 liblwnetapi_la_LIBADD =      \
-    $(SRVSVC_LIBS)           \
     $(LSASS_LIBS)            \
     $(LWADVAPI_LIBS)         \
     $(DCERPC_LIBS)           \

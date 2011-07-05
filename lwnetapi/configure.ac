@@ -242,33 +242,6 @@ AC_SUBST(LSASS_INCLUDES)
 AC_SUBST(LSASS_LDFLAGS)
 AC_SUBST(LSASS_LIBS)
 
-# srvsvc
-
-AC_ARG_WITH([srvsvc],
-        [AC_HELP_STRING([--with-srvsvc=<dir>], [use srvsvc located in prefix <dir>])],
-        [
-        SRVSVC_INCLUDES="-I$withval/include"
-        SRVSVC_LDFLAGS="-L$withval/lib"
-        ])
-
-AC_ARG_WITH([srvsvc-includes],
-        [AC_HELP_STRING([--with-srvsvc-includes=<dir>], [use srvsvc includes located in <dir>])],
-        [
-        SRVSVC_INCLUDES="-I$withval"
-        ])
-
-AC_ARG_WITH([srvsvc-libs],
-        [AC_HELP_STRING([--with-srvsvc-libs=<dir>], [use srvsvc libs located in <dir>])],
-        [
-        SRVSVC_LDFLAGS="-L$withval"
-        ])
-
-SRVSVC_LIBS=-lsrvsvc
-
-AC_SUBST(SRVSVC_INCLUDES)
-AC_SUBST(SRVSVC_LDFLAGS)
-AC_SUBST(SRVSVC_LIBS)
-
 # dcerpc
 
 AC_ARG_WITH([dcerpc],
