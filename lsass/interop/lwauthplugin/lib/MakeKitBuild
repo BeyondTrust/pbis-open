@@ -6,4 +6,5 @@ make()
         SOURCES="mechanism.c" \
         INCLUDEDIRS="../../../include" \
         HEADERDEPS="lw/types.h lwerror.h"
+        LDFLAGS="-framework CoreFoundation"
 }
