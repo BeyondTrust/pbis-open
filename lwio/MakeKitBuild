@@ -1,4 +1,4 @@
-SUBDIRS="include utils ipc logging_r common libshareinfo client server tools fuse etc tests"
+SUBDIRS="include utils ipc logging_r common libshareinfo client server tools etc tests"
 
 option()
 {
@@ -11,23 +11,7 @@ option()
             ;;
     esac
 
-    case "$LW_FEATURE_LEVEL" in
-        auth)
-            _default_DRIVERS="rdr"
-            _default_FUSE="no"
-            ;;
-        *)
-            _default_DRIVERS="rdr npfs pvfs srv"
-            _default_FUSE="yes"
-            ;;
-    esac  
-
-    mk_option \
-        OPTION=lwio-fuse \
-        VAR=LWIO_FUSE \
-        PARAM="yes|no" \
-        DEFAULT="$_default_FUSE" \
-        HELP="Enable building fuse module"
+    _default_DRIVERS="rdr"
 
     mk_option \
         OPTION=lwio-drivers \
@@ -118,13 +102,6 @@ configure()
         procfs.h sys/procfs.h sys/vfs.h netinet/in.h netinet/in6.h
 
     mk_check_headers \
-        fuse.h
-
-    mk_check_headers \
-        HEADERDEPS="stdlib.h" \
-        attr/xattr.h
-
-    mk_check_headers \
         HEADERDEPS="sys/types.h" \
         sys/sysctl.h sys/user.h
 
@@ -133,22 +110,7 @@ configure()
         "socklen_t"
 
     mk_check_libraries \
-        attr pthread nsl socket fuse dl
-
-    mk_check_functions \
-        HEADERDEPS="stdlib.h attr/xattr.h" \
-        LIBDEPS="$LIB_ATTR" \
-        setxattr fsetxattr getxattr fgetxattr
-
-    if [ "$HAVE_SETXATTR" = yes -a "$HAVE_GETXATTR" = yes ] ||
-       [ "$HAVE_FSETXATTR" = yes -a "$HAVE_FGETXATTR" = yes ]
-    then
-        LWIO_EA_ENABLED=yes
-    else
-        LWIO_EA_ENABLED=no
-    fi
-
-    mk_msg "EA support: $LWIO_EA_ENABLED"
+        attr pthread nsl socket dl
 
     mk_check_functions \
         HEADERDEPS="sys/vfs.h" \
@@ -178,16 +140,6 @@ configure()
     fi
 
     lw_check_pthread_once_init
-
-    if [ "$HAVE_FUSE_H" != "no" -a "$HAVE_LIB_FUSE" != "no" -a "$LWIO_FUSE" = "yes" ]
-    then
-        LWIO_FUSE_ENABLED=yes
-    else
-        LWIO_FUSE_ENABLED=no
-        mk_skip_subdir fuse
-    fi
-
-    mk_msg "build FUSE module: $LWIO_FUSE_ENABLED"
 
     mk_output_file "etc/lwiod.reg"
 }
