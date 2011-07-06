@@ -52,6 +52,51 @@
 #include "adnetapi.h"
 
 DWORD
+ADGetDefaultDomainPrefixedName(
+    IN PLSA_AD_PROVIDER_STATE pState,
+    IN PCSTR pAlias,
+    OUT PLSA_LOGIN_NAME_INFO* ppPrefixedName
+    )
+{
+    DWORD dwError = 0;
+    PSTR pDefaultPrefix = NULL;
+    PSTR pNameCopy = NULL;
+    PLSA_LOGIN_NAME_INFO pPrefixedName = NULL;
+
+    dwError = LwAllocateMemory(
+                    sizeof(*pPrefixedName),
+                    (PVOID*)&pPrefixedName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = AD_GetUserDomainPrefix(
+                    pState,
+                    &pDefaultPrefix);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateString(pAlias, &pNameCopy);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pPrefixedName->nameType = NameType_NT4;
+    pPrefixedName->pszDomain = pDefaultPrefix;
+    pPrefixedName->pszName = pNameCopy;
+
+    *ppPrefixedName = pPrefixedName;
+
+cleanup:
+    if (dwError)
+    {
+        LW_SAFE_FREE_STRING(pDefaultPrefix);
+        LW_SAFE_FREE_STRING(pNameCopy);
+        LW_SAFE_FREE_MEMORY(pPrefixedName);
+        *ppPrefixedName = NULL;
+    }
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+DWORD
 ADGetDomainQualifiedString(
     PCSTR pszNetBIOSDomainName,
     PCSTR pszName,

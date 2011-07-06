@@ -318,12 +318,6 @@ AD_OfflineFindObjectsByName(
     DWORD dwIndex = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     LSA_QUERY_TYPE type = LSA_QUERY_TYPE_UNDEFINED;
-    PSTR pszDefaultPrefix = NULL;
-
-    dwError = AD_GetUserDomainPrefix(
-                  pContext->pState,
-                  &pszDefaultPrefix);
-    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateMemory(sizeof(*ppObjects) * dwCount, OUT_PPVOID(&ppObjects));
     BAIL_ON_LSA_ERROR(dwError);
@@ -369,18 +363,21 @@ AD_OfflineFindObjectsByName(
         case LSA_OBJECT_TYPE_USER:
             dwError = ADCacheFindUserByName(
                 pContext->pState->hCacheConnection,
+                pContext->pState,
                 pUserNameInfo,
                 &pCachedUser);
             break;
         case LSA_OBJECT_TYPE_GROUP:
             dwError = ADCacheFindGroupByName(
                 pContext->pState->hCacheConnection,
+                pContext->pState,
                 pUserNameInfo,
                 &pCachedUser);
             break;
         default:
             dwError = ADCacheFindUserByName(
                 pContext->pState->hCacheConnection,
+                pContext->pState,
                 pUserNameInfo,
                 &pCachedUser);
             if (dwError == LW_ERROR_NO_SUCH_USER  ||
@@ -388,6 +385,7 @@ AD_OfflineFindObjectsByName(
             {
                 dwError = ADCacheFindGroupByName(
                     pContext->pState->hCacheConnection,
+                    pContext->pState,
                     pUserNameInfo,
                     &pCachedUser);
             }
@@ -405,63 +403,6 @@ AD_OfflineFindObjectsByName(
         case LW_ERROR_NO_SUCH_GROUP:
         case LW_ERROR_NO_SUCH_OBJECT:
             dwError = LW_ERROR_SUCCESS;
-            
-            if (QueryType == LSA_QUERY_TYPE_BY_ALIAS &&
-                AD_ShouldAssumeDefaultDomain(pContext->pState))
-            {
-                LW_SAFE_FREE_STRING(pszLoginId_copy);
-                LsaSrvFreeNameInfo(pUserNameInfo);
-                pUserNameInfo = NULL;
-
-                dwError = LwAllocateStringPrintf(
-                    &pszLoginId_copy,
-                    "%s%c%s",
-                    pszDefaultPrefix,
-                    LsaSrvDomainSeparator(),
-                    QueryList.ppszStrings[dwIndex]);
-                BAIL_ON_LSA_ERROR(dwError);
-
-                LwStrCharReplace(
-                    pszLoginId_copy,
-                    LsaSrvSpaceReplacement(),
-                    ' ');
-
-                dwError = LsaSrvCrackDomainQualifiedName(
-                    pszLoginId_copy,
-                    &pUserNameInfo);
-                BAIL_ON_LSA_ERROR(dwError);
-
-                if (ObjectType != LSA_OBJECT_TYPE_GROUP)
-                {
-                    dwError = ADCacheFindUserByName(
-                        pContext->pState->hCacheConnection,
-                        pUserNameInfo,
-                        &pCachedUser);
-                }
-                if (ObjectType == LSA_OBJECT_TYPE_GROUP ||
-                    (dwError == LW_ERROR_NO_SUCH_USER  ||
-                        dwError == LW_ERROR_NOT_HANDLED))
-                {
-                    dwError = ADCacheFindGroupByName(
-                        pContext->pState->hCacheConnection,
-                        pUserNameInfo,
-                        &pCachedUser);
-                }
-                switch (dwError)
-                {
-                case LW_ERROR_SUCCESS:
-                    break;
-                case LW_ERROR_NOT_HANDLED:
-                case LW_ERROR_NO_SUCH_USER:
-                case LW_ERROR_NO_SUCH_GROUP:
-                case LW_ERROR_NO_SUCH_OBJECT:
-                    dwError = LW_ERROR_SUCCESS;
-                    break;
-                default:
-                    BAIL_ON_LSA_ERROR(dwError);
-                }
-                ppObjects[dwIndex] = pCachedUser;
-            }
             break;
         default:
             BAIL_ON_LSA_ERROR(dwError);
@@ -476,7 +417,6 @@ AD_OfflineFindObjectsByName(
 
 cleanup:
 
-    LW_SAFE_FREE_STRING(pszDefaultPrefix);
     LW_SAFE_FREE_STRING(pszLoginId_copy);
 
     if (pUserNameInfo)

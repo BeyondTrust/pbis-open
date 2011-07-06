@@ -236,7 +236,8 @@ AD_CreateK5Login(
 DWORD
 AD_CheckExpiredObject(
     IN PLSA_AD_PROVIDER_STATE pState,
-    IN OUT PLSA_SECURITY_OBJECT* ppCachedUser
+    IN OUT PLSA_SECURITY_OBJECT* ppCachedUser,
+    IN BOOLEAN FreeExpired
     );
 
 DWORD

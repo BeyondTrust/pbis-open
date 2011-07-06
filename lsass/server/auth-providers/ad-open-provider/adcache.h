@@ -160,6 +160,7 @@ ADCacheFlushToDisk(
 DWORD
 ADCacheFindUserByName(
     LSA_DB_HANDLE hDb,
+    PLSA_AD_PROVIDER_STATE pState,
     PLSA_LOGIN_NAME_INFO pUserNameInfo,
     PLSA_SECURITY_OBJECT* ppObject
     );
@@ -175,6 +176,7 @@ ADCacheFindUserById(
 DWORD
 ADCacheFindGroupByName(
     LSA_DB_HANDLE hDb,
+    PLSA_AD_PROVIDER_STATE pState,
     PLSA_LOGIN_NAME_INFO pGroupNameInfo,
     PLSA_SECURITY_OBJECT* ppObject
     );
