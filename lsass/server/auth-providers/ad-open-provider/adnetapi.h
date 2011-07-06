@@ -83,7 +83,6 @@ AD_NetDestroySchannelState(
 DWORD
 AD_NetUserChangePassword(
     PCSTR pszDomainName,
-    BOOLEAN bIsInOneWayTrustedDomain,
     PCSTR pszLoginId,
     PCSTR pszUserPrincipalName,
     PCSTR pszOldPassword,
