@@ -1,5 +1,5 @@
-DRIVERS="rdr npfs pvfs srv"
-SUBDIRS="iomgr smbcommon $DRIVERS lwiod srvstat"
+DRIVERS="rdr"
+SUBDIRS="iomgr smbcommon $DRIVERS lwiod "
 
 configure()
 {
@@ -7,9 +7,4 @@ configure()
     do
         lwio_driver_enabled "$_driver" || mk_skip_subdir "$_driver"
     done
-
-    if [ "${LWIO_SRVSTAT_ENABLED}" != "yes" ]
-    then
-        mk_skip_subdir srvstat
-    fi
 }

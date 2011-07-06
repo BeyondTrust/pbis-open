@@ -2,13 +2,13 @@ PROJECT_NAME="platform"
 MODULES="core compiler autotools moonunit pkg-config likewise dceidl fortune"
 
 LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv popt \
-                libuuid sqlite openssl curl libxml2 fuse \
+                libuuid sqlite openssl curl libxml2 \
                 libedit libtdb"
 
 SUBDIRS="$LW_ALL_BUNDLED \
          lwbase lwmsg lwreg lwadvapi netlogon \
-         lwio nfs pvfs2 libschannel dcerpc centutils lwsm eventlog lsass reapsysl lwdns \
-         srvsvc lwnetapi lwtools lwadtool domainjoin lwconfig lwupgrade samba-interop mod_auth_kerb config docs \
+         lwio libschannel dcerpc centutils lwsm eventlog lsass reapsysl lwdns \
+         lwnetapi lwadtool domainjoin lwconfig lwupgrade samba-interop mod_auth_kerb config docs \
          package installer qatools gssapps"
 
 defaults()

@@ -2,7 +2,6 @@ make()
 {
     NETAPI_SOURCES="\
         libmain.c                     \
-	srvsvc.c                      \
 	globals.c                     \
 	net_connection.c              \
 	net_memory.c                  \
@@ -10,7 +9,6 @@ make()
 	net_groupinfo.c               \
 	net_memberinfo.c              \
 	net_displayinfo.c             \
-	net_serverinfo.c              \
 	net_crypto.c                  \
 	net_userenum.c                \
 	net_useradd.c                 \
@@ -34,7 +32,6 @@ make()
 	net_unjoindomain.c            \
 	net_querydisplayinformation.c \
 	net_wkstauserenum.c           \
-	net_serverenum.c              \
 	net_credentials.c"
 
     mk_library \
@@ -42,7 +39,7 @@ make()
 	SOURCES="$NETAPI_SOURCES" \
 	INCLUDEDIRS="../include" \
 	HEADERDEPS="lw/base.h lwadvapi.h openssl/rand.h lwio/lwio.h dce/rpc.h \
-                    lw/srvsvc.h lw/rpc/samr.h lw/rpc/lsa.h lw/rpc/wkssvc.h \
+                    lw/rpc/samr.h lw/rpc/lsa.h lw/rpc/wkssvc.h \
                     lwnet.h lsa/ad.h" \
-	LIBDEPS="srvsvc lwnetclientapi lwadvapi lwbase lsarpc dcerpc lsaclient"
+	LIBDEPS="lwnetclientapi lwadvapi lwbase lsarpc dcerpc lsaclient"
 }
