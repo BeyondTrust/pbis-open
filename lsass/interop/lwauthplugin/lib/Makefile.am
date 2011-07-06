@@ -9,5 +9,6 @@ libauthplugin_la_SOURCES = \
 	mechanism.c
 
 libauthplugin_la_CFLAGS = $(AM_CFLAGS)
-
 libauthplugin_la_CPPFLAGS = @AM_CPPFLAGS@
+libauthplugin_la_LDFLAGS = \
+     -framework CoreFoundation
