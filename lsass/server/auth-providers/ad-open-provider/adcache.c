@@ -89,18 +89,55 @@ ADCacheFlushToDisk(
 DWORD
 ADCacheFindUserByName(
     LSA_DB_HANDLE hDb,
+    PLSA_AD_PROVIDER_STATE pState,
     PLSA_LOGIN_NAME_INFO pUserNameInfo,
     PLSA_SECURITY_OBJECT* ppObject
     )
 {
     DWORD dwError = 0;
+    PLSA_LOGIN_NAME_INFO pPrefixedName = NULL;
 
     dwError = (*gpCacheProvider->pfnFindUserByName)(
-                        hDb,
-                        pUserNameInfo,
-                        ppObject
-                        );
+                    hDb,
+                    pUserNameInfo,
+                    ppObject);
+    switch (dwError)
+    {
+    case LW_ERROR_NOT_HANDLED:
+    case LW_ERROR_NO_SUCH_USER:
+    case LW_ERROR_NO_SUCH_GROUP:
+    case LW_ERROR_NO_SUCH_OBJECT:
+    case LW_ERROR_NOT_SUPPORTED:
+        if (pUserNameInfo->nameType == NameType_Alias &&
+            AD_ShouldAssumeDefaultDomain(pState))
+        {
+            dwError = ADGetDefaultDomainPrefixedName(
+                            pState,
+                            pUserNameInfo->pszName,
+                            &pPrefixedName);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            dwError = (*gpCacheProvider->pfnFindUserByName)(
+                            hDb,
+                            pPrefixedName,
+                            ppObject);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+        BAIL_ON_LSA_ERROR(dwError);
+        break;
+    default:
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+cleanup:
+    if (pPrefixedName)
+    {
+        LsaSrvFreeNameInfo(pPrefixedName);
+    }
     return dwError;
+
+error:
+    goto cleanup;
 }
 
 // returns LW_ERROR_NOT_HANDLED if the user is not in the database
@@ -124,18 +161,55 @@ ADCacheFindUserById(
 DWORD
 ADCacheFindGroupByName(
     LSA_DB_HANDLE hDb,
+    PLSA_AD_PROVIDER_STATE pState,
     PLSA_LOGIN_NAME_INFO pGroupNameInfo,
     PLSA_SECURITY_OBJECT* ppObject
     )
 {
     DWORD dwError = 0;
+    PLSA_LOGIN_NAME_INFO pPrefixedName = NULL;
 
     dwError = (*gpCacheProvider->pfnFindGroupByName)(
                     hDb,
                     pGroupNameInfo,
-                    ppObject
-                    );
+                    ppObject);
+    switch (dwError)
+    {
+    case LW_ERROR_NOT_HANDLED:
+    case LW_ERROR_NO_SUCH_USER:
+    case LW_ERROR_NO_SUCH_GROUP:
+    case LW_ERROR_NO_SUCH_OBJECT:
+    case LW_ERROR_NOT_SUPPORTED:
+        if (pGroupNameInfo->nameType == NameType_Alias &&
+            AD_ShouldAssumeDefaultDomain(pState))
+        {
+            dwError = ADGetDefaultDomainPrefixedName(
+                            pState,
+                            pGroupNameInfo->pszName,
+                            &pPrefixedName);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            dwError = (*gpCacheProvider->pfnFindGroupByName)(
+                            hDb,
+                            pPrefixedName,
+                            ppObject);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+        BAIL_ON_LSA_ERROR(dwError);
+        break;
+    default:
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+cleanup:
+    if (pPrefixedName)
+    {
+        LsaSrvFreeNameInfo(pPrefixedName);
+    }
     return dwError;
+
+error:
+    goto cleanup;
 }
 
 DWORD

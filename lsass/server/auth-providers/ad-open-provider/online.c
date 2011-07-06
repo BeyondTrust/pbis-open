@@ -2014,7 +2014,8 @@ error:
 DWORD
 AD_CheckExpiredObject(
     IN PLSA_AD_PROVIDER_STATE pState,
-    IN OUT PLSA_SECURITY_OBJECT* ppCachedUser
+    IN OUT PLSA_SECURITY_OBJECT* ppCachedUser,
+    IN BOOLEAN FreeExpired
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
@@ -2035,7 +2036,10 @@ AD_CheckExpiredObject(
                 now - expirationDate);
 
         //Pretend like the object couldn't be found in the cache
-        ADCacheSafeFreeObject(ppCachedUser);
+        if (FreeExpired)
+        {
+            ADCacheSafeFreeObject(ppCachedUser);
+        }
         dwError = LW_ERROR_NOT_HANDLED;
     }
     else
@@ -3641,6 +3645,9 @@ AD_OnlineFindObjectByName(
 {
     DWORD dwError = 0;
     PLSA_SECURITY_OBJECT pCachedUser = NULL;
+    PLSA_SECURITY_OBJECT pDownloadedUser = NULL;
+    PSTR pDefaultPrefix = NULL;
+    PSTR pPrefixedName = NULL;
 
     switch(ObjectType)
     {
@@ -3650,8 +3657,10 @@ AD_OnlineFindObjectByName(
                       pszLoginName);
         BAIL_ON_LSA_ERROR(dwError);
 
+        // Will prepend default domain when necessary
         dwError = ADCacheFindUserByName(
             pContext->pState->hCacheConnection,
+            pContext->pState,
             pUserNameInfo,
             &pCachedUser);
         break;
@@ -3661,22 +3670,28 @@ AD_OnlineFindObjectByName(
                       pszLoginName);
         BAIL_ON_LSA_ERROR(dwError);
 
+        // Will prepend default domain when necessary
         dwError = ADCacheFindGroupByName(
             pContext->pState->hCacheConnection,
+            pContext->pState,
             pUserNameInfo,
             &pCachedUser);
         break;
     default:
+        // Will prepend default domain when necessary
         dwError = ADCacheFindUserByName(
             pContext->pState->hCacheConnection,
+            pContext->pState,
             pUserNameInfo,
             &pCachedUser);
         if ((dwError == LW_ERROR_NO_SUCH_USER ||
             dwError == LW_ERROR_NOT_HANDLED) &&
             QueryType != LSA_QUERY_TYPE_BY_UPN)
         {
+            // Will prepend default domain when necessary
             dwError = ADCacheFindGroupByName(
                 pContext->pState->hCacheConnection,
+                pContext->pState,
                 pUserNameInfo,
                 &pCachedUser);
         }
@@ -3687,7 +3702,8 @@ AD_OnlineFindObjectByName(
     {
         dwError = AD_CheckExpiredObject(
                       pContext->pState,
-                      &pCachedUser);
+                      &pCachedUser,
+                      FALSE);
     }
     
     switch (dwError)
@@ -3703,15 +3719,87 @@ AD_OnlineFindObjectByName(
             pszLoginName,
             pUserNameInfo->nameType,
             ObjectType,
-            &pCachedUser);
+            &pDownloadedUser);
         switch (dwError)
         {
+        case LW_ERROR_NOT_HANDLED:
+        case LW_ERROR_NO_SUCH_USER:
+        case LW_ERROR_NO_SUCH_GROUP:
+        case LW_ERROR_NO_SUCH_OBJECT:
+        case LW_ERROR_NOT_SUPPORTED:
+            if (AD_ShouldAssumeDefaultDomain(pContext->pState) &&
+                    pUserNameInfo->nameType == NameType_Alias)
+            {
+                dwError = AD_GetUserDomainPrefix(
+                                pContext->pState,
+                                &pDefaultPrefix);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                dwError = LwAllocateStringPrintf(
+                                &pPrefixedName,
+                                "%s%c%s",
+                                pDefaultPrefix,
+                                LsaSrvDomainSeparator(),
+                                pUserNameInfo->pszName);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                dwError = AD_FindObjectByNameTypeNoCache(
+                                pContext,
+                                pPrefixedName,
+                                NameType_NT4,
+                                ObjectType,
+                                &pDownloadedUser);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                if (pCachedUser)
+                {
+                    // Make sure an expired alias account is not in the cache.
+                    // This would happen if it used to exist, got stored in the
+                    // cache, but was later deleted.
+                    if (strcmp(
+                                pCachedUser->pszObjectSid,
+                                pDownloadedUser->pszObjectSid))
+                    {
+                        if (pCachedUser->type == LSA_OBJECT_TYPE_GROUP)
+                        {
+                            ADCacheRemoveGroupBySid(
+                                    pContext->pState->hCacheConnection,
+                                    pCachedUser->pszObjectSid);
+                            // Ignore errors
+                        }
+                        else
+                        {
+                            ADCacheRemoveUserBySid(
+                                    pContext->pState->hCacheConnection,
+                                    pCachedUser->pszObjectSid);
+                            // Ignore errors
+                        }
+                    }
+                    LsaUtilFreeSecurityObject(pCachedUser);
+                }
+
+                dwError = ADCacheStoreObjectEntry(
+                                pContext->pState->hCacheConnection,
+                                pDownloadedUser);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                pCachedUser = pDownloadedUser;
+                pDownloadedUser = NULL;
+            }
+            BAIL_ON_LSA_ERROR(dwError);
+            break;
         case LW_ERROR_SUCCESS:
             dwError = ADCacheStoreObjectEntry(
-                pContext->pState->hCacheConnection,
-                pCachedUser);
+                            pContext->pState->hCacheConnection,
+                            pDownloadedUser);
             BAIL_ON_LSA_ERROR(dwError);
-            
+
+            if (pCachedUser)
+            {
+                LsaUtilFreeSecurityObject(pCachedUser);
+            }
+            pCachedUser = pDownloadedUser;
+            pDownloadedUser = NULL;
             break;
         default:
             BAIL_ON_LSA_ERROR(dwError);
@@ -3725,6 +3813,12 @@ AD_OnlineFindObjectByName(
     *ppObject = pCachedUser;
 
 cleanup:
+    LW_SAFE_FREE_STRING(pDefaultPrefix);
+    LW_SAFE_FREE_STRING(pPrefixedName);
+    if (pDownloadedUser)
+    {
+        LsaUtilFreeSecurityObject(pDownloadedUser);
+    }
 
     return dwError;
 
@@ -3758,12 +3852,6 @@ AD_OnlineFindObjectsByName(
     DWORD dwIndex = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     LSA_QUERY_TYPE type = LSA_QUERY_TYPE_UNDEFINED;
-    PSTR pszDefaultPrefix = NULL;
-
-    dwError = AD_GetUserDomainPrefix(
-                  pContext->pState,
-                  &pszDefaultPrefix);
-    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateMemory(sizeof(*ppObjects) * dwCount, OUT_PPVOID(&ppObjects));
     BAIL_ON_LSA_ERROR(dwError);
@@ -3824,55 +3912,6 @@ AD_OnlineFindObjectsByName(
         case LW_ERROR_NOT_SUPPORTED:
             ppObjects[dwIndex] = NULL;
             dwError = LW_ERROR_SUCCESS;
-            
-            if (QueryType == LSA_QUERY_TYPE_BY_ALIAS &&
-                AD_ShouldAssumeDefaultDomain(pContext->pState))
-            {
-                LW_SAFE_FREE_STRING(pszLoginId_copy);
-                LsaSrvFreeNameInfo(pUserNameInfo);
-                pUserNameInfo = NULL;
-
-                dwError = LwAllocateStringPrintf(
-                    &pszLoginId_copy,
-                    "%s%c%s",
-                    pszDefaultPrefix,
-                    LsaSrvDomainSeparator(),
-                    QueryList.ppszStrings[dwIndex]);
-                BAIL_ON_LSA_ERROR(dwError);
-
-                LwStrCharReplace(
-                    pszLoginId_copy,
-                    LsaSrvSpaceReplacement(),
-                    ' ');
-
-                dwError = LsaSrvCrackDomainQualifiedName(
-                    pszLoginId_copy,
-                    &pUserNameInfo);
-                BAIL_ON_LSA_ERROR(dwError);
-
-                dwError = AD_OnlineFindObjectByName(
-                    pContext,
-                    FindFlags,
-                    ObjectType,
-                    LSA_QUERY_TYPE_BY_NT4,
-                    pszLoginId_copy,
-                    pUserNameInfo,
-                    &ppObjects[dwIndex]);
-                switch (dwError)
-                {
-                case LW_ERROR_SUCCESS:
-                    break;
-                case LW_ERROR_NOT_HANDLED:
-                case LW_ERROR_NO_SUCH_USER:
-                case LW_ERROR_NO_SUCH_GROUP:
-                case LW_ERROR_NO_SUCH_OBJECT:
-                    ppObjects[dwIndex] = NULL;
-                    dwError = LW_ERROR_SUCCESS;
-                    break;
-                default:
-                    BAIL_ON_LSA_ERROR(dwError);
-                }
-            }
             break;
         default:
             BAIL_ON_LSA_ERROR(dwError);
@@ -3887,7 +3926,6 @@ AD_OnlineFindObjectsByName(
 
 cleanup:
 
-    LW_SAFE_FREE_STRING(pszDefaultPrefix);
     LW_SAFE_FREE_STRING(pszLoginId_copy);
 
     if (pUserNameInfo)
@@ -3951,7 +3989,8 @@ AD_OnlineFindObjectsById(
         {
             dwError = AD_CheckExpiredObject(
                           pContext->pState,
-                          &pCachedUser);
+                          &pCachedUser,
+                          TRUE);
         }
         
         switch (dwError)

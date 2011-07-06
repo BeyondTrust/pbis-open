@@ -49,6 +49,13 @@
 #define __ADLDAP_H__
 
 DWORD
+ADGetDefaultDomainPrefixedName(
+    IN PLSA_AD_PROVIDER_STATE pState,
+    IN PCSTR pAlias,
+    OUT PLSA_LOGIN_NAME_INFO* ppPrefixedName
+    );
+
+DWORD
 ADGetDomainQualifiedString(
     PCSTR pszNetBIOSDomainName,
     PCSTR pszName,
