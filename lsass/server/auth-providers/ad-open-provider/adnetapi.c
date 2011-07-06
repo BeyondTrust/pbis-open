@@ -240,7 +240,6 @@ AD_NetDestroySchannelState(
 DWORD
 AD_NetUserChangePassword(
     PCSTR pszDomainName,
-    BOOLEAN bIsInOneWayTrustedDomain,
     PCSTR pszLoginId,
     PCSTR pszUserPrincipalName,
     PCSTR pszOldPassword,
@@ -302,6 +301,17 @@ AD_NetUserChangePassword(
                     pwszLoginId,
                     pwszOldPassword,
                     pwszNewPassword);
+    if (dwError == ERROR_ACCESS_DENIED)
+    {
+        // Try again using machine credentials
+        LsaFreeSMBCreds(&pFreeInfo);
+
+        dwError = LsaUserChangePassword(
+                        pwszDomainName,
+                        pwszLoginId,
+                        pwszOldPassword,
+                        pwszNewPassword);
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
