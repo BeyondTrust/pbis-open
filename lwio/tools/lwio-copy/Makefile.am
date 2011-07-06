@@ -15,7 +15,6 @@ lwio_copy_CPPFLAGS =  \
 lwio_copy_LDADD = \
     @top_builddir@/client/liblwioclient.la\
     @top_builddir@/common/liblwiocommon.la\
-    $(top_builddir)/libshareinfo/liblwioshareinfo.la \
     @KRB5_LIBS@ \
     @NETLOGON_LIBS@ \
     -llwbase_nothr
@@ -23,6 +22,5 @@ lwio_copy_LDADD = \
 lwio_copy_LDFLAGS =  \
     @KRB5_LDFLAGS@  \
     @NETLOGON_LDFLAGS@ \
-    -L$(top_builddir)/common/.libs \
-    -L$(top_builddir)/libshareinfo/.libs
+    -L$(top_builddir)/common/.libs
 

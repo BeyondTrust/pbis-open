@@ -10,7 +10,6 @@ liblwioclient_la_SOURCES = \
     logging.c              \
     ntfileapictx.c         \
     smbfileapictx.c        \
-    srvshareapi.c          \
     thread.c               \
     win32.c
 
@@ -26,6 +25,5 @@ liblwioclient_la_CFLAGS = \
 
 liblwioclient_la_LIBADD = \
     @top_builddir@/common/liblwiocommon.la \
-    @top_builddir@/libshareinfo/liblwioshareinfo.la \
     @LWMSG_LIBS@ \
     -lkrb5

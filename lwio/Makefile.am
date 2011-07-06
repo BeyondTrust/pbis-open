@@ -7,7 +7,6 @@ SUBDIRS = \
     logging_r    \
     ipc          \
     common       \
-    libshareinfo \
     client       \
     server       \
     drivers      \

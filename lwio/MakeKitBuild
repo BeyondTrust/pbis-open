@@ -1,4 +1,4 @@
-SUBDIRS="include utils ipc logging_r common libshareinfo client server tools etc tests"
+SUBDIRS="include utils ipc logging_r common client server tools etc tests"
 
 option()
 {

@@ -5,8 +5,6 @@ lwio_driver_CPPFLAGS = $(AM_CPPFLAGS) -I@top_srcdir@/include
 lwio_driver_LDADD = \
     $(top_builddir)/client/liblwioclient.la \
     $(top_builddir)/common/liblwiocommon.la \
-    $(top_builddir)/libshareinfo/liblwioshareinfo.la \
     -llwbase_nothr
 
-lwio_driver_LDFLAGS = -L$(top_builddir)/common/.libs \
-                      -L$(top_builddir)/libshareinfo/.libs
+lwio_driver_LDFLAGS = -L$(top_builddir)/common/.libs

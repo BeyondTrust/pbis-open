@@ -10,8 +10,6 @@ lwio_set_log_level_CPPFLAGS =  \
 lwio_set_log_level_LDADD = \
     @top_builddir@/client/liblwioclient.la \
     @top_builddir@/common/liblwiocommon.la \
-    @top_builddir@/libshareinfo/liblwioshareinfo.la \
     -llwbase_nothr
 
-lwio_set_log_level_LDFLAGS = -L$(top_builddir)/common/.libs \
-                             -L$(top_builddir)/libshareinfo/.libs
+lwio_set_log_level_LDFLAGS = -L$(top_builddir)/common/.libs
