@@ -2075,39 +2075,6 @@ TestValidateSessionInfo(
 
 static
 BOOLEAN
-TestValidateServerInfo(
-    PVOID  pInfo,
-    DWORD  dwLevel
-    )
-{
-    BOOLEAN bRet = TRUE;
-    DWORD dwError = ERROR_SUCCESS;
-    PSERVER_INFO_100 pInfo100 = (PSERVER_INFO_100)pInfo;
-    size_t sServerNameLen = 0;
-
-    if (dwLevel == 100 ||
-        dwLevel == 101)
-    {
-        ASSERT_TEST(pInfo100->sv100_name != NULL);
-        if (pInfo100->sv100_name)
-        {
-            dwError = LwWc16sLen(pInfo100->sv100_name, &sServerNameLen);
-            if (dwError)
-            {
-                bRet = FALSE;
-                return bRet;
-            }
-
-            ASSERT_TEST(sServerNameLen > 0);
-        }
-    }
-
-    return bRet;
-}
-
-
-static
-BOOLEAN
 CallNetQueryDisplayInfo(
     PCWSTR pwszHostname,
     DWORD  dwLevel
@@ -2587,156 +2554,6 @@ done:
 
     return bRet;
 }
-
-
-static
-BOOLEAN
-CallNetServerEnum(
-    PCWSTR pwszHostname,
-    PWSTR  pwszDomain,
-    DWORD  dwLevel
-    )
-{
-    BOOLEAN bRet = TRUE;
-    NET_API_STATUS err = ERROR_SUCCESS;
-    PVOID pBuffer = NULL;
-    DWORD dwPrefMaxLen = MAX_PREFERRED_LENGTH;
-    DWORD dwNumEntries = 0;
-    DWORD dwTotalNumEntries = 0;
-    DWORD dwTotalCounted = 0;
-    DWORD dwResume = 0;
-    DWORD dwPrevTotalCounted = 0;
-    DWORD iEntry = 0;
-    DWORD dwServerType = SV_TYPE_DOMAIN_CTRL;
-    PSERVER_INFO_100 pServerInfo100 = NULL;
-    PSERVER_INFO_101 pServerInfo101 = NULL;
-
-    /* max buffer size below 10 bytes doesn't make much sense */
-    while (dwPrefMaxLen > 10)
-    {
-        do
-        {
-            err = NetServerEnum(pwszHostname,
-                                dwLevel,
-                                &pBuffer,
-                                dwPrefMaxLen,
-                                &dwNumEntries,
-                                &dwTotalNumEntries,
-                                dwServerType,
-                                pwszDomain,
-                                &dwResume
-                                );
-            if (err == NERR_BufTooSmall)
-            {
-                goto done;
-            }
-            else if (err != ERROR_SUCCESS &&
-                     err != ERROR_MORE_DATA)
-            {
-                bRet = FALSE;
-                goto done;
-            }
-
-            ASSERT_TEST(pBuffer != NULL);
-            ASSERT_TEST(dwNumEntries > 0);
-            ASSERT_TEST(dwTotalNumEntries >= dwNumEntries);
-
-            dwTotalCounted    += dwNumEntries;
-            dwTotalNumEntries  = 0;
-
-            for (iEntry = 0; iEntry < dwNumEntries; iEntry++)
-            {
-                switch (dwLevel)
-                {
-                case 100:
-                    pServerInfo100 = &(((PSERVER_INFO_100)(pBuffer))[iEntry]);
-
-                    bRet  &= TestValidateServerInfo(pServerInfo100, dwLevel);
-                    break;
-
-                case 101:
-                    pServerInfo101 = &(((PSERVER_INFO_101)(pBuffer))[iEntry]);
-
-                    bRet  &= TestValidateServerInfo(pServerInfo101, dwLevel);
-                    break;
-
-                default:
-                    bRet = FALSE;
-                    goto done;
-                }
-            }
-
-            if (pBuffer)
-            {
-                NetApiBufferFree(pBuffer);
-                pBuffer = NULL;
-            }
-        }
-        while (err == ERROR_MORE_DATA);
-
-        if (dwPrefMaxLen > 65536)
-        {
-            dwPrefMaxLen /= 256;
-        }
-        else if (dwPrefMaxLen <= 65536 && dwPrefMaxLen > 512)
-        {
-            dwPrefMaxLen /= 4;
-        }
-        else if (dwPrefMaxLen <= 512)
-        {
-            dwPrefMaxLen /= 2;
-        }
-        else if (dwPrefMaxLen < 32)
-        {
-            dwPrefMaxLen = 0;
-        }
-
-        if (dwPrevTotalCounted)
-        {
-            ASSERT_TEST(dwPrevTotalCounted == dwTotalCounted);
-        }
-
-        dwPrevTotalCounted  = dwTotalCounted;
-        dwTotalCounted      = 0;
-        dwResume            = 0;
-    }
-
-    dwLevel      = 50;
-    dwNumEntries = 0;
-    err = NetServerEnum(pwszHostname,
-                        dwLevel,
-                        &pBuffer,
-                        dwPrefMaxLen,
-                        &dwNumEntries,
-                        &dwTotalNumEntries,
-                        dwServerType,
-                        pwszDomain,
-                        &dwResume
-                        );
-    if (err != ERROR_INVALID_LEVEL)
-    {
-        bRet = FALSE;
-        goto done;
-    }
-
-    if (pBuffer)
-    {
-        /*
-         * There shouldn't be any buffer returned
-         */
-        bRet = FALSE;
-        goto done;
-    }
-
-done:
-    if (pBuffer)
-    {
-        NetApiBufferFree(pBuffer);
-    }
-
-    return bRet;
-}
-
 
 static
 DWORD
@@ -4308,91 +4125,9 @@ error:
 }
 
 
-static
-DWORD
-TestNetServerEnum(
-    PTEST         pTest,
-    PCWSTR        pwszHostname,
-    PCWSTR        pwszBindingString,
-    PCREDENTIALS  pCreds,
-    PPARAMETER    pOptions,
-    DWORD         dwOptcount
-    )
-{
-    const DWORD dwDefaultLevel = (DWORD)(-1);
-    PCSTR pszDefaultName = "(unknown)";
-
-    BOOLEAN bRet = TRUE;
-    DWORD dwError = ERROR_SUCCESS;
-    enum param_err perr = perr_success;
-    DWORD i = 0;
-    DWORD dwSelectedLevels[] = { 0 };
-    DWORD dwAvailableLevels[] = { 100, 101 };
-    PDWORD pdwLevels = NULL;
-    DWORD dwNumLevels = 0;
-    DWORD dwLevel = 0;
-    PWSTR pwszDefaultName = NULL;
-    PWSTR pwszDomainName = NULL;
-
-    TESTINFO(pTest, pwszHostname);
-
-    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
-                       (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
-    if (!perr_is_ok(perr)) perr_fail(perr);
-
-    perr = fetch_value(pOptions, dwOptcount, "domainname", pt_w16string,
-                       &pwszDomainName, &pszDefaultName);
-    if (!perr_is_ok(perr)) perr_fail(perr);
-
-    PARAM_INFO("level", pt_uint32, &dwLevel);
-    PARAM_INFO("domainname", pt_w16string, &pwszDomainName);
-
-    dwError = LwMbsToWc16s(pszDefaultName, &pwszDefaultName);
-    BAIL_ON_WIN_ERROR(dwError);
-
-    if (wc16scmp(pwszDomainName, pwszDefaultName) == 0)
-    {
-        LW_SAFE_FREE_MEMORY(pwszDomainName);
-        pwszDomainName = NULL;
-    }
-
-    if (dwLevel == (DWORD)(-1))
-    {
-        pdwLevels   = dwAvailableLevels;
-        dwNumLevels = sizeof(dwAvailableLevels)/sizeof(dwAvailableLevels[0]);
-    }
-    else
-    {
-        dwSelectedLevels[0] = dwLevel;
-        pdwLevels   = dwSelectedLevels;
-        dwNumLevels = sizeof(dwSelectedLevels)/sizeof(dwSelectedLevels[0]);
-    }
-
-    for (i = 0; i < dwNumLevels; i++)
-    {
-        dwLevel = pdwLevels[i];
-
-        bRet &= CallNetServerEnum(pwszHostname,
-                                  pwszDomainName,
-                                  dwLevel);
-    }
-
-error:
-    LW_SAFE_FREE_MEMORY(pwszDefaultName);
-    LW_SAFE_FREE_MEMORY(pwszDomainName);
-
-    return bRet;
-}
-
-
 VOID
 SetupNetApiTests(PTEST t)
 {
-    DWORD dwError = ERROR_SUCCESS;
-
-    dwError = SrvSvcInitMemory();
-    if (dwError) return;
-
     AddTest(t, "NETAPI-USER-ENUM", TestNetUserEnum);
     AddTest(t, "NETAPI-USER-ADD", TestNetUserAdd);
     AddTest(t, "NETAPI-USER-DEL", TestNetUserDel);
@@ -4412,7 +4147,6 @@ SetupNetApiTests(PTEST t)
     AddTest(t, "NETAPI-QUERY-DISP-INFO", TestNetQueryDisplayInformation);
     AddTest(t, "NETAPI-WKSTA-USER-ENUM", TestNetWkstaUserEnum);
     AddTest(t, "NETAPI-SESSION-ENUM", TestNetSessionEnum);
-    AddTest(t, "NETAPI-SERVER-ENUM", TestNetServerEnum);
 }
 
 
