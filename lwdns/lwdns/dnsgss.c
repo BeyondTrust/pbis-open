@@ -694,7 +694,7 @@ lwdns_display_status_1(
     int       type
     )
 {
-    OM_uint32 maj_stat, min_stat;
+    OM_uint32  min_stat;
     gss_buffer_desc msg;
     OM_uint32 msg_ctx;
 
@@ -706,7 +706,7 @@ lwdns_display_status_1(
     msg_ctx = 0;
     while (1)
     {
-        maj_stat = gss_display_status(&min_stat, code,
+        (void) gss_display_status(&min_stat, code,
                                       type, GSS_C_NULL_OID,
                                       &msg_ctx, &msg);
 

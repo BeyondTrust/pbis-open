@@ -611,7 +611,6 @@ GetDnsSuffixByHostname(
     PSTR pszHostDnsSuffix = NULL;
     struct hostent* pHost = NULL;
     PCSTR pszDot = NULL;
-    PCSTR pszFoundFqdn = NULL;
     PCSTR pszFoundDomain = NULL;
 
     pHost = gethostbyname(pszHostname);
@@ -629,7 +628,6 @@ GetDnsSuffixByHostname(
     pszDot = strchr(pHost->h_name, '.');
     if (pszDot)
     {
-        pszFoundFqdn = pHost->h_name;
         pszFoundDomain = pszDot + 1;
     }
     else
@@ -640,7 +638,6 @@ GetDnsSuffixByHostname(
             pszDot = strchr(pHost->h_aliases[i], '.');
             if (pszDot)
             {
-                pszFoundFqdn = pHost->h_aliases[i];
                 pszFoundDomain = pszDot + 1;
                 break;
             }
