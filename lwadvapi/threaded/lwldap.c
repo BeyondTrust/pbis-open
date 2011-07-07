@@ -1958,7 +1958,6 @@ LwLdapDirectoryExtendedDNSearch(
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
-    PLW_LDAP_DIRECTORY_CONTEXT pDirectory = NULL;
     CHAR ExtDNCriticality = 'T';
     LDAPControl *pExtDNControl = NULL;
     LDAPControl *ppInputControls[2] = { NULL, NULL };
@@ -1966,7 +1965,6 @@ LwLdapDirectoryExtendedDNSearch(
     struct berval value = {0};
 
 
-    pDirectory = (PLW_LDAP_DIRECTORY_CONTEXT)hDirectory;
     // Setup the extended DN control, in order to be windows 2000 compatible,
     // Do not specify control value, hence, the return result will always be in hexadecimal string format.
     value.bv_len = 0;
