@@ -463,8 +463,6 @@ EVTRegisterEndpoint(
     volatile DWORD dwRpcStatus = 0;
     unsigned32 tmpStatus = 0;
     rpc_binding_vector_p_t pServerBinding = NULL;
-    BOOLEAN bEPRegistered = FALSE;
-    BOOLEAN bBound = TRUE;
 
     TRY
     {
@@ -480,8 +478,6 @@ EVTRegisterEndpoint(
 
     BAIL_ON_DCE_ERROR(dwError, dwRpcStatus);
     BAIL_ON_EVT_ERROR(dwError);
-
-    bBound = TRUE;
 
     TRY
     {
@@ -506,7 +502,6 @@ EVTRegisterEndpoint(
     BAIL_ON_DCE_ERROR(dwError, dwRpcStatus);
     BAIL_ON_EVT_ERROR(dwError);
 
-    bEPRegistered = TRUE;
     EVT_LOG_INFO("RPC Endpoint registered successfully.");
 
 cleanup:
