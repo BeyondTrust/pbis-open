@@ -46,5 +46,5 @@ LsaNssLinuxDestruct(
     )
 {
     LsaNssCommonCloseConnection(&lsaConnection);
-    LsaFreeIgnoreLists();
+    LsaFreeIgnoreHashes();
 }

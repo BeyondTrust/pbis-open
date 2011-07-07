@@ -126,11 +126,13 @@ void
 LwHashSafeFree(
         LW_HASH_TABLE** ppResult)
 {
-    if (*ppResult != NULL)
+    LW_HASH_TABLE* pResult = *ppResult;
+    if (pResult != NULL)
     {
-        LwHashRemoveAll(*ppResult);
-        LW_SAFE_FREE_MEMORY((*ppResult)->ppEntries);
-        LW_SAFE_FREE_MEMORY(*ppResult);
+        *ppResult = NULL;
+        LwHashRemoveAll(pResult);
+        LW_SAFE_FREE_MEMORY(pResult->ppEntries);
+        LW_SAFE_FREE_MEMORY(pResult);
     }
 }
 

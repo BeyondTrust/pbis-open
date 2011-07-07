@@ -134,98 +134,41 @@ error:
 }
 
 DWORD
-LsaReadIgnoreLists()
+LsaReadIgnoreList(
+    PCSTR pListPath,
+    PSTR* ppIgnoreList
+    )
 {
+    PSTR pIgnoreList = NULL;
     DWORD dwError = 0;
-    time_t tCurrentTime = 0;
-    PSTR pszUserIgnoreList = NULL;
-    PSTR pszGroupIgnoreList = NULL;
+    struct stat fileStat = {0};
     int iListFd = -1;
     size_t sOffset = 0;
     ssize_t ssRead = 0;
-    struct stat fileStat = {0};
 
-    if (time(&tCurrentTime) == (time_t)-1)
-    {
-        dwError = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-    
-    if (tCurrentTime < gtIgnoreListLastUpdated +
-            LSA_IGNORE_LIST_UPDATE_INTERVAL)
-    {
-        goto cleanup;
-    }
-
-    if ((iListFd = open(LSA_USER_IGNORE_LIST_PATH, O_RDONLY, 0)) < 0)
+    if (stat(pListPath, &fileStat) < 0)
     {
         dwError = LwMapErrnoToLwError(errno);
         if (dwError == LwMapErrnoToLwError(ENOENT) ||
             dwError == LwMapErrnoToLwError(ENOTDIR))
         {
-            dwError = 0;
-            goto cleanup;
-        }
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    if (fstat(iListFd, &fileStat) < 0)
-    {
-        dwError = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwError = LwAllocateMemory(
-        fileStat.st_size + 1,
-        (PVOID*)&pszUserIgnoreList);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    sOffset = 0;
-    while (sOffset < fileStat.st_size)
-    {
-        ssRead = read(
-            iListFd,
-            pszUserIgnoreList,
-            fileStat.st_size - sOffset);
-        if (ssRead < 0)
-        {
-            dwError = LwMapErrnoToLwError(errno);
-            if (dwError == LwMapErrnoToLwError(EINTR))
-            {
-                dwError = 0;
-                ssRead = 0;
-            }
+            dwError = LwAllocateString(
+                            "",
+                            &pIgnoreList);
             BAIL_ON_LSA_ERROR(dwError);
-        }
-        sOffset += ssRead;
-    }
-    pszUserIgnoreList[sOffset] = 0;
-
-    if (iListFd != -1)
-    {
-        close(iListFd);
-        iListFd = -1;
-    }
-    if (stat(LSA_GROUP_IGNORE_LIST_PATH, &fileStat) < 0)
-    {
-        dwError = LwMapErrnoToLwError(errno);
-        if (dwError == LwMapErrnoToLwError(ENOENT) ||
-            dwError == LwMapErrnoToLwError(ENOTDIR))
-        {
-            dwError = 0;
         }
         BAIL_ON_LSA_ERROR(dwError);
     }
     else
     {
-        if ((iListFd = open(LSA_GROUP_IGNORE_LIST_PATH, O_RDONLY, 0)) < 0)
+        if ((iListFd = open(pListPath, O_RDONLY, 0)) < 0)
         {
             dwError = LwMapErrnoToLwError(errno);
             BAIL_ON_LSA_ERROR(dwError);
         }
         dwError = LwAllocateMemory(
                         fileStat.st_size + 1,
-                        (PVOID*)&pszGroupIgnoreList);
+                        (PVOID*)&pIgnoreList);
         BAIL_ON_LSA_ERROR(dwError);
 
         sOffset = 0;
@@ -233,7 +176,7 @@ LsaReadIgnoreLists()
         {
             ssRead = read(
                         iListFd,
-                        pszGroupIgnoreList,
+                        pIgnoreList,
                         fileStat.st_size - sOffset);
             if (ssRead < 0)
             {
@@ -247,27 +190,272 @@ LsaReadIgnoreLists()
             }
             sOffset += ssRead;
         }
-        pszGroupIgnoreList[sOffset] = 0;
+        pIgnoreList[sOffset] = 0;
     }
 
-    LW_SAFE_FREE_MEMORY(gpszUserIgnoreList);
-    gpszUserIgnoreList = pszUserIgnoreList;
-    LW_SAFE_FREE_MEMORY(gpszGroupIgnoreList);
-    gpszGroupIgnoreList = pszGroupIgnoreList;
-
-    gtIgnoreListLastUpdated = tCurrentTime;
+    *ppIgnoreList = pIgnoreList;
 
 cleanup:
+    if (dwError)
+    {
+        *ppIgnoreList = NULL;
+        LW_SAFE_FREE_MEMORY(pIgnoreList);
+    }
     if (iListFd != -1)
     {
         close(iListFd);
-        iListFd = -1;
     }
     return dwError;
 
 error:
-    LW_SAFE_FREE_MEMORY(pszUserIgnoreList);
-    LW_SAFE_FREE_MEMORY(pszGroupIgnoreList);
+    goto cleanup;
+}
+
+DWORD
+LsaParseIgnoreList(
+    PSTR pIgnoreList,
+    PBOOLEAN pIncludeSystemList,
+    PLW_HASH_TABLE* ppIgnoreHash
+    )
+{
+    DWORD dwError = 0;
+    PSTR pSavePtr = NULL;
+    PSTR pToken = strtok_r(pIgnoreList, "\r\n", &pSavePtr);
+    PSTR pTokenCopy = NULL;
+    PLW_HASH_TABLE pIgnoreHash = NULL;
+    BOOLEAN includeSystemList = FALSE;
+
+    dwError = LwHashCreate(
+                    10,
+                    LwHashStringCompare,
+                    LwHashStringHash,
+                    LwHashFreeStringKey,
+                    NULL,
+                    &pIgnoreHash);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    while (pToken)
+    {
+        if (!strcmp(pToken, "+"))
+        {
+            includeSystemList = TRUE;
+        }
+        else
+        {
+            dwError = LwAllocateString(
+                            pToken,
+                            &pTokenCopy);
+            BAIL_ON_LSA_ERROR(dwError);
+            dwError = LwHashSetValue(
+                            pIgnoreHash,
+                            pTokenCopy,
+                            pTokenCopy);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+
+        pToken = strtok_r(NULL, "\r\n", &pSavePtr);
+    }
+
+
+cleanup:
+    if (dwError)
+    {
+        LwHashSafeFree(&pIgnoreHash);
+    }
+    *pIncludeSystemList = includeSystemList;
+    *ppIgnoreHash = pIgnoreHash;
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+DWORD
+LsaReadIgnoreHashes()
+{
+    DWORD dwError = 0;
+    time_t tCurrentTime = 0;
+    PSTR pIgnoreList = NULL;
+    PLW_HASH_TABLE pUserIgnoreHash = NULL;
+    PLW_HASH_TABLE pGroupIgnoreHash = NULL;
+    BOOLEAN includeSystemList = FALSE;
+    FILE* pLocalFile = NULL;
+    struct passwd accountBuffer = { 0 };
+    struct passwd* pAccount = NULL;
+    struct group groupBuffer = { 0 };
+    struct group* pGroup = NULL;
+    PSTR pBuffer = NULL;
+    size_t bufferLen = 0;
+    PSTR pNameCopy = NULL;
+
+    if (time(&tCurrentTime) == (time_t)-1)
+    {
+        dwError = LwMapErrnoToLwError(errno);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    
+    if (tCurrentTime < gtIgnoreHashLastUpdated +
+            LSA_IGNORE_LIST_UPDATE_INTERVAL)
+    {
+        goto cleanup;
+    }
+
+    bufferLen = 100;
+    dwError = LwAllocateMemory(
+                    bufferLen,
+                    (PVOID*)&pBuffer);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaReadIgnoreList(
+                    LSA_USER_IGNORE_LIST_PATH,
+                    &pIgnoreList);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaParseIgnoreList(
+                    pIgnoreList,
+                    &includeSystemList,
+                    &pUserIgnoreHash);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LW_SAFE_FREE_MEMORY(pIgnoreList);
+
+    if (includeSystemList)
+    {
+        pLocalFile = fopen("/etc/passwd", "r");
+        // Ignore if the file cannot be opened
+        if (pLocalFile)
+        {
+            while(1)
+            {
+                dwError = fgetpwent_r(
+                                pLocalFile,
+                                &accountBuffer,
+                                pBuffer,
+                                bufferLen,
+                                &pAccount);
+                if (!dwError)
+                {
+                    dwError = LwAllocateString(
+                                    pAccount->pw_name,
+                                    &pNameCopy);
+                    BAIL_ON_LSA_ERROR(dwError);
+
+                    dwError = LwHashSetValue(
+                                    pUserIgnoreHash,
+                                    pNameCopy,
+                                    pNameCopy);
+                    BAIL_ON_LSA_ERROR(dwError);
+
+                    pNameCopy = NULL;
+                }
+                else if (dwError == ERANGE)
+                {
+                    LW_SAFE_FREE_MEMORY(pBuffer);
+                    bufferLen *= 2;
+                    dwError = LwAllocateMemory(
+                                    bufferLen,
+                                    (PVOID*)&pBuffer);
+                    BAIL_ON_LSA_ERROR(dwError);
+                }
+                else if (dwError == ENOENT)
+                {
+                    dwError = 0;
+                    break;
+                }
+                else
+                {
+                    dwError = LwMapErrnoToLwError(dwError);
+                    BAIL_ON_LSA_ERROR(dwError);
+                }
+            }
+            fclose(pLocalFile);
+            pLocalFile = NULL;
+        }
+    }
+
+    dwError = LsaReadIgnoreList(
+                    LSA_GROUP_IGNORE_LIST_PATH,
+                    &pIgnoreList);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaParseIgnoreList(
+                    pIgnoreList,
+                    &includeSystemList,
+                    &pGroupIgnoreHash);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (includeSystemList)
+    {
+        pLocalFile = fopen("/etc/group", "r");
+        // Ignore if the file cannot be opened
+        if (pLocalFile)
+        {
+            while(1)
+            {
+                dwError = fgetgrent_r(
+                                pLocalFile,
+                                &groupBuffer,
+                                pBuffer,
+                                bufferLen,
+                                &pGroup);
+                if (!dwError)
+                {
+                    dwError = LwAllocateString(
+                                    pGroup->gr_name,
+                                    &pNameCopy);
+                    BAIL_ON_LSA_ERROR(dwError);
+
+                    dwError = LwHashSetValue(
+                                    pUserIgnoreHash,
+                                    pNameCopy,
+                                    pNameCopy);
+                    BAIL_ON_LSA_ERROR(dwError);
+
+                    pNameCopy = NULL;
+                }
+                else if (dwError == ERANGE)
+                {
+                    LW_SAFE_FREE_MEMORY(pBuffer);
+                    bufferLen *= 2;
+                    dwError = LwAllocateMemory(
+                                    bufferLen,
+                                    (PVOID*)&pBuffer);
+                    BAIL_ON_LSA_ERROR(dwError);
+                }
+                else if (dwError == ENOENT)
+                {
+                    dwError = 0;
+                    break;
+                }
+                else
+                {
+                    dwError = LwMapErrnoToLwError(dwError);
+                    BAIL_ON_LSA_ERROR(dwError);
+                }
+            }
+        }
+    }
+
+    LwHashSafeFree(&gpUserIgnoreHash);
+    gpUserIgnoreHash = pUserIgnoreHash;
+    LwHashSafeFree(&gpGroupIgnoreHash);
+    gpGroupIgnoreHash = pGroupIgnoreHash;
+
+    gtIgnoreHashLastUpdated = tCurrentTime;
+
+cleanup:
+    if (pLocalFile)
+    {
+        fclose(pLocalFile);
+    }
+    LW_SAFE_FREE_STRING(pBuffer);
+    LW_SAFE_FREE_STRING(pIgnoreList);
+    LW_SAFE_FREE_STRING(pNameCopy);
+    return dwError;
+
+error:
+    LwHashSafeFree(&pUserIgnoreHash);
+    LwHashSafeFree(&pGroupIgnoreHash);
     goto cleanup;
 }
 
@@ -276,40 +464,14 @@ LsaShouldIgnoreGroup(
     PCSTR pszName
     )
 {
-    PCSTR pszEntryStart = NULL;
-    PCSTR pszEntryEnd = NULL;
-    PCSTR pszNextEntry = NULL;
     // Ignore errors
-    LsaReadIgnoreLists();
+    LsaReadIgnoreHashes();
 
-    pszEntryStart = gpszGroupIgnoreList;
-    while (pszEntryStart && pszEntryStart[0])
+    if (gpGroupIgnoreHash)
     {
-        pszNextEntry = strchr(pszEntryStart, '\n');
-        if (!pszNextEntry)
-        {
-            pszEntryEnd = pszEntryStart + strlen(pszEntryStart);
-        }
-        else if (pszNextEntry > pszEntryStart && pszNextEntry[-1] == '\r')
-        {
-            pszEntryEnd = pszNextEntry - 1;
-            pszNextEntry++;
-        }
-        else
-        {
-            pszEntryEnd = pszNextEntry;
-            pszNextEntry++;
-        }
-
-        if (pszEntryEnd - pszEntryStart == strlen(pszName) &&
-                !strncmp(pszName, pszEntryStart, pszEntryEnd - pszEntryStart))
-        {
-            return 1;
-        }
-        pszEntryStart = pszNextEntry;
+        return LwHashExists(gpGroupIgnoreHash, pszName);
     }
-
-    return 0;
+    return FALSE;
 }
 
 BOOLEAN
@@ -317,45 +479,19 @@ LsaShouldIgnoreUser(
     PCSTR pszName
     )
 {
-    PCSTR pszEntryStart = NULL;
-    PCSTR pszEntryEnd = NULL;
-    PCSTR pszNextEntry = NULL;
     // Ignore errors
-    LsaReadIgnoreLists();
+    LsaReadIgnoreHashes();
 
-    pszEntryStart = gpszUserIgnoreList;
-    while (pszEntryStart && pszEntryStart[0])
+    if (gpUserIgnoreHash)
     {
-        pszNextEntry = strchr(pszEntryStart, '\n');
-        if (!pszNextEntry)
-        {
-            pszEntryEnd = pszEntryStart + strlen(pszEntryStart);
-        }
-        else if (pszNextEntry > pszEntryStart && pszNextEntry[-1] == '\r')
-        {
-            pszEntryEnd = pszNextEntry - 1;
-            pszNextEntry++;
-        }
-        else
-        {
-            pszEntryEnd = pszNextEntry;
-            pszNextEntry++;
-        }
-
-        if (pszEntryEnd - pszEntryStart == strlen(pszName) &&
-                !strncmp(pszName, pszEntryStart, pszEntryEnd - pszEntryStart))
-        {
-            return 1;
-        }
-        pszEntryStart = pszNextEntry;
+        return (LwHashExists(gpUserIgnoreHash, pszName));
     }
-
-    return 0;
+    return FALSE;
 }
 
 VOID
-LsaFreeIgnoreLists(VOID)
+LsaFreeIgnoreHashes(VOID)
 {
-    LW_SAFE_FREE_MEMORY(gpszUserIgnoreList);
-    LW_SAFE_FREE_MEMORY(gpszGroupIgnoreList);
+    LwHashSafeFree(&gpUserIgnoreHash);
+    LwHashSafeFree(&gpGroupIgnoreHash);
 }

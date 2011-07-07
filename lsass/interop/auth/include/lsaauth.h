@@ -247,7 +247,7 @@ LsaShouldIgnoreUser(
     );
 
 VOID
-LsaFreeIgnoreLists(VOID);
+LsaFreeIgnoreHashes(VOID);
 
 #endif /* __LSA_AUTH_H__ */
 
