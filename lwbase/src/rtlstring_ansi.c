@@ -201,13 +201,12 @@ LwRtlAnsiStringDuplicate(
     )
 {
     NTSTATUS status = 0;
-    int EE = 0;
     ANSI_STRING newString = { 0 };
 
     if (!pOriginalString || !pNewString)
     {
         status = STATUS_INVALID_PARAMETER;
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
     }
 
     if (pOriginalString->Buffer && pOriginalString->Length > 0)
@@ -218,7 +217,7 @@ LwRtlAnsiStringDuplicate(
         newString.MaximumLength = pOriginalString->Length + sizeof(pOriginalString->Buffer[0]);
 
         status = RTL_ALLOCATE(&newString.Buffer, CHAR, newString.MaximumLength);
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
 
         memcpy(newString.Buffer, pOriginalString->Buffer, pOriginalString->Length);
         newString.Buffer[newString.Length/sizeof(newString.Buffer[0])] = 0;

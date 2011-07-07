@@ -1909,7 +1909,6 @@ RtlpFreeAbsoluteSecurityDescriptor(
     IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
     )
 {
-    NTSTATUS status = STATUS_SUCCESS;
     PSID pOwner = NULL;
     PSID pGroup = NULL;
     PACL pDacl = NULL;
@@ -1925,11 +1924,11 @@ RtlpFreeAbsoluteSecurityDescriptor(
 
     pSecDesc = *ppSecDesc;
 
-    status = RtlGetOwnerSecurityDescriptor(pSecDesc, &pOwner, &bDefaulted);
-    status = RtlGetGroupSecurityDescriptor(pSecDesc, &pGroup, &bDefaulted);
+    (void) RtlGetOwnerSecurityDescriptor(pSecDesc, &pOwner, &bDefaulted);
+    (void) RtlGetGroupSecurityDescriptor(pSecDesc, &pGroup, &bDefaulted);
 
-    status = RtlGetDaclSecurityDescriptor(pSecDesc, &bPresent, &pDacl, &bDefaulted);
-    status = RtlGetSaclSecurityDescriptor(pSecDesc, &bPresent, &pSacl, &bDefaulted);
+    (void) RtlGetDaclSecurityDescriptor(pSecDesc, &bPresent, &pDacl, &bDefaulted);
+    (void) RtlGetSaclSecurityDescriptor(pSecDesc, &bPresent, &pSacl, &bDefaulted);
 
     RTL_FREE(&pSecDesc);
     RTL_FREE(&pOwner);

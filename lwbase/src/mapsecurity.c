@@ -278,7 +278,6 @@ LwMapSecurityCreateContext(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     PLW_MAP_SECURITY_CONTEXT pContext = NULL;
     BOOLEAN bInLock = FALSE;
 
@@ -289,7 +288,7 @@ LwMapSecurityCreateContext(
         status = LwMapSecurityCreateContextInternal(
                                   &gLwMapSecurityState.Context,
                                   gLwMapSecurityState.pCreateContextCallback);
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
     }
 
     pContext = gLwMapSecurityState.Context;
@@ -380,34 +379,24 @@ LwMapSecurityCreateContextInternal(
     )
 {
     NTSTATUS status = 0;
-    int EE = 0;
-    PCSTR pszError = NULL;
     PLW_MAP_SECURITY_CONTEXT pContext = NULL;
     LWMSP_CREATE_CONTEXT_CALLBACK pCreateContextCallback = NULL;
 
     status = RTL_ALLOCATE(&pContext, LW_MAP_SECURITY_CONTEXT, sizeof(*pContext));
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     if (!pCallback)
     {
         status = RtlCStringDuplicate(&pContext->LibraryPath, LW_MAP_SECURITY_PLUGIN_PATH);
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
 
         dlerror();
 
         pContext->LibraryHandle = dlopen(pContext->LibraryPath, RTLD_NOW | RTLD_GLOBAL);
         if (!pContext->LibraryHandle)
         {
-#if ENABLE_LOGGING
-            int error = errno;
-#endif
-            pszError = dlerror();
-
-            LOG_ERROR("Failed to load %s (%s (%d))", pContext->LibraryPath,
-                      SAFE_LOG_STRING(pszError), error);
-
             status = STATUS_UNSUCCESSFUL;
-            GOTO_CLEANUP_EE(EE);
+            GOTO_CLEANUP();
         }
 
         dlerror();
@@ -416,14 +405,7 @@ LwMapSecurityCreateContextInternal(
                                             LWMSP_CREATE_CONTEXT_FUNCTION_NAME);
         if (!pCreateContextCallback)
         {
-            pszError = dlerror();
-
-            LOG_ERROR("Failed to load " LWMSP_CREATE_CONTEXT_FUNCTION_NAME
-                      " function from %s (%s)",
-                      pContext->LibraryPath, SAFE_LOG_STRING(pszError));
-
-            status = STATUS_UNSUCCESSFUL;
-            GOTO_CLEANUP_EE(EE);
+            GOTO_CLEANUP();
         }
     }
     else
@@ -431,16 +413,14 @@ LwMapSecurityCreateContextInternal(
         pCreateContextCallback = pCallback;
         if (!pCreateContextCallback)
         {
-            LOG_ERROR("Couldn't find any context create callback function.");
-
             status = STATUS_UNSUCCESSFUL;
-            GOTO_CLEANUP_EE(EE);
+            GOTO_CLEANUP();
         }
     }
 
     status = pCreateContextCallback(&pContext->PluginContext,
                                     &pContext->PluginInterface);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
 cleanup:
     if (!NT_SUCCESS(status))

@@ -93,20 +93,19 @@ LwRtlWC16StringDuplicate(
     )
 {
     NTSTATUS status = 0;
-    int EE = 0;
     size_t size = 0;
     PWSTR pszNewString = NULL;
 
     if (!pszOriginalString)
     {
         status = STATUS_INVALID_PARAMETER;
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
     }
 
     size = (LwRtlWC16StringNumChars(pszOriginalString) + 1) * sizeof(pszOriginalString[0]);
 
     status = RTL_ALLOCATE(&pszNewString, wchar16_t, size);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     memcpy(pszNewString, pszOriginalString, size);
 

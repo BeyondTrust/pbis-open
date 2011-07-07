@@ -133,20 +133,19 @@ LwRtlCStringDuplicate(
     )
 {
     NTSTATUS status = 0;
-    int EE = 0;
     size_t size = 0;
     PSTR pszNewString = NULL;
 
     if (!pszOriginalString)
     {
         status = STATUS_INVALID_PARAMETER;
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
     }
 
     size = (strlen(pszOriginalString) + 1) * sizeof(pszOriginalString[0]);
 
     status = LW_RTL_ALLOCATE_NOCLEAR(&pszNewString, CHAR, size);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     memcpy(pszNewString, pszOriginalString, size);
 
