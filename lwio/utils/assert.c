@@ -91,12 +91,11 @@ LwIoAssertionFailedFormat(
     ...
     )
 {
-    NTSTATUS status = STATUS_SUCCESS;
     PSTR message = NULL;
     va_list args;
 
     va_start(args, Line);
-    status = LwRtlCStringAllocatePrintfV(&message, Format, args);
+    (void) LwRtlCStringAllocatePrintfV(&message, Format, args);
     va_end(args);
 
     LwIoAssertionFailed(Expression, message ? message : Format, Function, File, Line);

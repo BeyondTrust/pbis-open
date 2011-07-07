@@ -587,7 +587,6 @@ IopRootReadConfigDriver(
     )
 {
     NTSTATUS status = 0;
-    int EE = 0;
     PSTR pszDriverPath = NULL;
     PSTR pszDriverKey = NULL;
     PLWIO_CONFIG_REG pReg = NULL;
@@ -596,13 +595,13 @@ IopRootReadConfigDriver(
                     &pszDriverKey,
                     "Services\\lwio\\Parameters\\Drivers\\%s",
                     pszDriverName);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     status = LwIoOpenConfig(
                     pszDriverKey,
                     NULL,
                     &pReg);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     status = LwIoReadConfigString(pReg, "Path", FALSE, &pszDriverPath);
     if (status)
@@ -612,13 +611,13 @@ IopRootReadConfigDriver(
                        status, LwNtStatusToName(status), pszDriverName);
         status = STATUS_DEVICE_CONFIGURATION_ERROR;
     }
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     if (IsNullOrEmptyString(pszDriverPath))
     {
         LWIO_LOG_ERROR("Empty path for driver '%s'", pszDriverName);
         status = STATUS_DEVICE_CONFIGURATION_ERROR;
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
     }
 
 cleanup:

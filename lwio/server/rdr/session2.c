@@ -98,7 +98,6 @@ RdrSession2Create(
 {
     NTSTATUS status = 0;
     RDR_SESSION2 *pSession = NULL;
-    BOOLEAN bDestroySetupCondition = FALSE;
     BOOLEAN bDestroyMutex = FALSE;
 
     status = LwIoAllocateMemory(
@@ -128,8 +127,6 @@ RdrSession2Create(
                 NULL,
                 &pSession->pTreeHashById);
     BAIL_ON_NT_STATUS(status);
-
-    bDestroySetupCondition = TRUE;
 
     /* Pre-allocate resources to send a logoff */
     status = RdrCreateContext(NULL, &pSession->pLogoffContext);

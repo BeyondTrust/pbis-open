@@ -100,9 +100,6 @@ RdrQueryDirectory2(
 {
     NTSTATUS status = STATUS_SUCCESS;
     PRDR_OP_CONTEXT pContext = NULL;
-    PRDR_CCB2 pFile = NULL;
-
-    pFile = IoFileGetContext(pIrp->FileHandle);
 
     status = RdrCreateContext(pIrp, &pContext);
     BAIL_ON_NT_STATUS(status);

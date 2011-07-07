@@ -389,7 +389,6 @@ LwZctCreate(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     PLW_ZCT_VECTOR pZct = NULL;
 
     switch (IoType)
@@ -403,12 +402,12 @@ LwZctCreate(
     }
     
     status = RTL_ALLOCATE(&pZct, LW_ZCT_VECTOR, sizeof(*pZct));
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     pZct->Capacity = LW_ZCT_ENTRY_CAPACITY_MINIMUM;
 
     status = RTL_ALLOCATE(&pZct->Entries, LW_ZCT_ENTRY, sizeof(*pZct->Entries) * pZct->Capacity);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     pZct->IoType = IoType;
     pZct->Mask = LwZctGetSystemSupportedMask(IoType);
@@ -447,18 +446,17 @@ LwpZctCheckEntry(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
 
     if (Entry->Length < 1)
     {
         status = STATUS_INVALID_PARAMETER;
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
     }
 
     if (!IsSetFlag(Mask, _LW_ZCT_ENTRY_MASK_FROM_TYPE(Entry->Type)))
     {
         status = STATUS_INVALID_PARAMETER;
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
     }
 
     switch (Entry->Type)
@@ -467,12 +465,12 @@ LwpZctCheckEntry(
             if (!Entry->Data.Memory.Buffer)
             {
                 status = STATUS_INVALID_PARAMETER;
-                GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+                GOTO_CLEANUP_ON_STATUS(status);
             }
             if ((PVOID)LwRtlOffsetToPointer(Entry->Data.Memory.Buffer, Entry->Length) < Entry->Data.Memory.Buffer)
             {
                 status = STATUS_INVALID_PARAMETER;
-                GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+                GOTO_CLEANUP_ON_STATUS(status);
             }
             break;
 
@@ -480,7 +478,7 @@ LwpZctCheckEntry(
             if (Entry->Data.FdFile.Fd < 0)
             {
                 status = STATUS_INVALID_PARAMETER;
-                GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+                GOTO_CLEANUP_ON_STATUS(status);
             }
             break;
 
@@ -488,13 +486,13 @@ LwpZctCheckEntry(
             if (Entry->Data.FdPipe.Fd < 0)
             {
                 status = STATUS_INVALID_PARAMETER;
-                GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+                GOTO_CLEANUP_ON_STATUS(status);
             }
             break;
 
         default:
             status = STATUS_INVALID_PARAMETER;
-            GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+            GOTO_CLEANUP_ON_STATUS(status);
     }
 
 cleanup:
@@ -511,7 +509,6 @@ LwpZctAdd(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     ULONG i = 0;
     ULONG newCount = 0;
     PLW_ZCT_ENTRY pTarget = NULL;
@@ -520,16 +517,16 @@ LwpZctAdd(
     if (pZct->Cursor)
     {
         status = STATUS_INVALID_PARAMETER;
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
     }
 
     for (i = 0; i < Count; i++)
     {
         status = LwpZctCheckEntry(pZct->Mask, &Entries[i]);
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
 
         status = LwRtlSafeAddULONG(&newLength, newLength, Entries[i].Length);
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
     }
 
     newCount = pZct->Count + Count;
@@ -539,7 +536,7 @@ LwpZctAdd(
         ULONG newCapacity = newCount + LW_ZCT_ENTRY_CAPACITY_INCREMENT;
 
         status = RTL_ALLOCATE(&pEntries, LW_ZCT_ENTRY, sizeof(pEntries[0]) * newCapacity);
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
 
         pTarget = pEntries;
         if (bAddToFront)
@@ -656,13 +653,12 @@ LwZctPrepareIo(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
 
     if (pZct->Count < 1)
     {
         assert(FALSE);
         status = STATUS_INTERNAL_ERROR;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
     switch (pZct->IoType)
@@ -670,12 +666,12 @@ LwZctPrepareIo(
     case LW_ZCT_IO_TYPE_READ_SOCKET:
     case LW_ZCT_IO_TYPE_WRITE_SOCKET:
         status = LwpZctPrepareForSocketIo(pZct);
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
         break;
     default:
         assert(FALSE);
         status = STATUS_INTERNAL_ERROR;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
 cleanup:
@@ -780,7 +776,6 @@ LwpZctCountRangeForSocketIo(
     )
 {
     LW_ZCT_CURSOR_TYPE cursorType = 0;
-    int EE = 0;
     ULONG count = 0;
     PLW_ZCT_ENTRY pEntry = &pZct->Entries[StartIndex];
 
@@ -789,7 +784,7 @@ LwpZctCountRangeForSocketIo(
         assert(FALSE);
         count = 0;
         cursorType = 0;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
 #if defined(HAVE_SENDFILEV)
@@ -797,7 +792,7 @@ LwpZctCountRangeForSocketIo(
     if (count > 0)
     {
         cursorType = LW_ZCT_CURSOR_TYPE_SENDFILE;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 #elif defined(HAVE_SENDFILE_HEADER_TRAILER)
     count = LwpZctCountRunMemory(pEntry, pZct->Count - StartIndex);
@@ -811,28 +806,28 @@ LwpZctCountRangeForSocketIo(
                         pZct->Count - (StartIndex + count));
         count = headerCount + 1 + count;
         cursorType = LW_ZCT_CURSOR_TYPE_SENDFILE;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 #elif defined(HAVE_SENDFILE)
     if (LW_ZCT_ENTRY_TYPE_FD_FILE == pEntry->Type)
     {
         count = 1;
         cursorType = LW_ZCT_CURSOR_TYPE_SENDFILE;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 #endif
     count = LwpZctCountRunMemory(pEntry, pZct->Count - StartIndex);
     if (count > 0)
     {
         cursorType = LW_ZCT_CURSOR_TYPE_IOVEC;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
     if (LW_ZCT_ENTRY_TYPE_FD_PIPE == pEntry->Type)
     {
         count = 1;
         cursorType = LW_ZCT_CURSOR_TYPE_SPLICE;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
     // Should never get here.
@@ -852,7 +847,6 @@ LwpZctCursorAllocateForSocketIo(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     ULONG i = 0;
     ULONG cursorEntryCount = 0;
     ULONG cursorEntrySize = 0;
@@ -907,7 +901,7 @@ LwpZctCursorAllocateForSocketIo(
             default:
                 assert(FALSE);
                 status = STATUS_INTERNAL_ERROR;
-                GOTO_CLEANUP_EE(EE);
+                GOTO_CLEANUP();
                 break;
         }
 
@@ -928,7 +922,7 @@ LwpZctCursorAllocateForSocketIo(
 #endif
 
     status = RTL_ALLOCATE(&pCursor, LW_ZCT_CURSOR, size);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     pCursor->Size = size;
     pCursor->IoVecOffset = baseSize + cursorEntrySize;
@@ -1144,7 +1138,6 @@ LwpZctCursorInitializeForSocketIo(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     ULONG i = 0;
     ULONG cursorIndex = 0;
 
@@ -1194,7 +1187,7 @@ LwpZctCursorInitializeForSocketIo(
             default:
                 assert(FALSE);
                 status = STATUS_INTERNAL_ERROR;
-                GOTO_CLEANUP_EE(EE);
+                GOTO_CLEANUP();
                 break;
         }
 
@@ -1213,16 +1206,15 @@ LwpZctPrepareForSocketIo(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     PLW_ZCT_CURSOR pCursor = NULL;
 
     status = LwpZctCursorAllocateForSocketIo(pZct, &pCursor);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     status = LwpZctCursorInitializeForSocketIo(
                     pZct,
                     pCursor);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     pZct->Cursor = pCursor;
     pCursor = NULL;
@@ -1299,7 +1291,6 @@ LwpZctReadWrite(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     ULONG totalBytesTransferred = 0;
     ULONG bytesRemaining = 0;
     LW_ZCT_IO_TYPE ioType = IsWrite ? LW_ZCT_IO_TYPE_WRITE_SOCKET : LW_ZCT_IO_TYPE_READ_SOCKET;
@@ -1307,19 +1298,19 @@ LwpZctReadWrite(
     if (!pZct->Cursor)
     {
         status = STATUS_INVALID_PARAMETER;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
     if (pZct->IoType != ioType)
     {
         status = STATUS_INVALID_PARAMETER;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
     if (pZct->Status)
     {
         status = pZct->Status;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
     switch (pEndpoint->Type)
@@ -1328,25 +1319,25 @@ LwpZctReadWrite(
         if (pEndpoint->Socket < 0)
         {
             status = STATUS_INVALID_PARAMETER;
-            GOTO_CLEANUP_EE(EE);
+            GOTO_CLEANUP();
         }
         break;
     case ZCT_ENDPOINT_TYPE_BUFFER:
         if (pEndpoint->Length && !pEndpoint->pBuffer)
         {
             status = STATUS_INVALID_PARAMETER;
-            GOTO_CLEANUP_EE(EE);
+            GOTO_CLEANUP();
         }
         if (!pEndpoint->Length && !pEndpoint->pBuffer)
         {
             status = STATUS_SUCCESS;
-            GOTO_CLEANUP_EE(EE);
+            GOTO_CLEANUP();
         }
         break;
     default:
         assert(FALSE);
         status = STATUS_ASSERTION_FAILURE;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
     while (pZct->Cursor->Index < pZct->Cursor->Count)
@@ -1379,7 +1370,7 @@ LwpZctReadWrite(
         default:
             assert(FALSE);
             status = STATUS_ASSERTION_FAILURE;
-            GOTO_CLEANUP_EE(EE);
+            GOTO_CLEANUP();
         }
         // Handle blocking where we already got some data
         if ((STATUS_MORE_PROCESSING_REQUIRED == status) &&
@@ -1388,7 +1379,7 @@ LwpZctReadWrite(
             status = STATUS_SUCCESS;
             break;
         }
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
 
         totalBytesTransferred += bytesTransferred;
         if (isDoneEntry)
@@ -1440,7 +1431,6 @@ LwpZctCursorEntryReadWriteSocket(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     ULONG bytesTransferred = 0;
     BOOLEAN isDoneEntry = FALSE;
 
@@ -1485,7 +1475,7 @@ LwpZctCursorEntryReadWriteSocket(
 #endif
     default:
         status = STATUS_INTERNAL_ERROR;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
 cleanup:
@@ -1511,7 +1501,6 @@ LwpZctIoVecReadWrite(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     struct iovec* vector = &Cursor->Vector[Cursor->Index];
     int count = Cursor->Count - Cursor->Index;
     ssize_t result = 0;
@@ -1538,11 +1527,11 @@ LwpZctIoVecReadWrite(
         {
             status = LwErrnoToNtStatus(error);
         }
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
         // unreachable
         assert(FALSE);
         status = STATUS_INTERNAL_ERROR;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
     assert(result <= LW_MAXULONG);
@@ -1605,7 +1594,6 @@ LwpZctSplice(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     long result = 0;
     ULONG bytesTransferred = 0;
     BOOLEAN isDone = FALSE;
@@ -1639,11 +1627,11 @@ LwpZctSplice(
         {
             status = LwErrnoToNtStatus(error);
         }
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
         // unreachable
         assert(FALSE);
         status = STATUS_INTERNAL_ERROR;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
     if (0 == result)
     {
@@ -1712,7 +1700,6 @@ LwpZctSendFile(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     ssize_t result = 0;
     ULONG bytesTransferred = 0;
     BOOLEAN isDone = FALSE;
@@ -1733,11 +1720,11 @@ LwpZctSendFile(
         {
             status = LwErrnoToNtStatus(error);
         }
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
         // unreachable
         assert(FALSE);
         status = STATUS_INTERNAL_ERROR;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
     assert(result <= Cursor->Length);
@@ -1780,7 +1767,6 @@ LwpZctCursorEntryReadWriteBuffer(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     ULONG bytesTransferred = 0;
     BOOLEAN isDoneEntry = FALSE;
 
@@ -1828,7 +1814,7 @@ LwpZctCursorEntryReadWriteBuffer(
 #endif
     default:
         status = STATUS_INTERNAL_ERROR;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
 cleanup:
@@ -1938,7 +1924,6 @@ LwpZctSpliceBuffer(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     long result = 0;
     ULONG bytesTransferred = 0;
     BOOLEAN isDone = FALSE;
@@ -1966,11 +1951,11 @@ LwpZctSpliceBuffer(
         {
             status = LwErrnoToNtStatus(error);
         }
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
         // unreachable
         assert(FALSE);
         status = STATUS_INTERNAL_ERROR;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
     if (0 == result)
     {
@@ -2042,7 +2027,6 @@ LwpZctSendFileBuffer(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     ssize_t result = 0;
     ULONG bytesTransferred = 0;
     BOOLEAN isDone = FALSE;
@@ -2062,11 +2046,11 @@ LwpZctSendFileBuffer(
         {
             status = LwErrnoToNtStatus(error);
         }
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
         // unreachable
         assert(FALSE);
         status = STATUS_INTERNAL_ERROR;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
     assert(result <= Cursor->Length);

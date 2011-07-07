@@ -53,17 +53,16 @@ ItCreateInternal(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     UNICODE_STRING path = { 0 };
     PIT_CCB pCcb = NULL;
 
     RtlUnicodeStringInit(&path, pIrp->Args.Create.FileName.FileName);
 
     status = ItpCreateCcb(&pCcb, &path);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     status = IoFileSetContext(pIrp->FileHandle, pCcb);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     pCcb = NULL;
 

@@ -601,7 +601,6 @@ IopIrpDispatch(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    int EE = 0;
     BOOLEAN isAsyncCall = FALSE;
     LW_RTL_EVENT event = LW_RTL_EVENT_ZERO_INITIALIZER;
     PIRP pExtraIrpReference = NULL;
@@ -635,7 +634,7 @@ IopIrpDispatch(
         LWIO_ASSERT(!irpInternal->Completion.IsAsyncCall);
 
         status = LwRtlInitializeEvent(&event);
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        GOTO_CLEANUP_ON_STATUS(status);
 
         irpInternal->Completion.Sync.Event = &event;
     }
@@ -647,7 +646,7 @@ IopIrpDispatch(
     // it gets subtracted.
 
     status = IopFileObjectAddDispatched(pIrp->FileHandle, pIrp->Type);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     SetFlag(irpInternal->Flags, IRP_FLAG_DISPATCHED);
 

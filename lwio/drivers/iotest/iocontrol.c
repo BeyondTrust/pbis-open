@@ -51,7 +51,6 @@ ItDispatchDeviceIoControl(
     )
 {
     NTSTATUS status = STATUS_NOT_IMPLEMENTED;
-    int EE = 0;
 
     switch (pIrp->Args.IoFsControl.ControlCode)
     {
@@ -60,7 +59,7 @@ ItDispatchDeviceIoControl(
                 pIrp->Args.IoFsControl.OutputBufferLength)
             {
                 status = STATUS_INVALID_PARAMETER;
-                GOTO_CLEANUP_EE(EE);
+                GOTO_CLEANUP();
             }
             status = ItTestSyncCreate();
             break;
@@ -69,7 +68,7 @@ ItDispatchDeviceIoControl(
                 pIrp->Args.IoFsControl.OutputBufferLength)
             {
                 status = STATUS_INVALID_PARAMETER;
-                GOTO_CLEANUP_EE(EE);
+                GOTO_CLEANUP();
             }
             status = ItTestAsyncCreate(TRUE, FALSE);
             break;
@@ -78,7 +77,7 @@ ItDispatchDeviceIoControl(
                 pIrp->Args.IoFsControl.OutputBufferLength)
             {
                 status = STATUS_INVALID_PARAMETER;
-                GOTO_CLEANUP_EE(EE);
+                GOTO_CLEANUP();
             }
             status = ItTestRundown();
             break;
@@ -87,13 +86,13 @@ ItDispatchDeviceIoControl(
                 pIrp->Args.IoFsControl.OutputBufferLength)
             {
                 status = STATUS_INVALID_PARAMETER;
-                GOTO_CLEANUP_EE(EE);
+                GOTO_CLEANUP();
             }
             status = ItTestSleep(pIrp, 10);
             break;
         default:
             status = STATUS_INVALID_PARAMETER;
-            GOTO_CLEANUP_EE(EE);
+            GOTO_CLEANUP();
     }
 
 cleanup:
