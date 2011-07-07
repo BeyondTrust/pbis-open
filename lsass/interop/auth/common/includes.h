@@ -49,6 +49,7 @@
 
 #include "lwmem.h"
 #include "lwstr.h"
+#include "lwhash.h"
 #include "lwsecurityidentifier.h"
 #include "lsautils.h"
 #include "lsaclient.h"

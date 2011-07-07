@@ -50,6 +50,6 @@ BOOLEAN gbLogInitialized = FALSE;
 
 DWORD   gdwLogLevel      = LSA_PAM_LOG_LEVEL_ERROR;
 
-PSTR gpszUserIgnoreList = NULL;
-PSTR gpszGroupIgnoreList = NULL;
-time_t gtIgnoreListLastUpdated = 0;
+PLW_HASH_TABLE gpUserIgnoreHash = NULL;
+PLW_HASH_TABLE gpGroupIgnoreHash = NULL;
+time_t gtIgnoreHashLastUpdated = 0;

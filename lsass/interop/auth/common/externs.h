@@ -49,8 +49,8 @@
 
 extern BOOLEAN gbLogInitialized;
 
-extern PSTR gpszUserIgnoreList;
-extern PSTR gpszGroupIgnoreList;
-extern time_t gtIgnoreListLastUpdated;
+extern PLW_HASH_TABLE gpUserIgnoreHash;
+extern PLW_HASH_TABLE gpGroupIgnoreHash;
+extern time_t gtIgnoreHashLastUpdated;
 
 #endif /* __EXTERNS_H__ */

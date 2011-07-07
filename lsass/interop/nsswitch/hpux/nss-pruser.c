@@ -112,7 +112,7 @@ LsaNssHpuxPrpasswdDestructor(
         &pLsaBackend->lsaConnection,
         pEnumUsersState);
     LsaNssCommonCloseConnection(&pLsaBackend->lsaConnection);
-    LsaFreeIgnoreLists();
+    LsaFreeIgnoreHashes();
     LwFreeMemory(pBackend);
 
     return ret;
