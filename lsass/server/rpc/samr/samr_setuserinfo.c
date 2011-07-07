@@ -821,18 +821,17 @@ SamrSrvCheckPasswordPolicy(
     IN  PWSTR            pwszPassword
     )
 {
-    wchar_t wszFilterFmt[] = L"%ws='%ws'";
+    PCSTR filterFormat = "%s=%Q";
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
     PDOMAIN_CONTEXT pDomCtx = NULL;
     PCONNECT_CONTEXT pConnCtx = NULL;
-    WCHAR wszAttrDn[] = DS_ATTR_DISTINGUISHED_NAME;
+    CHAR szAttrDn[] = DS_ATTR_DISTINGUISHED_NAME;
     WCHAR wszAttrPasswordLastSet[] = DS_ATTR_PASSWORD_LAST_SET;
     PWSTR pwszBase = 0;
     DWORD dwScope = 0;
-    size_t sDnLen = 0;
-    DWORD dwFilterLen = 0;
     PWSTR pwszFilter = NULL;
+    PSTR pszDn = NULL;
     PDIRECTORY_ENTRY pEntry = NULL;
     DWORD dwNumEntries = 0;
     LONG64 llLastPasswordChange = 0;
@@ -848,23 +847,15 @@ SamrSrvCheckPasswordPolicy(
     pConnCtx = pDomCtx->pConnCtx;
     pwszBase = pDomCtx->pwszDn;
 
-    dwError = LwWc16sLen(pAcctCtx->pwszDn, &sDnLen);
+    dwError = LwWc16sToMbs(pAcctCtx->pwszDn,
+                           &pszDn);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwFilterLen = ((sizeof(wszAttrDn)/sizeof(WCHAR)) - 1) +
-                  sDnLen + 
-                  (sizeof(wszFilterFmt)/sizeof(wszFilterFmt[0]));
-
-    dwError = LwAllocateMemory(sizeof(WCHAR) * dwFilterLen,
-                               OUT_PPVOID(&pwszFilter));
+    dwError = DirectoryAllocateWC16StringFilterPrintf(
+                              &pwszFilter,
+                              filterFormat,
+                              szAttrDn, pszDn);
     BAIL_ON_LSA_ERROR(dwError);
-
-    if (sw16printfw(pwszFilter, dwFilterLen, wszFilterFmt,
-                    wszAttrDn, pAcctCtx->pwszDn) < 0)
-    {
-        ntStatus = LwErrnoToNtStatus(errno);
-        BAIL_ON_NTSTATUS_ERROR(ntStatus);
-    }
 
     dwError = DirectorySearch(pConnCtx->hDirectory,
                               pwszBase,
@@ -925,6 +916,7 @@ cleanup:
         DirectoryFreeEntries(pEntry, dwNumEntries);
     }
 
+    LW_SAFE_FREE_MEMORY(pszDn);
     LW_SAFE_FREE_MEMORY(pwszFilter);
 
     if (ntStatus == STATUS_SUCCESS &&

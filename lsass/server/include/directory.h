@@ -498,6 +498,13 @@ DirectoryAllocateString(
     PSTR* ppszOutputString
     );
 
+DWORD
+DirectoryAllocateWC16StringFilterPrintf(
+    OUT PWSTR* pOutput,
+    IN PCSTR Format,
+    ...
+    );
+
 VOID
 DirectoryFreeStringW(
     PWSTR pwszString

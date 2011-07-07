@@ -59,26 +59,24 @@ SamrSrvChangePasswordUser2(
     /* [in] */ HashPassword    *pLmVerifier
     )
 {
-    const wchar_t wszFilterFmt[] = L"%ws='%ws'";
+    PCSTR filterFormat = "%s=%Q";
 
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
     HANDLE hDirectory = NULL;
     PWSTR pwszBase = NULL;
     DWORD dwScope = 0;
-    DWORD dwFilterLen = 0;
     PWSTR pwszFilter = NULL;
     PDIRECTORY_ENTRY pEntries = NULL;
     DWORD dwNumEntries = 0;
+    CHAR szAttrSamAccountName[] = DS_ATTR_SAM_ACCOUNT_NAME;
     WCHAR wszAttrDn[] = DS_ATTR_DISTINGUISHED_NAME;
     WCHAR wszAttrObjectClass[] = DS_ATTR_OBJECT_CLASS;
-    WCHAR wszAttrSamAccountName[] = DS_ATTR_SAM_ACCOUNT_NAME;
     WCHAR wszAttrSecurityDesc[] = DS_ATTR_SECURITY_DESCRIPTOR;
     WCHAR wszAttrAccountFlags[] = DS_ATTR_ACCOUNT_FLAGS;
     WCHAR wszAttrNtHash[] = DS_ATTR_NT_HASH;
-    size_t sUserNameLen = 0;
     PWSTR pwszUserName = NULL;
-    size_t sDomainNameLen = 0;
+    PSTR pszUserName = NULL;
     PWSTR pwszDomainName = NULL;
     WCHAR wszSystemName[] = { '\\', '\\', 0 };
     DWORD dwConnectFlags = SAMR_ACCESS_CONNECT_TO_SERVER;
@@ -132,24 +130,14 @@ SamrSrvChangePasswordUser2(
                                    pAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    sDomainNameLen = pDomainName->Length / 2;
-    sUserNameLen   = pAccountName->Length / 2;
-
-    dwFilterLen = (((sizeof(wszAttrSamAccountName)
-                     /sizeof(wszAttrSamAccountName[0])) - 1) +
-                   sUserNameLen +
-                   (sizeof(wszFilterFmt)/sizeof(wszFilterFmt[0])));
-
-    dwError = LwAllocateMemory(dwFilterLen * sizeof(WCHAR),
-                               OUT_PPVOID(&pwszFilter));
+    dwError = LwWc16sToMbs(pwszUserName, &pszUserName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (sw16printfw(pwszFilter, dwFilterLen, wszFilterFmt,
-                    wszAttrSamAccountName, pwszUserName) < 0)
-    {
-        ntStatus = LwErrnoToNtStatus(errno);
-        BAIL_ON_NTSTATUS_ERROR(ntStatus);
-    }
+    dwError = DirectoryAllocateWC16StringFilterPrintf(
+                              &pwszFilter,
+                              filterFormat,
+                              szAttrSamAccountName, pszUserName);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = DirectorySearch(hDirectory,
                               pwszBase,
@@ -267,6 +255,7 @@ cleanup:
 
     LW_SAFE_FREE_MEMORY(pwszDomainName);
     LW_SAFE_FREE_MEMORY(pwszUserName);
+    LW_SAFE_FREE_MEMORY(pszUserName);
     LW_SAFE_FREE_MEMORY(pwszFilter);
 
     DirectoryFreeEntrySecurityDescriptor(&pSecDesc);

@@ -55,8 +55,7 @@ SamrSrvQuerySecurity(
     OUT PSAMR_SECURITY_DESCRIPTOR_BUFFER *ppSecDescBuf
     )
 {
-    const wchar_t wszFilterFmt[] = L"%ws='%ws'";
-
+    PCSTR filterFormat = "%s=%Q";
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
     PSAMR_GENERIC_CONTEXT pCtx = (PSAMR_GENERIC_CONTEXT)hObject;
@@ -66,10 +65,9 @@ SamrSrvQuerySecurity(
     HANDLE hDirectory = NULL;
     PWSTR pwszBaseDn = NULL;
     DWORD dwScope = 0;
-    WCHAR wszAttrDn[] = DS_ATTR_DISTINGUISHED_NAME;
     WCHAR wszAttrSecDesc[] = DS_ATTR_SECURITY_DESCRIPTOR;
-    size_t sDnLen = 0;
-    DWORD dwFilterLen = 0;
+    CHAR szAttrDn[] = DS_ATTR_DISTINGUISHED_NAME;
+    PSTR pszDn = NULL;
     PWSTR pwszFilter = NULL;
     PDIRECTORY_ENTRY pEntries = NULL;
     DWORD dwNumEntries = 0;
@@ -114,24 +112,14 @@ SamrSrvQuerySecurity(
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
     }
 
-    dwError = LwWc16sLen(pwszDn, &sDnLen);
+    dwError = LwWc16sToMbs(pwszDn, &pszDn);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwFilterLen = ((sizeof(wszAttrDn)/sizeof(wszAttrDn[0])) - 1) +
-                  sDnLen +
-                  (sizeof(wszFilterFmt)/sizeof(wszFilterFmt[0]));
-
-    dwError = LwAllocateMemory(sizeof(WCHAR) * dwFilterLen,
-                               OUT_PPVOID(&pwszFilter));
+    dwError = DirectoryAllocateWC16StringFilterPrintf(
+                              &pwszFilter,
+                              filterFormat,
+                              szAttrDn, pszDn);
     BAIL_ON_LSA_ERROR(dwError);
-
-    if (sw16printfw(pwszFilter, dwFilterLen, wszFilterFmt,
-                    wszAttrDn,
-                    pwszDn) < 0)
-    {
-        ntStatus = LwErrnoToNtStatus(errno);
-        BAIL_ON_NTSTATUS_ERROR(ntStatus);
-    }
 
     dwError = DirectorySearch(hDirectory,
                               pwszBaseDn,
@@ -176,6 +164,7 @@ cleanup:
         DirectoryFreeEntries(pEntries, dwNumEntries);
     }
 
+    LW_SAFE_FREE_MEMORY(pszDn);
     LW_SAFE_FREE_MEMORY(pwszFilter);
 
     if (ntStatus == STATUS_SUCCESS &&

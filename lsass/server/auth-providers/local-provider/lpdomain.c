@@ -87,7 +87,6 @@ LocalSyncDomainInfo(
     HANDLE hDirectory = NULL;
     PSTR pszFilterFmt = LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %u";
     DWORD dwDomainObjectClass = LOCAL_OBJECT_CLASS_DOMAIN;
-    PSTR pszFilter = NULL;
     PWSTR pwszFilter = NULL;
     WCHAR wszAttrDn[] = LOCAL_DIR_ATTR_DISTINGUISHED_NAME;
     WCHAR wszAttrDomain[] = LOCAL_DIR_ATTR_DOMAIN;
@@ -339,15 +338,10 @@ LocalSyncDomainInfo(
                     ulMethod);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwAllocateStringPrintf(
-                    &pszFilter,
+    dwError = DirectoryAllocateWC16StringFilterPrintf(
+                    &pwszFilter,
                     pszFilterFmt,
                     dwDomainObjectClass);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwMbsToWc16s(
-                    pszFilter,
-                    &pwszFilter);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = DirectorySearch(
@@ -593,7 +587,6 @@ cleanup:
         DirectoryFreeEntries(pEntries, dwNumEntries);
     }
 
-    LW_SAFE_FREE_MEMORY(pszFilter);
     LW_SAFE_FREE_MEMORY(pwszFilter);
 
     if (dwError == ERROR_SUCCESS &&
@@ -625,7 +618,6 @@ LocalGetDomainInfo(
     HANDLE hDirectory  = NULL;
     DWORD  objectClass = LOCAL_OBJECT_CLASS_DOMAIN;
     PCSTR  pszFilterTemplate = LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %u";
-    PSTR   pszFilter = NULL;
     PWSTR  pwszFilter = NULL;
     wchar16_t wszAttrNameDomain[]      = LOCAL_DIR_ATTR_DOMAIN;
     wchar16_t wszAttrNameNetBIOSName[] = LOCAL_DIR_ATTR_NETBIOS_NAME;
@@ -654,15 +646,10 @@ LocalGetDomainInfo(
     LONG64 llMaxPwdAge = 0;
     LONG64 llPwdChangeTime = 0;
 
-    dwError = LwAllocateStringPrintf(
-                    &pszFilter,
+    dwError = DirectoryAllocateWC16StringFilterPrintf(
+                    &pwszFilter,
                     pszFilterTemplate,
                     objectClass);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwMbsToWc16s(
-                    pszFilter,
-                    &pwszFilter);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = DirectoryOpen(&hDirectory);
@@ -778,9 +765,7 @@ cleanup:
         DirectoryClose(hDirectory);
     }
 
-    LW_SAFE_FREE_STRING(pszFilter);
     LW_SAFE_FREE_STRING(pszDomainSID);
-    LW_SAFE_FREE_STRING(pszFilter);
     LW_SAFE_FREE_MEMORY(pwszFilter);
 
     return dwError;
@@ -960,7 +945,7 @@ LocalDirSetDomainName(
     IN PCSTR  pszNewDomainName
     )
 {
-    const wchar_t wszDomainFilterFmt[] = L"%ws=%d";
+    const wchar_t wszDomainFilterFmt[] = L"%ws=%u";
     const DWORD dwInt32StrSize = 10;
 
     DWORD dwError = 0;
@@ -1183,7 +1168,7 @@ LocalDirSetDomainSid(
     IN PCSTR  pszSid
     )
 {
-    const wchar_t wszDomainFilterFmt[] = L"%ws=%d";
+    const wchar_t wszDomainFilterFmt[] = L"%ws=%u";
     const DWORD dwInt32StrSize = 10;
 
     DWORD dwError = 0;

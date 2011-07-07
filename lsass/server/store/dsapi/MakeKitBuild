@@ -20,6 +20,6 @@ make()
 	SOURCES="$DSAPI_SOURCES" \
         GROUPS="../samdb/samdb" \
 	INCLUDEDIRS=". ../include ../../include ../../../include" \
-	HEADERDEPS="lw/base.h lwadvapi.h" \
-	LIBDEPS="lwbase lwadvapi lsacommon"
+	HEADERDEPS="lw/base.h lwadvapi.h sqlite3.h" \
+	LIBDEPS="lwbase lwadvapi lsacommon sqlite3"
 }
