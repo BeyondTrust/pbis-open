@@ -876,7 +876,6 @@ LWNetNbAddressListFree(
 VOID *LWNetSrvStartNetBiosThreadRoutine(VOID *ctx)
 {
     DWORD dwError = 0;
-    struct addrinfo hints = {0};
     struct pollfd pollfds[1];
     int sts = 0;
     int sock = 0;
@@ -893,9 +892,6 @@ VOID *LWNetSrvStartNetBiosThreadRoutine(VOID *ctx)
     DWORD addrsLen = 0;
     struct timeval  tp = {0};
     struct timespec cvTimeout = {0};
-
-    hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
 
     dwError = LWNetAllocateMemory(
                   LWNB_NETBIOS_UDP_MAX,
