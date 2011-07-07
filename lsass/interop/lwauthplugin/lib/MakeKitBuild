@@ -5,6 +5,6 @@ make()
         LIB="authplugin" \
         SOURCES="mechanism.c" \
         INCLUDEDIRS="../../../include" \
-        HEADERDEPS="lw/types.h lwerror.h"
+        HEADERDEPS="lw/types.h lwerror.h" \
         LDFLAGS="-framework CoreFoundation"
 }
