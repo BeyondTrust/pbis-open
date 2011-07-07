@@ -22,7 +22,7 @@
     doc = ""
 }
 "Dependencies" = {
-    default = "netlogon lwio lwreg rdr npfs"
+    default = "netlogon lwio lwreg rdr"
     doc = ""
 }
 "Type" = {
