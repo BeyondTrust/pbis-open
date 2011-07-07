@@ -185,10 +185,9 @@ LocalDirAddGroup(
     PWSTR pwszSamAccountName = NULL;
     PWSTR pwszDomain = NULL;
     PWSTR pwszNetBIOSDomain = NULL;
-    size_t sGroupDNLen = 0;
-    DWORD dwFilterLen = 0;
+    PSTR pszGroupDn = NULL;
     PWSTR pwszFilter = NULL;
-    wchar_t wszFilterFmt[] = L"%ws = '%ws'";
+    PCSTR filterFormat = LOCAL_DB_DIR_ATTR_DISTINGUISHED_NAME " = %Q";
     PWSTR pwszBase = NULL;
     DWORD dwScope = 0;
 
@@ -280,25 +279,16 @@ LocalDirAddGroup(
                     mods);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwWc16sLen(pwszGroupDN,
-                         &sGroupDNLen);
+    dwError = LwWc16sToMbs(
+                    pwszGroupDN,
+                    &pszGroupDn);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwFilterLen = (sizeof(wszAttrDistinguishedName) - 2) +
-                  (sGroupDNLen * sizeof(WCHAR)) +
-                   sizeof(wszFilterFmt);
-
-    dwError = LwAllocateMemory(
-                    dwFilterLen,
-                    OUT_PPVOID(&pwszFilter));
+    dwError = DirectoryAllocateWC16StringFilterPrintf(
+                    &pwszFilter,
+                    filterFormat,
+                    pszGroupDn);
     BAIL_ON_LSA_ERROR(dwError);
-
-    if (sw16printfw(pwszFilter, dwFilterLen/sizeof(WCHAR), wszFilterFmt,
-                    wszAttrDistinguishedName, pwszGroupDN) < 0)
-    {
-        dwError = LwErrnoToWin32Error(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
 
     dwError = DirectorySearch(
                     pContext->hDirectory,
@@ -376,6 +366,8 @@ cleanup:
     }
 
     LW_SAFE_FREE_MEMORY(pwszGroupDN);
+    LW_SAFE_FREE_MEMORY(pszGroupDn);
+    LW_SAFE_FREE_MEMORY(pwszFilter);
     LW_SAFE_FREE_MEMORY(pwszSamAccountName);
     LW_SAFE_FREE_MEMORY(pwszDomain);
     LW_SAFE_FREE_MEMORY(pwszNetBIOSDomain);
@@ -438,9 +430,10 @@ LocalDirModifyGroup(
     DWORD dwObjectClassLocalUser = LOCAL_OBJECT_CLASS_USER;
     PWSTR pwszBase = NULL;
     ULONG ulScope = 0;
-    wchar_t wszFilterFmtSidOnly[] = L"(%ws=%u OR %ws=%u) AND %ws=\'%ws\'";
+    PCSTR filterFormatSidOnly = "(" LOCAL_DB_DIR_ATTR_OBJECT_CLASS "=%u OR "
+                                    LOCAL_DB_DIR_ATTR_OBJECT_CLASS "=%u) AND "
+                                 LOCAL_DB_DIR_ATTR_OBJECT_SID "=%Q";
     PWSTR pwszFilter = NULL;
-    DWORD dwFilterLen = 0;
     WCHAR wszAttrObjectClass[] = LOCAL_DIR_ATTR_OBJECT_CLASS;
     WCHAR wszAttrDistinguishedName[] = LOCAL_DIR_ATTR_DISTINGUISHED_NAME;
     WCHAR wszAttrObjectSid[] = LOCAL_DIR_ATTR_OBJECT_SID;
@@ -538,30 +531,17 @@ LocalDirModifyGroup(
             dwError = LocalDirCheckLocalOrBuiltinSid(
                             pszSID,
                             &bIsLocalOrBuiltinSid);
+            BAIL_ON_LSA_ERROR(dwError);
 
             bForeignSid = !bIsLocalOrBuiltinSid;
 
-            dwError = LwMbsToWc16s(pszSID, &pwszSID);
+            dwError = DirectoryAllocateWC16StringFilterPrintf(
+                        &pwszFilter,
+                        filterFormatSidOnly,
+                        dwObjectClassGroupMember,
+                        dwObjectClassLocalUser,
+                        pszSID);
             BAIL_ON_LSA_ERROR(dwError);
-
-            dwFilterLen = (sizeof(wszAttrObjectClass) - 2) +
-                           10 +
-                          (sizeof(wszAttrObjectClass) - 2) +
-                           10 +
-                          (sizeof(wszAttrObjectSid) - 2) +
-                          (wc16slen(pwszSID) * sizeof(WCHAR)) +
-                          sizeof(wszFilterFmtSidOnly);
-
-            dwError = LwAllocateMemory(
-                        dwFilterLen,
-                        (PVOID*)&pwszFilter);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            sw16printfw(pwszFilter, dwFilterLen/sizeof(WCHAR),
-                        wszFilterFmtSidOnly,
-                        wszAttrObjectClass, dwObjectClassGroupMember,
-                        wszAttrObjectClass, dwObjectClassLocalUser,
-                        wszAttrObjectSid, pwszSID);
 
             dwError = DirectorySearch(
                         pContext->hDirectory,
@@ -577,6 +557,9 @@ LocalDirModifyGroup(
             if (dwNumEntries == 0 &&
                 bForeignSid)
             {
+                dwError = LwMbsToWc16s(pszSID, &pwszSID);
+                BAIL_ON_LSA_ERROR(dwError);
+
                 dwError = LocalDirCreateForeignPrincipalDN(hProvider,
                                                            pwszSID,
                                                            &pwszDN);
@@ -652,27 +635,13 @@ LocalDirModifyGroup(
         {
             pszSID = pGroupModInfo->ppszRemoveMembers[i];
 
-            dwError = LwMbsToWc16s(pszSID, &pwszSID);
+            dwError = DirectoryAllocateWC16StringFilterPrintf(
+                        &pwszFilter,
+                        filterFormatSidOnly,
+                        dwObjectClassGroupMember,
+                        dwObjectClassLocalUser,
+                        pszSID);
             BAIL_ON_LSA_ERROR(dwError);
-
-            dwFilterLen = (sizeof(wszAttrObjectClass) - 1) +
-                           10 +
-                          (sizeof(wszAttrObjectClass) - 2) +
-                           10 +
-                          (sizeof(wszAttrObjectSid) - 1) +
-                          (strlen(pszSID) * sizeof(WCHAR)) +
-                          sizeof(wszFilterFmtSidOnly);
-
-            dwError = LwAllocateMemory(
-                        dwFilterLen,
-                        (PVOID*)&pwszFilter);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            sw16printfw(pwszFilter, dwFilterLen/sizeof(WCHAR),
-                        wszFilterFmtSidOnly,
-                        wszAttrObjectClass, dwObjectClassGroupMember,
-                        wszAttrObjectClass, dwObjectClassLocalUser,
-                        wszAttrObjectSid, pwszSID);
 
             dwError = DirectorySearch(
                         pContext->hDirectory,
@@ -709,12 +678,6 @@ LocalDirModifyGroup(
                 pwszDN = NULL;
             }
 
-            if (pwszSID)
-            {
-                LW_SAFE_FREE_MEMORY(pwszSID);
-                pwszDN = NULL;
-            }
-
             if (pwszFilter)
             {
                 LW_SAFE_FREE_MEMORY(pwszFilter);
@@ -733,21 +696,9 @@ cleanup:
 
     LsaUtilFreeSecurityObjectList(1, ppObjects);
 
-    if (pwszFilter)
-    {
-        LW_SAFE_FREE_MEMORY(pwszFilter);
-    }
-
-    if (pwszDN)
-    {
-        LW_SAFE_FREE_MEMORY(pwszDN);
-    }
-
-    if (pwszSID)
-    {
-        LW_SAFE_FREE_MEMORY(pwszSID);
-    }
-
+    LW_SAFE_FREE_MEMORY(pwszFilter);
+    LW_SAFE_FREE_MEMORY(pwszDN);
+    LW_SAFE_FREE_MEMORY(pwszSID);
     LW_SAFE_FREE_MEMORY(pwszGroupDN);
 
     if (pMember)
@@ -994,12 +945,13 @@ LocalDirDeleteGroup(
     PWSTR  pwszGroupDN
     )
 {
-    const wchar_t wszFilterTemplate[] = L"%ws=%u AND %ws='%ws'";
+    PCSTR filterTemplate = LOCAL_DB_DIR_ATTR_OBJECT_CLASS "=%u AND "
+                           LOCAL_DB_DIR_ATTR_DISTINGUISHED_NAME "=%Q";
     DWORD dwError = 0;
     PLOCAL_PROVIDER_CONTEXT pContext = (PLOCAL_PROVIDER_CONTEXT)hProvider;
-    WCHAR wszAttrNameDN[] = LOCAL_DIR_ATTR_DISTINGUISHED_NAME;
     WCHAR wszAttrNameObjectClass[] = LOCAL_DIR_ATTR_OBJECT_CLASS;
     WCHAR wszAttrNameObjectSid[] = LOCAL_DIR_ATTR_OBJECT_SID;
+    PSTR pszGroupDn = NULL;
     PWSTR pwszFilter = NULL;
     PDIRECTORY_ENTRY pEntry = NULL;
     DWORD dwNumEntries = 0;
@@ -1012,11 +964,16 @@ LocalDirDeleteGroup(
         NULL
     };
 
-    dwError = LwAllocateWc16sPrintfW(
+    dwError = LwWc16sToMbs(
+                    pwszGroupDN,
+                    &pszGroupDn);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = DirectoryAllocateWC16StringFilterPrintf(
                     &pwszFilter,
-                    wszFilterTemplate,
-                    wszAttrNameObjectClass, LOCAL_OBJECT_CLASS_GROUP,
-                    wszAttrNameDN, pwszGroupDN);
+                    filterTemplate,
+                    LOCAL_OBJECT_CLASS_GROUP,
+                    pszGroupDn);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = DirectorySearch(
@@ -1067,6 +1024,7 @@ cleanup:
         DirectoryFreeEntries(pEntry, dwNumEntries);
     }
 
+    LW_SAFE_FREE_MEMORY(pszGroupDn);
     LW_SAFE_FREE_MEMORY(pwszFilter);
     LW_SAFE_FREE_MEMORY(pGroupSid);
 

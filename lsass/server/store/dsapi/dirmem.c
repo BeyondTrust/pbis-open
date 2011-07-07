@@ -42,7 +42,10 @@
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
  *          Sriram Nambakam (snambakam@likewisesoftware.com)
  */
+
 #include "includes.h"
+#include <sqlite3.h>
+
 
 DWORD
 DirectoryAllocateMemory(
@@ -238,4 +241,47 @@ DirectoryFreeStringArray(
         DirectoryFreeMemory(ppStringArray);
     }
 }
+
+
+DWORD
+DirectoryAllocateWC16StringFilterPrintf(
+    OUT PWSTR* pOutput,
+    IN PCSTR Format,
+    ...
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    va_list args;
+    PSTR formattedString = NULL;
+    PWSTR output = NULL;
+
+    va_start(args, Format);
+    formattedString = sqlite3_vmprintf(Format, args);
+    va_end(args);
+
+    if (formattedString == NULL)
+    {
+        err = ERROR_NOT_ENOUGH_MEMORY;
+        BAIL_ON_LSA_ERROR(err);
+    }
+
+    err = LwMbsToWc16s(formattedString, &output);
+    BAIL_ON_LSA_ERROR(err);
+
+error:
+    if (err)
+    {
+        LW_SAFE_FREE_MEMORY(output);
+    }
+
+    if (formattedString)
+    {
+        sqlite3_free(formattedString);
+    }
+
+    *pOutput = output;
+
+    return err;
+}
+
 

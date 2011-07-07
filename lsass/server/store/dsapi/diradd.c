@@ -59,10 +59,10 @@ DirectoryAddObject(
     PDIRECTORY_CONTEXT pContext = (PDIRECTORY_CONTEXT)hDirectory;
     PWSTR pwszBase = NULL;
     DWORD dwScope = 0;
-    wchar_t wszFilterFmt[] = L"%ws='%ws'";
-    size_t sDnLen = 0;
-    DWORD dwFilterLen = 0;
+    PSTR pszObjectDn = NULL;
+    PCSTR filterFormat = "%s=%Q";
     PWSTR pwszFilter = NULL;
+    CHAR szAttrDn[] = DIRECTORY_ATTR_DISTINGUISHED_NAME;
     WCHAR wszAttrDn[] = DIRECTORY_ATTR_DISTINGUISHED_NAME;
     WCHAR wszAttrObjectClass[] = DIRECTORY_ATTR_OBJECT_CLASS;
     PDIRECTORY_ENTRY pEntries = NULL;
@@ -82,24 +82,14 @@ DirectoryAddObject(
         BAIL_ON_DIRECTORY_ERROR(dwError);
     }
 
-    dwError = LwWc16sLen(pwszObjectDN, &sDnLen);
+    dwError = LwWc16sToMbs(pwszObjectDN, &pszObjectDn);
     BAIL_ON_DIRECTORY_ERROR(dwError);
 
-    dwFilterLen = ((sizeof(wszFilterFmt)/sizeof(wszFilterFmt[0])) - 1) +
-                   sizeof(wszAttrDn) +
-                   (sizeof(WCHAR) * sDnLen);
-
-    dwError = DirectoryAllocateMemory(dwFilterLen,
-                                      OUT_PPVOID(&pwszFilter));
+    dwError = DirectoryAllocateWC16StringFilterPrintf(
+                              &pwszFilter,
+                              filterFormat,
+                              szAttrDn, pszObjectDn);
     BAIL_ON_DIRECTORY_ERROR(dwError);
-
-    if (sw16printfw(pwszFilter, dwFilterLen, wszFilterFmt,
-                    wszAttrDn,
-                    pwszObjectDN) < 0)
-    {
-        dwError = LwErrnoToWin32Error(errno);
-        BAIL_ON_DIRECTORY_ERROR(dwError);
-    }
 
     dwError = DirectorySearch(hDirectory,
                               pwszBase,
@@ -155,6 +145,7 @@ error:
         DirectoryFreeEntries(pEntries, dwNumEntries);
     }
 
+    DIRECTORY_FREE_MEMORY(pszObjectDn);
     DIRECTORY_FREE_MEMORY(pwszFilter);
 
     return dwError;

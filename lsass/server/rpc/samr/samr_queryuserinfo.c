@@ -329,14 +329,13 @@ SamrSrvQueryUserInfo(
     /* [out] */ UserInfo **info
     )
 {
-    wchar_t wszFilterFmt[] = L"%ws='%ws'";
+    PCSTR filterFormat = "%s=%Q";
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = 0;
     PACCOUNT_CONTEXT pAcctCtx = NULL;
     PDOMAIN_CONTEXT pDomCtx = NULL;
     PCONNECT_CONTEXT pConnCtx = NULL;
     PWSTR pwszBase = NULL;
-    WCHAR wszAttrDn[] = DS_ATTR_DISTINGUISHED_NAME;
     WCHAR wszAttrObjectSid[] = DS_ATTR_OBJECT_SID;
     WCHAR wszAttrSamAccountName[] = DS_ATTR_SAM_ACCOUNT_NAME;
     WCHAR wszAttrFullName[] = DS_ATTR_FULL_NAME;
@@ -363,9 +362,10 @@ SamrSrvQueryUserInfo(
     WCHAR wszAttrAccountExpiry[] = DS_ATTR_ACCOUNT_EXPIRY;
     WCHAR wszAttrLmHash[] = DS_ATTR_LM_HASH;
     WCHAR wszAttrNtHash[] = DS_ATTR_NT_HASH;
+    CHAR szAttrDn[] = DS_ATTR_DISTINGUISHED_NAME;
     DWORD dwScope = 0;
+    PSTR pszDn = NULL;
     PWSTR pwszFilter = NULL;
-    DWORD dwFilterLen = 0;
     PDIRECTORY_ENTRY pEntry = NULL;
     DWORD dwEntriesNum = 0;
     UserInfo *pUserInfo = NULL;
@@ -577,16 +577,15 @@ SamrSrvQueryUserInfo(
 
     pwszBase = pDomCtx->pwszDn;
 
-    dwFilterLen = ((sizeof(wszAttrDn)/sizeof(WCHAR)) - 1) +
-                  wc16slen(pAcctCtx->pwszDn) + 
-                  (sizeof(wszFilterFmt)/sizeof(wszFilterFmt[0]));
+    dwError = LwWc16sToMbs(pAcctCtx->pwszDn,
+                           &pszDn);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    ntStatus = SamrSrvAllocateMemory((void**)&pwszFilter,
-                                   dwFilterLen * sizeof(WCHAR));
-    BAIL_ON_NTSTATUS_ERROR(ntStatus);
-
-    sw16printfw(pwszFilter, dwFilterLen, wszFilterFmt,
-                wszAttrDn, pAcctCtx->pwszDn);
+    dwError = DirectoryAllocateWC16StringFilterPrintf(
+                              &pwszFilter,
+                              filterFormat,
+                              szAttrDn, pszDn);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = DirectorySearch(pConnCtx->hDirectory,
                               pwszBase,
@@ -748,9 +747,8 @@ SamrSrvQueryUserInfo(
     *info = pUserInfo;
     
 cleanup:
-    if (pwszFilter) {
-        SamrSrvFreeMemory(pwszFilter);
-    }
+    LW_SAFE_FREE_MEMORY(pszDn);
+    LW_SAFE_FREE_MEMORY(pwszFilter);
 
     if (pEntry) {
         DirectoryFreeEntries(pEntry, dwEntriesNum);
