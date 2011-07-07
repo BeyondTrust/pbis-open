@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 
@@ -26,7 +27,7 @@ main(
     if (argc < 3 || (strcmp(argv[1], "enable") != 0 &&
                             strcmp(argv[1], "disable") != 0))
     {
-        errx(1, "Usage: %s <enable|disable> mechanism [...]");
+        errx(1, "Usage: %s <enable|disable> mechanism [...]", getprogname());
     }
 
     openlog(argv[0], LOG_PERROR, LOG_USER);
