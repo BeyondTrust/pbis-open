@@ -40,7 +40,8 @@ libdsapi_la_LIBADD =                             \
         $(LWBASE_LIBS)                           \
         $(ADDITIONAL_LIBS)                       \
         $(DL_LIBS)                               \
-        $(top_builddir)/common/liblsacommon.la
+        $(top_builddir)/common/liblsacommon.la   \
+        -lsqlite3
 
 libdsapi_la_LDFLAGS =                            \
         $(LWBASE_LDFLAGS)
