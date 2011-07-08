@@ -83,8 +83,6 @@ SamrSrvLookupNames(
     PSTR pszName = NULL;
     PDIRECTORY_ENTRY pEntries = NULL;
     PDIRECTORY_ENTRY pEntry = NULL;
-    PDIRECTORY_ATTRIBUTE pAttr = NULL;
-    PATTRIBUTE_VALUE pAttrVal = NULL;
     DWORD dwEntriesNum = 0;
     PWSTR pwszSid = NULL;
     PSID pSid = NULL;
@@ -155,8 +153,6 @@ SamrSrvLookupNames(
         wszAttributes[2] = NULL;
 
         pEntry   = NULL;
-        pAttr    = NULL;
-        pAttrVal = NULL;
 
         dwError = DirectorySearch(hDirectory,
                                   pwszDn,

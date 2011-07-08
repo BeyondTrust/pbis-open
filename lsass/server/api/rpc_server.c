@@ -238,14 +238,13 @@ LsaStartRpcServers(
     PLSA_RPC_SERVER pRpcServerList
     )
 {
-    DWORD dwError = 0;
     PLSA_RPC_SERVER pRpc = NULL;
 
     while (pRpcServerList) {
         pRpc = pRpcServerList;
         pRpcServerList = pRpcServerList->pNext;
 
-        dwError = LsaStartRpcSrv(pRpc);
+        (void) LsaStartRpcSrv(pRpc);
     }
 }
 
@@ -277,14 +276,13 @@ LsaStopRpcServers(
     PLSA_RPC_SERVER pRpcServerList
     )
 {
-    DWORD dwError = 0;
     PLSA_RPC_SERVER pRpc = NULL;
 
     while (pRpcServerList) {
         pRpc = pRpcServerList;
         pRpcServerList = pRpcServerList->pNext;
 
-        dwError = LsaStopRpcSrv(pRpc);
+        (void) LsaStopRpcSrv(pRpc);
     }
 }
 

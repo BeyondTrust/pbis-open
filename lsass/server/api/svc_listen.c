@@ -39,7 +39,7 @@ RpcSvcWorkerMain(
     void* pCtx
     )
 {
-    DWORD dwError = 0;
+    DWORD __attribute__((unused)) dwError = 0;
     unsigned32 dwRpcStatus = rpc_s_ok;
 
     DCETHREAD_TRY

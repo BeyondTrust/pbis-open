@@ -69,7 +69,6 @@ NtlmServerInitializeSecurityContext(
     PSTR pWorkstation = NULL;
     PSTR pDomain = NULL;
     PNTLM_CHALLENGE_MESSAGE pMessage = NULL;
-    DWORD dwMessageSize = 0;
 
     pOutput->pvBuffer = NULL;
 
@@ -112,7 +111,6 @@ NtlmServerInitializeSecurityContext(
         }
 
         pMessage = pInput->pvBuffer;
-        dwMessageSize = pInput->cbBuffer;
 
         dwError = NtlmCreateResponseContext(
             pMessage,

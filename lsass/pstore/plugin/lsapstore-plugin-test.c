@@ -192,7 +192,6 @@ LsaPstorePluginInitializeContext(
     )
 {
     DWORD dwError = 0;
-    int EE = 0;
     // compiler type check for this function
     LSA_PSTORE_PLUGIN_INITIALIZE_FUNCTION unused = LsaPstorePluginInitializeContext;
     static LSA_PSTORE_PLUGIN_DISPATCH globalDispatch = {
@@ -210,14 +209,14 @@ LsaPstorePluginInitializeContext(
     if (Version != LSA_PSTORE_PLUGIN_VERSION)
     {
         dwError = ERROR_INVALID_PARAMETER;
-        GOTO_CLEANUP_EE(EE);
+        GOTO_CLEANUP();
     }
 
     dwError = LwAllocateMemory(sizeof(*context), OUT_PPVOID(&context));
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
 
     dwError = LwAllocateString(pName, &context->Name);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    GOTO_CLEANUP_ON_WINERROR(dwError);
 
     PLUGIN_LOG(context, "INITIALIZE");
 

@@ -604,7 +604,6 @@ LdapMachAcctSearch(
 
     int lderr = LDAP_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    size_t basedn_len = 0;
     size_t filter_len = 0;
     size_t samacctname_len = 0;
     char *basedn = NULL;
@@ -621,8 +620,6 @@ LdapMachAcctSearch(
 
     dwError = LwWc16sToMbs(base, &basedn);
     BAIL_ON_LSA_ERROR(dwError);
-
-    basedn_len = strlen(basedn);
 
     samacctname_len = wc16slen(samacct_name);
 

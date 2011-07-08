@@ -134,11 +134,7 @@ LsaMapSecurityCloseConnection(
 
     if (hConnection)
     {
-        NTSTATUS status = STATUS_SUCCESS;
-        DWORD dwError = LW_ERROR_SUCCESS;
-
-        dwError = LsaCloseServer(hConnection);
-        status = LsaLsaErrorToNtStatus(dwError);
+        (void) LsaCloseServer(hConnection);
 
         *phConnection = NULL;
     }

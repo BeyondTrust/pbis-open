@@ -93,7 +93,6 @@ LocalAuthenticateUserExInternal(
     PSTR     pszAccountName = NULL;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     PLSA_AUTH_USER_INFO pUserInfo = NULL;
-    BOOLEAN bUsingNTLMv2 = FALSE;
     BOOLEAN bAcceptNTLMv1 = TRUE;
     PLSA_DATA_BLOB pSessionKey = NULL;
     LSA_QUERY_LIST QueryList;
@@ -152,8 +151,6 @@ LocalAuthenticateUserExInternal(
 
     if (LsaDataBlobLength(pUserParams->pass.chap.pNT_resp) == 24)
     {
-        bUsingNTLMv2 = FALSE;
-
         if (!bAcceptNTLMv1)
         {
             dwError = ERROR_INVALID_LOGON_TYPE;
@@ -167,8 +164,6 @@ LocalAuthenticateUserExInternal(
     }
     else
     {
-        bUsingNTLMv2 = TRUE;
-
         dwError = AuthenticateNTLMv2(pUserParams,
                                      ppObjects[0],
                                      &pSessionKey);

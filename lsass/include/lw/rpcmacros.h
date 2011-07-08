@@ -75,7 +75,7 @@
 
 #define DCERPC_CALL(status, fn_call)                                 \
     do {                                                             \
-        dcethread_exc *dceexc;                                       \
+        dcethread_exc __attribute__((unused)) *dceexc;               \
                                                                      \
         DCETHREAD_TRY                                                \
         {                                                            \
@@ -94,7 +94,7 @@
 
 #define DCERPC_CALL_WINERR(winerr, fn_call)                          \
     do {                                                             \
-        dcethread_exc *dceexc;                                       \
+        dcethread_exc __attribute__((unused)) *dceexc;               \
         NTSTATUS ntstat;                                             \
                                                                      \
         DCETHREAD_TRY                                                \

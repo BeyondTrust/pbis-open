@@ -636,10 +636,10 @@ LsaGssGetDisplayStatus_1(
     do
     {
         gss_buffer_desc msg;
-        OM_uint32       maj_stat, min_stat;
+        OM_uint32       min_stat;
         int             nWritten = 0;
 
-        maj_stat = gss_display_status(
+        (void) gss_display_status(
                             &min_stat,
                             code,
                             type,
