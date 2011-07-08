@@ -280,10 +280,6 @@ LsaReadIgnoreHashes()
     PLW_HASH_TABLE pGroupIgnoreHash = NULL;
     BOOLEAN includeSystemList = FALSE;
     FILE* pLocalFile = NULL;
-    struct passwd accountBuffer = { 0 };
-    struct passwd* pAccount = NULL;
-    struct group groupBuffer = { 0 };
-    struct group* pGroup = NULL;
     PSTR pBuffer = NULL;
     size_t bufferLen = 0;
     PSTR pNameCopy = NULL;
@@ -319,20 +315,49 @@ LsaReadIgnoreHashes()
 
     LW_SAFE_FREE_MEMORY(pIgnoreList);
 
+#if HAVE_DECL_FGETPWENT_R
     if (includeSystemList)
     {
+        struct passwd accountBuffer = { 0 };
+        struct passwd* pAccount = NULL;
+
         pLocalFile = fopen("/etc/passwd", "r");
         // Ignore if the file cannot be opened
         if (pLocalFile)
         {
             while(1)
             {
+#if FGETPWENT_R_TAKES_5_ARGS
                 dwError = fgetpwent_r(
                                 pLocalFile,
                                 &accountBuffer,
                                 pBuffer,
                                 bufferLen,
                                 &pAccount);
+#elif FGETPWENT_R_RETURNS_INT
+                dwError = fgetpwent_r(
+                                pLocalFile,
+                                &accountBuffer,
+                                pBuffer,
+                                bufferLen);
+                if (!dwError)
+                {
+                    pAccount = &accountBuffer;
+                }
+#else
+                // Solaris man page recommends setting errno to 0 before
+                // calling the function.
+                errno = 0;
+                pAccount = fgetpwent_r(
+                                pLocalFile,
+                                &accountBuffer,
+                                pBuffer,
+                                bufferLen);
+                if (!pAccount)
+                {
+                    dwError = errno;
+                }
+#endif
                 if (!dwError)
                 {
                     dwError = LwAllocateString(
@@ -372,6 +397,7 @@ LsaReadIgnoreHashes()
             pLocalFile = NULL;
         }
     }
+#endif /* HAVE_FGETPWENT_R */
 
     dwError = LsaReadIgnoreList(
                     LSA_GROUP_IGNORE_LIST_PATH,
@@ -384,20 +410,49 @@ LsaReadIgnoreHashes()
                     &pGroupIgnoreHash);
     BAIL_ON_LSA_ERROR(dwError);
 
+#if HAVE_DECL_FGETGRENT_R
     if (includeSystemList)
     {
+        struct group groupBuffer = { 0 };
+        struct group* pGroup = NULL;
+
         pLocalFile = fopen("/etc/group", "r");
         // Ignore if the file cannot be opened
         if (pLocalFile)
         {
             while(1)
             {
+#if FGETPWENT_R_TAKES_5_ARGS
                 dwError = fgetgrent_r(
                                 pLocalFile,
                                 &groupBuffer,
                                 pBuffer,
                                 bufferLen,
                                 &pGroup);
+#elif FGETPWENT_R_RETURNS_INT
+                dwError = fgetgrent_r(
+                                pLocalFile,
+                                &groupBuffer,
+                                pBuffer,
+                                bufferLen);
+                if (!dwError)
+                {
+                    pGroup = &groupBuffer;
+                }
+#else
+                // Solaris man page recommends setting errno to 0 before
+                // calling the function.
+                errno = 0;
+                pGroup = fgetgrent_r(
+                                pLocalFile,
+                                &groupBuffer,
+                                pBuffer,
+                                bufferLen);
+                if (!pGroup)
+                {
+                    dwError = errno;
+                }
+#endif
                 if (!dwError)
                 {
                     dwError = LwAllocateString(
@@ -435,6 +490,7 @@ LsaReadIgnoreHashes()
             }
         }
     }
+#endif /* HAVE_FGETGRENT_R */
 
     LwHashSafeFree(&gpUserIgnoreHash);
     gpUserIgnoreHash = pUserIgnoreHash;

@@ -244,6 +244,28 @@ configure()
 	HEADERDEPS="sys/time.h" \
         settimeofday
 
+    mk_check_functions \
+	HEADERDEPS="grp.h pwd.h" \
+        fgetpwent_r fgetgrent_r
+
+    mk_msg_checking "fgetpwent_r prototype"
+    if mk_check_function \
+        HEADERDEPS="pwd.h stdlib.h" \
+        PROTOTYPE="int fgetpwent_r(FILE *fp, struct passwd *pwbuf, char *buf, size_t buflen, struct passwd **pwbufp)"
+    then
+        mk_msg_result "5 arguments with int return type"
+        mk_define FGETPWENT_R_TAKES_5_ARGS 1
+        mk_define FGETPWENT_R_RETURNS_INT 1
+    elif mk_check_function \
+        HEADERDEPS="pwd.h stdlib.h" \
+        PROTOTYPE="int fgetpwent_r(FILE *fp, struct passwd *pwbuf, char *buf, int)"
+    then
+        mk_msg_result "4 arguments with int return type"
+        mk_define FGETPWENT_R_RETURNS_INT 1
+    else
+        mk_msg_result "4 arguments with pointer return type"
+    fi
+
     mk_msg_checking "pam_get_data data argument type"
 
     if mk_check_function \
