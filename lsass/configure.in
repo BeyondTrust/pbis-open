@@ -192,6 +192,7 @@ case "$host_os:$host_cpu" in
                 NSS_SHR_EXT=""
                 AC_SUBST(NSS_SHR_EXT)
                 AC_DEFINE([__LWI_AIX__], [], [Define if OS is AIX])
+                AC_DEFINE([_THREAD_SAFE], [1], [Define to enable reentrant functions])
                 AC_DEFINE([_LINUX_SOURCE_COMPAT], [], [Enable Linux source compatibility on AIX])
                 PLATFORM_AIX="true"
                 ;;
@@ -868,6 +869,8 @@ AC_CHECK_FUNCS([clock_gettime clock_settime settimeofday gettimeofday timegm])
 AC_CHECK_FUNCS([getgrouplist sysinfo backtrace])
 LDFLAGS="$old_LDFLAGS"
 AC_CHECK_DECLS([isblank], [], [], [#include <ctype.h>])
+AC_CHECK_DECLS([fgetpwent_r, fgetgrent_r], [], [], [#include <grp.h>
+#include <pwd.h>])
 AC_CHECK_TYPES([wchar16_t], [], [], [AC_INCLUDES_DEFAULT
 #ifdef HAVE_WC16STR_H
 # include <wc16str.h>
@@ -882,6 +885,47 @@ AC_CHECK_MEMBERS([ucontext_t.uc_mcontext,
 # include <execinfo.h>
 #endif
 ])
+
+saved_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -Wall -Werror"
+
+AC_MSG_CHECKING([if fgetpwent_r takes 5 arguments])
+AC_TRY_COMPILE([
+#include <pwd.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+],
+[
+fgetpwent_r(NULL, NULL, NULL, 0, NULL);
+], [
+AC_MSG_RESULT([yes])
+AC_DEFINE([FGETPWENT_R_TAKES_5_ARGS], [1], [Define if FGETPWENT_R takes 5 arguments])],[
+AC_MSG_RESULT([no])
+])
+
+AC_MSG_CHECKING([if fgetpwent_r returns int])
+AC_TRY_COMPILE([
+#include <pwd.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+],
+[
+	int result = 
+#if FGETPWENT_R_TAKES_5_ARGS
+		fgetpwent_r(NULL, NULL, NULL, 0, NULL);
+#else
+		fgetpwent_r(NULL, NULL, NULL, 0);
+#endif
+	result = result + 1;
+], [
+AC_MSG_RESULT([yes])
+AC_DEFINE([FGETPWENT_R_RETURNS_INT], [1], [Define if FGETPWENT_R returns an int])],[
+AC_MSG_RESULT([no])
+])
+
+CFLAGS="$saved_CFLAGS"
 
 if test x"$ENABLE_COMPAT" = x"false"; then
 AC_CHECK_HEADER([reg/reg.h],,[AC_MSG_ERROR([Could not find lwreg headers])],
