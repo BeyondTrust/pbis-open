@@ -635,7 +635,6 @@ rpc_fork_stage_id_t stage;
 #endif
 { 
     rpc_dg_sock_pool_elt_p_t eltp, neltp;
-    rpc_socket_error_t serr;
 
     switch ((int)stage)
     {
@@ -656,7 +655,7 @@ rpc_fork_stage_id_t stage;
             for (eltp = rpc_g_dg_sock_pool.private_sockets; eltp != NULL;
                  eltp = neltp)
             {
-                serr = RPC_SOCKET_CLOSE(eltp->sock);
+                (void) RPC_SOCKET_CLOSE(eltp->sock);
                 neltp = eltp->next;
                 RPC_MEM_FREE(eltp, RPC_C_MEM_DG_SOCK_POOL_ELT);
             }
@@ -665,7 +664,7 @@ rpc_fork_stage_id_t stage;
             for (eltp = rpc_g_dg_sock_pool.shared_sockets; eltp != NULL;
                  eltp = neltp)
             {
-                serr = RPC_SOCKET_CLOSE(eltp->sock);
+                (void) RPC_SOCKET_CLOSE(eltp->sock);
                 neltp = eltp->next;
                 RPC_MEM_FREE(eltp, RPC_C_MEM_DG_SOCK_POOL_ELT);
             }

@@ -3341,11 +3341,10 @@ unsigned32 *st;
          */
         if (rqe == NULL)
         {
-            rpc_socket_error_t serr;
             int recv_len;
 
             purged_pkts++;
-            serr = rpc__socket_recvfrom(sp->sock, junk_buf, sizeof(junk_buf), 
+            (void) rpc__socket_recvfrom(sp->sock, junk_buf, sizeof(junk_buf), 
                                 NULL, &recv_len);
             RPC_DBG_GPRINTF(("(rpc__dg_select_dispatch) discarded pkt !!!\n"));
             return;

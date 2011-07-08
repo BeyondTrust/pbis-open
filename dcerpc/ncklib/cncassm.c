@@ -1691,14 +1691,12 @@ pointer_t       sm;
 #endif
 {
     rpc_cn_assoc_t              *assoc;
-    rpc_cn_assoc_sm_work_t      *assoc_sm_work;
     rpc_cn_sm_event_entry_t     event;
     rpc_cn_sm_ctlblk_t		*sm_p;
  
     RPC_CN_DBG_RTN_PRINTF(CLIENT request_conn_action_rtn);
     
     assoc = (rpc_cn_assoc_t *) spc_struct;
-    assoc_sm_work = (rpc_cn_assoc_sm_work_t *) event_param;
     sm_p = (rpc_cn_sm_ctlblk_t *)sm;
 
     if (RPC_DBG2 (rpc_e_dbg_general, RPC_C_CN_DBG_GENERAL))
@@ -2331,7 +2329,6 @@ pointer_t       sm;
     rpc_cn_assoc_sm_work_t      *assoc_sm_work;
     boolean                     old_server;
     rpc_protocol_version_t      *protocol_version;
-    rpc_cn_sm_ctlblk_t		*sm_p;
 
 
     RPC_CN_DBG_RTN_PRINTF(CLIENT authent3_action_rtn);
@@ -2342,7 +2339,6 @@ pointer_t       sm;
     
     assoc = (rpc_cn_assoc_t *) spc_struct;
     assoc_sm_work = (rpc_cn_assoc_sm_work_t *) event_param;
-    sm_p = (rpc_cn_sm_ctlblk_t *)sm;
 
     /*
      * Check the binding handle for protocol version information
@@ -3842,7 +3838,7 @@ pointer_t       sm;
      * The event parameter is a pointer to the fragbuf containing
      * the rpc_bind_ack PDU.
      */
-    header = (rpc_cn_packet_t *) ((rpc_cn_fragbuf_t *)event_param)->data_p;
+    header = fragbuf->data_p;
 
     /*
      * Use the group id passed back from the server to see if we
@@ -4549,7 +4545,6 @@ pointer_t       sm;
 #endif
 {
     rpc_cn_assoc_t                      *assoc;
-    rpc_cn_packet_t                     *resp_header;
     unsigned32                          status;
     rpc_cn_sm_ctlblk_t 			*sm_p;
 
@@ -4568,8 +4563,6 @@ pointer_t       sm;
     	sm_p->cur_state = RPC_C_CLIENT_ASSOC_CLOSED;
     	return (assoc->assoc_status);  
     }
-
-    resp_header = (rpc_cn_packet_t *) event_param;
 
     /*
      * A bit of defensive code in case a 5.0 server sends

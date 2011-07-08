@@ -1602,12 +1602,10 @@ pointer_t       sm;
     unsigned32              status;
     rpc_cn_fragbuf_p_t      fragbuf;
     rpc_cn_packet_p_t       header_p;
-    rpc_cn_call_rep_p_t     call_rep;
     rpc_cn_sm_ctlblk_t 	    *sm_p;
 
     RPC_CN_DBG_RTN_PRINTF(SERVER handle_frag_action_rtn);
     sm_p = (rpc_cn_sm_ctlblk_t *)sm; 
-    call_rep = (rpc_cn_call_rep_p_t) spc_struct;
     fragbuf = (rpc_cn_fragbuf_p_t) event_param;
     header_p = RPC_CN_FRAGBUF_PKT_HDR (event_param);
     
@@ -2947,7 +2945,6 @@ pointer_t       event_param;
 pointer_t       sm;
 #endif
 {
-    rpc_cn_call_rep_p_t call_rep;
     unsigned32          status ATTRIBUTE_UNUSED;
     rpc_cn_sm_ctlblk_t 	    *sm_p;
 
@@ -2956,8 +2953,6 @@ pointer_t       sm;
     sm_p = (rpc_cn_sm_ctlblk_t *)sm; 
     sm_p->cur_state = RPC_C_SM_NO_NSTATE;
  
-    call_rep = (rpc_cn_call_rep_p_t) spc_struct;
-    
     /*
      * "Illegal state transition detected in CN {client|server} call state
      * machine [cur_state: %d, cur_event: %d, call_rep: %x]"

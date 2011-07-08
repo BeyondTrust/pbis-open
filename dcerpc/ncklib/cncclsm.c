@@ -565,12 +565,10 @@ pointer_t       spc_struct;
 pointer_t       event_param;
 #endif
 {
-    rpc_cn_call_rep_p_t     call_rep;
     rpc_cn_fragbuf_p_t      fragbuf;
     rpc_cn_packet_p_t       header_p;
 
     RPC_CN_DBG_RTN_PRINTF(CLIENT last_recv_frag_pred_rtn);
-    call_rep = (rpc_cn_call_rep_p_t) spc_struct;
     fragbuf = (rpc_cn_fragbuf_p_t) event_param;
 
     /* 
@@ -777,7 +775,9 @@ pointer_t       sm;
     unsigned8               event ATTRIBUTE_UNUSED;
     unsigned32              i;
     unsigned32              status;
+#if 0
     boolean                 found_reusable;
+#endif
     rpc_cn_sm_ctlblk_t	    *sm_p; 
 
     RPC_CN_DBG_RTN_PRINTF(CLIENT transmit_req_action_rtn);
@@ -810,7 +810,9 @@ pointer_t       sm;
 #endif
     {
         for (i = 0,
+#if 0
              found_reusable = false,
+#endif
              iov_elt_p = stub_data_p->elt;   /* first iovector element */
              i < stub_data_p->num_elt;
              i++, iov_elt_p++)
@@ -1761,10 +1763,8 @@ pointer_t       sm;
 #endif
 {
     unsigned32      status;
-    rpc_cn_sm_ctlblk_t *sm_p;
 
     RPC_CN_DBG_RTN_PRINTF(CLIENT abort_recv_action_rtn);
-    sm_p = (rpc_cn_sm_ctlblk_t *)sm; 
     /* 
      * Note that we are getting state from raise_fault_action_rtn().  Also
      * note that it does not seem that we are actually using abort_recv_

@@ -1816,8 +1816,6 @@ twr_p_t            *lower_flrs;
 unsigned32         *status;
 #endif
 {
-    unsigned32    net_prot_id;
-
     CODING_ERROR (status);
 
 #ifdef RPC_NO_TOWER_SUPPORT
@@ -1840,12 +1838,6 @@ unsigned32         *status;
      */
     twr_p_t     temp_lower_flrs;
 #endif
-
-    /*
-     * Get the network protocol id (aka transport layer protocol)
-     * for this RPC addr.
-     */
-    net_prot_id = RPC_PROTSEQ_INQ_NET_PROT_ID(rpc_addr->rpc_protseq_id);
 
     /*
      * Convert sockaddr to lower tower floors.

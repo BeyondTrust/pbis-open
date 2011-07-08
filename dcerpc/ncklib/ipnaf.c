@@ -1818,7 +1818,7 @@ twr_p_t            *lower_flrs;
 unsigned32         *status;
 #endif
 {
-    unsigned32    net_prot_id;
+    unsigned32  ATTRIBUTE_UNUSED  net_prot_id;
 
     CODING_ERROR (status);
 

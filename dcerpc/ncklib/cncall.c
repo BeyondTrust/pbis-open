@@ -2031,7 +2031,7 @@ unsigned32              l_st;
 #endif
 {
     rpc_cn_call_rep_p_t         call_rep;
-    unsigned32                  st;
+    unsigned32                  st ATTRIBUTE_UNUSED;
 
     RPC_CN_DBG_RTN_PRINTF(rpc__cn_call_reject);
 
@@ -2803,7 +2803,7 @@ rpc_cn_call_rep_p_t     call_rep;
 unsigned32              *status;
 #endif
 {
-    unsigned32          temp_status;
+    unsigned32          temp_status ATTRIBUTE_UNUSED;
 
     RPC_CN_DBG_RTN_PRINTF(rpc__cn_call_forward_cancel);
     CODING_ERROR (status);

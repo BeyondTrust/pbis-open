@@ -117,11 +117,9 @@ unsigned32              *status;
     unsigned32              bytes_left_to_xfer;
     unsigned32              cur_iov_index;
     byte_p_t                src;
-    rpc_cn_packet_p_t       header_p;
 
     src = iov_elt_p->data_addr;
     bytes_left_to_xfer = iov_elt_p->data_len;
-    header_p = (rpc_cn_packet_p_t) RPC_CN_CREP_SEND_HDR (call_rep);
     *status = rpc_s_ok;
 
     bytes_to_segment_size = call_rep->max_seg_size - 
@@ -280,15 +278,9 @@ unsigned32              *status;
 #endif
 {
     unsigned32              bytes_to_segment_size;
-    unsigned32              bytes_left_to_xfer;
     unsigned32              cur_iov_index;
-    byte_p_t                src;
     rpc_iovector_elt_p_t    iov_p;
-    rpc_cn_packet_p_t       header_p;
 
-    src = iov_elt_p->data_addr;
-    bytes_left_to_xfer = iov_elt_p->data_len;
-    header_p = (rpc_cn_packet_p_t) RPC_CN_CREP_SEND_HDR (call_rep);
     *status = rpc_s_ok;
 
     /*

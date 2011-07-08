@@ -335,7 +335,6 @@ rpc__http_raw_send(
     size_t len
     )
 {
-    int serr = 0;
     fd_set writeset;
     size_t remaining = len;
     size_t sent = 0;
@@ -365,12 +364,10 @@ rpc__http_raw_send(
 
             if (ret < 0)
             {
-                serr = errno;
                 goto error;
             }
             break;
         default:
-            serr = rpc__http_map_curl_error(code);
             goto error;
         }
     }
