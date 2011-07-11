@@ -5,7 +5,8 @@
 #include "../AuthPlugin.h"
 
 #include <lwerror.h>
-#include <lwkrb5.h>
+
+#include <Kerberos/krb5.h>
 
 #include <lsa/lsa.h>
 #include <lsautils.h>
@@ -17,19 +18,9 @@
     do {                                                        \
         if (_krb5_err)                                          \
         {                                                       \
-            PCSTR _err_string;                                  \
-            _err_string = krb5_get_error_message(_ctx,          \
-                    _krb5_err);                                 \
-            do {                                                \
-                __label__ error;                                \
-                AUTH_BAIL(LwMapKrb5ErrorToLwError(_krb5_err),   \
-                            "kerberos error: %s (%d)",          \
-                            LW_SAFE_LOG_STRING(_err_string),    \
-                            _krb5_err);                         \
-            error:;                                             \
-            } while (0);                                        \
-            krb5_free_error_message(_ctx, _err_string);         \
-            goto error;                                         \
+            AUTH_BAIL(LW_ERROR_INTERNAL,                        \
+                        "kerberos error %d",                    \
+                        _krb5_err);                             \
         }                                                       \
     } while (0)
 
