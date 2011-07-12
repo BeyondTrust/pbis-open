@@ -64,6 +64,7 @@ public:
 
     PDSRECORD GetRecordList(bool bRemove);
     long GetDirNodeRef();
+    static void SetCacheLifeTime(DWORD dwCacheLifeTime);
 
 protected:
 

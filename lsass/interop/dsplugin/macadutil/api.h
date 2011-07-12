@@ -203,7 +203,8 @@ GetConfigurationSettings(
     BOOLEAN * pbUseADUNCForHomeLocation,
     PSTR *    ppszUNCProtocolForHomeLocation,
     PSTR *    ppszAllowAdministrationBy,
-    BOOLEAN * pbMergeAdmins
+    BOOLEAN * pbMergeAdmins,
+    DWORD *   pdwCacheLifeTime
     );
 
 LONG
