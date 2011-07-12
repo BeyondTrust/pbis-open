@@ -406,7 +406,6 @@ RegParseAppendData(
     DWORD attrSize = 0;
     PSTR pszAttr = NULL;
     DWORD binaryValue = 0;
-    REG_DATA_TYPE eDataType = 0;
 
     BAIL_ON_INVALID_POINTER(parseHandle);
 
@@ -424,7 +423,6 @@ RegParseAppendData(
                    &binaryValue,
                    sizeof(binaryValue));
             parseHandle->binaryDataLen += sizeof(binaryValue);
-            eDataType = REG_DWORD;
             break;
 
         case REGLEX_REG_MULTI_SZ:
@@ -479,7 +477,6 @@ RegParseBinaryData(
     PREGPARSE_HANDLE parseHandle
     )
 {
-    PSTR dataName = NULL;
     BOOLEAN eof = FALSE;
     REGLEX_TOKEN token = 0;
     DWORD attrSize = 0;
@@ -493,44 +490,6 @@ RegParseBinaryData(
     parseHandle->binaryDataLen = 0;
     RegParseExternDataType(parseHandle->dataType,
                            &parseHandle->registryEntry.type);
-
-    switch (parseHandle->dataType)
-    {
-        case REGLEX_REG_MULTI_SZ:
-            dataName = "MultiStringValue";
-            break;
-
-        case REGLEX_REG_BINARY:
-            dataName = "Binary";
-            break;
-
-        case REGLEX_REG_EXPAND_SZ:
-            dataName = "ExpandString";
-            break;
-
-        case REGLEX_REG_RESOURCE_REQUIREMENTS_LIST:
-            dataName = "ResourceRequirementsList";
-            break;
-
-        case REGLEX_REG_RESOURCE_LIST:
-            dataName = "ResourceList";
-            break;
-
-        case REGLEX_REG_FULL_RESOURCE_DESCRIPTOR:
-            dataName = "FullResourceDescriptor";
-            break;
-
-        case REGLEX_REG_QUADWORD:
-            dataName = "Quadword";
-            break;
-
-        case REGLEX_REG_NONE:
-            dataName = "REG_NONE";
-            break;
-
-        default:
-            break;
-    }
 
     do {
         dwError = RegLexGetToken(parseHandle->ioHandle,
