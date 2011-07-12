@@ -579,6 +579,17 @@ log "Finalizing Likewise installation process"
 
 ConfigureDirectoryOwners
 
+#
+# Upgrading OS X (at least 10.6 to 10.7) deletes /var/lib/likewise.
+# So on OS X we actually use /opt/likewise/var and put in a symlink
+# back to /var/lib/likewise.  On every boot we make sure the symlink is
+# still there before starting our daemons.
+#
+log "Moving /var/lib/likewise to /opt/likewise/var."
+run_or_fail cp -rp /var/lib/likewise /opt/likewise/var
+run_or_fail rm -rf /var/lib/likewise
+run_or_fail ln -s /opt/likewise/var /var/lib/likewise
+
 determine_upgrade_type
 
 restore_6_0_configuration

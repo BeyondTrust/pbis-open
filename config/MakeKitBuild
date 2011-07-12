@@ -35,6 +35,7 @@ make()
 
         mk_stage DESTDIR="${MK_SYSCONFDIR}" user-home-directory-in-dock.plist
         mk_stage DESTDIR="${MK_SYSCONFDIR}/LaunchDaemons" com.likewisesoftware.lwsmd.plist
+        mk_stage DEST="${MK_PREFIX}/libexec/startup" SOURCE="macstartup.sh"
     else
         for i in lwsmd likewise
         do

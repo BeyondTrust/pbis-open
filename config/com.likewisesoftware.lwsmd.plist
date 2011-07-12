@@ -11,9 +11,7 @@
         <true/>
 	<key>ProgramArguments</key>
 	<array>
-                <string>/bin/sh</string>
-                <string>-c</string>
-                <string>( sleep 0.5; while [ ! -e "/var/lib/likewise/.lwsm" ]; do sleep 0.5; done; /opt/likewise/bin/lwsm autostart ) &amp; exec /opt/likewise/sbin/lwsmd</string>
+            <string>/opt/likewise/libexec/startup</string>
 	</array>
         <key>EnvironmentVariables</key>
             <dict>
