@@ -10,7 +10,7 @@ contents_DATA = Info.plist
 AM_CFLAGS=@AM_CFLAGS@ \
 	-Wno-unknown-pragmas \
 	-pipe -fno-common -fpascal-strings -Wno-four-char-constants \
-	-Wall -Werror -mmacosx-version-min=10.5
+	-Wall -Werror -mmacosx-version-min=10.4
 
 INFO=Info.plist
 
