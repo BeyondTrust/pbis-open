@@ -294,7 +294,7 @@ main()
         pkg_uninstall "${pkgName}"
     done
 
-    $RUN rm -rfv /opt/likewise /etc/likewise /var/log/likewise /var/lib/likewise /var/cache/likewise "/Applications/Likewise Utilities" "/Library/Security/SecurityAgentPlugins/Likewise.bundle"
+    $RUN rm -rfv /opt/likewise /etc/likewise /var/log/likewise /var/lib/likewise /var/cache/likewise "/Applications/Likewise Utilities" "/Library/Security/SecurityAgentPlugins/com.likewise.bundle"
 
     for file in /etc/* /etc/pam.d/* /etc/krb5.conf /etc/hosts /etc/sshd_config /etc/ssh_config ; do
         orig="$file.lwidentity.orig"
