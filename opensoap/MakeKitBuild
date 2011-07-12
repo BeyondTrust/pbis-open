@@ -1,0 +1,52 @@
+make()
+{
+    OPENSOAP_LIBS="\
+        OpenSOAPClient:2:0:0 \
+        OpenSOAPSecurity:2:0:0 \
+        OpenSOAPService:2:0:0"
+
+    OPENSOAP_HEADERS="\
+	OpenSOAP/Block.h \
+	OpenSOAP/ByteArray.h \
+	OpenSOAP/CStdio.h \
+	OpenSOAP/ClientSocket.h \
+	OpenSOAP/Defines.h \
+	OpenSOAP/Envelope.h \
+	OpenSOAP/ErrorCode.h \
+	OpenSOAP/Locale.h \
+	OpenSOAP/OpenSOAP.h \
+	OpenSOAP/Serializer.h \
+	OpenSOAP/Service.h \
+	OpenSOAP/Security.h \
+	OpenSOAP/Stream.h \
+	OpenSOAP/String.h \
+	OpenSOAP/StringHash.h \
+	OpenSOAP/Transport.h \
+	OpenSOAP/XMLAttr.h \
+	OpenSOAP/XMLElm.h \
+	OpenSOAP/XMLNamespace.h"
+
+    HEADERDEPS="\
+        libxml/parser.h \
+        libxml/tree.h \
+        libxml/xmlmemory.h \
+        krb5.h \
+        openssl/bio.h \
+        openssl/err.h \
+        openssl/err.h \
+        openssl/md5.h \
+        openssl/pem.h \
+        openssl/rand.h \
+        openssl/ripemd.h \
+        openssl/rsa.h \
+        openssl/sha.h \
+        openssl/ssl.h \
+        openssl/x509.h"
+
+    mk_autotools \
+        HEADERS="$OPENSOAP_HEADERS" \
+        LIBS="$OPENSOAP_LIBS" \
+        HEADERDEPS="$HEADERDEPS" \
+        LIBDEPS="ssl crypto xml2" \
+        -- --with-ssl="${MK_ROOT_DIR}/${MK_STAGE_DIR}${MK_PREFIX}"
+}
