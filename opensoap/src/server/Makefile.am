@@ -83,7 +83,7 @@ EXTRA_DIST	=	\
 
 INCLUDES = \
 	${DIRECTORY_CFLAGS} \
-	-I${top_builddir} -I${top_builddir}/include \
+	-I${top_srcdir} -I${top_srcdir}/include \
 	@XML2_CFLAGS@ @GNU_PTHREAD_CFLAGS@ @PTHREAD_CFLAGS@
 
 ### libraries ###

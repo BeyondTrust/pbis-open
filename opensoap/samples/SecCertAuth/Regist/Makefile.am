@@ -17,7 +17,7 @@ EXTRA_DIST = \
 	Regist.mak.in \
 	regist.txt
 
-INCLUDES = -I$(top_builddir) -I$(top_builddir)/include
+INCLUDES = -I${top_srcdir} -I${top_srcdir}/include
 
 registCA_SOURCES = regist.c
 registCA_LDADD = \

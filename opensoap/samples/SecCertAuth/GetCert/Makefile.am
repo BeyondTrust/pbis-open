@@ -65,7 +65,7 @@ noinst_PROGRAMS = \
 	${stdio_service_PROGRAMFILES} \
 	${cgi_service_PROGRAMFILES}
 
-INCLUDES = -I${top_builddir} -I${top_builddir}/include
+INCLUDES = -I${top_srcdir} -I${top_srcdir}/include
 
 # OpenSOAP conf and data directory
 OPENSOAP_SYSCONFDIR = @sysconfdir@

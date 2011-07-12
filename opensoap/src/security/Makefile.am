@@ -8,8 +8,8 @@
 # -----------------------------------------------------------------------------
 # 
 
-INCLUDES = -I$(top_builddir) -I$(top_builddir)/include @SSL_INCLUDES@
-#INCLUDES = -I$(top_builddir) -I$(top_builddir)/include @XML2_CFLAGS@ @MBFUNCS_CFLAGS@
+INCLUDES = -I${top_srcdir} -I${top_srcdir}/include @SSL_INCLUDES@
+#INCLUDES = -I${top_srcdir} -I${top_srcdir}/include @XML2_CFLAGS@ @MBFUNCS_CFLAGS@
 
 lib_LTLIBRARIES = \
 	libOpenSOAPSecurity.la

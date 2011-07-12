@@ -11,7 +11,7 @@
 
 noinst_PROGRAMS = genrsakey secEnv
 
-INCLUDES = -I$(top_builddir) -I$(top_builddir)/include
+INCLUDES = -I${top_srcdir} -I${top_srcdir}/include
 
 genrsakey_SOURCES = \
 	genkey.c

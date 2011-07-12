@@ -11,7 +11,7 @@
 
 noinst_PROGRAMS = xmliconv sendreq
 
-INCLUDES = -I$(top_builddir) -I$(top_builddir)/include
+INCLUDES = -I${top_srcdir} -I${top_srcdir}/include
 
 xmliconv_SOURCES = xmliconv.c
 xmliconv_LDADD = $(top_builddir)/src/api/libOpenSOAPClient.la

@@ -31,7 +31,7 @@ SSML_DIR=${OPENSOAP_SYSCONFDIR}/ssml
 SERVICE_DIR = @servicesdir@/${SERVICE_NAME}
 SERVICE_LOCALSTATEDIR = ${OPENSOAP_SERVICE_LOCALSTATEDIR}/${SERVICE_NAME}
 
-INCLUDES = -I${top_builddir} -I${top_builddir}/include
+INCLUDES = -I${top_srcdir} -I${top_srcdir}/include
 
 TransactionService_SOURCES = TransactionService.c
 TransactionService_LDADD = \

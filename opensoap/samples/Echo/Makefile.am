@@ -32,7 +32,7 @@ OPENSOAP_SYSCONFDIR=@sysconfdir@
 OPENSOAP_LOCALSTATEDIR=@localstatedir@
 SSML_DIR=${OPENSOAP_SYSCONFDIR}/ssml
 
-INCLUDES = -I${top_builddir} -I${top_builddir}/include
+INCLUDES = -I${top_srcdir} -I${top_srcdir}/include
 
 EchoClient_SOURCES = EchoClient.c Echo.h
 EchoClient_LDADD = ${top_builddir}/src/api/libOpenSOAPClient.la
