@@ -214,7 +214,7 @@ error:
 DWORD
 LsaParseIgnoreList(
     PSTR pIgnoreList,
-    PBOOLEAN pIncludeSystemList,
+    DWORD (*pReadExternalList)(PCSTR, PLW_HASH_TABLE),
     PLW_HASH_TABLE* ppIgnoreHash
     )
 {
@@ -223,7 +223,6 @@ LsaParseIgnoreList(
     PSTR pToken = strtok_r(pIgnoreList, "\r\n", &pSavePtr);
     PSTR pTokenCopy = NULL;
     PLW_HASH_TABLE pIgnoreHash = NULL;
-    BOOLEAN includeSystemList = FALSE;
 
     dwError = LwHashCreate(
                     10,
@@ -236,9 +235,21 @@ LsaParseIgnoreList(
 
     while (pToken)
     {
-        if (!strcmp(pToken, "+"))
+        if (pToken[0] == '+')
         {
-            includeSystemList = TRUE;
+            if (pToken[1] == 0)
+            {
+                dwError = pReadExternalList(
+                                NULL,
+                                pIgnoreHash);
+            }
+            else
+            {
+                dwError = pReadExternalList(
+                                pToken + 1,
+                                pIgnoreHash);
+            }
+            BAIL_ON_LSA_ERROR(dwError);
         }
         else
         {
@@ -262,12 +273,228 @@ cleanup:
     {
         LwHashSafeFree(&pIgnoreHash);
     }
-    *pIncludeSystemList = includeSystemList;
     *ppIgnoreHash = pIgnoreHash;
     return dwError;
 
 error:
     goto cleanup;
+}
+
+DWORD
+LsaReadSystemGroupList(
+    IN PCSTR pFileName,
+    IN OUT PLW_HASH_TABLE pGroupIgnoreHash
+    )
+{
+#if !HAVE_DECL_FGETGRENT_R
+    return 0;
+#else
+    DWORD dwError = 0;
+    PSTR pBuffer = NULL;
+    size_t bufferLen = 100;
+    struct group groupBuffer = { 0 };
+    struct group* pGroup = NULL;
+    FILE* pLocalFile = NULL;
+    PSTR pNameCopy = NULL;
+
+    pLocalFile = fopen(pFileName? pFileName : "/etc/group", "r");
+    // Ignore if the file cannot be opened
+    if (pLocalFile)
+    {
+        while(1)
+        {
+#if FGETPWENT_R_TAKES_5_ARGS
+            dwError = fgetgrent_r(
+                            pLocalFile,
+                            &groupBuffer,
+                            pBuffer,
+                            bufferLen,
+                            &pGroup);
+#elif FGETPWENT_R_RETURNS_INT
+            dwError = fgetgrent_r(
+                            pLocalFile,
+                            &groupBuffer,
+                            pBuffer,
+                            bufferLen);
+            if (!dwError)
+            {
+                pGroup = &groupBuffer;
+            }
+#else
+            // Solaris man page recommends setting errno to 0 before
+            // calling the function.
+            errno = 0;
+            pGroup = fgetgrent_r(
+                            pLocalFile,
+                            &groupBuffer,
+                            pBuffer,
+                            bufferLen);
+            if (!pGroup)
+            {
+                dwError = errno;
+            }
+#endif
+            if (!dwError)
+            {
+                dwError = LwAllocateString(
+                                pGroup->gr_name,
+                                &pNameCopy);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                dwError = LwHashSetValue(
+                                pGroupIgnoreHash,
+                                pNameCopy,
+                                pNameCopy);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                pNameCopy = NULL;
+            }
+            else if (dwError == ERANGE)
+            {
+                LW_SAFE_FREE_MEMORY(pBuffer);
+                bufferLen *= 2;
+                dwError = LwAllocateMemory(
+                                bufferLen,
+                                (PVOID*)&pBuffer);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+            else if (dwError == ENOENT)
+            {
+                dwError = 0;
+                break;
+            }
+            else
+            {
+                dwError = LwMapErrnoToLwError(dwError);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+        }
+    }
+
+cleanup:
+    if (pLocalFile)
+    {
+        fclose(pLocalFile);
+    }
+    LW_SAFE_FREE_STRING(pBuffer);
+    LW_SAFE_FREE_STRING(pNameCopy);
+    return dwError;
+
+error:
+    goto cleanup;
+#endif /* HAVE_FGETGRENT_R */
+}
+
+DWORD
+LsaReadSystemUserList(
+    IN PCSTR pFileName,
+    IN OUT PLW_HASH_TABLE pUserIgnoreHash
+    )
+{
+#if !HAVE_DECL_FGETPWENT_R
+    return 0;
+#else
+    DWORD dwError = 0;
+    PSTR pBuffer = NULL;
+    size_t bufferLen = 100;
+    struct passwd accountBuffer = { 0 };
+    struct passwd* pAccount = NULL;
+    FILE* pLocalFile = NULL;
+    PSTR pNameCopy = NULL;
+
+    dwError = LwAllocateMemory(
+                    bufferLen,
+                    (PVOID*)&pBuffer);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pLocalFile = fopen(pFileName? pFileName : "/etc/passwd", "r");
+    // Ignore if the file cannot be opened
+    if (pLocalFile)
+    {
+        while(1)
+        {
+#if FGETPWENT_R_TAKES_5_ARGS
+            dwError = fgetpwent_r(
+                            pLocalFile,
+                            &accountBuffer,
+                            pBuffer,
+                            bufferLen,
+                            &pAccount);
+#elif FGETPWENT_R_RETURNS_INT
+            dwError = fgetpwent_r(
+                            pLocalFile,
+                            &accountBuffer,
+                            pBuffer,
+                            bufferLen);
+            if (!dwError)
+            {
+                pAccount = &accountBuffer;
+            }
+#else
+            // Solaris man page recommends setting errno to 0 before
+            // calling the function.
+            errno = 0;
+            pAccount = fgetpwent_r(
+                            pLocalFile,
+                            &accountBuffer,
+                            pBuffer,
+                            bufferLen);
+            if (!pAccount)
+            {
+                dwError = errno;
+            }
+#endif
+            if (!dwError)
+            {
+                dwError = LwAllocateString(
+                                pAccount->pw_name,
+                                &pNameCopy);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                dwError = LwHashSetValue(
+                                pUserIgnoreHash,
+                                pNameCopy,
+                                pNameCopy);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                pNameCopy = NULL;
+            }
+            else if (dwError == ERANGE)
+            {
+                LW_SAFE_FREE_MEMORY(pBuffer);
+                bufferLen *= 2;
+                dwError = LwAllocateMemory(
+                                bufferLen,
+                                (PVOID*)&pBuffer);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+            else if (dwError == ENOENT)
+            {
+                dwError = 0;
+                break;
+            }
+            else
+            {
+                dwError = LwMapErrnoToLwError(dwError);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+        }
+        fclose(pLocalFile);
+        pLocalFile = NULL;
+    }
+
+cleanup:
+    if (pLocalFile)
+    {
+        fclose(pLocalFile);
+    }
+    LW_SAFE_FREE_STRING(pBuffer);
+    LW_SAFE_FREE_STRING(pNameCopy);
+    return dwError;
+
+error:
+    goto cleanup;
+#endif /* HAVE_FGETPWENT_R */
 }
 
 DWORD
@@ -278,11 +505,6 @@ LsaReadIgnoreHashes()
     PSTR pIgnoreList = NULL;
     PLW_HASH_TABLE pUserIgnoreHash = NULL;
     PLW_HASH_TABLE pGroupIgnoreHash = NULL;
-    BOOLEAN includeSystemList = FALSE;
-    FILE* pLocalFile = NULL;
-    PSTR pBuffer = NULL;
-    size_t bufferLen = 0;
-    PSTR pNameCopy = NULL;
 
     if (time(&tCurrentTime) == (time_t)-1)
     {
@@ -296,12 +518,6 @@ LsaReadIgnoreHashes()
         goto cleanup;
     }
 
-    bufferLen = 100;
-    dwError = LwAllocateMemory(
-                    bufferLen,
-                    (PVOID*)&pBuffer);
-    BAIL_ON_LSA_ERROR(dwError);
-
     dwError = LsaReadIgnoreList(
                     LSA_USER_IGNORE_LIST_PATH,
                     &pIgnoreList);
@@ -309,95 +525,11 @@ LsaReadIgnoreHashes()
 
     dwError = LsaParseIgnoreList(
                     pIgnoreList,
-                    &includeSystemList,
+                    &LsaReadSystemUserList,
                     &pUserIgnoreHash);
     BAIL_ON_LSA_ERROR(dwError);
 
     LW_SAFE_FREE_MEMORY(pIgnoreList);
-
-#if HAVE_DECL_FGETPWENT_R
-    if (includeSystemList)
-    {
-        struct passwd accountBuffer = { 0 };
-        struct passwd* pAccount = NULL;
-
-        pLocalFile = fopen("/etc/passwd", "r");
-        // Ignore if the file cannot be opened
-        if (pLocalFile)
-        {
-            while(1)
-            {
-#if FGETPWENT_R_TAKES_5_ARGS
-                dwError = fgetpwent_r(
-                                pLocalFile,
-                                &accountBuffer,
-                                pBuffer,
-                                bufferLen,
-                                &pAccount);
-#elif FGETPWENT_R_RETURNS_INT
-                dwError = fgetpwent_r(
-                                pLocalFile,
-                                &accountBuffer,
-                                pBuffer,
-                                bufferLen);
-                if (!dwError)
-                {
-                    pAccount = &accountBuffer;
-                }
-#else
-                // Solaris man page recommends setting errno to 0 before
-                // calling the function.
-                errno = 0;
-                pAccount = fgetpwent_r(
-                                pLocalFile,
-                                &accountBuffer,
-                                pBuffer,
-                                bufferLen);
-                if (!pAccount)
-                {
-                    dwError = errno;
-                }
-#endif
-                if (!dwError)
-                {
-                    dwError = LwAllocateString(
-                                    pAccount->pw_name,
-                                    &pNameCopy);
-                    BAIL_ON_LSA_ERROR(dwError);
-
-                    dwError = LwHashSetValue(
-                                    pUserIgnoreHash,
-                                    pNameCopy,
-                                    pNameCopy);
-                    BAIL_ON_LSA_ERROR(dwError);
-
-                    pNameCopy = NULL;
-                }
-                else if (dwError == ERANGE)
-                {
-                    LW_SAFE_FREE_MEMORY(pBuffer);
-                    bufferLen *= 2;
-                    dwError = LwAllocateMemory(
-                                    bufferLen,
-                                    (PVOID*)&pBuffer);
-                    BAIL_ON_LSA_ERROR(dwError);
-                }
-                else if (dwError == ENOENT)
-                {
-                    dwError = 0;
-                    break;
-                }
-                else
-                {
-                    dwError = LwMapErrnoToLwError(dwError);
-                    BAIL_ON_LSA_ERROR(dwError);
-                }
-            }
-            fclose(pLocalFile);
-            pLocalFile = NULL;
-        }
-    }
-#endif /* HAVE_FGETPWENT_R */
 
     dwError = LsaReadIgnoreList(
                     LSA_GROUP_IGNORE_LIST_PATH,
@@ -406,91 +538,9 @@ LsaReadIgnoreHashes()
 
     dwError = LsaParseIgnoreList(
                     pIgnoreList,
-                    &includeSystemList,
+                    &LsaReadSystemGroupList,
                     &pGroupIgnoreHash);
     BAIL_ON_LSA_ERROR(dwError);
-
-#if HAVE_DECL_FGETGRENT_R
-    if (includeSystemList)
-    {
-        struct group groupBuffer = { 0 };
-        struct group* pGroup = NULL;
-
-        pLocalFile = fopen("/etc/group", "r");
-        // Ignore if the file cannot be opened
-        if (pLocalFile)
-        {
-            while(1)
-            {
-#if FGETPWENT_R_TAKES_5_ARGS
-                dwError = fgetgrent_r(
-                                pLocalFile,
-                                &groupBuffer,
-                                pBuffer,
-                                bufferLen,
-                                &pGroup);
-#elif FGETPWENT_R_RETURNS_INT
-                dwError = fgetgrent_r(
-                                pLocalFile,
-                                &groupBuffer,
-                                pBuffer,
-                                bufferLen);
-                if (!dwError)
-                {
-                    pGroup = &groupBuffer;
-                }
-#else
-                // Solaris man page recommends setting errno to 0 before
-                // calling the function.
-                errno = 0;
-                pGroup = fgetgrent_r(
-                                pLocalFile,
-                                &groupBuffer,
-                                pBuffer,
-                                bufferLen);
-                if (!pGroup)
-                {
-                    dwError = errno;
-                }
-#endif
-                if (!dwError)
-                {
-                    dwError = LwAllocateString(
-                                    pGroup->gr_name,
-                                    &pNameCopy);
-                    BAIL_ON_LSA_ERROR(dwError);
-
-                    dwError = LwHashSetValue(
-                                    pUserIgnoreHash,
-                                    pNameCopy,
-                                    pNameCopy);
-                    BAIL_ON_LSA_ERROR(dwError);
-
-                    pNameCopy = NULL;
-                }
-                else if (dwError == ERANGE)
-                {
-                    LW_SAFE_FREE_MEMORY(pBuffer);
-                    bufferLen *= 2;
-                    dwError = LwAllocateMemory(
-                                    bufferLen,
-                                    (PVOID*)&pBuffer);
-                    BAIL_ON_LSA_ERROR(dwError);
-                }
-                else if (dwError == ENOENT)
-                {
-                    dwError = 0;
-                    break;
-                }
-                else
-                {
-                    dwError = LwMapErrnoToLwError(dwError);
-                    BAIL_ON_LSA_ERROR(dwError);
-                }
-            }
-        }
-    }
-#endif /* HAVE_FGETGRENT_R */
 
     LwHashSafeFree(&gpUserIgnoreHash);
     gpUserIgnoreHash = pUserIgnoreHash;
@@ -500,13 +550,7 @@ LsaReadIgnoreHashes()
     gtIgnoreHashLastUpdated = tCurrentTime;
 
 cleanup:
-    if (pLocalFile)
-    {
-        fclose(pLocalFile);
-    }
-    LW_SAFE_FREE_STRING(pBuffer);
     LW_SAFE_FREE_STRING(pIgnoreList);
-    LW_SAFE_FREE_STRING(pNameCopy);
     return dwError;
 
 error:
