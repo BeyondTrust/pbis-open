@@ -2305,7 +2305,8 @@ GetConfigurationSettings(
     BOOLEAN * pbUseADUNCForHomeLocation,
     PSTR *    ppszUNCProtocolForHomeLocation,
     PSTR *    ppszAllowAdministrationBy,
-    BOOLEAN * pbMergeAdmins
+    BOOLEAN * pbMergeAdmins,
+    DWORD *   pdwCacheLifeTime
     )
 {
     DWORD dwError = MAC_AD_ERROR_SUCCESS;
@@ -2402,6 +2403,18 @@ GetConfigurationSettings(
     if (dwError)
     {
         *pbMergeAdmins = FALSE;
+        dwError = MAC_AD_ERROR_SUCCESS;
+    }
+
+    dwError = ReadConfigDword(hConnection,
+                                hKey,
+                                "CacheLifeTime",
+                                0,
+                                INT_MAX,
+                                pdwCacheLifeTime);
+    if (dwError)
+    {
+        *pdwCacheLifeTime = 10; /* default is 10 seconds. */
         dwError = MAC_AD_ERROR_SUCCESS;
     }
 

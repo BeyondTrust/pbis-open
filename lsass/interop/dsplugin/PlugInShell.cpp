@@ -282,6 +282,7 @@ long PlugInShell_Initialize(void)
     PSTR pszAllowAdministrationBy = NULL;
     BOOLEAN bMergeAdmins = FALSE;
     PVOID pAllowAdminCheckData = NULL;
+    DWORD dwCacheLifeTime = 10;
 
     memset(info.sysname, 0, sizeof(info.sysname));
     memset(info.nodename, 0, sizeof(info.nodename));
@@ -417,7 +418,8 @@ long PlugInShell_Initialize(void)
                                         &bUseADUNCForHomeLocation,
                                         &pszUNCProtocolForHomeLocation,
                                         &pszAllowAdministrationBy,
-                                        &bMergeAdmins);
+                                        &bMergeAdmins,
+                                        &dwCacheLifeTime);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
     /* See if MCX setting aggregation feature is to be supported */
@@ -491,6 +493,8 @@ long PlugInShell_Initialize(void)
         GlobalState.Flags = GlobalState.Flags | LWE_DS_FLAG_DONT_REMOVE_LOCAL_ADMINS;
         LOG("Option to override allow-administration-by with local computer changes to the admin group is enabled.");
     }
+
+    LWIQuery::SetCacheLifeTime(dwCacheLifeTime);
 
     if (pthread_rwlock_init(&GlobalState.Lock, NULL) < 0)
     {
@@ -924,6 +928,7 @@ long PlugInShell_PeriodicTask(void)
     LWE_DS_FLAGS NewFlags = LWE_DS_FLAG_NO_OPTIONS_SET;
     PVOID pAllowAdminCheckData = NULL;
     PNETADAPTERINFO pTempNetInfo = NULL;
+    DWORD dwCacheLifeTime = 10;
 
     // No enter/leave logging since function is called every 30 seconds
     // or so (on Mac OS X 10.4.7).
@@ -970,7 +975,8 @@ long PlugInShell_PeriodicTask(void)
                                         &bUseADUNCForHomeLocation,
                                         &pszUNCProtocolForHomeLocation,
                                         &pszAllowAdministrationBy,
-                                        &bMergeAdmins);
+                                        &bMergeAdmins,
+                                        &dwCacheLifeTime);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
     /* Make sure to preserve the flag that tells us this is Leopard or not */
@@ -1112,6 +1118,8 @@ long PlugInShell_PeriodicTask(void)
 
         GS_RELEASE_ADMIN_ACCESS_LIST();
     }
+
+    LWIQuery::SetCacheLifeTime(dwCacheLifeTime);
 
     /* Now update the GlobalState to reflect new flags */
     GlobalState.Flags = NewFlags;

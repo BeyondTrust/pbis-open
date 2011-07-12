@@ -7886,5 +7886,11 @@ cleanup:
     return macError;
 }
 
-
+void
+LWIQuery::SetCacheLifeTime(
+    DWORD dwCacheLifeTime
+    )
+{
+    DEFAULT_ATTRIBUTE_TTL_SECONDS = dwCacheLifeTime;
+}
 
