@@ -23,8 +23,8 @@ esac
 __COMP_LIST="krb5 cyrus-sasl openldap libcrypto curl libuuid libiconv libxml2 \
     sqlite lwbase lwmsg lwreg \
     lwadvapi centutils netlogon lwio lwsm libschannel \
-    dcerpc eventlog lsass srvsvc \
-    lwdns domainjoin lwnetapi lwtools lwconfig lwupgrade samba-interop \
+    dcerpc eventlog lsass \
+    lwdns domainjoin lwnetapi lwconfig lwupgrade samba-interop \
 "
 
 function LikewiseOpenVersion

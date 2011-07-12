@@ -37,7 +37,7 @@ find ${TARGET} -name "*.sh" | xargs chmod u+x
     for f in `find . -name autogen.sh | grep -v "packaging/scripts"`; \
     do \
         echo "Running autogen.sh in `dirname $f`..."; \
-	(cd `dirname $f` && ./autogen.sh); \
+        (cd `dirname $f` && ./autogen.sh --skip-gnulib); \
         echo " "; \
     done)
 
