@@ -49,7 +49,7 @@ else
     SRC_ROOT="`pwd`"
 fi
 
-[ -x "$SRC_ROOT/build/mk-bootstrap" ] || fail "Please run from Platform/src/linux"
+[ -x "$SRC_ROOT/build/mk-bootstrap" ] || fail "Please run from $SRC_ROOT"
 
 for dir in "$SRC_ROOT"/*
 do
