@@ -172,7 +172,7 @@ configure_and_start_lwsmd()
     SERVICE_DAEMON_INSTALL=/etc/likewise/LaunchDaemons/$SERVICE_NAME.plist
 
     if [ -f $SERVICE_DAEMON_INSTALL ]; then
-        echo "Configuring and starting lwsmd service with launchctl"
+        log "Configuring and starting lwsmd service with launchctl"
         run_or_fail "cp $SERVICE_DAEMON_INSTALL $SERVICE_DAEMON"
         run_or_fail "launchctl load $SERVICE_DAEMON"
         run_or_fail "launchctl start $SERVICE_NAME"
@@ -226,15 +226,15 @@ enable_auth_plugin()
     LIBRARY_PLUGIN_DIR="/Library/Security/SecurityAgentPlugins"
 
     # Install auth plugin
-    echo "Installing auth plugin"
+    log "Installing auth plugin"
     run_or_fail "mkdir -p $LIBRARY_PLUGIN_DIR"
     run_or_fail "cp -r $SRC_DIR/$PLUGIN_DIR $LIBRARY_PLUGIN_DIR/$PLUGIN_DIR"
 
     for module in /opt/likewise/lib/AuthMechanisms/*.so
     do
         mechanism=`basename "$module" .so`
-        echo "Enabling auth mechanism '$mechanism'"
-        /opt/likewise/libexec/authmechanism enable "$mechanism"
+        log "Enabling auth mechanism '$mechanism'"
+        run_or_fail /opt/likewise/libexec/authmechanism enable "$mechanism"
     done
 }
 
@@ -242,10 +242,10 @@ configure_logon_message_application()
 {
     /usr/bin/defaults read /Library/Preferences/loginwindow | grep 'Likewise Logon Message.app' > /dev/null 2>&1
     if [ $? -ne 0 ]; then
-        echo "Configuring Likewise Logon Message application"
+        log "Configuring Likewise Logon Message application"
         defaults write /Library/Preferences/loginwindow AutoLaunchedApplicationDictionary -array-add '{ "Path" = "@MK_BINDIR@/Likewise Logon Message.app"; "Hide" = "0"; }'
     else
-        echo "Likewise Logon Message application already configured"
+        log "Likewise Logon Message application already configured"
     fi
 }
 
