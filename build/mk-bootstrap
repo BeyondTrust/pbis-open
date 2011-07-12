@@ -36,6 +36,9 @@ bootstrap()
         if [ -x autogen.sh ]
         then
             ./autogen.sh || fail "could not run autogen.sh in $dir"
+        elif [ -x bootstrap ]
+        then
+            ./bootstrap || fail "could not run bootstrap in $dir"
         else
             autoreconf -fi || fail "could not run autoreconf in $dir"
         fi
