@@ -366,6 +366,11 @@ LsaNssCommonPasswdGetpwnam(
     PVOID pUserInfo = NULL;
     DWORD dwUserInfoLevel = 0;
 
+    if (LsaShouldIgnoreUser(pszLoginId))
+    {
+        ret = MAP_LSA_ERROR(NULL, LW_ERROR_NOT_HANDLED);
+        BAIL_ON_NSS_ERROR(ret);
+    }
 
     ret = MAP_LSA_ERROR(NULL,
             LsaNssCommonEnsureConnected(pConnection));
