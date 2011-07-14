@@ -1008,12 +1008,7 @@ IsApparmorConfigured(BOOLEAN *configured)
     if(hasApparmor)
     {
         GCE(ceError = CTCheckFileHoldsPattern(APPARMOR_NSSWITCH,
-                    "centeris", configured));
-        if(!*configured)
-        {
-            GCE(ceError = CTCheckFileHoldsPattern(APPARMOR_NSSWITCH,
-                        "likewise", configured));
-        }
+                    "lsassd", configured));
     }
     else
     {
@@ -1059,16 +1054,12 @@ static void ConfigureApparmor(BOOLEAN enable, LWException **exc)
         addString = 
 PREFIXDIR "/lib/*.so*            mr,\n"
 PREFIXDIR "/lib64/*.so*          mr,\n"
-"/tmp/.lwidentity/pipe              rw,\n"
-LOCALSTATEDIR "/lib/likewise/.lsassd  rw,\n"
-LOCALSTATEDIR "/tmp/.lsaclient_*              rw,\n";
+LOCALSTATEDIR "/lib/likewise/.lsassd  rw,\n";
     else
         addString =
 PREFIXDIR "/lib/*.so*            r,\n"
 PREFIXDIR "/lib64/*.so*          r,\n"
-"/tmp/.lwidentity/pipe              rw,\n"
-LOCALSTATEDIR "/lib/likewise/.lsassd  rw,\n"
-LOCALSTATEDIR "/tmp/.lsaclient_*              rw,\n";
+LOCALSTATEDIR "/lib/likewise/.lsassd  rw,\n";
 
 
     if(enable)
