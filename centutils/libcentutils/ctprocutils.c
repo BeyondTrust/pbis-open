@@ -678,8 +678,8 @@ CTGetPidOfCmdLine(
 {
     DWORD ceError = ERROR_NOT_SUPPORTED;
 
-    *count = 0;
-    ceError = ERROR_PROC_NOT_FOUND;
+    if (count)
+        *count = 0;
 
     return ceError;
 }
