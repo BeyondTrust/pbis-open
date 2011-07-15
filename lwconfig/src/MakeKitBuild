@@ -8,5 +8,5 @@ make()
         CPPFLAGS="$LIBXML2_CPPFLAGS" \
         LDFLAGS="$LIBXML2_LDFLAGS" \
         HEADERDEPS="lwadvapi.h reg/lwreg.h reg/regutil.h $LIBXML2_HEADERDEPS" \
-        LIBDEPS="lwadvapi_nothr regclient xml2"
+        LIBDEPS="lwadvapi_nothr regclient regcommon xml2"
 }
