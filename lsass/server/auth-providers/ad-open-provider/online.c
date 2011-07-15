@@ -2348,6 +2348,7 @@ AD_OnlineChangePassword(
     PSTR pszFullDomainName = NULL;
     PLWNET_DC_INFO pDcInfo = NULL;
     DWORD dwGoodUntilTime = 0;
+    PSTR pGeneratedUpn = NULL;
 
     dwError = AD_FindUserObjectByName(
                      pContext,
@@ -2398,9 +2399,18 @@ AD_OnlineChangePassword(
                     &pDcInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
+    LwStrToUpper(pszFullDomainName);
+    
+    dwError = LwAllocateStringPrintf(
+                    &pGeneratedUpn,
+                    "%s@%s",
+                    pCachedUser->pszSamAccountName,
+                    pszFullDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
     dwError = AD_NetUserChangePassword(pDcInfo->pszDomainControllerName,
                                        pCachedUser->pszSamAccountName,
-                                       pCachedUser->userInfo.pszUPN,
+                                       pGeneratedUpn,
                                        pszOldPassword,
                                        pszPassword);
     BAIL_ON_LSA_ERROR(dwError);
@@ -2441,7 +2451,7 @@ cleanup:
     ADCacheSafeFreeObject(&pCachedUser);
 
     LW_SAFE_FREE_STRING(pszFullDomainName);
-
+    LW_SAFE_FREE_STRING(pGeneratedUpn);
 
     return dwError;
 
