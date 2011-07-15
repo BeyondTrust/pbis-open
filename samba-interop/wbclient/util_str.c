@@ -77,7 +77,7 @@ StrEqual(
     PCSTR pszStr2
     )
 {
-    DWORD dwError = LW_ERROR_INTERNAL;
+    DWORD __attribute__((unused)) dwError = LW_ERROR_INTERNAL;
     PSTR pszCopy1 = NULL;
     PSTR pszCopy2 = NULL;
     BOOLEAN bEqual = FALSE;
@@ -130,7 +130,7 @@ StrnEqual(
     )
 {
     DWORD dwLen1, dwLen2;
-    DWORD dwError = LW_ERROR_INTERNAL;
+    DWORD __attribute__((unused)) dwError = LW_ERROR_INTERNAL;
     PSTR pszCopy1 = NULL;
     PSTR pszCopy2 = NULL;
     BOOLEAN bResult = FALSE;
