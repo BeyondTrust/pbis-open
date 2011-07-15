@@ -11,5 +11,5 @@ make()
             lwtime.c" \
         INCLUDEDIRS=". ../include ../include/public" \
         HEADERDEPS="krb5.h ldap.h lwmsg/lwmsg.h sasl/sasl.h lw/base.h" \
-        LIBDEPS="krb5 gssapi_krb5 k5crypto ldap_r lwbase"
+        LIBDEPS="krb5 gssapi_krb5 k5crypto ldap_r lwbase $LIB_RT"
 }

@@ -12,6 +12,7 @@ make()
                     memory/memory \
                     lwunistr/lwunistr \
                     time/time \
-                    logging/logging"
+                    logging/logging" \
+                LIBDEPS="$LIB_RT"
 	mk_multiarch_done
 }
