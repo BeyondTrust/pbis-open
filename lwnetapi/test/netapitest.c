@@ -202,7 +202,6 @@ int main(int argc, char *argv[])
     PSTR pszPrincipal = NULL;
     PSTR pszCredsCache = NULL;
     PSTR pszBindingString = NULL;
-    int krb5_auth = 1;
     PTEST pTests  = NULL;
     PTEST pRunTest = NULL;
     PWSTR pwszHostname = NULL;
@@ -255,7 +254,6 @@ int main(int argc, char *argv[])
             break;
 
         case 'k':
-            krb5_auth = 1;
             break;
 
         case 'b':

@@ -76,8 +76,6 @@ NetUserGetLocalGroups(
     DWORD dwUserRid = 0;
     DWORD dwSidLen = 0;
     DWORD i = 0;
-    SID_PTR SidPtr = {0};
-    SID_ARRAY Sids = {0};
     PDWORD pdwUserRids = NULL;
     PDWORD pdwBuiltinUserRids = NULL;
     DWORD dwRidsCount = 0;
@@ -151,10 +149,6 @@ NetUserGetLocalGroups(
                              pUserSid,
                              dwUserRid);
     BAIL_ON_NT_STATUS(status);
-
-    SidPtr.pSid    = pUserSid;
-    Sids.pSids     = &SidPtr;
-    Sids.dwNumSids = 1;
 
     status = SamrGetAliasMembership(hSamrBinding,
                                     hDomain,

@@ -565,7 +565,6 @@ GetSamDomainName(
     const char *builtin = "Builtin";
 
     NTSTATUS status = STATUS_SUCCESS;
-    NTSTATUS ret = STATUS_SUCCESS;
     SAMR_BINDING samr_binding = NULL;
     CONNECT_HANDLE hConn = NULL;
     UINT32 resume = 0;
@@ -599,7 +598,6 @@ GetSamDomainName(
             wc16stombs(n, dom_names[i], sizeof(n));
             if (strcasecmp(n, builtin)) {
                 *domname = (wchar16_t*) wc16sdup(dom_names[i]);
-                ret = STATUS_SUCCESS;
 
                 SamrFreeMemory((void*)dom_names);
                 goto found;
@@ -611,7 +609,6 @@ GetSamDomainName(
     } while (status == STATUS_MORE_ENTRIES);
 
     *domname = NULL;
-    ret = STATUS_NOT_FOUND;
 
 found:
     status = SamrClose(samr_binding, hConn);

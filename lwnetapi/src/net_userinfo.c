@@ -486,7 +486,7 @@ NetAllocateUserInfo1(
     DWORD dwSize = 0;
     UserInfo21 *pSamrInfo21 = (UserInfo21*)pSource;
     LONG64 ntCurrentTime = 0;
-    LONG64 ntPasswordAge = 0;
+    LONG64 __attribute__((unused)) ntPasswordAge = 0;
 
     if (pdwSpaceLeft)
     {
@@ -1095,7 +1095,7 @@ NetAllocateUserInfo11(
     DWORD dwSize = 0;
     UserInfo21 *pSamrInfo21 = (UserInfo21*)pSource;
     LONG64 ntCurrentTime = 0;
-    LONG64 ntPasswordAge = 0;
+    LONG64 __attribute__((unused)) ntPasswordAge = 0;
 
     if (pdwSpaceLeft)
     {
