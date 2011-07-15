@@ -44,7 +44,7 @@ DJInitJoinInterface(
 
     ceError = dj_init_logging_to_file(LOG_LEVEL_VERBOSE, pszLogFilePath);
 
-    LW_TRY(&pException, DJNetInitialize(TRUE, &LW_EXC));
+    LW_TRY(&pException, DJNetInitialize(&LW_EXC));
 
     *ppFuncTable = gpDJApiFunctionTable;
 

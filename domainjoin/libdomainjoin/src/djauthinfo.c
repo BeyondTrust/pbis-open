@@ -1084,16 +1084,23 @@ cleanup:
     ;
 }
 
-void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
+void DJNetInitialize(LWException **exc)
 {
-    BOOLEAN systemDcedExists = FALSE;
     LWException *innerExc = NULL;
+
+    LW_CLEANUP_LSERR(exc, LsaNetJoinInitialize());
+
+cleanup:
+    LWHandle(&innerExc);
+}
+
+void DJConfigureServices(LwConfigureDcerpcd eConfigureDcerpcd, LWException **exc)
+{
+#ifndef MINIMAL_JOIN
     int firstStart = 0;
     int firstStop = 0;
     int stopLaterOffset = 0;
     BOOLEAN exists = FALSE;
-
-#ifndef MINIMAL_JOIN
 
     if (geteuid() == 0)
     {
@@ -1102,7 +1109,7 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
                     &firstStop,
                     &stopLaterOffset));
 
-        if (bEnableDcerpcd == FALSE)
+        if (eConfigureDcerpcd == DCERPCD_DISABLE)
         {
             // Deconfigure RPC use with eventlog and dcerpc services
 
@@ -1132,7 +1139,7 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
             DJ_LOG_VERBOSE("Start eventlog service");
             LW_TRY(exc, DJStartService("eventlog"));
         }
-        else
+        else if (eConfigureDcerpcd == DCERPCD_ENABLE)
         {
             // Configure RPC use with eventlog and dcerpc services
 
@@ -1177,23 +1184,9 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
         }
     }
 
-#if 0
-        LW_TRY(exc, DJManageDaemon("srvsvcd", TRUE,
-                    21, 9, &LW_EXC));
-#endif
-#endif
-
-        LW_CLEANUP_LSERR(exc, LsaNetJoinInitialize());
-#if 0
-        /* Do not enable debug logging in lsajoin because
-           it does not respect domainjoin logging settings
-           such as logfile */
-        if(gdjLogInfo.dwLogLevel >= LOG_LEVEL_VERBOSE)
-            lsaFunctions->pfnEnableDebugLog();
-#endif
-
 cleanup:
-    LWHandle(&innerExc);
+    return ;
+#endif
 }
 
 void DJNetShutdown(LWException **exc)

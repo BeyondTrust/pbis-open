@@ -835,7 +835,7 @@ int main(
     DWORD dwLogLevel;
     BOOLEAN showHelp = FALSE;
     BOOLEAN showInternalHelp = FALSE;
-    BOOLEAN bEnableDcerpcd = TRUE;
+    LwConfigureDcerpcd eConfigureDcerpcd = DCERPCD_ENABLE;
     int remainingArgs = argc;
     char **argPos = argv;
     int i;
@@ -872,7 +872,7 @@ int main(
             remainingArgs--;
         }
         else if (!strcmp(argPos[0], "--nodcerpcd"))
-            bEnableDcerpcd = FALSE;
+            eConfigureDcerpcd = DCERPCD_DISABLE;
         else
             break;
         remainingArgs--;
@@ -969,26 +969,28 @@ int main(
             goto cleanup;
         }
         //Needed so that DJGetMachineSid does not call winbind
-        LW_TRY(&exc, DJNetInitialize(bEnableDcerpcd, &LW_EXC));
+        LW_TRY(&exc, DJNetInitialize(&LW_EXC));
         LW_TRY(&exc, DJSetComputerName(argPos[0], NULL, &LW_EXC));
     }
     else if(!strcmp(argPos[0], "join"))
     {
         argPos++;
         remainingArgs--;
-        LW_TRY(&exc, DJNetInitialize(bEnableDcerpcd, &LW_EXC));
+        LW_TRY(&exc, DJConfigureServices(eConfigureDcerpcd, &LW_EXC));
+        LW_TRY(&exc, DJNetInitialize(&LW_EXC));
         LW_TRY(&exc, DoJoin(remainingArgs, argPos, columns, &LW_EXC));
     }
     else if(!strcmp(argPos[0], "leave"))
     {
         argPos++;
         remainingArgs--;
-        LW_TRY(&exc, DJNetInitialize(bEnableDcerpcd, &LW_EXC));
+        LW_TRY(&exc, DJConfigureServices(DCERPCD_DO_NOT_MODIFY, &LW_EXC));
+        LW_TRY(&exc, DJNetInitialize(&LW_EXC));
         LW_TRY(&exc, DoLeaveNew(remainingArgs, argPos, columns, &LW_EXC));
     }
     else if(!strcmp(argPos[0], "query"))
     {
-        LW_TRY(&exc, DJNetInitialize(bEnableDcerpcd, &LW_EXC));
+        LW_TRY(&exc, DJNetInitialize(&LW_EXC));
         LW_TRY(&exc, DoQuery(&LW_EXC));
     }
     else if(!strcmp(argPos[0], "fixfqdn"))

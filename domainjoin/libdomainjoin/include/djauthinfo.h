@@ -31,6 +31,13 @@
 #ifndef __DJ_AUTHINFO_H__
 #define __DJ_AUTHINFO_H__
 
+typedef enum
+{
+    DCERPCD_DO_NOT_MODIFY,
+    DCERPCD_ENABLE,
+    DCERPCD_DISABLE,
+} LwConfigureDcerpcd;
+
 //The answer is non-authoritative
 void
 DJGetDomainRwDC(PCSTR domain, PSTR *dc, LWException **exc);
@@ -38,9 +45,11 @@ DJGetDomainRwDC(PCSTR domain, PSTR *dc, LWException **exc);
 void
 DJGetComputerDN(PSTR *dn, LWException **exc);
 
-void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc);
+void DJNetInitialize(LWException **exc);
 
 void DJNetShutdown(LWException **exc);
+
+void DJConfigureServices(LwConfigureDcerpcd eConfigureDcerpcd, LWException **exc);
 
 void DJCreateComputerAccount(
                 PSTR *shortDomainName,
