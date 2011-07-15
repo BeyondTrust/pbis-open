@@ -104,7 +104,7 @@ wbcSidAppendRid(
 cleanup:
     wbcStatus = map_error_to_wbc_status(dwErr);
 
-    return dwErr;
+    return wbcStatus;
 }
 
 const char*
