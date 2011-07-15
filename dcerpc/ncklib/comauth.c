@@ -476,7 +476,7 @@ rpc_auth_info_p_t       *info;
 #endif
 {
     rpc_auth_info_p_t auth_info = *info;
-    char *info_type;
+    char ATTRIBUTE_UNUSED *info_type;
     
     if (auth_info == NULL)
     {
@@ -1710,7 +1710,7 @@ INTERNAL void rpc__auth_info_cache_remove
 rpc_auth_info_p_t       auth_info;
 #endif
 {
-    char *info_type;
+    char ATTRIBUTE_UNUSED *info_type;
 
     assert (!auth_info->is_server);
 

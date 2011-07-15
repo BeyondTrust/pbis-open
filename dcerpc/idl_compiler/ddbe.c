@@ -695,7 +695,7 @@ static void DDBE_scalar_vec_entry
 {
     DDBE_vec_rep_t  *new_p;         /* Ptr to new vector entry */
     char const      *type_name;     /* Scalar type name, if any */
-    char const      *comment;       /* Comment string */
+    char const ATTRIBUTE_UNUSED  *comment;       /* Comment string */
     char            comment_buf[DDBE_MAX_COMMENT];
 
     comment_buf[0] = '\0';
@@ -3598,7 +3598,7 @@ static void DDBE_op_range
     DDBE_vectors_t  *vip;           /* [io] vector information */
 #endif
 {
-    AST_type_n_t    *type_p;        /* Ptr to AST struct type node */
+    AST_type_n_t ATTRIBUTE_UNUSED *type_p;        /* Ptr to AST struct type node */
     char comment[DDBE_MAX_COMMENT]; /* Comment buffer */
 
     type_p = tup_p->arg[IR_ARG_TYPE].type;  /* -> array type node */
@@ -3649,7 +3649,7 @@ static DDBE_vec_rep_t *DDBE_gen_param_reps
     char const      *name;          /* Variable name */
     char const      *oper_name;     /* Operation name */
     IR_tup_n_t      *tup_p;         /* Intermediate rep tuple pointer */
-    IR_tup_n_t      *prev_tup_p;    /* Previous tuple pointer */
+    IR_tup_n_t ATTRIBUTE_UNUSED *prev_tup_p;    /* Previous tuple pointer */
     DDBE_vec_rep_t  *first_entry;   /* Ptr to first type vec entry for param */
     char comment[DDBE_MAX_COMMENT]; /* Comment buffer */
 

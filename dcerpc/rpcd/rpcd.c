@@ -781,7 +781,7 @@ rpcd_network_thread(
                 &status);
         }
 
-        if (!STATUS_OK(&status))
+        if (!STATUS_NOT_NULL_OK(&status))
         {
             printf("(rpcd) Could not listen on %s: %lx.  Retrying in %i seconds\n",
                    network_protseqs[index], (long) status, (int) retry_interval.tv_sec);
@@ -964,10 +964,10 @@ int main(int argc, char *argv[])
      * Initialize the database and other misc stuff.
      */
     init(&status);
-    if (! STATUS_OK(&status)) exit(1);
+    if (! STATUS_NOT_NULL_OK(&status)) exit(1);
 
     register_ifs(&status);
-    if (! STATUS_OK(&status)) exit(1);
+    if (! STATUS_NOT_NULL_OK(&status)) exit(1);
 
     /*
      * Ensure existence/permissions on named pipe socket directory
@@ -988,7 +988,7 @@ int main(int argc, char *argv[])
      */
     rpc_server_use_protseq_if((unsigned char*) "ncalrpc", 0, ept_v3_0_s_ifspec, &status);
 
-    if (!STATUS_OK(&status))
+    if (!STATUS_NOT_NULL_OK(&status))
     {
         printf("(rpcd) could not listen on ncalrpc\n");
         exit(1);
@@ -1013,7 +1013,7 @@ int main(int argc, char *argv[])
     {
         is_listening = rpc_mgmt_is_server_listening(NULL, &status);
 
-        if (!STATUS_OK(&status))
+        if (!STATUS_NOT_NULL_OK(&status))
         {
             printf("(rpcd) could not determine if listener is running\n");
             exit(1);

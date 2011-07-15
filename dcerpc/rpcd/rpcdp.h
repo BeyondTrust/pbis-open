@@ -45,6 +45,7 @@
 */
 
 #define STATUS_OK(s) ((s)==NULL || *(s) == rpc_s_ok)
+#define STATUS_NOT_NULL_OK(s) (*(s) == rpc_s_ok)
 #define SET_STATUS(s,val) *(s) = val
 #define SET_STATUS_OK(s) SET_STATUS(s, error_status_ok)
 #define STATUS(s) *(s)

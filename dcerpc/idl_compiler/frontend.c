@@ -742,7 +742,7 @@ AST_interface_n_t *FE_parse_import
 
 	 /* Saved interface attributes */
 	 AST_interface_n_t *saved_interface;
-	 int saved_op_count;
+	 int ATTRIBUTE_UNUSED saved_op_count;
 
 	 /*
 	  * Return now, if the file is already imported.

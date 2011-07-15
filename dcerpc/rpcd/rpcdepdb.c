@@ -666,7 +666,7 @@ error_status_t  *status;
         if (epdb_is_replace_candidate(entp, object, tfp, addr))
         {
             rpc__naf_addr_inq_netaddr(entp->addr, &netaddr2, &tmp_st);
-            if (! STATUS_OK(&tmp_st)) continue;
+            if (! STATUS_NOT_NULL_OK(&tmp_st)) continue;
 
             if (strcmp((char *) netaddr, (char *) netaddr2) == 0)
             {
@@ -824,13 +824,13 @@ error_status_t  *status;
      * Parse xentry's tower into twr_fields
      */
     tower_to_fields(xentry->tower, &twr_fields, &tmp_st);
-    if (!STATUS_OK(&tmp_st)) return;
+    if (!STATUS_NOT_NULL_OK(&tmp_st)) return;
 
     tower_to_addr(xentry->tower, &addr, &tmp_st);
-    if (!STATUS_OK(&tmp_st)) return;
+    if (!STATUS_NOT_NULL_OK(&tmp_st)) return;
 
     epdb_chk_entry(xentry, &twr_fields, addr, &tmp_st);
-    if (!STATUS_OK(&tmp_st))
+    if (!STATUS_NOT_NULL_OK(&tmp_st))
     {
         if (addr != NULL) rpc__naf_addr_free(&addr, &tmp_st);
         return;

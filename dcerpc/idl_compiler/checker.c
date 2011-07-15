@@ -1950,7 +1950,7 @@ static void param_type
 #endif
 
 {
-    AST_type_n_t        *btype_p;       /* Base type */
+    AST_type_n_t ATTRIBUTE_UNUSED       *btype_p;       /* Base type */
 
     /*
      * First, special case checks that do want to look at a toplevel [ref]
@@ -2918,7 +2918,7 @@ static void param_first_handle
 
 {
     AST_operation_n_t   *op_p;          /* Operation containing the parameter */
-    AST_type_n_t        *top_type_p;    /* Top-level parameter type */
+    AST_type_n_t  ATTRIBUTE_UNUSED *top_type_p;    /* Top-level parameter type */
     AST_type_n_t        *type_p;        /* Param type (deref'd if necess.) */
 
     op_p = param_p->uplink;
