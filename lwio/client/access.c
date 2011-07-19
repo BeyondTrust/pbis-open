@@ -414,6 +414,12 @@ LwIoCredentialCacheToTgt(
     krb5Error = krb5_init_context(&pContext);
     if (krb5Error)
     {
+        if (krb5Error == KRB5_CONFIG_BADFORMAT)
+        {
+            /* If krb5.conf is corrupted, give up */
+            goto cleanup;
+        }
+
         Status = STATUS_INSUFFICIENT_RESOURCES;
         BAIL_ON_NT_STATUS(Status);
     }
