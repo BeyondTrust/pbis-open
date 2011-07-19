@@ -151,7 +151,7 @@ NtlmServerAcceptSecurityContext(
                 dwError = NtlmCreateValidatedContext(
                     pRespMsg,
                     dwMessageSize,
-                    pNtlmCtxtChlng->NegotiatedFlags,
+                    pNtlmCtxtChlng,
                     SessionKey,
                     NTLM_SESSION_KEY_SIZE,
                     hCred,
@@ -410,7 +410,7 @@ DWORD
 NtlmCreateValidatedContext(
     IN PNTLM_RESPONSE_MESSAGE_V1 pNtlmRespMsg,
     IN DWORD dwMsgSize,
-    IN DWORD NegotiatedFlags,
+    IN PNTLM_CONTEXT pNtlmCtxtChlng,
     IN PBYTE pSessionKey,
     IN DWORD dwSessionKeyLen,
     IN NTLM_CRED_HANDLE hCred,
@@ -431,34 +431,20 @@ NtlmCreateValidatedContext(
 
     pNtlmContext->NtlmState = NtlmStateResponse;
 
-    pNtlmContext->NegotiatedFlags = NegotiatedFlags;
-
-    dwError = NtlmGetUserNameFromResponse(
-        pNtlmRespMsg,
-        dwMsgSize,
-        NegotiatedFlags & NTLM_FLAG_UNICODE,
-        &pUserName);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = NtlmGetDomainNameFromResponse(
-        pNtlmRespMsg,
-        dwMsgSize,
-        NegotiatedFlags & NTLM_FLAG_UNICODE,
-        &pDomainName);
-    BAIL_ON_LSA_ERROR(dwError);
+    pNtlmContext->NegotiatedFlags = pNtlmCtxtChlng->NegotiatedFlags;
 
     dwError = LwAllocateStringPrintf(
-        &pNtlmContext->pszClientUsername,
-        "%s\\%s",
-        pDomainName,
-        pUserName);
+                    &pNtlmContext->pszClientUsername,
+                    "%s\\%s",
+                    pNtlmCtxtChlng->pUserInfo->pszDomain,
+                    pNtlmCtxtChlng->pUserInfo->pszAccount);
     BAIL_ON_LSA_ERROR(dwError);
 
     memcpy(pNtlmContext->SessionKey, pSessionKey, NTLM_SESSION_KEY_SIZE);
     pNtlmContext->cbSessionKeyLen = dwSessionKeyLen;
     pNtlmContext->bInitiatedSide = FALSE;
 
-    if (NegotiatedFlags & NTLM_FLAG_KEY_EXCH)
+    if (pNtlmContext->NegotiatedFlags & NTLM_FLAG_KEY_EXCH)
     {
         pV2Message = (PNTLM_RESPONSE_MESSAGE_V2)pNtlmRespMsg;
         if (dwMsgSize < sizeof(*pV2Message))
@@ -737,6 +723,11 @@ NtlmValidateResponse(
         pChlngCtxt->NegotiatedFlags & NTLM_FLAG_UNICODE,
         &pDomainName);
     BAIL_ON_LSA_ERROR(dwError);
+
+    if (pDomainName[0] == 0)
+    {
+        LW_SAFE_FREE_STRING(pDomainName);
+    }
 
     dwError = NtlmGetWorkstationFromResponse(
         pRespMsg,

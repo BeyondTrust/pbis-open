@@ -501,7 +501,7 @@ DWORD
 NtlmCreateValidatedContext(
     IN PNTLM_RESPONSE_MESSAGE_V1 pNtlmRespMsg,
     IN DWORD dwMsgSize,
-    IN DWORD NegotiatedFlags,
+    IN PNTLM_CONTEXT pNtlmCtxtChlng,
     IN PBYTE pSessionKey,
     IN DWORD dwSessionKeyLen,
     IN NTLM_CRED_HANDLE hCred,
