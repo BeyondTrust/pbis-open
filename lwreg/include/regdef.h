@@ -49,6 +49,8 @@
 #ifndef __REGDEF_H__
 #define __REGDEF_H__
 
+#include "config.h"
+
 #define REG_API
 
 #ifndef CACHEDIR
