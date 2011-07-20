@@ -140,8 +140,8 @@ configure()
     esac
 
     mk_declare -o \
-        providerdir="$MK_LIBDIR/lsa-provider" \
-        rpcserverdir="$MK_LIBDIR/lsa-rpc" \
+        providerdir="$MK_LIBDIR" \
+        rpcserverdir="$MK_LIBDIR" \
         LIBDIR="$MK_LIBDIR" \
         SBINDIR="$MK_SBINDIR" \
         CACHEDIR="$LW_CACHEDIR" \
