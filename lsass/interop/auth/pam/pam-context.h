@@ -72,6 +72,7 @@ typedef struct _PAMCONTEXT
     PSTR       pszLoginName;
     PAMOPTIONS pamOptions;
     BOOLEAN    bPasswordExpired;
+    BOOLEAN    bPasswordMessageShown;
     BOOLEAN    bPasswordChangeFailed;
     BOOLEAN    bPasswordChangeSuceeded;
     BOOLEAN    bOnlineLogon;

@@ -125,6 +125,11 @@ pam_sm_acct_mgmt(
                     hLsaConnection,
                     pszLoginId,
                     NULL);
+    if (dwError == LW_ERROR_PASSWORD_EXPIRED)
+    {
+        dwError = 0;
+        pPamContext->bPasswordExpired = TRUE;
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
     if (pPamContext->bPasswordExpired)
@@ -132,13 +137,16 @@ pam_sm_acct_mgmt(
         // If during pam_sm_authenticate,
         // we detected that the password expired,
         // we handle it here
-        pPamContext->bPasswordExpired = FALSE;
+        if (!pPamContext->bPasswordMessageShown)
+        {
+            LsaPamConverse(
+                pamh,
+                "Your password has expired",
+                PAM_ERROR_MSG,
+                NULL);
+            pPamContext->bPasswordMessageShown = TRUE;
+        }
         dwError = LW_ERROR_PASSWORD_EXPIRED;
-        LsaPamConverse(
-            pamh,
-            "Your password has expired",
-            PAM_ERROR_MSG,
-            NULL);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
