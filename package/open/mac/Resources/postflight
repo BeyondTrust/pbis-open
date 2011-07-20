@@ -227,8 +227,8 @@ enable_auth_plugin()
 
     # Install auth plugin
     log "Installing auth plugin"
-    run_or_fail "mkdir -p $LIBRARY_PLUGIN_DIR"
-    run_or_fail "cp -r $SRC_DIR/$PLUGIN_DIR $LIBRARY_PLUGIN_DIR/$PLUGIN_DIR"
+    mkdir -p $LIBRARY_PLUGIN_DIR
+    cp -r $SRC_DIR/$PLUGIN_DIR $LIBRARY_PLUGIN_DIR/$PLUGIN_DIR
 
     for module in /opt/likewise/lib/AuthMechanisms/*.so
     do
@@ -619,7 +619,7 @@ enable_plugin
 enable_auth_plugin
 
 # Add Likewise DS Plugin to Search list
-log "Adding DS plugin to search list"
+echo "Adding DS plugin to search list"
 run "/usr/bin/dscl /Search -create / SearchPolicy CSPSearchPath"
 run "/usr/bin/dscl /Search -append / CSPSearchPath '/Likewise - Active Directory'"
 
