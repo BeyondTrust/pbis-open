@@ -33,4 +33,4 @@
 PREFIX="PREFIX_DIR"
 SERVICE_NAME="likewise"
 
-. PREFIX_DIR/bin/init-likewise.sh
+. EXECDIR/init-likewise.sh
