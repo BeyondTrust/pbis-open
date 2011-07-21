@@ -56,32 +56,6 @@
     doc = "" 
 }
 
-[HKEY_THIS_MACHINE\Services\npfs]
-"Description" = { 
-    default = "Likewise Named Pipe Filesystem" 
-    doc = "" 
-}
-"Path" = { 
-    default = "@providerdir@/libnpfs.sys@MOD_EXT@" 
-    doc = "" 
-}
-"Arguments" = { 
-    default = "npfs" 
-    doc = "" 
-}
-"Environment" = { 
-    default = "" 
-    doc = "" 
-}
-"Dependencies" = { 
-    default = "lwio" 
-    doc = "" 
-}
-"Type" = { 
-    default = dword:00000003 
-    doc = "" 
-}
-
 [HKEY_THIS_MACHINE\Services\lwio\Parameters]
 "SignMessagesIfSupported" = { 
     default = dword:00000000 
@@ -90,13 +64,7 @@
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers]
 "Load" = { 
-    default = "rdr,npfs" 
-    doc = "" 
-}
-
-[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\npfs]
-"Path" = { 
-    default = "@providerdir@/libnpfs.sys@MOD_EXT@" 
+    default = "rdr" 
     doc = "" 
 }
 
@@ -144,20 +112,4 @@
 "MinCreditReserve" = {
 	default = dword:0000000A
 	doc = "(SMB2) Minimum number of credits to attempt to keep available"
-}
-
-[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\iotest]
-"Path" = { 
-    default = "@providerdir@/libiotest.sys@MOD_EXT@" 
-    doc = "" 
-}
-
-[HKEY_THIS_MACHINE\Software\Likewise\lwiosrvstat]
-"Target" = { 
-    default = "file" 
-    doc = "" 
-}
-"Path" = { 
-    default = "/tmp/lwiosrvstat.log" 
-    doc = "" 
 }
