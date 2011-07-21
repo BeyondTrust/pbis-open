@@ -443,12 +443,16 @@ WriteHostnameToSunFiles(
 
     for (iPath = 0; iPath < nPaths; iPath++)
     {
-        ceError = CTRunSedOnFile(
-                        ppszHostfilePaths[iPath],
-                        ppszHostfilePaths[iPath],
-                        FALSE,
-                        pSedExpression);
-        BAIL_ON_CENTERIS_ERROR(ceError);
+        if (!CTStrEndsWith(ppszHostfilePaths[iPath], ".lwidentity.bak") &&
+            !CTStrEndsWith(ppszHostfilePaths[iPath], ".lwidentity.orig"))
+        {
+            ceError = CTRunSedOnFile(
+                            ppszHostfilePaths[iPath],
+                            ppszHostfilePaths[iPath],
+                            FALSE,
+                            pSedExpression);
+            BAIL_ON_CENTERIS_ERROR(ceError);
+        }
     }
 
 error:
