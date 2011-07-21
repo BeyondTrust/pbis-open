@@ -1,1 +1,1 @@
-SUBDIRS="cifs"
+SUBDIRS="open"
