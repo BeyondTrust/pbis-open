@@ -2,14 +2,7 @@ MODULES="package-deb package-rpm"
 
 configure()
 {
-    case "$LW_FEATURE_LEVEL" in
-        auth)
-            mk_declare -o PRIMARY_SERVICE=lsass
-            ;;
-        full)
-            mk_declare -o PRIMARY_SERVICE=srvsvc
-            ;;
-    esac
+    mk_declare -o PRIMARY_SERVICE=lsass
 
     case "$LW_DEVICE_PROFILE" in
         embedded)
@@ -32,7 +25,7 @@ configure()
     if mk_deb_enabled
     then
         mk_declare -o \
-            PKG_DEB_NAME="likewise-open-cifs" \
+            PKG_DEB_NAME="likewise-open" \
             PKG_DEB_VERSION="${LW_VERSION}-0" \
             PKG_DEB_DATE="`date -R`"
     fi
@@ -40,7 +33,7 @@ configure()
     if mk_rpm_enabled
     then
         mk_declare -o \
-            PKG_RPM_NAME="likewise-open-cifs" \
+            PKG_RPM_NAME="likewise-open" \
             PKG_RPM_VERSION="${LW_VERSION}" \
             PKG_RPM_RELEASE="0"
 
@@ -78,7 +71,7 @@ package_rpm()
     mk_rpm_do \
         PACKAGE="$PKG_RPM_NAME" \
         VERSION="$PKG_RPM_VERSION" \
-        SPECFILE="rpm/cifs.spec"
+        SPECFILE="rpm/open.spec"
 
         common_files
 
