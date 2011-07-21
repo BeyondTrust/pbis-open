@@ -10,34 +10,20 @@ Group: 		System Environment/Daemons
 Prereq: grep, sh-utils
 AutoReq: no
 
-Obsoletes:   likewise-open-libs, likewise-open-lsass, likewise-open-netlogon, likewise-open-lwio, likewise-open-eventlog, likewise-open-rpc, likewise-open-lwsm, likewise-open-lwreg, likewise-open-srvsvc
-
-%if @PKG_RPM_COMPAT@
-%package compat
-Summary:        Likewise Open (compat libraries)
-Group:          System Environment/Daemons
-Requires:       @PKG_RPM_NAME@
-%endif
-
-%package devel
-Summary:        Likewise Open (development)
-Group:          Development/Libraries
-Requires:       @PKG_RPM_NAME@
-
 %description
 Likewise Open integrates Unix desktops and servers into an Active Directory environment by joining hosts to the domain and lets Unix applications and services authenticate MS Windows' users and groups via the PAM and Name Service Switch libraries.
 
-%if @PKG_RPM_COMPAT@
-%description compat
-This package provides compatibility with 32-bit applications
-%endif
+%package devel
+Summary: Likewise Open (development)
+Group: Development/Libraries
+Requires: @PKG_RPM_NAME@
+
 
 %description devel
-This package provides files for developing against the Likewise Open APIs
+The @PKG_RPM_NAME@-devel package includes the development libraries and header files that supply the application programming interface for security and authentication.
 
-
-%define initScriptPathList %{INIT_DIR}/lwsmd %{INIT_DIR}/likewise
-%define AdProviderPath /opt/likewise/%{_LIB}/liblsass_auth_provider_ad_open.so
+%define initScriptPathList /etc/init.d/lwsmd /etc/init.d/likewise
+%define AdProviderPath @PRIMARY_LIBDIR@/liblsass_auth_provider_ad_open.so
 %post
 ## chkconfig behaves differently on various updates of RHEL and SUSE
 ## So, we massage the init script according to the release, for now.
@@ -159,15 +145,15 @@ run_or_fail()
 
 import_registry_configurations()
 {
-    REGSHELL='/opt/likewise/bin/lwregshell'
+    REGSHELL='@MK_BINDIR@/lwregshell'
 
     log 'Importing registry...'
-    run_or_fail "$REGSHELL" import /opt/likewise/share/config/dcerpcd.reg
-    run_or_fail "$REGSHELL" import /opt/likewise/share/config/eventlogd.reg
-    run_or_fail "$REGSHELL" import /opt/likewise/share/config/lsassd.reg
-    run_or_fail "$REGSHELL" import /opt/likewise/share/config/lwiod.reg
-    run_or_fail "$REGSHELL" import /opt/likewise/share/config/lwreg.reg
-    run_or_fail "$REGSHELL" import /opt/likewise/share/config/netlogond.reg
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/dcerpcd.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/eventlogd.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/lsassd.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/lwiod.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/lwreg.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/netlogond.reg"
 }
 
 determine_upgrade_type()
