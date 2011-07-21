@@ -2,48 +2,34 @@ MODULES="package-deb package-rpm"
 
 configure()
 {
-    mk_declare -o PRIMARY_SERVICE=lsass
-
-    case "$LW_DEVICE_PROFILE" in
-        embedded)
-            mk_declare -o IS_EMBEDDED="yes"
-            ;;
-        *)
-            mk_declare -o IS_EMBEDDED="no"
-            ;;
-    esac
-
     mk_declare -o \
         MK_BINDIR \
+        MK_SBINDIR \
         MK_PREFIX \
+        MK_DATADIR \
+        MK_LIBEXECDIR \
         MK_DEBUG \
         MK_ROOT_DIR \
         MK_STAGE_DIR \
+        MK_HOST_ARCH \
+        MK_SYSCONFDIR \
         LW_CACHEDIR \
-        LW_CONFIGDIR
+        LW_CONFIGDIR \
+        LW_INITDIR \
+        PRIMARY_LIBDIR="$MK_LIBDIR"
 
     if mk_deb_enabled
     then
-        mk_declare -o \
-            PKG_DEB_NAME="likewise-open" \
-            PKG_DEB_VERSION="${LW_VERSION}-0" \
-            PKG_DEB_DATE="`date -R`"
+        mk_declare -o PKG_DEB_NAME="likewise-open"
+        mk_declare -o PKG_DEB_VERSION="${LW_VERSION}-0"
+        mk_declare -o PKG_DEB_DATE="`date -R`"
     fi
 
     if mk_rpm_enabled
     then
-        mk_declare -o \
-            PKG_RPM_NAME="likewise-open" \
-            PKG_RPM_VERSION="${LW_VERSION}" \
-            PKG_RPM_RELEASE="0"
-
-        PKG_RPM_COMPAT="0"
-
-        mk_compat_do
-            PKG_RPM_COMPAT="1"
-        mk_compat_done
-
-        mk_declare -o PKG_RPM_COMPAT
+        mk_declare -o PKG_RPM_NAME="likewise-open"
+        mk_declare -o PKG_RPM_VERSION="${LW_VERSION}"
+        mk_declare -o PKG_RPM_RELEASE="0"
     fi
 }
 
@@ -52,18 +38,17 @@ package_deb()
     mk_deb_do \
         PACKAGE="$PKG_DEB_NAME" \
         VERSION="$PKG_DEB_VERSION" \
-        DEBIANFILES="debian/changelog.in debian/compat.in \
-                     debian/control.in debian/postinst.in \
-                     debian/postrm.in debian/preinst.in \
-                     debian/prerm.in debian/rules.in"
+        DEBIANFILES="deb/changelog.in deb/control.in \
+                     deb/likewise-open.postinst.in deb/likewise-open.postrm.in deb/compat.in \
+                     deb/likewise-open.preinst.in deb/likewise-open.prerm.in deb/rules.in"
 
-        common_files
-        common_files_compat
-        
+        open_files
+        open_files_compat
+
         mk_deb_sub_do SUBPACKAGE="dev"
-            common_files_dev
+            open_files_dev
         mk_deb_sub_done
-    mk_deb_done   
+    mk_deb_done
 }
 
 package_rpm()
@@ -71,102 +56,79 @@ package_rpm()
     mk_rpm_do \
         PACKAGE="$PKG_RPM_NAME" \
         VERSION="$PKG_RPM_VERSION" \
-        SPECFILE="rpm/open.spec"
+        SPECFILE="rpm/open.spec.in"
 
-        common_files
-
-        if [ "$PKG_RPM_COMPAT" -eq "1" ]
-        then
-            mk_subpackage_do SUBPACKAGE="compat"
-                common_files_compat
-            mk_subpackage_done
-        fi
+        open_files
+        open_files_compat
 
         mk_rpm_sub_do SUBPACKAGE="devel"
-            common_files_dev
+            open_files_dev
         mk_rpm_sub_done
     mk_rpm_done
 }
 
 make()
 {
-    COMMON_SUBDIRS="\
+    OPEN_SUBDIRS="\
         @krb5 @cyrus-sasl @openldap @libiconv @sqlite \
         @libuuid @openssl @curl @libxml2 \
         @lwbase @lwmsg @lwreg @lwadvapi @netlogon \
         @lwio @libschannel @dcerpc @centutils @lwsm \
-        @eventlog @lsass @reapsysl @lwdns @srvsvc @lwnetapi \
-        @lwtools @domainjoin @lwconfig @lwupgrade @samba-interop \
-        @config"
+        @eventlog @lsass @reapsysl @lwdns @lwnetapi \
+        @domainjoin/libdomainjoin @domainjoin/domainjoin-cli \
+        @domainjoin/scripts @lwconfig @lwupgrade @samba-interop @config"
 
     mk_deb_enabled && package_deb
     mk_rpm_enabled && package_rpm
 }
 
-lw_use_bundled()
+open_files()
 {
-    for _dep in ${LW_BUNDLED}
-    do
-        [ "$_dep" = "$1" ] && return 0
-    done
-
-    return 1
+    open_files_prefix
+    open_files_usr
+    open_files_root
 }
 
-common_files()
+open_files_prefix()
 {
     mk_package_patterns \
-        SUBDIRS="$COMMON_SUBDIRS" \
+        SUBDIRS="$OPEN_SUBDIRS" \
         "${MK_BINDIR}/*" \
         "${MK_SBINDIR}/*" \
-        "${MK_LIBDIR}/*${MK_LIB_EXT}" \
+        "${MK_LIBEXECDIR}/*" \
         "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
-        "${MK_LIBDIR}/*.sys${MK_DLO_EXT}" \
-        "${MK_LIBDIR}/liblsass_auth_provider_*${MK_DLO_EXT}" \
-        "${MK_LIBDIR}/liblwmapsecurity*${MK_DLO_EXT}" \
-        "${MK_LIBDIR}/liblsaaccess*${MK_DLO_EXT}" \
-        "${MK_LIBDIR}/lib*_srv${MK_DLO_EXT}" \
-        "${MK_LIBDIR}/libsamdb${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*" \
         "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/krb5/plugins/libkrb5/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/lwsm-loader/*${MK_DLO_EXT}" \
-        "${MK_DATADIR}/*.glade" \
-        "${MK_DATADIR}/*.png" \
-        "${NSSDIR}/*" \
-        "${PAMDIR}/*" \
+        "${MK_DATADIR}/likewise.pam-auth-update" \
         "${LW_CONFIGDIR}/*.reg" \
+        "${MK_PREFIX}/data/VERSION"
+
+    [ "$MK_DLO_EXT" != "$MK_LIB_EXT" ] && mk_package_patterns \
+        SUBDIRS="$OPEN_SUBDIRS" \
+        "${MK_LIBDIR}/*${MK_LIB_EXT}"
+}
+
+open_files_usr()
+{
+    open_files_interop
+
+    mk_package_patterns SUBDIRS="@docs" "*"
+}
+
+open_files_root()
+{
+    mk_package_patterns \
+        SUBDIRS="$OPEN_SUBDIRS" \
         "${MK_SYSCONFDIR}/*" \
         "${MK_SYSCONFDIR}/gss/mech" \
-        "${MK_PREFIX}/data/VERSION" \
-        "${LW_CONFIGDIR}/*" \
-        "${LW_CACHEDIR}/*" \
-        "${MK_DATADIR}/likewise.pam-auth-update" \
-        "/etc/init.d/*" \
-        "/etc/krb5.conf.default" \
-        "/${MK_LIBDIR##*/}/security/pam_lsass${MK_DLO_EXT}" \
-        "/${MK_LIBDIR##*/}/libnss_lsass${MK_DLO_EXT}.*"
-
-    if [ "$MK_DLO_EXT" != "$MK_LIB_EXT" ]
-    then
-        mk_package_files "${MK_LIBDIR}/*${MK_DLO_EXT}"
-    fi
-
-    if lw_use_bundled cyrus-sasl
-    then
-        mk_package_files \
-            "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
-            "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*"
-    fi
-
-    mk_get_export ../../domainjoin DJ_GUI_ENABLED
-
-    if [ "$result" = yes ]
-    then
-        mk_package_files \
-            "${MK_DATADIR}/*.glade" \
-            "${MK_DATADIR}/*.png"
-    fi
+        "${MK_SYSCONFDIR}/LaunchDaemons/*" \
+        "${MK_SYSCONFDIR}/svcs-solaris/*" \
+        "${LW_INITDIR}/*" \
+        "${LW_CACHEDIR}/*"
 
     mk_package_dirs \
         "${LW_CACHEDIR}" \
@@ -174,22 +136,62 @@ common_files()
         "${LW_CACHEDIR}/rpc"
 }
 
-common_files_compat()
+open_files_compat()
+{
+    open_files_compat_prefix
+    open_files_compat_usr
+}
+
+open_files_compat_prefix()
 {
     mk_compat_do
         mk_package_patterns \
-            SUBDIRS="$COMMON_SUBDIRS" \
-            "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
-            "${NSSDIR}/*" \
-            "${PAMDIR}/*"
+            SUBDIRS="$OPEN_SUBDIRS" \
+            "${MK_LIBDIR}/*${MK_LIB_EXT}.*"
     mk_compat_done
 }
 
-common_files_dev()
+open_files_compat_usr()
+{
+    mk_compat_do
+        open_files_interop
+    mk_compat_done
+}
+
+open_files_dev()
 {
     mk_package_patterns \
-        SUBDIRS="$COMMON_SUBDIRS" \
+        SUBDIRS="$OPEN_SUBDIRS" \
         "${MK_LIBDIR}/*.la" \
         "*.h" \
         "*.idl"
+}
+
+open_files_interop()
+{
+    case "$MK_HOST_OS:$MK_ISA" in
+        aix:ppc32)
+            mk_package_targets \
+                "@${MK_STAGE_DIR}/usr/lib/security/pam_lsass.so" \
+                "@${MK_STAGE_DIR}/usr/lib/security/LSASS" \
+                "@${MK_STAGE_DIR}/usr/lib/netsvc/dynload/lsass.so"
+            ;;
+        aix:ppc64)
+            mk_package_targets \
+                "@${MK_STAGE_DIR}/usr/lib/security/64/pam_lsass.so" \
+                "@${MK_STAGE_DIR}/usr/lib/security/LSASS_64" \
+                "@${MK_STAGE_DIR}/usr/lib/netsvc/dynload/lsass_64.so"
+            ;;
+        darwin:*)
+            mk_package_patterns \
+                SUBDIRS="@lsass/interop/dsplugin @lsass/interop/auth/pam @lsass/interop/lwauthplugin @lsass/tools/ticketcopy" \
+                "*"
+            ;;
+        *)
+            mk_package_patterns \
+                SUBDIRS="@lsass/interop" \
+                "${NSSDIR}/*" \
+                "${PAMDIR}/*"
+            ;;
+    esac
 }
