@@ -197,6 +197,10 @@ GLOBAL   boolean32      dflag = false;
 INTERNAL boolean32      foreground = false;
 
 
+/* Dcerpcd was asked to shutdown and all threads should exit */
+INTERNAL boolean32      shutdown_threads = false;
+
+
 INTERNAL char           rpcd_version_str[] =
 #ifdef ENABLE_DCOM
 	"rpcd/orpcd version freedce 1.1";
@@ -981,7 +985,7 @@ rpcd_network_thread(
         NULL
     };
 
-    while (network_protseqs[index])
+    while (network_protseqs[index] && !shutdown_threads)
     {
         use_protseq = false;
         if (!use_all_protseqs)
@@ -1300,6 +1304,8 @@ int main(int argc, char *argv[])
      * Wait for listener thread to exit
      */
     dcethread_join_throw(listen_thread, NULL);
+
+    shutdown_threads = true;
 
     /*
      * Cancel network detection thread
