@@ -22,7 +22,6 @@ pyversio := $(shell pyversions -vd)
 PKGNAME=@PKG_DEB_NAME@
 PREFIX=@MK_PREFIX@
 
-
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
@@ -48,10 +47,7 @@ install: build
 	dh_testroot
 	dh_clean -k
 	dh_installdirs
-
 	dh_install --sourcedir=@MK_ROOT_DIR@/@MK_STAGE_DIR@
-
-
 
 # Build architecture-independent files here.
 binary-indep: build install
@@ -80,7 +76,7 @@ binary-arch: build install
 	if [ "@MK_DEBUG@" = "no" ]; then dh_strip; fi
 	dh_compress
 	dh_fixperms
-	dh_perl
+#	dh_perl
 	dh_makeshlibs
 	dh_installdeb
 #	dh_shlibdeps -ldebian/likewise-open/usr/lib/likewise-open
