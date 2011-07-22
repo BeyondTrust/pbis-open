@@ -36,7 +36,7 @@ Replaces: @PKG_DEB_NAME@
 Description: Authentication services for Active Directory domains
  Likewise Open integrates Unix desktops and servers into an Active Directory
  environment by joining hosts to the domain and lets Unix applications and
- services authenticate Windows users and groups via the  PAM and Name Service
+ services authenticate Windows users and groups via the PAM and Name Service
  Switch libraries.
 
 Package: @PKG_DEB_NAME@-dev

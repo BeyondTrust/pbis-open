@@ -1,15 +1,15 @@
 #!/bin/sh
 
-UPGRADEDIR=@MK_PREFIX@-upgrade
+UPGRADEDIR=/var/lib/likewise-upgrade
 
 LOG=/var/log/likewise-open-install.log
 TLOG=/tmp/LikewiseOpenTemp.txt
 
 PKG_ARCH="@MK_HOST_ARCH@"
 
-DAEMONS_TO_KILL="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
+DAEMONS_TO_KILL="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
 
-# Display to screen and log file with a blank line between entires.
+# Display to screen and log file with a blank line between entries.
 log()
 {
     echo $@
@@ -37,7 +37,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    $@ > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -56,7 +56,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    $@ > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -74,7 +74,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    $@ > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -117,20 +117,21 @@ case "$1" in
         log "Package: Likewise Open preinstall [upgrade] begins (`date`)"
 
         if dpkg-query --show --showformat='${Version}' likewise-open | grep "ubuntu" > /dev/null 2>&1 ; then
-            log "The package likewise-open from Ubuntu has been detected."
-            log "Neither side-by-side installations nor upgrades are supported."
-            log "Please remove likewise-open before continuing."
+            log 'The package likewise-open from Ubuntu has been detected.'
+            log 'Neither side-by-side installations nor upgrades are supported.'
+            log 'Please remove likewise-open before continuing.'
             exit 1
         fi
 
-        run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable pam"
-        run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable nsswitch"
+        run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
+        run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-        run_quiet "@MK_BINDIR@/lwsm shutdown"
+        run_quiet /usr/sbin/service likewise stop
+        run_quiet /usr/sbin/service lwsmd stop
 
         for daemon in $DAEMONS_TO_KILL
         do
-            run_quiet "pkill -KILL -x $daemon"
+            run_quiet pkill -KILL -x $daemon
         done
 
         log "Package: Likewise Open preinstall [upgrade] finished"
@@ -139,16 +140,19 @@ case "$1" in
     install)
         log "Package: Likewise Open preinstall [install] begins (`date`)"
 
-        if check_deb_installed "likewise-open5" ; then
-            log "The package likewise-open5 from Ubuntu has been detected."
-            log "Neither side-by-side installations nor upgrades are supported."
-            log "Please remove likewise-open5 before continuing."
+        if check_deb_installed 'likewise-open5' ; then
+            log 'The package likewise-open5 from Ubuntu has been detected.'
+            log 'Neither side-by-side installations nor upgrades are supported.'
+            log 'Please remove likewise-open5 before continuing.'
             exit 1
         fi
 
+        run_quiet /usr/sbin/service likewise stop
+        run_quiet /usr/sbin/service lwsmd stop
+
         for daemon in $DAEMONS_TO_KILL
         do
-            run_quiet "pkill -KILL -x $daemon"
+            run_quiet pkill -KILL -x $daemon
         done
 
         log "Package: Likewise Open preinstall [install] finished"
