@@ -70,10 +70,10 @@ package_deb()
     mk_deb_do \
         PACKAGE="$PKG_DEB_NAME" \
         VERSION="$PKG_DEB_VERSION" \
-        DEBIANFILES="deb/changelog.in deb/control.in  \
+        DEBIANFILES="deb/changelog.in deb/control.in \
                      deb/likewise-open.postinst.in deb/likewise-open.postrm.in deb/compat.in \
                      deb/likewise-open.preinst.in deb/likewise-open.prerm.in deb/rules.in"
-        
+
         open_files
         open_files_compat
 
@@ -89,7 +89,7 @@ package_rpm()
         PACKAGE="$PKG_RPM_NAME" \
         VERSION="$PKG_RPM_VERSION" \
         SPECFILE="rpm/open.spec.in"
-        
+
         open_files
         open_files_compat
 
@@ -314,11 +314,11 @@ make()
 {
     OPEN_SUBDIRS="\
         @krb5 @cyrus-sasl @openldap @libiconv @popt @sqlite \
-        @libuuid @openssl @curl @libxml2 @fuse @libedit \
+        @libuuid @openssl @curl @libxml2 @libedit \
         @libtdb @lwbase @lwmsg @lwreg @lwadvapi @netlogon \
-        @lwio @nfs @libschannel @dcerpc @centutils @lwsm \
-        @eventlog @lsass @reapsysl @lwdns @srvsvc @lwnetapi \
-        @lwtools @domainjoin/libdomainjoin @domainjoin/domainjoin-cli \
+        @lwio @libschannel @dcerpc @centutils @lwsm \
+        @eventlog @lsass @reapsysl @lwdns @lwnetapi \
+        @domainjoin/libdomainjoin @domainjoin/domainjoin-cli \
         @domainjoin/scripts @lwconfig @lwupgrade @samba-interop @config"
 
     mk_deb_enabled && package_deb
