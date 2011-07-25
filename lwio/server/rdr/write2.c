@@ -296,7 +296,7 @@ cleanup:
 
 
         IoIrpComplete(pContexts->pIrp);
-        RdrFreeContextArray(pContexts, pContexts->State.Write2.usOpCount);
+        RdrFreeContextArray(pContexts, pContexts->State.Write2.usOpCount + 1);
     }
 
     return FALSE;
