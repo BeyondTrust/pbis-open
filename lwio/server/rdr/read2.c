@@ -307,7 +307,7 @@ cleanup:
         pContexts->pIrp->IoStatusBlock.Status = status;
 
         IoIrpComplete(pContexts->pIrp);
-        RdrFreeContextArray(pContexts, pContexts->State.Read2.usOpCount);
+        RdrFreeContextArray(pContexts, pContexts->State.Read2.usOpCount + 1);
     }
 
     return FALSE;
