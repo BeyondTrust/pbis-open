@@ -1,12 +1,12 @@
 #!/bin/sh
 
-UPGRADEDIR=@MK_PREFIX@-upgrade
-PKG_ARCH="__PKG_ARCH"
+UPGRADEDIR=/var/lib/likewise-upgrade
+PKG_ARCH="@MK_HOST_ARCH@"
 
 LOG=/var/adm/likewise-open-install.log
 TLOG=/tmp/LikewiseOpenTemp.txt
 
-# Display to screen and log file with a blank line between entires.
+# Display to screen and log file with a blank line between entries.
 log()
 {
     echo $@
@@ -34,7 +34,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -53,7 +53,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -71,7 +71,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -90,71 +90,68 @@ run_or_fail()
 
 import_registry_configurations()
 {
-    REGIMPORT='@MK_BINDIR@/lwregshell import'
+    REGSHELL='@MK_BINDIR@/lwregshell'
+    REGLIST="dcerpcd.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg \
+             lwiod.reg lwreg.reg netlogond.reg rdr.reg reapsysl.reg"
 
-    log "Importing registry..."
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/dcerpcd.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/eventlogd.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/lsassd.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/privileges.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/accounts.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/lwiod.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/lwreg.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/netlogond.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/rdr.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/npfs.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/srv.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/pvfs.reg"
-    #run_or_fail "$REGIMPORT @LW_CONFIGDIR@/dfs.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/srvsvcd.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/nfs.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/reapsysl.reg"
+    log 'Importing registry...'
+    for i in ${REGLIST}
+    do
+        if [ -f "@LW_CONFIGDIR@/$i" ]
+        then
+            log "$i"
+            run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/$i"
+        fi
+    done
 }
 
 determine_upgrade_type()
 {
     PRESERVEDVERSIONFILE="${UPGRADEDIR}/VERSION"
 
-    if [ -f $PRESERVEDVERSIONFILE ]; then
-        run_or_fail "cat $PRESERVEDVERSIONFILE"
+    if [ -f "$PRESERVEDVERSIONFILE" ]; then
+        run_or_fail cat "$PRESERVEDVERSIONFILE"
         if [ -n "`grep '^VERSION=5.0' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Upgrading from Likewise Identity Services Open 5.0"
+            log 'Upgrading from Likewise Identity Services Open 5.0'
         elif [ -n "`grep '^VERSION=5.1' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Upgrading from Likewise Identity Services Open 5.1."
+            log 'Upgrading from Likewise Identity Services Open 5.1'
         elif [ -n "`grep '^VERSION=5.2' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Upgrading from Likewise Identity Services Open 5.2."
+            log 'Upgrading from Likewise Identity Services Open 5.2'
         elif [ -n "`grep '^VERSION=5.3' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Upgrading from Likewise Identity Services Open 5.3."
+            log 'Upgrading from Likewise Identity Services Open 5.3'
         elif [ -n "`grep '^VERSION=6.0' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_6_0=1
-            log "Upgrading from Likewise Open 6.0."
+            log 'Upgrading from Likewise Open 6.0'
+        elif [ -n "`grep '^VERSION=6.1' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_6_1=1
+            log 'Upgrading from Likewise Open 6.1'
         fi
     fi
 }
 
 import_5_0123_file()
 {
-    CONVERT="@MK_LIBEXECDIR@/conf2reg"
-    REGIMPORT="@MK_BINDIR@/lwregshell import"
+    CONVERT='@MK_LIBEXECDIR@/conf2reg'
+    REGSHELL='@MK_BINDIR@/lwregshell'
 
     COMMAND=$1
     SOURCE=$2
     # DEST is not necessary for some commands.
     DEST=$3
 
-    if [ -f $SOURCE ]; then
-        run_quiet "$CONVERT $COMMAND $SOURCE $DEST"
+    if [ -f "$SOURCE" ]; then
+        run_quiet "$CONVERT" "$COMMAND" "$SOURCE" $DEST
         if [ $? -ne 0 ]; then
             log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE."
             return 1
         fi
 
         if [ -n "$DEST" -a -f "$DEST" ]; then
-            run_quiet "$REGIMPORT $DEST"
+            run_quiet "$REGSHELL" import "$DEST"
             if [ $? -ne 0 ]; then
                 log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE and $DEST."
                 return 1
@@ -166,22 +163,20 @@ import_5_0123_file()
 
 restore_5_0123_configuration()
 {
-    CONVERT="@MK_LIBEXECDIR@/conf2reg"
-
     if [ -z "$UPGRADING_FROM_5_0123" ]; then
         return 0
     fi
 
-    import_5_0123_file "--lsass" "${UPGRADEDIR}/lsassd.conf" \
+    import_5_0123_file --lsass "${UPGRADEDIR}/lsassd.conf" \
         "${UPGRADEDIR}/lsassd.conf.reg"
 
-    import_5_0123_file "--netlogon" "${UPGRADEDIR}/netlogon.conf" \
+    import_5_0123_file --netlogon "${UPGRADEDIR}/netlogon.conf" \
         "${UPGRADEDIR}/netlogon.conf.reg"
 
-    import_5_0123_file "--eventlog" "${UPGRADEDIR}/eventlogd.conf" \
+    import_5_0123_file --eventlog "${UPGRADEDIR}/eventlogd.conf" \
         "${UPGRADEDIR}/eventlogd.conf.reg"
 
-    import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR}/pstore.db"
+    import_5_0123_file --pstore-sqlite "${UPGRADEDIR}/pstore.db"
 }
 
 relocate_domain_separator()
@@ -193,7 +188,7 @@ relocate_domain_separator()
             DomainSeparator="\\"
         fi
 
-        run_quiet @MK_BINDIR@/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
+        run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
     fi
 }
 
@@ -202,47 +197,50 @@ relocate_space_replacement()
     SpaceReplacement=`@MK_BINDIR@/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
 
     if [ -n "${SpaceReplacement}" ]; then
-        run_quiet @MK_BINDIR@/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
+        run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
     fi
+}
+
+set_lsass_dependencies()
+{
+    # Need to get rid of npfs dependency from earlier versions
+    run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lsass]' 'Dependencies' 'netlogon lwio lwreg rdr'
 }
 
 fix_60_registry()
 {
-    REGCLEANUP="@MK_BINDIR@/lwregshell cleanup"
+    REGSHELL='@MK_BINDIR@/lwregshell'
 
     if [ -z "$UPGRADING_FROM_6_0" ]; then
         return 0
     fi
 
     # Migrate pstore entries from default to joined domain
-    run "@MK_LIBEXECDIR@/regupgr61.sh --install"
+    run '@MK_LIBEXECDIR@/regupgr61.sh' --install
 
     # Migrate some other entries
     relocate_domain_separator
     relocate_space_replacement
 
-    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/dcerpcd.reg"
-    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/eventlogd.reg"
-    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/lsassd.reg"
-    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/lwiod.reg"
-    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/lwreg.reg"
-    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/netlogond.reg"
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/dcerpcd.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/eventlogd.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/lsassd.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/lwiod.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/lwreg.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/netlogond.reg'
 }
 
-wait_for_lwsm_shutdown()
+switch_to_open_provider()
 {
-    LWSMD_WAIT_TIME=$1
+    _value='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
+    _path='@PRIMARY_LIBDIR@/lsa-provider/ad_open.so'
+    case "${PKG_ARCH}" in
+      hppa*)
+        _path='@PRIMARY_LIBDIR@/lsa-provider/ad_open.sl'
+        ;;
+    esac
 
-    while [ "$LWSMD_WAIT_TIME" -ne 0 ]; do
-        sleep 1
-        run_quiet "@MK_BINDIR@/lwsm list"
-        if [ $? -ne 0 ]; then
-            return 0
-        fi
-        LWSMD_WAIT_TIME=`expr $LWSMD_WAIT_TIME - 1`
-    done
-
-    return 1
+    run_quiet '@MK_BINDIR@/lwregshell' set_value "$_value" Path "$_path"
 }
 
 postinstall()
@@ -250,7 +248,7 @@ postinstall()
     log "Package: Likewise Open postinstall begins (`date`)"
     log "Logging all operations to $LOG"
 
-    run_or_fail "@MK_SBINDIR@/lwsmd --start-as-daemon --loglevel debug"
+    run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --loglevel debug
 
     determine_upgrade_type
 
@@ -260,21 +258,24 @@ postinstall()
 
     fix_60_registry
 
-    run_or_fail "@MK_BINDIR@/lwsm shutdown"
-    wait_for_lwsm_shutdown 60
+    set_lsass_dependencies
 
-    run "ln -f -s @LW_INITDIR@/lwsmd /sbin/rc1.d/K401lwsmd"
-    run "ln -f -s @LW_INITDIR@/lwsmd /sbin/rc2.d/S591lwsmd"
-    run "ln -f -s @LW_INITDIR@/likewise /sbin/rc1.d/K400likewise"
-    run "ln -f -s @LW_INITDIR@/likewise /sbin/rc2.d/S592likewise"
+    switch_to_open_provider
 
-    run "@LW_INITDIR@/lwsmd start"
-    run "@LW_INITDIR@/likewise start"
+    run_or_fail '@MK_BINDIR@/lwsm' shutdown
 
-    run "@MK_BINDIR@/domainjoin-cli configure --enable pam"
-    run "@MK_BINDIR@/domainjoin-cli configure --enable nsswitch"
+    run ln -f -s '@LW_INITDIR@/lwsmd' /sbin/rc1.d/K401lwsmd
+    run ln -f -s '@LW_INITDIR@/lwsmd' /sbin/rc2.d/S591lwsmd
+    run ln -f -s '@LW_INITDIR@/likewise' /sbin/rc1.d/K400likewise
+    run ln -f -s '@LW_INITDIR@/likewise' /sbin/rc2.d/S592likewise
 
-    run_quiet "rm -rf ${UPGRADEDIR}"
+    run '@LW_INITDIR@/lwsmd' start
+    run '@LW_INITDIR@/likewise' start
+
+    run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
+    run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
+
+    run_quiet rm -rf "${UPGRADEDIR}"
 
     log "Package: Likewise Open postinstall finished"
     exit 0

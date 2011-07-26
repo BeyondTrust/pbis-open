@@ -135,7 +135,7 @@ determine_upgrade_type()
 
 import_5_0123_file()
 {
-    CONVERT='@MK_BINDIR@/conf2reg'
+    CONVERT='@MK_LIBEXECDIR@/conf2reg'
     REGSHELL='@MK_BINDIR@/lwregshell'
 
     COMMAND=$1
@@ -163,8 +163,6 @@ import_5_0123_file()
 
 restore_5_0123_configuration()
 {
-    CONVERT='@MK_LIBEXECDIR@/conf2reg'
-
     if [ -z "$UPGRADING_FROM_5_0123" ]; then
         return 0
     fi
@@ -237,7 +235,7 @@ switch_to_open_provider()
     _value='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
     _path='@PRIMARY_LIBDIR@/lsa-provider/ad_open.so'
 
-    run_quiet "@MK_BINDIR@/lwregshell" set_value "$_value" Path "$_path"
+    run_quiet '@MK_BINDIR@/lwregshell' set_value "$_value" Path "$_path"
 }
 
 postinstall()
@@ -245,7 +243,7 @@ postinstall()
     log "Package: Likewise Open postinstall [configure] begins (`date`)"
     log "Logging all operations to $LOG"
 
-    run_or_fail "@MK_SBINDIR@/lwsmd" --start-as-daemon --loglevel debug
+    run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --loglevel debug
 
     determine_upgrade_type
 

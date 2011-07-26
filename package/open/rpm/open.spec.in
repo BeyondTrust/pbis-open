@@ -148,7 +148,7 @@ import_registry_configurations()
 {
     REGSHELL='@MK_BINDIR@/lwregshell'
     REGLIST="dcerpcd.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg \
-             lwiod.reg lwreg.reg netlogond.reg rdr.reg dfs.reg reapsysl.reg"
+             lwiod.reg lwreg.reg netlogond.reg rdr.reg reapsysl.reg"
 
     log 'Importing registry...'
     for i in ${REGLIST}

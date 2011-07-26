@@ -1,15 +1,15 @@
 #!/bin/sh
 
-UPGRADEDIR=@MK_PREFIX@-upgrade
+UPGRADEDIR=/var/lib/likewise-upgrade
 
 LOG=/var/log/likewise-open-install.log
 TLOG=/tmp/LikewiseOpenTemp.txt
 
+PKG_ARCH="@MK_HOST_ARCH"
 
+DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
 
-DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
-
-# Display to screen and log file with a blank line between entires.
+# Display to screen and log file with a blank line between entries.
 log()
 {
     echo $@
@@ -37,7 +37,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -56,7 +56,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -74,7 +74,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -94,13 +94,13 @@ run_or_fail()
 remove_service_configurations_or_init_d_symlinks()
 {
     if [ -x /usr/sbin/svcadm ]; then
-        run_quiet "/usr/sbin/svcadm disable likewise"
-        run_quiet "/usr/sbin/svcadm disable lwsmd"
-        run_quiet "/usr/sbin/svccfg delete likewise"
-        run_quiet "/usr/sbin/svccfg delete likewise"
+        run_quiet /usr/sbin/svcadm disable likewise
+        run_quiet /usr/sbin/svcadm disable lwsmd
+        run_quiet /usr/sbin/svccfg delete likewise
+        run_quiet /usr/sbin/svccfg delete lwsmd
     else
-        run_quiet "rm /etc/rc0.d/K08lwsmd /etc/rc.1d/K08lwsmd /etc/rcS.d/K08lwmsd /etc/rc2.d/S17lwsmd"
-        run_quiet "rm /etc/rc0.d/K08likewise /etc/rc.1d/K08likewise /etc/rcS.d/K08likewise /etc/rc2.d/S17likewise"
+        run_quiet rm /etc/rc0.d/K08lwsmd /etc/rc.1d/K08lwsmd /etc/rcS.d/K08lwmsd /etc/rc2.d/S17lwsmd
+        run_quiet rm /etc/rc0.d/K08likewise /etc/rc.1d/K08likewise /etc/rcS.d/K08likewise /etc/rc2.d/S17likewise
     fi
 }
 
@@ -109,18 +109,20 @@ preuninstall()
     log "Package: Likewise Open preuninstall begins (`date`)"
     log "Logging all operations to $LOG"
 
-    run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable pam"
-    run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable nsswitch"
+    run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
+    run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
     remove_service_configurations_or_init_d_symlinks
 
-    # Stop all daemons; none should be needed anymore.
-    run_quiet "@MK_BINDIR@/lwsm shutdown"
+    run_quiet '@MK_BINDIR@/lwsm' shutdown
+
     if [ -x /usr/bin/zonename ]; then
         PKILLOPTS="-z `/usr/bin/zonename`"
     fi
-    for daemon in $DAEMONS_TO_HALT; do
-        run_quiet "pkill -KILL $PKILLOPTS -x $daemon"
+
+    for daemon in $DAEMONS_TO_HALT
+    do
+        run_quiet pkill -KILL $PKILLOPTS -x $daemon
     done
 
     log "Package: Likewise Open preuninstall finished"

@@ -1,13 +1,15 @@
 #!/bin/sh
 
-UPGRADEDIR=@MK_PREFIX@-upgrade
+UPGRADEDIR=/var/lib/likewise-upgrade
 
 LOG=/var/adm/likewise-open-install.log
 TLOG=/tmp/LikewiseOpenTemp.txt
 
-DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd reapsysld lsassd lwiod netlogond eventlogd dcerpcd lwregd lwsmd"
+PKG_ARCH="@MK_HOST_ARCH"
 
-# Display to screen and log file with a blank line between entires.
+DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
+
+# Display to screen and log file with a blank line between entries.
 log()
 {
     echo $@
@@ -35,7 +37,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -54,7 +56,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -72,7 +74,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -89,38 +91,21 @@ run_or_fail()
     return $err
 }
 
-wait_for_lwsm_shutdown()
-{
-    LWSMD_WAIT_TIME=$1
-
-    while [ "$LWSMD_WAIT_TIME" -ne 0 ]; do
-        sleep 1
-        run_quiet "@MK_BINDIR@/lwsm list"
-        if [ $? -ne 0 ]; then
-            return 0
-        fi
-        LWSMD_WAIT_TIME=`expr $LWSMD_WAIT_TIME - 1`
-    done
-
-    return 1
-}
-
 preremove()
 {
     log "Package: Likewise Open preremove begins (`date`)"
     log "Logging all operations to $LOG"
 
-    run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable pam"
-    run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable nsswitch"
+    run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
+    run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    # Stop all daemons; none should be needed anymore.
-    run_quiet "@MK_BINDIR@/lwsm shutdown"
-    wait_for_lwsm_shutdown 60
+    run_quiet '@MK_BINDIR@/lwsm' shutdow
+
     for daemon in $DAEMONS_TO_HALT
     do
         PIDS=`UNIX95= ps -C $daemon -o pid=`
         if [ -n "$PIDS" ]; then
-            run_quiet "kill -KILL $PIDS"
+            run_quiet kill -KILL $PIDS
         fi
     done
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-UPGRADEDIR=@MK_PREFIX@-upgrade
+UPGRADEDIR=/var/lib/likewise-upgrade
 
 LOG=/var/log/likewise-open-install.log
 TLOG=/tmp/LikewiseOpenTemp.txt
@@ -35,7 +35,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -54,7 +54,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -72,7 +72,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -89,36 +89,20 @@ run_or_fail()
     return $err
 }
 
-wait_for_lwsm_shutdown()
-{
-    LWSMD_WAIT_TIME=$1
-
-    while [ "$LWSMD_WAIT_TIME" -ne 0 ]; do
-        sleep 1
-        run_quiet "@MK_BINDIR@/lwsm list"
-        if [ $? -ne 0 ]; then
-            return 0
-        fi
-        LWSMD_WAIT_TIME=`expr $LWSMD_WAIT_TIME - 1`
-    done
-
-    return 1
-}
-
 preuninstall()
 {
     log "Package: Likewise Open preuninstall begins (`date`)"
     log "Logging all operations to $LOG"
 
-    run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable pam"
-    run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable nsswitch"
+    run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
+    run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    # Stop all daemons; none should be needed anymore.
-    run_quiet "@MK_BINDIR@/lwsm shutdown"
-    wait_for_lwsm_shutdown 60
+    run_quiet /etc/rc.d/likewse stop
+    run_quiet /etc/rc.d/lwsmd stop
+
     for daemon in $DAEMONS_TO_HALT
     do
-        run_quiet "pkill -KILL -x $daemon"
+        run_quiet pkill -KILL -x $daemon
     done
 
     log "Package: Likewise Open preuninstall finished"

@@ -1,13 +1,13 @@
 #!/bin/sh
 
-UPGRADEDIR=@MK_PREFIX@-upgrade
+UPGRADEDIR=/var/lib/likewise-upgrade
 
 LOG=/var/log/likewise-open-install.log
 TLOG=/tmp/LikewiseOpenTemp.txt
 
-DAEMONS_TO_KILL="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd reapsysld lsassd lwiod netlogond eventlogd dcerpcd lwregd lwsmd"
+DAEMONS_TO_KILL="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
 
-# Display to screen and log file with a blank line between entires.
+# Display to screen and log file with a blank line between entries.
 log()
 {
     echo $@
@@ -35,7 +35,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -54,7 +54,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -72,7 +72,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -94,16 +94,16 @@ preinstall()
     log "Package: Likewise Open preinstall begins (`date`)"
     log "Logging all operations to $LOG"
 
-    if [ -f @MK_SBINDIR@/gpagentd ]; then
+    if [ -f '@MK_SBINDIR@/gpagentd' ]; then
         log "@MK_SBINDIR@/gpagentd exists: Uninstall Likewise Enterprise before installing Likewise Open."
         exit 1
-    elif [ -f @MK_PREFIX@/data/VERSION ]; then
+    elif [ -f '@MK_PREFIX@/data/VERSION' ]; then
         log "@MK_PREFIX@/data/VERSION exists: Uninstall previous version of Likewise Open before proceeding with the install."
         exit 1
     fi
 
     for daemon in $DAEMONS_TO_KILL; do
-        run_quiet "pkill -KILL -x $daemon"
+        run_quiet pkill -KILL -x $daemon
     done
 
     log "Package: Likewise Open preinstall finished"
