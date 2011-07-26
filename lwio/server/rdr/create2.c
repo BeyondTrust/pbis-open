@@ -145,7 +145,6 @@ RdrCreateTreeConnect2Complete(
 cleanup:
 
     RTL_FREE(&pContext->State.Create.pwszFilename);
-    RTL_FREE(&pContext->State.Create.pwszCanonicalPath);
 
     if (status != STATUS_PENDING)
     {
