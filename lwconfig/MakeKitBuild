@@ -11,6 +11,10 @@ configure()
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
     mk_define LWCONFIG_XML "\"${LW_CACHEDIR}/lwconfig.xml\""
 
+    mk_declare -o \
+        lwconfigdir="${LW_CACHEDIR}" \
+        lwbindir="${BINDIR}"
+
     # libxml2 puts headers in non-standard locations
     # Figure out if we build it ourselves
     XML_INCDIR="${MK_INCLUDEDIR}/libxml2"
