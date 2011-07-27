@@ -11,6 +11,10 @@ configure()
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
     mk_define LWCONFIG_XML "\"${LW_CACHEDIR}/lwconfig.xml\""
 
+    mk_declare -o \
+        lwconfigdir="${LW_CACHEDIR}" \
+        lwbindir="${BINDIR}"
+
     lw_check_libxml2
 
     mk_check_headers \

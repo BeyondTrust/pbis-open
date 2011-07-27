@@ -34,6 +34,7 @@
 #include <regex.h>
 #include <locale.h>
 
+#include <libxml/xinclude.h>
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
