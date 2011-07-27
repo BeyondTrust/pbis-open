@@ -252,6 +252,8 @@ CTGetPidOf(
     return CTGetPidOfCmdLine(programName, NULL, NULL, owner, pid, count);
 }
 
+#if defined(HAVE_DECL_PSTAT_GETPROC) && HAVE_DECL_PSTAT_GETPROC
+// HPUX should have this
 DWORD
 CTGetPidOfCmdLine(
     PCSTR programName,
@@ -266,42 +268,10 @@ CTGetPidOfCmdLine(
     size_t fillCount = 0;
     size_t foundCount = 0;
     struct stat findStat;
-#if HAVE_DECL_PSTAT_GETPROC
-    //HPUX should have this
     struct pst_status mystatus;
     struct pst_status status[10];
     int inBuffer;
     int i;
-#endif
-#ifdef HAVE_STRUCT_PSINFO
-    //Solaris and AIX should have this
-    DIR *dir = NULL;
-    struct dirent *dirEntry = NULL;
-    PSTR filePath = NULL;
-    struct psinfo infoStruct;
-    FILE *infoFile = NULL;
-    struct stat compareStat;
-    BOOLEAN bFileExists;
-#if defined(__LWI_SOLARIS__)
-    int (*getzoneid)() = NULL;
-    int zoneid = -1;
-#endif
-#endif
-#if defined(HAVE_KVM_GETPROCS) && HAVE_DECL_KERN_PROC_PATHNAME
-    //FreeBSD has this
-    char pathBuffer[MAXPATHLEN];
-    size_t len;
-    int unfilteredCount;
-    kvm_t *kd = NULL;
-    struct kinfo_proc *procs;
-    int i;
-    struct kinfo_proc *pos;
-    int sysctlName[4] = {
-        CTL_KERN,
-        KERN_PROC,
-        KERN_PROC_PATHNAME,
-        0 };
-#endif
 
     if(count)
     {
@@ -320,8 +290,7 @@ CTGetPidOfCmdLine(
             GCE(ceError = LwMapErrnoToLwError(errno));
         }
     }
-    
-#if HAVE_DECL_PSTAT_GETPROC
+
     //First get the process info for this process
     inBuffer = pstat_getproc(&mystatus, sizeof(mystatus), 0,
             getpid());
@@ -378,9 +347,62 @@ CTGetPidOfCmdLine(
             GCE(ceError = LwMapErrnoToLwError(errno));
     }
     ceError = ERROR_SUCCESS;
+
+    if(count)
+        *count = foundCount;
+    else if(!ceError && foundCount == 0)
+        ceError = ERROR_PROC_NOT_FOUND;
+
+cleanup:
+
+    return ceError;
+}
+#elif defined HAVE_STRUCT_PSINFO && HAVE_STRUCT_PSINFO
+//Solaris and AIX should have this
+DWORD
+CTGetPidOfCmdLine(
+    PCSTR programName,
+    PCSTR programFilename,
+    PCSTR cmdLine,
+    uid_t owner,
+    pid_t *pid,
+    size_t *count
+    )
+{
+    DWORD ceError = ERROR_NOT_SUPPORTED;
+    size_t fillCount = 0;
+    size_t foundCount = 0;
+    struct stat findStat;
+    DIR *dir = NULL;
+    struct dirent *dirEntry = NULL;
+    PSTR filePath = NULL;
+    struct psinfo infoStruct;
+    FILE *infoFile = NULL;
+    struct stat compareStat;
+    BOOLEAN bFileExists;
+#if defined(__LWI_SOLARIS__)
+    int (*getzoneid)() = NULL;
+    int zoneid = -1;
 #endif
 
-#ifdef HAVE_STRUCT_PSINFO
+    if(count)
+    {
+        fillCount = *count;
+        *count = 0;
+    }
+    else if(pid != NULL)
+        fillCount = 1;
+
+    if(programFilename != NULL)
+    {
+        while(stat(programFilename, &findStat) < 0)
+        {
+            if(errno == EINTR)
+                continue;
+            GCE(ceError = LwMapErrnoToLwError(errno));
+        }
+    }
+
     if ((dir = opendir("/proc")) == NULL) {
         GCE(ceError = LwMapErrnoToLwError(errno));
     }
@@ -493,9 +515,68 @@ CTGetPidOfCmdLine(
 not_match:
         ;
     }
-#endif
 
-#if defined(HAVE_KVM_GETPROCS) && HAVE_DECL_KERN_PROC_PATHNAME
+    if(count)
+        *count = foundCount;
+    else if(!ceError && foundCount == 0)
+        ceError = ERROR_PROC_NOT_FOUND;
+
+cleanup:
+    if(dir != NULL)
+        closedir(dir);
+    CT_SAFE_FREE_STRING(filePath);
+    CTSafeCloseFile(&infoFile);
+
+    return ceError;
+}
+#elif defined(HAVE_KVM_GETPROCS) && HAVE_KVM_GET_PROCS && HAVE_DECL_KERN_PROC_PATHNAME
+//FreeBSD has this
+DWORD
+CTGetPidOfCmdLine(
+    PCSTR programName,
+    PCSTR programFilename,
+    PCSTR cmdLine,
+    uid_t owner,
+    pid_t *pid,
+    size_t *count
+    )
+{
+    DWORD ceError = ERROR_NOT_SUPPORTED;
+    size_t fillCount = 0;
+    size_t foundCount = 0;
+    struct stat findStat;
+    //FreeBSD has this
+    char pathBuffer[MAXPATHLEN];
+    size_t len;
+    int unfilteredCount;
+    kvm_t *kd = NULL;
+    struct kinfo_proc *procs;
+    int i;
+    struct kinfo_proc *pos;
+    int sysctlName[4] = {
+        CTL_KERN,
+        KERN_PROC,
+        KERN_PROC_PATHNAME,
+        0 };
+
+    if(count)
+    {
+        fillCount = *count;
+        *count = 0;
+    }
+    else if(pid != NULL)
+        fillCount = 1;
+
+    if(programFilename != NULL)
+    {
+        while(stat(programFilename, &findStat) < 0)
+        {
+            if(errno == EINTR)
+                continue;
+            GCE(ceError = LwMapErrnoToLwError(errno));
+        }
+    }
+
     kd = kvm_open(NULL, "/dev/null", NULL, O_RDONLY, NULL);
     if (kd == NULL)
         GCE(ceError = DWORD_ACCESS_DENIED);
@@ -570,7 +651,6 @@ not_match:
         foundCount++;
     }
     ceError = ERROR_SUCCESS;
-#endif
 
     if(count)
         *count = foundCount;
@@ -578,18 +658,30 @@ not_match:
         ceError = ERROR_PROC_NOT_FOUND;
 
 cleanup:
-#ifdef HAVE_STRUCT_PSINFO
-    if(dir != NULL)
-        closedir(dir);
-    CT_SAFE_FREE_STRING(filePath);
-    CTSafeCloseFile(&infoFile);
-#endif
-#if defined(HAVE_KVM_GETPROCS) && HAVE_DECL_KERN_PROC_PATHNAME
     if(kd != NULL)
     {
         kvm_close(kd);
     }
-#endif
 
     return ceError;
 }
+#else
+DWORD
+CTGetPidOfCmdLine(
+    PCSTR programName,
+    PCSTR programFilename,
+    PCSTR cmdLine,
+    uid_t owner,
+    pid_t *pid,
+    size_t *count
+    )
+{
+    DWORD ceError = ERROR_NOT_SUPPORTED;
+
+    if (count)
+    {
+        *count = 0;
+    }
+    return ceError;
+}
+#endif

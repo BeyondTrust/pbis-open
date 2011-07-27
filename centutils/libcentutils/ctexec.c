@@ -242,7 +242,6 @@ CTSpawnProcessWithEnvironment(
     int fd0[2] = {-1, -1};
     int fd1[2] = {-1, -1};
     int fd2[2] = {-1, -1};
-    int maxfd = 0;
     struct rlimit rlm;
 
     *ppProcInfo = 0;
@@ -253,9 +252,6 @@ CTSpawnProcessWithEnvironment(
         ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
-
-    maxfd = rlm.rlim_max;
-
 
     if (dwFdIn >= 0)
     {
