@@ -18,7 +18,7 @@ make()
         HEADERDEPS="lw/base.h lwadvapi.h openssl/rand.h lwio/lwio.h dce/rpc.h \
                     lw/rpc/common.h lw/rpc/samr.h lw/rpc/lsa.h lw/rpc/wkssvc.h \
                     lwnet.h ntlm/gssntlm.h ntlm/sspintlm.h lsa/ad.h" \
-        LIBDEPS="lwnetclientapi lwadvapi lwbase lsarpc dcerpc lwnetapi lsaclient"
+        LIBDEPS="lwnetclientapi lwadvapi lwadvapi_nothr lwbase lwbase_nothr lsarpc dcerpc lwnetapi lsaclient lwioclient crypto"
 
     lw_add_tool_target "$result"
 }
