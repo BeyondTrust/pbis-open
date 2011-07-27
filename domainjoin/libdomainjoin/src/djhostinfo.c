@@ -96,7 +96,13 @@ WriteHostnameToFiles(
                 ceError = LwMapErrnoToLwError(errno);
                 BAIL_ON_CENTERIS_ERROR(ceError);
             }
-            fprintf(fp, "%s\n", pszComputerName);
+
+            if (fprintf(fp, "%s\n", pszComputerName) < 0)
+            {
+                ceError = LwMapErrnoToLwError(errno);
+                BAIL_ON_CENTERIS_ERROR(ceError);
+            }
+
             fclose(fp);
             fp = NULL;
         }
@@ -344,7 +350,11 @@ WriteHostnameToSunFiles(
             &fp);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    fprintf(fp, "%s\n", pNewShortHostname);
+    if (fprintf(fp, "%s\n", pNewShortHostname) < 0)
+    {
+        ceError = LwMapErrnoToLwError(errno);
+        BAIL_ON_CENTERIS_ERROR(ceError);
+    }
 
     ceError = CTSafeCloseFile(&fp);
     BAIL_ON_CENTERIS_ERROR(ceError);

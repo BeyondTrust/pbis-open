@@ -519,29 +519,61 @@ DJWriteHostsFileIfModified(
             if (pLine->pEntry != NULL) {
 
                 if (!IsNullOrEmptyString(pLine->pEntry->pszIpAddress))
-                    fprintf(fp, "%s", pLine->pEntry->pszIpAddress);
+                {
+                    if (fprintf(fp, "%s", pLine->pEntry->pszIpAddress) < 0)
+                    {
+                        ceError = LwMapErrnoToLwError(errno);
+                        BAIL_ON_CENTERIS_ERROR(ceError);
+                    }
+                }
 
                 if (!IsNullOrEmptyString(pLine->pEntry->pszCanonicalName))
-                    fprintf(fp, " %s", pLine->pEntry->pszCanonicalName);
+                {
+                    if (fprintf(fp, " %s", pLine->pEntry->pszCanonicalName) < 0)
+                    {
+                        ceError = LwMapErrnoToLwError(errno);
+                        BAIL_ON_CENTERIS_ERROR(ceError);
+                    }
+                }
 
                 pAlias = pLine->pEntry->pAliasList;
 
                 while (pAlias) {
 
                     if (!IsNullOrEmptyString(pAlias->pszAlias))
-                        fprintf(fp, " %s", pAlias->pszAlias);
+                    {
+                        if (fprintf(fp, " %s", pAlias->pszAlias) < 0)
+                        {
+                            ceError = LwMapErrnoToLwError(errno);
+                            BAIL_ON_CENTERIS_ERROR(ceError);
+                        }
+                    }
 
                     pAlias = pAlias->pNext;
                 }
 
                 if (pLine->pszComment != NULL)
-                    fprintf(fp, " %s", pLine->pszComment);
+                {
+                    if (fprintf(fp, " %s", pLine->pszComment) < 0)
+                    {
+                        ceError = LwMapErrnoToLwError(errno);
+                        BAIL_ON_CENTERIS_ERROR(ceError);
+                    }
+                }
 
-                fprintf(fp, "\n");
+                if (fprintf(fp, "\n") < 0)
+                {
+                    ceError = LwMapErrnoToLwError(errno);
+                    BAIL_ON_CENTERIS_ERROR(ceError);
+                }
             }
             else if(pLine->pszComment != NULL)
             {
-                fprintf(fp, "%s\n", pLine->pszComment);
+                if (fprintf(fp, "%s\n", pLine->pszComment) < 0)
+                {
+                    ceError = LwMapErrnoToLwError(errno);
+                    BAIL_ON_CENTERIS_ERROR(ceError);
+                }
             }
 
             pLine = pLine->pNext;

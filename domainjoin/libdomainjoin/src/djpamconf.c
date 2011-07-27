@@ -304,7 +304,7 @@ static DWORD CopyService(struct PamConf *conf, const char *oldName, const char *
     DWORD ceError = ERROR_SUCCESS;
     int line = -1;
     int newLine;
-    struct PamLine *oldLineObj, *newLineObj;
+    struct PamLine *newLineObj;
     for(;;)
     {
         line = NextLineForService(conf, line, oldName, NULL);
@@ -312,7 +312,6 @@ static DWORD CopyService(struct PamConf *conf, const char *oldName, const char *
             break;
 
         BAIL_ON_CENTERIS_ERROR(ceError = CopyLine(conf, line, &newLine));
-        oldLineObj = &conf->lines[line];
         newLineObj = &conf->lines[newLine];
         /* Update the service name */
         CT_SAFE_FREE_STRING(newLineObj->service->value);
