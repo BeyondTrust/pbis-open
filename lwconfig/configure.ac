@@ -153,6 +153,9 @@ fi
 AC_SUBST(lwconfigdir)
 AC_DEFINE_UNQUOTED(LWCONFIG_XML, "${lwconfigdir}/lwconfig.xml", "Path to lwconfig.xml")
 
+AS_AC_EXPAND(lwbindir, "$bindir")
+AC_SUBST(lwbindir)
+
 # Checks for library functions
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([strndup strncasecmp strtoul strtoll __strtoll])

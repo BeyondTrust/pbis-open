@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <capabilities xmlns:xi="http://www.w3.org/2001/XInclude">
-    <xi:include href="file:///var/lib/likewise/lwconfig_front.xml">
+    <xi:include href="file://@lwconfigdir@/lwconfig_front.xml">
        <xi:fallback></xi:fallback>
     </xi:include>
 <section section="Eventlog">
@@ -15,7 +15,7 @@
 
             <description>A list of user names, group names, or SIDS separated by commas.</description>
             <default><value></value></default>
-            <apply command="/opt/likewise/bin/lwsm restart eventlog" />
+            <apply command="@lwbindir@/lwsm restart eventlog" />
         </registry>
     </capability>
 
@@ -29,7 +29,7 @@
             <default>
                 <value></value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm restart eventlog" />
+            <apply command="@lwbindir@/lwsm restart eventlog" />
         </registry>
     </capability>
 
@@ -43,7 +43,7 @@
             <default>
                 <value></value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm restart eventlog" />
+            <apply command="@lwbindir@/lwsm restart eventlog" />
         </registry>
     </capability>
     <capability>
@@ -62,7 +62,7 @@
             <unit suffix="B"  multiplier="1" />
             <unit suffix="KB" multiplier="1024" />
             <unit suffix="MB" multiplier="1048576" />
-            <apply command="/opt/likewise/bin/lwsm restart eventlog" />
+            <apply command="@lwbindir@/lwsm restart eventlog" />
         </registry>
     </capability>
     <capability>
@@ -78,7 +78,7 @@
             <accept>
                 <range min="1" max="365" />
             </accept>
-            <apply command="/opt/likewise/bin/lwsm restart eventlog" />
+            <apply command="@lwbindir@/lwsm restart eventlog" />
         </registry>
     </capability>
     <capability>
@@ -94,10 +94,10 @@
             <accept>
                 <range min="100" max="2000000" />
             </accept>
-            <apply command="/opt/likewise/bin/lwsm restart eventlog" />
+            <apply command="@lwbindir@/lwsm restart eventlog" />
         </registry>
     </capability>
-    <xi:include href="file:///var/lib/likewise/lwconfig_eventlog.xml">
+    <xi:include href="file://@lwconfigdir@/lwconfig_eventlog.xml">
        <xi:fallback></xi:fallback>
     </xi:include>
   </section>
@@ -116,8 +116,8 @@
                 <pattern>..+</pattern>
                 <pattern>[a-zA-Z0-9]</pattern>
             </reject>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
-            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -134,8 +134,8 @@
                 <pattern>..+</pattern>
                 <pattern>[a-zA-Z0-9]</pattern>
             </reject>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
-            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -147,7 +147,7 @@
             <default>
                 <value>false</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -159,10 +159,10 @@
             <default>
                 <value>false</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
-    <xi:include href="file:///var/lib/likewise/lwconfig_lsass.xml">
+    <xi:include href="file://@lwconfigdir@/lwconfig_lsass.xml">
        <xi:fallback></xi:fallback>
     </xi:include>
 </section>
@@ -176,7 +176,7 @@
                 <default>
                     <value>false</value>
                 </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -195,7 +195,7 @@
                 <value>info</value>
                 <value>verbose</value>
             </accept>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -208,10 +208,10 @@
             <default>
                 <value>Access Denied</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
-    <xi:include href="file:///var/lib/likewise/lwconfig_lsass_pam.xml">
+    <xi:include href="file://@lwconfigdir@/lwconfig_lsass_pam.xml">
        <xi:fallback></xi:fallback>
     </xi:include>
 </section>
@@ -225,8 +225,8 @@
             <default>
                 <value>false</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
-            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -238,7 +238,7 @@
             <default>
                 <value>true</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -250,7 +250,7 @@
             <default>
                 <value>true</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -262,7 +262,7 @@
             <default>
                 <value>true</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -274,7 +274,7 @@
             <default>
                 <value>true</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -286,7 +286,7 @@
             <default>
                 <value>false</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -298,7 +298,7 @@
             <default>
                 <value>true</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -310,8 +310,8 @@
             <default>
                 <value>@enable_nss_enum_default@</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
-            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -323,8 +323,8 @@
             <default>
                 <value>true</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
-            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -336,8 +336,8 @@
             <default>
                 <value>false</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
-            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -349,7 +349,7 @@
             <default>
                 <value>true</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -369,7 +369,7 @@
             <unit suffix="m" multiplier="60" />
             <unit suffix="h" multiplier="3600" />
             <unit suffix="d" multiplier="86400" />
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -389,7 +389,7 @@
             <unit suffix="m" multiplier="60" />
             <unit suffix="h" multiplier="3600" />
             <unit suffix="d" multiplier="86400" />
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -409,7 +409,7 @@
             <unit suffix="m" multiplier="60" />
             <unit suffix="h" multiplier="3600" />
             <unit suffix="d" multiplier="86400" />
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -432,7 +432,7 @@
             <unit suffix="m" multiplier="60" />
             <unit suffix="h" multiplier="3600" />
             <unit suffix="d" multiplier="86400" />
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -448,7 +448,7 @@
             <unit suffix="B"  multiplier="1" />
             <unit suffix="KB" multiplier="1024" />
             <unit suffix="MB" multiplier="1048576" />
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -461,8 +461,8 @@
             <default>
                 <value>@default_homedir_prefix@</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
-            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -475,8 +475,8 @@
             <default>
                 <value>%H/local/%D/%U</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
-            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -489,8 +489,8 @@
             <default>
                 <value>022</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
-            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -503,8 +503,8 @@
             <default>
                 <value>/bin/sh</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
-            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -517,7 +517,7 @@
             <default>
                 <value>@default_skeldirs@</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -531,8 +531,8 @@
             <default>
                 <value></value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
-            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -544,7 +544,7 @@
             <default>
                 <value>false</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -557,7 +557,7 @@
             <default>
                 <value></value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -570,7 +570,7 @@
             <default>
                 <value></value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -583,7 +583,7 @@
             <default>
                 <value></value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -595,7 +595,7 @@
             <default>
                 <value>false</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -607,10 +607,10 @@
             <default>
                 <value>false</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
-    <xi:include href="file:///var/lib/likewise/lwconfig_lsass_ad.xml">
+    <xi:include href="file://@lwconfigdir@/lwconfig_lsass_ad.xml">
        <xi:fallback></xi:fallback>
     </xi:include>
 </section>
@@ -624,7 +624,7 @@
             <default>
                 <value>true</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -637,7 +637,7 @@
             <default>
                 <value>%H/local/%D/%U</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -650,7 +650,7 @@
             <default>
                 <value>022</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -663,7 +663,7 @@
             <default>
                 <value>/bin/sh</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
     <capability>
@@ -676,10 +676,10 @@
             <default>
                 <value>@default_skeldirs@</value>
             </default>
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="@lwbindir@/lwsm refresh lsass" />
         </registry>
     </capability>
-    <xi:include href="file:///var/lib/likewise/lwconfig_lsass_local.xml">
+    <xi:include href="file://@lwconfigdir@/lwconfig_lsass_local.xml">
        <xi:fallback></xi:fallback>
     </xi:include>
   </section>
@@ -714,11 +714,11 @@
             </default>
         </registry>
     </capability>
-    <xi:include href="file:///var/lib/likewise/lwconfig_system.xml">
+    <xi:include href="file://@lwconfigdir@/lwconfig_system.xml">
        <xi:fallback></xi:fallback>
     </xi:include>
   </section>
-  <xi:include href="file:///var/lib/likewise/lwconfig_end.xml">
+  <xi:include href="file://@lwconfigdir@/lwconfig_end.xml">
      <xi:fallback></xi:fallback>
   </xi:include>
 </capabilities>
