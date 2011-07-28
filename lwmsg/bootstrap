@@ -1,1 +1,1 @@
-cd `dirname $0` && aclocal && libtoolize --force && autoheader && autoconf && automake --add-missing
+cd `dirname $0` && aclocal -I m4 && libtoolize --force && autoheader && autoconf && automake --add-missing
