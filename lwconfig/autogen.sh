@@ -1,2 +1,2 @@
 #!/bin/sh
-autoreconf -fi
+autoreconf -fi -I m4
