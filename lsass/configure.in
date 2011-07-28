@@ -812,7 +812,7 @@ AC_CHECK_HEADERS([sys/sysctl.h sys/user.h pwd.h stdio.h grp.h sys/wait.h libgen.
 AC_CHECK_HEADERS([security/pam_appl.h], ,
     [AC_CHECK_HEADERS([pam/pam_appl.h], ,
         [AC_MSG_ERROR([No PAM header files found])])])
-AC_CHECK_HEADERS([execinfo.h sys/regset.h])
+AC_CHECK_HEADERS([execinfo.h ucontext.h sys/regset.h])
 
 AC_PATH_PROG([IDL], [dceidl], [no], [$PATH:$DCERPC_PATH])
 
@@ -867,14 +867,71 @@ AC_CHECK_TYPES([wchar16_t], [], [], [AC_INCLUDES_DEFAULT
 # include <wc16str.h>
 #endif
 ])
-AC_CHECK_MEMBERS([ucontext_t.uc_mcontext,
-                  ucontext_t.uc_mcontext->__ss,
-                  ucontext_t.uc_mcontext->__ss.__rip,
-                  ucontext_t.uc_mcontext->__ss.__eip],
+AC_CHECK_MEMBERS([ucontext_t.uc_mcontext],
 [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_UCONTEXT_H
+# include <ucontext.h>
+#endif
 #ifdef HAVE_EXECINFO_H
 # include <execinfo.h>
 #endif
+])
+
+AC_MSG_CHECKING([if ucontext_t.uc_mcontext->__ss exists])
+AC_TRY_COMPILE(AC_INCLUDES_DEFAULT [
+#ifdef HAVE_UCONTEXT_H
+# include <ucontext.h>
+#endif
+#ifdef HAVE_EXECINFO_H
+# include <execinfo.h>
+#endif
+],
+[
+ucontext_t a;
+void *b = &a.uc_mcontext->__ss;
+exit((int)b);
+], [
+AC_MSG_RESULT([yes])
+AC_DEFINE([HAVE_UCONTEXT_T_UC_MCONTEXT____SS], [1], [Define if ucontext_t.uc_mcontext->__ss exists])],[
+AC_MSG_RESULT([no])
+])
+
+AC_MSG_CHECKING([if ucontext_t.uc_mcontext->__ss.__rip exists])
+AC_TRY_COMPILE(AC_INCLUDES_DEFAULT [
+#ifdef HAVE_UCONTEXT_H
+# include <ucontext.h>
+#endif
+#ifdef HAVE_EXECINFO_H
+# include <execinfo.h>
+#endif
+],
+[
+ucontext_t a;
+void *b = &a.uc_mcontext->__ss.__rip;
+exit((int)b);
+], [
+AC_MSG_RESULT([yes])
+AC_DEFINE([HAVE_UCONTEXT_T_UC_MCONTEXT____SS___RIP], [1], [Define if ucontext_t.uc_mcontext->__ss.__rip exists])],[
+AC_MSG_RESULT([no])
+])
+
+AC_MSG_CHECKING([if ucontext_t.uc_mcontext->__ss.__eip exists])
+AC_TRY_COMPILE(AC_INCLUDES_DEFAULT [
+#ifdef HAVE_UCONTEXT_H
+# include <ucontext.h>
+#endif
+#ifdef HAVE_EXECINFO_H
+# include <execinfo.h>
+#endif
+],
+[
+ucontext_t a;
+void *b = &a.uc_mcontext->__ss.__eip;
+exit((int)b);
+], [
+AC_MSG_RESULT([yes])
+AC_DEFINE([HAVE_UCONTEXT_T_UC_MCONTEXT____SS___EIP], [1], [Define if ucontext_t.uc_mcontext->__ss.__eip exists])],[
+AC_MSG_RESULT([no])
 ])
 
 saved_CFLAGS="$CFLAGS"
