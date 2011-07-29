@@ -104,7 +104,7 @@ LwAutoEnrollCurlSoapRequest(
     const unsigned char *soapRequestStr = NULL;
     size_t soapRequestSize = 0;
     OpenSOAPEnvelopePtr pSoapReply = NULL;
-    CURL *curlHandle;
+    CURL *curlHandle = NULL;
     struct curl_slist *pHeaderList = NULL;
     long responseCode = 0;
     CURLcode curlResult = CURLE_OK;
