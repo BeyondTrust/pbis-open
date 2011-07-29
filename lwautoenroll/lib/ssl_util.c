@@ -304,7 +304,7 @@ AddExtensionAsn1Value(
         )
 {
     ASN1_OBJECT *object = NULL;
-    ASN1_OCTET_STRING *valueString;
+    ASN1_OCTET_STRING *valueString = NULL;
     unsigned char *data;
     X509_EXTENSION *extension = NULL;
     int sslResult = 0;
