@@ -50,6 +50,7 @@
 
 #include "adprovider.h"
 #include <lsa/lsapstore-api.h>
+#include <dce/rpc.h>
 
 static
 DWORD
@@ -2319,6 +2320,11 @@ AD_JoinDomain(
         pRequest->pszOSServicePack,
         pRequest->dwFlags);
     BAIL_ON_LSA_ERROR(dwError);
+
+    // All old RPC connections are keyed with the old machine account
+    // credentials. Closing them now will prevent the threads from waiting
+    // around 5 minutes to be garbage collected.
+    rpc_close_idle_associations();
 
     dwError = AD_PostJoinDomain(
                   pStateMinimal,

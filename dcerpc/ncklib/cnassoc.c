@@ -3958,6 +3958,15 @@ PRIVATE void rpc__cn_assoc_syntax_free
     *syntax = NULL;
 }
 
+void rpc_close_idle_associations
+(
+    void
+)
+{
+    rpc__cn_assoc_timer_reclaim((pointer_t) RPC_C_CN_ASSOC_GRP_CLIENT);
+    rpc__cn_assoc_timer_reclaim((pointer_t) RPC_C_CN_ASSOC_GRP_SERVER);
+}
+
 
 /******************************************************************************/
 /*
