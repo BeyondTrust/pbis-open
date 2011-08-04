@@ -660,7 +660,6 @@ if [ -z "$domain" ]; then
     _log "Use the domainjoin-cli program to join your computer to an Active "
     _log "Directory domain which will enable logons to your system with Active Directory "
     _log "user accounts."
-#    open -a '@MK_BINDIR@/Likewise Domain Join.app/Contents/MacOS/Likewise Domain Join'&
 else
     _log ""
     _log "Your computer is joined to $domain"
