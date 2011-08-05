@@ -3,7 +3,7 @@ vcersions of autoconf, libtool, moonunit, dash, m4, automake,
 and other tools necessary for building the 3rd party components such
 as cyrus-sasl, openldap, and krb5.  These tools are provided to
 help devleopers working on older Linux environments or commercial Unix
-operating systems whithout a current toolchain.
+operating systems without a current toolchain.
 
 To build the tools:
 

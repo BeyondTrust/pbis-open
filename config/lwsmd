@@ -58,6 +58,9 @@ fix_locale()
             . /etc/default/locale
             export LANG
         fi
+    elif [ -z "$LANG" ]; then
+        LANG="en_US.UTF-8"
+        export LANG
     fi
 }
 

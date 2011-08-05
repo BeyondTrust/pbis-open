@@ -105,7 +105,7 @@ configure()
     LW_VENDOR="likewise"
     LW_PRODUCT="platform"
     LW_VERSION="6.2.${LW_BUILD_ID:-0}"
-    
+
     mk_msg "configuring $LW_VENDOR $LW_PRODUCT $LW_VERSION"
     mk_msg "using bundled libraries: $LW_BUNDLED"
 
@@ -119,11 +119,7 @@ configure()
     case "$LW_FEATURE_LEVEL" in
         auth)
             mk_skip_subdir libschannel
-            mk_skip_subdir srvsvc
             mk_skip_subdir lwnetapi
-            mk_skip_subdir lwtools
-            mk_skip_subdir nfs
-            mk_skip_subdir pvfs2
             ;;
     esac
 

@@ -160,8 +160,6 @@ import_5_0123_file()
 
 restore_5_0123_configuration()
 {
-    CONVERT='@MK_LIBEXECDIR@/conf2reg'
-
     if [ -z "$UPGRADING_FROM_5_0123" ]; then
         return 0
     fi
