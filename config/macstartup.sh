@@ -10,7 +10,7 @@ fi
     # Wait for lwsmd to start.
     sleep 0.5
 
-    while [ ! -e "/var/lib/likewise/.lwsm" ]
+    while ! /opt/likewise/bin/lwsm list &> /dev/null
     do
         sleep 0.5
     done
