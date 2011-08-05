@@ -91,18 +91,18 @@ run_or_fail()
 import_registry_configurations()
 {
     REGSHELL='@MK_BINDIR@/lwregshell'
+    REGLIST="dcerpcd.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg \
+             lwiod.reg lwreg.reg netlogond.reg rdr.reg reapsysl.reg"
 
     log 'Importing registry...'
-    run_or_fail "$REGSHELL" import '@LW_CONFIGDIR@/dcerpcd.reg'
-    run_or_fail "$REGSHELL" import '@LW_CONFIGDIR@/eventlogd.reg'
-    run_or_fail "$REGSHELL" import '@LW_CONFIGDIR@/lsassd.reg'
-    run_or_fail "$REGSHELL" import '@LW_CONFIGDIR@/privileges.reg'
-    run_or_fail "$REGSHELL" import '@LW_CONFIGDIR@/accounts.reg'
-    run_or_fail "$REGSHELL" import '@LW_CONFIGDIR@/lwiod.reg'
-    run_or_fail "$REGSHELL" import '@LW_CONFIGDIR@/lwreg.reg'
-    run_or_fail "$REGSHELL" import '@LW_CONFIGDIR@/netlogond.reg'
-    run_or_fail "$REGSHELL" import '@LW_CONFIGDIR@/rdr.reg'
-    run_or_fail "$REGSHELL" import '@LW_CONFIGDIR@/reapsysl.reg'
+    for i in ${REGLIST}
+    do
+        if [ -f "@LW_CONFIGDIR@/$i" ]
+        then
+            log "$i"
+            run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/$i"
+        fi
+    done
 }
 
 determine_upgrade_type()
@@ -126,6 +126,9 @@ determine_upgrade_type()
         elif [ -n "`grep '^VERSION=6.0' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_6_0=1
             log 'Upgrading from Likewise Open 6.0'
+        elif [ -n "`grep '^VERSION=6.1' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_6_1=1
+            log 'Upgrading from Likewise Open 6.1'
         fi
     fi
 }
@@ -198,9 +201,9 @@ relocate_space_replacement()
     fi
 }
 
-set_lsass_dependencies()
+remove_npfs_dependencies()
 {
-    # Need to get rid of npfs dependency from earlier versions
+    run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers]' 'Load' 'rdr'
     run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lsass]' 'Dependencies' 'netlogon lwio lwreg rdr'
 }
 
@@ -213,18 +216,22 @@ fix_60_registry()
     fi
 
     # Migrate pstore entries from default to joined domain
-    run '@MK_LIBEXECDIR@/regupgr61.sh'--install
+    run '@MK_LIBEXECDIR@/regupgr61.sh' --install
 
     # Migrate some other entries
     relocate_domain_separator
     relocate_space_replacement
 
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/dcerpcd.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/eventlogd.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/lsassd.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/lwiod.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/lwreg.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/netlogond.reg"
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/dcerpcd.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/eventlogd.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/lsassd.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/privileges.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/accounts.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/lwiod.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/lwreg.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/netlogond.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/rdr.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/reapsysl.reg'
 }
 
 switch_to_open_provider()
@@ -250,7 +257,7 @@ postinstall()
 
     fix_60_registry
 
-    set_lsass_dependencies
+    remove_npfs_dependencies
 
     switch_to_open_provider
 

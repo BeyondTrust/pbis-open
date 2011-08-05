@@ -62,7 +62,7 @@ LOG=/var/log/likewise-open-install.log
 TLOG=/tmp/LikewiseOpenTemp.txt
 
 PKG_ARCH="__PKG_ARCH"
-# Display to screen and log file with a blank line between entires.
+# Display to screen and log file with a blank line between entries.
 log()
 {
     echo $@
@@ -182,6 +182,9 @@ determine_upgrade_type()
         elif [ -n "`grep '^VERSION=6.0' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_6_0=1
             log 'Upgrading from Likewise Open 6.0'
+        elif [ -n "`grep '^VERSION=6.1' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_6_1=1
+            log 'Upgrading from Likewise Open 6.1'
         fi
     fi
 }
@@ -254,10 +257,10 @@ relocate_space_replacement()
     fi
 }
 
-set_lsass_dependencies()
+remove_npfs_dependencies()
 {
-    # Need to get rid of npfs dependency from earlier versions
-    run_quiet /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass]' 'Dependencies' 'netlogon lwio lwreg rdr'
+    run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers]' 'Load' 'rdr'
+    run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lsass]' 'Dependencies' 'netlogon lwio lwreg rdr'
 }
 
 fix_60_registry()
@@ -278,9 +281,13 @@ fix_60_registry()
     run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/dcerpcd.reg'
     run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/eventlogd.reg'
     run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/lsassd.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/privileges.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/accounts.reg'
     run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/lwiod.reg'
     run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/lwreg.reg'
     run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/netlogond.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/rdr.reg'
+    run_or_fail "${REGSHELL}" cleanup '@LW_CONFIGDIR@/reapsysl.reg'
 }
 
 switch_to_open_provider()
@@ -306,7 +313,7 @@ postinstall()
 
     fix_60_registry
 
-    set_lsass_dependencies
+    remove_npfs_dependencies
 
     switch_to_open_provider
 
@@ -339,7 +346,7 @@ TLOG=/tmp/LikewiseOpenTemp.txt
 
 PKG_ARCH="__PKG_ARCH"
 
-# Display to screen and log file with a blank line between entires.
+# Display to screen and log file with a blank line between entries.
 log()
 {
     echo $@

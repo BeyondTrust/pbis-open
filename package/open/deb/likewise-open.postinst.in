@@ -201,15 +201,17 @@ relocate_space_replacement()
     fi
 }
 
-set_lsass_dependencies()
+remove_npfs_dependencies()
 {
-    # Need to get rid of npfs dependency from earlier versions
+    run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers]' 'Load' 'rdr'
     run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lsass]' 'Dependencies' 'netlogon lwio lwreg rdr'
 }
 
 fix_60_registry()
 {
     REGSHELL='@MK_BINDIR@/lwregshell'
+    REGLIST="dcerpcd.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg \
+             lwiod.reg lwreg.reg netlogond.reg rdr.reg reapsysl.reg"
 
     if [ -z "$UPGRADING_FROM_6_0" ]; then
         return 0
@@ -222,12 +224,13 @@ fix_60_registry()
     relocate_domain_separator
     relocate_space_replacement
 
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/dcerpcd.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/eventlogd.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/lsassd.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/lwiod.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/lwreg.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/netlogond.reg"
+    for i in ${REGLIST}
+    do
+        if [ -f "@LW_CONFIGDIR@/$i" ]
+        then
+            run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/$i"
+        fi
+    done
 }
 
 switch_to_open_provider()
@@ -253,7 +256,7 @@ postinstall()
 
     fix_60_registry
 
-    set_lsass_dependencies
+    remove_npfs_dependencies
 
     switch_to_open_provider
 
