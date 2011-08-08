@@ -102,6 +102,11 @@ RdrFreeTreeConnectContext(
             RTL_FREE(&pContext->State.TreeConnect.pszCachePath);
         }
 
+        if (pContext->State.TreeConnect.hGssContext)
+        {
+            SMBGSSContextFree(pContext->State.TreeConnect.hGssContext);
+        }
+
         RdrFreeContext(pContext);
     }
 }
