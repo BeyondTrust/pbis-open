@@ -573,27 +573,34 @@ boolean DRIVER_main
     if (cmd_opt != NULL && cmd_opt[opt_keep_obj] && status)
     {
         char **idir_list;               /* Array of include directories */
-        char idir_opt[max_string_len];  /* Cmd list of include directories */
-        char cc_cmd[max_string_len];    /* Base command line and options */
-#ifdef VMS
-        boolean     paren_flag;         /* TRUE if trailing paren needed */
-#endif
+        char *idir_opt = NULL;          /* Cmd list of include directories */
+        char *cc_cmd = NULL;            /* Base command line and options */
+        int str_len = 1;
+
+        /* Compute size of idir_opt string buffer */
+        str_len +=  3 + strlen(cmd_val[opt_out]);
+        idir_list = (char **)cmd_val[opt_idir];
+        while (*idir_list)
+        {
+            str_len +=  3;
+            if (strcmp(*idir_list, DEFAULT_IDIR) == 0)
+                str_len += sizeof(DEFAULT_H_IDIR);
+            else
+                str_len += strlen(*idir_list);
+            idir_list++;
+        }
+        idir_opt = (char *) calloc(str_len, sizeof(char));
+        if (!idir_opt)
+        {
+            return FALSE;
+        }
 
         /* Paste together command line option for include directories. */
-
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
+        /* Compute size of idir_opt string buffer */
+        str_len +=  3 + strlen(cmd_val[opt_out]);
         idir_list = (char **)cmd_val[opt_idir];
         idir_opt[0] = '\0';
-
-#ifdef VMS
-        if (*idir_list || cmd_opt[opt_out])
-        {
-            paren_flag = TRUE;
-            strcat(idir_opt, " /INCLUDE_DIRECTORY=(");
-        }
-        else
-            paren_flag = FALSE;
-#endif
 
         /* If an -out directory was specified, place it at front of idir list */
         if (cmd_opt[opt_out])
@@ -602,9 +609,6 @@ boolean DRIVER_main
             strcat(idir_opt, " -I");
 #endif
             strcat(idir_opt, (char *)cmd_val[opt_out]);
-#ifdef VMS
-            strcat(idir_opt, ",");
-#endif
         }
 
         while (*idir_list)
@@ -621,19 +625,21 @@ boolean DRIVER_main
             else
                 strcat(idir_opt, *idir_list);
             idir_list++;
-#ifdef VMS
-            strcat(idir_opt, ",");
-#endif
         }
 
-#ifdef VMS
-        if (paren_flag)
-            /* Overwrite trailing comma with paren. */
-            idir_opt[strlen(idir_opt)-1] = ')';
-#endif
 #endif
 
         /* Paste together base command line. */
+        /* Paste together base command line. */
+        str_len = strlen((char *)cmd_val[opt_cc_cmd]) +
+                  strlen((char *)cmd_val[opt_cc_opt]) +
+                  strlen(idir_opt) + 1;
+        cc_cmd = (char *) calloc(str_len, sizeof(char));
+        if (!cc_cmd)
+        {
+            free(idir_opt);
+            return FALSE;
+        }
 
 #ifdef PASS_I_DIRS_TO_CC
         sprintf(cc_cmd, "%s %s %s", (char *)cmd_val[opt_cc_cmd],
