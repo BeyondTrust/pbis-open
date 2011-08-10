@@ -1,0 +1,208 @@
+This is krb5-admin.info, produced by makeinfo version 4.5 from
+admin.texinfo.
+
+INFO-DIR-SECTION Kerberos
+START-INFO-DIR-ENTRY
+* krb5-admin: (krb5-admin).             Kerberos V5 Administrator's Guide
+END-INFO-DIR-ENTRY
+
+
+File: krb5-admin.info,  Node: kadmin Time Zones,  Prev: Errors,  Up: Appendix
+
+kadmin Time Zones
+=================
+
+This is a complete listing of the time zones recognized by the `kadmin'
+command.
+
+gmt
+     Greenwich Mean Time
+
+ut, utc
+     Universal Time (Coordinated).
+
+wet
+     Western European Time.  (Same as GMT.)
+
+bst
+     British Summer Time.  (1 hour ahead of GMT.)
+
+wat
+     West Africa Time.  (1 hour behind GMT.)
+
+at
+     Azores Time.  (2 hours behind GMT.)
+
+bst
+     Brazil Standard Time.  (3 hours behind GMT.)  Note that the
+     abbreviation BST also stands for British Summer Time.
+
+gst
+     Greenland Standard Time.  (3 hours behind GMT.)  Note that the
+     abbreviation GST also stands for Guam Standard Time.
+
+nft
+     Newfoundland Time.  (3.5 hours behind GMT.)
+
+nst
+     Newfoundland Standard Time.  (3.5 hours behind GMT.)
+
+ndt
+     Newfoundland Daylight Time.  (2.5 hours behind GMT.)
+
+ast
+     Atlantic Standard Time.  (4 hours behind GMT.)
+
+adt
+     Atlantic Daylight Time.  (3 hours behind GMT.)
+
+est
+     Eastern Standard Time.  (5 hours behind GMT.)
+
+edt
+     Eastern Daylight Time.  (4 hours behind GMT.)
+
+cst
+     Central Standard Time.  (6 hours behind GMT.)
+
+cdt
+     Central Daylight Time.  (5 hours behind GMT.)
+
+mst
+     Mountain Standard Time.  (7 hours behind GMT.)
+
+mdt
+     Mountain Daylight Time.  (6 hours behind GMT.)
+
+pst
+     Pacific Standard Time.  (8 hours behind GMT.)
+
+pdt
+     Pacific Daylight Time.  (7 hours behind GMT.)
+
+yst
+     Yukon Standard Time.  (9 hours behind GMT.)
+
+ydt
+     Yukon Daylight Time.  (8 hours behind GMT.)
+
+hst
+     Hawaii Standard Time.  (10 hours behind GMT.)
+
+hdt
+     Hawaii Daylight Time.  (9 hours behind GMT.)
+
+cat
+     Central Alaska Time.  (10 hours behind GMT.)
+
+ahst
+     Alaska-Hawaii Standard Time.  (10 hours behind GMT.)
+
+nt
+     Nome Time.  (11 hours behind GMT.)
+
+idlw
+     International Date Line West Time.  (12 hours behind GMT.)
+
+cet
+     Central European Time.  (1 hour ahead of GMT.)
+
+met
+     Middle European Time.  (1 hour ahead of GMT.)
+
+mewt
+     Middle European Winter Time.  (1 hour ahead of GMT.)
+
+mest
+     Middle European Summer Time.  (2 hours ahead of GMT.)
+
+swt
+     Swedish Winter Time.  (1 hour ahead of GMT.)
+
+sst
+     Swedish Summer Time.  (1 hours ahead of GMT.)
+
+fwt
+     French Winter Time.  (1 hour ahead of GMT.)
+
+fst
+     French Summer Time.  (2 hours ahead of GMT.)
+
+eet
+     Eastern Europe Time; Russia Zone 1.  (2 hours ahead of GMT.)
+
+bt
+     Baghdad Time; Russia Zone 2.  (3 hours ahead of GMT.)
+
+it
+     Iran Time.  (3.5 hours ahead of GMT.)
+
+zp4
+     Russia Zone 3.  (4 hours ahead of GMT.)
+
+zp5
+     Russia Zone 4.  (5 hours ahead of GMT.)
+
+ist
+     Indian Standard Time.  (5.5 hours ahead of GMT.)
+
+zp6
+     Russia Zone 5.  (6 hours ahead of GMT.)
+
+nst
+     North Sumatra Time.  (6.5 hours ahead of GMT.)  Note that the
+     abbreviation NST is also used for Newfoundland Stanard Time.
+
+sst
+     South Sumatra Time; Russia Zone 6.  (7 hours ahead of GMT.)  Note
+     that SST is also Swedish Summer Time.
+
+wast
+     West Australian Standard Time.  (7 hours ahead of GMT.)
+
+wadt
+     West Australian Daylight Time.  (8 hours ahead of GMT.)
+
+jt
+     Java Time.  (7.5 hours ahead of GMT.)
+
+cct
+     China Coast Time; Russia Zone 7.  (8 hours ahead of GMT.)
+
+jst
+     Japan Standard time; Russia Zone 8.  (9 hours ahead of GMT.)
+
+kst
+     Korean Standard Time.  (9 hours ahead of GMT.)
+
+cast
+     Central Australian Standard Time.  (9.5 hours ahead of GMT.)
+
+cadt
+     Central Australian Daylight Time.  (10.5 hours ahead of GMT.)
+
+east
+     Eastern Australian Standard Time.  (10 hours ahead of GMT.)
+
+eadt
+     Eastern Australian Daylight Time.  (11 hours ahead of GMT.)
+
+gst
+     Guam Standard Time; Russia Zone 9.  (10 hours ahead of GMT.)
+
+kdt
+     Korean Daylight Time.  (10 hours ahead of GMT.)
+
+nzt
+     New Zealand Time.  (12 hours ahead of GMT.)
+
+nzst
+     New Zealand Standard Time.  (12 hours ahead of GMT.)
+
+nzdt
+     New Zealand Daylight Time.  (13 hours ahead of GMT.)
+
+idle
+     International Date Line East.  (12 hours ahead of GMT.)
+
+

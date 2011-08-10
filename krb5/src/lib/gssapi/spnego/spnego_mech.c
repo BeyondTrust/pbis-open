@@ -1736,6 +1736,7 @@ spnego_gss_accept_sec_context(
 					  &negState, &return_token);
 			if (ret != GSS_S_COMPLETE)
 				goto cleanup;
+			sendTokenInit = 1;
 			ret = GSS_S_CONTINUE_NEEDED;
 		}
 	} else {

@@ -608,6 +608,13 @@ kg_accept_krb5(minor_status, context_handle,
     }
 #endif
 
+    if (authdat->checksum == NULL) {
+        /* missing checksum counts as "inappropriate type" */
+        code = KRB5KRB_AP_ERR_INAPP_CKSUM;
+        major_status = GSS_S_FAILURE;
+        goto fail;
+    }
+
    if (authdat->checksum == NULL) {
        /* missing checksum counts as "inappropriate type" */
        code = KRB5KRB_AP_ERR_INAPP_CKSUM;

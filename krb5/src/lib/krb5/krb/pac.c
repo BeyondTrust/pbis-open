@@ -658,16 +658,14 @@ k5_pac_verify_kdc_checksum(krb5_context context,
     krb5_boolean valid;
     krb5_octet *p;
 
-    ret = k5_pac_locate_buffer(context, pac,
-			       PAC_PRIVSVR_CHECKSUM, &privsvr_checksum);
+    ret = k5_pac_locate_buffer(context, pac, PAC_PRIVSVR_CHECKSUM, &privsvr_checksum);
     if (ret != 0)
 	return ret;
 
     if (privsvr_checksum.length < PAC_SIGNATURE_DATA_LENGTH)
 	return KRB5_BAD_MSIZE;
 
-    ret = k5_pac_locate_buffer(context, pac,
-			       PAC_SERVER_CHECKSUM, &server_checksum);
+    ret = k5_pac_locate_buffer(context, pac, PAC_SERVER_CHECKSUM, &server_checksum);
     if (ret != 0)
 	return ret;
 
@@ -678,6 +676,8 @@ k5_pac_verify_kdc_checksum(krb5_context context,
     checksum.checksum_type = load_32_le(p);
     checksum.length = privsvr_checksum.length - PAC_SIGNATURE_DATA_LENGTH;
     checksum.contents = p + PAC_SIGNATURE_DATA_LENGTH;
+    if (!krb5_c_is_keyed_cksum(checksum.checksum_type))
+        return KRB5KRB_AP_ERR_INAPP_CKSUM;
 
     server_checksum.data += PAC_SIGNATURE_DATA_LENGTH;
     server_checksum.length -= PAC_SIGNATURE_DATA_LENGTH;

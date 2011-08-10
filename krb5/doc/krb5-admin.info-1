@@ -1,0 +1,1136 @@
+This is krb5-admin.info, produced by makeinfo version 4.5 from
+admin.texinfo.
+
+INFO-DIR-SECTION Kerberos
+START-INFO-DIR-ENTRY
+* krb5-admin: (krb5-admin).             Kerberos V5 Administrator's Guide
+END-INFO-DIR-ENTRY
+
+
+File: krb5-admin.info,  Node: Top,  Next: Copyright,  Prev: (dir),  Up: (dir)
+
+This document describes how to administrate a Kerberos V5 installation.
+
+* Menu:
+
+* Copyright::
+* Introduction::
+* How Kerberos Works::
+* Configuration Files::
+* Using DNS::
+* Administrating the Kerberos Database::
+* Configuring Kerberos with OpenLDAP back-end::
+* Application Servers::
+* Backups of Secure Hosts::
+* Bug Reporting::
+* Appendix::
+
+
+File: krb5-admin.info,  Node: Copyright,  Next: Introduction,  Prev: Top,  Up: Top
+
+Copyright
+*********
+
+Copyright (C) 1985-2009 by the Massachusetts Institute of Technology.
+
+     Export of software employing encryption from the United States of
+     America may require a specific license from the United States
+     Government.  It is the responsibility of any person or organization
+     contemplating export to obtain such a license before exporting.
+
+WITHIN THAT CONSTRAINT, permission to use, copy, modify, and distribute
+this software and its documentation for any purpose and without fee is
+hereby granted, provided that the above copyright notice appear in all
+copies and that both that copyright notice and this permission notice
+appear in supporting documentation, and that the name of M.I.T. not be
+used in advertising or publicity pertaining to distribution of the
+software without specific, written prior permission.  Furthermore if you
+modify this software you must label your software as modified software
+and not distribute it in such a fashion that it might be confused with
+the original MIT software.  M.I.T. makes no representations about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+
+Individual source code files are copyright MIT, Cygnus Support, Novell,
+OpenVision Technologies, Oracle, Red Hat, Sun Microsystems,
+FundsXpress, and others.
+
+Project Athena, Athena, Athena MUSE, Discuss, Hesiod, Kerberos, Moira,
+and Zephyr are trademarks of the Massachusetts Institute of Technology
+(MIT).  No commercial use of these trademarks may be made without prior
+written permission of MIT.
+
+"Commercial use" means use of a name in a product or other for-profit
+manner.  It does NOT prevent a commercial firm from referring to the
+MIT trademarks in order to convey information (although in doing so,
+recognition of their trademark status should be given).
+
+The following copyright and permission notice applies to the OpenVision
+Kerberos Administration system located in `kadmin/create',
+`kadmin/dbutil', `kadmin/passwd', `kadmin/server', `lib/kadm5', and
+portions of `lib/rpc':
+
+     Copyright, OpenVision Technologies, Inc., 1996, All Rights Reserved
+
+     WARNING:  Retrieving the OpenVision Kerberos Administration system
+     source code, as described below, indicates your acceptance of the
+     following terms.  If you do not agree to the following terms, do
+     not retrieve the OpenVision Kerberos administration system.
+
+     You may freely use and distribute the Source Code and Object Code
+     compiled from it, with or without modification, but this Source
+     Code is provided to you "AS IS" EXCLUSIVE OF ANY WARRANTY,
+     INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY
+     OR FITNESS FOR A PARTICULAR PURPOSE, OR ANY OTHER WARRANTY,
+     WHETHER EXPRESS OR IMPLIED.  IN NO EVENT WILL OPENVISION HAVE ANY
+     LIABILITY FOR ANY LOST PROFITS, LOSS OF DATA OR COSTS OF
+     PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR FOR ANY SPECIAL,
+     INDIRECT, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS AGREEMENT,
+     INCLUDING, WITHOUT LIMITATION, THOSE RESULTING FROM THE USE OF THE
+     SOURCE CODE, OR THE FAILURE OF THE SOURCE CODE TO PERFORM, OR FOR
+     ANY OTHER REASON.
+
+     OpenVision retains all copyrights in the donated Source Code.
+     OpenVision also retains copyright to derivative works of the
+     Source Code, whether created by OpenVision or by a third party.
+     The OpenVision copyright notice must be preserved if derivative
+     works are made based on the donated Source Code.
+
+     OpenVision Technologies, Inc. has donated this Kerberos
+     Administration system to MIT for inclusion in the standard
+     Kerberos 5 distribution.  This donation underscores our commitment
+     to continuing Kerberos technology development and our gratitude
+     for the valuable work which has been performed by MIT and the
+     Kerberos community.
+
+     Portions contributed by Matt Crawford `<crawdad@fnal.gov>' were
+     work performed at Fermi National Accelerator Laboratory, which is
+     operated by Universities Research Association, Inc., under contract
+     DE-AC02-76CHO3000 with the U.S. Department of Energy.
+
+Portions of `src/lib/crypto' have the following copyright:
+
+     Copyright (C) 1998 by the FundsXpress, INC.
+
+     All rights reserved.
+
+     Export of this software from the United States of America may
+     require a specific license from the United States Government.  It
+     is the responsibility of any person or organization contemplating
+     export to obtain such a license before exporting.
+
+     WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+     distribute this software and its documentation for any purpose and
+     without fee is hereby granted, provided that the above copyright
+     notice appear in all copies and that both that copyright notice and
+     this permission notice appear in supporting documentation, and that
+     the name of FundsXpress. not be used in advertising or publicity
+     pertaining to distribution of the software without specific,
+     written prior permission.  FundsXpress makes no representations
+     about the suitability of this software for any purpose.  It is
+     provided "as is" without express or implied warranty.
+
+     THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR
+     IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+     WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+
+The implementation of the Yarrow pseudo-random number generator in
+`src/lib/crypto/yarrow' has the following copyright:
+
+     Copyright 2000 by Zero-Knowledge Systems, Inc.
+
+     Permission to use, copy, modify, distribute, and sell this software
+     and its documentation for any purpose is hereby granted without
+     fee, provided that the above copyright notice appear in all copies
+     and that both that copyright notice and this permission notice
+     appear in supporting documentation, and that the name of
+     Zero-Knowledge Systems, Inc. not be used in advertising or
+     publicity pertaining to distribution of the software without
+     specific, written prior permission.  Zero-Knowledge Systems, Inc.
+     makes no representations about the suitability of this software
+     for any purpose.  It is provided "as is" without express or
+     implied warranty.
+
+     ZERO-KNOWLEDGE SYSTEMS, INC. DISCLAIMS ALL WARRANTIES WITH REGARD
+     TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+     MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL ZERO-KNOWLEDGE
+     SYSTEMS, INC. BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
+     DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA
+     OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+     TORTUOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+     PERFORMANCE OF THIS SOFTWARE.
+
+The implementation of the AES encryption algorithm in
+`src/lib/crypto/aes' has the following copyright:
+
+     Copyright (C) 2001, Dr Brian Gladman `<brg@gladman.uk.net>',
+     Worcester, UK.
+     All rights reserved.
+
+     LICENSE TERMS
+
+     The free distribution and use of this software in both source and
+     binary form is allowed (with or without changes) provided that:
+
+       1. distributions of this source code include the above copyright
+          notice, this list of conditions and the following disclaimer;
+
+       2. distributions in binary form include the above copyright
+          notice, this list of conditions and the following disclaimer
+          in the documentation and/or other associated materials;
+
+       3. the copyright holder's name is not used to endorse products
+          built using this software without specific written permission.
+
+     DISCLAIMER
+
+     This software is provided 'as is' with no explcit or implied
+     warranties in respect of any properties, including, but not
+     limited to, correctness and fitness for purpose.
+
+Portions contributed by Red Hat, including the pre-authentication
+plug-in framework, contain the following copyright:
+
+     Copyright (C) 2006 Red Hat, Inc.
+     Portions copyright (C) 2006 Massachusetts Institute of Technology
+     All Rights Reserved.
+     Redistribution and use in source and binary forms, with or without
+     modification, are permitted provided that the following conditions
+     are met:
+
+        * Redistributions of source code must retain the above copyright
+          notice, this list of conditions and the following disclaimer.
+
+        * Redistributions in binary form must reproduce the above
+          copyright notice, this list of conditions and the following
+          disclaimer in the documentation and/or other materials
+          provided with the distribution.
+
+        * Neither the name of Red Hat, Inc., nor the names of its
+          contributors may be used to endorse or promote products
+          derived from this software without specific prior written
+          permission.
+
+     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+     BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+     EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+     PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+     PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+     THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+     TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+     THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+     SUCH DAMAGE.
+
+
+The implementations of GSSAPI mechglue in GSSAPI-SPNEGO in
+`src/lib/gssapi', including the following files:
+
+     lib/gssapi/generic/gssapi_err_generic.et
+     lib/gssapi/mechglue/g_accept_sec_context.c
+     lib/gssapi/mechglue/g_acquire_cred.c
+     lib/gssapi/mechglue/g_canon_name.c
+     lib/gssapi/mechglue/g_compare_name.c
+     lib/gssapi/mechglue/g_context_time.c
+     lib/gssapi/mechglue/g_delete_sec_context.c
+     lib/gssapi/mechglue/g_dsp_name.c
+     lib/gssapi/mechglue/g_dsp_status.c
+     lib/gssapi/mechglue/g_dup_name.c
+     lib/gssapi/mechglue/g_exp_sec_context.c
+     lib/gssapi/mechglue/g_export_name.c
+     lib/gssapi/mechglue/g_glue.c
+     lib/gssapi/mechglue/g_imp_name.c
+     lib/gssapi/mechglue/g_imp_sec_context.c
+     lib/gssapi/mechglue/g_init_sec_context.c
+     lib/gssapi/mechglue/g_initialize.c
+     lib/gssapi/mechglue/g_inquire_context.c
+     lib/gssapi/mechglue/g_inquire_cred.c
+     lib/gssapi/mechglue/g_inquire_names.c
+     lib/gssapi/mechglue/g_process_context.c
+     lib/gssapi/mechglue/g_rel_buffer.c
+     lib/gssapi/mechglue/g_rel_cred.c
+     lib/gssapi/mechglue/g_rel_name.c
+     lib/gssapi/mechglue/g_rel_oid_set.c
+     lib/gssapi/mechglue/g_seal.c
+     lib/gssapi/mechglue/g_sign.c
+     lib/gssapi/mechglue/g_store_cred.c
+     lib/gssapi/mechglue/g_unseal.c
+     lib/gssapi/mechglue/g_userok.c
+     lib/gssapi/mechglue/g_utils.c
+     lib/gssapi/mechglue/g_verify.c
+     lib/gssapi/mechglue/gssd_pname_to_uid.c
+     lib/gssapi/mechglue/mglueP.h
+     lib/gssapi/mechglue/oid_ops.c
+     lib/gssapi/spnego/gssapiP_spnego.h
+     lib/gssapi/spnego/spnego_mech.c
+
+and the initial implementation of incremental propagation, including
+the following new or changed files:
+
+       include/iprop_hdr.h
+       kadmin/server/ipropd_svc.c
+       lib/kdb/iprop.x
+       lib/kdb/kdb_convert.c
+       lib/kdb/kdb_log.c
+       lib/kdb/kdb_log.h
+       lib/krb5/error_tables/kdb5_err.et
+       slave/kpropd_rpc.c
+       slave/kproplog.c
+
+and marked portions of the following files:
+
+       lib/krb5/os/hst_realm.c
+
+are subject to the following license:
+
+     Copyright (C) 2004 Sun Microsystems, Inc.
+
+     Permission is hereby granted, free of charge, to any person
+     obtaining a copy of this software and associated documentation
+     files (the "Software"), to deal in the Software without
+     restriction, including without limitation the rights to use, copy,
+     modify, merge, publish, distribute, sublicense, and/or sell copies
+     of the Software, and to permit persons to whom the Software is
+     furnished to do so, subject to the following conditions:
+
+     The above copyright notice and this permission notice shall be
+     included in all copies or substantial portions of the Software.
+
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+     NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+     DEALINGS IN THE SOFTWARE.
+
+Kerberos V5 includes documentation and software developed at the
+University of California at Berkeley, which includes this copyright
+notice:
+
+     Copyright (C) 1983 Regents of the University of California.
+     All rights reserved.
+
+     Redistribution and use in source and binary forms, with or without
+     modification, are permitted provided that the following conditions
+     are met:
+       1. Redistributions of source code must retain the above copyright
+          notice, this list of conditions and the following disclaimer.
+
+       2. Redistributions in binary form must reproduce the above
+          copyright notice, this list of conditions and the following
+          disclaimer in the documentation and/or other materials
+          provided with the distribution.
+
+       3. Neither the name of the University nor the names of its
+          contributors may be used to endorse or promote products
+          derived from this software without specific prior written
+          permission.
+
+     THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS "AS IS"
+     AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+     TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+     PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS
+     OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+     LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+     USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+     AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+     POSSIBILITY OF SUCH DAMAGE.
+
+Portions contributed by Novell, Inc., including the LDAP database
+backend, are subject to the following license:
+
+     Copyright (C) 2004-2005, Novell, Inc.  All rights reserved.
+
+     Redistribution and use in source and binary forms, with or without
+     modification, are permitted provided that the following conditions
+     are met:
+
+        * Redistributions of source code must retain the above
+          copyright notice, this list of conditions and the following
+          disclaimer.
+
+        * Redistributions in binary form must reproduce the above
+          copyright notice, this list of conditions and the following
+          disclaimer in the documentation and/or other materials
+          provided with the distribution.
+
+        * The copyright holder's name is not used to endorse or promote
+          products derived from this software without specific prior
+          written permission.
+
+     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+     BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+     EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+     TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+     DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+     ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+     TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+     THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+     SUCH DAMAGE.
+
+Portions funded by Sandia National Laboratory and developed by the
+University of Michigan's Center for Information Technology Integration,
+including the PKINIT implementation, are subject to the following
+license:
+
+     COPYRIGHT (C) 2006-2007
+     THE REGENTS OF THE UNIVERSITY OF MICHIGAN
+     ALL RIGHTS RESERVED
+
+     Permission is granted to use, copy, create derivative works and
+     redistribute this software and such derivative works for any
+     purpose, so long as the name of The University of Michigan is not
+     used in any advertising or publicity pertaining to the use of
+     distribution of this software without specific, written prior
+     authorization.  If the above copyright notice or any other
+     identification of the University of Michigan is included in any
+     copy of any portion of this software, then the disclaimer below
+     must also be included.
+
+     THIS SOFTWARE IS PROVIDED AS IS, WITHOUT REPRESENTATION FROM THE
+     UNIVERSITY OF MICHIGAN AS TO ITS FITNESS FOR ANY PURPOSE, AND
+     WITHOUT WARRANTY BY THE UNIVERSITY OF MICHIGAN OF ANY KIND, EITHER
+     EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION THE IMPLIED
+     WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+     PURPOSE. THE REGENTS OF THE UNIVERSITY OF MICHIGAN SHALL NOT BE
+     LIABLE FOR ANY DAMAGES, INCLUDING SPECIAL, INDIRECT, INCIDENTAL, OR
+     CONSEQUENTIAL DAMAGES, WITH RESPECT TO ANY CLAIM ARISING OUT OF OR
+     IN CONNECTION WITH THE USE OF THE SOFTWARE, EVEN IF IT HAS BEEN OR
+     IS HEREAFTER ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+The pkcs11.h file included in the PKINIT code has the following license:
+
+     Copyright 2006 g10 Code GmbH Copyright 2006 Andreas Jellinghaus
+
+     This file is free software; as a special exception the author gives
+     unlimited permission to copy and/or distribute it, with or without
+     modifications, as long as this notice is preserved.
+
+     This file is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY, to the extent permitted by law; without even
+     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+     PURPOSE.
+
+
+Portions contributed by Apple Inc. are subject to the following license:
+
+     Copyright 2004-2008 Apple Inc.  All Rights Reserved.
+
+     Export of this software from the United States of America may
+     require a specific license from the United States Government.  It
+     is the responsibility of any person or organization contemplating
+     export to obtain such a license before exporting.
+
+     WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+     distribute this software and its documentation for any purpose and
+     without fee is hereby granted, provided that the above copyright
+     notice appear in all copies and that both that copyright notice and
+     this permission notice appear in supporting documentation, and that
+     the name of Apple Inc. not be used in advertising or publicity
+     pertaining to distribution of the software without specific,
+     written prior permission.  Apple Inc. makes no representations
+     about the suitability of this software for any purpose.  It is
+     provided "as is" without express or implied warranty.
+
+     THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR
+     IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+     WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+
+The implementations of strlcpy and strlcat in
+src/util/support/strlcat.c have the following copyright and permission
+notice:
+
+     Copyright (C) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+
+     Permission to use, copy, modify, and distribute this software for
+     any purpose with or without fee is hereby granted, provided that
+     the above copyright notice and this permission notice appear in
+     all copies.
+
+     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+     WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+     WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+     AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+     CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+     LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+     NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+     CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+The implementations of UTF-8 string handling in src/util/support and
+src/lib/krb5/unicode are subject to the following copyright and
+permission notice:
+
+     The OpenLDAP Public License   Version 2.8, 17 August 2003
+
+     Redistribution and use of this software and associated
+     documentation ("Software"), with or without modification, are
+     permitted provided that the following conditions are met:
+
+     1. Redistributions in source form must retain copyright statements
+       and notices,
+
+     2. Redistributions in binary form must reproduce applicable
+     copyright    statements and notices, this list of conditions, and
+     the following    disclaimer in the documentation and/or other
+     materials provided    with the distribution, and
+
+     3. Redistributions must contain a verbatim copy of this document.
+
+     The OpenLDAP Foundation may revise this license from time to time.
+     Each revision is distinguished by a version number.  You may use
+     this Software under terms of this license revision or under the
+     terms of any subsequent revision of the license.
+
+     THIS SOFTWARE IS PROVIDED BY THE OPENLDAP FOUNDATION AND ITS
+     CONTRIBUTORS "AS IS" AND ANY EXPRESSED OR IMPLIED WARRANTIES,
+     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+     DISCLAIMED.  IN NO EVENT SHALL THE OPENLDAP FOUNDATION, ITS
+     CONTRIBUTORS, OR THE AUTHOR(S) OR OWNER(S) OF THE SOFTWARE BE
+     LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+     OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+     PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+     PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+     THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+     TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+     THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+     SUCH DAMAGE.
+
+     The names of the authors and copyright holders must not be used in
+     advertising or otherwise to promote the sale, use or other dealing
+     in this Software without specific, written prior permission.  Title
+     to copyright in this Software shall at all times remain with
+     copyright holders.
+
+     OpenLDAP is a registered trademark of the OpenLDAP Foundation.
+
+     Copyright 1999-2003 The OpenLDAP Foundation, Redwood City,
+     California, USA.  All Rights Reserved.  Permission to copy and
+     distribute verbatim copies of this document is granted.
+
+
+Marked test programs in src/lib/krb5/krb have the following copyright:
+
+     Copyright (C) 2006 Kungliga Tekniska Ho"gskolan (Royal Institute
+     of Technology, Stockholm, Sweden).  All rights reserved.
+
+     Redistribution and use in source and binary forms, with or without
+     modification, are permitted provided that the following conditions
+     are met:
+
+     1. Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+
+     2. Redistributions in binary form must reproduce the above
+     copyright    notice, this list of conditions and the following
+     disclaimer in the    documentation and/or other materials provided
+     with the distribution.
+
+     3. Neither the name of KTH nor the names of its contributors may be
+       used to endorse or promote products derived from this software
+     without    specific prior written permission.
+
+     THIS SOFTWARE IS PROVIDED BY KTH AND ITS CONTRIBUTORS "AS IS" AND
+     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+     THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+     PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL KTH OR ITS
+     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+     LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+     USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+     AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+     POSSIBILITY OF SUCH DAMAGE.
+
+
+Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notices and this permission notice are
+preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions.
+
+
+File: krb5-admin.info,  Node: Introduction,  Next: How Kerberos Works,  Prev: Copyright,  Up: Top
+
+Introduction
+************
+
+* Menu:
+
+* Why Should I use Kerberos?::
+* Documentation for Kerberos V5::
+* Overview of This Guide::
+
+
+File: krb5-admin.info,  Node: Why Should I use Kerberos?,  Next: Documentation for Kerberos V5,  Prev: Introduction,  Up: Introduction
+
+Why Should I use Kerberos?
+==========================
+
+Since Kerberos negotiates authenticated, and optionally encrypted,
+communications between two points anywhere on the internet, it provides
+a layer of security that is not dependent on which side of a firewall
+either client is on.  Since studies have shown that half of the computer
+security breaches in industry happen from inside firewalls, Kerberos V5
+from MIT will play a vital role in the security of your network.
+
+
+File: krb5-admin.info,  Node: Documentation for Kerberos V5,  Next: Overview of This Guide,  Prev: Why Should I use Kerberos?,  Up: Introduction
+
+Documentation for Kerberos V5
+=============================
+
+This document is one piece of the document set for Kerberos V5.  The
+documents, and their intended audiences, are:
+
+   * Kerberos V5 Installation Guide:  a concise guide for installing
+     Kerberos V5.  Kerberos administrators (particularly whoever will be
+     making site-wide decisions about the installation) and the system
+     administrators who will be installing the software should read this
+     guide.
+
+   * Kerberos V5 System Administrator's Guide:  a sysadmin's guide to
+     administering a Kerberos installation.  The System Administrator's
+     Guide describes the administration software and suggests policies
+     and procedures for administering a Kerberos installation.  Anyone
+     who will have administrative access to your Kerberos database
+     should read this guide.
+
+   * Kerberos V5 UNIX User's Guide:  a guide to using the Kerberos UNIX
+     client programs.  All users on UNIX systems should read this guide,
+     particularly the "Tutorial" section.
+
+
+File: krb5-admin.info,  Node: Overview of This Guide,  Prev: Documentation for Kerberos V5,  Up: Introduction
+
+Overview of This Guide
+======================
+
+The next chapter describes how Kerberos works.
+
+Chapter three describes administration of the principals in the Kerberos
+database.
+
+Chapter four describes how you can use DNS in configuring your Kerberos
+realm.
+
+Chapter five describes administrative programs for manipulating the
+Kerberos database as a whole.
+
+Chapter six describes OpenLDAP Configuration steps.
+
+Chapter seven describes issues to consider when adding an application
+server to the database.
+
+Chapter eight describes our problem reporting system.
+
+The appendices include the list of Kerberos error messages, and a
+complete list of the time zones understood by `kadmin'.
+
+
+File: krb5-admin.info,  Node: How Kerberos Works,  Next: Configuration Files,  Prev: Introduction,  Up: Top
+
+How Kerberos Works
+******************
+
+This section provides a simplified description of a general user's
+interaction with the Kerberos system.  This interaction happens
+transparently--users don't need to know and probably don't care about
+what's going on--but Kerberos administrators might find a schematic
+description of the process useful.  This description glosses over a lot
+of details; for more information, see Kerberos: An Authentication
+Service for Open Network Systems, a paper presented at Winter USENIX
+1988, in Dallas, Texas.  This paper can be retreived by FTP from
+`athena-dist.mit.edu', in the location:
+`/pub/ATHENA/kerberos/doc/usenix.PS'.
+
+* Menu:
+
+* Network Services and Their Client Programs::
+* Kerberos Tickets::
+* The Kerberos Database::
+* Kerberos Realms::
+* The Ticket-Granting Ticket::
+* Network Services and the Master Database::
+* The User/Kerberos Interaction::
+* Definitions::
+
+
+File: krb5-admin.info,  Node: Network Services and Their Client Programs,  Next: Kerberos Tickets,  Prev: How Kerberos Works,  Up: How Kerberos Works
+
+Network Services and Their Client Programs
+==========================================
+
+In an environment that provides network services, you use "client"
+programs to request "services" from "server" programs that are
+somewhere on the network.  Suppose you have logged in to a workstation
+and you want to `rlogin' to a typical UNIX host.  You use the local
+`rlogin' client program to contact the remote machine's `rlogind'
+daemon.
+
+
+File: krb5-admin.info,  Node: Kerberos Tickets,  Next: The Kerberos Database,  Prev: Network Services and Their Client Programs,  Up: How Kerberos Works
+
+Kerberos Tickets
+================
+
+Under Kerberos, the `klogind' daemon allows you to login to a remote
+machine if you can provide `klogind' a Kerberos ticket which proves
+your identity.  In addition to the ticket, you must also have
+possession of the corresponding ticket session key. The combination of
+a ticket and the ticket's session key is known as a credential.
+
+Typically, a client program automatically obtains credentials
+identifying the person using the client program.  The credentials are
+obtained from a Kerberos server that resides somewhere on the network.
+A Kerberos server maintains a database of user, server, and password
+information.
+
+
+File: krb5-admin.info,  Node: The Kerberos Database,  Next: Kerberos Realms,  Prev: Kerberos Tickets,  Up: How Kerberos Works
+
+The Kerberos Database
+=====================
+
+Kerberos will give you credentials only if you have an entry in the
+Kerberos server's "Kerberos database".  Your database entry includes
+your Kerberos "principal" (an identifying string, which is often just
+your username), and your Kerberos password.  Every Kerberos user must
+have an entry in this database.
+
+
+File: krb5-admin.info,  Node: Kerberos Realms,  Next: The Ticket-Granting Ticket,  Prev: The Kerberos Database,  Up: How Kerberos Works
+
+Kerberos Realms
+===============
+
+Each administrative domain will have its own Kerberos database, which
+contains information about the users and services for that particular
+site or administrative domain.  This administrative domain is the
+"Kerberos realm".
+
+Each Kerberos realm will have at least one Kerberos server, where the
+master Kerberos database for that site or administrative domain is
+stored.  A Kerberos realm may also have one or more "slave servers",
+which have read-only copies of the Kerberos database that are
+periodically propagated from the master server.  For more details on how
+this is done, see the "Set Up the Slave KDCs for Database Propagation"
+and "Propagate the Database to Each Slave KDC" sections of the Kerberos
+V5 Installation Guide.
+
+
+File: krb5-admin.info,  Node: The Ticket-Granting Ticket,  Next: Network Services and the Master Database,  Prev: Kerberos Realms,  Up: How Kerberos Works
+
+The Ticket-Granting Ticket
+==========================
+
+The `kinit' command prompts for your password.  If you enter it
+successfully, you will obtain a "ticket-granting ticket" and a "ticket
+session key" which gives you the right to use the ticket.  This
+combination of the ticket and its associated key is known as your
+"credentials".  As illustrated below, client programs use your
+ticket-granting ticket credentials in order to obtain client-specific
+credentials as needed.
+
+Your credentials are stored in a "credentials cache", which is often
+just a file in `/tmp'.  The credentials cache is also called the
+"ticket file", especially in Kerberos V4 documentation.  Note, however,
+that a credentials cache does not have to be stored in a file.
+
+
+File: krb5-admin.info,  Node: Network Services and the Master Database,  Next: The User/Kerberos Interaction,  Prev: The Ticket-Granting Ticket,  Up: How Kerberos Works
+
+Network Services and the Master Database
+========================================
+
+The master database also contains entries for all network services that
+require Kerberos authentication.  Suppose that your site has a machine,
+`laughter.mit.edu', that requires Kerberos authentication from anyone
+who wants to `rlogin' to it.  The host's Kerberos realm is
+`ATHENA.MIT.EDU'.
+
+This service must be registered in the Kerberos database, using the
+proper service name, which in this case is the "principal":
+
+     host/laughter.mit.edu@ATHENA.MIT.EDU
+
+The `/' character separates the Kerberos "primary" (in this case,
+`host') from the "instance" (in this case, `laughter.mit.edu'); the `@'
+character separates the realm name (in this case, `ATHENA.MIT.EDU')
+from the rest of the principal.  The primary, `host', denotes the name
+or type of the service that is being offered:  generic host-level
+access to the machine.  The instance, `laughter.mit.edu', names the
+specific machine that is offering this service.  There will generally be
+many different machines, each offering one particular type of service,
+and the instance serves to give each one of these servers a different
+Kerberos principal.
+
+* Menu:
+
+* The Keytab File::
+
+
+File: krb5-admin.info,  Node: The Keytab File,  Prev: Network Services and the Master Database,  Up: Network Services and the Master Database
+
+The Keytab File
+---------------
+
+For each service, there must also be a "service key" known only by
+Kerberos and the service.  On the Kerberos server, the service key is
+stored in the Kerberos database.
+
+On the server host, these service keys are stored in "key tables",
+which are files known as "keytabs".(1)  For example, the service keys
+used by services that run as root are usually stored in the keytab file
+`/etc/krb5.keytab'.  N.B.: This service key is the equivalent of the
+service's password, and must be kept secure.  Data which is meant to be
+read only by the service is encrypted using this key.
+
+---------- Footnotes ----------
+
+(1) Keytabs were called "srvtabs" in Kerberos V4.
+
+
+File: krb5-admin.info,  Node: The User/Kerberos Interaction,  Next: Definitions,  Prev: Network Services and the Master Database,  Up: How Kerberos Works
+
+The User/Kerberos Interaction
+=============================
+
+Suppose that you walk up to a host intending to login to it, and then
+`rlogin' to the machine `laughter'.  Here's what happens:
+
+  1. You login to the workstation and use the `kinit' command to get a
+     ticket-granting ticket.  This command prompts you for your Kerberos
+     password.  (On systems running the Kerberos V5 `login' program,
+     this may be done as part of the login process, not requiring the
+     user to run a separate program.)
+
+       A. The `kinit' command sends your request to the Kerberos master
+          server machine.  The server software looks for your principal
+          name's entry in the Kerberos database.
+
+       B. If this entry exists, the Kerberos server creates and returns
+          a ticket-granting ticket and the key which allows you to use
+          it, encrypted by your password.  If `kinit' can decrypt the
+          Kerberos reply using the password you provide, it stores this
+          ticket in a credentials cache on your local machine for later
+          use.  The name of the credentials cache can be specified in
+          the `KRB5CCNAME' environment variable.  If this variable is
+          not set, the name of the file will be `/tmp/krb5cc_<uid>',
+          where <uid> is your UNIX user-id, represented in decimal
+          format.
+
+  2. Now you use the `rlogin' client to access the machine `laughter'.
+
+          host% rlogin laughter
+
+       A. The `rlogin' client checks your ticket file to see if you
+          have a ticket for the `host' service for `laughter'.  You
+          don't, so `rlogin' uses the credential cache's
+          ticket-granting ticket to make a request to the master
+          server's ticket-granting service.
+
+       B. This ticket-granting service receives the request for a
+          ticket for `host/laughter.mit.edu', and looks in the master
+          database for an entry for `host/laughter.mit.edu'.  If the
+          entry exists, the ticket-granting service issues you a ticket
+          for that service.  That ticket is also cached in your
+          credentials cache.
+
+       C. The `rlogin' client now sends that ticket to the `laughter'
+          `klogind' service program.  The service program checks the
+          ticket by using its own service key.  If the ticket is valid,
+          it now knows your identity.  If you are allowed to login to
+          `laughter' (because your username matches one in /etc/passwd,
+          or your Kerberos principal is in the appropriate `.k5login'
+          file), `klogind' will let you login.
+
+
+File: krb5-admin.info,  Node: Definitions,  Prev: The User/Kerberos Interaction,  Up: How Kerberos Works
+
+Definitions
+===========
+
+Following are definitions of some of the Kerberos terminology.
+
+client
+     an entity that can obtain a ticket.  This entity is usually either
+     a user or a host.
+
+host
+     a computer that can be accessed over a network.
+
+Kerberos
+     in Greek mythology, the three-headed dog that guards the entrance
+     to the underworld.  In the computing world, Kerberos is a network
+     security package that was developed at MIT.
+
+KDC
+     Key Distribution Center.  A machine that issues Kerberos tickets.
+
+keytab
+     a key table file containing one or more keys.  A host or service
+     uses a "keytab" file in much the same way as a user uses his/her
+     password.
+
+principal
+     a string that names a specific entity to which a set of
+     credentials may be assigned.  It can have an arbitrary number of
+     components, but generally has three:
+
+    primary
+          the first part of a Kerberos principal.  In the case of a
+          user, it is the username.  In the case of a service, it is
+          the name of the service.
+
+    instance
+          the second part of a Kerberos principal.  It gives
+          information that qualifies the primary.  The instance may be
+          null.  In the case of a user, the instance is often used to
+          describe the intended use of the corresponding credentials.
+          In the case of a host, the instance is the fully qualified
+          hostname.
+
+    realm
+          the logical network served by a single Kerberos database and
+          a set of Key Distribution Centers.  By convention, realm
+          names are generally all uppercase letters, to differentiate
+          the realm from the internet domain.
+
+     The typical format of a typical Kerberos principal is
+     primary/instance@REALM.
+
+service
+     any program or computer you access over a network.  Examples of
+     services include "host" (a host, e.g., when you use `telnet' and
+     `rsh'), "ftp" (FTP), "krbtgt" (authentication; cf. ticket-granting
+     ticket), and "pop" (email).
+
+ticket
+     a temporary set of electronic credentials that verify the identity
+     of a client for a particular service.
+
+TGT
+     Ticket-Granting Ticket.  A special Kerberos ticket that permits the
+     client to obtain additional Kerberos tickets within the same
+     Kerberos realm.
+
+
+File: krb5-admin.info,  Node: Configuration Files,  Next: Using DNS,  Prev: How Kerberos Works,  Up: Top
+
+Configuration Files
+*******************
+
+* Menu:
+
+* Supported Encryption Types::
+* Salts::
+* krb5.conf::
+* kdc.conf::
+
+
+File: krb5-admin.info,  Node: Supported Encryption Types,  Next: Salts,  Prev: Configuration Files,  Up: Configuration Files
+
+Supported Encryption Types
+==========================
+
+Any tag in the configuration files which requires a list of encryption
+types can be set to some combination of the following strings.
+Encryption types marked as "weak" are available for compatibility but
+not recommended for use.
+
+`des-cbc-crc'
+     DES cbc mode with CRC-32 (weak)
+
+`des-cbc-md4'
+     DES cbc mode with RSA-MD4 (weak)
+
+`des-cbc-md5'
+     DES cbc mode with RSA-MD5 (weak)
+
+`des-cbc-raw'
+     DES cbc mode raw (weak)
+
+`des3-cbc-raw'
+     Triple DES cbc mode raw (weak)
+
+`des3-cbc-sha1'
+`des3-hmac-sha1'
+`des3-cbc-sha1-kd'
+     Triple DES cbc mode with HMAC/sha1
+
+`des-hmac-sha1'
+     DES with HMAC/sha1 (weak)
+
+`aes256-cts-hmac-sha1-96'
+`aes256-cts'
+     AES-256 CTS mode with 96-bit SHA-1 HMAC
+
+`aes128-cts-hmac-sha1-96'
+`aes128-cts'
+     AES-128 CTS mode with 96-bit SHA-1 HMAC
+
+`arcfour-hmac'
+`rc4-hmac'
+`arcfour-hmac-md5'
+     RC4 with HMAC/MD5
+
+`arcfour-hmac-exp'
+`rc4-hmac-exp'
+`arcfour-hmac-md5-exp'
+     Exportable RC4 with HMAC/MD5 (weak)
+
+While aes128-cts and aes256-cts are supported for all Kerberos
+operations, they are not supported by older versions of our GSSAPI
+implementation (krb5-1.3.1 and earlier).
+
+By default, AES is enabled in this release.  Sites wishing to use AES
+encryption types on their KDCs need to be careful not to give GSSAPI
+services AES keys if the servers have not been updated.  If older
+GSSAPI services are given AES keys, then services may fail when clients
+supporting AES for GSSAPI are used.  Sites may wish to use AES for user
+keys and for the ticket granting ticket key, although doing so requires
+specifying what encryption types are used as each principal is created.
+
+If all GSSAPI-based services have been updated before or with the KDC,
+this is not an issue.
+
+
+File: krb5-admin.info,  Node: Salts,  Next: krb5.conf,  Prev: Supported Encryption Types,  Up: Configuration Files
+
+Salts
+=====
+
+Your Kerberos key is derived from your password.  To ensure that people
+who happen to pick the same password do not have the same key, Kerberos
+5 incorporates more information into the key using something called a
+salt.  The supported values for salts are as follows.
+
+`normal'
+     default for Kerberos Version 5
+
+`v4'
+     the only type used by Kerberos Version 4, no salt
+
+`norealm'
+     same as the default, without using realm information
+
+`onlyrealm'
+     uses only realm information as the salt
+
+`afs3'
+     AFS version 3, only used for compatibility with Kerberos 4 in AFS
+
+`special'
+     only used in very special cases; not fully supported
+
+
+File: krb5-admin.info,  Node: krb5.conf,  Next: kdc.conf,  Prev: Salts,  Up: Configuration Files
+
+krb5.conf
+=========
+
+The `krb5.conf' file contains Kerberos configuration information,
+including the locations of KDCs and admin servers for the Kerberos
+realms of interest, defaults for the current realm and for Kerberos
+applications, and mappings of hostnames onto Kerberos realms.  Normally,
+you should install your `krb5.conf' file in the directory `/etc'.  You
+can override the default location by setting the environment variable
+`KRB5_CONFIG'.
+
+The `krb5.conf' file is set up in the style of a Windows INI file.
+Sections are headed by the section name, in square brackets.  Each
+section may contain zero or more relations, of the form:
+
+     foo = bar
+
+or
+
+     fubar = {
+             foo = bar
+             baz = quux
+     }
+
+Placing a `*' at the end of a line indicates that this is the "final"
+value for the tag.  This means that neither the remainder of this
+configuration file nor any other configuration file will be checked for
+any other values for this tag.
+
+For example, if you have the following lines:
+
+     foo = bar*
+     foo = baz
+
+then the second value of foo (baz) would never be read.
+
+The `krb5.conf' file may contain any or all of the following sections:
+
+libdefaults
+     Contains default values used by the Kerberos V5 library.
+
+login
+     Contains default values used by the Kerberos V5 login program.
+
+appdefaults
+     Contains default values that can be used by Kerberos V5
+     applications.
+
+realms
+     Contains subsections keyed by Kerberos realm names.  Each
+     subsection describes realm-specific information, including where
+     to find the Kerberos servers for that realm.
+
+domain_realm
+     Contains relations which map domain names and subdomains onto
+     Kerberos realm names.  This is used by programs to determine what
+     realm a host should be in, given its fully qualified domain name.
+
+logging
+     Contains relations which determine how Kerberos programs are to
+     perform logging.
+
+capaths
+     Contains the authentication paths used with direct
+     (nonhierarchical) cross-realm authentication.  Entries in this
+     section are used by the client to determine the intermediate
+     realms which may be used in cross-realm authentication.  It is
+     also used by the end-service when checking the transited field for
+     trusted intermediate realms.
+
+
+* Menu:
+
+* libdefaults::
+* appdefaults::
+* login::
+* realms (krb5.conf)::
+* domain_realm::
+* logging::
+* capaths::
+* dbdefaults::
+* dbmodules::
+* pkinit client options::
+* Sample krb5.conf File::
+

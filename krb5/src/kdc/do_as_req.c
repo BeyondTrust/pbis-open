@@ -137,6 +137,11 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
     session_key.contents = 0;
     enc_tkt_reply.authorization_data = NULL;
 
+    if (request->msg_type != KRB5_AS_REQ) {
+        status = "msg_type mismatch";
+        errcode = KRB5_BADMSGTYPE;
+        goto errout;
+    }
     errcode = kdc_make_rstate(&state);
     if (errcode != 0) {
 	status = "constructing state";
@@ -778,6 +783,8 @@ prepare_error_as (struct kdc_request_state *rstate, krb5_kdc_req *request, int e
 		pad->contents = td[size]->data;
 		pad->length = td[size]->length;
 		pa[size] = pad;
+                    td[size]->data = NULL;
+                    td[size]->length = 0;
 	    }
 	    krb5_free_typed_data(kdc_context, td);
 	}
