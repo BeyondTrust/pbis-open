@@ -329,7 +329,7 @@ main()
         fi
     done
 
-    $RUN killall DirectoryService
+    $RUN killall DirectoryService opendirectoryd dspluginhelperd
 
     echo "Uninstall completed."
 }

@@ -214,7 +214,7 @@ enable_plugin()
         fi
     fi
 
-    killall DirectoryService
+    killall DirectoryService opendirectoryd dspluginhelperd
     sleep 5
 
 }
