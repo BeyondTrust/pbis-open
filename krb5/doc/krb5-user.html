@@ -3,53 +3,34 @@
 <title>Kerberos V5 UNIX User's Guide</title>
 <meta http-equiv="Content-Type" content="text/html">
 <meta name="description" content="Kerberos V5 UNIX User's Guide">
-<meta name="generator" content="makeinfo 4.7">
-<link title="Top" rel="top" href="#Top">
-<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
-<meta http-equiv="Content-Style-Type" content="text/css">
-<style type="text/css"><!--
-  pre.display { font-family:inherit }
-  pre.format  { font-family:inherit }
-  pre.smalldisplay { font-family:inherit; font-size:smaller }
-  pre.smallformat  { font-family:inherit; font-size:smaller }
-  pre.smallexample { font-size:smaller }
-  pre.smalllisp    { font-size:smaller }
-  span.sc { font-variant:small-caps }
-  span.roman { font-family: serif; font-weight: normal; } 
---></style>
+<meta name="generator" content="makeinfo 4.5">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home">
 </head>
 <body>
 <h1 class="settitle">Kerberos V5 UNIX User's Guide</h1>
 <div class="node">
 <p><hr>
-<a name="Top"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Copyright">Copyright</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#dir">(dir)</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
+Node:<a name="Top">Top</a>,
+Next:<a rel="next" accesskey="n" href="#Copyright">Copyright</a>,
+Previous:<a rel="previous" accesskey="p" href="#dir">(dir)</a>,
+Up:<a rel="up" accesskey="u" href="#dir">(dir)</a>
 <br>
 </div>
 
-<!-- The master menu is updated using emacs19's M-x texinfo-all-menus-update -->
-<!-- function.  Don't forget to run M-x texinfo-every-node-update after -->
-<!-- you add a new section or subsection, or after you've rearranged the -->
-<!-- comand before each @section or @subsection!  All you need to enter -->
-<!-- is: -->
-<!-- @section New Section Name -->
-<!-- M-x texinfo-every-node-update will take care of calculating the -->
-<!-- node's forward and back pointers. -->
-<!--  -->
 <ul class="menu">
-<li><a accesskey="1" href="#Copyright">Copyright</a>
-<li><a accesskey="2" href="#Introduction">Introduction</a>
-<li><a accesskey="3" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>
-<li><a accesskey="4" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
-<li><a accesskey="5" href="#Kerberos-Glossary">Kerberos Glossary</a>
+<li><a accesskey="1" href="#Copyright">Copyright</a>: 
+<li><a accesskey="2" href="#Introduction">Introduction</a>: 
+<li><a accesskey="3" href="#Kerberos%20V5%20Tutorial">Kerberos V5 Tutorial</a>: 
+<li><a accesskey="4" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>: 
+<li><a accesskey="5" href="#Kerberos%20Glossary">Kerberos Glossary</a>: 
 </ul>
 
 <div class="node">
 <p><hr>
-<a name="Copyright"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Introduction">Introduction</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Top">Top</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+Node:<a name="Copyright">Copyright</a>,
+Next:<a rel="next" accesskey="n" href="#Introduction">Introduction</a>,
+Previous:<a rel="previous" accesskey="p" href="#Top">Top</a>,
+Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 <br>
 </div>
 
@@ -74,7 +55,7 @@ software without specific, written prior permission.  Furthermore if you
 modify this software you must label your software as modified software
 and not distribute it in such a fashion that it might be confused with
 the original MIT software.  M.I.T. makes no representations about the
-suitability of this software for any purpose.  It is provided &ldquo;as is&rdquo;
+suitability of this software for any purpose.  It is provided "as is"
 without express or implied warranty.
 
 <p>Individual source code files are copyright MIT, Cygnus Support,
@@ -86,7 +67,7 @@ and Zephyr are trademarks of the Massachusetts Institute of Technology
 (MIT).  No commercial use of these trademarks may be made without
 prior written permission of MIT.
 
-<p>&ldquo;Commercial use&rdquo; means use of a name in a product or other for-profit
+<p>"Commercial use" means use of a name in a product or other for-profit
 manner.  It does NOT prevent a commercial firm from referring to the
 MIT trademarks in order to convey information (although in doing so,
 recognition of their trademark status should be given).
@@ -107,7 +88,7 @@ OpenVision Kerberos administration system.
 
      <p>You may freely use and distribute the Source Code and Object Code
 compiled from it, with or without modification, but this Source Code is
-provided to you &ldquo;AS IS&rdquo; EXCLUSIVE OF ANY WARRANTY, INCLUDING, WITHOUT
+provided to you "AS IS" EXCLUSIVE OF ANY WARRANTY, INCLUDING, WITHOUT
 LIMITATION, ANY WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A
 PARTICULAR PURPOSE, OR ANY OTHER WARRANTY, WHETHER EXPRESS OR IMPLIED. 
 IN NO EVENT WILL OPENVISION HAVE ANY LIABILITY FOR ANY LOST PROFITS,
@@ -157,10 +138,10 @@ this permission notice appear in supporting documentation, and that
 the name of FundsXpress. not be used in advertising or publicity pertaining
 to distribution of the software without specific, written prior
 permission.  FundsXpress makes no representations about the suitability of
-this software for any purpose.  It is provided &ldquo;as is&rdquo; without express
+this software for any purpose.  It is provided "as is" without express
 or implied warranty.
 
-     <p>THIS SOFTWARE IS PROVIDED &ldquo;AS IS&rdquo; AND WITHOUT ANY EXPRESS OR
+     <p>THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
 WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
@@ -181,7 +162,7 @@ Inc. not be used in advertising or publicity pertaining to
 distribution of the software without specific, written prior
 permission.  Zero-Knowledge Systems, Inc. makes no representations
 about the suitability of this software for any purpose.  It is
-provided &ldquo;as is&rdquo; without express or implied warranty.
+provided "as is" without express or implied warranty.
 
      <p>ZERO-KNOWLEDGE SYSTEMS, INC. DISCLAIMS ALL WARRANTIES WITH REGARD TO
 THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
@@ -235,7 +216,8 @@ modification, are permitted provided that the following conditions are
 met:
 
           <ul>
-<li>Redistributions of source code must retain the above copyright
+
+          <li>Redistributions of source code must retain the above copyright
 notice, this list of conditions and the following disclaimer. 
 <li>Redistributions in binary form must reproduce the above copyright
 notice, this list of conditions and the following disclaimer in the
@@ -245,8 +227,8 @@ may be used to endorse or promote products derived from this software
 without specific prior written permission. 
 </ul>
 
-     <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &ldquo;AS
-IS&rdquo; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+     <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
 PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
 OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
@@ -299,7 +281,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
      lib/gssapi/mechglue/oid_ops.c
      lib/gssapi/spnego/gssapiP_spnego.h
      lib/gssapi/spnego/spnego_mech.c
-</pre>
+     </pre>
+
 <p>and the initial implementation of incremental propagation, including
 the following new or changed files:
 
@@ -312,11 +295,13 @@ the following new or changed files:
        lib/krb5/error_tables/kdb5_err.et
        slave/kpropd_rpc.c
        slave/kproplog.c
-</pre>
+     </pre>
+
 <p>and marked portions of the following files:
 
 <pre class="smallexample">       lib/krb5/os/hst_realm.c
-</pre>
+     </pre>
+
 <p>are subject to the following license:
 
 <blockquote>
@@ -324,7 +309,7 @@ Copyright &copy; 2004 Sun Microsystems, Inc.
 
      <p>Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the
-&ldquo;Software&rdquo;), to deal in the Software without restriction, including
+"Software"), to deal in the Software without restriction, including
 without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to
 permit persons to whom the Software is furnished to do so, subject to
@@ -333,7 +318,7 @@ the following conditions:
      <p>The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
 
-     <p>THE SOFTWARE IS PROVIDED &ldquo;AS IS&rdquo;, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+     <p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
 IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
@@ -342,7 +327,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
 </blockquote>
 
-<p>Kerberos V5 includes documentation and software developed at the
+Kerberos V5 includes documentation and software developed at the
 University of California at Berkeley, which includes this copyright
 notice:
 
@@ -364,7 +349,7 @@ may be used to endorse or promote products derived from this software
 without specific prior written permission.
           </ol>
 
-     <p>THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS &ldquo;AS IS&rdquo; AND
+     <p>THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
@@ -397,7 +382,7 @@ documentation and/or other materials provided with the distribution.
 derived from this software without specific prior written permission. 
 </ul>
 
-     <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &ldquo;AS IS&rdquo;
+     <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
@@ -488,7 +473,7 @@ permission.  Apple Inc. makes no representations about the suitability of
 this software for any purpose.  It is provided "as is" without express
 or implied warranty.
 
-     <p>THIS SOFTWARE IS PROVIDED &ldquo;AS IS&rdquo; AND WITHOUT ANY EXPRESS OR
+     <p>THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
 WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
@@ -545,7 +530,7 @@ this Software under terms of this license revision or under the
 terms of any subsequent revision of the license.
 
      <p>THIS SOFTWARE IS PROVIDED BY THE OPENLDAP FOUNDATION AND ITS
-CONTRIBUTORS &ldquo;AS IS&rdquo; AND ANY EXPRESSED OR IMPLIED WARRANTIES,
+CONTRIBUTORS "AS IS" AND ANY EXPRESSED OR IMPLIED WARRANTIES,
 INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT
 SHALL THE OPENLDAP FOUNDATION, ITS CONTRIBUTORS, OR THE AUTHOR(S)
@@ -595,7 +580,7 @@ are met:
    used to endorse or promote products derived from this software without
    specific prior written permission.
 
-     <p>THIS SOFTWARE IS PROVIDED BY KTH AND ITS CONTRIBUTORS &ldquo;AS IS&rdquo; AND ANY
+     <p>THIS SOFTWARE IS PROVIDED BY KTH AND ITS CONTRIBUTORS "AS IS" AND ANY
 EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL KTH OR ITS CONTRIBUTORS BE
@@ -623,13 +608,14 @@ into another language, under the above conditions for modified versions.
 
 <div class="node">
 <p><hr>
-<a name="Introduction"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Copyright">Copyright</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+Node:<a name="Introduction">Introduction</a>,
+Next:<a rel="next" accesskey="n" href="#Kerberos%20V5%20Tutorial">Kerberos V5 Tutorial</a>,
+Previous:<a rel="previous" accesskey="p" href="#Copyright">Copyright</a>,
+Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 <br>
 </div>
 
-<h2 class="chapter">1 Introduction</h2>
+<h2 class="chapter">Introduction</h2>
 
 <p>Kerberos V5 is an authentication system developed at MIT. 
 Kerberos is named for the three-headed watchdog from Greek mythology,
@@ -663,21 +649,22 @@ that you have to type your password only once per session, and Kerberos
 does the authenticating and encrypting transparently.
 
 <ul class="menu">
-<li><a accesskey="1" href="#What-is-a-Ticket_003f">What is a Ticket?</a>
-<li><a accesskey="2" href="#What-is-a-Kerberos-Principal_003f">What is a Kerberos Principal?</a>
+<li><a accesskey="1" href="#What%20is%20a%20Ticket%3f">What is a Ticket?</a>: 
+<li><a accesskey="2" href="#What%20is%20a%20Kerberos%20Principal%3f">What is a Kerberos Principal?</a>: 
 </ul>
 
 <div class="node">
 <p><hr>
-<a name="What-is-a-Ticket_003f"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#What-is-a-Kerberos-Principal_003f">What is a Kerberos Principal?</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Introduction">Introduction</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Introduction">Introduction</a>
+Node:<a name="What%20is%20a%20Ticket%3f">What is a Ticket?</a>,
+Next:<a rel="next" accesskey="n" href="#What%20is%20a%20Kerberos%20Principal%3f">What is a Kerberos Principal?</a>,
+Previous:<a rel="previous" accesskey="p" href="#Introduction">Introduction</a>,
+Up:<a rel="up" accesskey="u" href="#Introduction">Introduction</a>
 <br>
 </div>
 
-<h3 class="section">1.1 What is a Ticket?</h3>
+<h3 class="section">What is a Ticket?</h3>
 
-<p>Your Kerberos <dfn>credentials</dfn>, or &ldquo;<dfn>tickets</dfn>&rdquo;, are a set of
+<p>Your Kerberos <dfn>credentials</dfn>, or "<dfn>tickets</dfn>", are a set of
 electronic information that can be used to verify your identity.  Your
 Kerberos tickets may be stored in a file, or they may exist only in
 memory.
@@ -699,12 +686,13 @@ you don't have to perform the transactions yourself.
 
 <div class="node">
 <p><hr>
-<a name="What-is-a-Kerberos-Principal_003f"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#What-is-a-Ticket_003f">What is a Ticket?</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Introduction">Introduction</a>
+Node:<a name="What%20is%20a%20Kerberos%20Principal%3f">What is a Kerberos Principal?</a>,
+Previous:<a rel="previous" accesskey="p" href="#What%20is%20a%20Ticket%3f">What is a Ticket?</a>,
+Up:<a rel="up" accesskey="u" href="#Introduction">Introduction</a>
 <br>
 </div>
 
-<h3 class="section">1.2 What is a Kerberos Principal?</h3>
+<h3 class="section">What is a Kerberos Principal?</h3>
 
 <p>A Kerberos <dfn>principal</dfn> is a unique identity to which Kerberos can
 assign tickets.  Principals can have an arbitrary number of
@@ -728,7 +716,7 @@ the word <code>host</code>.
 primary.  The instance is separated from the primary by a slash
 (<code>/</code>).  In the case of a user, the instance is usually null, but a
 user might also have an additional principal, with an instance called
-<span class="samp">admin</span>, which he/she uses to administrate a database.  The
+<code>admin</code>, which he/she uses to administrate a database.  The
 principal <code>jennifer@ATHENA.MIT.EDU</code> is completely
 separate from the principal
 <code>jennifer/admin@ATHENA.MIT.EDU</code>, with a separate
@@ -744,21 +732,23 @@ the realm <code>EXAMPLE.COM</code>.
 
 <div class="node">
 <p><hr>
-<a name="Kerberos-V5-Tutorial"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Introduction">Introduction</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+Node:<a name="Kerberos%20V5%20Tutorial">Kerberos V5 Tutorial</a>,
+Next:<a rel="next" accesskey="n" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>,
+Previous:<a rel="previous" accesskey="p" href="#Introduction">Introduction</a>,
+Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 <br>
 </div>
 
-<h2 class="chapter">2 Kerberos V5 Tutorial</h2>
+<h2 class="chapter">Kerberos V5 Tutorial</h2>
 
 <p>This tutorial is intended to familiarize you with the Kerberos V5
-client programs.  We will represent your prompt as &ldquo;<code>shell%</code>&rdquo;. 
-So an instruction to type the &ldquo;<kbd>ls</kbd>&rdquo; command would be represented as
+client programs.  We will represent your prompt as "<code>shell%</code>". 
+So an instruction to type the "<kbd>ls</kbd>" command would be represented as
 follows:
 
 <pre class="smallexample">     <b>shell%</b> ls
-</pre>
+     </pre>
+
 <p>In these examples, we will use sample usernames, such as
 <code>jennifer</code> and <code>david</code>, sample
 hostnames, such as <code>daffodil</code> and
@@ -768,21 +758,22 @@ see one of these, substitute your username, hostname, or domain name
 accordingly.
 
 <ul class="menu">
-<li><a accesskey="1" href="#Setting-Up-to-Use-Kerberos-V5">Setting Up to Use Kerberos V5</a>
-<li><a accesskey="2" href="#Ticket-Management">Ticket Management</a>
-<li><a accesskey="3" href="#Password-Management">Password Management</a>
-<li><a accesskey="4" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+<li><a accesskey="1" href="#Setting%20Up%20to%20Use%20Kerberos%20V5">Setting Up to Use Kerberos V5</a>: 
+<li><a accesskey="2" href="#Ticket%20Management">Ticket Management</a>: 
+<li><a accesskey="3" href="#Password%20Management">Password Management</a>: 
+<li><a accesskey="4" href="#Kerberos%20V5%20Applications">Kerberos V5 Applications</a>: 
 </ul>
 
 <div class="node">
 <p><hr>
-<a name="Setting-Up-to-Use-Kerberos-V5"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Ticket-Management">Ticket Management</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>
+Node:<a name="Setting%20Up%20to%20Use%20Kerberos%20V5">Setting Up to Use Kerberos V5</a>,
+Next:<a rel="next" accesskey="n" href="#Ticket%20Management">Ticket Management</a>,
+Previous:<a rel="previous" accesskey="p" href="#Kerberos%20V5%20Tutorial">Kerberos V5 Tutorial</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Tutorial">Kerberos V5 Tutorial</a>
 <br>
 </div>
 
-<h3 class="section">2.1 Setting Up to Use Kerberos V5</h3>
+<h3 class="section">Setting Up to Use Kerberos V5</h3>
 
 <p>Your system administrator will have installed the Kerberos V5
 programs in whichever directory makes the most sense for your system. 
@@ -798,13 +789,14 @@ versions, when you type their command names.
 
 <div class="node">
 <p><hr>
-<a name="Ticket-Management"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Password-Management">Password Management</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Setting-Up-to-Use-Kerberos-V5">Setting Up to Use Kerberos V5</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>
+Node:<a name="Ticket%20Management">Ticket Management</a>,
+Next:<a rel="next" accesskey="n" href="#Password%20Management">Password Management</a>,
+Previous:<a rel="previous" accesskey="p" href="#Setting%20Up%20to%20Use%20Kerberos%20V5">Setting Up to Use Kerberos V5</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Tutorial">Kerberos V5 Tutorial</a>
 <br>
 </div>
 
-<h3 class="section">2.2 Ticket Management</h3>
+<h3 class="section">Ticket Management</h3>
 
 <p>On many systems, Kerberos is built into the login program, and you get
 tickets automatically when you log in.  Other programs, such as
@@ -820,23 +812,24 @@ permissions, it is safest to either destroy all copies of your tickets,
 or use a screensaver that locks the screen.
 
 <ul class="menu">
-<li><a accesskey="1" href="#Kerberos-Ticket-Properties">Kerberos Ticket Properties</a>
-<li><a accesskey="2" href="#Obtaining-Tickets-with-kinit">Obtaining Tickets with kinit</a>
-<li><a accesskey="3" href="#Viewing-Your-Tickets-with-klist">Viewing Your Tickets with klist</a>
-<li><a accesskey="4" href="#Destroying-Your-Tickets-with-kdestroy">Destroying Your Tickets with kdestroy</a>
+<li><a accesskey="1" href="#Kerberos%20Ticket%20Properties">Kerberos Ticket Properties</a>: 
+<li><a accesskey="2" href="#Obtaining%20Tickets%20with%20kinit">Obtaining Tickets with kinit</a>: 
+<li><a accesskey="3" href="#Viewing%20Your%20Tickets%20with%20klist">Viewing Your Tickets with klist</a>: 
+<li><a accesskey="4" href="#Destroying%20Your%20Tickets%20with%20kdestroy">Destroying Your Tickets with kdestroy</a>: 
 </ul>
 
 <div class="node">
 <p><hr>
-<a name="Kerberos-Ticket-Properties"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Obtaining-Tickets-with-kinit">Obtaining Tickets with kinit</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Ticket-Management">Ticket Management</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Ticket-Management">Ticket Management</a>
+Node:<a name="Kerberos%20Ticket%20Properties">Kerberos Ticket Properties</a>,
+Next:<a rel="next" accesskey="n" href="#Obtaining%20Tickets%20with%20kinit">Obtaining Tickets with kinit</a>,
+Previous:<a rel="previous" accesskey="p" href="#Ticket%20Management">Ticket Management</a>,
+Up:<a rel="up" accesskey="u" href="#Ticket%20Management">Ticket Management</a>
 <br>
 </div>
 
-<h4 class="subsection">2.2.1 Kerberos Ticket Properties</h4>
+<h4 class="subsection">Kerberos Ticket Properties</h4>
 
-<p class="noindent">There are various properties that Kerberos tickets can have:
+<p>There are various properties that Kerberos tickets can have:
 
 <p>If a ticket is <dfn>forwardable</dfn>, then the KDC can issue a new ticket with
 a different network address based on the forwardable ticket.  This
@@ -912,13 +905,14 @@ protocol and is not yet implemented on MIT servers.
 
 <div class="node">
 <p><hr>
-<a name="Obtaining-Tickets-with-kinit"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Viewing-Your-Tickets-with-klist">Viewing Your Tickets with klist</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Kerberos-Ticket-Properties">Kerberos Ticket Properties</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Ticket-Management">Ticket Management</a>
+Node:<a name="Obtaining%20Tickets%20with%20kinit">Obtaining Tickets with kinit</a>,
+Next:<a rel="next" accesskey="n" href="#Viewing%20Your%20Tickets%20with%20klist">Viewing Your Tickets with klist</a>,
+Previous:<a rel="previous" accesskey="p" href="#Kerberos%20Ticket%20Properties">Kerberos Ticket Properties</a>,
+Up:<a rel="up" accesskey="u" href="#Ticket%20Management">Ticket Management</a>
 <br>
 </div>
 
-<h4 class="subsection">2.2.2 Obtaining Tickets with kinit</h4>
+<h4 class="subsection">Obtaining Tickets with kinit</h4>
 
 <p>If your site is using the Kerberos V5 login program, you will get
 Kerberos tickets automatically when you log in.  If your site uses a
@@ -935,7 +929,8 @@ with the domain name <code>mit.edu</code> and the Kerberos realm
 <pre class="smallexample">     <b>shell%</b> kinit
      <b>Password for jennifer@ATHENA.MIT.EDU:</b> <i>&lt;-- [Type jennifer's password here.]</i>
      <b>shell%</b>
-</pre>
+     </pre>
+
 <p>If you type your password incorrectly, kinit will give you the following
 error message:
 
@@ -943,20 +938,22 @@ error message:
      <b>Password for jennifer@ATHENA.MIT.EDU:</b> <i>&lt;-- [Type the wrong password here.]</i>
      <b>kinit: Password incorrect</b>
      <b>shell%</b>
-</pre>
-<p class="noindent">and you won't get Kerberos tickets.
+     </pre>
 
-<p class="noindent">Notice that <code>kinit</code> assumes you want tickets for your own
+<p>and you won't get Kerberos tickets.
+
+<p>Notice that <code>kinit</code> assumes you want tickets for your own
 username in your default realm. 
 Suppose Jennifer's friend David is visiting, and he wants to borrow a
 window to check his mail.  David needs to get tickets for himself in his
-own realm, EXAMPLE.COM.<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a>  He would type:
+own realm, EXAMPLE.COM.<a rel="footnote" href="#fn-1"><sup>1</sup></a>  He would type:
 
 <pre class="smallexample">     <b>shell%</b> kinit david@EXAMPLE.COM
      <b>Password for david@EXAMPLE.COM:</b> <i>&lt;-- [Type david's password here.]</i>
      <b>shell%</b>
-</pre>
-<p class="noindent">David would then have tickets which he could use to log onto
+     </pre>
+
+<p>David would then have tickets which he could use to log onto
 his own machine.  Note that he typed his password locally on Jennifer's
 machine, but it never went over the network.  Kerberos on the local host
 performed the authentication to the KDC in the other realm.
@@ -968,16 +965,17 @@ to request <dfn>forwardable</dfn> tickets.  You do this by specifying the
 <pre class="smallexample">     <b>shell%</b> kinit -f
      <b>Password for jennifer@ATHENA.MIT.EDU:</b> <i>&lt;-- [Type your password here.]</i>
      <b>shell%</b>
-</pre>
-<p class="noindent">Note that <code>kinit</code> does not tell you that it obtained forwardable
+     </pre>
+
+<p>Note that <code>kinit</code> does not tell you that it obtained forwardable
 tickets; you can verify this using the <code>klist</code> command
-(see <a href="#Viewing-Your-Tickets-with-klist">Viewing Your Tickets with klist</a>).
+(see <a href="#Viewing%20Your%20Tickets%20with%20klist">Viewing Your Tickets with klist</a>).
 
 <p>Normally, your tickets are good for your system's default ticket
 lifetime, which is ten hours on many systems.  You can specify a
-different ticket lifetime with the <span class="samp">-l</span> option.  Add the letter
-<span class="samp">s</span> to the value for seconds, <span class="samp">m</span> for minutes, <span class="samp">h</span> for
-hours, or <span class="samp">d</span> for days. 
+different ticket lifetime with the <code>-l</code> option.  Add the letter
+<code>s</code> to the value for seconds, <code>m</code> for minutes, <code>h</code> for
+hours, or <code>d</code> for days. 
 For example, to obtain forwardable tickets for
 <code>david@EXAMPLE.COM</code> that would be good for
 three hours, you would type:
@@ -985,24 +983,26 @@ three hours, you would type:
 <pre class="smallexample">     <b>shell%</b> kinit -f -l 3h david@EXAMPLE.COM
      <b>Password for david@EXAMPLE.COM:</b> <i>&lt;-- [Type david's password here.]</i>
      <b>shell%</b>
-</pre>
-<p class="noindent">You cannot mix units; specifying a lifetime of <span class="samp">3h30m</span> would result
+     </pre>
+
+<p>You cannot mix units; specifying a lifetime of <code>3h30m</code> would result
 in an error.  Note also that most systems specify a maximum ticket
 lifetime.  If you request a longer ticket lifetime, it will be
 automatically truncated to the maximum lifetime.
 
 <div class="node">
 <p><hr>
-<a name="Viewing-Your-Tickets-with-klist"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Destroying-Your-Tickets-with-kdestroy">Destroying Your Tickets with kdestroy</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Obtaining-Tickets-with-kinit">Obtaining Tickets with kinit</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Ticket-Management">Ticket Management</a>
+Node:<a name="Viewing%20Your%20Tickets%20with%20klist">Viewing Your Tickets with klist</a>,
+Next:<a rel="next" accesskey="n" href="#Destroying%20Your%20Tickets%20with%20kdestroy">Destroying Your Tickets with kdestroy</a>,
+Previous:<a rel="previous" accesskey="p" href="#Obtaining%20Tickets%20with%20kinit">Obtaining Tickets with kinit</a>,
+Up:<a rel="up" accesskey="u" href="#Ticket%20Management">Ticket Management</a>
 <br>
 </div>
 
-<h4 class="subsection">2.2.3 Viewing Your Tickets with klist</h4>
+<h4 class="subsection">Viewing Your Tickets with klist</h4>
 
 <p>The <code>klist</code> command shows your tickets.  When you first obtain
-tickets, you will have only the ticket-granting ticket.  (See <a href="#What-is-a-Ticket_003f">What is a Ticket?</a>.)  The listing would look like this:
+tickets, you will have only the ticket-granting ticket.  (See <a href="#What%20is%20a%20Ticket%3f">What is a Ticket?</a>.)  The listing would look like this:
 
 <pre class="smallexample">     <b>shell%</b> klist
      Ticket cache: /tmp/krb5cc_ttypa
@@ -1011,12 +1011,13 @@ tickets, you will have only the ticket-granting ticket.  (See <a href="#What-is-
      Valid starting     Expires            Service principal
      06/07/04 19:49:21  06/08/04 05:49:19  krbtgt/ATHENA.MIT.EDU@ATHENA.MIT.EDU
      <b>shell%</b>
-</pre>
-<p class="noindent">The ticket cache is the location of your ticket file.  In the above
-example, this file is named <code>/tmp/krb5cc_ttypa</code>.  The default
-principal is your kerberos <dfn>principal</dfn>.  (see <a href="#What-is-a-Kerberos-Principal_003f">What is a Kerberos Principal?</a>)
+     </pre>
 
-<p>The &ldquo;valid starting&rdquo; and &ldquo;expires&rdquo; fields describe the period of
+<p>The ticket cache is the location of your ticket file.  In the above
+example, this file is named <code>/tmp/krb5cc_ttypa</code>.  The default
+principal is your kerberos <dfn>principal</dfn>.  (see <a href="#What%20is%20a%20Kerberos%20Principal%3f">What is a Kerberos Principal?</a>)
+
+<p>The "valid starting" and "expires" fields describe the period of
 time during which the ticket is valid.  The <dfn>service principal</dfn>
 describes each ticket.  The ticket-granting ticket has the primary
 <code>krbtgt</code>, and the instance is the realm name.
@@ -1033,8 +1034,9 @@ describes each ticket.  The ticket-granting ticket has the primary
      06/07/04 19:49:21  06/08/04 05:49:19  krbtgt/ATHENA.MIT.EDU@ATHENA.MIT.EDU
      06/07/04 20:22:30  06/08/04 05:49:19  host/daffodil.mit.edu@ATHENA.MIT.EDU
      <b>shell%</b>
-</pre>
-<p class="noindent">Here's what happened:  when jennifer used telnet to connect
+     </pre>
+
+<p>Here's what happened:  when jennifer used telnet to connect
 to the host <code>daffodil.mit.edu</code>, the telnet
 program presented her ticket-granting ticket to the KDC and requested a
 host ticket for the host
@@ -1061,31 +1063,46 @@ show:
      06/07/04 20:24:18  06/08/04 05:49:19  krbtgt/EXAMPLE.COM@ATHENA.MIT.EDU
      06/07/04 20:24:18  06/08/04 05:49:19  host/trillium.example.com@ATHENA.MIT.EDU
      <b>shell%</b>
-</pre>
+     </pre>
+
 <p>You can use the <code>-f</code> option to view the <dfn>flags</dfn> that apply to
 your tickets.  The flags are:
 
      <dl>
-<dt><b>F</b><dd><b>F</b>orwardable
-<dt><b>f</b><dd><b>f</b>orwarded
-<dt><b>P</b><dd><b>P</b>roxiable
-<dt><b>p</b><dd><b>p</b>roxy
-<dt><b>D</b><dd>post<b>D</b>ateable
-<dt><b>d</b><dd>post<b>d</b>ated
-<dt><b>R</b><dd><b>R</b>enewable
-<dt><b>I</b><dd><b>I</b>nitial
-<dt><b>i</b><dd><b>i</b>nvalid
-<dt><b>H</b><dd><b>H</b>ardware authenticated
-<dt><b>A</b><dd>pre<b>A</b>uthenticated
-<dt><b>T</b><dd><b>T</b>ransit policy checked
-<dt><b>O</b><dd><b>O</b>kay as delegate
-<dt><b>a</b><dd><b>a</b>nonymous
+<dt><b>F</b>
+     <dd><b>F</b>orwardable
+<dt><b>f</b>
+     <dd><b>f</b>orwarded
+<dt><b>P</b>
+     <dd><b>P</b>roxiable
+<dt><b>p</b>
+     <dd><b>p</b>roxy
+<dt><b>D</b>
+     <dd>post<b>D</b>ateable
+<dt><b>d</b>
+     <dd>post<b>d</b>ated
+<dt><b>R</b>
+     <dd><b>R</b>enewable
+<dt><b>I</b>
+     <dd><b>I</b>nitial
+<dt><b>i</b>
+     <dd><b>i</b>nvalid
+<dt><b>H</b>
+     <dd><b>H</b>ardware authenticated
+<dt><b>A</b>
+     <dd>pre<b>A</b>uthenticated
+<dt><b>T</b>
+     <dd><b>T</b>ransit policy checked
+<dt><b>O</b>
+     <dd><b>O</b>kay as delegate
+<dt><b>a</b>
+     <dd><b>a</b>nonymous
 </dl>
 
 <p>Here is a sample listing.  In this example, the user jennifer
-obtained her initial tickets (<span class="samp">I</span>), which are forwardable
-(<span class="samp">F</span>) and postdated (<span class="samp">d</span>) but not yet validated (<span class="samp">i</span>). 
-(See <a href="#kinit-Reference">kinit Reference</a>, for more information about postdated tickets.)
+obtained her initial tickets (<code>I</code>), which are forwardable
+(<code>F</code>) and postdated (<code>d</code>) but not yet validated (<code>i</code>). 
+(See <a href="#kinit%20Reference">kinit Reference</a>, for more information about postdated tickets.)
 
 <pre class="smallexample">     <b>shell%</b> klist -f
      <b>Ticket cache: /tmp/krb5cc_320
@@ -1095,10 +1112,11 @@ obtained her initial tickets (<span class="samp">I</span>), which are forwardabl
      31/07/05 19:06:25  31/07/05 19:16:25  krbtgt/ATHENA.MIT.EDU@ATHENA.MIT.EDU
              Flags: FdiI
      shell%</b>
-</pre>
+     </pre>
+
 <p>In the following example, the user david's tickets were
-forwarded (<span class="samp">f</span>) to this host from another host.  The tickets are
-reforwardable (<span class="samp">F</span>).
+forwarded (<code>f</code>) to this host from another host.  The tickets are
+reforwardable (<code>F</code>).
 
 <pre class="smallexample">     <b>shell%</b> klist -f
      <b>Ticket cache: /tmp/krb5cc_p11795
@@ -1110,15 +1128,17 @@ reforwardable (<span class="samp">F</span>).
      07/31/05 12:03:48  07/31/05 21:11:23  host/trillium.example.com@EXAMPLE.COM
              Flags: Ff
      shell%</b>
-</pre>
+     </pre>
+
 <div class="node">
 <p><hr>
-<a name="Destroying-Your-Tickets-with-kdestroy"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#Viewing-Your-Tickets-with-klist">Viewing Your Tickets with klist</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Ticket-Management">Ticket Management</a>
+Node:<a name="Destroying%20Your%20Tickets%20with%20kdestroy">Destroying Your Tickets with kdestroy</a>,
+Previous:<a rel="previous" accesskey="p" href="#Viewing%20Your%20Tickets%20with%20klist">Viewing Your Tickets with klist</a>,
+Up:<a rel="up" accesskey="u" href="#Ticket%20Management">Ticket Management</a>
 <br>
 </div>
 
-<h4 class="subsection">2.2.4 Destroying Your Tickets with kdestroy</h4>
+<h4 class="subsection">Destroying Your Tickets with kdestroy</h4>
 
 <p>Your Kerberos tickets are proof that you are indeed yourself, and
 tickets can be stolen.  If this happens, the person who has them can
@@ -1129,7 +1149,8 @@ destroy your Kerberos tickets when you are away from your computer.
 
 <pre class="smallexample">     <b>shell%</b> kdestroy
      <b>shell%</b>
-</pre>
+     </pre>
+
 <p>If <code>kdestroy</code> fails to destroy your tickets, it will beep and give
 an error message.  For example, if <code>kdestroy</code> can't find any
 tickets to destroy, it will give the following message:
@@ -1137,45 +1158,48 @@ tickets to destroy, it will give the following message:
 <pre class="smallexample">     <b>shell%</b> kdestroy
      <b>kdestroy: No credentials cache file found while destroying cache
      shell%</b>
-</pre>
+     </pre>
+
 <div class="node">
 <p><hr>
-<a name="Password-Management"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Ticket-Management">Ticket Management</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>
+Node:<a name="Password%20Management">Password Management</a>,
+Next:<a rel="next" accesskey="n" href="#Kerberos%20V5%20Applications">Kerberos V5 Applications</a>,
+Previous:<a rel="previous" accesskey="p" href="#Ticket%20Management">Ticket Management</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Tutorial">Kerberos V5 Tutorial</a>
 <br>
 </div>
 
-<h3 class="section">2.3 Password Management</h3>
+<h3 class="section">Password Management</h3>
 
 <p>Your password is the only way Kerberos has of verifying your identity. 
 If someone finds out your password, that person can masquerade as
-you&mdash;send email that comes from you, read, edit, or delete your files,
-or log into other hosts as you&mdash;and no one will be able to tell the
+you--send email that comes from you, read, edit, or delete your files,
+or log into other hosts as you--and no one will be able to tell the
 difference.  For this reason, it is important that you choose a good
-password (see <a href="#Password-Advice">Password Advice</a>), and keep it secret.  If you need to
+password (see <a href="#Password%20Advice">Password Advice</a>), and keep it secret.  If you need to
 give access to your account to someone else, you can do so through
-Kerberos.  (See <a href="#Granting-Access-to-Your-Account">Granting Access to Your Account</a>.)  You should
+Kerberos.  (See <a href="#Granting%20Access%20to%20Your%20Account">Granting Access to Your Account</a>.)  You should
 <i>never</i> tell your password to anyone, including your system
 administrator, for any reason.  You should change your password
 frequently, particularly any time you think someone may have found out
 what it is.
 
 <ul class="menu">
-<li><a accesskey="1" href="#Changing-Your-Password">Changing Your Password</a>
-<li><a accesskey="2" href="#Password-Advice">Password Advice</a>
-<li><a accesskey="3" href="#Granting-Access-to-Your-Account">Granting Access to Your Account</a>
+<li><a accesskey="1" href="#Changing%20Your%20Password">Changing Your Password</a>: 
+<li><a accesskey="2" href="#Password%20Advice">Password Advice</a>: 
+<li><a accesskey="3" href="#Granting%20Access%20to%20Your%20Account">Granting Access to Your Account</a>: 
 </ul>
 
 <div class="node">
 <p><hr>
-<a name="Changing-Your-Password"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Password-Advice">Password Advice</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Password-Management">Password Management</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Password-Management">Password Management</a>
+Node:<a name="Changing%20Your%20Password">Changing Your Password</a>,
+Next:<a rel="next" accesskey="n" href="#Password%20Advice">Password Advice</a>,
+Previous:<a rel="previous" accesskey="p" href="#Password%20Management">Password Management</a>,
+Up:<a rel="up" accesskey="u" href="#Password%20Management">Password Management</a>
 <br>
 </div>
 
-<h4 class="subsection">2.3.1 Changing Your Password</h4>
+<h4 class="subsection">Changing Your Password</h4>
 
 <p>To change your Kerberos password, use the <code>kpasswd</code> command.  It
 will ask you for your old password (to prevent someone else from walking
@@ -1190,7 +1214,8 @@ user <code>david</code> would do the following:
      <b>Enter it again:</b>  <i>&lt;- Type the new password again.</i>
      <b>Password changed.</b>
      <b>shell%</b>
-</pre>
+     </pre>
+
 <p>If david typed the incorrect old password, he would get
 the following message:
 
@@ -1198,7 +1223,8 @@ the following message:
      <b>Password for david:</b>  <i>&lt;- Type the incorrect old password.</i>
      <b>kpasswd: Password incorrect while getting initial ticket
      shell%</b>
-</pre>
+     </pre>
+
 <p>If you make a mistake and don't type the new password the same way
 twice, <code>kpasswd</code> will ask you to try again:
 
@@ -1208,7 +1234,8 @@ twice, <code>kpasswd</code> will ask you to try again:
      <b>Enter it again:</b> <i>&lt;- Type a different new password.</i>
      <b>kpasswd: Password mismatch while reading password
      shell%</b>
-</pre>
+     </pre>
+
 <p>Once you change your password, it takes some time for the change to
 propagate through the system.  Depending on how your system is set up,
 this might be anywhere from a few minutes to an hour or more.  If you
@@ -1218,16 +1245,17 @@ the old one.
 
 <div class="node">
 <p><hr>
-<a name="Password-Advice"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Granting-Access-to-Your-Account">Granting Access to Your Account</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Changing-Your-Password">Changing Your Password</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Password-Management">Password Management</a>
+Node:<a name="Password%20Advice">Password Advice</a>,
+Next:<a rel="next" accesskey="n" href="#Granting%20Access%20to%20Your%20Account">Granting Access to Your Account</a>,
+Previous:<a rel="previous" accesskey="p" href="#Changing%20Your%20Password">Changing Your Password</a>,
+Up:<a rel="up" accesskey="u" href="#Password%20Management">Password Management</a>
 <br>
 </div>
 
-<h4 class="subsection">2.3.2 Password Advice</h4>
+<h4 class="subsection">Password Advice</h4>
 
 <p>Your password can include almost any character you can type (except
-control keys and the &ldquo;enter&rdquo; key).  A good password is one you can
+control keys and the "enter" key).  A good password is one you can
 remember, but that no one else can easily guess.  Examples of <i>bad</i>
 passwords are words that can be found in a dictionary, any common or
 popular name, especially a famous person (or cartoon character), your
@@ -1236,26 +1264,26 @@ twice, <i>etc.</i>), your spouse's, child's, or pet's name, your birth
 date, your social security number, and any sample password that appears
 in this (or any other) manual.
 
-<p>MIT recommends that your password be at least 6 characters
+MIT recommends that your password be at least 6 characters
 long, and contain UPPER- and lower-case letters, numbers, and/or
 punctuation marks.  Some passwords that would be good if they weren't
 listed in this manual include:
 
      <ul>
-<li>some initials, like &ldquo;GykoR-66.&rdquo; for &ldquo;Get your kicks on Route
-66.&rdquo;
+<li>some initials, like "GykoR-66." for "Get your kicks on Route
+66."
 
-     <li>an easy-to-pronounce nonsense word, like &ldquo;slaRooBey&rdquo; or
-&ldquo;krang-its&rdquo;
+     <li>an easy-to-pronounce nonsense word, like "slaRooBey" or
+"krang-its"
 
-     <li>a misspelled phrase, like &ldquo;2HotPeetzas!&rdquo; or &ldquo;ItzAGurl!!!&rdquo;
+     <li>a misspelled phrase, like "2HotPeetzas!" or "ItzAGurl!!!" 
 </ul>
 
-<p class="noindent">Note:  don't actually use any of the above passwords.  They're
+<p>Note:  don't actually use any of the above passwords.  They're
 only meant to show you how to make up a good password.  Passwords that
 appear in a manual are the first ones intruders will try.
 
-<p>Kerberos V5 allows your system administrators to automatically
+Kerberos V5 allows your system administrators to automatically
 reject bad passwords, based on certain criteria, such as a password
 dictionary or a minimum length.  For example, if the user
 <code>jennifer</code>, who had a policy "strict" that required a
@@ -1279,31 +1307,34 @@ characters, Kerberos would give an error message like the following:
      <b>Enter it again:</b>  <i>&lt;- Type it again.</i>
      <b>Password changed.
      shell%</b>
-</pre>
-<p class="noindent">Your system administrators can choose the message that is
+     </pre>
+
+<p>Your system administrators can choose the message that is
 displayed if you choose a bad password, so the message you see may be
 different from the above example.
 
 <div class="node">
 <p><hr>
-<a name="Granting-Access-to-Your-Account"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#Password-Advice">Password Advice</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Password-Management">Password Management</a>
+Node:<a name="Granting%20Access%20to%20Your%20Account">Granting Access to Your Account</a>,
+Previous:<a rel="previous" accesskey="p" href="#Password%20Advice">Password Advice</a>,
+Up:<a rel="up" accesskey="u" href="#Password%20Management">Password Management</a>
 <br>
 </div>
 
-<h4 class="subsection">2.3.3 Granting Access to Your Account</h4>
+<h4 class="subsection">Granting Access to Your Account</h4>
 
 <p>If you need to give someone access to log into your account, you can do
 so through Kerberos, without telling the person your password.  Simply
 create a file called <code>.k5login</code> in your home directory.  This file
-should contain the Kerberos principal (See <a href="#What-is-a-Kerberos-Principal_003f">What is a Kerberos Principal?</a>.) of each person to whom you wish to give access.  Each
+should contain the Kerberos principal (See <a href="#What%20is%20a%20Kerberos%20Principal%3f">What is a Kerberos Principal?</a>.) of each person to whom you wish to give access.  Each
 principal must be on a separate line.  Here is a sample <code>.k5login</code>
 file:
 
 <pre class="smallexample">     jennifer@ATHENA.MIT.EDU
      david@EXAMPLE.COM
-</pre>
-<p class="noindent">This file would allow the users <code>jennifer</code> and
+     </pre>
+
+<p>This file would allow the users <code>jennifer</code> and
 <code>david</code> to use your user ID, provided that they had
 Kerberos tickets in their respective realms.  If you will be logging
 into other hosts across a network, you will want to include your own
@@ -1334,14 +1365,15 @@ having to type the root password over the network.
 
 <div class="node">
 <p><hr>
-<a name="Kerberos-V5-Applications"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#Password-Management">Password Management</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>
+Node:<a name="Kerberos%20V5%20Applications">Kerberos V5 Applications</a>,
+Previous:<a rel="previous" accesskey="p" href="#Password%20Management">Password Management</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Tutorial">Kerberos V5 Tutorial</a>
 <br>
 </div>
 
-<h3 class="section">2.4 Kerberos V5 Applications</h3>
+<h3 class="section">Kerberos V5 Applications</h3>
 
-<p>Kerberos V5 is a <dfn>single-sign-on</dfn> system.  This means that you
+Kerberos V5 is a <dfn>single-sign-on</dfn> system.  This means that you
 only have to type your password once, and the Kerberos V5 programs
 do the authenticating (and optionally encrypting) for you.  The way this
 works is that Kerberos has been built into each of a suite of network
@@ -1356,24 +1388,25 @@ space of a few seconds.
 programs with the Kerberos features added.
 
 <ul class="menu">
-<li><a accesskey="1" href="#Overview-of-Additional-Features">Overview of Additional Features</a>
-<li><a accesskey="2" href="#telnet">telnet</a>
-<li><a accesskey="3" href="#rlogin">rlogin</a>
-<li><a accesskey="4" href="#FTP">FTP</a>
-<li><a accesskey="5" href="#rsh">rsh</a>
-<li><a accesskey="6" href="#rcp">rcp</a>
-<li><a accesskey="7" href="#ksu">ksu</a>
+<li><a accesskey="1" href="#Overview%20of%20Additional%20Features">Overview of Additional Features</a>: 
+<li><a accesskey="2" href="#telnet">telnet</a>: 
+<li><a accesskey="3" href="#rlogin">rlogin</a>: 
+<li><a accesskey="4" href="#FTP">FTP</a>: 
+<li><a accesskey="5" href="#rsh">rsh</a>: 
+<li><a accesskey="6" href="#rcp">rcp</a>: 
+<li><a accesskey="7" href="#ksu">ksu</a>: 
 </ul>
 
 <div class="node">
 <p><hr>
-<a name="Overview-of-Additional-Features"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#telnet">telnet</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+Node:<a name="Overview%20of%20Additional%20Features">Overview of Additional Features</a>,
+Next:<a rel="next" accesskey="n" href="#telnet">telnet</a>,
+Previous:<a rel="previous" accesskey="p" href="#Kerberos%20V5%20Applications">Kerberos V5 Applications</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Applications">Kerberos V5 Applications</a>
 <br>
 </div>
 
-<h4 class="subsection">2.4.1 Overview of Additional Features</h4>
+<h4 class="subsection">Overview of Additional Features</h4>
 
 <p>The Kerberos V5 <dfn>network programs</dfn> are those programs that
 connect to another host somewhere on the internet.  These programs
@@ -1388,7 +1421,7 @@ password, because Kerberos has already proven your identity.
 
 <p>The Kerberos V5 network programs allow you the options of forwarding
 your tickets to the remote host (if you obtained forwardable tickets
-with the <code>kinit</code> program; see <a href="#Obtaining-Tickets-with-kinit">Obtaining Tickets with kinit</a>), and
+with the <code>kinit</code> program; see <a href="#Obtaining%20Tickets%20with%20kinit">Obtaining Tickets with kinit</a>), and
 encrypting data transmitted between you and the remote host.
 
 <p>This section of the tutorial assumes you are familiar with the
@@ -1397,33 +1430,40 @@ functions added in the Kerberos V5 package.
 
 <div class="node">
 <p><hr>
-<a name="telnet"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#rlogin">rlogin</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Overview-of-Additional-Features">Overview of Additional Features</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+Node:<a name="telnet">telnet</a>,
+Next:<a rel="next" accesskey="n" href="#rlogin">rlogin</a>,
+Previous:<a rel="previous" accesskey="p" href="#Overview%20of%20Additional%20Features">Overview of Additional Features</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Applications">Kerberos V5 Applications</a>
 <br>
 </div>
 
-<h4 class="subsection">2.4.2 telnet</h4>
+<h4 class="subsection">telnet</h4>
 
 <p>The Kerberos V5 <code>telnet</code> command works exactly like the
 standard UNIX telnet program, with the following Kerberos options added:
 
      <dl>
-<dt><kbd>-f</kbd><dd>forwards a copy of your tickets to the remote host.
+<dt><kbd>-f</kbd>
+     <dd>forwards a copy of your tickets to the remote host.
 
-     <dt><kbd>-F</kbd><dd>forwards a copy of your tickets to the remote host, and marks them
+     <dt><kbd>-F</kbd>
+     <dd>forwards a copy of your tickets to the remote host, and marks them
 re-forwardable from the remote host.
 
-     <dt><kbd>-k </kbd><i>realm</i><dd>requests tickets for the remote host in the specified realm, instead of
+     <dt><kbd>-k </kbd><i>realm</i><kbd></kbd>
+     <dd>requests tickets for the remote host in the specified realm, instead of
 determining the realm itself.
 
-     <dt><kbd>-K</kbd><dd>uses your tickets to authenticate to the remote host, but does not log
+     <dt><kbd>-K</kbd>
+     <dd>uses your tickets to authenticate to the remote host, but does not log
 you in.
 
-     <dt><kbd>-a</kbd><dd>attempt automatic login using your tickets.  <code>telnet</code> will assume
+     <dt><kbd>-a</kbd>
+     <dd>attempt automatic login using your tickets.  <code>telnet</code> will assume
 the same username unless you explicitly specify another.
 
-     <dt><kbd>-x</kbd><dd>turns on encryption.
+     <dt><kbd>-x</kbd>
+     <dd>turns on encryption.
 
 </dl>
 
@@ -1448,8 +1488,9 @@ UNIX telnet to connect to the machine
      
      Welcome to NetBSD!
      shell%</b>
-</pre>
-<p class="noindent">Note that the machine
+     </pre>
+
+<p>Note that the machine
 <code>daffodil.example.com</code> asked for
 <code>david</code>'s password.  When he typed it, his password
 was sent over the network unencrypted.  If an intruder were watching
@@ -1473,8 +1514,9 @@ as follows:
      Athena Server (sun4) Version 9.1.11 Tue Jul 30 14:40:08 EDT 2002
      
      shell%</b>
-</pre>
-<p class="noindent">Note that <code>jennifer</code>'s machine used Kerberos
+     </pre>
+
+<p>Note that <code>jennifer</code>'s machine used Kerberos
 to authenticate her to <code>trillium.mit.edu</code>,
 and logged her in automatically as herself.  She had an encrypted
 session, a copy of her tickets already waiting for her, and she never
@@ -1483,31 +1525,36 @@ typed her password.
 <p>If you forwarded your Kerberos tickets, <code>telnet</code> automatically
 destroys them when it exits.  The full set of options to Kerberos V5
 <code>telnet</code> are discussed in the Reference section of this manual. 
-(see <a href="#telnet-Reference">telnet Reference</a>)
+(see <a href="#telnet%20Reference">telnet Reference</a>)
 
 <div class="node">
 <p><hr>
-<a name="rlogin"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#FTP">FTP</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#telnet">telnet</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+Node:<a name="rlogin">rlogin</a>,
+Next:<a rel="next" accesskey="n" href="#FTP">FTP</a>,
+Previous:<a rel="previous" accesskey="p" href="#telnet">telnet</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Applications">Kerberos V5 Applications</a>
 <br>
 </div>
 
-<h4 class="subsection">2.4.3 rlogin</h4>
+<h4 class="subsection">rlogin</h4>
 
 <p>The Kerberos V5 <code>rlogin</code> command works exactly like the
 standard UNIX rlogin program, with the following Kerberos options added:
 
      <dl>
-<dt><kbd>-f</kbd><dd>forwards a copy of your tickets to the remote host.
+<dt><kbd>-f</kbd>
+     <dd>forwards a copy of your tickets to the remote host.
 
-     <dt><kbd>-F</kbd><dd>forwards a copy of your tickets to the remote host, and marks them
+     <dt><kbd>-F</kbd>
+     <dd>forwards a copy of your tickets to the remote host, and marks them
 re-forwardable from the remote host.
 
-     <dt><kbd>-k </kbd><i>realm</i><dd>requests tickets for the remote host in the specified realm, instead of
+     <dt><kbd>-k </kbd><i>realm</i><kbd></kbd>
+     <dd>requests tickets for the remote host in the specified realm, instead of
 determining the realm itself.
 
-     <dt><kbd>-x</kbd><dd>encrypts the input and output data streams (the username is sent unencrypted)
+     <dt><kbd>-x</kbd>
+     <dd>encrypts the input and output data streams (the username is sent unencrypted)
 
 </dl>
 
@@ -1525,8 +1572,9 @@ UNIX rlogin to connect to the machine
      
      Welcome to NetBSD!
      shell%</b>
-</pre>
-<p class="noindent">Note that the machine
+     </pre>
+
+<p>Note that the machine
 <code>daffodil.example.com</code> asked for
 <code>david</code>'s password.  When he typed it, his password
 was sent over the network unencrypted.  If an intruder were watching
@@ -1544,8 +1592,9 @@ and request an encrypted session as follows:
      Last login: Thu Jun 20 16:20:50 from daffodil
      Athena Server (sun4) Version 9.1.11 Tue Jul 30 14:40:08 EDT 2002
      shell%</b>
-</pre>
-<p class="noindent">Note that <code>jennifer</code>'s machine used Kerberos
+     </pre>
+
+<p>Note that <code>jennifer</code>'s machine used Kerberos
 to authenticate her to <code>trillium.mit.edu</code>,
 and logged her in automatically as herself.  She had an encrypted
 session, a copy of her tickets were waiting for her, and she never typed
@@ -1554,31 +1603,35 @@ her password.
 <p>If you forwarded your Kerberos tickets, <code>rlogin</code> automatically
 destroys them when it exits.  The full set of options to Kerberos V5
 <code>rlogin</code> are discussed in the Reference section of this manual. 
-(see <a href="#rlogin-Reference">rlogin Reference</a>)
+(see <a href="#rlogin%20Reference">rlogin Reference</a>)
 
 <div class="node">
 <p><hr>
-<a name="FTP"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#rsh">rsh</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#rlogin">rlogin</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+Node:<a name="FTP">FTP</a>,
+Next:<a rel="next" accesskey="n" href="#rsh">rsh</a>,
+Previous:<a rel="previous" accesskey="p" href="#rlogin">rlogin</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Applications">Kerberos V5 Applications</a>
 <br>
 </div>
 
-<h4 class="subsection">2.4.4 FTP</h4>
+<h4 class="subsection">FTP</h4>
 
 <p>The Kerberos V5 <code>FTP</code> program works exactly like the standard
 UNIX FTP program, with the following Kerberos features added:
 
      <dl>
-<dt><kbd>-k </kbd><i>realm</i><dd>requests tickets for the remote host in the specified realm, instead of
+<dt><kbd>-k </kbd><i>realm</i><kbd></kbd>
+     <dd>requests tickets for the remote host in the specified realm, instead of
 determining the realm itself.
 
-     <dt><kbd>-f</kbd><dd>requests that your tickets be forwarded to the remote host.  The
+     <dt><kbd>-f</kbd>
+     <dd>requests that your tickets be forwarded to the remote host.  The
 <kbd>-f</kbd> argument must be the last argument on the command line.
 
-     <dt><kbd>protect </kbd><i>level</i><dd>(issued at the <code>ftp&gt;</code> prompt) sets the protection level.  &ldquo;Clear&rdquo;
-is no protection; &ldquo;safe&rdquo; ensures data integrity by verifying the
-checksum, and &ldquo;private&rdquo; encrypts the data.  Encryption also ensures
+     <dt><kbd>protect </kbd><i>level</i><kbd></kbd>
+     <dd>(issued at the <code>ftp&gt;</code> prompt) sets the protection level.  "Clear"
+is no protection; "safe" ensures data integrity by verifying the
+checksum, and "private" encrypts the data.  Encryption also ensures
 data integrity. 
 </dl>
 
@@ -1611,68 +1664,78 @@ following:
      361662 bytes received in 2.5 seconds (1.4e+02 Kbytes/s)
      ftp&gt; quit
      <b>shell%</b>
-</pre>
+     </pre>
+
 <p>The full set of options to Kerberos V5 <code>FTP</code> are discussed
-in the Reference section of this manual.  (see <a href="#FTP-Reference">FTP Reference</a>)
+in the Reference section of this manual.  (see <a href="#FTP%20Reference">FTP Reference</a>)
 
 <div class="node">
 <p><hr>
-<a name="rsh"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#rcp">rcp</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#FTP">FTP</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+Node:<a name="rsh">rsh</a>,
+Next:<a rel="next" accesskey="n" href="#rcp">rcp</a>,
+Previous:<a rel="previous" accesskey="p" href="#FTP">FTP</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Applications">Kerberos V5 Applications</a>
 <br>
 </div>
 
-<h4 class="subsection">2.4.5 rsh</h4>
+<h4 class="subsection">rsh</h4>
 
 <p>The Kerberos V5 <code>rsh</code> program works exactly like the standard
 UNIX rlogin program, with the following Kerberos features added:
 
      <dl>
-<dt><kbd>-f</kbd><dd>forwards a copy of your tickets to the remote host.
+<dt><kbd>-f</kbd>
+     <dd>forwards a copy of your tickets to the remote host.
 
-     <dt><kbd>-F</kbd><dd>forwards a copy of your tickets to the remote host, and marks them
+     <dt><kbd>-F</kbd>
+     <dd>forwards a copy of your tickets to the remote host, and marks them
 re-forwardable from the remote host.
 
-     <dt><kbd>-k </kbd><i>realm</i><dd>requests tickets for the remote host in the specified realm, instead of
+     <dt><kbd>-k </kbd><i>realm</i><kbd></kbd>
+     <dd>requests tickets for the remote host in the specified realm, instead of
 determining the realm itself.
 
-     <dt><kbd>-x</kbd><dd>encrypts the input and output data streams (the command line is not encrypted)
+     <dt><kbd>-x</kbd>
+     <dd>encrypts the input and output data streams (the command line is not encrypted)
 
 </dl>
 
 <p>For example, if your Kerberos tickets allowed you to run programs on the
 host <br> <code>trillium@example.com</code> as root, you could
-run the <span class="samp">date</span> program as follows:
+run the <code>date</code> program as follows:
 
 <pre class="smallexample">     <b>shell%</b> rsh trillium.example.com -l root -x date
      <b>This rsh session is using DES encryption for all data transmissions.
      Tue Jul 30 19:34:21 EDT 2002
      shell%</b>
-</pre>
+     </pre>
+
 <p>If you forwarded your Kerberos tickets, <code>rsh</code> automatically
 destroys them when it exits.  The full set of options to Kerberos V5
 <code>rsh</code> are discussed in the Reference section of this manual. 
-(see <a href="#rsh-Reference">rsh Reference</a>)
+(see <a href="#rsh%20Reference">rsh Reference</a>)
 
 <div class="node">
 <p><hr>
-<a name="rcp"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ksu">ksu</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#rsh">rsh</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+Node:<a name="rcp">rcp</a>,
+Next:<a rel="next" accesskey="n" href="#ksu">ksu</a>,
+Previous:<a rel="previous" accesskey="p" href="#rsh">rsh</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Applications">Kerberos V5 Applications</a>
 <br>
 </div>
 
-<h4 class="subsection">2.4.6 rcp</h4>
+<h4 class="subsection">rcp</h4>
 
 <p>The Kerberos V5 <code>rcp</code> program works exactly like the standard
 UNIX rcp program, with the following Kerberos features added:
 
      <dl>
-<dt><kbd>-k </kbd><i>realm</i><dd>requests tickets for the remote host in the specified realm, instead of
+<dt><kbd>-k </kbd><i>realm</i><kbd></kbd>
+     <dd>requests tickets for the remote host in the specified realm, instead of
 determining the realm itself.
 
-     <dt><kbd>-x</kbd><dd>turns on encryption. 
+     <dt><kbd>-x</kbd>
+     <dd>turns on encryption. 
 </dl>
 
 <p>For example, if you wanted to copy the file <code>/etc/motd</code> from the
@@ -1680,19 +1743,21 @@ host <code>daffodil.mit.edu</code> into the current
 directory, via an encrypted connection, you would simply type:
 
 <pre class="smallexample">     <b>shell%</b> rcp -x daffodil.mit.edu:/etc/motd .
-</pre>
+     </pre>
+
 <p>The <kbd>rcp</kbd> program negotiates authentication and encryption
 transparently.  The full set of options to Kerberos V5 <code>rcp</code>
-are discussed in the Reference section of this manual.  (see <a href="#rcp-Reference">rcp Reference</a>)
+are discussed in the Reference section of this manual.  (see <a href="#rcp%20Reference">rcp Reference</a>)
 
 <div class="node">
 <p><hr>
-<a name="ksu"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#rcp">rcp</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+Node:<a name="ksu">ksu</a>,
+Previous:<a rel="previous" accesskey="p" href="#rcp">rcp</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Applications">Kerberos V5 Applications</a>
 <br>
 </div>
 
-<h4 class="subsection">2.4.7 ksu</h4>
+<h4 class="subsection">ksu</h4>
 
 <p>The Kerberos V5 <code>ksu</code> program replaces the standard UNIX su
 program.  <code>ksu</code> first authenticates you to Kerberos.  Depending on
@@ -1702,7 +1767,7 @@ your password if you are remotely logged in using an unencrypted
 connection.</em>
 
 <p>Once <code>ksu</code> has authenticated you, if your Kerberos principal
-appears in the target's <code>.k5login</code> file (see <a href="#Granting-Access-to-Your-Account">Granting Access to Your Account</a>) or in the target's <code>.k5users</code> file (see below), it
+appears in the target's <code>.k5login</code> file (see <a href="#Granting%20Access%20to%20Your%20Account">Granting Access to Your Account</a>) or in the target's <code>.k5users</code> file (see below), it
 switches your user ID to the target user ID.
 
 <p>For example, <code>david</code> has put
@@ -1718,10 +1783,11 @@ prompt is represented as <code>jennifer%</code> and
      <b>Account david: authorization for jennifer@ATHENA.MIT.EDU successful
      Changing uid to david (3382)
      david%</b>
-</pre>
-<p class="noindent">Note that the new shell has a copy of <code>jennifer</code>'s
+     </pre>
+
+<p>Note that the new shell has a copy of <code>jennifer</code>'s
 tickets.  The ticket filename contains <code>david</code>'s UID
-with <span class="samp">.1</span> appended to it:
+with <code>.1</code> appended to it:
 
 <pre class="smallexample">     <b>david%</b> klist
      <b>Ticket cache: /tmp/krb5cc_3382.1
@@ -1731,7 +1797,8 @@ with <span class="samp">.1</span> appended to it:
      07/31/04 21:53:01  08/01/04 07:52:53  krbtgt/ATHENA.MIT.EDU@ATHENA.MIT.EDU
      07/31/04 21:53:39  08/01/04 07:52:53  host/daffodil.mit.edu@ATHENA.MIT.EDU
      david%</b>
-</pre>
+     </pre>
+
 <p>If <code>jennifer</code> had not appeared in
 <code>david</code>'s <code>.k5login</code> file (and the system was
 configured to ask for a password), the exchange would have looked like
@@ -1745,7 +1812,8 @@ precautions in protecting his password):
      <b>ksu: Password incorrect
      Authentication failed.
      jennifer%</b>
-</pre>
+     </pre>
+
 <p>Now, suppose <code>david</code> did not want to give
 <code>jennifer</code> full access to his account, but wanted to
 give her permission to list his files and use the "more" command to view
@@ -1762,8 +1830,9 @@ might look like the following:
      joeadmin@ATHENA.MIT.EDU         /bin/ls
      joeadmin/admin@ATHENA.MIT.EDU   *
      david@EXAMPLE.COM
-</pre>
-<p class="noindent">The above <code>.k5users</code> file would let
+     </pre>
+
+<p>The above <code>.k5users</code> file would let
 <code>jennifer</code> run only the commands <code>/bin/ls</code> and
 <code>/usr/bin/more</code>.  It would let <code>joeadmin</code> run only
 the command <code>/bin/ls</code> if he had regular tickets, but if he had
@@ -1786,8 +1855,9 @@ she would type:
      Changing uid to david (3382)
      Mail            News            Personal        misc            bin
      jennifer%</b>
-</pre>
-<p class="noindent">If <code>jennifer</code> had tried to give a different
+     </pre>
+
+<p>If <code>jennifer</code> had tried to give a different
 command to <code>ksu</code>, it would have prompted for a password as with the
 previous example.
 
@@ -1798,46 +1868,56 @@ run any command, the user must use <code>ksu</code> with the <kbd>-e</kbd>
 <p>The <code>ksu</code> options you are most likely to use are:
 
      <dl>
-<dt><kbd>-n </kbd><i>principal</i><dd>specifies which Kerberos principal you want to use for <code>ksu</code>. 
+<dt><kbd>-n </kbd><i>principal</i><kbd></kbd>
+     <dd>specifies which Kerberos principal you want to use for <code>ksu</code>. 
 (<i>e.g.</i>, the user <code>joeadmin</code> might want to use his
-<code>admin</code> instance.  See <a href="#What-is-a-Ticket_003f">What is a Ticket?</a>.)
+<code>admin</code> instance.  See <a href="#What%20is%20a%20Ticket%3f">What is a Ticket?</a>.)
 
-     <dt><kbd>-c</kbd><dd>specifies the location of your Kerberos credentials cache (ticket file).
+     <dt><kbd>-c</kbd>
+     <dd>specifies the location of your Kerberos credentials cache (ticket file).
 
-     <dt><kbd>-k</kbd><dd>tells <code>ksu</code> not to destroy your Kerberos tickets when <code>ksu</code> is
+     <dt><kbd>-k</kbd>
+     <dd>tells <code>ksu</code> not to destroy your Kerberos tickets when <code>ksu</code> is
 finished.
 
-     <dt><kbd>-f</kbd><dd>requests forwardable tickets.  (See <a href="#Obtaining-Tickets-with-kinit">Obtaining Tickets with kinit</a>.)  This
+     <dt><kbd>-f</kbd>
+     <dd>requests forwardable tickets.  (See <a href="#Obtaining%20Tickets%20with%20kinit">Obtaining Tickets with kinit</a>.)  This
 is only applicable if <code>ksu</code> needs to obtain tickets.
 
-     <dt><kbd>-l </kbd><i>lifetime</i><dd>sets the ticket lifetime.  (See <a href="#Obtaining-Tickets-with-kinit">Obtaining Tickets with kinit</a>.)  This is
+     <dt><kbd>-l </kbd><i>lifetime</i><kbd></kbd>
+     <dd>sets the ticket lifetime.  (See <a href="#Obtaining%20Tickets%20with%20kinit">Obtaining Tickets with kinit</a>.)  This is
 only applicable if <code>ksu</code> needs to obtain tickets.
 
-     <dt><kbd>-z</kbd><dd>tells <code>ksu</code> to copy your Kerberos tickets only if the UID you are
+     <dt><kbd>-z</kbd>
+     <dd>tells <code>ksu</code> to copy your Kerberos tickets only if the UID you are
 switching is the same as the Kerberos primary (either yours or the one
 specified by the <kbd>-n</kbd> option).
 
-     <dt><kbd>-Z</kbd><dd>tells <code>ksu</code> not to copy any Kerberos tickets to the new UID.
+     <dt><kbd>-Z</kbd>
+     <dd>tells <code>ksu</code> not to copy any Kerberos tickets to the new UID.
 
-     <dt><kbd>-e </kbd><i>command</i><dd>tells <code>ksu</code> to execute <i>command</i> and then exit.  See the
+     <dt><kbd>-e </kbd><i>command</i><kbd></kbd>
+     <dd>tells <code>ksu</code> to execute <i>command</i> and then exit.  See the
 description of the <code>.k5users</code> file above.
 
-     <dt><kbd>-a </kbd><i>text</i><dd>(at the end of the command line) tells <code>ksu</code> to pass everything
-after <span class="samp">-a</span> to the target shell. 
+     <dt><kbd>-a </kbd><i>text</i><kbd></kbd>
+     <dd>(at the end of the command line) tells <code>ksu</code> to pass everything
+after <code>-a</code> to the target shell. 
 </dl>
 
 <p>The full set of options to Kerberos V5 <code>ksu</code> are discussed
-in the Reference section of this manual.  (see <a href="#ksu-Reference">ksu Reference</a>)
+in the Reference section of this manual.  (see <a href="#ksu%20Reference">ksu Reference</a>)
 
 <div class="node">
 <p><hr>
-<a name="Kerberos-V5-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Kerberos-Glossary">Kerberos Glossary</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+Node:<a name="Kerberos%20V5%20Reference">Kerberos V5 Reference</a>,
+Next:<a rel="next" accesskey="n" href="#Kerberos%20Glossary">Kerberos Glossary</a>,
+Previous:<a rel="previous" accesskey="p" href="#Kerberos%20V5%20Tutorial">Kerberos V5 Tutorial</a>,
+Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 <br>
 </div>
 
-<h2 class="chapter">3 Kerberos V5 Reference</h2>
+<h2 class="chapter">Kerberos V5 Reference</h2>
 
 <p>This section will include copies of the manual pages for the
 Kerberos V5 client programs.  You can read the manual entry for any
@@ -1846,279 +1926,310 @@ of the command for which you want to read the manual entry.  For
 example, to read the <code>kinit</code> manual entry, you would type:
 
 <pre class="smallexample">     <b>shell%</b> man kinit
-</pre>
+     </pre>
+
 <p>Note:  To be able to view the Kerberos V5 manual pages on line, you
 may need to add the directory <code>/usr/local/man</code> to your MANPATH
 environment variable.  (Remember to replace <code>/usr/local</code> with
 the top-level directory in which Kerberos V5 is installed.)  For
 example, if you had the the following line in your <code>.login</code>
-file<a rel="footnote" href="#fn-2" name="fnd-2"><sup>2</sup></a>:
+file<a rel="footnote" href="#fn-2"><sup>2</sup></a>:
 
 <pre class="smallexample">     setenv MANPATH /usr/local/man:/usr/man
-</pre>
-<p class="noindent">and the Kerberos V5 man pages were in the directory
+     </pre>
+
+<p>and the Kerberos V5 man pages were in the directory
 <code>/usr/krb5/man</code>, you would change the line to the following:
 
 <pre class="smallexample">     setenv MANPATH /usr/krb5/man:/usr/local/man:/usr/man
-</pre>
+     </pre>
+
 <ul class="menu">
-<li><a accesskey="1" href="#kinit-Reference">kinit Reference</a>
-<li><a accesskey="2" href="#klist-Reference">klist Reference</a>
-<li><a accesskey="3" href="#ksu-Reference">ksu Reference</a>
-<li><a accesskey="4" href="#kdestroy-Reference">kdestroy Reference</a>
-<li><a accesskey="5" href="#kpasswd-Reference">kpasswd Reference</a>
-<li><a accesskey="6" href="#telnet-Reference">telnet Reference</a>
-<li><a accesskey="7" href="#FTP-Reference">FTP Reference</a>
-<li><a accesskey="8" href="#rlogin-Reference">rlogin Reference</a>
-<li><a accesskey="9" href="#rsh-Reference">rsh Reference</a>
-<li><a href="#rcp-Reference">rcp Reference</a>
+<li><a accesskey="1" href="#kinit%20Reference">kinit Reference</a>: 
+<li><a accesskey="2" href="#klist%20Reference">klist Reference</a>: 
+<li><a accesskey="3" href="#ksu%20Reference">ksu Reference</a>: 
+<li><a accesskey="4" href="#kdestroy%20Reference">kdestroy Reference</a>: 
+<li><a accesskey="5" href="#kpasswd%20Reference">kpasswd Reference</a>: 
+<li><a accesskey="6" href="#telnet%20Reference">telnet Reference</a>: 
+<li><a accesskey="7" href="#FTP%20Reference">FTP Reference</a>: 
+<li><a accesskey="8" href="#rlogin%20Reference">rlogin Reference</a>: 
+<li><a accesskey="9" href="#rsh%20Reference">rsh Reference</a>: 
+<li><a href="#rcp%20Reference">rcp Reference</a>: 
 </ul>
 
 <div class="node">
 <p><hr>
-<a name="kinit-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#klist-Reference">klist Reference</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+Node:<a name="kinit%20Reference">kinit Reference</a>,
+Next:<a rel="next" accesskey="n" href="#klist%20Reference">klist Reference</a>,
+Previous:<a rel="previous" accesskey="p" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>
 <br>
 </div>
 
-<h3 class="section">3.1 kinit Reference</h3>
+<h3 class="section">kinit Reference</h3>
 
-<p><a href="kinit.html"> kinit manpage</a>
+<a href="kinit.html"> kinit manpage</a>
 
 <div class="node">
 <p><hr>
-<a name="klist-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ksu-Reference">ksu Reference</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#kinit-Reference">kinit Reference</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+Node:<a name="klist%20Reference">klist Reference</a>,
+Next:<a rel="next" accesskey="n" href="#ksu%20Reference">ksu Reference</a>,
+Previous:<a rel="previous" accesskey="p" href="#kinit%20Reference">kinit Reference</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>
 <br>
 </div>
 
-<h3 class="section">3.2 klist Reference</h3>
+<h3 class="section">klist Reference</h3>
 
-<p><a href="klist.html"> klist manpage</a>
+<a href="klist.html"> klist manpage</a>
 
 <div class="node">
 <p><hr>
-<a name="ksu-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#kdestroy-Reference">kdestroy Reference</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#klist-Reference">klist Reference</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+Node:<a name="ksu%20Reference">ksu Reference</a>,
+Next:<a rel="next" accesskey="n" href="#kdestroy%20Reference">kdestroy Reference</a>,
+Previous:<a rel="previous" accesskey="p" href="#klist%20Reference">klist Reference</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>
 <br>
 </div>
 
-<h3 class="section">3.3 ksu Reference</h3>
+<h3 class="section">ksu Reference</h3>
 
-<p><a href="ksu.html"> ksu manpage</a>
+<a href="ksu.html"> ksu manpage</a>
 
 <div class="node">
 <p><hr>
-<a name="kdestroy-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#kpasswd-Reference">kpasswd Reference</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#ksu-Reference">ksu Reference</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+Node:<a name="kdestroy%20Reference">kdestroy Reference</a>,
+Next:<a rel="next" accesskey="n" href="#kpasswd%20Reference">kpasswd Reference</a>,
+Previous:<a rel="previous" accesskey="p" href="#ksu%20Reference">ksu Reference</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>
 <br>
 </div>
 
-<h3 class="section">3.4 kdestroy Reference</h3>
+<h3 class="section">kdestroy Reference</h3>
 
-<p><a href="kdestroy.html"> kdestroy manpage</a>
+<a href="kdestroy.html"> kdestroy manpage</a>
 
 <div class="node">
 <p><hr>
-<a name="kpasswd-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#telnet-Reference">telnet Reference</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#kdestroy-Reference">kdestroy Reference</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+Node:<a name="kpasswd%20Reference">kpasswd Reference</a>,
+Next:<a rel="next" accesskey="n" href="#telnet%20Reference">telnet Reference</a>,
+Previous:<a rel="previous" accesskey="p" href="#kdestroy%20Reference">kdestroy Reference</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>
 <br>
 </div>
 
-<h3 class="section">3.5 kpasswd Reference</h3>
+<h3 class="section">kpasswd Reference</h3>
 
-<p><a href="kpasswd.html"> kpasswd manpage</a>
+<a href="kpasswd.html"> kpasswd manpage</a>
 
 <div class="node">
 <p><hr>
-<a name="telnet-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#FTP-Reference">FTP Reference</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#kpasswd-Reference">kpasswd Reference</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+Node:<a name="telnet%20Reference">telnet Reference</a>,
+Next:<a rel="next" accesskey="n" href="#FTP%20Reference">FTP Reference</a>,
+Previous:<a rel="previous" accesskey="p" href="#kpasswd%20Reference">kpasswd Reference</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>
 <br>
 </div>
 
-<h3 class="section">3.6 telnet Reference</h3>
+<h3 class="section">telnet Reference</h3>
 
-<p><a href="telnet.html"> telnet manpage</a>
+<a href="telnet.html"> telnet manpage</a>
 
 <div class="node">
 <p><hr>
-<a name="FTP-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#rlogin-Reference">rlogin Reference</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#telnet-Reference">telnet Reference</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+Node:<a name="FTP%20Reference">FTP Reference</a>,
+Next:<a rel="next" accesskey="n" href="#rlogin%20Reference">rlogin Reference</a>,
+Previous:<a rel="previous" accesskey="p" href="#telnet%20Reference">telnet Reference</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>
 <br>
 </div>
 
-<h3 class="section">3.7 FTP Reference</h3>
+<h3 class="section">FTP Reference</h3>
 
-<p><a href="ftp.html"> ftp manpage</a>
+<a href="ftp.html"> ftp manpage</a>
 
 <div class="node">
 <p><hr>
-<a name="rlogin-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#rsh-Reference">rsh Reference</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#FTP-Reference">FTP Reference</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+Node:<a name="rlogin%20Reference">rlogin Reference</a>,
+Next:<a rel="next" accesskey="n" href="#rsh%20Reference">rsh Reference</a>,
+Previous:<a rel="previous" accesskey="p" href="#FTP%20Reference">FTP Reference</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>
 <br>
 </div>
 
-<h3 class="section">3.8 rlogin Reference</h3>
+<h3 class="section">rlogin Reference</h3>
 
-<p><a href="rlogin.html"> rlogin manpage</a>
+<a href="rlogin.html"> rlogin manpage</a>
 
 <div class="node">
 <p><hr>
-<a name="rsh-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#rcp-Reference">rcp Reference</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#rlogin-Reference">rlogin Reference</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+Node:<a name="rsh%20Reference">rsh Reference</a>,
+Next:<a rel="next" accesskey="n" href="#rcp%20Reference">rcp Reference</a>,
+Previous:<a rel="previous" accesskey="p" href="#rlogin%20Reference">rlogin Reference</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>
 <br>
 </div>
 
-<h3 class="section">3.9 rsh Reference</h3>
+<h3 class="section">rsh Reference</h3>
 
-<p><a href="rsh.html"> rsh manpage</a>
+<a href="rsh.html"> rsh manpage</a>
 
 <div class="node">
 <p><hr>
-<a name="rcp-Reference"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#rsh-Reference">rsh Reference</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+Node:<a name="rcp%20Reference">rcp Reference</a>,
+Previous:<a rel="previous" accesskey="p" href="#rsh%20Reference">rsh Reference</a>,
+Up:<a rel="up" accesskey="u" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>
 <br>
 </div>
 
-<h3 class="section">3.10 rcp Reference</h3>
+<h3 class="section">rcp Reference</h3>
 
-<p><a href="rcp.html"> rcp manpage</a>
+<a href="rcp.html"> rcp manpage</a>
 
 <div class="node">
 <p><hr>
-<a name="Kerberos-Glossary"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+Node:<a name="Kerberos%20Glossary">Kerberos Glossary</a>,
+Previous:<a rel="previous" accesskey="p" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>,
+Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 <br>
 </div>
 
-<h2 class="appendix">Appendix A Kerberos Glossary</h2>
+<h2 class="appendix">Kerberos Glossary</h2>
 
      <dl>
-<dt><b>client</b><dd>an entity that can obtain a ticket.  This entity is usually either a
+<dt><b>client</b>
+     <dd>an entity that can obtain a ticket.  This entity is usually either a
 user or a host.
 
-     <br><dt><b>host</b><dd>a computer that can be accessed over a network.
+     <br><dt><b>host</b>
+     <dd>a computer that can be accessed over a network.
 
-     <br><dt><b>Kerberos</b><dd>in Greek mythology, the three-headed dog that guards the entrance to the
+     <br><dt><b>Kerberos</b>
+     <dd>in Greek mythology, the three-headed dog that guards the entrance to the
 underworld.  In the computing world, Kerberos is a network security
 package that was developed at MIT.
 
-     <br><dt><b>KDC</b><dd>Key Distribution Center.  A machine that issues Kerberos tickets.
+     <br><dt><b>KDC</b>
+     <dd>Key Distribution Center.  A machine that issues Kerberos tickets.
 
-     <br><dt><b>keytab</b><dd>a <b>key tab</b>le file containing one or more keys.  A host or service
+     <br><dt><b>keytab</b>
+     <dd>a <b>key tab</b>le file containing one or more keys.  A host or service
 uses a <dfn>keytab</dfn> file in much the same way as a user uses his/her
 password.
 
-     <br><dt><b>principal</b><dd>a string that names a specific entity to which a set of credentials may
+     <br><dt><b>principal</b>
+     <dd>a string that names a specific entity to which a set of credentials may
 be assigned.  It can have an arbitrary number of components, but
 generally has three:
 
           <dl>
-<dt><b>primary</b><dd>the first part of a Kerberos <i>principal</i>.  In the case of a user, it
+<dt><b>primary</b>
+          <dd>the first part of a Kerberos <i>principal</i>.  In the case of a user, it
 is the username.  In the case of a service, it is the name of the
 service.
 
-          <br><dt><b>instance</b><dd>the second part of a Kerberos <i>principal</i>.  It gives information that
+          <br><dt><b>instance</b>
+          <dd>the second part of a Kerberos <i>principal</i>.  It gives information that
 qualifies the primary.  The instance may be null.  In the case of a
 user, the instance is often used to describe the intended use of the
 corresponding credentials.  In the case of a host, the instance is the
 fully qualified hostname.
 
-          <br><dt><b>realm</b><dd>the logical network served by a single Kerberos database and a set of
+          <br><dt><b>realm</b>
+          <dd>the logical network served by a single Kerberos database and a set of
 Key Distribution Centers.  By convention, realm names are generally all
 uppercase letters, to differentiate the realm from the internet domain. 
 </dl>
 
-     <p class="noindent">The typical format of a typical Kerberos principal is
+     <p>The typical format of a typical Kerberos principal is
 primary/instance@REALM.
 
-     <br><dt><b>service</b><dd>any program or computer you access over a network.  Examples of services
-include &ldquo;host&rdquo; (a host, <i>e.g.</i>, when you use <code>telnet</code> and
-<code>rsh</code>), &ldquo;ftp&rdquo; (FTP), &ldquo;krbtgt&rdquo; (authentication;
-cf. <i>ticket-granting ticket</i>), and &ldquo;pop&rdquo; (email).
+     <br><dt><b>service</b>
+     <dd>any program or computer you access over a network.  Examples of services
+include "host" (a host, <i>e.g.</i>, when you use <code>telnet</code> and
+<code>rsh</code>), "ftp" (FTP), "krbtgt" (authentication;
+cf. <i>ticket-granting ticket</i>), and "pop" (email).
 
-     <br><dt><b>ticket</b><dd>a temporary set of electronic credentials that verify the identity of a
+     <br><dt><b>ticket</b>
+     <dd>a temporary set of electronic credentials that verify the identity of a
 client for a particular service.
 
-     <br><dt><b>TGT</b><dd>Ticket-Granting Ticket.  A special Kerberos ticket that permits the
+     <br><dt><b>TGT</b>
+     <dd>Ticket-Granting Ticket.  A special Kerberos ticket that permits the
 client to obtain additional Kerberos tickets within the same Kerberos
 realm. 
 </dl>
+
 
 <div class="contents">
 <h2>Table of Contents</h2>
 <ul>
 <li><a name="toc_Copyright" href="#Copyright">Copyright</a>
-<li><a name="toc_Introduction" href="#Introduction">1 Introduction</a>
+<li><a name="toc_Introduction" href="#Introduction">Introduction</a>
 <ul>
-<li><a href="#What-is-a-Ticket_003f">1.1 What is a Ticket?</a>
-<li><a href="#What-is-a-Kerberos-Principal_003f">1.2 What is a Kerberos Principal?</a>
+<li><a href="#What%20is%20a%20Ticket%3f">What is a Ticket?</a>
+<li><a href="#What%20is%20a%20Kerberos%20Principal%3f">What is a Kerberos Principal?</a>
 </li></ul>
-<li><a name="toc_Kerberos-V5-Tutorial" href="#Kerberos-V5-Tutorial">2 Kerberos V5 Tutorial</a>
+<li><a name="toc_Kerberos%20V5%20Tutorial" href="#Kerberos%20V5%20Tutorial">Kerberos V5 Tutorial</a>
 <ul>
-<li><a href="#Setting-Up-to-Use-Kerberos-V5">2.1 Setting Up to Use Kerberos V5</a>
-<li><a href="#Ticket-Management">2.2 Ticket Management</a>
+<li><a href="#Setting%20Up%20to%20Use%20Kerberos%20V5">Setting Up to Use Kerberos V5</a>
+<li><a href="#Ticket%20Management">Ticket Management</a>
 <ul>
-<li><a href="#Kerberos-Ticket-Properties">2.2.1 Kerberos Ticket Properties</a>
-<li><a href="#Obtaining-Tickets-with-kinit">2.2.2 Obtaining Tickets with kinit</a>
-<li><a href="#Viewing-Your-Tickets-with-klist">2.2.3 Viewing Your Tickets with klist</a>
-<li><a href="#Destroying-Your-Tickets-with-kdestroy">2.2.4 Destroying Your Tickets with kdestroy</a>
+<li><a href="#Kerberos%20Ticket%20Properties">Kerberos Ticket Properties</a>
+<li><a href="#Obtaining%20Tickets%20with%20kinit">Obtaining Tickets with kinit</a>
+<li><a href="#Viewing%20Your%20Tickets%20with%20klist">Viewing Your Tickets with klist</a>
+<li><a href="#Destroying%20Your%20Tickets%20with%20kdestroy">Destroying Your Tickets with kdestroy</a>
 </li></ul>
-<li><a href="#Password-Management">2.3 Password Management</a>
+<li><a href="#Password%20Management">Password Management</a>
 <ul>
-<li><a href="#Changing-Your-Password">2.3.1 Changing Your Password</a>
-<li><a href="#Password-Advice">2.3.2 Password Advice</a>
-<li><a href="#Granting-Access-to-Your-Account">2.3.3 Granting Access to Your Account</a>
+<li><a href="#Changing%20Your%20Password">Changing Your Password</a>
+<li><a href="#Password%20Advice">Password Advice</a>
+<li><a href="#Granting%20Access%20to%20Your%20Account">Granting Access to Your Account</a>
 </li></ul>
-<li><a href="#Kerberos-V5-Applications">2.4 Kerberos V5 Applications</a>
+<li><a href="#Kerberos%20V5%20Applications">Kerberos V5 Applications</a>
 <ul>
-<li><a href="#Overview-of-Additional-Features">2.4.1 Overview of Additional Features</a>
-<li><a href="#telnet">2.4.2 telnet</a>
-<li><a href="#rlogin">2.4.3 rlogin</a>
-<li><a href="#FTP">2.4.4 FTP</a>
-<li><a href="#rsh">2.4.5 rsh</a>
-<li><a href="#rcp">2.4.6 rcp</a>
-<li><a href="#ksu">2.4.7 ksu</a>
+<li><a href="#Overview%20of%20Additional%20Features">Overview of Additional Features</a>
+<li><a href="#telnet">telnet</a>
+<li><a href="#rlogin">rlogin</a>
+<li><a href="#FTP">FTP</a>
+<li><a href="#rsh">rsh</a>
+<li><a href="#rcp">rcp</a>
+<li><a href="#ksu">ksu</a>
 </li></ul>
 </li></ul>
-<li><a name="toc_Kerberos-V5-Reference" href="#Kerberos-V5-Reference">3 Kerberos V5 Reference</a>
+<li><a name="toc_Kerberos%20V5%20Reference" href="#Kerberos%20V5%20Reference">Kerberos V5 Reference</a>
 <ul>
-<li><a href="#kinit-Reference">3.1 kinit Reference</a>
-<li><a href="#klist-Reference">3.2 klist Reference</a>
-<li><a href="#ksu-Reference">3.3 ksu Reference</a>
-<li><a href="#kdestroy-Reference">3.4 kdestroy Reference</a>
-<li><a href="#kpasswd-Reference">3.5 kpasswd Reference</a>
-<li><a href="#telnet-Reference">3.6 telnet Reference</a>
-<li><a href="#FTP-Reference">3.7 FTP Reference</a>
-<li><a href="#rlogin-Reference">3.8 rlogin Reference</a>
-<li><a href="#rsh-Reference">3.9 rsh Reference</a>
-<li><a href="#rcp-Reference">3.10 rcp Reference</a>
+<li><a href="#kinit%20Reference">kinit Reference</a>
+<li><a href="#klist%20Reference">klist Reference</a>
+<li><a href="#ksu%20Reference">ksu Reference</a>
+<li><a href="#kdestroy%20Reference">kdestroy Reference</a>
+<li><a href="#kpasswd%20Reference">kpasswd Reference</a>
+<li><a href="#telnet%20Reference">telnet Reference</a>
+<li><a href="#FTP%20Reference">FTP Reference</a>
+<li><a href="#rlogin%20Reference">rlogin Reference</a>
+<li><a href="#rsh%20Reference">rsh Reference</a>
+<li><a href="#rcp%20Reference">rcp Reference</a>
 </li></ul>
-<li><a name="toc_Kerberos-Glossary" href="#Kerberos-Glossary">Appendix A Kerberos Glossary</a>
+<li><a name="toc_Kerberos%20Glossary" href="#Kerberos%20Glossary">Kerberos Glossary</a>
 </li></ul>
 </div>
 
 <div class="footnote">
 <hr>
-<a name="texinfo-footnotes-in-document"></a><h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> Note:  the realm
+<h4>Footnotes</h4>
+<ol type="1">
+<li><a name="fn-1"></a>
+<p>Note:  the realm
 EXAMPLE.COM must be listed in your computer's Kerberos
 configuration file, <code>/etc/krb5.conf</code>.</p>
 
-<p class="footnote"><small>[<a name="fn-2" href="#fnd-2">2</a>]</small> The MANPATH variable may be specified in a different
+<li><a name="fn-2"></a>
+<p>The MANPATH variable may be specified in a different
 initialization file, depending on your operating system.  Some of the
 files in which you might specify environment variables include
 <code>.login</code>, <code>.profile</code>, or <code>.cshrc</code>.</p>
 
-<p><hr></div>
+</ol><hr></div>
 
 </body></html>
 

@@ -252,7 +252,7 @@ static struct gss_config spnego_mechanism =
  	spnego_gss_inquire_sec_context_by_oid, /* gss_inquire_sec_context_by_oid */
  	spnego_gss_inquire_cred_by_oid,	/* gss_inquire_cred_by_oid */
  	spnego_gss_set_sec_context_option, /* gss_set_sec_context_option */
- 	spnego_gssspi_set_cred_option,	/* gssspi_set_cred_option */
+	spnego_gss_set_cred_option,	/* gssspi_set_cred_option */
  	NULL,				/* gssspi_mech_invoke */
 	spnego_gss_wrap_aead,
 	spnego_gss_unwrap_aead,
@@ -1806,6 +1806,13 @@ cleanup:
 		free(((gss_union_ctx_id_t)sc->ctx_handle)->mech_type);
 		free(sc->ctx_handle);
 		release_spnego_ctx(&sc);
+	} else if (ret != GSS_S_CONTINUE_NEEDED) {
+		if (sc != NULL) {
+			gss_delete_sec_context(&tmpmin, &sc->ctx_handle,
+					       GSS_C_NO_BUFFER);
+			release_spnego_ctx(&sc);
+		}
+		*context_handle = GSS_C_NO_CONTEXT;
 	}
 	gss_release_buffer(&tmpmin, &mechtok_out);
 	if (mechtok_in != GSS_C_NO_BUFFER) {
@@ -2283,6 +2290,21 @@ spnego_gss_inquire_sec_context_by_oid(
 			    context_handle,
 			    desired_object,
 			    data_set);
+	return (ret);
+}
+
+OM_uint32
+spnego_gss_set_cred_option(
+		OM_uint32 *minor_status,
+		gss_cred_id_t cred_handle,
+		const gss_OID desired_object,
+		const gss_buffer_t value)
+{
+	OM_uint32 ret;
+	ret = gssspi_set_cred_option(minor_status,
+				     cred_handle,
+				     desired_object,
+				     value);
 	return (ret);
 }
 

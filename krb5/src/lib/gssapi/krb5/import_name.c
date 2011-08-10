@@ -22,7 +22,7 @@
  */
 
 /*
- * $Id: import_name.c 20876 2008-10-15 21:58:43Z tlyu $
+ * $Id: import_name.c 23636 2010-01-12 02:50:15Z tlyu $
  */
 
 #include "gssapiP_krb5.h"
@@ -206,7 +206,7 @@ krb5_gss_import_name(minor_status, input_name_buffer,
                 has_ad++;
                 break;
             default:
-                goto fail_name;
+                 goto fail_name;
             }
 
             BOUNDS_CHECK(cp, end, 2);

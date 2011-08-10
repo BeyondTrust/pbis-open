@@ -609,8 +609,10 @@ module_callback (void *cbdata, int socktype, struct sockaddr *sa)
     }
 #ifdef KRB5_USE_INET6
     if (sa->sa_family == AF_INET6) {
+#ifdef KRB5_USE_INET6
 	x->u.sin6 = *(struct sockaddr_in6 *)sa;
 	x->ai.ai_addrlen = sizeof(struct sockaddr_in6);
+#endif /* KRB5_USE_INET6 */
     }
 #endif
     if (add_addrinfo_to_list (d->lp, &x->ai, free, x) != 0) {

@@ -278,6 +278,7 @@ kg_seal_iov(OM_uint32 *minor_status,
 {
     krb5_gss_ctx_id_rec *ctx;
     krb5_error_code code;
+    krb5_timestamp now;
     krb5_context context;
 
     if (qop_req != 0) {
@@ -296,12 +297,19 @@ kg_seal_iov(OM_uint32 *minor_status,
         return GSS_S_NO_CONTEXT;
     }
 
+    context = ctx->k5_context;
+    code = krb5_timeofday(context, &now);
+    if (code != 0) {
+        *minor_status = code;
+        save_error_info(*minor_status, context);
+        return GSS_S_FAILURE;
+    }
+
     if (conf_req_flag && kg_integ_only_iov(iov, iov_count)) {
         /* may be more sensible to return an error here */
         conf_req_flag = FALSE;
     }
 
-    context = ctx->k5_context;
     switch (ctx->proto) {
     case 0:
         code = make_seal_token_v1_iov(context, ctx, conf_req_flag,
@@ -324,7 +332,7 @@ kg_seal_iov(OM_uint32 *minor_status,
 
     *minor_status = 0;
 
-    return GSS_S_COMPLETE;
+    return (ctx->krb_times.endtime < now) ? GSS_S_CONTEXT_EXPIRED : GSS_S_COMPLETE;
 }
 
 #define INIT_IOV_DATA(_iov)     do { (_iov)->buffer.value = NULL; \

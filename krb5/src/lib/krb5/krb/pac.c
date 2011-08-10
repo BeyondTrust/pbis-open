@@ -620,22 +620,19 @@ k5_pac_verify_server_checksum(krb5_context context,
     memcpy(pac_data.data, pac->data.data, pac->data.length);
 
     /* Zero out both checksum buffers */
-    ret = k5_pac_zero_signature(context, pac,
-				PAC_SERVER_CHECKSUM, &pac_data);
+    ret = k5_pac_zero_signature(context, pac, PAC_SERVER_CHECKSUM, &pac_data);
     if (ret != 0) {
 	free(pac_data.data);
 	return ret;
     }
 
-    ret = k5_pac_zero_signature(context, pac,
-				PAC_PRIVSVR_CHECKSUM, &pac_data);
+    ret = k5_pac_zero_signature(context, pac, PAC_PRIVSVR_CHECKSUM, &pac_data);
     if (ret != 0) {
 	free(pac_data.data);
 	return ret;
     }
 
-    ret = krb5_c_verify_checksum(context, server,
-				 KRB5_KEYUSAGE_APP_DATA_CKSUM,
+    ret = krb5_c_verify_checksum(context, server, KRB5_KEYUSAGE_APP_DATA_CKSUM,
 				 &pac_data, &checksum, &valid);
 
     free(pac_data.data);

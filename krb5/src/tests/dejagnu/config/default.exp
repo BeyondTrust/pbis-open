@@ -1272,7 +1272,7 @@ proc setup_kerberos_db { standalone } {
 	}
 	#exec xterm
 	verbose "starting $test"
-	spawn $KDB5_UTIL -r $REALMNAME create
+	spawn $KDB5_UTIL -r $REALMNAME create -W
 	expect_after $def_exp_after
 
 	expect "Enter KDC database master key:"
@@ -1823,7 +1823,7 @@ proc start_kerberos_daemons { standalone } {
     # removed when this is fixed
     envstack_push
     setup_kerberos_env kdc
-    spawn $BINSH -c "exec $KADMIND -r $REALMNAME -nofork 2>>$kadmind_lfile"
+    spawn $BINSH -c "exec $KADMIND -r $REALMNAME -W -nofork 2>>$kadmind_lfile"
     envstack_pop
     set kadmind_pid [exp_pid]
     set kadmind_spawn_id $spawn_id
@@ -2508,7 +2508,7 @@ proc setup_root_shell { testname } {
 	    set got_refused 1
 	    exp_continue
 	}
-	-re "word:|erberos rlogin failed|ection refused|ection reset by peer|not authorized|Ticket expired" {
+	-re "word:|erberos rlogin failed|ection refused|ection reset by peer|not authorized|Ticket expired|authenticity of" {
 	    note "$testname test requires ability to rlogin as root"
 	    unsupported "$testname"
 	    set timeout $old_timeout

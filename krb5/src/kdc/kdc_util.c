@@ -940,6 +940,16 @@ validate_as_request(register krb5_kdc_req *request, krb5_db_entry client,
 	return KDC_ERR_BADOPTION;
     }
 
+    /* The client must not be expired */
+    if (client.expiration && client.expiration < kdc_time) {
+	*status = "CLIENT EXPIRED";
+#ifdef KRBCONF_VAGUE_ERRORS
+	return(KRB_ERR_GENERIC);
+#else
+	return(KDC_ERR_NAME_EXP);
+#endif
+    }
+
     /* The client's password must not be expired, unless the server is
       a KRB5_KDC_PWCHANGE_SERVICE. */
     if (client.pw_expiration && client.pw_expiration < kdc_time &&
@@ -949,16 +959,6 @@ validate_as_request(register krb5_kdc_req *request, krb5_db_entry client,
 	return(KRB_ERR_GENERIC);
 #else
 	return(KDC_ERR_KEY_EXP);
-#endif
-    }
-
-    /* The client must not be expired */
-    if (client.expiration && client.expiration < kdc_time) {
-	*status = "CLIENT EXPIRED";
-#ifdef KRBCONF_VAGUE_ERRORS
-	return(KRB_ERR_GENERIC);
-#else
-	return(KDC_ERR_NAME_EXP);
 #endif
     }
 

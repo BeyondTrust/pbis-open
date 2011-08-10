@@ -12,8 +12,8 @@
 <H2>SYNOPSIS</H2><PRE>
      <B>kinit</B>
           [<B>-V</B>] [<B>-l</B> <I>lifetime</I>] [<B>-s</B> <I>start</I>_<I>time</I>] [<B>-r</B> <I>renewable</I>_<I>life</I>]
-          [<B>-p</B> | <B>-P</B>] [<B>-f</B> | <B>-F</B>] [<B>-a</B>] [<B>-A</B>] [<B>-v</B>] [<B>-R</B>] [<B>-k</B> [<B>-t</B>
-          <I>keytab</I>_<I>file</I>]] [<B>-c</B> <I>cache</I>_<I>name</I>] [<B>-S</B> <I>service</I>_<I>name</I>][<B>-T</B>
+          [<B>-p</B> | <B>-P</B>] [<B>-f</B> | <B>-F</B>] [<B>-a</B>] [<B>-A</B>] [<B>-C</B>] [<B>-E</B>] [<B>-v</B>] [<B>-R</B>] [<B>-k</B>
+          [<B>-t</B> <I>keytab</I>_<I>file</I>]] [<B>-c</B> <I>cache</I>_<I>name</I>] [<B>-S</B> <I>service</I>_<I>name</I>][<B>-T</B>
           <I>armor</I>_<I>ccache</I>] [<B>-X</B> <I>attribute</I>[=<I>value</I>]] [<I>principal</I>]
 
 
@@ -68,6 +68,10 @@
 
      -<B>A</B>   request address-less tickets.
 
+     -<B>C</B>   requests canonicalization of the principal name.
+
+     -<B>E</B>   treats the principal name as an enterprise name.
+
      -<B>v</B>   requests that the ticket granting ticket in  the  cache
           (with  the  <I>invalid</I>  flag set) be passed to the kdc for
           validation.  If the ticket is within its requested time
@@ -109,9 +113,9 @@
           specify a pre-authentication attribute and value to  be
           passed  to  pre-authentication plugins.  The acceptable
           <I>attribute</I> and <I>value</I> values vary from pre-authentication
-          plugin  to plugin.  This option may be specified multi-
-          ple times to specify multiple attributes.  If no  <I>value</I>
-          is specified, it is assumed to be "yes".
+          plugin   to  plugin.   This  option  may  be  specified
+          multiple times to specify multiple attributes.   If  no
+          <I>value</I> is specified, it is assumed to be "yes".
 
           The following attributes are recognized by the OpenSSL pkinit
           pre-authentication mechanism:
@@ -145,10 +149,6 @@
 </PRE>
 <H2>SEE ALSO</H2><PRE>
      <B>klist(1)</B>, <B>kdestroy(1)</B>, <B>kerberos(1)</B>
-
-
-
-
 
 
 

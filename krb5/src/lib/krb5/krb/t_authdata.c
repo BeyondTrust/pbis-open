@@ -112,5 +112,6 @@ int main()
     krb5_free_authdata(context, kdci);
     krb5_free_authdata(context, results);
     krb5_free_authdata(context, container_out);
+    krb5_free_context(context);
     return 0;
 }
