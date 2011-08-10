@@ -602,6 +602,7 @@ PlugInShell_ProcessRequest(void *inData)
 {
     long macError = eDSNoErr;
     bool isAcquired = false;
+    bool isPeriodicTaskMutexAcquired = false;
     sHeader * pMsgHdr = (sHeader *)inData;
     unsigned long msgType = pMsgHdr ? pMsgHdr->fType : 0;
 
@@ -631,14 +632,43 @@ PlugInShell_ProcessRequest(void *inData)
     // We also do not handle anything while not "startup complete".
     //
     if (GlobalState.IsStartupComplete == false && 
-        msgType != kOpenDirNode &&
         msgType != kDoPlugInCustomCall &&
         msgType != kServerRunLoop &&
         msgType != kKerberosMutex)
     {
-       macError = ePlugInNotActive;
-       LOG("Startup of dependent services not complete, therefore network accounts are offline");
-       GOTO_CLEANUP();
+        pthread_mutex_lock(&GlobalState.PeriodicTaskMutex);
+        isPeriodicTaskMutexAcquired = true;
+
+        if (GlobalState.IsStartupComplete == false)
+        {
+            BOOLEAN bIsStarted;
+
+            LOG("Re-verify that LSASS service is operational");
+            GetLsaStatus(&bIsStarted);
+            if (bIsStarted)
+            {
+                LOG("LSASS service is now operational");
+                GlobalState.IsStartupComplete = true;
+            }
+            else
+            {
+                if (msgType == kOpenDirNode)
+                {
+                    /*
+                     * Apple says kOpenDirNode should return
+                     * eDSOpenNodeFailed if we're offline.
+                     */
+                    macError = eDSOpenNodeFailed;
+                }
+                else
+                {
+                    macError = ePlugInNotActive;
+                }
+
+                LOG("Startup of dependent services not complete, therefore network accounts are offline");
+                GOTO_CLEANUP();
+            }
+        }
     }
 
     // ISSUE-2007/05/30-dalmeida -- We should use r/w locks instead so that
@@ -802,6 +832,11 @@ PlugInShell_ProcessRequest(void *inData)
     }
 
 cleanup:
+
+    if (isPeriodicTaskMutexAcquired)
+    {
+        pthread_mutex_unlock(&GlobalState.PeriodicTaskMutex);
+    }
 
     if (isAcquired)
     {
@@ -1256,25 +1291,18 @@ static long Activate(void)
     long macError = eDSNoErr;
     tDataListPtr nodeNameList = NULL;
     BOOLEAN bIsStarted = FALSE;
-    int i = 0;
     
     LOG_ENTER("");
 
     LOG("Verify that LSASS service is operational");
     GlobalState.IsStartupComplete = false;
 
-    for (i = 0; i < 24; i++)
+    // Verify that startup has completed successfully for lsass service.
+    GetLsaStatus(&bIsStarted);
+    if (bIsStarted)
     {
-        // Verify that startup has completed successfully for lsass service.
-        GetLsaStatus(&bIsStarted);
-        if (bIsStarted)
-        {
-            LOG("LSASS service is operational");
-            GlobalState.IsStartupComplete = true;
-            break;
-        }
-
-        sleep(5);
+        LOG("LSASS service is operational");
+        GlobalState.IsStartupComplete = true;
     }
 
     if ( !GlobalState.DsRoot )
