@@ -40,7 +40,7 @@ option()
             default_samba_interop="no"
             ;;
         linux-*)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt fuse libedit libtdb opensoap"
+            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt fuse libedit libtdb opensoap libxml2"
             ;;
         darwin-*)
             default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2 libedit libtdb opensoap"
