@@ -114,9 +114,9 @@ OM_uint32 gssint_get_mech_type_oid(gss_OID OID, gss_buffer_t token);
  *
  * This contants all of the functions defined in gssapi.h except for
  * gss_release_buffer() and gss_release_oid_set(), which I am
- * assuming, for now, to be equal across mechanisms.  
+ * assuming, for now, to be equal across mechanisms.
  */
- 
+
 typedef struct gss_config {
     gss_OID_desc    mech_type;
     void *	    context;
@@ -573,6 +573,22 @@ typedef struct gss_config {
 	    gss_any_t *			/* input */
 	/* */);
 
+        OM_uint32       (*gss_pseudo_random)
+        (
+            OM_uint32 *,                /* minor_status */
+            gss_ctx_id_t,               /* context */
+            int,                        /* prf_key */
+            const gss_buffer_t,         /* prf_in */
+            ssize_t,                    /* desired_output_len */
+            gss_buffer_t                /* prf_out */
+        /* */);
+
+	OM_uint32	(*gss_set_neg_mechs)
+	(
+	    OM_uint32 *,		/* minor_status */
+	    gss_cred_id_t,		/* cred_handle */
+	    const gss_OID_set		/* mech_set */
+	/* */);
 } *gss_mechanism;
 
 /* This structure MUST NOT be used by any code outside libgss */

@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 1993 by OpenVision Technologies, Inc.
  *
@@ -187,7 +187,7 @@ gss_krb5int_inq_session_key(
     gss_buffer_set_t *data_set)
 {
     krb5_gss_ctx_id_rec *ctx;
-    krb5_keyblock *key;
+    krb5_key key;
     gss_buffer_desc keyvalue, keyinfo;
     OM_uint32 major_status, minor;
     unsigned char oid_buf[GSS_KRB5_SESSION_KEY_ENCTYPE_OID_LENGTH + 6];
@@ -196,8 +196,8 @@ gss_krb5int_inq_session_key(
     ctx = (krb5_gss_ctx_id_rec *) context_handle;
     key = ctx->have_acceptor_subkey ? ctx->acceptor_subkey : ctx->subkey;
 
-    keyvalue.value = key->contents;
-    keyvalue.length = key->length;
+    keyvalue.value = key->keyblock.contents;
+    keyvalue.length = key->keyblock.length;
 
     major_status = generic_gss_add_buffer_set_member(minor_status, &keyvalue, data_set);
     if (GSS_ERROR(major_status))
@@ -209,7 +209,7 @@ gss_krb5int_inq_session_key(
     major_status = generic_gss_oid_compose(minor_status,
                                            GSS_KRB5_SESSION_KEY_ENCTYPE_OID,
                                            GSS_KRB5_SESSION_KEY_ENCTYPE_OID_LENGTH,
-                                           key->enctype,
+                                           key->keyblock.enctype,
                                            &oid);
     if (GSS_ERROR(major_status))
         goto cleanup;
@@ -235,10 +235,10 @@ cleanup:
 
 OM_uint32
 gss_krb5int_extract_authz_data_from_sec_context(
-   OM_uint32 *minor_status,
-   const gss_ctx_id_t context_handle,
-   const gss_OID desired_object,
-   gss_buffer_set_t *data_set)
+    OM_uint32 *minor_status,
+    const gss_ctx_id_t context_handle,
+    const gss_OID desired_object,
+    gss_buffer_set_t *data_set)
 {
     OM_uint32 major_status;
     krb5_gss_ctx_id_rec *ctx;
@@ -300,4 +300,3 @@ gss_krb5int_extract_authtime_from_sec_context(OM_uint32 *minor_status,
 
     return generic_gss_add_buffer_set_member(minor_status, &rep, data_set);
 }
-

@@ -53,7 +53,17 @@ This relation lists the ports which the Kerberos server should listen
 on, by default.  This list is a comma separated list of integers.  If
 this relation is not specified, the compiled-in default is usually
 port 88 and port 750.
+.IP kdc_tcp_ports
+This relation lists the ports on which the Kerberos server should
+listen for TCP connections by default.  This list is a comma separated
+list of integers.
+If this relation is not specified, the compiled-in default is not to
+listen for TCP connections at all.
 
+If you wish to change this (which we do not recommend, because the
+current implementation has little protection against denial-of-service
+attacks), the standard port number assigned for Kerberos TCP traffic
+is port 88.
 .IP v4_mode
 This 
 .B string
@@ -201,6 +211,16 @@ as specified in the
 .I [kdcdefaults] 
 section is used.
 
+.IP kdc_tcp_ports
+This
+.B string
+specifies the list of ports that the KDC is to listen to
+for TCP requests for this realm.  By default, the value of
+.I kdc_tcp_ports
+as specified in the
+.I [kdcdefaults]
+section is used.
+
 .IP master_key_name
 This
 .B string
@@ -245,9 +265,6 @@ master.  Default is "2m" (that is, two minutes).
 .IP supported_enctypes
 list of key:salt strings that specifies the default key/salt
 combinations of principals for this realm
-
-.IP kdc_supported_enctypes
-specifies the permitted key-salt combinations of principals for this realm
 
 .IP reject_bad_transit
 this

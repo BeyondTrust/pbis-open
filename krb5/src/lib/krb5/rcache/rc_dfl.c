@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * lib/krb5/rcache/rc_dfl.c
  *
@@ -656,10 +656,11 @@ krb5_rc_io_store(krb5_context context, struct dfl_data *t,
                  krb5_donot_replay *rep)
 {
     size_t clientlen, serverlen;
+    ssize_t buflen;
     unsigned int len;
     krb5_error_code ret;
     struct k5buf buf, extbuf;
-    char *ptr, *extstr;
+    char *bufptr, *extstr;
 
     clientlen = strlen(rep->client);
     serverlen = strlen(rep->server);
@@ -706,11 +707,12 @@ krb5_rc_io_store(krb5_context context, struct dfl_data *t,
     krb5int_buf_add_len(&buf, (char *) &rep->cusec, sizeof(rep->cusec));
     krb5int_buf_add_len(&buf, (char *) &rep->ctime, sizeof(rep->ctime));
 
-    ptr = krb5int_buf_data(&buf);
-    if (ptr == NULL)
+    bufptr = krb5int_buf_data(&buf);
+    buflen = krb5int_buf_len(&buf);
+    if (bufptr == NULL || buflen < 0)
         return KRB5_RC_MALLOC;
 
-    ret = krb5_rc_io_write(context, &t->d, ptr, krb5int_buf_len(&buf));
+    ret = krb5_rc_io_write(context, &t->d, bufptr, buflen);
     krb5int_free_buf(&buf);
     return ret;
 }
@@ -826,14 +828,9 @@ krb5_rc_dfl_expunge_locked(krb5_context context, krb5_rcache id)
         t = (struct dfl_data *)id->data; /* point to recovered cache */
     }
 
-    tmp = (krb5_rcache) malloc(sizeof(*tmp));
-    if (!tmp)
-        return ENOMEM;
     retval = krb5_rc_resolve_type(context, &tmp, "dfl");
-    if (retval) {
-        free(tmp);
+    if (retval)
         return retval;
-    }
     retval = krb5_rc_resolve(context, tmp, 0);
     if (retval)
         goto cleanup;

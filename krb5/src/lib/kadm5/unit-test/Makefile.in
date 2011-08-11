@@ -1,8 +1,6 @@
-thisconfigdir=../../..
-myfulldir=lib/kadm5/unit-test
 mydir=lib/kadm5/unit-test
 BUILDTOP=$(REL)..$(S)..$(S)..
-DEFINES = -DUSE_KADM5_API_VERSION=1
+DEFINES =
 PROG_LIBPATH=-L$(TOPLIBD)
 PROG_RPATH=$(KRB5_LIBDIR)
 KDB_DEP_LIB=$(DL_LIB) $(THREAD_LINKOPTS)
@@ -10,10 +8,6 @@ DEFS=
 
 SRCS= init-test.c destroy-test.c handle-test.c iter-test.c setkey-test.c \
 	randkey-test.c lock-test.c
-
-all:: init-test destroy-test client-handle-test client-iter-test
-all:: randkey-test server-handle-test lock-test server-iter-test 
-all:: server-setkey-test client-setkey-test
 
 #
 # The client-side test programs.
@@ -27,9 +21,12 @@ destroy-test: destroy-test.o $(KADMCLNT_DEPLIBS) $(KRB5_BASE_DEPLIBS)
 	$(CC_LINK) -o destroy-test destroy-test.o \
 		$(KADMCLNT_LIBS) $(KRB5_BASE_LIBS)
 
-client-handle-test: handle-test.o $(KADMCLNT_DEPLIBS) $(KRB5_BASE_DEPLIBS)
-	$(CC_LINK) -o client-handle-test handle-test.o \
+client-handle-test: client-handle-test.o $(KADMCLNT_DEPLIBS) $(KRB5_BASE_DEPLIBS)
+	$(CC_LINK) -o client-handle-test client-handle-test.o \
 		$(KADMCLNT_LIBS) $(KRB5_BASE_LIBS)
+
+client-handle-test.o: handle-test.c
+	$(CC) $(ALL_CFLAGS) -DCLIENT_TEST -o client-handle-test.o -c $(srcdir)/handle-test.c
 
 client-iter-test: iter-test.o $(KADMLCNT_DEPLIBS) $(KRB5_BASE_DEPLIBS)
 	$(CC_LINK) -o client-iter-test iter-test.o \
@@ -58,9 +55,6 @@ lock-test: lock-test.o $(KADMSRV_DEPLIBS) $(KRB5_BASE_DEPLIBS)
 server-iter-test: iter-test.o $(KADMSRV_DEPLIBS) $(KRB5_BASE_DEPLIBS)
 	$(CC_LINK) -o server-iter-test iter-test.o \
 		$(KADMSRV_LIBS) $(KDB_DEP_LIB) $(KRB5_BASE_LIBS)
-
-setkey-test.o: $(SRCTOP)/lib/kadm5/unit-test/setkey-test.c
-	$(CC) $(ALL_CFLAGS) -UUSE_KADM5_API_VERSION -DUSE_KADM5_API_VERSION=2 -c $(SRCTOP)/lib/kadm5/unit-test/setkey-test.c
 
 server-setkey-test: setkey-test.o $(KADMSRV_DEPLIBS) $(KRB5_BASE_DEPLIBS)
 	$(CC_LINK) -o server-setkey-test setkey-test.o \
@@ -135,7 +129,7 @@ unit-test-server-body: site.exp test-handle-server lock-test
 clean::
 	$(RM) init-test client_init.o init-test.o
 	$(RM) destroy-test destroy-test.o
-	$(RM) client-handle-test handle-test.o
+	$(RM) client-handle-test handle-test.o client-handle-test.o
 	$(RM) client-iter-test iter-test.o
 	$(RM) randkey-test randkey-test.o
 	$(RM) server-handle-test handle-test.o

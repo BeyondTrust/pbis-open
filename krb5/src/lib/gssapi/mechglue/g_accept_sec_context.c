@@ -2,7 +2,7 @@
 
 /*
  * Copyright 1996 by Sun Microsystems, Inc.
- * 
+ *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appears in all copies and
@@ -12,7 +12,7 @@
  * without specific, written prior permission. Sun Microsystems makes no
  * representations about the suitability of this software for any
  * purpose.  It is provided "as is" without express or implied warranty.
- * 
+ *
  * SUN MICROSYSTEMS DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
  * EVENT SHALL SUN MICROSYSTEMS BE LIABLE FOR ANY SPECIAL, INDIRECT OR
@@ -144,9 +144,9 @@ gss_cred_id_t *		d_cred;
      * underlying mechanism context handle. Otherwise, cast the
      * value of *context_handle to the union context variable.
      */
-    
+
     if(*context_handle == GSS_C_NO_CONTEXT) {
-	
+
 	if (input_token_buffer == GSS_C_NO_BUFFER)
 	    return (GSS_S_CALL_INACCESSIBLE_READ);
 
@@ -177,8 +177,8 @@ gss_cred_id_t *		d_cred;
 	union_ctx_id = (gss_union_ctx_id_t)*context_handle;
 	token_mech_type = union_ctx_id->mech_type;
     }
-    
-    /* 
+
+    /*
      * get the appropriate cred handle from the union cred struct.
      * defaults to GSS_C_NO_CREDENTIAL if there is no cred, which will
      * use the default credential.
@@ -187,22 +187,10 @@ gss_cred_id_t *		d_cred;
     input_cred_handle = gssint_get_mechanism_cred(union_cred, token_mech_type);
 
     /*
-     * If the mechanism is SPNEGO, and a SPNEGO specific cred could not be
-     * found, then pass the entire cred list through. SPNEGO will send the
-     * right creds to the correct mechanism.
-     */
-    if (input_cred_handle == NULL &&
-        token_mech_type->length == 6 &&
-        !memcmp(token_mech_type->elements, "\x2b\x06\x01\x05\x05\x02", 6))
-    {
-        input_cred_handle = (gss_cred_id_t) union_cred;
-    }
-
-    /*
      * now select the approprate underlying mechanism routine and
      * call it.
      */
-    
+
     mech = gssint_get_mechanism (token_mech_type);
     if (mech && mech->gss_accept_sec_context) {
 
@@ -221,7 +209,7 @@ gss_cred_id_t *		d_cred;
 	    /* If there's more work to do, keep going... */
 	    if (status == GSS_S_CONTINUE_NEEDED)
 		return GSS_S_CONTINUE_NEEDED;
-	    
+
 	    /* if the call failed, return with failure */
 	    if (status != GSS_S_COMPLETE) {
 		map_error(minor_status, mech);
@@ -345,23 +333,6 @@ gss_cred_id_t *		d_cred;
 		}
 	    }
 
-            if (status == GSS_S_COMPLETE && actual_mech) {
-                gss_OID temp_mech_type = union_ctx_id->mech_type;
-
-                status = generic_gss_copy_oid(minor_status, actual_mech,
-                                              &union_ctx_id->mech_type);
-                if (status != GSS_S_COMPLETE) {
-                    gssint_delete_internal_sec_context(&temp_minor_status,
-                                                       actual_mech,
-                                                       &union_ctx_id->internal_ctx_id,
-                                                       NULL);
-                    free(union_ctx_id);
-                    *context_handle = GSS_C_NO_CONTEXT;
-                }
-                free(temp_mech_type->elements);
-                free(temp_mech_type);
-            }
-
 	    if (mech_type != NULL)
 		*mech_type = actual_mech;
 	    else
@@ -373,7 +344,7 @@ gss_cred_id_t *		d_cred;
 
 	status = GSS_S_BAD_MECH;
     }
-    
+
 error_out:
     if (union_ctx_id) {
 	if (union_ctx_id->mech_type) {
@@ -381,12 +352,6 @@ error_out:
 		free(union_ctx_id->mech_type->elements);
 	    free(union_ctx_id->mech_type);
 	    *context_handle = GSS_C_NO_CONTEXT;
-	}
-	if (union_ctx_id->internal_ctx_id) {
-	    mech->gss_delete_sec_context(
-		&temp_minor_status,
-		&union_ctx_id->internal_ctx_id,
-		GSS_C_NO_BUFFER);
 	}
 	free(union_ctx_id);
     }
@@ -401,4 +366,3 @@ error_out:
     return (status);
 }
 #endif /* LEAN_CLIENT */
-

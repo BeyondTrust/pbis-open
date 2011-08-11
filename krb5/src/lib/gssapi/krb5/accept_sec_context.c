@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 2000, 2004, 2007, 2008  by the Massachusetts Institute of Technology.
  * All Rights Reserved.
@@ -257,7 +257,6 @@ rd_and_store_for_creds(context, auth_context, inbuf, out_cred)
         cred->rfc_mech = 1;
         cred->keytab = NULL; /* no keytab associated with this... */
         cred->tgt_expire = creds[0]->times.endtime; /* store the end time */
-        cred->destroy_ccache = 1;
         cred->ccache = ccache; /* the ccache containing the credential */
         ccache = NULL; /* cred takes ownership so don't destroy */
     }
@@ -293,104 +292,104 @@ static OM_uint32
 kg_accept_dce(minor_status, context_handle, verifier_cred_handle,
               input_token, input_chan_bindings, src_name, mech_type,
               output_token, ret_flags, time_rec, delegated_cred_handle)
-     OM_uint32 *minor_status;
-     gss_ctx_id_t *context_handle;
-     gss_cred_id_t verifier_cred_handle;
-     gss_buffer_t input_token;
-     gss_channel_bindings_t input_chan_bindings;
-     gss_name_t *src_name;
-     gss_OID *mech_type;
-     gss_buffer_t output_token;
-     OM_uint32 *ret_flags;
-     OM_uint32 *time_rec;
-     gss_cred_id_t *delegated_cred_handle;
+    OM_uint32 *minor_status;
+    gss_ctx_id_t *context_handle;
+    gss_cred_id_t verifier_cred_handle;
+    gss_buffer_t input_token;
+    gss_channel_bindings_t input_chan_bindings;
+    gss_name_t *src_name;
+    gss_OID *mech_type;
+    gss_buffer_t output_token;
+    OM_uint32 *ret_flags;
+    OM_uint32 *time_rec;
+    gss_cred_id_t *delegated_cred_handle;
 {
-   krb5_error_code code;
-   krb5_gss_ctx_id_rec *ctx = 0;
-   krb5_timestamp now;
-   krb5_gss_name_t name = NULL;
-   krb5_ui_4 nonce = 0;
-   krb5_data ap_rep;
-   OM_uint32 major_status = GSS_S_FAILURE;
+    krb5_error_code code;
+    krb5_gss_ctx_id_rec *ctx = 0;
+    krb5_timestamp now;
+    krb5_gss_name_t name = NULL;
+    krb5_ui_4 nonce = 0;
+    krb5_data ap_rep;
+    OM_uint32 major_status = GSS_S_FAILURE;
 
-   output_token->length = 0;
-   output_token->value = NULL;
+    output_token->length = 0;
+    output_token->value = NULL;
 
-   if (mech_type)
-      *mech_type = GSS_C_NULL_OID;
-   /* return a bogus cred handle */
-   if (delegated_cred_handle)
-      *delegated_cred_handle = GSS_C_NO_CREDENTIAL;
+    if (mech_type)
+        *mech_type = GSS_C_NULL_OID;
+    /* return a bogus cred handle */
+    if (delegated_cred_handle)
+        *delegated_cred_handle = GSS_C_NO_CREDENTIAL;
 
-   ctx = (krb5_gss_ctx_id_rec *)*context_handle;
+    ctx = (krb5_gss_ctx_id_rec *)*context_handle;
 
-   code = krb5_timeofday(ctx->k5_context, &now);
-   if (code != 0) {
-       major_status = GSS_S_FAILURE;
-       goto fail;
-   }
+    code = krb5_timeofday(ctx->k5_context, &now);
+    if (code != 0) {
+        major_status = GSS_S_FAILURE;
+        goto fail;
+    }
 
-   if (ctx->krb_times.endtime < now) {
-       code = 0;
-       major_status = GSS_S_CREDENTIALS_EXPIRED;
-       goto fail;
-   }
+    if (ctx->krb_times.endtime < now) {
+        code = 0;
+        major_status = GSS_S_CREDENTIALS_EXPIRED;
+        goto fail;
+    }
 
-   ap_rep.data = input_token->value;
-   ap_rep.length = input_token->length;
+    ap_rep.data = input_token->value;
+    ap_rep.length = input_token->length;
 
-   code = krb5_rd_rep_dce(ctx->k5_context,
-                          ctx->auth_context,
-                          &ap_rep,
-                          &nonce);
-   if (code != 0) {
-       major_status = GSS_S_FAILURE;
-       goto fail;
-   }
+    code = krb5_rd_rep_dce(ctx->k5_context,
+                           ctx->auth_context,
+                           &ap_rep,
+                           &nonce);
+    if (code != 0) {
+        major_status = GSS_S_FAILURE;
+        goto fail;
+    }
 
-   ctx->established = 1;
+    ctx->established = 1;
 
-   if (src_name) {
-       if ((code = kg_duplicate_name(ctx->k5_context, ctx->there,
-                                     KG_INIT_NAME_INTERN, &name))) {
-           major_status = GSS_S_FAILURE;
-           goto fail;
-       }
-      *src_name = (gss_name_t) name;
-   }
+    if (src_name) {
+        if ((code = kg_duplicate_name(ctx->k5_context, ctx->there,
+                                      KG_INIT_NAME_INTERN, &name))) {
+            major_status = GSS_S_FAILURE;
+            goto fail;
+        }
+        *src_name = (gss_name_t) name;
+    }
 
-   if (mech_type)
-      *mech_type = ctx->mech_used;
+    if (mech_type)
+        *mech_type = ctx->mech_used;
 
-   if (time_rec)
-      *time_rec = ctx->krb_times.endtime - now;
+    if (time_rec)
+        *time_rec = ctx->krb_times.endtime - now;
 
-   if (ret_flags)
-      *ret_flags = ctx->gss_flags;
+    if (ret_flags)
+        *ret_flags = ctx->gss_flags;
 
-   /* XXX no support for delegated credentials yet */
+    /* XXX no support for delegated credentials yet */
 
-   *minor_status = 0;
+    *minor_status = 0;
 
-   return GSS_S_COMPLETE;
+    return GSS_S_COMPLETE;
 
- fail:
-   /* real failure code follows */
+fail:
+    /* real failure code follows */
 
-   (void) krb5_gss_delete_sec_context(minor_status, (gss_ctx_id_t *) &ctx,
-                                      NULL);
-   *context_handle = GSS_C_NO_CONTEXT;
-   *minor_status = code;
+    (void) krb5_gss_delete_sec_context(minor_status, (gss_ctx_id_t *) &ctx,
+                                       NULL);
+    *context_handle = GSS_C_NO_CONTEXT;
+    *minor_status = code;
 
-   return major_status;
+    return major_status;
 }
 
 static OM_uint32
 kg_accept_krb5(minor_status, context_handle,
-              verifier_cred_handle, input_token,
-              input_chan_bindings, src_name, mech_type,
-              output_token, ret_flags, time_rec,
-              delegated_cred_handle)
+               verifier_cred_handle, input_token,
+               input_chan_bindings, src_name, mech_type,
+               output_token, ret_flags, time_rec,
+               delegated_cred_handle)
     OM_uint32 *minor_status;
     gss_ctx_id_t *context_handle;
     gss_cred_id_t verifier_cred_handle;
@@ -584,8 +583,17 @@ kg_accept_krb5(minor_status, context_handle,
         goto fail;
     }
 
+    /* Limit the encryption types negotiated (if requested). */
+    if (cred->req_enctypes) {
+        if ((code = krb5_set_default_tgs_enctypes(context,
+                                                  cred->req_enctypes))) {
+            major_status = GSS_S_FAILURE;
+            goto fail;
+        }
+    }
+
     if ((code = krb5_rd_req(context, &auth_context, &ap_req,
-                            cred->name ? cred->name->princ : NULL,
+                            cred->default_identity ? NULL : cred->name->princ,
                             cred->keytab,
                             &ap_req_options,
                             &ticket))) {
@@ -615,46 +623,37 @@ kg_accept_krb5(minor_status, context_handle,
         goto fail;
     }
 
-   if (authdat->checksum == NULL) {
-       /* missing checksum counts as "inappropriate type" */
-       code = KRB5KRB_AP_ERR_INAPP_CKSUM;
-       major_status = GSS_S_FAILURE;
-       goto fail;
-   }
+    if (authdat->checksum->checksum_type != CKSUMTYPE_KG_CB) {
+        /* Samba does not send 0x8003 GSS-API checksums */
+        krb5_boolean valid;
+        krb5_key subkey;
+        krb5_data zero;
 
-   if (authdat->checksum->checksum_type != CKSUMTYPE_KG_CB) {
-      /* Samba does not send 0x8003 GSS-API checksums */
-      krb5_boolean valid;
-      krb5_keyblock *subkey;
-      krb5_data zero;
+        code = krb5_auth_con_getkey_k(context, auth_context, &subkey);
+        if (code) {
+            major_status = GSS_S_FAILURE;
+            goto fail;
+        }
 
-      code = krb5_auth_con_getkey(context, auth_context, &subkey);
-      if (code) {
-         major_status = GSS_S_FAILURE;
-         goto fail;
-      }
+        zero.length = 0;
+        zero.data = "";
 
-      zero.length = 0;
-      zero.data = "";
+        code = krb5_k_verify_checksum(context,
+                                      subkey,
+                                      KRB5_KEYUSAGE_AP_REQ_AUTH_CKSUM,
+                                      &zero,
+                                      authdat->checksum,
+                                      &valid);
+        krb5_k_free_key(context, subkey);
+        if (code || !valid) {
+            major_status = GSS_S_BAD_SIG;
+            goto fail;
+        }
 
-      code = krb5_c_verify_checksum(context,
-                                    subkey,
-                                    KRB5_KEYUSAGE_AP_REQ_AUTH_CKSUM,
-                                    &zero,
-                                    authdat->checksum,
-                                    &valid);
-      if (code || !valid) {
-          major_status = GSS_S_BAD_SIG;
-          krb5_free_keyblock(context, subkey);
-          goto fail;
-      }
-
-      gss_flags = GSS_C_MUTUAL_FLAG | GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG;
-      bigend = 0;
-      decode_req_message = 0;
-
-      krb5_free_keyblock(context, subkey);
-   } else {
+        gss_flags = GSS_C_MUTUAL_FLAG | GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG;
+        bigend = 0;
+        decode_req_message = 0;
+    } else {
         /* gss krb5 v1 */
 
         /* stash this now, for later. */
@@ -873,9 +872,9 @@ kg_accept_krb5(minor_status, context_handle,
 
     /* XXX move this into gss_name_t */
     if (        (code = krb5_merge_authdata(context,
-                                   ticket->enc_part2->authorization_data,
+                                            ticket->enc_part2->authorization_data,
                                             authdat->authorization_data,
-                                   &ctx->authdata))) {
+                                            &ctx->authdata))) {
         major_status = GSS_S_FAILURE;
         goto fail;
     }
@@ -897,8 +896,8 @@ kg_accept_krb5(minor_status, context_handle,
     authdat->client = NULL;
     krb5_auth_con_set_authdata_context(context, auth_context, NULL);
 
-    if ((code = krb5_auth_con_getrecvsubkey(context, auth_context,
-                                            &ctx->subkey))) {
+    if ((code = krb5_auth_con_getrecvsubkey_k(context, auth_context,
+                                              &ctx->subkey))) {
         major_status = GSS_S_FAILURE;
         goto fail;
     }
@@ -906,8 +905,8 @@ kg_accept_krb5(minor_status, context_handle,
     /* use the session key if the subkey isn't present */
 
     if (ctx->subkey == NULL) {
-        if ((code = krb5_auth_con_getkey(context, auth_context,
-                                         &ctx->subkey))) {
+        if ((code = krb5_auth_con_getkey_k(context, auth_context,
+                                           &ctx->subkey))) {
             major_status = GSS_S_FAILURE;
             goto fail;
         }
@@ -997,9 +996,9 @@ kg_accept_krb5(minor_status, context_handle,
         if (ctx->proto == 0 &&
             (ctx->gss_flags & GSS_C_DCE_STYLE) == 0 &&
             (ap_req_options & AP_OPTS_USE_SUBKEY)) {
-            code = (*kaccess.krb5_auth_con_get_subkey_enctype) (context,
-                                                                auth_context,
-                                                                &negotiated_etype);
+            code = (*kaccess.auth_con_get_subkey_enctype)(context,
+                                                          auth_context,
+                                                          &negotiated_etype);
             if (code != 0) {
                 major_status = GSS_S_FAILURE;
                 goto fail;
@@ -1047,8 +1046,8 @@ kg_accept_krb5(minor_status, context_handle,
         if (cfx_generate_subkey) {
             /* Get the new acceptor subkey.  With the code above, there
                should always be one if we make it to this point.  */
-            code = krb5_auth_con_getsendsubkey(context, auth_context,
-                                               &ctx->acceptor_subkey);
+            code = krb5_auth_con_getsendsubkey_k(context, auth_context,
+                                                 &ctx->acceptor_subkey);
             if (code != 0) {
                 major_status = GSS_S_FAILURE;
                 goto fail;
@@ -1137,7 +1136,7 @@ kg_accept_krb5(minor_status, context_handle,
         *src_name = (gss_name_t) name;
 
     if (delegated_cred_handle) {
-       if (!kg_save_cred_id((gss_cred_id_t) deleg_cred)) {
+        if (!kg_save_cred_id((gss_cred_id_t) deleg_cred)) {
             major_status = GSS_S_FAILURE;
             code = G_VALIDATE_FAILED;
             goto fail;
@@ -1305,8 +1304,8 @@ krb5_gss_accept_sec_context(minor_status, context_handle,
     }
 
     return kg_accept_krb5(minor_status, context_handle,
-                         verifier_cred_handle, input_token,
-                         input_chan_bindings, src_name, mech_type,
-                         output_token, ret_flags, time_rec,
-                         delegated_cred_handle);
+                          verifier_cred_handle, input_token,
+                          input_chan_bindings, src_name, mech_type,
+                          output_token, ret_flags, time_rec,
+                          delegated_cred_handle);
 }

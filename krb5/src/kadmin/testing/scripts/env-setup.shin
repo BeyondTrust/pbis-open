@@ -66,20 +66,16 @@ if test x$EXPECT = x; then
 fi
 
 COMPARE_DUMP=$TESTDIR/scripts/compare_dump.pl; export COMPARE_DUMP
-FIX_CONF_FILES=$TESTDIR/scripts/fixup-conf-files.pl
-export FIX_CONF_FILES
 INITDB=$STESTDIR/scripts/init_db; export INITDB
 MAKE_KEYTAB=$TESTDIR/scripts/make-host-keytab.pl; export MAKE_KEYTAB
 LOCAL_MAKE_KEYTAB=$TESTDIR/scripts/make-host-keytab.pl
 export LOCAL_MAKE_KEYTAB
-RESTORE_FILES=$TESTDIR/scripts/restore_files.sh; export RESTORE_FILES
-SAVE_FILES=$STESTDIR/scripts/save_files.sh; export SAVE_FILES
 SIMPLE_DUMP=$TESTDIR/scripts/simple_dump.pl; export SIMPLE_DUMP
 QUALNAME=$TESTDIR/scripts/qualname.pl; export QUALNAME
 TCLUTIL=$STESTDIR/tcl/util.t; export TCLUTIL
 BSDDB_DUMP=$TESTDIR/util/bsddb_dump; export BSDDB_DUMP
-CLNTTCL=$TESTDIR/util/ovsec_kadm_clnt_tcl; export CLNTTCL
-SRVTCL=$TESTDIR/util/ovsec_kadm_srv_tcl; export SRVTCL
+CLNTTCL=$TESTDIR/util/kadm5_clnt_tcl; export CLNTTCL
+SRVTCL=$TESTDIR/util/kadm5_srv_tcl; export SRVTCL
 
 KRB5_CONFIG=$K5ROOT/krb5.conf; export KRB5_CONFIG
 KRB5_KDC_PROFILE=$K5ROOT/kdc.conf; export KRB5_KDC_PROFILE
@@ -94,21 +90,15 @@ if [ "$TEST_PATH" != "" ]; then
 fi
 
 if [ "x$PS_ALL" = "x" ]; then
-	ps -axwwu >/dev/null 2>&1
-	ps_bsd=$?
-
-	ps -ef >/dev/null 2>&1
-	ps_sysv=$?
-
-	if [ $ps_bsd = 0 -a $ps_sysv = 1 ]; then
-		PS_ALL="ps -auxww"
-		PS_PID="ps -auxww"
-	elif [ $ps_bsd = 1 -a $ps_sysv = 0 ]; then
+	if ps auxww >/dev/null 2>&1; then
+		PS_ALL="ps auxww"
+		PS_PID="ps auxww"
+	elif ps -ef >/dev/null 2>&1; then
 		PS_ALL="ps -ef"
 		PS_PID="ps -fp"
 	else
-		PS_ALL="ps -auxww"
-		PS_PID="ps -auxww"
+		PS_ALL="ps auxww"
+		PS_PID="ps auxww"
 		echo "WARNING!  Cannot auto-detect ps type, assuming BSD."
 	fi
 

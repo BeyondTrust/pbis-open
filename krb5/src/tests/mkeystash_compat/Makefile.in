@@ -1,6 +1,4 @@
-thisconfigdir=../..
 mydir=tests/mkeystash_compat
-myfulldir=tests/mkeystash_compat
 BUILDTOP=$(REL)..$(S)..
 
 RUN_SETUP = @KRB5_RUN_ENV@ KRB5_KDC_PROFILE=kdc.conf KRB5_CONFIG=krb5.conf
@@ -27,11 +25,12 @@ kdc.conf: Makefile
 	rm -rf kdc.conf
 	@echo "[realms]" > kdc.conf
 	@echo "$(TEST_REALM) = {" >> kdc.conf
+	@echo "  master_key_type = des3-cbc-sha1" >> kdc.conf
 	@echo "  key_stash_file = `pwd`/stash_file" >> kdc.conf
 	@echo "}" >> kdc.conf
 
 krb5.conf: Makefile
-	cat $(SRCTOP)/config-files/krb5.conf > krb5.new
+	cat $(top_srcdir)/config-files/krb5.conf > krb5.new
 	echo "[dbmodules]" >> krb5.new
 	echo " db_module_dir = $(BUILDTOP)/util/fakedest$(KRB5_DB_MODULE_DIR)" >> krb5.new
 	mv krb5.new krb5.conf
@@ -48,5 +47,5 @@ mkeystash_check: kdc.conf krb5.conf bigendian
 	$(RM) $(TEST_DB)* stash_file
 
 clean::
-	$(RM) kdc.conf
+	$(RM) kdc.conf krb5.conf bigendian.$(OBJEXT) bigendian
 

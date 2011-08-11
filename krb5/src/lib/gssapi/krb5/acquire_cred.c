@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 2000, 2007, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
@@ -138,12 +138,11 @@ gss_krb5int_register_acceptor_identity(OM_uint32 *minor_status,
 */
 
 static OM_uint32
-acquire_accept_cred(context, minor_status, desired_name, output_name, cred)
-    krb5_context context;
-    OM_uint32 *minor_status;
-    krb5_gss_name_t desired_name;
-    krb5_gss_name_t *output_name;
-    krb5_gss_cred_id_rec *cred;
+acquire_accept_cred(krb5_context context,
+                    OM_uint32 *minor_status,
+                    krb5_gss_name_t desired_name,
+                    krb5_gss_name_t *output_name,
+                    krb5_gss_cred_id_rec *cred)
 {
     krb5_error_code code;
     krb5_principal princ;
@@ -219,19 +218,18 @@ acquire_accept_cred(context, minor_status, desired_name, output_name, cred)
 */
 
 static OM_uint32
-acquire_init_cred(context, minor_status, desired_name, output_name, cred)
-    krb5_context context;
-    OM_uint32 *minor_status;
-    krb5_gss_name_t desired_name;
-    krb5_gss_name_t *output_name;
-    krb5_gss_cred_id_rec *cred;
+acquire_init_cred(krb5_context context,
+                  OM_uint32 *minor_status,
+                  krb5_gss_name_t desired_name,
+                  krb5_gss_name_t *output_name,
+                  krb5_gss_cred_id_rec *cred)
 {
     krb5_error_code code;
     krb5_ccache ccache;
     krb5_principal princ, tmp_princ;
     krb5_flags flags;
     krb5_cc_cursor cur;
-    krb5_creds creds = {0};
+    krb5_creds creds;
     int got_endtime;
     int caller_provided_ccache_name = 0;
 
@@ -339,17 +337,11 @@ acquire_init_cred(context, minor_status, desired_name, output_name, cred)
     /* turn off OPENCLOSE mode while extensive frobbing is going on */
 
     flags = 0;           /* turns off OPENCLOSE mode */
-   /* Clearing KRB5_TC_OPENCLOSE causes krb5_cc_store_cred to fail, and
-      read operations still succeed if the flag is set. So the flag
-      was cleared in original source code as an optimization.
-    */
-#if 0
     if ((code = krb5_cc_set_flags(context, ccache, flags))) {
         (void)krb5_cc_close(context, ccache);
         *minor_status = code;
         return(GSS_S_CRED_UNAVAIL);
     }
-#endif
 
     /* get out the principal name and see if it matches */
 
@@ -370,7 +362,7 @@ acquire_init_cred(context, minor_status, desired_name, output_name, cred)
         princ = desired_name->princ;
     } else {
         if ((code = kg_init_name(context, princ, NULL,
-                                 KG_INIT_NAME_NO_COPY,
+                                 KG_INIT_NAME_NO_COPY | KG_INIT_NAME_INTERN,
                                  output_name))) {
             (void)krb5_free_principal(context, princ);
             (void)krb5_cc_close(context, ccache);
@@ -405,8 +397,6 @@ acquire_init_cred(context, minor_status, desired_name, output_name, cred)
         *minor_status = code;
         return(GSS_S_FAILURE);
     }
-
-    memset(&creds, 0, sizeof(creds));
     while (!(code = krb5_cc_next_cred(context, ccache, &cur, &creds))) {
         if (krb5_principal_compare(context, tmp_princ, creds.server)) {
             cred->tgt_expire = creds.times.endtime;
@@ -421,7 +411,6 @@ acquire_init_cred(context, minor_status, desired_name, output_name, cred)
             got_endtime = 1;
         }
         krb5_free_cred_contents(context, &creds);
-        memset(&creds, 0, sizeof(creds));
     }
     krb5_free_principal(context, tmp_princ);
 
@@ -476,7 +465,7 @@ krb5_gss_acquire_cred(minor_status, desired_name, time_req,
     krb5_context context;
     size_t i;
     krb5_gss_cred_id_t cred;
-    gss_OID_set ret_mechs;
+    gss_OID_set ret_mechs = NULL;
     int req_old, req_new;
     OM_uint32 ret;
     krb5_error_code code;
@@ -549,7 +538,7 @@ krb5_gss_acquire_cred(minor_status, desired_name, time_req,
     cred->name = NULL;
     cred->prerfc_mech = (req_old != 0);
     cred->rfc_mech = (req_new != 0);
-    cred->destroy_ccache = 0;
+    cred->default_identity = (desired_name == GSS_C_NO_NAME);
 
 #ifndef LEAN_CLIENT
     cred->keytab = NULL;
@@ -581,8 +570,9 @@ krb5_gss_acquire_cred(minor_status, desired_name, time_req,
 #ifndef LEAN_CLIENT
     if ((cred_usage == GSS_C_ACCEPT) ||
         (cred_usage == GSS_C_BOTH))
-        if ((ret = acquire_accept_cred(context, minor_status, desired_name,
-                                       &(cred->name), cred))
+        if ((ret = acquire_accept_cred(context, minor_status,
+                                       (krb5_gss_name_t)desired_name,
+                                       &cred->name, cred))
             != GSS_S_COMPLETE) {
             if (cred->name)
                 kg_release_name(context, 0, &cred->name);
@@ -703,8 +693,10 @@ krb5_gss_acquire_cred(minor_status, desired_name, time_req,
     /* intern the credential handle */
 
     if (! kg_save_cred_id((gss_cred_id_t) cred)) {
-        free(ret_mechs->elements);
-        free(ret_mechs);
+        if (ret_mechs) {
+            free(ret_mechs->elements);
+            free(ret_mechs);
+        }
         if (cred->ccache)
             (void)krb5_cc_close(context, cred->ccache);
 #ifndef LEAN_CLIENT
@@ -734,46 +726,45 @@ krb5_gss_acquire_cred(minor_status, desired_name, time_req,
 
 OM_uint32
 gss_krb5int_set_cred_rcache(OM_uint32 *minor_status,
-    gss_cred_id_t cred_handle,
-    const gss_OID desired_oid,
-    const gss_buffer_t value)
+                            gss_cred_id_t cred_handle,
+                            const gss_OID desired_oid,
+                            const gss_buffer_t value)
 {
-   krb5_gss_cred_id_t cred;
-   krb5_error_code code;
-   krb5_context context;
-   krb5_rcache rcache;
+    krb5_gss_cred_id_t cred;
+    krb5_error_code code;
+    krb5_context context;
+    krb5_rcache rcache;
 
-   assert(value->length == sizeof(rcache));
+    assert(value->length == sizeof(rcache));
 
-   if (value->length != sizeof(rcache))
-      return GSS_S_FAILURE;
+    if (value->length != sizeof(rcache))
+        return GSS_S_FAILURE;
 
-   rcache = (krb5_rcache)value->value;
+    rcache = (krb5_rcache)value->value;
 
-   if (cred_handle == GSS_C_NO_CREDENTIAL)
-      return GSS_S_NO_CRED;
+    if (cred_handle == GSS_C_NO_CREDENTIAL)
+        return GSS_S_NO_CRED;
 
-   cred = (krb5_gss_cred_id_t)cred_handle;
+    cred = (krb5_gss_cred_id_t)cred_handle;
 
-   code = krb5_gss_init_context(&context);
-   if (code) {
-       *minor_status = code;
-       return GSS_S_FAILURE;
-   }
-   if (cred->rcache != NULL) {
-      code = krb5_rc_close(context, cred->rcache);
-      if (code) {
-         *minor_status = code;
-         krb5_free_context(context);
-         return GSS_S_FAILURE;
-      }
-   }
+    code = krb5_gss_init_context(&context);
+    if (code) {
+        *minor_status = code;
+        return GSS_S_FAILURE;
+    }
+    if (cred->rcache != NULL) {
+        code = krb5_rc_close(context, cred->rcache);
+        if (code) {
+            *minor_status = code;
+            krb5_free_context(context);
+            return GSS_S_FAILURE;
+        }
+    }
 
-   cred->rcache = rcache;
+    cred->rcache = rcache;
 
-   krb5_free_context(context);
+    krb5_free_context(context);
 
-   *minor_status = 0;
-   return GSS_S_COMPLETE;
+    *minor_status = 0;
+    return GSS_S_COMPLETE;
 }
-

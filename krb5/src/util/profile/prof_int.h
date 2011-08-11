@@ -35,7 +35,6 @@ struct _prf_data_t {
 	unsigned long	frac_ts;   /* fractional part of timestamp, if any */
 	int		flags;	/* r/w, dirty */
 	int		upd_serial; /* incremented when data changes */
-	char		*comment;
 
 	size_t		fslen;
 
@@ -73,7 +72,7 @@ typedef struct _prf_file_t *prf_file_t;
 /*
  * The profile flags
  *
- * Deprecated use of read/write profile flag.  
+ * Deprecated use of read/write profile flag.
  * Check whether file is writable lazily so we don't call access as often.
  */
 #define PROFILE_FILE_DEPRECATED_RW	0x0001
@@ -136,7 +135,7 @@ errcode_t profile_add_node
 
 errcode_t profile_make_node_final
 	(struct profile_node *node);
-	
+
 int profile_is_node_final
 	(struct profile_node *node);
 
@@ -161,11 +160,11 @@ errcode_t profile_find_node_subsection
 	(struct profile_node *section,
 		    const char *name, void **state,
 		    char **ret_name, struct profile_node **subsection);
-		   
+
 errcode_t profile_get_node_parent
 	(struct profile_node *section,
 		   struct profile_node **parent);
-		   
+
 errcode_t profile_delete_node_relation
 	(struct profile_node *section, const char *name);
 
@@ -249,5 +248,5 @@ errcode_t profile_get_value
 	(profile_t profile, const char **names,
 		    const char	**ret_value);
 /* Others included from profile.h */
-	
+
 /* prof_set.c -- included from profile.h */

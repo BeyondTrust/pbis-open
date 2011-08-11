@@ -1,3 +1,4 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * spnego-asn1.h
  *
@@ -8,7 +9,7 @@
  *   require a specific license from the United States Government.
  *   It is the responsibility of any person or organization contemplating
  *   export to obtain such a license before exporting.
- * 
+ *
  * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
  * distribute this software and its documentation for any purpose and
  * without fee is hereby granted, provided that the above copyright
@@ -22,9 +23,9 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- * 
  *
- * This file contains structure definitions 
+ *
+ * This file contains structure definitions
  * for the SPNEGO GSSAPI mechanism (RFC 2478).  This file is
  *an internal interface between the GSSAPI library  and the ASN.1
  *encoders/decoders for the SPNEGO structures in the krb5 library.
@@ -38,18 +39,18 @@
 
 /* Context flags recognized by SPNEGO*/
 enum {
-  SPNEGO_DELEG_FLAG = 0x80,
-  SPNEGO_MUTUAL_FLAG = 0x40,
-  SPNEGO_ANON_FLAG=0x20,
-  SPNEGO_CONF_FLAG = 0x10
+    SPNEGO_DELEG_FLAG = 0x80,
+    SPNEGO_MUTUAL_FLAG = 0x40,
+    SPNEGO_ANON_FLAG=0x20,
+    SPNEGO_CONF_FLAG = 0x10
 };
 
 /* Results of a negotiation*/
 enum {
-  SPNEGO_ACCEPT_COMPLETED = 0,
-  SPNEGO_ACCEPT_INCOMPLETE = 1,
-  SPNEGO_REJECT = 2,
-  SPNEGO_UNSPEC_RESULT = 3
+    SPNEGO_ACCEPT_COMPLETED = 0,
+    SPNEGO_ACCEPT_INCOMPLETE = 1,
+    SPNEGO_REJECT = 2,
+    SPNEGO_UNSPEC_RESULT = 3
 };
 
 typedef krb5_data spnego_oid;
@@ -79,7 +80,7 @@ typedef struct _spnego_acceptor_token {
 
 krb5_error_code krb5int_encode_spnego_acceptor_token
 (krb5_context , spnego_acceptor_token *,
-	 krb5_data **);
+ krb5_data **);
 
 krb5_error_code krb5int_encode_spnego_initiator_token
 (krb5_context, spnego_initiator_token *,

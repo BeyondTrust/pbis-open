@@ -153,17 +153,14 @@ gss_name_t *output_name;
 allocation_failure:
 	/* do not delete the src name external name format */
 	if (output_name) {
-		if (out_union)
-		{
-			if (out_union->external_name) {
-				if (out_union->external_name->value)
-					free(out_union->external_name->value);
-				free(out_union->external_name);
-			}
-			if (out_union->name_type)
-				(void) gss_release_oid(minor_status,
-					    &out_union->name_type);
+		if (out_union->external_name) {
+			if (out_union->external_name->value)
+				free(out_union->external_name->value);
+			free(out_union->external_name);
 		}
+		if (out_union->name_type)
+			(void) gss_release_oid(minor_status,
+					    &out_union->name_type);
 
 		dest_union = out_union;
 	} else
@@ -174,17 +171,15 @@ allocation_failure:
 	 * applies for both src and dest which ever is being used for output
 	 */
 
-	if (dest_union)
-	{
-		if (dest_union->mech_name) {
-			(void) gssint_release_internal_name(minor_status,
+	if (dest_union->mech_name) {
+		(void) gssint_release_internal_name(minor_status,
 						dest_union->mech_type,
 						&dest_union->mech_name);
-		}
-
-		if (dest_union->mech_type)
-			(void) gss_release_oid(minor_status, &dest_union->mech_type);
 	}
+
+	if (dest_union->mech_type)
+		(void) gss_release_oid(minor_status, &dest_union->mech_type);
+
 
 	if (output_name)
 		free(out_union);

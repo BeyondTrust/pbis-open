@@ -1,5 +1,3 @@
-thisconfigdir=../..
-myfulldir=kadmin/dbutil
 mydir=kadmin/dbutil
 BUILDTOP=$(REL)..$(S)..
 DEFS=
@@ -34,3 +32,4 @@ install::
 clean::
 	$(RM) $(PROG) $(OBJS) import_err.c import_err.h
 
+depend:: import_err.h

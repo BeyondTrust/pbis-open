@@ -1,12 +1,10 @@
-thisconfigdir=../../..
-myfulldir=lib/kadm5/clnt
 mydir=lib/kadm5/clnt
 BUILDTOP=$(REL)..$(S)..$(S)..
 LOCALINCLUDES = -I$(BUILDTOP)/include/kadm5
 DEFS=
 
-LIBBASE=kadm5clnt
-LIBMAJOR=6
+LIBBASE=kadm5clnt_mit
+LIBMAJOR=7
 LIBMINOR=0
 STOBJLISTS=../OBJS.ST OBJS.ST
 SHLIB_EXPDEPS=\
@@ -71,6 +69,13 @@ clean-windows::
 clean-unix:: clean-liblinks clean-libs clean-libobjs
 
 install:: install-libs
+
+install-unix::
+	$(RM) $(DESTDIR)$(KRB5_LIBDIR)/libkadm5clnt$(DEPLIBEXT)
+	(cd $(DESTDIR)$(KRB5_LIBDIR) && $(LN_S) lib$(LIBBASE)$(DEPLIBEXT) \
+		libkadm5clnt$(DEPLIBEXT))
+
+depend:: includes
 
 @lib_frag@
 @libobj_frag@

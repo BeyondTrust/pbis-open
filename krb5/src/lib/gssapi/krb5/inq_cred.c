@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 2000, 2007 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
@@ -89,7 +89,6 @@ krb5_gss_inquire_cred(minor_status, cred_handle, name, lifetime_ret,
     krb5_timestamp now;
     krb5_deltat lifetime;
     krb5_gss_name_t ret_name;
-    krb5_principal princ;
     gss_OID_set mechs;
     OM_uint32 ret;
 

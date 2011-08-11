@@ -1,3 +1,4 @@
+/* -*- mode: c; c-file-style: "bsd"; indent-tabs-mode: t -*- */
 /*
  * Copyright 1993 OpenVision Technologies, Inc., All Rights Reserved
  *
@@ -80,7 +81,7 @@ xdr_osa_princ_ent_rec(XDR *xdrs, osa_princ_ent_t objp)
 	      return FALSE;
 	 break;
     }
-    
+
     if (!xdr_nullstring(xdrs, &objp->policy))
 	return (FALSE);
     if (!xdr_long(xdrs, &objp->aux_attributes))
@@ -101,10 +102,9 @@ void
 osa_free_princ_ent(osa_princ_ent_t val)
 {
     XDR xdrs;
-                                                                                                                            
+
     xdrmem_create(&xdrs, NULL, 0, XDR_FREE);
-                                                                                                                            
+
     xdr_osa_princ_ent_rec(&xdrs, val);
     free(val);
 }
-                                                                                                                            

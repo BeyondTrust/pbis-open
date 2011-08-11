@@ -7,200 +7,6 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-File: krb5-install.info,  Node: Add Administrators to the Acl File,  Next: Add Administrators to the Kerberos Database,  Prev: Create the Database,  Up: Install the Master KDC
-
-Add Administrators to the Acl File
-..................................
-
-Next, you need create an Access Control List (acl) file, and put the
-Kerberos principal of at least one of the administrators into it.  This
-file is used by the `kadmind' daemon to control which principals may
-view and make privileged modifications to the Kerberos database files.
-The filename should match the value you have set for "acl_file" in your
-`kdc.conf' file.  The default file name is
-`/usr/local/var/krb5kdc/kadm5.acl'.
-
-The format of the file is:
-
-     Kerberos_principal      permissions     [target_principal]	[restrictions]
-
-The Kerberos principal (and optional target principal) can include the
-"*" wildcard, so if you want any principal with the instance "admin" to
-have full permissions on the database, you could use the principal
-"`*/admin@REALM'" where "REALM" is your Kerberos realm.
-`target_principal' can also include backreferences to
-`Kerberos_principal', in which "*number" matches the component number
-in the `Kerberos_principal'.
-
-Note:  a common use of an admin instance is so you can grant separate
-permissions (such as administrator access to the Kerberos database) to
-a separate Kerberos principal.  For example, the user `joeadmin' might
-have a principal for his administrative use, called `joeadmin/admin'.
-This way, `joeadmin' would obtain `joeadmin/admin' tickets only when he
-actually needs to use those permissions.
-
-The permissions are represented by single letters; UPPER-CASE letters
-represent negative permissions.  The permissions are:
-
-a
-     allows the addition of principals or policies in the database.
-
-A
-     disallows the addition of principals or policies in the database.
-
-d
-     allows the deletion of principals or policies in the database.
-
-D
-     disallows the deletion of principals or policies in the database.
-
-m
-     allows the modification of principals or policies in the database.
-
-M
-     disallows the modification of principals or policies in the
-     database.
-
-c
-     allows the changing of passwords for principals in the database.
-
-C
-     disallows the changing of passwords for principals in the database.
-
-i
-     allows inquiries to the database.
-
-I
-     disallows inquiries to the database.
-
-l
-     allows the listing of principals or policies in the database.
-
-L
-     disallows the listing of principals or policies in the database.
-
-s
-     allows the explicit setting of the key for a principal
-
-S
-     disallows the explicit setting of the key for a principal
-
-*
-     All privileges (admcil).
-
-x
-     All privileges (admcil); identical to "*".
-
-The restrictions are a string of flags.  Allowed restrictions are:
-
-[+ -]flagname
-     flag is forced to indicated value.  The permissible flags are the
-     same as the `+' and `-' flags for the `kadmin addprinc' and
-     `modprinc' commands.
-
--clearpolicy
-     policy is forced to clear
-
--policy pol
-     policy is forced to be pol
-
-expire time
-pwexpire time
-maxlife time
-maxrenewlife time
-     associated value will be forced to MIN(time, requested value)
-
-The above flags act as restrictions on any add or modify operation
-which is allowed due to that ACL line.
-
-Here is an example of a `kadm5.acl' file.  Note that order is
-important; permissions are determined by the first matching entry.
-
-     */admin@ATHENA.MIT.EDU  *
-     joeadmin@ATHENA.MIT.EDU  ADMCIL
-     joeadmin/*@ATHENA.MIT.EDU il */root@ATHENA.MIT.EDU
-     *@ATHENA.MIT.EDU cil *1/admin@ATHENA.MIT.EDU
-     */*@ATHENA.MIT.EDU  i
-     */admin@EXAMPLE.COM * -maxlife 9h -postdateable
-
-In the above file, any principal in the ATHENA.MIT.EDU realm with an
-`admin' instance has all administrative privileges.  The user `joeadmin'
-has all permissions with his `admin' instance,
-`joeadmin/admin@ATHENA.MIT.EDU' (matches the first line).  He has no
-permissions at all with his `null' instance, `joeadmin@ATHENA.MIT.EDU'
-(matches the second line).  His root instance has inquire and list
-permissions with any other principal that has the instance `root'.  Any
-principal in ATHENA.MIT.EDU can inquire, list, or change the password of
-their `admin' instance, but not any other `admin' instance.  Any
-principal in the realm `ATHENA.MIT.EDU' (except for
-`joeadmin@ATHENA.MIT.EDU', as mentioned above) has inquire privileges.
-Finally, any principal with an admin instance in EXAMPLE.COM has all
-permissions, but any principal that they create or modify will not be
-able to get postdateable tickets or tickets with a life of longer than
-9 hours.
-
-
-File: krb5-install.info,  Node: Add Administrators to the Kerberos Database,  Next: Create a kadmind Keytab (optional),  Prev: Add Administrators to the Acl File,  Up: Install the Master KDC
-
-Add Administrators to the Kerberos Database
-...........................................
-
-Next you need to add administrative principals to the Kerberos database.
-(You must add at least one now.)  To do this, use `kadmin.local' _on
-the master KDC_.  The administrative principals you create should be
-the ones you added to the ACL file.  (See *Note Add Administrators to
-the Acl File::.)  In the following example, the administration
-principal `admin/admin' is created:
-
-     shell% /usr/local/sbin/kadmin.local
-     kadmin.local: addprinc admin/admin@ATHENA.MIT.EDU
-     NOTICE: no policy specified for "admin/admin@ATHENA.MIT.EDU";
-     assigning "default".
-     Enter password for principal admin/admin@ATHENA.MIT.EDU:  <= Enter a password.
-     Re-enter password for principal admin/admin@ATHENA.MIT.EDU:  <= Type it again.
-     Principal "admin/admin@ATHENA.MIT.EDU" created.
-     kadmin.local:
-
-
-File: krb5-install.info,  Node: Create a kadmind Keytab (optional),  Next: Start the Kerberos Daemons,  Prev: Add Administrators to the Kerberos Database,  Up: Install the Master KDC
-
-Create a kadmind Keytab (optional)
-..................................
-
-The kadmind keytab is the key that the legacy admininstration daemons
-`kadmind4' and `v5passwdd' will use to decrypt administrators' or
-clients' Kerberos tickets to determine whether or not they should have
-access to the database.  You need to create the kadmin keytab with
-entries for the principals `kadmin/admin' and `kadmin/changepw'.
-(These principals are placed in the Kerberos database automatically
-when you create it.)  To create the kadmin keytab, run `kadmin.local'
-and use the `ktadd' command, as in the following example.  (The line
-beginning with => is a continuation of the previous line.):
-
-     shell% /usr/local/sbin/kadmin.local
-     kadmin.local: ktadd -k /usr/local/var/krb5kdc/kadm5.keytab
-     => kadmin/admin kadmin/changepw
-      Entry for principal kadmin/admin with kvno 5, encryption
-     	type Triple DES cbc mode with HMAC/sha1 added to keytab
-     	WRFILE:/usr/local/var/krb5kdc/kadm5.keytab.
-     Entry for principal kadmin/admin with kvno 5, encryption type DES cbc mode
-     	with CRC-32 added to keytab
-     	WRFILE:/usr/local/var/krb5kdc/kadm5.keytab.
-     Entry for principal kadmin/changepw with kvno 5, encryption
-     	type Triple DES cbc mode with HMAC/sha1 added to keytab
-     	WRFILE:/usr/local/var/krb5kdc/kadm5.keytab.
-     Entry for principal kadmin/changepw with kvno 5,
-     	encryption type DES cbc mode with CRC-32 added to keytab
-     	WRFILE:/usr/local/var/krb5kdc/kadm5.keytab.
-     kadmin.local: quit
-     shell%
-
-As specified in the `-k' argument, `ktadd' will save the extracted
-keytab as
-`/usr/local/var/krb5kdc/kadm5.keytab'.  The filename you use must be
-the one specified in your `kdc.conf' file.
-
-
 File: krb5-install.info,  Node: Start the Kerberos Daemons,  Prev: Create a kadmind Keytab (optional),  Up: Install the Master KDC
 
 Start the Kerberos Daemons on the Master KDC
@@ -322,16 +128,9 @@ file's contents would be:
      host/kerberos-1.mit.edu@ATHENA.MIT.EDU
      host/kerberos-2.mit.edu@ATHENA.MIT.EDU
 
-Then, add the following lines to `/etc/inetd.conf' file on each KDC
-(the line beginnng with => is a continuation of the previous line):
+Then, add the following line to `/etc/inetd.conf' file on each KDC:
 
      krb5_prop stream tcp nowait root /usr/local/sbin/kpropd kpropd
-     eklogin   stream tcp nowait root /usr/local/sbin/klogind
-     => klogind -k -c -e
-
-The first line sets up the `kpropd' database propagation daemon.  The
-second line sets up the `eklogin' daemon, allowing
-Kerberos-authenticated, encrypted rlogin to the KDC.
 
 You also need to add the following lines to `/etc/services' on each KDC:
 
@@ -340,7 +139,6 @@ You also need to add the following lines to `/etc/services' on each KDC:
      krb5_prop       754/tcp               # Kerberos slave propagation
      kerberos-adm    749/tcp               # Kerberos 5 admin/changepw (tcp)
      kerberos-adm    749/udp               # Kerberos 5 admin/changepw (udp)
-     eklogin         2105/tcp              # Kerberos encrypted rlogin
 
 
 File: krb5-install.info,  Node: Back on the Master KDC,  Next: Finish Installing the Slave KDCs,  Prev: Install the Slave KDCs,  Up: Installing KDCs
@@ -469,41 +267,6 @@ limited access.  If your KDC is also a file server, FTP server, Web
 server, or even just a client machine, someone who obtained root access
 through a security hole in any of those areas could gain access to the
 Kerberos database.
-
-MIT recommends that your KDCs use the following `/etc/inetd.conf' file.
-(Note:  each line beginning with => is a continuation of the previous
-line.):
-
-     #
-     # Configuration file for inetd(1M).  See inetd.conf(4).
-     #
-     # To re-configure the running inetd process, edit this file, then
-     # send the inetd process a SIGHUP.
-     #
-     # Syntax for socket-based Internet services:
-     #  <service_name> <socket_type> <proto> <flags> <user>
-     => <server_pathname> <args>
-     #
-     # Syntax for TLI-based Internet services:
-     #
-     #  <service_name> tli <proto> <flags> <user> <server_pathname> <args>
-     #
-     # Ftp and telnet are standard Internet services.
-     #
-     # This machine is a secure Kerberos Key Distribution Center (KDC).
-     # Services are limited.
-     #
-     #
-     # Time service is used for clock synchronization.
-     #
-     time    stream  tcp     nowait  root    internal
-     time    dgram   udp     wait    root    internal
-     #
-     # Limited Kerberos services
-     #
-     krb5_prop stream tcp nowait root /usr/local/sbin/kpropd  kpropd
-     eklogin   stream tcp nowait root /usr/local/sbin/klogind
-     => klogind -5 -c -e
 
 
 File: krb5-install.info,  Node: Switching Master and Slave KDCs,  Next: Incremental Database Propagation,  Prev: Limit Access to the KDCs,  Up: Installing KDCs
@@ -695,14 +458,9 @@ File: krb5-install.info,  Node: Client Programs,  Next: Client Machine Configura
 Client Programs
 ---------------
 
-The Kerberized client programs are `login.krb5', `rlogin', `telnet',
-`ftp', `rcp', `rsh', `kinit', `klist', `kdestroy', `kpasswd', `ksu', and
-`krb524init'.  All of these programs are in the directory
-`/usr/local/bin', except for `login.krb5' which is in `/usr/local/sbin'.
-
-You will probably want to have your users put `/usr/local/bin' ahead of
-`/bin' and `/usr/bin' in their paths, so they will by default get the
-Kerberos V5 versions of `rlogin', `telnet', `ftp', `rcp', and `rsh'.
+The Kerberized client programs are `kinit', `klist', `kdestroy',
+`kpasswd', and `ksu'.  All of these programs are in the directory
+`/usr/local/bin'.
 
 MIT recommends that you use `login.krb5' in place of `/bin/login' to
 give your users a single-sign-on system.  You will need to make sure
@@ -710,8 +468,8 @@ your users know to use their Kerberos passwords when they log in.
 
 You will also need to educate your users to use the ticket management
 programs `kinit', `klist', `kdestroy', and to use the Kerberos programs
-`ksu', and `kpasswd' in place of their non-Kerberos counterparts `su',
-`passwd', and `rdist'.
+`ksu' and `kpasswd' in place of their non-Kerberos counterparts `su'
+and `passwd'.
 
 
 File: krb5-install.info,  Node: Client Machine Configuration Files,  Prev: Client Programs,  Up: Installing and Configuring UNIX Client Machines
@@ -729,12 +487,9 @@ just insert the following code:
 
      kerberos      88/udp    kdc    # Kerberos V5 KDC
      kerberos      88/tcp    kdc    # Kerberos V5 KDC
-     klogin        543/tcp          # Kerberos authenticated rlogin
-     kshell        544/tcp   cmd    # and remote shell
      kerberos-adm  749/tcp          # Kerberos 5 admin/changepw
      kerberos-adm  749/udp          # Kerberos 5 admin/changepw
      krb5_prop     754/tcp          # Kerberos slave propagation
-     eklogin       2105/tcp         # Kerberos auth. & encrypted rlogin
      krb524        4444/tcp         # Kerberos 5 to 4 ticket translator
 
 * Menu:
@@ -833,69 +588,11 @@ sign-on capability.
 
 * Menu:
 
-* Server Programs::
-* Server Configuration Files::
 * The Keytab File::
 * Some Advice about Secure Hosts::
 
 
-File: krb5-install.info,  Node: Server Programs,  Next: Server Configuration Files,  Prev: UNIX Application Servers,  Up: UNIX Application Servers
-
-Server Programs
----------------
-
-Just as Kerberos V5 provided its own Kerberos-enhanced versions of
-client UNIX network programs, Kerberos V5 also provides
-Kerberos-enhanced versions of server UNIX network daemons.  These are
-`ftpd', `klogind', `kshd', and `telnetd'.  These programs are installed
-in the directory `/usr/local/sbin'.  You may want to add this directory
-to root's path.
-
-
-File: krb5-install.info,  Node: Server Configuration Files,  Next: The Keytab File,  Prev: Server Programs,  Up: UNIX Application Servers
-
-Server Configuration Files
---------------------------
-
-For a _secure_ server, make the following changes to `/etc/inetd.conf':
-
-Find and comment out any lines for the services `ftp', `telnet',
-`shell', `login', and `exec'.
-
-Add the following lines.  (Note:  each line beginning with => is a
-continuation of the previous line.)
-
-     klogin  stream  tcp  nowait  root  /usr/local/sbin/klogind
-     => klogind -k -c
-     eklogin stream  tcp  nowait  root  /usr/local/sbin/klogind
-     => klogind -k -c -e
-     kshell  stream  tcp  nowait  root  /usr/local/sbin/kshd
-     => kshd -k -c -A
-     ftp     stream  tcp  nowait  root  /usr/local/sbin/ftpd
-     => ftpd -a
-     telnet  stream  tcp  nowait  root  /usr/local/sbin/telnetd
-     => telnetd -a valid
-
-For an _insecure_ server, make the following changes instead to
-`/etc/inetd.conf':
-
-Find and comment out any lines for the services `ftp' and `telnet'.
-
-Add the following lines.  (Note:  each line beginning with => is a
-continuation of the previous line.)
-     klogin  stream  tcp  nowait  root  /usr/local/sbin/klogind
-     => klogind -k -c
-     eklogin stream  tcp  nowait  root  /usr/local/sbin/klogind
-     => klogind -k -c -e
-     kshell  stream  tcp  nowait  root  /usr/local/sbin/kshd
-     => kshd -k -c -A
-     ftp     stream  tcp  nowait  root  /usr/local/sbin/ftpd
-     => ftpd
-     telnet  stream  tcp  nowait  root  /usr/local/sbin/telnetd
-     => telnetd -a none
-
-
-File: krb5-install.info,  Node: The Keytab File,  Next: Some Advice about Secure Hosts,  Prev: Server Configuration Files,  Up: UNIX Application Servers
+File: krb5-install.info,  Node: The Keytab File,  Next: Some Advice about Secure Hosts,  Prev: UNIX Application Servers,  Up: UNIX Application Servers
 
 The Keytab File
 ---------------
@@ -940,8 +637,7 @@ trillium.mit.edu):
 
 If you generate the keytab file on another host, you need to get a copy
 of the keytab file onto the destination host (`trillium', in the above
-example) without sending it unencrypted over the network.  If you have
-installed the Kerberos V5 client programs, you can use encrypted `rcp'.
+example) without sending it unencrypted over the network.
 
 
 File: krb5-install.info,  Node: Some Advice about Secure Hosts,  Prev: The Keytab File,  Up: UNIX Application Servers
@@ -956,23 +652,14 @@ to try to include an exhaustive list of countermeasures for every
 possible attack, but it is worth noting some of the larger holes and how
 to close them.
 
-As stated earlier in this section, MIT recommends that on a secure
-host, you disable the standard `ftp', `login', `telnet', `shell', and
-`exec' services in `/etc/inetd.conf'.  We also recommend that secure
-hosts have an empty `/etc/hosts.equiv' file and that there not be a
-`.rhosts' file in `root''s home directory.  You can grant
-Kerberos-authenticated root access to specific Kerberos principals by
-placing those principals in the file `.k5login' in root's home
-directory.
-
 We recommend that backups of secure machines exclude the keytab file
 (`/etc/krb5.keytab').  If this is not possible, the backups should at
 least be done locally, rather than over a network, and the backup tapes
 should be physically secured.
 
-Finally, the keytab file and any programs run by root, including the
-Kerberos V5 binaries, should be kept on local disk.  The keytab file
-should be readable only by root.
+The keytab file and any programs run by root, including the Kerberos V5
+binaries, should be kept on local disk.  The keytab file should be
+readable only by root.
 
 
 File: krb5-install.info,  Node: Upgrading Existing Kerberos V5 Installations,  Next: Bug Reports for Kerberos V5,  Prev: Installing Kerberos V5,  Up: Top

@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 1993 by OpenVision Technologies, Inc.
  *
@@ -28,7 +28,7 @@
 #include <limits.h>
 
 /*
- * $Id: util_token.c 21778 2009-01-22 23:21:11Z tlyu $
+ * $Id: util_token.c 23457 2009-12-08 00:04:48Z tlyu $
  */
 
 /* XXXX this code currently makes the assumption that a mech oid will

@@ -128,6 +128,14 @@ types that should be requested by the client, in the same format.
 This relation identifies the permitted list of session key encryption
 types.
 
+.IP allow_weak_crypto
+If this is set to 0 (for false), then weak encryption types will be
+filtered out of the previous three lists.  The default value for this
+tag is false, which may cause authentication failures in existing
+Kerberos infrastructures that do not support strong crypto.  Users in
+affected environments should set this tag to true until their
+infrastructure adopts stronger ciphers.
+
 .IP clockskew 
 This relation sets the maximum allowable amount of clockskew in seconds
 that the library will tolerate before assuming that a Kerberos message
@@ -140,7 +148,7 @@ returned by the KDC and in order to correct for an inaccurate system
 clock.  This corrective factor is only used by the Kerberos library.
 
 .IP kdc_req_checksum_type
-For compatability with DCE security servers which do not support the
+For compatibility with DCE security servers which do not support the
 default CKSUMTYPE_RSA_MD5 used by this version of Kerberos. Use a value
 of 2 to use the CKSUMTYPE_RSA_MD4 instead. This applies to DCE 1.1 and
 earlier.  This value is only used for DES keys; other keys use the
@@ -188,7 +196,7 @@ of the preceding options are specified, this option has no effect.
 .IP realm_try_domains
 Indicate whether a host's domain components should be used to
 determine the Kerberos realm of the host.  The value of this variable
-is an integer: -1 means not to search, 0 means to try the host's
+is an integer: \-1 means not to search, 0 means to try the host's
 domain itself, 1 means to also try the domain's immediate parent, and
 so forth.  The library's usual mechanism for locating Kerberos realms
 is used to determine whether a domain is a valid realm--which may
@@ -211,6 +219,10 @@ tried if the first attempt fails.
 If this flag is set, then an attempt to get initial credentials will
 fail if the client machine does not have a keytab.  The default for the
 flag is false.
+
+.IP ticket_lifetime
+The value of this tag is the default lifetime for initial tickets.  The
+default value for the tag is 1 day (1d).
 
 .IP renew_lifetime
 The value of this tag is the default renewable lifetime for initial

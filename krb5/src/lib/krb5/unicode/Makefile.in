@@ -1,5 +1,3 @@
-thisconfigdir=../../..
-myfulldir=lib/krb5/unicode
 mydir=lib/krb5/unicode
 BUILDTOP=$(REL)..$(S)..$(S)..
 KRB5_RUN_ENV = @KRB5_RUN_ENV@
@@ -51,6 +49,7 @@ $(XXDIR)/uctable.h: $(XXDIR)/ucgendat.c $(srcdir)/UnicodeData.txt $(srcdir)/Comp
 ucgendat: ucgendat.o
 	$(CC_LINK) $(ALL_CFLAGS) -o ucgendat ucgendat.o $(LIBS)
 
+##DOS##!if 0
 .links :
 	@for i in $(XXSRCS) $(XXHEADERS); do \
 		$(RM) $$i ; \
@@ -58,6 +57,16 @@ ucgendat: ucgendat.o
 		$(LN_S) $$ii . ; \
 	done
 	touch .links
+##DOS##!endif
+##DOS##.links:
+##DOS##		$(CP) $(srcdir)\ucdata\ucdata.h ucdata.h
+##DOS##		$(CP) $(srcdir)\ucdata\ucdata.c ucdata.c
+##DOS##		$(CP) $(srcdir)\ucdata\ucgendat.c ucgendat.c
+##DOS##		$(CP) $(srcdir)\ucdata\uctable.h uctable.h
+##DOS##		$(CP) $(srcdir)\ure\ure.h ure.h
+##DOS##		$(CP) $(srcdir)\ure\ure.c ure.c
+##DOS##		$(CP) $(srcdir)\ure\urestubs.c urestubs.c
+##DOS##		$(CP) nul .links
 
 $(XXSRCS) $(XXHEADERS) : .links
 

@@ -25,7 +25,7 @@
 #define _GSSAPIP_GENERIC_H_
 
 /*
- * $Id: gssapiP_generic.h 21796 2009-01-26 19:06:21Z raeburn $
+ * $Id: gssapiP_generic.h 21875 2009-02-02 23:41:40Z raeburn $
  */
 
 #if defined(_WIN32)
@@ -75,7 +75,7 @@ typedef UINT64_TYPE gssint_uint64;
    (ptr) += 2;
 
 #define TWRITE_STR(ptr, str, len)               \
-   memcpy((ptr), (char *) (str), (len));        \
+   memcpy((ptr), (str), (len));                 \
    (ptr) += (len);
 
 #define TREAD_STR(ptr, str, len)                \

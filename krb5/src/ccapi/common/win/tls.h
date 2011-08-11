@@ -33,11 +33,11 @@
 #include "time.h"
 #include "rpc.h"
 
-#include "cci_stream.h"
+#include "k5-ipc_stream.h"
 
 #define UUID_SIZE   128
 
-/* The client code can be run in any client thread.  
+/* The client code can be run in any client thread.
    The thread-specific data is defined here.
  */
 

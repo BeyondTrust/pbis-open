@@ -1,3 +1,4 @@
+/* -*- mode: c; c-file-style: "bsd"; indent-tabs-mode: t -*- */
 /*
  * Copyright 1993 OpenVision Technologies, Inc., All Rights Reserved.
  *
@@ -28,7 +29,7 @@ static int check_rpcsec_auth(struct svc_req *);
 
 /*
  * Function: kadm_1
- * 
+ *
  * Purpose: RPC proccessing procedure.
  *	    originally generated from rpcgen
  *
@@ -36,7 +37,7 @@ static int check_rpcsec_auth(struct svc_req *);
  *	rqstp		    (input) rpc request structure
  *	transp		    (input) rpc transport structure
  *	(input/output)
- * 	<return value>
+ *	<return value>
  *
  * Requires:
  * Effects:
@@ -79,36 +80,36 @@ void kadm_1(rqstp, transp)
 	  svcerr_weakauth(transp);
 	  return;
      }
-     
+
      switch (rqstp->rq_proc) {
      case NULLPROC:
 	  (void) svc_sendreply(transp, xdr_void, (char *)NULL);
 	  return;
-	  
+
      case CREATE_PRINCIPAL:
 	  xdr_argument = xdr_cprinc_arg;
 	  xdr_result = xdr_generic_ret;
 	  local = (char *(*)()) create_principal_2_svc;
 	  break;
-	  
+
      case DELETE_PRINCIPAL:
 	  xdr_argument = xdr_dprinc_arg;
 	  xdr_result = xdr_generic_ret;
 	  local = (char *(*)()) delete_principal_2_svc;
 	  break;
-	  
+
      case MODIFY_PRINCIPAL:
 	  xdr_argument = xdr_mprinc_arg;
 	  xdr_result = xdr_generic_ret;
 	  local = (char *(*)()) modify_principal_2_svc;
 	  break;
-	  
+
      case RENAME_PRINCIPAL:
 	  xdr_argument = xdr_rprinc_arg;
 	  xdr_result = xdr_generic_ret;
 	  local = (char *(*)()) rename_principal_2_svc;
 	  break;
-	  
+
      case GET_PRINCIPAL:
 	  xdr_argument = xdr_gprinc_arg;
 	  xdr_result = xdr_gprinc_ret;
@@ -120,7 +121,7 @@ void kadm_1(rqstp, transp)
 	  xdr_result = xdr_gprincs_ret;
 	  local = (char *(*)()) get_princs_2_svc;
 	  break;
-	  
+
      case CHPASS_PRINCIPAL:
 	  xdr_argument = xdr_chpass_arg;
 	  xdr_result = xdr_generic_ret;
@@ -138,31 +139,31 @@ void kadm_1(rqstp, transp)
 	  xdr_result = xdr_generic_ret;
 	  local = (char *(*)()) setkey_principal_2_svc;
 	  break;
-	  
+
      case CHRAND_PRINCIPAL:
 	  xdr_argument = xdr_chrand_arg;
 	  xdr_result = xdr_chrand_ret;
 	  local = (char *(*)()) chrand_principal_2_svc;
 	  break;
-	  
+
      case CREATE_POLICY:
 	  xdr_argument = xdr_cpol_arg;
 	  xdr_result = xdr_generic_ret;
 	  local = (char *(*)()) create_policy_2_svc;
 	  break;
-	  
+
      case DELETE_POLICY:
 	  xdr_argument = xdr_dpol_arg;
 	  xdr_result = xdr_generic_ret;
 	  local = (char *(*)()) delete_policy_2_svc;
 	  break;
-	  
+
      case MODIFY_POLICY:
 	  xdr_argument = xdr_mpol_arg;
 	  xdr_result = xdr_generic_ret;
 	  local = (char *(*)()) modify_policy_2_svc;
 	  break;
-	  
+
      case GET_POLICY:
 	  xdr_argument = xdr_gpol_arg;
 	  xdr_result = xdr_gpol_ret;
@@ -174,7 +175,7 @@ void kadm_1(rqstp, transp)
 	  xdr_result = xdr_gpols_ret;
 	  local = (char *(*)()) get_pols_2_svc;
 	  break;
-	  
+
      case GET_PRIVS:
 	  xdr_argument = xdr_u_int32;
 	  xdr_result = xdr_getprivs_ret;
@@ -218,7 +219,7 @@ void kadm_1(rqstp, transp)
 	  svcerr_noproc(transp);
 	  return;
      }
-     memset((char *)&argument, 0, sizeof(argument));
+     memset(&argument, 0, sizeof(argument));
      if (!svc_getargs(transp, xdr_argument, &argument)) {
 	  svcerr_decode(transp);
 	  return;

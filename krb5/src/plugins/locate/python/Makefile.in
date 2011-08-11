@@ -1,5 +1,3 @@
-thisconfigdir=../../..
-myfulldir=plugins/locate/python
 mydir=plugins/locate/python
 BUILDTOP=$(REL)..$(S)..$(S)..
 
@@ -21,7 +19,7 @@ SRCS= \
 STOBJLISTS=OBJS.ST
 STLIBOBJS= py-locate.o
 
-all-unix:: $(LIBBASE)$(SO_EXT)
+all-unix:: all-liblinks
 install-unix:: install-libs
 clean-unix:: clean-libs clean-libobjs
 

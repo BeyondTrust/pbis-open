@@ -31,7 +31,6 @@
 #ifndef _PKINIT_H
 #define _PKINIT_H
 
-#include <autoconf.h>
 #include <krb5/krb5.h>
 #include <krb5/preauth_plugin.h>
 #include <k5-int-pkinit.h>
@@ -93,8 +92,8 @@ extern int longhorn;	    /* XXX Talking to a Longhorn server? */
 #define KRB5_CONF_PKINIT_WIN2K_REQUIRE_BINDING  "pkinit_win2k_require_binding"
 
 /* Make pkiDebug(fmt,...) print, or not.  */
-#ifdef PKINIT_DEBUG
-extern void pkiDebug (const char *fmt, ...);
+#ifdef DEBUG
+#define pkiDebug	printf
 #else
 /* Still evaluates for side effects.  */
 static inline void pkiDebug (const char *fmt, ...) { }
@@ -104,7 +103,7 @@ static inline void pkiDebug (const char *fmt, ...) { }
 /* #define pkiDebug	(void) */
 #endif
 
-/* Solaris compiler doesn't grok __FUNCTION__ 
+/* Solaris compiler doesn't grok __FUNCTION__
  * hack for now.  Fix all the uses eventually. */
 #define __FUNCTION__ __func__
 
@@ -126,15 +125,15 @@ extern const krb5_octet_data dh_oid;
  * (the kdc's identity is at the plugin level, the client's identity
  * information could change per-request.)
  * the identity context is meant to have the entity's cert,
- * a list of trusted and intermediate cas, a list of crls, and any 
+ * a list of trusted and intermediate cas, a list of crls, and any
  * pkcs11 information.  the req context is meant to have the
  * received certificate and the DH related information. the plugin
  * context is meant to have global crypto information, i.e., OIDs
  * and constant DH parameter information.
- */ 
+ */
 
 /*
- * plugin crypto context should keep plugin common information, 
+ * plugin crypto context should keep plugin common information,
  * eg., OIDs, known DHparams
  */
 typedef struct _pkinit_plg_crypto_context *pkinit_plg_crypto_context;
@@ -160,7 +159,7 @@ typedef struct _pkinit_plg_opts {
     int accept_secondary_eku;/* accept secondary EKU (default is false) */
     int allow_upn;	    /* allow UPN-SAN instead of pkinit-SAN */
     int dh_or_rsa;	    /* selects DH or RSA based pkinit */
-    int require_crl_checking; /* require CRL for a CA (default is false) */ 
+    int require_crl_checking; /* require CRL for a CA (default is false) */
     int dh_min_bits;	    /* minimum DH modulus size allowed */
 } pkinit_plg_opts;
 
@@ -182,13 +181,6 @@ typedef struct _pkinit_req_opts {
 /*
  * information about identity from config file or command line
  */
-
-#define PKINIT_ID_OPT_USER_IDENTITY	1
-#define PKINIT_ID_OPT_ANCHOR_CAS	2
-#define PKINIT_ID_OPT_INTERMEDIATE_CAS	3
-#define PKINIT_ID_OPT_CRLS		4
-#define PKINIT_ID_OPT_OCSP		5
-#define PKINIT_ID_OPT_DN_MAPPING	6   /* XXX ? */
 
 typedef struct _pkinit_identity_opts {
     char *identity;
@@ -233,7 +225,7 @@ struct _pkinit_req_context {
     pkinit_identity_opts *idopts;
     krb5_preauthtype pa_type;
 };
-typedef struct _pkinit_kdc_context *pkinit_kdc_context;
+typedef struct _pkinit_req_context *pkinit_req_context;
 
 /*
  * KDC's (per-realm) plugin context
@@ -247,7 +239,7 @@ struct _pkinit_kdc_context {
     char *realmname;
     unsigned int realmname_len;
 };
-typedef struct _pkinit_req_context *pkinit_req_context;
+typedef struct _pkinit_kdc_context *pkinit_kdc_context;
 
 /*
  * KDC's per-request context
@@ -263,7 +255,7 @@ typedef struct _pkinit_kdc_req_context *pkinit_kdc_req_context;
 
 /*
  * Functions in pkinit_lib.c
- */ 
+ */
 
 krb5_error_code pkinit_init_req_opts(pkinit_req_opts **);
 void pkinit_fini_req_opts(pkinit_req_opts *);

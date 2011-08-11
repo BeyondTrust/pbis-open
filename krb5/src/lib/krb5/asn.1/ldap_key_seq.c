@@ -1,34 +1,35 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ... copyright ... */
 
-/* Novell key-format scheme:
-
-   KrbKeySet ::= SEQUENCE {
-   attribute-major-vno       [0] UInt16,
-   attribute-minor-vno       [1] UInt16,
-   kvno                      [2] UInt32,
-   mkvno                     [3] UInt32 OPTIONAL,
-   keys                      [4] SEQUENCE OF KrbKey,
-   ...
-   }
-
-   KrbKey ::= SEQUENCE {
-   salt      [0] KrbSalt OPTIONAL,
-   key       [1] EncryptionKey,
-   s2kparams [2] OCTET STRING OPTIONAL,
-    ...
-   }
-
-   KrbSalt ::= SEQUENCE {
-   type      [0] Int32,
-   salt      [1] OCTET STRING OPTIONAL
-   }
-
-   EncryptionKey ::= SEQUENCE {
-   keytype   [0] Int32,
-   keyvalue  [1] OCTET STRING
-   }
-
+/*
+ * Novell key-format scheme:
+ *
+ * KrbKeySet ::= SEQUENCE {
+ * attribute-major-vno       [0] UInt16,
+ * attribute-minor-vno       [1] UInt16,
+ * kvno                      [2] UInt32,
+ * mkvno                     [3] UInt32 OPTIONAL,
+ * keys                      [4] SEQUENCE OF KrbKey,
+ * ...
+ * }
+ *
+ * KrbKey ::= SEQUENCE {
+ * salt      [0] KrbSalt OPTIONAL,
+ * key       [1] EncryptionKey,
+ * s2kparams [2] OCTET STRING OPTIONAL,
+ *  ...
+ * }
+ *
+ * KrbSalt ::= SEQUENCE {
+ * type      [0] Int32,
+ * salt      [1] OCTET STRING OPTIONAL
+ * }
+ *
+ * EncryptionKey ::= SEQUENCE {
+ * keytype   [0] Int32,
+ * keyvalue  [1] OCTET STRING
+ * }
+ *
  */
 
 #include <k5-int.h>
@@ -47,8 +48,10 @@
 /* Encode the Principal's keys                                          */
 /************************************************************************/
 
-/* Imports from asn1_k_encode.c.
-   XXX Must be manually synchronized for now.  */
+/*
+ * Imports from asn1_k_encode.c.
+ * XXX Must be manually synchronized for now.
+ */
 IMPORT_TYPE(octetstring, unsigned char *);
 IMPORT_TYPE(int32, krb5_int32);
 
@@ -60,7 +63,8 @@ static const struct field_info krbsalt_fields[] = {
     FIELDOF_OPTSTRINGL(krb5_key_data, octetstring, key_data_contents[1],
                        ui_2, key_data_length[1], 1, 1),
 };
-static unsigned int optional_krbsalt (const void *p)
+static unsigned int
+optional_krbsalt (const void *p)
 {
     const krb5_key_data *k = p;
     unsigned int optional = 0;
@@ -109,21 +113,21 @@ MAKE_FULL_ENCODER(krb5int_ldap_encode_sequence_of_keys, ldap_key_seq);
 /* Decode the Principal's keys                                          */
 /************************************************************************/
 
-#define cleanup(err)                                                    \
-        {                                                               \
-                ret = err;                                              \
-                goto last;                                              \
-        }
+#define cleanup(err)                            \
+    {                                           \
+        ret = err;                              \
+        goto last;                              \
+    }
 
-#define checkerr                                                        \
-                if (ret != 0)                                           \
-                        goto last
+#define checkerr                                \
+    if (ret != 0)                               \
+        goto last
 
-#define safe_syncbuf(outer,inner,buflen)                                \
-        if (! ((inner)->next == (inner)->bound + 1 &&                   \
-               (inner)->next == (outer)->next + buflen))                \
-            cleanup (ASN1_BAD_LENGTH);                                  \
-        asn1buf_sync((outer), (inner), 0, 0, 0, 0, 0);
+#define safe_syncbuf(outer,inner,buflen)                \
+    if (! ((inner)->next == (inner)->bound + 1 &&       \
+           (inner)->next == (outer)->next + buflen))    \
+        cleanup (ASN1_BAD_LENGTH);                      \
+    asn1buf_sync((outer), (inner), 0, 0, 0, 0, 0);
 
 static asn1_error_code
 decode_tagged_integer (asn1buf *buf, asn1_tagnum expectedtag, long *val)
@@ -208,7 +212,8 @@ last:
     return ret;
 }
 
-static asn1_error_code asn1_decode_key(asn1buf *buf, krb5_key_data *key)
+static asn1_error_code
+asn1_decode_key(asn1buf *buf, krb5_key_data *key)
 {
     int full_buflen, seqindef;
     unsigned int length;
@@ -290,8 +295,8 @@ last:
     return ret;
 }
 
-krb5_error_code krb5int_ldap_decode_sequence_of_keys (krb5_data *in,
-                                                      ldap_seqof_key_data **rep)
+krb5_error_code
+krb5int_ldap_decode_sequence_of_keys (krb5_data *in, ldap_seqof_key_data **rep)
 {
     ldap_seqof_key_data *repval;
     krb5_key_data **out;

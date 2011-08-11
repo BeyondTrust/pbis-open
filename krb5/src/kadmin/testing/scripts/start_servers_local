@@ -2,10 +2,8 @@
 
 DUMMY=${TESTDIR=$TOP/testing}
 DUMMY=${STESTDIR=$STOP/testing}
-DUMMY=${SAVE_FILES=$STESTDIR/scripts/save_files.sh}
-DUMMY=${FIX_CONF_FILES=$TESTDIR/scripts/fixup-conf-files.pl}
 DUMMY=${INITDB=$STESTDIR/scripts/init_db}
-DUMMY=${SRVTCL=$TESTDIR/util/ovsec_kadm_srv_tcl}; export SRVTCL
+DUMMY=${SRVTCL=$TESTDIR/util/kadm5_srv_tcl}; export SRVTCL
 DUMMY=${LOCAL_MAKE_KEYTAB=$TESTDIR/scripts/make-host-keytab.pl}
 DUMMY=${STOP_SERVERS_LOCAL=$STESTDIR/scripts/stop_servers_local}
 DUMMY=${KRB5RCACHEDIR=$TESTDIR} ; export KRB5RCACHEDIR
@@ -24,7 +22,6 @@ else
 	REDIRECT='>/dev/null'
 fi
 
-v4files=false
 while :; do
 	case $1 in
 	-keysalt)
@@ -43,13 +40,6 @@ while :; do
 			break
 		fi
 		;;
-	-v4files)
-		if [ "`whoami`" != "root" ]; then
-			echo "You must be root to use -v4files!" 1>&2
-			exit 1
-		fi
-		v4files=true
-		;;
 	*)
 		break
 		;;
@@ -63,12 +53,6 @@ if [ $# -gt 1 ]; then
 elif [ $# = 1 ]; then
 	TOP=$1
 	export TOP
-fi
-
-# fixup the system config files
-if $v4files; then
-	$SAVE_FILES || exit 1
-	$FIX_CONF_FILES || exit 1
 fi
 
 # create a fresh db
@@ -97,11 +81,12 @@ if { [catch {
 	source $env(STOP)/testing/tcl/util.t
 	set r $env(REALM)
 	set q $env(QUALNAME)
-	puts stdout [ovsec_kadm_init $env(SRVTCL) mrroot null $r \
-		$OVSEC_KADM_STRUCT_VERSION $OVSEC_KADM_API_VERSION_1 server_handle]
-	puts stdout [ovsec_kadm_create_principal $server_handle \
-		[simple_principal host/$q@$r] {OVSEC_KADM_PRINCIPAL} notathena]
-	puts stdout [ovsec_kadm_destroy $server_handle]
+	puts stdout [kadm5_init $env(SRVTCL) mrroot null \
+		[config_params {KADM5_CONFIG_REALM} $r] \
+		$KADM5_STRUCT_VERSION $KADM5_API_VERSION_3 server_handle]
+	puts stdout [kadm5_create_principal $server_handle \
+		[simple_principal host/$q@$r] {KADM5_PRINCIPAL} notathena]
+	puts stdout [kadm5_destroy $server_handle]
 } err]} {
 	puts stderr "initialization error: $err"
 	exit 1
@@ -139,82 +124,38 @@ timewait_s=300
 
 ovadm_args=-W
 
-while true; do
-	rm -f $adm_start_file
+rm -f $adm_start_file
 
-	(sleep 1; cd $TOP/server; ./kadmind $ovadm_args; \
-		touch $adm_start_file) < /dev/null > $usrtmp/kadm-log.$USER 2>&1 &
+(sleep 1; cd $TOP/server; ./kadmind $ovadm_args; \
+	touch $adm_start_file) < /dev/null > $usrtmp/kadm-log.$USER 2>&1 &
 
-	# wait until they start
+# wait until they start
 
-	while [ $sofar_s -le $max_s ]; do
-		if $VERBOSE; then
-			echo "Sleeping for $s seconds to allow servers" \
-				"to start..."
-		fi
+while [ $sofar_s -le $max_s ]; do
+	if $VERBOSE; then
+		echo "Sleeping for $s seconds to allow servers" \
+			"to start..."
+	fi
 
-		sofar_s=`expr $sofar_s + $s`
+	sofar_s=`expr $sofar_s + $s`
 
-		sleep $s
+	sleep $s
 
-		if [ -f $adm_start_file -a -f $kdc_start_file ]; then
-			break
-		fi
-
-	done
-
-	if [ $sofar_s -le $max_s ]; then
-		if $VERBOSE; then
-			LOG_USER='log_user 1'
-		else
-			LOG_USER='log_user 0'
-		fi
-		if $EXPECT <<EOF
-		$LOG_USER
-#		spawn telnet localhost 1751
-# Connect to 127.0.0.1 explicitly, so failure to connect to ::1 will not
-# cause bogus errors.
-		spawn telnet 127.0.0.1 1751
-		expect {
-			"Connection refused" {
-				close
-				wait
-				exit 1
-			}
-			"Connected" {
-				send "close\n"
-				close
-				wait
-				exit 0
-			}
-			default {
-				catch {close}
-				wait
-				exit 1
-			}
-		}
-EOF
-		then
-			rm -f $kdc_start_file $adm_start_file
-			break
-		else
-			if $VERBOSE; then
-				echo "Could not connect to Admin server;" \
-					"attempting restart ($sofar_s" \
-					"seconds so far)."
-			fi
-			max_s=$timewait_s
-			continue
-		fi
-	else
-		echo "Admin server or KDC failed to start after $sofar_s" \
-			"seconds." 1>&2
-		if [ ! -f $adm_start_file ]; then
-		    echo "  No admin server start file $adm_start_file." 1>&2
-		fi
-		if [ ! -f $kdc_start_file ]; then
-		    echo "  No KDC start file $adm_start_file." 1>&2
-		fi
-		exit 1
+	if [ -f $adm_start_file -a -f $kdc_start_file ]; then
+		break
 	fi
 done
+
+if [ $sofar_s -gt $max_s ]; then
+	echo "Admin server or KDC failed to start after $sofar_s" \
+		"seconds." 1>&2
+	if [ ! -f $adm_start_file ]; then
+	    echo "  No admin server start file $adm_start_file." 1>&2
+	fi
+	if [ ! -f $kdc_start_file ]; then
+	    echo "  No KDC start file $adm_start_file." 1>&2
+	fi
+	exit 1
+fi
+
+rm -f $kdc_start_file $adm_start_file

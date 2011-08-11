@@ -13,8 +13,9 @@
      <B>kinit</B>
           [<B>-V</B>] [<B>-l</B> <I>lifetime</I>] [<B>-s</B> <I>start</I>_<I>time</I>] [<B>-r</B> <I>renewable</I>_<I>life</I>]
           [<B>-p</B> | <B>-P</B>] [<B>-f</B> | <B>-F</B>] [<B>-a</B>] [<B>-A</B>] [<B>-C</B>] [<B>-E</B>] [<B>-v</B>] [<B>-R</B>] [<B>-k</B>
-          [<B>-t</B> <I>keytab</I>_<I>file</I>]] [<B>-c</B> <I>cache</I>_<I>name</I>] [<B>-S</B> <I>service</I>_<I>name</I>][<B>-T</B>
-          <I>armor</I>_<I>ccache</I>] [<B>-X</B> <I>attribute</I>[=<I>value</I>]] [<I>principal</I>]
+          [<B>-t</B> <I>keytab</I>_<I>file</I>]] [<B>-c</B> <I>cache</I>_<I>name</I>] [<B>-n</B>] [<B>-S</B>
+          <I>service</I>_<I>name</I>][<B>-T</B> <I>armor</I>_<I>ccache</I>] [<B>-X</B> <I>attribute</I>[=<I>value</I>]]
+          [<I>principal</I>]
 
 
 </PRE>
@@ -62,6 +63,7 @@
      -<B>F</B>   do not request forwardable tickets.
 
      -<B>p</B>   request proxiable tickets.
+
      -<B>P</B>   do not request proxiable tickets.
 
      -<B>a</B>   request tickets with the local address[es].
@@ -88,12 +90,31 @@
           option; otherwise the default name and location will be
           used.
 
+     <B>-n</B>   Requests anonymous processing.  Two types of  anonymous
+          principals  are  supported.   For  fully anonymous Ker-
+          beros,  configure  pkinit  on  the  KDC  and  configure
+          <I>pkinit</I>_<I>anchors</I> in the client's krb5.conf.  Then use the
+          <B>-n</B> option with a principal of the form @<I>REALM</I> (an empty
+          principal  name  followed  by  the  at-sign and a realm
+          name).  If permitted by the KDC,  an  anonymous  ticket
+          will  be  returned.  A second form of anonymous tickets
+          is supported;  these  realm-exposed  tickets  hide  the
+          identity of the client but not the client's realm.  For
+          this mode, use <B>kinit</B> <B>-n</B> with a normal  principal  name.
+          If  supported by the KDC, the principal (but not realm)
+          will be replaced by the  anonymous  principal.   As  of
+          release  1.8,  the MIT Kerberos KDC only supports fully
+          anonymous operation.
+
      <B>-T</B> <I>armor</I>_<I>ccache</I>
           Specifies the name of a credential cache  that  already
-          contains  a  ticket.  This ccache will be used to armor
-          the request.   Ideally,  an  attacker  should  have  to
-          attack both the armor ticket and the key of the princi-
-          pal.
+          contains  a  ticket.   If  supported  by  the KDC, This
+          ccache will be used to armor the  request  so  that  an
+          attacker  would  have to know both the key of the armor
+          ticket and the key of the principal used for  authenti-
+          cation  in  order  to attack the request. Armoring also
+          makes sure that  the  response  from  the  KDC  is  not
+          modified in transit.
 
      <B>-c</B> <I>cache</I>_<I>name</I>
           use <I>cache</I>_<I>name</I> as the Kerberos 5  credentials  (ticket)
@@ -113,9 +134,9 @@
           specify a pre-authentication attribute and value to  be
           passed  to  pre-authentication plugins.  The acceptable
           <I>attribute</I> and <I>value</I> values vary from pre-authentication
-          plugin   to  plugin.   This  option  may  be  specified
-          multiple times to specify multiple attributes.   If  no
-          <I>value</I> is specified, it is assumed to be "yes".
+          plugin  to plugin.  This option may be specified multi-
+          ple times to specify multiple attributes.  If no  <I>value</I>
+          is specified, it is assumed to be "yes".
 
           The following attributes are recognized by the OpenSSL pkinit
           pre-authentication mechanism:
@@ -149,27 +170,6 @@
 </PRE>
 <H2>SEE ALSO</H2><PRE>
      <B>klist(1)</B>, <B>kdestroy(1)</B>, <B>kerberos(1)</B>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 </PRE>

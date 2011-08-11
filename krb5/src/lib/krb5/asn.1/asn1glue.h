@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * lib/krb5/asn.1/asn1glue.h
  *
@@ -40,7 +40,6 @@
 #define KRB5_APOptions2krb5_apoptions(val, err) KRB5_TicketFlags2krb5_flags((struct type_KRB5_APOptions *) (val), err)
 
 /* to keep lint happy */
-#define xbcopy(src,dst,size) memcpy((char *)(dst), (char *)(src), size)
 #define xmalloc(n) malloc((unsigned) (n))
 #define xcalloc(n,s) calloc((unsigned)(n), (unsigned)(s))
 

@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 2007, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
@@ -29,8 +29,6 @@
 #ifndef _WIN32
 #include <unistd.h>
 #endif
-
-static const gss_OID_desc spnego_oid = { 6, "\053\006\001\005\005\002" };
 
 /* The mapping table is 0-based, but let's export codes that are
    1-based, keeping 0 for errors or unknown errors.
@@ -217,18 +215,6 @@ OM_uint32 gssint_mecherrmap_map(OM_uint32 minor, const gss_OID_desc * oid)
         /* There's a theoretical infinite loop risk here, if we fill
            in 2**32 values.  Also, returning 0 has a special
            meaning.  */
-
-        /* The concept of fake error codes is fundamentally flawed 
-           because they are meaningless to the caller.  Let's at
-           least not do this for SPNEGO since it was likely some other
-           mechanism which shouldn't be remapped with SPNEGO.  */
-        if (oid->length == spnego_oid.length &&
-            (memcmp(oid->elements, spnego_oid.elements, spnego_oid.length) == 0))
-        {
-            k5_mutex_unlock(&mutex);
-            return minor;
-        }
-
         do {
             next_fake++;
             new_status = next_fake;

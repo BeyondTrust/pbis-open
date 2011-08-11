@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 1993 by OpenVision Technologies, Inc.
  *
@@ -24,7 +24,7 @@
 #include "gssapiP_krb5.h"
 
 /*
- * $Id: delete_sec_context.c 21778 2009-01-22 23:21:11Z tlyu $
+ * $Id: delete_sec_context.c 23457 2009-12-08 00:04:48Z tlyu $
  */
 
 OM_uint32
@@ -82,19 +82,19 @@ krb5_gss_delete_sec_context(minor_status, context_handle, output_token)
         g_order_free(&(ctx->seqstate));
 
     if (ctx->enc)
-        krb5_free_keyblock(context, ctx->enc);
+        krb5_k_free_key(context, ctx->enc);
 
     if (ctx->seq)
-        krb5_free_keyblock(context, ctx->seq);
+        krb5_k_free_key(context, ctx->seq);
 
     if (ctx->here)
         kg_release_name(context, 0, &ctx->here);
     if (ctx->there)
         kg_release_name(context, 0, &ctx->there);
     if (ctx->subkey)
-        krb5_free_keyblock(context, ctx->subkey);
+        krb5_k_free_key(context, ctx->subkey);
     if (ctx->acceptor_subkey)
-        krb5_free_keyblock(context, ctx->acceptor_subkey);
+        krb5_k_free_key(context, ctx->acceptor_subkey);
 
     if (ctx->auth_context) {
         if (ctx->cred_rcache)

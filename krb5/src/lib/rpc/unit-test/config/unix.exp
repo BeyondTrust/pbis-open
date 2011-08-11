@@ -1,5 +1,5 @@
 #
-# $Id: unix.exp 22022 2009-02-18 18:19:18Z tlyu $
+# $Id: unix.exp 21895 2009-02-05 19:02:29Z epeisach $
 #
 
 set kill /bin/kill

@@ -1,3 +1,4 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 #include <kadm5/admin.h>
 #include <com_err.h>
 #include <stdio.h>
@@ -9,34 +10,39 @@
 #include <kadm5/client_internal.h>
 #include <string.h>
 
-#define	TEST_NUM    25
+#define TEST_NUM    25
 
 int main()
 {
-     ovsec_kadm_ret_t ret;
-     char   *cp;
-     int    x;
-     void *server_handle;
-     kadm5_server_handle_t handle;
+    kadm5_ret_t ret;
+    char   *cp;
+    int    x;
+    void *server_handle;
+    kadm5_server_handle_t handle;
+    krb5_context context;
 
-     for(x = 0; x < TEST_NUM; x++) {
-	ret = ovsec_kadm_init("admin", "admin", "ovsec_adm/admin", 0,
-			      OVSEC_KADM_STRUCT_VERSION,
-			      OVSEC_KADM_API_VERSION_1, NULL,
-			      &server_handle);
-	if(ret != OVSEC_KADM_OK) {
-	    com_err("test", ret, "init");
-	    exit(2);
-	}
-	handle = (kadm5_server_handle_t) server_handle;
-	cp = (char *) strdup(((char *) (strchr(handle->cache_name, ':')) + 1));
-	ovsec_kadm_destroy(server_handle);
-	if(access(cp, F_OK) == 0) {
-	    puts("ticket cache not destroyed");
-	    exit(2);
-	}
-	free(cp);
-     }
-     exit(0);
+    ret = kadm5_init_krb5_context(&context);
+    if (ret != 0) {
+        com_err("test", ret, "context init");
+        exit(2);
+    }
+    for(x = 0; x < TEST_NUM; x++) {
+        ret = kadm5_init(context, "admin", "admin", KADM5_ADMIN_SERVICE, 0,
+                         KADM5_STRUCT_VERSION, KADM5_API_VERSION_3, NULL,
+                         &server_handle);
+        if(ret != KADM5_OK) {
+            com_err("test", ret, "init");
+            exit(2);
+        }
+        handle = (kadm5_server_handle_t) server_handle;
+        cp = strdup(strchr(handle->cache_name, ':') + 1);
+        kadm5_destroy(server_handle);
+        if(access(cp, F_OK) == 0) {
+            puts("ticket cache not destroyed");
+            exit(2);
+        }
+        free(cp);
+    }
+    krb5_free_context(context);
+    exit(0);
 }
-

@@ -456,50 +456,6 @@ if test $krb5_cv_inet6 = yes || test "$krb5_cv_inet6_with_dinet6" = yes; then
 fi
 ])dnl
 dnl
-dnl Generic File existence tests
-dnl 
-dnl K5_AC_CHECK_FILE(FILE, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
-dnl
-AC_DEFUN(K5_AC_CHECK_FILE,
-[AC_REQUIRE([AC_PROG_CC])dnl
-dnl Do the transliteration at runtime so arg 1 can be a shell variable.
-ac_safe=`echo "$1" | sed 'y%./+-%__p_%'`
-AC_MSG_CHECKING([for $1])
-AC_CACHE_VAL(ac_cv_file_$ac_safe,
-[if test "$cross_compiling" = yes; then
-  errprint(__file__:__line__: warning: Cannot check for file existence when cross compiling
-)dnl
-  AC_MSG_ERROR(Cannot check for file existence when cross compiling)
-else
-  if test -r $1; then
-    eval "ac_cv_file_$ac_safe=yes"
-  else
-    eval "ac_cv_file_$ac_safe=no"
-  fi
-fi])dnl
-if eval "test \"`echo '$ac_cv_file_'$ac_safe`\" = yes"; then
-  AC_MSG_RESULT(yes)
-  ifelse([$2], , :, [$2])
-else
-  AC_MSG_RESULT(no)
-ifelse([$3], , , [$3
-np])dnl
-fi
-])
-dnl
-dnl K5_AC_CHECK_FILES(FILE... [, ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]])
-dnl
-AC_DEFUN(K5_AC_CHECK_FILES,
-[AC_REQUIRE([AC_PROG_CC])dnl
-for ac_file in $1
-do
-K5_AC_CHECK_FILE($ac_file,
-[changequote(, )dnl
-  ac_tr_file=HAVE`echo $ac_file | sed 'y%abcdefghijklmnopqrstuvwxyz./-%ABCDEFGHIJKLMNOPQRSTUVWXYZ___%'`
-changequote([, ])dnl
-  AC_DEFINE_UNQUOTED($ac_tr_file) $2], $3)dnl
-done
-])
 AC_DEFUN(KRB5_AC_CHECK_FOR_CFLAGS,[
 AC_BEFORE([$0],[AC_PROG_CC])
 AC_BEFORE([$0],[AC_PROG_CXX])
@@ -551,7 +507,7 @@ if test "$withval" = yes; then
   AC_DEFINE(CONFIG_SMALL,1,[Define to reduce code size even if it means more cpu usage])
 fi
 # -Wno-long-long, if needed, for k5-platform.h without inttypes.h etc.
-extra_gcc_warn_opts="-Wall -Wcast-qual -Wcast-align -Wshadow"
+extra_gcc_warn_opts="-Wall -Wcast-align -Wshadow"
 # -Wmissing-prototypes
 if test "$GCC" = yes ; then
   # Putting this here means we get -Os after -O2, which works.
@@ -664,7 +620,7 @@ else
     # works, but it also means that declaration-in-code warnings won't
     # be issued.
     # -v -fd -errwarn=E_DECLARATION_IN_CODE ...
-    WARN_CFLAGS="-errtags=yes -errwarn=E_BAD_PTR_INT_COMBINATION -errwarn=E_BAD_PTR_INT_COMB_ARG -errwarn=E_PTR_TO_VOID_IN_ARITHMETIC"
+    WARN_CFLAGS="-errtags=yes -errwarn=E_BAD_PTR_INT_COMBINATION,E_BAD_PTR_INT_COMB_ARG,E_PTR_TO_VOID_IN_ARITHMETIC,E_NO_IMPLICIT_DECL_ALLOWED,E_ATTRIBUTE_PARAM_UNDEFINED"
     WARN_CXXFLAGS="-errtags=yes +w +w2 -xport64"
   fi
 fi
@@ -738,31 +694,6 @@ AC_CHECK_MEMBER(struct sockaddr.sa_len,
   AC_DEFINE(HAVE_SA_LEN,1,[Define if struct sockaddr contains sa_len])
 ,,[#include <sys/types.h>
 #include <sys/socket.h>])])
-dnl
-dnl
-dnl CHECK_UTMP: check utmp structure and functions
-dnl
-AC_DEFUN(CHECK_UTMP,[
-AC_CHECK_MEMBERS([struct utmp.ut_pid, struct utmp.ut_type, struct utmp.ut_host, struct utmp.ut_exit],,,
-[#include <sys/types.h>
-#include <utmp.h>])
-
-# Define the names actually used in the krb5 code currently:
-if test $ac_cv_member_struct_utmp_ut_pid = no; then
-  AC_DEFINE(NO_UT_PID,1,[Define if ut_pid field not found])
-fi
-if test $ac_cv_member_struct_utmp_ut_type = no; then
-  AC_DEFINE(NO_UT_TYPE,1,[Define if ut_type field not found])
-fi
-if test $ac_cv_member_struct_utmp_ut_host = no; then
-  AC_DEFINE(NO_UT_HOST,1,[Define if ut_host field not found])
-fi
-if test $ac_cv_member_struct_utmp_ut_exit = no; then
-  AC_DEFINE(NO_UT_EXIT,1,[Define if ut_exit field not found])
-fi
-
-AC_CHECK_FUNCS(setutent setutxent updwtmp updwtmpx)
-])dnl
 dnl
 dnl WITH_NETLIB
 dnl 
@@ -1141,6 +1072,11 @@ if test "$ac_cv_prog_PERL" = "false"; then
 fi
 AC_SUBST(LIBLIST)
 AC_SUBST(LIBLINKS)
+AC_SUBST(PLUGIN)
+AC_SUBST(PLUGINLINK)
+AC_SUBST(PLUGININST)
+AC_SUBST(KDB5_PLUGIN_DEPLIBS)
+AC_SUBST(KDB5_PLUGIN_LIBS)
 AC_SUBST(MAKE_SHLIB_COMMAND)
 AC_SUBST(SHLIB_RPATH_FLAGS)
 AC_SUBST(SHLIB_EXPFLAGS)
@@ -1184,7 +1120,6 @@ AC_REQUIRE([KRB5_AC_NEED_LIBGEN])dnl
 AC_SUBST(CC_LINK)
 AC_SUBST(CXX_LINK)
 AC_SUBST(RPATH_FLAG)
-AC_SUBST(RPATH_TAIL)
 AC_SUBST(PROG_RPATH_FLAGS)
 AC_SUBST(DEPLIBEXT)])
 
@@ -1206,17 +1141,15 @@ dnl Parse configure options related to library building.
 AC_DEFUN(KRB5_LIB_AUX,
 [AC_REQUIRE([KRB5_LIB_PARAMS])dnl
 
-AC_ARG_ENABLE([static],,
-[if test "$enableval" != no; then
-  AC_MSG_ERROR([Sorry, static libraries do not work in this release.])
-fi])
-AC_ARG_ENABLE([shared], , 
-[if test "$enableval" != yes; then
-  AC_MSG_ERROR([Sorry, this release builds only shared libraries, cannot disable them.])
-fi])
+AC_ARG_ENABLE([static],,, [enable_static=no])
+AC_ARG_ENABLE([shared],,, [enable_shared=yes])
+
+if test "x$enable_static" = "x$enable_shared"; then
+  AC_MSG_ERROR([--enable-static must be specified with --disable-shared])
+fi
+
 AC_ARG_ENABLE([rpath],
-AC_HELP_STRING([--disable-rpath],[suppress run path flags in link lines]),
-[enable_rpath=$enableval],
+AC_HELP_STRING([--disable-rpath],[suppress run path flags in link lines]),,
 [enable_rpath=yes])
 
 if test "x$enable_rpath" != xyes ; then
@@ -1232,17 +1165,25 @@ fi
 
 DEPLIBEXT=$SHLIBEXT
 
-if test "$krb5_force_static" = "yes"; then
+if test "x$enable_static" = xyes; then
+	AC_MSG_NOTICE([using static libraries])
 	LIBLIST='lib$(LIBBASE)$(STLIBEXT)'
 	LIBLINKS='$(TOPLIBD)/lib$(LIBBASE)$(STLIBEXT)'
+	PLUGIN='libkrb5_$(LIBBASE)$(STLIBEXT)'
+	PLUGINLINK='$(TOPLIBD)/libkrb5_$(LIBBASE)$(STLIBEXT)'
+	PLUGININST=install-static
 	OBJLISTS=OBJS.ST
-	# This used to be install-static, but now we only follow this
-	# path for internal libraries we don't want installed, not for
-	# configure-time requests for installed static libraries.
-	LIBINSTLIST=
-#	CFLAGS="$CFLAGS -D_KDB5_STATIC_LINK"
+	LIBINSTLIST=install-static
+	DEPLIBEXT=$STLIBEXT
+	AC_DEFINE([STATIC_PLUGINS], 1, [Define for static plugin linkage])
 
-	AC_MSG_RESULT([Forcing static libraries.])
+	KDB5_PLUGIN_DEPLIBS='$(TOPLIBD)/libkrb5_db2$(DEPLIBEXT)'
+	KDB5_PLUGIN_LIBS='-lkrb5_db2'
+	if test "x$OPENLDAP_PLUGIN" = xyes; then
+		KDB5_PLUGIN_DEBLIBS=$KDB5_PLUGIN_DEPLIBS' $(TOPLIBD)/libkrb5_ldap$(DEPLIBEXT)'
+		KDB5_PLUGIN_LIBS=$KDB_LUGIN_LIBS' -lkrb5_ldap'
+	fi
+
 	# avoid duplicate rules generation for AIX and such
 	SHLIBEXT=.so-nobuild
 	SHLIBVEXT=.so.v-nobuild
@@ -1256,23 +1197,25 @@ else
 	fi
 	case "$SHLIBSEXT" in
 	.so.s-nobuild)
-		SHLIB_HAVE_MINOR_VERS=no
 		LIBLIST='lib$(LIBBASE)$(SHLIBEXT)'
 		LIBLINKS='$(TOPLIBD)/lib$(LIBBASE)$(SHLIBEXT) $(TOPLIBD)/lib$(LIBBASE)$(SHLIBVEXT)'
 		LIBINSTLIST="install-shared"
 		;;
 	*)
-		SHLIB_HAVE_MINOR_VERS=yes
 		LIBLIST='lib$(LIBBASE)$(SHLIBEXT) lib$(LIBBASE)$(SHLIBSEXT)'
 		LIBLINKS='$(TOPLIBD)/lib$(LIBBASE)$(SHLIBEXT) $(TOPLIBD)/lib$(LIBBASE)$(SHLIBVEXT) $(TOPLIBD)/lib$(LIBBASE)$(SHLIBSEXT)'
 		LIBINSTLIST="install-shlib-soname"
 		;;
 	esac
 	OBJLISTS="OBJS.SH"
+	PLUGIN='$(LIBBASE)$(DYNOBJEXT)'
+	PLUGINLINK=
+	PLUGININST=install-plugin
+	KDB5_PLUGIN_DEPLIBS=
+	KDB5_PLUGIN_LIBS=
 fi
 CC_LINK="$CC_LINK_SHARED"
 CXX_LINK="$CXX_LINK_SHARED"
-AC_SUBST(SHLIB_HAVE_MINOR_VERS)
 
 if test -z "$LIBLIST"; then
 	AC_MSG_ERROR([must enable one of shared or static libraries])
@@ -1361,18 +1304,6 @@ AC_DEFUN(AC_LIBRARY_NET, [
 
 _KRB5_AC_CHECK_RES_FUNCS(res_ninit res_nclose res_ndestroy res_nsearch dnl
 ns_initparse ns_name_uncompress dn_skipname res_search)
-AC_MSG_CHECKING(whether res_ninit works)
-if test $krb5_cv_func_res_ninit = yes; then
-AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <resolv.h>
-int main(void)
-{
-	struct __res_state statbuf;
-	memset(&statbuf, 0, sizeof(statbuf));
-	res_ninit(&statbuf);
-	return 0;
-}]])], [AC_MSG_RESULT(yes)
-		AC_DEFINE(HAVE_WORKING_RES_NINIT, 1, [Define if res_ninit does not crash the system])], [AC_MSG_RESULT(no)], [AC_MSG_RESULT(no)])
-fi
     if test $krb5_cv_func_res_nsearch = no \
       && test $krb5_cv_func_res_search = no; then
 	# Attempt to link with res_search(), in case it's not prototyped.
@@ -1716,10 +1647,8 @@ dnl KRB5_AC_PRAGMA_WEAK_REF
 AC_DEFUN([KRB5_AC_PRAGMA_WEAK_REF],
 [AC_CACHE_CHECK([whether pragma weak references are supported],
 krb5_cv_pragma_weak_ref,
-[AC_TRY_LINK([
-#include <pthread.h>
-#pragma weak pthread_create
-],[if (&pthread_create != 0) return 0;],
+[AC_TRY_LINK([#pragma weak flurbl
+extern int flurbl(void);],[if (&flurbl != 0) return flurbl();],
 krb5_cv_pragma_weak_ref=yes,krb5_cv_pragma_weak_ref=no)])
 if test $krb5_cv_pragma_weak_ref = yes ; then
   AC_DEFINE(HAVE_PRAGMA_WEAK_REF,1,[Define if #pragma weak references work])
@@ -1727,18 +1656,6 @@ fi])
 dnl
 dnl
 m4_include(config/ac-archive/acx_pthread.m4)
-#
-# KRB5_AC_LIBUTIL
-#
-# Check for libutil, for NetBSD, et al.; needed for openpty() and
-# logwtmp() on some platforms.
-#
-AC_DEFUN([KRB5_AC_LIBUTIL],
-	[AC_CHECK_LIB(util, main,
-		[AC_DEFINE(HAVE_LIBUTIL,1,[Define if util library is available with openpty, logwtmp, etc])
-  UTIL_LIB=-lutil])dnl
-AC_SUBST(UTIL_LIB)
-])
 dnl
 dnl
 dnl

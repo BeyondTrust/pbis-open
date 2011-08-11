@@ -1,3 +1,4 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * lib/krb5/os/os-proto.h
  *
@@ -8,7 +9,7 @@
  *   require a specific license from the United States Government.
  *   It is the responsibility of any person or organization contemplating
  *   export to obtain such a license before exporting.
- * 
+ *
  * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
  * distribute this software and its documentation for any purpose and
  * without fee is hereby granted, provided that the above copyright
@@ -22,7 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- * 
+ *
  *
  * LIBOS internal function prototypes.
  */
@@ -31,27 +32,24 @@
 #define KRB5_LIBOS_INT_PROTO__
 
 struct addrlist;
-krb5_error_code krb5_locate_kdc
-    (krb5_context, const krb5_data *, struct addrlist *, int, int, int);
+krb5_error_code krb5_locate_kdc(krb5_context, const krb5_data *,
+                                struct addrlist *, int, int, int);
 
 #ifdef HAVE_NETINET_IN_H
-krb5_error_code krb5_unpack_full_ipaddr
-	      (krb5_context,
-	       const krb5_address *,
-	       krb5_int32 *,
-	       krb5_int16 *);
+krb5_error_code krb5_unpack_full_ipaddr(krb5_context,
+                                        const krb5_address *,
+                                        krb5_int32 *,
+                                        krb5_int16 *);
 
-krb5_error_code krb5_make_full_ipaddr
-              (krb5_context,
-	       krb5_int32,
-	       int,			/* unsigned short promotes to signed
-					   int */
-	       krb5_address **);
+krb5_error_code krb5_make_full_ipaddr(krb5_context,
+                                      krb5_int32,
+                                      int,   /* unsigned short promotes to signed int */
+                                      krb5_address **);
 
 #endif /* HAVE_NETINET_IN_H */
 
-krb5_error_code krb5_try_realm_txt_rr(const char *, const char *, 
-				      char **realm);
+krb5_error_code krb5_try_realm_txt_rr(const char *, const char *,
+                                      char **realm);
 
 /* Obsolete interface - leave prototype here until code removed */
 krb5_error_code krb5_secure_config_files(krb5_context ctx);
@@ -61,6 +59,18 @@ void krb5int_debug_fprint (const char *fmt, ...);
 int _krb5_use_dns_realm (krb5_context);
 int _krb5_use_dns_kdc (krb5_context);
 int _krb5_conf_boolean (const char *);
+
+krb5_error_code krb5int_sendto(krb5_context context, const krb5_data *message,
+                               const struct addrlist *addrs,
+                               struct sendto_callback_info* callback_info,
+                               krb5_data *reply, struct sockaddr *localaddr,
+                               socklen_t *localaddrlen,
+                               struct sockaddr *remoteaddr, socklen_t *remoteaddrlen,
+                               int *addr_used,
+                               int (*msg_handler)(krb5_context, const krb5_data *, void *),
+                               void *msg_handler_data);
+
+krb5_error_code krb5int_get_fq_local_hostname(char *, size_t);
 
 /* The io vector is *not* const here, unlike writev()!  */
 int krb5int_net_writev (krb5_context, int, sg_buf *, int);

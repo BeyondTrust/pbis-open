@@ -1,7 +1,5 @@
 datadir=@datadir@
 
-thisconfigdir=.
-myfulldir=.
 mydir=.
 # Don't build sample by default, and definitely don't install them
 # for production use:
@@ -9,18 +7,13 @@ mydir=.
 #	plugins/preauth/wpse
 #	plugins/preauth/cksum_body
 #	plugins/authdata/greet
-# We moved to building only client side code because of issues buildng under AIX. 
-# The proper fixed is to have a configure option to be build only client side bits.
-#SUBDIRS=util include lib kdc kadmin @ldap_plugin_dir@ slave clients \
-#	plugins/kdb/db2 \
-#	plugins/preauth/pkinit \
-#	plugins/preauth/encrypted_challenge \
-#	appl tests \
-#	config-files gen-manpages
-SUBDIRS_all=util include lib kadmin/ktutil @ldap_plugin_dir@ clients \
-	plugins/preauth/pkinit config-files gen-manpages
-SUBDIRS_includes_only=util/support util/et util/profile include
-SUBDIRS=$(SUBDIRS_@SUBDIRS_TYPE@)
+SUBDIRS=util include lib \
+	@ldap_plugin_dir@ \
+	plugins/kdb/db2 \
+	plugins/preauth/pkinit \
+	plugins/preauth/encrypted_challenge \
+	kdc kadmin slave clients appl tests \
+	config-files gen-manpages
 BUILDTOP=$(REL)$(C)
 LOCALINCLUDES = -I$(srcdir) 
 
@@ -44,19 +37,13 @@ update-autoconf-h:
 
 ##DOS##!if 0
 # This makefile doesn't use lib.in, but we still need shlib.conf here.
-config.status: $(SRCTOP)/config/shlib.conf
+config.status: $(top_srcdir)/config/shlib.conf
 ##DOS##!endif
 
 all-windows:: maybe-awk Makefile-windows
 	@echo Making autoconf.h in include
 	cd include
 	$(MAKE) -$(MFLAGS) autoconf.h
-
-	@echo Making in ccapi
-	cd ..\ccapi
-	cd
-	$(MAKE) -$(MFLAGS)
-
 	@echo Making in util
 	cd ..\util
 	$(MAKE) -$(MFLAGS)
@@ -66,6 +53,9 @@ all-windows:: maybe-awk Makefile-windows
 	@echo Making in lib
 	cd ..\lib
 	$(MAKE) -$(MFLAGS) 
+	@echo Making in ccapi
+	cd ..\ccapi
+	$(MAKE) -$(MFLAGS)
 	@echo Making in windows
 	cd ..\windows
 	$(MAKE) -$(MFLAGS) 
@@ -122,6 +112,7 @@ fake-install:
 	(w=`pwd`; cd util && $(MAKE) install DESTDIR="$$w/util/fakedest")
 	(w=`pwd`; cd lib && $(MAKE) install DESTDIR="$$w/util/fakedest")
 	(w=`pwd`; cd plugins/kdb/db2 && $(MAKE) install DESTDIR="$$w/util/fakedest")
+	(w=`pwd`; cd plugins/preauth/encrypted_challenge && $(MAKE) install DESTDIR="$$w/util/fakedest")
 	if test -r plugins/preauth/pkinit/Makefile; then \
 	  (w=`pwd`; cd plugins/preauth/pkinit && $(MAKE) install DESTDIR="$$w/util/fakedest"); \
 	fi
@@ -195,21 +186,23 @@ WINMAKEFILES=Makefile \
 	ccapi\Makefile \
 	ccapi\lib\win\Makefile \
 	ccapi\server\win\Makefile \
-    ccapi\test\Makefile \
+	ccapi\test\Makefile \
 	clients\Makefile clients\kdestroy\Makefile \
 	clients\kinit\Makefile clients\klist\Makefile \
 	clients\kpasswd\Makefile clients\kvno\Makefile \
 	clients\kcpytkt\Makefile clients\kdeltkt\Makefile \
 	include\Makefile \
 	lib\Makefile lib\crypto\Makefile \
-	lib\crypto\crc32\Makefile lib\crypto\des\Makefile \
-	lib\crypto\dk\Makefile lib\crypto\enc_provider\Makefile \
-	lib\crypto\hash_provider\Makefile \
-	lib\crypto\keyhash_provider\Makefile \
-	lib\crypto\raw\Makefile lib\crypto\old\Makefile \
-	lib\crypto\sha1\Makefile lib\crypto\arcfour\Makefile \
-	lib\crypto\md4\Makefile lib\crypto\md5\Makefile \
-	lib\crypto\yarrow\Makefile lib\crypto\aes\Makefile \
+	lib\crypto\krb\crc32\Makefile lib\crypto\@CRYPTO_IMPL@\des\Makefile \
+	lib\crypto\krb\dk\Makefile lib\crypto\@CRYPTO_IMPL@\enc_provider\Makefile \
+	lib\crypto\@CRYPTO_IMPL@\hash_provider\Makefile \
+	lib\crypto\krb\keyhash_provider\Makefile \
+	lib\crypto\krb\prf\Makefile lib\crypto\krb\rand2key\Makefile \
+	lib\crypto\krb\raw\Makefile lib\crypto\krb\old\Makefile \
+	lib\crypto\@CRYPTO_IMPL@\sha1\Makefile lib\crypto\@CRYPTO_IMPL@\arcfour\Makefile \
+	lib\crypto\@CRYPTO_IMPL@\md4\Makefile lib\crypto\@CRYPTO_IMPL@\md5\Makefile \
+	lib\crypto\krb\yarrow\Makefile lib\crypto\@CRYPTO_IMPL@\aes\Makefile \
+	lib\crypto\crypto_tests \
 	lib\gssapi\Makefile lib\gssapi\generic\Makefile \
 	lib\gssapi\krb5\Makefile lib\gssapi\mechglue\Makefile \
 	lib\gssapi\spnego\Makefile \
@@ -221,6 +214,7 @@ WINMAKEFILES=Makefile \
 	lib\krb5\krb\Makefile \
 	lib\krb5\os\Makefile lib\krb5\posix\Makefile \
 	lib\krb5\rcache\Makefile \
+	lib\krb5\unicode\Makefile \
 	util\Makefile \
 	util\et\Makefile util\profile\Makefile \
 	util\support\Makefile \
@@ -268,39 +262,45 @@ WINMAKEFILES=Makefile \
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##lib\crypto\Makefile: lib\crypto\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##lib\crypto\crc32\Makefile: lib\crypto\crc32\Makefile.in $(MKFDEP)
+##DOS##lib\crypto\krb\crc32\Makefile: lib\crypto\krb\crc32\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##lib\crypto\des\Makefile: lib\crypto\des\Makefile.in $(MKFDEP)
+##DOS##lib\crypto\@CRYPTO_IMPL@\des\Makefile: lib\crypto\@CRYPTO_IMPL@\des\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##lib\crypto\dk\Makefile: lib\crypto\dk\Makefile.in $(MKFDEP)
+##DOS##lib\crypto\krb\dk\Makefile: lib\crypto\krb\dk\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##lib\crypto\enc_provider\Makefile: lib\crypto\enc_provider\Makefile.in $(MKFDEP)
+##DOS##lib\crypto\@CRYPTO_IMPL@\enc_provider\Makefile: lib\crypto\@CRYPTO_IMPL@\enc_provider\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##lib\crypto\hash_provider\Makefile: lib\crypto\hash_provider\Makefile.in $(MKFDEP)
+##DOS##lib\crypto\@CRYPTO_IMPL@\hash_provider\Makefile: lib\crypto\@CRYPTO_IMPL@\hash_provider\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##lib\crypto\keyhash_provider\Makefile: lib\crypto\keyhash_provider\Makefile.in $(MKFDEP)
+##DOS##lib\crypto\krb\keyhash_provider\Makefile: lib\crypto\krb\keyhash_provider\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##lib\crypto\sha1\Makefile: lib\crypto\sha1\Makefile.in $(MKFDEP)
+##DOS##lib\crypto\@CRYPTO_IMPL@\sha1\Makefile: lib\crypto\@CRYPTO_IMPL@\sha1\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##lib\crypto\arcfour\Makefile: lib\crypto\arcfour\Makefile.in $(MKFDEP)
+##DOS##lib\crypto\@CRYPTO_IMPL@\arcfour\Makefile: lib\crypto\@CRYPTO_IMPL@\arcfour\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##lib\crypto\md4\Makefile: lib\crypto\md4\Makefile.in $(MKFDEP)
+##DOS##lib\crypto\@CRYPTO_IMPL@\md4\Makefile: lib\crypto\@CRYPTO_IMPL@\md4\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##lib\crypto\md5\Makefile: lib\crypto\md5\Makefile.in $(MKFDEP)
+##DOS##lib\crypto\@CRYPTO_IMPL@\md5\Makefile: lib\crypto\md5\@CRYPTO_IMPL@\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##lib\crypto\yarrow\Makefile: lib\crypto\yarrow\Makefile.in $(MKFDEP)
+##DOS##lib\crypto\krb\yarrow\Makefile: lib\crypto\krb\yarrow\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##lib\crypto\aes\Makefile: lib\crypto\aes\Makefile.in $(MKFDEP)
+##DOS##lib\crypto\@CRYPTO_IMPL@\aes\Makefile: lib\crypto\@CRYPTO_IMPL@\aes\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##lib\crypto\old\Makefile: lib\crypto\old\Makefile.in $(MKFDEP)
+##DOS##lib\crypto\krb\old\Makefile: lib\crypto\krb\old\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
-##DOS##lib\crypto\raw\Makefile: lib\crypto\raw\Makefile.in $(MKFDEP)
+##DOS##lib\crypto\krb\raw\Makefile: lib\crypto\krb\raw\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\crypto\krb\Makefile: lib\crypto\krb\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\crypto\@CRYPTO_IMPL@\Makefile: lib\crypto\@CRYPTO_IMPL@\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##lib\gssapi\Makefile: lib\gssapi\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##lib\gssapi\generic\Makefile: lib\gssapi\generic\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##lib\gssapi\mechglue\Makefile: lib\gssapi\mechglue\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\gssapi\spnego\Makefile: lib\gssapi\spnego\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##lib\gssapi\krb5\Makefile: lib\gssapi\krb5\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
@@ -323,6 +323,8 @@ WINMAKEFILES=Makefile \
 ##DOS##lib\krb5\posix\Makefile: lib\krb5\posix\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##lib\krb5\rcache\Makefile: lib\krb5\rcache\Makefile.in $(MKFDEP)
+##DOS##	$(WCONFIG) config < $@.in > $@
+##DOS##lib\krb5\unicode\Makefile: lib\krb5\unicode\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
 ##DOS##util\Makefile: util\Makefile.in $(MKFDEP)
 ##DOS##	$(WCONFIG) config < $@.in > $@
@@ -392,11 +394,15 @@ FILES= ./* \
 	clients/kpasswd/* clients/kcpytkt/* clients/kdeltkt/* \
 	config/* include/* include/kerberosIV/* \
 	include/krb5/* include/krb5/stock/* include/sys/* lib/* \
-	lib/crypto/* lib/crypto/crc32/* lib/crypto/des/* lib/crypto/dk/* \
-	lib/crypto/enc_provider/* lib/crypto/hash_provider/* \
-	lib/crypto/keyhash_provider/* lib/crypto/old/* lib/crypto/raw/* \
-	lib/crypto/sha1/* lib/crypto/arcfour/* lib/crypto/md4/* \
-	lib/crypto/md5/* lib/crypto/yarrow/* \
+	lib/crypto/* lib/crypto/krb/crc32/* lib/crypto/@CRYPTO_IMPL@/des/* lib/crypto/krb/dk/* \
+	lib/crypto/@CRYPTO_IMPL@/enc_provider/* lib/crypto/@CRYPTO_IMPL@/hash_provider/* \
+	lib/crypto/krb/keyhash_provider/* \
+	lib/crypto/krb/prf/* lib/crypto/krb/rand2key/* \
+	lib/crypto/krb/old/* lib/crypto/krb/raw/* \
+	lib/crypto/@CRYPTO_IMPL@/sha1/* lib/crypto/@CRYPTO_IMPL@/arcfour/* \
+	lib/crypto/@CRYPTO_IMPL@/md4/* \
+	lib/crypto/@CRYPTO_IMPL@/md5/* lib/crypto/krb/yarrow/* \
+	lib/crypto/@CRYPTO_IMPL@/* lib/crypto/krb/* lib/crypto/crypto_tests \
 	lib/gssapi/* lib/gssapi/generic/* lib/gssapi/krb5/* \
 	lib/gssapi/mechglue/* lib/gssapi/spnego/* \
 	lib/krb5/* lib/krb5/asn.1/* lib/krb5/krb/* \
@@ -431,6 +437,7 @@ GG  = lib/gssapi/generic/
 GK  = lib/gssapi/krb5/
 PR  = util/profile/
 CE  = util/et/
+CCL = ccapi/lib/
 
 ETOUT =	\
 	$(INC)asn1_err.h $(ET)asn1_err.c \
@@ -440,7 +447,8 @@ ETOUT =	\
 	$(INC)krb524_err.h $(ET)krb524_err.c \
 	$(PR)prof_err.h $(PR)prof_err.c \
 	$(GG)gssapi_err_generic.h $(GG)gssapi_err_generic.c \
-	$(GK)gssapi_err_krb5.h $(GK)gssapi_err_krb5.c
+	$(GK)gssapi_err_krb5.h $(GK)gssapi_err_krb5.c \
+	$(CCL)ccapi_err.h $(CCL)ccapi_err.c
 
 HOUT =	$(INC)krb5\krb5.h $(GG)gssapi.h $(PR)profile.h
 
@@ -501,6 +509,8 @@ $(GG)gssapi_err_generic.h: $(AH) $(GG)gssapi_err_generic.et
 	$(AWK) -f $(AH) outfile=$@ $(GG)gssapi_err_generic.et
 $(GK)gssapi_err_krb5.h: $(AH) $(GK)gssapi_err_krb5.et
 	$(AWK) -f $(AH) outfile=$@ $(GK)gssapi_err_krb5.et
+$(CCL)ccapi_err.h: $(AH) $(CCL)ccapi_err.et
+	$(AWK) -f $(AH) outfile=$@ $(CCL)ccapi_err.et
 $(CE)test1.h: $(AH) $(CE)test1.et
 	$(AWK) -f $(AH) outfile=$@ $(CE)test1.et
 $(CE)test2.h: $(AH) $(CE)test2.et
@@ -522,6 +532,8 @@ $(GG)gssapi_err_generic.c: $(AC) $(GG)gssapi_err_generic.et
 	$(AWK) -f $(AC) outfile=$@ $(GG)gssapi_err_generic.et
 $(GK)gssapi_err_krb5.c: $(AC) $(GK)gssapi_err_krb5.et
 	$(AWK) -f $(AC) outfile=$@ $(GK)gssapi_err_krb5.et
+$(CCL)ccapi_err.c: $(AC) $(CCL)ccapi_err.et
+	$(AWK) -f $(AC) outfile=$@ $(CCL)ccapi_err.et
 $(CE)test1.c: $(AC) $(CE)test1.et
 	$(AWK) -f $(AC) outfile=$@ $(CE)test1.et
 $(CE)test2.c: $(AC) $(CE)test2.et
@@ -603,8 +615,8 @@ install-unix::
 		$(DESTDIR)$(CLIENT_BINDIR)/krb5-config
 	$(INSTALL_DATA) $(srcdir)/krb5-config.M $(DESTDIR)$(CLIENT_MANDIR)/krb5-config.1
 
-krb5-config: $(srcdir)/krb5-config.in $(thisconfigdir)/config.status
-	cd $(thisconfigdir) && $(SHELL) config.status krb5-config
+krb5-config: $(srcdir)/krb5-config.in config.status
+	$(SHELL) config.status krb5-config
 
 # Test to ensure that krb5-config does not spit out things like
 # $(PURE) or $(LDFLAGS) in case someone changes config/shlib.conf
@@ -629,7 +641,7 @@ COV_ANALYSES=
 COV_TEMPDIR=	cov-temp
 # Sources modeling some functions or macros confusing Prevent.
 COV_MODELS=\
-	$(SRCTOP)/util/coverity-models/threads.c
+	$(top_srcdir)/util/coverity-models/threads.c
 
 # Depend on Makefiles to ensure that (in maintainer mode) the configure
 # scripts won't get rerun under cov-build.
@@ -641,3 +653,105 @@ coverity prevent cov: Makefiles
 	else \
 		echo "** Coverity Prevent analysis results not commit to Defect Manager"; \
 	fi
+
+FIND = find
+XARGS = xargs
+EMACS = emacs
+PYTHON = python
+
+INDENTDIRS = \
+	appl \
+	clients \
+	include \
+	kadmin \
+	kdc \
+	lib/apputils \
+	lib/crypto \
+	lib/gssapi \
+	lib/kadm5 \
+	lib/kdb \
+	lib/krb5 \
+	plugins \
+	prototype \
+	slave \
+	tests \
+	util
+
+BSDFILES = \
+	kadmin/cli/strftime.c \
+	kadmin/server/ipropd_svc.c \
+	kadmin/server/kadm_rpc_svc.c \
+	lib/apputils/daemon.c \
+	lib/kadm5/admin_xdr.h \
+	lib/kadm5/clnt/client_rpc.c \
+	lib/kadm5/kadm_rpc.h \
+	lib/kadm5/kadm_rpc_xdr.c \
+	lib/kadm5/srv/adb_xdr.c \
+	lib/krb5/krb/strftime.c \
+	lib/krb5/krb/strptime.c \
+	slave/kpropd_rpc.c \
+	util/support/mkstemp.c \
+	util/support/strlcpy.c \
+	util/windows/getopt.c \
+	util/windows/getopt.h \
+	util/windows/getopt_long.c
+
+OTHEREXCLUDES = \
+	include/iprop.h \
+	include/k5-platform.h \
+	include/gssrpc \
+	lib/apputils/dummy.c \
+	lib/crypto/builtin/aes \
+	lib/gssapi/generic/gssapiP_generic.h \
+	lib/gssapi/generic/gssapi_ext.h \
+	lib/gssapi/krb5/gssapiP_krb5.h \
+	lib/gssapi/mechglue \
+	lib/gssapi/spnego \
+	lib/krb5/krb/deltat.c \
+	lib/krb5/unicode \
+	plugins/kdb/db2/libdb2 \
+	plugins/kdb/db2/pol_xdr.c \
+	plugins/kdb/hdb/hdb.h \
+	plugins/kdb/hdb/hdb_asn1.h \
+	plugins/kdb/hdb/hdb_err.h \
+	plugins/kdb/hdb/windc_plugin.h \
+	plugins/kdb/ldap/libkdb_ldap/princ_xdr.c \
+	plugins/kdb/ldap/libkdb_ldap/princ_xdr.h \
+	plugins/preauth/pkinit/pkcs11.h \
+	plugins/preauth/pkinit/pkinit_accessor.h \
+	plugins/preauth/pkinit/pkinit_crypto.h \
+	plugins/preauth/pkinit/pkinit.h \
+	plugins/preauth/pkinit/pkinit_crypto_openssl.h \
+	tests/asn.1/ktest.h \
+	tests/asn.1/ktest_equal.h \
+	tests/asn.1/utility.h \
+	tests/gss-threads/gss-misc.c \
+	tests/gss-threads/gss-misc.h \
+	tests/hammer/kdc5_hammer.c \
+	util/et/com_err.h \
+	util/profile/prof_int.h \
+	util/profile/profile.hin \
+	util/profile/profile_tcl.c
+
+EXCLUDES = `for i in $(BSDFILES) $(OTHEREXCLUDES); do echo $$i; done | $(AWK) '{ print "-path", $$1, "-o" }'` -path /dev/null
+
+reindent::
+	(cd $(top_srcdir) && \
+	$(FIND) . \
+	\( -name '*.[ch]' -o -name '*.hin' -o -name '*.[ch].in' \) \
+	-print0 | $(XARGS) -0 $(EMACS) -q -batch \
+	-l util/krb5-c-style.el \
+	-l util/krb5-batch-reindent.el)
+
+mark-cstyle:: mark-cstyle-krb5 mark-cstyle-bsd
+
+mark-cstyle-krb5::
+	(cd $(top_srcdir) && \
+	$(FIND) $(INDENTDIRS) \( $(EXCLUDES) \) -prune -o \
+	-name '*.[ch]' \
+	-print0 | $(XARGS) -0 $(PYTHON) util/krb5-mark-cstyle.py \
+	--cstyle=krb5)
+
+mark-cstyle-bsd::
+	(cd $(top_srcdir) && $(FIND) $(BSDFILES) -print0 | $(XARGS) -0 \
+	$(PYTHON) util/krb5-mark-cstyle.py --cstyle=bsd)

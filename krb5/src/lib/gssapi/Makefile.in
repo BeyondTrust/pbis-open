@@ -1,15 +1,13 @@
-thisconfigdir=../..
-myfulldir=lib/gssapi
 mydir=lib/gssapi
 BUILDTOP=$(REL)..$(S)..
 SUBDIRS= generic krb5 spnego mechglue
 DEFS=-D_GSS_STATIC_LINK=1
 
 ##DOSLIBNAME=$(OUTPRE)gssapi.lib
-##DOSOBJFILELIST=@$(OUTPRE)mechglue.lst @$(OUTPRE)spnego.lst @$(OUTPRE)generic.lst @$(OUTPRE)krb5.lst @$(OUTPRE)gssapi.lst
-##DOSOBJFILEDEP=$(OUTPRE)mechglue.lst $(OUTPRE)spnego.lst $(OUTPRE)generic.lst $(OUTPRE)krb5.lst $(OUTPRE)gssapi.lst
+##DOSOBJFILELIST=@$(OUTPRE)mechglue.lst @$(OUTPRE)spnego.lst @$(OUTPRE)generic.lst @$(OUTPRE)krb5.lst # @$(OUTPRE)gssapi.lst
+##DOSOBJFILEDEP=$(OUTPRE)mechglue.lst $(OUTPRE)spnego.lst $(OUTPRE)generic.lst $(OUTPRE)krb5.lst # $(OUTPRE)gssapi.lst
 
-##DOSOBJFILE=$(OUTPRE)gssapi.lst
+###DOSOBJFILE=$(OUTPRE)gssapi.lst
 ##DOSLIBOBJS=$(OBJS)
 
 ##DOS##DLL_EXP_TYPE=GSS
@@ -56,7 +54,7 @@ merged-gssapi-header.h: $(EXPORTED_HEADERS)
 	cat $(EXPORTED_HEADERS) > merged.tmp
 	$(MV) merged.tmp merged-gssapi-header.h
 verify-calling-conventions-gssapi: merged-gssapi-header.h
-	$(PERL) -w $(SRCTOP)/util/def-check.pl merged-gssapi-header.h $(srcdir)/../gssapi32.def
+	$(PERL) -w $(top_srcdir)/util/def-check.pl merged-gssapi-header.h $(srcdir)/../gssapi32.def
 
 all-windows::
 	cd generic

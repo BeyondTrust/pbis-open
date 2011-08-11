@@ -360,6 +360,15 @@ but not recommended for use.
 
 @include support-enc.texinfo
 
+The string DEFAULT can be used to refer to the default set of types for
+the variable in question.  Types or families can be removed from the
+current list by prefixing them with a minus sign (``-'').  Types or
+families can be prefixed with a plus sign (``+'') for symmetry; it has
+the same meaning as just listing the type or family.  For example,
+``DEFAULT -des'' would be the default set of encryption types with DES
+types removed, and ``des3 DEFAULT'' would be the default set of
+encryption types with triple DES types moved to the front.
+
 While aes128-cts and aes256-cts are supported for all Kerberos
 operations, they are not supported by older versions of our GSSAPI
 implementation (krb5-1.3.1 and earlier).
@@ -447,8 +456,11 @@ key encryption.  The default value for this tag is
 @itemx allow_weak_crypto
 If this is set to 0 (for false), then weak encryption types will be
 filtered out of the previous three lists (as noted in @ref{Supported
-Encryption Types}).  The default value for this tag is true, but that
-default may change in the future.
+Encryption Types}).  The default value for this tag is false, which
+may cause authentication failures in existing Kerberos infrastructures
+that do not support strong crypto.  Users in affected environments
+should set this tag to true until their infrastructure adopts stronger
+ciphers.
 
 @itemx clockskew
 Sets the maximum allowable amount of clockskew in seconds that the
@@ -503,13 +515,6 @@ received.  DCE and Kerberos can share the cache, but some versions of
 DCE do not support the default cache as created by this version of
 Kerberos.  Use a value of 1 on DCE 1.0.3a systems, and a value of 2 on
 DCE 1.1 systems.  The default value is @value{DefaultCcacheType}.
-
-@ignore
-@itemx tkt_lifetime
-The default lifetime of a ticket.  The default is
-@value{DefaultTktLifetime}.  This is currently not supported by the
-code.
-@end ignore
 
 @itemx dns_lookup_kdc
 Indicate whether DNS SRV records should be used to locate the KDCs and
@@ -570,6 +575,11 @@ be tried if the first attempt fails.
 If this flag is set, then an attempt to get initial credentials will
 fail if the client machine does not have a keytab.  The default for the
 flag is @value{DefaultVerifyApReqNofail}.
+
+@itemx ticket_lifetime
+The value of this tag is the default lifetime for
+initial tickets.  The default value for the tag is
+@value{DefaultTktLifetime}.
 
 @itemx renew_lifetime
 The value of this tag is the default renewable lifetime for
@@ -670,21 +680,21 @@ tags may be specified in the realm's subsection:
 
 @table @b
 @itemx kdc
-The name of a host running a KDC for that realm.  An optional port
-number (separated from the hostname by a colon) may be included.  For
-your computer to be able to communicate with the KDC for each realm,
-this tag must be given a value in each realm subsection in the
-configuration file, or there must be DNS SRV records specifying the
-KDCs (see @ref{Using DNS}).
+The name or address of a host running a KDC for that realm.  An optional
+port number, separated from the hostname by a colon, may be included.
+If the name or address contains colons (for example, if it is an IPv6
+address), enclose it in square brackets to distinguish the colon from a
+port separator.  For your computer to be able to communicate with the
+KDC for each realm, this tag must be given a value in each realm
+subsection in the configuration file, or there must be DNS SRV records
+specifying the KDCs (see @ref{Using DNS}).
 
 @itemx master_kdc
 Identifies the master KDC(s).  Currently, this tag is used in only one
 case: If an attempt to get credentials fails because of an invalid
 password, the client software will attempt to contact the master KDC,
 in case the user's password has just been changed, and the updated
-database has not been propagated to the slave servers yet.  (We don't
-currently check whether the KDC from which the initial response came
-is on the master KDC list.  That may be fixed in the future.)
+database has not been propagated to the slave servers yet.
 
 @itemx database_module
 
@@ -1168,7 +1178,7 @@ the user's certificate and private key.
 @item PKCS11:[@b{module_name=}]@i{module-name}[@b{:slotid=}@i{slot-id}][@b{:token=}@i{token-label}][@b{:certid=}@i{cert-id}][@b{:certlabel=}@i{cert-label}]
 All keyword/values are optional.
 @i{module-name} specifies the location of a library implementing
-@code{PKCS #11}.  If a value is encountered with not keyword, it
+@code{PKCS #11}.  If a value is encountered with no keyword, it
 is assumed to be the @i{module-name}.  If no @i{module-name} is
 specified, the default is @code{opensc-pkcs11.so}. 
 @b{slotid=} and/or @b{token=} may be specified to force the use of a
@@ -2527,6 +2537,7 @@ passwords kept in the database.
 * Retrieving the List of Policies::  
 * Adding or Modifying Policies::  
 * Deleting Policies::           
+* Updating the History Key::
 @end menu
 
 @node Retrieving Policies, Retrieving the List of Policies, Policies, Policies
@@ -2646,7 +2657,7 @@ Sets the number of past keys kept for a principal to @i{number}. This option is 
 @noindent
 Note: The policies are created under realm container in the LDAP database.
 
-@node Deleting Policies,  , Adding or Modifying Policies, Policies
+@node Deleting Policies, Updating the History Key, Adding or Modifying Policies, Policies
 @subsection Deleting Policies
 
 To delete a policy, use the @code{kadmin} @code{delete_policy} command,
@@ -2672,6 +2683,31 @@ For example:
 Note that you must cancel the policy from all principals before deleting
 it.  The @code{delete_policy} command will fail if it is in use by any
 principals.
+
+@node Updating the History Key,  , Deleting Policies, Policies
+
+If a policy specifies a number of old keys kept of two or more, the
+stored old keys are encrypted in a history key, which is found in the
+key data of the kadmin/history principal.
+
+Currently there is no support for proper rollover of the history key,
+but you can change the history key (for example, to use a better
+encryption type) at the cost of invalidating currently stored old keys.
+To change the history key, run:
+
+@smallexample
+@group
+@b{kadmin:} change_password -randkey kadmin/history
+@end group
+@end smallexample
+
+This command will fail if you specify the @b{-keepold} flag.  Only one
+new history key will be created, even if you specify multiple key/salt
+combinations.
+
+In the future, we plan to migrate towards encrypting old keys in the
+master key instead of the history key, and implementing proper rollover
+support for stored old keys.
 
 @node Global Operations on the Kerberos Database, Global Operations on the Kerberos LDAP Database, Policies, Administrating the Kerberos Database
 @section Global Operations on the Kerberos Database

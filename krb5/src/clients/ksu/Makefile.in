@@ -1,5 +1,3 @@
-thisconfigdir=../..
-myfulldir=clients/ksu
 mydir=clients/ksu
 BUILDTOP=$(REL)..$(S)..
 DEFINES = -DGET_TGT_VIA_PASSWD -DPRINC_LOOK_AHEAD -DCMD_PATH='"/bin /local/bin"'
@@ -34,14 +32,10 @@ ksu: $(OBJS) $(KRB5_BASE_DEPLIBS)
 clean::
 	$(RM) ksu
 
-# LW: Enable installing as non-root user for package build scenarios
-#     by installing setuid as the current user.
 install::
 	-for f in ksu; do \
-	  ( $(INSTALL_SETUID) $$f \
-		$(DESTDIR)$(CLIENT_BINDIR)/`echo $$f|sed '$(transform)'` || \
-		$(INSTALL_SETUID_USER) $$f \
-                $(DESTDIR)$(CLIENT_BINDIR)/`echo $$f|sed '$(transform)'` ); \
+	  $(INSTALL_SETUID) $$f \
+		$(DESTDIR)$(CLIENT_BINDIR)/`echo $$f|sed '$(transform)'`; \
 	  $(INSTALL_DATA) $(srcdir)/$$f.M \
 		${DESTDIR}$(CLIENT_MANDIR)/`echo $$f|sed '$(transform)'`.1; \
 	done

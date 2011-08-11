@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 2000, 2002, 2003, 2007, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
@@ -107,7 +107,7 @@
 #include <assert.h>
 
 /*
- * $Id: init_sec_context.c 22255 2009-04-15 20:07:48Z tlyu $
+ * $Id: init_sec_context.c 24460 2010-10-15 21:42:25Z tlyu $
  */
 
 /* XXX This is for debugging only!!!  Should become a real bitfield
@@ -135,6 +135,7 @@ static krb5_error_code get_credentials(context, cred, server, now,
     k5_mutex_assert_locked(&cred->lock);
     memset(&in_creds, 0, sizeof(krb5_creds));
     memset(&evidence_creds, 0, sizeof(krb5_creds));
+    in_creds.client = in_creds.server = NULL;
 
     assert(cred->name != NULL);
 
@@ -151,8 +152,8 @@ static krb5_error_code get_credentials(context, cred, server, now,
         krb5_creds mcreds;
 
         flags |= KRB5_GC_CANONICALIZE |
-                 KRB5_GC_NO_STORE |
-                 KRB5_GC_CONSTRAINED_DELEGATION;
+            KRB5_GC_NO_STORE |
+            KRB5_GC_CONSTRAINED_DELEGATION;
 
         memset(&mcreds, 0, sizeof(mcreds));
 
@@ -233,9 +234,7 @@ struct gss_checksum_data {
     krb5_data checksum_data;
 };
 
-#ifdef CFX_EXERCISE
 #include "../../krb5/krb/auth_con.h"
-#endif
 static krb5_error_code KRB5_CALLCONV
 make_gss_checksum (krb5_context context, krb5_auth_context auth_context,
                    void *cksum_data, krb5_data **out)
@@ -246,6 +245,7 @@ make_gss_checksum (krb5_context context, krb5_auth_context auth_context,
     struct gss_checksum_data *data = cksum_data;
     krb5_data credmsg;
     unsigned int junk;
+    krb5_key send_subkey;
 
     data->checksum_data.data = 0;
     credmsg.data = 0;
@@ -261,13 +261,22 @@ make_gss_checksum (krb5_context context, krb5_auth_context auth_context,
 
         assert(data->cred->name != NULL);
 
+        /*
+         * RFC 4121 4.1.1 specifies forwarded credentials must be encrypted in
+         * the session key, but krb5_fwd_tgt_creds will use the send subkey if
+         * it's set in the auth context.  Null out the send subkey temporarily.
+         */
+        send_subkey = auth_context->send_subkey;
+        auth_context->send_subkey = NULL;
+
         code = krb5_fwd_tgt_creds(context, auth_context, 0,
                                   data->cred->name->princ, data->ctx->there->princ,
                                   data->cred->ccache, 1,
                                   &credmsg);
 
-        /* turn KRB5_AUTH_CONTEXT_DO_TIME back on */
+        /* Turn KRB5_AUTH_CONTEXT_DO_TIME back on and reset the send subkey. */
         krb5_auth_con_setflags(context, auth_context, con_flags);
+        auth_context->send_subkey = send_subkey;
 
         if (code) {
             /* don't fail here; just don't accept/do the delegation
@@ -316,7 +325,7 @@ make_gss_checksum (krb5_context context, krb5_auth_context auth_context,
     ptr = (unsigned char *)data->checksum_data.data;
 
     TWRITE_INT(ptr, data->md5.length, 0);
-    TWRITE_STR(ptr, (unsigned char *) data->md5.contents, data->md5.length);
+    TWRITE_STR(ptr, data->md5.contents, data->md5.length);
     TWRITE_INT(ptr, data->ctx->gss_flags, 0);
 
     /* done with this, free it */
@@ -325,7 +334,7 @@ make_gss_checksum (krb5_context context, krb5_auth_context auth_context,
     if (credmsg.data) {
         TWRITE_INT16(ptr, KRB5_GSS_FOR_CREDS_OPTION, 0);
         TWRITE_INT16(ptr, credmsg.length, 0);
-        TWRITE_STR(ptr, (unsigned char *) credmsg.data, credmsg.length);
+        TWRITE_STR(ptr, credmsg.data, credmsg.length);
 
         /* free credmsg data */
         krb5_free_data_contents(context, &credmsg);
@@ -433,7 +442,7 @@ make_ap_req_v1(context, ctx, cred, k_cred, ad_context,
         g_make_token_header(mech_type, ap_req.length,
                             &ptr, KG_TOK_CTX_AP_REQ);
 
-        TWRITE_STR(ptr, (unsigned char *) ap_req.data, ap_req.length);
+        TWRITE_STR(ptr, ap_req.data, ap_req.length);
 
         /* pass it back */
 
@@ -477,10 +486,11 @@ kg_new_connection(
 {
     OM_uint32 major_status;
     krb5_error_code code;
-    krb5_creds *k_cred = NULL;
+    krb5_creds *k_cred;
     krb5_gss_ctx_id_rec *ctx, *ctx_free;
     krb5_timestamp now;
     gss_buffer_desc token;
+    krb5_keyblock *keyblock;
 
     k5_mutex_assert_locked(&cred->lock);
     major_status = GSS_S_FAILURE;
@@ -527,14 +537,9 @@ kg_new_connection(
     }
 
     ctx->initiate = 1;
-    /* Likewise patch:
-       The GSS_C_INTEG_FLAG and GSS_C_CONF_FLAG flags were moved out of the
-       required list and into the optional list. This allows ldap to have
-       signed but not sealed traffic.
-     */
-    ctx->gss_flags = (GSS_C_TRANS_FLAG |
+    ctx->gss_flags = (GSS_C_INTEG_FLAG | GSS_C_CONF_FLAG |
+                      GSS_C_TRANS_FLAG |
                       ((req_flags) & (GSS_C_MUTUAL_FLAG | GSS_C_REPLAY_FLAG |
-                                      GSS_C_INTEG_FLAG | GSS_C_CONF_FLAG |
                                       GSS_C_SEQUENCE_FLAG | GSS_C_DELEG_FLAG |
                                       GSS_C_DCE_STYLE | GSS_C_IDENTIFY_FLAG |
                                       GSS_C_EXTENDED_ERROR_FLAG)));
@@ -606,8 +611,14 @@ kg_new_connection(
 
         krb5_auth_con_getlocalseqnumber(context, ctx->auth_context, &seq_temp);
         ctx->seq_send = seq_temp;
-        krb5_auth_con_getsendsubkey(context, ctx->auth_context,
-                                    &ctx->subkey);
+        code = krb5_auth_con_getsendsubkey(context, ctx->auth_context,
+                                           &keyblock);
+        if (code != 0)
+            goto fail;
+        code = krb5_k_create_key(context, keyblock, &ctx->subkey);
+        krb5_free_keyblock(context, keyblock);
+        if (code != 0)
+            goto fail;
     }
 
     krb5_free_creds(context, k_cred);
@@ -664,10 +675,6 @@ kg_new_connection(
     }
 
 fail:
-    if (k_cred)
-    {
-        krb5_free_creds(context, k_cred);
-    }
     if (ctx_free) {
         if (ctx_free->auth_context)
             krb5_auth_con_free(context, ctx_free->auth_context);
@@ -676,7 +683,7 @@ fail:
         if (ctx_free->there)
             kg_release_name(context, 0, &ctx_free->there);
         if (ctx_free->subkey)
-            krb5_free_keyblock(context, ctx_free->subkey);
+            krb5_k_free_key(context, ctx_free->subkey);
         xfree(ctx_free);
     } else
         (void)krb5_gss_delete_sec_context(minor_status, context_handle, NULL);
@@ -766,9 +773,9 @@ mutual_auth(
         ap_rep.length = input_token->length;
         ap_rep.data = (char *)input_token->value;
     } else if (g_verify_token_header(ctx->mech_used,
-                              &(ap_rep.length),
-                              &ptr, KG_TOK_CTX_AP_REP,
-                              input_token->length, 1)) {
+                                     &(ap_rep.length),
+                                     &ptr, KG_TOK_CTX_AP_REP,
+                                     input_token->length, 1)) {
         if (g_verify_token_header((gss_OID) ctx->mech_used,
                                   &(ap_rep.length),
                                   &ptr, KG_TOK_CTX_ERROR,
@@ -805,7 +812,7 @@ mutual_auth(
          * To be removed in 1999 -- proven
          */
         krb5_auth_con_setuseruserkey(context, ctx->auth_context,
-                                     ctx->subkey);
+                                     &ctx->subkey->keyblock);
         if ((krb5_rd_rep(context, ctx->auth_context, &ap_rep,
                          &ap_rep_data)))
             goto fail;
@@ -819,11 +826,11 @@ mutual_auth(
 
     if (ap_rep_data->subkey != NULL &&
         (ctx->proto == 1 || (ctx->gss_flags & GSS_C_DCE_STYLE) ||
-         ap_rep_data->subkey->enctype != ctx->subkey->enctype)) {
+         ap_rep_data->subkey->enctype != ctx->subkey->keyblock.enctype)) {
         /* Keep acceptor's subkey.  */
         ctx->have_acceptor_subkey = 1;
-        code = krb5_copy_keyblock(context, ap_rep_data->subkey,
-                                  &ctx->acceptor_subkey);
+        code = krb5_k_create_key(context, ap_rep_data->subkey,
+                                 &ctx->acceptor_subkey);
         if (code) {
             krb5_free_ap_rep_enc_part(context, ap_rep_data);
             goto fail;
@@ -1010,11 +1017,11 @@ krb5_gss_init_sec_context(minor_status, claimant_cred_handle,
     /*SUPPRESS 29*/
     if (*context_handle == GSS_C_NO_CONTEXT) {
         major_status = kg_new_connection(minor_status, cred, context_handle,
-                                        target_name, mech_type, req_flags,
-                                        time_req, input_chan_bindings,
-                                        input_token, actual_mech_type,
-                                        output_token, ret_flags, time_rec,
-                                        context, default_mech);
+                                         target_name, mech_type, req_flags,
+                                         time_req, input_chan_bindings,
+                                         input_token, actual_mech_type,
+                                         output_token, ret_flags, time_rec,
+                                         context, default_mech);
         k5_mutex_unlock(&cred->lock);
         if (*context_handle == GSS_C_NO_CONTEXT) {
             save_error_info (*minor_status, context);

@@ -6,23 +6,23 @@
  * may copy or modify Sun RPC without charge, but are not authorized
  * to license or distribute it to anyone else except as part of a product or
  * program developed by the user.
- * 
+ *
  * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
  * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
+ *
  * Sun RPC is provided with no support and without any obligation on the
  * part of Sun Microsystems, Inc. to assist in its use, correction,
  * modification or enhancement.
- * 
+ *
  * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
  * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
  * OR ANY PART THEREOF.
- * 
+ *
  * In no event will Sun Microsystems, Inc. be liable for any lost revenue
  * or profits or other special, indirect and consequential damages, even if
  * Sun has been advised of the possibility of such damages.
- * 
+ *
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
@@ -54,10 +54,6 @@ static char sccsid[] = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 #include <net/route.h>
 #include <sys/mbuf.h>
 #endif
-/* S7_CHANGE */
-#if defined(__hpux) && defined(__ia64)
-#include "mymp.h"
-#endif
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
@@ -68,6 +64,9 @@ static char sccsid[] = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 
 static struct timeval timeout = { 3, 0 };
 
+#ifndef GETSOCKNAME_ARG3_TYPE
+#define GETSOCKNAME_ARG3_TYPE int
+#endif
 
 /*
  * pmapper remote-call-service interface.
@@ -172,7 +171,7 @@ xdr_rmtcallres(
 
 /*
  * The following is kludged-up support for simple rpc broadcasts.
- * Someday a large, complicated system will replace these trivial 
+ * Someday a large, complicated system will replace these trivial
  * routines which only support udp/ip .
  */
 
@@ -217,7 +216,7 @@ getbroadcastnets(
 							   (sockin->sin_addr),
 #else /* hpux or solaris */
 							   (sockin->sin_addr.s_addr),
-#endif				
+#endif
 							   INADDR_ANY);
 #endif
 			} else {
@@ -233,7 +232,7 @@ getbroadcastnets(
 	return (i);
 }
 
-enum clnt_stat 
+enum clnt_stat
 clnt_broadcast(
 	rpcprog_t	prog,		/* program number */
 	rpcvers_t	vers,		/* version number */
@@ -249,7 +248,9 @@ clnt_broadcast(
 	AUTH *unix_auth = authunix_create_default();
 	XDR xdr_stream;
 	register XDR *xdrs = &xdr_stream;
-	int outlen, inlen, fromlen, nets;
+	int outlen, nets;
+	ssize_t inlen;
+	GETSOCKNAME_ARG3_TYPE fromlen;
         SOCKET sock;
 	int on = 1;
 #ifdef FD_SETSIZE
@@ -268,7 +269,7 @@ clnt_broadcast(
 	struct rmtcallargs a;
 	struct rmtcallres r;
 	struct rpc_msg msg;
-	struct timeval t, t2; 
+	struct timeval t, t2;
 	char outbuf[MAX_BROADCAST_SIZE];
 #ifndef MAX
 #define MAX(A,B) ((A)<(B)?(B):(A))
@@ -355,7 +356,7 @@ clnt_broadcast(
                 msg.acpted_rply.ar_results.proc = xdr_rmtcallres;
 		readfds = mask;
 		t2 = t;
-		switch (select(gssrpc__rpc_dtablesize(), &readfds, (fd_set *)NULL, 
+		switch (select(gssrpc__rpc_dtablesize(), &readfds, (fd_set *)NULL,
 			       (fd_set *)NULL, &t2)) {
 
 		case 0:  /* timed out */
@@ -381,7 +382,7 @@ clnt_broadcast(
 			stat = RPC_CANTRECV;
 			goto done_broad;
 		}
-		if (inlen < sizeof(uint32_t))
+		if ((size_t)inlen < sizeof(uint32_t))
 			goto recv_again;
 		/*
 		 * see if reply transaction id matches sent id.
@@ -421,4 +422,3 @@ done_broad:
 	AUTH_DESTROY(unix_auth);
 	return (stat);
 }
-

@@ -138,7 +138,6 @@ S=/
 
 #
 srcdir = @srcdir@
-SRCTOP = @srcdir@/$(BUILDTOP)
 top_srcdir = @top_srcdir@
 VPATH = @srcdir@
 CONFIG_RELTOPDIR = @CONFIG_RELTOPDIR@
@@ -175,7 +174,7 @@ CC = @CC@
 CXX = @CXX@
 LD = $(PURE) @LD@
 DEPLIBS = @DEPLIBS@
-KRB_INCLUDES = -I$(BUILDTOP)/include -I$(SRCTOP)/include
+KRB_INCLUDES = -I$(BUILDTOP)/include -I$(top_srcdir)/include
 LDFLAGS = @LDFLAGS@
 LD_UNRESOLVED_PREFIX = @LD_UNRESOLVED_PREFIX@
 LD_SHLIBDIR_PREFIX = @LD_SHLIBDIR_PREFIX@
@@ -189,7 +188,6 @@ INSTALL_SCRIPT=@INSTALL_PROGRAM@
 INSTALL_DATA=@INSTALL_DATA@
 INSTALL_SHLIB=@INSTALL_SHLIB@
 INSTALL_SETUID=$(INSTALL) $(INSTALL_STRIP) -m 4755 -o root
-INSTALL_SETUID_USER=$(INSTALL) $(INSTALL_STRIP) -m 4755
 ## This is needed because autoconf will sometimes define @exec_prefix@ to be
 ## ${prefix}.
 prefix=@prefix@
@@ -230,24 +228,20 @@ KRB5_INCSUBDIRS = \
 # XXX check which of these are actually used!
 #
 TESTDIR		= $(BUILDTOP)/kadmin/testing
-STESTDIR	= $(SRCTOP)/kadmin/testing
+STESTDIR	= $(top_srcdir)/kadmin/testing
 COMPARE_DUMP	= $(TESTDIR)/scripts/compare_dump.pl
-FIX_CONF_FILES	= $(TESTDIR)/scripts/fixup-conf-files.pl
 INITDB		= $(STESTDIR)/scripts/init_db
 MAKE_KEYTAB	= $(TESTDIR)/scripts/make-host-keytab.pl
 LOCAL_MAKE_KEYTAB= $(TESTDIR)/scripts/make-host-keytab.pl
-RESTORE_FILES	= $(STESTDIR)/scripts/restore_files.sh
-SAVE_FILES	= $(STESTDIR)/scripts/save_files.sh
 ENV_SETUP	= $(TESTDIR)/scripts/env-setup.sh
-CLNTTCL		= $(TESTDIR)/util/ovsec_kadm_clnt_tcl
-SRVTCL		= $(TESTDIR)/util/ovsec_kadm_srv_tcl
+CLNTTCL		= $(TESTDIR)/util/kadm5_clnt_tcl
+SRVTCL		= $(TESTDIR)/util/kadm5_srv_tcl
 # Dejagnu variables.
 # We have to set the host with --host so that setup_xfail will work.
 # If we don't set it, then the host type used is "native", which
 # doesn't match "*-*-*".
 host=@krb5_cv_host@
-DEJAFLAGS	= $(DEJALFLAGS) $(CLFLAGS) --debug --srcdir $(srcdir) --host \
-		   $(host)
+DEJAFLAGS	= --debug --srcdir $(srcdir) --host $(host)
 RUNTEST		= runtest $(DEJAFLAGS)
 
 START_SERVERS	= $(STESTDIR)/scripts/start_servers $(TEST_SERVER) $(TEST_PATH)
@@ -278,7 +272,7 @@ AUTOCONF = autoconf
 AUTOCONFFLAGS =
 AUTOHEADER = autoheader
 AUTOHEADERFLAGS =
-MOVEIFCHANGED = $(SRCTOP)/config/move-if-changed
+MOVEIFCHANGED = $(top_srcdir)/config/move-if-changed
 
 SHEXT = @SHEXT@
 STEXT=@STEXT@
@@ -319,8 +313,11 @@ PROG_RPATH_FLAGS=@PROG_RPATH_FLAGS@
 # depending on whether we're building with shared libraries.
 DEPLIBEXT=@DEPLIBEXT@
 
-KADMCLNT_DEPLIB	= $(TOPLIBD)/libkadm5clnt$(DEPLIBEXT)
-KADMSRV_DEPLIB	= $(TOPLIBD)/libkadm5srv$(DEPLIBEXT)
+KDB5_PLUGIN_DEPLIBS = @KDB5_PLUGIN_DEPLIBS@
+KDB5_PLUGIN_LIBS = @KDB5_PLUGIN_LIBS@
+
+KADMCLNT_DEPLIB	= $(TOPLIBD)/libkadm5clnt_mit$(DEPLIBEXT)
+KADMSRV_DEPLIB	= $(TOPLIBD)/libkadm5srv_mit$(DEPLIBEXT)
 KDB5_DEPLIB	= $(TOPLIBD)/libkdb5$(DEPLIBEXT)
 GSSRPC_DEPLIB	= $(TOPLIBD)/libgssrpc$(DEPLIBEXT)
 GSS_DEPLIB	= $(TOPLIBD)/libgssapi_krb5$(DEPLIBEXT)
@@ -337,11 +334,10 @@ SUPPORT_DEPLIB	= $(TOPLIBD)/lib$(SUPPORT_LIBNAME)$(DEPLIBEXT)
 SS_DEPLIB	= $(SS_DEPLIB-@SS_VERSION@)
 SS_DEPLIB-k5	= $(TOPLIBD)/libss.a
 SS_DEPLIB-sys	=
-PTY_DEPLIB	= $(TOPLIBD)/libpty.a
 APPUTILS_DEPLIB	= $(TOPLIBD)/libapputils.a
 
 KRB5_BASE_DEPLIBS	= $(KRB5_DEPLIB) $(CRYPTO_DEPLIB) $(COM_ERR_DEPLIB) $(SUPPORT_DEPLIB)
-KDB5_DEPLIBS		= $(KDB5_DEPLIB)
+KDB5_DEPLIBS		= $(KDB5_DEPLIB) $(KDB5_PLUGIN_DEPLIBS)
 GSS_DEPLIBS		= $(GSS_DEPLIB)
 GSSRPC_DEPLIBS		= $(GSSRPC_DEPLIB) $(GSS_DEPLIBS)
 KADM_COMM_DEPLIBS	= $(GSSRPC_DEPLIBS) $(KDB5_DEPLIBS) $(GSSRPC_DEPLIBS)
@@ -369,7 +365,7 @@ GEN_LIB		= @GEN_LIB@
 SS_LIB		= $(SS_LIB-@SS_VERSION@)
 SS_LIB-sys	= @SS_LIB@
 SS_LIB-k5	= $(TOPLIBD)/libss.a
-KDB5_LIB	= -lkdb5
+KDB5_LIB	= -lkdb5 $(KDB5_PLUGIN_LIBS)
 
 DL_LIB		= @DL_LIB@
 
@@ -389,11 +385,8 @@ GSS_LIBS	= $(GSS_KRB5_LIB)
 GSSRPC_LIBS	= -lgssrpc $(GSS_LIBS)
 KADM_COMM_LIBS	= $(GSSRPC_LIBS)
 # need fixing if ever used on Mac OS X!
-KADMSRV_LIBS	= -lkadm5srv $(HESIOD_LIBS) $(KDB5_LIBS) $(KADM_COMM_LIBS)
-KADMCLNT_LIBS	= -lkadm5clnt $(KADM_COMM_LIBS)
-
-# need fixing if ever used on Mac OS X!
-PTY_LIB		= -lpty
+KADMSRV_LIBS	= -lkadm5srv_mit $(HESIOD_LIBS) $(KDB5_LIBS) $(KADM_COMM_LIBS)
+KADMCLNT_LIBS	= -lkadm5clnt_mit $(KADM_COMM_LIBS)
 
 # libutil for NetBSD, et al. for openpty(), etc.
 UTIL_LIB	= @UTIL_LIB@
@@ -415,7 +408,7 @@ TCL_INCLUDES	= @TCL_INCLUDES@
 ### /* these are invoked as $(...) foo.et, which works, but could be better */
 COMPILE_ET= $(COMPILE_ET-@COM_ERR_VERSION@)
 COMPILE_ET-sys= compile_et
-COMPILE_ET-k5= $(BUILDTOP)/util/et/compile_et -d $(SRCTOP)/util/et
+COMPILE_ET-k5= $(BUILDTOP)/util/et/compile_et -d $(top_srcdir)/util/et
 
 .SUFFIXES:  .h .c .et .ct
 
@@ -475,26 +468,28 @@ AR=@AR@
 # Set to "lib$(LIBBASE)$(STEXT) lib$(LIBBASE)$(SHEXT) lib$(LIBBASE)$(PFEXT)" or
 # some subset thereof by configure; determines which types of libs get
 # built.
-LIBLIST=$(LIBLIST_@SHLIB_HAVE_MINOR_VERS@)
-LIBLIST_yes=lib$(LIBBASE)$(SHLIBEXT) lib$(LIBBASE)$(SHLIBSEXT)
-LIBLIST_no=lib$(LIBBASE)$(SHLIBEXT)
+LIBLIST=@LIBLIST@
 
 # Set by configure; list of library symlinks to make to $(TOPLIBD)
-LIBLINKS=$(LIBLINKS_@SHLIB_HAVE_MINOR_VERS@)
-LIBLINKS_yes=$(TOPLIBD)/lib$(LIBBASE)$(SHLIBEXT) $(TOPLIBD)/lib$(LIBBASE)$(SHLIBVEXT) $(TOPLIBD)/lib$(LIBBASE)$(SHLIBSEXT)
-LIBLINKS_no=$(TOPLIBD)/lib$(LIBBASE)$(SHLIBEXT) $(TOPLIBD)/lib$(LIBBASE)$(SHLIBVEXT)
+LIBLINKS=@LIBLINKS@
 
-# Set by configure; list of install targets
-LIBINSTLIST=$(LIBINSTLIST_@SHLIB_HAVE_MINOR_VERS@)
-LIBINSTLIST_yes=install-shlib-soname
-LIBINSTLIST_no=install-shared
+# Set by configure; name of plugin module to build (libfoo.a or foo.so)
+PLUGIN=@PLUGIN@
+
+# Set by configure; symlink for plugin module for static plugin linking
+PLUGINLINK=@PLUGINLINK@
+
+# Set by configure; list of install targets for libraries
+LIBINSTLIST=@LIBINSTLIST@
+
+# Set by configure; install target
+PLUGININST=@PLUGININST@
 
 # Some of these should really move to pre.in, since programs will need
 # it too. (e.g. stuff that has dependencies on the libraries)
 
 # usually .a
-STLIBEXT_if_static=@STLIBEXT@
-STLIBEXT=.a-nobuild
+STLIBEXT=@STLIBEXT@
 
 # usually .so.$(LIBMAJOR).$(LIBMINOR)
 SHLIBVEXT=@SHLIBVEXT@
@@ -540,7 +535,7 @@ SHLIB_EXPFLAGS=@SHLIB_EXPFLAGS@
 
 # Set to "OBJS.ST OBJS.SH OBJS.PF" or some subset thereof by
 # configure; determines which types of object files get built.
-OBJLISTS=OBJS.SH
+OBJLISTS=@OBJLISTS@
 
 # Note that $(LIBSRCS) *cannot* contain any variable references, or
 # the suffix substitution will break on some platforms!
@@ -563,7 +558,14 @@ VALGRIND=
 # Need absolute paths here because under kshd or ftpd we may run programs
 # while in other directories.
 VALGRIND_LOGDIR = `cd $(BUILDTOP)&&pwd`
-VALGRIND1 = valgrind --tool=memcheck --log-file=$(VALGRIND_LOGDIR)/vg --trace-children=yes -v --leak-check=yes --suppressions=`cd $(SRCTOP)&&pwd`/util/valgrind-suppressions
+VALGRIND1 = valgrind --tool=memcheck --log-file=$(VALGRIND_LOGDIR)/vg --trace-children=yes -v --leak-check=yes --suppressions=`cd $(top_srcdir)&&pwd`/util/valgrind-suppressions
+
+# Set OFFLINE=yes to disable tests that assume network connectivity.
+# (Specifically, this concerns the ability to fetch DNS data for
+# mit.edu, to verify that SRV queries are working.)  Note that other
+# tests still assume that the local hostname can be resolved into
+# something that looks like an FQDN, with an IPv4 address.
+OFFLINE=no
 
 ##
 ## end of pre.in

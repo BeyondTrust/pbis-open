@@ -25,7 +25,7 @@ File: krb5-user.info,  Node: Copyright,  Next: Introduction,  Prev: Top,  Up: To
 Copyright
 *********
 
-Copyright (C) 1985-2009 by the Massachusetts Institute of Technology.
+Copyright (C) 1985-2010 by the Massachusetts Institute of Technology.
 
      Export of software employing encryption from the United States of
      America may require a specific license from the United States
@@ -275,10 +275,6 @@ the following new or changed files:
        slave/kpropd_rpc.c
        slave/kproplog.c
 
-and marked portions of the following files:
-
-       lib/krb5/os/hst_realm.c
-
 are subject to the following license:
 
      Copyright (C) 2004 Sun Microsystems, Inc.
@@ -342,7 +338,7 @@ notice:
 Portions contributed by Novell, Inc., including the LDAP database
 backend, are subject to the following license:
 
-     Copyright (C) 2004-2005, Novell, Inc.  All rights reserved.
+     Copyright (c) 2004-2005, Novell, Inc.  All rights reserved.
 
      Redistribution and use in source and binary forms, with or without
      modification, are permitted provided that the following conditions
@@ -444,27 +440,6 @@ Portions contributed by Apple Inc. are subject to the following license:
      WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
 
-The implementations of strlcpy and strlcat in
-src/util/support/strlcat.c have the following copyright and permission
-notice:
-
-     Copyright (C) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
-
-     Permission to use, copy, modify, and distribute this software for
-     any purpose with or without fee is hereby granted, provided that
-     the above copyright notice and this permission notice appear in
-     all copies.
-
-     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
-     WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
-     WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
-     AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
-     CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-     LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-     NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
-     CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-
 The implementations of UTF-8 string handling in src/util/support and
 src/lib/krb5/unicode are subject to the following copyright and
 permission notice:
@@ -516,41 +491,6 @@ permission notice:
      Copyright 1999-2003 The OpenLDAP Foundation, Redwood City,
      California, USA.  All Rights Reserved.  Permission to copy and
      distribute verbatim copies of this document is granted.
-
-
-Marked test programs in src/lib/krb5/krb have the following copyright:
-
-     Copyright (C) 2006 Kungliga Tekniska Ho"gskolan (Royal Institute
-     of Technology, Stockholm, Sweden).  All rights reserved.
-
-     Redistribution and use in source and binary forms, with or without
-     modification, are permitted provided that the following conditions
-     are met:
-
-     1. Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-
-     2. Redistributions in binary form must reproduce the above
-     copyright    notice, this list of conditions and the following
-     disclaimer in the    documentation and/or other materials provided
-     with the distribution.
-
-     3. Neither the name of KTH nor the names of its contributors may be
-       used to endorse or promote products derived from this software
-     without    specific prior written permission.
-
-     THIS SOFTWARE IS PROVIDED BY KTH AND ITS CONTRIBUTORS "AS IS" AND
-     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-     THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-     PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL KTH OR ITS
-     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-     LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-     USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-     AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-     POSSIBILITY OF SUCH DAMAGE.
 
 
 Permission is granted to make and distribute verbatim copies of this
@@ -1122,4 +1062,64 @@ this might be anywhere from a few minutes to an hour or more.  If you
 need to get new Kerberos tickets shortly after changing your password,
 try the new password.  If the new password doesn't work, try again using
 the old one.
+
+
+File: krb5-user.info,  Node: Password Advice,  Next: Granting Access to Your Account,  Prev: Changing Your Password,  Up: Password Management
+
+Password Advice
+---------------
+
+Your password can include almost any character you can type (except
+control keys and the "enter" key).  A good password is one you can
+remember, but that no one else can easily guess.  Examples of bad
+passwords are words that can be found in a dictionary, any common or
+popular name, especially a famous person (or cartoon character), your
+name or username in any form (e.g., forward, backward, repeated twice,
+etc.), your spouse's, child's, or pet's name, your birth date, your
+social security number, and any sample password that appears in this
+(or any other) manual.
+
+MIT recommends that your password be at least 6 characters long, and
+contain UPPER- and lower-case letters, numbers, and/or punctuation
+marks.  Some passwords that would be good if they weren't listed in
+this manual include:
+
+   * some initials, like "GykoR-66." for "Get your kicks on Route 66."
+
+   * an easy-to-pronounce nonsense word, like "slaRooBey" or "krang-its"
+
+   * a misspelled phrase, like "2HotPeetzas!" or "ItzAGurl!!!"
+
+Note:  don't actually use any of the above passwords.  They're only
+meant to show you how to make up a good password.  Passwords that
+appear in a manual are the first ones intruders will try.
+
+Kerberos V5 allows your system administrators to automatically reject
+bad passwords, based on certain criteria, such as a password dictionary
+or a minimum length.  For example, if the user `jennifer', who had a
+policy "strict" that required a minimum of 8 characaters, chose a
+password that was less than 8 characters, Kerberos would give an error
+message like the following:
+
+     shell% kpasswd
+     Password for jennifer:  <- Type your old password here.
+     
+     jennifer's password is controlled by the policy strict, which
+     requires a minimum of 8 characters from at least 3 classes (the five classes
+     are lowercase, uppercase, numbers, punctuation, and all other characters).
+     
+     Enter new password:  <- Type an insecure new password.
+     Enter it again:  <- Type it again.
+     
+     kpasswd: Password is too short while attempting to change password.
+     Please choose another password.
+     
+     Enter new password:  <- Type a good password here.
+     Enter it again:  <- Type it again.
+     Password changed.
+     shell%
+
+Your system administrators can choose the message that is displayed if
+you choose a bad password, so the message you see may be different from
+the above example.
 

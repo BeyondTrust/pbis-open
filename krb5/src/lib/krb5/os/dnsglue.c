@@ -1,14 +1,15 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * lib/krb5/os/dnsglue.c
  *
- * Copyright 2004 by the Massachusetts Institute of Technology.
+ * Copyright 2004, 2009 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
  *
  * Export of this software from the United States of America may
  *   require a specific license from the United States Government.
  *   It is the responsibility of any person or organization contemplating
  *   export to obtain such a license before exporting.
- * 
+ *
  * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
  * distribute this software and its documentation for any purpose and
  * without fee is hereby granted, provided that the above copyright
@@ -22,7 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- * 
+ *
  */
 #include "autoconf.h"
 #ifdef KRB5_DNS_LOOKUP
@@ -37,7 +38,7 @@
  * In any case, it is probable that platforms having broken
  * res_ninit() will have thread safety hacks for res_init() and _res.
  */
-#if HAVE_RES_NINIT && HAVE_WORKING_RES_NINIT && (HAVE_RES_NDESTROY || HAVE_RES_NCLOSE) && HAVE_RES_NSEARCH
+#if HAVE_RES_NINIT && HAVE_RES_NDESTROY && HAVE_RES_NSEARCH
 #define USE_RES_NINIT 1
 #endif
 
@@ -63,10 +64,6 @@ struct krb5int_dns_state {
 static int initparse(struct krb5int_dns_state *);
 #endif
 
-#if !USE_RES_NINIT
-static k5_mutex_t dns_res_lock = K5_MUTEX_PARTIAL_INITIALIZER;
-#endif
-
 /*
  * krb5int_dns_init()
  *
@@ -76,7 +73,7 @@ static k5_mutex_t dns_res_lock = K5_MUTEX_PARTIAL_INITIALIZER;
  */
 int
 krb5int_dns_init(struct krb5int_dns_state **dsp,
-		 char *host, int nclass, int ntype)
+                 char *host, int nclass, int ntype)
 {
 #if USE_RES_NINIT
     struct __res_state statbuf;
@@ -88,7 +85,7 @@ krb5int_dns_init(struct krb5int_dns_state **dsp,
 
     *dsp = ds = malloc(sizeof(*ds));
     if (ds == NULL)
-	return -1;
+        return -1;
 
     ret = -1;
     ds->nclass = nclass;
@@ -106,52 +103,40 @@ krb5int_dns_init(struct krb5int_dns_state **dsp,
 #if USE_RES_NINIT
     memset(&statbuf, 0, sizeof(statbuf));
     ret = res_ninit(&statbuf);
-    if (ret < 0)
-	return -1;
 #else
-    if (!(_res.options & RES_INIT))
-    {
-	ret = res_init();
-	if (ret < 0)
-	    return -1;
-
-	ret = k5_mutex_finish_init(&dns_res_lock);
-	if (ret < 0)
-	    return ret;
-    }
-    ret = k5_mutex_lock(&dns_res_lock);
-    if (ret < 0)
-	return ret;
+    ret = res_init();
 #endif
+    if (ret < 0)
+        return -1;
 
     do {
-	p = (ds->ansp == NULL)
-	    ? malloc(nextincr) : realloc(ds->ansp, nextincr);
+        p = (ds->ansp == NULL)
+            ? malloc(nextincr) : realloc(ds->ansp, nextincr);
 
-	if (p == NULL && ds->ansp != NULL) {
-	    ret = -1;
-	    goto errout;
-	}
-	ds->ansp = p;
-	ds->ansmax = nextincr;
+        if (p == NULL) {
+            ret = -1;
+            goto errout;
+        }
+        ds->ansp = p;
+        ds->ansmax = nextincr;
 
 #if USE_RES_NINIT
-	len = res_nsearch(&statbuf, host, ds->nclass, ds->ntype,
-			  ds->ansp, ds->ansmax);
+        len = res_nsearch(&statbuf, host, ds->nclass, ds->ntype,
+                          ds->ansp, ds->ansmax);
 #else
-	len = res_search(host, ds->nclass, ds->ntype,
-			 ds->ansp, ds->ansmax);
+        len = res_search(host, ds->nclass, ds->ntype,
+                         ds->ansp, ds->ansmax);
 #endif
-	if (len > maxincr) {
-	    ret = -1;
-	    goto errout;
-	}
-	while (nextincr < len)
-	    nextincr *= 2;
-	if (len < 0 || nextincr > maxincr) {
-	    ret = -1;
-	    goto errout;
-	}
+        if ((size_t) len > maxincr) {
+            ret = -1;
+            goto errout;
+        }
+        while (nextincr < (size_t) len)
+            nextincr *= 2;
+        if (len < 0 || nextincr > maxincr) {
+            ret = -1;
+            goto errout;
+        }
     } while (len > ds->ansmax);
 
     ds->anslen = len;
@@ -161,25 +146,19 @@ krb5int_dns_init(struct krb5int_dns_state **dsp,
     ret = initparse(ds);
 #endif
     if (ret < 0)
-	goto errout;
+        goto errout;
 
     ret = 0;
 
 errout:
 #if USE_RES_NINIT
-#if HAVE_RES_NDESTROY
     res_ndestroy(&statbuf);
-#else
-    res_nclose(&statbuf);
-#endif
-#else
-    k5_mutex_unlock(&dns_res_lock);
 #endif
     if (ret < 0) {
-	if (ds->ansp != NULL) {
-	    free(ds->ansp);
-	    ds->ansp = NULL;
-	}
+        if (ds->ansp != NULL) {
+            free(ds->ansp);
+            ds->ansp = NULL;
+        }
     }
 
     return ret;
@@ -194,7 +173,7 @@ errout:
  */
 int
 krb5int_dns_nextans(struct krb5int_dns_state *ds,
-		    const unsigned char **pp, int *lenp)
+                    const unsigned char **pp, int *lenp)
 {
     int len;
     ns_rr rr;
@@ -202,16 +181,16 @@ krb5int_dns_nextans(struct krb5int_dns_state *ds,
     *pp = NULL;
     *lenp = 0;
     while (ds->cur_ans < ns_msg_count(ds->msg, ns_s_an)) {
-	len = ns_parserr(&ds->msg, ns_s_an, ds->cur_ans, &rr);
-	if (len < 0)
-	    return -1;
-	ds->cur_ans++;
-	if (ds->nclass == ns_rr_class(rr)
-	    && ds->ntype == ns_rr_type(rr)) {
-	    *pp = ns_rr_rdata(rr);
-	    *lenp = ns_rr_rdlen(rr);
-	    return 0;
-	}
+        len = ns_parserr(&ds->msg, ns_s_an, ds->cur_ans, &rr);
+        if (len < 0)
+            return -1;
+        ds->cur_ans++;
+        if (ds->nclass == ns_rr_class(rr)
+            && ds->ntype == ns_rr_type(rr)) {
+            *pp = ns_rr_rdata(rr);
+            *lenp = ns_rr_rdlen(rr);
+            return 0;
+        }
     }
     return 0;
 }
@@ -220,19 +199,19 @@ krb5int_dns_nextans(struct krb5int_dns_state *ds,
 /*
  * krb5int_dns_expand - wrapper for dn_expand()
  */
-int krb5int_dns_expand(struct krb5int_dns_state *ds,
-		       const unsigned char *p,
-		       char *buf, int len)
+int
+krb5int_dns_expand(struct krb5int_dns_state *ds, const unsigned char *p,
+                   char *buf, int len)
 {
 
 #if HAVE_NS_NAME_UNCOMPRESS
     return ns_name_uncompress(ds->ansp,
-			      (unsigned char *)ds->ansp + ds->anslen,
-			      p, buf, (size_t)len);
+                              (unsigned char *)ds->ansp + ds->anslen,
+                              p, buf, (size_t)len);
 #else
     return dn_expand(ds->ansp,
-		     (unsigned char *)ds->ansp + ds->anslen,
-		     p, buf, len);
+                     (unsigned char *)ds->ansp + ds->anslen,
+                     p, buf, len);
 #endif
 }
 
@@ -243,9 +222,9 @@ void
 krb5int_dns_fini(struct krb5int_dns_state *ds)
 {
     if (ds == NULL)
-	return;
+        return;
     if (ds->ansp != NULL)
-	free(ds->ansp);
+        free(ds->ansp);
     free(ds);
 }
 
@@ -272,8 +251,8 @@ initparse(struct krb5int_dns_state *ds)
     char host[MAXDNAME];
 #endif
 
-    if (ds->anslen < sizeof(HEADER))
-	return -1;
+    if ((size_t) ds->anslen < sizeof(HEADER))
+        return -1;
 
     hdr = (HEADER *)ds->ansp;
     p = ds->ansp;
@@ -286,14 +265,14 @@ initparse(struct krb5int_dns_state *ds)
      */
     while (nqueries--) {
 #if HAVE_DN_SKIPNAME
-	len = dn_skipname(p, (unsigned char *)ds->ansp + ds->anslen);
+        len = dn_skipname(p, (unsigned char *)ds->ansp + ds->anslen);
 #else
-	len = dn_expand(ds->ansp, (unsigned char *)ds->ansp + ds->anslen,
-			p, host, sizeof(host));
+        len = dn_expand(ds->ansp, (unsigned char *)ds->ansp + ds->anslen,
+                        p, host, sizeof(host));
 #endif
-	if (len < 0 || !INCR_OK(ds->ansp, ds->anslen, p, len + 4))
-	    return -1;
-	p += len + 4;
+        if (len < 0 || !INCR_OK(ds->ansp, ds->anslen, p, len + 4))
+            return -1;
+        p += len + 4;
     }
     ds->ptr = p;
     ds->nanswers = nanswers;
@@ -307,7 +286,7 @@ initparse(struct krb5int_dns_state *ds)
  */
 int
 krb5int_dns_nextans(struct krb5int_dns_state *ds,
-		    const unsigned char **pp, int *lenp)
+                    const unsigned char **pp, int *lenp)
 {
     int len;
     unsigned char *p;
@@ -322,30 +301,30 @@ krb5int_dns_nextans(struct krb5int_dns_state *ds,
 
     while (ds->nanswers--) {
 #if HAVE_DN_SKIPNAME
-	len = dn_skipname(p, (unsigned char *)ds->ansp + ds->anslen);
+        len = dn_skipname(p, (unsigned char *)ds->ansp + ds->anslen);
 #else
-	len = dn_expand(ds->ansp, (unsigned char *)ds->ansp + ds->anslen,
-			p, host, sizeof(host));
+        len = dn_expand(ds->ansp, (unsigned char *)ds->ansp + ds->anslen,
+                        p, host, sizeof(host));
 #endif
-	if (len < 0 || !INCR_OK(ds->ansp, ds->anslen, p, len))
-	    return -1;
-	p += len;
-	SAFE_GETUINT16(ds->ansp, ds->anslen, p, 2, ntype, out);
-	/* Also skip 4 bytes of TTL */
-	SAFE_GETUINT16(ds->ansp, ds->anslen, p, 6, nclass, out);
-	SAFE_GETUINT16(ds->ansp, ds->anslen, p, 2, rdlen, out);
+        if (len < 0 || !INCR_OK(ds->ansp, ds->anslen, p, len))
+            return -1;
+        p += len;
+        SAFE_GETUINT16(ds->ansp, ds->anslen, p, 2, ntype, out);
+        /* Also skip 4 bytes of TTL */
+        SAFE_GETUINT16(ds->ansp, ds->anslen, p, 6, nclass, out);
+        SAFE_GETUINT16(ds->ansp, ds->anslen, p, 2, rdlen, out);
 
-	if (!INCR_OK(ds->ansp, ds->anslen, p, rdlen))
-	    return -1;
-	if (rdlen > INT_MAX)
-	    return -1;
-	if (nclass == ds->nclass && ntype == ds->ntype) {
-	    *pp = p;
-	    *lenp = rdlen;
-	    ds->ptr = p + rdlen;
-	    return 0;
-	}
-	p += rdlen;
+        if (!INCR_OK(ds->ansp, ds->anslen, p, rdlen))
+            return -1;
+        if (rdlen > INT_MAX)
+            return -1;
+        if (nclass == ds->nclass && ntype == ds->ntype) {
+            *pp = p;
+            *lenp = rdlen;
+            ds->ptr = p + rdlen;
+            return 0;
+        }
+        p += rdlen;
     }
     return 0;
 out:
@@ -353,5 +332,77 @@ out:
 }
 
 #endif
+
+/*
+ * Try to look up a TXT record pointing to a Kerberos realm
+ */
+
+krb5_error_code
+krb5_try_realm_txt_rr(const char *prefix, const char *name, char **realm)
+{
+    krb5_error_code retval = KRB5_ERR_HOST_REALM_UNKNOWN;
+    const unsigned char *p, *base;
+    char host[MAXDNAME];
+    int ret, rdlen, len;
+    struct krb5int_dns_state *ds = NULL;
+    struct k5buf buf;
+
+    /*
+     * Form our query, and send it via DNS
+     */
+
+    krb5int_buf_init_fixed(&buf, host, sizeof(host));
+    if (name == NULL || name[0] == '\0') {
+        krb5int_buf_add(&buf, prefix);
+    } else {
+        krb5int_buf_add_fmt(&buf, "%s.%s", prefix, name);
+
+        /* Realm names don't (normally) end with ".", but if the query
+           doesn't end with "." and doesn't get an answer as is, the
+           resolv code will try appending the local domain.  Since the
+           realm names are absolutes, let's stop that.
+
+           But only if a name has been specified.  If we are performing
+           a search on the prefix alone then the intention is to allow
+           the local domain or domain search lists to be expanded.
+        */
+
+        len = krb5int_buf_len(&buf);
+        if (len > 0 && host[len - 1] != '.')
+            krb5int_buf_add(&buf, ".");
+    }
+    if (krb5int_buf_data(&buf) == NULL)
+        return KRB5_ERR_HOST_REALM_UNKNOWN;
+    ret = krb5int_dns_init(&ds, host, C_IN, T_TXT);
+    if (ret < 0)
+        goto errout;
+
+    ret = krb5int_dns_nextans(ds, &base, &rdlen);
+    if (ret < 0 || base == NULL)
+        goto errout;
+
+    p = base;
+    if (!INCR_OK(base, rdlen, p, 1))
+        goto errout;
+    len = *p++;
+    *realm = malloc((size_t)len + 1);
+    if (*realm == NULL) {
+        retval = ENOMEM;
+        goto errout;
+    }
+    strncpy(*realm, (const char *)p, (size_t)len);
+    (*realm)[len] = '\0';
+    /* Avoid a common error. */
+    if ( (*realm)[len-1] == '.' )
+        (*realm)[len-1] = '\0';
+    retval = 0;
+
+errout:
+    if (ds != NULL) {
+        krb5int_dns_fini(ds);
+        ds = NULL;
+    }
+    return retval;
+}
 
 #endif /* KRB5_DNS_LOOKUP */

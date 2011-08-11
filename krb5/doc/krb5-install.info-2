@@ -7,71 +7,6 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-File: krb5-install.info,  Node: The lib Directory,  Next: The prototype Directory,  Prev: The krb524 Directory,  Up: Organization of the Source Directory
-
-The lib Directory
------------------
-
-The lib directory contain 10 subdirectories as well as some definition
-and glue files.  The crypto subdirectory contains the Kerberos V5
-encryption library.  The des425 subdirectory exports the Kerberos V4
-encryption API, and translates these functions into calls to the
-Kerberos V5 encryption API.  The gssapi library contains the Generic
-Security Services API, which is a library of commands to be used in
-secure client-server communication.  The kadm5 directory contains the
-libraries for the KADM5 administration utilities.  The Kerberos 5
-database libraries are contained in kdb.  The directories krb4 and krb5
-contain the Kerberos 4 and Kerberos 5 APIs, respectively.  The rpc
-directory contains the API for the Kerberos Remote Procedure Call
-protocol.
-
-
-File: krb5-install.info,  Node: The prototype Directory,  Next: The slave Directory,  Prev: The lib Directory,  Up: Organization of the Source Directory
-
-The prototype Directory
------------------------
-
-This directory contains several template files.  The `prototype.h' and
-`prototype.c' files contain the MIT copyright message and a placeholder
-for the title and description of the file.  `prototype.h' also has a
-short template for writing `ifdef' and `ifndef' preprocessor
-statements.  The `getopt.c' file provides a template for writing code
-that will parse the options with which a program was called.
-
-
-File: krb5-install.info,  Node: The slave Directory,  Next: The util Directory,  Prev: The prototype Directory,  Up: Organization of the Source Directory
-
-The slave Directory
--------------------
-
-This directory contains code which allows for the propagation of the
-Kerberos principal database from the master KDC to slave KDCs over an
-encrypted, secure channel.  `kprop' is the program which actually
-propagates the database dump file.  `kpropd' is the Kerberos V5 slave
-KDC update server which accepts connections from the `kprop' program.
-`kslave_update' is a script that takes the name of a slave server, and
-propagates the database to that server if the database has been
-modified since the last dump or if the database has been dumped since
-the last propagation.
-
-
-File: krb5-install.info,  Node: The util Directory,  Prev: The slave Directory,  Up: Organization of the Source Directory
-
-The util Directory
-------------------
-
-This directory contains several utility programs and libraries.  The
-programs used to configure and build the code, such as `autoconf',
-`lndir', `kbuild', `reconf',  and `makedepend', are in this directory.
-The profile directory contains most of the functions which parse the
-Kerberos configuration files (`krb5.conf' and `kdc.conf').  Also in
-this directory are the Kerberos error table library and utilities (et),
-the Sub-system library and utilities (ss), database utilities (db2),
-pseudo-terminal utilities (pty), bug-reporting program `send-pr', and a
-generic support library `support' used by several of our other
-libraries.
-
-
 File: krb5-install.info,  Node: Build Requirements,  Next: Unpacking the Sources,  Prev: Organization of the Source Directory,  Up: Building Kerberos V5
 
 Build Requirements
@@ -101,18 +36,18 @@ Unpacking the Sources
 
 The first step in each of these build procedures is to unpack the
 source distribution.  The Kerberos V5 distribution comes in a tar file,
-generally named `krb5-1.7.tar', which contains a compressed tar file
+generally named `krb5-1.8.tar', which contains a compressed tar file
 consisting of the sources for all of Kerberos (generally
-`krb5-1.7.tar.gz') and a PGP signature for this source tree (generally
-`krb5-1.7.tar.gz.asc').  MIT highly recommends that you verify the
+`krb5-1.8.tar.gz') and a PGP signature for this source tree (generally
+`krb5-1.8.tar.gz.asc').  MIT highly recommends that you verify the
 integrity of the source code using this signature.
 
 Unpack the compressed tar file in some directory, such as
-`/u1/krb5-1.7'.  (In the rest of this document, we will assume that you
+`/u1/krb5-1.8'.  (In the rest of this document, we will assume that you
 have chosen to unpack the Kerberos V5 source distribution in this
 directory.  Note that the tarfiles will by default all unpack into the
-`./krb5-1.7' directory, so that if your current directory is `/u1' when
-you unpack the tarfiles, you will get `/u1/krb5-1.7/src', etc.)
+`./krb5-1.8' directory, so that if your current directory is `/u1' when
+you unpack the tarfiles, you will get `/u1/krb5-1.8/src', etc.)
 
 
 File: krb5-install.info,  Node: Doing the Build,  Next: Installing the Binaries,  Prev: Unpacking the Sources,  Up: Building Kerberos V5
@@ -144,7 +79,7 @@ Building Within a Single Tree
 If you don't want separate build trees for each architecture, then use
 the following abbreviated procedure.
 
-  1.  `cd /u1/krb5-1.7/src'
+  1.  `cd /u1/krb5-1.8/src'
 
   2.  `./configure'
 
@@ -167,9 +102,9 @@ this, see the next section.
 For example, if you wish to create a build directory for `pmax' binaries
 you might use the following procedure:
 
-  1. `mkdir /u1/krb5-1.7/pmax'
+  1. `mkdir /u1/krb5-1.8/pmax'
 
-  2.  `cd /u1/krb5-1.7/pmax'
+  2.  `cd /u1/krb5-1.8/pmax'
 
   3.  `../src/configure'
 
@@ -189,11 +124,11 @@ trees in your build directory.
 For example, if you wish to create a build directory for solaris
 binaries you might use the following procedure:
 
-  1.  `mkdir /u1/krb5-1.7/solaris'
+  1.  `mkdir /u1/krb5-1.8/solaris'
 
-  2.  `cd /u1/krb5-1.7/solaris'
+  2.  `cd /u1/krb5-1.8/solaris'
 
-  3.  `/u1/krb5-1.7/src/util/lndir `pwd`/../src'
+  3.  `/u1/krb5-1.8/src/util/lndir `pwd`/../src'
 
   4.  `./configure'
 
@@ -254,12 +189,14 @@ However, there are several prerequisites that must be satisfied first:
      configure to tell it the location of the Tcl configuration script.
      (See *Note Options to Configure::.)
 
-   * You have to run `make install' before running `make check', or the
-     test suite will often pick up the installed version of Kerberos
-     rather than the newly built one.  You can install into a prefix
-     that isn't in the system library search path, though.  This
-     theoretically could be fixed with the appropriate environment
-     variable magic in the test suite, but hasn't been yet.
+   * On some operating systems, you have to run `make install' before
+     running `make check', or the test suite will pick up installed
+     versions of Kerberos libraries rather than the newly built ones.
+     You can install into a prefix that isn't in the system library
+     search path, though.  Alternatively, you can configure with
+     `--disable-rpath', which renders the build tree less suitable for
+     installation, but allows testing without interference from
+     previously installed libraries.
 
    * In order to test the RPC layer, the local system has to be running
      the `portmap' daemon and it has to be listening to the regular
@@ -282,29 +219,6 @@ than the normal built-in tests as they setup test servers and test
 client/server activities.
 
 DejaGnu may be found wherever GNU software is archived.
-
-Most of the tests are setup to run as a non-privileged user.  For some
-of the krb-root tests to work properly, either (a) the user running the
-tests must not have a .k5login file in the home directory or (b) the
-.k5login file must contain an entry for `<username>@KRBTEST.COM'.
-There are two series of tests (`rlogind' and `telnetd') which require
-the ability to `rlogin' as root to the local machine. Admittedly, this
-does require the use of a `.rhosts' file or some authenticated means.
-(1)
-
-If you cannot obtain root access to your machine, all the other tests
-will still run. Note however, with DejaGnu 1.2, the "untested testcases"
-will cause the testsuite to exit with a non-zero exit status which
-`make' will consider a failure of the testing process. Do not worry
-about this, as these tests are the last run when `make check' is
-executed from the top level of the build tree.  This problem does not
-exist with DejaGnu 1.3.
-
----------- Footnotes ----------
-
-(1) If you are fortunate enough to have a previous version of Kerberos
-V5 or V4 installed, and the Kerberos rlogin is first in your path, you
-can setup `.k5login' or `.klogin' respectively to allow you access.
 
 
 File: krb5-install.info,  Node: The KADM5 Tests,  Prev: The DejaGnu Tests,  Up: Testing the Build
@@ -851,7 +765,7 @@ rebuild any `configure' files which need rebuilding.  If you know that
 you have made a change that will require that all the `configure' files
 need to be rebuilt from scratch, specify the `--force' option:
 
-     % cd /u1/krb5-1.7/src
+     % cd /u1/krb5-1.8/src
      % ./util/reconf --force
 
 The developmental sources are a raw source tree (before it's been
@@ -867,7 +781,7 @@ In order to build from such a source tree, you must do:
 Then follow the instructions for building packaged source trees (above).
 To install the binaries into a binary tree, do:
 
-     % cd /u1/krb5-1.7/src
+     % cd /u1/krb5-1.8/src
      % make all
      % make install DESTDIR=somewhere-else
 
@@ -1153,4 +1067,198 @@ This will create five files in the directory specified in your
 `principal.kadm5.lock'; and the stash file, `.k5stash'.  (The default
 directory is `/usr/local/var/krb5kdc'.)  If you do not want a stash
 file, run the above command without the `-s' option.
+
+
+File: krb5-install.info,  Node: Add Administrators to the Acl File,  Next: Add Administrators to the Kerberos Database,  Prev: Create the Database,  Up: Install the Master KDC
+
+Add Administrators to the Acl File
+..................................
+
+Next, you need create an Access Control List (acl) file, and put the
+Kerberos principal of at least one of the administrators into it.  This
+file is used by the `kadmind' daemon to control which principals may
+view and make privileged modifications to the Kerberos database files.
+The filename should match the value you have set for "acl_file" in your
+`kdc.conf' file.  The default file name is
+`/usr/local/var/krb5kdc/kadm5.acl'.
+
+The format of the file is:
+
+     Kerberos_principal      permissions     [target_principal]	[restrictions]
+
+The Kerberos principal (and optional target principal) can include the
+"*" wildcard, so if you want any principal with the instance "admin" to
+have full permissions on the database, you could use the principal
+"`*/admin@REALM'" where "REALM" is your Kerberos realm.
+`target_principal' can also include backreferences to
+`Kerberos_principal', in which "*number" matches the component number
+in the `Kerberos_principal'.
+
+Note:  a common use of an admin instance is so you can grant separate
+permissions (such as administrator access to the Kerberos database) to
+a separate Kerberos principal.  For example, the user `joeadmin' might
+have a principal for his administrative use, called `joeadmin/admin'.
+This way, `joeadmin' would obtain `joeadmin/admin' tickets only when he
+actually needs to use those permissions.
+
+The permissions are represented by single letters; UPPER-CASE letters
+represent negative permissions.  The permissions are:
+
+a
+     allows the addition of principals or policies in the database.
+
+A
+     disallows the addition of principals or policies in the database.
+
+d
+     allows the deletion of principals or policies in the database.
+
+D
+     disallows the deletion of principals or policies in the database.
+
+m
+     allows the modification of principals or policies in the database.
+
+M
+     disallows the modification of principals or policies in the
+     database.
+
+c
+     allows the changing of passwords for principals in the database.
+
+C
+     disallows the changing of passwords for principals in the database.
+
+i
+     allows inquiries to the database.
+
+I
+     disallows inquiries to the database.
+
+l
+     allows the listing of principals or policies in the database.
+
+L
+     disallows the listing of principals or policies in the database.
+
+s
+     allows the explicit setting of the key for a principal
+
+S
+     disallows the explicit setting of the key for a principal
+
+*
+     All privileges (admcil).
+
+x
+     All privileges (admcil); identical to "*".
+
+The restrictions are a string of flags.  Allowed restrictions are:
+
+[+ -]flagname
+     flag is forced to indicated value.  The permissible flags are the
+     same as the `+' and `-' flags for the `kadmin addprinc' and
+     `modprinc' commands.
+
+-clearpolicy
+     policy is forced to clear
+
+-policy pol
+     policy is forced to be pol
+
+expire time
+pwexpire time
+maxlife time
+maxrenewlife time
+     associated value will be forced to MIN(time, requested value)
+
+The above flags act as restrictions on any add or modify operation
+which is allowed due to that ACL line.
+
+Here is an example of a `kadm5.acl' file.  Note that order is
+important; permissions are determined by the first matching entry.
+
+     */admin@ATHENA.MIT.EDU  *
+     joeadmin@ATHENA.MIT.EDU  ADMCIL
+     joeadmin/*@ATHENA.MIT.EDU il */root@ATHENA.MIT.EDU
+     *@ATHENA.MIT.EDU cil *1/admin@ATHENA.MIT.EDU
+     */*@ATHENA.MIT.EDU  i
+     */admin@EXAMPLE.COM * -maxlife 9h -postdateable
+
+In the above file, any principal in the ATHENA.MIT.EDU realm with an
+`admin' instance has all administrative privileges.  The user `joeadmin'
+has all permissions with his `admin' instance,
+`joeadmin/admin@ATHENA.MIT.EDU' (matches the first line).  He has no
+permissions at all with his `null' instance, `joeadmin@ATHENA.MIT.EDU'
+(matches the second line).  His root instance has inquire and list
+permissions with any other principal that has the instance `root'.  Any
+principal in ATHENA.MIT.EDU can inquire, list, or change the password of
+their `admin' instance, but not any other `admin' instance.  Any
+principal in the realm `ATHENA.MIT.EDU' (except for
+`joeadmin@ATHENA.MIT.EDU', as mentioned above) has inquire privileges.
+Finally, any principal with an admin instance in EXAMPLE.COM has all
+permissions, but any principal that they create or modify will not be
+able to get postdateable tickets or tickets with a life of longer than
+9 hours.
+
+
+File: krb5-install.info,  Node: Add Administrators to the Kerberos Database,  Next: Create a kadmind Keytab (optional),  Prev: Add Administrators to the Acl File,  Up: Install the Master KDC
+
+Add Administrators to the Kerberos Database
+...........................................
+
+Next you need to add administrative principals to the Kerberos database.
+(You must add at least one now.)  To do this, use `kadmin.local' _on
+the master KDC_.  The administrative principals you create should be
+the ones you added to the ACL file.  (See *Note Add Administrators to
+the Acl File::.)  In the following example, the administration
+principal `admin/admin' is created:
+
+     shell% /usr/local/sbin/kadmin.local
+     kadmin.local: addprinc admin/admin@ATHENA.MIT.EDU
+     NOTICE: no policy specified for "admin/admin@ATHENA.MIT.EDU";
+     assigning "default".
+     Enter password for principal admin/admin@ATHENA.MIT.EDU:  <= Enter a password.
+     Re-enter password for principal admin/admin@ATHENA.MIT.EDU:  <= Type it again.
+     Principal "admin/admin@ATHENA.MIT.EDU" created.
+     kadmin.local:
+
+
+File: krb5-install.info,  Node: Create a kadmind Keytab (optional),  Next: Start the Kerberos Daemons,  Prev: Add Administrators to the Kerberos Database,  Up: Install the Master KDC
+
+Create a kadmind Keytab (optional)
+..................................
+
+The kadmind keytab is the key that the legacy admininstration daemons
+`kadmind4' and `v5passwdd' will use to decrypt administrators' or
+clients' Kerberos tickets to determine whether or not they should have
+access to the database.  You need to create the kadmin keytab with
+entries for the principals `kadmin/admin' and `kadmin/changepw'.
+(These principals are placed in the Kerberos database automatically
+when you create it.)  To create the kadmin keytab, run `kadmin.local'
+and use the `ktadd' command, as in the following example.  (The line
+beginning with => is a continuation of the previous line.):
+
+     shell% /usr/local/sbin/kadmin.local
+     kadmin.local: ktadd -k /usr/local/var/krb5kdc/kadm5.keytab
+     => kadmin/admin kadmin/changepw
+      Entry for principal kadmin/admin with kvno 5, encryption
+     	type Triple DES cbc mode with HMAC/sha1 added to keytab
+     	WRFILE:/usr/local/var/krb5kdc/kadm5.keytab.
+     Entry for principal kadmin/admin with kvno 5, encryption type DES cbc mode
+     	with CRC-32 added to keytab
+     	WRFILE:/usr/local/var/krb5kdc/kadm5.keytab.
+     Entry for principal kadmin/changepw with kvno 5, encryption
+     	type Triple DES cbc mode with HMAC/sha1 added to keytab
+     	WRFILE:/usr/local/var/krb5kdc/kadm5.keytab.
+     Entry for principal kadmin/changepw with kvno 5,
+     	encryption type DES cbc mode with CRC-32 added to keytab
+     	WRFILE:/usr/local/var/krb5kdc/kadm5.keytab.
+     kadmin.local: quit
+     shell%
+
+As specified in the `-k' argument, `ktadd' will save the extracted
+keytab as
+`/usr/local/var/krb5kdc/kadm5.keytab'.  The filename you use must be
+the one specified in your `kdc.conf' file.
 

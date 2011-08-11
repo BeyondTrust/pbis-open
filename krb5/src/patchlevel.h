@@ -8,7 +8,7 @@
  *   require a specific license from the United States Government.
  *   It is the responsibility of any person or organization contemplating
  *   export to obtain such a license before exporting.
- * 
+ *
  * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
  * distribute this software and its documentation for any purpose and
  * without fee is hereby granted, provided that the above copyright
@@ -51,8 +51,8 @@
  * organization.
  */
 #define KRB5_MAJOR_RELEASE 1
-#define KRB5_MINOR_RELEASE 7
-#define KRB5_PATCHLEVEL 2
+#define KRB5_MINOR_RELEASE 8
+#define KRB5_PATCHLEVEL 4
 /* #undef KRB5_RELTAIL */
 #define KRB5_RELDATE "20110523"
-#define KRB5_RELTAG "tags/krb5-1-7-2-final"
+#define KRB5_RELTAG "tags/krb5-1-8-4-final"

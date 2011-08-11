@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * lib/gssapi/krb5/k5unsealiov.c
  *
@@ -52,7 +52,6 @@ kg_unseal_v1_iov(krb5_context context,
     int signalg;
     krb5_checksum cksum;
     krb5_checksum md5cksum;
-    krb5_timestamp now;
     size_t cksum_len = 0;
     size_t conflen = 0;
     int direction;
@@ -153,7 +152,7 @@ kg_unseal_v1_iov(krb5_context context,
 
                 store_32_be(seqnum, bigend_seqnum);
 
-                code = krb5_copy_keyblock(context, ctx->enc, &enc_key);
+                code = krb5_k_key_keyblock(context, ctx->enc, &enc_key);
                 if (code != 0) {
                     retval = GSS_S_FAILURE;
                     goto cleanup;
@@ -180,7 +179,7 @@ kg_unseal_v1_iov(krb5_context context,
                 goto cleanup;
             }
         }
-        conflen = kg_confounder_size(context, ctx->enc);
+        conflen = kg_confounder_size(context, ctx->enc->keyblock.enctype);
     }
 
     if (header->buffer.length != token_wrapper_len + 14 + cksum_len + conflen) {
@@ -231,7 +230,7 @@ kg_unseal_v1_iov(krb5_context context,
     case SGN_ALG_3:
         code = kg_encrypt(context, ctx->seq, KG_USAGE_SEAL,
                           (g_OID_equal(ctx->mech_used, gss_mech_krb5_old) ?
-                           ctx->seq->contents : NULL),
+                           ctx->seq->keyblock.contents : NULL),
                           md5cksum.contents, md5cksum.contents, 16);
         if (code != 0) {
             retval = GSS_S_FAILURE;
@@ -279,19 +278,6 @@ kg_unseal_v1_iov(krb5_context context,
 
     if (qop_state != NULL)
         *qop_state = GSS_C_QOP_DEFAULT;
-
-    code = krb5_timeofday(context, &now);
-    if (code != 0) {
-        *minor_status = code;
-        retval = GSS_S_FAILURE;
-        goto cleanup;
-    }
-
-    if (now > ctx->krb_times.endtime) {
-        *minor_status = 0;
-        retval = GSS_S_CONTEXT_EXPIRED;
-        goto cleanup;
-    }
 
     if ((ctx->initiate && direction != 0xff) ||
         (!ctx->initiate && direction != 0)) {
@@ -352,7 +338,7 @@ kg_unseal_iov_token(OM_uint32 *minor_status,
 
         kg_iov_msglen(iov, iov_count, &data_length, &assoc_data_length);
 
-        input_length += data_length;
+        input_length += data_length - assoc_data_length;
 
         if (padding != NULL)
             input_length += padding->buffer.length;
@@ -518,7 +504,7 @@ kg_unseal_stream_iov(OM_uint32 *minor_status,
     case KG2_TOK_WRAP_MSG:
     case KG2_TOK_DEL_CTX: {
         size_t ec, rrc;
-        krb5_enctype enctype = ctx->enc->enctype;
+        krb5_enctype enctype = ctx->enc->keyblock.enctype;
         unsigned int k5_headerlen = 0;
         unsigned int k5_trailerlen = 0;
 
@@ -551,13 +537,14 @@ kg_unseal_stream_iov(OM_uint32 *minor_status,
 
         ttrailer->buffer.length = ec + (conf_req_flag ? 16 : 0 /* E(Header) */) + k5_trailerlen;
         ttrailer->buffer.value = (unsigned char *)stream->buffer.value +
-                                 stream->buffer.length - ttrailer->buffer.length;
+            stream->buffer.length - ttrailer->buffer.length;
         break;
     }
     case KG_TOK_MIC_MSG:
     case KG_TOK_WRAP_MSG:
     case KG_TOK_DEL_CTX:
-        theader->buffer.length += ctx->cksum_size + kg_confounder_size(context, ctx->enc);
+        theader->buffer.length += ctx->cksum_size +
+            kg_confounder_size(context, ctx->enc->keyblock.enctype);
 
         /*
          * we can't set the padding accurately until decryption;
@@ -585,8 +572,8 @@ kg_unseal_stream_iov(OM_uint32 *minor_status,
 
     /* validate lengths */
     if (stream->buffer.length < theader->buffer.length +
-                                tpadding->buffer.length +
-                                ttrailer->buffer.length)
+        tpadding->buffer.length +
+        ttrailer->buffer.length)
     {
         code = (OM_uint32)KRB5_BAD_MSIZE;
         major_status = GSS_S_DEFECTIVE_TOKEN;
@@ -595,7 +582,7 @@ kg_unseal_stream_iov(OM_uint32 *minor_status,
 
     /* setup data */
     tdata->buffer.length = stream->buffer.length - ttrailer->buffer.length -
-                           tpadding->buffer.length - theader->buffer.length;
+        tpadding->buffer.length - theader->buffer.length;
 
     assert(data != NULL);
 

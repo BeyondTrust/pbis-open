@@ -2,7 +2,7 @@
 
 /*
  * Copyright 1996 by Sun Microsystems, Inc.
- * 
+ *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without fee,
  * provided that the above copyright notice appears in all copies and
@@ -12,7 +12,7 @@
  * without specific, written prior permission. Sun Microsystems makes no
  * representations about the suitability of this software for any
  * purpose.  It is provided "as is" without express or implied warranty.
- * 
+ *
  * SUN MICROSYSTEMS DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
  * EVENT SHALL SUN MICROSYSTEMS BE LIABLE FOR ANY SPECIAL, INDIRECT OR
@@ -567,9 +567,9 @@ updateMechList(void)
 {
 	char *fileName;
 	struct stat fileInfo;
-  
+
 	fileName = MECH_CONF;
-  
+
 	/* check if mechList needs updating */
 	if (stat(fileName, &fileInfo) == 0 &&
 		(fileInfo.st_mtime > g_confFileModTime)) {
@@ -638,7 +638,7 @@ gssint_register_mechinfo(gss_mech_info template)
 		releaseMechInfo(&new_cf);
 		return ENOMEM;
 	}
-	memcpy(new_cf->mech, template->mech, sizeof(struct gss_config));
+	*new_cf->mech = *template->mech;
 	if (template->mech_type != NULL)
 		new_cf->mech->mech_type = *(template->mech_type);
 	new_cf->mech_type = &new_cf->mech->mech_type;
@@ -773,6 +773,10 @@ build_dynamicMech(void *dl, const gss_OID mech_type)
 	GSS_ADD_DYNAMIC_METHOD(dl, mech, gss_export_name_composite);
 	GSS_ADD_DYNAMIC_METHOD(dl, mech, gss_map_name_to_any);
 	GSS_ADD_DYNAMIC_METHOD(dl, mech, gss_release_any_name_mapping);
+        /* RFC 4401 (introduced in 1.8) */
+	GSS_ADD_DYNAMIC_METHOD(dl, mech, gss_pseudo_random);
+	/* RFC 4178 (introduced in 1.8; gss_get_neg_mechs not implemented) */
+	GSS_ADD_DYNAMIC_METHOD(dl, mech, gss_set_neg_mechs);
 
 	assert(mech_type != GSS_C_NO_OID);
 

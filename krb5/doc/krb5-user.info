@@ -9,47 +9,47 @@ END-INFO-DIR-ENTRY
 
 Indirect:
 krb5-user.info-1: 220
-krb5-user.info-2: 49122
+krb5-user.info-2: 48967
 
 Tag Table:
 (Indirect)
 Node: Top220
 Node: Copyright479
-Node: Introduction26353
-Node: What is a Ticket?28212
-Node: What is a Kerberos Principal?29463
-Node: Kerberos V5 Tutorial31310
-Node: Setting Up to Use Kerberos V532100
-Node: Ticket Management32992
-Node: Kerberos Ticket Properties34080
-Node: Obtaining Tickets with kinit37978
-Ref: Obtaining Tickets with kinit-Footnote-141076
-Node: Viewing Your Tickets with klist41191
-Node: Destroying Your Tickets with kdestroy45479
-Node: Password Management46342
-Node: Changing Your Password47370
-Node: Password Advice49122
-Node: Granting Access to Your Account51717
-Node: Kerberos V5 Applications53626
-Node: Overview of Additional Features54633
-Node: telnet55899
-Node: rlogin58810
-Node: FTP61192
-Node: rsh63211
-Node: rcp64388
-Node: ksu65189
-Node: Kerberos V5 Reference70730
-Ref: Kerberos V5 Reference-Footnote-172179
-Node: kinit Reference72405
-Node: klist Reference72625
-Node: ksu Reference72837
-Node: kdestroy Reference73046
-Node: kpasswd Reference73272
-Node: telnet Reference73498
-Node: FTP Reference73716
-Node: rlogin Reference73924
-Node: rsh Reference74138
-Node: rcp Reference74343
-Node: Kerberos Glossary74523
+Node: Introduction23603
+Node: What is a Ticket?25462
+Node: What is a Kerberos Principal?26713
+Node: Kerberos V5 Tutorial28560
+Node: Setting Up to Use Kerberos V529350
+Node: Ticket Management30242
+Node: Kerberos Ticket Properties31330
+Node: Obtaining Tickets with kinit35228
+Ref: Obtaining Tickets with kinit-Footnote-138326
+Node: Viewing Your Tickets with klist38441
+Node: Destroying Your Tickets with kdestroy42729
+Node: Password Management43592
+Node: Changing Your Password44620
+Node: Password Advice46372
+Node: Granting Access to Your Account48967
+Node: Kerberos V5 Applications50876
+Node: Overview of Additional Features51883
+Node: telnet53149
+Node: rlogin56060
+Node: FTP58442
+Node: rsh60461
+Node: rcp61638
+Node: ksu62439
+Node: Kerberos V5 Reference67980
+Ref: Kerberos V5 Reference-Footnote-169429
+Node: kinit Reference69655
+Node: klist Reference69875
+Node: ksu Reference70087
+Node: kdestroy Reference70296
+Node: kpasswd Reference70522
+Node: telnet Reference70748
+Node: FTP Reference70966
+Node: rlogin Reference71174
+Node: rsh Reference71388
+Node: rcp Reference71593
+Node: Kerberos Glossary71773
 
 End Tag Table

@@ -33,17 +33,18 @@
 <H2>OPTIONS</H2><PRE>
      <I>principal</I>
           change the password for the Kerberos principal  <I>princi-</I>
-          <I>pal</I>.   Otherwise,  the  principal  is  derived from the
-          identity of the user invoking the <I>kpasswd</I> command.
+          <I>pal</I>.   Otherwise,  <I>kpasswd</I> uses the principal name from
+          an existing ccache if there is one; if not, the princi-
+          pal  is  derived from the identity of the user invoking
+          the <I>kpasswd</I> command.
 
 
 </PRE>
-<H2>FILES</H2><PRE>
-     /tmp/tkt_kadm_[pid]
-                        temporary credentials cache for the life-
-                        time  of the password changing operation.
-                        ([pid] is the process-ID of  the  kpasswd
-                        process.)
+<H2>PORTS</H2><PRE>
+     <B>kpasswd</B> looks first for kpasswd_server =  host:port  in  the
+     [realms]  section  of  the  krb5.conf file under the current
+     realm.   If  that  is  missing,  <B>kpasswd</B>   looks   for   the
+     admin_server entry, but substitutes 464 for the port.
 
 
 </PRE>
@@ -53,9 +54,8 @@
 
 </PRE>
 <H2>BUGS</H2><PRE>
-     If <B>kpasswd</B> is suspended, the changepw  tickets  may  not  be
-     destroyed.
-
+     <B>kpasswd</B> may not work with multi-homed hosts running  on  the
+     Solaris platform.
 
 
 

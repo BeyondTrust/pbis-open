@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 1993 by OpenVision Technologies, Inc.
  *
@@ -24,7 +24,7 @@
 #include "gssapiP_krb5.h"
 
 /*
- * $Id: seal.c 21778 2009-01-22 23:21:11Z tlyu $
+ * $Id: seal.c 23457 2009-12-08 00:04:48Z tlyu $
  */
 
 /* V2 interface */
@@ -79,4 +79,3 @@ krb5_gss_wrap_iov_length(OM_uint32 *minor_status,
                                       qop_req, conf_state, iov, iov_count);
     return major_status;
 }
-

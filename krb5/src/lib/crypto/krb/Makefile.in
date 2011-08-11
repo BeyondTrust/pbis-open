@@ -1,0 +1,254 @@
+mydir=lib/crypto/krb
+BUILDTOP=$(REL)..$(S)..$(S)..
+SUBDIRS= arcfour checksum crc32 dk \
+	prf rand2key old raw yarrow 
+LOCALINCLUDES = -I$(srcdir) -I$(srcdir)/../@CRYPTO_IMPL@/enc_provider -I$(srcdir)/dk	\
+		-I$(srcdir)/../@CRYPTO_IMPL@/hash_provider				\
+		-I$(srcdir)/prf -I$(srcdir)/rand2key		 			\
+		-I$(srcdir)/old -I$(srcdir)/raw -I$(srcdir)/yarrow 			\
+		-I$(srcdir)/../@CRYPTO_IMPL@/ -I$(srcdir)/../@CRYPTO_IMPL@/des		\
+		-I$(srcdir)/../@CRYPTO_IMPL@/aes -I$(srcdir)/arcfour 	\
+		-I$(srcdir)/../@CRYPTO_IMPL@/sha1 -I$(srcdir)/../@CRYPTO_IMPL@
+PROG_LIBPATH=-L$(TOPLIBD)
+PROG_RPATH=$(KRB5_LIBDIR)
+DEFS=
+
+##DOSBUILDTOP = ..\..\..
+##DOSLIBNAME=$(OUTPRE)crypto.lib
+##DOSOBJFILE=$(OUTPRE)crypto.lst
+##DOSOBJFILELIST=@$(OUTPRE)crypto.lst @$(OUTPRE)des.lst @$(OUTPRE)md4.lst @$(OUTPRE)md5.lst @$(OUTPRE)sha1.lst @$(OUTPRE)arcfour.lst @$(OUTPRE)crc32.lst @$(OUTPRE)dk.lst @$(OUTPRE)old.lst @$(OUTPRE)raw.lst @$(OUTPRE)enc_prov.lst @$(OUTPRE)hash_pro.lst @$(OUTPRE)cksum.lst @$(OUTPRE)yarrow.lst @$(OUTPRE)aes.lst
+##DOSOBJFILEDEP =$(OUTPRE)crypto.lst $(OUTPRE)des.lst $(OUTPRE)md4.lst $(OUTPRE)md5.lst $(OUTPRE)sha1.lst $(OUTPRE)arcfour.lst $(OUTPRE)crc32.lst $(OUTPRE)dk.lst $(OUTPRE)old.lst $(OUTPRE)raw.lst $(OUTPRE)enc_prov.lst $(OUTPRE)hash_pro.lst $(OUTPRE)cksum.lst $(OUTPRE)aes.lst
+
+PROG_LIBPATH=-L$(TOPLIBD)
+PROG_RPATH=$(KRB5_LIBDIR)
+
+STLIBOBJS=\
+	aead.o		 	\
+	block_size.o		\
+	cf2.o 			\
+	checksum_length.o	\
+	cksumtype_to_string.o	\
+	cksumtypes.o		\
+	coll_proof_cksum.o	\
+	combine_keys.o		\
+	crypto_length.o		\
+	crypto_libinit.o	\
+	default_state.o 	\
+	decrypt.o		\
+	decrypt_iov.o		\
+	encrypt.o		\
+	encrypt_iov.o		\
+	encrypt_length.o	\
+	enctype_util.o		\
+	etypes.o		\
+	key.o			\
+	keyblocks.o 		\
+	keyed_cksum.o		\
+	keyed_checksum_types.o	\
+	keylengths.o		\
+	make_checksum.o		\
+	make_checksum_iov.o	\
+	make_random_key.o	\
+	mandatory_sumtype.o	\
+	nfold.o			\
+	old_api_glue.o		\
+	prf.o			\
+	prng.o			\
+	random_to_key.o		\
+	state.o 		\
+	string_to_cksumtype.o	\
+	string_to_key.o		\
+	valid_cksumtype.o	\
+	verify_checksum.o	\
+	verify_checksum_iov.o
+
+OBJS=\
+	$(OUTPRE)aead.$(OBJEXT)		 	\
+	$(OUTPRE)block_size.$(OBJEXT)		\
+	$(OUTPRE)cf2$(OBJEXT) 			\
+	$(OUTPRE)checksum_length.$(OBJEXT)	\
+	$(OUTPRE)cksumtype_to_string.$(OBJEXT)	\
+	$(OUTPRE)cksumtypes.$(OBJEXT)		\
+	$(OUTPRE)coll_proof_cksum.$(OBJEXT)	\
+	$(OUTPRE)combine_keys.$(OBJEXT)		\
+	$(OUTPRE)crypto_length.$(OBJEXT)	\
+	$(OUTPRE)crypto_libinit.$(OBJEXT)	\
+	$(OUTPRE)default_state.$(OBJEXT) 	\
+	$(OUTPRE)decrypt.$(OBJEXT)		\
+	$(OUTPRE)decrypt_iov.$(OBJEXT)		\
+	$(OUTPRE)encrypt.$(OBJEXT)		\
+	$(OUTPRE)encrypt_iov.$(OBJEXT)		\
+	$(OUTPRE)encrypt_length.$(OBJEXT)	\
+	$(OUTPRE)enctype_util.$(OBJEXT)	\
+	$(OUTPRE)etypes.$(OBJEXT)		\
+	$(OUTPRE)key.$(OBJECT)			\
+	$(OUTPRE)keyblocks.$(OBJEXT) 		\
+	$(OUTPRE)keyed_cksum.$(OBJEXT)		\
+	$(OUTPRE)keyed_checksum_types.$(OBJEXT)	\
+	$(OUTPRE)keylengths.$(OBJEXT)		\
+	$(OUTPRE)make_checksum.$(OBJEXT)	\
+	$(OUTPRE)make_checksum_iov.$(OBJEXT)	\
+	$(OUTPRE)make_random_key.$(OBJEXT)	\
+	$(OUTPRE)mandatory_sumtype.$(OBJEXT)	\
+	$(OUTPRE)nfold.$(OBJEXT)		\
+	$(OUTPRE)old_api_glue.$(OBJEXT)		\
+	$(OUTPRE)prf.$(OBJEXT) 			\
+	$(OUTPRE)prng.$(OBJEXT)			\
+	$(OUTPRE)random_to_key.$(OBJEXT)	\
+	$(OUTPRE)state.$(OBJEXT) 		\
+	$(OUTPRE)string_to_cksumtype.$(OBJEXT)	\
+	$(OUTPRE)valid_cksumtype.$(OBJEXT)	\
+	$(OUTPRE)verify_checksum.$(OBJEXT)	\
+	$(OUTPRE)verify_checksum_iov.$(OBJEXT)
+
+SRCS=\
+	$(srcdir)/aead.c		\
+	$(srcdir)/block_size.c		\
+	$(srcdir)/checksum_length.c	\
+	$(srcdir)/cksumtype_to_string.c	\
+	$(srcdir)/cksumtypes.c		\
+	$(srcdir)/coll_proof_cksum.c	\
+	$(srcdir)/combine_keys.c	\
+	$(srcdir)/crypto_length.c	\
+	$(srcdir)/crypto_libinit.c	\
+	$(srcdir)/default_state.c 	\
+	$(srcdir)/decrypt.c		\
+	$(srcdir)/decrypt_iov.c		\
+	$(srcdir)/encrypt.c		\
+	$(srcdir)/encrypt_iov.c		\
+	$(srcdir)/encrypt_length.c	\
+	$(srcdir)/enctype_util.c	\
+	$(srcdir)/etypes.c		\
+	$(srcdir)/key.c			\
+	$(srcdir)/keyblocks.c 		\
+	$(srcdir)/keyed_cksum.c		\
+	$(srcdir)/keyed_checksum_types.c\
+	$(srcdir)/keylengths.c		\
+	$(srcdir)/make_checksum.c	\
+	$(srcdir)/make_checksum_iov.c	\
+	$(srcdir)/make_random_key.c	\
+	$(srcdir)/mandatory_sumtype.c	\
+	$(srcdir)/nfold.c		\
+	$(srcdir)/old_api_glue.c	\
+	$(srcdir)/prf.c 		\
+	$(srcdir)/cf2.c 		\
+	$(srcdir)/prng.c		\
+	$(srcdir)/random_to_key.c	\
+	$(srcdir)/state.c 		\
+	$(srcdir)/string_to_cksumtype.c	\
+	$(srcdir)/string_to_key.c	\
+	$(srcdir)/valid_cksumtype.c	\
+	$(srcdir)/verify_checksum.c	\
+	$(srcdir)/verify_checksum_iov.c
+
+STOBJLISTS=arcfour/OBJS.ST checksum/OBJS.ST crc32/OBJS.ST	\
+	dk/OBJS.ST prf/OBJS.ST rand2key/OBJS.ST			\
+	old/OBJS.ST raw/OBJS.ST  yarrow/OBJS.ST  OBJS.ST
+
+SUBDIROBJLISTS=arcfour/OBJS.ST checksum/OBJS.ST crc32/OBJS.ST	\
+	dk/OBJS.ST prf/OBJS.ST rand2key/OBJS.ST			\
+	old/OBJS.ST raw/OBJS.ST  yarrow/OBJS.ST 
+
+##DOS##LIBOBJS = $(OBJS)
+
+all-unix:: all-libobjs
+includes:: depend
+
+depend:: $(SRCS)
+
+clean-unix:: clean-libobjs
+
+all-windows::
+	cd arcfour
+	@echo Making in crypto\arcfour
+	$(MAKE) -$(MFLAGS)
+	cd ..\crc32
+	@echo Making in crypto\crc32
+	$(MAKE) -$(MFLAGS)
+	cd ..\checksum
+	@echo Making in crypto\checksum
+	$(MAKE) -$(MFLAGS)
+	cd ..\dk
+	@echo Making in crypto\dk
+	$(MAKE) -$(MFLAGS)
+	cd ..\prf
+	@echo Making in crypto\prf
+	$(MAKE) -$(MFLAGS)
+	cd ..\rand2key
+	@echo Making in crypto\rand2key
+	$(MAKE) -$(MFLAGS)
+	cd ..\old
+	@echo Making in crypto\old
+	$(MAKE) -$(MFLAGS)
+	cd ..\raw
+	@echo Making in crypto\raw
+	$(MAKE) -$(MFLAGS)
+	cd ..\yarrow
+	@echo Making in crypto\yarrow
+	$(MAKE) -$(MFLAGS)
+	cd ..
+
+clean-windows::
+	cd arcfour
+	@echo Making in clean crypto\arcfour
+	$(MAKE) -$(MFLAGS) clean
+	cd ..\crc32
+	@echo Making in clean crypto\crc32
+	$(MAKE) -$(MFLAGS) clean
+	cd ..\checksum
+	@echo Making clean in crypto\checksum
+	$(MAKE) -$(MFLAGS) clean
+	cd ..\dk
+	@echo Making clean in crypto\dk
+	$(MAKE) -$(MFLAGS) clean
+	cd ..\prf
+	@echo Making clean in crypto\prf
+	$(MAKE) -$(MFLAGS) clean
+	cd ..\rand2key
+	@echo Making clean in crypto\rand2key
+	$(MAKE) -$(MFLAGS) clean
+	cd ..\old
+	@echo Making clean in crypto\old
+	$(MAKE) -$(MFLAGS) clean
+	cd ..\raw
+	@echo Making clean in crypto\raw
+	$(MAKE) -$(MFLAGS) clean
+	cd ..\yarrow
+	@echo Making clean in crypto\yarrow
+	$(MAKE) -$(MFLAGS) clean
+	cd ..
+
+check-windows::
+	cd arcfour
+	@echo Making in check crypto\arcfour
+	$(MAKE) -$(MFLAGS) check
+	cd ..\crc32
+	@echo Making in check crypto\crc32
+	$(MAKE) -$(MFLAGS) check
+	cd ..\checksum
+	@echo Making check in crypto\checksum
+	$(MAKE) -$(MFLAGS) check
+	cd ..\dk
+	@echo Making check in crypto\dk
+	$(MAKE) -$(MFLAGS) check
+	cd ..\prf
+	@echo Making check in crypto\prf
+	$(MAKE) -$(MFLAGS) check
+	cd ..\rand2key
+	@echo Making check in crypto\rand2key
+	$(MAKE) -$(MFLAGS) check
+	cd ..\old
+	@echo Making check in crypto\old
+	$(MAKE) -$(MFLAGS) check
+	cd ..\raw
+	@echo Making check in crypto\raw
+	$(MAKE) -$(MFLAGS) check
+	cd ..\yarrow
+	@echo Making check in crypto\yarrow
+	$(MAKE) -$(MFLAGS) check
+	cd ..
+
+
+@lib_frag@
+@libobj_frag@
+

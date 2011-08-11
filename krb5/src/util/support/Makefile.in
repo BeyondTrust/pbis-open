@@ -1,5 +1,3 @@
-thisconfigdir=../..
-myfulldir=util/support
 mydir=util/support
 BUILDTOP=$(REL)..$(S)..
 RELDIR=../util/support
@@ -32,9 +30,27 @@ MKSTEMP_OBJ= @MKSTEMP_OBJ@
 
 STRLCPY_ST_OBJ=@STRLCPY_ST_OBJ@
 STRLCPY_OBJ=@STRLCPY_OBJ@
+##DOS##STRLCPY_ST_OBJ= strlcpy.o
+##DOS##STRLCPY_OBJ= $(OUTPRE)strlcpy.$(OBJEXT)
 
 PRINTF_ST_OBJ= @PRINTF_ST_OBJ@
 PRINTF_OBJ= @PRINTF_OBJ@
+##DOS##PRINTF_ST_OBJ= printf.o
+##DOS##PRINTF_OBJ= $(OUTPRE)printf.$(OBJEXT)
+
+IPC_ST_OBJ=
+IPC_OBJ=
+##DOS##IPC_ST_OBJ= ipc_stream.o
+##DOS##IPC_OBJ= $(OUTPRE)ipc_stream.$(OBJEXT)
+IPC_SYMS= \
+	krb5int_ipc_stream_data krb5int_ipc_stream_new \
+	krb5int_ipc_stream_write krb5int_ipc_stream_read \
+	krb5int_ipc_stream_read_int32 krb5int_ipc_stream_write_int32 \
+	krb5int_ipc_stream_read_int64 krb5int_ipc_stream_write_int64 \
+	krb5int_ipc_stream_read_uint32 krb5int_ipc_stream_write_uint32 \
+	krb5int_ipc_stream_read_string krb5int_ipc_stream_write_string \
+	krb5int_ipc_stream_release krb5int_ipc_stream_size \
+	krb5int_ipc_stream_free_string
 
 STLIBOBJS= \
 	threads.o \
@@ -46,6 +62,8 @@ STLIBOBJS= \
 	fake-addrinfo.o \
 	utf8.o \
 	utf8_conv.o \
+	zap.o \
+	$(IPC_ST_OBJ) \
 	$(STRLCPY_ST_OBJ) \
 	$(PRINTF_ST_OBJ) \
 	$(MKSTEMP_ST_OBJ)
@@ -60,6 +78,8 @@ LIBOBJS= \
 	$(OUTPRE)fake-addrinfo.$(OBJEXT) \
 	$(OUTPRE)utf8.$(OBJEXT) \
 	$(OUTPRE)utf8_conv.$(OBJEXT) \
+	$(OUTPRE)zap.$(OBJEXT) \
+	$(IPC_OBJ) \
 	$(STRLCPY_OBJ) \
 	$(PRINTF_OBJ) \
 	$(MKSTEMP_OBJ)
@@ -82,7 +102,9 @@ SRCS=\
 	$(srcdir)/strlcpy.c \
 	$(srcdir)/printf.c \
 	$(srcdir)/mkstemp.c \
-	$(srcdir)/t_k5buf.c
+	$(srcdir)/t_k5buf.c \
+	$(srcdir)/t_unal.c \
+	$(srcdir)/zap.c
 
 SHLIB_EXPDEPS =
 # Add -lm if dumping thread stats, for sqrt.
@@ -100,7 +122,7 @@ install-unix:: install-libs
 clean-unix:: clean-liblinks clean-libs clean-libobjs
 
 ##DOS##!if 0
-$(BUILDTOP)/include/autoconf.h: $(SRCTOP)/include/autoconf.h.in
+$(BUILDTOP)/include/autoconf.h: $(top_srcdir)/include/autoconf.h.in
 	(cd $(BUILDTOP)/include; $(MAKE) autoconf.h)
 ##DOS##!endif
 
@@ -111,7 +133,8 @@ SHLIB_EXPORT_FILE=libkrb5support.exports
 ##DOS##all-windows:: libkrb5support.exports
 
 EXTRA_SUPPORT_SYMS= @EXTRA_SUPPORT_SYMS@
-##DOS##EXTRA_SUPPORT_SYMS= krb5int_mkstemp
+##DOS##EXTRA_SUPPORT_SYMS= krb5int_mkstemp krb5int_strlcpy krb5int_strlcat \
+##DOS##		krb5int_vasprintf krb5int_asprintf $(IPC_SYMS)
 
 ##DOS##!if 0
 libkrb5support.exports: $(srcdir)/libkrb5support-fixed.exports Makefile
@@ -132,13 +155,17 @@ T_K5BUF_OBJS= t_k5buf.o k5buf.o $(PRINTF_ST_OBJ)
 t_k5buf: $(T_K5BUF_OBJS)
 	$(CC_LINK) -o t_k5buf $(T_K5BUF_OBJS)
 
-TEST_PROGS= t_k5buf
+t_unal: t_unal.o
+	$(CC_LINK) -o t_unal t_unal.o
+
+TEST_PROGS= t_k5buf t_unal
 
 check-unix:: $(TEST_PROGS)
 	./t_k5buf
+	./t_unal
 
 clean::
-	$(RM) t_k5buf.o t_k5buf
+	$(RM) t_k5buf.o t_k5buf t_unal.o t_unal
 
 @lib_frag@
 @libobj_frag@

@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * lib/gssapi/krb5/k5sealv3.c
  *
@@ -81,7 +81,7 @@ gss_krb5int_make_seal_token_v3 (krb5_context context,
     size_t ec;
     unsigned short tok_id;
     krb5_checksum sum;
-    krb5_keyblock *key;
+    krb5_key key;
     krb5_cksumtype cksumtype;
 
     assert(ctx->big_endian == 0);
@@ -136,7 +136,7 @@ gss_krb5int_make_seal_token_v3 (krb5_context context,
             return ENOMEM;
 
         /* Get size of ciphertext.  */
-        bufsize = 16 + krb5_encrypt_size (plain.length, key->enctype);
+        bufsize = 16 + krb5_encrypt_size (plain.length, key->keyblock.enctype);
         /* Allocate space for header plus encrypted data.  */
         outbuf = malloc(bufsize);
         if (outbuf == NULL) {
@@ -164,8 +164,8 @@ gss_krb5int_make_seal_token_v3 (krb5_context context,
 
         cipher.ciphertext.data = (char *)outbuf + 16;
         cipher.ciphertext.length = bufsize - 16;
-        cipher.enctype = key->enctype;
-        err = krb5_c_encrypt(context, key, key_usage, 0, &plain, &cipher);
+        cipher.enctype = key->keyblock.enctype;
+        err = krb5_k_encrypt(context, key, key_usage, 0, &plain, &cipher);
         zap(plain.data, plain.length);
         free(plain.data);
         plain.data = 0;
@@ -178,7 +178,7 @@ gss_krb5int_make_seal_token_v3 (krb5_context context,
 #ifdef CFX_EXERCISE
         rrc = rand() & 0xffff;
         if (gss_krb5int_rotate_left(outbuf+16, bufsize-16,
-                        (bufsize-16) - (rrc % (bufsize - 16))))
+                                    (bufsize-16) - (rrc % (bufsize - 16))))
             store_16_be(rrc, outbuf+6);
         /* If the rotate fails, don't worry about it.  */
 #endif
@@ -245,7 +245,7 @@ gss_krb5int_make_seal_token_v3 (krb5_context context,
         sum.contents = outbuf + 16 + message2->length;
         sum.length = cksumsize;
 
-        err = krb5_c_make_checksum(context, cksumtype, key,
+        err = krb5_k_make_checksum(context, cksumtype, key,
                                    key_usage, &plain, &sum);
         zap(plain.data, plain.length);
         free(plain.data);
@@ -267,7 +267,7 @@ gss_krb5int_make_seal_token_v3 (krb5_context context,
             rrc = rand() & 0xffff;
             /* If the rotate fails, don't worry about it.  */
             if (gss_krb5int_rotate_left(outbuf+16, bufsize-16,
-                            (bufsize-16) - (rrc % (bufsize - 16))))
+                                        (bufsize-16) - (rrc % (bufsize - 16))))
                 store_16_be(rrc, outbuf+6);
 #endif
             /* Fix up EC field.  */
@@ -317,7 +317,7 @@ gss_krb5int_unseal_token_v3(krb5_context *contextptr,
     krb5_checksum sum;
     krb5_error_code err;
     krb5_boolean valid;
-    krb5_keyblock *key;
+    krb5_key key;
     krb5_cksumtype cksumtype;
 
     if (ctx->big_endian != 0)
@@ -352,19 +352,19 @@ gss_krb5int_unseal_token_v3(krb5_context *contextptr,
 
     /* Two things to note here.
 
-    First, we can't really enforce the use of the acceptor's subkey,
-    if we're the acceptor; the initiator may have sent messages
-    before getting the subkey.  We could probably enforce it if
-    we're the initiator.
+       First, we can't really enforce the use of the acceptor's subkey,
+       if we're the acceptor; the initiator may have sent messages
+       before getting the subkey.  We could probably enforce it if
+       we're the initiator.
 
-    Second, if someone tweaks the code to not set the flag telling
-    the krb5 library to generate a new subkey in the AP-REP
-    message, the MIT library may include a subkey anyways --
-    namely, a copy of the AP-REQ subkey, if it was provided.  So
-    the initiator may think we wanted a subkey, and set the flag,
-    even though we weren't trying to set the subkey.  The "other"
-    key, the one not asserted by the acceptor, will have the same
-    value in that case, though, so we can just ignore the flag.  */
+       Second, if someone tweaks the code to not set the flag telling
+       the krb5 library to generate a new subkey in the AP-REP
+       message, the MIT library may include a subkey anyways --
+       namely, a copy of the AP-REQ subkey, if it was provided.  So
+       the initiator may think we wanted a subkey, and set the flag,
+       even though we weren't trying to set the subkey.  The "other"
+       key, the one not asserted by the acceptor, will have the same
+       value in that case, though, so we can just ignore the flag.  */
     if (ctx->have_acceptor_subkey && (ptr[2] & FLAG_ACCEPTOR_SUBKEY)) {
         key = ctx->acceptor_subkey;
         cksumtype = ctx->acceptor_subkey_cksumtype;
@@ -396,16 +396,16 @@ gss_krb5int_unseal_token_v3(krb5_context *contextptr,
                 *conf_state = 1;
             /* Do we have no decrypt_size function?
 
-            For all current cryptosystems, the ciphertext size will
-            be larger than the plaintext size.  */
-            cipher.enctype = key->enctype;
+               For all current cryptosystems, the ciphertext size will
+               be larger than the plaintext size.  */
+            cipher.enctype = key->keyblock.enctype;
             cipher.ciphertext.length = bodysize - 16;
             cipher.ciphertext.data = (char *)ptr + 16;
             plain.length = bodysize - 16;
             plain.data = malloc(plain.length);
             if (plain.data == NULL)
                 goto no_mem;
-            err = krb5_c_decrypt(context, key, key_usage, 0,
+            err = krb5_k_decrypt(context, key, key_usage, 0,
                                  &cipher, &plain);
             if (err) {
                 free(plain.data);
@@ -459,7 +459,7 @@ gss_krb5int_unseal_token_v3(krb5_context *contextptr,
             }
             sum.contents = ptr+bodysize-ec;
             sum.checksum_type = cksumtype;
-            err = krb5_c_verify_checksum(context, key, key_usage,
+            err = krb5_k_verify_checksum(context, key, key_usage,
                                          &plain, &sum, &valid);
             if (err)
                 goto error;
@@ -496,7 +496,7 @@ gss_krb5int_unseal_token_v3(krb5_context *contextptr,
         sum.length = bodysize - 16;
         sum.contents = ptr + 16;
         sum.checksum_type = cksumtype;
-        err = krb5_c_verify_checksum(context, key, key_usage,
+        err = krb5_k_verify_checksum(context, key, key_usage,
                                      &plain, &sum, &valid);
         free(plain.data);
         plain.data = NULL;

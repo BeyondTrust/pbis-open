@@ -1,5 +1,3 @@
-thisconfigdir=../..
-myfulldir=kadmin/cli
 mydir=kadmin/cli
 BUILDTOP=$(REL)..$(S)..
 PROG_LIBPATH=-L$(TOPLIBD)
@@ -12,7 +10,7 @@ COMMON_OBJS = kadmin.o kadmin_ct.o ss_wrapper.o getdate.o
 KADMIN_OBJS = $(COMMON_OBJS) keytab.o
 LOCAL_OBJS = $(COMMON_OBJS) keytab_local.o
 
-SRCS = kadmin.c kadmin_ct.c ss_wrapper.c getdate.c keytab.c
+SRCS = kadmin.c kadmin_ct.c ss_wrapper.c getdate.c keytab.c keytab_local.c
 
 LOCALINCLUDES=-I$(srcdir)
 
@@ -39,8 +37,9 @@ generate-files-mac: kadmin_ct.c getdate.c
 clean::
 	$(RM) $(PROG).local $(PROG) $(COMMON_OBJS) $(KADMIN_OBJS) $(LOCAL_OBJS)
 clean-unix::
-	$(RM) getdate.c kadmin_ct.c
+	$(RM) datetest getdate.c kadmin_ct.c
 
 # for testing getdate.y
+# CC_LINK is not meant for compilation and this use may break in the future.
 datetest: getdate.c
-	$(CC) -o datetest $(ALL_CFLAGS) $(LDFLAGS) $(LDARGS) -DTEST getdate.c
+	$(CC_LINK) $(ALL_CFLAGS) -DTEST -o datetest getdate.c

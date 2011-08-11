@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * lib/krb5/rcache/rc_io.c
  *
@@ -40,7 +40,6 @@
 #error find some way to use net-byte-order file version numbers.
 #endif
 
-#define FREE(x) ((void) free((char *) (x)))
 #define UNIQUE getpid() /* hopefully unique number */
 
 #define GETDIR (dir = getdir(), dirlen = strlen(dir) + sizeof(PATH_SEPARATOR) - 1)
@@ -81,9 +80,9 @@ krb5_rc_io_mkstemp(krb5_context context, krb5_rc_iostuff *d, char *dir)
     krb5_error_code retval = 0;
 #if HAVE_SYS_STAT_H
     struct stat stbuf;
-#endif
 
     memset(&stbuf, 0, sizeof(stbuf));
+#endif
     if (asprintf(&d->fn, "%s%skrb5_RCXXXXXX",
                  dir, PATH_SEPARATOR) < 0) {
         d->fn = NULL;
@@ -205,7 +204,7 @@ cleanup:
         if (d->fn) {
             if (!do_not_unlink)
                 (void) unlink(d->fn);
-            FREE(d->fn);
+            free(d->fn);
             d->fn = NULL;
         }
         if (d->fd != -1) {
@@ -263,12 +262,12 @@ krb5_rc_io_open_internal(krb5_context context, krb5_rc_iostuff *d, char *fn,
     /* check if someone was playing with symlinks */
     if ((sb1.st_dev != sb2.st_dev || sb1.st_ino != sb2.st_ino)
         || (sb1.st_mode & S_IFMT) != S_IFREG)
-        {
-            retval = KRB5_RC_IO_PERM;
-            krb5_set_error_message(context, retval,
-                                   "rcache not a file %s", d->fn);
-            goto cleanup;
-        }
+    {
+        retval = KRB5_RC_IO_PERM;
+        krb5_set_error_message(context, retval,
+                               "rcache not a file %s", d->fn);
+        goto cleanup;
+    }
     /* check that non other can read/write/execute the file */
     if (sb1.st_mode & 077) {
         krb5_set_error_message(context, retval, "Insecure file mode "
@@ -296,12 +295,10 @@ krb5_rc_io_open_internal(krb5_context context, krb5_rc_iostuff *d, char *fn,
 
 cleanup:
     if (retval) {
-        if (d->fn) {
-            if (!do_not_unlink)
-                (void) unlink(d->fn);
-            FREE(d->fn);
-            d->fn = NULL;
-        }
+        if (!do_not_unlink)
+            (void) unlink(d->fn);
+        free(d->fn);
+        d->fn = NULL;
         if (d->fd >= 0)
             (void) close(d->fd);
     }
@@ -470,7 +467,7 @@ krb5_error_code
 krb5_rc_io_close(krb5_context context, krb5_rc_iostuff *d)
 {
     if (d->fn != NULL) {
-        FREE(d->fn);
+        free(d->fn);
         d->fn = NULL;
     }
     if (d->fd != -1) {

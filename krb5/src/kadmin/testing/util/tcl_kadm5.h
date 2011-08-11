@@ -1,4 +1,3 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 
 void Tcl_kadm5_init(Tcl_Interp *interp);
-void Tcl_ovsec_kadm_init(Tcl_Interp *interp);
-

@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 2009  by the Massachusetts Institute of Technology.
  * All Rights Reserved.
@@ -103,7 +103,7 @@ static int
 kg_is_initiator_cred(krb5_gss_cred_id_t cred)
 {
     return (cred->usage == GSS_C_INITIATE || cred->usage == GSS_C_BOTH) &&
-           (cred->ccache != NULL);
+        (cred->ccache != NULL);
 }
 
 static OM_uint32
@@ -190,7 +190,7 @@ krb5_gss_acquire_cred_impersonate_name(OM_uint32 *minor_status,
 {
     OM_uint32 major_status;
     krb5_error_code code;
-    krb5_gss_cred_id_t cred = NULL;
+    krb5_gss_cred_id_t cred;
     krb5_context context;
 
     if (impersonator_cred_handle == GSS_C_NO_CREDENTIAL)
@@ -299,7 +299,7 @@ kg_compose_deleg_cred(OM_uint32 *minor_status,
     if (GSS_ERROR(major_status))
         goto cleanup;
 
-    cred->tgt_expire = subject_creds->times.endtime;
+    cred->tgt_expire = impersonator_cred->tgt_expire;
 
     code = kg_init_name(context, subject_creds->client, NULL, 0, &cred->name);
     if (code != 0)
@@ -309,11 +309,9 @@ kg_compose_deleg_cred(OM_uint32 *minor_status,
     if (code != 0)
         goto cleanup;
 
-    cred->destroy_ccache = 1;
-
     code = krb5_cc_initialize(context, cred->ccache,
                               cred->proxy_cred ? impersonator_cred->name->princ :
-                                    subject_creds->client);
+                              subject_creds->client);
     if (code != 0)
         goto cleanup;
 
@@ -367,4 +365,3 @@ cleanup:
 
     return major_status;
 }
-

@@ -7,66 +7,6 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 
 
-File: krb5-user.info,  Node: Password Advice,  Next: Granting Access to Your Account,  Prev: Changing Your Password,  Up: Password Management
-
-Password Advice
----------------
-
-Your password can include almost any character you can type (except
-control keys and the "enter" key).  A good password is one you can
-remember, but that no one else can easily guess.  Examples of bad
-passwords are words that can be found in a dictionary, any common or
-popular name, especially a famous person (or cartoon character), your
-name or username in any form (e.g., forward, backward, repeated twice,
-etc.), your spouse's, child's, or pet's name, your birth date, your
-social security number, and any sample password that appears in this
-(or any other) manual.
-
-MIT recommends that your password be at least 6 characters long, and
-contain UPPER- and lower-case letters, numbers, and/or punctuation
-marks.  Some passwords that would be good if they weren't listed in
-this manual include:
-
-   * some initials, like "GykoR-66." for "Get your kicks on Route 66."
-
-   * an easy-to-pronounce nonsense word, like "slaRooBey" or "krang-its"
-
-   * a misspelled phrase, like "2HotPeetzas!" or "ItzAGurl!!!"
-
-Note:  don't actually use any of the above passwords.  They're only
-meant to show you how to make up a good password.  Passwords that
-appear in a manual are the first ones intruders will try.
-
-Kerberos V5 allows your system administrators to automatically reject
-bad passwords, based on certain criteria, such as a password dictionary
-or a minimum length.  For example, if the user `jennifer', who had a
-policy "strict" that required a minimum of 8 characaters, chose a
-password that was less than 8 characters, Kerberos would give an error
-message like the following:
-
-     shell% kpasswd
-     Password for jennifer:  <- Type your old password here.
-     
-     jennifer's password is controlled by the policy strict, which
-     requires a minimum of 8 characters from at least 3 classes (the five classes
-     are lowercase, uppercase, numbers, punctuation, and all other characters).
-     
-     Enter new password:  <- Type an insecure new password.
-     Enter it again:  <- Type it again.
-     
-     kpasswd: Password is too short while attempting to change password.
-     Please choose another password.
-     
-     Enter new password:  <- Type a good password here.
-     Enter it again:  <- Type it again.
-     Password changed.
-     shell%
-
-Your system administrators can choose the message that is displayed if
-you choose a bad password, so the message you see may be different from
-the above example.
-
-
 File: krb5-user.info,  Node: Granting Access to Your Account,  Prev: Password Advice,  Up: Password Management
 
 Granting Access to Your Account

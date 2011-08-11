@@ -1,3 +1,4 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 2005-2006 Massachusetts Institute of Technology.
  * All Rights Reserved.
@@ -6,7 +7,7 @@
  * require a specific license from the United States Government.
  * It is the responsibility of any person or organization contemplating
  * export to obtain such a license before exporting.
- * 
+ *
  * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
  * distribute this software and its documentation for any purpose and
  * without fee is hereby granted, provided that the above copyright
@@ -42,7 +43,7 @@ extern "C" {
 typedef int32_t     kim_error;
 
 /*!
- * No error value for the kim_error type.  
+ * No error value for the kim_error type.
  */
 #define KIM_NO_ERROR ((kim_error) 0)
 
@@ -73,7 +74,7 @@ typedef int         kim_boolean;
  * \li Greater than 0 means the first object is greater than the second.
  * \note Convenience macros are provided for interpreting #kim_comparison
  * values to improve code readability.
- * See #kim_comparison_is_less_than(), #kim_comparison_is_equal_to() and 
+ * See #kim_comparison_is_less_than(), #kim_comparison_is_equal_to() and
  * #kim_comparison_is_greater_than()
  */
 typedef int         kim_comparison;
@@ -86,7 +87,7 @@ typedef int         kim_comparison;
 /*!
  * Convenience macro for interpreting #kim_comparison.
  */
-#define kim_comparison_is_equal_to(c)        (c == 0) 
+#define kim_comparison_is_equal_to(c)        (c == 0)
 
 /*!
  * Convenience macro for interpreting #kim_comparison.

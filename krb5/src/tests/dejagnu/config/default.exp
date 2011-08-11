@@ -17,8 +17,6 @@ set env(TERM) dumb
 
 set des3_krbtgt 0
 set tgt_support_desmd5 0
-set supported_enctypes "des-cbc-crc:normal"
-set kdc_supported_enctypes "des-cbc-crc:normal"
 
 # The names of the individual passes must be unique; lots of things
 # depend on it.  The PASSES variable may not contain comments; only
@@ -148,7 +146,6 @@ set passes {
 	mode=udp
 	des3_krbtgt=0
 	{supported_enctypes=des-cbc-crc:normal}
-	{kdc_supported_enctypes=des-cbc-crc:normal}
 	{dummy=[verbose -log "DES TGT, DES enctype"]}
     }
     {
@@ -156,7 +153,6 @@ set passes {
 	mode=udp
 	des3_krbtgt=1
 	{supported_enctypes=des-cbc-crc:normal}
-	{kdc_supported_enctypes=des3-cbc-sha1:normal des-cbc-crc:normal}
 	{dummy=[verbose -log "DES3 TGT, DES enctype"]}
     }
     {
@@ -164,15 +160,13 @@ set passes {
 	mode=udp
 	des3_krbtgt=1
 	{supported_enctypes=des3-cbc-sha1:normal des-cbc-crc:normal}
-	{kdc_supported_enctypes=des3-cbc-sha1:normal des-cbc-crc:normal}
 	{dummy=[verbose -log "DES3 TGT, DES3 + DES enctypes"]}
     }
     {
-	aes
+	aes-des
 	mode=udp
 	des3_krbtgt=0
 	{supported_enctypes=aes256-cts-hmac-sha1-96:normal des-cbc-crc:normal}
-	{kdc_supported_enctypes=aes256-cts-hmac-sha1-96:normal des-cbc-crc:normal}
 	{permitted_enctypes(kdc)=aes256-cts-hmac-sha1-96 des-cbc-crc}
 	{permitted_enctypes(client)=aes256-cts-hmac-sha1-96 des-cbc-crc}
 	{permitted_enctypes(server)=aes256-cts-hmac-sha1-96 des-cbc-crc}
@@ -180,23 +174,36 @@ set passes {
 	{dummy=[verbose -log "AES + DES enctypes"]}
     }
     {
+	aes-only
+	mode=udp
+	des3_krbtgt=0
+	{supported_enctypes=aes256-cts-hmac-sha1-96:normal}
+	{permitted_enctypes(kdc)=aes256-cts-hmac-sha1-96}
+	{permitted_enctypes(client)=aes256-cts-hmac-sha1-96}
+	{permitted_enctypes(server)=aes256-cts-hmac-sha1-96}
+	{allow_weak_crypto(kdc)=false}
+	{allow_weak_crypto(slave)=false}
+	{allow_weak_crypto(client)=false}
+	{allow_weak_crypto(server)=false}
+	{master_key_type=aes256-cts-hmac-sha1-96}
+	{dummy=[verbose -log "AES enctypes"]}
+    }
+    {
 	aes-des3
 	mode=udp
 	des3_krbtgt=0
 	{supported_enctypes=aes256-cts-hmac-sha1-96:normal des3-cbc-sha1:normal des-cbc-crc:normal}
-	{kdc_supported_enctypes=aes256-cts-hmac-sha1-96:normal des3-cbc-sha1:normal des-cbc-crc:normal}
 	{permitted_enctypes(kdc)=aes256-cts-hmac-sha1-96 des3-cbc-sha1 des-cbc-crc}
 	{permitted_enctypes(client)=aes256-cts-hmac-sha1-96 des3-cbc-sha1 des-cbc-crc}
 	{permitted_enctypes(server)=aes256-cts-hmac-sha1-96 des3-cbc-sha1 des-cbc-crc}
 	{master_key_type=aes256-cts-hmac-sha1-96}
-	{dummy=[verbose -log "AES + DES enctypes"]}
+	{dummy=[verbose -log "AES + DES3 + DES enctypes"]}
     }
     {
-	des3-aes
+	aes-des3tgt
 	mode=udp
 	des3_krbtgt=1
 	{supported_enctypes=aes256-cts-hmac-sha1-96:normal des3-cbc-sha1:normal des-cbc-crc:normal}
-	{kdc_supported_enctypes=aes256-cts-hmac-sha1-96:normal des3-cbc-sha1:normal des-cbc-crc:normal}
 	{permitted_enctypes(kdc)=aes256-cts-hmac-sha1-96 des3-cbc-sha1 des-cbc-crc}
 	{permitted_enctypes(client)=aes256-cts-hmac-sha1-96 des3-cbc-sha1 des-cbc-crc}
 	{permitted_enctypes(server)=aes256-cts-hmac-sha1-96 des3-cbc-sha1 des-cbc-crc}
@@ -208,7 +215,6 @@ set passes {
 	mode=udp
 	des3_krbtgt=0
 	{supported_enctypes=des-cbc-crc:v4}
-	{kdc_supported_enctypes=des-cbc-crc:v4}
 	{default_tkt_enctypes(client)=des-cbc-crc}
 	{dummy=[verbose -log "DES TGT, DES-CRC enctype, V4 salt"]}
     }
@@ -217,21 +223,18 @@ set passes {
 	mode=udp
 	des3_krbtgt=0
 	{supported_enctypes=des-cbc-md5:v4 des-cbc-crc:v4}
-	{kdc_supported_enctypes=des-cbc-md5:v4 des-cbc-crc:v4}
 	{default_tkt_enctypes(client)=des-cbc-md5 des-cbc-crc}
 	{dummy=[verbose -log "DES TGT, DES-MD5 and -CRC enctypes, V4 salt"]}
     }
     {
-	all-des-des3-enctypes
+	all-enctypes
 	mode=udp
-	des3_krbtgt=1
-	{supported_enctypes=des3-cbc-sha1:normal des-cbc-crc:normal \
-		des-cbc-md5:normal des-cbc-crc:v4 des-cbc-md5:norealm \
-		des-cbc-md4:normal}
-	{kdc_supported_enctypes=des3-cbc-sha1:normal des-cbc-crc:normal \
-		des-cbc-md5:normal des-cbc-crc:v4 des-cbc-md5:norealm \
-		des-cbc-md4:normal}
-	{dummy=[verbose -log "DES3 TGT, many DES3 + DES enctypes"]}
+	des3_krbtgt=0
+	{allow_weak_crypto(kdc)=false}
+	{allow_weak_crypto(slave)=false}
+	{allow_weak_crypto(client)=false}
+	{allow_weak_crypto(server)=false}
+	{dummy=[verbose -log "all default enctypes"]}
     }
     {
 	des.no-kdc-md5
@@ -242,7 +245,6 @@ set passes {
 	{default_tgs_enctypes(client)=des-cbc-md5 des-cbc-md4 des-cbc-crc}
 	{default_tkt_enctypes(client)=des-cbc-md5 des-cbc-md4 des-cbc-crc}
 	{supported_enctypes=des-cbc-crc:normal}
-	{kdc_supported_enctypes=des-cbc-crc:normal}
 	{master_key_type=des-cbc-crc}
 	{dummy=[verbose -log \
 		"DES TGT, KDC permitting only des-cbc-crc"]}
@@ -255,7 +257,6 @@ set passes {
 	{default_tgs_enctypes(client)=des-cbc-crc}
 	{default_tkt_enctypes(client)=des-cbc-crc}
 	{supported_enctypes=des3-cbc-sha1:normal des-cbc-crc:normal}
-	{kdc_supported_enctypes=des3-cbc-sha1:normal des-cbc-crc:normal}
 	{master_key_type=des-cbc-crc}
 	{dummy=[verbose -log \
 		"DES3 TGT, KDC permitting only des-cbc-crc"]}
@@ -292,7 +293,6 @@ set unused_passes {
 	des3_krbtgt=0
 	tgt_support_desmd5=1
 	supported_enctypes=des-cbc-crc:normal
-	kdc_supported_enctypes=des-cbc-crc:normal
 	{permitted_enctypes(kdc)=des-cbc-md5 des-cbc-md4 des-cbc-crc}
 	{permitted_enctypes(client)=des-cbc-md5 des-cbc-md4 des-cbc-crc}
 	{dummy=[verbose -log "DES TGT, SUPPORTS_DESMD5"]}
@@ -305,7 +305,6 @@ set unused_passes {
 	{default_tgs_enctypes(client)=des-cbc-crc}
 	{default_tkt_enctypes(client)=des-cbc-crc}
 	{supported_enctypes=des-cbc-crc:normal}
-	{kdc_supported_enctypes=des-cbc-crc:normal}
 	{master_key_type=des-cbc-crc}
 	{dummy=[verbose -log \
 		"DES TGT, SUPPORTS_DESMD5, KDC permitting only des-cbc-crc"]}
@@ -318,7 +317,6 @@ set unused_passes {
 	{default_tgs_enctypes(client)=des-cbc-crc des-cbc-md4}
 	{default_tkt_enctypes(client)=des-cbc-md4}
 	{supported_enctypes=des-cbc-crc:normal}
-	{kdc_supported_enctypes=des-cbc-crc:normal}
 	{dummy=[verbose -log \
 		"DES TGT, DES enctype, KDC permitting only des-cbc-crc, client requests des-cbc-md4 session key"]}
     }
@@ -332,11 +330,6 @@ set unused_passes {
 	des-cbc-md5:normal des-cbc-md4:normal des-cbc-crc:normal \
 	des-cbc-md5:v4 des-cbc-md4:v4 des-cbc-crc:v4 \
 	}
-	{kdc_supported_enctypes=\
-	des3-cbc-sha1:normal des3-cbc-sha1:none \
-	des-cbc-md5:normal des-cbc-md4:normal des-cbc-crc:normal \
-	des-cbc-md5:v4 des-cbc-md4:v4 des-cbc-crc:v4 \
-	}
 	{dummy=[verbose -log "DES3 TGT, default enctypes"]}
     }
     {
@@ -344,7 +337,6 @@ set unused_passes {
 	mode=tcp
 	des3_krbtgt=0
 	{supported_enctypes=aes256-cts-hmac-sha1-96:normal}
-	{kdc_supported_enctypes=aes256-cts-hmac-sha1-96:normal}
 	{permitted_enctypes(kdc)=aes256-cts-hmac-sha1-96}
 	{permitted_enctypes(client)=aes256-cts-hmac-sha1-96}
 	{permitted_enctypes(server)=aes256-cts-hmac-sha1-96}
@@ -353,7 +345,6 @@ set unused_passes {
     }
 }
 #	{supported_enctypes=des-cbc-md5:normal des-cbc-crc:normal twofish256-hmac-sha1:normal }
-#	{kdc_supported_enctypes= des-cbc-md5:normal des-cbc-crc:normal twofish256-hmac-sha1:normal}
 
 # This shouldn't be necessary on dejagnu-1.4 and later, but 1.3 seems
 # to need it because its runtest.exp doesn't deal with PASS at all.
@@ -409,7 +400,6 @@ if ![info exists KEY] {
 # We can't use them now because we don't know the right KEY.
 # krb5.conf might change if running tests on another host
 file delete $tmppwd/krb5.conf $tmppwd/kdc.conf $tmppwd/slave.conf \
-    $tmppwd/krb.realms $tmppwd/krb.conf \
     $tmppwd/krb5.client.conf $tmppwd/krb5.server.conf \
     $tmppwd/krb5.kdc.conf $tmppwd/krb5.slave.conf
 
@@ -563,37 +553,6 @@ proc check_k5login { testname } {
 
     note "$testname test requires that your name appear in your ~/.k5login"
     note "file in the form $env(USER)@$REALMNAME"
-    unsupported "$testname"
-
-    return 0
-}
-
-proc check_klogin { testname } {
-    global env
-    global REALMNAME
-
-    if {![file exists ~/.klogin]} {
-	if {$env(USER) == "root"} {
-	    return 0
-	} else {
-	    return 1
-	}
-    }
-
-    verbose "looking for $env(USER) in ~/.klogin" 2
-    set file [open ~/.klogin r]
-    while { [gets $file principal] != -1 } {
-	verbose " found $principal" 2
-	if { $principal == "$env(USER)" \
-		|| $principal == "$env(USER)@$REALMNAME" } {
-	    close $file
-	    return 1
-	}
-    }
-    close $file
-
-    note "$testname test requires that your name appear in your ~/.klogin"
-    note "file without a realm."
     unsupported "$testname"
 
     return 0
@@ -843,7 +802,6 @@ proc setup_kerberos_files { } {
     global domain
     global tmppwd
     global supported_enctypes
-    global kdc_supported_enctypes
     global last_passname_conf
     global multipass_name
     global master_key_type
@@ -863,9 +821,6 @@ proc setup_kerberos_files { } {
     # Create a kdc.conf file.
     if { ![file exists $tmppwd/kdc.conf] \
 	    || $last_passname_conf != $multipass_name } {
-	if ![info exists master_key_type] {
-	    set master_key_type des-cbc-md5
-	}
 	set conffile [open $tmppwd/kdc.conf w]
 	puts $conffile "\[kdcdefaults\]"
 	puts $conffile "	kdc_ports = $portbase,[expr 1 + $portbase],[expr 2 + $portbase]"
@@ -884,10 +839,13 @@ proc setup_kerberos_files { } {
 	puts $conffile "		kpasswd_port = [expr 5 + $portbase]"
 	puts $conffile "		max_life = 1:00:00"
 	puts $conffile "		max_renewable_life = 3:00:00"
-	puts $conffile "		master_key_type = $master_key_type"
+	if [info exists master_key_type] {
+	    puts $conffile "		master_key_type = $master_key_type"
+	}
 	puts $conffile "		master_key_name = master/key"
-	puts $conffile "		supported_enctypes = $supported_enctypes"
-	puts $conffile "		kdc_supported_enctypes = $kdc_supported_enctypes"
+	if [info exists supported_enctypes] {
+	    puts $conffile "		supported_enctypes = $supported_enctypes"
+	}
 	if { $mode == "tcp" } {
 	    puts $conffile "		kdc_ports = [expr 3 + $portbase]"
 	    puts $conffile "		kdc_tcp_ports = [expr 1 + $portbase],[expr 3 + $portbase]"
@@ -914,9 +872,6 @@ proc setup_kerberos_files { } {
     # KDC processes).
     if { ![file exists $tmppwd/slave.conf] \
 	    || $last_passname_conf != $multipass_name } {
-	if ![info exists master_key_type] {
-	    set master_key_type des-cbc-md5
-	}
 	set conffile [open $tmppwd/slave.conf w]
 	puts $conffile "\[kdcdefaults\]"
 	puts $conffile "	kdc_ports = $portbase,[expr 1 + $portbase],[expr 2 + $portbase]"
@@ -935,10 +890,13 @@ proc setup_kerberos_files { } {
 	puts $conffile "		kpasswd_port = [expr 5 + $portbase]"
 	puts $conffile "		max_life = 1:00:00"
 	puts $conffile "		max_renewable_life = 3:00:00"
-	puts $conffile "		master_key_type = $master_key_type"
+	if [info exists master_key_type] {
+	    puts $conffile "		master_key_type = $master_key_type"
+	}
 	puts $conffile "		master_key_name = master/key"
-	puts $conffile "		supported_enctypes = $supported_enctypes"
-	puts $conffile "		kdc_supported_enctypes = $kdc_supported_enctypes"
+	if [info exists supported_enctypes] {
+	    puts $conffile "		supported_enctypes = $supported_enctypes"
+	}
 	if { $mode == "tcp" } {
 	    puts $conffile "		kdc_ports = [expr 3 + $portbase]"
 	    puts $conffile "		kdc_tcp_ports = [expr 1 + $portbase],[expr 3 + $portbase]"
@@ -969,22 +927,6 @@ proc setup_kerberos_files { } {
 	close $aclfile
     }
 
-    # Create krb.conf file
-    if ![file exists $tmppwd/krb.conf] {
-	set conffile [open $tmppwd/krb.conf w]
-	puts $conffile "$REALMNAME"
-	puts $conffile "$REALMNAME $hostname:[expr 1 + $portbase] admin server"
-	close $conffile
-    }
-
-    # Create krb.realms file
-    if ![file exists $tmppwd/krb.realms] {
-	set conffile [open $tmppwd/krb.realms w]
-	puts $conffile ".[string toupper $domain] $REALMNAME"
-	puts $conffile "[string toupper $domain]. $REALMNAME"
-	close $conffile
-    }
-
     # Create dictfile file.
     if ![file exists $tmppwd/dictfile] {
 	set dictfile [open $tmppwd/dictfile w]
@@ -1013,10 +955,14 @@ proc setup_krb5_conf { {type client} } {
     global default_tgs_enctypes
     global default_tkt_enctypes
     global permitted_enctypes
+    global allow_weak_crypto
     global mode
     global portbase
     global KRB5_DB_MODULE_DIR
+    global KRB5_PA_MODULE_DIR
+    global srcdir
 
+    set pkinit_certs [findfile "[pwd]/$srcdir/pkinit-certs" "[pwd]/$srcdir/pkinit-certs" "$srcdir/pkinit-certs"]
     # Create a krb5.conf file.
     if { ![file exists $tmppwd/krb5.$type.conf] \
 	    || $last_passname_conf != $multipass_name } {
@@ -1024,7 +970,12 @@ proc setup_krb5_conf { {type client} } {
 	puts $conffile "\[libdefaults\]"
 	puts $conffile "	default_realm = $REALMNAME"
 	puts $conffile "	dns_lookup_kdc = false"
-	puts $conffile "	allow_weak_crypto = true"
+	if [info exists allow_weak_crypto($type)] {
+	    puts $conffile "	allow_weak_crypto = $allow_weak_crypto($type)"
+	} else {
+	    puts $conffile "	allow_weak_crypto = true"
+	}
+	puts $conffile "	pkinit_anchors = FILE:$pkinit_certs/ca.pem"
 	if [info exists default_tgs_enctypes($type)] {
 	    puts $conffile \
 		    "	default_tgs_enctypes = $default_tgs_enctypes($type)"
@@ -1040,6 +991,7 @@ proc setup_krb5_conf { {type client} } {
 	if { $mode == "tcp" } {
 	    puts $conffile "	udp_preference_limit = 1"
 	}
+	puts $conffile "	preauth_module_dir = $tmppwd/../../../util/fakedest$KRB5_PA_MODULE_DIR"
 	puts $conffile ""
 	puts $conffile "\[realms\]"
 	puts $conffile "	$REALMNAME = \{"
@@ -1051,6 +1003,8 @@ proc setup_krb5_conf { {type client} } {
 	# failures.  If we were running the client and KDC on different
 	# hosts, this would be okay....
 	#puts $conffile "		kdc = $hostname:[expr 6 + $portbase]"
+	puts $conffile "		pkinit_identity = FILE:$pkinit_certs/kdc.pem,$pkinit_certs/privkey.pem"
+	puts $conffile "		pkinit_anchors = FILE:$pkinit_certs/ca.pem"
 	puts $conffile "		kdc = $hostname:[expr 1 + $portbase]"
 	puts $conffile "		admin_server = $hostname:[expr 4 + $portbase]"
 	puts $conffile "		kpasswd_server = $hostname:[expr 5 + $portbase]"
@@ -1412,6 +1366,16 @@ proc setup_kerberos_db { standalone } {
 	    "Principal or policy already exists while creating*" { }
 	}
 	expect "kadmin.local: "
+	send "ank +requires_preauth krbtest/fast@$REALMNAME\r"
+	expect "Enter password for principal \"krbtest/fast@$REALMNAME\":"
+	send "adminpass$KEY\r"
+	expect "Re-enter password for principal \"krbtest/fast@$REALMNAME\":"
+	send "adminpass$KEY\r"
+	expect {
+	    "Principal \"krbtest/fast@$REALMNAME\" created" { }
+	    "Principal or policy already exists while creating*" { }
+	}
+	expect "kadmin.local: "
 	send "quit\r"
 	expect eof
 	catch expect_after
@@ -1747,6 +1711,8 @@ proc start_kerberos_daemons { standalone } {
     # The same thing is done a little later for the kadmind
     set kdc_lfile $tmppwd/kdc.log
     set kadmind_lfile $tmppwd/kadmind5.log
+    set kdc_pidfile $tmppwd/kdc.pid
+    set kadmind_pidfile $tmppwd/kadmind.pid
 
     if ![start_tail $kdc_lfile tailf_spawn_id tailf_pid krb5kdc $standalone] {
 	return 0
@@ -1754,7 +1720,9 @@ proc start_kerberos_daemons { standalone } {
 
     envstack_push
     setup_kerberos_env kdc
-    spawn $KRB5KDC -r $REALMNAME -n full
+    # Nuke pid file - to test if setup
+    file delete $kdc_pidfile
+    spawn $KRB5KDC -r $REALMNAME -n -P $kdc_pidfile
     envstack_pop
     set kdc_pid [exp_pid]
     set kdc_spawn_id $spawn_id
@@ -1797,6 +1765,20 @@ proc start_kerberos_daemons { standalone } {
     expect -i $tailf_spawn_id eof
     wait -i $tailf_spawn_id
 
+    if (![file exists $kdc_pidfile]) {
+	fail "krb5kdc pidfile"
+	stop_kerberos_daemons
+	return 0
+    }
+    set f [open $kdc_pidfile "r"]
+    if {[gets $f foundpid] < 0 || ![string equal $kdc_pid $foundpid]} {
+	fail "krb5kdc pid file contents"
+	close $f
+	stop_kerberos_daemons
+	return 0
+    }
+    close $f
+
     if {$standalone} {
 	pass "krb5kdc"
     }
@@ -1823,7 +1805,8 @@ proc start_kerberos_daemons { standalone } {
     # removed when this is fixed
     envstack_push
     setup_kerberos_env kdc
-    spawn $BINSH -c "exec $KADMIND -r $REALMNAME -W -nofork 2>>$kadmind_lfile"
+    file delete $kadmind_pidfile
+    spawn $BINSH -c "exec $KADMIND -r $REALMNAME -W -nofork -P $kadmind_pidfile 2>>$kadmind_lfile"
     envstack_pop
     set kadmind_pid [exp_pid]
     set kadmind_spawn_id $spawn_id
@@ -1887,6 +1870,20 @@ proc start_kerberos_daemons { standalone } {
     exec kill $tailf_pid
     expect -i $tailf_spawn_id eof
     wait -i $tailf_spawn_id
+
+    if (![file exists $kadmind_pidfile]) {
+	fail "kadmind pidfile"
+	stop_kerberos_daemons
+	return 0
+    }
+    set f [open $kadmind_pidfile "r"]
+    if {[gets $f foundpid] < 0 || ![string equal $kadmind_pid $foundpid]} {
+	fail "kadmind pid file contents"
+	close $f
+	stop_kerberos_daemons
+	return 0
+    }
+    close $f
 
     if {$standalone} {
 	pass "kadmind"
@@ -2264,6 +2261,59 @@ proc kinit_renew { name pass standalone } {
     return 1
 }
 
+# Retrieve a ticket using FAST armor
+proc kinit_fast { name pass standalone } {
+    global REALMNAME
+    global KINIT
+    global spawn_id
+    global env
+
+    # Use kinit to get a ticket.
+	#
+    spawn $KINIT -5 -f -T $env(KRB5CCNAME) $name@$REALMNAME
+    expect {
+	"Password for $name@$REALMNAME:" {
+	    verbose "kinit started"
+	}
+	timeout {
+	    fail "kinit"
+	    return 0
+	}
+	eof {
+	    fail "kinit"
+	    return 0
+	}
+    }
+    send "$pass\r"
+    expect eof
+    if ![check_exit_status kinit] {
+	return 0
+    }
+
+    if {$standalone} {
+	pass "kinit"
+    }
+
+    return 1
+}
+
+proc kinit_anonymous { name  } {
+    global REALMNAME
+    global KINIT
+    global spawn_id
+
+    # Use kinit to get a ticket.
+    #
+    spawn $KINIT -5 -f -n $name@$REALMNAME
+    expect eof
+    if ![check_exit_status kinit] {
+	fail "kinit anonymous"
+    }
+
+    pass "kinit anonymous"
+    return 1
+}
+
 proc kinit_kt { name keytab standalone testname } {
     global REALMNAME
     global KINIT
@@ -2454,7 +2504,7 @@ proc v4_compatible_enctype {} {
     global supported_enctypes
     global KRBIV
 
-    if ![info exists KRBIV] {
+    if ![info exists KRBIV] || ![info exists supported_enctypes] {
 	return 0;
     }
 
@@ -2835,7 +2885,7 @@ proc krb_exit { } {
 # helpful sometimes for debugging the test suite
 proc export_debug_envvars { } {
     global env
-    foreach i {KDB5_UTIL KRB5KDC KADMIND KADMIN KADMIN_LOCAL KINIT KTUTIL KLIST RLOGIN RLOGIND FTP FTPD KPASSWD REALMNAME GSSCLIENT KPROPLOG} {
+    foreach i {KDB5_UTIL KRB5KDC KADMIND KADMIN KADMIN_LOCAL KINIT KTUTIL KLIST RLOGIN RLOGIN_FLAGS RLOGIND FTP FTPD KPASSWD REALMNAME GSSCLIENT KPROPLOG} {
 	global $i
 	if [info exists $i] { set env($i) [set $i] }
     }

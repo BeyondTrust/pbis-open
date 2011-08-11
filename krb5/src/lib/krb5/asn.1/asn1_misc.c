@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * src/lib/krb5/asn.1/asn1_misc.c
  *
@@ -27,7 +27,8 @@
 
 #include "asn1_misc.h"
 
-asn1_error_code asn1_krb5_realm_copy(krb5_principal target, krb5_principal source)
+asn1_error_code
+asn1_krb5_realm_copy(krb5_principal target, krb5_principal source)
 {
     target->realm.length = source->realm.length;
     target->realm.data = (char*)malloc(target->realm.length); /* copy realm */

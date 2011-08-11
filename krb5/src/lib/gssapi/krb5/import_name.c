@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 1993 by OpenVision Technologies, Inc.
  *
@@ -22,7 +22,7 @@
  */
 
 /*
- * $Id: import_name.c 23636 2010-01-12 02:50:15Z tlyu $
+ * $Id: import_name.c 23528 2009-12-28 18:03:31Z ghudson $
  */
 
 #include "gssapiP_krb5.h"
@@ -154,7 +154,17 @@ krb5_gss_import_name(minor_status, input_name_buffer,
             krb5_free_context(context);
             return(GSS_S_FAILURE);
         }
-    } else {
+    } else if ((input_name_type != NULL) &&
+               g_OID_equal(input_name_type, GSS_C_NT_ANONYMOUS)) {
+        code = krb5_copy_principal(context, krb5_anonymous_principal(),
+                                   &princ);
+        if (code != 0) {
+            krb5_free_context(context);
+            *minor_status = code;
+            return GSS_S_FAILURE;
+        }
+    }
+    else {
 #ifndef NO_PASSWORD
         uid_t uid;
         struct passwd pwx;
@@ -191,12 +201,11 @@ krb5_gss_import_name(minor_status, input_name_buffer,
             goto do_getpwuid;
 #endif
         } else if (g_OID_equal(input_name_type, gss_nt_exported_name)) {
-#define BOUNDS_CHECK(cp, end, n) do { if ((end) - (cp) < (n)) \
-                    goto fail_name; } while (0)
+#define BOUNDS_CHECK(cp, end, n) do { if ((end) - (cp) < (n)) goto fail_name; } while (0)
             cp = (unsigned char *)tmp;
             end = cp + input_name_buffer->length;
 
-            BOUNDS_CHECK(cp, end, 4);
+            BOUNDS_CHECK(cp, end, 2);
             if (*cp++ != 0x04)
                 goto fail_name;
             switch (*cp++) {
@@ -206,7 +215,7 @@ krb5_gss_import_name(minor_status, input_name_buffer,
                 has_ad++;
                 break;
             default:
-                 goto fail_name;
+                goto fail_name;
             }
 
             BOUNDS_CHECK(cp, end, 2);
@@ -246,7 +255,7 @@ krb5_gss_import_name(minor_status, input_name_buffer,
             tmp2[length] = 0;
             stringrep = tmp2;
             cp += length;
- 
+
             if (has_ad) {
                 BOUNDS_CHECK(cp, end, 4);
                 length = *cp++;

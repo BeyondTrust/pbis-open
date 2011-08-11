@@ -1,3 +1,4 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * lib/krb5/krb/gen_subkey.c
  *
@@ -8,7 +9,7 @@
  *   require a specific license from the United States Government.
  *   It is the responsibility of any person or organization contemplating
  *   export to obtain such a license before exporting.
- * 
+ *
  * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
  * distribute this software and its documentation for any purpose and
  * without fee is hereby granted, provided that the above copyright
@@ -22,7 +23,7 @@
  * M.I.T. makes no representations about the suitability of
  * this software for any purpose.  It is provided "as is" without express
  * or implied warranty.
- * 
+ *
  *
  * Routine to automatically generate a subsession key based on an input key.
  */
@@ -41,26 +42,34 @@ key2data (krb5_keyblock k)
 
 krb5_error_code
 krb5_generate_subkey_extended(krb5_context context,
-			      const krb5_keyblock *key,
-			      krb5_enctype enctype,
-			      krb5_keyblock **subkey)
+                              const krb5_keyblock *key,
+                              krb5_enctype enctype,
+                              krb5_keyblock **subkey)
 {
     krb5_error_code retval;
     krb5_data seed;
+    krb5_keyblock *keyblock;
+
+    *subkey = NULL;
 
     seed = key2data(*key);
-    if ((retval = krb5_c_random_add_entropy(context, KRB5_C_RANDSOURCE_TRUSTEDPARTY, &seed)))
-	return(retval);
+    retval = krb5_c_random_add_entropy(context, KRB5_C_RANDSOURCE_TRUSTEDPARTY,
+                                       &seed);
+    if (retval)
+        return retval;
 
-    if ((*subkey = (krb5_keyblock *) malloc(sizeof(krb5_keyblock))) == NULL)
-	return(ENOMEM);
+    keyblock = malloc(sizeof(krb5_keyblock));
+    if (!keyblock)
+        return ENOMEM;
 
-    if ((retval = krb5_c_make_random_key(context, enctype, *subkey))) {
-	free(*subkey);
-	return(retval);
+    retval = krb5_c_make_random_key(context, enctype, keyblock);
+    if (retval) {
+        free(*subkey);
+        return retval;
     }
 
-    return(0);
+    *subkey = keyblock;
+    return 0;
 }
 
 krb5_error_code

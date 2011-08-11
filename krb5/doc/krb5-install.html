@@ -38,7 +38,7 @@ Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <h2 class="unnumbered">Copyright</h2>
 
-<p>Copyright &copy; 1985-2009 by the Massachusetts Institute of Technology.
+<p>Copyright &copy; 1985-2010 by the Massachusetts Institute of Technology.
 
 <blockquote>
 Export of software employing encryption from the United States of
@@ -299,11 +299,6 @@ the following new or changed files:
        slave/kproplog.c
      </pre>
 
-<p>and marked portions of the following files:
-
-<pre class="smallexample">       lib/krb5/os/hst_realm.c
-     </pre>
-
 <p>are subject to the following license:
 
 <blockquote>
@@ -368,7 +363,7 @@ SUCH DAMAGE.
 backend, are subject to the following license:
 
 <blockquote>
-Copyright &copy; 2004-2005, Novell, Inc. 
+Copyright (c) 2004-2005, Novell, Inc. 
 All rights reserved.
 
      <p>Redistribution and use in source and binary forms, with or without
@@ -481,28 +476,6 @@ WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
 </blockquote>
 
-<p>The implementations of strlcpy and strlcat in
-src/util/support/strlcat.c have the following copyright and permission
-notice:
-
-<blockquote>
-
-     <p>Copyright &copy; 1998 Todd C. Miller &lt;Todd.Miller@courtesan.com&gt;
-
-     <p>Permission to use, copy, modify, and distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
-
-     <p>THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-</blockquote>
-
 <p>The implementations of UTF-8 string handling in src/util/support and
 src/lib/krb5/unicode are subject to the following copyright and
 permission notice:
@@ -556,43 +529,6 @@ holders.
      <p>Copyright 1999-2003 The OpenLDAP Foundation, Redwood City,
 California, USA.  All Rights Reserved.  Permission to copy and
 distribute verbatim copies of this document is granted.
-
-</blockquote>
-
-<p>Marked test programs in src/lib/krb5/krb have the following copyright:
-
-<blockquote>
-
-     <p>Copyright &copy; 2006 Kungliga Tekniska H&ouml;gskolan
-(Royal Institute of Technology, Stockholm, Sweden). 
-All rights reserved.
-
-     <p>Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-
-     <p>1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-
-     <p>2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-
-     <p>3. Neither the name of KTH nor the names of its contributors may be
-   used to endorse or promote products derived from this software without
-   specific prior written permission.
-
-     <p>THIS SOFTWARE IS PROVIDED BY KTH AND ITS CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL KTH OR ITS CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 </blockquote>
 
@@ -1143,15 +1079,10 @@ Up:<a rel="up" accesskey="u" href="#Organization%20of%20the%20Source%20Directory
 
 <h4 class="subsection">The appl Directory</h4>
 
-<p>The Kerberos release provides certain UNIX utilities, modified to use
-Kerberos authentication.  In the <i>appl/bsd</i> directory are the
-Berkeley utilities <i>login</i>, <i>rlogin</i>, <i>rsh</i>, and <i>rcp</i>, as well as
-the associated daemons <i>kshd</i> and <i>klogind</i>.  The <i>login</i> program
-obtains ticket-granting tickets for users upon login; the other utilities
-provide authenticated Unix network services.
-
-<p>The <i>appl</i> directory also contains Kerberized telnet and ftp programs,
-as well as sample Kerberos application client and server programs.
+<p>The <i>appl</i> directory contains sample Kerberos application client and
+server programs.  In previous releases, it contained Kerberized versions
+of remote access daemons, but those have now been moved to a separate
+project.
 
 <div class="node">
 <p><hr>
@@ -1404,20 +1335,20 @@ Up:<a rel="up" accesskey="u" href="#Building%20Kerberos%20V5">Building Kerberos 
 
 <p>The first step in each of these build procedures is to unpack the
 source distribution.  The Kerberos V5 distribution comes in a tar file,
-generally named <code>krb5-1.7.tar</code>, which contains a
+generally named <code>krb5-1.8.tar</code>, which contains a
 compressed tar file consisting of the sources for all of Kerberos
-(generally <code>krb5-1.7.tar.gz</code>) and a PGP signature for
-this source tree (generally <code>krb5-1.7.tar.gz.asc</code>). 
+(generally <code>krb5-1.8.tar.gz</code>) and a PGP signature for
+this source tree (generally <code>krb5-1.8.tar.gz.asc</code>). 
 MIT highly recommends that you verify the integrity of the
 source code using this signature.
 
 <p>Unpack the compressed tar file in some directory, such as
-<code>/u1/krb5-1.7</code>.  (In the rest of this document, we
+<code>/u1/krb5-1.8</code>.  (In the rest of this document, we
 will assume that you have chosen to unpack the Kerberos V5 source
 distribution in this directory.  Note that the tarfiles will by default
-all unpack into the <code>./krb5-1.7</code> directory, so that if
+all unpack into the <code>./krb5-1.8</code> directory, so that if
 your current directory is <code>/u1</code> when you unpack the tarfiles, you
-will get <code>/u1/krb5-1.7/src</code>, etc.)
+will get <code>/u1/krb5-1.8/src</code>, etc.)
 
 <div class="node">
 <p><hr>
@@ -1459,7 +1390,7 @@ Up:<a rel="up" accesskey="u" href="#Doing%20the%20Build">Doing the Build</a>
 use the following abbreviated procedure.
 
      <ol type=1 start=1>
-<li> <code>cd /u1/krb5-1.7/src</code>
+<li> <code>cd /u1/krb5-1.8/src</code>
 <li> <code>./configure</code>
 <li> <code>make</code>
      </ol>
@@ -1487,8 +1418,8 @@ support this, see the next section.
 you might use the following procedure:
 
      <ol type=1 start=1>
-<li><code>mkdir /u1/krb5-1.7/pmax</code>
-<li> <code>cd /u1/krb5-1.7/pmax</code>
+<li><code>mkdir /u1/krb5-1.8/pmax</code>
+<li> <code>cd /u1/krb5-1.8/pmax</code>
 <li> <code>../src/configure</code>
 <li> <code>make</code>
      </ol>
@@ -1512,9 +1443,9 @@ symbolic link trees in your build directory.
 you might use the following procedure:
 
      <ol type=1 start=1>
-<li> <code>mkdir /u1/krb5-1.7/solaris</code>
-<li> <code>cd /u1/krb5-1.7/solaris</code>
-<li> <code>/u1/krb5-1.7/src/util/lndir `pwd`/../src</code>
+<li> <code>mkdir /u1/krb5-1.8/solaris</code>
+<li> <code>cd /u1/krb5-1.8/solaris</code>
+<li> <code>/u1/krb5-1.8/src/util/lndir `pwd`/../src</code>
 <li> <code>./configure</code>
 <li> <code>make</code>
      </ol>
@@ -1588,12 +1519,13 @@ test suite.  This often means passing <code>--with-tcl</code> to configure to
 tell it the location of the Tcl configuration script.  (See
 See <a href="#Options%20to%20Configure">Options to Configure</a>.)
 
-     <li>You have to run <code>make install</code> before running <code>make check</code>, or
-the test suite will often pick up the installed version of Kerberos
-rather than the newly built one.  You can install into a prefix that
-isn't in the system library search path, though.  This theoretically
-could be fixed with the appropriate environment variable magic in the
-test suite, but hasn't been yet.
+     <li>On some operating systems, you have to run <code>make install</code> before
+running <code>make check</code>, or the test suite will pick up installed
+versions of Kerberos libraries rather than the newly built ones.  You
+can install into a prefix that isn't in the system library search path,
+though.  Alternatively, you can configure with <code>--disable-rpath</code>,
+which renders the build tree less suitable for installation, but allows
+testing without interference from previously installed libraries.
 
      <li>In order to test the RPC layer, the local system has to be running the
 <code>portmap</code> daemon and it has to be listening to the regular
@@ -1622,23 +1554,6 @@ than the normal built-in tests as they setup test servers and test
 client/server activities.
 
 <p>DejaGnu may be found wherever GNU software is archived.
-
-<p>Most of the tests are setup to run as a non-privileged user.  For some
-of the krb-root tests to work properly, either (a) the user running the
-tests must not have a .k5login file in the home directory or (b) the
-.k5login file must contain an entry for <code>&lt;username&gt;@KRBTEST.COM</code>. 
-There are two series of tests (<code>rlogind</code> and <code>telnetd</code>) which
-require the ability to <code>rlogin</code> as root to the local
-machine. Admittedly, this does require the use of a <code>.rhosts</code> file
-or some authenticated means. <a rel="footnote" href="#fn-2"><sup>2</sup></a>
-
-<p>If you cannot obtain root access to your machine, all the other tests
-will still run. Note however, with DejaGnu 1.2, the "untested testcases"
-will cause the testsuite to exit with a non-zero exit status which
-<code>make</code> will consider a failure of the testing process. Do not worry
-about this, as these tests are the last run when <code>make check</code> is
-executed from the top level of the build tree.  This problem does not
-exist with DejaGnu 1.3.
 
 <div class="node">
 <p><hr>
@@ -2310,7 +2225,7 @@ that you have made a change that will require that all the
 <code>configure</code> files need to be rebuilt from scratch, specify the
 <code>--force</code> option:
 
-<pre class="example">     % cd /u1/krb5-1.7/src
+<pre class="example">     % cd /u1/krb5-1.8/src
      % ./util/reconf --force
      </pre>
 
@@ -2328,7 +2243,7 @@ In order to build from such a source tree, you must do:
 <p>Then follow the instructions for building packaged source trees (above). 
 To install the binaries into a binary tree, do:
 
-<pre class="example">     % cd /u1/krb5-1.7/src
+<pre class="example">     % cd /u1/krb5-1.8/src
      % make all
      % make install DESTDIR=somewhere-else
      </pre>
@@ -3020,18 +2935,10 @@ For example, if the master KDC were
      host/kerberos-2.mit.edu@ATHENA.MIT.EDU
      </pre>
 
-<p>Then, add the following lines to <code>/etc/inetd.conf</code> file on each KDC
-(the line beginnng with =&gt; is a continuation of the previous
-line):
+<p>Then, add the following line to <code>/etc/inetd.conf</code> file on each KDC:
 
 <pre class="smallexample">     krb5_prop stream tcp nowait root /usr/local/sbin/kpropd kpropd
-     eklogin   stream tcp nowait root /usr/local/sbin/klogind
-     =&gt; klogind -k -c -e
      </pre>
-
-<p>The first line sets up the <code>kpropd</code> database propagation daemon. 
-The second line sets up the <code>eklogin</code> daemon, allowing
-Kerberos-authenticated, encrypted rlogin to the KDC.
 
 <p>You also need to add the following lines to <code>/etc/services</code> on each
 KDC:
@@ -3041,7 +2948,6 @@ KDC:
      krb5_prop       754/tcp               # Kerberos slave propagation
      kerberos-adm    749/tcp               # Kerberos 5 admin/changepw (tcp)
      kerberos-adm    749/udp               # Kerberos 5 admin/changepw (udp)
-     eklogin         2105/tcp              # Kerberos encrypted rlogin
      </pre>
 
 <div class="node">
@@ -3209,42 +3115,6 @@ host, with limited access.  If your KDC is also a file server, FTP
 server, Web server, or even just a client machine, someone who obtained
 root access through a security hole in any of those areas could gain
 access to the Kerberos database.
-
-MIT recommends that your KDCs use the following
-<code>/etc/inetd.conf</code> file.  (Note:  each line beginning with =&gt;
-is a continuation of the previous line.):
-
-<pre class="smallexample">     #
-     # Configuration file for inetd(1M).  See inetd.conf(4).
-     #
-     # To re-configure the running inetd process, edit this file, then
-     # send the inetd process a SIGHUP.
-     #
-     # Syntax for socket-based Internet services:
-     #  &lt;service_name&gt; &lt;socket_type&gt; &lt;proto&gt; &lt;flags&gt; &lt;user&gt;
-     =&gt; &lt;server_pathname&gt; &lt;args&gt;
-     #
-     # Syntax for TLI-based Internet services:
-     #
-     #  &lt;service_name&gt; tli &lt;proto&gt; &lt;flags&gt; &lt;user&gt; &lt;server_pathname&gt; &lt;args&gt;
-     #
-     # Ftp and telnet are standard Internet services.
-     #
-     # This machine is a secure Kerberos Key Distribution Center (KDC).
-     # Services are limited.
-     #
-     #
-     # Time service is used for clock synchronization.
-     #
-     time    stream  tcp     nowait  root    internal
-     time    dgram   udp     wait    root    internal
-     #
-     # Limited Kerberos services
-     #
-     krb5_prop stream tcp nowait root /usr/local/sbin/kpropd  kpropd
-     eklogin   stream tcp nowait root /usr/local/sbin/klogind
-     =&gt; klogind -5 -c -e
-     </pre>
 
 <div class="node">
 <p><hr>
@@ -3463,17 +3333,9 @@ Up:<a rel="up" accesskey="u" href="#Installing%20and%20Configuring%20UNIX%20Clie
 
 <h4 class="subsection">Client Programs</h4>
 
-<p>The Kerberized client programs are <code>login.krb5</code>, <code>rlogin</code>,
-<code>telnet</code>, <code>ftp</code>, <code>rcp</code>, <code>rsh</code>, <code>kinit</code>,
-<code>klist</code>, <code>kdestroy</code>, <code>kpasswd</code>, <code>ksu</code>, and
-<code>krb524init</code>.  All of these programs are in the directory
-<code>/usr/local/bin</code>, except for <code>login.krb5</code> which is in
-<code>/usr/local/sbin</code>.
-
-<p>You will probably want to have your users put <code>/usr/local/bin</code>
-ahead of <code>/bin</code> and <code>/usr/bin</code> in their paths, so they will by
-default get the Kerberos V5 versions of <code>rlogin</code>,
-<code>telnet</code>, <code>ftp</code>, <code>rcp</code>, and <code>rsh</code>.
+<p>The Kerberized client programs are <code>kinit</code>, <code>klist</code>,
+<code>kdestroy</code>, <code>kpasswd</code>, and <code>ksu</code>.  All of these programs
+are in the directory <code>/usr/local/bin</code>.
 
 MIT recommends that you use <code>login.krb5</code> in place of
 <code>/bin/login</code> to give your users a single-sign-on system.  You will
@@ -3481,11 +3343,9 @@ need to make sure your users know to use their Kerberos passwords when
 they log in.
 
 <p>You will also need to educate your users to use the ticket management
-programs <code>kinit</code>,
-<code>klist</code>, <code>kdestroy</code>, and to use the Kerberos programs
-<code>ksu</code>, and <code>kpasswd</code> in place of their non-Kerberos
-counterparts
-<code>su</code>, <code>passwd</code>, and <code>rdist</code>.
+programs <code>kinit</code>, <code>klist</code>, <code>kdestroy</code>, and to use the
+Kerberos programs <code>ksu</code> and <code>kpasswd</code> in place of their
+non-Kerberos counterparts <code>su</code> and <code>passwd</code>.
 
 <div class="node">
 <p><hr>
@@ -3507,12 +3367,9 @@ to just insert the following code:
 
 <pre class="smallexample">     kerberos      88/udp    kdc    # Kerberos V5 KDC
      kerberos      88/tcp    kdc    # Kerberos V5 KDC
-     klogin        543/tcp          # Kerberos authenticated rlogin
-     kshell        544/tcp   cmd    # and remote shell
      kerberos-adm  749/tcp          # Kerberos 5 admin/changepw
      kerberos-adm  749/udp          # Kerberos 5 admin/changepw
      krb5_prop     754/tcp          # Kerberos slave propagation
-     eklogin       2105/tcp         # Kerberos auth. &amp; encrypted rlogin
      krb524        4444/tcp         # Kerberos 5 to 4 ticket translator
      </pre>
 
@@ -3623,88 +3480,15 @@ installed, you can run an insecure server, and still take advantage of
 Kerberos V5's single sign-on capability.
 
 <ul class="menu">
-<li><a accesskey="1" href="#Server%20Programs">Server Programs</a>: 
-<li><a accesskey="2" href="#Server%20Configuration%20Files">Server Configuration Files</a>: 
-<li><a accesskey="3" href="#The%20Keytab%20File">The Keytab File</a>: 
-<li><a accesskey="4" href="#Some%20Advice%20about%20Secure%20Hosts">Some Advice about Secure Hosts</a>: 
+<li><a accesskey="1" href="#The%20Keytab%20File">The Keytab File</a>: 
+<li><a accesskey="2" href="#Some%20Advice%20about%20Secure%20Hosts">Some Advice about Secure Hosts</a>: 
 </ul>
-
-<div class="node">
-<p><hr>
-Node:<a name="Server%20Programs">Server Programs</a>,
-Next:<a rel="next" accesskey="n" href="#Server%20Configuration%20Files">Server Configuration Files</a>,
-Previous:<a rel="previous" accesskey="p" href="#UNIX%20Application%20Servers">UNIX Application Servers</a>,
-Up:<a rel="up" accesskey="u" href="#UNIX%20Application%20Servers">UNIX Application Servers</a>
-<br>
-</div>
-
-<h4 class="subsection">Server Programs</h4>
-
-<p>Just as Kerberos V5 provided its own Kerberos-enhanced versions of
-client UNIX network programs, Kerberos V5 also provides
-Kerberos-enhanced versions of server UNIX network daemons.  These are
-<code>ftpd</code>, <code>klogind</code>, <code>kshd</code>, and <code>telnetd</code>. 
-These programs are installed in the directory
-<code>/usr/local/sbin</code>.  You may want to add this directory to
-root's path.
-
-<div class="node">
-<p><hr>
-Node:<a name="Server%20Configuration%20Files">Server Configuration Files</a>,
-Next:<a rel="next" accesskey="n" href="#The%20Keytab%20File">The Keytab File</a>,
-Previous:<a rel="previous" accesskey="p" href="#Server%20Programs">Server Programs</a>,
-Up:<a rel="up" accesskey="u" href="#UNIX%20Application%20Servers">UNIX Application Servers</a>
-<br>
-</div>
-
-<h4 class="subsection">Server Configuration Files</h4>
-
-<p>For a <em>secure</em> server, make the following changes to
-<code>/etc/inetd.conf</code>:
-
-<p>Find and comment out any lines for the services <code>ftp</code>,
-<code>telnet</code>, <code>shell</code>, <code>login</code>, and <code>exec</code>.
-
-<p>Add the following lines.  (Note:  each line beginning with =&gt; is
-a continuation of the previous line.)
-
-<pre class="smallexample">     klogin  stream  tcp  nowait  root  /usr/local/sbin/klogind
-     =&gt; klogind -k -c
-     eklogin stream  tcp  nowait  root  /usr/local/sbin/klogind
-     =&gt; klogind -k -c -e
-     kshell  stream  tcp  nowait  root  /usr/local/sbin/kshd
-     =&gt; kshd -k -c -A
-     ftp     stream  tcp  nowait  root  /usr/local/sbin/ftpd
-     =&gt; ftpd -a
-     telnet  stream  tcp  nowait  root  /usr/local/sbin/telnetd
-     =&gt; telnetd -a valid
-     </pre>
-
-<p>For an <em>insecure</em> server, make the following changes instead to
-<code>/etc/inetd.conf</code>:
-
-<p>Find and comment out any lines for the services <code>ftp</code> and
-<code>telnet</code>.
-
-<p>Add the following lines.  (Note:  each line beginning with =&gt; is
-a continuation of the previous line.)
-<pre class="smallexample">     klogin  stream  tcp  nowait  root  /usr/local/sbin/klogind
-     =&gt; klogind -k -c
-     eklogin stream  tcp  nowait  root  /usr/local/sbin/klogind
-     =&gt; klogind -k -c -e
-     kshell  stream  tcp  nowait  root  /usr/local/sbin/kshd
-     =&gt; kshd -k -c -A
-     ftp     stream  tcp  nowait  root  /usr/local/sbin/ftpd
-     =&gt; ftpd
-     telnet  stream  tcp  nowait  root  /usr/local/sbin/telnetd
-     =&gt; telnetd -a none
-     </pre>
 
 <div class="node">
 <p><hr>
 Node:<a name="The%20Keytab%20File">The Keytab File</a>,
 Next:<a rel="next" accesskey="n" href="#Some%20Advice%20about%20Secure%20Hosts">Some Advice about Secure Hosts</a>,
-Previous:<a rel="previous" accesskey="p" href="#Server%20Configuration%20Files">Server Configuration Files</a>,
+Previous:<a rel="previous" accesskey="p" href="#UNIX%20Application%20Servers">UNIX Application Servers</a>,
 Up:<a rel="up" accesskey="u" href="#UNIX%20Application%20Servers">UNIX Application Servers</a>
 <br>
 </div>
@@ -3754,9 +3538,7 @@ trillium.mit.edu):
 
 <p>If you generate the keytab file on another host, you need to get a copy
 of the keytab file onto the destination host (<code>trillium</code>, in the
-above example) without sending it unencrypted over the network.  If you
-have installed the Kerberos V5 client programs, you can use
-encrypted <code>rcp</code>.
+above example) without sending it unencrypted over the network.
 
 <div class="node">
 <p><hr>
@@ -3775,21 +3557,12 @@ to try to include an exhaustive list of countermeasures for every
 possible attack, but it is worth noting some of the larger holes and how
 to close them.
 
-<p>As stated earlier in this section, MIT recommends that on a
-secure host, you disable the standard <code>ftp</code>, <code>login</code>,
-<code>telnet</code>, <code>shell</code>, and <code>exec</code> services in
-<code>/etc/inetd.conf</code>.  We also recommend that secure hosts have an empty
-<code>/etc/hosts.equiv</code> file and that there not be a <code>.rhosts</code> file
-in <code>root</code>'s home directory.  You can grant Kerberos-authenticated
-root access to specific Kerberos principals by placing those principals
-in the file <code>.k5login</code> in root's home directory.
-
 <p>We recommend that backups of secure machines exclude the keytab file
 (<code>/etc/krb5.keytab</code>).  If this is not possible, the backups should
 at least be done locally, rather than over a network, and the backup
 tapes should be physically secured.
 
-<p>Finally, the keytab file and any programs run by root, including the
+<p>The keytab file and any programs run by root, including the
 Kerberos V5 binaries, should be kept on local disk.  The keytab file
 should be readable only by root.
 
@@ -4146,8 +3919,6 @@ an example.
 </li></ul>
 <li><a href="#UNIX%20Application%20Servers">UNIX Application Servers</a>
 <ul>
-<li><a href="#Server%20Programs">Server Programs</a>
-<li><a href="#Server%20Configuration%20Files">Server Configuration Files</a>
 <li><a href="#The%20Keytab%20File">The Keytab File</a>
 <li><a href="#Some%20Advice%20about%20Secure%20Hosts">Some Advice about Secure Hosts</a>
 </li></ul>
@@ -4167,12 +3938,6 @@ an example.
 <li><a name="fn-1"></a>
 <p>Kerberos V4 used port 750.  If
 necessary, you can run on both ports for backward compatibility.</p>
-
-<li><a name="fn-2"></a>
-<p>If you are fortunate enough to
-have a previous version of Kerberos V5 or V4 installed, and the Kerberos
-rlogin is first in your path, you can setup <code>.k5login</code> or
-<code>.klogin</code> respectively to allow you access.</p>
 
 </ol><hr></div>
 

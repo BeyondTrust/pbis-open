@@ -1,9 +1,9 @@
 /*
  * auth_gssapi.h, Protocol for GSS-API style authentication parameters for RPC
- * 
+ *
  * Copyright 1993 OpenVision Technologies, Inc., All Rights Reserved.
  *
- * $Id: auth_gssapi.h 18589 2006-09-16 01:32:40Z raeburn $
+ * $Id: auth_gssapi.h 23100 2009-10-31 00:48:38Z tlyu $
  *
  */
 
@@ -57,7 +57,7 @@ typedef void (*auth_gssapi_log_badauth_func)
 		OM_uint32 minor,
 		struct sockaddr_in *raddr,
 		caddr_t data);
-   
+
 typedef void (*auth_gssapi_log_badverf_func)
      (gss_name_t client,
 		gss_name_t server,
@@ -105,7 +105,7 @@ AUTH *auth_gssapi_create_default
 
 void auth_gssapi_display_status
 (char *msg, OM_uint32 major,
-	   OM_uint32 minor); 
+	   OM_uint32 minor);
 
 bool_t auth_gssapi_seal_seq
 (gss_ctx_id_t context, uint32_t seq_num, gss_buffer_t out_buf);

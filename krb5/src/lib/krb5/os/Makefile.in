@@ -1,5 +1,3 @@
-thisconfigdir=../../..
-myfulldir=lib/krb5/os
 mydir=lib/krb5/os
 BUILDTOP=$(REL)..$(S)..$(S)..
 KRB5_RUN_ENV = @KRB5_RUN_ENV@
@@ -7,7 +5,7 @@ PROG_LIBPATH=-L$(TOPLIBD)
 PROG_RPATH=$(KRB5_LIBDIR)
 DEFS=
 DEFINES=-DLIBDIR=\"$(KRB5_LIBDIR)\"
-LOCALINCLUDES=-I$(SRCTOP)/util/profile
+LOCALINCLUDES=-I$(top_srcdir)/util/profile
 
 ##DOS##BUILDTOP = ..\..\..
 ##DOS##PREFIXDIR=os
@@ -23,7 +21,6 @@ STLIBOBJS= \
 	dnsglue.o	\
 	dnssrv.o	\
 	free_krbhs.o	\
-	free_hstrl.o	\
 	full_ipadr.o	\
 	get_krbhst.o	\
 	gen_port.o	\
@@ -67,7 +64,6 @@ OBJS= \
 	$(OUTPRE)dnsglue.$(OBJEXT)	\
 	$(OUTPRE)dnssrv.$(OBJEXT)	\
 	$(OUTPRE)free_krbhs.$(OBJEXT)	\
-	$(OUTPRE)free_hstrl.$(OBJEXT)	\
 	$(OUTPRE)full_ipadr.$(OBJEXT)	\
 	$(OUTPRE)get_krbhst.$(OBJEXT)	\
 	$(OUTPRE)gen_port.$(OBJEXT)	\
@@ -111,7 +107,6 @@ SRCS= \
 	$(srcdir)/dnsglue.c	\
 	$(srcdir)/dnssrv.c	\
 	$(srcdir)/free_krbhs.c	\
-	$(srcdir)/free_hstrl.c	\
 	$(srcdir)/full_ipadr.c	\
 	$(srcdir)/get_krbhst.c	\
 	$(srcdir)/gen_port.c	\
@@ -194,7 +189,9 @@ lclint-localaddr: localaddr.c
 	$(LCLINT) $(LCLINTOPTS) $(CPPFLAGS) $(LOCALINCLUDES) $(DEFS) \
 		-DTEST $(srcdir)/localaddr.c
 
-check-unix:: $(TEST_PROGS)
+check-unix:: check-unix-stdconf check-unix-locate check-unix-antoln
+
+check-unix-stdconf:: t_std_conf
 	KRB5_CONFIG=$(srcdir)/td_krb5.conf ; export KRB5_CONFIG ;\
 	$(KRB5_RUN_ENV) $(VALGRIND) ./t_std_conf  -d -s NEW.DEFAULT.REALM -d \
 		-k IGGY.ORG -k DEFAULT_REALM.TST \
@@ -203,13 +200,29 @@ check-unix:: $(TEST_PROGS)
 		-r pgp.good.idea -r no_domain > test.out
 	cmp test.out $(srcdir)/ref_std_conf.out
 	$(RM) test.out
-	KRB5_CONFIG=$(srcdir)/td_krb5.conf ; export KRB5_CONFIG ;\
-	$(KRB5_RUN_ENV) $(VALGRIND) ./t_locate_kdc ATHENA.MIT.EDU
+
+# The following can be overriden on the make command line if needed:
+LOCREALM = ATHENA.MIT.EDU
+SRVNAME = _kerberos._udp.athena.mit.edu.
+DIGPAT = '^_kerberos.*srv'
+NSPAT = '^_kerberos.*service'
+DIG = @DIG@
+NSLOOKUP = @NSLOOKUP@
+
+check-unix-locate:: t_locate_kdc
+	if [ "$(OFFLINE)" = no ] && \
+	    $(DIG) $(SRVNAME) srv | grep -i $(DIGPAT) || \
+	    $(NSLOOKUP) -q=srv $(SRVNAME) | grep -i $(NSPAT); then \
+	    KRB5_CONFIG=$(srcdir)/td_krb5.conf ; export KRB5_CONFIG ;\
+	    $(KRB5_RUN_ENV) $(VALGRIND) ./t_locate_kdc $(LOCREALM); \
+	else \
+	    echo '*** WARNING: skipped t_locate_kdc test: known DNS name not found'; \
+	fi
 
 #
 # Do some aname-to-lname testing.
 #
-check-unix::
+check-unix-antoln:: t_an_to_ln
 	echo '[libdefaults]' > ./t_an.conf
 	echo '	default_realm = r' >> ./t_an.conf
 	echo '[realms]' >> ./t_an.conf
@@ -221,6 +234,8 @@ check-unix::
 #	fi
 	echo 'auth_to_local = RULE:[3:$$1$$3$$2](rule.*)s/rule//g' \
 		>> ./t_an.conf
+	echo 'auth_to_local = RULE:[4:wi$$1ma]s/x/l/g' \
+		>> ./t_an.conf
 	echo 'auth_to_local = DEFAULT' >> ./t_an.conf
 	echo '}' >> ./t_an.conf
 #	if test -r ../../../admin/aname/kdb5_anadd ; then \
@@ -230,7 +245,7 @@ check-unix::
 	KRB5_CONFIG=./t_an.conf ; export KRB5_CONFIG ; \
 	$(KRB5_RUN_ENV) $(VALGRIND) ./t_an_to_ln rul/helpme/e@r ru/123/le@r
 	KRB5_CONFIG=./t_an.conf ; export KRB5_CONFIG ; \
-	$(KRB5_RUN_ENV) $(VALGRIND) ./t_an_to_ln fred/r@r barney/r@r
+	$(KRB5_RUN_ENV) $(VALGRIND) ./t_an_to_ln fred/r@r barney/r@r x/r/r/r@r
 	$(RM) ./t_an.*
 
 clean:: 

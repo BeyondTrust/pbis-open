@@ -90,4 +90,3 @@ gssspi_set_cred_option(OM_uint32 *minor_status,
 
     return status;
 }
-

@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 1993 by OpenVision Technologies, Inc.
  *
@@ -75,7 +75,7 @@
  */
 
 /*
- * $Id: gssapi_krb5.c 21779 2009-01-22 23:37:35Z tlyu $
+ * $Id: gssapi_krb5.c 24196 2010-07-20 22:28:44Z tlyu $
  */
 
 
@@ -306,9 +306,9 @@ kg_set_ccache_name (OM_uint32 *minor_status, const char *name)
     return GSS_S_COMPLETE;
 }
 
-#define g_OID_prefix_equal(o1, o2) \
-        (((o1)->length >= (o2)->length) && \
-        (memcmp((o1)->elements, (o2)->elements, (o2)->length) == 0))
+#define g_OID_prefix_equal(o1, o2)                                      \
+    (((o1)->length >= (o2)->length) &&                                  \
+     (memcmp((o1)->elements, (o2)->elements, (o2)->length) == 0))
 
 /*
  * gss_inquire_sec_context_by_oid() methods
@@ -370,7 +370,7 @@ krb5_gss_inquire_sec_context_by_oid (OM_uint32 *minor_status,
         return GSS_S_NO_CONTEXT;
 
     for (i = 0; i < sizeof(krb5_gss_inquire_sec_context_by_oid_ops)/
-                    sizeof(krb5_gss_inquire_sec_context_by_oid_ops[0]); i++) {
+             sizeof(krb5_gss_inquire_sec_context_by_oid_ops[0]); i++) {
         if (g_OID_prefix_equal(desired_object, &krb5_gss_inquire_sec_context_by_oid_ops[i].oid)) {
             return (*krb5_gss_inquire_sec_context_by_oid_ops[i].func)(minor_status,
                                                                       context_handle,
@@ -403,7 +403,9 @@ krb5_gss_inquire_cred_by_oid(OM_uint32 *minor_status,
 {
     OM_uint32 major_status = GSS_S_FAILURE;
     krb5_gss_cred_id_t cred;
+#if 0
     size_t i;
+#endif
 
     if (minor_status == NULL)
         return GSS_S_CALL_INACCESSIBLE_WRITE;
@@ -430,7 +432,7 @@ krb5_gss_inquire_cred_by_oid(OM_uint32 *minor_status,
 
 #if 0
     for (i = 0; i < sizeof(krb5_gss_inquire_cred_by_oid_ops)/
-                    sizeof(krb5_gss_inquire_cred_by_oid_ops[0]); i++) {
+             sizeof(krb5_gss_inquire_cred_by_oid_ops[0]); i++) {
         if (g_OID_prefix_equal(desired_object, &krb5_gss_inquire_cred_by_oid_ops[i].oid)) {
             return (*krb5_gss_inquire_cred_by_oid_ops[i].func)(minor_status,
                                                                cred_handle,
@@ -486,7 +488,7 @@ krb5_gss_set_sec_context_option (OM_uint32 *minor_status,
 
 #if 0
     for (i = 0; i < sizeof(krb5_gss_set_sec_context_option_ops)/
-                    sizeof(krb5_gss_set_sec_context_option_ops[0]); i++) {
+             sizeof(krb5_gss_set_sec_context_option_ops[0]); i++) {
         if (g_OID_prefix_equal(desired_object, &krb5_gss_set_sec_context_option_ops[i].oid)) {
             return (*krb5_gss_set_sec_context_option_ops[i].func)(minor_status,
                                                                   context_handle,
@@ -549,7 +551,7 @@ krb5_gssspi_set_cred_option(OM_uint32 *minor_status,
         return major_status;
 
     for (i = 0; i < sizeof(krb5_gssspi_set_cred_option_ops)/
-                    sizeof(krb5_gssspi_set_cred_option_ops[0]); i++) {
+             sizeof(krb5_gssspi_set_cred_option_ops[0]); i++) {
         if (g_OID_prefix_equal(desired_object, &krb5_gssspi_set_cred_option_ops[i].oid)) {
             return (*krb5_gssspi_set_cred_option_ops[i].func)(minor_status,
                                                               cred_handle,
@@ -608,7 +610,7 @@ krb5_gssspi_mech_invoke (OM_uint32 *minor_status,
         return GSS_S_CALL_INACCESSIBLE_READ;
 
     for (i = 0; i < sizeof(krb5_gssspi_mech_invoke_ops)/
-                    sizeof(krb5_gssspi_mech_invoke_ops[0]); i++) {
+             sizeof(krb5_gssspi_mech_invoke_ops[0]); i++) {
         if (g_OID_prefix_equal(desired_object, &krb5_gssspi_mech_invoke_ops[i].oid)) {
             return (*krb5_gssspi_mech_invoke_ops[i].func)(minor_status,
                                                           desired_mech,
@@ -638,11 +640,14 @@ static struct gss_config krb5_mechanism = {
     krb5_gss_context_time,
     krb5_gss_get_mic,
     krb5_gss_verify_mic,
-#ifdef IOV_SHIM_EXERCISE
-    NULL,
+#if defined(IOV_SHIM_EXERCISE_WRAP) || defined(IOV_SHIM_EXERCISE)
     NULL,
 #else
     krb5_gss_wrap,
+#endif
+#if defined(IOV_SHIM_EXERCISE_UNWRAP) || defined(IOV_SHIM_EXERCISE)
+    NULL,
+#else
     krb5_gss_unwrap,
 #endif
     krb5_gss_display_status,
@@ -666,7 +671,7 @@ static struct gss_config krb5_mechanism = {
     krb5_gss_internal_release_oid,
     krb5_gss_wrap_size_limit,
     krb5_gss_export_name,
-    NULL,                        /* store_cred */
+    krb5_gss_store_cred,
     krb5_gss_inquire_sec_context_by_oid,
     krb5_gss_inquire_cred_by_oid,
     krb5_gss_set_sec_context_option,
@@ -688,6 +693,8 @@ static struct gss_config krb5_mechanism = {
     krb5_gss_export_name_composite,
     krb5_gss_map_name_to_any,
     krb5_gss_release_any_name_mapping,
+    krb5_gss_pseudo_random,
+    NULL,               /* set_neg_mechs */
 };
 
 

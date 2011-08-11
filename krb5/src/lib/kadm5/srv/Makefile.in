@@ -1,9 +1,7 @@
-thisconfigdir=../../..
-myfulldir=lib/kadm5/srv
 mydir=lib/kadm5/srv
 BUILDTOP=$(REL)..$(S)..$(S)..
 LOCALINCLUDES = -I$(BUILDTOP)/include/kadm5 \
-	-I$(SRCTOP)/lib/gssapi/krb5 -I$(SRCTOP)/lib/gssapi/generic \
+	-I$(top_srcdir)/lib/gssapi/krb5 -I$(top_srcdir)/lib/gssapi/generic \
 	-I$(BUILDTOP)/lib/gssapi/krb5 -I$(BUILDTOP)/lib/gssapi/generic
 DEFINES = @HESIOD_DEFS@
 DEFS=
@@ -11,8 +9,8 @@ DEFS=
 ##DOSBUILDTOP = ..\..\..
 ##DOSLIBNAME = libkadm5srv.lib
 
-LIBBASE=kadm5srv
-LIBMAJOR=6
+LIBBASE=kadm5srv_mit
+LIBMAJOR=7
 LIBMINOR=0
 STOBJLISTS=../OBJS.ST OBJS.ST
 
@@ -88,6 +86,13 @@ clean-windows::
 clean-unix:: clean-liblinks clean-libs clean-libobjs
 
 install:: install-libs
+
+install-unix::
+	$(RM) $(DESTDIR)$(KRB5_LIBDIR)/libkadm5srv$(DEPLIBEXT)
+	(cd $(DESTDIR)$(KRB5_LIBDIR) && $(LN_S) lib$(LIBBASE)$(DEPLIBEXT) \
+		libkadm5srv$(DEPLIBEXT))
+
+depend:: includes
 
 @lib_frag@
 @libobj_frag@

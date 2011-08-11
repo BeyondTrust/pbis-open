@@ -42,7 +42,7 @@ Up:<a rel="up" accesskey="u" href="#Top">Top</a>
 
 <h2 class="unnumbered">Copyright</h2>
 
-<p>Copyright &copy; 1985-2009 by the Massachusetts Institute of Technology.
+<p>Copyright &copy; 1985-2010 by the Massachusetts Institute of Technology.
 
 <blockquote>
 Export of software employing encryption from the United States of
@@ -303,11 +303,6 @@ the following new or changed files:
        slave/kproplog.c
      </pre>
 
-<p>and marked portions of the following files:
-
-<pre class="smallexample">       lib/krb5/os/hst_realm.c
-     </pre>
-
 <p>are subject to the following license:
 
 <blockquote>
@@ -372,7 +367,7 @@ SUCH DAMAGE.
 backend, are subject to the following license:
 
 <blockquote>
-Copyright &copy; 2004-2005, Novell, Inc. 
+Copyright (c) 2004-2005, Novell, Inc. 
 All rights reserved.
 
      <p>Redistribution and use in source and binary forms, with or without
@@ -485,28 +480,6 @@ WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
 </blockquote>
 
-<p>The implementations of strlcpy and strlcat in
-src/util/support/strlcat.c have the following copyright and permission
-notice:
-
-<blockquote>
-
-     <p>Copyright &copy; 1998 Todd C. Miller &lt;Todd.Miller@courtesan.com&gt;
-
-     <p>Permission to use, copy, modify, and distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
-
-     <p>THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-</blockquote>
-
 <p>The implementations of UTF-8 string handling in src/util/support and
 src/lib/krb5/unicode are subject to the following copyright and
 permission notice:
@@ -560,43 +533,6 @@ holders.
      <p>Copyright 1999-2003 The OpenLDAP Foundation, Redwood City,
 California, USA.  All Rights Reserved.  Permission to copy and
 distribute verbatim copies of this document is granted.
-
-</blockquote>
-
-<p>Marked test programs in src/lib/krb5/krb have the following copyright:
-
-<blockquote>
-
-     <p>Copyright &copy; 2006 Kungliga Tekniska H&ouml;gskolan
-(Royal Institute of Technology, Stockholm, Sweden). 
-All rights reserved.
-
-     <p>Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-
-     <p>1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-
-     <p>2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-
-     <p>3. Neither the name of KTH nor the names of its contributors may be
-   used to endorse or promote products derived from this software without
-   specific prior written permission.
-
-     <p>THIS SOFTWARE IS PROVIDED BY KTH AND ITS CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL KTH OR ITS CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
-BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 </blockquote>
 
@@ -1117,7 +1053,24 @@ but not recommended for use.
      <dd><dt><code>rc4-hmac-exp</code>
      <dd><dt><code>arcfour-hmac-md5-exp</code>
      <dd>Exportable RC4 with HMAC/MD5 (weak)
+<br><dt><code>des</code>
+     <dd>The DES family: des-cbc-crc, des-cbc-md5, and des-cbc-md4 (weak)
+<br><dt><code>des3</code>
+     <dd>The triple DES family: des3-cbc-sha1
+<br><dt><code>aes</code>
+     <dd>The AES family: aes256-cts-hmac-sha1-96 and aes128-cts-hmac-sha1-96
+<br><dt><code>rc4</code>
+     <dd>The RC4 family: arcfour-hmac
 </dl>
+
+<p>The string DEFAULT can be used to refer to the default set of types for
+the variable in question.  Types or families can be removed from the
+current list by prefixing them with a minus sign ("-").  Types or
+families can be prefixed with a plus sign ("+") for symmetry; it has
+the same meaning as just listing the type or family.  For example,
+"DEFAULT -des" would be the default set of encryption types with DES
+types removed, and "des3 DEFAULT" would be the default set of
+encryption types with triple DES types moved to the front.
 
 <p>While aes128-cts and aes256-cts are supported for all Kerberos
 operations, they are not supported by older versions of our GSSAPI
@@ -1311,8 +1264,11 @@ aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 des3-cbc-sha1 arcfour-hmac-md5 d
 
      <dt><b>allow_weak_crypto</b>
      <dd>If this is set to 0 (for false), then weak encryption types will be
-filtered out of the previous three lists (as noted in <a href="#Supported%20Encryption%20Types">Supported Encryption Types</a>).  The default value for this tag is true, but that
-default may change in the future.
+filtered out of the previous three lists (as noted in <a href="#Supported%20Encryption%20Types">Supported Encryption Types</a>).  The default value for this tag is false, which
+may cause authentication failures in existing Kerberos infrastructures
+that do not support strong crypto.  Users in affected environments
+should set this tag to true until their infrastructure adopts stronger
+ciphers.
 
      <dt><b>clockskew</b>
      <dd>Sets the maximum allowable amount of clockskew in seconds that the
@@ -1425,6 +1381,11 @@ be tried if the first attempt fails.
      <dd>If this flag is set, then an attempt to get initial credentials will
 fail if the client machine does not have a keytab.  The default for the
 flag is not set.
+
+     <dt><b>ticket_lifetime</b>
+     <dd>The value of this tag is the default lifetime for
+initial tickets.  The default value for the tag is
+1 day.
 
      <dt><b>renew_lifetime</b>
      <dd>The value of this tag is the default renewable lifetime for
@@ -1542,21 +1503,21 @@ tags may be specified in the realm's subsection:
 
      <dl>
 <dt><b>kdc</b>
-     <dd>The name of a host running a KDC for that realm.  An optional port
-number (separated from the hostname by a colon) may be included.  For
-your computer to be able to communicate with the KDC for each realm,
-this tag must be given a value in each realm subsection in the
-configuration file, or there must be DNS SRV records specifying the
-KDCs (see <a href="#Using%20DNS">Using DNS</a>).
+     <dd>The name or address of a host running a KDC for that realm.  An optional
+port number, separated from the hostname by a colon, may be included. 
+If the name or address contains colons (for example, if it is an IPv6
+address), enclose it in square brackets to distinguish the colon from a
+port separator.  For your computer to be able to communicate with the
+KDC for each realm, this tag must be given a value in each realm
+subsection in the configuration file, or there must be DNS SRV records
+specifying the KDCs (see <a href="#Using%20DNS">Using DNS</a>).
 
      <dt><b>master_kdc</b>
      <dd>Identifies the master KDC(s).  Currently, this tag is used in only one
 case: If an attempt to get credentials fails because of an invalid
 password, the client software will attempt to contact the master KDC,
 in case the user's password has just been changed, and the updated
-database has not been propagated to the slave servers yet.  (We don't
-currently check whether the KDC from which the initial response came
-is on the master KDC list.  That may be fixed in the future.)
+database has not been propagated to the slave servers yet.
 
      <dt><b>database_module</b>
      <dd>
@@ -2055,7 +2016,7 @@ the user's certificate and private key.
      <br><dt><b>PKCS11:[module_name=]</b><i>module-name</i><b>[:slotid=</b><i>slot-id</i><b>][:token=</b><i>token-label</i><b>][:certid=</b><i>cert-id</i><b>][:certlabel=</b><i>cert-label</i><b>]</b>
      <dd>All keyword/values are optional. 
 <i>module-name</i> specifies the location of a library implementing
-<code>PKCS #11</code>.  If a value is encountered with not keyword, it
+<code>PKCS #11</code>.  If a value is encountered with no keyword, it
 is assumed to be the <i>module-name</i>.  If no <i>module-name</i> is
 specified, the default is <code>opensc-pkcs11.so</code>. 
 <b>slotid=</b> and/or <b>token=</b> may be specified to force the use of a
@@ -3710,6 +3671,7 @@ passwords kept in the database.
 <li><a accesskey="2" href="#Retrieving%20the%20List%20of%20Policies">Retrieving the List of Policies</a>: 
 <li><a accesskey="3" href="#Adding%20or%20Modifying%20Policies">Adding or Modifying Policies</a>: 
 <li><a accesskey="4" href="#Deleting%20Policies">Deleting Policies</a>: 
+<li><a accesskey="5" href="#Updating%20the%20History%20Key">Updating the History Key</a>: 
 </ul>
 
 <div class="node">
@@ -3840,6 +3802,7 @@ following switches:
 <div class="node">
 <p><hr>
 Node:<a name="Deleting%20Policies">Deleting Policies</a>,
+Next:<a rel="next" accesskey="n" href="#Updating%20the%20History%20Key">Updating the History Key</a>,
 Previous:<a rel="previous" accesskey="p" href="#Adding%20or%20Modifying%20Policies">Adding or Modifying Policies</a>,
 Up:<a rel="up" accesskey="u" href="#Policies">Policies</a>
 <br>
@@ -3866,6 +3829,34 @@ For example:
 <p>Note that you must cancel the policy from all principals before deleting
 it.  The <code>delete_policy</code> command will fail if it is in use by any
 principals.
+
+<div class="node">
+<p><hr>
+Node:<a name="Updating%20the%20History%20Key">Updating the History Key</a>,
+Previous:<a rel="previous" accesskey="p" href="#Deleting%20Policies">Deleting Policies</a>,
+Up:<a rel="up" accesskey="u" href="#Policies">Policies</a>
+<br>
+</div>
+
+<p>If a policy specifies a number of old keys kept of two or more, the
+stored old keys are encrypted in a history key, which is found in the
+key data of the kadmin/history principal.
+
+<p>Currently there is no support for proper rollover of the history key,
+but you can change the history key (for example, to use a better
+encryption type) at the cost of invalidating currently stored old keys. 
+To change the history key, run:
+
+<pre class="smallexample">     <b>kadmin:</b> change_password -randkey kadmin/history
+     </pre>
+
+<p>This command will fail if you specify the <b>-keepold</b> flag.  Only one
+new history key will be created, even if you specify multiple key/salt
+combinations.
+
+<p>In the future, we plan to migrate towards encrypting old keys in the
+master key instead of the history key, and implementing proper rollover
+support for stored old keys.
 
 <div class="node">
 <p><hr>

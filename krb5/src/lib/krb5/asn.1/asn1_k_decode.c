@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * src/lib/krb5/asn.1/asn1_k_decode.c
  *
@@ -34,26 +34,26 @@
 
 /* Declare useful decoder variables. */
 #define setup()                                 \
-  asn1_error_code retval;                       \
-  asn1_class asn1class;                         \
-  asn1_construction construction;               \
-  asn1_tagnum tagnum;                           \
-  unsigned int length, taglen
+    asn1_error_code retval;                     \
+    asn1_class asn1class;                       \
+    asn1_construction construction;             \
+    asn1_tagnum tagnum;                         \
+    unsigned int length, taglen
 
 #define unused_var(x) if (0) { x = 0; x = x - x; }
 
 /* This is used for prefetch of next tag in sequence. */
-#define next_tag()                                                              \
-{ taginfo t2;                                                                   \
-  retval = asn1_get_tag_2(&subbuf, &t2);                                        \
-  if (retval) clean_return(retval);                                             \
-  /* Copy out to match previous functionality, until better integrated.  */     \
-  asn1class = t2.asn1class;                                                     \
-  construction = t2.construction;                                               \
-  tagnum = t2.tagnum;                                                           \
-  taglen = t2.length;                                                           \
-  indef = t2.indef;                                                             \
-}
+#define next_tag()                                                      \
+    { taginfo t2;                                                       \
+        retval = asn1_get_tag_2(&subbuf, &t2);                          \
+        if (retval) clean_return(retval);                               \
+        /* Copy out to match previous functionality, until better integrated.  */ \
+        asn1class = t2.asn1class;                                       \
+        construction = t2.construction;                                 \
+        tagnum = t2.tagnum;                                             \
+        taglen = t2.length;                                             \
+        indef = t2.indef;                                               \
+    }
 
 static asn1_error_code
 asn1_get_eoc_tag (asn1buf *buf)
@@ -77,40 +77,40 @@ asn1_get_eoc_tag (asn1buf *buf)
     }
 
 #define alloc_field(var)                        \
-  var = calloc(1, sizeof(*var));                \
-  if ((var) == NULL) clean_return(ENOMEM)
+    var = calloc(1, sizeof(*var));              \
+    if ((var) == NULL) clean_return(ENOMEM)
 
 /*
  * Allocate a principal and initialize enough fields for
  * krb5_free_principal to have defined behavior.
  */
 #define alloc_principal(var)                    \
-  alloc_field(var);                             \
-  var->realm.data = NULL;                       \
-  var->data = NULL
+    alloc_field(var);                           \
+    var->realm.data = NULL;                     \
+    var->data = NULL
 
 /*
  * Allocate a data structure and initialize enough fields for
  * krb5_free_data to have defined behavior.
  */
 #define alloc_data(var)                         \
-  alloc_field(var);                             \
-  var->data = NULL
+    alloc_field(var);                           \
+    var->data = NULL
 
 /* Fetch an expected APPLICATION class tag and verify. */
-#define apptag(tagexpect)                                                               \
-  {                                                                                     \
-      taginfo t1;                                                                       \
-      retval = asn1_get_tag_2(buf, &t1);                                                \
-      if (retval) clean_return(retval);                                                 \
-      if (t1.asn1class != APPLICATION || t1.construction != CONSTRUCTED ||              \
-          t1.tagnum != (tagexpect)) clean_return(ASN1_BAD_ID);                          \
-      /* Copy out to match previous functionality, until better integrated.  */         \
-      asn1class = t1.asn1class;                                                         \
-      construction = t1.construction;                                                   \
-      tagnum = t1.tagnum;                                                               \
-      applen = t1.length;                                                               \
-  }
+#define apptag(tagexpect)                                               \
+    {                                                                   \
+        taginfo t1;                                                     \
+        retval = asn1_get_tag_2(buf, &t1);                              \
+        if (retval) clean_return(retval);                               \
+        if (t1.asn1class != APPLICATION || t1.construction != CONSTRUCTED || \
+            t1.tagnum != (tagexpect)) clean_return(ASN1_BAD_ID);        \
+        /* Copy out to match previous functionality, until better integrated.  */ \
+        asn1class = t1.asn1class;                                       \
+        construction = t1.construction;                                 \
+        tagnum = t1.tagnum;                                             \
+        applen = t1.length;                                             \
+    }
 
 /**** normal fields ****/
 
@@ -122,10 +122,10 @@ asn1_get_eoc_tag (asn1buf *buf)
  * enclosed in a context-specific tag.
  */
 #define get_field_body(var, decoder)            \
-  retval = decoder(&subbuf, &(var));            \
-  if (retval) clean_return(retval);            \
-  if (!taglen && indef) { get_eoc(); }          \
-  next_tag()
+    retval = decoder(&subbuf, &(var));          \
+    if (retval) clean_return(retval);           \
+    if (!taglen && indef) { get_eoc(); }        \
+    next_tag()
 
 /*
  * error_if_bad_tag
@@ -133,8 +133,8 @@ asn1_get_eoc_tag (asn1buf *buf)
  * Checks that the next tag is the expected one; returns with an error
  * if not.
  */
-#define error_if_bad_tag(tagexpect) \
-  if (tagnum != (tagexpect)) { clean_return((tagnum < (tagexpect)) ? ASN1_MISPLACED_FIELD : ASN1_MISSING_FIELD); }
+#define error_if_bad_tag(tagexpect)                                     \
+    if (tagnum != (tagexpect)) { clean_return((tagnum < (tagexpect)) ? ASN1_MISPLACED_FIELD : ASN1_MISSING_FIELD); }
 
 /*
  * get_field
@@ -144,11 +144,11 @@ asn1_get_eoc_tag (asn1buf *buf)
  * verification of tag numbers.
  */
 #define get_field(var, tagexpect, decoder)                              \
-  error_if_bad_tag(tagexpect);                                          \
-  if ((asn1class != CONTEXT_SPECIFIC || construction != CONSTRUCTED)    \
-      && (tagnum || taglen || asn1class != UNIVERSAL))                  \
-    clean_return(ASN1_BAD_ID);                                          \
-  get_field_body(var,decoder)
+    error_if_bad_tag(tagexpect);                                        \
+    if ((asn1class != CONTEXT_SPECIFIC || construction != CONSTRUCTED)  \
+        && (tagnum || taglen || asn1class != UNIVERSAL))                \
+        clean_return(ASN1_BAD_ID);                                      \
+    get_field_body(var,decoder)
 
 /*
  * opt_field
@@ -159,59 +159,59 @@ asn1_get_eoc_tag (asn1buf *buf)
  * values that happen to have the value of OPTVAL.
  */
 #define opt_field(var, tagexpect, decoder, optvalue)                    \
-  if (asn1buf_remains(&subbuf, seqindef)) {                             \
-    if ((asn1class != CONTEXT_SPECIFIC || construction != CONSTRUCTED)  \
-        && (tagnum || taglen || asn1class != UNIVERSAL))                \
-      clean_return(ASN1_BAD_ID);                                        \
-    if (tagnum == (tagexpect)) {                                        \
-      get_field_body(var, decoder);                                     \
-    } else var = optvalue;                                              \
-  }
+    if (asn1buf_remains(&subbuf, seqindef)) {                           \
+        if ((asn1class != CONTEXT_SPECIFIC || construction != CONSTRUCTED) \
+            && (tagnum || taglen || asn1class != UNIVERSAL))            \
+            clean_return(ASN1_BAD_ID);                                  \
+        if (tagnum == (tagexpect)) {                                    \
+            get_field_body(var, decoder);                               \
+        } else var = optvalue;                                          \
+    }
 
 /**** fields w/ length ****/
 
 /* similar to get_field_body */
 #define get_lenfield_body(len, var, decoder)    \
-  retval = decoder(&subbuf, &(len), &(var));    \
-  if (retval) clean_return(retval);             \
-  if (!taglen && indef) { get_eoc(); }          \
-  next_tag()
+    retval = decoder(&subbuf, &(len), &(var));  \
+    if (retval) clean_return(retval);           \
+    if (!taglen && indef) { get_eoc(); }        \
+    next_tag()
 
 /* similar to get_field_body */
 #define get_lenfield(len, var, tagexpect, decoder)                      \
-  error_if_bad_tag(tagexpect);                                          \
-  if ((asn1class != CONTEXT_SPECIFIC || construction != CONSTRUCTED)    \
-      && (tagnum || taglen || asn1class != UNIVERSAL))                  \
-    clean_return(ASN1_BAD_ID);                                          \
-  get_lenfield_body(len, var, decoder)
+    error_if_bad_tag(tagexpect);                                        \
+    if ((asn1class != CONTEXT_SPECIFIC || construction != CONSTRUCTED)  \
+        && (tagnum || taglen || asn1class != UNIVERSAL))                \
+        clean_return(ASN1_BAD_ID);                                      \
+    get_lenfield_body(len, var, decoder)
 
 /* similar to opt_field */
 #define opt_lenfield(len, var, tagexpect, decoder)      \
-  if (tagnum == (tagexpect)) {                          \
-    get_lenfield_body(len, var, decoder);               \
-  } else { len = 0; var = 0; }
+    if (tagnum == (tagexpect)) {                        \
+        get_lenfield_body(len, var, decoder);           \
+    } else { len = 0; var = 0; }
 
 /*
  * Deal with implicitly tagged fields
  */
-#define get_implicit_octet_string(len, var, tagexpect)              \
-  if (tagnum != (tagexpect)) clean_return(ASN1_MISSING_FIELD);      \
-  if (asn1class != CONTEXT_SPECIFIC || construction != PRIMITIVE)   \
-    clean_return(ASN1_BAD_ID);                                      \
-  retval = asn1buf_remove_octetstring(&subbuf, taglen, &(var));     \
-  if (retval) clean_return(retval);                                 \
-  (len) = taglen;                                                   \
-  next_tag()
+#define get_implicit_octet_string(len, var, tagexpect)                  \
+    if (tagnum != (tagexpect)) clean_return(ASN1_MISSING_FIELD);        \
+    if (asn1class != CONTEXT_SPECIFIC || construction != PRIMITIVE)     \
+        clean_return(ASN1_BAD_ID);                                      \
+    retval = asn1buf_remove_octetstring(&subbuf, taglen, &(var));       \
+    if (retval) clean_return(retval);                                   \
+    (len) = taglen;                                                     \
+    next_tag()
 
-#define opt_implicit_octet_string(len, var, tagexpect)              \
-  if (tagnum == (tagexpect)) {                                      \
-    if (asn1class != CONTEXT_SPECIFIC || construction != PRIMITIVE) \
-        clean_return(ASN1_BAD_ID);                                  \
-    retval = asn1buf_remove_octetstring(&subbuf, taglen, &(var));   \
-    if (retval) clean_return(retval);                               \
-    (len) = taglen;                                                 \
-    next_tag();                                                     \
-  } else { (len) = 0; (var) = NULL; }
+#define opt_implicit_octet_string(len, var, tagexpect)                  \
+    if (tagnum == (tagexpect)) {                                        \
+        if (asn1class != CONTEXT_SPECIFIC || construction != PRIMITIVE) \
+            clean_return(ASN1_BAD_ID);                                  \
+        retval = asn1buf_remove_octetstring(&subbuf, taglen, &(var));   \
+        if (retval) clean_return(retval);                               \
+        (len) = taglen;                                                 \
+        next_tag();                                                     \
+    } else { (len) = 0; (var) = NULL; }
 
 /*
  * begin_structure
@@ -221,14 +221,14 @@ asn1_get_eoc_tag (asn1buf *buf)
  * end_structure().
  */
 #define begin_structure()                                       \
-  asn1buf subbuf;                                               \
-  int seqindef;                                                 \
-  int indef;                                                    \
-  retval = asn1_get_sequence(buf, &length, &seqindef);          \
-  if (retval) clean_return(retval);                             \
-  retval = asn1buf_imbed(&subbuf, buf, length, seqindef);       \
-  if (retval) clean_return(retval);                             \
-  next_tag()
+    asn1buf subbuf;                                             \
+    int seqindef;                                               \
+    int indef;                                                  \
+    retval = asn1_get_sequence(buf, &length, &seqindef);        \
+    if (retval) clean_return(retval);                           \
+    retval = asn1buf_imbed(&subbuf, buf, length, seqindef);     \
+    if (retval) clean_return(retval);                           \
+    next_tag()
 
 /*
  * This is used for structures which have no tagging.
@@ -236,19 +236,19 @@ asn1_get_eoc_tag (asn1buf *buf)
  * is not called.
  */
 #define begin_structure_no_tag()                                \
-  asn1buf subbuf;                                               \
-  int seqindef;                                                 \
-  int indef;                                                    \
-  retval = asn1_get_sequence(buf, &length, &seqindef);          \
-  if (retval) clean_return(retval);                             \
-  retval = asn1buf_imbed(&subbuf, buf, length, seqindef);       \
-  if (retval) clean_return(retval)
+    asn1buf subbuf;                                             \
+    int seqindef;                                               \
+    int indef;                                                  \
+    retval = asn1_get_sequence(buf, &length, &seqindef);        \
+    if (retval) clean_return(retval);                           \
+    retval = asn1buf_imbed(&subbuf, buf, length, seqindef);     \
+    if (retval) clean_return(retval)
 
 /* skip trailing garbage */
 #define end_structure()                                         \
-  retval = asn1buf_sync(buf, &subbuf, asn1class, tagnum,        \
-                        length, indef, seqindef);               \
-  if (retval) clean_return(retval)
+    retval = asn1buf_sync(buf, &subbuf, asn1class, tagnum,      \
+                          length, indef, seqindef);             \
+    if (retval) clean_return(retval)
 
 /*
  * begin_choice
@@ -258,28 +258,28 @@ asn1_get_eoc_tag (asn1buf *buf)
  * end_choice().
  */
 #define begin_choice()                                          \
-  asn1buf subbuf;                                               \
-  int seqindef;                                                 \
-  int indef;                                                    \
-  taginfo t;                                                    \
-  retval = asn1_get_tag_2(buf, &t);                             \
-  if (retval) clean_return(retval);                             \
-  tagnum = t.tagnum;                                            \
-  taglen = t.length;                                            \
-  indef = t.indef;                                              \
-  length = t.length;                                            \
-  seqindef = t.indef;                                           \
-  asn1class = t.asn1class;                                      \
-  construction = t.construction;                                \
-  retval = asn1buf_imbed(&subbuf, buf, length, seqindef);       \
-  if (retval) clean_return(retval)
+    asn1buf subbuf;                                             \
+    int seqindef;                                               \
+    int indef;                                                  \
+    taginfo t;                                                  \
+    retval = asn1_get_tag_2(buf, &t);                           \
+    if (retval) clean_return(retval);                           \
+    tagnum = t.tagnum;                                          \
+    taglen = t.length;                                          \
+    indef = t.indef;                                            \
+    length = t.length;                                          \
+    seqindef = t.indef;                                         \
+    asn1class = t.asn1class;                                    \
+    construction = t.construction;                              \
+    retval = asn1buf_imbed(&subbuf, buf, length, seqindef);     \
+    if (retval) clean_return(retval)
 
 /* skip trailing garbage */
 #define end_choice()                                            \
-  length -= t.length;                                           \
-  retval = asn1buf_sync(buf, &subbuf, t.asn1class, t.tagnum,    \
-                        length, t.indef, seqindef);             \
-  if (retval) clean_return(retval)
+    length -= t.length;                                         \
+    retval = asn1buf_sync(buf, &subbuf, t.asn1class, t.tagnum,  \
+                          length, t.indef, seqindef);           \
+    if (retval) clean_return(retval)
 
 /*
  * sequence_of
@@ -289,12 +289,12 @@ asn1_get_eoc_tag (asn1buf *buf)
  * end_sequence_of().
  */
 #define sequence_of(buf)                        \
-  unsigned int length, taglen;                  \
-  asn1_class asn1class;                         \
-  asn1_construction construction;               \
-  asn1_tagnum tagnum;                           \
-  int indef;                                    \
-  sequence_of_common(buf)
+    unsigned int length, taglen;                \
+    asn1_class asn1class;                       \
+    asn1_construction construction;             \
+    asn1_tagnum tagnum;                         \
+    int indef;                                  \
+    sequence_of_common(buf)
 
 /*
  * sequence_of_no_tagvars
@@ -304,7 +304,7 @@ asn1_get_eoc_tag (asn1buf *buf)
  * than does sequence_of() to avoid shadowing.
  */
 #define sequence_of_no_tagvars(buf)             \
-  sequence_of_common(buf)
+    sequence_of_common(buf)
 
 /*
  * sequence_of_common
@@ -314,12 +314,12 @@ asn1_get_eoc_tag (asn1buf *buf)
  * does not prefetch the next tag.
  */
 #define sequence_of_common(buf)                                 \
-  asn1buf seqbuf;                                               \
-  int seqofindef;                                               \
-  retval = asn1_get_sequence(buf, &length, &seqofindef);        \
-  if (retval) clean_return(retval);                             \
-  retval = asn1buf_imbed(&seqbuf, buf, length, seqofindef);     \
-  if (retval) clean_return(retval)
+    asn1buf seqbuf;                                             \
+    int seqofindef;                                             \
+    retval = asn1_get_sequence(buf, &length, &seqofindef);      \
+    if (retval) clean_return(retval);                           \
+    retval = asn1buf_imbed(&seqbuf, buf, length, seqofindef);   \
+    if (retval) clean_return(retval)
 
 /*
  * end_sequence_of
@@ -327,21 +327,21 @@ asn1_get_eoc_tag (asn1buf *buf)
  * Attempts to fetch an EOC tag, if any, and to sync over trailing
  * garbage, if any.
  */
-#define end_sequence_of(buf)                                                    \
-  {                                                                             \
-      taginfo t4;                                                               \
-      retval = asn1_get_tag_2(&seqbuf, &t4);                                    \
-      if (retval) clean_return(retval);                                         \
-      /* Copy out to match previous functionality, until better integrated.  */ \
-      asn1class = t4.asn1class;                                                 \
-      construction = t4.construction;                                           \
-      tagnum = t4.tagnum;                                                       \
-      taglen = t4.length;                                                       \
-      indef = t4.indef;                                                         \
-  }                                                                             \
-  retval = asn1buf_sync(buf, &seqbuf, asn1class, tagnum,                        \
-                        length, indef, seqofindef);                             \
-  if (retval) clean_return(retval);
+#define end_sequence_of(buf)                                            \
+    {                                                                   \
+        taginfo t4;                                                     \
+        retval = asn1_get_tag_2(&seqbuf, &t4);                          \
+        if (retval) clean_return(retval);                               \
+        /* Copy out to match previous functionality, until better integrated.  */ \
+        asn1class = t4.asn1class;                                       \
+        construction = t4.construction;                                 \
+        tagnum = t4.tagnum;                                             \
+        taglen = t4.length;                                             \
+        indef = t4.indef;                                               \
+    }                                                                   \
+        retval = asn1buf_sync(buf, &seqbuf, asn1class, tagnum,          \
+                              length, indef, seqofindef);               \
+        if (retval) clean_return(retval);
 
 /*
  * end_sequence_of_no_tagvars
@@ -363,7 +363,7 @@ end_sequence_of_no_tagvars_helper(asn1buf *buf, asn1buf *seqbufp,
                           t.length, t.indef, seqofindef);
     return retval;
 }
-#define end_sequence_of_no_tagvars(buf) \
+#define end_sequence_of_no_tagvars(buf)                                 \
     retval = end_sequence_of_no_tagvars_helper(buf, &seqbuf, seqofindef); \
     if (retval) clean_return(retval)
 
@@ -374,24 +374,25 @@ end_sequence_of_no_tagvars_helper(asn1buf *buf, asn1buf *seqbufp,
  * error) or a valid constructed structure, making cleanup easier on
  * callers.
  */
-#define decode_ptr(type, structure_decoder) \
-    type val; \
-    asn1_error_code retval; \
-\
-    *valptr = NULL; \
-    val = calloc(1, sizeof(*val)); \
-    if (!val) \
-        return ENOMEM; \
-    retval = structure_decoder(buf, val); \
-    if (retval) { \
-        free(val); \
-        return retval; \
-    } \
-    *valptr = val; \
+#define decode_ptr(type, structure_decoder)     \
+    type val;                                   \
+    asn1_error_code retval;                     \
+                                                \
+    *valptr = NULL;                             \
+    val = calloc(1, sizeof(*val));              \
+    if (!val)                                   \
+        return ENOMEM;                          \
+    retval = structure_decoder(buf, val);       \
+    if (retval) {                               \
+        free(val);                              \
+        return retval;                          \
+    }                                           \
+    *valptr = val;                              \
     return 0;
 
 /* scalars */
-asn1_error_code asn1_decode_kerberos_time(asn1buf *buf, krb5_timestamp *val)
+asn1_error_code
+asn1_decode_kerberos_time(asn1buf *buf, krb5_timestamp *val)
 {
     time_t      t;
     asn1_error_code retval;
@@ -404,26 +405,26 @@ asn1_error_code asn1_decode_kerberos_time(asn1buf *buf, krb5_timestamp *val)
     return 0;
 }
 
-#define integer_convert(fname,ktype)\
-asn1_error_code fname(asn1buf * buf, ktype * val)\
-{\
-  asn1_error_code retval;\
-  long n;\
-  retval = asn1_decode_integer(buf,&n);\
-  if (retval) return retval;\
-  *val = (ktype)n;\
-  return 0;\
-}
-#define unsigned_integer_convert(fname,ktype)\
-asn1_error_code fname(asn1buf * buf, ktype * val)\
-{\
-  asn1_error_code retval;\
-  unsigned long n;\
-  retval = asn1_decode_unsigned_integer(buf,&n);\
-  if (retval) return retval;\
-  *val = (ktype)n;\
-  return 0;\
-}
+#define integer_convert(fname,ktype)                    \
+    asn1_error_code fname(asn1buf * buf, ktype * val)   \
+    {                                                   \
+        asn1_error_code retval;                         \
+        long n;                                         \
+        retval = asn1_decode_integer(buf,&n);           \
+        if (retval) return retval;                      \
+        *val = (ktype)n;                                \
+        return 0;                                       \
+    }
+#define unsigned_integer_convert(fname,ktype)           \
+    asn1_error_code fname(asn1buf * buf, ktype * val)   \
+    {                                                   \
+        asn1_error_code retval;                         \
+        unsigned long n;                                \
+        retval = asn1_decode_unsigned_integer(buf,&n);  \
+        if (retval) return retval;                      \
+        *val = (ktype)n;                                \
+        return 0;                                       \
+    }
 integer_convert(asn1_decode_int,int)
 integer_convert(asn1_decode_int32,krb5_int32)
 integer_convert(asn1_decode_kvno,krb5_kvno)
@@ -435,7 +436,8 @@ integer_convert(asn1_decode_authdatatype,krb5_authdatatype)
 unsigned_integer_convert(asn1_decode_ui_2,krb5_ui_2)
 unsigned_integer_convert(asn1_decode_ui_4,krb5_ui_4)
 
-asn1_error_code asn1_decode_seqnum(asn1buf *buf, krb5_ui_4 *val)
+asn1_error_code
+asn1_decode_seqnum(asn1buf *buf, krb5_ui_4 *val)
 {
     asn1_error_code retval;
     unsigned long n;
@@ -446,7 +448,8 @@ asn1_error_code asn1_decode_seqnum(asn1buf *buf, krb5_ui_4 *val)
     return 0;
 }
 
-asn1_error_code asn1_decode_msgtype(asn1buf *buf, krb5_msgtype *val)
+asn1_error_code
+asn1_decode_msgtype(asn1buf *buf, krb5_msgtype *val)
 {
     asn1_error_code retval;
     unsigned long n;
@@ -460,14 +463,16 @@ asn1_error_code asn1_decode_msgtype(asn1buf *buf, krb5_msgtype *val)
 
 
 /* structures */
-asn1_error_code asn1_decode_realm(asn1buf *buf, krb5_principal *val)
+asn1_error_code
+asn1_decode_realm(asn1buf *buf, krb5_principal *val)
 {
     return asn1_decode_generalstring(buf,
                                      &((*val)->realm.length),
                                      &((*val)->realm.data));
 }
 
-asn1_error_code asn1_decode_principal_name(asn1buf *buf, krb5_principal *val)
+asn1_error_code
+asn1_decode_principal_name(asn1buf *buf, krb5_principal *val)
 {
     int size = 0, i;
     krb5_data *array = NULL, *new_array;
@@ -509,7 +514,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_checksum(asn1buf *buf, krb5_checksum *val)
+asn1_error_code
+asn1_decode_checksum(asn1buf *buf, krb5_checksum *val)
 {
     setup();
     val->contents = NULL;
@@ -525,12 +531,14 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_checksum_ptr(asn1buf *buf, krb5_checksum **valptr)
+asn1_error_code
+asn1_decode_checksum_ptr(asn1buf *buf, krb5_checksum **valptr)
 {
     decode_ptr(krb5_checksum *, asn1_decode_checksum);
 }
 
-asn1_error_code asn1_decode_encryption_key(asn1buf *buf, krb5_keyblock *val)
+asn1_error_code
+asn1_decode_encryption_key(asn1buf *buf, krb5_keyblock *val)
 {
     setup();
     val->contents = NULL;
@@ -552,7 +560,8 @@ asn1_decode_encryption_key_ptr(asn1buf *buf, krb5_keyblock **valptr)
     decode_ptr(krb5_keyblock *, asn1_decode_encryption_key);
 }
 
-asn1_error_code asn1_decode_encrypted_data(asn1buf *buf, krb5_enc_data *val)
+asn1_error_code
+asn1_decode_encrypted_data(asn1buf *buf, krb5_enc_data *val)
 {
     setup();
     val->ciphertext.data = NULL;
@@ -570,7 +579,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_krb5_flags(asn1buf *buf, krb5_flags *val)
+asn1_error_code
+asn1_decode_krb5_flags(asn1buf *buf, krb5_flags *val)
 {
     asn1_error_code retval;
     asn1_octet unused, o;
@@ -611,16 +621,20 @@ asn1_error_code asn1_decode_krb5_flags(asn1buf *buf, krb5_flags *val)
     return 0;
 }
 
-asn1_error_code asn1_decode_ticket_flags(asn1buf *buf, krb5_flags *val)
+asn1_error_code
+asn1_decode_ticket_flags(asn1buf *buf, krb5_flags *val)
 { return asn1_decode_krb5_flags(buf,val); }
 
-asn1_error_code asn1_decode_ap_options(asn1buf *buf, krb5_flags *val)
+asn1_error_code
+asn1_decode_ap_options(asn1buf *buf, krb5_flags *val)
 { return asn1_decode_krb5_flags(buf,val); }
 
-asn1_error_code asn1_decode_kdc_options(asn1buf *buf, krb5_flags *val)
+asn1_error_code
+asn1_decode_kdc_options(asn1buf *buf, krb5_flags *val)
 { return asn1_decode_krb5_flags(buf,val); }
 
-asn1_error_code asn1_decode_transited_encoding(asn1buf *buf, krb5_transited *val)
+asn1_error_code
+asn1_decode_transited_encoding(asn1buf *buf, krb5_transited *val)
 {
     setup();
     val->tr_contents.data = NULL;
@@ -636,13 +650,15 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_enc_kdc_rep_part(asn1buf *buf, krb5_enc_kdc_rep_part *val)
+asn1_error_code
+asn1_decode_enc_kdc_rep_part(asn1buf *buf, krb5_enc_kdc_rep_part *val)
 {
     setup();
     val->session = NULL;
     val->last_req = NULL;
     val->server = NULL;
     val->caddrs = NULL;
+    val->enc_padata = NULL;
     { begin_structure();
         get_field(val->session,0,asn1_decode_encryption_key_ptr);
         get_field(val->last_req,1,asn1_decode_last_req);
@@ -676,48 +692,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_s4u_userid(asn1buf *buf, krb5_s4u_userid *val)
-{
-    setup();
-    val->nonce = 0;
-    val->user = NULL;
-    val->subject_cert.data = NULL;
-    val->options = 0;
-    { begin_structure();
-        get_field(val->nonce,0,asn1_decode_int32);
-        alloc_principal(val->user);
-        opt_field(val->user,1,asn1_decode_principal_name,0);
-        get_field(val->user,2,asn1_decode_realm);
-        opt_lenfield(val->subject_cert.length,val->subject_cert.data,3,asn1_decode_charstring);
-        opt_field(val->options,4,asn1_decode_krb5_flags,0);
-        end_structure();
-    }
-    return 0;
-error_out:
-    krb5_free_principal(NULL, val->user);
-    krb5_free_data_contents(NULL, &val->subject_cert);
-    val->user = NULL;
-    val->subject_cert.data = NULL;
-    return retval;
-}
-
-asn1_error_code asn1_decode_pa_s4u_x509_user(asn1buf *buf, krb5_pa_s4u_x509_user *val)
-{
-    setup();
-    val->cksum.contents = NULL;
-    { begin_structure();
-        get_field(val->user_id,0,asn1_decode_s4u_userid);
-        get_field(val->cksum,1,asn1_decode_checksum);
-        end_structure();
-    }
-    return 0;
-error_out:
-    krb5_free_s4u_userid_contents(NULL, &val->user_id);
-    krb5_free_checksum_contents(NULL, &val->cksum);
-    return retval;
-}
-
-asn1_error_code asn1_decode_ticket(asn1buf *buf, krb5_ticket *val)
+asn1_error_code
+asn1_decode_ticket(asn1buf *buf, krb5_ticket *val)
 {
     setup();
     unsigned int applen;
@@ -755,7 +731,8 @@ asn1_decode_ticket_ptr(asn1buf *buf, krb5_ticket **valptr)
     decode_ptr(krb5_ticket *, asn1_decode_ticket);
 }
 
-asn1_error_code asn1_decode_kdc_req(asn1buf *buf, krb5_kdc_req *val)
+asn1_error_code
+asn1_decode_kdc_req(asn1buf *buf, krb5_kdc_req *val)
 {
     setup();
     val->padata = NULL;
@@ -776,7 +753,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_kdc_req_body(asn1buf *buf, krb5_kdc_req *val)
+asn1_error_code
+asn1_decode_kdc_req_body(asn1buf *buf, krb5_kdc_req *val)
 {
     setup();
     val->client = NULL;
@@ -846,7 +824,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_krb_safe_body(asn1buf *buf, krb5_safe *val)
+asn1_error_code
+asn1_decode_krb_safe_body(asn1buf *buf, krb5_safe *val)
 {
     setup();
     val->user_data.data = NULL;
@@ -875,7 +854,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_host_address(asn1buf *buf, krb5_address *val)
+asn1_error_code
+asn1_decode_host_address(asn1buf *buf, krb5_address *val)
 {
     setup();
     val->contents = NULL;
@@ -898,7 +878,8 @@ asn1_decode_host_address_ptr(asn1buf *buf, krb5_address **valptr)
     decode_ptr(krb5_address *, asn1_decode_host_address);
 }
 
-asn1_error_code asn1_decode_kdc_rep(asn1buf *buf, krb5_kdc_rep *val)
+asn1_error_code
+asn1_decode_kdc_rep(asn1buf *buf, krb5_kdc_rep *val)
 {
     setup();
     val->padata = NULL;
@@ -935,9 +916,9 @@ error_out:
 
 
 /* arrays */
-#define get_element(element,decoder)\
-retval = decoder(&seqbuf,&element);\
-if (retval) clean_return(retval)
+#define get_element(element,decoder)            \
+    retval = decoder(&seqbuf,&element);         \
+    if (retval) clean_return(retval)
 
 static void *
 array_expand (void *array, int n_elts, size_t elt_size)
@@ -956,58 +937,61 @@ array_expand (void *array, int n_elts, size_t elt_size)
     return realloc(array, new_size);
 }
 
-#define array_append(array,size,element,type)\
-  {\
-    void *new_array = array_expand(*(array), (size)+2, sizeof(type*));\
-    if (new_array == NULL) clean_return(ENOMEM);\
-    *(array) = new_array;\
-    (*(array))[(size)++] = elt;\
-  }
+#define array_append(array,size,element,type)                           \
+    {                                                                   \
+        void *new_array = array_expand(*(array), (size)+2, sizeof(type*)); \
+        if (new_array == NULL) clean_return(ENOMEM);                    \
+        *(array) = new_array;                                           \
+        (*(array))[(size)++] = elt;                                     \
+    }
 
 /*
  * Function body for array decoders.  freefn is expected to look like
  * a krb5_free_ function, so we pass a null first argument.
  */
-#define decode_array_body(type,decoder,freefn)\
-  asn1_error_code retval;\
-  type *elt = NULL, **array;\
-  int size = 0, i; \
-\
-  array = *val = NULL;\
-  { sequence_of(buf);\
-    while (asn1buf_remains(&seqbuf,seqofindef) > 0) {\
-      get_element(elt,decoder);\
-      array_append(&array,size,elt,type);\
-      elt = NULL;\
-    }\
-    if (array == NULL)\
-        array = malloc(sizeof(type*));\
-    array[size] = NULL;\
-    end_sequence_of(buf);\
-  }\
-  *val = array;\
-  return 0;\
-error_out:\
-  if (elt)\
-      freefn(NULL,elt);\
-  for (i = 0; i < size; i++)\
-      freefn(NULL,array[i]);\
-  free(array);\
-  return retval
+#define decode_array_body(type,decoder,freefn)                  \
+    asn1_error_code retval;                                     \
+    type *elt = NULL, **array;                                  \
+    int size = 0, i;                                            \
+                                                                \
+    array = *val = NULL;                                        \
+    { sequence_of(buf);                                         \
+        while (asn1buf_remains(&seqbuf,seqofindef) > 0) {       \
+            get_element(elt,decoder);                           \
+            array_append(&array,size,elt,type);                 \
+            elt = NULL;                                         \
+        }                                                       \
+        if (array == NULL)                                      \
+            array = malloc(sizeof(type*));                      \
+        array[size] = NULL;                                     \
+        end_sequence_of(buf);                                   \
+    }                                                           \
+    *val = array;                                               \
+    return 0;                                                   \
+error_out:                                                      \
+if (elt)                                                        \
+    freefn(NULL,elt);                                           \
+for (i = 0; i < size; i++)                                      \
+    freefn(NULL,array[i]);                                      \
+free(array);                                                    \
+return retval
 
-static void free_authdata_elt(void *dummy, krb5_authdata *val)
+static void
+free_authdata_elt(void *dummy, krb5_authdata *val)
 {
     free(val->contents);
     free(val);
 }
 
-asn1_error_code asn1_decode_authorization_data(asn1buf *buf, krb5_authdata ***val)
+asn1_error_code
+asn1_decode_authorization_data(asn1buf *buf, krb5_authdata ***val)
 {
     decode_array_body(krb5_authdata,asn1_decode_authdata_elt_ptr,
                       free_authdata_elt);
 }
 
-asn1_error_code asn1_decode_authdata_elt(asn1buf *buf, krb5_authdata *val)
+asn1_error_code
+asn1_decode_authdata_elt(asn1buf *buf, krb5_authdata *val)
 {
     setup();
     val->contents = NULL;
@@ -1024,24 +1008,68 @@ error_out:
     return retval;
 }
 
+static asn1_error_code
+asn1_peek_authdata_elt(asn1buf *buf, krb5_authdatatype *val)
+{
+    setup();
+    *val = 0;
+    { begin_structure();
+        get_field(*val, 0, asn1_decode_authdatatype);
+        end_structure();
+    }
+    return 0;
+error_out:
+    return retval;
+}
+
+asn1_error_code
+asn1_peek_authorization_data(asn1buf *buf, unsigned int *num,
+                             krb5_authdatatype **val)
+{
+    int size = 0;
+    krb5_authdatatype *array = NULL, *new_array;
+
+    asn1_error_code retval;
+    { sequence_of(buf);
+        while (asn1buf_remains(&seqbuf,seqofindef) > 0) {
+            size++;
+            new_array = realloc(array,size*sizeof(krb5_authdatatype));
+            if (new_array == NULL) clean_return(ENOMEM);
+            array = new_array;
+            retval = asn1_peek_authdata_elt(&seqbuf,&array[size-1]);
+            if (retval) clean_return(retval);
+        }
+        end_sequence_of(buf);
+    }
+    *num = size;
+    *val = array;
+    return 0;
+error_out:
+    free(array);
+    return retval;
+}
+
 asn1_error_code
 asn1_decode_authdata_elt_ptr(asn1buf *buf, krb5_authdata **valptr)
 {
     decode_ptr(krb5_authdata *, asn1_decode_authdata_elt);
 }
 
-asn1_error_code asn1_decode_host_addresses(asn1buf *buf, krb5_address ***val)
+asn1_error_code
+asn1_decode_host_addresses(asn1buf *buf, krb5_address ***val)
 {
     decode_array_body(krb5_address,asn1_decode_host_address_ptr,
                       krb5_free_address);
 }
 
-asn1_error_code asn1_decode_sequence_of_ticket(asn1buf *buf, krb5_ticket ***val)
+asn1_error_code
+asn1_decode_sequence_of_ticket(asn1buf *buf, krb5_ticket ***val)
 {
     decode_array_body(krb5_ticket,asn1_decode_ticket_ptr,krb5_free_ticket);
 }
 
-static void free_cred_info(void *dummy, krb5_cred_info *val)
+static void
+free_cred_info(void *dummy, krb5_cred_info *val)
 {
     krb5_free_keyblock(NULL, val->session);
     krb5_free_principal(NULL, val->client);
@@ -1050,13 +1078,15 @@ static void free_cred_info(void *dummy, krb5_cred_info *val)
     free(val);
 }
 
-asn1_error_code asn1_decode_sequence_of_krb_cred_info(asn1buf *buf, krb5_cred_info ***val)
+asn1_error_code
+asn1_decode_sequence_of_krb_cred_info(asn1buf *buf, krb5_cred_info ***val)
 {
     decode_array_body(krb5_cred_info,asn1_decode_krb_cred_info_ptr,
                       free_cred_info);
 }
 
-asn1_error_code asn1_decode_krb_cred_info(asn1buf *buf, krb5_cred_info *val)
+asn1_error_code
+asn1_decode_krb_cred_info(asn1buf *buf, krb5_cred_info *val)
 {
     setup();
     val->session = NULL;
@@ -1101,18 +1131,21 @@ asn1_decode_krb_cred_info_ptr(asn1buf *buf, krb5_cred_info **valptr)
     decode_ptr(krb5_cred_info *, asn1_decode_krb_cred_info);
 }
 
-static void free_pa_data(void *dummy, krb5_pa_data *val)
+static void
+free_pa_data(void *dummy, krb5_pa_data *val)
 {
     free(val->contents);
     free(val);
 }
 
-asn1_error_code asn1_decode_sequence_of_pa_data(asn1buf *buf, krb5_pa_data ***val)
+asn1_error_code
+asn1_decode_sequence_of_pa_data(asn1buf *buf, krb5_pa_data ***val)
 {
     decode_array_body(krb5_pa_data,asn1_decode_pa_data_ptr,free_pa_data);
 }
 
-asn1_error_code asn1_decode_pa_data(asn1buf *buf, krb5_pa_data *val)
+asn1_error_code
+asn1_decode_pa_data(asn1buf *buf, krb5_pa_data *val)
 {
     setup();
     val->contents = NULL;
@@ -1129,23 +1162,27 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_pa_data_ptr(asn1buf *buf, krb5_pa_data **valptr)
+asn1_error_code
+asn1_decode_pa_data_ptr(asn1buf *buf, krb5_pa_data **valptr)
 {
     decode_ptr(krb5_pa_data *, asn1_decode_pa_data);
 }
 
-static void free_last_req_entry(void *dummy, krb5_last_req_entry *val)
+static void
+free_last_req_entry(void *dummy, krb5_last_req_entry *val)
 {
     free(val);
 }
 
-asn1_error_code asn1_decode_last_req(asn1buf *buf, krb5_last_req_entry ***val)
+asn1_error_code
+asn1_decode_last_req(asn1buf *buf, krb5_last_req_entry ***val)
 {
     decode_array_body(krb5_last_req_entry,asn1_decode_last_req_entry_ptr,
                       free_last_req_entry);
 }
 
-asn1_error_code asn1_decode_last_req_entry(asn1buf *buf, krb5_last_req_entry *val)
+asn1_error_code
+asn1_decode_last_req_entry(asn1buf *buf, krb5_last_req_entry *val)
 {
     setup();
     { begin_structure();
@@ -1170,7 +1207,8 @@ asn1_decode_last_req_entry_ptr(asn1buf *buf, krb5_last_req_entry **valptr)
     decode_ptr(krb5_last_req_entry *, asn1_decode_last_req_entry);
 }
 
-asn1_error_code asn1_decode_sequence_of_enctype(asn1buf *buf, int *num, krb5_enctype **val)
+asn1_error_code
+asn1_decode_sequence_of_enctype(asn1buf *buf, int *num, krb5_enctype **val)
 {
     int size = 0;
     krb5_enctype *array = NULL, *new_array;
@@ -1195,20 +1233,23 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_sequence_of_checksum(asn1buf *buf, krb5_checksum ***val)
+asn1_error_code
+asn1_decode_sequence_of_checksum(asn1buf *buf, krb5_checksum ***val)
 {
     decode_array_body(krb5_checksum, asn1_decode_checksum_ptr,
                       krb5_free_checksum);
 }
 
-static void free_etype_info_entry(void *dummy, krb5_etype_info_entry *val)
+static void
+free_etype_info_entry(void *dummy, krb5_etype_info_entry *val)
 {
     krb5_free_data_contents(NULL, &val->s2kparams);
     free(val->salt);
     free(val);
 }
 
-static asn1_error_code asn1_decode_etype_info2_entry(asn1buf *buf, krb5_etype_info_entry *val )
+static asn1_error_code
+asn1_decode_etype_info2_entry(asn1buf *buf, krb5_etype_info_entry *val)
 {
     char *salt = NULL;
     krb5_octet *params = NULL;
@@ -1249,8 +1290,11 @@ asn1_decode_etype_info2_entry_ptr(asn1buf *buf, krb5_etype_info_entry **valptr)
     decode_ptr(krb5_etype_info_entry *, asn1_decode_etype_info2_entry);
 }
 
-static asn1_error_code asn1_decode_etype_info2_entry_1_3(asn1buf *buf, krb5_etype_info_entry *val )
+static asn1_error_code
+asn1_decode_etype_info2_entry_1_3(asn1buf *buf, krb5_etype_info_entry *val)
 {
+    krb5_octet *params = NULL;
+
     setup();
     val->salt = NULL;
     val->s2kparams.data = NULL;
@@ -1261,10 +1305,10 @@ static asn1_error_code asn1_decode_etype_info2_entry_1_3(asn1buf *buf, krb5_etyp
         } else
             val->length = KRB5_ETYPE_NO_SALT;
         if ( tagnum ==2) {
-            krb5_octet *params ;
             get_lenfield( val->s2kparams.length, params,
                           2, asn1_decode_octetstring);
             val->s2kparams.data = ( char *) params;
+            params = NULL;
         } else
             val->s2kparams.length = 0;
         end_structure();
@@ -1273,6 +1317,7 @@ static asn1_error_code asn1_decode_etype_info2_entry_1_3(asn1buf *buf, krb5_etyp
     return 0;
 error_out:
     krb5_free_data_contents(NULL, &val->s2kparams);
+    free(params);
     free(val->salt);
     val->salt = NULL;
     return retval;
@@ -1285,7 +1330,8 @@ asn1_decode_etype_info2_entry_1_3_ptr(asn1buf *buf,
     decode_ptr(krb5_etype_info_entry *, asn1_decode_etype_info2_entry_1_3);
 }
 
-static asn1_error_code asn1_decode_etype_info_entry(asn1buf *buf, krb5_etype_info_entry *val )
+static asn1_error_code
+asn1_decode_etype_info_entry(asn1buf *buf, krb5_etype_info_entry *val)
 {
     setup();
     val->salt = NULL;
@@ -1314,21 +1360,24 @@ asn1_decode_etype_info_entry_ptr(asn1buf *buf, krb5_etype_info_entry **valptr)
     decode_ptr(krb5_etype_info_entry *, asn1_decode_etype_info_entry);
 }
 
-asn1_error_code asn1_decode_etype_info(asn1buf *buf, krb5_etype_info_entry ***val )
+asn1_error_code
+asn1_decode_etype_info(asn1buf *buf, krb5_etype_info_entry ***val )
 {
     decode_array_body(krb5_etype_info_entry,asn1_decode_etype_info_entry_ptr,
                       free_etype_info_entry);
 }
 
-static asn1_error_code decode_etype_info2_13(asn1buf *buf, krb5_etype_info_entry ***val)
+static asn1_error_code
+decode_etype_info2_13(asn1buf *buf, krb5_etype_info_entry ***val)
 {
     decode_array_body(krb5_etype_info_entry,
                       asn1_decode_etype_info2_entry_1_3_ptr,
                       free_etype_info_entry);
 }
 
-asn1_error_code asn1_decode_etype_info2(asn1buf *buf, krb5_etype_info_entry ***val ,
-                                        krb5_boolean v1_3_behavior)
+asn1_error_code
+asn1_decode_etype_info2(asn1buf *buf, krb5_etype_info_entry ***val ,
+                        krb5_boolean v1_3_behavior)
 {
     if (v1_3_behavior)
         return decode_etype_info2_13(buf, val);
@@ -1339,7 +1388,8 @@ asn1_error_code asn1_decode_etype_info2(asn1buf *buf, krb5_etype_info_entry ***v
     }
 }
 
-asn1_error_code asn1_decode_passwdsequence(asn1buf *buf, passwd_phrase_element *val)
+asn1_error_code
+asn1_decode_passwdsequence(asn1buf *buf, passwd_phrase_element *val)
 {
     setup();
     val->passwd = NULL;
@@ -1371,22 +1421,28 @@ asn1_decode_passwdsequence_ptr(asn1buf *buf, passwd_phrase_element **valptr)
     decode_ptr(passwd_phrase_element *, asn1_decode_passwdsequence);
 }
 
-asn1_error_code asn1_decode_sequence_of_passwdsequence(asn1buf *buf, passwd_phrase_element ***val)
+asn1_error_code
+asn1_decode_sequence_of_passwdsequence(asn1buf *buf,
+                                       passwd_phrase_element ***val)
 {
     decode_array_body(passwd_phrase_element,asn1_decode_passwdsequence_ptr,
                       krb5_free_passwd_phrase_element);
 }
 
-asn1_error_code asn1_decode_sam_flags(asn1buf *buf, krb5_flags *val)
-{ return asn1_decode_krb5_flags(buf,val); }
+asn1_error_code
+asn1_decode_sam_flags(asn1buf *buf, krb5_flags *val)
+{
+    return asn1_decode_krb5_flags(buf,val);
+}
 
 #define opt_string(val,n,fn) opt_lenfield((val).length,(val).data,n,fn)
-#define opt_cksum(var,tagexpect,decoder)\
-if (tagnum == (tagexpect)) {\
-  get_field_body(var,decoder); }\
-else var.length = 0
+#define opt_cksum(var,tagexpect,decoder)        \
+    if (tagnum == (tagexpect)) {                \
+        get_field_body(var,decoder); }          \
+    else var.length = 0
 
-asn1_error_code asn1_decode_sam_challenge(asn1buf *buf, krb5_sam_challenge *val)
+asn1_error_code
+asn1_decode_sam_challenge(asn1buf *buf, krb5_sam_challenge *val)
 {
     setup();
     val->sam_type_name.data = NULL;
@@ -1414,7 +1470,8 @@ error_out:
     krb5_free_sam_challenge_contents(NULL, val);
     return retval;
 }
-asn1_error_code asn1_decode_sam_challenge_2(asn1buf *buf, krb5_sam_challenge_2 *val)
+asn1_error_code
+asn1_decode_sam_challenge_2(asn1buf *buf, krb5_sam_challenge_2 *val)
 {
     krb5_checksum **cksump;
     setup();
@@ -1452,7 +1509,8 @@ error_out:
     }
     return retval;
 }
-asn1_error_code asn1_decode_sam_challenge_2_body(asn1buf *buf, krb5_sam_challenge_2_body *val)
+asn1_error_code
+asn1_decode_sam_challenge_2_body(asn1buf *buf, krb5_sam_challenge_2_body *val)
 {
     setup();
     val->sam_type_name.data = NULL;
@@ -1480,7 +1538,8 @@ error_out:
     krb5_free_sam_challenge_2_body_contents(NULL, val);
     return retval;
 }
-asn1_error_code asn1_decode_enc_sam_key(asn1buf *buf, krb5_sam_key *val)
+asn1_error_code
+asn1_decode_enc_sam_key(asn1buf *buf, krb5_sam_key *val)
 {
     setup();
     val->sam_key.contents = NULL;
@@ -1495,7 +1554,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_enc_sam_response_enc(asn1buf *buf, krb5_enc_sam_response_enc *val)
+asn1_error_code
+asn1_decode_enc_sam_response_enc(asn1buf *buf, krb5_enc_sam_response_enc *val)
 {
     setup();
     val->sam_sad.data = NULL;
@@ -1513,7 +1573,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_enc_sam_response_enc_2(asn1buf *buf, krb5_enc_sam_response_enc_2 *val)
+asn1_error_code
+asn1_decode_enc_sam_response_enc_2(asn1buf *buf, krb5_enc_sam_response_enc_2 *val)
 {
     setup();
     val->sam_sad.data = NULL;
@@ -1529,18 +1590,19 @@ error_out:
     return retval;
 }
 
-#define opt_encfield(fld,tag,fn) \
-    if (tagnum == tag) { \
-      get_field(fld,tag,fn); } \
-    else {\
-      fld.magic = 0;\
-      fld.enctype = 0;\
-      fld.kvno = 0;\
-      fld.ciphertext.data = NULL;\
-      fld.ciphertext.length = 0;\
+#define opt_encfield(fld,tag,fn)                \
+    if (tagnum == tag) {                        \
+        get_field(fld,tag,fn); }                \
+    else {                                      \
+        fld.magic = 0;                          \
+        fld.enctype = 0;                        \
+        fld.kvno = 0;                           \
+        fld.ciphertext.data = NULL;             \
+        fld.ciphertext.length = 0;              \
     }
 
-asn1_error_code asn1_decode_sam_response(asn1buf *buf, krb5_sam_response *val)
+asn1_error_code
+asn1_decode_sam_response(asn1buf *buf, krb5_sam_response *val)
 {
     setup();
     val->sam_track_id.data = NULL;
@@ -1563,7 +1625,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_sam_response_2(asn1buf *buf, krb5_sam_response_2 *val)
+asn1_error_code
+asn1_decode_sam_response_2(asn1buf *buf, krb5_sam_response_2 *val)
 {
     setup();
     val->sam_track_id.data = NULL;
@@ -1584,7 +1647,9 @@ error_out:
 }
 
 
-asn1_error_code asn1_decode_predicted_sam_response(asn1buf *buf, krb5_predicted_sam_response *val)
+asn1_error_code
+asn1_decode_predicted_sam_response(asn1buf *buf,
+                                   krb5_predicted_sam_response *val)
 {
     setup();
     val->sam_key.contents = NULL;
@@ -1608,7 +1673,9 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_setpw_req(asn1buf *buf, krb5_data *newpasswd, krb5_principal *principal)
+asn1_error_code
+asn1_decode_setpw_req(asn1buf *buf, krb5_data *newpasswd,
+                      krb5_principal *principal)
 {
     krb5_principal princ = NULL;
     setup();
@@ -1632,7 +1699,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_pa_for_user(asn1buf *buf, krb5_pa_for_user *val)
+asn1_error_code
+asn1_decode_pa_for_user(asn1buf *buf, krb5_pa_for_user *val)
 {
     setup();
     val->user = NULL;
@@ -1655,7 +1723,51 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_pa_pac_req(asn1buf *buf, krb5_pa_pac_req *val)
+asn1_error_code
+asn1_decode_s4u_userid(asn1buf *buf, krb5_s4u_userid *val)
+{
+    setup();
+    val->nonce = 0;
+    val->user = NULL;
+    val->subject_cert.data = NULL;
+    val->options = 0;
+    { begin_structure();
+        get_field(val->nonce,0,asn1_decode_int32);
+        alloc_principal(val->user);
+        opt_field(val->user,1,asn1_decode_principal_name,0);
+        get_field(val->user,2,asn1_decode_realm);
+        opt_lenfield(val->subject_cert.length,val->subject_cert.data,3,asn1_decode_charstring);
+        opt_field(val->options,4,asn1_decode_krb5_flags,0);
+        end_structure();
+    }
+    return 0;
+error_out:
+    krb5_free_principal(NULL, val->user);
+    krb5_free_data_contents(NULL, &val->subject_cert);
+    val->user = NULL;
+    val->subject_cert.data = NULL;
+    return retval;
+}
+
+asn1_error_code
+asn1_decode_pa_s4u_x509_user(asn1buf *buf, krb5_pa_s4u_x509_user *val)
+{
+    setup();
+    val->cksum.contents = NULL;
+    { begin_structure();
+        get_field(val->user_id,0,asn1_decode_s4u_userid);
+        get_field(val->cksum,1,asn1_decode_checksum);
+        end_structure();
+    }
+    return 0;
+error_out:
+    krb5_free_s4u_userid_contents(NULL, &val->user_id);
+    krb5_free_checksum_contents(NULL, &val->cksum);
+    return retval;
+}
+
+asn1_error_code
+asn1_decode_pa_pac_req(asn1buf *buf, krb5_pa_pac_req *val)
 {
     setup();
     { begin_structure();
@@ -1667,72 +1779,72 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_fast_armor
-(asn1buf *buf, krb5_fast_armor *val)
+asn1_error_code
+asn1_decode_fast_armor(asn1buf *buf, krb5_fast_armor *val)
 {
     setup();
     val->armor_value.data = NULL;
     {begin_structure();
-    get_field(val->armor_type, 0, asn1_decode_int32);
-    get_lenfield(val->armor_value.length, val->armor_value.data,
-                 1, asn1_decode_charstring);
-    end_structure();
+        get_field(val->armor_type, 0, asn1_decode_int32);
+        get_lenfield(val->armor_value.length, val->armor_value.data,
+                     1, asn1_decode_charstring);
+        end_structure();
     }
     return 0;
- error_out:
+error_out:
     krb5_free_data_contents( NULL, &val->armor_value);
     return retval;
 }
 
-asn1_error_code asn1_decode_fast_armor_ptr
-(asn1buf *buf, krb5_fast_armor **valptr)
+asn1_error_code
+asn1_decode_fast_armor_ptr(asn1buf *buf, krb5_fast_armor **valptr)
 {
     decode_ptr(krb5_fast_armor *, asn1_decode_fast_armor);
 }
 
-asn1_error_code asn1_decode_fast_finished
-(asn1buf *buf, krb5_fast_finished *val)
+asn1_error_code
+asn1_decode_fast_finished(asn1buf *buf, krb5_fast_finished *val)
 {
     setup();
     val->client = NULL;
     val->ticket_checksum.contents = NULL;
     {begin_structure();
-    get_field(val->timestamp, 0, asn1_decode_kerberos_time);
-    get_field(val->usec, 1, asn1_decode_int32);
-    alloc_field(val->client);
-    get_field(val->client, 2, asn1_decode_realm);
-    get_field(val->client, 3, asn1_decode_principal_name);
-    get_field(val->ticket_checksum, 4, asn1_decode_checksum);
-    end_structure();
+        get_field(val->timestamp, 0, asn1_decode_kerberos_time);
+        get_field(val->usec, 1, asn1_decode_int32);
+        alloc_field(val->client);
+        get_field(val->client, 2, asn1_decode_realm);
+        get_field(val->client, 3, asn1_decode_principal_name);
+        get_field(val->ticket_checksum, 4, asn1_decode_checksum);
+        end_structure();
     }
     return 0;
- error_out:
+error_out:
     krb5_free_principal(NULL, val->client);
     krb5_free_checksum_contents( NULL, &val->ticket_checksum);
     return retval;
 }
-asn1_error_code asn1_decode_fast_finished_ptr
-(asn1buf *buf, krb5_fast_finished **valptr)
+asn1_error_code
+asn1_decode_fast_finished_ptr(asn1buf *buf, krb5_fast_finished **valptr)
 {
     decode_ptr( krb5_fast_finished *, asn1_decode_fast_finished);
 }
 
-asn1_error_code asn1_decode_ad_kdcissued
-(asn1buf *buf, krb5_ad_kdcissued *val)
+asn1_error_code
+asn1_decode_ad_kdcissued(asn1buf *buf, krb5_ad_kdcissued *val)
 {
     setup();
     val->ad_checksum.contents = NULL;
     val->i_principal = NULL;
     val->elements = NULL;
     {begin_structure();
-    get_field(val->ad_checksum, 0, asn1_decode_checksum);
-    if (tagnum == 1) {
-        alloc_principal(val->i_principal);
-        opt_field(val->i_principal, 1, asn1_decode_realm, 0);
-        opt_field(val->i_principal, 2, asn1_decode_principal_name, 0);
-    }
-    get_field(val->elements, 3, asn1_decode_authorization_data);
-    end_structure();
+        get_field(val->ad_checksum, 0, asn1_decode_checksum);
+        if (tagnum == 1) {
+            alloc_principal(val->i_principal);
+            opt_field(val->i_principal, 1, asn1_decode_realm, 0);
+            opt_field(val->i_principal, 2, asn1_decode_principal_name, 0);
+        }
+        get_field(val->elements, 3, asn1_decode_authorization_data);
+        end_structure();
     }
     return 0;
 error_out:
@@ -1742,10 +1854,58 @@ error_out:
     return retval;
 }
 
+static asn1_error_code asn1_decode_princ_plus_realm
+(asn1buf *buf, krb5_principal *valptr)
+{
+    setup();
+    alloc_principal((*valptr));
+    { begin_structure();
+        get_field((*valptr), 0, asn1_decode_principal_name);
+        get_field((*valptr), 1, asn1_decode_realm);
+        end_structure();
+    }
+    return 0;
+error_out:
+    krb5_free_principal(NULL, *valptr);
+    *valptr = NULL;
+    return retval;
+}
+
+static asn1_error_code
+asn1_decode_sequence_of_princ_plus_realm(asn1buf *buf, krb5_principal **val)
+{
+    decode_array_body(krb5_principal_data,asn1_decode_princ_plus_realm,krb5_free_principal);
+}
+
+asn1_error_code
+asn1_decode_ad_signedpath(asn1buf *buf, krb5_ad_signedpath *val)
+{
+    setup();
+    val->enctype = ENCTYPE_NULL;
+    val->checksum.contents = NULL;
+    val->delegated = NULL;
+    {
+        begin_structure();
+        get_field(val->enctype, 0, asn1_decode_enctype);
+        get_field(val->checksum, 1, asn1_decode_checksum);
+        opt_field(val->delegated, 2, asn1_decode_sequence_of_princ_plus_realm,
+                  NULL);
+        opt_field(val->method_data, 3, asn1_decode_sequence_of_pa_data, NULL);
+        end_structure();
+    }
+    return 0;
+error_out:
+    krb5_free_checksum_contents(NULL, &val->checksum);
+    return retval;
+}
+
 #ifndef DISABLE_PKINIT
 /* PKINIT */
 
-asn1_error_code asn1_decode_external_principal_identifier(asn1buf *buf, krb5_external_principal_identifier *val)
+asn1_error_code
+asn1_decode_external_principal_identifier(
+    asn1buf *buf,
+    krb5_external_principal_identifier *val)
 {
     setup();
     val->subjectName.data = NULL;
@@ -1770,9 +1930,9 @@ error_out:
 }
 
 asn1_error_code
-asn1_decode_external_principal_identifier_ptr
-	(asn1buf *buf,
-         krb5_external_principal_identifier **valptr)
+asn1_decode_external_principal_identifier_ptr(
+    asn1buf *buf,
+    krb5_external_principal_identifier **valptr)
 {
     decode_ptr(krb5_external_principal_identifier *,
                asn1_decode_external_principal_identifier);
@@ -1788,14 +1948,18 @@ free_external_principal_identifier(void *dummy,
     free(val);
 }
 
-asn1_error_code asn1_decode_sequence_of_external_principal_identifier(asn1buf *buf, krb5_external_principal_identifier ***val)
+asn1_error_code
+asn1_decode_sequence_of_external_principal_identifier(
+    asn1buf *buf,
+    krb5_external_principal_identifier ***val)
 {
     decode_array_body(krb5_external_principal_identifier,
                       asn1_decode_external_principal_identifier_ptr,
                       free_external_principal_identifier);
 }
 
-asn1_error_code asn1_decode_pa_pk_as_req(asn1buf *buf, krb5_pa_pk_as_req *val)
+asn1_error_code
+asn1_decode_pa_pk_as_req(asn1buf *buf, krb5_pa_pk_as_req *val)
 {
     setup();
     val->signedAuthPack.data = NULL;
@@ -1820,7 +1984,8 @@ error_out:
 }
 
 #if 0   /* XXX   This needs to be tested!!! XXX */
-asn1_error_code asn1_decode_trusted_ca(asn1buf *buf, krb5_trusted_ca *val)
+asn1_error_code
+asn1_decode_trusted_ca(asn1buf *buf, krb5_trusted_ca *val)
 {
     setup();
     val->choice = choice_trusted_cas_UNKNOWN;
@@ -1878,7 +2043,8 @@ error_out:
     return retval;
 }
 #else
-asn1_error_code asn1_decode_trusted_ca(asn1buf *buf, krb5_trusted_ca *val)
+asn1_error_code
+asn1_decode_trusted_ca(asn1buf *buf, krb5_trusted_ca *val)
 {
     setup();
     val->choice = choice_trusted_cas_UNKNOWN;
@@ -1916,7 +2082,8 @@ asn1_decode_trusted_ca_ptr(asn1buf *buf, krb5_trusted_ca **valptr)
     decode_ptr(krb5_trusted_ca *, asn1_decode_trusted_ca);
 }
 
-static void free_trusted_ca(void *dummy, krb5_trusted_ca *val)
+static void
+free_trusted_ca(void *dummy, krb5_trusted_ca *val)
 {
     if (val->choice == choice_trusted_cas_caName)
         free(val->u.caName.data);
@@ -1925,13 +2092,15 @@ static void free_trusted_ca(void *dummy, krb5_trusted_ca *val)
     free(val);
 }
 
-asn1_error_code asn1_decode_sequence_of_trusted_ca(asn1buf *buf, krb5_trusted_ca ***val)
+asn1_error_code
+asn1_decode_sequence_of_trusted_ca(asn1buf *buf, krb5_trusted_ca ***val)
 {
     decode_array_body(krb5_trusted_ca, asn1_decode_trusted_ca_ptr,
                       free_trusted_ca);
 }
 
-asn1_error_code asn1_decode_pa_pk_as_req_draft9(asn1buf *buf, krb5_pa_pk_as_req_draft9 *val)
+asn1_error_code
+asn1_decode_pa_pk_as_req_draft9(asn1buf *buf, krb5_pa_pk_as_req_draft9 *val)
 {
     int i;
     setup();
@@ -1963,7 +2132,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_dh_rep_info(asn1buf *buf, krb5_dh_rep_info *val)
+asn1_error_code
+asn1_decode_dh_rep_info(asn1buf *buf, krb5_dh_rep_info *val)
 {
     setup();
     val->dhSignedData.data = NULL;
@@ -1983,7 +2153,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_pk_authenticator(asn1buf *buf, krb5_pk_authenticator *val)
+asn1_error_code
+asn1_decode_pk_authenticator(asn1buf *buf, krb5_pk_authenticator *val)
 {
     setup();
     val->paChecksum.contents = NULL;
@@ -2000,7 +2171,9 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_pk_authenticator_draft9(asn1buf *buf, krb5_pk_authenticator_draft9 *val)
+asn1_error_code
+asn1_decode_pk_authenticator_draft9(asn1buf *buf,
+                                    krb5_pk_authenticator_draft9 *val)
 {
     setup();
     val->kdcName = NULL;
@@ -2020,8 +2193,9 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_algorithm_identifier(asn1buf *buf,  krb5_algorithm_identifier *val) {
-
+asn1_error_code
+asn1_decode_algorithm_identifier(asn1buf *buf, krb5_algorithm_identifier *val)
+{
     setup();
     val->algorithm.data = NULL;
     val->parameters.data = NULL;
@@ -2075,7 +2249,8 @@ asn1_decode_algorithm_identifier_ptr(asn1buf *buf,
     decode_ptr(krb5_algorithm_identifier *, asn1_decode_algorithm_identifier);
 }
 
-asn1_error_code asn1_decode_subject_pk_info(asn1buf *buf, krb5_subject_pk_info *val)
+asn1_error_code
+asn1_decode_subject_pk_info(asn1buf *buf, krb5_subject_pk_info *val)
 {
     asn1_octet unused;
     setup();
@@ -2133,14 +2308,17 @@ free_algorithm_identifier(void *dummy, krb5_algorithm_identifier *val)
     free(val);
 }
 
-asn1_error_code asn1_decode_sequence_of_algorithm_identifier(asn1buf *buf, krb5_algorithm_identifier ***val)
+asn1_error_code
+asn1_decode_sequence_of_algorithm_identifier(asn1buf *buf,
+                                             krb5_algorithm_identifier ***val)
 {
     decode_array_body(krb5_algorithm_identifier,
                       asn1_decode_algorithm_identifier_ptr,
                       free_algorithm_identifier);
 }
 
-asn1_error_code asn1_decode_kdc_dh_key_info (asn1buf *buf, krb5_kdc_dh_key_info *val)
+asn1_error_code
+asn1_decode_kdc_dh_key_info(asn1buf *buf, krb5_kdc_dh_key_info *val)
 {
     setup();
     val->subjectPublicKey.data = NULL;
@@ -2160,7 +2338,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_reply_key_pack (asn1buf *buf, krb5_reply_key_pack *val)
+asn1_error_code
+asn1_decode_reply_key_pack (asn1buf *buf, krb5_reply_key_pack *val)
 {
     setup();
     val->replyKey.contents = NULL;
@@ -2179,7 +2358,9 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_reply_key_pack_draft9 (asn1buf *buf, krb5_reply_key_pack_draft9 *val)
+asn1_error_code
+asn1_decode_reply_key_pack_draft9 (asn1buf *buf,
+                                   krb5_reply_key_pack_draft9 *val)
 {
     setup();
     val->replyKey.contents = NULL;
@@ -2195,8 +2376,8 @@ error_out:
     return retval;
 }
 
-
-asn1_error_code asn1_decode_krb5_principal_name (asn1buf *buf, krb5_principal *val)
+asn1_error_code
+asn1_decode_krb5_principal_name (asn1buf *buf, krb5_principal *val)
 {
     int i;
     setup();
@@ -2220,7 +2401,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_auth_pack(asn1buf *buf, krb5_auth_pack *val)
+asn1_error_code
+asn1_decode_auth_pack(asn1buf *buf, krb5_auth_pack *val)
 {
     int i;
     setup();
@@ -2283,7 +2465,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_auth_pack_draft9(asn1buf *buf, krb5_auth_pack_draft9 *val)
+asn1_error_code
+asn1_decode_auth_pack_draft9(asn1buf *buf, krb5_auth_pack_draft9 *val)
 {
     setup();
     val->pkAuthenticator.kdcName = NULL;
@@ -2325,7 +2508,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_pa_pk_as_rep(asn1buf *buf, krb5_pa_pk_as_rep *val)
+asn1_error_code
+asn1_decode_pa_pk_as_rep(asn1buf *buf, krb5_pa_pk_as_rep *val)
 {
     setup();
     val->choice = choice_pa_pk_as_rep_UNKNOWN;
@@ -2357,7 +2541,8 @@ error_out:
     return retval;
 }
 
-asn1_error_code asn1_decode_pa_pk_as_rep_draft9(asn1buf *buf, krb5_pa_pk_as_rep_draft9 *val)
+asn1_error_code
+asn1_decode_pa_pk_as_rep_draft9(asn1buf *buf, krb5_pa_pk_as_rep_draft9 *val)
 {
     setup();
     val->choice = choice_pa_pk_as_rep_draft9_UNKNOWN;
@@ -2395,13 +2580,15 @@ static void free_typed_data(void *dummy, krb5_typed_data *val)
     free(val);
 }
 
-asn1_error_code asn1_decode_sequence_of_typed_data(asn1buf *buf, krb5_typed_data ***val)
+asn1_error_code
+asn1_decode_sequence_of_typed_data(asn1buf *buf, krb5_typed_data ***val)
 {
     decode_array_body(krb5_typed_data,asn1_decode_typed_data_ptr,
                       free_typed_data);
 }
 
-asn1_error_code asn1_decode_typed_data(asn1buf *buf, krb5_typed_data *val)
+asn1_error_code
+asn1_decode_typed_data(asn1buf *buf, krb5_typed_data *val)
 {
     setup();
     val->data = NULL;

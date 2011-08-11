@@ -1,3 +1,4 @@
+/* -*- mode: c; c-file-style: "bsd"; indent-tabs-mode: t -*- */
 /*
  * Copyright 1993 OpenVision Technologies, Inc., All Rights Reserved
  */
@@ -14,6 +15,9 @@
 static bool_t
 _xdr_kadm5_principal_ent_rec(XDR *xdrs, kadm5_principal_ent_rec *objp,
 			     int v);
+static bool_t
+_xdr_kadm5_policy_ent_rec(XDR *xdrs, kadm5_policy_ent_rec *objp, int vers);
+
 /*
  * Function: xdr_ui_4
  *
@@ -61,7 +65,7 @@ bool_t xdr_nullstring(XDR *xdrs, char **objp)
 	       }
 	  }
 	  return (xdr_opaque(xdrs, *objp, size));
-	  
+
      case XDR_ENCODE:
 	  if (size != 0)
 	       return (xdr_opaque(xdrs, *objp, size));
@@ -223,15 +227,15 @@ xdr_krb5_ui_2(XDR *xdrs, krb5_ui_2 *objp)
 static bool_t xdr_krb5_boolean(XDR *xdrs, krb5_boolean *kbool)
 {
 	bool_t val;
-	
+
 	switch (xdrs->x_op) {
 	case XDR_DECODE:
 	     if (!xdr_bool(xdrs, &val))
 		     return FALSE;
-	     
+
 	     *kbool = (val == FALSE) ? FALSE : TRUE;
 	     return TRUE;
-	     
+
 	case XDR_ENCODE:
 	     val = *kbool ? TRUE : FALSE;
 	     return xdr_bool(xdrs, &val);
@@ -239,7 +243,7 @@ static bool_t xdr_krb5_boolean(XDR *xdrs, krb5_boolean *kbool)
 	case XDR_FREE:
 	     return TRUE;
 	}
-	
+
 	return FALSE;
 }
 
@@ -253,7 +257,7 @@ bool_t xdr_krb5_key_data_nocontents(XDR *xdrs, krb5_key_data *objp)
      unsigned int tmp;
 
      if (xdrs->x_op == XDR_DECODE)
-	  memset((char *) objp, 0, sizeof(krb5_key_data));
+	  memset(objp, 0, sizeof(krb5_key_data));
 
      if (!xdr_krb5_int16(xdrs, &objp->key_data_ver)) {
 	  return (FALSE);
@@ -280,13 +284,13 @@ bool_t xdr_krb5_key_data_nocontents(XDR *xdrs, krb5_key_data *objp)
 	  if (!xdr_bytes(xdrs, (char **) &objp->key_data_contents[0],
 			 &tmp, ~0))
 	       return FALSE;
-	  
+
 	  tmp = (unsigned int) objp->key_data_length[1];
 	  if (!xdr_bytes(xdrs, (char **) &objp->key_data_contents[1],
 			 &tmp, ~0))
 	       return FALSE;
      }
-     
+
      return (TRUE);
 }
 
@@ -317,7 +321,7 @@ bool_t xdr_krb5_tl_data(XDR *xdrs, krb5_tl_data **tl_data_head)
 	       tl = tl2;
 	  }
 	  break;
-	  
+
      case XDR_ENCODE:
 	  tl = *tl_data_head;
 	  while (1) {
@@ -345,7 +349,7 @@ bool_t xdr_krb5_tl_data(XDR *xdrs, krb5_tl_data **tl_data_head)
 	       tl2 = (krb5_tl_data *) malloc(sizeof(krb5_tl_data));
 	       if (tl2 == NULL)
 		    return FALSE;
-	       memset((char *) tl2, 0, sizeof(krb5_tl_data));
+	       memset(tl2, 0, sizeof(krb5_tl_data));
 	       if (!xdr_krb5_int16(xdrs, &tl2->tl_data_type))
 		    return FALSE;
 	       if (!xdr_bytes(xdrs, (char **)&tl2->tl_data_contents, &len, ~0))
@@ -380,24 +384,18 @@ xdr_kadm5_ret_t(XDR *xdrs, kadm5_ret_t *objp)
 	return (TRUE);
 }
 
-bool_t xdr_kadm5_principal_ent_rec_v1(XDR *xdrs,
-				      kadm5_principal_ent_rec *objp)
-{
-     return _xdr_kadm5_principal_ent_rec(xdrs, objp, KADM5_API_VERSION_1);
-}
-
 bool_t xdr_kadm5_principal_ent_rec(XDR *xdrs,
 				   kadm5_principal_ent_rec *objp)
 {
-     return _xdr_kadm5_principal_ent_rec(xdrs, objp, KADM5_API_VERSION_2);
+     return _xdr_kadm5_principal_ent_rec(xdrs, objp, KADM5_API_VERSION_3);
 }
 
 static bool_t
 _xdr_kadm5_principal_ent_rec(XDR *xdrs, kadm5_principal_ent_rec *objp,
 			     int v)
 {
-     unsigned int n;
-     
+	unsigned int n;
+
 	if (!xdr_krb5_principal(xdrs, &objp->principal)) {
 		return (FALSE);
 	}
@@ -413,15 +411,9 @@ _xdr_kadm5_principal_ent_rec(XDR *xdrs, kadm5_principal_ent_rec *objp,
 	if (!xdr_krb5_deltat(xdrs, &objp->max_life)) {
 		return (FALSE);
 	}
-        if (v == KADM5_API_VERSION_1) {
-	     if (!xdr_krb5_principal(xdrs, &objp->mod_name)) {
-		  return (FALSE);
-	     }
-	} else {
-	     if (!xdr_nulltype(xdrs, (void **) &objp->mod_name,
-			       xdr_krb5_principal)) {
-		  return (FALSE);
-	     }
+	if (!xdr_nulltype(xdrs, (void **) &objp->mod_name,
+			  xdr_krb5_principal)) {
+		return (FALSE);
 	}
 	if (!xdr_krb5_timestamp(xdrs, &objp->mod_date)) {
 		return (FALSE);
@@ -441,41 +433,40 @@ _xdr_kadm5_principal_ent_rec(XDR *xdrs, kadm5_principal_ent_rec *objp,
 	if (!xdr_long(xdrs, &objp->aux_attributes)) {
 		return (FALSE);
 	}
-	if (v != KADM5_API_VERSION_1) {
-	     if (!xdr_krb5_deltat(xdrs, &objp->max_renewable_life)) {
-		  return (FALSE);
-	     }
-	     if (!xdr_krb5_timestamp(xdrs, &objp->last_success)) {
-		  return (FALSE);
-	     }
-	     if (!xdr_krb5_timestamp(xdrs, &objp->last_failed)) {
-		  return (FALSE);
-	     }
-	     if (!xdr_krb5_kvno(xdrs, &objp->fail_auth_count)) {
-		  return (FALSE);
-	     }
-	     if (!xdr_krb5_int16(xdrs, &objp->n_key_data)) {
-		  return (FALSE);
-	     }
-	     if (!xdr_krb5_int16(xdrs, &objp->n_tl_data)) {
-		  return (FALSE);
-	     }
-	     if (!xdr_nulltype(xdrs, (void **) &objp->tl_data,
-			       xdr_krb5_tl_data)) { 
-		  return FALSE;
-	     }
-	     n = objp->n_key_data;
-	     if (!xdr_array(xdrs, (caddr_t *) &objp->key_data,
-			    &n, ~0, sizeof(krb5_key_data),
-			    xdr_krb5_key_data_nocontents)) {
-		  return (FALSE);
-	     }
+	if (!xdr_krb5_deltat(xdrs, &objp->max_renewable_life)) {
+		return (FALSE);
 	}
+	if (!xdr_krb5_timestamp(xdrs, &objp->last_success)) {
+		return (FALSE);
+	}
+	if (!xdr_krb5_timestamp(xdrs, &objp->last_failed)) {
+		return (FALSE);
+	}
+	if (!xdr_krb5_kvno(xdrs, &objp->fail_auth_count)) {
+		return (FALSE);
+	}
+	if (!xdr_krb5_int16(xdrs, &objp->n_key_data)) {
+		return (FALSE);
+	}
+	if (!xdr_krb5_int16(xdrs, &objp->n_tl_data)) {
+		return (FALSE);
+	}
+	if (!xdr_nulltype(xdrs, (void **) &objp->tl_data,
+			  xdr_krb5_tl_data)) {
+		return FALSE;
+	}
+	n = objp->n_key_data;
+	if (!xdr_array(xdrs, (caddr_t *) &objp->key_data,
+		       &n, ~0, sizeof(krb5_key_data),
+		       xdr_krb5_key_data_nocontents)) {
+		return (FALSE);
+	}
+
 	return (TRUE);
 }
 
-bool_t
-xdr_kadm5_policy_ent_rec(XDR *xdrs, kadm5_policy_ent_rec *objp)
+static bool_t
+_xdr_kadm5_policy_ent_rec(XDR *xdrs, kadm5_policy_ent_rec *objp, int vers)
 {
 	if (!xdr_nullstring(xdrs, &objp->policy)) {
 		return (FALSE);
@@ -501,7 +492,25 @@ xdr_kadm5_policy_ent_rec(XDR *xdrs, kadm5_policy_ent_rec *objp)
 	if (!xdr_long(xdrs, &objp->policy_refcnt)) {
 		return (FALSE);
 	}
+	if (vers == KADM5_API_VERSION_3) {
+		if (!xdr_krb5_kvno(xdrs, &objp->pw_max_fail))
+			return (FALSE);
+		if (!xdr_krb5_deltat(xdrs, &objp->pw_failcnt_interval))
+			return (FALSE);
+		if (!xdr_krb5_deltat(xdrs, &objp->pw_lockout_duration))
+			return (FALSE);
+	} else if (xdrs->x_op == XDR_DECODE) {
+		objp->pw_max_fail = 0;
+		objp->pw_failcnt_interval = 0;
+		objp->pw_lockout_duration = 0;
+	}
 	return (TRUE);
+}
+
+bool_t
+xdr_kadm5_policy_ent_rec(XDR *xdrs, kadm5_policy_ent_rec *objp)
+{
+	return _xdr_kadm5_policy_ent_rec(xdrs, objp, KADM5_API_VERSION_3);
 }
 
 bool_t
@@ -510,14 +519,9 @@ xdr_cprinc_arg(XDR *xdrs, cprinc_arg *objp)
 	if (!xdr_ui_4(xdrs, &objp->api_version)) {
 		return (FALSE);
 	}
-	if (objp->api_version == KADM5_API_VERSION_1) {
-	     if (!xdr_kadm5_principal_ent_rec_v1(xdrs, &objp->rec)) {
-		  return (FALSE);
-	     }
-	} else {
-	     if (!xdr_kadm5_principal_ent_rec(xdrs, &objp->rec)) {
-		  return (FALSE);
-	     }
+	if (!_xdr_kadm5_principal_ent_rec(xdrs, &objp->rec,
+					  objp->api_version)) {
+		return (FALSE);
 	}
 	if (!xdr_long(xdrs, &objp->mask)) {
 		return (FALSE);
@@ -534,14 +538,9 @@ xdr_cprinc3_arg(XDR *xdrs, cprinc3_arg *objp)
 	if (!xdr_ui_4(xdrs, &objp->api_version)) {
 		return (FALSE);
 	}
-	if (objp->api_version == KADM5_API_VERSION_1) {
-		if (!xdr_kadm5_principal_ent_rec_v1(xdrs, &objp->rec)) {
-			return (FALSE);
-		}
-	} else {
-		if (!xdr_kadm5_principal_ent_rec(xdrs, &objp->rec)) {
-			return (FALSE);
-		}
+	if (!_xdr_kadm5_principal_ent_rec(xdrs, &objp->rec,
+					  objp->api_version)) {
+		return (FALSE);
 	}
 	if (!xdr_long(xdrs, &objp->mask)) {
 		return (FALSE);
@@ -589,14 +588,9 @@ xdr_mprinc_arg(XDR *xdrs, mprinc_arg *objp)
 	if (!xdr_ui_4(xdrs, &objp->api_version)) {
 		return (FALSE);
 	}
-	if (objp->api_version == KADM5_API_VERSION_1) {
-	     if (!xdr_kadm5_principal_ent_rec_v1(xdrs, &objp->rec)) {
-		  return (FALSE);
-	     }
-	} else {
-	     if (!xdr_kadm5_principal_ent_rec(xdrs, &objp->rec)) {
-		  return (FALSE);
-	     }
+	if (!_xdr_kadm5_principal_ent_rec(xdrs, &objp->rec,
+					  objp->api_version)) {
+		return (FALSE);
 	}
 	if (!xdr_long(xdrs, &objp->mask)) {
 		return (FALSE);
@@ -632,7 +626,7 @@ xdr_gprincs_arg(XDR *xdrs, gprincs_arg *objp)
 }
 
 bool_t
-xdr_gprincs_ret(XDR *xdrs, gprincs_ret *objp)     
+xdr_gprincs_ret(XDR *xdrs, gprincs_ret *objp)
 {
      if (!xdr_ui_4(xdrs, &objp->api_version)) {
 	  return (FALSE);
@@ -707,7 +701,7 @@ xdr_setv4key_arg(XDR *xdrs, setv4key_arg *objp)
 	if (!xdr_array(xdrs, (caddr_t *) &objp->keyblock,
 		       &n_keys, ~0,
 		       sizeof(krb5_keyblock), xdr_krb5_keyblock)) {
-	        return (FALSE);
+		return (FALSE);
 	}
 	return (TRUE);
 }
@@ -724,7 +718,7 @@ xdr_setkey_arg(XDR *xdrs, setkey_arg *objp)
 	if (!xdr_array(xdrs, (caddr_t *) &objp->keyblocks,
 		       (unsigned int *) &objp->n_keys, ~0,
 		       sizeof(krb5_keyblock), xdr_krb5_keyblock)) {
-	        return (FALSE);
+		return (FALSE);
 	}
 	return (TRUE);
 }
@@ -796,19 +790,10 @@ xdr_chrand_ret(XDR *xdrs, chrand_ret *objp)
 	if (!xdr_kadm5_ret_t(xdrs, &objp->code)) {
 		return (FALSE);
 	}
-	if (objp->api_version == KADM5_API_VERSION_1) {
-	     if(objp->code == KADM5_OK) {
-		  if (!xdr_krb5_keyblock(xdrs, &objp->key)) {
-		       return (FALSE);
-		  }
-	     }
-	} else {
-	     if (objp->code == KADM5_OK) {
-		  if (!xdr_array(xdrs, (char **)&objp->keys, &objp->n_keys, ~0,
-				 sizeof(krb5_keyblock),
-				 xdr_krb5_keyblock))
-		       return FALSE;
-	     }
+	if (objp->code == KADM5_OK) {
+		if (!xdr_array(xdrs, (char **)&objp->keys, &objp->n_keys, ~0,
+			       sizeof(krb5_keyblock), xdr_krb5_keyblock))
+			return FALSE;
 	}
 
 	return (TRUE);
@@ -823,11 +808,10 @@ xdr_gprinc_arg(XDR *xdrs, gprinc_arg *objp)
 	if (!xdr_krb5_principal(xdrs, &objp->princ)) {
 		return (FALSE);
 	}
-	if ((objp->api_version > KADM5_API_VERSION_1) &&
-	    !xdr_long(xdrs, &objp->mask)) {
+	if (!xdr_long(xdrs, &objp->mask)) {
 	     return FALSE;
 	}
-	     
+
 	return (TRUE);
 }
 
@@ -841,15 +825,10 @@ xdr_gprinc_ret(XDR *xdrs, gprinc_ret *objp)
 		return (FALSE);
 	}
 	if(objp->code == KADM5_OK)  {
-	     if (objp->api_version == KADM5_API_VERSION_1) {
-		  if (!xdr_kadm5_principal_ent_rec_v1(xdrs, &objp->rec)) {
-		       return (FALSE);
-		  }
-	     } else {
-		  if (!xdr_kadm5_principal_ent_rec(xdrs, &objp->rec)) {
-		       return (FALSE);
-		  }
-	     }
+		if (!_xdr_kadm5_principal_ent_rec(xdrs, &objp->rec,
+						  objp->api_version)) {
+			return (FALSE);
+		}
 	}
 
 	return (TRUE);
@@ -861,7 +840,8 @@ xdr_cpol_arg(XDR *xdrs, cpol_arg *objp)
 	if (!xdr_ui_4(xdrs, &objp->api_version)) {
 		return (FALSE);
 	}
-	if (!xdr_kadm5_policy_ent_rec(xdrs, &objp->rec)) {
+	if (!_xdr_kadm5_policy_ent_rec(xdrs, &objp->rec,
+				       objp->api_version)) {
 		return (FALSE);
 	}
 	if (!xdr_long(xdrs, &objp->mask)) {
@@ -888,7 +868,8 @@ xdr_mpol_arg(XDR *xdrs, mpol_arg *objp)
 	if (!xdr_ui_4(xdrs, &objp->api_version)) {
 		return (FALSE);
 	}
-	if (!xdr_kadm5_policy_ent_rec(xdrs, &objp->rec)) {
+	if (!_xdr_kadm5_policy_ent_rec(xdrs, &objp->rec,
+				       objp->api_version)) {
 		return (FALSE);
 	}
 	if (!xdr_long(xdrs, &objp->mask)) {
@@ -919,7 +900,8 @@ xdr_gpol_ret(XDR *xdrs, gpol_ret *objp)
 		return (FALSE);
 	}
 	if(objp->code == KADM5_OK) {
-	    if (!xdr_kadm5_policy_ent_rec(xdrs, &objp->rec))
+	    if (!_xdr_kadm5_policy_ent_rec(xdrs, &objp->rec,
+					   objp->api_version))
 		return (FALSE);
 	}
 
@@ -939,7 +921,7 @@ xdr_gpols_arg(XDR *xdrs, gpols_arg *objp)
 }
 
 bool_t
-xdr_gpols_ret(XDR *xdrs, gpols_ret *objp)     
+xdr_gpols_ret(XDR *xdrs, gpols_ret *objp)
 {
      if (!xdr_ui_4(xdrs, &objp->api_version)) {
 	  return (FALSE);
@@ -991,7 +973,7 @@ xdr_krb5_principal(XDR *xdrs, krb5_principal *objp)
     switch(xdrs->x_op) {
     case XDR_ENCODE:
 	if (*objp) {
-	     if((ret = krb5_unparse_name(context, *objp, &p)) != 0) 
+	     if((ret = krb5_unparse_name(context, *objp, &p)) != 0)
 		  return FALSE;
 	}
 	if(!xdr_nullstring(xdrs, &p))
@@ -1003,7 +985,7 @@ xdr_krb5_principal(XDR *xdrs, krb5_principal *objp)
 	    return FALSE;
 	if (p) {
 	     ret = krb5_parse_name(context, p, &pr);
-	     if(ret != 0) 
+	     if(ret != 0)
 		  return FALSE;
 	     *objp = pr;
 	     free(p);
@@ -1011,7 +993,7 @@ xdr_krb5_principal(XDR *xdrs, krb5_principal *objp)
 	     *objp = NULL;
 	break;
     case XDR_FREE:
-	if(*objp != NULL) 
+	if(*objp != NULL)
 	    krb5_free_principal(context, *objp);
 	break;
     }

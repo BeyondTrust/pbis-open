@@ -1,5 +1,3 @@
-thisconfigdir=../..
-myfulldir=util/collected-client-lib
 mydir=util/collected-client-lib
 BUILDTOP=$(REL)..$(S)..
 RELDIR=../util/collected-client-lib
@@ -38,21 +36,24 @@ STOBJLISTS= \
 	../../lib/krb5/krb/OBJS.ST \
 	../../lib/krb5/rcache/OBJS.ST \
 	../../lib/krb5/os/OBJS.ST \
+	../../lib/krb5/unicode/OBJS.ST \
 	../profile/OBJS.ST \
-	../../lib/crypto/crc32/OBJS.ST \
-	../../lib/crypto/des/OBJS.ST \
-	../../lib/crypto/dk/OBJS.ST \
-	../../lib/crypto/enc_provider/OBJS.ST \
-	../../lib/crypto/hash_provider/OBJS.ST \
-	../../lib/crypto/keyhash_provider/OBJS.ST \
-	../../lib/crypto/md4/OBJS.ST \
-	../../lib/crypto/md5/OBJS.ST \
-	../../lib/crypto/old/OBJS.ST \
-	../../lib/crypto/raw/OBJS.ST \
-	../../lib/crypto/sha1/OBJS.ST \
-	../../lib/crypto/arcfour/OBJS.ST \
-	../../lib/crypto/aes/OBJS.ST \
-	../../lib/crypto/yarrow/OBJS.ST \
+	../../lib/crypto/krb/crc32/OBJS.ST \
+	../../lib/crypto/@CRYPTO_IMPL@/des/OBJS.ST \
+	../../lib/crypto/krb/dk/OBJS.ST \
+	../../lib/crypto/@CRYPTO_IMPL@/enc_provider/OBJS.ST \
+	../../lib/crypto/krb/hash_provider/OBJS.ST \
+	../../lib/crypto/krb/keyhash_provider/OBJS.ST \
+	../../lib/crypto/@CRYPTO_IMPL@/md4/OBJS.ST \
+	../../lib/crypto/@CRYPTO_IMPL@/md5/OBJS.ST \
+	../../lib/crypto/krb/old/OBJS.ST \
+	../../lib/crypto/krb/raw/OBJS.ST \
+	../../lib/crypto/@CRYPTO_IMPL@/sha1/OBJS.ST \
+	../../lib/crypto/@CRYPTO_IMPL@/arcfour/OBJS.ST \
+	../../lib/crypto/@CRYPTO_IMPL@/aes/OBJS.ST \
+	../../lib/crypto/krb/yarrow/OBJS.ST \
+	../../lib/crypto/krb/OBJS.ST \
+	../../lib/crypto/@CRYPTO_IMPL@/OBJS.ST \
 	../../lib/crypto/OBJS.ST \
 	../et/OBJS.ST \
 	../support/OBJS.ST
@@ -60,8 +61,10 @@ STOBJLISTS= \
 SRCS=
 
 SHLIB_EXPDEPS =
+
+LIBS_UTILS=-lresolv
 # Add -lm if dumping thread stats, for sqrt.
-SHLIB_EXPLIBS= @CRYPTO_LIBS@ $(LIBS) $(DL_LIB)
+SHLIB_EXPLIBS= @CRYPTO_LIBS@ $(LIBS) $(DL_LIB) $(LIBS_UTILS)
 SHLIB_DIRS=
 SHLIB_RDIRS=
 

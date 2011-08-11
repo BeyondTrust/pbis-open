@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * lib/gssapi/krb5/k5sealiov.c
  *
@@ -73,7 +73,7 @@ make_seal_token_v1_iov(krb5_context context,
 
     /* Determine confounder length */
     if (toktype == KG_TOK_WRAP_MSG || conf_req_flag)
-        k5_headerlen = kg_confounder_size(context, ctx->enc);
+        k5_headerlen = kg_confounder_size(context, ctx->enc->keyblock.enctype);
 
     /* Check padding length */
     if (toktype == KG_TOK_WRAP_MSG) {
@@ -112,7 +112,7 @@ make_seal_token_v1_iov(krb5_context context,
         if (ctx->gss_flags & GSS_C_DCE_STYLE)
             tmsglen = k5_headerlen; /* confounder length */
         else
-            tmsglen = conf_data_length + padding->buffer.length + assoc_data_length;
+            tmsglen = conf_data_length + padding->buffer.length;
     }
 
     /* Determine token size */
@@ -175,7 +175,8 @@ make_seal_token_v1_iov(krb5_context context,
     md5cksum.length = k5_trailerlen;
 
     if (k5_headerlen != 0) {
-        code = kg_make_confounder(context, ctx->enc, ptr + 14 + ctx->cksum_size);
+        code = kg_make_confounder(context, ctx->enc->keyblock.enctype,
+                                  ptr + 14 + ctx->cksum_size);
         if (code != 0)
             goto cleanup;
     }
@@ -193,7 +194,7 @@ make_seal_token_v1_iov(krb5_context context,
     case SGN_ALG_3:
         code = kg_encrypt(context, ctx->seq, KG_USAGE_SEAL,
                           (g_OID_equal(ctx->mech_used, gss_mech_krb5_old) ?
-                           ctx->seq->contents : NULL),
+                           ctx->seq->keyblock.contents : NULL),
                           md5cksum.contents, md5cksum.contents, 16);
         if (code != 0)
             goto cleanup;
@@ -226,7 +227,7 @@ make_seal_token_v1_iov(krb5_context context,
 
             store_32_be(ctx->seq_send, bigend_seqnum);
 
-            code = krb5_copy_keyblock(context, ctx->enc, &enc_key);
+            code = krb5_k_key_keyblock(context, ctx->enc, &enc_key);
             if (code != 0)
                 goto cleanup;
 
@@ -278,7 +279,6 @@ kg_seal_iov(OM_uint32 *minor_status,
 {
     krb5_gss_ctx_id_rec *ctx;
     krb5_error_code code;
-    krb5_timestamp now;
     krb5_context context;
 
     if (qop_req != 0) {
@@ -297,19 +297,12 @@ kg_seal_iov(OM_uint32 *minor_status,
         return GSS_S_NO_CONTEXT;
     }
 
-    context = ctx->k5_context;
-    code = krb5_timeofday(context, &now);
-    if (code != 0) {
-        *minor_status = code;
-        save_error_info(*minor_status, context);
-        return GSS_S_FAILURE;
-    }
-
     if (conf_req_flag && kg_integ_only_iov(iov, iov_count)) {
         /* may be more sensible to return an error here */
         conf_req_flag = FALSE;
     }
 
+    context = ctx->k5_context;
     switch (ctx->proto) {
     case 0:
         code = make_seal_token_v1_iov(context, ctx, conf_req_flag,
@@ -332,12 +325,12 @@ kg_seal_iov(OM_uint32 *minor_status,
 
     *minor_status = 0;
 
-    return (ctx->krb_times.endtime < now) ? GSS_S_CONTEXT_EXPIRED : GSS_S_COMPLETE;
+    return GSS_S_COMPLETE;
 }
 
-#define INIT_IOV_DATA(_iov)     do { (_iov)->buffer.value = NULL; \
-                                     (_iov)->buffer.length = 0; } \
-                                while (0)
+#define INIT_IOV_DATA(_iov)     do { (_iov)->buffer.value = NULL;       \
+        (_iov)->buffer.length = 0; }                                    \
+    while (0)
 
 OM_uint32
 kg_seal_iov_length(OM_uint32 *minor_status,
@@ -408,17 +401,16 @@ kg_seal_iov_length(OM_uint32 *minor_status,
     gss_headerlen = gss_padlen = gss_trailerlen = 0;
 
     if (ctx->proto == 1) {
+        krb5_key key;
         krb5_enctype enctype;
         size_t ec;
 
-        if (ctx->have_acceptor_subkey)
-            enctype = ctx->acceptor_subkey->enctype;
-        else
-            enctype = ctx->subkey->enctype;
+        key = (ctx->have_acceptor_subkey) ? ctx->acceptor_subkey : ctx->subkey;
+        enctype = key->keyblock.enctype;
 
         code = krb5_c_crypto_length(context, enctype,
                                     conf_req_flag ?
-                                        KRB5_CRYPTO_TYPE_TRAILER : KRB5_CRYPTO_TYPE_CHECKSUM,
+                                    KRB5_CRYPTO_TYPE_TRAILER : KRB5_CRYPTO_TYPE_CHECKSUM,
                                     &k5_trailerlen);
         if (code != 0) {
             *minor_status = code;
@@ -474,7 +466,7 @@ kg_seal_iov_length(OM_uint32 *minor_status,
         /* Header | Checksum | Confounder | Data | Pad */
         size_t data_size;
 
-        k5_headerlen = kg_confounder_size(context, ctx->enc);
+        k5_headerlen = kg_confounder_size(context, ctx->enc->keyblock.enctype);
 
         data_size = 14 /* Header */ + ctx->cksum_size + k5_headerlen;
 

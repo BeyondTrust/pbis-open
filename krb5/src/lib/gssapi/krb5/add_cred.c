@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 2000, 2008 by the Massachusetts Institute of Technology.
  * All Rights Reserved.
@@ -57,7 +57,7 @@
 #endif
 
 /*
- * $Id: add_cred.c 20876 2008-10-15 21:58:43Z tlyu $
+ * $Id: add_cred.c 23457 2009-12-08 00:04:48Z tlyu $
  */
 
 /* V2 interface */
@@ -323,13 +323,6 @@ krb5_gss_add_cred(minor_status, input_cred_handle,
                 save_error_info(*minor_status, context);
                 krb5_free_context(context);
                 return(GSS_S_FAILURE);
-            } else {
-                /* If the cred. cache is an internal memory cache
-                 * it will be leaked but that's better than a
-                 * segfault if one of them destroys it while the
-                 * other is still using it.
-                 */
-                cred->destroy_ccache = new_cred->destroy_ccache = 0;
             }
         } else {
             new_cred->ccache = NULL;

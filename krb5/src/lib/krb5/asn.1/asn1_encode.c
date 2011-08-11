@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * src/lib/krb5/asn.1/asn1_encode.c
  *
@@ -30,8 +30,8 @@
 #include "asn1_encode.h"
 #include "asn1_make.h"
 
-asn1_error_code asn1_encode_boolean(asn1buf *buf, asn1_intmax val,
-                                    unsigned int *retlen)
+asn1_error_code
+asn1_encode_boolean(asn1buf *buf, asn1_intmax val, unsigned int *retlen)
 {
     asn1_error_code retval;
     unsigned int length = 0;
@@ -52,9 +52,9 @@ asn1_error_code asn1_encode_boolean(asn1buf *buf, asn1_intmax val,
     return 0;
 }
 
-static asn1_error_code asn1_encode_integer_internal(asn1buf *buf,
-                                                    asn1_intmax val,
-                                                    unsigned int *retlen)
+static asn1_error_code
+asn1_encode_integer_internal(asn1buf *buf, asn1_intmax val,
+                             unsigned int *retlen)
 {
     asn1_error_code retval;
     unsigned int length = 0;
@@ -85,8 +85,8 @@ static asn1_error_code asn1_encode_integer_internal(asn1buf *buf,
     return 0;
 }
 
-asn1_error_code asn1_encode_integer(asn1buf * buf, asn1_intmax val,
-                                    unsigned int *retlen)
+asn1_error_code
+asn1_encode_integer(asn1buf * buf, asn1_intmax val, unsigned int *retlen)
 {
     asn1_error_code retval;
     unsigned int length = 0;
@@ -124,8 +124,9 @@ asn1_encode_enumerated(asn1buf * buf, long val,
 }
 #endif
 
-asn1_error_code asn1_encode_unsigned_integer(asn1buf *buf, asn1_uintmax val,
-                                             unsigned int *retlen)
+asn1_error_code
+asn1_encode_unsigned_integer(asn1buf *buf, asn1_uintmax val,
+                             unsigned int *retlen)
 {
     asn1_error_code retval;
     unsigned int length = 0;
@@ -175,17 +176,17 @@ encode_bytestring_with_tag(asn1buf *buf, unsigned int len,
     return 0;
 }
 
-asn1_error_code asn1_encode_oid(asn1buf *buf, unsigned int len,
-                                const asn1_octet *val,
-                                unsigned int *retlen)
+asn1_error_code
+asn1_encode_oid(asn1buf *buf, unsigned int len, const asn1_octet *val,
+                unsigned int *retlen)
 {
     return encode_bytestring_with_tag(buf, len, val, ASN1_OBJECTIDENTIFIER,
                                       retlen);
 }
 
-asn1_error_code asn1_encode_octetstring(asn1buf *buf, unsigned int len,
-                                        const void *val,
-                                        unsigned int *retlen)
+asn1_error_code
+asn1_encode_octetstring(asn1buf *buf, unsigned int len, const void *val,
+                        unsigned int *retlen)
 {
     return encode_bytestring_with_tag(buf, len, val, ASN1_OCTETSTRING,
                                       retlen);
@@ -220,8 +221,8 @@ asn1_error_code asn1_encode_ia5string(asn1buf *buf, unsigned int len,
 }
 #endif
 
-asn1_error_code asn1_encode_generaltime(asn1buf *buf, time_t val,
-                                        unsigned int *retlen)
+asn1_error_code
+asn1_encode_generaltime(asn1buf *buf, time_t val, unsigned int *retlen)
 {
     struct tm *gtime, gtimebuf;
     char s[16], *sp;
@@ -273,17 +274,17 @@ asn1_error_code asn1_encode_generaltime(asn1buf *buf, time_t val,
                                       retlen);
 }
 
-asn1_error_code asn1_encode_generalstring(asn1buf *buf, unsigned int len,
-                                          const void *val,
-                                          unsigned int *retlen)
+asn1_error_code
+asn1_encode_generalstring(asn1buf *buf, unsigned int len, const void *val,
+                          unsigned int *retlen)
 {
     return encode_bytestring_with_tag(buf, len, val, ASN1_GENERALSTRING,
                                       retlen);
 }
 
-asn1_error_code asn1_encode_bitstring(asn1buf *buf, unsigned int len,
-                                      const void *val,
-                                      unsigned int *retlen)
+asn1_error_code
+asn1_encode_bitstring(asn1buf *buf, unsigned int len, const void *val,
+                      unsigned int *retlen)
 {
     asn1_error_code retval;
     unsigned int length;
@@ -299,8 +300,9 @@ asn1_error_code asn1_encode_bitstring(asn1buf *buf, unsigned int len,
     return 0;
 }
 
-asn1_error_code asn1_encode_opaque(asn1buf *buf, unsigned int len,
-                                   const void *val, unsigned int *retlen)
+asn1_error_code
+asn1_encode_opaque(asn1buf *buf, unsigned int len, const void *val,
+                   unsigned int *retlen)
 {
     asn1_error_code retval;
 
@@ -310,22 +312,24 @@ asn1_error_code asn1_encode_opaque(asn1buf *buf, unsigned int len,
     return 0;
 }
 
-/* ASN.1 constructed type encoder engine
-
-   Two entry points here:
-
-   krb5int_asn1_encode_a_thing: Incrementally adds the partial
-   encoding of an object to an already-initialized asn1buf.
-
-   krb5int_asn1_do_full_encode: Returns a completed encoding, in the
-   correct byte order, in an allocated krb5_data.  */
+/*
+ * ASN.1 constructed type encoder engine
+ *
+ * Two entry points here:
+ *
+ * krb5int_asn1_encode_a_thing: Incrementally adds the partial
+ * encoding of an object to an already-initialized asn1buf.
+ *
+ * krb5int_asn1_do_full_encode: Returns a completed encoding, in the
+ * correct byte order, in an allocated krb5_data.
+ */
 
 #ifdef POINTERS_ARE_ALL_THE_SAME
-#define LOADPTR(PTR,TYPE)       \
-    (assert((TYPE)->loadptr != NULL), (TYPE)->loadptr(PTR))
-#else
-#define LOADPTR(PTR,TYPE)       \
+#define LOADPTR(PTR,TYPE)                       \
     (*(const void *const *)(PTR))
+#else
+#define LOADPTR(PTR,TYPE)                                       \
+    (assert((TYPE)->loadptr != NULL), (TYPE)->loadptr(PTR))
 #endif
 
 static int
@@ -456,9 +460,11 @@ encode_a_field(asn1buf *buf, const void *val,
         unsigned int length;
         const struct atype_info *a;
 
-        /* The field holds a pointer to the array of objects.  So the
-           address we compute is a pointer-to-pointer, and that's what
-           field->atype must help us dereference.  */
+        /*
+         * The field holds a pointer to the array of objects.  So the
+         * address we compute is a pointer-to-pointer, and that's what
+         * field->atype must help us dereference.
+         */
         dataptr = (const char *)val + field->dataoff;
         lenptr = (const char *)val + field->lenoff;
         assert(field->atype->type == atype_ptr);
@@ -545,8 +551,10 @@ encode_a_field(asn1buf *buf, const void *val,
             return EINVAL;
         if (dataptr == NULL && slen != 0)
             return ASN1_MISSING_FIELD;
-        /* Currently our string encoders want "unsigned int" for
-           lengths.  */
+        /*
+         * Currently our string encoders want "unsigned int" for
+         * lengths.
+         */
         if (slen != (unsigned int) slen)
             return EINVAL;
         assert(a->enclen != NULL);
@@ -620,8 +628,10 @@ just_encode_sequence(asn1buf *buf, const void *val,
     if (seq->optional)
         optional = seq->optional(val);
     else
-        /* In this case, none of the field descriptors should indicate
-           that we examine any bits of this value.  */
+        /*
+         * In this case, none of the field descriptors should indicate
+         * that we examine any bits of this value.
+         */
         optional = 0;
     {
         unsigned int length;

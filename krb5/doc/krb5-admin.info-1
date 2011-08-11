@@ -31,7 +31,7 @@ File: krb5-admin.info,  Node: Copyright,  Next: Introduction,  Prev: Top,  Up: T
 Copyright
 *********
 
-Copyright (C) 1985-2009 by the Massachusetts Institute of Technology.
+Copyright (C) 1985-2010 by the Massachusetts Institute of Technology.
 
      Export of software employing encryption from the United States of
      America may require a specific license from the United States
@@ -281,10 +281,6 @@ the following new or changed files:
        slave/kpropd_rpc.c
        slave/kproplog.c
 
-and marked portions of the following files:
-
-       lib/krb5/os/hst_realm.c
-
 are subject to the following license:
 
      Copyright (C) 2004 Sun Microsystems, Inc.
@@ -348,7 +344,7 @@ notice:
 Portions contributed by Novell, Inc., including the LDAP database
 backend, are subject to the following license:
 
-     Copyright (C) 2004-2005, Novell, Inc.  All rights reserved.
+     Copyright (c) 2004-2005, Novell, Inc.  All rights reserved.
 
      Redistribution and use in source and binary forms, with or without
      modification, are permitted provided that the following conditions
@@ -450,27 +446,6 @@ Portions contributed by Apple Inc. are subject to the following license:
      WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
 
-The implementations of strlcpy and strlcat in
-src/util/support/strlcat.c have the following copyright and permission
-notice:
-
-     Copyright (C) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
-
-     Permission to use, copy, modify, and distribute this software for
-     any purpose with or without fee is hereby granted, provided that
-     the above copyright notice and this permission notice appear in
-     all copies.
-
-     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
-     WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
-     WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
-     AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
-     CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-     LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-     NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
-     CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-
 The implementations of UTF-8 string handling in src/util/support and
 src/lib/krb5/unicode are subject to the following copyright and
 permission notice:
@@ -522,41 +497,6 @@ permission notice:
      Copyright 1999-2003 The OpenLDAP Foundation, Redwood City,
      California, USA.  All Rights Reserved.  Permission to copy and
      distribute verbatim copies of this document is granted.
-
-
-Marked test programs in src/lib/krb5/krb have the following copyright:
-
-     Copyright (C) 2006 Kungliga Tekniska Ho"gskolan (Royal Institute
-     of Technology, Stockholm, Sweden).  All rights reserved.
-
-     Redistribution and use in source and binary forms, with or without
-     modification, are permitted provided that the following conditions
-     are met:
-
-     1. Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-
-     2. Redistributions in binary form must reproduce the above
-     copyright    notice, this list of conditions and the following
-     disclaimer in the    documentation and/or other materials provided
-     with the distribution.
-
-     3. Neither the name of KTH nor the names of its contributors may be
-       used to endorse or promote products derived from this software
-     without    specific prior written permission.
-
-     THIS SOFTWARE IS PROVIDED BY KTH AND ITS CONTRIBUTORS "AS IS" AND
-     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-     THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-     PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL KTH OR ITS
-     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-     LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-     USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-     AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-     POSSIBILITY OF SUCH DAMAGE.
 
 
 Permission is granted to make and distribute verbatim copies of this
@@ -1001,6 +941,27 @@ not recommended for use.
 `rc4-hmac-exp'
 `arcfour-hmac-md5-exp'
      Exportable RC4 with HMAC/MD5 (weak)
+
+`des'
+     The DES family: des-cbc-crc, des-cbc-md5, and des-cbc-md4 (weak)
+
+`des3'
+     The triple DES family: des3-cbc-sha1
+
+`aes'
+     The AES family: aes256-cts-hmac-sha1-96 and aes128-cts-hmac-sha1-96
+
+`rc4'
+     The RC4 family: arcfour-hmac
+
+The string DEFAULT can be used to refer to the default set of types for
+the variable in question.  Types or families can be removed from the
+current list by prefixing them with a minus sign ("-").  Types or
+families can be prefixed with a plus sign ("+") for symmetry; it has
+the same meaning as just listing the type or family.  For example,
+"DEFAULT -des" would be the default set of encryption types with DES
+types removed, and "des3 DEFAULT" would be the default set of
+encryption types with triple DES types moved to the front.
 
 While aes128-cts and aes256-cts are supported for all Kerberos
 operations, they are not supported by older versions of our GSSAPI

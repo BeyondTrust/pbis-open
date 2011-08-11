@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 1993 by OpenVision Technologies, Inc.
  *
@@ -25,7 +25,7 @@
 #define _GSSAPI_GENERIC_H_
 
 /*
- * $Id: gssapi_generic.h 21778 2009-01-22 23:21:11Z tlyu $
+ * $Id: gssapi_generic.h 23457 2009-12-08 00:04:48Z tlyu $
  */
 
 #include <gssapi/gssapi.h>
@@ -38,8 +38,8 @@
 #define GSSAPIGENERIC_END_DECLS
 #endif
 
-#define GSS_EMPTY_BUFFER(buf)   ((buf) == NULL ||\
-        (buf)->value == NULL || (buf)->length == 0)
+#define GSS_EMPTY_BUFFER(buf)   ((buf) == NULL ||                       \
+                                 (buf)->value == NULL || (buf)->length == 0)
 
 GSSAPIGENERIC_BEGIN_DECLS
 

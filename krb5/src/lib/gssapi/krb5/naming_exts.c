@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * lib/gssapi/krb5/naming_exts.c
  *
@@ -719,4 +719,3 @@ krb5_gss_display_name_ext(OM_uint32 *minor_status,
 {
 }
 #endif
-

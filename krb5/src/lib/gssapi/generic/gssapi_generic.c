@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 1993 by OpenVision Technologies, Inc.
  *
@@ -22,7 +22,7 @@
  */
 
 /*
- * $Id: gssapi_generic.c 21778 2009-01-22 23:21:11Z tlyu $
+ * $Id: gssapi_generic.c 23457 2009-12-08 00:04:48Z tlyu $
  */
 
 #include "gssapiP_generic.h"
@@ -152,4 +152,3 @@ GSS_DLLIMP gss_OID GSS_C_NT_EXPORT_NAME         = oids+6;
 gss_OID gss_nt_exported_name                    = oids+6;
 
 GSS_DLLIMP gss_OID GSS_C_INQ_SSPI_SESSION_KEY   = oids+7;
-

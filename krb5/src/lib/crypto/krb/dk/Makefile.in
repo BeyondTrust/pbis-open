@@ -1,0 +1,42 @@
+mydir=lib/crypto/krb/dk
+BUILDTOP=$(REL)..$(S)..$(S)..$(S)..
+LOCALINCLUDES = -I$(srcdir)/..  -I$(srcdir)/../../@CRYPTO_IMPL@
+DEFS=
+
+##DOS##BUILDTOP = ..\..\..\..
+##DOS##PREFIXDIR=dk
+##DOS##OBJFILE=..\$(OUTPRE)dk.lst
+
+PROG_LIBPATH=-L$(TOPLIBD)
+PROG_RPATH=$(KRB5_LIBDIR)
+
+STLIBOBJS=\
+	checksum.o	\
+	dk_aead.o	\
+	derive.o	\
+	stringtokey.o
+
+OBJS=\
+	$(OUTPRE)checksum.$(OBJEXT)	\
+	$(OUTPRE)dk_aead.$(OBJEXT)	\
+	$(OUTPRE)derive.$(OBJEXT)	\
+	$(OUTPRE)stringtokey.$(OBJEXT)
+
+SRCS=\
+	$(srcdir)/checksum.c	\
+	$(srcdir)/dk_aead.c	\
+	$(srcdir)/derive.c	\
+	$(srcdir)/stringtokey.c
+
+##DOS##LIBOBJS = $(OBJS)
+
+all-unix:: all-libobjs
+
+includes:: depend
+
+depend:: $(SRCS)
+
+clean-unix:: clean-libobjs
+
+@libobj_frag@
+

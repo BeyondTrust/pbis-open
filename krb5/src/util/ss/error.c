@@ -1,3 +1,4 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 2007 Massachusetts Institute of Technology.
  * All Rights Reserved.
@@ -6,7 +7,7 @@
  *   require a specific license from the United States Government.
  *   It is the responsibility of any person or organization contemplating
  *   export to obtain such a license before exporting.
- * 
+ *
  * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
  * distribute this software and its documentation for any purpose and
  * without fee is hereby granted, provided that the above copyright
@@ -38,16 +39,16 @@ char * ss_name(sci_idx)
     int sci_idx;
 {
     register ss_data *infop;
-    
+
     infop = ss_info(sci_idx);
     if (infop->current_request == (char const *)NULL) {
-	return strdup(infop->subsystem_name);
+        return strdup(infop->subsystem_name);
     } else {
-	char *ret_val;
-	if (asprintf(&ret_val, "%s (%s)",
-		     infop->subsystem_name, infop->current_request) < 0)
-	    return NULL;
-	return ret_val;
+        char *ret_val;
+        if (asprintf(&ret_val, "%s (%s)",
+                     infop->subsystem_name, infop->current_request) < 0)
+            return NULL;
+        return ret_val;
     }
 }
 

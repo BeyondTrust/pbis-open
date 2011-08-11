@@ -170,7 +170,7 @@ error_code KRB5PLACEHOLD_125,	"KRB5 error code 125"
 error_code KRB5PLACEHOLD_126,	"KRB5 error code 126"
 error_code KRB5PLACEHOLD_127,	"KRB5 error code 127"
 
-error_code KRB5_ERR_RCSID,	"$Id: krb5_err.et 22254 2009-04-15 20:07:45Z tlyu $"
+error_code KRB5_ERR_RCSID,	"$Id: krb5_err.et 22857 2009-10-06 15:54:50Z raeburn $"
 
 error_code KRB5_LIBOS_BADLOCKFLAG,	"Invalid flag for file lock mode"
 error_code KRB5_LIBOS_CANTREADPWD,	"Cannot read password"
@@ -220,7 +220,7 @@ error_code KRB5_RC_MALLOC,		"No more memory to allocate (in replay cache code)"
 error_code KRB5_RC_TYPE_NOTFOUND,	"Replay cache type is unknown"
 error_code KRB5_RC_UNKNOWN,		"Generic unknown RC error"
 error_code KRB5_RC_REPLAY,		"Message is a replay"
-error_code KRB5_RC_IO,			"Replay I/O operation failed XXX"
+error_code KRB5_RC_IO,			"Replay cache I/O operation failed"
 error_code KRB5_RC_NOIO,		"Replay cache type does not support non-volatile storage"
 error_code KRB5_RC_PARSE,		"Replay cache name parse/format error"
 

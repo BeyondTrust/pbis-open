@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 1993 by OpenVision Technologies, Inc.
  *
@@ -26,15 +26,15 @@
 #include <stdio.h>
 
 /*
- * $Id: disp_major_status.c 20876 2008-10-15 21:58:43Z tlyu $
+ * $Id: disp_major_status.c 23457 2009-12-08 00:04:48Z tlyu $
  */
 
 /* This code has knowledge of the min and max errors of each type
    within the gssapi major status */
 
-#define GSS_ERROR_STR(value, array, select, min, max, num) \
-   (((select(value) < (min)) || (select(value) > (max))) ? NULL : \
-    (array)[num(value)])
+#define GSS_ERROR_STR(value, array, select, min, max, num)              \
+    (((select(value) < (min)) || (select(value) > (max))) ? NULL :      \
+     (array)[num(value)])
 
 /**/
 
@@ -47,10 +47,10 @@ static const char * const calling_error_string[] = {
 
 static const char * const calling_error = "calling error";
 
-#define GSS_CALLING_ERROR_STR(x) \
-   GSS_ERROR_STR((x), calling_error_string, GSS_CALLING_ERROR, \
-                 GSS_S_CALL_INACCESSIBLE_READ, GSS_S_CALL_BAD_STRUCTURE, \
-                 GSS_CALLING_ERROR_FIELD)
+#define GSS_CALLING_ERROR_STR(x)                                        \
+    GSS_ERROR_STR((x), calling_error_string, GSS_CALLING_ERROR,         \
+                  GSS_S_CALL_INACCESSIBLE_READ, GSS_S_CALL_BAD_STRUCTURE, \
+                  GSS_CALLING_ERROR_FIELD)
 
 /**/
 
@@ -76,10 +76,10 @@ static const char * const routine_error_string[] = {
 
 static const char * const routine_error = "routine error";
 
-#define GSS_ROUTINE_ERROR_STR(x) \
-   GSS_ERROR_STR((x), routine_error_string, GSS_ROUTINE_ERROR, \
-                 GSS_S_BAD_MECH, GSS_S_FAILURE, \
-                 GSS_ROUTINE_ERROR_FIELD)
+#define GSS_ROUTINE_ERROR_STR(x)                                \
+    GSS_ERROR_STR((x), routine_error_string, GSS_ROUTINE_ERROR, \
+                  GSS_S_BAD_MECH, GSS_S_FAILURE,                \
+                  GSS_ROUTINE_ERROR_FIELD)
 
 /**/
 
@@ -97,9 +97,9 @@ static const char * const sinfo_code = "supplementary info code";
 #define LSBGET(x) ((((x)^((x)-1))+1)>>1)
 #define LSBMASK(n) ((1<<(n))^((1<<(n))-1))
 
-#define GSS_SINFO_STR(x) \
-   ((((1<<(x)) < GSS_S_CONTINUE_NEEDED) || ((1<<(x)) > GSS_S_UNSEQ_TOKEN)) ? \
-    /**/NULL:sinfo_string[(x)])
+#define GSS_SINFO_STR(x)                                                \
+    ((((1<<(x)) < GSS_S_CONTINUE_NEEDED) || ((1<<(x)) > GSS_S_UNSEQ_TOKEN)) ? \
+     /**/NULL:sinfo_string[(x)])
 
 /**/
 

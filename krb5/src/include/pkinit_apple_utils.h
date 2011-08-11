@@ -1,3 +1,4 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright (c) 2004-2008 Apple Inc.  All Rights Reserved.
  *
@@ -28,8 +29,8 @@
  *
  * Created 19 May 2004 by Doug Mitchell.
  */
- 
-#ifndef	_PKINIT_APPLE_UTILS_H_
+
+#ifndef _PKINIT_APPLE_UTILS_H_
 #define _PKINIT_APPLE_UTILS_H_
 
 #include <krb5/krb5.h>
@@ -45,7 +46,7 @@ extern "C" {
 #define PKI_DEBUG   0
 #endif
 
-#if	PKI_DEBUG
+#if     PKI_DEBUG
 
 #include <stdio.h>
 
@@ -54,7 +55,7 @@ extern "C" {
 #else
 #define pkiDebug(args...)
 #define pkiCssmErr(str, rtn)
-#endif	/* PKI_DEBUG */
+#endif  /* PKI_DEBUG */
 
 /*
  * Macros used to initialize a declared CSSM_DATA and krb5_data to zero/NULL values.
@@ -70,11 +71,11 @@ CSSM_CL_HANDLE pkiClStartup(void);
  * CSSM_DATA <--> krb5_ui_4
  */
 krb5_error_code pkiDataToInt(
-    const CSSM_DATA *cdata, 
-    krb5_int32       *i);	/* RETURNED */
+    const CSSM_DATA *cdata,
+    krb5_int32       *i);       /* RETURNED */
 
 krb5_error_code pkiIntToData(
-    krb5_int32	    num,
+    krb5_int32      num,
     CSSM_DATA       *cdata,     /* allocated in coder space and RETURNED */
     SecAsn1CoderRef coder);
 
@@ -84,16 +85,16 @@ krb5_error_code pkiIntToData(
 krb5_error_code pkiDataToKrb5Data(
     const void *data,
     unsigned dataLen,
-    krb5_data *kd);		/* content mallocd and RETURNED */
+    krb5_data *kd);             /* content mallocd and RETURNED */
 
-/* 
+/*
  * CSSM_DATA <--> krb5_data
  *
  * CSSM_DATA data is managed by a SecAsn1CoderRef; krb5_data.data is mallocd.
  */
 krb5_error_code pkiCssmDataToKrb5Data(
-    const CSSM_DATA *cd, 
-    krb5_data *kd);		/* content mallocd and RETURNED */
+    const CSSM_DATA *cd,
+    krb5_data *kd);             /* content mallocd and RETURNED */
 
 
 krb5_error_code pkiKrb5DataToCssm(
@@ -101,23 +102,27 @@ krb5_error_code pkiKrb5DataToCssm(
     CSSM_DATA       *cdata,     /* allocated in coder space and RETURNED */
     SecAsn1CoderRef coder);
 
-/* 
+/*
  * CFDataRef --> krb5_data, mallocing the destination contents.
  */
 krb5_error_code pkiCfDataToKrb5Data(
-    CFDataRef	    cfData,
-    krb5_data	    *kd);	/* content mallocd and RETURNED */
-    
+    CFDataRef       cfData,
+    krb5_data       *kd);       /* content mallocd and RETURNED */
+
 /*
  * Non-mallocing conversion between CSSM_DATA and krb5_data
  */
-#define PKI_CSSM_TO_KRB_DATA(cd, kd)    \
-    (kd)->data = (char *)(cd)->Data;	\
-    (kd)->length = (cd)->Length;
+#define PKI_CSSM_TO_KRB_DATA(cd, kd)            \
+    do {                                        \
+        (kd)->data = (char *)(cd)->Data;        \
+        (kd)->length = (cd)->Length;            \
+    } while (0)
 
-#define PKI_KRB_TO_CSSM_DATA(kd, cd)    \
-    (cd)->Data = (uint8 *)(kd)->data;	\
-    (cd)->Length = (kd)->length;
+#define PKI_KRB_TO_CSSM_DATA(kd, cd)            \
+    do {                                        \
+        (cd)->Data = (uint8 *)(kd)->data;       \
+        (cd)->Length = (kd)->length;            \
+    } while (0)
 
 /*
  * Compare to CSSM_DATAs. Return TRUE if they're the same else FALSE.
@@ -126,17 +131,17 @@ krb5_boolean pkiCompareCssmData(
     const CSSM_DATA *d1,
     const CSSM_DATA *d2);
 
-/* 
+/*
  * krb5_timestamp <--> a mallocd string in generalized format
  */
 krb5_error_code pkiKrbTimestampToStr(
     krb5_timestamp      kts,
-    char		**str);		/* mallocd and RETURNED */
+    char                **str);         /* mallocd and RETURNED */
 
 krb5_error_code pkiTimeStrToKrbTimestamp(
-    const char		*str,
-    unsigned		len,
-    krb5_timestamp      *kts);		/* RETURNED */
+    const char          *str,
+    unsigned            len,
+    krb5_timestamp      *kts);          /* RETURNED */
 
 /*
  * How many items in a NULL-terminated array of pointers?

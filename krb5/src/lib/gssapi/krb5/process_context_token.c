@@ -1,4 +1,4 @@
-/* -*- mode: c; indent-tabs-mode: nil -*- */
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright 1993 by OpenVision Technologies, Inc.
  *
@@ -24,7 +24,7 @@
 #include "gssapiP_krb5.h"
 
 /*
- * $Id: process_context_token.c 20876 2008-10-15 21:58:43Z tlyu $
+ * $Id: process_context_token.c 23457 2009-12-08 00:04:48Z tlyu $
  */
 
 OM_uint32

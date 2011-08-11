@@ -9,7 +9,7 @@ END-INFO-DIR-ENTRY
 
 File: krb5-install.info,  Node: Top,  Next: Copyright,  Prev: (dir),  Up: (dir)
 
-This file documents how to install the 1.7 release of Kerberos V5.
+This file documents how to install the 1.8 release of Kerberos V5.
 
 * Menu:
 
@@ -27,7 +27,7 @@ File: krb5-install.info,  Node: Copyright,  Next: Introduction,  Prev: Top,  Up:
 Copyright
 *********
 
-Copyright (C) 1985-2009 by the Massachusetts Institute of Technology.
+Copyright (C) 1985-2010 by the Massachusetts Institute of Technology.
 
      Export of software employing encryption from the United States of
      America may require a specific license from the United States
@@ -277,10 +277,6 @@ the following new or changed files:
        slave/kpropd_rpc.c
        slave/kproplog.c
 
-and marked portions of the following files:
-
-       lib/krb5/os/hst_realm.c
-
 are subject to the following license:
 
      Copyright (C) 2004 Sun Microsystems, Inc.
@@ -344,7 +340,7 @@ notice:
 Portions contributed by Novell, Inc., including the LDAP database
 backend, are subject to the following license:
 
-     Copyright (C) 2004-2005, Novell, Inc.  All rights reserved.
+     Copyright (c) 2004-2005, Novell, Inc.  All rights reserved.
 
      Redistribution and use in source and binary forms, with or without
      modification, are permitted provided that the following conditions
@@ -446,27 +442,6 @@ Portions contributed by Apple Inc. are subject to the following license:
      WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
 
-The implementations of strlcpy and strlcat in
-src/util/support/strlcat.c have the following copyright and permission
-notice:
-
-     Copyright (C) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
-
-     Permission to use, copy, modify, and distribute this software for
-     any purpose with or without fee is hereby granted, provided that
-     the above copyright notice and this permission notice appear in
-     all copies.
-
-     THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
-     WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
-     WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
-     AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
-     CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-     LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-     NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
-     CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
-
 The implementations of UTF-8 string handling in src/util/support and
 src/lib/krb5/unicode are subject to the following copyright and
 permission notice:
@@ -518,41 +493,6 @@ permission notice:
      Copyright 1999-2003 The OpenLDAP Foundation, Redwood City,
      California, USA.  All Rights Reserved.  Permission to copy and
      distribute verbatim copies of this document is granted.
-
-
-Marked test programs in src/lib/krb5/krb have the following copyright:
-
-     Copyright (C) 2006 Kungliga Tekniska Ho"gskolan (Royal Institute
-     of Technology, Stockholm, Sweden).  All rights reserved.
-
-     Redistribution and use in source and binary forms, with or without
-     modification, are permitted provided that the following conditions
-     are met:
-
-     1. Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-
-     2. Redistributions in binary form must reproduce the above
-     copyright    notice, this list of conditions and the following
-     disclaimer in the    documentation and/or other materials provided
-     with the distribution.
-
-     3. Neither the name of KTH nor the names of its contributors may be
-       used to endorse or promote products derived from this software
-     without    specific prior written permission.
-
-     THIS SOFTWARE IS PROVIDED BY KTH AND ITS CONTRIBUTORS "AS IS" AND
-     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-     THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-     PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL KTH OR ITS
-     CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-     LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-     USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-     AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-     POSSIBILITY OF SUCH DAMAGE.
 
 
 Permission is granted to make and distribute verbatim copies of this
@@ -1030,15 +970,10 @@ File: krb5-install.info,  Node: The appl Directory,  Next: The clients Directory
 The appl Directory
 ------------------
 
-The Kerberos release provides certain UNIX utilities, modified to use
-Kerberos authentication.  In the appl/bsd directory are the Berkeley
-utilities login, rlogin, rsh, and rcp, as well as the associated
-daemons kshd and klogind.  The login program obtains ticket-granting
-tickets for users upon login; the other utilities provide authenticated
-Unix network services.
-
-The appl directory also contains Kerberized telnet and ftp programs, as
-well as sample Kerberos application client and server programs.
+The appl directory contains sample Kerberos application client and
+server programs.  In previous releases, it contained Kerberized versions
+of remote access daemons, but those have now been moved to a separate
+project.
 
 
 File: krb5-install.info,  Node: The clients Directory,  Next: The gen-manpages Directory,  Prev: The appl Directory,  Up: Organization of the Source Directory
@@ -1132,4 +1067,69 @@ The krb524 Directory
 This directory contains the code for `krb524', a service that converts
 Kerberos V5 credentials into Kerberos V4 credentials suitable for use
 with applications that for whatever reason do not use V5 directly.
+
+
+File: krb5-install.info,  Node: The lib Directory,  Next: The prototype Directory,  Prev: The krb524 Directory,  Up: Organization of the Source Directory
+
+The lib Directory
+-----------------
+
+The lib directory contain 10 subdirectories as well as some definition
+and glue files.  The crypto subdirectory contains the Kerberos V5
+encryption library.  The des425 subdirectory exports the Kerberos V4
+encryption API, and translates these functions into calls to the
+Kerberos V5 encryption API.  The gssapi library contains the Generic
+Security Services API, which is a library of commands to be used in
+secure client-server communication.  The kadm5 directory contains the
+libraries for the KADM5 administration utilities.  The Kerberos 5
+database libraries are contained in kdb.  The directories krb4 and krb5
+contain the Kerberos 4 and Kerberos 5 APIs, respectively.  The rpc
+directory contains the API for the Kerberos Remote Procedure Call
+protocol.
+
+
+File: krb5-install.info,  Node: The prototype Directory,  Next: The slave Directory,  Prev: The lib Directory,  Up: Organization of the Source Directory
+
+The prototype Directory
+-----------------------
+
+This directory contains several template files.  The `prototype.h' and
+`prototype.c' files contain the MIT copyright message and a placeholder
+for the title and description of the file.  `prototype.h' also has a
+short template for writing `ifdef' and `ifndef' preprocessor
+statements.  The `getopt.c' file provides a template for writing code
+that will parse the options with which a program was called.
+
+
+File: krb5-install.info,  Node: The slave Directory,  Next: The util Directory,  Prev: The prototype Directory,  Up: Organization of the Source Directory
+
+The slave Directory
+-------------------
+
+This directory contains code which allows for the propagation of the
+Kerberos principal database from the master KDC to slave KDCs over an
+encrypted, secure channel.  `kprop' is the program which actually
+propagates the database dump file.  `kpropd' is the Kerberos V5 slave
+KDC update server which accepts connections from the `kprop' program.
+`kslave_update' is a script that takes the name of a slave server, and
+propagates the database to that server if the database has been
+modified since the last dump or if the database has been dumped since
+the last propagation.
+
+
+File: krb5-install.info,  Node: The util Directory,  Prev: The slave Directory,  Up: Organization of the Source Directory
+
+The util Directory
+------------------
+
+This directory contains several utility programs and libraries.  The
+programs used to configure and build the code, such as `autoconf',
+`lndir', `kbuild', `reconf',  and `makedepend', are in this directory.
+The profile directory contains most of the functions which parse the
+Kerberos configuration files (`krb5.conf' and `kdc.conf').  Also in
+this directory are the Kerberos error table library and utilities (et),
+the Sub-system library and utilities (ss), database utilities (db2),
+pseudo-terminal utilities (pty), bug-reporting program `send-pr', and a
+generic support library `support' used by several of our other
+libraries.
 

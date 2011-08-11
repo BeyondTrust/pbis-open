@@ -53,43 +53,43 @@ static cc_int32 _cci_ipc_send (enum cci_msg_id_t  in_request_name,
     k5_ipc_stream request = NULL;
     k5_ipc_stream reply = NULL;
     cc_int32 reply_error = 0;
-    
+
     if (!in_identifier) { err = cci_check_error (ccErrBadParam); }
     /* in_request_data may be NULL */
     /* out_reply_data may be NULL */
-    
+
     if (!err) {
         err = cci_message_new_request_header (&request,
                                               in_request_name,
                                               in_identifier);
     }
-    
+
     if (!err && in_request_data) {
-        err = k5_ipc_stream_write (request, 
-                                k5_ipc_stream_data (in_request_data), 
-                                k5_ipc_stream_size (in_request_data));
+        err = krb5int_ipc_stream_write (request,
+                                krb5int_ipc_stream_data (in_request_data),
+                                krb5int_ipc_stream_size (in_request_data));
     }
-    
+
     if (!err) {
         err = cci_os_ipc (in_launch_server, request, &reply);
 
-        if (!err && k5_ipc_stream_size (reply) > 0) {
+        if (!err && krb5int_ipc_stream_size (reply) > 0) {
             err = cci_message_read_reply_header (reply, &reply_error);
         }
     }
-    
-    if (!err && reply_error) { 
+
+    if (!err && reply_error) {
         err = reply_error;
     }
-    
+
     if (!err && out_reply_data) {
         *out_reply_data = reply;
         reply = NULL; /* take ownership */
     }
-    
-    k5_ipc_stream_release (request);
-    k5_ipc_stream_release (reply);
-    
+
+    krb5int_ipc_stream_release (request);
+    krb5int_ipc_stream_release (reply);
+
     return cci_check_error (err);
 }
 

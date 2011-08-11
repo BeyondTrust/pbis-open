@@ -82,6 +82,12 @@ typedef struct {
 	gss_name_t	mech_name;
 } spnego_name_desc, *spnego_name_t;
 
+/* Structure for credential */
+typedef struct {
+	gss_cred_id_t mcred;	/* mechglue union of obtainable creds */
+	gss_OID_set neg_mechs;	/* app-specified list of allowable mechs */
+} spnego_gss_cred_id_rec, *spnego_gss_cred_id_t;
+
 /* Structure for context handle */
 typedef struct {
 	OM_uint32	magic_num;
@@ -343,15 +349,6 @@ spnego_gss_inquire_sec_context_by_oid
 );
 
 OM_uint32
-spnego_gss_set_cred_option
-(
-	OM_uint32 *minor_status,
-	gss_cred_id_t cred_handle,
-	const gss_OID desired_object,
-	const gss_buffer_t value
-);
-
-OM_uint32
 spnego_gss_inquire_cred_by_oid
 (
 	OM_uint32 *minor_status,
@@ -361,21 +358,21 @@ spnego_gss_inquire_cred_by_oid
 );
 
 OM_uint32
+spnego_gss_set_cred_option
+(
+	OM_uint32 *minor_status,
+	gss_cred_id_t cred_handle,
+	const gss_OID desired_object,
+	const gss_buffer_t value
+);
+
+OM_uint32
 spnego_gss_set_sec_context_option
 (
 	OM_uint32 *minor_status,
 	gss_ctx_id_t *context_handle,
 	const gss_OID desired_object,
 	const gss_buffer_t value
-);
-
-OM_uint32
-spnego_gssspi_set_cred_option
-(
-	OM_uint32 *minor_status,
-        gss_cred_id_t cred_handle,
-        const gss_OID desired_object,
-        const gss_buffer_t value
 );
 
 #ifdef _GSS_STATIC_LINK
@@ -535,6 +532,25 @@ spnego_gss_release_any_name_mapping
 	gss_name_t name,
 	gss_buffer_t type_id,
 	gss_any_t *input
+);
+
+OM_uint32
+spnego_gss_pseudo_random
+(
+	OM_uint32 *minor_status,
+	gss_ctx_id_t context,
+	int prf_key,
+	const gss_buffer_t prf_in,
+	ssize_t desired_output_len,
+	gss_buffer_t prf_out
+);
+
+OM_uint32
+spnego_gss_set_neg_mechs
+(
+	OM_uint32 *minor_status,
+	gss_cred_id_t cred_handle,
+	const gss_OID_set mech_list
 );
 
 #ifdef	__cplusplus

@@ -1,3 +1,4 @@
+/* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * This file is now only used on Windows
  */
@@ -25,8 +26,8 @@
 
 #else /* ! RES_ONLY */
 
-/* To ensure backward compatibility of the ABI use 32-bit time_t on 
- * 32-bit Windows. 
+/* To ensure backward compatibility of the ABI use 32-bit time_t on
+ * 32-bit Windows.
  */
 #ifdef _KRB5_INT_H
 #ifdef KRB5_GENERAL__
@@ -37,7 +38,7 @@
 #error time_t has been defined as a 64-bit integer which is incompatible with Kerberos on this platform.
 #endif /* _TIME_T_DEFINED */
 #define _USE_32BIT_TIME_T
-#endif 
+#endif
 #endif
 
 #define SIZEOF_INT      4
@@ -72,10 +73,10 @@
 #ifndef KRB5_SYSTYPES__
 #define KRB5_SYSTYPES__
 #include <sys/types.h>
-typedef unsigned long	 u_long;      /* Not part of sys/types.h on the pc */
-typedef unsigned int	 u_int;
-typedef unsigned short	 u_short;
-typedef unsigned char	 u_char;
+typedef unsigned long    u_long;      /* Not part of sys/types.h on the pc */
+typedef unsigned int     u_int;
+typedef unsigned short   u_short;
+typedef unsigned char    u_char;
 typedef unsigned int     uint32_t;
 typedef int              int32_t;
 #if _INTEGRAL_MAX_BITS >= 64
@@ -87,9 +88,9 @@ typedef __int64          int64_t;
 #undef ssize_t
 #endif
 #ifdef _WIN64
-typedef __int64		 ssize_t;
+typedef __int64          ssize_t;
 #else
-typedef _W64 int 	 ssize_t;
+typedef _W64 int         ssize_t;
 #endif
 #define SSIZE_T_DEFINED
 #endif
@@ -102,7 +103,7 @@ typedef _W64 int 	 ssize_t;
 
 #define HAVE_NETINET_IN_H
 #define MSDOS_FILESYSTEM
-#define HAVE_STRING_H 
+#define HAVE_STRING_H
 #define HAVE_SRAND
 #define HAVE_ERRNO
 #define HAVE_STRDUP
@@ -128,7 +129,7 @@ typedef _W64 int 	 ssize_t;
 #ifdef CYGNUS
 #define KERBEROS_HLP    "kerbnet.hlp"
 #else
-#define KERBEROS_HLP	"krb5clnt.hlp"
+#define KERBEROS_HLP    "krb5clnt.hlp"
 #endif
 #define INI_DEFAULTS    "Defaults"
 #define   INI_USER        "User"          /* Default user */
@@ -145,16 +146,16 @@ typedef _W64 int 	 ssize_t;
 #define   INI_KRB_CONF    "krb.conf"     /* Location of krb.conf file */
 #define   DEF_KRB_CONF    "krb.conf"      /* Default name for krb.conf file */
 #else
-#define INI_KRB5_CONF   "krb5.ini"	/* From k5-config.h */
-#define INI_KRB_CONF    INI_KRB5_CONF	/* Location of krb.conf file */
-#define DEF_KRB_CONF    INI_KRB5_CONF	/* Default name for krb.conf file */
+#define INI_KRB5_CONF   "krb5.ini"      /* From k5-config.h */
+#define INI_KRB_CONF    INI_KRB5_CONF   /* Location of krb.conf file */
+#define DEF_KRB_CONF    INI_KRB5_CONF   /* Default name for krb.conf file */
 #define INI_TICKETOPTS  "TicketOptions" /* Ticket options */
 #define   INI_FORWARDABLE  "Forwardable" /* get forwardable tickets */
-#define INI_KRB_CCACHE  "krb5cc"       	/* From k5-config.h */
+#define INI_KRB_CCACHE  "krb5cc"        /* From k5-config.h */
 #endif
 #define INI_KRB_REALMS  "krb.realms"    /* Location of krb.realms file */
 #define DEF_KRB_REALMS  "krb.realms"    /* Default name for krb.realms file */
-#define INI_RECENT_LOGINS "Recent Logins"    
+#define INI_RECENT_LOGINS "Recent Logins"
 #define INI_LOGIN       "Login"
 
 #define HAS_VOID_TYPE
@@ -176,7 +177,7 @@ typedef _W64 int 	 ssize_t;
 
 /* Ugly. Microsoft, in stdc mode, doesn't support the low-level i/o
  * routines directly. Rather, they only export the _<function> version.
- * The following defines works around this problem. 
+ * The following defines works around this problem.
  */
 #include <sys\types.h>
 #include <sys\stat.h>
@@ -207,10 +208,10 @@ typedef _W64 int 	 ssize_t;
 
 HINSTANCE get_lib_instance(void);
 
-#define GETSOCKNAME_ARG2_TYPE	struct sockaddr
-#define GETSOCKNAME_ARG3_TYPE	size_t
-#define GETPEERNAME_ARG2_TYPE	GETSOCKNAME_ARG2_TYPE
-#define GETPEERNAME_ARG3_TYPE	GETSOCKNAME_ARG3_TYPE
+#define GETSOCKNAME_ARG2_TYPE   struct sockaddr
+#define GETSOCKNAME_ARG3_TYPE   size_t
+#define GETPEERNAME_ARG2_TYPE   GETSOCKNAME_ARG2_TYPE
+#define GETPEERNAME_ARG3_TYPE   GETSOCKNAME_ARG3_TYPE
 
 #endif /* !RES_ONLY */
 
