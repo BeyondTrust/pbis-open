@@ -80,8 +80,10 @@ locate_kpasswd(krb5_context context, const krb5_data *realm,
                 krb5_ui_2 kpasswd_port = htons(DEFAULT_KPASSWD_PORT);
                 if (a->ai_family == AF_INET)
                     sa2sin (a->ai_addr)->sin_port = kpasswd_port;
+#ifdef KRB5_USE_INET6
                 if (a->ai_family == AF_INET6)
                     sa2sin6 (a->ai_addr)->sin6_port = kpasswd_port;
+#endif
                 if (sockType != SOCK_STREAM)
                     a->ai_socktype = sockType;
             }
