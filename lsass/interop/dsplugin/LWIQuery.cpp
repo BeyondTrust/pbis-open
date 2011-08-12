@@ -228,10 +228,9 @@ LWIQuery::GetDirNodeRef(void)
 bool
 LWIQuery::ShouldQueryUserInformation()
 {
-    /* We support user queries for the root DS node only */
+    /* We support user queries for all our DS nodes */
     return (_recTypeSet &&
-            LWI_BITVECTOR_ISSET(_recTypeSet, LWIRecTypeLookup::idx_kDSStdRecordTypeUsers) &&
-            _pDirNode->fPlugInRootConnection);
+            LWI_BITVECTOR_ISSET(_recTypeSet, LWIRecTypeLookup::idx_kDSStdRecordTypeUsers));
 }
 
 bool
