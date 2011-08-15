@@ -141,11 +141,13 @@ kpasswd_sendto_msg_callback(struct conn_state *conn,
         local_kaddr.addrtype = ADDRTYPE_INET;
         local_kaddr.length = sizeof(ss2sin(&local_addr)->sin_addr);
         local_kaddr.contents = (krb5_octet *) &ss2sin(&local_addr)->sin_addr;
+#ifdef KRB5_USE_INET6
     } else if (local_addr.ss_family == AF_INET6 &&
                ss2sin6(&local_addr)->sin6_addr.s6_addr != 0) {
         local_kaddr.addrtype = ADDRTYPE_INET6;
         local_kaddr.length = sizeof(ss2sin6(&local_addr)->sin6_addr);
         local_kaddr.contents = (krb5_octet *) &ss2sin6(&local_addr)->sin6_addr;
+#endif
     } else {
         krb5_address **addrs;
 
@@ -294,11 +296,13 @@ change_set_password(krb5_context context,
             remote_kaddr.length = sizeof(ss2sin(&remote_addr)->sin_addr);
             remote_kaddr.contents =
                 (krb5_octet *) &ss2sin(&remote_addr)->sin_addr;
+#ifdef KRB5_USE_INET6
         } else if (remote_addr.ss_family == AF_INET6) {
             remote_kaddr.addrtype = ADDRTYPE_INET6;
             remote_kaddr.length = sizeof(ss2sin6(&remote_addr)->sin6_addr);
             remote_kaddr.contents =
                 (krb5_octet *) &ss2sin6(&remote_addr)->sin6_addr;
+#endif
         } else {
             break;
         }
