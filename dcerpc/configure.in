@@ -50,6 +50,15 @@ case $target_os in
 		target_cpu="x86_64"
 	 fi
          ;;
+     darwin11.*)
+         echo "Detected Mac OS X 10.7 - Lion system"
+         target_os="darwin6.0"
+	 if test "$ac_cv_sizeof_long" = "8" -a "$target_cpu" = "i386"
+	 then
+		echo "Building in 64-bit mode"
+		target_cpu="x86_64"
+	 fi
+         ;;
      solaris2.1*)
          echo "Detected Solaris system"
          target_os="solaris2.10"
