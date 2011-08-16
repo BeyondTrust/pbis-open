@@ -109,7 +109,11 @@ typedef int socklen_t;
 /* XXX should only be done if sockaddr_storage not found */
 #ifndef HAVE_STRUCT_SOCKADDR_STORAGE
 struct krb5int_sockaddr_storage {
-    struct sockaddr_in s;
+    union
+    {
+        sa_family_t ss_family;
+        struct sockaddr_in s;
+    };
     /* Plenty of slop just in case we get an ipv6 address anyways.  */
     long extra[16];
 };
