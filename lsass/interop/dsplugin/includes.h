@@ -79,6 +79,7 @@
 #include <lwmem.h>
 #include <lwfile.h>
 #include <lwstr.h>
+#include <lsaauth.h>
 
 #ifdef __cplusplus
 extern "C" {

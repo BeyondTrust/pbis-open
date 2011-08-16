@@ -52,17 +52,23 @@ LWDSPlugIn_la_SOURCES= \
         macadutil/policyutils.c \
         macadutil/xfer.c
 
-LWDSPlugIn_la_CFLAGS=$(AM_CFLAGS)
+LWDSPlugIn_la_CFLAGS=$(AM_CFLAGS) -I$(top_srcdir)/interop/auth/include
 
-LWDSPlugIn_la_CXXFLAGS=$(AM_CFLAGS) -fvisibility-inlines-hidden
+LWDSPlugIn_la_CXXFLAGS=$(AM_CFLAGS)\
+	-I$(top_srcdir)/interop/auth/include \
+	-fvisibility-inlines-hidden
 
 LWDSPlugIn_la_CPPFLAGS=@AM_CPPFLAGS@
 
 LWDSPlugIn_la_LDFLAGS= \
-     -module -shrext '' -avoid-version -bundle_loader \
-     /usr/sbin/DirectoryService \
-     -framework CoreFoundation \
-     @top_builddir@/client/liblsaclient.la \
+     -module -shrext '' -avoid-version \
+     -bundle_loader /usr/sbin/DirectoryService \
+     -framework CoreFoundation
+
+LWDSPlugIn_la_LIBADD =  \
+    $(top_builddir)/common/liblsacommon.la \
+    $(top_builddir)/interop/auth/common/liblsaauth.la \
+    $(top_builddir)/client/liblsaclient.la \
      -llwnetclientapi \
      -llwioclient \
      -llwadvapi \
