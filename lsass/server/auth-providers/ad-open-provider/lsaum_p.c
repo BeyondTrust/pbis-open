@@ -1594,11 +1594,24 @@ error:
 
         if (AD_EventlogEnabled(Handle->pProviderState))
         {
-            LsaUmpLogUserTGTRefreshFailureEvent(pUserInfo->userInfo.pszUPN,
-                                                pUserItem->uUid,
-                                                pUserInfo->pszNetbiosDomainName,
-                                                pUserItem->dwFailedCount,
-                                                dwError);
+            if (pUserInfo)
+            {
+                LsaUmpLogUserTGTRefreshFailureEvent(
+                        pUserInfo->userInfo.pszUPN,
+                        pUserItem->uUid,
+                        pUserInfo->pszNetbiosDomainName,
+                        pUserItem->dwFailedCount,
+                        dwError);
+            }
+            else
+            {
+                LsaUmpLogUserTGTRefreshFailureEvent(
+                        "<null>",
+                        pUserItem->uUid,
+                        "<null>",
+                        pUserItem->dwFailedCount,
+                        dwError);
+            }
         }
     }
 
