@@ -940,7 +940,9 @@ AC_SUBST(HAVE_RUNTEST)
 # it is linked again later.
 case $krb5_cv_host in
 *-*-aix*)
-	DB_EXTRA_LIBS=-ldb
+        # This is causing problems on AIX 5.2
+        #DB_EXTRA_LIBS=-ldb
+	DB_EXTRA_LIBS=
 	;;
 *)
 	DB_EXTRA_LIBS=
