@@ -5,4 +5,54 @@ make()
         lsassd.reg \
         privileges.reg \
         accounts.reg
+
+    stage_ignore_file "user-ignore"
+    stage_ignore_file "group-ignore"
+}
+
+stage_ignore_file()
+{
+    local ignore_file="$1"
+    local target="${MK_SYSCONFDIR}/${ignore_file}"
+    local source os_ignore_file os_ignore_dep
+
+    source="${MK_SOURCE_DIR}${MK_SUBDIR}/$ignore_file"
+    os_ignore_file="${MK_SOURCE_DIR}${MK_SUBDIR}/${ignore_file}.${MK_BUILD_OS}"
+
+    if [ -e "$os_ignore_file" ]
+    then
+        os_ignore_dep="${ignore_file}.${MK_BUILD_OS}"
+    fi
+
+    mk_target \
+        TARGET="$target" \
+        DEPS="${base} ${os_ignore_dep}" \
+        install_ignore_file \
+            "&$target" \
+            "@$source" \
+            "@$os_ignore_file"
+}
+
+install_ignore_file()
+{
+    local target="$1"
+    local source="$2"
+    local os_file="$3"
+    local dir=`dirname "$target"`
+
+    mk_msg_domain "stage"
+    mk_msg "${target#$MK_STAGE_DIR}"
+    mk_mkdir "$dir"
+
+    if [ -f "$os_file" ]
+    then
+        cat "$source" "$os_file" > "$target"
+    else
+        cat "$source" > "$target"
+    fi
+
+    if [ $? -ne 0 ]
+    then
+        mk_fail "staging $target failed"
+    fi
 }

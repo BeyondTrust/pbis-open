@@ -50,11 +50,11 @@ make()
         EXT="" \
         INSTALLDIR="${MACOS_DIR}" \
         SOURCES="$LWDS_SOURCES" \
-        INCLUDEDIRS=". ../../include" \
+        INCLUDEDIRS=". ../../include ../auth/include" \
         CFLAGS="$LWDS_CFLAGS" \
         CXXFLAGS="$LWDS_CFLAGS -Wno-deprecated -Wno-deprecated-declarations -fvisibility-inlines-hidden" \
         HEADERDEPS="lwio/lwio.h lwnet.h lwadvapi.h ldap.h krb5.h" \
-        LIBDEPS="lwnetclientapi lwioclient lwadvapi ldap_r krb5 lsacommon lsaclient" \
+        LIBDEPS="lwnetclientapi lwioclient lwadvapi ldap_r krb5 lsacommon lsaclient lsaauth" \
         LDFLAGS="-framework CoreFoundation"
 
     mk_target \

@@ -3032,6 +3032,12 @@ GetUserObjectFromName(
     LSA_QUERY_LIST QueryList = {0};
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
 
+    if (LsaShouldIgnoreUser(pszName))
+    {
+        dwError = LW_ERROR_NO_SUCH_USER;
+        goto cleanup;
+    }
+
     QueryList.ppszStrings = (PCSTR*)&pszName;
 
     dwError = LsaOpenServer(&hLsaConnection);
@@ -3233,6 +3239,12 @@ GetGroupObjectFromName(
     HANDLE hLsaConnection = (HANDLE)NULL;
     LSA_QUERY_LIST QueryList = {0};
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
+
+    if (LsaShouldIgnoreGroup(pszName))
+    {
+        dwError = LW_ERROR_NO_SUCH_GROUP;
+        goto cleanup;
+    }
 
     QueryList.ppszStrings = (PCSTR*)&pszName;;
 
