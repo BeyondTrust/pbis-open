@@ -3737,6 +3737,11 @@ AD_OnlineFindObjectByName(
         case LW_ERROR_NO_SUCH_GROUP:
         case LW_ERROR_NO_SUCH_OBJECT:
         case LW_ERROR_NOT_SUPPORTED:
+            // This could mean one of the trusted domains could not be reached,
+            // and maybe that domain is never reachable. Prepending the default
+            // domain should be attempted because if DEFAULT\\username ends up
+            // in the cache, cached lookups to username would work.
+        case LW_ERROR_DOMAIN_IS_OFFLINE:
             if (AD_ShouldAssumeDefaultDomain(pContext->pState) &&
                     pUserNameInfo->nameType == NameType_Alias)
             {
