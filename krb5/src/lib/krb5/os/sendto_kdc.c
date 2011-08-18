@@ -555,6 +555,10 @@ krb5int_cm_call_select (const struct select_state *in,
             return 0;
         }
     }
+#ifdef HAVE_POLL
+    *sret = poll(out->fds, out->nfds, timo->tv_sec * 1000 + timo->tv_usec / 1000);
+    e = SOCKET_ERRNO;
+#else
     dprint("selecting on max=%d sockets [%F] timeout %t\n",
            out->max,
            &out->rfds, &out->wfds, &out->xfds, out->max,
@@ -569,11 +573,64 @@ krb5int_cm_call_select (const struct select_state *in,
         dprint(" (timeout)\n");
     else
         dprint(":%F\n", &out->rfds, &out->wfds, &out->xfds, out->max);
+#endif
 
     if (*sret < 0)
         return e;
     return 0;
 }
+
+#ifdef HAVE_POLL
+static int krb5int_cm_set_poll(
+    struct select_state* state,
+    int fd,
+    short int events
+    )
+{
+    int i;
+
+    for (i = 0; i < state->nfds; i++)
+    {
+        if (state->fds[i].fd == fd)
+        {
+            state->fds[i].events = events;
+            return 0;
+        }
+    }
+
+    if (state->nfds == MAX_POLL_FDS)
+    {
+        return -1;
+    }
+    else
+    {
+        state->fds[state->nfds].fd = fd;
+        state->fds[state->nfds].events = events;
+        state->nfds++;
+        return 0;
+    }
+}
+
+static short krb5int_cm_get_poll(
+    struct select_state* state,
+    int fd
+    )
+{
+    int i;
+
+    for (i = 0; i < state->nfds; i++)
+    {
+        if (state->fds[i].fd == fd)
+        {
+            return state->fds[i].revents;
+        }
+    }
+
+    return 0;
+}
+#endif
+    
+
 
 static int service_tcp_fd (struct conn_state *conn,
                            struct select_state *selstate, int ssflags);
@@ -656,6 +713,8 @@ start_connection (struct conn_state *state,
 {
     int fd, e;
     struct addrinfo *ai = state->addr;
+    static const int one = 1;
+    static const struct linger lopt = { 0, 0 };
 
     dprint("start_connection(@%p)\ngetting %s socket in family %d...", state,
            ai->ai_socktype == SOCK_STREAM ? "stream" : "dgram", ai->ai_family);
@@ -665,7 +724,7 @@ start_connection (struct conn_state *state,
         dprint("socket: %m creating with af %d\n", state->err, ai->ai_family);
         return -1;              /* try other hosts */
     }
-#ifndef _WIN32 /* On Windows FD_SETSIZE is a count, not a max value.  */
+#if !defined(_WIN32) && !defined(HAVE_POLL) /* On Windows FD_SETSIZE is a count, not a max value.  */
     if (fd >= FD_SETSIZE) {
         closesocket(fd);
         state->err = EMFILE;
@@ -675,15 +734,10 @@ start_connection (struct conn_state *state,
 #endif
     set_cloexec_fd(fd);
     /* Make it non-blocking.  */
-    if (ai->ai_socktype == SOCK_STREAM) {
-        static const int one = 1;
-        static const struct linger lopt = { 0, 0 };
-
-        if (ioctlsocket(fd, FIONBIO, (const void *) &one))
-            dperror("sendto_kdc: ioctl(FIONBIO)");
-        if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &lopt, sizeof(lopt)))
-            dperror("sendto_kdc: setsockopt(SO_LINGER)");
-    }
+    if (ioctlsocket(fd, FIONBIO, (const void *) &one))
+        dperror("sendto_kdc: ioctl(FIONBIO)");
+    if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &lopt, sizeof(lopt)))
+        dperror("sendto_kdc: setsockopt(SO_LINGER)");
 
     /* Start connecting to KDC.  */
     dprint(" fd %d; connecting to %A...\n", fd, ai);
@@ -774,6 +828,19 @@ start_connection (struct conn_state *state,
         }
     }
 #endif
+
+#ifdef HAVE_POLL
+    if (krb5int_cm_set_poll(selstate, fd,
+                            POLLIN | POLLERR |
+                            ((state->state == CONNECTING || state->state == WRITING) ?
+                             POLLOUT : 0)) != 0)
+    {
+        closesocket(fd);
+	state->err = EMFILE;
+	dprint("socket: fd %d too high\n", fd);
+	return -1;
+    }
+#else
     FD_SET(state->fd, &selstate->rfds);
     if (state->state == CONNECTING || state->state == WRITING)
         FD_SET(state->fd, &selstate->wfds);
@@ -784,6 +851,7 @@ start_connection (struct conn_state *state,
 
     dprint("new select vectors: %F\n",
            &selstate->rfds, &selstate->wfds, &selstate->xfds, selstate->max);
+#endif
 
     return 0;
 }
@@ -840,12 +908,25 @@ maybe_send (struct conn_state *conn,
 static void
 kill_conn(struct conn_state *conn, struct select_state *selstate, int err)
 {
+#ifdef HAVE_POLL
+    int i = 0;
+#endif
     conn->state = FAILED;
+    conn->err = err;
     shutdown(conn->fd, SHUTDOWN_BOTH);
+#ifdef HAVE_POLL
+    for (i = 0; i < selstate->nfds; i++)
+    {
+        if (selstate->fds[i].fd == conn->fd)
+        {
+            selstate->fds[i] = selstate->fds[--selstate->nfds];
+            break;
+        }
+    }
+#else
     FD_CLR(conn->fd, &selstate->rfds);
     FD_CLR(conn->fd, &selstate->wfds);
     FD_CLR(conn->fd, &selstate->xfds);
-    conn->err = err;
     dprint("abandoning connection %d: %m\n", conn->fd, err);
     /* Fix up max fd for next select call.  */
     if (selstate->max == 1 + conn->fd) {
@@ -857,6 +938,7 @@ kill_conn(struct conn_state *conn, struct select_state *selstate, int err)
         dprint("new max_fd + 1 is %d\n", selstate->max);
     }
     selstate->nfds--;
+#endif
 }
 
 /* Check socket for error.  */
@@ -974,7 +1056,11 @@ service_tcp_fd (struct conn_state *conn, struct select_state *selstate,
             /* Done writing, switch to reading.  */
             /* Don't call shutdown at this point because
              * some implementations cannot deal with half-closed connections.*/
+#ifdef HAVE_POLL
+            krb5int_cm_set_poll(selstate, conn->fd, POLLIN | POLLERR);
+#else
             FD_CLR(conn->fd, &selstate->wfds);
+#endif
             /* Q: How do we detect failures to send the remaining data
                to the remote side, since we're in non-blocking mode?
                Will we always get errors on the reading side?  */
@@ -1098,18 +1184,34 @@ service_fds (krb5_context context,
             return 0;
 
         /* Got something on a socket, process it.  */
-        for (i = 0; i <= (unsigned int)selstate->max && selret > 0 && i < n_conns; i++) {
+	for (i = 0; selret > 0 && i < n_conns; i++) {
             int ssflags;
+#ifdef HAVE_POLL
+            short pollflags;
+#endif
 
             if (conns[i].fd == INVALID_SOCKET)
                 continue;
             ssflags = 0;
+#ifdef HAVE_POLL
+            pollflags = krb5int_cm_get_poll(seltemp, conns[i].fd);
+
+            if (pollflags)
+            {
+                selret--;
+                if (pollflags & POLLIN) ssflags |= SSF_READ;
+                if (pollflags & POLLOUT) ssflags |= SSF_WRITE;
+                if (pollflags & POLLERR) ssflags |= SSF_EXCEPTION;
+            }
+#else
             if (FD_ISSET(conns[i].fd, &seltemp->rfds))
                 ssflags |= SSF_READ, selret--;
             if (FD_ISSET(conns[i].fd, &seltemp->wfds))
                 ssflags |= SSF_WRITE, selret--;
             if (FD_ISSET(conns[i].fd, &seltemp->xfds))
                 ssflags |= SSF_EXCEPTION, selret--;
+#endif
+
             if (!ssflags)
                 continue;
 
@@ -1224,12 +1326,16 @@ krb5int_sendto (krb5_context context, const krb5_data *message,
         retval = ENOMEM;
         goto egress;
     }
+#ifdef HAVE_POLL
+    memset(sel_state, 0, 2 * sizeof(*sel_state));
+#else
     sel_state->max = 0;
     sel_state->nfds = 0;
     sel_state->end_time.tv_sec = sel_state->end_time.tv_usec = 0;
     FD_ZERO(&sel_state->rfds);
     FD_ZERO(&sel_state->wfds);
     FD_ZERO(&sel_state->xfds);
+#endif
 
 
     /* Set up connections.  */

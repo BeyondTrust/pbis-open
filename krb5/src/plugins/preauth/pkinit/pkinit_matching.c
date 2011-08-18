@@ -81,7 +81,8 @@ relation2string(unsigned int rel)
 typedef enum {
     kwvaltype_undefined = 0,
     kwvaltype_regexp = 1,
-    kwvaltype_list = 2
+    kwvaltype_list = 2,
+    kwvaltype_principal = 3,
 } kw_value_type;
 
 static char *
@@ -106,6 +107,7 @@ struct keyword_desc {
     { "<SAN>",      5, kw_san, kwvaltype_regexp },
     { "<ISSUER>",   8, kw_issuer, kwvaltype_regexp },
     { "<SUBJECT>",  9, kw_subject, kwvaltype_regexp },
+    { "<PRINCIPAL>", 11, kw_subject, kwvaltype_principal },
     { NULL, 0, kw_undefined, kwvaltype_undefined},
 };
 
@@ -322,18 +324,19 @@ parse_rule_component(krb5_context context,
     else
         len = (*remaining);
 
-    if (len == 0) {
+    if (len == 0 && kw->kwvaltype != kwvaltype_principal) {
         pkiDebug("%s: Missing value for keyword '%s'\n",
                  __FUNCTION__, kw->value);
         retval = EINVAL;
         goto out;
+    } else {
+        value = calloc(1, len+1);
+        if (value == NULL) {
+            retval = ENOMEM;
+            goto out;
+        }
     }
 
-    value = calloc(1, len+1);
-    if (value == NULL) {
-        retval = ENOMEM;
-        goto out;
-    }
     memcpy(value, *rule, len);
     *remaining -= len;
     *rule += len;
@@ -466,7 +469,8 @@ regexp_match(krb5_context context, rule_component *rc, char *value)
 static int
 component_match(krb5_context context,
                 rule_component *rc,
-                pkinit_cert_matching_data *md)
+		pkinit_cert_matching_data *md,
+		krb5_principal princ)
 {
     int match = 0;
     int i;
@@ -523,6 +527,29 @@ component_match(krb5_context context,
             break;
         }
         break;
+    case kwvaltype_principal:
+        if (md->sans == NULL)
+            break;
+#ifdef DEBUG
+        krb5_unparse_name(context, princ, &princ_string);
+#endif
+        for (i = 0, p = md->sans[i]; p != NULL; p = md->sans[++i]) {
+#ifdef DEBUG
+            char *san_string;
+
+            krb5_unparse_name(context, p, &san_string);
+            pkiDebug("%s: comparing principal '%s' with cert SAN '%s'\n",
+                    __FUNCTION__, princ_string, san_string);
+#endif
+            if (krb5_principal_compare_flags(context, p, princ,
+                        KRB5_PRINCIPAL_COMPARE_CASEFOLD)) {
+                match = 1;
+                break;
+            }
+            if (match)
+                break;
+        }
+	break;
     default:
         pkiDebug("%s: unknown keyword value type %d\n",
                  __FUNCTION__, rc->kwval_type);
@@ -554,6 +581,8 @@ check_all_certs(krb5_context context,
     rule_component *rc;
     int certs_checked = 0;
     pkinit_cert_matching_data *save_match = NULL;
+    char *princ_string = NULL;
+    char *princ_realm = NULL;
 
     if (match_found == NULL || matching_cert == NULL)
         return EINVAL;
@@ -564,24 +593,35 @@ check_all_certs(krb5_context context,
     pkiDebug("%s: matching rule relation is %s with %d components\n",
              __FUNCTION__, relation2string(rs->relation), rs->num_crs);
 
+    if (princ)
+    {
+        retval = krb5_unparse_name(context, princ, &princ_string);
+        if (retval || princ_string == NULL) {
+            return EINVAL;
+        }
+
+        princ_realm = strchr(princ_string, '@');
+
+        if (princ_realm == NULL) {
+            krb5_free_unparsed_name(context, princ_string);
+            return EINVAL;
+        }
+
+        *princ_realm++ = '\0';
+    }
+
     /*
      * Loop through all the certs available and count
      * how many match the rule
      */
     for (i = 0, md = matchdata[i]; md != NULL; md = matchdata[++i]) {
         pkiDebug("%s: subject: '%s'\n", __FUNCTION__, md->subject_dn);
-#if 0
-        pkiDebug("%s: issuer:  '%s'\n", __FUNCTION__, md->subject_dn);
-        for (j = 0, p = md->sans[j]; p != NULL; p = md->sans[++j]) {
-            char *san_string;
-            krb5_unparse_name(context, p, &san_string);
-            pkiDebug("%s: san: '%s'\n", __FUNCTION__, san_string);
-            krb5_free_unparsed_name(context, san_string);
-        }
-#endif
+	pkiDebug("%s: issuer:  '%s'\n", __FUNCTION__, md->issuer_dn);
+
         certs_checked++;
         for (rc = rs->crs; rc != NULL; rc = rc->next) {
-            comp_match = component_match(context, rc, md);
+	    comp_match = component_match(context, rc, md,
+                    princ);
             if (comp_match) {
                 pkiDebug("%s: match for keyword type %s\n",
                          __FUNCTION__, keyword2string(rc->kw_type));
@@ -607,6 +647,11 @@ check_all_certs(krb5_context context,
     nextcert:
         continue;
     }
+
+    if (princ_string) {
+        krb5_free_unparsed_name(context, princ_string);
+    }
+
     pkiDebug("%s: After checking %d certs, we found %d matches\n",
              __FUNCTION__, certs_checked, total_cert_matches);
     if (total_cert_matches == 1) {

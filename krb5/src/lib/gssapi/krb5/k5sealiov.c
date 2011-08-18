@@ -112,7 +112,7 @@ make_seal_token_v1_iov(krb5_context context,
         if (ctx->gss_flags & GSS_C_DCE_STYLE)
             tmsglen = k5_headerlen; /* confounder length */
         else
-            tmsglen = conf_data_length + padding->buffer.length;
+            tmsglen = conf_data_length + padding->buffer.length + assoc_data_length;
     }
 
     /* Determine token size */

@@ -188,6 +188,7 @@ INSTALL_SCRIPT=@INSTALL_PROGRAM@
 INSTALL_DATA=@INSTALL_DATA@
 INSTALL_SHLIB=@INSTALL_SHLIB@
 INSTALL_SETUID=$(INSTALL) $(INSTALL_STRIP) -m 4755 -o root
+INSTALL_SETUID_USER=$(INSTALL) $(INSTALL_STRIP) -m 4755
 ## This is needed because autoconf will sometimes define @exec_prefix@ to be
 ## ${prefix}.
 prefix=@prefix@

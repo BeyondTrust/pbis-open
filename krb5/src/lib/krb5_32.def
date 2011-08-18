@@ -300,6 +300,9 @@ EXPORTS
 	krb5_free_error_message			@134
 	krb5_clear_error_message		@94
 
+; new in 1.10
+        k5_kt_get_principal                             @385 ; PRIVATE GSSAPI
+
 ; new in 1.7
 	krb5_rd_rep_dce
 	krb5_mk_rep_dce

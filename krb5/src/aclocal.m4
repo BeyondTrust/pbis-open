@@ -1120,6 +1120,7 @@ AC_REQUIRE([KRB5_AC_NEED_LIBGEN])dnl
 AC_SUBST(CC_LINK)
 AC_SUBST(CXX_LINK)
 AC_SUBST(RPATH_FLAG)
+AC_SUBST(RPATH_TAIL)
 AC_SUBST(PROG_RPATH_FLAGS)
 AC_SUBST(DEPLIBEXT)])
 
@@ -1304,6 +1305,18 @@ AC_DEFUN(AC_LIBRARY_NET, [
 
 _KRB5_AC_CHECK_RES_FUNCS(res_ninit res_nclose res_ndestroy res_nsearch dnl
 ns_initparse ns_name_uncompress dn_skipname res_search)
+AC_MSG_CHECKING(whether res_ninit works)
+if test $krb5_cv_func_res_ninit = yes; then
+AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <resolv.h>
+int main(void)
+{
+	struct __res_state statbuf;
+	memset(&statbuf, 0, sizeof(statbuf));
+	res_ninit(&statbuf);
+	return 0;
+}]])], [AC_MSG_RESULT(yes)
+		AC_DEFINE(HAVE_WORKING_RES_NINIT, 1, [Define if res_ninit does not crash the system])], [AC_MSG_RESULT(no)], [AC_MSG_RESULT(no)])
+fi
     if test $krb5_cv_func_res_nsearch = no \
       && test $krb5_cv_func_res_search = no; then
 	# Attempt to link with res_search(), in case it's not prototyped.

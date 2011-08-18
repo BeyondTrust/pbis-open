@@ -236,6 +236,13 @@ get_credentials_val_renew_core(krb5_context context, krb5_flags options,
         retval = 255;
         break;
     }
+    if (!retval && (options & KRB5_GC_CONSTRAINED_DELEGATION)) {
+	if (((*out_creds)->ticket_flags & TKT_FLG_FORWARDABLE) == 0) {
+	    retval = KRB5_TKT_NOT_FORWARDABLE;
+	    krb5_free_creds(context, *out_creds);
+	    *out_creds = NULL;
+	}
+    }
     /*
      * Callers to krb5_get_cred_blah... must free up tgts even in
      * error cases.
@@ -360,3 +367,4 @@ krb5_get_renewed_creds(krb5_context context, krb5_creds *creds, krb5_principal c
     return(validate_or_renew_creds(context, creds, client, ccache,
                                    in_tkt_service, 0));
 }
+

@@ -213,6 +213,12 @@ add_pa_data_element (krb5_context context,
                      krb5_pa_data ***out_padata,
                      krb5_boolean copy);
 
+krb5_error_code add_pa_data_element
+    (krb5_context context,
+		    krb5_pa_data *padata,
+		    krb5_pa_data ***out_padata,
+		    krb5_boolean copy);
+
 /* kdc_authdata.c */
 krb5_error_code
 load_authdata_plugins(krb5_context context);

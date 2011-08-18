@@ -271,4 +271,10 @@ asn1_error_code asn1_decode_ad_kdcissued_ptr(asn1buf *buf,
 asn1_error_code asn1_decode_ad_signedpath(asn1buf *buf,
                                           krb5_ad_signedpath *val);
 
+asn1_error_code asn1_decode_ad_kdcissued
+(asn1buf *buf, krb5_ad_kdcissued *val);
+
+asn1_error_code asn1_decode_ad_kdcissued_ptr
+(asn1buf *buf, krb5_ad_kdcissued **val);
+
 #endif

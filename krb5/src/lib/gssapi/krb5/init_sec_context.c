@@ -486,7 +486,7 @@ kg_new_connection(
 {
     OM_uint32 major_status;
     krb5_error_code code;
-    krb5_creds *k_cred;
+    krb5_creds *k_cred = NULL;
     krb5_gss_ctx_id_rec *ctx, *ctx_free;
     krb5_timestamp now;
     gss_buffer_desc token;
@@ -537,9 +537,14 @@ kg_new_connection(
     }
 
     ctx->initiate = 1;
-    ctx->gss_flags = (GSS_C_INTEG_FLAG | GSS_C_CONF_FLAG |
-                      GSS_C_TRANS_FLAG |
+    /* Likewise patch:
+       The GSS_C_INTEG_FLAG and GSS_C_CONF_FLAG flags were moved out of the
+       required list and into the optional list. This allows ldap to have
+       signed but not sealed traffic.
+     */
+    ctx->gss_flags = (GSS_C_TRANS_FLAG |
                       ((req_flags) & (GSS_C_MUTUAL_FLAG | GSS_C_REPLAY_FLAG |
+                                      GSS_C_INTEG_FLAG | GSS_C_CONF_FLAG |
                                       GSS_C_SEQUENCE_FLAG | GSS_C_DELEG_FLAG |
                                       GSS_C_DCE_STYLE | GSS_C_IDENTIFY_FLAG |
                                       GSS_C_EXTENDED_ERROR_FLAG)));
@@ -675,6 +680,10 @@ kg_new_connection(
     }
 
 fail:
+    if (k_cred)
+    {
+        krb5_free_creds(context, k_cred);
+    }
     if (ctx_free) {
         if (ctx_free->auth_context)
             krb5_auth_con_free(context, ctx_free->auth_context);

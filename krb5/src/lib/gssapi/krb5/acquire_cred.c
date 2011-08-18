@@ -229,7 +229,7 @@ acquire_init_cred(krb5_context context,
     krb5_principal princ, tmp_princ;
     krb5_flags flags;
     krb5_cc_cursor cur;
-    krb5_creds creds;
+    krb5_creds creds = {0};
     int got_endtime;
     int caller_provided_ccache_name = 0;
 
@@ -337,11 +337,17 @@ acquire_init_cred(krb5_context context,
     /* turn off OPENCLOSE mode while extensive frobbing is going on */
 
     flags = 0;           /* turns off OPENCLOSE mode */
+   /* Clearing KRB5_TC_OPENCLOSE causes krb5_cc_store_cred to fail, and
+      read operations still succeed if the flag is set. So the flag
+      was cleared in original source code as an optimization.
+    */
+#if 0
     if ((code = krb5_cc_set_flags(context, ccache, flags))) {
         (void)krb5_cc_close(context, ccache);
         *minor_status = code;
         return(GSS_S_CRED_UNAVAIL);
     }
+#endif
 
     /* get out the principal name and see if it matches */
 
@@ -397,6 +403,8 @@ acquire_init_cred(krb5_context context,
         *minor_status = code;
         return(GSS_S_FAILURE);
     }
+
+    memset(&creds, 0, sizeof(creds));
     while (!(code = krb5_cc_next_cred(context, ccache, &cur, &creds))) {
         if (krb5_principal_compare(context, tmp_princ, creds.server)) {
             cred->tgt_expire = creds.times.endtime;
@@ -411,6 +419,7 @@ acquire_init_cred(krb5_context context,
             got_endtime = 1;
         }
         krb5_free_cred_contents(context, &creds);
+        memset(&creds, 0, sizeof(creds));
     }
     krb5_free_principal(context, tmp_princ);
 
@@ -538,6 +547,7 @@ krb5_gss_acquire_cred(minor_status, desired_name, time_req,
     cred->name = NULL;
     cred->prerfc_mech = (req_old != 0);
     cred->rfc_mech = (req_new != 0);
+    cred->destroy_ccache = 0;
     cred->default_identity = (desired_name == GSS_C_NO_NAME);
 
 #ifndef LEAN_CLIENT
@@ -768,3 +778,4 @@ gss_krb5int_set_cred_rcache(OM_uint32 *minor_status,
     *minor_status = 0;
     return GSS_S_COMPLETE;
 }
+

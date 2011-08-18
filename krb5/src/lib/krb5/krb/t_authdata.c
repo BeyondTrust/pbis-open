@@ -73,6 +73,13 @@ krb5_keyblock key = {
     (unsigned char *)"1234567890ABCDEF"
 };
 
+krb5_keyblock key = {
+    KV5M_KEYBLOCK,
+    ENCTYPE_AES128_CTS_HMAC_SHA1_96,
+    16,
+    (unsigned char *)"1234567890ABCDEF"
+};
+
 static void compare_authdata(const krb5_authdata *adc1, krb5_authdata *adc2) {
     assert(adc1->ad_type == adc2->ad_type);
     assert(adc1->length == adc2->length);

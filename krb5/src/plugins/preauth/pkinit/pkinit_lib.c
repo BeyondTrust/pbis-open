@@ -29,6 +29,7 @@
  * SUCH DAMAGES.
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -451,4 +452,32 @@ print_buffer_bin(unsigned char *buf, unsigned int len, char *filename)
         fputc(buf[i], f);
 
     fclose(f);
+}
+
+void pkiDebug (const char *fmt, ...)
+{
+    static int pkiDebugOutput = -1;
+
+    if (pkiDebugOutput == -1)
+    {
+        const char *debugString = getenv("PKINIT_DEBUG");
+
+        if (debugString && atoi(debugString) != 0)
+        {
+            pkiDebugOutput = 1;
+        }
+        else
+        {
+            pkiDebugOutput = 0;
+        }
+    }
+
+    if (pkiDebugOutput)
+    {
+        va_list args;
+
+        va_start(args, fmt);
+        vprintf(fmt, args);
+        va_end(args);
+    }
 }

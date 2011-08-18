@@ -357,6 +357,11 @@ kg_seal(minor_status, context_handle, conf_req_flag, qop_req,
         return(GSS_S_NO_CONTEXT);
     }
 
+    if (ctx->krb_times.endtime < now) {
+        *minor_status = 0;
+        return (GSS_S_CONTEXT_EXPIRED);
+    }
+
     context = ctx->k5_context;
     switch (ctx->proto)
     {

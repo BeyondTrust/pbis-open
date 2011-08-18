@@ -269,6 +269,9 @@ gss_krb5int_make_seal_token_v3_iov(krb5_context context,
 
     code = 0;
 
+    if (conf_state != NULL)
+        *conf_state = conf_req_flag;
+
 cleanup:
     if (code != 0)
         kg_release_iov(iov, iov_count);

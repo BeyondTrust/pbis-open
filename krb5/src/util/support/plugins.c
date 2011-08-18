@@ -259,7 +259,8 @@ krb5int_open_plugin (const char *filepath, struct plugin_file_handle **h, struct
         }
 #endif /* USE_CFBUNDLE */
 
-#ifdef RTLD_GROUP
+        /* 32bit PARISC HP-UX does not support the RTLD_GROUP flag */
+#if defined(RTLD_GROUP) && !defined(__hppa__)
 #define PLUGIN_DLOPEN_FLAGS (RTLD_NOW | RTLD_LOCAL | RTLD_GROUP)
 #else
 #define PLUGIN_DLOPEN_FLAGS (RTLD_NOW | RTLD_LOCAL)

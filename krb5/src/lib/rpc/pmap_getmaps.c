@@ -51,6 +51,10 @@ static char sccsid[] = "@(#)pmap_getmaps.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 #include <net/route.h>
 #include <sys/mbuf.h>
 #endif
+/* S7_CHANGE */
+#if defined(__hpux) && defined(__ia64)
+#include "mymp.h"
+#endif
 #include <net/if.h>
 #include <sys/ioctl.h>
 #define NAMELEN 255

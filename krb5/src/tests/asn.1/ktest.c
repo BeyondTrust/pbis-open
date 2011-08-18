@@ -892,6 +892,36 @@ krb5_error_code ktest_make_sample_ad_signedpath(p)
     return retval;
 }
 
+krb5_error_code ktest_make_sample_pa_s4u_x509_user(p)
+    krb5_pa_s4u_x509_user *p;
+{
+    krb5_error_code retval;
+    krb5_s4u_userid *u = &p->user_id;
+    u->nonce = 13243546;
+    retval = ktest_make_sample_principal(&u->user);
+    if (retval) return retval;
+    u->subject_cert.data = strdup("pa_s4u_x509_user");
+    if (u->subject_cert.data == NULL) return ENOMEM;
+    u->subject_cert.length = strlen(u->subject_cert.data);
+    u->options = 0x80000000;
+    retval = ktest_make_sample_checksum(&p->cksum);
+    if (retval) return retval;
+    return 0;
+}
+
+krb5_error_code ktest_make_sample_ad_kdcissued(p)
+    krb5_ad_kdcissued *p;
+{
+    krb5_error_code retval;
+    retval = ktest_make_sample_checksum(&p->ad_checksum);
+    if (retval) return retval;
+    retval = ktest_make_sample_principal(&p->i_principal);
+    if (retval) return retval;
+    retval = ktest_make_sample_authorization_data(&p->elements);
+    if (retval) return retval;
+    return retval;
+}
+
 #ifdef ENABLE_LDAP
 static krb5_error_code ktest_make_sample_key_data(krb5_key_data *p, int i)
 {
@@ -1532,6 +1562,22 @@ void ktest_empty_ad_signedpath(p)
         free(p->delegated);
     }
     ktest_destroy_pa_data_array(&p->method_data);
+}
+
+void ktest_empty_pa_s4u_x509_user(p)
+    krb5_pa_s4u_x509_user *p;
+{
+    ktest_destroy_principal(&p->user_id.user);
+    ktest_empty_data(&p->user_id.subject_cert);
+    if (p->cksum.contents) free(p->cksum.contents);
+}
+
+void ktest_empty_ad_kdcissued(p)
+    krb5_ad_kdcissued *p;
+{
+    if (p->ad_checksum.contents) free(p->ad_checksum.contents);
+    ktest_destroy_principal(&p->i_principal);
+    ktest_destroy_authorization_data(&p->elements);
 }
 
 #ifdef ENABLE_LDAP

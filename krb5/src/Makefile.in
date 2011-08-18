@@ -7,13 +7,19 @@ mydir=.
 #	plugins/preauth/wpse
 #	plugins/preauth/cksum_body
 #	plugins/authdata/greet
-SUBDIRS=util include lib \
-	@ldap_plugin_dir@ \
-	plugins/kdb/db2 \
-	plugins/preauth/pkinit \
-	plugins/preauth/encrypted_challenge \
-	kdc kadmin slave clients appl tests \
-	config-files gen-manpages
+# We moved to building only client side code because of issues buildng under AIX. 
+# The proper fixed is to have a configure option to be build only client side bits.
+#SUBDIRS=util include lib \
+#	@ldap_plugin_dir@ \
+#	plugins/kdb/db2 \
+#	plugins/preauth/pkinit \
+#	plugins/preauth/encrypted_challenge \
+#	kdc kadmin slave clients appl tests \
+#	config-files gen-manpages
+SUBDIRS_all=util include lib kadmin/ktutil @ldap_plugin_dir@ clients \
+	plugins/preauth/pkinit config-files gen-manpages
+SUBDIRS_includes_only=util/support util/et util/profile include
+SUBDIRS=$(SUBDIRS_@SUBDIRS_TYPE@)
 BUILDTOP=$(REL)$(C)
 LOCALINCLUDES = -I$(srcdir) 
 

@@ -56,7 +56,16 @@ krb5_gss_release_cred(minor_status, cred_handle)
     /* ignore error destroying mutex */
 
     if (cred->ccache)
-        code1 = krb5_cc_close(context, cred->ccache);
+    {
+        if (cred->destroy_ccache)
+        {
+            code1 = krb5_cc_destroy(context, cred->ccache);
+        }
+        else
+        {
+            code1 = krb5_cc_close(context, cred->ccache);
+        }
+    }
     else
         code1 = 0;
 

@@ -88,6 +88,11 @@ typedef int socklen_t;
 extern int h_errno;             /* In case it's missing, e.g., HP-UX 10.20. */
 #endif
 
+/* LW */
+#if defined(__hpux) && defined(__ia64)
+#include "mymp.h"
+#endif
+
 #include <sys/param.h>          /* For MAXHOSTNAMELEN */
 #include <sys/socket.h>         /* For SOCK_*, AF_*, etc */
 #include <sys/time.h>           /* For struct timeval */
