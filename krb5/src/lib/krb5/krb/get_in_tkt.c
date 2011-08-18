@@ -643,55 +643,6 @@ request_enc_pa_rep(krb5_pa_data ***padptr)
     return 0;
 }
 
-static krb5_error_code
-rewrite_server_realm(krb5_context context,
-		     krb5_const_principal old_server,
-		     const krb5_data *realm,
-		     krb5_boolean tgs,
-		     krb5_principal *server)
-{
-    krb5_error_code retval;
-
-    assert(*server == NULL);
-
-    retval = krb5_copy_principal(context, old_server, server);
-    if (retval)
-	return retval;
-
-    krb5_free_data_contents(context, &(*server)->realm);
-    (*server)->realm.data = NULL;
-
-    retval = krb5int_copy_data_contents(context, realm, &(*server)->realm);
-    if (retval)
-	goto cleanup;
-
-    if (tgs) {
-	krb5_free_data_contents(context, &(*server)->data[1]);
-	(*server)->data[1].data = NULL;
-
-	retval = krb5int_copy_data_contents(context, realm, &(*server)->data[1]);
-	if (retval)
-	    goto cleanup;
-    }
-
-cleanup:
-    if (retval) {
-	krb5_free_principal(context, *server);
-	*server = NULL;
-    }
-
-    return retval;
-}
-
-static inline int
-tgt_is_local_realm(krb5_creds *tgt)
-{
-    return (tgt->server->length == 2
-            && data_eq_string(tgt->server->data[0], KRB5_TGS_NAME)
-            && data_eq(tgt->server->data[1], tgt->client->realm)
-            && data_eq(tgt->server->realm, tgt->client->realm));
-}
-
 krb5_error_code KRB5_CALLCONV
 krb5_get_in_tkt(krb5_context context,
                 krb5_flags options,

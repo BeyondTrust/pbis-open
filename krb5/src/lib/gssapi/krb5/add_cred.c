@@ -277,6 +277,13 @@ krb5_gss_add_cred(minor_status, input_cred_handle,
                 save_error_info(*minor_status, context);
                 krb5_free_context(context);
                 return(GSS_S_FAILURE);
+            } else {
+                /* If the cred. cache is an internal memory cache
+                 * it will be leaked but that's better than a
+                 * segfault if one of them destroys it while the
+                 * other is still using it.
+                 */
+                cred->destroy_ccache = new_cred->destroy_ccache = 0;
             }
         } else {
             new_cred->rcache = NULL;

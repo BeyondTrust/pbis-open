@@ -2473,18 +2473,23 @@ cleanup:
     return retval;
 }
 
-static void
-openssl_init()
+static int
+openssl_init(void)
 {
-    static int did_init = 0;
-
-    if (!did_init) {
-        /* initialize openssl routines */
+    if (EVP_get_cipherbyname(EVP_CIPHER_name(EVP_des_cbc())) == NULL)
+    {
+        pkiDebug("%s: initializing OpenSSL\n", __FUNCTION__);
         CRYPTO_malloc_init();
         ERR_load_crypto_strings();
         OpenSSL_add_all_algorithms();
-        did_init++;
+        do_openssl_cleanup = TRUE;
     }
+    else
+    {
+        pkiDebug("%s: OpenSSL already initialized\n", __FUNCTION__);
+    }
+
+    return 0;
 }
 
 static krb5_error_code

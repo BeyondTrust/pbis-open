@@ -578,11 +578,12 @@ init_ctx_new(OM_uint32 *minor_status,
 	     gss_OID_set *mechSet,
 	     send_token_flag *tokflag)
 {
-+	OM_uint32 ret, tmpmin, saveret = 0, savemin = 0;
-+	gss_ctx_id_t tmpctx = {0};
-+	gss_buffer_desc tmpoutput = GSS_C_EMPTY_BUFFER;
+	OM_uint32 ret, tmpmin, saveret = 0, savemin = 0;
+	gss_ctx_id_t tmpctx = {0};
+	gss_buffer_desc tmpoutput = GSS_C_EMPTY_BUFFER;
 	spnego_gss_ctx_id_t sc = NULL;
-+	size_t read_mech = 0, write_mech = 0;
+	size_t read_mech = 0, write_mech = 0;
+	gss_cred_id_t mcred;
 
 	/* determine negotiation mech set */
 	ret = get_negotiable_mechs(minor_status, spcred, GSS_C_INITIATE,
@@ -599,10 +600,11 @@ init_ctx_new(OM_uint32 *minor_status,
 	 * once for each mechanism, and throwing away the results.
 	 */
 	write_mech = 0;
+	mcred = (spcred == NULL) ? GSS_C_NO_CREDENTIAL : spcred->mcred;
 	for (read_mech = 0; read_mech < (*mechSet)->count; read_mech++)
 	{
 		ret = gss_init_sec_context(&tmpmin,
-					   cred,
+					   mcred,
 					   &tmpctx,
 					   target_name,
 					   &(*mechSet)->elements[read_mech],
@@ -1021,16 +1023,16 @@ spnego_gss_init_sec_context(
 	spcred = (spnego_gss_cred_id_t)claimant_cred_handle;
 	if (*context_handle == GSS_C_NO_CONTEXT) {
 		ret = init_ctx_new(minor_status, spcred,
-+				   target_name, req_flags, time_req, context_handle,
-+				   &mechSet, &send_token);
+				   target_name, req_flags, time_req, context_handle,
+				   &mechSet, &send_token);
 		if (ret != GSS_S_CONTINUE_NEEDED) {
 			goto cleanup;
 		}
 	} else {
 		ret = init_ctx_cont(minor_status, context_handle,
 				    input_token, &mechtok_in,
-+				    &mechListMIC_in, &negState,
-+				    &peerState,  &send_token);
+				    &mechListMIC_in, &negState,
+				    &peerState,  &send_token);
 		if (HARD_ERROR(ret)) {
 			goto cleanup;
 		}
@@ -1798,7 +1800,7 @@ cleanup:
 						   GSS_C_NO_OID,
 						   &mechtok_out, mic_out,
 						   return_token,
-						   output_token);
+						   output_token, 0);
 		if (tmpret < 0)
 			ret = GSS_S_FAILURE;
 	}
@@ -1985,76 +1987,6 @@ spnego_gss_inquire_cred(
 		gss_release_cred(&tmp_minor_status, &creds);
 	} else {
 		status = gss_inquire_cred(minor_status, spcred->mcred,
-					  name, lifetime,
-					  cred_usage, mechanisms);
-	}
-
-	dsyslog("Leaving inquire_cred\n");
-
-	return (status);
-}
-
-OM_uint32
-spnego_gss_inquire_cred(
-			OM_uint32 *minor_status,
-			gss_cred_id_t cred_handle,
-			gss_name_t *name,
-			OM_uint32 *lifetime,
-			int *cred_usage,
-			gss_OID_set *mechanisms)
-{
-	OM_uint32 status;
-	gss_cred_id_t creds = GSS_C_NO_CREDENTIAL;
-	OM_uint32 tmp_minor_status;
-	OM_uint32 initiator_lifetime, acceptor_lifetime;
-
-	dsyslog("Entering inquire_cred\n");
-
-	/*
-	 * To avoid infinite recursion, if GSS_C_NO_CREDENTIAL is
-	 * supplied we call gss_inquire_cred_by_mech() on the
-	 * first non-SPNEGO mechanism.
-	 */
-	if (cred_handle == GSS_C_NO_CREDENTIAL) {
-		status = get_available_mechs(minor_status,
-			GSS_C_NO_NAME,
-			GSS_C_BOTH,
-			&creds,
-			mechanisms);
-		if (status != GSS_S_COMPLETE) {
-			dsyslog("Leaving inquire_cred\n");
-			return (status);
-		}
-
-		if ((*mechanisms)->count == 0) {
-			gss_release_cred(&tmp_minor_status, &creds);
-			gss_release_oid_set(&tmp_minor_status, mechanisms);
-			dsyslog("Leaving inquire_cred\n");
-			return (GSS_S_DEFECTIVE_CREDENTIAL);
-		}
-
-		assert((*mechanisms)->elements != NULL);
-
-		status = gss_inquire_cred_by_mech(minor_status,
-			creds,
-			&(*mechanisms)->elements[0],
-			name,
-			&initiator_lifetime,
-			&acceptor_lifetime,
-			cred_usage);
-		if (status != GSS_S_COMPLETE) {
-			gss_release_cred(&tmp_minor_status, &creds);
-			dsyslog("Leaving inquire_cred\n");
-			return (status);
-		}
-
-		if (lifetime != NULL)
-			*lifetime = (*cred_usage == GSS_C_ACCEPT) ?
-				acceptor_lifetime : initiator_lifetime;
-
-		gss_release_cred(&tmp_minor_status, &creds);
-	} else {
-		status = gss_inquire_cred(minor_status, cred_handle,
 					  name, lifetime,
 					  cred_usage, mechanisms);
 	}
@@ -2408,21 +2340,6 @@ spnego_gss_set_cred_option(
 				     mcred,
 				     desired_object,
 				     value);
-	return (ret);
-}
-
-OM_uint32
-spnego_gss_inquire_cred_by_oid(
-		OM_uint32 *minor_status,
-		const gss_cred_id_t cred_handle,
-		const gss_OID desired_object,
-		gss_buffer_set_t *data_set)
-{
-	OM_uint32 ret;
-	ret = gss_inquire_cred_by_oid(minor_status,
-				cred_handle,
-				desired_object,
-				data_set);
 	return (ret);
 }
 
@@ -2783,176 +2700,6 @@ spnego_gss_set_neg_mechs(OM_uint32 *minor_status,
 	gss_release_oid_set(minor_status, &spcred->neg_mechs);
 	ret = generic_gss_copy_oid_set(minor_status, mech_list,
 				       &spcred->neg_mechs);
-	return (ret);
-}
-
-OM_uint32
-spnego_gss_acquire_cred_impersonate_name(OM_uint32 *minor_status,
-					 const gss_cred_id_t impersonator_cred_handle,
-					 gss_name_t desired_name,
-					 OM_uint32 time_req,
-					 gss_OID_set desired_mechs,
-					 gss_cred_usage_t cred_usage,
-					 gss_cred_id_t *output_cred_handle,
-					 gss_OID_set *actual_mechs,
-					 OM_uint32 *time_rec)
-{
-	OM_uint32 status;
-	gss_OID_set amechs = GSS_C_NULL_OID_SET;
-
-	dsyslog("Entering spnego_gss_acquire_cred_impersonate_name\n");
-
-	if (actual_mechs)
-		*actual_mechs = NULL;
-
-	if (time_rec)
-		*time_rec = 0;
-
-	if (desired_mechs == GSS_C_NO_OID_SET) {
-		status = gss_inquire_cred(minor_status,
-					  impersonator_cred_handle,
-					  NULL, NULL,
-					  NULL, &amechs);
-		if (status != GSS_S_COMPLETE)
-			return status;
-
-		desired_mechs = amechs;
-	}
-
-	status = gss_acquire_cred_impersonate_name(minor_status,
-			impersonator_cred_handle,
-			desired_name, time_req,
-			desired_mechs, cred_usage,
-			output_cred_handle, actual_mechs,
-			time_rec);
-
-	if (amechs != GSS_C_NULL_OID_SET)
-		(void) gss_release_oid_set(minor_status, &amechs);
-
-	dsyslog("Leaving spnego_gss_acquire_cred_impersonate_name\n");
-	return (status);
-}
-
-OM_uint32
-spnego_gss_display_name_ext(OM_uint32 *minor_status,
-			    gss_name_t name,
-			    gss_OID display_as_name_type,
-			    gss_buffer_t display_name)
-{
-	OM_uint32 ret;
-	ret = gss_display_name_ext(minor_status,
-				   name,
-				   display_as_name_type,
-				   display_name);
-	return (ret);
-}
-
-
-OM_uint32
-spnego_gss_inquire_name(OM_uint32 *minor_status,
-			gss_name_t name,
-			int *name_is_MN,
-			gss_OID *MN_mech,
-			gss_buffer_set_t *attrs)
-{
-	OM_uint32 ret;
-	ret = gss_inquire_name(minor_status,
-			       name,
-			       name_is_MN,
-			       MN_mech,
-			       attrs);
-	return (ret);
-}
-
-OM_uint32
-spnego_gss_get_name_attribute(OM_uint32 *minor_status,
-			      gss_name_t name,
-			      gss_buffer_t attr,
-			      int *authenticated,
-			      int *complete,
-			      gss_buffer_t value,
-			      gss_buffer_t display_value,
-			      int *more)
-{
-	OM_uint32 ret;
-	ret = gss_get_name_attribute(minor_status,
-				     name,
-				     attr,
-				     authenticated,
-				     complete,
-				     value,
-				     display_value,
-				     more);
-	return (ret);
-}
-
-OM_uint32
-spnego_gss_set_name_attribute(OM_uint32 *minor_status,
-			      gss_name_t name,
-			      int complete,
-			      gss_buffer_t attr,
-			      gss_buffer_t value)
-{
-	OM_uint32 ret;
-	ret = gss_set_name_attribute(minor_status,
-				     name,
-				     complete,
-				     attr,
-				     value);
-	return (ret);
-}
-
-OM_uint32
-spnego_gss_delete_name_attribute(OM_uint32 *minor_status,
-				 gss_name_t name,
-				 gss_buffer_t attr)
-{
-	OM_uint32 ret;
-	ret = gss_delete_name_attribute(minor_status,
-					name,
-					attr);
-	return (ret);
-}
-
-OM_uint32
-spnego_gss_export_name_composite(OM_uint32 *minor_status,
-				 gss_name_t name,
-				 gss_buffer_t exp_composite_name)
-{
-	OM_uint32 ret;
-	ret = gss_export_name_composite(minor_status,
-					name,
-					exp_composite_name);
-	return (ret);
-}
-
-OM_uint32
-spnego_gss_map_name_to_any(OM_uint32 *minor_status,
-			   gss_name_t name,
-			   int authenticated,
-			   gss_buffer_t type_id,
-			   gss_any_t *output)
-{
-	OM_uint32 ret;
-	ret = gss_map_name_to_any(minor_status,
-				  name,
-				  authenticated,
-				  type_id,
-				  output);
-	return (ret);
-}
-
-OM_uint32
-spnego_gss_release_any_name_mapping(OM_uint32 *minor_status,
-				    gss_name_t name,
-				    gss_buffer_t type_id,
-				    gss_any_t *input)
-{
-	OM_uint32 ret;
-	ret = gss_release_any_name_mapping(minor_status,
-					   name,
-					   type_id,
-					   input);
 	return (ret);
 }
 

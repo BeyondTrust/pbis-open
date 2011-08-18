@@ -968,21 +968,6 @@ typedef struct _krb5_pa_s4u_x509_user {
     krb5_checksum       cksum;
 } krb5_pa_s4u_x509_user;
 
-typedef struct _krb5_s4u_userid {
-    krb5_int32		nonce;
-    krb5_principal	user;
-    krb5_data		subject_cert;
-    krb5_flags		options;
-} krb5_s4u_userid;
-
-#define KRB5_S4U_OPTS_CHECK_LOGON_HOURS		0x40000000 /* check logon hour restrictions */
-#define KRB5_S4U_OPTS_USE_REPLY_KEY_USAGE	0x20000000 /* sign with usage 27 instead of 26 */
-
-typedef struct _krb5_pa_s4u_x509_user {
-    krb5_s4u_userid	user_id;
-    krb5_checksum	cksum;
-} krb5_pa_s4u_x509_user;
-
 enum {
     KRB5_FAST_ARMOR_AP_REQUEST = 0x1
 };
@@ -1148,11 +1133,6 @@ void krb5_free_etype_info(krb5_context, krb5_etype_info);
 #define krb5_gic_opt_is_shadowed(s)                                     \
     ((s) && ((s)->flags & KRB5_GET_INIT_CREDS_OPT_SHADOWED) ? 1 : 0)
 
-typedef struct _krb5_ad_kdcissued {
-    krb5_checksum ad_checksum;
-    krb5_principal i_principal;
-    krb5_authdata **elements;
-} krb5_ad_kdcissued;
 
 typedef struct _krb5_gic_opt_private {
     int num_preauth_data;
@@ -1806,9 +1786,6 @@ decode_krb5_enc_sam_response_enc_2(const krb5_data *,
 krb5_error_code
 decode_krb5_sam_response_2(const krb5_data *, krb5_sam_response_2 **);
 
-
-krb5_error_code encode_krb5_ad_kdcissued
-(const krb5_ad_kdcissued *, krb5_data **);
 
 /*************************************************************************
  * Prototypes for krb5_decode.c
@@ -2863,18 +2840,6 @@ krb5int_pac_sign(krb5_context context,
                  const krb5_keyblock *privsvr_key,
                  krb5_data *data);
 
-krb5_error_code
-krb5_auth_con_get_authdata_context
-	(krb5_context context,
-	    krb5_auth_context auth_context,
-	    krb5_authdata_context *ad_context);
-
-krb5_error_code
-krb5_auth_con_set_authdata_context
-	(krb5_context context,
-	    krb5_auth_context auth_context,
-	    krb5_authdata_context ad_context);
-
 krb5_error_code KRB5_CALLCONV
 krb5_get_credentials_for_user(krb5_context context, krb5_flags options,
                               krb5_ccache ccache,
@@ -2899,21 +2864,6 @@ krb5int_get_authdata_containee_types(krb5_context context,
 krb5_error_code krb5int_parse_enctype_list(krb5_context context, char *profstr,
                                            krb5_enctype *default_list,
                                            krb5_enctype **result);
-
-krb5_error_code KRB5_CALLCONV
-krb5_get_credentials_for_user(krb5_context context, krb5_flags options,
-                              krb5_ccache ccache,
-                              krb5_creds *in_creds,
-                              krb5_data *cert,
-                              krb5_creds **out_creds);
-
-krb5_error_code KRB5_CALLCONV
-krb5_get_credentials_for_proxy(krb5_context context,
-                               krb5_flags options,
-                               krb5_ccache ccache,
-                               krb5_creds *in_creds,
-                               krb5_ticket *evidence_tkt,
-                               krb5_creds **out_creds);
 
 #ifdef DEBUG_ERROR_LOCATIONS
 #define krb5_set_error_message(ctx, code, ...)                          \

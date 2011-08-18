@@ -257,6 +257,7 @@ rd_and_store_for_creds(context, auth_context, inbuf, out_cred)
         cred->rfc_mech = 1;
         cred->keytab = NULL; /* no keytab associated with this... */
         cred->tgt_expire = creds[0]->times.endtime; /* store the end time */
+        cred->destroy_ccache = 1;
         cred->ccache = ccache; /* the ccache containing the credential */
         ccache = NULL; /* cred takes ownership so don't destroy */
     }
