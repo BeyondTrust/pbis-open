@@ -507,6 +507,9 @@ CheckSambaVersion(
     else if (!strncmp(pVersionString, "3.5.", sizeof("3.5.") - 1))
     {
     }
+    else if (!strncmp(pVersionString, "3.6.", sizeof("3.6.") - 1))
+    {
+    }
     else if (!strncmp(pVersionString, "3.0.", sizeof("3.0.") - 1))
     {
         int build = 0;
