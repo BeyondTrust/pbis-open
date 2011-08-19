@@ -138,6 +138,7 @@ LsaNssWriteUserInfo(
        BAIL_ON_LSA_ERROR(dwError);
     }
 
+    memset(pResultUser , 0, sizeof(struct passwd));
     pResultUser->pw_uid = pUserInfo_0->uid;
     pResultUser->pw_gid = pUserInfo_0->gid;
 
