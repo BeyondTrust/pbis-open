@@ -1388,13 +1388,17 @@ LsaCreateMachineAccount(
     {
         BAIL_ON_LSA_ERROR(NERR_SetupAlreadyJoined);
     }
-    else
+    else if (ntStatus == STATUS_SUCCESS)
     {
         ntStatus = SamrOpenUser(hSamrBinding,
                                 hDomain,
                                 dwUserAccess,
                                 pdwRids[0],
                                 &hUser);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+    else
+    {
         BAIL_ON_NT_STATUS(ntStatus);
     }
 
