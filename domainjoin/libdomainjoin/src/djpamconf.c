@@ -1075,6 +1075,7 @@ ReadPamDirFile(
     PSTR pNonPrefixedFilePath = NULL;
     PSTR pFilePath = NULL;
     PSTR pSymTarget = NULL;
+    struct stat linkTargetStat = { 0 };
     struct stat pamDirectoryStat = { 0 };
     struct stat compareDirectoryStat = { 0 };
     PSTR pSymDirName = NULL;
@@ -1117,6 +1118,20 @@ ReadPamDirFile(
 
     if (pSymTarget != NULL)
     {
+        // Verify the symlink target exists
+        while (stat(pFilePath, &linkTargetStat) < 0)
+        {
+            if (errno == EINTR)
+                continue;
+            if (errno == ENOENT)
+            {
+                DJ_LOG_WARNING("Pam file %s is a dangling symlink with target %s. Skipping", pFilePath, pSymTarget);
+                goto error;
+            }
+            ceError = LwMapErrnoToLwError(errno);
+            BAIL_ON_CENTERIS_ERROR(ceError);
+        }
+
         // Only treat this symlink as an alias if it points to a file in the
         // same directory.
 
