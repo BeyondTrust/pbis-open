@@ -2107,6 +2107,7 @@ AD_WinErrorIsConnectionError(
         case ERROR_UNEXP_NET_ERR:
         case ERROR_PIPE_NOT_CONNECTED:
         case ERROR_BAD_NET_NAME:
+        case WSAECONNRESET:
             return TRUE;
 
         default:
