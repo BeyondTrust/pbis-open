@@ -166,6 +166,22 @@ typedef struct _SM_LOGGER
         );
 } SM_LOGGER, *PSM_LOGGER;
 
+typedef struct _SM_GLOBAL_STATE
+{
+    PLW_THREAD_POOL pPool;
+    LWMsgContext* pIpcContext;
+    LWMsgProtocol* pIpcProtocol;
+    LWMsgServer* pIpcServer;
+    BOOLEAN bStartAsDaemon;
+    BOOLEAN bNotified;
+    int notifyPipe[2];
+    LW_SM_LOG_LEVEL logLevel;
+    PCSTR pszLogFilePath;
+    BOOLEAN bSyslog;
+    int ControlLock;
+    BOOLEAN bWatchdog;
+} SM_GLOBAL_STATE, *PSM_GLOBAL_STATE;
+
 DWORD
 LwSmSrvAcquireServiceHandle(
     PCWSTR pwszName,
@@ -424,5 +440,8 @@ LwSmSrvGetLogInfo(
 #define SM_LOG_TRACE(...) SM_LOG(LW_SM_LOG_LEVEL_TRACE, __VA_ARGS__)
 
 extern SM_LOADER_CALLS gTableCalls;
+
+extern PLW_THREAD_POOL gpPool;
+extern SM_GLOBAL_STATE gState;
 
 #endif

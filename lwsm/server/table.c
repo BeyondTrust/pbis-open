@@ -981,7 +981,7 @@ LwSmTableNotifyEntryStateChanged(
 
     pthread_cond_broadcast(pEntry->pEvent);
 
-    if (state == LW_SERVICE_STATE_DEAD)
+    if (state == LW_SERVICE_STATE_DEAD && gState.bWatchdog)
     {
         now = time(NULL);
         if (now == (time_t) -1)

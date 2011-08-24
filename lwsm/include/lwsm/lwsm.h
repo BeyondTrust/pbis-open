@@ -246,6 +246,22 @@ typedef enum _LW_SM_LOGGER_TYPE
     LW_SM_LOGGER_SYSLOG
 } LW_SM_LOGGER_TYPE, *PLW_SM_LOGGER_TYPE;
 
+typedef enum _LW_SM_GLOBAL_SETTING
+{
+    /**
+     * @brief No setting
+     * @hideinitializer
+     */
+    LW_SM_GLOBAL_SETTING_NONE = 0,
+    /**
+     * @brief Control service watchdog
+     *
+     * (BOOLEAN) Turns service watchdog on or off globally
+     * @hideinitializer
+     */
+    LW_SM_GLOBAL_SETTING_WATCHDOG
+} LW_SM_GLOBAL_SETTING, *PLW_SM_GLOBAL_SETTING;
+
 /**
  * @brief Acquire service handle
  *
@@ -565,6 +581,56 @@ LwSmShutdown(
 VOID
 LwSmFreeLogTarget(
     PSTR pszTarget
+    );
+
+/**
+ * @brief Change global setting
+ *
+ * Changes a global setting.  See the description of each
+ * global setting for the type of parameters to pass as
+ * the trailing arguments.
+ *
+ * @param[in] Setting the setting to change
+ * @param[in] ... value or values for the given setting
+ * @retval #ERROR_SUCCESS success
+ * @retval #ERROR_INVALID_PARAMETER invalid setting or value
+ */
+DWORD
+LwSmSetGlobal(
+    LW_IN LW_SM_GLOBAL_SETTING Setting,
+    ...
+    );
+
+/**
+ * @brief Get global setting
+ *
+ * Gets the value of a global setting.  The
+ * trailing parameters should be out pointers to
+ * the appropriate types listed in the description
+ * of the setting to change.
+ *
+ * @param[in] Setting the setting to get
+ * @param[out] ... set to the value or values for the given setting
+ */
+DWORD
+LwSmGetGlobal(
+    LW_IN LW_SM_GLOBAL_SETTING Setting,
+    ...
+    );
+
+/**
+ * @brief Free global setting value
+ *
+ * Frees the value of a global setting previously
+ * returned by #LwSmGetGlobal().
+ *
+ * @param[in] Setting the setting associated with the value to free
+ * @param[in,out] ... the value or values to free
+ */
+VOID
+LwSmFreeGlobal(
+    LW_IN LW_SM_GLOBAL_SETTING Setting,
+    ...
     );
 
 /*@}*/

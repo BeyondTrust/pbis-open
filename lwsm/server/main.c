@@ -38,20 +38,7 @@
 
 #include "includes.h"
 
-static struct
-{
-    PLW_THREAD_POOL pPool;
-    LWMsgContext* pIpcContext;
-    LWMsgProtocol* pIpcProtocol;
-    LWMsgServer* pIpcServer;
-    BOOLEAN bStartAsDaemon;
-    BOOLEAN bNotified;
-    int notifyPipe[2];
-    LW_SM_LOG_LEVEL logLevel;
-    PCSTR pszLogFilePath;
-    BOOLEAN bSyslog;
-    int ControlLock;
-} gState = 
+SM_GLOBAL_STATE gState =
 {
     .pPool = NULL,
     .pIpcContext = NULL,
@@ -62,7 +49,8 @@ static struct
     .logLevel = LW_SM_LOG_LEVEL_WARNING,
     .pszLogFilePath = NULL,
     .bSyslog = FALSE,
-    .ControlLock = -1
+    .ControlLock = -1,
+    .bWatchdog = TRUE
 };
 
 static

@@ -1623,6 +1623,80 @@ error:
 
 static
 DWORD
+LwSmCmdSettings(
+    VOID
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    BOOLEAN bWatchdog = FALSE;
+
+    dwError = LwSmGetGlobal(LW_SM_GLOBAL_SETTING_WATCHDOG, &bWatchdog);
+    BAIL_ON_ERROR(dwError);
+
+    printf("watchdog: %s\n", bWatchdog ? "on" : "off");
+
+error:
+
+    return dwError;
+}
+
+static
+DWORD
+ParseBoolean(
+    PCSTR pStr,
+    PBOOLEAN pValue
+    )
+{
+    if (!strcmp(pStr, "true") ||
+        !strcmp(pStr, "on"))
+    {
+        *pValue = TRUE;
+    }
+    else if (!strcmp(pStr, "false") ||
+             !strcmp(pStr, "off"))
+    {
+        *pValue = FALSE;
+    }
+    else
+    {
+        return ERROR_INVALID_PARAMETER;
+    }
+
+    return ERROR_SUCCESS;
+}
+
+static
+DWORD
+LwSmCmdSet(
+    int argc,
+    char** ppArgv
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    BOOLEAN booleanValue = FALSE;
+
+    if (argc != 3)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (!strcmp(ppArgv[1], "watchdog"))
+    {
+        dwError = ParseBoolean(ppArgv[2], &booleanValue);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = LwSmSetGlobal(LW_SM_GLOBAL_SETTING_WATCHDOG, booleanValue);
+        BAIL_ON_ERROR(dwError);
+    }
+
+error:
+
+    return dwError;
+}
+
+static
+DWORD
 LwSmUsage(
     int argc,
     char** pArgv
@@ -1661,7 +1735,9 @@ LwSmUsage(
            "                                   verbose\n"
            "                                   debug\n"
            "                                   trace\n"
-           "    get-log-level              Show current log level\n\n");
+           "    get-log-level              Show current log level\n\n"
+           "    settings                   List global settings and values \n"
+           "    set <setting> <value>      Change global setting\n\n");
     printf("Options:\n"
            "    -q, --quiet                Suppress console output\n"
            "    -h, --help                 Show usage information\n\n");
@@ -1777,6 +1853,16 @@ main(
         else if (!strcmp(pArgv[i], "shutdown"))
         {
             dwError = LwSmShutdown();
+            goto error;
+        }
+        else if (!strcmp(pArgv[i], "settings"))
+        {
+            dwError = LwSmCmdSettings();
+            goto error;
+        }
+        else if (!strcmp(pArgv[i], "set"))
+        {
+            dwError = LwSmCmdSet(argc - 1, pArgv + 1);
             goto error;
         }
         else
