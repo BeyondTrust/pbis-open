@@ -55,7 +55,7 @@
 #include <lwerror.h>
 
 
-#if defined(sun) || defined(_AIX)
+#ifdef PTHREAD_ONCE_INIT_BROKEN
 #define ONCE_INIT {PTHREAD_ONCE_INIT}
 #else
 #define ONCE_INIT PTHREAD_ONCE_INIT
