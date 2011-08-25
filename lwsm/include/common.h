@@ -83,7 +83,7 @@
 #endif
 #endif
 
-#if BROKEN_ONCE_INIT
+#ifdef PTHREAD_ONCE_INIT_BROKEN
 #  define ONCE_INIT {PTHREAD_ONCE_INIT}
 #else
 #  define ONCE_INIT PTHREAD_ONCE_INIT
