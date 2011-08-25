@@ -515,11 +515,6 @@ cleanup:
 
     if (status != STATUS_PENDING)
     {
-        if (pContext->State.TreeConnect.hGssContext)
-        {
-            SMBGSSContextFree(pContext->State.TreeConnect.hGssContext);
-        }
-
         if (pSession)
         {
             RdrSession2Invalidate(pSession, status);
