@@ -441,7 +441,6 @@ LwSmSrvGetLogInfo(
 
 extern SM_LOADER_CALLS gTableCalls;
 
-extern PLW_THREAD_POOL gpPool;
 extern SM_GLOBAL_STATE gState;
 
 #endif
