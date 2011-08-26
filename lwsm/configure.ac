@@ -104,13 +104,14 @@ CFLAGS="$CFLAGS $LWSM_CFLAGS"
 AC_MSG_CHECKING([if PTHREAD_ONCE_INIT must be surrounded by braces])
 AC_TRY_COMPILE([
 #include <pthread.h>
+#include <string.h>
 ],
 [
 struct
 {
 	pthread_once_t once;
 } once = {PTHREAD_ONCE_INIT};
-return *(int *)&once;
+memset(&once, 0, sizeof(once));
 ], [AC_MSG_RESULT([no])], [
 AC_MSG_RESULT([yes])
 AC_DEFINE([PTHREAD_ONCE_INIT_BROKEN], [], [Define if PTHREAD_ONCE_INIT must be surrounded by braces])
