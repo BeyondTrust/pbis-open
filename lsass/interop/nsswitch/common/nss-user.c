@@ -102,6 +102,10 @@ LsaNssComputeUserStringLength(
        dwLength += strlen(pUserInfo->pszHomedir) + 1;
     }
 
+#ifdef HAVE_STRUCT_PASSWD_PW_CLASS
+   dwLength++;
+#endif
+
     return dwLength;
 }
 
@@ -189,6 +193,12 @@ LsaNssWriteUserInfo(
        pResultUser->pw_dir = pszMarker;
        pszMarker += dwLen + 1;
     }
+
+#ifdef HAVE_STRUCT_PASSWD_PW_CLASS
+    *pszMarker = 0;
+    pResultUser->pw_class = pszMarker;
+    pszMarker ++;
+#endif
 
 cleanup:
 
