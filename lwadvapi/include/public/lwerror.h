@@ -756,6 +756,35 @@
 #define _LW_ERROR_PAM_BASE                                 49900
 #define _LW_ERROR_PAM_MAX                                  49999
 
+// 50000-50999 reserved for gpagentd
+#define LW_ERROR_GP_REFRESH_FAILED                         50000
+#define LW_ERROR_GP_LOGIN_POLICY_FAILED                    50001
+#define LW_ERROR_GP_LOGOUT_POLICY_FAILED                   50002
+#define LW_ERROR_GP_PATH_NOT_FOUND                         50003
+#define LW_ERROR_GP_CREATE_FAILED                          50004
+#define LW_ERROR_GP_READ_FAILED                            50005
+#define LW_ERROR_GP_WRITE_FAILED                           50006
+#define LW_ERROR_GP_QUERY_DIRECTORY                        50007
+#define LW_ERROR_GP_FILE_COPY_FAILED                       50008
+#define LW_ERROR_GP_LWIDATA_NOT_INITIALIZED                50009
+#define LW_ERROR_GP_XPATH_CONTEXT_INIT_ERR                 50010
+#define LW_ERROR_GP_XPATH_BAD_EXPRESSION                   50011
+#define LW_ERROR_GP_XML_GPITEM_NOT_FOUND                   50012
+#define LW_ERROR_GP_XML_NO_NODE_TEXT                       50013
+#define LW_ERROR_GP_XML_TYPE_MISMATCH                      50014
+#define LW_ERROR_GP_XML_NODE_NOT_FOUND                     50015
+#define LW_ERROR_GP_GSS_CALL_FAILED                        50016
+#define LW_ERROR_GP_NO_SMB_KRB5_SITE_KDC_INFO              50017
+#define LW_ERROR_GP_NO_SMB_KRB5_SITE_INFO                  50018
+#define LW_ERROR_GP_NOT_EXACTLY_ONE                        50019
+#define LW_ERROR_GP_INVALID_GPLINK                         50020
+#define LW_ERROR_GP_LICENSE_RESTRICTION                    50021
+#define LW_ERROR_GP_FILE_PARSE_ERROR                       50022
+#define LW_ERROR_GP_UNEXPECTED_ACTION_TYPE                 50023
+#define LW_ERROR_GP_XML_FAILED_TO_WRITE_DOC                50024
+#define LW_ERROR_GP_SETLOGLEVEL_FAILED                     50025
+#define LW_ERROR_GP_DOMAIN_JOIN_FAILED                     50026
+#define LW_ERROR_GP_DOMAIN_LEAVE_FAILED                    50027
 
 LW_BEGIN_EXTERN_C
 
