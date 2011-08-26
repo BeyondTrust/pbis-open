@@ -39,6 +39,7 @@
  * Authors: Danilo Almeida (dalmeida@likewise.com)
  */
 
+#include "config.h"
 #include <lsa/lsapstore-api.h>
 #include <lsa/lsapstore-plugin.h>
 

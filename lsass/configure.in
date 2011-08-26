@@ -867,6 +867,13 @@ AC_CHECK_TYPES([wchar16_t], [], [], [AC_INCLUDES_DEFAULT
 # include <wc16str.h>
 #endif
 ])
+
+AC_CHECK_MEMBERS([struct passwd.pw_class],
+[], [], [AC_INCLUDES_DEFAULT
+#include <sys/types.h>
+#include <pwd.h>
+])
+
 AC_CHECK_MEMBERS([ucontext_t.uc_mcontext],
 [], [], [AC_INCLUDES_DEFAULT
 #ifdef HAVE_UCONTEXT_H
