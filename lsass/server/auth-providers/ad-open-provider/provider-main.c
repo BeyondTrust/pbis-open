@@ -3098,6 +3098,10 @@ AD_RemoveGroupByIdFromCache(
                   ppObjects[0]->pszObjectSid);
     BAIL_ON_LSA_ERROR(dwError);
 
+    // Flush the system cache incase the assume default domain setting changed.
+    dwError = LsaSrvFlushSystemCache();
+    BAIL_ON_LSA_ERROR(dwError);
+
 cleanup:
     LsaUtilFreeSecurityObjectList(1, ppObjects);
     AD_ClearProviderState(pContext);
