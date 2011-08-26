@@ -98,19 +98,25 @@ AC_C_BIGENDIAN
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
+saved_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS $LWSM_CFLAGS"
+
 AC_MSG_CHECKING([if PTHREAD_ONCE_INIT must be surrounded by braces])
 AC_TRY_COMPILE([
 #include <pthread.h>
-#include <string.h>
 ],
 [
-pthread_once_t x = PTHREAD_ONCE_INIT;
-memset(&x, 0, sizeof(x));
+struct
+{
+	pthread_once_t once;
+} once = {PTHREAD_ONCE_INIT};
+return *(int *)&once;
 ], [AC_MSG_RESULT([no])], [
 AC_MSG_RESULT([yes])
 AC_DEFINE([PTHREAD_ONCE_INIT_BROKEN], [], [Define if PTHREAD_ONCE_INIT must be surrounded by braces])
 ])
 
+CFLAGS="$saved_CFLAGS"
 CPPFLAGS="$saved_CPPFLAGS"
 
 AC_CONFIG_FILES([Makefile doc/Doxyfile])
