@@ -656,12 +656,6 @@ error:
         pExec->pid = -1;
     }
 
-    if (pExec->notifyFd >= 0)
-    {
-        close(pExec->notifyFd);
-        pExec->notifyFd = -1;
-    }
-
     *pWaitMask = LW_TASK_EVENT_COMPLETE;
 
     goto cleanup;
