@@ -101,7 +101,8 @@ LdapMachDnsNameSearch(
     LDAP *ld,
     const wchar16_t *name,
     const wchar16_t *dns_domain_name,
-    const wchar16_t *base
+    const wchar16_t *base,
+    PCWSTR pSchemaContext
     );
 
 int

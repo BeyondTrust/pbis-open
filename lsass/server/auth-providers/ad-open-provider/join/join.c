@@ -172,9 +172,10 @@ LsaSavePrincipalKey(
 static
 DWORD
 LsaDirectoryConnect(
-    const wchar16_t *domain,
-    LDAP **ldconn,
-    wchar16_t **dn_context
+    PCWSTR pDomain,
+    LDAP** ppLdConn,
+    PWSTR* ppDefaultContext,
+    PWSTR* ppSchemaContext
     );
 
 
@@ -202,6 +203,7 @@ LsaMachDnsNameSearch(
     LDAP *ldconn,
     const wchar16_t *name,
     const wchar16_t *dn_context,
+    PCWSTR pSchemaContext,
     const wchar16_t *dns_domain_name,
     wchar16_t **samacct
     );
@@ -453,6 +455,7 @@ LsaJoinDomainInternal(
     LDAP *pLdap = NULL;
     PWSTR pwszMachineNameLc = NULL;    /* lower cased machine name */
     PWSTR pwszBaseDn = NULL;
+    PWSTR pwszSchemaDn = NULL;
     PWSTR pwszDn = NULL;
     PWSTR pwszDnsAttrName = NULL;
     PWSTR pwszDnsAttrVal[2] = {0};
@@ -531,7 +534,11 @@ LsaJoinDomainInternal(
        be reset afterwards by means of rpc calls */
     if (pwszAccountOu)
     {
-        dwError = LsaDirectoryConnect(pwszDCName, &pLdap, &pwszBaseDn);
+        dwError = LsaDirectoryConnect(
+                        pwszDCName,
+                        &pLdap,
+                        &pwszBaseDn,
+                        &pwszSchemaDn);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LsaMachAcctCreate(pLdap, pwszMachineName, pwszMachineAcctName, pwszAccountOu,
@@ -543,6 +550,7 @@ LsaJoinDomainInternal(
         BAIL_ON_LSA_ERROR(dwError);
 
         LW_SAFE_FREE_MEMORY(pwszBaseDn);
+        LW_SAFE_FREE_MEMORY(pwszSchemaDn);
     }
 
     dwError = LsaGenerateMachinePassword(
@@ -569,7 +577,11 @@ LsaJoinDomainInternal(
     BAIL_ON_NT_STATUS(ntStatus);
 
     // Make sure we can access the account
-    dwError = LsaDirectoryConnect(pwszDCName, &pLdap, &pwszBaseDn);
+    dwError = LsaDirectoryConnect(
+                    pwszDCName,
+                    &pLdap,
+                    &pwszBaseDn,
+                    &pwszSchemaDn);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaMachAcctSearch(
@@ -777,6 +789,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszMachineAcctName);
     LW_SAFE_FREE_MEMORY(pwszMachineNameLc);
     LW_SAFE_FREE_MEMORY(pwszBaseDn);
+    LW_SAFE_FREE_MEMORY(pwszSchemaDn);
     LW_SAFE_FREE_MEMORY(pwszDn);
     LW_SAFE_FREE_MEMORY(pwszDnsAttrName);
     LW_SAFE_FREE_MEMORY(pwszDnsAttrVal[0]);
@@ -818,6 +831,7 @@ LsaGetAccountName(
     int err = ERROR_SUCCESS;
     LDAP *ld = NULL;
     wchar16_t *base_dn = NULL;
+    PWSTR pSchemaDn = NULL;
     wchar16_t *dn = NULL;
     wchar16_t *machname_lc = NULL;
     wchar16_t *samname = NULL;     /* short name valid for SAM account */
@@ -843,10 +857,20 @@ LsaGetAccountName(
     wc16slower(machname_lc);
 
     /* look for an existing account using the dns_host_name attribute */
-    err = LsaDirectoryConnect(domain_controller_name, &ld, &base_dn);
+    err = LsaDirectoryConnect(
+                domain_controller_name,
+                &ld,
+                &base_dn,
+                &pSchemaDn);
     BAIL_ON_LSA_ERROR(err);
 
-    err = LsaMachDnsNameSearch(ld, machname_lc, base_dn, dns_domain_name, &samname);
+    err = LsaMachDnsNameSearch(
+                ld,
+                machname_lc,
+                base_dn,
+                pSchemaDn,
+                dns_domain_name,
+                &samname);
     if (err == ERROR_SUCCESS)
     {
         size_t samname_len = 0;
@@ -998,6 +1022,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(dnsname);
     LW_SAFE_FREE_MEMORY(samname);
     LW_SAFE_FREE_MEMORY(base_dn);
+    LW_SAFE_FREE_MEMORY(pSchemaDn);
 
     return err;
 
@@ -2292,59 +2317,84 @@ error:
 static
 DWORD
 LsaDirectoryConnect(
-    const wchar16_t *domain,
-    LDAP **ldconn,
-    wchar16_t **dn_context
+    PCWSTR pDomain,
+    LDAP** ppLdConn,
+    PWSTR* ppDefaultContext,
+    PWSTR* ppSchemaContext
     )
 {
     DWORD dwError = ERROR_SUCCESS;
     int lderr = LDAP_SUCCESS;
-    int close_lderr = LDAP_SUCCESS;
-    LDAP *ld = NULL;
-    LDAPMessage *info = NULL;
-    LDAPMessage *res = NULL;
-    wchar16_t *dn_context_name = NULL;
-    wchar16_t **dn_context_val = NULL;
+    LDAP *pLdConn = NULL;
+    // Do not free
+    LDAPMessage *pInfo = NULL;
+    LDAPMessage *pRes = NULL;
+    PWSTR pAttributeName = NULL;
+    PWSTR* ppAttributeValue = NULL;
+    PWSTR pDefaultContext = NULL;
+    PWSTR pSchemaContext = NULL;
 
-    BAIL_ON_INVALID_POINTER(domain);
-    BAIL_ON_INVALID_POINTER(ldconn);
-    BAIL_ON_INVALID_POINTER(dn_context);
+    BAIL_ON_INVALID_POINTER(pDomain);
+    BAIL_ON_INVALID_POINTER(ppLdConn);
+    BAIL_ON_INVALID_POINTER(ppDefaultContext);
+    BAIL_ON_INVALID_POINTER(ppSchemaContext);
 
-    *ldconn     = NULL;
-    *dn_context = NULL;
-
-    lderr = LdapInitConnection(&ld, domain, FALSE);
+    lderr = LdapInitConnection(&pLdConn, pDomain, FALSE);
     BAIL_ON_LDAP_ERROR(lderr);
 
-    lderr = LdapGetDirectoryInfo(&info, &res, ld);
+    lderr = LdapGetDirectoryInfo(&pInfo, &pRes, pLdConn);
     BAIL_ON_LDAP_ERROR(lderr);
 
     dwError = LwMbsToWc16s("defaultNamingContext",
-                           &dn_context_name);
+                           &pAttributeName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dn_context_val = LdapAttributeGet(ld, info, dn_context_name, NULL);
-    if (dn_context_val == NULL) {
+    ppAttributeValue = LdapAttributeGet(pLdConn, pInfo, pAttributeName, NULL);
+    if (ppAttributeValue == NULL) {
         /* TODO: find more descriptive error code */
         lderr = LDAP_NO_SUCH_ATTRIBUTE;
         BAIL_ON_LDAP_ERROR(lderr);
-
     }
 
-    dwError = LwAllocateWc16String(dn_context,dn_context_val[0]);
+    dwError = LwAllocateWc16String(&pDefaultContext, ppAttributeValue[0]);
     BAIL_ON_LSA_ERROR(dwError);
 
-    *ldconn = ld;
-
-cleanup:
-    LW_SAFE_FREE_MEMORY(dn_context_name);
-
-    if (dn_context_val) {
-        LdapAttributeValueFree(dn_context_val);
+    LW_SAFE_FREE_MEMORY(pAttributeName);
+    if (ppAttributeValue)
+    {
+        LdapAttributeValueFree(ppAttributeValue);
+        ppAttributeValue = NULL;
     }
 
-    if (res) {
-        LdapMessageFree(res);
+    dwError = LwMbsToWc16s("schemaNamingContext",
+                           &pAttributeName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ppAttributeValue = LdapAttributeGet(pLdConn, pInfo, pAttributeName, NULL);
+    if (ppAttributeValue == NULL) {
+        /* TODO: find more descriptive error code */
+        lderr = LDAP_NO_SUCH_ATTRIBUTE;
+        BAIL_ON_LDAP_ERROR(lderr);
+    }
+
+    dwError = LwAllocateWc16String(&pSchemaContext, ppAttributeValue[0]);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    *ppLdConn = pLdConn;
+    *ppDefaultContext = pDefaultContext;
+    *ppSchemaContext = pSchemaContext;
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pAttributeName);
+
+    if (ppAttributeValue)
+    {
+        LdapAttributeValueFree(ppAttributeValue);
+    }
+
+    if (pRes)
+    {
+        LdapMessageFree(pRes);
     }
 
     if (dwError == ERROR_SUCCESS &&
@@ -2356,16 +2406,16 @@ cleanup:
     return dwError;
 
 error:
-    if (ld) {
-        close_lderr = LdapCloseConnection(ld);
-        if (lderr == LDAP_SUCCESS &&
-            close_lderr != STATUS_SUCCESS) {
-            lderr = close_lderr;
-        }
+    if (pLdConn)
+    {
+        LdapCloseConnection(pLdConn);
     }
+    LW_SAFE_FREE_MEMORY(pDefaultContext);
+    LW_SAFE_FREE_MEMORY(pSchemaContext);
 
-    *dn_context = NULL;
-    *ldconn     = NULL;
+    *ppLdConn = NULL;
+    *ppDefaultContext = NULL;
+    *ppSchemaContext = NULL;
     goto cleanup;
 }
 
@@ -2481,6 +2531,7 @@ LsaMachDnsNameSearch(
     LDAP *ldconn,
     const wchar16_t *name,
     const wchar16_t *dn_context,
+    PCWSTR pSchemaContext,
     const wchar16_t *dns_domain_name,
     wchar16_t **samacct
     )
@@ -2504,7 +2555,8 @@ LsaMachDnsNameSearch(
                 ldconn,
                 name,
                 dns_domain_name,
-                dn_context);
+                dn_context,
+                pSchemaContext);
     BAIL_ON_LDAP_ERROR(lderr);
 
     dwError = LwMbsToWc16s("sAMAccountName",

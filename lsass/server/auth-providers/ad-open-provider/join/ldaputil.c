@@ -525,14 +525,14 @@ LdapMachDnsNameSearch(
     LDAP *ld,
     const wchar16_t *name,
     const wchar16_t *dns_domain_name,
-    const wchar16_t *base
+    const wchar16_t *base,
+    PCWSTR pSchemaContext
     )
 {
-    const wchar_t filter_fmt[] = L"(&(objectClass=computer)(dNSHostName=%ws))";
+    const wchar_t filter_fmt[] = L"(&(objectCategory=CN=Computer,%ws)(dNSHostName=%ws))";
 
     int lderr = LDAP_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    size_t filter_len = 0;
     size_t dnsname_len = 0;
     wchar16_t *dnsname = NULL;
     char *basedn = NULL;
@@ -560,17 +560,12 @@ LdapMachDnsNameSearch(
 
     dnsname_len = wc16slen(dnsname);
 
-    filter_len = dnsname_len + (sizeof(filter_fmt)/sizeof(filter_fmt[0]));
-
-    dwError = LwAllocateMemory(sizeof(wchar16_t) * filter_len,
-                               OUT_PPVOID(&filterw16));
+    dwError = LwAllocateWc16sPrintfW(
+                    &filterw16,
+                    filter_fmt, 
+                    pSchemaContext,
+                    dnsname);
     BAIL_ON_LSA_ERROR(dwError);
-
-    if (sw16printfw(filterw16, filter_len, filter_fmt, dnsname) < 0)
-    {
-        dwError = LwErrnoToWin32Error(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
 
     dwError = LwWc16sToMbs(filterw16, &filter);
     BAIL_ON_LSA_ERROR(dwError);
