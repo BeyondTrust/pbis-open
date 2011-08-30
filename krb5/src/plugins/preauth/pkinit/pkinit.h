@@ -31,6 +31,7 @@
 #ifndef _PKINIT_H
 #define _PKINIT_H
 
+#include <autoconf.h>
 #include <krb5/krb5.h>
 #include <krb5/preauth_plugin.h>
 #include <k5-int-pkinit.h>
@@ -92,8 +93,8 @@ extern int longhorn;	    /* XXX Talking to a Longhorn server? */
 #define KRB5_CONF_PKINIT_WIN2K_REQUIRE_BINDING  "pkinit_win2k_require_binding"
 
 /* Make pkiDebug(fmt,...) print, or not.  */
-#ifdef DEBUG
-#define pkiDebug	printf
+#ifdef PKINIT_DEBUG
+extern void pkiDebug (const char *fmt, ...);
 #else
 /* Still evaluates for side effects.  */
 static inline void pkiDebug (const char *fmt, ...) { }

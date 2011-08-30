@@ -45,10 +45,13 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h> /* needed for IPPROTO_* on NetBSD */
-#include <k5-platform.h>
+#ifdef _HPUX_SOURCE
+#define USE_FAKE_ADDRINFO
+#endif /* _HPUX_SOURCE */
 #ifdef USE_FAKE_ADDRINFO
 #include "fake-addrinfo.h"
 #endif
+#include <k5-platform.h>
 
 static const char *protoname (int p) {
     static char buf[30];

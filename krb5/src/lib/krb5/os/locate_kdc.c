@@ -269,7 +269,16 @@ krb5int_add_host_to_list (struct addrlist *lp, const char *hostname,
     result = snprintf(secportbuf, sizeof(secportbuf), "%d", ntohs(secport));
     if (SNPRINTF_OVERFLOW(result, sizeof(secportbuf)))
         return EINVAL;
+
+    // The hostname may be an IP address, depending on what is stored in the
+    // configuration file. To avoid issuing any unnecessary network traffic,
+    // try looking it up as a numerical host first.
+    hint.ai_flags |= AI_NUMERICHOST;
     err = getaddrinfo (hostname, portbuf, &hint, &addrs);
+    if (err == EAI_NONAME) {
+	hint.ai_flags &= ~AI_NUMERICHOST;
+	err = getaddrinfo (hostname, portbuf, &hint, &addrs);
+    }
     if (err) {
         Tprintf ("\tgetaddrinfo(\"%s\", \"%s\", ...)\n\treturns %d: %s\n",
                  hostname, portbuf, err, gai_strerror (err));

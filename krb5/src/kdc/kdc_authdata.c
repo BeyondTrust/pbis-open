@@ -250,6 +250,9 @@ load_authdata_plugins(krb5_context context)
     module_count += sizeof(static_authdata_systems)
         / sizeof(static_authdata_systems[0]);
 
+    module_count += sizeof(static_authdata_systems)
+	/ sizeof(static_authdata_systems[0]);
+
     /* Build the complete list of supported authdata options, and
      * leave room for a terminator entry.
      */
@@ -357,6 +360,22 @@ load_authdata_plugins(krb5_context context)
             continue;
         assert(static_authdata_systems[i].init == NULL);
         authdata_systems[k++] = static_authdata_systems[i];
+    }
+
+    /* Add the locally-supplied mechanisms to the dynamic list first. */
+    for (i = 0;
+	 i < sizeof(static_authdata_systems) / sizeof(static_authdata_systems[0]);
+	 i++) {
+	authdata_systems[k] = static_authdata_systems[i];
+	/* Try to initialize the authdata system.  If it fails, we'll remove it
+	 * from the list of systems we'll be using. */
+	server_init_proc = static_authdata_systems[i].init;
+	if ((server_init_proc != NULL) &&
+	    ((*server_init_proc)(context, &authdata_systems[k].plugin_context) != 0)) {
+	    memset(&authdata_systems[k], 0, sizeof(authdata_systems[k]));
+	    continue;
+	}
+	k++;
     }
 
     n_authdata_systems = k;

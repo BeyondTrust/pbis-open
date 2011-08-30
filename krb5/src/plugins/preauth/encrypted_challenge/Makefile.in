@@ -12,7 +12,7 @@ LOCALINCLUDES = -I../../../include/krb5 -I.
 LIBBASE=encrypted_challenge
 LIBMAJOR=0
 LIBMINOR=0
-SO_EXT=.so
+SO_EXT=$(DYNOBJEXT)
 RELDIR=../plugins/preauth/encrypted_challenge
 # Depends on libk5crypto and libkrb5
 SHLIB_EXPDEPS = \

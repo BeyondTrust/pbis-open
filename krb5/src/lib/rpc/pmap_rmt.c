@@ -56,6 +56,10 @@ static char sccsid[] = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 #include <net/route.h>
 #include <sys/mbuf.h>
 #endif
+/* S7_CHANGE */
+#if defined(__hpux) && defined(__ia64)
+#include "mymp.h"
+#endif
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>

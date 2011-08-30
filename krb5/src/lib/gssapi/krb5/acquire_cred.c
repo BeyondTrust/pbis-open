@@ -228,7 +228,7 @@ acquire_init_cred(krb5_context context,
     krb5_ccache ccache;
     krb5_principal ccache_princ = NULL, tmp_princ;
     krb5_cc_cursor cur;
-    krb5_creds creds;
+    krb5_creds creds = {0};
     int got_endtime;
     int caller_provided_ccache_name = 0;
     krb5_data password_data, *cred_princ_realm;
@@ -340,6 +340,11 @@ acquire_init_cred(krb5_context context,
     }
 
     /* turn off OPENCLOSE mode while extensive frobbing is going on */
+   /* Clearing KRB5_TC_OPENCLOSE causes krb5_cc_store_cred to fail, and
+      read operations still succeed if the flag is set. So the flag
+      was cleared in original source code as an optimization.
+    */
+#if 0
     code = krb5_cc_set_flags(context, ccache, 0);
     if (code == KRB5_FCC_NOFILE &&
         password != GSS_C_NO_BUFFER && desired_princ != NULL) {
@@ -353,6 +358,7 @@ acquire_init_cred(krb5_context context,
         *minor_status = code;
         return GSS_S_CRED_UNAVAIL;
     }
+#endif
 
     /*
      * Credentials cache principal must match either the acceptor principal
@@ -447,6 +453,8 @@ acquire_init_cred(krb5_context context,
         *minor_status = code;
         return GSS_S_FAILURE;
     }
+
+    memset(&creds, 0, sizeof(creds));
     while (!(code = krb5_cc_next_cred(context, ccache, &cur, &creds))) {
         if (krb5_principal_compare(context, tmp_princ, creds.server)) {
             cred->tgt_expire = creds.times.endtime;
@@ -461,6 +469,7 @@ acquire_init_cred(krb5_context context,
             got_endtime = 1;
         }
         krb5_free_cred_contents(context, &creds);
+        memset(&creds, 0, sizeof(creds));
     }
     krb5_free_principal(context, tmp_princ);
 

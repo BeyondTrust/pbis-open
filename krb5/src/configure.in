@@ -55,6 +55,18 @@ AC_KRB5_TCL
 AC_ARG_ENABLE([athena],
 [  --enable-athena         build with MIT Project Athena configuration],,)
 
+# Special --enable-includes-only build option.
+
+includes_only=
+AC_ARG_ENABLE([includes-only],
+  AC_HELP_STRING([--enable-includes-only],[build only include files @<:@disabled@:>@]),
+  includes_only=yes,)
+SUBDIRS_TYPE="all"
+if test -n "$includes_only" ; then
+  SUBDIRS_TYPE="includes_only"
+fi
+AC_SUBST(SUBDIRS_TYPE)
+
 # Begin autoconf tests for the Makefiles generated out of the top-level
 # configure.in...
 
@@ -214,7 +226,7 @@ AC_PROG_AWK
 AC_PROG_LEX
 AC_C_CONST
 AC_HEADER_DIRENT
-AC_CHECK_FUNCS(strdup setvbuf inet_ntoa inet_aton seteuid setresuid setreuid setegid setresgid setregid setsid flock fchmod chmod strftime strptime geteuid setenv unsetenv getenv gmtime_r localtime_r bswap16 bswap64 mkstemp getusershell access getcwd srand48 srand srandom stat strchr strerror strerror_r)
+AC_CHECK_FUNCS(strdup setvbuf inet_ntoa inet_aton seteuid setresuid setreuid setegid setresgid setregid setsid flock fchmod chmod strftime strptime geteuid setenv unsetenv getenv gmtime_r localtime_r bswap16 bswap64 mkstemp getusershell access getcwd srand48 srand srandom stat strchr strerror strerror_r poll)
 
 AC_CHECK_FUNC(mkstemp,
 [MKSTEMP_ST_OBJ=
@@ -997,7 +1009,9 @@ AC_SUBST(HAVE_PYTHON)
 # it is linked again later.
 case $krb5_cv_host in
 *-*-aix*)
-	DB_EXTRA_LIBS=-ldb
+        # This is causing problems on AIX 5.2
+        #DB_EXTRA_LIBS=-ldb
+	DB_EXTRA_LIBS=
 	;;
 *)
 	DB_EXTRA_LIBS=
@@ -1128,7 +1142,7 @@ fi
 AC_CONFIG_FILES(krb5-config, [chmod +x krb5-config])
 V5_AC_OUTPUT_MAKEFILE(.
 
-	util util/support util/profile util/send-pr
+	util util/support util/profile
 
 	lib lib/kdb
 
@@ -1165,14 +1179,6 @@ dnl	ccapi ccapi/lib ccapi/lib/unix ccapi/server ccapi/server/unix ccapi/test
 
 	plugins/locate/python
 	plugins/kadm5_hook/test
-	plugins/kdb/db2
-	plugins/kdb/db2/libdb2
-	plugins/kdb/db2/libdb2/hash
-	plugins/kdb/db2/libdb2/btree
-	plugins/kdb/db2/libdb2/db
-	plugins/kdb/db2/libdb2/mpool
-	plugins/kdb/db2/libdb2/recno
-	plugins/kdb/db2/libdb2/test
 	plugins/kdb/hdb
 	plugins/preauth/cksum_body plugins/preauth/encrypted_challenge
 	plugins/preauth/securid_sam2

@@ -3,7 +3,7 @@ BUILDTOP=$(REL)..$(S)..
 DEFINES = -DGSSAPI_KRB5 -DDEBUG_GSSAPI=0 -DGSSRPC__IMPL
 DEFS=
 
-SUBDIRS=unit-test
+#SUBDIRS=unit-test
 
 ##DOSBUILDTOP = ..\..
 ##DOSLIBNAME=libgssrpc.lib

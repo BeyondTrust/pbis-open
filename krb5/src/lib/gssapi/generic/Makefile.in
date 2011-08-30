@@ -52,7 +52,9 @@ gssapi.h: gssapi.hin
 	(echo "/* This is the gssapi.h prologue. */"; \
 	$(include_stdint) && \
 	$(include_inttypes) && \
-	$(include_xom) && \
+	echo "#ifndef __ia64" && \
+ 	$(include_xom) && \
+	echo "#endif" && \
 	echo "/* End of gssapi.h prologue. */"&& \
 	cat $(srcdir)/gssapi.hin )> $$h && \
 	(set -x; $(MV) $$h $@) ; e=$$?; $(RM) $$h; exit $$e
@@ -117,7 +119,7 @@ STLIBOBJS = \
 	gssapi_err_generic.o
 
 EXPORTED_HEADERS= gssapi_generic.h gssapi_ext.h
-EXPORTED_BUILT_HEADERS= gssapi.h
+EXPORTED_BUILT_HEADERS= gssapi.h $(ETHDRS)
 
 $(OBJS): $(EXPORTED_HEADERS) $(ETHDRS)
 
@@ -151,7 +153,7 @@ win-create-ehdrdir:
 	if not exist $(EHDRDIR)\nul mkdir $(EHDRDIR)
 
 clean-unix:: clean-libobjs
-	$(RM) $(ETHDRS) $(ETSRCS) $(HDRS) $(EXPORTED_BUILT_HEADERS) \
+	$(RM) $(ETSRCS) $(HDRS) $(EXPORTED_BUILT_HEADERS) \
 		$(EHDRDIR)$(S)timestamp
 
 clean-windows::
@@ -161,7 +163,7 @@ clean-windows::
 generate-files-mac: gssapi.h errmap.h
 
 # Krb5InstallHeaders($(EXPORTED_HEADERS), $(KRB5_INCDIR)/krb5)
-install-headers-unix install:: gssapi.h
+install-headers-unix install:: $(EXPORTED_BUILT_HEADERS)
 	@set -x; for f in $(EXPORTED_HEADERS) ; \
 	do $(INSTALL_DATA) $(srcdir)/$$f	\
 		$(DESTDIR)$(KRB5_INCDIR)/gssapi/$$f ; \

@@ -8,7 +8,7 @@ OBJS=resolve.o addrinfo-test.o fake-addrinfo-test.o
 SRCS=$(srcdir)/resolve.c $(srcdir)/addrinfo-test.c \
 	$(srcdir)/fake-addrinfo-test.c
 
-all:: resolve addrinfo-test fake-addrinfo-test
+all:: resolve fake-addrinfo-test
 
 resolve: resolve.o
 	$(CC_LINK) -o $@ resolve.o $(LIBS)

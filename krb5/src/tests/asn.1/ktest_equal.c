@@ -623,6 +623,34 @@ int ktest_equal_iakerb_finished(ref, var)
     return p;
 }
 
+int ktest_equal_pa_s4u_x509_user(ref, var)
+    krb5_pa_s4u_x509_user *ref;
+    krb5_pa_s4u_x509_user *var;
+{
+    int p = TRUE;
+    if (ref == var) return TRUE;
+    else if (ref == NULL || var == NULL) return FALSE;
+    p=p&&scalar_equal(user_id.nonce);
+    p=p&&ptr_equal(user_id.user,ktest_equal_principal_data);
+    p=p&&struct_equal(user_id.subject_cert,ktest_equal_data);
+    p=p&&scalar_equal(user_id.options);
+    p=p&&struct_equal(cksum,ktest_equal_checksum);
+    return p;
+}
+
+int ktest_equal_ad_kdcissued(ref, var)
+    krb5_ad_kdcissued *ref;
+    krb5_ad_kdcissued *var;
+{
+    int p = TRUE;
+    if (ref == var) return TRUE;
+    else if (ref == NULL || var == NULL) return FALSE;
+    p=p&&struct_equal(ad_checksum,ktest_equal_checksum);
+    p=p&&ptr_equal(i_principal,ktest_equal_principal_data);
+    p=p&&ptr_equal(elements,ktest_equal_authorization_data);
+    return p;
+}
+
 #ifdef ENABLE_LDAP
 static int equal_key_data(ref, var)
     krb5_key_data *ref;

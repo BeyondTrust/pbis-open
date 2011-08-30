@@ -328,6 +328,7 @@ kg_seal(minor_status, context_handle, conf_req_flag, qop_req,
 {
     krb5_gss_ctx_id_rec *ctx;
     krb5_error_code code;
+    krb5_timestamp now;
     krb5_context context;
 
     output_message_buffer->length = 0;
@@ -358,6 +359,17 @@ kg_seal(minor_status, context_handle, conf_req_flag, qop_req,
     }
 
     context = ctx->k5_context;
+    if ((code = krb5_timeofday(context, &now))) {
+        *minor_status = code;
+        save_error_info(*minor_status, context);
+        return(GSS_S_FAILURE);
+    }
+
+    if (ctx->krb_times.endtime < now) {
+        *minor_status = 0;
+        return (GSS_S_CONTEXT_EXPIRED);
+    }
+
     switch (ctx->proto)
     {
     case 0:

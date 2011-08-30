@@ -220,8 +220,14 @@ krb5_cc_retrieve_cred_seq (krb5_context context, krb5_ccache id,
     kret = krb5_cc_get_flags(context, id, &oflags);
     if (kret != KRB5_OK)
         return kret;
+   /* Clearing KRB5_TC_OPENCLOSE causes krb5_cc_store_cred to fail, and
+      read operations still succeed if the flag is set. So the flag
+      was cleared in original source code as an optimization.
+    */
+#if 0
     if (oflags & KRB5_TC_OPENCLOSE)
         (void) krb5_cc_set_flags(context, id, oflags & ~KRB5_TC_OPENCLOSE);
+#endif
     kret = krb5_cc_start_seq_get(context, id, &cursor);
     if (kret != KRB5_OK) {
         if (oflags & KRB5_TC_OPENCLOSE)
