@@ -47,6 +47,7 @@ krb5_c_enctype_compare
 krb5_c_verify_checksum_iov
 valid_enctype
 krb5_enctype_to_string
+krb5_enctype_to_name
 krb5_c_make_checksum_iov
 krb5_calculate_checksum
 krb5_c_string_to_key
@@ -94,3 +95,10 @@ krb5int_MD5Final
 krb5int_aes_decrypt
 krb5int_enc_des3
 krb5int_arcfour_gsscrypt
+krb5int_camellia_cbc_mac
+krb5int_cmac_checksum
+krb5int_enc_aes128
+krb5int_enc_aes256
+krb5int_enc_camellia128
+krb5int_enc_camellia256
+krb5int_derive_key

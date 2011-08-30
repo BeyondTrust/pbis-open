@@ -1,4 +1,4 @@
-mydir=lib/krb5/krb
+mydir=lib$(S)krb5$(S)krb
 BUILDTOP=$(REL)..$(S)..$(S)..
 RUN_SETUP = @KRB5_RUN_ENV@
 PROG_LIBPATH=-L$(TOPLIBD)
@@ -18,6 +18,9 @@ STLIBOBJS= \
 	appdefault.o	\
 	auth_con.o	\
 	authdata.o	\
+	authdata_exp.o	\
+	authdata_enc.o	\
+	authdata_dec.o	\
 	bld_pr_ext.o	\
 	bld_princ.o	\
 	chk_trans.o	\
@@ -44,7 +47,6 @@ STLIBOBJS= \
 	etype_list.o	\
 	fast.o \
 	fwd_tgt.o	\
-	gc_frm_kdc.o	\
 	gc_via_tkt.o	\
 	gen_seqnum.o	\
 	gen_subkey.o	\
@@ -70,10 +72,12 @@ STLIBOBJS= \
 	mk_req_ext.o	\
 	mk_safe.o	\
 	pac.o		\
+	pac_sign.o	\
 	parse.o		\
+	plugin.o	\
 	pr_to_salt.o	\
-	preauth.o	\
 	preauth2.o	\
+	gic_opt_set_pa.o	\
 	princ_comp.o	\
 	rd_cred.o	\
 	rd_error.o	\
@@ -83,6 +87,7 @@ STLIBOBJS= \
 	rd_req_dec.o	\
 	rd_safe.o	\
 	recvauth.o	\
+	s4u_authdata.o	\
 	s4u_creds.o	\
 	sendauth.o	\
 	send_tgs.o	\
@@ -101,6 +106,7 @@ STLIBOBJS= \
 	str_conv.o	\
 	tgtname.o	\
 	unparse.o	\
+	val_renew.o	\
 	valid_times.o	\
 	vfy_increds.o	\
 	vic_opt.o	\
@@ -109,9 +115,13 @@ STLIBOBJS= \
 OBJS=	$(OUTPRE)addr_comp.$(OBJEXT)	\
 	$(OUTPRE)addr_order.$(OBJEXT)	\
 	$(OUTPRE)addr_srch.$(OBJEXT)	\
+	$(OUTPRE)allow_weak.$(OBJEXT)	\
 	$(OUTPRE)appdefault.$(OBJEXT)	\
 	$(OUTPRE)auth_con.$(OBJEXT)	\
 	$(OUTPRE)authdata.$(OBJEXT)	\
+	$(OUTPRE)authdata_exp.$(OBJEXT)	\
+	$(OUTPRE)authdata_enc.$(OBJEXT)	\
+	$(OUTPRE)authdata_dec.$(OBJEXT)	\
 	$(OUTPRE)bld_pr_ext.$(OBJEXT)	\
 	$(OUTPRE)bld_princ.$(OBJEXT)	\
 	$(OUTPRE)chk_trans.$(OBJEXT)	\
@@ -138,7 +148,6 @@ OBJS=	$(OUTPRE)addr_comp.$(OBJEXT)	\
 	$(OUTPRE)etype_list.$(OBJEXT)	\
 	$(OUTPRE)fast.$(OBJEXT) \
 	$(OUTPRE)fwd_tgt.$(OBJEXT)	\
-	$(OUTPRE)gc_frm_kdc.$(OBJEXT)	\
 	$(OUTPRE)gc_via_tkt.$(OBJEXT)	\
 	$(OUTPRE)gen_seqnum.$(OBJEXT)	\
 	$(OUTPRE)gen_subkey.$(OBJEXT)	\
@@ -164,10 +173,12 @@ OBJS=	$(OUTPRE)addr_comp.$(OBJEXT)	\
 	$(OUTPRE)mk_req_ext.$(OBJEXT)	\
 	$(OUTPRE)mk_safe.$(OBJEXT)	\
 	$(OUTPRE)pac.$(OBJEXT)		\
+	$(OUTPRE)pac_sign.$(OBJEXT)	\
 	$(OUTPRE)parse.$(OBJEXT)	\
+	$(OUTPRE)plugin.$(OBJEXT)	\
 	$(OUTPRE)pr_to_salt.$(OBJEXT)	\
-	$(OUTPRE)preauth.$(OBJEXT)	\
 	$(OUTPRE)preauth2.$(OBJEXT)	\
+	$(OUTPRE)gic_opt_set_pa.$(OBJEXT)	\
 	$(OUTPRE)princ_comp.$(OBJEXT)	\
 	$(OUTPRE)rd_cred.$(OBJEXT)	\
 	$(OUTPRE)rd_error.$(OBJEXT)	\
@@ -177,6 +188,7 @@ OBJS=	$(OUTPRE)addr_comp.$(OBJEXT)	\
 	$(OUTPRE)rd_req_dec.$(OBJEXT)	\
 	$(OUTPRE)rd_safe.$(OBJEXT)	\
 	$(OUTPRE)recvauth.$(OBJEXT)	\
+	$(OUTPRE)s4u_authdata.$(OBJEXT)	\
 	$(OUTPRE)s4u_creds.$(OBJEXT)	\
 	$(OUTPRE)sendauth.$(OBJEXT)	\
 	$(OUTPRE)send_tgs.$(OBJEXT)	\
@@ -195,6 +207,7 @@ OBJS=	$(OUTPRE)addr_comp.$(OBJEXT)	\
 	$(OUTPRE)str_conv.$(OBJEXT)	\
 	$(OUTPRE)tgtname.$(OBJEXT)	\
 	$(OUTPRE)unparse.$(OBJEXT)	\
+	$(OUTPRE)val_renew.$(OBJEXT)	\
 	$(OUTPRE)valid_times.$(OBJEXT)	\
 	$(OUTPRE)vfy_increds.$(OBJEXT)	\
 	$(OUTPRE)vic_opt.$(OBJEXT)	\
@@ -206,6 +219,9 @@ SRCS=	$(srcdir)/addr_comp.c	\
 	$(srcdir)/appdefault.c	\
 	$(srcdir)/auth_con.c	\
 	$(srcdir)/authdata.c	\
+	$(srcdir)/authdata_exp.c	\
+	$(srcdir)/authdata_enc.c	\
+	$(srcdir)/authdata_dec.c	\
 	$(srcdir)/bld_pr_ext.c	\
 	$(srcdir)/bld_princ.c	\
 	$(srcdir)/brand.c	\
@@ -233,7 +249,6 @@ SRCS=	$(srcdir)/addr_comp.c	\
 	$(srcdir)/etype_list.c	\
 	$(srcdir)/fast.c \
 	$(srcdir)/fwd_tgt.c	\
-	$(srcdir)/gc_frm_kdc.c	\
 	$(srcdir)/gc_via_tkt.c	\
 	$(srcdir)/gen_seqnum.c	\
 	$(srcdir)/gen_subkey.c	\
@@ -259,10 +274,12 @@ SRCS=	$(srcdir)/addr_comp.c	\
 	$(srcdir)/mk_req_ext.c	\
 	$(srcdir)/mk_safe.c	\
 	$(srcdir)/pac.c		\
+	$(srcdir)/pac_sign.c	\
 	$(srcdir)/parse.c	\
+	$(srcdir)/plugin.c	\
 	$(srcdir)/pr_to_salt.c	\
-	$(srcdir)/preauth.c	\
 	$(srcdir)/preauth2.c	\
+	$(srcdir)/gic_opt_set_pa.c	\
 	$(srcdir)/princ_comp.c	\
 	$(srcdir)/rd_cred.c	\
 	$(srcdir)/rd_error.c	\
@@ -272,6 +289,7 @@ SRCS=	$(srcdir)/addr_comp.c	\
 	$(srcdir)/rd_req_dec.c	\
 	$(srcdir)/rd_safe.c	\
 	$(srcdir)/recvauth.c	\
+	$(srcdir)/s4u_authdata.c\
 	$(srcdir)/s4u_creds.c	\
 	$(srcdir)/sendauth.c	\
 	$(srcdir)/send_tgs.c	\
@@ -291,6 +309,7 @@ SRCS=	$(srcdir)/addr_comp.c	\
 	$(srcdir)/t_ad_fx_armor.c \
 	$(srcdir)/tgtname.c	\
 	$(srcdir)/unparse.c	\
+	$(srcdir)/val_renew.c	\
 	$(srcdir)/valid_times.c	\
 	$(srcdir)/vfy_increds.c \
 	$(srcdir)/vic_opt.c	\
@@ -327,15 +346,15 @@ T_KERB_OBJS= t_kerb.o conv_princ.o unparse.o set_realm.o str_conv.o
 
 T_SER_OBJS= t_ser.o ser_actx.o ser_adata.o ser_addr.o ser_auth.o ser_cksum.o \
 	ser_ctx.o ser_key.o ser_princ.o serialize.o authdata.o pac.o \
-	copy_data.o etype_list.o
+	pac_sign.o authdata_exp.o s4u_authdata.o copy_data.o etype_list.o
 
 T_DELTAT_OBJS= t_deltat.o deltat.o
 
-T_PAC_OBJS= t_pac.o pac.o copy_data.o
+T_PAC_OBJS= t_pac.o pac.o pac_sign.o copy_data.o
 
 T_PRINC_OBJS= t_princ.o parse.o unparse.o
 
-T_ETYPES_OBJS= t_etypes.o init_ctx.o etype_list.o
+T_ETYPES_OBJS= t_etypes.o init_ctx.o etype_list.o plugin.o
 
 t_walk_rtree: $(T_WALK_RTREE_OBJS) $(KRB5_BASE_DEPLIBS)
 	$(CC_LINK) -o t_walk_rtree $(T_WALK_RTREE_OBJS) $(KRB5_BASE_LIBS)
@@ -367,6 +386,9 @@ t_princ: $(T_PRINC_OBJS) $(KRB5_BASE_DEPLIBS)
 
 t_etypes: $(T_ETYPES_OBJS) $(KRB5_BASE_DEPLIBS)
 	$(CC_LINK) -o t_etypes $(T_ETYPES_OBJS) $(KRB5_BASE_LIBS)
+
+t_expire_warn: t_expire_warn.o $(KRB5_BASE_DEPLIBS)
+	$(CC_LINK) -o $@ t_expire_warn.o $(KRB5_BASE_LIBS)
 
 TEST_PROGS= t_walk_rtree t_kerb t_ser t_deltat t_expand t_authdata t_pac \
 	t_princ t_etypes
@@ -407,6 +429,9 @@ check-unix:: $(TEST_PROGS)
 	$(RUN_SETUP) $(VALGRIND) ./t_pac
 	$(RUN_SETUP) $(VALGRIND) ./t_princ
 	$(RUN_SETUP) $(VALGRIND) ./t_etypes
+
+check-pytests:: t_expire_warn
+	$(RUNPYTEST) $(srcdir)/t_expire_warn.py $(PYTESTFLAGS)
 
 clean::
 	$(RM) $(OUTPRE)t_walk_rtree$(EXEEXT) $(OUTPRE)t_walk_rtree.$(OBJEXT) \

@@ -7,10 +7,7 @@ kadm5int_acl_impose_restrictions
 kadm5int_acl_init
 adb_policy_close
 adb_policy_init
-destroy_dict
-find_word
 hist_princ
-init_dict
 kadm5_set_use_password_server
 kadm5_chpass_principal
 kadm5_chpass_principal_3
@@ -46,6 +43,7 @@ kadm5_lock
 kadm5_modify_policy
 kadm5_modify_policy_internal
 kadm5_modify_principal
+kadm5_purgekeys
 kadm5_randkey_principal
 kadm5_randkey_principal_3
 kadm5_rename_principal
@@ -55,7 +53,6 @@ kadm5_setv4key_principal
 kadm5_unlock
 kdb_delete_entry
 kdb_free_entry
-kdb_get_entry
 kdb_init_hist
 kdb_init_master
 kdb_iter_entry
@@ -84,7 +81,6 @@ krb5_string_to_flags
 krb5_string_to_keysalts
 krb5_match_config_pattern
 master_db
-master_keyblock
 master_keylist
 master_princ
 osa_free_princ_ent
@@ -134,6 +130,7 @@ xdr_nullstring
 xdr_nulltype
 xdr_osa_princ_ent_rec
 xdr_osa_pw_hist_ent
+xdr_purgekeys_arg
 xdr_rprinc_arg
 xdr_setkey3_arg
 xdr_setkey_arg

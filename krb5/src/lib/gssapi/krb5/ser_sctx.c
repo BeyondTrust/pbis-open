@@ -357,7 +357,7 @@ kg_ctx_size(kcontext, arg, sizep)
 
             initiator_name = ctx->initiate ? ctx->here : ctx->there;
 
-            if (initiator_name) {
+            if (initiator_name && initiator_name->ad_context) {
                 kret = krb5_size_opaque(kcontext,
                                         KV5M_AUTHDATA_CONTEXT,
                                         initiator_name->ad_context,
@@ -534,7 +534,7 @@ kg_ctx_externalize(kcontext, arg, buffer, lenremain)
 
                 initiator_name = ctx->initiate ? ctx->here : ctx->there;
 
-                if (initiator_name) {
+                if (initiator_name && initiator_name->ad_context) {
                     kret = krb5_externalize_opaque(kcontext,
                                                    KV5M_AUTHDATA_CONTEXT,
                                                    initiator_name->ad_context,
@@ -610,6 +610,7 @@ kg_ctx_internalize(kcontext, argp, buffer, lenremain)
              xmalloc(sizeof(krb5_gss_ctx_id_rec)))) {
             memset(ctx, 0, sizeof(krb5_gss_ctx_id_rec));
 
+            ctx->magic = ibuf;
             ctx->k5_context = kcontext;
 
             /* Get static data */
@@ -774,6 +775,8 @@ kg_ctx_internalize(kcontext, argp, buffer, lenremain)
                                                    (krb5_pointer *)&initiator_name->ad_context,
                                                    &bp,
                                                    &remain);
+                    if (kret == EINVAL)
+                        kret = 0;
                 }
             }
             /* Get trailer */

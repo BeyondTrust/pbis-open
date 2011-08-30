@@ -1,0 +1,26 @@
+mydir=lib$(S)crypto$(S)nss$(S)md5
+BUILDTOP=$(REL)..$(S)..$(S)..$(S)..
+DEFS=
+
+PROG_LIBPATH=-L$(TOPLIBD)
+PROG_RPATH=$(KRB5_LIBDIR)
+CRYPTO_IMPL_CFLAGS=@CRYPTO_IMPL_CFLAGS@
+LOCALINCLUDES = -I$(srcdir)/.. $(CRYPTO_IMPL_CFLAGS)
+
+
+STLIBOBJS= md5.o
+
+OBJS= $(OUTPRE)md5.$(OBJEXT) 
+
+SRCS= $(srcdir)/md5.c
+
+all-unix:: all-libobjs
+
+includes:: depend
+
+depend:: $(SRCS)
+
+clean-unix:: clean-libobjs
+
+@libobj_frag@
+

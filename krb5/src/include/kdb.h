@@ -72,6 +72,10 @@
 
 #include <krb5.h>
 
+/* This version will be incremented when incompatible changes are made to the
+ * KDB API, and will be kept in sync with the libkdb major version. */
+#define KRB5_KDB_API_VERSION 5
+
 /* Salt types */
 #define KRB5_KDB_SALTTYPE_NORMAL        0
 #define KRB5_KDB_SALTTYPE_V4            1
@@ -97,8 +101,8 @@
 #define KRB5_KDB_SUPPORT_DESMD5         0x00004000
 #define KRB5_KDB_NEW_PRINC              0x00008000
 #define KRB5_KDB_OK_AS_DELEGATE         0x00100000
-#define KRB5_KDB_OK_TO_AUTH_AS_DELEGATE	0x00200000 /* S4U2Self OK */
-#define KRB5_KDB_NO_AUTH_DATA_REQUIRED	0x00400000
+#define KRB5_KDB_OK_TO_AUTH_AS_DELEGATE 0x00200000 /* S4U2Self OK */
+#define KRB5_KDB_NO_AUTH_DATA_REQUIRED  0x00400000
 
 /* Creation flags */
 #define KRB5_KDB_CREATE_BTREE           0x00000001
@@ -126,6 +130,8 @@
 #define KRB5_KDB_FLAG_USER_TO_USER              0x00000800
 /* Cross-realm */
 #define KRB5_KDB_FLAG_CROSS_REALM               0x00001000
+/* Allow in-realm aliases */
+#define KRB5_KDB_FLAG_ALIAS_OK                  0x00002000
 
 #define KRB5_KDB_FLAGS_S4U                      ( KRB5_KDB_FLAG_PROTOCOL_TRANSITION | \
                                                   KRB5_KDB_FLAG_CONSTRAINED_DELEGATION )
@@ -232,6 +238,7 @@ typedef struct __krb5_key_salt_tuple {
 #define KRB5_TL_CONSTRAINED_DELEGATION_ACL 0x0400 /* Each entry is a permitted SPN */
 #define KRB5_TL_LM_KEY                  0x0500 /* LM OWF */
 #define KRB5_TL_X509_SUBJECT_ISSUER_NAME 0x0600 /* <I>IssuerDN<S>SubjectDN */
+#define KRB5_TL_LAST_ADMIN_UNLOCK       0x0700 /* Timestamp of admin unlock */
 
 /* version number for KRB5_TL_ACTKVNO data */
 #define KRB5_TL_ACTKVNO_VER     1
@@ -316,95 +323,6 @@ extern char *krb5_mkey_pwd_prompt2;
 #define KRB5_DB_LOCKMODE_DONTBLOCK    0x0004
 #define KRB5_DB_LOCKMODE_PERMANENT    0x0008
 
-/* db_invoke methods */
-#define KRB5_KDB_METHOD_SIGN_AUTH_DATA                  0x00000010
-#define KRB5_KDB_METHOD_CHECK_TRANSITED_REALMS          0x00000020
-#define KRB5_KDB_METHOD_CHECK_POLICY_AS                 0x00000030
-#define KRB5_KDB_METHOD_CHECK_POLICY_TGS                0x00000040
-#define KRB5_KDB_METHOD_AUDIT_AS                        0x00000050
-#define KRB5_KDB_METHOD_AUDIT_TGS                       0x00000060
-#define KRB5_KDB_METHOD_REFRESH_POLICY                  0x00000070
-#define KRB5_KDB_METHOD_CHECK_ALLOWED_TO_DELEGATE       0x00000080
-
-typedef struct _kdb_sign_auth_data_req {
-    krb5_magic magic;
-    unsigned int flags;                 /* KRB5_KDB flags */
-    krb5_const_principal client_princ;  /* Client name used in ticket */
-    krb5_db_entry *client;              /* DB entry for client principal */
-    krb5_db_entry *server;              /* DB entry for server principal */
-    krb5_db_entry *krbtgt;              /* DB entry for ticket granting service principal */
-    krb5_keyblock *client_key;          /* Reply key, valid for AS-REQ only */
-    krb5_keyblock *server_key;          /* Key used to generate server signature */
-    krb5_timestamp authtime;            /* Authtime of TGT */
-    krb5_authdata **auth_data;          /* Authorization data from TGT */
-    krb5_keyblock *session_key;         /* Reply session key */
-    krb5_keyblock *krbtgt_key;          /* Key used to decrypt TGT, valid for TGS-REQ only */
-} kdb_sign_auth_data_req;
-
-typedef struct _kdb_sign_auth_data_rep {
-    krb5_magic magic;
-    krb5_authdata **auth_data;          /* Signed authorization data */
-} kdb_sign_auth_data_rep;
-
-typedef struct _kdb_check_transited_realms_req {
-    krb5_magic magic;
-    const krb5_data *tr_contents;
-    const krb5_data *client_realm;
-    const krb5_data *server_realm;
-} kdb_check_transited_realms_req;
-
-typedef struct _kdb_check_policy_as_req {
-    krb5_magic magic;
-    krb5_kdc_req *request;
-    krb5_db_entry *client;
-    krb5_db_entry *server;
-    krb5_timestamp kdc_time;
-} kdb_check_policy_as_req;
-
-typedef struct _kdb_check_policy_as_rep {
-    krb5_magic magic;
-    const char *status;
-    krb5_data e_data;
-} kdb_check_policy_as_rep;
-
-typedef struct _kdb_check_policy_tgs_req {
-    krb5_magic magic;
-    krb5_kdc_req *request;
-    krb5_db_entry *server;
-    krb5_ticket *ticket;
-} kdb_check_policy_tgs_req;
-
-typedef struct _kdb_check_policy_tgs_rep {
-    krb5_magic magic;
-    const char *status;
-    krb5_data e_data;
-} kdb_check_policy_tgs_rep;
-
-typedef struct _kdb_audit_as_req {
-    krb5_magic magic;
-    krb5_kdc_req *request;
-    krb5_db_entry *client;
-    krb5_db_entry *server;
-    krb5_timestamp authtime;
-    krb5_error_code error_code;
-} kdb_audit_as_req;
-
-typedef struct _kdb_audit_tgs_req {
-    krb5_magic magic;
-    krb5_kdc_req *request;
-    krb5_const_principal client;
-    krb5_db_entry *server;
-    krb5_timestamp authtime;
-    krb5_error_code error_code;
-} kdb_audit_tgs_req;
-
-typedef struct _kdb_check_allowed_to_delegate_req {
-    krb5_magic magic;
-    const krb5_db_entry *server;
-    krb5_const_principal proxy;
-    krb5_const_principal client;
-} kdb_check_allowed_to_delegate_req;
-
 /* libkdb.spec */
 krb5_error_code krb5_db_setup_lib_handle(krb5_context kcontext);
 krb5_error_code krb5_db_open( krb5_context kcontext, char **db_args, int mode );
@@ -417,53 +335,23 @@ const char * krb5_db_errcode2string ( krb5_context kcontext, long err_code );
 krb5_error_code krb5_db_destroy ( krb5_context kcontext, char **db_args );
 krb5_error_code krb5_db_promote ( krb5_context kcontext, char **db_args );
 krb5_error_code krb5_db_get_age ( krb5_context kcontext, char *db_name, time_t *t );
-krb5_error_code krb5_db_set_option ( krb5_context kcontext, int option, void *value );
 krb5_error_code krb5_db_lock ( krb5_context kcontext, int lock_mode );
 krb5_error_code krb5_db_unlock ( krb5_context kcontext );
 krb5_error_code krb5_db_get_principal ( krb5_context kcontext,
                                         krb5_const_principal search_for,
-                                        krb5_db_entry *entries,
-                                        int *nentries,
-                                        krb5_boolean *more );
-krb5_error_code krb5_db_get_principal_ext ( krb5_context kcontext,
-                                            krb5_const_principal search_for,
-                                            unsigned int flags,
-                                            krb5_db_entry *entries,
-                                            int *nentries,
-                                            krb5_boolean *more );
-krb5_error_code krb5_db_free_principal ( krb5_context kcontext,
-                                         krb5_db_entry *entry,
-                                         int count );
+                                        unsigned int flags,
+                                        krb5_db_entry **entry );
+void krb5_db_free_principal ( krb5_context kcontext, krb5_db_entry *entry );
 krb5_error_code krb5_db_put_principal ( krb5_context kcontext,
-                                        krb5_db_entry *entries,
-                                        int *nentries);
+                                        krb5_db_entry *entry );
 krb5_error_code krb5_db_delete_principal ( krb5_context kcontext,
-                                           krb5_principal search_for,
-                                           int *nentries );
+                                           krb5_principal search_for );
 krb5_error_code krb5_db_iterate ( krb5_context kcontext,
                                   char *match_entry,
                                   int (*func) (krb5_pointer, krb5_db_entry *),
                                   krb5_pointer func_arg );
-krb5_error_code krb5_supported_realms ( krb5_context kcontext,
-                                        char **realms );
-krb5_error_code krb5_free_supported_realms ( krb5_context kcontext,
-                                             char **realms );
-krb5_error_code krb5_db_set_master_key_ext ( krb5_context kcontext,
-                                             char *pwd,
-                                             krb5_keyblock *key );
-krb5_error_code krb5_db_set_mkey ( krb5_context context,
-                                   krb5_keyblock *key);
-krb5_error_code krb5_db_get_mkey ( krb5_context kcontext,
-                                   krb5_keyblock **key );
 
-krb5_error_code krb5_db_set_mkey_list( krb5_context context,
-                                       krb5_keylist_node * keylist);
 
-krb5_error_code krb5_db_get_mkey_list( krb5_context kcontext,
-                                       krb5_keylist_node ** keylist);
-
-krb5_error_code krb5_db_free_master_key ( krb5_context kcontext,
-                                          krb5_keyblock *key );
 krb5_error_code krb5_db_store_master_key  ( krb5_context kcontext,
                                             char *keyfile,
                                             krb5_principal mname,
@@ -484,18 +372,16 @@ krb5_error_code krb5_db_fetch_mkey  ( krb5_context   context,
                                       krb5_kvno     *kvno,
                                       krb5_data     *salt,
                                       krb5_keyblock *key);
-krb5_error_code krb5_db_verify_master_key ( krb5_context   kcontext,
-                                            krb5_principal mprinc,
-                                            krb5_kvno      kvno,
-                                            krb5_keyblock  *mkey );
 krb5_error_code
 krb5_db_fetch_mkey_list( krb5_context    context,
                          krb5_principal  mname,
                          const krb5_keyblock * mkey,
                          krb5_kvno             mkvno,
                          krb5_keylist_node  **mkeys_list );
-
-krb5_error_code
+/**
+ * Free a master keylist.
+ */
+void
 krb5_db_free_mkey_list( krb5_context         context,
                         krb5_keylist_node  *mkey_list );
 
@@ -523,20 +409,24 @@ krb5_db_setup_mkey_name ( krb5_context context,
                           char **fullname,
                           krb5_principal *principal);
 
+/**
+ * Decrypts the key given in @@a key_data. If @a mkey is specified, that
+ * master key is used. If @a mkey is NULL, then all master keys are tried.
+ */
 krb5_error_code
-krb5_dbekd_decrypt_key_data( krb5_context         context,
-                             const krb5_keyblock        * mkey,
-                             const krb5_key_data        * key_data,
-                             krb5_keyblock      * dbkey,
-                             krb5_keysalt       * keysalt);
+krb5_dbe_decrypt_key_data( krb5_context         context,
+                           const krb5_keyblock        * mkey,
+                           const krb5_key_data        * key_data,
+                           krb5_keyblock      * dbkey,
+                           krb5_keysalt       * keysalt);
 
 krb5_error_code
-krb5_dbekd_encrypt_key_data( krb5_context                 context,
-                             const krb5_keyblock        * mkey,
-                             const krb5_keyblock        * dbkey,
-                             const krb5_keysalt         * keysalt,
-                             int                          keyver,
-                             krb5_key_data              * key_data);
+krb5_dbe_encrypt_key_data( krb5_context                 context,
+                           const krb5_keyblock        * mkey,
+                           const krb5_keyblock        * dbkey,
+                           const krb5_keysalt         * keysalt,
+                           int                          keyver,
+                           krb5_key_data              * key_data);
 
 krb5_error_code
 krb5_dbe_fetch_act_key_list(krb5_context          context,
@@ -605,6 +495,11 @@ krb5_dbe_update_last_pwd_change( krb5_context     context,
                                  krb5_timestamp   stamp);
 
 krb5_error_code
+krb5_dbe_update_last_admin_unlock( krb5_context     context,
+                                   krb5_db_entry  * entry,
+                                   krb5_timestamp   stamp);
+
+krb5_error_code
 krb5_dbe_lookup_tl_data( krb5_context          context,
                          krb5_db_entry       * entry,
                          krb5_tl_data        * ret_tl_data);
@@ -632,6 +527,11 @@ krb5_error_code
 krb5_dbe_lookup_last_pwd_change( krb5_context          context,
                                  krb5_db_entry       * entry,
                                  krb5_timestamp      * stamp);
+
+krb5_error_code
+krb5_dbe_lookup_last_admin_unlock( krb5_context          context,
+                                   krb5_db_entry       * entry,
+                                   krb5_timestamp      * stamp);
 
 krb5_error_code
 krb5_dbe_delete_tl_data( krb5_context    context,
@@ -682,11 +582,50 @@ krb5_db_get_key_data_kvno( krb5_context    context,
                            int             count,
                            krb5_key_data * data);
 
-krb5_error_code krb5_db_invoke ( krb5_context kcontext,
-                                 unsigned int method,
-                                 const krb5_data *req,
-                                 krb5_data *rep );
+krb5_error_code krb5_db_sign_authdata(krb5_context kcontext,
+                                      unsigned int flags,
+                                      krb5_const_principal client_princ,
+                                      krb5_db_entry *client,
+                                      krb5_db_entry *server,
+                                      krb5_db_entry *krbtgt,
+                                      krb5_keyblock *client_key,
+                                      krb5_keyblock *server_key,
+                                      krb5_keyblock *krbtgt_key,
+                                      krb5_keyblock *session_key,
+                                      krb5_timestamp authtime,
+                                      krb5_authdata **tgt_auth_data,
+                                      krb5_authdata ***signed_auth_data);
 
+krb5_error_code krb5_db_check_transited_realms(krb5_context kcontext,
+                                               const krb5_data *tr_contents,
+                                               const krb5_data *client_realm,
+                                               const krb5_data *server_realm);
+
+krb5_error_code krb5_db_check_policy_as(krb5_context kcontext,
+                                        krb5_kdc_req *request,
+                                        krb5_db_entry *client,
+                                        krb5_db_entry *server,
+                                        krb5_timestamp kdc_time,
+                                        const char **status,
+                                        krb5_data *e_data);
+
+krb5_error_code krb5_db_check_policy_tgs(krb5_context kcontext,
+                                         krb5_kdc_req *request,
+                                         krb5_db_entry *server,
+                                         krb5_ticket *ticket,
+                                         const char **status,
+                                         krb5_data *e_data);
+
+void krb5_db_audit_as_req(krb5_context kcontext, krb5_kdc_req *request,
+                          krb5_db_entry *client, krb5_db_entry *server,
+                          krb5_timestamp authtime, krb5_error_code error_code);
+
+void krb5_db_refresh_config(krb5_context kcontext);
+
+krb5_error_code krb5_db_check_allowed_to_delegate(krb5_context kcontext,
+                                                  krb5_const_principal client,
+                                                  const krb5_db_entry *server,
+                                                  krb5_const_principal proxy);
 
 /* default functions. Should not be directly called */
 /*
@@ -703,14 +642,6 @@ krb5_dbe_def_search_enctype( krb5_context kcontext,
                              krb5_key_data **kdatap);
 
 krb5_error_code
-krb5_def_store_mkey( krb5_context context,
-                     char *keyfile,
-                     krb5_principal mname,
-                     krb5_kvno kvno,
-                     krb5_keyblock *key,
-                     char *master_pwd);
-
-krb5_error_code
 krb5_def_store_mkey_list( krb5_context context,
                           char *keyfile,
                           krb5_principal mname,
@@ -725,30 +656,11 @@ krb5_db_def_fetch_mkey( krb5_context   context,
                         char          *db_args);
 
 krb5_error_code
-krb5_def_verify_master_key( krb5_context   context,
-                            krb5_principal mprinc,
-                            krb5_kvno      kvno,
-                            krb5_keyblock *mkey);
-
-krb5_error_code
 krb5_def_fetch_mkey_list( krb5_context            context,
                           krb5_principal        mprinc,
                           const krb5_keyblock  *mkey,
                           krb5_kvno             mkvno,
                           krb5_keylist_node  **mkeys_list);
-
-krb5_error_code kdb_def_set_mkey ( krb5_context kcontext,
-                                   char *pwd,
-                                   krb5_keyblock *key );
-
-krb5_error_code kdb_def_set_mkey_list ( krb5_context kcontext,
-                                        krb5_keylist_node *keylist );
-
-krb5_error_code kdb_def_get_mkey ( krb5_context kcontext,
-                                   krb5_keyblock **key );
-
-krb5_error_code kdb_def_get_mkey_list ( krb5_context kcontext,
-                                        krb5_keylist_node **keylist );
 
 krb5_error_code
 krb5_dbe_def_cpw( krb5_context    context,
@@ -761,37 +673,19 @@ krb5_dbe_def_cpw( krb5_context    context,
                   krb5_db_entry * db_entry);
 
 krb5_error_code
-krb5_def_promote_db(krb5_context, char *, char **);
+krb5_dbe_def_decrypt_key_data( krb5_context             context,
+                               const krb5_keyblock    * mkey,
+                               const krb5_key_data    * key_data,
+                               krb5_keyblock          * dbkey,
+                               krb5_keysalt           * keysalt);
 
 krb5_error_code
-krb5_dbekd_def_decrypt_key_data( krb5_context             context,
-                                 const krb5_keyblock    * mkey,
-                                 const krb5_key_data    * key_data,
-                                 krb5_keyblock          * dbkey,
-                                 krb5_keysalt           * keysalt);
-
-krb5_error_code
-krb5_dbekd_def_encrypt_key_data( krb5_context             context,
-                                 const krb5_keyblock    * mkey,
-                                 const krb5_keyblock    * dbkey,
-                                 const krb5_keysalt     * keysalt,
-                                 int                      keyver,
-                                 krb5_key_data          * key_data);
-
-krb5_error_code
-krb5_dbekd_def_decrypt_key_data( krb5_context     context,
-                                 const krb5_keyblock    * mkey,
-                                 const krb5_key_data    * key_data,
-                                 krb5_keyblock  * dbkey,
-                                 krb5_keysalt   * keysalt);
-
-krb5_error_code
-krb5_dbekd_def_encrypt_key_data( krb5_context             context,
-                                 const krb5_keyblock    * mkey,
-                                 const krb5_keyblock    * dbkey,
-                                 const krb5_keysalt     * keysalt,
-                                 int                      keyver,
-                                 krb5_key_data          * key_data);
+krb5_dbe_def_encrypt_key_data( krb5_context             context,
+                               const krb5_keyblock    * mkey,
+                               const krb5_keyblock    * dbkey,
+                               const krb5_keysalt     * keysalt,
+                               int                      keyver,
+                               krb5_key_data          * key_data);
 
 krb5_error_code
 krb5_db_create_policy( krb5_context kcontext,
@@ -800,8 +694,7 @@ krb5_db_create_policy( krb5_context kcontext,
 krb5_error_code
 krb5_db_get_policy ( krb5_context kcontext,
                      char *name,
-                     osa_policy_ent_t *policy,
-                     int *nentries);
+                     osa_policy_ent_t *policy );
 
 krb5_error_code
 krb5_db_put_policy( krb5_context kcontext,
@@ -860,197 +753,536 @@ krb5_dbe_free_tl_data(krb5_context, krb5_tl_data *);
 #define KRB5_KDB_OPT_SET_DB_NAME        0
 #define KRB5_KDB_OPT_SET_LOCK_MODE      1
 
+/*
+ * This number indicates the date of the last incompatible change to the DAL.
+ * The maj_ver field of the module's vtable structure must match this version.
+ */
+#define KRB5_KDB_DAL_MAJOR_VERSION 2
+
+/*
+ * A krb5_context can hold one database object.  Modules should use
+ * context->dal_handle->db_context to store state associated with the database
+ * object.
+ *
+ * Some module functions are mandatory for KDC operation; others are optional
+ * or apply only to administrative operations.  If a function is optional, a
+ * module can leave the function pointer as NULL.  Alternatively, modules can
+ * return KRB5_PLUGIN_OP_NOTSUPP when asked to perform an inapplicable action.
+ *
+ * Some module functions have default implementations which will call back into
+ * the vtable interface.  Leave these functions as NULL to use the default
+ * implementations.
+ *
+ * The documentation in these comments describes the DAL as it is currently
+ * implemented and used, not as it should be.  So if anything seems off, that
+ * probably means the current state of things is off.
+ */
+
 typedef struct _kdb_vftabl {
     short int maj_ver;
     short int min_ver;
 
-    krb5_error_code (*init_library)();
-    krb5_error_code (*fini_library)();
-    krb5_error_code (*init_module) ( krb5_context kcontext,
-                                     char * conf_section,
-                                     char ** db_args,
-                                     int mode );
+    /*
+     * Mandatory: Invoked after the module library is loaded, when the first DB
+     * using the module is opened, across all contexts.
+     */
+    krb5_error_code (*init_library)(void);
 
-    krb5_error_code (*fini_module) ( krb5_context kcontext );
+    /*
+     * Mandatory: Invoked before the module library is unloaded, after the last
+     * DB using the module is closed, across all contexts.
+     */
+    krb5_error_code (*fini_library)(void);
 
-    krb5_error_code (*db_create) ( krb5_context kcontext,
-                                   char * conf_section,
-                                   char ** db_args );
+    /*
+     * Mandatory: Initialize a database object.  Profile settings should be
+     * read from conf_section inside KDB_MODULE_SECTION.  db_args communicates
+     * command-line arguments for module-specific flags.  mode will be one of
+     * KRB5_KDB_OPEN_{RW,RO} or'd with one of
+     * KRB5_KDB_SRV_TYPE_{KDC,ADMIN,PASSWD,OTHER}.
+     *
+     * A db_args value of "temporary" is generated programattically by
+     * kdb5_util load.  If this db_args value is present, the module should
+     * open a side copy of the database suitable for loading in a propagation
+     * from master to slave.  This side copy will later be promoted with
+     * promote_db, allowing complete updates of the DB with no loss in read
+     * availability.  If the module cannot comply with this architecture, it
+     * should return an error.
+     */
+    krb5_error_code (*init_module)(krb5_context kcontext, char *conf_section,
+                                   char **db_args, int mode);
 
-    krb5_error_code (*db_destroy) ( krb5_context kcontext,
-                                    char *conf_section,
-                                    char ** db_args );
+    /*
+     * Mandatory: Finalize the database object contained in a context.  Free
+     * any state contained in the db_context pointer and null it out.
+     */
+    krb5_error_code (*fini_module)(krb5_context kcontext);
 
-    krb5_error_code (*db_get_age) ( krb5_context kcontext,
-                                    char *db_name,
-                                    time_t *age );
+    /*
+     * Optional: Initialize a database object while creating the underlying
+     * database.  conf_section and db_args have the same meaning as in
+     * init_module.  This function may return an error if the database already
+     * exists.  Used by kdb5_util create.
+     */
+    krb5_error_code (*create)(krb5_context kcontext, char *conf_section,
+                              char **db_args);
 
-    krb5_error_code (*db_set_option) ( krb5_context kcontext,
-                                       int option,
-                                       void *value );
+    /*
+     * Optional: Destroy a database.  conf_section and db_args have the same
+     * meaning as in init_module.  Used by kdb5_util destroy.  In current
+     * usage, the database is destroyed while open, so the module should handle
+     * that.
+     */
+    krb5_error_code (*destroy)(krb5_context kcontext, char *conf_section,
+                               char **db_args);
 
-    krb5_error_code (*db_lock) ( krb5_context kcontext,
-                                 int mode );
+    /*
+     * Optional: Set *age to the last modification time of the database.  Used
+     * by the KDC lookaside cache to ensure that lookaside entries are not used
+     * if the database has changed since the entry was recorded.
+     *
+     * If this function is unimplemented, lookaside cache entries will
+     * effectively expire immediately.  Another option is to supply the current
+     * time, which will cause lookaside cache entries to last for one second.
+     */
+    krb5_error_code (*get_age)(krb5_context kcontext, char *db_name,
+                               time_t *age);
 
-    krb5_error_code (*db_unlock) ( krb5_context kcontext);
+    /*
+     * Optional: Lock the database, with semantics depending on the mode
+     * argument:
+     *
+     * KRB5_DB_LOCKMODE_SHARED: Lock may coexist with other shared locks.
+     * KRB5_DB_LOCKMODE_EXCLUSIVE: Lock may not coexist with other locks.
+     * KRB5_DB_LOCKMODE_PERMANENT: Exclusive lock surviving process exit.
+     * (KRB5_DB_LOCKMODE_DONTBLOCK is unused and unimplemented.)
+     *
+     * Used by the "kadmin lock" command, incremental propagation, and
+     * kdb5_util dump.  Incremental propagation support requires shared locks
+     * to operate.  kdb5_util dump will continue unlocked if the module returns
+     * KRB5_PLUGIN_OP_NOTSUPP.
+     */
+    krb5_error_code (*lock)(krb5_context kcontext, int mode);
 
-    krb5_error_code (*db_get_principal) ( krb5_context kcontext,
-                                          krb5_const_principal search_for,
-                                          unsigned int flags,
-                                          krb5_db_entry *entries,
-                                          int *nentries,
-                                          krb5_boolean *more );
+    /* Optional: Release a lock created with db_lock. */
+    krb5_error_code (*unlock)(krb5_context kcontext);
 
-    krb5_error_code (*db_free_principal) ( krb5_context kcontext,
-                                           krb5_db_entry *entry,
-                                           int count );
+    /*
+     * Mandatory: Set *entry to an allocated entry for the principal
+     * search_for.  If the principal is not found, return KRB5_KDB_NOENTRY.
+     *
+     * The meaning of flags are as follows:
+     *
+     * KRB5_KDB_FLAG_CANONICALIZE: Set by the KDC when looking up entries for
+     *     an AS or TGS request with canonicalization requested.  Determines
+     *     whether the module should return out-of-realm referrals.
+     *
+     * KRB5_KDB_FLAG_INCLUDE_PAC: Set by the KDC during an AS request when the
+     *     client requested PAC information during padata, and during most TGS
+     *     requests.  Indicates that the module should include PAC information
+     *     when its sign_authdata method is invoked.
+     *
+     * KRB5_KDB_FLAG_CLIENT_REFERRALS_ONLY: Set by the KDC when looking up the
+     *     client entry in an AS request.  Affects how the module should return
+     *     out-of-realm referrals.
+     *
+     * KRB5_KDB_FLAG_MAP_PRINCIPALS: Set by the KDC when looking up the client
+     *     entry during TGS requests, except for S4U TGS requests and requests
+     *     where the server entry has the KRB5_KDB_NO_AUTH_DATA_REQUIRED
+     *     attribute.  Indicates that the module should map foreign principals
+     *     to local principals if it supports doing so.
+     *
+     * KRB5_KDB_FLAG_PROTOCOL_TRANSITION: Set by the KDC when looking up the
+     *     client entry during an S4U2Self TGS request.  This affects the PAC
+     *     information which should be included when authorization data is
+     *     generated; see the Microsoft S4U specification for details.
+     *
+     * KRB5_KDB_FLAG_CONSTRAINED_DELEGATION: Set by the KDC when looking up the
+     *     client entry during an S4U2Proxy TGS request.  Also affects PAC
+     *     generation.
+     *
+     * KRB5_KDB_FLAG_CROSS_REALM: Set by the KDC when looking up a client entry
+     *     during a TGS request, if the client principal is not part of the
+     *     realm being served.
+     *
+     * KRB5_KDB_FLAG_ALIAS_OK: Set by the KDC for server principal lookups and
+     *     for AS request client principal lookups with canonicalization
+     *     requested; also set by the admin interface.  Determines whether the
+     *     module should return in-realm aliases.
+     *
+     * A module can return in-realm aliases if KRB5_KDB_FLAG_ALIAS_OK is set.
+     * To return an in-realm alias, fill in a different value for
+     * entries->princ than the one requested.
+     *
+     * A module can return out-of-realm referrals if KRB5_KDB_FLAG_CANONICALIZE
+     * is set.  For AS request clients (KRB5_KDB_FLAG_CLIENT_REFERRALS_ONLY is
+     * also set), the module should do so by simply filling in an out-of-realm
+     * name in entries->princ and setting all other fields to NULL.  Otherwise,
+     * the module should return the entry for the cross-realm TGS of the
+     * referred-to realm.  For TGS referals, the module can also include
+     * tl-data of type KRB5_TL_SERVER_REFERRAL containing ASN.1-encoded Windows
+     * referral data as documented in draft-ietf-krb-wg-kerberos-referrals-11
+     * appendix A; this will be returned to the client as encrypted padata.
+     */
+    krb5_error_code (*get_principal)(krb5_context kcontext,
+                                     krb5_const_principal search_for,
+                                     unsigned int flags,
+                                     krb5_db_entry **entry);
 
-    krb5_error_code (*db_put_principal) ( krb5_context kcontext,
-                                          krb5_db_entry *entries,
-                                          int *nentries,
-                                          char **db_args);
+    /*
+     * Mandatory: Free a database entry.  The entry may have been constructed
+     * by the caller (using the db_alloc function to allocate associated
+     * memory); thus, a plugin must allocate each field of a principal entry
+     * separately.
+     */
+    void (*free_principal)(krb5_context kcontext, krb5_db_entry *entry);
 
-    krb5_error_code (*db_delete_principal) ( krb5_context kcontext,
-                                             krb5_const_principal search_for,
-                                             int *nentries );
+    /*
+     * Optional: Create or modify a principal entry.  db_args communicates
+     * command-line arguments for module-specific flags.
+     *
+     * The mask field of an entry indicates the changed fields.  Mask values
+     * are defined in kadmin's admin.h header.  If KADM5_PRINCIPAL is set in
+     * the mask, the entry is new; otherwise it already exists.  All fields of
+     * an entry are expected to contain correct values, regardless of whether
+     * they are specified in the mask, so it is acceptable for a module to
+     * ignore the mask and update the entire entry.
+     */
+    krb5_error_code (*put_principal)(krb5_context kcontext,
+                                     krb5_db_entry *entry, char **db_args);
 
-    krb5_error_code (*db_iterate) ( krb5_context kcontext,
-                                    char *match_entry,
-                                    int (*func) (krb5_pointer, krb5_db_entry *),
-                                    krb5_pointer func_arg );
+    /*
+     * Optional: Delete the entry for the principal search_for.  If the
+     * principal did not exist, return KRB5_KDB_NOENTRY.
+     */
+    krb5_error_code (*delete_principal)(krb5_context kcontext,
+                                        krb5_const_principal search_for);
 
-    krb5_error_code (*db_create_policy) ( krb5_context kcontext,
-                                          osa_policy_ent_t policy );
+    /*
+     * Optional: For each principal entry in the database, invoke func with the
+     * argments func_arg and the entry data.  If match_entry is specified, the
+     * module may narrow the iteration to principal names matching that regular
+     * expression; a module may alternatively ignore match_entry.
+     */
+    krb5_error_code (*iterate)(krb5_context kcontext,
+                               char *match_entry,
+                               int (*func)(krb5_pointer, krb5_db_entry *),
+                               krb5_pointer func_arg);
 
-    krb5_error_code (*db_get_policy) ( krb5_context kcontext,
-                                       char *name,
-                                       osa_policy_ent_t *policy,
-                                       int *cnt);
+    /*
+     * Optional: Create a password policy entry.  Return an error if the policy
+     * already exists.
+     */
+    krb5_error_code (*create_policy)(krb5_context kcontext,
+                                     osa_policy_ent_t policy);
 
-    krb5_error_code (*db_put_policy) ( krb5_context kcontext,
-                                       osa_policy_ent_t policy );
+    /*
+     * Optional: Set *policy to the policy entry of the specified name.  If the
+     * entry does not exist, return KRB5_KDB_NOENTRY.
+     */
+    krb5_error_code (*get_policy)(krb5_context kcontext, char *name,
+                                  osa_policy_ent_t *policy);
 
-    krb5_error_code (*db_iter_policy) ( krb5_context kcontext,
-                                        char *match_entry,
-                                        osa_adb_iter_policy_func func,
-                                        void *data );
+    /*
+     * Optional: Modify an existing password policy entry to match the values
+     * in policy.  Return an error if the policy does not already exist.
+     */
+    krb5_error_code (*put_policy)(krb5_context kcontext,
+                                  osa_policy_ent_t policy);
+
+    /*
+     * Optional: For each password policy entry in the database, invoke func
+     * with the argments data and the entry data.  If match_entry is specified,
+     * the module may narrow the iteration to policy names matching that
+     * regular expression; a module may alternatively ignore match_entry.
+     */
+    krb5_error_code (*iter_policy)(krb5_context kcontext, char *match_entry,
+                                   osa_adb_iter_policy_func func,
+                                   void *data);
+
+    /*
+     * Optional: Delete the password policy entry with the name policy.  Return
+     * an error if the entry does not exist.
+     */
+    krb5_error_code (*delete_policy)(krb5_context kcontext, char *policy);
+
+    /* Optional: Free a policy entry returned by db_get_policy. */
+    void (*free_policy)(krb5_context kcontext, osa_policy_ent_t val);
+
+    /*
+     * Mandatory: Has the semantics of realloc(ptr, size).  Callers use this to
+     * allocate memory for new or changed principal entries, so the module
+     * should expect to potentially see this memory in db_free_principal.
+     */
+    void *(*alloc)(krb5_context kcontext, void *ptr, size_t size);
+
+    /*
+     * Mandatory: Has the semantics of free(ptr).  Callers use this to free
+     * fields from a principal entry (such as key data) before changing it in
+     * place, and in some cases to free data they allocated with db_alloc.
+     */
+    void (*free)(krb5_context kcontext, void *ptr);
+
+    /*
+     * Optional with default: Retrieve a master keyblock from the stash file
+     * db_args, filling in *key and *kvno.  mname is the name of the master
+     * principal for the realm.
+     *
+     * The default implementation reads the master keyblock from a keytab or
+     * old-format stash file.
+     */
+    krb5_error_code (*fetch_master_key)(krb5_context kcontext,
+                                        krb5_principal mname,
+                                        krb5_keyblock *key, krb5_kvno *kvno,
+                                        char *db_args);
+
+    /*
+     * Optional with default: Given a keyblock for some version of the
+     * database's master key, fetch the decrypted master key values from the
+     * database and store the list into *mkeys_list.  The caller will free
+     * *mkeys_list using a libkdb5 function which uses the standard free()
+     * function, so the module must not use a custom allocator.
+     *
+     * The caller may not know the version number of the master key it has, in
+     * which case it will pass IGNORE_VNO.
+     *
+     * The default implementation ignores kvno and tries the key against the
+     * current master key data and all KRB5_TL_MKEY_AUX values, which contain
+     * copies of the master keys encrypted with old master keys.
+     */
+    krb5_error_code (*fetch_master_key_list)(krb5_context kcontext,
+                                             krb5_principal mname,
+                                             const krb5_keyblock *key,
+                                             krb5_kvno kvno,
+                                             krb5_keylist_node **mkeys_list);
+
+    /*
+     * Optional with default: Save a list of master keyblocks, obtained from
+     * fetch_master_key_list, into the stash file db_arg.  The caller will set
+     * master_pwd to NULL, so the module should just ignore it.  mname is the
+     * name of the master principal for the realm.
+     *
+     * The default implementation saves the list of master keys in a
+     * keytab-format file.
+     */
+    krb5_error_code (*store_master_key_list)(krb5_context kcontext,
+                                             char *db_arg,
+                                             krb5_principal mname,
+                                             krb5_keylist_node *keylist,
+                                             char *master_pwd);
+
+    /*
+     * Optional with default: Starting at position *start, scan the key data of
+     * a database entry for a key matching the enctype ktype, the salt type
+     * stype, and the version kvno.  Store the resulting key into *kdatap and
+     * set *start to the position after the key found.  If ktype is negative,
+     * match any enctype.  If stype is negative, match any salt type.  If kvno
+     * is zero or negative, find the most recent key version satisfying the
+     * other constraints.
+     */
+    krb5_error_code (*dbe_search_enctype)(krb5_context kcontext,
+                                          krb5_db_entry *dbentp,
+                                          krb5_int32 *start, krb5_int32 ktype,
+                                          krb5_int32 stype, krb5_int32 kvno,
+                                          krb5_key_data **kdatap);
 
 
-    krb5_error_code (*db_delete_policy) ( krb5_context kcontext,
-                                          char *policy );
+    /*
+     * Optional with default: Change the key data for db_entry to include keys
+     * derived from the password passwd in each of the specified key-salt
+     * types, at version new_kvno.  Discard the old key data if keepold is not
+     * set.
+     *
+     * The default implementation uses the keyblock master_key to encrypt each
+     * new key, via the function encrypt_key_data.
+     */
+    krb5_error_code (*change_pwd)(krb5_context context,
+                                  krb5_keyblock *master_key,
+                                  krb5_key_salt_tuple *ks_tuple,
+                                  int ks_tuple_count, char *passwd,
+                                  int new_kvno, krb5_boolean keepold,
+                                  krb5_db_entry *db_entry);
 
-    void (*db_free_policy) ( krb5_context kcontext,
-                             osa_policy_ent_t val );
+    /*
+     * Optional: Promote a temporary database to be the live one.  kdb5_util
+     * load opens the database with the "temporary" db_arg and then invokes
+     * this function when the load is complete, thus replacing the live
+     * database with no loss of read availability.
+     */
+    krb5_error_code (*promote_db)(krb5_context context, char *conf_section,
+                                  char **db_args);
 
-    krb5_error_code (*db_supported_realms) ( krb5_context kcontext,
-                                             char **realms );
+    /*
+     * Optional with default: Decrypt the key in key_data with master keyblock
+     * mkey, placing the result into dbkey.  Copy the salt from key_data, if
+     * any, into keysalt.  Either dbkey or keysalt may be left unmodified on
+     * successful return if key_data does not contain key or salt information.
+     *
+     * The default implementation expects the encrypted key (in krb5_c_encrypt
+     * format) to be stored in key_data_contents[0], with length given by
+     * key_data_length[0].  If key_data_ver is 2, it expects the salt to be
+     * stored, unencrypted, in key_data_contents[1], with length given by
+     * key_data_length[1].
+     */
+    krb5_error_code (*decrypt_key_data)(krb5_context kcontext,
+                                        const krb5_keyblock *mkey,
+                                        const krb5_key_data *key_data,
+                                        krb5_keyblock *dbkey,
+                                        krb5_keysalt *keysalt);
 
-    krb5_error_code (*db_free_supported_realms) ( krb5_context kcontext,
-                                                  char **realms );
+    /*
+     * Optional with default: Encrypt dbkey with master keyblock mkey, placing
+     * the result into key_data along with keysalt.
+     *
+     * The default implementation stores the encrypted key (in krb5_c_encrypt
+     * format) in key_data_contents[0] and the length in key_data_length[0].
+     * If keysalt is specified, it sets key_data_ver to 2, and stores the salt
+     * in key_data_contents[1] and its length in key_data_length[1].  If
+     * keysalt is not specified, key_data_ver is set to 1.
+     */
+    krb5_error_code (*encrypt_key_data)(krb5_context kcontext,
+                                        const krb5_keyblock *mkey,
+                                        const krb5_keyblock *dbkey,
+                                        const krb5_keysalt *keysalt,
+                                        int keyver, krb5_key_data *key_data);
 
+    /*
+     * Optional: Generate signed authorization data, such as a Windows PAC, for
+     * the ticket to be returned to the client.  Place the signed authorization
+     * data, if any, in *signed_auth_data.  This function will be invoked for
+     * an AS request if the client included padata requesting a PAC.  This
+     * function will be invoked for a TGS request if there is authorization
+     * data in the TGT, if the client is from another realm, or if the TGS
+     * request is an S4U2Self or S4U2Proxy request.  This function will not be
+     * invoked during TGS requests if the server principal has the
+     * no_auth_data_required attribute set.  Input parameters are:
+     *
+     *   flags: The flags used to look up the client principal.
+     *
+     *   client_princ: For S4U2Proxy TGS requests, the client principal
+     *     requested by the service; for regular TGS requests, the
+     *     possibly-canonicalized client principal.
+     *
+     *   client: The DB entry of the client.  For S4U2Self, this will be the DB
+     *     entry for the client principal requested by the service).
+     *
+     *   server: The DB entry of the service principal.
+     *
+     *   krbtgt: For TGS requests, the DB entry of the (possibly foreign)
+     *     ticket granting service of the TGT.  For AS requests, the DB entry
+     *     of the service principal.
+     *
+     *   client_key: The reply key for the KDC request, before any FAST armor
+     *     is applied.  For AS requests, this may be the client's long-term key
+     *     or a key chosen by a preauth mechanism.  For TGS requests, this may
+     *     be the subkey found in the AP-REQ or the session key of the TGT.
+     *
+     *   server_key: The server key used to encrypt the returned ticket.
+     *
+     *   krbtgt_key: For TGS requests, the key of the (possibly foreign) ticket
+     *     granting service of the TGT.  for AS requests, the service
+     *     principal's key.
+     *
+     *   session_key: The session key of the ticket being granted to the
+     *     requestor.
+     *
+     *   authtime: The timestamp of the original client authentication time.
+     *     For AS requests, this is the current time.  For TGS requests, this
+     *     is the authtime of the subject ticket (TGT or S4U2Proxy evidence
+     *     ticket).
+     *
+     *   tgt_auth_data: For TGS requests, the authorization data present in the
+     *     subject ticket.  For AS requests, NULL.
+     */
+    krb5_error_code (*sign_authdata)(krb5_context kcontext,
+                                     unsigned int flags,
+                                     krb5_const_principal client_princ,
+                                     krb5_db_entry *client,
+                                     krb5_db_entry *server,
+                                     krb5_db_entry *krbtgt,
+                                     krb5_keyblock *client_key,
+                                     krb5_keyblock *server_key,
+                                     krb5_keyblock *krbtgt_key,
+                                     krb5_keyblock *session_key,
+                                     krb5_timestamp authtime,
+                                     krb5_authdata **tgt_auth_data,
+                                     krb5_authdata ***signed_auth_data);
 
-    const char * (*errcode_2_string) ( krb5_context kcontext,
-                                       long err_code );
+    /*
+     * Optional: Perform a policy check on a cross-realm ticket's transited
+     * field and return an error (other than KRB5_PLUGIN_OP_NOTSUPP) if the
+     * check fails.
+     */
+    krb5_error_code (*check_transited_realms)(krb5_context kcontext,
+                                              const krb5_data *tr_contents,
+                                              const krb5_data *client_realm,
+                                              const krb5_data *server_realm);
 
-    void (*release_errcode_string) (krb5_context kcontext, const char *msg);
+    /*
+     * Optional: Perform a policy check on an AS request, in addition to the
+     * standard policy checks.  Return 0 if the AS request is allowed.  If the
+     * AS request is not allowed:
+     *   - Place a short string literal into *status.
+     *   - If desired, place data into e_data.  Any data placed here will be
+     *     freed by the caller using the standard free function.
+     *   - Return an appropriate error (such as KDC_ERR_POLICY).
+     */
+    krb5_error_code (*check_policy_as)(krb5_context kcontext,
+                                       krb5_kdc_req *request,
+                                       krb5_db_entry *client,
+                                       krb5_db_entry *server,
+                                       krb5_timestamp kdc_time,
+                                       const char **status,
+                                       krb5_data *e_data);
 
-    void * (*db_alloc) (krb5_context kcontext, void *ptr, size_t size);
-    void   (*db_free)  (krb5_context kcontext, void *ptr);
+    /*
+     * Optional: Perform a policy check on a TGS request, in addition to the
+     * standard policy checks.  Return 0 if the TGS request is allowed.  If the
+     * TGS request is not allowed:
+     *   - Place a short string literal into *status.
+     *   - If desired, place data into e_data.  Any data placed here will be
+     *     freed by the caller using the standard free function.
+     *   - Return an appropriate error (such as KDC_ERR_POLICY).
+     * The input parameter ticket contains the TGT used in the TGS request.
+     */
+    krb5_error_code (*check_policy_tgs)(krb5_context kcontext,
+                                        krb5_kdc_req *request,
+                                        krb5_db_entry *server,
+                                        krb5_ticket *ticket,
+                                        const char **status,
+                                        krb5_data *e_data);
 
+    /*
+     * Optional: This method informs the module of a successful or unsuccessful
+     * AS request.
+     */
+    void (*audit_as_req)(krb5_context kcontext, krb5_kdc_req *request,
+                         krb5_db_entry *client, krb5_db_entry *server,
+                         krb5_timestamp authtime, krb5_error_code error_code);
 
+    /* Note: there is currently no method for auditing TGS requests. */
 
-    /* optional functions */
-    krb5_error_code (*set_master_key)    ( krb5_context kcontext,
-                                           char *pwd,
-                                           krb5_keyblock *key);
+    /*
+     * Optional: This method informs the module of a request to reload
+     * configuration or other state (that is, the KDC received a SIGHUP).
+     */
+    void (*refresh_config)(krb5_context kcontext);
 
-    krb5_error_code (*get_master_key)    ( krb5_context kcontext,
-                                           krb5_keyblock **key);
-
-    krb5_error_code (*set_master_key_list) ( krb5_context kcontext,
-                                             krb5_keylist_node *keylist);
-
-    krb5_error_code (*get_master_key_list) ( krb5_context kcontext,
-                                             krb5_keylist_node **keylist);
-
-    krb5_error_code (*setup_master_key_name) ( krb5_context kcontext,
-                                               char *keyname,
-                                               char *realm,
-                                               char **fullname,
-                                               krb5_principal  *principal);
-
-    krb5_error_code (*store_master_key)  ( krb5_context kcontext,
-                                           char *db_arg,
-                                           krb5_principal mname,
-                                           krb5_kvno kvno,
-                                           krb5_keyblock *key,
-                                           char *master_pwd);
-
-    krb5_error_code (*fetch_master_key)  ( krb5_context kcontext,
-                                           krb5_principal mname,
-                                           krb5_keyblock *key,
-                                           krb5_kvno *kvno,
-                                           char *db_args);
-
-    krb5_error_code (*verify_master_key) ( krb5_context kcontext,
-                                           krb5_principal mprinc,
-                                           krb5_kvno kvno,
-                                           krb5_keyblock *mkey );
-
-    krb5_error_code (*fetch_master_key_list) (krb5_context kcontext,
-                                              krb5_principal mname,
-                                              const krb5_keyblock *key,
-                                              krb5_kvno            kvno,
-                                              krb5_keylist_node  **mkeys_list);
-
-    krb5_error_code (*store_master_key_list)  ( krb5_context kcontext,
-                                                char *db_arg,
-                                                krb5_principal mname,
-                                                krb5_keylist_node *keylist,
-                                                char *master_pwd);
-
-    krb5_error_code (*dbe_search_enctype) ( krb5_context kcontext,
-                                            krb5_db_entry *dbentp,
-                                            krb5_int32 *start,
-                                            krb5_int32 ktype,
-                                            krb5_int32 stype,
-                                            krb5_int32 kvno,
-                                            krb5_key_data **kdatap);
-
-
-    krb5_error_code
-    (*db_change_pwd) ( krb5_context       context,
-                       krb5_keyblock       * master_key,
-                       krb5_key_salt_tuple      * ks_tuple,
-                       int                        ks_tuple_count,
-                       char             * passwd,
-                       int                        new_kvno,
-                       krb5_boolean       keepold,
-                       krb5_db_entry    * db_entry);
-
-    /* Promote a temporary database to be the live one.  */
-    krb5_error_code (*promote_db) (krb5_context context,
-                                   char *conf_section,
-                                   char **db_args);
-
-    krb5_error_code (*dbekd_decrypt_key_data) ( krb5_context kcontext,
-                                                const krb5_keyblock *mkey,
-                                                const krb5_key_data *key_data,
-                                                krb5_keyblock *dbkey,
-                                                krb5_keysalt *keysalt );
-
-    krb5_error_code (*dbekd_encrypt_key_data) ( krb5_context kcontext,
-                                                const krb5_keyblock *mkey,
-                                                const krb5_keyblock *dbkey,
-                                                const krb5_keysalt *keyselt,
-                                                int keyver,
-                                                krb5_key_data *key_data );
-
-    krb5_error_code
-    (*db_invoke) ( krb5_context context,
-                   unsigned int method,
-                   const krb5_data *req,
-                   krb5_data *rep );
+    /*
+     * Optional: Perform a policy check on server being allowed to obtain
+     * tickets from client to proxy.  (Note that proxy is the target of the
+     * delegation, not the delegating service; the term "proxy" is from the
+     * viewpoint of the delegating service asking another service to perform
+     * some of its work in the authentication context of the client.  This
+     * terminology comes from the Microsoft S4U protocol documentation.)
+     * Return 0 if policy allows it, or an appropriate error (such as
+     * KRB5KDC_ERR_POLICY) if not.  If this method is not implemented, all
+     * S4U2Proxy delegation requests will be rejected.
+     */
+    krb5_error_code (*check_allowed_to_delegate)(krb5_context context,
+                                                 krb5_const_principal client,
+                                                 const krb5_db_entry *server,
+                                                 krb5_const_principal proxy);
 } kdb_vftabl;
 
 #endif /* !defined(_WIN32) */

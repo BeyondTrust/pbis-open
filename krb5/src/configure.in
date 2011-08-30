@@ -55,18 +55,6 @@ AC_KRB5_TCL
 AC_ARG_ENABLE([athena],
 [  --enable-athena         build with MIT Project Athena configuration],,)
 
-# Special --enable-includes-only build option.
-
-includes_only=
-AC_ARG_ENABLE([includes-only],
-  AC_HELP_STRING([--enable-includes-only],[build only include files @<:@disabled@:>@]),
-  includes_only=yes,)
-SUBDIRS_TYPE="all"
-if test -n "$includes_only" ; then
-  SUBDIRS_TYPE="includes_only"
-fi
-AC_SUBST(SUBDIRS_TYPE)
-
 # Begin autoconf tests for the Makefiles generated out of the top-level
 # configure.in...
 
@@ -135,8 +123,65 @@ AC_HELP_STRING([--with-crypto-impl=IMPL], [use specified crypto implementation @
 [CRYPTO_IMPL=$withval
 AC_MSG_RESULT("k5crypto will use \'$withval\'")
 ], withval=builtin)
+case "$withval" in
+builtin)
+  ;;
+openssl)
+  AC_CHECK_LIB(crypto, PKCS7_get_signer_info)
+  ;;
+nss)
+  if test "${CRYPTO_IMPL_CFLAGS+set}" != set; then
+    CRYPTO_IMPL_CFLAGS=`pkg-config --cflags nss`
+  fi
+  if test "${CRYPTO_IMPL_LIBS+set}" != set; then
+    CRYPTO_IMPL_LIBS="-lnss3 $(pkg-config --libs nss-util)"
+  fi
+  AC_DEFINE(CRYPTO_IMPL_NSS,1,[Define if crypto implementation is NSS])
+  save_CFLAGS=$CFLAGS
+  CFLAGS="$CFLAGS $CRYPTO_IMPL_CFLAGS"
+  AC_COMPILE_IFELSE([
+#include <nss.h>
+#if NSS_VMAJOR < 3 || (NSS_VMAJOR == 3 && NSS_VMINOR < 12)
+#error
+#elif NSS_VMAJOR == 3 && NSS_VMINOR == 12 && NSS_VPATCH < 9
+#error
+#endif
+  ], [], [AC_MSG_ERROR([NSS version 3.12.9 or later required.])])
+  CFLAGS=$save_CFLAGS
+  ;;
+*)
+  AC_MSG_ERROR([Unknown crypto implementation $withval])
+  ;;
+esac
 AC_CONFIG_COMMANDS(CRYPTO_IMPL, , CRYPTO_IMPL=$CRYPTO_IMPL)
 AC_SUBST(CRYPTO_IMPL)
+AC_SUBST(CRYPTO_IMPL_CFLAGS)
+AC_SUBST(CRYPTO_IMPL_LIBS)
+
+if test "$CRYPTO_IMPL" = nss; then
+	PRNG_ALG="nss"
+else
+PRNG_ALG="yarrow"
+AC_ARG_WITH([prng-alg],
+AC_HELP_STRING([--with-prng-alg=ALG], [use specified PRNG algorithm. Ignored for nss. @<:@yarrow@:>@]),
+[PRNG_ALG=$withval
+AC_MSG_RESULT("k5crypto will use \'$withval\'")
+], withval=yarrow)
+fi
+AC_CONFIG_COMMANDS(PRNG_ALG, , PRNG_ALG=$PRNG_ALG)
+AC_SUBST(PRNG_ALG)
+if test "$withval" = fortuna; then
+	AC_DEFINE(FORTUNA,1,[Define if Fortuna PRNG is selected])
+fi
+
+AC_ARG_ENABLE([fortuna-test],
+	[  --enable-fortuna-test  build to test Fortuna PRNG],,enableval=no)
+if test "$enableval" = yes ; then
+	PRNG_FORTUNA_TEST="yes"
+	AC_DEFINE(TEST_FORTUNA,1,[Create a special build to test Fortuna PRNG])
+	AC_CONFIG_COMMANDS(PRNG_FORTUNA_TEST, , PRNG_FORTUNA_TEST=$PRNG_FORTUNA_TEST)
+	AC_SUBST(PRNG_FORTUNA_TEST)
+fi
 
 # --with-kdc-kdb-update makes the KDC update the database with last request
 # information and failure information.
@@ -148,24 +193,12 @@ if test "$withval" = yes; then
 	AC_DEFINE(KRBCONF_KDC_MODIFIES_KDB,1,[Define if KDC should update database with each request])
 fi
 
-# Needed for hw-preauth replay detection on KDC.
-
-# USE_RCACHE enables the replay cache
-# NOCACHE disables the lookaside cache
-
-# The lookaside cache is checked first; if *exactly* the same message
-# comes in twice, e.g., because the (legitimate) client resent it,
-# the previous response will be resent.  Otherwise, the replay cache
-# is used to check for attempts to fake out the KDC.  Some hardware
-# preauth methods are weak enough that we *really* want to have this
-# checking turned on.
-
-AC_ARG_ENABLE([kdc-replay-cache],
-AC_HELP_STRING([--enable-kdc-replay-cache],[check for replayed/retransmitted KDC requests (recommended when hardware preauthentication is in use) @<:@disabled@:>@]), , enableval=yes)
-if test "$enableval" = yes ; then
-	AC_DEFINE(USE_RCACHE,1,[Define if the KDC should use a replay cache])
-else
-	AC_DEFINE(NOCACHE,1,[Define if the KDC should use no replay cache])
+AC_ARG_ENABLE([kdc-lookaside-cache],
+AC_HELP_STRING([--disable-kdc-lookaside-cache],
+               [Disable the cache which detects client retransmits]), ,
+               enableval=yes)
+if test "$enableval" = no ; then
+	AC_DEFINE(NOCACHE,1,[Define if the KDC should use no lookaside cache])
 fi
 KRB5_RUN_FLAGS
 
@@ -181,7 +214,7 @@ AC_PROG_AWK
 AC_PROG_LEX
 AC_C_CONST
 AC_HEADER_DIRENT
-AC_CHECK_FUNCS(strdup setvbuf inet_ntoa inet_aton seteuid setresuid setreuid setegid setresgid setregid setsid flock fchmod chmod strftime strptime geteuid setenv unsetenv getenv gmtime_r localtime_r bswap16 bswap64 mkstemp getusershell lstat access getcwd srand48 srand srandom stat strchr strerror strerror_r poll)
+AC_CHECK_FUNCS(strdup setvbuf inet_ntoa inet_aton seteuid setresuid setreuid setegid setresgid setregid setsid flock fchmod chmod strftime strptime geteuid setenv unsetenv getenv gmtime_r localtime_r bswap16 bswap64 mkstemp getusershell access getcwd srand48 srand srandom stat strchr strerror strerror_r)
 
 AC_CHECK_FUNC(mkstemp,
 [MKSTEMP_ST_OBJ=
@@ -945,6 +978,18 @@ else
 fi
 AC_SUBST(HAVE_RUNTEST)
 
+# For Python tests.
+AC_CHECK_PROG(PYTHON,python,python)
+HAVE_PYTHON=no
+if test x"$PYTHON" != x; then
+	# k5test.py requires python 2.4 (for the subprocess module).
+    	vercheck="import sys;sys.exit((sys.hexversion < 0x2040000) and 1 or 0)"
+	if python -c "$vercheck"; then
+		HAVE_PYTHON=yes
+	fi
+fi
+AC_SUBST(HAVE_PYTHON)
+
 # for plugins/kdb/db2
 
 # AIX is unusual in that it wants all symbols resolved at link time
@@ -952,9 +997,7 @@ AC_SUBST(HAVE_RUNTEST)
 # it is linked again later.
 case $krb5_cv_host in
 *-*-aix*)
-        # This is causing problems on AIX 5.2
-        #DB_EXTRA_LIBS=-ldb
-	DB_EXTRA_LIBS=
+	DB_EXTRA_LIBS=-ldb
 	;;
 *)
 	DB_EXTRA_LIBS=
@@ -1055,8 +1098,20 @@ else
 fi
 AC_SUBST(ldap_plugin_dir)
 AC_SUBST(LDAP)
+# This check is for plugins/preauth/securid_sam2
+sam2_plugin=""
+old_CFLAGS=$CFLAGS
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+AC_CHECK_LIB(aceclnt, sd_init,[
+		      AC_MSG_NOTICE([Enabling RSA securID support])
+		      sam2_plugin=plugins/preauth/securid_sam2
+		      ])
+AC_SUBST(sam2_plugin)
+CFLAGS=$old_CFLAGS
 
-# We really should look for and use python-config.
+# This checks is for plugins/locate/python, which isn't built by
+# default, so it's not a big deal that it isn't very good.  We should
+# use python-config instead.
 PYTHON_LIB=
 AC_CHECK_HEADERS(Python.h python2.3/Python.h python2.5/Python.h)
 AC_CHECK_LIB(python2.3,main,[PYTHON_LIB=-lpython2.3],
@@ -1073,7 +1128,7 @@ fi
 AC_CONFIG_FILES(krb5-config, [chmod +x krb5-config])
 V5_AC_OUTPUT_MAKEFILE(.
 
-	util util/support util/profile
+	util util/support util/profile util/send-pr
 
 	lib lib/kdb
 
@@ -1082,9 +1137,13 @@ V5_AC_OUTPUT_MAKEFILE(.
 	lib/crypto/$CRYPTO_IMPL/hash_provider lib/crypto/krb/checksum
 	lib/crypto/krb/prf lib/crypto/krb/rand2key
 	lib/crypto/$CRYPTO_IMPL lib/crypto/$CRYPTO_IMPL/md4 lib/crypto/$CRYPTO_IMPL/md5
-	lib/crypto/krb/old lib/crypto/krb/raw lib/crypto/$CRYPTO_IMPL/sha1
-	lib/crypto/krb/arcfour lib/crypto/krb/yarrow lib/crypto/$CRYPTO_IMPL/aes
-	lib/crypto/crypto_tests
+	lib/crypto/krb/old lib/crypto/krb/raw
+        lib/crypto/$CRYPTO_IMPL/sha1
+        lib/crypto/$CRYPTO_IMPL/sha2
+	lib/crypto/krb/arcfour lib/crypto/krb/prng
+	lib/crypto/krb/prng/$PRNG_ALG
+	lib/crypto/$CRYPTO_IMPL/aes
+	lib/crypto/$CRYPTO_IMPL/camellia lib/crypto/crypto_tests
 
 	lib/krb5 lib/krb5/error_tables lib/krb5/asn.1 lib/krb5/ccache
 dnl	lib/krb5/ccache/ccapi
@@ -1105,8 +1164,18 @@ dnl	ccapi ccapi/lib ccapi/lib/unix ccapi/server ccapi/server/unix ccapi/test
 	kdc slave config-files gen-manpages include
 
 	plugins/locate/python
+	plugins/kadm5_hook/test
+	plugins/kdb/db2
+	plugins/kdb/db2/libdb2
+	plugins/kdb/db2/libdb2/hash
+	plugins/kdb/db2/libdb2/btree
+	plugins/kdb/db2/libdb2/db
+	plugins/kdb/db2/libdb2/mpool
+	plugins/kdb/db2/libdb2/recno
+	plugins/kdb/db2/libdb2/test
 	plugins/kdb/hdb
 	plugins/preauth/cksum_body plugins/preauth/encrypted_challenge
+	plugins/preauth/securid_sam2
 	plugins/preauth/wpse
 	plugins/authdata/greet
 	plugins/authdata/greet_client

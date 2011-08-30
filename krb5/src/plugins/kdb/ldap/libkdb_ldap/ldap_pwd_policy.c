@@ -214,11 +214,12 @@ populate_policy(krb5_context context,
     krb5_ldap_get_value(ld, ent, "krbpwdfailurecountinterval", &(pol_entry->pw_failcnt_interval));
     krb5_ldap_get_value(ld, ent, "krbpwdlockoutduration", &(pol_entry->pw_lockout_duration));
 
-    /* Get the reference count */
-    pol_dn = ldap_get_dn(ld, ent);
-    st = krb5_ldap_get_reference_count (context, pol_dn, "krbPwdPolicyReference",
-                                        &(pol_entry->policy_refcnt), ld);
-    ldap_memfree(pol_dn);
+    /*
+     * We don't store the policy refcnt, because principals might be maintained
+     * outside of kadmin.  Instead, we will check for principal references when
+     * policies are deleted.
+     */
+    pol_entry->policy_refcnt = 0;
 
 cleanup:
     return st;
@@ -226,8 +227,7 @@ cleanup:
 
 static krb5_error_code
 krb5_ldap_get_password_policy_from_dn(krb5_context context, char *pol_name,
-                                      char *pol_dn, osa_policy_ent_t *policy,
-                                      int *cnt)
+                                      char *pol_dn, osa_policy_ent_t *policy)
 {
     krb5_error_code             st=0, tempst=0;
     LDAP                        *ld=NULL;
@@ -247,7 +247,6 @@ krb5_ldap_get_password_policy_from_dn(krb5_context context, char *pol_name,
     SETUP_CONTEXT();
     GET_HANDLE();
 
-    *cnt = 0;
     *(policy) = (osa_policy_ent_t) malloc(sizeof(osa_policy_ent_rec));
     if (*policy == NULL) {
         st = ENOMEM;
@@ -256,7 +255,6 @@ krb5_ldap_get_password_policy_from_dn(krb5_context context, char *pol_name,
     memset(*policy, 0, sizeof(osa_policy_ent_rec));
 
     LDAP_SEARCH(pol_dn, LDAP_SCOPE_BASE, "(objectclass=krbPwdPolicy)", password_policy_attributes);
-    *cnt = 1;
 #if 0 /************** Begin IFDEF'ed OUT *******************************/
     (*policy)->name = strdup(name);
     CHECK_NULL((*policy)->name);
@@ -302,7 +300,7 @@ cleanup:
  */
 krb5_error_code
 krb5_ldap_get_password_policy(krb5_context context, char *name,
-                              osa_policy_ent_t *policy, int *cnt)
+                              osa_policy_ent_t *policy)
 {
     krb5_error_code             st = 0;
     char                        *policy_dn = NULL;
@@ -320,7 +318,8 @@ krb5_ldap_get_password_policy(krb5_context context, char *name,
     if (st != 0)
         goto cleanup;
 
-    st = krb5_ldap_get_password_policy_from_dn(context, name, policy_dn, policy, cnt);
+    st = krb5_ldap_get_password_policy_from_dn(context, name, policy_dn,
+                                               policy);
 
 cleanup:
     if (policy_dn != NULL)
@@ -331,7 +330,7 @@ cleanup:
 krb5_error_code
 krb5_ldap_delete_password_policy(krb5_context context, char *policy)
 {
-    int                         mask = 0;
+    int                         mask = 0, refcount;
     char                        *policy_dn = NULL, *class[] = {"krbpwdpolicy", NULL};
     krb5_error_code             st=0;
     LDAP                        *ld=NULL;
@@ -350,6 +349,13 @@ krb5_ldap_delete_password_policy(krb5_context context, char *policy)
     GET_HANDLE();
 
     st = krb5_ldap_name_to_policydn (context, policy, &policy_dn);
+    if (st != 0)
+        goto cleanup;
+
+    st = krb5_ldap_get_reference_count(context, policy_dn,
+                                       "krbPwdPolicyReference", &refcount, ld);
+    if (st == 0 && refcount != 0)
+        st = KRB5_KDB_POLICY_REF;
     if (st != 0)
         goto cleanup;
 

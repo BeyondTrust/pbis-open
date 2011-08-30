@@ -105,6 +105,37 @@ prof_get_integer_def(krb5_context ctx, const char *conf_section,
     return 0;
 }
 
+/* Get integer or string values from the config section, falling back
+   to the default section, then to hard-coded values.  */
+static errcode_t
+prof_get_boolean_def(krb5_context ctx, const char *conf_section,
+                     const char *name, krb5_boolean dfl, krb5_boolean *out)
+{
+    errcode_t err;
+    int out_temp = 0;
+
+    err = profile_get_boolean(ctx->profile, KDB_MODULE_SECTION, conf_section,
+                              name, -1, &out_temp);
+    if (err) {
+        krb5_set_error_message(ctx, err, "Error reading '%s' attribute: %s",
+                               name, error_message(err));
+        return err;
+    }
+    if (out_temp != -1) {
+        *out = out_temp;
+        return 0;
+    }
+    err = profile_get_boolean(ctx->profile, KDB_MODULE_DEF_SECTION, name, 0,
+                              dfl, &out_temp);
+    if (err) {
+        krb5_set_error_message(ctx, err, "Error reading '%s' attribute: %s",
+                               name, error_message(err));
+        return err;
+    }
+    *out = out_temp;
+    return 0;
+}
+
 /* We don't have non-null defaults in any of our calls, so don't
    bother with the extra argument.  */
 static errcode_t
@@ -308,6 +339,16 @@ krb5_ldap_read_server_params(krb5_context context, char *conf_section,
             profile_release_string(tempval);
         }
     }
+
+    if ((st = prof_get_boolean_def(context, conf_section,
+                                   KRB5_CONF_DISABLE_LAST_SUCCESS, FALSE,
+                                   &ldap_context->disable_last_success)))
+        goto cleanup;
+
+    if ((st = prof_get_boolean_def(context, conf_section,
+                                   KRB5_CONF_DISABLE_LOCKOUT, FALSE,
+                                   &ldap_context->disable_lockout)))
+        goto cleanup;
 
 cleanup:
     return(st);
@@ -1473,14 +1514,6 @@ krb5_add_int_mem_ldap_mod(LDAPMod ***mods, char *attribute, int op, int value)
 }
 
 krb5_error_code
-krb5_ldap_set_option(krb5_context kcontext, int option, void *value)
-{
-    krb5_error_code status = KRB5_PLUGIN_OP_NOTSUPP;
-    krb5_set_error_message(kcontext, status, "LDAP %s", error_message(status));
-    return status;
-}
-
-krb5_error_code
 krb5_ldap_lock(krb5_context kcontext, int mode)
 {
     krb5_error_code status = KRB5_PLUGIN_OP_NOTSUPP;
@@ -1494,34 +1527,6 @@ krb5_ldap_unlock(krb5_context kcontext)
     krb5_error_code status = KRB5_PLUGIN_OP_NOTSUPP;
     krb5_set_error_message(kcontext, status, "LDAP %s", error_message(status));
     return status;
-}
-
-krb5_error_code
-krb5_ldap_supported_realms(krb5_context kcontext, char **realms)
-{
-    krb5_error_code status = KRB5_PLUGIN_OP_NOTSUPP;
-    krb5_set_error_message(kcontext, status, "LDAP %s", error_message(status));
-    return status;
-}
-
-krb5_error_code
-krb5_ldap_free_supported_realms(krb5_context kcontext, char **realms)
-{
-    krb5_error_code status = KRB5_PLUGIN_OP_NOTSUPP;
-    krb5_set_error_message(kcontext, status, "LDAP %s", error_message(status));
-    return status;
-}
-
-const char *
-krb5_ldap_errcode_2_string(krb5_context kcontext, long err_code)
-{
-    return krb5_get_error_message(kcontext, err_code);
-}
-
-void
-krb5_ldap_release_errcode_string(krb5_context kcontext, const char *msg)
-{
-    krb5_free_error_message(kcontext, msg);
 }
 
 
@@ -1991,6 +1996,20 @@ populate_krb5_db_entry(krb5_context context, krb5_ldap_context *ldap_context,
         }
     }
 
+    /* LAST ADMIN UNLOCK */
+    {
+        krb5_timestamp unlock_time=0;
+        if ((st=krb5_ldap_get_time(ld, ent, "krbLastAdminUnlock",
+                                   &unlock_time, &attr_present)) != 0)
+            goto cleanup;
+        if (attr_present == TRUE) {
+            if ((st=krb5_dbe_update_last_admin_unlock(context, entry,
+                                                      unlock_time)))
+                goto cleanup;
+            mask |= KDB_LAST_ADMIN_UNLOCK_ATTR;
+        }
+    }
+
     /* ALLOWED TO DELEGATE TO */
     {
         char **a2d2 = NULL;
@@ -2081,7 +2100,7 @@ populate_krb5_db_entry(krb5_context context, krb5_ldap_context *ldap_context,
             goto cleanup;
 
         if (attr_present == TRUE) {
-            if ((mask & KDB_PRINC_EXPIRE_TIME_ATTR) == 1) {
+            if (mask & KDB_PRINC_EXPIRE_TIME_ATTR) {
                 if (expiretime < entry->expiration)
                     entry->expiration = expiretime;
             } else {
@@ -2107,13 +2126,12 @@ populate_krb5_db_entry(krb5_context context, krb5_ldap_context *ldap_context,
     /* We already know that the policy is inside the realm container. */
     if (polname) {
         osa_policy_ent_t   pwdpol;
-        int                cnt=0;
         krb5_timestamp     last_pw_changed;
         krb5_ui_4          pw_max_life;
 
         memset(&pwdpol, 0, sizeof(pwdpol));
 
-        if ((st=krb5_ldap_get_password_policy(context, polname, &pwdpol, &cnt)) != 0)
+        if ((st=krb5_ldap_get_password_policy(context, polname, &pwdpol)) != 0)
             goto cleanup;
         pw_max_life = pwdpol->pw_max_life;
         free (pwdpol);
@@ -2122,7 +2140,7 @@ populate_krb5_db_entry(krb5_context context, krb5_ldap_context *ldap_context,
             if ((st=krb5_dbe_lookup_last_pwd_change(context, entry, &last_pw_changed)) != 0)
                 goto cleanup;
 
-            if ((mask & KDB_PWD_EXPIRE_TIME_ATTR) == 1) {
+            if (mask & KDB_PWD_EXPIRE_TIME_ATTR) {
                 if ((last_pw_changed + pw_max_life) < entry->pw_expiration)
                     entry->pw_expiration = last_pw_changed + pw_max_life;
             } else

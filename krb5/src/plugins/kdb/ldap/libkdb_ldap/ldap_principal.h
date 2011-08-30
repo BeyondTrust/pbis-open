@@ -82,7 +82,7 @@
 #define KDB_LAST_SUCCESS_ATTR                0x000800
 #define KDB_LAST_FAILED_ATTR                 0x001000
 #define KDB_FAIL_AUTH_COUNT_ATTR             0x002000
-#define KDB_LOCKED_TIME_ATTR                 0x004000
+#define KDB_LAST_ADMIN_UNLOCK_ATTR           0x004000
 
 /*
  * This is a private contract between krb5_ldap_lockout_audit()
@@ -95,17 +95,17 @@ extern struct timeval timeout;
 extern char *policyclass[];
 
 krb5_error_code
-krb5_ldap_put_principal(krb5_context, krb5_db_entry *, int *, char **);
+krb5_ldap_put_principal(krb5_context, krb5_db_entry *, char **);
 
 krb5_error_code
 krb5_ldap_get_principal(krb5_context , krb5_const_principal ,
-                        unsigned int, krb5_db_entry *, int *, krb5_boolean *);
+                        unsigned int, krb5_db_entry **);
 
 krb5_error_code
-krb5_ldap_delete_principal(krb5_context, krb5_const_principal, int *);
+krb5_ldap_delete_principal(krb5_context, krb5_const_principal);
 
-krb5_error_code
-krb5_ldap_free_principal(krb5_context, krb5_db_entry *, int );
+void
+krb5_ldap_free_principal(krb5_context, krb5_db_entry *);
 
 krb5_error_code
 krb5_ldap_iterate(krb5_context, char *,

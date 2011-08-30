@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <fake-addrinfo.h>
 #include <k5-int.h> /* for KRB5_ADM_DEFAULT_PORT */
 #include <krb5.h>
 #ifdef __STDC__
@@ -61,130 +62,105 @@
 
 enum init_type { INIT_PASS, INIT_SKEY, INIT_CREDS, INIT_ANONYMOUS };
 
-static kadm5_ret_t _kadm5_init_any(krb5_context context,
-                                   char *client_name,
-                                   enum init_type init_type,
-                                   char *pass,
-                                   krb5_ccache ccache_in,
-                                   char *service_name,
-                                   kadm5_config_params *params,
-                                   krb5_ui_4 struct_version,
-                                   krb5_ui_4 api_version,
-                                   char **db_args,
-                                   void **server_handle);
+static kadm5_ret_t
+init_any(krb5_context context, char *client_name, enum init_type init_type,
+         char *pass, krb5_ccache ccache_in, char *service_name,
+         kadm5_config_params *params, krb5_ui_4 struct_version,
+         krb5_ui_4 api_version, char **db_args, void **server_handle);
 
 static kadm5_ret_t
-kadm5_get_init_creds(kadm5_server_handle_t handle,
-                     char *client_name, enum init_type init_type,
-                     char *pass, krb5_ccache ccache_in,
-                     char *svcname_in, char *realm,
-                     char *full_svcname, unsigned int full_svcname_len);
+get_init_creds(kadm5_server_handle_t handle, char *client_name,
+               enum init_type init_type, char *pass, krb5_ccache ccache_in,
+               char *svcname_in, char *realm, char *full_svcname,
+               unsigned int full_svcname_len);
 
 static kadm5_ret_t
-kadm5_gic_iter(kadm5_server_handle_t handle,
-               enum init_type init_type,
-               krb5_ccache ccache,
-               krb5_principal client, char *pass,
-               char *svcname, char *realm,
-               char *full_svcname, unsigned int full_svcname_len);
+gic_iter(kadm5_server_handle_t handle, enum init_type init_type,
+         krb5_ccache ccache, krb5_principal client, char *pass,
+         char *svcname, char *realm, char *full_svcname,
+         unsigned int full_svcname_len);
 
 static kadm5_ret_t
-kadm5_setup_gss(kadm5_server_handle_t handle,
-                kadm5_config_params *params_in,
-                char *client_name, char *full_svcname);
+connect_to_server(const char *hostname, int port, int *fd);
+
+static kadm5_ret_t
+setup_gss(kadm5_server_handle_t handle, kadm5_config_params *params_in,
+          char *client_name, char *full_svcname);
 
 static void
-kadm5_rpc_auth(kadm5_server_handle_t handle,
-               kadm5_config_params *params_in,
-               gss_cred_id_t gss_client_creds,
-               gss_name_t gss_target);
+rpc_auth(kadm5_server_handle_t handle, kadm5_config_params *params_in,
+         gss_cred_id_t gss_client_creds, gss_name_t gss_target);
 
-kadm5_ret_t kadm5_init_with_creds(krb5_context context,
-                                  char *client_name,
-                                  krb5_ccache ccache,
-                                  char *service_name,
-                                  kadm5_config_params *params,
-                                  krb5_ui_4 struct_version,
-                                  krb5_ui_4 api_version,
-                                  char **db_args,
-                                  void **server_handle)
+kadm5_ret_t
+kadm5_init_with_creds(krb5_context context, char *client_name,
+                      krb5_ccache ccache, char *service_name,
+                      kadm5_config_params *params, krb5_ui_4 struct_version,
+                      krb5_ui_4 api_version, char **db_args,
+                      void **server_handle)
 {
-    return _kadm5_init_any(context, client_name, INIT_CREDS, NULL, ccache,
-                           service_name, params,
-                           struct_version, api_version, db_args,
-                           server_handle);
+    return init_any(context, client_name, INIT_CREDS, NULL, ccache,
+                    service_name, params, struct_version, api_version, db_args,
+                    server_handle);
 }
 
-
-kadm5_ret_t kadm5_init_with_password(krb5_context context, char *client_name,
-                                     char *pass, char *service_name,
-                                     kadm5_config_params *params,
-                                     krb5_ui_4 struct_version,
-                                     krb5_ui_4 api_version,
-                                     char **db_args,
-                                     void **server_handle)
+kadm5_ret_t
+kadm5_init_with_password(krb5_context context, char *client_name,
+                         char *pass, char *service_name,
+                         kadm5_config_params *params, krb5_ui_4 struct_version,
+                         krb5_ui_4 api_version, char **db_args,
+                         void **server_handle)
 {
-    return _kadm5_init_any(context, client_name, INIT_PASS, pass, NULL,
-                           service_name, params, struct_version,
-                           api_version, db_args, server_handle);
+    return init_any(context, client_name, INIT_PASS, pass, NULL, service_name,
+                    params, struct_version, api_version, db_args,
+                    server_handle);
 }
 
-kadm5_ret_t kadm5_init_anonymous(krb5_context context, char *client_name,
-                                 char *service_name,
-                                 kadm5_config_params *params,
-                                 krb5_ui_4 struct_version,
-                                 krb5_ui_4 api_version,
-                                 char **db_args,
-                                 void **server_handle)
+kadm5_ret_t
+kadm5_init_anonymous(krb5_context context, char *client_name,
+                     char *service_name, kadm5_config_params *params,
+                     krb5_ui_4 struct_version, krb5_ui_4 api_version,
+                     char **db_args, void **server_handle)
 {
-    return _kadm5_init_any(context, client_name, INIT_ANONYMOUS, NULL, NULL,
-                           service_name, params, struct_version,
-                           api_version, db_args, server_handle);
+    return init_any(context, client_name, INIT_ANONYMOUS, NULL, NULL,
+                    service_name, params, struct_version, api_version,
+                    db_args, server_handle);
 }
 
-kadm5_ret_t kadm5_init(krb5_context context, char *client_name, char *pass,
-                       char *service_name,
-                       kadm5_config_params *params,
-                       krb5_ui_4 struct_version,
-                       krb5_ui_4 api_version,
-                       char **db_args,
-                       void **server_handle)
+kadm5_ret_t
+kadm5_init(krb5_context context, char *client_name, char *pass,
+           char *service_name, kadm5_config_params *params,
+           krb5_ui_4 struct_version, krb5_ui_4 api_version, char **db_args,
+           void **server_handle)
 {
-    return _kadm5_init_any(context, client_name, INIT_PASS, pass, NULL,
-                           service_name, params, struct_version,
-                           api_version, db_args, server_handle);
+    return init_any(context, client_name, INIT_PASS, pass, NULL, service_name,
+                    params, struct_version, api_version, db_args,
+                    server_handle);
 }
 
-kadm5_ret_t kadm5_init_with_skey(krb5_context context, char *client_name,
-                                 char *keytab, char *service_name,
-                                 kadm5_config_params *params,
-                                 krb5_ui_4 struct_version,
-                                 krb5_ui_4 api_version,
-                                 char **db_args,
-                                 void **server_handle)
+kadm5_ret_t
+kadm5_init_with_skey(krb5_context context, char *client_name,
+                     char *keytab, char *service_name,
+                     kadm5_config_params *params, krb5_ui_4 struct_version,
+                     krb5_ui_4 api_version, char **db_args,
+                     void **server_handle)
 {
-    return _kadm5_init_any(context, client_name, INIT_SKEY, keytab, NULL,
-                           service_name, params, struct_version,
-                           api_version, db_args, server_handle);
+    return init_any(context, client_name, INIT_SKEY, keytab, NULL,
+                    service_name, params, struct_version, api_version, db_args,
+                    server_handle);
 }
 
-static kadm5_ret_t _kadm5_init_any(krb5_context context, char *client_name,
-                                   enum init_type init_type,
-                                   char *pass,
-                                   krb5_ccache ccache_in,
-                                   char *service_name,
-                                   kadm5_config_params *params_in,
-                                   krb5_ui_4 struct_version,
-                                   krb5_ui_4 api_version,
-                                   char **db_args,
-                                   void **server_handle)
+static kadm5_ret_t
+init_any(krb5_context context, char *client_name, enum init_type init_type,
+         char *pass, krb5_ccache ccache_in, char *service_name,
+         kadm5_config_params *params_in, krb5_ui_4 struct_version,
+         krb5_ui_4 api_version, char **db_args, void **server_handle)
 {
-    struct sockaddr_in addr;
-    struct hostent *hp;
     int fd;
 
-    char *iprop_svc;
-    int iprop_enable = 0;
+    krb5_boolean iprop_enable;
+    int port;
+    rpcprog_t rpc_prog;
+    rpcvers_t rpc_vers;
     char full_svcname[BUFSIZ];
     char *realm;
     krb5_ccache ccache;
@@ -292,53 +268,32 @@ static kadm5_ret_t _kadm5_init_any(krb5_context context, char *client_name,
      * Get credentials.  Also does some fallbacks in case kadmin/fqdn
      * principal doesn't exist.
      */
-    code = kadm5_get_init_creds(handle, client_name, init_type, pass,
-                                ccache_in, service_name, realm,
-                                full_svcname, sizeof(full_svcname));
+    code = get_init_creds(handle, client_name, init_type, pass, ccache_in,
+                          service_name, realm, full_svcname,
+                          sizeof(full_svcname));
     if (code)
         goto error;
-    /*
-     * We have ticket; open the RPC connection.
-     */
 
-    hp = gethostbyname(handle->params.admin_server);
-    if (hp == (struct hostent *) NULL) {
-        code = KADM5_BAD_SERVER_NAME;
-        goto cleanup;
+    /* If the service_name and client_name are iprop-centric, use the iprop
+     * port and RPC identifiers. */
+    iprop_enable = (service_name != NULL &&
+                    strstr(service_name, KIPROP_SVC_NAME) != NULL &&
+                    strstr(client_name, KIPROP_SVC_NAME) != NULL);
+    if (iprop_enable) {
+        port = handle->params.iprop_port;
+        rpc_prog = KRB5_IPROP_PROG;
+        rpc_vers = KRB5_IPROP_VERS;
+    } else {
+        port = handle->params.kadmind_port;
+        rpc_prog = KADM;
+        rpc_vers = KADMVERS;
     }
 
-    /*
-     * If the service_name and client_name are iprop-centric,
-     * we need to clnttcp_create to the appropriate RPC prog.
-     */
-    iprop_svc = strdup(KIPROP_SVC_NAME);
-    if (iprop_svc == NULL)
-        return ENOMEM;
+    code = connect_to_server(handle->params.admin_server, port, &fd);
+    if (code)
+        goto error;
 
-    if (service_name != NULL &&
-        (strstr(service_name, iprop_svc) != NULL) &&
-        (strstr(client_name, iprop_svc) != NULL))
-        iprop_enable = 1;
-    else
-        iprop_enable = 0;
-
-    free(iprop_svc);
-
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = hp->h_addrtype;
-    (void) memcpy(&addr.sin_addr, hp->h_addr, sizeof(addr.sin_addr));
-    if (iprop_enable)
-        addr.sin_port = htons((u_short) handle->params.iprop_port);
-    else
-        addr.sin_port = htons((u_short) handle->params.kadmind_port);
-
-    fd = RPC_ANYSOCK;
-
-    if (iprop_enable) {
-        handle->clnt = clnttcp_create(&addr, KRB5_IPROP_PROG, KRB5_IPROP_VERS,
-                                      &fd, 0, 0);
-    } else
-        handle->clnt = clnttcp_create(&addr, KADM, KADMVERS, &fd, 0, 0);
+    handle->clnt = clnttcp_create(NULL, rpc_prog, rpc_vers, &fd, 0, 0);
     if (handle->clnt == NULL) {
         code = KADM5_RPC_ERROR;
 #ifdef DEBUG
@@ -356,9 +311,9 @@ static kadm5_ret_t _kadm5_init_any(krb5_context context, char *client_name,
      * The RPC connection is open; establish the GSS-API
      * authentication context.
      */
-    code = kadm5_setup_gss(handle, params_in,
-                           (init_type == INIT_CREDS) ? client_name : NULL,
-                           full_svcname);
+    code = setup_gss(handle, params_in,
+                     (init_type == INIT_CREDS) ? client_name : NULL,
+                     full_svcname);
     if (code)
         goto error;
 
@@ -366,7 +321,7 @@ static kadm5_ret_t _kadm5_init_any(krb5_context context, char *client_name,
      * Bypass the remainder of the code and return straightaway
      * if the gss service requested is kiprop
      */
-    if (iprop_enable == 1) {
+    if (iprop_enable) {
         code = 0;
         *server_handle = (void *) handle;
         goto cleanup;
@@ -427,35 +382,26 @@ cleanup:
     return code;
 }
 
-/*
- * kadm5_get_init_creds
- *
- * Get initial credentials for authenticating to server.  Perform
- * fallback from kadmin/fqdn to kadmin/admin if svcname_in is NULL.
- */
+/* Get initial credentials for authenticating to server.  Perform fallback from
+ * kadmin/fqdn to kadmin/admin if svcname_in is NULL. */
 static kadm5_ret_t
-kadm5_get_init_creds(kadm5_server_handle_t handle,
-                     char *client_name, enum init_type init_type,
-                     char *pass, krb5_ccache ccache_in,
-                     char *svcname_in, char *realm,
-                     char *full_svcname, unsigned int full_svcname_len)
+get_init_creds(kadm5_server_handle_t handle, char *client_name,
+               enum init_type init_type, char *pass, krb5_ccache ccache_in,
+               char *svcname_in, char *realm, char *full_svcname,
+               unsigned int full_svcname_len)
 {
     kadm5_ret_t code;
-    krb5_principal client;
-    krb5_ccache ccache;
+    krb5_principal client = NULL;
+    krb5_ccache ccache = NULL;
     char svcname[BUFSIZ];
 
-    client = NULL;
-    ccache = NULL;
     /* NULL svcname means use host-based. */
     if (svcname_in == NULL) {
         code = kadm5_get_admin_service_name(handle->context,
                                             handle->params.realm,
                                             svcname, sizeof(svcname));
-        if (code) {
-            code = KADM5_MISSING_KRB5_CONF_PARAMS;
+        if (code)
             goto error;
-        }
     } else {
         strncpy(svcname, svcname_in, sizeof(svcname));
         svcname[sizeof(svcname)-1] = '\0';
@@ -500,16 +446,14 @@ kadm5_get_init_creds(kadm5_server_handle_t handle,
     }
     handle->lhandle->cache_name = handle->cache_name;
 
-    code = kadm5_gic_iter(handle, init_type, ccache,
-                          client, pass, svcname, realm,
-                          full_svcname, full_svcname_len);
+    code = gic_iter(handle, init_type, ccache, client, pass, svcname, realm,
+                    full_svcname, full_svcname_len);
     if ((code == KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN
          || code == KRB5_CC_NOTFOUND) && svcname_in == NULL) {
         /* Retry with old host-independent service principal. */
-        code = kadm5_gic_iter(handle, init_type, ccache,
-                              client, pass,
-                              KADM5_ADMIN_SERVICE, realm,
-                              full_svcname, full_svcname_len);
+        code = gic_iter(handle, init_type, ccache, client, pass,
+                        KADM5_ADMIN_SERVICE, realm, full_svcname,
+                        full_svcname_len);
     }
     /* Improved error messages */
     if (code == KRB5KRB_AP_ERR_BAD_INTEGRITY) code = KADM5_BAD_PASSWORD;
@@ -517,25 +461,18 @@ kadm5_get_init_creds(kadm5_server_handle_t handle,
         code = KADM5_SECURE_PRINC_MISSING;
 
 error:
+    krb5_free_principal(handle->context, client);
     if (ccache != NULL && init_type != INIT_CREDS)
         krb5_cc_close(handle->context, ccache);
     return code;
 }
 
-/*
- * kadm5_gic_iter
- *
- * Perform one iteration of attempting to get credentials.  This
- * includes searching existing ccache for requested service if
- * INIT_CREDS.
- */
+/* Perform one iteration of attempting to get credentials.  This includes
+ * searching existing ccache for requested service if INIT_CREDS. */
 static kadm5_ret_t
-kadm5_gic_iter(kadm5_server_handle_t handle,
-               enum init_type init_type,
-               krb5_ccache ccache,
-               krb5_principal client, char *pass,
-               char *svcname, char *realm,
-               char *full_svcname, unsigned int full_svcname_len)
+gic_iter(kadm5_server_handle_t handle, enum init_type init_type,
+         krb5_ccache ccache, krb5_principal client, char *pass, char *svcname,
+         char *realm, char *full_svcname, unsigned int full_svcname_len)
 {
     kadm5_ret_t code;
     krb5_context ctx;
@@ -613,15 +550,53 @@ error:
     return code;
 }
 
-/*
- * kadm5_setup_gss
- *
- * Acquire GSSAPI credentials and set up RPC auth flavor.
- */
+/* Set *fd to a socket connected to hostname and port. */
 static kadm5_ret_t
-kadm5_setup_gss(kadm5_server_handle_t handle,
-                kadm5_config_params *params_in,
-                char *client_name, char *full_svcname)
+connect_to_server(const char *hostname, int port, int *fd)
+{
+    struct addrinfo hint, *addrs, *a;
+    char portbuf[32];
+    int err, s;
+    kadm5_ret_t code;
+
+    /* Look up the server's addresses. */
+    (void) snprintf(portbuf, sizeof(portbuf), "%d", port);
+    memset(&hint, 0, sizeof(hint));
+    hint.ai_socktype = SOCK_STREAM;
+#ifdef AI_NUMERICSERV
+    hint.ai_flags = AI_NUMERICSERV;
+#endif
+    err = getaddrinfo(hostname, portbuf, &hint, &addrs);
+    if (err != 0)
+        return KADM5_CANT_RESOLVE;
+
+    /* Try to connect to each address until we succeed. */
+    for (a = addrs; a != NULL; a = a->ai_next) {
+        s = socket(a->ai_family, a->ai_socktype, 0);
+        if (s == -1) {
+            code = KADM5_FAILURE;
+            goto cleanup;
+        }
+        err = connect(s, a->ai_addr, a->ai_addrlen);
+        if (err == 0) {
+            *fd = s;
+            code = 0;
+            goto cleanup;
+        }
+        close(s);
+    }
+
+    /* We didn't succeed on any address. */
+    code = KADM5_RPC_ERROR;
+cleanup:
+    freeaddrinfo(addrs);
+    return code;
+}
+
+/* Acquire GSSAPI credentials and set up RPC auth flavor. */
+static kadm5_ret_t
+setup_gss(kadm5_server_handle_t handle, kadm5_config_params *params_in,
+          char *client_name, char *full_svcname)
 {
     kadm5_ret_t code;
     OM_uint32 gssstat, minor_stat;
@@ -726,7 +701,7 @@ kadm5_setup_gss(kadm5_server_handle_t handle,
      * Do actual creation of RPC auth handle.  Implements auth flavor
      * fallback.
      */
-    kadm5_rpc_auth(handle, params_in, gss_client_creds, gss_target);
+    rpc_auth(handle, params_in, gss_client_creds, gss_target);
 
 error:
     if (gss_client_creds != GSS_C_NO_CREDENTIAL)
@@ -757,16 +732,10 @@ error:
     return 0;
 }
 
-/*
- * kadm5_rpc_auth
- *
- * Create RPC auth handle.  Do auth flavor fallback if needed.
- */
+/* Create RPC auth handle.  Do auth flavor fallback if needed. */
 static void
-kadm5_rpc_auth(kadm5_server_handle_t handle,
-               kadm5_config_params *params_in,
-               gss_cred_id_t gss_client_creds,
-               gss_name_t gss_target)
+rpc_auth(kadm5_server_handle_t handle, kadm5_config_params *params_in,
+         gss_cred_id_t gss_client_creds, gss_name_t gss_target)
 {
     OM_uint32 gssstat, minor_stat;
     struct rpc_gss_sec sec;

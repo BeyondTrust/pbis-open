@@ -322,9 +322,8 @@ krb5_ldap_delete_realm (krb5_context context, char *lrealm)
                 for (i = 0; values[i] != NULL; ++i) {
                     krb5_parse_name(context, values[i], &principal);
                     if (principal_in_realm_2(principal, lrealm) == 0) {
-                        int nent = 0;
-                        if ((st=krb5_ldap_delete_principal(context, principal,
-                                                           &nent)) != LDAP_SUCCESS)
+                        st=krb5_ldap_delete_principal(context, principal);
+                        if (st && st != KRB5_KDB_NOENTRY)
                             goto cleanup;
                     }
                     krb5_free_principal(context, principal);
@@ -1456,11 +1455,6 @@ krb5_ldap_free_realm_params(krb5_ldap_realm_params *rparams)
             if (rparams->tl_data->tl_data_contents)
                 krb5_xfree(rparams->tl_data->tl_data_contents);
             krb5_xfree(rparams->tl_data);
-        }
-
-        if (rparams->mkey.contents) {
-            memset(rparams->mkey.contents, 0, rparams->mkey.length);
-            krb5_xfree(rparams->mkey.contents);
         }
 
         krb5_xfree(rparams);

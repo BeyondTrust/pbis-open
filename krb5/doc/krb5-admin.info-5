@@ -1,641 +1,11 @@
 This is krb5-admin.info, produced by makeinfo version 4.5 from
 admin.texinfo.
 
+Copyright (C) 1985-2010 by the Massachusetts Institute of Technology.
 INFO-DIR-SECTION Kerberos
 START-INFO-DIR-ENTRY
 * krb5-admin: (krb5-admin).             Kerberos V5 Administrator's Guide
 END-INFO-DIR-ENTRY
-
-
-File: krb5-admin.info,  Node: Configuring Kerberos with OpenLDAP back-end,  Next: Application Servers,  Prev: Administrating the Kerberos Database,  Up: Top
-
-Configuring Kerberos with OpenLDAP back-end
-*******************************************
-
-  1. Set up SSL on the OpenLDAP server and client to ensure secure
-     communication when the KDC service and LDAP server are on different
-     machines. `ldapi://' can be used if the LDAP server and KDC
-     service are running on the same machine.
-
-       A. Setting up SSL on the OpenLDAP server:
-
-            a. Get a CA certificate using OpenSSL tools
-
-            b. Configure OpenLDAP server for using SSL/TLS
-
-               For the latter, you need to specify the location of CA
-               certificate location in slapd.conf file.
-
-               Refer to the following link for more information:
-
-               `http://www.openldap.org/doc/admin23/tls.html'
-
-       B. Setting up SSL on OpenLDAP Client:
-
-            a. For the KDC and Admin Server, you need to do the
-               client-side configuration in ldap.conf.
-
-               For example,
-                    TLS_CACERT `/etc/openldap/certs/cacert.pem'
-
-  2. Include the Kerberos schema file (kerberos.schema) in the
-     configuration file (slapd.conf) on the LDAP Server, by providing
-     the location where it is stored.
-
-          include `/etc/openldap/schema/kerberos.schema'
-
-  3. Choose DNs for the KDC and kadmin servers to bind to the LDAP
-     server, and create them if necessary.  These DNs will be specified
-     with the `ldap_kdc_dn' and `ldap_kadmind_dn' directives in
-     krb5.conf; their passwords can be stashed with `kdb5_ldap_util
-     stashsrvpw' and the resulting file specified with the
-     `ldap_service_password_file' directive.
-
-  4. Choose a DN for the global Kerberos container entry (but do not
-     create the entry at this time).  This DN will be specified with the
-     `ldap_kerberos_container_dn' directive in krb5.conf.  Realm
-     container entries will be created underneath this DN.  Principal
-     entries may exist either underneath the realm container (the
-     default) or in separate trees referenced from the realm container.
-
-  5. Configure the LDAP server ACLs to enable the KDC and kadmin server
-     DNs to read and write the Kerberos data.
-
-
-
-     Sample access control information
-
-          access to dn.base=""
-                  by * read
-          
-          access to dn.base="cn=Subschema"
-                  by * read
-          
-          access to attrs=userPassword,userPKCS12
-                  by self write
-                  by * auth
-          
-          access to attrs=shadowLastChange
-                  by self write
-                  by * read
-          
-          # Providing access to realm container
-          access to `dn.subtree'= "cn=EXAMPLE.COM,cn=krbcontainer,dc=example,dc=com"
-                  by `dn.exact'="cn=kdc-service,dc=example,dc=com" read
-                  by `dn.exact'="cn=adm-service,dc=example,dc=com" write
-                  by * none
-          
-          # Providing access to principals, if not underneath realm container
-          access to `dn.subtree'= "ou=users,dc=example,dc=com"
-                  by `dn.exact'="cn=kdc-service,dc=example,dc=com" read
-                  by `dn.exact'="cn=adm-service,dc=example,dc=com" write
-                  by * none
-          
-          access to *
-                  by * read
-
-     If the locations of the container and principals or the DNs of the
-service objects for a realm are changed then this information should be
-updated.
-
-  6. Start the LDAP server as follows:
-          slapd -h "ldapi:/// ldaps:///"
-
-  7. Modify the krb5.conf file to include LDAP specific items listed
-     below:
-          `realms'
-            `database_module'
-          
-          `dbmodules'
-            `db_library'
-            `db_module_dir'
-            `ldap_kdc_dn'
-            `ldap_kadmind_dn'
-            `ldap_service_password_file'
-            `ldap_servers'
-            `ldap_conns_per_server'
-
-     For the sample `krb5.conf' file, refer to *Note Sample krb5.conf
-     File::.
-
-     For more details, refer to the section `krb5.conf'
-
-  8. Create the realm using `kdb5_ldap_util'.
-
-          kdb5_ldap_util -D cn=admin,dc=example,dc=com create -subtrees ou=users,dc=example,dc=com -r EXAMPLE.COM -s
-
-     Use the `-subtrees' option if the principals are to exist in a
-     separate subtree from the realm container.  Before executing the
-     command, make sure that the subtree mentioned above
-     `(ou=users,dc=example,dc=com)' exists.  If the principals will
-     exist underneath the realm container, omit the `-subtrees' option
-     and do not worry about creating the principal subtree.
-
-     For more information, refer to the section "Global Operations on
-     the Kerberos LDAP Database".
-
-     The realm object is created under the ldap_kerberos_container_dn
-     specified in the configuration file. This operation will also
-     create the Kerberos container, if not present already. This will
-     be used to store information related to all realms.
-
-  9. Stash the password of the service object used by the KDC and
-     Administration service to bind to the LDAP server using the
-     stashsrvpw command of kdb5_ldap_util. The object DN should be the
-     same as ldap_kdc_dn and ldap_kadmind_dn values specified in the
-     krb5.conf file.
-
-          kdb5_ldap_util -D cn=admin,dc=example,dc=com stashsrvpw -f `/etc/kerberos/service.keyfile' cn=krbadmin,dc=example,dc=com
-
- 10. Add krb5principalname to the indexes in slapd.conf to speed up the
-     access.
-
-With the LDAP back end it is possible to provide aliases for principal
-entries.  Currently we provide no mechanism provided for creating
-aliases, so it must be done by direct manipulation of the LDAP entries.
-
-An entry with aliases contains multiple values of the krbPrincipalName
-attribute.  Since LDAP attribute values are not ordered, it is
-necessary to specify which principal name is canonical, by using the
-krbCanonicalName attribute.  Therefore, to create aliases for an entry,
-first set the krbCanonicalName attribute of the entry to the canonical
-principal name (which should be identical to the pre-existing
-krbPrincipalName value), and then add additional krbPrincipalName
-attributes for the aliases.
-
-Principal aliases are only returned by the KDC when the client requests
-canonicalization.  Canonicalization is normally requested for service
-principals; for client principals, an explicit flag is often required
-(e.g. `kinit -C') and canonicalization is only performed for initial
-ticket requests.
-
-
-File: krb5-admin.info,  Node: Application Servers,  Next: Backups of Secure Hosts,  Prev: Configuring Kerberos with OpenLDAP back-end,  Up: Top
-
-Application Servers
-*******************
-
-If you need to install the Kerberos V5 programs on an application
-server, please refer to the Kerberos V5 Installation Guide.  Once you
-have installed the software, you need to add that host to the Kerberos
-database (*note Adding or Modifying Principals::), and generate a
-"keytab" for that host, that contains the host's key.  You also need to
-make sure the host's clock is within your maximum clock skew of the
-KDCs.
-
-* Menu:
-
-* Keytabs::
-* Clock Skew::
-* Getting DNS Information Correct::
-* Configuring Your Firewall to Work With Kerberos V5::
-
-
-File: krb5-admin.info,  Node: Keytabs,  Next: Clock Skew,  Prev: Application Servers,  Up: Application Servers
-
-Keytabs
-=======
-
-A "keytab" is a host's copy of its own keylist, which is analogous to a
-user's password.  An application server that needs to authenticate
-itself to the KDC has to have a keytab that contains its own principal
-and key.  Just as it is important for users to protect their passwords,
-it is equally important for hosts to protect their keytabs.  You should
-always store keytab files on local disk, and make them readable only by
-root, and you should never send a keytab file over a network in the
-clear.  Ideally, you should run the `kadmin' command to extract a
-keytab on the host on which the keytab is to reside.
-
-* Menu:
-
-* Adding Principals to Keytabs::
-* Removing Principals from Keytabs::
-
-
-File: krb5-admin.info,  Node: Adding Principals to Keytabs,  Next: Removing Principals from Keytabs,  Prev: Keytabs,  Up: Keytabs
-
-Adding Principals to Keytabs
-----------------------------
-
-To generate a keytab, or to add a principal to an existing keytab, use
-the `ktadd' command from `kadmin', which requires the "inquire"
-administrative privilege.  (If you use the -glob princ_exp option, it
-also requires the "list" administrative privilege.)  The syntax is:
-
-     ktadd [-k[eytab] keytab] [-q] [-e
-     key:salt_list] [principal | -glob princ_exp]
-     [...]
-
-The `ktadd' command takes the following switches:
-
--k[eytab] keytab
-     use keytab as the keytab file.  Otherwise, `ktadd' will use the
-     default keytab file (`/etc/krb5.keytab').
-
--e "enc:salt..."
-     Uses the specified list of enctype-salttype pairs for setting the
-     key of the principal.  The quotes are necessary if there are
-     multiple enctype-salttype pairs.  This will not function against
-     kadmin daemons earlier than krb5-1.2.  See *Note Supported
-     Encryption Types:: and *Note Salts:: for all possible values.
-
--q
-     run in quiet mode.  This causes `ktadd' to display less verbose
-     information.
-
-principal | -glob principal expression
-     add principal, or all principals matching principal expression to
-     the keytab.  The rules for principal expression are the same as
-     for the kadmin `list_principals' (*note Retrieving a List of
-     Principals::) command.
-
-Here is a sample session, using configuration files that enable only
-`des-cbc-crc' encryption. (The line beginning with => is a continuation
-of the previous line.)
-
-     kadmin: ktadd host/daffodil.mit.edu@ATHENA.MIT.EDU
-     kadmin: Entry for principal host/daffodil.mit.edu@ATHENA.MIT.EDU with
-          kvno 2, encryption type DES-CBC-CRC added to keytab
-          WRFILE:/etc/krb5.keytab.
-     kadmin:
-
-     kadmin: ktadd -k /usr/local/var/krb5kdc/kadmind.keytab
-     => kadmin/admin kadmin/changepw
-     kadmin: Entry for principal kadmin/admin@ATHENA.MIT.EDU with
-          kvno 3, encryption type DES-CBC-CRC added to keytab
-          WRFILE:/usr/local/var/krb5kdc/kadmind.keytab.
-     kadmin:
-
-
-File: krb5-admin.info,  Node: Removing Principals from Keytabs,  Prev: Adding Principals to Keytabs,  Up: Keytabs
-
-Removing Principals from Keytabs
---------------------------------
-
-To remove a principal from an existing keytab, use the kadmin
-`ktremove' command.  The syntax is:
-
-     ktremove [-k[eytab] keytab] [-q] principal [kvno | all | old]
-
-The `ktremove' command takes the following switches:
-
--k[eytab] keytab
-     use keytab as the keytab file.  Otherwise, `ktremove' will use the
-     default keytab file (`/etc/krb5.keytab').
-
--q
-     run in quiet mode.  This causes `ktremove' to display less verbose
-     information.
-
-principal
-     the principal to remove from the keytab.  (Required.)
-
-kvno
-     remove all entries for the specified principal whose Key Version
-     Numbers match kvno.
-
-all
-     remove all entries for the specified principal
-
-old
-     remove all entries for the specified principal except those with
-     the highest kvno.
-
-For example:
-
-     kadmin: ktremove -k /usr/local/var/krb5kdc/kadmind.keytab kadmin/admin
-     kadmin: Entry for principal kadmin/admin with kvno 3 removed
-          from keytab WRFILE:/usr/local/var/krb5kdc/kadmind.keytab.
-     kadmin:
-
-
-File: krb5-admin.info,  Node: Clock Skew,  Next: Getting DNS Information Correct,  Prev: Keytabs,  Up: Application Servers
-
-Clock Skew
-==========
-
-In order to prevent intruders from resetting their system clocks in
-order to continue to use expired tickets, Kerberos V5 is set up to
-reject ticket requests from any host whose clock is not within the
-specified maximum clock skew of the KDC (as specified in the `kdc.conf'
-file).  Similarly, hosts are configured to reject responses from any
-KDC whose clock is not within the specified maximum clock skew of the
-host (as specified in the `krb5.conf' file).  The default value for
-maximum clock skew is 300 seconds, or five minutes.
-
-MIT suggests that you add a line to client machines' `/etc/rc' files to
-synchronize the machine's clock to your KDC at boot time.  On UNIX
-hosts, assuming you had a kdc called `kerberos' in your realm, this
-would be:
-
-     gettime -s kerberos
-
-If the host is not likely to be rebooted frequently, you may also want
-to set up a cron job that adjusts the time on a regular basis.
-
-
-File: krb5-admin.info,  Node: Getting DNS Information Correct,  Next: Configuring Your Firewall to Work With Kerberos V5,  Prev: Clock Skew,  Up: Application Servers
-
-Getting DNS Information Correct
-===============================
-
-Several aspects of Kerberos rely on name service.  In order for Kerberos
-to provide its high level of security, it is less forgiving of name
-service problems than some other parts of your network.  It is important
-that your Domain Name System (DNS) entries and your hosts have the
-correct information.
-
-Each host's canonical name must be the fully-qualified host name
-(including the domain), and each host's IP address must reverse-resolve
-to the canonical name.
-
-Other than the `localhost' entry, make all entries in each machine's
-`/etc/hosts' file in the following form:
-
-     IP address      fully-qualified hostname        aliases
-
-Here is a sample `/etc/hosts' file:
-
-     # this is a comment
-     127.0.0.1       localhost localhost@mit.edu
-     10.0.0.6       daffodil.mit.edu trillium wake-robin
-
-Additionally, on Solaris machines, you need to be sure the "hosts"
-entry in the file
-`/etc/nsswitch.conf' includes the source "dns" as well as "file".
-
-Finally, each host's keytab file must include a host/key pair for the
-host's canonical name.  You can list the keys in a keytab file by
-issuing the command `klist -k'.  For example:
-
-     viola# klist -k
-     Keytab name: /etc/krb5.keytab
-     KVNO Principal
-     ---- ------------------------------------------------------------
-        1 host/daffodil.mit.edu@ATHENA.MIT.EDU
-
-If you telnet to the host with a fresh credentials cache (ticket file),
-and then `klist', the host's service principal should be
-host/fully-qualified-hostname@REALM_NAME.
-
-
-File: krb5-admin.info,  Node: Configuring Your Firewall to Work With Kerberos V5,  Prev: Getting DNS Information Correct,  Up: Application Servers
-
-Configuring Your Firewall to Work With Kerberos V5
-==================================================
-
-If you need off-site users to be able to get Kerberos tickets in your
-realm, they must be able to get to your KDC.  This requires either that
-you have a slave KDC outside your firewall, or you configure your
-firewall to allow UDP requests into at least one of your KDCs, on
-whichever port the KDC is running.  (The default is port 88; other
-ports may be specified in the KDC's kdc.conf file.)  Similarly, if you
-need off-site users to be able to change their passwords in your realm,
-they must be able to get to your Kerberos admin server.  The default
-port for the admin server is 749.
-
-If your on-site users inside your firewall will need to get to KDCs in
-other realms, you will also need to configure your firewall to allow
-outgoing TCP and UDP requests to port 88.  Additionally, if they will
-need to get to any Kerberos V4 KDCs, you may also need to allow TCP and
-UDP requests to port 750.  If your on-site users inside your firewall
-will need to get to Kerberos admin servers in other realms, you will
-also need to allow outgoing TCP and UDP requests to port
-749.
-
-If any of your KDCs are outside your firewall, you will need to allow
-`kprop' requests to get through to the remote KDC.  `Kprop' uses the
-krb5_prop service on port 754 (tcp).
-
-If you need your off-site users to have access to machines inside your
-firewall, you need to allow TCP connections from their off-site hosts on
-the appropriate ports for the programs they will be using.  The
-following lines from `/etc/services' show the default port numbers for
-the Kerberos V5 programs:
-
-     ftp           21/tcp           # Kerberos ftp and telnet use the
-     telnet        23/tcp           # default ports
-     kerberos      88/udp    kdc    # Kerberos V5 KDC
-     kerberos      88/tcp    kdc    # Kerberos V5 KDC
-     klogin        543/tcp          # Kerberos authenticated rlogin
-     kshell        544/tcp   cmd    # and remote shell
-     kerberos-adm  749/tcp          # Kerberos 5 admin/changepw
-     kerberos-adm  749/udp          # Kerberos 5 admin/changepw
-     krb5_prop     754/tcp          # Kerberos slave propagation
-     eklogin       2105/tcp         # Kerberos auth. & encrypted rlogin
-
-By default, Kerberos V5 `telnet' and `ftp' use the same ports as the
-standard `telnet' and `ftp' programs, so if you already allow telnet
-and ftp connections through your firewall, the Kerberos V5 versions
-will get through as well.  If you do not already allow telnet and ftp
-connections through your firewall, but need your users to be able to
-use Kerberos V5 telnet and ftp, you can either allow ftp and telnet
-connections on the standard ports, or switch these programs to
-non-default port numbers and allow ftp and telnet connections on those
-ports to get through.
-
-Kerberos V5 `rlogin' uses the `klogin' service, which by default uses
-port 543.  Encrypted Kerberos V5 rlogin uses the `eklogin' service,
-which by default uses port 2105.
-
-Kerberos V5 `rsh' uses the `kshell' service, which by default uses port
-544.  However, the server must be able to make a TCP connection from
-the kshell port to an arbitrary port on the client, so if your users
-are to be able to use `rsh' from outside your firewall, the server they
-connect to must be able to send outgoing packets to arbitrary port
-numbers.  Similarly, if your users need to run `rsh' from inside your
-firewall to hosts outside your firewall, the outside server needs to be
-able to connect to an arbitrary port on the machine inside your
-firewall.  Because Kerberos V5 `rcp' uses `rsh', the same issues apply.
-If you need to use `rsh' (or `rcp') through your firewall and are
-concerned with the security implications of allowing connections to
-arbitrary ports, MIT suggests that you have rules that specifically
-name these applications and, if possible, list the allowed hosts.
-
-The book `UNIX System Security', by David Curry, is a good starting
-point for learning to configure firewalls.
-
-
-File: krb5-admin.info,  Node: Backups of Secure Hosts,  Next: Bug Reporting,  Prev: Application Servers,  Up: Top
-
-Backups of Secure Hosts
-***********************
-
-When you back up a secure host, you should exclude the host's keytab
-file from the backup.  If someone obtained a copy of the keytab from a
-backup, that person could make any host masquerade as the host whose
-keytab was compromised.  This could be particularly dangerous if the
-compromised keytab was from one of your KDCs.  If the machine has a disk
-crash and the keytab file is lost, it is easy to generate another keytab
-file.  (*Note Adding Principals to Keytabs::.)  If you are unable to
-exclude particular files from backups, you should ensure that the
-backups are kept as secure as the host's root password.
-
-* Menu:
-
-* Backing Up the Kerberos Database::
-
-
-File: krb5-admin.info,  Node: Backing Up the Kerberos Database,  Prev: Backups of Secure Hosts,  Up: Backups of Secure Hosts
-
-Backing Up the Kerberos Database
-================================
-
-As with any file, it is possible that your Kerberos database could
-become corrupted.  If this happens on one of the slave KDCs, you might
-never notice, since the next automatic propagation of the database would
-install a fresh copy.  However, if it happens to the master KDC, the
-corrupted database would be propagated to all of the slaves during the
-next propagation.  For this reason, MIT recommends that you back up
-your Kerberos database regularly.  Because the master KDC is
-continuously dumping the database to a file in order to propagate it to
-the slave KDCs, it is a simple matter to have a cron job periodically
-copy the dump file to a secure machine elsewhere on your network.  (Of
-course, it is important to make the host where these backups are stored
-as secure as your KDCs, and to encrypt its transmission across your
-network.)  Then if your database becomes corrupted, you can load the
-most recent dump onto the master KDC.  (*Note Restoring a Kerberos
-Database from a Dump File::.)
-
-
-File: krb5-admin.info,  Node: Bug Reporting,  Next: Appendix,  Prev: Backups of Secure Hosts,  Up: Top
-
-Bug Reporting
-*************
-
-In any complex software, there will be bugs.  If you have successfully
-built and installed Kerberos V5, please use the `krb5-send-pr' program
-to fill out a Problem Report should you encounter any errors in our
-software.
-
-Bug reports that include proposed fixes are especially welcome.  If you
-do include fixes, please send them using either context diffs or unified
-diffs (using `diff -c' or `diff -u', respectively).  Please be careful
-when using "cut and paste" or other such means to copy a patch into a
-bug report; depending on the system being used, that can result in
-converting TAB characters into spaces, which makes applying the patches
-more difficult.
-
-The `krb5-send-pr' program is installed in the directory
-`/usr/local/sbin'.
-
-The `krb5-send-pr' program enters the problem report into our Problem
-Report Management System (PRMS), which automatically assigns it to the
-engineer best able to help you with problems in the assigned category.
-
-The `krb5-send-pr' program will try to intelligently fill in as many
-fields as it can.  You need to choose the "category", "class",
-"severity", and "priority" of the problem, as well as giving us as much
-information as you can about its exact nature.
-
-The PR category will be one of:
-
-     krb5-admin   krb5-appl    krb5-build   krb5-clients
-     krb5-doc     krb5-kdc     krb5-libs    krb5-misc
-     pty          telnet       test
-
-Choose the category that best describes the area under which your
-problem falls.
-
-The class can be "sw-bug", "doc-bug", "change-request", or "support".
-The first two are exactly as their names imply.  Use change-request
-when the software is behaving according to specifications, but you want
-to request changes in some feature or behavior.  The support class is
-intended for more general questions about building or using Kerberos V5.
-
-The severity of the problem indicates the problem's impact on the
-usability of Kerberos V5.  If a problem is "critical", that means the
-product, component or concept is completely non-operational, or some
-essential functionality is missing, and no workaround is known.  A
-"serious" problem is one in which the product, component or concept is
-not working properly or significant functionality is missing.  Problems
-that would otherwise be considered critical are rated serious when a
-workaround is known.  A "non-critical" problem is one that is indeed a
-problem, but one that is having a minimal effect on your ability to use
-Kerberos V5.  E.g., The product, component or concept is working in
-general, but lacks features, has irritating behavior, does something
-wrong, or doesn't match its documentation.  The default severity is
-serious.
-
-The priority indicates how urgent this particular problem is in
-relation to your work.  Note that low priority does not imply low
-importance.  A priority of "high" means a solution is needed as soon as
-possible.  A priority of "medium" means the problem should be solved no
-later than the next release.  A priority of "low" means the problem
-should be solved in a future release, but it is not important to your
-work how soon this happens.  The default priority is medium.
-
-Note that a given severity does not necessarily imply a given priority.
-For example, a non-critical problem might still have a high priority if
-you are faced with a hard deadline.  Conversely, a serious problem might
-have a low priority if the feature it is disabling is one that you do
-not need.
-
-It is important that you fill in the release field and tell us what
-changes you have made, if any.
-
-A sample filled-out form from a company named "Toasters, Inc." might
-look like this:
-
-     To: krb5-bugs@mit.edu
-     Subject: misspelled "Kerberos" in title of installation guide
-     From: jcb
-     Reply-To: jcb
-     Cc:
-     X-send-pr-version: 3.99
-     
-     
-     >Submitter-Id:	mit
-     >Originator:	Jeffrey C. Gilman Bigler
-     >Organization:
-     mit
-     >Confidential:	no
-     >Synopsis:	Misspelled "Kerberos" in title of installation guide
-     >Severity:	non-critical
-     >Priority:	low
-     >Category:	krb5-doc
-     >Class:		doc-bug
-     >Release:	1.0-development
-     >Environment:
-     	<machine, os, target, libraries (multiple lines)>
-     System: ULTRIX imbrium 4.2 0 RISC
-     Machine: mips
-     >Description:
-             Misspelled "Kerberos" in title of "Kerboros V5 Installation Guide"
-     >How-To-Repeat:
-             N/A
-     >Fix:
-             Correct the spelling.
-
-If the `krb5-send-pr' program does not work for you, or if you did not
-get far enough in the process to have an installed and working
-`krb5-send-pr', you can generate your own form, using the above as an
-example.
-
-
-File: krb5-admin.info,  Node: Appendix,  Prev: Bug Reporting,  Up: Top
-
-Appendix
-********
-
-* Menu:
-
-* Errors::
-* kadmin Time Zones::
-
-
-File: krb5-admin.info,  Node: Errors,  Next: kadmin Time Zones,  Prev: Appendix,  Up: Appendix
-
-Kerberos Error Messages
-=======================
-
-* Menu:
-
-* Kerberos V5 Library Error Codes::
-* Kerberos V5 Database Library Error Codes::
-* Kerberos V5 Magic Numbers Error Codes::
-* ASN.1 Error Codes::
-* GSSAPI Error Codes::
 
 
 File: krb5-admin.info,  Node: Kerberos V5 Library Error Codes,  Next: Kerberos V5 Database Library Error Codes,  Prev: Errors,  Up: Errors
@@ -1477,4 +847,203 @@ Kerberos 5 GSSAPI Errors:
  12. KG_EMPTY_CCACHE: Credential cache is empty
 
  13. KG_NO_CTYPES: Acceptor and Initiator share no checksum types
+
+
+File: krb5-admin.info,  Node: kadmin Time Zones,  Prev: Errors,  Up: Appendix
+
+kadmin Time Zones
+=================
+
+This is a complete listing of the time zones recognized by the `kadmin'
+command.
+
+gmt
+     Greenwich Mean Time
+
+ut, utc
+     Universal Time (Coordinated).
+
+wet
+     Western European Time.  (Same as GMT.)
+
+bst
+     British Summer Time.  (1 hour ahead of GMT.)
+
+wat
+     West Africa Time.  (1 hour behind GMT.)
+
+at
+     Azores Time.  (2 hours behind GMT.)
+
+bst
+     Brazil Standard Time.  (3 hours behind GMT.)  Note that the
+     abbreviation BST also stands for British Summer Time.
+
+gst
+     Greenland Standard Time.  (3 hours behind GMT.)  Note that the
+     abbreviation GST also stands for Guam Standard Time.
+
+nft
+     Newfoundland Time.  (3.5 hours behind GMT.)
+
+nst
+     Newfoundland Standard Time.  (3.5 hours behind GMT.)
+
+ndt
+     Newfoundland Daylight Time.  (2.5 hours behind GMT.)
+
+ast
+     Atlantic Standard Time.  (4 hours behind GMT.)
+
+adt
+     Atlantic Daylight Time.  (3 hours behind GMT.)
+
+est
+     Eastern Standard Time.  (5 hours behind GMT.)
+
+edt
+     Eastern Daylight Time.  (4 hours behind GMT.)
+
+cst
+     Central Standard Time.  (6 hours behind GMT.)
+
+cdt
+     Central Daylight Time.  (5 hours behind GMT.)
+
+mst
+     Mountain Standard Time.  (7 hours behind GMT.)
+
+mdt
+     Mountain Daylight Time.  (6 hours behind GMT.)
+
+pst
+     Pacific Standard Time.  (8 hours behind GMT.)
+
+pdt
+     Pacific Daylight Time.  (7 hours behind GMT.)
+
+yst
+     Yukon Standard Time.  (9 hours behind GMT.)
+
+ydt
+     Yukon Daylight Time.  (8 hours behind GMT.)
+
+hst
+     Hawaii Standard Time.  (10 hours behind GMT.)
+
+hdt
+     Hawaii Daylight Time.  (9 hours behind GMT.)
+
+cat
+     Central Alaska Time.  (10 hours behind GMT.)
+
+ahst
+     Alaska-Hawaii Standard Time.  (10 hours behind GMT.)
+
+nt
+     Nome Time.  (11 hours behind GMT.)
+
+idlw
+     International Date Line West Time.  (12 hours behind GMT.)
+
+cet
+     Central European Time.  (1 hour ahead of GMT.)
+
+met
+     Middle European Time.  (1 hour ahead of GMT.)
+
+mewt
+     Middle European Winter Time.  (1 hour ahead of GMT.)
+
+mest
+     Middle European Summer Time.  (2 hours ahead of GMT.)
+
+swt
+     Swedish Winter Time.  (1 hour ahead of GMT.)
+
+sst
+     Swedish Summer Time.  (1 hours ahead of GMT.)
+
+fwt
+     French Winter Time.  (1 hour ahead of GMT.)
+
+fst
+     French Summer Time.  (2 hours ahead of GMT.)
+
+eet
+     Eastern Europe Time; Russia Zone 1.  (2 hours ahead of GMT.)
+
+bt
+     Baghdad Time; Russia Zone 2.  (3 hours ahead of GMT.)
+
+it
+     Iran Time.  (3.5 hours ahead of GMT.)
+
+zp4
+     Russia Zone 3.  (4 hours ahead of GMT.)
+
+zp5
+     Russia Zone 4.  (5 hours ahead of GMT.)
+
+ist
+     Indian Standard Time.  (5.5 hours ahead of GMT.)
+
+zp6
+     Russia Zone 5.  (6 hours ahead of GMT.)
+
+nst
+     North Sumatra Time.  (6.5 hours ahead of GMT.)  Note that the
+     abbreviation NST is also used for Newfoundland Stanard Time.
+
+sst
+     South Sumatra Time; Russia Zone 6.  (7 hours ahead of GMT.)  Note
+     that SST is also Swedish Summer Time.
+
+wast
+     West Australian Standard Time.  (7 hours ahead of GMT.)
+
+wadt
+     West Australian Daylight Time.  (8 hours ahead of GMT.)
+
+jt
+     Java Time.  (7.5 hours ahead of GMT.)
+
+cct
+     China Coast Time; Russia Zone 7.  (8 hours ahead of GMT.)
+
+jst
+     Japan Standard time; Russia Zone 8.  (9 hours ahead of GMT.)
+
+kst
+     Korean Standard Time.  (9 hours ahead of GMT.)
+
+cast
+     Central Australian Standard Time.  (9.5 hours ahead of GMT.)
+
+cadt
+     Central Australian Daylight Time.  (10.5 hours ahead of GMT.)
+
+east
+     Eastern Australian Standard Time.  (10 hours ahead of GMT.)
+
+eadt
+     Eastern Australian Daylight Time.  (11 hours ahead of GMT.)
+
+gst
+     Guam Standard Time; Russia Zone 9.  (10 hours ahead of GMT.)
+
+kdt
+     Korean Daylight Time.  (10 hours ahead of GMT.)
+
+nzt
+     New Zealand Time.  (12 hours ahead of GMT.)
+
+nzst
+     New Zealand Standard Time.  (12 hours ahead of GMT.)
+
+nzdt
+     New Zealand Daylight Time.  (13 hours ahead of GMT.)
+
+idle
+     International Date Line East.  (12 hours ahead of GMT.)
 

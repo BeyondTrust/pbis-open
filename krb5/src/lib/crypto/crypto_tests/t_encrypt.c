@@ -45,6 +45,10 @@ krb5_enctype interesting_enctypes[] = {
     ENCTYPE_ARCFOUR_HMAC_EXP,
     ENCTYPE_AES256_CTS_HMAC_SHA1_96,
     ENCTYPE_AES128_CTS_HMAC_SHA1_96,
+#ifdef CAMELLIA
+    ENCTYPE_CAMELLIA128_CTS_CMAC,
+    ENCTYPE_CAMELLIA256_CTS_CMAC,
+#endif
     0
 };
 
@@ -73,6 +77,17 @@ static int compare_results(krb5_data *d1, krb5_data *d2)
         return EINVAL;
     }
     return 0;
+}
+
+static void
+display(const char *msg, const krb5_data *d)
+{
+    unsigned int i;
+
+    printf("%s:", msg);
+    for (i = 0; i < d->length; i++)
+        printf(" %02X", (unsigned char) d->data[i]);
+    printf("\n");
 }
 
 int
@@ -134,6 +149,7 @@ main ()
         /* Encrypt, decrypt, and see if we got the plaintext back again. */
         test ("Encrypting (c)",
               krb5_c_encrypt (context, keyblock, 7, 0, &in, &enc_out));
+        display ("Enc output", &enc_out.ciphertext);
         test ("Decrypting",
               krb5_c_decrypt (context, keyblock, 7, 0, &enc_out, &check));
         test ("Comparing", compare_results (&in, &check));
@@ -142,6 +158,7 @@ main ()
         memset(out.data, 0, out.length);
         test ("Encrypting (k)",
               krb5_k_encrypt (context, key, 7, 0, &in, &enc_out));
+        display ("Enc output", &enc_out.ciphertext);
         test ("Decrypting",
               krb5_k_decrypt (context, key, 7, 0, &enc_out, &check));
         test ("Comparing", compare_results (&in, &check));
@@ -197,6 +214,10 @@ main ()
             test("iov encrypting (c)",
                  krb5_c_encrypt_iov(context, keyblock, 7, 0, iov, 5));
             assert(iov[1].data.length == in.length);
+            display("Header", &iov[0].data);
+            display("Data", &iov[1].data);
+            display("Padding", &iov[3].data);
+            display("Trailer", &iov[4].data);
             test("iov decrypting",
                  krb5_c_decrypt_iov(context, keyblock, 7, 0, iov, 5));
             test("Comparing results",
@@ -206,6 +227,10 @@ main ()
             test("iov encrypting (k)",
                  krb5_k_encrypt_iov(context, key, 7, 0, iov, 5));
             assert(iov[1].data.length == in.length);
+            display("Header", &iov[0].data);
+            display("Data", &iov[1].data);
+            display("Padding", &iov[3].data);
+            display("Trailer", &iov[4].data);
             test("iov decrypting",
                  krb5_k_decrypt_iov(context, key, 7, 0, iov, 5));
             test("Comparing results",
@@ -219,8 +244,10 @@ main ()
               krb5_c_init_state (context, keyblock, 7, &state));
         test ("Encrypting with state",
               krb5_c_encrypt (context, keyblock, 7, &state, &in, &enc_out));
+        display ("Enc output", &enc_out.ciphertext);
         test ("Encrypting again with state",
               krb5_c_encrypt (context, keyblock, 7, &state, &in2, &enc_out2));
+        display ("Enc output", &enc_out2.ciphertext);
         test ("free_state",
               krb5_c_free_state (context, keyblock, &state));
         test ("init_state",
@@ -251,6 +278,7 @@ main ()
     check.length = 2048;
     test ("Encrypting with RC4 key usage 8",
           krb5_c_encrypt (context, keyblock, 8, 0, &in, &enc_out));
+    display ("Enc output", &enc_out.ciphertext);
     test ("Decrypting with RC4 key usage 9",
           krb5_c_decrypt (context, keyblock, 9, 0, &enc_out, &check));
     test ("Comparing", compare_results (&in, &check));

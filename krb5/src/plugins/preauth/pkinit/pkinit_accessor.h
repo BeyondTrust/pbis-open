@@ -80,10 +80,4 @@ extern void (*k5int_set_prompt_types)
 extern krb5_error_code (*k5int_encode_krb5_authdata_elt)
 	(const krb5_authdata *rep, krb5_data **code);
 
-struct srv_dns_entry;
-extern krb5_error_code (*k5int_make_srv_query_realm)
-        (const krb5_data *realm, const char *service,
-         const char *protocol, struct srv_dns_entry **answers);
-extern void (*k5int_free_srv_dns_data)(struct srv_dns_entry *);
-
 #endif /* _PKINIT_ACCESSOR_H */

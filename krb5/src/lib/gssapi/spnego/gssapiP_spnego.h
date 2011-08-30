@@ -13,7 +13,6 @@ extern "C" {
 #endif
 
 #include <gssapi/gssapi.h>
-#include <syslog.h>
 
 #define	SEC_CONTEXT_TOKEN 1
 #define	SPNEGO_SIZE_OF_INT 4
@@ -361,7 +360,7 @@ OM_uint32
 spnego_gss_set_cred_option
 (
 	OM_uint32 *minor_status,
-	gss_cred_id_t cred_handle,
+	gss_cred_id_t *cred_handle,
 	const gss_OID desired_object,
 	const gss_buffer_t value
 );
@@ -373,15 +372,6 @@ spnego_gss_set_sec_context_option
 	gss_ctx_id_t *context_handle,
 	const gss_OID desired_object,
 	const gss_buffer_t value
-);
-
-OM_uint32
-spnego_gssspi_set_cred_option
-(
-	OM_uint32 *minor_status,
-        gss_cred_id_t cred_handle,
-        const gss_OID desired_object,
-        const gss_buffer_t value
 );
 
 #ifdef _GSS_STATIC_LINK
@@ -465,6 +455,18 @@ spnego_gss_acquire_cred_impersonate_name(
     gss_cred_id_t *,	    /* output_cred_handle */
     gss_OID_set *,	    /* actual_mechs */
     OM_uint32 *);	    /* time_rec */
+
+OM_uint32
+spnego_gss_acquire_cred_with_password(
+    OM_uint32 *minor_status,
+    const gss_name_t desired_name,
+    const gss_buffer_t password,
+    OM_uint32 time_req,
+    const gss_OID_set desired_mechs,
+    gss_cred_usage_t cred_usage,
+    gss_cred_id_t *output_cred_handle,
+    gss_OID_set *actual_mechs,
+    OM_uint32 *time_rec);
 
 OM_uint32
 spnego_gss_display_name_ext
@@ -560,6 +562,33 @@ spnego_gss_set_neg_mechs
 	OM_uint32 *minor_status,
 	gss_cred_id_t cred_handle,
 	const gss_OID_set mech_list
+);
+
+OM_uint32
+spnego_gss_inquire_mech_for_saslname
+(
+	OM_uint32 *minor_status,
+	const gss_buffer_t sasl_mech_name,
+	gss_OID *mech_type
+);
+
+OM_uint32
+spnego_gss_inquire_saslname_for_mech
+(
+	OM_uint32 *minor_status,
+	const gss_OID desired_mech,
+	gss_buffer_t sasl_mech_name,
+	gss_buffer_t mech_name,
+	gss_buffer_t mech_description
+);
+
+OM_uint32
+spnego_gss_inquire_attrs_for_mech
+(
+	OM_uint32 *minor_status,
+	gss_const_OID mech,
+	gss_OID_set *mech_attrs,
+	gss_OID_set *known_mech_attrs
 );
 
 #ifdef	__cplusplus

@@ -184,7 +184,11 @@ main(argc, argv)
     }
 
     if (print_version) {
+#ifdef _WIN32                   /* No access to autoconf vars; fix somehow. */
+        printf("Kerberos for Windows\n");
+#else
         printf("%s version %s\n", PACKAGE_NAME, PACKAGE_VERSION);
+#endif
         exit(0);
     }
 
@@ -428,7 +432,7 @@ etype_string(enctype)
     static char buf[100];
     krb5_error_code retval;
 
-    if ((retval = krb5_enctype_to_string(enctype, buf, sizeof(buf)))) {
+    if ((retval = krb5_enctype_to_name(enctype, FALSE, buf, sizeof(buf)))) {
         /* XXX if there's an error != EINVAL, I should probably report it */
         snprintf(buf, sizeof(buf), "etype %d", enctype);
     }
@@ -487,7 +491,7 @@ printtime(tv)
                                     timestring,
                                     timestamp_width+1,
                                     &fill)) {
-        printf(timestring);
+        printf("%s", timestring);
     }
 }
 

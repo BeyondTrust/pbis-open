@@ -84,11 +84,17 @@
           ticket is still within its renewable life.
 
      <B>-k</B> [<B>-t</B> <I>keytab</I>_<I>file</I>]
-          requests a host ticket, obtained  from  a  key  in  the
-          local host's <I>keytab</I> file.  The name and location of the
-          keytab file may be specified with  the  -<B>t</B>  <I>keytab</I>_<I>file</I>
+          requests a ticket, obtained from a  key  in  the  local
+          host's  <I>keytab</I> file.  The name and location of the key-
+          tab file may  be  specified  with  the  -<B>t</B>  <I>keytab</I>_<I>file</I>
           option; otherwise the default name and location will be
-          used.
+          used.  By default a host ticket is  requested  but  any
+          principal  may be specified. On a KDC, the special key-
+          tab location <B>KDB:</B> can be used to  indicate  that  kinit
+          should  open  the  KDC  database  and  look  up the key
+          directly.  This  permits  an  administrator  to  obtain
+          tickets  as  any principal that supports password-based
+          authentication.
 
      <B>-n</B>   Requests anonymous processing.  Two types of  anonymous
           principals  are  supported.   For  fully anonymous Ker-
@@ -113,8 +119,8 @@
           attacker  would  have to know both the key of the armor
           ticket and the key of the principal used for  authenti-
           cation  in  order  to attack the request. Armoring also
-          makes sure that  the  response  from  the  KDC  is  not
-          modified in transit.
+          makes sure that the response from the KDC is not  modi-
+          fied in transit.
 
      <B>-c</B> <I>cache</I>_<I>name</I>
           use <I>cache</I>_<I>name</I> as the Kerberos 5  credentials  (ticket)
@@ -170,6 +176,52 @@
 </PRE>
 <H2>SEE ALSO</H2><PRE>
      <B>klist(1)</B>, <B>kdestroy(1)</B>, <B>kerberos(1)</B>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 </PRE>

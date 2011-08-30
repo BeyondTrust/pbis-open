@@ -1,19 +1,20 @@
 This is krb5-admin.info, produced by makeinfo version 4.5 from
 admin.texinfo.
 
+Copyright (C) 1985-2010 by the Massachusetts Institute of Technology.
 INFO-DIR-SECTION Kerberos
 START-INFO-DIR-ENTRY
 * krb5-admin: (krb5-admin).             Kerberos V5 Administrator's Guide
 END-INFO-DIR-ENTRY
 
 
-File: krb5-admin.info,  Node: Top,  Next: Copyright,  Prev: (dir),  Up: (dir)
+File: krb5-admin.info,  Node: Top,  Next: Introduction,  Prev: (dir),  Up: (dir)
 
 This document describes how to administrate a Kerberos V5 installation.
 
+Copyright (C) 1985-2010 by the Massachusetts Institute of Technology.
 * Menu:
 
-* Copyright::
 * Introduction::
 * How Kerberos Works::
 * Configuration Files::
@@ -24,495 +25,10 @@ This document describes how to administrate a Kerberos V5 installation.
 * Backups of Secure Hosts::
 * Bug Reporting::
 * Appendix::
+* Copyright::
 
 
-File: krb5-admin.info,  Node: Copyright,  Next: Introduction,  Prev: Top,  Up: Top
-
-Copyright
-*********
-
-Copyright (C) 1985-2010 by the Massachusetts Institute of Technology.
-
-     Export of software employing encryption from the United States of
-     America may require a specific license from the United States
-     Government.  It is the responsibility of any person or organization
-     contemplating export to obtain such a license before exporting.
-
-WITHIN THAT CONSTRAINT, permission to use, copy, modify, and distribute
-this software and its documentation for any purpose and without fee is
-hereby granted, provided that the above copyright notice appear in all
-copies and that both that copyright notice and this permission notice
-appear in supporting documentation, and that the name of M.I.T. not be
-used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  Furthermore if you
-modify this software you must label your software as modified software
-and not distribute it in such a fashion that it might be confused with
-the original MIT software.  M.I.T. makes no representations about the
-suitability of this software for any purpose.  It is provided "as is"
-without express or implied warranty.
-
-Individual source code files are copyright MIT, Cygnus Support, Novell,
-OpenVision Technologies, Oracle, Red Hat, Sun Microsystems,
-FundsXpress, and others.
-
-Project Athena, Athena, Athena MUSE, Discuss, Hesiod, Kerberos, Moira,
-and Zephyr are trademarks of the Massachusetts Institute of Technology
-(MIT).  No commercial use of these trademarks may be made without prior
-written permission of MIT.
-
-"Commercial use" means use of a name in a product or other for-profit
-manner.  It does NOT prevent a commercial firm from referring to the
-MIT trademarks in order to convey information (although in doing so,
-recognition of their trademark status should be given).
-
-The following copyright and permission notice applies to the OpenVision
-Kerberos Administration system located in `kadmin/create',
-`kadmin/dbutil', `kadmin/passwd', `kadmin/server', `lib/kadm5', and
-portions of `lib/rpc':
-
-     Copyright, OpenVision Technologies, Inc., 1996, All Rights Reserved
-
-     WARNING:  Retrieving the OpenVision Kerberos Administration system
-     source code, as described below, indicates your acceptance of the
-     following terms.  If you do not agree to the following terms, do
-     not retrieve the OpenVision Kerberos administration system.
-
-     You may freely use and distribute the Source Code and Object Code
-     compiled from it, with or without modification, but this Source
-     Code is provided to you "AS IS" EXCLUSIVE OF ANY WARRANTY,
-     INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY
-     OR FITNESS FOR A PARTICULAR PURPOSE, OR ANY OTHER WARRANTY,
-     WHETHER EXPRESS OR IMPLIED.  IN NO EVENT WILL OPENVISION HAVE ANY
-     LIABILITY FOR ANY LOST PROFITS, LOSS OF DATA OR COSTS OF
-     PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR FOR ANY SPECIAL,
-     INDIRECT, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS AGREEMENT,
-     INCLUDING, WITHOUT LIMITATION, THOSE RESULTING FROM THE USE OF THE
-     SOURCE CODE, OR THE FAILURE OF THE SOURCE CODE TO PERFORM, OR FOR
-     ANY OTHER REASON.
-
-     OpenVision retains all copyrights in the donated Source Code.
-     OpenVision also retains copyright to derivative works of the
-     Source Code, whether created by OpenVision or by a third party.
-     The OpenVision copyright notice must be preserved if derivative
-     works are made based on the donated Source Code.
-
-     OpenVision Technologies, Inc. has donated this Kerberos
-     Administration system to MIT for inclusion in the standard
-     Kerberos 5 distribution.  This donation underscores our commitment
-     to continuing Kerberos technology development and our gratitude
-     for the valuable work which has been performed by MIT and the
-     Kerberos community.
-
-     Portions contributed by Matt Crawford `<crawdad@fnal.gov>' were
-     work performed at Fermi National Accelerator Laboratory, which is
-     operated by Universities Research Association, Inc., under contract
-     DE-AC02-76CHO3000 with the U.S. Department of Energy.
-
-Portions of `src/lib/crypto' have the following copyright:
-
-     Copyright (C) 1998 by the FundsXpress, INC.
-
-     All rights reserved.
-
-     Export of this software from the United States of America may
-     require a specific license from the United States Government.  It
-     is the responsibility of any person or organization contemplating
-     export to obtain such a license before exporting.
-
-     WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-     distribute this software and its documentation for any purpose and
-     without fee is hereby granted, provided that the above copyright
-     notice appear in all copies and that both that copyright notice and
-     this permission notice appear in supporting documentation, and that
-     the name of FundsXpress. not be used in advertising or publicity
-     pertaining to distribution of the software without specific,
-     written prior permission.  FundsXpress makes no representations
-     about the suitability of this software for any purpose.  It is
-     provided "as is" without express or implied warranty.
-
-     THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR
-     IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
-     WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-
-
-The implementation of the Yarrow pseudo-random number generator in
-`src/lib/crypto/yarrow' has the following copyright:
-
-     Copyright 2000 by Zero-Knowledge Systems, Inc.
-
-     Permission to use, copy, modify, distribute, and sell this software
-     and its documentation for any purpose is hereby granted without
-     fee, provided that the above copyright notice appear in all copies
-     and that both that copyright notice and this permission notice
-     appear in supporting documentation, and that the name of
-     Zero-Knowledge Systems, Inc. not be used in advertising or
-     publicity pertaining to distribution of the software without
-     specific, written prior permission.  Zero-Knowledge Systems, Inc.
-     makes no representations about the suitability of this software
-     for any purpose.  It is provided "as is" without express or
-     implied warranty.
-
-     ZERO-KNOWLEDGE SYSTEMS, INC. DISCLAIMS ALL WARRANTIES WITH REGARD
-     TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
-     MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL ZERO-KNOWLEDGE
-     SYSTEMS, INC. BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
-     DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA
-     OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
-     TORTUOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-     PERFORMANCE OF THIS SOFTWARE.
-
-The implementation of the AES encryption algorithm in
-`src/lib/crypto/aes' has the following copyright:
-
-     Copyright (C) 2001, Dr Brian Gladman `<brg@gladman.uk.net>',
-     Worcester, UK.
-     All rights reserved.
-
-     LICENSE TERMS
-
-     The free distribution and use of this software in both source and
-     binary form is allowed (with or without changes) provided that:
-
-       1. distributions of this source code include the above copyright
-          notice, this list of conditions and the following disclaimer;
-
-       2. distributions in binary form include the above copyright
-          notice, this list of conditions and the following disclaimer
-          in the documentation and/or other associated materials;
-
-       3. the copyright holder's name is not used to endorse products
-          built using this software without specific written permission.
-
-     DISCLAIMER
-
-     This software is provided 'as is' with no explcit or implied
-     warranties in respect of any properties, including, but not
-     limited to, correctness and fitness for purpose.
-
-Portions contributed by Red Hat, including the pre-authentication
-plug-in framework, contain the following copyright:
-
-     Copyright (C) 2006 Red Hat, Inc.
-     Portions copyright (C) 2006 Massachusetts Institute of Technology
-     All Rights Reserved.
-     Redistribution and use in source and binary forms, with or without
-     modification, are permitted provided that the following conditions
-     are met:
-
-        * Redistributions of source code must retain the above copyright
-          notice, this list of conditions and the following disclaimer.
-
-        * Redistributions in binary form must reproduce the above
-          copyright notice, this list of conditions and the following
-          disclaimer in the documentation and/or other materials
-          provided with the distribution.
-
-        * Neither the name of Red Hat, Inc., nor the names of its
-          contributors may be used to endorse or promote products
-          derived from this software without specific prior written
-          permission.
-
-     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
-     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
-     BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-     EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-     PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-     PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-     THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-     TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-     THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-     SUCH DAMAGE.
-
-
-The implementations of GSSAPI mechglue in GSSAPI-SPNEGO in
-`src/lib/gssapi', including the following files:
-
-     lib/gssapi/generic/gssapi_err_generic.et
-     lib/gssapi/mechglue/g_accept_sec_context.c
-     lib/gssapi/mechglue/g_acquire_cred.c
-     lib/gssapi/mechglue/g_canon_name.c
-     lib/gssapi/mechglue/g_compare_name.c
-     lib/gssapi/mechglue/g_context_time.c
-     lib/gssapi/mechglue/g_delete_sec_context.c
-     lib/gssapi/mechglue/g_dsp_name.c
-     lib/gssapi/mechglue/g_dsp_status.c
-     lib/gssapi/mechglue/g_dup_name.c
-     lib/gssapi/mechglue/g_exp_sec_context.c
-     lib/gssapi/mechglue/g_export_name.c
-     lib/gssapi/mechglue/g_glue.c
-     lib/gssapi/mechglue/g_imp_name.c
-     lib/gssapi/mechglue/g_imp_sec_context.c
-     lib/gssapi/mechglue/g_init_sec_context.c
-     lib/gssapi/mechglue/g_initialize.c
-     lib/gssapi/mechglue/g_inquire_context.c
-     lib/gssapi/mechglue/g_inquire_cred.c
-     lib/gssapi/mechglue/g_inquire_names.c
-     lib/gssapi/mechglue/g_process_context.c
-     lib/gssapi/mechglue/g_rel_buffer.c
-     lib/gssapi/mechglue/g_rel_cred.c
-     lib/gssapi/mechglue/g_rel_name.c
-     lib/gssapi/mechglue/g_rel_oid_set.c
-     lib/gssapi/mechglue/g_seal.c
-     lib/gssapi/mechglue/g_sign.c
-     lib/gssapi/mechglue/g_store_cred.c
-     lib/gssapi/mechglue/g_unseal.c
-     lib/gssapi/mechglue/g_userok.c
-     lib/gssapi/mechglue/g_utils.c
-     lib/gssapi/mechglue/g_verify.c
-     lib/gssapi/mechglue/gssd_pname_to_uid.c
-     lib/gssapi/mechglue/mglueP.h
-     lib/gssapi/mechglue/oid_ops.c
-     lib/gssapi/spnego/gssapiP_spnego.h
-     lib/gssapi/spnego/spnego_mech.c
-
-and the initial implementation of incremental propagation, including
-the following new or changed files:
-
-       include/iprop_hdr.h
-       kadmin/server/ipropd_svc.c
-       lib/kdb/iprop.x
-       lib/kdb/kdb_convert.c
-       lib/kdb/kdb_log.c
-       lib/kdb/kdb_log.h
-       lib/krb5/error_tables/kdb5_err.et
-       slave/kpropd_rpc.c
-       slave/kproplog.c
-
-are subject to the following license:
-
-     Copyright (C) 2004 Sun Microsystems, Inc.
-
-     Permission is hereby granted, free of charge, to any person
-     obtaining a copy of this software and associated documentation
-     files (the "Software"), to deal in the Software without
-     restriction, including without limitation the rights to use, copy,
-     modify, merge, publish, distribute, sublicense, and/or sell copies
-     of the Software, and to permit persons to whom the Software is
-     furnished to do so, subject to the following conditions:
-
-     The above copyright notice and this permission notice shall be
-     included in all copies or substantial portions of the Software.
-
-     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-     NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-     DEALINGS IN THE SOFTWARE.
-
-Kerberos V5 includes documentation and software developed at the
-University of California at Berkeley, which includes this copyright
-notice:
-
-     Copyright (C) 1983 Regents of the University of California.
-     All rights reserved.
-
-     Redistribution and use in source and binary forms, with or without
-     modification, are permitted provided that the following conditions
-     are met:
-       1. Redistributions of source code must retain the above copyright
-          notice, this list of conditions and the following disclaimer.
-
-       2. Redistributions in binary form must reproduce the above
-          copyright notice, this list of conditions and the following
-          disclaimer in the documentation and/or other materials
-          provided with the distribution.
-
-       3. Neither the name of the University nor the names of its
-          contributors may be used to endorse or promote products
-          derived from this software without specific prior written
-          permission.
-
-     THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS "AS IS"
-     AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-     TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-     PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS
-     OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-     SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-     LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-     USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
-     AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-     ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-     POSSIBILITY OF SUCH DAMAGE.
-
-Portions contributed by Novell, Inc., including the LDAP database
-backend, are subject to the following license:
-
-     Copyright (c) 2004-2005, Novell, Inc.  All rights reserved.
-
-     Redistribution and use in source and binary forms, with or without
-     modification, are permitted provided that the following conditions
-     are met:
-
-        * Redistributions of source code must retain the above
-          copyright notice, this list of conditions and the following
-          disclaimer.
-
-        * Redistributions in binary form must reproduce the above
-          copyright notice, this list of conditions and the following
-          disclaimer in the documentation and/or other materials
-          provided with the distribution.
-
-        * The copyright holder's name is not used to endorse or promote
-          products derived from this software without specific prior
-          written permission.
-
-     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
-     CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-     DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
-     BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-     EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
-     TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-     DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-     ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-     TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-     THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-     SUCH DAMAGE.
-
-Portions funded by Sandia National Laboratory and developed by the
-University of Michigan's Center for Information Technology Integration,
-including the PKINIT implementation, are subject to the following
-license:
-
-     COPYRIGHT (C) 2006-2007
-     THE REGENTS OF THE UNIVERSITY OF MICHIGAN
-     ALL RIGHTS RESERVED
-
-     Permission is granted to use, copy, create derivative works and
-     redistribute this software and such derivative works for any
-     purpose, so long as the name of The University of Michigan is not
-     used in any advertising or publicity pertaining to the use of
-     distribution of this software without specific, written prior
-     authorization.  If the above copyright notice or any other
-     identification of the University of Michigan is included in any
-     copy of any portion of this software, then the disclaimer below
-     must also be included.
-
-     THIS SOFTWARE IS PROVIDED AS IS, WITHOUT REPRESENTATION FROM THE
-     UNIVERSITY OF MICHIGAN AS TO ITS FITNESS FOR ANY PURPOSE, AND
-     WITHOUT WARRANTY BY THE UNIVERSITY OF MICHIGAN OF ANY KIND, EITHER
-     EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION THE IMPLIED
-     WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-     PURPOSE. THE REGENTS OF THE UNIVERSITY OF MICHIGAN SHALL NOT BE
-     LIABLE FOR ANY DAMAGES, INCLUDING SPECIAL, INDIRECT, INCIDENTAL, OR
-     CONSEQUENTIAL DAMAGES, WITH RESPECT TO ANY CLAIM ARISING OUT OF OR
-     IN CONNECTION WITH THE USE OF THE SOFTWARE, EVEN IF IT HAS BEEN OR
-     IS HEREAFTER ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
-
-The pkcs11.h file included in the PKINIT code has the following license:
-
-     Copyright 2006 g10 Code GmbH Copyright 2006 Andreas Jellinghaus
-
-     This file is free software; as a special exception the author gives
-     unlimited permission to copy and/or distribute it, with or without
-     modifications, as long as this notice is preserved.
-
-     This file is distributed in the hope that it will be useful, but
-     WITHOUT ANY WARRANTY, to the extent permitted by law; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.
-
-
-Portions contributed by Apple Inc. are subject to the following license:
-
-     Copyright 2004-2008 Apple Inc.  All Rights Reserved.
-
-     Export of this software from the United States of America may
-     require a specific license from the United States Government.  It
-     is the responsibility of any person or organization contemplating
-     export to obtain such a license before exporting.
-
-     WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
-     distribute this software and its documentation for any purpose and
-     without fee is hereby granted, provided that the above copyright
-     notice appear in all copies and that both that copyright notice and
-     this permission notice appear in supporting documentation, and that
-     the name of Apple Inc. not be used in advertising or publicity
-     pertaining to distribution of the software without specific,
-     written prior permission.  Apple Inc. makes no representations
-     about the suitability of this software for any purpose.  It is
-     provided "as is" without express or implied warranty.
-
-     THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR
-     IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
-     WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-
-
-The implementations of UTF-8 string handling in src/util/support and
-src/lib/krb5/unicode are subject to the following copyright and
-permission notice:
-
-     The OpenLDAP Public License   Version 2.8, 17 August 2003
-
-     Redistribution and use of this software and associated
-     documentation ("Software"), with or without modification, are
-     permitted provided that the following conditions are met:
-
-     1. Redistributions in source form must retain copyright statements
-       and notices,
-
-     2. Redistributions in binary form must reproduce applicable
-     copyright    statements and notices, this list of conditions, and
-     the following    disclaimer in the documentation and/or other
-     materials provided    with the distribution, and
-
-     3. Redistributions must contain a verbatim copy of this document.
-
-     The OpenLDAP Foundation may revise this license from time to time.
-     Each revision is distinguished by a version number.  You may use
-     this Software under terms of this license revision or under the
-     terms of any subsequent revision of the license.
-
-     THIS SOFTWARE IS PROVIDED BY THE OPENLDAP FOUNDATION AND ITS
-     CONTRIBUTORS "AS IS" AND ANY EXPRESSED OR IMPLIED WARRANTIES,
-     INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-     MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-     DISCLAIMED.  IN NO EVENT SHALL THE OPENLDAP FOUNDATION, ITS
-     CONTRIBUTORS, OR THE AUTHOR(S) OR OWNER(S) OF THE SOFTWARE BE
-     LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-     OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-     PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-     PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-     THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-     TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
-     THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-     SUCH DAMAGE.
-
-     The names of the authors and copyright holders must not be used in
-     advertising or otherwise to promote the sale, use or other dealing
-     in this Software without specific, written prior permission.  Title
-     to copyright in this Software shall at all times remain with
-     copyright holders.
-
-     OpenLDAP is a registered trademark of the OpenLDAP Foundation.
-
-     Copyright 1999-2003 The OpenLDAP Foundation, Redwood City,
-     California, USA.  All Rights Reserved.  Permission to copy and
-     distribute verbatim copies of this document is granted.
-
-
-Permission is granted to make and distribute verbatim copies of this
-manual provided the copyright notices and this permission notice are
-preserved on all copies.
-
-Permission is granted to copy and distribute modified versions of this
-manual under the conditions for verbatim copying, provided also that the
-entire resulting derived work is distributed under the terms of a
-permission notice identical to this one.
-
-Permission is granted to copy and distribute translations of this manual
-into another language, under the above conditions for modified versions.
-
-
-File: krb5-admin.info,  Node: Introduction,  Next: How Kerberos Works,  Prev: Copyright,  Up: Top
+File: krb5-admin.info,  Node: Introduction,  Next: How Kerberos Works,  Prev: Top,  Up: Top
 
 Introduction
 ************
@@ -1046,6 +562,19 @@ For example, if you have the following lines:
 
 then the second value of foo (baz) would never be read.
 
+The `krb5.conf' file can include other files using either of the
+following directives at the beginning of a line:
+
+     include FILENAME
+     includedir DIRNAME
+
+FILENAME or DIRNAME should be an absolute path.  The named file or
+directory must exist and be readable.  Including a directory includes
+all files within the directory whose names consist solely of
+alphanumeric characters, dashes, or underscores.  Included profile files
+are syntactically independent of their parents, so each included file
+must begin with a section header.
+
 The `krb5.conf' file may contain any or all of the following sections:
 
 libdefaults
@@ -1080,6 +609,10 @@ capaths
      also used by the end-service when checking the transited field for
      trusted intermediate realms.
 
+plugins
+     Contains tags to register dynamic plugin modules and to turn
+     modules on and off.
+
 
 * Menu:
 
@@ -1092,6 +625,664 @@ capaths
 * capaths::
 * dbdefaults::
 * dbmodules::
+* plugins::
 * pkinit client options::
 * Sample krb5.conf File::
+
+
+File: krb5-admin.info,  Node: libdefaults,  Next: appdefaults,  Prev: krb5.conf,  Up: krb5.conf
+
+[libdefaults]
+-------------
+
+The `libdefaults' section may contain any of the following relations:
+
+default_keytab_name
+     This relation specifies the default keytab name to be used by
+     application servers such as telnetd and rlogind.  The default is
+     /etc/krb5.keytab.
+
+default_realm
+     Identifies the default Kerberos realm for the client.  Set its
+     value to your Kerberos realm.  If this is not specified and the
+     TXT record lookup is enabled (see *Note Using DNS::), then that
+     information will be used to determine the default realm.  If this
+     tag is not set in this configuration file and there is no DNS
+     information found, then an error will be returned.
+
+default_tgs_enctypes
+     Identifies the supported list of session key encryption types that
+     should be returned by the KDC.  The list may be delimited with
+     commas or whitespace.  Kerberos supports many different encryption
+     types, and support for more is planned in the future. (see *Note
+     Supported Encryption Types:: for a list of the accepted values for
+     this tag).  The default value is aes256-cts-hmac-sha1-96
+     aes128-cts-hmac-sha1-96 des3-cbc-sha1 arcfour-hmac-md5 des-cbc-crc
+     des-cbc-md5 des-cbc-md4.
+
+default_tkt_enctypes
+     Identifies the supported list of session key encryption types that
+     should be requested by the client.  The format is the same as for
+     _default_tgs_enctypes_.  The default value for this tag is
+     aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 des3-cbc-sha1
+     arcfour-hmac-md5 des-cbc-crc des-cbc-md5 des-cbc-md4.
+
+permitted_enctypes
+     Identifies all encryption types that are permitted for use in
+     session key encryption.  The default value for this tag is
+     aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 des3-cbc-sha1
+     arcfour-hmac-md5 des-cbc-crc des-cbc-md5 des-cbc-md4.
+
+allow_weak_crypto
+     If this is set to 0 (for false), then weak encryption types will be
+     filtered out of the previous three lists (as noted in *Note
+     Supported Encryption Types::).  The default value for this tag is
+     false, which may cause authentication failures in existing
+     Kerberos infrastructures that do not support strong crypto.  Users
+     in affected environments should set this tag to true until their
+     infrastructure adopts stronger ciphers.
+
+clockskew
+     Sets the maximum allowable amount of clockskew in seconds that the
+     library  will tolerate before assuming that a Kerberos message is
+     invalid.  The default value is 300 seconds, or five minutes.
+
+k5login_authoritative
+     If the value of this relation is true (the default), principals
+     must be listed in a local user's k5login file to be granted login
+     access, if a k5login file exists.  If the value of this relation
+     is false, a principal may still be granted login access through
+     other mechanisms even if a k5login file exists but does not list
+     the principal.
+
+k5login_directory
+     If set, the library will look for a local user's k5login file
+     within the named directory, with a filename corresponding to the
+     local username.  If not set, the library will look for k5login
+     files in the user's home directory, with the filename `.k5login'.
+     For security reasons, k5login files must be owned by the local
+     user or by root.
+
+kdc_timesync
+     If this is set to 1 (for true), then client machines will compute
+     the difference between their time and the time returned by the KDC
+     in the timestamps in the tickets and use this value to correct for
+     an inaccurate system clock.  This corrective factor is only used
+     by the Kerberos library.  The default is 1.
+
+kdc_req_checksum_type
+ap_req_checksum_type
+safe_checksum_type
+     An integer which specifies the type of checksum to use.  Used for
+     compatability with DCE security servers which do not support the
+     default RSA MD5 used by this version of Kerberos.  The
+     kdc_req_checksum_type is only used for DES keys.   The
+     ap_req_checksum_type defaults to the preferred checksum for the
+     encryption type being used if unset.  If set, then the selected
+     checksum is used regardless of the type of key being used.  The
+     possible values and their meanings are as follows.
+
+    1
+          CRC32
+
+    2
+          RSA MD4
+
+    3
+          RSA MD4 DES
+
+    4
+          DES CBC
+
+    7
+          RSA MD5
+
+    8
+          RSA MD5 DES
+
+    9
+          NIST SHA
+
+    12
+          HMAC SHA1 DES3
+
+    -138
+          Microsoft MD5 HMAC checksum type
+
+ccache_type
+     Use this parameter on systems which are DCE clients, to specify the
+     type of cache to be created by kinit, or when forwarded tickets are
+     received.  DCE and Kerberos can share the cache, but some versions
+     of DCE do not support the default cache as created by this version
+     of Kerberos.  Use a value of 1 on DCE 1.0.3a systems, and a value
+     of 2 on DCE 1.1 systems.  The default value is 4.
+
+dns_lookup_kdc
+     Indicate whether DNS SRV records should be used to locate the KDCs
+     and other servers for a realm, if they are not listed in the
+     information for the realm.  (Note that the `admin_server' entry
+     must be in the file, because the DNS implementation for it is
+     incomplete.)
+
+     Enabling this option does open up a type of denial-of-service
+     attack, if someone spoofs the DNS records and redirects you to
+     another server.  However, it's no worse than a denial of service,
+     because that fake KDC will be unable to decode anything you send
+     it (besides the initial ticket request, which has no encrypted
+     data), and anything the fake KDC sends will not be trusted without
+     verification using some secret that it won't know.
+
+     If this option is not specified but `dns_fallback' is, that value
+     will be used instead.  If neither option is specified, the behavior
+     depends on configure-time options; if none were given, the default
+     is to enable this option.  If the DNS support is not compiled in,
+     this entry has no effect.
+
+dns_lookup_realm
+     Indicate whether DNS TXT records should be used to determine the
+     Kerberos realm of a host.
+
+     Enabling this option may permit a redirection attack, where
+     spoofed DNS replies persuade a client to authenticate to the wrong
+     realm, when talking to the wrong host (either by spoofing yet more
+     DNS records or by intercepting the net traffic).  Depending on how
+     the client software manages hostnames, however, it could already
+     be vulnerable to such attacks.  We are looking at possible ways to
+     minimize or eliminate this exposure.  For now, we encourage more
+     adventurous sites to try using Secure DNS.
+
+     If this option is not specified but `dns_fallback' is, that value
+     will be used instead.  If neither option is specified, the behavior
+     depends on configure-time options; if none were given, the default
+     is to disable this option.  If the DNS support is not compiled in,
+     this entry has no effect.
+
+dns_fallback
+     General flag controlling the use of DNS for Kerberos information.
+     If both of the preceding options are specified, this option has no
+     effect.
+
+extra_addresses
+     This allows a computer to use multiple local addresses, in order to
+     allow Kerberos to work in a network that uses NATs.  The addresses
+     should be in a comma-separated list.
+
+udp_preference_limit
+     When sending a message to the KDC, the library will try using TCP
+     before UDP if the size of the message is above
+     `udp_preference_list'.  If the message is smaller than
+     `udp_preference_list', then UDP will be tried before TCP.
+     Regardless of the size, both protocols will be tried if the first
+     attempt fails.
+
+verify_ap_req_nofail
+     If this flag is set, then an attempt to get initial credentials
+     will fail if the client machine does not have a keytab.  The
+     default for the flag is not set.
+
+ticket_lifetime
+     The value of this tag is the default lifetime for initial tickets.
+     The default value for the tag is 1 day.
+
+renew_lifetime
+     The value of this tag is the default renewable lifetime for
+     initial tickets.  The default value for the tag is
+     0.
+
+noaddresses
+     Setting this flag causes the initial Kerberos ticket to be
+     addressless.  The default for the flag is set.
+
+forwardable
+     If this flag is set, initial tickets by default will be
+     forwardable.  The default value for this flag is not set.
+
+proxiable
+     If this flag is set, initial tickets by default will be proxiable.
+     The default value for this flag is not set.
+
+rdns
+     If set to false, prevent the use of reverse DNS resolution when
+     translating hostnames into service principal names.  Defaults to
+     true.  Setting this flag to false is more secure, but may force
+     users to exclusively use fully qualified domain names when
+     authenticating to services.
+
+
+
+File: krb5-admin.info,  Node: appdefaults,  Next: login,  Prev: libdefaults,  Up: krb5.conf
+
+[appdefaults]
+-------------
+
+Each tag in the [appdefaults] section names a Kerberos V5 application
+or an option that is used by some Kerberos V5 application[s].  The
+value of the tag defines the default behaviors for that application.
+
+For example:
+
+     [appdefaults]
+         telnet = {
+             ATHENA.MIT.EDU = {
+                  option1 = false
+             }
+         }
+         telnet = {
+             option1 = true
+             option2 = true
+         }
+         ATHENA.MIT.EDU = {
+             option2 = false
+         }
+         option2 = true
+
+The above four ways of specifying the value of an option are shown in
+order of decreasing precedence.   In this example, if telnet is running
+in the realm EXAMPLE.COM, it should, by default, have option1 and
+option2 set to true.  However, a telnet program in the realm
+ATHENA.MIT.EDU should have option1 set to false and option2 set to
+true.  Any other programs in ATHENA.MIT.EDU should have option2 set to
+false by default.  Any programs running in other realms should have
+option2 set to true.
+
+The list of specifiable options for each application may be found in
+that application's man pages.  The application defaults specified here
+are overridden by those specified in the [realms] section.
+
+
+File: krb5-admin.info,  Node: login,  Next: realms (krb5.conf),  Prev: appdefaults,  Up: krb5.conf
+
+[login]
+-------
+
+Each tag in the [login] section of the file is an option for
+login.krb5.  This section may contain any of the following relations:
+
+krb5_get_tickets
+     Indicate whether or not to use a user's password to get V5 tickets.
+     The default value is true.
+
+krb_run_aklog
+     Indicate whether or not to run aklog.  The default value is
+     false.
+
+aklog_path
+     Indicate where to find aklog.  The default value is
+     $(prefix)/bin/aklog.
+
+accept_passwd
+     A true value will cause login not to accept plaintext passwords.
+     The default value is false.  This is not yet implemented.
+
+
+File: krb5-admin.info,  Node: realms (krb5.conf),  Next: domain_realm,  Prev: login,  Up: krb5.conf
+
+[realms]
+--------
+
+Each tag in the [realms] section of the file is the name of a Kerberos
+realm.  The value of the tag is a subsection with relations that define
+the properties of that particular realm.  For each realm, the following
+tags may be specified in the realm's subsection:
+
+kdc
+     The name or address of a host running a KDC for that realm.  An
+     optional port number, separated from the hostname by a colon, may
+     be included.  If the name or address contains colons (for example,
+     if it is an IPv6 address), enclose it in square brackets to
+     distinguish the colon from a port separator.  For your computer to
+     be able to communicate with the KDC for each realm, this tag must
+     be given a value in each realm subsection in the configuration
+     file, or there must be DNS SRV records specifying the KDCs (see
+     *Note Using DNS::).
+
+master_kdc
+     Identifies the master KDC(s).  Currently, this tag is used in only
+     one case: If an attempt to get credentials fails because of an
+     invalid password, the client software will attempt to contact the
+     master KDC, in case the user's password has just been changed, and
+     the updated database has not been propagated to the slave servers
+     yet.
+
+database_module
+     This relation indicates the name of the configuration section
+     under [dbmodules] for database specific parameters used by the
+     loadable database library.
+
+admin_server
+     Identifies the host where the administration server is running.
+     Typically, this is the master Kerberos server.  This tag must be
+     given a value in order to communicate with the kadmin server for
+     the realm.
+
+default_domain
+     This tag is used for Kerberos 4 compatibility.  Kerberos 4 does not
+     require the entire hostname of a server to be in its principal like
+     Kerberos 5 does.  This tag provides the domain name needed to
+     produce a full hostname when translating V4 principal names into
+     V5 principal names.  All servers in this realm are assumed to be
+     in the domain given as the value of this tag
+
+v4_instance_convert
+     This subsection allows the administrator to configure exceptions
+     to the default_domain mapping rule.  It contains V4 instances (the
+     tag name) which should be translated to some specific hostname
+     (the tag value) as the second component in a Kerberos V5 principal
+     name.
+
+v4_realm
+     This relation is used by the krb524 library routines when
+     converting a V5 principal name to a V4 principal name.  It is used
+     when the V4 realm name and the V5 realm name are not the same, but
+     still share the same principal names and passwords.  The tag value
+     is the Kerberos V4 realm name.
+
+auth_to_local_names
+     This subsection allows you to set explicit mappings from principal
+     names to local user names.  The tag is the mapping name, and the
+     value is the corresponding local user name.
+
+auth_to_local
+     This tag allows you to set a general rule for mapping principal
+     names to local user names.  It will be used if there is not an
+     explicit mapping for the principal name that is being translated.
+     The possible values are:
+
+    DB:filename
+          The principal will be looked up in the database filename.
+          Support for this is not currently compiled in by default.
+
+    RULE:exp
+          The local name will be formulated from exp.
+
+          The format for exp is
+          `[n:string](regexp)s/pattern/replacement/g'.  The integer n
+          indicates how many components the target principal should
+          have.  If this matches, then a string will be formed from
+          string, substituting the realm of the principal for `$0' and
+          the n'th component of the principal for `$n' (e.g. if the
+          principal was johndoe/admin then [2:$2$1foo] would result in
+          the string "adminjohndoefoo").  If this string matches
+          regexp, then the `s//[g]' substitution command will be run
+          over the string.  The optional g will cause the substitution
+          to be global over the string, instead of replacing only the
+          first match in the string.
+
+    DEFAULT
+          The principal name will be used as the local user name.  If
+          the principal has more than one component or is not in the
+          default realm, this rule is not applicable and the conversion
+          will fail.
+
+
+     For example:
+
+          [realms]
+              ATHENA.MIT.EDU = {
+                  auth_to_local = RULE:[2:$1](johndoe)s/^.*$/guest/
+                  auth_to_local = RULE:[2:$1;$2](^.*;admin$)s/;admin$//
+                  auth_to_local = RULE:[2:$2](^.*;root)s/^.*$/root/
+                  auto_to_local = DEFAULT
+              }
+
+     would result in any principal without `root' or `admin' as the
+     second component to be translated with the default rule.  A
+     principal with a second component of `admin' will become its first
+     component.  `root' will be used as the local name for any
+     principal with a second component of `root'.  The exception to
+     these two rules are any principals johndoe/*, which will always
+     get the local name `guest'.
+
+
+
+File: krb5-admin.info,  Node: domain_realm,  Next: logging,  Prev: realms (krb5.conf),  Up: krb5.conf
+
+[domain_realm]
+--------------
+
+The [domain_realm] section provides a translation from a domain name or
+hostname to a Kerberos realm name.  The tag name can be a host name, or
+a domain name, where domain names are indicated by a prefix of a period
+(`.').  The value of the relation is the Kerberos realm name for that
+particular host or domain.  Host names and domain names should be in
+lower case.
+
+If no translation entry applies, the host's realm is considered to be
+the hostname's domain portion converted to upper case.  For example, the
+following [domain_realm] section:
+
+     [domain_realm]
+         .mit.edu = ATHENA.MIT.EDU
+         mit.edu = ATHENA.MIT.EDU
+         crash.mit.edu = TEST.ATHENA.MIT.EDU
+         example.com = EXAMPLE.COM
+
+maps crash.mit.edu into the TEST.ATHENA.MIT.EDU realm.  All other hosts
+in the mit.edu domain will map by default to the ATHENA.MIT.EDU realm,
+and all hosts in the example.com domain will map by default into the
+EXAMPLE.COM realm.  Note the entries for the hosts mit.edu and
+example.com.  Without these entries, these hosts would be mapped into
+the Kerberos realms `EDU' and `ORG', respectively.
+
+
+File: krb5-admin.info,  Node: logging,  Next: capaths,  Prev: domain_realm,  Up: krb5.conf
+
+[logging]
+---------
+
+The [logging] section indicates how a particular entity is to perform
+its logging.  The relations in this section assign one or more values to
+the entity name.  Currently, the following entities are used:
+
+kdc
+     These entries specify how the KDC is to perform its logging.
+
+admin_server
+     These entries specify how the administrative server is to perform
+     its logging.
+
+default
+     These entries specify how to perform logging in the absence of
+     explicit specifications otherwise.
+
+Values are of the following forms:
+
+FILE=<filename>
+FILE:<filename>
+     This value causes the entity's logging messages to go to the
+     specified file.  If the `=' form is used, the file is overwritten.
+     If the `:' form is used, the file is appended to.
+
+STDERR
+     This value causes the entity's logging messages to go to its
+     standard error stream.
+
+CONSOLE
+     This value causes the entity's logging messages to go to the
+     console, if the system supports it.
+
+DEVICE=<devicename>
+     This causes the entity's logging messages to go to the specified
+     device.
+
+SYSLOG[:<severity>[:<facility>]]
+     This causes the entity's logging messages to go to the system log.
+
+     The "severity" argument specifies the default severity of system
+     log messages.  This may be any of the following severities
+     supported by the `syslog(3)' call, minus the LOG_ prefix:
+     LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERR, LOG_WARNING, LOG_NOTICE,
+     LOG_INFO, and LOG_DEBUG.  For example, a value of `CRIT' would
+     specify LOG_CRIT severity.
+
+     The facility argument specifies the facility under which the
+     messages are logged.  This may be any of the following facilities
+     supported by the syslog(3) call minus the LOG_ prefix:  LOG_KERN,
+     LOG_USER, LOG_MAIL, LOG_DAEMON, LOG_AUTH, LOG_LPR, LOG_NEWS,
+     LOG_UUCP, LOG_CRON, and LOG_LOCAL0 through LOG_LOCAL7.
+
+     If no severity is specified, the default is ERR.  If no facility is
+     specified, the default is AUTH.
+
+In the following example, the logging messages from the KDC will go to
+the console and to the system log under the facility LOG_DAEMON with
+default severity of LOG_INFO; and the logging messages from the
+administrative server will be appended to the file /var/adm/kadmin.log
+and sent to the device /dev/tty04.
+
+     [logging]
+         kdc = CONSOLE
+         kdc = SYSLOG:INFO:DAEMON
+         admin_server = FILE:/var/adm/kadmin.log
+         admin_server = DEVICE=/dev/tty04
+
+
+File: krb5-admin.info,  Node: capaths,  Next: dbdefaults,  Prev: logging,  Up: krb5.conf
+
+[capaths]
+---------
+
+In order to perform direct (non-hierarchical) cross-realm
+authentication, a database is needed to construct the authentication
+paths between the realms.  This section defines that database.
+
+A client will use this section to find the authentication path between
+its realm and the realm of the server.  The server will use this section
+to verify the authentication path used by the client, by checking the
+transited field of the received ticket.
+
+There is a tag for each participating realm, and each tag has subtags
+for each of the realms.  The value of the subtags is an intermediate
+realm which may participate in the cross-realm authentication.  The
+subtags may be repeated if there is more then one intermediate realm.  A
+value of "."  means that the two realms share keys directly, and no
+intermediate realms should be allowed to participate.
+
+There are n**2 possible entries in this table, but only those entries
+which will be needed on the client or the server need to be present.
+The client needs a tag for its local realm, with subtags for all the
+realms of servers it will need to authenticate with.  A server needs a
+tag for each realm of the clients it will serve.
+
+For example, ANL.GOV, PNL.GOV, and NERSC.GOV all wish to use the ES.NET
+realm as an intermediate realm.  ANL has a sub realm of TEST.ANL.GOV
+which will authenticate with NERSC.GOV but not PNL.GOV.  The [capaths]
+section for ANL.GOV systems would look like this:
+
+     [capaths]
+         ANL.GOV = {
+             TEST.ANL.GOV = .
+             PNL.GOV = ES.NET
+             NERSC.GOV = ES.NET
+             ES.NET = .
+         }
+         TEST.ANL.GOV = {
+             ANL.GOV = .
+         }
+         PNL.GOV = {
+             ANL.GOV = ES.NET
+         }
+         NERSC.GOV = {
+             ANL.GOV = ES.NET
+         }
+         ES.NET = {
+             ANL.GOV = .
+         }
+
+The [capaths] section of the configuration file used on NERSC.GOV
+systems would look like this:
+
+     [capaths]
+         NERSC.GOV = {
+             ANL.GOV = ES.NET
+             TEST.ANL.GOV = ES.NET
+             TEST.ANL.GOV = ANL.GOV
+             PNL.GOV = ES.NET
+             ES.NET = .
+         }
+         ANL.GOV = {
+             NERSC.GOV = ES.NET
+         }
+         PNL.GOV = {
+             NERSC.GOV = ES.NET
+         }
+         ES.NET = {
+             NERSC.GOV = .
+         }
+         TEST.ANL.GOV = {
+             NERSC.GOV = ANL.GOV
+             NERSC.GOV = ES.NET
+         }
+
+In the above examples, the ordering is not important, except when the
+same subtag name is used more then once.  The client will use this to
+determine the path.  (It is not important to the server, since the
+transited field is not sorted.)
+
+This feature is not currently supported by DCE.  DCE security servers
+can be used with Kerberized clients and servers, but versions prior to
+DCE 1.1 did not fill in the transited field, and should be used with
+caution.
+
+
+File: krb5-admin.info,  Node: dbdefaults,  Next: dbmodules,  Prev: capaths,  Up: krb5.conf
+
+[dbdefaults]
+------------
+
+The [dbdefaults] section provides default values for the database
+specific parameters. It can also specify the configuration section
+under [dbmodules] section for database specific parameters used by the
+database library.(*note dbmodules::).
+
+The following tags are used in this section:
+
+database_module
+     This relation indicates the name of the configuration section
+     under the [dbmodules] for database specific parameters used by the
+     loadable database library.
+
+ldap_kerberos_container_dn
+     This LDAP specific tag indicates the DN of the container object
+     where the realm objects will be located. This value is used if the
+     container object is not mentioned in the configuration section
+     under [dbmodules].
+
+ldap_kdc_dn
+     This LDAP specific tag indicates the default bind DN for the KDC
+     server. The KDC server does a login to the directory as this
+     object. This object should have the rights to read the Kerberos
+     data in the LDAP database. This value is used if the bind DN for
+     the KDC is not mentioned in the configuration section under
+     [dbmodules].
+
+ldap_kadmind_dn
+     This LDAP specific tag indicates the default bind DN for the
+     Administration server. The administration server does a login to
+     the directory as this object. This object should have the rights
+     to read and write the Kerberos data in the LDAP database. This
+     value is used if the bind DN for the Administration server is not
+     mentioned in the configuration section under [dbmodules].
+
+ldap_service_password_file
+     This LDAP specific tag indicates the file containing the stashed
+     passwords (created by `kdb5_ldap_util stashsrvpw') for the objects
+     used by the Kerberos servers to bind to the LDAP server. This file
+     must be kept secure. This value is used if no service password
+     file is mentioned in the configuration section under [dbmodules].
+
+ldap_server
+     This LDAP specific tag indicates the list of LDAP servers that the
+     Kerberos servers can connect to. The list of LDAP servers is
+     whitespace-separated. The LDAP server is specified by a LDAP URI.
+     This value is used if no LDAP servers are mentioned in the
+     configuration section under [dbmodules]. It is recommended to use
+     the ldapi:// or ldaps:// interface and not to use ldap://
+     interface.
+
+ldap_conns_per_server
+     This LDAP specific tag indicates the number of connections to be
+     maintained per LDAP server. This value is used if the number of
+     connections per LDAP server are not mentioned in the configuration
+     section under [dbmodules]. The default value is 5.
 

@@ -1,26 +1,37 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
+
+/*
+ * lib/krb5/krb/auth_con.c
+ *
+ * Copyright 2010 by the Massachusetts Institute of Technology.
+ * All Rights Reserved.
+ *
+ * Export of this software from the United States of America may
+ *   require a specific license from the United States Government.
+ *   It is the responsibility of any person or organization contemplating
+ *   export to obtain such a license before exporting.
+ *
+ * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+ * distribute this software and its documentation for any purpose and
+ * without fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright notice and
+ * this permission notice appear in supporting documentation, and that
+ * the name of M.I.T. not be used in advertising or publicity pertaining
+ * to distribution of the software without specific, written prior
+ * permission.  Furthermore if you modify this software you must label
+ * your software as modified software and not distribute it in such a
+ * fashion that it might be confused with the original M.I.T. software.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is" without express
+ * or implied warranty.
+ *
+ */
+
 #include "k5-int.h"
 #include "int-proto.h"
 #include "auth_con.h"
 
 static krb5_boolean chk_heimdal_seqnum(krb5_ui_4, krb5_ui_4);
-
-static krb5_error_code
-actx_copy_addr(krb5_context context, const krb5_address *inad, krb5_address **outad)
-{
-    krb5_address *tmpad;
-
-    if (!(tmpad = (krb5_address *)malloc(sizeof(*tmpad))))
-        return ENOMEM;
-    *tmpad = *inad;
-    if (!(tmpad->contents = (krb5_octet *)malloc(inad->length))) {
-        free(tmpad);
-        return ENOMEM;
-    }
-    memcpy(tmpad->contents, inad->contents, inad->length);
-    *outad = tmpad;
-    return 0;
-}
 
 krb5_error_code KRB5_CALLCONV
 krb5_auth_con_init(krb5_context context, krb5_auth_context *auth_context)
@@ -87,14 +98,14 @@ krb5_auth_con_setaddrs(krb5_context context, krb5_auth_context auth_context, krb
 
     retval = 0;
     if (local_addr)
-        retval = actx_copy_addr(context,
+        retval = krb5_copy_addr(context,
                                 local_addr,
                                 &auth_context->local_addr);
     else
         auth_context->local_addr = NULL;
 
     if (!retval && remote_addr)
-        retval = actx_copy_addr(context,
+        retval = krb5_copy_addr(context,
                                 remote_addr,
                                 &auth_context->remote_addr);
     else
@@ -110,12 +121,12 @@ krb5_auth_con_getaddrs(krb5_context context, krb5_auth_context auth_context, krb
 
     retval = 0;
     if (local_addr && auth_context->local_addr) {
-        retval = actx_copy_addr(context,
+        retval = krb5_copy_addr(context,
                                 auth_context->local_addr,
                                 local_addr);
     }
     if (!retval && (remote_addr) && auth_context->remote_addr) {
-        retval = actx_copy_addr(context,
+        retval = krb5_copy_addr(context,
                                 auth_context->remote_addr,
                                 remote_addr);
     }
@@ -135,14 +146,14 @@ krb5_auth_con_setports(krb5_context context, krb5_auth_context auth_context, krb
 
     retval = 0;
     if (local_port)
-        retval = actx_copy_addr(context,
+        retval = krb5_copy_addr(context,
                                 local_port,
                                 &auth_context->local_port);
     else
         auth_context->local_port = NULL;
 
     if (!retval && remote_port)
-        retval = actx_copy_addr(context,
+        retval = krb5_copy_addr(context,
                                 remote_port,
                                 &auth_context->remote_port);
     else
@@ -210,6 +221,16 @@ krb5_auth_con_setsendsubkey(krb5_context ctx, krb5_auth_context ac, krb5_keybloc
 }
 
 krb5_error_code KRB5_CALLCONV
+krb5_auth_con_setsendsubkey_k(krb5_context ctx, krb5_auth_context ac,
+                              krb5_key key)
+{
+    krb5_k_free_key(ctx, ac->send_subkey);
+    ac->send_subkey = key;
+    krb5_k_reference_key(ctx, key);
+    return 0;
+}
+
+krb5_error_code KRB5_CALLCONV
 krb5_auth_con_setrecvsubkey(krb5_context ctx, krb5_auth_context ac, krb5_keyblock *keyblock)
 {
     if (ac->recv_subkey != NULL)
@@ -219,6 +240,16 @@ krb5_auth_con_setrecvsubkey(krb5_context ctx, krb5_auth_context ac, krb5_keybloc
         return krb5_k_create_key(ctx, keyblock, &ac->recv_subkey);
     else
         return 0;
+}
+
+krb5_error_code KRB5_CALLCONV
+krb5_auth_con_setrecvsubkey_k(krb5_context ctx, krb5_auth_context ac,
+                              krb5_key key)
+{
+    krb5_k_free_key(ctx, ac->recv_subkey);
+    ac->recv_subkey = key;
+    krb5_k_reference_key(ctx, key);
+    return 0;
 }
 
 krb5_error_code KRB5_CALLCONV
@@ -277,14 +308,6 @@ krb5_auth_con_getlocalseqnumber(krb5_context context, krb5_auth_context auth_con
     *seqnumber = auth_context->local_seq_number;
     return 0;
 }
-#ifndef LEAN_CLIENT
-krb5_error_code KRB5_CALLCONV
-krb5_auth_con_getauthenticator(krb5_context context, krb5_auth_context auth_context, krb5_authenticator **authenticator)
-{
-    return (krb5_copy_authenticator(context, auth_context->authentp,
-                                    authenticator));
-}
-#endif
 
 krb5_error_code KRB5_CALLCONV
 krb5_auth_con_getremoteseqnumber(krb5_context context, krb5_auth_context auth_context, krb5_int32 *seqnumber)
@@ -578,7 +601,7 @@ krb5_auth_con_get_subkey_enctype(krb5_context context,
     return 0;
 }
 
-krb5_error_code KRB5_CALLCONV
+krb5_error_code
 krb5_auth_con_get_authdata_context(krb5_context context,
                                    krb5_auth_context auth_context,
                                    krb5_authdata_context *ad_context)
@@ -587,7 +610,7 @@ krb5_auth_con_get_authdata_context(krb5_context context,
     return 0;
 }
 
-krb5_error_code KRB5_CALLCONV
+krb5_error_code
 krb5_auth_con_set_authdata_context(krb5_context context,
                                    krb5_auth_context auth_context,
                                    krb5_authdata_context ad_context)

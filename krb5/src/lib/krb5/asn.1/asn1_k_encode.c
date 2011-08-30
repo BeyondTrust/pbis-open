@@ -532,7 +532,6 @@ optional_sam_challenge(const void *p)
 DEFSEQTYPE(sam_challenge,krb5_sam_challenge,sam_challenge_fields,
            optional_sam_challenge);
 
-#if 0 /* encoders not used! */
 MAKE_ENCFN(asn1_encode_sequence_of_checksum, seq_of_checksum);
 static asn1_error_code
 asn1_encode_sam_challenge_2(asn1buf *buf, const krb5_sam_challenge_2 *val,
@@ -595,7 +594,7 @@ optional_sam_challenge_2_body(const void *p)
 }
 DEFSEQTYPE(sam_challenge_2_body,krb5_sam_challenge_2_body,sam_challenge_2_body_fields,
            optional_sam_challenge_2_body);
-#endif
+
 
 static const struct field_info sam_key_fields[] = {
     FIELDOF_NORM(krb5_sam_key, encryption_key, sam_key, 0),
@@ -1394,6 +1393,35 @@ static unsigned int ad_signedpath_optional(const void *p)
 
 DEFSEQTYPE(ad_signedpath, krb5_ad_signedpath, ad_signedpath_fields, ad_signedpath_optional);
 
+static const struct field_info iakerb_header_fields[] = {
+    FIELDOF_NORM(krb5_iakerb_header, ostring_data, target_realm, 1),
+    FIELDOF_OPT(krb5_iakerb_header, ostring_data_ptr, cookie, 2, 2),
+};
+
+static unsigned int iakerb_header_optional(const void *p)
+{
+    unsigned int optional = 0;
+    const krb5_iakerb_header *val = p;
+    if (val->cookie && val->cookie->data)
+        optional |= (1u << 2);
+    return optional;
+}
+
+DEFSEQTYPE(iakerb_header, krb5_iakerb_header, iakerb_header_fields, iakerb_header_optional);
+
+static const struct field_info iakerb_finished_fields[] = {
+    FIELDOF_NORM(krb5_iakerb_finished, checksum, checksum, 1),
+};
+
+static unsigned int iakerb_finished_optional(const void *p)
+{
+    unsigned int optional = 0;
+    return optional;
+}
+
+DEFSEQTYPE(iakerb_finished, krb5_iakerb_finished, iakerb_finished_fields,
+iakerb_finished_optional);
+
 /* Exported complete encoders -- these produce a krb5_data with
    the encoding in the correct byte order.  */
 
@@ -1442,11 +1470,9 @@ MAKE_FULL_ENCODER(encode_krb5_pwd_data, pwd_data);
 MAKE_FULL_ENCODER(encode_krb5_padata_sequence, seq_of_pa_data);
 /* sam preauth additions */
 MAKE_FULL_ENCODER(encode_krb5_sam_challenge, sam_challenge);
-#if 0 /* encoders not used! */
 MAKE_FULL_ENCODER(encode_krb5_sam_challenge_2, sam_challenge_2);
 MAKE_FULL_ENCODER(encode_krb5_sam_challenge_2_body,
                   sam_challenge_2_body);
-#endif
 MAKE_FULL_ENCODER(encode_krb5_sam_key, sam_key);
 MAKE_FULL_ENCODER(encode_krb5_enc_sam_response_enc,
                   enc_sam_response_enc);
@@ -1472,6 +1498,8 @@ MAKE_FULL_ENCODER(encode_krb5_fast_response, fast_response);
 MAKE_FULL_ENCODER(encode_krb5_ad_kdcissued, ad_kdc_issued);
 MAKE_FULL_ENCODER(encode_krb5_ad_signedpath_data, ad_signedpath_data);
 MAKE_FULL_ENCODER(encode_krb5_ad_signedpath, ad_signedpath);
+MAKE_FULL_ENCODER(encode_krb5_iakerb_header, iakerb_header);
+MAKE_FULL_ENCODER(encode_krb5_iakerb_finished, iakerb_finished);
 
 
 

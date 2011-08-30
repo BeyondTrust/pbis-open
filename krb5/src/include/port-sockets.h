@@ -88,11 +88,6 @@ typedef int socklen_t;
 extern int h_errno;             /* In case it's missing, e.g., HP-UX 10.20. */
 #endif
 
-/* LW */
-#if defined(__hpux) && defined(__ia64)
-#include "mymp.h"
-#endif
-
 #include <sys/param.h>          /* For MAXHOSTNAMELEN */
 #include <sys/socket.h>         /* For SOCK_*, AF_*, etc */
 #include <sys/time.h>           /* For struct timeval */
@@ -114,11 +109,7 @@ typedef int socklen_t;
 /* XXX should only be done if sockaddr_storage not found */
 #ifndef HAVE_STRUCT_SOCKADDR_STORAGE
 struct krb5int_sockaddr_storage {
-    union
-    {
-        sa_family_t ss_family;
-        struct sockaddr_in s;
-    };
+    struct sockaddr_in s;
     /* Plenty of slop just in case we get an ipv6 address anyways.  */
     long extra[16];
 };

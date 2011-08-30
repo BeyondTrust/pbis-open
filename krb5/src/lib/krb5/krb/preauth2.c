@@ -241,52 +241,6 @@ krb5_clear_preauth_context_use_counts(krb5_context context)
     }
 }
 
-/*
- * Give all the preauth plugins a look at the preauth option which
- * has just been set
- */
-krb5_error_code
-krb5_preauth_supply_preauth_data(krb5_context context,
-                                 krb5_gic_opt_ext *opte,
-                                 const char *attr,
-                                 const char *value)
-{
-    krb5_error_code retval = 0;
-    int i;
-    void *pctx;
-    const char *emsg = NULL;
-
-    if (context->preauth_context == NULL)
-        krb5_init_preauth_context(context);
-    if (context->preauth_context == NULL) {
-        retval = EINVAL;
-        krb5int_set_error(&context->err, retval,
-                          "krb5_preauth_supply_preauth_data: "
-                          "Unable to initialize preauth context");
-        return retval;
-    }
-
-    /*
-     * Go down the list of preauth modules, and supply them with the
-     * attribute/value pair.
-     */
-    for (i = 0; i < context->preauth_context->n_modules; i++) {
-        if (context->preauth_context->modules[i].client_supply_gic_opts == NULL)
-            continue;
-        pctx = context->preauth_context->modules[i].plugin_context;
-        retval = (*context->preauth_context->modules[i].client_supply_gic_opts)
-            (context, pctx,
-             (krb5_get_init_creds_opt *)opte, attr, value);
-        if (retval) {
-            emsg = krb5_get_error_message(context, retval);
-            krb5int_set_error(&context->err, retval, "Preauth plugin %s: %s",
-                              context->preauth_context->modules[i].name, emsg);
-            krb5_free_error_message(context, emsg);
-            break;
-        }
-    }
-    return retval;
-}
 
 /* Free the per-krb5_context preauth_context. This means clearing any
  * plugin-specific context which may have been created, and then
@@ -586,10 +540,7 @@ run_preauth_plugins(krb5_context kcontext,
         /* if it's a REAL module, try to call it only once per library call */
         if (module_required_flags & PA_REAL) {
             if (module->use_count > 0) {
-#ifdef DEBUG
-                fprintf(stderr, "skipping already-used module \"%s\"(%d)\n",
-                        module->name, module->pa_type);
-#endif
+                TRACE_PREAUTH_SKIP(kcontext, module->name, module->pa_type);
                 continue;
             }
             module->use_count++;
@@ -614,6 +565,8 @@ run_preauth_plugins(krb5_context kcontext,
                                      gak_fct, gak_data, salt, s2kparams,
                                      as_key,
                                      &out_pa_data);
+        TRACE_PREAUTH_PROCESS(kcontext, module->name, module->pa_type,
+                              module->flags, ret);
         /* Make note of the module's flags and status. */
         *module_flags = module->flags;
         *module_ret = ret;
@@ -659,6 +612,7 @@ pa_salt(krb5_context context, krb5_kdc_req *request, krb5_pa_data *in_padata,
     if (retval)
         return retval;
 
+    TRACE_PREAUTH_SALT(context, salt, in_padata->pa_type);
     if (in_padata->pa_type == KRB5_PADATA_AFS3_SALT)
         salt->length = SALT_TYPE_AFS_LENGTH;
 
@@ -675,6 +629,8 @@ pa_fx_cookie(krb5_context context, krb5_kdc_req *request,
 {
     krb5_pa_data *pa = calloc(1, sizeof(krb5_pa_data));
     krb5_octet *contents;
+
+    TRACE_PREAUTH_COOKIE(context, in_padata->length, in_padata->contents);
     if (pa == NULL)
         return ENOMEM;
     contents = malloc(in_padata->length);
@@ -717,6 +673,7 @@ pa_enc_timestamp(krb5_context context, krb5_kdc_req *request,
                                prompter, prompter_data,
                                salt, s2kparams, as_key, gak_data))))
             return(ret);
+        TRACE_PREAUTH_ENC_TS_KEY_GAK(context, as_key);
     }
 
     /* now get the time of day, and encrypt it accordingly */
@@ -727,20 +684,11 @@ pa_enc_timestamp(krb5_context context, krb5_kdc_req *request,
     if ((ret = encode_krb5_pa_enc_ts(&pa_enc, &tmp)))
         return(ret);
 
-#ifdef DEBUG
-    fprintf (stderr, "key type %d bytes %02x %02x ...\n",
-             as_key->enctype,
-             as_key->contents[0], as_key->contents[1]);
-#endif
     ret = krb5_encrypt_helper(context, as_key,
                               KRB5_KEYUSAGE_AS_REQ_PA_ENC_TS,
                               tmp, &enc_data);
-#ifdef DEBUG
-    fprintf (stderr, "enc data { type=%d kvno=%d data=%02x %02x ... }\n",
-             enc_data.enctype, enc_data.kvno,
-             0xff & enc_data.ciphertext.data[0],
-             0xff & enc_data.ciphertext.data[1]);
-#endif
+    TRACE_PREAUTH_ENC_TS(context, pa_enc.patimestamp, pa_enc.pausec,
+                         tmp, &enc_data.ciphertext);
 
     krb5_free_data(context, tmp);
 
@@ -769,294 +717,6 @@ pa_enc_timestamp(krb5_context context, krb5_kdc_req *request,
     *out_padata = pa;
 
     free(tmp);
-
-    return(0);
-}
-
-static char *
-sam_challenge_banner(krb5_int32 sam_type)
-{
-    char *label;
-
-    switch (sam_type) {
-    case PA_SAM_TYPE_ENIGMA:    /* Enigma Logic */
-        label = "Challenge for Enigma Logic mechanism";
-        break;
-    case PA_SAM_TYPE_DIGI_PATH: /*  Digital Pathways */
-    case PA_SAM_TYPE_DIGI_PATH_HEX: /*  Digital Pathways */
-        label = "Challenge for Digital Pathways mechanism";
-        break;
-    case PA_SAM_TYPE_ACTIVCARD_DEC: /*  Digital Pathways */
-    case PA_SAM_TYPE_ACTIVCARD_HEX: /*  Digital Pathways */
-        label = "Challenge for Activcard mechanism";
-        break;
-    case PA_SAM_TYPE_SKEY_K0:   /*  S/key where  KDC has key 0 */
-        label = "Challenge for Enhanced S/Key mechanism";
-        break;
-    case PA_SAM_TYPE_SKEY:      /*  Traditional S/Key */
-        label = "Challenge for Traditional S/Key mechanism";
-        break;
-    case PA_SAM_TYPE_SECURID:   /*  Security Dynamics */
-        label = "Challenge for Security Dynamics mechanism";
-        break;
-    case PA_SAM_TYPE_SECURID_PREDICT:   /* predictive Security Dynamics */
-        label = "Challenge for Security Dynamics mechanism";
-        break;
-    default:
-        label = "Challenge from authentication server";
-        break;
-    }
-
-    return(label);
-}
-
-/* this macro expands to the int,ptr necessary for "%.*s" in an sprintf */
-
-#define SAMDATA(kdata, str, maxsize)                                    \
-    (int)((kdata.length)?                                               \
-          ((((kdata.length)<=(maxsize))?(kdata.length):strlen(str))):   \
-          strlen(str)),                                                 \
-        (kdata.length)?                                                 \
-        ((((kdata.length)<=(maxsize))?(kdata.data):(str))):(str)
-
-/* XXX Danger! This code is not in sync with the kerberos-password-02
-   draft.  This draft cannot be implemented as written.  This code is
-   compatible with earlier versions of mit krb5 and cygnus kerbnet. */
-
-static krb5_error_code
-pa_sam(krb5_context context, krb5_kdc_req *request, krb5_pa_data *in_padata,
-       krb5_pa_data **out_padata, krb5_data *salt, krb5_data *s2kparams,
-       krb5_enctype *etype, krb5_keyblock *as_key, krb5_prompter_fct prompter,
-       void *prompter_data, krb5_gic_get_as_key_fct gak_fct, void *gak_data)
-{
-    krb5_error_code             ret;
-    krb5_data                   tmpsam;
-    char                        name[100], banner[100];
-    char                        prompt[100], response[100];
-    krb5_data                   response_data;
-    krb5_prompt                 kprompt;
-    krb5_prompt_type            prompt_type;
-    krb5_data                   defsalt;
-    krb5_sam_challenge          *sam_challenge = 0;
-    krb5_sam_response           sam_response;
-    /* these two get encrypted and stuffed in to sam_response */
-    krb5_enc_sam_response_enc   enc_sam_response_enc;
-    krb5_data *                 scratch;
-    krb5_pa_data *              pa;
-
-    if (prompter == NULL)
-        return EIO;
-
-    tmpsam.length = in_padata->length;
-    tmpsam.data = (char *) in_padata->contents;
-    if ((ret = decode_krb5_sam_challenge(&tmpsam, &sam_challenge)))
-        return(ret);
-
-    if (sam_challenge->sam_flags & KRB5_SAM_MUST_PK_ENCRYPT_SAD) {
-        krb5_free_sam_challenge(context, sam_challenge);
-        return(KRB5_SAM_UNSUPPORTED);
-    }
-
-    /* If we need the password from the user (USE_SAD_AS_KEY not set),  */
-    /* then get it here.  Exception for "old" KDCs with CryptoCard      */
-    /* support which uses the USE_SAD_AS_KEY flag, but still needs pwd  */
-
-    if (!(sam_challenge->sam_flags & KRB5_SAM_USE_SAD_AS_KEY) ||
-        (sam_challenge->sam_type == PA_SAM_TYPE_CRYPTOCARD)) {
-
-        /* etype has either been set by caller or by KRB5_PADATA_ETYPE_INFO */
-        /* message from the KDC.  If it is not set, pick an enctype that we */
-        /* think the KDC will have for us.                                  */
-
-        if (*etype == 0)
-            *etype = ENCTYPE_DES_CBC_CRC;
-
-        if ((ret = (gak_fct)(context, request->client, *etype, prompter,
-                             prompter_data, salt, s2kparams, as_key,
-                             gak_data))) {
-            krb5_free_sam_challenge(context, sam_challenge);
-            return(ret);
-        }
-    }
-    snprintf(name, sizeof(name), "%.*s",
-             SAMDATA(sam_challenge->sam_type_name, "SAM Authentication",
-                     sizeof(name) - 1));
-
-    snprintf(banner, sizeof(banner), "%.*s",
-             SAMDATA(sam_challenge->sam_challenge_label,
-                     sam_challenge_banner(sam_challenge->sam_type),
-                     sizeof(banner)-1));
-
-    /* sprintf(prompt, "Challenge is [%s], %s: ", challenge, prompt); */
-    snprintf(prompt, sizeof(prompt), "%s%.*s%s%.*s",
-             sam_challenge->sam_challenge.length?"Challenge is [":"",
-             SAMDATA(sam_challenge->sam_challenge, "", 20),
-             sam_challenge->sam_challenge.length?"], ":"",
-             SAMDATA(sam_challenge->sam_response_prompt, "passcode", 55));
-
-    response_data.data = response;
-    response_data.length = sizeof(response);
-
-    kprompt.prompt = prompt;
-    kprompt.hidden = 1;
-    kprompt.reply = &response_data;
-    prompt_type = KRB5_PROMPT_TYPE_PREAUTH;
-
-    /* PROMPTER_INVOCATION */
-    krb5int_set_prompt_types(context, &prompt_type);
-    if ((ret = ((*prompter)(context, prompter_data, name,
-                            banner, 1, &kprompt)))) {
-        krb5_free_sam_challenge(context, sam_challenge);
-        krb5int_set_prompt_types(context, 0);
-        return(ret);
-    }
-    krb5int_set_prompt_types(context, 0);
-
-    enc_sam_response_enc.sam_nonce = sam_challenge->sam_nonce;
-    if (sam_challenge->sam_nonce == 0) {
-        if ((ret = krb5_us_timeofday(context,
-                                     &enc_sam_response_enc.sam_timestamp,
-                                     &enc_sam_response_enc.sam_usec))) {
-            krb5_free_sam_challenge(context,sam_challenge);
-            return(ret);
-        }
-
-        sam_response.sam_patimestamp = enc_sam_response_enc.sam_timestamp;
-    }
-
-    /* XXX What if more than one flag is set?  */
-    if (sam_challenge->sam_flags & KRB5_SAM_SEND_ENCRYPTED_SAD) {
-
-        /* Most of this should be taken care of before we get here.  We */
-        /* will need the user's password and as_key to encrypt the SAD  */
-        /* and we want to preserve ordering of user prompts (first      */
-        /* password, then SAM data) so that user's won't be confused.   */
-
-        if (as_key->length) {
-            krb5_free_keyblock_contents(context, as_key);
-            as_key->length = 0;
-        }
-
-        /* generate a salt using the requested principal */
-
-        if ((salt->length == -1 || salt->length == SALT_TYPE_AFS_LENGTH) && (salt->data == NULL)) {
-            if ((ret = krb5_principal2salt(context, request->client,
-                                           &defsalt))) {
-                krb5_free_sam_challenge(context, sam_challenge);
-                return(ret);
-            }
-
-            salt = &defsalt;
-        } else {
-            defsalt.length = 0;
-        }
-
-        /* generate a key using the supplied password */
-
-        ret = krb5_c_string_to_key(context, ENCTYPE_DES_CBC_MD5,
-                                   (krb5_data *)gak_data, salt, as_key);
-
-        if (defsalt.length)
-            free(defsalt.data);
-
-        if (ret) {
-            krb5_free_sam_challenge(context, sam_challenge);
-            return(ret);
-        }
-
-        /* encrypt the passcode with the key from above */
-
-        enc_sam_response_enc.sam_sad = response_data;
-    } else if (sam_challenge->sam_flags & KRB5_SAM_USE_SAD_AS_KEY) {
-
-        /* process the key as password */
-
-        if (as_key->length) {
-            krb5_free_keyblock_contents(context, as_key);
-            as_key->length = 0;
-        }
-
-#if 0
-        if ((salt->length == SALT_TYPE_AFS_LENGTH) && (salt->data == NULL)) {
-            if (ret = krb5_principal2salt(context, request->client,
-                                          &defsalt)) {
-                krb5_free_sam_challenge(context, sam_challenge);
-                return(ret);
-            }
-
-            salt = &defsalt;
-        } else {
-            defsalt.length = 0;
-        }
-#else
-        defsalt.length = 0;
-        salt = NULL;
-#endif
-
-        /* XXX As of the passwords-04 draft, no enctype is specified,
-           the server uses ENCTYPE_DES_CBC_MD5. In the future the
-           server should send a PA-SAM-ETYPE-INFO containing the enctype. */
-
-        ret = krb5_c_string_to_key(context, ENCTYPE_DES_CBC_MD5,
-                                   &response_data, salt, as_key);
-
-        if (defsalt.length)
-            free(defsalt.data);
-
-        if (ret) {
-            krb5_free_sam_challenge(context, sam_challenge);
-            return(ret);
-        }
-
-        enc_sam_response_enc.sam_sad.length = 0;
-    } else {
-        /* Eventually, combine SAD with long-term key to get
-           encryption key.  */
-        krb5_free_sam_challenge(context, sam_challenge);
-        return KRB5_PREAUTH_BAD_TYPE;
-    }
-
-    /* copy things from the challenge */
-    sam_response.sam_nonce = sam_challenge->sam_nonce;
-    sam_response.sam_flags = sam_challenge->sam_flags;
-    sam_response.sam_track_id = sam_challenge->sam_track_id;
-    sam_response.sam_type = sam_challenge->sam_type;
-    sam_response.magic = KV5M_SAM_RESPONSE;
-
-    krb5_free_sam_challenge(context, sam_challenge);
-
-    /* encode the encoded part of the response */
-    if ((ret = encode_krb5_enc_sam_response_enc(&enc_sam_response_enc,
-                                                &scratch)))
-        return(ret);
-
-    ret = krb5_encrypt_helper(context, as_key, 0, scratch,
-                              &sam_response.sam_enc_nonce_or_ts);
-
-    krb5_free_data(context, scratch);
-
-    if (ret)
-        return(ret);
-
-    /* sam_enc_key is reserved for future use */
-    sam_response.sam_enc_key.ciphertext.length = 0;
-
-    if ((pa = malloc(sizeof(krb5_pa_data))) == NULL)
-        return(ENOMEM);
-
-    if ((ret = encode_krb5_sam_response(&sam_response, &scratch))) {
-        free(pa);
-        return(ret);
-    }
-
-    pa->magic = KV5M_PA_DATA;
-    pa->pa_type = KRB5_PADATA_SAM_RESPONSE;
-    pa->length = scratch->length;
-    pa->contents = (krb5_octet *) scratch->data;
-
-    *out_padata = pa;
-
-    free(scratch);
 
     return(0);
 }
@@ -1375,6 +1035,51 @@ error_out:
 }
 #endif /* APPLE_PKINIT */
 
+/* this macro expands to the int,ptr necessary for "%.*s" in an sprintf */
+
+#define SAMDATA(kdata, str, maxsize)                                    \
+    (int)((kdata.length)?                                               \
+          ((((kdata.length)<=(maxsize))?(kdata.length):strlen(str))):   \
+          strlen(str)),                                                 \
+        (kdata.length)?                                                 \
+        ((((kdata.length)<=(maxsize))?(kdata.data):(str))):(str)
+static char *
+sam_challenge_banner(krb5_int32 sam_type)
+{
+    char *label;
+
+    switch (sam_type) {
+    case PA_SAM_TYPE_ENIGMA:    /* Enigma Logic */
+        label = "Challenge for Enigma Logic mechanism";
+        break;
+    case PA_SAM_TYPE_DIGI_PATH: /*  Digital Pathways */
+    case PA_SAM_TYPE_DIGI_PATH_HEX: /*  Digital Pathways */
+        label = "Challenge for Digital Pathways mechanism";
+        break;
+    case PA_SAM_TYPE_ACTIVCARD_DEC: /*  Digital Pathways */
+    case PA_SAM_TYPE_ACTIVCARD_HEX: /*  Digital Pathways */
+        label = "Challenge for Activcard mechanism";
+        break;
+    case PA_SAM_TYPE_SKEY_K0:   /*  S/key where  KDC has key 0 */
+        label = "Challenge for Enhanced S/Key mechanism";
+        break;
+    case PA_SAM_TYPE_SKEY:      /*  Traditional S/Key */
+        label = "Challenge for Traditional S/Key mechanism";
+        break;
+    case PA_SAM_TYPE_SECURID:   /*  Security Dynamics */
+        label = "Challenge for Security Dynamics mechanism";
+        break;
+    case PA_SAM_TYPE_SECURID_PREDICT:   /* predictive Security Dynamics */
+        label = "Challenge for Security Dynamics mechanism";
+        break;
+    default:
+        label = "Challenge from authentication server";
+        break;
+    }
+
+    return(label);
+}
+
 static krb5_error_code
 pa_sam_2(krb5_context context, krb5_kdc_req *request, krb5_pa_data *in_padata,
          krb5_pa_data **out_padata, krb5_data *salt, krb5_data *s2kparams,
@@ -1490,7 +1195,7 @@ pa_sam_2(krb5_context context, krb5_kdc_req *request, krb5_pa_data *in_padata,
     krb5int_set_prompt_types(context, (krb5_prompt_type *)NULL);
 
     /* Generate salt used by string_to_key() */
-    if ((salt->length == -1) && (salt->data == NULL)) {
+    if (((int) salt->length == -1) && (salt->data == NULL)) {
         if ((retval =
              krb5_principal2salt(context, request->client, &defsalt))) {
             krb5_free_sam_challenge_2(context, sc2);
@@ -1778,11 +1483,6 @@ static const pa_types_t pa_types[] = {
         PA_REAL,
     },
     {
-        KRB5_PADATA_SAM_CHALLENGE,
-        pa_sam,
-        PA_REAL,
-    },
-    {
         KRB5_PADATA_FX_COOKIE,
         pa_fx_cookie,
         PA_INFO,
@@ -1836,6 +1536,8 @@ krb5_do_preauth_tryagain(krb5_context kcontext,
         return KRB5KRB_ERR_GENERIC;
     }
 
+    TRACE_PREAUTH_TRYAGAIN_INPUT(kcontext, padata);
+
     for (i = 0; padata[i] != NULL && padata[i]->pa_type != 0; i++) {
         out_padata = NULL;
         for (j = 0; j < context->n_modules; j++) {
@@ -1867,6 +1569,7 @@ krb5_do_preauth_tryagain(krb5_context kcontext,
                     grow_pa_list(return_padata, &out_pa_list_size,
                                  out_padata, k);
                     free(out_padata);
+                    TRACE_PREAUTH_TRYAGAIN_OUTPUT(kcontext, *return_padata);
                     return 0;
                 }
             }
@@ -1904,16 +1607,7 @@ krb5_do_preauth(krb5_context context,
         return(0);
     }
 
-#ifdef DEBUG
-    fprintf (stderr, "salt len=%d", (int) salt->length);
-    if ((int) salt->length > 0)
-        fprintf (stderr, " '%.*s'", salt->length, salt->data);
-    fprintf (stderr, "; preauth data types:");
-    for (i = 0; in_padata[i]; i++) {
-        fprintf (stderr, " %d", in_padata[i]->pa_type);
-    }
-    fprintf (stderr, "\n");
-#endif
+    TRACE_PREAUTH_INPUT(context, in_padata);
 
     out_pa_list = NULL;
     out_pa_list_size = 0;
@@ -2008,16 +1702,7 @@ krb5_do_preauth(krb5_context context,
                                                       &etype_info[l]->s2kparams,
                                                       s2kparams)) != 0)
                     goto cleanup;
-#ifdef DEBUG
-                for (j = 0; etype_info[j]; j++) {
-                    krb5_etype_info_entry *e = etype_info[j];
-                    fprintf (stderr, "etype info %d: etype %d salt len=%d",
-                             j, e->etype, e->length);
-                    if (e->length > 0 && e->length != KRB5_ETYPE_NO_SALT)
-                        fprintf (stderr, " '%.*s'", e->length, e->salt);
-                    fprintf (stderr, "\n");
-                }
-#endif
+                TRACE_PREAUTH_ETYPE_INFO(context, *etype, salt, s2kparams);
                 break;
             }
             case KRB5_PADATA_PW_SALT:
@@ -2044,12 +1729,9 @@ krb5_do_preauth(krb5_context context,
                                                        prompter, prompter_data,
                                                        gak_fct, gak_data)))) {
                             if (paorder[h] == PA_INFO) {
-#ifdef DEBUG
-                                fprintf (stderr,
-                                         "internal function for type %d, flag %d "
-                                         "failed with err %d\n",
-                                         in_padata[i]->pa_type, paorder[h], ret);
-#endif
+                                TRACE_PREAUTH_INFO_FAIL(context,
+                                                        in_padata[i]->pa_type,
+                                                        ret);
                                 ret = 0;
                                 continue; /* PA_INFO type failed, ignore */
                             }
@@ -2106,6 +1788,7 @@ krb5_do_preauth(krb5_context context,
         }
     }
 
+    TRACE_PREAUTH_OUTPUT(context, out_pa_list);
     *out_padata = out_pa_list;
     if (etype_info)
         krb5_free_etype_info(context, etype_info);

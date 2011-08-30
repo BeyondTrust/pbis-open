@@ -250,9 +250,6 @@ load_authdata_plugins(krb5_context context)
     module_count += sizeof(static_authdata_systems)
         / sizeof(static_authdata_systems[0]);
 
-    module_count += sizeof(static_authdata_systems)
-	/ sizeof(static_authdata_systems[0]);
-
     /* Build the complete list of supported authdata options, and
      * leave room for a terminator entry.
      */
@@ -360,22 +357,6 @@ load_authdata_plugins(krb5_context context)
             continue;
         assert(static_authdata_systems[i].init == NULL);
         authdata_systems[k++] = static_authdata_systems[i];
-    }
-
-    /* Add the locally-supplied mechanisms to the dynamic list first. */
-    for (i = 0;
-	 i < sizeof(static_authdata_systems) / sizeof(static_authdata_systems[0]);
-	 i++) {
-	authdata_systems[k] = static_authdata_systems[i];
-	/* Try to initialize the authdata system.  If it fails, we'll remove it
-	 * from the list of systems we'll be using. */
-	server_init_proc = static_authdata_systems[i].init;
-	if ((server_init_proc != NULL) &&
-	    ((*server_init_proc)(context, &authdata_systems[k].plugin_context) != 0)) {
-	    memset(&authdata_systems[k], 0, sizeof(authdata_systems[k]));
-	    continue;
-	}
-	k++;
     }
 
     n_authdata_systems = k;
@@ -699,7 +680,7 @@ handle_kdb_authdata (krb5_context context,
                      krb5_enc_tkt_part *enc_tkt_reply)
 {
     krb5_error_code code;
-    krb5_authdata **db_authdata = NULL;
+    krb5_authdata **tgt_authdata, **db_authdata = NULL;
     krb5_boolean tgs_req = (request->msg_type == KRB5_TGS_REQ);
     krb5_const_principal actual_client;
 
@@ -739,19 +720,12 @@ handle_kdb_authdata (krb5_context context,
     else
         actual_client = enc_tkt_reply->client;
 
-    code = sign_db_authdata(context,
-                            flags,
-                            actual_client,
-                            client,
-                            server,
-                            krbtgt,
-                            client_key,
-                            server_key, /* U2U or server key */
-                            krbtgt_key,
-                            enc_tkt_reply->times.authtime,
-                            tgs_req ? enc_tkt_request->authorization_data : NULL,
-                            enc_tkt_reply->session,
-                            &db_authdata);
+    tgt_authdata = tgs_req ? enc_tkt_request->authorization_data : NULL;
+    code = krb5_db_sign_authdata(context, flags, actual_client, client,
+                                 server, krbtgt, client_key, server_key,
+                                 krbtgt_key, enc_tkt_reply->session,
+                                 enc_tkt_reply->times.authtime, tgt_authdata,
+                                 &db_authdata);
     if (code == 0) {
         code = merge_authdata(context,
                               db_authdata,
@@ -760,7 +734,7 @@ handle_kdb_authdata (krb5_context context,
                               FALSE);        /* !ignore_kdc_issued */
         if (code != 0)
             krb5_free_authdata(context, db_authdata);
-    } else if (code == KRB5_KDB_DBTYPE_NOSUP)
+    } else if (code == KRB5_PLUGIN_OP_NOTSUPP)
         code = 0;
 
     return code;

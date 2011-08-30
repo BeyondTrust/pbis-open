@@ -1,0 +1,24 @@
+mydir=lib$(S)crypto$(S)nss$(S)md4
+BUILDTOP=$(REL)..$(S)..$(S)..$(S)..
+LOCALINCLUDES = -I$(srcdir)
+DEFS=
+
+PROG_LIBPATH=-L$(TOPLIBD)
+PROG_RPATH=$(KRB5_LIBDIR)
+
+STLIBOBJS= md4.o
+
+OBJS= $(OUTPRE)md4.$(OBJEXT) 
+
+SRCS= $(srcdir)/md4.c
+
+all-unix:: all-libobjs
+
+includes:: depend
+
+depend:: $(SRCS)
+
+clean-unix:: clean-libobjs
+
+@libobj_frag@
+

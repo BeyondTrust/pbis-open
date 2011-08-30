@@ -815,6 +815,55 @@ kadmin_free_tl_data(kadm5_principal_ent_t princ)
     }
 }
 
+/* Construct a tl_data element and add it to the tail of princ->tl_data. */
+static void
+add_tl_data(kadm5_principal_ent_t princ, krb5_int16 tl_type, krb5_ui_2 len,
+            krb5_octet *contents)
+{
+    krb5_tl_data *tl_data, **tlp;
+    krb5_octet *copy;
+
+    copy = malloc(len);
+    tl_data = calloc(1, sizeof(*tl_data));
+    if (copy == NULL || tl_data == NULL) {
+        fprintf(stderr, "Not enough memory\n");
+        exit(1);
+    }
+    memcpy(copy, contents, len);
+
+    tl_data->tl_data_type = tl_type;
+    tl_data->tl_data_length = len;
+    tl_data->tl_data_contents = copy;
+    tl_data->tl_data_next = NULL;
+
+    for (tlp = &princ->tl_data; *tlp != NULL; tlp = &(*tlp)->tl_data_next);
+    *tlp = tl_data;
+    princ->n_tl_data++;
+}
+
+static void
+unlock_princ(kadm5_principal_ent_t princ, long *mask, const char *caller)
+{
+    krb5_error_code retval;
+    krb5_timestamp now;
+    krb5_octet timebuf[4];
+
+    /* Zero out the failed auth count. */
+    princ->fail_auth_count = 0;
+    *mask |= KADM5_FAIL_AUTH_COUNT;
+
+    /* Record the timestamp of this unlock operation so that slave KDCs will
+     * see it, since fail_auth_count is unreplicated. */
+    retval = krb5_timeofday(context, &now);
+    if (retval) {
+        com_err(caller, retval, "while getting time");
+        exit(1);
+    }
+    store_32_le((krb5_int32)now, timebuf);
+    add_tl_data(princ, KRB5_TL_LAST_ADMIN_UNLOCK, 4, timebuf);
+    *mask |= KADM5_TL_DATA;
+}
+
 /*
  * Parse addprinc or modprinc arguments.  Some output fields may be
  * filled in on error.
@@ -834,7 +883,6 @@ kadmin_parse_princ_args(int argc, char *argv[], kadm5_principal_ent_t oprinc,
     time_t date;
     time_t now;
     krb5_error_code retval;
-    krb5_tl_data *tl_data, *tail = NULL;
 
     *mask = 0;
     *pass = NULL;
@@ -851,29 +899,8 @@ kadmin_parse_princ_args(int argc, char *argv[], kadm5_principal_ent_t oprinc,
             if (++i > argc - 2)
                 return -1;
 
-            tl_data = malloc(sizeof(krb5_tl_data));
-            if (tl_data == NULL) {
-                fprintf(stderr, "Not enough memory\n");
-                exit(1);
-            }
-
-            memset(tl_data, 0, sizeof(krb5_tl_data));
-            tl_data->tl_data_type = KRB5_TL_DB_ARGS;
-            tl_data->tl_data_length = strlen(argv[i])+1;
-            tl_data->tl_data_contents = (krb5_octet *) strdup(argv[i]);
-
-            if (tail) {
-                tail->tl_data_next = tl_data;
-            } else {
-                oprinc->tl_data = tl_data;
-            }
-            tail = tl_data;
-            oprinc->n_tl_data++;
-
-            if (tl_data->tl_data_contents == NULL) {
-                fprintf(stderr, "Not enough memory\n");
-                exit(1);
-            }
+            add_tl_data(oprinc, KRB5_TL_DB_ARGS, strlen(argv[i]) + 1,
+                        (krb5_octet *)argv[i]);
             *mask |= KADM5_TL_DATA;
             continue;
         }
@@ -983,8 +1010,7 @@ kadmin_parse_princ_args(int argc, char *argv[], kadm5_principal_ent_t oprinc,
         }
 #endif /* APPLE_PKINIT */
         if (strlen(argv[i]) == 7 && !strcmp("-unlock", argv[i])) {
-            oprinc->fail_auth_count = 0;
-            *mask |= KADM5_FAIL_AUTH_COUNT;
+            unlock_princ(oprinc, mask, caller);
             continue;
         }
         if (!strcmp("-e", argv[i])) {
@@ -1380,8 +1406,8 @@ kadmin_getprinc(int argc, char *argv[])
             krb5_key_data *key_data = &dprinc.key_data[i];
             char enctype[BUFSIZ], salttype[BUFSIZ];
 
-            if (krb5_enctype_to_string(key_data->key_data_type[0],
-                                       enctype, sizeof(enctype)))
+            if (krb5_enctype_to_name(key_data->key_data_type[0], FALSE,
+                                     enctype, sizeof(enctype)))
                 snprintf(enctype, sizeof(enctype), "<Encryption type 0x%x>",
                          key_data->key_data_type[0]);
             printf("Key: vno %d, %s, ", key_data->key_data_kvno, enctype);
@@ -1715,4 +1741,51 @@ kadmin_getprivs(int argc, char *argv[])
             printf(" %s", privs[i]);
     }
     printf("\n");
+}
+
+void
+kadmin_purgekeys(int argc, char *argv[])
+{
+    kadm5_ret_t retval;
+    int keepkvno = -1;
+    char *pname = NULL, *canon = NULL;
+    krb5_principal princ;
+
+    if (argc == 4 && strcmp(argv[1], "-keepkvno") == 0) {
+        keepkvno = atoi(argv[2]);
+        pname = argv[3];
+    }
+    if (argc == 2) {
+        pname = argv[1];
+    }
+    if (pname == NULL) {
+        fprintf(stderr, "usage: purgekeys [-keepkvno oldest_kvno_to_keep] "
+                "principal\n");
+        return;
+    }
+
+    retval = kadmin_parse_name(pname, &princ);
+    if (retval) {
+        com_err("purgekeys", retval, "while parsing principal");
+        return;
+    }
+
+    retval = krb5_unparse_name(context, princ, &canon);
+    if (retval) {
+        com_err("purgekeys", retval, "while canonicalizing principal");
+        goto cleanup;
+    }
+
+    retval = kadm5_purgekeys(handle, princ, keepkvno);
+    if (retval) {
+        com_err("purgekeys", retval,
+                "while purging keys for principal \"%s\"", canon);
+        goto cleanup;
+    }
+
+    printf("Old keys for principal \"%s\" purged.\n", canon);
+cleanup:
+    krb5_free_principal(context, princ);
+    free(canon);
+    return;
 }

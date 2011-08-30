@@ -1,11 +1,13 @@
-mydir=lib/crypto/builtin
+mydir=lib$(S)crypto$(S)builtin
 BUILDTOP=$(REL)..$(S)..$(S)..
-SUBDIRS=des aes	 md4 md5  sha1 enc_provider hash_provider
+SUBDIRS=camellia des aes md4 md5 sha1 sha2 enc_provider hash_provider
 LOCALINCLUDES = -I$(srcdir)/../krb 			\
 		-I$(srcdir)/../krb/hash_provider 	\
 		-I$(srcdir)/des 	\
 		-I$(srcdir)/aes 	\
+		-I$(srcdir)/camellia 	\
 		-I$(srcdir)/sha1 	\
+		-I$(srcdir)/sha2 	\
 		-I$(srcdir)/md4 	\
 		-I$(srcdir)/md5	\
 		-I$(srcdir)/enc_provider	\
@@ -18,36 +20,39 @@ DEFS=
 EXTRADEPSRCS= $(srcdir)/t_cf2.c 
 
 
-##DOSBUILDTOP = ..\..\..
-##DOSLIBNAME=$(OUTPRE)crypto.lib
-##DOSOBJFILE=$(OUTPRE)crypto.lst
-##DOSOBJFILELIST=@$(OUTPRE)crypto.lst @$(OUTPRE)des.lst @$(OUTPRE)md4.lst @$(OUTPRE)md5.lst @$(OUTPRE)sha1.lst @$(OUTPRE)crc32.lst @$(OUTPRE)dk.lst @$(OUTPRE)old.lst @$(OUTPRE)raw.lst @$(OUTPRE)enc_prov.lst @$(OUTPRE)hash_pro.lst @$(OUTPRE)kh_pro.lst @$(OUTPRE)yarrow.lst @$(OUTPRE)aes.lst
-##DOSOBJFILEDEP =$(OUTPRE)crypto.lst $(OUTPRE)des.lst $(OUTPRE)md4.lst $(OUTPRE)md5.lst $(OUTPRE)sha1.lst $(OUTPRE)crc32.lst $(OUTPRE)dk.lst $(OUTPRE)old.lst $(OUTPRE)raw.lst $(OUTPRE)enc_prov.lst $(OUTPRE)hash_pro.lst $(OUTPRE)kh_pro.lst $(OUTPRE)aes.lst
+##DOS##BUILDTOP = ..\..\..
+##DOS##PREFIXDIR = builtin
+##DOS##OBJFILE = ..\$(OUTPRE)builtin.lst
 
 STLIBOBJS=\
 	hmac.o	\
-	pbkdf2.o		
+	init.o	\
+	pbkdf2.o
 
 OBJS=\
 	$(OUTPRE)hmac.$(OBJEXT)	\
-	$(OUTPRE)pbkdf2.$(OBJEXT)		
+	$(OUTPRE)init.$(OBJEXT)	\
+	$(OUTPRE)pbkdf2.$(OBJEXT)
 
 SRCS=\
 	$(srcdir)/hmac.c	\
+	$(srcdir)/init.c	\
 	$(srcdir)/pbkdf2.c	
 
 STOBJLISTS= des/OBJS.ST md4/OBJS.ST 	\
-	md5/OBJS.ST sha1/OBJS.ST 	\
+	md5/OBJS.ST sha1/OBJS.ST sha2/OBJS.ST	\
 	enc_provider/OBJS.ST 		\
 	hash_provider/OBJS.ST 		\
 	aes/OBJS.ST 			\
+	camellia/OBJS.ST 		\
 	OBJS.ST
 
 SUBDIROBJLISTS= des/OBJS.ST md4/OBJS.ST 	\
-		md5/OBJS.ST sha1/OBJS.ST 	\
+		md5/OBJS.ST sha1/OBJS.ST sha2/OBJS.ST 	\
 		enc_provider/OBJS.ST 		\
 		hash_provider/OBJS.ST 		\
-		aes/OBJS.ST 
+		aes/OBJS.ST			\
+		camellia/OBJS.ST 
 
 ##DOS##LIBOBJS = $(OBJS)
 
@@ -66,82 +71,6 @@ t_cf2$(EXEEXT): t_cf2.$(OBJEXT) $(SUPPORT_DEPLIB)
 
 clean::
 	$(RM)  t_cf2 t_cf2.o  t_cf2.output
-
-
-
-
-all-windows::
-	cd ..\des
-	@echo Making in crypto\des
-	$(MAKE) -$(MFLAGS)
-	cd ..\md4
-	@echo Making in crypto\md4
-	$(MAKE) -$(MFLAGS)
-	cd ..\md5
-	@echo Making in crypto\md5
-	$(MAKE) -$(MFLAGS)
-	cd ..\sha1
-	@echo Making in crypto\sha1
-	$(MAKE) -$(MFLAGS)
-	cd ..\hash_provider
-	@echo Making in crypto\hash_provider
-	$(MAKE) -$(MFLAGS)
-	cd ..\enc_provider
-	@echo Making in crypto\enc_provider
-	$(MAKE) -$(MFLAGS)
-	cd ..\aes
-	@echo Making in crypto\aes
-	$(MAKE) -$(MFLAGS)
-	cd ..
-
-clean-windows::
-	cd ..\des
-	@echo Making clean in crypto\des
-	$(MAKE) -$(MFLAGS) clean
-	cd ..\md4
-	@echo Making clean in crypto\md4
-	$(MAKE) -$(MFLAGS) clean
-	cd ..\md5
-	@echo Making clean in crypto\md5
-	$(MAKE) -$(MFLAGS) clean
-	cd ..\sha1
-	@echo Making clean in crypto\sha1
-	$(MAKE) -$(MFLAGS) clean
-	cd ..\hash_provider
-	@echo Making clean in crypto\hash_provider
-	$(MAKE) -$(MFLAGS) clean
-	cd ..\enc_provider
-	@echo Making clean in crypto\enc_provider
-	$(MAKE) -$(MFLAGS) clean
-	cd ..\aes
-	@echo Making clean in crypto\aes
-	$(MAKE) -$(MFLAGS) clean
-	cd ..
-
-check-windows::
-	cd ..\des
-	@echo Making check in crypto\des
-	$(MAKE) -$(MFLAGS) check
-	cd ..\md4
-	@echo Making check in crypto\md4
-	$(MAKE) -$(MFLAGS) check
-	cd ..\md5
-	@echo Making check in crypto\md5
-	$(MAKE) -$(MFLAGS) check
-	cd ..\sha1
-	@echo Making check in crypto\sha1
-	$(MAKE) -$(MFLAGS) check
-	cd ..\hash_provider
-	@echo Making check in crypto\hash_provider
-	$(MAKE) -$(MFLAGS) check
-	cd ..\enc_provider
-	@echo Making check in crypto\enc_provider
-	$(MAKE) -$(MFLAGS) check
-	cd ..\aes
-	@echo Making check in crypto\aes
-	$(MAKE) -$(MFLAGS) check
-	cd ..
-
 
 @lib_frag@
 @libobj_frag@

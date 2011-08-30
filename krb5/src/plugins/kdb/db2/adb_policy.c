@@ -9,12 +9,10 @@
 static char *rcsid = "$Header$";
 #endif
 
-#include        <sys/file.h>
-#include        <fcntl.h>
-#include        "policy_db.h"
-#include        <stdlib.h>
-#include        <string.h>
-#include <errno.h>
+#include "k5-int.h"
+
+#include <sys/file.h>
+#include "policy_db.h"
 
 #define OPENLOCK(db, mode)                                              \
     {                                                                   \
@@ -184,17 +182,17 @@ error:
  */
 krb5_error_code
 osa_adb_get_policy(osa_adb_policy_t db, char *name,
-                   osa_policy_ent_t *entry, int *cnt)
+                   osa_policy_ent_t *entry_ptr)
 {
     DBT                 dbkey;
     DBT                 dbdata;
     XDR                 xdrs;
     int                 ret;
-    char                *aligned_data;
+    char                *aligned_data = NULL;
+    osa_policy_ent_t    entry = NULL;
 
+    *entry_ptr = NULL;
     OPENLOCK(db, KRB5_DB_LOCKMODE_SHARED);
-
-    *cnt = 1;
 
     if(name == NULL) {
         ret = EINVAL;
@@ -206,8 +204,7 @@ osa_adb_get_policy(osa_adb_policy_t db, char *name,
     dbdata.size = 0;
     switch((db->db->get(db->db, &dbkey, &dbdata, 0))) {
     case 1:
-        ret = 0;
-        *cnt = 0;
+        ret = KRB5_KDB_NOENTRY;
         goto error;
     case 0:
         break;
@@ -215,24 +212,26 @@ osa_adb_get_policy(osa_adb_policy_t db, char *name,
         ret = OSA_ADB_FAILURE;
         goto error;
     }
-    if (!(*(entry) = (osa_policy_ent_t)malloc(sizeof(osa_policy_ent_rec)))) {
-        ret = ENOMEM;
+    entry = k5alloc(sizeof(*entry), &ret);
+    if (entry == NULL)
         goto error;
-    }
-    if (!(aligned_data = (char *) malloc(dbdata.size))) {
-        ret = ENOMEM;
+    aligned_data = k5alloc(dbdata.size, &ret);
+    if (aligned_data == NULL)
         goto error;
-    }
     memcpy(aligned_data, dbdata.data, dbdata.size);
-    memset(*entry, 0, sizeof(osa_policy_ent_rec));
     xdrmem_create(&xdrs, aligned_data, dbdata.size, XDR_DECODE);
-    if (!xdr_osa_policy_ent_rec(&xdrs, *entry))
-        ret =  OSA_ADB_FAILURE;
-    else ret = OSA_ADB_OK;
+    if (!xdr_osa_policy_ent_rec(&xdrs, entry)) {
+        ret = OSA_ADB_FAILURE;
+        goto error;
+    }
+    ret = OSA_ADB_OK;
     xdr_destroy(&xdrs);
-    free(aligned_data);
+    *entry_ptr = entry;
+    entry = NULL;
 
 error:
+    free(aligned_data);
+    free(entry);
     CLOSELOCK(db);
     return ret;
 }

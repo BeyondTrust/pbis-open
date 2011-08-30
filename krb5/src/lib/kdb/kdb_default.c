@@ -231,23 +231,6 @@ out:
     return retval;
 }
 
-krb5_error_code
-krb5_def_store_mkey(krb5_context   context,
-                    char           *keyfile,
-                    krb5_principal mname,
-                    krb5_kvno      kvno,
-                    krb5_keyblock  *key,
-                    char           *master_pwd)
-{
-    krb5_keylist_node list;
-
-    list.kvno = kvno;
-    list.keyblock = *key;
-    list.next = NULL;
-    return krb5_def_store_mkey_list(context, keyfile, mname, &list,
-                                    master_pwd);
-}
-
 static krb5_error_code
 krb5_db_def_fetch_mkey_stash(krb5_context   context,
                              const char *keyfile,
@@ -432,63 +415,6 @@ krb5_db_def_fetch_mkey(krb5_context   context,
         return 0;
 }
 
-/*
- * Note, this verifies that the input mkey is currently protecting all the mkeys
- */
-krb5_error_code
-krb5_def_verify_master_key(krb5_context    context,
-                           krb5_principal  mprinc,
-                           krb5_kvno       kvno,
-                           krb5_keyblock   *mkey)
-{
-    krb5_error_code retval;
-    krb5_db_entry master_entry;
-    int nprinc;
-    krb5_boolean more;
-    krb5_keyblock tempkey;
-
-    nprinc = 1;
-    if ((retval = krb5_db_get_principal(context, mprinc,
-                                        &master_entry, &nprinc, &more)))
-        return(retval);
-
-    if (nprinc != 1) {
-        if (nprinc)
-            krb5_db_free_principal(context, &master_entry, nprinc);
-        return(KRB5_KDB_NOMASTERKEY);
-    } else if (more) {
-        krb5_db_free_principal(context, &master_entry, nprinc);
-        return(KRB5KDC_ERR_PRINCIPAL_NOT_UNIQUE);
-    }
-
-    if ((retval = krb5_dbekd_decrypt_key_data(context, mkey,
-                                              &master_entry.key_data[0],
-                                              &tempkey, NULL))) {
-        krb5_db_free_principal(context, &master_entry, nprinc);
-        return retval;
-    }
-
-    if (mkey->length != tempkey.length ||
-        memcmp((char *)mkey->contents,
-               (char *)tempkey.contents,mkey->length)) {
-        retval = KRB5_KDB_BADMASTERKEY;
-    }
-
-    if (kvno != IGNORE_VNO &&
-        kvno != (krb5_kvno) master_entry.key_data->key_data_kvno) {
-        retval = KRB5_KDB_BADMASTERKEY;
-        krb5_set_error_message (context, retval,
-                                "User specified mkeyVNO (%u) does not match master key princ's KVNO (%u)",
-                                kvno, master_entry.key_data->key_data_kvno);
-    }
-
-    zap((char *)tempkey.contents, tempkey.length);
-    free(tempkey.contents);
-    krb5_db_free_principal(context, &master_entry, nprinc);
-
-    return retval;
-}
-
 krb5_error_code
 krb5_def_fetch_mkey_list(krb5_context        context,
                          krb5_principal        mprinc,
@@ -497,9 +423,8 @@ krb5_def_fetch_mkey_list(krb5_context        context,
                          krb5_keylist_node  **mkeys_list)
 {
     krb5_error_code retval;
-    krb5_db_entry master_entry;
-    int nprinc;
-    krb5_boolean more, found_key = FALSE;
+    krb5_db_entry *master_entry;
+    krb5_boolean found_key = FALSE;
     krb5_keyblock cur_mkey;
     krb5_keylist_node *mkey_list_head = NULL, **mkey_list_node;
     krb5_key_data *key_data;
@@ -510,46 +435,37 @@ krb5_def_fetch_mkey_list(krb5_context        context,
         return (EINVAL);
 
     memset(&cur_mkey, 0, sizeof(cur_mkey));
-    memset(&master_entry, 0, sizeof(master_entry));
 
-    nprinc = 1;
-    if ((retval = krb5_db_get_principal(context, mprinc,
-                                        &master_entry, &nprinc, &more)))
+    retval = krb5_db_get_principal(context, mprinc, 0, &master_entry);
+    if (retval == KRB5_KDB_NOENTRY)
+        return (KRB5_KDB_NOMASTERKEY);
+    if (retval)
         return (retval);
-
-    if (nprinc != 1) {
-        if (nprinc)
-            krb5_db_free_principal(context, &master_entry, nprinc);
-        return(KRB5_KDB_NOMASTERKEY);
-    } else if (more) {
-        krb5_db_free_principal(context, &master_entry, nprinc);
-        return (KRB5KDC_ERR_PRINCIPAL_NOT_UNIQUE);
-    }
 
     /*
      * Check if the input mkey is the latest key and if it isn't then find the
      * latest mkey.
      */
 
-    if (mkey->enctype == master_entry.key_data[0].key_data_type[0]) {
-        if (krb5_dbekd_decrypt_key_data(context, mkey,
-                                        &master_entry.key_data[0],
-                                        &cur_mkey, NULL) == 0) {
+    if (mkey->enctype == master_entry->key_data[0].key_data_type[0]) {
+        if (krb5_dbe_decrypt_key_data(context, mkey,
+                                      &master_entry->key_data[0],
+                                      &cur_mkey, NULL) == 0) {
             found_key = TRUE;
         }
     }
 
     if (!found_key) {
-        if ((retval = krb5_dbe_lookup_mkey_aux(context, &master_entry,
+        if ((retval = krb5_dbe_lookup_mkey_aux(context, master_entry,
                                                &mkey_aux_data_list)))
             goto clean_n_exit;
 
         for (aux_data_entry = mkey_aux_data_list; aux_data_entry != NULL;
              aux_data_entry = aux_data_entry->next) {
 
-            if (krb5_dbekd_decrypt_key_data(context, mkey,
-                                             &aux_data_entry->latest_mkey,
-                                             &cur_mkey, NULL) == 0) {
+            if (krb5_dbe_decrypt_key_data(context, mkey,
+                                          &aux_data_entry->latest_mkey,
+                                          &cur_mkey, NULL) == 0) {
                 found_key = TRUE;
                 break;
             }
@@ -577,13 +493,13 @@ krb5_def_fetch_mkey_list(krb5_context        context,
 
     /* Set mkey_list_head to the current mkey as an optimization. */
     /* mkvno may not be latest so ... */
-    mkey_list_head->kvno = master_entry.key_data[0].key_data_kvno;
+    mkey_list_head->kvno = master_entry->key_data[0].key_data_kvno;
     /* this is the latest clear mkey (avoids a redundant decrypt) */
     mkey_list_head->keyblock = cur_mkey;
 
     /* loop through any other master keys creating a list of krb5_keylist_nodes */
     mkey_list_node = &mkey_list_head->next;
-    for (i = 1; i < master_entry.n_key_data; i++) {
+    for (i = 1; i < master_entry->n_key_data; i++) {
         if (*mkey_list_node == NULL) {
             /* *mkey_list_node points to next field of previous node */
             *mkey_list_node = (krb5_keylist_node *) malloc(sizeof(krb5_keylist_node));
@@ -593,11 +509,10 @@ krb5_def_fetch_mkey_list(krb5_context        context,
             }
             memset(*mkey_list_node, 0, sizeof(krb5_keylist_node));
         }
-        key_data = &master_entry.key_data[i];
-        retval = krb5_dbekd_decrypt_key_data(context, &cur_mkey,
-                                             key_data,
-                                             &((*mkey_list_node)->keyblock),
-                                             NULL);
+        key_data = &master_entry->key_data[i];
+        retval = krb5_dbe_decrypt_key_data(context, &cur_mkey, key_data,
+                                           &((*mkey_list_node)->keyblock),
+                                           NULL);
         if (retval)
             goto clean_n_exit;
 
@@ -608,45 +523,9 @@ krb5_def_fetch_mkey_list(krb5_context        context,
     *mkeys_list = mkey_list_head;
 
 clean_n_exit:
-    krb5_db_free_principal(context, &master_entry, nprinc);
+    krb5_db_free_principal(context, master_entry);
     krb5_dbe_free_mkey_aux_list(context, mkey_aux_data_list);
     if (retval != 0)
         krb5_dbe_free_key_list(context, mkey_list_head);
     return retval;
-}
-
-krb5_error_code kdb_def_set_mkey ( krb5_context kcontext,
-                                   char *pwd,
-                                   krb5_keyblock *key )
-{
-    /* printf("default set master key\n"); */
-    return 0;
-}
-
-krb5_error_code kdb_def_get_mkey ( krb5_context kcontext,
-                                   krb5_keyblock **key )
-{
-    /* printf("default get master key\n"); */
-    return 0;
-}
-
-krb5_error_code kdb_def_set_mkey_list ( krb5_context kcontext,
-                                        krb5_keylist_node *keylist )
-{
-    /* printf("default set master key\n"); */
-    return 0;
-}
-
-krb5_error_code kdb_def_get_mkey_list ( krb5_context kcontext,
-                                        krb5_keylist_node **keylist )
-{
-    /* printf("default get master key\n"); */
-    return 0;
-}
-
-krb5_error_code krb5_def_promote_db (krb5_context kcontext,
-                                     char *s, char **args)
-{
-    /* printf("default promote_db\n"); */
-    return KRB5_PLUGIN_OP_NOTSUPP;
 }

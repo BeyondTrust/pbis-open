@@ -61,10 +61,8 @@ static gss_OID_desc spnego_mech = { 6, "\053\006\001\005\005\002" };
 
 static int use_spnego = 0;
 
-static void displayStatus_1(m, code, type)
-     char *m;
-     OM_uint32 code;
-     int type;
+static void
+displayStatus_1(char *m, OM_uint32 code, int type)
 {
      OM_uint32 maj_stat, min_stat;
      gss_buffer_desc msg;
@@ -83,10 +81,8 @@ static void displayStatus_1(m, code, type)
      }
 }
 
-static void displayStatus(msg, maj_stat, min_stat)
-     char *msg;
-     OM_uint32 maj_stat;
-     OM_uint32 min_stat;
+static void
+displayStatus(char *msg, OM_uint32 maj_stat, OM_uint32 min_stat)
 {
      displayStatus_1(msg, maj_stat, GSS_C_GSS_CODE);
      displayStatus_1(msg, min_stat, GSS_C_MECH_CODE);
@@ -141,10 +137,8 @@ displayOID(OM_uint32 *minor, gss_OID oid, char *tag)
 }
 
 static OM_uint32
-testPrf(OM_uint32 *minor,
-        gss_ctx_id_t initiatorContext,
-        gss_ctx_id_t acceptorContext,
-        int flags)
+testPrf(OM_uint32 *minor, gss_ctx_id_t initiatorContext,
+        gss_ctx_id_t acceptorContext, int flags)
 {
     gss_buffer_desc constant;
     OM_uint32 major, tmp_minor;
@@ -201,8 +195,7 @@ testPrf(OM_uint32 *minor,
 }
 
 static OM_uint32
-initAcceptSecContext(OM_uint32 *minor,
-                     gss_cred_id_t claimant_cred_handle,
+initAcceptSecContext(OM_uint32 *minor, gss_cred_id_t claimant_cred_handle,
                      gss_cred_id_t verifier_cred_handle,
                      gss_cred_id_t *deleg_cred_handle)
 {
@@ -288,7 +281,82 @@ initAcceptSecContext(OM_uint32 *minor,
     return major;
 }
 
-int main(int argc, char *argv[])
+static OM_uint32
+getDefaultCred(OM_uint32 *minor, const char *keytab_name, gss_OID_set mechs,
+               gss_cred_id_t *impersonator_cred_handle)
+{
+    OM_uint32 major = GSS_S_FAILURE, tmp_minor;
+
+    if (keytab_name) {
+        krb5_error_code code;
+        krb5_context context = NULL;
+        krb5_keytab keytab = NULL;
+        krb5_principal keytab_principal = NULL;
+        krb5_ccache ccache = NULL;
+
+        code = krb5_init_context(&context);
+        if (code) {
+            displayStatus("krb5_init_context", major, code);
+            return major;
+        }
+
+        code = krb5_kt_resolve(context, keytab_name, &keytab);
+        if (code) {
+            displayStatus("krb5_kt_resolve", major, code);
+            goto out;
+        }
+
+        code = krb5_cc_default(context, &ccache);
+        if (code) {
+            displayStatus("krb5_cc_default", major, code);
+            goto out;
+        }
+
+        code = krb5_cc_get_principal(context, ccache, &keytab_principal);
+        if (code) {
+            displayStatus("krb5_cc_get_principal", major, code);
+            goto out;
+        }
+
+        major = gss_krb5_import_cred(minor,
+                                     ccache,
+                                     keytab_principal,
+                                     keytab,
+                                     impersonator_cred_handle);
+        if (GSS_ERROR(major)) {
+            displayStatus("gss_krb5_import_cred", major, *minor);
+            goto out;
+        }
+
+    out:
+        if (code)
+            *minor = code;
+        krb5_free_principal(context, keytab_principal);
+        krb5_cc_close(context, ccache);
+        krb5_kt_close(context, keytab);
+        krb5_free_context(context);
+     } else {
+        gss_OID_set actual_mechs = GSS_C_NO_OID_SET;
+
+        major = gss_acquire_cred(minor,
+                                 GSS_C_NO_NAME,
+                                 GSS_C_INDEFINITE,
+                                 mechs,
+                                 GSS_C_BOTH,
+                                 impersonator_cred_handle,
+                                 &actual_mechs,
+                                 NULL);
+        if (GSS_ERROR(major)) {
+            displayStatus("gss_acquire_cred", major, *minor);
+        }
+        (void) gss_release_oid_set(&tmp_minor, &actual_mechs);
+    }
+
+    return major;
+}
+
+int
+main(int argc, char *argv[])
 {
     OM_uint32 minor, major;
     gss_cred_id_t impersonator_cred_handle = GSS_C_NO_CREDENTIAL;
@@ -338,34 +406,16 @@ int main(int argc, char *argv[])
         target = GSS_C_NO_NAME;
     }
 
-    if (argc > 3) {
-        major = krb5_gss_register_acceptor_identity(argv[3]);
-        if (GSS_ERROR(major)) {
-            displayStatus("krb5_gss_register_acceptor_identity",
-                          major, minor);
-            goto out;
-        }
-    }
-
     mechs.elements = use_spnego ? (gss_OID)&spnego_mech :
                                   (gss_OID)gss_mech_krb5;
     mechs.count = 1;
 
-    /* get default cred */
-    major = gss_acquire_cred(&minor,
-                             GSS_C_NO_NAME,
-                             GSS_C_INDEFINITE,
-                             &mechs,
-                             GSS_C_BOTH,
-                             &impersonator_cred_handle,
-                             &actual_mechs,
-                             NULL);
-    if (GSS_ERROR(major)) {
-        displayStatus("gss_acquire_cred", major, minor);
+    major = getDefaultCred(&minor,
+                           argc > 3 ? argv[3] : NULL,
+                           &mechs,
+                           &impersonator_cred_handle);
+    if (GSS_ERROR(major))
         goto out;
-    }
-
-    (void) gss_release_oid_set(&minor, &actual_mechs);
 
     printf("Protocol transition tests follow\n");
     printf("-----------------------------------\n\n");

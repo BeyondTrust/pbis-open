@@ -466,7 +466,7 @@ krb5_ac_warn_cxxflags_set=${WARN_CXXFLAGS+set}
 ])
 dnl
 AC_DEFUN(TRY_WARN_CC_FLAG,[dnl
-  cachevar=`echo "krb5_cv_cc_flag_$1" | sed s/[[^a-zA-Z0-9_]]/_/g`
+  cachevar=`echo "krb5_cv_cc_flag_$1" | sed -e s/=/_eq_/g -e s/-/_dash_/g -e s/[[^a-zA-Z0-9_]]/_/g`
   AC_CACHE_CHECK([if C compiler supports $1], [$cachevar],
   [# first try without, then with
   AC_TRY_COMPILE([], 1;,
@@ -565,7 +565,17 @@ if test "$GCC" = yes ; then
         TRY_WARN_CC_FLAG(-W$flag)
       fi
     done
-    #  missing-prototypes? maybe someday
+    # We require function declarations now.
+    #
+    # In some compiler versions -- e.g., "gcc version 4.2.1 (Apple
+    # Inc. build 5664)" -- the -Werror- option works, but the -Werror=
+    # version doesn't cause implicitly declared functions to be
+    # flagged as errors.  If neither works, -Wall implies
+    # -Wimplicit-function-declaration so don't bother.
+    TRY_WARN_CC_FLAG(-Werror-implicit-function-declaration)
+    if test "implicit-function-declaration_supported" = no; then
+      TRY_WARN_CC_FLAG(-Werror=implicit-function-declaration)
+    fi
     #
   fi
   if test "`uname -s`" = Darwin ; then
@@ -1120,7 +1130,6 @@ AC_REQUIRE([KRB5_AC_NEED_LIBGEN])dnl
 AC_SUBST(CC_LINK)
 AC_SUBST(CXX_LINK)
 AC_SUBST(RPATH_FLAG)
-AC_SUBST(RPATH_TAIL)
 AC_SUBST(PROG_RPATH_FLAGS)
 AC_SUBST(DEPLIBEXT)])
 
@@ -1132,7 +1141,9 @@ dnl Set up environment for running dynamic executables out of build tree
 AC_DEFUN(KRB5_RUN_FLAGS,
 [AC_REQUIRE([KRB5_LIB_AUX])dnl
 KRB5_RUN_ENV="$RUN_ENV"
-AC_SUBST(KRB5_RUN_ENV)])
+KRB5_RUN_VARS="$RUN_VARS"
+AC_SUBST(KRB5_RUN_ENV)
+AC_SUBST(KRB5_RUN_VARS)])
 
 dnl
 dnl KRB5_LIB_AUX
@@ -1305,18 +1316,6 @@ AC_DEFUN(AC_LIBRARY_NET, [
 
 _KRB5_AC_CHECK_RES_FUNCS(res_ninit res_nclose res_ndestroy res_nsearch dnl
 ns_initparse ns_name_uncompress dn_skipname res_search)
-AC_MSG_CHECKING(whether res_ninit works)
-if test $krb5_cv_func_res_ninit = yes; then
-AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <resolv.h>
-int main(void)
-{
-	struct __res_state statbuf;
-	memset(&statbuf, 0, sizeof(statbuf));
-	res_ninit(&statbuf);
-	return 0;
-}]])], [AC_MSG_RESULT(yes)
-		AC_DEFINE(HAVE_WORKING_RES_NINIT, 1, [Define if res_ninit does not crash the system])], [AC_MSG_RESULT(no)], [AC_MSG_RESULT(no)])
-fi
     if test $krb5_cv_func_res_nsearch = no \
       && test $krb5_cv_func_res_search = no; then
 	# Attempt to link with res_search(), in case it's not prototyped.
@@ -1660,10 +1659,8 @@ dnl KRB5_AC_PRAGMA_WEAK_REF
 AC_DEFUN([KRB5_AC_PRAGMA_WEAK_REF],
 [AC_CACHE_CHECK([whether pragma weak references are supported],
 krb5_cv_pragma_weak_ref,
-[AC_TRY_LINK([
-#include <pthread.h>
-#pragma weak pthread_create
-],[if (&pthread_create != 0) return 0;],
+[AC_TRY_LINK([#pragma weak flurbl
+extern int flurbl(void);],[if (&flurbl != 0) return flurbl();],
 krb5_cv_pragma_weak_ref=yes,krb5_cv_pragma_weak_ref=no)])
 if test $krb5_cv_pragma_weak_ref = yes ; then
   AC_DEFINE(HAVE_PRAGMA_WEAK_REF,1,[Define if #pragma weak references work])

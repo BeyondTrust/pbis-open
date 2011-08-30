@@ -44,7 +44,14 @@
  *
  *  server specifies the expected server's name for the ticket; if NULL, then
  *  any server will be accepted if the key can be found, and the caller should
- *  verify that the principal is something it trusts.
+ *  verify that the principal is something it trusts. With the exception of the
+ *  kdb keytab, the ticket's server field need not match the name passed in for
+ *  server. All that is required is that the ticket be encrypted with a key
+ *  from the keytab associated with the specified server principal. This
+ *  permits the KDC to have a set of aliases for the server without keeping
+ *  this information consistent with the server. So, when server is non-null,
+ *  the principal expected by the application needs to be consistent with the
+ *  local keytab, but not with the informational name in the ticket.
  *
  *  rcache specifies a replay detection cache used to store authenticators and
  *  server names
@@ -97,6 +104,10 @@ rd_req_decrypt_tkt_part(krb5_context context, const krb5_ap_req *req,
                                    req->ticket->enc_part.enctype, &ktent);
         if (retval == 0) {
             retval = krb5_decrypt_tkt_part(context, &ktent.key, req->ticket);
+            if (retval == 0) {
+                TRACE_RD_REQ_DECRYPT_SPECIFIC(context, ktent.principal,
+                                              &ktent.key);
+            }
             if (retval == 0 && key != NULL)
                 retval = krb5_copy_keyblock_contents(context, &ktent.key, key);
 
@@ -125,6 +136,7 @@ rd_req_decrypt_tkt_part(krb5_context context, const krb5_ap_req *req,
             if (retval == 0) {
                 krb5_principal tmp = NULL;
 
+                TRACE_RD_REQ_DECRYPT_ANY(context, ktent.principal, &ktent.key);
                 /*
                  * We overwrite ticket->server to be the principal
                  * that we match in the keytab.  The reason for doing
@@ -248,6 +260,8 @@ rd_req_decoded_opt(krb5_context context, krb5_auth_context *auth_context,
                                               check_valid_flag ? &decrypt_key : NULL)))
             goto cleanup;
     }
+    TRACE_RD_REQ_TICKET(context, req->ticket->enc_part2->client,
+                        req->ticket->server, req->ticket->enc_part2->session);
 
     /* XXX this is an evil hack.  check_valid_flag is set iff the call
        is not from inside the kdc.  we can use this to determine which
@@ -373,7 +387,7 @@ rd_req_decoded_opt(krb5_context context, krb5_auth_context *auth_context,
             goto cleanup;
     }
 
-    retval = krb5_validate_times(context, &req->ticket->enc_part2->times);
+    retval = krb5int_validate_times(context, &req->ticket->enc_part2->times);
     if (retval != 0)
         goto cleanup;
 
@@ -471,11 +485,13 @@ rd_req_decoded_opt(krb5_context context, krb5_auth_context *auth_context,
                              &(*auth_context)->negotiated_etype);
     if (retval != 0)
         goto cleanup;
+    TRACE_RD_REQ_NEGOTIATED_ETYPE(context, (*auth_context)->negotiated_etype);
 
     assert((*auth_context)->negotiated_etype != ENCTYPE_NULL);
 
     (*auth_context)->remote_seq_number = (*auth_context)->authentp->seq_number;
     if ((*auth_context)->authentp->subkey) {
+        TRACE_RD_REQ_SUBKEY(context, (*auth_context)->authentp->subkey);
         if ((retval = krb5_k_create_key(context,
                                         (*auth_context)->authentp->subkey,
                                         &((*auth_context)->recv_subkey))))

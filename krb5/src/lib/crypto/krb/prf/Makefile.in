@@ -1,26 +1,26 @@
-mydir=lib/crypto/krb/prf
+mydir=lib$(S)crypto$(S)krb$(S)prf
 BUILDTOP=$(REL)..$(S)..$(S)..$(S)..
 LOCALINCLUDES = -I$(srcdir) -I$(srcdir)/.. 		\
 		-I$(srcdir)/../dk			\
-		-I$(srcdir)/../../@CRYPTO_IMPL@ 	\
-		-I$(srcdir)/../../@CRYPTO_IMPL@/md5 	\
-		-I$(srcdir)/../../@CRYPTO_IMPL@/sha1 
+		-I$(srcdir)/../../$(CRYPTO_IMPL) 	\
+		-I$(srcdir)/../../$(CRYPTO_IMPL)/md5 	\
+		-I$(srcdir)/../../$(CRYPTO_IMPL)/sha1
 DEFS=
 
 ##DOS##BUILDTOP = ..\..\..\..
-##DOS##PREFIXDIR=prf
-##DOS##OBJFILE=..\$(OUTPRE)prf.lst
+##DOS##PREFIXDIR = krb\prf
+##DOS##OBJFILE = ..\..\$(OUTPRE)prf.lst
 
 PROG_LIBPATH=-L$(TOPLIBD)
 PROG_RPATH=$(KRB5_LIBDIR)
 
-STLIBOBJS= des_prf.o dk_prf.o rc4_prf.o
+STLIBOBJS= des_prf.o dk_prf.o rc4_prf.o cmac_prf.o
 
 OBJS=   $(OUTPRE)des_prf.$(OBJEXT) $(OUTPRE)dk_prf.$(OBJEXT) \
-	$(OUTPRE)rc4_prf.$(OBJEXT) 
+	$(OUTPRE)rc4_prf.$(OBJEXT) $(OUTPRE)cmac_prf.$(OBJEXT)
 
 SRCS= $(srcdir)/des_prf.c $(srcdir)/dk_prf.c \
-	$(srcdir)/rc4_prf.c 
+	$(srcdir)/rc4_prf.c  $(srcdir)/cmac_prf.c
 
 ##DOS##LIBOBJS = $(OBJS)
 

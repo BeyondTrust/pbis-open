@@ -371,6 +371,7 @@ krb5_sendto_kdc (krb5_context context, const krb5_data *message,
 
     dprint("krb5_sendto_kdc(%d@%p, \"%D\", use_master=%d, tcp_only=%d)\n",
            message->length, message->data, realm, *use_master, tcp_only);
+    TRACE_SENDTO_KDC(context, message->length, realm, *use_master, tcp_only);
 
     if (!tcp_only && context->udp_pref_limit < 0) {
         int tmp;
@@ -442,6 +443,7 @@ krb5_sendto_kdc (krb5_context context, const krb5_data *message,
                         *use_master = 1;
                     krb5int_free_addrlist (&addrs3);
                 }
+                TRACE_SENDTO_KDC_MASTER(context, *use_master);
             }
             krb5int_free_addrlist (&addrs);
             return 0;
@@ -555,10 +557,6 @@ krb5int_cm_call_select (const struct select_state *in,
             return 0;
         }
     }
-#ifdef HAVE_POLL
-    *sret = poll(out->fds, out->nfds, timo->tv_sec * 1000 + timo->tv_usec / 1000);
-    e = SOCKET_ERRNO;
-#else
     dprint("selecting on max=%d sockets [%F] timeout %t\n",
            out->max,
            &out->rfds, &out->wfds, &out->xfds, out->max,
@@ -573,69 +571,16 @@ krb5int_cm_call_select (const struct select_state *in,
         dprint(" (timeout)\n");
     else
         dprint(":%F\n", &out->rfds, &out->wfds, &out->xfds, out->max);
-#endif
 
     if (*sret < 0)
         return e;
     return 0;
 }
 
-#ifdef HAVE_POLL
-static int krb5int_cm_set_poll(
-    struct select_state* state,
-    int fd,
-    short int events
-    )
-{
-    int i;
-
-    for (i = 0; i < state->nfds; i++)
-    {
-        if (state->fds[i].fd == fd)
-        {
-            state->fds[i].events = events;
-            return 0;
-        }
-    }
-
-    if (state->nfds == MAX_POLL_FDS)
-    {
-        return -1;
-    }
-    else
-    {
-        state->fds[state->nfds].fd = fd;
-        state->fds[state->nfds].events = events;
-        state->nfds++;
-        return 0;
-    }
-}
-
-static short krb5int_cm_get_poll(
-    struct select_state* state,
-    int fd
-    )
-{
-    int i;
-
-    for (i = 0; i < state->nfds; i++)
-    {
-        if (state->fds[i].fd == fd)
-        {
-            return state->fds[i].revents;
-        }
-    }
-
-    return 0;
-}
-#endif
-    
-
-
-static int service_tcp_fd (struct conn_state *conn,
-                           struct select_state *selstate, int ssflags);
-static int service_udp_fd (struct conn_state *conn,
-                           struct select_state *selstate, int ssflags);
+static int service_tcp_fd(krb5_context context, struct conn_state *conn,
+                          struct select_state *selstate, int ssflags);
+static int service_udp_fd(krb5_context context, struct conn_state *conn,
+                          struct select_state *selstate, int ssflags);
 
 static void
 set_conn_state_msg_length (struct conn_state *state, const krb5_data *message)
@@ -706,15 +651,13 @@ setup_connection (struct conn_state *state, struct addrinfo *ai,
 }
 
 static int
-start_connection (struct conn_state *state,
-                  struct select_state *selstate,
-                  struct sendto_callback_info* callback_info,
-                  krb5_data* callback_buffer)
+start_connection(krb5_context context, struct conn_state *state,
+                 struct select_state *selstate,
+                 struct sendto_callback_info *callback_info,
+                 krb5_data *callback_buffer)
 {
     int fd, e;
     struct addrinfo *ai = state->addr;
-    static const int one = 1;
-    static const struct linger lopt = { 0, 0 };
 
     dprint("start_connection(@%p)\ngetting %s socket in family %d...", state,
            ai->ai_socktype == SOCK_STREAM ? "stream" : "dgram", ai->ai_family);
@@ -724,7 +667,7 @@ start_connection (struct conn_state *state,
         dprint("socket: %m creating with af %d\n", state->err, ai->ai_family);
         return -1;              /* try other hosts */
     }
-#if !defined(_WIN32) && !defined(HAVE_POLL) /* On Windows FD_SETSIZE is a count, not a max value.  */
+#ifndef _WIN32 /* On Windows FD_SETSIZE is a count, not a max value.  */
     if (fd >= FD_SETSIZE) {
         closesocket(fd);
         state->err = EMFILE;
@@ -734,10 +677,16 @@ start_connection (struct conn_state *state,
 #endif
     set_cloexec_fd(fd);
     /* Make it non-blocking.  */
-    if (ioctlsocket(fd, FIONBIO, (const void *) &one))
-        dperror("sendto_kdc: ioctl(FIONBIO)");
-    if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &lopt, sizeof(lopt)))
-        dperror("sendto_kdc: setsockopt(SO_LINGER)");
+    if (ai->ai_socktype == SOCK_STREAM) {
+        static const int one = 1;
+        static const struct linger lopt = { 0, 0 };
+
+        if (ioctlsocket(fd, FIONBIO, (const void *) &one))
+            dperror("sendto_kdc: ioctl(FIONBIO)");
+        if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &lopt, sizeof(lopt)))
+            dperror("sendto_kdc: setsockopt(SO_LINGER)");
+        TRACE_SENDTO_KDC_TCP_CONNECT(context, ai);
+    }
 
     /* Start connecting to KDC.  */
     dprint(" fd %d; connecting to %A...\n", fd, ai);
@@ -759,10 +708,9 @@ start_connection (struct conn_state *state,
         }
     } else {
         /*
-         * Connect returned zero even though we tried to make it
-         * non-blocking, which should have caused it to return before
-         * finishing the connection.  Oh well.  Someone's network
-         * stack is broken, but if they gave us a connection, use it.
+         * Connect returned zero even though we made it non-blocking.  This
+         * happens normally for UDP sockets, and can perhaps also happen for
+         * TCP sockets connecting to localhost.
          */
         state->state = WRITING;
         state->fd = fd;
@@ -801,9 +749,11 @@ start_connection (struct conn_state *state,
         ssize_t ret;
         sg_buf *sg = &state->x.out.sgbuf[0];
 
+        TRACE_SENDTO_KDC_UDP_SEND_INITIAL(context, ai);
         dprint("sending %d bytes on fd %d\n", SG_LEN(sg), state->fd);
         ret = send(state->fd, SG_BUF(sg), SG_LEN(sg), 0);
         if (ret < 0 || (size_t) ret != SG_LEN(sg)) {
+            TRACE_SENDTO_KDC_UDP_ERROR_SEND_INITIAL(context, ai, SOCKET_ERRNO);
             dperror("sendto");
             (void) closesocket(state->fd);
             state->fd = INVALID_SOCKET;
@@ -828,19 +778,6 @@ start_connection (struct conn_state *state,
         }
     }
 #endif
-
-#ifdef HAVE_POLL
-    if (krb5int_cm_set_poll(selstate, fd,
-                            POLLIN | POLLERR |
-                            ((state->state == CONNECTING || state->state == WRITING) ?
-                             POLLOUT : 0)) != 0)
-    {
-        closesocket(fd);
-	state->err = EMFILE;
-	dprint("socket: fd %d too high\n", fd);
-	return -1;
-    }
-#else
     FD_SET(state->fd, &selstate->rfds);
     if (state->state == CONNECTING || state->state == WRITING)
         FD_SET(state->fd, &selstate->wfds);
@@ -851,7 +788,6 @@ start_connection (struct conn_state *state,
 
     dprint("new select vectors: %F\n",
            &selstate->rfds, &selstate->wfds, &selstate->xfds, selstate->max);
-#endif
 
     return 0;
 }
@@ -861,10 +797,10 @@ start_connection (struct conn_state *state,
    Otherwise, the caller should immediately move on to process the
    next connection.  */
 static int
-maybe_send (struct conn_state *conn,
-            struct select_state *selstate,
-            struct sendto_callback_info* callback_info,
-            krb5_data* callback_buffer)
+maybe_send(krb5_context context, struct conn_state *conn,
+           struct select_state *selstate,
+           struct sendto_callback_info *callback_info,
+           krb5_data *callback_buffer)
 {
     sg_buf *sg;
     ssize_t ret;
@@ -872,8 +808,10 @@ maybe_send (struct conn_state *conn,
     dprint("maybe_send(@%p) state=%s type=%s\n", conn,
            state_strings[conn->state],
            conn->is_udp ? "udp" : "tcp");
-    if (conn->state == INITIALIZING)
-        return start_connection(conn, selstate, callback_info, callback_buffer);
+    if (conn->state == INITIALIZING) {
+        return start_connection(context, conn, selstate, callback_info,
+                                callback_buffer);
+    }
 
     /* Did we already shut down this channel?  */
     if (conn->state == FAILED) {
@@ -888,12 +826,14 @@ maybe_send (struct conn_state *conn,
         return -1;
     }
 
-    /* UDP - Send message, possibly for the first time, possibly a
-       retransmit if a previous attempt timed out.  */
+    /* UDP - retransmit after a previous attempt timed out. */
     sg = &conn->x.out.sgbuf[0];
+    TRACE_SENDTO_KDC_UDP_SEND_RETRY(context, conn->addr);
     dprint("sending %d bytes on fd %d\n", SG_LEN(sg), conn->fd);
     ret = send(conn->fd, SG_BUF(sg), SG_LEN(sg), 0);
     if (ret < 0 || (size_t) ret != SG_LEN(sg)) {
+        TRACE_SENDTO_KDC_UDP_ERROR_SEND_INITIAL(context, conn->addr,
+                                                SOCKET_ERRNO);
         dperror("send");
         /* Keep connection alive, we'll try again next pass.
 
@@ -908,25 +848,12 @@ maybe_send (struct conn_state *conn,
 static void
 kill_conn(struct conn_state *conn, struct select_state *selstate, int err)
 {
-#ifdef HAVE_POLL
-    int i = 0;
-#endif
     conn->state = FAILED;
-    conn->err = err;
     shutdown(conn->fd, SHUTDOWN_BOTH);
-#ifdef HAVE_POLL
-    for (i = 0; i < selstate->nfds; i++)
-    {
-        if (selstate->fds[i].fd == conn->fd)
-        {
-            selstate->fds[i] = selstate->fds[--selstate->nfds];
-            break;
-        }
-    }
-#else
     FD_CLR(conn->fd, &selstate->rfds);
     FD_CLR(conn->fd, &selstate->wfds);
     FD_CLR(conn->fd, &selstate->xfds);
+    conn->err = err;
     dprint("abandoning connection %d: %m\n", conn->fd, err);
     /* Fix up max fd for next select call.  */
     if (selstate->max == 1 + conn->fd) {
@@ -938,7 +865,6 @@ kill_conn(struct conn_state *conn, struct select_state *selstate, int err)
         dprint("new max_fd + 1 is %d\n", selstate->max);
     }
     selstate->nfds--;
-#endif
 }
 
 /* Check socket for error.  */
@@ -965,10 +891,10 @@ get_so_error(int fd)
    or the socket has closed and no others are open.  */
 
 static int
-service_tcp_fd (struct conn_state *conn, struct select_state *selstate,
-                int ssflags)
+service_tcp_fd(krb5_context context, struct conn_state *conn,
+               struct select_state *selstate, int ssflags)
 {
-    krb5_error_code e = 0;
+    int e = 0;
     ssize_t nwritten, nread;
 
     if (!(ssflags & (SSF_READ|SSF_WRITE|SSF_EXCEPTION)))
@@ -981,6 +907,7 @@ service_tcp_fd (struct conn_state *conn, struct select_state *selstate,
             /* Bad -- the KDC shouldn't be sending to us first.  */
             e = EINVAL /* ?? */;
         kill_conn:
+            TRACE_SENDTO_KDC_TCP_DISCONNECT(context, conn->addr);
             kill_conn(conn, selstate, e);
             if (e == EINVAL) {
                 closesocket(conn->fd);
@@ -1009,6 +936,7 @@ service_tcp_fd (struct conn_state *conn, struct select_state *selstate,
          */
         e = get_so_error(conn->fd);
         if (e) {
+            TRACE_SENDTO_KDC_TCP_ERROR_CONNECT(context, conn->addr, e);
             dprint("socket error on write fd: %m", e);
             goto kill_conn;
         }
@@ -1030,10 +958,12 @@ service_tcp_fd (struct conn_state *conn, struct select_state *selstate,
                ((conn->x.out.sg_count == 2 ? SG_LEN(&conn->x.out.sgp[1]) : 0)
                 + SG_LEN(&conn->x.out.sgp[0])),
                conn->fd);
+        TRACE_SENDTO_KDC_TCP_SEND(context, conn->addr);
         nwritten = SOCKET_WRITEV(conn->fd, conn->x.out.sgp,
                                  conn->x.out.sg_count, tmp);
         if (nwritten < 0) {
             e = SOCKET_ERRNO;
+            TRACE_SENDTO_KDC_TCP_ERROR_SEND(context, conn->addr, e);
             dprint("failed: %m\n", e);
             goto kill_conn;
         }
@@ -1056,11 +986,7 @@ service_tcp_fd (struct conn_state *conn, struct select_state *selstate,
             /* Done writing, switch to reading.  */
             /* Don't call shutdown at this point because
              * some implementations cannot deal with half-closed connections.*/
-#ifdef HAVE_POLL
-            krb5int_cm_set_poll(selstate, conn->fd, POLLIN | POLLERR);
-#else
             FD_CLR(conn->fd, &selstate->wfds);
-#endif
             /* Q: How do we detect failures to send the remaining data
                to the remote side, since we're in non-blocking mode?
                Will we always get errors on the reading side?  */
@@ -1092,6 +1018,7 @@ service_tcp_fd (struct conn_state *conn, struct select_state *selstate,
                 e = nread ? SOCKET_ERRNO : ECONNRESET;
                 free(conn->x.in.buf);
                 conn->x.in.buf = 0;
+                TRACE_SENDTO_KDC_TCP_ERROR_RECV(context, conn->addr, e);
                 goto kill_conn;
             }
             conn->x.in.n_left -= nread;
@@ -1106,6 +1033,7 @@ service_tcp_fd (struct conn_state *conn, struct select_state *selstate,
                                 conn->x.in.bufsizebytes + conn->x.in.bufsizebytes_read,
                                 4 - conn->x.in.bufsizebytes_read);
             if (nread < 0) {
+                TRACE_SENDTO_KDC_TCP_ERROR_RECV_LEN(context, conn->addr, e);
                 e = SOCKET_ERRNO;
                 goto kill_conn;
             }
@@ -1138,8 +1066,8 @@ service_tcp_fd (struct conn_state *conn, struct select_state *selstate,
 }
 
 static int
-service_udp_fd(struct conn_state *conn, struct select_state *selstate,
-               int ssflags)
+service_udp_fd(krb5_context context, struct conn_state *conn,
+               struct select_state *selstate, int ssflags)
 {
     int nread;
 
@@ -1150,6 +1078,7 @@ service_udp_fd(struct conn_state *conn, struct select_state *selstate,
 
     nread = recv(conn->fd, conn->x.in.buf, conn->x.in.bufsize, 0);
     if (nread < 0) {
+        TRACE_SENDTO_KDC_UDP_ERROR_RECV(context, conn->addr, SOCKET_ERRNO);
         kill_conn(conn, selstate, SOCKET_ERRNO);
         return 0;
     }
@@ -1184,34 +1113,18 @@ service_fds (krb5_context context,
             return 0;
 
         /* Got something on a socket, process it.  */
-	for (i = 0; selret > 0 && i < n_conns; i++) {
+        for (i = 0; i <= (unsigned int)selstate->max && selret > 0 && i < n_conns; i++) {
             int ssflags;
-#ifdef HAVE_POLL
-            short pollflags;
-#endif
 
             if (conns[i].fd == INVALID_SOCKET)
                 continue;
             ssflags = 0;
-#ifdef HAVE_POLL
-            pollflags = krb5int_cm_get_poll(seltemp, conns[i].fd);
-
-            if (pollflags)
-            {
-                selret--;
-                if (pollflags & POLLIN) ssflags |= SSF_READ;
-                if (pollflags & POLLOUT) ssflags |= SSF_WRITE;
-                if (pollflags & POLLERR) ssflags |= SSF_EXCEPTION;
-            }
-#else
             if (FD_ISSET(conns[i].fd, &seltemp->rfds))
                 ssflags |= SSF_READ, selret--;
             if (FD_ISSET(conns[i].fd, &seltemp->wfds))
                 ssflags |= SSF_WRITE, selret--;
             if (FD_ISSET(conns[i].fd, &seltemp->xfds))
                 ssflags |= SSF_EXCEPTION, selret--;
-#endif
-
             if (!ssflags)
                 continue;
 
@@ -1222,7 +1135,7 @@ service_fds (krb5_context context,
                    conns[i].fd, conns[i].addr,
                    state_strings[(int) conns[i].state]);
 
-            if (conns[i].service (&conns[i], selstate, ssflags)) {
+            if (conns[i].service(context, &conns[i], selstate, ssflags)) {
                 int stop = 1;
 
                 if (msg_handler != NULL) {
@@ -1326,16 +1239,12 @@ krb5int_sendto (krb5_context context, const krb5_data *message,
         retval = ENOMEM;
         goto egress;
     }
-#ifdef HAVE_POLL
-    memset(sel_state, 0, 2 * sizeof(*sel_state));
-#else
     sel_state->max = 0;
     sel_state->nfds = 0;
     sel_state->end_time.tv_sec = sel_state->end_time.tv_usec = 0;
     FD_ZERO(&sel_state->rfds);
     FD_ZERO(&sel_state->wfds);
     FD_ZERO(&sel_state->xfds);
-#endif
 
 
     /* Set up connections.  */
@@ -1352,9 +1261,7 @@ krb5int_sendto (krb5_context context, const krb5_data *message,
             dprint("host %d\n", host);
 
             /* Send to the host, wait for a response, then move on. */
-            if (maybe_send(&conns[host],
-                           sel_state,
-                           callback_info,
+            if (maybe_send(context, &conns[host], sel_state, callback_info,
                            (callback_info ? &callback_data[host] : NULL)))
                 continue;
 
@@ -1403,6 +1310,7 @@ krb5int_sendto (krb5_context context, const krb5_data *message,
         goto egress;
     }
     /* Success!  */
+    TRACE_SENDTO_KDC_RESPONSE(context, conns[winning_conn].addr);
     reply->data = conns[winning_conn].x.in.buf;
     reply->length = (conns[winning_conn].x.in.pos
                      - conns[winning_conn].x.in.buf);

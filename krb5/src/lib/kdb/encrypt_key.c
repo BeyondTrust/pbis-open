@@ -64,12 +64,12 @@
  */
 
 krb5_error_code
-krb5_dbekd_def_encrypt_key_data( krb5_context             context,
-                                 const krb5_keyblock    * mkey,
-                                 const krb5_keyblock    * dbkey,
-                                 const krb5_keysalt     * keysalt,
-                                 int                      keyver,
-                                 krb5_key_data          * key_data)
+krb5_dbe_def_encrypt_key_data( krb5_context             context,
+                               const krb5_keyblock    * mkey,
+                               const krb5_keyblock    * dbkey,
+                               const krb5_keysalt     * keysalt,
+                               int                      keyver,
+                               krb5_key_data          * key_data)
 {
     krb5_error_code               retval;
     krb5_octet                  * ptr;
@@ -104,10 +104,10 @@ krb5_dbekd_def_encrypt_key_data( krb5_context             context,
     ptr += 2;
 
     plain.length = dbkey->length;
-    plain.data = dbkey->contents;
+    plain.data = (char *) dbkey->contents;
 
     cipher.ciphertext.length = len;
-    cipher.ciphertext.data = ptr;
+    cipher.ciphertext.data = (char *) ptr;
 
     if ((retval = krb5_c_encrypt(context, mkey, /* XXX */ 0, 0,
                                  &plain, &cipher))) {

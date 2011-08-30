@@ -46,6 +46,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <string.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
@@ -97,6 +98,7 @@ main(argc, argv)
     (void) setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&one,
                       sizeof (one));
 
+    memset(&l_inaddr, 0, sizeof(l_inaddr));
     l_inaddr.sin_family = AF_INET;
     l_inaddr.sin_addr.s_addr = 0;
     l_inaddr.sin_port = port;
@@ -112,6 +114,7 @@ main(argc, argv)
     }
 
     printf("Ready!\n");
+    fflush(stdout);
     if ((acc = accept(sock, (struct sockaddr *)&f_inaddr,
                       &namelen)) == -1) {
         com_err(progname, errno, "accepting");

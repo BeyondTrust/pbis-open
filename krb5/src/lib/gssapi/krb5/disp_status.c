@@ -148,7 +148,6 @@ void krb5_gss_save_error_info(OM_uint32 minor_code, krb5_context ctx)
 void krb5_gss_delete_error_info(void *p)
 {
     gsserrmap_destroy(p);
-    free(p);
 }
 
 /**/
@@ -186,16 +185,11 @@ krb5_gss_display_status(minor_status, status_value, status_type,
 
         /* If this fails, there's not much we can do...  */
         if (g_make_string_buffer(krb5_gss_get_error_message(status_value),
-                                 status_string) == 0)
-        {
+                                 status_string) != 0)
             *minor_status = ENOMEM;
-            return(GSS_S_FAILURE);
-        }
         else
-        {
             *minor_status = 0;
-        }
-        return(GSS_S_COMPLETE);
+        return 0;
     } else {
         *minor_status = 0;
         return(GSS_S_BAD_STATUS);

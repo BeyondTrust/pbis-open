@@ -195,25 +195,26 @@ gss_OID *oid;
  * a mech oid set, and only update it once the file has changed.
  */
 OM_uint32 KRB5_CALLCONV
-gss_indicate_mechs(minorStatus, mechSet)
+gss_indicate_mechs(minorStatus, mechSet_out)
 OM_uint32 *minorStatus;
-gss_OID_set *mechSet;
+gss_OID_set *mechSet_out;
 {
 	char *fileName;
 	struct stat fileInfo;
 	unsigned int i, j;
 	gss_OID curItem;
+	gss_OID_set mechSet;
 
 	/* Initialize outputs. */
 
 	if (minorStatus != NULL)
 		*minorStatus = 0;
 
-	if (mechSet != NULL)
-		*mechSet = GSS_C_NO_OID_SET;
+	if (mechSet_out != NULL)
+		*mechSet_out = GSS_C_NO_OID_SET;
 
 	/* Validate arguments. */
-	if (minorStatus == NULL || mechSet == NULL)
+	if (minorStatus == NULL || mechSet_out == NULL)
 		return (GSS_S_CALL_INACCESSIBLE_WRITE);
 
 	*minorStatus = gssint_mechglue_initialize_library();
@@ -237,7 +238,7 @@ gss_OID_set *mechSet;
 	 * the mech set is created and it is up to date
 	 * so just copy it to caller
 	 */
-	if ((*mechSet =
+	if ((mechSet =
 		(gss_OID_set) malloc(sizeof (gss_OID_set_desc))) == NULL)
 	{
 		return (GSS_S_FAILURE);
@@ -248,29 +249,30 @@ gss_OID_set *mechSet;
 	 * I'm copying it.
 	 */
 	*minorStatus = k5_mutex_lock(&g_mechSetLock);
-	if (*minorStatus)
+	if (*minorStatus) {
+		free(mechSet);
 		return GSS_S_FAILURE;
+	}
 
 	/* allocate space for the oid structures */
-	if (((*mechSet)->elements =
+	if ((mechSet->elements =
 		(void*) calloc(g_mechSet.count, sizeof (gss_OID_desc)))
 		== NULL)
 	{
 		(void) k5_mutex_unlock(&g_mechSetLock);
-		free(*mechSet);
-		*mechSet = NULL;
+		free(mechSet);
 		return (GSS_S_FAILURE);
 	}
 
 	/* now copy the oid structures */
-	(void) memcpy((*mechSet)->elements, g_mechSet.elements,
+	(void) memcpy(mechSet->elements, g_mechSet.elements,
 		g_mechSet.count * sizeof (gss_OID_desc));
 
-	(*mechSet)->count = g_mechSet.count;
+	mechSet->count = g_mechSet.count;
 
 	/* still need to copy each of the oid elements arrays */
-	for (i = 0; i < (*mechSet)->count; i++) {
-		curItem = &((*mechSet)->elements[i]);
+	for (i = 0; i < mechSet->count; i++) {
+		curItem = &(mechSet->elements[i]);
 		curItem->elements =
 			(void *) malloc(g_mechSet.elements[i].length);
 		if (curItem->elements == NULL) {
@@ -280,16 +282,16 @@ gss_OID_set *mechSet;
 			 * each allocated gss_OID_desc
 			 */
 			for (j = 0; j < i; j++) {
-				free((*mechSet)->elements[j].elements);
+				free(mechSet->elements[j].elements);
 			}
-			free((*mechSet)->elements);
-			free(*mechSet);
-			*mechSet = NULL;
+			free(mechSet->elements);
+			free(mechSet);
 			return (GSS_S_FAILURE);
 		}
 		g_OID_copy(curItem, &g_mechSet.elements[i]);
 	}
 	(void) k5_mutex_unlock(&g_mechSetLock);
+	*mechSet_out = mechSet;
 	return (GSS_S_COMPLETE);
 } /* gss_indicate_mechs */
 
@@ -609,6 +611,10 @@ releaseMechInfo(gss_mech_info *pCf)
 		memset(cf->mech, 0, sizeof(*cf->mech));
 		free(cf->mech);
 	}
+	if (cf->mech_ext != NULL) {
+		memset(cf->mech_ext, 0, sizeof(*cf->mech_ext));
+		free(cf->mech_ext);
+	}
 	if (cf->dl_handle != NULL)
 		krb5int_close_plugin(cf->dl_handle);
 
@@ -645,6 +651,16 @@ gssint_register_mechinfo(gss_mech_info template)
 	new_cf->priority = template->priority;
 	new_cf->freeMech = 1;
 	new_cf->next = NULL;
+
+	if (template->mech_ext != NULL) {
+		new_cf->mech_ext = (gss_mechanism_ext)calloc(1,
+						sizeof(struct gss_config_ext));
+		if (new_cf->mech_ext == NULL) {
+			releaseMechInfo(&new_cf);
+			return ENOMEM;
+		}
+		*new_cf->mech_ext = *template->mech_ext;
+	}
 
 	if (template->kmodName != NULL) {
 		new_cf->kmodName = strdup(template->kmodName);
@@ -777,12 +793,32 @@ build_dynamicMech(void *dl, const gss_OID mech_type)
 	GSS_ADD_DYNAMIC_METHOD(dl, mech, gss_pseudo_random);
 	/* RFC 4178 (introduced in 1.8; gss_get_neg_mechs not implemented) */
 	GSS_ADD_DYNAMIC_METHOD(dl, mech, gss_set_neg_mechs);
+        /* draft-ietf-sasl-gs2 */
+        GSS_ADD_DYNAMIC_METHOD(dl, mech, gss_inquire_saslname_for_mech);
+        GSS_ADD_DYNAMIC_METHOD(dl, mech, gss_inquire_mech_for_saslname);
+        /* RFC 5587 */
+        GSS_ADD_DYNAMIC_METHOD(dl, mech, gss_inquire_attrs_for_mech);
 
 	assert(mech_type != GSS_C_NO_OID);
 
 	mech->mech_type = *(mech_type);
 
 	return mech;
+}
+
+static gss_mechanism_ext
+build_dynamicMechExt(void *dl, const gss_OID mech_type)
+{
+	gss_mechanism_ext mech_ext;
+
+	mech_ext = (gss_mechanism_ext)calloc(1, sizeof(*mech_ext));
+	if (mech_ext == NULL) {
+		return NULL;
+	}
+
+	GSS_ADD_DYNAMIC_METHOD(dl, mech_ext, gssspi_acquire_cred_with_password);
+
+	return mech_ext;
 }
 
 static void
@@ -906,58 +942,49 @@ gssint_get_mechanism_ext(oid)
 const gss_OID oid;
 {
 	gss_mech_info aMech;
-	gss_mechanism_ext mech_ext;
 
 	if (gssint_mechglue_initialize_library() != 0)
 		return (NULL);
 
+	if (k5_mutex_lock(&g_mechListLock) != 0)
+		return NULL;
 	/* check if the mechanism is already loaded */
-	if ((aMech = searchMechList(oid)) != NULL && aMech->mech_ext != NULL)
+	if ((aMech = searchMechList(oid)) != NULL && aMech->mech_ext) {
+		(void) k5_mutex_unlock(&g_mechListLock);
 		return (aMech->mech_ext);
+	}
 
-	if (gssint_get_mechanism(oid) == NULL)
-		return (NULL);
-
-	if (aMech->dl_handle == NULL)
-		return (NULL);
-
-	/* Load the gss_config_ext struct for this mech */
-
-	mech_ext = (gss_mechanism_ext)malloc(sizeof (struct gss_config_ext));
-
-	if (mech_ext == NULL)
-		return (NULL);
-
-#if 0
 	/*
-	 * dlsym() the mech's 'method' functions for the extended APIs
-	 *
-	 * NOTE:  Until the void *context argument is removed from the
-	 * SPI method functions' signatures it will be necessary to have
-	 * different function pointer typedefs and function names for
-	 * the SPI methods than for the API.  When this argument is
-	 * removed it will be possible to rename gss_*_sfct to gss_*_fct
-	 * and and gssspi_* to gss_*.
+	 * might need to re-read the configuration file before loading
+	 * the mechanism to ensure we have the latest info.
 	 */
-	mech_ext->gss_acquire_cred_with_password =
-		(gss_acquire_cred_with_password_sfct)dlsym(aMech->dl_handle,
-			"gssspi_acquire_cred_with_password");
-#endif
+	updateMechList();
 
-	/* Set aMech->mech_ext */
-	(void) k5_mutex_lock(&g_mechListLock);
+	aMech = searchMechList(oid);
 
-	if (aMech->mech_ext == NULL)
-		aMech->mech_ext = mech_ext;
-	else
-		free(mech_ext);	/* we raced and lost; don't leak */
+	/* is the mechanism present in the list ? */
+	if (aMech == NULL || aMech->dl_handle == NULL) {
+		(void) k5_mutex_unlock(&g_mechListLock);
+		return ((gss_mechanism_ext)NULL);
+	}
+
+	/* has another thread loaded the mech */
+	if (aMech->mech_ext) {
+		(void) k5_mutex_unlock(&g_mechListLock);
+		return (aMech->mech_ext);
+	}
+
+	/* Try dynamic dispatch table */
+	aMech->mech_ext = build_dynamicMechExt(aMech->dl_handle,
+                                               aMech->mech_type);
+	if (aMech->mech_ext == NULL) {
+		(void) k5_mutex_unlock(&g_mechListLock);
+		return ((gss_mechanism_ext)NULL);
+	}
 
 	(void) k5_mutex_unlock(&g_mechListLock);
-
 	return (aMech->mech_ext);
-
 } /* gssint_get_mechanism_ext */
-
 
 /*
  * this routine is used for searching the list of mechanism data.

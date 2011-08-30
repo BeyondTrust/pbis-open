@@ -105,9 +105,8 @@ add_key_rnd(context, master_key, ks_tuple, ks_tuple_count, db_entry, kvno)
 {
     krb5_principal        krbtgt_princ;
     krb5_keyblock         key;
-    krb5_db_entry         krbtgt_entry;
-    krb5_boolean          more;
-    int                   max_kvno, one, i, j, k;
+    krb5_db_entry         *krbtgt_entry;
+    int                   max_kvno, i, j, k;
     krb5_error_code       retval;
     krb5_key_data         tmp_key_data;
     krb5_key_data        *tptr;
@@ -127,22 +126,15 @@ add_key_rnd(context, master_key, ks_tuple, ks_tuple_count, db_entry, kvno)
         return retval;
 
     /* Get tgt from database */
-    retval = krb5_db_get_principal(context, krbtgt_princ, &krbtgt_entry,
-                                   &one, &more);
+    retval = krb5_db_get_principal(context, krbtgt_princ, 0, &krbtgt_entry);
     krb5_free_principal(context, krbtgt_princ); /* don't need it anymore */
     if (retval)
         return(retval);
-    if ((one > 1) || (more)) {
-        krb5_db_free_principal(context, &krbtgt_entry, one);
-        return KRB5KDC_ERR_PRINCIPAL_NOT_UNIQUE;
-    }
-    if (!one)
-        return KRB5_KDB_NOENTRY;
 
     /* Get max kvno */
-    for (max_kvno = j = 0; j < krbtgt_entry.n_key_data; j++) {
-        if (max_kvno < krbtgt_entry.key_data[j].key_data_kvno) {
-            max_kvno = krbtgt_entry.key_data[j].key_data_kvno;
+    for (max_kvno = j = 0; j < krbtgt_entry->n_key_data; j++) {
+        if (max_kvno < krbtgt_entry->key_data[j].key_data_kvno) {
+            max_kvno = krbtgt_entry->key_data[j].key_data_kvno;
         }
     }
 
@@ -186,9 +178,8 @@ add_key_rnd(context, master_key, ks_tuple, ks_tuple_count, db_entry, kvno)
         /* db library will free this. Since, its a so, it could actually be using different memory management
            function. So, its better if the memory is allocated by the db's malloc. So, a temporary memory is used
            here which will later be copied to the db_entry */
-        retval = krb5_dbekd_encrypt_key_data(context, master_key,
-                                             &key, NULL, kvno,
-                                             &tmp_key_data);
+        retval = krb5_dbe_encrypt_key_data(context, master_key, &key, NULL,
+                                           kvno, &tmp_key_data);
 
         krb5_free_keyblock_contents(context, &key);
         if( retval )
@@ -225,7 +216,7 @@ add_key_rnd(context, master_key, ks_tuple, ks_tuple_count, db_entry, kvno)
     }
 
 add_key_rnd_err:
-    krb5_db_free_principal(context, &krbtgt_entry, one);
+    krb5_db_free_principal(context, krbtgt_entry);
 
     for( i = 0; i < tmp_key_data.key_data_ver; i++ )
     {
@@ -464,9 +455,9 @@ add_key_pwd(context, master_key, ks_tuple, ks_tuple_count, passwd,
 
         /* memory allocation to be done by db. So, use temporary block and later copy
            it to the memory allocated by db */
-        retval = krb5_dbekd_encrypt_key_data(context, master_key, &key,
-                                             (const krb5_keysalt *)&key_salt,
-                                             kvno, &tmp_key_data);
+        retval = krb5_dbe_encrypt_key_data(context, master_key, &key,
+                                           (const krb5_keysalt *)&key_salt,
+                                           kvno, &tmp_key_data);
         if (key_salt.data.data)
             free(key_salt.data.data);
         free(key.contents);

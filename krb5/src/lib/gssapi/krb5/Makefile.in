@@ -1,4 +1,4 @@
-mydir=lib/gssapi/krb5
+mydir=lib$(S)gssapi$(S)krb5
 BUILDTOP=$(REL)..$(S)..$(S)..
 LOCALINCLUDES = -I. -I$(srcdir) -I$(srcdir)/.. -I../generic -I$(srcdir)/../generic -I../mechglue -I$(srcdir)/../mechglue
 DEFS=-D_GSS_STATIC_LINK=1
@@ -39,7 +39,6 @@ gssapi_err_krb5.c: gssapi_err_krb5.et
 SRCS = \
 	$(srcdir)/accept_sec_context.c \
 	$(srcdir)/acquire_cred.c \
-	$(srcdir)/add_cred.c \
 	$(srcdir)/canon_name.c \
 	$(srcdir)/compare_name.c \
 	$(srcdir)/context_time.c \
@@ -52,6 +51,7 @@ SRCS = \
 	$(srcdir)/export_sec_context.c \
 	$(srcdir)/get_tkt_flags.c \
 	$(srcdir)/gssapi_krb5.c \
+	$(srcdir)/iakerb.c \
 	$(srcdir)/import_name.c \
 	$(srcdir)/import_sec_context.c \
 	$(srcdir)/indicate_mechs.c \
@@ -93,7 +93,6 @@ SRCS = \
 OBJS = \
 	$(OUTPRE)accept_sec_context.$(OBJEXT) \
 	$(OUTPRE)acquire_cred.$(OBJEXT) \
-	$(OUTPRE)add_cred.$(OBJEXT) \
 	$(OUTPRE)canon_name.$(OBJEXT) \
 	$(OUTPRE)compare_name.$(OBJEXT) \
 	$(OUTPRE)context_time.$(OBJEXT) \
@@ -106,6 +105,7 @@ OBJS = \
 	$(OUTPRE)export_sec_context.$(OBJEXT) \
 	$(OUTPRE)get_tkt_flags.$(OBJEXT) \
 	$(OUTPRE)gssapi_krb5.$(OBJEXT) \
+	$(OUTPRE)iakerb.$(OBJEXT) \
 	$(OUTPRE)import_name.$(OBJEXT) \
 	$(OUTPRE)import_sec_context.$(OBJEXT) \
 	$(OUTPRE)indicate_mechs.$(OBJEXT) \
@@ -150,7 +150,6 @@ OBJS = \
 STLIBOBJS = \
 	accept_sec_context.o \
 	acquire_cred.o \
-	add_cred.o \
 	canon_name.o \
 	compare_name.o \
 	context_time.o \
@@ -163,6 +162,7 @@ STLIBOBJS = \
 	export_sec_context.o \
 	get_tkt_flags.o \
 	gssapi_krb5.o \
+	iakerb.o \
 	import_name.o \
 	import_sec_context.o \
 	indicate_mechs.o \
@@ -237,7 +237,8 @@ error_map.h: $(top_srcdir)/util/gen-map.pl \
 		VALUE="char *" \
 		COMPARE=compare_OM_uint32 \
 		FREEVALUE=free_string
-	$(MV) error_map.new error_map.h
+	$(RM) $@
+	$(MV) error_map.new $@
 
 clean-unix::
 	$(RM) $(BUILDTOP)/include/gssapi/gssapi_krb5.h

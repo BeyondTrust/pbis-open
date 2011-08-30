@@ -75,6 +75,7 @@ GSS_DLLIMP extern const gss_OID_desc * const GSS_KRB5_NT_PRINCIPAL_NAME;
 GSS_DLLIMP extern const gss_OID_desc * const gss_mech_krb5;
 GSS_DLLIMP extern const gss_OID_desc * const gss_mech_krb5_old;
 GSS_DLLIMP extern const gss_OID_desc * const gss_mech_krb5_wrong;
+GSS_DLLIMP extern const gss_OID_desc * const gss_mech_iakerb;
 GSS_DLLIMP extern const gss_OID_set_desc * const gss_mech_set_krb5;
 GSS_DLLIMP extern const gss_OID_set_desc * const gss_mech_set_krb5_old;
 GSS_DLLIMP extern const gss_OID_set_desc * const gss_mech_set_krb5_both;
@@ -280,6 +281,13 @@ gss_krb5_set_cred_rcache(OM_uint32 *minor_status,
 
 OM_uint32 KRB5_CALLCONV
 gsskrb5_extract_authtime_from_sec_context(OM_uint32 *, gss_ctx_id_t, krb5_timestamp *);
+
+OM_uint32 KRB5_CALLCONV
+gss_krb5_import_cred(OM_uint32 *minor_status,
+                     krb5_ccache id,
+                     krb5_principal keytab_principal,
+                     krb5_keytab keytab,
+                     gss_cred_id_t *cred);
 
 #ifdef __cplusplus
 }

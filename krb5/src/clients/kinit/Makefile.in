@@ -1,11 +1,11 @@
-mydir=clients/kinit
+mydir=clients$(S)kinit
 BUILDTOP=$(REL)..$(S)..
 DEFS=
 
 PROG_LIBPATH=-L$(TOPLIBD)
 PROG_RPATH=$(KRB5_LIBDIR)
 
-SRCS=kinit.c
+SRCS=kinit.c kinit_kdb.c
 
 ##WIN32##LOCALINCLUDES=-I$(BUILDTOP)\util\windows
 ##WIN32##DEFINES=-DGETOPT_LONG
@@ -23,15 +23,15 @@ SRCS=kinit.c
 all-unix:: kinit
 ##WIN32##all-windows:: $(KINIT)
 
-kinit: kinit.o $(KRB5_BASE_DEPLIBS)
-	$(CC_LINK) -o $@ kinit.o $(KRB5_BASE_LIBS)
+kinit: kinit.o kinit_kdb.o $(KRB5_BASE_DEPLIBS) $(KADMSRV_DEPLIBS)
+	$(CC_LINK) -o $@ kinit.o kinit_kdb.o $(KADMSRV_LIBS) $(KRB5_BASE_LIBS)
 
 ##WIN32##$(KINIT): $(OUTPRE)kinit.obj $(BUILDTOP)\util\windows\$(OUTPRE)getopt.lib $(KLIB) $(CLIB) $(EXERES)
 ##WIN32##	link $(EXE_LINKOPTS) -out:$@ $** advapi32.lib
 ##WIN32##	$(_VC_MANIFEST_EMBED_EXE)
 
 clean-unix::
-	$(RM) kinit.o kinit
+	$(RM) kinit.o kinit_kdb.o kinit
 
 install-unix::
 	for f in kinit; do \

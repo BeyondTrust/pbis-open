@@ -75,7 +75,7 @@
  */
 
 /*
- * $Id: gssapi_krb5.c 24196 2010-07-20 22:28:44Z tlyu $
+ * $Id: gssapi_krb5.c 24553 2010-12-03 00:05:44Z tlyu $
  */
 
 
@@ -127,34 +127,36 @@ const gss_OID_desc krb5_gss_oid_array[] = {
     {GSS_MECH_KRB5_OLD_OID_LENGTH, GSS_MECH_KRB5_OLD_OID},
     /* this is the unofficial, incorrect mech OID emitted by MS */
     {GSS_MECH_KRB5_WRONG_OID_LENGTH, GSS_MECH_KRB5_WRONG_OID},
+    /* IAKERB OID */
+    {GSS_MECH_IAKERB_OID_LENGTH, GSS_MECH_IAKERB_OID},
     /* this is the v2 assigned OID */
     {9, "\052\206\110\206\367\022\001\002\003"},
     /* these two are name type OID's */
-
     /* 2.1.1. Kerberos Principal Name Form:  (rfc 1964)
      * This name form shall be represented by the Object Identifier {iso(1)
      * member-body(2) United States(840) mit(113554) infosys(1) gssapi(2)
      * krb5(2) krb5_name(1)}.  The recommended symbolic name for this type
      * is "GSS_KRB5_NT_PRINCIPAL_NAME". */
     {10, "\052\206\110\206\367\022\001\002\002\001"},
-
     /* gss_nt_krb5_principal.  Object identifier for a krb5_principal. Do not use. */
     {10, "\052\206\110\206\367\022\001\002\002\002"},
-
     { 0, 0 }
 };
 
 const gss_OID_desc * const gss_mech_krb5              = krb5_gss_oid_array+0;
 const gss_OID_desc * const gss_mech_krb5_old          = krb5_gss_oid_array+1;
 const gss_OID_desc * const gss_mech_krb5_wrong        = krb5_gss_oid_array+2;
-const gss_OID_desc * const gss_nt_krb5_name           = krb5_gss_oid_array+4;
-const gss_OID_desc * const gss_nt_krb5_principal      = krb5_gss_oid_array+5;
-const gss_OID_desc * const GSS_KRB5_NT_PRINCIPAL_NAME = krb5_gss_oid_array+4;
+const gss_OID_desc * const gss_mech_iakerb            = krb5_gss_oid_array+3;
+
+
+const gss_OID_desc * const gss_nt_krb5_name           = krb5_gss_oid_array+5;
+const gss_OID_desc * const gss_nt_krb5_principal      = krb5_gss_oid_array+6;
+const gss_OID_desc * const GSS_KRB5_NT_PRINCIPAL_NAME = krb5_gss_oid_array+5;
 
 static const gss_OID_set_desc oidsets[] = {
-    {1, (gss_OID) krb5_gss_oid_array+0},
-    {1, (gss_OID) krb5_gss_oid_array+1},
-    {3, (gss_OID) krb5_gss_oid_array+0},
+    {1, (gss_OID) krb5_gss_oid_array+0}, /* RFC OID */
+    {1, (gss_OID) krb5_gss_oid_array+1}, /* pre-RFC OID */
+    {4, (gss_OID) krb5_gss_oid_array+0}, /* includes wrong OID & IAKERB */
     {1, (gss_OID) krb5_gss_oid_array+2},
     {3, (gss_OID) krb5_gss_oid_array+0},
 };
@@ -508,7 +510,7 @@ krb5_gss_set_sec_context_option (OM_uint32 *minor_status,
  */
 static struct {
     gss_OID_desc oid;
-    OM_uint32 (*func)(OM_uint32 *, gss_cred_id_t, const gss_OID, const gss_buffer_t);
+    OM_uint32 (*func)(OM_uint32 *, gss_cred_id_t *, const gss_OID, const gss_buffer_t);
 } krb5_gssspi_set_cred_option_ops[] = {
     {
         {GSS_KRB5_COPY_CCACHE_OID_LENGTH, GSS_KRB5_COPY_CCACHE_OID},
@@ -522,11 +524,15 @@ static struct {
         {GSS_KRB5_SET_CRED_RCACHE_OID_LENGTH, GSS_KRB5_SET_CRED_RCACHE_OID},
         gss_krb5int_set_cred_rcache
     },
+    {
+        {GSS_KRB5_IMPORT_CRED_OID_LENGTH, GSS_KRB5_IMPORT_CRED_OID},
+        gss_krb5int_import_cred
+    },
 };
 
 static OM_uint32
 krb5_gssspi_set_cred_option(OM_uint32 *minor_status,
-                            gss_cred_id_t cred_handle,
+                            gss_cred_id_t *cred_handle,
                             const gss_OID desired_object,
                             const gss_buffer_t value)
 {
@@ -536,19 +542,19 @@ krb5_gssspi_set_cred_option(OM_uint32 *minor_status,
     if (minor_status == NULL)
         return GSS_S_CALL_INACCESSIBLE_WRITE;
 
-    *minor_status = 0;
+    if (cred_handle == NULL)
+        return GSS_S_CALL_INACCESSIBLE_WRITE;
 
-    if (cred_handle == GSS_C_NO_CREDENTIAL) {
-        *minor_status = (OM_uint32)KRB5_NOCREDS_SUPPLIED;
-        return GSS_S_NO_CRED;
-    }
+    *minor_status = 0;
 
     if (desired_object == GSS_C_NO_OID)
         return GSS_S_CALL_INACCESSIBLE_READ;
 
-    major_status = krb5_gss_validate_cred(minor_status, cred_handle);
-    if (GSS_ERROR(major_status))
-        return major_status;
+    if (*cred_handle != GSS_C_NO_CREDENTIAL) {
+        major_status = krb5_gss_validate_cred(minor_status, *cred_handle);
+        if (GSS_ERROR(major_status))
+            return major_status;
+    }
 
     for (i = 0; i < sizeof(krb5_gssspi_set_cred_option_ops)/
              sizeof(krb5_gssspi_set_cred_option_ops[0]); i++) {
@@ -584,10 +590,12 @@ static struct {
         {GSS_KRB5_FREE_LUCID_SEC_CONTEXT_OID_LENGTH, GSS_KRB5_FREE_LUCID_SEC_CONTEXT_OID},
         gss_krb5int_free_lucid_sec_context
     },
+#ifndef _WIN32
     {
         {GSS_KRB5_USE_KDC_CONTEXT_OID_LENGTH, GSS_KRB5_USE_KDC_CONTEXT_OID},
         krb5int_gss_use_kdc_context
     },
+#endif
 };
 
 static OM_uint32
@@ -624,6 +632,116 @@ krb5_gssspi_mech_invoke (OM_uint32 *minor_status,
     return GSS_S_UNAVAILABLE;
 }
 
+#define GS2_KRB5_SASL_NAME        "GS2-KRB5"
+#define GS2_KRB5_SASL_NAME_LEN    (sizeof(GS2_KRB5_SASL_NAME) - 1)
+
+#define GS2_IAKERB_SASL_NAME      "GS2-IAKERB"
+#define GS2_IAKERB_SASL_NAME_LEN  (sizeof(GS2_IAKERB_SASL_NAME) - 1)
+
+static OM_uint32
+krb5_gss_inquire_mech_for_saslname(OM_uint32 *minor_status,
+                                   const gss_buffer_t sasl_mech_name,
+                                   gss_OID *mech_type)
+{
+    *minor_status = 0;
+
+    if (sasl_mech_name->length == GS2_KRB5_SASL_NAME_LEN &&
+        memcmp(sasl_mech_name->value,
+               GS2_KRB5_SASL_NAME, GS2_KRB5_SASL_NAME_LEN) == 0) {
+        if (mech_type != NULL)
+            *mech_type = (gss_OID)gss_mech_krb5;
+        return GSS_S_COMPLETE;
+    } else if (sasl_mech_name->length == GS2_IAKERB_SASL_NAME_LEN &&
+        memcmp(sasl_mech_name->value,
+               GS2_IAKERB_SASL_NAME, GS2_IAKERB_SASL_NAME_LEN) == 0) {
+        if (mech_type != NULL)
+            *mech_type = (gss_OID)gss_mech_iakerb;
+        return GSS_S_COMPLETE;
+    }
+
+    return GSS_S_BAD_MECH;
+}
+
+static OM_uint32
+krb5_gss_inquire_saslname_for_mech(OM_uint32 *minor_status,
+                                   const gss_OID desired_mech,
+                                   gss_buffer_t sasl_mech_name,
+                                   gss_buffer_t mech_name,
+                                   gss_buffer_t mech_description)
+{
+    if (g_OID_equal(desired_mech, gss_mech_iakerb)) {
+        if (!g_make_string_buffer(GS2_IAKERB_SASL_NAME, sasl_mech_name) ||
+            !g_make_string_buffer("iakerb", mech_name) ||
+            !g_make_string_buffer("Initial and Pass Through Authentication "
+                             "Kerberos Mechanism (IAKERB)", mech_description))
+            goto fail;
+    } else {
+        if (!g_make_string_buffer(GS2_KRB5_SASL_NAME, sasl_mech_name) ||
+            !g_make_string_buffer("krb5", mech_name) ||
+            !g_make_string_buffer("Kerberos 5 GSS-API Mechanism",
+                                  mech_description))
+            goto fail;
+    }
+
+    *minor_status = 0;
+    return GSS_S_COMPLETE;
+
+fail:
+    *minor_status = ENOMEM;
+    return GSS_S_FAILURE;
+}
+
+static OM_uint32
+krb5_gss_inquire_attrs_for_mech(OM_uint32 *minor_status,
+                                gss_const_OID mech,
+                                gss_OID_set *mech_attrs,
+                                gss_OID_set *known_mech_attrs)
+{
+    OM_uint32 major, tmpMinor;
+
+    if (mech_attrs == NULL) {
+        *minor_status = 0;
+        return GSS_S_COMPLETE;
+    }
+
+    major = gss_create_empty_oid_set(minor_status, mech_attrs);
+    if (GSS_ERROR(major))
+        goto cleanup;
+
+#define MA_SUPPORTED(ma)    do { \
+    major = gss_add_oid_set_member(minor_status, (gss_OID)ma, mech_attrs);  \
+    if (GSS_ERROR(major))                                                   \
+        goto cleanup;                                                       \
+    } while (0)
+
+    MA_SUPPORTED(GSS_C_MA_MECH_CONCRETE);
+    MA_SUPPORTED(GSS_C_MA_ITOK_FRAMED);
+    MA_SUPPORTED(GSS_C_MA_AUTH_INIT);
+    MA_SUPPORTED(GSS_C_MA_AUTH_TARG);
+    MA_SUPPORTED(GSS_C_MA_DELEG_CRED);
+    MA_SUPPORTED(GSS_C_MA_INTEG_PROT);
+    MA_SUPPORTED(GSS_C_MA_CONF_PROT);
+    MA_SUPPORTED(GSS_C_MA_MIC);
+    MA_SUPPORTED(GSS_C_MA_WRAP);
+    MA_SUPPORTED(GSS_C_MA_PROT_READY);
+    MA_SUPPORTED(GSS_C_MA_REPLAY_DET);
+    MA_SUPPORTED(GSS_C_MA_OOS_DET);
+    MA_SUPPORTED(GSS_C_MA_CBINDINGS);
+    MA_SUPPORTED(GSS_C_MA_CTX_TRANS);
+
+    if (g_OID_equal(mech, gss_mech_iakerb)) {
+        MA_SUPPORTED(GSS_C_MA_AUTH_INIT_INIT);
+    } else if (!g_OID_equal(mech, gss_mech_krb5)) {
+        MA_SUPPORTED(GSS_C_MA_DEPRECATED);
+    }
+
+cleanup:
+    if (GSS_ERROR(major))
+        gss_release_oid_set(&tmpMinor, mech_attrs);
+
+    return major;
+}
+
 static struct gss_config krb5_mechanism = {
     { GSS_MECH_KRB5_OID_LENGTH, GSS_MECH_KRB5_OID },
     NULL,
@@ -657,7 +775,7 @@ static struct gss_config krb5_mechanism = {
     krb5_gss_import_name,
     krb5_gss_release_name,
     krb5_gss_inquire_cred,
-    krb5_gss_add_cred,
+    NULL,                /* add_cred */
 #ifdef LEAN_CLIENT
     NULL,
     NULL,
@@ -695,20 +813,53 @@ static struct gss_config krb5_mechanism = {
     krb5_gss_release_any_name_mapping,
     krb5_gss_pseudo_random,
     NULL,               /* set_neg_mechs */
+    krb5_gss_inquire_saslname_for_mech,
+    krb5_gss_inquire_mech_for_saslname,
+    krb5_gss_inquire_attrs_for_mech,
 };
 
+static struct gss_config_ext krb5_mechanism_ext = {
+    krb5_gss_acquire_cred_with_password,
+};
+
+static struct gss_config_ext iakerb_mechanism_ext = {
+    iakerb_gss_acquire_cred_with_password,
+};
 
 #ifdef _GSS_STATIC_LINK
 #include "mglueP.h"
+static int gss_iakerbmechglue_init(void)
+{
+    struct gss_mech_config mech_iakerb;
+    struct gss_config iakerb_mechanism = krb5_mechanism;
+
+    /* IAKERB mechanism mirrors krb5, but with different context SPIs */
+    iakerb_mechanism.gss_accept_sec_context = iakerb_gss_accept_sec_context;
+    iakerb_mechanism.gss_init_sec_context   = iakerb_gss_init_sec_context;
+    iakerb_mechanism.gss_delete_sec_context = iakerb_gss_delete_sec_context;
+    iakerb_mechanism.gss_acquire_cred       = iakerb_gss_acquire_cred;
+
+    memset(&mech_iakerb, 0, sizeof(mech_iakerb));
+    mech_iakerb.mech = &iakerb_mechanism;
+    mech_iakerb.mech_ext = &iakerb_mechanism_ext;
+
+    mech_iakerb.mechNameStr = "iakerb";
+    mech_iakerb.mech_type = (gss_OID)gss_mech_iakerb;
+    gssint_register_mechinfo(&mech_iakerb);
+
+    return 0;
+}
+
 static int gss_krb5mechglue_init(void)
 {
     struct gss_mech_config mech_krb5;
 
     memset(&mech_krb5, 0, sizeof(mech_krb5));
     mech_krb5.mech = &krb5_mechanism;
+    mech_krb5.mech_ext = &krb5_mechanism_ext;
+
     mech_krb5.mechNameStr = "kerberos_v5";
     mech_krb5.mech_type = (gss_OID)gss_mech_krb5;
-
     gssint_register_mechinfo(&mech_krb5);
 
     mech_krb5.mechNameStr = "kerberos_v5_old";
@@ -767,6 +918,9 @@ int gss_krb5int_lib_init(void)
 #endif
 #ifdef _GSS_STATIC_LINK
     err = gss_krb5mechglue_init();
+    if (err)
+        return err;
+    err = gss_iakerbmechglue_init();
     if (err)
         return err;
 #endif

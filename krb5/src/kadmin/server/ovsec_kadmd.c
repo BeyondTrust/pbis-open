@@ -72,8 +72,6 @@ void    request_pure_clear(int);
 extern int daemon(int, int);
 #endif
 
-volatile int    signal_request_exit = 0;
-volatile int    signal_request_hup = 0;
 void    setup_signal_handlers(iprop_role iproprole);
 void    request_exit(int);
 void    request_hup(int);
@@ -91,7 +89,6 @@ gss_name_t gss_changepw_name = NULL, gss_oldchangepw_name = NULL;
 gss_name_t gss_kadmin_name = NULL;
 void *global_server_handle;
 
-extern krb5_keyblock master_keyblock;
 extern krb5_keylist_node  *master_keylist;
 
 char *build_princ_name(char *name, char *realm);
@@ -383,7 +380,20 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    if ((ret = setup_network(global_server_handle, whoami))) {
+#define server_handle ((kadm5_server_handle_t)global_server_handle)
+    if ((ret = add_udp_port(server_handle->params.kpasswd_port))
+        || (ret = add_tcp_port(server_handle->params.kpasswd_port))
+        || (ret = add_rpc_service(server_handle->params.kadmind_port,
+                                  KADM, KADMVERS, kadm_1))
+#ifndef DISABLE_IPROP
+        || (server_handle->params.iprop_enabled
+            ? (ret = add_rpc_service(server_handle->params.iprop_port,
+                                     KRB5_IPROP_PROG, KRB5_IPROP_VERS,
+                                     krb5_iprop_prog_1))
+            : 0)
+#endif
+#undef server_handle
+        || (ret = setup_network(global_server_handle, whoami, 0))) {
         const char *e_txt = krb5_get_error_message (context, ret);
         krb5_klog_syslog(LOG_ERR, "%s: %s while initializing network, aborting",
                          whoami, e_txt);
@@ -418,17 +428,6 @@ int main(int argc, char *argv[])
     ret = krb5_ktkdb_set_context(hctx);
     if (ret) {
         krb5_klog_syslog(LOG_ERR, "Can't set kdb keytab's internal context.");
-        goto kterr;
-    }
-    /* XXX master_keyblock is in guts of lib/kadm5/server_kdb.c */
-    ret = krb5_db_set_mkey(hctx, &master_keyblock);
-    if (ret) {
-        krb5_klog_syslog(LOG_ERR, "Can't set master key for kdb keytab.");
-        goto kterr;
-    }
-    ret = krb5_db_set_mkey_list(hctx, master_keylist);
-    if (ret) {
-        krb5_klog_syslog(LOG_ERR, "Can't set master key list for kdb keytab.");
         goto kterr;
     }
     ret = krb5_kt_register(context, &krb5_kt_kdb_ops);
@@ -632,13 +631,13 @@ kterr:
     if (nofork)
         fprintf(stderr, "%s: starting...\n", whoami);
 
-    listen_and_process(global_server_handle, whoami);
+    listen_and_process(global_server_handle, whoami, reset_db);
     krb5_klog_syslog(LOG_INFO, "finished, exiting");
 
     /* Clean up memory, etc */
     svcauth_gssapi_unset_names();
     kadm5_destroy(global_server_handle);
-    closedown_network(global_server_handle, whoami);
+    closedown_network();
     kadm5int_acl_finish(context, 0);
     if(gss_changepw_name) {
         (void) gss_release_name(&OMret, &gss_changepw_name);
@@ -765,12 +764,12 @@ void request_pure_clear(int signum)
  * Requires:
  * Effects:
  * Modifies:
- *      sets signal_request_hup to one
+ *      sets signal_requests_reset to one
  */
 
 void request_hup(int signum)
 {
-    signal_request_hup = 1;
+    signal_requests_reset = 1;
     return;
 }
 
@@ -783,7 +782,7 @@ void request_hup(int signum)
  * Requires:
  * Effects:
  *
- * Currently, just sets signal_request_reset to 0.  The kdb and adb
+ * Currently, just sets signal_requests_reset to 0.  The kdb and adb
  * libraries used to be sufficiently broken that it was prudent to
  * close and reopen the databases periodically.  They are no longer
  * that broken, so this function is not necessary.
@@ -815,17 +814,17 @@ void reset_db(void)
  * Arguments:
  * Requires:
  * Effects:
- *      modifies signal_request_exit which ideally makes the server exit
+ *      modifies signal_requests_exit which ideally makes the server exit
  *      at some point.
  *
  * Modifies:
- *      signal_request_exit
+ *      signal_requests_exit
  */
 
 void request_exit(int signum)
 {
     krb5_klog_syslog(LOG_DEBUG, "Got signal to request exit");
-    signal_request_exit = 1;
+    signal_requests_exit = 1;
     return;
 }
 
@@ -923,7 +922,8 @@ void log_badverf(gss_name_t client_name, gss_name_t server_name,
         {18, "CREATE_PRINCIPAL3"},
         {19, "CHPASS_PRINCIPAL3"},
         {20, "CHRAND_PRINCIPAL3"},
-        {21, "SETKEY_PRINCIPAL3"}
+        {21, "SETKEY_PRINCIPAL3"},
+        {22, "PURGEKEYS"}
     };
 #define NPROCNAMES (sizeof (proc_names) / sizeof (struct procnames))
     OM_uint32 minor;

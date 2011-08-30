@@ -238,6 +238,12 @@ krb5_cc_resolve (krb5_context context, const char *name, krb5_ccache *cache)
     return ops->resolve(context, cache, resid);
 }
 
+krb5_error_code KRB5_CALLCONV
+krb5_cc_dup(krb5_context context, krb5_ccache in, krb5_ccache *out)
+{
+    return in->ops->resolve(context, out, in->ops->get_name(context, in));
+}
+
 /*
  * cc_getops
  *
@@ -289,6 +295,7 @@ krb5_cc_new_unique(
 
     *id = NULL;
 
+    TRACE_CC_NEW_UNIQUE(context, type);
     err = krb5int_cc_getops(context, type, &ops);
     if (err)
         return err;
@@ -367,6 +374,7 @@ krb5_cc_move(krb5_context context, krb5_ccache src, krb5_ccache dst)
     krb5_error_code ret = 0;
     krb5_principal princ = NULL;
 
+    TRACE_CC_MOVE(context, src, dst);
     ret = krb5_cccol_lock(context);
     if (ret) {
         return ret;

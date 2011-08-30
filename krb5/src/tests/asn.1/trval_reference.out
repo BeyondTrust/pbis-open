@@ -1332,40 +1332,16 @@ encode_krb5_ad_signedpath:
 .  .  .  [1] [Integer] 13
 .  .  .  [2] [Octet String] "pa-data"
 
-encode_krb5_pa_s4u_x509_user:
+encode_krb5_iakerb_header:
 
 [Sequence/Sequence Of] 
-.  [0] [Sequence/Sequence Of] 
-.  .  [0] [Integer] 13243546
-.  .  [1] [Sequence/Sequence Of] 
-.  .  .  [0] [Integer] 1
-.  .  .  [1] [Sequence/Sequence Of] 
-.  .  .  .  [General string] "hftsai"
-.  .  .  .  [General string] "extra"
-.  .  [2] [General string] "ATHENA.MIT.EDU"
-.  .  [3] [Octet String] "pa_s4u_x509_user"
-.  .  [4] [Bit String] 0x80000000
+.  [1] [Octet String] "krb5data"
+.  [2] [Octet String] "krb5data"
+
+encode_krb5_iakerb_finished:
+
+[Sequence/Sequence Of] 
 .  [1] [Sequence/Sequence Of] 
 .  .  [0] [Integer] 1
 .  .  [1] [Octet String] "1234"
-
-encode_krb5_ad_kdcissued:
-
-[Sequence/Sequence Of] 
-.  [0] [Sequence/Sequence Of] 
-.  .  [0] [Integer] 1
-.  .  [1] [Octet String] "1234"
-.  [1] [General string] "ATHENA.MIT.EDU"
-.  [2] [Sequence/Sequence Of] 
-.  .  [0] [Integer] 1
-.  .  [1] [Sequence/Sequence Of] 
-.  .  .  [General string] "hftsai"
-.  .  .  [General string] "extra"
-.  [3] [Sequence/Sequence Of] 
-.  .  [Sequence/Sequence Of] 
-.  .  .  [0] [Integer] 1
-.  .  .  [1] [Octet String] "foobar"
-.  .  [Sequence/Sequence Of] 
-.  .  .  [0] [Integer] 1
-.  .  .  [1] [Octet String] "foobar"
 

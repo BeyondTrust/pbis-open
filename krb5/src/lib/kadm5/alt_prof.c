@@ -33,6 +33,7 @@
 /*
  * alt_prof.c - Implement alternate profile file handling.
  */
+#include "fake-addrinfo.h"
 #include "k5-int.h"
 #include <kadm5/admin.h>
 #include "adm_proto.h"
@@ -619,10 +620,6 @@ krb5_error_code kadm5_get_config_params(context, use_kdc_config,
     GET_STRING_PARAM(dbname, KADM5_CONFIG_DBNAME, KRB5_CONF_DATABASE_NAME,
                      DEFAULT_KDB_FILE);
 
-    params.admin_dbname_was_here = NULL;
-    params.admin_lockfile_was_here = NULL;
-    /* never set KADM5_CONFIG_ADBNAME, KADM5_CONFIG_ADB_LOCKFILE */
-
     /* Get the value for the admin (policy) database lock file*/
     if (!GET_STRING_PARAM(admin_keytab, KADM5_CONFIG_ADMIN_KEYTAB,
                           KRB5_CONF_ADMIN_KEYTAB, NULL)) {
@@ -886,7 +883,8 @@ kadm5_get_admin_service_name(krb5_context ctx,
 {
     krb5_error_code ret;
     kadm5_config_params params_in, params_out;
-    struct hostent *hp;
+    struct addrinfo hint, *ai = NULL;
+    int err;
 
     memset(&params_in, 0, sizeof(params_in));
     memset(&params_out, 0, sizeof(params_out));
@@ -902,18 +900,26 @@ kadm5_get_admin_service_name(krb5_context ctx,
         goto err_params;
     }
 
-    hp = gethostbyname(params_out.admin_server);
-    if (hp == NULL) {
-        ret = errno;
+    memset(&hint, 0, sizeof(hint));
+    hint.ai_flags = AI_CANONNAME;
+    err = getaddrinfo(params_out.admin_server, NULL, &hint, &ai);
+    if (err != 0) {
+        ret = KADM5_CANT_RESOLVE;
+        krb5_set_error_message(ctx, ret,
+                               "Cannot resolve address of admin server \"%s\" "
+                               "for realm \"%s\"", params_out.admin_server,
+                               realm_in);
         goto err_params;
     }
-    if (strlen(hp->h_name) + sizeof("kadmin/") > maxlen) {
+    if (strlen(ai->ai_canonname) + sizeof("kadmin/") > maxlen) {
         ret = ENOMEM;
         goto err_params;
     }
-    snprintf(admin_name, maxlen, "kadmin/%s", hp->h_name);
+    snprintf(admin_name, maxlen, "kadmin/%s", ai->ai_canonname);
 
 err_params:
+    if (ai != NULL)
+        freeaddrinfo(ai);
     kadm5_free_config_params(ctx, &params_out);
     return ret;
 }
@@ -980,13 +986,10 @@ krb5_read_realm_params(kcontext, realm, rparamp)
     /* Initialize realm parameters */
     memset(rparams, 0, sizeof(krb5_realm_params));
 
-    /* Get the value for the database */
+    /* Set up the hierarchy so we can query multiple realm variables. */
     hierarchy[0] = KRB5_CONF_REALMS;
     hierarchy[1] = lrealm;
-    hierarchy[2] = KRB5_CONF_DATABASE_NAME;
     hierarchy[3] = (char *) NULL;
-    if (!krb5_aprof_get_string(aprofile, hierarchy, TRUE, &svalue))
-        rparams->realm_dbname = svalue;
 
     /* Get the value for the KDC port list */
     hierarchy[2] = KRB5_CONF_KDC_PORTS;
@@ -1053,6 +1056,12 @@ krb5_read_realm_params(kcontext, realm, rparamp)
     if (!krb5_aprof_get_boolean(aprofile, hierarchy, TRUE, &bvalue)) {
         rparams->realm_reject_bad_transit = bvalue;
         rparams->realm_reject_bad_transit_valid = 1;
+    }
+
+    hierarchy[2] = KRB5_CONF_RESTRICT_ANONYMOUS_TO_TGT;
+    if (!krb5_aprof_get_boolean(aprofile, hierarchy, TRUE, &bvalue)) {
+        rparams->realm_restrict_anon = bvalue;
+        rparams->realm_restrict_anon_valid = 1;
     }
 
     hierarchy[2] = KRB5_CONF_NO_HOST_REFERRAL;
@@ -1130,7 +1139,6 @@ krb5_free_realm_params(kcontext, rparams)
 {
     if (rparams) {
         free(rparams->realm_profile);
-        free(rparams->realm_dbname);
         free(rparams->realm_mkey_name);
         free(rparams->realm_stash_file);
         free(rparams->realm_keysalts);

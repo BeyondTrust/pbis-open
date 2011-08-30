@@ -25,7 +25,7 @@
 #define _GSSAPIP_GENERIC_H_
 
 /*
- * $Id: gssapiP_generic.h 21875 2009-02-02 23:41:40Z raeburn $
+ * $Id: gssapiP_generic.h 24436 2010-10-06 18:25:04Z ghudson $
  */
 
 #if defined(_WIN32)
@@ -293,5 +293,14 @@ OM_uint32 generic_gss_copy_oid_set
 (OM_uint32 *, /* minor_status */
             const gss_OID_set_desc *, /* const oidset*/
             gss_OID_set * /*new_oidset*/);
+
+extern gss_OID_set gss_ma_known_attrs;
+
+OM_uint32 generic_gss_display_mech_attr(
+      OM_uint32         *minor_status,
+      gss_const_OID      mech_attr,
+      gss_buffer_t       name,
+      gss_buffer_t       short_desc,
+      gss_buffer_t       long_desc);
 
 #endif /* _GSSAPIP_GENERIC_H_ */

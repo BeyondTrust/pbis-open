@@ -637,6 +637,7 @@ krb5_c_keyed_checksum_types(krb5_context context, krb5_enctype enctype,
 #define KRB5_KEYUSAGE_PA_S4U_X509_USER_REPLY    27 /* XXX note conflict with above */
 
 #define KRB5_KEYUSAGE_AD_SIGNEDPATH             -21
+#define KRB5_KEYUSAGE_IAKERB_FINISHED           42
 #define KRB5_KEYUSAGE_PA_PKINIT_KX              44
 /* define in draft-ietf-krb-wg-preauth-framework*/
 #define KRB5_KEYUSAGE_FAST_REQ_CHKSUM 50
@@ -1002,6 +1003,8 @@ krb5_verify_checksum(krb5_context context, krb5_cksumtype ctype,
 #define KRB5_LRQ_ONE_LAST_REQ           (-5)
 #define KRB5_LRQ_ALL_PW_EXPTIME         6
 #define KRB5_LRQ_ONE_PW_EXPTIME         (-6)
+#define KRB5_LRQ_ALL_ACCT_EXPTIME       7
+#define KRB5_LRQ_ONE_ACCT_EXPTIME       (-7)
 
 /* PADATA types */
 #define KRB5_PADATA_NONE                0
@@ -1431,6 +1434,12 @@ typedef struct _krb5_cccol_cursor *krb5_cccol_cursor;
 #define KRB5_TC_OPENCLOSE               0x00000001
 #define KRB5_TC_NOTICKET                0x00000002
 
+/** Retrieve the name but not type of a credential cache.
+ *
+ * @return The name of the credential cache as an alias that should not be
+ * freed or modified by the caller.  This name does not include the type
+ * portion, so cannot be used as input to krb5_cc_resolve().
+ */
 const char * KRB5_CALLCONV
 krb5_cc_get_name(krb5_context context, krb5_ccache cache);
 
@@ -1481,6 +1490,11 @@ krb5_cc_set_flags(krb5_context context, krb5_ccache cache, krb5_flags flags);
 krb5_error_code KRB5_CALLCONV
 krb5_cc_get_flags(krb5_context context, krb5_ccache cache, krb5_flags *flags);
 
+/** Retrieve the type of a credential cache.
+ *
+ * @return The type of a credential cache as an alias that should not be
+ * modified or freed by the caller.
+ */
 const char * KRB5_CALLCONV
 krb5_cc_get_type(krb5_context context, krb5_ccache cache);
 
@@ -1850,6 +1864,13 @@ krb5_principal2salt(krb5_context, krb5_const_principal, krb5_data *);
 krb5_error_code KRB5_CALLCONV
 krb5_cc_resolve(krb5_context, const char *, krb5_ccache *);
 
+/**
+ * Create a new handle referring to the same cache as @a in.
+ * The new handle and @a in can be closed independently.
+ */
+krb5_error_code KRB5_CALLCONV
+krb5_cc_dup(krb5_context context, krb5_ccache in, krb5_ccache *out);
+
 const char *KRB5_CALLCONV
 krb5_cc_default_name(krb5_context);
 
@@ -1941,17 +1962,6 @@ krb5_error_code KRB5_CALLCONV
 krb5_get_profile(krb5_context, struct _profile_t * /* profile_t */ *);
 
 #if KRB5_DEPRECATED
-KRB5_ATTR_DEPRECATED krb5_error_code KRB5_CALLCONV
-krb5_get_in_tkt(krb5_context, krb5_flags, krb5_address *const *,
-                krb5_enctype *, krb5_preauthtype *,
-                krb5_error_code (*)(krb5_context, krb5_enctype, krb5_data *,
-                                    krb5_const_pointer, krb5_keyblock **),
-                krb5_const_pointer,
-                krb5_error_code (*)(krb5_context, const krb5_keyblock *,
-                                    krb5_const_pointer, krb5_kdc_rep * ),
-                krb5_const_pointer, krb5_creds *, krb5_ccache,
-                krb5_kdc_rep **);
-
 KRB5_ATTR_DEPRECATED krb5_error_code KRB5_CALLCONV
 krb5_get_in_tkt_with_password(krb5_context, krb5_flags, krb5_address *const *,
                               krb5_enctype *, krb5_preauthtype *, const char *,
@@ -2073,7 +2083,13 @@ krb5_error_code KRB5_CALLCONV
 krb5_auth_con_setsendsubkey(krb5_context, krb5_auth_context, krb5_keyblock *);
 
 krb5_error_code KRB5_CALLCONV
+krb5_auth_con_setsendsubkey_k(krb5_context, krb5_auth_context, krb5_key);
+
+krb5_error_code KRB5_CALLCONV
 krb5_auth_con_setrecvsubkey(krb5_context, krb5_auth_context, krb5_keyblock *);
+
+krb5_error_code KRB5_CALLCONV
+krb5_auth_con_setrecvsubkey_k(krb5_context, krb5_auth_context, krb5_key);
 
 #if KRB5_DEPRECATED
 KRB5_ATTR_DEPRECATED krb5_error_code KRB5_CALLCONV
@@ -2159,6 +2175,8 @@ krb5_error_code KRB5_CALLCONV krb5_string_to_timestamp(char *,
 krb5_error_code KRB5_CALLCONV krb5_string_to_deltat(char *, krb5_deltat *);
 krb5_error_code KRB5_CALLCONV krb5_enctype_to_string(krb5_enctype, char *,
                                                      size_t);
+krb5_error_code KRB5_CALLCONV krb5_enctype_to_name(krb5_enctype, krb5_boolean,
+                                                   char *, size_t);
 krb5_error_code KRB5_CALLCONV krb5_salttype_to_string(krb5_int32, char *,
                                                       size_t);
 krb5_error_code KRB5_CALLCONV krb5_cksumtype_to_string(krb5_cksumtype, char *,
@@ -2328,6 +2346,15 @@ krb5_get_init_creds_opt_set_fast_ccache_name(krb5_context context,
                                              krb5_get_init_creds_opt *opt,
                                              const char *fast_ccache_name);
 
+/** Set the FAST ccache name as in
+ * krb5_get_init_creds_opt_set_fast_ccache_name() but using a krb5_ccache
+ * rather than a name.
+ */
+krb5_error_code KRB5_CALLCONV
+krb5_get_init_creds_opt_set_fast_ccache(krb5_context context,
+                                        krb5_get_init_creds_opt *opt,
+                                        krb5_ccache fast_ccache_name);
+
 /**
  * Set a ccache where resulting credentials will be stored.  If set, then the
  * krb5_get_init_creds family of APIs will write out credentials to the given
@@ -2353,6 +2380,48 @@ krb5_get_init_creds_opt_get_fast_flags(krb5_context context,
 /* Fast flags*/
 #define KRB5_FAST_REQUIRED 1l<<0 /*!< Require KDC to support FAST*/
 
+typedef void
+(KRB5_CALLCONV *krb5_expire_callback_func)(krb5_context context, void *data,
+                                           krb5_timestamp password_expiration,
+                                           krb5_timestamp account_expiration,
+                                           krb5_boolean is_last_req);
+
+/**
+ * Set a callback to receive password and account expiration times.
+ *
+ * This option only applies to krb5_get_init_creds_password().  @a cb will be
+ * invoked if and only if credentials are successfully acquired.  The callback
+ * will receive the @a context from the krb5_get_init_creds_password() call and
+ * the @a data argument supplied with this API.  The remaining arguments should
+ * be interpreted as follows:
+ *
+ * If @a is_last_req is true, then the KDC reply contained last-req entries
+ * which unambiguously indicated the password expiration, account expiration,
+ * or both.  (If either value was not present, the corresponding argument will
+ * be 0.)  Furthermore, a non-zero @a password_expiration should be taken as a
+ * suggestion from the KDC that a warning be displayed.
+ *
+ * If @a is_last_req is false, then @a account_expiration will be 0 and @a
+ * password_expiration will contain the expiration time of either the password
+ * or account, or 0 if no expiration time was indicated in the KDC reply.  The
+ * callback should independently decide whether to display a password
+ * expiration warning.
+ *
+ * Note that @a cb may be invoked even if credentials are being acquired for
+ * the kadmin/changepw service in order to change the password.  It is the
+ * caller's responsibility to avoid displaying a password expiry warning in
+ * this case.
+ *
+ * Setting an expire callback with this API will cause
+ * krb5_get_init_creds_password() not to send password expiry warnings to the
+ * prompter, as it ordinarily may.
+ */
+krb5_error_code KRB5_CALLCONV
+krb5_get_init_creds_opt_set_expire_callback(krb5_context context,
+                                            krb5_get_init_creds_opt *opt,
+                                            krb5_expire_callback_func cb,
+                                            void *data);
+
 krb5_error_code KRB5_CALLCONV
 krb5_get_init_creds_password(krb5_context context, krb5_creds *creds,
                              krb5_principal client, char *password,
@@ -2362,6 +2431,8 @@ krb5_get_init_creds_password(krb5_context context, krb5_creds *creds,
 
 struct _krb5_init_creds_context;
 typedef struct _krb5_init_creds_context *krb5_init_creds_context;
+
+#define KRB5_INIT_CREDS_STEP_FLAG_CONTINUE 0x1  /* More responses needed */
 
 void KRB5_CALLCONV
 krb5_init_creds_free(krb5_context context, krb5_init_creds_context ctx);
@@ -2407,6 +2478,102 @@ krb5_init_creds_set_service(krb5_context context, krb5_init_creds_context ctx,
 krb5_error_code KRB5_CALLCONV
 krb5_init_creds_get_times(krb5_context context, krb5_init_creds_context ctx,
                           krb5_ticket_times *times);
+
+struct _krb5_tkt_creds_context;
+typedef struct _krb5_tkt_creds_context *krb5_tkt_creds_context;
+
+/**
+ * Create a context to get credentials from a KDC's Ticket Granting Service.
+ *
+ * The resulting TGS acquisition context can be used asynchronously with
+ * krb5_tkt_creds_step() or synchronously with krb5_tkt_creds_get().  See also
+ * krb5_get_credentials() for synchrous use.
+ *
+ * @param[in]  context  A krb5 library context (see krb5_init_context())
+ * @param[in]  ccache   A credentials cache containing the desired credentials
+ *                      or a Ticket Granting Ticket (TGT) for the client realm.
+ *                      TGT and service credentials may be stored into this
+ *                      cache as they are acquired.
+ * @param[in]  options  KRB5_GC_* options for this request.
+ * @param[out] ctx      The TGS acquisition context.
+ */
+krb5_error_code KRB5_CALLCONV
+krb5_tkt_creds_init(krb5_context context, krb5_ccache ccache,
+                    krb5_creds *creds, krb5_flags options,
+                    krb5_tkt_creds_context *ctx);
+
+/**
+ * Synchronously obtain credentials within an acquisition context.
+ *
+ * This function repeatedly generates requests, sends them to the appropriate
+ * realms' KDCs, and processes the replies until credentials are available for
+ * retrieval with krb5_tkt_creds_get_creds().
+ *
+ * @param[in]  context  A krb5 library context (see krb5_init_context())
+ * @param[in]  ctx      A TGS acquisition context (see krb5_tkt_creds_init())
+ */
+krb5_error_code KRB5_CALLCONV
+krb5_tkt_creds_get(krb5_context context, krb5_tkt_creds_context ctx);
+
+/**
+ * Retrieve credentials from an acquisition context, filling in @a creds.
+ *
+ * The acquisition context must have completed obtaining credentials via either
+ * krb5_tkt_creds_get() or krb5_tkt_creds_step().
+ *
+ * @param[in]  context  A krb5 library context (see krb5_init_context())
+ * @param[in]  ctx      A TGS acquisition context (see krb5_tkt_creds_init())
+ * @param[out] creds    The acquired credentials
+ */
+krb5_error_code KRB5_CALLCONV
+krb5_tkt_creds_get_creds(krb5_context context, krb5_tkt_creds_context ctx,
+                         krb5_creds *creds);
+
+/**
+ * Release the resources used by an acquisition context.
+ *
+ * @param[in]  context  A krb5 library context (see krb5_init_context())
+ * @param[in]  ctx      A TGS acquisition context (see krb5_tkt_creds_init())
+ */
+void KRB5_CALLCONV
+krb5_tkt_creds_free(krb5_context context, krb5_tkt_creds_context ctx);
+
+#define KRB5_TKT_CREDS_STEP_FLAG_CONTINUE 0x1  /* More responses needed. */
+
+/**
+ * Process a response and generate the next request to acquire credentials.
+ *
+ * On the first call, @a in should be empty or NULL.  If more responses are
+ * needed, the @a flags output parameter will contain @a
+ * KRB5_TKT_CREDS_STEP_FLAG_CONTINUE.  In that case, the caller must transport
+ * @a out to a KDC for @a realm and receive a response, which should be
+ * provided as @a in to the next call.
+ *
+ * @param[in]  context  A krb5 library context (see krb5_init_context())
+ * @param[in]  ctx      A TGS acquisition context (see krb5_tkt_creds_init())
+ * @param[in]  in       The last response (empty or NULL for first call)
+ * @param[out] out      The next request to be sent
+ * @param[out] realm    The realm to which the next request should be sent
+ * @param[out] flags    Indicates whether more responses are needed
+ */
+krb5_error_code KRB5_CALLCONV
+krb5_tkt_creds_step(krb5_context context, krb5_tkt_creds_context ctx,
+                    krb5_data *in, krb5_data *out, krb5_data *realm,
+                    unsigned int *flags);
+
+/**
+ * Retrieve ticket times for obtained credentials, filling in @a times.
+ *
+ * The acquisition context must have completed obtaining credentials via either
+ * krb5_tkt_creds_get() or krb5_tkt_creds_step().
+ *
+ * @param[in]  context  A krb5 library context (see krb5_init_context())
+ * @param[in]  ctx      A TGS acquisition context (see krb5_tkt_creds_init())
+ * @param[out] times    Ticket times for the acquired credentials
+ */
+krb5_error_code KRB5_CALLCONV
+krb5_tkt_creds_get_times(krb5_context context, krb5_tkt_creds_context ctx,
+                         krb5_ticket_times *times);
 
 krb5_error_code KRB5_CALLCONV
 krb5_get_init_creds_keytab(krb5_context context, krb5_creds *creds,
@@ -2492,7 +2659,9 @@ krb5_copy_error_message(krb5_context, krb5_context);
  * time it is called after a failed call to a krb5 function using the
  * same context, and only when the error code passed in is the same as
  * that returned by the krb5 function.  Future versions may return the
- * same string for the second and following calls.
+ * same string for the second and following calls.  This function never
+ * returns NULL, so its result may be used unconditionally as a C
+ * string.
  *
  * The string returned by this function must be freed using
  * krb5_free_error_message.
@@ -2534,22 +2703,6 @@ krb5_verify_authdata_kdc_issued(krb5_context context,
                                 krb5_authdata ***authdata);
 
 /*
- * AD-KDCIssued
- */
-krb5_error_code KRB5_CALLCONV
-krb5_make_authdata_kdc_issued(krb5_context context,
-    const krb5_keyblock *key,
-    krb5_const_principal issuer,
-    krb5_authdata *const *authdata,
-    krb5_authdata ***ad_kdcissued);
-krb5_error_code KRB5_CALLCONV
-krb5_verify_authdata_kdc_issued(krb5_context context,
-    const krb5_keyblock *key,
-    const krb5_authdata *ad_kdcissued,
-    krb5_principal *issuer,
-    krb5_authdata ***authdata);
-
-/*
  * Windows PAC
  */
 struct krb5_pac_data;
@@ -2586,6 +2739,40 @@ krb5_pac_verify(krb5_context context, const krb5_pac pac,
  * Primarily for use by aklog. */
 krb5_error_code KRB5_CALLCONV
 krb5_allow_weak_crypto(krb5_context context, krb5_boolean enable);
+
+/* This structure may be extended to contain more fields in the future. */
+struct krb5_trace_info {
+    const char *message;
+};
+
+typedef void
+(KRB5_CALLCONV *krb5_trace_callback)(krb5_context context,
+                                     const struct krb5_trace_info *info,
+                                     void *cb_data);
+
+/**
+ * Specify a callback for trace events occurring in krb5 operations performed
+ * within @a context.  @a fn will be invoked with @a context as the first
+ * argument, @a cb_data as the last argument, and a pointer to a struct
+ * krb5_trace_info as the second argument.  If the trace callback is reset via
+ * this function or @a context is destroyed, @a fn will be invoked with a NULL
+ * second argument to allow cleanup of @a cb_data.  Supply a NULL value for @a
+ * fn to disable trace callbacks within @a context.
+ *
+ * Returns KRB5_TRACE_NOSUPP if tracing is not supported in the library (unless
+ * @a fn is NULL).
+ */
+krb5_error_code KRB5_CALLCONV
+krb5_set_trace_callback(krb5_context context, krb5_trace_callback fn,
+                        void *cb_data);
+
+/**
+ * Open @a filename for appending (creating it, if necessary) and set up a
+ * callback to write trace events to it.  Returns KRB5_TRACE_NOSUPP if tracing
+ * is not supported in the library.
+ */
+krb5_error_code KRB5_CALLCONV
+krb5_set_trace_filename(krb5_context context, const char *filename);
 
 #if TARGET_OS_MAC
 #    pragma pack(pop)

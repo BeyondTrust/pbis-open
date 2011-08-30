@@ -691,7 +691,6 @@ pkinit_server_return_padata(krb5_context context,
     krb5_reply_key_pack *key_pack = NULL;
     krb5_reply_key_pack_draft9 *key_pack9 = NULL;
     krb5_data *encoded_key_pack = NULL;
-    krb5_cksumtype cksum_type;
 
     pkinit_kdc_context plgctx;
     pkinit_kdc_req_context reqctx;
@@ -882,24 +881,7 @@ pkinit_server_return_padata(krb5_context context,
                 goto cleanup;
             }
 
-            switch (encrypting_key->enctype) {
-            case ENCTYPE_DES_CBC_MD4:
-                cksum_type = CKSUMTYPE_RSA_MD4_DES;
-                break;
-            case ENCTYPE_DES_CBC_MD5:
-            case ENCTYPE_DES_CBC_CRC:
-                cksum_type = CKSUMTYPE_RSA_MD5_DES;
-                break;
-            default:
-                retval = krb5int_c_mandatory_cksumtype(context,
-                                                       encrypting_key->enctype,
-                                                       &cksum_type);
-                if (retval)
-                    goto cleanup;
-                break;
-            }
-
-            retval = krb5_c_make_checksum(context, cksum_type,
+            retval = krb5_c_make_checksum(context, 0,
                                           encrypting_key, KRB5_KEYUSAGE_TGS_REQ_AUTH_CKSUM,
                                           req_pkt, &key_pack->asChecksum);
             if (retval) {

@@ -22,7 +22,7 @@
  */
 
 /*
- * $Id: util_buffer.c 23457 2009-12-08 00:04:48Z tlyu $
+ * $Id: util_buffer.c 24436 2010-10-06 18:25:04Z ghudson $
  */
 
 #include "gssapiP_generic.h"
@@ -34,6 +34,9 @@
 
 int g_make_string_buffer(const char *str, gss_buffer_t buffer)
 {
+    if (buffer == GSS_C_NO_BUFFER)
+        return (1);
+
     buffer->length = strlen(str);
 
     if ((buffer->value = strdup(str)) == NULL) {

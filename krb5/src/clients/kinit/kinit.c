@@ -31,6 +31,7 @@
 #include "autoconf.h"
 #include "k5-platform.h"        /* for asprintf */
 #include <krb5.h>
+#include "extern.h"
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
@@ -456,12 +457,20 @@ k5_begin(opts, k5)
                     opts->k5_cache_name);
             return 0;
         }
+        if (opts->verbose) {
+            fprintf(stderr, "Using specified cache: %s\n",
+                    opts->k5_cache_name);
+        }
     }
     else
     {
         if ((code = krb5_cc_default(k5->ctx, &k5->cc))) {
             com_err(progname, code, "while getting default ccache");
             return 0;
+        }
+        if (opts->verbose) {
+            fprintf(stderr, "Using default cache: %s\n",
+                    krb5_cc_get_name(k5->ctx, k5->cc));
         }
     }
 
@@ -544,6 +553,9 @@ k5_begin(opts, k5)
         com_err(progname, code, "when unparsing name");
         return 0;
     }
+    if (opts->verbose)
+        fprintf(stderr, "Using principal: %s\n", k5->name);
+
     opts->principal_name = k5->name;
 
     return 1;
@@ -638,12 +650,27 @@ k5_kinit(opts, k5)
 
     if ((opts->action == INIT_KT) && opts->keytab_name)
     {
+#ifndef _WIN32
+        if (strncmp(opts->keytab_name, "KDB:", 3) == 0) {
+            code = kinit_kdb_init(&k5->ctx,
+                                  krb5_princ_realm(k5->ctx, k5->me)->data);
+            if (code != 0) {
+                com_err(progname, code,
+                        "while setting up KDB keytab for realm %s",
+                        krb5_princ_realm(k5->ctx, k5->me)->data);
+                goto cleanup;
+            }
+        }
+#endif
+
         code = krb5_kt_resolve(k5->ctx, opts->keytab_name, &keytab);
         if (code != 0) {
             com_err(progname, code, "resolving keytab %s",
                     opts->keytab_name);
             goto cleanup;
         }
+        if (opts->verbose)
+            fprintf(stderr, "Using keytab: %s\n", opts->keytab_name);
     }
 
     for (i = 0; i < opts->num_pa_opts; i++) {
@@ -654,6 +681,10 @@ k5_kinit(opts, k5)
             com_err(progname, code, "while setting '%s'='%s'",
                     opts->pa_opts[i].attr, opts->pa_opts[i].value);
             goto cleanup;
+        }
+        if (opts->verbose) {
+            fprintf(stderr, "PA Option %s = %s\n", opts->pa_opts[i].attr,
+                    opts->pa_opts[i].value);
         }
     }
     code = krb5_get_init_creds_opt_set_out_ccache(k5->ctx, options, k5->cc);
@@ -716,12 +747,16 @@ k5_kinit(opts, k5)
                     opts->k5_cache_name?opts->k5_cache_name:"");
             goto cleanup;
         }
+        if (opts->verbose)
+            fprintf(stderr, "Initialized cache\n");
 
         code = krb5_cc_store_cred(k5->ctx, k5->cc, &my_creds);
         if (code) {
             com_err(progname, code, "while storing credentials");
             goto cleanup;
         }
+        if (opts->verbose)
+            fprintf(stderr, "Stored credentials\n");
     }
     notix = 0;
 

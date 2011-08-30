@@ -1,4 +1,4 @@
-mydir=lib/gssapi/generic
+mydir=lib$(S)gssapi$(S)generic
 BUILDTOP=$(REL)..$(S)..$(S)..
 LOCALINCLUDES = -I. -I$(srcdir) -I$(srcdir)/..
 DEFS=
@@ -39,24 +39,26 @@ $(OUTPRE)gssapi_err_generic.$(OBJEXT): gssapi_err_generic.c
 gssapi_err_generic.h: gssapi_err_generic.et
 gssapi_err_generic.c: gssapi_err_generic.et
 
+##DOS##!if 0
 include_stdint=@include_stdint@
 include_inttypes=@include_inttypes@
 include_xom=@include_xom@
 ##DOS##include_stdint=rem
 ##DOS##include_inttypes=rem
 ##DOS##include_xom=rem
-gssapi.h: gssapi.hin $(BUILDTOP)/include/autoconf.h
+gssapi.h: gssapi.hin
 	@echo "Creating gssapi.h" ; \
 	h=gss$$$$; $(RM) $$h; \
 	(echo "/* This is the gssapi.h prologue. */"; \
 	$(include_stdint) && \
 	$(include_inttypes) && \
-	echo "#ifndef __ia64" && \
- 	$(include_xom) && \
-	echo "#endif" && \
+	$(include_xom) && \
 	echo "/* End of gssapi.h prologue. */"&& \
 	cat $(srcdir)/gssapi.hin )> $$h && \
 	(set -x; $(MV) $$h $@) ; e=$$?; $(RM) $$h; exit $$e
+##DOS##!endif
+##DOS##gssapi.h: gssapi.hin
+##DOS##	$(CP) $** $@
 
 #if HasHashLibrary
 # UTIL_VALIDATE_SRC= $(srcdir)/util_validate.c
@@ -115,7 +117,7 @@ STLIBOBJS = \
 	gssapi_err_generic.o
 
 EXPORTED_HEADERS= gssapi_generic.h gssapi_ext.h
-EXPORTED_BUILT_HEADERS= gssapi.h $(ETHDRS)
+EXPORTED_BUILT_HEADERS= gssapi.h
 
 $(OBJS): $(EXPORTED_HEADERS) $(ETHDRS)
 
@@ -149,7 +151,7 @@ win-create-ehdrdir:
 	if not exist $(EHDRDIR)\nul mkdir $(EHDRDIR)
 
 clean-unix:: clean-libobjs
-	$(RM) $(ETSRCS) $(HDRS) $(EXPORTED_BUILT_HEADERS) \
+	$(RM) $(ETHDRS) $(ETSRCS) $(HDRS) $(EXPORTED_BUILT_HEADERS) \
 		$(EHDRDIR)$(S)timestamp
 
 clean-windows::
@@ -159,7 +161,7 @@ clean-windows::
 generate-files-mac: gssapi.h errmap.h
 
 # Krb5InstallHeaders($(EXPORTED_HEADERS), $(KRB5_INCDIR)/krb5)
-install-headers-unix install:: $(EXPORTED_BUILT_HEADERS)
+install-headers-unix install:: gssapi.h
 	@set -x; for f in $(EXPORTED_HEADERS) ; \
 	do $(INSTALL_DATA) $(srcdir)/$$f	\
 		$(DESTDIR)$(KRB5_INCDIR)/gssapi/$$f ; \

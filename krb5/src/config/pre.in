@@ -188,7 +188,6 @@ INSTALL_SCRIPT=@INSTALL_PROGRAM@
 INSTALL_DATA=@INSTALL_DATA@
 INSTALL_SHLIB=@INSTALL_SHLIB@
 INSTALL_SETUID=$(INSTALL) $(INSTALL_STRIP) -m 4755 -o root
-INSTALL_SETUID_USER=$(INSTALL) $(INSTALL_STRIP) -m 4755
 ## This is needed because autoconf will sometimes define @exec_prefix@ to be
 ## ${prefix}.
 prefix=@prefix@
@@ -245,6 +244,9 @@ host=@krb5_cv_host@
 DEJAFLAGS	= --debug --srcdir $(srcdir) --host $(host)
 RUNTEST		= runtest $(DEJAFLAGS)
 
+RUNPYTEST	= PYTHONPATH=$(top_srcdir)/util VALGRIND="$(VALGRIND)" \
+			$(PYTHON)
+
 START_SERVERS	= $(STESTDIR)/scripts/start_servers $(TEST_SERVER) $(TEST_PATH)
 START_SERVERS_LOCAL = $(STESTDIR)/scripts/start_servers_local
 
@@ -269,6 +271,7 @@ LEX = @LEX@
 LEXLIB = @LEXLIB@
 YACC = @YACC@
 PERL = @PERL@
+PYTHON = @PYTHON@
 AUTOCONF = autoconf
 AUTOCONFFLAGS =
 AUTOHEADER = autoheader
@@ -396,6 +399,10 @@ UTIL_LIB	= @UTIL_LIB@
 # eventually) but which we don't want to install.
 APPUTILS_LIB	= -lapputils
 
+# So test programs can find their libraries without "make install", etc.
+KRB5_RUN_ENV=@KRB5_RUN_ENV@
+KRB5_RUN_VARS=@KRB5_RUN_VARS@
+
 #
 # variables for --with-tcl=
 TCL_LIBS	= @TCL_LIBS@
@@ -403,6 +410,10 @@ TCL_LIBPATH	= @TCL_LIBPATH@
 TCL_RPATH	= @TCL_RPATH@
 TCL_MAYBE_RPATH = @TCL_MAYBE_RPATH@
 TCL_INCLUDES	= @TCL_INCLUDES@
+
+# Crypto and PRNG back-end selections
+CRYPTO_IMPL	= @CRYPTO_IMPL@
+PRNG_ALG	= @PRNG_ALG@
 
 # error table rules
 #
@@ -559,7 +570,7 @@ VALGRIND=
 # Need absolute paths here because under kshd or ftpd we may run programs
 # while in other directories.
 VALGRIND_LOGDIR = `cd $(BUILDTOP)&&pwd`
-VALGRIND1 = valgrind --tool=memcheck --log-file=$(VALGRIND_LOGDIR)/vg --trace-children=yes -v --leak-check=yes --suppressions=`cd $(top_srcdir)&&pwd`/util/valgrind-suppressions
+VALGRIND1 = valgrind --tool=memcheck --log-file=$(VALGRIND_LOGDIR)/vg.%p --trace-children=yes -v --leak-check=yes --suppressions=`cd $(top_srcdir)&&pwd`/util/valgrind-suppressions
 
 # Set OFFLINE=yes to disable tests that assume network connectivity.
 # (Specifically, this concerns the ability to fetch DNS data for
@@ -567,6 +578,9 @@ VALGRIND1 = valgrind --tool=memcheck --log-file=$(VALGRIND_LOGDIR)/vg --trace-ch
 # tests still assume that the local hostname can be resolved into
 # something that looks like an FQDN, with an IPv4 address.
 OFFLINE=no
+
+# Used when running Python tests.
+PYTESTFLAGS=
 
 ##
 ## end of pre.in

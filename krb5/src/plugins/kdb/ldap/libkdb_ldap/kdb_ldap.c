@@ -87,7 +87,7 @@ krb5_ldap_get_db_opt(char *input, char **opt, char **val)
  * ldap get age
  */
 krb5_error_code
-krb5_ldap_db_get_age(context, db_name, age)
+krb5_ldap_get_age(context, db_name, age)
     krb5_context context;
     char *db_name;
     time_t *age;
@@ -526,4 +526,57 @@ int
 kldap_ensure_initialized(void)
 {
     return CALL_INIT_FUNCTION (kldap_init_fn);
+}
+
+krb5_error_code
+krb5_ldap_check_policy_as(krb5_context kcontext, krb5_kdc_req *request,
+                          krb5_db_entry *client, krb5_db_entry *server,
+                          krb5_timestamp kdc_time, const char **status,
+                          krb5_data *e_data)
+{
+    krb5_error_code retval;
+
+    retval = krb5_ldap_lockout_check_policy(kcontext, client, kdc_time);
+    if (retval == KRB5KDC_ERR_CLIENT_REVOKED)
+        *status = "LOCKED_OUT";
+    return retval;
+}
+
+void
+krb5_ldap_audit_as_req(krb5_context kcontext, krb5_kdc_req *request,
+                       krb5_db_entry *client, krb5_db_entry *server,
+                       krb5_timestamp authtime, krb5_error_code error_code)
+{
+    (void) krb5_ldap_lockout_audit(kcontext, client, authtime, error_code);
+}
+
+krb5_error_code
+krb5_ldap_check_allowed_to_delegate(krb5_context context,
+                                    krb5_const_principal client,
+                                    const krb5_db_entry *server,
+                                    krb5_const_principal proxy)
+{
+    krb5_error_code code;
+    krb5_tl_data *tlp;
+
+    code = KRB5KDC_ERR_POLICY;
+
+    for (tlp = server->tl_data; tlp != NULL; tlp = tlp->tl_data_next) {
+        krb5_principal acl;
+
+        if (tlp->tl_data_type != KRB5_TL_CONSTRAINED_DELEGATION_ACL)
+            continue;
+
+        if (krb5_parse_name(context, (char *)tlp->tl_data_contents, &acl) != 0)
+            continue;
+
+        if (krb5_principal_compare(context, proxy, acl)) {
+            code = 0;
+            krb5_free_principal(context, acl);
+            break;
+        }
+        krb5_free_principal(context, acl);
+    }
+
+    return code;
 }

@@ -8,7 +8,12 @@
 @setchapternewpage odd                  @c chapter begins on next odd page
 @c @setchapternewpage on                   @c chapter begins on next page
 @c @smallbook                              @c Format for 7" X 9.25" paper
+@documentencoding UTF-8
 @c %**end of header
+@copying
+Copyright @copyright{} 1985-2010 by the Massachusetts Institute of Technology.
+@end copying
+
 @paragraphindent 0
 @iftex
 @parskip 6pt plus 6pt
@@ -34,15 +39,17 @@
 
 @page
 @vskip 0pt plus 1filll
-
+@insertcopying
 @end titlepage
 
 @comment  node-name,  next,  previous,  up
-@node Top, Copyright, (dir), (dir)
+@node Top, Introduction, (dir), (dir)
 
 @ifinfo
 This document describes how to administrate a @value{PRODUCT}
 installation.
+
+@insertcopying
 @end ifinfo
 
 @c The master menu is updated using emacs19's M-x texinfo-all-menus-update
@@ -61,7 +68,6 @@ installation.
 @c ---------------------------------------------------------------------
 
 @menu
-* Copyright::                   
 * Introduction::                
 * How Kerberos Works::          
 * Configuration Files::         
@@ -72,14 +78,10 @@ installation.
 * Backups of Secure Hosts::     
 * Bug Reporting::               
 * Appendix::                    
+* Copyright::                   
 @end menu
 
-@node Copyright, Introduction, Top, Top
-@unnumbered Copyright
-@include copyright.texinfo
-
-
-@node Introduction, How Kerberos Works, Copyright, Top
+@node Introduction, How Kerberos Works, Top, Top
 @chapter Introduction
 
 @menu
@@ -410,7 +412,8 @@ salt.  The supported values for salts are as follows.
 * capaths::                     
 * dbdefaults::                  
 * dbmodules::                   
-* pkinit client options::
+* plugins::                     
+* pkinit client options::       
 * Sample krb5.conf File::       
 @end menu
 
@@ -466,6 +469,20 @@ ciphers.
 Sets the maximum allowable amount of clockskew in seconds that the
 library  will tolerate before assuming that a Kerberos message is
 invalid.  The default value is @value{DefaultClockskew}.
+
+@itemx k5login_authoritative
+If the value of this relation is true (the default), principals must
+be listed in a local user's k5login file to be granted login access,
+if a k5login file exists.  If the value of this relation is false, a
+principal may still be granted login access through other mechanisms
+even if a k5login file exists but does not list the principal.
+
+@itemx k5login_directory
+If set, the library will look for a local user's k5login file within the
+named directory, with a filename corresponding to the local username.
+If not set, the library will look for k5login files in the user's home
+directory, with the filename @code{.k5login}.  For security reasons,
+k5login files must be owned by the local user or by root.
 
 @itemx kdc_timesync
 If this is set to 1 (for true), then client machines will compute the
@@ -597,6 +614,13 @@ The default value for this flag is @value{DefaultForwardable}.
 @itemx proxiable
 If this flag is set, initial tickets by default will be proxiable.
 The default value for this flag is @value{DefaultProxiable}.
+
+@itemx rdns
+If set to false, prevent the use of reverse DNS resolution when
+translating hostnames into service principal names.  Defaults to
+true.  Setting this flag to false is more secure, but may force
+users to exclusively use fully qualified domain names when
+authenticating to services.
 
 @end table
 
@@ -756,16 +780,17 @@ for this is not currently compiled in by default.
 The local name will be formulated from @i{exp}.
 
 The format for @i{exp} is
-@code{[@i{n}:$@i{d}..@i{string}](@i{regexp})s/@i{pattern}/@i{replacement}/g}.
+@code{[@i{n}:@i{string}](@i{regexp})s/@i{pattern}/@i{replacement}/g}.
 The integer @i{n} indicates how many components the target principal
-should have.  If this matches, then a string will be formed by putting
-together the components of the principal in the order indicated by each
-integer @i{d}, and the arbitrary string @i{string} (i.e. if the
+should have.  If this matches, then a string will be formed from
+@i{string}, substituting the realm of the principal for @code{$0} and
+the @i{n}'th component of the principal for @code{$@i{n}} (e.g. if the
 principal was @value{RANDOMUSER}/admin then [2:$2$1foo] would result in
-the string "admin@value{RANDOMUSER}foo".  If this string matches
-@i{regexp}, then the @code{s//[g]} substitution command will be run over the
-string.  The optional g will cause the substitution to be global over
-the string, instead of replacing only the first match in the string.
+the string "admin@value{RANDOMUSER}foo").  If this string matches
+@i{regexp}, then the @code{s//[g]} substitution command will be run over
+the string.  The optional g will cause the substitution to be global
+over the string, instead of replacing only the first match in the
+string.
 
 @item DEFAULT
 The principal name will be used as the local user name.  If the
@@ -780,13 +805,11 @@ For example:
 @group
 [realms]
     @value{PRIMARYREALM} = @{
-        auth_to_local = @{
-            RULE:[2:$1](@value{RANDOMUSER})s/^.*$/guest/
-            RULE:[2:$1;$2](^.*;admin$)s/;admin$//
-            RULE:[2:$2](^.*;root)s/^.*$/root/
-            DEFAULT
-            @}
-        @}
+        auth_to_local = RULE:[2:$1](@value{RANDOMUSER})s/^.*$/guest/
+        auth_to_local = RULE:[2:$1;$2](^.*;admin$)s/;admin$//
+        auth_to_local = RULE:[2:$2](^.*;root)s/^.*$/root/
+        auto_to_local = DEFAULT
+    @}
 @end group
 @end smallexample
 
@@ -1042,7 +1065,7 @@ This LDAP specific tag indicates the list of LDAP servers that the Kerberos serv
 This LDAP specific tag indicates the number of connections to be maintained per LDAP server. This value is used if the number of connections per LDAP server are not mentioned in the configuration section under [dbmodules]. The default value is 5.
 @end table
 
-@node dbmodules, pkinit client options, dbdefaults, krb5.conf
+@node dbmodules, plugins, dbdefaults, krb5.conf
 @subsection [dbmodules]
 
 Contains database specific parameters used by the database library. Each tag in the [dbmodules] section of the file names a configuration section for database specific parameters that can be referred to by a realm. The value of the tag is a subsection where the relations in that subsection define the database specific parameters.
@@ -1052,6 +1075,23 @@ For each section, the following tags may be specified in the subsection:
 @table @b
 @itemx db_library
 This tag indicates the name of the loadable database library. The value should be @samp{db2} for DB2 database and @samp{kldap} for LDAP database.
+
+@itemx database_name
+This DB2-specific tag indicates the location of the database in the
+filesystem.  The default is @* @code{@value{DefaultDatabaseName}}.
+
+@itemx disable_last_success
+If set to @code{true}, suppresses KDC updates to the ``Last successful
+authentication'' field of principal entries requiring preauthentication.
+Setting this flag may improve performance.  (Principal entries which do
+not require preauthentication never update the ``Last successful
+authentication'' field.)
+
+@itemx disable_lockout
+If set to @code{true}, suppresses KDC updates to the ``Last failed
+authentication'' and ``Failed password attempts'' fields of principal
+entries requiring preauthentication.  Setting this flag may improve
+performance, but also disables account lockout.
 
 @itemx ldap_kerberos_container_dn 
 This LDAP specific tag indicates the DN of the container object where the realm objects will be located.
@@ -1073,12 +1113,81 @@ This LDAP specific tags indicates the number of connections to be maintained per
 
 @end table
 
-@node pkinit client options, Sample krb5.conf File, dbmodules, krb5.conf
+@node plugins, pkinit client options, dbmodules, krb5.conf
+@subsection Plugins
+
+@menu
+* pwqual interface::            
+* kadm5_hook interface::        
+@end menu
+
+Tags in the [plugins] section can be used to register dynamic plugin
+modules and to turn modules on and off.  Not every krb5 pluggable
+interface uses the [plugins] section; the ones that do are documented
+here.
+
+Each pluggable interface corresponds to a subsection of [plugins].
+All subsections support the same tags:
+
+@table @b
+@itemx module
+This tag may have multiple values.  Each value is a string of the form
+"modulename:pathname", which causes the shared object located at
+pathname to be registered as a dynamic module named modulename for the
+pluggable interface.  If pathname is not an absolute path, it will be
+treated as relative to the "krb5/plugins" subdirectory of the krb5
+library directory.
+
+@itemx enable_only
+This tag may have multiple values.  If there are values for this tag,
+then only the named modules will be enabled for the pluggable
+interface.
+
+@itemx disable
+This tag may have multiple values.  If there are values for this tag,
+then the named modules will be disabled for the pluggable interface.
+@end table
+
+The following subsections are currently supported within the [plugins]
+section:
+
+@node pwqual interface, kadm5_hook interface, plugins, plugins
+@subsubsection pwqual interface
+
+The pwqual subsection controls modules for the password quality
+interface, which is used to reject weak passwords when passwords are
+changed.  In addition to any registered dynamic modules, the following
+built-in modules exist (and may be disabled with the disable tag):
+
+@table @b
+@itemx dict
+Checks against the realm dictionary file
+
+@itemx empty
+Rejects empty passwords
+
+@itemx hesiod
+Checks against user information stored in Hesiod (only if Kerberos was
+built with Hesiod support)
+
+@itemx princ
+Checks against components of the principal name
+@end table
+
+@node kadm5_hook interface,  , pwqual interface, plugins
+@subsubsection kadm5_hook interface
+The kadm5_hook interface provides plugins with information on
+principal creation, modification, password changes and deletion. This
+interface can be used to write a plugin to synchronize MIT Kerberos
+with another database such as Active Directory. No plugins are built
+in for this interface.
+
+@node pkinit client options, Sample krb5.conf File, plugins, krb5.conf
 @subsection pkinit options
 
 @menu
-* pkinit identity syntax::
-* pkinit krb5.conf options::
+* pkinit identity syntax::      
+* pkinit krb5.conf options::    
 @end menu
 
 The following are @b{pkinit-specific} options.
@@ -1431,7 +1540,7 @@ Here is an example of a generic @code{krb5.conf} file:
 @menu
 * kdcdefaults::                 
 * realms (kdc.conf)::           
-* pkinit kdc options::
+* pkinit kdc options::          
 * Sample kdc.conf File::        
 @end menu
 
@@ -1460,7 +1569,11 @@ If you wish to change this (which we do not recommend, because the
 current implementation has little protection against denial-of-service
 attacks), the standard port number assigned for Kerberos TCP traffic
 is port 88.
--@end table
+
+@itemx restrict_anonymous_to_tgt
+This flag determines the default value of restrict_anonymous_to_tgt for
+realms.  The default value is @code{false}.
+@end table
 
 @node realms (kdc.conf), pkinit kdc options, kdcdefaults, kdc.conf
 @subsection [realms]
@@ -1482,10 +1595,6 @@ database.  The default is @code{@value{DefaultAclFile}}.
 (String.)  Location of the keytab file that the legacy administration
 daemons @code{kadmind4} and @code{v5passwdd} use to authenticate to
 the database.  The default is @code{@value{DefaultAdminKeytab}}.
-
-@itemx database_name
-(String.)  Location of the Kerberos database for this realm.  The
-default is @* @code{@value{DefaultDatabaseName}}.
 
 @itemx default_principal_expiration
 (Absolute time string.)  Specifies the default expiration date of
@@ -1644,13 +1753,22 @@ software on its application servers updated but another has not.
 
 This option defaults to @code{true}.
 
+@itemx restrict_anonymous_to_tgt
+A boolean value (@code{true}, @code{false}).  If set to @code{true}, the
+KDC will reject ticket requests from anonymous principals to service
+principals other than the realm's ticket-granting service.  This option
+allows anonymous PKINIT to be enabled for use as FAST armor tickets
+without allowing anonymous authentication to services.  By default, the
+value of restrict_anonymous_to_tgt as specified in the [kdcdefaults]
+section is used.
+
 @end table
 
 @node pkinit kdc options, Sample kdc.conf File, realms (kdc.conf), kdc.conf
 @subsection pkinit options
 
 @menu
-* pkinit kdc.conf options::
+* pkinit kdc.conf options::     
 @end menu
 
 The following are @b{pkinit-specific} options.
@@ -2490,10 +2608,10 @@ earlier than krb5-1.2.  See @ref{Supported Encryption Types} and
 @ref{Salts} for possible values.
 
 @item @b{-keepold}
-Keeps the previous kvno's keys around.  There is no easy way to delete
-the old keys, and this flag is usually not necessary except perhaps for
-TGS keys.  Don't use this flag unless you know what you're doing. This 
-option is not supported for the LDAP database
+Keeps the previous kvno's keys around.  This flag is usually not
+necessary except perhaps for TGS keys.  Don't use this flag unless you
+know what you're doing. This option is not supported for the LDAP
+database
 
 
 
@@ -2537,7 +2655,7 @@ passwords kept in the database.
 * Retrieving the List of Policies::  
 * Adding or Modifying Policies::  
 * Deleting Policies::           
-* Updating the History Key::
+* Updating the History Key::    
 @end menu
 
 @node Retrieving Policies, Retrieving the List of Policies, Policies, Policies
@@ -2685,6 +2803,7 @@ it.  The @code{delete_policy} command will fail if it is in use by any
 principals.
 
 @node Updating the History Key,  , Deleting Policies, Policies
+@subsection Updating the History Key
 
 If a policy specifies a number of old keys kept of two or more, the
 stored old keys are encrypted in a history key, which is found in the
@@ -3919,14 +4038,11 @@ well as the new key.  For example:
 @end group
 @end smallexample
 
-There is currently no way to remove the old key without running
-@code{change_password} without the @b{-keepold} flag (and thereby
-invalidating all existing TGTs).  After issuing this command, the old
-key is still valid and is still vulnerable to (for instance) brute force
-attacks.  To completely retire an old key or encryption type, it's
-therefore currently necessary to declare a flag day, run
-@code{change_password} without the @b{-keepold} flag, and force all
-users to acquire new tickets.
+After issuing this command, the old key is still valid and is still
+vulnerable to (for instance) brute force attacks.  To completely
+retire an old key or encryption type, run the @code{purgekeys} command
+to delete keys with older kvnos, ideally first making sure that all
+tickets issued with the old keys have expired.
 
 @node Configuring Kerberos with OpenLDAP back-end, Application Servers, Administrating the Kerberos Database, Top
 @chapter Configuring Kerberos with OpenLDAP back-end
@@ -4475,7 +4591,7 @@ Database from a Dump File}.)
 
 @include send-pr.texinfo
 
-@node Appendix,  , Bug Reporting, Top
+@node Appendix, Copyright, Bug Reporting, Top
 @appendix Appendix
 
 @menu
@@ -5444,6 +5560,10 @@ New Zealand Daylight Time.  (13 hours ahead of GMT.)
 @itemx idle
 International Date Line East.  (12 hours ahead of GMT.)
 @end table
+
+@node Copyright,  , Appendix, Top
+@appendix Copyright
+@include copyright.texinfo
 
 @contents
 @bye

@@ -39,7 +39,6 @@
 #include <dlfcn.h>
 #include <sys/stat.h>
 
-#include <k5-int.h>
 #include "pkinit.h"
 
 /* Remove when FAST PKINIT is settled. */
@@ -508,16 +507,13 @@ verify_kdc_san(krb5_context context,
     char **certhosts = NULL, **cfghosts = NULL;
     krb5_principal *princs = NULL;
     unsigned char ***get_dns;
-    struct srv_dns_entry *kdc_dns_entries = NULL;
-    const char *kdc_realm;
     int i, j;
 
     *valid_san = 0;
     *need_eku_checking = 1;
 
-    kdc_realm = krb5_princ_realm(context, kdcprinc);
     retval = pkinit_libdefault_strings(context,
-				       kdc_realm, 
+                                       krb5_princ_realm(context, kdcprinc),
                                        KRB5_CONF_PKINIT_KDC_HOSTNAME,
                                        &cfghosts);
     if (retval || cfghosts == NULL) {
@@ -578,49 +574,9 @@ verify_kdc_san(krb5_context context,
 
     for (i = 0; certhosts[i] != NULL; i++) {
         for (j = 0; cfghosts != NULL && cfghosts[j] != NULL; j++) {
-            if (!strcmp(cfghosts[j], "<DNS>")) {
-#ifdef KRB5_DNS_LOOKUP
-                struct srv_dns_entry *entry;
-
-                if (kdc_dns_entries == NULL) {
-                    if (k5int_make_srv_query_realm(kdc_realm,
-                                "_kerberos", "_tcp", &kdc_dns_entries)) {
-                        pkiDebug("%s: DNS lookup failed\n", __FUNCTION__);
-                        continue;
-                    }
-
-                    /* Remove trailing dots from DNS names. */
-                    for (entry = kdc_dns_entries; entry != NULL;
-                            entry = entry->next) {
-                        char *cp = strrchr(entry->host, '.');
-
-                        if (cp[1] == '\0') {
-                            *cp = '\0';
-                        }
-                    }
-                }
-
-                for (entry = kdc_dns_entries; entry != NULL;
-                        entry = entry->next) {
-                    pkiDebug("%s: comparing cert name '%s' with DNS name '%s'\n",
-                             __FUNCTION__, certhosts[i], entry->host);
-                    if (!strcasecmp(certhosts[i], entry->host)) {
-                        pkiDebug("%s: we have a dnsName match\n", __FUNCTION__);
-                        *valid_san = 1;
-                        retval = 0;
-                        goto out;
-                    }
-                }
-#else /* KRB5_DNS_LOOKUP */
-                pkiDebug("%s: <DNS> tag used but DNS lookup not enabled in build\n",
-                        __FUNCTION__);
-#endif /* KRB5_DNS_LOOKUP */
-
-                continue;
-            }
             pkiDebug("%s: comparing cert name '%s' with config name '%s'\n",
                      __FUNCTION__, certhosts[i], cfghosts[j]);
-	    if (strcasecmp(certhosts[i], cfghosts[j]) == 0) {
+            if (strcmp(certhosts[i], cfghosts[j]) == 0) {
                 pkiDebug("%s: we have a dnsName match\n", __FUNCTION__);
                 *valid_san = 1;
                 retval = 0;
@@ -646,9 +602,6 @@ out:
     }
     if (cfghosts != NULL)
         profile_free_list(cfghosts);
-    if (kdc_dns_entries != NULL) {
-        k5int_free_srv_dns_data(kdc_dns_entries);
-    }
 
     pkiDebug("%s: returning retval %d, valid_san %d, need_eku_checking %d\n",
              __FUNCTION__, retval, *valid_san, *need_eku_checking);
@@ -1089,13 +1042,6 @@ pkinit_client_process(krb5_context context,
         return EINVAL;
     }
 
-    if (plgctx->cryptoctx == NULL)
-    {
-        retval = pkinit_init_plg_crypto(&plgctx->cryptoctx);
-        if (retval)
-            return retval;
-    }
-
     if (processing_request) {
         pkinit_client_profile(context, plgctx, reqctx,
                               &request->server->realm);
@@ -1247,10 +1193,8 @@ pkinit_client_get_flags(krb5_context kcontext, krb5_preauthtype patype)
 }
 
 static krb5_preauthtype supported_client_pa_types[] = {
-#if 0 /* Doesn't work yet. */
     KRB5_PADATA_PK_AS_REP,
     KRB5_PADATA_PK_AS_REQ,
-#endif
     KRB5_PADATA_PK_AS_REP_OLD,
     KRB5_PADATA_PK_AS_REQ_OLD,
     0
@@ -1370,6 +1314,10 @@ pkinit_client_plugin_init(krb5_context context, void **blob)
         goto errout;
 
     retval = pkinit_init_plg_opts(&ctx->opts);
+    if (retval)
+        goto errout;
+
+    retval = pkinit_init_plg_crypto(&ctx->cryptoctx);
     if (retval)
         goto errout;
 

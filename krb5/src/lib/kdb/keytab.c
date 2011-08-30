@@ -124,13 +124,9 @@ krb5_ktkdb_get_entry(in_context, id, principal, kvno, enctype, entry)
     krb5_keytab_entry   * entry;
 {
     krb5_context          context;
-    krb5_keylist_node  * master_keylist;
-    krb5_keyblock       * master_key;
     krb5_error_code       kerror = 0;
     krb5_key_data       * key_data;
-    krb5_db_entry         db_entry;
-    krb5_boolean          more = 0;
-    int                   n = 0;
+    krb5_db_entry       * db_entry;
     int xrealm_tgt;
     krb5_boolean similar;
 
@@ -146,37 +142,24 @@ krb5_ktkdb_get_entry(in_context, id, principal, kvno, enctype, entry)
         return(kerror);
 
     /* get_principal */
-    kerror = krb5_db_get_principal(context, principal, &
-                                   db_entry, &n, &more);
-    if (kerror) {
-        /*        krb5_db_close_database(context); */
+    kerror = krb5_db_get_principal(context, principal, 0, &db_entry);
+    if (kerror == KRB5_KDB_NOENTRY)
+        return(KRB5_KT_NOTFOUND);
+    if (kerror)
         return(kerror);
-    }
-    if (n != 1) {
-        /* krb5_db_close_database(context); */
-        return KRB5_KT_NOTFOUND;
-    }
 
-    if (db_entry.attributes & KRB5_KDB_DISALLOW_SVR
-        || db_entry.attributes & KRB5_KDB_DISALLOW_ALL_TIX) {
+    if (db_entry->attributes & KRB5_KDB_DISALLOW_SVR
+        || db_entry->attributes & KRB5_KDB_DISALLOW_ALL_TIX) {
         kerror = KRB5_KT_NOTFOUND;
         goto error;
     }
 
     /* match key */
-    kerror = krb5_db_get_mkey_list(context, &master_keylist);
-    if (kerror)
-        goto error;
-
-    kerror = krb5_dbe_find_mkey(context, master_keylist, &db_entry, &master_key);
-    if (kerror)
-        goto error;
-
     /* For cross realm tgts, we match whatever enctype is provided;
      * for other principals, we only match the first enctype that is
      * found.  Since the TGS and AS code do the same thing, then we
      * will only successfully decrypt  tickets we have issued.*/
-    kerror = krb5_dbe_find_enctype(context, &db_entry,
+    kerror = krb5_dbe_find_enctype(context, db_entry,
                                    xrealm_tgt?enctype:-1,
                                    -1, kvno, &key_data);
     if (kerror == KRB5_KDB_NO_MATCHING_KEY)
@@ -185,8 +168,8 @@ krb5_ktkdb_get_entry(in_context, id, principal, kvno, enctype, entry)
         goto error;
 
 
-    kerror = krb5_dbekd_decrypt_key_data(context, master_key,
-                                         key_data, &entry->key, NULL);
+    kerror = krb5_dbe_decrypt_key_data(context, NULL, key_data,
+                                       &entry->key, NULL);
     if (kerror)
         goto error;
 
@@ -213,7 +196,7 @@ krb5_ktkdb_get_entry(in_context, id, principal, kvno, enctype, entry)
 
     /* Close database */
 error:
-    krb5_db_free_principal(context, &db_entry, 1);
+    krb5_db_free_principal(context, db_entry);
     /*    krb5_db_close_database(context); */
     return(kerror);
 }

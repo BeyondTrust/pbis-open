@@ -1,9 +1,9 @@
 /* -*- mode: c; c-basic-offset: 4; indent-tabs-mode: nil -*- */
 #include "gssapiP_krb5.h"
 
-OM_uint32 KRB5_CALLCONV
+OM_uint32
 gss_krb5int_copy_ccache(OM_uint32 *minor_status,
-                        gss_cred_id_t cred_handle,
+                        gss_cred_id_t *cred_handle,
                         const gss_OID desired_object,
                         const gss_buffer_t value)
 {
@@ -22,8 +22,7 @@ gss_krb5int_copy_ccache(OM_uint32 *minor_status,
     out_ccache = (krb5_ccache)value->value;
 
     /* cred handle will have been validated by gssspi_set_cred_option() */
-
-    k5creds = (krb5_gss_cred_id_t) cred_handle;
+    k5creds = (krb5_gss_cred_id_t) *cred_handle;
     code = k5_mutex_lock(&k5creds->lock);
     if (code) {
         *minor_status = code;

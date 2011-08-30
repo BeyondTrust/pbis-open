@@ -173,7 +173,7 @@ krb5int_make_tgs_request_ext(krb5_context context,
     krb5_error_code retval;
     krb5_kdc_req tgsreq;
     krb5_data *scratch, scratch2;
-    krb5_ticket *sec_ticket = 0;
+    krb5_ticket *sec_ticket = NULL;
     krb5_ticket *sec_ticket_arr[2];
     krb5_timestamp time_now;
     krb5_pa_data **combined_padata = NULL;
@@ -188,7 +188,7 @@ krb5int_make_tgs_request_ext(krb5_context context,
      * place holder for us to get credentials for the caller.
      */
     if (!in_cred->ticket.length)
-        return(KRB5_NO_TKT_SUPPLIED);
+        return KRB5_NO_TKT_SUPPLIED;
 
     memset(&tgsreq, 0, sizeof(tgsreq));
 
@@ -200,7 +200,7 @@ krb5int_make_tgs_request_ext(krb5_context context,
     tgsreq.authorization_data.ciphertext.data = NULL;
     tgsreq.rtime = timestruct->renew_till;
     if ((retval = krb5_timeofday(context, &time_now)))
-        return(retval);
+        return retval;
     /* XXX we know they are the same size... */
     *nonce = tgsreq.nonce = (krb5_int32)time_now;
     *timestamp = time_now;
@@ -211,31 +211,30 @@ krb5int_make_tgs_request_ext(krb5_context context,
     if ((retval = krb5_generate_subkey( context, &in_cred->keyblock,
                                         &local_subkey)) != 0)
         return retval;
+    TRACE_SEND_TGS_SUBKEY(context, local_subkey);
 
     if (authorization_data) {
         /* need to encrypt it in the request */
 
         if ((retval = encode_krb5_authdata(authorization_data, &scratch)))
-            goto send_tgs_error_1;
+            goto cleanup;
 
-        if ((retval = krb5_encrypt_helper(context, local_subkey,
-                                          KRB5_KEYUSAGE_TGS_REQ_AD_SUBKEY,
-                                          scratch,
-                                          &tgsreq.authorization_data))) {
-            free(tgsreq.authorization_data.ciphertext.data);
-            krb5_free_data(context, scratch);
-            goto send_tgs_error_1;
-        }
-
+        retval = krb5_encrypt_helper(context, local_subkey,
+                                     KRB5_KEYUSAGE_TGS_REQ_AD_SUBKEY,
+                                     scratch, &tgsreq.authorization_data);
         krb5_free_data(context, scratch);
+        if (retval)
+            goto cleanup;
     }
 
     /* Get the encryption types list */
     if (ktypes) {
         /* Check passed ktypes and make sure they're valid. */
         for (tgsreq.nktypes = 0; ktypes[tgsreq.nktypes]; tgsreq.nktypes++) {
-            if (!krb5_c_valid_enctype(ktypes[tgsreq.nktypes]))
-                return KRB5_PROG_ETYPE_NOSUPP;
+            if (!krb5_c_valid_enctype(ktypes[tgsreq.nktypes])) {
+                retval = KRB5_PROG_ETYPE_NOSUPP;
+                goto cleanup;
+            }
         }
         tgsreq.ktype = (krb5_enctype *)ktypes;
     } else {
@@ -243,10 +242,11 @@ krb5int_make_tgs_request_ext(krb5_context context,
         krb5_get_tgs_ktypes(context, sname, &(tgsreq.ktype));
         for(tgsreq.nktypes = 0; tgsreq.ktype[tgsreq.nktypes]; tgsreq.nktypes++);
     }
+    TRACE_SEND_TGS_ETYPES(context, tgsreq.ktype);
 
     if (second_ticket) {
         if ((retval = decode_krb5_ticket(second_ticket, &sec_ticket)))
-            goto send_tgs_error_1;
+            goto cleanup;
         sec_ticket_arr[0] = sec_ticket;
         sec_ticket_arr[1] = 0;
         tgsreq.second_ticket = sec_ticket_arr;
@@ -257,7 +257,7 @@ krb5int_make_tgs_request_ext(krb5_context context,
 
     /* encode the body; then checksum it */
     if ((retval = encode_krb5_kdc_req_body(&tgsreq, &scratch)))
-        goto send_tgs_error_2;
+        goto cleanup;
 
     /*
      * Get an ap_req.
@@ -265,19 +265,19 @@ krb5int_make_tgs_request_ext(krb5_context context,
     if ((retval = tgs_construct_tgsreq(context, scratch, in_cred,
                                        &scratch2, local_subkey))) {
         krb5_free_data(context, scratch);
-        goto send_tgs_error_2;
+        goto cleanup;
     }
     krb5_free_data(context, scratch);
 
-    tgsreq.padata = (krb5_pa_data **)calloc(2, sizeof(krb5_pa_data *));
+    tgsreq.padata = k5alloc(2 * sizeof(krb5_pa_data *), &retval);
     if (tgsreq.padata == NULL) {
         free(scratch2.data);
-        goto send_tgs_error_2;
+        goto cleanup;
     }
-    tgsreq.padata[0] = (krb5_pa_data *)malloc(sizeof(krb5_pa_data));
+    tgsreq.padata[0] = k5alloc(sizeof(krb5_pa_data), &retval);
     if (tgsreq.padata[0] == NULL) {
         free(scratch2.data);
-        goto send_tgs_error_2;
+        goto cleanup;
     }
     tgsreq.padata[0]->pa_type = KRB5_PADATA_AP_REQ;
     tgsreq.padata[0]->length = scratch2.length;
@@ -297,29 +297,26 @@ krb5int_make_tgs_request_ext(krb5_context context,
         for (i = 0; padata[i]; i++)
             ;
 
-        tmp = (krb5_pa_data **)realloc(tgsreq.padata,
-                                       (i + 2) * sizeof(*combined_padata));
-        if (tmp == NULL)
-            goto send_tgs_error_2;
+        tmp = realloc(tgsreq.padata, (i + 2) * sizeof(*combined_padata));
+        if (tmp == NULL) {
+            retval = ENOMEM;
+            goto cleanup;
+        }
 
         tgsreq.padata = tmp;
 
         for (i = 0; padata[i]; i++) {
             krb5_pa_data *pa;
 
-            pa = tgsreq.padata[1 + i] = (krb5_pa_data *)malloc(sizeof(krb5_pa_data));
-            if (tgsreq.padata == NULL) {
-                retval = ENOMEM;
-                goto send_tgs_error_2;
-            }
+            pa = tgsreq.padata[1 + i] = k5alloc(sizeof(krb5_pa_data), &retval);
+            if (tgsreq.padata == NULL)
+                goto cleanup;
 
             pa->pa_type = padata[i]->pa_type;
             pa->length = padata[i]->length;
-            pa->contents = (krb5_octet *)malloc(padata[i]->length);
-            if (pa->contents == NULL) {
-                retval = ENOMEM;
-                goto send_tgs_error_2;
-            }
+            pa->contents = k5alloc(padata[i]->length, &retval);
+            if (pa->contents == NULL)
+                goto cleanup;
             memcpy(pa->contents, padata[i]->contents, padata[i]->length);
         }
         tgsreq.padata[1 + i] = NULL;
@@ -327,114 +324,26 @@ krb5int_make_tgs_request_ext(krb5_context context,
 
     if (pacb_fct != NULL) {
         if ((retval = (*pacb_fct)(context, local_subkey, &tgsreq, pacb_data)))
-            goto send_tgs_error_2;
+            goto cleanup;
     }
     /* the TGS_REQ is assembled in tgsreq, so encode it */
     if ((retval = encode_krb5_tgs_req(&tgsreq, &scratch)))
-        goto send_tgs_error_2;
-
-    /* now send request & get response from KDC */
-    krb5_free_pa_data(context, tgsreq.padata);
-    tgsreq.padata = NULL;
+        goto cleanup;
 
     *request_data = *scratch;
     free(scratch);
     scratch = NULL;
 
-send_tgs_error_2:;
-    if (tgsreq.padata)
-        krb5_free_pa_data(context, tgsreq.padata);
-    if (sec_ticket)
-        krb5_free_ticket(context, sec_ticket);
+    *subkey = local_subkey;
+    local_subkey = NULL;
 
-send_tgs_error_1:;
+cleanup:
+    krb5_free_pa_data(context, tgsreq.padata);
+    krb5_free_ticket(context, sec_ticket);
     if (ktypes == NULL)
         free(tgsreq.ktype);
-    if (tgsreq.authorization_data.ciphertext.data) {
-        memset(tgsreq.authorization_data.ciphertext.data, 0,
-               tgsreq.authorization_data.ciphertext.length);
-        free(tgsreq.authorization_data.ciphertext.data);
-    }
-
-    if (retval)
-        krb5_free_keyblock(context, local_subkey);
-    else
-        *subkey = local_subkey;
-
-    return retval;
-
-}
-
-krb5_error_code
-krb5int_send_tgs(krb5_context context, krb5_flags kdcoptions,
-                 const krb5_ticket_times *timestruct,
-                 const krb5_enctype *ktypes,
-                 krb5_const_principal sname, krb5_address *const *addrs,
-                 krb5_authdata *const *authorization_data,
-                 krb5_pa_data *const *padata, const krb5_data *second_ticket,
-                 krb5_creds *in_cred,
-                 krb5_error_code (*pacb_fct)(krb5_context,
-                                             krb5_keyblock *,
-                                             krb5_kdc_req *,
-                                             void *),
-                 void *pacb_data,
-                 krb5_response *rep, krb5_keyblock **subkey_out)
-{
-    krb5_error_code retval;
-    krb5_data request;
-    int tcp_only = 0, use_master;
-    krb5_timestamp now;
-    krb5_int32 nonce;
-    krb5_keyblock *subkey;
-    krb5_error *err_reply = NULL;
-    krb5_ui_4 err;
-
-    *subkey_out = NULL;
-    rep->message_type = KRB5_ERROR;
-
-    retval = krb5int_make_tgs_request_ext(context, kdcoptions, timestruct,
-                                          ktypes, sname, addrs,
-                                          authorization_data, padata,
-                                          second_ticket, in_cred,
-                                          pacb_fct, pacb_data, &request, &now,
-                                          &nonce, &subkey);
-    if (retval != 0)
-        return retval;
-
-    rep->expected_nonce = nonce;
-    rep->request_time = now;
-
-    for (tcp_only = 0; tcp_only <= 1; tcp_only++) {
-        use_master = 0;
-        retval = krb5_sendto_kdc(context, &request,
-                                 krb5_princ_realm(context, sname),
-                                 &rep->response, &use_master, tcp_only);
-        if (retval != 0)
-            break;
-
-        if (krb5_is_tgs_rep(&rep->response)) {
-            /* Successful response; set the output subkey. */
-            rep->message_type = KRB5_TGS_REP;
-            *subkey_out = subkey;
-            subkey = NULL;
-            break;
-        } else if (krb5_is_krb_error(&rep->response) && !tcp_only) {
-            /* Decode the error response to extract the code. */
-            retval = decode_krb5_error(&rep->response, &err_reply);
-            err = (retval == 0) ? err_reply->error : 0;
-            krb5_free_error(context, err_reply);
-            if (err == KRB_ERR_RESPONSE_TOO_BIG) {
-                /* Try again with TCP. */
-                krb5_free_data_contents(context, &rep->response);
-                continue;
-            }
-        }
-        /* Unexpected message type, or an error other than RESPONSE_TOO_BIG. */
-        rep->message_type = KRB5_ERROR;
-        break;
-    }
-
-    krb5_free_data_contents(context, &request);
-    krb5_free_keyblock(context, subkey);
+    zapfree(tgsreq.authorization_data.ciphertext.data,
+            tgsreq.authorization_data.ciphertext.length);
+    krb5_free_keyblock(context, local_subkey);
     return retval;
 }

@@ -18,7 +18,7 @@
 .\" M.I.T. makes no representations about the suitability of
 .\" this software for any purpose.  It is provided "as is" without express
 .\" or implied warranty.
-.\" "
+.\"
 .TH KRB5.CONF 5
 .SH NAME
 krb5.conf \- Kerberos configuration file
@@ -60,6 +60,17 @@ multiple values.  Here is an example of the INI-style format used by
 .sp
 
 .PP
+.I krb5.conf
+can include other files using the directives "include FILENAME" or
+"includedir DIRNAME", which must occur at the beginning of a line.
+FILENAME or DIRNAME should be an absolute path.  The named file or
+directory must exist and be readable.  Including a directory includes
+all files within the directory whose names consist solely of
+alphanumeric characters, dashes, or underscores.  Included profile
+files are syntactically independent of their parents, so each included
+file must begin with a section header.
+
+.PP
 The following sections are currently used in the 
 .I krb5.conf
 file:
@@ -99,6 +110,9 @@ Contains default values for database specific parameters.
 
 .IP [dbmodules]
 Contains database specific parameters used by the database library.
+
+.ip [plugins]
+Contains plugin module registration and filtering parameters.
 .PP 
 Each of these sections will be covered in more details in the following
 sections.
@@ -140,6 +154,20 @@ infrastructure adopts stronger ciphers.
 This relation sets the maximum allowable amount of clockskew in seconds
 that the library will tolerate before assuming that a Kerberos message
 is invalid.  The default value is 300 seconds, or five minutes.
+
+.IP k5login_authoritative
+If the value of this relation is true (the default), principals must
+be listed in a local user's k5login file to be granted login access,
+if a k5login file exists.  If the value of this relation is false, a
+principal may still be granted login access through other mechanisms
+even if a k5login file exists but does not list the principal.
+
+.IP k5login_directory
+If set, the library will look for a local user's k5login file within
+the named directory, with a filename corresponding to the local
+username.  If not set, the library will look for k5login files in the
+user's home directory, with the filename .k5login.  For security
+reasons, k5login files must be owned by the local user or by root.
 
 .IP kdc_timesync 
 If the value of this relation is non-zero (the default), the library
@@ -239,6 +267,13 @@ The default value for this flag is false.
 .IP proxiable
 If this flag is set, initial tickets by default will be proxiable.
 The default value for this flag is false.
+
+.IP rdns
+If set to false, prevent the use of reverse DNS resolution when
+translating hostnames into service principal names.  Defaults to
+true.  Setting this flag to false is more secure, but may force
+users to exclusively use fully qualified domain names when
+authenticating to services.
 
 .SH APPDEFAULTS SECTION
 
@@ -585,6 +620,23 @@ The following tags are used in this section:
 This relation indicates the name of the configuration section under dbmodules
 for database specific parameters used by the loadable database library.
 
+.IP database_name
+This DB2-specific tag indicates the location of the database in the
+filesystem.
+
+.IP disable_last_success
+If set to true, suppresses KDC updates to the "Last successful
+authentication" field of principal entries requiring
+preauthentication.  Setting this flag may improve performance.
+(Principal entries which do not require preauthentication never update
+the "Last successful authentication" field.)
+
+.IP disable_lockout
+If set to true, suppresses KDC updates to the "Last failed
+authentication" and "Failed password attempts" fields of principal
+entries requiring preauthentication.  Setting this flag may improve
+performance, but also disables account lockout.
+
 .IP ldap_kerberos_container_dn 
 This LDAP specific tag indicates the DN of the container object where the realm
 objects will be located. This value is used if no object DN is mentioned in the
@@ -654,6 +706,67 @@ is whitespace-separated. The LDAP server is specified by a LDAP URI.
 .IP ldap_conns_per_server
 This LDAP specific tag indicates the number of connections to be maintained per
 LDAP server.
+
+.SH PLUGINS SECTION
+
+Tags in the [plugins] section can be used to register dynamic plugin
+modules and to turn modules on and off.  Not every krb5 pluggable
+interface uses the [plugins] section; the ones that do are documented
+here.
+
+.PP
+Each pluggable interface corresponds to a subsection of [plugins].
+All subsections support the same tags:
+
+.IP module
+This tag may have multiple values.  Each value is a string of the form
+"modulename:pathname", which causes the shared object located at
+pathname to be registered as a dynamic module named modulename for the
+pluggable interface.  If pathname is not an absolute path, it will be
+treated as relative to the "krb5/plugins" subdirectory of the krb5
+library directory.
+
+.IP enable_only
+This tag may have multiple values.  If there are values for this tag,
+then only the named modules will be enabled for the pluggable
+interface.
+
+.IP disable
+This tag may have multiple values.  If there are values for this tag,
+then the named modules will be disabled for the pluggable interface.
+
+.PP
+The following subsections are currently supported within the [plugins]
+section:
+
+.SS pwqual interface
+
+The pwqual subsection controls modules for the password quality
+interface, which is used to reject weak passwords when passwords are
+changed.  In addition to any registered dynamic modules, the following
+built-in modules exist (and may be disabled with the disable tag):
+
+.IP dict
+Checks against the realm dictionary file
+
+.IP empty
+Rejects empty passwords
+
+.IP hesiod
+Checks against user information stored in Hesiod (only if Kerberos was
+built with Hesiod support)
+
+.IP princ
+Checks against components of the principal name
+
+.SS kadm5_hook interface
+
+The kadm5_hook interface provides plugins with information on
+principal creation, modification, password changes and deletion. This
+interface can be used to write a plugin to synchronize MIT Kerberos
+with another database such as Active Directory. No plugins are built
+in for this interface.
+
 .SH FILES 
 /etc/krb5.conf
 .SH SEE ALSO

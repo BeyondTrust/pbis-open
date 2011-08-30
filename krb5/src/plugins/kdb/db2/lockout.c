@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <kadm5/server_internal.h>
+#include "kdb5.h"
 #include "kdb_db2.h"
 
 /*
@@ -72,17 +73,14 @@ lookup_lockout_policy(krb5_context context,
 
     if (adb.policy != NULL) {
         osa_policy_ent_t policy = NULL;
-        int count = 0;
 
-        code = krb5_db2_get_policy(context, adb.policy,
-                                   &policy, &count);
-        if (code == 0 && count == 1) {
+        code = krb5_db2_get_policy(context, adb.policy, &policy);
+        if (code == 0) {
             *pw_max_fail = policy->pw_max_fail;
             *pw_failcnt_interval = policy->pw_failcnt_interval;
             *pw_lockout_duration = policy->pw_lockout_duration;
-        }
-        if (policy != NULL)
             krb5_db2_free_policy(context, policy);
+        }
     }
 
     xdr_destroy(&xdrs);
@@ -102,6 +100,13 @@ locked_check_p(krb5_context context,
                krb5_timestamp lockout_duration,
                krb5_db_entry *entry)
 {
+    krb5_timestamp unlock_time;
+
+    /* If the entry was unlocked since the last failure, it's not locked. */
+    if (krb5_dbe_lookup_last_admin_unlock(context, entry, &unlock_time) == 0 &&
+        entry->last_failed <= unlock_time)
+        return FALSE;
+
     if (max_fail == 0 || entry->fail_auth_count < max_fail)
         return FALSE;
 
@@ -120,6 +125,10 @@ krb5_db2_lockout_check_policy(krb5_context context,
     krb5_kvno max_fail = 0;
     krb5_deltat failcnt_interval = 0;
     krb5_deltat lockout_duration = 0;
+    krb5_db2_context *db_ctx = context->dal_handle->db_context;
+
+    if (db_ctx->disable_lockout)
+        return 0;
 
     code = lookup_lockout_policy(context, entry, &max_fail,
                                  &failcnt_interval,
@@ -143,7 +152,9 @@ krb5_db2_lockout_audit(krb5_context context,
     krb5_kvno max_fail = 0;
     krb5_deltat failcnt_interval = 0;
     krb5_deltat lockout_duration = 0;
-    int nentries = 1;
+    krb5_db2_context *db_ctx = context->dal_handle->db_context;
+    krb5_boolean need_update = FALSE;
+    krb5_timestamp unlock_time;
 
     switch (status) {
     case 0:
@@ -158,38 +169,50 @@ krb5_db2_lockout_audit(krb5_context context,
         return 0;
     }
 
-    code = lookup_lockout_policy(context, entry, &max_fail,
-                                 &failcnt_interval,
-                                 &lockout_duration);
-    if (code != 0)
-        return code;
+    if (!db_ctx->disable_lockout) {
+        code = lookup_lockout_policy(context, entry, &max_fail,
+                                     &failcnt_interval, &lockout_duration);
+        if (code != 0)
+            return code;
+    }
 
-    assert (!locked_check_p(context, stamp, max_fail, lockout_duration, entry));
-
+    /* Only mark the authentication as successful if the entry
+     * required preauthentication, otherwise we have no idea. */
     if (status == 0 && (entry->attributes & KRB5_KDB_REQUIRES_PRE_AUTH)) {
-        /*
-         * Only mark the authentication as successful if the entry
-         * required preauthentication, otherwise we have no idea.
-         */
-        entry->fail_auth_count = 0;
-        entry->last_success = stamp;
-    } else if (status == KRB5KDC_ERR_PREAUTH_FAILED ||
-               status == KRB5KRB_AP_ERR_BAD_INTEGRITY) {
+        if (!db_ctx->disable_lockout && entry->fail_auth_count != 0) {
+            entry->fail_auth_count = 0;
+            need_update = TRUE;
+        }
+        if (!db_ctx->disable_last_success) {
+            entry->last_success = stamp;
+            need_update = TRUE;
+        }
+    } else if (!db_ctx->disable_lockout &&
+               (status == KRB5KDC_ERR_PREAUTH_FAILED ||
+                status == KRB5KRB_AP_ERR_BAD_INTEGRITY)) {
+        if (krb5_dbe_lookup_last_admin_unlock(context, entry,
+                                              &unlock_time) == 0 &&
+            entry->last_failed <= unlock_time) {
+            /* Reset fail_auth_count after administrative unlock. */
+            entry->fail_auth_count = 0;
+        }
+
         if (failcnt_interval != 0 &&
             stamp > entry->last_failed + failcnt_interval) {
-            /* Reset fail_auth_count after failcnt_interval */
+            /* Reset fail_auth_count after failcnt_interval. */
             entry->fail_auth_count = 0;
         }
 
         entry->last_failed = stamp;
         entry->fail_auth_count++;
-    } else
-        return 0; /* nothing to do */
+        need_update = TRUE;
+    }
 
-    code = krb5_db2_db_put_principal(context, entry,
-                                     &nentries, NULL);
-    if (code != 0)
-        return code;
+    if (need_update) {
+        code = krb5_db2_put_principal(context, entry, NULL);
+        if (code != 0)
+            return code;
+    }
 
     return 0;
 }

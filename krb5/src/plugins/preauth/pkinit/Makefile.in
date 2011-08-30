@@ -1,4 +1,4 @@
-mydir=plugins/preauth/pkinit
+mydir=plugins$(S)preauth$(S)pkinit
 BUILDTOP=$(REL)..$(S)..$(S)..
 KRB5_RUN_ENV = @KRB5_RUN_ENV@
 KRB5_CONFIG_SETUP = KRB5_CONFIG=$(top_srcdir)/config-files/krb5.conf ; export KRB5_CONFIG ;
@@ -12,6 +12,7 @@ LOCALINCLUDES = -I../../../include/krb5 -I.
 LIBBASE=pkinit
 LIBMAJOR=0
 LIBMINOR=0
+SO_EXT=.so
 RELDIR=../plugins/preauth/pkinit
 # Depends on libk5crypto and libkrb5
 SHLIB_EXPDEPS = \
@@ -48,7 +49,7 @@ install-unix:: install-libs
 clean-unix:: clean-libs clean-libobjs
 
 clean::
-	$(RM) lib$(LIBBASE)$(DYNOBJEXT)
+	$(RM) lib$(LIBBASE)$(SO_EXT)
 
 @libnover_frag@
 @libobj_frag@

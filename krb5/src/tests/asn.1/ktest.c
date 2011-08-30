@@ -868,8 +868,6 @@ krb5_error_code ktest_make_sample_ad_signedpath_data(p)
     retval = ktest_make_sample_principal(&p->delegated[0]);
     if (retval) return retval;
     p->delegated[1] = NULL;
-    retval = ktest_make_sample_principal(&p->client);
-    if (retval) return retval;
     retval = ktest_make_sample_authorization_data(&p->authorization_data);
     if (retval) return retval;
     retval = ktest_make_sample_pa_data_array(&p->method_data);
@@ -892,32 +890,24 @@ krb5_error_code ktest_make_sample_ad_signedpath(p)
     return retval;
 }
 
-krb5_error_code ktest_make_sample_pa_s4u_x509_user(p)
-    krb5_pa_s4u_x509_user *p;
+krb5_error_code ktest_make_sample_iakerb_header(ih)
+    krb5_iakerb_header *ih;
 {
     krb5_error_code retval;
-    krb5_s4u_userid *u = &p->user_id;
-    u->nonce = 13243546;
-    retval = ktest_make_sample_principal(&u->user);
+    retval = ktest_make_sample_data(&(ih->target_realm));
     if (retval) return retval;
-    u->subject_cert.data = strdup("pa_s4u_x509_user");
-    if (u->subject_cert.data == NULL) return ENOMEM;
-    u->subject_cert.length = strlen(u->subject_cert.data);
-    u->options = 0x80000000;
-    retval = ktest_make_sample_checksum(&p->cksum);
+    ih->cookie = k5alloc(sizeof(krb5_data), &retval);
     if (retval) return retval;
-    return 0;
+    retval = ktest_make_sample_data(ih->cookie);
+    if (retval) return retval;
+    return retval;
 }
 
-krb5_error_code ktest_make_sample_ad_kdcissued(p)
-    krb5_ad_kdcissued *p;
+krb5_error_code ktest_make_sample_iakerb_finished(ih)
+    krb5_iakerb_finished *ih;
 {
     krb5_error_code retval;
-    retval = ktest_make_sample_checksum(&p->ad_checksum);
-    if (retval) return retval;
-    retval = ktest_make_sample_principal(&p->i_principal);
-    if (retval) return retval;
-    retval = ktest_make_sample_authorization_data(&p->elements);
+    retval = ktest_make_sample_checksum(&ih->checksum);
     if (retval) return retval;
     return retval;
 }
@@ -1564,20 +1554,17 @@ void ktest_empty_ad_signedpath(p)
     ktest_destroy_pa_data_array(&p->method_data);
 }
 
-void ktest_empty_pa_s4u_x509_user(p)
-    krb5_pa_s4u_x509_user *p;
+void ktest_empty_iakerb_header(p)
+    krb5_iakerb_header *p;
 {
-    ktest_destroy_principal(&p->user_id.user);
-    ktest_empty_data(&p->user_id.subject_cert);
-    if (p->cksum.contents) free(p->cksum.contents);
+    krb5_free_data_contents(NULL, &p->target_realm);
+    krb5_free_data(NULL, p->cookie);
 }
 
-void ktest_empty_ad_kdcissued(p)
-    krb5_ad_kdcissued *p;
+void ktest_empty_iakerb_finished(p)
+    krb5_iakerb_finished *p;
 {
-    if (p->ad_checksum.contents) free(p->ad_checksum.contents);
-    ktest_destroy_principal(&p->i_principal);
-    ktest_destroy_authorization_data(&p->elements);
+    krb5_free_checksum_contents(NULL, &p->checksum);
 }
 
 #ifdef ENABLE_LDAP

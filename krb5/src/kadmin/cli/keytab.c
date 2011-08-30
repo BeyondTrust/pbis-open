@@ -2,7 +2,7 @@
 /*
  * Copyright 1993 OpenVision Technologies, Inc., All Rights Reserved.
  *
- * $Id: keytab.c 24131 2010-06-10 21:14:34Z tlyu $
+ * $Id: keytab.c 24123 2010-06-08 18:18:03Z ghudson $
  * $Source$
  */
 
@@ -338,11 +338,9 @@ add_principal(void *lhandle, char *keytab_str, krb5_keytab keytab,
     }
 
 cleanup:
-    if (nkeys) {
-        for (i = 0; i < nkeys; i++)
-            krb5_free_keyblock_contents(context, &keys[i]);
-        free(keys);
-    }
+    for (i = 0; i < nkeys; i++)
+        krb5_free_keyblock_contents(context, &keys[i]);
+    free(keys);
     krb5_free_principal(context, princ);
 }
 
@@ -479,7 +477,7 @@ etype_string(krb5_enctype enctype)
     static char buf[100];
     krb5_error_code ret;
 
-    ret = krb5_enctype_to_string(enctype, buf, sizeof(buf));
+    ret = krb5_enctype_to_name(enctype, FALSE, buf, sizeof(buf));
     if (ret)
         snprintf(buf, sizeof(buf), "etype %d", enctype);
 

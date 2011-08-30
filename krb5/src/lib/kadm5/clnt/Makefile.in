@@ -1,10 +1,10 @@
-mydir=lib/kadm5/clnt
+mydir=lib$(S)kadm5$(S)clnt
 BUILDTOP=$(REL)..$(S)..$(S)..
 LOCALINCLUDES = -I$(BUILDTOP)/include/kadm5
 DEFS=
 
 LIBBASE=kadm5clnt_mit
-LIBMAJOR=7
+LIBMAJOR=8
 LIBMINOR=0
 STOBJLISTS=../OBJS.ST OBJS.ST
 SHLIB_EXPDEPS=\

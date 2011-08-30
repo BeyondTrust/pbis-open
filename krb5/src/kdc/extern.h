@@ -50,7 +50,6 @@ typedef struct __kdc_realm_data {
     /*
      * Database per-realm data.
      */
-    char *              realm_dbname;   /* Database name for realm          */
     char *              realm_stash;    /* Stash file name for realm        */
     char *              realm_mpname;   /* Master principal name for realm  */
     krb5_principal      realm_mprinc;   /* Master principal for realm       */
@@ -75,6 +74,7 @@ typedef struct __kdc_realm_data {
     krb5_deltat         realm_maxlife;  /* Maximum ticket life for realm    */
     krb5_deltat         realm_maxrlife; /* Maximum renewable life for realm */
     krb5_boolean        realm_reject_bad_transit; /* Accept unverifiable transited_realm ? */
+    krb5_boolean        realm_restrict_anon;  /* Anon to local TGT only */
 } kdc_realm_t;
 
 extern kdc_realm_t      **kdc_realmlist;
@@ -96,17 +96,14 @@ kdc_realm_t *find_realm_data (char *, krb5_ui_4);
 #define master_princ                    kdc_active_realm->realm_mprinc
 #define tgs_server                      kdc_active_realm->realm_tgsprinc
 #define reject_bad_transit              kdc_active_realm->realm_reject_bad_transit
+#define restrict_anon                   kdc_active_realm->realm_restrict_anon
 
 /* various externs for KDC */
 extern krb5_data        empty_string;   /* an empty string */
 extern krb5_timestamp   kdc_infinity;   /* greater than all other timestamps */
-extern krb5_rcache      kdc_rcache;     /* replay cache */
 extern krb5_keyblock    psr_key;        /* key for predicted sam response */
 extern const int        kdc_modifies_kdb;
 extern krb5_int32       max_dgram_reply_size; /* maximum datagram size */
 
 extern const int        vague_errors;
-
-extern volatile int signal_requests_exit;
-extern volatile int signal_requests_hup;
 #endif /* __KRB5_KDC_EXTERN__ */

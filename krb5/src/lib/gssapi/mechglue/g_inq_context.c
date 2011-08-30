@@ -116,7 +116,7 @@ gss_inquire_context(
 			(src_name ? &localSourceName : NULL),
 			(targ_name ? &localTargName : NULL),
 			lifetime_rec,
-			mech_type,
+			NULL,
 			ctx_flags,
 			locally_initiated,
 			opened);
@@ -157,5 +157,8 @@ gss_inquire_context(
         }
     }
 
+    /* spec says mech type must point to static storage */
+    if (mech_type)
+	*mech_type = &mech->mech_type;
     return(GSS_S_COMPLETE);
 }

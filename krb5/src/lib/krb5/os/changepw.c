@@ -80,10 +80,8 @@ locate_kpasswd(krb5_context context, const krb5_data *realm,
                 krb5_ui_2 kpasswd_port = htons(DEFAULT_KPASSWD_PORT);
                 if (a->ai_family == AF_INET)
                     sa2sin (a->ai_addr)->sin_port = kpasswd_port;
-#ifdef KRB5_USE_INET6
                 if (a->ai_family == AF_INET6)
                     sa2sin6 (a->ai_addr)->sin6_port = kpasswd_port;
-#endif
                 if (sockType != SOCK_STREAM)
                     a->ai_socktype = sockType;
             }
@@ -141,13 +139,12 @@ kpasswd_sendto_msg_callback(struct conn_state *conn,
         local_kaddr.addrtype = ADDRTYPE_INET;
         local_kaddr.length = sizeof(ss2sin(&local_addr)->sin_addr);
         local_kaddr.contents = (krb5_octet *) &ss2sin(&local_addr)->sin_addr;
-#ifdef KRB5_USE_INET6
     } else if (local_addr.ss_family == AF_INET6 &&
-               ss2sin6(&local_addr)->sin6_addr.s6_addr != 0) {
+               memcmp(ss2sin6(&local_addr)->sin6_addr.s6_addr,
+                      in6addr_any.s6_addr, sizeof(in6addr_any.s6_addr)) != 0) {
         local_kaddr.addrtype = ADDRTYPE_INET6;
         local_kaddr.length = sizeof(ss2sin6(&local_addr)->sin6_addr);
         local_kaddr.contents = (krb5_octet *) &ss2sin6(&local_addr)->sin6_addr;
-#endif
     } else {
         krb5_address **addrs;
 
@@ -269,6 +266,7 @@ change_set_password(krb5_context context,
         callback_info.context = (void*) &callback_ctx;
         callback_info.pfn_callback = kpasswd_sendto_msg_callback;
         callback_info.pfn_cleanup = kpasswd_sendto_msg_cleanup;
+        krb5_free_data_contents(callback_ctx.context, &chpw_rep);
 
         if ((code = krb5int_sendto(callback_ctx.context,
                                    NULL,
@@ -296,13 +294,11 @@ change_set_password(krb5_context context,
             remote_kaddr.length = sizeof(ss2sin(&remote_addr)->sin_addr);
             remote_kaddr.contents =
                 (krb5_octet *) &ss2sin(&remote_addr)->sin_addr;
-#ifdef KRB5_USE_INET6
         } else if (remote_addr.ss_family == AF_INET6) {
             remote_kaddr.addrtype = ADDRTYPE_INET6;
             remote_kaddr.length = sizeof(ss2sin6(&remote_addr)->sin6_addr);
             remote_kaddr.contents =
                 (krb5_octet *) &ss2sin6(&remote_addr)->sin6_addr;
-#endif
         } else {
             break;
         }

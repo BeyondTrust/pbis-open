@@ -47,6 +47,33 @@ int KRB5_CALLCONV __gss_userok
 	 const char * /*username*/);
 #endif
 
+OM_uint32 KRB5_CALLCONV
+gss_acquire_cred_with_password(
+    OM_uint32 *,        /* minor_status */
+    const gss_name_t,   /* desired_name */
+    const gss_buffer_t, /* password */
+    OM_uint32,          /* time_req */
+    const gss_OID_set,  /* desired_mechs */
+    gss_cred_usage_t,   /* cred_usage */
+    gss_cred_id_t *,    /* output_cred_handle */
+    gss_OID_set *,      /* actual_mechs */
+    OM_uint32 *);       /* time_rec */
+
+OM_uint32 KRB5_CALLCONV
+gss_add_cred_with_password(
+    OM_uint32 *,        /* minor_status */
+    const gss_cred_id_t,/* input_cred_handle */
+    const gss_name_t,   /* desired_name */
+    const gss_OID,      /* desired_mech */
+    const gss_buffer_t, /* password */
+    gss_cred_usage_t,   /* cred_usage */
+    OM_uint32,          /* initiator_time_req */
+    OM_uint32,          /* acceptor_time_req */
+    gss_cred_id_t *,    /* output_cred_handle */
+    gss_OID_set *,      /* actual_mechs */
+    OM_uint32 *,        /* initiator_time_rec */
+    OM_uint32 *);       /* acceptor_time_rec */
+
 /*
  * GGF extensions
  */
@@ -88,10 +115,9 @@ OM_uint32 KRB5_CALLCONV gss_set_sec_context_option
 	 const gss_OID /*desired_object*/,
 	 const gss_buffer_t /*value*/);
 
-/* XXX do these really belong in this header? */
-OM_uint32 KRB5_CALLCONV gssspi_set_cred_option
+OM_uint32 KRB5_CALLCONV gss_set_cred_option
 	(OM_uint32 * /*minor_status*/,
-	 gss_cred_id_t /*cred*/,
+	 gss_cred_id_t * /*cred*/,
 	 const gss_OID /*desired_object*/,
 	 const gss_buffer_t /*value*/);
 

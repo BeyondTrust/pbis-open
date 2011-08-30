@@ -116,12 +116,12 @@ main (int argc, char *argv[])
 
     switch (how) {
     case LOOKUP_CONF:
-        err = krb5_locate_srv_conf (ctx, &realm, "kdc", &al, 0,
+        err = krb5_locate_srv_conf (ctx, &realm, "kdc", &al,
                                     htons (88), htons (750));
         break;
 
     case LOOKUP_DNS:
-        err = krb5_locate_srv_dns_1 (&realm, "_kerberos", "_udp", &al, 0);
+        err = locate_srv_dns_1 (&realm, "_kerberos", "_udp", &al, 0);
         break;
 
     case LOOKUP_WHATEVER:

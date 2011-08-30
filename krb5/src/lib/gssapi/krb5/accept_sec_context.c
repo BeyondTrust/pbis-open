@@ -105,7 +105,6 @@
 #endif
 #include <assert.h>
 
-
 #ifdef CFX_EXERCISE
 #define CFX_ACCEPTOR_SUBKEY (time(0) & 1)
 #else
@@ -150,9 +149,7 @@ create_constrained_deleg_creds(OM_uint32 *minor_status,
                                          verifier_cred_handle,
                                          &krb_creds,
                                          GSS_C_INDEFINITE,
-                                         GSS_C_NO_OID_SET,
                                          out_cred,
-                                         NULL,
                                          NULL,
                                          context);
 
@@ -253,12 +250,10 @@ rd_and_store_for_creds(context, auth_context, inbuf, out_cred)
 
         cred->usage = GSS_C_INITIATE; /* we can't accept with this */
         /* cred->name already set */
-        cred->prerfc_mech = 1; /* this cred will work with all three mechs */
-        cred->rfc_mech = 1;
         cred->keytab = NULL; /* no keytab associated with this... */
         cred->tgt_expire = creds[0]->times.endtime; /* store the end time */
-        cred->destroy_ccache = 1;
         cred->ccache = ccache; /* the ccache containing the credential */
+        cred->destroy_ccache = 1;
         ccache = NULL; /* cred takes ownership so don't destroy */
     }
 
@@ -385,12 +380,49 @@ fail:
     return major_status;
 }
 
+static krb5_error_code
+kg_process_extension(krb5_context context,
+                     krb5_auth_context auth_context,
+                     int ext_type,
+                     krb5_data *ext_data,
+                     krb5_gss_ctx_ext_t exts)
+{
+    krb5_error_code code = 0;
+
+    assert(exts != NULL);
+
+    switch (ext_type) {
+    case KRB5_GSS_EXTS_IAKERB_FINISHED:
+        if (exts->iakerb.conv == NULL) {
+            code = KRB5KRB_AP_ERR_MSG_TYPE; /* XXX */
+        } else {
+            krb5_key key;
+
+            code = krb5_auth_con_getrecvsubkey_k(context, auth_context, &key);
+            if (code != 0)
+                break;
+
+            code = iakerb_verify_finished(context, key, exts->iakerb.conv,
+                                          ext_data);
+            if (code == 0)
+                exts->iakerb.verified = 1;
+
+            krb5_k_free_key(context, key);
+        }
+        break;
+    default:
+        break;
+    }
+
+    return code;
+}
+
 static OM_uint32
 kg_accept_krb5(minor_status, context_handle,
                verifier_cred_handle, input_token,
                input_chan_bindings, src_name, mech_type,
                output_token, ret_flags, time_rec,
-               delegated_cred_handle)
+               delegated_cred_handle, exts)
     OM_uint32 *minor_status;
     gss_ctx_id_t *context_handle;
     gss_cred_id_t verifier_cred_handle;
@@ -402,6 +434,7 @@ kg_accept_krb5(minor_status, context_handle,
     OM_uint32 *ret_flags;
     OM_uint32 *time_rec;
     gss_cred_id_t *delegated_cred_handle;
+    krb5_gss_ctx_ext_t exts;
 {
     krb5_context context;
     unsigned char *ptr, *ptr2;
@@ -510,6 +543,12 @@ kg_accept_krb5(minor_status, context_handle,
                                        &ptr, KG_TOK_CTX_AP_REQ,
                                        input_token->length, 1))) {
         mech_used = gss_mech_krb5;
+    } else if ((code == G_WRONG_MECH)
+               &&!(code = g_verify_token_header((gss_OID) gss_mech_iakerb,
+                                                &(ap_req.length),
+                                                &ptr, KG_TOK_CTX_AP_REQ,
+                                                input_token->length, 1))) {
+        mech_used = gss_mech_iakerb;
     } else if ((code == G_WRONG_MECH)
                &&!(code = g_verify_token_header((gss_OID) gss_mech_krb5_wrong,
                                                 &(ap_req.length),
@@ -758,16 +797,11 @@ kg_accept_krb5(minor_status, context_handle,
 
         /* if the checksum length > 24, there are options to process */
 
-        if(authdat->checksum->length > 24 && (gss_flags & GSS_C_DELEG_FLAG)) {
-
-            i = authdat->checksum->length - 24;
-
+        i = authdat->checksum->length - 24;
+        if (i && (gss_flags & GSS_C_DELEG_FLAG)) {
             if (i >= 4) {
-
                 TREAD_INT16(ptr, option_id, bigend);
-
                 TREAD_INT16(ptr, option.length, bigend);
-
                 i -= 4;
 
                 if (i < option.length || option.length < 0) {
@@ -801,35 +835,39 @@ kg_accept_krb5(minor_status, context_handle,
 
             } /* if i >= 4 */
             /* ignore any additional trailing data, for now */
-#ifdef CFX_EXERCISE
-            {
-                FILE *f = fopen("/tmp/gsslog", "a");
-                if (f) {
-                    fprintf(f,
-                            "initial context token with delegation, %d extra bytes\n",
-                            i);
-                    fclose(f);
-                }
-            }
-#endif
-        } else {
-#ifdef CFX_EXERCISE
-            {
-                FILE *f = fopen("/tmp/gsslog", "a");
-                if (f) {
-                    if (gss_flags & GSS_C_DELEG_FLAG)
-                        fprintf(f,
-                                "initial context token, delegation flag but too small\n");
-                    else
-                        /* no deleg flag, length might still be too big */
-                        fprintf(f,
-                                "initial context token, %d extra bytes\n",
-                                authdat->checksum->length - 24);
-                    fclose(f);
-                }
-            }
-#endif
         }
+        while (i > 0) {
+            /* Process Type-Length-Data options */
+            if (i < 8) {
+                code = KG_BAD_LENGTH;
+                major_status = GSS_S_FAILURE;
+                goto fail;
+            }
+            TREAD_INT(ptr, option_id, 1);
+            TREAD_INT(ptr, option.length, 1);
+            i -= 8;
+            if (i < option.length) {
+                code = KG_BAD_LENGTH;
+                major_status = GSS_S_FAILURE;
+                goto fail;
+            }
+            TREAD_STR(ptr, ptr2, option.length);
+            option.data = (char *)ptr2;
+
+            i -= option.length;
+
+            code = kg_process_extension(context, auth_context,
+                                        option_id, &option, exts);
+            if (code != 0) {
+                major_status = GSS_S_FAILURE;
+                goto fail;
+            }
+        }
+    }
+
+    if (exts->iakerb.conv && !exts->iakerb.verified) {
+        major_status = GSS_S_BAD_SIG;
+        goto fail;
     }
 
     /* only DCE_STYLE clients are allowed to send raw AP-REQs */
@@ -848,6 +886,7 @@ kg_accept_krb5(minor_status, context_handle,
     }
 
     memset(ctx, 0, sizeof(krb5_gss_ctx_id_rec));
+    ctx->magic = KG_CONTEXT;
     ctx->mech_used = (gss_OID) mech_used;
     ctx->auth_context = auth_context;
     ctx->initiate = 0;
@@ -1265,22 +1304,19 @@ done:
 #endif /* LEAN_CLIENT */
 
 OM_uint32
-krb5_gss_accept_sec_context(minor_status, context_handle,
-                            verifier_cred_handle, input_token,
-                            input_chan_bindings, src_name, mech_type,
-                            output_token, ret_flags, time_rec,
-                            delegated_cred_handle)
-    OM_uint32 *minor_status;
-    gss_ctx_id_t *context_handle;
-    gss_cred_id_t verifier_cred_handle;
-    gss_buffer_t input_token;
-    gss_channel_bindings_t input_chan_bindings;
-    gss_name_t *src_name;
-    gss_OID *mech_type;
-    gss_buffer_t output_token;
-    OM_uint32 *ret_flags;
-    OM_uint32 *time_rec;
-    gss_cred_id_t *delegated_cred_handle;
+krb5_gss_accept_sec_context_ext(
+    OM_uint32 *minor_status,
+    gss_ctx_id_t *context_handle,
+    gss_cred_id_t verifier_cred_handle,
+    gss_buffer_t input_token,
+    gss_channel_bindings_t input_chan_bindings,
+    gss_name_t *src_name,
+    gss_OID *mech_type,
+    gss_buffer_t output_token,
+    OM_uint32 *ret_flags,
+    OM_uint32 *time_rec,
+    gss_cred_id_t *delegated_cred_handle,
+    krb5_gss_ctx_ext_t exts)
 {
     krb5_gss_ctx_id_rec *ctx = (krb5_gss_ctx_id_rec *)*context_handle;
 
@@ -1308,5 +1344,42 @@ krb5_gss_accept_sec_context(minor_status, context_handle,
                           verifier_cred_handle, input_token,
                           input_chan_bindings, src_name, mech_type,
                           output_token, ret_flags, time_rec,
-                          delegated_cred_handle);
+                          delegated_cred_handle, exts);
 }
+
+OM_uint32
+krb5_gss_accept_sec_context(minor_status, context_handle,
+                            verifier_cred_handle, input_token,
+                            input_chan_bindings, src_name, mech_type,
+                            output_token, ret_flags, time_rec,
+                            delegated_cred_handle)
+    OM_uint32 *minor_status;
+    gss_ctx_id_t *context_handle;
+    gss_cred_id_t verifier_cred_handle;
+    gss_buffer_t input_token;
+    gss_channel_bindings_t input_chan_bindings;
+    gss_name_t *src_name;
+    gss_OID *mech_type;
+    gss_buffer_t output_token;
+    OM_uint32 *ret_flags;
+    OM_uint32 *time_rec;
+    gss_cred_id_t *delegated_cred_handle;
+{
+    krb5_gss_ctx_ext_rec exts;
+
+    memset(&exts, 0, sizeof(exts));
+
+    return krb5_gss_accept_sec_context_ext(minor_status,
+                                           context_handle,
+                                           verifier_cred_handle,
+                                           input_token,
+                                           input_chan_bindings,
+                                           src_name,
+                                           mech_type,
+                                           output_token,
+                                           ret_flags,
+                                           time_rec,
+                                           delegated_cred_handle,
+                                           &exts);
+}
+

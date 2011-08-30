@@ -83,8 +83,6 @@ struct _pkinit_identity_crypto_context {
     CK_BYTE_PTR cert_id;
     int cert_id_len;
     CK_MECHANISM_TYPE mech;
-    CK_TOKEN_INFO tinfo;
-    krb5_boolean login_done;
 #endif
 };
 
@@ -127,6 +125,8 @@ struct _pkinit_cert_iter_data {
     pkinit_identity_crypto_context idctx;
     unsigned int index;
 };
+
+static void openssl_init(void);
 
 static krb5_error_code pkinit_init_pkinit_oids(pkinit_plg_crypto_context );
 static void pkinit_fini_pkinit_oids(pkinit_plg_crypto_context );
@@ -200,10 +200,9 @@ static krb5_error_code pkinit_find_private_key
 		CK_OBJECT_HANDLE *objp);
 static krb5_error_code pkinit_login
 	(krb5_context context, pkinit_identity_crypto_context id_cryptoctx,
-             CK_TOKEN_INFO *tip);
+		CK_TOKEN_INFO *tip);
 static krb5_error_code pkinit_open_session
-	(krb5_context context, pkinit_identity_crypto_context id_cryptoctx,
-         krb5_boolean do_login);
+	(krb5_context context, pkinit_identity_crypto_context id_cryptoctx);
 static void * pkinit_C_LoadModule(const char *modname, CK_FUNCTION_LIST_PTR_PTR p11p);
 static CK_RV pkinit_C_UnloadModule(void *handle);
 #ifdef SILLYDECRYPT

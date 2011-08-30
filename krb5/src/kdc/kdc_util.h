@@ -32,11 +32,7 @@
 #define __KRB5_KDC_UTIL__
 
 #include "kdb.h"
-
-typedef struct _krb5_fulladdr {
-    krb5_address *      address;
-    krb5_ui_4           port;
-} krb5_fulladdr;
+#include "net-server.h"
 
 krb5_error_code check_hot_list (krb5_ticket *);
 krb5_boolean realm_compare (krb5_const_principal, krb5_const_principal);
@@ -67,16 +63,14 @@ kdc_process_tgs_req (krb5_kdc_req *,
                      const krb5_fulladdr *,
                      krb5_data *,
                      krb5_ticket **,
-                     krb5_db_entry *krbtgt,
-                     int *nprincs,
+                     krb5_db_entry **krbtgt_ptr,
                      krb5_keyblock **, krb5_keyblock **,
                      krb5_pa_data **pa_tgs_req);
 
 krb5_error_code
 kdc_get_server_key (krb5_ticket *, unsigned int,
                     krb5_boolean match_enctype,
-                    krb5_db_entry *, int *,
-                    krb5_keyblock **, krb5_kvno *);
+                    krb5_db_entry **, krb5_keyblock **, krb5_kvno *);
 
 int
 validate_as_request (krb5_kdc_req *, krb5_db_entry,
@@ -137,12 +131,12 @@ process_tgs_req (krb5_data *,
                  krb5_data ** );
 /* dispatch.c */
 krb5_error_code
-dispatch (krb5_data *,
+dispatch (void *,
+          struct sockaddr *,
           const krb5_fulladdr *,
-          krb5_data **);
-
-/* main.c */
-krb5_error_code kdc_initialize_rcache (krb5_context, char *);
+          krb5_data *,
+          krb5_data **,
+          int);
 
 krb5_error_code
 setup_server_realm (krb5_principal);
@@ -152,11 +146,6 @@ kdc_err(krb5_context call_context, errcode_t code, const char *fmt, ...)
     __attribute__((__format__(__printf__, 3, 4)))
 #endif
 ;
-
-/* network.c */
-krb5_error_code listen_and_process (void);
-krb5_error_code setup_network (void);
-krb5_error_code closedown_network (void);
 
 /* policy.c */
 int
@@ -213,12 +202,6 @@ add_pa_data_element (krb5_context context,
                      krb5_pa_data ***out_padata,
                      krb5_boolean copy);
 
-krb5_error_code add_pa_data_element
-    (krb5_context context,
-		    krb5_pa_data *padata,
-		    krb5_pa_data ***out_padata,
-		    krb5_boolean copy);
-
 /* kdc_authdata.c */
 krb5_error_code
 load_authdata_plugins(krb5_context context);
@@ -246,15 +229,7 @@ void kdc_insert_lookaside (krb5_data *, krb5_data *);
 void kdc_free_lookaside(krb5_context);
 
 /* kdc_util.c */
-krb5_error_code
-get_principal_locked (krb5_context kcontext,
-                      krb5_const_principal search_for,
-                      krb5_db_entry *entries, int *nentries,
-                      krb5_boolean *more);
-krb5_error_code
-get_principal (krb5_context kcontext,
-               krb5_const_principal search_for,
-               krb5_db_entry *entries, int *nentries, krb5_boolean *more);
+void reset_for_hangup(void);
 
 krb5_boolean
 include_pac_p(krb5_context context, krb5_kdc_req *request);
@@ -268,21 +243,6 @@ return_enc_padata(krb5_context context,
                   krb5_boolean is_referral);
 
 krb5_error_code
-sign_db_authdata (krb5_context context,
-                  unsigned int flags,
-                  krb5_const_principal client_princ,
-                  krb5_db_entry *client,
-                  krb5_db_entry *server,
-                  krb5_db_entry *krbtgt,
-                  krb5_keyblock *client_key,
-                  krb5_keyblock *server_key,
-                  krb5_keyblock *krbtgt_key,
-                  krb5_timestamp authtime,
-                  krb5_authdata **tgs_authdata,
-                  krb5_keyblock *session_key,
-                  krb5_authdata ***ret_authdata);
-
-krb5_error_code
 kdc_process_s4u2self_req (krb5_context context,
                           krb5_kdc_req *request,
                           krb5_const_principal client_princ,
@@ -291,8 +251,7 @@ kdc_process_s4u2self_req (krb5_context context,
                           krb5_keyblock *tgs_session,
                           krb5_timestamp kdc_time,
                           krb5_pa_s4u_x509_user **s4u2self_req,
-                          krb5_db_entry *princ,
-                          int *nprincs,
+                          krb5_db_entry **princ_ptr,
                           const char **status);
 
 krb5_error_code

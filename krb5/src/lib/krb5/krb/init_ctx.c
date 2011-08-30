@@ -234,8 +234,12 @@ init_common (krb5_context *context, krb5_boolean secure, krb5_boolean kdc)
     ctx->fcc_default_format = tmp + 0x0500;
     ctx->prompt_types = 0;
     ctx->use_conf_ktypes = 0;
-
     ctx->udp_pref_limit = -1;
+    ctx->trace_callback = NULL;
+#ifndef DISABLE_TRACING
+    if (!secure)
+        krb5int_init_trace(ctx);
+#endif
     *context = ctx;
     return 0;
 
@@ -263,6 +267,13 @@ krb5_free_context(krb5_context ctx)
     }
 
     krb5_clear_error_message(ctx);
+
+#ifndef DISABLE_TRACING
+    if (ctx->trace_callback)
+        ctx->trace_callback(ctx, NULL, ctx->trace_callback_data);
+#endif
+
+    k5_plugin_free_context(ctx);
 
     ctx->magic = 0;
     free(ctx);
@@ -421,6 +432,11 @@ krb5int_parse_enctype_list(krb5_context context, char *profstr,
             mod_list(ENCTYPE_AES128_CTS_HMAC_SHA1_96, sel, weak, &list);
         } else if (strcasecmp(token, "rc4") == 0) {
             mod_list(ENCTYPE_ARCFOUR_HMAC, sel, weak, &list);
+#ifdef CAMELLIA
+        } else if (strcasecmp(token, "camellia") == 0) {
+            mod_list(ENCTYPE_CAMELLIA256_CTS_CMAC, sel, weak, &list);
+            mod_list(ENCTYPE_CAMELLIA128_CTS_CMAC, sel, weak, &list);
+#endif
         } else if (krb5_string_to_enctype(token, &etype) == 0) {
             /* Set a specific enctype. */
             mod_list(etype, sel, weak, &list);

@@ -2,7 +2,7 @@
 /*
  * Copyright 1993 OpenVision Technologies, Inc., All Rights Reserved.
  *
- * $Id: server_init.c 23527 2009-12-28 17:15:30Z hartmans $
+ * $Id: server_init.c 24375 2010-09-29 21:29:14Z hartmans $
  * $Source$
  */
 /*
@@ -317,8 +317,18 @@ kadm5_ret_t kadm5_init(krb5_context context, char *client_name, char *pass,
         return ret;
     }
 
-    ret = init_dict(&handle->params);
+    ret = k5_kadm5_hook_load(context,&handle->hook_handles);
     if (ret) {
+        krb5_db_fini(handle->context);
+        krb5_free_principal(handle->context, handle->current_caller);
+        free_db_args(handle);
+        free(handle);
+        return ret;
+    }
+
+    ret = init_pwqual(handle);
+    if (ret) {
+        k5_kadm5_hook_free_handles(context, handle->hook_handles);
         krb5_db_fini(handle->context);
         krb5_free_principal(handle->context, handle->current_caller);
         free_db_args(handle);
@@ -337,8 +347,9 @@ kadm5_ret_t kadm5_destroy(void *server_handle)
 
     CHECK_HANDLE(server_handle);
 
-    destroy_dict();
+    destroy_pwqual(handle);
 
+    k5_kadm5_hook_free_handles(handle->context, handle->hook_handles);
     adb_policy_close(handle);
     krb5_db_fini(handle->context);
     krb5_free_principal(handle->context, handle->current_caller);

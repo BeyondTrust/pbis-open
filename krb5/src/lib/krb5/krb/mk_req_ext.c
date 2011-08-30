@@ -30,6 +30,7 @@
 
 
 #include "k5-int.h"
+#include "int-proto.h"
 #include "auth_con.h"
 
 /*
@@ -80,6 +81,36 @@ generate_authenticator(krb5_context,
                        krb5_enctype *desired_etypes,
                        krb5_enctype tkt_enctype);
 
+/* Return the checksum type for the AP request, or 0 to use the enctype's
+ * mandatory checksum. */
+static krb5_cksumtype
+ap_req_cksum(krb5_context context, krb5_auth_context auth_context,
+             krb5_enctype enctype)
+{
+    /* Use the configured checksum type if one was set. */
+    if (auth_context->req_cksumtype)
+        return auth_context->req_cksumtype;
+
+    /*
+     * Otherwise choose based on the enctype.  For interoperability with very
+     * old implementations, use unkeyed MD4 or MD5 checkums for DES enctypes.
+     * (The authenticator checksum does not have to be keyed since it is
+     * contained within an encrypted blob.)
+     */
+    switch (enctype) {
+    case ENCTYPE_DES_CBC_CRC:
+    case ENCTYPE_DES_CBC_MD5:
+        return CKSUMTYPE_RSA_MD5;
+        break;
+    case ENCTYPE_DES_CBC_MD4:
+        return CKSUMTYPE_RSA_MD4;
+        break;
+    default:
+        /* Use the mandatory checksum type for the enctype. */
+        return 0;
+    }
+}
+
 krb5_error_code KRB5_CALLCONV
 krb5_mk_req_extended(krb5_context context, krb5_auth_context *auth_context,
                      krb5_flags ap_req_options, krb5_data *in_data,
@@ -111,7 +142,7 @@ krb5_mk_req_extended(krb5_context context, krb5_auth_context *auth_context,
         return(retval);
 
     /* verify that the ticket is not expired */
-    if ((retval = krb5_validate_times(context, &in_creds->times)) != 0)
+    if ((retval = krb5int_validate_times(context, &in_creds->times)) != 0)
         goto cleanup;
 
     /* generate auth_context if needed */
@@ -134,10 +165,11 @@ krb5_mk_req_extended(krb5_context context, krb5_auth_context *auth_context,
     /* generate seq number if needed */
     if ((((*auth_context)->auth_context_flags & KRB5_AUTH_CONTEXT_DO_SEQUENCE)
          || ((*auth_context)->auth_context_flags & KRB5_AUTH_CONTEXT_RET_SEQUENCE))
-        && ((*auth_context)->local_seq_number == 0))
+        && ((*auth_context)->local_seq_number == 0)) {
         if ((retval = krb5_generate_seq_number(context, &in_creds->keyblock,
                                                &(*auth_context)->local_seq_number)))
             goto cleanup;
+    }
 
     /* generate subkey if needed */
     if ((ap_req_options & AP_OPTS_USE_SUBKEY)&&(!(*auth_context)->send_subkey)) {
@@ -167,13 +199,8 @@ krb5_mk_req_extended(krb5_context context, krb5_auth_context *auth_context,
         } else {
             krb5_enctype enctype = krb5_k_key_enctype(context,
                                                       (*auth_context)->key);
-            krb5_cksumtype cksumtype;
-            retval = krb5int_c_mandatory_cksumtype(context, enctype,
-                                                   &cksumtype);
-            if (retval)
-                goto cleanup_cksum;
-            if ((*auth_context)->req_cksumtype)
-                cksumtype = (*auth_context)->req_cksumtype;
+            krb5_cksumtype cksumtype = ap_req_cksum(context, *auth_context,
+                                                    enctype);
             if ((retval = krb5_k_make_checksum(context,
                                                cksumtype,
                                                (*auth_context)->key,
@@ -200,6 +227,8 @@ krb5_mk_req_extended(krb5_context context, krb5_auth_context *auth_context,
             desired_etypes = (*auth_context)->permitted_etypes;
     }
 
+    TRACE_MK_REQ(context, in_creds, (*auth_context)->local_seq_number,
+                 (*auth_context)->send_subkey, &in_creds->keyblock);
     if ((retval = generate_authenticator(context,
                                          (*auth_context)->authentp,
                                          in_creds->client, checksump,
@@ -304,6 +333,7 @@ generate_authenticator(krb5_context context, krb5_authenticator *authent,
 
     /* Only send EtypeList if we prefer another enctype to tkt_enctype */
     if (desired_etypes != NULL && desired_etypes[0] != tkt_enctype) {
+        TRACE_MK_REQ_ETYPES(context, desired_etypes);
         retval = make_etype_list(context, desired_etypes, tkt_enctype,
                                  &authent->authorization_data);
         if (retval)

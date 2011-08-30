@@ -741,26 +741,26 @@ main(argc, argv)
         ktest_empty_ad_signedpath(&sp);
     }
     /****************************************************************/
-    /* encode_krb5_pa_s4u_x509_user */
+    /* encode_krb5_iakerb_header */
     {
-	krb5_pa_s4u_x509_user s4u;
-	setup(s4u,krb5_pa_s4u_x509_user,"pa_s4u_x509_user",
-	      ktest_make_sample_pa_s4u_x509_user);
-	encode_run(s4u,krb5_pa_s4u_x509_user,
-		   "pa_s4u_x509_user","",
-		   encode_krb5_pa_s4u_x509_user);
-	ktest_empty_pa_s4u_x509_user(&s4u);
+        krb5_iakerb_header ih;
+        setup(ih,krb5_ad_signedpath,"iakerb_header",
+              ktest_make_sample_iakerb_header);
+        encode_run(ih,krb5_iakerb_header,
+                   "iakerb_header","",
+                   encode_krb5_iakerb_header);
+        ktest_empty_iakerb_header(&ih);
     }
     /****************************************************************/
-    /* encode_krb5_ad_kdcissued */
+    /* encode_krb5_iakerb_finished */
     {
-	krb5_ad_kdcissued kdci;
-	setup(kdci,krb5_ad_kdcissued,"ad_kdcissued",
-	      ktest_make_sample_ad_kdcissued);
-	encode_run(kdci,krb5_ad_kdcissued,
-		   "ad_kdcissued","",
-		   encode_krb5_ad_kdcissued);
-	ktest_empty_ad_kdcissued(&kdci);
+        krb5_iakerb_finished ih;
+        setup(ih,krb5_ad_signedpath,"iakerb_finished",
+              ktest_make_sample_iakerb_finished);
+        encode_run(ih,krb5_iakerb_finished,
+                   "iakerb_finished","",
+                   encode_krb5_iakerb_finished);
+        ktest_empty_iakerb_finished(&ih);
     }
 #ifdef ENABLE_LDAP
     {

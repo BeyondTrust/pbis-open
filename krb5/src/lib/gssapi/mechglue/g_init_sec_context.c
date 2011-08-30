@@ -117,7 +117,6 @@ OM_uint32 *		time_rec;
     gss_name_t		internal_name;
     gss_union_ctx_id_t	union_ctx_id;
     gss_OID		mech_type = (gss_OID) req_mech_type;
-    gss_OID		local_actual_mech = GSS_C_NO_OID;
     gss_mechanism	mech;
     gss_cred_id_t	input_cred_handle;
 
@@ -219,7 +218,7 @@ OM_uint32 *		time_rec;
 	time_req,
 	input_chan_bindings,
 	input_token,
-	&local_actual_mech,
+	actual_mech_type,
 	output_token,
 	ret_flags,
 	time_rec);
@@ -240,27 +239,6 @@ OM_uint32 *		time_rec;
     } else if (*context_handle == GSS_C_NO_CONTEXT) {
 	union_ctx_id->loopback = union_ctx_id;
 	*context_handle = (gss_ctx_id_t)union_ctx_id;
-    }
-    if (status == GSS_S_COMPLETE && local_actual_mech) {
-        gss_OID temp_mech_type = union_ctx_id->mech_type;
-
-        status = generic_gss_copy_oid(minor_status, local_actual_mech,
-				      &union_ctx_id->mech_type);
-        if (status != GSS_S_COMPLETE) {
-            gssint_delete_internal_sec_context(&temp_minor_status,
-                                               local_actual_mech,
-                                               &union_ctx_id->internal_ctx_id,
-                                               NULL);
-            free(union_ctx_id);
-            *context_handle = GSS_C_NO_CONTEXT;
-        }
-
-        free(temp_mech_type->elements);
-        free(temp_mech_type);
-    }
-
-    if (actual_mech_type != NULL) {
-        *actual_mech_type = local_actual_mech;
     }
 
 end:

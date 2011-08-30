@@ -25,17 +25,6 @@
  * or implied warranty.
  */
 
-#ifdef HAVE_POLL
-#include <poll.h>
-#ifndef MAX_POLL_FDS
-#define MAX_POLL_FDS 1024
-#endif
-struct select_state {
-    int nfds;
-    struct timeval end_time;	/* magic: tv_sec==0 => never time out */
-    struct pollfd fds[MAX_POLL_FDS];
-};
-#else
 /* Since fd_set is large on some platforms (8K on AIX 5.2), this
    probably shouldn't be allocated in automatic storage.  */
 struct select_state {
@@ -43,7 +32,6 @@ struct select_state {
     fd_set rfds, wfds, xfds;
     struct timeval end_time;    /* magic: tv_sec==0 => never time out */
 };
-#endif
 
 
 /* Select state flags.  */
@@ -72,7 +60,8 @@ struct conn_state {
     krb5_error_code err;
     enum conn_states state;
     unsigned int is_udp : 1;
-    int (*service)(struct conn_state *, struct select_state *, int);
+    int (*service)(krb5_context context, struct conn_state *,
+                   struct select_state *, int);
     struct addrinfo *addr;
     struct {
         struct {

@@ -126,8 +126,8 @@ error_code KRB5KDC_ERR_PUBLIC_KEY_ENCRYPTION_NOT_SUPPORTED,	"Public key encrypti
 error_code KRB5PLACEHOLD_82,	"KRB5 error code 82"
 error_code KRB5PLACEHOLD_83,	"KRB5 error code 83"
 error_code KRB5PLACEHOLD_84,	"KRB5 error code 84"
-error_code KRB5PLACEHOLD_85,	"KRB5 error code 85"
-error_code KRB5PLACEHOLD_86,	"KRB5 error code 86"
+error_code KRB5KRB_AP_ERR_IAKERB_KDC_NOT_FOUND,         "The IAKERB proxy could not find a KDC"
+error_code KRB5KRB_AP_ERR_IAKERB_KDC_NO_RESPONSE,	"The KDC did not respond to the IAKERB proxy"
 error_code KRB5PLACEHOLD_87,	"KRB5 error code 87"
 error_code KRB5PLACEHOLD_88,	"KRB5 error code 88"
 error_code KRB5PLACEHOLD_89,	"KRB5 error code 89"
@@ -170,7 +170,7 @@ error_code KRB5PLACEHOLD_125,	"KRB5 error code 125"
 error_code KRB5PLACEHOLD_126,	"KRB5 error code 126"
 error_code KRB5PLACEHOLD_127,	"KRB5 error code 127"
 
-error_code KRB5_ERR_RCSID,	"$Id: krb5_err.et 22857 2009-10-06 15:54:50Z raeburn $"
+error_code KRB5_ERR_RCSID,	"$Id: krb5_err.et 24571 2010-12-14 23:10:45Z tlyu $"
 
 error_code KRB5_LIBOS_BADLOCKFLAG,	"Invalid flag for file lock mode"
 error_code KRB5_LIBOS_CANTREADPWD,	"Cannot read password"
@@ -344,11 +344,13 @@ error_code KRB5_CC_NOSUPP,      "Ccache function not supported: not implemented"
 error_code KRB5_DELTAT_BADFORMAT,	"Invalid format of Kerberos lifetime or clock skew string"
 
 error_code KRB5_PLUGIN_NO_HANDLE,	"Supplied data not handled by this plugin"
-error_code KRB5_PLUGIN_OP_NOTSUPP,  "Plugin does not support the operaton"
+error_code KRB5_PLUGIN_OP_NOTSUPP,  "Plugin does not support the operation"
 
 error_code KRB5_ERR_INVALID_UTF8,	"Invalid UTF-8 string"
 error_code KRB5_ERR_FAST_REQUIRED, "FAST protected pre-authentication required but not supported by KDC"
 
 error_code KRB5_LOCAL_ADDR_REQUIRED,  "Auth context must contain local address"
 error_code KRB5_REMOTE_ADDR_REQUIRED, "Auth context must contain remote address"
+
+error_code KRB5_TRACE_NOSUPP, "Tracing unsupported"
 end

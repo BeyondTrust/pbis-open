@@ -1,31 +1,35 @@
 /* @(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC */
 /*
- * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
- * unrestricted use provided that this legend is included on all tape
- * media and as a part of the software program in whole or part.  Users
- * may copy or modify Sun RPC without charge, but are not authorized
- * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
+ * Copyright (c) 2010, Oracle America, Inc.
  *
- * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
- * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
+ * All rights reserved.
  *
- * Sun RPC is provided with no support and without any obligation on the
- * part of Sun Microsystems, Inc. to assist in its use, correction,
- * modification or enhancement.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *
- * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
- * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
- * OR ANY PART THEREOF.
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
  *
- * In no event will Sun Microsystems, Inc. be liable for any lost revenue
- * or profits or other special, indirect and consequential damages, even if
- * Sun has been advised of the possibility of such damages.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in
+ *       the documentation and/or other materials provided with the
+ *       distribution.
  *
- * Sun Microsystems, Inc.
- * 2550 Garcia Avenue
- * Mountain View, California  94043
+ *     * Neither the name of the "Oracle America, Inc." nor the names of
+ *       its contributors may be used to endorse or promote products
+ *       derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ * TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #if !defined(lint) && defined(SCCSIDS)
 static char sccsid[] = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
@@ -33,8 +37,6 @@ static char sccsid[] = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 
 /*
  * svc_tcp.c, Server side for TCP/IP based RPC.
- *
- * Copyright (C) 1984, Sun Microsystems, Inc.
  *
  * Actually implements two flavors of transporter -
  * a tcp rendezvouser (a listner and connection establisher)
@@ -116,6 +118,17 @@ struct tcp_conn {  /* kept in xprt->xp_p1 */
 	char verf_body[MAX_AUTH_BYTES];
 };
 
+static u_short
+getport(struct sockaddr *addr)
+{
+    if (addr->sa_family == AF_INET)
+	return ntohs(((struct sockaddr_in *) addr)->sin_port);
+    else if (addr->sa_family == AF_INET6)
+	return ntohs(((struct sockaddr_in6 *) addr)->sin6_port);
+    else
+	return 0;
+}
+
 /*
  * Usage:
  *	xprt = svctcp_create(sock, send_buf_size, recv_buf_size);
@@ -145,8 +158,9 @@ svctcp_create(
 	bool_t madesock = FALSE;
 	register SVCXPRT *xprt;
 	register struct tcp_rendezvous *r;
-	struct sockaddr_in addr;
-	int len = sizeof(struct sockaddr_in);
+	struct sockaddr_in sin;
+	struct sockaddr_storage addr;
+	socklen_t len = sizeof(addr);
 
 	if (sock == RPC_ANYSOCK) {
 		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -156,14 +170,14 @@ svctcp_create(
 		set_cloexec_fd(sock);
 		madesock = TRUE;
 	}
-	memset(&addr, 0, sizeof (addr));
+	memset(&sin, 0, sizeof(sin));
 #if HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
-	addr.sin_len = sizeof(addr);
+	sin.sin_len = sizeof(sin);
 #endif
-	addr.sin_family = AF_INET;
-	if (bindresvport(sock, &addr)) {
-		addr.sin_port = 0;
-		(void)bind(sock, (struct sockaddr *)&addr, len);
+	sin.sin_family = AF_INET;
+	if (bindresvport(sock, &sin)) {
+		sin.sin_port = 0;
+		(void)bind(sock, (struct sockaddr *)&sin, sizeof(sin));
 	}
 	if (getsockname(sock, (struct sockaddr *)&addr, &len) != 0) {
 		perror("svc_tcp.c - cannot getsockname");
@@ -194,7 +208,7 @@ svctcp_create(
 	xprt->xp_auth = NULL;
 	xprt->xp_verf = gssrpc__null_auth;
 	xprt->xp_ops = &svctcp_rendezvous_op;
-	xprt->xp_port = ntohs(addr.sin_port);
+	xprt->xp_port = getport((struct sockaddr *) &addr);
 	xprt->xp_sock = sock;
 	xprt->xp_laddrlen = 0;
 	xprt_register(xprt);
@@ -274,7 +288,7 @@ rendezvous_request(
         SOCKET sock;
 	struct tcp_rendezvous *r;
 	struct sockaddr_in addr, laddr;
-	int len, llen;
+	socklen_t len, llen;
 
 	r = (struct tcp_rendezvous *)xprt->xp_p1;
     again:

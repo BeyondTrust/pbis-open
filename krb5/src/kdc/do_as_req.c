@@ -88,25 +88,33 @@ prepare_error_as(struct kdc_request_state *, krb5_kdc_req *,
                  int, krb5_data *, krb5_principal, krb5_data **,
                  const char *);
 
+/* Determine the key-expiration value according to RFC 4120 section 5.4.2. */
+static krb5_timestamp
+get_key_exp(krb5_db_entry *entry)
+{
+    if (entry->expiration == 0)
+        return entry->pw_expiration;
+    if (entry->pw_expiration == 0)
+        return entry->expiration;
+    return min(entry->expiration, entry->pw_expiration);
+}
+
 /*ARGSUSED*/
 krb5_error_code
 process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
                const krb5_fulladdr *from, krb5_data **response)
 {
-    krb5_db_entry client, server;
+    krb5_db_entry *client = NULL, *server = NULL;
     krb5_kdc_rep reply;
     krb5_enc_kdc_rep_part reply_encpart;
     krb5_ticket ticket_reply;
     krb5_enc_tkt_part enc_tkt_reply;
     krb5_error_code errcode;
-    int c_nprincs = 0, s_nprincs = 0;
-    krb5_boolean more;
     krb5_timestamp kdc_time, authtime = 0;
     krb5_keyblock session_key;
     const char *status;
     krb5_key_data *server_key, *client_key;
     krb5_keyblock server_keyblock, client_keyblock;
-    krb5_keyblock *mkey_ptr;
     krb5_enctype useenctype;
     krb5_data e_data;
     register int i;
@@ -117,7 +125,6 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
     void *pa_context = NULL;
     int did_log = 0;
     const char *emsg = 0;
-    krb5_keylist_node *tmp_mkey_list;
     struct kdc_request_state *state = NULL;
     krb5_data encoded_req_body;
     krb5_keyblock *as_encrypting_key = NULL;
@@ -197,29 +204,22 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
         krb5_princ_type(kdc_context,
                         request->client) == KRB5_NT_ENTERPRISE_PRINCIPAL) {
         setflag(c_flags, KRB5_KDB_FLAG_CANONICALIZE);
+        setflag(c_flags, KRB5_KDB_FLAG_ALIAS_OK);
     }
     if (include_pac_p(kdc_context, request)) {
         setflag(c_flags, KRB5_KDB_FLAG_INCLUDE_PAC);
     }
-    c_nprincs = 1;
-    if ((errcode = krb5_db_get_principal_ext(kdc_context, request->client,
-                                             c_flags, &client, &c_nprincs,
-                                             &more))) {
-        status = "LOOKING_UP_CLIENT";
-        c_nprincs = 0;
-        goto errout;
-    }
-
-    if (more) {
-        status = "NON-UNIQUE_CLIENT";
-        errcode = KRB5KDC_ERR_PRINCIPAL_NOT_UNIQUE;
-        goto errout;
-    } else if (c_nprincs != 1) {
+    errcode = krb5_db_get_principal(kdc_context, request->client,
+                                    c_flags, &client);
+    if (errcode == KRB5_KDB_NOENTRY) {
         status = "CLIENT_NOT_FOUND";
         if (vague_errors)
             errcode = KRB5KRB_ERR_GENERIC;
         else
             errcode = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
+        goto errout;
+    } else if (errcode) {
+        status = "LOOKING_UP_CLIENT";
         goto errout;
     }
 
@@ -227,7 +227,7 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
      * If the backend returned a principal that is not in the local
      * realm, then we need to refer the client to that realm.
      */
-    if (!is_local_principal(client.princ)) {
+    if (!is_local_principal(client->princ)) {
         /* Entry is a referral to another realm */
         status = "REFERRAL";
         errcode = KRB5KDC_ERR_WRONG_REALM;
@@ -239,7 +239,7 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
      * Turn off canonicalization if client is marked DES only
      * (unless enterprise principal name was requested)
      */
-    if (isflagset(client.attributes, KRB5_KDB_NON_MS_PRINCIPAL) &&
+    if (isflagset(client->attributes, KRB5_KDB_NON_MS_PRINCIPAL) &&
         krb5_princ_type(kdc_context,
                         request->client) != KRB5_NT_ENTERPRISE_PRINCIPAL) {
         clear(c_flags, KRB5_KDB_FLAG_CANONICALIZE);
@@ -247,23 +247,18 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
 #endif
 
     s_flags = 0;
+    setflag(s_flags, KRB5_KDB_FLAG_ALIAS_OK);
     if (isflagset(request->kdc_options, KDC_OPT_CANONICALIZE)) {
         setflag(s_flags, KRB5_KDB_FLAG_CANONICALIZE);
     }
-    s_nprincs = 1;
-    if ((errcode = krb5_db_get_principal_ext(kdc_context, request->server,
-                                             s_flags, &server,
-                                             &s_nprincs, &more))) {
-        status = "LOOKING_UP_SERVER";
-        goto errout;
-    }
-    if (more) {
-        status = "NON-UNIQUE_SERVER";
-        errcode = KRB5KDC_ERR_PRINCIPAL_NOT_UNIQUE;
-        goto errout;
-    } else if (s_nprincs != 1) {
+    errcode = krb5_db_get_principal(kdc_context, request->server,
+                                    s_flags, &server);
+    if (errcode == KRB5_KDB_NOENTRY) {
         status = "SERVER_NOT_FOUND";
         errcode = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
+        goto errout;
+    } else if (errcode) {
+        status = "LOOKING_UP_SERVER";
         goto errout;
     }
 
@@ -273,7 +268,7 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
     }
     authtime = kdc_time; /* for audit_as_request() */
 
-    if ((errcode = validate_as_request(request, client, server,
+    if ((errcode = validate_as_request(request, *client, *server,
                                        kdc_time, &status, &e_data))) {
         if (!status)
             status = "UNKNOWN_REASON";
@@ -284,7 +279,7 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
     /*
      * Select the keytype for the ticket session key.
      */
-    if ((useenctype = select_session_keytype(kdc_context, &server,
+    if ((useenctype = select_session_keytype(kdc_context, server,
                                              request->nktypes,
                                              request->ktype)) == 0) {
         /* unsupported ktype */
@@ -306,8 +301,8 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
      */
     if (isflagset(s_flags, KRB5_KDB_FLAG_CANONICALIZE) &&
         krb5_is_tgs_principal(request->server) &&
-        krb5_is_tgs_principal(server.princ)) {
-        ticket_reply.server = server.princ;
+        krb5_is_tgs_principal(server->princ)) {
+        ticket_reply.server = server->princ;
     } else {
         ticket_reply.server = request->server;
     }
@@ -335,11 +330,11 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
 
     enc_tkt_reply.session = &session_key;
     if (isflagset(c_flags, KRB5_KDB_FLAG_CANONICALIZE)) {
-        client_princ = *(client.princ);
+        client_princ = *(client->princ);
     } else {
         client_princ = *(request->client);
         /* The realm is always canonicalized */
-        client_princ.realm = *(krb5_princ_realm(context, client.princ));
+        client_princ.realm = *(krb5_princ_realm(context, client->princ));
     }
     enc_tkt_reply.client = &client_princ;
     enc_tkt_reply.transited.tr_type = KRB5_DOMAIN_X500_COMPRESS;
@@ -356,12 +351,12 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
                            enc_tkt_reply.times.starttime,
                            kdc_infinity,
                            request->till,
-                           &client,
-                           &server,
+                           client,
+                           server,
                            &enc_tkt_reply.times.endtime);
 
     if (isflagset(request->kdc_options, KDC_OPT_RENEWABLE_OK) &&
-        !isflagset(client.attributes, KRB5_KDB_DISALLOW_RENEWABLE) &&
+        !isflagset(client->attributes, KRB5_KDB_DISALLOW_RENEWABLE) &&
         (enc_tkt_reply.times.endtime < request->till)) {
 
         /* we set the RENEWABLE option for later processing */
@@ -379,8 +374,8 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
         setflag(enc_tkt_reply.flags, TKT_FLG_RENEWABLE);
         enc_tkt_reply.times.renew_till =
             min(rtime, enc_tkt_reply.times.starttime +
-                min(client.max_renewable_life,
-                    min(server.max_renewable_life,
+                min(client->max_renewable_life,
+                    min(server->max_renewable_life,
                         max_renewable_life_for_realm)));
     } else
         enc_tkt_reply.times.renew_till = 0; /* XXX */
@@ -413,17 +408,17 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
             goto errout;
         }
         enc_tkt_reply.client = request->client;
-        setflag(client.attributes, KRB5_KDB_REQUIRES_PRE_AUTH);
+        setflag(client->attributes, KRB5_KDB_REQUIRES_PRE_AUTH);
     }
     /*
      * Check the preauthentication if it is there.
      */
     if (request->padata) {
-        errcode = check_padata(kdc_context, &client, req_pkt, request,
+        errcode = check_padata(kdc_context, client, req_pkt, request,
                                &enc_tkt_reply, &pa_context, &e_data);
         if (errcode) {
             if (errcode == KRB5KDC_ERR_PREAUTH_FAILED)
-                get_preauth_hint_list(request, &client, &server, &e_data);
+                get_preauth_hint_list(request, client, server, &e_data);
 
             status = "PREAUTH_FAILED";
             if (vague_errors)
@@ -437,14 +432,14 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
      * preauthentication, verify that the proper kind of
      * preauthentication was carried out.
      */
-    status = missing_required_preauth(&client, &server, &enc_tkt_reply);
+    status = missing_required_preauth(client, server, &enc_tkt_reply);
     if (status) {
         errcode = KRB5KDC_ERR_PREAUTH_REQUIRED;
-        get_preauth_hint_list(request, &client, &server, &e_data);
+        get_preauth_hint_list(request, client, server, &e_data);
         goto errout;
     }
 
-    if ((errcode = validate_forwardable(request, client, server,
+    if ((errcode = validate_forwardable(request, *client, *server,
                                         kdc_time, &status))) {
         errcode += ERROR_TABLE_BASE_krb5;
         goto errout;
@@ -455,7 +450,7 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
     /*
      * Find the server key
      */
-    if ((errcode = krb5_dbe_find_enctype(kdc_context, &server,
+    if ((errcode = krb5_dbe_find_enctype(kdc_context, server,
                                          -1, /* ignore keytype   */
                                          -1, /* Ignore salttype  */
                                          0,  /* Get highest kvno */
@@ -464,34 +459,15 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
         goto errout;
     }
 
-    if ((errcode = krb5_dbe_find_mkey(kdc_context, master_keylist, &server,
-                                      &mkey_ptr))) {
-        /* try refreshing master key list */
-        /* XXX it would nice if we had the mkvno here for optimization */
-        if (krb5_db_fetch_mkey_list(kdc_context, master_princ,
-                                    &master_keyblock, 0, &tmp_mkey_list) == 0) {
-            krb5_dbe_free_key_list(kdc_context, master_keylist);
-            master_keylist = tmp_mkey_list;
-            if ((errcode = krb5_dbe_find_mkey(kdc_context, master_keylist,
-                                              &server, &mkey_ptr))) {
-                status = "FINDING_MASTER_KEY";
-                goto errout;
-            }
-        } else {
-            status = "FINDING_MASTER_KEY";
-            goto errout;
-        }
-    }
-
     /*
-     * Convert server.key into a real key
+     * Convert server->key into a real key
      * (it may be encrypted in the database)
      *
      *  server_keyblock is later used to generate auth data signatures
      */
-    if ((errcode = krb5_dbekd_decrypt_key_data(kdc_context, mkey_ptr,
-                                               server_key, &server_keyblock,
-                                               NULL))) {
+    if ((errcode = krb5_dbe_decrypt_key_data(kdc_context, NULL,
+                                             server_key, &server_keyblock,
+                                             NULL))) {
         status = "DECRYPT_SERVER_KEY";
         goto errout;
     }
@@ -506,7 +482,7 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
         if (!krb5_c_valid_enctype(useenctype))
             continue;
 
-        if (!krb5_dbe_find_enctype(kdc_context, &client, useenctype, -1,
+        if (!krb5_dbe_find_enctype(kdc_context, client, useenctype, -1,
                                    0, &client_key))
             break;
     }
@@ -517,29 +493,10 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
         goto errout;
     }
 
-    if ((errcode = krb5_dbe_find_mkey(kdc_context, master_keylist, &client,
-                                      &mkey_ptr))) {
-        /* try refreshing master key list */
-        /* XXX it would nice if we had the mkvno here for optimization */
-        if (krb5_db_fetch_mkey_list(kdc_context, master_princ,
-                                    &master_keyblock, 0, &tmp_mkey_list) == 0) {
-            krb5_dbe_free_key_list(kdc_context, master_keylist);
-            master_keylist = tmp_mkey_list;
-            if ((errcode = krb5_dbe_find_mkey(kdc_context, master_keylist,
-                                              &client, &mkey_ptr))) {
-                status = "FINDING_MASTER_KEY";
-                goto errout;
-            }
-        } else {
-            status = "FINDING_MASTER_KEY";
-            goto errout;
-        }
-    }
-
     /* convert client.key_data into a real key */
-    if ((errcode = krb5_dbekd_decrypt_key_data(kdc_context, mkey_ptr,
-                                               client_key, &client_keyblock,
-                                               NULL))) {
+    if ((errcode = krb5_dbe_decrypt_key_data(kdc_context, NULL,
+                                             client_key, &client_keyblock,
+                                             NULL))) {
         status = "DECRYPT_CLIENT_KEY";
         goto errout;
     }
@@ -550,12 +507,12 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
     reply.client = enc_tkt_reply.client; /* post canonicalization */
     reply.ticket = &ticket_reply;
     reply_encpart.session = &session_key;
-    if ((errcode = fetch_last_req_info(&client, &reply_encpart.last_req))) {
+    if ((errcode = fetch_last_req_info(client, &reply_encpart.last_req))) {
         status = "FETCH_LAST_REQ";
         goto errout;
     }
     reply_encpart.nonce = request->nonce;
-    reply_encpart.key_exp = client.expiration;
+    reply_encpart.key_exp = get_key_exp(client);
     reply_encpart.flags = enc_tkt_reply.flags;
     reply_encpart.server = ticket_reply.server;
 
@@ -571,7 +528,7 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
     /* Fetch the padata info to be returned (do this before
      *  authdata to handle possible replacement of reply key
      */
-    errcode = return_padata(kdc_context, &client, req_pkt, request,
+    errcode = return_padata(kdc_context, client, req_pkt, request,
                             &reply, client_key, &client_keyblock, &pa_context);
     if (errcode) {
         status = "KDC_RETURN_PADATA";
@@ -587,9 +544,9 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
 
     errcode = handle_authdata(kdc_context,
                               c_flags,
-                              &client,
-                              &server,
-                              &server,
+                              client,
+                              server,
+                              server,
                               &client_keyblock,
                               &server_keyblock,
                               &server_keyblock,
@@ -629,7 +586,7 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
         goto errout;
     }
     errcode = return_enc_padata(kdc_context, req_pkt, request,
-                                as_encrypting_key, &server, &reply_encpart,
+                                as_encrypting_key, server, &reply_encpart,
                                 FALSE);
     if (errcode) {
         status = "KDC_RETURN_ENC_PADATA";
@@ -649,7 +606,7 @@ process_as_req(krb5_kdc_req *request, krb5_data *req_pkt,
     memset(reply.enc_part.ciphertext.data, 0, reply.enc_part.ciphertext.length);
     free(reply.enc_part.ciphertext.data);
 
-    log_as_req(from, request, &reply, &client, cname, &server, sname,
+    log_as_req(from, request, &reply, client, cname, server, sname,
                authtime, 0, 0, 0);
     did_log = 1;
 
@@ -668,7 +625,7 @@ egress:
         emsg = krb5_get_error_message(kdc_context, errcode);
 
     if (status) {
-        log_as_req(from, request, &reply, &client, cname, &server, sname,
+        log_as_req(from, request, &reply, client, cname, server, sname,
                    authtime, status, errcode, emsg);
         did_log = 1;
     }
@@ -676,17 +633,19 @@ egress:
         if (status == 0) {
             status = emsg;
         }
+        if (errcode == KRB5KDC_ERR_DISCARD)
+            goto discard;
         errcode -= ERROR_TABLE_BASE_krb5;
         if (errcode < 0 || errcode > 128)
             errcode = KRB_ERR_GENERIC;
 
         errcode = prepare_error_as(state, request, errcode, &e_data,
-                                   c_nprincs ? client.princ : NULL,
+                                   (client != NULL) ? client->princ : NULL,
                                    response, status);
         status = 0;
     }
 
-    if (emsg)
+discard: if (emsg)
         krb5_free_error_message(kdc_context, emsg);
     if (enc_tkt_reply.authorization_data != NULL)
         krb5_free_authdata(kdc_context, enc_tkt_reply.authorization_data);
@@ -703,10 +662,8 @@ egress:
         free(cname);
     if (sname != NULL)
         free(sname);
-    if (c_nprincs)
-        krb5_db_free_principal(kdc_context, &client, c_nprincs);
-    if (s_nprincs)
-        krb5_db_free_principal(kdc_context, &server, s_nprincs);
+    krb5_db_free_principal(kdc_context, client);
+    krb5_db_free_principal(kdc_context, server);
     if (session_key.contents != NULL)
         krb5_free_keyblock_contents(kdc_context, &session_key);
     if (ticket_reply.enc_part.ciphertext.data != NULL) {
@@ -750,7 +707,7 @@ prepare_error_as (struct kdc_request_state *rstate, krb5_kdc_req *request,
         errpkt.client = canon_client;
     else
         errpkt.client = request->client;
-    errpkt.text.length = strlen(status) + 1;
+    errpkt.text.length = strlen(status);
     if (!(errpkt.text.data = strdup(status)))
         return ENOMEM;
 
