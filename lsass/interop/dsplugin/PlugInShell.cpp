@@ -30,8 +30,21 @@
 
 static long Activate(void);
 static long Deactivate(void);
-static long RefreshGPONodes(void);
 
+static long GetDomainJoinState(
+    PSTR* ppszDomain
+    );
+
+static long GetGPONodes(
+    PCSTR pszDomain,
+    PGROUP_POLICY_OBJECT *ppCurrentGPOs,
+    PBOOLEAN pbOffline
+    );
+
+static long UpdateGPONodes(
+    PCSTR pszDomain,
+    const PGROUP_POLICY_OBJECT pCurrentGPOs
+    );
 
 // ----------------------------------------------------------------------------
 // * Private Globals
@@ -48,17 +61,10 @@ typedef struct _PLUGIN_STATE {
     bool IsJoinedToAD;
     bool IsStartupComplete;
     LWE_DS_FLAGS Flags;
-    pthread_mutex_t PeriodicTaskMutex;
-    bool IsPeriodicTaskMutexInitialized;
     PSTR pszRealm;
     PGROUP_POLICY_OBJECT pGPOs;
-    bool fDomainControllerNotAvailable;
-    int OfflineTimerCount;
     PNETADAPTERINFO pNetAdapterList;
-    PSTR pszCurrentAllowedAdminsList;
     PVOID pAllowAdminCheckData;
-    pthread_rwlock_t AdminAccessListLock;
-    bool IsAdminAccessListLockInitialized;
 } PLUGIN_STATE, *PPLUGIN_STATE;
 
 static PLUGIN_STATE GlobalState = { 0 };
@@ -87,30 +93,6 @@ static PLUGIN_STATE GlobalState = { 0 };
         } \
     } while (0)
 
-#define _GS_ACQUIRE_ADMIN_ACCESS_LIST(OpCode, OpLiteral) \
-    do { \
-        if (pthread_rwlock_ ## OpCode ## lock(&GlobalState.AdminAccessListLock) < 0) \
-        { \
-            int libcError = errno; \
-            LOG_FATAL("Error acquiring access list lock for " OpLiteral ": %s (%d)", strerror(libcError), libcError); \
-        } \
-    } while (0)
-
-#define GS_ACQUIRE_EXCLUSIVE_ADMIN_ACCESS_LIST() \
-    _GS_ACQUIRE_ADMIN_ACCESS_LIST(wr, "write")
-
-#define GS_ACQUIRE_SHARED_ADMIN_ACCESS_LIST() \
-    _GS_ACQUIRE_ADMIN_ACCESS_LIST(rd, "read")
-
-#define GS_RELEASE_ADMIN_ACCESS_LIST() \
-    do { \
-        if (pthread_rwlock_unlock(&GlobalState.AdminAccessListLock) < 0) \
-        { \
-            int libcError = errno; \
-            LOG_FATAL("Error releasing access list lock: %s (%d)", strerror(libcError), libcError); \
-        } \
-    } while (0)
-
 #define GS_VERIFY_INITIALIZED(macError) \
     do { \
         if (!GlobalState.IsInitialized) \
@@ -123,8 +105,8 @@ static PLUGIN_STATE GlobalState = { 0 };
 
 static
 long RegisterGPONode(
-    PSTR pszDomain,
-    PSTR pszGPOName
+    PCSTR pszDomain,
+    PCSTR pszGPOName
 	)
 {
     long macError = eDSNoErr;
@@ -171,8 +153,8 @@ cleanup:
 
 static
 long UnregisterGPONode(
-    PSTR pszDomain,
-    PSTR pszGPOName
+    PCSTR pszDomain,
+    PCSTR pszGPOName
 	)
 {
     long macError = eDSNoErr;
@@ -214,24 +196,6 @@ cleanup:
     }
     
     return macError;
-}
-
-static
-bool
-SafeIsJoined(
-    void
-    )
-{
-    bool result;
-
-    // We assume that we are initialized because this function
-    // should only be called after checking that we are
-    // initialized.
-    pthread_mutex_lock(&GlobalState.PeriodicTaskMutex);
-    result = GlobalState.IsJoinedToAD;
-    pthread_mutex_unlock(&GlobalState.PeriodicTaskMutex);
-
-    return result;
 }
 
 // -------------------------------------------------------------------------
@@ -459,29 +423,28 @@ long PlugInShell_Initialize(void)
 
     if (pszAllowAdministrationBy)
     {
-        GlobalState.pszCurrentAllowedAdminsList = pszAllowAdministrationBy;
-        pszAllowAdministrationBy = NULL;
-
-        macError = GetAccessCheckData(GlobalState.pszCurrentAllowedAdminsList, &pAllowAdminCheckData);
+        macError = GetAccessCheckData(pszAllowAdministrationBy, &pAllowAdminCheckData);
         if (macError)
         {
             if (macError == eDSAuthUnknownUser)
             {
-                LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by Likewise authentication daemon. Recommend checking that system administrator has enabled the items here in the Likewise cell that applies to this computer.", GlobalState.pszCurrentAllowedAdminsList);
+                LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by Likewise authentication daemon. Recommend checking that system administrator has enabled the items here in the Likewise cell that applies to this computer.", pszAllowAdministrationBy);
             }
             else
             {
-                LOG("Failed to GetAccessCheckData(%s) with error: %d", GlobalState.pszCurrentAllowedAdminsList, macError);
+                LOG("Failed to GetAccessCheckData(%s) with error: %d", pszAllowAdministrationBy, macError);
             }
 
-            LW_SAFE_FREE_STRING(GlobalState.pszCurrentAllowedAdminsList);
-            GlobalState.pszCurrentAllowedAdminsList = NULL;
-            GlobalState.pAllowAdminCheckData = NULL;
             macError = eDSNoErr;
         }
         else
         {
-            LOG("AllowAdministrationBy configured to: %s", GlobalState.pszCurrentAllowedAdminsList);
+            LOG("AllowAdministrationBy configured to: %s", pszAllowAdministrationBy);
+            if (GlobalState.pAllowAdminCheckData)
+            {
+                FreeAccessCheckData(GlobalState.pAllowAdminCheckData);
+            }
+
             GlobalState.pAllowAdminCheckData = pAllowAdminCheckData;
             pAllowAdminCheckData = NULL;
         }
@@ -504,24 +467,6 @@ long PlugInShell_Initialize(void)
         GOTO_CLEANUP();
     }
     GlobalState.IsLockInitialized = true;
-
-    if (pthread_mutex_init(&GlobalState.PeriodicTaskMutex, NULL) < 0)
-    {
-        int libcError = errno;
-        LOG_ERROR("Failied to init mutex: %s (%d)", strerror(libcError), libcError);
-        macError = ePlugInInitError;
-        GOTO_CLEANUP();
-    }
-    GlobalState.IsPeriodicTaskMutexInitialized = true;
-
-    if (pthread_rwlock_init(&GlobalState.AdminAccessListLock, NULL) < 0)
-    {
-        int libcError = errno;
-        LOG_ERROR("Failied to init admin access list lock: %s (%d)", strerror(libcError), libcError);
-        macError = ePlugInInitError;
-        GOTO_CLEANUP();
-    }
-    GlobalState.IsAdminAccessListLockInitialized = true;
 
     macError = LWIAttrLookup::Initialize();
     GOTO_CLEANUP_ON_MACERROR(macError);
@@ -602,13 +547,10 @@ PlugInShell_ProcessRequest(void *inData)
 {
     long macError = eDSNoErr;
     bool isAcquired = false;
-    bool isPeriodicTaskMutexAcquired = false;
     sHeader * pMsgHdr = (sHeader *)inData;
     unsigned long msgType = pMsgHdr ? pMsgHdr->fType : 0;
 
     LOG_ENTER("inData = @%p => { fType = %lu (%s) }", inData, msgType, TypeToString(msgType));
-
-    GS_VERIFY_INITIALIZED(macError);
 
     if (!inData)
     {
@@ -618,6 +560,8 @@ PlugInShell_ProcessRequest(void *inData)
 
     GS_ACQUIRE_SHARED();
     isAcquired = true;
+
+    GS_VERIFY_INITIALIZED(macError);
 
     //
     // We currently do not handle anything while not "active".
@@ -636,8 +580,8 @@ PlugInShell_ProcessRequest(void *inData)
         msgType != kServerRunLoop &&
         msgType != kKerberosMutex)
     {
-        pthread_mutex_lock(&GlobalState.PeriodicTaskMutex);
-        isPeriodicTaskMutexAcquired = true;
+        GS_RELEASE();
+        GS_ACQUIRE_EXCLUSIVE();
 
         if (GlobalState.IsStartupComplete == false)
         {
@@ -669,6 +613,9 @@ PlugInShell_ProcessRequest(void *inData)
                 GOTO_CLEANUP();
             }
         }
+
+        GS_RELEASE();
+        GS_ACQUIRE_SHARED();
     }
 
     // ISSUE-2007/05/30-dalmeida -- We should use r/w locks instead so that
@@ -700,12 +647,10 @@ PlugInShell_ProcessRequest(void *inData)
             break;
 
         case kDoDirNodeAuth:
-            GS_ACQUIRE_SHARED_ADMIN_ACCESS_LIST();
             macError = LWIDirNodeQuery::DoDirNodeAuth((sDoDirNodeAuth *)inData,
-                                                       SafeIsJoined(),
+                                                       GlobalState.IsJoinedToAD,
                                                        GlobalState.pAllowAdminCheckData,
                                                        GlobalState.Flags);
-            GS_RELEASE_ADMIN_ACCESS_LIST();
             break;
             
         case kCloseDirNode:
@@ -833,11 +778,6 @@ PlugInShell_ProcessRequest(void *inData)
 
 cleanup:
 
-    if (isPeriodicTaskMutexAcquired)
-    {
-        pthread_mutex_unlock(&GlobalState.PeriodicTaskMutex);
-    }
-
     if (isAcquired)
     {
         GS_RELEASE();
@@ -869,8 +809,6 @@ long PlugInShell_SetPluginState(const unsigned long inNewState)
 
     LOG_ENTER("inNewState = 0x%08x (%s)", inNewState, StateToString(inNewState));
 
-    GS_VERIFY_INITIALIZED(macError);
-
     if (FlagOn(inNewState, ~(kActive | kInactive)))
     {
         LOG("Ignoring unexpected state flags: 0x%08x", FlagOn(inNewState, ~(kActive | kInactive)));
@@ -893,6 +831,8 @@ long PlugInShell_SetPluginState(const unsigned long inNewState)
 
     GS_ACQUIRE_EXCLUSIVE();
     isAcquired = true;
+
+    GS_VERIFY_INITIALIZED(macError);
 
     LOG("Current State = 0x%08x", GlobalState.PluginState);
 
@@ -964,15 +904,127 @@ long PlugInShell_PeriodicTask(void)
     PVOID pAllowAdminCheckData = NULL;
     PNETADAPTERINFO pTempNetInfo = NULL;
     DWORD dwCacheLifeTime = 10;
+    PGROUP_POLICY_OBJECT pCurrentGPOs = NULL;
+    PSTR pszDomain = NULL;
+    BOOLEAN bOffline = false;
+    static int offlineTimerCount = 0;
+    static PSTR pszCurrentAllowedAdminsList = NULL;
 
     // No enter/leave logging since function is called every 30 seconds
     // or so (on Mac OS X 10.4.7).
 
+    // Get some information that might take a while before locking
+    // GlobalState.
+    macError = GetConfigurationSettings(&bMergeModeMCX,
+                                        &bEnableForceHomedirOnStartupDisk,
+                                        &bUseADUNCForHomeLocation,
+                                        &pszUNCProtocolForHomeLocation,
+                                        &pszAllowAdministrationBy,
+                                        &bMergeAdmins,
+                                        &dwCacheLifeTime);
+    GOTO_CLEANUP_ON_MACERROR(macError);
+
+    macError = GetDomainJoinState(&pszDomain);
+    GOTO_CLEANUP_ON_MACERROR(macError);
+
+    if (offlineTimerCount)
+    {
+        if (offlineTimerCount < 5)
+        {
+            ++offlineTimerCount;
+        }
+        else
+        {
+            offlineTimerCount = 0;
+        }
+    }
+
+    if (offlineTimerCount == 0)
+    {
+        macError = GetGPONodes(pszDomain, &pCurrentGPOs, &bOffline);
+        GOTO_CLEANUP_ON_MACERROR(macError);
+
+        if (bOffline)
+        {
+            offlineTimerCount = 1;
+        }
+    }
+
+    if (pszAllowAdministrationBy)
+    {
+        if (pszCurrentAllowedAdminsList)
+        {
+            if (strcmp(pszCurrentAllowedAdminsList, pszAllowAdministrationBy))
+            {
+                // Setting changed from one value to another
+                bAdminListChanged = true;
+
+                // Release the former cached list
+                LW_SAFE_FREE_STRING(pszCurrentAllowedAdminsList);
+                pszCurrentAllowedAdminsList = pszAllowAdministrationBy;
+                pszAllowAdministrationBy = NULL;
+            }
+        }
+        else
+        {
+            // Former empty value is to be updated to new
+            bAdminListChanged = true;
+            pszCurrentAllowedAdminsList = pszAllowAdministrationBy;
+            pszAllowAdministrationBy = NULL;
+        }
+
+        if (bAdminListChanged)
+        {
+            macError = GetAccessCheckData(pszCurrentAllowedAdminsList, &pAllowAdminCheckData);
+            if (macError)
+            {
+                if (macError == eDSAuthUnknownUser)
+                {
+                    LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by Likewise authentication daemon. Recommend checking that system administrator has enabled the items here in the Likewise cell that applies to this computer.", pszCurrentAllowedAdminsList);
+                }
+                else
+                {
+                    LOG("Failed to GetAllowData(%s) with error: %d", pszCurrentAllowedAdminsList, macError);
+                }
+
+                LW_SAFE_FREE_STRING(pszCurrentAllowedAdminsList);
+                pszCurrentAllowedAdminsList = NULL;
+                pAllowAdminCheckData = NULL;
+                macError = eDSNoErr;
+            }
+            else
+            {
+                LOG("AllowAdministrationBy updated to (%s)", pszCurrentAllowedAdminsList);
+            }
+        }
+    }
+    else
+    {
+        if (pszCurrentAllowedAdminsList)
+        {
+            // Former value being set to empty
+            bAdminListChanged = true;
+            LW_SAFE_FREE_STRING(pszCurrentAllowedAdminsList);
+            pszCurrentAllowedAdminsList = NULL;
+            LOG("AllowAdministrationBy updated to (not set)");
+        }
+    }
+
+    GS_ACQUIRE_EXCLUSIVE();
+    isAcquired = true;
+
     GS_VERIFY_INITIALIZED(macError);
 
-    GS_ACQUIRE_SHARED();
-    pthread_mutex_lock(&GlobalState.PeriodicTaskMutex);
-    isAcquired = true;
+    if (pszDomain && GlobalState.pszRealm &&
+        strcmp(pszDomain, GlobalState.pszRealm))
+    {
+        LOG("Unexpected domain name change: '%s' -> '%s'",
+            pszDomain, GlobalState.pszRealm);
+        // ISSUE-2008/10/07-dalmeida -- To support this, we would
+        // need to unregister all nodes.
+        macError = eDSOperationFailed;
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
 
     if (!GlobalState.pNetAdapterList)
     {
@@ -1004,15 +1056,6 @@ long PlugInShell_PeriodicTask(void)
             GlobalState.IsStartupComplete = true;
         }
     }
-
-    macError = GetConfigurationSettings(&bMergeModeMCX,
-                                        &bEnableForceHomedirOnStartupDisk,
-                                        &bUseADUNCForHomeLocation,
-                                        &pszUNCProtocolForHomeLocation,
-                                        &pszAllowAdministrationBy,
-                                        &bMergeAdmins,
-                                        &dwCacheLifeTime);
-    GOTO_CLEANUP_ON_MACERROR(macError);
 
     /* Make sure to preserve the flag that tells us this is Leopard or not */
     if (GlobalState.Flags & LWE_DS_FLAG_IS_LEOPARD)
@@ -1064,66 +1107,6 @@ long PlugInShell_PeriodicTask(void)
         }
     }
 
-    if (pszAllowAdministrationBy)
-    {
-        if (GlobalState.pszCurrentAllowedAdminsList)
-        {
-            if (strcmp(GlobalState.pszCurrentAllowedAdminsList, pszAllowAdministrationBy))
-            {
-                // Setting changed from one value to another
-                bAdminListChanged = true;
-            }
-
-            // Release the former cached list
-            LW_SAFE_FREE_STRING(GlobalState.pszCurrentAllowedAdminsList);
-        }
-        else
-        {
-            // Former empty value is to be updated to new
-            bAdminListChanged = true;
-        }
-
-        // Now replace cached list
-        GlobalState.pszCurrentAllowedAdminsList = pszAllowAdministrationBy;
-        pszAllowAdministrationBy = NULL;
-
-        if (bAdminListChanged)
-        {
-            macError = GetAccessCheckData(GlobalState.pszCurrentAllowedAdminsList, &pAllowAdminCheckData);
-            if (macError)
-            {
-                if (macError == eDSAuthUnknownUser)
-                {
-                    LOG("GetAccessCheckData(%s) failed with error: eDSAuthUnknownUser. AD user accounts will not be added to admin group (GID:80), since the list provided is incorrectly specified. This error suggests that you have a user or group that is not recognized by Likewise authentication daemon. Recommend checking that system administrator has enabled the items here in the Likewise cell that applies to this computer.", GlobalState.pszCurrentAllowedAdminsList);
-                }
-                else
-                {
-                    LOG("Failed to GetAllowData(%s) with error: %d", GlobalState.pszCurrentAllowedAdminsList, macError);
-                }
-
-                LW_SAFE_FREE_STRING(GlobalState.pszCurrentAllowedAdminsList);
-                GlobalState.pszCurrentAllowedAdminsList = NULL;
-                pAllowAdminCheckData = NULL;
-                macError = eDSNoErr;
-            }
-            else
-            {
-                LOG("AllowAdministrationBy updated to (%s)", GlobalState.pszCurrentAllowedAdminsList);
-            }
-        }
-    }
-    else
-    {
-        if (GlobalState.pszCurrentAllowedAdminsList)
-        {
-            // Former value being set to empty
-            bAdminListChanged = true;
-            LW_SAFE_FREE_STRING(GlobalState.pszCurrentAllowedAdminsList);
-            GlobalState.pszCurrentAllowedAdminsList = NULL;
-            LOG("AllowAdministrationBy updated to (not set)");
-        }
-    }
-
     /* See if Merge Admins feature is to be supported */
     if (bMergeAdmins)
     {
@@ -1137,8 +1120,6 @@ long PlugInShell_PeriodicTask(void)
     if (bAdminListChanged)
     {
         /* Now update the GlobalState to reflect new pAllowAdminCheckData */
-        GS_ACQUIRE_EXCLUSIVE_ADMIN_ACCESS_LIST();
-
         if (GlobalState.pAllowAdminCheckData)
         {
             FreeAccessCheckData(GlobalState.pAllowAdminCheckData);
@@ -1150,8 +1131,6 @@ long PlugInShell_PeriodicTask(void)
             GlobalState.pAllowAdminCheckData = pAllowAdminCheckData;
             pAllowAdminCheckData = NULL;
         }
-
-        GS_RELEASE_ADMIN_ACCESS_LIST();
     }
 
     LWIQuery::SetCacheLifeTime(dwCacheLifeTime);
@@ -1159,48 +1138,41 @@ long PlugInShell_PeriodicTask(void)
     /* Now update the GlobalState to reflect new flags */
     GlobalState.Flags = NewFlags;
 
-    if (GlobalState.fDomainControllerNotAvailable &&
-        (GlobalState.OfflineTimerCount < 5))
+    if (offlineTimerCount == 0)
     {
-        GlobalState.OfflineTimerCount++;
-        macError = eDSNoErr;
-        goto cleanup;
+        macError = UpdateGPONodes(pszDomain, pCurrentGPOs);
+        if (macError)
+        {
+            LOG("Encountered error %d while updating GPO nodes", macError);
+            macError = eDSNoErr;
+        }
     }
 
-    GlobalState.fDomainControllerNotAvailable = false;
-    GlobalState.OfflineTimerCount = 0;
+    GPA_SAFE_FREE_GPO_LIST(GlobalState.pGPOs);
+    GlobalState.pGPOs = pCurrentGPOs;
+    pCurrentGPOs = NULL;
 
-    if (isAcquired)
-    {
-        pthread_mutex_unlock(&GlobalState.PeriodicTaskMutex);
-        GS_RELEASE();
-        isAcquired = false;
-    }
-
-    macError = RefreshGPONodes();
-    if (macError)
-    {
-        LOG("Encountered error %d from refresh GPO nodes", macError);
-        macError = eDSNoErr;
-    }
+    GlobalState.IsJoinedToAD = pszDomain ? true : false;
+    LW_SAFE_FREE_STRING(GlobalState.pszRealm);
+    GlobalState.pszRealm = pszDomain;
+    pszDomain = NULL;
 
 cleanup:
-    
-    if (pszUNCProtocolForHomeLocation)
-    {
-        LW_SAFE_FREE_STRING(pszUNCProtocolForHomeLocation);
-    }
-
-    if (pszAllowAdministrationBy)
-    {
-        LW_SAFE_FREE_STRING(pszAllowAdministrationBy);
-    }
 
     if (isAcquired)
     {
-        pthread_mutex_unlock(&GlobalState.PeriodicTaskMutex);
         GS_RELEASE();
     }
+
+    if (pAllowAdminCheckData)
+    {
+        FreeAccessCheckData(pAllowAdminCheckData);
+    }
+    
+    LW_SAFE_FREE_STRING(pszUNCProtocolForHomeLocation);
+    LW_SAFE_FREE_STRING(pszAllowAdministrationBy);
+    LW_SAFE_FREE_STRING(pszDomain);
+    GPA_SAFE_FREE_GPO_LIST(pCurrentGPOs);
 
     return macError;
 }
@@ -1259,19 +1231,7 @@ long PlugInShell_Shutdown(void)
     LWIDirNodeQuery::Cleanup();
     LWIRecTypeLookup::Cleanup();
     LWIAttrLookup::Cleanup();
-
-    if (GlobalState.IsPeriodicTaskMutexInitialized)
-    {
-        pthread_mutex_destroy(&GlobalState.PeriodicTaskMutex);
-        GlobalState.IsPeriodicTaskMutexInitialized = false;
-    }
-
-    if (GlobalState.IsAdminAccessListLockInitialized)
-    {
-        pthread_rwlock_destroy(&GlobalState.AdminAccessListLock);
-        GlobalState.IsAdminAccessListLockInitialized = false;
-    }
-
+ 
     if (GlobalState.IsLockInitialized)
     {
         pthread_rwlock_destroy(&GlobalState.Lock);
@@ -1286,6 +1246,9 @@ long PlugInShell_Shutdown(void)
     return macError;
 }
 
+/*
+ * This must be called between GS_ACQUIRE_EXCLUSIVE() and GS_RELEASE().
+ */
 static long Activate(void)
 {
     long macError = eDSNoErr;
@@ -1357,6 +1320,9 @@ cleanup:
     return macError;
 }
 
+/*
+ * This must be called between GS_ACQUIRE_EXCLUSIVE() and GS_RELEASE().
+ */
 static long Deactivate(void)
 {
     long macError = eDSNoErr;
@@ -1414,12 +1380,6 @@ static long Deactivate(void)
         GlobalState.DsRoot = 0;
     }
 
-    if (GlobalState.pszCurrentAllowedAdminsList)
-    {
-        LW_SAFE_FREE_STRING(GlobalState.pszCurrentAllowedAdminsList);
-        GlobalState.pszCurrentAllowedAdminsList = NULL;
-    }
-
     if (GlobalState.pAllowAdminCheckData)
     {
         FreeAccessCheckData(GlobalState.pAllowAdminCheckData);
@@ -1459,32 +1419,18 @@ cleanup:
     return macError;
 }
 
-static long RefreshGPONodes(void)
+static long GetGPONodes(
+    PCSTR pszDomain,
+    PGROUP_POLICY_OBJECT *ppCurrentGPOs,
+    PBOOLEAN pbOffline
+    )
 {
     long macError = eDSNoErr;
     PGROUP_POLICY_OBJECT pCurrentGPOs = NULL;
-    PGROUP_POLICY_OBJECT pDeletedGPOs = NULL;
-    PGROUP_POLICY_OBJECT pNewGPOs = NULL;
-    PGROUP_POLICY_OBJECT pTemp = NULL;
-    PSTR pszDomain = NULL;
-    bool isAcquired = false;
-
-    macError = GetDomainJoinState(&pszDomain);
-    GOTO_CLEANUP_ON_MACERROR(macError);
+    BOOLEAN bOffline = false;
 
     if (pszDomain)
     {
-        if (pszDomain && GlobalState.pszRealm &&
-            strcmp(pszDomain, GlobalState.pszRealm))
-        {
-            LOG("Unexpected domain name change: '%s' -> '%s'",
-                pszDomain, GlobalState.pszRealm);
-            // ISSUE-2008/10/07-dalmeida -- To support this, we would
-            // need to unregister all nodes.
-            macError = eDSOperationFailed;
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-
         macError = EnumWorkgroupManagerEnabledGPOs(pszDomain, &pCurrentGPOs);
         if (macError == eDSReceiveFailed ||
             macError == eDSBogusServer ||
@@ -1492,26 +1438,47 @@ static long RefreshGPONodes(void)
             macError == eDSAuthMasterUnreachable)
         {
             LOG("EnumWorkgroupManagerEnableGPOs failed %d, treating as okay", macError);
-            GlobalState.fDomainControllerNotAvailable = true;
-            GlobalState.OfflineTimerCount = 1;
+            bOffline = true;
             macError = eDSNoErr;
         }
-
-        if (macError)
+        else if (macError)
         {
             LOG("EnumWorkgroupManagerEnableGPOs failed unexpectedly (error = %d)", macError);
             GOTO_CLEANUP_ON_MACERROR(macError);
         }
     }
 
-    GS_ACQUIRE_SHARED();
-    pthread_mutex_lock(&GlobalState.PeriodicTaskMutex);
-    isAcquired = true;
+    *pbOffline = bOffline;
+    *ppCurrentGPOs = pCurrentGPOs;
+    pCurrentGPOs = NULL;
 
-    macError = GPAComputeDeletedList(pCurrentGPOs, GlobalState.pGPOs, &pDeletedGPOs);
+cleanup:
+
+    GPA_SAFE_FREE_GPO_LIST(pCurrentGPOs);
+
+    return macError;
+}
+
+static long UpdateGPONodes(
+    PCSTR pszDomain,
+    const PGROUP_POLICY_OBJECT pCurrentGPOs
+    )
+{
+    long macError = eDSNoErr;
+    PGROUP_POLICY_OBJECT pDeletedGPOs = NULL;
+    PGROUP_POLICY_OBJECT pNewGPOs = NULL;
+    PGROUP_POLICY_OBJECT pTemp = NULL;
+
+    macError = GPAComputeDeletedList(
+                pCurrentGPOs,
+                GlobalState.pGPOs,
+                &pDeletedGPOs);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    macError = GPAComputeDeletedList(GlobalState.pGPOs, pCurrentGPOs, &pNewGPOs);
+    macError = GPAComputeDeletedList(
+                GlobalState.pGPOs,
+                pCurrentGPOs,
+                &pNewGPOs);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
     pTemp = pDeletedGPOs;
@@ -1530,27 +1497,10 @@ static long RefreshGPONodes(void)
         pTemp = pTemp->pNext;
     }
 
-    GPA_SAFE_FREE_GPO_LIST(GlobalState.pGPOs);
-    GlobalState.pGPOs = pCurrentGPOs;
-    pCurrentGPOs = NULL;
-
-    GlobalState.IsJoinedToAD = pszDomain ? true : false;
-    LW_SAFE_FREE_STRING(GlobalState.pszRealm);
-    GlobalState.pszRealm = pszDomain;
-    pszDomain = NULL;
-
 cleanup:
 
-    if (isAcquired)
-    {
-        pthread_mutex_unlock(&GlobalState.PeriodicTaskMutex);
-        GS_RELEASE();
-    }
-
-    GPA_SAFE_FREE_GPO_LIST(pCurrentGPOs);
     GPA_SAFE_FREE_GPO_LIST(pDeletedGPOs);
     GPA_SAFE_FREE_GPO_LIST(pNewGPOs);
-    LW_SAFE_FREE_STRING(pszDomain);
 
     return macError;
 }
