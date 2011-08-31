@@ -5194,6 +5194,11 @@ AD_MachineCredentialsCacheInitialize(
                 FALSE);
         }
 
+        if (dwError == LW_ERROR_PASSWORD_MISMATCH)
+        {
+            LSA_LOG_ERROR("The cached machine account password was rejected by the DC.");
+        }
+
         ADSetMachineTGTExpiryError(pState->hMachinePwdState);
     }
     BAIL_ON_LSA_ERROR(dwError);
