@@ -374,15 +374,6 @@ spnego_gss_set_sec_context_option
 	const gss_buffer_t value
 );
 
-OM_uint32
-spnego_gssspi_set_cred_option
-(
-	OM_uint32 *minor_status,
-        gss_cred_id_t cred_handle,
-        const gss_OID desired_object,
-        const gss_buffer_t value
-);
-
 #ifdef _GSS_STATIC_LINK
 int gss_spnegoint_lib_init(void);
 void gss_spnegoint_lib_fini(void);

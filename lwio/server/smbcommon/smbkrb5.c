@@ -333,9 +333,9 @@ SMBGSSContextBuild(
                 authDataBuffer.value = &authData;
                 authDataBuffer.length = sizeof(authData);
                 
-                dwMajorStatus = gssspi_set_cred_option(
+                dwMajorStatus = gss_set_cred_option(
                     (OM_uint32 *)&dwMinorStatus,
-                    pContext->credHandle,
+                    &pContext->credHandle,
                     (gss_OID) &gssCredOptionPasswordOidDesc,
                     &authDataBuffer);
                 BAIL_ON_SEC_ERROR(dwMajorStatus);

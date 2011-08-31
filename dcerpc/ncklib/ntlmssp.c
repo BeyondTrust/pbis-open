@@ -280,8 +280,8 @@ INTERNAL void rpc__ntlmauth_bnd_set_auth
 	auth_buffer.value  = auth_info;
 	auth_buffer.length = sizeof(*auth_info);
 
-	gss_rc = gssspi_set_cred_option(&minor_status,
-					cred_handle,
+	gss_rc = gss_set_cred_option(&minor_status,
+					&cred_handle,
 					(gss_OID)&gss_cred_opt_password_oid_desc,
 					&auth_buffer);
 	if (gss_rc != GSS_S_COMPLETE)

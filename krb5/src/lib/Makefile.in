@@ -1,6 +1,6 @@
 mydir=lib
 #LW#SUBDIRS=crypto krb5 gssapi rpc kdb kadm5 apputils
-SUBDIRS=crypto krb5 gssapi
+SUBDIRS=crypto krb5 gssapi rpc kdb kadm5
 WINSUBDIRS=crypto krb5 gssapi
 BUILDTOP=$(REL)..
 
