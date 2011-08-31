@@ -140,6 +140,12 @@ ParseArgs(
                 }
                 else
                 {
+                    if (strncmp(pszArg, "--", 2) == 0)
+                    {
+                        ShowUsage();
+                        exit(0);
+                    }
+
                     dwError = LWNetAllocateString(pszArg, &pszTargetFQDN);
                     BAIL_ON_LWNET_ERROR(dwError);
         
