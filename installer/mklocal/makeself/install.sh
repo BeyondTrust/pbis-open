@@ -442,7 +442,7 @@ package_install_linux_deb()
 
 package_uninstall_linux_deb()
 {
-    eval "dpkg --purge $@"
+    eval "dpkg --remove $@"
     if [ $? -eq 0 ]; then
         return 0
     fi
