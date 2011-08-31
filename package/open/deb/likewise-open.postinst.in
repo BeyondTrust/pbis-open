@@ -241,6 +241,15 @@ switch_to_open_provider()
     run_quiet '@MK_BINDIR@/lwregshell' set_value "$_value" Path "$_path"
 }
 
+execute_auxiliary_scripts()
+{
+    # The system administrator may have configured these during a previous
+    # install
+    for file in `ls "@LW_CACHEDIR@/scripts/install"`; do
+        run_quiet "@LW_CACHEDIR@/scripts/install/$file" --install
+    done
+}
+
 postinstall()
 {
     log "Package: Likewise Open postinstall [configure] begins (`date`)"
@@ -272,6 +281,8 @@ postinstall()
     run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
 
     run_quiet rm -rf "${UPGRADEDIR}"
+
+    execute_auxiliary_scripts
 
     log "Package: Likewise Open postinstall [configure] finished"
     exit 0

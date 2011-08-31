@@ -91,9 +91,18 @@ run_or_fail()
     return $err
 }
 
+execute_auxiliary_scripts()
+{
+    for file in `ls "@LW_CACHEDIR@/scripts/uninstall"`; do
+        run_quiet "@LW_CACHEDIR@/scripts/uninstall/$file" --uninstall
+    done
+}
+
 prerm_remove()
 {
     log "Package: Likewise Open preremove [remove] begins (`date`)"
+
+    execute_auxiliary_scripts
 
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
