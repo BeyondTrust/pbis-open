@@ -5,7 +5,7 @@ LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv \
 SUBDIRS="$LW_ALL_BUNDLED \
          lwbase lwmsg libedit lwreg lwadvapi netlogon \
          lwio libschannel dcerpc centutils lwsm eventlog lsass lwdns \
-         srvsvc lwnetapi lwtools domainjoin lwconfig lwupgrade samba-interop config package"
+         lwnetapi lwtools domainjoin lwconfig lwupgrade samba-interop config package"
 
 
 defaults()
@@ -85,7 +85,6 @@ configure()
     case "$LW_FEATURE_LEVEL" in
         auth)
             mk_skip_subdir libschannel
-            mk_skip_subdir srvsvc
             mk_skip_subdir lwnetapi
             mk_skip_subdir lwtools
             ;;
