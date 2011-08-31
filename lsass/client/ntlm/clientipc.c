@@ -403,60 +403,91 @@ error:
     goto cleanup;
 }
 
+typedef struct DELETE_CONTEXT
+{
+    NTLM_IPC_DELETE_SEC_CTXT_REQ Req;
+    LWMsgParams In;
+    LWMsgParams Out;
+} DELETE_CONTEXT, *PDELETE_CONTEXT;
+
+static
+VOID
+NtlmDeleteSecurityContextComplete(
+    LWMsgCall* pCall,
+    LWMsgStatus status,
+    PVOID pData
+    )
+{
+    LWMsgSession* pSession = lwmsg_call_get_session(pCall);
+    PDELETE_CONTEXT pContext = (PDELETE_CONTEXT) pData;
+
+    lwmsg_session_release_handle(pSession, pContext->Req.hContext);
+    lwmsg_call_destroy_params(pCall, &pContext->Out);
+    lwmsg_call_release(pCall);
+    LwFreeMemory(pContext);
+}
+
+
 DWORD
 NtlmTransactDeleteSecurityContext(
     IN PNTLM_CONTEXT_HANDLE phContext
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
-    NTLM_IPC_DELETE_SEC_CTXT_REQ DeleteSecCtxtReq;
-    // Do not free pError
-    PNTLM_IPC_ERROR pError = NULL;
-    LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
-    LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
+    PDELETE_CONTEXT pContext = NULL;
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    dwError = LwAllocateMemory(sizeof(*pContext), OUT_PPVOID(&pContext));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pContext->Req.hContext = *phContext;
+    pContext->In.tag = NTLM_Q_DELETE_SEC_CTXT;
+    pContext->In.data = &pContext->Req;
+    pContext->Out.tag = LWMSG_TAG_INVALID;
+    pContext->Out.data = NULL;
 
     dwError = NtlmIpcAcquireCall(&pCall);
     BAIL_ON_LSA_ERROR(dwError);
 
-    memset(&DeleteSecCtxtReq, 0, sizeof(DeleteSecCtxtReq));
-
-    DeleteSecCtxtReq.hContext = *phContext;
-
-    In.tag = NTLM_Q_DELETE_SEC_CTXT;
-    In.data = &DeleteSecCtxtReq;
-
-    dwError = MAP_LWMSG_ERROR(
-        lwmsg_call_dispatch(pCall, &In, &Out, NULL, NULL));
-    BAIL_ON_LSA_ERROR(dwError);
-
-    switch (Out.tag)
+    status = lwmsg_call_dispatch(
+            pCall,
+            &pContext->In,
+            &pContext->Out,
+            NtlmDeleteSecurityContextComplete, pContext);
+    switch(status)
     {
-        case NTLM_R_DELETE_SEC_CTXT_SUCCESS:
-            break;
-        case NTLM_R_GENERIC_FAILURE:
-            pError = (PNTLM_IPC_ERROR) Out.data;
-            dwError = pError->dwError;
-            BAIL_ON_LSA_ERROR(dwError);
-            break;
-        default:
-            dwError = LW_ERROR_INTERNAL;
-            BAIL_ON_LSA_ERROR(dwError);
+    case LWMSG_STATUS_SUCCESS:
+        goto error;
+    case LWMSG_STATUS_PENDING:
+        break;
+    default:
+        dwError = MAP_LWMSG_ERROR(status);
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
 cleanup:
+
+    return dwError;
+
+error:
 
     NtlmIpcReleaseHandle(*phContext);
 
     if (pCall)
     {
-        lwmsg_call_destroy_params(pCall, &Out);
+        if (pContext)
+        {
+            lwmsg_call_destroy_params(pCall, &pContext->Out);
+        }
         lwmsg_call_release(pCall);
     }
 
-    return dwError;
+    if (pContext)
+    {
+        LwFreeMemory(pContext);
+    }
 
-error:
     goto cleanup;
 }
 
