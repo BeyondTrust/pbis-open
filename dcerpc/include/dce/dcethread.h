@@ -102,10 +102,10 @@ typedef void* dcethread_addr;
 typedef void (*dcethread_initroutine)(void);
 typedef void* (*dcethread_startroutine)(void*);
 
-/* Solaris and AIX have a broken PTHREAD_ONCE_INIT macro, so wrap it
-   appropriately depending on platform */
+/* Solaris and AIX may have a broken PTHREAD_ONCE_INIT macro, so wrap it
+   appropriately depending on tests */
 
-#if defined(_AIX)
+#ifdef PTHREAD_ONCE_INIT_BROKEN
 #  define DCETHREAD_ONCE_INIT {PTHREAD_ONCE_INIT}
 #else
 #  define DCETHREAD_ONCE_INIT PTHREAD_ONCE_INIT
