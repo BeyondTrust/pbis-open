@@ -1599,6 +1599,7 @@ EVTNetworkThread(
     };
     struct timespec delay = {5, 0};
     BOOLEAN *pbExitNow = (BOOLEAN *)pArg;
+    BOOLEAN bFirstAttempt = TRUE;
  
     while (endpoints[index].protocol && !*pbExitNow)
     {
@@ -1609,6 +1610,11 @@ EVTNetworkThread(
         
         if (dwError)
         {
+            if (bFirstAttempt)
+            {
+                EVT_LOG_ERROR("Failed to register RPC endpoint.  Error Code: [%u]\n", dwError);
+                bFirstAttempt = FALSE;
+            }
             dwError = 0;
             dcethread_delay(&delay);
         }
@@ -1628,6 +1634,7 @@ EVTNetworkThread(
             }
                                 
             index++;
+            bFirstAttempt = TRUE;
         }
     }
 
