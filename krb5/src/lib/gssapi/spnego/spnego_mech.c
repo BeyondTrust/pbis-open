@@ -86,6 +86,11 @@ extern int gssint_put_der_length(OM_uint32, unsigned char **, unsigned int);
 
 
 /* private routines for spnego_mechanism */
+static OM_uint32
+filter_mech_list(OM_uint32 *minor_status,
+	gss_OID_set mechs,
+	gss_OID filter,
+	gss_OID_set *rmechs);
 static spnego_token_t make_spnego_token(char *);
 static gss_buffer_desc make_err_msg(char *);
 static int g_token_size(gss_OID_const, unsigned int);
@@ -326,6 +331,41 @@ void gss_spnegoint_lib_fini(void)
 {
 }
 
+static OM_uint32
+filter_mech_list(OM_uint32 *minor_status,
+	gss_OID_set mechs,
+	gss_OID filter,
+	gss_OID_set *rmechs)
+{
+	unsigned int	i;
+	OM_uint32 major_status = GSS_S_COMPLETE, tmpmin;
+
+	major_status = gss_create_empty_oid_set(minor_status, rmechs);
+
+	if (major_status != GSS_S_COMPLETE) {
+		(void) gss_release_oid_set(minor_status, &mechs);
+		return (major_status);
+	}
+
+	for (i = 0; i < mechs->count && major_status == GSS_S_COMPLETE; i++) {
+		if ((mechs->elements[i].length != filter->length) ||
+		    memcmp(mechs->elements[i].elements,
+			filter->elements,
+			filter->length)) {
+
+			major_status = gss_add_oid_set_member(minor_status,
+							      &mechs->elements[i],
+							      rmechs);
+			if (major_status != GSS_S_COMPLETE) {
+				(void) gss_release_oid_set(&tmpmin, rmechs);
+				return (major_status);
+			}
+		}
+	}
+
+	return (major_status);
+}
+
 /*ARGSUSED*/
 OM_uint32
 spnego_gss_acquire_cred(OM_uint32 *minor_status,
@@ -337,8 +377,9 @@ spnego_gss_acquire_cred(OM_uint32 *minor_status,
 			gss_OID_set *actual_mechs,
 			OM_uint32 *time_rec)
 {
-	OM_uint32 status;
+	OM_uint32 tmpmin, status;
 	gss_OID_set amechs;
+	gss_OID_set filtered_mechs = GSS_C_NO_OID_SET;
 	gss_cred_id_t mcred = NULL;
 	spnego_gss_cred_id_t spcred = NULL;
 	dsyslog("Entering spnego_gss_acquire_cred\n");
@@ -374,10 +415,21 @@ spnego_gss_acquire_cred(OM_uint32 *minor_status,
 		 * gss_acquire_creds will return the subset of mechs for
 		 * which the given 'output_cred_handle' is valid.
 		 */
-		status = gss_acquire_cred(minor_status,
-				desired_name, time_req,
-				desired_mechs, cred_usage,
-				&mcred, &amechs, time_rec);
+		status = filter_mech_list(minor_status,
+			desired_mechs,
+			&spnego_mechanism.mech_type,
+			&filtered_mechs);
+		if (!filtered_mechs->elements)
+		{
+			gss_release_oid_set(&tmpmin, &filtered_mechs);
+		}
+		if (status == GSS_S_COMPLETE) {
+			status = gss_acquire_cred(minor_status,
+					desired_name, time_req,
+					filtered_mechs, cred_usage,
+					&mcred, &amechs, time_rec);
+		}
+		gss_release_oid_set(&tmpmin, &filtered_mechs);
 	}
 
 	if (actual_mechs && amechs != GSS_C_NULL_OID_SET) {

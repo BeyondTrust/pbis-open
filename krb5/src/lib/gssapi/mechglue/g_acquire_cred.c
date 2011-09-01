@@ -35,6 +35,22 @@
 #include <errno.h>
 #include <time.h>
 
+static
+OM_uint32 KRB5_CALLCONV
+gss_add_cred_with_mech_list(
+    OM_uint32		*minor_status,
+    gss_cred_id_t	input_cred_handle,
+    gss_name_t		desired_name,
+    gss_OID		desired_mech,
+    gss_OID_set		desired_mechs,
+    gss_cred_usage_t	cred_usage,
+    OM_uint32		initiator_time_req,
+    OM_uint32		acceptor_time_req,
+    gss_cred_id_t	*output_cred_handle,
+    gss_OID_set		*actual_mechs,
+    OM_uint32		*initiator_time_rec,
+    OM_uint32		*acceptor_time_rec);
+
 static OM_uint32
 val_acq_cred_args(
     OM_uint32 *minor_status,
@@ -159,9 +175,10 @@ OM_uint32 *		time_rec;
 
     /* for each requested mech attempt to obtain a credential */
     for (i = 0; i < mechs->count; i++) {
-	major = gss_add_cred(minor_status, (gss_cred_id_t)creds,
+	major = gss_add_cred_with_mech_list(minor_status, (gss_cred_id_t)creds,
 			     desired_name,
 			     &mechs->elements[i],
+			     mechs,
 			     cred_usage, time_req, time_req, NULL,
 			     NULL, &initTimeOut, &acceptTimeOut);
 	if (major == GSS_S_COMPLETE) {
@@ -293,6 +310,30 @@ gss_add_cred(minor_status, input_cred_handle,
     gss_OID_set		*actual_mechs;
     OM_uint32		*initiator_time_rec;
     OM_uint32		*acceptor_time_rec;
+{
+	return gss_add_cred_with_mech_list(minor_status, input_cred_handle,
+			  desired_name, desired_mech,
+			  GSS_C_NULL_OID_SET, cred_usage,
+			  initiator_time_req, acceptor_time_req,
+			  output_cred_handle, actual_mechs,
+			  initiator_time_rec, acceptor_time_rec);
+}
+
+static
+OM_uint32 KRB5_CALLCONV
+gss_add_cred_with_mech_list(
+    OM_uint32		*minor_status,
+    gss_cred_id_t	input_cred_handle,
+    gss_name_t		desired_name,
+    gss_OID		desired_mech,
+    gss_OID_set		desired_mechs,
+    gss_cred_usage_t	cred_usage,
+    OM_uint32		initiator_time_req,
+    OM_uint32		acceptor_time_req,
+    gss_cred_id_t	*output_cred_handle,
+    gss_OID_set		*actual_mechs,
+    OM_uint32		*initiator_time_rec,
+    OM_uint32		*acceptor_time_rec)
 {
     OM_uint32		status, temp_minor_status;
     OM_uint32		time_req, time_rec;

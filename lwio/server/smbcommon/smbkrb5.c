@@ -162,7 +162,7 @@ SMBGSSContextBuild(
     gss_buffer_desc inputNameBuffer = {0};
     gss_buffer_desc authDataBuffer = {0};
     gss_name_t pUsername = NULL;
-    gss_OID_set_desc desiredMechs;
+    gss_OID_set desiredMechs = GSS_C_NO_OID_SET;
     gss_OID_set actualMechs;
     OM_uint32 timeRec = 0;
     SEC_WINNT_AUTH_IDENTITY authData;
@@ -177,6 +177,13 @@ SMBGSSContextBuild(
         .elements = GSS_MECH_NTLM
     };
     size_t sCopyServerChars = 0;
+    static gss_OID_desc gss_spnego_mech_oid_desc =
+      {6, (void *)"\x2b\x06\x01\x05\x05\x02"};
+
+    dwMajorStatus = gss_create_empty_oid_set(
+                        (OM_uint32 *)&dwMinorStatus,
+                        &desiredMechs);
+    BAIL_ON_SEC_ERROR(dwMajorStatus);
 
     dwError = LwRtlCStringAllocateFromWC16String(&pszServerName, pwszServerName);
     BAIL_ON_LWIO_ERROR(dwError);
@@ -248,14 +255,23 @@ SMBGSSContextBuild(
                 &pUsername);
             BAIL_ON_SEC_ERROR(dwMajorStatus);
 
-            desiredMechs.count = 1;
-            desiredMechs.elements = (gss_OID) gss_mech_krb5;
+            dwMajorStatus = gss_add_oid_set_member(
+                (OM_uint32 *)&dwMinorStatus,
+                (gss_OID)gss_mech_krb5,
+                &desiredMechs);
+            BAIL_ON_SEC_ERROR(dwMajorStatus);
+
+            dwMajorStatus = gss_add_oid_set_member(
+                (OM_uint32 *)&dwMinorStatus,
+                &gss_spnego_mech_oid_desc,
+                &desiredMechs);
+            BAIL_ON_SEC_ERROR(dwMajorStatus);
 
             dwMajorStatus = gss_acquire_cred(
                 (OM_uint32 *)&dwMinorStatus,
                 pUsername,
                 0,
-                &desiredMechs,
+                desiredMechs,
                 GSS_C_INITIATE,
                 &pContext->credHandle,
                 &actualMechs,
@@ -298,14 +314,23 @@ SMBGSSContextBuild(
                 }
             }
             
-            desiredMechs.count = 1;
-            desiredMechs.elements = (gss_OID) &gssNtlmOidDesc;
+            dwMajorStatus = gss_add_oid_set_member(
+                (OM_uint32 *)&dwMinorStatus,
+                &gssNtlmOidDesc,
+                &desiredMechs);
+            BAIL_ON_SEC_ERROR(dwMajorStatus);
+
+            dwMajorStatus = gss_add_oid_set_member(
+                (OM_uint32 *)&dwMinorStatus,
+                &gss_spnego_mech_oid_desc,
+                &desiredMechs);
+            BAIL_ON_SEC_ERROR(dwMajorStatus);
             
             dwMajorStatus = gss_acquire_cred(
                 (OM_uint32 *)&dwMinorStatus,
                 pUsername,
                 0,
-                &desiredMechs,
+                desiredMechs,
                 GSS_C_INITIATE,
                 &pContext->credHandle,
                 &actualMechs,
@@ -359,6 +384,7 @@ cleanup:
     {
         gss_release_name((OM_uint32 *)&dwMinorStatus, &pUsername);
     }
+    gss_release_oid_set((OM_uint32 *)&dwMinorStatus, &desiredMechs);
 
     LWIO_SAFE_FREE_STRING(pszTargetName);
     LWIO_SAFE_FREE_STRING(pszServerName);

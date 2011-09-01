@@ -389,14 +389,19 @@ error:
 
 typedef struct DELETE_CONTEXT
 {
-    NTLM_IPC_DELETE_SEC_CTXT_REQ Req;
+    union
+    {
+        NTLM_IPC_DELETE_SEC_CTXT_REQ SecReq;
+        NTLM_IPC_FREE_CREDS_REQ CredsReq;
+    };
+    PVOID Handle;
     LWMsgParams In;
     LWMsgParams Out;
 } DELETE_CONTEXT, *PDELETE_CONTEXT;
 
 static
 VOID
-NtlmDeleteSecurityContextComplete(
+NtlmDeleteContextComplete(
     LWMsgCall* pCall,
     LWMsgStatus status,
     PVOID pData
@@ -405,7 +410,7 @@ NtlmDeleteSecurityContextComplete(
     LWMsgSession* pSession = lwmsg_call_get_session(pCall);
     PDELETE_CONTEXT pContext = (PDELETE_CONTEXT) pData;
 
-    lwmsg_session_release_handle(pSession, pContext->Req.hContext);
+    lwmsg_session_release_handle(pSession, pContext->Handle);
     lwmsg_call_destroy_params(pCall, &pContext->Out);
     lwmsg_call_release(pCall);
     LwFreeMemory(pContext);
@@ -425,9 +430,10 @@ NtlmTransactDeleteSecurityContext(
     dwError = LwAllocateMemory(sizeof(*pContext), OUT_PPVOID(&pContext));
     BAIL_ON_LSA_ERROR(dwError);
 
-    pContext->Req.hContext = (LWMsgHandle*) hContext;
+    pContext->SecReq.hContext = (LWMsgHandle*) hContext;
+    pContext->Handle = (LWMsgHandle*) hContext;
     pContext->In.tag = NTLM_Q_DELETE_SEC_CTXT;
-    pContext->In.data = &pContext->Req;
+    pContext->In.data = &pContext->SecReq;
     pContext->Out.tag = LWMSG_TAG_INVALID;
     pContext->Out.data = NULL;
 
@@ -438,7 +444,7 @@ NtlmTransactDeleteSecurityContext(
             pCall,
             &pContext->In,
             &pContext->Out,
-            NtlmDeleteSecurityContextComplete, pContext);
+            NtlmDeleteContextComplete, pContext);
     switch(status)
     {
     case LWMSG_STATUS_SUCCESS:
@@ -625,54 +631,63 @@ NtlmTransactFreeCredentialsHandle(
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
-    NTLM_IPC_FREE_CREDS_REQ FreeCredsReq;
-    // Do not free pError
-    PNTLM_IPC_ERROR pError = NULL;
-    LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
-    LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
+    PDELETE_CONTEXT pContext = NULL;
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    dwError = LwAllocateMemory(sizeof(*pContext), OUT_PPVOID(&pContext));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pContext->CredsReq.hCredential = (LWMsgHandle*) hCredential;
+    pContext->Handle = (LWMsgHandle*) hCredential;
+    pContext->In.tag = NTLM_Q_FREE_CREDS;
+    pContext->In.data = &pContext->SecReq;
+    pContext->Out.tag = LWMSG_TAG_INVALID;
+    pContext->Out.data = NULL;
 
     dwError = NtlmIpcAcquireCall(&pCall);
     BAIL_ON_LSA_ERROR(dwError);
 
-    memset(&FreeCredsReq, 0, sizeof(FreeCredsReq));
-
-    FreeCredsReq.hCredential = (LWMsgHandle*) hCredential;
-
-    In.tag = NTLM_Q_FREE_CREDS;
-    In.data = &FreeCredsReq;
-
-    dwError = MAP_LWMSG_ERROR(
-        lwmsg_call_dispatch(pCall, &In, &Out, NULL, NULL));
-    BAIL_ON_LSA_ERROR(dwError);
-
-    switch (Out.tag)
+    status = lwmsg_call_dispatch(
+            pCall,
+            &pContext->In,
+            &pContext->Out,
+            NtlmDeleteContextComplete, pContext);
+    switch(status)
     {
-        case NTLM_R_FREE_CREDS_SUCCESS:
-            break;
-        case NTLM_R_GENERIC_FAILURE:
-            pError = (PNTLM_IPC_ERROR) Out.data;
-            dwError = pError->dwError;
-            BAIL_ON_LSA_ERROR(dwError);
-            break;
-        default:
-            dwError = LW_ERROR_INTERNAL;
-            BAIL_ON_LSA_ERROR(dwError);
+    case LWMSG_STATUS_SUCCESS:
+    case LWMSG_STATUS_PENDING:
+        break;
+    default:
+        dwError = MAP_LWMSG_ERROR(status);
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
 cleanup:
 
-    NtlmIpcReleaseHandle((LWMsgHandle*) hCredential);
-
-    if (pCall)
+    if (status != LWMSG_STATUS_PENDING)
     {
-        lwmsg_call_destroy_params(pCall, &Out);
-        lwmsg_call_release(pCall);
+        if (pCall)
+        {
+            if (pContext)
+            {
+                lwmsg_call_destroy_params(pCall, &pContext->Out);
+            }
+            lwmsg_call_release(pCall);
+        }
+
+        if (pContext)
+        {
+            LwFreeMemory(pContext);
+        }
+
+        NtlmIpcReleaseHandle((LWMsgHandle*) hCredential);
     }
 
     return dwError;
 
 error:
+
     goto cleanup;
 }
 
