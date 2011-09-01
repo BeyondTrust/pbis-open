@@ -1242,13 +1242,13 @@ LocalDirDeleteUser(
 
     pDomainSid = gLPGlobals.pLocalDomainSID;
 
-    if (LocalDirIsBuiltinAccount(
+    /*if (LocalDirIsBuiltinAccount(
                     pDomainSid,
                     pUserSid))
     {
         dwError = ERROR_SPECIAL_ACCOUNT;
         BAIL_ON_LSA_ERROR(dwError);
-    }
+    }*/
 
     dwError = DirectoryDeleteObject(
                     pContext->hDirectory,

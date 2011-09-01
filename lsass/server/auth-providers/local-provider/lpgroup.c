@@ -1005,13 +1005,13 @@ LocalDirDeleteGroup(
 
     pDomainSid = gLPGlobals.pLocalDomainSID;
 
-    if (LocalDirIsBuiltinAccount(
+    /*if (LocalDirIsBuiltinAccount(
                     pDomainSid,
                     pGroupSid))
     {
         dwError = ERROR_SPECIAL_ACCOUNT;
         BAIL_ON_LSA_ERROR(dwError);
-    }
+    }*/
 
     dwError = DirectoryDeleteObject(
                     pContext->hDirectory,
