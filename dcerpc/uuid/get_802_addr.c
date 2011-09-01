@@ -36,7 +36,7 @@
 /* Bizarre hack for HP-UX ia64 where a system header
  * makes reference to a kernel-only data structure
  */
-#if defined(__hpux) && defined(__ia64)
+#if defined(__hpux) && defined(__ia64) && !defined(_DEFINED_MPINFOU)
 union mpinfou {};
 #endif
 #include <net/if.h>
@@ -58,12 +58,22 @@ void dce_get_802_addr(dce_802_addr_t *addr, error_status_t *st)
 	struct ifconf ifc;
 	struct ifreq *ifr;
 	int s, i;
-	struct sockaddr *sa;
+	struct sockaddr ATTRIBUTE_UNUSED *sa;
 #ifdef AF_LINK
 	struct sockaddr_dl *sdl;
 #endif
-#ifdef HAVE_NET_IF_ARP_H
-	struct arpreq arpreq;
+#if defined(HAVE_NET_IF_ARP_H) && defined(SIOCGARP) && !defined(SIOCGIFHWADDR)
+        union
+        {
+            struct arpreq arpreq;
+#ifdef AF_LINK
+            struct
+            {
+                struct sockaddr pa;
+                struct sockaddr_dl ha;
+            } arpreq_dl;
+#endif
+        } u;
 #endif
 	struct ifreq ifreq;
 
@@ -127,15 +137,15 @@ void dce_get_802_addr(dce_802_addr_t *addr, error_status_t *st)
 			return;
 		}
 #elif defined(SIOCGARP)
-		memset(&arpreq, 0, sizeof(arpreq));
-		arpreq.arp_pa = ifr->ifr_dstaddr;
-		arpreq.arp_flags = 0;			
-		if (ioctl(s, SIOCGARP, &arpreq) == 0) {
+		memset(&u.arpreq, 0, sizeof(u.arpreq));
+		u.arpreq.arp_pa = ifr->ifr_dstaddr;
+		u.arpreq.arp_flags = 0;			
+		if (ioctl(s, SIOCGARP, &u.arpreq) == 0) {
 #ifdef AF_LINK
-			sdl = (struct sockaddr_dl *)&arpreq.arp_ha;
-			memcpy(addr->eaddr, (unsigned char *)&sdl->sdl_data + sdl->sdl_nlen, 6);
+			sdl = &u.arpreq_dl.ha;
+			memcpy(addr->eaddr, (unsigned const char *)&sdl->sdl_data + sdl->sdl_nlen, 6);
 #else
-			memcpy(addr->eaddr, (unsigned char*)&arpreq.arp_ha.sa_data[0], 6);
+			memcpy(addr->eaddr, (unsigned char*)&u.arpreq.arp_ha.sa_data[0], 6);
 #endif
 			*st = error_status_ok;
 			close(s);
