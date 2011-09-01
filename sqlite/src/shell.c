@@ -100,10 +100,14 @@ static double timeDiff(struct timeval *pStart, struct timeval *pEnd){
 static void endTimer(void){
   if( enableTimer ){
     struct rusage sEnd;
+    double userTime, sysTime;
+
     getrusage(RUSAGE_SELF, &sEnd);
+    userTime = timeDiff(&sBegin.ru_utime, &sEnd.ru_utime);
+    sysTime = timeDiff(&sBegin.ru_stime, &sEnd.ru_stime);
     printf("CPU Time: user %f sys %f\n",
-       timeDiff(&sBegin.ru_utime, &sEnd.ru_utime),
-       timeDiff(&sBegin.ru_stime, &sEnd.ru_stime));
+       userTime,
+       sysTime);
   }
 }
 #define BEGIN_TIMER beginTimer()
