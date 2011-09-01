@@ -514,9 +514,6 @@ cleanup:
     return dwError;
 
 error:
-
-    EVT_LOG_ERROR("Failed to register RPC endpoint.  Error Code: [%u]\n", dwError);
-
     goto cleanup;
 }
 
