@@ -424,7 +424,8 @@ cleanup:
 
 DWORD
 CheckSambaVersion(
-    PCSTR pSmbdPath
+    PCSTR pSmbdPath,
+    PSTR *ppVersion
     )
 {
     DWORD error = 0;
@@ -487,8 +488,13 @@ CheckSambaVersion(
         BAIL_ON_LSA_ERROR(error);
     }
 
+
 cleanup:
-    LW_SAFE_FREE_STRING(pVersionString);
+    if (error)
+    {
+        LW_SAFE_FREE_STRING(pVersionString);
+    }
+    *ppVersion = pVersionString;
     return error;
 }
 
@@ -1429,6 +1435,7 @@ main(
     DWORD argIndex = 0;
     DWORD logLevel = LW_LOG_LEVEL_ERROR;
     PCSTR pErrorSymbol = NULL;
+    PSTR pVersion = NULL;
     BOOLEAN smbdExists = FALSE;
 
     for (argIndex = 1; argIndex < argc; argIndex++)
@@ -1553,7 +1560,7 @@ main(
         LW_LOG_ERROR("Smbd file not found at path '%s'", pSmbdPath);
     }
 
-    error = CheckSambaVersion(pSmbdPath);
+    error = CheckSambaVersion(pSmbdPath, &pVersion);
     BAIL_ON_LSA_ERROR(error);
 
     if (mode == CHECK_VERSION)
@@ -1565,8 +1572,12 @@ main(
         error = InstallWbclient(pSmbdPath);
         BAIL_ON_LSA_ERROR(error);
 
-        error = InstallLwiCompat(pSmbdPath);
-        BAIL_ON_LSA_ERROR(error);
+        if (!strncmp(pVersion, "3.0.", sizeof("3.0.") - 1))
+        {
+            // Only Samba 3.0.x needs this
+            error = InstallLwiCompat(pSmbdPath);
+            BAIL_ON_LSA_ERROR(error);
+        }
 
         error = SynchronizePassword(
                     pSmbdPath);
@@ -1597,6 +1608,7 @@ main(
 
 cleanup:
     LW_SAFE_FREE_STRING(pFoundSmbdPath);
+    LW_SAFE_FREE_STRING(pVersion);
 
     if (error)
     {
