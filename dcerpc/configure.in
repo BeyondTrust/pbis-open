@@ -491,6 +491,7 @@ AC_SUBST(IDL_FLAGS)
 
 saved_CPPFLAGS="$CPPFLAGS"
 saved_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -Wall -Werror"
 
 AC_MSG_CHECKING([if PTHREAD_ONCE_INIT must be surrounded by braces])
 AC_TRY_COMPILE([
