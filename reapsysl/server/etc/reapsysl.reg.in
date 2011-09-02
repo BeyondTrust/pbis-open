@@ -126,11 +126,11 @@
     doc = ""
 }
 "Regex" = {
-    default = "^.* sshd\\[[[:digit:]]+\\]:( \\[ID [[:digit:]]+ [^]]+\\])? (error: PAM: [Aa]uthentication (failure|error)|Failed (keyboard-interactive|password)) for (.*) from .*"
+    default = "^.* sshd\\[[[:digit:]]+\\]:( \\[ID [[:digit:]]+ [^]]+\\])? (error: PAM: [Aa]uthentication (failure|error)|Failed (keyboard-interactive(/pam)?|password)) for (invalid user )?(.*) from .*"
     doc = ""
 }
 "UsernameIndex" = {
-    default = dword:00000005
+    default = dword:00000007
     doc = ""
 }
 "UserType" = {
@@ -236,11 +236,11 @@
     doc = ""
 }
 "Regex" = {
-    default = "^.* sshd\\[[[:digit:]]+\\]:( \\[ID [[:digit:]]+ [^]]+\\])? (error: PAM: [Aa]uthentication (failure|error)|Failed (keyboard-interactive|password)) for (.*) from .*"
+    default = "^.* sshd\\[[[:digit:]]+\\]:( \\[ID [[:digit:]]+ [^]]+\\])? (error: PAM: [Aa]uthentication (failure|error)|Failed (keyboard-interactive(/pam)?|password)) for (invalid user )?(.*) from .*"
     doc = ""
 }
 "UsernameIndex" = {
-    default = dword:00000005
+    default = dword:00000007
     doc = ""
 }
 "UserType" = {
