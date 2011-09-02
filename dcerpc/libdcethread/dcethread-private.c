@@ -32,6 +32,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <config.h>
+
 #include "dcethread-private.h"
 #include "dcethread-debug.h"
 #include "dcethread-exception.h"
