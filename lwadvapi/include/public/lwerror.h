@@ -785,6 +785,8 @@
 #define LW_ERROR_GP_SETLOGLEVEL_FAILED                     50025
 #define LW_ERROR_GP_DOMAIN_JOIN_FAILED                     50026
 #define LW_ERROR_GP_DOMAIN_LEAVE_FAILED                    50027
+#define LW_ERROR_GP_XMLPARSE_BAD_DATA                      50028
+#define LW_ERROR_GP_XML_PROPERTY_NOT_FOUND                 50029
 
 LW_BEGIN_EXTERN_C
 
