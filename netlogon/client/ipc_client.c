@@ -49,15 +49,8 @@
 
 static LWNET_CLIENT_CONNECTION_CONTEXT gContext = {0};
 static volatile LONG glLibraryRefCount = 0;
-#ifndef BROKEN_ONCE_INIT
-#if defined(__LWI_SOLARIS__) || defined (__LWI_AIX__)
-#define BROKEN_ONCE_INIT 1
-#else
-#define BROKEN_ONCE_INIT 0
-#endif
-#endif
 
-#if BROKEN_ONCE_INIT
+#ifdef PTHREAD_ONCE_INIT_BROKEN
 static pthread_once_t gOnceControl = {PTHREAD_ONCE_INIT};
 #else
 static pthread_once_t gOnceControl = PTHREAD_ONCE_INIT;
