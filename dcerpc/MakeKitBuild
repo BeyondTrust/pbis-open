@@ -292,9 +292,9 @@ configure()
     lw_check_pthread_once_init
     if [ "$result" = "yes" ]
     then
-        mk_declare -o BROKEN_ONCE_INIT="#define __LW_BROKEN_ONCE_INIT 1"
+        mk_declare -o BROKEN_ONCE_INIT="#define PTHREAD_ONCE_INIT_BROKEN 1"
     else
-        mk_declare -o BROKEN_ONCE_INIT="#define __LW_BROKEN_ONCE_INIT 0"
+        mk_declare -o BROKEN_ONCE_INIT="#define PTHREAD_ONCE_INIT_BROKEN 0"
     fi
 
     # Check for stuff for build system (needed by idl compiler)

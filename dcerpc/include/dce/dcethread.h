@@ -106,13 +106,13 @@ typedef void* (*dcethread_startroutine)(void*);
 /* Solaris and AIX have a broken PTHREAD_ONCE_INIT macro, so wrap it
    appropriately depending on platform */
 
-#if __LW_BROKEN_ONCE_INIT
+#if PTHREAD_ONCE_INIT_BROKEN
 #  define DCETHREAD_ONCE_INIT {PTHREAD_ONCE_INIT}
 #else
 #  define DCETHREAD_ONCE_INIT PTHREAD_ONCE_INIT
 #endif
 #define DCETHREAD_MUTEX_INITIALIZER {PTHREAD_MUTEX_INITIALIZER, (pthread_t) -1}
-#if __LW_BROKEN_ONCE_INIT &&  !defined(_AIX)
+#if PTHREAD_ONCE_INIT_BROKEN &&  !defined(_AIX)
 #  define DCETHREAD_COND_INITIALIZER {{{0}, 0, 0}, 0}
 #else
 #  define DCETHREAD_COND_INITIALIZER PTHREAD_COND_INITIALIZER
