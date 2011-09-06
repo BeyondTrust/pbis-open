@@ -1080,11 +1080,15 @@ AC_TRY_COMPILE([
 #include <string.h>
 ],
 [
-pthread_once_t x = PTHREAD_ONCE_INIT;
-memset(&x, 0, sizeof(x));
-], [AC_MSG_RESULT([no])], [
+struct
+{
+	pthread_once_t once;
+} once = {PTHREAD_ONCE_INIT};
+memset(&once, 0, sizeof(once));
+], [AC_MSG_RESULT([no])
+AC_DEFINE([PTHREAD_ONCE_INIT_BROKEN], [0], [Define if PTHREAD_ONCE_INIT must be surrounded by braces])], [
 AC_MSG_RESULT([yes])
-AC_DEFINE([PTHREAD_ONCE_INIT_BROKEN], [], [Define if PTHREAD_ONCE_INIT must be surrounded by braces])
+AC_DEFINE([PTHREAD_ONCE_INIT_BROKEN], [1], [Define if PTHREAD_ONCE_INIT must be surrounded by braces])
 ])
 
 AC_MSG_CHECKING([if getsockname takes socklen_t*])
