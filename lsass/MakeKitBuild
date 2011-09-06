@@ -361,6 +361,12 @@ return (int) (size_t) conversation.conv;
     fi
 
     lw_check_pthread_once_init
+    if [ "$result" = "yes" ]
+    then
+        mk_define PTHREAD_ONCE_INIT_BROKEN 1
+    else
+        mk_define PTHREAD_ONCE_INIT_BROKEN 0
+    fi
 
     mk_check_doxygen
 
