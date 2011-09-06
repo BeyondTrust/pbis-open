@@ -130,9 +130,23 @@ case "$host_os:$host_cpu" in
                 CF_FRAMEWORK_LDFLAGS="-framework CoreFoundation"
                 SC_FRAMEWORK_LDFLAGS="-framework SystemConfiguration"
                 DS_FRAMEWORK_LDFLAGS="-framework DirectoryService"
-                AC_DEFINE([__LWI_DARWIN__], [], [Define if OS is Darwin - x64 Snow Leopard])
-                AC_DEFINE([__LWI_DARWIN_X64__], [], [Define if OS is Darwin - x64 Snow Leopard])
-                ;;
+                AC_DEFINE([__LWI_DARWIN__], [], [Define if OS is Darwin])
+                AC_DEFINE([__LWI_DARWIN_X64__], [], [Define if OS is Darwin x64])
+		;;
+	darwin11.*:*)
+                echo "Detected Mac OS X - Lion"
+		nss_libdir="/usr/lib"
+		pam_libdir="/usr/lib/pam"
+                ENABLE_NSS_ENUM_DEFAULT="yes"
+		PLATFORM_MAC="true"
+                default_skeldirs="System/Library/User Template/Non_localized, /System/Library/User Template/English.lproj"
+                default_homedir_prefix="/Users"
+                CF_FRAMEWORK_LDFLAGS="-framework CoreFoundation"
+                SC_FRAMEWORK_LDFLAGS="-framework SystemConfiguration"
+                DS_FRAMEWORK_LDFLAGS="-framework DirectoryService"
+                AC_DEFINE([__LWI_DARWIN__], [], [Define if OS is Darwin])
+                AC_DEFINE([__LWI_DARWIN_X64__], [], [Define if OS is Darwin x64])
+		;;
         freebsd*:*)
                 echo "Detected Free BSD OS"
                 nss_libdir="/usr/local/lib"
