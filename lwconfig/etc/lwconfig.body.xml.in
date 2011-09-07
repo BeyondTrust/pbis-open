@@ -1,8 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
-<capabilities xmlns:xi="http://www.w3.org/2001/XInclude">
-    <xi:include href="file://@lwconfigdir@/lwconfig_front.xml">
-       <xi:fallback></xi:fallback>
-    </xi:include>
 <section section="Eventlog">
     <capability>
         <name>AllowDeleteTo</name>
@@ -718,20 +713,3 @@
        <xi:fallback></xi:fallback>
     </xi:include>
   </section>
-  <xi:include href="file://@lwconfigdir@/lwconfig_end.xml">
-     <xi:fallback></xi:fallback>
-  </xi:include>
-</capabilities>
-
-<!--
-#Additional Likewise settings to be converted to Capabilities
-
-[HKEY_THIS_MACHINE\Services\lsass\Parameters\NTLM]
-"SendNTLMv2"=dword:00000000
-"Support128bit"=dword:00000001
-"Support56bit"=dword:00000001
-"SupportKeyExchange"=dword:00000001
-"SupportNTLM2SessionSecurity"=dword:00000001
-"SupportUnicode"=dword:00000001
-
--->

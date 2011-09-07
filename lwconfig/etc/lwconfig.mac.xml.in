@@ -1,0 +1,70 @@
+<section section="Mac">
+    <capability>
+        <name>AllowAdministrationBy</name>
+        <description>List of AD users or groups to be added to the local admin
+            group.</description>
+        <registry
+            type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lwdsplugin\Parameters\AllowAdministrationBy"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lwdsplugin\Parameters\AllowAdministrationBy"
+            >
+
+            <description>A list of user names or group names separated by commas.</description>
+            <default><value></value></default>
+        </registry>
+    </capability>
+
+    <capability>
+        <name>EnableForceHomedirOnStartupDisk</name>
+        <description>Allowed users that can read entries from log</description>
+        <registry type="dword"
+            lp-path="HKEY_THIS_MACHINE\Services\lwdsplugin\Parameters\EnableForceHomedirOnStartupDisk"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lwdsplugin\Parameters\EnableForceHomedirOnStartupDisk">
+            <description>Use local home directory path.</description>
+            <default>
+                <value>0</value>
+            </default>
+        </registry>
+    </capability>
+
+    <capability>
+        <name>EnableMergeAdmins</name>
+        <description></description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lwdsplugin\Parameters\EnableMergeAdmins"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lwdsplugin\Parameters\EnableMergeAdmins" >
+            <description></description>
+            <default>
+                <value>false</value>
+            </default>
+        </registry>
+    </capability>
+    <capability>
+        <name>UncProtocolForHomeLocation</name>
+        <description></description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lwdsplugin\Parameters\UncProtocolForHomeLocation"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lwdsplugin\Parameters\UncProtocolForHomeLocation" >
+            <description></description>
+            <default>
+                <value>smb</value>
+            </default>
+            <accept>
+                <value>smb</value>
+                <value>afp</value>
+            </accept>
+        </registry>
+    </capability>
+    <capability>
+        <name>UseADUncForHomeLocation</name>
+        <description></description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lwdsplugin\Parameters\UseADUncForHomeLocation"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lwdsplugin\Parameters\UseADUncforHomeLocation" >
+            <description></description>
+            <default>
+                <value>false</value>
+            </default>
+        </registry>
+    </capability>
+</section>

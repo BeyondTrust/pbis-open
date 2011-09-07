@@ -23,5 +23,13 @@ configure()
         reg/lwreg.h \
         reg/regutil.h
 
-    mk_output_file etc/lwconfig.xml
+
+    mk_output_file etc/lwconfig.header.xml
+    mk_output_file etc/lwconfig.body.xml
+    mk_output_file etc/lwconfig.footer.xml
+
+    if [ "$MK_OS" = "darwin" ]
+    then
+        mk_output_file etc/lwconfig.mac.xml
+    fi
 }
