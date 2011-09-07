@@ -812,10 +812,26 @@ AD_SetConfig_RequireMembershipOf(
     pszIter = pszValue;
     while (pszIter != NULL && *pszIter != '\0')
     {
+        PSTR pszEnd;
+
+        while (*pszIter == ' ')
+        {
+            ++pszIter;
+        }
+
         dwError = LwStrDupOrNull(
                         pszIter,
                         &pszMember);
         BAIL_ON_LSA_ERROR(dwError);
+
+        pszEnd = pszMember + strlen(pszMember);
+
+        while (pszEnd > pszMember && pszEnd[-1] == ' ')
+        {
+            --pszEnd;
+        }
+
+        *pszEnd = '\0';
 
         dwError = LsaDLinkedListAppend(
                         &pConfig->pUnresolvedMemberList,
