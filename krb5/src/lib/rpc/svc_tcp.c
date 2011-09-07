@@ -123,8 +123,10 @@ getport(struct sockaddr *addr)
 {
     if (addr->sa_family == AF_INET)
 	return ntohs(((struct sockaddr_in *) addr)->sin_port);
+#ifdef HAVE_SOCKADDR_IN6_SIN6_ADDR
     else if (addr->sa_family == AF_INET6)
 	return ntohs(((struct sockaddr_in6 *) addr)->sin6_port);
+#endif
     else
 	return 0;
 }

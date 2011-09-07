@@ -30,6 +30,20 @@
 
 #include "dnsglue.h"
 
+#if !HAVE_DECL_DN_EXPAND
+ssize_t dn_expand(const u_char *, const u_char *, const u_char *,
+    u_char *, int);
+#endif
+
+#if !HAVE_DECL_RES_INIT
+int res_init();
+#endif
+
+#if !HAVE_DECL_RES_SEARCH
+ssize_t res_search(char *dname, int class, int type, u_char *answer,
+    int anslen);
+#endif
+
 /*
  * Only use res_ninit() if there's also a res_ndestroy(), to avoid
  * memory leaks (Linux & Solaris) and outright corruption (AIX 4.x,

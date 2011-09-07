@@ -58,7 +58,7 @@
 #include <ctype.h>
 #include "brand.c"
 /* There has to be a better way for windows... */
-#if defined(unix) || TARGET_OS_MAC
+#if defined(unix) || defined(__unix) || defined(_XOPEN_UNIX) || TARGET_OS_MAC
 #include "../krb5_libinit.h"
 #endif
 
