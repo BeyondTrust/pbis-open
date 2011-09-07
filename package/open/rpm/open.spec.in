@@ -235,6 +235,13 @@ restore_5_0123_configuration()
     import_5_0123_file --pstore-sqlite "${UPGRADEDIR}/pstore.db"
 }
 
+remove_old_init_symlinks()
+{
+    for daemon in dcerpcd netlogond eventlogd lwiod lsassd gpagentd; do
+        rm -f /etc/rc?.d/*"$daemon"
+    done
+}
+
 relocate_domain_separator()
 {
     DomainSeparator=`@MK_BINDIR@/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
@@ -318,6 +325,8 @@ postinstall()
     switch_to_open_provider
 
     run_or_fail '@MK_BINDIR@/lwsm' shutdown
+
+    remove_old_init_symlinks
 
     run /sbin/chkconfig --add lwsmd
     run /sbin/chkconfig --add likewise
