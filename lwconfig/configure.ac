@@ -9,6 +9,7 @@ AM_CPPFLAGS=""
 AM_CFLAGS=""
 AM_LDFLAGS=""
 
+PLATFORM_MAC="false"
 default_skeldirs="/etc/skel"
 default_homedir_prefix="/home"
 enable_nss_enum_default="false"
@@ -21,6 +22,7 @@ case "$host_os:$host_cpu" in
         AC_DEFINE([__LWI_SOLARIS__], [], [Define if OS is Solaris])
         ;;
     darwin*:*)
+        PLATFORM_MAC="true"
         default_skeldirs="System/LibraryUser Template/Non_localized, /System/Library/User Template/English.lproj"
         default_homedir_prefix="/Users"
         enable_nss_enum_default="true"
@@ -172,6 +174,8 @@ AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CFLAGS)
 AC_SUBST(AM_LDFLAGS)
 
+AM_CONDITIONAL(PLATFORM_MAC, [$PLATFORM_MAC])
+
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_LIBTOOL
@@ -183,8 +187,11 @@ AC_C_BIGENDIAN
 AC_HEADER_STDC
 
 AC_CONFIG_FILES([Makefile
+                 etc/lwconfig.header.xml
+                 etc/lwconfig.body.xml
+                 etc/lwconfig.mac.xml
+                 etc/lwconfig.footer.xml
                  etc/Makefile
-                 etc/lwconfig.xml
                  src/Makefile])
 
 AC_OUTPUT

@@ -1,5 +1,20 @@
 make()
 {
+    # This isn't the easiest or only way to do this, but I want something not
+    # specific to xml files.
+    if [ "$MK_OS" = "darwin" ]
+    then
+        mk_target \
+            TARGET="lwconfig.xml" \
+            DEPS="lwconfig.header.xml lwconfig.body.xml lwconfig.mac.xml lwconfig.footer.xml" \
+            cat "&lwconfig.header.xml" "&lwconfig.body.xml" "&lwconfig.mac.xml" "&lwconfig.footer.xml" "%>" "&lwconfig.xml"
+    else
+        mk_target \
+            TARGET="lwconfig.xml" \
+            DEPS="lwconfig.header.xml lwconfig.body.xml lwconfig.footer.xml" \
+            cat "&lwconfig.header.xml" "&lwconfig.body.xml" "&lwconfig.footer.xml" "%>" "&lwconfig.xml"
+    fi
+
     mk_stage \
         DESTDIR="${LW_CACHEDIR}" \
         lwconfig.xml
