@@ -94,7 +94,7 @@ public:
         idx_kDS1AttrPrimaryGroupID,          //  7
         idx_kDS1AttrUniqueID,                //  8
         idx_kDS1AttrUserShell,               //  9
-        idx_kDSNAttrAuthenticationAuthority, // 10
+        _idx_unused_10,                      // 10 formerly idx_kDSNAttrAuthenticationAuthority
         idx_kDSNAttrGroupMembership,         // 11
         idx_kDSNAttrHomeDirectory,           // 12
         idx_kDSNAttrRecordName,              // 13

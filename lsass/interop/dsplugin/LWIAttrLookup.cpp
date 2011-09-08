@@ -80,7 +80,6 @@ long LWIAttrLookup::Initialize()
     _INIT_KEY(kDS1AttrPrimaryGroupID);
     _INIT_KEY(kDS1AttrUniqueID);
     _INIT_KEY(kDS1AttrUserShell);
-    _INIT_KEY(kDSNAttrAuthenticationAuthority);
     _INIT_KEY(kDSNAttrGroupMembership);
     _INIT_KEY(kDSNAttrHomeDirectory);
     _INIT_KEY(kDSNAttrRecordName);

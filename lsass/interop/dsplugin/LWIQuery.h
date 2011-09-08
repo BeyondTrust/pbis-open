@@ -149,8 +149,6 @@ protected:
     static long SetUniqueID(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
     static long SetUniqueID(PDSRECORD pRecord, const PLWIGROUP pGroup, bool bSetValue);
     static long SetUserShell(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
-    static long SetAuthenticationAuthority(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
-    static long SetAuthenticationAuthority(PDSRECORD pRecord, const PLWICOMPUTER pComputer, bool bSetValue);
     static long SetGroupMembership(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
     static long SetGroupMembership(PDSRECORD pRecord, const PLWIGROUP pGroup, bool bSetValue);
     static long SetGroupMembership(PDSRECORD pRecord, const PLWICOMPUTERGROUP pComputerGroup, bool bSetValue);
