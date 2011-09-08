@@ -388,13 +388,9 @@ MemDbStopExportToFileThread(
     pthread_mutex_lock(&MemRegRoot()->ExportMutexStop);
     MemRegRoot()->ExportCtx->bStopThread = TRUE;
     pthread_cond_signal(&MemRegRoot()->ExportCond);
-
-    while (MemRegRoot()->ExportCtx->bStopThread)
-    {
-        pthread_cond_wait(&MemRegRoot()->ExportCondStop, 
-                          &MemRegRoot()->ExportMutexStop);
-    }
     pthread_mutex_unlock(&MemRegRoot()->ExportMutexStop);
+
+    pthread_join(MemRegRoot()->hThread, NULL);
 }
 
 
@@ -514,16 +510,16 @@ MemDbExportToFileThread(
                     pthread_mutex_unlock(&MemRegRoot()->ExportMutex);
                     break;
                 }
+                else if (sts == ETIMEDOUT)
+                {
+                    changeCountInit = MemRegRoot()->valueChangeCount;
+                    state = MEMDB_EXPORT_WRITE_CHANGES;
+                }
                 else if (changeCountInit > 0 &&
                          changeCountInit == MemRegRoot()->valueChangeCount)
                 {
                     /* False wakeup? */
                     state = MEMDB_EXPORT_WAIT;
-                }
-                else if (sts == ETIMEDOUT)
-                {
-                    changeCountInit = MemRegRoot()->valueChangeCount;
-                    state = MEMDB_EXPORT_WRITE_CHANGES;
                 }
                 else 
                 {
@@ -566,25 +562,26 @@ MemDbExportToFileThread(
                 break;
 
             case MEMDB_EXPORT_WRITE_CHANGES:
-                REG_LOG_DEBUG("MemDbExportToFileThread: "
-                              "Exporting registry to save file...");
+                pthread_mutex_lock(&MemRegRoot()->ExportMutex);
                 pthread_rwlock_rdlock(&MemRegRoot()->lock);
-                status = MemDbExportToFile(exportCtx);
+                status = 0;
+                if (changeCountInit > 0)
+                {
+                    REG_LOG_DEBUG("MemDbExportToFileThread: "
+                                  "Exporting registry to save file...");
+                    status = MemDbExportToFile(exportCtx);
+                    REG_LOG_ERROR("MemDbExportToFileThread: "
+                                  "Exporting registry to save file completed.");
+                }
                 pthread_rwlock_unlock(&MemRegRoot()->lock);
-                REG_LOG_ERROR("MemDbExportToFileThread: "
-                              "Exporting registry to save file completed.");
                 if (status)
                 {
                     REG_LOG_DEBUG("Failed exporting registry to %s",
                                   MEMDB_EXPORT_FILE);
                 }
 
-                pthread_mutex_lock(&MemRegRoot()->ExportMutex);
-                if (MemRegRoot()->valueChangeCount == changeCountInit)
-                {
-                    changeCountInit = 0;
-                    MemRegRoot()->valueChangeCount  = 0;
-                }
+                changeCountInit = 0;
+                MemRegRoot()->valueChangeCount = 0;
                 pthread_mutex_unlock(&MemRegRoot()->ExportMutex);
             
                 state = MEMDB_EXPORT_START;
@@ -665,7 +662,6 @@ MemDbStartExportToFileThread(VOID)
     NTSTATUS status = 0;
     PMEMDB_FILE_EXPORT_CTX exportCtx = {0};
     PWSTR pwszRootKey = NULL;
-    pthread_t hThread;
 
     status = LW_RTL_ALLOCATE(
                  (PVOID*) &exportCtx,
@@ -676,8 +672,12 @@ MemDbStartExportToFileThread(VOID)
     exportCtx->hNode = MemRegRoot()->pMemReg;
 
     MemRegRoot()->ExportCtx = exportCtx;
-    pthread_create(&hThread, NULL, MemDbExportToFileThread, (PVOID) exportCtx);
-    pthread_detach(hThread);
+    status = pthread_create(&MemRegRoot()->hThread, 
+                            NULL, 
+                            MemDbExportToFileThread, 
+                            (PVOID) exportCtx);
+    status = RegMapErrnoToLwRegError(status);
+    BAIL_ON_REG_ERROR(status);
 
 cleanup:
     if (status)

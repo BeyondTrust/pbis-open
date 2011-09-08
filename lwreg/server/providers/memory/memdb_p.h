@@ -19,6 +19,7 @@ typedef struct _MEMDB_FILE_EXPORT_CTX
 typedef struct _REG_DB_CONNECTION
 {
     PMEMREG_NODE pMemReg;
+    pthread_t hThread;
     pthread_rwlock_t lock;
     pthread_mutex_t ExportMutex;
     pthread_mutex_t ExportMutexStop;
