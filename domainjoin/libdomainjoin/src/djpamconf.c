@@ -3063,13 +3063,13 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
             DJ_LOG_ERROR("Nothing seems to be protecting logins for service %s", service);
             if(!strcmp(control, "sufficient"))
             {
-                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown pam module", "The likewise PAM module cannot be configured for the %s service. This service uses the '%s' module, which is not in this program's list of known modules. Please email Likewise technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service, module);
+                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown pam module", "The PBIS PAM module cannot be configured for the %s service. This service uses the '%s' module, which is not in this program's list of known modules. Please email Likewise technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service, module);
             }
             //It is somewhat normal to not require a password in an included
             //pam file. It is up to the top-most parent to require the password.
             else if(state->includeLevel == 0)
             {
-                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown pam configuration", "The likewise PAM module cannot be configured for the %s service. Either this service is unprotected (does not require a valid password for access), or it is using a pam module that this program is unfamiliar with. Please email Likewise technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service);
+                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown pam configuration", "The PBIS PAM module cannot be configured for the %s service. Either this service is unprotected (does not require a valid password for access), or it is using a pam module that this program is unfamiliar with. Please email Likewise technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service);
             }
             goto cleanup;
         }
@@ -3846,11 +3846,11 @@ CheckForPamAuthUpdate(
     LW_CLEANUP_CTERR(exc, CTCheckDirectoryExists(pamauthupdatedir, &pamauthupdatedirExists));
 
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
-        &pamauthupdatedirconf, "%s%s", testPrefix, "/usr/share/pam-configs/likewise"));
+        &pamauthupdatedirconf, "%s%s", testPrefix, "/usr/share/pam-configs/pbis"));
     LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists(pamauthupdatedirconf, &pamauthupdatedirconfExists));
 
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
-        &pamauthupdateconf, "%s%s", testPrefix, "/opt/likewise/share/likewise.pam-auth-update"));
+        &pamauthupdateconf, "%s%s", testPrefix, "/opt/pbis/share/pbis.pam-auth-update"));
     LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists(pamauthupdateconf, &pamauthupdateconfExists));
 
     if (pamauthupdateExists && pamauthupdatedirExists && pamauthupdateconfExists)
@@ -3882,13 +3882,13 @@ EnablePamAuthUpdate(
         testPrefix="";
 
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
-         &pamauthupdate, "%s%s", testPrefix, "/usr/sbin/pam-auth-update --package likewise"));
+         &pamauthupdate, "%s%s", testPrefix, "/usr/sbin/pam-auth-update --package pbis"));
 
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
-        &pamauthupdateconf, "%s%s", testPrefix, "/opt/likewise/share/likewise.pam-auth-update"));
+        &pamauthupdateconf, "%s%s", testPrefix, "/opt/pbis/share/pbis.pam-auth-update"));
 
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
-        &pamauthupdatedirconf, "%s%s", testPrefix, "/usr/share/pam-configs/likewise"));
+        &pamauthupdatedirconf, "%s%s", testPrefix, "/usr/share/pam-configs/pbis"));
     LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists(pamauthupdatedirconf, &pamauthupdatedirconfExists));
 
     if (!pamauthupdatedirconfExists)
@@ -3915,10 +3915,10 @@ DisablePamAuthUpdate(
         testPrefix="";
 
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
-         &pamauthupdate, "%s%s", testPrefix, "/usr/sbin/pam-auth-update --package --remove likewise"));
+         &pamauthupdate, "%s%s", testPrefix, "/usr/sbin/pam-auth-update --package --remove pbis"));
 
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
-         &pamauthupdatedirconf, "%s%s", testPrefix, "/usr/share/pam-configs/likewise"));
+         &pamauthupdatedirconf, "%s%s", testPrefix, "/usr/share/pam-configs/pbis"));
 
     LW_CLEANUP_CTERR(exc, CTRunCommand(pamauthupdate));
 
