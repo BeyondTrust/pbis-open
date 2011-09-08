@@ -249,7 +249,7 @@ AC_CHECK_HEADER(regexp.h, [], [],
 #define RETURN(c) return(c)
 #define ERROR(c)
 ])
-AC_CHECK_DECLS(dn_expand res_init res_search, , ,
+AC_CHECK_DECLS([dn_expand, res_init, res_search], , ,
 [#include <netinet/in.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
