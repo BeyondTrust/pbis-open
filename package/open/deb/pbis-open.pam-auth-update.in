@@ -1,4 +1,4 @@
-Name: Likewise Open
+Name: PowerBroker Identity Services
 Default: yes
 Priority: 250
 Conflicts: winbind

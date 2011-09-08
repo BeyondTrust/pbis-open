@@ -71,8 +71,8 @@ package_deb()
         PACKAGE="$PKG_DEB_NAME" \
         VERSION="$PKG_DEB_VERSION" \
         DEBIANFILES="deb/changelog.in deb/control.in \
-                     deb/likewise-open.postinst.in deb/likewise-open.postrm.in deb/compat.in \
-                     deb/likewise-open.preinst.in deb/likewise-open.prerm.in deb/rules.in"
+                     deb/pbis-open.postinst.in deb/pbis-open.postrm.in deb/compat.in \
+                     deb/pbis-open.preinst.in deb/pbis-open.prerm.in deb/rules.in"
 
         open_files
         open_files_compat
@@ -104,8 +104,8 @@ package_freebsd()
     mk_freebsd_do \
         PACKAGE="$PKG_FREEBSD_NAME" \
         VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}" \
-        SHORT="-Likewise Open ${LW_VERSION}" \
-        LONG="-Likewise Open joins your machine into Active Directory" \
+        SHORT="-PowerBroker Identity Services Open ${LW_VERSION}" \
+        LONG="-PowerBroker Identity Services Open joins your machine into Active Directory" \
         PREINST="freebsd/preinstall.in" \
         POSTINST="freebsd/postinstall.in" \
         PRERM="freebsd/preuninstall.in" \
@@ -123,7 +123,7 @@ package_pkg()
         VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
 
         mk_pkg_sub_do \
-            SUBPACKAGE="LIKEopenu" \
+            SUBPACKAGE="PBISopenu" \
             INFOFILES="pkg/u/pkginfo.in"
         
             open_files_usr
@@ -138,7 +138,7 @@ package_pkg()
         mk_pkg_sub_done
 
         mk_pkg_sub_do \
-            SUBPACKAGE="LIKEopenr" \
+            SUBPACKAGE="PBISopenr" \
             INFOFILES="pkg/r/pkginfo.in"
 
             open_files_root
@@ -154,7 +154,7 @@ package_pkg()
 
         
         mk_pkg_sub_do \
-            SUBPACKAGE="LIKEopenz" \
+            SUBPACKAGE="PBISopenz" \
             INFOFILES="pkg/pkginfo.in pkg/copyright.in pkg/depend.in pkg/postinstall.in pkg/preinstall.in pkg/preremove.in"
 
             open_files_prefix
@@ -207,7 +207,7 @@ package_lpp()
     
         mk_lpp_sub_do \
             SUBPACKAGE="root" \
-            DESCRIPTION="Likewise Open" \
+            DESCRIPTION="PowerBroker Identity Services Open" \
             PREIN="lpp/root.pre_i.in" \
             CONFIG="lpp/root.config.in" \
             UNCONFIG="lpp/root.unconfig.in" \
@@ -357,7 +357,7 @@ open_files_prefix()
         "${MK_LIBDIR}/lw-map-sec/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/apache2.0/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/apache2.2/*${MK_DLO_EXT}" \
-        "${MK_DATADIR}/likewise.pam-auth-update" \
+        "${MK_DATADIR}/pbis.pam-auth-update" \
         "${LW_CONFIGDIR}/*.reg" \
         "${MK_PREFIX}/data/VERSION"
 }

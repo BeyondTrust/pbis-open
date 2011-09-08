@@ -1,6 +1,6 @@
 @PKG_DEB_NAME@ (@PKG_DEB_VERSION@) gutsy; urgency=low
 
-  * New Likewise Open release
+  * New PowerBroker Identity Services Open release
 
- -- Likewise Software <support@likewise.com>  @PKG_DEB_DATE@
+ -- PBIS Support <pbis-support@beyondtrust.com>  @PKG_DEB_DATE@
 

@@ -5,17 +5,17 @@ Summary: 	Identity Services for authenticating with Active Directory domains
 Version: 	@PKG_RPM_VERSION@
 Release: 	@PKG_RPM_RELEASE@
 License: 	Likewise Proprietary
-URL: 		http://www.likewise.com/
+URL:	http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
 Group: 		System Environment/Daemons
 Prereq: grep, sh-utils
 AutoReq: no
 AutoProv: no
 
 %description
-Likewise Open integrates Unix desktops and servers into an Active Directory environment by joining hosts to the domain and lets Unix applications and services authenticate MS Windows' users and groups via the PAM and Name Service Switch libraries.
+PowerBroker Identity Services Open integrates Unix desktops and servers into an Active Directory environment by joining hosts to the domain and lets Unix applications and services authenticate MS Windows' users and groups via the PAM and Name Service Switch libraries.
 
 %package devel
-Summary: Likewise Open (development)
+Summary: PowerBroker Identity Services Open (development)
 Group: Development/Libraries
 Requires: @PKG_RPM_NAME@
 
@@ -23,7 +23,7 @@ Requires: @PKG_RPM_NAME@
 %description devel
 The @PKG_RPM_NAME@-devel package includes the development libraries and header files that supply the application programming interface for security and authentication.
 
-%define initScriptPathList /etc/init.d/lwsmd /etc/init.d/likewise
+%define initScriptPathList /etc/init.d/lwsmd /etc/init.d/pbis
 %define AdProviderPath @PRIMARY_LIBDIR@/lsa-provider/ad_open.so
 %post
 ## chkconfig behaves differently on various updates of RHEL and SUSE
@@ -56,10 +56,10 @@ done
 
 DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
 
-UPGRADEDIR=/var/lib/likewise-upgrade
+UPGRADEDIR=/var/lib/pbis-upgrade
 
-LOG=/var/log/likewise-open-install.log
-TLOG=/tmp/LikewiseOpenTemp.txt
+LOG=/var/log/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
 
 PKG_ARCH="__PKG_ARCH"
 # Display to screen and log file with a blank line between entries.
@@ -307,7 +307,7 @@ switch_to_open_provider()
 
 postinstall()
 {
-    log "Package: Likewise Open postinstall begins (`date`)"
+    log "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
     log "Logging all operations to $LOG"
 
     run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --loglevel debug
@@ -329,29 +329,29 @@ postinstall()
     remove_old_init_symlinks
 
     run /sbin/chkconfig --add lwsmd
-    run /sbin/chkconfig --add likewise
+    run /sbin/chkconfig --add pbis
 
     run /etc/init.d/lwsmd start
-    run /etc/init.d/likewise start
+    run /etc/init.d/pbis start
 
     run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
     run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
 
     run_quiet rm -rf "${UPGRADEDIR}"
 
-    log "Package: Likewise Open postinstall finished"
+    log "Package: PowerBroker Identity Services Open postinstall finished"
     exit 0
 }
 
 postinstall
 
 %pre
-DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
+DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld srvsvcd"
 
-UPGRADEDIR=/var/lib/likewise-upgrade
+UPGRADEDIR=/var/lib/pbis-upgrade
 
-LOG=/var/log/likewise-open-install.log
-TLOG=/tmp/LikewiseOpenTemp.txt
+LOG=/var/log/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
 
 PKG_ARCH="__PKG_ARCH"
 
@@ -439,12 +439,12 @@ run_or_fail()
 
 pre_upgrade()
 {
-    log "Package: Likewise Open [pre upgrade] begins (`date`)"
+    log "Package: PowerBroker Identity Services Open [pre upgrade] begins (`date`)"
 
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    run_quiet /etc/init.d/likewise stop
+    run_quiet /etc/init.d/pbis stop
     run_quiet /etc/init.d/lwsmd stop
 
     for daemon in $DAEMONS_TO_HALT
@@ -452,12 +452,12 @@ pre_upgrade()
         run_quiet pkill -KILL -x $daemon
     done
 
-    log "Package: Likewise Open [pre upgrade] finished"
+    log "Package: PowerBroker Identity Services Open [pre upgrade] finished"
 }
 
 pre_install()
 {
-    log "Package: Likewise Open [pre install] begins (`date`)"
+    log "Package: PowerBroker Identity Services Open [pre install] begins (`date`)"
 
     logfile "Checking SELinux"
     if [ -x "/usr/sbin/selinuxenabled" -a -x "/usr/sbin/getenforce" ]; then
@@ -484,7 +484,7 @@ Check your system's documentation for details."
         fi
     fi
 
-    run_quiet /etc/init.d/likewise stop
+    run_quiet /etc/init.d/pbis stop
     run_quiet /etc/init.d/lwsmd stop
 
     for daemon in $DAEMONS_TO_HALT
@@ -492,7 +492,7 @@ Check your system's documentation for details."
         run_quiet pkill -KILL -x $daemon
     done
 
-    log "Package: Likewise Open [pre install] finished"
+    log "Package: PowerBroker Identity Services Open [pre install] finished"
     exit 0
 }
 
@@ -506,10 +506,10 @@ fi
 %preun
 DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
 
-UPGRADEDIR=/var/lib/likewise-upgrade
+UPGRADEDIR=/var/lib/pbis-upgrade
 
-LOG=/var/log/likewise-open-install.log
-TLOG=/tmp/LikewiseOpenTemp.txt
+LOG=/var/log/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
 
 PKG_ARCH="__PKG_ARCH"
 
@@ -597,7 +597,7 @@ run_or_fail()
 
 preuninstall_remove()
 {
-    log "Package: Likewise Open [preun remove] begins (`date`)"
+    log "Package: PowerBroker Identity Services Open [preun remove] begins (`date`)"
 
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
@@ -607,7 +607,7 @@ preuninstall_remove()
                               --short `hostname --short` \
                               --disable krb5
 
-    run_quiet /etc/init.d/likewise stop
+    run_quiet /etc/init.d/pbis stop
     run_quiet /etc/init.d/lwsmd stop
 
     for daemon in $DAEMONS_TO_HALT
@@ -615,10 +615,10 @@ preuninstall_remove()
         run_quiet pkill -KILL -x $daemon
     done
 
-    run_quiet /sbin/chkconfig --del likewise
+    run_quiet /sbin/chkconfig --del pbis
     run_quiet /sbin/chkconfig --del lwsmd
 
-    log "Package: Likewise Open [preun remove] finished"
+    log "Package: PowerBroker Identity Services Open [preun remove] finished"
     exit 0
 }
 

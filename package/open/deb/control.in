@@ -1,10 +1,10 @@
 Source: @PKG_DEB_NAME@
 Section: net
 Priority: optional
-Maintainer: Likewise Software <support@likewise.com>
+Maintainer: PBIS Support <pbis-support@beyondtrust.com>
 Build-Depends: dpkg-dev (>= 1.10.28), debhelper (>= 4.2), lsb-base
 Standards-Version: 3.7.2
-Homepage: http://www.likewiseopen.org/
+Homepage: http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
 
 Package: @PKG_DEB_NAME@
 Architecture: any
@@ -34,16 +34,16 @@ Conflicts: @PKG_DEB_NAME@,
  likewise-srvsvc (<< 6.2),
 Replaces: @PKG_DEB_NAME@
 Description: Authentication services for Active Directory domains
- Likewise Open integrates Unix desktops and servers into an Active Directory
- environment by joining hosts to the domain and lets Unix applications and
- services authenticate Windows users and groups via the PAM and Name Service
- Switch libraries.
+ PowerBroker Identity Services integrates Unix desktops and servers into
+ an Active Directory environment by joining hosts to the domain and lets Unix
+ applications and services authenticate Windows users and groups via the PAM
+ and Name Service Switch libraries.
 
 Package: @PKG_DEB_NAME@-dev
 Section: libdevel
 Architecture: any
 #Depends: likewise_open (= ${binary:Version})
-Description: Likewise Open SDK
- Likewise Open Software Development Kit
+Description: PowerBroker Identity Services Open SDK
+ PowerBroker Identity Services Open Software Development Kit
 
 

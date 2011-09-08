@@ -1,10 +1,10 @@
 #!/bin/sh
 
-UPGRADEDIR=/var/lib/likewise-upgrade
+UPGRADEDIR=/var/lib/pbis-upgrade
 PKG_ARCH="@MK_HOST_ARCH@"
 
-LOG=/var/adm/likewise-open-install.log
-TLOG=/tmp/LikewiseOpenTemp.txt
+LOG=/var/adm/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -249,7 +249,7 @@ switch_to_open_provider()
 
 postinstall()
 {
-    log "Package: Likewise Open postinstall begins (`date`)"
+    log "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
     log "Logging all operations to $LOG"
 
     run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --loglevel debug
@@ -270,18 +270,18 @@ postinstall()
 
     run ln -f -s '@LW_INITDIR@/lwsmd' /sbin/rc1.d/K401lwsmd
     run ln -f -s '@LW_INITDIR@/lwsmd' /sbin/rc2.d/S591lwsmd
-    run ln -f -s '@LW_INITDIR@/likewise' /sbin/rc1.d/K400likewise
-    run ln -f -s '@LW_INITDIR@/likewise' /sbin/rc2.d/S592likewise
+    run ln -f -s '@LW_INITDIR@/pbis' /sbin/rc1.d/K400pbis
+    run ln -f -s '@LW_INITDIR@/pbis' /sbin/rc2.d/S592pbis
 
     run '@LW_INITDIR@/lwsmd' start
-    run '@LW_INITDIR@/likewise' start
+    run '@LW_INITDIR@/pbis' start
 
     run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
     run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
 
     run_quiet rm -rf "${UPGRADEDIR}"
 
-    log "Package: Likewise Open postinstall finished"
+    log "Package: PowerBroker Identity Services Open postinstall finished"
     exit 0
 }
 

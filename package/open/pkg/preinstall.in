@@ -1,13 +1,13 @@
 #!/bin/sh
 
-UPGRADEDIR=/var/lib/likewise-upgrade
+UPGRADEDIR=/var/lib/pbis-upgrade
 
-LOG=/var/log/likewise-open-install.log
-TLOG=/tmp/LikewiseOpenTemp.txt
+LOG=/var/log/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
 
 PKG_ARCH="@MK_HOST_ARCH@"
 
-DAEMONS_TO_KILL="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
+DAEMONS_TO_KILL="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld srvsvcd"
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -93,14 +93,14 @@ run_or_fail()
 
 preinstall()
 {
-    log "Package: Likewise Open preinstall begins (`date`)"
+    log "Package: PowerBroker Identity Services Open preinstall begins (`date`)"
     log "Logging all operations to $LOG"
 
     if [ -f '@MK_SBINDIR@/gpagentd' ]; then
-        log "@MK_SBINDIR@/gpagentd exists: Uninstall Likewise Enterprise before installing Likewise Open."
+        log "@MK_SBINDIR@/gpagentd exists: Uninstall PowerBroker Identity Services  Enterprise before installing PowerBroker Identity Services Open."
         exit 1
     elif [ -f '@MK_PREFIX@/data/VERSION' ]; then
-        log "@MK_PREFIX@/data/VERSION exists: Uninstall previous version of Likewise Open before proceeding with the install."
+        log "@MK_PREFIX@/data/VERSION exists: Uninstall previous version of PowerBroker Identityer Services Open before proceeding with the install."
         exit 1
     fi
 
@@ -112,7 +112,7 @@ preinstall()
         run_quiet pkill -KILL $PKILLOPTS -x $daemon
     done
 
-    log "Package: Likewise Open preinstall finished"
+    log "Package: PowerBroker Identity Services Open preinstall finished"
     exit 0
 }
 

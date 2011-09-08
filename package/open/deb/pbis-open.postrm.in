@@ -1,11 +1,11 @@
 #!/bin/sh
 
-UPGRADEDIR=/var/lib/likewise-upgrade
+UPGRADEDIR=/var/lib/pbis-upgrade
 
-LOG=/var/log/likewise-open-install.log
-TLOG=/tmp/LikewiseOpenTemp.txt
+LOG=/var/log/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
 
-PKG_ARCH="@MK_HOST_ARCH"
+PKG_ARCH="@MK_HOST_ARCH@"
 
 DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
 
@@ -91,49 +91,42 @@ run_or_fail()
     return $err
 }
 
-execute_auxiliary_scripts()
-{
-    for file in `ls "@LW_CACHEDIR@/scripts/uninstall"`; do
-        run_quiet "@LW_CACHEDIR@/scripts/uninstall/$file" --uninstall
-    done
-}
-
-prerm_remove()
-{
-    log "Package: Likewise Open preremove [remove] begins (`date`)"
-
-    execute_auxiliary_scripts
-
-    run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
-    run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
-
-    run_quiet '@MK_BINDIR@/domainjoin-cli' configure \
-                              --long `hostname --long` \
-                              --short `hostname --short` \
-                              --disable krb5
-
-    run_quiet /usr/sbin/service likewise stop
-    run_quiet /usr/sbin/service lwsmd stop
-
-    for daemon in $DAEMONS_TO_HALT
-    do
-        run_quiet pkill -KILL -x $daemon
-    done
-
-    log "Package: Likewise Open preremove [remove] finished"
-    exit 0
-}
-
 case "$1" in
     remove)
-        prerm_remove
-        ;;
+        log "Package: PowerBroker Identity Services Open postremove [remove] begins (`date`)"
 
-    failed-upgrade)
-    # The prerm script of a previous version failed for upgrade.
-        ;;
+        run_quiet /usr/sbin/service pbis stop
+        run_quiet /usr/sbin/service lwsmd stop
 
-    upgrade)
-    # A newer version is about to be installed; do nothing and let it handle it.
-        ;;
+        for daemon in $DAEMONS_TO_HALT
+        do
+            run_quiet pkill -KILL -x $daemon
+        done
+
+        run_quiet /usr/sbin/update-rc.d pbis remove
+        run_quiet /usr/sbin/update-rc.d lwsmd remove
+
+        log "Package: PowerBroker Identity Services Open postremove [remove] finished"
+    ;;
+
+    purge)
+        log "Package: PowerBroker Identity Services Open postremove [purge] begins (`date`)"
+
+        run_quiet /usr/sbin/service pbis stop
+        run_quiet /usr/sbin/service lwsmd stop
+
+        for daemon in $DAEMONS_TO_HALT
+        do
+            run_quiet pkill -KILL -x $daemon
+        done
+
+        run_quiet /usr/sbin/update-rc.d pbis remove
+        run_quiet /usr/sbin/update-rc.d lwsmd remove
+
+        run_quiet rm -rf /var/lib/pbis
+
+        log "Package: PowerBroker IdentityServices Open postremove [purge] finished"
+    ;;
 esac
+
+#DEBHELPER#

@@ -21,7 +21,7 @@ pyversio := $(shell pyversions -vd)
 
 DESTDIR=`pwd`/debian/tmp
 PKGNAME=__PKG_NAME
-PREFIX=/opt/likewise
+PREFIX=@MK_PREFIX@
 
 
 configure: configure-stamp

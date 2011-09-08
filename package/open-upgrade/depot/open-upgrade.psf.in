@@ -1,5 +1,5 @@
 product
-    tag LikewiseOpenUpgrade
+    tag PowerBrokerIdentityServicesOpenUpgrade
     revision @PKG_DEPOT_VERSION@
     os_name HP-UX
     os_release ?.11.??

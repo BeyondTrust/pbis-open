@@ -1,11 +1,11 @@
 #!/bin/bash
 
-UPGRADEDIR=@MK_PREFIX@-upgrade
+UPGRADEDIR=/var/lib/pbis-upgrade
 
-LOG=/var/log/likewise-open-install.log
-TLOG=/tmp/LikewiseOpenTemp.txt
+LOG=/var/log/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
 
-DAEMONS_TO_KILL="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
+DAEMONS_TO_KILL="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
 
 # Display to screen and log file with a blank line between entires.
 log()
@@ -230,11 +230,11 @@ enable_auth_plugin()
     mkdir -p $LIBRARY_PLUGIN_DIR
     cp -r $SRC_DIR/$PLUGIN_DIR $LIBRARY_PLUGIN_DIR/$PLUGIN_DIR
 
-    for module in /opt/likewise/lib/AuthMechanisms/*.so
+    for module in @MK_PREFIX@/lib/AuthMechanisms/*.so
     do
         mechanism=`basename "$module" .so`
         log "Enabling auth mechanism '$mechanism'"
-        run_or_fail /opt/likewise/libexec/authmechanism enable "$mechanism"
+        run_or_fail @MK_PREFIX@/libexec/authmechanism enable "$mechanism"
     done
 }
 

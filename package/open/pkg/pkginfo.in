@@ -1,11 +1,11 @@
-PKG=LIKEopenz
-NAME=Likewise Open
+PKG=PBISopenz
+NAME=PowerBroker Identity Services
 ARCH=@PKG_PKG_ARCH@
 VERSION=@PKG_PKG_VERSION@
 CATEGORY=system
-VENDOR=Likewise Software
+VENDOR=BeyondTrust Software, Inc.
 DESC=Authentication services for Active Directory
-HOTLINE=425-378-7887
-EMAIL=support@likewise.com
+HOTLINE=1-800-234-9072,1-800-575-4040
+EMAIL=pbis-support@beyondtrust.com
 CLASSES=none
 VSTOCK=@PKG_PKG_NAME@

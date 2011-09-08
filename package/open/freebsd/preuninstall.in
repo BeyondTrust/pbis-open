@@ -1,11 +1,11 @@
 #!/bin/sh
 
-UPGRADEDIR=/var/lib/likewise-upgrade
+UPGRADEDIR=/var/lib/pbis-upgrade
 
-LOG=/var/log/likewise-open-install.log
-TLOG=/tmp/LikewiseOpenTemp.txt
+LOG=/var/log/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
 
-DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd reapsysld lsassd lwiod netlogond eventlogd dcerpcd lwregd lwsmd"
+DAEMONS_TO_HALT="reapsysld lsassd lwiod netlogond eventlogd dcerpcd lwregd lwsmd"
 
 # Display to screen and log file with a blank line between entires.
 log()
@@ -91,13 +91,13 @@ run_or_fail()
 
 preuninstall()
 {
-    log "Package: Likewise Open preuninstall begins (`date`)"
+    log "Package: PowerBroker Identity Services Open preuninstall begins (`date`)"
     log "Logging all operations to $LOG"
 
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    run_quiet /etc/rc.d/likewse stop
+    run_quiet /etc/rc.d/pbis stop
     run_quiet /etc/rc.d/lwsmd stop
 
     for daemon in $DAEMONS_TO_HALT
@@ -105,7 +105,7 @@ preuninstall()
         run_quiet pkill -KILL -x $daemon
     done
 
-    log "Package: Likewise Open preuninstall finished"
+    log "Package: PowerBroker Identity Services Open preuninstall finished"
     exit 0
 }
 

@@ -65,7 +65,7 @@ package_freebsd()
     mk_freebsd_do \
         PACKAGE="$PKG_FREEBSD_NAME" \
         VERSION="$PKG_FREEBSD_VERSION" \
-        SHORT="-Likewise Open Graphical Interface $PKG_FREEBSD_VERSION" \
+        SHORT="-PowerBroker Identity Services Open Graphical Interface $PKG_FREEBSD_VERSION" \
         LONG="-Allows you to join Active Directory using a graphical interface"
 
         gui_files

@@ -1,17 +1,17 @@
 Source: @PKG_DEB_NAME@
 Section: net
 Priority: optional
-Maintainer: Likewise Software <support@likewise.com>
+Maintainer: PBIS Support <pbis-support@beyondtrust.com>
 Build-Depends: dpkg-dev (>= 1.10.28), debhelper (>= 4.2), lsb-base
 Standards-Version: 3.7.2
-Homepage: http://www.likewiseopen.org/
+Homepage: http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
 
 Package: @PKG_DEB_NAME@
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Provides: likewise-open-upgrade
-Conflicts: likewise-open-upgrade
-Replaces: likewise-open-upgrade
+Provides: pbis-open-upgrade
+Conflicts: pbis-open-upgrade
+Replaces: pbis-open-upgrade
 Description: Helper package for upgrading systems with versions preceding
- Likewise Open 6.2.
+ PowerBroker Identity Services Open 6.2.
 

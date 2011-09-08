@@ -79,8 +79,8 @@ package_freebsd()
     mk_freebsd_do \
         PACKAGE="$PKG_FREEBSD_NAME" \
         VERSION="$PKG_FREEBSD_VERSION" \
-        SHORT="-Likewise Open Upgrade Helper" \
-        LONG="-Aids in upgrading between versions of Likewise Open" \
+        SHORT="-PowerBroker Identity Services Open Upgrade Helper" \
+        LONG="-Aids in upgrading between versions of PowerBroker Identity Services Open" \
         PREINST="freebsd/preinstall.in" \
         POSTINST="freebsd/postinstall.in"
 
@@ -94,7 +94,7 @@ package_pkg()
         VERSION="$PKG_PKG_VERSION"
 
         mk_pkg_sub_do \
-            SUBPACKAGE="LIKEopeng" \
+            SUBPACKAGE="PBISopeng" \
             INFOFILES="pkg/pkginfo.in pkg/copyright.in pkg/depend.in pkg/postinstall.in"
 
         mk_pkg_sub_done

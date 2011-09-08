@@ -1,10 +1,10 @@
 #!/bin/sh
 
-UPGRADEDIR=/var/lib/likewise-upgrade
+UPGRADEDIR=/var/lib/pbis-upgrade
 PKG_ARCH="@MK_HOST_ARCH@"
 
-LOG=/var/log/likewise-open-install.log
-TLOG=/tmp/LikewiseOpenTemp.txt
+LOG=/var/log/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -245,14 +245,14 @@ execute_auxiliary_scripts()
 {
     # The system administrator may have configured these during a previous
     # install
-    for file in `ls "@LW_CACHEDIR@/scripts/install"`; do
+    for file in `ls "@LW_CACHEDIR@/scripts/install" > /dev/null 2>/dev/null`; do
         run_quiet "@LW_CACHEDIR@/scripts/install/$file" --install
     done
 }
 
 postinstall()
 {
-    log "Package: Likewise Open postinstall [configure] begins (`date`)"
+    log "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
     log "Logging all operations to $LOG"
 
     run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --loglevel debug
@@ -272,10 +272,10 @@ postinstall()
     run_or_fail '@MK_BINDIR@/lwsm' shutdown
 
     run /usr/sbin/update-rc.d -f lwsmd defaults 17 8
-    run /usr/sbin/update-rc.d -f likewise defaults 18 7
+    run /usr/sbin/update-rc.d -f pbis defaults 18 7
 
     run /usr/sbin/service lwsmd start
-    run /usr/sbin/service likewise start
+    run /usr/sbin/service pbis start
 
     run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
     run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
@@ -284,7 +284,7 @@ postinstall()
 
     execute_auxiliary_scripts
 
-    log "Package: Likewise Open postinstall [configure] finished"
+    log "Package: PowerBroker Identity Services Open postinstall finished"
     exit 0
 }
 

@@ -1,13 +1,13 @@
 #!/bin/sh
 
-UPGRADEDIR=/var/lib/likewise-upgrade
+UPGRADEDIR=/var/lib/pbis-upgrade
 
-LOG=/var/adm/likewise-open-install.log
-TLOG=/tmp/LikewiseOpenTemp.txt
+LOG=/var/adm/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
 
 PKG_ARCH="@MK_HOST_ARCH"
 
-DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
+DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld srvsvcd"
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -93,13 +93,13 @@ run_or_fail()
 
 preremove()
 {
-    log "Package: Likewise Open preremove begins (`date`)"
+    log "Package: PowerBroker Identity Services Open preremove begins (`date`)"
     log "Logging all operations to $LOG"
 
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    run_quiet '@MK_BINDIR@/lwsm' shutdow
+    run_quiet '@MK_BINDIR@/lwsm' shutdown
 
     for daemon in $DAEMONS_TO_HALT
     do
@@ -109,7 +109,7 @@ preremove()
         fi
     done
 
-    log "Package: Likewise Open preremove finished"
+    log "Package: PowerBroker Identity Services Open preremove finished"
     exit 0
 }
 

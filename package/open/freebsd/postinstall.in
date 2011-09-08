@@ -1,9 +1,9 @@
 #!/bin/sh
 
-UPGRADEDIR=/var/lib/likewise-upgrade
+UPGRADEDIR=/var/lib/pbis-upgrade
 
-LOG=/var/log/likewise-open-install.log
-TLOG=/tmp/LikewiseOpenTemp.txt
+LOG=/var/log/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -243,7 +243,7 @@ switch_to_open_provider()
 
 postinstall()
 {
-    log "Package: Likewise Open postinstall begins (`date`)"
+    log "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
     log "Logging all operations to $LOG"
 
     run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --loglevel debug
@@ -263,14 +263,14 @@ postinstall()
     run_or_fail '@MK_BINDIR@/lwsm' shutdown
 
     run /etc/rc.d/lwsmd start
-    run /etc/rc.d/likewise start
+    run /etc/rc.d/pbis start
 
     run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
     run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
 
     run_quiet rm -rf "${UPGRADEDIR}"
 
-    log "Package: Likewise Open postinstall finished"
+    log "Package: PowerBroker Identity Services Open postinstall finished"
     exit 0
 }
 

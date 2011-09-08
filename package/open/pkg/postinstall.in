@@ -1,10 +1,10 @@
 #!/bin/sh
 
-UPGRADEDIR=/var/lib/likewise-upgrade
+UPGRADEDIR=/var/lib/pbis-upgrade
 PKG_ARCH="@MK_HOST_ARCH@"
 
-LOG=/var/log/likewise-open-install.log
-TLOG=/tmp/LikewiseOpenTemp.txt
+LOG=/var/log/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -94,7 +94,7 @@ import_service_configuration()
     run_quiet svcadm disable "$1"
     run_quiet svccfg delete "$1"
 
-    run_or_fail svccfg import "/etc/likewise/svcs-solaris/$1.xml"
+    run_or_fail svccfg import "/etc/pbis/svcs-solaris/$1.xml"
 }
 
 enable_service_configurations_or_init_d_symlinks()
@@ -102,10 +102,10 @@ enable_service_configurations_or_init_d_symlinks()
     if [ -x /usr/sbin/svcadm ]; then
         log 'Importing service configurations'
         import_service_configuration lwsmd
-        import_service_configuration likewise
+        import_service_configuration pbis
 
         run /usr/sbin/svcadm enable lwsmd
-        run /usr/sbin/svcadm enable likewise
+        run /usr/sbin/svcadm enable pbis
     else
     # On older Solaris systems, in order for a deamon to start in
     # multi-user mode a start symlink must be put in /etc/rc2.d, and a stop
@@ -115,13 +115,13 @@ enable_service_configurations_or_init_d_symlinks()
         run_quiet ln -s /etc/init.d/lwsmd /etc/rcS.d/K08lwsmd
         run_quiet ln -s /etc/init.d/lwsmd /etc/rc2.d/S17lwsmd
 
-        run_quiet ln -s /etc/init.d/likewise /etc/rc0.d/K07likewise
-        run_quiet ln -s /etc/init.d/likewise /etc/rc1.d/K07likewise
-        run_quiet ln -s /etc/init.d/likewise /etc/rcS.d/K07likewise
-        run_quiet ln -s /etc/init.d/likewise /etc/rc2.d/S18likewise
+        run_quiet ln -s /etc/init.d/pbis /etc/rc0.d/K07pbis
+        run_quiet ln -s /etc/init.d/pbis /etc/rc1.d/K07pbis
+        run_quiet ln -s /etc/init.d/pbis /etc/rcS.d/K07pbis
+        run_quiet ln -s /etc/init.d/pbis /etc/rc2.d/S18pbis
 
         run /etc/init.d/lwsmd start
-        run /etc/init.d/likewise start
+        run /etc/init.d/pbis start
     fi
 }
 
@@ -281,7 +281,7 @@ switch_to_open_provider()
 
 postinstall()
 {
-    log "Package: Likewise Open postinstall begins (`date`)"
+    log "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
     log "Logging all operations to $LOG"
 
     run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --loglevel debug
@@ -307,7 +307,7 @@ postinstall()
 
     run_quiet rm -rf "${UPGRADEDIR}"
 
-    log "Package: Likewise Open postinstall finished"
+    log "Package: PowerBroker Identity Services Open postinstall finished"
     exit 0
 }
 

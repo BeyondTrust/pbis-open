@@ -1,11 +1,11 @@
 #!/bin/sh
 
-UPGRADEDIR=@MK_PREFIX@-upgrade
+UPGRADEDIR=/var/lib/pbis-upgrade
 
-LOG=/var/log/likewise-open-install.log
-TLOG=/tmp/LikewiseOpenTemp.txt
+LOG=/var/log/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
 
-DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open likewise-winbindd centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
+DAEMONS_TO_HALT="reapsysld lsassd lwiod netlogond dcerpcd eventlogd lwregd lwsmd"
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -35,7 +35,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    $@ > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -54,7 +54,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    $@ > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -72,7 +72,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    $@ > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -95,18 +95,18 @@ determine_upgrade_type()
     ENTERPRISE_VERSIONFILE=@MK_PREFIX@/data/ENTERPRISE_VERSION
 
     if [ -f $ENTERPRISE_VERSIONFILE ]; then
-        log "$ENTERPRISE_VERSIONFILE exists: Uninstall Likewise Enterprise before proceeding."
+        log "$ENTERPRISE_VERSIONFILE exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
         exit 1
     elif [ -f @MK_SBINDIR@/gpagentd ]; then
-        log "@MK_SBINDIR@/gpagentd exists: Uninstall Likewise Enterprise before proceeding."
+        log "@MK_SBINDIR@/gpagentd exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
         exit 1
     fi
 
-    if [ -f $VERSIONFILE ]; then
-        run_or_fail "mkdir -p ${UPGRADEDIR}"
-        run_or_fail "cp $VERSIONFILE ${UPGRADEDIR}"
+    if [ -f "$VERSIONFILE" ]; then
+        run_or_fail mkdir -p "${UPGRADEDIR}"
+        run_or_fail cp "$VERSIONFILE" "${UPGRADEDIR}"
 
-        run_or_fail "cat $VERSIONFILE"
+        run_or_fail cat "$VERSIONFILE"
         if [ -n "`grep '^VERSION=5.0' $VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
             log "Preserving 5.0 configuration in ${UPGRADEDIR}."
@@ -129,21 +129,21 @@ determine_upgrade_type()
 preserve_5_0123_configuration()
 {
     if [ -n "${UPGRADING_FROM_5_0123}" ]; then
-        if [ -f "@MK_SYSCONFDIR@/eventlogd.conf" ]; then
-            run_or_fail "cp @MK_SYSCONFDIR@/eventlogd.conf ${UPGRADEDIR}"
+        if [ -f '@MK_SYSCONFDIR@/eventlogd.conf' ]; then
+            run_or_fail cp '@MK_SYSCONFDIR@/eventlogd.conf' "${UPGRADEDIR}"
         fi
 
-        if [ -f "@MK_SYSCONFDIR@/lsassd.conf" ]; then
-            run_or_fail "cp @MK_SYSCONFDIR@/lsassd.conf ${UPGRADEDIR}"
+        if [ -f '@MK_SYSCONFDIR@/lsassd.conf' ]; then
+            run_or_fail cp '@MK_SYSCONFDIR@/lsassd.conf' "${UPGRADEDIR}"
         fi
 
-        if [ -f "@MK_SYSCONFDIR@/netlogon.conf" ]; then
-            run_or_fail "cp @MK_SYSCONFDIR@/netlogon.conf ${UPGRADEDIR}"
+        if [ -f '@MK_SYSCONFDIR@/netlogon.conf' ]; then
+            run_or_fail cp '@MK_SYSCONFDIR@/netlogon.conf' "${UPGRADEDIR}"
         fi
 
-        if [ -f "@LW_CACHEDIR@/db/pstore.db" ]; then
-            run_or_fail "cp @LW_CACHEDIR@/db/pstore.db ${UPGRADEDIR}"
-            run_or_fail "chmod 700 ${UPGRADEDIR}/pstore.db"
+        if [ -f '@LW_CACHEDIR@/db/pstore.db' ]; then
+            run_or_fail cp '@LW_CACHEDIR@/db/pstore.db' "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/pstore.db"
         fi
     fi
 }
@@ -154,34 +154,50 @@ preserve_6_0_configuration()
     return 0
 }
 
+wait_for_lwsm_shutdown()
+{
+    LWSMD_WAIT_TIME=$1
+
+    while [ "$LWSMD_WAIT_TIME" -ne 0 ]; do
+        sleep 1
+        run_quiet '@MK_BINDIR@/lwsm' list
+        if [ $? -ne 0 ]; then
+            return 0
+        fi
+        LWSMD_WAIT_TIME=`expr $LWSMD_WAIT_TIME - 1`
+    done
+
+    return 1
+}
+
 preinstall()
 {
-    log "Package: Likewise Open Upgrade begins (`date`)"
+    log "Package: PowerBroker Identity Services Open Upgrade begins (`date`)"
 
     determine_upgrade_type
 
     # Try to deconfigure pam/nsswitch
     if [ -x @MK_BINDIR@/domainjoin-cli ]; then
-        run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable pam"
-        run_quiet "@MK_BINDIR@/domainjoin-cli configure --disable nsswitch"
+        run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
+        run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
     fi
 
-    # Stop any Likewise daemons
     if [ -x @MK_BINDIR@/lwsm ]; then
-        run_quiet "@MK_BINDIR@/lwsm shutdown"
+        run_quiet '@MK_BINDIR@/lwsm' shutdown
+        wait_for_lwsm_shutdown 60
     fi
     for daemon in $DAEMONS_TO_HALT; do
         if [ -x /etc/init.d/$daemon ]; then
-            run_quiet "/etc/init.d/$daemon stop"
+            run_quiet /etc/init.d/$daemon stop
         fi
-        run_quiet "pkill -KILL -x $daemon"
+        run_quiet pkill -KILL -x $daemon
     done
 
     preserve_5_0123_configuration
 
     preserve_6_0_configuration
 
-    log "Package: Likewise Open Upgrade finished"
+    log "Package: PowerBroker Identity Services Open Upgrade finished"
     exit 0
 }
 
