@@ -1,14 +1,14 @@
 make()
 {
     mk_program \
-        PROGRAM=lwregshell \
+        PROGRAM=regshell \
         SOURCES="cmdparse.c regshell.c import.c export.c" \
         INCLUDEDIRS=". ../include ../shellutil" \
         LIBDEPS="regcommon regclient rsutils lwbase_nothr edit" \
         HEADERDEPS="lw/base.h lwmsg/lwmsg.h histedit.h"
 
     mk_stage \
-        DEST="${MK_BINDIR}/lw-edit-reg" \
+        DEST="${MK_BINDIR}/edit-reg" \
         SOURCE="lw-edit-reg.sh" \
         MODE=0755
 }

@@ -8,7 +8,7 @@ make()
         account.c"
 
     mk_program \
-        PROGRAM=lw-privilege \
+        PROGRAM=privilege \
         SOURCES="$LWPRIV_SOURCES" \
         INCLUDEDIRS=". ../../include" \
         HEADERDEPS="lwadvapi.h lw/base.h dce/rpc.h" \

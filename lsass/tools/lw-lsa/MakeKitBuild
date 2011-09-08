@@ -1,34 +1,5 @@
 make()
 {
-    COMMAND_NAMES="\
-	ad-cache \
-	add-group \
-	add-user \
-	del-group \
-	del-user \
-	enum-groups \
-	enum-users \
-	find-by-sid \
-	find-group-by-id \
-	find-group-by-name \
-	find-user-by-id \
-	find-user-by-name \
-	get-metrics \
-	get-status \
-	list-groups-for-user \
-	ypcat \
-	ypmatch \
-	mod-group \
-	mod-user \
-	set-default-domain \
-	set-machine-sid \
-	set-machine-name \
-	find-objects \
-	enum-objects \
-	enum-members \
-	query-member-of \
-	account-rights"
-
     LSA_SOURCES="\
 	ad_cache_main.c \
 	ad_get_machine.c \
@@ -67,19 +38,9 @@ make()
 	main.c"
 
     mk_program \
-	PROGRAM=lw-lsa \
-	SOURCES="$LSA_SOURCES" \
-	INCLUDEDIRS=". ../../include" \
-	HEADERDEPS="lwadvapi.h" \
-	LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr"
-
-    if [ "$LW_DEVICE_PROFILE" != "embedded" ]
-    then
-        for COMMAND in ${COMMAND_NAMES}
-        do
-            mk_symlink \
-                LINK="${MK_BINDIR}/lw-${COMMAND}" \
-                TARGET="lw-lsa"
-        done
-    fi
+        PROGRAM=lsa \
+        SOURCES="$LSA_SOURCES" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="lwadvapi.h" \
+        LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr"
 }

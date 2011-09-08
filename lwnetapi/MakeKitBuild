@@ -17,7 +17,8 @@ configure()
     mk_check_headers \
 	FAIL=yes \
 	wc16str.h wc16printf.h lw/base.h lwadvapi.h openssl/rand.h lwio/lwio.h \
-	dce/rpc.h lw/rpc/samr.h lw/rpc/lsa.h lw/rpc/wkssvc.h lwnet.h
+	dce/rpc.h lw/rpc/samr.h lw/rpc/lsa.h lw/rpc/wkssvc.h lw/rpc/netlogon.h \
+	lw/rpc/dssetup.h lwnet.h
 
     mk_check_sizeofs "long int"
 
