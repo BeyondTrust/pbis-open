@@ -1,7 +1,7 @@
 make()
 {
     mk_program \
-	PROGRAM=lw-eventlog-cli \
+	PROGRAM=eventlog-cli \
 	SOURCES="evtparser.c xmllookup.c main.c" \
 	INCLUDEDIRS=". ../../include $LIBXML2_INCLUDEDIRS" \
         CFLAGS="$LIBXML2_CFLAGS" \
