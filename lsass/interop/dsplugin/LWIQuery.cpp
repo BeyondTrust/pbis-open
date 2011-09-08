@@ -402,7 +402,6 @@ LWIQuery::ProcessUserAttributes(
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDS1AttrPrimaryGroupID);
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDS1AttrUniqueID);
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDS1AttrUserShell);
-        LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDSNAttrAuthenticationAuthority);
         // LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDSNAttrGroupMembership);             - skipped
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDSNAttrRecordName);
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDSNAttrRecordType);
@@ -530,20 +529,6 @@ LWIQuery::ProcessUserAttributes(
                 case LWIAttrLookup::idx_kDS1AttrUserShell:
                     macError = SetUserShell(pRecord, pUser, bSetValue);
                     GOTO_CLEANUP_ON_MACERROR(macError);
-                    break;
-                case LWIAttrLookup::idx_kDSNAttrAuthenticationAuthority:
-                    macError = AddAttributeEx(&pAttribute, pRecord, kDSNAttrAuthenticationAuthority, NULL);
-                    GOTO_CLEANUP_ON_MACERROR(macError);
-
-                    if (bSetValue)
-                    {
-                        /*
-                         * Always set the auth string to the default.
-                         * Lsass handles getting kerberos tickets for the user.
-                         */
-                        macError = SetAttributeValue(pAttribute, kDSValueAuthAuthorityDefault);
-                        GOTO_CLEANUP_ON_MACERROR(macError);
-                    }
                     break;
                 case LWIAttrLookup::idx_kDSNAttrGroupMembership:
                     macError = SetGroupMembership(pRecord, pUser, bSetValue);
@@ -856,7 +841,6 @@ LWIQuery::ProcessComputerAttributes(
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDS1AttrDistinguishedName);
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDSNAttrRecordName);
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDSNAttrMetaNodeLocation);
-        LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDSNAttrAuthenticationAuthority);
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDS1AttrGeneratedUID);
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDS1AttrENetAddress);
         LWI_BITVECTOR_SET(_attributeSet, LWIAttrLookup::idx_kDSNAttrIPAddress);
@@ -896,10 +880,6 @@ LWIQuery::ProcessComputerAttributes(
                 break;
             case LWIAttrLookup::idx_kDS1AttrGeneratedUID:
                 macError = SetGeneratedUID(pRecord, pComputer, bSetValue);
-                GOTO_CLEANUP_ON_MACERROR(macError);
-                break;
-            case LWIAttrLookup::idx_kDSNAttrAuthenticationAuthority:
-                macError = SetAuthenticationAuthority(pRecord, pComputer, bSetValue);
                 GOTO_CLEANUP_ON_MACERROR(macError);
                 break;
             case LWIAttrLookup::idx_kDS1AttrENetAddress:
@@ -4327,48 +4307,6 @@ LWIQuery::SetUserShell(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue)
         else
         {
             macError = AddAttribute(kDS1AttrUserShell, pRecord, &pAttribute);
-        }
-    }
-
-    return macError;
-}
-
-long
-LWIQuery::SetAuthenticationAuthority(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue)
-{
-    long macError = eDSNoErr;
-    PDSATTRIBUTE pAttribute = NULL;
-
-    if (pUser)
-    {
-        if (bSetValue)
-        {
-            macError = AddAttributeAndValue(kDSNAttrAuthenticationAuthority, kDSValueAuthAuthorityDefault, pRecord, &pAttribute);
-        }
-        else
-        {
-            macError = AddAttribute(kDSNAttrAuthenticationAuthority, pRecord, &pAttribute);
-        }
-    }
-
-    return macError;
-}
-
-long
-LWIQuery::SetAuthenticationAuthority(PDSRECORD pRecord, const PLWICOMPUTER pComputer, bool bSetValue)
-{
-    long macError = eDSNoErr;
-    PDSATTRIBUTE pAttribute = NULL;
-
-    if (pComputer)
-    {
-        if (bSetValue)
-        {
-            macError = AddAttributeAndValue(kDSNAttrAuthenticationAuthority, kDSValueAuthAuthorityDefault, pRecord, &pAttribute);
-        }
-        else
-        {
-            macError = AddAttribute(kDSNAttrAuthenticationAuthority, pRecord, &pAttribute);
         }
     }
 
