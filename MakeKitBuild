@@ -1,5 +1,5 @@
 PROJECT_NAME="platform"
-MODULES="core compiler autotools moonunit pkg-config likewise dceidl fortune"
+MODULES="core compiler autotools moonunit pkg-config pbis dceidl fortune"
 
 LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv popt \
                 libuuid sqlite openssl curl libxml2 \
@@ -13,17 +13,17 @@ SUBDIRS="$LW_ALL_BUNDLED \
 
 defaults()
 {
-    PREFIX="/opt/likewise"
-    SYSCONFDIR="/etc/likewise"
+    PREFIX="/opt/pbis"
+    SYSCONFDIR="/etc/pbis"
     LOCALSTATEDIR="/var"
-    DATADIR="/opt/likewise/share"
-    DOCDIR="/opt/likewise/share/doc"
+    DATADIR="/opt/pbis/share"
+    DOCDIR="/opt/pbis/share/doc"
     MANDIR="/usr/share/man"
 
     if [ "`uname`" = "Darwin" ]
     then
         LOCALSTATEDIR="/private/var"
-        SYSCONFDIR="/private/etc/likewise"
+        SYSCONFDIR="/private/etc/pbis"
     fi
     
     # Fail on warnings
@@ -102,7 +102,7 @@ option()
 
 configure()
 {
-    LW_VENDOR="likewise"
+    LW_VENDOR="pbis"
     LW_PRODUCT="platform"
     LW_VERSION="6.2.${LW_BUILD_ID:-0}"
 
