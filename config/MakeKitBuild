@@ -12,10 +12,10 @@ make()
 {
     mk_stage \
         DESTDIR="${MK_LIBEXECDIR}" \
-        init-base.sh init-lwsm.sh init-likewise.sh
+        init-base.sh init-lwsm.sh init-pbis.sh
 
     mk_stage \
-        SOURCE="likewise-krb5-ad.conf" \
+        SOURCE="pbis-krb5-ad.conf" \
         DESTDIR="${MK_SYSCONFDIR}"
     
     mk_stage \
@@ -26,7 +26,7 @@ make()
     
     mk_stage \
         DESTDIR="${MK_DATADIR}" \
-        SOURCE="likewise.pam-auth-update"        
+        SOURCE="pbis.pam-auth-update"        
 
     if [ "$MK_HOST_OS" = "darwin" ]
     then
@@ -37,7 +37,7 @@ make()
         mk_stage DESTDIR="${MK_SYSCONFDIR}/LaunchDaemons" com.likewisesoftware.lwsmd.plist
         mk_stage DEST="${MK_PREFIX}/libexec/startup" SOURCE="macstartup.sh"
     else
-        for i in lwsmd likewise
+        for i in lwsmd pbis
         do
             lw_init_script "$i"
         done
@@ -45,7 +45,7 @@ make()
 
     if [ "$MK_HOST_OS" = "solaris" ]
     then
-        for i in lwsmd.xml likewise.xml
+        for i in lwsmd.xml pbis.xml
         do
             mk_stage \
                 SOURCE="svcs-solaris/$i" \

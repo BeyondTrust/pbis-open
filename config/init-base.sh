@@ -76,7 +76,7 @@ then
         unalias _test_alias
         unalias aliastest
         # Resource this script
-        . /opt/likewise/libexec/init-base.sh
+        . /opt/pbis/libexec/init-base.sh
         exit $?
     fi
 
@@ -326,9 +326,9 @@ generic_pid()
 
 check_load_path()
 {
-    libdir=/opt/likewise/lib
-    if [ -x /opt/likewise/lib64 ]; then
-        libdir=/opt/likewise/lib64
+    libdir=/opt/pbis/lib
+    if [ -x /opt/pbis/lib64 ]; then
+        libdir=/opt/pbis/lib64
     fi
     for name in LD_LIBRARY_PATH LIBPATH SHLIB_PATH; do
         eval value=\$$name

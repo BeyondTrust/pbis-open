@@ -1,11 +1,11 @@
 #! /bin/sh
 # ex: set tabstop=4 expandtab shiftwidth=4:
 #
-# Copyright (c) Likewise Software.  All rights reserved.
+# Copyright (c) BeyondTrust Software.  All rights reserved.
 #
 #LWI_STARTUP_TYPE_REDHAT###
 #LWI_STARTUP_TYPE_REDHAT# chkconfig: 35 17 9
-#LWI_STARTUP_TYPE_REDHAT# description: Start and Stop Likewise Service Manager
+#LWI_STARTUP_TYPE_REDHAT# description: Start and Stop PBIS Service Manager
 #LWI_STARTUP_TYPE_REDHAT###
 #LWI_STARTUP_TYPE_REDHAT#
 #LWI_STARTUP_TYPE_SUSE### BEGIN INIT INFO
@@ -14,7 +14,7 @@
 #LWI_STARTUP_TYPE_SUSE# Required-Stop:
 #LWI_STARTUP_TYPE_SUSE# Default-Start: 3 5
 #LWI_STARTUP_TYPE_SUSE# Default-Stop: 0 1 2 6
-#LWI_STARTUP_TYPE_SUSE# Description: Start and Stop Likewise Service Manager
+#LWI_STARTUP_TYPE_SUSE# Description: Start and Stop PBIS Service Manager
 #LWI_STARTUP_TYPE_SUSE### END INIT INFO
 #LWI_STARTUP_TYPE_DEBIAN### BEGIN INIT INFO
 #LWI_STARTUP_TYPE_DEBIAN# Provides: lwsmd
@@ -22,13 +22,13 @@
 #LWI_STARTUP_TYPE_DEBIAN# Required-Stop:
 #LWI_STARTUP_TYPE_DEBIAN# Default-Start: 2 3 4 5
 #LWI_STARTUP_TYPE_DEBIAN# Default-Stop: 0 1 6
-#LWI_STARTUP_TYPE_DEBIAN# Description: Start and Stop Likewise Service Manager
+#LWI_STARTUP_TYPE_DEBIAN# Description: Start and Stop PBIS Service Manager
 #LWI_STARTUP_TYPE_DEBIAN### END INIT INFO
 #LWI_STARTUP_TYPE_FREEBSD# PROVIDE: lwsmd
 #LWI_STARTUP_TYPE_FREEBSD# REQUIRE: NETWORKING
 #LWI_STARTUP_TYPE_FREEBSD# BEFORE: LOGIN
 
-PROG_DESC="Likewise Service Manager"
+PROG_DESC="PBIS Service Manager"
 PROG_BIN=PREFIX_DIR/sbin/lwsmd
 PROG_ARGS="--start-as-daemon"
 PIDFILE=

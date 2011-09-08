@@ -1,6 +1,6 @@
 #!/bin/sh
 # Implicit arguments
-#  PREFIX - prefix of Likewise installation
+#  PREFIX - prefix of PowerBroker Identity Services installation
 #  SERVICE_NAME - name of the service
 
 LWSM="${PREFIX}/bin/lwsm"
@@ -55,7 +55,7 @@ service_start()
         SUSE)
             printf "%s" "Starting `service_description`"
             for i in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-                if [ -e "/var/lib/likewise/.lwsm" ]; then
+                if [ -e "/var/lib/pbis/.lwsm" ]; then
                     break;
                 fi
                 sleep 1
@@ -239,7 +239,7 @@ case "$1" in
     rcvar|fastrcvar|forcercvar|onercvar)
         if type run_rc_command >/dev/null 2>&1; then
             # Looks like this is a FreeBSD based system.
-            name=likewise
+            name=pbis
             rcvar="`set_rcvar`"
             start_cmd="service_start"
             stop_cmd="service_stop"
