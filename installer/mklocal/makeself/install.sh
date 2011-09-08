@@ -2,7 +2,7 @@
 # ex: set tabstop=4 expandtab shiftwidth=4:
 
 #
-# Copyright (c) Likewise Software.  All rights reserved.
+# Copyright (c) PowerBroker.  All rights reserved.
 #
 
 ERR_PACKAGE_FILE_NOT_FOUND=1
@@ -173,21 +173,21 @@ do_setup()
         exit_on_error 1 "The installer does not support this OS (${OS_TYPE}) and architecture (${OS_ARCH})."
     fi
 
-    libdir=/opt/likewise/lib
-    if [ -x /opt/likewise/lib64 ]; then
-        libdir=/opt/likewise/lib64
+    libdir=/opt/pbis/lib
+    if [ -x /opt/pbis/lib64 ]; then
+        libdir=/opt/pbis/lib64
     fi
     for i in "$LD_LIBRARY_PATH" "$LIBPATH" "$SHLIB_PATH"; do
         if [ -n "$i" ]; then
             expr "$i" : "^$libdir:" >/dev/null
             if [ $? -ne 0 ]; then
-                exit_on_error 1 "LD_LIBRARY_PATH, LIBPATH, and SHLIB_PATH must be unset or list $libdir as the first directory. See the \"Requirements for the Agent\" section of the Likewise manual for more information."
+                exit_on_error 1 "LD_LIBRARY_PATH, LIBPATH, and SHLIB_PATH must be unset or list $libdir as the first directory. See the \"Requirements for the Agent\" section of the PowerBroker Identity Services manual for more information."
             fi
         fi
     done
     for i in "$LD_PRELOAD"; do
         if [ -n "$i" ]; then
-            exit_on_error 1 "LD_PRELOAD must be unset. See the \"Requirements for the Agent\" section of the Likewise manual for more information."
+            exit_on_error 1 "LD_PRELOAD must be unset. See the \"Requirements for the Agent\" section of the PowerBroker Identity Services manual for more information."
         fi
     done
 
@@ -504,14 +504,14 @@ package_uninstall_solaris()
 
 remove_extra_files()
 {
-    for file in /opt/likewise /etc/likewise /var/log/likewise /var/lib/likewise /var/cache/likewise ; do
+    for file in /opt/pbis /etc/pbis /var/log/pbis /var/lib/pbis /var/cache/pbis ; do
         if [ -d "$file" ]; then
             echo "Removing directory $file"
             /bin/rm -rf "$file"
         fi
     done
 
-    echo "Remove Likewise created backup/restore files"
+    echo "Remove PowerBroker Identity Services created backup/restore files"
     for file in /etc/pam.conf /etc/pam.d/* /etc/krb5.conf /etc/krb5/* /etc/hosts /etc/sshd_config /etc/ssh_config /etc/ssh/* /etc/nsswitch.conf /etc/skel /etc/inet/* /etc/hostname.* /etc/defaultdomain /usr/lib/security/methods.cfg /etc/security/user /etc/security/login.cfg /etc/netsvc.conf /etc/methods.cfg; do
         orig="$file.lwidentity.orig"
         bak="$file.lwidentity.bak"
@@ -564,11 +564,11 @@ get_prefix_dir()
 uninstall_darwin()
 {
     # No easy way to uninstall individual packages on Mac OS X
-    if [ -x /opt/likewise/bin/lwi-uninstall.sh ]; then
-       /opt/likewise/bin/lwi-uninstall.sh
+    if [ -x /opt/pbis/bin/lwi-uninstall.sh ]; then
+       /opt/pbis/bin/lwi-uninstall.sh
 
-        if [ -d /opt/likewise ]; then
-            /bin/rm -rf /opt/likewise
+        if [ -d /opt/pbis ]; then
+            /bin/rm -rf /opt/pbis
         fi
     fi
     return 0
@@ -679,14 +679,14 @@ do_install()
         fi
     fi
 
-    mkdir -p /var/lib/likewise/uninstall
-    echo "PREFIX=\"$PREFIX\"" > /var/lib/likewise/uninstall/MANIFEST
-    echo "PKGTYPE=\"$PKGTYPE\"" >> /var/lib/likewise/uninstall/MANIFEST
-    echo "INSTALL_UPGRADE_PACKAGE=\"$INSTALL_UPGRADE_PACKAGE\"" >> /var/lib/likewise/uninstall/MANIFEST
-    echo "INSTALL_BASE_PACKAGE=\"$INSTALL_BASE_PACKAGE\"" >> /var/lib/likewise/uninstall/MANIFEST
-    echo "INSTALL_GUI_PACKAGE=\"$INSTALL_GUI_PACKAGE\"" >> /var/lib/likewise/uninstall/MANIFEST
+    mkdir -p /var/lib/pbis/uninstall
+    echo "PREFIX=\"$PREFIX\"" > /var/lib/pbis/uninstall/MANIFEST
+    echo "PKGTYPE=\"$PKGTYPE\"" >> /var/lib/pbis/uninstall/MANIFEST
+    echo "INSTALL_UPGRADE_PACKAGE=\"$INSTALL_UPGRADE_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
+    echo "INSTALL_BASE_PACKAGE=\"$INSTALL_BASE_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
+    echo "INSTALL_GUI_PACKAGE=\"$INSTALL_GUI_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
     if [ -f "${DIRNAME}/response" ]; then
-        cp "${DIRNAME}/response" /var/lib/likewise/uninstall/response
+        cp "${DIRNAME}/response" /var/lib/pbis/uninstall/response
     fi
 
     log_info "Installing Packages was successful"
@@ -715,7 +715,7 @@ do_postinstall_messages()
 
     if [ -n "${UPGRADING}" ]; then
         log_info ""
-        log_info "Likewise Open has been successfully upgraded."
+        log_info "PowerBroker Identity Services Open has been successfully upgraded."
         log_info ""
 
         command="`get_prefix_dir`/bin/lw-get-current-domain"
@@ -740,7 +740,7 @@ do_postinstall_messages()
             log_info ""
             log_info "As root, run ${guimsg}domainjoin-cli to join a domain so you can log on"
             log_info "with Active Directory credentials. Example:"
-            log_info "domainjoin-cli join likewisedemo.com ADadminAccount"
+            log_info "domainjoin-cli join YourDomain.com ADadminAccount"
             log_info ""
 
             if $run_join_gui
@@ -1031,10 +1031,10 @@ main_uninstall()
 {
     setup_os_vars
 
-    if [ -f /var/lib/likewise/uninstall/MANIFEST ]; then
-        . /var/lib/likewise/uninstall/MANFIEST
+    if [ -f /var/lib/pbis/uninstall/MANIFEST ]; then
+        . /var/lib/pbis/uninstall/MANFIEST
     else
-        echo "The file /var/lib/likewise/uninstall/MANIFEST cannot be found and"
+        echo "The file /var/lib/pbis/uninstall/MANIFEST cannot be found and"
         echo "is required for this uninstall procedure."
         exit 1
     fi
