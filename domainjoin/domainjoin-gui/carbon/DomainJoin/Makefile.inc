@@ -105,8 +105,13 @@ STD_CFLAGS=-pipe -fno-common -fpascal-strings -Wno-four-char-constants -Wall -We
 
 #STD_LDFLAGS=-Wl,-Y,1455
 
+ifeq ($(BUILD_OS_ARCH), x86_64)
+STD_CFLAGS+=-arch i386
+STD_LDFLAGS+=-arch i386
+endif
+
 COMPILE_FLAGS=-I. $(STD_CFLAGS) $(TYPE_CFLAGS) $(LOCAL_CFLAGS)
-LINK_FLAGS=$(TYPE_LDFLAGS) $(addprefix -framework ,$(FRAMEWORKS)) $(LOCAL_LDFLAGS)
+LINK_FLAGS=$(STD_LDFLAGS) $(TYPE_LDFLAGS) $(addprefix -framework ,$(FRAMEWORKS)) $(LOCAL_LDFLAGS)
 
 all: $(OUT_INFO) $(OUT_REZ) $(OUT_RESOURCES_NEUTRAL) $(OUT_RESOURCES_LOCALIZE) $(OUT_PROGRAM)
 
@@ -141,13 +146,13 @@ endif
 
 $(OUT_PROGRAM): $(OBJS)
 	mkdir -p $(OUT_PROGRAM_DIR)
-	g++-4.0 $(LINK_FLAGS) -o "$@" $(OBJS)
+	$(CXX) $(LINK_FLAGS) -o "$@" $(OBJS)
 
 %.o : %.c
 	gcc $(COMPILE_FLAGS) -c -o $@ $<
 
 %.o : %.cp
-	g++-4.0 -x c++ $(COMPILE_FLAGS) -c -o $@ $<
+	$(CXX) -x c++ $(COMPILE_FLAGS) -c -o $@ $<
 
 %.o : %.cpp
-	g++-4.0 -x c++ $(COMPILE_FLAGS) -c -o $@ $<
+	$(CXX) -x c++ $(COMPILE_FLAGS) -c -o $@ $<
