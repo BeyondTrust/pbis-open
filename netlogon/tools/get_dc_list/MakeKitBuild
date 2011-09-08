@@ -1,7 +1,7 @@
 make()
 {
     mk_program \
-        PROGRAM=lw-get-dc-list \
+        PROGRAM=get-dc-list \
         SOURCES="main.c" \
         INCLUDEDIRS=". ../../include" \
         HEADERDEPS="reg/lwreg.h lwadvapi.h" \
