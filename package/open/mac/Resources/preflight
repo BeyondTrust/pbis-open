@@ -274,6 +274,23 @@ preserve_6_1_configuration()
 ##
 log "See /var/log/likewise-open-install.log for a complete installation log"
 
+if [ "`uname -n`" = "localhost" ]
+then
+    log "Error: local host name is 'localhost' - please change it before installing Likewise Enterprise."
+
+    if [ ! -t 0 ]
+    then
+        /usr/bin/osascript << EOF
+tell application "System Events"
+    activate
+    display dialog "Error: local host name is 'localhost' - please change it before installing Likewise Enterprise."
+end tell
+EOF
+    fi
+
+    exit 1
+fi
+
 determine_upgrade_type
 
 stop_daemons
