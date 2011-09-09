@@ -46,6 +46,7 @@
 #include "wbclient.h"
 #include "lsawbclient_p.h"
 #include <stdio.h>
+#include <lwmem.h>
 
 wbcErr wbcQuerySidToUid(
     const struct wbcDomainSid *sid,
@@ -330,6 +331,114 @@ cleanup:
     return wbc_status;
 }
 
+wbcErr wbcSidsToUnixIds(
+    const struct wbcDomainSid *pSids,
+    uint32_t num_sids,
+    struct wbcUnixId *pIds
+    )
+{
+    wbcErr wbc_status = WBC_ERR_UNKNOWN_FAILURE;
+    HANDLE hLsa = (HANDLE)NULL;
+    DWORD dwErr = LW_ERROR_SUCCESS;
+    PSTR pszSidString = NULL;
+    PSTR* ppszSidList = NULL;
+    int index = 0;
+    LSA_QUERY_LIST query = { 0 };
+    PLSA_SECURITY_OBJECT* ppObjects = NULL;
+
+    BAIL_ON_NULL_PTR_PARAM(pSids, dwErr);
+    BAIL_ON_NULL_PTR_PARAM(pIds, dwErr);
+
+    dwErr = LwAllocateMemory(
+                sizeof(ppszSidList[0]) * (num_sids + 1),
+                (PVOID*)&ppszSidList);
+    BAIL_ON_LSA_ERR(dwErr);
+
+    for (index = 0; index < num_sids; index++)
+    {
+        wbc_status = wbcSidToString(&pSids[index], &pszSidString);
+        dwErr = map_wbc_to_lsa_error(wbc_status);
+        BAIL_ON_LSA_ERR(dwErr);
+
+        ppszSidList[index] = pszSidString;
+        pszSidString = NULL;
+    }
+
+    ppszSidList[index] = NULL;
+
+    dwErr = LsaOpenServer(&hLsa);
+    BAIL_ON_LSA_ERR(dwErr);
+
+    query.ppszStrings = (PCSTR *)ppszSidList;
+    dwErr = LsaFindObjects(
+                hLsa,
+                NULL,
+                0,
+                LSA_OBJECT_TYPE_UNDEFINED,
+                LSA_QUERY_TYPE_BY_SID,
+                num_sids,
+                query,
+                &ppObjects);
+    BAIL_ON_LSA_ERR(dwErr);
+
+    dwErr = LsaCloseServer(hLsa);
+    hLsa = (HANDLE)NULL;
+    BAIL_ON_LSA_ERR(dwErr);
+
+    for (index = 0; index < num_sids; index++)
+    {
+        if (ppObjects[index] && ppObjects[index]->enabled)
+        {
+            switch (ppObjects[index]->type)
+            {
+                case LSA_OBJECT_TYPE_GROUP:
+                    pIds[index].type = WBC_ID_TYPE_GID;
+                    pIds[index].id.gid = ppObjects[index]->groupInfo.gid;
+                    break;
+                case LSA_OBJECT_TYPE_USER:
+                    pIds[index].type = WBC_ID_TYPE_UID;
+                    break;
+                default:
+                    pIds[index].type = WBC_ID_TYPE_NOT_SPECIFIED;
+                    pIds[index].id.uid = ppObjects[index]->userInfo.uid;
+                    break;
+            }
+        }
+        else
+        {
+            pIds[index].type = WBC_ID_TYPE_NOT_SPECIFIED;
+            pIds[index].id.uid = (uid_t)-1;
+        }
+    }
+
+cleanup:
+    if (ppszSidList)
+    {
+        for (index = 0; index < num_sids; index++)
+        {
+            wbcFreeMemory(ppszSidList[index]);
+        }
+        LW_SAFE_FREE_MEMORY(ppszSidList);
+    }
+
+    if (pszSidString) {
+        wbcFreeMemory(pszSidString);
+    }
+
+    if (hLsa) {
+        LsaCloseServer(hLsa);
+    }
+
+    wbc_status = map_error_to_wbc_status(dwErr);
+
+    if (ppObjects)
+    {
+        LsaFreeSecurityObjectList(
+            num_sids,
+            ppObjects);
+    }
+    return wbc_status;
+}
 
 wbcErr wbcAllocateUid(uid_t *puid)
 {

@@ -595,6 +595,50 @@ cleanup:
 }
 
 wbcErr
+wbcDcInfo(
+    const char *domain,
+    size_t *num_dcs,
+    const char ***dc_names,
+    const char ***dc_ips
+    )
+{
+    DWORD error;
+    PLWNET_DC_INFO pDCInfo = NULL;
+
+    error = LWNetGetDCName(
+            NULL,
+            domain,
+            NULL,
+            0,
+            &pDCInfo);
+    BAIL_ON_LSA_ERR(error);
+
+    *num_dcs = 1;
+
+    *dc_names = _wbc_malloc_zero(sizeof(**dc_names) * 2,
+            _wbc_free_string_array);
+    BAIL_ON_NULL_PTR(*dc_names, error);
+
+    (*dc_names)[0] = _wbc_strdup(pDCInfo->pszDomainControllerName);
+    BAIL_ON_NULL_PTR((*dc_names)[0], error);
+
+    *dc_ips = _wbc_malloc_zero(sizeof(**dc_ips) * 2,
+            _wbc_free_string_array);
+    BAIL_ON_NULL_PTR(*dc_ips, error);
+
+    (*dc_ips)[0] = _wbc_strdup(pDCInfo->pszDomainControllerAddress);
+    BAIL_ON_NULL_PTR((*dc_ips)[0], error);
+
+cleanup:
+    if (error)
+    {
+        _WBC_FREE(*dc_ips);
+        _WBC_FREE(*dc_names);
+    }
+    return map_error_to_wbc_status(error);
+}
+
+wbcErr
 wbcPingDc(
     const char *domain,
     struct wbcAuthErrorInfo **ppError
