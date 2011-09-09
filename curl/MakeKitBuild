@@ -17,7 +17,7 @@ make()
         LIBS="curl:6:0:2" \
         HEADERDEPS="openssl/ssl.h" \
         LIBDEPS="ssl crypto" \
-        --without-libidn --without-zlib \
+        --without-libidn --without-zlib --without-libssh2 \
         --disable-ldap --disable-ldaps --disable-ftp \
         --disable-rtsp --disable-dict --disable-telnet \
         --disable-tftp --disable-pop3 --disable-imap \
