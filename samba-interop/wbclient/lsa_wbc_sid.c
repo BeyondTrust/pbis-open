@@ -139,6 +139,53 @@ wbcSidTypeString(
     }
 }
 
+int wbcSidToStringBuf(
+    const struct wbcDomainSid *sid,
+    char *buf,
+    int buflen
+    )
+{
+    wbcErr wbc_status = WBC_ERR_UNKNOWN_FAILURE;
+    uint32_t dwAuthId = 0;
+    int i = 0;
+    DWORD dwErr = LW_ERROR_INTERNAL;
+
+    BAIL_ON_NULL_PTR_PARAM(sid, dwErr);
+    BAIL_ON_NULL_PTR_PARAM(buf, dwErr);
+
+    dwAuthId = sid->id_auth[5] +
+        (sid->id_auth[4] << 8) +
+        (sid->id_auth[3] << 16) +
+        (sid->id_auth[2] << 24);
+
+    snprintf(buf,
+         buflen,
+         "S-%d-%d",
+         sid->sid_rev_num,
+         dwAuthId);
+
+    for (i=0; i<sid->num_auths; i++) {
+        char pszAuth[12];
+
+        snprintf(pszAuth, sizeof(pszAuth), "-%u", sid->sub_auths[i]);
+        strncat(buf, pszAuth, buflen-strlen(buf));
+    }
+
+    dwErr = LW_ERROR_SUCCESS;
+
+cleanup:
+    wbc_status = map_error_to_wbc_status(dwErr);
+
+    if (wbc_status)
+    {
+        return -1;
+    }
+    else
+    {
+        return strlen(buf);
+    }
+}
+
 wbcErr wbcSidToString(
     const struct wbcDomainSid *sid,
     char **sid_string
@@ -445,6 +492,165 @@ cleanup:
     if (dwErr != LW_ERROR_SUCCESS) {
         _WBC_FREE(*domain);
         _WBC_FREE(*name);
+    }
+
+    wbc_status = map_error_to_wbc_status(dwErr);
+
+    return wbc_status;
+}
+
+static
+int
+_wbc_free_translated_names(
+    void *p
+    )
+{
+    struct wbcTranslatedName *pNames = (struct wbcTranslatedName *)p;
+    int index = 0;
+
+    if (pNames)
+    {
+        for (index = 0; pNames[index].type != -1; index++)
+        {
+            _WBC_FREE(pNames[index].name);
+        }
+    }
+    return 0;
+}
+
+wbcErr wbcLookupSids(
+    const struct wbcDomainSid *sids,
+    int num_sids,
+    struct wbcDomainInfo **ppDomains,
+    int *pNumDomains,
+    struct wbcTranslatedName **ppNames
+    )
+{
+    wbcErr wbc_status = WBC_ERR_UNKNOWN_FAILURE;
+    HANDLE hLsa = (HANDLE)NULL;
+    DWORD dwErr = LW_ERROR_SUCCESS;
+    PSTR pszSidString = NULL;
+    PSTR* ppszSidList = NULL;
+    PLSA_SID_INFO pNameList = NULL;
+    int index = 0;
+    int domainIndex = 0;
+    int numDomains = 0;
+    struct wbcTranslatedName *pNames = NULL;
+    struct wbcDomainInfo *pDomains = NULL;
+
+    BAIL_ON_NULL_PTR_PARAM(sids, dwErr);
+    BAIL_ON_NULL_PTR_PARAM(ppDomains, dwErr);
+    BAIL_ON_NULL_PTR_PARAM(pNumDomains, dwErr);
+    BAIL_ON_NULL_PTR_PARAM(ppNames, dwErr);
+
+    wbc_status = wbcListTrusts(
+                    &pDomains,
+                    &numDomains);
+    dwErr = map_wbc_to_lsa_error(wbc_status);
+    BAIL_ON_LSA_ERR(dwErr);
+
+    dwErr = LwAllocateMemory(
+                sizeof(ppszSidList[0]) * (num_sids + 1),
+                (PVOID*)&ppszSidList);
+    BAIL_ON_LSA_ERR(dwErr);
+
+    for (index = 0; index < num_sids; index++)
+    {
+        wbc_status = wbcSidToString(&sids[index], &pszSidString);
+        dwErr = map_wbc_to_lsa_error(wbc_status);
+        BAIL_ON_LSA_ERR(dwErr);
+
+        ppszSidList[index] = pszSidString;
+        pszSidString = NULL;
+    }
+
+    ppszSidList[index] = NULL;
+
+    dwErr = LsaOpenServer(&hLsa);
+    BAIL_ON_LSA_ERR(dwErr);
+
+    dwErr = LsaGetNamesBySidList(
+                hLsa,
+                1,
+                ppszSidList,
+                &pNameList,
+                NULL);
+    BAIL_ON_LSA_ERR(dwErr);
+
+    dwErr = LsaCloseServer(hLsa);
+    hLsa = (HANDLE)NULL;
+    BAIL_ON_LSA_ERR(dwErr);
+
+    pNames = _wbc_malloc_zero(sizeof(pNames[0])*(num_sids + 1),
+                 _wbc_free_translated_names);
+    BAIL_ON_NULL_PTR(pNames, dwErr);
+
+    pNames[num_sids].type = -1;
+
+    for (index = 0; index < num_sids; index++)
+    {
+        if (pNameList[index].accountType == AccountType_NotFound)
+        {
+            pNames[index].type = WBC_SID_NAME_USE_NONE;
+        }
+        else
+        {
+            pNames[index].type = map_lsa_sid_type_to_wbc(
+                    pNameList[index].accountType);
+
+            pNames[index].name = _wbc_strdup(
+                    pNameList[index].pszSamAccountName);
+            BAIL_ON_NULL_PTR(pNames[index].name, dwErr);
+
+            pNames[index].domain_index = -1;
+            for (domainIndex = 0; domainIndex < numDomains; domainIndex++)
+            {
+                if (!strcmp(pDomains[domainIndex].short_name,
+                            pNameList[index].pszDomainName) ||
+                    !strcmp(pDomains[domainIndex].dns_name,
+                            pNameList[index].pszDomainName))
+                {
+                    pNames[index].domain_index = domainIndex;
+                    break;
+                }
+            }
+        }
+    }
+
+cleanup:
+    if (dwErr)
+    {
+        *pNumDomains = 0;
+        *ppNames = NULL;
+        *ppDomains = NULL;
+        _WBC_FREE(pNames);
+        _WBC_FREE(pDomains);
+    }
+    else
+    {
+        *pNumDomains = numDomains;
+        *ppNames = pNames;
+        *ppDomains = pDomains;
+    }
+    if (pNameList)
+    {
+        LsaFreeSIDInfoList(pNameList, num_sids);
+    }
+    if (ppszSidList)
+    {
+        for (index = 0; index < num_sids; index++)
+        {
+            wbcFreeMemory(ppszSidList[index]);
+        }
+        LW_SAFE_FREE_MEMORY(ppszSidList);
+    }
+
+    if (pszSidString) {
+        wbcFreeMemory(pszSidString);
+    }
+
+    if (hLsa) {
+        LsaCloseServer(hLsa);
     }
 
     wbc_status = map_error_to_wbc_status(dwErr);
