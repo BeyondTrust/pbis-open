@@ -1,11 +1,21 @@
 configure()
 {
     mk_declare -o \
+        MK_PREFIX \
+        MK_LIBEXECDIR \
+        MK_SBINDIR \
+        LW_INITDIR \
         VERSION="$LW_VERSION" \
         BUILD="${LW_BUILD_ID:-0}" \
         REVISION="${LW_BUILD_REVISION:-0}"
 
     mk_output_file VERSION
+    mk_output_file init-base.sh
+    mk_output_file init-lwsm.sh
+    mk_output_file init-pbis.sh
+    mk_output_file pbis
+    mk_output_file lwsmd
+
 }
 
 make()
@@ -14,10 +24,6 @@ make()
         DESTDIR="${MK_LIBEXECDIR}" \
         init-base.sh init-lwsm.sh init-pbis.sh
 
-    mk_stage \
-        SOURCE="pbis-krb5-ad.conf" \
-        DESTDIR="${MK_SYSCONFDIR}"
-    
     mk_stage \
         SOURCE="VERSION" \
         DESTDIR="${MK_PREFIX}/data"
@@ -37,10 +43,7 @@ make()
         mk_stage DESTDIR="${MK_SYSCONFDIR}/LaunchDaemons" com.likewisesoftware.lwsmd.plist
         mk_stage DEST="${MK_PREFIX}/libexec/startup" SOURCE="macstartup.sh"
     else
-        for i in lwsmd pbis
-        do
-            lw_init_script "$i"
-        done
+        mk_stage DESTDIR="${LW_INITDIR}" MODE=0755 lwsmd pbis
     fi
 
     if [ "$MK_HOST_OS" = "solaris" ]
@@ -60,29 +63,4 @@ make()
             DESTDIR="/etc" \
             MODE="0644"
     fi
-}
-
-lw_init_script()
-{
-    mk_target \
-        TARGET="${LW_INITDIR}/$1" \
-        DEPS="$1" \
-        _lw_install_init_script '$@' "&$1"
-
-    mk_add_all_target "$result"
-}
-
-_lw_install_init_script()
-{
-    mk_msg_domain init
-
-    mk_msg "${1#$MK_STAGE_DIR}"
-
-    mk_mkdir "${1%/*}"
-
-    mk_run_or_fail sed \
-        -e "s:PREFIX_DIR:${MK_PREFIX}:g" \
-        -e "s:EXECDIR:${MK_LIBEXECDIR}:g" \
-        < "$2" > "$1"
-    mk_run_or_fail chmod +x "$1"
 }

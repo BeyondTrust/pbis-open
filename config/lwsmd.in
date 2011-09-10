@@ -29,7 +29,7 @@
 #LWI_STARTUP_TYPE_FREEBSD# BEFORE: LOGIN
 
 PROG_DESC="PBIS Service Manager"
-PROG_BIN=PREFIX_DIR/sbin/lwsmd
+PROG_BIN=@MK_SBINDIR@/lwsmd
 PROG_ARGS="--start-as-daemon"
 PIDFILE=
 SCRIPTNAME="lwsmd"
@@ -64,4 +64,4 @@ fix_locale()
     fi
 }
 
-. PREFIX_DIR/libexec/init-base.sh
+. @MK_LIBEXECDIR@/init-base.sh

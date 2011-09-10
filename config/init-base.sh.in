@@ -76,7 +76,7 @@ then
         unalias _test_alias
         unalias aliastest
         # Resource this script
-        . /opt/pbis/libexec/init-base.sh
+        . @MK_LIBEXECDIR@/init-base.sh
         exit $?
     fi
 
