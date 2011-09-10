@@ -90,7 +90,7 @@ run_or_fail()
 
 import_registry_configurations()
 {
-    REGSHELL='@MK_BINDIR@/lwregshell'
+    REGSHELL='@MK_BINDIR@/regshell'
     REGLIST="dcerpcd.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg \
              lwiod.reg lwreg.reg netlogond.reg rdr.reg reapsysl.reg"
 
@@ -136,7 +136,7 @@ determine_upgrade_type()
 import_5_0123_file()
 {
     CONVERT='@MK_LIBEXECDIR@/conf2reg'
-    REGSHELL='@MK_BINDIR@/lwregshell'
+    REGSHELL='@MK_BINDIR@/regshell'
 
     COMMAND=$1
     SOURCE=$2
@@ -181,35 +181,35 @@ restore_5_0123_configuration()
 
 relocate_domain_separator()
 {
-    DomainSeparator=`@MK_BINDIR@/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+    DomainSeparator=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
 
     if [ -n "${DomainSeparator}" ]; then
         if [ "$DomainSeparator" = "\\\\" ]; then
             DomainSeparator="\\"
         fi
 
-        run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
+        run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
     fi
 }
 
 relocate_space_replacement()
 {
-    SpaceReplacement=`@MK_BINDIR@/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+    SpaceReplacement=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
 
     if [ -n "${SpaceReplacement}" ]; then
-        run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
+        run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
     fi
 }
 
 remove_npfs_dependencies()
 {
-    run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers]' 'Load' 'rdr'
-    run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lsass]' 'Dependencies' 'netlogon lwio lwreg rdr'
+    run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers]' 'Load' 'rdr'
+    run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lsass]' 'Dependencies' 'netlogon lwio lwreg rdr'
 }
 
 fix_60_registry()
 {
-    REGSHELL='@MK_BINDIR@/lwregshell'
+    REGSHELL='@MK_BINDIR@/regshell'
 
     if [ -z "$UPGRADING_FROM_6_0" ]; then
         return 0
@@ -244,7 +244,7 @@ switch_to_open_provider()
         ;;
     esac
 
-    run_quiet '@MK_BINDIR@/lwregshell' set_value "$_value" Path "$_path"
+    run_quiet '@MK_BINDIR@/regshell' set_value "$_value" Path "$_path"
 }
 
 postinstall()
