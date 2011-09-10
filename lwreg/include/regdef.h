@@ -54,7 +54,7 @@
 #define REG_API
 
 #ifndef CACHEDIR
-#define CACHEDIR "/var/lib/likewise"
+#define CACHEDIR "/var/lib/pbis"
 #endif
 
 #define REG_SECONDS_IN_MINUTE (60)

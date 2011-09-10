@@ -3,7 +3,7 @@
 #define MEMDB_MAX_EXPORT_TIMEOUT (60*10) // 10 Minutes
 #define MEMDB_CHANGED_EXPORT_TIMEOUT 5 // 5 seconds
 #define MEMDB_FOREVER_EXPORT_TIMEOUT (30 * 24 * 3600) // 1 month
-#define MEMDB_EXPORT_DIR "/var/lib/likewise/db"
+#define MEMDB_EXPORT_DIR "/var/lib/pbis/db"
 #define MEMDB_EXPORT_FILE MEMDB_EXPORT_DIR "/memprovider.exp"
 
 typedef struct _MEMREG_NODE *PMEMREG_NODE;
