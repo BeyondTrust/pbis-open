@@ -1,6 +1,10 @@
 make()
 {
     mk_stage \
+        SOURCE="pbis-krb5-ad.conf" \
+        DESTDIR="${MK_SYSCONFDIR}"
+
+    mk_stage \
         SOURCE="netlogond.reg" \
         DESTDIR="${LW_CONFIGDIR}"
 }
