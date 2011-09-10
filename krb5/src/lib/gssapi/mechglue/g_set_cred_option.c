@@ -186,7 +186,7 @@ gss_set_cred_option(OM_uint32 *minor_status,
 		continue;
 
 	    mech_status = mech->gssspi_set_cred_option(&mech_minor_status,
-						       &union_cred->cred_array[i],
+						       union_cred->cred_array[i],
 						       desired_object,
 						       value);
 	    if (mech_status == GSS_S_UNAVAILABLE)
