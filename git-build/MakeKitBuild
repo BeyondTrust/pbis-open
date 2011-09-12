@@ -1,5 +1,5 @@
 PROJECT_NAME="likewise-open"
-MODULES="core compiler autotools moonunit pkg-config likewise dceidl fortune"
+MODULES="core compiler autotools moonunit pkg-config pbis dceidl fortune"
 LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv \
                 sqlite libuuid openssl curl libxml2"
 SUBDIRS="$LW_ALL_BUNDLED \
