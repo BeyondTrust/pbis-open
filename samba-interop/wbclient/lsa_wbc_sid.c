@@ -534,7 +534,7 @@ wbcErr wbcLookupSids(
     PLSA_SID_INFO pNameList = NULL;
     int index = 0;
     int domainIndex = 0;
-    int numDomains = 0;
+    size_t numDomains = 0;
     struct wbcTranslatedName *pNames = NULL;
     struct wbcDomainInfo *pDomains = NULL;
 
