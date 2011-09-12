@@ -45,7 +45,7 @@ sfx_generic()
 
     lw_sfx \
         SFX="pbis-open-${LW_VERSION}" \
-        FILES="COPYING README EULA LICENSES $2" \
+        FILES="COPYING README LICENSES $2" \
         FORMAT="$1" \
         PACKAGES="pbis-open pbis-open-upgrade $GUI_PACKAGE" \
         UPGRADE="pbis-open-upgrade" \
