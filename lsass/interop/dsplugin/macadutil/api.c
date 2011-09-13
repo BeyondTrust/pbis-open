@@ -1346,6 +1346,10 @@ AuthenticateUser(
     BAIL_ON_MAC_ERROR(dwError);
 
     dwError = LsaAuthenticateUserPam(hLsaServer, &params, &pInfo);
+    if (dwError && pInfo && pInfo->pszMessage)
+    {
+        LOG_ERROR("LsaAuthenticateUserPam failed: '%s'", pInfo->pszMessage);
+    }
     BAIL_ON_MAC_ERROR(dwError);
 
     if (pInfo && pInfo->pszMessage)
@@ -1375,6 +1379,11 @@ AuthenticateUser(
     }
 
 cleanup:
+
+    if (pInfo)
+    {
+        LsaFreeAuthUserPamInfo(pInfo);
+    }
 
     if (hLsaServer != (HANDLE)NULL) {
        LsaCloseServer(hLsaServer);
