@@ -642,6 +642,7 @@ LWIDirNodeQuery::DoDirNodeAuth(
     int EE = 0;
     size_t offset = 0;
     char* username = NULL;
+    char* auth_user = NULL;
     char* oldPassword = NULL;
     char* password = NULL;
     bool isChangePassword = false;
@@ -705,19 +706,31 @@ LWIDirNodeQuery::DoDirNodeAuth(
         macError = eDSNullDataBuff;
         GOTO_CLEANUP_EE(EE);
     }
-    
-    if (isSetPassword)
-    {
-        LOG("dsAuthMethodStandard:dsAuthSetPasswd operation not supported here");
-        macError = eDSAuthMethodNotSupported;
-        GOTO_CLEANUP_EE(EE);
-    }
 
     macError = GetCountedString(pDoDirNodeAuth->fInAuthStepData, &offset, &username, NULL);
     GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
 
     if (isChangePassword)
     {
+        macError = GetCountedString(pDoDirNodeAuth->fInAuthStepData, &offset, &oldPassword, NULL);
+        GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
+    }
+
+    if (isSetPassword)
+    {
+        macError = GetCountedString(pDoDirNodeAuth->fInAuthStepData, &offset, &password, NULL);
+        GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
+
+        macError = GetCountedString(pDoDirNodeAuth->fInAuthStepData, &offset, &auth_user, NULL);
+        GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
+
+        if (strcmp(username, auth_user) != 0)
+        {
+            LOG("dsAuthMethodStandard:dsAuthSetPasswd operation only supported when user and auth user are the same");
+            macError = eDSAuthMethodNotSupported;
+            GOTO_CLEANUP_EE(EE);
+        }
+
         macError = GetCountedString(pDoDirNodeAuth->fInAuthStepData, &offset, &oldPassword, NULL);
         GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
     }
@@ -746,7 +759,7 @@ LWIDirNodeQuery::DoDirNodeAuth(
         }
         GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
     }
-    else if (isChangePassword)
+    else if (isChangePassword || isSetPassword)
     {
         LOG("Going to change password for user %s", username);
         DEBUG_USER_PASSWORD(username, oldPassword, password);
@@ -913,6 +926,11 @@ cleanup:
     if (password)
     {
         free(password);
+    }
+
+    if (auth_user)
+    {
+        free(auth_user);
     }
 
     if (username)
