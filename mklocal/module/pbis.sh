@@ -9,10 +9,10 @@ option()
 
     case "$LOCALSTATEDIR" in
         "/var")
-            _default_cachedir="/var/lib/likewise"
+            _default_cachedir="/var/lib/pbis"
             ;;
         "/private/var")
-            _default_cachedir="/private/var/lib/likewise"
+            _default_cachedir="/private/var/lib/pbis"
             ;;
     esac
 
