@@ -106,10 +106,10 @@ determine_upgrade_type()
     VERSIONFILE=@MK_PREFIX@/data/VERSION
     ENTERPRISE_VERSIONFILE=@MK_PREFIX@/data/ENTERPRISE_VERSION
 
-    if [ -f $ENTERPRISE_VERSIONFILE ]; then
+    if [ -f "$ENTERPRISE_VERSIONFILE" ]; then
         log "$ENTERPRISE_VERSIONFILE exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
         exit 1
-    elif [ -f @MK_SBINDIR@/gpagentd ]; then
+    elif [ -f "@MK_SBINDIR@/gpagentd" ]; then
         log "@MK_SBINDIR@/gpagentd exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
         exit 1
     fi
@@ -134,6 +134,9 @@ determine_upgrade_type()
         elif [ -n "`grep '^VERSION=6.0' $VERSIONFILE`" ]; then
             UPGRADING_FROM_6_0=1
             log "Preserving 6.0 configuration in ${UPGRADEDIR}."
+        elif [ -n "`grep '^VERSION=6.1' $VERSIONFILE`" ]; then
+            UPGRADING_FROM_6_1=1
+            log "Preserving 6.1 configuration in ${UPGRADEDIR}."
         fi
     fi
 }
@@ -141,20 +144,20 @@ determine_upgrade_type()
 preserve_5_0123_configuration()
 {
     if [ -n "${UPGRADING_FROM_5_0123}" ]; then
-        if [ -f '@MK_SYSCONFDIR@/eventlogd.conf' ]; then
-            run_or_fail cp '@MK_SYSCONFDIR@/eventlogd.conf' "${UPGRADEDIR}"
+        if [ -f "/etc/likewise/eventlogd.conf" ]; then
+            run_or_fail cp /etc/likewise/eventlogd.conf "${UPGRADEDIR}"
         fi
 
-        if [ -f '@MK_SYSCONFDIR@/lsassd.conf' ]; then
-            run_or_fail cp '@MK_SYSCONFDIR@/lsassd.conf' "${UPGRADEDIR}"
+        if [ -f "/etc/likewise/lsassd.conf" ]; then
+            run_or_fail cp /etc/likewise/lsassd.conf "${UPGRADEDIR}"
         fi
 
-        if [ -f '@MK_SYSCONFDIR@/netlogon.conf' ]; then
-            run_or_fail cp '@MK_SYSCONFDIR@/netlogon.conf' "${UPGRADEDIR}"
+        if [ -f "/etc/likewise/netlogon.conf" ]; then
+            run_or_fail cp /etc/likewise/netlogon.conf "${UPGRADEDIR}"
         fi
 
-        if [ -f '@LW_CACHEDIR@/db/pstore.db' ]; then
-            run_or_fail cp '@LW_CACHEDIR@/db/pstore.db' "${UPGRADEDIR}"
+        if [ -f "/var/lib/likewise/db/pstore.db" ]; then
+            run_or_fail cp /var/lib/likewise/db/pstore.db "${UPGRADEDIR}"
             run_or_fail chmod 700 "${UPGRADEDIR}/pstore.db"
         fi
     fi
@@ -162,8 +165,62 @@ preserve_5_0123_configuration()
 
 preserve_6_0_configuration()
 {
-    # Nothing to do for 6.0 -- all files will be upgraded in place
-    return 0
+    if [ -n "${UPGRADING_FROM_6_0}" ]; then
+        if [ -f "/var/lib/likewise/db/registry.db" ]; then
+            run_or_fail cp /var/lib/likewise/db/registry.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/registry.db"
+        fi
+
+        if [ -f "/var/lib/likewise/db/sam.db" ]; then
+            run_or_fail cp /var/lib/likewise/db/sam.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/sam.db"
+        fi
+
+        if [ -f "/var/lib/likewise/db/lwi_events.db" ]; then
+            run_or_fail cp /var/lib/likewise/db/lwi_events.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lwi_events.db"
+        fi
+
+        if [ -f "/var/lib/likewise/db/lsass-adcache.db" ]; then
+            run_or_fail cp /var/lib/likewise/db/lsass-adcache.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lsass-adcache.db"
+        fi
+
+        if [ -f "/var/lib/likewise/db/lsass-adcache.filedb" ]; then
+            run_or_fail cp /var/lib/likewise/db/lsass-adcache.filedb "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lsass-adcache.filedb"
+        fi
+    fi
+}
+
+preserve_6_1_configuration()
+{
+    if [ -n "${UPGRADING_FROM_6_1}" ]; then
+        if [ -f "/var/lib/likewise/db/registry.db" ]; then
+            run_or_fail cp /var/lib/likewise/db/registry.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/registry.db"
+        fi
+
+        if [ -f "/var/lib/likewise/db/sam.db" ]; then
+            run_or_fail cp /var/lib/likewise/db/sam.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/sam.db"
+        fi
+
+        if [ -f "/var/lib/likewise/db/lwi_events.db" ]; then
+            run_or_fail cp /var/lib/likewise/db/lwi_events.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lwi_events.db"
+        fi
+
+        if [ -f "/var/lib/likewise/db/lsass-adcache.db" ]; then
+            run_or_fail cp /var/lib/likewise/db/lsass-adcache.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lsass-adcache.db"
+        fi
+
+        if [ -f "/var/lib/likewise/db/lsass-adcache.filedb" ]; then
+            run_or_fail cp /var/lib/likewise/db/lsass-adcache.filedb "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lsass-adcache.filedb"
+        fi
+    fi
 }
 
 wait_for_lwsm_shutdown()
@@ -198,6 +255,10 @@ preinstall()
         run_quiet /etc/init.d/likewise stop
     fi
 
+    if [ -x /etc/init.d/pbis ]; then
+        run_quiet /etc/init.d/pbis stop
+    fi
+
     if [ -x /etc/init.d/lwsmd ]; then
         run_quiet /etc/init.d/lwsmd stop
     fi
@@ -216,6 +277,8 @@ preinstall()
     preserve_5_0123_configuration
 
     preserve_6_0_configuration
+
+    preserve_6_1_configuration
 
     log "Package: PowerBroker Identity Services Open Upgrade finished"
     exit 0
