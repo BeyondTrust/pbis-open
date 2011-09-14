@@ -2,7 +2,7 @@
 # ex: set tabstop=4 expandtab shiftwidth=4:
 
 #
-# Copyright (c) PowerBroker.  All rights reserved.
+# Copyright (c) BeyondTrust Software.  All rights reserved.
 #
 
 ERR_PACKAGE_FILE_NOT_FOUND=1
@@ -148,8 +148,6 @@ perl_uid()
 
 do_setup()
 {
-    setup_os_vars
-
     umask 022
 
     if [ ! -d "${DIRNAME}/packages" ]; then
@@ -166,12 +164,13 @@ do_setup()
         exit 1
     fi
 
-    # FIXME: Use different check for OS support (manifest value?)
-    PKGDIR_RELATIVE="packages"
+    PKGDIR_RELATIVE="packages/${OS_TYPE}/${OS_ARCH}"
     PKGDIR="${DIRNAME}/${PKGDIR_RELATIVE}"
     if [ ! -d "${PKGDIR}" ]; then
         exit_on_error 1 "The installer does not support this OS (${OS_TYPE}) and architecture (${OS_ARCH})."
     fi
+
+    check_specific_os
 
     libdir=/opt/pbis/lib
     if [ -x /opt/pbis/lib64 ]; then
@@ -210,11 +209,54 @@ Check your system's documentation for details."
 
 }
 
+check_specific_os_freebsd()
+{
+    if [ "$BUILD_UNAME" != 'FreeBSD' ]; then
+        return 0
+    fi
+
+    BUILD_UNAME_R_MAJOR=`echo $BUILD_UNAME_R | grep -o "^[0-9]\+*\." | grep -o "^[0-9]\+"`
+    CURRENT_UNAME_R_MAJOR=`uname -r | grep -o "^[0-9]\+*\." | grep -o "^[0-9]\+"`
+
+    if [ "`uname`" != 'FreeBSD' ]; then
+        echo "System is not FreeBSD"
+        return 1
+    fi
+
+    if [ "$CURRENT_UNAME_R_MAJOR" != "$BUILD_UNAME_R_MAJOR" ]; then
+        echo "System is not FreeBSD ${BUILD_UNAME_R_MAJOR}.x"
+        return 1
+    fi
+
+    return 0
+}
+
+check_specific_os()
+{
+    Message=''
+
+    if [ -n "$OPT_IGNORE_SPECIFIC_OS" ]; then
+        return 0
+    fi
+
+    case "${OS_TYPE}" in
+        freebsd)
+            Message=`check_specific_os_freebsd`
+        ;;
+    esac
+
+    if [ -n "$Message" ]; then
+       log_info "Error: $Message"
+       log_info "Use --ignore-specific-os to avoid this error, but you may break your system."
+       exit 1
+   fi
+}
+
 package_file_exists_aix_bff()
 {
-    pkgFile=${PKGDIR}/$1.*.bff
+    pkgFile=${PKGDIR}/$1-*.bff
     if [ -f $pkgFile ]; then
-        echo "I:$1"
+        echo "$pkgFile"
         return 0
     fi
     return $ERR_PACKAGE_FILE_NOT_FOUND
@@ -222,7 +264,7 @@ package_file_exists_aix_bff()
 
 is_package_installed_aix_bff()
 {
-    lslpp -L "$1.*" > /dev/null 2>&1
+    lslpp -L $1 > /dev/null 2>&1
     if [ $? -eq 0 ]; then
         echo $1
         return 0
@@ -232,7 +274,7 @@ is_package_installed_aix_bff()
 
 package_install_aix_bff()
 {
-    geninstall -I "aX" -d "${PKGDIR}" $@
+    geninstall -I "aX" -d $@ I:all
     if [ $? -eq 0 ]; then
         return 0
     fi
@@ -311,6 +353,9 @@ package_install_freebsd()
 {
     pkg_add $@ > /dev/null 2>&1
     if [ $? -eq 0 ]; then
+        pkgName=`basename $@ | sed -e 's/-x86_64\.tbz$//' | sed -e 's/-i386\.tbz$//'`
+        # We don't want to be updated by the port system (bug 11833)
+        touch "/var/db/pkg/$pkgName/+IGNOREME" >/dev/null 2>&1
         return 0
     fi
     return $ERR_PACKAGE_NOT_INSTALLED
@@ -389,7 +434,7 @@ is_package_installed_linux_rpm()
 
 package_install_linux_rpm()
 {
-    eval "rpm ${RPM_INSTALL_OPTIONS} $@"
+    rpm ${RPM_INSTALL_OPTIONS} "'$@'"
     if [ $? -eq 0 ]; then
         return 0
     fi
@@ -418,7 +463,7 @@ package_file_exists_linux_deb()
 
 is_package_installed_linux_deb()
 {
-    _status="`dpkg -s "$1" 2>/dev/null | grep Status: 2>/dev/null`"
+    _status="`dpkg -s $1 2>/dev/null | grep Status: 2>/dev/null`"
     if [ $? -eq 0 ]
     then
         if echo "$_status" | grep ' installed' >/dev/null 2>&1
@@ -433,7 +478,7 @@ is_package_installed_linux_deb()
 
 package_install_linux_deb()
 {
-    eval "dpkg ${DPKG_INSTALL_OPTIONS} $@"
+    eval "dpkg ${DPKG_INSTALL_OPTIONS} '$@'"
     if [ $? -eq 0 ]; then
         return 0;
     fi
@@ -442,7 +487,7 @@ package_install_linux_deb()
 
 package_uninstall_linux_deb()
 {
-    eval "dpkg --remove $@"
+    eval "dpkg -r $@"
     if [ $? -eq 0 ]; then
         return 0
     fi
@@ -473,9 +518,15 @@ is_package_installed_solaris()
 
 package_install_solaris()
 {
+    EXTRA_OPTIONS=""
+
+    if [ "${OPT_SOLARIS_CURRENT_ZONE}" = "yes" ]; then
+        EXTRA_OPTIONS="$EXTRA_OPTIONS -G"
+    fi
+
     pkgList=`eval echo "$@"`
     for pkgFile in $pkgList; do
-        eval "pkgadd -a ${DIRNAME}/response -d $pkgFile all"
+        eval "pkgadd ${EXTRA_OPTIONS} -a ${DIRNAME}/response -d $pkgFile all"
         err=$?
         if [ $err -eq 1 ]; then
             return $ERR_PACKAGE_COULD_NOT_INSTALL
@@ -486,11 +537,17 @@ package_install_solaris()
 
 package_uninstall_solaris()
 {
-    for candidate in `pkginfo | awk '{print $2}' | grep '^LIKE' | sort -r`; do
+    if [ -f "/var/lib/pbis/uninstall/response" ]; then
+        RESPONSE="-a /var/lib/pbis/uninstall/response"
+    else
+        RESPONSE="-a ${DIRNAME}/response"
+    fi
+
+    for candidate in `pkginfo | awk '{print $2}' | grep '^PBIS' | sort -r`; do
         mpkg=`pkginfo -l $candidate | grep VSTOCK: | awk '{print $2;}'`
         for pkg in $@; do
             if [ "$mpkg" = "$pkg" ]; then
-                pkgrm -a "${DIRNAME}/response" -n "$candidate"
+                pkgrm $RESPONSE -n "$candidate"
                 err=$?
                 if [ $err -eq 1 ]; then
                     return $ERR_PACKAGE_COULD_NOT_UNINSTALL
@@ -556,56 +613,15 @@ package_uninstall()
     return $?
 }
 
-get_prefix_dir()
-{
-    echo "${PREFIX}"
-}
-
-uninstall_darwin()
-{
-    # No easy way to uninstall individual packages on Mac OS X
-    if [ -x /opt/pbis/bin/lwi-uninstall.sh ]; then
-       /opt/pbis/bin/lwi-uninstall.sh
-
-        if [ -d /opt/pbis ]; then
-            /bin/rm -rf /opt/pbis
-        fi
-    fi
-    return 0
-}
-
-install_darwin()
-{
-    uninstall_darwin
-
-    for pkg in $INSTALL_BASE_PACKAGES ; do
-        file=`echo ${PKGDIR}/${pkg}-[0-9]*.dmg`
-        hdiutil attach "${file}"
-        exit_on_error $? "Failed to attach ${file}"
-        name=`basename "${file}" | sed -e 's/^\(.*\)\.dmg$/\1/'`
-        exit_on_error $? "Failed to get package name from ${file}"
-        installer -pkg /Volumes/${name}/${name}.mpkg -target /
-        exit_on_error $? "Failed to install ${name} package"
-        hdiutil detach /Volumes/${name}
-        exit_on_error $? "Failed to detach /Volumes/${name}"
-    done
-    return 0
-}
-
 do_install()
 {
-    log_info "Installing packages"
-
-    if [ "$PKGTYPE" = 'darwin' ]; then
-        install_darwin
-        return $?
-    fi
+    log_info "Installing packages and old packages will be removed"
 
     # Install upgrade helper package.
     if [ -n "$INSTALL_UPGRADE_PACKAGE" ]; then
         pkgName=`is_package_installed $INSTALL_UPGRADE_PACKAGE`
         if [ $? -eq 0 ]; then
-            package_uninstall $pkgName
+            package_uninstall "$pkgName"
             err=$?
             if [ $err -ne 0 ]; then
                 log_info "Error uninstalling $pkgName"
@@ -650,6 +666,50 @@ do_install()
         fi
     fi
 
+    # Install base usr package -- cannot be installed if /usr is read-only.
+    if [ -n "$INSTALL_BASE_USR_PACKAGE" ]; then
+        pkgName=`package_file_exists $INSTALL_BASE_USR_PACKAGE`
+        if [ $? -eq 0 ]; then
+            package_install "$pkgName"
+            err=$?
+            if [ $err -ne 0 ]; then
+                if [ -x "/usr/sbin/zonename" ]; then
+                    zonename=`/usr/sbin/zonename > /dev/null 2>&1`
+                    if [ -n "$zonename" -a "$zonename" != "global" ]; then
+                        ZoneMaybeSparseRoot="1"
+                    fi
+                fi
+
+                if [ -n "$ZoneMaybeSparseRoot" ]; then
+                    log_info "Assuming a spare root zone configuration prevented the installation of $INSTALL_BASE_USR_PACKAGE"
+                    AsssumedZoneIsSparseRoot="1"
+                else
+                    log_info "Error installing $pkgName"
+                    exit 1
+                fi
+            fi
+        else
+            log_info "Missing package file for $INSTALL_BASE_USR_PACKAGE"
+            exit 1
+        fi
+    fi
+
+    # Install base root package.
+    if [ -n "$INSTALL_BASE_ROOT_PACKAGE" ]; then
+        pkgName=`package_file_exists $INSTALL_BASE_ROOT_PACKAGE`
+        if [ $? -eq 0 ]; then
+            package_install "$pkgName"
+            err=$?
+            if [ $err -ne 0 ]; then
+                log_info "Error installing $pkgName"
+                exit 1
+            fi
+        else
+            log_info "Missing package file for $INSTALL_BASE_ROOT_PACKAGE"
+            exit 1
+        fi
+    fi
+
     # Install base package.
     if [ -n "$INSTALL_BASE_PACKAGE" ]; then
         pkgName=`package_file_exists $INSTALL_BASE_PACKAGE`
@@ -684,6 +744,12 @@ do_install()
     echo "PKGTYPE=\"$PKGTYPE\"" >> /var/lib/pbis/uninstall/MANIFEST
     echo "INSTALL_UPGRADE_PACKAGE=\"$INSTALL_UPGRADE_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
     echo "INSTALL_BASE_PACKAGE=\"$INSTALL_BASE_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
+    if [ -n "${AsssumedZoneIsSparseRoot}" ]; then
+        echo "INSTALL_BASE_USR_PACKAGE=\"\"" >> /var/lib/pbis/uninstall/MANIFEST
+    else
+        echo "INSTALL_BASE_USR_PACKAGE=\"$INSTALL_BASE_USR_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
+    fi
+    echo "INSTALL_BASE_ROOT_PACKAGE=\"$INSTALL_BASE_ROOT_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
     echo "INSTALL_GUI_PACKAGE=\"$INSTALL_GUI_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
     if [ -f "${DIRNAME}/response" ]; then
         cp "${DIRNAME}/response" /var/lib/pbis/uninstall/response
@@ -694,59 +760,43 @@ do_install()
 
 do_postinstall_messages()
 {
-    domainjoin_gui=`get_prefix_dir`/bin/domainjoin-gui
-    run_join_gui=true
+    RUN_JOIN_GUI="1"
     guimsg=""
 
     if [ "$1" != 'interactive' ]; then
-        run_join_gui=false
+        RUN_JOIN_GUI=""
     fi
 
-    if [ -x "$domainjoin_gui" ]; then
+    if [ -x "/opt/pbis/bin/domainjoin-gui" ]; then
         guimsg="domainjoin-gui or "
     else
-        run_join_gui=false
+        RUN_JOIN_GUI=""
     fi
 
-    if $OPT_DONT_JOIN
-    then
-        run_join_gui=false
+    if [ -n "$OPT_DONT_JOIN" ]; then
+        RUN_JOIN_GUI=""
     fi
 
-    if [ -n "${UPGRADING}" ]; then
+    domain=`/opt/pbis/bin/lw-lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
+
+    if [ -n "$domain" ]; then
         log_info ""
-        log_info "PowerBroker Identity Services Open has been successfully upgraded."
+        log_info "This computer is joined to $domain"
+    fi
+
+    log_info ""
+    log_info "New libraries and configurations have been installed for PAM and NSS."
+    log_info "Please reboot so that all processes pick up the new versions."
+    log_info ""
+
+    if [ -z "$domain" ]; then
+        log_info "As root, run ${guimsg}domainjoin-cli to join a domain so you can log on"
+        log_info "with Active Directory credentials. Example:"
+        log_info "domainjoin-cli join DOMAIN.com ADadminAccount"
         log_info ""
 
-        command="`get_prefix_dir`/bin/lw-get-current-domain"
-        domain=`$command 2>/dev/null`
-        if [ $? -eq 0 ]; then
-            domain=`echo $domain | sed -e 's/^Current Domain = //'`
-            log_info "This computer is joined to $domain"
-            log_info ""
-        fi
-
-        log_info "The nsswitch file has been modified."
-        log_info "Please reboot so that all processes pick up the new copy."
-        log_info ""
-    else
-        command="`get_prefix_dir`/bin/lw-get-current-domain"
-        domain=`$command 2>/dev/null`
-        if [ $? -eq 0 ]; then
-            domain=`echo $domain | sed -e 's/^Current Domain = //'`
-            log_info "This computer is joined to $domain"
-            log_info ""
-        else
-            log_info ""
-            log_info "As root, run ${guimsg}domainjoin-cli to join a domain so you can log on"
-            log_info "with Active Directory credentials. Example:"
-            log_info "domainjoin-cli join YourDomain.com ADadminAccount"
-            log_info ""
-
-            if $run_join_gui
-            then
-                $domainjoin_gui >/dev/null 2>&1 &
-            fi
+        if [ -n "$RUN_JOIN_GUI" ]; then
+            /opt/pbis/bin/domainjoin-gui >/dev/null 2>&1 &
         fi
     fi
 }
@@ -771,15 +821,10 @@ scrub_prefix()
 
 do_uninstall()
 {
-    log_info "Uninstall started"
-
-    if [ "$PKGTYPE" = "darwin" ]; then
-        uninstall_darwin
-        return $?
-    fi
+    log_info "Uninstalling packages"
 
     pkgList=""
-    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_BASE_PACKAGE;
+    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_BASE_PACKAGE $INSTALL_BASE_ROOT_PACKAGE $INSTALL_BASE_USR_PACKAGE;
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
@@ -793,16 +838,15 @@ do_uninstall()
 
 do_purge()
 {
-    log_info "Purge uninstall started"
-    log_info ""
+    log_info "Uninstalling packages and purging data files"
 
-    domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
+    domainjoin_cli=/opt/pbis/bin/domainjoin-cli
     if [ -x "$domainjoin_cli" ]; then
         $domainjoin_cli leave > /dev/null 2>&1
     fi
 
     pkgList=""
-    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_BASE_PACKAGE;
+    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_BASE_PACKAGE $INSTALL_BASE_ROOT_PACKAGE $INSTALL_BASE_USR_PACKAGE;
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
@@ -899,10 +943,10 @@ do_interactive()
     prompt_yes_no "Would you like to install now?"
     if [ "x$answer" != "xyes" ]; then
         do_info
+        exit 0
     else
         do_install
     fi
-    exit 0
 }
 
 # must check before shift to avoid shift error on some sh versions.
@@ -913,6 +957,7 @@ check_arg_present()
             echo "Missing argument for $2"
         fi
         usage
+        exit 1
     fi
 }
 
@@ -924,7 +969,13 @@ usage()
     echo ""
     echo "    --dir <DIR>      base directory where this script is located"
     echo "    --echo-dir <DIR> prefix to output for packages directory (w/info command)"
-    echo "    --devel          install development packages"
+    echo "    --dont-join      do not run the domainjoin GUI tool after install completes (default: auto)"
+
+    if [ "${OS_TYPE}" = "solaris" ]; then
+        echo "    --all-zones      install to all zones (default)"
+        echo "    --current-zone   install only to the current zone"
+    fi
+
     echo ""
     echo "  where command is one of:"
     echo ""
@@ -936,15 +987,15 @@ usage()
     echo ""
     echo "  If not command is given, interactive mode is used."
     echo ""
-    exit 1
 }
 
 main_install()
 {
-    OPT_DEVEL=false
+    OPT_DONT_JOIN=""
+    OPT_SOLARIS_CURRENT_ZONE=""
+    OPT_IGNORE_SPECIFIC_OS=""
 
     ECHO_DIRNAME=""
-    PKGTYPE=""
 
     parseOptDone=""
     while [ -z "$parseOptDone" ]; do
@@ -959,8 +1010,33 @@ main_install()
                 ECHO_DIRNAME="$2"
                 shift 2
                 ;;
-            --devel)
-                OPT_DEVEL=true
+            --current-zone)
+                if [ -n "${OPT_SOLARIS_CURRENT_ZONE}" ]; then
+                    if [ "${OPT_SOLARIS_CURRENT_ZONE}" != "yes" ]; then
+                        echo "Cannot use $1 with --all-zones"
+                        usage
+                        exit 1
+                    fi
+                fi
+                OPT_SOLARIS_CURRENT_ZONE="yes"
+                shift 1
+                ;;
+            --all-zones)
+                if [ -n "${OPT_SOLARIS_CURRENT_ZONE}" ]; then
+                    if [ "${OPT_SOLARIS_CURRENT_ZONE}" != "no" ]; then
+                        echo "Cannot use $1 with --current-zone"
+                        usage
+                        exit 1
+                    fi
+                fi
+                OPT_SOLARIS_CURRENT_ZONE="no"
+                shift 1
+                ;;
+            --ignore-specific-os)
+                OPT_IGNORE_SPECIFIC_OS="1"
+                ;;
+            --dont-join)
+                OPT_DONT_JOIN="1"
                 shift 1
                 ;;
             *)
@@ -978,6 +1054,7 @@ main_install()
 
     if [ -n "$1" ]; then
         usage
+        exit 1
     fi
 
     case "${VERB}" in
@@ -1003,10 +1080,16 @@ main_install()
         interactive)
             do_setup
             do_interactive
-            do_postinstall_messages
+            do_install
+            do_postinstall_messages 'interactive'
+            ;;
+        help)
+            usage
+            exit 0
             ;;
         *)
             usage
+            exit 1
             ;;
     esac
 
@@ -1023,16 +1106,12 @@ usage_uninstall()
     echo "    purge         silent purge uninstall (same as uninstall but will unjoin domain"
     echo "                  and delete all generated files)"
     echo ""
-    exit 1
-
 }
 
 main_uninstall()
 {
-    setup_os_vars
-
     if [ -f /var/lib/pbis/uninstall/MANIFEST ]; then
-        . /var/lib/pbis/uninstall/MANFIEST
+        . /var/lib/pbis/uninstall/MANIFEST
     else
         echo "The file /var/lib/pbis/uninstall/MANIFEST cannot be found and"
         echo "is required for this uninstall procedure."
@@ -1049,6 +1128,7 @@ main_uninstall()
     case "${VERB}" in
         help)
             usage_uninstall
+            exit 0
             ;;
         uninstall)
             do_uninstall
@@ -1060,6 +1140,7 @@ main_uninstall()
             ;;
         *)
             usage_uninstall
+            exit 1
             ;;
     esac
 }
@@ -1081,10 +1162,12 @@ main()
         fi
     fi
 
+    setup_os_vars
+
     if [ "$BASENAME" = "uninstall.sh" ]; then
-        main_uninstall $@
+        main_uninstall "$@"
     else
-        main_install $@
+        main_install "$@"
     fi
 
     return 0
