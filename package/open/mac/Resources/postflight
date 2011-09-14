@@ -7,7 +7,7 @@ TLOG=/tmp/pbis-open-install.tmp
 
 DAEMONS_TO_KILL="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
 
-# Display to screen and log file with a blank line between entires.
+# Display to screen and log file with a blank line between entries.
 log()
 {
     echo $@
@@ -35,7 +35,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -54,7 +54,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -72,7 +72,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -99,7 +99,7 @@ ConfigureDirectoryOwners()
     ETC_LW="@MK_SYSCONFDIR@"
 
     for f in $CHOWN_0_80; do
-        case $f in
+        case "$f" in
             */)
                  CHOWNFLAGS=''
                  ;;
@@ -108,32 +108,20 @@ ConfigureDirectoryOwners()
                  ;;
         esac
 
-        if [ -d $f ]; then
-            #log "setting $f directory owner to 0:80"
-            run_or_fail "chown $CHOWNFLAGS 0:80 $f"
+        if [ -d "$f" ]; then
+            run_or_fail chown $CHOWNFLAGS 0:80 "$f"
         else
-            #log "creating $f directory and setting owner to 0:80"
-            run_or_fail "mkdir $f"
-            run_or_fail "chown $CHOWNFLAGS 0:80 $f"
+            run_or_fail mkdir "$f"
+            run_or_fail chown $CHOWNFLAGS 0:80 "$f"
         fi
     done
 
     for f in $CHOWN_0_0; do
-        case $f in
-            */)
-                 CHOWNFLAGS=''
-                 ;;
-             *)
-                 CHOWNFLAGS='-R'
-                 ;;
-        esac
-        if [ -d $f ]; then
-            #log "setting $f directory owner to 0:0"
-            run_or_fail "chown 0:0 $f"
+        if [ -d "$f" ]; then
+            run_or_fail chown 0:0 "$f"
         else
-            #log "creating $f directory and setting owner to 0:0"
-            run_or_fail "mkdir $f"
-            run_or_fail "chown 0:0 $f"
+            run_or_fail mkdir "$f"
+            run_or_fail chown 0:0 "$f"
         fi
     done
 }
@@ -173,9 +161,9 @@ configure_and_start_lwsmd()
 
     if [ -f $SERVICE_DAEMON_INSTALL ]; then
         log "Configuring and starting lwsmd service with launchctl"
-        run_or_fail "cp $SERVICE_DAEMON_INSTALL $SERVICE_DAEMON"
-        run_or_fail "launchctl load $SERVICE_DAEMON"
-        run_or_fail "launchctl start $SERVICE_NAME"
+        run_or_fail cp "$SERVICE_DAEMON_INSTALL" "$SERVICE_DAEMON"
+        run_or_fail launchctl load "$SERVICE_DAEMON"
+        run_or_fail launchctl start "$SERVICE_NAME"
         wait_for_lwsm_running_status
     fi
 }
@@ -190,23 +178,23 @@ enable_plugin()
     for plugin in LWIDSPlugIn LWEDSPlugIn LWDSPlugin ; do
         path="$FRAMEWORK_DIR/${plugin}.dsplug"
         if [ -h "${path}" ]; then
-            run_or_fail "rm -fv ${path}"
+            run_or_fail rm -fv "${path}"
         fi
     done
 
     for plugin in LWIDSPlugIn LWEDSPlugIn LWDSPlugin ; do
         path="$LIBRARY_DS_DIR/${plugin}.dsplug"
         if [ -d "${path}" ]; then
-            run_or_fail "rm -r ${path}"
+            run_or_fail rm -r "${path}"
         fi
     done
 
     # Install new plugin
-    run_or_fail "mkdir -p $LIBRARY_DS_DIR"
-    run_or_fail "cp -r $SRC_DIR/$PLUGIN_DIR $LIBRARY_DS_DIR/$PLUGIN_DIR"
+    run_or_fail mkdir -p "$LIBRARY_DS_DIR"
+    run_or_fail cp -r "$SRC_DIR/$PLUGIN_DIR" "$LIBRARY_DS_DIR/$PLUGIN_DIR"
 
     if [ -f /usr/bin/setfile ]; then
-        run_or_fail "/usr/bin/setfile -a V /opt"
+        run_or_fail /usr/bin/setfile -a V /opt
     else
         grep opt /.hidden > /dev/null
         if [ $? -ne 0 ]; then
@@ -256,15 +244,14 @@ configure_agent()
     AGENT_PLIST_INSTALL=/etc/likewise/LaunchAgents/$agent_name.plist
 
     if [ -f $AGENT_PLIST_INSTALL ]; then
-        #log "Installing login agent $agent_name"
-        run_or_fail "cp $AGENT_PLIST_INSTALL $AGENT_PLIST"
+        run_or_fail cp "$AGENT_PLIST_INSTALL" "$AGENT_PLIST"
     fi
 }
 
 import_5_0123_file()
 {
     CONVERT="@MK_LIBEXECDIR@/conf2reg"
-    REGIMPORT="@MK_BINDIR@/lwregshell import"
+    REGIMPORT="@MK_BINDIR@/lwregshell"
 
     COMMAND=$1
     SOURCE=$2
@@ -272,14 +259,14 @@ import_5_0123_file()
     DEST=$3
 
     if [ -f $SOURCE ]; then
-        run_quiet "$CONVERT $COMMAND $SOURCE $DEST"
+        run_quiet "$CONVERT" "$COMMAND" "$SOURCE" $DEST
         if [ $? -ne 0 ]; then
             log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE."
             return 1
         fi
 
         if [ -n "$DEST" -a -f "$DEST" ]; then
-            run_quiet "$REGIMPORT $DEST"
+            run_quiet "$REGSHELL" import "$DEST"
             if [ $? -ne 0 ]; then
                 log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE and $DEST."
                 return 1
@@ -297,16 +284,16 @@ restore_5_0123_configuration()
         return 0
     fi
 
-    import_5_0123_file "--lsass" "${UPGRADEDIR}/lsassd.conf" \
+    import_5_0123_file --lsass "${UPGRADEDIR}/lsassd.conf" \
         "${UPGRADEDIR}/lsassd.conf.reg"
 
-    import_5_0123_file "--netlogon" "${UPGRADEDIR}/netlogon.conf" \
+    import_5_0123_file --netlogon "${UPGRADEDIR}/netlogon.conf" \
         "${UPGRADEDIR}/netlogon.conf.reg"
 
-    import_5_0123_file "--eventlog" "${UPGRADEDIR}/eventlogd.conf" \
+    import_5_0123_file --eventlog "${UPGRADEDIR}/eventlogd.conf" \
         "${UPGRADEDIR}/eventlogd.conf.reg"
 
-    import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR}/pstore.db"
+    import_5_0123_file --pstore-sqlite "${UPGRADEDIR}/pstore.db"
 }
 
 restore_6_0_configuration()
@@ -316,52 +303,51 @@ restore_6_0_configuration()
     fi
 
     if [ -f "${UPGRADEDIR}/registry.db" ]; then
-        #log "Restoring /var/lib/likewise/db/registry.db"
-        run_or_fail "mkdir -p /var/lib/likewise/db"
-        run_or_fail "chmod 700 /var/lib/likewise/db"
-        run_or_fail "chown 0:80 /var/lib/likewise/db"
+        run_or_fail mkdir -p /var/lib/pbis/db
+        run_or_fail chmod 700 /var/lib/pbis/db
+        run_or_fail chown 0:80 /var/lib/pbis/db
 
-        run_or_fail "cp ${UPGRADEDIR}/registry.db /var/lib/likewise/db/registry.db"
-        run_or_fail "chmod 700 /var/lib/likewise/db/registry.db"
+        run_or_fail cp "${UPGRADEDIR}/registry.db" /var/lib/pbis/db/registry.db
+        run_or_fail chmod 700 /var/lib/pbis/db/registry.db
     fi
 
     if [ -f "${UPGRADEDIR}/sam.db" ]; then
-        run_or_fail "mkdir -p /var/lib/likewise/db"
-        run_or_fail "chmod 700 /var/lib/likewise/db"
-        run_or_fail "chown 0:80 /var/lib/likewise/db"
+        run_or_fail mkdir -p /var/lib/pbis/db
+        run_or_fail chmod 700 /var/lib/pbis/db
+        run_or_fail chown 0:80 /var/lib/pbis/db
 
-        run_or_fail "cp ${UPGRADEDIR}/sam.db /var/lib/likewise/db/sam.db"
-        run_or_fail "chmod 700 /var/lib/likewise/db/sam.db"
+        run_or_fail cp "${UPGRADEDIR}/sam.db" /var/lib/pbis/db/sam.db
+        run_or_fail chmod 700 /var/lib/pbis/db/sam.db
     fi
 
     if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
-        run_or_fail "mkdir -p /var/lib/likewise/db"
-        run_or_fail "chmod 700 /var/lib/likewise/db"
-        run_or_fail "chown 0:80 /var/lib/likewise/db"
+        run_or_fail mkdir -p /var/lib/pbis/db
+        run_or_fail chmod 700 /var/lib/pbis/db
+        run_or_fail chown 0:80 /var/lib/pbis/db
 
-        run_or_fail "cp ${UPGRADEDIR}/lwi_events.db /var/lib/likewise/db/lwi_events.db"
-        run_or_fail "chmod 700 /var/lib/likewise/db/lwi_events.db"
+        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" /var/lib/pbis/db/lwi_events.db
+        run_or_fail chmod 700 /var/lib/pbis/db/lwi_events.db
     fi
 
     if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
-        run_or_fail "mkdir -p /var/lib/likewise/db"
-        run_or_fail "chmod 700 /var/lib/likewise/db"
-        run_or_fail "chown 0:80 /var/lib/likewise/db"
+        run_or_fail mkdir -p /var/lib/pbis/db
+        run_or_fail chmod 700 /var/lib/pbis/db
+        run_or_fail chown 0:80 /var/lib/pbis/db
 
-        run_or_fail "cp ${UPGRADEDIR}/lsass-adcache.db /var/lib/likewise/db/lsass-adcache.db"
-        run_or_fail "chmod 700 /var/lib/likewise/db/lsass-adcache.db"
+        run_or_fail cp ${UPGRADEDIR}/lsass-adcache.db /var/lib/pbis/db/lsass-adcache.db
+        run_or_fail chmod 700 /var/lib/pbis/db/lsass-adcache.db
     fi
 
     if [ -f "${UPGRADEDIR}/lsass-adcache.filedb" ]; then
-        run_or_fail "mkdir -p /var/lib/likewise/db"
-        run_or_fail "chmod 700 /var/lib/likewise/db"
-        run_or_fail "chown 0:80 /var/lib/likewise/db"
+        run_or_fail mkdir -p /var/lib/pbis/db
+        run_or_fail chmod 700 /var/lib/pbis/db
+        run_or_fail chown 0:80 /var/lib/pbis/db
 
-        run_or_fail "cp ${UPGRADEDIR}/lsass-adcache.filedb /var/lib/likewise/db/lsass-adcache.filedb"
-        run_or_fail "chmod 700 /var/lib/likewise/db/lsass-adcache.filedb"
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.filedb" /var/lib/pbis/db/lsass-adcache.filedb
+        run_or_fail chmod 700 /var/lib/pbis/db/lsass-adcache.filedb
     fi
 
-    run_quiet "rm -r ${UPGRADEDIR}"
+    run_quiet rm -r "${UPGRADEDIR}"
 }
 
 restore_6_1_configuration()
@@ -371,83 +357,77 @@ restore_6_1_configuration()
     fi
 
     if [ -f "${UPGRADEDIR}/registry.db" ]; then
-        run_or_fail "mkdir -p /var/lib/likewise/db"
-        run_or_fail "chmod 700 /var/lib/likewise/db"
-        run_or_fail "chown 0:80 /var/lib/likewise/db"
+        run_or_fail mkdir -p /var/lib/pbis/db
+        run_or_fail chmod 700 /var/lib/pbis/db
+        run_or_fail chown 0:80 /var/lib/pbis/db
 
-        run_or_fail "cp ${UPGRADEDIR}/registry.db /var/lib/likewise/db/registry.db"
-        run_or_fail "chmod 700 /var/lib/likewise/db/registry.db"
+        run_or_fail cp "${UPGRADEDIR}/registry.db" /var/lib/pbis/db/registry.db
+        run_or_fail chmod 700 /var/lib/pbis/db/registry.db
     fi
 
     if [ -f "${UPGRADEDIR}/sam.db" ]; then
-        run_or_fail "mkdir -p /var/lib/likewise/db"
-        run_or_fail "chmod 700 /var/lib/likewise/db"
-        run_or_fail "chown 0:80 /var/lib/likewise/db"
+        run_or_fail mkdir -p /var/lib/pbis/db
+        run_or_fail chmod 700 /var/lib/pbis/db
+        run_or_fail chown 0:80 /var/lib/pbis/db
 
-        run_or_fail "cp ${UPGRADEDIR}/sam.db /var/lib/likewise/db/sam.db"
-        run_or_fail "chmod 700 /var/lib/likewise/db/sam.db"
+        run_or_fail cp "${UPGRADEDIR}/sam.db" /var/lib/pbis/db/sam.db
+        run_or_fail chmod 700 /var/lib/pbis/db/sam.db
     fi
 
     if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
-        run_or_fail "mkdir -p /var/lib/likewise/db"
-        run_or_fail "chmod 700 /var/lib/likewise/db"
-        run_or_fail "chown 0:80 /var/lib/likewise/db"
+        run_or_fail mkdir -p /var/lib/pbis/db
+        run_or_fail chmod 700 /var/lib/pbis/db
+        run_or_fail chown 0:80 /var/lib/pbis/db
 
-        run_or_fail "cp ${UPGRADEDIR}/lwi_events.db /var/lib/likewise/db/lwi_events.db"
-        run_or_fail "chmod 700 /var/lib/likewise/db/lwi_events.db"
+        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" /var/lib/pbis/db/lwi_events.db
+        run_or_fail chmod 700 /var/lib/pbis/db/lwi_events.db
     fi
 
     if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
-        run_or_fail "mkdir -p /var/lib/likewise/db"
-        run_or_fail "chmod 700 /var/lib/likewise/db"
-        run_or_fail "chown 0:80 /var/lib/likewise/db"
+        run_or_fail mkdir -p /var/lib/pbis/db
+        run_or_fail chmod 700 /var/lib/pbis/db
+        run_or_fail chown 0:80 /var/lib/pbis/db
 
-        run_or_fail "cp ${UPGRADEDIR}/lsass-adcache.db /var/lib/likewise/db/lsass-adcache.db"
-        run_or_fail "chmod 700 /var/lib/likewise/db/lsass-adcache.db"
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.db" /var/lib/pbis/db/lsass-adcache.db
+        run_or_fail chmod 700 /var/lib/pbis/db/lsass-adcache.db
     fi
 
     if [ -f "${UPGRADEDIR}/lsass-adcache.filedb" ]; then
-        run_or_fail "mkdir -p /var/lib/likewise/db"
-        run_or_fail "chmod 700 /var/lib/likewise/db"
-        run_or_fail "chown 0:80 /var/lib/likewise/db"
+        run_or_fail mkdir -p /var/lib/pbis/db
+        run_or_fail chmod 700 /var/lib/pbis/db
+        run_or_fail chown 0:80 /var/lib/pbis/db
 
-        run_or_fail "cp ${UPGRADEDIR}/lsass-adcache.filedb /var/lib/likewise/db/lsass-adcache.filedb"
-        run_or_fail "chmod 700 /var/lib/likewise/db/lsass-adcache.filedb"
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.filedb" /var/lib/pbis/db/lsass-adcache.filedb
+        run_or_fail chmod 700 /var/lib/pbis/db/lsass-adcache.filedb
     fi
 
-
-    run_quiet "rm -r ${UPGRADEDIR}"
+    run_quiet rm -r "${UPGRADEDIR}"
 }
 
 import_registry_configurations()
 {
-    REGIMPORT='@MK_BINDIR@/lwregshell import'
+    REGSHELL='@MK_BINDIR@/lwregshell'
 
     log "Importing registry..."
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/dcerpcd.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/eventlogd.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/lsassd.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/privileges.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/accounts.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/lwiod.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/lwreg.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/netlogond.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/rdr.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/npfs.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/srv.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/pvfs.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/srvsvcd.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/nfs.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/reapsysl.reg"
-    run_or_fail "$REGIMPORT @LW_CONFIGDIR@/lwdsplugin.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/dcerpcd.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/eventlogd.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/lsassd.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/privileges.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/accounts.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/lwiod.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/lwreg.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/netlogond.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/rdr.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/reapsysl.reg"
+    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/lwdsplugin.reg"
 }
 
 determine_upgrade_type()
 {
     PRESERVEDVERSIONFILE="${UPGRADEDIR}/VERSION"
 
-    if [ -f $PRESERVEDVERSIONFILE ]; then
-        run_or_fail "cat $PRESERVEDVERSIONFILE"
+    if [ -f "$PRESERVEDVERSIONFILE" ]; then
+        run_or_fail cat "$PRESERVEDVERSIONFILE"
         if [ -n "`grep '^VERSION=5.0' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
             log "Upgrading from Likewise Identity Services Open 5.0"
@@ -468,54 +448,6 @@ determine_upgrade_type()
             log "Upgrading from Likewise Open 6.1."
         fi
     fi
-}
-
-import_5_0123_file()
-{
-    CONVERT="@MK_LIBEXECDIR@/conf2reg"
-    REGIMPORT="@MK_BINDIR@/lwregshell import"
-
-    COMMAND=$1
-    SOURCE=$2
-    # DEST is not necessary for some commands.
-    DEST=$3
-
-    if [ -f $SOURCE ]; then
-        run_quiet "$CONVERT $COMMAND $SOURCE $DEST"
-        if [ $? -ne 0 ]; then
-            log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE."
-            return 1
-        fi
-
-        if [ -n "$DEST" -a -f "$DEST" ]; then
-            run_quiet "$REGIMPORT $DEST"
-            if [ $? -ne 0 ]; then
-                log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE and $DEST."
-                return 1
-            fi
-        fi
-    fi
-    return 0
-}
-
-restore_5_0123_configuration()
-{
-    CONVERT="@MK_LIBEXECDIR@/conf2reg"
-
-    if [ -z "$UPGRADING_FROM_5_0123" ]; then
-        return 0
-    fi
-
-    import_5_0123_file "--lsass" "${UPGRADEDIR}/lsassd.conf" \
-        "${UPGRADEDIR}/lsassd.conf.reg"
-
-    import_5_0123_file "--netlogon" "${UPGRADEDIR}/netlogon.conf" \
-        "${UPGRADEDIR}/netlogon.conf.reg"
-
-    import_5_0123_file "--eventlog" "${UPGRADEDIR}/eventlogd.conf" \
-        "${UPGRADEDIR}/eventlogd.conf.reg"
-
-    import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR}/pstore.db"
 }
 
 relocate_domain_separator()
@@ -540,27 +472,33 @@ relocate_space_replacement()
     fi
 }
 
+set_lsass_dependencies()
+{
+    # Need to get rid of npfs dependency from earlier versions
+    run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lsass]' 'Dependencies' 'netlogon lwio lwreg rdr'
+}
+
 fix_60_registry()
 {
-    REGCLEANUP="@MK_BINDIR@/lwregshell cleanup"
+    REGSHELL='@MK_BINDIR@/lwregshell'
 
     if [ -z "$UPGRADING_FROM_6_0" ]; then
         return 0
     fi
 
     # Migrate pstore entries from default to joined domain
-    run "@MK_LIBEXECDIR@/regupgr61.sh --install"
+    run "@MK_LIBEXECDIR@/regupgr61.sh" --install
 
     # Migrate some other entries
     relocate_domain_separator
     relocate_space_replacement
 
-    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/dcerpcd.reg"
-    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/eventlogd.reg"
-    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/lsassd.reg"
-    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/lwiod.reg"
-    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/lwreg.reg"
-    run_or_fail "${REGCLEANUP} @LW_CONFIGDIR@/netlogond.reg"
+    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/dcerpcd.reg"
+    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/eventlogd.reg"
+    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/lsassd.reg"
+    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/lwiod.reg"
+    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/lwreg.reg"
+    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/netlogond.reg"
 }
 
 switch_to_open_provider()
@@ -568,7 +506,7 @@ switch_to_open_provider()
     _value='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
     _path='@PRIMARY_LIBDIR@/liblsass_auth_provider_ad_open.so'
 
-    run_quiet "@MK_BINDIR@/lwregshell set_value $_value Path $_path"
+    run_quiet "@MK_BINDIR@/lwregshell" set_value "$_value" Path "$_path"
 }
 
 ##
@@ -596,7 +534,7 @@ restore_6_0_configuration
 
 restore_6_1_configuration
 
-run_or_fail "@MK_SBINDIR@/lwsmd --start-as-daemon --loglevel debug"
+run_or_fail "@MK_SBINDIR@/lwsmd" --start-as-daemon --loglevel debug
 
 restore_5_0123_configuration
 
@@ -604,13 +542,15 @@ import_registry_configurations
 
 fix_60_registry
 
+set_lsass_dependencies
+
 switch_to_open_provider
 
-run_or_fail "@MK_BINDIR@/lwsm shutdown"
+run_or_fail "@MK_BINDIR@/lwsm" shutdown
 
 configure_and_start_lwsmd
 
-run "@MK_BINDIR@/domainjoin-cli configure --enable pam"
+run "@MK_BINDIR@/domainjoin-cli" configure --enable pam
 
 # Configure Likewise DS plugin
 enable_plugin
@@ -620,8 +560,60 @@ enable_auth_plugin
 
 # Add Likewise DS Plugin to Search list
 echo "Adding DS plugin to search list"
-run "/usr/bin/dscl /Search -create / SearchPolicy CSPSearchPath"
-run "/usr/bin/dscl /Search -append / CSPSearchPath '/Likewise - Active Directory'"
+run /usr/bin/dscl /Search -create / SearchPolicy CSPSearchPath
+
+if ! run /usr/bin/dscl /Search -append / CSPSearchPath "/Likewise - Active Directory"
+then
+    #
+    # Add a plist file that adds the DS plugin to the search list and then
+    # removes itself.
+    #
+    startup_dir='/Library/StartupItems/com.likewise.first_boot'
+
+    echo "Arranging to add DS plugin to search list after reboot"
+    mkdir -p "$startup_dir"
+    cat > "$startup_dir/StartupParameters.plist" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+        <key>Description</key>
+        <string>com.likewise.first_boot</string>
+        <key>OrderPreference</key>
+        <string>Early</string>
+        <key>Provides</key>
+        <array>
+                <string>com.likewise.first_boot</string>
+        </array>
+        <key>Requires</key>
+        <array>
+        </array>
+</dict>
+</plist>
+EOF
+
+    cat > "$startup_dir/${startup_dir##*/}" << EOF
+#!/bin/bash
+
+. /etc/rc.common
+
+StartService()
+{
+    /usr/bin/dscl /Search -append / CSPSearchPath "/Likewise - Active Directory"
+    rm -rf "${startup_dir}"
+}
+
+StopService()
+{
+    : Nothing to do
+}
+
+RunService "\$1"
+EOF
+
+    chmod 0755 "$startup_dir/${startup_dir##*/}"
+    unset startup_dir
+fi
 
 # Create Global Login Item entry for Likewise Logon Message.app
 # to display licensing and password expiration warning messages on
@@ -636,13 +628,13 @@ configure_agent com.likewisesoftware.ticketcopy
 if [ -d '/Applications/Likewise Utilities' ]; then
     _log "Likewise Utilities folder already exists"
 else
-    run "mkdir -p '/Applications/Likewise Utilities'"
+    run mkdir -p '/Applications/Likewise Utilities'
 fi
 
 if [ -f '/Applications/Likewise Utilities/Likewise Domain Join.app' ]; then
     _log "Likewise Domain Join application already created in utilities folder"
 else
-    run "ln -s '@MK_BINDIR@/Likewise Domain Join.app' '/Applications/Likewise Utilities/Likewise Domain Join.app'"
+    run ln -s '@MK_BINDIR@/Likewise Domain Join.app' '/Applications/Likewise Utilities/Likewise Domain Join.app'
 fi
 
 domain=`@MK_BINDIR@/lw-lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`

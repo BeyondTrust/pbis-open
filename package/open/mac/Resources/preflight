@@ -7,7 +7,7 @@ TLOG=/tmp/pbis-open-install.tmp
 
 DAEMONS_TO_KILL="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
 
-# Display to screen and log file with a blank line between entires.
+# Display to screen and log file with a blank line between entries.
 log()
 {
     echo $@
@@ -35,7 +35,7 @@ logfile()
 # If not successful, note on screen and log file.
 run()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -54,7 +54,7 @@ run()
 # Log only to file.
 run_quiet()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -72,7 +72,7 @@ run_quiet()
 # If not successful, note on screen and log file and then exit.
 run_or_fail()
 {
-    eval "$@" > $TLOG 2>&1
+    "$@" > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
         echo "Success: $@" >> $LOG
@@ -97,23 +97,21 @@ stop_and_disable_daemon()
     SERVICE_DAEMON_OLD=/System/Library/LaunchDaemons/$SERVICE_NAME.plist
     SERVICE_DAEMON=/Library/LaunchDaemons/$SERVICE_NAME.plist
 
-    if [ -f $SERVICE_DAEMON_OLD ]; then
-        SERVICE_DAEMON=$SERVICE_DAEMON_OLD
+    if [ -f "$SERVICE_DAEMON_OLD" ]; then
+        SERVICE_DAEMON="$SERVICE_DAEMON_OLD"
     fi
 
-    if [ -f $SERVICE_DAEMON ]; then
+    if [ -f "$SERVICE_DAEMON" ]; then
 
         launchctl list | grep $SERVICE_NAME > /dev/null
         if [ $? -eq 0 ]; then
-#            log "Stopping Likewise $SERVICE service"
-            run_quiet "launchctl stop $SERVICE_NAME"
+            run_quiet launchctl stop "$SERVICE_NAME"
         fi
 
-#        log "Disable Likewise $SERVICE service"
-        run_quiet "launchctl unload $SERVICE_DAEMON"
-        run_quiet "rm $SERVICE_DAEMON"
-        if [ -f $SERVICE_PATH ]; then
-            run_quiet "rm $SERVICE_PATH"
+        run_quiet launchctl unload "$SERVICE_DAEMON"
+        run_quiet rm "$SERVICE_DAEMON"
+        if [ -f "$SERVICE_PATH" ]; then
+            run_quiet rm "$SERVICE_PATH"
         fi
     fi
 }
@@ -123,8 +121,6 @@ stop_daemons()
     for daemon in $DAEMONS_TO_KILL; do
         stop_and_disable_daemon $daemon
     done
-
-#    log "All Likewise services now stopped and disabled"
 }
 
 disable_plugin()
@@ -135,14 +131,14 @@ disable_plugin()
     for plugin in LWIDSPlugIn LWEDSPlugIn LWDSPlugin ; do
         path="$FRAMEWORK_DIR/${plugin}.dsplug"
         if [ -h "${path}" ]; then
-            run_or_fail "rm -fv ${path}"
+            run_or_fail rm -fv "${path}"
         fi
     done
 
     for plugin in LWIDSPlugIn LWEDSPlugIn LWDSPlugin ; do
         path="$LIBRARY_DS_DIR/${plugin}.dsplug"
         if [ -d "${path}" ]; then
-            run_or_fail "rm -r ${path}"
+            run_or_fail rm -r "${path}"
         fi
     done
 }
@@ -152,19 +148,19 @@ determine_upgrade_type()
     VERSIONFILE=@MK_PREFIX@/data/VERSION
     ENTERPRISE_VERSIONFILE=@MK_PREFIX@/data/ENTERPRISE_VERSION
 
-    if [ -f $ENTERPRISE_VERSIONFILE ]; then
-        log "$ENTERPRISE_VERSIONFILE exists: Uninstall Likewise Enterprise before proceeding."
+    if [ -f "$ENTERPRISE_VERSIONFILE" ]; then
+        log "$ENTERPRISE_VERSIONFILE exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
         exit 1
-    elif [ -f @MK_SBINDIR@/gpagentd ]; then
-        log "@MK_SBINDIR@/gpagentd exists: Uninstall Likewise Enterprise before proceeding."
+    elif [ -f "@MK_SBINDIR@/gpagentd" ]; then
+        log "@MK_SBINDIR@/gpagentd exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
         exit 1
     fi
 
-    if [ -f $VERSIONFILE ]; then
-        run_or_fail "mkdir -p ${UPGRADEDIR}"
-        run_or_fail "cp $VERSIONFILE ${UPGRADEDIR}"
+    if [ -f "$VERSIONFILE" ]; then
+        run_or_fail mkdir -p "${UPGRADEDIR}"
+        run_or_fail cp "$VERSIONFILE" "${UPGRADEDIR}"
 
-        run_or_fail "cat $VERSIONFILE"
+        run_or_fail cat "$VERSIONFILE"
         if [ -n "`grep '^VERSION=5.0' $VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
             log "Preserving 5.0 configuration in ${UPGRADEDIR}."
@@ -191,20 +187,20 @@ preserve_5_0123_configuration()
 {
     if [ -n "${UPGRADING_FROM_5_0123}" ]; then
         if [ -f "/etc/likewise/eventlogd.conf" ]; then
-            run_or_fail "cp /etc/likewise/eventlogd.conf ${UPGRADEDIR}"
+            run_or_fail cp /etc/likewise/eventlogd.conf "${UPGRADEDIR}"
         fi
 
         if [ -f "/etc/likewise/lsassd.conf" ]; then
-            run_or_fail "cp /etc/likewise/lsassd.conf ${UPGRADEDIR}"
+            run_or_fail cp /etc/likewise/lsassd.conf "${UPGRADEDIR}"
         fi
 
         if [ -f "/etc/likewise/netlogon.conf" ]; then
-            run_or_fail "cp /etc/likewise/netlogon.conf ${UPGRADEDIR}"
+            run_or_fail cp /etc/likewise/netlogon.conf "${UPGRADEDIR}"
         fi
 
         if [ -f "/var/lib/likewise/db/pstore.db" ]; then
-            run_or_fail "cp /var/lib/likewise/db/pstore.db ${UPGRADEDIR}"
-            run_or_fail "chmod 700 ${UPGRADEDIR}/pstore.db"
+            run_or_fail cp /var/lib/likewise/db/pstore.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/pstore.db"
         fi
     fi
 }
@@ -213,28 +209,28 @@ preserve_6_0_configuration()
 {
     if [ -n "${UPGRADING_FROM_6_0}" ]; then
         if [ -f "/var/lib/likewise/db/registry.db" ]; then
-            run_or_fail "cp /var/lib/likewise/db/registry.db ${UPGRADEDIR}"
-            run_or_fail "chmod 700 ${UPGRADEDIR}/registry.db"
+            run_or_fail cp /var/lib/likewise/db/registry.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/registry.db"
         fi
 
         if [ -f "/var/lib/likewise/db/sam.db" ]; then
-            run_or_fail "cp /var/lib/likewise/db/sam.db ${UPGRADEDIR}"
-            run_or_fail "chmod 700 ${UPGRADEDIR}/sam.db"
+            run_or_fail cp /var/lib/likewise/db/sam.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/sam.db"
         fi
 
         if [ -f "/var/lib/likewise/db/lwi_events.db" ]; then
-            run_or_fail "cp /var/lib/likewise/db/lwi_events.db ${UPGRADEDIR}"
-            run_or_fail "chmod 700 ${UPGRADEDIR}/lwi_events.db"
+            run_or_fail cp /var/lib/likewise/db/lwi_events.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lwi_events.db"
         fi
 
         if [ -f "/var/lib/likewise/db/lsass-adcache.db" ]; then
-            run_or_fail "cp /var/lib/likewise/db/lsass-adcache.db ${UPGRADEDIR}"
-            run_or_fail "chmod 700 ${UPGRADEDIR}/lsass-adcache.db"
+            run_or_fail cp /var/lib/likewise/db/lsass-adcache.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lsass-adcache.db"
         fi
 
         if [ -f "/var/lib/likewise/db/lsass-adcache.filedb" ]; then
-            run_or_fail "cp /var/lib/likewise/db/lsass-adcache.filedb ${UPGRADEDIR}"
-            run_or_fail "chmod 700 ${UPGRADEDIR}/lsass-adcache.filedb"
+            run_or_fail cp /var/lib/likewise/db/lsass-adcache.filedb "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lsass-adcache.filedb"
         fi
     fi
 }
@@ -243,28 +239,28 @@ preserve_6_1_configuration()
 {
     if [ -n "${UPGRADING_FROM_6_1}" ]; then
         if [ -f "/var/lib/likewise/db/registry.db" ]; then
-            run_or_fail "cp /var/lib/likewise/db/registry.db ${UPGRADEDIR}"
-            run_or_fail "chmod 700 ${UPGRADEDIR}/registry.db"
+            run_or_fail cp /var/lib/likewise/db/registry.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/registry.db"
         fi
 
         if [ -f "/var/lib/likewise/db/sam.db" ]; then
-            run_or_fail "cp /var/lib/likewise/db/sam.db ${UPGRADEDIR}"
-            run_or_fail "chmod 700 ${UPGRADEDIR}/sam.db"
+            run_or_fail cp /var/lib/likewise/db/sam.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/sam.db"
         fi
 
         if [ -f "/var/lib/likewise/db/lwi_events.db" ]; then
-            run_or_fail "cp /var/lib/likewise/db/lwi_events.db ${UPGRADEDIR}"
-            run_or_fail "chmod 700 ${UPGRADEDIR}/lwi_events.db"
+            run_or_fail cp /var/lib/likewise/db/lwi_events.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lwi_events.db"
         fi
 
         if [ -f "/var/lib/likewise/db/lsass-adcache.db" ]; then
-            run_or_fail "cp /var/lib/likewise/db/lsass-adcache.db ${UPGRADEDIR}"
-            run_or_fail "chmod 700 ${UPGRADEDIR}/lsass-adcache.db"
+            run_or_fail cp /var/lib/likewise/db/lsass-adcache.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lsass-adcache.db"
         fi
 
         if [ -f "/var/lib/likewise/db/lsass-adcache.filedb" ]; then
-            run_or_fail "cp /var/lib/likewise/db/lsass-adcache.filedb ${UPGRADEDIR}"
-            run_or_fail "chmod 700 ${UPGRADEDIR}/lsass-adcache.filedb"
+            run_or_fail cp /var/lib/likewise/db/lsass-adcache.filedb "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lsass-adcache.filedb"
         fi
     fi
 }
