@@ -91,6 +91,8 @@ run_or_fail()
 
 determine_upgrade_type()
 {
+    LW_VERSIONFILE=/opt/likewise/data/VERSION
+    LW_ENTERPRISE_VERSIONFILE=/opt/likewise/data/ENTERPRISE_VERSION
     VERSIONFILE=@MK_PREFIX@/data/VERSION
     ENTERPRISE_VERSIONFILE=@MK_PREFIX@/data/ENTERPRISE_VERSION
 
@@ -100,29 +102,35 @@ determine_upgrade_type()
     elif [ -f "@MK_SBINDIR@/gpagentd" ]; then
         log "@MK_SBINDIR@/gpagentd exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
         exit 1
+    elif [ -f "$LW_ENTERPRISE_VERSIONFILE" ]; then
+        log "$LW_ENTERPRISE_VERSIONFILE exists: Uninstall Likewise Enterprise before proceeding."
+        exit 1
+    elif [ -f "/opt/likewise/sbin/gpagentd" ]; then
+        log "/opt/likewise/sbin/gpagentd exists: Uninstall Likewise Enterprise before proceeding."
+        exit 1
     fi
 
-    if [ -f "$VERSIONFILE" ]; then
+    if [ -f "$LW_VERSIONFILE" ]; then
         run_or_fail mkdir -p "${UPGRADEDIR}"
-        run_or_fail cp "$VERSIONFILE" "${UPGRADEDIR}"
+        run_or_fail cp "$LW_VERSIONFILE" "${UPGRADEDIR}"
 
-        run_or_fail cat "$VERSIONFILE"
-        if [ -n "`grep '^VERSION=5.0' $VERSIONFILE`" ]; then
+        run_or_fail cat "$LW_VERSIONFILE"
+        if [ -n "`grep '^VERSION=5.0' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
             log "Preserving 5.0 configuration in ${UPGRADEDIR}."
-        elif [ -n "`grep '^VERSION=5.1' $VERSIONFILE`" ]; then
+        elif [ -n "`grep '^VERSION=5.1' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
             log "Preserving 5.1 configuration in ${UPGRADEDIR}."
-        elif [ -n "`grep '^VERSION=5.2' $VERSIONFILE`" ]; then
+        elif [ -n "`grep '^VERSION=5.2' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
             log "Preserving 5.2 configuration in ${UPGRADEDIR}."
-        elif [ -n "`grep '^VERSION=5.3' $VERSIONFILE`" ]; then
+        elif [ -n "`grep '^VERSION=5.3' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
             log "Preserving 5.3 configuration in ${UPGRADEDIR}."
-        elif [ -n "`grep '^VERSION=6.0' $VERSIONFILE`" ]; then
+        elif [ -n "`grep '^VERSION=6.0' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_6_0=1
             log "Preserving 6.0 configuration in ${UPGRADEDIR}."
-        elif [ -n "`grep '^VERSION=6.1' $VERSIONFILE`" ]; then
+        elif [ -n "`grep '^VERSION=6.1' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_6_1=1
             log "Preserving 6.1 configuration in ${UPGRADEDIR}."
         fi
@@ -229,7 +237,7 @@ wait_for_lwsm_shutdown()
 
 postinstall()
 {
-    log "Package: PowerBroker Identity Services Open Upgrade begins (`date`)"
+    logfile "Package: PowerBroker Identity Services Open Upgrade begins (`date`)"
 
     determine_upgrade_type
 
@@ -261,7 +269,7 @@ postinstall()
 
     preserve_6_1_configuration
 
-    log "Package: PowerBroker Identity Services Open Upgrade finished"
+    logfile "Package: PowerBroker Identity Services Open Upgrade finished"
     exit 0
 }
 

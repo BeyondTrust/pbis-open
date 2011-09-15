@@ -69,7 +69,7 @@ package_deb()
     mk_deb_do \
         PACKAGE="$PKG_DEB_NAME" \
         VERSION="$PKG_DEB_VERSION" \
-        DEBIANFILES="deb/changelog.in deb/control.in deb/rules.in deb/compat.in"
+        DEBIANFILES="deb/pbis-open-upgrade.preinst.in deb/changelog.in deb/control.in deb/rules.in deb/compat.in"
 
     mk_deb_done   
 }

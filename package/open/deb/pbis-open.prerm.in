@@ -100,7 +100,7 @@ execute_auxiliary_scripts()
 
 prerm_remove()
 {
-    log "Package: PowerBroker Identity Services Open preremove [remove] begins (`date`)"
+    logfile "Package: PowerBroker Identity Services Open preremove [remove] begins (`date`)"
 
     execute_auxiliary_scripts
 
@@ -120,7 +120,7 @@ prerm_remove()
         run_quiet pkill -KILL -x $daemon
     done
 
-    log "Package: PowerBroker Identity Services Open preremove [remove] finished"
+    logfile "Package: PowerBroker Identity Services Open preremove [remove] finished"
     exit 0
 }
 

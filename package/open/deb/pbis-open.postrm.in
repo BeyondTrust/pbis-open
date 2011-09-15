@@ -93,7 +93,7 @@ run_or_fail()
 
 case "$1" in
     remove)
-        log "Package: PowerBroker Identity Services Open postremove [remove] begins (`date`)"
+        logfile "Package: PowerBroker Identity Services Open postremove [remove] begins (`date`)"
 
         run_quiet /usr/sbin/service pbis stop
         run_quiet /usr/sbin/service lwsmd stop
@@ -106,11 +106,11 @@ case "$1" in
         run_quiet /usr/sbin/update-rc.d pbis remove
         run_quiet /usr/sbin/update-rc.d lwsmd remove
 
-        log "Package: PowerBroker Identity Services Open postremove [remove] finished"
+        logfile "Package: PowerBroker Identity Services Open postremove [remove] finished"
     ;;
 
     purge)
-        log "Package: PowerBroker Identity Services Open postremove [purge] begins (`date`)"
+        logfile "Package: PowerBroker Identity Services Open postremove [purge] begins (`date`)"
 
         run_quiet /usr/sbin/service pbis stop
         run_quiet /usr/sbin/service lwsmd stop
@@ -123,9 +123,9 @@ case "$1" in
         run_quiet /usr/sbin/update-rc.d pbis remove
         run_quiet /usr/sbin/update-rc.d lwsmd remove
 
-        run_quiet rm -rf /var/lib/pbis
+        run_quiet rm -rf '@LW_CACHEDIR@'
 
-        log "Package: PowerBroker IdentityServices Open postremove [purge] finished"
+        logfile "Package: PowerBroker IdentityServices Open postremove [purge] finished"
     ;;
 esac
 

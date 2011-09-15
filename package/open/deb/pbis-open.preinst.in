@@ -109,12 +109,12 @@ check_deb_installed()
 
 case "$1" in
     abort-upgrade)
-        log "Package: PowerBroker Identity Services Open preinstall [abort-upgrade] begins (`date`)"
-        log "Package: PowerBroker Identity Services Open preinstall [abort-upgrade] finished"
+        logfile "Package: PowerBroker Identity Services Open preinstall [abort-upgrade] begins (`date`)"
+        logfile "Package: PowerBroker Identity Services Open preinstall [abort-upgrade] finished"
     ;;
 
     upgrade)
-        log "Package: PowerBroker Identity Services Open preinstall [upgrade] begins (`date`)"
+        logfile "Package: PowerBroker Identity Services Open preinstall [upgrade] begins (`date`)"
 
         if dpkg-query --show --showformat='${Version}' likewise-open | grep "ubuntu" > /dev/null 2>&1 ; then
             log 'The package likewise-open from Ubuntu has been detected.'
@@ -134,11 +134,11 @@ case "$1" in
             run_quiet pkill -KILL -x $daemon
         done
 
-        log "Package: PowerBroker Identity Services Open preinstall [upgrade] finished"
+        logfile "Package: PowerBroker Identity Services Open preinstall [upgrade] finished"
     ;;
 
     install)
-        log "Package: PowerBroker Identity Services Open preinstall [install] begins (`date`)"
+        logfile "Package: PowerBroker Identity Services Open preinstall [install] begins (`date`)"
 
         if check_deb_installed 'likewise-open5' ; then
             log 'The package likewise-open5 from Ubuntu has been detected.'
@@ -155,7 +155,7 @@ case "$1" in
             run_quiet pkill -KILL -x $daemon
         done
 
-        log "Package: PowerBroker Identity Services Open preinstall [install] finished"
+        logfile "Package: PowerBroker Identity Services Open preinstall [install] finished"
         exit 0
     ;;
 esac
