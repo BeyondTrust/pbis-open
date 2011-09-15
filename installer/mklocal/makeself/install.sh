@@ -164,7 +164,7 @@ do_setup()
         exit 1
     fi
 
-    PKGDIR_RELATIVE="packages/${OS_TYPE}/${OS_ARCH}"
+    PKGDIR_RELATIVE="packages"
     PKGDIR="${DIRNAME}/${PKGDIR_RELATIVE}"
     if [ ! -d "${PKGDIR}" ]; then
         exit_on_error 1 "The installer does not support this OS (${OS_TYPE}) and architecture (${OS_ARCH})."
@@ -777,7 +777,7 @@ do_postinstall_messages()
         RUN_JOIN_GUI=""
     fi
 
-    domain=`/opt/pbis/bin/lw-lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
+    domain=`/opt/pbis/bin/lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
 
     if [ -n "$domain" ]; then
         log_info ""
