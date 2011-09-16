@@ -80,6 +80,8 @@ static time_t g_mechSetTime = (time_t)0;
 static gss_OID_set_desc g_mechSet = { 0, NULL };
 static k5_mutex_t g_mechSetLock = K5_MUTEX_PARTIAL_INITIALIZER;
 
+static int g_gssint_mechglue_fini_running = 1;
+
 MAKE_INIT_FUNCTION(gssint_mechglue_init);
 MAKE_FINI_FUNCTION(gssint_mechglue_fini);
 
@@ -108,12 +110,16 @@ gssint_mechglue_init(void)
 void
 gssint_mechglue_fini(void)
 {
-	if (!INITIALIZER_RAN(gssint_mechglue_init) || PROGRAM_EXITING()) {
+	if (!INITIALIZER_RAN(gssint_mechglue_init) || PROGRAM_EXITING() ||
+		g_gssint_mechglue_fini_running) {
 #ifdef SHOW_INITFINI_FUNCS
 		printf("gssint_mechglue_fini: skipping\n");
 #endif
 		return;
 	}
+
+	// OS X 10.5 can call the library destructors recursively
+	g_gssint_mechglue_fini_running = 1;
 
 #ifdef SHOW_INITFINI_FUNCS
 	printf("gssint_mechglue_fini\n");
@@ -128,6 +134,8 @@ gssint_mechglue_fini(void)
 	freeMechList();
 	remove_error_table(&et_ggss_error_table);
 	gssint_mecherrmap_destroy();
+
+	g_gssint_mechglue_fini_running = 0;
 }
 
 int
