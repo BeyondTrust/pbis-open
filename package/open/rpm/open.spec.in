@@ -57,11 +57,11 @@ done
 DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
 
 UPGRADEDIR=/var/lib/pbis-upgrade
+PKG_ARCH="@MK_HOST_ARCH@"
 
 LOG=/var/log/pbis-open-install.log
 TLOG=/tmp/pbis-open-install.tmp
 
-PKG_ARCH="__PKG_ARCH"
 # Display to screen and log file with a blank line between entries.
 log()
 {
@@ -391,8 +391,7 @@ execute_auxiliary_scripts()
 
 postinstall()
 {
-    log "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
-    log "Logging all operations to $LOG"
+    logfile "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
 
     determine_upgrade_type
 
@@ -429,14 +428,14 @@ postinstall()
 
     execute_auxiliary_scripts
 
-    log "Package: PowerBroker Identity Services Open postinstall finished"
+    logfile "Package: PowerBroker Identity Services Open postinstall finished"
     exit 0
 }
 
 postinstall
 
 %pre
-DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld srvsvcd"
+DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
 
 UPGRADEDIR=/var/lib/pbis-upgrade
 
@@ -529,7 +528,7 @@ run_or_fail()
 
 pre_upgrade()
 {
-    log "Package: PowerBroker Identity Services Open [pre upgrade] begins (`date`)"
+    logfile "Package: PowerBroker Identity Services Open [pre upgrade] begins (`date`)"
 
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
@@ -542,12 +541,12 @@ pre_upgrade()
         run_quiet pkill -KILL -x $daemon
     done
 
-    log "Package: PowerBroker Identity Services Open [pre upgrade] finished"
+    logfile "Package: PowerBroker Identity Services Open [pre upgrade] finished"
 }
 
 pre_install()
 {
-    log "Package: PowerBroker Identity Services Open [pre install] begins (`date`)"
+    logfile "Package: PowerBroker Identity Services Open [pre install] begins (`date`)"
 
     logfile "Checking SELinux"
     if [ -x "/usr/sbin/selinuxenabled" -a -x "/usr/sbin/getenforce" ]; then
@@ -582,7 +581,7 @@ Check your system's documentation for details."
         run_quiet pkill -KILL -x $daemon
     done
 
-    log "Package: PowerBroker Identity Services Open [pre install] finished"
+    logfile "Package: PowerBroker Identity Services Open [pre install] finished"
     exit 0
 }
 
@@ -594,7 +593,7 @@ else
 fi
 
 %preun
-DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
+DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
 
 UPGRADEDIR=/var/lib/pbis-upgrade
 
@@ -687,7 +686,7 @@ run_or_fail()
 
 preuninstall_remove()
 {
-    log "Package: PowerBroker Identity Services Open [preun remove] begins (`date`)"
+    logfile "Package: PowerBroker Identity Services Open [preun remove] begins (`date`)"
 
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
@@ -708,7 +707,7 @@ preuninstall_remove()
     run_quiet /sbin/chkconfig --del pbis
     run_quiet /sbin/chkconfig --del lwsmd
 
-    log "Package: PowerBroker Identity Services Open [preun remove] finished"
+    logfile "Package: PowerBroker Identity Services Open [preun remove] finished"
     exit 0
 }
 

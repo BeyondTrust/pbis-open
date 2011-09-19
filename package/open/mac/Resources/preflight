@@ -5,7 +5,7 @@ UPGRADEDIR=/var/lib/pbis-upgrade
 LOG=/var/log/pbis-open-install.log
 TLOG=/tmp/pbis-open-install.tmp
 
-DAEMONS_TO_KILL="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
+DAEMONS_TO_HALT="reapsysld lsassd lwiod netlogond dcerpcd eventlogd lwregd lwsmd"
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -145,6 +145,8 @@ disable_plugin()
 
 determine_upgrade_type()
 {
+    LW_VERSIONFILE=/opt/likewise/data/VERSION
+    LW_ENTERPRISE_VERSIONFILE=/opt/likewise/data/ENTERPRISE_VERSION
     VERSIONFILE=@MK_PREFIX@/data/VERSION
     ENTERPRISE_VERSIONFILE=@MK_PREFIX@/data/ENTERPRISE_VERSION
 
@@ -154,31 +156,37 @@ determine_upgrade_type()
     elif [ -f "@MK_SBINDIR@/gpagentd" ]; then
         log "@MK_SBINDIR@/gpagentd exists: Uninstall PowerBroker Identity Services Enterprise before proceeding."
         exit 1
+    elif [ -f "$LW_ENTERPRISE_VERSIONFILE" ]; then
+        log "$LW_ENTERPRISE_VERSIONFILE exists: Uninstall Likewise Enterprise before proceeding."
+        exit 1
+    elif [ -f "/opt/likewise/sbin/gpagentd" ]; then
+        log "/opt/likewise/sbin/gpagentd exists: Uninstall Likewise Enterprise before proceeding."
+        exit 1
     fi
 
-    if [ -f "$VERSIONFILE" ]; then
+    if [ -f "$LW_VERSIONFILE" ]; then
         run_or_fail mkdir -p "${UPGRADEDIR}"
-        run_or_fail cp "$VERSIONFILE" "${UPGRADEDIR}"
+        run_or_fail cp "$LW_VERSIONFILE" "${UPGRADEDIR}"
 
-        run_or_fail cat "$VERSIONFILE"
-        if [ -n "`grep '^VERSION=5.0' $VERSIONFILE`" ]; then
+        run_or_fail cat "$LW_VERSIONFILE"
+        if [ -n "`grep '^VERSION=5.0' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Preserving 5.0 configuration in ${UPGRADEDIR}."
-        elif [ -n "`grep '^VERSION=5.1' $VERSIONFILE`" ]; then
+            log "Preserving Likewise Identity Services Open 5.0 configuration in ${UPGRADEDIR}."
+        elif [ -n "`grep '^VERSION=5.1' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Preserving 5.1 configuration in ${UPGRADEDIR}."
-        elif [ -n "`grep '^VERSION=5.2' $VERSIONFILE`" ]; then
+            log "Preserving Likewise Identity Services Open 5.1 configuration in ${UPGRADEDIR}."
+        elif [ -n "`grep '^VERSION=5.2' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Preserving 5.2 configuration in ${UPGRADEDIR}."
-        elif [ -n "`grep '^VERSION=5.3' $VERSIONFILE`" ]; then
+            log "Preserving Likewise Identity Services Open 5.2 configuration in ${UPGRADEDIR}."
+        elif [ -n "`grep '^VERSION=5.3' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Preserving 5.3 configuration in ${UPGRADEDIR}."
-        elif [ -n "`grep '^VERSION=6.0' $VERSIONFILE`" ]; then
+            log "Preserving Likewise Identity Services Open 5.3 configuration in ${UPGRADEDIR}."
+        elif [ -n "`grep '^VERSION=6.0' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_6_0=1
-            log "Preserving 6.0 configuration in ${UPGRADEDIR}."
-        elif [ -n "`grep '^VERSION=6.1' $VERSIONFILE`" ]; then
+            log "Preserving Likewise Open 6.0 configuration in ${UPGRADEDIR}."
+        elif [ -n "`grep '^VERSION=6.1' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_6_1=1
-            log "Preserving 6.1 configuration in ${UPGRADEDIR}."
+            log "Preserving Likewise Open 6.1 configuration in ${UPGRADEDIR}."
         fi
     fi
 }
@@ -268,18 +276,18 @@ preserve_6_1_configuration()
 ##
 ## Main
 ##
-log "See /var/log/likewise-open-install.log for a complete installation log"
+log "See /var/log/pbis-open-install.log for a complete installation log"
 
 if [ "`uname -n`" = "localhost" ]
 then
-    log "Error: local host name is 'localhost' - please change it before installing Likewise Enterprise."
+    log "Error: local host name is 'localhost' - please change it before installing PowerBroker Identity Services Open."
 
     if [ ! -t 0 ]
     then
         /usr/bin/osascript << EOF
 tell application "System Events"
     activate
-    display dialog "Error: local host name is 'localhost' - please change it before installing Likewise Enterprise."
+    display dialog "Error: local host name is 'localhost' - please change it before installing PowerBroker Identity Services Open."
 end tell
 EOF
     fi
@@ -291,7 +299,7 @@ determine_upgrade_type
 
 stop_daemons
 
-# Disable Likewise DS plugin
+# Disable DS plugin
 disable_plugin
 
 # Save 5.[0123] configuration files and pstore.
@@ -303,7 +311,7 @@ preserve_6_0_configuration
 # Save 6.1 configuration files and pstore.
 preserve_6_1_configuration
 
-# Remove previous Likwise installation with macuninstall.sh
+# Remove previous installation with macuninstall.sh
 if [ -x @MK_BINDIR@/macuninstall.sh ]; then
     @MK_BINDIR@/macuninstall.sh
 fi

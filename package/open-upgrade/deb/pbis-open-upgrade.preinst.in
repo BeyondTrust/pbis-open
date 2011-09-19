@@ -117,22 +117,22 @@ determine_upgrade_type()
         run_or_fail cat "$LW_VERSIONFILE"
         if [ -n "`grep '^VERSION=5.0' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Preserving 5.0 configuration in ${UPGRADEDIR}."
+            log "Preserving Likewise Identity Services Open 5.0 configuration in ${UPGRADEDIR}."
         elif [ -n "`grep '^VERSION=5.1' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Preserving 5.1 configuration in ${UPGRADEDIR}."
+            log "Preserving Likewise Identity Services Open 5.1 configuration in ${UPGRADEDIR}."
         elif [ -n "`grep '^VERSION=5.2' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Preserving 5.2 configuration in ${UPGRADEDIR}."
+            log "Preserving Likewise Identity Services Open 5.2 configuration in ${UPGRADEDIR}."
         elif [ -n "`grep '^VERSION=5.3' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Preserving 5.3 configuration in ${UPGRADEDIR}."
+            log "Preserving Likewise Identity Services Open 5.3 configuration in ${UPGRADEDIR}."
         elif [ -n "`grep '^VERSION=6.0' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_6_0=1
-            log "Preserving 6.0 configuration in ${UPGRADEDIR}."
+            log "Preserving Likewise Open 6.0 configuration in ${UPGRADEDIR}."
         elif [ -n "`grep '^VERSION=6.1' $LW_VERSIONFILE`" ]; then
             UPGRADING_FROM_6_1=1
-            log "Preserving 6.1 configuration in ${UPGRADEDIR}."
+            log "Preserving Likewise Open 6.1 configuration in ${UPGRADEDIR}."
         fi
     fi
 }

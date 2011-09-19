@@ -7,7 +7,7 @@ TLOG=/tmp/pbis-open-install.tmp
 
 PKG_ARCH="@MK_HOST_ARCH@"
 
-DAEMONS_TO_KILL="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
+DAEMONS_TO_KILL="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
 
 # Display to screen and log file with a blank line between entries.
 log()

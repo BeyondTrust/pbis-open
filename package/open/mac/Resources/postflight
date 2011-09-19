@@ -251,7 +251,7 @@ configure_agent()
 import_5_0123_file()
 {
     CONVERT="@MK_LIBEXECDIR@/conf2reg"
-    REGIMPORT="@MK_BINDIR@/lwregshell"
+    REGIMPORT="@MK_BINDIR@/regshell"
 
     COMMAND=$1
     SOURCE=$2
