@@ -16,12 +16,12 @@ make()
         HEADERDEPS="dce/rpc.h" \
         LIBDEPS="$LIB_SOCKET"
 
-    mk_program \
-        PROGRAM="uuid" \
-        SOURCES="uuidtool.c" \
-        INCLUDEDIRS=". ../include" \
-        CPPFLAGS="$EXTRA_CPPFLAGS" \
-        CFLAGS="-Wall -Werror" \
-        HEADERDEPS="dce/rpc.h" \
-        GROUPS="uuid"
+#    mk_program \
+#        PROGRAM="uuid" \
+#        SOURCES="uuidtool.c" \
+#        INCLUDEDIRS=". ../include" \
+#        CPPFLAGS="$EXTRA_CPPFLAGS" \
+#        CFLAGS="-Wall -Werror" \
+#        HEADERDEPS="dce/rpc.h" \
+#        GROUPS="uuid"
 }

@@ -182,7 +182,9 @@ make()
     done
 
     # Build two copies of dceidl -- one for the build system and one for the host system
-    for _sys in build host
+#    for _sys in build host
+    # Correction -- build only for the build system.
+    for _sys in build
     do
         mk_system "$_sys"
 
