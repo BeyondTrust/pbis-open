@@ -43,4 +43,27 @@ make()
         INCLUDEDIRS=". ../../include" \
         HEADERDEPS="lwadvapi.h" \
         LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr"
+
+
+    COMMAND_NAMES="\
+    enum-groups \
+    enum-users \
+    find-group-by-id \
+    find-group-by-name \
+    find-user-by-id \
+    find-user-by-name \
+    get-status \
+    list-groups-for-user"
+
+    if [ "$LW_DEVICE_PROFILE" != "embedded" ]
+    then
+        for COMMAND in ${COMMAND_NAMES}
+        do
+            mk_symlink \
+                LINK="${MK_BINDIR}/${COMMAND}" \
+                TARGET="lsa"
+        done
+    fi
+
+
 }
