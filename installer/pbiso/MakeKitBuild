@@ -58,7 +58,8 @@ sfx_generic()
                   likewise-netlogon likewise-openldap likewise-passwd \
                   likewise-pstore likewise-reskit likewise-rpc likewise-sqlite \
                   likewise-srvsvc likewise-reapsysl likewise-samba-interop \
-                  likewise-smbclient" \
+                  likewise-smbclient \
+                  likewise-open-upgrade likewise-open-gui likewise-open" \
         BASE="pbis-open" \
         GUI="$GUI_PACKAGE"
 }
