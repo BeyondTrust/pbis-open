@@ -39,7 +39,7 @@ make()
 	SOURCES="$NETAPI_SOURCES" \
 	INCLUDEDIRS="../include" \
 	HEADERDEPS="lw/base.h lwadvapi.h openssl/rand.h lwio/lwio.h dce/rpc.h \
-                    lw/rpc/samr.h lw/rpc/lsa.h lw/rpc/wkssvc.h \
-                    lwnet.h lsa/ad.h" \
+                lw/rpc/samr.h lw/rpc/lsa.h lw/rpc/wkssvc.h lw/rpc/netlogon.h \
+                lwnet.h lsa/ad.h" \
 	LIBDEPS="lwnetclientapi lwadvapi lwbase lsarpc dcerpc lsaclient"
 }
