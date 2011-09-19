@@ -104,7 +104,7 @@ configure()
 {
     LW_VENDOR="pbis"
     LW_PRODUCT="platform"
-    LW_VERSION="6.2.${LW_BUILD_ID:-0}"
+    LW_VERSION="6.5.${LW_BUILD_ID:-0}"
 
     mk_msg "configuring $LW_VENDOR $LW_PRODUCT $LW_VERSION"
     mk_msg "using bundled libraries: $LW_BUNDLED"
