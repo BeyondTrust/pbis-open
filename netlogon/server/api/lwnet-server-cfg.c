@@ -334,7 +334,7 @@ LWNetConfigResolveNameOrder(
         BAIL_ON_LWNET_ERROR(dwError);
     }
 
-    dwError = LWNetAllocateMemory(3, (PVOID*)&retNameOrder);
+    dwError = LWNetAllocateMemory(3 * sizeof(retNameOrder), (PVOID*)&retNameOrder);
     BAIL_ON_LWNET_ERROR(dwError);
 
     dwError = LwRtlCStringDuplicate(&tmpNameOrder, 
