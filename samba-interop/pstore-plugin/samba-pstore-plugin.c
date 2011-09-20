@@ -99,6 +99,56 @@ DeletePassword(
 
 static
 DWORD
+TdbRead(
+    TDB_CONTEXT *pTdb,
+    PCSTR pKeyStart,
+    PCSTR pKeyEnd,
+    PVOID* ppData,
+    PDWORD pDataLen
+    )
+{
+    DWORD error = 0;
+    TDB_DATA tdbKey = { 0 };
+    TDB_DATA tdbData = { 0 };
+    PSTR pKey = NULL;
+
+    error = LwAllocateStringPrintf(
+                    &pKey,
+                    "%s/%s",
+                    pKeyStart,
+                    pKeyEnd);
+    BAIL_ON_LSA_ERROR(error);
+
+    tdbKey.dptr = pKey;
+    tdbKey.dsize = strlen(pKey);
+
+    tdbData = tdb_fetch(pTdb, tdbKey);
+    if (!tdbData.dptr)
+    {
+        tdb_transaction_cancel(pTdb);
+        if (tdb_error(pTdb) == TDB_ERR_NOEXIST)
+        {
+            error = ERROR_FILE_NOT_FOUND;
+        }
+        else
+        {
+            error = ERROR_INTERNAL_DB_ERROR;
+        }
+        BAIL_ON_LSA_ERROR(error);
+    }
+
+    *ppData = tdbData.dptr;
+    tdbData.dptr = NULL;
+    *pDataLen = tdbData.dsize;
+
+cleanup:
+    LW_SAFE_FREE_STRING(pKey);
+    LW_SAFE_FREE_MEMORY(tdbData.dptr);
+    return error;
+}
+
+static
+DWORD
 TdbStore(
     TDB_CONTEXT *pTdb,
     PCSTR pKeyStart,
@@ -305,6 +355,35 @@ SetPassword(
     DWORD schannelType = 0;
     DWORD LCT = 0;
     BYTE sambaSid[68] = { 0 };
+    DWORD oldPasswordLen = 0;
+    PVOID pOldPassword = NULL;
+
+    // Move the current password to the old password
+    error = TdbRead(
+                    pContext->pTdb,
+                    "SECRETS/MACHINE_PASSWORD",
+                    pPasswordInfo->Account.NetbiosDomainName,
+                    &pOldPassword,
+                    &oldPasswordLen);
+    if (error == ERROR_FILE_NOT_FOUND)
+    {
+        error = 0;
+    }
+    else
+    {
+        BAIL_ON_LSA_ERROR(error);
+
+        if (strcmp(pOldPassword, pPasswordInfo->Password))
+        {
+            error = TdbStore(
+                            pContext->pTdb,
+                            "SECRETS/MACHINE_PASSWORD.PREV",
+                            pPasswordInfo->Account.NetbiosDomainName,
+                            pOldPassword,
+                            oldPasswordLen);
+            BAIL_ON_LSA_ERROR(error);
+        }
+    }
 
     /* Machine Password */
     // The terminating null must be stored with the password
@@ -384,6 +463,7 @@ cleanup:
     {
         LwFreeSecurityIdentifier(pSid);
     }
+    LW_SAFE_FREE_MEMORY(pOldPassword);
     return error;
 }
 
