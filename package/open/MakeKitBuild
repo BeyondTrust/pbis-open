@@ -113,6 +113,11 @@ package_freebsd()
         
         open_files
         open_files_compat
+
+        mk_package_patterns \
+            SUBDIRS="$OPEN_SUBDIRS" \
+            "${MK_LIBDIR}/*${MK_LIB_EXT}"
+
     mk_freebsd_done
 }
       
