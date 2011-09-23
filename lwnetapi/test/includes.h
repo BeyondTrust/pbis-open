@@ -34,7 +34,6 @@
 #include <lw/rpc/netlogon.h>
 #include <lw/rpc/dssetup.h>
 #include <lw/rpc/wkssvc.h>
-#include <lw/srvsvc.h>
 #include <lw/lm.h>
 
 #include "netapitest.h"
