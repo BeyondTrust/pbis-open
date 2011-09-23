@@ -281,10 +281,10 @@ static int client_establish_context(
             auth_data_tok.length = sizeof(auth_data);
             auth_data_tok.value = &auth_data;
 
-            maj_stat = gssspi_set_cred_option(&min_stat,
-                                              cred,
-                                              GssCredOptionPasswordOid,
-                                              &auth_data_tok);
+            maj_stat = gss_set_cred_option(&min_stat,
+                                           &cred,
+                                           GssCredOptionPasswordOid,
+                                           &auth_data_tok);
 
             if (maj_stat != GSS_S_COMPLETE)
             {

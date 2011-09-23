@@ -281,10 +281,10 @@ static int server_establish_context(
         domain_tok.length = strlen(domain);
         domain_tok.value = domain;
 
-        maj_stat = gssspi_set_cred_option(&min_stat,
-                                          cred,
-                                          GssCredOptionDomainOid,
-                                          &domain_tok);
+        maj_stat = gss_set_cred_option(&min_stat,
+                                       &cred,
+                                       GssCredOptionDomainOid,
+                                       &domain_tok);
         if (maj_stat != GSS_S_COMPLETE)
         {
             display_status("setting cred option", maj_stat, min_stat);

@@ -736,13 +736,13 @@ ClientEstablishContext(
                           &GssCredOptionPasswordOid);
         BAIL_ON_ERROR(MajorStatus);
 
-        nError = gssspi_set_cred_option(
+        nError = gss_set_cred_option(
             &MinorStatus,
-            CredHandle,
+            &CredHandle,
             GssCredOptionPasswordOid,
             &AuthDataDesc
             );
-        display_status("gssspi_set_cred_option", nError, MinorStatus);
+        display_status("gss_set_cred_option", nError, MinorStatus);
 
         if ((GSS_S_FAILURE == nError) && MinorStatus)
         {
