@@ -469,19 +469,28 @@ _mk_library_process_version()
                 esac
                 ;;
             *)
-                _rest="${VERSION}."
-                MAJOR="${_rest%%.*}"
-                _rest="${_rest#*.}"
-                MINOR="${_rest%%.*}"
-                _rest="${_rest#*.}"
-                MICRO="${_rest%.}"
                 case "$MK_OS" in
-                    freebsd|darwin)
+                    freebsd)
+                        MAJOR="${VERSION}"
                         MINOR=""
                         MICRO=""
                         ;;
-                    hpux)
-                        MICRO=""
+                    *)
+                        _rest="${VERSION}."
+                        MAJOR="${_rest%%.*}"
+                        _rest="${_rest#*.}"
+                        MINOR="${_rest%%.*}"
+                        _rest="${_rest#*.}"
+                        MICRO="${_rest%.}"
+                        case "$MK_OS" in
+                            darwin)
+                                MINOR=""
+                                MICRO=""
+                                ;;
+                            hpux)
+                                MICRO=""
+                                ;;
+                        esac
                         ;;
                 esac
                 ;;
