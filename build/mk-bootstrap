@@ -15,10 +15,6 @@ blacklisted()
     do
         [ "$bad" = "${1#$SRC_ROOT/}" ] && return 0
     done
-
-    # If the configure script is checked in, don't re-generate it
-    svn info "$dir/configure" &> /dev/null
-    return $?
 }
 
 bootstrap()
