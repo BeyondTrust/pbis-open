@@ -20,7 +20,7 @@ make()
                     lw/rpc/common.h lw/rpc/samr.h lw/rpc/lsa.h lw/rpc/wkssvc.h \
                     lw/rpc/netlogon.h lw/rpc/dssetup.h \
                     lwnet.h ntlm/gssntlm.h ntlm/sspintlm.h lsa/ad.h" \
-	LIBDEPS="lwnetclientapi lwadvapi lwbase lsarpc dcerpc lwnetapi lsaclient"
+	LIBDEPS="lwnetclientapi lwadvapi lwadvapi_nothr lwbase lwbase_nothr lsarpc dcerpc lwnetapi lsaclient"
 
     lw_add_tool_target "$result"
 }
