@@ -62,7 +62,7 @@ configure()
         inttypes.h
 
     mk_check_headers \
-        HEADERDEPS="sys/types.h" \
+        HEADERDEPS="sys/types.h sys/param.h" \
         sys/sysctl.h sys/user.h
 
     mk_check_functions \

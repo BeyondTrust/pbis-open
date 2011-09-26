@@ -23,7 +23,7 @@ configure()
 
     # Headers
     mk_check_headers \
-        HEADERDEPS="sys/types.h" \
+        HEADERDEPS="sys/types.h sys/param.h" \
         inttypes.h fcntl.h limits.h stdlib.h string.h \
         strings.h syslog.h unistd.h sys/types.h fcntl.h \
         sys/stat.h sys/param.h sys/pstat.h proc/readproc.h \

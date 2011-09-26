@@ -18,7 +18,7 @@ make()
 	SOURCES="main-svcm.c globals.c listener.c" \
         GROUPS="$PROVIDER_GROUPS" \
 	INCLUDEDIRS=". ../include ../../include" \
-	HEADERDEPS="lwadvapi.h lwio/lwio.h" \
+	HEADERDEPS="lwadvapi.h lwio/lwio.h eventlog.h" \
 	LIBDEPS="lsaserverapi lsacommon ntlmserver lsaclient_ntlm lwnetclientapi lwnetcommon lwioclient lwiocommon lwmsg lwmsg_nothr lwadvapi lwadvapi_nothr lwbase_nothr dcerpc pthread"
 }
 
