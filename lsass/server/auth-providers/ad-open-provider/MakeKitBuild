@@ -53,7 +53,7 @@ make()
         SOURCES="$AD_SOURCES" \
         CPPFLAGS="-DLW_ENABLE_THREADS=1" \
         INCLUDEDIRS="join/include ../../include ../../../include" \
-        HEADERDEPS="lw/base.h lwadvapi.h lwnet.h uuid/uuid.h openssl/rc4.h reg/regutil.h" \
+        HEADERDEPS="lw/base.h lwadvapi.h lwnet.h uuid/uuid.h openssl/rc4.h reg/regutil.h eventlog.h" \
         LIBDEPS="lsacommon lsapstore lsaserverapi sqlite3 uuid $LIB_KVM" \
         GROUPS="join/lsajoin" \
         LDFLAGS="$FRAMEWORK_FLAGS"
