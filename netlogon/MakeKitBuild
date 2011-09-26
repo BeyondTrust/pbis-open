@@ -52,6 +52,10 @@ configure()
         res_init res_query res_ninit res_ndestroy
 
     lw_check_pthread_once_init
+    if [ "$result" = "yes" ]
+    then
+        mk_define PTHREAD_ONCE_INIT_BROKEN 1
+    fi
 
     mk_output_file "etc/netlogond.reg"
 }
