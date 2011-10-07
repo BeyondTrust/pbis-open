@@ -708,7 +708,7 @@ LsaCopyFileWithPerms(
     )
 {
     DWORD dwError = 0;
-    PCSTR pszTmpSuffix = ".tmp_likewise_lsass";
+    PCSTR pszTmpSuffix = ".tmp_lsass";
     PSTR pszTmpPath = NULL;
     BOOLEAN bRemoveFile = FALSE;
     CHAR szBuf[1024+1];
@@ -839,14 +839,14 @@ LsaBackupFile(
         goto done;
     }
 
-    sprintf(szBackupPath, "%s.likewise_lsass.orig", pszPath);
+    sprintf(szBackupPath, "%s.lsass.orig", pszPath);
 
     dwError = LsaCheckFileExists(szBackupPath, &bExists);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (bExists)
     {
-       sprintf(szBackupPath, "%s.likewise_lsass.bak", pszPath);
+       sprintf(szBackupPath, "%s.lsass.bak", pszPath);
     }
 
     dwError = LsaCopyFileWithOriginalPerms(pszPath, szBackupPath);
