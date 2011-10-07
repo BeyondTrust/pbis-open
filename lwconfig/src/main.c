@@ -496,13 +496,13 @@ cleanup:
                     returnErrorCode = 4;
                     break;
                 case APP_ERROR_UNEXPECTED_VALUE:
-                    strcpy(buf, "Bad value in /var/lib/likewise/lwconfig.xml");
+                    strcpy(buf, "Bad value in " LWCONFIG_XML);
                     break;
                 case APP_ERROR_COULD_NOT_FORK:
                     strcpy(buf, "Could not fork");
                     break;
                 case APP_ERROR_BAD_XML:
-                    strcpy(buf, "Malformed XML in /var/lib/likewise/lwconfig.xml");
+                    strcpy(buf, "Malformed XML in " LWCONFIG_XML);
                     break;
                 case APP_ERROR_INVALID_ESCAPE_SEQUENCE:
                     strcpy(buf, "Bad escape sequence");
