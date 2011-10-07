@@ -269,9 +269,9 @@ RemoveCacheFiles()
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
-    /* Likewise 5.0 (group policy scratch) files... */
+    /* Likewise 6.2 (group policy scratch) files... */
 
-    pszCachePath = LOCALSTATEDIR "/lib/likewise/grouppolicy/scratch";
+    pszCachePath = LOCALSTATEDIR "/lib/pbis/grouppolicy/scratch";
     ceError = CTCheckDirectoryExists(pszCachePath, &bDirExists);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
@@ -282,21 +282,21 @@ RemoveCacheFiles()
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
-    pszCachePath = LOCALSTATEDIR "/lib/likewise/grouppolicy/{*}*";
+    pszCachePath = LOCALSTATEDIR "/lib/pbis/grouppolicy/{*}*";
     (void) CTRemoveFiles(pszCachePath, FALSE, TRUE);
 
-    pszCachePath = LOCALSTATEDIR "/lib/likewise/grouppolicy/user-cache";
+    pszCachePath = LOCALSTATEDIR "/lib/pbis/grouppolicy/user-cache";
     (void) CTRemoveFiles(pszCachePath, FALSE, TRUE);
 
-    pszCachePath = LOCALSTATEDIR "/lib/likewise/lwedsplugin/user-cache";
+    pszCachePath = LOCALSTATEDIR "/lib/pbis/lwedsplugin/user-cache";
     (void) CTRemoveFiles(pszCachePath, FALSE, TRUE);
 
     /* Revert any system configuration files that may have been changed by previous domain GPOs */
-    ceError = CTCheckDirectoryExists( "/var/lib/likewise/grouppolicy", 
+    ceError = CTCheckDirectoryExists( "/var/lib/pbis/grouppolicy", 
                                       &bDirExists);
     BAIL_ON_CENTERIS_ERROR(ceError);
     if (bDirExists) {
-        ceError = CTRemoveDirectory("/var/lib/likewise/grouppolicy");
+        ceError = CTRemoveDirectory("/var/lib/pbis/grouppolicy");
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -827,9 +827,9 @@ static void DoJoin(JoinProcessOptions *options, LWException **exc)
         if (options->warningCallback != NULL)
         {
             options->warningCallback(options, "Unsupported loader flags set",
-                                 "LD_LIBRARY_PATH and/or LD_PRELOAD are currently set on your system. Best practices for Unix and Linux administration strongly recommend not to use these environmental variables. Likewise does not support environments where either variable is set.\n"
+                                 "LD_LIBRARY_PATH and/or LD_PRELOAD are currently set on your system. Best practices for Unix and Linux administration strongly recommend not to use these environmental variables. PowerBroker Identity Services does not support environments where either variable is set.\n"
                                   "\n"
-                                 "If this operation fails you should stop all likewise daemons, clear the environmental variable, then retry the join operation.\n"
+                                 "If this operation fails you should stop all PowerBroker Identity Services daemons, clear the environmental variable, then retry the join operation.\n"
                                  "\n"
                                  "For more information, see the PowerBroker Identity Services guide online at:\n"
                                  "http://www.beyondtrust.com/Technical-Support/Downloads/files/pbiso/Manuals/likewise-open-guide.html#AgentRequirements\n"
@@ -1562,7 +1562,7 @@ DJLogDomainJoinSucceededEvent(
                  "     User name:               %s\r\n" \
                  "     Operating system:        %s\r\n" \
                  "     Distribution version:    %s\r\n" \
-                 "     Likewise version:        %s",
+                 "     PBIS version:            %s",
                  JoinOptions->domainName ? JoinOptions->domainName : "<not set>",
                  JoinOptions->shortDomainName ? JoinOptions->shortDomainName : "<not set>",
                  JoinOptions->computerName ? JoinOptions->computerName : "<not set>",
@@ -1626,7 +1626,7 @@ DJLogDomainJoinFailedEvent(
                  "     User name:               %s\r\n" \
                  "     Operating system:        %s\r\n" \
                  "     Distribution version:    %s\r\n" \
-                 "     Likewise version:        %s",
+                 "     PBIS version:            %s",
                  exc && exc->shortMsg ? exc->shortMsg : "<not set>",
                  exc && exc->longMsg ? exc->longMsg : "<not set>",
                  exc && exc->code ? exc->code : 0,
