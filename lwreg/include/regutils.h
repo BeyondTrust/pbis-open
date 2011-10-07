@@ -447,29 +447,11 @@ RegGetOwnerAndPermissions(
     );
 
 DWORD
-RegCopyFileWithPerms(
-    PCSTR pszSrcPath,
-    PCSTR pszDstPath,
-    mode_t dwPerms
-    );
-
-DWORD
-RegCopyFileWithOriginalPerms(
-    PCSTR pszSrcPath,
-    PCSTR pszDstPath
-    );
-
-DWORD
 RegChangeOwnerAndPermissions(
     PCSTR pszPath,
     uid_t uid,
     gid_t gid,
     mode_t dwFileMode
-    );
-
-DWORD
-RegBackupFile(
-    PCSTR pszPath
     );
 
 DWORD
@@ -483,14 +465,6 @@ RegCreateSymlink(
    PCSTR pszOldPath,
    PCSTR pszNewPath
    );
-
-DWORD
-RegCopyDirectory(
-    PCSTR pszSourceDirPath,
-    uid_t ownerUid,
-    gid_t ownerGid,
-    PCSTR pszDestDirPath
-    );
 
 DWORD
 RegGetMatchingFilePathsInFolder(
