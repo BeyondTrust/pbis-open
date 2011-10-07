@@ -58,7 +58,7 @@ static
 const char* gDNSErrorMessages[] =
 {
      // LWDNS_ERROR_INIT_FAILED         : 57344
-     "Failed to initialize the Likewise DNS library",
+     "Failed to initialize DNS library",
      // LWDNS_ERROR_RECORD_NOT_FOUND    : 57345
      "Failed to find the DNS record",
      // LWDNS_ERROR_BAD_RESPONSE        : 57346
