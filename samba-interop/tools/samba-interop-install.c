@@ -1301,7 +1301,7 @@ SynchronizePassword(
         &pPasswordInfo);
     if (error == NERR_SetupNotJoined)
     {
-        LW_RTL_LOG_ERROR("Unable to write machine password in secrets.tdb because Likewise is not joined. The password will be written to secrets.tdb on the next successful join attempt");
+        LW_RTL_LOG_ERROR("Unable to write machine password in secrets.tdb because PowerBroker Identity Services is not joined. The password will be written to secrets.tdb on the next successful join attempt");
         error = 0;
     }
     else
@@ -1440,13 +1440,15 @@ ShowUsage(
 {
     fprintf(stderr, "Usage: %s {options} [smbd path]\n", pProgramName);
     fprintf(stderr, "\n");
-    fprintf(stderr, "Installs the Likewise-Samba interop libraries into the directories used by\n");
-    fprintf(stderr, "Samba, and copies over the machine password from Likewise's database to Samba's.\n");
+    fputs(
+"Installs interop libraries into directories used by Samba and copies the\n"
+"machine password from the PowerBroker Identity Services' database to Samba's.\n",
+    stderr);
     fprintf(stderr, "\n");
     fprintf(stderr, "Options are:\n");
     fprintf(stderr, "    --help               Show this help message\n");
-    fprintf(stderr, "    --install            Configure smbd to interface with Likewise\n");
-    fprintf(stderr, "    --uninstall          Deconfigure smbd from talking to Likewise\n");
+    fprintf(stderr, "    --install            Configure smbd to use interop libraries\n");
+    fprintf(stderr, "    --uninstall          Deconfigure smbd's use of interop libraries\n");
     fprintf(stderr, "    --check-version      Ensure the version of smbd is supported\n");
     fprintf(stderr, "    --loglevel {level}   Set the logging to error (default), warning, info,\n");
     fprintf(stderr, "                         verbose, or debug\n");
