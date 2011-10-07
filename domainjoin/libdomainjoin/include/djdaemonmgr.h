@@ -40,25 +40,6 @@ DJGetDaemonStatus(
     LWException **exc
     );
 
-void
-DJManageDaemon(
-    PCSTR pszName,
-    BOOLEAN bStart,
-    int startPriority,
-    int stopPriority,
-    LWException **exc
-    );
-
-void
-DJManageDaemonDescription(
-    PCSTR pszName,
-    BOOLEAN bStart,
-    int startPriority,
-    int stopPriority,
-    PSTR *description,
-    LWException **exc
-    );
-
 DWORD
 DJGetBaseDaemonPriorities(
     int *startPriority,
