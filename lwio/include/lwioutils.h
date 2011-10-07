@@ -1092,24 +1092,11 @@ SMBCreateDirectory(
     );
 
 DWORD
-SMBCopyFileWithPerms(
-    PCSTR pszSrcPath,
-    PCSTR pszDstPath,
-    mode_t dwPerms
-    );
-
-DWORD
 SMBGetOwnerAndPermissions(
     PCSTR pszSrcPath,
     uid_t * uid,
     gid_t * gid,
     mode_t * mode
-    );
-
-DWORD
-SMBCopyFileWithOriginalPerms(
-    PCSTR pszSrcPath,
-    PCSTR pszDstPath
     );
 
 DWORD
