@@ -1,0 +1,4 @@
+SUBDIRS =  \
+    agents \
+    main
+

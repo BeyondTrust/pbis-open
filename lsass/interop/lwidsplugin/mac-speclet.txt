@@ -1,0 +1,164 @@
+Mac OS X Support for LWI
+------------------------
+
+Introduction
+------------
+
+Mac OS X does not use NSS.  Instead it uses Open Directory to implement
+the standard NSS functionality.
+
+The OS does support PAM.  However, native (non-Unix) applications
+typically use Open Directory directly to do authentication.  One such
+application is loginwindow, the main graphical login application.  Other
+applications use PAM directly.  These are typically UNIX applications
+such as sshd, su, login, etc.
+
+[TODO: Need OS version info here explaining which versions support
+what.]
+
+LWI already has NSS and PAM libraries that work on the Mac.  However,
+the Open Directory plug-in needs some work.  This document goes on to
+explain how to leverage the current NSS and PAM work to implement an
+Open Directory plug-in for LWI that meets the following minimal critera:
+
+- User can login via loginwindow (and presumably any other native Mac
+  apps).
+
+- All libc NSS-type functionality is supported.
+
+Limitations
+-----------
+
+Limitations of Open Directory Plug-ins:
+
+- There is no way to present messages to the user.
+
+- There does not appear to be a way to initialize Kerberos tickets for
+  the user.  (However, there is probably another plug-in mechanism that
+  will allow this.)
+
+Remaining Research
+------------------
+
+Items currently not scoped/researched:
+
+- Change password.
+
+- Populuating ticket cache on logon.
+
+- Requiring password change on logon via loginwindow.
+
+- Presenting other messages on logon (such as license expiration, etc).
+
+- [TODO: GP Issues?]
+
+Achieving Minimal Goals
+-----------------------
+
+We need to implement the standard entrypoints:
+
+  1) Validate
+     - Called first to set "signature".
+  2) Initialize
+  3) SetPluginState
+     - Allows plug-in to be enabled/disabled.
+  4) Shutdown
+     - NOTE: This is never called by DirectoryService.
+  5) Configure
+     - NOTE: This is never called by DirectoryService.
+  6) PeriodicTask
+     - Called every 30 seconds or so.
+  7) ProcessRequest
+     - Main dispatch routine
+
+The bulk of the work is done by ProcessRequest.  To achieve our minimal
+goals, we need to implement the following handlers:
+
+  1) kOpenDirNode
+  2) kCloseDirNode
+  3) kGetDirNodeInfo [TODO: Check on this]
+  4) kGetRecordList
+  5) kDoAttributeValueSearchWithData
+  6) kDoAttributeValueSearch
+     - Maybe?  Basically free w/kDoAttributeValueSearchWithData.
+  7) kDoDirNodeAuth
+
+Standard attributes that we want to be able to return:
+
+  G  Member (multi-valued, names, same as GroupMembership)
+  G  GroupMembership (multi-valued, names, same as Member)
+  GU AppleMetaNodeLocation
+   U NFSHomeDirecotry
+  GU Password (always "*")
+  GU PrimaryGroupID
+   U RealName [Just return the same as RecordName for now; maybe return GECOS later]
+  GU RecordName (multi-valued ok)
+   U UniqueID
+   U UserShell
+  GU GeneratedUID
+  GU RecordType
+
+Optionally, we might want to return (since it is easy):
+
+  GU SMBSID
+
+We need to be able to search on the following standard attributes:
+
+  GU RecordName [NOTE: Also matches "RealName" -- but we do not support that. ]
+  G  GroupMembers (GUID) [NOTE: No need for Members (name) since we have this. ]
+   U UniqueID
+  G  PrimaryGroupID
+  GU GeneratedUID
+
+We have already implemented kDoDirNodeAuth.
+
+[TODO: Add the details from other doc about implementing 1-7 above.]
+
+Implementing GUID
+-----------------
+
+Initially, we want to implement the GUID functionality as follows.  We
+have a fixed GUID into which we substitute a bit and a 32-bit UID/GID.
+The bit represents whether this is a user or group.
+
+This allows us to map GUID <--> UID/GID.
+
+Implementing Search of Groups By Member GUID (GroupMembers)
+-----------------------------------------------------------
+
+To do a search of groups to which a user belongs, we do the following.
+First, convert the GUID to a UID.  Then, use the UID to call
+_nss_lwidentity_initgroups_dyn() to get the GIDs for the groups to which
+the user belongs.  Finally, convert the GIDs to group records.
+
+Understanding the loginwindow Call Sequence
+-------------------------------------------
+
+An abbreviated call sequence is below:
+
+1) kOpenDirNode for top node
+
+2) kGetRecordList for U using name used to log in
+
+3) kDoAttributeValueSearchWithData for G w/Members then GroupMembers
+
+4) kDoAttributeValueSearchWithData for G w/GID
+
+
+Libc Calls
+----------
+
+For libc calls, we expect the following:
+
+1) kDoAttributeValueSearchWithData for U/G w/UID/GID
+2) kGetRecordList/kDoAttributeValueSearchWithData for U/G w/name
+3) We will not support user/group enumeration right now.
+
+Need to write/get a test application to test/verify.  (Check w/Kyle.)
+
+==================================================
+
+Other stuff:
+
+PPC support --> Universal Binaries
+- should be easy

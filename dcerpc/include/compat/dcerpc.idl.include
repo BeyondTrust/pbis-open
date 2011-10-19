@@ -1,0 +1,8 @@
+#ifndef DCERPC_IDL
+#define DCERPC_IDL
+
+#ifdef _WIN32
+  typedef unsigned int unsigned32;
+#endif
+
+#endif

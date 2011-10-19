@@ -1,0 +1,28 @@
+#!/bin/bash
+
+BUILD_ROOT=`(cd $(dirname $0)/../../.. && pwd)`
+export BUILD_ROOT
+
+umask 022
+
+_UUID=""
+_ICONV=""
+case `uname -s` in
+    NetBSD)
+        _UUID="libuuid"
+        _ICONV="libiconv"
+    ;;
+esac
+
+PKG="platform"
+COMPONENTS="krb5 openldap libcrypto lwbase ${_UUID} ${_ICONV} \
+            lwmsg lwadvapi centutils \
+            libschannel sqlite pstore lsass lwdns \
+            domainjoin eventlog lwio lwreg lwsm netlogon dcerpc \
+            lwnetapi lwtools srvsvc"
+
+for comp in ${COMPONENTS}; do
+    echo "Populating files from $comp..."
+    (${BUILD_ROOT}/build/populate ${PKG} $comp)
+done
+

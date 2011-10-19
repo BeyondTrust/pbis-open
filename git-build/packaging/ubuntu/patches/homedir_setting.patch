@@ -1,0 +1,22 @@
+diff --git a/domainjoin/libdomainjoin/src/djauthinfo.c b/domainjoin/libdomainjoin/src/djauthinfo.c
+index 6e52b52..094a7dd 100644
+--- a/domainjoin/libdomainjoin/src/djauthinfo.c
++++ b/domainjoin/libdomainjoin/src/djauthinfo.c
+@@ -1126,6 +1126,9 @@ static void DoLwiConf(JoinProcessOptions *options, LWException **exc)
+ 
+ 	LW_CLEANUP_CTERR(exc, DJGetDistroInfo(NULL, &distro));
+ 
++#if 0 	/* Disabled to allow distros to pre-configure the homedir and
++ 	   shell setting as appropriate. */
++
+ 	switch (distro.os) {
+ 	case OS_SUNOS:
+ 		LW_CLEANUP_CTERR(exc, DJSetSambaValue(NULL, 
+@@ -1151,6 +1154,7 @@ static void DoLwiConf(JoinProcessOptions *options, LWException **exc)
+ 						      "template shell",
+ 						      "/bin/bash"));
+ 	}
++#endif
+ 
+ 	/*
+ 	 * Need to determine between an Enterprise and Open install.

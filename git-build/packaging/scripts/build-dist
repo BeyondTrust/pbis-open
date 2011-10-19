@@ -1,0 +1,59 @@
+#!/bin/bash
+
+BASEDIR=`dirname $0`/../..
+RELEASE=""
+DIRS="\
+  krb5 \
+  openldap \
+  lwmsg \
+  centutils \
+  dcerpc \
+  domainjoin \
+  eventlog \
+  libgss \
+  libiconv \
+  libkeytab \
+  librpc \
+  libunistr \
+  lsass \
+  netlogon \
+  lwio \
+  build \
+  config \
+  packaging \
+  pstore \
+  sqlite \
+  lwdns \
+  libtdb \
+  lwmapsecurity \
+  srvsvc \
+"
+
+. ${BASEDIR}/packaging/scripts/functions
+VERSION=$(get_lwopen_version)
+if [ "x$1" = "xrelease" ]; then
+	RELEASE="-release"
+fi
+
+TARGET=likewise-open-$VERSION$RELEASE
+/bin/rm -rf $BASEDIR/../$TARGET || exit 1
+mkdir $BASEDIR/../$TARGET || exit 1
+
+for dir in ${DIRS}; do
+	echo "Copying $dir..."
+	rsync -a --exclude=.git* --exclude=.svn --exclude=*~ --exclude=*bak \
+		$BASEDIR/$dir $BASEDIR/../$TARGET/ || exit 1
+done
+
+for file in Build.sh Makefile Configure.sh autogen.sh packaging/scripts/autogen.sh; do
+	cp -p $file $BASEDIR/../$TARGET/ || exit 1
+done
+
+cd $BASEDIR/..
+
+find $TARGET -name "*.sh" | xargs chmod u+x
+(cd $TARGET && ./autogen.sh)
+
+tar cf - $TARGET | gzip -9 > likewise-open-$VERSION.tar.gz
+[ "$TARGET" != "/" ] && /bin/rm -rf $TARGET
+

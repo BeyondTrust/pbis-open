@@ -1,0 +1,14 @@
+#include <compat/dcerpc.idl.include>
+
+[ uuid(12345778-1234-abcd-ef00-0123456789ac),
+  version(1.0),
+  pointer_default(unique)
+]
+interface samrt {
+/* this is a test copy of the SAMR interface */
+	unsigned32 samrt_Connect (
+		[in,unique]	unsigned16 *system_name,
+		[in]		unsigned32 access_mask,
+		[out,ref,context_handle] void **connect_handle
+	);
+}

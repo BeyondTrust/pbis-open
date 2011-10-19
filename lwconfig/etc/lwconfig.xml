@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LWConfigCapabilities>
+  <LWConfigSection Section="Eventlog">   
+    <Capability Name="AllowDeleteTo">
+      <Description>Allowed users that can delete entries from log</Description>
+      <RegistryPath>\Services\eventlog\Parameters\AllowDeleteTo</RegistryPath>
+      <Type>string</Type>
+      <Default></Default>
+      <Allowed>Comma separated list of user names, group names, or SIDs</Allowed>
+      <ApplyCommand>/opt/likewise/bin/lwsm restart eventlog</ApplyCommand>
+    </Capability>
+    <Capability Name="AllowReadTo">
+      <Description>Allowed users that can read entries from log</Description>
+      <RegistryPath>\Services\eventlog\Parameters\AllowReadTo</RegistryPath>
+      <Type>string</Type>
+      <Default></Default>
+      <Allowed>Comma separated list of user names, group names, or SIDs</Allowed>
+      <ApplyCommand>/opt/likewise/bin/lwsm restart eventlog</ApplyCommand>
+    </Capability>
+    <Capability Name="AllowWriteTo">
+      <Description>Allowed users that can delete entries from log</Description>
+      <RegistryPath>\Services\eventlog\Parameters\AllowWriteTo</RegistryPath>
+      <Type>string</Type>
+      <Default></Default>
+      <Allowed>Comma separated list of user names, group names, or SIDs</Allowed>
+      <ApplyCommand>/opt/likewise/bin/lwsm restart eventlog</ApplyCommand>
+    </Capability>
+    <Capability Name="MaxDiskUsage">
+      <Description>Max size in kilobytes of eventlog database</Description>
+      <RegistryPath>\Services\eventlog\Parameters\MaxDiskUsage</RegistryPath>
+      <Type>dword</Type>
+      <Prompt>KiloBytes</Prompt>
+      <Min>100</Min>
+      <Max>2000000</Max>
+      <Default>100000</Default>
+      <Multiplier>1000</Multiplier> <!-- Converted to bytes -->
+      <ApplyCommand>/opt/likewise/bin/lwsm restart eventlog</ApplyCommand>
+    </Capability>
+    <Capability Name="MaxEventLifespan">
+      <Description>Max number of days that events are saved in eventlog</Description>
+      <RegistryPath>\Services\eventlog\Parameters\MaxEventLifespan</RegistryPath>
+      <Type>dword</Type>
+      <Prompt>Days</Prompt>
+      <Min>1</Min>
+      <Max>365</Max>
+      <Default>90</Default>
+      <Multiplier>1</Multiplier> <!-- As entered -->
+      <ApplyCommand>/opt/likewise/bin/lwsm restart eventlog</ApplyCommand>
+    </Capability>
+    <Capability Name="MaxNumEvents">
+      <Description>Max number of events to hold in eventlog database</Description>
+      <RegistryPath>\Services\eventlog\Parameters\MaxNumEvents</RegistryPath>
+      <Type>dword</Type>
+      <Prompt>Number</Prompt>
+      <Min>100</Min>
+      <Max>2000000</Max>
+      <Default>100000</Default>
+      <ApplyCommand>/opt/likewise/bin/lwsm restart eventlog</ApplyCommand>
+    </Capability>
+  </LWConfigSection>
+  <LWConfigSection Section="Lsass">   
+    <Capability Name="DomainSeparator">
+      <Description>Character used to designate the domain name separator</Description>
+      <RegistryPath>\Services\lsass\Parameters\DomainSeparator</RegistryPath>
+      <Type>string</Type>
+      <Prompt>Character</Prompt>
+      <Default>\\</Default>
+      <Allowed>Punctuation character</Allowed>
+      <Excluded>White space, alphanumeric, or SpaceReplacement character</Excluded>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="SpaceReplacement">
+      <Description>Character used to designate space characters in names of objects</Description>
+      <RegistryPath>\Services\lsass\Parameters\SpaceReplacement</RegistryPath>
+      <Type>string</Type>
+      <Prompt>Character</Prompt>
+      <Default>^<Default>
+      <Allowed>Punctuation character or Space</Allowed>
+      <Excluded>Alphanumeric, @, /, #, or DomainSeparator character</Excluded>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability> Name="EnableEventlog">
+      <Description>Configure lsass to log events to the event log</Description>
+      <RegistryPath>\Services\lsass\Parameters\EnableEventlog</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>0</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability> Name="LogInvalidPasswords">
+      <Description>Configure lsass to log events for failed authentication attempts due to invalid passwords</Description>
+      <RegistryPath>\Services\lsass\Parameters\LogInvalidPasswords</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>0</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability> Name="LogNetworkConnectionEvents">
+      <Description>Configure lsass to log events for offline query failures and transitions</Description>
+      <RegistryPath>\Services\lsass\Parameters\LogNetworkConnectionEvents</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>1</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability> Name="LsassLogLevel">
+      <Description>Configure lsass logging detail level</Description>
+      <RegistryPath>\Services\lsass\Parameters\LogLevel</RegistryPath>
+      <Type>string</Type>
+      <Value>error</Value>
+      <Value>warning</Value>
+      <Value>info</Value>
+      <Value>verbose</Value>
+      <Value>debug</Value>
+      <Value>trace</Value>
+      <Default>error</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+  </LWConfigSection>
+  <LWConfigSection Section="Lsass - PAM">   
+    <Capability Name="DisplayMotd">
+      <Description>Character used to designate the domain name separator</Description>
+      <RegistryPath>\Services\lsass\Parameters\PAM\DisplayMotd</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>0</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability> Name="PAMLogLevel">
+      <Description>Configure PAM lsass logging detail level</Description>
+      <RegistryPath>\Services\lsass\Parameters\PAM\LogLevel</RegistryPath>
+      <Type>string</Type>
+      <Value>disabled</Value>
+      <Value>error</Value>
+      <Value>warning</Value>
+      <Value>info</Value>
+      <Value>verbose</Value>
+      <Default>error</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability> Name="UserNotAllowedError">
+      <Description>Message displayed at console logon failed attempt</Description>
+      <RegistryPath>\Services\lsass\Parameters\PAM\UserNotAllowedError</RegistryPath>
+      <Type>string</Type>
+      <Prompt>Not allowed error</Prompt>
+      <Default>Access Denied</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+  </LWConfigSection>
+  <LWConfigSection Section="Lsass - Active Directory provider">   
+    <Capability Name="AssumeDefaultDomain">
+      <Description>Apply domain name prefix to account name at logon</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\AssumeDefaultDomain</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>0</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="CreateHomeDir">
+      <Description>Whether home directories should be automatically created upon user logon</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\CreateHomeDir</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>1</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="CreateK5Login">
+      <Description>Whether .k5login file is to be created upon user logon</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\CreateK5Login</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>1</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="SyncSystemTime">
+      <Description>Whether system time should be syncronized with AD domain controller</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\SyncSystemTime</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>1</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="TrimUserMembership">
+      <Description>Whether to remove a cached group membership entry derived from PAC with information from LDAP showing the user disappearing from a group.</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\TrimUserMembership</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>1</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="LdapSignAndSeal">
+      <Description>Whether all LDAP traffic should be sent both signed and sealed</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\LdapSignAndSeal</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>0</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability> Name="LogADNetworkConnectionEvents">
+<!-- Seems to be a duplicate of the lsass\Parameters setting, doesn't look right -->
+      <Description>Configure lsass to log events for offline query failures and transitions</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\LogNetworkConnectionEvents</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>1</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="NssEnumerationEnabled">
+      <Description>Whether to enumerate users or groups for NSS</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\NssEnumerationEnabled</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default Label="MacOS">1</Default>
+      <Default Label="Linux">0</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="NssGroupMembersQueryCacheOnly">
+      <Description>Whether to return only cached info for NSS group members</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\NssGroupMembersQueryCacheOnly</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>1</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="NssUserMembershipQueryCacheOnly">
+      <Description>Whether to return only cached info for NSS user's groups</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\NssUserMembershipQueryCacheOnly</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>0</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="RefreshUserCredentials">
+      <Description>Whether to refresh user credentials agaist AD domain controller</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\RefreshUserCredentials</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>1</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="CacheEntryExpiry">
+      <Description>Duration for when lsass object cache entries are marked stale</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\CacheEntryExpiry</RegistryPath>
+      <Type>dword</Type>
+      <Prompt>Hours</Prompt>
+      <Min>0</Min>
+      <Max>24</Max>
+      <Default>4</Default>
+      <Multiplier>3600</Multiplier> <!-- 60*60 -->
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="CachePurgeTimeout">
+      <Description>Duration for when lsass object cache entries are purged</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\CachePurgeTimeout</RegistryPath>
+      <Type>dword</Type>
+      <Prompt>Days</Prompt>
+      <Min>0</Min>
+      <Max>365</Max>
+      <Default>30</Default>
+      <Multiplier>86400</Multiplier> <!-- 24*60*60 -->
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="DomainManagerCheckDomainOnlineInterval">
+      <Description>How often the domain manager should check whether a domain is back online</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\DomainManagerCheckDomainOnlineInterval</RegistryPath>
+      <Type>dword</Type>
+      <Prompt>Minutes</Prompt>
+      <Min>1</Min>
+      <Max>1440</Max>
+      <Default>5</Default>
+      <Multiplier>60</Multiplier> <!-- Convert to seconds -->
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="DomainManagerUnknownDomainCacheTimeout">
+      <Description>How long an unknown domain is cached as unknown in the domain manager</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\DomainManagerUnknownDomainCacheTimeout</RegistryPath>
+      <Type>dword</Type>
+      <Prompt>Minutes</Prompt>
+      <Min>1</Min>
+      <Max>1440</Max>
+      <Default>60</Default>
+      <Multiplier>60</Multiplier> <!-- Convert to seconds -->
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="MachinePasswordLifespan">
+      <Description>Machine password expiration lifespan</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\MachinePasswordLifespan</RegistryPath>
+      <Type>dword</Type>
+      <Prompt>Days</Prompt>
+      <Min>1</Min>
+      <Max>365</Max>
+      <Default>30</Default>
+      <Multiplier>86400</Multiplier> <!-- 24*60*60 -->
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="MemoryCacheSizeCap">
+      <Description>The maximum bytes to use for the in-memory cache. Old data will be purged if the total cache size exceeds this limit. A value of 0 indicates no limit.</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\MemoryCacheSizeCap</RegistryPath>
+      <Type>dword</Type>
+      <Prompt>Bytes</Prompt>
+      <Default>0</Default>
+      <Multiplier>1</Multiplier> <!-- As entered -->
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="HomeDirPrefix">
+      <Description>Prefix path for user's home directory. This value is used in place of the %H in the HomeDirTemplate setting. Value must be an absolute path.</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\HomeDirPrefix</RegistryPath>
+      <Type>string</Type>
+      <Default Label="Linux">/home</Default>
+      <Default Label="MacOS">/Users</Default>
+      <Default Label="SunOS">/export/home</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="HomeDirTemplate">
+      <Description>Format string for user's home directory path. This value can contain substitution string markers for HomeDirPrefix (%H), Domain (%D), and User (%U).</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\HomeDirTemplate</RegistryPath>
+      <Type>string</Type>
+      <Default>%H/local/%D/%U</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="HomeDirUmask">
+      <Description>Umask for home directories</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\HomeDirUmask</RegistryPath>
+      <Type>string</Type>
+      <Default>022</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="LoginShellTemplate">
+      <Description>Default login shell template</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\LoginShellTemplate</RegistryPath>
+      <Type>string</Type>
+      <Default>/bin/sh</Default>
+<!-- This might be a default for Mac only, need to see if this is different per distro -->
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="SkeletonDirs">
+      <Description>Skeleton home directory template directories</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\SkeletonDirs</RegistryPath>
+      <Type>string</Type>
+      <Default Label="MacOS">/System/Library/User Template/Non_localized, /System/Library/User Template/English.lproj</Default>
+<!-- This might be a default for Mac only, need to see if this is different per distro -->
+      <Default Label="Linux">/etc/skel</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="UserDomainPrefix">
+      <Description>Domain short name prefix to be used when AssumeDefaultDomain setting is enabled</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\UserDomainPrefix</RegistryPath>
+      <Type>string</Type>
+      <Default></Default>
+      <Allowed>Domain short name of Active Directory domain that the user accounts reside. Blank will use the domain name which the computer is joined to.</Allowed>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="RequireMembershipOf">
+      <Description>Restrict logon access to computer to specific users or group members, or SIDs</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\RequireMembershipOf</RegistryPath>
+      <Type>multi-string</Type>
+      <Default></Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+  </LWConfigSection>
+  <LWConfigSection Section="Lsass - Local provider">   
+    <Capability Name="Local_AcceptNTLMv1">
+      <Description></Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\Local\AcceptNTLMv1</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>1</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="Local_CreateHomeDir">
+      <Description>Whether home directories should be automatically created upon lsass local provider account user logon</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\Local\CreateHomeDir</RegistryPath>
+      <Type>dword</Type>
+      <Value Label="false">0</Value>
+      <Value Label="true">1</Value>
+      <Default>1</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="Local_HomeDirPrefix">
+      <Description>Prefix path for lsass local provider account user's home directory. This value is used in place of the %H in the HomeDirTemplate setting. Value must be an absolute path.</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\Local\HomeDirPrefix</RegistryPath>
+      <Type>string</Type>
+      <Default Label="Linux">/home</Default>
+      <Default Label="MacOS">/Users</Default>
+      <Default Label="SunOS">/export/home</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="Local_HomeDirTemplate">
+      <Description>Format string for lsass local provider account user's home directory path. This value can contain substitution string markers for HomeDirPrefix (%H), Domain (%D), and User (%U).</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\Local\HomeDirTemplate</RegistryPath>
+      <Type>string</Type>
+      <Default>%H/local/%D/%U</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="Local_HomeDirUmask">
+      <Description>Umask for lsass local provider account home directories</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\Local\HomeDirUmask</RegistryPath>
+      <Type>string</Type>
+      <Default>022</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="Local_LoginShellTemplate">
+      <Description>Default login shell template for lsass local provider accounts</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\Local\LoginShellTemplate</RegistryPath>
+      <Type>string</Type>
+      <Default>/bin/sh</Default>
+<!-- This might be a default for Mac only, need to see if this is different per distro -->
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+    <Capability Name="Local_SkeletonDirs">
+      <Description>Skeleton home directory template directories for lsass local provider accounts</Description>
+      <RegistryPath>\Services\lsass\Parameters\Providers\ActiveDirectory\SkeletonDirs</RegistryPath>
+      <Type>string</Type>
+      <Default Label="MacOS">/System/Library/User Template/Non_localized, /System/Library/User Template/English.lproj</Default>
+<!-- This might be a default for Mac only, need to see if this is different per distro -->
+      <Default Label="Linux">/etc/skel</Default>
+      <ApplyCommand>/opt/likewise/bin/lw-refresh-configuration</ApplyCommand>
+    </Capability>
+  </LWConfigSection>
+</LWConfigCapabilities>
+
+
+<!--
+#Additional Likewise settings to be converted to Capabilities
+
+[HKEY_THIS_MACHINE\Services\lsass\Parameters\NTLM]
+"SendNTLMv2"=dword:00000000
+"Support128bit"=dword:00000001
+"Support56bit"=dword:00000001
+"SupportKeyExchange"=dword:00000001
+"SupportNTLM2SessionSecurity"=dword:00000001
+"SupportUnicode"=dword:00000001
+
+-->

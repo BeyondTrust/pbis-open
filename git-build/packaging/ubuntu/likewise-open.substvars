@@ -1,0 +1,1 @@
+shlibs:Depends=libuuid1, libcomerr2 (>= 1.33-3), likewise-open, libxml2 (>= 2.6.27), libldap-2.4-2 (>= 2.4.7), libkrb53 (>= 1.6.dfsg.2), libpam0g (>= 0.99.7.1), libc6 (>= 2.4)

@@ -1,0 +1,43 @@
+lsaincludedir = $(includedir)/lsa
+lsainclude_HEADERS = \
+    lsa/lsa.h \
+    lsa/join.h \
+    lsa/ad.h \
+    lsa/lsa2.h \
+    lsa/provider.h
+
+ntlmincludedir = $(includedir)/ntlm
+ntlminclude_HEADERS = \
+    ntlm/gssntlm.h \
+    ntlm/sspintlm.h
+
+lsarpcincludedir = $(includedir)/lw/rpc
+lsarpcinclude_HEADERS =   \
+    lw/rpc/lsa.h             \
+    lw/rpc/samr.h            \
+    lw/rpc/netlogon.h        \
+    lw/rpc/dssetup.h         \
+    lw/rpc/krb5pac.h         \
+    lw/rpc/wkssvc.h
+
+noinst_HEADERS = \
+    ntlmipc.h \
+    lsaaccess.h \
+    lsaclient.h \
+    lsalog_r.h \
+    lsasystem.h \
+    lwmapsecurity-lsass.h \
+    xpg_socket.h
+
+lsainternaldir = $(includedir)/lsa/internal
+lsainternal_HEADERS = \
+    lsaadprovider.h \
+    lsadatablob.h \
+    lsadef.h \
+    lsaipc.h \
+    lsakrb5smb.h \
+    lsalist.h \
+    lsasrvcred.h \
+    lsasystem.h \
+    lsautils.h \
+    lwsecurityidentifier.h

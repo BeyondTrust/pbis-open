@@ -1,0 +1,1909 @@
+/*
+ * 
+ * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      rpc.idl
+**
+**  FACILITY:
+**
+**      Remote Procedure Call
+**
+**  ABSTRACT:
+**
+**  This module contains the public interface to the Common Communications
+**  Service of the RPC facility.
+**
+**
+*/
+
+[local] interface rpc
+{
+import "dce/lbase.idl";
+import "dce/rpcsts.idl";
+import "dce/rpcbase.idl";
+import "dce/rpcpvt.idl";
+import "dce/ncastat.idl";
+import "dce/iovector.idl";
+import "dce/uuid.idl";
+import "dce/ndrold.idl";
+import "dce/rpctypes.idl";
+import "dce/twr.idl";
+
+/*************************************************************************/
+/*******************  Comm Services Binding object  **********************/
+/*************************************************************************/
+
+/*
+ * R P C _ B I N D I N G _ C O P Y
+ *
+ * Copy a binding. A new binding object is created and all attributes of the
+ * source binding are given to the destination binding. This includes
+ * the object UUID, address and timeout value.
+ */
+void rpc_binding_copy
+(
+    [in]        rpc_binding_handle_t    src_binding_handle,
+    [out]       rpc_binding_handle_t    *dst_binding_handle,
+    [out]       unsigned32              *status
+);
+
+
+/*
+ * R P C _ B I N D I N G _ F R E E
+ *
+ * Free a binding. A NULL will be returned.  When no more duplicate handles
+ * to a binding object exist, the binding object is freed.
+ */
+void rpc_binding_free
+(
+    [in, out]   rpc_binding_handle_t    *binding_handle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ B I N D I N G _ F R O M _ S T R I N G _ B I N D I N G
+ *
+ * Convert a string binding into a binary binding.
+ */
+void rpc_binding_from_string_binding
+(
+    [in]        unsigned_char_p_t       string_binding,
+    [out]       rpc_binding_handle_t    *binding_handle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ B I N D I N G _ I N Q _ O B J E C T
+ *
+ * Inquire what the object UUID in a binding is.
+ */
+void rpc_binding_inq_object
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       dce_uuid_t              *object_uuid,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ B I N D I N G _ R E S E T
+ *
+ * Reset a binding such that the host is specified but the server on
+ * that host is unspecified.
+ */
+void rpc_binding_reset
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ B I N D I N G _ S E T _ O B J E C T
+ *
+ * Set the object UUID in a binding to the given object UUID.
+ */
+void rpc_binding_set_object
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [in]        dce_uuid_p_t            object_uuid,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ B I N D I N G _ T O _ S T R I N G _ B I N D I N G
+ *
+ * Convert a binary binding into a string binding.
+ */
+void rpc_binding_to_string_binding
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       unsigned_char_p_t       *string_binding,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ B I N D I N G _ V E C T O R _ F R E E
+ *
+ * This routine will free the bindings contained in the vector (using
+ * rpc_binding_free) and the vector itself. A NULL pointer will be
+ * returned.
+ */
+void rpc_binding_vector_free
+(
+    [in, out]   rpc_binding_vector_p_t  *binding_vector,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S T R I N G _ B I N D I N G _ C O M P O S E
+ *
+ * Compose a string binding from its various component parts.
+ */
+void rpc_string_binding_compose
+(
+    [in]        unsigned_char_p_t       string_object_uuid,
+    [in]        unsigned_char_p_t       string_protseq,
+    [in]        unsigned_char_p_t       string_netaddr,
+    [in]        unsigned_char_p_t       string_endpoint,
+    [in]        unsigned_char_p_t       string_options,
+    [out]       unsigned_char_p_t       *string_binding,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S T R I N G _ B I N D I N G _ P A R S E
+ *
+ * Split the string binding into its various component parts.
+ *
+ * "object_uuid"@"string_address" ==> "object_uuid" and "string_address"
+ * "string_address" is of the form
+ *      "protocol_sequence":"network_address"["endpoint"]
+ */
+void rpc_string_binding_parse
+(
+    [in]        unsigned_char_p_t       string_binding,
+    [out]       unsigned_char_p_t       *string_object_uuid,
+    [out]       unsigned_char_p_t       *string_protseq,
+    [out]       unsigned_char_p_t       *string_netaddr,
+    [out]       unsigned_char_p_t       *string_endpoint,
+    [out]       unsigned_char_p_t       *string_options,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ B I N D I N G _ S E T _ A U T H _ I N F O
+ *
+ * Set authentication and authorization information into a binding
+ * handle.
+ */
+void rpc_binding_set_auth_info
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [in]        unsigned_char_p_t       server_princ_name,
+    [in]        unsigned32              protect_level,
+    [in]        unsigned32              authn_svc,
+    [in]        rpc_auth_identity_handle_t
+                                        auth_identity,
+    [in]        unsigned32              authz_svc,
+    [out]       unsigned32              *st
+);
+
+/*
+ * R P C _ B I N D I N G _ I N Q _ A U T H _ I N F O
+ *
+ * Return authentication and authorization information from a binding
+ * handle.  Client-only.
+ */
+void rpc_binding_inq_auth_info
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       unsigned_char_p_t       *server_princ_name,
+    [out]       unsigned32              *protect_level,
+    [out]       unsigned32              *authn_svc,
+    [out]       rpc_auth_identity_handle_t
+                                        *auth_identity,
+    [out]       unsigned32              *authz_svc,
+    [out]       unsigned32              *st
+);
+
+/*
+ * R P C _ B I N D I N G _ I N Q _ A U T H _ C A L L E R
+ *
+ * Return an opaque handle on version 1.1+ authentication and
+ * authorization information from a binding handle to an 
+ * authenticated client.  The clients credentials are
+ * obtained by calling the sec_cred_ interface.
+ * Server-only.
+ *
+ * This call replaces rpc_binding_inq_auth_client(), which is 
+ * supported for backward compatibility purposes.
+ */
+void rpc_binding_inq_auth_caller
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       rpc_authz_cred_handle_t *privs,
+    [out]       unsigned_char_p_t       *server_princ_name,
+    [out]       unsigned32              *protect_level,
+    [out]       unsigned32              *authn_svc,
+    [out]       unsigned32              *authz_svc,
+    [out]       unsigned32              *st
+);
+
+/*
+ * R P C _ B I N D I N G _ I N Q _ A U T H _ C L I E N T
+ *
+ * Return version 1.0.x authentication and authorization information 
+ * from a binding handle to an authenticated client.  Server-only.
+ * This call is superceded by rpc_binding_inq_auth_caller(), but is
+ * retained for backward compatibility purposes.   Server-only.
+ */
+void rpc_binding_inq_auth_client
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       rpc_authz_handle_t      *privs,
+    [out]       unsigned_char_p_t       *server_princ_name,
+    [out]       unsigned32              *protect_level,
+    [out]       unsigned32              *authn_svc,
+    [out]       unsigned32              *authz_svc,
+    [out]       unsigned32              *st
+);
+
+void rpc_binding_set_transport_info
+(
+    [in]        rpc_binding_handle_t         binding_handle,
+    [in]        rpc_transport_info_handle_t  info,
+    [out]       unsigned32                   *st
+);
+
+void rpc_binding_inq_transport_info
+(
+    [in]        rpc_binding_handle_t         binding_handle,
+    [out]       rpc_transport_info_handle_t  *info,
+    [out]       unsigned32                   *st
+);
+
+void rpc_binding_inq_prot_seq
+(
+    [in]        rpc_binding_handle_t         binding_handle,
+    [out]       unsigned32                   *prot_seq,
+    [out]       unsigned32                   *st
+);
+
+void rpc_binding_inq_access_token_caller
+(
+    [in]        rpc_binding_handle_t         binding_handle,
+    [out]       rpc_access_token_p_t*        token,
+    [out]       unsigned32                    *st
+);
+
+/*
+ * R P C _ B I N D I N G _ S E R V E R _ F R O M _ C L I E N T
+ *
+ * Convert a client binding handle to a server handle.  The new handle's
+ * endpoint is reset and it has no associated authentication information.
+ *
+ * Client binding handles are those created by the runtime and provided
+ * to the server manager as a result of a [handle_t] RPC parameter.
+ */
+void rpc_binding_server_from_client
+(
+    [in]        rpc_binding_handle_t    cbinding_handle,
+    [out]       rpc_binding_handle_t    *sbinding_handle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ I N Q _ C A L L _ A T T R I B U T E S
+ *
+ * Return client security context attributes.
+ */
+typedef struct rpc_call_attributes_v1_s_t {
+	unsigned32		version;
+	unsigned32		flags;
+	unsigned32		server_princ_name_buff_len;
+	[size_is(server_princ_name_buff_len)] char *server_princ_name;
+	unsigned32		client_princ_name_buff_len;
+	[size_is(client_princ_name_buff_len)] char *client_princ_name;
+	unsigned32		authn_level;
+	unsigned32		authn_protocol;
+	boolean			null_session;
+} rpc_call_attributes_v1_t, *rpc_call_attributes_v1_p_t;
+
+typedef rpc_call_attributes_v1_t rpc_call_attributes_t, *rpc_call_attributes_p_t;
+
+const unsigned32 rpc_call_attributes_version = 1;
+const unsigned32 rpc_query_server_principal_name = 2;
+const unsigned32 rpc_query_client_principal_name = 4;
+
+void rpc_server_inq_call_attributes
+(
+    [in]        rpc_binding_handle_t    cbinding_handle,
+    [out]       rpc_call_attributes_t   *attributes,
+    [out]       unsigned32               *status
+);
+ 
+/*
+ * R P C _ B I N D I N G _ I N Q _ S E C U R I T Y _ C O N T E X T
+ *
+ * Return mechanism-specific security context.
+ */
+void rpc_binding_inq_security_context
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       unsigned32              *authn_svc,
+    [out]       void                    **mech_context,
+    [out]       unsigned32              *st
+);
+
+typedef struct rpc_binding_handle_template_v1_s_t {
+	unsigned32		version;
+	unsigned32		flags;
+	unsigned_char_p_t	protseq;
+	unsigned_char_p_t	network_address;
+	unsigned_char_p_t	string_endpoint;
+	unsigned_char_p_t	reserved;
+	dce_uuid_t		object_uuid;
+} rpc_binding_handle_template_v1_t, rpc_binding_handle_template_t;
+
+typedef struct rpc_binding_handle_security_v1_s_t {
+	unsigned32		version;
+	unsigned_char_p_t	server_princ_name;
+	unsigned32		authn_level;
+	unsigned32		authn_protocol;
+	rpc_auth_identity_handle_t auth_identity;
+	unsigned32		authz_svc;
+} rpc_binding_handle_security_v1_t, rpc_binding_handle_security_t;
+
+typedef struct rpc_binding_handle_options_v1_s_t {
+	unsigned32		version;
+	unsigned32		flags;
+	unsigned32		com_timeout;
+	unsigned32		cancel_timeout;
+} rpc_binding_handle_options_v1_t, rpc_binding_handle_options_t;
+
+const unsigned32 rpc_bht_noncausal = 1;
+const unsigned32 rpc_bht_dont_linger = 2;
+const unsigned32 rpc_bht_exclusive_and_guaranteed = 4;
+
+/*
+ * R P C _ B I N D I N G _ C R E A T E
+ */
+void rpc_binding_create
+(
+    [in]        rpc_binding_handle_template_t *_template,
+    [in]        rpc_binding_handle_security_t *security,
+    [in]        rpc_binding_handle_options_t  *options,
+    [out]       rpc_binding_handle_t          *handle,
+    [out]       unsigned32                    *st
+);
+
+/*************************************************************************/
+/*******************  Comm Services Interface object  ********************/
+/*************************************************************************/
+
+/*
+ * R P C _ I F _ I D _ V E C T O R _ F R E E
+ *
+ * Free the memory allocated by the RPC runtime for an interface id
+ * vector. A NULL pointer will be returned.
+ */
+void rpc_if_id_vector_free
+(
+    [in, out]   rpc_if_id_vector_p_t    *if_id_vector,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ I F _ I N Q _ I D
+ *
+ * Inquire what interface UUID and version(s) are contained in the
+ * interface spec handle.
+ */
+void rpc_if_inq_id
+(
+    [in]        rpc_if_handle_t         if_spec,
+    [out]       rpc_if_id_t             *if_id,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/******************  Comm Services Network object  ***********************/
+/*************************************************************************/
+
+/*
+ * R P C _ N E T W O R K _ I N Q _ P R O T S E Q S
+ *
+ * Return all protocol sequences supported by both the RPC runtime and
+ * the operating system.
+ */
+void rpc_network_inq_protseqs
+(
+    [out]       rpc_protseq_vector_p_t  *protseq_vector,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N E T W O R K _ I S _ P R O T S E Q _ V A L I D
+ *
+ * This routine will return false if the protocol sequence given is not
+ * supported by either the RPC runtime or the operating system. It will return
+ * true if it is supported by both the RPC runtime and the operating system.
+ */
+boolean32 rpc_network_is_protseq_valid
+(
+    [in]        unsigned_char_p_t       protseq,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/*******************  Comm Services Object object  ***********************/
+/*************************************************************************/
+
+/*
+ * R P C _ O B J E C T _ S E T _ T Y P E
+ *
+ * Set the type UUID associated with an object UUID in the RPC runtime.
+ * This routine, used in conjunction with rpc_if_register, allows a server
+ * to support multiple implementations of the same interface. The RPC
+ * runtime will dispatch to a specific implementation, contained in a
+ * manager Entry Point Vector, based on the object UUID contained in the
+ * binding of the RPC. The RPC runtime, using the results of a call to
+ * this routine, will determine the type UUID of the object UUID. A
+ * specific manager Entry Point Vector of this type UUID can then be
+ * found using the results of a call to the rpc_if_register
+ * routine.
+ */
+void rpc_object_set_type
+(
+    [in]        dce_uuid_p_t            object_uuid,
+    [in]        dce_uuid_p_t            type_uuid,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ O B J E C T _ I N Q _ T Y P E
+ *
+ * Given an object ID, return its type ID.
+ */
+void rpc_object_inq_type
+(
+    [in]        dce_uuid_p_t            object_uuid,
+    [out]       dce_uuid_t              *type_uuid,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ O B J E C T _ S E T _ I N Q _ F N
+ *
+ * Supply a function that is called by the runtime to determine the type
+ * of objects that have not been set by "rpc_object_set_type".
+ */
+void rpc_object_set_inq_fn
+(
+    [in]        rpc_object_inq_fn_t     inq_fn,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/********************  Comm Services Protseq object  *********************/
+/*************************************************************************/
+
+/*
+ * R P C _ P R O T S E Q _ V E C T O R _ F R E E
+ *
+ * Free the memory allocated by the RPC runtime for the protocol sequences
+ * contained in the vector and the vector itself. A NULL pointer will be
+ * returned.
+ */
+void rpc_protseq_vector_free
+(
+    [in, out]    rpc_protseq_vector_p_t *protseq_vector,
+    [out]        unsigned32             *status
+);
+
+/*************************************************************************/
+/********************  Comm Services Server object  **********************/
+/*************************************************************************/
+
+/*
+ * R P C _ S E R V E R _ I N Q _ B I N D I N G S
+ *
+ * Return the bindings in the local process to which RPCs may be made.
+ * Note that object UUIDs are not part of these bindings.
+ */
+void rpc_server_inq_bindings
+(
+    [out]       rpc_binding_vector_p_t  *binding_vector,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ L I S T E N
+ *
+ * This routine tells the RPC runtime to being listening for RPCs (in
+ * any of the registered interfaces) on all protocol sequences
+ * previously registered with calls to rpc_protseq_register or
+ * rpc_protseq_register_wk. The maximum number of concurrent calls the
+ * RPC runtime can handle is given. Note that this routine will not
+ * return until either a fault occurs or a shutdown is requested.
+ */
+void rpc_server_listen
+(
+    [in]        unsigned32              max_calls_exec,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ U S E _ A L L _ P R O T S E Q S
+ *
+ * This routine tells the RPC runtime to listen for RPCs on all
+ * supported (by both the RPC runtime and the operating system) protocol
+ * sequences.
+ */
+void rpc_server_use_all_protseqs
+(
+    [in]        unsigned32              max_call_requests,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ U S E _ P R O T S E Q
+ *
+ * This routine tells the RPC runtime to listen for RPCs on the protocol
+ * sequence given. Note that this protocol sequence must be supported by
+ * both the RPC runtime and the operating system.
+ */
+void rpc_server_use_protseq
+(
+    [in]        unsigned_char_p_t       protseq,
+    [in]        unsigned32              max_call_requests,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ U S E _ P R O T S E Q _ E P
+ *
+ * This routine tells the RPC runtime to listen for RPCs on the protocol
+ * sequence given. Part of the address (endpoint) to be listened on is
+ * provided by the caller. Note that this protocol sequence must be
+ * supported by both the RPC runtime and the operating system.
+ */
+void rpc_server_use_protseq_ep
+(
+    [in]        unsigned_char_p_t       protseq,
+    [in]        unsigned32              max_call_requests,
+    [in]        unsigned_char_p_t       endpoint,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ U S E _ P R O T S E Q _ I F
+ *
+ * This routine tells the RPC runtime to listen for RPCs on the protocol
+ * sequence given. Part of the address (endpoint) to be listened on will
+ * be extracted from the interface spec handle. Note that this protocol
+ * sequence must be supported by both the RPC runtime and the operating
+ * system.
+ */
+void rpc_server_use_protseq_if
+(
+    [in]        unsigned_char_p_t       protseq,
+    [in]        unsigned32              max_call_requests,
+    [in]        rpc_if_handle_t         if_spec,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ U S E _ A L L _ P R O T S E Q S _ I F
+ *
+ * This routine tells the RPC runtime to listen for RPCs on all the
+ * protocol sequences for which the specified interface has well-known
+ * endpoints.
+ */
+void rpc_server_use_all_protseqs_if
+(
+    [in]        unsigned32              max_call_requests,
+    [in]        rpc_if_handle_t         if_spec,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ R E G I S T E R _ I F
+ *
+ * Register an interface with the RPC runtime. This includes the
+ * interface specification handle which contains the interface UUID and
+ * version, the server stub Entry Point Vector for this interface, a
+ * manager Entry Point Vector for this interface and the type UUID
+ * associated with this manager EPV. This routine may be called multiple
+ * times with the same interface spec handle but different manager
+ * EPVs and type UUIDs. The RPC runtime will group these manager EPVs and
+ * type UUIDs with the single interface spec handle and server stub EPV.
+ * See rpc_object_register for an explanation of the purpose of providing
+ * a type UUID.
+ */
+void rpc_server_register_if
+(
+    [in]        rpc_if_handle_t         if_spec,
+    [in]        dce_uuid_p_t            mgr_type_uuid,
+    [in]        rpc_mgr_epv_t           mgr_epv,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ I F _ C A L L B A C K _ F N _ T
+ *
+ * Security callback function
+ */
+typedef void (*rpc_if_callback_fn_t)
+(
+    [in]        rpc_if_handle_t        if_spec,
+    [in]        void                   *context,
+    [out]       unsigned32             *status
+);
+
+const unsigned32 rpc_if_autolisten = 0x0001;
+const unsigned32 rpc_if_ole = 0x0002;
+const unsigned32 rpc_if_allow_unknown_authority = 0x0004;
+const unsigned32 rpc_if_allow_secure_only = 0x0008;
+const unsigned32 rpc_if_allow_callbacks_with_no_auth = 0x0010;
+const unsigned32 rpc_if_allow_local_only = 0x0020;
+const unsigned32 rpc_if_sec_no_cache = 0x0040;
+
+/*
+ * R P C _ S E R V E R _ R E G I S T E R _ I F _ E X
+ *
+ * Extended version of rpc_server_register_if()
+ */
+void rpc_server_register_if_ex
+(
+    [in]        rpc_if_handle_t         if_spec,
+    [in]        dce_uuid_p_t            mgr_type_uuid,
+    [in]        rpc_mgr_epv_t           mgr_epv,
+    [in]        unsigned32              flags,
+    [in]        unsigned32              max_calls,
+    [in]        rpc_if_callback_fn_t    if_callback,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ R E G I S T E R _ I F 2
+ *
+ * Same as rpc_server_register_if_ex(), but takes a maximum RPC
+ * size parameter to avoid Denial of Service (DoS) attacks.
+ */
+void rpc_server_register_if_2
+(
+    [in]        rpc_if_handle_t         if_spec,
+    [in]        dce_uuid_p_t            mgr_type_uuid,
+    [in]        rpc_mgr_epv_t           mgr_epv,
+    [in]        unsigned32              flags,
+    [in]        unsigned32              max_calls,
+    [in]        unsigned32              max_rpc_size,
+    [in]        rpc_if_callback_fn_t    if_callback,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ U N R E G I S T E R _ I F
+ *
+ * Unregister from the RPC runtime an interface spec handle, its server
+ * stub Entry Point Vector and all manager Entry Point Vectors for this
+ * interface.
+ */
+void rpc_server_unregister_if
+(
+    [in]        rpc_if_handle_t         if_spec,
+    [in]        dce_uuid_p_t            mgr_type_uuid,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ I N Q _ I F
+ *
+ * Given an interface spec and type ID, return the manager EPV that has
+ * been registered for them (if any).
+ */
+void rpc_server_inq_if
+(
+    [in]        rpc_if_handle_t         if_spec,
+    [in]        dce_uuid_p_t            mgr_type_uuid,
+    [out]       rpc_mgr_epv_t           *mgr_epv,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ R E G I S T E R _ A U T H _ I N F O
+ *
+ * Register authentication information with the RPC runtime.
+ */
+void rpc_server_register_auth_info
+(
+    [in]        unsigned_char_p_t       server_princ_name,
+    [in]        unsigned32              auth_svc,
+    [in]        rpc_auth_key_retrieval_fn_t
+                                        get_key_func,
+    [in]        void                    *arg,
+    [out]       unsigned32              *st
+);
+
+/*************************************************************************/
+/*****************  Comm Services Endpoint Map object  *******************/
+/*************************************************************************/
+
+/*
+ * R P C _ E P _ R E G I S T E R
+ *
+ * Register entries with the local Endpoint Map.  Endpoint map entries
+ * logically consist of <if_spec, address, object, annotation> tuples.
+ * The object_uuid_vec and annotation are optional; NULL may be
+ * specified.
+ *
+ * Registrations tuples that differ only in the endpoint portion of the
+ * address are defined to be duplicate registrations and the new
+ * registration replaces the old registration.  The old registration
+ * is assumed to be stale (i.e. from a previous instance of the server
+ * that exited without unregistering).
+ */
+
+void rpc_ep_register
+(
+    [in]        rpc_if_handle_t         if_spec,
+    [in]        rpc_binding_vector_p_t  binding_vec,
+    [in]        uuid_vector_p_t         object_uuid_vec,
+    [in]        unsigned_char_p_t       annotation,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ E P _ R E G I S T E R _ N O _ R E P L A C E
+ *
+ * Just like "rpc_ep_register" except this version does NOT replace old
+ * registrations that differ only in the endpoint.
+ */
+
+void rpc_ep_register_no_replace
+(
+    [in]        rpc_if_handle_t         if_spec,
+    [in]        rpc_binding_vector_p_t  binding_vec,
+    [in]        uuid_vector_p_t         object_uuid_vec,
+    [in]        unsigned_char_p_t       annotation,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ E P _ R E S O L V E _ B I N D I N G
+ *
+ * Resolve a partially bound server handle into a fully bound
+ * handle.
+ * 
+ */
+void rpc_ep_resolve_binding
+(
+    [in]        rpc_binding_handle_t    binding_h,
+    [in]        rpc_if_handle_t         if_spec, 
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ E P _ U N R E G I S T E R
+ *
+ * Unregister all Endpoint Map entries matching the specified
+ * <if_spec, address, object> tuples.
+ */
+void rpc_ep_unregister
+(
+    [in]        rpc_if_handle_t         if_spec,
+    [in]        rpc_binding_vector_p_t  binding_vec,
+    [in]        uuid_vector_p_t         object_uuid_vec,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/**************************  Management Services  ************************/
+/*************************************************************************/
+
+/*
+ * R P C _ M G M T _ I N Q _ C O M _ T I M E O U T
+ *
+ * Inquire what the RPC timeout is for a binding. See
+ * rpc_mgmt_set_com_timeout for an explanation.
+ */
+void rpc_mgmt_inq_com_timeout
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       unsigned32              *timeout,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ I N Q _ I F _ I D S
+ *
+ * Obtain a vector of interface identifications listing the interfaces
+ * registered with the RPC runtime. If a server has not registered any
+ * interfaces this routine will return an rpc_s_no_interfaces status
+ * code and a NULL if_id_vector. The application is responsible for
+ * calling rpc_if_id_vector_free to release the memory used by the vector.
+ */
+void rpc_mgmt_inq_if_ids
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       rpc_if_id_vector_p_t    *if_id_vector,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ I N Q _ S T A T S
+ *
+ * Obtain statistics about the specified server from the RPC runtime.
+ * Each element in the returned argument contains an integer value which
+ * can be indexed using the defined statistics constants.
+ */
+void rpc_mgmt_inq_stats
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       rpc_stats_vector_p_t    *statistics,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ S T A T S _ V E C T O R _ F R E E
+ *
+ * This routine will free the statistics vector. A NULL pointer will be
+ * returned.
+ */
+void rpc_mgmt_stats_vector_free
+(
+    [in, out]   rpc_stats_vector_p_t    *statistics,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ I S _ S E R V E R _ L I S T E N I N G
+ *
+ * Determine if the specified server is listening for remote procedure calls.
+ */
+boolean32 rpc_mgmt_is_server_listening
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ S E T _ C A N C E L _ T I M E O U T
+ *
+ * Set the amount of time for the RPC runtime to wait for a server to
+ * acknowledge a cancel before orphaning the call. The application should
+ * specify to either wait forever or to wait the length of the time
+ * specified in seconds. If the value of seconds is 0 the remote procedure
+ * call is orphaned as soon as a cancel is received by the server and
+ * control returns immediately to the client application. The default
+ * is to wait forever for the call to complete.
+ *
+ * The value for the cancel timeout applies to all remote procedure calls
+ * made in the current thread. A multi-threaded client that wishes to change
+ * the default timeout value must call this routine in each thread of
+ * execution.
+ */
+void rpc_mgmt_set_cancel_timeout
+(
+    [in]        signed32                seconds,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ S E T _ C O M _ T I M E O U T
+ *
+ * Set the RPC timeout for a binding. The timeout value is a metric
+ * indicating the relative amount of time retries to contact the server
+ * should be made.  A value of rpc_c_binding_infinite_time (10) indicates
+ * an an infinite wait. A value of rpc_c_binding_min_timeout indicates
+ * a minimum wait.  Values 1-5 favor fast reponse time over correctness
+ * in determining whether the server is alive.  Values 6-10 favor
+ * correctness over response time.
+ */
+void rpc_mgmt_set_com_timeout
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [in]        unsigned32              timeout,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ S E T _ S E R V E R _ S T A C K _ S I Z E
+ *
+ * Set the value that the RPC runtime is to use in specifying the
+ * the thread stack size when creating call threads. This value will
+ * be applied to all threads created for the server.
+ */
+void rpc_mgmt_set_server_stack_size
+(
+    [in]        unsigned32              thread_stack_size,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ S T O P _ S E R V E R _ L I S T E N I N G
+ *
+ * Direct a server to stop listening for remote procedure calls. On receipt
+ * of a stop listening request the RPC runtime stops accepting new remote
+ * procedure calls for all registered interfaces. Executing calls are
+ * allowed to complete, including callbacks. After alls executing calls
+ * complete the rpc_server_listen() routine returns to the caller.
+ */
+void rpc_mgmt_stop_server_listening
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ I N Q _ D F L T _ P R O T _ L E V E L
+ *
+ * Returns the default protection level for an authentication service.
+ */
+void rpc_mgmt_inq_dflt_protect_level
+(
+    [in]        unsigned32              authn_svc,
+    [out]       unsigned32              *protect_level,
+    [out]       unsigned32              *st
+);
+
+/*
+ * R P C _ M G M T _ S E T _ A U T H O R I Z A T I O N _ F N
+ *
+ * Specify the application function that the RPC runtime should call
+ * when it receives remote request to do a management operation.  The
+ * application function can decide whether the operation should be allowed
+ * to proceed.
+ */
+void rpc_mgmt_set_authorization_fn
+(
+    [in]        rpc_mgmt_authorization_fn_t
+                                        authorization_fn_arg,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ E P _ E L T _ I N Q _ B E G I N
+ *
+ * Creates an inquiry context for viewing the elements in a local or
+ * remote endpoint map database.
+ */
+void rpc_mgmt_ep_elt_inq_begin
+(
+    [in]        rpc_binding_handle_t    ep_binding,
+    [in]        unsigned32              inquiry_type,
+    [in]        rpc_if_id_p_t           if_id,
+    [in]        unsigned32              vers_option,
+    [in]        dce_uuid_p_t            object_uuid,
+    [out]       rpc_ep_inq_handle_t     *inquiry_context,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ E P _ E L T _ I N Q _ N E X T
+ *
+ * Returns one element at a time from in a local or remote endpoint map
+ * database.
+ */
+void rpc_mgmt_ep_elt_inq_next
+(
+    [in]      rpc_ep_inq_handle_t       inquiry_context,
+    [out]     rpc_if_id_t               *if_id,
+    [out]     rpc_binding_handle_t      *binding,
+    [out]     dce_uuid_t                *object_uuid,
+    [out]     unsigned_char_p_t         *annotation,
+    [out]     unsigned32                *status
+);
+
+/*
+ * R P C _ M G M T _ E P _ E L T _ I N Q _ D O N E
+ *
+ * Deletes the inquiry context for viewing the elements in a local or
+ * remote endpoint map database.
+ */
+void rpc_mgmt_ep_elt_inq_done
+(
+    [in, out]   rpc_ep_inq_handle_t     *inquiry_context,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ E P _ U N R E G I S T E R
+ *
+ * Removes server address information from the local endpoint map database.
+ */
+void rpc_mgmt_ep_unregister
+(
+    [in]        rpc_binding_handle_t    ep_binding,
+    [in]        rpc_if_id_p_t           if_id,
+    [in]        rpc_binding_handle_t    binding,
+    [in]        dce_uuid_p_t            object_uuid,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ I N Q _ S E R V E R _ P R I N C _ N A M E
+ *
+ * Obtain server principal name information for the specified server 
+ * from the RPC runtime.
+ */
+void rpc_mgmt_inq_server_princ_name
+(
+    [in]        rpc_binding_handle_t    binding_h,
+    [in]        unsigned32              authn_svc,
+    [out]       unsigned_char_p_t       *server_princ_name,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/*********************  Name Services Binding object  ********************/
+/*************************************************************************/
+
+/*
+ * R P C _ N S _ B I N D I N G _ E X P O R T
+ *
+ * Export a set of bindings and/or object uuids for a particular interface.
+ */
+void rpc_ns_binding_export
+(
+    [in]        unsigned32              entry_name_syntax,
+    [in]        unsigned_char_p_t       entry_name,
+    [in]        rpc_if_handle_t         if_spec,
+    [in]        rpc_binding_vector_p_t  binding_vector,
+    [in]        uuid_vector_p_t         object_uuid_vector,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ B I N D I N G _ I M P O R T _ B E G I N
+ *
+ * Create an import context for an interface and optionally an object.
+ */
+void rpc_ns_binding_import_begin
+(
+    [in]        unsigned32              entry_name_syntax,
+    [in]        unsigned_char_p_t       entry_name,
+    [in]        rpc_if_handle_t         if_spec,
+    [in]        dce_uuid_p_t            object_uuid,
+    [out]       rpc_ns_handle_t         *import_context,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ B I N D I N G _ I M P O R T _ D O N E
+ *
+ * Delete an import context.
+ */
+void rpc_ns_binding_import_done
+(
+    [in, out]   rpc_ns_handle_t         *import_context,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ B I N D I N G _ I M P O R T _ N E X T
+ *
+ * Look up an interface and optionally an object from a name-service
+ * database and return a binding of a compatible server (if found).
+ */
+void rpc_ns_binding_import_next
+(
+    [in]        rpc_ns_handle_t         import_context,
+    [out]       rpc_binding_handle_t    *binding,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ B I N D I N G _ I N Q _ E N T R Y _ N A M E
+ *
+ * Inquire the name of the name service entry from which a binding
+ * was obtained.
+ */
+void rpc_ns_binding_inq_entry_name
+(
+    [in]        rpc_binding_handle_t    binding,
+    [in]        unsigned32              entry_name_syntax,
+    [out]       unsigned_char_p_t       *entry_name,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ B I N D I N G _ L O O K U P _ B E G I N
+ *
+ * Start a search in the name service for a compatible binding.
+ */
+void rpc_ns_binding_lookup_begin
+(
+    [in]        unsigned32              entry_name_syntax,
+    [in]        unsigned_char_p_t       entry_name,
+    [in]        rpc_if_handle_t         if_spec,
+    [in]        dce_uuid_p_t            object_uuid,
+    [in]        unsigned32              binding_max_count,
+    [out]       rpc_ns_handle_t         *lookup_context,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ B I N D I N G _ L O O K U P _ D O N E
+ *
+ * Terminate a search in the name service for a compatible binding.
+ */
+void rpc_ns_binding_lookup_done
+(
+    [in, out]   rpc_ns_handle_t         *lookup_context,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ B I N D I N G _ L O O K U P _ N E X T
+ *
+ * Continue a search in the name service for a compatible binding.
+ */
+void rpc_ns_binding_lookup_next
+(
+    [in]        rpc_ns_handle_t         lookup_context,
+    [out]       rpc_binding_vector_p_t  *binding_vector,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ B I N D I N G _ S E L E C T
+ *
+ * Select a binding from among those returned in a lookup operation.
+ */
+void rpc_ns_binding_select
+(
+    [in,out]    rpc_binding_vector_t    *binding_vector,
+    [out]       rpc_binding_handle_t    *binding,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ B I N D I N G _ U N E X P O R T
+ *
+ * Unexport an interface and/or a set of object uuids.
+ */
+void rpc_ns_binding_unexport
+(
+    [in]        unsigned32              entry_name_syntax,
+    [in]        unsigned_char_p_t       entry_name,
+    [in]        rpc_if_handle_t         if_spec,
+    [in]        uuid_vector_p_t         object_uuid_vector,
+    [out]       unsigned32              *status
+);
+
+
+/*************************************************************************/
+/**********************  Name Services Entry object  *********************/
+/*************************************************************************/
+
+/*
+ * R P C _ N S _ E N T R Y _ E X P A N D _ N A M E
+ *
+ * Expand a name service entry name.
+ */
+void rpc_ns_entry_expand_name
+(
+    [in]        unsigned32              entry_name_syntax,
+    [in]        unsigned_char_p_t       entry_name,
+    [out]       unsigned_char_p_t       *expanded_name,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ E N T R Y _ O B J E C T _ I N Q _ B E G I N
+ *
+ * Start a search for an object UUID in a given name service entry.
+ */
+void rpc_ns_entry_object_inq_begin
+(
+    [in]        unsigned32              entry_name_syntax,
+    [in]        unsigned_char_p_t       entry_name,
+    [out]       rpc_ns_handle_t         *inquiry_context,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ E N T R Y _ O B J E C T _ I N Q _ D O N E
+ *
+ * Terminate a search for an object UUID in a given name service entry.
+ */
+void rpc_ns_entry_object_inq_done
+(
+    [in, out]   rpc_ns_handle_t         *inquiry_context,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ E N T R Y _ O B J E C T _ I N Q _ N E X T
+ *
+ * Continue a search for an object UUID in a given name service entry.
+ */
+void rpc_ns_entry_object_inq_next
+(
+    [in]        rpc_ns_handle_t         inquiry_context,
+    [out]       dce_uuid_t              *object_uuid,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/**********************  Name Services Group object  *********************/
+/*************************************************************************/
+
+/*
+ * R P C _ N S _ G R O U P _ D E L E T E
+ *
+ * Delete a service group from the name service database.
+ */
+void rpc_ns_group_delete
+(
+    [in]        unsigned32              group_name_syntax,
+    [in]        unsigned_char_p_t       group_name,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ G R O U P _ M B R _ A D D
+ *
+ * Add a member name to a service group in the name service.
+ */
+void rpc_ns_group_mbr_add
+(
+    [in]        unsigned32              group_name_syntax,
+    [in]        unsigned_char_p_t       group_name,
+    [in]        unsigned32              member_name_syntax,
+    [in]        unsigned_char_p_t       member_name,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ G R O U P _ M B R _ I N Q _ B E G I N
+ *
+ * Start a search for a member with a given name service name in a
+ * service group.
+ */
+void rpc_ns_group_mbr_inq_begin
+(
+    [in]        unsigned32              group_name_syntax,
+    [in]        unsigned_char_p_t       group_name,
+    [in]        unsigned32              member_name_syntax,
+    [out]       rpc_ns_handle_t         *inquiry_context,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ G R O U P _ M B R _ I N Q _ D O N E
+ *
+ * Terminate a search for a member with a given name service name in a
+ * service group.
+ */
+void rpc_ns_group_mbr_inq_done
+(
+    [in, out]   rpc_ns_handle_t         *inquiry_context,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ G R O U P _ M B R _ I N Q _ N E X T
+ *
+ * Continue a search for a member with a given name service name in a
+ * service group.
+ */
+void rpc_ns_group_mbr_inq_next
+(
+    [in]        rpc_ns_handle_t         inquiry_context,
+    [out]       unsigned_char_p_t       *member_name,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ G R O U P _ M B R _ R E M O V E
+ *
+ * Remove a member name from a service group in the name service.
+ */
+void rpc_ns_group_mbr_remove
+(
+    [in]        unsigned32              group_name_syntax,
+    [in]        unsigned_char_p_t       group_name,
+    [in]        unsigned32              member_name_syntax,
+    [in]        unsigned_char_p_t       member_name,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/******************  Name Services Management object  ********************/
+/*************************************************************************/
+
+/*
+ * R P C _ N S _ M G M T _ B I N D I N G _ U N E X P O R T
+ *
+ * Unexport an interface and/or a set of object uuids. This routine differs
+ * from rpc_ns_binding_unexport only in that access to the ifspec is not
+ * required, and it can therefore be performed by management applications
+ * on behalf of other servers whose interface id's are known.
+ */
+void rpc_ns_mgmt_binding_unexport
+(
+    [in]        unsigned32              entry_name_syntax,
+    [in]        unsigned_char_p_t       entry_name,
+    [in]        rpc_if_id_p_t           if_id,
+    [in]        unsigned32              vers_option,
+    [in]        uuid_vector_p_t         object_uuid_vector,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ M G M T _ E N T R Y _ C R E A T E
+ *
+ * Create a name service entry.
+ */
+void rpc_ns_mgmt_entry_create
+(
+    [in]        unsigned32              entry_name_syntax,
+    [in]        unsigned_char_p_t       entry_name,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ M G M T _ E N T R Y _ D E L E T E
+ *
+ * Delete an entry from the name service database.
+ */
+void rpc_ns_mgmt_entry_delete
+(
+    [in]        unsigned32              entry_name_syntax,
+    [in]        unsigned_char_p_t       entry_name,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ M G M T _ E N T R Y _ I N Q _ I F _ I D S
+ *
+ * Inquire the interface id's exported into a name service entry.
+ */
+void rpc_ns_mgmt_entry_inq_if_ids
+(
+    [in]        unsigned32              entry_name_syntax,
+    [in]        unsigned_char_p_t       entry_name,
+    [out]       rpc_if_id_vector_p_t    *if_id_vector,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ M G M T _ I N Q _ E X P _ A G E
+ *
+ * Inquire the default name service local data expiration age.
+ */
+void rpc_ns_mgmt_inq_exp_age
+(
+    [out]       unsigned32              *expiration_age,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ M G M T _ S E T _ E X P _ A G E
+ *
+ * Set the default name service local data expiration age.
+ */
+void rpc_ns_mgmt_set_exp_age
+(
+    [in]        unsigned32              expiration_age,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ M G M T _ H A N D L E _ E X P _ A G E
+ *
+ * Inquire the default name service local data expiration age.
+ */
+void rpc_ns_mgmt_handle_set_exp_age
+(
+    [in]        rpc_ns_handle_t         ns_handle,
+    [in]        unsigned32              expiration_age,
+    [out]       unsigned32              *status
+);
+
+
+/*************************************************************************/
+/*********************  Name Services Profile object  ********************/
+/*************************************************************************/
+
+/*
+ * R P C _ N S _ P R O F I L E _ D E L E T E
+ *
+ * Delete a configuration profile from the name service database.
+ */
+void rpc_ns_profile_delete
+(
+    [in]        unsigned32              profile_name_syntax,
+    [in]        unsigned_char_p_t       profile_name,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ P R O F I L E _ E L T _ A D D
+ *
+ * Add an element to a profile.  If necessary, creates the entry.
+ */
+void rpc_ns_profile_elt_add
+(
+    [in]        unsigned32              profile_name_syntax,
+    [in]        unsigned_char_p_t       profile_name,
+    [in]        rpc_if_id_p_t           if_id,
+    [in]        unsigned32              member_name_syntax,
+    [in]        unsigned_char_p_t       member_name,
+    [in]        unsigned32              priority,
+    [in]        unsigned_char_p_t       annotation,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ P R O F I L E _ E L T _ I N Q _ B E G I N
+ *
+ * Create an inquiry context for viewing the elements in a profile.
+ */
+void rpc_ns_profile_elt_inq_begin
+(
+    [in]        unsigned32              profile_name_syntax,
+    [in]        unsigned_char_p_t       profile_name,
+    [in]        unsigned32              inquiry_type,
+    [in]        rpc_if_id_p_t           if_id,
+    [in]        unsigned32              if_vers_option,
+    [in]        unsigned32              member_name_syntax,
+    [in]        unsigned_char_p_t       member_name,
+    [out]       rpc_ns_handle_t         *inquiry_context,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ P R O F I L E _ E L T _ I N Q _ D O N E
+ *
+ * Deletes the inquiry context for viewing the elements in a profile.
+ */
+void rpc_ns_profile_elt_inq_done
+(
+    [in, out]   rpc_ns_handle_t         *inquiry_context,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ P R O F I L E _ E L T _ I N Q _ N E X T
+ *
+ * Return one element at a time from a profile.
+ */
+void rpc_ns_profile_elt_inq_next
+(
+    [in]        rpc_ns_handle_t         inquiry_context,
+    [out]       rpc_if_id_t             *if_id,
+    [out]       unsigned_char_p_t       *member_name,
+    [out]       unsigned32              *priority,
+    [out]       unsigned_char_p_t       *annotation,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N S _ P R O F I L E _ E L T _ R E M O V E
+ *
+ * Remove an element from a profile.
+ */
+void rpc_ns_profile_elt_remove
+(
+    [in]        unsigned32              profile_name_syntax,
+    [in]        unsigned_char_p_t       profile_name,
+    [in]        rpc_if_id_p_t           if_id,
+    [in]        unsigned32              member_name_syntax,
+    [in]        unsigned_char_p_t       member_name,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/***************************  String Services  ***************************/
+/*************************************************************************/
+
+/*
+ * R P C _ S T R I N G _ F R E E
+ *
+ * Free the memory allocated by the RPC runtime for a string argument.
+ * A NULL pointer will be returned.
+ */
+void rpc_string_free
+(
+    [in, out]   unsigned_char_p_t       *string,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/*******************  Codesets Interoperability Extension  ***************/
+/*************************************************************************/
+
+/*
+ *  Supported Code sets information for either a server or a client.
+ *
+ *   - The first element in codesets[] is a local code set of the process.
+ *   - The second (and maybe more) is the intermediate code set(s) which
+ *     is used on the wire, in case there is no direct converter available.
+ *   - Other array elements are code sets which are supported by the process.
+ *   - Conformant array is used, since a number of code sets supported in a
+ *     host will vary.
+ *   - This data structure is moved from codesets.idl to rpc.idl, because if
+ *     this data structure is defined in codesets.idl, the IDL generated stub 
+ *     cannot be compiled with undefined symbol error.  This data structure
+ *     needs to be defined here.
+ */
+
+/*
+ * R P C _ C O D E S E T _ M G M T _ T
+ *
+ * Data structure to hold (server's or client's) supported code sets
+ * Each code set has an attribute (max bytes) to indicate the maximum
+ * number of bytes needed to encode that code set.  This is used to
+ * calculate the size of a necessary buffer for code set conversion.
+ */
+typedef struct rpc_cs_c_set_s_t {
+	unsigned32	c_set;
+	unsigned16	c_max_bytes;
+} rpc_cs_c_set_t;
+
+typedef struct rpc_codeset_mgmt_s_t {
+	unsigned32      version;	/* version of this structure */
+	unsigned32	count;		/* number of code sets defined */
+	[size_is(count)] rpc_cs_c_set_t codesets[];
+} rpc_codeset_mgmt_t, *rpc_codeset_mgmt_p_t;
+
+/*
+ * R P C _ N S _ M G M T _ S E T _ A T T R I B U T E
+ *
+ * Register code sets value (and possibly other attribute values in the future)
+ * to CDS server entry.
+ */
+void rpc_ns_mgmt_set_attribute
+(
+    [in]	unsigned32		entry_name_syntax,
+    [in]	unsigned_char_p_t	entry_name,
+    [in]	dce_uuid_p_t		attr_type,
+    [in]	void			*attr_val,
+    [out]	error_status_t		*status
+);
+
+/*
+ * R P C _ N S _ M G M T _ R E A D _ A T T R _ B E G I N
+ *
+ * Setup inquiry context for code sets attribute (and others in the future).
+ */
+void rpc_ns_mgmt_read_attr_begin
+(
+    [in]	unsigned32		entry_name_syntax,
+    [in]	unsigned_char_p_t	entry_name,
+    [in]	dce_uuid_p_t		attr_type,
+    [out]	rpc_ns_handle_t		*inquiry_context,
+    [out]	error_status_t		*status
+);
+
+/*
+ * R P C _ N S _ M G M T _ R E A D _ A T T R _ N E X T
+ *
+ * Read code set attribute (or others in the future) based on the inquiry 
+ * context.
+ */
+void rpc_ns_mgmt_read_attr_next
+(
+    [in]	rpc_ns_handle_t		inquiry_context,
+    [in]	dce_uuid_p_t		attr_type,
+    [out]	byte			**value,
+    [out]	unsigned32		*length,
+    [out]	error_status_t		*status
+);
+
+/*
+ * R P C _ N S _ M G M T _ R E A D _ A T T R _ D O N E
+ *
+ * Release inquiry context for code set attribute (or others in the future)
+ */
+void rpc_ns_mgmt_read_attr_done
+(
+    [in]	rpc_ns_handle_p_t	inquiry_context,
+    [out]	error_status_t		*status
+);
+
+/*
+ * R P C _ N S _ M G M T _ R E M O V E _ A T T R I B U T E
+ *
+ * Remove code set attribute value (or others in the future) from
+ * CDS server entry.
+ */
+void rpc_ns_mgmt_remove_attribute
+(
+    [in]	unsigned32		entry_name_syntax,
+    [in]	unsigned_char_p_t	entry_name,
+    [in]	dce_uuid_p_t		attr_type,
+    [out]	error_status_t		*status
+);
+
+/*
+ * R P C _ N S _ M G M T _ R E A D _ C O D E S E T S
+ *
+ * Convenience routine for reading the code set attribute value from CDS
+ * server entry.
+ */
+void rpc_ns_mgmt_read_codesets
+(
+    [in]	unsigned32		entry_name_syntax,
+    [in]	unsigned_char_p_t	entry_name,
+    [out]	rpc_codeset_mgmt_p_t	*codesets_val,
+    [out]	error_status_t		*status
+);
+
+
+/*
+ * R P C _ N S _ I M P O R T _ C T X _ A D D _ E V A L
+ *
+ * Client uses this function to set an appropriate evaluation routine
+ * to an import context.
+ */
+void rpc_ns_import_ctx_add_eval
+(
+    [in, out]	rpc_ns_handle_t		*import_ctx,
+    [in]	unsigned32		func_type,
+    [in]	void			*args,
+    [in]	void			(*eval_func)(handle_t binding_h, void *args, void **cntx),
+    [in]	void			(*cs_free_func)(void *cntx),
+    [out]	error_status_t		*status
+);
+
+
+/*
+ * R P C _ C S _ E V A L _ W I T H _ U N I V E R S A L
+ *
+ * Code set interoperability evaluation routine.  If none of the client and
+ * server code sets match, Universal code set will be used for communication.
+ * 'args' is not used, and 'cntx' points to 'rpc_cs_codeset_i14y_data'.
+ */
+void rpc_cs_eval_with_universal
+(
+    [in]	handle_t		binding_h,
+    [in]	void			*args,
+    [in, out]	void			**cntx
+);
+
+
+/*
+ * R P C _ C S _ E V A L _ W I T H O U T _ U N I V E R S A L
+ *
+ * Code set interoperability evaluation routine.  If none of the client and
+ * server code sets match, evaluation will fail.
+ * 'args' is not used, and 'cntx' points to 'rpc_cs_codeset_i14y_data'.
+ */
+void rpc_cs_eval_without_universal
+(
+    [in]	handle_t		binding_h,
+    [in]	void			*args,
+    [in, out]	void			**cntx
+);
+
+
+/*
+ * R P C _ C S _ C H A R  _ S E T _ C O M P A T _ C H E C K 
+ *
+ * Client character set and server character set compatibility is
+ * to be evaluated.
+ */
+void rpc_cs_char_set_compat_check (
+    [in]	unsigned32			client_codeset,
+    [in]	unsigned32			server_codeset,
+    [out]	error_status_t			*status
+);
+
+
+/*
+ * Code set interoperability checking data types and routines
+ */
+
+/*
+ * R P C _ C S _ T A G S _ E V A L _ T
+ *
+ * Data structure which is attached to a binding handle at client side, when
+ * automatic code set conversion is enabled.  When 'fixed' flag is not on,
+ * code set compatibility evaluation can be done within a client stub.
+ * Performing code set evaluation in a stub is not a good idea for performance
+ * wise, however, some application might need that functionality.
+ * Usually, each item is set by an evaluation routine within a client.
+ *
+ * stag, drtag	: sending tag and desired receiving tag
+ * stag_max_bytes : maximum number of bytes required to encode 'stag' code set
+ * client_tag	: client current code set tag.
+ * client_max_bytes : maximum number of bytes required to encode client code set
+ * fixed	: boolean flag indicating if in-stub evaluation is necessary.
+ * type_handle	: points to 'idl_cs_convert_t' data structure.  This is used
+ *		  within a client stub to calculate conversion buffer size.
+ */
+typedef struct {
+        unsigned32              stag;
+        unsigned32              drtag;
+	unsigned16		stag_max_bytes;	
+        unsigned32              client_tag;
+	unsigned16		client_max_bytes;	
+	rpc_ns_handle_t		type_handle;
+} rpc_cs_tags_eval_t, *rpc_cs_tags_eval_p_t;
+
+
+/*
+ * R P C _ C S _ M E T H O D _ E V A L _ T
+ *
+ * Data structure which is attached to a binding handle at client side, when
+ * automatic code set conversion is enabled.  This data includes 'rpc_cs_tags_
+ * eval_t' data structure.  The main difference is it includes server's and
+ * client's supported code sets, which makes in-stub evaluation faster.
+ *
+ * method	: connection method between client and server, e.g, CMIR
+ * tags		: rpc_cs_tags_eval_t.  See above.
+ * server	: server's supported code sets.
+ * client	: client's supported code sets.
+ * cs_stub_eval_func  : When 'fixed' is not true, 
+ *			it points to code set I14Y evaluation routine.  
+ */
+typedef struct {
+        unsigned32              method;
+        rpc_cs_tags_eval_t      tags;
+        rpc_codeset_mgmt_t      *server;
+        rpc_codeset_mgmt_t      *client;
+	boolean32		fixed;
+	void			(*cs_stub_eval_func)(unsigned32 *p_stag, unsigned32 *p_drtag, error_status_t *status);
+} rpc_cs_method_eval_t, *rpc_cs_method_eval_p_t;
+
+/*
+ * R P C _ C S _ E V A L U A T I O N _ T
+ *
+ * Data structure which is attached to a binding handle at client side, when
+ * automatic code set conversion is enabled.  The content will be either
+ * 'rpc_cs_tags_eval_t' data or 'rpc_cs_method_eval_t' data.  See above.
+ */
+typedef union switch(short key) 
+{
+case 0:	rpc_cs_tags_eval_t	tags_key;
+case 1:
+default:	rpc_cs_method_eval_t	method_key;
+} rpc_cs_evaluation_t;
+
+
+/*
+ * Evaluation Function List Structures
+ */
+typedef struct rpc_eval_lists   *rpc_cs_eval_list_p;
+
+typedef struct rpc_eval_lists {
+	unsigned32		type;
+	void			(*eval_func)(handle_t binding_h, void *args, void **cntx);
+	void			(*cs_free_func)(void *cntx);
+	void			*args;
+	void			*cntx;
+	rpc_cs_eval_list_p	next;
+} rpc_cs_eval_list_t, *rpc_cs_eval_list_p_t;
+
+/* 
+ * R P C _ C S _ B I N D I N G _ S E T _ T A G S
+ *
+ * Set the tags value into rpc binding handle.
+ */
+
+void rpc_cs_binding_set_tags (
+        [in, out]	rpc_binding_handle_t	*h,
+        [in]		unsigned32		stag,
+        [in]		unsigned32		drtag,
+	[in]		unsigned16		stag_max_bytes,
+        [out]		error_status_t		*status
+);
+
+/* 
+ * R P C _ C S _ B I N D I N G _ S E T _ E V A L
+ *
+ * Set in-stub evaluation routine into rpc binding handle.
+ * When in-stub evaluation is used, RPC performance can be
+ * suffered.
+ */
+
+void rpc_cs_binding_set_eval (
+        [in, out]   rpc_binding_handle_t	*h,
+	[in]	    void			(*cs_stub_eval_func)(unsigned32 *p_stag, unsigned32 *p_drtag, error_status_t *status),
+        [out]		error_status_t		*status
+);
+
+/* 
+ * R P C _ R G Y _ G E T _ C O D E S E T S
+ *
+ * Get server's or client's supported code sets.
+ * file_name is the absolute path name which contains the list of supported
+ * code sets.
+ */
+
+void rpc_rgy_get_codesets (
+        [out]		rpc_codeset_mgmt_p_t	*codesets_p,
+        [out]		error_status_t		*status
+);
+
+
+/* 
+ * R P C _ R G Y _ G E T _ M A X _ B Y T E S
+ *
+ * Get the code set's maximum number of bytes per a character.
+ */
+
+void rpc_rgy_get_max_bytes (
+        [in]		unsigned32		tag,
+        [out]		unsigned16		*max_bytes,
+        [out]		error_status_t		*status
+);
+
+
+/* 
+ * D C E _ C S _ L O C _ T O _ R G Y
+ *
+ * Convert code set name to code set registry value (code set)
+ */
+
+void dce_cs_loc_to_rgy (
+        [in]		char			*local_code_set_name,
+        [out]		unsigned32		*rgy_code_set_value,
+        [out]		unsigned16		*rgy_char_sets_number,
+        [out]		unsigned16		**rgy_char_sets_value,
+        [out]		error_status_t		*status
+);
+
+
+/* 
+ * D C E _ C S _ R G Y _ T O _ L O C
+ *
+ * Convert code set registry value (code set) to code set name
+ */
+
+void dce_cs_rgy_to_loc (
+        [in]		unsigned32		rgy_code_set_value,
+        [out]		char			**local_code_set_name,
+        [out]		unsigned16		*rgy_char_sets_number,
+        [out]		unsigned16		**rgy_char_sets_value,
+        [out]		error_status_t		*status
+);
+
+/* 
+ * R P C _ N S _ M G M T _ F R E E _ A T T R _ D A T A
+ *
+ * Free an attribute allocated by the runtime
+ */
+void rpc_ns_mgmt_free_attr_data (
+        [in, out]	byte			**value,
+        [out]		error_status_t		*status
+);
+
+
+/* 
+ * R P C _ N S _ M G M T _ F R E E _ C O D E S E T S
+ *
+ * Free a codesets array allocated by the runtime
+ */
+void rpc_ns_mgmt_free_codesets (
+        [in, out]	rpc_codeset_mgmt_p_t	*codesets,
+        [out]		error_status_t		*status
+);
+
+}

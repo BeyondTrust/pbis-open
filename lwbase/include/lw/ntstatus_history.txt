@@ -1,0 +1,89 @@
+1. Apply this patch:
+Index: lsass/server/rpc/samr/samr.c
+===================================================================
+--- lsass/server/rpc/samr/samr.c	(revision 35882)
++++ lsass/server/rpc/samr/samr.c	(working copy)
+@@ -775,14 +775,25 @@
+     /* [out] */ CONNECT_HANDLE *hConn
+     )
+ {
+-    NTSTATUS status = STATUS_SUCCESS;
++    NTSTATUS ntStatus = STATUS_SUCCESS;
++    static int severity = 0;
++    static int facility = 0;
++    static int status = 1;
+ 
+-    status = SamrSrvConnect2(IDL_handle,
+-                             size,
+-                             system_name,
+-                             access_mask,
+-                             hConn);
+-    return status;
++    ntStatus = (severity << 30) | (facility << 16) | (status << 0);
++    status++;
++    if (status > 2000)
++    {
++        status = 0;
++        facility++;
++    }
++    if (facility > 3)
++    {
++        facility = 0;
++        severity++;
++    }
++    LSA_LOG_DEBUG("Returning error for sniffing %X", ntStatus);
++    return ntStatus;
+ }
+ 
+ 
+Index: librpc/testrpc/test_samr.c
+===================================================================
+--- librpc/testrpc/test_samr.c	(revision 35882)
++++ librpc/testrpc/test_samr.c	(working copy)
+@@ -555,8 +555,8 @@
+     uint32 access_mask = SAMR_ACCESS_OPEN_DOMAIN |
+                          SAMR_ACCESS_ENUM_DOMAINS |
+                          SAMR_ACCESS_CONNECT_TO_SERVER;
+-    uint32 level_in = 0;
+-    uint32 level_out = 0;
++    /*uint32 level_in = 0;
++    uint32 level_out = 0;*/
+     SamrConnectInfo info_in;
+     SamrConnectInfo info_out;
+     PolicyHandle hConn;
+@@ -576,7 +576,7 @@
+         hConn     = h;
+     }
+ 
+-    DISPLAY_COMMENT(("Testing SamrConnect3\n"));
++    /*DISPLAY_COMMENT(("Testing SamrConnect3\n"));
+ 
+     status = SamrConnect3(hBinding, system_name, access_mask, &h);
+     if (status) {
+@@ -623,7 +623,7 @@
+ 
+         connected = TRUE;
+         hConn     = h;
+-    }
++    }*/
+ 
+     *phConn = hConn;
+     return ret;
+
+2. Join both machines to corpqa
+3. Enable npfs and srv drivers in lwio
+4. Enable rpc servers in lsassd.conf
+5. Capture port 445
+6. Login as corpqa\join on client machine
+7. Run while true; do /opt/likewise/bin/testrpc -h <hostname> -k -r join@CORPQA.CENTERIS.COM -c /tmp/krb5cc_1662020624 SAMR-CONNECT; done
+8. Load the capture file in netmon 3.3 with the 3.4 filters installed
+9. Apply this filter:
+SAMR.SamrConnect2.Response.ReturnValue > 0
+10. Copy the frame summary (with the description column visible) to the clipboard
+11. Save the clipboard to a text file
+12. Run this sed expression on the text file:
+cat >tab.sh <<end
+#!/bin/sh
+set $1
+printf "%s %-50s %s\\n" "$1" "$2" "$3"
+end; chmod u+x tab.sh; sed -n -e 's/^.*\(0x[^ ]*\) - \(.*\)$/#define LW_\2 ((LW_NTSTATUS)\1)/p' status.txt | xargs -l1 -d '\n' tab.sh

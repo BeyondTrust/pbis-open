@@ -1,0 +1,13 @@
+Code under the libtdb/ directory is a convience repackaging of the Samba 3.0
+libtdb code released by the Samba project under the GPLv2.  More details on
+libtdb may be found on the Samba's project's website: http://www.samba.org/.
+
+Likewise Code residing in all remaining directories except the tools/ sub-
+directory is licensed under the terms of the GNU Lesser General Public
+License v2.1.  Code below the tools/ subdirectory is licensed under the GNU
+General Public License version 2. Please see the COPYING.GPL and COPYING.LGPL
+for full licenses terms.
+
+Alternate licensing terms are available.  Please contact license@likewise.com
+for details.
+

@@ -1,0 +1,29 @@
+[
+uuid(3919286a-b10c-11d0-9ba8-00c04fd92ef5),
+version(0.0),
+pointer_default(unique)
+]
+interface dssetup
+{
+cpp_quote("#ifdef DCERPC_STUB_BUILD")
+
+#include <lw/security-types.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/rpc/dssetup.h>
+
+typedef [switch_type(UINT16)] union _DSR_ROLE_INFO
+{
+    [case(DS_ROLE_BASIC_INFORMATION)] DSR_ROLE_PRIMARY_DOMAIN_INFO_BASIC  Basic;
+    [case(DS_ROLE_UPGRADE_STATUS)]    DSR_ROLE_UPGRADE_STATUS             Upgrade;
+    [case(DS_ROLE_OP_STATUS)]         DSR_ROLE_OP_STATUS                  OpStatus;
+} DSR_ROLE_INFO;
+
+cpp_quote("#endif")
+
+    WINERROR DsrRoleGetPrimaryDomainInformation(
+        [in] WORD swLevel,
+        [out,switch_is(swLevel)] DSR_ROLE_INFO **ppInfo
+        );
+
+}

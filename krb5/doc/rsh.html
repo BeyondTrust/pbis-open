@@ -1,0 +1,183 @@
+<HTML>
+<BODY>
+<PRE>
+<!-- Manpage converted by man2html 3.0.1 -->
+
+</PRE>
+<H2>NAME</H2><PRE>
+     rsh - remote shell
+
+
+</PRE>
+<H2>SYNOPSIS</H2><PRE>
+     <B>rsh</B> <I>host</I> [<B>-l</B> <I>username</I>] [<B>-n</B>] [<B>-d</B>] [<B>-k</B> <I>realm</I>] [<B>-f</B> |  <B>-F</B>]  [<B>-x</B>]
+     [<B>-PN</B> <B>|</B> <B>-PO</B>] <I>command</I>
+
+
+</PRE>
+<H2>DESCRIPTION</H2><PRE>
+     <B>Rsh</B> connects to the specified <I>host</I>, and executes the  speci-
+     fied  <I>command</I>.   <B>Rsh</B> copies its standard input to the remote
+     command, the standard output of the remote  command  to  its
+     standard  output,  and the standard error of the remote com-
+     mand to its standard error.  This implementation of <B>rsh</B> will
+     accept  any  port for the standard error stream.  Interrupt,
+     quit and terminate signals are propagated to the remote com-
+     mand; <I>rsh</I> normally terminates when the remote command does.
+
+     Each user may have a private authorization list  in  a  file
+     .k5login  in  his  login  directory.  Each line in this file
+     should  contain  a  Kerberos  principal  name  of  the  form
+     <I>principal</I>/<I>instance</I>@<I>realm</I>.   If  there  is a ~/.k5login file,
+     then access is granted to the account if  and  only  if  the
+     originater  user  is  authenticated to one of the princiapls
+     named in the ~/.k5login file.   Otherwise,  the  originating
+     user  will  be  granted access to the account if and only if
+     the authenticated principal name of the user can  be  mapped
+     to  the  local account name using the aname -&gt; lname mapping
+     rules (see <B>krb5_anadd(8)</B> for more details).
+
+
+</PRE>
+<H2>OPTIONS</H2><PRE>
+     <B>-l</B> <I>username</I>
+          sets the remote username to <I>username</I>.   Otherwise,  the
+          remote username will be the same as the local username.
+
+     <B>-x</B>   causes the network session  traffic  to  be  encrypted.
+          This  applies only to the input and output streams, and
+          not the command line.
+
+     <B>-f</B>   cause nonforwardable Kerberos credentials  to  be  for-
+          warded  to  the remote machine for use by the specified
+          <I>command</I>.  They will be removed when  <I>command</I>  finishes.
+          This option is mutually exclusive with the -<B>F</B> option.
+
+     <B>-F</B>   cause <I>forwardable</I> Kerberos credentials to be  forwarded
+          to the remote machine for use by the specified <I>command</I>.
+          They will  be  removed  when  <I>command</I>  finishes.   This
+          option is mutually exclusive with the -<B>f</B> option.
+
+     <B>-k</B> <I>realm</I>
+          causes <I>rsh</I> to obtain tickets for  the  remote  host  in
+          <I>realm</I>  instead of the remote host's realm as determined
+          by <B>krb_realmofhost(3)</B>.
+
+     -<B>d</B>   turns on socket debugging (via  <B>setsockopt(2)</B>)  on  the
+          TCP  sockets  used  for  communication  with the remote
+          host.
+
+     -<B>n</B>   redirects input from the special device /<I>dev</I>/<I>null</I>  (see
+          the BUGS section below).
+
+     <B>-PN</B>
+
+     <B>-PO</B>  Explicitly request new or old version of  the  Kerberos
+          ``rcmd''  protocol.  The new protocol avoids many secu-
+          rity problems found in the old one, but is not interop-
+          erable  with  older  servers.  (An "input/output error"
+          and a closed connection is the most  likely  result  of
+          attempting  this  combination.)   If  neither option is
+          specified, some simple heuristics  are  used  to  guess
+          which to try.
+
+     If you omit <I>command</I>, then instead of executing a single com-
+     mand,  you  will  be logged in on the remote host using <I>rlo-</I>
+     <B>gin(1)</B>.
+
+     Shell metacharacters which are not quoted are interpreted on
+     the  local  machine,  while quoted metacharacters are inter-
+     preted on the remote machine.  Thus the command
+
+        rsh otherhost cat remotefile &gt;&gt; localfile
+
+     appends the remote file <I>remotefile</I> to the local file  <I>local-</I>
+     <I>file</I>, while
+
+        rsh otherhost cat remotefile "&gt;&gt;" otherremotefile
+
+     appends <I>remotefile</I> to <I>otherremotefile</I>.
+
+
+</PRE>
+<H2>FILES</H2><PRE>
+     /etc/hosts
+7
+     ~/.k5login  (on remote  host)  -  file  containing  Kerberos
+                 principals that are allowed access.
+
+
+</PRE>
+<H2>SEE ALSO</H2><PRE>
+     <B>rlogin(1)</B>, <B>kerberos(3)</B>, <B>krb_sendauth(3)</B>, <B>krb_realmofhost(3)</B>,
+     <B>kshd(8)</B>
+
+
+</PRE>
+<H2>BUGS</H2><PRE>
+     If you are using <B>csh(1)</B> and put a <B>rsh(1)</B> in  the  background
+     without  redirecting  its  input  away from the terminal, it
+     will block even if no reads are posted by  the  remote  com-
+     mand.   If no input is desired you should redirect the input
+     of <I>rsh</I> to /dev/null using the -<B>n</B> option.
+
+
+     You cannot run an  interactive  command  (like  <B>rogue(6)</B>  or
+     <B>vi(1)</B>); use <B>rlogin(1)</B>.
+
+     Stop signals stop the local <I>rsh</I> process only; this is  argu-
+     ably  wrong,  but currently hard to fix for reasons too com-
+     plicated to explain here.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+<HR>
+<ADDRESS>
+Man(1) output converted with
+<a href="http://www.oac.uci.edu/indiv/ehood/man2html.html">man2html</a>
+</ADDRESS>
+</BODY>
+</HTML>

@@ -1,0 +1,6 @@
+LwSmGetServiceObjectData
+LwSmRetainServiceObject
+LwSmReleaseServiceObject
+LwSmNotifyServiceObjectStateChange
+LwSmLoaderInitialize
+LwSmLoaderGetVtbl

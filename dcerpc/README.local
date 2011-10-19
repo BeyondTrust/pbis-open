@@ -1,0 +1,21 @@
+Instructionns on how to build...
+
+First, we need to get the relevant pthread extensions on the system.
+This typically means:
+
+/opt/dcerpc/include/pthread_ext.h
+/opt/dcerpc/lib/libpthread_ext.so.0
+
+On Linux, to build this, you need to patch the glibc sources with the
+contents of the dceext threads stuff...
+
+Then, to build from scratch:
+
+autoreconf -fis
+./buildconf
+./configure --prefix=/opt/dcerpc --with-pthread-ext-dir=/opt/dcerpc
+make
+
+To run the rpcd (which is required to end points for servers), these directories must be precreated:
+$prefix/var/run
+$prefix/var/rpc

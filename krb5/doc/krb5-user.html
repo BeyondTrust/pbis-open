@@ -1,0 +1,2124 @@
+<html lang="en">
+<head>
+<title>Kerberos V5 UNIX User's Guide</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="Kerberos V5 UNIX User's Guide">
+<meta name="generator" content="makeinfo 4.7">
+<link title="Top" rel="top" href="#Top">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc { font-variant:small-caps }
+  span.roman { font-family: serif; font-weight: normal; } 
+--></style>
+</head>
+<body>
+<h1 class="settitle">Kerberos V5 UNIX User's Guide</h1>
+<div class="node">
+<p><hr>
+<a name="Top"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Copyright">Copyright</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#dir">(dir)</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
+<br>
+</div>
+
+<!-- The master menu is updated using emacs19's M-x texinfo-all-menus-update -->
+<!-- function.  Don't forget to run M-x texinfo-every-node-update after -->
+<!-- you add a new section or subsection, or after you've rearranged the -->
+<!-- comand before each @section or @subsection!  All you need to enter -->
+<!-- is: -->
+<!-- @section New Section Name -->
+<!-- M-x texinfo-every-node-update will take care of calculating the -->
+<!-- node's forward and back pointers. -->
+<!--  -->
+<ul class="menu">
+<li><a accesskey="1" href="#Copyright">Copyright</a>
+<li><a accesskey="2" href="#Introduction">Introduction</a>
+<li><a accesskey="3" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>
+<li><a accesskey="4" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+<li><a accesskey="5" href="#Kerberos-Glossary">Kerberos Glossary</a>
+</ul>
+
+<div class="node">
+<p><hr>
+<a name="Copyright"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Introduction">Introduction</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Top">Top</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+<br>
+</div>
+
+<h2 class="unnumbered">Copyright</h2>
+
+<p>Copyright &copy; 1985-2009 by the Massachusetts Institute of Technology.
+
+<blockquote>
+Export of software employing encryption from the United States of
+America may require a specific license from the United States
+Government.  It is the responsibility of any person or organization
+contemplating export to obtain such a license before exporting. 
+</blockquote>
+
+<p>WITHIN THAT CONSTRAINT, permission to use, copy, modify, and distribute
+this software and its documentation for any purpose and without fee is
+hereby granted, provided that the above copyright notice appear in all
+copies and that both that copyright notice and this permission notice
+appear in supporting documentation, and that the name of M.I.T. not be
+used in advertising or publicity pertaining to distribution of the
+software without specific, written prior permission.  Furthermore if you
+modify this software you must label your software as modified software
+and not distribute it in such a fashion that it might be confused with
+the original MIT software.  M.I.T. makes no representations about the
+suitability of this software for any purpose.  It is provided &ldquo;as is&rdquo;
+without express or implied warranty.
+
+<p>Individual source code files are copyright MIT, Cygnus Support,
+Novell, OpenVision Technologies, Oracle, Red Hat, Sun Microsystems,
+FundsXpress, and others.
+
+<p>Project Athena, Athena, Athena MUSE, Discuss, Hesiod, Kerberos, Moira,
+and Zephyr are trademarks of the Massachusetts Institute of Technology
+(MIT).  No commercial use of these trademarks may be made without
+prior written permission of MIT.
+
+<p>&ldquo;Commercial use&rdquo; means use of a name in a product or other for-profit
+manner.  It does NOT prevent a commercial firm from referring to the
+MIT trademarks in order to convey information (although in doing so,
+recognition of their trademark status should be given).
+
+<p>The following copyright and permission notice applies to the
+OpenVision Kerberos Administration system located in
+<code>kadmin/create</code>, <code>kadmin/dbutil</code>, <code>kadmin/passwd</code>,
+<code>kadmin/server</code>, <code>lib/kadm5</code>, and portions of
+<code>lib/rpc</code>:
+
+<blockquote>
+Copyright, OpenVision Technologies, Inc., 1996, All Rights Reserved
+
+     <p>WARNING:  Retrieving the OpenVision Kerberos Administration system source
+code, as described below, indicates your acceptance of the following
+terms.  If you do not agree to the following terms, do not retrieve the
+OpenVision Kerberos administration system.
+
+     <p>You may freely use and distribute the Source Code and Object Code
+compiled from it, with or without modification, but this Source Code is
+provided to you &ldquo;AS IS&rdquo; EXCLUSIVE OF ANY WARRANTY, INCLUDING, WITHOUT
+LIMITATION, ANY WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A
+PARTICULAR PURPOSE, OR ANY OTHER WARRANTY, WHETHER EXPRESS OR IMPLIED. 
+IN NO EVENT WILL OPENVISION HAVE ANY LIABILITY FOR ANY LOST PROFITS,
+LOSS OF DATA OR COSTS OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR
+FOR ANY SPECIAL, INDIRECT, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS
+AGREEMENT, INCLUDING, WITHOUT LIMITATION, THOSE RESULTING FROM THE USE
+OF THE SOURCE CODE, OR THE FAILURE OF THE SOURCE CODE TO PERFORM, OR FOR
+ANY OTHER REASON.
+
+     <p>OpenVision retains all copyrights in the donated Source Code. OpenVision
+also retains copyright to derivative works of the Source Code, whether
+created by OpenVision or by a third party. The OpenVision copyright
+notice must be preserved if derivative works are made based on the
+donated Source Code.
+
+     <p>OpenVision Technologies, Inc. has donated this Kerberos Administration
+system to MIT for inclusion in the standard Kerberos 5 distribution. 
+This donation underscores our commitment to continuing Kerberos
+technology development and our gratitude for the valuable work which has
+been performed by MIT and the Kerberos community. 
+</blockquote>
+
+<blockquote>
+Portions contributed by Matt Crawford <code>&lt;crawdad@fnal.gov&gt;</code> were work
+performed at Fermi National Accelerator Laboratory, which is operated
+by Universities Research Association, Inc., under contract
+DE-AC02-76CHO3000 with the U.S. Department of Energy. 
+</blockquote>
+
+<p>Portions of <code>src/lib/crypto</code> have the following copyright:
+
+<blockquote>
+Copyright &copy; 1998 by the FundsXpress, INC.
+
+     <p>All rights reserved.
+
+     <p>Export of this software from the United States of America may require
+a specific license from the United States Government.  It is the
+responsibility of any person or organization contemplating export to
+obtain such a license before exporting.
+
+     <p>WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+distribute this software and its documentation for any purpose and
+without fee is hereby granted, provided that the above copyright
+notice appear in all copies and that both that copyright notice and
+this permission notice appear in supporting documentation, and that
+the name of FundsXpress. not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.  FundsXpress makes no representations about the suitability of
+this software for any purpose.  It is provided &ldquo;as is&rdquo; without express
+or implied warranty.
+
+     <p>THIS SOFTWARE IS PROVIDED &ldquo;AS IS&rdquo; AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+</blockquote>
+
+<p>The implementation of the Yarrow pseudo-random number generator
+in <code>src/lib/crypto/yarrow</code> has the following copyright:
+
+<blockquote>
+Copyright 2000 by Zero-Knowledge Systems, Inc.
+
+     <p>Permission to use, copy, modify, distribute, and sell this software
+and its documentation for any purpose is hereby granted without fee,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation, and that the name of Zero-Knowledge Systems,
+Inc. not be used in advertising or publicity pertaining to
+distribution of the software without specific, written prior
+permission.  Zero-Knowledge Systems, Inc. makes no representations
+about the suitability of this software for any purpose.  It is
+provided &ldquo;as is&rdquo; without express or implied warranty.
+
+     <p>ZERO-KNOWLEDGE SYSTEMS, INC. DISCLAIMS ALL WARRANTIES WITH REGARD TO
+THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS, IN NO EVENT SHALL ZERO-KNOWLEDGE SYSTEMS, INC. BE LIABLE FOR
+ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTUOUS ACTION, ARISING OUT
+OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
+</blockquote>
+
+<p>The implementation of the AES encryption algorithm in
+<code>src/lib/crypto/aes</code> has the following copyright:
+
+<blockquote>
+Copyright &copy; 2001, Dr Brian Gladman <code>&lt;brg@gladman.uk.net&gt;</code>,
+Worcester, UK.<br>
+All rights reserved.
+
+     <p>LICENSE TERMS
+
+     <p>The free distribution and use of this software in both source and binary
+form is allowed (with or without changes) provided that:
+
+          <ol type=1 start=1>
+<li>distributions of this source code include the above copyright
+notice, this list of conditions and the following disclaimer;
+<li>distributions in binary form include the above copyright
+notice, this list of conditions and the following disclaimer
+in the documentation and/or other associated materials;
+<li>the copyright holder's name is not used to endorse products
+built using this software without specific written permission.
+          </ol>
+
+     <p>DISCLAIMER
+
+     <p>This software is provided 'as is' with no explcit or implied warranties
+in respect of any properties, including, but not limited to, correctness
+and fitness for purpose. 
+</blockquote>
+
+<p>Portions contributed by Red Hat, including the pre-authentication
+plug-in framework, contain the following copyright:
+
+<blockquote>
+Copyright &copy; 2006 Red Hat, Inc.<br>
+Portions copyright &copy; 2006 Massachusetts Institute of Technology<br>
+All Rights Reserved.<br>
+
+     <p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+          <ul>
+<li>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer. 
+<li>Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution. 
+<li>Neither the name of Red Hat, Inc., nor the names of its contributors
+may be used to endorse or promote products derived from this software
+without specific prior written permission. 
+</ul>
+
+     <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &ldquo;AS
+IS&rdquo; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+</blockquote>
+
+<p>The implementations of GSSAPI mechglue in GSSAPI-SPNEGO in
+<code>src/lib/gssapi</code>, including the following files:
+
+<pre class="smallexample">     lib/gssapi/generic/gssapi_err_generic.et
+     lib/gssapi/mechglue/g_accept_sec_context.c
+     lib/gssapi/mechglue/g_acquire_cred.c
+     lib/gssapi/mechglue/g_canon_name.c
+     lib/gssapi/mechglue/g_compare_name.c
+     lib/gssapi/mechglue/g_context_time.c
+     lib/gssapi/mechglue/g_delete_sec_context.c
+     lib/gssapi/mechglue/g_dsp_name.c
+     lib/gssapi/mechglue/g_dsp_status.c
+     lib/gssapi/mechglue/g_dup_name.c
+     lib/gssapi/mechglue/g_exp_sec_context.c
+     lib/gssapi/mechglue/g_export_name.c
+     lib/gssapi/mechglue/g_glue.c
+     lib/gssapi/mechglue/g_imp_name.c
+     lib/gssapi/mechglue/g_imp_sec_context.c
+     lib/gssapi/mechglue/g_init_sec_context.c
+     lib/gssapi/mechglue/g_initialize.c
+     lib/gssapi/mechglue/g_inquire_context.c
+     lib/gssapi/mechglue/g_inquire_cred.c
+     lib/gssapi/mechglue/g_inquire_names.c
+     lib/gssapi/mechglue/g_process_context.c
+     lib/gssapi/mechglue/g_rel_buffer.c
+     lib/gssapi/mechglue/g_rel_cred.c
+     lib/gssapi/mechglue/g_rel_name.c
+     lib/gssapi/mechglue/g_rel_oid_set.c
+     lib/gssapi/mechglue/g_seal.c
+     lib/gssapi/mechglue/g_sign.c
+     lib/gssapi/mechglue/g_store_cred.c
+     lib/gssapi/mechglue/g_unseal.c
+     lib/gssapi/mechglue/g_userok.c
+     lib/gssapi/mechglue/g_utils.c
+     lib/gssapi/mechglue/g_verify.c
+     lib/gssapi/mechglue/gssd_pname_to_uid.c
+     lib/gssapi/mechglue/mglueP.h
+     lib/gssapi/mechglue/oid_ops.c
+     lib/gssapi/spnego/gssapiP_spnego.h
+     lib/gssapi/spnego/spnego_mech.c
+</pre>
+<p>and the initial implementation of incremental propagation, including
+the following new or changed files:
+
+<pre class="smallexample">       include/iprop_hdr.h
+       kadmin/server/ipropd_svc.c
+       lib/kdb/iprop.x
+       lib/kdb/kdb_convert.c
+       lib/kdb/kdb_log.c
+       lib/kdb/kdb_log.h
+       lib/krb5/error_tables/kdb5_err.et
+       slave/kpropd_rpc.c
+       slave/kproplog.c
+</pre>
+<p>and marked portions of the following files:
+
+<pre class="smallexample">       lib/krb5/os/hst_realm.c
+</pre>
+<p>are subject to the following license:
+
+<blockquote>
+Copyright &copy; 2004 Sun Microsystems, Inc.
+
+     <p>Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+&ldquo;Software&rdquo;), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+     <p>The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+     <p>THE SOFTWARE IS PROVIDED &ldquo;AS IS&rdquo;, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. 
+</blockquote>
+
+<p>Kerberos V5 includes documentation and software developed at the
+University of California at Berkeley, which includes this copyright
+notice:
+
+<blockquote>
+Copyright &copy; 1983 Regents of the University of California.<br>
+All rights reserved.
+
+     <p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+          <ol type=1 start=1>
+<li>Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer. 
+<li>Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution. 
+<li>Neither the name of the University nor the names of its contributors
+may be used to endorse or promote products derived from this software
+without specific prior written permission.
+          </ol>
+
+     <p>THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS &ldquo;AS IS&rdquo; AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGE. 
+</blockquote>
+
+<p>Portions contributed by Novell, Inc., including the LDAP database
+backend, are subject to the following license:
+
+<blockquote>
+Copyright &copy; 2004-2005, Novell, Inc. 
+All rights reserved.
+
+     <p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+          <ul>
+<li>Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer. 
+<li>Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution. 
+<li>The copyright holder's name is not used to endorse or promote products
+derived from this software without specific prior written permission. 
+</ul>
+
+     <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &ldquo;AS IS&rdquo;
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE. 
+</blockquote>
+
+<p>Portions funded by Sandia National Laboratory
+and developed by the University of Michigan's
+Center for Information Technology Integration,
+including the PKINIT implementation, are subject
+to the following license:
+
+<blockquote>
+
+     <p>COPYRIGHT &copy; 2006-2007<br>
+THE REGENTS OF THE UNIVERSITY OF MICHIGAN<br>
+ALL RIGHTS RESERVED
+
+     <p>Permission is granted to use, copy, create derivative works
+and redistribute this software and such derivative works
+for any purpose, so long as the name of The University of
+Michigan is not used in any advertising or publicity
+pertaining to the use of distribution of this software
+without specific, written prior authorization.  If the
+above copyright notice or any other identification of the
+University of Michigan is included in any copy of any
+portion of this software, then the disclaimer below must
+also be included.
+
+     <p>THIS SOFTWARE IS PROVIDED AS IS, WITHOUT REPRESENTATION
+FROM THE UNIVERSITY OF MICHIGAN AS TO ITS FITNESS FOR ANY
+PURPOSE, AND WITHOUT WARRANTY BY THE UNIVERSITY OF
+MICHIGAN OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING
+WITHOUT LIMITATION THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+REGENTS OF THE UNIVERSITY OF MICHIGAN SHALL NOT BE LIABLE
+FOR ANY DAMAGES, INCLUDING SPECIAL, INDIRECT, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES, WITH RESPECT TO ANY CLAIM ARISING
+OUT OF OR IN CONNECTION WITH THE USE OF THE SOFTWARE, EVEN
+IF IT HAS BEEN OR IS HEREAFTER ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES. 
+</blockquote>
+
+<p>The pkcs11.h file included in the PKINIT code has the
+following license:
+
+<blockquote>
+
+     <p>Copyright 2006 g10 Code GmbH
+Copyright 2006 Andreas Jellinghaus
+
+     <p>This file is free software; as a special exception the author gives
+unlimited permission to copy and/or distribute it, with or without
+modifications, as long as this notice is preserved.
+
+     <p>This file is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY, to the extent permitted by law; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.
+
+</blockquote>
+
+<p>Portions contributed by Apple Inc. are subject to the following license:
+
+<blockquote>
+
+     <p>Copyright 2004-2008 Apple Inc.  All Rights Reserved.
+
+     <p>Export of this software from the United States of America may require
+a specific license from the United States Government.  It is the
+responsibility of any person or organization contemplating export to
+obtain such a license before exporting.
+
+     <p>WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+distribute this software and its documentation for any purpose and
+without fee is hereby granted, provided that the above copyright
+notice appear in all copies and that both that copyright notice and
+this permission notice appear in supporting documentation, and that
+the name of Apple Inc. not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.  Apple Inc. makes no representations about the suitability of
+this software for any purpose.  It is provided "as is" without express
+or implied warranty.
+
+     <p>THIS SOFTWARE IS PROVIDED &ldquo;AS IS&rdquo; AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+</blockquote>
+
+<p>The implementations of strlcpy and strlcat in
+src/util/support/strlcat.c have the following copyright and permission
+notice:
+
+<blockquote>
+
+     <p>Copyright &copy; 1998 Todd C. Miller &lt;Todd.Miller@courtesan.com&gt;
+
+     <p>Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+     <p>THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+</blockquote>
+
+<p>The implementations of UTF-8 string handling in src/util/support and
+src/lib/krb5/unicode are subject to the following copyright and
+permission notice:
+
+<blockquote>
+
+     <p>The OpenLDAP Public License
+  Version 2.8, 17 August 2003
+
+     <p>Redistribution and use of this software and associated documentation
+("Software"), with or without modification, are permitted provided
+that the following conditions are met:
+
+     <p>1. Redistributions in source form must retain copyright statements
+   and notices,
+
+     <p>2. Redistributions in binary form must reproduce applicable copyright
+   statements and notices, this list of conditions, and the following
+   disclaimer in the documentation and/or other materials provided
+   with the distribution, and
+
+     <p>3. Redistributions must contain a verbatim copy of this document.
+
+     <p>The OpenLDAP Foundation may revise this license from time to time. 
+Each revision is distinguished by a version number.  You may use
+this Software under terms of this license revision or under the
+terms of any subsequent revision of the license.
+
+     <p>THIS SOFTWARE IS PROVIDED BY THE OPENLDAP FOUNDATION AND ITS
+CONTRIBUTORS &ldquo;AS IS&rdquo; AND ANY EXPRESSED OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT
+SHALL THE OPENLDAP FOUNDATION, ITS CONTRIBUTORS, OR THE AUTHOR(S)
+OR OWNER(S) OF THE SOFTWARE BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+     <p>The names of the authors and copyright holders must not be used in
+advertising or otherwise to promote the sale, use or other dealing
+in this Software without specific, written prior permission.  Title
+to copyright in this Software shall at all times remain with copyright
+holders.
+
+     <p>OpenLDAP is a registered trademark of the OpenLDAP Foundation.
+
+     <p>Copyright 1999-2003 The OpenLDAP Foundation, Redwood City,
+California, USA.  All Rights Reserved.  Permission to copy and
+distribute verbatim copies of this document is granted.
+
+</blockquote>
+
+<p>Marked test programs in src/lib/krb5/krb have the following copyright:
+
+<blockquote>
+
+     <p>Copyright &copy; 2006 Kungliga Tekniska H&ouml;gskolan
+(Royal Institute of Technology, Stockholm, Sweden). 
+All rights reserved.
+
+     <p>Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+     <p>1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+     <p>2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+     <p>3. Neither the name of KTH nor the names of its contributors may be
+   used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+     <p>THIS SOFTWARE IS PROVIDED BY KTH AND ITS CONTRIBUTORS &ldquo;AS IS&rdquo; AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL KTH OR ITS CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+</blockquote>
+
+<p>Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notices and this permission notice are
+preserved on all copies.
+
+<p>Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided also that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+<p>Permission is granted to copy and distribute translations of this manual
+into another language, under the above conditions for modified versions.
+
+<div class="node">
+<p><hr>
+<a name="Introduction"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Copyright">Copyright</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+<br>
+</div>
+
+<h2 class="chapter">1 Introduction</h2>
+
+<p>Kerberos V5 is an authentication system developed at MIT. 
+Kerberos is named for the three-headed watchdog from Greek mythology,
+who guarded the entrance to the underworld.
+
+<p>Under Kerberos, a client (generally either a user or a service) sends a
+request for a ticket to the <i>Key Distribution Center</i> (KDC).  The KDC
+creates a <dfn>ticket-granting ticket</dfn> (TGT) for the client, encrypts it
+using the client's password as the key, and sends the encrypted TGT back
+to the client.  The client then attempts to decrypt the TGT, using its
+password.  If the client successfully decrypts the TGT (<i>i.e.</i>, if the
+client gave the correct password), it keeps the decrypted TGT, which
+indicates proof of the client's identity.
+
+<p>The TGT, which expires at a specified time, permits the client to obtain
+additional tickets, which give permission for specific services.  The
+requesting and granting of these additional tickets is user-transparent.
+
+<p>Since Kerberos negotiates authenticated, and optionally encrypted,
+communications between two points anywhere on the internet, it provides
+a layer of security that is not dependent on which side of a firewall
+either client is on.  Since studies have shown that half of the computer
+security breaches in industry happen from <i>inside</i> firewalls,
+MIT's Kerberos V5 plays a vital role in maintaining your
+network security.
+
+<p>The Kerberos V5 package is designed to be easy to use.  Most of the
+commands are nearly identical to UNIX network programs you already
+use.  Kerberos V5 is a <dfn>single-sign-on</dfn> system, which means
+that you have to type your password only once per session, and Kerberos
+does the authenticating and encrypting transparently.
+
+<ul class="menu">
+<li><a accesskey="1" href="#What-is-a-Ticket_003f">What is a Ticket?</a>
+<li><a accesskey="2" href="#What-is-a-Kerberos-Principal_003f">What is a Kerberos Principal?</a>
+</ul>
+
+<div class="node">
+<p><hr>
+<a name="What-is-a-Ticket_003f"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#What-is-a-Kerberos-Principal_003f">What is a Kerberos Principal?</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Introduction">Introduction</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Introduction">Introduction</a>
+<br>
+</div>
+
+<h3 class="section">1.1 What is a Ticket?</h3>
+
+<p>Your Kerberos <dfn>credentials</dfn>, or &ldquo;<dfn>tickets</dfn>&rdquo;, are a set of
+electronic information that can be used to verify your identity.  Your
+Kerberos tickets may be stored in a file, or they may exist only in
+memory.
+
+<p>The first ticket you obtain is a <dfn>ticket-granting ticket</dfn>, which
+permits you to obtain additional tickets.  These additional tickets give
+you permission for specific services.  The requesting and granting of
+these additional tickets happens transparently.
+
+<p>A good analogy for the ticket-granting ticket is a three-day ski pass
+that is good at four different resorts.  You show the pass at whichever
+resort you decide to go to (until it expires), and you receive a lift
+ticket for that resort.  Once you have the lift ticket, you can ski all
+you want at that resort.  If you go to another resort the next day, you
+once again show your pass, and you get an additional lift ticket for the
+new resort.  The difference is that the Kerberos V5 programs notice
+that you have the weekend ski pass, and get the lift ticket for you, so
+you don't have to perform the transactions yourself.
+
+<div class="node">
+<p><hr>
+<a name="What-is-a-Kerberos-Principal_003f"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#What-is-a-Ticket_003f">What is a Ticket?</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Introduction">Introduction</a>
+<br>
+</div>
+
+<h3 class="section">1.2 What is a Kerberos Principal?</h3>
+
+<p>A Kerberos <dfn>principal</dfn> is a unique identity to which Kerberos can
+assign tickets.  Principals can have an arbitrary number of
+components.  Each component is separated by a component separator,
+generally `/'.  The last component is the realm, separated from the
+rest of the principal by the realm separator, generally `@'.  If there
+is no realm component in the principal, then it will be assumed that
+the principal is in the default realm for the context in which it is
+being used.
+
+<p>Traditionally, a principal is divided into three parts:  the
+<dfn>primary</dfn>, the <dfn>instance</dfn>, and the <dfn>realm</dfn>.  The format of
+a typical Kerberos V5 principal is <code>primary/instance@REALM</code>.
+
+     <ul>
+<li>The <dfn>primary</dfn> is the first part of the principal.  In the case
+of a user, it's the same as your username.  For a host, the primary is
+the word <code>host</code>.
+
+     <li>The <dfn>instance</dfn> is an optional string that qualifies the
+primary.  The instance is separated from the primary by a slash
+(<code>/</code>).  In the case of a user, the instance is usually null, but a
+user might also have an additional principal, with an instance called
+<span class="samp">admin</span>, which he/she uses to administrate a database.  The
+principal <code>jennifer@ATHENA.MIT.EDU</code> is completely
+separate from the principal
+<code>jennifer/admin@ATHENA.MIT.EDU</code>, with a separate
+password, and separate permissions.  In the case of a host, the instance
+is the fully qualified hostname, e.g.,
+<code>daffodil.mit.edu</code>.
+
+     <li>The <dfn>realm</dfn> is your Kerberos realm.  In most cases, your
+Kerberos realm is your domain name, in upper-case letters.  For example,
+the machine <code>daffodil.example.com</code> would be in
+the realm <code>EXAMPLE.COM</code>. 
+</ul>
+
+<div class="node">
+<p><hr>
+<a name="Kerberos-V5-Tutorial"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Introduction">Introduction</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+<br>
+</div>
+
+<h2 class="chapter">2 Kerberos V5 Tutorial</h2>
+
+<p>This tutorial is intended to familiarize you with the Kerberos V5
+client programs.  We will represent your prompt as &ldquo;<code>shell%</code>&rdquo;. 
+So an instruction to type the &ldquo;<kbd>ls</kbd>&rdquo; command would be represented as
+follows:
+
+<pre class="smallexample">     <b>shell%</b> ls
+</pre>
+<p>In these examples, we will use sample usernames, such as
+<code>jennifer</code> and <code>david</code>, sample
+hostnames, such as <code>daffodil</code> and
+<code>trillium</code>, and sample domain names, such as
+<code>mit.edu</code> and <code>example.com</code>.  When you
+see one of these, substitute your username, hostname, or domain name
+accordingly.
+
+<ul class="menu">
+<li><a accesskey="1" href="#Setting-Up-to-Use-Kerberos-V5">Setting Up to Use Kerberos V5</a>
+<li><a accesskey="2" href="#Ticket-Management">Ticket Management</a>
+<li><a accesskey="3" href="#Password-Management">Password Management</a>
+<li><a accesskey="4" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+</ul>
+
+<div class="node">
+<p><hr>
+<a name="Setting-Up-to-Use-Kerberos-V5"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Ticket-Management">Ticket Management</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>
+<br>
+</div>
+
+<h3 class="section">2.1 Setting Up to Use Kerberos V5</h3>
+
+<p>Your system administrator will have installed the Kerberos V5
+programs in whichever directory makes the most sense for your system. 
+We will use <code>/usr/local</code> throughout this guide to refer to the
+top-level directory Kerberos V5 directory.  We will therefor use
+<code>/usr/local/bin</code> to denote the location of the Kerberos V5 user
+programs.  In your installation, the directory name may be different,
+but whatever the directory name is, you should make sure it is included
+in your path.  You will probably want to put it <i>ahead of</i> the
+directories <code>/bin</code> and <code>/usr/bin</code> so you will get the
+Kerberos V5 network programs, rather than the standard UNIX
+versions, when you type their command names.
+
+<div class="node">
+<p><hr>
+<a name="Ticket-Management"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Password-Management">Password Management</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Setting-Up-to-Use-Kerberos-V5">Setting Up to Use Kerberos V5</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>
+<br>
+</div>
+
+<h3 class="section">2.2 Ticket Management</h3>
+
+<p>On many systems, Kerberos is built into the login program, and you get
+tickets automatically when you log in.  Other programs, such as
+<code>rsh</code>, <code>rcp</code>, <code>telnet</code>, and <code>rlogin</code>, can forward
+copies of your tickets to the remote host.  Most of these programs also
+automatically destroy your tickets when they exit.  However,
+MIT recommends that you explicitly destroy your Kerberos
+tickets when you are through with them, just to be sure.  One way to
+help ensure that this happens is to add the <code>kdestroy</code> command to
+your <code>.logout</code> file.  Additionally, if you are going to be away
+from your machine and are concerned about an intruder using your
+permissions, it is safest to either destroy all copies of your tickets,
+or use a screensaver that locks the screen.
+
+<ul class="menu">
+<li><a accesskey="1" href="#Kerberos-Ticket-Properties">Kerberos Ticket Properties</a>
+<li><a accesskey="2" href="#Obtaining-Tickets-with-kinit">Obtaining Tickets with kinit</a>
+<li><a accesskey="3" href="#Viewing-Your-Tickets-with-klist">Viewing Your Tickets with klist</a>
+<li><a accesskey="4" href="#Destroying-Your-Tickets-with-kdestroy">Destroying Your Tickets with kdestroy</a>
+</ul>
+
+<div class="node">
+<p><hr>
+<a name="Kerberos-Ticket-Properties"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Obtaining-Tickets-with-kinit">Obtaining Tickets with kinit</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Ticket-Management">Ticket Management</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Ticket-Management">Ticket Management</a>
+<br>
+</div>
+
+<h4 class="subsection">2.2.1 Kerberos Ticket Properties</h4>
+
+<p class="noindent">There are various properties that Kerberos tickets can have:
+
+<p>If a ticket is <dfn>forwardable</dfn>, then the KDC can issue a new ticket with
+a different network address based on the forwardable ticket.  This
+allows for authentication forwarding without requiring a password to be
+typed in again.  For example, if a user with a forwardable TGT logs
+into a remote system, the KDC could issue a new TGT for that user with
+the network address of the remote system, allowing authentication on
+that host to work as though the user were logged in locally.
+
+<p>When the KDC creates a new ticket based on a forwardable ticket, it
+sets the <dfn>forwarded</dfn> flag on that new ticket.  Any tickets that are
+created based on a ticket with the forwarded flag set will also have
+their forwarded flags set.
+
+<p>A <dfn>proxiable</dfn> ticket is similar to a forwardable ticket in that it
+allows a service to take on the identity of the client.  Unlike a
+forwardable ticket, however, a proxiable ticket is only issued for
+specific services.  In other words, a ticket-granting ticket cannot be
+issued based on a ticket that is proxiable but not forwardable.
+
+<p>A <dfn>proxy</dfn> ticket is one that was issued based on a proxiable ticket.
+
+<p>A <dfn>postdated</dfn> ticket is issued with the <i>invalid</i> flag set. 
+After the starting time listed on the ticket, it can be presented to
+the KDC to obtain valid tickets.
+
+<p>Tickets with the <dfn>postdateable</dfn> flag set can be used to issue postdated
+tickets.
+
+<p><dfn>Renewable</dfn> tickets can be used to obtain new session keys without
+the user entering their password again.  A renewable ticket has two
+expiration times.  The first is the time at which this particular
+ticket expires.  The second is the latest possible expiration time for
+any ticket issued based on this renewable ticket.
+
+<p>A ticket with the <dfn>initial</dfn> flag set was issued based on the
+authentication protocol, and not on a ticket-granting ticket.   Clients
+that wish to ensure that the user's key has been recently presented for
+verification could specify that this flag must be set to accept the
+ticket.
+
+<p>An <dfn>invalid</dfn> ticket must be rejected by application servers.  Postdated
+tickets are usually issued with this flag set, and must be validated by
+the KDC before they can be used.
+
+<p>A <dfn>preauthenticated</dfn> ticket is one that was only issued after the
+client requesting the ticket had authenticated itself to the KDC.
+
+<p>The <dfn>hardware authentication</dfn> flag is set on a ticket which
+required the use of hardware for authentication.  The hardware is
+expected to be possessed only by the client which requested the
+tickets.
+
+<p>If a ticket has the <dfn>transit policy checked</dfn> flag set, then the KDC that
+issued this ticket implements the transited-realm check policy and
+checked the transited-realms list on the ticket.  The transited-realms
+list contains a list of all intermediate realms between the realm of the
+KDC that issued the first ticket and that of the one that issued the
+current ticket.  If this flag is not set, then the application server
+must check the transited realms itself or else reject the ticket.
+
+<p>The <dfn>okay as delegate</dfn> flag indicates that the server specified in
+the ticket is suitable as a delegate as determined by the policy of
+that realm.  A server that is acting as a delegate has been granted a
+proxy or a forwarded TGT.  This flag is a new addition to the
+Kerberos V5 protocol and is not yet implemented on MIT servers.
+
+<p>An <dfn>anonymous</dfn>  ticket is one in which the named principal is a generic
+principal for that realm; it does not actually specify the individual
+that will be using the ticket.  This ticket is meant only to securely
+distribute a session key.  This is a new addition to the Kerberos V5
+protocol and is not yet implemented on MIT servers.
+
+<div class="node">
+<p><hr>
+<a name="Obtaining-Tickets-with-kinit"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Viewing-Your-Tickets-with-klist">Viewing Your Tickets with klist</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Kerberos-Ticket-Properties">Kerberos Ticket Properties</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Ticket-Management">Ticket Management</a>
+<br>
+</div>
+
+<h4 class="subsection">2.2.2 Obtaining Tickets with kinit</h4>
+
+<p>If your site is using the Kerberos V5 login program, you will get
+Kerberos tickets automatically when you log in.  If your site uses a
+different login program, you may need to explicitly obtain your Kerberos
+tickets, using the <code>kinit</code> program.  Similarly, if your Kerberos
+tickets expire, use the <code>kinit</code> program to obtain new ones.
+
+<p>To use the <code>kinit</code> program, simply type <kbd>kinit</kbd> and then type
+your password at the prompt.  For example, Jennifer (whose username is
+<code>jennifer</code>) works for Bleep, Inc. (a fictitious company
+with the domain name <code>mit.edu</code> and the Kerberos realm
+<code>ATHENA.MIT.EDU</code>).  She would type:
+
+<pre class="smallexample">     <b>shell%</b> kinit
+     <b>Password for jennifer@ATHENA.MIT.EDU:</b> <i>&lt;-- [Type jennifer's password here.]</i>
+     <b>shell%</b>
+</pre>
+<p>If you type your password incorrectly, kinit will give you the following
+error message:
+
+<pre class="smallexample">     <b>shell%</b> kinit
+     <b>Password for jennifer@ATHENA.MIT.EDU:</b> <i>&lt;-- [Type the wrong password here.]</i>
+     <b>kinit: Password incorrect</b>
+     <b>shell%</b>
+</pre>
+<p class="noindent">and you won't get Kerberos tickets.
+
+<p class="noindent">Notice that <code>kinit</code> assumes you want tickets for your own
+username in your default realm. 
+Suppose Jennifer's friend David is visiting, and he wants to borrow a
+window to check his mail.  David needs to get tickets for himself in his
+own realm, EXAMPLE.COM.<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a>  He would type:
+
+<pre class="smallexample">     <b>shell%</b> kinit david@EXAMPLE.COM
+     <b>Password for david@EXAMPLE.COM:</b> <i>&lt;-- [Type david's password here.]</i>
+     <b>shell%</b>
+</pre>
+<p class="noindent">David would then have tickets which he could use to log onto
+his own machine.  Note that he typed his password locally on Jennifer's
+machine, but it never went over the network.  Kerberos on the local host
+performed the authentication to the KDC in the other realm.
+
+<p>If you want to be able to forward your tickets to another host, you need
+to request <dfn>forwardable</dfn> tickets.  You do this by specifying the
+<kbd>-f</kbd> option:
+
+<pre class="smallexample">     <b>shell%</b> kinit -f
+     <b>Password for jennifer@ATHENA.MIT.EDU:</b> <i>&lt;-- [Type your password here.]</i>
+     <b>shell%</b>
+</pre>
+<p class="noindent">Note that <code>kinit</code> does not tell you that it obtained forwardable
+tickets; you can verify this using the <code>klist</code> command
+(see <a href="#Viewing-Your-Tickets-with-klist">Viewing Your Tickets with klist</a>).
+
+<p>Normally, your tickets are good for your system's default ticket
+lifetime, which is ten hours on many systems.  You can specify a
+different ticket lifetime with the <span class="samp">-l</span> option.  Add the letter
+<span class="samp">s</span> to the value for seconds, <span class="samp">m</span> for minutes, <span class="samp">h</span> for
+hours, or <span class="samp">d</span> for days. 
+For example, to obtain forwardable tickets for
+<code>david@EXAMPLE.COM</code> that would be good for
+three hours, you would type:
+
+<pre class="smallexample">     <b>shell%</b> kinit -f -l 3h david@EXAMPLE.COM
+     <b>Password for david@EXAMPLE.COM:</b> <i>&lt;-- [Type david's password here.]</i>
+     <b>shell%</b>
+</pre>
+<p class="noindent">You cannot mix units; specifying a lifetime of <span class="samp">3h30m</span> would result
+in an error.  Note also that most systems specify a maximum ticket
+lifetime.  If you request a longer ticket lifetime, it will be
+automatically truncated to the maximum lifetime.
+
+<div class="node">
+<p><hr>
+<a name="Viewing-Your-Tickets-with-klist"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Destroying-Your-Tickets-with-kdestroy">Destroying Your Tickets with kdestroy</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Obtaining-Tickets-with-kinit">Obtaining Tickets with kinit</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Ticket-Management">Ticket Management</a>
+<br>
+</div>
+
+<h4 class="subsection">2.2.3 Viewing Your Tickets with klist</h4>
+
+<p>The <code>klist</code> command shows your tickets.  When you first obtain
+tickets, you will have only the ticket-granting ticket.  (See <a href="#What-is-a-Ticket_003f">What is a Ticket?</a>.)  The listing would look like this:
+
+<pre class="smallexample">     <b>shell%</b> klist
+     Ticket cache: /tmp/krb5cc_ttypa
+     Default principal: jennifer@ATHENA.MIT.EDU
+     
+     Valid starting     Expires            Service principal
+     06/07/04 19:49:21  06/08/04 05:49:19  krbtgt/ATHENA.MIT.EDU@ATHENA.MIT.EDU
+     <b>shell%</b>
+</pre>
+<p class="noindent">The ticket cache is the location of your ticket file.  In the above
+example, this file is named <code>/tmp/krb5cc_ttypa</code>.  The default
+principal is your kerberos <dfn>principal</dfn>.  (see <a href="#What-is-a-Kerberos-Principal_003f">What is a Kerberos Principal?</a>)
+
+<p>The &ldquo;valid starting&rdquo; and &ldquo;expires&rdquo; fields describe the period of
+time during which the ticket is valid.  The <dfn>service principal</dfn>
+describes each ticket.  The ticket-granting ticket has the primary
+<code>krbtgt</code>, and the instance is the realm name.
+
+<p>Now, if jennifer connected to the machine
+<code>daffodil.mit.edu</code>, and then typed
+<kbd>klist</kbd> again, she would have gotten the following result:
+
+<pre class="smallexample">     <b>shell%</b> klist
+     Ticket cache: /tmp/krb5cc_ttypa
+     Default principal: jennifer@ATHENA.MIT.EDU
+     
+     Valid starting     Expires            Service principal
+     06/07/04 19:49:21  06/08/04 05:49:19  krbtgt/ATHENA.MIT.EDU@ATHENA.MIT.EDU
+     06/07/04 20:22:30  06/08/04 05:49:19  host/daffodil.mit.edu@ATHENA.MIT.EDU
+     <b>shell%</b>
+</pre>
+<p class="noindent">Here's what happened:  when jennifer used telnet to connect
+to the host <code>daffodil.mit.edu</code>, the telnet
+program presented her ticket-granting ticket to the KDC and requested a
+host ticket for the host
+<code>daffodil.mit.edu</code>.  The KDC sent the host
+ticket, which telnet then presented to the host
+<code>daffodil.mit.edu</code>, and she was allowed to
+log in without typing her password.
+
+<p>Suppose your Kerberos tickets allow you to log into a host in another
+domain, such as <code>trillium.example.com</code>, which
+is also in another Kerberos realm, <code>EXAMPLE.COM</code>.  If you
+telnet to this host, you will receive a ticket-granting ticket for the
+realm <code>EXAMPLE.COM</code>, plus the new <code>host</code> ticket for
+<code>trillium.example.com</code>.  <kbd>klist</kbd> will now
+show:
+
+<pre class="smallexample">     <b>shell%</b> klist
+     Ticket cache: /tmp/krb5cc_ttypa
+     Default principal: jennifer@ATHENA.MIT.EDU
+     
+     Valid starting     Expires            Service principal
+     06/07/04 19:49:21  06/08/04 05:49:19  krbtgt/ATHENA.MIT.EDU@ATHENA.MIT.EDU
+     06/07/04 20:22:30  06/08/04 05:49:19  host/daffodil.mit.edu@ATHENA.MIT.EDU
+     06/07/04 20:24:18  06/08/04 05:49:19  krbtgt/EXAMPLE.COM@ATHENA.MIT.EDU
+     06/07/04 20:24:18  06/08/04 05:49:19  host/trillium.example.com@ATHENA.MIT.EDU
+     <b>shell%</b>
+</pre>
+<p>You can use the <code>-f</code> option to view the <dfn>flags</dfn> that apply to
+your tickets.  The flags are:
+
+     <dl>
+<dt><b>F</b><dd><b>F</b>orwardable
+<dt><b>f</b><dd><b>f</b>orwarded
+<dt><b>P</b><dd><b>P</b>roxiable
+<dt><b>p</b><dd><b>p</b>roxy
+<dt><b>D</b><dd>post<b>D</b>ateable
+<dt><b>d</b><dd>post<b>d</b>ated
+<dt><b>R</b><dd><b>R</b>enewable
+<dt><b>I</b><dd><b>I</b>nitial
+<dt><b>i</b><dd><b>i</b>nvalid
+<dt><b>H</b><dd><b>H</b>ardware authenticated
+<dt><b>A</b><dd>pre<b>A</b>uthenticated
+<dt><b>T</b><dd><b>T</b>ransit policy checked
+<dt><b>O</b><dd><b>O</b>kay as delegate
+<dt><b>a</b><dd><b>a</b>nonymous
+</dl>
+
+<p>Here is a sample listing.  In this example, the user jennifer
+obtained her initial tickets (<span class="samp">I</span>), which are forwardable
+(<span class="samp">F</span>) and postdated (<span class="samp">d</span>) but not yet validated (<span class="samp">i</span>). 
+(See <a href="#kinit-Reference">kinit Reference</a>, for more information about postdated tickets.)
+
+<pre class="smallexample">     <b>shell%</b> klist -f
+     <b>Ticket cache: /tmp/krb5cc_320
+     Default principal: jennifer@ATHENA.MIT.EDU
+     
+     Valid starting      Expires             Service principal
+     31/07/05 19:06:25  31/07/05 19:16:25  krbtgt/ATHENA.MIT.EDU@ATHENA.MIT.EDU
+             Flags: FdiI
+     shell%</b>
+</pre>
+<p>In the following example, the user david's tickets were
+forwarded (<span class="samp">f</span>) to this host from another host.  The tickets are
+reforwardable (<span class="samp">F</span>).
+
+<pre class="smallexample">     <b>shell%</b> klist -f
+     <b>Ticket cache: /tmp/krb5cc_p11795
+     Default principal: david@EXAMPLE.COM
+     
+     Valid starting     Expires            Service principal
+     07/31/05 11:52:29  07/31/05 21:11:23  krbtgt/EXAMPLE.COM@EXAMPLE.COM
+             Flags: Ff
+     07/31/05 12:03:48  07/31/05 21:11:23  host/trillium.example.com@EXAMPLE.COM
+             Flags: Ff
+     shell%</b>
+</pre>
+<div class="node">
+<p><hr>
+<a name="Destroying-Your-Tickets-with-kdestroy"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#Viewing-Your-Tickets-with-klist">Viewing Your Tickets with klist</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Ticket-Management">Ticket Management</a>
+<br>
+</div>
+
+<h4 class="subsection">2.2.4 Destroying Your Tickets with kdestroy</h4>
+
+<p>Your Kerberos tickets are proof that you are indeed yourself, and
+tickets can be stolen.  If this happens, the person who has them can
+masquerade as you until they expire.  For this reason, you should
+destroy your Kerberos tickets when you are away from your computer.
+
+<p>Destroying your tickets is easy.  Simply type <kbd>kdestroy</kbd>.
+
+<pre class="smallexample">     <b>shell%</b> kdestroy
+     <b>shell%</b>
+</pre>
+<p>If <code>kdestroy</code> fails to destroy your tickets, it will beep and give
+an error message.  For example, if <code>kdestroy</code> can't find any
+tickets to destroy, it will give the following message:
+
+<pre class="smallexample">     <b>shell%</b> kdestroy
+     <b>kdestroy: No credentials cache file found while destroying cache
+     shell%</b>
+</pre>
+<div class="node">
+<p><hr>
+<a name="Password-Management"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Ticket-Management">Ticket Management</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>
+<br>
+</div>
+
+<h3 class="section">2.3 Password Management</h3>
+
+<p>Your password is the only way Kerberos has of verifying your identity. 
+If someone finds out your password, that person can masquerade as
+you&mdash;send email that comes from you, read, edit, or delete your files,
+or log into other hosts as you&mdash;and no one will be able to tell the
+difference.  For this reason, it is important that you choose a good
+password (see <a href="#Password-Advice">Password Advice</a>), and keep it secret.  If you need to
+give access to your account to someone else, you can do so through
+Kerberos.  (See <a href="#Granting-Access-to-Your-Account">Granting Access to Your Account</a>.)  You should
+<i>never</i> tell your password to anyone, including your system
+administrator, for any reason.  You should change your password
+frequently, particularly any time you think someone may have found out
+what it is.
+
+<ul class="menu">
+<li><a accesskey="1" href="#Changing-Your-Password">Changing Your Password</a>
+<li><a accesskey="2" href="#Password-Advice">Password Advice</a>
+<li><a accesskey="3" href="#Granting-Access-to-Your-Account">Granting Access to Your Account</a>
+</ul>
+
+<div class="node">
+<p><hr>
+<a name="Changing-Your-Password"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Password-Advice">Password Advice</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Password-Management">Password Management</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Password-Management">Password Management</a>
+<br>
+</div>
+
+<h4 class="subsection">2.3.1 Changing Your Password</h4>
+
+<p>To change your Kerberos password, use the <code>kpasswd</code> command.  It
+will ask you for your old password (to prevent someone else from walking
+up to your computer when you're not there and changing your password),
+and then prompt you for the new one twice.  (The reason you have to type
+it twice is to make sure you have typed it correctly.)  For example,
+user <code>david</code> would do the following:
+
+<pre class="smallexample">     <b>shell%</b> kpasswd
+     <b>Password for david:</b>    <i>&lt;- Type your old password.</i>
+     <b>Enter new password:</b>    <i>&lt;- Type your new password.</i>
+     <b>Enter it again:</b>  <i>&lt;- Type the new password again.</i>
+     <b>Password changed.</b>
+     <b>shell%</b>
+</pre>
+<p>If david typed the incorrect old password, he would get
+the following message:
+
+<pre class="smallexample">     <b>shell%</b> kpasswd
+     <b>Password for david:</b>  <i>&lt;- Type the incorrect old password.</i>
+     <b>kpasswd: Password incorrect while getting initial ticket
+     shell%</b>
+</pre>
+<p>If you make a mistake and don't type the new password the same way
+twice, <code>kpasswd</code> will ask you to try again:
+
+<pre class="smallexample">     <b>shell%</b> kpasswd
+     <b>Password for david:</b>  <i>&lt;- Type the old password.</i>
+     <b>Enter new password:</b>  <i>&lt;- Type the new password.</i>
+     <b>Enter it again:</b> <i>&lt;- Type a different new password.</i>
+     <b>kpasswd: Password mismatch while reading password
+     shell%</b>
+</pre>
+<p>Once you change your password, it takes some time for the change to
+propagate through the system.  Depending on how your system is set up,
+this might be anywhere from a few minutes to an hour or more.  If you
+need to get new Kerberos tickets shortly after changing your password,
+try the new password.  If the new password doesn't work, try again using
+the old one.
+
+<div class="node">
+<p><hr>
+<a name="Password-Advice"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Granting-Access-to-Your-Account">Granting Access to Your Account</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Changing-Your-Password">Changing Your Password</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Password-Management">Password Management</a>
+<br>
+</div>
+
+<h4 class="subsection">2.3.2 Password Advice</h4>
+
+<p>Your password can include almost any character you can type (except
+control keys and the &ldquo;enter&rdquo; key).  A good password is one you can
+remember, but that no one else can easily guess.  Examples of <i>bad</i>
+passwords are words that can be found in a dictionary, any common or
+popular name, especially a famous person (or cartoon character), your
+name or username in any form (<i>e.g.</i>, forward, backward, repeated
+twice, <i>etc.</i>), your spouse's, child's, or pet's name, your birth
+date, your social security number, and any sample password that appears
+in this (or any other) manual.
+
+<p>MIT recommends that your password be at least 6 characters
+long, and contain UPPER- and lower-case letters, numbers, and/or
+punctuation marks.  Some passwords that would be good if they weren't
+listed in this manual include:
+
+     <ul>
+<li>some initials, like &ldquo;GykoR-66.&rdquo; for &ldquo;Get your kicks on Route
+66.&rdquo;
+
+     <li>an easy-to-pronounce nonsense word, like &ldquo;slaRooBey&rdquo; or
+&ldquo;krang-its&rdquo;
+
+     <li>a misspelled phrase, like &ldquo;2HotPeetzas!&rdquo; or &ldquo;ItzAGurl!!!&rdquo;
+</ul>
+
+<p class="noindent">Note:  don't actually use any of the above passwords.  They're
+only meant to show you how to make up a good password.  Passwords that
+appear in a manual are the first ones intruders will try.
+
+<p>Kerberos V5 allows your system administrators to automatically
+reject bad passwords, based on certain criteria, such as a password
+dictionary or a minimum length.  For example, if the user
+<code>jennifer</code>, who had a policy "strict" that required a
+minimum of 8 characaters, chose a password that was less than 8
+characters, Kerberos would give an error message like the following:
+
+<pre class="smallexample">     <b>shell%</b> kpasswd
+     <b>Password for jennifer:</b>  <i>&lt;- Type your old password here.</i>
+     
+     jennifer's password is controlled by the policy strict, which
+     requires a minimum of 8 characters from at least 3 classes (the five classes
+     are lowercase, uppercase, numbers, punctuation, and all other characters).
+     
+     <b>Enter new password:</b>  <i>&lt;- Type an insecure new password.</i>
+     <b>Enter it again:</b>  <i>&lt;- Type it again.</i>
+     
+     kpasswd: Password is too short while attempting to change password.
+     Please choose another password.
+     
+     <b>Enter new password:</b>  <i>&lt;- Type a good password here.</i>
+     <b>Enter it again:</b>  <i>&lt;- Type it again.</i>
+     <b>Password changed.
+     shell%</b>
+</pre>
+<p class="noindent">Your system administrators can choose the message that is
+displayed if you choose a bad password, so the message you see may be
+different from the above example.
+
+<div class="node">
+<p><hr>
+<a name="Granting-Access-to-Your-Account"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#Password-Advice">Password Advice</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Password-Management">Password Management</a>
+<br>
+</div>
+
+<h4 class="subsection">2.3.3 Granting Access to Your Account</h4>
+
+<p>If you need to give someone access to log into your account, you can do
+so through Kerberos, without telling the person your password.  Simply
+create a file called <code>.k5login</code> in your home directory.  This file
+should contain the Kerberos principal (See <a href="#What-is-a-Kerberos-Principal_003f">What is a Kerberos Principal?</a>.) of each person to whom you wish to give access.  Each
+principal must be on a separate line.  Here is a sample <code>.k5login</code>
+file:
+
+<pre class="smallexample">     jennifer@ATHENA.MIT.EDU
+     david@EXAMPLE.COM
+</pre>
+<p class="noindent">This file would allow the users <code>jennifer</code> and
+<code>david</code> to use your user ID, provided that they had
+Kerberos tickets in their respective realms.  If you will be logging
+into other hosts across a network, you will want to include your own
+Kerberos principal in your <code>.k5login</code> file on each of these hosts.
+
+<p>Using a <code>.k5login</code> file is much safer than giving out your
+password, because:
+
+     <ul>
+<li>You can take access away any time simply by removing the principal
+from your <code>.k5login</code> file.
+
+     <li>Although the user has full access to your account on one
+particular host (or set of hosts if your <code>.k5login</code> file is shared,
+<i>e.g.</i>, over NFS), that user does not inherit your network privileges.
+
+     <li>Kerberos keeps a log of who obtains tickets, so a system
+administrator could find out, if necessary, who was capable of using
+your user ID at a particular time. 
+</ul>
+
+<p>One common application is to have a <code>.k5login</code> file in
+<code>root</code>'s home directory, giving root access to that machine to the
+Kerberos principals listed.  This allows system administrators to allow
+users to become root locally, or to log in remotely as <code>root</code>,
+without their having to give out the root password, and without anyone
+having to type the root password over the network.
+
+<div class="node">
+<p><hr>
+<a name="Kerberos-V5-Applications"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#Password-Management">Password Management</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>
+<br>
+</div>
+
+<h3 class="section">2.4 Kerberos V5 Applications</h3>
+
+<p>Kerberos V5 is a <dfn>single-sign-on</dfn> system.  This means that you
+only have to type your password once, and the Kerberos V5 programs
+do the authenticating (and optionally encrypting) for you.  The way this
+works is that Kerberos has been built into each of a suite of network
+programs.  For example, when you use a Kerberos V5 program to
+connect to a remote host, the program, the KDC, and the remote host
+perform a set of rapid negotiations.  When these negotiations are
+completed, your program has proven your identity on your behalf to the
+remote host, and the remote host has granted you access, all in the
+space of a few seconds.
+
+<p>The Kerberos V5 applications are versions of existing UNIX network
+programs with the Kerberos features added.
+
+<ul class="menu">
+<li><a accesskey="1" href="#Overview-of-Additional-Features">Overview of Additional Features</a>
+<li><a accesskey="2" href="#telnet">telnet</a>
+<li><a accesskey="3" href="#rlogin">rlogin</a>
+<li><a accesskey="4" href="#FTP">FTP</a>
+<li><a accesskey="5" href="#rsh">rsh</a>
+<li><a accesskey="6" href="#rcp">rcp</a>
+<li><a accesskey="7" href="#ksu">ksu</a>
+</ul>
+
+<div class="node">
+<p><hr>
+<a name="Overview-of-Additional-Features"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#telnet">telnet</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+<br>
+</div>
+
+<h4 class="subsection">2.4.1 Overview of Additional Features</h4>
+
+<p>The Kerberos V5 <dfn>network programs</dfn> are those programs that
+connect to another host somewhere on the internet.  These programs
+include <code>rlogin</code>, <code>telnet</code>, <code>ftp</code>, <code>rsh</code>,
+<code>rcp</code>, and <code>ksu</code>.  These programs have all of the original
+features of the corresponding non-Kerberos <code>rlogin</code>, <code>telnet</code>,
+<code>ftp</code>, <code>rsh</code>, <code>rcp</code>, and <code>su</code> programs, plus
+additional features that transparently use your Kerberos tickets for
+negotiating authentication and optional encryption with the remote host. 
+In most cases, all you'll notice is that you no longer have to type your
+password, because Kerberos has already proven your identity.
+
+<p>The Kerberos V5 network programs allow you the options of forwarding
+your tickets to the remote host (if you obtained forwardable tickets
+with the <code>kinit</code> program; see <a href="#Obtaining-Tickets-with-kinit">Obtaining Tickets with kinit</a>), and
+encrypting data transmitted between you and the remote host.
+
+<p>This section of the tutorial assumes you are familiar with the
+non-Kerberos versions of these programs, and highlights the Kerberos
+functions added in the Kerberos V5 package.
+
+<div class="node">
+<p><hr>
+<a name="telnet"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#rlogin">rlogin</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Overview-of-Additional-Features">Overview of Additional Features</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+<br>
+</div>
+
+<h4 class="subsection">2.4.2 telnet</h4>
+
+<p>The Kerberos V5 <code>telnet</code> command works exactly like the
+standard UNIX telnet program, with the following Kerberos options added:
+
+     <dl>
+<dt><kbd>-f</kbd><dd>forwards a copy of your tickets to the remote host.
+
+     <dt><kbd>-F</kbd><dd>forwards a copy of your tickets to the remote host, and marks them
+re-forwardable from the remote host.
+
+     <dt><kbd>-k </kbd><i>realm</i><dd>requests tickets for the remote host in the specified realm, instead of
+determining the realm itself.
+
+     <dt><kbd>-K</kbd><dd>uses your tickets to authenticate to the remote host, but does not log
+you in.
+
+     <dt><kbd>-a</kbd><dd>attempt automatic login using your tickets.  <code>telnet</code> will assume
+the same username unless you explicitly specify another.
+
+     <dt><kbd>-x</kbd><dd>turns on encryption.
+
+</dl>
+
+<p>For example, if <code>david</code> wanted to use the standard
+UNIX telnet to connect to the machine
+<code>daffodil.mit.edu</code>, he would type:
+
+<pre class="smallexample">     <b>shell%</b> telnet daffodil.example.com
+     <b>Trying 128.0.0.5 ...
+     Connected to daffodil.example.com.
+     Escape character is '^]'.
+     
+     NetBSD/i386 (daffodil) (ttyp3)
+     
+     login:</b> david
+     <b>Password:</b>    <i>&lt;- david types his password here</i>
+     <b>Last login: Fri Jun 21 17:13:11 from trillium.mit.edu
+     Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993, 1994
+             The Regents of the University of California.   All rights reserved.
+     
+     NetBSD 1.1: Tue May 21 00:31:42 EDT 1996
+     
+     Welcome to NetBSD!
+     shell%</b>
+</pre>
+<p class="noindent">Note that the machine
+<code>daffodil.example.com</code> asked for
+<code>david</code>'s password.  When he typed it, his password
+was sent over the network unencrypted.  If an intruder were watching
+network traffic at the time, that intruder would know
+<code>david</code>'s password.
+
+<p>If, on the other hand, <code>jennifer</code> wanted to use the
+Kerberos V5 telnet to connect to the machine
+<code>trillium.mit.edu</code>, she could forward a
+copy of her tickets, request an encrypted session, and log on as herself
+as follows:
+
+<pre class="smallexample">     <b>shell%</b> telnet -a -f -x trillium.mit.edu
+     <b>Trying 128.0.0.5...
+     Connected to trillium.mit.edu.
+     Escape character is '^]'.
+     [ Kerberos V5 accepts you as ``jennifer@mit.edu'' ]
+     [ Kerberos V5 accepted forwarded credentials ]
+     What you type is protected by encryption.
+     Last login: Tue Jul 30 18:47:44 from daffodil.example.com
+     Athena Server (sun4) Version 9.1.11 Tue Jul 30 14:40:08 EDT 2002
+     
+     shell%</b>
+</pre>
+<p class="noindent">Note that <code>jennifer</code>'s machine used Kerberos
+to authenticate her to <code>trillium.mit.edu</code>,
+and logged her in automatically as herself.  She had an encrypted
+session, a copy of her tickets already waiting for her, and she never
+typed her password.
+
+<p>If you forwarded your Kerberos tickets, <code>telnet</code> automatically
+destroys them when it exits.  The full set of options to Kerberos V5
+<code>telnet</code> are discussed in the Reference section of this manual. 
+(see <a href="#telnet-Reference">telnet Reference</a>)
+
+<div class="node">
+<p><hr>
+<a name="rlogin"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#FTP">FTP</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#telnet">telnet</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+<br>
+</div>
+
+<h4 class="subsection">2.4.3 rlogin</h4>
+
+<p>The Kerberos V5 <code>rlogin</code> command works exactly like the
+standard UNIX rlogin program, with the following Kerberos options added:
+
+     <dl>
+<dt><kbd>-f</kbd><dd>forwards a copy of your tickets to the remote host.
+
+     <dt><kbd>-F</kbd><dd>forwards a copy of your tickets to the remote host, and marks them
+re-forwardable from the remote host.
+
+     <dt><kbd>-k </kbd><i>realm</i><dd>requests tickets for the remote host in the specified realm, instead of
+determining the realm itself.
+
+     <dt><kbd>-x</kbd><dd>encrypts the input and output data streams (the username is sent unencrypted)
+
+</dl>
+
+<p>For example, if <code>david</code> wanted to use the standard
+UNIX rlogin to connect to the machine
+<code>daffodil.example.com</code>, he would type:
+
+<pre class="smallexample">     <b>shell%</b> rlogin daffodil.example.com -l david
+     <b>Password:</b>  <i>&lt;- david types his password here</i>
+     <b>Last login: Fri Jun 21 10:36:32 from :0.0
+     Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993, 1994
+             The Regents of the University of California.   All rights reserved.
+     
+     NetBSD 1.1: Tue May 21 00:31:42 EDT 1996
+     
+     Welcome to NetBSD!
+     shell%</b>
+</pre>
+<p class="noindent">Note that the machine
+<code>daffodil.example.com</code> asked for
+<code>david</code>'s password.  When he typed it, his password
+was sent over the network unencrypted.  If an intruder were watching
+network traffic at the time, that intruder would know
+<code>david</code>'s password.
+
+<p>If, on the other hand, <code>jennifer</code> wanted to use
+Kerberos V5 rlogin to connect to the machine
+<code>trillium.mit.edu</code>, she could forward a
+copy of her tickets, mark them as not forwardable from the remote host,
+and request an encrypted session as follows:
+
+<pre class="smallexample">     <b>shell%</b> rlogin trillium.mit.edu -f -x
+     <b>This rlogin session is using DES encryption for all data transmissions.
+     Last login: Thu Jun 20 16:20:50 from daffodil
+     Athena Server (sun4) Version 9.1.11 Tue Jul 30 14:40:08 EDT 2002
+     shell%</b>
+</pre>
+<p class="noindent">Note that <code>jennifer</code>'s machine used Kerberos
+to authenticate her to <code>trillium.mit.edu</code>,
+and logged her in automatically as herself.  She had an encrypted
+session, a copy of her tickets were waiting for her, and she never typed
+her password.
+
+<p>If you forwarded your Kerberos tickets, <code>rlogin</code> automatically
+destroys them when it exits.  The full set of options to Kerberos V5
+<code>rlogin</code> are discussed in the Reference section of this manual. 
+(see <a href="#rlogin-Reference">rlogin Reference</a>)
+
+<div class="node">
+<p><hr>
+<a name="FTP"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#rsh">rsh</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#rlogin">rlogin</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+<br>
+</div>
+
+<h4 class="subsection">2.4.4 FTP</h4>
+
+<p>The Kerberos V5 <code>FTP</code> program works exactly like the standard
+UNIX FTP program, with the following Kerberos features added:
+
+     <dl>
+<dt><kbd>-k </kbd><i>realm</i><dd>requests tickets for the remote host in the specified realm, instead of
+determining the realm itself.
+
+     <dt><kbd>-f</kbd><dd>requests that your tickets be forwarded to the remote host.  The
+<kbd>-f</kbd> argument must be the last argument on the command line.
+
+     <dt><kbd>protect </kbd><i>level</i><dd>(issued at the <code>ftp&gt;</code> prompt) sets the protection level.  &ldquo;Clear&rdquo;
+is no protection; &ldquo;safe&rdquo; ensures data integrity by verifying the
+checksum, and &ldquo;private&rdquo; encrypts the data.  Encryption also ensures
+data integrity. 
+</dl>
+
+<p>For example, suppose <code>jennifer</code> wants to get her
+<code>RMAIL</code> file from the directory <code>~jennifer/Mail</code>,
+on the host <code>daffodil.mit.edu</code>.  She wants
+to encrypt the file transfer.  The exchange would look like the
+following:
+
+<pre class="smallexample">     <b>shell%</b> ftp daffodil.mit.edu
+     Connected to daffodil.mit.edu.
+     220 daffodil.mit.edu FTP server (Version 5.60) ready.
+     334 Using authentication type GSSAPI; ADAT must follow
+     GSSAPI accepted as authentication type
+     GSSAPI authentication succeeded
+     200 Data channel protection level set to private.
+     Name (daffodil.mit.edu:jennifer):
+     232 GSSAPI user jennifer@ATHENA.MIT.EDU is authorized as jennifer
+     230 User jennifer logged in.
+     Remote system type is UNIX.
+     Using binary mode to transfer files.
+     ftp&gt; protect private
+     200 Protection level set to Private.
+     ftp&gt; cd ~jennifer/MAIL
+     250 CWD command successful.
+     ftp&gt; get RMAIL
+     227 Entering Passive Mode (128,0,0,5,16,49)
+     150 Opening BINARY mode data connection for RMAIL (361662 bytes).
+     226 Transfer complete.
+     361662 bytes received in 2.5 seconds (1.4e+02 Kbytes/s)
+     ftp&gt; quit
+     <b>shell%</b>
+</pre>
+<p>The full set of options to Kerberos V5 <code>FTP</code> are discussed
+in the Reference section of this manual.  (see <a href="#FTP-Reference">FTP Reference</a>)
+
+<div class="node">
+<p><hr>
+<a name="rsh"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#rcp">rcp</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#FTP">FTP</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+<br>
+</div>
+
+<h4 class="subsection">2.4.5 rsh</h4>
+
+<p>The Kerberos V5 <code>rsh</code> program works exactly like the standard
+UNIX rlogin program, with the following Kerberos features added:
+
+     <dl>
+<dt><kbd>-f</kbd><dd>forwards a copy of your tickets to the remote host.
+
+     <dt><kbd>-F</kbd><dd>forwards a copy of your tickets to the remote host, and marks them
+re-forwardable from the remote host.
+
+     <dt><kbd>-k </kbd><i>realm</i><dd>requests tickets for the remote host in the specified realm, instead of
+determining the realm itself.
+
+     <dt><kbd>-x</kbd><dd>encrypts the input and output data streams (the command line is not encrypted)
+
+</dl>
+
+<p>For example, if your Kerberos tickets allowed you to run programs on the
+host <br> <code>trillium@example.com</code> as root, you could
+run the <span class="samp">date</span> program as follows:
+
+<pre class="smallexample">     <b>shell%</b> rsh trillium.example.com -l root -x date
+     <b>This rsh session is using DES encryption for all data transmissions.
+     Tue Jul 30 19:34:21 EDT 2002
+     shell%</b>
+</pre>
+<p>If you forwarded your Kerberos tickets, <code>rsh</code> automatically
+destroys them when it exits.  The full set of options to Kerberos V5
+<code>rsh</code> are discussed in the Reference section of this manual. 
+(see <a href="#rsh-Reference">rsh Reference</a>)
+
+<div class="node">
+<p><hr>
+<a name="rcp"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ksu">ksu</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#rsh">rsh</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+<br>
+</div>
+
+<h4 class="subsection">2.4.6 rcp</h4>
+
+<p>The Kerberos V5 <code>rcp</code> program works exactly like the standard
+UNIX rcp program, with the following Kerberos features added:
+
+     <dl>
+<dt><kbd>-k </kbd><i>realm</i><dd>requests tickets for the remote host in the specified realm, instead of
+determining the realm itself.
+
+     <dt><kbd>-x</kbd><dd>turns on encryption. 
+</dl>
+
+<p>For example, if you wanted to copy the file <code>/etc/motd</code> from the
+host <code>daffodil.mit.edu</code> into the current
+directory, via an encrypted connection, you would simply type:
+
+<pre class="smallexample">     <b>shell%</b> rcp -x daffodil.mit.edu:/etc/motd .
+</pre>
+<p>The <kbd>rcp</kbd> program negotiates authentication and encryption
+transparently.  The full set of options to Kerberos V5 <code>rcp</code>
+are discussed in the Reference section of this manual.  (see <a href="#rcp-Reference">rcp Reference</a>)
+
+<div class="node">
+<p><hr>
+<a name="ksu"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#rcp">rcp</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Applications">Kerberos V5 Applications</a>
+<br>
+</div>
+
+<h4 class="subsection">2.4.7 ksu</h4>
+
+<p>The Kerberos V5 <code>ksu</code> program replaces the standard UNIX su
+program.  <code>ksu</code> first authenticates you to Kerberos.  Depending on
+the configuration of your system, <code>ksu</code> may ask for your Kerberos
+password if authentication fails.  <em>Note that you should never type
+your password if you are remotely logged in using an unencrypted
+connection.</em>
+
+<p>Once <code>ksu</code> has authenticated you, if your Kerberos principal
+appears in the target's <code>.k5login</code> file (see <a href="#Granting-Access-to-Your-Account">Granting Access to Your Account</a>) or in the target's <code>.k5users</code> file (see below), it
+switches your user ID to the target user ID.
+
+<p>For example, <code>david</code> has put
+<code>jennifer</code>'s Kerberos principal in his <code>.k5login</code>
+file.  If <code>jennifer</code> uses <code>ksu</code> to become
+<code>david</code>, the exchange would look like this.  (To
+differentiate between the two shells, <code>jennifer</code>'s
+prompt is represented as <code>jennifer%</code> and
+<code>david</code>'s prompt is represented as
+<code>david%</code>.)
+
+<pre class="smallexample">     <b>jennifer%</b> ksu david
+     <b>Account david: authorization for jennifer@ATHENA.MIT.EDU successful
+     Changing uid to david (3382)
+     david%</b>
+</pre>
+<p class="noindent">Note that the new shell has a copy of <code>jennifer</code>'s
+tickets.  The ticket filename contains <code>david</code>'s UID
+with <span class="samp">.1</span> appended to it:
+
+<pre class="smallexample">     <b>david%</b> klist
+     <b>Ticket cache: /tmp/krb5cc_3382.1
+     Default principal: jennifer@ATHENA.MIT.EDU
+     
+     Valid starting      Expires             Service principal
+     07/31/04 21:53:01  08/01/04 07:52:53  krbtgt/ATHENA.MIT.EDU@ATHENA.MIT.EDU
+     07/31/04 21:53:39  08/01/04 07:52:53  host/daffodil.mit.edu@ATHENA.MIT.EDU
+     david%</b>
+</pre>
+<p>If <code>jennifer</code> had not appeared in
+<code>david</code>'s <code>.k5login</code> file (and the system was
+configured to ask for a password), the exchange would have looked like
+this (assuming <code>david</code> has taken appropriate
+precautions in protecting his password):
+
+<pre class="smallexample">     <b>jennifer%</b> ksu david
+     <b>WARNING: Your password may be exposed if you enter it here and are logged
+              in remotely using an unsecure (non-encrypted) channel.
+     Kerberos password for david@ATHENA.MIT.EDU:</b>  <i>&lt;-  </i><code>jennifer</code><i> types the wrong password here.</i>
+     <b>ksu: Password incorrect
+     Authentication failed.
+     jennifer%</b>
+</pre>
+<p>Now, suppose <code>david</code> did not want to give
+<code>jennifer</code> full access to his account, but wanted to
+give her permission to list his files and use the "more" command to view
+them.  He could create a <code>.k5users</code> file giving her permission to
+run only those specific commands.
+
+<p>The <code>.k5users</code> file is like the <code>.k5login</code> file, except that
+each principal is optionally followed by a list of commands.  <code>ksu</code>
+will let those principals execute only the commands listed, using the
+<kbd>-e</kbd> option.  <code>david</code>'s <code>.k5users</code> file
+might look like the following:
+
+<pre class="smallexample">     jennifer@ATHENA.MIT.EDU       /bin/ls /usr/bin/more
+     joeadmin@ATHENA.MIT.EDU         /bin/ls
+     joeadmin/admin@ATHENA.MIT.EDU   *
+     david@EXAMPLE.COM
+</pre>
+<p class="noindent">The above <code>.k5users</code> file would let
+<code>jennifer</code> run only the commands <code>/bin/ls</code> and
+<code>/usr/bin/more</code>.  It would let <code>joeadmin</code> run only
+the command <code>/bin/ls</code> if he had regular tickets, but if he had
+tickets for his <code>admin</code> instance,
+<code>joeadmin/admin@ATHENA.MIT.EDU</code>, he would be able
+to execute any command.  The last line gives <code>david</code>
+in the realm EXAMPLE.COM permission to execute any command. 
+(<i>I.e.</i>, having only a Kerberos principal on a line is equivalent to
+giving that principal permission to execute <code>*</code>.)  This is so that
+david can allow himself to execute commands when he logs
+in, using Kerberos, from a machine in the realm EXAMPLE.COM.
+
+<p>Then, when <code>jennifer</code> wanted to list his home directory,
+she would type:
+
+<pre class="smallexample">     <b>jennifer%</b> ksu david -e ls ~david
+     <b>Authenticated jennifer@ATHENA.MIT.EDU
+     Account david: authorization for jennifer@ATHENA.MIT.EDU for execution of
+                    /bin/ls successful
+     Changing uid to david (3382)
+     Mail            News            Personal        misc            bin
+     jennifer%</b>
+</pre>
+<p class="noindent">If <code>jennifer</code> had tried to give a different
+command to <code>ksu</code>, it would have prompted for a password as with the
+previous example.
+
+<p>Note that unless the <code>.k5users</code> file gives the target permission to
+run any command, the user must use <code>ksu</code> with the <kbd>-e</kbd>
+<i>command</i> option.
+
+<p>The <code>ksu</code> options you are most likely to use are:
+
+     <dl>
+<dt><kbd>-n </kbd><i>principal</i><dd>specifies which Kerberos principal you want to use for <code>ksu</code>. 
+(<i>e.g.</i>, the user <code>joeadmin</code> might want to use his
+<code>admin</code> instance.  See <a href="#What-is-a-Ticket_003f">What is a Ticket?</a>.)
+
+     <dt><kbd>-c</kbd><dd>specifies the location of your Kerberos credentials cache (ticket file).
+
+     <dt><kbd>-k</kbd><dd>tells <code>ksu</code> not to destroy your Kerberos tickets when <code>ksu</code> is
+finished.
+
+     <dt><kbd>-f</kbd><dd>requests forwardable tickets.  (See <a href="#Obtaining-Tickets-with-kinit">Obtaining Tickets with kinit</a>.)  This
+is only applicable if <code>ksu</code> needs to obtain tickets.
+
+     <dt><kbd>-l </kbd><i>lifetime</i><dd>sets the ticket lifetime.  (See <a href="#Obtaining-Tickets-with-kinit">Obtaining Tickets with kinit</a>.)  This is
+only applicable if <code>ksu</code> needs to obtain tickets.
+
+     <dt><kbd>-z</kbd><dd>tells <code>ksu</code> to copy your Kerberos tickets only if the UID you are
+switching is the same as the Kerberos primary (either yours or the one
+specified by the <kbd>-n</kbd> option).
+
+     <dt><kbd>-Z</kbd><dd>tells <code>ksu</code> not to copy any Kerberos tickets to the new UID.
+
+     <dt><kbd>-e </kbd><i>command</i><dd>tells <code>ksu</code> to execute <i>command</i> and then exit.  See the
+description of the <code>.k5users</code> file above.
+
+     <dt><kbd>-a </kbd><i>text</i><dd>(at the end of the command line) tells <code>ksu</code> to pass everything
+after <span class="samp">-a</span> to the target shell. 
+</dl>
+
+<p>The full set of options to Kerberos V5 <code>ksu</code> are discussed
+in the Reference section of this manual.  (see <a href="#ksu-Reference">ksu Reference</a>)
+
+<div class="node">
+<p><hr>
+<a name="Kerberos-V5-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#Kerberos-Glossary">Kerberos Glossary</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Kerberos-V5-Tutorial">Kerberos V5 Tutorial</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+<br>
+</div>
+
+<h2 class="chapter">3 Kerberos V5 Reference</h2>
+
+<p>This section will include copies of the manual pages for the
+Kerberos V5 client programs.  You can read the manual entry for any
+command by typing <code>man</code> <i>command</i>, where <i>command</i> is the name
+of the command for which you want to read the manual entry.  For
+example, to read the <code>kinit</code> manual entry, you would type:
+
+<pre class="smallexample">     <b>shell%</b> man kinit
+</pre>
+<p>Note:  To be able to view the Kerberos V5 manual pages on line, you
+may need to add the directory <code>/usr/local/man</code> to your MANPATH
+environment variable.  (Remember to replace <code>/usr/local</code> with
+the top-level directory in which Kerberos V5 is installed.)  For
+example, if you had the the following line in your <code>.login</code>
+file<a rel="footnote" href="#fn-2" name="fnd-2"><sup>2</sup></a>:
+
+<pre class="smallexample">     setenv MANPATH /usr/local/man:/usr/man
+</pre>
+<p class="noindent">and the Kerberos V5 man pages were in the directory
+<code>/usr/krb5/man</code>, you would change the line to the following:
+
+<pre class="smallexample">     setenv MANPATH /usr/krb5/man:/usr/local/man:/usr/man
+</pre>
+<ul class="menu">
+<li><a accesskey="1" href="#kinit-Reference">kinit Reference</a>
+<li><a accesskey="2" href="#klist-Reference">klist Reference</a>
+<li><a accesskey="3" href="#ksu-Reference">ksu Reference</a>
+<li><a accesskey="4" href="#kdestroy-Reference">kdestroy Reference</a>
+<li><a accesskey="5" href="#kpasswd-Reference">kpasswd Reference</a>
+<li><a accesskey="6" href="#telnet-Reference">telnet Reference</a>
+<li><a accesskey="7" href="#FTP-Reference">FTP Reference</a>
+<li><a accesskey="8" href="#rlogin-Reference">rlogin Reference</a>
+<li><a accesskey="9" href="#rsh-Reference">rsh Reference</a>
+<li><a href="#rcp-Reference">rcp Reference</a>
+</ul>
+
+<div class="node">
+<p><hr>
+<a name="kinit-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#klist-Reference">klist Reference</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+<br>
+</div>
+
+<h3 class="section">3.1 kinit Reference</h3>
+
+<p><a href="kinit.html"> kinit manpage</a>
+
+<div class="node">
+<p><hr>
+<a name="klist-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ksu-Reference">ksu Reference</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#kinit-Reference">kinit Reference</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+<br>
+</div>
+
+<h3 class="section">3.2 klist Reference</h3>
+
+<p><a href="klist.html"> klist manpage</a>
+
+<div class="node">
+<p><hr>
+<a name="ksu-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#kdestroy-Reference">kdestroy Reference</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#klist-Reference">klist Reference</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+<br>
+</div>
+
+<h3 class="section">3.3 ksu Reference</h3>
+
+<p><a href="ksu.html"> ksu manpage</a>
+
+<div class="node">
+<p><hr>
+<a name="kdestroy-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#kpasswd-Reference">kpasswd Reference</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#ksu-Reference">ksu Reference</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+<br>
+</div>
+
+<h3 class="section">3.4 kdestroy Reference</h3>
+
+<p><a href="kdestroy.html"> kdestroy manpage</a>
+
+<div class="node">
+<p><hr>
+<a name="kpasswd-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#telnet-Reference">telnet Reference</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#kdestroy-Reference">kdestroy Reference</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+<br>
+</div>
+
+<h3 class="section">3.5 kpasswd Reference</h3>
+
+<p><a href="kpasswd.html"> kpasswd manpage</a>
+
+<div class="node">
+<p><hr>
+<a name="telnet-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#FTP-Reference">FTP Reference</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#kpasswd-Reference">kpasswd Reference</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+<br>
+</div>
+
+<h3 class="section">3.6 telnet Reference</h3>
+
+<p><a href="telnet.html"> telnet manpage</a>
+
+<div class="node">
+<p><hr>
+<a name="FTP-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#rlogin-Reference">rlogin Reference</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#telnet-Reference">telnet Reference</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+<br>
+</div>
+
+<h3 class="section">3.7 FTP Reference</h3>
+
+<p><a href="ftp.html"> ftp manpage</a>
+
+<div class="node">
+<p><hr>
+<a name="rlogin-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#rsh-Reference">rsh Reference</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#FTP-Reference">FTP Reference</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+<br>
+</div>
+
+<h3 class="section">3.8 rlogin Reference</h3>
+
+<p><a href="rlogin.html"> rlogin manpage</a>
+
+<div class="node">
+<p><hr>
+<a name="rsh-Reference"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#rcp-Reference">rcp Reference</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#rlogin-Reference">rlogin Reference</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+<br>
+</div>
+
+<h3 class="section">3.9 rsh Reference</h3>
+
+<p><a href="rsh.html"> rsh manpage</a>
+
+<div class="node">
+<p><hr>
+<a name="rcp-Reference"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#rsh-Reference">rsh Reference</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>
+<br>
+</div>
+
+<h3 class="section">3.10 rcp Reference</h3>
+
+<p><a href="rcp.html"> rcp manpage</a>
+
+<div class="node">
+<p><hr>
+<a name="Kerberos-Glossary"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#Kerberos-V5-Reference">Kerberos V5 Reference</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
+<br>
+</div>
+
+<h2 class="appendix">Appendix A Kerberos Glossary</h2>
+
+     <dl>
+<dt><b>client</b><dd>an entity that can obtain a ticket.  This entity is usually either a
+user or a host.
+
+     <br><dt><b>host</b><dd>a computer that can be accessed over a network.
+
+     <br><dt><b>Kerberos</b><dd>in Greek mythology, the three-headed dog that guards the entrance to the
+underworld.  In the computing world, Kerberos is a network security
+package that was developed at MIT.
+
+     <br><dt><b>KDC</b><dd>Key Distribution Center.  A machine that issues Kerberos tickets.
+
+     <br><dt><b>keytab</b><dd>a <b>key tab</b>le file containing one or more keys.  A host or service
+uses a <dfn>keytab</dfn> file in much the same way as a user uses his/her
+password.
+
+     <br><dt><b>principal</b><dd>a string that names a specific entity to which a set of credentials may
+be assigned.  It can have an arbitrary number of components, but
+generally has three:
+
+          <dl>
+<dt><b>primary</b><dd>the first part of a Kerberos <i>principal</i>.  In the case of a user, it
+is the username.  In the case of a service, it is the name of the
+service.
+
+          <br><dt><b>instance</b><dd>the second part of a Kerberos <i>principal</i>.  It gives information that
+qualifies the primary.  The instance may be null.  In the case of a
+user, the instance is often used to describe the intended use of the
+corresponding credentials.  In the case of a host, the instance is the
+fully qualified hostname.
+
+          <br><dt><b>realm</b><dd>the logical network served by a single Kerberos database and a set of
+Key Distribution Centers.  By convention, realm names are generally all
+uppercase letters, to differentiate the realm from the internet domain. 
+</dl>
+
+     <p class="noindent">The typical format of a typical Kerberos principal is
+primary/instance@REALM.
+
+     <br><dt><b>service</b><dd>any program or computer you access over a network.  Examples of services
+include &ldquo;host&rdquo; (a host, <i>e.g.</i>, when you use <code>telnet</code> and
+<code>rsh</code>), &ldquo;ftp&rdquo; (FTP), &ldquo;krbtgt&rdquo; (authentication;
+cf. <i>ticket-granting ticket</i>), and &ldquo;pop&rdquo; (email).
+
+     <br><dt><b>ticket</b><dd>a temporary set of electronic credentials that verify the identity of a
+client for a particular service.
+
+     <br><dt><b>TGT</b><dd>Ticket-Granting Ticket.  A special Kerberos ticket that permits the
+client to obtain additional Kerberos tickets within the same Kerberos
+realm. 
+</dl>
+
+<div class="contents">
+<h2>Table of Contents</h2>
+<ul>
+<li><a name="toc_Copyright" href="#Copyright">Copyright</a>
+<li><a name="toc_Introduction" href="#Introduction">1 Introduction</a>
+<ul>
+<li><a href="#What-is-a-Ticket_003f">1.1 What is a Ticket?</a>
+<li><a href="#What-is-a-Kerberos-Principal_003f">1.2 What is a Kerberos Principal?</a>
+</li></ul>
+<li><a name="toc_Kerberos-V5-Tutorial" href="#Kerberos-V5-Tutorial">2 Kerberos V5 Tutorial</a>
+<ul>
+<li><a href="#Setting-Up-to-Use-Kerberos-V5">2.1 Setting Up to Use Kerberos V5</a>
+<li><a href="#Ticket-Management">2.2 Ticket Management</a>
+<ul>
+<li><a href="#Kerberos-Ticket-Properties">2.2.1 Kerberos Ticket Properties</a>
+<li><a href="#Obtaining-Tickets-with-kinit">2.2.2 Obtaining Tickets with kinit</a>
+<li><a href="#Viewing-Your-Tickets-with-klist">2.2.3 Viewing Your Tickets with klist</a>
+<li><a href="#Destroying-Your-Tickets-with-kdestroy">2.2.4 Destroying Your Tickets with kdestroy</a>
+</li></ul>
+<li><a href="#Password-Management">2.3 Password Management</a>
+<ul>
+<li><a href="#Changing-Your-Password">2.3.1 Changing Your Password</a>
+<li><a href="#Password-Advice">2.3.2 Password Advice</a>
+<li><a href="#Granting-Access-to-Your-Account">2.3.3 Granting Access to Your Account</a>
+</li></ul>
+<li><a href="#Kerberos-V5-Applications">2.4 Kerberos V5 Applications</a>
+<ul>
+<li><a href="#Overview-of-Additional-Features">2.4.1 Overview of Additional Features</a>
+<li><a href="#telnet">2.4.2 telnet</a>
+<li><a href="#rlogin">2.4.3 rlogin</a>
+<li><a href="#FTP">2.4.4 FTP</a>
+<li><a href="#rsh">2.4.5 rsh</a>
+<li><a href="#rcp">2.4.6 rcp</a>
+<li><a href="#ksu">2.4.7 ksu</a>
+</li></ul>
+</li></ul>
+<li><a name="toc_Kerberos-V5-Reference" href="#Kerberos-V5-Reference">3 Kerberos V5 Reference</a>
+<ul>
+<li><a href="#kinit-Reference">3.1 kinit Reference</a>
+<li><a href="#klist-Reference">3.2 klist Reference</a>
+<li><a href="#ksu-Reference">3.3 ksu Reference</a>
+<li><a href="#kdestroy-Reference">3.4 kdestroy Reference</a>
+<li><a href="#kpasswd-Reference">3.5 kpasswd Reference</a>
+<li><a href="#telnet-Reference">3.6 telnet Reference</a>
+<li><a href="#FTP-Reference">3.7 FTP Reference</a>
+<li><a href="#rlogin-Reference">3.8 rlogin Reference</a>
+<li><a href="#rsh-Reference">3.9 rsh Reference</a>
+<li><a href="#rcp-Reference">3.10 rcp Reference</a>
+</li></ul>
+<li><a name="toc_Kerberos-Glossary" href="#Kerberos-Glossary">Appendix A Kerberos Glossary</a>
+</li></ul>
+</div>
+
+<div class="footnote">
+<hr>
+<a name="texinfo-footnotes-in-document"></a><h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> Note:  the realm
+EXAMPLE.COM must be listed in your computer's Kerberos
+configuration file, <code>/etc/krb5.conf</code>.</p>
+
+<p class="footnote"><small>[<a name="fn-2" href="#fnd-2">2</a>]</small> The MANPATH variable may be specified in a different
+initialization file, depending on your operating system.  Some of the
+files in which you might specify environment variables include
+<code>.login</code>, <code>.profile</code>, or <code>.cshrc</code>.</p>
+
+<p><hr></div>
+
+</body></html>
+

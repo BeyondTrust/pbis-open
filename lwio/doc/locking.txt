@@ -1,0 +1,94 @@
+Locking Rules for LWIO
+
+These rules are about locking and referencing/dereferencing objects in LWIO.
+
+Terminology:
+- P = parent object.
+- C = child object.
+- O = some object.
+
+1) Any parent and/or child object must have a reference count.
+
+2) Any object that can be a child must have a parent pointer.
+
+3) If acquiring more than one object, the ordering is from leaf object up
+   towards the root.
+
+Algorighms for common operations:
+
+A. Referencing an object:
+
+ReferenceObject(O)
+{
+    return InterlockedIncrement(&O->RefCount);
+}
+
+B. Looking up a parent's child:
+
+FindChild(P, Key)
+{
+    Lock(P)
+    C = { Lookup child of P using Key }
+    ReferenceObject(C)
+    Unlock(P)
+    return C
+}
+
+C. Dereferencing an object that can have a parent:
+
+DereferenceObject(O)
+{
+    count = InterlockedDecrerement(&O->RefCount);
+    if (count == 0)
+    {
+        parent = O->P
+        if (parent)
+        {
+            ReferenceObject(parent)
+            Lock(parent)
+            count = InterlockedGet(&O->RefCount)
+        }
+        if (count == 0)
+        {
+            /* This will dereference the parent once */
+            DestroyObject(O)
+        }
+        if (parent)
+        {
+            Unlock(parent)
+            /* This will destroy the parent if this was the last reference */
+            DereferenceObject(parent)
+        }
+    }
+    return count
+}
+
+DestroyObject(O)
+{
+   if (O->P)
+   {
+      RemoveChild(P, O)
+      DereferenceObject(O->P)
+      O->P = NULL
+   }
+   ... free object ...
+}
+
+
+C.2. Dereferencing an object that cannot have a parent:
+
+DereferenceObject(O)
+{
+    count = InterlockedDecrerement(&O->RefCount);
+    if (count == 0)
+    {
+        DestroyObject(O)
+    }
+    return count
+}
+
+
+IMPORTANT:
+---------
+
+The fallout of this is that we need recurive locks on any object that can be a parent.

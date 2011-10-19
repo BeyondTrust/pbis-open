@@ -1,0 +1,309 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.59)
+AC_INIT(likewise-password-store, 1.0, support@likewisesoftware.com)
+AC_CANONICAL_TARGET
+AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AC_CONFIG_HEADERS([include/config.h])
+
+# Configuration settings
+
+pstoreregdir="$datadir/config"
+AC_SUBST(pstoreregdir)
+
+# lwmsg
+
+AC_ARG_WITH([lwmsg],
+        [AC_HELP_STRING([--with-lwmsg=<dir>], [use lwmsg located in prefix <dir>])],
+        [
+                LWMSG_INCLUDES="-I$withval/include"
+                LWMSG_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([lwmsg-includes],
+        [AC_HELP_STRING([--with-lwmsg-includes=<dir>], [use lwmsg includes located in <dir>])],
+        [
+                LWMSG_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([lwmsg-libs],
+        [AC_HELP_STRING([--with-lwmsg-libs=<dir>], [use lwmsg libs located in <dir>])],
+        [
+                LWMSG_LDFLAGS="-L$withval"
+        ])
+
+# sqlite
+
+AC_ARG_WITH([sqlite],
+        [AC_HELP_STRING([--with-sqlite=<dir>], [use sqlite located in prefix <dir>])],
+        [
+		SQLITE_INCLUDES="-I$withval/include"
+                SQLITE_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([sqlite-includes],
+        [AC_HELP_STRING([--with-sqlite-includes=<dir>], [use sqlite includes located in <dir>])],
+        [
+		SQLITE_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([sqlite-libs],
+        [AC_HELP_STRING([--with-sqlite-libs=<dir>], [use sqlite libs located in <dir>])],
+        [
+		SQLITE_LDFLAGS="-L$withval"
+        ])
+
+AC_SUBST(SQLITE_INCLUDES)
+AC_SUBST(SQLITE_LDFLAGS)
+AC_SUBST(SQLITE_LIBS)
+
+# providers
+
+AC_ARG_WITH([providers], [AC_HELP_STRING([--with-providers], [list of providers to build (sqldb filedb regdb)])],
+                       [], [with_providers="sqldb regdb"])
+
+_IFS="${IFS}"
+IFS=" ,"
+for provider in $with_providers
+do
+        eval "enable_${provider}=yes"
+done
+IFS="${_IFS}"
+
+AM_CONDITIONAL(ENABLE_SQLDB, test x"$enable_sqldb" = x"yes")
+if test x"$enable_sqldb" = x"yes"
+then
+        AC_DEFINE([ENABLE_SQLDB], [], [Define if sqldb provider should be built])
+fi
+
+AM_CONDITIONAL(ENABLE_FILEDB, test x"$enable_filedb" = x"yes")
+if test x"$enable_filedb" = x"yes"
+then
+        AC_DEFINE([ENABLE_FILEDB], [], [Define if filedb provider should be built])
+fi
+
+AM_CONDITIONAL(ENABLE_REGDB, test x"$enable_regdb" = x"yes")
+if test x"$enable_regdb" = x"yes"
+then
+        AC_DEFINE([ENABLE_REGDB], [], [Define if regdb provider should be built])
+fi
+
+# Boolean settings
+
+AC_ARG_ENABLE([static-providers], [AC_HELP_STRING([--enable-static-providers], [build providers directly into pstore])])
+AM_CONDITIONAL(ENABLE_STATIC_PROVIDERS, test x"$enable_static_providers" = x"yes")
+if test x"$enable_static_providers" = x"yes"
+then
+        AC_DEFINE([ENABLE_STATIC_PROVIDERS], [], [Define if providers should be built directly into pstore])
+fi
+
+# debugging
+
+AC_ARG_ENABLE([debug],
+        [AC_HELP_STRING([--enable-debug], [enable debugging (default: disabled)])],
+        [
+                if test x"$enableval" = x"yes"
+                then
+			AM_CFLAGS="$AM_CFLAGS -g -O0"
+			AM_CPPFLAGS="$AM_CPPFLAGS -DDEBUG"			
+                fi
+        ])
+
+# tests
+
+ENABLE_TESTS=false
+
+AC_ARG_ENABLE([tests],
+        [AC_HELP_STRING([--enable-tests], [enable tests (default: disabled)])],
+        [
+                if test x"$enableval" = x"yes"
+                then
+			ENABLE_TESTS=true
+		else
+			ENABLE_TESTS=false
+                fi
+        ])
+
+AM_CONDITIONAL(ENABLE_TESTS, [$ENABLE_TESTS])
+
+# Basic variables
+
+CPPFLAGS="$CPPFLAGS -D_REENTRANT -D_GNU_SOURCE"
+
+AM_CPPFLAGS="$AM_CPPFLAGS -I$top_builddir/include"
+AM_LDFLAGS="$AM_LDFLAGS -Wall -Werror"
+AM_CFLAGS="$AM_CFLAGS -Wall -Werror -fno-strict-aliasing"
+
+AC_SUBST(AM_CPPFLAGS)
+AC_SUBST(AM_CFLAGS)
+AC_SUBST(AM_LDFLAGS)
+
+AC_DEFINE_UNQUOTED([PREFIXDIR], ["$prefix"], [Prefix directory])
+
+AS_AC_EXPAND(LIBDIR, $libdir)
+AC_DEFINE_UNQUOTED(LIBDIR, "$LIBDIR", [Library directory])
+
+AS_AC_EXPAND(pstoreconfdir, ["$sysconfdir"])
+AC_DEFINE_UNQUOTED([LWPS_CONFIG_DIR], ["$pstoreconfdir"], [Location of pstore configuration files])
+
+if test x"$localstatedir" = x"/var"; then
+    pstorecachedir="$localstatedir/lib/likewise"
+else
+    pstorecachedir="$localstatedir"
+fi
+AC_DEFINE_UNQUOTED([LWPS_CACHE_DIR], ["$pstorecachedir"], [Location of pstore cache files])
+
+AS_AC_EXPAND(providerdir, $libdir)
+
+# System-specific configuration
+
+MOD_EXT=".so"
+
+case "$host_os:$host_cpu" in
+     solaris2.*:*)
+	AC_DEFINE([__LWI_SOLARIS__], [], [Define if the host system is Solaris])
+	;;
+     hpux11.*:hppa*)
+	AC_DEFINE([__LWI_HP_UX__], [], [Define if the host system is HP-UX])
+	MOD_EXT=".sl"
+	;;
+     hpux11.*:ia64*)
+	AC_DEFINE([__LWI_HP_UX__], [], [Define if the host system is HP-UX])
+	;;
+     darwin8.*:*)
+        echo "Detected Mac OS X - Tiger"
+        AC_DEFINE([__LWI_DARWIN__], [], [Define if OS is Darwin])
+        ;;
+     darwin9.*:*)
+        echo "Detected Mac OS X - Leopard"
+        AC_DEFINE([__LWI_DARWIN__], [], [Define if OS is Darwin])
+        ;;
+     darwin10.*:*)
+        echo "Detected Mac OS X - Snow Leopard"
+        AC_DEFINE([__LWI_DARWIN__], [], [Define if OS is Darwin - x64 Snow Leopard])
+        AC_DEFINE([__LWI_DARWIN_X64__], [], [Define if OS is Darwin - x64 Snow Leopard])
+        ;;
+     aix*:*)
+        AC_DEFINE([__LWI_AIX__], [], [Define if OS is AIX])
+        ;;
+esac
+
+AC_SUBST(MOD_EXT)
+AC_DEFINE_UNQUOTED([MOD_EXT], ["$MOD_EXT"], [Extension of shared modules])
+
+# Checks for programs.
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LIBTOOL
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS([inttypes.h arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdlib.h string.h strings.h sys/socket.h syslog.h unistd.h sys/types.h fcntl.h iconv.h sys/stat.h time.h sys/time.h synch.h pthread.h wc16str.h wc16printf.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_PID_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+AC_C_BIGENDIAN
+
+# Checks for library functions.
+AC_FUNC_FORK
+AC_FUNC_MALLOC
+AC_FUNC_REALLOC
+AC_FUNC_SELECT_ARGTYPES
+AC_TYPE_SIGNAL
+AC_FUNC_STRFTIME
+AC_FUNC_VPRINTF
+AC_FUNC_STRERROR_R
+AC_CHECK_FUNCS([localtime_r memset select strchr strerror vsyslog strtoll __strtoll])
+
+AC_CHECK_LIB([dl], [dlopen], [DL_LIBS="-ldl"])
+AC_SUBST(DL_LIBS)
+
+AC_CHECK_DECLS([isblank, pstat_getproc], [], [], [#include <ctype.h>
+#if HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#if HAVE_SYS_PSTAT_H
+#include <sys/pstat.h>
+#endif])
+AC_CHECK_TYPES([wchar16_t], [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_WC16STR_H
+# include <wc16str.h>
+#endif
+])
+
+AC_CHECK_HEADER([lwmsg/lwmsg.h],,[AC_MSG_ERROR([Could not find lwmsg headers])])
+AC_CHECK_LIB([lwmsg_nothr], [lwmsg_data_marshal], [LWMSG_NOTHR_LIBS="-llwmsg_nothr"], [AC_MSG_ERROR([Could not find liblwmsg_nothr])], [$LWMSG_LDFLAGS])
+AC_CHECK_LIB([lwmsg], [lwmsg_peer_new], [LWMSG_LIBS="-llwmsg"], [AC_MSG_ERROR([Could not find liblwmsg])], [$LWMSG_LDFLAGS])
+
+AC_SUBST(LWMSG_INCLUDES)
+AC_SUBST(LWMSG_LDFLAGS)
+AC_SUBST(LWMSG_NOTHR_LIBS)
+AC_SUBST(LWMSG_LIBS)
+
+
+# lwreg 
+
+AC_ARG_WITH([lwreg],
+        [AC_HELP_STRING([--with-lwreg=<dir>], [use lwreg located in prefix <dir>])],
+        [
+                LWREG_INCLUDES="-I$withval/include"
+        LWREG_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([lwreg-includes],
+        [AC_HELP_STRING([--with-lwreg-includes=<dir>], [use lwreg includes located in <dir>])],
+        [
+                LWREG_INCLUDES="-I$withval" 
+        ])
+
+AC_ARG_WITH([lwreg-libs],
+        [AC_HELP_STRING([--with-lwreg-libs=<dir>], [use lwreg libs located in <dir>])],
+        [
+                LWREG_LDFLAGS="-L$withval"
+        ])
+
+LWREG_LIBS="-lrsutils -lregclient -lregcommon"
+
+#AC_CHECK_HEADER([reg/reg.h],,[AC_MSG_ERROR([Could not find lwreg headers])])
+AC_SUBST(LWREG_INCLUDES)
+AC_SUBST(LWREG_LDFLAGS)
+AC_SUBST(LWREG_LIBS)
+
+# Check for external libraries
+AC_CHECK_LIB([sqlite3], [sqlite3_exec], [SQLITE_LIBS="-lsqlite3"],
+    AC_MSG_ERROR([Could not find sqlite; please use --with-sqlite]),
+    [$SQLITE_LDFLAGS])
+AC_CHECK_LIB([pthread], [pthread_self], [PTHREAD_LIBS="-lpthread"], [])
+
+AC_SUBST(PTHREAD_LIBS)
+
+# Create output files
+AC_CONFIG_FILES([Makefile
+                 include/Makefile
+                 utils/Makefile
+                 api/Makefile
+                 providers/Makefile
+                 providers/sqldb/Makefile
+                 providers/filedb/Makefile
+                 providers/regdb/Makefile
+		 tools/Makefile
+		 tools/dump_machine_account/Makefile
+                 etc/Makefile
+                 etc/pstore.reg
+		 logging/Makefile
+                 ])
+
+if $ENABLE_TESTS
+then
+	AC_CONFIG_FILES([
+			tests/Makefile
+			tests/test_show_sqldb_machinepwd_entries/Makefile
+			tests/test_SqlDBMachinePwdDBGet/Makefile
+			tests/test_SqlDBMachinePwdDBSet/Makefile])
+fi
+
+AC_OUTPUT

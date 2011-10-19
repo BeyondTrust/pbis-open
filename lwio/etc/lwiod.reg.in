@@ -1,0 +1,93 @@
+[HKEY_THIS_MACHINE\Services]
+
+[HKEY_THIS_MACHINE\Services\lwio]
+"Description"="Likewise IO Manager"
+"Path"="@SBINDIR@/lwiod"
+"Arguments"="@SBINDIR@/lwiod --syslog"
+"Environment"=""
+"Dependencies"="lwreg"
+"Type"=dword:00000001
+
+[HKEY_THIS_MACHINE\Services\rdr]
+"Description"="Likewise CIFS Redirector"
+"Path"="@providerdir@/librdr.sys@MOD_EXT@"
+"Arguments"="rdr"
+"Environment"=""
+"Dependencies"="lwio"
+"Type"=dword:00000003
+
+[HKEY_THIS_MACHINE\Services\srv]
+"Description"="Likewise CIFS Server"
+"Path"="@providerdir@/libsrv.sys@MOD_EXT@"
+"Arguments"="srv"
+"Environment"=""
+"Dependencies"="lwio pvfs npfs lsass"
+"Type"=dword:00000003
+
+[HKEY_THIS_MACHINE\Services\pvfs]
+"Description"="Likewise POSIX VFS Filesystem"
+"Path"="@providerdir@/libpvfs.sys@MOD_EXT@"
+"Arguments"="pvfs"
+"Environment"=""
+"Dependencies"="lwio"
+"Type"=dword:00000003
+
+[HKEY_THIS_MACHINE\Services\dfs]
+"Description"="Likewise Distributed Filesystem"
+"Path"="@providerdir@/libdfs.sys@MOD_EXT@"
+"Arguments"="dfs"
+"Environment"=""
+"Dependencies"="lwio"
+"Type"=dword:00000003
+
+[HKEY_THIS_MACHINE\Services\npfs]
+"Description"="Likewise Named Pipe Filesystem"
+"Path"="@providerdir@/libnpfs.sys@MOD_EXT@"
+"Arguments"="npfs"
+"Environment"=""
+"Dependencies"="lwio"
+"Type"=dword:00000003
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters]
+"SignMessagesIfSupported"=dword:00000000
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers]
+"Load"="rdr,srv,pvfs,dfs,npfs"
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\dfs]
+"Path"="@providerdir@/libdfs.sys@MOD_EXT@"
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\pvfs]
+"Path"="@providerdir@/libpvfs.sys@MOD_EXT@"
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\npfs]
+"Path"="@providerdir@/libnpfs.sys@MOD_EXT@"
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\rdr]
+"Path"="@providerdir@/librdr.sys@MOD_EXT@"
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv]
+"Path"="@providerdir@/libsrv.sys@MOD_EXT@"
+"SupportSmb2"=dword:00000000
+"EnableSecuritySignatures"=dword:00000001
+"RequireSecuritySignatures"=dword:00000001
+"BootstrapDefaultSharePath"=dword:00000001
+"DefaultSharePath"="/lwcifs"
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\statistics]
+"Path"="@providerdir@/libsrv.stat@MOD_EXT@"
+"EnableLogging"=dword:00000000
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\shares]
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\shares\security]
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\smb1]
+"OplockTimeoutMillisecs"=dword:00007530
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\iotest]
+"Path"="@providerdir@/libiotest.sys@MOD_EXT@"
+
+[HKEY_THIS_MACHINE\Software\Likewise\lwiosrvstat]
+"Target"="file"
+"Path"="/tmp/lwiosrvstat.log"

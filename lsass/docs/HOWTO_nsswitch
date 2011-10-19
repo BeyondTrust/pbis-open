@@ -1,0 +1,149 @@
+Foreword
+========
+
+This document serves as an informal spec for information regarding NSS and caveats with respect to its implementation on various platforms.
+
+Introduction
+============
+
+NSS stands for "Name Service Switch".
+
+Traditionally, specific information on the local system was looked up (by libc routines) in local files such as /etc/passwd. In course of time, additional information repositories such as DNS and NIS became relevant, and various versions of libc would enforce a specific search order of these additional repositories.
+
+Starting with C library in Solaris 2, a file at /etc/nsswitch.conf was used to dynamically define the order of lookup including these repositories. This is the foundation for the use of nsswitch.conf.
+
+Which repositories are defined?
+==============================
+
+The following repositories are standard on various Linux and UNIX Operating systems. 
+
+Repository [Name: aliases]
+
+    mail aliases (used by sendmail).
+
+    This is ignored on Linux presently.
+
+Repository [Name: ethers]
+
+    ethernet numbers
+
+Repository [Name: group]
+
+    groups of users.
+
+    This is used by getgrent(3) functions.
+
+Repository [Name: hosts]
+
+    Host names and numbers.
+
+    This is used by gethostbyname(3) and similar functions.
+
+Repository [Name: netgroup]
+
+    Network wide list of hosts and users.
+
+    This is used for access rules.
+    C libraries before glib 2.1 only support netgroups over NIS.
+
+Repository [Name: network]
+
+    Network names and numbers.
+
+    This is used by getnetent(3) functions.
+
+Repository [Name: passwd]
+
+    user passwords.
+
+    This is used by getpwent(3) functions.
+
+Repository [Name: protocols]
+
+    Network protocols.
+
+    This is used by getprotoent(3) functions.
+
+Repository [Name: publickey]
+
+    Public and secret keys.
+
+    This is used for Secure_RPC used by NFS and NIS+
+
+Repository [Name: rpc]
+
+    Remote procedure call names and numbers.
+
+    This is used by getrpcbyname(3) and similar functions.
+
+Repository [Name: services]
+
+    Network services.
+
+    This is used by getservent(3) and similar functions.
+
+Repository [Name: shadow]
+
+    Shadow user passwords.
+
+    This is used by getspnam(3) and similar functions.
+
+Repository requirements
+=======================
+
+For each SERVICE (Repository name above), there must be a corresponding file at /lib/libnss_SERVICE.so.X where X is 0 for glibc 2.0 and 1 for glibc 2.1
+
+A repository is defined in the /etc/nsswitch.conf file as following
+
+<SERVICE> : (<repository name> ('[' ('!'? {success|notfound|unavail|tryagain} '=' {return|continue} )+ ']')?)+ 
+
+For instance, hosts: dns [!UNAVAIL=return] files
+
+The status codes are explained as follows.
+
+a) success
+
+   default action: return
+
+   The requested entry was found successfully.
+
+b) notfound
+
+   default action: continue
+
+   The requested entry was not found, though the lookup succeeded.
+
+c) unavail
+
+   default action: continue
+
+   The service is not available. This could happen if the file was
+   not available or the service (in the case of DNS) cannot be contacted.
+
+d) tryagain
+
+   default actoin: continue
+
+   This could happen if a resource is temporarily not available.
+
+Pseudo repositories
+===================
+
+passwd_compat, group_compat and shadow_compat are pseudo repositories that are available only with the GNU C Library.
+
+Lookouts
+========
+
+a) Within each process that uses /etc/nsswitch.conf, the entire file is
+   read once and it is read-only.
+
+b) On Solaris, you cannot link programs that use the NSS Service statically.
+
+References
+==========
+
+http://tldp.org/HOWTO/NIS-HOWTO/settingup_client.html#AEN300
+http://linux.about.com/od/commands/l/blcmdl5_nsswitc.htm
+
+Testing
+=======

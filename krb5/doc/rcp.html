@@ -1,0 +1,183 @@
+<HTML>
+<BODY>
+<PRE>
+<!-- Manpage converted by man2html 3.0.1 -->
+
+</PRE>
+<H2>NAME</H2><PRE>
+     rcp - remote file copy
+
+
+</PRE>
+<H2>SYNOPSIS</H2><PRE>
+     <B>rcp</B> [<B>-p</B>] [<B>-x</B>] [<B>-k</B> <I>realm</I> ] [<B>-c</B>  <I>ccachefile</I>]  [<B>-C</B>  <I>configfile</I>]
+     [<B>-D</B> <I>port</I>] [<B>-N</B>] [<B>-PN</B> <B>|</B> <B>-PO</B>] <I>file1</I> <I>file2</I>
+
+     <B>rcp</B> [<B>-p]</B> <B>[-x]</B> <B>[-k</B> <I>realm</I><B>]</B> <B>[-r]</B> <B>[-D</B> <I>port</I><B>]</B>  <B>[-N]</B>  <B>[-PN</B>  <B>|</B>  <B>-PO]</B>
+     <I>file</I> ... <I>directory</I>
+
+     <B>rcp</B> [<B>-f</B> <B>|</B> <B>-t</B>] ...
+
+
+</PRE>
+<H2>DESCRIPTION</H2><PRE>
+     <B>Rcp</B> copies files between machines.  Each <I>file</I>  or  <I>directory</I>
+     argument   is   either  a  remote  file  name  of  the  form
+     ``rhost:path'', or a local  file  name  (containing  no  `:'
+     characters, or a `/' before any `:'s).
+
+     By default, the mode and owner of <I>file2</I> are preserved if  it
+     already existed; otherwise the mode of the source file modi-
+     fied by the <B>umask(2)</B> on the destination host is used.
+
+     If <I>path</I> is not a full path name, it is interpreted  relative
+     to  your  login directory on <I>rhost</I>.  A <I>path</I> on a remote host
+     may be quoted (using \, ", or ') so that the  metacharacters
+     are interpreted remotely.
+
+     <B>Rcp</B> does not prompt for passwords; it uses Kerberos  authen-
+     tication  when  connecting  to  <I>rhost</I>.  Each user may have a
+     private authorization list in a file .k5login in  his  login
+     directory.  Each line in this file should contain a Kerberos
+     principal name of  the  form  <I>principal</I>/<I>instance</I>@<I>realm</I>.   If
+     there  is  a  ~/.k5login file, then access is granted to the
+     account if and only if the originater user is  authenticated
+     to one of the principals named in the ~/.k5login file.  Oth-
+     erwise, the originating user will be granted access  to  the
+     account  if  and only if the authenticated principal name of
+     the user can be mapped to the local account name  using  the
+     aname  -&gt;  lname  mapping  rules (see <B>krb5_anadd(8)</B> for more
+     details).
+
+
+</PRE>
+<H2>OPTIONS</H2><PRE>
+     -<B>p</B>   attempt to preserve (duplicate) the modification  times
+          and  modes  of the source files in the copies, ignoring
+          the <I>umask</I>.
+
+     <B>-x</B>   encrypt all information transferring between hosts.
+
+     <B>-k</B> <I>realm</I>
+          obtain tickets for the remote host in <I>realm</I> instead  of
+          the    remote    host's    realm   as   determined   by
+          <B>krb_realmofhost(3)</B>.
+
+     <B>-c</B> <I>ccachefile</I>
+          change the default credentials cache file to <I>ccachefile</I>
+
+     <B>-C</B> <I>configfile</I>
+          change the default configuation file to <I>configfile</I>
+
+     -<B>r</B>   if any of the source files are directories,  copy  each
+          subtree  rooted at that name; in this case the destina-
+          tion must be a directory.
+
+     <B>-PN</B>
+
+     <B>-PO</B>  Explicitly request new or old version of  the  Kerberos
+          ``rcmd''  protocol.  The new protocol avoids many secu-
+          rity problems found in the old one, but is not interop-
+          erable  with  older  servers.  (An "input/output error"
+          and a closed connection is the most  likely  result  of
+          attempting  this  combination.)   If  neither option is
+          specified, some simple heuristics  are  used  to  guess
+          which to try.
+
+     <B>-D</B> <I>port</I>
+          connect to port <I>port</I> on the remote machine.
+
+     -<B>N</B>   use a network connection, even when  copying  files  on
+          the local machine (used for testing purposes).
+
+     -<B>f</B> -<B>t</B>
+          These options are for internal use only.  They tell the
+          remotely-running  rcp process (started via the Kerberos
+          remote shell daemon) which direction  files  are  being
+          sent.   These  options  should not be used by the user.
+          In particular, <B>-f</B> does <B>not</B> mean that  the  user's  Ker-
+          beros ticket should be forwarded!
+
+     <B>Rcp</B> handles third party copies,  where  neither  source  nor
+     target files are on the current machine.  Hostnames may also
+     take the form ``rname@rhost'' to use <I>rname</I> rather  than  the
+     current user name on the remote host.
+
+
+</PRE>
+<H2>FILES</H2><PRE>
+     ~/.k5login  (on remote  host)  -  file  containing  Kerberos
+                 principals that are allowed access.
+
+
+</PRE>
+<H2>SEE ALSO</H2><PRE>
+     <B>cp(1)</B>,    <B>ftp(1)</B>,    <B>rsh(1)</B>,     <B>rlogin(1)</B>,     <B>kerberos(3)</B>,
+     <B>krb_getrealm(3)</B>, <B>kshd(8)</B>, <B>rcp(1)</B> [UCB version]
+
+
+</PRE>
+<H2>BUGS</H2><PRE>
+     <B>Rcp</B> doesn't detect all cases where  the  target  of  a  copy
+     might  be  a  file in cases where only a directory should be
+     legal.
+     <B>Rcp</B> is confused by any output generated  by  commands  in  a
+     .login, .profile, or .cshrc file on the remote host.
+
+     Kerberos is only used for the first connection of  a  third-
+     party copy; the second connection uses the standard Berkeley
+     rcp protocol.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+<HR>
+<ADDRESS>
+Man(1) output converted with
+<a href="http://www.oac.uci.edu/indiv/ehood/man2html.html">man2html</a>
+</ADDRESS>
+</BODY>
+</HTML>

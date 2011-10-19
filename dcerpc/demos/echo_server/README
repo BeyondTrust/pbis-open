@@ -1,0 +1,65 @@
+
+Demo Applet:	Echo Server
+===========================
+
+
+This RPC application implements a simple single-function RPC server
+interface. The function ReverseIt() accepts as input an array of
+strings. It reverses the order of characters in the strings, and
+returns the results to the client.
+
+Build Instructions
+------------------
+
+	- echo_client and echo_server build by default with the
+	  Linux build.
+
+	- The Makefile can be edited to compile the demo app on
+	  Solaris with Transarc DCE and AIX with IBM's DCE product.
+	  Edit the makefile and run make.
+
+
+Running the Application
+-----------------------
+
+	1.  The RPC endpoint mapper daemon needs to be running on
+	    the machine where the Echo server runs. If you are
+	    running vendor DCE, this already handled for you by the
+	    'dced' process. On Linux, you can start rpcd if it is not
+	    already running. As root:
+
+		#  /etc/rc.d/init.d/ rc.dcerpcd start
+
+
+	2.  Start the echo_server, you do not need to be root to
+	    do this:
+
+		./echo_server
+
+
+	3. The Echo client can be run on any machine on the internet,
+	   or it can simply be run on the same host as that the
+	   echo server runs on.  
+
+	   Run the echo_client, telling it the host where to look
+	   for the echo server. i.e.:
+
+		./echo_client -h acs4.bu.edu
+
+	   Additionally, you can tell it to specifically use the
+	   TCP registration -or- the UDP registration that the
+	   server is listening on.
+
+		./echo_client -h acs4.bu.edu -u     <= call using UDP RPC
+		./echo_client -h acs4.bu.edu -t	    <= call using TCP RPC
+
+
+	4. You can feed the echo client large gobs of text from
+	   a flatfile as well as from the prompt.  Here's how you can
+	   see what a Unix man page looks like printed in reverse. :)
+
+		$ man gcc > /tmp/blah
+		$ ./echo_client -h localhost < /tmp/blah
+
+
+

@@ -1,0 +1,4 @@
+14 April 2000:
+  The idl compiler is now installed as dceidl, and "idl" is symlinked to it,
+  if you do not already have an idl compiler installed.  This is designed
+  to ease coexisting with other idl compilers, such as those in CORBA etc.

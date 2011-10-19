@@ -1,0 +1,173 @@
+#!/usr/bin/make -f
+
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# Set the host and build architectures for use with config.cache loading,
+# cross-building, etc.
+DEB_HOST_GNU_TYPE	:= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE	:= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+DEB_HOST_ARCH_OS	:= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
+
+export DEB_HOST_GNU_TYPE
+export DEB_BUILD_GNU_TYPE
+export DEB_HOST_ARCH_OS
+pyversion := $(shell pyversions -vd)
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+  CFLAGS += -O0
+else
+  CFLAGS += -O2
+endif
+
+include /usr/share/quilt/quilt.make
+
+DESTDIR=`pwd`/debian/tmp
+PKGNAME=likewise
+PREFIX=/usr
+LIBEXECDIR=$(PREFIX)/lib/$(PKGNAME)
+LOCALSTATEDIR=/var
+SYSCONFDIR=/etc/$(PKGNAME)
+
+ifeq ($(DEB_BUILD_GNU_TYPE), $(DEB_HOST_GNU_TYPE))
+  conf_args += --build $(DEB_BUILD_GNU_TYPE)
+else
+  conf_args += --build $(DEB_BUILD_GNU_TYPE) --host $(DEB_HOST_GNU_TYPE)
+endif
+
+
+configure: configure-stamp
+configure-stamp: $(QUILT_STAMPFN)
+	dh_testdir
+
+	## Everything is done during the build phase
+
+	touch configure-stamp
+
+build: build-stamp
+
+build-stamp: configure-stamp
+	dh_testdir
+
+	env BUILD_LOCALSTATEDIR=$(LOCALSTATEDIR) \
+	    BUILD_SYSCONFIDIR=$(SYSCONFDIR) \
+	    BUILD_LIBDIR="lib/likewise" \
+	    BUILD_PREFIXDIR=$(PREFIX) \
+	    BUILD_LIBEXECDIR=$(LIBEXECDIR) \
+	    BUILD_MAKE_FLAGS="SCRIPTDIR=$(LIBEXECDIR)" \
+	    ./Build.sh
+
+	touch build-stamp
+clean: clean-patched unpatch
+
+clean-patched:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+
+	$(MAKE) clean
+
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+#	dh_installdirs -P $(DESTDIR)
+	dh_installdirs
+
+	[ "$(DESTDIR)" != "/" ] && rm -rf $(DESTDIR)
+
+	mkdir -p $(DESTDIR)/usr/bin
+	mkdir -p $(DESTDIR)/usr/share/$(PKGNAME)
+	mkdir -p $(DESTDIR)/usr/share/applications
+	mkdir -p $(DESTDIR)/usr/share/icons
+	mkdir -p $(DESTDIR)/etc/init.d
+	mkdir -p $(DESTDIR)/$(LIBEXECDIR)
+	mkdir -p $(DESTDIR)/lib/security
+
+	rsync -av --exclude-from=debian/install-excludes build-install/ $(DESTDIR)/
+
+	for file in ConfigureLogin gpcron sqlite3; do \
+		/bin/mv $(DESTDIR)/$(PREFIX)/bin/$$file $(DESTDIR)/$(LIBEXECDIR)/; \
+		chmod 755 $(DESTDIR)/$(LIBEXECDIR)/$$file; \
+	done
+
+	for file in lsmbd dcerpcd eventlogd lsassd netlogond npcmuxd; do \
+		cat config/$$file |\
+			 sed 's#EXECDIR#$(LIBEXECDIR)#g' |\
+			 sed 's#PREFIX_DIR#$(PREFIX)#g' > $$file.new; \
+		/bin/mv $$file.new $(DESTDIR)/etc/init.d/$$file; \
+		chmod 755 $(DESTDIR)/etc/init.d/$$file; \
+	done
+
+	## Granted this is a bug cause by my misusing the ${_lib} build
+	## variable so just make sure the PAM and NSS modules get installed
+	## in the right place
+	mv $(DESTDIR)/lib/likewise/libnss* $(DESTDIR)/lib/
+	mv $(DESTDIR)/lib/likewise/security/pam_lsass.so $(DESTDIR)/lib/security/
+	/bin/rm -rf $(DESTDIR)/lib/likewise
+
+	install -m755 config/init-base.sh $(DESTDIR)/$(LIBEXECDIR)/
+	install -m644 config/likewise-krb5-ad.conf $(DESTDIR)/$(SYSCONFDIR)/
+	packaging/scripts/mkversion.sh > $(DESTDIR)/$(PREFIX)/share/$(PKGNAME)/VERSION
+	ln -s $(PREFIX)/share/$(PKGNAME) $(DESTDIR)/$(PREFIX)/data
+
+	#install -D -m 644  debian/$(PKGNAME).lintian $(DESTDIR)/usr/share/lintian/overrides/$(PKGNAME) 
+
+	install -D -m 644 debian/likewise-open-gui.desktop $(DESTDIR)/usr/share/applications
+	install -D -m 644 debian/likewise-open-gui-kde.desktop $(DESTDIR)/usr/share/applications
+
+	install -D -m 644 debian/likewise-gui.xpm $(DESTDIR)/usr/share/icons/
+
+	## Config files
+	cat $(DESTDIR)/etc/likewise/lsassd.conf |\
+		sed 's#.*homedir-template\s*=.*$$#    homedir-template = %H/%D/%U#' |\
+		sed 's#.*login-shell-template\s*=.*#    login-shell-template = /bin/bash#' |\
+		sed 's/.*cell-support\s*=.*/    cell-support = unprovisioned/' \
+	> $(DESTDIR)/etc/likewise/lsassd.conf.new && \
+	  /bin/mv -f $(DESTDIR)/etc/likewise/lsassd.conf.new $(DESTDIR)/etc/likewise/lsassd.conf
+
+	dh_install --sourcedir=$(DESTDIR) --list-missing
+
+# Build architecture-independent files here.
+binary-indep: build install
+# We have nothing to do by default.
+
+# Build architecture-dependent files here.
+binary-arch: install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_installexamples
+#	dh_install
+#	dh_installmenu
+#	dh_installdebconf
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_python
+	dh_installinit
+#	dh_installcron
+#	dh_installinfo
+	dh_installman
+	dh_desktop
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+	dh_perl
+	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps -l`pwd`/debian/likewise-open-libs/$(PREFIX)/lib/likewise
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

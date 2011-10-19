@@ -1,0 +1,202 @@
+/*
+ * 
+ * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      ep.idl
+**
+**  FACILITY:
+**
+**      RPC Daemon
+**
+**  ABSTRACT:
+**
+**  The Endpoint Map object exists to support the specific problem of
+**  network transports having a small endpoint namespace (e.g. UDP/IP).
+**  Such transports require that objects (servers) use dynamically
+**  generated endpoints, registering this endpoint with an endpoint map
+**  object and actually exporting an endpoint to the endpoint map object.
+**  Clients use an endpoint map either directly or indirectly (in the
+**  case of connection oriented or connectionless transports respectively)
+**  to determine the real endpoint of the object (server).
+**
+**  Note that the "ip" and "dds" well known endpoints are those
+**  assigned to the NCS 1.5.1 Local Location Broker.
+**
+**
+*/
+  
+[
+ uuid(e1af8308-5d1f-11c9-91a4-08002b14a0fa), version(3.0), 
+ endpoint("ncadg_ip_udp:[135]", "ncadg_dds:[12]", "ncacn_ip_tcp:[135]", 
+          "ncacn_dnet_nsp:[#69]", "ncalrpc:[epmapper]"
+          /* "ncacn_np:[\\PIPE\\epmapper]" */),
+ pointer_default(ptr) 
+]
+
+interface ept
+{
+
+import "dce/nbase.idl";
+import "dce/rpctypes.idl";
+
+const long ept_max_annotation_size  = 64;
+
+
+typedef struct 
+{
+                dce_uuid_t      object;
+                twr_p_t     tower;
+    [string]    char        annotation[ept_max_annotation_size];
+} ept_entry_t, *ept_entry_p_t;
+
+
+typedef [context_handle] void *ept_lookup_handle_t;
+
+
+/*
+ * E P T _ I N S E R T
+ *
+ * Add the specified entries to an endpoint map.
+ */
+
+void ept_insert(
+    [in]            handle_t            h,
+    [in, range(0,500)]
+                    unsigned32          num_ents,
+    [in, size_is(num_ents)]
+                    ept_entry_t         entries[],
+    [in]            boolean32           replace,
+    [out]           error_status_t      *status
+);
+
+
+/*
+ * E P T _ D E L E T E
+ *
+ * Delete the specified entries from an endpoint map.
+ */
+
+void ept_delete(
+    [in]            handle_t            h,
+    [in, range(0,500)]
+                    unsigned32          num_ents,
+    [in, size_is(num_ents)]
+                    ept_entry_t         entries[],
+    [out]           error_status_t      *status
+);
+
+
+/*
+ * E P T _ L O O K U P
+ *
+ * Lookup entries in an endpoint map.  
+ *
+ */
+
+[idempotent]
+void ept_lookup(
+    [in]            handle_t            h,
+    [in]            unsigned32          inquiry_type,
+    [in]            dce_uuid_p_t        object,
+    [in]            rpc_if_id_p_t       interface_id,
+    [in]            unsigned32          vers_option,
+    [in, out]       ept_lookup_handle_t *entry_handle,
+    [in, range(0,500)] 
+                    unsigned32          max_ents,
+    [out]           unsigned32          *num_ents,
+    [out, length_is(*num_ents), size_is(max_ents)]  
+                    ept_entry_t         entries[],    
+    [out]           error_status_t      *status
+);
+
+
+/*
+ * E P T _ M A P
+ *
+ * Apply some algorithm (using the fields in the map_tower)
+ * to an endpoint map to produce a list of protocol towers.
+ */
+
+[idempotent]
+void ept_map(
+    [in]            handle_t            h,
+    [in]            dce_uuid_p_t        object,
+    [in]            twr_p_t             map_tower,
+    [in, out]       ept_lookup_handle_t *entry_handle,
+    [in, range(0,500)]
+                    unsigned32          max_towers,
+    [out]           unsigned32          *num_towers,
+    [out, length_is(*num_towers), size_is(max_towers)]  
+                    twr_p_t             towers[],
+    [out]           error_status_t      *status
+);
+
+
+/*
+ * E P T _ L O O K U P _ H A N D L E _ F R E E
+ *
+ * Free an ept_lookup or ept_map context_handle
+ */
+
+void ept_lookup_handle_free(
+    [in]            handle_t            h,
+    [in, out]       ept_lookup_handle_t *entry_handle,
+    [out]           error_status_t      *status
+);
+
+
+/*
+ * E P T _ I N Q _ O B J E C T
+ *
+ * Inquire Endpoint Map's object id.
+ */
+
+[idempotent]
+void ept_inq_object(
+    [in]            handle_t            h,
+    [out]           dce_uuid_t              *ept_object,
+    [out]           error_status_t      *status
+);
+
+/*
+ * E P T _ M G M T _ D E L E T E
+ *
+ * Delete matching entries from an endpoint map.
+ *
+ * All entries that match the tower's interface uuid, 
+ * version, and network address are deleted.  If an 
+ * object uuid is specified, the entries which are 
+ * deleted must also match the object uuid.
+ */
+
+void ept_mgmt_delete(
+    [in]            handle_t            h,
+    [in]            boolean32           object_speced,
+    [in]            dce_uuid_p_t        object,
+    [in]            twr_p_t             tower,
+    [out]           error_status_t      *status
+);
+
+}

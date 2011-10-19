@@ -1,0 +1,195 @@
+<?xml version="1.0" standalone="yes"?>
+<object class="NSIBObjectData">
+  <string name="targetFramework">IBCarbonFramework</string>
+  <object name="rootObject" class="NSCustomObject" id="1">
+    <null name="customClass"/>
+  </object>
+  <array count="17" name="allObjects">
+    <object class="IBCarbonWindow" id="166">
+      <string name="windowRect">528 96 906 473 </string>
+      <string name="title">Likewise Domain Join</string>
+      <object name="rootControl" class="IBCarbonRootControl" id="167">
+        <string name="bounds">0 0 378 377 </string>
+        <string name="viewFrame">0 0 377 378 </string>
+        <array count="11" name="subviews">
+          <object class="IBCarbonStaticText" id="181">
+            <string name="bounds">26 88 62 357 </string>
+            <string name="viewFrame">88 26 269 36 </string>
+            <ostype name="controlSignature">CnTs</ostype>
+            <int name="controlID">302</int>
+            <boolean name="small">TRUE</boolean>
+            <int name="controlSize">1</int>
+            <string name="title">Likewise is using the following information to identify your computer on the network.</string>
+          </object>
+          <object class="IBCarbonStaticText" id="182">
+            <string name="bounds">78 20 91 122 </string>
+            <string name="viewFrame">20 78 102 13 </string>
+            <ostype name="controlSignature">CnTs</ostype>
+            <int name="controlID">303</int>
+            <boolean name="small">TRUE</boolean>
+            <int name="controlSize">1</int>
+            <string name="title">Computer name:</string>
+          </object>
+          <object class="IBCarbonStaticText" id="183">
+            <string name="bounds">99 20 112 122 </string>
+            <string name="viewFrame">20 99 102 13 </string>
+            <ostype name="controlSignature">CnTs</ostype>
+            <int name="controlID">305</int>
+            <boolean name="small">TRUE</boolean>
+            <int name="controlSize">1</int>
+            <string name="title">Domain:</string>
+          </object>
+          <object class="IBCarbonStaticText" id="184">
+            <string name="bounds">78 121 91 346 </string>
+            <string name="viewFrame">121 78 225 13 </string>
+            <ostype name="controlSignature">CnTs</ostype>
+            <int name="controlID">304</int>
+            <boolean name="small">TRUE</boolean>
+            <int name="controlSize">1</int>
+          </object>
+          <object class="IBCarbonStaticText" id="185">
+            <string name="bounds">99 121 112 346 </string>
+            <string name="viewFrame">121 99 225 13 </string>
+            <ostype name="controlSignature">CnTs</ostype>
+            <int name="controlID">306</int>
+            <boolean name="small">TRUE</boolean>
+            <int name="controlSize">1</int>
+          </object>
+          <object class="IBCarbonButton" id="188">
+            <string name="bounds">338 276 358 346 </string>
+            <string name="viewFrame">276 338 70 20 </string>
+            <ostype name="controlSignature">CnTs</ostype>
+            <int name="controlID">309</int>
+            <string name="title">Close</string>
+            <ostype name="command">not!</ostype>
+            <int name="buttonType">2</int>
+          </object>
+          <object class="IBCarbonGroupBox" id="189">
+            <string name="bounds">183 20 245 357 </string>
+            <string name="viewFrame">20 183 337 62 </string>
+            <array count="2" name="subviews">
+              <object class="IBCarbonStaticText" id="192">
+                <string name="bounds">207 40 220 266 </string>
+                <string name="viewFrame">20 24 226 13 </string>
+                <ostype name="controlSignature">CnTs</ostype>
+                <int name="controlID">313</int>
+                <boolean name="small">TRUE</boolean>
+                <int name="controlSize">1</int>
+                <string name="title">To leave the current domain, click Leave.</string>
+              </object>
+              <object class="IBCarbonButton" id="193">
+                <string name="bounds">204 277 224 347 </string>
+                <string name="viewFrame">257 21 70 20 </string>
+                <ostype name="controlSignature">CnTs</ostype>
+                <int name="controlID">308</int>
+                <string name="title">Leave</string>
+                <ostype name="command">leav</ostype>
+              </object>
+            </array>
+          </object>
+          <object class="IBCarbonPicture" id="180">
+            <string name="bounds">20 20 68 68 </string>
+            <string name="viewFrame">20 20 48 48 </string>
+            <ostype name="controlSignature">CnTs</ostype>
+            <int name="controlID">301</int>
+            <int name="contentResID">9563</int>
+          </object>
+          <object class="IBCarbonStaticText" id="194">
+            <string name="bounds">121 20 134 122 </string>
+            <string name="viewFrame">20 121 102 13 </string>
+            <ostype name="controlSignature">CnTs</ostype>
+            <int name="controlID">307</int>
+            <boolean name="small">TRUE</boolean>
+            <int name="controlSize">1</int>
+            <string name="title">Location:</string>
+          </object>
+          <object class="IBCarbonStaticText" id="195">
+            <string name="bounds">121 121 171 346 </string>
+            <string name="viewFrame">121 121 225 50 </string>
+            <ostype name="controlSignature">CnTs</ostype>
+            <int name="controlID">310</int>
+            <boolean name="small">TRUE</boolean>
+            <int name="controlSize">1</int>
+          </object>
+          <object class="IBCarbonGroupBox" id="196">
+            <string name="bounds">260 20 322 357 </string>
+            <string name="viewFrame">20 260 337 62 </string>
+            <array count="2" name="subviews">
+              <object class="IBCarbonStaticText" id="198">
+                <string name="bounds">284 40 297 266 </string>
+                <string name="viewFrame">20 24 226 13 </string>
+                <ostype name="controlSignature">CnTs</ostype>
+                <int name="controlID">311</int>
+                <boolean name="small">TRUE</boolean>
+                <int name="controlSize">1</int>
+                <string name="title">Migrate local account profile to AD profile.</string>
+              </object>
+              <object class="IBCarbonButton" id="197">
+                <string name="bounds">281 274 301 350 </string>
+                <string name="viewFrame">254 21 76 20 </string>
+                <ostype name="controlSignature">CnTs</ostype>
+                <int name="controlID">312</int>
+                <string name="title">Migrate</string>
+                <ostype name="command">migr</ostype>
+              </object>
+            </array>
+          </object>
+        </array>
+      </object>
+      <boolean name="receiveUpdates">FALSE</boolean>
+      <boolean name="isResizable">FALSE</boolean>
+      <boolean name="liveResize">TRUE</boolean>
+      <boolean name="compositing">TRUE</boolean>
+      <int name="carbonWindowClass">4</int>
+      <int name="windowPosition">1</int>
+      <boolean name="isConstrained">FALSE</boolean>
+      <boolean name="hideOnFullScreen">TRUE</boolean>
+      <int name="WindowMaxWidth">378</int>
+      <int name="WindowMinWidth">377</int>
+      <int name="WindowMaxHeight">267</int>
+      <int name="WindowMinHeight">266</int>
+    </object>
+    <reference idRef="167"/>
+    <reference idRef="180"/>
+    <reference idRef="181"/>
+    <reference idRef="182"/>
+    <reference idRef="183"/>
+    <reference idRef="184"/>
+    <reference idRef="185"/>
+    <reference idRef="188"/>
+    <reference idRef="189"/>
+    <reference idRef="192"/>
+    <reference idRef="193"/>
+    <reference idRef="194"/>
+    <reference idRef="195"/>
+    <reference idRef="196"/>
+    <reference idRef="197"/>
+    <reference idRef="198"/>
+  </array>
+  <array count="17" name="allParents">
+    <reference idRef="1"/>
+    <reference idRef="166"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="189"/>
+    <reference idRef="189"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="167"/>
+    <reference idRef="196"/>
+    <reference idRef="196"/>
+  </array>
+  <dictionary count="2" name="nameTable">
+    <string>File&apos;s Owner</string>
+    <reference idRef="1"/>
+    <string>Window</string>
+    <reference idRef="166"/>
+  </dictionary>
+  <unsigned_int name="nextObjectID">199</unsigned_int>
+</object>

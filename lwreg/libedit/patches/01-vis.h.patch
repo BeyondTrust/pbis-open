@@ -1,0 +1,29 @@
+--- export/src/vis.h	2009-09-05 13:37:56.000000000 +0200
++++ ../src/vis.h	2009-09-05 13:47:56.000000000 +0200
+@@ -34,7 +34,7 @@
+ #ifndef _VIS_H_
+ #define	_VIS_H_
+ 
+-#include <sys/types.h>
++#include <config.h>
+ 
+ /*
+  * to select alternate encoding format
+@@ -73,8 +73,6 @@
+  */
+ #define	UNVIS_END	1	/* no more characters */
+ 
+-#include <sys/cdefs.h>
+-
+ __BEGIN_DECLS
+ char	*vis(char *, int, int, int);
+ char	*svis(char *, int, int, int, const char *);
+@@ -85,7 +83,7 @@
+ int	strunvis(char *, const char *);
+ int	strunvisx(char *, const char *, int);
+ #ifndef __LIBC12_SOURCE__
+-int	unvis(char *, int, int *, int) __RENAME(__unvis13);
++int	unvis(char *, int, int *, int);
+ #endif
+ __END_DECLS
+ 

@@ -1,0 +1,219 @@
+[
+uuid(12345678-1234-abcd-ef00-01234567cffb),
+version(1.0),
+endpoint("ncacn_np:[\\pipe\\netlogon]"),
+pointer_default(unique)
+]
+interface netlogon
+{
+
+cpp_quote("#ifdef DCERPC_STUB_BUILD")
+
+#include <lw/security-types.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
+
+    typedef [switch_type(UINT16)] union {
+        [case(1)] NetrPasswordInfo *password1;
+        [case(2)] NetrNetworkInfo  *network2;
+        [case(3)] NetrPasswordInfo *password3;
+        [case(5)] NetrPasswordInfo *password5;
+        [case(6)] NetrNetworkInfo  *network6;
+    } NetrLogonInfo;
+
+    typedef [switch_type(UINT16)] union {
+        [case(2)] NetrSamInfo2 *sam2;
+        [case(3)] NetrSamInfo3 *sam3;
+        [case(4)] NetrPacInfo  *pac4;
+        [case(5)] NetrPacInfo  *pac5;
+        [case(6)] NetrSamInfo6 *sam6;
+    } NetrValidationInfo;
+
+    typedef [switch_type(UINT32)] union netr_domain_query {
+        [case(1)] NetrDomainQuery1 *query1;
+        [case(2)] NetrDomainQuery1 *query2;
+    } NetrDomainQuery;
+
+    typedef [switch_type(UINT32)] union netr_domain_info {
+        [case(1)] NetrDomainInfo1 *info1;
+        [case(2)] NetrDomainInfo1 *info2;
+    } NetrDomainInfo;
+
+cpp_quote("#endif")
+
+
+    NTSTATUS netr_Function00();
+    NTSTATUS netr_Function01();
+
+    /* function 0x02 */
+    NTSTATUS NetrLogonSamLogon(
+        [in,unique,string] wchar16_t *server_name,
+        [in,unique,string] wchar16_t *computer_name,
+        [in,unique] NetrAuth *creds,
+        [in,out,unique] NetrAuth *ret_creds,
+        [in] UINT16 logon_level,
+        [in,ref,switch_is(logon_level)] NetrLogonInfo *logon,
+        [in] UINT16 validation_level,
+        [out,ref,switch_is(validation_level)] NetrValidationInfo *validation,
+        [out,ref] UINT8 *authoritative
+        );
+
+	/* function 0x03 */
+    NTSTATUS NetrLogonSamLogoff(
+        [in,unique,string] wchar16_t *server_name,
+        [in,unique,string] wchar16_t *computer_name,
+        [in,unique] NetrAuth *creds,
+        [in,out,unique] NetrAuth *ret_creds,
+        [in] UINT16 logon_level,
+        [in,ref,switch_is(logon_level)] NetrLogonInfo *logon
+        );
+
+	/* function 0x04 */
+    NTSTATUS NetrServerReqChallenge(
+        [in,string,unique] wchar16_t *server_name,
+        [in,string] wchar16_t *computer_name,
+        [in,out,ref] NetrCred *credentials
+        );
+
+	/* function 0x05 */
+    NTSTATUS NetrServerAuthenticate(
+        [in,string,unique] wchar16_t *server_name,
+        [in,string] wchar16_t account_name[],
+        [in] UINT16 secure_channel_type,
+        [in,string] wchar16_t computer_name[],
+        [in,out,ref] NetrCred *credentials
+        );
+
+    NTSTATUS netr_Function06();
+    NTSTATUS netr_Function07();
+    NTSTATUS netr_Function08();
+    NTSTATUS netr_Function09();
+    NTSTATUS netr_Function0a();
+    NTSTATUS netr_Function0b();
+    NTSTATUS netr_Function0c();
+    NTSTATUS netr_Function0d();
+    NTSTATUS netr_Function0e();
+
+	/* function 0x0f */
+    NTSTATUS NetrServerAuthenticate2(
+        [in,string,unique] wchar16_t *server_name,
+        [in,string] wchar16_t account_name[],
+        [in] UINT16 secure_channel_type,
+        [in,string] wchar16_t computer_name[],
+        [in,out,ref] NetrCred *credentials,
+        [in,out,ref] UINT32 *negotiate_flags
+        );
+
+    NTSTATUS netr_Function10();
+    NTSTATUS netr_Function11();
+    NTSTATUS netr_Function12();
+    NTSTATUS netr_Function13();
+
+    /* function 0x14 */
+    WINERROR DsrGetDcName(
+        [in,string,unique] wchar16_t *server_name,
+        [in,string,unique] wchar16_t *domain_name,
+        [in,unique] GUID *domain_guid,
+        [in,unique] GUID *site_guid,
+        [in] UINT32 get_dc_flags,
+        [out,ref] DsrDcNameInfo **info
+        );
+
+    NTSTATUS netr_Function15();
+    NTSTATUS netr_Function16();
+    NTSTATUS netr_Function17();
+    NTSTATUS netr_Function18();
+    NTSTATUS netr_Function19();
+
+	/* function 0x1a */
+    NTSTATUS NetrServerAuthenticate3(
+        [in,string] wchar16_t *server_name,
+        [in,string] wchar16_t account_name[],
+        [in] UINT16 secure_channel_type,
+        [in,string] wchar16_t computer_name[],
+        [in,out,ref] NetrCred *credentials,
+        [in,out,ref] UINT32 *negotiate_flags,
+        [out,ref] UINT32 *rid
+        );
+
+    NTSTATUS netr_Function1b();
+    NTSTATUS netr_Function1c();
+
+    /* function 0x1d */
+    NTSTATUS NetrLogonGetDomainInfo(
+        [in,string] wchar16_t *server_name,
+        [in,unique,string] wchar16_t *computer_name,
+        [in] NetrAuth *creds,
+        [in,out,ref] NetrAuth *ret_creds,
+        [in] UINT32 level,
+        [in,switch_is(level)] NetrDomainQuery *query,
+        [out,ref,switch_is(level)] NetrDomainInfo *info
+        );
+
+
+    NTSTATUS netr_Function1e();
+    NTSTATUS netr_Function1f();
+    NTSTATUS netr_Function20();
+    NTSTATUS netr_Function21();
+    NTSTATUS netr_Function22();
+    NTSTATUS netr_Function23();
+
+	/* function 0x24 */
+    NTSTATUS NetrEnumerateTrustedDomainsEx(
+        [in,string,unique] wchar16_t *server_name,
+        [out,ref] NetrDomainTrustList *domain_trusts
+        );
+
+    NTSTATUS netr_Function25();
+    NTSTATUS netr_Function26();
+
+	/* function 0x27 */
+    NTSTATUS NetrLogonSamLogonEx(
+        [in,unique,string] wchar16_t *server_name,
+        [in,unique,string] wchar16_t *computer_name,
+        [in] UINT16 logon_level,
+        [in,ref,switch_is(logon_level)] NetrLogonInfo *logon,
+        [in] UINT16 validation_level,
+        [out,ref,switch_is(validation_level)] NetrValidationInfo *validation,
+        [out,ref] UINT8 *authoritative,
+        [in,out,ref] UINT32 *flags
+        );
+
+  
+	/* function 0x28 */
+   WINERROR DsrEnumerateDomainTrusts(
+        [in,unique,string] wchar16_t *server_name,
+        [in] UINT32 trust_flags,
+        [out,ref] NetrDomainTrustList *trusts
+        );
+
+    NTSTATUS netr_Function29();
+    NTSTATUS netr_Function2a();
+    NTSTATUS netr_Function2b();
+    NTSTATUS netr_Function2c();
+    NTSTATUS netr_Function2d();
+    NTSTATUS netr_Function2e();
+    NTSTATUS netr_Function2f();
+    NTSTATUS netr_Function30();
+    NTSTATUS netr_Function31();
+    NTSTATUS netr_Function32();
+    NTSTATUS netr_Function33();
+    NTSTATUS netr_Function34();
+    NTSTATUS netr_Function35();
+    NTSTATUS netr_Function36();
+    NTSTATUS netr_Function37();
+    NTSTATUS netr_Function38();
+    NTSTATUS netr_Function39();
+    NTSTATUS netr_Function3a();
+    NTSTATUS netr_Function3b();
+}
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

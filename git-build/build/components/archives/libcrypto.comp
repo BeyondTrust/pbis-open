@@ -1,0 +1,92 @@
+#!/bin/sh
+
+COMP_VERSION="0.9.8h"
+COMP_RELEASE="1"
+COMP_SOURCES="${BUILD_ROOT}/src/linux/openssl"
+
+function component_gather
+{
+    rsync -a --exclude=.svn ${COMP_SOURCES}/ ${GATHER_DIR}/
+}
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    cd ${BUILDING_ROOT}
+
+    CFLAGS="${_cflags}"
+    LDFLAGS="${_ldflags} $(libtool_format_rpath ${PREFIX_DIR}/${_lib})"
+    if echo "$CC" | grep " -static-libgcc"; then
+        LDFLAGS="${LDFLAGS} -static-libgcc"
+    fi
+
+    export CFLAGS LDFLAGS
+}
+
+function component_configure
+{
+    _setup_build_env
+
+    case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}-`[ -n "${IS_COMPAT}" ] && echo yes || echo no`" in
+        hpux-ia64-no)
+            TARGET="hpux-ia64-gcc"
+            ;;
+        hpux-ia64-yes)
+            TARGET="hpux64-ia64-gcc"
+	    ;;
+        *)
+            TARGET=""
+            ;;
+    esac
+
+    if [ -n "${TARGET}" ]
+    then
+        ./Configure --prefix="${PREFIXDIR}" shared ${TARGET}
+    else 
+        ./config --prefix="${PREFIXDIR}" shared
+    fi
+}
+
+function component_build
+{
+    _setup_build_env
+
+    ${MAKE} DIRS="crypto" SHARED_LDFLAGS="-shared ${LDFLAGS}" all
+}
+
+function component_stage
+{
+    _setup_build_env
+
+    ${MAKE} INSTALL_PREFIX="${STAGING_ROOT_DIR}" DIRS="crypto" install_sw
+
+    if [ -z "$IS_COMPAT" ]; then
+       if [ -d ${STAGING_PREFIX_DIR}/lib ]; then
+          _lib_path=`eval echo ${STAGING_PREFIX_DIR}/lib`
+          _compat_lib_path=`eval echo ${STAGING_PREFIX_DIR}/${_lib}`
+          if [ "$_lib_path" != "$_compat_lib_path" ]; then
+              /bin/mv $_lib_path $_compat_lib_path
+          fi
+       fi
+    fi
+
+    /bin/rm -f ${STAGING_PREFIX_DIR}/${_lib}/libssl.so
+    /bin/rm -f ${STAGING_PREFIX_DIR}/${_lib}/pkgconfig/libssl.pc
+    /bin/rm -f ${STAGING_PREFIX_DIR}/${_lib}/pkgconfig/openssl.pc
+    /bin/rm -rf ${STAGING_PREFIX_DIR}/${_lib}/engines
+    /bin/rm -rf ${STAGING_PREFIX_DIR}/ssl
+
+    libtool_rewrite_staging
+}
+
+function component_populate
+{
+    COMP_NAME=libcrypto
+    COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
+    COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
+
+    rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
+
+    libtool_rewrite_populate
+}

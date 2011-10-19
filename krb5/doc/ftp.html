@@ -1,0 +1,822 @@
+<HTML>
+<BODY>
+<PRE>
+<!-- Manpage converted by man2html 3.0.1 -->
+
+</PRE>
+<H2>NAME</H2><PRE>
+     ftp - ARPANET file transfer program
+
+
+</PRE>
+<H2>SYNOPSIS</H2><PRE>
+     <B>ftp</B> [<B>-v</B>] [<B>-d</B>] [<B>-i</B>] [<B>-n</B>] [<B>-g</B>] [<B>-k</B> <I>realm</I>] [<B>-f</B>] [<B>-x</B>] [<B>-u</B>]  [<B>-t</B>]
+     [<I>host</I>]
+
+
+</PRE>
+<H2>DESCRIPTION</H2><PRE>
+     <B>FTP</B> is the user  interface  to  the  ARPANET  standard  File
+     Transfer  Protocol.   The  program allows a user to transfer
+     files to and from a remote network site.
+
+
+</PRE>
+<H2>OPTIONS</H2><PRE>
+     Options may be specified at the command line, or to the com-
+     mand interpreter.
+
+     -<B>v</B>   Verbose option forces <B>ftp</B> to show  all  responses  from
+          the  remote  server, as well as report on data transfer
+          statistics.
+
+     -<B>n</B>   Restrains <B>ftp</B> from attempting ``auto-login'' upon  ini-
+          tial  connection.   If  auto-login is enabled, <B>ftp</B> will
+          check the .<I>netrc</I> (see below) file in  the  user's  home
+          directory  for  an  entry  describing an account on the
+          remote machine.  If no entry exists,  <B>ftp</B>  will  prompt
+          for  the remote machine login name (default is the user
+          identity on the  local  machine),  and,  if  necessary,
+          prompt  for  a  password  and  an account with which to
+          login.
+
+     -<B>u</B>   Restrains <B>ftp</B> from  attempting  ``auto-authentication''
+          upon  initial  connection.   If  auto-authentication is
+          enabled, <B>ftp</B> attempts to authenticate to the FTP server
+          by  sending the AUTH command, using whichever authenti-
+          cation types are locally supported.  Once an  authenti-
+          cation  type  is  accepted,  an authentication protocol
+          will proceed by issuing  ADAT  commands.   This  option
+          also disables auto-login.
+
+     -<B>i</B>   Turns off interactive prompting  during  multiple  file
+          transfers.
+
+     -<B>d</B>   Enables debugging.
+
+     -<B>g</B>   Disables file name globbing.
+
+     -<B>f</B>   Causes credentials to be forwarded to the remote host.
+
+     -<B>x</B>   Causes the client to attempt  to  negotiate  encryption
+          (data   and   command  protection  levels  ``private'')
+          immediately after successfully authenticating.
+
+     -<B>t</B>   Enables packet tracing.
+
+
+</PRE>
+<H2>COMMANDS</H2><PRE>
+     The client host with which <B>ftp</B>  is  to  communicate  may  be
+     specified  on  the  command line.  If this is done, <B>ftp</B> will
+     immediately attempt to establish  a  connection  to  an  FTP
+     server  on  that host; otherwise, <B>ftp</B> will enter its command
+     interpreter and await instructions from the user.  When  <B>ftp</B>
+     is  awaiting  commands  from the user the prompt ``ftp&gt;'' is
+     provided to the user.  The following commands are recognized
+     by <B>ftp</B>:
+
+     <B>!</B> [<I>command</I>] [<I>args</I>]]
+          Invoke an interactive shell on the local  machine.   If
+          there are arguments, the first is taken to be a command
+          to execute directly, with the rest of the arguments  as
+          its arguments.
+
+     <B>$</B> <I>macro</I>-<I>name</I> [<I>args</I>]
+          Execute the macro <I>macro</I>-<I>name</I> that was defined with  the
+          <B>macdef</B>  command.   Arguments  are  passed  to the macro
+          unglobbed.
+
+     <B>account</B> [<I>passwd</I>]
+          Supply a supplemental password  required  by  a  remote
+          system  for  access  to resources once a login has been
+          successfully completed.  If no  argument  is  included,
+          the  user will be prompted for an account password in a
+          non-echoing input mode.
+
+     <B>append</B> <I>local</I>-<I>file</I> [<I>remote</I>-<I>file</I>]
+          Append a local file to a file on  the  remote  machine.
+          If <I>remote</I>-<I>file</I> is left unspecified, the local file name
+          is used in naming the remote file after  being  altered
+          by  any <B>ntrans</B> or <B>nmap</B> setting.  File transfer uses the
+          current settings for <B>type</B>, <B>format</B>, <B>mode</B>, and <B>structure</B>.
+
+     <B>ascii</B>
+          Set the file transfer <B>type</B> to network ASCII .  This  is
+          the default type.
+
+     <B>bell</B> Arrange that a bell be sounded after each file transfer
+          command is completed.
+
+     <B>binary</B>
+          Set the file  transfer  <B>type</B>  to  support  binary  file
+          transfer.
+
+     <B>bye</B>  Terminate the FTP session with the  remote  server  and
+          exit  <B>ftp</B>.  An end of file will also terminate the ses-
+          sion and exit.
+
+     <B>case</B> Toggle remote computer file name  case  mapping  during
+          <B>mget</B>  commands.   When  <B>case</B>  is  on  (default is off),
+          remote computer file names with all  letters  in  upper
+          case  are  written  in  the  local  directory  with the
+          letters mapped to lower case.
+
+     <B>ccc</B>  Turn off integrity protection on the  command  channel.
+          This command must be sent integrity protected, and must
+          be proceeded by a successful ADAT command.  Since turn-
+          ing  off  integrity  protection  potentially  allows an
+          attacker to insert commands onto the  command  channel,
+          some FTP servers may refuse to honor this command.
+
+     <B>cd</B> <I>remote</I>-<I>directory</I>
+          Change the working directory on the remote  machine  to
+          <I>remote</I>-<I>directory</I>.
+
+     <B>cdup</B> Change the remote  machine  working  directory  to  the
+          parent of the current remote machine working directory.
+
+     <B>chmod</B> <I>mode</I> <I>file</I>-<I>name</I>
+          Change the permission modes of the  file  <I>file</I>-<I>name</I>  on
+          the remote system to <I>mode</I>.
+
+     <B>clear</B>
+          Set  the  protection  level  on   data   transfers   to
+          ``clear''.   If no ADAT command succeeded, then this is
+          the default protection level.
+
+     <B>close</B>
+          Terminate the FTP session with the remote  server,  and
+          return  to the command interpreter.  Any defined macros
+          are erased.
+
+     <B>cprotect</B> [<I>protection</I>-<I>level</I>]
+          Set the protection level  on  commands  to  <I>protection</I>-
+          <I>level</I>.   The  valid protection levels are ``clear'' for
+          unprotected commands, ``safe'' for  commands  integrity
+          protected  by  cryptographic  checksum, and ``private''
+          for commands confidentiality and integrity protected by
+          encryption.   If  an  ADAT  command succeeded, then the
+          default command protection level is ``safe'', otherwise
+          the  only  possible level is ``clear''.  If no level is
+          specified, the  current  level  is  printed.   <B>cprotect</B>
+          <B>clear</B> is equivalent to the <B>ccc</B> command.
+
+     <B>cr</B>   Toggle carriage return stripping during ascii type file
+          retrieval.    Records   are   denoted   by  a  carriage
+          return/linefeed  sequence  during   ascii   type   file
+          transfer.   When  <B>cr</B>  is  on  (the  default),  carriage
+          returns are stripped from this sequence to conform with
+          the  UNIX single linefeed record delimiter.  Records on
+          non-UNIX remote systems may contain  single  linefeeds;
+          when  an  ascii  type transfer is made, these linefeeds
+          may be distinguished from a record delimiter only  when
+          <B>cr</B> is off.
+
+     <B>delete</B> <I>remote</I>-<I>file</I>
+          Delete the file <I>remote</I>-<I>file</I> on the remote machine.
+
+     <B>debug</B> [<I>debug</I>-<I>value</I>]
+          Toggle debugging mode.  If an optional  <I>debug</I>-<I>value</I>  is
+          specified  it is used to set the debugging level.  When
+          debugging is on, <B>ftp</B> prints each command  sent  to  the
+          remote machine, preceded by the string `--&gt;'
+
+     <B>dir</B> [<I>remote</I>-<I>directory</I>] [<I>local</I>-<I>file</I>]
+          Print a listing of the directory contents in the direc-
+          tory,  <I>remote</I>-<I>directory</I>,  and,  optionally, placing the
+          output in <I>local</I>-<I>file</I>.  If interactive prompting is  on,
+          <B>ftp</B>  will prompt the user to verify that the last argu-
+          ment is indeed the target local file for receiving  <B>dir</B>
+          output.   If  no  directory  is  specified, the current
+          working directory on the remote machine is used.  If no
+          local  file  is specified, or <I>local</I>-<I>file</I> is `<B>-</B>', output
+          comes to the terminal.
+
+     <B>disconnect</B>
+          A synonym for <I>close</I>.
+
+     <B>form</B> <I>format</I>
+          Set the file transfer <B>form</B> to <I>format</I>.  The default for-
+          mat is ``file''.
+
+     <B>get</B> <I>remote</I>-<I>file</I> [<I>local</I>-<I>file</I>]
+          Retrieve the file <I>remote</I>-<I>file</I> and store it on the local
+          machine.   If  the local file name is not specified, it
+          is given the same name it has on  the  remote  machine,
+          subject  to alteration by the current <B>case</B>, <B>ntrans</B>, and
+          <B>nmap</B> settings.  The current settings  for  <B>type</B>,  <B>form</B>,
+          <B>mode</B>,  and  <B>structure</B>  are  used while transferring the
+          file.
+
+     <B>glob</B> Toggle filename expansion for <B>mdelete</B>, <B>mget</B>, and  <B>mput</B>.
+          If  globbing  is  turned  off  with <B>glob</B>, the file name
+          arguments are taken literally and not expanded.   Glob-
+          bing  for  <B>mput</B>  is done as in <B>csh(1)</B>.  For <B>mdelete</B> and
+          <B>mget</B>, each remote file name is expanded  separately  on
+          the  remote  machine  and  the  lists  are  not merged.
+          Expansion of a directory name is likely to be different
+          from  expansion  of  the  name of an ordinary file: the
+          exact result depends on the  foreign  operating  system
+          and  ftp  server,  and  can  be previewed by doing `mls
+          remote-files -' Note:  <B>mget</B> and <B>mput</B> are not  meant  to
+          transfer  entire directory subtrees of files.  That can
+          be done by transferring a <B>tar(1)</B> archive of the subtree
+          (in binary mode).
+
+     <B>hash</B> Toggle hash-sign (``#'') printing for each  data  block
+          transferred.  The size of a data block is 1024 bytes.
+
+     <B>help</B> [<I>command</I>]
+          Print an informative message about the meaning of  <I>com-</I>
+          <I>mand</I>.   If  no  argument is given, <B>ftp</B> prints a list of
+          the known commands.
+
+     <B>idle</B> [<I>seconds</I>]
+          Set the  inactivity  timer  on  the  remote  server  to
+          <I>seconds</I>  seconds.   If  <I>seconds</I> is omitted, the current
+          inactivity timer is printed.
+
+     <B>lcd</B> [<I>directory</I>]
+          Change the working directory on the local machine.   If
+          no <I>directory</I> is specified, the user's home directory is
+          used.
+
+     <B>ls</B> [<I>remote</I>-<I>directory</I>] [<I>local</I>-<I>file</I>]
+          Print a listing of the contents of a directory  on  the
+          remote  machine.   The  listing  includes  any  system-
+          dependent  information  that  the  server  chooses   to
+          include;  for  example,  most UNIX systems will produce
+          output from the command `ls -l'.  (See also <B>nlist</B>.)  If
+          <I>remote</I>-<I>directory</I> is left unspecified, the current work-
+          ing directory is used.  If interactive prompting is on,
+          <B>ftp</B>  will prompt the user to verify that the last argu-
+          ment is indeed the target local file for  receiving  <B>ls</B>
+          output.   If  no  local file is specified, or if <I>local</I>-
+          <I>file</I> is `<B>-</B>', the output is sent to the terminal.
+
+     <B>macdef</B><I>macro</I>-<I>name</I>
+          Define a macro.  Subsequent lines  are  stored  as  the
+          macro  <I>macro</I>-<I>name</I>;  a  null  line  (consecutive newline
+          characters in a file or carriage returns from the  ter-
+          minal)  terminates  macro input mode.  There is a limit
+          of 16 macros and 4096 total characters in  all  defined
+          macros.  Macros remain defined until a <B>close</B> command is
+          executed.  The macro processor interprets `$'  and  `\'
+          as  special characters.  A `$' followed by a number (or
+          numbers) is replaced by the corresponding  argument  on
+          the  macro  invocation command line.  A `$' followed by
+          an `i' signals that macro processor that the  executing
+          macro  is  to  be  looped.   On  the first pass `$i' is
+          replaced by the first argument on the macro  invocation
+          command  line, on the second pass it is replaced by the
+          second argument, and so on.   A  `\'  followed  by  any
+          character  is  replaced by that character.  Use the `\'
+          to prevent special treatment of the `$'.
+
+     <B>mdelete</B> [<I>remote</I>-<I>files</I>]
+          Delete <I>remote</I>-<I>files</I> on the remote machine.
+
+     <B>mdir</B> <I>remote</I>-<I>files</I> <I>local</I>-<I>file</I>
+          Like <B>dir</B>, except multiple remote files  may  be  speci-
+          fied.   If interactive prompting is on, <B>ftp</B> will prompt
+          the user to verify that the last argument is indeed the
+          target local file for receiving <B>mdir</B> output.
+
+     <B>mget</B> <I>remote</I>-<I>files</I>
+          Expand the <I>remote</I>-<I>files</I> on the remote machine and do  a
+          <B>get</B>  for  each  file  name thus produced.  See <B>glob</B> for
+          details on  the  filename  expansion.   Resulting  file
+          names will then be processed according to <B>case</B>, <B>ntrans</B>,
+          and <B>nmap</B> settings.   Files  are  transferred  into  the
+          local working directory, which can be changed with `lcd
+          directory'; new local directories can be  created  with
+          `! mkdir directory'.
+
+     <B>mkdir</B> <I>directory</I>-<I>name</I>
+          Make a directory on the remote machine.
+
+     <B>mls</B> <I>remote</I>-<I>files</I> <I>local</I>-<I>file</I>
+          Like <B>nlist</B>, except multiple remote files may be  speci-
+          fied,   and  the  <I>local</I>-<I>file</I>  must  be  specified.   If
+          interactive prompting is on, <B>ftp</B> will prompt  the  user
+          to  verify  that the last argument is indeed the target
+          local file for receiving <B>mls</B> output.
+
+     <B>mode</B> [<I>mode</I>-<I>name</I>]
+          Set the file transfer <B>mode</B> to <I>mode</I>-<I>name</I>.   The  default
+          mode is ``stream'' mode.
+
+     <B>modtime</B> <I>file</I>-<I>name</I>
+          Show the last modification time  of  the  file  on  the
+          remote machine.
+
+     <B>mput</B> <I>local</I>-<I>files</I>
+          Expand wild cards in the list of local files  given  as
+          arguments  and  do a <B>put</B> for each file in the resulting
+          list.  See <B>glob</B>  for  details  of  filename  expansion.
+          Resulting  file  names will then be processed according
+          to <B>ntrans</B> and <B>nmap</B> settings.
+
+     <B>newer</B> <I>file</I>-<I>name</I>
+          Get the file only  if  the  modification  time  of  the
+          remote file is more recent that the file on the current
+          system.  If the file does not exist on the current sys-
+          tem,  the  remote file is considered <B>newer</B>.  Otherwise,
+          this command is identical to <B>get</B>.
+
+     <B>nlist</B> [<I>remote</I>-<I>directory</I>] [<I>local</I>-<I>file</I>]
+          Print a list of the files in a directory on the  remote
+          machine.   If <I>remote</I>-<I>directory</I> is left unspecified, the
+          current working  directory  is  used.   If  interactive
+          prompting  is  on,  <B>ftp</B>  will prompt the user to verify
+          that the last argument is indeed the target local  file
+          for receiving <B>nlist</B> output.  If no local file is speci-
+          fied, or if <I>local</I>-<I>file</I> is `<B>-</B>', the output  is  sent  to
+          the terminal.
+
+     <B>nmap</B> [<I>inpattern</I> <I>outpattern</I>]
+          Set or unset the filename  mapping  mechanism.   If  no
+          arguments are specified, the filename mapping mechanism
+          is unset.  If arguments are specified, remote filenames
+          are mapped during <B>mput</B> commands and <B>put</B> commands issued
+          without a specified remote target filename.   If  argu-
+          ments  are specified, local filenames are mapped during
+          <B>mget</B> commands and <B>get</B> commands issued without a  speci-
+          fied  local  target  filename.   This command is useful
+          when connecting to non-UNIX remote computer  with  dif-
+          ferent  file naming conventions or practices.  The map-
+          ping follows the pattern set by <I>inpattern</I>  and  <I>outpat-</I>
+          <I>tern</I>.  [<I>Inpattern</I>] is a template for incoming filenames
+          (which may have already been processed according to the
+          <B>ntrans</B>  and  <B>case</B>  settings).   Variable  templating is
+          accomplished by including  the  sequences  `$1',  `$2',
+          ...,  `$9'  in <I>inpattern</I>.  Use `\' to prevent this spe-
+          cial treatment of the `$' character.  All other charac-
+          ters  are  treated literally, and are used to determine
+          the <B>nmap</B> [<I>inpattern</I>]  variable  values.   For  example,
+          given   <I>inpattern</I>   $1.$2  and  the  remote  file  name
+          "mydata.data", $1 would have the value "mydata", and $2
+          would have the value "data".  The <I>outpattern</I> determines
+          the resulting mapped  filename.   The  sequences  `$1',
+          `$2',  ...,  `$9'  are  replaced by any value resulting
+          from the <I>inpattern</I>  template.   The  sequence  `$0'  is
+          replace  by  the  original filename.  Additionally, the
+          sequence `[<I>seq1</I>, <I>seq2</I>]' is replaced by [<I>seq1</I>]  if  <I>seq1</I>
+          is not a null string; otherwise it is replaced by <I>seq2</I>.
+          For example, the command
+
+               nmap $1.$2.$3 [$1,$2].[$2,file]
+
+          would yield the output filename "myfile.data" for input
+          filenames    "myfile.data"    and    "myfile.data.old",
+          "myfile.file" for  the  input  filename  "myfile",  and
+          "myfile.myfile"   for  the  input  filename  ".myfile".
+          Spaces may be included in <I>outpattern</I>, as in  the  exam-
+          ple: `nmap $1 sed "s/ *$//" &gt; $1'.  Use the `\' charac-
+          ter to prevent special treatment  of  the  `$','[',']',
+          and `,' characters.
+
+     <B>ntrans</B> [<I>inchars</I> [<I>outchars</I>]]
+          Set or unset the filename character translation mechan-
+          ism.  If no arguments are specified, the filename char-
+          acter translation mechanism is unset.  If arguments are
+          specified,   characters   in   remote   filenames   are
+          translated during <B>mput</B> commands and <B>put</B> commands issued
+          without  a  specified remote target filename.  If argu-
+          ments are specified, characters in local filenames  are
+          translated during <B>mget</B> commands and <B>get</B> commands issued
+          without a specified local target filename.   This  com-
+          mand  is  useful  when  connecting to a non-UNIX remote
+          computer with  different  file  naming  conventions  or
+          practices.  Characters in a filename matching a charac-
+          ter in <I>inchars</I>  are  replaced  with  the  corresponding
+          character  in <I>outchars</I>.  If the character's position in
+          <I>inchars</I> is longer than  the  length  of  <I>outchars</I>,  the
+          character is deleted from the file name.
+
+     <B>open</B> <I>host</I> [<I>port</I>] [<B>-forward</B>]
+          Establish  a  connection  to  the  specified  <I>host</I>  FTP
+          server.   An  optional  port number may be supplied, in
+          which case, <B>ftp</B> will attempt to contact an  FTP  server
+          at  that  port.   If the <B>auto-authenticate</B> option is on
+          (default), <B>ftp</B> will attempt to authenticate to the  FTP
+          server  by  sending  the  AUTH command, using whichever
+          authentication types which are locally supported.  Once
+          an  authentication  type is accepted, an authentication
+          protocol will proceed by issuing ADAT commands.  If the
+          <B>auto-login</B>  option  is  on  (default),  <B>ftp</B>  will  also
+          attempt to automatically log the user  in  to  the  FTP
+          server  (see  below).  If the -<B>forward</B> option is speci-
+          fied, <B>ftp</B> will forward a copy of  the  user's  Kerberos
+          tickets to the remote host.
+
+     <B>passive</B>
+          Toggle passive data transfer mode.   In  passive  mode,
+          the  client  initiates the data connection by listening
+          on the data port.  Passive mode may  be  necessary  for
+          operation  from  behind  firewalls  which do not permit
+          incoming connections.
+
+     <B>private</B>
+          Set  the  protection  level  on   data   transfers   to
+          ``private''.   Data  transmissions  are confidentiality
+          and integrity protected by encryption.  If no ADAT com-
+          mand   succeeded,  then  the  only  possible  level  is
+          ``clear''.
+
+     <B>prompt</B>
+          Toggle interactive  prompting.   Interactive  prompting
+          occurs during multiple file transfers to allow the user
+          to selectively retrieve or store files.   If  prompting
+          is  turned  off  (default is on), any <B>mget</B> or <B>mput</B> will
+          transfer all files, and any  <B>mdelete</B>  will  delete  all
+          files.
+
+     <B>protect</B> [<I>protection</I>-<I>level</I>]
+          Set  the  protection  level  on   data   transfers   to
+          <I>protection</I>-<I>level</I>.   The  valid  protection  levels  are
+          ``clear'' for unprotected data transmissions,  ``safe''
+          for  data  transmissions integrity protected by crypto-
+          graphic checksum, and ``private''  for  data  transmis-
+          sions   confidentiality   and  integrity  protected  by
+          encryption.  If no ADAT  command  succeeded,  then  the
+          only  possible  level  is  ``clear''.   If  no level is
+          specified, the current level is printed.   The  default
+          protection level is ``clear''.
+
+     <B>proxy</B> <I>ftp</I>-<I>command</I>
+          Execute an ftp command on a secondary  control  connec-
+          tion.   This  command allows simultaneous connection to
+          two remote ftp servers for transferring  files  between
+          the  two servers.  The first <B>proxy</B> command should be an
+          <B>open</B> <B>,</B> to establish the secondary  control  connection.
+          Enter  the  command "proxy ?" to see other ftp commands
+          executable on the secondary connection.  The  following
+          commands  behave  differently  when  prefaced by <B>proxy</B>:
+          <B>open</B> will not define new macros during  the  auto-login
+          process,  <B>close</B>  will  not erase existing macro defini-
+          tions, <B>get</B> and <B>mget</B> transfer files from the host on the
+          primary control connection to the host on the secondary
+          control connection, and <B>put</B>, <B>mput</B>, and <B>append</B>  transfer
+          files from the host on the secondary control connection
+          to the host on the primary control  connection.   Third
+          party  file  transfers  depend  upon support of the ftp
+          protocol PASV command by the server  on  the  secondary
+          control connection.
+
+     <B>put</B> <I>local</I>-<I>file</I> [<I>remote</I>-<I>file</I>]
+          Store a local file on the remote machine.   If  <I>remote</I>-
+          <I>file</I>  is  left unspecified, the local file name is used
+          after processing according to any <B>ntrans</B> or  <B>nmap</B>  set-
+          tings  in  naming  the remote file.  File transfer uses
+          the current settings for <B>type</B>, <B>format</B>, <B>mode</B>, and <B>struc-</B>
+          <B>ture</B>.
+
+     <B>pwd</B>  Print the name of the current working directory on  the
+          remote machine.
+
+     <B>quit</B> A synonym for <B>bye</B>.
+
+     <B>quote</B> <I>arg1</I> [<I>arg2</I>] [...]
+          The arguments specified  are  sent,  verbatim,  to  the
+          remote FTP server.
+
+     <B>recv</B> <I>remote</I>-<I>file</I> [<I>local</I>-<I>file</I>]
+          A synonym for get.
+
+     <B>reget</B> <I>remote</I>-<I>file</I> [<I>local</I>-<I>file</I>]
+          Reget acts like get, except that if  <I>local</I>-<I>file</I>  exists
+          and is smaller than <I>remote</I>-<I>file</I>, <I>local</I>-<I>file</I> is presumed
+          to be a partially transferred copy of  <I>remote</I>-<I>file</I>  and
+          the  transfer  is  continued from the apparent point of
+          failure.  This command is useful when transferring very
+          large  files  over  networks that are prone to dropping
+          connections.
+
+     <B>remotehelp</B> [<I>command</I>-<I>name</I>]
+          Request  help  from  the  remote  FTP  server.   If   a
+          <I>command</I>-<I>name</I>  is specified it is supplied to the server
+          as well.
+
+     <B>remotestatus</B> [<I>file</I>-<I>name</I>]
+          With no arguments, show status of remote  machine.   If
+          <I>file</I>-<I>name</I>  is  specified,  show  status of <I>file</I>-<I>name</I> on
+          remote machine.
+
+     <B>rename</B> [<I>from</I>] [<I>to</I>]
+          Rename the file <I>from</I> on the remote machine, to the file
+          <I>to</I>.
+
+     <B>reset</B>
+          Clear  reply  queue.   This   command   re-synchronizes
+          command/reply  sequencing  with  the remote ftp server.
+          Resynchronization may be necessary following  a  viola-
+          tion of the ftp protocol by the remote server.
+
+     <B>restart</B> <I>marker</I>
+          Restart the immediately following <B>get</B>  or  <B>put</B>  at  the
+          indicated <I>marker</I>.  On UNIX systems, marker is usually a
+          byte offset into the file.
+
+     <B>rmdir</B> <I>directory</I>-<I>name</I>
+          Delete a directory on the remote machine.
+
+     <B>runique</B>
+          Toggle storing of files on the local system with unique
+          filenames.   If a file already exists with a name equal
+          to the target local filename for a <B>get</B> or <B>mget</B> command,
+          a  ".1" is appended to the name.  If the resulting name
+          matches another existing file, a ".2"  is  appended  to
+          the  original  name.   If  this process continues up to
+          ".99", an error message is printed,  and  the  transfer
+          does  not  take  place.   The generated unique filename
+          will be reported.  Note that <B>runique</B>  will  not  affect
+          local files generated from a shell command (see below).
+          The default value is off.
+
+     <B>safe</B> Set the protection level on data transfers to ``safe''.
+          Data  transmissions  are integrity-protected by crypto-
+          graphic checksum.  If no ADAT command  succeeded,  then
+          the only possible level is ``clear''.
+
+     <B>send</B> <I>local</I>-<I>file</I> [<I>remote</I>-<I>file</I>]
+          A synonym for put.
+
+     <B>sendport</B>
+          Toggle the use of PORT commands.  By default, <B>ftp</B>  will
+          attempt  to use a PORT command when establishing a con-
+          nection for each data transfer.  The use of  PORT  com-
+          mands  can prevent delays when performing multiple file
+          transfers.  If the PORT command fails, <B>ftp</B> will use the
+          default  data  port.   When the use of PORT commands is
+          disabled, no attempt will be made to use PORT  commands
+          for each data transfer.  This is useful for certain FTP
+          implementations which  do  ignore  PORT  commands  but,
+          incorrectly, indicate they've been accepted.
+
+     <B>site</B> <I>arg1</I> [<I>arg2</I>] [...]
+          The arguments specified  are  sent,  verbatim,  to  the
+          remote FTP server as a SITE command.
+
+     <B>size</B> <I>file</I>-<I>name</I>
+          Return size of <I>file</I>-<I>name</I> on remote machine.
+
+     <B>status</B>
+          Show the current status of <B>ftp</B>.
+
+     <B>struct</B> <I>struct</I>-<I>name</I>
+          Set the file transfer  <I>structure</I>  to  <I>struct</I>-<I>name</I>.   By
+          default ``stream'' structure is used.
+
+     <B>sunique</B>
+          Toggle storing of files on remote machine under  unique
+          file  names.  Remote ftp server must support ftp proto-
+          col STOU command for successful completion.  The remote
+          server will report unique name.  Default value is off.
+
+     <B>system</B>
+          Show the type of operating system running on the remote
+          machine.
+
+     <B>tenex</B>
+          Set the file transfer type to that needed  to  talk  to
+          TENEX machines.
+
+     <B>trace</B>
+          Toggle packet tracing.
+
+     <B>type</B> [<I>type</I>-<I>name</I>]
+          Set the file transfer <B>type</B> to <I>type</I>-<I>name</I>.  If no type is
+          specified,  the  current  type is printed.  The default
+          type is network ASCII.
+
+     <B>umask</B> [<I>newmask</I>]
+          Set the default umask on the remote server to  <I>newmask</I>.
+          If <I>newmask</I> is omitted, the current umask is printed.
+
+     <B>user</B> <I>user</I>-<I>name</I> [<I>password</I>] [<I>account</I>]
+          Identify yourself to the remote  FTP  server.   If  the
+          <I>password</I>  is  not specified and the server requires it,
+          <B>ftp</B> will prompt the user for it (after disabling  local
+          echo).   If  an <I>account</I> field is not specified, and the
+          FTP server requires it, the user will be  prompted  for
+          it.   If an <I>account</I> field is specified, an account com-
+          mand will be relayed to the  remote  server  after  the
+          login  sequence  is  completed if the remote server did
+          not require it for logging in.  Unless <B>ftp</B>  is  invoked
+          with  ``auto-login''  disabled,  this  process  is done
+          automatically on initial connection to the FTP server.
+
+     <B>verbose</B>
+          Toggle verbose mode.  In verbose  mode,  all  responses
+          from  the  FTP  server  are  displayed to the user.  In
+          addition, if verbose is on, when a file  transfer  com-
+          pletes,  statistics  regarding  the  efficiency  of the
+          transfer are reported.  By default, verbose is on.
+
+      <B>?</B> <B>[</B><I>command</I><B>]</B>
+          A synonym for help.
+
+     Command arguments which have embedded spaces may  be  quoted
+     with quote `"' marks.
+
+
+</PRE>
+<H2>ABORTING A FILE TRANSFER</H2><PRE>
+     To abort a file transfer, use  the  terminal  interrupt  key
+     (usually  Ctrl-C).   Sending  transfers  will be immediately
+     halted.  Receiving transfers will be halted by sending a FTP
+     protocol  ABOR  command to the remote server, and discarding
+     any further data received.   The  speed  at  which  this  is
+     accomplished  depends  upon  the remote server's support for
+     ABOR processing.  If the remote server does not support  the
+     ABOR  command,  an  `ftp&gt;'  prompt will not appear until the
+     remote server has completed sending the requested file.
+
+     The terminal interrupt key sequence will be ignored when <B>ftp</B>
+     has  completed  any local processing and is awaiting a reply
+     from the remote server.  A  long  delay  in  this  mode  may
+     result  from  the  ABOR  processing described above, or from
+     unexpected behavior by the remote server,  including  viola-
+     tions  of the ftp protocol.  If the delay results from unex-
+     pected remote server behavior, the local <B>ftp</B> program must be
+     killed by hand.
+
+
+</PRE>
+<H2>FILE NAMING CONVENTIONS</H2><PRE>
+     Files specified as arguments to <B>ftp</B> commands  are  processed
+     according to the following rules.
+
+     1.   If the file name `<B>-</B>' is specified, <I>stdin</I> (for  reading)
+          or <I>stdout</I> (for writing) is used.
+
+     2.   If the first character of the file  name  is  `|',  the
+          remainder  of  the  argument  is interpreted as a shell
+          command.  <B>Ftp</B> then forks a shell, using  <B>popen(3)</B>  with
+          the  argument  supplied,  and  reads  from  (writes to)
+          stdout (stdin).  If the shell command includes  spaces,
+          the  argument  must  be quoted; e.g.  ``" ls -lt"''.  A
+          particularly  useful  example  of  this  mechanism  is:
+          ``dir more''.
+
+     3.   Failing the above checks, if ``globbing''  is  enabled,
+          local  file  names  are expanded according to the rules
+          used in <B>csh(1)</B>; c.f. the <B>glob</B> command.  If the <B>ftp</B> com-
+          mand expects a single local file (.e.g.  <B>put</B>), only the
+          first filename generated by the ``globbing''  operation
+          is used.
+
+     4.   For <B>mget</B> commands and  <B>get</B>  commands  with  unspecified
+          local  file  names,  the  local  filename is the remote
+          filename, which may be altered by a  <B>case</B>,  <B>ntrans</B>,  or
+          <B>nmap</B>  setting.   The  resulting  filename  may  then be
+          altered if <B>runique</B> is on.
+
+     5.   For <B>mput</B> commands and  <B>put</B>  commands  with  unspecified
+          remote  file  names,  the  remote filename is the local
+          filename, which may be altered by a <B>ntrans</B> or <B>nmap</B> set-
+          ting.   The  resulting  filename may then be altered by
+          the remote server if <B>sunique</B> is on.
+
+
+</PRE>
+<H2>FILE TRANSFER PARAMETERS</H2><PRE>
+     The FTP specification specifies many  parameters  which  may
+     affect  a  file transfer.  The <B>type</B> may be one of ``ascii'',
+     ``image'' (binary),  ``ebcdic'',  and  ``local  byte  size''
+     (mostly  for PDP-10's and PDP-20's).  <B>Ftp</B> supports the ascii
+     and image types of file transfer, plus local byte size 8 for
+     <B>tenex</B> mode transfers.
+
+     <B>Ftp</B> supports only the default values for the remaining  file
+     transfer parameters:  <B>mode</B>, <B>form</B>, and <B>struct</B>.
+
+
+</PRE>
+<H2>THE .netrc FILE</H2><PRE>
+     The .<I>netrc</I> file contains login and  initialization  informa-
+     tion  used  by  the  auto-login  process.  It resides in the
+     user's home directory.  The following tokens are recognized;
+     they may be separated by spaces, tabs, or new-lines:
+
+     <B>machine</B> <I>name</I>
+          Identify a remote machine <I>name</I>.  The auto-login process
+          searches  the  .<I>netrc</I>  file  for  a  <B>machine</B> token that
+          matches the remote machine specified on the <B>ftp</B> command
+          line  or  as an <B>open</B> command argument.  Once a match is
+          made, the subsequent .<I>netrc</I> tokens are processed, stop-
+          ping when the end of file is reached or another <B>machine</B>
+          or a <B>default</B> token is encountered.
+
+     <B>default</B>
+          This is the same as <B>machine</B> <I>name</I>  except  that  <B>default</B>
+          matches any name.  There can be only one <B>default</B> token,
+          and it must be after all <B>machine</B> tokens.  This is  nor-
+          mally used as:
+
+               default login anonymous password user@site
+
+          thereby giving the user <I>automatic</I> anonymous  ftp  login
+          to machines not specified in .<I>netrc</I>.  This can be over-
+          ridden by using the -<B>n</B> flag to disable auto-login.
+
+     <B>login</B> <I>name</I>
+          Identify a user on the remote machine.  If  this  token
+          is  present,  the  auto-login  process  will initiate a
+          login using the specified <I>name</I>.
+
+     <B>password</B> <I>string</I>
+          Supply a password.   If  this  token  is  present,  the
+          auto-login  process will supply the specified string if
+          the remote server requires a password as  part  of  the
+          login  process.   Note that if this token is present in
+          the .<I>netrc</I> file for any user other than <I>anonymous</I>,  <B>ftp</B>
+          will  abort  the  auto-login  process  if the .<I>netrc</I> is
+          readable by anyone besides the user.
+
+     <B>account</B> <I>string</I>
+          Supply an additional account password.  If  this  token
+          is  present,  the  auto-login  process  will supply the
+          specified string if the remote server requires an addi-
+          tional account password, or the auto-login process will
+          initiate an ACCT command if it does not.
+
+     <B>macdef</B> <I>name</I>
+          Define a macro.  This token functions like the <B>ftp</B> <B>mac-</B>
+          <B>def</B>  command  functions.   A  macro is defined with the
+          specified name; its contents begin with the next .<I>netrc</I>
+          line  and  continue until a null line (consecutive new-
+          line characters) is encountered.  If a macro named <B>init</B>
+          is  defined,  it  is automatically executed as the last
+          step in the auto-login process.
+
+
+</PRE>
+<H2>ENVIRONMENT</H2><PRE>
+     <B>Ftp</B> utilizes the following environment variables.
+
+     HOME For default location of a .<I>netrc</I> file, if one exists.
+
+     SHELL
+          For default shell.
+
+
+</PRE>
+<H2>SEE ALSO</H2><PRE>
+     <B>ftpd(8)</B>
+
+     Lunt,  S.  J.,  FTP  Security  Extensions,  Internet  Draft,
+     November 1993.
+
+
+</PRE>
+<H2>HISTORY</H2><PRE>
+     The <B>ftp</B> command appeared in 4.2BSD.
+
+
+</PRE>
+<H2>BUGS</H2><PRE>
+     Correct execution  of  many  commands  depends  upon  proper
+     behavior by the remote server.
+
+     An error in the treatment of carriage returns in the  4.2BSD
+     ascii-mode  transfer  code has been corrected.  This correc-
+     tion may result in incorrect transfers of  binary  files  to
+     and  from  4.2BSD  servers using the ascii type.  Avoid this
+     problem by using the binary image type.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+<HR>
+<ADDRESS>
+Man(1) output converted with
+<a href="http://www.oac.uci.edu/indiv/ehood/man2html.html">man2html</a>
+</ADDRESS>
+</BODY>
+</HTML>

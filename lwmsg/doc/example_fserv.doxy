@@ -1,0 +1,63 @@
+/*
+ * Copyright (c) Likewise Software.  All rights Reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the license, or (at
+ * your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
+ * General Public License for more details.  You should have received a copy
+ * of the GNU Lesser General Public License along with this program.  If
+ * not, see <http://www.gnu.org/licenses/>.
+ *
+ * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
+ * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
+ * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
+ * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
+ * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
+ * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
+ * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
+ * license@likewisesoftware.com
+ */
+
+/*
+ * Module Name:
+ *
+ *        example_fserv.doxy
+ *
+ * Abstract:
+ *
+ *        Fserv example documentation page
+ *
+ * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
+ *
+ */
+
+/**
+@page example_fserv Tutorial
+
+@section Overview
+This tutorial demonstrates how to use <tt>LWMsg</tt> to implement a
+file server daemon and client API that supports open, read, write, and close
+operations.  Although a file server that only accepts clients over local
+IPC has limited use in the real world, it provides good coverage of most
+of <tt>LWMsg</tt>'s features:
+
+- Type specification
+- Authentication using security tokens
+- Opaque handles
+- Implementing a multi-threaded server
+- Implementing a multi-threaded client API
+
+This example is available in the <tt>LWMsg</tt> source distribution in the
+<tt>example/fserv</tt> subdirectory where it can be built and run.
+
+@section Contents
+
+-# @subpage example_fserv_walkthrough
+-# @subpage example_fserv_layout
+
+**/

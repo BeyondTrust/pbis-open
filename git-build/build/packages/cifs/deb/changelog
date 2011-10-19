@@ -1,0 +1,6 @@
+__PKG_NAME (__PKG_VERSION-1) lucid; urgency=low
+
+  * New Likewise Open release
+
+ -- Gerald Cartert <gcarter@likewise.com>  __PKG_DATE
+

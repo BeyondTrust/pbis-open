@@ -1,0 +1,230 @@
+                      =================================
+                      README File for Likewise Open 5.4
+                      =================================
+
+Likewise Open has several goals:
+
+(a) Simplify the process of joining non-Microsoft hosts to Active Directory
+    domains,
+(b) Simplify the management of these hosts, and
+(c) Provide a rich development platform for writing applications in
+    heterogeneous networks.
+
+We hope you find this software useful.
+
+
+                                            -- Gerald Carter
+                                               Likewise Open Project Lead
+                                               <gcarter@likewiseopen.org.>
+
+
+Instructions on building likewise-open
+======================================
+
+The likewise-open build is driven by a series of shell scripts.
+While the code is portable among a variety of *nix based platforms
+(Linux, Solaris, AIX, HP-UX, and OS X), this build system is 
+primarily intended for Linux & FreeBSD platforms.
+
+You need at least the following minimum versions of the toolchain
+components:
+
+  * gcc >= 3.x
+  * autoconf >= 2.61
+  * libtool >= 2.2.4
+  * automake >= 1.9.6
+  * pkg-config >= 0.23
+
+Before you begin, please read over this list of prerequisite development
+packages (depending on your Linux distro):
+
+  * RedHat/Fedora - gcc, autoconf, automake, e2fsprogs-devel,
+    pam-devel, ncurses-devel, flex, bison, rpm-build, rpm-devel,
+    openssl-devel
+
+    Optional packages: 
+       o libglade2-devel - To build domainjoin-gui GTK application
+       o libattr-devel   - To enable extended attribute support for the 
+                           Likewise CIFS server (experimental)
+
+  * Ubuntu - build-essential, fakeroot, devscripts, debhelper,
+    autoconf, automake, libtool, libncurses5-dev, uuid-dev,
+    flex, bison, libpam0g-dev, libssl-dev
+
+    Optional packages: 
+       o libglade2-dev - To build domainjoin-gui GTK application
+       o libattr1-dev  - To enable extended attribute support for the 
+                         Likewise CIFS server (experimental)
+
+  * SLES/SLED/openSUSE - TDB
+
+The easiest way to begin a build is to run:
+
+  $ build/mkcomp all
+
+This will build the necessary components and install them to the
+staging/install-root/ directory.  
+
+You may then create a set of packages by executing (currently only debs
+and rpms are supported)
+
+  $ build/mkpkg all
+
+Both mkcomp and mkpkg support the --debug option for including (and not
+stripping) debug symbols.
+
+If you are working directory from the likewise-open git tree, the
+"'build/mkdist" script can be used to generate a release tarball file.
+
+
+Note: It is currently necessary to manually import all the service
+registry files after installing the packages.
+
+  $ sudo bash -c 'for file in /etc/likewise/*reg; do \
+      /opt/likewise/bin/regshell import $file; \
+    done'
+
+
+Likewise Registry Service
+=========================
+
+The Likewise Registry Service (lwregd) is the configuration data store
+used by all Likewise services.  You can view and modify the registry
+settings by running /opt/likewise/bin/regshell as the root user.  For
+example:
+
+  $ sudo /opt/likewise/bin/regshell
+  > cd hkey_this_machine\\services
+
+  hkey_this_machine\services> dir
+  [hkey_this_machine\services]
+  [HKEY_THIS_MACHINE\Services\lsass]
+  ...
+
+  hkey_this_machine\services> cd lsass
+
+  hkey_this_machine\services\lsass> dir
+  Arguments    REG_SZ   "lsassd --syslog"
+  Dependencies REG_SZ   "netlogon lwio lwreg rdr"
+  Description  REG_SZ    "Likewise Security and Authentication Subsystem"
+  Path         REG_SZ    "/opt/likewise/sbin/lsassd"
+  Type         REG_DWORD 0x00000001 (1)
+
+  [HKEY_THIS_MACHINE\Services\lsass\Parameters]
+
+
+Likewise Service Manager
+========================
+
+The Likewise Service Manager (lwsmd) provides a service control
+architecture for starting and stopping all Likewise daemons and drivers
+based on a dependency graph.
+
+The lwsmd daemon itself is managed using the standard SysV init
+script:
+
+  $ /etc/init.d/lwsmd start
+  * Starting Likewise Service Manager: lwsmd              [ OK ] 
+
+Only the registry service (lwregd) is hard coded to be started
+initially.  The user space CLI for managing services is the "lwsm"
+utility.
+
+  $ lwsm list
+  lwreg       running (standalone: 19415)
+  dcerpc      running (standalone: 19453)
+  eventlog    stopped
+  lsass       running (standalone: 19475)
+  lwio        running (standalone: 19438)
+  rdr         running (io: 19438)
+  srv         running (io: 19438)
+  pvfs        running (io: 19438)
+  npfs        running (io: 19438)
+  netlogon    running (standalone: 19468)
+  srvsvc      running (standalone: 19529)
+
+  $ lwsm info lsass
+  Service: lsass
+  Description: Likewise Security and Authentication Subsystem
+  Type: executable
+  Autostart: no
+  Path: /opt/likewise/sbin/lsassd
+  Arguments: 'lsassd' '--syslog'
+  Dependencies: netlogon lwio lwreg rdr
+
+  $ lwsm stop-all lsass
+  Stopping service reverse dependency: srvsvc
+  Stopping service reverse dependency: srv
+  Stopping service: lsass
+
+  $ lwsm start-all srvsvc
+  Starting service dependency: lsass
+  Starting service dependency: srv
+  Starting service: srvsvc
+
+
+
+Likewise-CIFS
+=============
+
+We are actively implementing a full SMBv1 and SMBv2 protocol stack in the
+Likewise I/O Manager.  Some overview information and details about the
+server architecture are available at http://www.likewiseopen.org/.
+The server offers support for the following client architectures:
+
+  * WinXP
+  * Vista
+  * Win2003/2008 (including R2)
+  * Windows 7
+  * OS 10.5 and later
+  * Gnome Desktop smb:// URL
+
+No support is planned for any client requiring port tcp/139 (e.g.
+Windows 95, Linux smbfs, or OS X 10.4)
+
+Be warned that the server represents active design and development.  It is
+not recommended in any way for production use at this time.  If you are
+interested in track Likewise development or just experimenting with
+upcoming release feature, please note that the server drivers
+(srv.sys.so, pvfs.sys.so, and npvfs.sys.so) are not loaded by default.
+The easier way to start the CIFS server to for force the Likewise
+Service Manager (lwsmd) to launch all the dependent services for the
+srvsvcd daemon (lwsm start-all srvsvc)/
+
+Finally, the SRV driver exports the /lwcifs directory as the C$ share.
+This directory is created for you automatically and cannot currently
+be disabled.
+
+This following is a short list of known issues in the Likewise CIFS 
+server:
+
+  * No interaction with POSIX file permissions (uses Extended
+    Attributes for storing the Windows security descriptor). (planned)
+  * No file system integration with byte-range locks or change
+    notification (planned)
+  * Missing NT_CANCEL support (planned)
+  * No raw NTLMSSP support (only NTLMSSP encapsulated inside SPNEGO) 
+    (future)
+  * No printing support (future)
+
+That said, I am using the server for roaming user profiles, iTunes media
+libraries, network home directories, "My Documents" redirection, and other
+fundamental file services on a daily basis.
+
+
+Getting Help
+============
+
+The main Likewise Open web site is at http://www.likewiseopen.org/.
+From here you will find links to the project forums, and pre-built
+package downloads.
+
+If you find any bugs, please file a report at
+   http://lobugs.likewiseopen.org/
+
+There are also mailing lists available for developer interaction at
+http://lists.likewiseopen.org/.  There is also a link to the user
+community forums on the community section of likewise.com.
+
+====
+

@@ -1,0 +1,85 @@
+/*
+ * 
+ * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      iovector.idl
+**
+**  FACILITY:
+**
+**      Remote Procedure Call (RPC) 
+**
+**  ABSTRACT:
+**
+**  iovector buffer definitions and handling routines
+**
+**
+*/
+
+[local] interface rpc_iovector
+{
+
+import "dce/lbase.idl";
+
+typedef void (*rpc_buff_dealloc_fn_t)
+(
+    [in]        byte_p_t        buff_addr
+);
+
+typedef struct
+{
+    rpc_buff_dealloc_fn_t   buff_dealloc;
+    unsigned8           flags;
+    unsigned8           pad1;
+    unsigned8           pad2;
+    unsigned8           pad3;
+    byte_p_t            buff_addr;
+    unsigned32          buff_len;
+    byte_p_t            data_addr;
+    unsigned32          data_len;
+} rpc_iovector_elt_t, *rpc_iovector_elt_p_t;
+
+/* values for 'flags' */
+const long rpc_c_iovector_elt_reused       = 0x01;
+
+
+typedef struct
+{
+    unsigned16              num_elt;
+    rpc_iovector_elt_t      elt[1];
+} rpc_iovector_t, *rpc_iovector_p_t;
+
+/*
+ * R P C _ I O V E C T O R _ D E A L L O C
+ *
+ * Deallocate all buffers associated with all the elements of an I/O vector.
+ */
+
+void rpc_iovector_dealloc
+(
+    [in]    rpc_iovector_p_t    iovector,
+    [out]   unsigned32          *status
+);
+
+}

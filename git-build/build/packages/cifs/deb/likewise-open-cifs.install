@@ -1,0 +1,14 @@
+opt/likewise/bin/*
+opt/likewise/sbin/*
+opt/likewise/share/likewise/*
+opt/likewise/share/config/*
+opt/likewise/share/doc/*
+opt/likewise/__LIB/*
+opt/likewise/__LIB/gss/*
+opt/likewise/data/VERSION
+etc/init.d/*
+etc/krb5.conf.default
+etc/likewise/*
+__LIB/security/pam_lsass.so
+__LIB/libnss_lsass.so*
+opt/likewise/include/*

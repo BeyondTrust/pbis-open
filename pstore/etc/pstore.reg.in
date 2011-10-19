@@ -1,0 +1,14 @@
+[HKEY_THIS_MACHINE\Services]
+
+[HKEY_THIS_MACHINE\Services\lsass]
+
+[HKEY_THIS_MACHINE\Services\lsass\Parameters]
+
+[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers]
+
+[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]
+
+[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore]
+"path"="@LIBDIR@/liblwps-regdb@MOD_EXT@"
+"type"=dword:00000005
+"default"=dword:00000001

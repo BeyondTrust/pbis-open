@@ -1,0 +1,99 @@
+#!/bin/bash
+
+BUILD_ROOT=`(cd $(dirname $0)/.. && pwd)`
+export BUILD_ROOT
+
+umask 022
+
+##
+## Support libraries
+##
+. ${BUILD_ROOT}/build/lib/common.sh
+. ${BUILD_ROOT}/build/lib/mkcomp-helper.sh
+. ${BUILD_ROOT}/build/lib/VARS
+
+## Check if we have any overrides
+function setup_build_vars
+{
+    local _upcomp=$(echo $1 | tr "[a-z]" "[A-Z]")
+
+    ##
+    ## Autoconf paths picked up by the components
+    ##
+    export PRODUCTNAME="likewise"
+
+    # Overridable variables
+    INITDIR="/etc/init.d"
+    PREFIXDIR="/opt/${PRODUCTNAME}"
+    LIBEXECDIR="${PREFIXDIR}/bin"
+    LOCALSTATEDIR="/var/lib/${PRODUCTNAME}"
+    STAGE_DIR="${BUILD_ROOT}/staging"
+    STAGE_COMP_DIR="${STAGE_DIR}/components"
+    STAGE_INSTALL_DIR="${STAGE_DIR}/install-root"
+    SYSCONFDIR="/etc/${PRODUCTNAME}"
+
+    for _variable in PREFIXDIR SYSCONFDIR INITDIR LOCALSTATEDIR LIBEXECDIR STAGE_INSTALL_DIR; do
+        eval "if [ -n \"\${BUILD_${_variable}}\" ]; then export ${_variable}=\${BUILD_${_variable}}; fi"
+        eval "if [ -n \"\${BUILD_${_upcomp}_${_variable}}\" ]; then export ${_variable}=\${BUILD_${_upcomp}_${_variable}}; fi"
+        if [ -n "${BUILD_VERBOSE}" ]; then
+            eval "echo ${_variable}=\${${_variable}}"
+        fi
+    done
+}
+
+function build_component
+{
+    echo "Running configure stage"
+    component_configure
+    exit_on_error $?
+
+    echo "Running build stage"
+    component_build
+    exit_on_error $?
+
+    echo "Running install stage"
+    if [ ! -d ${STAGE_INSTALL_DIR} ]; then
+	mkdir -p ${STAGE_INSTALL_DIR}
+	exit_on_error $?
+    fi
+    component_install
+    exit_on_error $?
+}
+
+
+#############################################################
+## Main Driver
+##
+function main 
+{
+    local _COMP_NAME="$1"
+    local _COMP_FILE="${BUILD_ROOT}/build/components/${_COMP_NAME}.comp"
+
+    if [ ! -f ${_COMP_FILE} ]; then
+	exit_on_error 1 "Invalid component name (${_COMP_NAME})!  Exiting...."
+    fi
+
+    setup_build_vars ${_COMP_NAME}
+
+    ##
+    ## This imports the following variables:
+    ##   COMP_SOURCES
+    ##
+    . ${_COMP_FILE}
+
+    cd ${COMP_SOURCES}
+
+    if [ -n "${ENABLE_CLEAN}" ]; then
+	git clean -dxf .
+    fi
+
+    echo "Building ${_COMP_NAME} component..."
+    time_command "${_COMP_NAME}" build_component
+    exit_on_error $?
+
+    ## HACK ALERT -- remove libtool files
+    # find ${STAGE_INSTALL_DIR} -name "*.la" -exec /bin/rm {} \;
+}
+
+main "$@"
+exit 0
