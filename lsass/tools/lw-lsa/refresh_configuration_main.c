@@ -203,7 +203,7 @@ static
 void
 ShowUsage()
 {
-    printf("Usage: lw-refresh-configuration\n");
+    printf("Usage: refresh-configuration\n");
 }
 
 static

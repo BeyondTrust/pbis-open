@@ -238,7 +238,7 @@ static
 void
 ShowUsage()
 {
-    printf("Usage: lw-set-machine-sid <SID>\n");
+    printf("Usage: set-machine-sid <SID>\n");
 }
 
 static

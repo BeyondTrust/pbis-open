@@ -458,7 +458,7 @@ static
 void
 ShowUsage()
 {
-    printf("Usage: lw-ypcat [-d domain] [-x] [-t] [-k] [--check-group-members-online | -c] map-name\n");
+    printf("Usage: ypcat [-d domain] [-x] [-t] [-k] [--check-group-members-online | -c] map-name\n");
     printf("\n");
     printf("-k : print keys.\n");
     printf("-x : print nis nickname table.\n");

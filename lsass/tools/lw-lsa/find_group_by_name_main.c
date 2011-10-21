@@ -318,7 +318,7 @@ error:
 void
 ShowUsage()
 {
-    PCSTR pszProgramName = "lw-find-group-by-name";
+    PCSTR pszProgramName = "find-group-by-name";
     printf("Usage: %s [OPTIONS] <GROUP_NAME>\n"
            "\n"
            "    Lookup a group by name.\n"

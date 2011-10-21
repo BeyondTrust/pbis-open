@@ -219,7 +219,7 @@ static
 void
 ShowUsage()
 {
-    printf("Usage: lw-set-default-domain <domain name>\n");
+    printf("Usage: set-default-domain <domain name>\n");
 }
 
 static

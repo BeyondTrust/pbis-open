@@ -385,7 +385,7 @@ ParseArgs(
 void
 ShowUsage()
 {
-    printf("Usage: lw-enum-users {--level [0, 1, 2]} {--batchsize [1..1000]} {--checkUserinList || -c} \n");
+    printf("Usage: enum-users {--level [0, 1, 2]} {--batchsize [1..1000]} {--checkUserinList || -c} \n");
 }
 
 VOID

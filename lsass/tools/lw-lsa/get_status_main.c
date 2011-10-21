@@ -355,7 +355,7 @@ ParseArgs(
 void
 ShowUsage()
 {
-    printf("Usage: lw-get-status [--all] [domain]\n");
+    printf("Usage: get-status [--all] [domain]\n");
 }
 
 VOID

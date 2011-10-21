@@ -309,7 +309,7 @@ ParseArgs(
 void
 ShowUsage()
 {
-    printf("Usage: lw-find-user-by-id {--level [0, 1, 2]} <uid>\n");
+    printf("Usage: find-user-by-id {--level [0, 1, 2]} <uid>\n");
 }
 
 VOID

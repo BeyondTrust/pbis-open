@@ -210,7 +210,7 @@ ParseArgs(
 void
 ShowUsage()
 {
-    printf("Usage: lw-get-log-info\n");
+    printf("Usage: get-log-info\n");
 }
 
 DWORD

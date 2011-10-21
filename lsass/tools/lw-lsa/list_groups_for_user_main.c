@@ -59,8 +59,8 @@ static
 void
 ShowUsage()
 {
-    printf("Usage: lw-list-groups-for-user [options] <user name>\n"
-           "   or: lw-list-groups-for-user [options] --uid <uid>\n"
+    printf("Usage: list-groups-for-user [options] <user name>\n"
+           "   or: list-groups-for-user [options] --uid <uid>\n"
            "\n"
            "  where options are:\n"
            "\n"

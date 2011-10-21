@@ -265,7 +265,7 @@ ParseArgs(
 void
 ShowUsage()
 {
-    printf("Usage: lw-get-metrics { --level [0, 1] }\n");
+    printf("Usage: get-metrics { --level [0, 1] }\n");
 }
 
 VOID

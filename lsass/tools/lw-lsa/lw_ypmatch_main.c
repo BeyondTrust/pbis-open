@@ -450,7 +450,7 @@ static
 void
 ShowUsage()
 {
-    printf("Usage: lw-ypmatch [-d domain] [-x] [-t] [-k] key-name map-name\n");
+    printf("Usage: ypmatch [-d domain] [-x] [-t] [-k] key-name map-name\n");
     printf("\n");
     printf("-k : print keys.\n");
     printf("-x : print nis nickname table.\n");

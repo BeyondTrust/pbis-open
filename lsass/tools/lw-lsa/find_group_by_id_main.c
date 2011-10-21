@@ -314,7 +314,7 @@ ParseArgs(
 void
 ShowUsage()
 {
-    PCSTR pszProgramName = "lw-find-group-by-id";
+    PCSTR pszProgramName = "find-group-by-id";
     printf("Usage: %s [OPTIONS] <GROUP_GID>\n"
            "\n"
            "    Lookup a group by id.\n"

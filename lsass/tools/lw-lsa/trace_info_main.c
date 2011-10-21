@@ -519,10 +519,10 @@ error:
 void
 ShowUsage()
 {
-    printf("Usage: lw-trace-info {--set (flag-name:(0|1))(,flag-name:(0|1))*}\n"
-           "                      {--get flag-name}\n");
+    printf("Usage: trace-info {--set (flag-name:(0|1))(,flag-name:(0|1))*}\n"
+           "                  {--get flag-name}\n");
     printf("\nValid flag names: {user-group-queries, authentication, user-group-administration}\n");
-    printf("\nExample: lw-trace-info --set user-group-queries:0,authentication:1 --get user-group-administration\n");
+    printf("\nExample: trace-info --set user-group-queries:0,authentication:1 --get user-group-administration\n");
 }
 
 DWORD

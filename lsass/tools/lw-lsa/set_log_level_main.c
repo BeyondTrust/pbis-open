@@ -272,7 +272,7 @@ static
 void
 ShowUsage()
 {
-    printf("Usage: lw-set-log-level {error, warning, info, verbose, debug, trace}\n");
+    printf("Usage: set-log-level {error, warning, info, verbose, debug, trace}\n");
 }
 
 static

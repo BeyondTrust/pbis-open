@@ -350,7 +350,7 @@ static
 void
 ShowUsage()
 {
-    printf("Usage: lw-enum-groups {--level [0, 1]} {--batchsize [1..1000]} {--check-group-members-online | -c}\n");
+    printf("Usage: enum-groups {--level [0, 1]} {--batchsize [1..1000]} {--check-group-members-online | -c}\n");
 }
 
 static

@@ -303,7 +303,7 @@ error:
 void
 ShowUsage()
 {
-    printf("Usage: lw-find-by-sid {--level [0, 1, 2]} <SID>\n"
+    printf("Usage: find-by-sid {--level [0, 1, 2]} <SID>\n"
             "\n"
             "Note: level 2 is only valid for user sids\n");
 }

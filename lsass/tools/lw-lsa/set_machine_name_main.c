@@ -229,7 +229,7 @@ static
 void
 ShowUsage()
 {
-    printf("Usage: lw-set-machine-name <name>\n");
+    printf("Usage: set-machine-name <name>\n");
 }
 
 static

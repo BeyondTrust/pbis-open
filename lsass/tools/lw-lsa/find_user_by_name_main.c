@@ -312,7 +312,7 @@ error:
 void
 ShowUsage()
 {
-    printf("Usage: lw-find-user-by-name {--level [0, 1, 2]} <user login id>\n");
+    printf("Usage: find-user-by-name {--level [0, 1, 2]} <user login id>\n");
 }
 
 VOID
