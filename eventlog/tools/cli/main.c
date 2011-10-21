@@ -57,7 +57,7 @@ void
 ShowUsage()
 {
     fputs(
-"Usage: lw-eventlog-cli [-h] | --list | \n"
+"Usage: eventlog-cli [-h] | --list | \n"
 " { [-s <filter>] | [-c <filter>] | [-t <filter>] | [-d <filter>] }\n"
 " { [-e [<csv_path>|-]] }\n"
 " { [--days <int>] | [--hours <int>] | [--mins <int>] } <ip_address>\n"
@@ -78,12 +78,12 @@ ShowUsage()
 "\n"
 "Examples:\n"
 "   Prints details for events 1-10:\n"
-"   lw-eventlog-cli -s 1-10 127.0.0.1\n"
+"   eventlog-cli -s 1-10 127.0.0.1\n"
 "\n"
 "   Prints table for all events:\n"
-"   lw-eventlog-cli -t - 127.0.0.1\n\n"
+"   eventlog-cli -t - 127.0.0.1\n\n"
 "   Count all events matching the SQL WHILE expression:\n"
-"   lw-eventlog-cli -c \"(EventRecordId < 1000) AND (EventType = 'Warning')\" 127.0.0.1\n"
+"   eventlog-cli -c \"(EventRecordId < 1000) AND (EventType = 'Warning')\" 127.0.0.1\n"
 "\n"
 "Valid Field Names:\n"
 "    EventTableCategoryId (integer)\n"
