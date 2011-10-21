@@ -56,6 +56,7 @@ sfx_generic()
                   likewise-lwnetapi likewise-lwreg likewise-lwreg-32bit \
                   likewise-lwtools likewise-lwupgrade likewise-mod-auth-kerb \
                   likewise-netlogon likewise-openldap likewise-passwd \
+                  likewise-password-policy \
                   likewise-pstore likewise-reskit likewise-rpc likewise-sqlite \
                   likewise-srvsvc likewise-reapsysl likewise-samba-interop \
                   likewise-smbclient \
