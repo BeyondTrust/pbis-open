@@ -111,7 +111,7 @@ COMPUTER="${ROOT_OU}Computer"
 ################
 # FULL COMMAND #
 ################
-ADT_CMD="./lw-adtool $ADT_CONN_SERVER $ADT_CONN_PORT $ADT_CONN_DOMAIN $ADT_SCHEMA $ADT_AUTH_NAME $ADT_AUTH_PASSWD $ADT_AUTH_SEC_MODE $ADT_AUTH_KEYTAB $ADT_AUTH_KRB5CC $ADT_OPT_QUIET $ADT_OPT_LOG_LEVEL -a"
+ADT_CMD="./adtool $ADT_CONN_SERVER $ADT_CONN_PORT $ADT_CONN_DOMAIN $ADT_SCHEMA $ADT_AUTH_NAME $ADT_AUTH_PASSWD $ADT_AUTH_SEC_MODE $ADT_AUTH_KEYTAB $ADT_AUTH_KRB5CC $ADT_OPT_QUIET $ADT_OPT_LOG_LEVEL -a"
 
 ###################
 # Handy functions #
@@ -328,7 +328,7 @@ CUR_CTX="OU=$ROOT_OU,$CUR_CTX"
 #
 # Search for and look up OU
 #
-CMD="$ADT_CMD search-ou --search-base $CUR_CTX --name=$CELL_OU1 -t | $ADT_CMD lookup-object --dn=- --attr=description | grep -s lw-adtool"
+CMD="$ADT_CMD search-ou --search-base $CUR_CTX --name=$CELL_OU1 -t | $ADT_CMD lookup-object --dn=- --attr=description | grep -s adtool"
 
 echo "$EMSG\n$CMD" && echo "$EMSG\n$CMD" >&2 && eval $CMD
 [ $? = 0 ] || { 
@@ -338,7 +338,7 @@ ExitOnError
 #
 # Search for and look up user
 #
-CMD="$ADT_CMD search-user --search-base $CUR_CTX --name=$USER1 -t | $ADT_CMD lookup-object --dn=- --attr=description | grep -s lw-adtool"
+CMD="$ADT_CMD search-user --search-base $CUR_CTX --name=$USER1 -t | $ADT_CMD lookup-object --dn=- --attr=description | grep -s adtool"
 
 echo "$EMSG\n$CMD" && echo "$EMSG\n$CMD" >&2 && eval $CMD
 [ $? = 0 ] || { 
@@ -348,7 +348,7 @@ ExitOnError
 #
 # Search for and look up group
 #
-CMD="$ADT_CMD search-group --search-base $CUR_CTX --name=$GROUP1 -t | $ADT_CMD lookup-object --dn=- --attr=description | grep -s lw-adtool"
+CMD="$ADT_CMD search-group --search-base $CUR_CTX --name=$GROUP1 -t | $ADT_CMD lookup-object --dn=- --attr=description | grep -s adtool"
 
 echo "$EMSG\n$CMD" && echo "$EMSG\n$CMD" >&2 && eval $CMD
 [ $? = 0 ] || { 
@@ -358,7 +358,7 @@ ExitOnError
 #
 # Search for and look up computer
 #
-CMD="$ADT_CMD search-computer --search-base $CUR_CTX --name=$COMPUTER -t | $ADT_CMD lookup-object --dn=- --attr=description | grep -s lw-adtool"
+CMD="$ADT_CMD search-computer --search-base $CUR_CTX --name=$COMPUTER -t | $ADT_CMD lookup-object --dn=- --attr=description | grep -s adtool"
 
 echo "$EMSG\n$CMD" && echo "$EMSG\n$CMD" >&2 && eval $CMD
 [ $? = 0 ] || { 
@@ -368,7 +368,7 @@ ExitOnError
 #
 # Search for and look up a generic object
 #
-CMD="$ADT_CMD search-object --search-base $CUR_CTX --filter \(samAccountName=$USER1\) -t | $ADT_CMD lookup-object --dn=- --attr=description | grep -s lw-adtool"
+CMD="$ADT_CMD search-object --search-base $CUR_CTX --filter \(samAccountName=$USER1\) -t | $ADT_CMD lookup-object --dn=- --attr=description | grep -s adtool"
 
 echo "$EMSG\n$CMD" && echo "$EMSG\n$CMD" >&2 && eval $CMD
 [ $? = 0 ] || { 

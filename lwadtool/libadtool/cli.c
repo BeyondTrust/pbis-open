@@ -2199,119 +2199,119 @@ VOID PrintExamples() {
             A_EXAMPLES_HEADER
             "Create OU in a root naming context:"
             NL_STR2
-            "lw-adtool -a new-ou --dn OU=TestOu"
+            "adtool -a new-ou --dn OU=TestOu"
             NL_STR
             "Create OU in DC=department,DC=company,DC=com:"
             NL_STR2
-            "lw-adtool -a new-ou --dn OU=TestOu,DC=department,DC=company,DC=com"
+            "adtool -a new-ou --dn OU=TestOu,DC=department,DC=company,DC=com"
             NL_STR
             "Create Likewise cell in OU TestOU setting the default login shell property to /bin/ksh:"
             NL_STR2
-            "lw-adtool -a new-ou --dn OU=TestOu --default-login-shell=/bin/ksh"
+            "adtool -a new-ou --dn OU=TestOu --default-login-shell=/bin/ksh"
             NL_STR
             "Create a new account for user TestUser in OU=Users,OU=TestOu:"
             NL_STR2
-            "lw-adtool -a new-user --dn OU=Users,OU=TestOu --cn=TestUserCN --logon-name=TestUser --password=$PASSWD"
+            "adtool -a new-user --dn OU=Users,OU=TestOu --cn=TestUserCN --logon-name=TestUser --password=$PASSWD"
             NL_STR
             "Enable the user account:"
             NL_STR2
-            "lw-adtool -a enable-user --name=TestUser"
+            "adtool -a enable-user --name=TestUser"
             NL_STR
             "Reset user\'s password reading the password from TestUser.pwd file:"
             NL_STR2
-            "cat TestUser.pwd | lw-adtool -a reset-user-password --name=TestUser --password=- --no-password-expires"
+            "cat TestUser.pwd | adtool -a reset-user-password --name=TestUser --password=- --no-password-expires"
             NL_STR
             "Create a new group in OU=Groups,OU=TestOu:"
             NL_STR2
-            "lw-adtool -a new-group --dn OU=Groups,OU=TestOu --pre-win-2000-name=TestGrooup --name=TestGroup"
+            "adtool -a new-group --dn OU=Groups,OU=TestOu --pre-win-2000-name=TestGrooup --name=TestGroup"
             NL_STR
             "Look up \"description\" attribute of an OU specified by name with a wildcard:"
             NL_STR2
-            "lw-adtool -a search-ou --name=\'*RootOu\' -t | lw-adtool -a lookup-object --dn=- --attr=description"
+            "adtool -a search-ou --name=\'*RootOu\' -t | adtool -a lookup-object --dn=- --attr=description"
             NL_STR
             "Look up \"unixHomeDirectory\" attribute of a user with samAccountName TestUser:"
             NL_STR2
-            "lw-adtool -a search-user --name TestUser -t | lw-adtool -a lookup-object --dn=- --attr=unixHomeDirectory"
+            "adtool -a search-user --name TestUser -t | adtool -a lookup-object --dn=- --attr=unixHomeDirectory"
             NL_STR
             "Look up \"userAccountControl\" attribute of a user with CN TestUserCN:"
             NL_STR2
-            "lw-adtool -a search-user --name CN=TestUserCN -t | lw-adtool -a lookup-object --dn=- --attr=userAccountControl"
+            "adtool -a search-user --name CN=TestUserCN -t | adtool -a lookup-object --dn=- --attr=userAccountControl"
             NL_STR
             "Look up all attributes of an AD object using filter-based search:"
             NL_STR2
-            "lw-adtool -a search-object --filter \'(&(objectClass=person)(displayName=TestUser))\' -t | lw-adtool -a lookup-object"
+            "adtool -a search-object --filter \'(&(objectClass=person)(displayName=TestUser))\' -t | adtool -a lookup-object"
             NL_STR
             "Add user TestUser to group TestGroup:"
             NL_STR2
-            "lw-adtool -a add-to-group --user TestUser --to-group=TestGroup"
+            "adtool -a add-to-group --user TestUser --to-group=TestGroup"
             NL_STR
             "Add group TestGroup2 to group TestGroup:"
             NL_STR2
-            "lw-adtool -a add-to-group --group TestGroup2 --to-group=TestGroup"
+            "adtool -a add-to-group --group TestGroup2 --to-group=TestGroup"
             NL_STR
             "Remove user TestUser from group TestGroup:"
             NL_STR2
-            "lw-adtool -a remove-from-group --user TestUser --from-group=TestGroup"
+            "adtool -a remove-from-group --user TestUser --from-group=TestGroup"
             NL_STR
             "Rename AD object OU=OldName and move it to a new location:"
             NL_STR2
-            "lw-adtool -a move-object --from OU=OldName,DC=department,DC=company,DC=com --to OU=NewName,OU=TestOU,DC=department,DC=company,DC=com"
+            "adtool -a move-object --from OU=OldName,DC=department,DC=company,DC=com --to OU=NewName,OU=TestOU,DC=department,DC=company,DC=com"
             NL_STR
             "Add group TestGroup to Likewise cell in TestOU:"
             NL_STR2
-            "lw-adtool -a add-to-cell --dn OU=TestOU,DC=department,DC=company,DC=com --group=TestGroup"
+            "adtool -a add-to-cell --dn OU=TestOU,DC=department,DC=company,DC=com --group=TestGroup"
             NL_STR
             "Remove user TestUser from Likewise cell in TestOU:"
             NL_STR2
-            "lw-adtool -a remove-from-cell --dn OU=TestOU,DC=department,DC=company,DC=com --user=TestUser"
+            "adtool -a remove-from-cell --dn OU=TestOU,DC=department,DC=company,DC=com --user=TestUser"
             NL_STR
             "Search for cells in a specific location:"
             NL_STR2
-            "lw-adtool -a search-cells --search-base OU=department,DC=country,DC=company,DC=com"
+            "adtool -a search-cells --search-base OU=department,DC=country,DC=company,DC=com"
             NL_STR
             "Link cell in OU=TestOU1 to the default cell in DC=country:"
             NL_STR2
-            "lw-adtool -a link-cell --source-dn OU=TestOU1,DC=department,DC=company,DC=com --target-dn DC=country,DC=company,DC=com"
+            "adtool -a link-cell --source-dn OU=TestOU1,DC=department,DC=company,DC=com --target-dn DC=country,DC=company,DC=com"
             NL_STR
             "Unink cell in OU=TestOU1 from the default cell in DC=country:"
             NL_STR2
-            "lw-adtool -a unlink-cell --source-dn OU=TestOU1,DC=department,DC=company,DC=com --target-dn DC=country,DC=company,DC=com"
+            "adtool -a unlink-cell --source-dn OU=TestOU1,DC=department,DC=company,DC=com --target-dn DC=country,DC=company,DC=com"
             NL_STR
             "Change the default login shell property of Likewise cell in TestOU:"
             NL_STR2
-            "lw-adtool -a edit-cell --dn OU=TestOU --default-login-shell=/bin/csh"
+            "adtool -a edit-cell --dn OU=TestOU --default-login-shell=/bin/csh"
             NL_STR
             "Find cells linked to Likewise cell in OU=TestOU,DC=department,DC=company,DC=com:"
             NL_STR2
-            "lw-adtool -a lookup-cell --dn OU=TestOU --linked-cells"
+            "adtool -a lookup-cell --dn OU=TestOU --linked-cells"
             NL_STR
             "Look up login shell property of user TestUser in cell created in TestOU:"
             NL_STR2
-            "lw-adtool -a lookup-cell-user --dn OU=TestOU --user TestUser --login-shell"
+            "adtool -a lookup-cell-user --dn OU=TestOU --user TestUser --login-shell"
             NL_STR
             "Change login shell property of user TestUser in cell created in TestOU:"
             NL_STR2
-            "lw-adtool -a edit-cell-user --dn OU=TestOU --user TestUser --login-shell=/usr/bin/ksh"
+            "adtool -a edit-cell-user --dn OU=TestOU --user TestUser --login-shell=/usr/bin/ksh"
             NL_STR
             "Delete a cell object and all its children if any (--force):"
             NL_STR2
-            "lw-adtool -a delete-object --dn OU=TestOU --force"
+            "adtool -a delete-object --dn OU=TestOU --force"
             NL_STR
             "Search for Likewise cells in root naming context containing user TestUser:"
             NL_STR2
-            "lw-adtool -a search-cells --user TestUser"
+            "adtool -a search-cells --user TestUser"
             NL_STR
             "Create a new Likewise cell in OU=department:"
             NL_STR2
-            "lw-adtool -a new-cell --dn OU=department,DC=country,DC=company,DC=com"
+            "adtool -a new-cell --dn OU=department,DC=country,DC=company,DC=com"
             NL_STR
             "Create default Likewise cell (assuming root naming context is DC=country,DC=company,DC=com):"
             NL_STR2
-            "lw-adtool -a new-cell --dn DC=country,DC=company,DC=com"
+            "adtool -a new-cell --dn DC=country,DC=company,DC=com"
             NL_STR
             "Delete the default Likewise cell (assuming root naming context is DC=country,DC=company,DC=com):"
             NL_STR2
-            "lw-adtool -a delete-cell --dn DC=country,DC=company,DC=com --force"
+            "adtool -a delete-cell --dn DC=country,DC=company,DC=com --force"
             ;
 
     fprintf(stdout, "%s\n", s);

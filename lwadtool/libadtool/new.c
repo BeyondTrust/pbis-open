@@ -113,7 +113,7 @@ DWORD ValidateAdtNewOuAction(IN AdtActionTP action)
     action->newOu.dn = dn;
 
     if(!action->newOu.desc) {
-        dwError = LwStrDupOrNull("lw-adtool created", &(action->newOu.desc));
+        dwError = LwStrDupOrNull("adtool created", &(action->newOu.desc));
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
     }
 
@@ -292,7 +292,7 @@ DWORD ValidateAdtNewUserAction(IN AdtActionTP action)
     action->newUser.dn = dn;
 
     if(!action->newUser.desc) {
-        dwError = LwStrDupOrNull("lw-adtool created", &(action->newUser.desc));
+        dwError = LwStrDupOrNull("adtool created", &(action->newUser.desc));
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
     }
 
@@ -589,7 +589,7 @@ DWORD ValidateAdtNewGroupAction(IN AdtActionTP action)
     action->newGroup.dn = dn;
 
     if(!action->newGroup.desc) {
-        dwError = LwStrDupOrNull("lw-adtool created", &(action->newGroup.desc));
+        dwError = LwStrDupOrNull("adtool created", &(action->newGroup.desc));
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
     }
 
@@ -770,7 +770,7 @@ DWORD ValidateAdtNewComputerAction(IN AdtActionTP action)
     action->newComputer.namePreWin2000 = name;
 
     if(!action->newComputer.desc) {
-        dwError = LwStrDupOrNull("lw-adtool created", &(action->newComputer.desc));
+        dwError = LwStrDupOrNull("adtool created", &(action->newComputer.desc));
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
     }
 

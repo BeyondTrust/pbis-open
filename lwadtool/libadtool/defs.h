@@ -43,7 +43,7 @@
 
 /* TODO: Get version number from the build */
 #define ADT_VERSION "1.0.0"
-#define ADTOOL  "lw-adtool"
+#define ADTOOL  "adtool"
 
 #define ADT_APP_USAGE "[OPTIONS] <ACTION> [ACTION_ARGUMENTS]"
 #define ADT_ACTION_HELP "[OPTIONS] (-a |--action) %s <ARGUMENTS>\n\n%s\n\nAcceptable arguments ([X] - required):\n"
