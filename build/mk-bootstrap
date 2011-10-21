@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BLACKLIST="libiconv templatedriver mod_auth_kerb fuse sqlite lwtest lwtask lwautoentroll lwadtool"
+BLACKLIST="libiconv templatedriver mod_auth_kerb fuse sqlite lwtest lwtask lwautoentroll"
 EXTRA="krb5/src dcerpc/flex-2.5.4"
 
 fail()
