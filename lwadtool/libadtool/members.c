@@ -118,7 +118,7 @@ ValidateGroupType(IN AdtActionTP action)
     INT i, j;
     AttrValsT *avp = NULL;
 
-    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), (PVOID) &avp);
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avp));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     avp[0].attr = "groupType";
@@ -172,10 +172,10 @@ ExecuteAdtAddToRemoveFromGroupAction(IN AdtActionTP action, IN BOOL isRemove)
         member = action->addToGroup.group;
     }
 
-    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), (PVOID) &avpGrp);
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avpGrp));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
-    dwError = LwAllocateMemory(2 * sizeof(PSTR), (PVOID) &(avpGrp[0].vals));
+    dwError = LwAllocateMemory(2 * sizeof(PSTR), OUT_PPVOID(&(avpGrp[0].vals)));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     avpGrp[0].attr = "member";
@@ -261,7 +261,7 @@ ExecuteAdtAddToRemoveFromGroupActionLocal(IN AdtActionTP action, IN BOOL isRemov
     PSTR group = NULL;
 
     /** Get samAccountName of the member */
-    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), (PVOID) &avp);
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avp));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     avp[0].attr = "samAccountName";
@@ -278,7 +278,7 @@ ExecuteAdtAddToRemoveFromGroupActionLocal(IN AdtActionTP action, IN BOOL isRemov
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
     /** Get samAccountName of the group */
-    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), (PVOID) &avpGrp);
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avpGrp));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     avpGrp[0].attr = "samAccountName";

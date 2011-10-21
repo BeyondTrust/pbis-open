@@ -107,7 +107,7 @@ DWORD ExecuteAdtLookupObjectAction(IN AdtActionTP action)
                 appContext->actionName);
 
     if(action->lookupObject.attr) {
-        dwError = LwAllocateMemory(2 * sizeof(AttrValsT), (PVOID) &avp);
+        dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avp));
         ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
         dwError = LwStrDupOrNull((PCSTR) action->lookupObject.attr, &(avp[0].attr));

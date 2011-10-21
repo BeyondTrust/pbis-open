@@ -115,7 +115,7 @@ DWORD ExecuteAdtResetUserPasswordAction(IN AdtActionTP action)
     dwError = LocateADUser(appContext, &(action->resetUserPassword.name));
     ADT_BAIL_ON_ERROR_NP(dwError);
 
-    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), (PVOID) &avp);
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avp));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     avp[0].attr = "samAccountName";
@@ -155,10 +155,10 @@ DWORD ExecuteAdtResetUserPasswordAction(IN AdtActionTP action)
         ADT_BAIL_ON_ERROR_NP(dwError);
     }
 
-    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), (PVOID) &avpTime);
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avpTime));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
-    dwError = LwAllocateMemory(2 * sizeof(PSTR), (PVOID) &(avpTime[0].vals));
+    dwError = LwAllocateMemory(2 * sizeof(PSTR), OUT_PPVOID(&(avpTime[0].vals)));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     avpTime[0].attr = "pwdLastSet";

@@ -65,7 +65,7 @@ int main(int argc, const char **argv) {
     dwError = AdtExecuteAction(action);
     ADT_BAIL_ON_ERROR(dwError);
 
-    dwError = AdtGetExecResult(action, (AdtResultTPP) (PVOID) &result);
+    dwError = AdtGetExecResult(action, (AdtResultTPP) &result);
     ADT_BAIL_ON_ERROR(dwError);
 
     if(result->resultStr) {

@@ -438,10 +438,10 @@ DWORD ExecuteAdtNewUserAction(IN AdtActionTP action)
         ADT_BAIL_ON_ERROR_NP(dwError);
 
         if(action->newUser.isNoMustChangePasswd) {
-            dwError = LwAllocateMemory(2 * sizeof(AttrValsT), (PVOID) &avpTime);
+            dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avpTime));
             ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
-            dwError = LwAllocateMemory(2 * sizeof(PSTR), (PVOID) &(avpTime[0].vals));
+            dwError = LwAllocateMemory(2 * sizeof(PSTR), OUT_PPVOID(&(avpTime[0].vals)));
             ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
             avpTime[0].attr = "pwdLastSet";

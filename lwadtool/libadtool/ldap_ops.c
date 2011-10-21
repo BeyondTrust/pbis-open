@@ -303,7 +303,7 @@ FormatKnownAttributes(IN AppContextTP appContext,
                             localtime_r(&winTime, &localTime);
 
                             dwError = LwAllocateMemory(128 * sizeof(char),
-                                                       (PVOID) &(ovals[i]));
+                                                       OUT_PPVOID(&(ovals[i])));
                             ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
                             strftime(ovals[i],
@@ -1288,7 +1288,7 @@ DWORD CreateADObject(IN AppContextTP appContext, IN PSTR dn, IN AttrValsT *avp)
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     for (i = 0; i < length; ++i) {
-        dwError = LwAllocateMemory(sizeof(LDAPMod), (PVOID *) &mods[i]);
+        dwError = LwAllocateMemory(sizeof(LDAPMod), OUT_PPVOID(&mods[i]));
         ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
         mods[i]->mod_op = 0;
@@ -1359,7 +1359,7 @@ ModifyADObject(IN AppContextTP appContext, IN PSTR dn, IN AttrValsT *avp, IN INT
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     for (i = 0; i < length; ++i) {
-        dwError = LwAllocateMemory(sizeof(LDAPMod), (PVOID *) &mods[i]);
+        dwError = LwAllocateMemory(sizeof(LDAPMod), OUT_PPVOID(&mods[i]));
         ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
         mods[i]->mod_op = opType;
@@ -1627,7 +1627,7 @@ DWORD GetObjectSIDBytes(IN AppContextTP appContext, IN PSTR dn, OUT PVOID *sid)
 
     size = vals[0][1] * sizeof(DWORD) + 8;
 
-    dwError = LwAllocateMemory(size, sid);
+    dwError = LwAllocateMemory(size, OUT_PPVOID(sid));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     memcpy((PVOID) *sid, (PVOID)vals[0], size);
@@ -1688,7 +1688,7 @@ DWORD GetAllObjectAttrs(IN AppContextTP appContext, IN PSTR dn, OUT AttrValsT **
         ADT_BAIL_ON_ERROR_NP(dwError);
     }
 
-    dwError = LwAllocateMemory(LDAP_ATTRS_MAX * sizeof(AttrValsT) + 1, (PVOID) &avp);
+    dwError = LwAllocateMemory(LDAP_ATTRS_MAX * sizeof(AttrValsT) + 1, OUT_PPVOID(&avp));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     for (i = 0, aname = ldap_first_attribute(ld, e, &ber);
@@ -1700,7 +1700,7 @@ DWORD GetAllObjectAttrs(IN AppContextTP appContext, IN PSTR dn, OUT AttrValsT **
 
         if ((vals = ldap_get_values(ld, e, aname)) != NULL) {
             dwError = LwAllocateMemory((ldap_count_values(vals) + 1)
-                    * sizeof(PSTR), (PVOID) &(avp[i].vals));
+                    * sizeof(PSTR), OUT_PPVOID(&(avp[i].vals)));
             ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
             FormatKnownAttributes(appContext, aname, vals, avp[i].vals);
@@ -1762,7 +1762,7 @@ DWORD GetObjectAttrs(IN AppContextTP appContext, IN PSTR dn, OUT AttrValsT *avp)
     for(i = 0; avp[i].attr; ++i);
     len = i + 1;
 
-    dwError = LwAllocateMemory(len * sizeof(PSTR), (PVOID) &attrs);
+    dwError = LwAllocateMemory(len * sizeof(PSTR), OUT_PPVOID(&attrs));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     for(i = 0; i < len; ++i) {
@@ -1798,7 +1798,7 @@ DWORD GetObjectAttrs(IN AppContextTP appContext, IN PSTR dn, OUT AttrValsT *avp)
             for(j = 0; vals[j]; ++j);
             valLen = j + 1;
 
-            dwError = LwAllocateMemory(valLen * sizeof(PSTR), (PVOID) &(avp[i].vals));
+            dwError = LwAllocateMemory(valLen * sizeof(PSTR), OUT_PPVOID(&(avp[i].vals)));
             ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
             FormatKnownAttributes(appContext, attrs[i], vals, avp[i].vals);
@@ -2110,7 +2110,7 @@ DWORD IsCellInNonSchemaMode(IN AppContextTP appContext, IN PSTR dn, OUT BOOL *re
 
     *res = FALSE;
 
-    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), (PVOID) &avp);
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avp));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     avp[0].attr = "description";
@@ -2231,7 +2231,7 @@ GetCellsForObject(IN AppContextTP appContext, IN PSTR sb, IN PSTR name, IN Objec
     }
 
     if (outDNs && cellNum) {
-        dwError = LwAllocateMemory((cellNum + 1) * sizeof(PSTR), (PVOID) &retCells);
+        dwError = LwAllocateMemory((cellNum + 1) * sizeof(PSTR), OUT_PPVOID(&retCells));
         ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
         for (i = 0, j = 0; outDNs[i] && (j < cellNum); ++i) {

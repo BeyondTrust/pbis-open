@@ -57,7 +57,7 @@ static DWORD ExecuteAdtEnableDisableUser(IN AdtActionTP action, IN BOOL isEnable
     dwError = LocateADUser(appContext, &(action->disableUser.name));
     ADT_BAIL_ON_ERROR_NP(dwError);
 
-    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), (PVOID) &avp);
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avp));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     avp[0].attr = "samAccountName";

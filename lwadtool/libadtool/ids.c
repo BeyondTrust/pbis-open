@@ -54,7 +54,7 @@ DWORD Guid2Str(IN PVOID s, OUT PSTR *out)
     INT i = 0, j;
     PUCHAR b = (PUCHAR) s;
 
-    dwError = LwAllocateMemory(37 * sizeof(char), (PVOID) out);
+    dwError = LwAllocateMemory(37 * sizeof(char), OUT_PPVOID(out));
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
     for(j = 3; j >= 0; --j, i += 2) {
@@ -133,7 +133,7 @@ DWORD Sid2Str(IN PVOID s, OUT PSTR *out)
 
     size = 2 + 3 + 1 + 14 + (1 + 10) * sid->SubAuthorityCount + 1;
 
-    dwError = LwAllocateMemory(size * sizeof(char), (PVOID) out);
+    dwError = LwAllocateMemory(size * sizeof(char), OUT_PPVOID(out));
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
     if (sid->IdentifierAuthority[0] || sid->IdentifierAuthority[1]) {

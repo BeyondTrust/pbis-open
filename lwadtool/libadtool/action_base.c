@@ -508,7 +508,7 @@ AdtAddGroupToCellSDefaultCell(IN AdtActionTP action, PSTR groupDN) {
     PrintStderr(appContext, LogLevelVerbose, "%s: Since this is the default cell - modifying properties of AD group...\n",
                 appContext->actionName);
 
-    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), (PVOID) &avp);
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avp));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     avp[0].attr = "gidNumber";
@@ -524,7 +524,7 @@ AdtAddGroupToCellSDefaultCell(IN AdtActionTP action, PSTR groupDN) {
         propSet = TRUE;
 
         if(!avp[0].vals) {
-            dwError = LwAllocateMemory(2 * sizeof(PSTR), (PVOID) &(avp[0].vals));
+            dwError = LwAllocateMemory(2 * sizeof(PSTR), OUT_PPVOID(&(avp[0].vals)));
             ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
         }
         else {

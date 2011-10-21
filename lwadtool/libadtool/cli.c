@@ -88,7 +88,7 @@ MakeOptions(IN INT howMany) {
         return NULL;
     }
 
-    if(LwAllocateMemory(howMany * sizeof(struct poptOption), OUT_PPVOID(&opts)) != 0) {
+    if(LwAllocateMemory(howMany * sizeof(struct poptOption), OUT_PPVOID(opts)) != 0) {
         return NULL;
     }
 

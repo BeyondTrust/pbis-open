@@ -108,7 +108,7 @@ DWORD ExecuteAdtUnlockAccountAction(IN AdtActionTP action)
     }
     ADT_BAIL_ON_ERROR_NP(dwError);
 
-    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), (PVOID) &avp);
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avp));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     avp[0].attr = "samAccountName";
@@ -131,10 +131,10 @@ DWORD ExecuteAdtUnlockAccountAction(IN AdtActionTP action)
                 appContext->actionName,
                 avp[0].vals[0]);
 
-    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), (PVOID) &avpMod);
+    dwError = LwAllocateMemory(2 * sizeof(AttrValsT), OUT_PPVOID(&avpMod));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
-    dwError = LwAllocateMemory(2 * sizeof(PSTR), (PVOID) &(avpMod[0].vals));
+    dwError = LwAllocateMemory(2 * sizeof(PSTR), OUT_PPVOID(&(avpMod[0].vals)));
     ADT_BAIL_ON_ALLOC_FAILURE(!dwError);
 
     avpMod[0].attr = "lockoutTime";

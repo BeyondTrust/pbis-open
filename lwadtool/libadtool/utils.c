@@ -610,7 +610,7 @@ DWORD GetParentDN(IN PSTR str, OUT PSTR *out)
     ind = GetFirstIndexOfChar(str, ',', 1);
     len = strlen(str) - ind;
 
-    dwError = LwAllocateMemory(sizeof(CHAR) * (len + 1), (PVOID *) out);
+    dwError = LwAllocateMemory(sizeof(CHAR) * (len + 1), OUT_PPVOID(out));
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
     strncpy(*out, str + ind + 1, len - 1);
@@ -647,7 +647,7 @@ DWORD GetRDN(IN PSTR str, OUT PSTR *out)
 
     len = GetFirstIndexOfChar(str, ',', 1);
 
-    dwError = LwAllocateMemory(sizeof(CHAR) * (len + 1), (PVOID *) out);
+    dwError = LwAllocateMemory(sizeof(CHAR) * (len + 1), OUT_PPVOID(out));
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
     strncpy(*out, str, len);
@@ -684,7 +684,7 @@ DWORD GetDomainComp(IN PSTR str, OUT PSTR *out)
 
     len = GetFirstIndexOfChar(str, '.', 1);
 
-    dwError = LwAllocateMemory(sizeof(CHAR) * (len + 1), (PVOID *) out);
+    dwError = LwAllocateMemory(sizeof(CHAR) * (len + 1), OUT_PPVOID(out));
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
     strncpy(*out, str, len);
@@ -740,7 +740,7 @@ DWORD SplitStr(IN PSTR s, IN CHAR separator, OUT PSTR **out)
     len[ind] = i - j;
 
     dwError = LwAllocateMemory(sizeof(CHAR) * (len[0] + 1),
-                               (PVOID *) &((*out)[0]));
+                               OUT_PPVOID(&((*out)[0])));
 
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
@@ -750,7 +750,7 @@ DWORD SplitStr(IN PSTR s, IN CHAR separator, OUT PSTR **out)
             k = -1;
 
             dwError = LwAllocateMemory(sizeof(CHAR) * (len[count] + 1),
-                                       (PVOID *) (&(*out)[count]));
+                                       OUT_PPVOID((&(*out)[count])));
             ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
             continue;
@@ -798,7 +798,7 @@ DWORD StrArray2Str(IN PSTR *s, IN PSTR strToAdd, OUT PSTR *out)
         len += strlen(strToAdd) + 1;
     }
 
-    dwError = LwAllocateMemory(sizeof(CHAR) * len, (PVOID *) out);
+    dwError = LwAllocateMemory(sizeof(CHAR) * len, OUT_PPVOID(out));
     ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
     for(i = 0, k = 0; s && s[i]; ++i) {
@@ -932,7 +932,7 @@ DWORD ProcessDash(IN PSTR * str) {
     INT len = 129;
     INT nLen = 0;
 
-    if(str && *str && !strcmp((PCSTR) *str, "-")) {
+    if(str && *str && !strncmp((PCSTR) *str, "-", 1024)) {
         LW_SAFE_FREE_MEMORY(*str);
 
         dwError = LwAllocateMemory(len, OUT_PPVOID(&buf));
