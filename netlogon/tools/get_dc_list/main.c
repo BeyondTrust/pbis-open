@@ -57,7 +57,7 @@ static
 void
 ShowUsage()
 {
-    printf("Usage: lw-get-dc-list <target domain FQDN> [--site <site name>]\n");
+    printf("Usage: get-dc-list <target domain FQDN> [--site <site name>]\n");
     printf("        [--force] [--ds-required] [--gc-required]\n");
     printf("        [--pdc-required] [--background-only] [--kdc-required]\n");
     printf("        [--timeserv-required] [--writeable-required] [--good-timeserv-required]\n");

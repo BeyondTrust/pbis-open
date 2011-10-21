@@ -57,7 +57,7 @@ static
 void
 ShowUsage()
 {
-    printf("Usage: lw-get-dc-time <target domain FQDN>\n");
+    printf("Usage: get-dc-time <target domain FQDN>\n");
 }
 
 DWORD
