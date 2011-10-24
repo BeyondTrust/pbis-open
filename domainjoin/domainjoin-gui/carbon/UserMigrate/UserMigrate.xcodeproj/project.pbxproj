@@ -53,7 +53,7 @@
 		5048395F09E3302200765E4B /* TCarbonEvent.cp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TCarbonEvent.cp; path = HIFramework/TCarbonEvent.cp; sourceTree = "<group>"; };
 		5048396009E3302200765E4B /* TEventHandler.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TEventHandler.h; path = HIFramework/TEventHandler.h; sourceTree = "<group>"; };
 		5048396109E3302200765E4B /* HIFramework.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = HIFramework.h; path = HIFramework/HIFramework.h; sourceTree = "<group>"; };
-		508344B209E5C41E0093A071 /* Likewise Domain Join.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Likewise Domain Join.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		508344B209E5C41E0093A071 /* Domain Join.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Domain Join.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		61D0523A0C6B886100A44DF7 /* main.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = main.h; sourceTree = "<group>"; };
 		61D053A10C6BB82E00A44DF7 /* MainWindow.cp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = MainWindow.cp; sourceTree = "<group>"; };
 		61D056BF0C710D1400A44DF7 /* CredentialsDialog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CredentialsDialog.h; sourceTree = "<group>"; };
@@ -94,7 +94,7 @@
 		195DF8CFFE9D517E11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				508344B209E5C41E0093A071 /* Likewise Domain Join.app */,
+				508344B209E5C41E0093A071 /* Domain Join.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -207,7 +207,7 @@
 			name = DomainJoin;
 			productInstallPath = "$(HOME)/Applications";
 			productName = DomainJoin;
-			productReference = 508344B209E5C41E0093A071 /* Likewise Domain Join.app */;
+			productReference = 508344B209E5C41E0093A071 /* Domain Join.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -326,7 +326,7 @@
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_1)",
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_1 = "\"$(SRCROOT)\"";
-				PRODUCT_NAME = "Likewise Domain Join";
+				PRODUCT_NAME = "Domain Join";
 			};
 			name = Debug;
 		};
@@ -346,7 +346,7 @@
 				);
 				LIBRARY_SEARCH_PATHS_QUOTED_1 = "\"$(SRCROOT)\"";
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
-				PRODUCT_NAME = "Likewise Domain Join";
+				PRODUCT_NAME = "Domain Join";
 			};
 			name = Release;
 		};
@@ -361,7 +361,7 @@
 				OTHER_LDFLAGS = "";
 				PRELINK_FLAGS = "";
 				PRELINK_LIBS = "$(inherited)";
-				PRODUCT_NAME = "Likewise Domain Join";
+				PRODUCT_NAME = "Domain Join";
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				ZERO_LINK = YES;
 				ddd = "";
@@ -378,7 +378,7 @@
 				OTHER_LDFLAGS = "";
 				PRELINK_FLAGS = "";
 				PRELINK_LIBS = "$(inherited)";
-				PRODUCT_NAME = "Likewise Domain Join";
+				PRODUCT_NAME = "Domain Join";
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 				SEPARATE_STRIP = YES;
 				ddd = "";

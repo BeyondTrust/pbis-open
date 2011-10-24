@@ -577,7 +577,7 @@ DomainMigrateWindow::CallMigrateCommand(
     long macError = eDSNoErr;
     char * pszOutput = NULL;
     int exitCode = 0;
-    const char* args[] = { "/opt/likewise/bin/lw-local-user-migrate.sh",
+    const char* args[] = { "/opt/pbis/bin/lw-local-user-migrate.sh",
         localUserName.c_str(),
         adUserName.c_str(),
         bMoveProfile ? "--move" : " ",
@@ -714,7 +714,7 @@ DomainMigrateWindow::HandleMigration()
         SInt16 outItemHit;
         StandardAlert(kAlertStopAlert,
                       "\pUnexpected error",
-                      "\pAn unexpected error occurred when attempting to migrate local user profile to AD profile. Please report this to Likewise Technical Support at support@likewisesoftware.com",
+                      "\pAn unexpected error occurred when attempting to migrate local user profile to AD profile. Please report this to BeyondTrust Technical Support at pbis-support@beyondtrust.com",
                       NULL,
                       &outItemHit);
     }
@@ -774,7 +774,7 @@ DomainMigrateWindow::HandleValidateUser()
         SInt16 outItemHit;
         StandardAlert(kAlertStopAlert,
                       "\pUnexpected error",
-                      "\pAn unexpected error occurred when attempting to migrate local user profile to AD profile. Please report this to Likewise Technical Support at support@likewisesoftware.com",
+                      "\pAn unexpected error occurred when attempting to migrate local user profile to AD profile. Please report this to BeyondTrust Technical Support at pbis-support@beyondtrust.com",
                       NULL,
                       &outItemHit);
     }

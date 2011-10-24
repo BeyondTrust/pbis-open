@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
            SInt16 outItemHit;
 		   StandardAlert(kAlertStopAlert,
 		                 "\pPermissions error",
-					     "\pUnexpected error while setting privileges when launching Likewise - Active Directory Join Application",
+					     "\pUnexpected error while setting privileges when launching Active Directory Join Application",
 					     NULL,
 					     &outItemHit);
         }
@@ -251,7 +251,7 @@ int main(int argc, char* argv[])
            SInt16 outItemHit;
 		   StandardAlert(kAlertStopAlert,
 		                 "\pUnexpected error",
-					     "\pUnexpected error when launching Likewise - Active Directory Join Application",
+					     "\pUnexpected error when launching Active Directory Join Application",
 					     NULL,
 					     &outItemHit);
        }

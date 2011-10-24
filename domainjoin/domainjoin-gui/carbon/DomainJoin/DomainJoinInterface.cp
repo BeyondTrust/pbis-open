@@ -38,7 +38,7 @@ DomainJoinInterface::getInstance()
 void
 DomainJoinInterface::Initialize()
 {
-    const char* LIBDOMAINJOIN = "/opt/likewise/lib/libdomainjoin-mac.so";
+    const char* LIBDOMAINJOIN = "/opt/pbis/lib/libdomainjoin-mac.so";
     std::string szShortError = "Failed to load domain join interface";
     void* pLibHandle = NULL;
     PFNInitJoinInterface     pfnInitJoinInterface = NULL;

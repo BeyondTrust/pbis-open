@@ -7,7 +7,7 @@
   <array count="17" name="allObjects">
     <object class="IBCarbonWindow" id="166">
       <string name="windowRect">528 96 906 473 </string>
-      <string name="title">Likewise Domain Join</string>
+      <string name="title">Domain Join</string>
       <object name="rootControl" class="IBCarbonRootControl" id="167">
         <string name="bounds">0 0 378 377 </string>
         <string name="viewFrame">0 0 377 378 </string>
@@ -19,7 +19,7 @@
             <int name="controlID">302</int>
             <boolean name="small">TRUE</boolean>
             <int name="controlSize">1</int>
-            <string name="title">Likewise is using the following information to identify your computer on the network.</string>
+            <string name="title">PowerBroker Identity Services is using the following information to identify your computer on the network.</string>
           </object>
           <object class="IBCarbonStaticText" id="182">
             <string name="bounds">78 20 91 122 </string>

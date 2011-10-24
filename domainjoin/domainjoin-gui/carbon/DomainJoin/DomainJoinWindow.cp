@@ -412,7 +412,7 @@ DomainJoinWindow::HandleJoinDomain()
         SInt16 outItemHit;
         StandardAlert(kAlertStopAlert,
                     "\pUnexpected error",
-                    "\pAn unexpected error occurred when joining the Active Directory domain. Please report this to Likewise Technical Support at support@likewisesoftware.com",
+                    "\pAn unexpected error occurred when joining the Active Directory domain. Please report this to BeyondTrust Technical Support at pbis-support@beyondtrust.com",
                     NULL,
                     &outItemHit);
     }

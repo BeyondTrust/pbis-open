@@ -30,7 +30,7 @@ make()
 
     NEUTRAL_RESOURCES="DomainJoin.icns"
 
-    PROGRAM_DIR="$MK_BINDIR/Likewise Domain Join.app"
+    PROGRAM_DIR="$MK_BINDIR/Domain Join.app"
     CONTENTS_DIR="$PROGRAM_DIR/Contents"
     RESOURCE_DIR="$CONTENTS_DIR/Resources"
     MACOS_DIR="$CONTENTS_DIR/MacOS"
@@ -54,7 +54,7 @@ make()
     done
 
     mk_program \
-        PROGRAM="Likewise Domain Join" \
+        PROGRAM="Domain Join" \
         INSTALLDIR="$MACOS_DIR" \
         SOURCES="$DJ_SOURCES" \
         INCLUDEDIRS="HIFramework" \
@@ -70,7 +70,7 @@ make()
         "&process-info-plist.pl" -v "$LW_VERSION" -o '$@' "&Info.plist"
 
     mk_target \
-        TARGET="${RESOURCE_DIR}/Likewise Domain Join.rsrc" \
+        TARGET="${RESOURCE_DIR}/Domain Join.rsrc" \
         DEPS="$RES_FILES" \
         mk_mkdir "&'$RESOURCE_DIR'" '%;' \
         /Developer/Tools/ResMerger -dstIs DF "&$RES_FILES" -o '$@'

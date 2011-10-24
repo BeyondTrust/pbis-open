@@ -129,7 +129,7 @@ DomainLeaveWindow::ConfirmLeave(const std::string& domainName)
 	msgStrRef = CFStringCreateWithFormat(NULL, NULL, CFSTR("Are you sure you want to leave the %s domain?"), domainName.c_str());
 	
 	err = CreateStandardAlert(kAlertStopAlert,
-	                          CFSTR("Likewise Domain Join"),
+	                          CFSTR("Domain Join"),
 							  msgStrRef,
 							  &params,
 							  &dialog);
@@ -206,7 +206,7 @@ DomainLeaveWindow::HandleLeaveDomain()
         SInt16 outItemHit;
         StandardAlert(kAlertStopAlert,
                       "\pUnexpected error",
-                      "\pAn unexpected error occurred when joining the Active Directory domain. Please report this to Likewise Technical Support at support@likewisesoftware.com",
+                      "\pAn unexpected error occurred when joining the Active Directory domain. Please report this to BeyondTrust Technical Support at pbis-support@beyondtrust.com",
                       NULL,
                       &outItemHit);
     }

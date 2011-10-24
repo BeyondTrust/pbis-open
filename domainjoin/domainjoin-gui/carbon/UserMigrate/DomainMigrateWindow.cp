@@ -695,7 +695,7 @@ DomainMigrateWindow::HandleMigration()
         SInt16 outItemHit;
         StandardAlert(kAlertStopAlert,
                       "\pUnexpected error",
-                      "\pAn unexpected error occurred when attempting to migrate local user profile to AD profile. Please report this to Likewise Technical Support at pbis-support@beyondtrust.com",
+                      "\pAn unexpected error occurred when attempting to migrate local user profile to AD profile. Please report this to BeyondTrust Technical Support at pbis-support@beyondtrust.com",
                       NULL,
                       &outItemHit);
     }
@@ -756,7 +756,7 @@ DomainMigrateWindow::HandleValidateUser()
         SInt16 outItemHit;
         StandardAlert(kAlertStopAlert,
                       "\pUnexpected error",
-                      "\pAn unexpected error occurred when attempting to migrate local user profile to AD profile. Please report this to Likewise Technical Support at pbis-support@beyondtrust.com",
+                      "\pAn unexpected error occurred when attempting to migrate local user profile to AD profile. Please report this to BeyondTrust Technical Support at pbis-support@beyondtrust.com",
                       NULL,
                       &outItemHit);
     }
