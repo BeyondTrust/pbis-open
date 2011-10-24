@@ -16,5 +16,5 @@ make()
 
     mk_stage \
         DESTDIR="${MK_DATADIR}" \
-	domainjoin-gtk.glade likewise-logo.png domainjoin-logo.png
+	domainjoin-gtk.glade beyondtrust-logo.png domainjoin-logo.png
 }

@@ -34,7 +34,7 @@
 void
 dialog_insert_likewise_logo(GtkDialog* dialog)
 {
-    GtkWidget* image = gtk_image_new_from_file (DATADIR "/likewise-logo.png");
+    GtkWidget* image = gtk_image_new_from_file (DATADIR "/beyondtrust-logo.png");
 
     if (image)
     {
