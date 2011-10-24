@@ -554,13 +554,13 @@ DomainMigrateWindow::CallMigrateCommand(
     long macError = eDSNoErr;
     char * pszOutput = NULL;
     int exitCode = 0;
-    const char* argsCopy[] = { "/opt/likewise/bin/lw-local-user-migrate.sh",
+    const char* argsCopy[] = { "/opt/pbis/bin/lw-local-user-migrate.sh",
                                localUserHomeDir.c_str(),
                                adUserName.c_str(),
                                "--log",
                                logFileName.c_str(),
                                (char *) NULL };
-    const char* argsMove[] = { "/opt/likewise/bin/lw-local-user-migrate.sh",
+    const char* argsMove[] = { "/opt/pbis/bin/lw-local-user-migrate.sh",
                                localUserHomeDir.c_str(),
                                adUserName.c_str(),
                                "--move",
@@ -695,7 +695,7 @@ DomainMigrateWindow::HandleMigration()
         SInt16 outItemHit;
         StandardAlert(kAlertStopAlert,
                       "\pUnexpected error",
-                      "\pAn unexpected error occurred when attempting to migrate local user profile to AD profile. Please report this to Likewise Technical Support at support@likewisesoftware.com",
+                      "\pAn unexpected error occurred when attempting to migrate local user profile to AD profile. Please report this to Likewise Technical Support at pbis-support@beyondtrust.com",
                       NULL,
                       &outItemHit);
     }
@@ -756,7 +756,7 @@ DomainMigrateWindow::HandleValidateUser()
         SInt16 outItemHit;
         StandardAlert(kAlertStopAlert,
                       "\pUnexpected error",
-                      "\pAn unexpected error occurred when attempting to migrate local user profile to AD profile. Please report this to Likewise Technical Support at support@likewisesoftware.com",
+                      "\pAn unexpected error occurred when attempting to migrate local user profile to AD profile. Please report this to Likewise Technical Support at pbis-support@beyondtrust.com",
                       NULL,
                       &outItemHit);
     }
