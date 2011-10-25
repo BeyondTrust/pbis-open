@@ -1839,6 +1839,9 @@ static BOOLEAN PamModulePrompts( const char * phase, const char * module)
         return TRUE;
     if(!strcmp(buffer, "pam_gnome_keyring"))
         return TRUE;
+    // This module is used on Max OS X 10.7
+    if(!strcmp(buffer, "pam_ntlm"))
+        return TRUE;
     // This module is used on Max OS X 10.6 - Snow Leopard
     if(!strcmp(buffer, "pam_opendirectory"))
         return TRUE;
