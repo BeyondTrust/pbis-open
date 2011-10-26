@@ -358,7 +358,7 @@ ParseArgs(
     DWORD dwAddressCount = 0;
     LWDNSLogLevel LogLevel = LWDNS_LOG_LEVEL_ERROR;
     PFN_LWDNS_LOG_MESSAGE pfnLogger = NULL;
-    PCSTR pszProgramName = "lw-update-dns";
+    PCSTR pszProgramName = "update-dns";
 
     for (iArg = 1; iArg < argc; iArg++)
     {
