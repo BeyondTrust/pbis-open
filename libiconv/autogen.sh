@@ -35,7 +35,8 @@
 # Usage from a released tarball:             ./autogen.sh --skip-gnulib
 # This does not use a gnulib checkout.
 
-skip_gnulib=false
+skip_gnulib=true
+#skip_gnulib=false
 while :; do
   case "$1" in
     --skip-gnulib) skip_gnulib=true; shift;;
