@@ -127,6 +127,13 @@ then
     show rm -rf "$BUILD_DIR"
 fi
 
+if [ -n "$BOOTSTRAP" ]
+then
+    show cd "$SOURCE_DIR"
+    show ./build/mk-bootstrap
+    exit 0
+fi
+
 show mkdir -p "${BUILD_DIR}"
 show cd "$BUILD_DIR"
 
@@ -135,13 +142,6 @@ then
     show "${SOURCE_DIR}/configure" \
         ${CONFIG_PARAM} ${REVISION_PARAM} ${ID_PARAM} ${ARCHIVE_PARAM} ${APACHE_PARAMS} \
         CPPFLAGS="$EXTRA_CPPFLAGS" LDFLAGS="$EXTRA_LDFLAGS"
-fi
-
-if [ -n "$BOOTSTRAP" ]
-then
-    show cd "$SOURCE_DIR"
-    show ./build/mk-bootstrap
-    exit 0
 fi
 
 for target
