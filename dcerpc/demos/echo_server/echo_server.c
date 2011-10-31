@@ -5,7 +5,7 @@
  *
  *
  */
-#if HAVE_CONFIG_H
+#ifdef _MK_HOST
 #include <config.h>
 #endif
 
@@ -13,16 +13,13 @@
 #define _POSIX_PTHREAD_SEMANTICS 1
 #endif
 
-#define getopt getopt_system
-
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <compat/dcerpc.h>
 #include "echo.h"
 #include "misc.h"
-
-#undef getopt
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
@@ -111,7 +108,6 @@ int main(int argc, char *argv[])
     char * protocol = NULL;
     char * endpoint = NULL;
     int c;
-    char * function = NULL;
     char * spn = NULL;
 
     /*
@@ -298,11 +294,11 @@ ReverseIt(
     unsigned32 i,j,l;
 #if 0
     rpc_transport_info_handle_t transport_info = NULL;
-#endif
     unsigned32 rpcstatus = 0;
     unsigned char* sesskey = NULL;
     unsigned32 sesskey_len = 0;
     unsigned char* principal_name = NULL;
+#endif
 
     /*
      * Get some info about the client binding
@@ -341,7 +337,7 @@ ReverseIt(
     printf("\n\nFunction ReverseIt() -- input argments\n");
 
     for (i=0; i<in_text->argc; i++)
-        printf("\t[arg %ld]: %s\n", i, in_text->argv[i]);
+        printf("\t[arg %lu]: %s\n", (unsigned long)i, in_text->argv[i]);
 
     printf ("\n=========================================\n");
 

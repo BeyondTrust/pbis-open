@@ -6,20 +6,21 @@
  *
  *
  */
-#if HAVE_CONFIG_H
+#ifdef _MK_HOST
 #include <config.h>
 #endif
 
-#define getopt getopt_system
-
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdlib.h>
 #include <compat/dcerpc.h>
 #include "echo.h"
 #include <misc.h>
 
-#undef getopt
+#define PUBLIC
+#define PRIVATE
+#include <rpcdbg.h>
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
@@ -241,7 +242,7 @@ main(
     {
         printf ("got response from server. results: \n");
         for (i=0; i<outargs->argc; i++)
-            printf("\t[%ld]: %s\n", i, outargs->argv[i]);
+            printf("\t[%lu]: %s\n", (unsigned long)i, outargs->argv[i]);
         printf("\n===================================\n");
 
     }
@@ -285,7 +286,7 @@ get_client_rpc_binding(
     char * endpoint
     )
 {
-    char * string_binding = NULL;
+    unsigned char * string_binding = NULL;
     error_status_t status;
 
     /*
