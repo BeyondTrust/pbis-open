@@ -18,9 +18,11 @@
 #include "echo.h"
 #include <misc.h>
 
+#ifndef _WIN32
 #define PUBLIC
 #define PRIVATE
 #include <rpcdbg.h>
+#endif
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
