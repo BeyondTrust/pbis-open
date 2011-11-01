@@ -798,6 +798,10 @@ LsaJoinDomainInternal(
             }
         }
 
+        if (dwUserAccountAttributes == 0)
+        {
+            dwUserAccountAttributes = LSAJOIN_WORKSTATION_TRUST_ACCOUNT;
+        }
         if (dwUserAccountAttributes)
         {
             dwError = LwMbsToWc16s("userAccountControl",
