@@ -637,7 +637,7 @@
   <widget class="GtkDialog" id="JoinDialog">
     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
     <property name="border_width">5</property>
-    <property name="title" translatable="yes">Likewise AD Settings</property>
+    <property name="title" translatable="yes">PowerBroker IdentityServices AD Settings</property>
     <property name="resizable">False</property>
     <property name="window_position">center</property>
     <property name="icon">domainjoin-logo.png</property>
@@ -1162,7 +1162,7 @@ Nested OUs should be separated by a forward-slash.&lt;/span&gt;</property>
   <widget class="GtkDialog" id="StatusDialog">
     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
     <property name="border_width">5</property>
-    <property name="title" translatable="yes">Likewise AD Settings</property>
+    <property name="title" translatable="yes">PowerBroker IdentityServices AD Settings</property>
     <property name="resizable">False</property>
     <property name="window_position">center-on-parent</property>
     <property name="icon">domainjoin-logo.png</property>
