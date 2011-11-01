@@ -56,9 +56,10 @@ get_client_rpc_binding(
 
 static void usage()
 {
-    printf("usage: echo_client [-h hostname] [-a name [-p level]] [-e endpoint] [-n] [-u] [-t]\n");
+    printf("usage: echo_client [-h hostname] [{-a name | -i} [-p level]] [-e endpoint] [-n] [-u] [-t]\n");
     printf("         -h:  specify host of RPC server (default is localhost)\n");
     printf("         -a:  specify authentication identity\n");
+    printf("         -i:  inquire authentication identity from host\n");
     printf("         -p:  specify protection level\n");
     printf("         -e:  specify endpoint for protocol\n");
     printf("         -n:  use named pipe protocol\n");
@@ -89,6 +90,8 @@ main(
     char * protocol = PROTOCOL_TCP;
     char * endpoint = NULL;
     char * spn = NULL;
+    char * inquired_spn = NULL;
+    int inquire_spn = FALSE;
     unsigned32 protect_level = rpc_c_protect_level_pkt_integ;
 
     char buf[MAX_LINE+1];
@@ -111,7 +114,7 @@ main(
      * Process the cmd line args
      */
 
-    while ((c = getopt(argc, argv, "h:a:p:e:nutdg:")) != EOF)
+    while ((c = getopt(argc, argv, "h:a:ip:e:nutdg:")) != EOF)
     {
         switch (c)
         {
@@ -120,6 +123,9 @@ main(
             break;
         case 'a':
             spn = optarg;
+            break;
+        case 'i':
+            inquire_spn = TRUE;
             break;
         case 'p':
             protect_level = atoi(optarg);
@@ -171,9 +177,25 @@ main(
         exit(1);
     }
 
+    if (inquire_spn)
+    {
+        rpc_mgmt_inq_server_princ_name(
+            echo_server,
+            rpc_c_authn_gss_negotiate,
+            (unsigned_char_p_t *)&inquired_spn,
+            &status);
+        if (status)
+        {
+            printf ("Unable to inquire SPN %x. exiting.\n", status);
+            exit(1);
+        }
+        printf("Found SPN %s\n", inquired_spn);
+        spn = inquired_spn;
+    }
     if (spn)
     {
-        rpc_binding_set_auth_info(echo_server,
+        rpc_binding_set_auth_info(
+            echo_server,
             spn,
             protect_level,
             rpc_c_authn_gss_negotiate,
@@ -256,6 +278,10 @@ main(
      * Done. Now gracefully teardown the RPC binding to the server
      */
 
+    if (inquired_spn)
+    {
+        rpc_string_free((unsigned_char_p_t *)&inquired_spn, &status);
+    }
     rpc_binding_free(&echo_server, &status);
     exit(0);
 
