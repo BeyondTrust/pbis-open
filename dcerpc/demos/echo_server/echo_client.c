@@ -56,10 +56,11 @@ get_client_rpc_binding(
 
 static void usage()
 {
-    printf("usage: echo_client [-h hostname] [{-a name | -i} [-p level]] [-e endpoint] [-n] [-u] [-t]\n");
+    printf("usage: echo_client [-h hostname] [{-a name | -i} [-s] [-p level]] [-e endpoint] [-n] [-u] [-t]\n");
     printf("         -h:  specify host of RPC server (default is localhost)\n");
     printf("         -a:  specify authentication identity\n");
     printf("         -i:  inquire authentication identity from host\n");
+    printf("         -s:  enable header signing\n");
     printf("         -p:  specify protection level\n");
     printf("         -e:  specify endpoint for protocol\n");
     printf("         -n:  use named pipe protocol\n");
@@ -93,6 +94,7 @@ main(
     char * inquired_spn = NULL;
     int inquire_spn = FALSE;
     unsigned32 protect_level = rpc_c_protect_level_pkt_integ;
+    unsigned32 flags = 0;
 
     char buf[MAX_LINE+1];
 
@@ -114,10 +116,17 @@ main(
      * Process the cmd line args
      */
 
-    while ((c = getopt(argc, argv, "h:a:ip:e:nutdg:")) != EOF)
+    while ((c = getopt(argc, argv, "sh:a:ip:e:nutdg:")) != EOF)
     {
         switch (c)
         {
+        case 's':
+#ifdef _WIN32
+	    printf("This option is only supported on Linux. It is automatically enabled on Windows\n");
+#else
+            flags |= rpc_c_protect_flags_header_sign;
+#endif
+            break;
         case 'h':
             rpc_host = optarg;
             break;
@@ -194,11 +203,12 @@ main(
     }
     if (spn)
     {
-        rpc_binding_set_auth_info(
+        rpc_binding_set_auth_info_2(
             echo_server,
             spn,
             protect_level,
             rpc_c_authn_gss_negotiate,
+            flags,
             NULL,
             rpc_c_authz_name, &status);
         if (status)
