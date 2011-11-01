@@ -1199,7 +1199,7 @@ void DJCreateComputerAccount(
         LW_CLEANUP_LSERR(exc, dwError);
     }
 
-    dwError = LsaAdJoinDomainDn(
+    dwError = LsaAdJoinDomainUac(
                  lsa,
                  options->computerName,
                  dnsDomain,
@@ -1210,7 +1210,8 @@ void DJCreateComputerAccount(
                  osName,
                  distro.version,
                  likewiseOSServicePack,
-                 dwFlags);
+                 dwFlags,
+                 options->uacFlags);
     if (dwError)
     {
         switch(dwError)

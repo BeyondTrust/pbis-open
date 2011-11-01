@@ -351,6 +351,14 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
             argv++;
             argc--;
         }
+        else if(!strcmp(argv[0], "--uac-flags"))
+        {
+            DJ_LOG_INFO("Domainjoin invoked with option --uac-flags %s", argv[1]);
+            CT_SAFE_FREE_STRING(options.ouName);
+            options.uacFlags = strtoul(argv[1], NULL, 0);
+            argv++;
+            argc--;
+        }
         else if(!strcmp(argv[0], "--assumeDefaultDomain"))
         {
             DJ_LOG_INFO("Domainjoin invoked with option --assumeDefaultDomain");

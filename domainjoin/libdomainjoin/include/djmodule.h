@@ -72,6 +72,7 @@ struct _JoinProcessOptions
     PSTR ouName;
     PSTR username;
     PSTR password;
+    DWORD uacFlags;
     void *userData;
     //TRUE if joining to AD, FALSE if leaving
     BOOLEAN joiningDomain;

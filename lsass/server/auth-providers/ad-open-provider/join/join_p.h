@@ -64,8 +64,6 @@
 
 /* LDAP account flags - local copies of UF_* flags
    from NetAPI */
-#define LSAJOIN_ACCOUNTDISABLE                       (0x00000002)
-#define LSAJOIN_WORKSTATION_TRUST_ACCOUNT            (0x00001000)
 
 DWORD
 LsaSyncTimeToDC(

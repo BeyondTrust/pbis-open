@@ -210,6 +210,48 @@ LsaAdJoinDomainDn(
     );
 
 /**
+ * @brief Join Active Directory domain with userAccountControl flags
+ *
+ * Identical to #LsaAdJoinDomain(), but allows passing User-Account-Control
+ * flag values.
+ *
+ * @param[in] hLsaConnection a connection handle
+ * @param[in] pHostname the computer name to join with
+ * @param[in] pHostDnsDomain the DNS domain name of the computer
+ * @param[in] pDomain the fully-qualified domain name to join
+ * @param[in] pOu an optional OU (organizational unit) to join
+ * specified as a DN.
+ * @param[in] pUsername the name of an AD user with permission with
+ * permission to join computers to the target domain
+ * @param[in] pPassword the password for the user
+ * @param[in] pOsName the operating system name to set on
+ * the computer object
+ * @param[in] pOsVersion the operating system version to set on
+ * the computer object
+ * @param[in] pOsServicePack the service pack level to set on
+ * the computer object
+ * @param[in] dwFlags additional flags to control join behavior
+ * @param[in] dwUac additional user account control flags
+ * @retval LW_ERROR_SUCCESS success
+ */
+DWORD
+LsaAdJoinDomainUac(
+    HANDLE hLsaConnection,
+    PCSTR pszHostname,
+    PCSTR pszHostDnsDomain,
+    PCSTR pszDomain,
+    PCSTR pszOu,
+    PCSTR pszUsername,
+    PCSTR pszPassword,
+    PCSTR pszOSName,
+    PCSTR pszOSVersion,
+    PCSTR pszOSServicePack,
+    LSA_NET_JOIN_FLAGS dwFlags,
+    LSA_USER_ACCOUNT_CONTROL_FLAGS dwUac
+    );
+
+
+/**
  * @brief Leave default Active Directory domain
  *
  * Leaves the currently-joined default AD domain.

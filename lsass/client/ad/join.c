@@ -49,6 +49,23 @@
 #define LSA_JOIN_CN_PREFIX "CN="
 #define LSA_JOIN_DC_PREFIX "DC="
 
+static
+DWORD
+LsaAdJoinDomainInternal(
+    IN HANDLE hLsaConnection,
+    IN PCSTR pHostname,
+    IN PCSTR pHostDnsDomain,
+    IN PCSTR pDomain,
+    IN PCSTR pOu,
+    IN PCSTR pUsername,
+    IN PCSTR pPassword,
+    IN PCSTR pOsName,
+    IN PCSTR pOsVersion,
+    IN PCSTR pOsServicePack,
+    IN LSA_NET_JOIN_FLAGS dwFlags,
+    IN LSA_USER_ACCOUNT_CONTROL_FLAGS dwUac
+    );
+
 DWORD
 LsaAdOuSlashToDn(
     IN PCSTR pDomain,
@@ -221,6 +238,37 @@ error:
 }
 
 DWORD
+LsaAdJoinDomainUac(
+    HANDLE hLsaConnection,
+    PCSTR pszHostname,
+    PCSTR pszHostDnsDomain,
+    PCSTR pszDomain,
+    PCSTR pOu,
+    PCSTR pszUsername,
+    PCSTR pszPassword,
+    PCSTR pszOSName,
+    PCSTR pszOSVersion,
+    PCSTR pszOSServicePack,
+    LSA_NET_JOIN_FLAGS dwFlags,
+    LSA_USER_ACCOUNT_CONTROL_FLAGS dwUac
+    )
+{
+    return LsaAdJoinDomainInternal(
+               hLsaConnection,
+               pszHostname,
+               pszHostDnsDomain,
+               pszDomain,
+               pOu,
+               pszUsername,
+               pszPassword,
+               pszOSName,
+               pszOSVersion,
+               pszOSServicePack,
+               dwFlags,
+               dwUac);
+}
+
+DWORD
 LsaAdJoinDomain(
     HANDLE hLsaConnection,
     PCSTR pszHostname,
@@ -272,8 +320,9 @@ error:
     goto cleanup;
 }
 
+static
 DWORD
-LsaAdJoinDomainDn(
+LsaAdJoinDomainInternal(
     IN HANDLE hLsaConnection,
     IN PCSTR pHostname,
     IN PCSTR pHostDnsDomain,
@@ -284,7 +333,8 @@ LsaAdJoinDomainDn(
     IN PCSTR pOsName,
     IN PCSTR pOsVersion,
     IN PCSTR pOsServicePack,
-    IN LSA_NET_JOIN_FLAGS dwFlags
+    IN LSA_NET_JOIN_FLAGS dwFlags,
+    IN LSA_USER_ACCOUNT_CONTROL_FLAGS dwUac
     )
 {
     DWORD dwError = 0;
@@ -303,6 +353,7 @@ LsaAdJoinDomainDn(
     request.pszOSVersion = pOsVersion;
     request.pszOSServicePack = pOsServicePack;
     request.dwFlags = dwFlags;
+    request.dwUac = dwUac;
 
     dwError = MAP_LWMSG_ERROR(lwmsg_data_context_new(NULL, &pDataContext));
     BAIL_ON_LSA_ERROR(dwError);
@@ -339,6 +390,36 @@ cleanup:
 error:
 
     goto cleanup;
+}
+
+DWORD
+LsaAdJoinDomainDn(
+    IN HANDLE hLsaConnection,
+    IN PCSTR pHostname,
+    IN PCSTR pHostDnsDomain,
+    IN PCSTR pDomain,
+    IN PCSTR pOu,
+    IN PCSTR pUsername,
+    IN PCSTR pPassword,
+    IN PCSTR pOsName,
+    IN PCSTR pOsVersion,
+    IN PCSTR pOsServicePack,
+    IN LSA_NET_JOIN_FLAGS dwFlags
+    )
+{
+    return LsaAdJoinDomainInternal(
+               hLsaConnection,
+               pHostname,
+               pHostDnsDomain,
+               pDomain,
+               pOu,
+               pUsername,
+               pPassword,
+               pOsName,
+               pOsVersion,
+               pOsServicePack,
+               dwFlags,
+               0);
 }
 
 DWORD
@@ -808,3 +889,5 @@ error:
 
     return dwError;
 }
+
+

@@ -64,6 +64,22 @@ LsaJoinDomain(
     LSA_NET_JOIN_FLAGS dwFlags
     );
 
+
+DWORD
+LsaJoinDomainUac(
+    PCSTR pszHostname,
+    PCSTR pszHostDnsDomain,
+    PCSTR pszDomain,
+    PCSTR pszOU,
+    PCSTR pszUsername,
+    PCSTR pszPassword,
+    PCSTR pszOSName,
+    PCSTR pszOSVersion,
+    PCSTR pszOSServicePack,
+    LSA_NET_JOIN_FLAGS dwFlags,
+    LSA_USER_ACCOUNT_CONTROL_FLAGS dwUac
+    );
+
 DWORD
 LsaLeaveDomain2(
     IN OPTIONAL PCSTR pszDnsDomainName,

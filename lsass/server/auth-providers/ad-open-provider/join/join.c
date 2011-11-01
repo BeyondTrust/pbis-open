@@ -62,6 +62,7 @@ LsaJoinDomainInternal(
     PWSTR  pwszAccount,
     PWSTR  pwszPassword,
     DWORD  dwJoinFlags,
+    DWORD  dwUserAccountAttributes,
     PWSTR  pwszOsName,
     PWSTR  pwszOsVersion,
     PWSTR  pwszOsServicePack
@@ -260,8 +261,9 @@ LsaPrepareDesKey(
     );
 
 
+
 DWORD
-LsaJoinDomain(
+LsaJoinDomainUac(
     PCSTR pszHostname,
     PCSTR pszHostDnsDomain,
     PCSTR pszDomain,
@@ -271,7 +273,8 @@ LsaJoinDomain(
     PCSTR pszOSName,
     PCSTR pszOSVersion,
     PCSTR pszOSServicePack,
-    LSA_NET_JOIN_FLAGS dwFlags
+    LSA_NET_JOIN_FLAGS dwFlags,
+    LSA_USER_ACCOUNT_CONTROL_FLAGS dwUac
     )
 {
     DWORD dwError = 0;
@@ -367,6 +370,7 @@ LsaJoinDomain(
             NULL,
             NULL,
             dwOptions,
+            dwUac,
             pwszOSName,
             pwszOSVersion,
             pwszOSServicePack);
@@ -389,6 +393,35 @@ cleanup:
 error:
 
     goto cleanup;
+}
+
+DWORD
+LsaJoinDomain(
+    PCSTR pszHostname,
+    PCSTR pszHostDnsDomain,
+    PCSTR pszDomain,
+    PCSTR pszOU,
+    PCSTR pszUsername,
+    PCSTR pszPassword,
+    PCSTR pszOSName,
+    PCSTR pszOSVersion,
+    PCSTR pszOSServicePack,
+    LSA_NET_JOIN_FLAGS dwFlags
+    )
+{
+    return LsaJoinDomainUac(
+               pszHostname,
+               pszHostDnsDomain,
+               pszDomain,
+               pszOU,
+               pszUsername,
+               pszPassword,
+               pszOSName,
+               pszOSVersion,
+               pszOSServicePack,
+               dwFlags,
+               0
+               );
 }
 
 DWORD
@@ -432,6 +465,7 @@ LsaJoinDomainInternal(
     PWSTR  pwszAccount,
     PWSTR  pwszPassword,
     DWORD  dwJoinFlags,
+    DWORD  dwUserAccountAttributes,
     PWSTR  pwszOsName,
     PWSTR  pwszOsVersion,
     PWSTR  pwszOsServicePack
@@ -469,7 +503,10 @@ LsaJoinDomainInternal(
     PWSTR pwszOSVersionAttrVal[2] = {0};
     PWSTR pwszOSServicePackAttrName = NULL;
     PWSTR pwszOSServicePackAttrVal[2] = {0};
+    PWSTR pwszUserAccountControlName = NULL;
+    PWSTR pwszUserAccountControlVal[2] = {0};
     PWSTR pwszSidStr = NULL;
+    WCHAR wszUacVal[11] = {0};
     LW_PIO_CREDS pCreds = NULL;
 
     dwError = LwAllocateWc16String(&pwszMachineName,
@@ -541,8 +578,12 @@ LsaJoinDomainInternal(
                         &pwszSchemaDn);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaMachAcctCreate(pLdap, pwszMachineName, pwszMachineAcctName, pwszAccountOu,
-                                    (dwJoinFlags & LSAJOIN_DOMAIN_JOIN_IF_JOINED));
+        dwError = LsaMachAcctCreate(
+                      pLdap, 
+                      pwszMachineName, 
+                      pwszMachineAcctName, 
+                      pwszAccountOu,
+                      (dwJoinFlags & LSAJOIN_DOMAIN_JOIN_IF_JOINED));
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LsaDirectoryDisconnect(pLdap);
@@ -746,6 +787,36 @@ LsaJoinDomainInternal(
             dwError = LsaMachAcctSetAttribute(pLdap, pwszDn,
                                        pwszOSServicePackAttrName,
                                        (const wchar16_t**)pwszOSServicePackAttrVal,
+                                       0);
+            if (dwError == LW_ERROR_LDAP_INSUFFICIENT_ACCESS)
+            {
+                dwError = ERROR_SUCCESS;
+            }
+            else
+            {
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+        }
+
+        if (dwUserAccountAttributes)
+        {
+            dwError = LwMbsToWc16s("userAccountControl",
+                                   &pwszUserAccountControlName);
+            BAIL_ON_LSA_ERROR(dwError);
+
+           sw16printfw(
+                wszUacVal,
+                sizeof(wszUacVal)/sizeof(wszUacVal[0]),
+                L"%u",
+                dwUserAccountAttributes);
+            pwszUserAccountControlVal[0] = wszUacVal;
+            dwError = LwAllocateWc16String(&pwszUserAccountControlVal[0],
+                                           wszUacVal);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            dwError = LsaMachAcctSetAttribute(pLdap, pwszDn,
+                                       pwszUserAccountControlName,
+                                       (const wchar16_t**)pwszUserAccountControlVal,
                                        0);
             if (dwError == LW_ERROR_LDAP_INSUFFICIENT_ACCESS)
             {

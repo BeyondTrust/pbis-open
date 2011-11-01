@@ -2308,7 +2308,7 @@ AD_JoinDomain(
     dwError = LsaPstoreDeletePasswordInfoA(pszCanonicalDnsDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaJoinDomain(
+    dwError = LsaJoinDomainUac(
         pszCanonicalHostname,
         pszCanonicalHostDnsDomain,
         pszCanonicalDnsDomainName,
@@ -2318,7 +2318,8 @@ AD_JoinDomain(
         pRequest->pszOSName,
         pRequest->pszOSVersion,
         pRequest->pszOSServicePack,
-        pRequest->dwFlags);
+        pRequest->dwFlags,
+        pRequest->dwUac);
     BAIL_ON_LSA_ERROR(dwError);
 
     // All old RPC connections are keyed with the old machine account

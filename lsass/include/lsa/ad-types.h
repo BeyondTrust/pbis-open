@@ -54,6 +54,7 @@
  * Encodes additional options when joining a domain
  */
 typedef DWORD LSA_NET_JOIN_FLAGS;
+typedef DWORD LSA_USER_ACCOUNT_CONTROL_FLAGS;
 typedef DWORD *PLSA_NET_JOIN_FLAGS;
 
 /**
@@ -86,6 +87,32 @@ typedef DWORD *PLSA_NET_JOIN_FLAGS;
 // The following setting is not implemented
 #define LSA_NET_LEAVE_DOMAIN_ACCT_DELETE       (0x00000001)
 
+/* LDAP account flags - local copies of UF_* flags
+   from NetAPI */
+// User Account Control Flags
+#define LSAJOIN_SCRIPT                          (0x00000001)
+#define LSAJOIN_ACCOUNTDISABLE                  (0x00000002)
+#define LSAJOIN_HOMEDIR_REQUIRED                (0x00000008)
+#define LSAJOIN_LOCKOUT                         (0x00000010)
+#define LSAJOIN_PASSWD_NOTREQD                  (0x00000020)
+#define LSAJOIN_PASSWD_CANT_CHANGE              (0x00000040)
+#define LSAJOIN_ENCRYPTED_TEXT_PASSWORD_ALLOWED (0x00000080)
+#define LSAJOIN_TEMP_DUPLICATE_ACCOUNT          (0x00000100)
+#define LSAJOIN_NORMAL_ACCOUNT                  (0x00000200)
+#define LSAJOIN_INTERDOMAIN_TRUST_ACCOUNT       (0x00000800)
+#define LSAJOIN_WORKSTATION_TRUST_ACCOUNT       (0x00001000)
+#define LSAJOIN_SERVER_TRUST_ACCOUNT            (0x00002000)
+// N/A                                          (0x00004000)
+// N/A                                          (0x00008000)
+#define LSAJOIN_DONT_EXPIRE_PASSWD              (0x00010000)
+#define LSAJOIN_MNS_LOGON_ACCOUNT               (0x00020000)
+#define LSAJOIN_SMARTCARD_REQUIRED              (0x00040000)
+#define LSAJOIN_TRUSTED_FOR_DELEGATION          (0x00080000)
+#define LSAJOIN_NOT_DELEGATED                   (0x00100000)
+#define LSAJOIN_USE_DES_KEY_ONLY                (0x00200000)
+#define LSAJOIN_DONT_REQUIRE_PREAUTH            (0x00400000)
+#define LSAJOIN_PASSWORD_EXPIRED                (0x00800000)
+#define LSAJOIN_TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION (0x01000000) 
 /*@}*/
 
 #endif /* __LSA_AD_TYPES_H__ */
