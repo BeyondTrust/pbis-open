@@ -77,6 +77,12 @@
 #define rpc_string_binding_compose(obj_uuid, protseq, network_addr, endpoint, options, string_binding, status) \
     (*(status) = RpcStringBindingCompose(obj_uuid, protseq, network_addr, endpoint, options, string_binding))
 
+#define rpc_mgmt_inq_server_princ_name(binding_h, authn_svc, server_princ_name, status) \
+    (*(status) = RpcMgmtInqServerPrincName(binding_h, authn_svc, server_princ_name))
+
+#define rpc_string_binding_compose(obj_uuid, protseq, network_addr, endpoint, options, string_binding, status) \
+    (*(status) = RpcStringBindingCompose(obj_uuid, protseq, network_addr, endpoint, options, string_binding))
+
 #define rpc_string_free(string, status) \
     (*(status) = RpcStringFree(string))
 

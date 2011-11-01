@@ -182,7 +182,7 @@ main(
         rpc_mgmt_inq_server_princ_name(
             echo_server,
             rpc_c_authn_gss_negotiate,
-            (unsigned_char_p_t *)&inquired_spn,
+            (unsigned char **)&inquired_spn,
             &status);
         if (status)
         {
@@ -280,7 +280,7 @@ main(
 
     if (inquired_spn)
     {
-        rpc_string_free((unsigned_char_p_t *)&inquired_spn, &status);
+        rpc_string_free((unsigned char **)&inquired_spn, &status);
     }
     rpc_binding_free(&echo_server, &status);
     exit(0);
