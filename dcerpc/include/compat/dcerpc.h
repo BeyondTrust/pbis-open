@@ -28,6 +28,9 @@
 #define rpc_binding_set_auth_info(binding, server_name, authn_level, authn_protocol, auth_identity, authz_protocol, status) \
     (*(status) = RpcBindingSetAuthInfo(binding, server_name, authn_level, authn_protocol, auth_identity, authz_protocol))
 
+#define rpc_binding_set_auth_info_2(binding, server_name, authn_level, authn_protocol, authn_flags, auth_identity, authz_protocol, status) \
+    ((authn_flags) == 0 ? *(status) = RpcBindingSetAuthInfo(binding, server_name, authn_level, authn_protocol, auth_identity, authz_protocol) : ERROR_INVALID_FLAGS)
+
 #define rpc_binding_to_string_binding(binding, string_binding, status) \
     (*(status) = RpcBindingToStringBinding(binding, string_binding))
 
