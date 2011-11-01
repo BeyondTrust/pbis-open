@@ -187,21 +187,22 @@
 /*
  * Values for the flag field in the packet header.
  */
-#define RPC_C_CN_FLAGS_FIRST_FRAG       0x01    /* First fragment */
-#define RPC_C_CN_FLAGS_LAST_FRAG        0x02    /* Last fragment */
-#define RPC_C_CN_FLAGS_ALERT_PENDING    0x04    /* Alert was pending at sender */
-#define RPC_C_CN_FLAGS_RESERVED_1       0x08    /* Reserved, m.b.z. */
-#define RPC_C_CN_FLAGS_CONCURRENT_MPX   0x10    /* Supports concurrent multiplexing
-                                                 * of a single connection */
-#define RPC_C_CN_FLAGS_DID_NOT_EXECUTE  0x20    /* only meaningful on `fault'
-                                                 * packet; if true, call did
-                                                 * not execute. */
-#define RPC_C_CN_FLAGS_MAYBE            0x40    /* 'maybe' semantics requested */
-#define RPC_C_CN_FLAGS_OBJECT_UUID      0x80    /* if true, a non-nil object UUID
-                                                 * was specified in the handle,
-                                                 * and is present in the optional
-                                                 * object field. If false, the
-                                                 * object field is omitted */
+#define RPC_C_CN_FLAGS_FIRST_FRAG             0x01    /* First fragment */
+#define RPC_C_CN_FLAGS_LAST_FRAG              0x02    /* Last fragment */
+#define RPC_C_CN_FLAGS_ALERT_PENDING          0x04    /* Alert was pending at sender */
+#define RPC_C_CN_FLAGS_SUPPORT_HEADER_SIGN    0x04    /* DCE/RPC header signing requested */
+#define RPC_C_CN_FLAGS_RESERVED_1             0x08    /* Reserved, m.b.z. */
+#define RPC_C_CN_FLAGS_CONCURRENT_MPX         0x10    /* Supports concurrent multiplexing
+                                                       * of a single connection */
+#define RPC_C_CN_FLAGS_DID_NOT_EXECUTE        0x20    /* only meaningful on `fault'
+                                                       * packet; if true, call did
+                                                       * not execute. */
+#define RPC_C_CN_FLAGS_MAYBE                  0x40    /* 'maybe' semantics requested */
+#define RPC_C_CN_FLAGS_OBJECT_UUID            0x80    /* if true, a non-nil object UUID
+                                                       * was specified in the handle,
+                                                       * and is present in the optional
+                                                       * object field. If false, the
+                                                       * object field is omitted */
 
 
 /*

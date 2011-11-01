@@ -57,6 +57,7 @@ extern "C" {
 typedef void (*rpc_auth_bnd_set_auth_info_fn_t) (
         unsigned_char_p_t                   /* in  */   /*server_princ_name*/,
         rpc_authn_level_t                   /* in  */   /*authn_level*/,
+        rpc_authn_flags_t                   /* in */    /*authn_flags*/,
         rpc_auth_identity_handle_t          /* in  */   /*auth_identity*/,
         rpc_authz_protocol_id_t             /* in  */   /*authz_protocol*/,
         rpc_binding_handle_t                /* in  */   /*binding_h*/,   

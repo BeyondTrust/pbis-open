@@ -52,6 +52,7 @@ INTERNAL boolean32 rpc__schnauth_cn_context_valid (
 
 INTERNAL void rpc__schnauth_cn_create_info (
        rpc_authn_level_t                 /*authn_level*/,
+       rpc_authn_flags_t                 /*authn_flags*/,
        rpc_auth_info_p_t                * /*auth_info*/,
        unsigned32                       * /*st*/
     );
@@ -345,6 +346,7 @@ INTERNAL boolean32 rpc__schnauth_cn_context_valid
 INTERNAL void rpc__schnauth_cn_create_info 
 (
     rpc_authn_level_t                authn_level,
+    rpc_authn_flags_t                authn_flags,
     rpc_auth_info_p_t                *auth_info,
     unsigned32                       *st
 )
@@ -557,6 +559,21 @@ INTERNAL void rpc__schnauth_cn_cred_refresh
     *st = rpc_s_ok;
 }
 
+INTERNAL unsigned32 rpc__schnauth_cn_inq_flags_supported
+(
+	unsigned32 authn_flags
+)
+{
+	unsigned st = rpc_s_ok;
+
+	if (authn_flags)
+	{
+		st = rpc_s_unsupported_authn_level;;
+	}
+
+	return st;
+}
+
 /*****************************************************************************/
 /*
 **++
@@ -642,6 +659,14 @@ INTERNAL void rpc__schnauth_cn_fmt_client_req
         return;
     }
 #endif
+    /*
+     * Check if requested authn_flags are supported by this mechanism
+     */
+    *st = rpc__schnauth_cn_inq_flags_supported(sec->sec_info->authn_flags);
+    if (*st != rpc_s_ok)
+    {
+        return;
+    }
 
     auth_info = sec->sec_cn_info;
     schnauth_info = (rpc_schnauth_cn_info_t*)auth_info;
@@ -1466,11 +1491,28 @@ INTERNAL void rpc__schnauth_cn_recv_check
 					auth_tlr, unpack_ints, st);
             return;
         }
-        case RPC_C_CN_PKT_FAULT:
         case RPC_C_CN_PKT_BIND:
+        case RPC_C_CN_PKT_ALTER_CONTEXT:
+            if (pdu->flags & RPC_C_CN_FLAGS_SUPPORT_HEADER_SIGN)
+            {
+                *st = rpc__schnauth_cn_inq_flags_supported(rpc_c_protect_flags_header_sign);
+                if (*st == rpc_s_ok)
+                {
+                    sec->sec_info->authn_flags |= rpc_c_protect_flags_header_sign;
+                }
+                else
+                {
+                    sec->sec_info->authn_flags &= ~rpc_c_protect_flags_header_sign;
+                }
+
+		/* If header signing is not supported it is enough to clear the flag */
+		*st = rpc_s_ok;
+            }
+            break;
+
+        case RPC_C_CN_PKT_FAULT:
         case RPC_C_CN_PKT_BIND_ACK:
         case RPC_C_CN_PKT_BIND_NAK:
-        case RPC_C_CN_PKT_ALTER_CONTEXT:
         case RPC_C_CN_PKT_ALTER_CONTEXT_RESP:
         case RPC_C_CN_PKT_AUTH3:
         case RPC_C_CN_PKT_SHUTDOWN:

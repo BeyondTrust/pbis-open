@@ -57,7 +57,8 @@ INTERNAL rpc_auth_info_t *rpc__auth_info_cache_lkup (
         rpc_authn_level_t                    /*authn_level*/,
         rpc_auth_identity_handle_t           /*auth_identity*/,
         rpc_authz_protocol_id_t              /*authz_protocol*/,
-        rpc_authn_protocol_id_t             /* authn_protocol*/
+        rpc_authn_protocol_id_t             /* authn_protocol*/,
+        unsigned32                          /* authn_flags*/
     );
 
 /*
@@ -663,7 +664,7 @@ PRIVATE void rpc__auth_inq_my_princ_name
 **
 **  ROUTINE NAME:       rpc_binding_set_auth_info
 **
-**  SCOPE:              PUBLIC - declared in rpcauth.idl
+**  SCOPE:              PUBLIC - declared in rpc.idl
 **
 **  DESCRIPTION:
 **      
@@ -703,12 +704,106 @@ PRIVATE void rpc__auth_inq_my_princ_name
 **--
 **/
 
-PUBLIC void rpc_binding_set_auth_info 
+PUBLIC void rpc_binding_set_auth_info
 (
   rpc_binding_handle_t    binding_h,
   unsigned_char_p_t       server_princ_name,
   unsigned32              authn_level,
   unsigned32              authn_protocol,
+  rpc_auth_identity_handle_t auth_identity,
+  unsigned32              authz_protocol,
+  unsigned32              *st
+)
+{
+    unsigned32 authn_flags = 0;
+
+    switch (authn_protocol)
+    {
+    case rpc_c_authn_none:
+    case rpc_c_authn_dce_secret:
+    case rpc_c_authn_dce_public:
+    case rpc_c_authn_dce_dummy:
+    case rpc_c_authn_dssa_public:
+    case rpc_c_authn_gss_tls:
+    case rpc_c_authn_netlogon:
+    case rpc_c_authn_default:
+        authn_flags = 0;
+        break;
+
+    case rpc_c_authn_winnt:
+        authn_flags |= rpc_c_protect_flags_header_sign;
+	break;
+
+    default:
+        authn_flags = 0;
+        break;
+    }
+
+    rpc_binding_set_auth_info_2(
+                       binding_h,
+		       server_princ_name,
+		       authn_level,
+		       authn_protocol,
+		       authn_flags,
+		       auth_identity,
+		       authz_protocol,
+		       st);
+}
+ 
+/*
+**++
+**
+**  ROUTINE NAME:       rpc_binding_set_auth_info_2
+**
+**  SCOPE:              PUBLIC - declared in rpc.idl
+**
+**  DESCRIPTION:
+**      
+**  Set up client handle for authentication.
+**  
+**  INPUTS:
+**
+**      h               RPC binding handle
+**
+**      server_princ_name     
+**                      Name of server to authenticate to
+**
+**      authn_level     Authentication level
+**  
+**      authn_protocol  Desired authentication protocol to use
+**
+**      auth_identity   Credentials to use on calls
+**
+**      authz_protocol  Authorization protocol to use
+**
+**      authn_flags     Authentication and protection level flags
+**
+**  INPUTS/OUTPUTS:
+**
+**  OUTPUTS:
+**
+**      status          A value indicating the return status of the routine
+**          rpc_s_invalid_binding
+**                          RPC Protocol ID in binding handle was invalid.
+**
+**  IMPLICIT INPUTS:    none
+**
+**  IMPLICIT OUTPUTS:   none
+**
+**  FUNCTION VALUE:     none
+**
+**  SIDE EFFECTS:       none
+**
+**--
+**/
+
+PUBLIC void rpc_binding_set_auth_info_2
+(
+  rpc_binding_handle_t    binding_h,
+  unsigned_char_p_t       server_princ_name,
+  unsigned32              authn_level,
+  unsigned32              authn_protocol,
+  unsigned32              authn_flags,
   rpc_auth_identity_handle_t auth_identity,
   unsigned32              authz_protocol,
   unsigned32              *st
@@ -814,7 +909,8 @@ PUBLIC void rpc_binding_set_auth_info
                                                 authn_level,
                                                 ref_auth_identity,
                                                 authz_protocol, 
-                                                authn_protocol)) == NULL)
+                                                authn_protocol,
+                                                authn_flags)) == NULL)
     {
         
         /*
@@ -823,7 +919,7 @@ PUBLIC void rpc_binding_set_auth_info
          * to a single RPC protocol) "set server" function.
          */
         (*auth_epv->binding_set_auth_info)
-            (server_princ_name, authn_level, auth_identity, 
+            (server_princ_name, authn_level, authn_flags, auth_identity, 
              authz_protocol, binding_h, &auth_info, st);
         
         if (*st != rpc_s_ok)
@@ -876,9 +972,106 @@ PUBLIC void rpc_binding_set_auth_info
 /*
 **++
 **
+**  ROUTINE NAME:       rpc_binding_inq_auth_info_2
+**
+**  SCOPE:              PUBLIC - declared in rpc.idl
+**
+**  DESCRIPTION:
+**      
+**  Return authentication and authorization information from a binding
+**  handle.
+**  
+**  INPUTS:
+**
+**      h               RPC binding handle
+**
+**  INPUTS/OUTPUTS:
+**
+**  OUTPUTS:
+**
+**      server_princ_name     
+**                      Name of server to authenticate to
+**
+**      authn_level     Authentication level
+**  
+**      authn_protocol  Desired authentication protocol to use
+**
+**      auth_identity   Credentials to use on calls
+**
+**      authz_protocol  Authorization protocol to use
+**
+**      authn_flags     Authentication flags
+**
+**      status          A value indicating the return status of the routine
+**          rpc_s_invalid_binding
+**                          RPC Protocol ID in binding handle was invalid.
+**
+**  IMPLICIT INPUTS:    none
+**
+**  IMPLICIT OUTPUTS:   none
+**
+**  FUNCTION VALUE:     none
+**
+**  SIDE EFFECTS:       none
+**
+**--
+**/
+
+PUBLIC void rpc_binding_inq_auth_info_2
+(
+    rpc_binding_handle_t    binding_h,
+    unsigned_char_p_t       *server_princ_name,
+    unsigned32              *authn_level,
+    unsigned32              *authn_protocol,  
+    unsigned32              *authn_flags,
+    rpc_auth_identity_handle_t *auth_identity,
+    unsigned32              *authz_protocol,
+    unsigned32              *st
+    )
+{
+    rpc_binding_rep_p_t     binding_rep = (rpc_binding_rep_p_t) binding_h;
+    rpc_auth_info_p_t       auth_info;
+
+    CODING_ERROR (st);  
+    RPC_VERIFY_INIT (); 
+
+    RPC_BINDING_VALIDATE_CLIENT(binding_rep, st);
+    if (*st != rpc_s_ok)
+        return;
+
+    auth_info = ((rpc_binding_rep_p_t)binding_h)->auth_info;
+
+    if (auth_info == NULL)
+    {
+        *st = rpc_s_binding_has_no_auth;
+        return;
+    }
+
+    assert(! auth_info->is_server);
+
+    if (auth_info->server_princ_name == NULL) 
+    {
+        ASSIGN(server_princ_name, NULL);
+    } else 
+    {
+        ASSIGN(server_princ_name, rpc_stralloc(auth_info->server_princ_name));
+    }
+    ASSIGN(authn_level,         auth_info->authn_level);
+    ASSIGN(authn_protocol,      auth_info->authn_protocol);  
+    ASSIGN(auth_identity,       auth_info->u.auth_identity);
+    ASSIGN(authz_protocol,      auth_info->authz_protocol);
+    ASSIGN(authn_flags,         auth_info->authn_flags);
+
+    *st = rpc_s_ok;
+}
+
+
+/*
+**++
+**
 **  ROUTINE NAME:       rpc_binding_inq_auth_info
 **
-**  SCOPE:              PUBLIC - declared in rpcauth.idl
+**  SCOPE:              PUBLIC - declared in rpc.idl
 **
 **  DESCRIPTION:
 **      
@@ -930,39 +1123,17 @@ PUBLIC void rpc_binding_inq_auth_info
     unsigned32              *st
     )
 {
-    rpc_binding_rep_p_t     binding_rep = (rpc_binding_rep_p_t) binding_h;
-    rpc_auth_info_p_t       auth_info;
+    unsigned32 authn_flags = 0;
 
-    CODING_ERROR (st);  
-    RPC_VERIFY_INIT (); 
-
-    RPC_BINDING_VALIDATE_CLIENT(binding_rep, st);
-    if (*st != rpc_s_ok)
-        return;
-
-    auth_info = ((rpc_binding_rep_p_t)binding_h)->auth_info;
-
-    if (auth_info == NULL)
-    {
-        *st = rpc_s_binding_has_no_auth;
-        return;
-    }
-
-    assert(! auth_info->is_server);
-
-    if (auth_info->server_princ_name == NULL) 
-    {
-        ASSIGN(server_princ_name, NULL);
-    } else 
-    {
-        ASSIGN(server_princ_name, rpc_stralloc(auth_info->server_princ_name));
-    }
-    ASSIGN(authn_level,         auth_info->authn_level);
-    ASSIGN(authn_protocol,      auth_info->authn_protocol);  
-    ASSIGN(auth_identity,       auth_info->u.auth_identity);
-    ASSIGN(authz_protocol,      auth_info->authz_protocol);  
-
-    *st = rpc_s_ok;
+    rpc_binding_inq_auth_info_2(
+                      binding_h,
+                      server_princ_name,
+                      authn_level,
+                      authn_protocol,
+                      &authn_flags,
+                      auth_identity,
+                      authz_protocol,
+                      st);
 }
 
 
@@ -1382,6 +1553,7 @@ PRIVATE void rpc__auth_info_cache_init
 **      authn_identity  Authentication identity handle.
 **      authz_protocol  Authorization protocol.
 **      authn_protocol  Authentication protocol.
+**      authn_flags     Authentication flags
 **
 **  INPUTS/OUTPUTS:     none
 **
@@ -1409,7 +1581,8 @@ INTERNAL rpc_auth_info_t *rpc__auth_info_cache_lkup
     rpc_authn_level_t                   authn_level,
     rpc_auth_identity_handle_t          auth_identity,
     rpc_authz_protocol_id_t             authz_protocol,
-    rpc_authn_protocol_id_t             authn_protocol
+    rpc_authn_protocol_id_t             authn_protocol,
+    unsigned32                          authn_flags
 )
 {
     rpc_auth_info_t     *auth_info;
@@ -1449,7 +1622,9 @@ INTERNAL rpc_auth_info_t *rpc__auth_info_cache_lkup
             &&
             (authz_protocol == auth_info->authz_protocol)
             &&
-            (auth_identity == auth_info->u.auth_identity))
+            (auth_identity == auth_info->u.auth_identity)
+            &&
+            (authn_flags == auth_info->authn_flags))
         {
             /*
              * A matching auth info was found. 

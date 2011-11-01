@@ -55,6 +55,7 @@ INTERNAL rpc_auth_rpc_prot_epv_p_t rpc_g_ntlmauth_rpc_prot_epv[RPC_C_PROTOCOL_ID
 INTERNAL void rpc__ntlmauth_bnd_set_auth (
 	unsigned_char_p_t		/* in  */    /*server_princ_name*/,
 	rpc_authn_level_t		/* in  */    /*authn_level*/,
+	rpc_authn_flags_t               /* in  */    /*authn_flags*/,
 	rpc_auth_identity_handle_t	/* in  */    /*auth_identity*/,
 	rpc_authz_protocol_id_t		/* in  */    /*authz_protocol*/,
 	rpc_binding_handle_t		/* in  */    /*binding_h*/,
@@ -133,6 +134,7 @@ INTERNAL void rpc__ntlmauth_bnd_set_auth
 (
 	unsigned_char_p_t server_name,
 	rpc_authn_level_t level,
+	rpc_authn_flags_t flags,
 	rpc_auth_identity_handle_t auth_ident,
 	rpc_authz_protocol_id_t authz_prot,
 	rpc_binding_handle_t binding_h,
@@ -179,6 +181,12 @@ INTERNAL void rpc__ntlmauth_bnd_set_auth
 	    (level != rpc_c_authn_level_pkt_privacy))
 	{
 		st = rpc_s_unsupported_authn_level;
+		goto poison;
+	}
+
+	if (flags & (~rpc_c_protect_flags_header_sign))
+	{
+		st = rpc_s_unsupported_protect_level;
 		goto poison;
 	}
 

@@ -685,7 +685,7 @@ typedef unsigned32 rpc_authn_protocol_id_t;
  * R P C _ A U T H Z _ P R O T O C O L _ I D _ T
  *
  * The RPC Authorization Protocol IDs.  See the "rpc_c_authz_..." constants
- * in "rpcauth.idl".
+ * in "rpcbase.idl".
  */
 typedef unsigned32 rpc_authz_protocol_id_t;
 
@@ -693,9 +693,17 @@ typedef unsigned32 rpc_authz_protocol_id_t;
  * R P C _ A U T H N _ L E V E L _ T
  *
  * The RPC Authentication levels.  See the "rpc_c_authn_level_..." constants
- * in "rpcauth.idl".
+ * in "rpcbase.idl".
  */
 typedef unsigned32 rpc_authn_level_t;
+
+/*
+ * R P C _ A U T H N _ F L A G S _ T
+ *
+ * The RPC Authentication flags.  See the "rpc_c_authn_level_..." constants
+ * in "rpcbase.idl".
+ */
+typedef unsigned32 rpc_authn_flags_t;
 
 /***********************************************************************/
 /*
@@ -728,6 +736,7 @@ typedef struct
     rpc_authn_level_t       authn_level;
     rpc_authn_protocol_id_t authn_protocol;
     rpc_authz_protocol_id_t authz_protocol;
+    rpc_authn_flags_t       authn_flags;
     unsigned                is_server: 1;
     union
     {

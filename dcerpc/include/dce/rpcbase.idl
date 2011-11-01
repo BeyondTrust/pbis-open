@@ -316,6 +316,12 @@ const long rpc_c_protect_level_pkt_integ       = 5; /* strong integrity check */
 const long rpc_c_protect_level_pkt_privacy     = 6; /* encrypt arguments */
 
 /*
+ * Authentication and protection flags
+ */
+const long rpc_c_protect_flags_header_sign  = 0x00000001;  /* DCE/RPC header and trailer signing */
+
+
+/*
  * Authentication services
  *
  * The various authentication schemes/protocols available to applications.

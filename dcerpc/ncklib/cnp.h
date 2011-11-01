@@ -662,11 +662,11 @@ struct rpc_cn_assoc_s_t
 #define RPC_CN_AUTH_CONTEXT_VALID(sec, st)\
     (*(sec)->sec_cn_info->cn_epv->context_valid)(sec, st)
 
-#define RPC_CN_AUTH_CREATE_INFO(prot, level, info, st)\
+#define RPC_CN_AUTH_CREATE_INFO(prot, level, flags, info, st) \
 {\
     rpc_cn_auth_epv_t   *_cn_epv;\
     _cn_epv = RPC_CN_AUTH_PROT_EPV(prot);\
-    (*_cn_epv->create_info)(level, info, st);\
+    (*_cn_epv->create_info)(level, flags, info, st);\
 }
 
 #define RPC_CN_AUTH_CRED_CHANGED(sec, st)\

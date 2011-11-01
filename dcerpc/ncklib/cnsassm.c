@@ -1426,6 +1426,8 @@ INTERNAL unsigned32     do_alter_cont_req_action_rtn
     rpc_cn_sm_event_entry_t     event;
     rpc_cn_port_any_t           *sec_addr;
     boolean 			old_client;
+    rpc_cn_sec_context_p_t      sec_context = NULL;
+    unsigned8                   resp_flags = 0;
     
     RPC_CN_DBG_RTN_PRINTF(SERVER do_alter_cont_req_action_rtn);
 
@@ -1519,6 +1521,19 @@ INTERNAL unsigned32     do_alter_cont_req_action_rtn
     }
     
     /*
+     * Prepare header flags especially taking rpc_c_protect_flags_header_sign
+     * into account if it has been requested and accepted
+     */
+    sec_context = assoc->security.assoc_current_sec_context;
+
+    resp_flags = RPC_C_CN_FLAGS_FIRST_FRAG | RPC_C_CN_FLAGS_LAST_FRAG;
+    if (sec_context &&
+	(sec_context->sec_info->authn_flags & rpc_c_protect_flags_header_sign))
+    {
+        resp_flags |= RPC_C_CN_FLAGS_SUPPORT_HEADER_SIGN;
+    }
+
+    /*
      * An rpc_alter_context_response PDU will be sent if the association status is
      * OK.
      */
@@ -1527,7 +1542,7 @@ INTERNAL unsigned32     do_alter_cont_req_action_rtn
         fragbuf->data_size = header_size;
         rpc__cn_pkt_format_common (resp_header, 
                                    RPC_C_CN_PKT_ALTER_CONTEXT_RESP,
-                                   (RPC_C_CN_FLAGS_FIRST_FRAG | RPC_C_CN_FLAGS_LAST_FRAG),
+                                   resp_flags,
                                    fragbuf->data_size,
                                    auth_len,
                                    RPC_CN_PKT_CALL_ID (req_header),
@@ -1885,6 +1900,8 @@ INTERNAL unsigned32     do_assoc_req_action_rtn
     rpc_cn_port_any_t           *sec_addr;
     boolean			old_client; 
     rpc_cn_sm_ctlblk_t 		*sm_p; 
+    rpc_cn_sec_context_p_t      sec_context = NULL;
+    unsigned8                   resp_flags = 0;
 
     RPC_CN_DBG_RTN_PRINTF (SERVER do_assoc_req_action_rtn);
 
@@ -2127,6 +2144,19 @@ INTERNAL unsigned32     do_assoc_req_action_rtn
 #endif
 
     /*
+     * Prepare header flags especially taking rpc_c_protect_flags_header_sign
+     * into account if it has been requested and accepted
+     */
+    sec_context = assoc->security.assoc_current_sec_context;
+
+    resp_flags = RPC_C_CN_FLAGS_FIRST_FRAG | RPC_C_CN_FLAGS_LAST_FRAG;
+    if (sec_context &&
+	(sec_context->sec_info->authn_flags & rpc_c_protect_flags_header_sign))
+    {
+        resp_flags |= RPC_C_CN_FLAGS_SUPPORT_HEADER_SIGN;
+    }
+
+    /*
      * An rpc_bind_nak PDU will be sent if the association status is
      * not OK. Assume it will be the only fragment sent.
      */
@@ -2135,7 +2165,7 @@ INTERNAL unsigned32     do_assoc_req_action_rtn
         fragbuf->data_size = header_size;
         rpc__cn_pkt_format_common (resp_header, 
                                    RPC_C_CN_PKT_BIND_ACK,
-                                   (RPC_C_CN_FLAGS_FIRST_FRAG | RPC_C_CN_FLAGS_LAST_FRAG),
+                                   resp_flags,
                                    fragbuf->data_size,
                                    auth_len,
                                    RPC_CN_PKT_CALL_ID (req_header),
@@ -2149,7 +2179,7 @@ INTERNAL unsigned32     do_assoc_req_action_rtn
     }
     else
     {
-	int 	i;
+	int i = 0;
 
         /*
          * Some failure happened. Reject this
@@ -2160,7 +2190,7 @@ INTERNAL unsigned32     do_assoc_req_action_rtn
             (RPC_C_CN_PROTO_VERS_MINOR * sizeof(rpc_cn_version_t));
         rpc__cn_pkt_format_common (resp_header, 
                                    RPC_C_CN_PKT_BIND_NAK,
-                                   (RPC_C_CN_FLAGS_FIRST_FRAG | RPC_C_CN_FLAGS_LAST_FRAG),
+                                   resp_flags,
                                    fragbuf->data_size,
                                    0,
                                    RPC_CN_PKT_CALL_ID (req_header),
@@ -3624,6 +3654,7 @@ INTERNAL void rpc__cn_assoc_process_auth_tlr
     rpc_cn_bind_auth_value_priv_p_t local_auth_value, priv_auth_value;
     unsigned32                      local_auth_value_len;
     rpc_authn_protocol_id_t         authn_protocol;
+    rpc_authn_flags_t               req_authn_flags = 0;
 
     RPC_CN_DBG_RTN_PRINTF(SERVER rpc__cn_assoc_process_auth_tlr);
     CODING_ERROR (st);
@@ -3661,6 +3692,15 @@ INTERNAL void rpc__cn_assoc_process_auth_tlr
         *st = rpc_s_unknown_auth_protocol;
         goto DONE;
     }
+
+    /*
+     * Check if header signing extension has been requested
+     */
+    if (RPC_CN_PKT_FLAGS(req_header) & RPC_C_CN_FLAGS_SUPPORT_HEADER_SIGN)
+    {
+        req_authn_flags |= rpc_c_protect_flags_header_sign;
+    }
+
     /*
      * Determine whether a security context with the given
      * key ID already exists. If it does this is an attempt at
@@ -3677,6 +3717,7 @@ INTERNAL void rpc__cn_assoc_process_auth_tlr
         RPC_CN_AUTH_CREATE_INFO (
                    authn_protocol,
                    req_auth_tlr->auth_level,
+                   req_authn_flags,
                    &info,
                    st);
     }
@@ -3970,6 +4011,7 @@ rpc_cn_packet_p_t       header;
     boolean                                 first_frag  = true;
     boolean                                 free_buf    = false;
     boolean                                 free_message=false;
+    rpc_cn_sec_context_p_t                  sec_context = NULL;
 
     /*
      * We stashed the KRB_AP_REP message here when we built it.
@@ -3991,6 +4033,7 @@ rpc_cn_packet_p_t       header;
     do
     {
         flags = 0;
+	sec_context = assoc->security.assoc_current_sec_context;
 
         if (first_frag)
         {
@@ -4010,6 +4053,13 @@ rpc_cn_packet_p_t       header;
             free_buf = true;
         }
 
+	if (sec_context &&
+	    (sec_context->sec_info->authn_flags &
+	     rpc_c_protect_flags_header_sign))
+	{
+		flags |= RPC_C_CN_FLAGS_SUPPORT_HEADER_SIGN;
+	}
+
         RPC_CN_PKT_FLAGS (header) = flags;
 
         /*
@@ -4017,7 +4067,7 @@ rpc_cn_packet_p_t       header;
          */
         rpc__cn_assoc_send_fragbuf (assoc, 
                                     fragbuf,
-                                    assoc->security.assoc_current_sec_context,
+                                    sec_context,
                                     free_buf,
                                     &(assoc->assoc_status));
 

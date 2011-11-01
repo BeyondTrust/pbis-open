@@ -69,6 +69,7 @@ PRIVATE void rpc__noauth_bnd_set_auth
 (
         unsigned_char_p_t server_name,
         rpc_authn_level_t level,
+        rpc_authn_flags_t authn_flags,
         rpc_auth_identity_handle_t auth_ident,
         rpc_authz_protocol_id_t authz_prot,
         rpc_binding_handle_t binding_h,
@@ -122,6 +123,7 @@ PRIVATE void rpc__noauth_bnd_set_auth
     noauth_info->auth_info.server_princ_name = server_name;
     noauth_info->auth_info.authn_level = level;
     noauth_info->auth_info.authn_protocol = rpc_c_authn_dce_dummy;
+    noauth_info->auth_info.authn_flags = authn_flags;
     noauth_info->auth_info.authz_protocol = authz_prot;
     noauth_info->auth_info.is_server = 0;
     noauth_info->auth_info.u.auth_identity = auth_ident;

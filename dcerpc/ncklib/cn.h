@@ -103,6 +103,8 @@ typedef struct rpc_cn_auth_info_s_t
 #define RPC_C_SEC_STATE_INCOMPLETE		1
 #define RPC_C_SEC_STATE_COMPLETE		2
 
+#define RPC_C_SEC_FLAGS_SIGN_HEADER             (0x00000001)
+
 typedef struct rpc_cn_sec_context_s_t
 {
     rpc_list_t           link;         /* MUST BE 1ST                    */
@@ -110,6 +112,7 @@ typedef struct rpc_cn_sec_context_s_t
     unsigned32           sec_status;
     unsigned32           sec_key_id;
     unsigned32           sec_last_call_id;
+    unsigned32           sec_flags;
     rpc_auth_info_t      *sec_info;
     rpc_cn_auth_info_t   *sec_cn_info;
 } rpc_cn_sec_context_t, *rpc_cn_sec_context_p_t;
@@ -152,6 +155,7 @@ typedef boolean32 (*rpc_cn_auth_context_valid_fn_t) (
 
 typedef void (*rpc_cn_auth_create_info_fn_t) (
        rpc_authn_level_t                /* authn_level */,
+       rpc_authn_flags_t                /* authn_flags */,
        rpc_auth_info_p_t                * /* auth_info */,
        unsigned32                       * /* st*/
     );

@@ -81,6 +81,7 @@ PRIVATE void rpc__schnauth_bnd_set_auth
 (
         unsigned_char_p_t server_name,
         rpc_authn_level_t level,
+        rpc_authn_flags_t flags,
         rpc_auth_identity_handle_t auth_ident,
         rpc_authz_protocol_id_t authz_prot,
         rpc_binding_handle_t binding_h   ATTRIBUTE_UNUSED,
@@ -116,6 +117,13 @@ PRIVATE void rpc__schnauth_bnd_set_auth
     {
 	st = rpc_s_unsupported_authn_level;
 	goto poison;
+    }
+
+    /* No authentication flags are supported */
+    if (flags)
+    {
+        st = rpc_s_unsupported_authn_level;
+        goto poison;
     }
 
     if (auth_info->domain_name != NULL) {

@@ -48,6 +48,7 @@ INTERNAL boolean32 rpc__ntlmauth_cn_context_valid (
 
 INTERNAL void rpc__ntlmauth_cn_create_info (
        rpc_authn_level_t		/* in */     /*authn_level*/,
+       rpc_authn_flags_t                /* in */     /*authn_flags */,
        rpc_auth_info_p_t		/* out */    * /*auth_info*/,
        unsigned32			/* out */    * /*st*/
     );
@@ -335,6 +336,7 @@ INTERNAL boolean32 rpc__ntlmauth_cn_context_valid
 INTERNAL void rpc__ntlmauth_cn_create_info
 (
 	rpc_authn_level_t	authn_level,
+	rpc_authn_flags_t       authn_flags,
 	rpc_auth_info_p_t	*auth_info,
 	unsigned32		*st
 )
@@ -361,6 +363,9 @@ INTERNAL void rpc__ntlmauth_cn_create_info
 		return;
 	}
 
+	/* Accept header signing if requested */
+	authn_flags &= rpc_c_protect_flags_header_sign;
+
 	/*
 	 * Allocate storage for a ntlmauth info structure from heap.
 	 */
@@ -377,6 +382,7 @@ INTERNAL void rpc__ntlmauth_cn_create_info
 	ntlmauth_info->auth_info.refcount           = 1;
 	ntlmauth_info->auth_info.server_princ_name  = '\0';
 	ntlmauth_info->auth_info.authn_level        = authn_level;
+	ntlmauth_info->auth_info.authn_flags        = authn_flags;
 	ntlmauth_info->auth_info.authn_protocol     = rpc_c_authn_winnt;
 	ntlmauth_info->auth_info.authz_protocol     = rpc_c_authz_name;
 	ntlmauth_info->auth_info.is_server          = true;
@@ -707,6 +713,25 @@ INTERNAL int rpc__ntlmauth_verify_server_token
 	return gss_rc;
 }
 
+INTERNAL unsigned32 rpc__ntlmauth_cn_inq_flags_supported
+(
+	unsigned32 authn_flags
+)
+{
+	unsigned st = rpc_s_ok;
+
+	/*
+	 * Mask off all known flags to see if there's any remaining
+	 * (i.e. unknown) flag set. Return error if there is.
+	 */
+	if (authn_flags & ~rpc_c_protect_flags_header_sign)
+	{
+		st = rpc_s_unsupported_protect_level;
+	}
+
+	return st;
+}
+
 /*****************************************************************************/
 /*
 **++
@@ -794,6 +819,15 @@ INTERNAL void rpc__ntlmauth_cn_fmt_client_req
 		return;
 	}
 #endif
+	/*
+	 * Check if requested authn_flags are supported by this mechanism
+	 */
+	*st = rpc__ntlmauth_cn_inq_flags_supported(sec->sec_info->authn_flags);
+	if (*st != rpc_s_ok)
+	{
+		return;
+	}
+
 	if (ntlmauth_cn_info->gss_ctx != GSS_C_NO_CONTEXT)
 	{
 		/*
@@ -1257,6 +1291,7 @@ INTERNAL void rpc__ntlmauth_cn_wrap_packet
 )
 {
 	rpc_ntlmauth_cn_info_p_t ntlmauth_cn_info = (rpc_ntlmauth_cn_info_p_t)sec->sec_cn_info;
+	rpc_ntlmauth_info_p_t ntlmauth_info = (rpc_ntlmauth_info_p_t)sec->sec_info;
 	rpc_cn_common_hdr_p_t hdr = NULL;
 	rpc_cn_auth_tlr_p_t tlr = NULL;
 	unsigned32 i = 0;
@@ -1273,6 +1308,7 @@ INTERNAL void rpc__ntlmauth_cn_wrap_packet
 	int conf_state = 0;
 	gss_iov_buffer_desc output_iov[4] = { {0}, {0}, {0}, {0} };
 	gss_buffer_desc ntlmssp_buffer = {0};
+	unsigned32 gss_buffer_idx = 0;
 
 	CODING_ERROR(st);
 	RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_ROUTINE_TRACE,
@@ -1351,35 +1387,50 @@ INTERNAL void rpc__ntlmauth_cn_wrap_packet
 		wrap_idx += iov[i].iov_len;
 	}
 
-	/* Ensure padding bytes are zeroed */
+	/* Ensure padding bytes zeroed */
 	memset(&wrap_base[wrap_idx], 0, auth_pad_len);
 	wrap_idx += auth_pad_len;
 
-	/* Copy the DCE/RPC trailer (common part) */
+	/* Copy the DCE/RPC trailer (the common part) because it may
+	   be needed in case header signing has been negotiated */
 	memcpy(&wrap_base[wrap_idx],
 	       iov[tlr_iov_idx].iov_base,
 	       RPC_CN_PKT_SIZEOF_COM_AUTH_TLR);
 	wrap_idx += RPC_CN_PKT_SIZEOF_COM_AUTH_TLR;
 
-
 	/* NTLMSSP header to be generated */
-	output_iov[0].type          = GSS_IOV_BUFFER_TYPE_HEADER |
-                                      GSS_IOV_BUFFER_FLAG_ALLOCATE;
+	output_iov[gss_buffer_idx++].type = GSS_IOV_BUFFER_TYPE_HEADER |
+                                            GSS_IOV_BUFFER_FLAG_ALLOCATE;
 
-	/* DCE/RPC header (for signing) */
-	output_iov[1].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
-	output_iov[1].buffer.value  = &(wrap_base[0]);
-	output_iov[1].buffer.length = RPC_CN_PKT_SIZEOF_RESP_HDR;
+	if (ntlmauth_info->auth_info.authn_flags &&
+	    rpc_c_protect_flags_header_sign)
+	{
+		/* DCE/RPC header (if header signing has been enabled) */
+		output_iov[gss_buffer_idx].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
+		output_iov[gss_buffer_idx].buffer.value  = &(wrap_base[0]);
+		output_iov[gss_buffer_idx].buffer.length = RPC_CN_PKT_SIZEOF_RESP_HDR;
+
+		gss_buffer_idx++;
+	}
 
 	/* Data payload (for signing and sealing) */
-	output_iov[2].type          = GSS_IOV_BUFFER_TYPE_DATA;
-	output_iov[2].buffer.value  = &(wrap_base[header_size]);
-	output_iov[2].buffer.length = pdu_len + auth_pad_len;
+	output_iov[gss_buffer_idx].type          = GSS_IOV_BUFFER_TYPE_DATA;
+	output_iov[gss_buffer_idx].buffer.value  = &(wrap_base[header_size]);
+	output_iov[gss_buffer_idx].buffer.length = pdu_len + auth_pad_len;
 
-	/* DCE/RPC common part of auth trailer (for signing) */
-	output_iov[3].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
-	output_iov[3].buffer.value  = &(wrap_base[header_size + pdu_len + auth_pad_len]);
-	output_iov[3].buffer.length = RPC_CN_PKT_SIZEOF_COM_AUTH_TLR;
+	gss_buffer_idx++;
+
+	if (ntlmauth_info->auth_info.authn_flags &&
+	    rpc_c_protect_flags_header_sign)
+	{
+		/* DCE/RPC common part of auth trailer
+		   (if header signing has been enabled) */
+		output_iov[gss_buffer_idx].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
+		output_iov[gss_buffer_idx].buffer.value  = &(wrap_base[header_size + pdu_len + auth_pad_len]);
+		output_iov[gss_buffer_idx].buffer.length = RPC_CN_PKT_SIZEOF_COM_AUTH_TLR;
+
+		gss_buffer_idx++;
+	}
 
 	gss_rc = gss_wrap_iov(&minor_status,
 			      ntlmauth_cn_info->gss_ctx,
@@ -1422,7 +1473,9 @@ INTERNAL void rpc__ntlmauth_cn_wrap_packet
 	}
 
 	/* NTLMSSP trailer (yes, gss_wrap_iov auth header is in fact a trailer in DCE/RPC) */
-	memcpy(&wrap_base[wrap_idx], ntlmssp_buffer.value, ntlmssp_buffer.length);
+	memcpy(&wrap_base[wrap_idx],
+	       ntlmssp_buffer.value,
+	       ntlmssp_buffer.length);
 	wrap_idx += ntlmssp_buffer.length;
 
 	/* set the out_iov blob to be sent */
@@ -1746,6 +1799,7 @@ INTERNAL void rpc__ntlmauth_cn_unwrap_packet
 )
 {
 	rpc_ntlmauth_cn_info_p_t ntlmauth_cn_info = (rpc_ntlmauth_cn_info_p_t)sec->sec_cn_info;
+	rpc_ntlmauth_info_p_t ntlmauth_info = (rpc_ntlmauth_info_p_t)sec->sec_info;
 	unsigned32 pdu_len = 0;
 	OM_uint32 gss_rc = 0;
 	OM_uint32 minor_status = 0;
@@ -1760,6 +1814,7 @@ INTERNAL void rpc__ntlmauth_cn_unwrap_packet
 	gss_buffer_desc pdu_buffer = {0};
 	gss_buffer_desc ntlmssp_buffer = {0};
 	gss_buffer_desc auth_tlr_buffer = {0};
+	unsigned32 gss_buffer_idx = 0;
 
 	CODING_ERROR(st);
 	RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_ROUTINE_TRACE,
@@ -1773,11 +1828,16 @@ INTERNAL void rpc__ntlmauth_cn_unwrap_packet
 
 	/* Get rpc payload and ntlmssp trailer pointers */
 	auth_pad_len = auth_tlr->stub_pad_length;
+	if (unpack_ints)
+	{
+		SWAB_INPLACE_16(auth_pad_len);
+	}
+
 	pdu_base     = ((unsigned_char_p_t)pkt) + header_size;
-	pdu_len      = pkt_len - (header_size + auth_pad_len + RPC_CN_PKT_SIZEOF_COM_AUTH_TLR + ntlmssp_len);
+	pdu_len      = pkt_len - (header_size + auth_pad_len + RPC_CN_PKT_SIZEOF_COM_AUTH_TLR + ntlmssp_len + auth_pad_len);
 	ntlmssp_base = ((unsigned_char_p_t)auth_tlr) + RPC_CN_PKT_SIZEOF_COM_AUTH_TLR;
 
-	/* DCE/RPC header (for signing check) */
+	/* DCE/RPC header (for signing check if enabled) */
 	hdr_buffer.value       = pkt;
 	hdr_buffer.length      = header_size;
 
@@ -1794,17 +1854,33 @@ INTERNAL void rpc__ntlmauth_cn_unwrap_packet
 	ntlmssp_buffer.length = ntlmssp_len;
 
 	/* Prepare output_iov buffers to be verified and decrypted */
-	output_iov[0].type   = GSS_IOV_BUFFER_TYPE_HEADER;
-	output_iov[0].buffer = ntlmssp_buffer;
+	output_iov[gss_buffer_idx].type   = GSS_IOV_BUFFER_TYPE_HEADER;
+	output_iov[gss_buffer_idx].buffer = ntlmssp_buffer;
 
-	output_iov[1].type   = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
-	output_iov[1].buffer = hdr_buffer;
+	gss_buffer_idx++;
 
-	output_iov[2].type   = GSS_IOV_BUFFER_TYPE_DATA;
-	output_iov[2].buffer = pdu_buffer;
+	if (ntlmauth_info->auth_info.authn_flags &&
+	    rpc_c_protect_flags_header_sign)
+	{
+		output_iov[gss_buffer_idx].type   = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
+		output_iov[gss_buffer_idx].buffer = hdr_buffer;
 
-	output_iov[3].type   = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
-	output_iov[3].buffer = auth_tlr_buffer;
+		gss_buffer_idx++;
+	}
+
+	output_iov[gss_buffer_idx].type   = GSS_IOV_BUFFER_TYPE_DATA;
+	output_iov[gss_buffer_idx].buffer = pdu_buffer;
+
+	gss_buffer_idx++;
+
+	if (ntlmauth_info->auth_info.authn_flags &&
+	    rpc_c_protect_flags_header_sign)
+	{
+		output_iov[gss_buffer_idx].type   = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
+		output_iov[gss_buffer_idx].buffer = auth_tlr_buffer;
+
+		gss_buffer_idx++;
+	}
 
 	gss_rc = gss_unwrap_iov(&minor_status,
 				ntlmauth_cn_info->gss_ctx,
@@ -1980,11 +2056,28 @@ INTERNAL void rpc__ntlmauth_cn_recv_check
 					      unpack_ints, st);
 		return;
 
-	case RPC_C_CN_PKT_FAULT:
 	case RPC_C_CN_PKT_BIND:
+	case RPC_C_CN_PKT_ALTER_CONTEXT:
+		if (pdu->flags & RPC_C_CN_FLAGS_SUPPORT_HEADER_SIGN)
+		{
+			*st = rpc__ntlmauth_cn_inq_flags_supported(rpc_c_protect_flags_header_sign);
+			if (*st == rpc_s_ok)
+			{
+				sec->sec_info->authn_flags |= rpc_c_protect_flags_header_sign;
+			}
+			else
+			{
+				sec->sec_info->authn_flags &= ~rpc_c_protect_flags_header_sign;
+			}
+
+			/* If header signing is not supported it is enough to clear the flag */
+			*st = rpc_s_ok;
+		}
+		break;
+
+	case RPC_C_CN_PKT_FAULT:
 	case RPC_C_CN_PKT_BIND_ACK:
 	case RPC_C_CN_PKT_BIND_NAK:
-	case RPC_C_CN_PKT_ALTER_CONTEXT:
 	case RPC_C_CN_PKT_ALTER_CONTEXT_RESP:
 	case RPC_C_CN_PKT_AUTH3:
 	case RPC_C_CN_PKT_SHUTDOWN:

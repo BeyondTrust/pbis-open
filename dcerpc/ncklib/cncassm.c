@@ -3654,6 +3654,7 @@ INTERNAL unsigned32     add_mark_set_action_rtn
     unsigned32          local_st;
     rpc_cn_sm_ctlblk_t	*sm_p;
     unsigned32		status;
+    rpc_binding_rep_p_t binding_rep = NULL;
 
     RPC_CN_DBG_RTN_PRINTF(CLIENT add_mark_set_action_rtn);
    
@@ -3729,6 +3730,25 @@ INTERNAL unsigned32     add_mark_set_action_rtn
     {
        sm_p->cur_state =  RPC_C_CLIENT_ASSOC_OPEN;
        return (assoc->assoc_status);
+    }
+
+    /*
+     * Check if header signing has been requested _and_ server
+     * confirms it is supported. Fail if it does not.
+     */
+    binding_rep = assoc->call_rep->binding_rep;
+    if (binding_rep)
+    {
+	if (binding_rep->auth_info &&
+            (binding_rep->auth_info->authn_flags &
+             rpc_c_protect_flags_header_sign))
+        {
+            if (!(RPC_CN_PKT_FLAGS(header) & RPC_C_CN_FLAGS_SUPPORT_HEADER_SIGN))
+            {
+                assoc->assoc_status = rpc_s_auth_method;
+                RPC_CN_ASSOC_CHECK_ST(assoc, &(assoc->assoc_status));
+            }
+	}
     }
 
     /*
@@ -4864,8 +4884,9 @@ INTERNAL void send_pdu
         auth_len = auth_space;
         flags = 0;
 
-        if (first_frag) {
-            flags = RPC_C_CN_FLAGS_FIRST_FRAG;
+        if (first_frag)
+        {
+            flags |= RPC_C_CN_FLAGS_FIRST_FRAG;
             first_frag = false;
         }
 
@@ -4894,6 +4915,20 @@ INTERNAL void send_pdu
         if (auth_len_remain == 0) {
             flags = flags | RPC_C_CN_FLAGS_LAST_FRAG;
             done = true;
+        }
+
+        /*
+         * Request header signing support if the corresponding
+         * authentication flag is set
+         */
+        if (sec_context &&
+            sec_context->sec_info->authn_flags & rpc_c_protect_flags_header_sign)
+        {
+            if (pdu_type == RPC_C_CN_PKT_BIND ||
+                pdu_type == RPC_C_CN_PKT_ALTER_CONTEXT)
+            {
+                flags |= RPC_C_CN_FLAGS_SUPPORT_HEADER_SIGN;
+            }
         }
 
         fragbuf->data_size = header_size + auth_len;

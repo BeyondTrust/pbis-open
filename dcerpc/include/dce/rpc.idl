@@ -210,6 +210,25 @@ void rpc_binding_set_auth_info
 );
 
 /*
+ * R P C _ B I N D I N G _ S E T _ A U T H _ I N F O _ 2
+ *
+ * Set authentication and authorization information into a binding
+ * handle.
+ */
+void rpc_binding_set_auth_info_2
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [in]        unsigned_char_p_t       server_princ_name,
+    [in]        unsigned32              protect_level,
+    [in]        unsigned32              authn_svc,
+    [in]        unsigned32              authn_flags,
+    [in]        rpc_auth_identity_handle_t
+                                        auth_identity,
+    [in]        unsigned32              authz_svc,
+    [out]       unsigned32              *st
+);
+
+/*
  * R P C _ B I N D I N G _ I N Q _ A U T H _ I N F O
  *
  * Return authentication and authorization information from a binding
@@ -221,6 +240,25 @@ void rpc_binding_inq_auth_info
     [out]       unsigned_char_p_t       *server_princ_name,
     [out]       unsigned32              *protect_level,
     [out]       unsigned32              *authn_svc,
+    [out]       rpc_auth_identity_handle_t
+                                        *auth_identity,
+    [out]       unsigned32              *authz_svc,
+    [out]       unsigned32              *st
+);
+
+/*
+ * R P C _ B I N D I N G _ I N Q _ A U T H _ I N F O _ 2
+ *
+ * Return authentication and authorization information from a binding
+ * handle.  Client-only.
+ */
+void rpc_binding_inq_auth_info_2
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       unsigned_char_p_t       *server_princ_name,
+    [out]       unsigned32              *protect_level,
+    [out]       unsigned32              *authn_svc,
+    [out]       unsigned32              *authn_flags,
     [out]       rpc_auth_identity_handle_t
                                         *auth_identity,
     [out]       unsigned32              *authz_svc,

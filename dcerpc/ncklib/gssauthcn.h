@@ -44,7 +44,7 @@
 #include <gssapi/gssapi_ext.h>
 #include <krb5.h>
 
-typedef struct
+typedef struct rpc_gssauth_cn_info
 {
     rpc_cn_auth_info_t  cn_info;
 

@@ -66,6 +66,9 @@ typedef struct rpc_gssauth_info_t {
 
 } rpc_gssauth_info_t, *rpc_gssauth_info_p_t;
 
+
+#define RPC_CN_PKT_SIZEOF_GSSAUTH_AUTH_TLR   (45)
+
 /*
  * Prototypes for PRIVATE routines.
  */
