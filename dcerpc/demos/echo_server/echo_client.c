@@ -17,15 +17,13 @@
 #include <compat/dcerpc.h>
 #include "echo.h"
 #include <misc.h>
-#ifndef _WIN32
-#include <ntlm/sspintlm.h>
-#include <termios.h>
-#endif
 
 #ifndef _WIN32
 #define PUBLIC
 #define PRIVATE
 #include <rpcdbg.h>
+#include <dce/ntlmssp_types.h>
+#include <termios.h>
 #endif
 
 #ifdef HAVE_GETOPT_H
@@ -126,7 +124,7 @@ main(
     unsigned32 authn_svc = rpc_c_authn_gss_negotiate;
 
     char * nl;
-    SEC_WINNT_AUTH_IDENTITY winnt = { 0 };
+    rpc_ntlmssp_auth_ident_t winnt = { 0 };
     winnt.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
     /*
@@ -327,7 +325,7 @@ main(
             &status);
         if (status)
         {
-            printf ("Unable to inquire SPN %x. exiting.\n", status);
+            printf ("Unable to inquire SPN %x. exiting.\n", (unsigned int)status);
             exit(1);
         }
         printf("Found SPN %s\n", inquired_spn);
@@ -345,7 +343,7 @@ main(
             rpc_c_authz_name, &status);
         if (status)
         {
-            printf ("Couldn't set auth info %u. exiting.\n", status);
+            printf ("Couldn't set auth info %u. exiting.\n", (unsigned int)status);
             exit(1);
         }
     }
