@@ -65,6 +65,22 @@ typedef struct _CLOCK
     LONG64 llAdjust;
 } CLOCK, *PCLOCK;
 
+
+/*
+ * Two ways to set default thread pool stack size:
+ * - By setting _LW_TASK_THREAD_STACK_SIZE during the build
+ * - Changing "0" below to some number greater than PTHREAD_STACK_MIN (
+ *   generally 16k) 
+ * When not set, the default thread pool stack size is in effect; 8M on Linux.
+ */
+#ifndef _LW_TASK_THREAD_STACK_SIZE 
+#define _LW_TASK_THREAD_STACK_SIZE (0 * 1024)
+#endif
+
+#ifndef _LW_WORK_THREAD_STACK_SIZE 
+#define _LW_WORK_THREAD_STACK_SIZE (0 * 1024)
+#endif
+
 struct _LW_THREAD_POOL_ATTRIBUTES
 {
     unsigned bDelegateTasks:1;
