@@ -1,10 +1,11 @@
 /* ex: set shiftwidth=4 softtabstop=4 expandtab: */
-#if HAVE_CONFIG_H
+#ifdef _MK_HOST
 #include <config.h>
 #endif
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <compat/dcerpc.h>
 #include "misc.h"
@@ -26,10 +27,10 @@ chk_dce_err(
         if (error_status == error_status_ok)
             printf("ERROR.  where = <%s> why = <%s> error code = 0x%lx"
                    "reason = <%s>\n",
-                   where, why, ecode, errstr);
+                   where, why, (long int)ecode, errstr);
         else
             printf("ERROR.  where = <%s> why = <%s> error code = 0x%lx\n",
-                   where, why, ecode);
+                   where, why, (long int)ecode);
        
         if (fatal) exit(1);
     }

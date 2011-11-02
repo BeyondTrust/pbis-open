@@ -1,4 +1,4 @@
-SUBDIRS=". libdcethread idl_compiler include uuid idl_lib ncklib dcelib rpcd"
+SUBDIRS=". libdcethread idl_compiler include uuid idl_lib ncklib dcelib rpcd demos"
 
 option()
 {
