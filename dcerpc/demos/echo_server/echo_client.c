@@ -17,6 +17,8 @@
 #include <compat/dcerpc.h>
 #include "echo.h"
 #include <misc.h>
+#include <ntlm/sspintlm.h>
+#include <termios.h>
 
 #ifndef _WIN32
 #define PUBLIC
@@ -56,7 +58,7 @@ get_client_rpc_binding(
 
 static void usage()
 {
-    printf("usage: echo_client [-h hostname] [{-a name | -i} [-s] [-p level]] [-e endpoint] [-n] [-u] [-t]\n");
+    printf("usage: echo_client [-S service] [-h hostname] [{-a name | -i} [-s] [-p level]] [-e endpoint] [-n] [-u] [-t] [-g count] [-c count] [-U user] [-D domain] [-P password | -] \n");
     printf("         -h:  specify host of RPC server (default is localhost)\n");
     printf("         -a:  specify authentication identity\n");
     printf("         -i:  inquire authentication identity from host\n");
@@ -67,7 +69,12 @@ static void usage()
     printf("         -u:  use UDP protocol\n");
     printf("         -t:  use TCP protocol (default)\n");
     printf("         -g:  instead of prompting, generate a data string of the specified length\n");
+    printf("         -c:  call the funnction the specified number of times (default 1)\n");
     printf("         -d:  turn on debugging\n");
+    printf("         -U:  Specify username for NTLM authentication\n");
+    printf("         -P:  Specify password for NTLM authentication or - to prompt\n");
+    printf("         -D:  Specify domain for NTLM authentication\n");
+    printf("         -S:  Specify authentication service (krb5, negotiate, winnt)\n");
     printf("\n");
     exit(1);
 }
@@ -97,6 +104,7 @@ main(
     unsigned32 flags = 0;
 
     char buf[MAX_LINE+1];
+    char password_buffer[MAX_LINE+1];
 
     /*
      * stuff needed to make RPC calls
@@ -109,14 +117,18 @@ main(
     int ok;
     unsigned32 i;
     int generate_length = -1;
+    int call_count = 1;
+    int call = 0;
+    unsigned32 authn_svc = rpc_c_authn_gss_negotiate;
 
     char * nl;
+    SEC_WINNT_AUTH_IDENTITY winnt = { 0 };
 
     /*
      * Process the cmd line args
      */
 
-    while ((c = getopt(argc, argv, "sh:a:ip:e:nutdg:")) != EOF)
+    while ((c = getopt(argc, argv, "S:sc:h:a:ip:e:nutdg:U:D:P:")) != EOF)
     {
         switch (c)
         {
@@ -126,6 +138,54 @@ main(
 #else
             flags |= rpc_c_protect_flags_header_sign;
 #endif
+            break;
+        case 'S':
+            if (!strcasecmp(optarg, "gss_negotiate") ||
+                !strcasecmp(optarg, "spnego") ||
+                !strcasecmp(optarg, "negotiate") ||
+                !strcasecmp(optarg, "rpc_c_authn_gss_negotiate") ||
+                !strcasecmp(optarg, "authn_gss_negotiate") ||
+                !strcasecmp(optarg, "authn_negotiate"))
+            {
+                authn_svc = rpc_c_authn_gss_negotiate;
+            }
+            else if (!strcasecmp(optarg, "winnt") ||
+                !strcasecmp(optarg, "rpc_c_authn_winnt") ||
+                !strcasecmp(optarg, "ntlm") ||
+                !strcasecmp(optarg, "authn_ntlm") ||
+                !strcasecmp(optarg, "authn_winnt"))
+            {
+                authn_svc = rpc_c_authn_winnt;
+            }
+            else if (!strcasecmp(optarg, "gss_mskrb") ||
+                !strcasecmp(optarg, "gss_kerberos") ||
+                !strcasecmp(optarg, "mskrb") ||
+                !strcasecmp(optarg, "krb") ||
+                !strcasecmp(optarg, "kerberos") ||
+                !strcasecmp(optarg, "krb5") ||
+                !strcasecmp(optarg, "rpc_c_authn_gss_mskrb") ||
+                !strcasecmp(optarg, "authn_gss_mskrb"))
+            {
+                authn_svc = rpc_c_authn_gss_mskrb;
+            }
+            else if (!strcasecmp(optarg, "gss_tls") ||
+                !strcasecmp(optarg, "tls") ||
+                !strcasecmp(optarg, "schannel") ||
+                !strcasecmp(optarg, "rpc_c_authn_gss_tls") ||
+                !strcasecmp(optarg, "authn_gss_tls"))
+            {
+                authn_svc = rpc_c_authn_gss_tls;
+            }
+            else if (!strcasecmp(optarg, "default") ||
+                !strcasecmp(optarg, "rpc_c_authn_default"))
+            {
+                authn_svc = rpc_c_authn_default;
+            }
+            else
+            {
+                printf ("Unknown authentication service %s\n", optarg);
+                exit(1);
+            }
             break;
         case 'h':
             rpc_host = optarg;
@@ -160,8 +220,47 @@ main(
             rpc__dbg_set_switches("21-43.10", &status);
 #endif
             break;
+        case 'c':
+            call_count = strtol(optarg, NULL, 10);
+            break;
         case 'g':
             generate_length = strtol(optarg, NULL, 10);
+            break;
+        case 'U':
+            winnt.User = optarg;
+            winnt.UserLength = strlen(optarg);
+            break;
+        case 'P':
+            if (!strcmp(optarg, "-") || !strcmp(optarg, "*"))
+            {
+                struct termios old, new;
+                FILE *tty = fopen("/dev/tty", "r+");
+
+                tcgetattr(fileno(tty), &old);
+                memcpy(&new, &old, sizeof(old));
+                new.c_lflag &= ~(ECHO);
+                tcsetattr(fileno(tty), TCSANOW, &new);
+                fprintf(tty, "%s", "Password: ");
+                fflush(tty);
+
+                fgets(password_buffer, sizeof(password_buffer), tty);
+                fprintf(tty, "\n");
+
+                tcsetattr(fileno(tty), TCSANOW, &old);
+                fclose(tty);
+
+                winnt.Password = password_buffer;
+                winnt.PasswordLength = strlen(password_buffer);
+            }
+            else
+            {
+                winnt.Password = optarg;
+                winnt.PasswordLength = strlen(optarg);
+            }
+            break;
+        case 'D':
+            winnt.Domain = optarg;
+            winnt.DomainLength = strlen(optarg);
             break;
         default:
             usage();
@@ -190,7 +289,7 @@ main(
     {
         rpc_mgmt_inq_server_princ_name(
             echo_server,
-            rpc_c_authn_gss_negotiate,
+            authn_svc,
             (unsigned char **)&inquired_spn,
             &status);
         if (status)
@@ -207,9 +306,9 @@ main(
             echo_server,
             spn,
             protect_level,
-            rpc_c_authn_gss_negotiate,
+            authn_svc,
             flags,
-            NULL,
+            authn_svc == rpc_c_authn_winnt ? (rpc_auth_identity_handle_t) &winnt : NULL,
             rpc_c_authz_name, &status);
         if (status)
         {
@@ -265,24 +364,27 @@ main(
      * Do the RPC call
      */
 
-    printf ("calling server\n");
-    ok = ReverseIt(echo_server, inargs, &outargs, &status);
-
-    /*
-     * Print the results
-     */
-
-    if (ok && status == error_status_ok)
+    for (call = 0; call < call_count; call++)
     {
-        printf ("got response from server. results: \n");
-        for (i=0; i<outargs->argc; i++)
-            printf("\t[%lu]: %s\n", (unsigned long)i, outargs->argv[i]);
-        printf("\n===================================\n");
+        printf ("calling server\n");
+        ok = ReverseIt(echo_server, inargs, &outargs, &status);
 
+        /*
+         * Print the results
+         */
+
+        if (ok && status == error_status_ok)
+        {
+            printf ("got response from server. results: \n");
+            for (i=0; i<outargs->argc; i++)
+                printf("\t[%lu]: %s\n", (unsigned long)i, outargs->argv[i]);
+            printf("\n===================================\n");
+
+        }
+
+        if (status != error_status_ok)
+            chk_dce_err(status, "ReverseIt()", "main()", 1);
     }
-
-    if (status != error_status_ok)
-        chk_dce_err(status, "ReverseIt()", "main()", 1);
 
     /*
      * Done. Now gracefully teardown the RPC binding to the server
