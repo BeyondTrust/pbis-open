@@ -17,8 +17,10 @@
 #include <compat/dcerpc.h>
 #include "echo.h"
 #include <misc.h>
+#ifndef _WIN32
 #include <ntlm/sspintlm.h>
 #include <termios.h>
+#endif
 
 #ifndef _WIN32
 #define PUBLIC
@@ -34,6 +36,8 @@
 #define MAX_LINE 100 * 1024
 
 #ifdef _WIN32
+#define strcasecmp stricmp
+
 #define EOF_STRING "^Z"
 #else
 #define EOF_STRING "^D"
@@ -123,6 +127,7 @@ main(
 
     char * nl;
     SEC_WINNT_AUTH_IDENTITY winnt = { 0 };
+    winnt.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
     /*
      * Process the cmd line args
@@ -233,6 +238,18 @@ main(
         case 'P':
             if (!strcmp(optarg, "-") || !strcmp(optarg, "*"))
             {
+#ifdef _WIN32
+                FILE *tty = stdin;
+                HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE); 
+                DWORD old, new;
+                GetConsoleMode(hStdin, &old);
+
+                new = old & ~ENABLE_ECHO_INPUT;
+
+                SetConsoleMode(hStdin, new );
+                fprintf(stdout, "%s", "Password: ");
+                fflush(stdout);
+#else
                 struct termios old, new;
                 FILE *tty = fopen("/dev/tty", "r+");
 
@@ -242,15 +259,31 @@ main(
                 tcsetattr(fileno(tty), TCSANOW, &new);
                 fprintf(tty, "%s", "Password: ");
                 fflush(tty);
+#endif
 
                 fgets(password_buffer, sizeof(password_buffer), tty);
-                fprintf(tty, "\n");
 
+#ifdef _WIN32
+                fprintf(stdout, "\n");
+                SetConsoleMode(hStdin, old );
+#else
+                fprintf(tty, "\n");
                 tcsetattr(fileno(tty), TCSANOW, &old);
                 fclose(tty);
+#endif
 
                 winnt.Password = password_buffer;
                 winnt.PasswordLength = strlen(password_buffer);
+                if (winnt.PasswordLength > 0 && winnt.Password[winnt.PasswordLength - 1] == '\r')
+                {
+                    winnt.PasswordLength--;
+                    winnt.Password[winnt.PasswordLength] = 0;
+                }
+                if (winnt.PasswordLength > 0 && winnt.Password[winnt.PasswordLength - 1] == '\n')
+                {
+                    winnt.PasswordLength--;
+                    winnt.Password[winnt.PasswordLength] = 0;
+                }
             }
             else
             {

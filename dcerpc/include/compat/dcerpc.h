@@ -96,6 +96,7 @@ typedef RPC_BINDING_VECTOR* rpc_binding_vector_p_t;
 typedef RPC_BINDING_HANDLE rpc_binding_handle_t;
 typedef RPC_IF_HANDLE rpc_if_handle_t;
 typedef RPC_IF_ID rpc_if_id_t;
+typedef RPC_AUTH_IDENTITY_HANDLE rpc_auth_identity_handle_t;
 
 #define ATTRIBUTE_UNUSED
 
