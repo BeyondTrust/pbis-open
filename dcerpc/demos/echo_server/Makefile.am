@@ -10,6 +10,8 @@ bin_PROGRAMS=echo_server echo_client
 echo_server_SOURCES=misc.c echo_server.c echo_sstub.c
 echo_client_SOURCES=misc.c echo_client.c echo_cstub.c
 
+echo_client_CPPFLAGS=$(AM_CPPFLAGS) -I$(top_srcdir)/ncklib
+
 noinst_HEADERS=misc.h echo.idl echo.acf
 
 CLEANFILES=echo.h echo_sstub.c echo_cstub.c

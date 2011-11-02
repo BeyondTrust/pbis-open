@@ -77,6 +77,12 @@
 #define rpc_string_binding_compose(obj_uuid, protseq, network_addr, endpoint, options, string_binding, status) \
     (*(status) = RpcStringBindingCompose(obj_uuid, protseq, network_addr, endpoint, options, string_binding))
 
+#define rpc_mgmt_inq_server_princ_name(binding_h, authn_svc, server_princ_name, status) \
+    (*(status) = RpcMgmtInqServerPrincName(binding_h, authn_svc, server_princ_name))
+
+#define rpc_string_binding_compose(obj_uuid, protseq, network_addr, endpoint, options, string_binding, status) \
+    (*(status) = RpcStringBindingCompose(obj_uuid, protseq, network_addr, endpoint, options, string_binding))
+
 #define rpc_string_free(string, status) \
     (*(status) = RpcStringFree(string))
 
@@ -87,6 +93,7 @@ typedef RPC_BINDING_VECTOR* rpc_binding_vector_p_t;
 typedef RPC_BINDING_HANDLE rpc_binding_handle_t;
 typedef RPC_IF_HANDLE rpc_if_handle_t;
 typedef RPC_IF_ID rpc_if_id_t;
+typedef RPC_AUTH_IDENTITY_HANDLE rpc_auth_identity_handle_t;
 
 #define ATTRIBUTE_UNUSED
 
