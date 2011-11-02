@@ -5,7 +5,7 @@ MY_IDLFLAGS = -I$(IDL_INCLUDE_DIR)/.. -I$(top_builddir)/include $(DCETHREADINCLU
 
 install-strip:	install
 
-noinst_PROGRAMS=echo_server echo_client
+bin_PROGRAMS=echo_server echo_client
 
 echo_server_SOURCES=misc.c echo_server.c echo_sstub.c
 echo_client_SOURCES=misc.c echo_client.c echo_cstub.c
