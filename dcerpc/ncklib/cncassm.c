@@ -331,6 +331,11 @@ INTERNAL unsigned32     mark_syntax_and_sec_action_rtn (
     pointer_t  /*event_param*/,
     pointer_t  /*sm*/);
 
+INTERNAL unsigned8     mark_syntax_and_sec_action(
+    pointer_t       spc_struct,
+    pointer_t       event_param,
+    pointer_t       sm);
+
 INTERNAL unsigned32     mark_abort_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
@@ -2953,6 +2958,31 @@ INTERNAL unsigned32     mark_syntax_and_sec_action_rtn
 )
 {
     rpc_cn_assoc_t                  *assoc;
+
+    RPC_CN_DBG_RTN_PRINTF(CLIENT mark_syntax_and_sec_action_rtn);
+    
+    /*
+     * The special structure is a pointer to the association.
+     */
+    assoc = (rpc_cn_assoc_t *) spc_struct;
+
+    if (mark_syntax_and_sec_action(spc_struct, event_param, sm))
+    {
+	RPC_CN_ASSOC_WAKEUP (assoc);
+    }
+    return (assoc->assoc_status);
+}
+
+/* Returns 1 if the sender should be notified */
+
+INTERNAL unsigned8     mark_syntax_and_sec_action
+(
+  pointer_t       spc_struct,
+  pointer_t       event_param,
+  pointer_t       sm 
+)
+{
+    rpc_cn_assoc_t                  *assoc;
     rpc_cn_packet_t                 *header;
     unsigned32                      header_size;
     rpc_cn_pres_result_list_t       *pres_result_list;
@@ -2967,8 +2997,6 @@ INTERNAL unsigned32     mark_syntax_and_sec_action_rtn
     unsigned32			    status;
     unsigned8                       ptype;
 
-    RPC_CN_DBG_RTN_PRINTF(CLIENT mark_syntax_and_sec_action_rtn);
-    
     /*
      * The special structure is a pointer to the association.
      */
@@ -2982,7 +3010,7 @@ INTERNAL unsigned32     mark_syntax_and_sec_action_rtn
     {
 	process_frag_action_rtn(spc_struct, event_param, sm);
         sm_p->cur_state = RPC_C_CLIENT_ASSOC_ACTIVE;
-    	return (assoc->assoc_status);
+    	return 0;
     }
 
     /*
@@ -3306,9 +3334,8 @@ DONE:
      * wake up the client caller thread.
      */
     assoc->assoc_flags &= ~RPC_C_CN_ASSOC_AUTH_EXPECTED;
-    RPC_CN_ASSOC_WAKEUP (assoc);
     sm_p->cur_state = RPC_C_CLIENT_ASSOC_ACTIVE; 
-    return (assoc->assoc_status);
+    return 1;
 }
 
 
@@ -3655,6 +3682,7 @@ INTERNAL unsigned32     add_mark_set_action_rtn
     rpc_cn_sm_ctlblk_t	*sm_p;
     unsigned32		status;
     rpc_binding_rep_p_t binding_rep = NULL;
+    boolean             wakeup = false;
 
     RPC_CN_DBG_RTN_PRINTF(CLIENT add_mark_set_action_rtn);
    
@@ -3725,11 +3753,10 @@ INTERNAL unsigned32     add_mark_set_action_rtn
     /*
      * Mark the association with the negotiated syntax(es).
      */
-    mark_syntax_and_sec_action_rtn (spc_struct, event_param, sm);
+    wakeup = mark_syntax_and_sec_action (spc_struct, event_param, sm);
     if (assoc->assoc_status != rpc_s_ok)
     {
-       sm_p->cur_state =  RPC_C_CLIENT_ASSOC_OPEN;
-       return (assoc->assoc_status);
+       goto DONE;
     }
 
     /*
@@ -3787,8 +3814,7 @@ INTERNAL unsigned32     add_mark_set_action_rtn
     set_secondary_addr_action_rtn (spc_struct, event_param, sm);
     if (assoc->assoc_status != rpc_s_ok)
     {
-       sm_p->cur_state =  RPC_C_CLIENT_ASSOC_OPEN;
-       return (assoc->assoc_status);
+       goto DONE;
     }
     
     /*
@@ -3814,7 +3840,12 @@ INTERNAL unsigned32     add_mark_set_action_rtn
      */
     assoc->assoc_vers_minor = RPC_CN_PKT_VERS_MINOR(header);
 
+DONE:
     sm_p->cur_state =  RPC_C_CLIENT_ASSOC_OPEN;
+    if (wakeup)
+    {
+	RPC_CN_ASSOC_WAKEUP (assoc);
+    }
     return (assoc->assoc_status);
 }
 
