@@ -1608,6 +1608,10 @@ ntlm_gss_wrap_iov(
                     NtlmBuffer[dwIndex].BufferType = SECBUFFER_PADDING;
                     pBuffers[dwIndex].buffer.length = 0;
                     break;
+                case GSS_IOV_BUFFER_TYPE_EMPTY:
+                    NtlmBuffer[dwIndex].BufferType = SECBUFFER_EMPTY;
+                    pBuffers[dwIndex].buffer.length = 0;
+                    break;
                 default:
                     MinorStatus = LW_ERROR_INVALID_PARAMETER;
                     BAIL_ON_LSA_ERROR(MinorStatus);
