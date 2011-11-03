@@ -8,6 +8,13 @@ option()
         VAR=LWBASE_THREADPOOL_BACKEND \
         DEFAULT="autodetect" \
         HELP="Threadpool backend"
+
+  mk_option \
+        OPTION=threadpool-stacksize \
+        PARAM='value' \
+        VAR=LW_THREADPOOL_STACK_SIZE \
+        DEFAULT="0" \
+        HELP="Threadpool stack (In Bytes; 0=OS default)"
 }
 
 configure()
