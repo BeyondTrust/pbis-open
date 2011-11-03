@@ -470,7 +470,7 @@ _mk_library_process_version()
                 ;;
             *)
                 case "$MK_OS" in
-                    freebsd)
+                    freebsd|aix)
                         MAJOR="${VERSION}"
                         MINOR=""
                         MICRO=""
