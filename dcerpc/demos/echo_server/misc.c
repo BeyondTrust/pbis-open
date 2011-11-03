@@ -23,7 +23,7 @@ chk_dce_err(
   
     if (ecode != error_status_ok)
     {
-        dce_error_inq_text(ecode, errstr, &error_status); 
+        dce_error_inq_text(ecode, (UCHAR*)errstr, &error_status); 
         if (error_status == error_status_ok)
             printf("ERROR.  where = <%s> why = <%s> error code = 0x%lx"
                    "reason = <%s>\n",

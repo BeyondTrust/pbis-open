@@ -72,13 +72,13 @@ bind_server(
         else
         {
             function = "rpc_server_use_protseq()";
-            rpc_server_use_protseq(protocol, rpc_c_protseq_max_calls_default, &status);
+            rpc_server_use_protseq((unsigned_char_p_t)protocol, rpc_c_protseq_max_calls_default, &status);
         }
     }
     else
     {
         function = "rpc_server_use_protseq_ep()";
-        rpc_server_use_protseq_ep(protocol, rpc_c_protseq_max_calls_default, endpoint, &status);
+        rpc_server_use_protseq_ep((unsigned_char_p_t)protocol, rpc_c_protseq_max_calls_default, (unsigned_char_p_t)endpoint, &status);
     }
 #endif
 
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
     if (spn)
     {
         rpc_server_register_auth_info(
-            spn,
+            (unsigned_char_p_t)spn,
             rpc_c_authn_gss_negotiate,
             NULL,
             NULL,
@@ -354,7 +354,7 @@ ReverseIt(
     for (i=0; i < in_text->argc; i++)
     {
         result->argv[i] =
-            (string_t)rpc_ss_allocate(strlen(in_text->argv[i]) + 1);
+            (string_t)rpc_ss_allocate(strlen((PCSTR)in_text->argv[i]) + 1);
     }
 
     /*
@@ -363,7 +363,7 @@ ReverseIt(
 
     for (i=0; i < in_text->argc; i++)
     {
-        l = strlen(in_text->argv[i]);
+        l = strlen((PCSTR)in_text->argv[i]);
         for (j=0; j<l; j++)
         {
             result->argv[i][j] = in_text->argv[i][l-j-1];

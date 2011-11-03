@@ -236,6 +236,7 @@ main(
         case 'P':
             if (!strcmp(optarg, "-") || !strcmp(optarg, "*"))
             {
+                char *result = NULL;
 #ifdef _WIN32
                 FILE *tty = stdin;
                 HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE); 
@@ -259,7 +260,7 @@ main(
                 fflush(tty);
 #endif
 
-                fgets(password_buffer, sizeof(password_buffer), tty);
+                result = fgets(password_buffer, sizeof(password_buffer), tty);
 
 #ifdef _WIN32
                 fprintf(stdout, "\n");
@@ -335,7 +336,7 @@ main(
     {
         rpc_binding_set_auth_info_2(
             echo_server,
-            spn,
+            (unsigned_char_p_t)spn,
             protect_level,
             authn_svc,
             flags,
@@ -467,9 +468,9 @@ get_client_rpc_binding(
      */
 
     rpc_string_binding_compose(NULL,
-			       protocol,
-			       hostname,
-			       endpoint,
+			       (unsigned_char_p_t)protocol,
+			       (unsigned_char_p_t)hostname,
+			       (unsigned_char_p_t)endpoint,
 			       NULL,
 			       &string_binding,
 			       &status);
