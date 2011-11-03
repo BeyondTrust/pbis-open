@@ -1421,6 +1421,198 @@ INTERNAL void rpc__gssauth_cn_pre_call
 	*st = rpc_s_ok;
 }
 
+INTERNAL void rpc__gssauth_cn_get_packet_mic
+(
+	rpc_cn_sec_context_p_t		sec,
+	const char			*comment,
+	unsigned8			header_size,
+	rpc_socket_iovec_p_t		iov,
+	unsigned32			iovlen,
+	rpc_socket_iovec_p_t		out_iov,
+	unsigned32			*st
+)
+{
+	rpc_gssauth_cn_info_p_t gssauth_cn_info = (rpc_gssauth_cn_info_p_t)sec->sec_cn_info;
+	rpc_gssauth_info_p_t gssauth_info = (rpc_gssauth_info_p_t)sec->sec_info;
+	rpc_cn_common_hdr_p_t hdr = NULL;
+	rpc_cn_auth_tlr_p_t tlr = NULL;
+	unsigned32 i = 0;
+	unsigned32 pdu_iov_num = iovlen - 1;
+	unsigned32 auth_iov_idx = iovlen - 1;
+	unsigned32 tlr_iov_idx = iovlen - 1;
+	unsigned32 pdu_len = 0;
+	unsigned8 auth_pad_len = 0;
+	unsigned32 wrap_len = 0;
+	unsigned32 wrap_idx = 0;
+	unsigned_char_p_t wrap_base = NULL;
+	OM_uint32 maj_stat = 0;
+	OM_uint32 min_stat = 0;
+	gss_buffer_desc sign_buffer = {0};
+	gss_buffer_desc signature = {0};
+
+	CODING_ERROR(st);
+	RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_ROUTINE_TRACE,
+		("(rpc__gssauth_cn_get_packet_mic)\n"));
+
+	if (iovlen < 2) {
+		RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
+			("(rpc__gssauth_cn_get_packet_mic): %s: iovlen[%u]\n",
+			comment, (unsigned int)iovlen));
+		*st = rpc_m_no_stub_data;
+		return;
+	}
+
+	if (iov[0].iov_len < header_size) {
+		RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
+			("(rpc__gssauth_cn_get_packet_mic): %s: iov[0].iov_len[%u] < header_size[%u]\n",
+			comment, (unsigned int)iov[0].iov_len,(unsigned int)header_size));
+		*st = rpc_m_no_stub_data;
+		return;
+	}
+
+	if (iov[auth_iov_idx].iov_len != RPC_CN_PKT_SIZEOF_COM_AUTH_TLR+RPC__GSSAUTH_CN_AUTH_MAX_LEN) {
+		RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
+			("(rpc__gssauth_cn_get_packet_mic): %s: iov[%u].iov_len[%u] != %u\n",
+			comment,(unsigned int)auth_iov_idx,
+			(unsigned int)iov[auth_iov_idx].iov_len,
+			RPC_CN_PKT_SIZEOF_COM_AUTH_TLR));
+		*st = rpc_s_auth_field_toolong;
+		return;
+	}
+
+	if (iov[tlr_iov_idx].iov_len < RPC_CN_PKT_SIZEOF_COM_AUTH_TLR)
+	{
+		RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
+			("(rpc__gssauth_cn_get_packet_mic): %s: iov[%u].iov_len[%u] < %u\n",
+			comment,(unsigned int)tlr_iov_idx,
+			(unsigned int)iov[tlr_iov_idx].iov_len,
+			RPC_CN_PKT_SIZEOF_COM_AUTH_TLR));
+		*st = rpc_s_auth_field_toolong;
+		return;
+	}
+
+	/*
+	 * Calculate padding length
+	 */
+	for (i = 0; i < pdu_iov_num; i++)
+	{
+		pdu_len += iov[i].iov_len;
+	}
+
+	pdu_len      -= header_size;
+	auth_pad_len  = 16 - (pdu_len % 16);
+
+	/*
+	 * Prepare wrapping for the whole packet (copy iov blobs
+	 * - all except the last one)
+	 */
+	wrap_len = header_size + pdu_len + auth_pad_len +
+		   RPC_CN_PKT_SIZEOF_COM_AUTH_TLR + RPC__GSSAUTH_CN_AUTH_MAX_LEN;
+
+	RPC_MEM_ALLOC(wrap_base,
+		      unsigned_char_p_t,
+		      wrap_len,
+		      RPC_C_MEM_CN_ENCRYPT_BUF,
+		      RPC_C_MEM_WAITOK);
+
+	wrap_idx = 0;
+	hdr = (rpc_cn_common_hdr_p_t)iov[0].iov_base;
+
+	hdr->auth_len = RPC_CN_PKT_SIZEOF_GSSGETMIC_AUTH_TLR;
+	hdr->frag_len = RPC_CN_PKT_SIZEOF_RESP_HDR +
+                        pdu_len + auth_pad_len +
+                        RPC_CN_PKT_SIZEOF_COM_AUTH_TLR +
+                        hdr->auth_len;
+
+	tlr = (rpc_cn_auth_tlr_p_t)iov[tlr_iov_idx].iov_base;
+
+	tlr->stub_pad_length = auth_pad_len;
+
+	/* Copy the DCE/RPC header and the PDU */
+	for (i = 0; i < pdu_iov_num; i++)
+	{
+		memcpy(&wrap_base[wrap_idx],
+		       iov[i].iov_base,
+		       iov[i].iov_len);
+		wrap_idx += iov[i].iov_len;
+	}
+
+	/* Ensure padding bytes zeroed */
+	memset(&wrap_base[wrap_idx], 0, auth_pad_len);
+	wrap_idx += auth_pad_len;
+
+	/* Copy the DCE/RPC trailer (the common part) because it may
+	   be needed in case header signing has been negotiated */
+	memcpy(&wrap_base[wrap_idx],
+	       iov[tlr_iov_idx].iov_base,
+	       RPC_CN_PKT_SIZEOF_COM_AUTH_TLR);
+	wrap_idx += RPC_CN_PKT_SIZEOF_COM_AUTH_TLR;
+
+
+	if (gssauth_info->auth_info.authn_flags &&
+	    rpc_c_protect_flags_header_sign)
+	{
+		sign_buffer.length = wrap_idx;
+		sign_buffer.value  = wrap_base;
+	}
+	else
+	{
+		sign_buffer.length = pdu_len + auth_pad_len;
+		sign_buffer.value  = &(wrap_base[header_size]);
+	}
+
+	maj_stat = gss_get_mic(&min_stat,
+			       gssauth_cn_info->gss_ctx,
+			       GSS_C_QOP_DEFAULT,
+			       &sign_buffer,
+			       &signature);
+	if (maj_stat != GSS_S_COMPLETE) {
+		char msg[256];
+		rpc__gssauth_error_map(maj_stat, min_stat,
+				       (gss_OID)&rpc__gssauth_krb5_oid,
+				       msg, sizeof(msg), st);
+		RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
+			("(rpc__gssauth_cn_get_packet_mic): %s: %s\n", comment, msg));
+		/* *st is already filled */
+		goto cleanup;
+	}
+
+	if (signature.length > RPC__GSSAUTH_CN_AUTH_MAX_LEN) {
+		RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
+			("(rpc__gssauth_cn_get_packet_mic): %s: auth_len[%u] > auth_max_len[%u]\n",
+			comment, (unsigned int)auth_len, (unsigned int)RPC__GSSAUTH_CN_AUTH_MAX_LEN));
+		*st = rpc_s_auth_method;
+		goto cleanup;
+	}
+
+	/* GSS-API signature */
+	memcpy(&wrap_base[wrap_idx],
+	       signature.value,
+	       signature.length);
+	wrap_idx += signature.length;
+
+	/* set the out_iov blob to be sent */
+	out_iov->iov_base = wrap_base;
+	out_iov->iov_len  = wrap_idx;
+
+	*st = rpc_s_ok;
+
+cleanup:
+	maj_stat = gss_release_buffer(&min_stat,
+				      &signature);
+	if (maj_stat != GSS_S_COMPLETE) {
+		char msg[256];
+		rpc__gssauth_error_map(maj_stat, min_stat,
+				       (gss_OID)&rpc__gssauth_krb5_oid,
+				       msg, sizeof(msg), st);
+		RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
+			("(rpc__gssauth_cn_get_packet_mic): %s: %s\n", comment, msg));
+		/* *st is already filled */
+	}
+
+	return;
+}
+
 INTERNAL void rpc__gssauth_cn_wrap_packet
 (
 	rpc_cn_sec_context_p_t		sec,
@@ -1428,7 +1620,6 @@ INTERNAL void rpc__gssauth_cn_wrap_packet
 	unsigned8			header_size,
 	rpc_socket_iovec_p_t		iov,
 	unsigned32			iovlen,
-	unsigned32                      seal,
 	rpc_socket_iovec_p_t		out_iov,
 	unsigned32			*st
 )
@@ -1449,7 +1640,7 @@ INTERNAL void rpc__gssauth_cn_wrap_packet
 	unsigned_char_p_t wrap_base = NULL;
 	OM_uint32 maj_stat = 0;
 	OM_uint32 min_stat = 0;
-	int conf_req = (int)seal;
+	int conf_req = 1;
 	int conf_state = 0;
 	gss_iov_buffer_desc output_iov[4] = { {0}, {0}, {0}, {0} };
 	gss_buffer_desc gssauth_buffer = {0};
@@ -1523,7 +1714,10 @@ INTERNAL void rpc__gssauth_cn_wrap_packet
 	wrap_idx = 0;
 	hdr = (rpc_cn_common_hdr_p_t)iov[0].iov_base;
 
-	hdr->auth_len = RPC_CN_PKT_SIZEOF_GSSAUTH_AUTH_TLR;
+	hdr->auth_len = (conf_req) ?
+                        RPC_CN_PKT_SIZEOF_GSSWRAP_AUTH_TLR :
+                        RPC_CN_PKT_SIZEOF_GSSGETMIC_AUTH_TLR;
+
 	hdr->frag_len = RPC_CN_PKT_SIZEOF_RESP_HDR +
                         pdu_len + auth_pad_len +
                         RPC_CN_PKT_SIZEOF_COM_AUTH_TLR +
@@ -1811,7 +2005,6 @@ INTERNAL void rpc__gssauth_cn_pre_send
 )
 {
 	unsigned32 ptype = 0;
-	unsigned32 seal = 0;
 
 	CODING_ERROR(st);
 	RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_ROUTINE_TRACE,
@@ -1850,15 +2043,15 @@ INTERNAL void rpc__gssauth_cn_pre_send
 
 		if (sec->sec_info->authn_level == rpc_c_authn_level_pkt_integrity)
 		{
-			seal = 0;
+			rpc__gssauth_cn_get_packet_mic(sec, "request", RPC_CN_PKT_SIZEOF_RQST_HDR,
+						       iov, iovlen, out_iov, st);
 		}
 		else if (sec->sec_info->authn_level == rpc_c_authn_level_pkt_privacy)
 		{
-			seal = 1;
+			rpc__gssauth_cn_wrap_packet(sec, "request", RPC_CN_PKT_SIZEOF_RQST_HDR,
+						    iov, iovlen, out_iov, st);
 		}
 
-		rpc__gssauth_cn_wrap_packet(sec, "request", RPC_CN_PKT_SIZEOF_RQST_HDR,
-					    iov, iovlen, seal, out_iov, st);
 		return;
 
 	case RPC_C_CN_PKT_RESPONSE:
@@ -1869,15 +2062,15 @@ INTERNAL void rpc__gssauth_cn_pre_send
 
 		if (sec->sec_info->authn_level == rpc_c_authn_level_pkt_integrity)
 		{
-			seal = 0;
+			rpc__gssauth_cn_get_packet_mic(sec, "response", RPC_CN_PKT_SIZEOF_RQST_HDR,
+						       iov, iovlen, out_iov, st);
 		}
 		else if (sec->sec_info->authn_level == rpc_c_authn_level_pkt_privacy)
 		{
-			seal = 1;
+			rpc__gssauth_cn_wrap_packet(sec, "response", RPC_CN_PKT_SIZEOF_RESP_HDR,
+						    iov, iovlen, out_iov, st);
 		}
 
-		rpc__gssauth_cn_wrap_packet(sec, "response", RPC_CN_PKT_SIZEOF_RESP_HDR,
-					    iov, iovlen, seal, out_iov, st);
 		return;
 
 	case RPC_C_CN_PKT_BIND:
@@ -1917,6 +2110,92 @@ INTERNAL void rpc__gssauth_cn_pre_send
 	*st = rpc_s_ok;
 }
 
+INTERNAL void rpc__gssauth_cn_verify_packet_mic
+(
+	rpc_cn_sec_context_p_t		sec,
+	const char			*comment,
+	unsigned8			header_size,
+	rpc_cn_common_hdr_p_t		pkt,
+	unsigned32			pkt_len,
+	unsigned32			cred_len ATTRIBUTE_UNUSED /*TODO*/,
+	rpc_cn_auth_tlr_p_t		auth_tlr,
+	boolean32			unpack_ints,
+	unsigned32			*st
+)
+{
+	rpc_gssauth_cn_info_p_t gssauth_cn_info = (rpc_gssauth_cn_info_p_t)sec->sec_cn_info;
+	rpc_gssauth_info_p_t gssauth_info = (rpc_gssauth_info_p_t)sec->sec_info;
+	OM_uint32 maj_stat = 0;
+	OM_uint32 min_stat = 0;
+	gss_qop_t qop_state = 0;
+	unsigned_char_p_t pdu_base = NULL;
+	unsigned32 pdu_len = 0;
+	unsigned_char_p_t gssauth_base = NULL;
+	unsigned16 gssauth_len = 0;
+	unsigned8 auth_pad_len = 0;
+	gss_buffer_desc verify_buffer = {0};
+	gss_buffer_desc gssauth_buffer = {0};
+
+	CODING_ERROR(st);
+	RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_ROUTINE_TRACE,
+		("(rpc__gssauth_cn_verify_packet_mic)\n"));
+
+	gssauth_len = pkt->auth_len;
+	if (unpack_ints)
+        {
+		SWAB_INPLACE_16(gssauth_len);
+	}
+
+	/* Get rpc payload and gss trailer pointers */
+	auth_pad_len = auth_tlr->stub_pad_length;
+	if (unpack_ints)
+	{
+		SWAB_INPLACE_16(auth_pad_len);
+	}
+
+	pdu_base     = ((unsigned_char_p_t)pkt) + header_size;
+	pdu_len      = pkt_len - (header_size + RPC_CN_PKT_SIZEOF_COM_AUTH_TLR + gssauth_len + auth_pad_len);
+	gssauth_base = ((unsigned_char_p_t)auth_tlr) + RPC_CN_PKT_SIZEOF_COM_AUTH_TLR;
+
+	if (gssauth_info->auth_info.authn_flags &&
+	    rpc_c_protect_flags_header_sign)
+	{
+		verify_buffer.length = pkt_len - gssauth_len;
+		verify_buffer.value  = pkt;
+	}
+	else
+	{
+		verify_buffer.length = pdu_len + auth_pad_len;
+		verify_buffer.value  = pdu_base;
+	}
+
+	/* GSS auth trailer */
+	gssauth_buffer.value   = gssauth_base;
+	gssauth_buffer.length  = gssauth_len;
+
+	maj_stat = gss_verify_mic(&min_stat,
+				  gssauth_cn_info->gss_ctx,
+				  &verify_buffer,
+				  &gssauth_buffer,
+				  &qop_state);
+	if (maj_stat != GSS_S_COMPLETE) {
+		char msg[256];
+		rpc__gssauth_error_map(maj_stat, min_stat,
+				       (gss_OID)&rpc__gssauth_krb5_oid,
+				       msg, sizeof(msg), st);
+		RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
+			("(rpc__gssauth_cn_verify_packet_mic): %s: %s\n",
+			comment, msg));
+		/* *st is already filled */
+		goto cleanup;
+	}
+
+	*st = rpc_s_ok;
+
+cleanup:
+	return;
+}
+
 INTERNAL void rpc__gssauth_cn_unwrap_packet
 (
 	rpc_cn_sec_context_p_t		sec,
@@ -1926,7 +2205,6 @@ INTERNAL void rpc__gssauth_cn_unwrap_packet
 	unsigned32			pkt_len,
 	unsigned32			cred_len ATTRIBUTE_UNUSED /*TODO*/,
 	rpc_cn_auth_tlr_p_t		auth_tlr,
-	unsigned32                      sealed,
 	boolean32			unpack_ints,
 	unsigned32			*st
 )
@@ -1935,6 +2213,7 @@ INTERNAL void rpc__gssauth_cn_unwrap_packet
 	rpc_gssauth_info_p_t gssauth_info = (rpc_gssauth_info_p_t)sec->sec_info;
 	OM_uint32 maj_stat = 0;
 	OM_uint32 min_stat = 0;
+	int sealed = 1;          /* packet is expected to be sealed */
 	int conf_state = 0;
 	gss_qop_t qop_state = 0;
 	unsigned_char_p_t pdu_base = NULL;
@@ -2113,8 +2392,6 @@ INTERNAL void rpc__gssauth_cn_recv_check
 	unsigned32			*st
 )
 {
-	unsigned32 sealed = 0;
-
 	CODING_ERROR(st);
 	RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_ROUTINE_TRACE,
 		("(rpc__gssauth_cn_recv_check)\n"));
@@ -2143,36 +2420,45 @@ INTERNAL void rpc__gssauth_cn_recv_check
 
 	switch (pdu->ptype) {
 	case RPC_C_CN_PKT_REQUEST:
-		if (sec->sec_info->authn_level == rpc_c_authn_level_connect) {
+		if (sec->sec_info->authn_level == rpc_c_authn_level_connect)
+		{
 			*st = rpc_s_ok;
 			return;
 		}
 
-		if (sec->sec_info->authn_level == rpc_c_authn_level_pkt_integrity) {
-			sealed = 0;
-		} else if (sec->sec_info->authn_level == rpc_c_authn_level_pkt_privacy) {
-			sealed = 1;
+		if (sec->sec_info->authn_level == rpc_c_authn_level_pkt_integrity)
+		{
+			rpc__gssauth_cn_verify_packet_mic(sec, "request", RPC_CN_PKT_SIZEOF_RQST_HDR,
+							  pdu, pdu_len, cred_len, auth_tlr,
+							  unpack_ints, st);
 		}
-
-		rpc__gssauth_cn_unwrap_packet(sec, "request", RPC_CN_PKT_SIZEOF_RQST_HDR,
-					      pdu, pdu_len, cred_len, auth_tlr, sealed,
-					      unpack_ints, st);
+		else if (sec->sec_info->authn_level == rpc_c_authn_level_pkt_privacy)
+		{
+			rpc__gssauth_cn_unwrap_packet(sec, "request", RPC_CN_PKT_SIZEOF_RQST_HDR,
+						      pdu, pdu_len, cred_len, auth_tlr,
+						      unpack_ints, st);
+		}
 		return;
+
 	case RPC_C_CN_PKT_RESPONSE:
-		if (sec->sec_info->authn_level == rpc_c_authn_level_connect) {
+		if (sec->sec_info->authn_level == rpc_c_authn_level_connect)
+		{
 			*st = rpc_s_ok;
 			return;
 		}
 
-		if (sec->sec_info->authn_level == rpc_c_authn_level_pkt_integrity) {
-			sealed = 0;
-		} else if (sec->sec_info->authn_level == rpc_c_authn_level_pkt_privacy) {
-			sealed = 1;
+		if (sec->sec_info->authn_level == rpc_c_authn_level_pkt_integrity)
+		{
+			rpc__gssauth_cn_verify_packet_mic(sec, "response", RPC_CN_PKT_SIZEOF_RQST_HDR,
+							  pdu, pdu_len, cred_len, auth_tlr,
+							  unpack_ints, st);
 		}
-
-		rpc__gssauth_cn_unwrap_packet(sec, "response", RPC_CN_PKT_SIZEOF_RESP_HDR,
-					      pdu, pdu_len, cred_len, auth_tlr, sealed,
-					      unpack_ints, st);
+		else if (sec->sec_info->authn_level == rpc_c_authn_level_pkt_privacy)
+		{
+			rpc__gssauth_cn_unwrap_packet(sec, "response", RPC_CN_PKT_SIZEOF_RQST_HDR,
+						      pdu, pdu_len, cred_len, auth_tlr,
+						      unpack_ints, st);
+		}
 		return;
 
 	case RPC_C_CN_PKT_BIND:
