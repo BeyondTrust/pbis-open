@@ -1,0 +1,306 @@
+SUBDIRS=". libdcethread idl_compiler include uuid idl_lib ncklib dcelib rpcd"
+
+option()
+{
+    mk_option \
+        OPTION=rpc-ncacn \
+        VAR=ENABLE_NCACN \
+        DEFAULT="yes" \
+        HELP="Enable ncacn RPC protocol sequences"
+
+    mk_option \
+        OPTION=rpc-ncadg \
+        VAR=ENABLE_NCADG \
+        DEFAULT="yes" \
+        HELP="Enable ncadg RPC protocol sequences"
+
+    mk_option \
+        OPTION=rpc-ip \
+        VAR=ENABLE_IP \
+        DEFAULT="yes" \
+        HELP="Enable TCP/IP RPC support"
+    
+    mk_option \
+        OPTION=rpc-np \
+        VAR=ENABLE_NP \
+        DEFAULT="yes" \
+        HELP="Enable SMB named pipe RPC support"
+
+    mk_option \
+        OPTION=rpc-http \
+        VAR=ENABLE_HTTP \
+        DEFAULT="yes" \
+        HELP="Enable RPCHTTP support"
+    
+    mk_option \
+        OPTION=rpc-gss \
+        VAR=ENABLE_GSS \
+        DEFAULT="yes" \
+        HELP="Enable GSS RPC authentication support"
+    
+    mk_option \
+        OPTION=rpc-schannel \
+        VAR=ENABLE_SCHANNEL \
+        DEFAULT="yes" \
+        HELP="Enable schannel RPC authentication support"
+
+    mk_option \
+        OPTION=rpc-ntlmssp \
+        VAR=ENABLE_NTLMSSP \
+        DEFAULT="yes" \
+        HELP="Enable NTLMSSP RPC authentication support"
+}
+
+rpc_feature_flags()
+{
+    _feature_flags=""
+
+    case "$MK_OS" in
+        linux)
+            _feature_flags="-D_GNU_SOURCE -D_BSD -D_XOPEN_SOURCE=500 -D__EXTENSIONS__ -D_POSIX_PTHREAD_SEMANTICS -D_ALL_SOURCE=1 -D_REENTRANT"
+            ;;
+        freebsd)
+            _feature_flags="-D_SOCKADDR_LEN -D__EXTENSIONS__ -D_REENTRANT -D_BSD"
+            IDL_CFLAGS="$IDL_CFLAGS -D_SOCKADDR_LEN"
+            ;;
+        solaris)
+            _feature_flags="-D_XOPEN_SOURCE=500 -D_BSD -D__EXTENSIONS__ -D_POSIX_PTHREAD_SEMANTICS -D_ALL_SOURCE=1 -D_REENTRANT"
+            ;;
+        darwin)
+            _feature_flags="-D_SOCKADDR_LEN -D_BSD -D_REENTRANT"
+            IDL_CFLAGS="$IDL_CFLAGS -D_SOCKADDR_LEN"
+            ;;
+        aix)
+            _feature_flags="-D_XOPEN_SOURCE=500 -D_ALL_SOURCE=1 -D_REENTRANT"
+            IDL_CFLAGS="$IDL_CFLAGS -D_SOCKADDR_LEN"
+            ;;
+        hpux)
+            DCERPCD_SERVICE_TYPE="dword:00000004"
+            _feature_flags="-D_XOPEN_SOURCE=500 -D__EXTENSIONS__ -D_POSIX_PTHREAD_SEMANTICS -D_ALL_SOURCE=1 -D_REENTRANT -D_BSD"
+            ;;
+    esac
+
+    MK_CPPFLAGS="$MK_CPPFLAGS $_feature_flags"
+}
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    case "$MK_HOST_OS" in
+        linux)
+            target_os="linux-gnu"
+            ;;
+        solaris)
+            target_os="solaris2.${MK_HOST_DISTRO_VERSION}"
+            ;;
+        freebsd)
+            target_os="freebsd6.0"
+            ;;
+        darwin)
+            target_os="darwin6.0"
+            ;;
+        aix)
+            target_os="aix5.2.0.0"
+            ;;
+        hpux)
+            target_os="hpux11.11"
+            # HACK HACK HACK
+            mk_define_always _DEFINED_MPINFOU
+            mk_write_config_header "union mpinfou {};"
+            ;;
+        *)
+            mk_fail "unsupported os: $MK_HOST_OS"
+            ;;
+    esac
+
+    case "$MK_ISA" in
+        x86_32)
+            target_cpu="i386"
+            ;;
+        x86_64)
+            target_cpu="x86_64"
+            ;;
+        sparc_32)
+            target_cpu="sparc"
+            ;;
+        ppc32)
+            target_cpu="powerpc"
+            ;;
+        ppc64)
+            target_cpu="powerpc64"
+            ;;
+        hppa32)
+            target_cpu="hppa2.0"
+            ;;
+        ia64_32)
+            target_cpu="ia64"
+            ;;
+    esac
+
+    mk_export DCERPCD_SERVICE_TYPE="dword:00000001"
+
+    mk_multiarch_do
+        rpc_feature_flags
+    mk_multiarch_done
+    
+    mk_export MK_CFLAGS="$MK_CFLAGS -Wall"
+
+    mk_export SBINDIR="$MK_SBINDIR"
+    
+
+    # FIXME: need test
+    mk_export OBJEXT="o"
+    # FIXME: need test
+    mk_export IDL_CPP="$MK_CC -E -x c-header"
+    mk_export IDL_CC="$MK_CC"
+    mk_export IDL_CFLAGS target_os target_cpu
+
+    mk_export ENABLE_NCACN ENABLE_NCADG
+
+    # FIXME: need test
+    mk_define_always ATTRIBUTE_UNUSED "__attribute__((unused))"
+    mk_define_always VERSION "\"1.1.0.7\""
+    mk_define_always RPC_C_NP_DIR "\"$LW_CACHEDIR/rpc\""
+    mk_define_always RPC_C_UXD_DIR "\"$LW_CACHEDIR/rpc\""
+
+    # Options
+    [ "$ENABLE_NCACN" = "yes" ] && mk_define ENABLE_PROT_NCACN 1
+    [ "$ENABLE_NCADG" = "yes" ] && mk_define ENABLE_PROT_NCADG 1
+    [ "$ENABLE_IP" = "yes" ] && mk_define ENABLE_NAF_IP 1
+    [ "$ENABLE_NP" = "yes" ] && mk_define ENABLE_NAF_NP 1
+    [ "$ENABLE_GSS" = "yes" ] && mk_define ENABLE_AUTH_GSS_NEGOTIATE 1
+    [ "$ENABLE_SCHANNEL" = "yes" ] && mk_define ENABLE_AUTH_SCHANNEL 1
+    [ "$ENABLE_NTLMSSP" = "yes" ] && mk_define ENABLE_AUTH_NTLMSSP 1
+
+    # Check for CPU architecture characteristics
+    mk_multiarch_do
+        mk_check_sizeofs "long" "long int" "long long int"
+        mk_check_endian
+    mk_multiarch_done
+
+    # Required headers
+    mk_check_headers \
+        FAIL=yes \
+        lwio/lwio.h lw/base.h
+
+    # Optional headers
+    mk_check_headers \
+        HEADERDEPS="sys/types.h sys/socket.h" \
+        features.h sys/cdefs.h dlfcn.h sys/time.h \
+        getopt.h sys/sockio.h sys/un.h nl_types.h \
+        net/if.h net/if_dl.h execinfo.h sys/fd_set.h \
+        sys/select.h string.h
+
+    mk_check_headers \
+        HEADERDEPS="sys/types.h sys/socket.h sys/time.h net/if.h" \
+        net/if_arp.h
+
+    # Optional types
+    mk_check_types \
+        HEADERDEPS="inttypes.h" \
+        uint8 uint16 uint32 uint64 int8 int16 int32 int64
+
+    # Required libraries
+    mk_check_libraries \
+        FAIL=yes \
+        lwioclient schannel curl
+
+    # Curl
+    if [ "$ENABLE_HTTP" = "yes" ]
+    then
+        mk_check_headers FAIL=yes curl/curl.h
+        mk_check_libraries FAIL=yes curl
+    fi
+
+    # Optional libraries
+    mk_check_libraries \
+        socket nsl dl pthread rt
+    
+    # Required functions
+    mk_check_functions \
+        FAIL=yes \
+        HEADERDEPS="string.h" \
+        memcmp
+
+    # Optional functions
+    mk_check_functions \
+        HEADERDEPS="pthread.h" \
+        LIBDEPS="$LIB_PTHREAD $LIB_RT" \
+        pthread_yield sched_yield
+
+    mk_check_functions \
+	HEADERDEPS="sys/time.h sys/socket.h dirent.h" \
+	gettimeofday socket getpeereid setgrp scandir
+
+    # Test for particular version of gethostbyname_r
+    if mk_check_function \
+        PROTOTYPE="int gethostbyname_r(const char*,struct hostent*,char*,size_t,struct hostent**,int*)" \
+        HEADERDEPS="netdb.h" \
+        LIBDEPS="$LIB_NSL"
+    then
+        mk_define GETHOSTBYNAME_R_ARGS 6
+    elif mk_check_function \
+        PROTOTYPE="struct hostent* gethostbyname_r(const char*,struct hostent*,char*,int,int*)" \
+        HEADERDEPS="netdb.h" \
+        LIBDEPS="$LIB_NSL"
+    then
+        mk_define GETHOSTBYNAME_R_ARGS 5
+    elif mk_check_function \
+        PROTOTYPE="int gethostbyname_r(const char*,struct hostent*,struct hostent_data*)" \
+        HEADERDEPS="netdb.h" \
+        LIBDEPS="$LIB_NSL"
+    then
+        mk_define GETHOSTBYNAME_R_ARGS 3
+    fi
+
+    lw_check_pthread_once_init
+    if [ "$result" = "yes" ]
+    then
+        mk_export BROKEN_ONCE_INIT="#define __LW_BROKEN_ONCE_INIT 1"
+    else
+        mk_export BROKEN_ONCE_INIT="#define __LW_BROKEN_ONCE_INIT 0"
+    fi
+
+    # Check for stuff for build system (needed by idl compiler)
+    mk_system build
+        rpc_feature_flags
+        mk_check_headers nl_types.h
+    mk_system host
+
+    # Programs
+    mk_check_program FAIL=yes bison
+    mk_check_program FAIL=yes gencat
+    mk_check_program FAIL=yes sed
+
+    # We build flex using mk_system "build" so that we get a version of it
+    # suitable to run on the build system even if we are cross compiling.
+    # Normally this would deposit it in ${MK_RUN_BINDIR}.  However, the
+    # flex Makefile was hacked to not install the binary on "make install"
+    # to work around autoconf limitations.  This hack lets us run it
+    # directly out of its build directory.  This is not recommended as the
+    # build directory path is in implementation detail of MetaKit
+    mk_resolve_file "flex-2.5.4_build_${MK_BUILD_PRIMARY_ISA}/flex"
+    mk_export FLEX="$result"
+
+    # Extra files to generate
+    mk_output_file include/dce/dce_error.h
+    mk_output_file include/dce/dce_utils.h
+    mk_output_file include/dce/dce.h
+    mk_output_file include/dce/ndr_rep.h
+    mk_output_file include/dce/ndrtypes.h
+    mk_output_file include/dce/sec_authn.h
+    mk_output_file include/dce/marshall.h
+    mk_output_file idl_compiler/sysdep.h
+    mk_output_file rpcd/dcerpcd.reg
+}
+
+make()
+{
+    mk_system "build"
+
+    mk_autotools \
+            SOURCEDIR=flex-2.5.4 \
+        TARGETS="flex-2.5.4_build_${MK_BUILD_PRIMARY_ISA}/flex" \
+        INSTALL=no
+}

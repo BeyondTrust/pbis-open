@@ -1,0 +1,11 @@
+make()
+{
+    mk_multiarch_do
+        mk_group \
+            GROUP="time" \
+            SOURCES=lwtime-conv.c \
+            INCLUDEDIRS=". ../../include ../../include/public" \
+	    HEADERDEPS="lw/base.h" \
+	    LIBDEPS="lwbase_nothr"
+    mk_multiarch_done
+}

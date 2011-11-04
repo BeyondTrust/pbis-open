@@ -1,0 +1,72 @@
+SUBDIRS='include unthreaded threaded'
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    lw_define_feature_macros
+
+    mk_multiarch_do
+        MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+    mk_multiarch_done
+
+    mk_check_headers \
+        FAIL=yes \
+        uuid/uuid.h krb5.h gssapi.h lw/base.h ldap.h sasl/sasl.h
+    
+    mk_check_libraries \
+        FAIL=yes \
+        uuid krb5 k5crypto gssapi_krb5 lwbase ldap_r
+    
+    mk_check_headers \
+        string.h strings.h sys/types.h sys/socket.h sys/varargs.h pthread.h DirectoryService/DirServices.h
+
+    mk_check_types \
+        HEADERDEPS="sys/types.h sys/socket.h" \
+        socklen_t
+
+    mk_check_libraries \
+        socket nsl pthread rt
+
+    if mk_check_function \
+        HEADERDEPS="sys/socket.h" \
+        LIBDEPS="$LIB_SOCKET $LIB_NSL" \
+        PROTOTYPE="int getsockname(int,struct sockaddr*,socklen_t*)" ||
+       mk_check_function \
+        HEADERDEPS="sys/socket.h" \
+        LIBDEPS="$LIB_SOCKET $LIB_NSL" \
+        PROTOTYPE="int getsockname(int,__SOCKADDR_ARG,socklen_t*)" # Hack for clang on linux
+    then
+        mk_define GETSOCKNAME_TAKES_SOCKLEN_T 1
+    elif mk_check_function \
+        HEADERDEPS="sys/socket.h" \
+        LIBDEPS="$LIB_SOCKET $LIB_NSL" \
+        PROTOTYPE="int getsockname(int,struct sockaddr*,int*)"
+    then
+        mk_define GETSOCKNAME_TAKES_SOCKLEN_T 0
+    else
+        mk_fail "could not find usable getsockname()"
+    fi
+
+    mk_check_functions \
+        HEADERDEPS='stdlib.h time.h sys/time.h' \
+        LIBDEPS="$LIB_RT" \
+        strtoll __strtoll strtoull __strtoull clock_settime settimeofday gettimeofday
+
+    if mk_check_function \
+        FUNCTION='isblank' \
+        HEADERDEPS='ctype.h'
+    then
+        mk_define HAVE_DECL_ISBLANK 1
+    else
+        mk_define HAVE_DECL_ISBLANK 0
+    fi
+}
+
+make()
+{
+    mk_library \
+        LIB=lwadvapi \
+        GROUPS="threaded/threaded" \
+        LIBDEPS="lwadvapi_nothr"
+}

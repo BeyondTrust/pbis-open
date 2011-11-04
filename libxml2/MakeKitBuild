@@ -1,0 +1,27 @@
+make()
+{
+    # libxml2 likes to put headers in weird places
+    XML_INCDIR="${MK_INCLUDEDIR}/libxml2"
+
+    # Work around race condition in mkdir -p on some systems
+    # by pre-creating directory
+    mk_target \
+        TARGET=".precreate_dir" \
+        mk_mkdir "&${XML_INCDIR}/libxml" '%;' \
+        mk_run_or_fail touch '$@'
+
+    mk_autotools \
+        HEADERS="${XML_INCDIR}/libxml/tree.h \
+                 ${XML_INCDIR}/libxml/xpath.h \
+                 ${XML_INCDIR}/libxml/parser.h \
+                 ${XML_INCDIR}/libxml/xpathInternals.h" \
+        LIBS="xml2" \
+        DEPS="$result" \
+        -- \
+        --with-iconv=no \
+        --with-zlib=no \
+        --with-http=no \
+        --with-ftp=no \
+        --enable-ipv6=no \
+        --with-python=no
+}

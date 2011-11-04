@@ -1,0 +1,42 @@
+#!/bin/bash
+
+DIRLIST=" \
+    centutils \
+    dcerpc \
+    domainjoin \
+    eventlog \
+    krb5 \
+    libschannel \
+    lsass \
+    lwadvapi \
+    lwbase \
+    lwdns \
+    lwio \
+    lwmsg \
+    lwnetapi \
+    lwreg \
+    lwsm \
+    lwtools \
+    netlogon \
+    openldap \
+    sqlite \
+    srvsvc \
+"
+
+FILELIST=`find ${DIRLIST} -name "*.[ch]" -type f | grep -v -e '(flex-2.5.4)'`
+
+if [ -x `which etags` ]; then
+    echo -n "Building tags file..."
+    etags ${FILELIST}
+    echo "done"
+else
+    echo "etags command not found.  Skipping building TAGS file."
+fi
+
+if [ -x `which cscope` ]; then
+    echo -n "Build cscope cross-reference database..."
+    cscope -b ${FILELIST}
+    echo "done"
+else
+    echo "cscope command not found.  Skipping building of cross-reference database."
+fi

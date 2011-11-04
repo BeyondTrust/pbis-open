@@ -1,0 +1,147 @@
+# Grammar for Registry file (.reg) parsing
+# 
+# Definition for registry key path
+# [HKEY_LOCAL_MACHINE\SOFTWARE\Classes\MIME\Database\Codepage\1256]
+
+<reg_key_path> ::= <key_prefix> <key_entry_path> <key_suffix> <EOL>
+<key_prefix> ::= "["
+<key_entry_path> ::= <hive_name> <reg_key_path_sep> <path_entry>
+<key_suffix> ::= "]"
+<path_entry> ::= <path_entry_name> | <path_entry_name> <reg_key_path_sep> <path_entry>
+<path_entry_name> ::= <alnum_string>
+<alnum_string> ::= <text> | <text> <alnum_string>
+<text> ::= "[A-Za-z0-9_]"
+<reg_key_path_sep> ::= "\"
+<EOL> ::= "\n" | "\r\n"
+<hive> ::= "HKEY_CLASSES_ROOT" | "HKEY_CURRENT_CONFIG" | "HKEY_CURRENT_USER" |
+           "HKEY_LOCAL_MACHINE" | "HKEY_PERFORMANCE_DATA" | "HKEY_PERFORMANCE_NLSTEXT" |
+           "HKEY_PERFORMANCE_TEXT" | "HKEY_USERS" | "HKEY_DYN_DATA"
+
+# Definition for registry entry
+# Types specified here are the following:
+#
+# REG_SZ
+# REG_DWORD
+# REG_BINARY
+# REG_MULTI_SZ
+#
+# Examples:
+# @="SafeDisc RefCount"
+# "QuickTip"="prop:Type;Size;Write"
+# "C:\\"=",,5"
+# "C:\\Documents and Settings\\*\\Local Settings\\*"=",,4"
+
+<reg_entry_spec> ::= <reg_entry_key_spec> <equals_char> <reg_entry_value_spec>
+<reg_entry_key_spec> ::= <reg_entry_key_empty_spec> | <reg_entry_key_name_spec> |
+                         <reg_entry_key_security_spec> 
+<reg_entry_key_empty_spec> ::= "@"
+<reg_entry_key_security_spec> ::= <reg_entry_key_security_spec_id> <equals_char> <reg_key_security_spec_sddl>
+<reg_entry_key_security_spec_id> ::= "@security"
+#
+# TBD: String representation of Security Descriptor
+#
+<reg_key_security_spec_sddl> ::= "sddl-string"
+
+<reg_entry_key_name_spec> ::= <quote> <reg_entry_key_name> <quote>
+<reg_entry_key_name> ::= <ascii_string> | <key_sep_string> |
+                         <drive_spec> <key_sep_string> |
+                         <drive_spec> <key_sep>
+<key_sep_string> ::= <key_sep> <ascii_string> | <key_sep> <ascii_string> <key_sep_string>
+<quote> ::= '"'
+<equals_char> ::= "="
+<hyphen_char> ::= "-"
+<ascii_string> ::= <key_text> | <key_text> <ascii_string>
+<key_text> ::= "[A-Za-z0-9_*]"
+
+<key_sep> ::= "\\"
+<drive_spec> ::= <drive_letter> <drive_spec_sep>
+<drive_letter> ::= "[A-Z]"
+<drive_spec_sep ::= ":"
+
+# Definition for registry entry values
+# Supported types (so far):
+#
+# REG_SZ
+# "Auth132"="IISSUBA"
+#
+# REG_DWORD
+# "80867110"=dword:00000001
+# 
+# REG_BINARY:
+# "Base"=hex:13,00,00,00,0e,00,00,00,01,00,00,00,02,00
+#
+# REG_MULTI_SZ
+# "Security Packages"=hex(7):6b,00,65,00,72,00,62,00,65,00,72,00,6f,00,73,00,00,\
+#  00,6d,00,73,00,76,00,31,00
+#
+<reg_entry_value_spec> ::= <reg_sz_value> | <reg_dword_value> | <reg_binary_value> |
+                           <reg_multi_sz_value> | <reg_attribute_value>
+
+<reg_sz_value> ::= <quote><TEXT><quote>
+<reg_plaintext_value ::= <ASCII_CHARS>
+<ASCII_CHARS> ::= <ASCII_CHARS><ASCII_CHAR>
+
+<reg_dword_value> ::= <reg_dword_type><dword_hex_value>
+<reg_dword_type> ::= "dword:"
+<dword_hex_value> ::= "[0-9A-Fa-f]{8}"
+<int_value> ::= <int_value><int_char>
+<int_char> ::= "[0-9]"
+
+<reg_binary_value> ::= <reg_binary_type><reg_binhex_string>
+<reg_binary_type> ::= "hex:"
+<reg_binhex_string> ::= <hexpair> <comma_sep> <continuation_char> <reg_binhex_string> |
+                        <hexpair> <comma_sep> <reg_binhex_string> |
+                        <hexpair>
+<hexpair> ::= "[0-9A-Fa-f]{2}"
+<comma_sep> ::= ","
+<continuation_char> ::= "\"
+
+<reg_multi_sz_value> ::= <reg_multi_sz_type_hex> <reg_binhex_string> |
+               <reg_multi_sz_type_sza> <reg_multi_sz_sza_value>
+
+<reg_multi_sz_type_hex> ::= "hex(7):" 
+<reg_multi_sz_type_sza> ::= "sza:"
+
+<reg_multi_sz_sza_value> := <reg_multi_sz_sza_value><reg>sz_value>
+
+<reg_attribute_value> ::= <reg_attribute_type><reg_attribute_values><reg_attribute_end>
+<reg_attribute_type_begin> ::= <reg_attribute_name> <equals_char> "{\n"
+  <reg_attribute_values>
+<reg_attribute_name> := <reg_sz_value> | <reg_plaintext_value>
+<reg_attribute_end> ::= "}\n"
+<reg_attribute_values> ::= <reg_attribute_value> <reg_attribute_values> | 
+                           <reg_attribute_value>
+#
+# The intent of this type is it is only valid within { attribute } block
+#
+<reg_attribute_valuespec> ::= <reg_entry_value_spec>
+    <reg_attribute_namespec> <equals_char> <reg_attribute_data>
+<reg_attrname_value> ::= "value"
+<reg_attrname_default> ::= "default"
+<reg_attrname_doc> ::= "doc"
+<reg_attrname_range> ::= "range"
+<reg_attrname_hint> ::= "hint"
+<reg_attribute_valuespec> ::= 
+    <reg_attrname_value> <equals_char> <reg_entry_value_spec> |
+    <reg_attrname_default> <equals_char> <reg_entry_value_spec> |
+    <reg_attrname_doc> <equals_char> <reg_sz_value> |
+    <reg_attrname_range> <equals_char> <reg_attr_range_value> |
+    <reg_attrname_hint> <equals_char> <reg_attr_hint_value> |
+
+<reg_attr_range_value>  ::= <reg_attr_range_value_int> | 
+                            <reg_attr_range_boolean> |
+                            <reg_attr_range_string>
+<reg_attr_range_value_int> ::= 
+    <reg_attr_range_entry_int_type><reg_attr_range_intrange>
+<reg_attr_range_entry_int_type> ::= "integer:"
+<reg_attr_range_intrange> ::= 
+    <int_value><hyphen_char><int_value>
+
+<reg_attr_range_boolean> ::=  "boolean"
+<reg_attr_range_string> ::=  
+    <reg_attr_range_entry_string_type><reg_attr_range_str_range>
+<reg_attr_range_entry_string_type> ::= "string:"
+<reg_attr_range_str_range> ::= <reg_multi_sz_value>
+<reg_attr_range_entry_boolean_type> ::= "boolean"
+<reg_attr_range_boolrange> ::= "0" | "1"
+<reg_attr_hint_value> ::= "seconds" | "path" | "account"

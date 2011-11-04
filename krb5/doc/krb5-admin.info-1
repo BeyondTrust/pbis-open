@@ -1,0 +1,1288 @@
+This is krb5-admin.info, produced by makeinfo version 4.5 from
+admin.texinfo.
+
+Copyright (C) 1985-2010 by the Massachusetts Institute of Technology.
+INFO-DIR-SECTION Kerberos
+START-INFO-DIR-ENTRY
+* krb5-admin: (krb5-admin).             Kerberos V5 Administrator's Guide
+END-INFO-DIR-ENTRY
+
+
+File: krb5-admin.info,  Node: Top,  Next: Introduction,  Prev: (dir),  Up: (dir)
+
+This document describes how to administrate a Kerberos V5 installation.
+
+Copyright (C) 1985-2010 by the Massachusetts Institute of Technology.
+* Menu:
+
+* Introduction::
+* How Kerberos Works::
+* Configuration Files::
+* Using DNS::
+* Administrating the Kerberos Database::
+* Configuring Kerberos with OpenLDAP back-end::
+* Application Servers::
+* Backups of Secure Hosts::
+* Bug Reporting::
+* Appendix::
+* Copyright::
+
+
+File: krb5-admin.info,  Node: Introduction,  Next: How Kerberos Works,  Prev: Top,  Up: Top
+
+Introduction
+************
+
+* Menu:
+
+* Why Should I use Kerberos?::
+* Documentation for Kerberos V5::
+* Overview of This Guide::
+
+
+File: krb5-admin.info,  Node: Why Should I use Kerberos?,  Next: Documentation for Kerberos V5,  Prev: Introduction,  Up: Introduction
+
+Why Should I use Kerberos?
+==========================
+
+Since Kerberos negotiates authenticated, and optionally encrypted,
+communications between two points anywhere on the internet, it provides
+a layer of security that is not dependent on which side of a firewall
+either client is on.  Since studies have shown that half of the computer
+security breaches in industry happen from inside firewalls, Kerberos V5
+from MIT will play a vital role in the security of your network.
+
+
+File: krb5-admin.info,  Node: Documentation for Kerberos V5,  Next: Overview of This Guide,  Prev: Why Should I use Kerberos?,  Up: Introduction
+
+Documentation for Kerberos V5
+=============================
+
+This document is one piece of the document set for Kerberos V5.  The
+documents, and their intended audiences, are:
+
+   * Kerberos V5 Installation Guide:  a concise guide for installing
+     Kerberos V5.  Kerberos administrators (particularly whoever will be
+     making site-wide decisions about the installation) and the system
+     administrators who will be installing the software should read this
+     guide.
+
+   * Kerberos V5 System Administrator's Guide:  a sysadmin's guide to
+     administering a Kerberos installation.  The System Administrator's
+     Guide describes the administration software and suggests policies
+     and procedures for administering a Kerberos installation.  Anyone
+     who will have administrative access to your Kerberos database
+     should read this guide.
+
+   * Kerberos V5 UNIX User's Guide:  a guide to using the Kerberos UNIX
+     client programs.  All users on UNIX systems should read this guide,
+     particularly the "Tutorial" section.
+
+
+File: krb5-admin.info,  Node: Overview of This Guide,  Prev: Documentation for Kerberos V5,  Up: Introduction
+
+Overview of This Guide
+======================
+
+The next chapter describes how Kerberos works.
+
+Chapter three describes administration of the principals in the Kerberos
+database.
+
+Chapter four describes how you can use DNS in configuring your Kerberos
+realm.
+
+Chapter five describes administrative programs for manipulating the
+Kerberos database as a whole.
+
+Chapter six describes OpenLDAP Configuration steps.
+
+Chapter seven describes issues to consider when adding an application
+server to the database.
+
+Chapter eight describes our problem reporting system.
+
+The appendices include the list of Kerberos error messages, and a
+complete list of the time zones understood by `kadmin'.
+
+
+File: krb5-admin.info,  Node: How Kerberos Works,  Next: Configuration Files,  Prev: Introduction,  Up: Top
+
+How Kerberos Works
+******************
+
+This section provides a simplified description of a general user's
+interaction with the Kerberos system.  This interaction happens
+transparently--users don't need to know and probably don't care about
+what's going on--but Kerberos administrators might find a schematic
+description of the process useful.  This description glosses over a lot
+of details; for more information, see Kerberos: An Authentication
+Service for Open Network Systems, a paper presented at Winter USENIX
+1988, in Dallas, Texas.  This paper can be retreived by FTP from
+`athena-dist.mit.edu', in the location:
+`/pub/ATHENA/kerberos/doc/usenix.PS'.
+
+* Menu:
+
+* Network Services and Their Client Programs::
+* Kerberos Tickets::
+* The Kerberos Database::
+* Kerberos Realms::
+* The Ticket-Granting Ticket::
+* Network Services and the Master Database::
+* The User/Kerberos Interaction::
+* Definitions::
+
+
+File: krb5-admin.info,  Node: Network Services and Their Client Programs,  Next: Kerberos Tickets,  Prev: How Kerberos Works,  Up: How Kerberos Works
+
+Network Services and Their Client Programs
+==========================================
+
+In an environment that provides network services, you use "client"
+programs to request "services" from "server" programs that are
+somewhere on the network.  Suppose you have logged in to a workstation
+and you want to `rlogin' to a typical UNIX host.  You use the local
+`rlogin' client program to contact the remote machine's `rlogind'
+daemon.
+
+
+File: krb5-admin.info,  Node: Kerberos Tickets,  Next: The Kerberos Database,  Prev: Network Services and Their Client Programs,  Up: How Kerberos Works
+
+Kerberos Tickets
+================
+
+Under Kerberos, the `klogind' daemon allows you to login to a remote
+machine if you can provide `klogind' a Kerberos ticket which proves
+your identity.  In addition to the ticket, you must also have
+possession of the corresponding ticket session key. The combination of
+a ticket and the ticket's session key is known as a credential.
+
+Typically, a client program automatically obtains credentials
+identifying the person using the client program.  The credentials are
+obtained from a Kerberos server that resides somewhere on the network.
+A Kerberos server maintains a database of user, server, and password
+information.
+
+
+File: krb5-admin.info,  Node: The Kerberos Database,  Next: Kerberos Realms,  Prev: Kerberos Tickets,  Up: How Kerberos Works
+
+The Kerberos Database
+=====================
+
+Kerberos will give you credentials only if you have an entry in the
+Kerberos server's "Kerberos database".  Your database entry includes
+your Kerberos "principal" (an identifying string, which is often just
+your username), and your Kerberos password.  Every Kerberos user must
+have an entry in this database.
+
+
+File: krb5-admin.info,  Node: Kerberos Realms,  Next: The Ticket-Granting Ticket,  Prev: The Kerberos Database,  Up: How Kerberos Works
+
+Kerberos Realms
+===============
+
+Each administrative domain will have its own Kerberos database, which
+contains information about the users and services for that particular
+site or administrative domain.  This administrative domain is the
+"Kerberos realm".
+
+Each Kerberos realm will have at least one Kerberos server, where the
+master Kerberos database for that site or administrative domain is
+stored.  A Kerberos realm may also have one or more "slave servers",
+which have read-only copies of the Kerberos database that are
+periodically propagated from the master server.  For more details on how
+this is done, see the "Set Up the Slave KDCs for Database Propagation"
+and "Propagate the Database to Each Slave KDC" sections of the Kerberos
+V5 Installation Guide.
+
+
+File: krb5-admin.info,  Node: The Ticket-Granting Ticket,  Next: Network Services and the Master Database,  Prev: Kerberos Realms,  Up: How Kerberos Works
+
+The Ticket-Granting Ticket
+==========================
+
+The `kinit' command prompts for your password.  If you enter it
+successfully, you will obtain a "ticket-granting ticket" and a "ticket
+session key" which gives you the right to use the ticket.  This
+combination of the ticket and its associated key is known as your
+"credentials".  As illustrated below, client programs use your
+ticket-granting ticket credentials in order to obtain client-specific
+credentials as needed.
+
+Your credentials are stored in a "credentials cache", which is often
+just a file in `/tmp'.  The credentials cache is also called the
+"ticket file", especially in Kerberos V4 documentation.  Note, however,
+that a credentials cache does not have to be stored in a file.
+
+
+File: krb5-admin.info,  Node: Network Services and the Master Database,  Next: The User/Kerberos Interaction,  Prev: The Ticket-Granting Ticket,  Up: How Kerberos Works
+
+Network Services and the Master Database
+========================================
+
+The master database also contains entries for all network services that
+require Kerberos authentication.  Suppose that your site has a machine,
+`laughter.mit.edu', that requires Kerberos authentication from anyone
+who wants to `rlogin' to it.  The host's Kerberos realm is
+`ATHENA.MIT.EDU'.
+
+This service must be registered in the Kerberos database, using the
+proper service name, which in this case is the "principal":
+
+     host/laughter.mit.edu@ATHENA.MIT.EDU
+
+The `/' character separates the Kerberos "primary" (in this case,
+`host') from the "instance" (in this case, `laughter.mit.edu'); the `@'
+character separates the realm name (in this case, `ATHENA.MIT.EDU')
+from the rest of the principal.  The primary, `host', denotes the name
+or type of the service that is being offered:  generic host-level
+access to the machine.  The instance, `laughter.mit.edu', names the
+specific machine that is offering this service.  There will generally be
+many different machines, each offering one particular type of service,
+and the instance serves to give each one of these servers a different
+Kerberos principal.
+
+* Menu:
+
+* The Keytab File::
+
+
+File: krb5-admin.info,  Node: The Keytab File,  Prev: Network Services and the Master Database,  Up: Network Services and the Master Database
+
+The Keytab File
+---------------
+
+For each service, there must also be a "service key" known only by
+Kerberos and the service.  On the Kerberos server, the service key is
+stored in the Kerberos database.
+
+On the server host, these service keys are stored in "key tables",
+which are files known as "keytabs".(1)  For example, the service keys
+used by services that run as root are usually stored in the keytab file
+`/etc/krb5.keytab'.  N.B.: This service key is the equivalent of the
+service's password, and must be kept secure.  Data which is meant to be
+read only by the service is encrypted using this key.
+
+---------- Footnotes ----------
+
+(1) Keytabs were called "srvtabs" in Kerberos V4.
+
+
+File: krb5-admin.info,  Node: The User/Kerberos Interaction,  Next: Definitions,  Prev: Network Services and the Master Database,  Up: How Kerberos Works
+
+The User/Kerberos Interaction
+=============================
+
+Suppose that you walk up to a host intending to login to it, and then
+`rlogin' to the machine `laughter'.  Here's what happens:
+
+  1. You login to the workstation and use the `kinit' command to get a
+     ticket-granting ticket.  This command prompts you for your Kerberos
+     password.  (On systems running the Kerberos V5 `login' program,
+     this may be done as part of the login process, not requiring the
+     user to run a separate program.)
+
+       A. The `kinit' command sends your request to the Kerberos master
+          server machine.  The server software looks for your principal
+          name's entry in the Kerberos database.
+
+       B. If this entry exists, the Kerberos server creates and returns
+          a ticket-granting ticket and the key which allows you to use
+          it, encrypted by your password.  If `kinit' can decrypt the
+          Kerberos reply using the password you provide, it stores this
+          ticket in a credentials cache on your local machine for later
+          use.  The name of the credentials cache can be specified in
+          the `KRB5CCNAME' environment variable.  If this variable is
+          not set, the name of the file will be `/tmp/krb5cc_<uid>',
+          where <uid> is your UNIX user-id, represented in decimal
+          format.
+
+  2. Now you use the `rlogin' client to access the machine `laughter'.
+
+          host% rlogin laughter
+
+       A. The `rlogin' client checks your ticket file to see if you
+          have a ticket for the `host' service for `laughter'.  You
+          don't, so `rlogin' uses the credential cache's
+          ticket-granting ticket to make a request to the master
+          server's ticket-granting service.
+
+       B. This ticket-granting service receives the request for a
+          ticket for `host/laughter.mit.edu', and looks in the master
+          database for an entry for `host/laughter.mit.edu'.  If the
+          entry exists, the ticket-granting service issues you a ticket
+          for that service.  That ticket is also cached in your
+          credentials cache.
+
+       C. The `rlogin' client now sends that ticket to the `laughter'
+          `klogind' service program.  The service program checks the
+          ticket by using its own service key.  If the ticket is valid,
+          it now knows your identity.  If you are allowed to login to
+          `laughter' (because your username matches one in /etc/passwd,
+          or your Kerberos principal is in the appropriate `.k5login'
+          file), `klogind' will let you login.
+
+
+File: krb5-admin.info,  Node: Definitions,  Prev: The User/Kerberos Interaction,  Up: How Kerberos Works
+
+Definitions
+===========
+
+Following are definitions of some of the Kerberos terminology.
+
+client
+     an entity that can obtain a ticket.  This entity is usually either
+     a user or a host.
+
+host
+     a computer that can be accessed over a network.
+
+Kerberos
+     in Greek mythology, the three-headed dog that guards the entrance
+     to the underworld.  In the computing world, Kerberos is a network
+     security package that was developed at MIT.
+
+KDC
+     Key Distribution Center.  A machine that issues Kerberos tickets.
+
+keytab
+     a key table file containing one or more keys.  A host or service
+     uses a "keytab" file in much the same way as a user uses his/her
+     password.
+
+principal
+     a string that names a specific entity to which a set of
+     credentials may be assigned.  It can have an arbitrary number of
+     components, but generally has three:
+
+    primary
+          the first part of a Kerberos principal.  In the case of a
+          user, it is the username.  In the case of a service, it is
+          the name of the service.
+
+    instance
+          the second part of a Kerberos principal.  It gives
+          information that qualifies the primary.  The instance may be
+          null.  In the case of a user, the instance is often used to
+          describe the intended use of the corresponding credentials.
+          In the case of a host, the instance is the fully qualified
+          hostname.
+
+    realm
+          the logical network served by a single Kerberos database and
+          a set of Key Distribution Centers.  By convention, realm
+          names are generally all uppercase letters, to differentiate
+          the realm from the internet domain.
+
+     The typical format of a typical Kerberos principal is
+     primary/instance@REALM.
+
+service
+     any program or computer you access over a network.  Examples of
+     services include "host" (a host, e.g., when you use `telnet' and
+     `rsh'), "ftp" (FTP), "krbtgt" (authentication; cf. ticket-granting
+     ticket), and "pop" (email).
+
+ticket
+     a temporary set of electronic credentials that verify the identity
+     of a client for a particular service.
+
+TGT
+     Ticket-Granting Ticket.  A special Kerberos ticket that permits the
+     client to obtain additional Kerberos tickets within the same
+     Kerberos realm.
+
+
+File: krb5-admin.info,  Node: Configuration Files,  Next: Using DNS,  Prev: How Kerberos Works,  Up: Top
+
+Configuration Files
+*******************
+
+* Menu:
+
+* Supported Encryption Types::
+* Salts::
+* krb5.conf::
+* kdc.conf::
+
+
+File: krb5-admin.info,  Node: Supported Encryption Types,  Next: Salts,  Prev: Configuration Files,  Up: Configuration Files
+
+Supported Encryption Types
+==========================
+
+Any tag in the configuration files which requires a list of encryption
+types can be set to some combination of the following strings.
+Encryption types marked as "weak" are available for compatibility but
+not recommended for use.
+
+`des-cbc-crc'
+     DES cbc mode with CRC-32 (weak)
+
+`des-cbc-md4'
+     DES cbc mode with RSA-MD4 (weak)
+
+`des-cbc-md5'
+     DES cbc mode with RSA-MD5 (weak)
+
+`des-cbc-raw'
+     DES cbc mode raw (weak)
+
+`des3-cbc-raw'
+     Triple DES cbc mode raw (weak)
+
+`des3-cbc-sha1'
+`des3-hmac-sha1'
+`des3-cbc-sha1-kd'
+     Triple DES cbc mode with HMAC/sha1
+
+`des-hmac-sha1'
+     DES with HMAC/sha1 (weak)
+
+`aes256-cts-hmac-sha1-96'
+`aes256-cts'
+     AES-256 CTS mode with 96-bit SHA-1 HMAC
+
+`aes128-cts-hmac-sha1-96'
+`aes128-cts'
+     AES-128 CTS mode with 96-bit SHA-1 HMAC
+
+`arcfour-hmac'
+`rc4-hmac'
+`arcfour-hmac-md5'
+     RC4 with HMAC/MD5
+
+`arcfour-hmac-exp'
+`rc4-hmac-exp'
+`arcfour-hmac-md5-exp'
+     Exportable RC4 with HMAC/MD5 (weak)
+
+`des'
+     The DES family: des-cbc-crc, des-cbc-md5, and des-cbc-md4 (weak)
+
+`des3'
+     The triple DES family: des3-cbc-sha1
+
+`aes'
+     The AES family: aes256-cts-hmac-sha1-96 and aes128-cts-hmac-sha1-96
+
+`rc4'
+     The RC4 family: arcfour-hmac
+
+The string DEFAULT can be used to refer to the default set of types for
+the variable in question.  Types or families can be removed from the
+current list by prefixing them with a minus sign ("-").  Types or
+families can be prefixed with a plus sign ("+") for symmetry; it has
+the same meaning as just listing the type or family.  For example,
+"DEFAULT -des" would be the default set of encryption types with DES
+types removed, and "des3 DEFAULT" would be the default set of
+encryption types with triple DES types moved to the front.
+
+While aes128-cts and aes256-cts are supported for all Kerberos
+operations, they are not supported by older versions of our GSSAPI
+implementation (krb5-1.3.1 and earlier).
+
+By default, AES is enabled in this release.  Sites wishing to use AES
+encryption types on their KDCs need to be careful not to give GSSAPI
+services AES keys if the servers have not been updated.  If older
+GSSAPI services are given AES keys, then services may fail when clients
+supporting AES for GSSAPI are used.  Sites may wish to use AES for user
+keys and for the ticket granting ticket key, although doing so requires
+specifying what encryption types are used as each principal is created.
+
+If all GSSAPI-based services have been updated before or with the KDC,
+this is not an issue.
+
+
+File: krb5-admin.info,  Node: Salts,  Next: krb5.conf,  Prev: Supported Encryption Types,  Up: Configuration Files
+
+Salts
+=====
+
+Your Kerberos key is derived from your password.  To ensure that people
+who happen to pick the same password do not have the same key, Kerberos
+5 incorporates more information into the key using something called a
+salt.  The supported values for salts are as follows.
+
+`normal'
+     default for Kerberos Version 5
+
+`v4'
+     the only type used by Kerberos Version 4, no salt
+
+`norealm'
+     same as the default, without using realm information
+
+`onlyrealm'
+     uses only realm information as the salt
+
+`afs3'
+     AFS version 3, only used for compatibility with Kerberos 4 in AFS
+
+`special'
+     only used in very special cases; not fully supported
+
+
+File: krb5-admin.info,  Node: krb5.conf,  Next: kdc.conf,  Prev: Salts,  Up: Configuration Files
+
+krb5.conf
+=========
+
+The `krb5.conf' file contains Kerberos configuration information,
+including the locations of KDCs and admin servers for the Kerberos
+realms of interest, defaults for the current realm and for Kerberos
+applications, and mappings of hostnames onto Kerberos realms.  Normally,
+you should install your `krb5.conf' file in the directory `/etc'.  You
+can override the default location by setting the environment variable
+`KRB5_CONFIG'.
+
+The `krb5.conf' file is set up in the style of a Windows INI file.
+Sections are headed by the section name, in square brackets.  Each
+section may contain zero or more relations, of the form:
+
+     foo = bar
+
+or
+
+     fubar = {
+             foo = bar
+             baz = quux
+     }
+
+Placing a `*' at the end of a line indicates that this is the "final"
+value for the tag.  This means that neither the remainder of this
+configuration file nor any other configuration file will be checked for
+any other values for this tag.
+
+For example, if you have the following lines:
+
+     foo = bar*
+     foo = baz
+
+then the second value of foo (baz) would never be read.
+
+The `krb5.conf' file can include other files using either of the
+following directives at the beginning of a line:
+
+     include FILENAME
+     includedir DIRNAME
+
+FILENAME or DIRNAME should be an absolute path.  The named file or
+directory must exist and be readable.  Including a directory includes
+all files within the directory whose names consist solely of
+alphanumeric characters, dashes, or underscores.  Included profile files
+are syntactically independent of their parents, so each included file
+must begin with a section header.
+
+The `krb5.conf' file may contain any or all of the following sections:
+
+libdefaults
+     Contains default values used by the Kerberos V5 library.
+
+login
+     Contains default values used by the Kerberos V5 login program.
+
+appdefaults
+     Contains default values that can be used by Kerberos V5
+     applications.
+
+realms
+     Contains subsections keyed by Kerberos realm names.  Each
+     subsection describes realm-specific information, including where
+     to find the Kerberos servers for that realm.
+
+domain_realm
+     Contains relations which map domain names and subdomains onto
+     Kerberos realm names.  This is used by programs to determine what
+     realm a host should be in, given its fully qualified domain name.
+
+logging
+     Contains relations which determine how Kerberos programs are to
+     perform logging.
+
+capaths
+     Contains the authentication paths used with direct
+     (nonhierarchical) cross-realm authentication.  Entries in this
+     section are used by the client to determine the intermediate
+     realms which may be used in cross-realm authentication.  It is
+     also used by the end-service when checking the transited field for
+     trusted intermediate realms.
+
+plugins
+     Contains tags to register dynamic plugin modules and to turn
+     modules on and off.
+
+
+* Menu:
+
+* libdefaults::
+* appdefaults::
+* login::
+* realms (krb5.conf)::
+* domain_realm::
+* logging::
+* capaths::
+* dbdefaults::
+* dbmodules::
+* plugins::
+* pkinit client options::
+* Sample krb5.conf File::
+
+
+File: krb5-admin.info,  Node: libdefaults,  Next: appdefaults,  Prev: krb5.conf,  Up: krb5.conf
+
+[libdefaults]
+-------------
+
+The `libdefaults' section may contain any of the following relations:
+
+default_keytab_name
+     This relation specifies the default keytab name to be used by
+     application servers such as telnetd and rlogind.  The default is
+     /etc/krb5.keytab.
+
+default_realm
+     Identifies the default Kerberos realm for the client.  Set its
+     value to your Kerberos realm.  If this is not specified and the
+     TXT record lookup is enabled (see *Note Using DNS::), then that
+     information will be used to determine the default realm.  If this
+     tag is not set in this configuration file and there is no DNS
+     information found, then an error will be returned.
+
+default_tgs_enctypes
+     Identifies the supported list of session key encryption types that
+     should be returned by the KDC.  The list may be delimited with
+     commas or whitespace.  Kerberos supports many different encryption
+     types, and support for more is planned in the future. (see *Note
+     Supported Encryption Types:: for a list of the accepted values for
+     this tag).  The default value is aes256-cts-hmac-sha1-96
+     aes128-cts-hmac-sha1-96 des3-cbc-sha1 arcfour-hmac-md5 des-cbc-crc
+     des-cbc-md5 des-cbc-md4.
+
+default_tkt_enctypes
+     Identifies the supported list of session key encryption types that
+     should be requested by the client.  The format is the same as for
+     _default_tgs_enctypes_.  The default value for this tag is
+     aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 des3-cbc-sha1
+     arcfour-hmac-md5 des-cbc-crc des-cbc-md5 des-cbc-md4.
+
+permitted_enctypes
+     Identifies all encryption types that are permitted for use in
+     session key encryption.  The default value for this tag is
+     aes256-cts-hmac-sha1-96 aes128-cts-hmac-sha1-96 des3-cbc-sha1
+     arcfour-hmac-md5 des-cbc-crc des-cbc-md5 des-cbc-md4.
+
+allow_weak_crypto
+     If this is set to 0 (for false), then weak encryption types will be
+     filtered out of the previous three lists (as noted in *Note
+     Supported Encryption Types::).  The default value for this tag is
+     false, which may cause authentication failures in existing
+     Kerberos infrastructures that do not support strong crypto.  Users
+     in affected environments should set this tag to true until their
+     infrastructure adopts stronger ciphers.
+
+clockskew
+     Sets the maximum allowable amount of clockskew in seconds that the
+     library  will tolerate before assuming that a Kerberos message is
+     invalid.  The default value is 300 seconds, or five minutes.
+
+k5login_authoritative
+     If the value of this relation is true (the default), principals
+     must be listed in a local user's k5login file to be granted login
+     access, if a k5login file exists.  If the value of this relation
+     is false, a principal may still be granted login access through
+     other mechanisms even if a k5login file exists but does not list
+     the principal.
+
+k5login_directory
+     If set, the library will look for a local user's k5login file
+     within the named directory, with a filename corresponding to the
+     local username.  If not set, the library will look for k5login
+     files in the user's home directory, with the filename `.k5login'.
+     For security reasons, k5login files must be owned by the local
+     user or by root.
+
+kdc_timesync
+     If this is set to 1 (for true), then client machines will compute
+     the difference between their time and the time returned by the KDC
+     in the timestamps in the tickets and use this value to correct for
+     an inaccurate system clock.  This corrective factor is only used
+     by the Kerberos library.  The default is 1.
+
+kdc_req_checksum_type
+ap_req_checksum_type
+safe_checksum_type
+     An integer which specifies the type of checksum to use.  Used for
+     compatability with DCE security servers which do not support the
+     default RSA MD5 used by this version of Kerberos.  The
+     kdc_req_checksum_type is only used for DES keys.   The
+     ap_req_checksum_type defaults to the preferred checksum for the
+     encryption type being used if unset.  If set, then the selected
+     checksum is used regardless of the type of key being used.  The
+     possible values and their meanings are as follows.
+
+    1
+          CRC32
+
+    2
+          RSA MD4
+
+    3
+          RSA MD4 DES
+
+    4
+          DES CBC
+
+    7
+          RSA MD5
+
+    8
+          RSA MD5 DES
+
+    9
+          NIST SHA
+
+    12
+          HMAC SHA1 DES3
+
+    -138
+          Microsoft MD5 HMAC checksum type
+
+ccache_type
+     Use this parameter on systems which are DCE clients, to specify the
+     type of cache to be created by kinit, or when forwarded tickets are
+     received.  DCE and Kerberos can share the cache, but some versions
+     of DCE do not support the default cache as created by this version
+     of Kerberos.  Use a value of 1 on DCE 1.0.3a systems, and a value
+     of 2 on DCE 1.1 systems.  The default value is 4.
+
+dns_lookup_kdc
+     Indicate whether DNS SRV records should be used to locate the KDCs
+     and other servers for a realm, if they are not listed in the
+     information for the realm.  (Note that the `admin_server' entry
+     must be in the file, because the DNS implementation for it is
+     incomplete.)
+
+     Enabling this option does open up a type of denial-of-service
+     attack, if someone spoofs the DNS records and redirects you to
+     another server.  However, it's no worse than a denial of service,
+     because that fake KDC will be unable to decode anything you send
+     it (besides the initial ticket request, which has no encrypted
+     data), and anything the fake KDC sends will not be trusted without
+     verification using some secret that it won't know.
+
+     If this option is not specified but `dns_fallback' is, that value
+     will be used instead.  If neither option is specified, the behavior
+     depends on configure-time options; if none were given, the default
+     is to enable this option.  If the DNS support is not compiled in,
+     this entry has no effect.
+
+dns_lookup_realm
+     Indicate whether DNS TXT records should be used to determine the
+     Kerberos realm of a host.
+
+     Enabling this option may permit a redirection attack, where
+     spoofed DNS replies persuade a client to authenticate to the wrong
+     realm, when talking to the wrong host (either by spoofing yet more
+     DNS records or by intercepting the net traffic).  Depending on how
+     the client software manages hostnames, however, it could already
+     be vulnerable to such attacks.  We are looking at possible ways to
+     minimize or eliminate this exposure.  For now, we encourage more
+     adventurous sites to try using Secure DNS.
+
+     If this option is not specified but `dns_fallback' is, that value
+     will be used instead.  If neither option is specified, the behavior
+     depends on configure-time options; if none were given, the default
+     is to disable this option.  If the DNS support is not compiled in,
+     this entry has no effect.
+
+dns_fallback
+     General flag controlling the use of DNS for Kerberos information.
+     If both of the preceding options are specified, this option has no
+     effect.
+
+extra_addresses
+     This allows a computer to use multiple local addresses, in order to
+     allow Kerberos to work in a network that uses NATs.  The addresses
+     should be in a comma-separated list.
+
+udp_preference_limit
+     When sending a message to the KDC, the library will try using TCP
+     before UDP if the size of the message is above
+     `udp_preference_list'.  If the message is smaller than
+     `udp_preference_list', then UDP will be tried before TCP.
+     Regardless of the size, both protocols will be tried if the first
+     attempt fails.
+
+verify_ap_req_nofail
+     If this flag is set, then an attempt to get initial credentials
+     will fail if the client machine does not have a keytab.  The
+     default for the flag is not set.
+
+ticket_lifetime
+     The value of this tag is the default lifetime for initial tickets.
+     The default value for the tag is 1 day.
+
+renew_lifetime
+     The value of this tag is the default renewable lifetime for
+     initial tickets.  The default value for the tag is
+     0.
+
+noaddresses
+     Setting this flag causes the initial Kerberos ticket to be
+     addressless.  The default for the flag is set.
+
+forwardable
+     If this flag is set, initial tickets by default will be
+     forwardable.  The default value for this flag is not set.
+
+proxiable
+     If this flag is set, initial tickets by default will be proxiable.
+     The default value for this flag is not set.
+
+rdns
+     If set to false, prevent the use of reverse DNS resolution when
+     translating hostnames into service principal names.  Defaults to
+     true.  Setting this flag to false is more secure, but may force
+     users to exclusively use fully qualified domain names when
+     authenticating to services.
+
+
+
+File: krb5-admin.info,  Node: appdefaults,  Next: login,  Prev: libdefaults,  Up: krb5.conf
+
+[appdefaults]
+-------------
+
+Each tag in the [appdefaults] section names a Kerberos V5 application
+or an option that is used by some Kerberos V5 application[s].  The
+value of the tag defines the default behaviors for that application.
+
+For example:
+
+     [appdefaults]
+         telnet = {
+             ATHENA.MIT.EDU = {
+                  option1 = false
+             }
+         }
+         telnet = {
+             option1 = true
+             option2 = true
+         }
+         ATHENA.MIT.EDU = {
+             option2 = false
+         }
+         option2 = true
+
+The above four ways of specifying the value of an option are shown in
+order of decreasing precedence.   In this example, if telnet is running
+in the realm EXAMPLE.COM, it should, by default, have option1 and
+option2 set to true.  However, a telnet program in the realm
+ATHENA.MIT.EDU should have option1 set to false and option2 set to
+true.  Any other programs in ATHENA.MIT.EDU should have option2 set to
+false by default.  Any programs running in other realms should have
+option2 set to true.
+
+The list of specifiable options for each application may be found in
+that application's man pages.  The application defaults specified here
+are overridden by those specified in the [realms] section.
+
+
+File: krb5-admin.info,  Node: login,  Next: realms (krb5.conf),  Prev: appdefaults,  Up: krb5.conf
+
+[login]
+-------
+
+Each tag in the [login] section of the file is an option for
+login.krb5.  This section may contain any of the following relations:
+
+krb5_get_tickets
+     Indicate whether or not to use a user's password to get V5 tickets.
+     The default value is true.
+
+krb_run_aklog
+     Indicate whether or not to run aklog.  The default value is
+     false.
+
+aklog_path
+     Indicate where to find aklog.  The default value is
+     $(prefix)/bin/aklog.
+
+accept_passwd
+     A true value will cause login not to accept plaintext passwords.
+     The default value is false.  This is not yet implemented.
+
+
+File: krb5-admin.info,  Node: realms (krb5.conf),  Next: domain_realm,  Prev: login,  Up: krb5.conf
+
+[realms]
+--------
+
+Each tag in the [realms] section of the file is the name of a Kerberos
+realm.  The value of the tag is a subsection with relations that define
+the properties of that particular realm.  For each realm, the following
+tags may be specified in the realm's subsection:
+
+kdc
+     The name or address of a host running a KDC for that realm.  An
+     optional port number, separated from the hostname by a colon, may
+     be included.  If the name or address contains colons (for example,
+     if it is an IPv6 address), enclose it in square brackets to
+     distinguish the colon from a port separator.  For your computer to
+     be able to communicate with the KDC for each realm, this tag must
+     be given a value in each realm subsection in the configuration
+     file, or there must be DNS SRV records specifying the KDCs (see
+     *Note Using DNS::).
+
+master_kdc
+     Identifies the master KDC(s).  Currently, this tag is used in only
+     one case: If an attempt to get credentials fails because of an
+     invalid password, the client software will attempt to contact the
+     master KDC, in case the user's password has just been changed, and
+     the updated database has not been propagated to the slave servers
+     yet.
+
+database_module
+     This relation indicates the name of the configuration section
+     under [dbmodules] for database specific parameters used by the
+     loadable database library.
+
+admin_server
+     Identifies the host where the administration server is running.
+     Typically, this is the master Kerberos server.  This tag must be
+     given a value in order to communicate with the kadmin server for
+     the realm.
+
+default_domain
+     This tag is used for Kerberos 4 compatibility.  Kerberos 4 does not
+     require the entire hostname of a server to be in its principal like
+     Kerberos 5 does.  This tag provides the domain name needed to
+     produce a full hostname when translating V4 principal names into
+     V5 principal names.  All servers in this realm are assumed to be
+     in the domain given as the value of this tag
+
+v4_instance_convert
+     This subsection allows the administrator to configure exceptions
+     to the default_domain mapping rule.  It contains V4 instances (the
+     tag name) which should be translated to some specific hostname
+     (the tag value) as the second component in a Kerberos V5 principal
+     name.
+
+v4_realm
+     This relation is used by the krb524 library routines when
+     converting a V5 principal name to a V4 principal name.  It is used
+     when the V4 realm name and the V5 realm name are not the same, but
+     still share the same principal names and passwords.  The tag value
+     is the Kerberos V4 realm name.
+
+auth_to_local_names
+     This subsection allows you to set explicit mappings from principal
+     names to local user names.  The tag is the mapping name, and the
+     value is the corresponding local user name.
+
+auth_to_local
+     This tag allows you to set a general rule for mapping principal
+     names to local user names.  It will be used if there is not an
+     explicit mapping for the principal name that is being translated.
+     The possible values are:
+
+    DB:filename
+          The principal will be looked up in the database filename.
+          Support for this is not currently compiled in by default.
+
+    RULE:exp
+          The local name will be formulated from exp.
+
+          The format for exp is
+          `[n:string](regexp)s/pattern/replacement/g'.  The integer n
+          indicates how many components the target principal should
+          have.  If this matches, then a string will be formed from
+          string, substituting the realm of the principal for `$0' and
+          the n'th component of the principal for `$n' (e.g. if the
+          principal was johndoe/admin then [2:$2$1foo] would result in
+          the string "adminjohndoefoo").  If this string matches
+          regexp, then the `s//[g]' substitution command will be run
+          over the string.  The optional g will cause the substitution
+          to be global over the string, instead of replacing only the
+          first match in the string.
+
+    DEFAULT
+          The principal name will be used as the local user name.  If
+          the principal has more than one component or is not in the
+          default realm, this rule is not applicable and the conversion
+          will fail.
+
+
+     For example:
+
+          [realms]
+              ATHENA.MIT.EDU = {
+                  auth_to_local = RULE:[2:$1](johndoe)s/^.*$/guest/
+                  auth_to_local = RULE:[2:$1;$2](^.*;admin$)s/;admin$//
+                  auth_to_local = RULE:[2:$2](^.*;root)s/^.*$/root/
+                  auto_to_local = DEFAULT
+              }
+
+     would result in any principal without `root' or `admin' as the
+     second component to be translated with the default rule.  A
+     principal with a second component of `admin' will become its first
+     component.  `root' will be used as the local name for any
+     principal with a second component of `root'.  The exception to
+     these two rules are any principals johndoe/*, which will always
+     get the local name `guest'.
+
+
+
+File: krb5-admin.info,  Node: domain_realm,  Next: logging,  Prev: realms (krb5.conf),  Up: krb5.conf
+
+[domain_realm]
+--------------
+
+The [domain_realm] section provides a translation from a domain name or
+hostname to a Kerberos realm name.  The tag name can be a host name, or
+a domain name, where domain names are indicated by a prefix of a period
+(`.').  The value of the relation is the Kerberos realm name for that
+particular host or domain.  Host names and domain names should be in
+lower case.
+
+If no translation entry applies, the host's realm is considered to be
+the hostname's domain portion converted to upper case.  For example, the
+following [domain_realm] section:
+
+     [domain_realm]
+         .mit.edu = ATHENA.MIT.EDU
+         mit.edu = ATHENA.MIT.EDU
+         crash.mit.edu = TEST.ATHENA.MIT.EDU
+         example.com = EXAMPLE.COM
+
+maps crash.mit.edu into the TEST.ATHENA.MIT.EDU realm.  All other hosts
+in the mit.edu domain will map by default to the ATHENA.MIT.EDU realm,
+and all hosts in the example.com domain will map by default into the
+EXAMPLE.COM realm.  Note the entries for the hosts mit.edu and
+example.com.  Without these entries, these hosts would be mapped into
+the Kerberos realms `EDU' and `ORG', respectively.
+
+
+File: krb5-admin.info,  Node: logging,  Next: capaths,  Prev: domain_realm,  Up: krb5.conf
+
+[logging]
+---------
+
+The [logging] section indicates how a particular entity is to perform
+its logging.  The relations in this section assign one or more values to
+the entity name.  Currently, the following entities are used:
+
+kdc
+     These entries specify how the KDC is to perform its logging.
+
+admin_server
+     These entries specify how the administrative server is to perform
+     its logging.
+
+default
+     These entries specify how to perform logging in the absence of
+     explicit specifications otherwise.
+
+Values are of the following forms:
+
+FILE=<filename>
+FILE:<filename>
+     This value causes the entity's logging messages to go to the
+     specified file.  If the `=' form is used, the file is overwritten.
+     If the `:' form is used, the file is appended to.
+
+STDERR
+     This value causes the entity's logging messages to go to its
+     standard error stream.
+
+CONSOLE
+     This value causes the entity's logging messages to go to the
+     console, if the system supports it.
+
+DEVICE=<devicename>
+     This causes the entity's logging messages to go to the specified
+     device.
+
+SYSLOG[:<severity>[:<facility>]]
+     This causes the entity's logging messages to go to the system log.
+
+     The "severity" argument specifies the default severity of system
+     log messages.  This may be any of the following severities
+     supported by the `syslog(3)' call, minus the LOG_ prefix:
+     LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERR, LOG_WARNING, LOG_NOTICE,
+     LOG_INFO, and LOG_DEBUG.  For example, a value of `CRIT' would
+     specify LOG_CRIT severity.
+
+     The facility argument specifies the facility under which the
+     messages are logged.  This may be any of the following facilities
+     supported by the syslog(3) call minus the LOG_ prefix:  LOG_KERN,
+     LOG_USER, LOG_MAIL, LOG_DAEMON, LOG_AUTH, LOG_LPR, LOG_NEWS,
+     LOG_UUCP, LOG_CRON, and LOG_LOCAL0 through LOG_LOCAL7.
+
+     If no severity is specified, the default is ERR.  If no facility is
+     specified, the default is AUTH.
+
+In the following example, the logging messages from the KDC will go to
+the console and to the system log under the facility LOG_DAEMON with
+default severity of LOG_INFO; and the logging messages from the
+administrative server will be appended to the file /var/adm/kadmin.log
+and sent to the device /dev/tty04.
+
+     [logging]
+         kdc = CONSOLE
+         kdc = SYSLOG:INFO:DAEMON
+         admin_server = FILE:/var/adm/kadmin.log
+         admin_server = DEVICE=/dev/tty04
+
+
+File: krb5-admin.info,  Node: capaths,  Next: dbdefaults,  Prev: logging,  Up: krb5.conf
+
+[capaths]
+---------
+
+In order to perform direct (non-hierarchical) cross-realm
+authentication, a database is needed to construct the authentication
+paths between the realms.  This section defines that database.
+
+A client will use this section to find the authentication path between
+its realm and the realm of the server.  The server will use this section
+to verify the authentication path used by the client, by checking the
+transited field of the received ticket.
+
+There is a tag for each participating realm, and each tag has subtags
+for each of the realms.  The value of the subtags is an intermediate
+realm which may participate in the cross-realm authentication.  The
+subtags may be repeated if there is more then one intermediate realm.  A
+value of "."  means that the two realms share keys directly, and no
+intermediate realms should be allowed to participate.
+
+There are n**2 possible entries in this table, but only those entries
+which will be needed on the client or the server need to be present.
+The client needs a tag for its local realm, with subtags for all the
+realms of servers it will need to authenticate with.  A server needs a
+tag for each realm of the clients it will serve.
+
+For example, ANL.GOV, PNL.GOV, and NERSC.GOV all wish to use the ES.NET
+realm as an intermediate realm.  ANL has a sub realm of TEST.ANL.GOV
+which will authenticate with NERSC.GOV but not PNL.GOV.  The [capaths]
+section for ANL.GOV systems would look like this:
+
+     [capaths]
+         ANL.GOV = {
+             TEST.ANL.GOV = .
+             PNL.GOV = ES.NET
+             NERSC.GOV = ES.NET
+             ES.NET = .
+         }
+         TEST.ANL.GOV = {
+             ANL.GOV = .
+         }
+         PNL.GOV = {
+             ANL.GOV = ES.NET
+         }
+         NERSC.GOV = {
+             ANL.GOV = ES.NET
+         }
+         ES.NET = {
+             ANL.GOV = .
+         }
+
+The [capaths] section of the configuration file used on NERSC.GOV
+systems would look like this:
+
+     [capaths]
+         NERSC.GOV = {
+             ANL.GOV = ES.NET
+             TEST.ANL.GOV = ES.NET
+             TEST.ANL.GOV = ANL.GOV
+             PNL.GOV = ES.NET
+             ES.NET = .
+         }
+         ANL.GOV = {
+             NERSC.GOV = ES.NET
+         }
+         PNL.GOV = {
+             NERSC.GOV = ES.NET
+         }
+         ES.NET = {
+             NERSC.GOV = .
+         }
+         TEST.ANL.GOV = {
+             NERSC.GOV = ANL.GOV
+             NERSC.GOV = ES.NET
+         }
+
+In the above examples, the ordering is not important, except when the
+same subtag name is used more then once.  The client will use this to
+determine the path.  (It is not important to the server, since the
+transited field is not sorted.)
+
+This feature is not currently supported by DCE.  DCE security servers
+can be used with Kerberized clients and servers, but versions prior to
+DCE 1.1 did not fill in the transited field, and should be used with
+caution.
+
+
+File: krb5-admin.info,  Node: dbdefaults,  Next: dbmodules,  Prev: capaths,  Up: krb5.conf
+
+[dbdefaults]
+------------
+
+The [dbdefaults] section provides default values for the database
+specific parameters. It can also specify the configuration section
+under [dbmodules] section for database specific parameters used by the
+database library.(*note dbmodules::).
+
+The following tags are used in this section:
+
+database_module
+     This relation indicates the name of the configuration section
+     under the [dbmodules] for database specific parameters used by the
+     loadable database library.
+
+ldap_kerberos_container_dn
+     This LDAP specific tag indicates the DN of the container object
+     where the realm objects will be located. This value is used if the
+     container object is not mentioned in the configuration section
+     under [dbmodules].
+
+ldap_kdc_dn
+     This LDAP specific tag indicates the default bind DN for the KDC
+     server. The KDC server does a login to the directory as this
+     object. This object should have the rights to read the Kerberos
+     data in the LDAP database. This value is used if the bind DN for
+     the KDC is not mentioned in the configuration section under
+     [dbmodules].
+
+ldap_kadmind_dn
+     This LDAP specific tag indicates the default bind DN for the
+     Administration server. The administration server does a login to
+     the directory as this object. This object should have the rights
+     to read and write the Kerberos data in the LDAP database. This
+     value is used if the bind DN for the Administration server is not
+     mentioned in the configuration section under [dbmodules].
+
+ldap_service_password_file
+     This LDAP specific tag indicates the file containing the stashed
+     passwords (created by `kdb5_ldap_util stashsrvpw') for the objects
+     used by the Kerberos servers to bind to the LDAP server. This file
+     must be kept secure. This value is used if no service password
+     file is mentioned in the configuration section under [dbmodules].
+
+ldap_server
+     This LDAP specific tag indicates the list of LDAP servers that the
+     Kerberos servers can connect to. The list of LDAP servers is
+     whitespace-separated. The LDAP server is specified by a LDAP URI.
+     This value is used if no LDAP servers are mentioned in the
+     configuration section under [dbmodules]. It is recommended to use
+     the ldapi:// or ldaps:// interface and not to use ldap://
+     interface.
+
+ldap_conns_per_server
+     This LDAP specific tag indicates the number of connections to be
+     maintained per LDAP server. This value is used if the number of
+     connections per LDAP server are not mentioned in the configuration
+     section under [dbmodules]. The default value is 5.
+

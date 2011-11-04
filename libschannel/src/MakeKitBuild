@@ -1,0 +1,15 @@
+make()
+{
+    SCHANNEL_SOURCES="\
+       schn_util.c \
+       schn_init.c \
+       schn_wrap.c \
+       schn_unwrap.c"
+
+    mk_library \
+        LIB=schannel \
+        INCLUDEDIRS=". ../include" \
+        SOURCES="$SCHANNEL_SOURCES" \
+        HEADERDEPS="openssl/crypto.h lw/base.h" \
+        LIBDEPS="crypto"
+}

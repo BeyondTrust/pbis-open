@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Building and Using Cyrus SASL on Mac OS X</title>
+<!-- $Id: macosx.html,v 1.6 2003/12/12 00:43:03 rbraun Exp $ -->
+</head>
+<body>
+<h1>Cyrus SASL v2 on Mac OS X (and 9)</h1>
+<p>The Cyrus SASL v2 distribution now supports Mac OS X, including
+applications written to Apple's Carbon and Cocoa interfaces, as well
+as the standard Unix-like API. It includes the following
+components:</p>
+<ul>
+  <li>A port of the Unix SASL library, which lives in <tt>/usr/local/lib/libsasl2.dylib</tt>
+(or something like that) and
+with plugins in <tt>/usr/lib/sasl</tt> (which should be a symlink to <tt>/usr/local/lib/sasl</tt>).
+  </li>
+  <li>A framework which lives in
+<tt>/Library/Frameworks/SASL2.framework</tt>, and allows the use of the
+<tt>-framework</tt> option to Apple's <tt>ld</tt>, or linking with the
+framework in Project Builder. This framework is in fact a wrapper for a
+symlink to <tt>/usr/local/lib/libsasl2.dylib</tt> with the necessary
+information to recognize it as a framework. This is what we expect many
+Cocoa and Carbon Mach-O applications will want to use, and the framework
+is required for CFBundle to work, which is used by the CFM glue library.
+</li>
+  <li>A CFM glue library (<tt>/Library/CFMSupport/SASL2GlueCFM</tt>) which
+can be linked in by Carbon CFM applications, that uses CFBundle to bind
+the framework and thus load the Unix-level library. It automatically loads
+the important functions at <tt>sasl_client_init</tt> or
+<tt>sasl_server_init</tt> time; it also automatically makes sure memory
+allocation works if you're using the metrowerks malloc; if you're not,
+<tt>sasl_set_alloc</tt> works as usual. </li>
+  <li>A Carbon port of the existing CFM library for Mac OS 9. Note that
+this could probably be modified fairly easily to work on OS X, but
+there's not much point. The CFM glue layer to the Unix library
+supports many more functions, including the entire server API; also,
+the Unix implementation is mostly independent of Kerberos
+implementation, while the Mac OS 9 Carbon port specifically requires
+MIT Kerberos for Macintosh 3.5 or later in order to get Kerberos
+support. The Mac OS 9 code implements only the client API, but this is
+mostly what is wanted from SASL on OS 9 anyway. </li>
+</ul>
+<p>If you are building a Carbon CFM application and intend it to run on
+both OS 9 and OS X, you should link against the OS 9 Carbon SASL
+library, since it exports fewer APIs (client side only, specifically)
+than the OS X CFM glue. Your application should work seamlessly with
+both libraries if you do this, despite the different implementations
+underneath.</p>
+<p>If you need a Carbon CFM application to support server-side SASL
+functionality, you need to link against the <tt>SASL2GlueCFM</tt>
+library, but be aware that your application will not run on OS 9.</p>
+<h2>Compiling and Using the Unix library</h2>
+
+The Unix library is mostly ready to build on Mac OS X, but it does depend
+on the <tt>dlcompat</tt> package in order to load its plugins.
+<tt>dlcompat-20010505</tt> is a relatively simple version known to work
+with SASL; it is provided with the distribution in a tarball. You should
+<tt>make</tt> and <tt>make install</tt> the <tt>dlcompat</tt> library
+(which probably goes into <tt>/usr/local/lib/libdl.dylib</tt>) before
+attempting to <tt>./configure</tt> the SASL distribution itself. SASL will
+then pretend it's a real Unix <tt>libdl</tt>, and link against it. 
+
+<p>Since there are, at this point, newer and far more complex versions of
+dlcompat, you may prefer to use those instead if other software requires
+their functionality. The dlcompat homepage is located <a
+href="http://www.opendarwin.org/projects/dlcompat/">on the OpenDarwin
+site.</a> Many users may want to install the <tt>/sw</tt> tree from <a
+href="http://fink.sourceforge.net/">the Fink project</a> to get this, as
+well as possibly newer autotools and other software.<br> </p>
+
+<p>As of version 2.1.16, SASL uses and requires a recent version of GNU
+autotools (autoconf, automake, and libtool) to build its configuration scripts.
+If you are building from CVS, you will need to have the autotools installed
+on your system. The version included with all releases of the developer tools
+for OS X 10.2.x is too old for this; if you aren't using OS X 10.3 or later,
+you should upgrade to more recent patchlevels of these tools. The easiest way
+to do this is to <a href="http://fink.sourceforge.net/">install the Fink
+environment</a> and then <tt>apt-get
+install autoconf2.5 automake1.7 libtool14</tt>.<br>
+</p>
+<p>Recent versions of SASL ship with Kerberos v4 disabled by default.
+If you need Kerberos v4 for some reason, and you are using MIT Kerberos
+for Macintosh 4.0 or later, you should <tt>./configure</tt> with
+the added options <tt>"--enable-krb4=/usr --without-openssl
+--disable-digest"</tt> so that it finds the
+correct location for the header files, and does not use OpenSSL or
+build anything that depends on it (such as the digest-md5 plugin),
+since OpenSSL provides its own DES routines which do not work with
+Kerberos v4. <i>Please read the "Known Problems" section at the end of
+this
+document for more information on this issue.<br>
+</i></p>
+<p>You must be root to make install, since <tt>/usr/local</tt> is only
+modifiable by root. You need not enable the root account using
+NetInfo; the recommended (but underdocumented) method is to use
+<tt>sudo -s</tt> from the Terminal window when you are logged into an
+administrator's account, and enter the password for that account. When
+building on Mac OS X, <tt>make install</tt> will automatically add the
+framework to <tt>/Library/Frameworks</tt>.</p>
+<p>This does not build the CFM glue library. Building the CFM glue
+library requires Metrowerks CodeWarrior Pro 6 or later (tested with
+6), and the files necessary to build it are in the
+<tt>mac/osx_cfm_glue</tt> folder.</p>
+<h2>Changes to the Unix library to make it work on OS X</h2>
+<p>This is provided for reference purposes only. The build system will
+automatically take care of all of these issues when building on Darwin
+or Mac OS X.</p>
+<ul>
+  <li>The random code supports the preferred way to generate random
+numbers in Darwin. (In SASL v2, it does this on all unix-like
+platforms that lack jrand48). <i>Note that Mac OS X "Jaguar", version
+10.2,
+now has the standard jrand48 function, and that SASL will use this
+instead
+of the previous workaround.</i> </li>
+  <li>Symbols which are dlopened have an underscore prefixed. (This
+behavior is detected by configure in SASL v2.) </li>
+  <li>Plugins are linked with the <tt>-module</tt> option to <tt>libtool</tt>,
+which causes the <tt>-bundle</tt> option to be
+supplied to Apple's <tt>ld</tt>. (This is done on all platforms in
+SASL v2.) </li>
+  <li>The MD5 symbols are renamed to avoid library conflicts. This
+allows proper compilations against Heimdal and MIT's unix kerberos
+distribution, and prevents crashes when linked against MIT Kerberos
+for Macintosh (which also duplicates the symbols, but in a different
+way). Note that the MD5 symbols have local names on all platforms with
+SASL v2; this was only different in SASL v1. </li>
+  <li>MIT Kerberos for Macintosh 4.0 and later are fully supported. This
+was accomplished by using <tt>krb_get_err_text</tt> if available and
+checking for additional names for the krb4 libraries. </li> </ul>
+<h2>Changes to the Mac OS 9 projects to support Carbon</h2>
+<p><b><i>Please read these notes before you attempt to build SASL for OS 9
+Carbon!</i></b> </p> <ul>
+  <li><b>Important!</b> You must make sure that all files have their
+correct HFS filetype before starting to build this code! In
+particular, all source and text files must be of type <tt>'TEXT'</tt>,
+which is not the default if you use the Mac OS X cvs client to check
+out the projects. If you run into this problem, you may want to use a
+utility such as FileTyper to recursively change the type on all
+files. CodeWarrior is less picky about the projects' filetypes, but
+setting them to filetype <tt>'MMPr'</tt>, creator code <tt>'CWIE'</tt>
+may be helpful in opening the projects from the Finder. Users on Mac OS
+X familiar with the Unix <tt>find</tt>
+command should be able to rig <tt>/Developer/Tools/SetFile</tt>
+to do this job as well. </li>
+  <li>Many of the important projects (for <tt>libdes</tt>, <tt>libsasl</tt>,
+    <tt>build_plugins</tt>, and the sample client <tt>sc_shlb</tt>)
+have Carbon versions. </li>
+  <li>Plugins are loaded from a <tt>Carbon</tt> subfolder of the <tt>SASL
+v2</tt> folder in the Extensions folder. Plugins directly
+in
+the <tt>SASL v2</tt> folder are considered to be for the Classic
+libraries. </li>
+  <li>Note that when using the <tt>build_plugins</tt> project, you must
+generate the plugin init files using the <tt>makeinit.sh</tt> script in
+the <tt>plugins</tt> directory. The easiest way to do this is to run the
+script from a Unix shell, such as Mac OS X. You must then fix the
+filetypes of the generated source files (see above). </li>
+  <li>There is a new folder in <tt>CommonKClient</tt> called <tt>mac_kclient3</tt>
+which contains code compatible with MIT's new <a
+ href="http://web.mit.edu/macdev/Development/MITKerberos/MITKerberosLib/KClient/Documentation/index.html">KClient
+3.0</a> API. This folder must be in your CodeWarrior access paths, the
+old <tt>mac_kclient</tt> folder must not, and it must precede the
+project's main folder. </li>
+  <li>The kerberos4 plugin uses this new code. The kerberos4 plugin
+also
+statically links the Carbon <tt>libdes</tt>, and no other part of
+Carbon SASL uses <tt>libdes</tt> directly. <i>Your application should
+    <b>not</b> link against</i> <tt>libdes.shlb</tt> <i>under Carbon!</i>
+(It causes problems due to DES symbols also existing in the MIT
+Kerberos library, which loads first.) </li>
+  <li>To build the projects, you should have the MIT Kerberos for
+Macintosh 3.5 installation disk images mounted, since the access paths
+include the absolute paths to the library directories from that
+image. It's easier than you having to find the paths yourself, and
+smaller than having to distribute the libraries with SASL. </li>
+</ul>
+<h2>Known Problems</h2>
+<ul>
+  <li>The Kerberos v4 headers bundled with Mac OS X (and Kerberos for
+Macintosh) are not compatible with OS X's OpenSSL headers. (Kerberos v4
+support is disabled by default.) If you actually need krb4 support, the
+easiest solution is to build without using OpenSSL's
+<tt>libcrypto</tt>. To do this, specify the <tt>--without-openssl</tt>
+option to <tt>configure</tt>. As of version 2.1.18, this automatically
+disables using <tt>libcrypto</tt> for DES as well. You will probably
+also need to specify <tt>--disable-digest</tt> since the digestmd5 plugin
+does not build against Kerberos v4's DES headers or library. Note that
+this disables several features (digestmd5, NTLM, OTP) which require
+OpenSSL. If both Kerberos v4 and functionality that requires OpenSSL are
+needed, it is probably possible to build the Kerberos v4 plugin against
+the correct K4 DES libraries, and everything else against OpenSSL;
+however, we do not support that configuration.<br>
+  </li>
+  <li>Versions of Cyrus SASL prior to 2.1.14 with support for Carbon
+CFM applications on Mac OS X have a known bug involving the CFM glue
+code (in <tt>mac/osx_cfm_glue</tt>). If <tt>sasl_done</tt> is called
+to unload the SASL library, and then one of the initialization
+functions (such as <tt>sasl_client_init</tt>) is called to
+reinitialize it from the same process, the application will crash. A
+fix for one obvious cause of this problem is included in 2.1.14;
+however, as of this writing, it has not been tested. It is possible
+that other bugs in Cyrus SASL, or deficiencies in Apple's libraries,
+will make this fix insufficient to resolve this issue. </li>
+</ul>
+</body>
+</html>

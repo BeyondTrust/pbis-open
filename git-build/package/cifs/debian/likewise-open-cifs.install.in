@@ -1,0 +1,13 @@
+@MK_BINDIR@/*
+@MK_SBINDIR@/*
+@MK_DATADIR@/likewise/*
+@MK_PREFIX@/data/VERSION
+@LW_CONFIGDIR@/*
+@MK_LIBDIR@/*
+@MK_LIBDIR@/gss/*
+/etc/init.d/*
+/etc/krb5.conf.default
+@MK_SYSCONFDIR@/*
+/lib/security/pam_lsass.so
+/lib/libnss_lsass.so*
+@MK_INCLUDEDIR@/*

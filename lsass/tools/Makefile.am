@@ -1,0 +1,3 @@
+SUBDIRS = \
+	lw-lsa \
+	domainjoin

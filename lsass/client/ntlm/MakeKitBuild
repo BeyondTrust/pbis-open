@@ -1,0 +1,27 @@
+make()
+{
+    NTLM_SOURCES="\
+        acceptsecctxt.c \
+	acquirecreds.c \
+	clientipc.c \
+	decryptmsg.c \
+	delsecctxt.c \
+	encryptmsg.c \
+	exportsecctxt.c \
+	freecreds.c \
+	globals.c \
+	importsecctxt.c \
+	initsecctxt.c \
+	makesign.c \
+	querycreds.c \
+	queryctxt.c \
+	setcreds.c \
+	verifysign.c"
+
+    mk_library \
+	LIB="lsaclient_ntlm" \
+	SOURCES="$NTLM_SOURCES" \
+	INCLUDEDIRS="../../include" \
+	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
+	LIBDEPS="lwmsg lsacommon $LIB_PTHREAD"
+}

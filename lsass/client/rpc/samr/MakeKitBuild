@@ -1,0 +1,70 @@
+make()
+{
+    SAMR_SOURCES="\
+        globals.c                    \
+	samr_binding.c               \
+	samr_memory.c                \
+	samr_stubmemory.c            \
+	samr_close.c                 \
+	samr_querysecurity.c         \
+	samr_connect2.c              \
+	samr_enumdomains.c           \
+	samr_enumdomainusers.c       \
+	samr_lookupdomain.c          \
+	samr_lookupnames.c           \
+	samr_opendomain.c            \
+	samr_openuser.c              \
+	samr_queryuserinfo.c         \
+	samr_setuserinfo.c           \
+	samr_setuserinfo2.c          \
+	samr_createuser.c            \
+	samr_deleteuser.c            \
+	samr_createdomalias.c        \
+	samr_deletedomalias.c        \
+	samr_getaliasmembership.c    \
+	samr_createdomgroup.c        \
+	samr_deletedomgroup.c        \
+	samr_opengroup.c             \
+	samr_lookuprids.c            \
+	samr_queryaliasinfo.c        \
+	samr_setaliasinfo.c          \
+	samr_addaliasmember.c        \
+	samr_deletealiasmember.c     \
+	samr_getmembersinalias.c     \
+	samr_querydomaininfo.c       \
+	samr_enumdomainaliases.c     \
+	samr_openalias.c             \
+	samr_connect3.c              \
+	samr_connect4.c              \
+	samr_connect5.c              \
+	samr_createuser2.c           \
+	samr_getuserpwinfo.c         \
+	samr_changepassworduser2.c   \
+	samr_getusergroups.c         \
+	samr_querydisplayinfo.c"
+
+    lw_dceidl \
+	IDL="../../../idl/samr.idl" \
+	CSTUB="samr_cstub.c" \
+	HEADER="samr_h.h" \
+	INCLUDEDIRS=". ../../../include" \
+	IDLFLAGS="-cstub_pref cli_ -sstub_pref srv_" \
+	HEADERDEPS="lw/base.h"
+
+    mk_group \
+	GROUP=samr_cstub \
+	SOURCES="samr_cstub.c" \
+	CPPFLAGS="-DDCERPC_STUB_BUILD" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADERDEPS="dce/rpc.h" \
+	LIBDEPS="dcerpc"
+
+    mk_group \
+	GROUP=samr \
+	SOURCES="$SAMR_SOURCES" \
+	GROUPDEPS="samr_cstub" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h" \
+	LIBDEPS="lwbase dcerpc" \
+	DEPS="samr_h.h"
+}

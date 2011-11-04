@@ -1,0 +1,41 @@
+[
+	explicit_handle
+]
+interface samr
+{
+	[enable_allocate] SamrConnect();
+	[enable_allocate] SamrClose();
+	[enable_allocate] SamrQuerySecurity();
+	[enable_allocate] SamrLookupDomain();
+	[enable_allocate] SamrEnumDomains();
+	[enable_allocate] SamrOpenDomain();
+	[enable_allocate] SamrQueryDomainInfo();
+	[enable_allocate] SamrCreateUser();
+	[enable_allocate] SamrEnumDomainUsers();
+	[enable_allocate] SamrCreateDomAlias();
+	[enable_allocate] SamrEnumDomainAliases();
+	[enable_allocate] SamrGetAliasMembership();
+	[enable_allocate] SamrLookupNames();
+	[enable_allocate] SamrLookupRids();
+	[enable_allocate] SamrOpenAlias();
+	[enable_allocate] SamrQueryAliasInfo();
+	[enable_allocate] SamrSetAliasInfo();
+	[enable_allocate] SamrDeleteDomAlias();
+	[enable_allocate] SamrAddAliasMember();
+	[enable_allocate] SamrDeleteAliasMember();
+	[enable_allocate] SamrGetMembersInAlias();
+	[enable_allocate] SamrOpenUser();
+	[enable_allocate] SamrDeleteUser();
+	[enable_allocate] SamrQueryUserInfo();
+	[enable_allocate] SamrSetUserInfo();
+	[enable_allocate] SamrGetUserGroups();
+	[enable_allocate] SamrQueryDisplayInfo();
+	[enable_allocate] SamrGetUserPwInfo();
+	[enable_allocate] SamrRemoveMemberFromForeignDomain();
+	[enable_allocate] SamrCreateUser2();
+	[enable_allocate] SamrChangePasswordUser2();
+	[enable_allocate] SamrConnect2();
+	[enable_allocate] SamrConnect3();
+	[enable_allocate] SamrConnect4();
+	[enable_allocate] SamrConnect5();
+}

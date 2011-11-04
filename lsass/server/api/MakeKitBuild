@@ -1,0 +1,42 @@
+make()
+{
+    API_SOURCES="\
+       api2.c          \
+       artefacts.c     \
+       auth.c          \
+       auth_provider.c \
+       config.c        \
+       credentials.c   \
+       event.c         \
+       globals.c       \
+       ipc_dispatch.c  \
+       ipc_error.c     \
+       ipc_state.c     \
+       lsacfg_reg.c    \
+       lsaevent.c      \
+       lsatime.c       \
+       loginfo.c       \
+       machinepwdinfo.c \
+       metrics.c       \
+       pam.c           \
+       provider.c      \
+       session.c       \
+       state.c         \
+       status.c        \
+       systemcache.c   \
+       traceinfo.c     \
+       rpc_server.c    \
+       svc_register.c  \
+       svc_unregister.c \
+       parse_name.c    \
+       svc_listen.c"
+
+    mk_library \
+	LIB=lsaserverapi \
+	SOURCES="$API_SOURCES" \
+	GROUPS="../../interop/lwmapsecurity/lwmapsecurity_internal ../../logging_r/logging_r" \
+	CPPFLAGS="-DLW_ENABLE_THREADS" \
+	INCLUDEDIRS=". ../include ../../include" \
+	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h dce/rpc.h" \
+	LIBDEPS="uuid eventlog $LIB_PTHREAD $LIB_RT"
+}

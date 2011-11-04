@@ -1,0 +1,218 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.59)
+AC_INIT(centutils, 5.0.0, support@likewisesoftware.com)
+AC_CANONICAL_TARGET
+AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AC_CONFIG_HEADERS([include/config.h])
+
+AM_CPPFLAGS=""
+AM_CFLAGS=""
+AM_LDFLAGS=""
+
+# Platform-specific stuff
+
+MOD_EXT=".so"
+
+case "$host_os:$host_cpu" in
+     	linux*:i?86|linux*:x86_64|linux*:s390*)
+		AC_DEFINE([__LWI_LINUX__], [], [Define if OS is Linux])
+		;;
+	solaris*:i?86|solaris*:sparc*)
+		AC_DEFINE([__LWI_SOLARIS__], [], [Define if OS is Solaris])
+		AC_DEFINE([__EXTENSIONS__], [], [Solaris requires this macro to be defined to enable
+several function declarations like:
+settimeofday(3) in sys/time.h
+vsyslog(3) in syslog.h])
+	        AC_DEFINE([_XOPEN_SOURCE], [500], [Define to desired XOPEN compliance level])
+		;;
+	darwin*:*)
+		AC_DEFINE([__LWI_DARWIN__], [], [Define if OS is Darwin])
+		;;
+	freebsd*:*)
+		AC_DEFINE([__LWI_FREEBSD__], [], [Define if OS is FreeBSD])
+		;;
+	hpux*:hppa*)
+		MOD_EXT=".sl"
+		AC_DEFINE([__LWI_HP_UX__], [], [Define if OS is HP-UX])
+                AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [Define on HP-UX])
+		;;
+	hpux*:ia64*)
+		AC_DEFINE([__LWI_HP_UX__], [], [Define if OS is HP-UX])
+                AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [Define on HP-UX])
+		;;
+	aix*:*)
+		AC_DEFINE([__LWI_AIX__], [], [Define if OS is AIX])
+                AC_DEFINE([_LINUX_SOURCE_COMPAT], [], [Enable Linux source compatibility on AIX])
+		AC_DEFINE([_THREAD_SAFE_ERRNO], [1], [Define on AIX to turn errno into a thread-safe function])
+		;;
+esac
+
+AC_SUBST(MOD_EXT)
+
+AC_DEFINE_UNQUOTED([MOD_EXT], ["$MOD_EXT"], [Extension of shared modules])
+
+# debugging
+
+AC_ARG_ENABLE([debug],
+        [AC_HELP_STRING([--enable-debug], [enable debugging (default: disabled)])],
+        [
+                if test x"$enableval" = x"yes"
+                then
+			AM_CFLAGS="$AM_CFLAGS -g -O0"
+			AM_CPPFLAGS="$AM_CPPFLAGS -DDEBUG"			
+                fi
+        ])
+
+CPPFLAGS="$CPPFLAGS -D_REENTRANT -D_GNU_SOURCE"
+
+AM_CFLAGS="$AM_CFLAGS -Wall -Werror -fno-strict-aliasing"
+
+AC_SUBST(AM_CPPFLAGS)
+AC_SUBST(AM_CFLAGS)
+
+centutilsconfdir="$sysconfdir"
+AC_SUBST(centutilsconfdir)
+AS_AC_EXPAND(CONFIGDIR, $centutilsconfdir)
+AC_DEFINE_UNQUOTED(CONFIGDIR, "$CONFIGDIR", [Config directory])
+
+AS_AC_EXPAND(providerdir, $libdir)
+
+AS_AC_EXPAND(PREFIXDIR, $prefix)
+AC_DEFINE_UNQUOTED(PREFIXDIR, "$PREFIXDIR", [Prefix directory])
+
+AS_AC_EXPAND(LIBDIR, $libdir)
+AC_DEFINE_UNQUOTED(LIBDIR, "$LIBDIR", [Library directory])
+
+AC_C_BIGENDIAN
+
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LIBTOOL
+
+AC_CHECK_LIB([proc], [openproc], [PROC_LIBS="-lproc"])
+AC_CHECK_LIB([kvm], [kvm_open], [KVM_LIBS="-lkvm"])
+AC_CHECK_LIB([rt], [clock_settime], [RT_LIBS="-lrt"])
+
+AC_SUBST(PROC_LIBS)
+AC_SUBST(KVM_LIBS)
+AC_SUBST(RT_LIBS)
+
+# lwadvapi
+
+AC_ARG_WITH([lwadvapi],
+        [AC_HELP_STRING([--with-lwadvapi=<dir>], [use lwadvapi located in prefix <dir>])],
+        [
+                LWADVAPI_INCLUDES="-I$withval/include"
+                LWADVAPI_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([lwadvapi-includes],
+        [AC_HELP_STRING([--with-lwadvapi-includes=<dir>], [use lwadvapi includes located in <dir>])],
+        [
+                LWADVAPI_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([lwadvapi-libs],
+        [AC_HELP_STRING([--with-lwadvapi-libs=<dir>], [use lwadvapi libs located in <dir>])],
+        [
+                LWADVAPI_LDFLAGS="-L$withval"
+        ])
+
+LWADVAPI_LIBS="-llwadvapi"
+LWADVAPI_NOTHR_LIBS="-llwadvapi_nothr"
+
+AC_SUBST(LWADVAPI_INCLUDES)
+AC_SUBST(LWADVAPI_LDFLAGS)
+AC_SUBST(LWADVAPI_LIBS)
+AC_SUBST(LWADVAPI_NOTHR_LIBS)
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS([inttypes.h fcntl.h limits.h stdlib.h string.h strings.h syslog.h unistd.h sys/types.h fcntl.h sys/stat.h sys/param.h sys/pstat.h proc/readproc.h sys/ioctl.h sys/termio.h utmps.h utmpx.h utmp.h procfs.h sys/procfs.h kvm.h sys/sysctl.h sys/user.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_PID_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+# Check for basic types
+AC_CHECK_TYPES([int8, int16, int32, int64], [], [],
+[#include <sys/types.h>
+ #if __ia64
+ #include <model.h>
+ #endif])
+AC_CHECK_TYPES([uint8, uint16, uint32, uint64])
+
+AC_CHECK_SIZEOF([long long int])
+AC_CHECK_SIZEOF([long int])
+
+# Checks for library functions.
+AC_FUNC_FORK
+AC_FUNC_SELECT_ARGTYPES
+AC_TYPE_SIGNAL
+AC_FUNC_STRFTIME
+AC_FUNC_VPRINTF
+AC_FUNC_STRERROR_R
+old_LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $RT_LIBS"
+AC_CHECK_FUNCS([atexit bzero localtime_r memset select socket strchr strerror vsyslog mkdtemp _NSGetEnviron kvm_open kvm_getprocs])
+
+# Checks for library functions.
+case `uname -s` in
+		HP-UX*)
+			;;
+		*)
+			AC_CHECK_FUNCS(sigtimedwait)
+			;;
+esac
+AC_CHECK_DECLS([isblank, pstat_getproc, KERN_PROC_PATHNAME], [], [], [
+#include <ctype.h>
+#if HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#if HAVE_SYS_SYSCTL_H
+#include <sys/sysctl.h>
+#endif
+#if HAVE_SYS_PSTAT_H
+#include <sys/pstat.h>
+#endif])
+AC_CHECK_TYPES([struct psinfo], , , [
+#if HAVE_PROCFS_H
+#include <procfs.h>
+#elif HAVE_SYS_PROCFS_H
+#include <sys/procfs.h>
+#endif
+])
+
+if test "$ac_cv_have_decl_pstat_getproc" = yes; then
+AM_CPPFLAGS="$AM_CPPFLAGS -D_PSTAT64"
+fi
+
+# Check for moonunit bits
+AC_CHECK_HEADERS([moonunit/moonunit.h], [HAVE_MOONUNIT_H=true], [HAVE_MOONUNIT_H=false])
+AC_CHECK_LIB(moonunit, Mu_Interface_Result, [HAVE_MOONUNIT_LIB=true], [HAVE_MOONUNIT_LIB=false])
+AC_CHECK_PROG(MOONUNIT_STUB, moonunit-stub, moonunit-stub, false)
+
+if test "${MOONUNIT_STUB}" = "moonunit-stub" && $HAVE_MOONUNIT_H && $HAVE_MOONUNIT_LIB
+then
+	HAVE_MOONUNIT="true"
+	LIB_moonunit="-lmoonunit"
+	AC_DEFINE([HAVE_MOONUNIT], [], [Have MoonUnit])
+else
+	HAVE_MOONUNIT="false"
+fi
+
+AC_SUBST(HAVE_MOONUNIT)
+AC_SUBST(LIB_moonunit)
+
+AM_CONDITIONAL(HAVE_MOONUNIT, $HAVE_MOONUNIT)
+
+AC_CONFIG_FILES([Makefile
+                 include/Makefile
+                 libcentutils/Makefile
+                 test/Makefile])
+
+AC_OUTPUT

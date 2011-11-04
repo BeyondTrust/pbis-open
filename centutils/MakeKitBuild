@@ -1,0 +1,64 @@
+SUBDIRS="include libcentutils test"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    lw_define_feature_macros
+
+    mk_export MOD_EXT="${MK_DLO_EXT}"
+    mk_define MOD_EXT "\"${MK_DLO_EXT}"\"
+    
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+    
+    mk_export CONFIGDIR="${MK_SYSCONFDIR}"
+    mk_define CONFIGDIR "\"${MK_SYSCONFDIR}\""
+    
+    mk_define PREFIXDIR "\"${MK_PREFIX}\""
+    mk_define LIBDIR "\"${MK_LIBDIR}\""
+
+    mk_check_endian
+
+    # Headers
+    mk_check_headers \
+        HEADERDEPS="sys/types.h" \
+        inttypes.h fcntl.h limits.h stdlib.h string.h \
+        strings.h syslog.h unistd.h sys/types.h fcntl.h \
+        sys/stat.h sys/param.h sys/pstat.h proc/readproc.h \
+        sys/ioctl.h sys/termio.h utmps.h utmpx.h utmp.h \
+        procfs.h sys/procfs.h kvm.h sys/sysctl.h sys/user.h \
+        time.h sys/time.h
+
+    # Types
+    mk_check_types \
+        HEADERDEPS="unistd.h time.h inttypes.h" \
+        pid_t "struct tm" \
+        int8 int16 int32 int64 \
+        uint8 uint16 uint32 uint64
+
+    mk_check_types \
+        HEADERDEPS="procfs.h sys/procfs.h" \
+        "struct psinfo"
+
+    # Libraries
+    mk_check_libraries \
+        proc kvm rt
+
+    mk_check_functions \
+        HEADERDEPS="signal.h stdlib.h kvm.h unistd.h" \
+        sigtimedwait bzero localtime_r memset \
+        select socket strchr strerror vsyslog \
+        rpl_malloc rpl_realloc mkdtemp _NSGetEnviron \
+
+    mk_check_functions \
+        HEADERDEPS="kvm.h sys/param.h sys/sysctl.h sys/user.h" \
+        LIBDEPS="$LIB_KVM" \
+        kvm_getprocs kvm_open
+
+    # Functions
+    mk_check_functions \
+        HEADERDEPS="ctype.h" \
+        isblank
+
+    mk_check_sizeofs "long long int" "long int"
+}

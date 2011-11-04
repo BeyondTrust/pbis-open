@@ -1,0 +1,91 @@
+make()
+{
+    DJ_SOURCES="\
+        HIFramework/TApplication.cp \
+        HIFramework/TCarbonEvent.cp \
+        HIFramework/TEventHandler.cp \
+        HIFramework/TNib.cp \
+        HIFramework/TSheet.cp \
+        HIFramework/TWindow.cp \
+        CredentialsDialog.cp \
+        DomainJoinException.cp \
+        DomainJoinInterface.cp \
+        DomainJoinWindow.cp \
+        DomainLeaveWindow.cp \
+        DomainMigrateWindow.cp \
+        MainWindow.cp \
+        main.cp"
+
+    RES_FILES="App.rsrc keys.rsrc"
+
+    LANGUAGES="English"
+
+    LANGUAGE_RESOURCES="\
+        InfoPlist.strings \
+        main.nib \
+        Credentials.nib \
+        Leave.nib \
+        Join.nib \
+        Migrate.nib"
+
+    NEUTRAL_RESOURCES="DomainJoin.icns"
+
+    PROGRAM_DIR="$MK_BINDIR/Likewise Domain Join.app"
+    CONTENTS_DIR="$PROGRAM_DIR/Contents"
+    RESOURCE_DIR="$CONTENTS_DIR/Resources"
+    MACOS_DIR="$CONTENTS_DIR/MacOS"
+
+    FRAMEWORK_FLAGS="-framework Carbon -framework Security -framework DirectoryService"
+
+    # This is sort of a hack to avoid building 64-bit versions
+    # of the program since certain functions are not supported
+    OLD_ISAS="$MK_HOST_ISAS"
+    MK_HOST_ISAS=""
+
+    for isa in ${OLD_ISAS}
+    do
+        case "$isa" in
+            x86_64|ppc64)
+                continue
+                ;;
+        esac
+
+        MK_HOST_ISAS="$MK_HOST_ISAS $isa"
+    done
+
+    mk_program \
+        PROGRAM="Likewise Domain Join" \
+        INSTALLDIR="$MACOS_DIR" \
+        SOURCES="$DJ_SOURCES" \
+        INCLUDEDIRS="HIFramework" \
+        CXXFLAGS="-fpascal-strings -Wno-four-char-constants -fvisibility-inlines-hidden" \
+        LDFLAGS="$FRAMEWORK_FLAGS"
+
+    MK_HOST_ISAS="$OLD_ISAS"
+
+    mk_target \
+        TARGET="${CONTENTS_DIR}/Info.plist" \
+        DEPS="Info.plist process-info-plist.pl" \
+        mk_mkdir "&'${CONTENTS_DIR}'" '%;' \
+        "&process-info-plist.pl" -v "$LW_VERSION" -o '$@' "&Info.plist"
+
+    mk_add_all_target "$result"
+
+    mk_target \
+        TARGET="${RESOURCE_DIR}/Likewise Domain Join.rsrc" \
+        DEPS="$RES_FILES" \
+        mk_mkdir "&'$RESOURCE_DIR'" '%;' \
+        /Developer/Tools/ResMerger -dstIs DF "&$RES_FILES" -o '$@'
+
+    mk_add_all_target "$result"
+
+    mk_stage DESTDIR="${RESOURCE_DIR}" ${NEUTRAL_RESOURCES}
+
+    for lang in ${LANGUAGES}
+    do
+        for res in ${LANGUAGE_RESOURCES}
+        do
+            mk_stage DEST="${RESOURCE_DIR}/${lang}.lproj/$res" SOURCE="${lang}.lproj/$res"
+        done
+    done
+}

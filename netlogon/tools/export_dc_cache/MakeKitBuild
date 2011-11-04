@@ -1,0 +1,10 @@
+make()
+{
+    mk_program \
+        PROGRAM=lw-export-dc-cache \
+        SOURCES="main.c" \
+        INCLUDEDIRS=". ../../include ../../server/include ../../server/api" \
+        GROUPS="../../utils/utils ../../server/api/api" \
+        HEADERDEPS="reg/lwreg.h lwadvapi.h" \
+        LIBDEPS="lwbase_nothr regclient ldap_r $LIB_RESOLV"
+}

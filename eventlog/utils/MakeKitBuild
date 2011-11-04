@@ -1,0 +1,21 @@
+make()
+{
+    UTILS_SOURCES="\
+        evtcfg.c    \
+	evtfutils.c \
+	evthost.c   \
+	evtlogger.c \
+	evtmem.c    \
+	evtrpcmem.c \
+	evtstack.c  \
+	evtstr.c    \
+	globals.c   \
+	sysfuncs.c"
+
+    mk_library \
+	LIB=eventlogutils \
+	SOURCES="$UTILS_SOURCES" \
+	INCLUDEDIRS="../include" \
+	HEADERDEPS="dce/rpc.h reg/lwreg.h" \
+	LIBDEPS="dcerpc regclient"
+}

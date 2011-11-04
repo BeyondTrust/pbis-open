@@ -1,0 +1,58 @@
+SUBDIRS="include utils ipc common client server tools etc"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    lw_define_feature_macros
+
+    mk_export MOD_EXT="$MK_DLO_EXT"
+    mk_export SBINDIR="$MK_SBINDIR"
+    mk_export LIBDIR="$MK_LIBDIR"
+
+    mk_define MOD_EXT "\"$MK_DLO_EXT\""
+    mk_define PREFIXDIR "\"$MK_PREFIX\""
+    mk_define LWNET_CACHE_DIR "\"$LW_CACHEDIR\""
+    mk_define LWNET_CONFIG_DIR "\"$MK_SYSCONFDIR\""
+
+    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+   
+    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
+    then
+        mk_output_file \
+            INPUT="etc/netlogond.reg.svcm.in" \
+            OUTPUT="etc/netlogond.reg"
+    else
+        mk_output_file "etc/netlogond.reg"
+    fi
+
+    mk_check_headers \
+        FAIL=yes \
+        reg/lwreg.h lwadvapi.h reg/regutil.h
+
+    mk_check_libraries \
+        FAIL=yes \
+        rsutils regclient lwadvapi
+
+    mk_check_headers \
+        sys/types.h netinet/in.h arpa/nameser.h
+
+    mk_check_headers \
+        HEADERDEPS="sys/types.h netinet/in.h arpa/nameser.h" \
+	resolv.h
+
+    mk_check_libraries \
+        rt pthread resolv
+
+    mk_check_functions \
+        HEADERDEPS="time.h sys/time.h" \
+        LIBDEPS="$LIB_RT" \
+        clock_settime settimeofday
+
+    mk_check_functions \
+        HEADERDEPS="sys/types.h netinet/in.h arpa/nameser.h resolv.h" \
+        LIBDEPS="$LIB_RESOLV" \
+        res_init res_query res_ninit res_ndestroy
+
+    lw_check_pthread_once_init
+}

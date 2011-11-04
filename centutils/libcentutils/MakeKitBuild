@@ -1,0 +1,9 @@
+make()
+{
+    mk_library \
+        LIB=centutils \
+        SOURCES="*.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lw/base.h lwadvapi.h" \
+        LIBDEPS="lwadvapi $LIB_PROC $LIB_KVM $LIB_RT"
+}

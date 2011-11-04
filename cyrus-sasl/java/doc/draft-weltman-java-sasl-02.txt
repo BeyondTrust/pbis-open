@@ -1,0 +1,1444 @@
+
+    Internet Draft                                    Rob Weltman
+                                                        Netscape Communications Corp.
+                                                      Rosanna Lee
+  draft-weltman-java-sasl-02.txt                        Sun Microsystems
+                                                      Rob Earhart
+                                                        Carnegie Mellon
+                                                        June 4, 1999
+
+
+              The Java SASL Application Program Interface
+
+
+Status of this Memo
+
+   This document is an Internet-Draft and is in full conformance with
+   all provisions of Section 10 of RFC2026.
+
+   Internet-Drafts are working documents of the Internet Task Force
+   (IETF), its areas, and its working groups.  Note that other groups
+   may also distribute working documents as Internet-Drafts.
+
+   Internet-Drafts are draft documents valid for a maximum of six
+   months and may be updated, replaced, or obsoleted by other documents
+   at any time.  It is inappropriate to use Internet Drafts as
+   reference material or to cite them other than as "work in progress."
+
+   The list of current Internet-Drafts can be accessed at
+   http://www.ietf.org/ietf/1id-abstracts.txt
+
+   The list of Internet-Draft Shadow Directories can be accessed at
+   http://www.ietf.org/shadow.html.
+
+
+
+Abstract
+
+   This document defines a client-side and a server-side Java language
+   interface for using the Simple Authentication and Security Layer
+   (SASL) mechanisms for adding authentication support to connection-
+   based protocols. The interface promotes sharing of SASL mechanism
+   drivers and security layers between applications using different
+   protocols. It complements but does not replace [SASL], which defines
+   and exemplifies use of the SASL protocol in a language-independent
+   way.
+
+
+
+
+
+
+
+
+
+
+
+
+ Expires 12/99                                                [Page 1]
+
+JAVA SASL API                                                June 1999
+
+
+1    Overview of the SASL classes..........................5
+1.1  Interfaces     .......................................5
+1.2  Classes        .......................................5
+2    Overview of SASL API Use..............................6
+3    The java SASL classes.................................7
+3.1  public class Sasl.....................................7
+3.1.1     createSaslClient.................................7
+3.1.2     setSaslClientFactory.............................9
+3.1.3     createSaslServer.................................9
+3.1.4     setSaslServerFactory............................10
+3.2  public interface SaslClient..........................11
+3.2.1     createInitialResponse...........................11
+3.2.2     evaluateChallenge...............................11
+3.2.3     isComplete......................................11
+3.2.4     getSecurityLayer................................11
+3.2.5     getMechanismName................................12
+3.3  public interface SaslClientFactory...................12
+3.3.1     createSaslClient................................12
+3.3.2     getMechanismNames...............................13
+3.4  public interface SaslServer..........................13
+3.4.1     evaluateResponse................................13
+3.4.2     isComplete......................................14
+3.4.3     getSecurityLayer................................14
+3.4.4     getMechanismName................................14
+3.4.5     getAuthorizationID..............................14
+3.5  public interface SaslServerFactory...................15
+3.5.1     createSaslServer................................15
+3.5.2     getMechanismNames...............................16
+3.6  public class SaslException...........................16
+3.6.1     Constructors....................................16
+3.6.2     getException....................................17
+3.6.3     printStackTrace.................................17
+3.7  public interface SecurityLayer.......................17
+3.7.1         encode......................................17
+3.7.2         decode......................................18
+4    Security Considerations..............................19
+5    Bibliography   ......................................19
+6    Authors' Addresses...................................19
+7    Acknowledgements.....................................19
+8    Appendix A - Sample java LDAP program using SASL.....20
+9    Appendix B - Changes from java-sasl-01.txt...........24
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Expires 12/99                                                 [Page 2]
+
+JAVA SASL API                                                June 1999
+
+Introduction
+
+
+   See [SASL], section 3, for an introduction to and overview of the
+   SASL framework for authentication and negotiation of a security
+   layer. The following presents an outline of the concepts.
+
+    ---------------     -------------------      -----------------
+    | Application |-----| Protocol Driver |------| MD5           |
+    ---------------     -------------------   |  -----------------
+                                              |
+                                              |  -----------------
+                                              |--| Kerberos v5   |
+                                              |  -----------------
+                                              |
+                                              |  -----------------
+                                              |--| PKCS-11       |
+                                              |  -----------------
+                                              |
+                                              |
+                                              |
+                                              |  - - - - - - - - -
+                                              |--| xxxYYYxxx     |
+                                                 - - - - - - - - -
+
+   An application chooses a Protocol Driver specific to the protocol it
+   wants to use, and specifies one or more acceptable mechanisms. The
+   Protocol Driver controls the socket, and knows the format/packaging
+   of bytes sent down and received from the socket, but does not know
+   how to authenticate or to encrypt/ decrypt the bytes. It uses one of
+   the Mechanism Drivers to help it perform authentication. The
+   Protocol Driver examines each byte string received from the server
+   during the authentication in a protocol-specific way to determine if
+   the authentication process has been completed. If not, the byte
+   string is passed to the Mechanism Driver to be interpreted as a
+   server challenge; the Mechanism Driver returns an appropriate
+   response, which the Protocol Driver can encode in a protocol-
+   specific way and return to the server.
+
+   If the Protocol Driver concludes from the byte string received from
+   the server that authentication is complete, it may query the
+   Mechanism Driver if it considers the authentication process
+   complete, in order to thwart early completion messages inserted by
+   an intruder.
+
+   On completed authentication, the Protocol Driver may receive from
+   the Mechanism Driver a Security Layer object. From this point on,
+   any data exchanged throught the socket is passed to the Security
+   Layer object for encoding/decoding.
+
+   A complication here is that some authentication methods may require
+   additional user/application input.  That means that a Mechanism
+   Driver may need to call up to an application during the
+   authentication process. To satisfy this requirement, the application
+
+
+Expires 12/99                                                 [Page 3]
+
+JAVA SASL API                                                June 1999
+
+   can supply a javax.security.auth.callback.CallbackHandler instance
+   [JAAS] that can be used by the Mechanism Driver to prompt the user
+   for additional input.
+
+   Protocol Drivers are protocol-dependent, and may be built in to a
+   protocol package or an application. There is a generalized framework
+   for registering and finding Mechanism Drivers. The framework uses a
+   factory to produce an appropriate Mechanism Driver. The factory may
+   be preconfigured, explicitly specified by the caller, specified as a
+   list of packages by the caller, or be identified based on a list of
+   packages in the System properties.
+
+   The Mechanism Drivers are protocol-independent, and don't deal
+   directly with network connections, just byte arrays, so they can be
+   implemented in a generalizable way for all protocols.
+
+   A Security Layer Driver typically inherits a state object from the
+   Mechanism Driver, where parameters and resolutions reached during
+   authentication have been stored.
+
+   Different Mechanism Drivers may require different parameters to
+   carry out the authentication process. This is handled by passing a
+   java.util.Hashtable object as an argument to instantiation methods.
+
+   In the following discussion, 'client' refers to the client-side
+   protocol driver that is using the SASL mechanism while 'server'
+   refers to the server-side protocol driver that is using the SASL
+   mechanism.
+
+   In the Java SASL environment, the SaslClient interface represents
+   the client's view of the Mechanism Driver, while the SaslServer
+   interface represents the server's view.
+
+   ---------------                                     ---------------
+   | Application |--+                               +--|   Server    |
+   ---------------  |                               |  ---------------
+                    |                               |
+       -------------------                       -------------------
+       | Protocol Driver |--+   <- - - - ->   +--| Protocol Driver |
+       -------------------  |                 |  -------------------
+                            |                 |
+                 -------------------     -------------------
+                 |   SaslClient    |     |    SaslServer   |
+                 -------------------     -------------------
+                               |              |
+          -----------------    |              |   -----------------
+          | MD5           |----|              |---| MD5           |
+          -----------------    |              |   -----------------
+                               |              |
+          -----------------    |              |   -----------------
+          | Kerberos v5   |----|              |---| Kerberos v5   |
+          -----------------    |              |   -----------------
+                               |              |
+          -----------------    |              |   -----------------
+
+
+Expires 12/99                                                 [Page 4]
+
+JAVA SASL API                                                June 1999
+
+          | PKCS-11       |----|              |---| PKCS-11       |
+          -----------------    |              |   -----------------
+                               |              |
+          - - - - - - - - -    |              |   - - - - - - - - -
+          | xxxYYYxxx     |----+              +---| xxxYYYxxx     |
+          - - - - - - - - -                       - - - - - - - - -
+
+   A client using the Java SASL API may communicate with any server
+   implementing the SASL protocol, and a server may use the API to
+   process authentication requests from any client using the SASL
+   protocol. It is not required that both sides use the same language
+   bindings.
+
+1     Overview of the SASL classes
+
+
+1.1   Interfaces
+
+
+   SaslClient                  Performs SASL authentication as a
+                               client.
+
+   SaslClientFactory           An interface for creating instances of
+                               SaslClient. It is not normally accessed
+                               directly by a client, which will use the
+                               Sasl static methods instead. However, a
+                               particular environment may provide and
+                               install a new or different
+                               SaslClientFactory.
+
+   SaslServer                  Performs SASL authentication as a
+                               server.
+
+   SaslServerFactory           An interface for creating instances of
+                               SaslServer. It is not normally accessed
+                               directly by a server, which will use the
+                               Sasl static methods instead. However, a
+                               particular environment may provide and
+                               install a new or different
+                               SaslServerFactory.
+
+   SecurityLayer               An interface for encoding and decoding
+                               data.
+
+
+1.2   Classes
+
+
+   Sasl                        A static class for creating SASL clients
+                               and servers. It transparently locates
+                               and uses any available
+                               SaslClientFactory/SaslServerFactory
+                               instances.
+
+
+
+Expires 12/99                                                 [Page 5]
+
+JAVA SASL API                                                June 1999
+
+   SaslException               Exception thrown on errors and failures
+                               in the authentication process.
+
+
+2     Overview of SASL API Use
+
+   An application generally uses the SASL API as follows:
+
+   -    Pass a list of acceptable or known Mechanisms to
+        Sasl.createSaslClient. The method returns an object
+        implementing SaslClient on success.
+
+   -    Create an object implementing the client authentication
+        callback interfaces, which can provide credentials when
+        required by the SaslClient.
+
+   -    Have the SaslClient object begin the authentication process by
+        providing an initial server response, if the protocol supports
+        an initial response.
+
+   -    Responses/challenges are exchanged with the server. If a
+        response indicates authentication has completed, SaslClient is
+        queried for validation, and a SecurityLayer object may be
+        obtained from it. If not, the SaslClient is queried for an
+        appropriate next response to the server. This continues until
+        authentication has completed.
+
+   -    For the rest of the session, messages to the server are encoded
+        first by the Security Layer (if one has been provided by
+        SaslClient), and messages from the server are decoded by it
+        before processing in the application.
+
+
+   A server generally uses the SASL API as follows:
+
+   -    It receives a request from the client requesting authentication
+        for a particular SASL mechanism, accompanied by an optional
+        an initial response.
+
+   -    It processes the initial response and generates a challenge
+        specific for the SASL mechanism to be sent back to the client
+        if the response is processed successfully. If the response is
+        not processed successfully, it sends an error to the client and
+        terminates the authentication session.
+
+   -    Responses/challenges are exchanged with the client. If the
+        server cannot successful process a response, the server sends
+        an error to the client and terminates the authentication. If
+        the server has completed the authentication and has no more
+        challenges to send, it sends a success indication to the
+        client.
+
+   -    If the authentication has completed successfully, the server
+        extracts the authorization ID of the client from the SaslServer
+
+
+Expires 12/99                                                 [Page 6]
+
+JAVA SASL API                                                June 1999
+
+        instance (if appropriate) to be used for subsequent access
+        control checks.
+
+   -    For the rest of the session, messages to and from the client
+        are encoded and decoded by the Security Layer, if one has been
+        provided by SaslServer.
+
+   The following sections describe the SASL classes in more detail.
+
+
+3     The Java SASL classes
+
+
+3.1   public class Sasl
+
+   A class capable of providing a SaslClient or SaslServer.
+
+
+3.1.1 createSaslClient
+
+   public static SaslClient
+   createSaslClient(String[] mechanisms,
+                    String authorizationID,
+                    String protocol,
+                    String serverName,
+                    Hashtable props,
+                    javax.security.auth.callback.CallbackHandler cbh)
+                    throws SaslException
+
+   Creates a SaslClient using the parameters supplied. It returns null
+   if no SaslClient can be created using the parameters supplied.
+   Throws SaslException if it cannot create a SaslClient because of an
+   error.
+
+   The algorithm for selection is as follows:
+
+      1.If a factory has been installed via setSaslClientFactory(), try
+        it first. If non-null answer produced, return it.
+      2.Use the packages listed in the javax.security.sasl.client.pkgs
+        property from props to load in a factory and try to create a
+        SaslClient, by looking for a class named ClientFactory. Repeat
+        this for each package on the list until a non-null answer is
+        produced. If non-null answer produced, return it.
+      3.Repeat previous step using the javax.security.sasl.client.pkgs
+        System property.
+      4.If no non-null answer produced, return null.
+
+   Parameters are:
+
+      mechanisms     The non-null list of mechanism names to try. Each
+                      is the IANA-registered name of a SASL mechanism.
+                      (e.g. "GSSAPI", "CRAM-MD5").
+
+
+
+
+Expires 12/99                                                 [Page 7]
+
+JAVA SASL API                                                June 1999
+
+      authorizationIDThe possibly null protocol-dependent
+                      identification to be used for authorization, e.g.
+                      user name or distinguished name. When the SASL
+                      authentication completes successfully, the entity
+                      named by authorizationId is granted access. If
+                      null, access is granted to a protocol-dependent
+                      default (for example, in LDAP this is the DN in
+                      the bind request).
+
+      protocol       The non-null string name of the protocol for
+                      which the authentication is being performed, e.g
+                      "pop", "ldap".
+
+      serverName     The non-null fully qualified host name of the
+                      server to authenticate to.
+
+      props          The possibly null additional configuration
+                      properties for the session, e.g.
+
+           javax.security.sasl.encryption.minimum  Minimum key length;
+                                                    default "0" (no
+                                                    session
+                                                    protection). "1"
+                                                    means integrity
+                                                    protection only.
+
+           javax.security.sasl.encryption.maximum  Maximum key length;
+                                                    default "256".
+
+           javax.security.sasl.server.authentication   "true" if
+                                                    server must
+                                                    authenticate to
+                                                    client; default
+                                                    "false".
+
+           javax.security.sasl.ip.local            IP address in
+                                                    dotted decimal
+                                                    format, for
+                                                    kerberos v4; no
+                                                    default.
+
+           javax.security.sasl.ip.remote           IP address in
+                                                    dotted decimal
+                                                    format, for
+                                                    kerberos v4; no
+                                                    default.
+
+           javax.security.sasl.maxbuffer           Maximum size of
+                                                    security layer
+                                                    frames; default "0"
+                                                    (client will
+                                                    not use the
+                                                    security layer).
+
+
+
+Expires 12/99                                                 [Page 8]
+
+JAVA SASL API                                                June 1999
+
+           javax.security.sasl.client.pkgs         A space-separated
+                                                    list of package
+                                                    names to use when
+                                                    locating a
+                                                    SaslClientFactory.
+
+      cbh            The possibly null callback handler to used by the
+                      SASL mechanisms to get further information  from
+                      the application/library to complete the
+                      authentication. For example, a SASL mechanism
+                      might require the authentication ID and password
+                      from the caller. The authentication ID may be
+                      requested with a NameCallback, and the password
+                      with a PasswordCallback.
+
+
+3.1.2 setSaslClientFactory
+
+   public static void
+   setSaslClientFactory(SaslClientFactory fac)
+
+   Sets the default SaslClientFactory to use. This method sets fac to
+   be the default factory. It can only be called with a non-null value
+   once per VM. If a factory has been set already, this method throws
+   IllegalStateException.
+
+   Parameters are:
+
+      fac            The possibly null factory to set. If null, it
+                      doesn't do anything.
+
+
+
+3.1.3 createSaslServer
+
+   public static SaslServer
+   createSaslServer(String mechanism,
+                    String protocol,
+                    String serverName,
+                    Hashtable props,
+                    javax.security.auth.callback.CallbackHandler cbh)
+                    throws SaslException
+
+   This method creates a SaslServer for the specified mechanism. It
+   returns null if no SaslServer can be created for the specified
+   mechanism.
+
+   The algorithm for selection is as follows:
+
+      1.If a factory has been installed via setSaslServerFactory(), try
+        it first. If non-null answer produced, return it.
+      2.Use the packages listed in the javax.security.sasl.server.pkgs
+        property in props, if present, to load in a factory and try to
+        create a SaslServer, by looking for a class named
+
+
+Expires 12/99                                                 [Page 9]
+
+JAVA SASL API                                                June 1999
+
+        ServerFactory. Repeat this for each package on the list until a
+        non-null answer is produced. If non-null answer produced,
+        return it.
+      3.Use the packages listed in the javax.security.sasl.server.pkgs
+        System property to load in a factory and try to create a
+        SaslServer. Repeat this for each package on the list until a
+        non-null answer is produced. If non-null answer produced,
+        return it.
+      4.If no non-null answer produced, return null.
+
+   Parameters are:
+
+      mechanism      A non-null IANA-registered name of a SASL
+                      mechanism (e.g. "GSSAPI", "CRAM-MD5").
+
+      protocol       The non-null string name of the protocol for
+                      which the authentication is being performed, e.g
+                      "pop", "ldap".
+
+      serverName     The non-null fully qualified host name of the
+                      server to authenticate to.
+
+      props          The possibly null properties to be used by the
+                      SASL mechanisms to configure the authentication
+                      exchange. See Sasl.createSaslClient for examples
+                      of properties.
+
+      cbh            The possibly null callback handler to used by the
+                      SASL mechanisms to get further information  from
+                      the application/library to complete the
+                      authentication. For example, a SASL mechanism
+                      might require the authentication ID and password
+                      from the caller. The authentication ID may be
+                      requested with a NameCallback, and the password
+                      with a PasswordCallback.
+
+
+3.1.4 setSaslServerFactory
+
+   public static void
+   setSaslServerFactory(SaslServerFactory fac)
+
+   Sets the default SaslServerFactory to use. This method sets fac to
+   be the default factory. It can only be called with a non-null value
+   once per VM. If a factory has been set already, this method throws
+   IllegalStateException.
+
+   Parameters are:
+
+      fac            The possibly null factory to set. If null, it
+                      doesn't do anything.
+
+
+
+
+
+Expires 12/99                                                [Page 10]
+
+JAVA SASL API                                                June 1999
+
+3.2   public interface SaslClient
+
+   An object implementing this interface can negotiate authentication
+   using one of the IANA-registered mechanisms.
+
+
+3.2.1 createInitialResponse
+
+   public byte[]
+   createInitialResponse() throws SaslException
+
+   This method prepares a byte array to use for the initial response to
+   start the authentication process. A SaslException is thrown if the
+   driver cannot initiate authentication.  The return value may be
+   null, indicating there is no initial response to send to the server.
+
+
+3.2.2 evaluateChallenge
+
+   public byte[]
+   evaluateChallenge(byte[] challenge)
+                    throws SaslException
+
+   If a challenge is received from the server during the authentication
+   process, this method is called to prepare an appropriate next
+   response to submit to the server. The response is null if the
+   challenge accompanied a "SUCCESS" status and the challenge only
+   contains data for the client to update its state and no response
+   needs to be sent to the server. A SaslException is thrown if an
+   error occurred while processing the challenge or generating a
+   response.
+
+   Parameters are:
+
+      challenge      The non-null challenge received from the server.
+
+
+3.2.3 isComplete
+
+   public boolean
+   isComplete()
+
+   This method may be called at any time to determine if the
+   authentication process is finished. Typically, the protocol driver
+   will not do this until it has received something from the server
+   which indicates (in a protocol-specific manner) that the process has
+   completed.
+
+3.2.4 getSecurityLayer
+
+   public SecurityLayer
+   getSecurityLayer() throws SaslException
+
+
+
+
+Expires 12/99                                                [Page 11]
+
+JAVA SASL API                                                June 1999
+
+   Once authentication is complete, this method may be called to obtain
+   an object capable of encoding/decoding data content for the rest of
+   the session. An exception is thrown if authentication is not yet
+   complete. It may return null if the mechanism does not define a
+   security layer, or if none was negotiated.
+
+
+3.2.5 getMechanismName
+
+   public String
+   getMechanismName()
+
+   Report the IANA-registered name of the mechanism used by this
+   client, e.g. "GSSAPI" or "CRAM-MD5".
+
+
+
+3.3   public interface SaslClientFactory
+
+   An object implementing this interface can provide a SaslClient.
+   Implementations must be thread-safe and handle multiple simultaneous
+   requests.
+
+
+3.3.1 createSaslClient
+
+   public SaslClient
+   createSaslClient(String[] mechanisms,
+                    String authorizationID,
+                    String protocol,
+                    String serverName,
+                    Hashtable props,
+                    javax.security.auth.callback.CallbackHandler cbh)
+                    throws SaslException
+
+   Creates a SaslClient using the parameters supplied. It returns null
+   if no SaslClient can be created using the parameters supplied.
+   Throws SaslException if it cannot create a SaslClient because of an
+   error.
+
+   Returns a possibly null SaslClient created using the parameters
+   supplied. If null, this factory cannot produce a SaslClient using
+   the parameters supplied.
+
+      Parameters are:
+
+      mechanisms     The non-null list of mechanism names to try. Each
+                      is the IANA-registered name of a SASL mechanism.
+                      (e.g. "GSSAPI", "CRAM-MD5").
+
+      authorizationID The possibly null protocol-dependent
+                      identification to be used for authorization, e.g.
+                      user name or distinguished name. When the SASL
+                      authentication completes successfully, the entity
+
+
+Expires 12/99                                                [Page 12]
+
+JAVA SASL API                                                June 1999
+
+                      named by authorizationId is granted access. If
+                      null, access is granted to a protocol-dependent
+                      default (for example, in LDAP this is the DN in
+                      the bind request).
+
+      protocol       The non-null string name of the protocol for
+                      which the authentication is being performed, e.g
+                      "pop", "ldap".
+
+      serverName     The non-null fully qualified host name of the
+                      server to authenticate to.
+
+      props          The possibly null properties to be used by the
+                      SASL mechanisms to configure the authentication
+                      exchange. See Sasl.createSaslClient for examples
+                      of properties.
+
+      cbh            The possibly null callback handler to used by the
+                      SASL mechanisms to get further information  from
+                      the application/library to complete the
+                      authentication. For example, a SASL mechanism
+                      might require the authentication ID and password
+                      from the caller. The authentication ID may be
+                      requested with a NameCallback, and the password
+                      with a PasswordCallback.
+
+
+
+3.3.2 getMechanismNames
+
+   public String[]
+   getMechanismNames()
+
+   Returns a non-null array of names of mechanisms supported by this
+   factory.
+
+
+3.4   public interface SaslServer
+
+   An object implementing this interface can negotiate authentication
+   using one of the IANA-registered mechanisms.
+
+
+3.4.1 evaluateResponse
+
+   public byte[]
+   evaluateResponse(byte[] response)
+                    throws SaslException
+
+   If a response is received from the client during the authentication
+   process, this method is called to prepare an appropriate next
+   challenge to submit to the client. The challenge is null if the
+   authentication has succeeded and no more challenge data is to be
+   sent to the client. It is non-null if the authentication must be
+
+
+Expires 12/99                                                [Page 13]
+
+JAVA SASL API                                                June 1999
+
+   continued by sending a challenge to the client, or if the
+   authentication has succeeded but challenge data needs to be
+   processed by the client. A SaslException is thrown if an error
+   occurred while processing the response or generating a challenge.
+   isComplete() should be called after each call to evaluateResponse(),
+   to determine if any further response is needed from the client. The
+   protocol driver will send an indication (in a protocol-specific
+   manner) as to whether the authentication has succeeded, failed, or
+   should be continued, and any accompanying challenge data.
+
+   Parameters are:
+
+      response       Non-null response received from client.
+
+
+3.4.2 isComplete
+
+   public boolean
+   isComplete()
+
+   This method may be called at any time to determine if the
+   authentication process is finished. This method is typically called
+   after each invocation of evaluateResponse() to determine whether the
+   authentication has completed successfully or should be continued.
+
+
+3.4.3 getSecurityLayer
+
+   public SecurityLayer
+   getSecurityLayer() throws SaslException
+
+   Once authentication is complete, this method may be called to obtain
+   an object capable of encoding/decoding data content for the rest of
+   the session. An exception is thrown if authentication is not yet
+   complete. It may return null if the mechanism does not define a
+   security layer, or if none was negotiated.
+
+
+3.4.4 getMechanismName
+
+   public String
+   getMechanismName()
+
+   Returns the non-null IANA-registered name of the mechanism used by
+   this server, e.g. "GSSAPI" or "CRAM-MD5".
+
+
+3.4.5 getAuthorizationID
+
+   public String
+   getAuthorizationID()
+
+   Report the authorization ID in effect for the client of this
+   session. If null, a protocol-dependent default is assumed.
+
+
+Expires 12/99                                                [Page 14]
+
+JAVA SASL API                                                June 1999
+
+
+
+
+3.5   public interface SaslServerFactory
+
+   An object implementing this interface can provide a SaslServer.
+   Implementations must be thread-safe and handle multiple simultaneous
+   requests.
+
+
+3.5.1 createSaslServer
+
+   public SaslServer
+   createSaslServer(String mechanism,
+                    String protocol,
+                    String serverName,
+                    Hashtable props,
+                    javax.security.auth.callback.CallbackHandler cbh)
+                    throws SaslException
+
+   Creates a SaslServer using the mechanism supplied. It returns null
+   if no SaslClient can be created using the parameters supplied.
+   Throws SaslException if it cannot create a SaslClient because of an
+   error.
+
+   Returns a possibly null SaslServer which supports the specified
+   mechanism. If null, this factory cannot produce a SaslServer for the
+   specified mechanism.
+
+      Parameters are:
+
+      mechanism      The non-null IANA-registered name of a SASL
+                      mechanism (e.g. "GSSAPI", "CRAM-MD5").
+
+      protocol       The non-null string name of the protocol for
+                      which the authentication is being performed, e.g
+                      "pop", "ldap".
+
+      serverName     The non-null fully qualified host name of the
+                      server.
+
+      props          The possibly null properties to be used by the
+                      SASL mechanisms to configure the authentication
+                      exchange. See Sasl.createSaslClient for examples
+                      of properties.
+
+      cbh            The possibly null callback handler to used by the
+                      SASL mechanisms to get further information  from
+                      the application/library to complete the
+                      authentication. For example, a SASL mechanism
+                      might require the authentication ID and password
+                      from the caller. The authentication ID may be
+                      requested with a NameCallback, and the password
+                      with a PasswordCallback.
+
+
+Expires 12/99                                                [Page 15]
+
+JAVA SASL API                                                June 1999
+
+
+
+3.5.2 getMechanismNames
+
+   public String[]
+   getMechanismNames()
+
+   Returns a non-null array of names of mechanisms supported by this
+   factory.
+
+
+3.6   public class SaslException
+   extends IOException
+
+   Exception thrown on errors and failures in authentication.
+
+
+3.6.1 Constructors
+
+   public SaslException()
+
+   Constructs a new instance of SaslException. The root exception and
+   the detailed message are null.
+
+
+   public SaslException(String message)
+
+
+   Constructs a default exception with a detailed message and no root
+   exception.
+
+
+   public SaslException(String messag,
+                        Throwable ex)
+
+   Constructs a new instance of SaslException with a detailed message
+   and a root exception. For example, a SaslException might result from
+   a problem with the callback handler, which might throw a
+   NoSuchCallbackException if it does not support the requested
+   callback, or throw an IOException if it had problems obtaining data
+   for the callback. The SaslException's root exception would be then
+   be the exception thrown by the callback handler.
+
+
+   Parameters are:
+
+      message        Possibly null additional detail about the
+                      exception.
+
+      ex             A possibly null root exception that caused this
+                      exception.
+
+
+
+
+
+Expires 12/99                                                [Page 16]
+
+JAVA SASL API                                                June 1999
+
+3.6.2 getException
+
+   public Throwable
+   getException()
+
+   Returns the possibly null root exception that caused this exception.
+
+
+3.6.3 printStackTrace
+
+   public void
+   printStackTrace()
+
+   Prints this exception's stack trace to System.err. If this
+   exception has a root exception, the stack trace of the root
+   exception is printed to System.err instead.
+
+   public void
+   printStackTrace(PrintStream ps)
+
+   Prints this exception's stack trace to a print stream. If this
+   exception has a root exception, the stack trace of the root
+   exception is printed to the print stream instead.
+
+   public void
+   printStackTrace(PrintWriter pw)
+
+   Prints this exception's stack trace to a print writer. If this
+   exception has a root exception, the stack trace of the root
+   exception is printed to the print writer instead.
+
+   Parameters are:
+
+      ps             The non-null print stream to which to print.
+
+      pw             The non-null print writer to which to print.
+
+
+3.7 public interface SecurityLayer
+
+   An object implementing this interface translates buffers back and
+   forth during a session, after the authentication process has
+   completed, to provide a security layer. The security layer may
+   provide data integrity and/or session privacy.
+
+
+3.7.1 encode
+
+   public byte[]
+   encode(byte[] inVals, int offset, int count) throws SASLException
+
+   Take a protocol-dependent byte array and encode it (encrypt, for
+   example) for sending to the server.
+
+
+
+Expires 12/99                                                [Page 17]
+
+JAVA SASL API                                                June 1999
+
+
+   Parameters are:
+
+      inVals         A request to be encoded before sending to the
+                      server.
+
+      offset         The inclusive starting offset in the byte array
+                      inVals to use. 0 <= offset < inVals.length.
+
+      count          The number of bytes in inVals to use.
+                      0 <= count < inVals.length-offset.
+
+
+3.7.2 decode
+
+   public byte[]
+   decode(byte[] outVals, int offset, int count) throws SASLException
+
+   Take an encoded byte array received from the server and decode it.
+
+   Parameters are:
+
+      outVals        A response received from the server, to be
+                      decoded.
+
+      offset         The inclusive starting offset in the byte array
+                      outVals to use. 0 <= offset < outVals.length.
+
+      count          The number of bytes in outVals to use.
+                      0 <= count < outVals.length-offset.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Expires 12/99                                                [Page 18]
+
+JAVA SASL API                                                June 1999
+
+4     Security Considerations
+
+   When SASL authentication is performed over unsecured connections, it
+   is possible for an active attacker to spoof the server's protocol-
+   specific indication that authentication is complete.  Clients should
+   protect against this attack by verifying the completion of
+   authentication with the mechanism driver by calling the driver's
+   isComplete() method.
+
+   Additional security considerations are discussed in [SASL].
+
+
+5     Bibliography
+
+   [JAAS] Java Software, Sun Microsystems, Inc., "Java Authentication
+        and Authorization Service," http://java.sun.com/security/jaas,
+        March 1999.
+
+   [SASL] J. Myers, "Simple Authentication and Security Layer (SASL)",
+        RFC 2222, October 1997
+
+
+6     Authors' Addresses
+
+      Rob Weltman
+      Netscape Communications Corp.
+      501 E. Middlefield Rd.
+      Mail Stop MV-029
+      Mountain View, CA 94043-4042
+      USA
+      Email: rweltman@netscape.com
+
+      Rosanna Lee
+      Sun Microsystems
+      Mail Stop UCUP02-206
+      901 San Antonio Road
+      Palo Alto, CA  94303
+      USA
+      Email: rosanna.lee@eng.sun.com
+
+      Rob Earhart
+      Carnegie Mellon
+      5000 Forbes Ave.
+      Pittsburgh, PA 15213-3890
+      USA
+      Email: earhart@cmu.edu
+
+
+7     Acknowledgements
+
+   Scott Seligman of Sun Microsystems, Inc. contributed to the
+   architecture and API proposed in this document.
+
+
+
+
+Expires 12/99                                                [Page 19]
+
+JAVA SASL API                                                June 1999
+
+8     Appendix A - Sample java LDAP program using SASL
+
+   /****************************************************************
+    It might look like this in LDAP. The Protocol Driver is
+    implemented as part of the authenticate method of
+    LDAPConnection.
+   ****************************************************************/
+
+   public class LDAPConnection {
+     public void authenticate( String dn,
+                               String[] mechs,
+                               Hashtable props,
+                               CallbackHandler cbh )
+                               throws SaslException {
+
+       // Create SASL client to use for authentication
+       SaslClient saslClnt = Sasl.createSaslClient(
+                   mechs, dn, "ldap", getHost(), props, cbh);
+
+       if (saslClnt == null) {
+           throw new SaslException("SASL client not available");
+       }
+
+       String mechName = saslClnt.getMechanismName();
+       byte[] response = saslClnt.createInitialResponse();
+
+       // Create a bind request message, including the initial
+
+       // response (if any), and send it off
+
+       LDAPSASLBindResponse msg =
+
+           writeRequest( new LDAPSASLBindRequest( dn, mechName,
+
+                                                  response ) );
+
+       // Get the server challenge
+       LDAPSASLBindResponse msg = (LDAPSASLBindResponse)readResponse();
+       // Authentication done?
+       while (!saslClnt.isComplete() &&
+              msg.getStatus() == LDAP_SASL_BIND_IN_PROGRESS) {
+           // No, get an appropriate next response and send it off
+           byte[] challenge = msg.getChallenge();
+           response = saslClnt.evaluateChallenge( challenge );
+           // May be a success message with no further challenge
+           if ( response != null ) {
+               // Wrap the response in another bind request and
+               // send it off
+               writeRequest( new LDAPSASLBindRequest( dn,
+                                               mechName, response ) );
+               msg = (LDAPSASLBindResponse)readResponse();
+           }
+       }
+       // Make sure authentication REALLY is complete
+       if ( !driver.isComplete() ) {
+           /* Authentication session hijacked! */
+           throw new SaslException( "SASL session hijacked!" );
+       }
+        // Get the negotiated security layer, if any
+
+
+Expires 12/99                                                [Page 20]
+
+JAVA SASL API                                                June 1999
+
+        security = saslClnt.getSecurityLayer();
+
+   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Expires 12/99                                                [Page 21]
+
+JAVA SASL API                                                June 1999
+
+   /****************************************************************
+    This might be in an application
+   ****************************************************************/
+
+   /**
+    * A sample callback handler. This implementation is created by
+    * using the input that it will return. Other implementations are
+    * typically more sophisticated and might prompt the user on demand
+    * in order to satisfy the callbacks.
+    */
+   class SimpleCallbackHandler implements CallbackHandler {
+       private char[] passwd;
+       private String authenticationID;
+
+       SimpleCallbackHandler(String principal, Object cred)
+                             throws IOException {
+           authenticationID = principal;
+
+           if (cred instanceof String) {
+               passwd = ((String)cred).toCharArray();
+           } else if (cred instanceof char[]) {
+               passwd = (char[])((char[])cred).clone();
+           } else if (cred instanceof byte[]) {
+               // PasswordCallback expects char[]; assume UTF-8
+               // encoding
+               String orig = new String((byte[])cred, "UTF8");
+               passwd = orig.toCharArray();
+           } else {
+               throw new IOException("Unsupported password format: " +
+                                     cred);
+           }
+       }
+
+       public void invokeCallback(Callback[] callbacks)
+           throws java.io.IOException, UnsupportedCallbackException {
+           for (int i = 0; i < callbacks.length; i++) {
+               if (callbacks[i] instanceof NameCallback) {
+                   ((NameCallback)callbacks[i]).setName(
+                                                     authenticationID);
+
+               } else if (callbacks[i] instanceof PasswordCallback) {
+                   ((PasswordCallback)callbacks[i]).setPassword(
+                                                               passwd);
+               } else {
+                   throw new
+                         UnsupportedCallbackException(callbacks[i]);
+               }
+           }
+       }
+   }
+
+
+
+
+
+
+Expires 12/99                                                [Page 22]
+
+JAVA SASL API                                                June 1999
+
+   /***************************************************************
+     And so the application code to do authentication
+   ***************************************************************/
+
+    // Set up all SASL parameters; some may have reasonable defaults
+    Hashtable props = new Hashtable();
+    props.add("javax.security.sasl.encryption.minimum", "40");
+    props.add("javax.security.sasl.encryption.maximum", "128");
+    props.add("javax.security.sasl.server_authentication", "true");
+    props.add("javax.security.sasl.maxbuffer", "4096");
+    // The following two for kerberos v4, only
+    //props.add("javax.security.sasl.ip.local", "192.68.1.10");
+    //props.add("javax.security.sasl.ip.remote", "192.68.1.50");
+
+    // What we want to authenticate as
+    String dn = "cn=Directory Manager";
+
+    // Create an object for possible use by the authentication
+    // process
+    SimpleCallbackHandler cbh = new SimpleCallbackHandler();
+
+    try {
+      // Note: cbh methods may be called during authentication
+      // Note: "connection" includes the SASL Protocol Driver
+      // functionality, and it will internally manage a Mechanism
+      // Driver for GSSAPI, and then a Security Layer object for
+      // data translation
+      String[] mechNames = { "GSSAPI" };
+      connection.authenticate( dn, mechNames, props, cbh );
+    } catch ( SaslException e ) {
+      // Abort, return, maybe try some other authentication
+    }
+
+    // Okay. From here on, everything goes through security, but the
+    // methods have the same signatures as if we were not using SASL
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Expires 12/99                                                [Page 23]
+
+JAVA SASL API                                                June 1999
+
+9     Appendix B - Changes from draft-weltman-java-sasl-01.txt
+
+   The class hierarchy defined in this document is entirely different
+   from that defined in the previous document.
+
+   For callback handling, the newly released
+   javax.security.auth.callback package is used.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Expires 12/99                                                [Page 24]
+

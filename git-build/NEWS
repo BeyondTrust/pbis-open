@@ -1,0 +1,15 @@
+30-November-2010
+================
+
+The MakeKit migration is stable enough to swap over from the older
+"mkcomp" and "mkpkg" scripts.  This yields a much faster build (up
+to 60% faster in testing) and removes dependencies on specific versions
+of libtool and autoconf.  
+
+For more information on makekit, please visit http://mkbuild.sourceforge.net/
+Thanks to our own Brian Koropoff for spending the time to develop makekit
+and solve some very hairy problems for us.
+
+Review the README file for more details on the new build procedure.
+
+

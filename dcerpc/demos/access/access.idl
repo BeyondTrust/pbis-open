@@ -1,0 +1,18 @@
+#include <compat/dcerpc.idl.include>
+
+[ uuid(5ab2e9b4-3d48-11d2-9ea4-80c5140aaa78), 
+  version(1.0),
+  pointer_default(ptr),
+  endpoint("ncacn_np:[\\pipe\\demo_access], ncalrpc:[demo_access]")
+]
+
+interface access
+{
+    typedef [ptr, string] char * string_t;
+    
+    void
+    WhoAmI(	
+	[in] handle_t            	h,
+        [out, ref] string_t* sid
+        );
+}

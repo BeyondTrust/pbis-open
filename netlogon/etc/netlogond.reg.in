@@ -1,0 +1,79 @@
+[HKEY_THIS_MACHINE\Services]
+
+[HKEY_THIS_MACHINE\Services\netlogon]
+"Description" = { 
+    default = "Likewise Site Affinity Service" 
+    doc = "" 
+}
+"Path" = { 
+    default = "@SBINDIR@/netlogond" 
+    doc = "" 
+}
+"Arguments" = { 
+    default = "@SBINDIR@/netlogond --syslog" 
+    doc = "" 
+}
+"Environment" = { 
+    default = "" 
+    doc = "" 
+}
+"Dependencies" = { 
+    default = "lwreg" 
+    doc = "" 
+}
+"Type" = { 
+    default = dword:00000001 
+    doc = "" 
+}
+"Autostart" = {
+    default = dword:00000001
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\netlogon\Parameters]
+"PingAgainTimeout" = { 
+    default = dword:00000384 
+    doc = "" 
+}
+"NegativeCacheTimeout" = { 
+    default = dword:0000003C 
+    doc = "" 
+}
+"WritableRediscoveryTimeout" = { 
+    default = dword:00000708 
+    doc = "" 
+}
+"WritableTimestampMinimumChange" = { 
+    default = dword:00000000 
+    doc = "" 
+}
+"CLdapMaximumConnections" = { 
+    default = dword:00000064 
+    doc = "" 
+}
+"CLdapSearchTimeout" = { 
+    default = dword:0000000F 
+    doc = "" 
+}
+"CLdapSingleConnectionTimeout" = { 
+    default = dword:0000000F 
+    doc = "" 
+}
+
+"NetBiosSupportEnable" = {
+    default = dword:00000000
+    doc = "Enable NetBIOS name resolution. 0=off 1=on"
+}
+"NetBiosUdpTimeout" = {
+    default = dword:00000001
+    "range" = integer:1 - 60
+    doc = "Wait this many seconds for responses to NetBIOS broadcast queries"
+}
+"NetBiosWinsPrimary" = {
+    default = ""
+    doc = "IP address of primary WINS server used for name resolution"
+}
+"NetBiosWinsSecondary" = {
+    default = ""
+    doc = "IP address of secondary WINS server used for name resolution"
+}

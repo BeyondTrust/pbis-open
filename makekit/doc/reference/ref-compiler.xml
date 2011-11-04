@@ -1,0 +1,9 @@
+<reference xml:id="ref-compiler" 
+	   xmlns="http://docbook.org/ns/docbook" version="5.0"
+	   xmlns:xi="http://www.w3.org/2001/XInclude">
+  <info>
+    <title>Compiler Module</title>
+  </info>
+  <xi:include href="compiler.7mk.xml"/>
+  <xi:include href="mk_program.3mk.xml"/>
+</reference>

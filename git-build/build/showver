@@ -1,0 +1,11 @@
+#!/bin/bash
+
+BUILD_ROOT=`(cd $(dirname $0)/.. && pwd)`
+export BUILD_ROOT
+
+umask 022
+
+. ${BUILD_ROOT}/build/lib/common.sh
+. ${BUILD_ROOT}/build/lib/VARS
+
+LikewiseOpenVersion

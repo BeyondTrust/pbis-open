@@ -1,0 +1,6 @@
+make()
+{
+    mk_install_file \
+	FILE=eventlogd.reg \
+	INSTALLDIR="${LW_CONFIGDIR}"
+}

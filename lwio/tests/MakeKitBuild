@@ -1,0 +1,4 @@
+SUBDIRS="\
+    test_load \
+    test_pvfs"
+

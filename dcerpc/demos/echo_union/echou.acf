@@ -1,0 +1,4 @@
+[ explicit_handle ] 
+interface echou {
+	ReplyBack([comm_status, fault_status] status);
+}

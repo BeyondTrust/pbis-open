@@ -1,0 +1,703 @@
+Likewise Security and Authentication Subsystem (LSASS)
+======================================================
+
+1.0 Introduction
+================
+
+   The Likewise Security and Authentication Subsystem (LSASS) interfaces 
+   authentication services from various authentication providers. Likewise
+   provides the following authentication providers.
+   
+    Local Authentication Provider
+
+        The user/group information is provided on the local system.
+        
+    Active Directory Authentication Provider
+    
+        The user/group information is provided in Active Directory.
+        
+    This document describes how the Active Directory Authentication Provider
+    performs searches for user and group information.
+    
+2.0 Active Directory Authentication Provider
+============================================
+
+    For the purpose of this document, we believe that the local
+    UNIX/Linux system is joined to an Active Directory Domain.
+    The provider will also recognize various trusted domains affiliated
+    to this primary domain.
+
+    The Active Directory Domain may be found in one of the following
+    configurations.
+
+    a) Schema
+
+        The Schema mode is active when the Active Directory Schema has been
+        augmented according to RFC2307 to support POSIX Attributes. The 
+        definitions for posixAccount and posixGroup are of primary interest 
+        in this discussion. These definitions have the required fields to 
+        store user and group information specific to UNIX/Linux systems.
+
+    b) Non-Schema
+
+        In this configuration, the Active Directory schema does not have any
+        additional fields for storing UNIX/Linux specific user and group 
+        information.
+
+    At the discretion of the customer, Likewise may extend the Active Directory
+    schema (and data) to provide authentication features. Based on the current
+    Active Directory Configuration and extensions, the authentication provider
+    will operate in one of the following modes.
+
+    1) Un-provisioned
+    2) Default (Cell) Schema
+    3) Default (Cell) Non-Schema
+    4) Cell Schema
+    5) Cell Non-Schema
+    
+2.1 Un-provisioned Mode
+=======================
+
+    This mode is effective when, relative to the location of the computer
+    account in Active Directory, there must be no presence of a container
+    named $LikewiseIdentityCell at the current level or at any parent level.
+
+    In this mode, Likewise must not make any changes to the Active Directory
+    Schema.
+
+    For the purposes of this document, consider <root-dn> to represent
+    the Root Distinguished Name of the Active Directory Domain.
+    For instance, this might be "DC=Likewise,DC=com".
+
+    The user-search-root and group-search-root will be the <root-dn>.
+
+    2.1.1 Lookup User by Name
+    =========================
+
+        1.  Perform an LDAP sub-tree search starting from the user-search-root
+            and filter with "&(objectClass=user)(sAMAccountName=<user name>)".
+            The sAMAccountName is guaranteed to be unique in the current
+            domain. Retrieve the objectSID for the user account.
+        
+        2.  The UID is a 32bit mapping of the ObjectSID, combining the
+            high-order 12 bits of the domain SID and the low-order 19 bits
+            of the RID.
+        
+    2.1.2   Lookup User by Id
+    =========================
+
+        1.  Parse the given UID into an objectSID. Use the low-order 19 bits
+            as the RID (of the SID). The 12 high-order bits starting from the
+            20th bit of the UID must match the Domain SID.
+
+        2.  Use the objectSID attribute to find the user account.
+
+    2.1.3   Lookup Group by Name
+    ============================
+
+        1.  Perform an LDAP sub-tree search starting from the group-search-root
+            and filter with "&(objectClass=group)(sAMAccountName=<group name>)".
+            The sAMAccountName is guaranteed to be unique in the current domain.
+            Retrieve the objectSID for the group.
+
+        2.  The GID is a 32bit mapping of the ObjectSID, combining the
+            high-order 12 bits of the domain SID and the low-order 19 bits of
+            the RID.
+        
+    2.1.4   Lookup Group by Id
+    ==========================
+
+        1.  Parse the given GID into an objectSID. Use the low-order 19 bits
+            as the RID (of the SID). The 12 high-order bits starting from the
+            20th bit of the GID must match the Domain SID.
+
+        2.  Use the objectSID attribute to find the group object.
+    
+    2.1.5   Lookup Alias (User/Group)
+    =================================
+
+        Aliases are not supported in this mode unless provided locally.
+ 
+2.2 Default (Cell) Schema Mode
+==============================
+
+    This mode is effective when, relative to the location of the computer
+    account in Active Directory object hierarchy, there must be a container
+    named $LikewiseIdentityCell  present only at the top/root level.
+
+    The Active Directory domain must be configured in Schema Mode 
+    (posixAccount and posixGroup object classes are available).
+
+    The "description" attribute (which is a multi-valued string) of the
+    $LikewiseIdentityCell container must have a string that has the value
+    "use2307Attrs=TRUE".
+
+    The user-search-root and group-search-root for LDAP queries will be the
+    Root Distinguished Name of the Domain. For instance, this might be
+    "DC=Likewise,DC=com".
+
+    CAVEATS
+    =======
+
+    When a user from a trusted domain is logging into this system, we must
+    lookup the user's account in the domain in which the user is defined.
+
+    2.2.1   Lookup User by Name
+    ===========================
+
+    Perform an LDAP sub-tree search at the user-search-root using the search
+    filter "&(objectClass=posixAccount)(uid=<user name>)".
+
+    2.2.2   Lookup User by Id
+    =========================
+    
+    Perform an LDAP sub-tree search at the user-search-root using the search
+    filter "&(objectClass=posixAccount)(uidNumber=<UID>)".
+
+    2.2.3   Lookup Group by Name
+    ============================
+    
+    Perform an LDAP sub-tree search at the user-search-root using the search
+    filter "&(objectClass=posixGroup)(displayName=<group name>)".
+    
+    2.2.4   Lookup Group by Id
+    ==========================
+    
+    Perform an LDAP sub-tree search at the user-search-root using the search
+    filter "&(objectClass=posixGroup)(gidNumber=<GID>)".
+
+    2.2.5   Lookup Alias (User/Group)
+    =================================
+    
+    This is the same as searching for a user or group by name.
+    
+2.3 Default (Cell) Non-Schema Mode
+==================================
+
+    This mode is effective when, relative to the location of the computer
+    account in Active Directory object hierarchy, there must be a container
+    named $LikewiseIdentityCell  present only at the top/root level.
+
+    The Active Directory domain must not have RFC2307 extensions 
+    (posixAccount and posixGroup object classes are not available).
+
+    The "description" attribute (which is a multi-valued string) of the
+    $LikewiseIdentityCell container must have a string that has the value
+    "use2307Attrs=FALSE".
+
+    For the purposes of this document, consider <root-dn> to represent the
+    Root Distinguished Name of the current Active Directory Domain.
+    For instance, this might be "DC=Likewise,DC=com".
+
+    The user-search-root will be 
+        "CN=Users,CN=$LikewiseIdentityCell,<root-dn>"
+
+    The group-search-root will be 
+        "CN=Groups,CN=$LikewiseIdentityCell,<root-dn>"
+
+    CAVEATS
+    =======
+
+    When a user from a trusted domain is logging into this system, we must
+    lookup the user's account in the domain in which the user is defined.
+        
+    2.3.1   Lookup User by Name
+    ===========================
+
+    Perform an LDAP sub-tree search at the user-search-root using the search
+    filter "&(objectClass=serviceConnectionPoint)        \
+             (keywords=objectClass=centerisLikewiseUser) \
+             (uid=<user name>)".
+    
+    2.3.2   Lookup User by Id
+    =========================
+
+    Perform an LDAP sub-tree search at the user-search-root using the search
+    filter "&(objectClass=serviceConnectionPoint)        \
+             (keywords=objectClass=centerisLikewiseUser) \
+             (uidNumber=<UID>)".
+    
+    2.3.3   Lookup Group by Name
+    ===============================
+    
+    Perform an LDAP sub-tree search at the group-search-root using the search
+    filter "&(objectClass=serviceConnectionPoint)         \
+             (keywords=objectClass=centerisLikewiseGroup) \
+             (displayName=<group name>)".
+    
+    2.3.4   Lookup Group by Id
+    ==========================
+
+    Perform an LDAP sub-tree search at the group-search-root using the search
+    filter "&(objectClass=serviceConnectionPoint)         \
+             (keywords=objectClass=centerisLikewiseGroup) \
+             (gidNumber=<GID>)".
+    
+    2.3.5  Lookup Alias (User/Group)
+    =================================
+    
+    This is the same as searching for a user or group by name.
+    
+2.4 Cell Schema Mode
+====================
+
+    This mode is effective when, relative to the location of the computer
+    account in Active Directory object hierarchy, there must be a container
+    named $LikewiseIdentityCell at the current location or at any parent
+    location; however, the $LikewiseIdentityCell must not be present at the
+    top/root level.
+
+    The Active Directory domain must be configured in Schema Mode (posixAccount
+    and posixGroup object classes are available).
+
+    The "description" attribute (which is a multi-valued string) of the
+    $LikewiseIdentityCell container must have a string that has the value
+    "use2307Attrs=TRUE".
+
+    The Authentication Provider would have already determined the distinguished
+    name of the governing cell at startup. For the purposes of this discussion,
+    let us refer to this value as <cell-dn>. For instance, this might be
+    "DC=Engg,DC=Likewise,DC=com".
+
+    The user-search-root for this cell would be
+
+         CN=users,CN=$LikewiseIdentityCell,<cell-dn>
+
+    The group-search-root for this cell would be
+
+         CN=groups,CN=$LikewiseIdentityCell,<cell-dn>
+
+    CAVEATS
+    =======
+
+    A User from another domain may be defined in the cell. In this case, the
+    User object's "uid" attribute will be fully qualified. The "backLink"
+    attribute will contain the value of the SID of the real user object (to
+    which this current object is a reference).
+
+    To ensure that the user/group object found in the cell is valid, find the
+    value contained in its "backLink" attribute; this will contain the
+    objectSID of the real user/group object. If the object corresponding to
+    this objectSID does not exist, consider that the user/group does not exist.
+
+    If the display name of the user/group is desired, we should get this from
+    the real user/group object.
+
+    2.4.1  Lookup User by Name
+    ===========================
+
+    1.  Perform an LDAP one-level search at the user-search-root using the
+        search filter
+        "&(objectClass=posixAccount)(sAMAccountName=< user name>)".
+
+    2.  Cells may contain links to other cells. If the user cannot be found
+        in the current cell, all linked cells must be searched
+        (in the order they are specified). If one of the linked cells happens
+        to be a Default Cell, then the search rules must be modified
+        accordingly (uses a forest wide search).
+
+    2.4.2  Lookup User by Id
+    =========================
+
+    1.  Perform an LDAP one-level search at the user-search-root using the
+        search filter "&(objectClass=posixAccount)(uidNumber=<UID>)".
+
+    2.  Cells may contain links to other cells. If the user cannot be found
+        in the current cell, all linked cells must be searched
+        (in the order they are specified). If one of the linked cells happens
+        to be a Default Cell, then the search rules must be modified
+        accordingly (uses a forest wide search).
+
+    2.4.3  Lookup Group by Name
+    ===========================
+
+    1.  Perform an LDAP one-level search at the group-search-root using the
+        search filter "&(objectClass=posixGroup)(sAMAccountName=<group name>)".
+
+    2.  Cells can contain links to other cells. If the group cannot be found
+        in the current cell, all linked cells must be searched
+        (in the order they are specified). If one of the linked cells happens
+        to be a Default Cell, then the search rules must be modified
+        accordingly (it changes to a forest wide search).
+
+    2.4.4  Lookup Group by Id
+    =========================
+
+    1.  Perform an LDAP one-level search at the group-search-root using the
+        search filter "&(objectClass= posixGroup)(gidNumber=<GID>)".
+
+    2.  Cells can contain links to other cells. If the group cannot be found
+        in the current cell, all linked cells must be searched
+        (in the order they are specified). If one of the linked cells happens
+        to be a Default Cell, then the search rules must be modified
+        accordingly (it changes to a forest wide search).
+
+    2.4.5  Lookup Alias (User/Group)
+    ================================
+
+    For user aliases, perform an LDAP one-level search at the user-search-root
+    using the filter
+        "&(objectClass=posixAccount)(uid=< user name>)".
+ 
+    For group aliases, perform an LDAP one-level search at the group-search-root
+    using the filter
+        "&(objectClass=posixAccount)(displayName=< group name>)".
+
+2.5 Cell Non-Schema Mode
+========================
+
+    This mode is effective when, relative to the location of the computer
+    account in Active Directory object hierarchy, there must be a container
+    named $LikewiseIdentityCell at the current location or at any parent
+    location; however, the $LikewiseIdentityCell must not be present at the
+    top/root level.
+
+    The Active Directory domain must not have RFC2307 extensions (posixAccount
+    and posixGroup object classes are not available).
+
+    The "description" attribute (which is a multi-valued string) of the
+    $LikewiseIdentityCell container must have a string that has the value
+    "use2307Attrs=FALSE".
+
+    CAVEATS
+    =======
+
+    A User from another domain may be defined in the cell. In this case, the
+    User object's "uid" attribute will be fully qualified. The "backLink"
+    attribute will contain the value of the SID of the real user object (to
+    which this current object is a reference).
+
+    To ensure that the user/group object found in the cell is valid, find the
+    value contained in its "backLink" attribute; this will contain the
+    objectSID of the real user/group object. If the object corresponding to
+    this objectSID does not exist, consider that the user/group does not exist.
+
+    If the display name of the user/group is desired, we should get this from
+    the real user/group object.
+
+    2.5.1  Lookup User by Name
+    ==========================
+
+    1.  Perform an LDAP one-level search at the user-search-root using the
+        search filter "&(objectClass=serviceConnectionPoint)        \
+                        (keywords=objectClass=centerisLikewiseUser) \
+                        (uid=<user name>)".
+
+    2.  Cells may contain links to other cells. If the user cannot be found
+        in the current cell, all linked cells must be searched
+        (in the order they are specified). If one of the linked cells happens
+        to be a Default Cell, then the search rules must be modified
+        accordingly (uses a forest wide search).
+
+    2.5.2  Lookup User by Id
+    ========================
+
+    1.  Perform an LDAP one-level search at the user-search-root using the
+        search filter "&(objectClass=serviceConnectionPoint)        \
+                        (keywords=objectClass=centerisLikewiseUser) \
+                        (uidNumber=<UID>)".
+
+    2.  Cells may contain links to other cells. If the user cannot be found
+        in the current cell, all linked cells must be searched
+        (in the order they are specified). If one of the linked cells happens
+        to be a Default Cell, then the search rules must be modified
+        accordingly (uses a forest wide search).
+
+    2.5.3  Lookup Group by Name
+    ===========================
+
+    1.  Perform an LDAP one-level search at the group-search-root using the
+        search filter "&(objectClass=serviceConnectionPoint)         \
+                        (keywords=objectClass=centerisLikewiseGroup) \
+                        (displayName=<group name>)".
+
+    2.  Cells may contain links to other cells. If the user cannot be found
+        in the current cell, all linked cells must be searched
+        (in the order they are specified). If one of the linked cells happens
+        to be a Default Cell, then the search rules must be modified
+        accordingly (uses a forest wide search).
+
+    2.5.4  Lookup Group by Id
+    =========================
+
+    1.  Perform an LDAP one-level search at the group-search-root using the
+        search filter "&(objectClass=serviceConnectionPoint)         \
+                        (keywords=objectClass=centerisLikewiseGroup) \
+                        (gidNumber=<GID>)".
+
+    2.  Cells may contain links to other cells. If the user cannot be found
+        in the current cell, all linked cells must be searched
+        (in the order they are specified). If one of the linked cells happens
+        to be a Default Cell, then the search rules must be modified
+        accordingly (uses a forest wide search).
+            
+    2.5.5  Lookup Alias (User/Group)
+    ================================
+
+    This is similar to looking up a user or group by name.
+    
+3.0 Cross-forest searches
+=========================
+
+    3.1 Global Catalog Searches
+    ===========================
+
+    It is necessary to perform searches on the Active Directory Global Catalog.
+
+    In the Non-Schema mode, we store the data in the keywords field, which
+    is maintained in the Global Catalog.
+
+    Use Port 3268 to search the Global Catalog.
+
+Appendix A: User Info Attributes (Schema Mode)
+==============================================
+
+    pw_uid/Uid: User Id
+    -------------------
+
+        "uidNumber" attribute of the user object.
+
+    pw_gid/Gid: Primary Group Id
+    ----------------------------
+
+        "gidNumber" attribute of the user object.
+
+    pw_nam/Name: Login Id
+    ---------------------
+
+        "name" attribute of the user object.
+
+        This must be qualified with the (short) domain name.
+        Some programs will start using this value in subsequent calls.
+
+    pw_passwd/Passwd: (Shadow) Password
+    -----------------------------------
+
+        "unixUserPassword" attribute of the user object.
+   
+        This is not used by the client.
+
+    pw_shell/Shell: Login Shell
+    ---------------------------
+
+        "loginShell" attribute of the user object.
+
+    pw_dir/HomeDir: Path to user's home directory
+    ---------------------------------------------
+
+        "unixHomeDirectory" attribute of the user object.
+
+    pw_gecos/Gecos: General Electric Comprehensive Operating System
+    ---------------------------------------------------------------
+
+        "gecos" attribute of the user object.
+
+Appendix B: User Info Attributes (Non-Schema Mode)
+==================================================
+
+    pw_uid/Uid: User Id
+    -------------------
+
+        Look in the "keywords" attribute (of type multi-valued string)
+        of the user object. Parse value with the prefix "uidNumber=".
+
+    pw_gid/Gid: Primary Group Id
+    ----------------------------
+
+        Look in the "keywords" attribute (of type multi-valued string)
+        of the user object. Parse value with the prefix "gidNumber=".
+
+    pw_nam/Name: Login Id
+    ---------------------
+
+        Value of the "name" attribute of the user object.
+
+        This must be qualified with the (short) domain name.
+        Some programs will start using this value in subsequent calls.
+
+    pw_passwd/Passwd: (Shadow) Password
+    -----------------------------------
+
+        N/A
+        Likewise does not fill this field.
+
+    pw_shell/Shell: Login Shell
+    ---------------------------
+
+        Look in the "keywords" attribute (of type multi-valued string)
+        of the user object. Parse value with the prefix "loginShell=".
+
+    pw_dir/HomeDir: Path to user's home directory
+    ---------------------------------------------
+
+        Look in the "keywords" attribute (of type multi-valued string)
+        of the user object. Parse value with the prefix "unixHomeDirectory=".
+
+    pw_gecos/Gecos: General Electric Comprehensive Operating System
+    ---------------------------------------------------------------
+
+        Look in the "keywords" attribute (of type multi-valued string)
+        of the user object. Parse value with the prefix "gecos=".
+
+Appendix C: User Info Attributes (Unprovisioned Mode)
+=====================================================
+
+    pw_uid/Uid: User Id
+    -------------------
+
+        This is the Likewise specific 32 bit unsigned integer Hash Value 
+        of the objectSid attribute from the user object. 
+        
+        The hash algorithm is non-cryptographic and hence reversible
+        under some circumstances.
+        
+        Bit 31 (most significant bit) is always set to zero.
+        
+        If there are fewer than three sub-authority ID's, then 
+        bits 19-30 are also set to zero.
+        
+        Otherwise, bits 19-30 are produced as a result of the XOR of the 
+        final three sub-authority IDs:  
+        
+        //dwAuthorityCount includes the final RID
+        dwHash = 0;
+        if(dwAuthorityCount > 3)
+	    {
+	        dwHash = 
+	            dwAuthorities[dwAuthorityCount - 4] ^
+	            dwAuthorities[dwAuthorityCount - 3] ^
+	            dwAuthorities[dwAuthorityCount - 2];
+	    }
+        
+        
+        The XOR'd value is then compressed into 
+        12 bits by the addition together, modulo 0xFFF, of bits 0-7, 8-19, 
+        and 20-31:
+        
+            dwHash = (((dwHash & 0xFFF00000) >> 20) +
+              ((dwHash & 0x000FFF00) >> 8) +
+              ((dwHash & 0x000000FF))) & 0x0000FFF;
+        
+        This result is added to bits 0-18 (least significant 19 bits) of
+        the RID:
+        
+        UID = (dwHash << 19) +
+              (dwAuthorities[dwAuthorityCount - 1] & 0x0007FFFF);
+
+    pw_gid/Gid: Primary Group Id
+    ----------------------------
+
+        This is the value of the "primaryGroupId" attribute of the user
+        object.
+
+    pw_nam/Name: Login Id
+    ---------------------
+
+        This is the value of the "sAMAccountName" attribute of the user object.
+
+    pw_passwd/Passwd: (Shadow) Password
+    -----------------------------------
+
+        N/A
+
+        Likewise does not fill this value.
+
+    pw_shell/Shell: Login Shell
+    ---------------------------
+
+        This is pre-defined in the configuration.
+
+    pw_dir/HomeDir: Path to user's home directory
+    ---------------------------------------------
+
+        This is formed from a template string path saved in the configuration.
+        For instance, the template might be "/home/%s/%s" with a place holder
+        with the first place-holder for the short domain name and the second
+        place-holder for the user's login id.
+
+    pw_gecos/Gecos: General Electric Comprehensive Operating System
+    ---------------------------------------------------------------
+
+Appendix D: Group Info Attributes (Schema Mode)
+===============================================
+
+    gr_gid/Gid: Group Id
+    --------------------
+
+        Value of the "gidNumber" attribute of the group object.
+
+    gr_nam/Name: Group Name
+    -----------------------
+      
+        This is the value of the "name" attribute of the group object.
+
+        This must be qualified with the (short) domain name.
+        Some programs will start using this value in subsequent calls.
+
+    gr_passwd/Passwd: (Shadow) Password
+    -----------------------------------
+
+        Value of the "unixUserPassword" attribute of the group object.
+
+    gr_mem/Members: Group Members
+    -----------------------------
+
+        Values from the multi-valued-string attribute "members" of
+        the (real) group object.
+
+Appendix E: Group Info Attributes (Non-Schema Mode)
+===================================================
+
+    gr_gid/Gid: Group Id
+    --------------------
+
+        Look in the "keywords" attribute (of type multi-valued string)
+        of the user object. Parse value with the prefix "gecos=".
+
+    gr_nam/Name: Group Name
+    -----------------------
+
+        This is the value of the "name" attribute of the group object.
+
+        This must be qualified with the (short) domain name.
+        Some programs will start using this value in subsequent calls.
+
+    gr_passwd/Passwd: (Shadow) Password
+    -----------------------------------
+
+        N/A
+
+        Likewise does not fill this value.
+
+    gr_mem/Members: Group Members
+    -----------------------------
+
+        Values from the multi-valued-string attribute "members" of
+        the (real) group object.
+
+Appendix F: Group Info Attributes (Unprovisioned Mode)
+======================================================
+
+    gr_gid/Gid: Group Id
+    --------------------
+
+        This is the Likewise Specific Hash of the objectSid attribute value
+        of the group object.
+
+    gr_nam/Name: Group Name
+    -----------------------
+
+        This is the value of the "name" attribute of the group object.
+
+    gr_passwd/Passwd: (Shadow) Password
+    -----------------------------------
+
+        N/A
+
+        Likewise does not fill this value.
+
+    gr_mem/Members: Group Members
+    -----------------------------
+
+        Values from the multi-valued-string attribute "members" of
+        the (real) group object.

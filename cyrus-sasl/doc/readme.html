@@ -1,0 +1,129 @@
+<HTML><HEAD>
+<title>Cyrus SASLv2 README</title>
+<!-- $Id: readme.html,v 1.13 2005/02/16 20:52:05 shadow Exp $ -->
+</HEAD>
+<BODY>
+<H1>Read Me First</H1>
+
+This document offers a general overview of the Cyrus SASL library.
+The Cyrus SASL Libray provides applications with an implementation
+of the Simple Authentication and Security Layer (RFC2222), and
+several authentication mechanisms.  Users interested in the "big picture"
+of what is provided by the library should read about
+<a href=components.html>Cyrus SASL Components</a>.
+
+<H2>FEATURES</H2>
+
+The following <a href="mechanisms.html">mechanisms</a> are included in
+this distribution:
+<ul>
+<li>ANONYMOUS
+<li>CRAM-MD5
+<li>DIGEST-MD5
+<li>EXTERNAL
+<li>GSSAPI (MIT Kerberos 5, Heimdal Kerberos 5 or CyberSafe)
+<li>KERBEROS_V4
+<li>LOGIN
+<li>NTLM (requires OpenSSL libcrypto)
+<li>OTP (requires OpenSSL libcrypto)
+<li>PLAIN
+<li>SRP (work in progress; requires OpenSSL libcrypto)
+</ul>
+
+The library also supports storing user secrets in either a hash
+database (e.g. Berkeley DB, gdbm, ndbm), LDAP, or in a SQL database 
+(MySQL, Postgres).
+
+
+Additionally, mechanisms such as PLAIN and LOGIN
+(where the plaintext password is directly supplied by the client)
+can perform direct password verification via the saslauthd daemon.  This
+allows the use of LDAP, PAM, and a variety of other password verification
+routines.
+
+The sample directory contains two programs which provide a reference
+for using the library, as well as making it easy to test a mechanism
+on the command line.  See <a
+href="programming.html">programming.html</a> for more information.<p>
+
+This library is believed to be thread safe IF:
+<ul>
+<li>you supply mutex functions (see sasl_set_mutex())
+<li>you make no libsasl calls until sasl_client/server_init() completes
+<li>no libsasl calls are made after sasl_done() is begun
+<li>when using GSSAPI, you use a thread-safe GSS / Kerberos 5 library.
+</ul>
+
+<H2>TYPICAL UNIX INSTALLATION</H2>
+
+First, if you are upgrading from Cyrus SASLv1, please see <a
+href="upgrading.html">upgrading.html</a>.<p>
+
+Please see the file <a href="install.html">install.html</a> for instructions
+on how to install this package.<p>
+
+Note that the library can use the environment variable SASL_PATH to locate the
+directory where the mechanisms are; this should be a colon-separated
+list of directories containing plugins.  Otherwise it will default to the
+value of <tt>--with-plugindir</tt> as supplied to <tt>configure</tt> (which
+itself defaults to <tt>/usr/local/lib</tt>).
+
+<H2>INSTALLATION ON MAC OS X</H2>
+Please read <A HREF="macosx.html">macosx.html</A>
+
+<H2>INSTALLATION ON WINDOWS</H2>
+Please read <A HREF="windows.html">windows.html</A>.  This configuration
+has not been extensively tested.
+
+<H2>CONFIGURATION</H2>
+There are two main ways to configure the SASL library for a given
+application.  The first (and typically easiest) is to make use
+of the application's configuration files.  Provided the application supports it
+(via the <tt>SASL_CB_GETOPT</tt> callback), please refer to that documetation
+for how to supply <a href=options.html>SASL options</a>.<p>
+
+Alternatively, Cyrus SASL looks for configuration files in
+/usr/lib/sasl/Appname.conf where Appname is settable by the
+application (for example, Sendmail 8.10 and later set this to
+"Sendmail").<p>
+
+Configuration using the application's configuration files (via
+the <tt>getopt</tt> callback) will override those supplied by
+the SASL configuration files.<p>
+
+For a detailed guide on configuring libsasl, please look at
+<A HREF=sysadmin.html>sysadmin.html</A> and
+<A HREF=options.html>options.html</A>
+
+<H2>KNOWN BUGS</H2>
+<ul>
+<li>libtool doesn't always link libraries together.  In our environment,
+we only have static Krb5 libraries; the GSSAPI plugin should link
+these libraries in on platforms that support it (Solaris and Linux
+among them) but it does not.  It also doesn't always get the runpath
+of libraries correct.
+<li>Also see our <A HREF=http://bugzilla.andrew.cmu.edu>bugzilla</A>.
+</ul>
+
+<H2>AUTHORS</H2>
+
+For any comments/suggestions/bug reports, please contact <a
+href="mailto:cyrus-bugs@andrew.cmu.edu">cyrus-bugs@andrew.cmu.edu</a>.
+Be sure to include the version of libsasl and your operating system;
+messages without this information will not be answered.<p>
+
+Major contributors to the libsasl code can be found in the top-level
+file AUTHORS.  Additionally saslauthd has an AUTHORS file that lists
+major contributors as well.<p>
+
+People considering doing binary distributions that include saslauthd
+should be aware that the code is covered by several slightly different
+(but compatible) licenses, due to how it was contributed.  Details can
+be found within the source code.<p>
+
+<hr>
+Back to the <A href=index.html>index</a>
+
+</body>
+</html>
+

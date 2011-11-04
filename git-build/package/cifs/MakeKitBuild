@@ -1,0 +1,149 @@
+MODULES="package-deb package-rpm"
+
+configure()
+{
+    if mk_deb_enabled
+    then
+        mk_export PKG_DEB_NAME="likewise-open-cifs"
+        mk_export PKG_DEB_VERSION="${LW_VERSION}-1"
+        mk_export PKG_DEB_DATE="`date -R`"
+    fi
+
+    if mk_rpm_enabled
+    then
+        mk_export PKG_RPM_NAME="likewise-open-cifs"
+        mk_export PKG_RPM_VERSION="${LW_VERSION}"
+
+        PKG_RPM_COMPAT="0"
+
+        mk_compat_do
+            PKG_RPM_COMPAT="1"
+        mk_compat_done
+
+        mk_export PKG_RPM_COMPAT
+    fi
+}
+
+package_deb()
+{
+    mk_deb_do \
+        PACKAGE="$PKG_DEB_NAME" \
+        VERSION="$PKG_DEB_VERSION" \
+        DEBIANFILES="debian/changelog.in debian/compat.in \
+                     debian/control.in debian/postinst.in \
+                     debian/postrm.in debian/preinst.in \
+                     debian/prerm.in debian/rules.in"
+        
+        common_files
+        common_files_compat
+        
+        mk_subpackage_do SUBPACKAGE="dev"
+            common_files_dev
+        mk_subpackage_done
+    mk_deb_done   
+}
+        
+package_rpm()
+{
+    mk_rpm_do \
+        PACKAGE="$PKG_RPM_NAME" \
+        VERSION="$PKG_RPM_VERSION" \
+        SPECFILE="rpm/cifs.spec"
+        
+        common_files
+
+        if [ "$PKG_RPM_COMPAT" -eq "1" ]
+        then
+            mk_subpackage_do SUBPACKAGE="compat"
+                common_files_compat
+            mk_subpackage_done
+        fi
+
+        mk_subpackage_do SUBPACKAGE="devel"
+            common_files_dev
+        mk_subpackage_done
+    mk_rpm_done
+}
+        
+make()
+{
+    mk_deb_enabled && package_deb
+    mk_rpm_enabled && package_rpm
+}
+
+lw_use_bundled()
+{
+    for _dep in ${LW_BUNDLED}
+    do
+        [ "$_dep" = "$1" ] && return 0
+    done
+
+    return 1
+}
+
+common_files()
+{
+    mk_package_files \
+        "${MK_BINDIR}/*" \
+        "${MK_SBINDIR}/*" \
+        "${MK_PREFIX}/data/VERSION" \
+        "${LW_CONFIGDIR}/*" \
+        "${MK_LIBDIR}/*${MK_LIB_EXT}" \
+        "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
+        "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/lwsm-loader/*${MK_DLO_EXT}" \
+        "/etc/init.d/*" \
+        "/etc/krb5.conf.default" \
+        "${MK_SYSCONFDIR}/*" \
+        "/${MK_LIBDIR##*/}/security/pam_lsass${MK_DLO_EXT}" \
+        "/${MK_LIBDIR##*/}/libnss_lsass${MK_DLO_EXT}.*"
+
+    if [ "$MK_DLO_EXT" != "$MK_LIB_EXT" ]
+    then
+        mk_package_files "${MK_LIBDIR}/*${MK_DLO_EXT}"
+    fi
+
+    if lw_use_bundled cyrus-sasl
+    then
+        mk_package_files \
+            "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
+            "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*"
+    fi
+
+    mk_get_export ../../domainjoin DJ_GUI_ENABLED
+
+    if [ "$result" = yes ]
+    then
+        mk_package_files \
+            "${MK_DATADIR}/*.glade" \
+            "${MK_DATADIR}/*.png"
+    fi
+
+    mk_package_dirs \
+        "${LW_CACHEDIR}" \
+        "${LW_CACHEDIR}/db" \
+        "${LW_CACHEDIR}/rpc"
+}
+
+common_files_compat()
+{
+    mk_compat_do
+        mk_package_files \
+            "${MK_LIBDIR}/*${MK_LIB_EXT}" \
+            "/${MK_LIBDIR##*/}/security/pam_lsass${MK_DLO_EXT}" \
+            "/${MK_LIBDIR##*/}/libnss_lsass${MK_DLO_EXT}.*"
+
+        if [ "$MK_DLO_EXT" != "$MK_LIB_EXT" ]
+        then
+            mk_package_files "${MK_LIBDIR}/*${MK_DLO_EXT}"
+        fi
+   mk_compat_done
+}
+
+common_files_dev()
+{
+    mk_package_files \
+        "${MK_INCLUDEDIR}/*" \
+        "${MK_LIBDIR}/*.la" \
+        "${MK_LIBDIR}/*.a"
+}

@@ -1,0 +1,48 @@
+#!/bin/bash
+##
+## Likewise Open version
+##   The REVISION is generated from the SVN rev number sin the log
+##
+LIKEWISE_OPEN_MAJOR=6
+LIKEWISE_OPEN_MINOR=1
+LIKEWISE_OPEN_BUILD=0
+LIKEWISE_OPEN_REVISION=`git log | grep '\(.*: r[1-9].*\)' | cut -d: -f2 | sed -e 's:\s*r::' -e 's:)$::' | sort -n | tail -1`
+LIKEWISE_OPEN_EXTRA_TAG=""
+
+## check for platform specific components
+_UUID=""
+_ICONV=""
+case `uname -s` in
+    NetBSD|FreeBSD)
+	_UUID="libuuid"
+	_ICONV="libiconv"
+	;;
+esac
+
+## List of all components necessary 
+__COMP_LIST="krb5 cyrus-sasl openldap libcrypto curl ${_UUID} ${_ICONV} lwbase \
+    lwmsg sqlite lwreg pstore \
+    lwadvapi centutils netlogon lwio lwsm libschannel \
+    dcerpc eventlog lsass srvsvc \
+    lwdns domainjoin lwnetapi lwtools \
+"
+
+function LikewiseOpenVersion
+{
+    local _VERSION_STRING="${LIKEWISE_OPEN_MAJOR}.${LIKEWISE_OPEN_MINOR}.${LIKEWISE_OPEN_BUILD}.${LIKEWISE_OPEN_REVISION}"
+
+    if [ -n "${LIKEWISE_OPEN_EXTRA_TAG}" ]; then
+	_VERSION_STRING="${_VERSION_STRING}-${LIKEWISE_OPEN_EXTRA_TAG}"
+    fi
+
+    echo "${_VERSION_STRING}"
+}
+
+
+function PrintVersionData
+{
+    echo "VERSION=${LIKEWISE_OPEN_MAJOR}.${LIKEWISE_OPEN_MINOR}"
+    echo "BUILD=${LIKEWISE_OPEN_BUILD}"
+    echo "REVISION=${LIKEWISE_OPEN_REVISION}"
+    echo "EXTRA_TAG=${LIKEWISE_OPEN_EXTRA_TAG}"
+}

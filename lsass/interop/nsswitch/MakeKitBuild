@@ -1,0 +1,9 @@
+SUBDIRS="common linux freebsd solaris aix hpux"
+
+configure()
+{
+    for i in ${SUBDIRS}
+    do
+        [ "$i" = "$MK_HOST_OS" -o "$i" = "common" ] || mk_skip_subdir "$i"
+    done
+}

@@ -1,0 +1,23 @@
+Tim Martin <tmartin@andrew.cmu.edu> wrote, debugged, and tested most of the
+code.
+
+Rob Siemborski <rjs3@andrew.cmu.edu> wrote the self-contained autoconf system.
+
+Larry Greenfield <leg+sasl@andrew.cmu.edu> talked a lot.
+
+Igor Brezac <igor@ipass.net> has done a good deal of work on the saslauthd
+LDAP module.
+
+Jeremy Rumpf <jrumpf@heavyload.net> implemented the credential cache, unified
+the different IPC methods under a common framework.
+
+Fabian Knittel <fknittel@gmx.de> wrote auth_pam plugin, based on
+Debian's pwcheck_pam daemon by Michael-John Turner <mj@debian.org>.
+
+saslauthd was originally contributed by Lyndon Nerenberg on
+behalf of MessagingDirect Ltd.
+
+getaddrinfo.c was written by Hajimu UMEMOTO <ume@mahoroba.org>
+which is based on the IPv6 code written by KIKUCHI Takahiro
+<kick@kyoto.wide.ad.jp>
+

@@ -1,0 +1,420 @@
+/*
+ * 
+ * (c) Copyright 1991 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1991 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1991 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      rpcbase.idl
+**
+**  FACILITY:
+**
+**      Remote Procedure Call
+**
+**  ABSTRACT:
+**
+**  Base RPC types.
+**
+**
+*/
+
+[local] interface rpcbase
+{
+
+import "dce/lbase.idl";
+import "dce/rpctypes.idl";
+import "dce/iovector.idl";
+
+/*************************************************************************/
+/*************************  Common definitions  **************************/
+/*************************************************************************/
+
+/* 
+ * Communications runtime status codes 
+ */
+const long  rpc_s_ok                            = error_status_ok;
+
+/* 
+ * Opaque pointer for those arguments which are pointers to
+ * internal structures.
+ */
+typedef struct
+{
+    unsigned32  dummy;
+} *rpc_opaque_ptr_t;
+
+/*
+ * Max call constants.
+ */
+const long  rpc_c_protseq_max_reqs_default  = 0;
+const long  rpc_c_listen_max_calls_default  = 10;
+
+/*
+ * RPC call semantics.
+ */
+const long  rpc_c_call_non_idempotent       = 0x00000000;
+const long  rpc_c_call_brdcst               = 0x00000001;
+const long  rpc_c_call_idempotent           = 0x00000002;
+const long  rpc_c_call_maybe                = 0x00000004;
+
+/*
+ * Binding timeout attribute.
+ */
+const long  rpc_c_binding_min_timeout       = 0;
+const long  rpc_c_binding_default_timeout   = 5;
+const long  rpc_c_binding_max_timeout       = 9;
+const long  rpc_c_binding_infinite_timeout  = 10;
+
+/*
+ * RPC protocol sequence ids
+ */
+const long  rpc_c_protseq_id_ncacn_ip_tcp   = 0;
+const long  rpc_c_protseq_id_ncacn_dnet_nsp = 1;
+const long  rpc_c_protseq_id_ncacn_osi_dna  = 2;
+const long  rpc_c_protseq_id_ncadg_ip_udp   = 3;
+const long  rpc_c_protseq_id_ncadg_dds      = 4;
+const long  rpc_c_protseq_id_ncalrpc        = 5;
+const long  rpc_c_protseq_id_ncacn_np       = 6;
+const long  rpc_c_protseq_id_ncacn_nb       = 7;
+
+const long  rpc_c_invalid_protseq_id        = -1;
+
+/*
+ * A transfer syntax representation. The transfer syntax values are
+ * architected. 
+ */
+typedef struct
+{
+    dce_uuid_t                  id;
+    unsigned32              version;
+} rpc_syntax_id_t, *rpc_syntax_id_p_t;
+
+/*
+ * Procedural mashalling/unmarshalling entry point vector type definition.
+ */
+typedef void (*rpc_convert_proc_t)
+(
+);
+
+typedef rpc_convert_proc_t *rpc_convert_epv_t;
+
+typedef struct
+{
+    rpc_syntax_id_t         id;
+    unsigned32              index;
+    rpc_convert_epv_t       convert_epv;    
+} rpc_transfer_syntax_t, *rpc_transfer_syntax_p_t;
+
+/*
+ * An opaque binding handle.
+ */
+typedef handle_t rpc_binding_handle_t;
+
+/*
+ * An opaque call handle for use during an RPC call.
+ */
+typedef rpc_opaque_ptr_t    rpc_call_handle_t, *rpc_call_handle_p_t;
+
+/*
+ * An opaque client handle to be passed to the server stub. It
+ * identifies a client address space or thread of execution.
+ */
+typedef rpc_opaque_ptr_t    rpc_client_handle_t, *rpc_client_handle_p_t;
+
+/*
+ * A vector of binding handles.
+ */
+typedef struct
+{
+    unsigned32              count;
+    rpc_binding_handle_t    binding_h[1];   /* count_is=count */
+} rpc_binding_vector_t, *rpc_binding_vector_p_t;
+
+/*
+ * A vector of RPC protocol sequences.
+ */
+typedef struct
+{
+    unsigned32              count;
+    unsigned_char_p_t       protseq[1];   /* count_is=count */
+} rpc_protseq_vector_t, *rpc_protseq_vector_p_t;
+
+/*
+ * Opaque interface handle representing the interface being used.
+ */    
+typedef rpc_opaque_ptr_t    rpc_if_handle_t, *rpc_if_handle_p_t;
+
+/*
+ * Manager entry point vector type definitions
+ */
+typedef void (*rpc_mgr_proc_t)
+(
+);
+
+typedef rpc_mgr_proc_t *rpc_mgr_epv_t;
+       
+/*
+ * Version 2 (NCS 2.0) server stub and stub EPV
+ */
+typedef void (*rpc_v2_server_stub_proc_t)
+(
+    [in]        handle_t                binding_handle,
+    [in]        rpc_call_handle_t       call_handle,
+    [in]        rpc_iovector_elt_p_t    in_call_args,
+    [in]        ndr_format_p_t          remote_ndr_fmt,
+    [in]        rpc_transfer_syntax_p_t xfer_syntax,
+    [in]        rpc_mgr_epv_t           mgr_epv,
+    [out]       unsigned32              *st
+);
+
+typedef rpc_v2_server_stub_proc_t *rpc_v2_server_stub_epv_t;
+
+/*
+ * A pointer to the liveness rundown routine.
+ */
+typedef void (*rpc_network_rundown_fn_t)
+(
+    [in]        rpc_client_handle_t     client_h
+);
+
+/*************************************************************************/
+/******************  Management Services definitions  ********************/
+/*************************************************************************/
+
+/*
+ * Cancel timeout attribute
+ */
+const long  rpc_c_cancel_infinite_timeout   = -1;
+
+/*
+ * Authorization routine for processing remote calls to the server's
+ * management routines.
+ */
+
+typedef boolean32 (*rpc_mgmt_authorization_fn_t)
+(
+    [in]        rpc_binding_handle_t  binding_handle,
+    [in]        unsigned32            requested_mgmt_operation,
+    [out]       unsigned32            *status
+);
+
+/*
+ * Values that are passed as the 2nd paramater to the management
+ * authorization routine.
+ */
+
+const long  rpc_c_mgmt_inq_if_ids               = 0;
+const long  rpc_c_mgmt_inq_stats                = 1;
+const long  rpc_c_mgmt_is_server_listen         = 2;
+const long  rpc_c_mgmt_stop_server_listen       = 3;
+const long  rpc_c_mgmt_inq_princ_name           = 4;
+
+/*************************************************************************/
+/*********************  Name Services definitions  ***********************/
+/*************************************************************************/
+
+/*
+ * Generic ns handle.
+ */
+typedef rpc_opaque_ptr_t    rpc_ns_handle_t, *rpc_ns_handle_p_t;
+
+/* 
+ * Supported name service constants.
+ */
+const long  rpc_c_ns_none                   = 0; /* No name service     */
+const long  rpc_c_ns_dec_dns                = 1; /* DECdns              */
+const long  rpc_c_ns_ms_wins                = 2; /* MS WINS (rfc1001/2 NBNS) */
+const long  rpc_c_ns_ldap                   = 3; /* LDAP                */
+
+/*
+ * Name service syntax constants (architected values).
+ */
+const long  rpc_c_ns_syntax_default         = 0; /* use default         */
+const long  rpc_c_ns_syntax_unknown         = 1; /* unknown             */
+const long  rpc_c_ns_syntax_dec_dns         = 2; /* DECdns              */
+const long  rpc_c_ns_syntax_dce             = 3; /* DCE                 */
+const long  rpc_c_ns_syntax_x500            = 4; /* ISO OSI X.500       */
+const long  rpc_c_ns_syntax_internet_dns    = 5; /* DOD internet Domain NS */
+const long  rpc_c_ns_syntax_uuid            = 6; /* UUID string          */
+const long  rpc_c_ns_syntax_ms_wins         = 7; /* Microsoft WINS (NBNS) */
+const long  rpc_c_ns_syntax_ldap            = 8; /* RFC 1779 DN         */
+
+/*
+ * Name service inquiry options for profiles.
+ */
+const long  rpc_c_profile_default_elt       = 1;
+const long  rpc_c_profile_all_elts          = 2;
+const long  rpc_c_profile_match_by_if       = 3;
+const long  rpc_c_profile_match_by_mbr      = 4;
+const long  rpc_c_profile_match_by_both     = 5;
+
+/*
+ * Name service binding vector size for lookup.
+ */
+const long  rpc_c_binding_max_count_default = 5;
+
+/*
+ * NSI to generate (or use) a default expiration age value for updates to
+ * name service local data.
+ */
+const long  rpc_c_ns_default_exp_age    = 0xffffffff;
+
+/*************************************************************************/
+/*********************  Protocol tower definitions  **********************/
+/*************************************************************************/
+
+/*
+ * A vector of protocol towers
+ */
+typedef struct
+{
+    unsigned32  count;
+    twr_p_t     tower[1];
+} rpc_tower_vector_t, *rpc_tower_vector_p_t;
+
+/*************************************************************************/
+/****************  Authentication Services definitions  ******************/
+/*************************************************************************/
+
+/*
+ * Handle on authentication service identity (credentials)
+ *
+ * This is what a client uses to refer to (one of) its own identities.
+ */
+typedef rpc_opaque_ptr_t rpc_auth_identity_handle_t;
+
+typedef rpc_opaque_ptr_t rpc_transport_info_handle_t;
+
+/*
+ * Protection level
+ */
+const long rpc_c_protect_level_default         = 0; /* default for auth svc */
+const long rpc_c_protect_level_none            = 1; /* no authentication performed */
+const long rpc_c_protect_level_connect         = 2; /* only on "connect" */
+const long rpc_c_protect_level_call            = 3; /* on first pkt of each call */
+const long rpc_c_protect_level_pkt             = 4; /* on each packet */
+const long rpc_c_protect_level_pkt_integ       = 5; /* strong integrity check */
+const long rpc_c_protect_level_pkt_privacy     = 6; /* encrypt arguments */
+
+/*
+ * Authentication services
+ *
+ * The various authentication schemes/protocols available to applications.
+ */
+const long rpc_c_authn_none         = 0; /* no authentication */
+const long rpc_c_authn_dce_secret   = 1; /* OSF DCE shared secret key auth */
+const long rpc_c_authn_dce_public   = 2; /* OSF DCE public key auth (reserved) */
+const long rpc_c_authn_dce_dummy    = 3; /* OSF DCE non-crypto auth */
+const long rpc_c_authn_dssa_public  = 4; /* DSSA public key auth (reserved) */
+const long rpc_c_authn_gss_negotiate = 9;  /* GSS-API (SPNEGO) */
+const long rpc_c_authn_winnt         = 10; /* NTLMSSP */
+const long rpc_c_authn_gss_tls       = 14; /* Secure Socket Layer */
+const long rpc_c_authn_gss_mskrb     = 16; /* GSS-API (Kerberos V) */
+const long rpc_c_authn_msn           = 17; /* MSN proprietary */
+const long rpc_c_authn_dpa           = 18; /* DPA proprietary */
+const long rpc_c_authn_netlogon      = 68; /* Netlogon secure channel */
+const long rpc_c_authn_schannel      = 68; /* Netlogon secure channel */
+const long rpc_c_authn_default      = 0xffffffff; /* default for environment */
+
+/*
+ * Authorization services
+ *
+ * The various authorization schemes/protocol available to applications.
+ * The application's choice of authentication service determines the
+ * set of authorization services the application is allowed to use.
+ */
+const long rpc_c_authz_none = 0;
+const long rpc_c_authz_name = 1;  /* Kerberos name */
+const long rpc_c_authz_dce  = 2;  /* DCE PAC */
+const long rpc_c_authz_gss_name = 3; /* gss_name_t */
+
+/*
+ * Truly opaque handle on authorization data 
+ *
+ * An opaque handle on client authorization data obtained by 
+ * calling rpc_binding_inq_auth_caller().  Unlike the deprecated
+ * rpc_authz_handle_t type below, an instance of the 
+ * rpc_authz_cred_handle_t type is truly opaque.  It cannot be
+ * cast to anything meaningful.  Credentials can only extracted
+ * via calls to the sec_cred_ interface.
+ */
+typedef struct {
+    unsigned32  magic;
+    void        *data;
+} rpc_authz_cred_handle_t, *rpc_authz_cred_handle_p_t;
+
+/*
+ * Handle on authorization data
+ *
+ * This is what a server gets back when it asks who a client is (via
+ * rpc_binding_inq_auth_client).  A pointer of this type must be cast
+ * to some concrete type (by the server) that's a function of the
+ * authorization service that the client used when authenticating to
+ * the server.
+ */
+typedef void *rpc_authz_handle_t;
+
+/*
+ * Signature of a server-application procedure routine that returns
+ * encryption keys.
+ */
+typedef void (*rpc_auth_key_retrieval_fn_t) 
+(
+    [in]        void                    *arg, 
+    [in]        unsigned_char_p_t       server_princ_name,
+    [in]        unsigned32              key_type,
+    [in]        unsigned32              key_ver,
+    [out]       void                    **key,
+    [out]       unsigned32              *st
+);
+
+/*************************************************************************/
+/*******************  Object Services definitions  ***********************/
+/*************************************************************************/
+
+/*
+ * Signature of an application procedure that returns takes an object ID
+ * and returns that object's type ID.
+ */
+typedef void (*rpc_object_inq_fn_t)
+(
+    [in]        dce_uuid_p_t                object_uuid,
+    [out]       dce_uuid_t                  *type_uuid,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/*******************  Endpoint Service definitions  **********************/
+/*************************************************************************/
+
+const long  rpc_c_ep_max_annotation_size    = 64;   /* including null */
+
+/*
+ * Types and constants for use by EP management functions.
+ */
+typedef rpc_opaque_ptr_t    rpc_ep_inq_handle_t, *rpc_ep_inq_handle_p_t;
+
+#include "lw/security-types.h"
+    
+typedef PACCESS_TOKEN rpc_access_token_p_t;
+
+}

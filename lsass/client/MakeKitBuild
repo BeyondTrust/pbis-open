@@ -1,0 +1,10 @@
+SUBDIRS="api ad ntlm rpc"
+
+make()
+{
+    mk_multiarch_do
+        mk_library \
+	    LIB="lsaclient" \
+	    GROUPS="api/api ad/ad"
+    mk_multiarch_done
+}

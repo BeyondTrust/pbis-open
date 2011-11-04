@@ -1,0 +1,9 @@
+#define LSA_DEFAULT_PROVIDERS \
+    "Local,ActiveDirectory"
+
+#define LSA_PROVIDER_PATH_AD \
+    "@providerdir@/liblsass_auth_provider_ad@MOD_EXT@"
+
+#define LSA_PROVIDER_PATH_LOCAL \
+    "@providerdir@/liblsass_auth_provider_local@MOD_EXT@"
+

@@ -1,0 +1,107 @@
+What it does
+============
+
+The test_load utility spawns multiple threads, each of which open
+multiple files using the LwNtCreate/Read/Write/Close file client
+API.  These file operations and sent through the librdr.sys.so running
+in lwiod on the client machine across the network to the Likewise
+server.
+
+The test_load program will create one file per thread/per connection
+in the root of the target share.
+
+
+Setup
+=====
+
+Join both the client and server machines to an AD domain
+
+    $ domainjoin-cli join ad.domain.com administrator
+      Password: <enter password>
+
+Start the client start server processes if necessary
+
+    # /etc/init.d/lwsmd start
+    # lwsm start srvsvc
+
+Tweak the connection and thread numbers in client as you prefer and
+rebuild if necessary.  See the gState structure in test_load/main.c:
+
+    struct
+    {
+        ULONG ulThreadCount;
+        ULONG ulConnectionsPerThread;
+        ULONG ulIterations;
+        PCSTR pszServer;
+        PCSTR pszShare;
+        BOOLEAN volatile bStart;
+        pthread_mutex_t Lock;
+        pthread_cond_t Event;
+    } gState =
+    {
+        .ulThreadCount = 100,
+        .ulConnectionsPerThread = 100,
+       .ulIterations = 10,
+        .bStart = FALSE,
+        .Lock = PTHREAD_MUTEX_INITIALIZER,
+        .Event = PTHREAD_COND_INITIALIZER
+    };
+
+From a shell prompt, run "kinit <username>" where <username> is the
+account in the AD domain used to establish the connections.
+
+
+Running the Test
+================
+
+The test is launched by running the following command:
+
+    $ ./test_load <server fqdn> <sharename>
+
+The <server fqdn> is the fully qualified name of the server to connect
+to and the <sharename> is share in which to run the test.
+
+[Note that the test tool itself gives very little feedback in the case of
+success.  This will be addressed in the future.]
+
+
+Tracking the connections on the server
+======================================
+
+The connections may be tracked on the server through the lwio-cli
+utilitywhich will exercise a device ioctl into the srv driver in
+order to query performance counters.  The following shows a server
+recently started with very little activity:
+
+    $ /opt/likewise/bin/lwio-cli  --get-stats
+    Server statistics [level 0]: 
+
+    Number of connections:           [2]
+    Maximum Number of connections:   [2]
+    Number of sessions:              [2]
+    Maximum Number of sessions:      [2]
+    Number of tree connects:         [4]
+    Maximum Number of tree connects: [4]
+    Number of open files:            [0]
+    Maximum Number of open files:    [0]
+
+
+The following shows a server under active testing
+
+    $ /opt/likewise/bin/lwio-cli  --get-stats
+    Server statistics [level 0]: 
+
+    Number of connections:           [5067]
+    Maximum Number of connections:   [5067]
+    Number of sessions:              [5061]
+    Maximum Number of sessions:      [5061]
+    Number of tree connects:         [5066]
+    Maximum Number of tree connects: [5066]
+    Number of open files:            [5066]
+    Maximum Number of open files:    [5066]
+
+Performance counters may be reset by running
+
+    $ /opt/likewise/bin/lwio-cli --reset-stats
+
+

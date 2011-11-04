@@ -1,0 +1,11 @@
+make()
+{
+    mk_multiarch_do
+        mk_group \
+	    GROUP=api \
+	    SOURCES="ipc_protocol.c" \
+	    INCLUDEDIRS="../../../include" \
+	    HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
+	    LIBDEPS="lwmsg_nothr"
+    mk_multiarch_done
+}

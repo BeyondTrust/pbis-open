@@ -1,0 +1,236 @@
+/*
+ * 
+ * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      conv.idl
+**
+**  FACILITY:
+**
+**      Remote Procedure Call (RPC) 
+**
+**  ABSTRACT:
+**
+**  Conversation Manager (conv) Interface.
+**
+**  This interface defines procedure that are architecturally defined
+**  by the NCA datagram-oriented RPC protocol.  Calls to these procedures
+**  are made by servers to clients.  I.e., an application client makes
+**  a call to an application server and (sometimes) the application server
+**  makes a call on one of these procedures back to the application client.
+**  (The application server is thus transiently a "client.)
+**  
+**  All application clients must be prepared to handle calls on this
+**  interface.  (Note that these calls are typically transparently handled
+**  by the client's runtime environment and not be the application client
+**  itself.)
+**  
+**  Note well that calls made on this interface are not "real callbacks".
+**  (They're sometimes called "who-are-you [or WAY] callbacks".)  Whereas
+**  the activity ID in the headers of packets that are parts of real
+**  callbacks matches (i.e., must match) the activity ID of the surrounding
+**  call, calls on this interface use a different activity ID.  This
+**  is a requirement that arises from the fact that this interface is
+**  used in maintaining "at most once" call semantics (i.e., protection
+**  against duplication of datagrams) for calls to non-idempotent
+**  procedures.
+**
+**
+*/
+
+[uuid(333A2276-0000-0000-0D00-00809C000000), version(3)] 
+interface conv
+{
+
+/*
+ * C O N V _ W H O _ A R E _ Y O U
+ *
+ * This procedure is called by a server to a client when the server has
+ * just received a non-idempotent call request from a client about whom
+ * the server knows nothing.  The server calls this procedure to determine
+ * the current sequence number of the client (identified by its activity
+ * ID) in question.  If the returned sequence number is higher than the
+ * one in the request that prompted the "who-are-you" call, the request
+ * must be a duplicated and is ignored.
+ *
+ * This procedure is necessarily (marked) "idempotent" since it supports
+ * (and hence can not depend on) non-idempotent call semantics.
+ *
+ * It is expected (though not logically required) that servers will
+ * maintain a cache of (client activity ID, current sequence number)
+ * pairs to minimize the number of times this procedure needs to be called
+ * by servers.  Cache entries can be dropped as is convenient to servers
+ * since the cached information can always be re-obtained by making calls
+ * on this procedure.
+ *
+ * The server passes its boot time back to the client to protect against
+ * the case where the server receives a request, executes it, crashes
+ * before sending the reply, and then reboots and receives a duplicate
+ * of the request.  In this scenario, the rebooted server will necessarily
+ * make a "who-are-you" call.  However, the input boot time will be
+ * different and the client (processing the "who-are-you" call), which
+ * will have saved the server's boot time from the "who-are-you" call
+ * made by the previous incarnation of the server, will notice this and
+ * return a non-zero error status to the server, prompting the server
+ * to not execute the original request.  (Note that the client will still
+ * not know whether the call was executed zero or one times, but all
+ * we're promising is that it isn't executed more than once.)
+ */
+
+[idempotent] 
+void conv_who_are_you(
+        [in]    handle_t        h,
+        [in]    dce_uuid_t          *actuid,
+        [in]    unsigned32      boot_time,
+        [out]   unsigned32      *seq,
+        [out]   unsigned32      *st
+);
+
+
+/*
+ * C O N V _ W H O _ A R E _ Y O U 2
+ *                  
+ * This is a newer version of "conv_who_are_you" and has a superset of
+ * the older call's semantics.  The additional semantics are that this
+ * call returns a UUID that uniquely identifies the client's address
+ * space (CAS UUID).  The CAS UUID is used in cases where the server
+ * is monitoring the "liveness" of a client which is not currently making
+ * a remote call to the server (e.g., in case the server application
+ * is holding state on behalf of the client and it wants to discard or
+ * otherwise clean up this state if the client crashes).
+ *                  
+ * For compatibility with old clients, servers do not (should not) call
+ * this procedure to get client sequence number information.  Rather,
+ * they call this procedure if, in the course of processing a client's
+ * call, they need the CAS UUID.  This procedure is constructed as a
+ * superset of the old "who-are-you" to make it possible that some day
+ * (or in environments with no old clients), servers WILL call this
+ * procedure to get the client's sequence number (and hence avoid making
+ * an EXTRA call to get the CAS UUID).
+ */
+
+[idempotent] 
+void conv_who_are_you2(
+        [in]    handle_t        h,
+        [in]    dce_uuid_t          *actuid,
+        [in]    unsigned32      boot_time,
+        [out]   unsigned32      *seq,
+        [out]   dce_uuid_t          *cas_uuid,
+        [out]   unsigned32      *st
+);
+
+
+/*
+ * C O N V _ A R E _ Y O U _ T H E R E
+ * 
+ * This interface is used for server to client "liveness" checking.
+ * If a server is in the process of receiving input from a client and
+ * has not received any data for a period of time defined by the liveness
+ * timeout, the server may attempt to do an "are_you_there" callback.  This
+ * callback is usually the servers last resort before declaring an RPC
+ * dead.
+ */
+
+[idempotent] 
+void conv_are_you_there(
+        [in]    handle_t        h,
+        [in]    dce_uuid_t          *actuid,
+        [in]    unsigned32      boot_time,
+        [out]   unsigned32      *st
+);
+
+
+/*
+ * C O N V _ W H O _ A R E _ Y O U _ A U T H
+ *
+ * Version of "conv_who_are_you" (actually, "conv_who_are_you2") that's
+ * used to do authenticated RPC.  Instead of calling "conv_who_are_you"
+ * the server (callback-er) can use this function and supply (in addition
+ * to the regular inputs) an "authentication challenge" to the client
+ * (the callback-ee) and receive as output (in addition to the regular
+ * outputs) a "response" to the challenge.
+ *
+ * The challenge is plaintext containing a nonce (random value) and the
+ * response is an "authenticator".  An authenticator consists of (1) a
+ * "ticket", and (2) the nonce sealed under the "session key".  The
+ * ticket is encrypted in the servers key and contains (1) the identity
+ * of the client, and (2) the session key.  (See the MIT Project Athena
+ * Kerberos papers for an example of how a particular realization of
+ * the authenticator abstraction.)
+ */
+
+[idempotent] 
+void conv_who_are_you_auth(
+        [in]    handle_t        h,
+        [in]    dce_uuid_t          *actuid,
+        [in]    unsigned32      boot_time,
+        [in, size_is(in_len)]    
+                byte            in_data[],
+        [in]    signed32        in_len,
+        [in]    signed32        out_max_len,
+        [out]   unsigned32      *seq,
+        [out]   dce_uuid_t          *cas_uuid,
+        [out, length_is(*out_len), size_is(out_max_len)]    
+                byte            out_data[],
+        [out]   signed32        *out_len,
+        [out]   unsigned32      *st
+);
+
+/*
+ * C O N V _ W H O _ A R E _ Y O U _ A U T H _ M O R E
+ * 
+ * This routine is used, in conjunction with the conv_who_are_you_auth()
+ * operation, for retrieving oversized PACs.  In the event that a client's
+ * credentials are too large to fit within a single DG packet, the server
+ * can retrieve the PAC, packet by packet, by repeated calls on this 
+ * operation.  
+ *
+ * Note that because the "conv" interface is serviced directly by the 
+ * the DG protocol (as opposed to being handled by a call executor thread),
+ * there is no additional client overhead with retrieving the PAC by
+ * multiple single-packet calls, rather than a single multiple-packet call.
+ * The small amount of overhead induced on the server side is more than
+ * compensated for by being able to avoid adding flow-control/windowing
+ * to the DG protocol's internal handling of the conv interface.
+ *
+ * Logically, this call returns
+ * 
+ *        client_credentials[index ... (index+out_max_len-1)] 
+ */
+
+[idempotent]
+void conv_who_are_you_auth_more(
+        [in]    handle_t        h,
+        [in]    dce_uuid_t          *actuid,
+        [in]    unsigned32      boot_time,
+        [in]    signed32        index,
+        [in]    signed32        out_max_len,
+        [out, length_is(*out_len), size_is(out_max_len)]
+                byte            out_data[],
+        [out]   signed32        *out_len,
+        [out]   unsigned32      *st
+);
+
+ 
+}

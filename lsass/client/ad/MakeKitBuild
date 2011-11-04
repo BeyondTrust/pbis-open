@@ -1,0 +1,17 @@
+make()
+{
+    AD_SOURCES="\
+        cache.c     \
+        groups.c    \
+        users.c     \
+        join.c"
+
+    mk_multiarch_do
+        mk_group \
+	    GROUP="ad" \
+	    SOURCES="$AD_SOURCES" \
+	    INCLUDEDIRS="../../include" \
+	    HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
+	    LIBDEPS="lwmsg_nothr lsacommon"
+    mk_multiarch_done
+}

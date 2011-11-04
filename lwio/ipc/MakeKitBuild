@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+        GROUP="ipc" \
+        SOURCES="globals.c libmain.c ntipc.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lwmsg/lwmsg.h" \
+        LIBDEPS="lwmsg"
+}

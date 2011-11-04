@@ -1,0 +1,9 @@
+make()
+{
+    mk_dlo \
+	DLO=liblsaaccess \
+	SOURCES="access.c" \
+	INCLUDEDIRS="../../include" \
+	HEADERDEPS="lwadvapi.h" \
+	LIBDEPS="lsaclient"
+}

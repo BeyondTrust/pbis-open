@@ -1,0 +1,17 @@
+[
+	explicit_handle
+]
+interface netlogon
+{
+	[enable_allocate] NetrLogonSamLogon();
+	[enable_allocate] NetrLogonSamLogoff();
+	[enable_allocate] NetrServerReqChallenge();
+	[enable_allocate] NetrServerAuthenticate();
+	[enable_allocate] NetrServerAuthenticate2();
+	[enable_allocate] DsrGetDcName();
+	[enable_allocate] NetrServerAuthenticate3();
+	[enable_allocate] NetrLogonGetDomainInfo();
+	[enable_allocate] NetrEnumerateTrustedDomainsEx();
+	[enable_allocate] NetrLogonSamLogonEx();
+	[enable_allocate] DsrEnumerateDomainTrusts();
+}

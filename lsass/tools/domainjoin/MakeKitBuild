@@ -1,0 +1,10 @@
+make()
+{
+    mk_program \
+    	PROGRAM=lsadomainjoin-test \
+        INSTALLDIR="$LW_TOOL_DIR" \
+        SOURCES="join.c" \
+	INCLUDEDIRS="../../include" \
+        HEADERDEPS="lw/types.h lw/rtlstring.h lsa/ad.h lwadvapi.h" \
+        LIBDEPS="lsaclient lwbase_nothr lwadvapi_nothr"
+}

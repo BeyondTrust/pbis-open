@@ -1,0 +1,9 @@
+make()
+{
+    mk_program \
+        PROGRAM=lwio-get-log-info \
+        SOURCES="main.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="lw/base.h" \
+        LIBDEPS="lwioclient lwiocommon lwbase lwbase_nothr"
+}

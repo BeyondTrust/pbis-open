@@ -1,0 +1,1284 @@
+This is krb5-admin.info, produced by makeinfo version 4.5 from
+admin.texinfo.
+
+Copyright (C) 1985-2010 by the Massachusetts Institute of Technology.
+INFO-DIR-SECTION Kerberos
+START-INFO-DIR-ENTRY
+* krb5-admin: (krb5-admin).             Kerberos V5 Administrator's Guide
+END-INFO-DIR-ENTRY
+
+
+File: krb5-admin.info,  Node: dbmodules,  Next: plugins,  Prev: dbdefaults,  Up: krb5.conf
+
+[dbmodules]
+-----------
+
+Contains database specific parameters used by the database library.
+Each tag in the [dbmodules] section of the file names a configuration
+section for database specific parameters that can be referred to by a
+realm. The value of the tag is a subsection where the relations in that
+subsection define the database specific parameters.
+
+For each section, the following tags may be specified in the subsection:
+
+db_library
+     This tag indicates the name of the loadable database library. The
+     value should be `db2' for DB2 database and `kldap' for LDAP
+     database.
+
+database_name
+     This DB2-specific tag indicates the location of the database in the
+     filesystem.  The default is
+     `/usr/local/var/krb5kdc/principal'.
+
+disable_last_success
+     If set to `true', suppresses KDC updates to the "Last successful
+     authentication" field of principal entries requiring
+     preauthentication.  Setting this flag may improve performance.
+     (Principal entries which do not require preauthentication never
+     update the "Last successful authentication" field.)
+
+disable_lockout
+     If set to `true', suppresses KDC updates to the "Last failed
+     authentication" and "Failed password attempts" fields of principal
+     entries requiring preauthentication.  Setting this flag may improve
+     performance, but also disables account lockout.
+
+ldap_kerberos_container_dn
+     This LDAP specific tag indicates the DN of the container object
+     where the realm objects will be located.
+
+ldap_kdc_dn
+     This LDAP specific tag indicates the default bind DN for the KDC
+     server. The KDC server does a login to the directory as this
+     object. This object should have the rights to read the Kerberos
+     data in the LDAP database.
+
+ldap_kadmind_dn
+     This LDAP specific tag indicates the default bind DN for the
+     Administration server. The administration server does a login to
+     the directory as this object. This object should have the rights
+     to read and write the Kerberos data in the LDAP database.
+
+ldap_service_password_file
+     This LDAP specific tag indicates the file containing the stashed
+     passwords (created by `kdb5_ldap_util stashsrvpw') for the objects
+     used by the Kerberos servers to bind to the LDAP server. This file
+     must be kept secure.
+
+ldap_server
+     This LDAP specific tag indicates the list of LDAP servers that the
+     Kerberos servers can connect to. The list of LDAP servers is
+     whitespace-separated. The LDAP server is specified by a LDAP URI.
+     It is recommended to use ldapi:// or ldaps:// interface to connect
+     to the LDAP server.
+
+ldap_conns_per_server
+     This LDAP specific tags indicates the number of connections to be
+     maintained per LDAP server.
+
+
+
+File: krb5-admin.info,  Node: plugins,  Next: pkinit client options,  Prev: dbmodules,  Up: krb5.conf
+
+Plugins
+-------
+
+* Menu:
+
+* pwqual interface::
+* kadm5_hook interface::
+
+Tags in the [plugins] section can be used to register dynamic plugin
+modules and to turn modules on and off.  Not every krb5 pluggable
+interface uses the [plugins] section; the ones that do are documented
+here.
+
+Each pluggable interface corresponds to a subsection of [plugins].  All
+subsections support the same tags:
+
+module
+     This tag may have multiple values.  Each value is a string of the
+     form "modulename:pathname", which causes the shared object located
+     at pathname to be registered as a dynamic module named modulename
+     for the pluggable interface.  If pathname is not an absolute path,
+     it will be treated as relative to the "krb5/plugins" subdirectory
+     of the krb5 library directory.
+
+enable_only
+     This tag may have multiple values.  If there are values for this
+     tag, then only the named modules will be enabled for the pluggable
+     interface.
+
+disable
+     This tag may have multiple values.  If there are values for this
+     tag, then the named modules will be disabled for the pluggable
+     interface.
+
+The following subsections are currently supported within the [plugins]
+section:
+
+
+File: krb5-admin.info,  Node: pwqual interface,  Next: kadm5_hook interface,  Prev: plugins,  Up: plugins
+
+pwqual interface
+................
+
+The pwqual subsection controls modules for the password quality
+interface, which is used to reject weak passwords when passwords are
+changed.  In addition to any registered dynamic modules, the following
+built-in modules exist (and may be disabled with the disable tag):
+
+dict
+     Checks against the realm dictionary file
+
+empty
+     Rejects empty passwords
+
+hesiod
+     Checks against user information stored in Hesiod (only if Kerberos
+     was built with Hesiod support)
+
+princ
+     Checks against components of the principal name
+
+
+File: krb5-admin.info,  Node: kadm5_hook interface,  Prev: pwqual interface,  Up: plugins
+
+kadm5_hook interface
+....................
+
+The kadm5_hook interface provides plugins with information on principal
+creation, modification, password changes and deletion. This interface
+can be used to write a plugin to synchronize MIT Kerberos with another
+database such as Active Directory. No plugins are built in for this
+interface.
+
+
+File: krb5-admin.info,  Node: pkinit client options,  Next: Sample krb5.conf File,  Prev: plugins,  Up: krb5.conf
+
+pkinit options
+--------------
+
+* Menu:
+
+* pkinit identity syntax::
+* pkinit krb5.conf options::
+
+The following are pkinit-specific options.  Note that these values may
+be specified in `[libdefaults]' as global defaults, or within a
+realm-specific subsection of `[libdefaults]', or may be specified as
+realm-specific values in the `[realms]' section.  Also note that a
+realm-specific value over-rides, does not add to, a generic
+`[libdefaults]' specification.  The search order is:
+  1. realm-specific subsection of `[libdefaults]'
+          [libdefaults]
+              EXAMPLE.COM = {
+                  pkinit_anchors = FILE:/usr/local/example.com.crt
+              }
+
+  2. realm-specific value in the `[realms]' section,
+          [realms]
+              OTHERREALM.ORG = {
+                  pkinit_anchors = FILE:/usr/local/otherrealm.org.crt
+              }
+
+  3. generic value in the `[libdefaults]' section.
+          [libdefaults]
+              pkinit_anchors = DIR:/usr/local/generic_trusted_cas/
+
+
+File: krb5-admin.info,  Node: pkinit identity syntax,  Next: pkinit krb5.conf options,  Prev: pkinit client options,  Up: pkinit client options
+
+Specifying pkinit identity information
+......................................
+
+The syntax for specifying Public Key identity, trust, and revocation
+information for pkinit is as follows:
+FILE:file-name[,key-file-name]
+     This option has context-specific behavior.
+    pkinit_identity
+    pkinit_identities
+          file-name specifies the name of a PEM-format file containing
+          the user's certificate.  If key-file-name is not specified,
+          the user's private key is expected to be in file-name as
+          well.  Otherwise, key-file-name is the name of the file
+          containing the private key.
+
+    pkinit_anchors
+    pkinit_pool
+          file-name is assumed to be the name of an OpenSSL-style
+          ca-bundle file.
+
+DIR:directory-name
+     This option has context-specific behavior.
+    pkinit_identity
+    pkinit_identities
+          directory-name specifies a directory with files named `*.crt'
+          and `*.key', where the first part of the file name is the
+          same for matching pairs of certificate and private key files.
+          When a file with a name ending with `.crt' is found, a
+          matching file ending with `.key' is assumed to contain the
+          private key.  If no such file is found, then the certificate
+          in the `.crt' is not used.
+
+    pkinit_anchors
+    pkinit_pool
+          directory-name is assumed to be an OpenSSL-style hashed CA
+          directory where each CA cert is stored in a file named
+          hash-of-ca-cert.#.  This infrastructure is encouraged, but
+          all files in the directory will be examined and if they
+          contain certificates (in PEM format), they will be used.
+
+    pkinit_revoke
+          directory-name is assumed to be an OpenSSL-style hashed CA
+          directory where each revocation list is stored in a file
+          named hash-of-ca-cert.r#.  This infrastructure is encouraged,
+          but all files in the directory will be examined and if they
+          contain a revocation list (in PEM format), they will be used.
+
+PKCS12:pkcs12-file-name
+     pkcs12-file-name is the name of a `PKCS #12' format file,
+     containing the user's certificate and private key.
+
+PKCS11:[module_name=]module-name[:slotid=slot-id][:token=token-label][:certid=cert-id][:certlabel=cert-label]
+     All keyword/values are optional.  module-name specifies the
+     location of a library implementing `PKCS #11'.  If a value is
+     encountered with no keyword, it is assumed to be the module-name.
+     If no module-name is specified, the default is `opensc-pkcs11.so'.
+     slotid= and/or token= may be specified to force the use of a
+     particular smard card reader or token if there is more than one
+     available.  certid= and/or certlabel= may be specified to force
+     the selection of a particular certificate on the device.  See the
+     `pkinit_cert_match' configuration option for more ways to select a
+     particular certificate to use for pkinit.
+
+ENV:environment-variable-name
+     environment-variable-name specifies the name of an environment
+     variable which has been set to a value conforming to one of the
+     previous values.  For example, `ENV:X509_PROXY', where environment
+     variable `X509_PROXY' has been set to `FILE:/tmp/my_proxy.pem'.
+
+
+File: krb5-admin.info,  Node: pkinit krb5.conf options,  Prev: pkinit identity syntax,  Up: pkinit client options
+
+pkinit krb5.conf options
+........................
+
+pkinit_identities
+     Specifies the location(s) to be used to find the user's X.509
+     identity information.  This option may be specified multiple times.
+     Each value is attempted in order until identity information is
+     found and authentication is attempted.  Note that these values are
+     not used if the user specifies X509_user_identity on the command
+     line.
+
+pkinit_anchors
+     Specifies the location of trusted anchor (root) certificates which
+     the client trusts to sign KDC certificates.  This option may be
+     specified multiple times.  These values from the config file are
+     not used if the user specifies X509_anchors on the command line.
+
+pkinit_pool
+     Specifies the location of intermediate certificates which may be
+     used by the client to complete the trust chain between a KDC
+     certificate and a trusted anchor.  This option may be specified
+     multiple times.
+
+pkinit_revoke
+     Specifies the location of Certificate Revocation List (CRL)
+     information to be used by the client when verifying the validity
+     of the KDC certificate presented.  This option may be specified
+     multiple times.
+
+pkinit_require_crl_checking
+     The default certificate verification process will always check the
+     available revocation information to see if a certificate has been
+     revoked.  If a match is found for the certificate in a CRL,
+     verification fails.  If the certificate being verified is not
+     listed in a CRL, or there is no CRL present for its issuing CA,
+     and `pkinit_require_crl_checking' is `false', then verification
+     succeeds.
+
+     However, if `pkinit_require_crl_checking' is `true' and there is
+     no CRL information available for the issuing CA, then verification
+     fails.
+
+     `pkinit_require_crl_checking' should be set to `true' if the
+     policy is such that up-to-date CRLs must be present for every CA.
+
+pkinit_dh_min_bits
+     Specifies the size of the Diffie-Hellman key the client will
+     attempt to use.  The acceptable values are currently 1024, 2048,
+     and 4096.  The default is 2048.
+
+pkinit_win2k
+     This flag specifies whether the target realm is assumed to support
+     only the old, pre-RFC version of the protocol.  The default is
+     false.
+
+pkinit_win2k_require_binding
+     If this flag is set to true, it expects that the target KDC is
+     patched to return a reply with a checksum rather than a nonce.
+     The default is false.
+
+pkinit_eku_checking
+     This option specifies what Extended Key Usage value the KDC
+     certificate presented to the client must contain.  (Note that if
+     the KDC certificate has the pkinit SubjectAlternativeName encoded
+     as the Kerberos TGS name, EKU checking is not necessary since the
+     issuing CA has certified this as a KDC certificate.)  The values
+     recognized in the `krb5.conf' file are:
+    kpKDC
+          This is the default value and specifies that the KDC must
+          have the id-pkinit-KPKdc EKU as defined in RFC4556.
+
+    kpServerAuth
+          If `kpServerAuth' is specified, a KDC certificate with the
+          id-kp-serverAuth EKU as used by Microsoft will be accepted.
+
+    none
+          If `none' is specified, then the KDC certificate will not be
+          checked to verify it has an acceptable EKU.  The use of this
+          option is not recommended.
+
+pkinit_kdc_hostname
+     The presense of this option indicates that the client is willing to
+     accept a KDC certificate with a dNSName SAN (Subject Alternative
+     Name) rather than requiring the id-pkinit-san as defined in
+     RFC4556.  This option may be specified multiple times.  Its value
+     should contain the acceptable hostname for the KDC (as contained
+     in its certificate).
+
+pkinit_cert_match
+     Specifies matching rules that the client certificate must match
+     before it is used to attempt pkinit authentication.  If a user has
+     multiple certificates available (on a smart card, or via other
+     media), there must be exactly one certificate chosen before
+     attempting pkinit authentication.  This option may be specified
+     multiple times.  All the available certificates are checked
+     against each rule in order until there is a match of exactly one
+     certificate.
+
+     The Subject and Issuer comparison strings are the RFC2253 string
+     representations from the certificate Subject DN and Issuer DN
+     values.
+
+     The syntax of the matching rules is:
+          [relation-operator]component-rule `...'
+     where
+    relation-operator
+          can be either `&&', meaning all component rules must match,
+          or `||', meaning only one component rule must match.  The
+          default is `&&' if not specified.
+
+    component-rule
+          can be one of the following.  Note that there is no
+          punctuation or whitespace between component rules.
+         `<SUBJECT>'regular-expression
+
+         `<ISSUER>'regular-expression
+
+         `<SAN>'regular-expression
+
+         `<EKU>'extended-key-usage-list
+               where extended-key-usage-list is a comma-separated list
+               of required Extended Key Usage values.  All values in
+               the list must be present in the certificate.
+                    `pkinit'
+                    `msScLogin'
+                    `clientAuth'
+                    `emailProtection'
+
+         `<KU>'key-usage-list
+               where key-usage-list is a comma-separated list of
+               required Key Usage values.  All values in the list must
+               be present in the certificate.
+                    `digitalSignature'
+                    `keyEncipherment'
+Examples:
+          pkinit_cert_match = ||<SUBJECT>.*DoE.*<SAN>.*@EXAMPLE.COM
+          pkinit_cert_match = &&<EKU>msScLogin,clientAuth<ISSUER>.*DoE.*
+          pkinit_cert_match = <EKU>msScLogin,clientAuth<KU>digitalSignature
+
+
+File: krb5-admin.info,  Node: Sample krb5.conf File,  Prev: pkinit client options,  Up: krb5.conf
+
+Sample krb5.conf File
+---------------------
+
+Here is an example of a generic `krb5.conf' file:
+
+     [libdefaults]
+         default_realm = ATHENA.MIT.EDU
+         default_tkt_enctypes = des3-hmac-sha1 des-cbc-crc
+         default_tgs_enctypes = des3-hmac-sha1 des-cbc-crc
+         dns_lookup_kdc = true
+         dns_lookup_realm = false
+     
+     [realms]
+         ATHENA.MIT.EDU = {
+             kdc = kerberos.mit.edu
+             kdc = kerberos-1.mit.edu
+             kdc = kerberos-2.mit.edu:750
+             admin_server = kerberos.mit.edu
+             master_kdc = kerberos.mit.edu
+             default_domain = mit.edu
+         }
+         EXAMPLE.COM = {
+             kdc = kerberos.example.com
+             kdc = kerberos-1.example.com
+             admin_server = kerberos.example.com
+         }
+         OPENLDAP.MIT.EDU = {
+             kdc = kerberos.mit.edu
+             admin_server = kerberos.mit.edu
+             database_module = openldap_ldapconf
+         }
+     
+     [domain_realm]
+         .mit.edu = ATHENA.MIT.EDU
+         mit.edu = ATHENA.MIT.EDU
+     
+     [capaths]
+         ATHENA.MIT.EDU = {
+         	EXAMPLE.COM = .
+         }
+         EXAMPLE.COM = {
+         	ATHENA.MIT.EDU = .
+         }
+     
+     [logging]
+         kdc = SYSLOG:INFO
+         admin_server = FILE=/var/kadm5.log
+     [dbdefaults]
+         ldap_kerberos_container_dn = cn=krbcontainer,dc=example,dc=com
+     [dbmodules]
+         openldap_ldapconf = {
+             db_library = kldap
+             ldap_kerberos_container_dn = cn=krbcontainer,dc=example,dc=com
+             ldap_kdc_dn = "cn=krbadmin,dc=example,dc=com"
+                 # this object needs to have read rights on
+                 # the realm container and principal subtrees
+             ldap_kadmind_dn = "cn=krbadmin,dc=example,dc=com"
+                 # this object needs to have read and write rights on
+                 # the realm container and principal subtrees
+             ldap_service_password_file = /etc/kerberos/service.keyfile
+             ldap_servers = ldaps://kerberos.mit.edu
+             ldap_conns_per_server = 5
+     }
+
+
+File: krb5-admin.info,  Node: kdc.conf,  Prev: krb5.conf,  Up: Configuration Files
+
+kdc.conf
+========
+
+The `kdc.conf' file contains KDC configuration information, including
+defaults used when issuing Kerberos tickets.  Normally, you should
+install your `kdc.conf' file in the directory `/usr/local/var/krb5kdc'.
+You can override the default location by setting the environment
+variable `KRB5_KDC_PROFILE'.
+
+The `kdc.conf' file is set up in the same format as the `krb5.conf'
+file.  (*Note krb5.conf::.)  The `kdc.conf' file may contain any or all
+of the following three sections:
+
+kdcdefaults
+     Contains default values for overall behavior of the KDC.
+
+realms
+     Contains subsections keyed by Kerberos realm names.  Each
+     subsection describes realm-specific information, including where
+     to find the Kerberos servers for that realm.
+
+logging
+     Contains relations which determine how Kerberos programs are to
+     perform logging.
+
+* Menu:
+
+* kdcdefaults::
+* realms (kdc.conf)::
+* pkinit kdc options::
+* Sample kdc.conf File::
+
+
+File: krb5-admin.info,  Node: kdcdefaults,  Next: realms (kdc.conf),  Prev: kdc.conf,  Up: kdc.conf
+
+[kdcdefaults]
+-------------
+
+The following relation is defined in the [kdcdefaults] section:
+
+kdc_ports
+     This relation lists the ports on which the Kerberos server should
+     listen for UDP requests by default.  This list is a comma separated
+     list of integers.  If this relation is not specified, the
+     compiled-in default is 88,750, the first being the assigned
+     Kerberos port and the second which was used by Kerberos V4.
+
+kdc_tcp_ports
+     This relation lists the ports on which the Kerberos server should
+     listen for TCP connections by default.  This list is a comma
+     separated list of integers.  If this relation is not specified,
+     the compiled-in default is not to listen for TCP connections at
+     all.
+
+     If you wish to change this (which we do not recommend, because the
+     current implementation has little protection against
+     denial-of-service attacks), the standard port number assigned for
+     Kerberos TCP traffic is port 88.
+
+restrict_anonymous_to_tgt
+     This flag determines the default value of
+     restrict_anonymous_to_tgt for realms.  The default value is
+     `false'.
+
+
+File: krb5-admin.info,  Node: realms (kdc.conf),  Next: pkinit kdc options,  Prev: kdcdefaults,  Up: kdc.conf
+
+[realms]
+--------
+
+Each tag in the [realms] section of the file names a Kerberos realm.
+The value of the tag is a subsection where the relations in that
+subsection define KDC parameters for that particular realm.
+
+For each realm, the following tags may be specified in the [realms]
+subsection:
+
+acl_file
+     (String.)  Location of the access control list (acl) file that
+     kadmin uses to determine which principals are allowed which
+     permissions on the database.  The default is
+     `/usr/local/var/krb5kdc/kadm5.acl'.
+
+admin_keytab
+     (String.)  Location of the keytab file that the legacy
+     administration daemons `kadmind4' and `v5passwdd' use to
+     authenticate to the database.  The default is
+     `/usr/local/var/krb5kdc/kadm5.keytab'.
+
+default_principal_expiration
+     (Absolute time string.)  Specifies the default expiration date of
+     principals created in this realm.  The default value for this tag
+     is 0.
+
+default_principal_flags
+     (Flag string.)  Specifies the default attributes of principals
+     created in this realm.  The format for this string is a
+     comma-separated list of flags, with '+' before each flag that
+     should be enabled and '-' before each flag that should be
+     disabled.   The default is postdateable, forwardable, tgt-based,
+     renewable, proxiable, dup-skey, allow-tickets, and service
+     enabled..
+
+     There are a number of possible flags:
+
+    postdateable
+          Enabling this flag allows the principal to obtain
+          postdateable tickets.
+
+    forwardable
+          Enabling this flag allows the principal to obtain forwardable
+          tickets.
+
+    tgt-based
+          Enabling this flag allows a principal to obtain tickets based
+          on a ticket-granting-ticket, rather than repeating the
+          authentication process that was used to obtain the TGT.
+
+    renewable
+          Enabling this flag allows the principal to obtain renewable
+          tickets.
+
+    proxiable
+          Enabling this flag allows the principal to obtain proxy
+          tickets.
+
+    dup-skey
+          Enabling this flag allows the principal to obtain a session
+          key for another user, permitting user-to-user authentication
+          for this principal.
+
+    allow-tickets
+          Enabling this flag means that the KDC will issue tickets for
+          this principal.  Disabling this flag essentially deactivates
+          the principal within this realm.
+
+    preauth
+          If this flag is enabled on a client principal, then that
+          principal is required to preauthenticate to the KDC before
+          receiving any tickets.  On a service principal, enabling this
+          flag means that service tickets for this principal will only
+          be issued to clients with a TGT that has the preauthenticated
+          ticket set.
+
+    hwauth
+          If this flag is enabled, then the principal is required to
+          preauthenticate using a hardware device before receiving any
+          tickets.
+
+    pwchange
+          Enabling this flag forces a password change for this
+          principal.
+
+    service
+          Enabling this flag allows the the KDC to issue service
+          tickets for this principal.
+
+    pwservice
+          If this flag is enabled, it marks this principal as a
+          password change service.  This should only be used in special
+          cases, for example, if a user's password has expired, then
+          the user has to get tickets for that principal without going
+          through the normal password authentication in order to be
+          able to change the password.
+
+
+dict_file
+     (String.)  Location of the dictionary file containing strings that
+     are not allowed as passwords.  If none is specified or if there is
+     no policy assigned to the principal, no dictionary checks of
+     passwords will be performed.
+
+kadmind_port
+     (Port number.)  Specifies the port on which the kadmind daemon is
+     to listen for this realm.  The assigned port for kadmind is
+     749.
+
+kpasswd_port
+     (Port number.)  Specifies the port on which the kpasswd daemon is
+     to listen for this realm.  The default is 464.
+
+key_stash_file
+     (String.)  Specifies the location where the master key has been
+     stored (via `kdb5_util stash').  The default is
+     `/usr/local/var/krb5kdc/.k5.REALM', where REALM is the Kerberos
+     realm.
+
+kdc_ports
+     (String.)  Specifies the list of ports that the KDC is to listen to
+     for UDP requests for this realm.  By default, the value of
+     kdc_ports as specified in the [kdcdefaults] section is used.
+
+kdc_tcp_ports
+     (String.)  Specifies the list of ports that the KDC is to listen to
+     for TCP requests for this realm.  By default, the value of
+     kdc_tcp_ports as specified in the [kdcdefaults] section is used.
+
+master_key_name
+     (String.)  Specifies the name of the principal associated with the
+     master key.  The default is K/M.
+
+master_key_type
+     (Key type string.)  Specifies the master key's key type.  The
+     default value for this is des3-cbc-sha1.  For a list of all
+     possible values, see *Note Supported Encryption Types::.
+
+max_life
+     (Delta time string.)  Specifes the maximum time period for which a
+     ticket may be valid in this realm.  The default value is
+     24 hours.
+
+max_renewable_life
+     (Delta time string.)  Specifies the maximum time period during
+     which a valid ticket may be renewed in this realm.  The default
+     value is 0.
+
+supported_enctypes
+     List of key:salt strings.  Specifies the default key/salt
+     combinations of principals for this realm.  Any principals created
+     through `kadmin' will have keys of these types.  The default value
+     for this tag is aes256-cts-hmac-sha1-96:normal
+     aes128-cts-hmac-sha1-96:normal des3-cbc-sha1:normal
+     arcfour-hmac-md5:normal. For lists of possible values, see *Note
+     Supported Encryption Types:: and *Note Salts::.
+
+reject_bad_transit
+     A boolean value (`true', `false').  If set to `true', the KDC will
+     check the list of transited realms for cross-realm tickets against
+     the transit path computed from the realm names and the `capaths'
+     section of its `krb5.conf' file; if the path in the ticket to be
+     issued contains any realms not in the computed path, the ticket
+     will not be issued, and an error will be returned to the client
+     instead.  If this value is set to `false', such tickets will be
+     issued anyways, and it will be left up to the application server to
+     validate the realm transit path.
+
+     If the `disable-transited-check' flag is set in the incoming
+     request, this check is not performed at all.  Having the
+     `reject_bad_transit' option will cause such ticket requests to be
+     rejected always.
+
+     This transit path checking and config file option currently apply
+     only to TGS requests.
+
+     Earlier versions of the MIT release (before 1.2.3) had bugs in the
+     application server support such that the server-side checks may
+     not be performed correctly.  We recommend turning this option on,
+     unless you know that all application servers in this realm have
+     been updated to fixed versions of the software, and for whatever
+     reason, you don't want the KDC to do the validation.
+
+     This is a per-realm option so that multiple-realm KDCs may control
+     it separately for each realm, in case (for example) one realm has
+     had the software on its application servers updated but another
+     has not.
+
+     This option defaults to `true'.
+
+restrict_anonymous_to_tgt
+     A boolean value (`true', `false').  If set to `true', the KDC will
+     reject ticket requests from anonymous principals to service
+     principals other than the realm's ticket-granting service.  This
+     option allows anonymous PKINIT to be enabled for use as FAST armor
+     tickets without allowing anonymous authentication to services.  By
+     default, the value of restrict_anonymous_to_tgt as specified in
+     the [kdcdefaults] section is used.
+
+
+
+File: krb5-admin.info,  Node: pkinit kdc options,  Next: Sample kdc.conf File,  Prev: realms (kdc.conf),  Up: kdc.conf
+
+pkinit options
+--------------
+
+* Menu:
+
+* pkinit kdc.conf options::
+
+The following are pkinit-specific options.  Note that these values may
+be specified in `[kdcdefaults]' as global defaults, or within a
+realm-specific subsection of `[realms]'.  Also note that a
+realm-specific value over-rides, does not add to, a generic
+`[kdcdefaults]' specification.  The search order is:
+  1. realm-specific subsection of `[realms]'
+          [realms]
+              EXAMPLE.COM = {
+                  pkinit_anchors = FILE:/usr/local/example.com.crt
+              }
+
+  2. generic value in the `[kdcdefaults]' section.
+          [kdcdefaults]
+              pkinit_anchors = DIR:/usr/local/generic_trusted_cas/
+
+
+File: krb5-admin.info,  Node: pkinit kdc.conf options,  Prev: pkinit kdc options,  Up: pkinit kdc options
+
+pkinit kdc.conf options
+.......................
+
+For information about the syntax of some of these options, see *Note
+pkinit identity syntax::.
+
+pkinit_identity
+     Specifies the location of the KDC's X.509 identity information.
+     This option is required if pkinit is to be supported by the KDC.
+
+pkinit_anchors
+     Specifies the location of trusted anchor (root) certificates which
+     the KDC trusts to sign client certificates.  This option is
+     required if pkinit is to be supported by the KDC.  This option may
+     be specified multiple times.
+
+pkinit_pool
+     Specifies the location of intermediate certificates which may be
+     used by the KDC to complete the trust chain between a client's
+     certificate and a trusted anchor.  This option may be specified
+     multiple times.
+
+pkinit_revoke
+     Specifies the location of Certificate Revocation List (CRL)
+     information to be used by the KDC when verifying the validity of
+     client certificates.  This option may be specified multiple times.
+
+pkinit_require_crl_checking
+     The default certificate verification process will always check the
+     available revocation information to see if a certificate has been
+     revoked.  If a match is found for the certificate in a CRL,
+     verification fails.  If the certificate being verified is not
+     listed in a CRL, or there is no CRL present for its issuing CA,
+     and `pkinit_require_crl_checking' is `false', then verification
+     succeeds.
+
+     However, if `pkinit_require_crl_checking' is `true' and there is
+     no CRL information available for the issuing CA, then verification
+     fails.
+
+     `pkinit_require_crl_checking' should be set to `true' if the
+     policy is such that up-to-date CRLs must be present for every CA.
+
+pkinit_dh_min_bits
+     Specifies the minimum number of bits the KDC is willing to accept
+     for a client's Diffie-Hellman key.  The default is 2048.
+
+pkinit_allow_upn
+     Specifies that the KDC is willing to accept client certificates
+     with the Microsoft UserPrincipalName (UPN) Subject Alternative Name
+     (SAN).  This means the KDC accepts the binding of the UPN in the
+     certificate to the Kerberos principal name.
+
+     The default is false.
+
+     Without this option, the KDC will only accept certificates with
+     the id-pkinit-san as defined in RFC4556.  There is currently no
+     option to disable SAN checking in the KDC.
+
+pkinit_eku_checking
+     This option specifies what Extended Key Usage (EKU) values the KDC
+     is willing to accept in client certificates.  The values
+     recognized in the `kdc.conf' file are:
+    kpClientAuth
+          This is the default value and specifies that client
+          certificates must have the id-pkinit-KPClientAuth EKU as
+          defined in RFC4556.
+
+    scLogin
+          If `scLogin' is specified, client certificates with the
+          Microsoft Smart Card Login EKU (id-ms-kp-sc-logon) will be
+          accepted.
+
+    none
+          If `none' is specified, then client certificates will not be
+          checked to verify they have an acceptable EKU.  The use of
+          this option is not recommended.
+
+
+File: krb5-admin.info,  Node: Sample kdc.conf File,  Prev: pkinit kdc options,  Up: kdc.conf
+
+Sample kdc.conf File
+--------------------
+
+Here's an example of a `kdc.conf' file:
+
+     [kdcdefaults]
+         kdc_ports = 88
+     
+     [realms]
+         ATHENA.MIT.EDU = {
+             kadmind_port = 749
+             max_life = 12h 0m 0s
+             max_renewable_life = 7d 0h 0m 0s
+             master_key_type = des3-hmac-sha1
+             supported_enctypes = des3-hmac-sha1:normal des-cbc-crc:normal des-cbc-crc:v4
+         }
+     
+     [logging]
+         kdc = FILE:/usr/local/var/krb5kdc/kdc.log
+         admin_server = FILE:/usr/local/var/krb5kdc/kadmin.log
+
+
+File: krb5-admin.info,  Node: Using DNS,  Next: Administrating the Kerberos Database,  Prev: Configuration Files,  Up: Top
+
+Using DNS
+*********
+
+* Menu:
+
+* Mapping Hostnames onto Kerberos Realms::
+* Hostnames for KDCs::
+
+
+File: krb5-admin.info,  Node: Mapping Hostnames onto Kerberos Realms,  Next: Hostnames for KDCs,  Prev: Using DNS,  Up: Using DNS
+
+Mapping Hostnames onto Kerberos Realms
+======================================
+
+Mapping hostnames onto Kerberos realms is done in one of two ways.
+
+The first mechanism, which has been in use for years in MIT-based
+Kerberos distributions, works through a set of rules in the `krb5.conf'
+configuration file.  (*Note krb5.conf::.)  You can specify mappings for
+an entire domain or subdomain, and/or on a hostname-by-hostname basis.
+Since greater specificity takes precedence, you would do this by
+specifying the mappings for a given domain or subdomain and listing the
+exceptions.
+
+The second mechanism works by looking up the information in special
+`TXT' records in the Domain Name Service.  This is currently not used
+by default because security holes could result if the DNS TXT records
+were spoofed.  If this mechanism is enabled on the client, it will try
+to look up a `TXT' record for the DNS name formed by putting the prefix
+`_kerberos' in front of the hostname in question.  If that record is
+not found, it will try using `_kerberos' and the host's domain name,
+then its parent domain, and so forth.  So for the hostname
+BOSTON.ENGINEERING.FOOBAR.COM, the names looked up would be:
+
+     _kerberos.boston.engineering.foobar.com
+     _kerberos.engineering.foobar.com
+     _kerberos.foobar.com
+     _kerberos.com
+
+The value of the first TXT record found is taken as the realm name.
+(Obviously, this doesn't work all that well if a host and a subdomain
+have the same name, and different realms.  For example, if all the hosts
+in the ENGINEERING.FOOBAR.COM domain are in the ENGINEERING.FOOBAR.COM
+realm, but a host named ENGINEERING.FOOBAR.COM is for some reason in
+another realm.  In that case, you would set up TXT records for all
+hosts, rather than relying on the fallback to the domain name.)
+
+Even if you do not choose to use this mechanism within your site, you
+may wish to set it up anyway, for use when interacting with other sites.
+
+
+File: krb5-admin.info,  Node: Hostnames for KDCs,  Prev: Mapping Hostnames onto Kerberos Realms,  Up: Using DNS
+
+Hostnames for KDCs
+==================
+
+MIT recommends that your KDCs have a predefined set of CNAME records
+(DNS hostname aliases), such as `kerberos' for the master KDC and
+`kerberos-1', `kerberos-2', ... for the slave KDCs.  This way, if you
+need to swap a machine, you only need to change a DNS entry, rather
+than having to change hostnames.
+
+A new mechanism for locating KDCs of a realm through DNS has been added
+to the MIT Kerberos V5 distribution.  A relatively new record type
+called `SRV' has been added to DNS.  Looked up by a service name and a
+domain name, these records indicate the hostname and port number to
+contact for that service, optionally with weighting and prioritization.
+(See RFC 2782 if you want more information.  You can follow the
+example below for straightforward cases.)
+
+The use with Kerberos is fairly straightforward.  The domain name used
+in the SRV record name is the domain-style Kerberos realm name.  (It is
+possible to have Kerberos realm names that are not DNS-style names, but
+we don't recommend it for Internet use, and our code does not support it
+well.)  Several different Kerberos-related service names are used:
+
+`_kerberos._udp'
+     This is for contacting any KDC by UDP.  This entry will be used
+     the most often.  Normally you should list port 88 on each of your
+     KDCs.
+
+`_kerberos._tcp'
+     This is for contacting any KDC by TCP.  The MIT KDC by default
+     will not listen on any TCP ports, so unless you've changed the
+     configuration or you're running another KDC implementation, you
+     should leave this unspecified.  If you do enable TCP support,
+     normally you should use port 88.
+
+`_kerberos-master._udp'
+     This entry should refer to those KDCs, if any, that will
+     immediately see password changes to the Kerberos database.  This
+     entry is used only in one case, when the user is logging in and
+     the password appears to be incorrect; the master KDC is then
+     contacted, and the same password used to try to decrypt the
+     response, in case the user's password had recently been changed
+     and the first KDC contacted hadn't been updated.  Only if that
+     fails is an "incorrect password" error given.
+
+     If you have only one KDC, or for whatever reason there is no
+     accessible KDC that would get database changes faster than the
+     others, you do not need to define this entry.
+
+`_kerberos-adm._tcp'
+     This should list port 749 on your master KDC.  Support for it is
+     not complete at this time, but it will eventually be used by the
+     `kadmin' program and related utilities.  For now, you will also
+     need the `admin_server' entry in `krb5.conf'.  (*Note krb5.conf::.)
+
+`_kpasswd._udp'
+     This should list port 464 on your master KDC.  It is used when a
+     user changes her password.
+
+
+Be aware, however, that the DNS SRV specification requires that the
+hostnames listed be the canonical names, not aliases.  So, for example,
+you might include the following records in your (BIND-style) zone file:
+
+     $ORIGIN foobar.com.
+     _kerberos               TXT       "FOOBAR.COM"
+     kerberos                CNAME     daisy
+     kerberos-1              CNAME     use-the-force-luke
+     kerberos-2              CNAME     bunny-rabbit
+     _kerberos._udp          SRV       0 0 88 daisy
+                             SRV       0 0 88 use-the-force-luke
+                             SRV       0 0 88 bunny-rabbit
+     _kerberos-master._udp   SRV       0 0 88 daisy
+     _kerberos-adm._tcp      SRV       0 0 749 daisy
+     _kpasswd._udp           SRV       0 0 464 daisy
+
+As with the DNS-based mechanism for determining the Kerberos realm of a
+host, we recommend distributing the information this way for use by
+other sites that may want to interact with yours using Kerberos, even if
+you don't immediately make use of it within your own site.  If you
+anticipate installing a very large number of machines on which it will
+be hard to update the Kerberos configuration files, you may wish to do
+all of your Kerberos service lookups via DNS and not put the information
+(except for `admin_server' as noted above) in future versions of your
+`krb5.conf' files at all.  Eventually, we hope to phase out the listing
+of server hostnames in the client-side configuration files; making
+preparations now will make the transition easier in the future.
+
+
+File: krb5-admin.info,  Node: Administrating the Kerberos Database,  Next: Configuring Kerberos with OpenLDAP back-end,  Prev: Using DNS,  Up: Top
+
+Administrating the Kerberos Database
+************************************
+
+Your Kerberos database contains all of your realm's Kerberos principals,
+their passwords, and other administrative information about each
+principal.  For the most part, you will use the `kdb5_util' program to
+manipulate the Kerberos database as a whole, and the `kadmin' program
+to make changes to the entries in the database.  (One notable exception
+is that users will use the `kpasswd' program to change their own
+passwords.)  The `kadmin' program has its own command-line interface,
+to which you type the database administrating commands.
+
+`Kdb5_util' provides a means to create, delete, load, or dump a
+Kerberos database.  It also includes a command to stash a copy of the
+master database key in a file on a KDC, so that the KDC can authenticate
+itself to the `kadmind' and `krb5kdc' daemons at boot time.
+
+`Kadmin' provides for the maintenance of Kerberos principals, KADM5
+policies, and service key tables (keytabs).  It exists as both a
+Kerberos client, `kadmin', using Kerberos authentication and an RPC, to
+operate securely from anywhere on the network, and as a local client,
+`kadmin.local', intended to run directly on the KDC without Kerberos
+authentication.  `kadmin.local' need not run on the kdc if the database
+is LDAP. Other than the fact that the remote client uses Kerberos to
+authenticate the person using it, the functionalities of the two
+versions are identical. The local version is necessary to enable you to
+set up enough of the database to be able to use the remote version.  It
+replaces the now obsolete `kdb5_edit' (except for database dump and
+load, which are provided by `kdb5_util').
+
+The remote version authenticates to the KADM5 server using the service
+principal `kadmin/admin'.  If the credentials cache contains a ticket
+for the `kadmin/admin' principal, and the `-c ccache' option is
+specified, that ticket is used to authenticate to KADM5.  Otherwise,
+the `-p' and `-k' options are used to specify the client Kerberos
+principal name used to authenticate.  Once kadmin has determined the
+principal name, it requests a `kadmin/admin' Kerberos service ticket
+from the KDC, and uses that service ticket to authenticate to KADM5.
+
+* Menu:
+
+* Kadmin Options::
+* Date Format::
+* Principals::
+* Policies::
+* Global Operations on the Kerberos Database::
+* Global Operations on the Kerberos LDAP Database::
+* Cross-realm Authentication::
+* Changing the krbtgt Key::
+
+
+File: krb5-admin.info,  Node: Kadmin Options,  Next: Date Format,  Prev: Administrating the Kerberos Database,  Up: Administrating the Kerberos Database
+
+Kadmin Options
+==============
+
+You can invoke `kadmin' or `kadmin.local' with any of the following
+options:
+
+-r REALM
+     Use REALM as the default Kerberos realm for the database.
+
+-p principal
+     Use the Kerberos principal principal to authenticate to Kerberos.
+     If this option is not given, `kadmin' will append `admin' to
+     either the primary principal name, the environment variable USER,
+     or to the username obtained from `getpwuid', in order of
+     preference.
+
+-q query
+     Pass query directly to `kadmin'.  This is useful for writing
+     scripts that pass specific queries to `kadmin'.
+
+     You can invoke `kadmin' with any of the following options:
+
+-k [-t keytab]
+     Use the keytab keytab to decrypt the KDC response instead of
+     prompting for a password on the TTY.  In this case, the principal
+     will be `host/hostname'.  If -t is not used to specify a keytab,
+     then the default keytab will be used.
+
+-c credentials cache
+     Use credentials_cache as the credentials cache.  The credentials
+     cache should contain a service ticket for the `kadmin/admin'
+     service, which can be acquired with the `kinit' program.  If this
+     option is not specified, `kadmin' requests a new service ticket
+     from the KDC, and stores it in its own temporary ccache.
+
+-w password
+     Use password as the password instead of prompting for one on the
+     TTY.  Note:  placing the password for a Kerberos principal with
+     administration access into a shell script can be dangerous if
+     unauthorized users gain read access to the script.
+
+-x db_args
+     Specifies the database specific arguments.
+
+-x host=<hostname>
+     Specifies the LDAP server to connect to by a LDAP URI. It is
+     recommend to use ldapi:// or ldaps:// interface to connect to the
+     LDAP server.
+
+-x binddn=<bind_dn>
+     Specifies the Distinguished Name (DN) of the object used by the
+     administration server to bind to the LDAP server. This object
+     should have the read and write rights on the realm container,
+     principal container and realm subtree.
+
+-x bindpwd=<bind_password>
+     Specifies the password for the above mentioned binddn. It is
+     recommended not to use this option. Instead, the password can be
+     stashed using the stashsrvpw command of kdb5_ldap_util.
+
+     Note: This database specific argument is applicable only to
+     kadmin.local and the KADM5 server.
+
+-s admin_server[:port]
+     Specifies the admin server that kadmin should contact.
+
+     You can invoke `kadmin.local' with an of the follwing options:
+
+-d_ dbname
+     Specifies the name of the Kerberos database.
+
+-e "enctypes ..."
+     Sets the list of cryptosystem and salt types to be used for any new
+     keys created.  See *Note Supported Encryption Types:: and *Note
+     Salts:: for available types.
+
+-m
+     Do not authenticate using a keytab.  This option will cause kadmin
+     to prompt for the master database password.
+
+
+
+File: krb5-admin.info,  Node: Date Format,  Next: Principals,  Prev: Kadmin Options,  Up: Administrating the Kerberos Database
+
+Date Format
+===========
+
+Many of the `kadmin' commands take a duration or time as an argument.
+The date can appear in a wide variety of formats, such as:
+
+     "15 minutes"
+     "7 days"
+     "1 month"
+     "2 hours"
+     "400000 seconds"
+     "next year"
+     "this Monday"
+     "next Monday"
+     yesterday
+     tomorrow
+     now
+     "second Monday"
+     fortnight
+     "3/31/1992 10:00:07 PST"
+     "January 23, 2007 10:05pm"
+     "22:00 GMT"
+
+Note that if the date specification contains spaces, you must enclose it
+in double quotes.  Note also that you cannot use a number without a
+unit.  (I.e., ""60 seconds"" is correct, but "60" is incorrect.)  All
+keywords are case-insensitive.  The following is a list of all of the
+allowable keywords.
+
+Months
+     january, jan, february, feb, march, mar, april, apr, may, june,
+     jun, july, jul, august, aug, september, sep, sept, october, oct,
+     november, nov, december, dec
+
+Days
+     sunday, sun, monday, mon, tuesday, tues, tue, wednesday, wednes,
+     wed, thursday, thurs, thur, thu, friday, fri, saturday, sat
+
+Units
+     year, month, fortnight, week, day, hour, minute, min, second, sec
+
+Relative
+     tomorrow, yesterday, today, now, last, this, next, first, second,
+     third, fourth, fifth, sixth, seventh, eighth, ninth, tenth,
+     eleventh, twelfth, ago
+
+Time Zones
+     `kadmin' recognizes abbreviations for most of the world's time
+     zones.  A complete listing appears in *Note kadmin Time Zones::.
+
+12-hour Time Delimiters
+     am, pm
+
+
+File: krb5-admin.info,  Node: Principals,  Next: Policies,  Prev: Date Format,  Up: Administrating the Kerberos Database
+
+Principals
+==========
+
+Each entry in the Kerberos database contains a Kerberos principal
+(*note Definitions::) and the attributes and policies associated with
+that principal.
+
+* Menu:
+
+* Retrieving Information About a Principal::
+* Privileges::
+* Adding or Modifying Principals::
+* Deleting Principals::
+* Changing Passwords::
+
+
+File: krb5-admin.info,  Node: Retrieving Information About a Principal,  Next: Privileges,  Prev: Principals,  Up: Principals
+
+Retrieving Information About a Principal
+----------------------------------------
+
+* Menu:
+
+* Attributes::
+* Retrieving a List of Principals::
+
+
+File: krb5-admin.info,  Node: Attributes,  Next: Retrieving a List of Principals,  Prev: Retrieving Information About a Principal,  Up: Retrieving Information About a Principal
+
+Attributes
+..........
+
+To retrieve a listing of the attributes and/or policies associated with
+a principal, use the `kadmin' `get_principal' command, which requires
+the "inquire" administrative privilege.  The syntax is:
+
+     get_principal principal
+
+The `get_principal' command has the alias `getprinc'.
+
+For example, suppose you wanted to view the attributes of the principal
+`jennifer/root@ATHENA.MIT.EDU'.    You would type:
+
+     shell% kadmin
+     kadmin: getprinc jennifer/root
+     Principal: jennifer/root@ATHENA.MIT.EDU
+     Expiration date: [never]
+     Last password change: Mon Jan 31 02:06:40 EDT 2002
+     Password Expiration date: [none]
+     Maximum ticket life: 0 days 10:00:00
+     Maximum renewable life: 7 days 00:00:00
+     Last modified: Wed Jul 24 14:46:25 EDT 2002 (joeadmin/admin@ATHENA.MIT.EDU)
+     Last successful authentication: Mon Jul 29 18:20:17 EDT 2002
+     Last failed authentication: Mon Jul 29 18:18:54 EDT 2002
+     Failed password attempts: 3
+     Number of keys: 2
+     Key: vno 2, Triple DES cbc mode with HMAC/sha1, no salt
+     Key: vno 2, DES cbc mode with CRC-32, no salt
+     Attributes: DISALLOW_FORWARDABLE, DISALLOW_PROXIABLE
+     Policy: [none]
+     kadmin:
+
+The `get_principal' command has a `-terse' option, which lists the
+fields as a quoted, tab-separated string.  For example:
+
+     kadmin: getprinc -terse jennifer/root
+     jennifer/root@ATHENA.MIT.EDU	0	1027458564
+     0	36000	 (joeadmin/admin@ATHENA.MIT.EDU
+     1027536385	18	2	0	[none]	604800	1027980137
+     1027980054	3	2	1	2	16	0	1
+     2	1	0
+     kadmin:
+

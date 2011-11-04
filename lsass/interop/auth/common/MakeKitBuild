@@ -1,0 +1,17 @@
+make()
+{
+    AUTH_SOURCES="\
+    globals.c    \
+    libmain.c    \
+    pam-config.c \
+    pam-logging.c"
+
+    mk_multiarch_do
+        mk_library \
+	    LIB=lsaauth \
+	    SOURCES="$AUTH_SOURCES" \
+	    INCLUDEDIRS="../include ../../../include" \
+	    HEADERDEPS="lwadvapi.h" \
+	    LIBDEPS="lsaclient"
+    mk_multiarch_done
+}

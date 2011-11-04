@@ -1,0 +1,627 @@
+LWIO Asynchronouse I/O And Rundown Speclet
+------------------------------------------
+
+1. Introduction
+---------------
+
+This speclet describes how asynchronous I/O support is being added to LWIO.
+It also addresses improvements in how handle rundown happens in LWIO.
+
+1.1 Goals
+---------
+
+- Asynchronous I/O model with cancellation, including:
+  + ioapi.h support for asynchronous I/O.
+    - IoXxxFile() APIs.
+    - Cancellation.
+  + Driver support for processing IRPs asynchronously.
+  + Driver support for cancelling IRPs.
+- Ensure that handle rundown works in desired scenarios.
+
+1.2 Non-Goals
+-------------
+
+- NtXxxFile()/NtCtxXxxFile (ntfileapi.h) support for asynchronous I/O.
+
+2. Async IO Model
+-----------------
+
+2.1 IoXxxFile() APIs
+--------------------
+
+IoXxxFile() APIs have an optional parameter:
+
+    IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
+
+Currently, this parameter is unused and must always be NULL.  The async I/O
+support will use this parameter to control whether the IoXxxFile() API should
+behave asychronously.
+
+Here is how the ACB (asynchronous control block) works:
+
+typedef struct _IO_ASYNC_CONTROL_BLOCK {
+    IN PIO_ASYNC_CALLBACK Callback;
+    IN OPTIONAL PVOID CallbackContext;
+    OUT PIO_ASYNC_CONTEXT AsyncContext;
+} IO_ASYNC_CONROL_BLOCK, *PIO_ASYNC_CONTROL_BLOCK;
+
+On input, the ACB must contain a callback function.  On output, the ACB will
+return an AsyncContext that can be used to cancel the I/O.  It is up to the
+caller to dereference the returned context when the caller is done with it by
+calling IoDereferenceAsyncContext().
+
+VOID
+IoDereferenceAsyncContext(
+    IN OUT PIO_ASYNC_CONTEXT* AsyncContext
+    );
+
+The async callback is defined as:
+
+typedef VOID (*PIO_ASYNC_CALLBACK)(
+    IN PVOID CallbackContext,
+    IN PIO_ASYNC_CONTEXT AsyncContext,
+    IN PIO_STATUS_BLOCK IoStatusBlock
+    );
+
+The callback does not have to worry about the AsyncContext passed in here.
+(Note, however, that the caller can use this value to call
+IoDereferenceAsyncContext() if they never dereferenced the context returned in
+the original async I/O call.)
+
+<ISSUE>
+ISSUE: Do we want to pass in AsyncContext here?  It is just being passed in as
+a convenience to the caller in case they do not want to have a CallbackContext
+but still want to track additional context w/the operation.
+</ISSUE>
+
+The IoStatusBlock will contain the result of the operation.
+
+2.2 Cancellation API
+--------------------
+
+To cancel an async I/O, the caller calls IoCancelAsyncContext().  Note that
+the caller must still dereference the context.
+
+BOOLEAN
+IoCancelAsyncContext(
+    IN PIO_ASYNC_CONTEXT AsyncContext
+    );
+
+IoCancelAsyncContext() will set the cancel bit on the call and call the
+cancellation routine on the operation (if any).  If the operation is in a
+cancellable state (i.e., a cancel routine is set), IoCancelAsyncContext()
+returns TRUE.  If the operation is not cancellable (i.e., a cancel routine is
+not currently set), IoCancelAsyncContext() returns FALSE.
+
+<ISSUE>
+Should IoCancelAsyncContext() return a BOOLEAN or just be VOID?  Is there any
+reason why we would actually care?
+</ISSUE>
+
+Once an async I/O is cancelled, the operation will complete with either
+STATUS_CANCELLED or the normal result of the I/O.  That means that the
+async callback will be called with the appropriate result.
+
+
+2.3 Driver Support
+-------------------
+
+To support asynchronous I/O, drivers must be able to behave asychronously with
+respect to the I/O operation.  If a driver behaves synchronously, the I/O will
+be synchronous even if the caller (via IoXxxFile() call) asked for it to be
+asynchronous.
+
+There is no way for a driver to tell whether the caller asked for synchronous
+or asynchronous behavior.
+
+When a driver processes an IRP asychronously, it must return STATUS_PENDING to
+tell the IO manager to take its hands off the IRP until the driver completes
+the IRP.
+
+When the IO manager gets STATUS_PENDING from the driver, it will do one of two
+things depending on whether the caller of the IoXxxFile() API asked for
+synchronous or asynchronous behavior.  In the synchronous case, the IO manager
+just waits for the driver to complete the I/O before returning the final
+result to the caller.  In the asynchronous case, the IO manager just returns
+STATUS_PENDING to the caller (along with an AsyncContext).
+
+2.3.1 IoIrpXxx() APIs
+---------------------
+
+To support asynchronous processing of IRPs, the IO manager provies the
+following IoIrpXxx() APIs (via iodriver.h).
+
+typedef NTSTATUS (*PIO_IRP_CALLBACK)(
+    IN PVOID CallbackContext,
+    IN PIRP Irp
+    );
+
+VOID
+IoIrpSetCancelCallback(
+    IN PIRP Irp,
+    IN PIO_IRP_CALLBACK Callback,
+    IN OPTIONAL PVOID CallbackContext
+    );
+
+// Cannot touch IRP after this:
+VOID
+IoIrpComplete(
+    IN OUT PIRP Irp
+    );
+
+2.3.2 Cancellation
+------------------
+
+For an I/O to be cancellable, the driver must call IoIrpSetCancelCallback().
+Ideally, the driver should do this before returning STATUS_PENDING to the
+driver.  Note that a driver can set a cancel callback even when an opration is
+synchronous.
+
+Before a driver completes an IRP (synchronously or asynchronously), the driver
+must clear any cancellation callback that it set on the IRP.  This is done by
+setting a NULL cancellation callback using IoIrpSetCancelCallback().
+
+2.3.3 Completion
+----------------
+
+If an IRP is handled asynchronously, the IRP is completed by calling
+IoIrpComplete().  Before calling this function, however, the driver must make
+sure to clear any cancellation callback (see above) and it must set the
+IoStatusBlock in the IRP with the proper Status and Information.
+
+3. Rundown
+----------
+
+There are two basic rundown scenarios to consider here.  One is the lwiod
+shutdown case and the other is an RPC named pipe (NP) server scenario.  The
+former can be handled with the standard lwmsg and iomgr asynchronous support.
+The latter, however, needs additional support.
+
+There are three basic rundown scenarios to consider here:
+
+1) lwiod shutdown
+2) RPC named pipe (NP) server shutdown
+3) SRV operation vs. close race
+
+The first can be handled with the standard lwmsg and iomgr asynchronous
+support.  The other two, however, need additional support.
+
+
+3.1 lwiod Shutdown Scenario
+---------------------------
+
+With the lwmsg async support, all lwmsg-based i/o would be async on the
+server-side.  If the IPC connection goes away, lwmsg can cancel all
+asynchronous operations and cleanup its file object handles.  Thus, if lwiod
+shuts down lwmsg before shutting down the iomgr, the iomgr does not need any
+additional rundown support aside from asynchronous i/o cancellation support.
+
+In other words, because of lwmsg, iomgr does not need additional rundown
+support for rundown.  Rather, lwiod just need to use lwmsg in the following
+manner:
+
+  - all lwmsg-based i/o would be async on server-side.
+
+  - lwmsg server will do async cancel and then close.
+
+  - would need to ensure that lwiod shutdown first shuts down lwmsg before
+    shutting down iomgr.
+
+
+3.2 RPC NP Server Shutdown Scenario
+-----------------------------------
+
+The important rundown scenario for us is RPC NP server shutdown:
+
+   a) thread 1 - "accept" thread (waiting for client connection)
+      - NtFsControlFile(h)
+
+   b) thread 2 - shutdown server
+      - NtCloseFile(h)
+      - wait for "accept" thread to complete
+
+This scenario is not handled by lwmsg handle rundown.
+
+The current lwmsg server-side usage (IopIpcCloseFile()) handles NtCloseFile()
+by simply unregistering the file object handle from lwmsg (using
+lwmsg_assoc_unregister_handle()).  This does not issue an IoCloseFile().  The
+IoCloseFile() is only issues when IopIpcCleanupFileHandle() is called by lwmsg
+when the last handle reference goes away.  The last reference only goes away
+when all operations for the handle dispatched by lwmsg have been finished.
+
+<ISSUE>
+ADD INFO TO SPEC: Why does lwmsg_assoc_unregister_handle() not cancel
+all operations using the handle?  Is it because lwmsg does not track that
+explicitly?
+</ISSUE>
+
+Additional support is needed in iomgr to handle this scenario.
+
+
+3.3 SRV Operation vs. Close Race Scenario
+-----------------------------------------
+
+There is a scenario in SRV where a client sends an operation on a FID and a
+close on a FID over the wire thus creating a race between the two operations.
+(This is not a chaining case, but rather two "independent" oprations.)  While
+this sequence would be invalid from a correctness point of view, the server
+needs to behave sensisbly and not crash.
+
+If SRV were to just call IoCloseFile() and IoReadFile() in separate threads, a
+race coould happen where the IoCloseFile() would clean up the file object and
+cause the IoReadFile() to be called with invalid memory.
+
+
+3.4 Rundown Solution
+--------------------
+
+The solution to the unhandled rundown scenarios above is to separate the
+notion of "closing the file" from the lifetime of the file object.  This can
+be achieved with the notion of "shutdown" vs. "close" (as per BSD socket
+notions).  We can define a "shutdown" that does the equivalent of "closing the
+file" without de-allocating the handle/file object.  The "close" then becomes
+a "shutdown" + file object cleanup.
+
+In places where XxxCloseFile() would be called, we can now call
+XxxShutdownFile() instead.  This would set the file to a "closed" state,
+cancel any outstanding I/O, and prevent any new I/O from being issued.  When
+the caller determines that it no longer needs the file handle (i.e., all I/O
+is complete or even the last reference to state embedding the file handle is
+gone), the caller can call XxxCloseFile() to free up the file object state.
+
+This is the breakdown of how the relevant APIs would work:
+
+IoShutdownFile() [TODO]
+- if !FILE_OBJECT_FLAG_CLOSED
+  + set FILE_OBJECT_FLAG_CLOSED
+  + issue cancellation for all outstanding I/O
+  + MAY wait for outstanding I/O to complete (not required)
+
+IoCloseFile()
+- call IoShutdownFile() [TODO]
+- wait for outstanding I/O to complete [TODO]
+- send IRP_TYPE_CLOSE to driver
+
+NtCtxShutdownFile() [TODO]
+- send SHUTDOWN_FILE message to lwiod
+
+NtCtxCloseFile()
+- send CLOSE_FILE message
+- remove from handle table
+  + call lwmsg_assoc_unregister_handle() (via NtIpcUnregisterFileHandle()).
+
+IopIpcShutdownFile() [TODO]
+- call IoShutdownFile()
+
+IopIpcCloseFile()
+- call IoShutdownFile() [TODO]
+- remove from handle table
+  + call lwmsg_assoc_unregister_handle() (via NtIpcUnregisterFileHandle()).
+
+IopIpcCleanupFileHandle()
+- NOTE: called on last deref from lwmsg
+- call IoCloseFile()
+
+Note that IoCloseFile() and IoShutdownFile() could block if there are
+in-flight ops.  So IoCloseFile() and IoShutdownFile() need to support ACB to
+signal completion but not to cancel.
+
+
+3.4.1 Rundown Solution Template
+-------------------------------
+
+This is a general algorithm/template for rundown protection.  It need to be
+modified depending on how state is managed.  Note that LAST below could be 1
+or 0 depending on how how the context is managed and whether a reference count
+or in-flight operation count is used.
+
+   a) thread 1 - doing some operation
+      - InterlockedIncrement(&context->RefCount) // (potentially from table lookup)
+
+      - Lock(context->Mutex)
+      - isClosed = context->IsClosed
+      - Unlock(context->Mutex)
+      - if (!isClosed)
+        + XxxOperationFile(context->FileHandle)
+        + Lock(context->Mutex)
+        + isClosed = context->IsClosed
+        + Unlock(context->Mutex)
+
+      - count = InterlockedDecrement(&context->RefCount)
+      - if (isCosed && (count == LAST))
+        + Signal(context->RundownCondition)
+
+
+   b) thread 2 - rundown/"close"
+      - InterlockedIncrement(&context->RefCount) // (potentially from table lookup)
+
+      - Lock(context->Mutex)
+      - context->IsClosed = true
+      - (remove context from appropriate table(s))
+      - Unlock(context->Mutex)
+      - XxxShutdownFile(context->FileHandle, WAIT)
+      - Lock(context->mutex)
+      - count = InterlockedGet(&context->RefCount)
+      - if (count > 1)
+        + Wait(context->RundownCondition, context->Mutex)
+      - Unlock(context->Mutex)
+      - XxxCloseFile(context->FileHandle)
+      - context->FileHandle = NULL
+
+      - InterlockedDecrement(&context->RefCount)
+      
+3.4.2 RPC NP Server Shutdown Scenario Solution
+----------------------------------------------
+
+   a) thread 1 - "accept" thread (waiting for client connection)
+      - NtFsControlFile(h)
+
+   b) thread 2 - shutdown server
+      - NtShutdownFile(h)
+      - wait for "accept" thread to complete (join)
+      - NtCloseFile(h)
+
+3.4.3 SRV Close Race Solution
+-----------------------------
+
+The implementation is like the template section above (3.4.1).
+
+
+4. Async I/O IO Manager Implementation
+--------------------------------------
+
+[CURRENTLY WORKING ON THIS]
+
+In the IO manager, we need to add the following:
+
+- From IoXxxFile() API perspective, PIO_ASYNC_CONTEXT is just an opaque
+  pointer.  Internally, it will point to either an IRP or a field inside an
+  IRP.
+
+- Need reference counting for IRP.
+
+- Need IRP_FLAGS to track state of IRP:
+  + IRP_FLAG_COMPLETE
+  + IRP_FLAG_CANCEL
+
+- Need cancellation callback information in IRP.
+
+- Need completion callback information in IRP.
+
+- Need to track "close" state in file object
+  + FILE_OBJECT_FLAG_CLOSED
+
+4.1 Locking
+-----------
+
+Need locks to protect:
+
+- Device object's file object list
+- File object's IRP list and flags
+- IRP's cancellation information (flag and callback).
+
+Functions affected by locks:
+- IopFileObjectAllocate()/IopFileObjectFree().
+- IoIrpSetCancelCallback()/IoCancelAsyncContext()/IoIrpComplete().
+
+[TODO: Specify lock locations]
+
+<ISSUE>
+Current assumptions:
+- drivers only loaded synchronously on startup
+- devices only created synchronously on startup
+
+Implications:
+- no locks needed to protect driver and device lists
+</ISSUE>
+
+4.2 IoShutdownFile()/IoCloseFile() Details
+------------------------------------------
+
+NTSTATUS
+IoShutdownFile(
+    IN OUT IO_FILE_HANDLE FileHandle,
+    IN OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
+    IN BOOLEAN WaitForInFlightOperation
+    );
+
+IoShutdownFile() needs to support async:
+
+- if (!FILE_OBJECT_FLAG_CLOSED)
+  + set FILE_OBJECT_FLAG_CLOSED
+  + issue cancellation for all outstanding IRPs
+
+- if WaitForInFlightOperations
+  + if in-flight ops, return STATUS_PENDING (or block if sync)
+  + wait until in-flight ops is 0
+
+[NOTE: common completion processing woould check for FILE_OBJECT_FLAG_CLOSED
+and resume any waiting file shutdown operation.]
+
+NTSTATUS
+IoCloseFile(
+    IN OUT IO_FILE_HANDLE FileHandle,
+    IN OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock
+    );
+
+- IoShutdownFile(..., TRUE)
+- send IRP_TYPE_CLOSE to driver
+
+4.3 Cancellation Details
+------------------------
+
+IoIrpSetCancelCallback()
+- acquire LOCK
+- set cancel callback
+- release LOCK
+
+IoCancelAsyncContext()
+- acquire LOCK
+- if IRP_FLAG_CANCEL and IRP_FLAG_COMPLETE not set
+  + set IPR_FLAG_CANCEL
+  + call cancel callback, if any
+- release LOCK
+
+[NOTE: CANCEL CALLBACK MUST BE QUICK.]
+
+4.4 Completion Details
+----------------------
+
+The details may change, but the basic idea is:
+
+struct _IO_IRP_COMPLETION_CONTEXT {
+    union {
+        struct {
+            IN OPTIONAL PIO_ASYNC_CALLBACK Callback;
+            IN OPTIONAL PVOID CallbackContext;
+        } Async;
+        struct {
+            IN OPTIONAL <POINTER TO CONDITION VARIABLE> Condition;
+        } Sync;
+    };
+    BOOLEAN IsAsync;
+} IO_IRP_COMPLETION_CONTEXT, *PIO_IRP_COMPLETION_CONTEXT;
+
+IoXxxFile()
+- irp = IopIrpCreate()
+- if AsyncControlBlock
+  + irp->IsAsync = TRUE
+  + irp->Async.Callback = AsyncControlBlock->Callback;
+  + irp->Async.CallbackContext = AsyncControlBlock->CallbackContext;
+  + Reference(irp)
+- else
+  + irp->IsAsync = FALSE
+  + irp->Sync.Condition = pointer to stack condition variable
+- IopDeviceCallDriver(..., irp)
+- if sync
+  + if STATUS_PENDING
+    - wait on context->Sync.Condition
+  + *IoStatusBlock = Irp.IoStatusBlock
+  + Dereference(irp)
+- if async
+  + if STATUS_PENDING
+    - set AsyncControlBlock->AsynContext = irp 
+  + else
+    - NOTE: *** FOR NOW, SYNC COMPLETION MEANS NO CALL TO IoIrpComplete() ***
+    - NOTE: *** Callback not called since returning complete to caller ***
+    - *IoStatusBlock = Irp.IoStatusBlock
+    - set AsyncControlBlock->AsyncContext = NULL
+    - Dereference(irp)
+
+IoIrpComplete()
+- acquire LOCK
+- set IRP_FLAG_COMPLETE
+- release LOCK
+- if Irp->IsAsync
+  + call Irp->Async.Callback(Irp->Async.CallbackContext, Irp, &Irp->IoStatusBlock)
+  + Dereferece(Irp)
+- else
+  + signal Irp->Sync.Condition
+
+
+====================
+
+IRP NOTES wrt async calls into IoXxxFile() APIs:
+
+All arguments are copied, except:
+
+IoCreateFile():
+- SecurityContext - ref-counted
+- EA - TBD
+- SD - TBD
+- QOS - TBD
+- ECP - caller must not free until complete
+
+IoCloseFile():
+- N/A
+
+Io{Read,Write}File():
+- Buffer - caller must not free until complete
+
+Io{DeviceIo,Fs}ControlFile():
+- InputBuffer - caller must not free until complete
+- OutputBuffer - caller must not free until complete
+
+IoFlushBuffersFile():
+- N/A
+
+Io{Query,Set}InformationFile Params:
+- FileInformation - caller must not free until complete
+
+IoQueryDirectoryFile():
+- FileInformation - caller must not free until complete
+
+Io{Query,Set}VolumeInformationFile():
+- FsInformation - caller must not free until complete
+
+Io{Lock,Unlock}File():
+- N/A
+
+Io{Query,Set}QuotaInformationFile():
+- TBD
+
+Io{Query,Set}SecurityFile():
+- SecurityDescriptor  - caller must not free until complete
+
+NOTE: In general, IoXxxFile() should not copy buffer.  In SRV case, this will
+      cause us to be faster.  In lwmsg case, lwmsg will already preserve the
+      buffers for the duration of the call.
+
+===========================
+
+IopIrpCreate(FileObject) => irp
+- irp->RefCount = 1
+- irp->FileObject = FileObject
+- REF(FileObject)
+- return irp
+
+IoCreateFile()
+- irp = IopIrpCreate(file)
+
+
+IopIrpDispatch(Irp, AsyncControlBlock)
+- if AsyncControlBlock
+  + irp->IsAsync = TRUE
+  + irp->Async.Callback = AsyncControlBlock->Callback;
+  + irp->Async.CallbackContext = AsyncControlBlock->CallbackContext;
+  + REF(irp)
+- else
+  + irp->IsAsync = FALSE
+  + irp->Sync.Condition = pointer to stack condition variable
+- IopDeviceCallDriver(..., irp)
+- if sync
+  + if STATUS_PENDING
+    - wait on context->Sync.Condition
+  + *IoStatusBlock = Irp.IoStatusBlock
+  + Dereference(irp)
+- if async
+  + if STATUS_PENDING
+    - set AsyncControlBlock->AsynContext = irp 
+  + else
+    - NOTE: *** FOR NOW, SYNC COMPLETION MEANS NO CALL TO IoIrpComplete() ***
+    - NOTE: *** Callback not called since returning complete to caller ***
+    - *IoStatusBlock = Irp.IoStatusBlock
+    - set AsyncControlBlock->AsyncContext = NULL
+    - Dereference(irp)
+
+
+IoCreateFile(AsyncControlBlock) => fileOject, ioSb, AsyncControlBlock->AsyncContext
+- irp = IopIrpCreate(fileObject)
+- fileObject = NULL
+- (set various irp parameters)
+- status = IopIrpDispatch(irp, AsyncControlBlock)
+- if !STATUS_PENDING
+  + ioSb = irp->IoSb
+  + fileObject = irp->FileObject
+- else do not touch ioSb or fileObject
+- return fileObjbect, ioSb, AsyncControlBlock.AsyncContext
+
+IoXxxFile(FileAsyncControlBlock)
+- irp = IopIrpCreate(fileObject)
+- fileObject = NULL
+- (set various irp parameters)
+- status = IopIrpDispatch(irp, AsyncControlBlock)
+- if !STATUS_PENDING
+  + ioSb = irp->IoSb
+  + fileObject = irp->FileObject
+- return fileOejbect, ioSb, status

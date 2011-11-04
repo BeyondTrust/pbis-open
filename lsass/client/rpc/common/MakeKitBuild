@@ -1,0 +1,12 @@
+make()
+{
+    COMMON_SOURCES="\
+        binding.c"
+
+    mk_group \
+	GROUP=common \
+	SOURCES="$COMMON_SOURCES" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h" \
+	LIBDEPS="lwbase dcerpc lwadvapi lsacommon"
+}

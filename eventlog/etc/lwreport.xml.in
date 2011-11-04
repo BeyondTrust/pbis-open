@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8"?> <reports>
+<section section="Logon Activity">
+    <report>
+        <name>AccessDenied</name>
+        <description>Displays events recorded for denied logon activity for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1215' OR EventSourceID = '1213'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>FailedLogon</name>
+        <description>Displays events recorded for failed logon activity for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND ((EventSourceID &gt;= '1205' AND EventSourceID &lt;= '1215') OR (EventSourceID &gt;= '1250' AND EventSourceID &lt;= '1269') OR (EventSourceID = '1271')))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>SuccessfulLogon</name>
+        <description>Displays events recorded for successful logon activity for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1200' OR (EventSourceID &gt;= '1230' AND EventSourceID &lt;= '1249') OR (EventSourceID = '1270')))"
+            >
+        </query>
+    </report>
+</section>
+
+<section section="Access Restriction">
+    <report>
+        <name>AccessRestrictionChanges</name>
+        <description>Displays events recorded for access configuration change activity for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1502'))"
+            >
+        </query>
+    </report>
+</section>
+
+<section section="Network Status">
+    <report>
+        <name>Online</name>
+        <description>Displays events recorded for detection of network status online activity for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1700'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>Offline</name>
+        <description>Displays events recorded for detection of network status offline activity for the specified computer</description>
+        <query
+            sql="(EventSource = 'Likewise LSASS') AND (EventSourceID = '1701')"
+            >
+        </query>
+    </report>
+</section>
+
+<section section="Likewise Services">
+    <report>
+        <name>LikewiseServiceStarting</name>
+        <description>Displays events recorded for any Likewise services starting for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS' AND (EventSourceID = '1000')) OR
+                  (EventSource = 'Likewise NETLOGON' AND (EventSourceID = '1000')))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>LikewiseServiceStopping</name>
+        <description>Displays events recorded for any Likewise services stopping for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS' AND (EventSourceID = '1002')) OR
+                  (EventSource = 'Likewise NETLOGON' AND (EventSourceID = '1002')))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>LikewiseServiceFailures</name>
+        <description>Displays failure events recorded for any Likewise services for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS' AND (EventSourceID = '1001' OR EventSourceID = '1003')) OR
+                  (EventSource = 'Likewise NETLOGON' AND (EventSourceID = '1001' OR EventSourceID = '1003')))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>LsassFailures</name>
+        <description>Displays failure events recorded for the Likewise Authentication service (lsassd) for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1001' OR EventSourceID = '1003'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>NetlogonFailures</name>
+        <description>Displays failure events recorded for the Likewise AD Sites service (netlogond) for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise NETLOGON') AND (EventSourceID = '1001' OR EventSourceID = '1003'))"
+            >
+        </query>
+    </report>
+</section>
+
+<section section="Likewise Configuration">
+    <report>
+        <name>LikewiseServiceChanged</name>
+        <description>Displays configuration changed events recorded for any Likewise services for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS' AND (EventSourceID = '1004')) OR
+                  (EventSource = 'Likewise NETLOGON' AND (EventSourceID = '1004')))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>LsassChanged</name>
+        <description>Displays configuration changed events recorded for the Likewise Authentication service (lsassd) for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1004'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>NetlogonChanged</name>
+        <description>Displays configuration changed events recorded for the Likewise AD Sites service (netlogond) for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise NETLOGON') AND (EventSourceID = '1001' OR EventSourceID = '1003'))"
+            >
+        </query>
+    </report>
+</section>
+
+<section section="Kerberos Activity">
+    <report>
+        <name>TicketRefresh</name>
+        <description>Displays Kerberos ticket refresh events recorded for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1302' OR EventSourceID = '1322'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>MachineTicketRefresh</name>
+        <description>Displays computer account Kerberos ticket refresh events recorded for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1322'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>UserTicketRefresh</name>
+        <description>Displays user account Kerberos ticket refresh events recorded for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1302'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>TicketRefreshIssues</name>
+        <description>Displays failed Kerberos ticket refresh events recorded for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1303' OR EventSourceID = '1323'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>MachineTicketRefreshIssues</name>
+        <description>Displays failed computer account Kerberos ticket refresh events recorded for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1323'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>UserTicketRefreshIssues</name>
+        <description>Displays failed user account Kerberos ticket refresh events recorded for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1303'))"
+            >
+        </query>
+    </report>
+</section>
+
+<section section="Password Changes">
+    <report>
+        <name>PasswordChanges</name>
+        <description>Displays password change events recorded for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1300' OR EventSourceID = '1320'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>MachinePasswordChanges</name>
+        <description>Displays computer account password change events recorded for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1320'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>UserPasswordChanges</name>
+        <description>Displays user account password change events recorded for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1300'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>PasswordChangeIssues</name>
+        <description>Displays failed password change events recorded for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1301' OR EventSourceID = '1321'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>MachinePasswordChangeIssues</name>
+        <description>Displays failed computer account password change events recorded for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1321'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>UserPasswordChangeIssues</name>
+        <description>Displays failed user account password change events recorded for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1301'))"
+            >
+        </query>
+    </report>
+</section>
+
+<section section="Likewise LSASS - Local Provider Activity">
+    <report>
+        <name>UserUpdates</name>
+        <description>Displays events recorded that show (Lsass - Local Provider) user account updates for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1400' OR EventSourceID = '1401'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>UserAdds</name>
+        <description>Displays events recorded that show (Lsass - Local Provider) user account additions for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1400'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>UserDeletes</name>
+        <description>Displays events recorded that show (Lsass - Local Provider) user account removals for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1401'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>GroupUpdates</name>
+        <description>Displays events recorded that show (Lsass - Local Provider) group updates for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1402' OR EventSourceID = '1403'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>GroupAdds</name>
+        <description>Displays events recorded that show (Lsass - Local Provider) group additions for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1402'))"
+            >
+        </query>
+    </report>
+    <report>
+        <name>GroupDeletes</name>
+        <description>Displays events recorded that show (Lsass - Local Provider) group removals for the specified computer</description>
+        <query
+            sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1403'))"
+            >
+        </query>
+    </report>
+</section>
+
+<section section="General">
+    <report>
+        <name>All</name>
+        <description>Displays all events recorded for the specified computer</description>
+        <query
+            sql="()"
+            >
+        </query>
+    </report>
+    <report>
+        <name>Information</name>
+        <description>Displays information events recorded for the specified computer</description>
+        <query
+            sql="(EventType = 'Information')"
+            >
+        </query>
+    </report>
+    <report>
+        <name>Warning</name>
+        <description>Displays warning events recorded for the specified computer</description>
+        <query
+            sql="(EventType = 'Warning')"
+            >
+        </query>
+    </report>
+    <report>
+        <name>Error</name>
+        <description>Displays error events recorded for the specified computer</description>
+        <query
+            sql="(EventType = 'Error')"
+            >
+        </query>
+    </report>
+    <report>
+        <name>Success</name>
+        <description>Displays success audit events recorded for the specified computer</description>
+        <query
+            sql="(EventType = 'Success Audit' OR EventType = 'SuccessAudit' OR EventType = 'Audit Success')"
+            >
+        </query>
+    </report>
+    <report>
+        <name>Failure</name>
+        <description>Displays failure audit events recorded for the specified computer</description>
+        <query
+            sql="(EventType = 'Failure Audit' OR EventType = 'FailureAudit' OR EventType = 'Audit Failure')"
+            >
+        </query>
+    </report>
+</section>
+
+</reports>

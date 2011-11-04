@@ -1,0 +1,53 @@
+#include <compat/dcerpc.idl.include>
+
+[ uuid(5ab2e9b4-3d48-11d2-9ea4-80c5140aaa77), 
+  version(1.0),
+  pointer_default(ptr)
+]
+
+interface echo {
+
+  /*
+   * TYPES:
+   *
+   * Input and output data types
+   * string_t is a portable C string type, that is a varying array
+   * of characters terminated by a null.
+   *
+   * the structure type 'args' demonstrates how to compose a
+   * commonly used datatype, a variable length array of strings.
+   *
+   */
+
+  typedef [ptr, string] char * string_t;
+
+  typedef struct {
+   		  [range(0,1000)] unsigned32 argc;
+		  [size_is(argc)] string_t argv[];
+	          } args;
+
+   /*
+    * FUNCTIONS:
+    * 
+    * Method ReverseIt()
+    *
+    *      Reverse the order of letters in words
+    #
+    *      INPUT Arguments:
+    * 		 An array of strings
+    *      OUTPUT:
+    *            An array of strings and application error
+    *            status information.
+    *
+    */
+
+  boolean ReverseIt(	
+	[in] handle_t            	h,
+	[in] args *             	in_text,
+	[out] args ** 	  	      	out_text,
+	[out, ref] error_status_t *	status
+	);
+
+}
+
+

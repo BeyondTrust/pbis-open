@@ -1,0 +1,23 @@
+# From Windows Platform SDK
+!include <win32.mak>
+
+# Sadly, there appears to be a capitalization issue in win32.mak...
+COMPATDIR=../..
+CFLAGS=$(cflags) -DHAVE_GETOPT_H -I. -I$(COMPATDIR)/include
+
+all: echo_server.exe echo_client.exe
+
+echo_server.exe: echo_s.obj echo_server.obj misc.obj getopt.obj
+	$(link) $(conlflags) -out:$@ $** rpcrt4.lib
+
+echo_client.exe: echo_c.obj echo_client.obj misc.obj getopt.obj
+	$(link) $(conlflags) -out:$@ $** rpcrt4.lib
+
+echo_server.c: echo.h misc.h $(COMPATDIR)/include/compat/dcerpc.h
+echo_client.c: echo.h misc.h $(COMPATDIR)/include/compat/dcerpc.h
+
+echo.h echo_s.c echo_c.c: echo.idl
+	midl /I../../include echo.idl
+
+clean:
+	del *.obj *.exe echo.h echo_s.c echo_c.c

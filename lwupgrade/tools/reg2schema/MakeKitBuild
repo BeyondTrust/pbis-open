@@ -1,0 +1,12 @@
+make()
+{
+    mk_program \
+        PROGRAM=psupgrade \
+        SOURCES="psupgrade.c" \
+        HEADERDEPS="" \
+        LIBDEPS="lwadvapi_nothr"
+
+    mk_install_file \
+        FILE="regupgr61.sh" \
+        INSTALLDIR="${MK_BINDIR}"
+}

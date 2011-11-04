@@ -1,0 +1,53 @@
+/*
+ * 
+ * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      mgmt.acf
+**
+**  FACILITY:
+**
+**      Remote Procedure Call (RPC) 
+**
+**  ABSTRACT:
+**
+**  Management Attribute Configuration File (ACF)
+**
+**  This configuration file causes communications errors that occur during
+**  the execution of remote management operations to be returned in the
+**  status value for the routine.
+**  
+**
+*/
+
+interface mgmt
+{
+
+rpc__mgmt_inq_if_ids ([comm_status, fault_status] status);
+rpc__mgmt_inq_stats ([comm_status, fault_status] status);
+rpc__mgmt_is_server_listening ([comm_status, fault_status] status);
+rpc__mgmt_stop_server_listening ([comm_status, fault_status] status);
+rpc__mgmt_inq_princ_name ([comm_status, fault_status] status);
+
+}

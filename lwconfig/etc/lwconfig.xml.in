@@ -1,0 +1,689 @@
+<?xml version="1.0" encoding="utf-8"?> <capabilities>
+<section section="Eventlog">
+
+    <capability>
+        <name>AllowDeleteTo</name>
+        <description>List of users that can delete entries from log</description>
+        <registry
+            type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\AllowDeleteTo"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\eventlog\Parameters\AllowDeleteTo"
+            >
+
+            <description>A list of user names, group names, or SIDS separated by commas.</description>
+            <default><value></value></default>
+            <apply command="/opt/likewise/bin/lwsm restart eventlog" />
+        </registry>
+    </capability>
+
+    <capability>
+        <name>AllowReadTo</name>
+        <description>Allowed users that can read entries from log</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\AllowReadTo"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\eventlog\Parameters\AllowReadTo">
+            <description>A list of user names, group names, or SIDS separated by commas.</description>
+            <default>
+                <value></value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm restart eventlog" />
+        </registry>
+    </capability>
+
+    <capability>
+        <name>AllowWriteTo</name>
+        <description>Allowed users that can delete entries from log</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\AllowWriteTo"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\eventlog\Parameters\AllowWriteTo" >
+            <description>A list of user names, group names, or SIDS separated by commas.</description>
+            <default>
+                <value></value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm restart eventlog" />
+        </registry>
+    </capability>
+    <capability>
+        <name>MaxDiskUsage</name>
+        <description>Max size in bytes of eventlog database</description>
+        <registry type="dword"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\MaxDiskUsage"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\eventlog\Parameters\MaxDiskUsage" >
+            <description>Size in bytes</description>
+            <default>
+                <value>100MB</value>
+            </default>
+            <accept>
+                <range min="100" max="2147483648" />
+            </accept>
+            <unit suffix="B"  multiplier="1" />
+            <unit suffix="KB" multiplier="1024" />
+            <unit suffix="MB" multiplier="1048576" />
+            <apply command="/opt/likewise/bin/lwsm restart eventlog" />
+        </registry>
+    </capability>
+    <capability>
+        <name>MaxEventLifespan</name>
+        <description>Maximum number of days that events are saved in eventlog</description>
+        <registry type="dword"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\MaxEventLifespan"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\eventlog\Parameters\MaxEventLifespan" >
+            <description>days</description>
+            <default>
+                <value>90</value>
+            </default>
+            <accept>
+                <range min="1" max="365" />
+            </accept>
+            <apply command="/opt/likewise/bin/lwsm restart eventlog" />
+        </registry>
+    </capability>
+    <capability>
+        <name>MaxNumEvents</name>
+        <description>Maximum number of events to hold in eventlog database</description>
+        <registry type="dword"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Parameters\MaxNumEvents"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\eventlog\Parameters\MaxNumEvents" >
+            <description>number of events</description>
+            <default>
+                <value>100000</value>
+            </default>
+            <accept>
+                <range min="100" max="2000000" />
+            </accept>
+            <apply command="/opt/likewise/bin/lwsm restart eventlog" />
+        </registry>
+    </capability>
+  </section>
+<section section="Lsass">
+    <capability>
+        <name>DomainSeparator</name>
+        <description>Character used to designate the domain name separator</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\DomainSeparator"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\DomainSeparator" >
+            <description>A single character this is not alphanumeric or the SpaceReplacement character.</description>
+            <default>
+                <value>\</value>
+            </default>
+            <reject>
+                <pattern>..+</pattern>
+                <pattern>[a-zA-Z0-9]</pattern>
+            </reject>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+        </registry>
+    </capability>
+    <capability>
+        <name>SpaceReplacement</name>
+        <description>Character used to designate space characters in names of objects</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\SpaceReplacement"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\SpaceReplacement" >
+            <description>A single character used in place of spaces in names of objects</description>
+            <default>
+                <value>^</value>
+            </default>
+            <reject>
+                <pattern>..+</pattern>
+                <pattern>[a-zA-Z0-9]</pattern>
+            </reject>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+        </registry>
+    </capability>
+    <capability>
+        <name>EnableEventlog</name>
+        <description>Configure lsass to log events to the event log</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\EnableEventLog"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\EnableEventLog" >
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>LogInvalidPasswords</name>
+        <description>Configure lsass to log events for failed authentication attempts due to invalid passwords</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\LogInvalidPasswords"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\LogInvalidPasswords" >
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+</section>
+<section section="Lsass - PAM">
+    <capability>
+        <name>DisplayMotd</name>
+        <description>Display message of the day</description>
+            <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\PAM\DisplayMotd"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\PAM\DisplayMotd" >
+                <default>
+                    <value>false</value>
+                </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>PAMLogLevel</name>
+        <description>Configure PAM lsass logging detail level</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\PAM\LogLevel"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\PAM\LogLevel" >
+            <default>
+                <value>error</value>
+            </default>
+            <accept>
+                <value>disabled</value>
+                <value>error</value>
+                <value>warning</value>
+                <value>info</value>
+                <value>verbose</value>
+            </accept>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>UserNotAllowedError</name>
+        <description>Message displayed at console logon failed attempt</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\PAM\UserNotAllowedError"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\PAM\UserNotAllowedError" >
+            <description>Not allowed error</description>
+            <default>
+                <value>Access Denied</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+</section>
+<section section="Lsass - Active Directory provider">
+    <capability>
+        <name>AssumeDefaultDomain</name>
+        <description>Apply domain name prefix to account name at logon</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\AssumeDefaultDomain"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\AssumeDefaultDomain" >
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+        </registry>
+    </capability>
+    <capability>
+        <name>CreateHomeDir</name>
+        <description>Whether home directories should be automatically created upon user logon</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\CreateHomeDir"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\CreateHomeDir" >
+            <default>
+                <value>true</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>CreateK5Login</name>
+        <description>Whether .k5login file is to be created upon user logon</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\CreateK5Login"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\CreateK5Login" >
+            <default>
+                <value>true</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>SyncSystemTime</name>
+        <description>Whether system time should be syncronized with AD domain controller</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\SyncSystemTime"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\SyncSystemTime" >
+            <default>
+                <value>true</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>TrimUserMembership</name>
+        <description>Whether to remove a cached group membership entry derived from PAC with information from LDAP showing the user disappearing from a group.</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\TrimUserMembership"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\TrimUserMembership" >
+            <default>
+                <value>true</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>LdapSignAndSeal</name>
+        <description>Whether all LDAP traffic should be sent both signed and sealed</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\LdapSignAndSeal"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\LdapSignAndSeal" >
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+      <name>LogADNetworkConnectionEvents</name>
+      <description>Configure lsass to log events for offline query failures and transitions</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\LogNetworkConnectionEvents"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\LogNetworkConnectionEvents" >
+            <default>
+                <value>true</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+      <name>NssEnumerationEnabled</name>
+      <description>Whether to enumerate users or groups for NSS</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\NssEnumerationEnabled"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\NssEnumerationEnabled" >
+            <default>
+                <value>@enable_nss_enum_default@</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+        </registry>
+    </capability>
+    <capability>
+        <name>NssGroupMembersQueryCacheOnly</name>
+        <description>Whether to return only cached info for NSS group members</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\NssGroupMembersQueryCacheOnly"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\NssGroupMembersQueryCacheOnly" >
+            <default>
+                <value>true</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+        </registry>
+    </capability>
+    <capability>
+        <name>NssUserMembershipQueryCacheOnly</name>
+        <description>Whether to return only cached info for NSS user's groups</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\NssUserMembershipQueryCacheOnly"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\NssUserMembershipQueryCacheOnly" >
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+        </registry>
+    </capability>
+    <capability>
+        <name>RefreshUserCredentials</name>
+        <description>Whether to refresh user credentials agaist AD domain controller</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\RefreshUserCredentials"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\RefreshUserCredentials" >
+            <default>
+                <value>true</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>CacheEntryExpiry</name>
+        <description>Duration for when lsass object cache entries are marked stale</description>
+        <registry type="dword"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\CacheEntryExpiry"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\CacheEntryExpiry" >
+            <description>Duration in seconds (s), minutes (m), hours (h) or days (d)</description>
+            <default>
+                <value>4h</value>
+            </default>
+            <accept>
+                <range min="0" max="86400" />
+            </accept>
+            <unit suffix="s" multiplier="1" />
+            <unit suffix="m" multiplier="60" />
+            <unit suffix="h" multiplier="3600" />
+            <unit suffix="d" multiplier="86400" />
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>DomainManagerCheckDomainOnlineInterval</name>
+        <description>How often the domain manager should check whether a domain is back online</description>
+        <registry type="dword"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\DomainManagerCheckDomainOnlineInterval"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\DomainManagerCheckDomainOnlineInterval" >
+            <description>Duration in seconds (s), minutes (m), hours (h) or days (d)</description>
+            <default>
+                <value>5m</value>
+            </default>
+            <accept>
+                <range min="60" max="86400" />
+            </accept>
+            <unit suffix="s" multiplier="1" />
+            <unit suffix="m" multiplier="60" />
+            <unit suffix="h" multiplier="3600" />
+            <unit suffix="d" multiplier="86400" />
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>DomainManagerUnknownDomainCacheTimeout</name>
+        <description>How long an unknown domain is cached as unknown in the domain manager</description>
+        <registry type="dword"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\DomainManagerUnknownDomainCacheTimeout"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\DomainManagerUnknownDomainCacheTimeout" >
+            <description>Duration in seconds (s), minutes (m), hours (h) or days (d)</description>
+            <default>
+               <value>1h</value>
+            </default>
+            <accept>
+               <range min="60" max="86400" />
+            </accept>
+            <unit suffix="s" multiplier="1" />
+            <unit suffix="m" multiplier="60" />
+            <unit suffix="h" multiplier="3600" />
+            <unit suffix="d" multiplier="86400" />
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>MachinePasswordLifespan</name>
+        <description>Machine password expiration lifespan in seconds.</description>
+        <registry type="dword"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\MachinePasswordLifespan"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\MachinePasswordLifespan" >
+            <description>Duration in seconds (s), minutes (m), hours (h) or days (d). Example: 1d</description>
+            <default>
+                <value>30d</value>
+            </default>
+            <accept>
+                <range min="3600" max="31536000" />
+            </accept>
+            <accept>
+                <range min="0" max="0" />
+            </accept>
+            <unit suffix="s" multiplier="1" />
+            <unit suffix="m" multiplier="60" />
+            <unit suffix="h" multiplier="3600" />
+            <unit suffix="d" multiplier="86400" />
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>MemoryCacheSizeCap</name>
+        <description>The maximum bytes to use for the in-memory cache. Old data will be purged if the total cache size exceeds this limit. A value of 0 indicates no limit.</description>
+        <registry type="dword"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\MemoryCacheSizeCap"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\MemoryCacheSizeCap" >
+            <description>Size in bytes</description>
+            <default>
+                <value>0</value>
+            </default>
+            <unit suffix="B"  multiplier="1" />
+            <unit suffix="KB" multiplier="1024" />
+            <unit suffix="MB" multiplier="1048576" />
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>HomeDirPrefix</name>
+        <description>Prefix path for user's home directory. This value is used in place of the %H in the HomeDirTemplate setting. Value must be an absolute path.</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\HomeDirPrefix"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\HomeDirPrefix" >
+            <description>Absolute path to the home directory.</description>
+            <default>
+                <value>@default_homedir_prefix@</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+        </registry>
+    </capability>
+    <capability>
+        <name>HomeDirTemplate</name>
+        <description>Format string for user's home directory path. This value can contain substitution string markers for HomeDirPrefix (%H), Domain (%D), and User (%U).</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\HomeDirTemplate"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\HomeDirTemplate" >
+            <description>Absolute path to the home directory.</description>
+            <default>
+                <value>%H/local/%D/%U</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+        </registry>
+    </capability>
+    <capability>
+        <name>HomeDirUmask</name>
+        <description>Umask for home directories</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\HomeDirUmask"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\HomeDirUmask" >
+            <description>String of octal digits for home directory umask</description>
+            <default>
+                <value>022</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+        </registry>
+    </capability>
+    <capability>
+        <name>LoginShellTemplate</name>
+        <description>Default login shell template</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\LoginShellTemplate"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\LoginShellTemplate" >
+            <description>Path to shell</description>
+            <default>
+                <value>/bin/sh</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+        </registry>
+    </capability>
+    <capability>
+        <name>SkeletonDirs</name>
+        <description>Skeleton home directory template directories</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\SkeletonDirs"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\SkeletonDirs" >
+            <description>Comma separated list of skeleton directories.</description>
+            <default>
+                <value>@default_skeldirs@</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>UserDomainPrefix</name>
+        <description>Domain short name prefix to be used when AssumeDefaultDomain setting is enabled</description>
+      <Allowed>Domain short name of Active Directory domain that the user accounts reside. Blank will use the domain name which the computer is joined to.</Allowed>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\UserDomainPrefix"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\UserDomainPrefix" >
+            <description>Short name of Active Directory domain where the user accounts reside. Blank means use the domain name to which the computer is joined.</description>
+            <default>
+                <value></value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+            <apply command="/opt/likewise/bin/lw-ad-cache --delete-all" />
+        </registry>
+    </capability>
+    <capability>
+        <name>DomainManagerIgnoreAllTrusts</name>
+        <description>When true, ignore all trusts during domain enumeration.</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\DomainManagerIgnoreAllTrusts"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\DomainManagerIgnoreAllTrusts" >
+            <default>
+                <value>false</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>DomainManagerIncludeTrustsList</name>
+        <description>When DomainManagerIgnoreAllTrusts is true, these trusts are included</description>
+        <registry type="multistring"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\DomainManagerIncludeTrustsList"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\DomainManagerIncludeTrustsList" >
+            <description>A list of trusts.</description>
+            <default>
+                <value></value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>DomainManagerExcludeTrustsList</name>
+        <description>When DomainManagerIgnoreAllTrusts is false, these trusts are excluded.</description>
+        <registry type="multistring"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\DomainManagerExcludeTrustsList"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\DomainManagerExcludeTrustsList" >
+            <description>A list of trusts.</description>
+            <default>
+                <value></value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>RequireMembershipOf</name>
+        <description>Restrict logon access to computer to specific users or group members, or SIDs</description>
+        <registry type="multistring"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\RequireMembershipOf"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\RequireMembershipOf" >
+            <description>User names, group names, or SIDs.</description>
+            <default>
+                <value></value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+</section>
+<section section="Lsass - Local provider">
+    <capability>
+        <name>Local_AcceptNTLMv1</name>
+        <description></description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\Local\AcceptNTLMv1"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\Local\AcceptNTLMv1" >
+            <default>
+                <value>true</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>Local_HomeDirTemplate</name>
+        <description>Format string for lsass local provider account user's home directory path. This value can contain substitution string markers for HomeDirPrefix (%H), Domain (%D), and User (%U).</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\Local\HomeDirTemplate"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\Local\HomeDirTemplate" >
+            <description>Absolute path to the home directory.</description>
+            <default>
+                <value>%H/local/%D/%U</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>Local_HomeDirUmask</name>
+        <description>Umask for lsass local provider account home directories</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\Local\HomeDirUmask"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\Local\HomeDirUmask" >
+            <description>Absolute path to the home directory.</description>
+            <default>
+                <value>022</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>Local_LoginShellTemplate</name>
+        <description>Default login shell template for lsass local provider accounts</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\Local\LoginShellTemplate"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\Local\LoginShellTemplate" >
+            <description>Absolute path to the home directory.</description>
+            <default>
+                <value>/bin/sh</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+    <capability>
+        <name>Local_SkeletonDirs</name>
+        <description>Skeleton home directory template directories for lsass local provider accounts</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\Local\SkeletonDirs"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\Local\SkeletonDirs" >
+            <description>Absolute path to the home directory.</description>
+            <default>
+                <value>@default_skeldirs@</value>
+            </default>
+            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
+        </registry>
+    </capability>
+  </section>
+  <section section="System Initialization">
+    <capability>
+        <name>LsassAutostart</name>
+        <description>Start lsassd when lwsmd starts.</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Autostart" >
+            <default>
+                <value>true</value>
+            </default>
+        </registry>
+    </capability>
+    <capability>
+        <name>EventlogAutostart</name>
+        <description>Start eventlogd when lwsmd starts.</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Autostart" >
+            <default>
+                <value>true</value>
+            </default>
+        </registry>
+    </capability>
+    <capability>
+        <name>GpagentAutostart</name>
+        <description>Start gpagentd when lwsmd starts.</description>
+        <registry type="boolean"
+            lp-path="HKEY_THIS_MACHINE\Services\gpagent\Autostart" >
+            <default>
+                <value>true</value>
+            </default>
+        </registry>
+    </capability>
+  </section>
+</capabilities>
+
+<!--
+#Additional Likewise settings to be converted to Capabilities
+
+[HKEY_THIS_MACHINE\Services\lsass\Parameters\NTLM]
+"SendNTLMv2"=dword:00000000
+"Support128bit"=dword:00000001
+"Support56bit"=dword:00000001
+"SupportKeyExchange"=dword:00000001
+"SupportNTLM2SessionSecurity"=dword:00000001
+"SupportUnicode"=dword:00000001
+
+-->

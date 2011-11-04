@@ -1,0 +1,27 @@
+[HKEY_THIS_MACHINE\Services]
+
+[HKEY_THIS_MACHINE\Services\lwreg]
+"Description" = { 
+    default = "Likewise Registry Service" 
+    doc = "" 
+}
+"Path" = { 
+    default = "@SBINDIR@/lwregd" 
+    doc = "" 
+}
+"Arguments" = { 
+    default = "@SBINDIR@/lwregd" 
+    doc = "" 
+}
+"Environment" = { 
+    default = "" 
+    doc = "" 
+}
+"Dependencies" = { 
+    default = "" 
+    doc = "" 
+}
+"Type" = { 
+    default = dword:00000001 
+    doc = "" 
+}

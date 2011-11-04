@@ -1,0 +1,163 @@
+PROJECT_NAME="likewise-open"
+MODULES="core compiler autotools moonunit pkg-config likewise dceidl fortune"
+LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv \
+                sqlite libuuid openssl curl libxml2"
+SUBDIRS="$LW_ALL_BUNDLED \
+         lwbase lwmsg lwreg lwadvapi netlogon \
+         lwio libschannel dcerpc centutils lwsm eventlog lsass lwdns \
+         srvsvc lwnetapi lwtools domainjoin config package"
+
+
+defaults()
+{
+    MK_PREFIX="/opt/likewise"
+    MK_SYSCONFDIR="/etc/likewise"
+    MK_LOCALSTATEDIR="/var"
+    MK_DATADIR="/opt/likewise/share"
+    MK_DOCDIR="/usr/share/doc/likewise"
+    MK_MANDIR="/usr/share/man"
+}
+
+option()
+{
+    case "${MK_HOST_OS}" in
+        linux)
+            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl"
+            ;;
+        *)
+            default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl libxml2"
+            ;;
+    esac
+
+    mk_option \
+        OPTION=lw-bundled-libs \
+        PARAM='...' \
+        VAR=LW_BUNDLED \
+        DEFAULT="$default_bundled" \
+        HELP="Use bundled libraries"
+
+    _LW_BUNDLED="$LW_BUNDLED"
+
+    unset LW_BUNDLED
+    
+    for i in ${_LW_BUNDLED}
+    do
+        case "$i" in
+            +*)
+                [ -z "$LW_BUNDLED" ] && LW_BUNDLED="$default_bundled"
+                LW_BUNDLED="${LW_BUNDLED:+$LW_BUNDLED }${i#+}"
+                ;;
+            -*)
+                [ -z "$LW_BUNDLED" ] && LW_BUNDLED="$default_bundled"
+                lw_filter_bundled "${i#-}"
+                ;;
+            *)
+                LW_BUNDLED="${LW_BUNDLED:+$LW_BUNDLED }${i}"
+                ;;
+        esac
+    done
+}
+
+configure()
+{
+    mk_export LW_VERSION="6.1.0"
+    mk_export LW_BUNDLED
+    
+    mk_msg "configuring Likewise Open $LW_VERSION"
+    mk_msg "using bundled libraries: $LW_BUNDLED"
+
+    for comp in ${LW_ALL_BUNDLED}
+    do
+        lw_use_bundled "$comp" || mk_skip_subdir "$comp"
+    done
+}
+
+make()
+{
+    bundled_targets=""
+
+    for comp in ${LW_ALL_BUNDLED}
+    do
+        lw_use_bundled "$comp" && bundled_targets="$bundled_targets @$comp"
+    done
+            
+    mk_target \
+        TARGET="@bundled" \
+        DEPS="$bundled_targets @lwreg/libedit @dcerpc/flex-2.5.4"
+
+    mk_add_phony_target "$result"
+
+    lw_print_features
+}
+
+lw_filter_bundled()
+{
+    __needle="$1"
+    set -- ${LW_BUNDLED}
+    unset LW_BUNDLED
+    for i
+    do
+        if [ "$i" != "$__needle" ]
+        then
+            LW_BUNDLED="${LW_BUNDLED:+$LW_BUNDLED }${i}"
+        fi
+    done
+}
+
+
+lw_use_bundled()
+{
+    for _dep in ${LW_BUNDLED}
+    do
+        [ "$_dep" = "$1" ] && return 0
+    done
+
+    return 1
+}
+
+lw_print_feature()
+{
+    printf "%-30s%s\n" "$1:" "$2"
+}
+
+lw_print_features()
+{
+    printf -- "\n---\nConfiguration summary\n---\n\n"
+
+    set -- ${MK_HOST_ISAS}
+    
+    if [ "$#" -gt 1 -a "$MK_HOST_MULTIARCH" != "none" ]
+    then
+        lw_print_feature "Host system" "$MK_HOST_OS ($MK_HOST_MULTIARCH $MK_HOST_ISAS)"
+    else
+        lw_print_feature "Host system" "$MK_HOST_OS ($MK_HOST_ISAS)"
+    fi
+
+    lw_print_feature "Bundled libraries" "$LW_BUNDLED"
+
+    mk_get_export lwbase THREADPOOL_BACKEND
+    lw_print_feature "Threadpool backend" "$result"
+
+    mk_get_export lwbase HAVE_PTHREAD_ATTR_SETAFFINITY_NP
+    lw_print_feature "Threadpool CPU affinity" "$result"
+
+    mk_get_export lwio HAVE_LIB_FUSE
+    [ "$result" != "no" ] && result=yes
+    lw_print_feature "FUSE support" "$result"
+
+    mk_get_export lwio HAVE_LIB_ATTR
+    [ "$result" != "no" ] && result=yes
+    lw_print_feature "EA support" "$result"
+
+    mk_get_export domainjoin DJ_GUI_INTERFACE
+    lw_print_feature "Domain join GUI" "$result"
+
+    types=""
+
+    mk_rpm_enabled && types="$types rpm"
+    mk_deb_enabled && types="$types deb"
+
+    [ -z "$types" ] && types="none"
+
+    lw_print_feature "Package types" "${types# }"
+}

@@ -1,0 +1,7 @@
+make()
+{
+    mk_library \
+        LIB=gpglib \
+        SOURCES="*.c" \
+        INCLUDEDIRS=". ../include"
+}

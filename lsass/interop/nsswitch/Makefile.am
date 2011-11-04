@@ -1,0 +1,1 @@
+SUBDIRS = common @NSS_SUBDIR@

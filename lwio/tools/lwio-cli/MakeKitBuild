@@ -1,0 +1,9 @@
+make()
+{
+    mk_program \
+        PROGRAM=lwio-cli \
+        SOURCES="main.c stats.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="lw/base.h" \
+        LIBDEPS="lwioclient lwiocommon lwbase lwbase_nothr"
+}

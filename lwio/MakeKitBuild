@@ -1,0 +1,135 @@
+SUBDIRS="include utils ipc logging_r common libshareinfo client server tools fuse etc tests"
+
+configure()
+{
+    mk_config_header \
+        HEADER="include/config.h"
+
+    lw_define_feature_macros
+
+    case "$MK_OS" in
+        freebsd)
+            mk_define HAVE_DECL_KERN_PROC_PATHNAME 1 # FIXME
+            ;;
+        darwin)
+            mk_define HAVE_DECL_KERN_PROCARGS 1 # FIXME
+            ;;
+    esac
+
+    mk_check_endian
+    
+    mk_export MOD_EXT="$MK_DLO_EXT"
+    mk_export SBINDIR="$MK_SBINDIR"
+    mk_export LIBDIR="$MK_LIBDIR"
+    mk_export providerdir="$MK_LIBDIR"
+
+    mk_define MOD_EXT "\"$MK_DLO_EXT\""
+    mk_define CACHEDIR "\"$LW_CACHEDIR\""
+    mk_define LIBDIR "\"${MK_LIBDIR}\""
+    mk_define PREFIXDIR "\"${MK_PREFIX}\""
+
+    # FIXME: do a real configure test here
+    mk_define HAVE_SOCKLEN_T 1
+    mk_define GETSOCKNAME_TAKES_SOCKLEN_T 1
+
+    # FIXME: make this an option
+    mk_define LW_USE_SHARE_REPOSITORY_REGISTRY 1
+
+    mk_define UNICODE 1
+    mk_define _FILE_OFFSET_BITS 64
+
+    # Hack around buggy system header on HP-UX 11.11
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+
+    mk_check_types \
+        HEADERDEPS="sys/types.h" \
+        blksize_t
+
+    mk_check_libraries \
+        FAIL="yes" \
+        regclient lwbase krb5 gssapi_krb5 crypto lwnetclientapi
+
+    mk_check_headers \
+        FAIL="yes" \
+        reg/reg.h lw/base.h krb5.h gssapi.h openssl/crypto.h wc16str.h \
+        openssl/md5.h openssl/hmac.h openssl/rand.h
+
+    mk_check_headers \
+        inttypes.h stdlib.h sys/varargs.h dlfcn.h pthread.h \
+        time.h sys/time.h strings.h stdbool.h sys/socket.h netinet/tcp.h \
+        netdb.h wc16str.h wc16printf.h sys/param.h sys/pstat.h \
+        procfs.h sys/procfs.h sys/vfs.h netinet/in.h netinet/in6.h
+
+    mk_check_headers \
+        fuse.h
+
+    mk_check_headers \
+        HEADERDEPS="stdlib.h" \
+        attr/xattr.h
+
+    mk_check_headers \
+        HEADERDEPS="sys/types.h" \
+        sys/sysctl.h sys/user.h
+
+    mk_check_types \
+        HEADERDEPS="procfs.h sys/procfs.h" \
+        "struct psinfo"
+
+    mk_check_types \
+        HEADERDEPS="sys/types.h sys/socket.h" \
+        "socklen_t"
+
+    mk_check_libraries \
+        attr pthread nsl socket fuse
+
+    mk_check_functions \
+        HEADERDEPS="stdlib.h attr/xattr.h" \
+        LIBDEPS="$LIB_ATTR" \
+        setxattr fsetxattr getxattr fgetxattr
+
+    mk_check_functions \
+        HEADERDEPS="sys/vfs.h" \
+        statfs fstatfs
+
+    mk_check_functions \
+        HEADERDEPS="unistd.h" \
+        fdatasync fsync
+
+    mk_check_functions \
+        HEADERDEPS="sys/types.h dirent.h" \
+        dirfd
+
+    mk_check_functions \
+        HEADERDEPS="stdlib.h" \
+        strtoll __strtoll strtoull __strtoull
+
+    mk_check_functions \
+        HEADERDEPS="sys/pstat.h" \
+        pstat_getproc
+
+    if mk_check_function \
+        HEADERDEPS="ctype.h" \
+        FUNCTION="isblank"
+    then
+        mk_define HAVE_DECL_ISBLANK 1
+    fi
+
+    lw_check_pthread_once_init
+
+    if [ "$HAVE_FUSE_H" != "no" -a "$HAVE_LIB_FUSE" != "no" ]
+    then
+        mk_msg "build FUSE module: yes"
+    else
+        mk_msg "build FUSE module: no"
+        mk_skip_subdir fuse
+    fi
+
+    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
+    then
+        mk_output_file \
+            INPUT="etc/lwiod.reg.svcm.in" \
+            OUTPUT="etc/lwiod.reg"
+    else
+        mk_output_file "etc/lwiod.reg"
+    fi
+}

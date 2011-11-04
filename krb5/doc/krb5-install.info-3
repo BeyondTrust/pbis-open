@@ -1,0 +1,385 @@
+This is krb5-install.info, produced by makeinfo version 4.5 from
+install.texinfo.
+
+Copyright (C) 1985-2010 by the Massachusetts Institute of Technology.
+INFO-DIR-SECTION Kerberos
+START-INFO-DIR-ENTRY
+* krb5-install: (krb5-install).         Kerberos V5 Installation Guide
+END-INFO-DIR-ENTRY
+
+
+File: krb5-install.info,  Node: Mac OS X Configuration,  Prev: Client Machine Configuration Files,  Up: Client Machine Configuration Files
+
+Mac OS X Configuration
+......................
+
+To install Kerberos V5 on Mac OS X and Mac OS X Server, follow the
+directions for generic Unix-based OS's, except for the `/etc/services'
+updates described above.
+
+Mac OS X and Mac OS X Server use a database called NetInfo to store the
+contents of files normally found in `/etc'.  Instead of modifying
+`/etc/services', you should run the following commands to add the
+Kerberos service entries to NetInfo:
+
+     $ niutil -create . /services/kerberos
+     $ niutil -createprop . /services/kerberos name kerberos kdc
+     $ niutil -createprop . /services/kerberos port 750
+     $ niutil -createprop . /services/kerberos protocol tcp udp
+     $ niutil -create . /services/krbupdate
+     $ niutil -createprop . /services/krbupdate name krbupdate kreg
+     $ niutil -createprop . /services/krbupdate port 760
+     $ niutil -createprop . /services/krbupdate protocol tcp
+     $ niutil -create . /services/kpasswd
+     $ niutil -createprop . /services/kpasswd name kpasswd kpwd
+     $ niutil -createprop . /services/kpasswd port 761
+     $ niutil -createprop . /services/kpasswd protocol tcp
+     $ niutil -create . /services/klogin
+     $ niutil -createprop . /services/klogin port 543
+     $ niutil -createprop . /services/klogin protocol tcp
+     $ niutil -create . /services/eklogin
+     $ niutil -createprop . /services/eklogin port 2105
+     $ niutil -createprop . /services/eklogin protocol tcp
+     $ niutil -create . /services/kshell
+     $ niutil -createprop . /services/kshell name kshell krcmd
+     $ niutil -createprop . /services/kshell port 544
+     $ niutil -createprop . /services/kshell protocol tcp
+
+In addition to adding services to NetInfo, you must also modify the
+resolver configuration in NetInfo so that the machine resolves its own
+hostname as a FQDN (fully qualified domain name).  By default, Mac OS X
+and Mac OS X Server machines query NetInfo to resolve hostnames before
+falling back to DNS.  Because NetInfo has an unqualified name for all
+the machines in the NetInfo database, the machine's own hostname will
+resolve to an unqualified name.  Kerberos needs a FQDN to look up keys
+in the machine's keytab file.
+
+Fortunately, you can change the `lookupd' caching order to query DNS
+first.  Run the following NetInfo commands and reboot the machine:
+
+     $ niutil -create . /locations/lookupd/hosts
+     $ niutil -createprop . /locations/lookupd/hosts LookupOrder CacheAgent DNSAgent
+      NIAgent NILAgent
+
+Once you have rebooted, you can verify that the resolver now behaves
+correctly.  Compile the Kerberos 5 distribution and run:
+
+     $ cd .../src/tests/resolve
+     $ ./resolve
+
+This will tell you whether or not your machine returns FQDNs on name
+lookups.  If the test still fails, you can also try turning off DNS
+caching.  Run the following commands and reboot:
+
+     $ niutil -create . /locations/lookupd/hosts
+     $ niutil -createprop . /locations/lookupd/hosts LookupOrder DNSAgent
+      CacheAgent NIAgent NILAgent
+
+The remainder of the setup of a Mac OS X client machine or application
+server should be the same as for other UNIX-based systems.
+
+
+File: krb5-install.info,  Node: UNIX Application Servers,  Prev: Installing and Configuring UNIX Client Machines,  Up: Installing Kerberos V5
+
+UNIX Application Servers
+========================
+
+An application server is a host that provides one or more services over
+the network.  Application servers can be "secure" or "insecure."  A
+"secure" host is set up to require authentication from every client
+connecting to it.  An "insecure" host will still provide Kerberos
+authentication, but will also allow unauthenticated clients to connect.
+
+If you have Kerberos V5 installed on all of your client machines,
+MIT recommends that you make your hosts secure, to take advantage of
+the security that Kerberos authentication affords.  However, if you
+have some clients that do not have Kerberos V5 installed, you can run
+an insecure server, and still take advantage of Kerberos V5's single
+sign-on capability.
+
+* Menu:
+
+* The Keytab File::
+* Some Advice about Secure Hosts::
+
+
+File: krb5-install.info,  Node: The Keytab File,  Next: Some Advice about Secure Hosts,  Prev: UNIX Application Servers,  Up: UNIX Application Servers
+
+The Keytab File
+---------------
+
+All Kerberos server machines need a "keytab" file, called
+`/etc/krb5.keytab', to authenticate to the KDC.  The keytab file is an
+encrypted, local, on-disk copy of the host's key.  The keytab file,
+like the stash file (*Note Create the Database::) is a potential
+point-of-entry for a break-in, and if compromised, would allow
+unrestricted access to its host.  The keytab file should be readable
+only by root, and should exist only on the machine's local disk.  The
+file should not be part of any backup of the machine, unless access to
+the backup data is secured as tightly as access to the machine's root
+password itself.
+
+In order to generate a keytab for a host, the host must have a principal
+in the Kerberos database.  The procedure for adding hosts to the
+database is described fully in the "Adding or Modifying Principals"
+section of the `Kerberos V5 System Administrator's Guide'.  *Note
+Create Host Keys for the Slave KDCs::. for a brief description.)  The
+keytab is generated by running `kadmin' and issuing the `ktadd' command.
+
+For example, to generate a keytab file to allow the host
+trillium.mit.edu to authenticate for the services `host', `ftp', and
+`pop', the administrator `joeadmin' would issue the command (on
+trillium.mit.edu):
+
+     trillium% /usr/local/sbin/kadmin
+     kadmin5: ktadd host/trillium.mit.edu ftp/trillium.mit.edu
+     => pop/trillium.mit.edu
+     kadmin: Entry for principal host/trillium.mit.edu@ATHENA.MIT.EDU with
+     kvno 3, encryption type DES-CBC-CRC added to keytab
+     WRFILE:/etc/krb5.keytab.
+     kadmin: Entry for principal ftp/trillium.mit.edu@ATHENA.MIT.EDU with
+     kvno 3, encryption type DES-CBC-CRC added to keytab
+     WRFILE:/etc/krb5.keytab.
+     kadmin: Entry for principal pop/trillium.mit.edu@ATHENA.MIT.EDU with
+     kvno 3, encryption type DES-CBC-CRC added to keytab
+     WRFILE:/etc/krb5.keytab.
+     kadmin5: quit
+     trillium%
+
+If you generate the keytab file on another host, you need to get a copy
+of the keytab file onto the destination host (`trillium', in the above
+example) without sending it unencrypted over the network.
+
+
+File: krb5-install.info,  Node: Some Advice about Secure Hosts,  Prev: The Keytab File,  Up: UNIX Application Servers
+
+Some Advice about Secure Hosts
+------------------------------
+
+Kerberos V5 can protect your host from certain types of break-ins, but
+it is possible to install Kerberos V5 and still leave your host
+vulnerable to attack.  Obviously an installation guide is not the place
+to try to include an exhaustive list of countermeasures for every
+possible attack, but it is worth noting some of the larger holes and how
+to close them.
+
+We recommend that backups of secure machines exclude the keytab file
+(`/etc/krb5.keytab').  If this is not possible, the backups should at
+least be done locally, rather than over a network, and the backup tapes
+should be physically secured.
+
+The keytab file and any programs run by root, including the Kerberos V5
+binaries, should be kept on local disk.  The keytab file should be
+readable only by root.
+
+
+File: krb5-install.info,  Node: Upgrading Existing Kerberos V5 Installations,  Next: Bug Reports for Kerberos V5,  Prev: Installing Kerberos V5,  Up: Top
+
+Upgrading Existing Kerberos V5 Installations
+********************************************
+
+If you already have an existing Kerberos database that you created with
+a prior release of Kerberos 5, you can upgrade it to work with the
+current release with the `kdb5_util' command.  It is only necessary to
+perform this dump/undump procedure if you were running a krb5-1.0.x KDC
+and are migrating to a krb5-1.1.x or newer KDC or if you were running a
+krb5-1.1.x KDC and are migrating to a krb5-1.2.x or newer KDC.  The
+process for upgrading a Master KDC involves the following steps:
+
+  1. Stop your current KDC and administration server processes, if any.
+
+  2. Dump your existing Kerberos database to an ASCII file with
+     `kdb5_util''s "dump" command:
+
+          shell% cd /usr/local/var/krb5kdc
+          shell% kdb5_util dump old-kdb-dump
+          shell% kdb5_util dump -ov old-kdb-dump.ov
+          shell%
+
+  3. Create a new Master KDC installation (*Note Install the Master
+     KDC::.).  If you have a stash file for your current database,
+     choose any new master password but then copy your existing stash
+     file to the location specified by your kdc.conf; if you do not
+     have a stash file for your current database, you must choose the
+     same master password.
+
+  4. Load your old Kerberos database into the new system with
+     `kdb5_util''s "load" command:
+
+          shell% cd /usr/local/var/krb5kdc
+          shell% kdb5_util load old-kdb-dump
+          shell% kdb5_util load -update old-kdb-dump.ov
+          shell%
+
+
+The "dump -ov" and "load -update" commands are necessary in order to
+preserve per-principal policy information, since the default dump format
+filters out that information.  If you omit those steps, the loaded
+database database will lose the policy information for each principal
+that has a policy.
+
+To update a Slave KDC, you must stop the old server processes on the
+Slave KDC, install the new server binaries, reload the most recent slave
+dump file, and re-start the server processes.
+
+* Menu:
+
+* Upgrading to Triple-DES and RC4 Encryption Keys::
+
+
+File: krb5-install.info,  Node: Upgrading to Triple-DES and RC4 Encryption Keys,  Prev: Upgrading Existing Kerberos V5 Installations,  Up: Upgrading Existing Kerberos V5 Installations
+
+Upgrading to Triple-DES Encryption Keys
+=======================================
+
+Beginning with the 1.2 release from MIT, Kerberos includes a stronger
+encryption algorithm called "triple DES" - essentially, three
+applications of the basic DES encryption algorithm, greatly increasing
+the resistance to a brute-force search for the key by an attacker.
+This algorithm is more secure, but encryption is much slower.
+
+Release 1.1 had some support for triple-DES service keys, but with
+release 1.2 we have added support for user keys and session keys as
+well.  Release 1.0 had very little support for multiple cryptosystems,
+and some of that software may not function properly in an environment
+using triple-DES as well as plain DES.
+
+In the 1.3 release from MIT, Kerberos also includes the RC4 encryption
+alogorithm, a stream cipher symmetric key algorithm developed in 1987
+by Ronald Rivest at RSA Data Security.  Please note that RC4 is not
+part of the IETF standard.
+
+Because of the way the MIT Kerberos database is structured, the KDC
+will assume that a service supports only those encryption types for
+which keys are found in the database.  Thus, if a service has only a
+single-DES key in the database, the KDC will not issue tickets for that
+service that use triple-DES or RC4 session keys; it will instead issue
+only single-DES session keys, even if other services are already
+capable of using triple-DES or RC4.  So if you make sure your
+application server software is updated before adding a triple-DES or
+RC4 key for the service, clients should be able to talk to services at
+all times during the updating process.
+
+Normally, the listed `supported_enctypes' in `kdc.conf' are all used
+when a new key is generated.  You can control this with command-line
+flags to `kadmin' and `kadmin.local'.  You may want to exclude
+triple-DES and RC4 by default until you have updated a lot of your
+application servers, and then change the default to include triple-DES
+and RC4.  We recommend that you always include `des-cbc-crc' in the
+default list.
+
+
+File: krb5-install.info,  Node: Bug Reports for Kerberos V5,  Next: Copyright,  Prev: Upgrading Existing Kerberos V5 Installations,  Up: Top
+
+Bug Reports for Kerberos V5
+***************************
+
+In any complex software, there will be bugs.  If you have successfully
+built and installed Kerberos V5, please use the `krb5-send-pr' program
+to fill out a Problem Report should you encounter any errors in our
+software.
+
+Bug reports that include proposed fixes are especially welcome.  If you
+do include fixes, please send them using either context diffs or unified
+diffs (using `diff -c' or `diff -u', respectively).  Please be careful
+when using "cut and paste" or other such means to copy a patch into a
+bug report; depending on the system being used, that can result in
+converting TAB characters into spaces, which makes applying the patches
+more difficult.
+
+The `krb5-send-pr' program is installed in the directory
+`/usr/local/sbin'.
+
+The `krb5-send-pr' program enters the problem report into our Problem
+Report Management System (PRMS), which automatically assigns it to the
+engineer best able to help you with problems in the assigned category.
+
+The `krb5-send-pr' program will try to intelligently fill in as many
+fields as it can.  You need to choose the "category", "class",
+"severity", and "priority" of the problem, as well as giving us as much
+information as you can about its exact nature.
+
+The PR category will be one of:
+
+     krb5-admin   krb5-appl    krb5-build   krb5-clients
+     krb5-doc     krb5-kdc     krb5-libs    krb5-misc
+     pty          telnet       test
+
+Choose the category that best describes the area under which your
+problem falls.
+
+The class can be "sw-bug", "doc-bug", "change-request", or "support".
+The first two are exactly as their names imply.  Use change-request
+when the software is behaving according to specifications, but you want
+to request changes in some feature or behavior.  The support class is
+intended for more general questions about building or using Kerberos V5.
+
+The severity of the problem indicates the problem's impact on the
+usability of Kerberos V5.  If a problem is "critical", that means the
+product, component or concept is completely non-operational, or some
+essential functionality is missing, and no workaround is known.  A
+"serious" problem is one in which the product, component or concept is
+not working properly or significant functionality is missing.  Problems
+that would otherwise be considered critical are rated serious when a
+workaround is known.  A "non-critical" problem is one that is indeed a
+problem, but one that is having a minimal effect on your ability to use
+Kerberos V5.  E.g., The product, component or concept is working in
+general, but lacks features, has irritating behavior, does something
+wrong, or doesn't match its documentation.  The default severity is
+serious.
+
+The priority indicates how urgent this particular problem is in
+relation to your work.  Note that low priority does not imply low
+importance.  A priority of "high" means a solution is needed as soon as
+possible.  A priority of "medium" means the problem should be solved no
+later than the next release.  A priority of "low" means the problem
+should be solved in a future release, but it is not important to your
+work how soon this happens.  The default priority is medium.
+
+Note that a given severity does not necessarily imply a given priority.
+For example, a non-critical problem might still have a high priority if
+you are faced with a hard deadline.  Conversely, a serious problem might
+have a low priority if the feature it is disabling is one that you do
+not need.
+
+It is important that you fill in the release field and tell us what
+changes you have made, if any.
+
+A sample filled-out form from a company named "Toasters, Inc." might
+look like this:
+
+     To: krb5-bugs@mit.edu
+     Subject: misspelled "Kerberos" in title of installation guide
+     From: jcb
+     Reply-To: jcb
+     Cc:
+     X-send-pr-version: 3.99
+     
+     
+     >Submitter-Id:	mit
+     >Originator:	Jeffrey C. Gilman Bigler
+     >Organization:
+     mit
+     >Confidential:	no
+     >Synopsis:	Misspelled "Kerberos" in title of installation guide
+     >Severity:	non-critical
+     >Priority:	low
+     >Category:	krb5-doc
+     >Class:		doc-bug
+     >Release:	1.0-development
+     >Environment:
+     	<machine, os, target, libraries (multiple lines)>
+     System: ULTRIX imbrium 4.2 0 RISC
+     Machine: mips
+     >Description:
+             Misspelled "Kerberos" in title of "Kerboros V5 Installation Guide"
+     >How-To-Repeat:
+             N/A
+     >Fix:
+             Correct the spelling.
+
+If the `krb5-send-pr' program does not work for you, or if you did not
+get far enough in the process to have an installed and working
+`krb5-send-pr', you can generate your own form, using the above as an
+example.
+

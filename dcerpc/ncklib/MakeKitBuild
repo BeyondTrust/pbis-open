@@ -1,0 +1,268 @@
+make()
+{
+    # Common flags
+
+    NCK_IDLFLAGS="-no_cpp -no_mepv"
+    NCK_INCLUDEDIRS=". ../include include/$target_os"
+    NCK_CFLAGS="-Wall -Werror -fno-strict-aliasing"
+    NCK_HEADERDEPS="dce/rpc.h gssapi.h"
+
+    # Source listings
+
+    RPC_SOURCES="\
+        dce_error.c rpcclock.c rpcdbg.c rpclist.c \
+        rpclog.c rpcmem.c rpcmutex.c rpcrand.c rpctimer.c"
+
+    COM_SOURCES="\
+        comauth.c combind.c comcall.c comcthd.c comep.c comif.c \
+        cominit.c cominit_ux.c comnaf.c comnet.c comnlsn.c comobj.c comp.c \
+        comtwr.c comtwrflr.c comtwrref.c comutil.c nsldap.c sec_id.c"
+
+    TRANS_SOURCES="comsoc.c comsoc_bsd.c comsoc_smb.c xnet.c"
+    
+    TRANS_HEADERS=""
+    
+    TRANS_LIBS=""
+
+    if [ "$ENABLE_HTTP" = yes ]
+    then
+        TRANS_SOURCES="$TRANS_SOURCES comsoc_http.c"
+        TRANS_HEADERS="$TRANS_HEADERS curl/curl.h"
+        TRANS_LIBS="$TRANS_LIBS curl"
+    fi
+
+    STUB_SOURCES="pickle_cstub.c ep_cstub.c"
+
+    MGMT_STUB_SOURCES="mgmt_cstub.c mgmt_sstub.c"
+
+    NCK_SOURCES="comfork.c ndrglob.c mgmt.c"
+
+    PROT_NCACN_SOURCES="\
+        cnassoc.c cnbind.c cncall.c cncasgsm.c \
+        cncassm.c cncclsm.c cncthd.c cnfbuf.c cnid.c cninit.c cnmgmt.c \
+        cnnet.c cnp.c cnpkt.c cnrcvr.c cnsasgsm.c cnsassm.c cnsclsm.c \
+        cnsm.c cnxfer.c"
+
+    PROT_NCADG_SOURCES="\
+        conv.c dg.c dgcall.c dgccall.c \
+        dgccallt.c dgcct.c dgclive.c dgclsn.c dgexec.c dgfwd.c \
+        dgglob.c dghnd.c dginit.c dglossy.c dglsn.c dgpkt.c dgrq.c \
+        dgscall.c dgsct.c dgslive.c dgslsn.c dgsoc.c dgutl.c dgxq.c"
+
+    PROT_NCADG_STUB_SOURCES="conv_cstub.c convc_cstub.c convc_sstub.c"
+
+    NAF_IP_SOURCES="ipnaf.c ipnaf_linux.c twr_ip.c"
+
+    NAF_NP_SOURCES="npnaf.c npnaf_linux.c twr_np.c twr_uxd.c"
+
+    NAF_HTTP_SOURCES="httpnaf.c httpnaf_linux.c"
+
+    AUTH_GSS_SOURCES="gssauth.c gssauthcn.c"
+
+    AUTH_SCHANNEL_SOURCES="schnauth.c schnauthcn.c"
+
+    AUTH_NTLMSSP_SOURCES="ntlmssp.c ntlmsspcn.c"
+
+    NCK_EXTRA_GROUPS=""
+
+    # Generate core stubs
+
+    lw_dceidl \
+        IDL="pickle.idl" \
+        HEADER="pickle.h" \
+        CSTUB="pickle_cstub.c" \
+        INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+        IDLFLAGS="$NCK_IDLFLAGS"
+
+    lw_dceidl \
+        IDL="../include/dce/ep.idl" \
+        HEADER="ep.h" \
+        CSTUB="ep_cstub.c" \
+        INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+        IDLFLAGS="$NCK_IDLFLAGS -cepv"
+
+    lw_dceidl \
+        IDL="../include/dce/mgmt.idl" \
+        HEADER="mgmt.h" \
+        CSTUB="mgmt_cstub.c" \
+        SSTUB="mgmt_sstub.c" \
+        INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+        IDLFLAGS="$NCK_IDLFLAGS -cepv"
+
+    # Build core object groups
+
+    mk_group \
+        GROUP="stubs" \
+        SOURCES="$STUB_SOURCES" \
+        INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+        HEADERDEPS="$NCK_HEADERDEPS" \
+        CFLAGS="$NCK_CFLAGS"
+
+    mk_group \
+        GROUP="mgmt_stubs" \
+        SOURCES="$MGMT_STUB_SOURCES" \
+        INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+        HEADERDEPS="$NCK_HEADERDEPS" \
+        CFLAGS="$NCK_CFLAGS"
+
+    mk_group \
+        GROUP="com" \
+        SOURCES="$COM_SOURCES" \
+        INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+        CPPFLAGS="-DIMAGE_DIR=\"$MK_LIBDIR\"" \
+        CFLAGS="$NCK_CFLAGS" \
+        GROUPDEPS="stubs" \
+        HEADERDEPS="$NCK_HEADERDEPS" \
+        DEPS="ep.h pickle.h"
+    
+    mk_group \
+        GROUP="rpc" \
+        SOURCES="$RPC_SOURCES" \
+        INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+        CFLAGS="$NCK_CFLAGS" \
+        HEADERDEPS="$NCK_HEADERDEPS"
+
+    mk_group \
+        GROUP="trans" \
+        SOURCES="$TRANS_SOURCES" \
+        INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+        CFLAGS="$NCK_CFLAGS" \
+        HEADERDEPS="$NCK_HEADERDEPS lwio/lwio.h lw/base.h $TRANS_HEADERS" \
+        LIBDEPS="lwioclient $TRANS_LIBS"
+
+    # Build optional protocol support
+
+    if [ "$ENABLE_NCACN" = "yes" ]
+    then
+        mk_group \
+            GROUP="prot_ncacn" \
+            SOURCES="$PROT_NCACN_SOURCES" \
+            INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+            CFLAGS="$NCK_CFLAGS" \
+            HEADERDEPS="$NCK_HEADERDEPS"
+        
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS prot_ncacn"
+    fi
+
+    if [ "$ENABLE_NCADG" = "yes" ]
+    then
+        lw_dceidl \
+            IDL="../include/dce/conv.idl" \
+            HEADER="conv.h" \
+            CSTUB="conv_cstub.c" \
+            INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+            IDLFLAGS="$NCK_IDLFLAGS -cepv"
+
+        lw_dceidl \
+            IDL="../include/dce/convc.idl" \
+            HEADER="convc.h" \
+            CSTUB="convc_cstub.c" \
+            SSTUB="convc_sstub.c" \
+            INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+            IDLFLAGS="$NCK_IDLFLAGS -cepv"
+
+        mk_group \
+            GROUP="prot_ncadg_stubs" \
+            SOURCES="$PROT_NCADG_STUB_SOURCES" \
+            INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+            HEADERDEPS="$NCK_HEADERDEPS" \
+            CFLAGS="$NCK_CFLAGS"
+
+        mk_group \
+            GROUP="prot_ncadg" \
+            SOURCES="$PROT_NCADG_SOURCES" \
+            INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+            CFLAGS="$NCK_CFLAGS" \
+            HEADERDEPS="$NCK_HEADERDEPS" \
+            GROUPDEPS="prot_ncadg_stubs"
+        
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS prot_ncadg"
+    fi
+
+    # Build optional address family support
+
+    if [ "$ENABLE_IP" = "yes" ]
+    then
+        mk_group \
+            GROUP="naf_ip" \
+            SOURCES="$NAF_IP_SOURCES" \
+            INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+            CFLAGS="$NCK_CFLAGS" \
+            HEADERDEPS="$NCK_HEADERDEPS"
+
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS naf_ip"
+    fi
+
+    if [ "$ENABLE_NP" = "yes" ]
+    then
+        mk_group \
+            GROUP="naf_np" \
+            SOURCES="$NAF_NP_SOURCES" \
+            INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+            CFLAGS="$NCK_CFLAGS" \
+            HEADERDEPS="$NCK_HEADERDEPS"
+
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS naf_np"
+    fi
+
+    if [ "$ENABLE_HTTP" = "yes" ]
+    then
+        mk_group \
+            GROUP="naf_http" \
+            SOURCES="$NAF_HTTP_SOURCES" \
+            INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+            CFLAGS="$NCK_CFLAGS" \
+            HEADERDEPS="$NCK_HEADERDEPS"
+
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS naf_http"
+    fi
+
+    # Build optional authentication support
+
+    if [ "$ENABLE_GSS" = "yes" ]
+    then
+        mk_group \
+            GROUP="auth_gss" \
+            SOURCES="$AUTH_GSS_SOURCES" \
+            INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+            CFLAGS="$NCK_CFLAGS" \
+            HEADERDEPS="$NCK_HEADERDEPS gssapi.h" \
+            LIBDEPS="gssapi_krb5"
+
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS auth_gss"
+    fi
+
+    if [ "$ENABLE_SCHANNEL" = "yes" ]
+    then
+        mk_group \
+            GROUP="auth_schannel" \
+            SOURCES="$AUTH_SCHANNEL_SOURCES" \
+            INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+            CFLAGS="$NCK_CFLAGS" \
+            HEADERDEPS="$NCK_HEADERDEPS schannel.h" \
+            LIBDEPS="schannel"
+
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS auth_schannel"
+    fi
+
+    if [ "$ENABLE_NTLMSSP" = "yes" ]
+    then
+        mk_group \
+            GROUP="auth_ntlmssp" \
+            SOURCES="$AUTH_NTLMSSP_SOURCES" \
+            INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+            CFLAGS="$NCK_CFLAGS" \
+            HEADERDEPS="$NCK_HEADERDEPS"
+
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS auth_ntlmssp"
+    fi
+
+    mk_group \
+        GROUP="nck" \
+        SOURCES="$NCK_SOURCES" \
+        INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+        CFLAGS="$NCK_CFLAGS" \
+        HEADERDEPS="$NCK_HEADERDEPS" \
+        GROUPDEPS="com rpc trans mgmt_stubs $NCK_EXTRA_GROUPS" \
+        LIBDEPS="$LIB_SOCKET $LIB_NSL $LIB_DL"
+}

@@ -1,0 +1,1 @@
+SUBDIRS="api ntlm store auth-providers rpc lsassd"

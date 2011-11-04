@@ -1,0 +1,12 @@
+make()
+{
+    mk_autotools \
+        HEADERS="curl/curl.h" \
+        LIBS="curl" \
+        HEADERDEPS="openssl/ssl.h" \
+        LIBDEPS="ssl" \
+        --disable-ldap --disable-ldaps --disable-ftp \
+        --disable-rtsp --disable-dict --disable-telnet \
+        --disable-tftp --disable-pop3 --disable-imap \
+        --disable-smtp
+}

@@ -1,0 +1,72 @@
+make()
+{
+    BASE_INCLUDE_DIRS="../include ."
+
+    BASE_NOTHR_SOURCES="\
+        error-conv.c \
+        errno.c \
+        ntstatus.c \
+        dscache.c \
+        rpcstatus.c \
+        rtllog.c \
+        rtlmemory.c \
+        rtlstring.c \
+        rtlstring_cstring.c \
+        rtlstring_wc16string.c \
+        rtlstring_unicode.c \
+        rtlstring_ansi.c \
+        rbtree.c \
+        hash.c \
+        security-sid.c \
+        security-acl.c \
+        security-sd.c \
+        security-sddl.c \
+        security-sddlmapping.c \
+        security-privileges.c \
+        wc16str.c \
+        wc16printf.c"
+
+    BASE_SOURCES="\
+        atomic.c \
+        svcm.c \
+        security-token.c \
+        security-sd-inherit.c \
+        threadpool-common.c \
+        mapsecurity.c"
+
+    BASE_HEADER_DEPS="uuid/uuid.h iconv.h"
+       
+    mk_multiarch_do
+        mk_library \
+            LIB="lwbase_nothr" \
+            SOURCES="$BASE_NOTHR_SOURCES" \
+            INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
+            HEADERDEPS="$BASE_HEADER_DEPS" \
+            LIBDEPS="uuid $LIB_ICONV $LIB_XNET" \
+            LDFLAGS="$DS_FRAMEWORK_LDFLAGS"
+    mk_multiarch_done
+
+    case "$THREADPOOL_BACKEND" in
+        "epoll"|"kqueue"|"select"|"poll")
+            THREADPOOL_SOURCES="threadpool-${THREADPOOL_BACKEND}.c"
+            ;;
+        *)
+            mk_fail "unknown threadpool backend: $THREADPOOL_BACKEND"
+            ;;
+    esac
+
+    mk_library \
+        LIB="lwbase" \
+        SOURCES="$BASE_SOURCES $THREADPOOL_SOURCES" \
+        CPPFLAGS="$BASE_CPPFLAGS" \
+        INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
+        HEADERDEPS="$BASE_HEADER_DEPS" \
+        LIBDEPS="lwbase_nothr $LIB_PTHREAD $LIB_DL $LIB_RT"
+
+    mk_program \
+        PROGRAM="lw-svcm-wrap" \
+        SOURCES="svcm-wrap.c" \
+        INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
+        HEADERDEPS="$BASE_HEADER_DEPS" \
+        LIBDEPS="lwbase_nothr lwbase"
+}

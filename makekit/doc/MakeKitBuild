@@ -1,0 +1,39 @@
+MODULES="docbook"
+
+configure()
+{
+    if mk_have_docbook
+    then
+        mk_output_file html.xsl
+        mk_output_file man.xsl
+    fi
+}
+
+make()
+{
+    if mk_have_docbook
+    then
+        # Calculate names of man pages
+        mk_expand_pathnames "reference/*.?mk.xml"
+        mk_unquote_list "$result"
+        
+        for i in "$@"
+        do
+            base="${i##*/}"
+            manfile="${base%.xml}"
+            MANFILES="$MANFILES $manfile"
+        done
+        
+        mk_docbook_html \
+            SOURCE="index.xml" \
+            STYLESHEET="html.xsl" \
+            CSS="docbook.css" \
+            DEPS="reference/*.xml guide/*.xml"
+        
+        mk_docbook_man \
+            SOURCE="index.xml" \
+            STYLESHEET="man.xsl" \
+            DEPS="reference/*.xml guide/*.xml" \
+            MANPAGES="$MANFILES"
+    fi
+}

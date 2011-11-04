@@ -1,0 +1,299 @@
+make()
+{
+    lw_openssl \
+        HEADERS="openssl/crypto.h openssl/md5.h openssl/rand.h openssl/hmac.h openssl/ssl.h openssl/md4.h openssl/rc4.h" \
+        LIBS="ssl crypto"
+}
+
+_lw_openssl()
+{
+    suffix="${MK_CANONICAL_SYSTEM%/*}_${MK_CANONICAL_SYSTEM#*/}"
+
+    mk_comment "OpenSSL ($MK_CANONICAL_SYSTEM)"
+
+    BUILDDIR="build_${suffix}"
+    mk_resolve_target "$BUILDDIR"
+    mk_add_clean_target "$result"
+
+    INSTALLDIR="install_${suffix}"
+    mk_resolve_target "$INSTALLDIR"
+    mk_add_clean_target "$result"
+
+    # Emit make target to configure OpenSSL
+    mk_target \
+        TARGET=".configure_${suffix}" \
+        configure_openssl '$@' "&${BUILDDIR}" "&."
+
+    # Emit make target to build OpenSSL
+    mk_target \
+        TARGET=".build_${suffix}" \
+        DEPS="$result" \
+        build_openssl '$@' "&${BUILDDIR}" '$(MAKE)'
+}
+
+# OpenSSL can't be built with the usual mk_autotools stuff
+lw_openssl()
+{
+    mk_push_vars LIBS HEADERS CPPFLAGS CFLAGS LDFLAGS BUILDDIR INSTALLDIR suffix stamp item
+    mk_parse_params
+
+    if [ "$MK_SYSTEM" = "host" -a "$MK_HOST_MULTIARCH" = "combine" ]
+    then
+        parts=""
+
+        for _isa in ${MK_HOST_ISAS}
+        do
+            mk_system "host/$_isa"
+
+            _lw_openssl "$@"
+            mk_quote "$result"
+
+            DESTDIR=".stage_$suffix"
+
+            mk_target \
+                TARGET="$DESTDIR" \
+                DEPS="$result" \
+                stage_openssl '$@' "&$DESTDIR" "&${BUILDDIR}" '$(MAKE)'
+            mk_quote "$result"
+
+            parts="$parts $result"
+        done
+
+        mk_system host
+
+        # Borrow at-combine script from autotools module to merge install images
+        mk_target \
+            TARGET=".stage_host" \
+            DEPS="$parts" \
+            mk_run_script at-combine '$@' "*$parts"
+        stamp="$result"
+    else
+        _lw_openssl "$@"
+        mk_quote "$result"
+        
+        mk_target \
+            TARGET=".stage_${MK_CANONICAL_SYSTEM%/*}_${MK_CANONICAL_SYSTEM#*/}" \
+            DEPS="$result" \
+            stage_openssl '$@' "@$MK_STAGE_DIR" "&${BUILDDIR}" '$(MAKE)' "$LIBS"
+        stamp="$result"
+    fi
+
+    # Include openssl in 'make all'
+    mk_add_all_target "$stamp"
+    
+    # Allow 'make openssl'
+    mk_target \
+        TARGET="@openssl" \
+        DEPS="$stamp"
+    
+    mk_add_phony_target "$result"
+    
+    # For each header/library that OpenSSL installs, we need to
+    # emit a dummy target for it that depends on the build stamp file
+    # in order to get make to do the right thing.  We also need to
+    # tell MakeKit that we build it internally so subsequent configure
+    # checks for it succeed.
+
+    mk_unquote_list "$HEADERS"
+    for item in "$@"
+    do
+        mk_target \
+            TARGET="${MK_INCLUDEDIR}/$item" \
+            DEPS="$stamp"
+        
+        mk_declare_internal_header "$item"
+    done
+    
+    mk_unquote_list "$LIBS"
+    for item in "$@"
+    do
+        mk_target \
+            TARGET="${MK_LIBDIR}/lib${item}.la" \
+            DEPS="$stamp" \
+            la_openssl '$@'
+        
+        mk_declare_internal_library "$item"
+    done
+    
+    mk_pop_vars
+}
+
+copy_openssl()
+{
+    # $1 = build directory
+    # $2 = source directory
+
+    MK_MSG_DOMAIN="copy"
+
+    mk_msg "openssl ($MK_CANONICAL_SYSTEM)"
+
+    mk_safe_rm "$1"
+    mk_run_or_fail cp -r "$2" "$1"
+}
+
+configure_openssl()
+{
+    # $1 = stamp file
+    # $2 = build directory
+    # $3 = source directory
+
+    copy_openssl "$2" "$3"
+
+    MK_MSG_DOMAIN="configure"
+
+    case "${MK_OS}-${MK_ISA}" in
+        darwin-x86_64)
+            host_string="darwin64-x86_64-cc"
+            ;;
+        darwin-x86_32)
+            host_string="darwin-i386-cc"
+            ;;
+        darwin-ppc32)
+            host_string="darwin-ppc-cc"
+            ;;
+        darwin-ppc64)
+            host_string="darwin64-ppc-cc"
+            ;;
+        solaris-sparc_32)
+            host_string="solaris-sparcv9-gcc"
+            ;;
+        solaris-x86_32)
+            host_string="solaris-x86-gcc"
+            ;;
+        aix-ppc32)
+            host_string="aix-gcc"
+            ;;
+        hpux-ia64_32)
+            host_string="hpux-ia64-gcc"
+            ;;
+        hpux-ia64_64)
+            host_string="hpux64-ia64-gcc"
+            ;;
+        *)
+            host_string=""
+            ;;
+    esac
+
+    old_pwd="$PWD"
+    
+    mk_cd_or_fail "$2"
+
+    mk_msg "begin openssl ($MK_CANONICAL_SYSTEM)"
+
+    if [ -n "$host_string" ]
+    then
+        mk_run_quiet_or_fail \
+            ./Configure \
+            --prefix="${MK_PREFIX}" \
+            shared \
+            "$host_string"
+    else
+        mk_run_quiet_or_fail \
+            ./config \
+            --prefix="${MK_PREFIX}" \
+            -d \
+            shared
+    fi
+
+    mk_cd_or_fail "${old_pwd}"
+    mk_run_or_fail touch "$1"
+
+    mk_msg "end openssl ($MK_CANONICAL_SYSTEM)"
+}
+
+build_openssl()
+{
+    # $1 = stamp file
+    # $2 = build directory
+    # $3 = make command
+
+    MK_MSG_DOMAIN="build"
+
+    old_pwd="$PWD"
+    
+    mk_cd_or_fail "$2"
+
+    mk_msg "begin openssl ($MK_CANONICAL_SYSTEM)"
+
+    # OpenSSL does not cleanly build concurrently, so unset
+    # environment variables that GNU make uses to pass
+    # concurrency settings
+    unset MAKE MFLAGS MAKEFLAGS
+    export MAKE MFLAGS MAKEFLAGS
+    
+    case "$MK_HOST_OS" in
+        linux)
+            # Ensure executable stack bit is not set in resulting library
+            CC="$MK_CC -Wa,--noexecstack"
+            SHARED_LDFLAGS="-shared"
+            ;;
+        aix)
+            CC="$MK_CC"
+            SHARED_LDFLAGS="-shared -Wl,-brtl -Wl,-bnoentry"
+            ;;
+        *)
+            CC="$MK_CC"
+            SHARED_LDFLAGS="-shared"
+            ;;
+    esac
+
+    # Build it
+    mk_run_quiet_or_fail ${3} MAKE="$3" CC="${CC}" SHARED_LDFLAGS="$SHARED_LDFLAGS"
+
+    # Touch stamp file
+    mk_cd_or_fail "$old_pwd"
+    mk_run_or_fail touch "$1"
+
+    mk_msg "end openssl ($MK_CANONICAL_SYSTEM)"
+}
+
+stage_openssl()
+{
+    # $1 = stamp file
+    # $2 = install directory
+    # $3 = build directory
+    # $4 = make command
+    # $5 = LIBS
+
+    MK_MSG_DOMAIN="stage"
+
+    old_pwd="$PWD"
+    
+    mk_cd_or_fail "$3"
+
+    mk_msg "begin openssl ($MK_CANONICAL_SYSTEM)"
+
+    # OpenSSL does not cleanly build concurrently, so unset
+    # environment variables that GNU make uses to pass
+    # concurrency settings
+    unset MAKE MFLAGS MAKEFLAGS
+    export MAKE MFLAGS MAKEFLAGS
+    
+    # Install into temporary install area
+    mk_mkdir "${MK_ROOT_DIR}/$2"
+    mk_run_quiet_or_fail ${4} MAKE="$4" INSTALL_PREFIX="${PWD}/.install" install_sw
+
+    # Go back to build root
+    mk_cd_or_fail "$old_pwd"
+
+    # Move bits we want into staging area
+    mk_mkdir "${2}${MK_LIBDIR}"
+    mk_run_or_fail mv -f "${3}/.install${MK_PREFIX}/lib/"*.* "${2}${MK_LIBDIR}"
+
+    mk_mkdir "${2}${MK_INCLUDEDIR}/openssl"
+    mk_run_or_fail mv -f "${3}/.install${MK_PREFIX}/include/openssl/"* "${2}${MK_INCLUDEDIR}/openssl"
+    
+    # Touch stamp file
+    mk_run_or_fail touch "$1"
+
+    mk_msg "end openssl ($MK_CANONICAL_SYSTEM)"
+}
+
+la_openssl()
+{
+    if ! [ -f "$1" ]
+    then
+        mk_run_script link \
+            MODE=la EXT="${MK_LIB_EXT}" "$1"
+    fi
+}

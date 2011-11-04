@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+        GROUP="logging_r" \
+        SOURCES="globals.c logging.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lw/base.h"
+        LIBDEPS="$LIB_PTHREAD lwbase"
+}

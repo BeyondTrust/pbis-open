@@ -1,0 +1,208 @@
+SUBDIRS="include common pstore logging_r client interop server tools etc"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    lw_define_feature_macros
+
+    # Declare which variable vary by system (ISA)
+    mk_declare_system_var MOD_EXT
+    mk_declare_system_var PAMDIR
+    mk_declare_system_var NSSDIR
+
+    # Do defines/exports of system-dependent variables
+    mk_multiarch_do
+        case "$MK_OS:$MK_ISA" in
+            linux:*)
+                PAMDIR="/${MK_LIBDIR##*/}/security"
+                NSSDIR="/${MK_LIBDIR##*/}"
+                ;;
+            freebsd:*)
+                PAMDIR="/usr/local/${MK_LIBDIR##*/}/security"
+                NSSDIR="/usr/local/${MK_LIBDIR##*/}"
+                ;;
+            solaris:sparc_32|solaris:x86_32)
+                NSSDIR="/usr/lib"
+                PAMDIR="/usr/lib/security"
+                ;;
+            solaris:x86_64)
+                NSSDIR="/usr/lib/64"
+                PAMDIR="/usr/lib/security/64"
+                ;;
+            solaris:sparc_64)
+                NSSDIR="/usr/lib/sparcv9"
+                PAMDIR="/usr/lib/security/sparcv9"
+                ;;
+            aix:ppc32)
+                NSSDIR="/usr/lib/security"
+                PAMDIR="/usr/lib/security"
+                ;;
+            aix:ppc64)
+                NSSDIR="/usr/lib/security"
+                PAMDIR="/usr/lib/security/64"
+                ;;
+            hpux:hppa32)
+                NSSDIR="/usr/lib"
+                PAMDIR="/usr/lib/security"
+                ;;
+            hpux:hppa64)
+                NSSDIR="/usr/lib/pa20_64"
+                PAMDIR="/usr/lib/security/pa20_64"
+                ;;
+            hpux:ia64_32)
+                NSSDIR="/usr/lib/hpux32"
+                PAMDIR="/usr/lib/security/hpux32"
+                ;;
+            hpux:ia64_64)
+                NSSDIR="/usr/lib/hpux64"
+                PAMDIR="/usr/lib/security/hpux64"
+                ;;
+        esac
+
+        mk_define LIBDIR "\"$MK_LIBDIR\""
+        MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+        MK_CXXFLAGS="$MK_CXXFLAGS -Wall -Werror"
+        MOD_EXT="$MK_DLO_EXT"
+    mk_multiarch_done
+
+    case "$MK_OS" in
+        linux|freebsd)
+            mk_export ENABLE_NSS_ENUM_DEFAULT_DWORD="00000000"
+            ;;
+    esac
+
+    mk_export providerdir="$MK_LIBDIR"
+    mk_export rpcserverdir="$MK_LIBDIR"
+    mk_export default_homedir_prefix="/home"
+    mk_export default_skeldirs="/etc/skel"
+    mk_export LIBDIR="$MK_LIBDIR"
+    mk_export SBINDIR="$MK_SBINDIR"
+    mk_export CACHEDIR="$LW_CACHEDIR"
+    mk_export MOD_EXT
+
+    mk_define PREFIXDIR "\"$MK_PREFIX\""
+    mk_define CACHEDIR "\"$LW_CACHEDIR\""
+    mk_define CONFIGDIR "\"$MK_SYSCONFDIR\""
+
+    # FIXME
+    mk_define COMPONENT_VERSION "\"5.0.0.0\""
+    mk_define __LW_MOTD_FILE__ "\"/etc/motd\""
+    mk_define __LW_MOTD_MAX_SIZE__ 4096
+    mk_define AD_DEFAULT_HOMEDIR_PREFIX '"/home"'
+    mk_define AD_DEFAULT_SKELDIRS '"/etc/skel"'
+
+    mk_check_headers \
+	stdlib.h sys/varargs.h time.h strings.h stdbool.h \
+	unistd.h sys/systeminfo.h sys/utsname.h sys/socket.h \
+	wc16str.h wc16printf.h sys/pstat.h procfs.h sys/procfs.h \
+	kvm.h sys/param.h sys/sysctl.h sys/user.h libgen.h execinfo.h \
+	sys/regset.h sys/resource.h security/pam_appl.h pam/pam_appl.h \
+        nss_common.h nss_dbdefs.h nss.h
+
+    mk_check_headers \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h" \
+        security/pam_modules.h pam/pam_modules.h
+
+    mk_check_headers \
+	FAIL=yes \
+	gssapi.h ldap.h lw/base.h lwadvapi.h openssl/md4.h \
+        openssl/rc4.h
+
+    mk_check_types \
+        HEADERDEPS="procfs.h sys/procfs.h" \
+        "struct psinfo"
+
+    mk_check_sizeofs \
+        HEADERDEPS="time.h" \
+        time_t
+
+    mk_check_libraries \
+	FAIL=yes \
+	lwbase_nothr lwbase lwadvapi_nothr lwadvapi \
+	lwmsg_nothr lwmsg pam sqlite3
+
+    mk_check_functions \
+	HEADERDEPS="ctype.h" \
+        isblank
+
+    mk_check_functions \
+	HEADERDEPS="stdlib.h" \
+	strtol strtoll __strtoll strtoul strtoull __strtoull
+
+    mk_check_functions \
+	HEADERDEPS="inttypes.h" \
+	__strtoll __strtoull
+
+    mk_check_functions \
+	HEADERDEPS="time.h" \
+        clock_settime
+
+    mk_check_functions \
+	HEADERDEPS="sys/time.h" \
+        settimeofday
+
+    mk_msg_checking "pam_get_data data argument type"
+
+    if mk_check_function \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h security/pam_modules.h pam/pam_modules.h" \
+        LIBDEPS="$LIB_PAM" \
+        PROTOTYPE="int pam_get_data(const pam_handle_t* pamh,const char* module_data_name, const void** data)"
+    then
+        mk_msg_result "const void**"
+        mk_define PAM_GET_DATA_TAKES_CONST_DATA_ARG 1
+    else
+        mk_msg_result "void**"
+    fi
+
+    mk_msg_checking "pam_get_item data argument type"
+
+    if mk_check_function \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h security/pam_modules.h pam/pam_modules.h" \
+        LIBDEPS="$LIB_PAM" \
+        PROTOTYPE="int pam_get_item(const pam_handle_t* pamh,int item_type,const void** item)"
+    then
+        mk_msg_result "const void**"
+        mk_define PAM_GET_ITEM_TAKES_CONST_ITEM_ARG 1
+    else
+        mk_msg_result "void**"
+    fi
+
+    mk_check_libraries \
+        proc kvm sec
+
+    mk_check_functions \
+        HEADERDEPS="kvm.h sys/param.h sys/sysctl.h sys/user.h" \
+        LIBDEPS="$LIB_KVM" \
+        kvm_getprocs
+
+    mk_check_functions \
+        HEADERDEPS="sys/pstat.h" \
+        pstat_getproc
+
+    mk_msg_checking "pthread_mutex_lock in libc"
+
+    if mk_check_function \
+        HEADERDEPS="pthread.h" \
+        FUNCTION="pthread_mutex_lock"
+    then
+        mk_msg_result "yes"
+        mk_define HAVE_NONLIBPTHREAD_MUTEX_LOCK
+    else
+        mk_msg_result "no"
+    fi
+
+    mk_output_file include/lsaregdef.h
+    mk_output_file server/auth-providers/local-provider/lpdefs.h
+    mk_output_file server/store/dsapi/dirdefs.h
+    mk_output_file interop/gssntlm/mech
+
+    if [ "$LW_USE_SERVICE_CONTAINERS" = "yes" ]
+    then
+        mk_output_file \
+            INPUT=etc/lsassd.reg.svcm.in \
+            OUTPUT=etc/lsassd.reg
+    else
+        mk_output_file etc/lsassd.reg
+    fi
+}

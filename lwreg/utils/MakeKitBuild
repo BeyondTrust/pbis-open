@@ -1,0 +1,25 @@
+make()
+{
+    REGUTILS_SOURCES="\
+        consolelog.c \
+        filelog.c \
+        fileutils.c \
+        globals.c \
+        reglogger.c \
+        regloginfo.c \
+        regmem.c \
+        sysfuncs.c \
+        syslog.c \
+        regtime.c \
+        dlinkedlist.c \
+        hashtable.c \
+        regerror.c \
+        regdatatype.c"
+
+    mk_group \
+        GROUP=regutils \
+        SOURCES="$REGUTILS_SOURCES" \
+        INCLUDEDIRS="../include" \
+        LIBDEPS="lwbase" \
+        HEADERDEPS="lw/base.h"
+}

@@ -1,0 +1,62 @@
+Library
+~~~~~~~
+) Better/FASTER random numbers (init time is pretty miserable)
+) Test suite [still] needs work
+) better support for including missing routines
+) check return settings (ssf, etc.) on auth failure
+
+Documentation
+~~~~~~~~~~~~~
+) so much to do here
+) man pages (check spelling) 
+) programmers/sysadmin guide updates and clarifications
+) update INSTALL to have clearer step-by-step instructions
+
+Mechs to write
+~~~~~~~~~~~~~~
+
+SRP
+~~~
+) Testing
+
+OTP
+~~~
+) Checking edge cases
+) Testing
+
+Digest-MD5
+~~~~~~~~~~
+) Checking wacko cases or even not so wacko cases
+) Testing
+
+Kerberos_V4
+~~~~~~~~~~~
+) client-side should set realm
+) is prompt_need callback set default value
+
+GSSAPI
+~~~~~~
+) Allow specification of alternate keytab file
+
+Plain
+~~~~~
+
+Cram-MD5
+~~~~~~~~
+) needs snprintf support
+
+Database stuff
+~~~~~~~~~~~~~~
+) transactions?
+) version the database?
+) atomic updates of passwords (we can crash and leave the user with 
+  different passwords for different mechanisms) [through failure to
+  make setpass calls]
+) locks (to help fortify protection against OTP race attack)?
+
+ABI
+~~~
+) Consider IRIX ABI issues for plugins
+	- /usr/lib32/sasl?
+	- /usr/lib/sasl/{ABI}?
+) Standardize the plugin ABI

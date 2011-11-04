@@ -1,0 +1,2 @@
+SUBDIRS = \
+	lwkrb5str

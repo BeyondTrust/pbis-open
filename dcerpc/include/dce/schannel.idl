@@ -1,0 +1,57 @@
+/*
+ * 
+ * (c) Copyright 1991 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1991 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1991 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      schannel.idl
+**
+**  FACILITY:
+**
+**      Remote Procedure Call
+**
+**  ABSTRACT:
+**
+**  Netlogon/Schannel types.
+**
+**
+*/
+
+[local] interface schannel
+{
+
+import "dce/lbase.idl";
+
+const unsigned32 rpc_schn_initiator_flags = 0x0080;
+const unsigned32 rpc_schn_acceptor_flags  = 0x0000;
+
+
+typedef struct {
+    unsigned_char_p_t domain_name;
+    unsigned_char_p_t fqdn;
+    unsigned_char_p_t machine_name;
+    unsigned8  session_key[16];
+    unsigned32 sender_flags;
+} rpc_schannel_auth_info_t, *rpc_schannel_auth_info_p_t;
+
+}

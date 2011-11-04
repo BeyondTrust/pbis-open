@@ -1,0 +1,434 @@
+
+
+Network Working Group                               L. Nerenberg, Editor
+Internet Draft: The CRAM-MD5 SASL Mechanism              Orthanc Systems
+Document: draft-ietf-sasl-crammd5-01.txt                   November 2003
+
+
+
+                      The CRAM-MD5 SASL Mechanism
+
+
+Status of this Memo
+
+     This document is an Internet Draft and is in full conformance with
+     all provisions of Section 10 of RFC 2026.
+
+     Internet Drafts are working documents of the Internet Engineering
+     Task Force (IETF), its areas, and its working groups.  Note that
+     other groups may also distribute working documents as Internet
+     Drafts.
+
+     Internet Drafts are draft documents valid for a maximum of six
+     months and may be updated, replaced, or obsoleted by other docu-
+     ments at any time.  It is inappropriate to use Internet Drafts as
+     reference material or to cite them other than as "work in
+     progress."
+
+     The list of current Internet Drafts can be accessed at
+     http://www.ietf.org/ietf/1id-abstracts.txt The list of Internet
+     Draft Shadow Directories can be accessed at
+     http://www.ietf.org/shadow.html.
+
+     Copyright 2003, The Internet Society.  All Rights Reserved.
+
+     Please see the Copyright section near the end of this document for
+     more information.
+
+Abstract
+
+     This document defines a simple challenge-response authentication
+     mechanism, using a keyed-hash digest, for use with the Simple
+     Authentication and Security Layer (SASL).
+
+1.  Conventions Used in this Document
+
+     The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY"
+     in this document are to be interpreted as defined in [KEYWORD].
+
+
+2.  CRAM-MD5 Authentication Mechanism
+
+     This document defines a simple challenge-response [SASL] authenti-
+     cation mechanism, using a [KEYED-MD5] digest, for use with [SASL].
+     The mechanism name associated with CRAM-MD5 is 'CRAM-MD5'.
+
+     This mechanism does not provide a security layer.
+
+
+
+Nerenberg            draft-ietf-sasl-crammd5-01.txt             [Page 1]
+
+Internet Draft           CRAM-MD5 SASL Mechanism           November 2003
+
+
+     The data encoded in the challenge contains a presumptively arbi-
+     trary string of random digits, a time-stamp, and the fully-quali-
+     fied primary host name of the server.
+
+     The client makes note of the data and then responds with a string
+     consisting of the user name, a space, and a "digest."  The latter
+     is computed by applying the keyed MD5 algorithm from [KEYED-MD5]
+     where the key is a shared secret and the digested text is the chal-
+     lenge (including angle-brackets). The client MUST NOT interpret or
+     attempt to validate the contents of the challenge in any way.
+
+     This shared secret is a string known only to the client and server.
+     The "digest" parameter itself is a 16-octet value which is sent in
+     hexadecimal format, using lower-case US-ASCII characters.
+
+     When the server receives this client response, it verifies the
+     digest provided.  Since the user name may contain the space charac-
+     ter, the server MUST scan the client response from right to left;
+     the first space character encountered separates the digest from the
+     user name.  If the digest is correct, the server should consider
+     the client authenticated and respond appropriately.
+
+     The client MUST prepare the user name and shared secret strings
+     using the [SASLPrep] profile of the [StringPrep] algorithm.  The
+     resulting values MUST be encoded as UTF-8 [UTF8].
+
+
+2.1.  Formal Syntax
+
+     The following syntax specification uses the augmented Backus-Naur
+     Form (ABNF) as specified in [ABNF], and incorporates by reference
+     the Core Rules defined in that document.
+
+     challenge  = "<" 1*DIGIT "." 1*DIGIT "@" hostname ">"
+
+     digest     = 32(DIGIT / %x61-66)
+                  ; A hexadecimal string using only lower-case
+                  ; letters
+
+     hostname   = 1*(ALPHA / DIGIT) *("." / "-" / ALPHA / DIGIT)
+
+     response   = user SP digest
+
+     user       = 1*OCTET
+
+
+2.2.  Examples
+
+     The examples in this section do NOT form part of the specification.
+     Where conflicts exist between the examples and the formal grammar
+     or specification text, the latter are authoritative.
+
+     These examples show the use of the CRAM-MD5 mechanism with the
+     IMAP4 AUTHENTICATE command [IMAP4].  The base64 encoding of the
+
+
+
+Nerenberg            draft-ietf-sasl-crammd5-01.txt             [Page 2]
+
+Internet Draft           CRAM-MD5 SASL Mechanism           November 2003
+
+
+     challenges and responses is part of the IMAP4 AUTHENTICATE command,
+     not part of the CRAM-MD5 specification itself.
+
+     S: * OK [CAPABILITY IMAP4rev1 STARTTLS LOGINDISABLED AUTH=CRAM-MD5]
+     C: A0001 AUTHENTICATE CRAM-MD5
+     S: + PDE4OTYuNjk3MTcwOTUyQHBvc3RvZmZpY2UucmVzdG9uLm1jaS5uZXQ+
+     C: dGltIGI5MTNhNjAyYzdlZGE3YTQ5NWI0ZTZlNzMzNGQzODkw
+     S: A0001 OK CRAM-MD5 authentication successful
+
+     In this example, the shared secret is the string
+
+          tanstaaftanstaaf
+
+     Hence, the Keyed MD5 digest is produced by calculating
+
+          MD5((tanstaaftanstaaf XOR opad),
+               MD5((tanstaaftanstaaf XOR ipad),
+               <1896.697170952@postoffice.example.net>))
+
+     where ipad and opad are as defined in [KEYED-MD5] and the string
+     shown in the challenge is the base64 encoding of
+     <1896.697170952@postoffice.reston.mci.net>. The shared secret is
+     null-padded to a length of 64 bytes. If the shared secret is longer
+     than 64 bytes, the MD5 digest of the shared secret is used as a 16
+     byte input to the keyed MD5 calculation.
+
+     This produces a digest value (in hexadecimal) of
+
+          b913a602c7eda7a495b4e6e7334d3890
+
+     The user name is then prepended to it, forming
+
+          tim b913a602c7eda7a495b4e6e7334d3890
+
+     Which is then base64 encoded to meet the requirements of the IMAP4
+     AUTHENTICATE command (or the similar POP3 AUTH command), yielding
+
+          dGltIGI5MTNhNjAyYzdlZGE3YTQ5NWI0ZTZlNzMzNGQzODkw
+
+
+
+3.  References
+
+3.1.  Normative References
+
+[ABNF]
+     Crocker, D., P. Overell, "Augmented BNF for Syntax Specifications:
+     ABNF", RFC2234, Internet Mail Consortium and Demon Internet Ltd.,
+     November 1997.
+
+[KEYED-MD5]
+     Krawczyk, Bellare, Canetti, "HMAC: Keyed-Hashing for Message
+     Authentication", RFC 2104, IBM and UCSD, February 1997.
+
+
+
+
+Nerenberg            draft-ietf-sasl-crammd5-01.txt             [Page 3]
+
+Internet Draft           CRAM-MD5 SASL Mechanism           November 2003
+
+
+[KEYWORD]
+     Bradner, S., "Key words for use in RFCs to Indicate Requirement
+     Levels", BCP 14, RFC2119, Harvard University, March 1997.
+
+[MD5]
+     Rivest, R., "The MD5 Message Digest Algorithm", RFC 1321, MIT Labo-
+     ratory for Computer Science and RSA Data Security, Inc., April
+     1992.
+
+[SASL]
+     Myers, J., "Simple Authentication and Security Layer (SASL)," RFC
+     2222, Netscape Communications, October 1997.
+
+[SASLPrep]
+     Zeilenga, K., "SASL String Preparation Profiles", draft-ietf-sasl-
+     saslprep (work in progress)
+
+[StringPrep]
+     Hoffman, P., M. Blanchet, "Preparation of Internationalized Strings
+     (stringprep)", RFC 3454, IMC and Viagenie, December 2002.
+
+[UTF8]
+     Yergeau, F., "UTF-8, a transformation format of ISO 10646", RFC
+     2279, Alis Technologies, January 1998.
+
+3.2.  Informative References
+
+[IMAP4]
+     Crispin, M., "Internet Message Access Protocol - Version 4rev1,"
+     RFC 3501, University of Washington, March 2003.
+
+
+4.  Security Considerations
+
+     It is conjectured that use of the CRAM-MD5 authentication mechanism
+     provides replay protection for a session.
+
+     This mechanism does not obscure the user name in any way.  Accord-
+     ingly, a server that implements both a clear-text password command
+     and this authentication type should not allow both methods of
+     access for a given user name.
+
+     Keyed MD5 is chosen for this application because of the greater
+     security imparted to authentication of short messages. In addition,
+     the use of the techniques described in [KEYED-MD5] for pre-computa-
+     tion of intermediate results make it possible to avoid explicit
+     clear-text storage of the shared secret on the server system by
+     instead storing the intermediate results which are known as "con-
+     texts."  While the saving, on the server, of the MD5 "context" is
+     marginally better than saving the shared secrets in clear-text, it
+     is not sufficient to protect the secrets if the server itself is
+     compromised.  Consequently, servers that store the secrets or con-
+     texts must both be protected to a level appropriate to the poten-
+     tial information value in the data and services protected by this
+
+
+
+Nerenberg            draft-ietf-sasl-crammd5-01.txt             [Page 4]
+
+Internet Draft           CRAM-MD5 SASL Mechanism           November 2003
+
+
+     mechanism.  In other words, techniques like this one involve a
+     trade-off between vulnerability to network sniffing and I/O buffer
+     snooping and vulnerability of the server host's databases.  If one
+     believes that the host and its databases are subject to compromise,
+     and the network is not, this technique (and all others like it) is
+     unattractive.  It is perhaps even less attractive than clear-text
+     passwords, which are typically stored on hosts in one-way hash
+     form.  On the other hand, if the server databases are perceived as
+     reasonably secure, and one is concerned about client-side or net-
+     work interception of the passwords (secrets), then this (and simi-
+     lar) techniques are preferable to clear-text passwords by a wide
+     margin.
+
+     As the length of the shared secret increases, so does the diffi-
+     culty of deriving it.
+
+     While there are now suggestions in the literature that the use of
+     MD5 and keyed MD5 in authentication procedures probably has a lim-
+     ited effective lifetime, the technique is now widely deployed and
+     widely understood.  It is believed that this general understanding
+     may assist with the rapid replacement, by CRAM-MD5, of the current
+     uses of permanent clear-text passwords in many protocols.  This
+     document has been deliberately written to permit easy upgrading to
+     use SHA (or whatever alternatives emerge) when they are considered
+     to be widely available and adequately safe.
+
+     Even with the use of CRAM-MD5, users are still vulnerable to active
+     attacks.  An example of an increasingly common active attack is
+     'TCP Session Hijacking' as described in CERT Advisory CA-95:01.
+
+     CRAM-MD5 does not authenticate the server and does not include a
+     client-supplied nonce.  As a result, it is possible to construct a
+     server with a fixed challenge string that has pre-computed the
+     hashes for all possible passwords up to a certain length (or from a
+     dictionary).  Such a server could then immediately determine the
+     user's password if it is sufficiently short.
+
+
+5.  IANA Considerations
+
+     The SASL Mechanism Registry entry for CRAM-MD5 must be updated to
+     reference this specification.
+
+
+6.  Contributors
+
+     The CRAM-MD5 mechanism was originally specified in RFC 2095,
+     IMAP/POP AUTHorize Extension for Simple Challenge/Response.  The
+     authors of that document -- John C. Klensin, Paul Krumviede, and
+     Randy Catoe -- are to be credited with the design and specification
+     of CRAM-MD5. This memo serves only to re-state CRAM-MD5 within the
+     formal context of SASL, which specification it preceded by several
+     months.
+
+
+
+
+Nerenberg            draft-ietf-sasl-crammd5-01.txt             [Page 5]
+
+Internet Draft           CRAM-MD5 SASL Mechanism           November 2003
+
+
+7.  Intellectual Property
+
+     The IETF takes no position regarding the validity or scope of any
+     intellectual property or other rights that might be claimed to per-
+     tain to the implementation or use of the technology described in
+     this document or the extent to which any license under such rights
+     might or might not be available; neither does it represent that it
+     has made any effort to identify any such rights.  Information on
+     the IETF's procedures with respect to rights in standards-track and
+     standards-related documentation can be found in BCP-11.  Copies of
+     claims of rights made available for publication and any assurances
+     of licenses to be made available, or the result of an attempt made
+     to obtain a general license or permission for the use of such pro-
+     prietary rights by implementers or users of this specification can
+     be obtained from the IETF Secretariat.
+
+     The IETF invites any interested party to bring to its attention any
+     copyrights, patents or patent applications, or other proprietary
+     rights which may cover technology that may be required to practice
+     this standard.  Please address the information to the IETF Execu-
+     tive Director.
+
+
+8.  Editors' Address
+
+     Lyndon Nerenberg
+     Orthanc Systems
+     1606 - 10770 Winterburn Road
+     Edmonton, Alberta
+     Canada T5S 1T6
+     Email: lyndon+rfc-crammd5@orthanc.ca
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Nerenberg            draft-ietf-sasl-crammd5-01.txt             [Page 6]
+
+Internet Draft           CRAM-MD5 SASL Mechanism           November 2003
+
+
+9.  Full Copyright Statement
+
+     Copyright 2003, The Internet Society. All Rights Reserved.
+
+     This document and translations of it may be copied and furnished to
+     others, and derivative works that comment on or otherwise explain
+     it or assist in its implementation may be prepared, copied, pub-
+     lished and distributed, in whole or in part, without restriction of
+     any kind, provided that the above copyright notice and this para-
+     graph are included on all such copies and derivative works.  How-
+     ever, this document itself may not be modified in any way, such as
+     by removing the copyright notice or references to the Internet
+     Society or other Internet organizations, except as needed for the
+     purpose of developing Internet standards in which case the proce-
+     dures for copyrights defined in the Internet Standards process must
+     be followed, or as required to translate it into languages other
+     than English.  The limited permissions granted above are perpetual
+     and will not be revoked by the Internet Society or its successors
+     or assigns.
+
+     This document and the information contained herein is provided on
+     an "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGI-
+     NEERING TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
+     INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE
+     INFORMATION HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WAR-
+     RANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Nerenberg            draft-ietf-sasl-crammd5-01.txt             [Page 7]
+
+

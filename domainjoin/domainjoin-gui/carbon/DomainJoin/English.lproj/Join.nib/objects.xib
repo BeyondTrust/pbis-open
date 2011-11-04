@@ -1,0 +1,281 @@
+<?xml version="1.0" standalone="yes"?>
+<object class="NSIBObjectData">
+  <object name="rootObject" class="NSCustomObject" id="1">
+  </object>
+  <array count="20" name="allObjects">
+    <object class="IBCarbonButton" id="240">
+      <ostype name="controlSignature">CnTs</ostype>
+      <int name="controlID">140</int>
+      <ostype name="command">join</ostype>
+      <object name="layoutInfo" class="IBCarbonHILayoutInfo">
+        <int name="bindingBottomKind">2</int>
+        <int name="bindingRightKind">2</int>
+      </object>
+      <int name="buttonType">1</int>
+      <string name="title">Join</string>
+      <string name="viewFrame">358 416 69 20 </string>
+      <string name="bounds">416 359 436 428 </string>
+    </object>
+    <object class="IBCarbonRootControl" id="230">
+      <string name="viewFrame">0 0 449 456 </string>
+      <array count="1" name="subviews">
+        <object class="IBCarbonUserPane" id="244">
+          <int name="featureBits">2</int>
+          <string name="viewFrame">1 0 448 456 </string>
+          <array count="13" name="subviews">
+            <object class="IBCarbonStaticText" id="231">
+              <ostype name="controlSignature">CnTs</ostype>
+              <int name="controlID">130</int>
+              <object name="layoutInfo" class="IBCarbonHILayoutInfo">
+                <int name="bindingTopKind">1</int>
+                <int name="bindingLeftKind">1</int>
+              </object>
+              <string name="title">Computer name:</string>
+              <string name="viewFrame">20 88 114 16 </string>
+              <string name="bounds">88 21 104 135 </string>
+            </object>
+            <object class="IBCarbonEditText" id="232">
+              <ostype name="controlSignature">CnTs</ostype>
+              <int name="controlID">131</int>
+              <ostype name="command">cnam</ostype>
+              <object name="layoutInfo" class="IBCarbonHILayoutInfo">
+                <int name="bindingTopKind">1</int>
+                <int name="bindingLeftKind">1</int>
+                <int name="bindingRightKind">2</int>
+              </object>
+              <boolean name="isUnicode">TRUE</boolean>
+              <boolean name="isSingleLine">TRUE</boolean>
+              <string name="viewFrame">154 89 271 16 </string>
+              <string name="bounds">89 155 105 426 </string>
+            </object>
+            <object class="IBCarbonStaticText" id="233">
+              <ostype name="controlSignature">CnTs</ostype>
+              <int name="controlID">132</int>
+              <object name="layoutInfo" class="IBCarbonHILayoutInfo">
+                <int name="bindingLeftKind">1</int>
+                <int name="bindingBottomKind">2</int>
+              </object>
+              <string name="title">Domain to join:</string>
+              <string name="viewFrame">20 132 114 16 </string>
+              <string name="bounds">132 21 148 135 </string>
+            </object>
+            <object class="IBCarbonEditText" id="234">
+              <ostype name="controlSignature">CnTs</ostype>
+              <int name="controlID">133</int>
+              <ostype name="command">dnam</ostype>
+              <object name="layoutInfo" class="IBCarbonHILayoutInfo">
+                <int name="bindingLeftKind">1</int>
+                <int name="bindingBottomKind">2</int>
+                <int name="bindingRightKind">2</int>
+              </object>
+              <boolean name="isUnicode">TRUE</boolean>
+              <boolean name="isSingleLine">TRUE</boolean>
+              <string name="viewFrame">154 133 271 16 </string>
+              <string name="bounds">133 155 149 426 </string>
+            </object>
+            <object class="IBCarbonCheckBox" id="257">
+              <ostype name="controlSignature">CnTs</ostype>
+              <int name="controlID">150</int>
+              <ostype name="command">shrt</ostype>
+              <int name="initialState">1</int>
+              <string name="title">Assume default domain for logons</string>
+              <string name="viewFrame">18 171 255 18 </string>
+              <string name="bounds">171 19 189 274 </string>
+            </object>
+            <object class="IBCarbonStaticText" id="259">
+              <ostype name="controlSignature">CnTs</ostype>
+              <int name="controlID">151</int>
+              <string name="title">Specify short domain prefix:</string>
+              <string name="viewFrame">38 200 182 16 </string>
+              <string name="bounds">200 39 216 221 </string>
+            </object>
+            <object class="IBCarbonEditText" id="258">
+              <ostype name="controlSignature">CnTs</ostype>
+              <int name="controlID">152</int>
+              <boolean name="useInlineInput">TRUE</boolean>
+              <boolean name="isUnicode">TRUE</boolean>
+              <boolean name="isSingleLine">TRUE</boolean>
+              <string name="foreColor">0 0 0 </string>
+              <string name="viewFrame">231 200 193 16 </string>
+              <string name="bounds">200 232 216 425 </string>
+            </object>
+            <object class="IBCarbonGroupBox" id="235">
+              <ostype name="controlSignature">CnTs</ostype>
+              <int name="controlID">134</int>
+              <object name="layoutInfo" class="IBCarbonHILayoutInfo">
+                <int name="bindingLeftKind">1</int>
+                <int name="bindingBottomKind">2</int>
+                <int name="bindingRightKind">2</int>
+              </object>
+              <string name="title">Specify an Organizational Unit path for the computer account.</string>
+              <string name="viewFrame">20 278 408 122 </string>
+              <array count="4" name="subviews">
+                <object class="IBCarbonRadioButton" id="239">
+                  <ostype name="controlSignature">CnTs</ostype>
+                  <int name="controlID">135</int>
+                  <ostype name="command">oudf</ostype>
+                  <object name="layoutInfo" class="IBCarbonHILayoutInfo">
+                    <int name="bindingTopKind">1</int>
+                    <int name="bindingLeftKind">1</int>
+                    <int name="bindingRightKind">2</int>
+                  </object>
+                  <int name="initialState">1</int>
+                  <string name="title">Computers container or existing computer location.</string>
+                  <string name="viewFrame">14 35 349 19 </string>
+                  <string name="bounds">313 35 332 384 </string>
+                </object>
+                <object class="IBCarbonRadioButton" id="237">
+                  <ostype name="controlSignature">CnTs</ostype>
+                  <int name="controlID">136</int>
+                  <ostype name="command">oupt</ostype>
+                  <object name="layoutInfo" class="IBCarbonHILayoutInfo">
+                    <int name="bindingLeftKind">1</int>
+                    <int name="bindingBottomKind">2</int>
+                  </object>
+                  <string name="title">OU Path: </string>
+                  <string name="viewFrame">14 73 88 19 </string>
+                  <string name="bounds">351 35 370 123 </string>
+                </object>
+                <object class="IBCarbonEditText" id="238">
+                  <ostype name="controlSignature">CnTs</ostype>
+                  <int name="controlID">137</int>
+                  <ostype name="command">ouph</ostype>
+                  <object name="layoutInfo" class="IBCarbonHILayoutInfo">
+                    <int name="bindingLeftKind">1</int>
+                    <int name="bindingBottomKind">2</int>
+                    <int name="bindingRightKind">2</int>
+                  </object>
+                  <boolean name="isUnicode">TRUE</boolean>
+                  <boolean name="isSingleLine">TRUE</boolean>
+                  <int name="justification">-2</int>
+                  <string name="viewFrame">106 75 283 16 </string>
+                  <string name="bounds">353 127 369 410 </string>
+                </object>
+                <object class="IBCarbonStaticText" id="236">
+                  <ostype name="controlSignature">CnTs</ostype>
+                  <int name="controlID">138</int>
+                  <int name="controlSize">1</int>
+                  <object name="layoutInfo" class="IBCarbonHILayoutInfo">
+                    <int name="bindingLeftKind">1</int>
+                    <int name="bindingBottomKind">2</int>
+                  </object>
+                  <string name="title">Example OU Path: Regional/Sales</string>
+                  <string name="viewFrame">103 100 289 13 </string>
+                  <string name="bounds">378 124 391 413 </string>
+                </object>
+              </array>
+              <string name="bounds">278 21 400 429 </string>
+            </object>
+            <reference idRef="240"/>
+            <object class="IBCarbonButton" id="241">
+              <ostype name="controlSignature">CnTs</ostype>
+              <int name="controlID">139</int>
+              <ostype name="command">not!</ostype>
+              <object name="layoutInfo" class="IBCarbonHILayoutInfo">
+                <int name="bindingBottomKind">2</int>
+                <int name="bindingRightKind">2</int>
+              </object>
+              <int name="buttonType">2</int>
+              <string name="title">Cancel</string>
+              <string name="viewFrame">277 416 69 20 </string>
+              <string name="bounds">416 278 436 347 </string>
+            </object>
+            <object class="IBCarbonStaticText" id="242">
+              <ostype name="controlSignature">CnTs</ostype>
+              <int name="controlID">129</int>
+              <string name="title">Active Directory requires that computer names be unique in an organization. If you wish, you may rename your computer by changing the name below.</string>
+              <string name="viewFrame">81 20 347 48 </string>
+              <string name="bounds">20 82 68 429 </string>
+            </object>
+            <object class="IBCarbonPicture" id="243">
+              <ostype name="controlSignature">CnTs</ostype>
+              <int name="controlID">128</int>
+              <int name="contentResID">9563</int>
+              <string name="viewFrame">20 20 48 48 </string>
+              <string name="bounds">20 21 68 69 </string>
+            </object>
+            <object class="IBCarbonStaticText" id="272">
+              <ostype name="controlSignature">CnTs</ostype>
+              <int name="controlID">138</int>
+              <int name="controlSize">1</int>
+              <object name="layoutInfo" class="IBCarbonHILayoutInfo">
+                <int name="bindingLeftKind">1</int>
+                <int name="bindingBottomKind">2</int>
+              </object>
+              <string name="title">Example domain prefix: CORP or leave blank (uses same as domain above)</string>
+              <string name="viewFrame">228 222 200 52 </string>
+              <string name="bounds">222 229 274 429 </string>
+            </object>
+          </array>
+          <string name="bounds">0 1 456 449 </string>
+        </object>
+      </array>
+      <string name="bounds">0 0 456 449 </string>
+    </object>
+    <reference idRef="242"/>
+    <object class="IBCarbonWindow" id="229">
+      <boolean name="hasCloseBox">TRUE</boolean>
+      <boolean name="hasHorizontalZoom">TRUE</boolean>
+      <boolean name="hasVerticalZoom">TRUE</boolean>
+      <boolean name="receiveUpdates">FALSE</boolean>
+      <boolean name="isResizable">FALSE</boolean>
+      <boolean name="liveResize">TRUE</boolean>
+      <boolean name="compositing">TRUE</boolean>
+      <boolean name="isConstrained">FALSE</boolean>
+      <int name="carbonWindowClass">4</int>
+      <int name="windowPosition">1</int>
+      <string name="title">Join Active Directory Domain</string>
+      <reference name="rootControl" idRef="230"/>
+      <string name="windowRect">285 72 741 521 </string>
+      <string name="ScreenRectAtEncodeTime">0 0 768 1024 </string>
+      <int name="WindowMinWidth">450</int>
+      <int name="WindowMinHeight">350</int>
+    </object>
+    <reference idRef="239"/>
+    <reference idRef="258"/>
+    <reference idRef="236"/>
+    <reference idRef="241"/>
+    <reference idRef="259"/>
+    <reference idRef="237"/>
+    <reference idRef="234"/>
+    <reference idRef="243"/>
+    <reference idRef="235"/>
+    <reference idRef="238"/>
+    <reference idRef="244"/>
+    <reference idRef="232"/>
+    <reference idRef="233"/>
+    <reference idRef="272"/>
+    <reference idRef="257"/>
+    <reference idRef="231"/>
+  </array>
+  <array count="20" name="allParents">
+    <reference idRef="244"/>
+    <reference idRef="229"/>
+    <reference idRef="244"/>
+    <reference idRef="1"/>
+    <reference idRef="235"/>
+    <reference idRef="244"/>
+    <reference idRef="235"/>
+    <reference idRef="244"/>
+    <reference idRef="244"/>
+    <reference idRef="235"/>
+    <reference idRef="244"/>
+    <reference idRef="244"/>
+    <reference idRef="244"/>
+    <reference idRef="235"/>
+    <reference idRef="230"/>
+    <reference idRef="244"/>
+    <reference idRef="244"/>
+    <reference idRef="244"/>
+    <reference idRef="244"/>
+    <reference idRef="244"/>
+  </array>
+  <dictionary count="2" name="nameTable">
+    <string>File&apos;s Owner</string>
+    <reference idRef="1"/>
+    <string>Window</string>
+    <reference idRef="229"/>
+  </dictionary>
+  <string name="targetFramework">IBCarbonFramework</string>
+  <unsigned_int name="nextObjectID">273</unsigned_int>
+</object>

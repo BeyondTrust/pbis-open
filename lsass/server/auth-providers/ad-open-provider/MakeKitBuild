@@ -1,0 +1,53 @@
+SUBDIRS="join"
+
+make()
+{
+    AD_SOURCES="\
+       adcache.c                 \
+       adcfg.c                   \
+       adldap.c                  \
+       ad_marshal_user.c         \
+       ad_marshal_group.c        \
+       ad_marshal_nss_artefact.c \
+       adnetapi.c                \
+       state_store.c             \
+       cellldap.c                \
+       defldap.c                 \
+       enumstate.c               \
+       globals.c                 \
+       machinepwd.c              \
+       machinepwdinfo.c          \
+       offline.c                 \
+       offline-helper.c          \
+       online.c                  \
+       provider-main.c           \
+       providerstate.c           \
+       lsadm.c                   \
+       lsadmengine.c             \
+       lsadmwrap.c               \
+       media-sense.c             \
+       batch.c                   \
+       lsaum.c                   \
+       lsaum_p.c                 \
+       lsaumproc.c               \
+       batch_build.c             \
+       batch_gather.c            \
+       batch_marshal.c           \
+       batch_enum.c              \
+       memcache.c                \
+       specialdomain.c           \
+       unprov.c                  \
+       sqlcache.c                \
+       lsasqlite.c               \
+       pwdcache.c                \
+       ioctl.c"
+
+    mk_dlo \
+	DLO=liblsass_auth_provider_ad_open \
+	SOURCES="$AD_SOURCES" \
+	CPPFLAGS="-DLW_ENABLE_THREADS=1" \
+	INCLUDEDIRS="join/include ../../include ../../../include" \
+	HEADERDEPS="lw/base.h lwadvapi.h lwnet.h uuid/uuid.h openssl/rc4.h reg/regutil.h" \
+	LIBDEPS="lsacommon lsapstore lsaserverapi sqlite3" \
+	GROUPS="join/lsajoin"
+}

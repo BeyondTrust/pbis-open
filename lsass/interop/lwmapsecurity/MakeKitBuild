@@ -1,0 +1,17 @@
+make()
+{
+    mk_dlo \
+	DLO=liblwmapsecurity_lsass \
+	SOURCES="lwmapsecurity-lsass.c" \
+	INCLUDEDIRS="../../include" \
+	HEADERDEPS="lw/base.h lwadvapi.h lwio/lwio.h" \
+	LIBDEPS="lsarpc lsaclient lwbase"
+
+    mk_group \
+	GROUP=lwmapsecurity_internal \
+	SOURCES="lwmapsecurity-lsass.c lsass-calls.c" \
+	CPPFLAGS="-DLSASS_INTERNAL_PLUGIN" \
+	INCLUDEDIRS="../../include ../../server/include" \
+	HEADERDEPS="lw/base.h lwadvapi.h lwio/lwio.h" \
+	LIBDEPS="lsarpc lwbase"
+}

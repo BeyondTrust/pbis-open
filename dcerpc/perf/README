@@ -1,0 +1,61 @@
+I haven't tried running these tests - let me know if you have success.
+--Wez.
+
+# 
+# (c) Copyright 1991 OPEN SOFTWARE FOUNDATION, INC.
+# (c) Copyright 1991 HEWLETT-PACKARD COMPANY
+# (c) Copyright 1991 DIGITAL EQUIPMENT CORPORATION
+# To anyone who acknowledges that this file is provided "AS IS"
+# without any express or implied warranty:
+#                 permission to use, copy, modify, and distribute this
+# file for any purpose is hereby granted without fee, provided that
+# the above copyright notices and this notice appears in all source
+# code copies, and that none of the names of Open Software
+# Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+# Corporation be used in advertising or publicity pertaining to
+# distribution of the software without specific, written prior
+# permission.  Neither Open Software Foundation, Inc., Hewlett-
+# Packard Company, nor Digital Equipment Corporation makes any
+# representations about the suitability of this software for any
+# purpose.
+# 
+
+Perf Test Suite
+============================================
+
+The perf tests has to be run as two different processes - 
+a perf server and a perf client. The perf server need to be started
+before a perf client process can be invoked.
+
+Various RPC request combinations can be tested as input to
+perf client process.
+
+The following scripts are provided to execute a minimal set
+of perf tests:
+	run_client.sh (can be run with both tcp and udp).
+	perf_udp.sh
+	perf_tcp.sh
+
+Usage of these scripts:
+run_client.sh `string binding returned by server`
+perf_udp.sh server_host_name client_program_directory
+perf_tcp.sh server_host_name client_program_directory
+
+Before executing any of these scripts, a server need to started
+with appropriate protseq_spec.
+
+An example run  of these scripts involve starting the server:
+
+        ./server 1 ncadg_ip_udp
+              ==> returns binding, such as ncadg_ip_udp:130.105.4.102[2001]
+         run_client.sh 'ncadg_ip_udp:130.105.4.102[2001]'
+	 perf_udp.sh server_host_name .
+or 
+        ./server 1 ncacn_ip_tcp
+              ==> returns binding, such as ncacn_ip_tcp:130.105.4.102[2001]
+         run_client.sh 'ncacn_ip_tcp:130.105.4.102[2001]'
+	 perf_tcp.sh server_host_name .
+
+The alternate methods of executing the perf tests are provided 
+in the DCE Porting and Testing Guide.
+

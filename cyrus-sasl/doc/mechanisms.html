@@ -1,0 +1,268 @@
+<!-- $Id: mechanisms.html,v 1.6 2003/09/16 23:57:37 ken3 Exp $ -->
+<HTML>
+<HEAD>
+<TITLE>SASL Mechanism Properties/Features</TITLE>
+</HEAD>
+<BODY>
+<h2>SASL Mechanism Properties/Features</h2>
+
+This table shows what security flags and features are supported by each
+of the mechanisms provided by the Cyrus SASL Library.<p>
+
+<TABLE BORDER=1 CELLSPACING=1 CELLPADDING=2>
+
+<TR>
+<TH ROWSPAN=2><br></TH>
+<TH ROWSPAN=2>MAX<br>SSF</TH>
+<TH COLSPAN=7>SECURITY PROPERTIES</TH>
+<TH COLSPAN=4>FEATURES</TH>
+</TR>
+
+<TR>
+<TH><CENTER>NOPLAIN</CENTER></TH>
+<TH><CENTER>NOACTIVE</CENTER></TH>
+<TH><CENTER>NODICT</CENTER></TH>
+<TH><CENTER>FORWARD</CENTER></TH>
+<TH><CENTER>NOANON</CENTER></TH>
+<TH><CENTER>CRED</CENTER></TH>
+<TH><CENTER>MUTUAL</CENTER></TH>
+<TH><CENTER>CLT FIRST</CENTER></TH>
+<TH><CENTER>SRV FIRST</CENTER></TH>
+<TH><CENTER>SRV LAST</CENTER></TH>
+<TH><CENTER>PROXY</CENTER></TH>
+</TR>
+
+<TR>
+<TH>ANONYMOUS</TH>
+<TD><CENTER>0</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+</TR>
+
+<TR>
+<TH>CRAM-MD5</TH>
+<TD><CENTER>0</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+</TR>
+
+<TR>
+<TH>DIGEST-MD5</TH>
+<TD><CENTER>128</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER>reauth</CENTER></TD>
+<TD><CENTER>initial auth</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+</TR>
+
+<TR>
+<TH>EXTERNAL</TH>
+<TD><CENTER>0</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+</TR>
+
+<TR>
+<TH>GSSAPI</TH>
+<TD><CENTER>56</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+</TR>
+
+<TR>
+<TH>KERBEROS_V4</TH>
+<TD><CENTER>56</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+</TR>
+
+<TR>
+<TH>LOGIN</TH>
+<TD><CENTER>0</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+</TR>
+
+<TR>
+<TH>NTLM</TH>
+<TD><CENTER>0</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+</TR>
+
+<TR>
+<TH>OTP</TH>
+<TD><CENTER>0</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+</TR>
+
+<TR>
+<TH>PLAIN</TH>
+<TD><CENTER>0</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+</TR>
+<!--
+<TR>
+<TH>SECURID</TH>
+<TD><CENTER>0</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+</TR>
+
+<TR>
+<TH>SKEY</TH>
+<TD><CENTER>0</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+</TR>
+-->
+<TR>
+<TH>SRP</TH>
+<TD><CENTER>128</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER><br></CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+<TD><CENTER>X</CENTER></TD>
+</TR>
+
+</TABLE>
+
+<h3>Understanding this table:</h3>
+<ul>
+<li><b>MAX SSF</b> - The maximum Security Strength Factor supported
+by the mechanism (roughly the number of bits of encryption provided, but may
+have other meanings, for example an SSF of 1 indicates integrity protection
+only, no encryption).</li>
+<li><b>NOPLAIN</b> - Mechanism is not susceptable to simple passive
+(eavesdropping) attack.</li>
+<li><b>NOACTIVE</b> - Protection from active (non-dictionary) attacks
+during authentication exchange.  (Implies <b>MUTUAL</b>).</li>
+<li><b>NODICT</b> - Not susceptable to passive dictionary attack.</li>
+<li><b>NOFORWARD</b> - Breaking one session won't help break the next.</li>
+<li><b>NOANON</b> - Don't permit anonymous logins.</li>
+<li><b>CRED</b> - Mechanism can pass client credentials.</li>
+<li><b>MUTUAL</b> - Supports mutual authentication (authenticates the server
+to the client)</li>
+<li><b>CLTFIRST</b> - The client should send first in this mechanism.</li>
+<li><b>SRVFIRST</b> - The server must send first in this mechanism.</li>
+<li><b>SRVLAST</b> - This mechanism supports server-send-last configurations.</li>
+<li><b>PROXY</b> - This mechanism supports proxy authentication.</li>
+</ul>
+
+</BODY>
+</HTML>

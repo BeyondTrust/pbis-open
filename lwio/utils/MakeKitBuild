@@ -1,0 +1,36 @@
+make()
+{
+    UTILS_SOURCES="\
+        assert.c      \
+        bitvector.c   \
+        consolelog.c  \
+        ecp.c         \
+        dlinkedlist.c \
+        filelog.c     \
+        fileutils.c   \
+        globals.c     \
+        hashtable.c   \
+        hostinfo.c    \
+        libmain.c     \
+        logger.c      \
+        lwlist.c      \
+        memory.c      \
+        queue.c       \
+        lwiologinfo.c \
+        path.c        \
+        stack.c       \
+        strings.c     \
+        sysfuncs.c    \
+        syslog.c      \
+        unistr.c      \
+        regcfg.c      \
+        lru.c         \
+	time.c"
+
+    mk_group \
+        GROUP=utils \
+        SOURCES="$UTILS_SOURCES" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="reg/lwreg.h" \
+        LIBDEPS="regclient lwbase $LIB_DL"
+}

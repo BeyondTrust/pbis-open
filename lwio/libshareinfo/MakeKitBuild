@@ -1,0 +1,9 @@
+make()
+{
+    mk_library \
+        LIB=lwioshareinfo \
+        SOURCES="libmain.c lwfileinfo.c lwsessioninfo.c lwshareinfo.c lwconnectioninfo.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lwmsg/lwmsg.h" \
+        LIBDEPS="lwiocommon"
+}

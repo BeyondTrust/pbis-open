@@ -1,0 +1,51 @@
+make()
+{
+    KRB5_HEADERS="\
+        krb5/krb5.h
+        krb5/locate_plugin.h
+        kdb.h \
+        krb5.h \
+        gssapi/gssapi_err_generic.h \
+        gssapi/mechglue.h \
+        gssapi/gssapi_ext.h \
+        gssapi/gssapi_krb5.h \
+        gssapi/gssapi_generic.h \
+        gssapi/gssapi.h \
+        profile.h \
+        com_err.h \
+        gssapi.h"
+
+    case "$MK_OS" in
+        darwin)
+            SUPPORT_MAJOR=1
+            ;;
+        *)
+            SUPPORT_MAJOR=0
+            ;;
+    esac
+        
+    KRB5_LIBS="\
+        com_err:3.0 \
+        k5crypto:3.1 \
+        gssapi_krb5:2.2 \
+        krb5:3.3 \
+        krb5support:${SUPPORT_MAJOR}.1"
+
+    KRB5_EXTRA_TARGETS="\
+        ${MK_BINDIR}/kinit \
+        ${MK_BINDIR}/klist \
+        ${MK_BINDIR}/kdestroy \
+        ${MK_BINDIR}/kvno \
+        ${MK_BINDIR}/ktutil"
+        
+    mk_autotools \
+        SOURCEDIR=src \
+        HEADERS="$KRB5_HEADERS" \
+        LIBS="$KRB5_LIBS" \
+        TARGETS="$KRB5_EXTRA_TARGETS" \
+        --enable-shared \
+	--disable-pkinit \
+        --without-tcl
+
+    unset KRB5_HEADERS KRB5_LIBS KRB5_EXTRA_TARGETS
+}
