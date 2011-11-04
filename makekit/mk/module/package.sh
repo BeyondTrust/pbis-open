@@ -158,6 +158,13 @@ option()
         PARAM="path" \
         DEFAULT="package" \
         HELP="Subdirectory for built packages"
+
+    mk_option \
+        OPTION="package-debug" \
+        VAR="MK_PACKAGE_DEBUG" \
+        PARAM="yes|no" \
+        DEFAULT="no" \
+        HELP="Specify \"-debug\" suffix in package name"
 }
 
 make()

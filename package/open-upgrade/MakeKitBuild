@@ -14,14 +14,22 @@ configure()
 
     if mk_deb_enabled
     then
-        mk_declare -o PKG_DEB_NAME="${LW_VENDOR}-open-upgrade"
+        if [ "$MK_DEBUG" = "yes" -a "$MK_PACKAGE_DEBUG" = "yes" ]; then
+            mk_declare -o PKG_DEB_NAME="${LW_VENDOR}-open-upgrade-debug"
+        else
+            mk_declare -o PKG_DEB_NAME="${LW_VENDOR}-open-upgrade"
+        fi
         mk_declare -o PKG_DEB_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
         mk_declare -o PKG_DEB_DATE="`date -R`"
     fi
 
     if mk_rpm_enabled
     then
-        mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-open-upgrade"
+        if [ "$MK_DEBUG" = "yes" -a "$MK_PACKAGE_DEBUG" = "yes" ]; then
+            mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-open-upgrade-debug"
+        else
+            mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-open-upgrade"
+        fi
         mk_declare -o PKG_RPM_VERSION="${LW_VERSION}"
         mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_REVISION:-0}"
     fi
