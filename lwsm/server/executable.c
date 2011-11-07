@@ -64,6 +64,7 @@ typedef struct _SM_EXECUTABLE
     PWSTR* ppwszArgs;
     PWSTR* ppwszEnv;
     DWORD dwFdLimit;
+    DWORD dwCoreSize;
     PLW_SERVICE_OBJECT pObject;
 } SM_EXECUTABLE, *PSM_EXECUTABLE;
 
@@ -249,6 +250,12 @@ LwSmSetLimits(
 
         /* Ignore errors */
         (void) setrlimit(RLIMIT_NOFILE, &limit);
+    }
+    if (pExec->dwCoreSize)
+    {
+        limit.rlim_cur = pExec->dwCoreSize;
+        limit.rlim_max = pExec->dwCoreSize;
+        (void) setrlimit(RLIMIT_CORE, &limit);
     }
 
     return dwError;
@@ -495,6 +502,7 @@ LwSmExecutableConstruct(
     pExec->state = LW_SERVICE_STATE_STOPPED;
     pExec->pObject = pObject;
     pExec->dwFdLimit = pInfo->dwFdLimit;
+    pExec->dwCoreSize = pInfo->dwCoreSize;
 
     *ppData = pExec;
 

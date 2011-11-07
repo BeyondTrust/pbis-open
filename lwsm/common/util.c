@@ -235,6 +235,7 @@ LwSmCopyServiceInfo(
     pCopy->type = pInfo->type;
     pCopy->bAutostart = pInfo->bAutostart;
     pCopy->dwFdLimit = pInfo->dwFdLimit;
+    pCopy->dwCoreSize = pInfo->dwCoreSize;
     
     dwError = LwSmCopyString(pInfo->pwszPath, &pCopy->pwszPath);
     BAIL_ON_ERROR(dwError);
