@@ -312,6 +312,7 @@ LwSmTableUpdateEntry(
     pUpdate->type = mask & LW_SERVICE_INFO_MASK_TYPE ? pInfo->type : pEntry->pInfo->type;
     pUpdate->bAutostart = mask & LW_SERVICE_INFO_MASK_AUTOSTART ? pInfo->bAutostart : pEntry->pInfo->bAutostart;
     pUpdate->dwFdLimit = mask & LW_SERVICE_INFO_MASK_AUTOSTART ? pInfo->dwFdLimit : pEntry->pInfo->dwFdLimit;
+    pUpdate->dwCoreSize = mask & LW_SERVICE_INFO_MASK_AUTOSTART ? pInfo->dwCoreSize : pEntry->pInfo->dwCoreSize;
     pUpdate->DefaultLogType = mask & LW_SERVICE_INFO_MASK_LOG ? pInfo->DefaultLogType : pEntry->pInfo->DefaultLogType;
     pUpdate->DefaultLogLevel = mask & LW_SERVICE_INFO_MASK_LOG ? pInfo->DefaultLogLevel : pEntry->pInfo->DefaultLogLevel;
 

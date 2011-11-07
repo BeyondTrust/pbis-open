@@ -93,6 +93,7 @@ typedef struct _CONTAINER_START_REQ
     LW_SM_LOGGER_TYPE LogType;
     LW_SM_LOG_LEVEL LogLevel;
     PWSTR pLogTarget;
+    DWORD CoreSize;
 } CONTAINER_START_REQ, *PCONTAINER_START_REQ;
 
 typedef struct _CONTAINER_STATUS_RES
@@ -165,6 +166,7 @@ typedef struct _CONTAINER_INSTANCE
     LWMsgParams Out;
     CONTAINER_START_REQ Start;
     SM_LINK Link;
+    DWORD CoreSize;
 } CONTAINER_INSTANCE, *PCONTAINER_INSTANCE;
 
 static LWMsgTypeSpec gLogLevelSpec[] =
@@ -248,6 +250,7 @@ static LWMsgTypeSpec gContainerStartSpec[] =
     LWMSG_MEMBER_TYPESPEC(CONTAINER_START_REQ, LogType, gLogTypeSpec),
     LWMSG_MEMBER_PWSTR(CONTAINER_START_REQ, pLogTarget),
     LWMSG_MEMBER_TYPESPEC(CONTAINER_START_REQ, LogLevel, gLogLevelSpec),
+    LWMSG_MEMBER_UINT32(CONTAINER_START_REQ, CoreSize),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
@@ -365,7 +368,8 @@ static PLW_TASK_GROUP gpContainerGroup = NULL;
 static
 DWORD
 SetLimits(
-    DWORD FdLimit
+    DWORD FdLimit,
+    DWORD CoreSize
     )
 {
     DWORD dwError = 0;
@@ -386,6 +390,27 @@ SetLimits(
         }
 
         (void) setrlimit(RLIMIT_NOFILE, &limit);
+
+        (void) getrlimit(RLIMIT_NOFILE, &limit);
+    }
+
+    if (CoreSize)
+    {
+        (void) getrlimit(RLIMIT_CORE, &limit);
+
+        if (CoreSize > limit.rlim_cur)
+        {
+            limit.rlim_cur = CoreSize;
+        }
+
+        if (CoreSize > limit.rlim_max)
+        {
+            limit.rlim_max = CoreSize;
+        }
+
+        (void) setrlimit(RLIMIT_CORE, &limit);
+
+        (void) getrlimit(RLIMIT_CORE, &limit);
     }
 
     return dwError;
@@ -989,6 +1014,7 @@ ContainerStart(
     pInstance->Start.LogType = pInstance->LogType;
     pInstance->Start.LogLevel = pInstance->LogLevel;
     pInstance->Start.pLogTarget = pInstance->pLogTarget;
+    pInstance->Start.CoreSize = pInstance->CoreSize;
     pInstance->In.tag = CONTAINER_REQ_START;
     pInstance->In.data = &pInstance->Start;
 
@@ -1489,6 +1515,7 @@ ContainerConstruct(
     pInstance->pObject = pObject;
     pInstance->State = LW_SERVICE_STATE_STOPPED;
     pInstance->FdLimit = pInfo->dwFdLimit;
+    pInstance->CoreSize = pInfo->dwCoreSize;
     pInstance->LogType = pInfo->DefaultLogType;
     pInstance->LogLevel = pInfo->DefaultLogLevel;
 
@@ -1765,7 +1792,7 @@ ContainerSrvStart(
         BAIL_ON_ERROR(dwError);
     }
 
-    dwError = SetLimits(pReq->FdLimit);
+    dwError = SetLimits(pReq->FdLimit, pReq->CoreSize);
     BAIL_ON_ERROR(dwError);
 
     dwError = LwNtStatusToWin32Error(LwRtlSvcmStart(

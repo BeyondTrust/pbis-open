@@ -29,6 +29,10 @@
     default = dword:00000001
     doc = ""
 }
+"CoreSize" = {
+    default = dword:00000000
+    doc = "Enable/Set maximum core dump size (0=disabled)"
+}
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters]
 "AllowReadTo" = { 

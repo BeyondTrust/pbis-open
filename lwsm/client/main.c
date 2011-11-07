@@ -1035,6 +1035,14 @@ LwSmInfo(
     {
         printf("File descriptor limit: inherit\n");
     }
+    if (pInfo->dwCoreSize)
+    {
+        printf("Core dump size limit: %lu\n", (unsigned long) pInfo->dwCoreSize);
+    }
+    else
+    {
+        printf("Core dump size limit: inherit\n");
+    }
 
 cleanup:
     

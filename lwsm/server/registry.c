@@ -210,6 +210,8 @@ LwSmRegistryReadServiceInfo(
             {'D', 'e', 'f', 'a', 'u', 'l', 't', 'L', 'o', 'g', 'T', 'a', 'r', 'g', 'e', 't', 0};
     static const WCHAR wszDefaultLogLevel[] =
             {'D', 'e', 'f', 'a', 'u', 'l', 't', 'L', 'o', 'g', 'L', 'e', 'v', 'e', 'l', 0};
+    static const WCHAR wszCoreSize[] =
+        {'C', 'o', 'r', 'e', 'S', 'i', 'z', 'e', 0};
 
     dwError = LwWc16sToMbs(pwszName, &pszName);
     BAIL_ON_ERROR(dwError);
@@ -310,6 +312,19 @@ LwSmRegistryReadServiceInfo(
     {
         dwError = 0;
         pInfo->dwFdLimit = 0;
+    }
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmRegistryReadDword(
+        hReg,
+        pRootKey,
+        pwszParentKey,
+        wszCoreSize,
+        &pInfo->dwCoreSize);
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        dwError = 0;
+        pInfo->dwCoreSize = 0;
     }
     BAIL_ON_ERROR(dwError);
 

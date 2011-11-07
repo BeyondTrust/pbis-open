@@ -235,6 +235,7 @@ LwSmCopyServiceInfo(
     pCopy->type = pInfo->type;
     pCopy->bAutostart = pInfo->bAutostart;
     pCopy->dwFdLimit = pInfo->dwFdLimit;
+    pCopy->dwCoreSize = pInfo->dwCoreSize;
     pCopy->DefaultLogType = pInfo->DefaultLogType;
     pCopy->DefaultLogLevel = pInfo->DefaultLogLevel;
     

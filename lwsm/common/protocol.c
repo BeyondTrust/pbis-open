@@ -184,6 +184,7 @@ static LWMsgTypeSpec gServiceInfoSpec[] =
     LWMSG_MEMBER_PWSTR(LW_SERVICE_INFO, pwszGroup),
     LWMSG_MEMBER_TYPESPEC(LW_SERVICE_INFO, bAutostart, gBooleanSpec),
     LWMSG_MEMBER_UINT32(LW_SERVICE_INFO, dwFdLimit),
+    LWMSG_MEMBER_UINT32(LW_SERVICE_INFO, dwCoreSize),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };

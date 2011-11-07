@@ -33,6 +33,10 @@
 	default = dword:00004000
 	doc = "File descriptor limit"
 }
+"CoreSize" = {
+    default = dword:00000000
+    doc = "Enable/Set maximum core dump size (0=disabled)"
+}
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters]
 "SignMessagesIfSupported" = { 

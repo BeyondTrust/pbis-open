@@ -354,6 +354,8 @@ typedef struct _LW_SERVICE_INFO
     LW_PWSTR pDefaultLogTarget;
     /** @brief Default log level */
     LW_SM_LOG_LEVEL DefaultLogLevel;
+    /** @brief Core dump size limit */
+    LW_DWORD dwCoreSize;
 } LW_SERVICE_INFO, *PLW_SERVICE_INFO;
 
 typedef const LW_SERVICE_INFO* PCLW_SERVICE_INFO;
