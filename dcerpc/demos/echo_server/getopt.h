@@ -37,6 +37,7 @@
 #ifndef GETOPT_H_
 #define GETOPT_H_
 
+#ifdef _WIN32
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,7 +56,7 @@ int getopt(int argc, char** argv, char* optstr);
 }
 #endif
 
-
+#endif /* _WIN32 */
 #endif /* GETOPT_H_ */
 
 
