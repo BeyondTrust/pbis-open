@@ -180,7 +180,7 @@ void CSPELL_interface_def
         fprintf(fid, ",IDL_epva /* server_epv */\n");
         if (generate_mepv)
         {
-            fprintf(fid,",(rpc_mgr_epv_t)&IDL_manager_epv /* manager epv */\n");
+            fprintf(fid,",(rpc_mgr_epv_t)(void*)&IDL_manager_epv /* manager epv */\n");
         }
         else
         {

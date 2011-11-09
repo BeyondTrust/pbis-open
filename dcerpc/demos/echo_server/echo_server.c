@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 {
     unsigned32 status;
     rpc_binding_vector_p_t server_binding;
-    char * string_binding;
+    unsigned_char_p_t string_binding;
     unsigned32 i;
     char * protocol = NULL;
     char * endpoint = NULL;
@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
     for (i=0; i<RPC_FIELD_COUNT(server_binding); i++)
     {
         rpc_binding_to_string_binding(RPC_FIELD_BINDING_H(server_binding)[i],
-                                      (unsigned char **)&string_binding,
+                                      &string_binding,
                                       &status);
         if (string_binding)
             printf("\t%s\n", string_binding);
@@ -287,7 +287,7 @@ ReverseIt(
     )
 {
 
-    char * binding_info;
+    unsigned_char_p_t binding_info;
     error_status_t e;
     unsigned result_size;
     args * result;
@@ -304,7 +304,7 @@ ReverseIt(
      * Get some info about the client binding
      */
 
-    rpc_binding_to_string_binding(h, (unsigned char **)&binding_info, &e);
+    rpc_binding_to_string_binding(h, &binding_info, &e);
     if (e == rpc_s_ok)
     {
         printf ("ReverseIt() called by client: %s\n", binding_info);

@@ -99,8 +99,8 @@ main(
     char * rpc_host = "localhost";
     char * protocol = PROTOCOL_TCP;
     char * endpoint = NULL;
-    char * spn = NULL;
-    char * inquired_spn = NULL;
+    unsigned_char_p_t spn = NULL;
+    unsigned_char_p_t inquired_spn = NULL;
     int inquire_spn = FALSE;
     unsigned32 protect_level = rpc_c_protect_level_pkt_integ;
     unsigned32 flags = 0;
@@ -194,7 +194,7 @@ main(
             rpc_host = optarg;
             break;
         case 'a':
-            spn = optarg;
+            spn = (unsigned_char_p_t)optarg;
             break;
         case 'i':
             inquire_spn = TRUE;
@@ -322,7 +322,7 @@ main(
         rpc_mgmt_inq_server_princ_name(
             echo_server,
             authn_svc,
-            (unsigned char **)&inquired_spn,
+            &inquired_spn,
             &status);
         if (status)
         {
@@ -336,11 +336,11 @@ main(
     {
         rpc_binding_set_auth_info_2(
             echo_server,
-            (unsigned_char_p_t)spn,
+            spn,
             protect_level,
             authn_svc,
             flags,
-            authn_svc == rpc_c_authn_winnt ? (rpc_auth_identity_handle_t) &winnt : NULL,
+            authn_svc == rpc_c_authn_winnt ? (rpc_auth_identity_handle_t)(void*) &winnt : NULL,
             rpc_c_authz_name, &status);
         if (status)
         {
