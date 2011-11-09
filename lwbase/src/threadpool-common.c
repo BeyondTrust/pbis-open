@@ -106,8 +106,8 @@ AcquireDelegatePool(
         .bDelegateTasks = FALSE,
         .lTaskThreads = -1,
         .lWorkThreads = 0,
-        .ulTaskThreadStackSize = _LW_TASK_THREAD_STACK_SIZE,
-        .ulWorkThreadStackSize = _LW_WORK_THREAD_STACK_SIZE
+        .ulTaskThreadStackSize = (ULONG) _LW_TASK_THREAD_STACK_SIZE,
+        .ulWorkThreadStackSize = (ULONG) _LW_WORK_THREAD_STACK_SIZE
     };
 
     if (getenv("LW_GLOBAL_TASK_THREADS"))
@@ -184,8 +184,8 @@ LwRtlCreateThreadPoolAttributes(
     pAttrs->bDelegateTasks = TRUE;
     pAttrs->lTaskThreads = -1;
     pAttrs->lWorkThreads = -4;
-    pAttrs->ulTaskThreadStackSize = _LW_TASK_THREAD_STACK_SIZE;
-    pAttrs->ulWorkThreadStackSize = _LW_WORK_THREAD_STACK_SIZE;
+    pAttrs->ulTaskThreadStackSize = (ULONG) _LW_TASK_THREAD_STACK_SIZE;
+    pAttrs->ulWorkThreadStackSize = (ULONG) _LW_WORK_THREAD_STACK_SIZE;
     pAttrs->ulWorkThreadTimeout = DEFAULT_WORK_THREAD_TIMEOUT;
 
     *ppAttrs = pAttrs;
