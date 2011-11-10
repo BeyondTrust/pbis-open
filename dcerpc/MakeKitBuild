@@ -225,6 +225,9 @@ configure()
         HEADERDEPS="sys/types.h sys/socket.h sys/time.h net/if.h" \
         net/if_arp.h
 
+    mk_check_headers \
+        unistd.h
+
     # Optional types
     mk_check_types \
         HEADERDEPS="inttypes.h" \

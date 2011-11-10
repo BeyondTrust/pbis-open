@@ -25,6 +25,14 @@
 #include <getopt.h>
 #endif
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#ifdef _WIN32
+#include "getopt_internal.h"
+#endif
+
 #ifndef _WIN32
 static void wait_for_signals();
 #endif

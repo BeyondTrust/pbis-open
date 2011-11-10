@@ -3,14 +3,14 @@
 
 # Sadly, there appears to be a capitalization issue in win32.mak...
 COMPATDIR=../..
-CFLAGS=$(cflags) -DHAVE_GETOPT_H -I. -I$(COMPATDIR)/include
+CFLAGS=$(cflags) -I. -I$(COMPATDIR)/include
 
 all: echo_server.exe echo_client.exe
 
-echo_server.exe: echo_s.obj echo_server.obj misc.obj getopt.obj
+echo_server.exe: echo_s.obj echo_server.obj misc.obj getopt_internal.obj
 	$(link) $(conlflags) -out:$@ $** rpcrt4.lib
 
-echo_client.exe: echo_c.obj echo_client.obj misc.obj getopt.obj
+echo_client.exe: echo_c.obj echo_client.obj misc.obj getopt_internal.obj
 	$(link) $(conlflags) -out:$@ $** rpcrt4.lib
 
 echo_server.c: echo.h misc.h $(COMPATDIR)/include/compat/dcerpc.h

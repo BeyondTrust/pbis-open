@@ -30,6 +30,14 @@
 #include <getopt.h>
 #endif
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#ifdef _WIN32
+#include "getopt_internal.h"
+#endif
+
 #define MAX_USER_INPUT 128
 #define MAX_LINE 100 * 1024
 
