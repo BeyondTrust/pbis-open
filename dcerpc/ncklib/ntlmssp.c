@@ -190,6 +190,9 @@ INTERNAL void rpc__ntlmauth_bnd_set_auth
 		goto poison;
 	}
 
+	// Header signing extension has to be enabled in ntlmssp
+	flags |= rpc_c_protect_flags_header_sign;
+
 	if (server_name == NULL ||
 	    auth_ident == NULL)
 	{
@@ -304,6 +307,7 @@ INTERNAL void rpc__ntlmauth_bnd_set_auth
 
 	ntlmauth_info->auth_info.server_princ_name = str_server_name;
 	ntlmauth_info->auth_info.authn_level       = level;
+	ntlmauth_info->auth_info.authn_flags       = flags;
 	ntlmauth_info->auth_info.authn_protocol    = rpc_c_authn_winnt;
 	ntlmauth_info->auth_info.authz_protocol    = authz_prot;
 	ntlmauth_info->auth_info.is_server         = 0;

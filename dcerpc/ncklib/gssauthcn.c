@@ -1641,7 +1641,7 @@ INTERNAL void rpc__gssauth_cn_wrap_packet
 	OM_uint32 maj_stat = 0;
 	OM_uint32 min_stat = 0;
 	int conf_req = 1;
-	int conf_state = 0;
+ 	int conf_state = 0;
 	gss_iov_buffer_desc output_iov[4] = { {0}, {0}, {0}, {0} };
 	gss_buffer_desc gssauth_buffer = {0};
 	unsigned32 gss_buffer_idx = 0;
@@ -1718,7 +1718,7 @@ INTERNAL void rpc__gssauth_cn_wrap_packet
                         RPC_CN_PKT_SIZEOF_GSSWRAP_AUTH_TLR :
                         RPC_CN_PKT_SIZEOF_GSSGETMIC_AUTH_TLR;
 
-	hdr->frag_len = RPC_CN_PKT_SIZEOF_RESP_HDR +
+	hdr->frag_len = header_size +
                         pdu_len + auth_pad_len +
                         RPC_CN_PKT_SIZEOF_COM_AUTH_TLR +
                         hdr->auth_len;
@@ -1757,7 +1757,7 @@ INTERNAL void rpc__gssauth_cn_wrap_packet
 		/* DCE/RPC header (if header signing has been enabled) */
 		output_iov[gss_buffer_idx].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
 		output_iov[gss_buffer_idx].buffer.value  = &(wrap_base[0]);
-		output_iov[gss_buffer_idx].buffer.length = RPC_CN_PKT_SIZEOF_RESP_HDR;
+		output_iov[gss_buffer_idx].buffer.length = header_size;
 
 		gss_buffer_idx++;
 	}

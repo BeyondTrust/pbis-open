@@ -1309,6 +1309,7 @@ INTERNAL void rpc__ntlmauth_cn_wrap_packet
 	gss_iov_buffer_desc output_iov[4] = { {0}, {0}, {0}, {0} };
 	gss_buffer_desc ntlmssp_buffer = {0};
 	unsigned32 gss_buffer_idx = 0;
+	unsigned32 gss_buffer_count = 0;
 
 	CODING_ERROR(st);
 	RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_ROUTINE_TRACE,
@@ -1368,7 +1369,7 @@ INTERNAL void rpc__ntlmauth_cn_wrap_packet
 	hdr = (rpc_cn_common_hdr_p_t)iov[0].iov_base;
 
 	hdr->auth_len = RPC_CN_PKT_SIZEOF_NTLMSSP_AUTH_TLR;
-	hdr->frag_len = RPC_CN_PKT_SIZEOF_RESP_HDR +
+	hdr->frag_len = header_size +
                         pdu_len + auth_pad_len +
                         RPC_CN_PKT_SIZEOF_COM_AUTH_TLR +
                         hdr->auth_len;
@@ -1408,7 +1409,7 @@ INTERNAL void rpc__ntlmauth_cn_wrap_packet
 		/* DCE/RPC header (if header signing has been enabled) */
 		output_iov[gss_buffer_idx].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
 		output_iov[gss_buffer_idx].buffer.value  = &(wrap_base[0]);
-		output_iov[gss_buffer_idx].buffer.length = RPC_CN_PKT_SIZEOF_RESP_HDR;
+		output_iov[gss_buffer_idx].buffer.length = header_size;
 
 		gss_buffer_idx++;
 	}
@@ -1432,13 +1433,15 @@ INTERNAL void rpc__ntlmauth_cn_wrap_packet
 		gss_buffer_idx++;
 	}
 
+	gss_buffer_count = gss_buffer_idx;
+
 	gss_rc = gss_wrap_iov(&minor_status,
 			      ntlmauth_cn_info->gss_ctx,
 			      conf_req,
 			      GSS_C_QOP_DEFAULT,
 			      &conf_state,
 			      output_iov,
-			      sizeof(output_iov)/sizeof(output_iov[0]));
+			      gss_buffer_count);
 	if (gss_rc != GSS_S_COMPLETE)
 	{	
 		char msg[256] = {0};
@@ -1815,6 +1818,7 @@ INTERNAL void rpc__ntlmauth_cn_unwrap_packet
 	gss_buffer_desc ntlmssp_buffer = {0};
 	gss_buffer_desc auth_tlr_buffer = {0};
 	unsigned32 gss_buffer_idx = 0;
+	unsigned32 gss_buffer_count = 0;
 
 	CODING_ERROR(st);
 	RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_ROUTINE_TRACE,
@@ -1834,7 +1838,7 @@ INTERNAL void rpc__ntlmauth_cn_unwrap_packet
 	}
 
 	pdu_base     = ((unsigned_char_p_t)pkt) + header_size;
-	pdu_len      = pkt_len - (header_size + auth_pad_len + RPC_CN_PKT_SIZEOF_COM_AUTH_TLR + ntlmssp_len + auth_pad_len);
+	pdu_len      = pkt_len - (header_size + auth_pad_len + RPC_CN_PKT_SIZEOF_COM_AUTH_TLR + ntlmssp_len);
 	ntlmssp_base = ((unsigned_char_p_t)auth_tlr) + RPC_CN_PKT_SIZEOF_COM_AUTH_TLR;
 
 	/* DCE/RPC header (for signing check if enabled) */
@@ -1882,12 +1886,14 @@ INTERNAL void rpc__ntlmauth_cn_unwrap_packet
 		gss_buffer_idx++;
 	}
 
+	gss_buffer_count = gss_buffer_idx;
+
 	gss_rc = gss_unwrap_iov(&minor_status,
 				ntlmauth_cn_info->gss_ctx,
 				&conf_state,
 				&qop_state,
 				output_iov,
-				sizeof(output_iov)/sizeof(output_iov[0]));
+				gss_buffer_count);
 	if (gss_rc != GSS_S_COMPLETE)
 	{
 		char msg[256] = {0};

@@ -331,11 +331,6 @@ INTERNAL unsigned32     mark_syntax_and_sec_action_rtn (
     pointer_t  /*event_param*/,
     pointer_t  /*sm*/);
 
-INTERNAL unsigned8     mark_syntax_and_sec_action(
-    pointer_t       spc_struct,
-    pointer_t       event_param,
-    pointer_t       sm);
-
 INTERNAL unsigned32     mark_abort_action_rtn (
     pointer_t  /*spc_struct*/, 
     pointer_t  /*event_param*/,
@@ -2957,46 +2952,23 @@ INTERNAL unsigned32     mark_syntax_and_sec_action_rtn
   pointer_t       sm 
 )
 {
-    rpc_cn_assoc_t                  *assoc;
-
-    RPC_CN_DBG_RTN_PRINTF(CLIENT mark_syntax_and_sec_action_rtn);
-    
-    /*
-     * The special structure is a pointer to the association.
-     */
-    assoc = (rpc_cn_assoc_t *) spc_struct;
-
-    if (mark_syntax_and_sec_action(spc_struct, event_param, sm))
-    {
-	RPC_CN_ASSOC_WAKEUP (assoc);
-    }
-    return (assoc->assoc_status);
-}
-
-/* Returns 1 if the sender should be notified */
-
-INTERNAL unsigned8     mark_syntax_and_sec_action
-(
-  pointer_t       spc_struct,
-  pointer_t       event_param,
-  pointer_t       sm 
-)
-{
-    rpc_cn_assoc_t                  *assoc;
-    rpc_cn_packet_t                 *header;
+    rpc_cn_assoc_t                  *assoc = NULL;
+    rpc_cn_packet_t                 *header = NULL;
     unsigned32                      header_size;
-    rpc_cn_pres_result_list_t       *pres_result_list;
-    rpc_cn_syntax_t                 *pres_context;
-    rpc_cn_sec_context_t            *sec_context;
-    rpc_cn_auth_tlr_t               *auth_tlr;
+    rpc_cn_pres_result_list_t       *pres_result_list = NULL;
+    rpc_cn_syntax_t                 *pres_context = NULL;
+    rpc_cn_sec_context_t            *sec_context = NULL;
+    rpc_cn_auth_tlr_t               *auth_tlr = NULL;
     unsigned32                      i, local_auth_value_len;
-    rpc_cn_port_any_t               *sec_addr;
+    rpc_cn_port_any_t               *sec_addr = NULL;
     rpc_cn_bind_auth_value_priv_p_t priv_auth_value, local_auth_value;
     unsigned32                      st;
-    rpc_cn_sm_ctlblk_t		    *sm_p;
+    rpc_cn_sm_ctlblk_t		    *sm_p = NULL;
     unsigned32			    status;
     unsigned8                       ptype;
 
+    RPC_CN_DBG_RTN_PRINTF(CLIENT mark_syntax_and_sec_action_rtn);
+    
     /*
      * The special structure is a pointer to the association.
      */
@@ -3010,7 +2982,7 @@ INTERNAL unsigned8     mark_syntax_and_sec_action
     {
 	process_frag_action_rtn(spc_struct, event_param, sm);
         sm_p->cur_state = RPC_C_CLIENT_ASSOC_ACTIVE;
-    	return 0;
+    	return (assoc->assoc_status);
     }
 
     /*
@@ -3331,11 +3303,18 @@ DONE:
 
     /*
      * Queue a dummy fragbuf on the association receive queue to
-     * wake up the client caller thread.
+     * wake up the client caller thread. Do it only if we have received
+     * ALTER_CONTEXT because otherwise we may still be in the middle
+     * of authentication phase in which case the caller thread has to wait.
      */
-    assoc->assoc_flags &= ~RPC_C_CN_ASSOC_AUTH_EXPECTED;
-    sm_p->cur_state = RPC_C_CLIENT_ASSOC_ACTIVE; 
-    return 1;
+    if (ptype == RPC_C_CN_PKT_ALTER_CONTEXT_RESP)
+    {
+        assoc->assoc_flags &= ~RPC_C_CN_ASSOC_AUTH_EXPECTED;
+	RPC_CN_ASSOC_WAKEUP (assoc);
+	sm_p->cur_state = RPC_C_CLIENT_ASSOC_ACTIVE;
+    }
+
+    return (assoc->assoc_status);
 }
 
 
@@ -3682,7 +3661,6 @@ INTERNAL unsigned32     add_mark_set_action_rtn
     rpc_cn_sm_ctlblk_t	*sm_p;
     unsigned32		status;
     rpc_binding_rep_p_t binding_rep = NULL;
-    boolean             wakeup = false;
 
     RPC_CN_DBG_RTN_PRINTF(CLIENT add_mark_set_action_rtn);
    
@@ -3753,10 +3731,11 @@ INTERNAL unsigned32     add_mark_set_action_rtn
     /*
      * Mark the association with the negotiated syntax(es).
      */
-    wakeup = mark_syntax_and_sec_action (spc_struct, event_param, sm);
+    mark_syntax_and_sec_action_rtn (spc_struct, event_param, sm);
     if (assoc->assoc_status != rpc_s_ok)
     {
-       goto DONE;
+       sm_p->cur_state =  RPC_C_CLIENT_ASSOC_OPEN;
+       return (assoc->assoc_status);
     }
 
     /*
@@ -3776,6 +3755,40 @@ INTERNAL unsigned32     add_mark_set_action_rtn
                 RPC_CN_ASSOC_CHECK_ST(assoc, &(assoc->assoc_status));
             }
 	}
+    }
+
+    /*
+     * Record the server's max transmit frag size as our max receive
+     * frag size in the association. Record the server's max receive
+     * frag size as our max transmit frag size. As per the NCA
+     * Connection Architecture zero is a reserved value for the max
+     * receive frag implying the default size: rpc_c_assoc_must_recv_frag_size.
+     */
+    if (RPC_CN_PKT_MAX_RECV_FRAG (header) == 0)
+    {
+        assoc->assoc_max_xmit_frag = RPC_C_ASSOC_MUST_RECV_FRAG_SIZE;
+    }
+    else
+    {
+        assoc->assoc_max_xmit_frag = RPC_CN_PKT_MAX_RECV_FRAG(header);
+    }
+    assoc->assoc_max_recv_frag = RPC_CN_PKT_MAX_XMIT_FRAG(header);
+
+    /*
+     * Record the servers minor version number in the association.
+     * This will be used in all subsequent PDU's.
+     */
+    assoc->assoc_vers_minor = RPC_CN_PKT_VERS_MINOR(header);
+
+    /*
+     * Set the secondary address on the group using the secondary
+     * address endpoint sent from the server.
+     */
+    set_secondary_addr_action_rtn (spc_struct, event_param, sm);
+    if (assoc->assoc_status != rpc_s_ok)
+    {
+       sm_p->cur_state =  RPC_C_CLIENT_ASSOC_OPEN;
+       return (assoc->assoc_status);
     }
 
     /*
@@ -3802,50 +3815,30 @@ INTERNAL unsigned32     add_mark_set_action_rtn
 	    assoc_sm_work.pres_context = NULL;
 	    assoc_sm_work.sec_context = sec_context;
 
+	    /*
+	     * After sending AUTH3 we're not expecting more authentication
+	     * steps so set the security state to complete. This will
+	     * prevent from sending out ALTER_CONTEXT.
+	     */
+	    sec_context->sec_state = RPC_C_SEC_STATE_COMPLETE;
+
 	    authent3_action_rtn(spc_struct, &assoc_sm_work, sm);
+
+	    assoc->assoc_flags &= ~RPC_C_CN_ASSOC_AUTH_EXPECTED;
+	    RPC_CN_ASSOC_WAKEUP (assoc);
+	    sm_p->cur_state = RPC_C_CLIENT_ASSOC_ACTIVE;
+	    return (assoc->assoc_status);
 	}
     }
 
-
     /*
-     * Set the secondary address on the group using the secondary
-     * address endpoint sent from the server.
+     * Queue a dummy fragbuf on the association receive queue to
+     * wake up the client caller thread.
      */
-    set_secondary_addr_action_rtn (spc_struct, event_param, sm);
-    if (assoc->assoc_status != rpc_s_ok)
-    {
-       goto DONE;
-    }
+    assoc->assoc_flags &= ~RPC_C_CN_ASSOC_AUTH_EXPECTED;
+    RPC_CN_ASSOC_WAKEUP (assoc);
+    sm_p->cur_state = RPC_C_CLIENT_ASSOC_ACTIVE;
     
-    /*
-     * Record the server's max transmit frag size as our max receive
-     * frag size in the association. Record the server's max receive
-     * frag size as our max transmit frag size. As per the NCA
-     * Connection Architecture zero is a reserved value for the max
-     * receive frag implying the default size: rpc_c_assoc_must_recv_frag_size.
-     */
-    if (RPC_CN_PKT_MAX_RECV_FRAG (header) == 0)
-    {
-        assoc->assoc_max_xmit_frag = RPC_C_ASSOC_MUST_RECV_FRAG_SIZE;
-    }
-    else
-    {
-        assoc->assoc_max_xmit_frag = RPC_CN_PKT_MAX_RECV_FRAG(header);
-    }
-    assoc->assoc_max_recv_frag = RPC_CN_PKT_MAX_XMIT_FRAG(header);
-
-    /*
-     * Record the servers minor version number in the association.
-     * This will be used in all subsequent PDU's.
-     */
-    assoc->assoc_vers_minor = RPC_CN_PKT_VERS_MINOR(header);
-
-DONE:
-    sm_p->cur_state =  RPC_C_CLIENT_ASSOC_OPEN;
-    if (wakeup)
-    {
-	RPC_CN_ASSOC_WAKEUP (assoc);
-    }
     return (assoc->assoc_status);
 }
 
@@ -4956,7 +4949,8 @@ INTERNAL void send_pdu
             sec_context->sec_info->authn_flags & rpc_c_protect_flags_header_sign)
         {
             if (pdu_type == RPC_C_CN_PKT_BIND ||
-                pdu_type == RPC_C_CN_PKT_ALTER_CONTEXT)
+                pdu_type == RPC_C_CN_PKT_ALTER_CONTEXT ||
+		pdu_type == RPC_C_CN_PKT_AUTH3)
             {
                 flags |= RPC_C_CN_FLAGS_SUPPORT_HEADER_SIGN;
             }
