@@ -152,6 +152,12 @@ LwAutoEnrollCurlSoapRequest(
 
     curlResult = curl_easy_setopt(
                     curlHandle,
+                    CURLOPT_CAINFO,
+                    NULL);
+    BAIL_ON_CURL_ERROR(curlResult);
+
+    curlResult = curl_easy_setopt(
+                    curlHandle,
                     CURLOPT_CAPATH,
                     "/var/lib/likewise/trusted_certs");
     BAIL_ON_CURL_ERROR(curlResult);
