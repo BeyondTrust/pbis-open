@@ -1,11 +1,12 @@
-PROJECT_NAME="likewise-open"
+PROJECT_NAME="platform"
 MODULES="core compiler autotools moonunit pkg-config likewise dceidl fortune"
 LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv \
-                sqlite libuuid openssl curl libxml2"
+                libuuid sqlite openssl curl libxml2"
 SUBDIRS="$LW_ALL_BUNDLED \
          lwbase lwmsg lwreg lwadvapi netlogon \
          lwio libschannel dcerpc centutils lwsm eventlog lsass lwdns \
-         lwnetapi domainjoin lwconfig lwupgrade samba-interop config package"
+         lwnetapi domainjoin lwconfig lwupgrade config \
+         package"
 
 
 defaults()
@@ -14,20 +15,39 @@ defaults()
     MK_SYSCONFDIR="/etc/likewise"
     MK_LOCALSTATEDIR="/var"
     MK_DATADIR="/opt/likewise/share"
-    MK_DOCDIR="/usr/share/doc/likewise"
+    MK_DOCDIR="/opt/likewise/share/doc"
     MK_MANDIR="/usr/share/man"
+
+    if [ "`uname`" = "Darwin" ]
+    then
+        MK_LOCALSTATEDIR="/private/var"
+        MK_SYSCONFDIR="/private/etc/likewise"
+    fi
+    
+    # Fail on warnings
+    MK_FAIL_ON_WARN=yes
 }
 
 option()
 {
-    case "${MK_HOST_OS}" in
-        linux)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl"
+    case "${MK_HOST_OS}-${LW_FEATURE_LEVEL}" in
+        *-auth)
+            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl"
+            ;;
+        linux-*)
+            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl libxml2"
             ;;
         *)
             default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl libxml2"
             ;;
     esac
+
+    mk_option \
+        OPTION=samba-interop \
+        PARAM="yes|no" \
+        VAR="LW_SAMBA_INTEROP" \
+        DEFAULT="yes" \
+        HELP="Build samba interop libraries"
 
     mk_option \
         OPTION=lw-bundled-libs \
@@ -56,20 +76,57 @@ option()
                 ;;
         esac
     done
+
+    mk_option \
+        OPTION="build-revision" \
+        PARAM="rev" \
+        VAR="LW_BUILD_REVISION" \
+        DEFAULT="" \
+        HELP="Official build revision"
+
+    mk_option \
+        OPTION="build-id" \
+        PARAM="id" \
+        VAR="LW_BUILD_ID" \
+        DEFAULT="" \
+        HELP="Official build id"
 }
 
 configure()
 {
-    mk_export LW_VERSION="6.1.0"
-    mk_export LW_BUNDLED
+    LW_VENDOR="likewise"
+    LW_PRODUCT="platform"
+    LW_VERSION="6.1.${LW_BUILD_ID:-0}"
 
-    mk_msg "configuring Likewise Open $LW_VERSION"
+    mk_msg "configuring $LW_VENDOR $LW_PRODUCT $LW_VERSION"
     mk_msg "using bundled libraries: $LW_BUNDLED"
 
     for comp in ${LW_ALL_BUNDLED}
     do
         lw_use_bundled "$comp" || mk_skip_subdir "$comp"
     done
+
+    [ "$LW_SAMBA_INTEROP" = "yes" ] || mk_skip_subdir "samba-interop"
+
+    case "$LW_FEATURE_LEVEL" in
+        auth)
+            mk_skip_subdir libschannel
+            mk_skip_subdir srvsvc
+            mk_skip_subdir lwnetapi
+            mk_skip_subdir lwtools
+            mk_skip_subdir nfs
+            ;;
+    esac
+
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            mk_skip_subdir eventlog
+            mk_skip_subdir domainjoin
+            mk_skip_subdir centutils
+            mk_skip_subdir lwconfig
+            mk_skip_subdir lwupgrade
+            ;;
+    esac
 }
 
 make()
@@ -86,6 +143,35 @@ make()
         DEPS="$bundled_targets @lwreg/libedit @dcerpc/flex-2.5.4"
 
     mk_add_phony_target "$result"
+
+    case "$MK_HOST_OS:$MK_HOST_ARCH" in
+        hpux:ia64|solaris:x86)
+            # Add target to build everything without attempting to
+            # unpack staging archive from other build machine
+
+            _local_targets=""
+            mk_unquote_list "$SUBDIRS"
+            for subdir
+            do
+                [ "$subdir" != "package" -a "$subdir" != "installer" ] &&
+                    _local_targets="$_local_targets @$subdir"
+            done
+            
+            mk_target \
+                TARGET="@all-local" \
+                DEPS="$_local_targets"
+
+            mk_add_phony_target "$result"
+            ;;
+        solaris:x86_64)
+            # Add target to build only compat bits
+            mk_target \
+                TARGET="@compat" \
+                DEPS="/usr/lib/64/nss_lsass.la /usr/lib/security/64/pam_lsass.la"
+
+            mk_add_phony_target "$result"
+            ;;
+    esac
 
     lw_print_features
 }
@@ -133,16 +219,19 @@ lw_print_features()
         lw_print_feature "Host system" "$MK_HOST_OS ($MK_HOST_ISAS)"
     fi
 
+    lw_print_feature "Device profile" "$LW_DEVICE_PROFILE"
+    lw_print_feature "Feature level" "$LW_FEATURE_LEVEL"
     lw_print_feature "Bundled libraries" "$LW_BUNDLED"
+    lw_print_feature "Threadpool backend" "$LWBASE_THREADPOOL_BACKEND"
 
-    mk_get_export lwbase THREADPOOL_BACKEND
-    lw_print_feature "Threadpool backend" "$result"
+    if [ "$LW_FEATURE_LEVEL" != "auth" ]
+    then
+        lw_print_feature "FUSE support" "$LWIO_FUSE_ENABLED"
+        lw_print_feature "EA support" "$LWIO_EA_ENABLED"
+        lw_print_feature "Domain join GUI" "$DJ_GUI_INTERFACE"
+    fi
 
-    mk_get_export lwbase HAVE_PTHREAD_ATTR_SETAFFINITY_NP
-    lw_print_feature "Threadpool CPU affinity" "$result"
-
-    mk_get_export domainjoin DJ_GUI_INTERFACE
-    lw_print_feature "Domain join GUI" "$result"
+    lw_print_feature "Samba interoperability" "$LW_SAMBA_INTEROP"
 
     types=""
 
