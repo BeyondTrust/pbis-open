@@ -57,7 +57,7 @@ registrydir="${datadir}/config"
 
 # tests
 
-noinst_PROGRAMS = test/request
+bin_PROGRAMS = test/request
 
 test_request_SOURCES = test/request.c
 test_request_LDADD = lib/liblwautoenroll.la
