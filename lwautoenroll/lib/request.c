@@ -13,6 +13,7 @@
 
 #include <lsa/lsa.h>
 
+#include <lw/rtllog.h>
 #include <lwerror.h>
 #include <lwkrb5.h>
 #include <lwmem.h>
@@ -27,20 +28,160 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-static DWORD
+static
+DWORD
+GetBlockChildFromEnvelope(
+    IN OpenSOAPEnvelopePtr pEnvelope,
+    const char * const * ppName,
+    OUT OpenSOAPXMLElmPtr* pResult
+    )
+{
+    DWORD error = 0;
+    DWORD i = 0;
+    OpenSOAPBlockPtr pBody = NULL;
+    int soapResult = 0;
+    OpenSOAPXMLElmPtr pPos = NULL;
+
+    if (!ppName[0])
+    {
+        error = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LW_ERROR(error);
+    }
+
+    soapResult = OpenSOAPEnvelopeGetBodyBlockMB(
+                    pEnvelope,
+                    ppName[0],
+                    &pBody);
+    BAIL_ON_SOAP_ERROR(soapResult);
+
+    pPos = (OpenSOAPXMLElmPtr)pBody;
+
+    for (i = 1; pPos && ppName[i]; i++)
+    {
+        soapResult = OpenSOAPXMLElmGetChildMB(
+                        pPos,
+                        ppName[i],
+                        &pPos);
+        BAIL_ON_SOAP_ERROR(soapResult);
+    }
+
+cleanup:
+    if (error)
+    {
+        *pResult = NULL;
+    }
+    else
+    {
+        *pResult = pPos;
+    }
+    return error;
+}
+
+static
+DWORD
+GetStringFromEnvelope(
+    IN OpenSOAPEnvelopePtr pEnvelope,
+    IN const char * const * ppName,
+    OUT PSTR* ppResult
+    )
+{
+    DWORD error = 0;
+    int soapResult = 0;
+    OpenSOAPXMLElmPtr pElement = NULL;
+    OpenSOAPStringPtr pSoapString = NULL;
+    PSTR pString = NULL;
+
+    error = GetBlockChildFromEnvelope(
+                    pEnvelope,
+                    ppName,
+                    &pElement);
+    BAIL_ON_LW_ERROR(error);
+
+    if (pElement)
+    {
+        soapResult = OpenSOAPStringCreate(&pSoapString);
+        BAIL_ON_SOAP_ERROR(soapResult);
+
+        soapResult = OpenSOAPXMLElmGetValueMB(
+                        pElement,
+                        "string",
+                        &pSoapString);
+        BAIL_ON_SOAP_ERROR(soapResult);
+
+        soapResult = OpenSOAPStringGetStringMBWithAllocator(
+                        pSoapString,
+                        NULL,
+                        NULL,
+                        &pString);
+        BAIL_ON_SOAP_ERROR(soapResult);
+    }
+
+cleanup:
+    if (pSoapString)
+    {
+        OpenSOAPStringRelease(pSoapString);
+    }
+    if (error)
+    {
+        LW_SAFE_FREE_STRING(pString);
+        *ppResult = NULL;
+    }
+    else
+    {
+        *ppResult = pString;
+    }
+    return error;
+}
+
+static
+DWORD
+GetIntFromEnvelope(
+    IN OpenSOAPEnvelopePtr pEnvelope,
+    IN const char * const * ppName,
+    OUT int* pResult,
+    OUT PBOOLEAN pFound
+    )
+{
+    DWORD error = 0;
+    int soapResult = 0;
+    OpenSOAPXMLElmPtr pElement = NULL;
+    int result = -1;
+
+    error = GetBlockChildFromEnvelope(
+                    pEnvelope,
+                    ppName,
+                    &pElement);
+    BAIL_ON_LW_ERROR(error);
+
+    if (pElement)
+    {
+        soapResult = OpenSOAPXMLElmGetValueMB(
+                        pElement,
+                        "int",
+                        &result);
+        BAIL_ON_SOAP_ERROR(soapResult);
+    }
+
+cleanup:
+    *pFound = (pElement != NULL);
+    *pResult = result;
+    return error;
+}
+
+static
+DWORD
 CheckSoapFault(
         IN OpenSOAPEnvelopePtr pSoapReply
         )
 {
     OpenSOAPBlockPtr pFaultBlock = NULL;
-    OpenSOAPXMLElmPtr pFaultReason = NULL;
-    OpenSOAPXMLElmPtr pFaultReasonText = NULL;
-    OpenSOAPStringPtr pFaultReasonString = NULL;
-    OpenSOAPByteArrayPtr pFaultReasonBuffer = NULL;
-    const unsigned char *faultReasonStr = NULL;
-    size_t faultReasonSize = 0;
+    PSTR pFaultReasonStr = NULL;
     int soapResult = 0;
     DWORD error = LW_ERROR_SUCCESS;
+    const char * const ppReasonPath[] = {"Fault", "Reason", "Text", NULL};
+    const char * const ppCodePath[] = {"Fault", "Detail", "CertificateEnrollmentWSDetail", "ErrorCode", NULL};
+    int faultCode = 0;
+    BOOLEAN codeFound = FALSE;
 
     soapResult = OpenSOAPEnvelopeGetBodyBlockMB(
                     pSoapReply,
@@ -50,59 +191,26 @@ CheckSoapFault(
 
     if (pFaultBlock != NULL)
     {
-        soapResult = OpenSOAPBlockGetChildMB(
-                        pFaultBlock,
-                        "Reason",
-                        &pFaultReason);
-        BAIL_ON_SOAP_ERROR(soapResult);
+        error = GetStringFromEnvelope(
+                        pSoapReply,
+                        ppReasonPath,
+                        &pFaultReasonStr);
+        BAIL_ON_LW_ERROR(error);
 
-        soapResult = OpenSOAPXMLElmGetChildMB(
-                        pFaultReason,
-                        "Text",
-                        &pFaultReasonText);
-        BAIL_ON_SOAP_ERROR(soapResult);
-
-        soapResult = OpenSOAPStringCreate(&pFaultReasonString);
-        BAIL_ON_SOAP_ERROR(soapResult);
-
-        soapResult = OpenSOAPXMLElmGetValueMB(
-                        pFaultReasonText,
-                        "string",
-                        &pFaultReasonString);
-        BAIL_ON_SOAP_ERROR(soapResult);
-
-        soapResult = OpenSOAPByteArrayCreate(&pFaultReasonBuffer);
-        BAIL_ON_SOAP_ERROR(soapResult);
-
-        soapResult = OpenSOAPStringGetStringUSASCII(
-                        pFaultReasonString,
-                        pFaultReasonBuffer);
-        BAIL_ON_SOAP_ERROR(soapResult);
-
-        soapResult = OpenSOAPByteArrayGetBeginSizeConst(
-                        pFaultReasonBuffer,
-                        &faultReasonStr,
-                        &faultReasonSize);
-        BAIL_ON_SOAP_ERROR(soapResult);
+        error = GetIntFromEnvelope(
+                        pSoapReply,
+                        ppCodePath,
+                        &faultCode,
+                        &codeFound);
+        BAIL_ON_LW_ERROR(error);
 
         BAIL_WITH_LW_ERROR(
             LW_ERROR_AUTOENROLL_FAILED,
-            ": SOAP Fault: %.*s",
-            faultReasonSize,
-            faultReasonStr);
+            ": SOAP Fault: %s SOAP Error code: %d",
+            LW_RTL_LOG_SAFE_STRING(pFaultReasonStr), faultCode);
     }
 
 cleanup:
-    if (pFaultReasonString)
-    {
-        OpenSOAPStringRelease(pFaultReasonString);
-    }
-
-    if (pFaultReasonBuffer)
-    {
-        OpenSOAPByteArrayRelease(pFaultReasonBuffer);
-    }
-
     return error;
 }
 
