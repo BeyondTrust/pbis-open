@@ -30,6 +30,9 @@ GenerateX509Request(
         OUT X509_REQ **ppRequest
         )
 {
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN 1024
+#endif
     char hostName[MAXHOSTNAMELEN];
     RSA *pRsaKey = NULL;
     EVP_PKEY *pKeyPair = NULL;
@@ -156,7 +159,7 @@ GenerateX509Request(
     pAsn1Value = NULL;
 
     // Add the Microsoft Enrollment CSP Info attribute.
-    if (pTemplate->csp && isdigit(pTemplate->csp[0]))
+    if (pTemplate->csp && isdigit((int)pTemplate->csp[0]))
     {
         providerID = strtoul(pTemplate->csp, &end, 0);
 

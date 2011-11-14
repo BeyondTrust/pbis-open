@@ -1,6 +1,7 @@
 /*
  * Copyright (C) Likewise Software.  All rights reserved.
  */
+#include "config.h"
 #include <lwautoenroll/lwautoenroll.h>
 #include <bail.h>
 #include <ssl_util.h>

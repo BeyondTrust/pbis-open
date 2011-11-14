@@ -36,7 +36,6 @@
 #define LDAP_BASE "cn=NTAuthCertificates,cn=Public Key Services,cn=Services,cn=Configuration"
 #define TRUSTED_CERT_DIR            CACHEDIR "/trusted_certs"
 #define KRB5_CACHE                  "MEMORY:lwcertd_krb5_cc"
-#define TRUSTED_CERT_PATH_MAX       (sizeof(TRUSTED_CERT_DIR) + NAME_MAX + 2)
 
 /* Markers for cert files that are found/not found in AD. */
 static int found, notfound;
@@ -83,6 +82,7 @@ GetTrustedCertificates(
     LW_BOOL downloadedCerts = LW_FALSE;
     int ret;
     DWORD error = LW_ERROR_SUCCESS;
+    PSTR pPath = NULL;
 
     if (!initialized)
     {
@@ -194,7 +194,6 @@ GetTrustedCertificates(
             const unsigned char *pCertData;
             DWORD hash;
             int sequence = 0;
-            char path[TRUSTED_CERT_PATH_MAX];
             const char *file;
             unsigned int uCertDigestLen = 0;
             unsigned char certDigest[EVP_MAX_MD_SIZE];
@@ -225,9 +224,16 @@ GetTrustedCertificates(
                 FILE *fp;
                 int result;
 
-                snprintf(path, sizeof(path), "%s/%08x.%d",
-                        TRUSTED_CERT_DIR, hash, sequence);
-                file = strrchr(path, '/') + 1;
+                LW_SAFE_FREE_STRING(pPath);
+                error = LwAllocateStringPrintf(
+                            &pPath,
+                            "%s/%08x.%d",
+                            TRUSTED_CERT_DIR,
+                            hash,
+                            sequence);
+                BAIL_ON_LW_ERROR(error);
+
+                file = strrchr(pPath, '/') + 1;
 
                 if (LwHashGetValue(
                         pCertFiles,
@@ -238,11 +244,11 @@ GetTrustedCertificates(
                     break;
                 }
 
-                fp = fopen(path, "r");
+                fp = fopen(pPath, "r");
                 if (fp == NULL)
                 {
                     LW_RTL_LOG_ERROR("fopen(%s) failed: %s",
-                            path, strerror(errno));
+                            pPath, strerror(errno));
                     continue;
                 }
 
@@ -294,10 +300,10 @@ GetTrustedCertificates(
             {
                 FILE *fp;
 
-                fp = fopen(path, "w");
+                fp = fopen(pPath, "w");
                 if (fp == NULL)
                 {
-                    LW_RTL_LOG_ERROR("Cannot create %s", path);
+                    LW_RTL_LOG_ERROR("Cannot create %s", pPath);
                 }
                 else
                 {
@@ -316,8 +322,8 @@ GetTrustedCertificates(
                          */
                         LW_RTL_LOG_ERROR(
                             "PEM_write_X509 Write failed to %s",
-                            path);
-                        unlink(path);
+                            pPath);
+                        unlink(pPath);
                     }
 
                     fclose(fp);
@@ -341,26 +347,19 @@ GetTrustedCertificates(
         {
             if (pCertFile->pValue == &notfound)
             {
-                char path[TRUSTED_CERT_PATH_MAX];
+                LW_SAFE_FREE_STRING(pPath);
+                error = LwAllocateStringPrintf(
+                            &pPath,
+                            "%s/%s",
+                            TRUSTED_CERT_DIR,
+                            (const char *) pCertFile->pKey);
+                BAIL_ON_LW_ERROR(error);
 
-                if (snprintf(
-                        path,
-                        sizeof(path),
-                        "%s/%s",
-                        TRUSTED_CERT_DIR,
-                        (const char *) pCertFile->pKey)
-                    >= sizeof(path))
-                {
-                    LW_RTL_LOG_ERROR(
-                        "path %s/%s too long",
-                        TRUSTED_CERT_DIR,
-                        (const char *) pCertFile->pKey);
-                }
-                else if (unlink(path) == -1)
+                if (unlink(pPath) == -1)
                 {
                     LW_RTL_LOG_ERROR(
                         "Could not unlink %s: %s",
-                        path,
+                        pPath,
                         strerror(errno));
                 }
             }
@@ -368,6 +367,7 @@ GetTrustedCertificates(
     }
 
 cleanup:
+    LW_SAFE_FREE_STRING(pPath);
     if (lsaConnection)
     {
         LsaCloseServer(lsaConnection);
