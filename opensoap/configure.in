@@ -111,7 +111,7 @@ HAVE_LIBXML2_XMLVERSION_H=0
 HAVE_LIBXML_XMLVERSION_H=0
 XML2_CFLAGS=`$XML2_CONFIG --cflags`
 XML2_LIBS=`$XML2_CONFIG --libs`
-for d in `echo ${XML2_CFLAGS} \
+for d in `echo ${CPPFLAGS} ${XML2_CFLAGS} \
 | ${AWK} '{ for (i = 1; i <= NF; ++i) { \
 	if (sub(/^\-I/, "", $i) != 0) { print $i }}}'`; do
   if test -f ${d}/libxml2/xmlversion.h; then
