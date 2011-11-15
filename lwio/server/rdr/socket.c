@@ -653,12 +653,12 @@ SMBSocketReaderMain(
             if (WakeMask & LW_TASK_EVENT_TIME)
             {
                 /* We timed out, give up */
-                ntStatus = STATUS_TIMEOUT;
+                ntStatus = STATUS_IO_TIMEOUT;
                 BAIL_ON_NT_STATUS(ntStatus);
             }
             else
             {
-                *pWaitMask = LW_TASK_EVENT_FD_WRITABLE;
+                *pWaitMask = LW_TASK_EVENT_FD_WRITABLE | LW_TASK_EVENT_TIME;
                 *pllTime = llConnectTimeout;
                 goto cleanup;
             }
@@ -967,8 +967,8 @@ SMBSocketConnect(
     {
         pthread_cond_wait(&pSocket->event, &pSocket->mutex);
     }
-
-    LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
+    ntStatus = pSocket->error;
+    BAIL_ON_NT_STATUS(ntStatus);
 
 cleanup:
 
@@ -978,6 +978,7 @@ cleanup:
     }
 
     LWIO_SAFE_FREE_MEMORY(pszHostname);
+    LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
 
     return ntStatus;
 
@@ -988,7 +989,11 @@ error:
         close(fd);
     }
 
-    SMBSocketInvalidate(pSocket, ntStatus);
+    if (!bInLock)
+    {
+        LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
+    }
+    SMBSocketInvalidate_InLock(pSocket, ntStatus);
 
     goto cleanup;
 }
