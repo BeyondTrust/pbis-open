@@ -19,6 +19,13 @@ AC_USE_SYSTEM_EXTENSIONS
 
 AC_HEADER_STDC
 
+AC_C_BIGENDIAN
+if test "x$ac_cv_c_bigendian" = "xyes"; then
+    AC_DEFINE([LW_BIG_ENDIAN], [], [Define standard macro for Big Endian systems])
+else
+    AC_DEFINE([LW_LITTLE_ENDIAN], [], [Define standard macro for Little Endian systems])
+fi
+
 LWAUTOENROLL_CPPFLAGS=
 LWAUTOENROLL_CFLAGS='-Wall -Werror -Wmissing-prototypes'
 AC_SUBST(LWAUTOENROLL_CPPFLAGS)

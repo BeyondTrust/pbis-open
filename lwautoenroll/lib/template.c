@@ -1,6 +1,7 @@
 /*
  * Copyright (C) Likewise Software.  All rights reserved.
  */
+#include "config.h"
 #include <lwautoenroll/lwautoenroll.h>
 
 #include <bail.h>
@@ -16,6 +17,7 @@
 #include <lwldap.h>
 #include <lwmem.h>
 #include <lwstr.h>
+#include <lw/swab.h>
 
 #include <ldap.h>
 #include <string.h>
@@ -391,7 +393,8 @@ LwAutoEnrollGetTemplateList(
             continue;
         }
 
-        keyUsage = *((PWORD) (ppValues[0]->bv_val));
+        memcpy(&keyUsage, ppValues[0]->bv_val, ppValues[0]->bv_len);
+        keyUsage = LW_LTOH32(keyUsage);
 
         ldap_value_free_len(ppValues);
         ppValues = ldap_get_values_len(
