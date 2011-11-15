@@ -234,7 +234,7 @@ typedef enum LW_THREAD_POOL_OPTION
     LW_THREAD_POOL_OPTION_DELEGATE_TASKS,
     /**
      * (LONG) Number of task threads to create.  A negative number indicates
-     * a multiple of the number of CPUs present on the system.
+     * that the number of CPUs present on the system should be used.
      * (Default: -1)
      */
     LW_THREAD_POOL_OPTION_TASK_THREADS,

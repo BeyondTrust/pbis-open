@@ -44,6 +44,10 @@
 #include <signal.h>
 #include <stdlib.h>
 
+#ifndef LWBASE_THREADPOOL_TASK_THREADS_DEFAULT_LIMIT
+#define LWBASE_THREADPOOL_TASK_THREADS_DEFAULT_LIMIT 16
+#endif
+
 /*
  * Circular linked list structure
  * TODO: merge or replace with LW_LIST_LINKS from lwio
@@ -380,9 +384,17 @@ GetTaskThreadsAttr(
     int numCpus
     )
 {
-    LONG lCount = pAttrs ? pAttrs->lTaskThreads : -1;
+    if (pAttrs && pAttrs->lTaskThreads > 0)
+    {
+        return pAttrs->lTaskThreads;
+    }
 
-    return lCount < 0 ? -lCount * numCpus : lCount;
+    if (numCpus > LWBASE_THREADPOOL_TASK_THREADS_DEFAULT_LIMIT)
+    {
+        return LWBASE_THREADPOOL_TASK_THREADS_DEFAULT_LIMIT;
+    }
+
+    return numCpus;
 }
 
 static
