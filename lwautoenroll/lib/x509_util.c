@@ -9,6 +9,8 @@
 #include <x509_util.h>
 
 #include <lwerror.h>
+#include <lwmem.h>
+#include <lwstr.h>
 
 #include <sys/param.h>
 
@@ -49,6 +51,10 @@ GenerateX509Request(
     int sslResult = 0;
     int unixResult = 0;
     DWORD error = LW_ERROR_SUCCESS;
+    ASN1_OBJECT *obj = NULL;
+    char charTemp = 0;
+    PSTR pExtensionName = NULL;
+    int extensionNameLen = 0;
 
     unixResult = gethostname(hostName, sizeof(hostName));
     BAIL_ON_UNIX_ERROR(unixResult == -1, ": Could not get hostname");
@@ -255,19 +261,62 @@ GenerateX509Request(
                 index < sk_ASN1_OBJECT_num(pTemplate->extendedKeyUsage);
                 ++index)
         {
+            int nameId = NID_undef;
+
             if (buf->length)
             {
                 error = BufAppend(buf, ", ", 2);
                 BAIL_ON_LW_ERROR(error);
             }
 
-            error = BufAppend(
-                        buf,
-                        OBJ_nid2sn(OBJ_obj2nid(
-                            sk_ASN1_OBJECT_value(
-                                pTemplate->extendedKeyUsage,
-                                index))),
-                        -1);
+            obj = sk_ASN1_OBJECT_value(
+                        pTemplate->extendedKeyUsage,
+                        index);
+
+            extensionNameLen = OBJ_obj2txt(
+                                &charTemp,
+                                1,
+                                obj,
+                                0);
+            if (extensionNameLen < 0)
+            {
+                error = ERROR_INVALID_PARAMETER;
+                BAIL_ON_LW_ERROR(error);
+            }
+
+            LW_SAFE_FREE_STRING(pExtensionName);
+            error = LwAllocateMemory(
+                        extensionNameLen + 2,
+                        OUT_PPVOID(&pExtensionName));
+            BAIL_ON_LW_ERROR(error);
+
+            extensionNameLen = OBJ_obj2txt(
+                                pExtensionName,
+                                extensionNameLen + 1,
+                                obj,
+                                0);
+            if (extensionNameLen < 0)
+            {
+                error = ERROR_INVALID_PARAMETER;
+                BAIL_ON_LW_ERROR(error);
+            }
+
+            nameId = OBJ_obj2nid(obj);
+
+            if (nameId == NID_undef)
+            {
+                error = BufAppend(
+                            buf,
+                            pExtensionName,
+                            -1);
+            }
+            else
+            {
+                error = BufAppend(
+                            buf,
+                            OBJ_nid2sn(nameId),
+                            -1);
+            }
             BAIL_ON_LW_ERROR(error);
         }
 
@@ -395,6 +444,7 @@ GenerateX509Request(
     BAIL_ON_SSL_ERROR(sslResult == 0);
 
 cleanup:
+    LW_SAFE_FREE_STRING(pExtensionName);
     if (error)
     {
         if (pKeyPair)
