@@ -2,7 +2,7 @@
 
 [HKEY_THIS_MACHINE\Services\lsass]
 "Description" = {
-    default = "Likewise Security and Authentication Subsystem"
+    default = "Security and Authentication Subsystem"
     doc = ""
 }
 "Path" = {
