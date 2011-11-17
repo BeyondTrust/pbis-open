@@ -704,6 +704,7 @@ struct
     { OS_SUNOS, "SunOS" },
     { OS_SUNOS, "Solaris" },
     { OS_DARWIN, "Mac OS X"},
+    { OS_DARWIN, "Darwin"},
     { OS_DARWIN, "OsX" },
     { OS_HPUX, "HP-UX"},
     { OS_LINUX, "Linux" },
