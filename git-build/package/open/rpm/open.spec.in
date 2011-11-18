@@ -175,6 +175,11 @@ determine_upgrade_type()
         elif [ -n "`grep '^VERSION=5.3' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
             log 'Upgrading from Likewise Identity Services Open 5.3'
+        elif [ -n "`grep '^VERSION=5.4' $PRESERVEDVERSIONFILE`" ]; then
+            # 5.4 not released but used by OEMs.
+            UPGRADING_FROM_5_0123=1
+            UPGRADING_FROM_6_0=1
+            log 'Upgrading from Likewise Identity Services Open 5.4'
         elif [ -n "`grep '^VERSION=6.0' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_6_0=1
             log 'Upgrading from Likewise Open 6.0'
@@ -265,7 +270,7 @@ fix_60_registry()
     fi
 
     # Migrate pstore entries from default to joined domain
-    run '@MK_LIBEXECDIR@/regupgr61.sh' --install
+    run '@MK_BINDIR@/regupgr61.sh' --install
 
     # Migrate some other entries
     relocate_domain_separator
