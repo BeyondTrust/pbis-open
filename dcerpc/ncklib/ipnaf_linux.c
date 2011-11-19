@@ -578,15 +578,6 @@ PRIVATE void rpc__ip_init_local_addr_vec
     }
 
 done:
-    if (sock != RPC_SOCKET_INVALID)
-    {
-        RPC_SOCKET_CLOSE(sock);
-    }
-
-    return;
-
-error:
-
     if (rpc_addr_vec != NULL)
     {
         for (i = 0; i < rpc_addr_vec->len; i++)
@@ -595,6 +586,7 @@ error:
         }
         RPC_MEM_FREE (rpc_addr_vec, RPC_C_MEM_RPC_ADDR_VEC);
     }
+
     if (netmask_addr_vec != NULL)
     {
         for (i = 0; i < netmask_addr_vec->len; i++)
@@ -603,7 +595,14 @@ error:
         }
         RPC_MEM_FREE (netmask_addr_vec, RPC_C_MEM_RPC_ADDR_VEC);
     }
+    if (sock != RPC_SOCKET_INVALID)
+    {
+        RPC_SOCKET_CLOSE(sock);
+    }
 
+    return;
+
+error:
     goto done;
 }
 
