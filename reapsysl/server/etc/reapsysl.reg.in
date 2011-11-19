@@ -317,3 +317,47 @@
     default = dword:00000001
     doc = ""
 }
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event12]
+"Event" = { 
+    default = dword:0000000C
+    doc = ""
+}
+"Type" = {
+    default = "Failure Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* gdm(-password|)\\[[[:digit:]]+\\]: pam_unix\\((gdm(-password|):auth)\\): authentication failure; .* user=(.*)"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000004
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000002
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\reapsysl\Parameters\Pattern\Event13]
+"Event" = {
+    default = dword:0000000D
+    doc = ""
+}
+"Type" = {
+    default = "Success Audit"
+    doc = ""
+}
+"Regex" = {
+    default = "^.* gdm(-password|)\\[[[:digit:]]+\\]: pam_unix\\((gdm(-password|):session)\\): session opened for user (.*) by .*"
+    doc = ""
+}
+"UsernameIndex" = {
+    default = dword:00000004
+    doc = ""
+}
+"UserType" = {
+    default = dword:00000002
+    doc = ""
+}
