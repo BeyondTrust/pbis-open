@@ -316,6 +316,7 @@ ReverseIt(
     if (e == rpc_s_ok)
     {
         printf ("ReverseIt() called by client: %s\n", binding_info);
+	rpc_string_free(&binding_info, &e);
     }
 
 #if 0
