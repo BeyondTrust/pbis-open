@@ -3667,6 +3667,20 @@ unsigned32              *st
             *st = sec_context->sec_status;
             return;
         }
+
+	/*
+	 * Completing authentication may require more than one cycle of 
+	 * ALTER_CONTEXT_REQ/ALTER_CONTEXT_RESP, if association has already
+	 * been established but binding to another interface (1st ALTER_CONTEXT)
+	 * is authenticated at the same time (2nd ALTER_CONTEXT).
+	 */
+	if (RPC_CN_AUTH_REQUIRED(info) && (sec_context->sec_state == RPC_C_SEC_STATE_INCOMPLETE))
+        {
+            RPC_CN_ASSOC_EVAL_USER_EVENT(assoc,
+                                         RPC_C_ASSOC_ALTER_CONTEXT_REQ,
+                                         &assoc_sm_work,
+                                         *st);
+        }
     }
 
     /*
