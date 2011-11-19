@@ -1169,6 +1169,10 @@ cleanup:
     {
         *ppSrcName = pSrcName;
     }
+    else
+    {
+        ntlm_gss_release_name(NULL, &pSrcName);
+    }
 
     if (pRetFlags)
     {
