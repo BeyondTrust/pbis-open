@@ -1850,7 +1850,6 @@ spnego_gss_accept_sec_context(
 					  &negState, &return_token);
 			if (ret != GSS_S_COMPLETE)
 				goto cleanup;
-			sendTokenInit = 1;
 			ret = GSS_S_CONTINUE_NEEDED;
 		}
 	} else {
@@ -1915,7 +1914,7 @@ cleanup:
 			ret = GSS_S_FAILURE;
 	}
 	if (ret == GSS_S_COMPLETE) {
-		*context_handle = (gss_union_ctx_id_t)(sc->ctx_handle)->internal_ctx_id;
+		*context_handle = (gss_ctx_id_t)sc->ctx_handle;
 		if (sc->internal_name != GSS_C_NO_NAME) {
                     if (src_name != NULL) {
 			*src_name = sc->internal_name;
@@ -1924,9 +1923,6 @@ cleanup:
                         gss_release_name(&tmpmin, &sc->internal_name);
                     }
 		}
-		free(((gss_union_ctx_id_t)sc->ctx_handle)->mech_type->elements);
-		free(((gss_union_ctx_id_t)sc->ctx_handle)->mech_type);
-		free(sc->ctx_handle);
 		release_spnego_ctx(&sc);
 	} else if (ret != GSS_S_CONTINUE_NEEDED) {
 		if (sc != NULL) {
