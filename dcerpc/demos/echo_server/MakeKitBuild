@@ -4,6 +4,7 @@ make()
     lw_dceidl \
         IDL="echo.idl" \
         HEADER="echo.h" \
+        HEADERDEPS="compat/dcerpc.idl.include" \
         SSTUB="echo_s.c" \
         CSTUB="echo_c.c"
 
