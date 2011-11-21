@@ -1,0 +1,11 @@
+PKG=PBISopeng
+NAME=PowerBroker Identity Services Open Legacy
+ARCH=@PKG_PKG_ARCH@
+VERSION=@PKG_PKG_VERSION@
+CATEGORY=system
+VENDOR=BeyondTrust Software
+DESC=Adds symbolic links in /opt/likewise/bin for legacy scripts.
+HOTLINE=1-800-234-9072,1-818-575-4040
+EMAIL=pbis-support@beyondtrust.com
+CLASSES=none
+VSTOCK=@PKG_PKG_NAME@

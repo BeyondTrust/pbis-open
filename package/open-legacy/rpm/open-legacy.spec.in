@@ -1,0 +1,13 @@
+Name: 		@PKG_RPM_NAME@
+Summary: 	Legacy package for PowerBroker Identity Services Open
+Version: 	@PKG_RPM_VERSION@
+Release:        @PKG_RPM_RELEASE@
+License: 	Likewise Proprietary
+URL: 		http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/
+Group: 		System Environment/Daemons
+Prereq: grep, sh-utils
+AutoReq: no
+
+%description
+PowerBroker Identity Services provides Active Directory authentication.
+
