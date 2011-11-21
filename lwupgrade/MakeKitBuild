@@ -1,4 +1,4 @@
-SUBDIRS="utils tools"
+SUBDIRS="utils tools legacy"
 
 configure()
 {
@@ -7,6 +7,9 @@ configure()
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -Wmissing-prototypes -fno-strict-aliasing"
 
     lw_define_feature_macros
+
+    mk_declare -o \
+        MK_BINDIR \
 
     mk_check_headers \
         FAIL=yes \

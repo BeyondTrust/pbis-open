@@ -1,0 +1,71 @@
+make()
+{
+    LW_LINKS=" \
+        lsa \
+        ad-cache
+        add-group \
+        add-user \
+        del-group \
+        del-user \
+        enum-groups \
+        enum-users \
+        find-by-sid \
+        find-group-by-id \
+        find-group-by-name \
+        find-user-by-id \
+        find-user-by-name \
+        get-metrics \
+        get-status \
+        list-groups-for-user \
+        ypcat \
+        ypmatch \
+        mod-group \
+        mod-user \
+        set-default-domain \
+        set-machine-sid \
+        set-machine-name \
+        find-objects \
+        enum-objects \
+        enum-members \
+        query-member-of \
+        account-rights \
+        update-dns \
+        adtool \
+        eventlog-cli"
+
+    LWLINKS=" \
+        get-dc-time \
+        get-dc-list \
+        get-dc-name \
+        config \
+        regshell"
+
+    LINKS="domainjoin-cli kdestroy kinit klist ktutil kvno lwio-copy lwma passwd samba-interop-install sqlite3"
+    
+    if [ "$DJ_GUI_INTERFACE" != "no" ]
+    then
+         LINKS="$LINKS domainjoin-gui"
+    fi
+
+    #mk_mkdir "/opt/likewise/bin"
+    for link in ${LW_LINKS}
+    do
+        mk_symlink \
+            LINK="/opt/likewise/bin/lw-$link" \
+            TARGET="${MK_BINDIR}/$link"
+    done
+
+    for link in ${LWLINKS}
+    do
+        mk_symlink \
+            LINK="/opt/likewise/bin/lw$link" \
+            TARGET="${MK_BINDIR}/$link"
+    done
+
+    for link in ${LINKS}
+    do
+        mk_symlink \
+            LINK="/opt/likewise/bin/$link" \
+            TARGET="${MK_BINDIR}/$link"
+    done
+}
