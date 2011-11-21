@@ -328,7 +328,7 @@
     doc = ""
 }
 "Regex" = {
-    default = "^.* gdm(-password|)\\[[[:digit:]]+\\]: pam_unix\\((gdm(-password|):auth)\\): authentication failure; .* user=(.*)"
+    default = "^.* [a-z]dm(-password|)\\[[[:digit:]]+\\]: pam_unix\\(([a-z]dm(-password|):auth)\\): authentication failure; .* user=(.*)"
     doc = ""
 }
 "UsernameIndex" = {
@@ -350,7 +350,7 @@
     doc = ""
 }
 "Regex" = {
-    default = "^.* gdm(-password|)\\[[[:digit:]]+\\]: pam_unix\\((gdm(-password|):session)\\): session opened for user (.*) by .*"
+    default = "^.* [a-z]dm(-password|)\\[[[:digit:]]+\\]: pam_unix\\(([a-z]dm(-password|):session)\\): session opened for user (.*) by .*"
     doc = ""
 }
 "UsernameIndex" = {
