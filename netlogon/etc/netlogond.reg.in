@@ -2,7 +2,7 @@
 
 [HKEY_THIS_MACHINE\Services\netlogon]
 "Description" = { 
-    default = "Likewise Site Affinity Service" 
+    default = "Site Affinity Service" 
     doc = "" 
 }
 "Path" = { 
