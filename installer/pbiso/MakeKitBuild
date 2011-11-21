@@ -47,8 +47,9 @@ sfx_generic()
         SFX="pbis-open-${LW_VERSION}" \
         FILES="COPYING README LICENSES $2" \
         FORMAT="$1" \
-        PACKAGES="pbis-open pbis-open-upgrade $GUI_PACKAGE" \
+        PACKAGES="pbis-open pbis-open-upgrade $GUI_PACKAGE pbis-open-legacy" \
         UPGRADE="pbis-open-upgrade" \
+        LEGACY="pbis-open-legacy" \
         OBSOLETE="likewise-base likewise-base-32bit likewise-domainjoin \
                   likewise-domainjoin-gui likewise-eventlog likewise-krb5 \
                   likewise-lac likewise-libxml2 likewise-lsass likewise-lsass-32bit \

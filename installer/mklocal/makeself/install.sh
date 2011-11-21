@@ -739,6 +739,28 @@ do_install()
         fi
     fi
 
+    if [ -n "$INSTALL_LEGACY_PACKAGE" ]; then
+        if [ -z "$OPT_INSTALL_LEGACY_PACKAGE" -a -f "/var/lib/pbis-upgrade/VERSION" ]; then
+            DO_INSTALL_LEGACY_PACKAGE="yes"
+        fi
+        if [ "$OPT_INSTALL_LEGACY_PACKAGE" = "yes" ]; then
+            DO_INSTALL_LEGACY_PACKAGE="yes"
+        fi
+
+        if [ "$DO_INSTALL_LEGACY_PACKAGE" = "yes" ]; then
+            pkgName=`package_file_exists $INSTALL_LEGACY_PACKAGE`
+            if [ $? -eq 0 ]; then
+                package_install "$pkgName"
+               err=$?
+                if [ $err -ne 0 ]; then
+                    log_info "Error installing $pkgName"
+                fi
+            else
+                log_info "Missing package file $pkgName for $INSTALL_LEGACY_PACKAGE"
+            fi
+        fi
+    fi
+
     mkdir -p /var/lib/pbis/uninstall
     echo "PREFIX=\"$PREFIX\"" > /var/lib/pbis/uninstall/MANIFEST
     echo "PKGTYPE=\"$PKGTYPE\"" >> /var/lib/pbis/uninstall/MANIFEST
@@ -940,6 +962,15 @@ do_interactive()
         echo ""
     fi
 
+    prompt_yes_no "Would you like to install package for legacy links? (i.e.  /opt/likewise/bin/lw-find-user-by-name -> /opt/pbis/bin/find-user-by-name)"
+    if [ "x$answer" = "yes" ]; then
+        OPT_INSTALL_LEGACY_PACKAGE="yes"
+    elif [ "x$answer" = "no" ]; then
+        OPT_INSTALL_LEGACY_PACKAGE="no"
+    elif [ "x$answer" = "auto" ]; then
+        OPT_INSTALL_LEGACY_PACKAGE=""
+    fi
+
     prompt_yes_no "Would you like to install now?"
     if [ "x$answer" != "xyes" ]; then
         do_info
@@ -970,6 +1001,8 @@ usage()
     echo "    --dir <DIR>      base directory where this script is located"
     echo "    --echo-dir <DIR> prefix to output for packages directory (w/info command)"
     echo "    --dont-join      do not run the domainjoin GUI tool after install completes (default: auto)"
+    echo "    --legacy         install the legacy package"
+    echo "    --no-legacy      do not install the legacy package"
 
     if [ "${OS_TYPE}" = "solaris" ]; then
         echo "    --all-zones      install to all zones (default)"
@@ -994,6 +1027,7 @@ main_install()
     OPT_DONT_JOIN=""
     OPT_SOLARIS_CURRENT_ZONE=""
     OPT_IGNORE_SPECIFIC_OS=""
+    OPT_INSTALL_LEGACY_PACKAGE=""
 
     ECHO_DIRNAME=""
 
@@ -1034,9 +1068,32 @@ main_install()
                 ;;
             --ignore-specific-os)
                 OPT_IGNORE_SPECIFIC_OS="1"
+                shift 1
                 ;;
             --dont-join)
                 OPT_DONT_JOIN="1"
+                shift 1
+                ;;
+            --legacy)
+                if [ -n "${OPT_INSTALL_LEGACY_PACKAGE}" ]; then
+                    if [ "${OPT_INSTALL_LEGACY_PACKAGE}" != "yes" ]; then
+                        echo "Cannot use $1 with --legacy"
+                        usage
+                        exit 1
+                    fi
+                fi
+                OPT_INSTALL_LEGACY_PACKAGE="yes"
+                shift 1
+                ;;
+            --no-legacy)
+                if [ -n "${OPT_INSTALL_LEGACY_PACKAGE}" ]; then
+                    if [ "${OPT_INSTALL_LEGACY_PACKAGE}" != "no" ]; then
+                        echo "Cannot use $1 with --no-legacy"
+                        usage
+                        exit 1
+                    fi
+                fi
+                OPT_INSTALL_LEGACY_PACKAGE="no"
                 shift 1
                 ;;
             *)

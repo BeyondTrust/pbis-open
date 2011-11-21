@@ -4,7 +4,7 @@ DEPENDS="package"
 
 lw_sfx()
 {
-    mk_push_vars FILES PACKAGES SFX PKGDIRS FORMAT BASE UPGRADE OBSOLETE GUI
+    mk_push_vars FILES PACKAGES SFX PKGDIRS FORMAT BASE UPGRADE LEGACY OBSOLETE GUI
     mk_parse_params
 
     mk_unquote_list "$PACKAGES"
@@ -17,7 +17,7 @@ lw_sfx()
     mk_target \
         TARGET="@sfx/$SFX.$MK_HOST_OS.$MK_HOST_ARCH.$FORMAT.sh" \
         DEPS="$PKGDIRS $FILES" \
-        _lw_sfx %FILES %FORMAT %BASE %UPGRADE %OBSOLETE %GUI \
+        _lw_sfx %FILES %FORMAT %BASE %UPGRADE %LEGACY %OBSOLETE %GUI \
         '$@' "*$PKGDIRS"
 
     _sfx_target="$result"
@@ -133,6 +133,8 @@ _lw_sfx()
         echo "PREFIX=\"$MK_PREFIX\""
         _lw_package_native_list ${UPGRADE}
         echo "INSTALL_UPGRADE_PACKAGE=\"$result\""
+        _lw_package_native_list ${LEGACY}
+        echo "INSTALL_LEGACY_PACKAGE=\"$result\""
         _lw_package_native_list ${OBSOLETE}
         echo "INSTALL_OBSOLETE_PACKAGES=\"$result\""
         _lw_package_native_list ${BASE}
