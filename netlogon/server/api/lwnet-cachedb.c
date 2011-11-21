@@ -1049,7 +1049,8 @@ LWNetCacheDbQuery(
         if ( pEntry->QueryType == queryType &&
              !strcmp(pEntry->pszDnsDomainName, pszDnsDomainNameLower))
         {
-            if (!pEntry->pszSiteName && !pszSiteNameLower)
+            if (LW_IS_NULL_OR_EMPTY_STR(pEntry->pszSiteName) &&
+                    LW_IS_NULL_OR_EMPTY_STR(pszSiteNameLower))
             {
                 break;
             }
