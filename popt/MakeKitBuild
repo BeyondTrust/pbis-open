@@ -1,10 +1,12 @@
 make()
 {
-    mk_autotools \
-        HEADERS="popt.h" \
-        LIBS="popt:0:0:0" \
-        HEADERDEPS="iconv.h" \
-        LIBDEPS="iconv" \
-        -- \
-        --disable-nls
+    mk_multiarch_do
+        mk_autotools \
+            HEADERS="popt.h" \
+            LIBS="popt:0:0:0" \
+            HEADERDEPS="iconv.h" \
+            LIBDEPS="iconv" \
+            -- \
+            --disable-nls
+    mk_multiarch_done
 }
