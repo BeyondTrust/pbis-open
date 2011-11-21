@@ -1249,6 +1249,7 @@ unsigned32              *st;
     volatile rpc_socket_error_t  serr = 0;
     signed32            need_bytes;
     static rpc_addr_p_t addr = NULL;
+    unsigned char *realloc_iov = NULL;
 
     //DO_NOT_CLOBBER(fbp);
     //DO_NOT_CLOBBER(frag_length);
@@ -1348,10 +1349,27 @@ unsigned32              *st;
      */
     while (need_bytes > 0)
     {
-
         /*
          * Initialize our iovector.
          */
+        if (need_bytes > RPC_C_CN_LARGE_FRAG_SIZE)
+        {
+            realloc_iov = (unsigned8 *)
+                realloc(fbp,
+                        need_bytes + fbp->data_size + sizeof(rpc_cn_fragbuf_t));
+            if (realloc_iov)
+            {
+                fbp = (rpc_cn_fragbuf_t *) realloc_iov;
+                fbp->max_data_size += need_bytes;
+                fbp->data_p = (pointer_t) RPC_CN_ALIGN_PTR(fbp->data_area, 8);
+            }
+            else
+            {
+                *st = rpc_s_no_memory;
+                return;
+            }
+        }
+
         iov.iov_base = (byte_p_t)((unsigned8 *)(fbp->data_p) + fbp->data_size);
         iov.iov_len = need_bytes;
 
