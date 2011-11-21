@@ -1352,7 +1352,7 @@ unsigned32              *st;
         /*
          * Initialize our iovector.
          */
-        if (need_bytes > RPC_C_CN_LARGE_FRAG_SIZE)
+        if (need_bytes > RPC_C_CN_LARGE_FRAG_SIZE || fbp->data_size > 0)
         {
             realloc_iov = (unsigned8 *)
                 realloc(fbp,
