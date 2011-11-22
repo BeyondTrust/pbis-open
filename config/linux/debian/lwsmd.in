@@ -1,8 +1,16 @@
 #! /bin/sh
-# ex: set tabstop=4 expandtab shiftwidth=4:
 #
 # Copyright (c) BeyondTrust Software.  All rights reserved.
 #
+### BEGIN INIT INFO
+# Provides: lwsmd
+# Required-Start:
+# Required-Stop:
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Description: Start and Stop PBIS Service Manager
+### END INIT INFO
+
 PROG_DESC="PBIS Service Manager"
 PROG_BIN=@MK_SBINDIR@/lwsmd
 PROG_ARGS="--start-as-daemon"

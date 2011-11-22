@@ -1,8 +1,13 @@
 #! /bin/sh
-# ex: set tabstop=4 expandtab shiftwidth=4:
 #
 # Copyright (c) BeyondTrust Software.  All rights reserved.
 #
+###
+# chkconfig: 35 21 9
+# description: Start PowerBroker Identity Services Open services
+###
+#
+
 PREFIX="@MK_PREFIX@"
 SERVICE_NAME="pbis"
 

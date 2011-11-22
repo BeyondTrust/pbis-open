@@ -1,3 +1,6 @@
+OPERATING_SYSTEMS="aix darwin freebsd hpux linux solaris"
+SUBDIRS="$OPERATING_SYSTEMS"
+
 configure()
 {
     mk_declare -o \
@@ -9,58 +12,27 @@ configure()
         BUILD="${LW_BUILD_ID:-0}" \
         REVISION="${LW_BUILD_REVISION:-0}"
 
+    for os in ${OPERATING_SYSTEMS}
+    do
+        if [ "$MK_HOST_OS" != "$os" ]; then
+            mk_skip_subdir "$os"
+        fi
+    done
+
     mk_output_file VERSION
     mk_output_file init-base.sh
-    mk_output_file init-lwsm.sh
     mk_output_file init-pbis.sh
-    mk_output_file pbis
-    mk_output_file lwsmd
-
 }
 
 make()
 {
     mk_stage \
         DESTDIR="${MK_LIBEXECDIR}" \
-        init-base.sh init-lwsm.sh init-pbis.sh
+        init-base.sh init-pbis.sh
 
     mk_stage \
         SOURCE="VERSION" \
         DESTDIR="${MK_PREFIX}/data"
-    
+
     mk_stage DESTDIR="${MK_PREFIX}/mib" likewise-platform.mib
-    
-    mk_stage \
-        DESTDIR="${MK_DATADIR}" \
-        SOURCE="pbis.pam-auth-update"        
-
-    if [ "$MK_HOST_OS" = "darwin" ]
-    then
-        mk_stage DEST="${MK_BINDIR}/lw-local-user-migrate.sh" SOURCE="lw-local-user-migrate.sh.in"
-        mk_stage DEST="${MK_BINDIR}/macuninstall.sh" SOURCE="macuninstall.sh"
-
-        mk_stage DESTDIR="${MK_SYSCONFDIR}" user-home-directory-in-dock.plist
-        mk_stage DESTDIR="${MK_SYSCONFDIR}/LaunchDaemons" com.likewisesoftware.lwsmd.plist
-        mk_stage DEST="${MK_PREFIX}/libexec/startup" SOURCE="macstartup.sh"
-    else
-        mk_stage DESTDIR="${LW_INITDIR}" MODE=0755 lwsmd pbis
-    fi
-
-    if [ "$MK_HOST_OS" = "solaris" ]
-    then
-        for i in lwsmd.xml pbis.xml
-        do
-            mk_stage \
-                SOURCE="svcs-solaris/$i" \
-                DEST="${MK_SYSCONFDIR}/svcs-solaris/$i"
-        done
-    fi
-
-    if [ "$MK_HOST_OS" = "hpux" ]
-    then
-        mk_stage \
-            SOURCE="nsswitch.lwi_defaults" \
-            DESTDIR="/etc" \
-            MODE="0644"
-    fi
 }

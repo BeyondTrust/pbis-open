@@ -1,8 +1,12 @@
 #! /bin/sh
-# ex: set tabstop=4 expandtab shiftwidth=4:
 #
 # Copyright (c) BeyondTrust Software.  All rights reserved.
 #
+###
+# chkconfig: 35 17 9
+# description: Start and Stop PBIS Service Manager
+###
+
 PROG_DESC="PBIS Service Manager"
 PROG_BIN=@MK_SBINDIR@/lwsmd
 PROG_ARGS="--start-as-daemon"

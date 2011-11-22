@@ -1,0 +1,2 @@
+DISTRO="debian redhat suse"
+SUBDIRS="$DISTRO"

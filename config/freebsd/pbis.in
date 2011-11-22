@@ -1,8 +1,11 @@
 #! /bin/sh
-# ex: set tabstop=4 expandtab shiftwidth=4:
 #
 # Copyright (c) BeyondTrust Software.  All rights reserved.
 #
+# PROVIDE: pbis
+# REQUIRE: NETWORKING lwsmd
+# BEFORE: LOGIN
+
 PREFIX="@MK_PREFIX@"
 SERVICE_NAME="pbis"
 
