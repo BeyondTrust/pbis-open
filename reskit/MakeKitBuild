@@ -1,0 +1,13 @@
+configure()
+{
+    mk_declare -o \
+        MK_LIBEXECDIR
+
+    lw_define_feature_macros
+}
+
+make()
+{
+    mk_stage DEST="${MK_LIBEXECDIR}" SOURCE="likewise-support.pl"
+#    mk_stage SOURCE="likewise-open-guide.pdf"
+}
