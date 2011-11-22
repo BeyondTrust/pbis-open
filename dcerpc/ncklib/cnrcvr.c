@@ -521,6 +521,7 @@ rpc_cn_assoc_p_t        assoc;
     unsigned32                  auth_st;
     rpc_cn_sec_context_t        *sec_context;
     boolean                     already_unpacked;
+    unsigned char *realloc_iov = NULL;
 
     //DO_NOT_CLOBBER(unpack_ints);
     //DO_NOT_CLOBBER(i);
@@ -700,7 +701,32 @@ rpc_cn_assoc_p_t        assoc;
                  (ptype == RPC_C_CN_PKT_AUTH3)))
             {
                 assoc->raw_packet_p = rpc__cn_fragbuf_alloc (true);
+
+                /*
+                 * Possibly received packet larger than default 
+                 * fragbuf size, so realloc raw_packet_p here.
+                 */
+                if (fragbuf_p->data_size > RPC_C_CN_LARGE_FRAG_SIZE || 
+                    fragbuf_p->data_size > 0)
+                {
+                    realloc_iov = (unsigned8 *)
+                        realloc(assoc->raw_packet_p,
+                                fragbuf_p->data_size +
+                                    sizeof(rpc_cn_fragbuf_t));
+                    if (realloc_iov)
+                    {
+                        assoc->raw_packet_p = (rpc_cn_fragbuf_t *) realloc_iov;
+                        assoc->raw_packet_p->data_p = (pointer_t) 
+                            RPC_CN_ALIGN_PTR(assoc->raw_packet_p, 8);
+                    }
+                    else
+                    {
+                        st = rpc_s_no_memory;
+                        break;
+                    }
+                }
                 assoc->raw_packet_p->data_size = fragbuf_p->data_size;
+                assoc->raw_packet_p->max_data_size = fragbuf_p->max_data_size;
                 memcpy (assoc->raw_packet_p->data_p,
                         fragbuf_p->data_p,
                         fragbuf_p->data_size);
