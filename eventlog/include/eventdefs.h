@@ -47,24 +47,6 @@
 #ifndef __EVENTDEFS_H__
 #define __EVENTDEFS_H__
 
-/*
- * Log levels
- */
-#define LOG_LEVEL_ALWAYS  0
-#define LOG_LEVEL_ERROR   1
-#define LOG_LEVEL_WARNING 2
-#define LOG_LEVEL_INFO    3
-#define LOG_LEVEL_VERBOSE 4
-#define LOG_LEVEL_DEBUG   5
-
-/*
- * Logging targets
- */
-#define LOG_DISABLED   0
-#define LOG_TO_SYSLOG  1
-#define LOG_TO_FILE    2
-#define LOG_TO_CONSOLE 3
-
 #define TRY DCETHREAD_TRY
 #define CATCH_ALL DCETHREAD_CATCH_ALL(THIS_CATCH)
 #define CATCH(x) DCETHREAD_CATCH(x)

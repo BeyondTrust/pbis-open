@@ -77,25 +77,25 @@ LwmEvtSrvLogIpc (
     switch (level)
     {
     case LWMSG_LOGLEVEL_ALWAYS:
-        dwLevel = LOG_LEVEL_ALWAYS;
+        dwLevel = LW_RTL_LOG_LEVEL_ALWAYS;
         break;
     case LWMSG_LOGLEVEL_ERROR:
-        dwLevel = LOG_LEVEL_ERROR;
+        dwLevel = LW_RTL_LOG_LEVEL_ERROR;
         break;
     case LWMSG_LOGLEVEL_WARNING:
-        dwLevel = LOG_LEVEL_WARNING;
+        dwLevel = LW_RTL_LOG_LEVEL_WARNING;
         break;
     case LWMSG_LOGLEVEL_INFO:
-        dwLevel = LOG_LEVEL_INFO;
+        dwLevel = LW_RTL_LOG_LEVEL_INFO;
         break;
     case LWMSG_LOGLEVEL_VERBOSE:
-        dwLevel = LOG_LEVEL_VERBOSE;
+        dwLevel = LW_RTL_LOG_LEVEL_VERBOSE;
         break;
     case LWMSG_LOGLEVEL_DEBUG:
-        dwLevel = LOG_LEVEL_DEBUG;
+        dwLevel = LW_RTL_LOG_LEVEL_DEBUG;
         break;
     case LWMSG_LOGLEVEL_TRACE:
-        dwLevel = LOG_LEVEL_DEBUG;
+        dwLevel = LW_RTL_LOG_LEVEL_TRACE;
         break;
     }
 
