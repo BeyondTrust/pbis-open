@@ -5,9 +5,9 @@ UPGRADEDIR=/var/lib/pbis-upgrade
 LOG=/var/log/pbis-open-install.log
 TLOG=/tmp/pbis-open-install.tmp
 
-PKG_ARCH="@MK_HOST_ARCH"
+PKG_ARCH="@MK_HOST_ARCH@"
 
-DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
+DAEMONS_TO_HALT="reapsysld lsassd lwiod netlogond eventlogd dcerpcd lwregd lwsmd"
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -99,8 +99,19 @@ remove_service_configurations_or_init_d_symlinks()
         run_quiet /usr/sbin/svccfg delete pbis
         run_quiet /usr/sbin/svccfg delete lwsmd
     else
-        run_quiet rm /etc/rc0.d/K08lwsmd /etc/rc.1d/K08lwsmd /etc/rcS.d/K08lwmsd /etc/rc2.d/S17lwsmd
-        run_quiet rm /etc/rc0.d/K08pbis /etc/rc.1d/K08pbis /etc/rcS.d/K08pbis /etc/rc2.d/S17pbis
+        run_quiet rm -f /etc/rc0.d/K08lwsmd /etc/rc.1d/K08lwsmd /etc/rcS.d/K08lwmsd /etc/rc2.d/S17lwsmd
+        run_quiet rm -f /etc/rc0.d/K08pbis /etc/rc.1d/K08pbis /etc/rcS.d/K08pbis /etc/rc2.d/S17pbis
+        run_quiet rm -f '@LW_INITDIR@/pbis'
+        run_quiet rm -f '@LW_INITDIR@/lwsmd'
+    fi
+}
+
+execute_auxiliary_scripts()
+{
+    if [ -d "@LW_CACHEDIR@/scripts/uninstall" ]; then
+        for file in @LW_CACHEDIR@/scripts/uninstall/*; do
+            run_quiet "$file" --uninstall
+        done
     fi
 }
 
@@ -108,6 +119,8 @@ preuninstall()
 {
     log "Package: PowerBroker Identity Services Open preuninstall begins (`date`)"
     log "Logging all operations to $LOG"
+
+    execute_auxiliary_scripts
 
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch

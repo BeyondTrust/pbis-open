@@ -99,7 +99,6 @@ import_registry_configurations()
     do
         if [ -f "@LW_CONFIGDIR@/$i" ]
         then
-            log "$i"
             run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/$i"
         fi
     done
@@ -321,9 +320,11 @@ execute_auxiliary_scripts()
 {
     # The system administrator may have configured these during a previous
     # install
-    for file in `ls "@LW_CACHEDIR@/scripts/install" > /dev/null 2>/dev/null`; do
-        run_quiet "@LW_CACHEDIR@/scripts/install/$file" --install
-    done
+    if [ -d "@LW_CACHEDIR@/scripts/install" ]; then
+        for file in @LW_CACHEDIR@/scripts/install/*; do
+            run_quiet "$file" --install
+        done
+    fi
 }
 
 postinstall()
@@ -350,6 +351,17 @@ postinstall()
     switch_to_open_provider
 
     run_or_fail '@MK_BINDIR@/lwsm' shutdown
+
+    if [ -f "@LW_INITDIR@/lwsmd" ]; then
+        run rm -f '@LW_INITDIR@/lwsmd'
+    fi
+
+    if [ -f "@LW_INITDIR@/pbis" ]; then
+        run rm -f '@LW_INITDIR@/pbis'
+    fi
+
+    run ln -s '@MK_SYSCONFDIR@/aix/lwsmd' '@LW_INITDIR@/lwsmd'
+    run ln -s '@MK_SYSCONFDIR@/aix/pbis' '@LW_INITDIR@/pbis'
 
     run ln -s '@LW_INITDIR@/lwsmd' /etc/rc.d/rc2.d/K08lwsmd
     run ln -s '@LW_INITDIR@/lwsmd' /etc/rc.d/rc2.d/S17lwsmd

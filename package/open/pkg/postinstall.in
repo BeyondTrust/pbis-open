@@ -94,7 +94,7 @@ import_service_configuration()
     run_quiet svcadm disable "$1"
     run_quiet svccfg delete "$1"
 
-    run_or_fail svccfg import "/etc/pbis/svcs-solaris/$1.xml"
+    run_or_fail svccfg import "/etc/pbis/solaris/$1.xml"
 }
 
 enable_service_configurations_or_init_d_symlinks()
@@ -107,21 +107,33 @@ enable_service_configurations_or_init_d_symlinks()
         run /usr/sbin/svcadm enable lwsmd
         run /usr/sbin/svcadm enable pbis
     else
+        if [ -f "@LW_INITDIR@/lwsmd" ]; then
+            run rm -f '@LW_INITDIR@/lwsmd'
+        fi
+
+        if [ -f "@LW_INITDIR@/pbis" ]; then
+            run rm -f '@LW_INITDIR@/pbis'
+        fi
+
+        run ln -s '@MK_SYSCONFDIR@/solaris/lwsmd' '@LW_INITDIR@/lwsmd'
+        run ln -s '@MK_SYSCONFDIR@/solaris/pbis' '@LW_INITDIR@/pbis'
+
+
     # On older Solaris systems, in order for a deamon to start in
     # multi-user mode a start symlink must be put in /etc/rc2.d, and a stop
     # symlink must be put in /etc/rc0.d, /etc/rc1.d, /etc/rcS.d
-        run_quiet ln -s /etc/init.d/lwsmd /etc/rc0.d/K08lwsmd
-        run_quiet ln -s /etc/init.d/lwsmd /etc/rc1.d/K08lwsmd
-        run_quiet ln -s /etc/init.d/lwsmd /etc/rcS.d/K08lwsmd
-        run_quiet ln -s /etc/init.d/lwsmd /etc/rc2.d/S17lwsmd
+        run_quiet ln -s '@LW_INITDIR@/lwsmd' /etc/rc0.d/K08lwsmd
+        run_quiet ln -s '@LW_INITDIR@/lwsmd' /etc/rc1.d/K08lwsmd
+        run_quiet ln -s '@LW_INITDIR@/lwsmd' /etc/rcS.d/K08lwsmd
+        run_quiet ln -s '@LW_INITDIR@/lwsmd' /etc/rc2.d/S17lwsmd
 
-        run_quiet ln -s /etc/init.d/pbis /etc/rc0.d/K07pbis
-        run_quiet ln -s /etc/init.d/pbis /etc/rc1.d/K07pbis
-        run_quiet ln -s /etc/init.d/pbis /etc/rcS.d/K07pbis
-        run_quiet ln -s /etc/init.d/pbis /etc/rc2.d/S18pbis
+        run_quiet ln -s '@LW_INITDIR@/pbis' /etc/rc0.d/K07pbis
+        run_quiet ln -s '@LW_INITDIR@/pbis' /etc/rc1.d/K07pbis
+        run_quiet ln -s '@LW_INITDIR@/pbis' /etc/rcS.d/K07pbis
+        run_quiet ln -s '@LW_INITDIR@/pbis' /etc/rc2.d/S18pbis
 
-        run /etc/init.d/lwsmd start
-        run /etc/init.d/pbis start
+        run '@LW_INITDIR@/lwsmd' start
+        run '@LW_INITDIR@/pbis' start
     fi
 }
 
@@ -136,7 +148,6 @@ import_registry_configurations()
     do
         if [ -f "@LW_CONFIGDIR@/$i" ]
         then
-            log "$i"
             run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/$i"
         fi
     done
@@ -358,9 +369,11 @@ execute_auxiliary_scripts()
 {
     # The system administrator may have configured these during a previous
     # install
-    for file in `ls "@LW_CACHEDIR@/scripts/install" > /dev/null 2>/dev/null`; do
-        run_quiet "@LW_CACHEDIR@/scripts/install/$file" --install
-    done
+    if [ -d "@LW_CACHEDIR@/scripts/install" ]; then
+        for file in @LW_CACHEDIR@/scripts/install/*; do
+            run_quiet "$file" --install
+        done
+    fi
 }
 
 postinstall()

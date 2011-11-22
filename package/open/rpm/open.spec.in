@@ -23,38 +23,9 @@ Requires: @PKG_RPM_NAME@
 %description devel
 The @PKG_RPM_NAME@-devel package includes the development libraries and header files that supply the application programming interface for security and authentication.
 
-%define initScriptPathList /etc/init.d/lwsmd /etc/init.d/pbis
 %define AdProviderPath @PRIMARY_LIBDIR@/lsa-provider/ad_open.so
 %post
-## chkconfig behaves differently on various updates of RHEL and SUSE
-## So, we massage the init script according to the release, for now.
-for daemon in %{initScriptPathList}; do
-    if [ -x $daemon ]; then
-        if grep "LWI_STARTUP_TYPE_" $daemon >/dev/null 2>&1; then
-            daemon_new=${daemon}.new
-
-            if [ -f /etc/redhat-release ]; then
-                /bin/sed \
-                    -e 's/^#LWI_STARTUP_TYPE_REDHAT\(.*\)$/\1/' \
-                    -e'/^#LWI_STARTUP_TYPE_SUSE.*$/ d' \
-                    -e'/^#LWI_STARTUP_TYPE_DEBIAN.*$/ d' \
-                    -e'/^#LWI_STARTUP_TYPE_FREEBSD.*$/ d' \
-                    $daemon > $daemon_new
-            else
-                /bin/sed \
-                    -e 's/^#LWI_STARTUP_TYPE_SUSE\(.*\)$/\1/' \
-                    -e '/^#LWI_STARTUP_TYPE_REDHAT.*$/ d' \
-                    -e'/^#LWI_STARTUP_TYPE_DEBIAN.*$/ d' \
-                    -e'/^#LWI_STARTUP_TYPE_FREEBSD.*$/ d' \
-                    $daemon > $daemon_new
-            fi
-            mv $daemon_new $daemon
-            chmod 0755 $daemon
-        fi
-    fi
-done
-
-DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
+DAEMONS_TO_HALT="reapsysld lsassd lwiod netlogond eventlogd dcerpcd lwregd lwsmd"
 
 UPGRADEDIR=/var/lib/pbis-upgrade
 PKG_ARCH="@MK_HOST_ARCH@"
@@ -155,7 +126,6 @@ import_registry_configurations()
     do
         if [ -f "@LW_CONFIGDIR@/$i" ]
         then
-            log "$i"
             run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/$i"
         fi
     done
@@ -384,9 +354,11 @@ execute_auxiliary_scripts()
 {
     # The system administrator may have configured these during a previous
     # install
-    for file in `ls "@LW_CACHEDIR@/scripts/install" > /dev/null 2>/dev/null`; do
-        run_quiet "@LW_CACHEDIR@/scripts/install/$file" --install
-    done
+    if [ -d "@LW_CACHEDIR@/scripts/install" ]; then
+        for file in @LW_CACHEDIR@/scripts/install/*; do
+            run_quiet "$file" --install
+        done
+    fi
 }
 
 postinstall()
@@ -413,13 +385,29 @@ postinstall()
 
     run_or_fail '@MK_BINDIR@/lwsm' shutdown
 
+    if [ -f "@LW_INITDIR@/lwsmd" ]; then
+        run rm -f '@LW_INITDIR@/lwsmd'
+    fi
+
+    if [ -f "@LW_INITDIR@/pbis" ]; then
+        run rm -f '@LW_INITDIR@/pbis'
+    fi
+
+    if [ -f /etc/redhat-release ]; then
+        run ln -s '@MK_SYSCONFDIR@/redhat/lwsmd' '@LW_INITDIR@/lwsmd'
+        run ln -s '@MK_SYSCONFDIR@/readhat/pbis' '@LW_INITDIR@/pbis'
+    else
+        run ln -s '@MK_SYSCONFDIR@/suse/lwsmd' '@LW_INITDIR@/lwsmd'
+        run ln -s '@MK_SYSCONFDIR@/suse/pbis' '@LW_INITDIR@/pbis'
+    fi
+
     remove_old_init_symlinks
 
     run /sbin/chkconfig --add lwsmd
     run /sbin/chkconfig --add pbis
 
-    run /etc/init.d/lwsmd start
-    run /etc/init.d/pbis start
+    run '@LW_INITDIR@/lwsmd' start
+    run '@LW_INITDIR@/pbis' start
 
     run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
     run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
@@ -684,20 +672,26 @@ run_or_fail()
     return $err
 }
 
+execute_auxiliary_scripts()
+{
+    if [ -d "@LW_CACHEDIR@/scripts/uninstall" ]; then
+        for file in @LW_CACHEDIR@/scripts/uninstall/*; do
+            run_quiet "$file" --uninstall
+        done
+    fi
+}
+
 preuninstall_remove()
 {
     logfile "Package: PowerBroker Identity Services Open [preun remove] begins (`date`)"
 
+    execute_auxiliary_scripts
+
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    run_quiet '@MK_BINDIR@/domainjoin-cli' configure \
-                              --long `hostname --long` \
-                              --short `hostname --short` \
-                              --disable krb5
-
-    run_quiet /etc/init.d/pbis stop
-    run_quiet /etc/init.d/lwsmd stop
+    run_quiet '@LW_INITDIR@/pbis' stop
+    run_quiet '@LW_INITDIR@/lwsmd' stop
 
     for daemon in $DAEMONS_TO_HALT
     do
@@ -706,6 +700,9 @@ preuninstall_remove()
 
     run_quiet /sbin/chkconfig --del pbis
     run_quiet /sbin/chkconfig --del lwsmd
+
+    run_quiet rm -f '@LW_INITDIR@/pbis'
+    run_quiet rm -f '@LW_INITDIR@/lwsmd'
 
     logfile "Package: PowerBroker Identity Services Open [preun remove] finished"
     exit 0

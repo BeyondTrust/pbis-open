@@ -95,33 +95,11 @@ case "$1" in
     remove)
         logfile "Package: PowerBroker Identity Services Open postremove [remove] begins (`date`)"
 
-        run_quiet /usr/sbin/service pbis stop
-        run_quiet /usr/sbin/service lwsmd stop
-
-        for daemon in $DAEMONS_TO_HALT
-        do
-            run_quiet pkill -KILL -x $daemon
-        done
-
-        run_quiet /usr/sbin/update-rc.d pbis remove
-        run_quiet /usr/sbin/update-rc.d lwsmd remove
-
         logfile "Package: PowerBroker Identity Services Open postremove [remove] finished"
     ;;
 
     purge)
         logfile "Package: PowerBroker Identity Services Open postremove [purge] begins (`date`)"
-
-        run_quiet /usr/sbin/service pbis stop
-        run_quiet /usr/sbin/service lwsmd stop
-
-        for daemon in $DAEMONS_TO_HALT
-        do
-            run_quiet pkill -KILL -x $daemon
-        done
-
-        run_quiet /usr/sbin/update-rc.d pbis remove
-        run_quiet /usr/sbin/update-rc.d lwsmd remove
 
         run_quiet rm -rf '@LW_CACHEDIR@'
 

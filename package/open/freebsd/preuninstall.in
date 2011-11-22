@@ -7,7 +7,7 @@ TLOG=/tmp/pbis-open-install.tmp
 
 DAEMONS_TO_HALT="reapsysld lsassd lwiod netlogond eventlogd dcerpcd lwregd lwsmd"
 
-# Display to screen and log file with a blank line between entires.
+# Display to screen and log file with a blank line between entries.
 log()
 {
     echo $@
@@ -89,16 +89,30 @@ run_or_fail()
     return $err
 }
 
+execute_auxiliary_scripts()
+{
+    if [ -d "@LW_CACHEDIR@/scripts/uninstall" ]; then
+        for file in @LW_CACHEDIR@/scripts/uninstall/*; do
+            run_quiet "$file" --uninstall
+        done
+    fi
+}
+
 preuninstall()
 {
     log "Package: PowerBroker Identity Services Open preuninstall begins (`date`)"
     log "Logging all operations to $LOG"
+
+    execute_auxiliary_scripts
 
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
     run_quiet /etc/rc.d/pbis stop
     run_quiet /etc/rc.d/lwsmd stop
+
+    run_quiet rm -f '@LW_INITDIR@/pbis'
+    run_quiet rm -f '@LW_INITDIR@/lwsmd'
 
     for daemon in $DAEMONS_TO_HALT
     do

@@ -5,9 +5,9 @@ UPGRADEDIR=/var/lib/pbis-upgrade
 LOG=/var/adm/pbis-open-install.log
 TLOG=/tmp/pbis-open-install.tmp
 
-PKG_ARCH="@MK_HOST_ARCH"
+PKG_ARCH="@MK_HOST_ARCH@"
 
-DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld srvsvcd"
+DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -91,13 +91,30 @@ run_or_fail()
     return $err
 }
 
+execute_auxiliary_scripts()
+{
+    if [ -d "@LW_CACHEDIR@/scripts/uninstall" ]; then
+        for file in @LW_CACHEDIR@/scripts/uninstall/*; do
+            run_quiet "$file" --uninstall
+        done
+    fi
+}
+
 preremove()
 {
     log "Package: PowerBroker Identity Services Open preremove begins (`date`)"
     log "Logging all operations to $LOG"
 
+    execute_auxiliary_scripts
+
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
+
+    run_quiet rm -f '@LW_INITDIR@/pbis'
+    run_quiet rm -f '@LW_INITDIR@/lwsmd'
+
+    run rm -f /sbin/rc1.d/K400pbis /sbin/rc2.d/S592pbis
+    run rm -f /sbin/rc1.d/K401lwsmd /sbin/rc2.d/S591lwsmd
 
     run_quiet '@MK_BINDIR@/lwsm' shutdown
 

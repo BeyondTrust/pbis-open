@@ -7,7 +7,7 @@ TLOG=/tmp/pbis-open-install.tmp
 
 PKG_ARCH="@MK_HOST_ARCH@"
 
-DAEMONS_TO_HALT="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
+DAEMONS_TO_HALT="reapsysld lsassd lwiod netlogond eventlogd dcerpcd lwregd lwsmd"
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -93,9 +93,11 @@ run_or_fail()
 
 execute_auxiliary_scripts()
 {
-    for file in `ls "@LW_CACHEDIR@/scripts/uninstall"`; do
-        run_quiet "@LW_CACHEDIR@/scripts/uninstall/$file" --uninstall
-    done
+    if [ -d "@LW_CACHEDIR@/scripts/uninstall" ]; then
+        for file in @LW_CACHEDIR@/scripts/uninstall/*; do
+            run_quiet "$file" --uninstall
+        done
+    fi
 }
 
 prerm_remove()
@@ -107,13 +109,14 @@ prerm_remove()
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    run_quiet '@MK_BINDIR@/domainjoin-cli' configure \
-                              --long `hostname --long` \
-                              --short `hostname --short` \
-                              --disable krb5
-
     run_quiet /usr/sbin/service pbis stop
     run_quiet /usr/sbin/service lwsmd stop
+
+    run_quiet /usr/sbin/update-rc.d pbis remove
+    run_quiet /usr/sbin/update-rc.d lwsmd remove
+
+    run_quiet rm -f '@LW_INITDIR@/pbis'
+    run_quiet rm -f '@LW_INITDIR@/lwsmd'
 
     for daemon in $DAEMONS_TO_HALT
     do

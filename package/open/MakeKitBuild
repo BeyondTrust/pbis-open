@@ -158,6 +158,7 @@ package_pkg()
 
             mk_package_dirs \
                 "${MK_SYSCONFDIR}" \
+                "${MK_SYSCONFDIR}/solaris" \
                 "${MK_SYSCONFDIR}/gss" \
                 "${MK_SYSCONFDIR}/krb5" \
                 "${MK_SYSCONFDIR}/krb5/plugins" \
@@ -387,9 +388,15 @@ open_files_root()
     mk_package_patterns \
         SUBDIRS="$OPEN_SUBDIRS" \
         "${MK_SYSCONFDIR}/*" \
+        "${MK_SYSCONFDIR}/aix/*" \
+        "${MK_SYSCONFDIR}/freebsd/*" \
+        "${MK_SYSCONFDIR}/hpux/*" \
+        "${MK_SYSCONFDIR}/debian/*" \
+        "${MK_SYSCONFDIR}/redhat/*" \
+        "${MK_SYSCONFDIR}/solaris/*" \
+        "${MK_SYSCONFDIR}/suse/*" \
         "${MK_SYSCONFDIR}/gss/mech" \
         "${MK_SYSCONFDIR}/LaunchDaemons/*" \
-        "${MK_SYSCONFDIR}/svcs-solaris/*" \
         "${LW_INITDIR}/*" \
         "${LW_CACHEDIR}/*"
 
