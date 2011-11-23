@@ -97,7 +97,7 @@ preinstall()
     log "Logging all operations to $LOG"
 
     if [ -f '@MK_SBINDIR@/gpagentd' ]; then
-        log "@MK_SBINDIR@/gpagentd exists: Uninstall PowerBroker Identity Services  Enterprise before installing PowerBroker Identity Services Open."
+        log "@MK_SBINDIR@/gpagentd exists: Uninstall PowerBroker Identity Services Enterprise before installing PowerBroker Identity Services Open."
         exit 1
     elif [ -f '@MK_PREFIX@/data/VERSION' ]; then
         log "@MK_PREFIX@/data/VERSION exists: Uninstall previous version of PowerBroker Identityer Services Open before proceeding with the install."
