@@ -33,7 +33,7 @@ option()
             _default_FUSE="no"
             ;;
         *)
-            _default_DRIVERS="rdr npfs pvfs srv"
+            _default_DRIVERS="rdr"
             _default_FUSE="yes"
             ;;
     esac  
@@ -198,14 +198,6 @@ configure()
     else
         LWIO_FUSE_ENABLED=no
         mk_skip_subdir fuse
-    fi
-
-    # srvstat can only be enabled if srv enabled
-    if lwio_driver_enabled srv
-    then
-        LWIO_SRVSTAT_ENABLED=yes
-    else
-        LWIO_SRVSTAT_ENABLED=no
     fi
 
     mk_msg "build FUSE module: $LWIO_FUSE_ENABLED"

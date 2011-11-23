@@ -42,7 +42,7 @@
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers]
 "Load" = { 
-    default = "rdr,srv,pvfs,dfs,npfs" 
+    default = "rdr" 
     doc = "" 
 }
 
