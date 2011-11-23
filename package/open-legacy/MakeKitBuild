@@ -119,7 +119,7 @@ package_pkg()
 
         mk_pkg_sub_do \
             SUBPACKAGE="PBISopenz" \
-            INFOFILES="pkg/pkginfo.in pkg/copyright.in pkg/depend.in pkg/postinstall.in"
+            INFOFILES="pkg/pkginfo.in pkg/copyright.in pkg/depend.in"
 
             open_legacy_files_prefix
 
