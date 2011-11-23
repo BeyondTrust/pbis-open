@@ -61,7 +61,8 @@ sfx_generic()
                   likewise-pstore likewise-reskit likewise-rpc likewise-sqlite \
                   likewise-srvsvc likewise-reapsysl likewise-samba-interop \
                   likewise-smbclient \
-                  likewise-open-upgrade likewise-open-gui likewise-open" \
+                  likewise-open-upgrade likewise-open-gui likewise-open \
+                  pbis-open-legacy pbis-open-upgrade pbis-open-gui pbis-open" \
         BASE="pbis-open" \
         GUI="$GUI_PACKAGE"
 }
