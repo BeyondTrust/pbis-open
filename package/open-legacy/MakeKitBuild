@@ -118,7 +118,7 @@ package_pkg()
         VERSION="$PKG_PKG_VERSION"
 
         mk_pkg_sub_do \
-            SUBPACKAGE="PBISopenz" \
+            SUBPACKAGE="PBISopenl" \
             INFOFILES="pkg/pkginfo.in pkg/copyright.in pkg/depend.in"
 
             open_legacy_files_prefix

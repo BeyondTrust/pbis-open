@@ -1,4 +1,4 @@
-PKG=PBISopeng
+PKG=PBISopenl
 NAME=PowerBroker Identity Services Open Legacy
 ARCH=@PKG_PKG_ARCH@
 VERSION=@PKG_PKG_VERSION@
