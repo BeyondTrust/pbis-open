@@ -38,6 +38,37 @@
 
 #include "includes.h"
 
+struct SM_LOGGER_MAP
+{
+    PCSTR pszName;
+    LW_SM_LOG_LEVEL eValue;
+};
+
+static struct SM_LOGGER_MAP gLoggerMap[] =
+{
+    { "default", LW_SM_LOGGER_DEFAULT },
+    { "none", LW_SM_LOGGER_NONE },
+    { "file", LW_SM_LOGGER_FILE },
+    { "syslog", LW_SM_LOGGER_SYSLOG}
+};
+
+struct SM_LOGLEVEL_MAP
+{
+    PCSTR pszName;
+    LW_SM_LOG_LEVEL eValue;
+};
+
+static struct SM_LOGLEVEL_MAP gLogLevelMap[] =
+{
+    { "default", LW_SM_LOG_LEVEL_DEFAULT },
+    { "always", LW_RTL_LOG_LEVEL_ALWAYS },
+    { "error", LW_RTL_LOG_LEVEL_ERROR },
+    { "warning", LW_RTL_LOG_LEVEL_WARNING },
+    { "info", LW_RTL_LOG_LEVEL_INFO },
+    { "verbose", LW_RTL_LOG_LEVEL_VERBOSE },
+    { "trace", LW_RTL_LOG_LEVEL_TRACE }
+};
+
 static
 DWORD
 LwSmRegistryReadDword(
@@ -185,6 +216,12 @@ LwSmRegistryReadServiceInfo(
     PSTR pszName = NULL;
     PSTR pszParentKey = NULL;
     DWORD dwAutostart = 0;
+
+    PWSTR pwszDefaultLogType = NULL;
+    PSTR pszDefaultLogType = NULL;
+    PWSTR pwszDefaultLogLevel = NULL;
+    PSTR pszDefaultLogLevel = NULL;
+    size_t i;
 
     static const WCHAR wszDescription[] =
         {'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 0};
@@ -344,29 +381,67 @@ LwSmRegistryReadServiceInfo(
     }
     BAIL_ON_ERROR(dwError);
 
-    dwError = LwSmRegistryReadDword(
+    dwError = LwSmRegistryReadString(
         hReg,
         pRootKey,
         pwszParentKey,
         wszDefaultLogType,
-        &pInfo->DefaultLogType);
+        &pwszDefaultLogType);
     if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
         dwError = 0;
         pInfo->DefaultLogType = LW_SM_LOGGER_DEFAULT;
     }
+    else if (dwError == 0)
+    {
+        dwError = LwWc16sToMbs(pwszDefaultLogType, &pszDefaultLogType);
+        BAIL_ON_ERROR(dwError);
+
+        for (i = 0; i < sizeof(gLoggerMap)/sizeof(gLoggerMap[0]); i++)
+        {
+            if (!strcmp(gLoggerMap[i].pszName, pszDefaultLogType))
+            {
+                pInfo->DefaultLogType = gLoggerMap[i].eValue;
+                break;
+            }
+        }
+        if (i == sizeof(gLoggerMap)/sizeof(gLoggerMap[0]))
+        {
+            SM_LOG_WARNING("Invalid value in registry for LogType");
+            pInfo->DefaultLogType = LW_SM_LOGGER_DEFAULT;
+        }
+    }
     BAIL_ON_ERROR(dwError);
 
-    dwError = LwSmRegistryReadDword(
+    dwError = LwSmRegistryReadString(
         hReg,
         pRootKey,
         pwszParentKey,
         wszDefaultLogLevel,
-        &pInfo->DefaultLogLevel);
+        &pwszDefaultLogLevel);
     if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
         dwError = 0;
         pInfo->DefaultLogLevel = 0;
+    }
+    else if (dwError == 0)
+    {
+        dwError = LwWc16sToMbs(pwszDefaultLogLevel, &pszDefaultLogLevel);
+        BAIL_ON_ERROR(dwError);
+
+        for (i = 0; i < sizeof(gLogLevelMap)/sizeof(gLogLevelMap[0]); i++)
+        {
+            if (!strcmp(gLogLevelMap[i].pszName, pszDefaultLogType))
+            {
+                pInfo->DefaultLogType = gLogLevelMap[i].eValue;
+                break;
+            }
+        }
+        if (i == sizeof(gLogLevelMap)/sizeof(gLogLevelMap[0]))
+        {
+            SM_LOG_WARNING("Invalid value in registry for LogType");
+            pInfo->DefaultLogType = LW_SM_LOGGER_DEFAULT;
+        }
     }
     BAIL_ON_ERROR(dwError);
 
