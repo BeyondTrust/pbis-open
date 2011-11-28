@@ -2,14 +2,17 @@
 
 [HKEY_THIS_MACHINE\Services\netlogon]
 "Description" = { 
+    value = "Site Affinity Service" 
     default = "Site Affinity Service" 
     doc = "" 
 }
 "Path" = { 
+    value = "@LIBDIR@/lw-svcm/netlogon@MOD_EXT@" 
     default = "@LIBDIR@/lw-svcm/netlogon@MOD_EXT@" 
     doc = "" 
 }
 "Arguments" = { 
+    value = "" 
     default = "" 
     doc = "" 
 }
@@ -18,10 +21,12 @@
     doc = "" 
 }
 "Dependencies" = { 
+    value = "lwreg" 
     default = "lwreg" 
     doc = "" 
 }
 "Type" = { 
+    value = dword:00000002
     default = dword:00000002
     doc = "" 
 }
