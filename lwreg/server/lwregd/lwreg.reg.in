@@ -2,14 +2,17 @@
 
 [HKEY_THIS_MACHINE\Services\lwreg]
 "Description" = { 
+    value = "Likewise Registry Service" 
     default = "Likewise Registry Service" 
     doc = "" 
 }
 "Path" = { 
+    value = "@LIBDIR@/lw-svcm/lwreg@MOD_EXT@" 
     default = "@LIBDIR@/lw-svcm/lwreg@MOD_EXT@" 
     doc = "" 
 }
 "Arguments" = { 
+    value = "" 
     default = "" 
     doc = "" 
 }
@@ -18,10 +21,12 @@
     doc = "" 
 }
 "Dependencies" = { 
+    value = "" 
     default = "" 
     doc = "" 
 }
 "Type" = { 
+    value = dword:00000002
     default = dword:00000002
     doc = "" 
 }
