@@ -1,28 +1,33 @@
 [HKEY_THIS_MACHINE\Services]
 
 [HKEY_THIS_MACHINE\Services\dcerpc]
-"Description" = { 
-    default = "Likewise DCE/RPC Endpoint Mapper" 
-    doc = "" 
+"Description" = {
+    value = "DCE/RPC Endpoint Mapper"
+    default = "DCE/RPC Endpoint Mapper"
+    doc = ""
 }
-"Path" = { 
-    default = "@LIBDIR@/lw-svcm/dcerpc@MOD_EXT@" 
-    doc = "" 
+"Path" = {
+    value = "@LIBDIR@/lw-svcm/dcerpc@MOD_EXT@"
+    default = "@LIBDIR@/lw-svcm/dcerpc@MOD_EXT@"
+    doc = ""
 }
-"Arguments" = { 
+"Arguments" = {
     default = ""
-    doc = "" 
+    default = ""
+    doc = ""
 }
-"Environment" = { 
-    default = "" 
-    doc = "" 
+"Environment" = {
+    default = ""
+    doc = ""
 }
-"Dependencies" = { 
-    default = "" 
-    doc = "" 
+"Dependencies" = {
+    value = ""
+    default = ""
+    doc = ""
 }
-"Type" = { 
-    default = @DCERPCD_SERVICE_TYPE@ 
-    doc = "" 
+"Type" = {
+    value = @DCERPCD_SERVICE_TYPE@
+    default = @DCERPCD_SERVICE_TYPE@
+    doc = ""
 }
 
