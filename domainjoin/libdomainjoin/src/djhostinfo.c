@@ -1415,12 +1415,23 @@ DJSetComputerName(
         oldShortHostname = NULL;
     }
 
-    ceError = LwAllocateStringPrintf(
-                &pNewFqdnHostname,
-                "%s.%s",
-                pszComputerName,
-                pszDnsDomainName);
-    LW_CLEANUP_CTERR(exc, ceError);
+    if (pszDnsDomainName[0])
+    {
+        ceError = LwAllocateStringPrintf(
+                    &pNewFqdnHostname,
+                    "%s.%s",
+                    pszComputerName,
+                    pszDnsDomainName);
+        LW_CLEANUP_CTERR(exc, ceError);
+    }
+    else
+    {
+        ceError = LwAllocateStringPrintf(
+                    &pNewFqdnHostname,
+                    "%s",
+                    pszComputerName);
+        LW_CLEANUP_CTERR(exc, ceError);
+    }
 
     ceError = DJCopyMissingHostsEntry("/etc/inet/ipnodes", "/etc/hosts",
             pszComputerName_lower, oldShortHostname);
