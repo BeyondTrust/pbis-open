@@ -2,14 +2,17 @@
 
 [HKEY_THIS_MACHINE\Services\lsass]
 "Description" = {
+    value = "Security and Authentication Subsystem"
     default = "Security and Authentication Subsystem"
     doc = ""
 }
 "Path" = {
+    value = "@LIBDIR@/lw-svcm/lsass@MOD_EXT@"
     default = "@LIBDIR@/lw-svcm/lsass@MOD_EXT@"
     doc = ""
 }
 "Arguments" = {
+    value = ""
     default = ""
     doc = ""
 }
@@ -22,10 +25,12 @@
     doc = ""
 }
 "Dependencies" = {
+    value = "netlogon lwio lwreg rdr @EXTRA_SERVICE_DEPS@"
     default = "netlogon lwio lwreg rdr @EXTRA_SERVICE_DEPS@"
     doc = ""
 }
 "Type" = {
+    value = dword:00000002
     default = dword:00000002
     doc = ""
 }
@@ -104,7 +109,7 @@
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers]
 "LoadOrder" = {
-    default = sza:"ActiveDirectory" "Local"
+    default = sza:"ActiveDirectory"
     doc = ""
 }
 
@@ -114,6 +119,7 @@
     doc = ""
 }
 "Path" = {
+    value = "@providerdir@/ad_open@MOD_EXT@"
     default = "@providerdir@/ad_open@MOD_EXT@"
     doc = ""
 }
@@ -263,6 +269,7 @@
     doc = ""
 }
 "Path" = {
+    value = "@providerdir@/local@MOD_EXT@"
     default = "@providerdir@/local@MOD_EXT@"
     doc = ""
 }
@@ -337,6 +344,7 @@
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\lsarpc]
 "Path" = {
+    value = "@rpcserverdir@/lsa@MOD_EXT@"
     default = "@rpcserverdir@/lsa@MOD_EXT@"
     doc = ""
 }
@@ -351,10 +359,12 @@
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\samr]
 "Path" = {
+    value = "@rpcserverdir@/samr@MOD_EXT@"
     default = "@rpcserverdir@/samr@MOD_EXT@"
     doc = ""
 }
 "LpcSocketPath" = {
+    value = "@CACHEDIR@/rpc/lsass"
     default = "@CACHEDIR@/rpc/lsass"
     doc = ""
 }
@@ -377,10 +387,12 @@
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\dssetup]
 "Path" = {
+    value = "@rpcserverdir@/dssetup@MOD_EXT@"
     default = "@rpcserverdir@/dssetup@MOD_EXT@"
     doc = ""
 }
 "LpcSocketPath" = {
+    value = "@CACHEDIR@/rpc/lsass"
     default = "@CACHEDIR@/rpc/lsass"
     doc = ""
 }
@@ -391,10 +403,12 @@
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\wkssvc]
 "Path" = {
+    value = "@rpcserverdir@/wkssvc@MOD_EXT@"
     default = "@rpcserverdir@/wkssvc@MOD_EXT@"
     doc = ""
 }
 "LpcSocketPath" = {
+    value = "@CACHEDIR@/rpc/lsass"
     default = "@CACHEDIR@/rpc/lsass"
     doc = ""
 }
