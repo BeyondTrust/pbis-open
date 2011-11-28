@@ -10,7 +10,7 @@
 # entry for each name=value pair. An empty doc="" entry is added for
 # filling in later with descriptive information.
 #
-# Authors: Adam Bernstein (abernstein@likewise.com)
+# Authors: Adam Bernstein (abernstein@beyondtrust.com)
 #
 
 #Temporary sed script file

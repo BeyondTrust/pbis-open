@@ -13,7 +13,7 @@
 # Pstore 6.0 entries have been renamed quite a bit in 6.1, so those
 # value names are renamed.
 #
-# Authors: Adam Bernstein (abernstein@likewise.com)
+# Authors: Adam Bernstein (abernstein@beyondtrust.com)
 #
 
 TMPSEDSCRIPT="/tmp/upgr61.sed$$"

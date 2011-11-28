@@ -2,5 +2,11 @@ make()
 {
     mk_stage \
         DESTDIR="${MK_LIBEXECDIR}" \
-        regupgr61.sh reg61sed.sh
+        MODE=0755 \
+        SOURCE=regupgr61.sh
+
+    mk_stage \
+        DESTDIR="${MK_LIBEXECDIR}" \
+        MODE=0755 \
+        SOURCE=reg61sed.sh
 }
