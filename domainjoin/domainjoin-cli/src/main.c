@@ -972,14 +972,25 @@ int main(
 
     if(!strcmp(argPos[0], "setname"))
     {
+        PSTR pDomainSuffix = 0;
         argPos++;
         if(--remainingArgs != 1)
         {
             ShowUsage();
             goto cleanup;
         }
-        //Needed so that DJGetMachineSid does not call winbind
-        LW_TRY(&exc, DJSetComputerName(argPos[0], NULL, &LW_EXC));
+
+        pDomainSuffix = strchr(argPos[0], '.');
+        if (pDomainSuffix)
+        {
+            *pDomainSuffix = 0;
+            pDomainSuffix++;
+        }
+        else
+        {
+            pDomainSuffix = "";
+        }
+        LW_TRY(&exc, DJSetComputerName(argPos[0], pDomainSuffix, &LW_EXC));
     }
     else if(!strcmp(argPos[0], "join"))
     {
