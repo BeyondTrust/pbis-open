@@ -1,29 +1,33 @@
 [HKEY_THIS_MACHINE\Services]
 
 [HKEY_THIS_MACHINE\Services\eventlog]
-"Description" = { 
-    default = "Likewise Event Log Service" 
-    doc = "" 
+"Description" = {
+    value = "Likewise Event Log Service"
+    default = "Likewise Event Log Service"
+    doc = ""
 }
-"Path" = { 
-    default = "@LIBDIR@/lw-svcm/eventlog@MOD_EXT@" 
-    doc = "" 
+"Path" = {
+    value = "@LIBDIR@/lw-svcm/eventlog@MOD_EXT@"
+    default = "@LIBDIR@/lw-svcm/eventlog@MOD_EXT@"
+    doc = ""
 }
-"Arguments" = { 
-    default = "" 
-    doc = "" 
+"Arguments" = {
+    value = ""
+    default = ""
+    doc = ""
 }
-"Environment" = { 
-    default = "" 
-    doc = "" 
+"Environment" = {
+    default = ""
+    doc = ""
 }
-"Dependencies" = { 
-    default = "" 
-    doc = "" 
+"Dependencies" = {
+    default = ""
+    doc = ""
 }
-"Type" = { 
-    default = dword:00000002 
-    doc = "" 
+"Type" = {
+    value = dword:00000002
+    default = dword:00000002
+    doc = ""
 }
 "Autostart" = {
     default = dword:00000001
