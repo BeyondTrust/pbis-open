@@ -4,10 +4,12 @@
     doc = "" 
 }
 "Path" = { 
+    value = "@providerdir@/rdr@MOD_EXT@" 
     default = "@providerdir@/rdr@MOD_EXT@" 
     doc = "" 
 }
 "Arguments" = { 
+    value = "rdr" 
     default = "rdr" 
     doc = "" 
 }
@@ -16,16 +18,19 @@
     doc = "" 
 }
 "Dependencies" = { 
+    value = "lwio" 
     default = "lwio" 
     doc = "" 
 }
 "Type" = { 
+    value = dword:00000003 
     default = dword:00000003 
     doc = "" 
 }
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\rdr]
 "Path" = { 
+    value = "@providerdir@/rdr@MOD_EXT@" 
     default = "@providerdir@/rdr@MOD_EXT@" 
     doc = "" 
 }

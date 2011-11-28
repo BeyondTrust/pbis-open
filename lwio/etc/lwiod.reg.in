@@ -2,14 +2,17 @@
 
 [HKEY_THIS_MACHINE\Services\lwio]
 "Description" = { 
+    value = "Likewise IO Manager" 
     default = "Likewise IO Manager" 
     doc = "" 
 }
 "Path" = { 
+    value = "@LIBDIR@/lw-svcm/lwio@MOD_EXT@" 
     default = "@LIBDIR@/lw-svcm/lwio@MOD_EXT@" 
     doc = "" 
 }
 "Arguments" = { 
+    value = "" 
     default = "" 
     doc = "" 
 }
@@ -18,10 +21,12 @@
     doc = "" 
 }
 "Dependencies" = { 
+    value = "lwreg" 
     default = "lwreg" 
     doc = "" 
 }
 "Type" = { 
+    value = dword:00000002
     default = dword:00000002
     doc = "" 
 }
@@ -30,8 +35,8 @@
     doc = ""
 }
 "FdLimit" = {
-	default = dword:00004000
-	doc = "File descriptor limit"
+    default = dword:00004000
+    doc = "File descriptor limit"
 }
 "CoreSize" = {
     default = dword:00000000
@@ -46,12 +51,14 @@
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers]
 "Load" = { 
+    value = "rdr"
     default = "rdr"
     doc = "" 
 }
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\iotest]
 "Path" = { 
+    value = "@providerdir@/libiotest.sys@MOD_EXT@" 
     default = "@providerdir@/libiotest.sys@MOD_EXT@" 
     doc = "" 
 }
