@@ -395,7 +395,7 @@ postinstall()
 
     if [ -f /etc/redhat-release ]; then
         run ln -s '@MK_SYSCONFDIR@/redhat/lwsmd' '@LW_INITDIR@/lwsmd'
-        run ln -s '@MK_SYSCONFDIR@/readhat/pbis' '@LW_INITDIR@/pbis'
+        run ln -s '@MK_SYSCONFDIR@/redhat/pbis' '@LW_INITDIR@/pbis'
     else
         run ln -s '@MK_SYSCONFDIR@/suse/lwsmd' '@LW_INITDIR@/lwsmd'
         run ln -s '@MK_SYSCONFDIR@/suse/pbis' '@LW_INITDIR@/pbis'
