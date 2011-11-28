@@ -88,10 +88,10 @@ TMP_FILE="/tmp/.lw-edit-reg-$$.txt"
 # Warning: \r is embedded as ^M (0xd) as not all UNIX sed supports 
 # the \r escape sequence for this character.
 #
-"${BINDIR}/lwregshell" export --legacy ${ROOT_PATH} - | \
+"${BINDIR}/regshell" export --legacy ${ROOT_PATH} - | \
     sed 's|$||' > "${TMP_FILE}" || exit $?
 cp "${TMP_FILE}" "${TMP_FILE}.bak"
 ${EDITOR} "${TMP_FILE}" || exit $?
-diff "${TMP_FILE}.bak" "${TMP_FILE}" > /dev/null || "${BINDIR}/lwregshell" import "${TMP_FILE}" || exit $?
+diff "${TMP_FILE}.bak" "${TMP_FILE}" > /dev/null || "${BINDIR}/regshell" import "${TMP_FILE}" || exit $?
 rm -f "${TMP_FILE}"
 rm -f "${TMP_FILE}.bak"
