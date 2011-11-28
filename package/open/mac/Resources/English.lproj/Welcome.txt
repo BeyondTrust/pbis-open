@@ -1,5 +1,5 @@
-Likewise Open
+PowerBroker Identity Services - Open Edition
 
 Interoperability software to allow non-Windows systems to use Microsoft Active Directory.
 
-This program installs the Likewise Open software suite in order to enable AD authentication, single sign-on, and other features.
+This program installs the PowerBroker Identity Services - Open Edition (PBISO) software suite in order to enable AD authentication, single sign-on, and other features.

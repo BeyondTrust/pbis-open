@@ -1,4 +1,4 @@
-Likewise Open
+PowerBroker Identity Services - Open Edition
 -------------------
 
 To join an Active Directory domain using a command-line interface, run:
