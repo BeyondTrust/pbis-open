@@ -56,10 +56,10 @@
     </report>
 </section>
 
-<section section="Likewise Services">
+<section section="PBIS Services">
     <report>
-        <name>LikewiseServiceStarting</name>
-        <description>Displays events recorded for any Likewise services starting for the specified computer</description>
+        <name>PBISServiceStarting</name>
+        <description>Displays events recorded for any PBIS services starting for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise LSASS' AND (EventSourceID = '1000')) OR
                   (EventSource = 'Likewise NETLOGON' AND (EventSourceID = '1000')))"
@@ -67,8 +67,8 @@
         </query>
     </report>
     <report>
-        <name>LikewiseServiceStopping</name>
-        <description>Displays events recorded for any Likewise services stopping for the specified computer</description>
+        <name>PBISServiceStopping</name>
+        <description>Displays events recorded for any PBIS services stopping for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise LSASS' AND (EventSourceID = '1002')) OR
                   (EventSource = 'Likewise NETLOGON' AND (EventSourceID = '1002')))"
@@ -76,8 +76,8 @@
         </query>
     </report>
     <report>
-        <name>LikewiseServiceFailures</name>
-        <description>Displays failure events recorded for any Likewise services for the specified computer</description>
+        <name>PBISServiceFailures</name>
+        <description>Displays failure events recorded for any PBIS services for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise LSASS' AND (EventSourceID = '1001' OR EventSourceID = '1003')) OR
                   (EventSource = 'Likewise NETLOGON' AND (EventSourceID = '1001' OR EventSourceID = '1003')))"
@@ -86,7 +86,7 @@
     </report>
     <report>
         <name>LsassFailures</name>
-        <description>Displays failure events recorded for the Likewise Authentication service (lsassd) for the specified computer</description>
+        <description>Displays failure events recorded for the PBIS Authentication service (lsassd) for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1001' OR EventSourceID = '1003'))"
             >
@@ -94,7 +94,7 @@
     </report>
     <report>
         <name>NetlogonFailures</name>
-        <description>Displays failure events recorded for the Likewise AD Sites service (netlogond) for the specified computer</description>
+        <description>Displays failure events recorded for the PBIS AD Sites service (netlogond) for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise NETLOGON') AND (EventSourceID = '1001' OR EventSourceID = '1003'))"
             >
@@ -102,10 +102,10 @@
     </report>
 </section>
 
-<section section="Likewise Configuration">
+<section section="PBIS Configuration">
     <report>
-        <name>LikewiseServiceChanged</name>
-        <description>Displays configuration changed events recorded for any Likewise services for the specified computer</description>
+        <name>PBISServiceChanged</name>
+        <description>Displays configuration changed events recorded for any PBIS services for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise LSASS' AND (EventSourceID = '1004')) OR
                   (EventSource = 'Likewise NETLOGON' AND (EventSourceID = '1004')))"
@@ -114,7 +114,7 @@
     </report>
     <report>
         <name>LsassChanged</name>
-        <description>Displays configuration changed events recorded for the Likewise Authentication service (lsassd) for the specified computer</description>
+        <description>Displays configuration changed events recorded for the PBIS Authentication service (lsassd) for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise LSASS') AND (EventSourceID = '1004'))"
             >
@@ -122,7 +122,7 @@
     </report>
     <report>
         <name>NetlogonChanged</name>
-        <description>Displays configuration changed events recorded for the Likewise AD Sites service (netlogond) for the specified computer</description>
+        <description>Displays configuration changed events recorded for the PBIS AD Sites service (netlogond) for the specified computer</description>
         <query
             sql="((EventSource = 'Likewise NETLOGON') AND (EventSourceID = '1001' OR EventSourceID = '1003'))"
             >
@@ -232,7 +232,7 @@
     </report>
 </section>
 
-<section section="Likewise LSASS - Local Provider Activity">
+<section section="PBIS LSASS - Local Provider Activity">
     <report>
         <name>UserUpdates</name>
         <description>Displays events recorded that show (Lsass - Local Provider) user account updates for the specified computer</description>
