@@ -5,6 +5,8 @@ PKG_ARCH="@MK_HOST_ARCH@"
 
 LOG=/var/log/pbis-open-install.log
 TLOG=/tmp/pbis-open-install.tmp
+REGLIST="dcerpcd.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg \
+         lwiod.reg lwreg.reg netlogond.reg rdr.reg reapsysl.reg"
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -140,8 +142,6 @@ enable_service_configurations_or_init_d_symlinks()
 import_registry_configurations()
 {
     REGSHELL='@MK_BINDIR@/regshell'
-    REGLIST="dcerpcd.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg \
-             lwiod.reg lwreg.reg netlogond.reg rdr.reg reapsysl.reg"
 
     log 'Importing registry...'
     for i in ${REGLIST}
@@ -334,8 +334,6 @@ remove_npfs_dependencies()
 fix_60_registry()
 {
     REGSHELL='@MK_BINDIR@/regshell'
-    REGLIST="dcerpcd.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg \
-             lwiod.reg lwreg.reg netlogond.reg rdr.reg reapsysl.reg"
 
     if [ -z "$UPGRADING_FROM_6_0" ]; then
         return 0
@@ -348,6 +346,10 @@ fix_60_registry()
     relocate_domain_separator
     relocate_space_replacement
 
+}
+
+cleanup_registry()
+{
     for i in ${REGLIST}
     do
         if [ -f "@LW_CONFIGDIR@/$i" ]
@@ -394,6 +396,8 @@ postinstall()
     import_registry_configurations
 
     fix_60_registry
+
+    cleanup_registry
 
     remove_npfs_dependencies
 

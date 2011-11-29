@@ -492,7 +492,10 @@ fix_60_registry()
     # Migrate some other entries
     relocate_domain_separator
     relocate_space_replacement
+}
 
+cleanup_registry()
+{
     run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/dcerpcd.reg"
     run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/eventlogd.reg"
     run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/lsassd.reg"
@@ -541,6 +544,8 @@ restore_5_0123_configuration
 import_registry_configurations
 
 fix_60_registry
+
+cleanup_registry
 
 set_lsass_dependencies
 
