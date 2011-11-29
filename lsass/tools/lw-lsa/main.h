@@ -209,6 +209,12 @@ account_rights_main(
     );
 
 int
+AuthenticateUserMain(
+    int argc,
+    char** ppszArgv
+    );
+
+int
 JoinMain(
     int argc,
     char** argv

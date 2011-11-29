@@ -45,6 +45,7 @@ static main_entry entry_list[] =
     {"enum-members", EnumMembersMain},
     {"query-member-of", QueryMemberOfMain},
     {"account-rights", account_rights_main},
+    {"authenticate-user", AuthenticateUserMain},
     {"join", JoinMain},
     {"leave", LeaveMain},
     {NULL, NULL}
