@@ -27,7 +27,6 @@ make()
 	enum-objects \
 	enum-members \
 	query-member-of \
-	authenticate_user \
 	account-rights"
 
     LSA_SOURCES="\
