@@ -961,7 +961,7 @@ do_purge()
             pkgList="$pkgList $pkgName"
         fi
     done
-    package_uninstall $pkgList
+    package_purge $pkgList
 
     remove_extra_files
 
