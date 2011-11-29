@@ -9,5 +9,6 @@ configure()
 make()
 {
     mk_stage DEST="${MK_LIBEXECDIR}" SOURCE="likewise-support.pl"
-#    mk_stage SOURCE="likewise-open-guide.pdf"
+    mk_stage DEST="${MK_PRODDOCDIR}" SOURCE="pbis-open-installation-and-administration-guide.pdf"
+    mk_stage DEST="${MK_PRODDOCDIR}" SOURCE="pbis-quick-start-guide-for-linux.pdf"
 }
