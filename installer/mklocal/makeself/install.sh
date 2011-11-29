@@ -290,6 +290,15 @@ package_uninstall_aix_bff()
     return $ERR_PACKAGE_COULD_NOT_UNINSTALL
 }
 
+package_purge_aix_bff()
+{
+    geninstall -u $@
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+}
+
 package_file_exists_aix_rpm()
 {
     pkgFile=${PKGDIR}/$1_*.rpm
@@ -321,6 +330,15 @@ package_install_aix_rpm()
 }
 
 package_uninstall_aix_rpm()
+{
+    geninstall -u $@
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+}
+
+package_purge_aix_rpm()
 {
     geninstall -u $@
     if [ $? -eq 0 ]; then
@@ -370,6 +388,15 @@ package_uninstall_freebsd()
     return $ERR_PACKAGE_COULD_NOT_UNINSTALL
 }
 
+package_purge_freebsd()
+{
+    pkg_delete $@ >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+}
+
 package_file_exists_hpux()
 {
     pkgFile=`(cd "${PKGDIR}" && echo $1-[0-9]*.depot)`
@@ -411,6 +438,15 @@ package_uninstall_hpux()
     return $ERR_PACKAGE_COULD_NOT_UNINSTALL
 }
 
+package_purge_hpux()
+{
+    for pkg in $@; do
+        eval "swremove -x mount_all_filesystems=false $@"
+    done
+    return 0
+    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+}
+
 package_file_exists_linux_rpm()
 {
     pkgFile=`(cd "${PKGDIR}" && echo $1-[0-9]*.rpm)`
@@ -442,6 +478,15 @@ package_install_linux_rpm()
 }
 
 package_uninstall_linux_rpm()
+{
+    eval "rpm -e $@"
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_INSTALL
+}
+
+package_purge_linux_rpm()
 {
     eval "rpm -e $@"
     if [ $? -eq 0 ]; then
@@ -495,6 +540,16 @@ package_uninstall_linux_deb()
     return $ERR_PACKAGE_COULD_NOT_UNINSTALL
 }
 
+package_purge_linux_deb()
+{
+    eval "dpkg --purge $@"
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+
+    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+}
+
 package_file_exists_solaris()
 {
     pkgFile=`(cd "${PKGDIR}" && echo $1-[0-9]*.pkg)`
@@ -536,6 +591,30 @@ package_install_solaris()
 }
 
 package_uninstall_solaris()
+{
+    if [ -f "/var/lib/pbis/uninstall/response" ]; then
+        RESPONSE="-a /var/lib/pbis/uninstall/response"
+    else
+        RESPONSE="-a ${DIRNAME}/response"
+    fi
+
+    for candidate in `pkginfo | awk '{print $2}' | grep '^PBIS' | sort -r`; do
+        mpkg=`pkginfo -l $candidate | grep VSTOCK: | awk '{print $2;}'`
+        for pkg in $@; do
+            if [ "$mpkg" = "$pkg" ]; then
+                pkgrm $RESPONSE -n "$candidate"
+                err=$?
+                if [ $err -eq 1 ]; then
+                    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+                fi
+            fi
+        done
+    done
+
+    return 0
+}
+
+package_purge_solaris()
 {
     if [ -f "/var/lib/pbis/uninstall/response" ]; then
         RESPONSE="-a /var/lib/pbis/uninstall/response"
@@ -610,6 +689,12 @@ package_install()
 package_uninstall()
 {
     package_uninstall_${PKGTYPE} "$@"
+    return $?
+}
+
+package_purge()
+{
+    package_purge_${PKGTYPE} "$@"
     return $?
 }
 
@@ -773,6 +858,7 @@ do_install()
     fi
     echo "INSTALL_BASE_ROOT_PACKAGE=\"$INSTALL_BASE_ROOT_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
     echo "INSTALL_GUI_PACKAGE=\"$INSTALL_GUI_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
+    echo "INSTALL_LEGACY_PACKAGE=\"$INSTALL_LEGACY_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
     if [ -f "${DIRNAME}/response" ]; then
         cp "${DIRNAME}/response" /var/lib/pbis/uninstall/response
     fi
@@ -846,7 +932,7 @@ do_uninstall()
     log_info "Uninstalling packages"
 
     pkgList=""
-    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_BASE_PACKAGE $INSTALL_BASE_ROOT_PACKAGE $INSTALL_BASE_USR_PACKAGE;
+    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_BASE_PACKAGE $INSTALL_BASE_ROOT_PACKAGE $INSTALL_BASE_USR_PACKAGE $INSTALL_LEGACY_PACKAGE;
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
@@ -868,7 +954,7 @@ do_purge()
     fi
 
     pkgList=""
-    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_BASE_PACKAGE $INSTALL_BASE_ROOT_PACKAGE $INSTALL_BASE_USR_PACKAGE;
+    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_BASE_PACKAGE $INSTALL_BASE_ROOT_PACKAGE $INSTALL_BASE_USR_PACKAGE $INSTALL_LEGACY_PACKAGE;
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
