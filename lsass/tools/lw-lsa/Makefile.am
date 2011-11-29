@@ -29,6 +29,7 @@ MODE_NAMES = \
 	find-objects \
 	enum-objects \
 	enum-members \
+	authenticate-user \
 	query-member-of
 
 bin_PROGRAMS = lw-lsa
@@ -68,6 +69,7 @@ lw_lsa_SOURCES = \
 	enum_objects.c \
 	enum_members.c \
 	query_member_of.c \
+	authenticate_user.c \
 	common.c \
 	main.c
 
@@ -75,6 +77,7 @@ lw_lsa_LDADD = \
 	@top_builddir@/client/liblsaclient.la \
 	@top_builddir@/common/liblsacommon.la \
 	-llwbase_nothr \
+	-lpopt \
 	-llwadvapi_nothr
 
 install-exec-hook:

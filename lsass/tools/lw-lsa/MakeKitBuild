@@ -29,6 +29,7 @@ make()
 	find-objects \
 	enum-objects \
 	enum-members \
+	authenticate_user \
 	query-member-of"
 
     LSA_SOURCES="\
@@ -66,6 +67,7 @@ make()
 	enum_objects.c \
 	enum_members.c \
 	query_member_of.c \
+        authenticate_user.c \
 	common.c \
 	main.c"
 
@@ -74,7 +76,7 @@ make()
 	SOURCES="$LSA_SOURCES" \
 	INCLUDEDIRS=". ../../include" \
 	HEADERDEPS="lwadvapi.h" \
-	LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr"
+	LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr popt"
 
     if [ "$LW_DEVICE_PROFILE" != "embedded" ]
     then

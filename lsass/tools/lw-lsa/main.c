@@ -47,6 +47,7 @@ static main_entry entry_list[] =
     {"enum-objects", EnumObjectsMain},
     {"enum-members", EnumMembersMain},
     {"query-member-of", QueryMemberOfMain},
+    {"authenticate-user", AuthenticateUserMain},
     {NULL, NULL}
 };
 

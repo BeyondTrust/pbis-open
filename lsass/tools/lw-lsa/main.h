@@ -201,3 +201,9 @@ QueryMemberOfMain(
     int argc,
     char** ppszArgv
     );
+
+int
+AuthenticateUserMain(
+    int argc,
+    char** ppszArgv
+    );
