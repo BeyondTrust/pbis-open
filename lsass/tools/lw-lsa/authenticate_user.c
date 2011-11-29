@@ -46,8 +46,9 @@
 #include <lsa/lsa.h>
 #include <lwmem.h>
 #include <lwerror.h>
-#include <popt.h>
+#include <lw/rtllog.h>
 
+#include <popt.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -130,6 +131,7 @@ PromptForPassword(
     struct termios old = {0}, new = {0};
     FILE *tty = NULL;
     BOOLEAN echoCleared = FALSE;
+    ssize_t len = 0;
     
     tty = fopen("/dev/tty", "r+");
     if (tty == NULL)
@@ -148,10 +150,15 @@ PromptForPassword(
     fprintf(tty, "%s", "Password: ");
     fflush(tty);
 
-    if (afgets(&pPassword, tty) < 0)
+    len = afgets(&pPassword, tty);
+    if (len < 0)
     {
         dwError = ERROR_BROKEN_PIPE;
         BAIL_ON_LSA_ERROR(dwError);
+    }
+    if (len > 0 && pPassword[len - 1] == '\n')
+    {
+        pPassword[len - 1] = 0;
     }
 
     fprintf(tty, "\n");
