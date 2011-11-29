@@ -264,7 +264,15 @@ ProcessImportedValue(
         hKey = hCurrRootKey;
     }
 
-    cbData = pItem->type == REG_SZ ? pItem->valueLen+1 : pItem->valueLen;
+    if (pItem->type == REG_ATTRIBUTES)
+    {
+        cbData = pItem->regAttr.ValueType == REG_SZ ?
+                     pItem->valueLen+1 : pItem->valueLen;
+    }
+    else
+    {
+        cbData = pItem->type == REG_SZ ? pItem->valueLen+1 : pItem->valueLen;
+    }
 
     dwError = RegAllocateMemory(sizeof(*pData) * (cbData+1), (PVOID*)&pData);
     BAIL_ON_REG_ERROR(dwError);
@@ -408,8 +416,7 @@ printf("Importing type=%2d  key=%s valueName=%s\n",
 
             if (pItem->value)
             {
-                /* dwValueLen includes null termination in string data */
-                if (bCleanup && pItem->valueLen == (dwValueLen - 1) &&
+                if (bCleanup && cbData == dwValueLen &&
                     !memcmp(pItem->value, pValue, dwValueLen))
                 {
                     /*
