@@ -208,16 +208,6 @@ DEPENDS="platform"
 # Defaults to <lit>$<varref>MK_DATAROOTDIR</varref>/man</lit>.
 #>
 
-#<
-# @var MK_PRODDOCDIR
-# @brief Product documentation directory
-# @export
-#
-# The directory where product documentation is installed.
-#
-# Defaults to <lit>$<varref>MK_EPREFIX</varref>/docs</lit>.
-#>
-
 option()
 {
     mk_option \
@@ -277,13 +267,6 @@ option()
         PARAM="path" \
         DEFAULT="${EPREFIX}/lib" \
         HELP="Library directory (base)"
-
-    mk_option \
-        VAR=PRODDOCDIR \
-        OPTION=proddocdir \
-        PARAM="path" \
-        DEFAULT="${EPREFIX}/docs" \
-        HELP="Product Document Directory"
 
     if [ "$MK_HOST_MULTIARCH" = "separate" ]
     then
@@ -394,13 +377,12 @@ configure()
         MK_RUN_SYSCONFDIR="${MK_RUN_DIR}/etc" \
         MK_RUN_LOCALSTATEDIR="${MK_RUN_DIR}/var" \
         MK_RUN_DATAROOTDIR="${MK_RUN_DIR}/share" \
-        MK_RUN_PRODDOCDIR="${MK_RUN_DIR}/docs" \
         MK_RUN_DATADIR="${MK_RUN_DIR}/share"
 
     # Declare basic path variables
     mk_declare -s -e \
         MK_PREFIX MK_EPREFIX MK_INCLUDEDIR MK_BINDIR MK_SBINDIR MK_LIBDIR \
-        MK_LIBEXECDIR MK_SYSCONFDIR MK_LOCALSTATEDIR MK_DATAROOTDIR MK_PRODDOCDIR MK_DATADIR
+        MK_LIBEXECDIR MK_SYSCONFDIR MK_LOCALSTATEDIR MK_DATAROOTDIR MK_DATADIR
 
     # Set values of basic path variables
     mk_set_system_var SYSTEM="build" MK_PREFIX "@$MK_RUN_PREFIX"
@@ -413,7 +395,6 @@ configure()
     mk_set_system_var SYSTEM="build" MK_SYSCONFDIR "@$MK_RUN_SYSCONFDIR"
     mk_set_system_var SYSTEM="build" MK_LOCALSTATEDIR "@$MK_RUN_LOCALSTATEDIR"
     mk_set_system_var SYSTEM="build" MK_DATAROOTDIR "@$MK_RUN_DATAROOTDIR"
-    mk_set_system_var SYSTEM="build" MK_PRODDOCDIR "@$MK_RUN_PRODDOCDIR"
     mk_set_system_var SYSTEM="build" MK_DATADIR "@$MK_RUN_DATADIR"
 
     mk_set_system_var SYSTEM="host" MK_PREFIX "$PREFIX"
@@ -425,7 +406,6 @@ configure()
     mk_set_system_var SYSTEM="host" MK_SYSCONFDIR "$SYSCONFDIR"
     mk_set_system_var SYSTEM="host" MK_LOCALSTATEDIR "$LOCALSTATEDIR"
     mk_set_system_var SYSTEM="host" MK_DATAROOTDIR "$DATAROOTDIR"
-    mk_set_system_var SYSTEM="host" MK_PRODDOCDIR "$PRODDOCDIR"
     mk_set_system_var SYSTEM="host" MK_DATADIR "$DATADIR"
 
     mk_declare -e \
