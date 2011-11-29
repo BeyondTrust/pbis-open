@@ -203,6 +203,7 @@ ProcessImportedValue(
     BOOLEAN bIsValidSecDesc = FALSE;
     SECURITY_INFORMATION SecInfo = 0;
     PLWREG_CURRENT_VALUEINFO pCurrentValue = NULL;
+    BOOLEAN bCleanup = FALSE;
 
     BAIL_ON_INVALID_HANDLE(hReg);
 
@@ -400,12 +401,24 @@ printf("Importing type=%2d  key=%s valueName=%s\n",
                                       NULL,
                                       pItem->valueName);
                         BAIL_ON_REG_ERROR(dwError);
+                        bCleanup = TRUE;
                     }
                 }
             }
 
             if (pItem->value)
             {
+                /* dwValueLen includes null termination in string data */
+                if (bCleanup && pItem->valueLen == (dwValueLen - 1) &&
+                    !memcmp(pItem->value, pValue, dwValueLen))
+                {
+                    /*
+                     * Just cleaned up this value from the registry, so
+                     * don't add it back.
+                     */
+                    goto cleanup;
+                }
+
                 /* Handle data value (non-attribute data) */
                 regItem = *pItem;
                 regItem.type = pItem->regAttr.ValueType;
