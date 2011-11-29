@@ -87,7 +87,7 @@ _lw_dmg()
     trap "mk_safe_rm $result" 0
 
     mk_mkdir "$TEMP_DIR"
-    _unpack "$DMG_TEMPLATE" "$TEMP_DIR"
+    #_unpack "$DMG_TEMPLATE" "$TEMP_DIR"
     mk_mkdir "$TEMP_DIR/Installer"
     
     for _pkgdir
