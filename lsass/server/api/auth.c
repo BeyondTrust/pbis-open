@@ -197,6 +197,9 @@ LsaSrvAuthenticateUserEx(
     BOOLEAN bFoundProvider = FALSE;
     PSTR pszTargetProviderName = NULL;
     PSTR pszTargetInstance = NULL;
+    PSTR pCombinedAccountName = NULL;
+    LSA_AUTH_USER_PAM_PARAMS pamParams = { 0 };
+    PLSA_AUTH_USER_PAM_INFO pPamAuthInfo = NULL;
 
     BAIL_ON_INVALID_POINTER(pUserParams);
     BAIL_ON_INVALID_POINTER(ppUserInfo);
@@ -211,47 +214,32 @@ LsaSrvAuthenticateUserEx(
     switch (pUserParams->AuthType)
     {
     case LSA_AUTH_PLAINTEXT:
-    {
-	    PSTR pszAccountName = NULL;
-	    DWORD dwLen = 0;
-            LSA_AUTH_USER_PAM_PARAMS params = { 0 };
-	    
-	    /* calculate length including '\' and terminating NULL */
+        if (pUserParams->pszDomain)
+        {
+            dwError = LwAllocateStringPrintf(
+                            &pCombinedAccountName,
+                            "%s\\%s", 
+                            pUserParams->pszDomain,
+                            pUserParams->pszAccountName);
+            pamParams.pszLoginName = pCombinedAccountName;
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+        else
+        {
+            pamParams.pszLoginName = pUserParams->pszAccountName;
+        }
+        pamParams.pszPassword = pUserParams->pass.clear.pszPassword;
+        break;
 
-            if (pUserParams->pszDomain)
-            {
-	        dwLen = strlen(pUserParams->pszDomain);
-            }
-	    dwLen += strlen(pUserParams->pszAccountName) + 2;    
-	    dwError = LwAllocateMemory(dwLen, (PVOID*)&pszAccountName);
-	    BAIL_ON_LSA_ERROR(dwError);
-    
-	    snprintf(pszAccountName, dwLen,
-		     "%s%s%s", 
-		     pUserParams->pszDomain,
-		     pUserParams->pszDomain ? "\\" : "", 
-		     pUserParams->pszAccountName);
-
-            params.pszLoginName = pszAccountName;
-            params.pszPassword = pUserParams->pass.clear.pszPassword;
-
-	    /* Pass off plain text auth to AuthenticateUser() */
-	    dwError = LsaSrvAuthenticateUserPam(hServer, 
-					     &params,
-                                             NULL);
-	    LW_SAFE_FREE_MEMORY(pszAccountName);	    
-	    goto cleanup;
-	    break;
-    }
-    
     case LSA_AUTH_CHAP:
-	    /* NTLM is what we'll do for the rest of the routine */
-	    break;
+        /* NTLM is what we'll do for the rest of the routine */
+        break;
+
     default:
-	    /* Bad AuthType */
-	    dwError = LW_ERROR_INVALID_PARAMETER;
-	    goto cleanup;
-	    break;	    
+        /* Bad AuthType */
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        goto cleanup;
+        break;
     }
 
     /* Fix up the name.  This allows us to handle a UPN */
@@ -299,10 +287,26 @@ LsaSrvAuthenticateUserEx(
                       &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable->pfnAuthenticateUserEx(
-                                            hProvider,
-                                            &localUserParams,
-                                            ppUserInfo);
+        switch (pUserParams->AuthType)
+        {
+        case LSA_AUTH_PLAINTEXT:
+            dwError = pProvider->pFnTable->pfnAuthenticateUserPam(
+                                                hProvider,
+                                                &pamParams,
+                                                &pPamAuthInfo);
+            if (pPamAuthInfo)
+            {
+                LsaFreeAuthUserPamInfo(pPamAuthInfo);
+            }
+            break;
+
+        case LSA_AUTH_CHAP:
+            dwError = pProvider->pFnTable->pfnAuthenticateUserEx(
+                                                hProvider,
+                                                &localUserParams,
+                                                ppUserInfo);
+            break;
+        }
         if (!dwError) 
         {
             if (LsaSrvEventlogEnabled())
@@ -355,6 +359,7 @@ LsaSrvAuthenticateUserEx(
 
 cleanup:
 
+    LW_SAFE_FREE_MEMORY(pCombinedAccountName);
     LW_SAFE_FREE_STRING(pszTargetProviderName);
     LW_SAFE_FREE_STRING(pszTargetInstance);
 
