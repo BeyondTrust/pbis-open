@@ -339,10 +339,10 @@ _mk_lpp_bff()
     } | tee "$LPP_DIR/image-list" | 
     {
         mk_cd_or_fail "$LPP_DIR/image"
-        mk_run_or_fail backup -iqprf "$MK_ROOT_DIR/$LPP_OUTPUT/${LPP_NAMEDOT}.${LPP_VER}.bff" -b1
+        mk_run_or_fail backup -iqprf "$MK_ROOT_DIR/$LPP_OUTPUT/${LPP_NAMEDOT}-${LPP_VER}.bff" -b1
     }
 
-    mk_msg "built ${LPP_NAMEDOT}.${LPP_VER}.bff"
+    mk_msg "built ${LPP_NAMEDOT}-${LPP_VER}.bff"
 }
 
 _mk_build_lpp "$@"
