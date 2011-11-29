@@ -13,6 +13,7 @@ configure()
         MK_STAGE_DIR \
         MK_HOST_ARCH \
         MK_SYSCONFDIR \
+        MK_DOCDIR \
         LW_CACHEDIR \
         LW_CONFIGDIR \
         LW_INITDIR \
@@ -181,6 +182,8 @@ package_pkg()
                 "${MK_BINDIR}" \
                 "${MK_SBINDIR}" \
                 "${MK_DATADIR}" \
+                "${MK_DOCDIR}" \
+                "${MK_DOCDIR}/html" \
                 "${MK_LIBEXECDIR}" \
                 "${LW_CONFIGDIR}" \
                 "${MK_LIBDIR}/gss" \
@@ -247,6 +250,8 @@ package_lpp()
                 "${MK_SBINDIR}" \
                 "${MK_DATADIR}" \
                 "${MK_LIBEXECDIR}" \
+                "${MK_DOCDIR}" \
+                "${MK_DOCDIR}/html" \
                 "${LW_CONFIGDIR}" \
                 "${MK_LIBDIR}/gss" \
                 "${MK_LIBDIR}/krb5" \
@@ -333,7 +338,8 @@ make()
         @lwio @libschannel @dcerpc @centutils @lwsm @lwadtool \
         @eventlog @lsass @reapsysl @lwdns @lwnetapi \
         @domainjoin/libdomainjoin @domainjoin/domainjoin-cli \
-        @domainjoin/scripts @lwconfig @lwupgrade @samba-interop @config"
+        @domainjoin/scripts @lwconfig @lwupgrade @samba-interop @config \
+        @reskit"
 
     mk_deb_enabled && package_deb
     mk_rpm_enabled && package_rpm
@@ -372,6 +378,8 @@ open_files_prefix()
         "${MK_LIBDIR}/apache2.0/*${MK_DLO_EXT}" \
         "${MK_LIBDIR}/apache2.2/*${MK_DLO_EXT}" \
         "${MK_DATADIR}/pbis.pam-auth-update" \
+        "${MK_DOCDIR}/*" \
+        "${MK_DOCDIR}/html/*" \
         "${LW_CONFIGDIR}/*.reg" \
         "${MK_PREFIX}/data/VERSION"
 }

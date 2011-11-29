@@ -10,7 +10,7 @@ SUBDIRS="$LW_ALL_BUNDLED \
          lwio libschannel dcerpc centutils lwsm eventlog lsass reapsysl lwdns \
          lwnetapi lwadtool domainjoin lwconfig lwupgrade samba-interop \
          mod_auth_kerb config docs reskit \
-         package installer qatools gssapps"
+         package installer qatools gssapps lwsecurity"
 
 defaults()
 {
@@ -18,7 +18,7 @@ defaults()
     SYSCONFDIR="/etc/pbis"
     LOCALSTATEDIR="/var"
     DATADIR="/opt/pbis/share"
-    DOCDIR="/opt/pbis/share/doc"
+    DOCDIR="/opt/pbis/docs"
     MANDIR="/usr/share/man"
 
     if [ "`uname`" = "Darwin" ]

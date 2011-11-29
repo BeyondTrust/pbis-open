@@ -1,14 +1,21 @@
 configure()
 {
     mk_declare -o \
-        MK_LIBEXECDIR
+        MK_LIBEXECDIR \
+        MK_DOCDIR
 
     lw_define_feature_macros
 }
 
 make()
 {
-    mk_stage DEST="${MK_LIBEXECDIR}" SOURCE="likewise-support.pl"
-    mk_stage DEST="${MK_PRODDOCDIR}" SOURCE="pbis-open-installation-and-administration-guide.pdf"
-    mk_stage DEST="${MK_PRODDOCDIR}" SOURCE="pbis-quick-start-guide-for-linux.pdf"
+    mk_stage DESTDIR="${MK_LIBEXECDIR}" SOURCE="likewise-support.pl"
+    mk_stage DESTDIR="${MK_DOCDIR}" SOURCE="pbis-open-installation-and-administration-guide.pdf"
+
+    if [ "$MK_HOST_OS" = "darwin" ]
+    then
+        mk_stage DESTDIR="${MK_DOCDIR}" SOURCE="pbis-ten-minute-setup-guide-for-mac.pdf"
+    else
+        mk_stage DESTDIR="${MK_DOCDIR}" SOURCE="pbis-quick-start-guide-for-linux.pdf"
+    fi
 }
