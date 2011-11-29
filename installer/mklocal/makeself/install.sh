@@ -1049,11 +1049,11 @@ do_interactive()
     fi
 
     prompt_yes_no "Would you like to install package for legacy links? (i.e.  /opt/likewise/bin/lw-find-user-by-name -> /opt/pbis/bin/find-user-by-name)"
-    if [ "x$answer" = "yes" ]; then
+    if [ "x$answer" = "xyes" ]; then
         OPT_INSTALL_LEGACY_PACKAGE="yes"
-    elif [ "x$answer" = "no" ]; then
+    elif [ "x$answer" = "xno" ]; then
         OPT_INSTALL_LEGACY_PACKAGE="no"
-    elif [ "x$answer" = "auto" ]; then
+    elif [ "x$answer" = "xauto" ]; then
         OPT_INSTALL_LEGACY_PACKAGE=""
     fi
 
@@ -1061,8 +1061,6 @@ do_interactive()
     if [ "x$answer" != "xyes" ]; then
         do_info
         exit 0
-    else
-        do_install
     fi
 }
 
