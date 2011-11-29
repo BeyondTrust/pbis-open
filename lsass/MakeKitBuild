@@ -163,16 +163,10 @@ configure()
         done
     fi
 
-    EXTRA_SERVICE_DEPS=""
-
     if [ "$LSA_RPC_SERVERS" = "no" ]
     then
         mk_define DISABLE_RPC_SERVERS
-    else
-        EXTRA_SERVICE_DEPS="$EXTRA_SERVICE_DEPS npfs"
     fi
-
-    mk_declare -o EXTRA_SERVICE_DEPS
 
     # FIXME
     mk_define COMPONENT_VERSION "\"5.0.0.0\""
@@ -334,6 +328,7 @@ return (int) (size_t) conversation.conv;
     mk_check_libraries \
         proc kvm sec pthread
 
+    # FreeBSD uses this for examing which users/processes are running
     mk_check_functions \
         HEADERDEPS="kvm.h sys/param.h sys/sysctl.h sys/user.h" \
         LIBDEPS="$LIB_KVM" \
