@@ -143,7 +143,7 @@ AD_InitializeConfig(
     pConfig->DomainManager.dwTrustExceptionCount = 0;
 
     pConfig->bMultiTenancyEnabled = FALSE;
-    pConfig->bAddDomainToLocalGroupsEnabled = TRUE;
+    pConfig->bAddDomainToLocalGroupsEnabled = FALSE;
 
     dwError = LwAllocateString(
                     AD_DEFAULT_SHELL,

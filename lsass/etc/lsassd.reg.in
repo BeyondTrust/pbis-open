@@ -258,7 +258,7 @@
     range = boolean
 }
 "AddDomainToLocalGroupsEnabled" = {
-    default = dword:00000001
+    default = dword:00000000
     doc = "Whether to add domain groups to local groups when joining a domain"
     range = boolean
 }
