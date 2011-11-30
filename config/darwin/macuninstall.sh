@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# This script completely uninstalls all Likewise products from the Mac
+# This script completely uninstalls PowerBroker Identity Services from the Mac
 
 warn()
 {
@@ -54,9 +54,9 @@ gather_version_info()
     return 0
 }
 
-pkg_list_likewise()
+pkg_list_pbis()
 {
-    ls -1d /Library/Receipts/likewise-*.pkg | tr '\n' '\0' | xargs -0 basename
+    ls -1d /Library/Receipts/pbis-*.pkg | tr '\n' '\0' | xargs -0 basename
 }
 
 pkg_verify_installed()
@@ -111,13 +111,13 @@ launchctl_get_all_daemons()
 
 launchctl_get_daemons()
 {
-    launchctl_get_all_daemons | grep '^com\.likewisesoftware\.'
+    launchctl_get_all_daemons | grep '^com\.beyondtrust\.pbis\.'
 }
 
 launchctl_view_daemons()
 {
     # Note that launchctl v2 has the daemon name in the third column.
-    launchctl list | grep 'com\.likewisesoftware\.'
+    launchctl list | grep 'com\.beyondtrust\.pbis\.'
 }
 
 launchctl_stop_daemons()
@@ -128,8 +128,8 @@ launchctl_stop_daemons()
 launchctl_unload_daemon()
 {
     if [ -z "$1" ]; then
-	echo "Missing daemon name."
-	return 1
+        echo "Missing daemon name."
+        return 1
     fi
     true
     for _plist in \
@@ -152,8 +152,8 @@ launchctl_unload_daemons()
 launchctl_delete_daemons()
 {
     for _plist in \
-        /System/Library/LaunchDaemons/com.likewisesoftware.*.plist \
-        /Library/LaunchDaemons/com.likewisesoftware.*.plist \
+        /System/Library/LaunchDaemons/com.beyondtrust.pbis.*.plist \
+        /Library/LaunchDaemons/com.beyondtrust.pbis.*.plist \
         ; do
         $RUN rm -f "${_plist}"
     done
@@ -162,8 +162,8 @@ launchctl_delete_daemons()
 launchctl_delete_agents()
 {
     for _plist in \
-        /System/Library/LaunchAgents/com.likewisesoftware.*.plist \
-        /Library/LaunchAgents/com.likewisesoftware.*.plist \
+        /System/Library/LaunchAgents/com.beyondtrust.pbis.*.plist \
+        /Library/LaunchAgents/com.beyondtrust.pbis.*.plist \
         ; do
         $RUN rm -f "${_plist}"
     done
@@ -172,7 +172,7 @@ launchctl_delete_agents()
 get_running_daemons()
 {
     running=""
-    for daemon in /opt/likewise/sbin/* ; do
+    for daemon in /opt/pbis/sbin/* ; do
         found=`ps -A -o "command" | egrep '^'"${daemon}"'( |$)' 2>/dev/null`
         if [ -n "${found}" ]; then
             running="${running} ${daemon}"
@@ -268,12 +268,12 @@ main()
 
     echo "Uninstall started."
 
-    if [ -f /opt/likewise/bin/domainjoin-cli ]; then
+    if [ -f /opt/pbis/bin/domainjoin-cli ]; then
         echo "Leaving the domain..."
-        $RUN /opt/likewise/bin/domainjoin-cli leave
+        $RUN /opt/pbis/bin/domainjoin-cli leave
         # In case leave fails, make sure that we always unconfigure PAM
         echo "Unconfiguring PAM..."
-        $RUN /opt/likewise/bin/domainjoin-cli configure pam --disable
+        $RUN /opt/pbis/bin/domainjoin-cli configure pam --disable
     fi
 
     stop_daemons
@@ -283,18 +283,18 @@ main()
     launchctl_delete_daemons
     launchctl_delete_agents
 
-    for module in /opt/likewise/lib/AuthMechanisms/*.so
+    for module in /opt/pbis/lib/AuthMechanisms/*.so
     do
         mechanism=`basename "$module" .so`
         echo "Disabling auth mechanism '$mechanism'"
-        $RUN /opt/likewise/libexec/authmechanism disable "$mechanism"
+        $RUN /opt/pbis/libexec/authmechanism disable "$mechanism"
     done
 
-    for pkgName in `pkg_list_likewise` ; do
+    for pkgName in `pkg_list_pbis` ; do
         pkg_uninstall "${pkgName}"
     done
 
-    $RUN rm -rfv /opt/likewise /etc/likewise /var/log/likewise /var/lib/likewise /var/cache/likewise "/Applications/Likewise Utilities" "/Library/Security/SecurityAgentPlugins/com.likewise.bundle"
+    $RUN rm -rfv /opt/pbis /etc/pbis /var/log/pbis /var/lib/pbis /var/cache/pbis "/Applications/Likewise Utilities" "/Library/Security/SecurityAgentPlugins/com.likewise.bundle"
 
     for file in /etc/* /etc/pam.d/* /etc/krb5.conf /etc/hosts /etc/sshd_config /etc/ssh_config ; do
         orig="$file.lwidentity.orig"
