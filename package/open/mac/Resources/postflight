@@ -641,10 +641,10 @@ else
     run mkdir -p '/Applications/PBIS Utilities'
 fi
 
-if [ -f '/Applications/PBIS Utilities/Domain Join.app' ]; then
+if [ -d '/Applications/PBIS Utilities/Domain Join.app' ]; then
     _log "Domain Join application already created in Utilities folder"
 else
-    run ln -s '@MK_BINDIR@/Domain Join.app' '/Applications/PBIS Utilities/Domain Join.app'
+    run ln -s '@MK_BINDIR@/Domain Join.app' '/Applications/PBIS Utilities/.'
 fi
 
 domain=`@MK_BINDIR@/lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
