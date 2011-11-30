@@ -88,11 +88,11 @@ _lw_dmg()
 
     mk_mkdir "$TEMP_DIR"
     #_unpack "$DMG_TEMPLATE" "$TEMP_DIR"
-    mk_mkdir "$TEMP_DIR/Installer"
+    #mk_mkdir "$TEMP_DIR/Installer"
     
     for _pkgdir
     do
-        mk_run_or_fail cp "$_pkgdir"/*.pkg "$TEMP_DIR/Installer/"
+        mk_run_or_fail cp "$_pkgdir"/*.pkg "$TEMP_DIR/"
     done
 
     mk_run_or_fail chmod -Rf go-w "$TEMP_DIR"
