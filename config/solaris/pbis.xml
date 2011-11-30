@@ -7,15 +7,15 @@
         #ident  "@(#)likewise.xml        5.3     08/09/21 SMI"
 -->
 
-<service_bundle type='manifest' name='LIKEWISElwis:likewise'>
+<service_bundle type='manifest' name='BEYONDTRUSTpbis:pbis'>
 
-<service name='network/likewise' type='service' version='1'>
+<service name='network/pbis' type='service' version='1'>
 
         <create_default_instance enabled='false' />
 
         <single_instance/>
 
-        <dependency name='likewise-lwsmd' grouping='require_any'
+        <dependency name='pbis-lwsmd' grouping='require_any'
                         restart_on='none' type='service'>
                 <service_fmri value='svc:/network/lwsmd' />
         </dependency>
@@ -46,7 +46,7 @@
         </dependent>
 
         <exec_method type='method' name='start'
-                exec='/opt/likewise/bin/lwsm -q autostart'
+                exec='/opt/pbis/bin/lwsm -q autostart'
                 timeout_seconds='60' />
 
         <exec_method type='method' name='stop'
@@ -62,11 +62,11 @@
         <template>
                 <common_name>
                         <loctext xml:lang='C'>
-                        Likewise Software autostart
+                        PowerBroker Identity Services autostart
                         </loctext>
                 </common_name>
                 <documentation>
-                        <doc_link name='Likewise Software Documentation' uri='http://www.likewise.com/resources/documentation_library' />
+                        <doc_link name='PowerBroker Identity Services Documentation' uri='http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/Resources/Documentation-Library/' />
                 </documentation>
         </template>
 </service>

@@ -7,7 +7,7 @@
         #ident  "@(#)lwsmd.xml        5.3     08/09/21 SMI"
 -->
 
-<service_bundle type='manifest' name='LIKEWISElwis:lwsmd'>
+<service_bundle type='manifest' name='BEYONDTRUSTpbis:lwsmd'>
 
 <service name='network/lwsmd' type='service' version='1'>
 
@@ -41,7 +41,7 @@
         </dependent>
 
         <exec_method type='method' name='start'
-                exec='/opt/likewise/sbin/lwsmd --start-as-daemon'
+                exec='/opt/pbis/sbin/lwsmd --start-as-daemon'
                 timeout_seconds='60'>
                 <method_context>
                         <method_environment>
@@ -52,7 +52,7 @@
         </exec_method>
 
         <exec_method type='method' name='stop'
-                exec='/opt/likewise/bin/lwsm shutdown'
+                exec='/opt/pbis/bin/lwsm shutdown'
                 timeout_seconds='60'>
                 <method_context>
                         <method_environment>
@@ -67,11 +67,11 @@
         <template>
                 <common_name>
                         <loctext xml:lang='C'>
-                        Likewise Software Service Management daemon
+                        PowerBroker Identity Services Service Management daemon
                         </loctext>
                 </common_name>
                 <documentation>
-                        <doc_link name='Likewise Software Documentation' uri='http://www.likewise.com/resources/documentation_library' />
+                        <doc_link name='PowerBroker Identity Services Documentation' uri='http://www.beyondtrust.com/Products/PowerBroker-Identity-Services-Open-Edition/Resources/Documentation-Library/' />
                 </documentation>
         </template>
 </service>
