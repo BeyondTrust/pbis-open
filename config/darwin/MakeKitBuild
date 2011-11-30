@@ -13,7 +13,7 @@ configure()
 make()
 {
     mk_stage DEST="${MK_BINDIR}/lw-local-user-migrate.sh" SOURCE="lw-local-user-migrate.sh.in"
-    mk_stage DESTDIR="${MK_BINDIR}/macuninstall.sh" macuninstall.sh
+    mk_stage DESTDIR="${MK_BINDIR}" macuninstall.sh
     mk_stage DESTDIR="${MK_SYSCONFDIR}" user-home-directory-in-dock.plist
     mk_stage DESTDIR="${MK_SYSCONFDIR}/LaunchDaemons" com.beyondtrust.pbis.lwsmd.plist
     mk_stage DEST="${MK_PREFIX}/libexec/startup" SOURCE="startup.sh"
