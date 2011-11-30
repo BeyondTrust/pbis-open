@@ -223,7 +223,7 @@ package_lpp()
         VERSION="${LW_VERSION}.0"
     
         mk_lpp_sub_do \
-            SUBPACKAGE="root" \
+            SUBPACKAGE="-" \
             DESCRIPTION="PowerBroker Identity Services Open" \
             PREIN="lpp/root.pre_i.in" \
             CONFIG="lpp/root.config.in" \

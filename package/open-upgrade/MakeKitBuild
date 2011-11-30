@@ -116,7 +116,7 @@ package_lpp()
         VERSION="${LW_VERSION}.0"
     
         mk_lpp_sub_do \
-            SUBPACKAGE="root" \
+            SUBPACKAGE="-" \
             PREIN="lpp/root.pre_i.in" \
             REQUISITES="lpp/requisites.in"
         

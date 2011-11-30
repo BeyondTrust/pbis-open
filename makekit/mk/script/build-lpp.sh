@@ -198,6 +198,11 @@ _mk_lpp_emit_inventory()
         FILE="$result"
         mk_get_file_mode "$LPP_DIR/image${FILE}"
         MODE="$result"
+        if [ "${LPP_SUB}" = "-" ]; then
+            FILESET="${LPP_NAMEDOT}"
+        else
+            FILESET="${LPP_NAMEDOT}.${LPP_SUB}"
+        fi
         
         echo "$FILE:"
         echo "          owner = root"
@@ -207,7 +212,7 @@ _mk_lpp_emit_inventory()
         if [ -d "$LPP_DIR/image${FILE}" ]
         then
             echo "          type = DIRECTORY"
-            echo "          class = apply,inventory,${LPP_NAMEDOT}.${LPP_SUB}"
+            echo "          class = apply,inventory,${FILESET}"
         elif [ -h "$LPP_DIR/image${FILE}" ]
         then
             TARGET=$(file -h "$LPP_DIR/image${FILE}")
@@ -215,14 +220,14 @@ _mk_lpp_emit_inventory()
             TARGET="${TARGET%.}"
             
             echo "          type = SYMLINK"
-            echo "          class = apply,inventory,${LPP_NAMEDOT}.${LPP_SUB}"
+            echo "          class = apply,inventory,${FILESET}"
             echo "          target = ${TARGET}"
         else
             SIZE=$(ls -l "$LPP_DIR/image${FILE}" | awk '{print $5;}')
             CKSUM=$(sum -r "$LPP_DIR/image${FILE}" | awk '{print $1 " " $2;}')
             
             echo "          type = FILE"
-            echo "          class = apply,inventory,${LPP_NAMEDOT}.${LPP_SUB}"
+            echo "          class = apply,inventory,${FILESET}"
             echo "          size = $SIZE"
             echo "          checksum = \"$CKSUM\""
         fi
@@ -267,8 +272,14 @@ _mk_lpp_lib()
     do
         for FILE in "$LPP_DIR/"*".$CONFIG"
         do
+            if [ $FILE = "$LPP_DIR/-.$CONFIG" ]
+            then
+                DEST=$LPP_NAMEDOT.${FILE##*/-.}
+            else
+                DEST=$LPP_NAMEDOT.${FILE##*/}
+            fi
             [ -f "$FILE" ] &&
-            mk_run_or_fail cp "$FILE" "$LPP_DIR/liblpp.$2/$LPP_NAMEDOT.${FILE##*/}"
+            mk_run_or_fail cp "$FILE" "$LPP_DIR/liblpp.$2/${DEST}"
         done
     done
     
@@ -278,9 +289,14 @@ _mk_lpp_lib()
         do
             if [ -f "$FILE" ]
             then
-                DEST="${FILE##*/}"
-                DEST="${DEST%.$2.$CONFIG}.$CONFIG"
-                mk_run_or_fail cp "$FILE" "$LPP_DIR/liblpp.$2/$LPP_NAMEDOT.$DEST"
+                if [ "$FILE" = "$LPP_DIR/-.$2.$CONFIG" ];
+                then
+                    DEST="${LPP_NAMEDOT}.$CONFIG"
+                else
+                    DEST="${FILE##*/}"
+                    DEST="${LPP_NAMEDOT}.${DEST%.$2.$CONFIG}.$CONFIG"
+                fi
+                mk_run_or_fail cp "$FILE" "$LPP_DIR/liblpp.$2/$DEST"
             fi
         done
     done

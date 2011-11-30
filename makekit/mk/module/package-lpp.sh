@@ -215,7 +215,11 @@ mk_lpp_sub_do()
     LPP_MANIFEST="${LPP_LPPDIR}/$SUBPACKAGE"
     LPP_SUBLPPS="$LPP_SUBLPPS $SUBPACKAGE"
 
-    echo "${LPP_PACKAGEDOT}.${SUBPACKAGE} ${VERSION} 01 N B ${LANG} $DESCRIPTION" > "$LPP_MANIFEST.name" || mk_fail "could not write manifest"
+    if [ "$SUBPACKAGE" = "-" ]; then
+        echo "${LPP_PACKAGEDOT} ${VERSION} 01 N B ${LANG} $DESCRIPTION" > "$LPP_MANIFEST.name" || mk_fail "could not write manifest"
+    else
+        echo "${LPP_PACKAGEDOT}.${SUBPACKAGE} ${VERSION} 01 N B ${LANG} $DESCRIPTION" > "$LPP_MANIFEST.name" || mk_fail "could not write manifest"
+    fi
 
     [ -n "$PREIN" ] &&
     mk_output_file INPUT="$PREIN" OUTPUT="@$LPP_MANIFEST.pre_i"

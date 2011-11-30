@@ -138,7 +138,7 @@ package_lpp()
         VERSION="${LW_VERSION}.0"
 
         mk_lpp_sub_do \
-            SUBPACKAGE="root" \
+            SUBPACKAGE="-" \
             REQUISITES="lpp/requisites.in"
 
         open_legacy_files
