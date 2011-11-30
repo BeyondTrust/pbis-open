@@ -5,15 +5,15 @@ make()
         ticketcopy.c"
 
     mk_program \
-	PROGRAM=ticketcopy \
-	SOURCES="$TICKETCOPY_SOURCES" \
+        PROGRAM=ticketcopy \
+        SOURCES="$TICKETCOPY_SOURCES" \
         INSTALLDIR="${MK_LIBEXECDIR}" \
-	INCLUDEDIRS="../../include" \
-	HEADERDEPS="lw/attrs.h lw/types.h lsa/lsa.h lwerror.h lwkrb5.h" \
-	LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr popt" \
+        INCLUDEDIRS="../../include" \
+        HEADERDEPS="lw/attrs.h lw/types.h lsa/lsa.h lwerror.h lwkrb5.h" \
+        LIBDEPS="lsaclient lsacommon lwadvapi lwadvapi_nothr lwbase lwbase_nothr popt" \
         LDFLAGS="-framework Kerberos"
 
     mk_stage \
         DESTDIR="${MK_SYSCONFDIR}/LaunchAgents" \
-        com.likewisesoftware.ticketcopy.plist
+        com.beyondtrust.pbis.ticketcopy.plist
 }

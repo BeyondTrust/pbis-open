@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-        <string>com.likewise.ticketcopy</string>
+        <string>com.beyondtrust.pbis.ticketcopy</string>
 	<key>ProgramArguments</key>
         <array>
-            <string>/opt/likewise/libexec/ticketcopy</string>
+            <string>/opt/pbis/libexec/ticketcopy</string>
         </array>
 	<key>RunAtLoad</key>
         <true/>
