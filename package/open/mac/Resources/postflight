@@ -526,15 +526,16 @@ ConfigureDirectoryOwners
 # back to /var/lib/pbis.  On every boot we make sure the symlink is
 # still there before starting our daemons.
 #
-if [ -d /var/lib/pbis ]; then
+if [ -f /var/lib/pbis ]; then
      run_or_fail cp -rp /var/lib/pbis /opt/pbis/var
      run_or_fail rm -rf /var/lib/pbis
-     run_or_fail ln -s /opt/pbis/var /var/lib/pbis
 else
      run_or_fail cp -rp /var/lib/likewise /opt/pbis/var
-     run_or_fail rm -rf /var/lib/likewise
-     run_or_fail ln -s /opt/pbis/var /var/lib/pbis
 fi
+
+run_or_fail rm -rf /var/lib/likewise
+run_or_fail ln -s /opt/pbis/var /var/lib/pbis
+run_or_fail ln -s /opt/pbis/var /var/lib/likewise
 
 determine_upgrade_type
 
