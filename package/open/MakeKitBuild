@@ -138,7 +138,7 @@ package_pkg()
 
         mk_pkg_sub_do \
             SUBPACKAGE="PBISopenu" \
-            INFOFILES="pkg/u/pkginfo.in"
+            INFOFILES="pkg/u/pkginfo.in pkg/u/depend.in"
         
             open_files_usr
             open_files_compat_usr
@@ -153,7 +153,7 @@ package_pkg()
 
         mk_pkg_sub_do \
             SUBPACKAGE="PBISopenr" \
-            INFOFILES="pkg/r/pkginfo.in"
+            INFOFILES="pkg/r/pkginfo.in pkg/r/depend.in"
 
             open_files_root
 
@@ -170,7 +170,7 @@ package_pkg()
         
         mk_pkg_sub_do \
             SUBPACKAGE="PBISopenz" \
-            INFOFILES="pkg/pkginfo.in pkg/copyright.in pkg/depend.in pkg/postinstall.in pkg/preinstall.in pkg/preremove.in"
+            INFOFILES="pkg/pkginfo.in pkg/copyright.in pkg/postinstall.in pkg/preinstall.in pkg/preremove.in"
 
             open_files_prefix
             open_files_compat_prefix
