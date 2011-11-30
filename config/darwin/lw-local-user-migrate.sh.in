@@ -119,7 +119,7 @@ run()
 
 GetOsType()
 {
-    /opt/likewise/bin/domainjoin-cli get_os_type
+    /opt/pbis/bin/domainjoin-cli get_os_type
 }
 
 RemoveAccount()
@@ -558,7 +558,7 @@ fi
 #
 # Get the details about the destination AD user.
 #
-DestHomeDirectory=`/opt/likewise/bin/lw-find-user-by-name "$AdUserAccount" | grep Home | awk '{print $3}'`
+DestHomeDirectory=`/opt/pbis/bin/find-user-by-name "$AdUserAccount" | grep Home | awk '{print $3}'`
 if [ -z "$DestHomeDirectory" ]; then
     rc="4"
     DisplayStatus
@@ -572,14 +572,14 @@ if [ $? -eq 0 ]; then
     exit $rc
 fi
 
-NewOwnerUID=`/opt/likewise/bin/lw-find-user-by-name "$AdUserAccount" | grep Uid | awk '{print $2}'`
+NewOwnerUID=`/opt/pbis/bin/find-user-by-name "$AdUserAccount" | grep Uid | awk '{print $2}'`
 if [ -z "$NewOwnerUID" ]; then
     rc="5"
     DisplayStatus
     exit $rc
 fi
 
-NewOwnerGID=`/opt/likewise/bin/lw-find-user-by-name "$AdUserAccount" | grep Gid | awk '{print $2}'`
+NewOwnerGID=`/opt/pbis/bin/find-user-by-name "$AdUserAccount" | grep Gid | awk '{print $2}'`
 if [ -z "$NewOwnerGID" ]; then
     rc="6"
     DisplayStatus
