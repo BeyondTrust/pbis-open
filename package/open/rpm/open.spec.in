@@ -421,6 +421,7 @@ postinstall()
     run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
     run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
 
+    run_quiet mv /var/lib/likewise /var/lib/likewise.old
     run_quiet rm -rf "${UPGRADEDIR}"
 
     execute_auxiliary_scripts
