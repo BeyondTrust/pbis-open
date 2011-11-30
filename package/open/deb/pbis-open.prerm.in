@@ -109,8 +109,14 @@ prerm_remove()
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
     run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-    run_quiet /usr/sbin/service pbis stop
-    run_quiet /usr/sbin/service lwsmd stop
+    if [ -f /usr/sbin/service ]
+    then
+        run_quiet /usr/sbin/service pbis stop
+        run_quiet /usr/sbin/service lwsmd stop
+    else
+        run_quiet '@LW_INITDIR@/pbis' stop
+        run_quiet '@LW_INITDIR@/lwsmd' stop
+    fi
 
     run_quiet /usr/sbin/update-rc.d pbis remove
     run_quiet /usr/sbin/update-rc.d lwsmd remove

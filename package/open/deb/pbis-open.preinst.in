@@ -126,8 +126,14 @@ case "$1" in
         run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
         run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
 
-        run_quiet /usr/sbin/service pbis stop
-        run_quiet /usr/sbin/service lwsmd stop
+        if [ -f /usr/sbin/service ]
+        then
+            run_quiet /usr/sbin/service pbis stop
+            run_quiet /usr/sbin/service lwsmd stop
+        else
+            run_quiet '@LW_INITDIR@/pbis' stop
+            run_quiet '@LW_INITDIR@/lwsmd' stop
+        fi
 
         for daemon in $DAEMONS_TO_KILL
         do
@@ -147,8 +153,14 @@ case "$1" in
             exit 1
         fi
 
-        run_quiet /usr/sbin/service pbis stop
-        run_quiet /usr/sbin/service lwsmd stop
+        if [ -f /usr/sbin/service ]
+        then
+            run_quiet /usr/sbin/service pbis stop
+            run_quiet /usr/sbin/service lwsmd stop
+        else
+            run_quiet '@LW_INITDIR@/pbis' stop
+            run_quiet '@LW_INITDIR@/lwsmd' stop
+        fi
 
         for daemon in $DAEMONS_TO_KILL
         do
