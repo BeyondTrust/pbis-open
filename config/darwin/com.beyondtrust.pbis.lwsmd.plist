@@ -4,14 +4,14 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>com.likewisesoftware.lwsmd</string>
+	<string>com.beyondtrust.pbis.lwsmd</string>
         <key>OnDemand</key>
         <true/>
         <key>RunAtLoad</key>
         <true/>
 	<key>ProgramArguments</key>
 	<array>
-            <string>/opt/likewise/libexec/startup</string>
+            <string>/opt/pbis/libexec/startup</string>
 	</array>
         <key>EnvironmentVariables</key>
             <dict>
