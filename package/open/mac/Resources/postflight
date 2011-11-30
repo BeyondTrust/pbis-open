@@ -526,7 +526,7 @@ ConfigureDirectoryOwners
 # back to /var/lib/pbis.  On every boot we make sure the symlink is
 # still there before starting our daemons.
 #
-if [ -f /var/lib/pbis ]; then
+if [ -h /var/lib/pbis ]; then
      run_or_fail cp -rp /var/lib/pbis /opt/pbis/var
      run_or_fail rm -rf /var/lib/pbis
 else
