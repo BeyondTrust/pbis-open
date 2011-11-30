@@ -1,11 +1,13 @@
 #!/bin/sh
 
 UPGRADEDIR=/var/lib/pbis-upgrade
+PKG_ARCH="@MK_HOST_ARCH@"
+REGLIST="dcerpcd.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg \
+         lwiod.reg lwreg.reg netlogond.reg rdr.reg reapsysl.reg"
+
 
 LOG=/var/log/pbis-open-install.log
 TLOG=/tmp/pbis-open-install.tmp
-REGLIST="dcerpcd.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg \
-         lwiod.reg lwreg.reg netlogond.reg rdr.reg reapsysl.reg"
 
 # Display to screen and log file with a blank line between entries.
 log()

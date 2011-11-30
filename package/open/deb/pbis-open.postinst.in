@@ -94,6 +94,7 @@ run_or_fail()
 import_registry_configurations()
 {
     REGSHELL='@MK_BINDIR@/regshell'
+
     log 'Importing registry...'
     for i in ${REGLIST}
     do
