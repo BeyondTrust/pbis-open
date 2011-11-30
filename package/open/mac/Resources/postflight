@@ -91,7 +91,7 @@ run_or_fail()
 
 ConfigureDirectoryOwners()
 {
-    log "Prepare common installation and dependant directories used by Likewise"
+    log "Prepare directories"
 
     CHOWN_0_80="/opt/ @MK_PREFIX@ /etc/ @MK_SYSCONFDIR@ /var/ /var/lib/ @LW_CACHEDIR@"
     CHOWN_0_0="/usr/ /usr/lib/"
@@ -155,9 +155,9 @@ wait_for_service_running_status()
 
 configure_and_start_lwsmd()
 {
-    SERVICE_NAME=com.likewisesoftware.lwsmd
+    SERVICE_NAME=com.beyondtrust.pbis.lwsmd
     SERVICE_DAEMON=/Library/LaunchDaemons/$SERVICE_NAME.plist
-    SERVICE_DAEMON_INSTALL=/etc/likewise/LaunchDaemons/$SERVICE_NAME.plist
+    SERVICE_DAEMON_INSTALL=/etc/pbis/LaunchDaemons/$SERVICE_NAME.plist
 
     if [ -f $SERVICE_DAEMON_INSTALL ]; then
         log "Configuring and starting lwsmd service with launchctl"
@@ -241,7 +241,7 @@ configure_agent()
 {
     agent_name="$1"
     AGENT_PLIST=/Library/LaunchAgents/$agent_name.plist
-    AGENT_PLIST_INSTALL=/etc/likewise/LaunchAgents/$agent_name.plist
+    AGENT_PLIST_INSTALL=/etc/pbis/LaunchAgents/$agent_name.plist
 
     if [ -f $AGENT_PLIST_INSTALL ]; then
         run_or_fail cp "$AGENT_PLIST_INSTALL" "$AGENT_PLIST"
@@ -516,7 +516,7 @@ switch_to_open_provider()
 ## Main
 ##
 
-log "Finalizing Likewise installation process"
+log "Finalizing PowerBroker Identity Services installation"
 
 ConfigureDirectoryOwners
 
@@ -526,18 +526,14 @@ ConfigureDirectoryOwners
 # back to /var/lib/likewise.  On every boot we make sure the symlink is
 # still there before starting our daemons.
 #
-log "Moving /var/lib/likewise to /opt/likewise/var."
-
 if [ -f /var/lib/pbis ]; then
      run_or_fail cp -rp /var/lib/pbis /opt/pbis/var
      run_or_fail rm -rf /var/lib/pbis
-     run_or_fail rm -rf /var/lib/likewise
      run_or_fail ln -s /opt/pbis/var /var/lib/pbis
-     run_or_fail ln -s /opt/pbis/var /var/lib/likewise
 else
      run_or_fail cp -rp /var/lib/likewise /opt/pbis/var
      run_or_fail rm -rf /var/lib/likewise
-     run_or_fail ln -s /opt/likewise/var /var/lib/likewise
+     run_or_fail ln -s /opt/pbis/var /var/lib/pbis
 fi
 
 determine_upgrade_type
@@ -566,13 +562,13 @@ configure_and_start_lwsmd
 
 run "@MK_BINDIR@/domainjoin-cli" configure --enable pam
 
-# Configure Likewise DS plugin
+# Configure PBIS DS plugin
 enable_plugin
 
-# Configure Likewise Auth plugin
+# Configure PBIS Auth plugin
 enable_auth_plugin
 
-# Add Likewise DS Plugin to Search list
+# Add PBIS DS Plugin to Search list
 echo "Adding DS plugin to search list"
 run /usr/bin/dscl /Search -create / SearchPolicy CSPSearchPath
 
@@ -582,7 +578,7 @@ then
     # Add a plist file that adds the DS plugin to the search list and then
     # removes itself.
     #
-    startup_dir='/Library/StartupItems/com.likewise.first_boot'
+    startup_dir='/Library/StartupItems/com.beyondtrust.pbis.first_boot'
 
     echo "Arranging to add DS plugin to search list after reboot"
     mkdir -p "$startup_dir"
@@ -592,12 +588,12 @@ then
 <plist version="1.0">
 <dict>
         <key>Description</key>
-        <string>com.likewise.first_boot</string>
+        <string>com.beyondtrust.pbis.first_boot</string>
         <key>OrderPreference</key>
         <string>Early</string>
         <key>Provides</key>
         <array>
-                <string>com.likewise.first_boot</string>
+                <string>com.beyondtrust.pbis.first_boot</string>
         </array>
         <key>Requires</key>
         <array>
@@ -635,23 +631,23 @@ fi
 configure_logon_message_application
 
 # Add the ticketcopy login agent
-configure_agent com.likewisesoftware.ticketcopy
+configure_agent com.beyondtrust.pbis.ticketcopy
 
-# Add Likewise Utilities folder to Applications location in Finder. Shortcut
-# the Likewise Domain Join application to here.
-if [ -d '/Applications/Likewise Utilities' ]; then
-    _log "Likewise Utilities folder already exists"
+# Add PBIS Utilities folder to Applications location in Finder. Shortcut
+# the Domain Join application to here.
+if [ -d '/Applications/PBIS Utilities' ]; then
+    _log "PBIS Utilities folder already exists"
 else
-    run mkdir -p '/Applications/Likewise Utilities'
+    run mkdir -p '/Applications/PBIS Utilities'
 fi
 
-if [ -f '/Applications/Likewise Utilities/Likewise Domain Join.app' ]; then
-    _log "Likewise Domain Join application already created in utilities folder"
+if [ -f '/Applications/PBIS Utilities/Domain Join.app' ]; then
+    _log "Domain Join application already created in Utilities folder"
 else
-    run ln -s '@MK_BINDIR@/Likewise Domain Join.app' '/Applications/Likewise Utilities/Likewise Domain Join.app'
+    run ln -s '@MK_BINDIR@/Domain Join.app' '/Applications/PBIS Utilities/Domain Join.app'
 fi
 
-domain=`@MK_BINDIR@/lw-lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
+domain=`@MK_BINDIR@/lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
 
 if [ -n "$UPGRADING_FROM_5_0123" ]; then
     log "Likewise Identity Services Open 5.X has been successfully upgraded."
@@ -659,6 +655,10 @@ fi
 
 if [ -n "$UPGRADING_FROM_6_0" ]; then
     log "Likewise Open 6.0 has been successfully upgraded."
+fi
+
+if [ -n "$UPGRADING_FROM_6_1" ]; then
+    log "Likewise Open 6.1 has been successfully upgraded."
 fi
 
 if [ -z "$domain" ]; then

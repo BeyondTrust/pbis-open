@@ -93,7 +93,7 @@ stop_and_disable_daemon()
 {
     SERVICE=$1
     SERVICE_PATH=@MK_SBINDIR@/$SERVICE
-    SERVICE_NAME=com.likewisesoftware.$SERVICE
+    SERVICE_NAME=com.beyondtrust.pbis.$SERVICE
     SERVICE_DAEMON_OLD=/System/Library/LaunchDaemons/$SERVICE_NAME.plist
     SERVICE_DAEMON=/Library/LaunchDaemons/$SERVICE_NAME.plist
 
