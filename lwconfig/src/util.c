@@ -111,6 +111,49 @@ error:
     goto cleanup;
 }
 
+BOOLEAN
+UtilMultistringAreEqual(
+    PCSTR pszValue1,
+    PCSTR pszValue2
+    )
+{
+    if (!pszValue1 && !pszValue2)
+    {
+        /* Neither exists */
+        return TRUE;
+    }
+
+    if (!pszValue1 || !pszValue2)
+    {
+        /* Only one exists */
+        return FALSE;
+    }
+
+    while (*pszValue1 && *pszValue2)
+    {
+        if (strcmp(pszValue1, pszValue2))
+        {
+            return FALSE;
+        }
+
+        pszValue1 = pszValue1 + strlen(pszValue1) + 1;
+        pszValue2 = pszValue2 + strlen(pszValue2) + 1;
+    }
+
+    if (!*pszValue1 && !*pszValue2)
+    {
+        /* Both are empty -- so each piece up to this was the same.*/
+        return TRUE;
+    }
+    else
+    {
+        /* Only one is empty -- one string is shorter than the other*/
+        return FALSE;
+    }
+
+    return FALSE;
+}
+
 DWORD
 UtilParseRegName(
     PCSTR pszPath,

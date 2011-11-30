@@ -605,6 +605,194 @@ ValidateString(
 
 static
 DWORD
+ValidateMultistring(
+    PCSTR pszaValue,
+    xmlDocPtr xmlDoc,
+    xmlNodePtr pxRegistry,
+    PBOOLEAN pbAccept
+    )
+{
+    DWORD dwError = 0;
+    xmlNodePtr xmlAccept = NULL;
+    xmlNodePtr xmlAcceptChild = NULL;
+    const DWORD UNDECIDED = 0;
+    const DWORD ACCEPT_VALUE = 1;
+    const DWORD REJECT_VALUE = 2;
+    DWORD dwDecision = UNDECIDED;
+    const DWORD NOTHING = 0;
+    const DWORD ACCEPT = 1;
+    const DWORD REJECT = 2;
+    DWORD dwState = NOTHING;
+    xmlChar *xszValue = NULL;
+    xmlChar *xszPattern = NULL;
+    regex_t patternExp;
+    regmatch_t matches[5];
+    PSTR *ppszArgs = NULL;
+    DWORD dwArgs = 0;
+    PSTR pszaArg = NULL;
+    size_t i;
+
+
+    for (xmlAccept = pxRegistry->xmlChildrenNode;
+         xmlAccept && dwDecision == UNDECIDED;
+         xmlAccept = xmlAccept->next)
+    {
+        if (xmlAccept->type != XML_ELEMENT_NODE)
+            continue;
+
+        if (!xmlStrcmp(xmlAccept->name, (const xmlChar*)"accept"))
+        {
+            dwState = ACCEPT;
+        }
+        else if (!xmlStrcmp(xmlAccept->name, (const xmlChar*)"reject"))
+        {
+            dwState = REJECT;
+        }
+        else
+        {
+            continue;
+        }
+
+        for (xmlAcceptChild = xmlAccept->xmlChildrenNode;
+             xmlAcceptChild && dwDecision == UNDECIDED;
+             xmlAcceptChild = xmlAcceptChild->next)
+        {
+            if (xmlAcceptChild->type != XML_ELEMENT_NODE)
+                continue;
+
+            if (!xmlStrcmp(xmlAcceptChild->name, (const xmlChar*)"value"))
+            {
+                xszValue = xmlNodeListGetString(
+                                xmlDoc,
+                                xmlAcceptChild->xmlChildrenNode,
+                                TRUE);
+
+                if (xszValue)
+                {
+                    dwError = UtilParseLine((PCSTR)xszValue, &ppszArgs, &dwArgs);
+                    BAIL_ON_ERROR(dwError);
+                }
+
+                if (dwArgs > 0)
+                {
+                    dwError = UtilAllocateMultistring((PCSTR*)ppszArgs, dwArgs, &pszaArg);
+                    BAIL_ON_ERROR(dwError);
+                }
+
+                if (pszaArg)
+                {
+                    if (UtilMultistringAreEqual(pszaArg, pszaValue))
+                    {
+                        if (dwState == ACCEPT)
+                        {
+                            dwDecision = ACCEPT_VALUE;
+                        }
+                        else
+                        {
+                            dwDecision = REJECT_VALUE;
+                        }
+                    }
+                }
+
+                if (xszValue)
+                {
+                    xmlFree(xszValue);
+                    xszValue = NULL;
+                }
+
+                for (i = 0; i < dwArgs; i++)
+                    LW_SAFE_FREE_MEMORY(ppszArgs[i]);
+                dwArgs = 0;
+                LW_SAFE_FREE_MEMORY(ppszArgs);
+                LW_SAFE_FREE_MEMORY(pszaArg);
+
+            } else if (!xmlStrcmp(
+                        xmlAcceptChild->name,
+                        (const xmlChar*)"pattern"))
+            {
+                xszPattern = xmlNodeListGetString(
+                                xmlDoc,
+                                xmlAcceptChild->xmlChildrenNode,
+                                TRUE);
+
+                if (xszPattern)
+                {
+                    if (!regcomp(&patternExp, (PCSTR)xszPattern, REG_EXTENDED))
+                    {
+                        if (!regexec(&patternExp, pszaValue,
+                                    sizeof(matches)/sizeof(matches[0]),
+                                    matches,
+                                    0))
+                        {
+                            if (dwState == ACCEPT)
+                            {
+                                dwDecision = ACCEPT_VALUE;
+                            }
+                            else
+                            {
+                                dwDecision = REJECT_VALUE;
+                            }
+                        }
+                        regfree(&patternExp);
+                    }
+                }
+                if (xszPattern)
+                {
+                    xmlFree(xszPattern);
+                    xszPattern = NULL;
+                }
+            }
+        }
+    }
+
+    if (dwDecision == ACCEPT_VALUE)
+    {
+        *pbAccept = TRUE;
+    }
+    else if (dwDecision == REJECT_VALUE)
+    {
+        *pbAccept = FALSE;
+    }
+    else
+    {
+        if (dwState == NOTHING)
+        {
+            *pbAccept = TRUE;
+        }
+        else if (dwState == ACCEPT)
+        {
+            *pbAccept = FALSE;
+        }
+        else if (dwState == REJECT)
+        {
+            *pbAccept = TRUE;
+        }
+    }
+
+error:
+
+    for (i = 0; i < dwArgs; i++)
+        LW_SAFE_FREE_MEMORY(ppszArgs[i]);
+    dwArgs = 0;
+    LW_SAFE_FREE_MEMORY(ppszArgs);
+    LW_SAFE_FREE_MEMORY(pszaArg);
+
+    if (xszValue)
+    {
+        xmlFree(xszValue);
+        xszValue = NULL;
+    }
+    if (xszPattern)
+    {
+        xmlFree(xszPattern);
+        xszPattern = NULL;
+    }
+
+    return dwError;
+}
+
+static
+DWORD
 CapabilityRegistryGetUnitMultiplier(
     PCSTR pszUnit,
     xmlNodePtr pxRegistry,
@@ -912,6 +1100,10 @@ DefaultValue(
     xmlChar *xszDefault = NULL;
     DWORD dwLength = 0;
     PSTR pszValue = NULL;
+    PSTR *ppszArgs = NULL;
+    DWORD dwArgs = 0;
+    PSTR pszaArg = NULL;
+    size_t i;
 
     if (pxDefault->type != XML_ELEMENT_NODE)
     {
@@ -970,16 +1162,33 @@ DefaultValue(
         }
     }
 
-    *ppszValue = pszValue;
+    dwError = UtilParseLine(pszValue, &ppszArgs, &dwArgs);
+    BAIL_ON_ERROR(dwError);
+
+    if (dwArgs > 0)
+    {
+        dwError = UtilAllocateMultistring((PCSTR*)ppszArgs, dwArgs, &pszaArg);
+        BAIL_ON_ERROR(dwError);
+
+        *ppszValue = pszaArg;
+    }
 
 cleanup:
+
+    for (i = 0; i < dwArgs; i++)
+        LW_SAFE_FREE_MEMORY(ppszArgs[i]);
+    dwArgs = 0;
+    LW_SAFE_FREE_MEMORY(ppszArgs);
+
+    LW_SAFE_FREE_MEMORY(pszValue);
+
     xmlFree(xszDefault);
     xszDefault = NULL;
 
     return dwError;
 
 error:
-    LW_SAFE_FREE_MEMORY(pszValue);
+    LW_SAFE_FREE_MEMORY(pszaArg);
     goto cleanup;
 }
 
@@ -1048,6 +1257,14 @@ CapabilityEditRegistry(
     }
     else if (!strcmp(pRegistry->pszType, "multistring"))
     {
+        dwError = ValidateMultistring(pszaArg, pCapability->xmlDoc, pRegistry->pxRegistry, &bAccept);
+        BAIL_ON_ERROR(dwError);
+
+        if (!bAccept)
+        {
+            dwError = APP_ERROR_VALUE_NOT_ACCEPTED;
+            BAIL_ON_ERROR(dwError);
+        }
         dwType = REG_MULTI_SZ;
         pData = (const BYTE*) pszaArg;
         dwDataSize = UtilMultistringLength(pszaArg);

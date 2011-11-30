@@ -43,6 +43,12 @@ UtilDuplicateMultistring(
     PSTR *ppszValue
     );
 
+BOOLEAN
+UtilMultistringAreEqual(
+    PCSTR pszValue1,
+    PCSTR pszValue2
+    );
+
 DWORD
 UtilParseRegName(
     PCSTR pszPath,
