@@ -521,12 +521,12 @@ log "Finalizing PowerBroker Identity Services installation"
 ConfigureDirectoryOwners
 
 #
-# Upgrading OS X (at least 10.6 to 10.7) deletes /var/lib/likewise.
-# So on OS X we actually use /opt/likewise/var and put in a symlink
-# back to /var/lib/likewise.  On every boot we make sure the symlink is
+# Upgrading OS X (at least 10.6 to 10.7) deletes /var/lib/pbis.
+# So on OS X we actually use /opt/pbis/var and put in a symlink
+# back to /var/lib/pbis.  On every boot we make sure the symlink is
 # still there before starting our daemons.
 #
-if [ -f /var/lib/pbis ]; then
+if [ -d /var/lib/pbis ]; then
      run_or_fail cp -rp /var/lib/pbis /opt/pbis/var
      run_or_fail rm -rf /var/lib/pbis
      run_or_fail ln -s /opt/pbis/var /var/lib/pbis
