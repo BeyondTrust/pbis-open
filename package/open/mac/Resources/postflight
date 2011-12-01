@@ -530,6 +530,7 @@ if [ -h /var/lib/pbis ]; then
      run_or_fail cp -rp /var/lib/pbis /opt/pbis/var
      run_or_fail rm -rf /var/lib/pbis
 else
+     mkdir /var/lib/likewise 2> /dev/null 
      run_or_fail cp -rp /var/lib/likewise /opt/pbis/var
 fi
 
