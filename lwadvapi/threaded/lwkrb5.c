@@ -49,6 +49,7 @@
 
 #include "includes.h"
 #include <gssapi/gssapi_krb5.h>
+#include <lw/swab.h>
 
 #define LW_GSS_LOG_CALL_FORMAT \
     "GSS API error calling %s(): majorStatus = 0x%08x, minorStatus = 0x%08x"
@@ -892,10 +893,8 @@ LwKrb5VerifyPac(
     PSTR pszLogonName = NULL;
     char* pchLogonInfo = NULL;
 
-    #if defined(WORDS_BIGENDIAN)
     WORD * pwNameLocal = NULL;
     DWORD dwCount = 0;
-    #endif
 
     dwError = LwAllocateMemory(
                 pPacBerVal->bv_len,
@@ -904,10 +903,8 @@ LwKrb5VerifyPac(
 
     memcpy(pPacData, pPacBerVal->bv_val, pPacBerVal->bv_len);
 
-    #if defined(WORDS_BIGENDIAN)
-        pPacData->dwBufferCount = LW_ENDIAN_SWAP32(pPacData->dwBufferCount);
-        pPacData->dwVersion = LW_ENDIAN_SWAP32(pPacData->dwVersion);
-    #endif
+    pPacData->dwBufferCount = LW_LTOH32(pPacData->dwBufferCount);
+    pPacData->dwVersion = LW_LTOH32(pPacData->dwVersion);
 
     // We only know about version 0
     if (pPacData->dwVersion != 0)
@@ -928,11 +925,9 @@ LwKrb5VerifyPac(
     // bounds
     for (i = 0; i < pPacData->dwBufferCount; i++)
     {
-        #if defined(WORDS_BIGENDIAN)
-            pPacData->buffers[i].dwType = LW_ENDIAN_SWAP32(pPacData->buffers[i].dwType);
-            pPacData->buffers[i].dwSize = LW_ENDIAN_SWAP32(pPacData->buffers[i].dwSize);
-            pPacData->buffers[i].qwOffset = LW_ENDIAN_SWAP64(pPacData->buffers[i].qwOffset);
-        #endif
+        pPacData->buffers[i].dwType = LW_LTOH32(pPacData->buffers[i].dwType);
+        pPacData->buffers[i].dwSize = LW_LTOH32(pPacData->buffers[i].dwSize);
+        pPacData->buffers[i].qwOffset = LW_LTOH64(pPacData->buffers[i].qwOffset);
 
         if (pPacData->buffers[i].qwOffset + pPacData->buffers[i].dwSize <
                 pPacData->buffers[i].qwOffset)
@@ -971,9 +966,7 @@ LwKrb5VerifyPac(
                 pServerSig = (PAC_SIGNATURE_DATA *)((char *)pPacData +
                              pPacData->buffers[i].qwOffset);
 
-                #if defined(WORDS_BIGENDIAN)
-                    pServerSig->dwType = LW_ENDIAN_SWAP32(pServerSig->dwType);
-                #endif
+                pServerSig->dwType = LW_LTOH32(pServerSig->dwType);
 
                 sServerSig = pPacData->buffers[i].dwSize -
                         (size_t)&((PAC_SIGNATURE_DATA *)0)->pchSignature;
@@ -996,18 +989,16 @@ LwKrb5VerifyPac(
                 pLogonName = (PAC_LOGON_NAME *)((char *)pPacData +
                              pPacData->buffers[i].qwOffset);
 
-                #if defined(WORDS_BIGENDIAN)
-                    pLogonName->ticketTime = LW_ENDIAN_SWAP64(pLogonName->ticketTime);
-                    pLogonName->wAccountNameLen = LW_ENDIAN_SWAP16(pLogonName->wAccountNameLen);
-                    pwNameLocal = pLogonName->pwszName;
+                pLogonName->ticketTime = LW_LTOH64(pLogonName->ticketTime);
+                pLogonName->wAccountNameLen = LW_LTOH16(pLogonName->wAccountNameLen);
+                pwNameLocal = pLogonName->pwszName;
 
-                    for ( dwCount = 0 ;
-                          dwCount < pLogonName->wAccountNameLen / 2 ;
-                          dwCount++ )
-                    {
-                        pwNameLocal[dwCount] = LW_ENDIAN_SWAP16(pwNameLocal[dwCount]);
-                    }
-                #endif
+                for ( dwCount = 0 ;
+                      dwCount < pLogonName->wAccountNameLen / 2 ;
+                      dwCount++ )
+                {
+                    pwNameLocal[dwCount] = LW_LTOH16(pwNameLocal[dwCount]);
+                }
 
                 if ((char *)&pLogonName->pwszName +
                     pLogonName->wAccountNameLen >

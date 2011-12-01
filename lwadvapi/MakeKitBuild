@@ -8,6 +8,15 @@ configure()
 
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
 
+    mk_multiarch_do
+        mk_check_endian
+
+        case "$ENDIANNESS" in
+            big) mk_define LW_BIG_ENDIAN;;
+            little) mk_define LW_LITTLE_ENDIAN;;
+        esac
+    mk_multiarch_done
+
     mk_check_headers \
         FAIL=yes \
         uuid/uuid.h krb5.h gssapi.h lw/base.h ldap.h sasl/sasl.h
