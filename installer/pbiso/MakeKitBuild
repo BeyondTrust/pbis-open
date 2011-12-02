@@ -13,7 +13,7 @@ make()
             mk_freebsd_enabled && sfx_generic "freebsd"
             ;;
         solaris)
-            mk_pkg_enabled && sfx_generic "pkg" "response"
+            mk_pkg_enabled && sfx_solaris "pkg" "response"
             ;;
         aix)
             mk_lpp_enabled && sfx_generic "lpp"
@@ -31,13 +31,37 @@ make()
     esac
 }
 
+sfx_solaris()
+{
+    lw_sfx \
+        SFX="pbis-open-${LW_VERSION}" \
+        FILES="COPYING README LICENSES $2" \
+        FORMAT="$1" \
+        PACKAGES="PBISopen PBISopeng PBISopenl" \
+        UPGRADE="PBISopeng" \
+        LEGACY="PBISopenl" \
+        OBSOLETE="LikewiseBase LikewiseDomainjoin \
+LikewiseDomainjoinGui LikewiseEventlog LikewiseKrb5 \
+LikewiseLac LikewiseLibxml2 LikewiseLsass \
+LikewiseLwadutil LikewiseLwconfig LikewiseLwio LikewiseLwmgmt \
+LikewiseLwnetapi LikewiseLwreg \
+LikewiseLwtools LikewiseLwupgrade LikewiseModAuthKerb \
+LikewiseNetlogon LikewiseOpenldap LikewisePasswd \
+LikewisePasswordPolicy \
+LikewisePstore LikewiseReskit LikewiseRpc LikewiseSmbclient LikewiseSqlite \
+LikewiseSrvsvc LikewiseSambaInterop \
+LikewiseOpenUpgrade LikewiseOpen LikewiseOpenu LikewiseOpenr \
+PBISopen PBISopenr PBISopenu PBISopeng PBISopenl" \
+        BASE="PBISopen" \
+        GUI="$GUI_PACKAGE"
+}
+
 sfx_generic()
 {
     # $1 = package format
     # $2 = extra files to include
 
     GUI_PACKAGE=""
-
     if [ "$DJ_GUI_INTERFACE" = "gtk" ]
     then
         GUI_PACKAGE="pbis-open-gui"
