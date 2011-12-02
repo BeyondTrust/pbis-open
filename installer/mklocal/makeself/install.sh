@@ -431,20 +431,14 @@ package_install_hpux()
 
 package_uninstall_hpux()
 {
-    for pkg in $@; do
-        eval "swremove -x mount_all_filesystems=false $@"
-    done
+    eval "swremove -x mount_all_filesystems=false $@"
     return 0
-    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
 }
 
 package_purge_hpux()
 {
-    for pkg in $@; do
-        eval "swremove -x mount_all_filesystems=false $@"
-    done
+    eval "swremove -x mount_all_filesystems=false $@"
     return 0
-    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
 }
 
 package_file_exists_linux_rpm()
@@ -883,7 +877,10 @@ do_uninstall()
             pkgList="$pkgList $pkgName"
         fi
     done
-    package_uninstall $pkgList
+
+    if [ -n "$pkgList" ]; then
+        package_uninstall $pkgList
+    fi
 
     scrub_prefix
 }
@@ -909,7 +906,10 @@ do_purge()
             pkgList="$pkgList $pkgName"
         fi
     done
-    package_purge $pkgList
+
+    if [ -n "$pkgList" ]; then
+        package_purge $pkgList
+    fi
 
     remove_extra_files
 
