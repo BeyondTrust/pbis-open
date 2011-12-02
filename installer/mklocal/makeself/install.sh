@@ -563,7 +563,7 @@ package_file_exists_solaris()
 
 is_package_installed_solaris()
 {
-    pkginfo -l | grep "VSTOCK:.*$1" > /dev/null 2>&1
+    pkginfo $1 > /dev/null 2>&1
     if [ $? -eq 0 ]; then
         echo $1
         return 0
@@ -598,19 +598,14 @@ package_uninstall_solaris()
         RESPONSE="-a ${DIRNAME}/response"
     fi
 
-    for candidate in `pkginfo | awk '{print $2}' | grep '^PBIS' | sort -r`; do
-        mpkg=`pkginfo -l $candidate | grep VSTOCK: | awk '{print $2;}'`
-        for pkg in $@; do
-            if [ "$mpkg" = "$pkg" ]; then
-                pkgrm $RESPONSE -n "$candidate"
-                err=$?
-                if [ $err -eq 1 ]; then
-                    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
-                fi
-            fi
-        done
+    pkgList=`eval echo "$@"`
+    for pkg in $pkgList; do
+        pkgrm $RESPONSE -n "$pkg"
+        err=$?
+        if [ $err -eq 1 ]; then
+            return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+        fi
     done
-
     return 0
 }
 
@@ -622,19 +617,14 @@ package_purge_solaris()
         RESPONSE="-a ${DIRNAME}/response"
     fi
 
-    for candidate in `pkginfo | awk '{print $2}' | grep '^PBIS' | sort -r`; do
-        mpkg=`pkginfo -l $candidate | grep VSTOCK: | awk '{print $2;}'`
-        for pkg in $@; do
-            if [ "$mpkg" = "$pkg" ]; then
-                pkgrm $RESPONSE -n "$candidate"
-                err=$?
-                if [ $err -eq 1 ]; then
-                    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
-                fi
-            fi
-        done
+    pkgList=`eval echo "$@"`
+    for pkg in $pkgList; do
+        pkgrm $RESPONSE -n "$pkg"
+        err=$?
+        if [ $err -eq 1 ]; then
+            return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+        fi
     done
-
     return 0
 }
 
@@ -751,50 +741,6 @@ do_install()
         fi
     fi
 
-    # Install base usr package -- cannot be installed if /usr is read-only.
-    if [ -n "$INSTALL_BASE_USR_PACKAGE" ]; then
-        pkgName=`package_file_exists $INSTALL_BASE_USR_PACKAGE`
-        if [ $? -eq 0 ]; then
-            package_install "$pkgName"
-            err=$?
-            if [ $err -ne 0 ]; then
-                if [ -x "/usr/sbin/zonename" ]; then
-                    zonename=`/usr/sbin/zonename > /dev/null 2>&1`
-                    if [ -n "$zonename" -a "$zonename" != "global" ]; then
-                        ZoneMaybeSparseRoot="1"
-                    fi
-                fi
-
-                if [ -n "$ZoneMaybeSparseRoot" ]; then
-                    log_info "Assuming a spare root zone configuration prevented the installation of $INSTALL_BASE_USR_PACKAGE"
-                    AsssumedZoneIsSparseRoot="1"
-                else
-                    log_info "Error installing $pkgName"
-                    exit 1
-                fi
-            fi
-        else
-            log_info "Missing package file for $INSTALL_BASE_USR_PACKAGE"
-            exit 1
-        fi
-    fi
-
-    # Install base root package.
-    if [ -n "$INSTALL_BASE_ROOT_PACKAGE" ]; then
-        pkgName=`package_file_exists $INSTALL_BASE_ROOT_PACKAGE`
-        if [ $? -eq 0 ]; then
-            package_install "$pkgName"
-            err=$?
-            if [ $err -ne 0 ]; then
-                log_info "Error installing $pkgName"
-                exit 1
-            fi
-        else
-            log_info "Missing package file for $INSTALL_BASE_ROOT_PACKAGE"
-            exit 1
-        fi
-    fi
-
     # Install base package.
     if [ -n "$INSTALL_BASE_PACKAGE" ]; then
         pkgName=`package_file_exists $INSTALL_BASE_PACKAGE`
@@ -851,12 +797,6 @@ do_install()
     echo "PKGTYPE=\"$PKGTYPE\"" >> /var/lib/pbis/uninstall/MANIFEST
     echo "INSTALL_UPGRADE_PACKAGE=\"$INSTALL_UPGRADE_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
     echo "INSTALL_BASE_PACKAGE=\"$INSTALL_BASE_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
-    if [ -n "${AsssumedZoneIsSparseRoot}" ]; then
-        echo "INSTALL_BASE_USR_PACKAGE=\"\"" >> /var/lib/pbis/uninstall/MANIFEST
-    else
-        echo "INSTALL_BASE_USR_PACKAGE=\"$INSTALL_BASE_USR_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
-    fi
-    echo "INSTALL_BASE_ROOT_PACKAGE=\"$INSTALL_BASE_ROOT_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
     echo "INSTALL_GUI_PACKAGE=\"$INSTALL_GUI_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
     echo "INSTALL_LEGACY_PACKAGE=\"$INSTALL_LEGACY_PACKAGE\"" >> /var/lib/pbis/uninstall/MANIFEST
     if [ -f "${DIRNAME}/response" ]; then
@@ -931,8 +871,12 @@ do_uninstall()
 {
     log_info "Uninstalling packages"
 
+    if [ "$OS_TYPE" = 'solaris' ]; then
+        UNINSTALL_EXTRA_PACKAGES="PBISopenu PBISopenr"
+    fi
+
     pkgList=""
-    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_BASE_PACKAGE $INSTALL_BASE_ROOT_PACKAGE $INSTALL_BASE_USR_PACKAGE $INSTALL_LEGACY_PACKAGE;
+    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_LEGACY_PACKAGE  $UNINSTALL_EXTRA_PACKAGES $INSTALL_BASE_PACKAGE;
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
@@ -953,8 +897,12 @@ do_purge()
         $domainjoin_cli leave > /dev/null 2>&1
     fi
 
+    if [ "$OS_TYPE" = 'solaris' ]; then
+        UNINSTALL_EXTRA_PACKAGES="PBISopenu PBISopenr"
+    fi
+
     pkgList=""
-    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_BASE_PACKAGE $INSTALL_BASE_ROOT_PACKAGE $INSTALL_BASE_USR_PACKAGE $INSTALL_LEGACY_PACKAGE;
+    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_GUI_PACKAGE $INSTALL_LEGACY_PACKAGE $UNINSTALL_EXTRA_PACKAGES $INSTALL_BASE_PACKAGE;
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
