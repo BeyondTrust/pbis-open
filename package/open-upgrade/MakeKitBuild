@@ -42,7 +42,7 @@ configure()
 
     if mk_pkg_enabled
     then
-        mk_declare -o PKG_PKG_NAME="${LW_VENDOR}-open-upgrade"
+        mk_declare -o PKG_PKG_NAME="PBISopeng"
         mk_declare -o PKG_PKG_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
         case "$MK_HOST_ARCH" in
             x86)

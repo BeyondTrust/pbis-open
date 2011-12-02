@@ -1,5 +1,5 @@
-PKG=PBISopenz
-NAME=PowerBroker Identity Services
+PKG=PBISopen
+NAME=PowerBroker Identity Services Open
 ARCH=@PKG_PKG_ARCH@
 VERSION=@PKG_PKG_VERSION@
 CATEGORY=system

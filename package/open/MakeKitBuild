@@ -48,7 +48,7 @@ configure()
 
     if mk_pkg_enabled
     then
-        mk_declare -o PKG_PKG_NAME="${LW_VENDOR}-open"
+        mk_declare -o PKG_PKG_NAME="PBISopen"
         mk_declare -o PKG_PKG_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
         case "$MK_HOST_ARCH" in
             x86)
@@ -139,7 +139,7 @@ package_pkg()
         mk_pkg_sub_do \
             SUBPACKAGE="PBISopenu" \
             INFOFILES="pkg/u/pkginfo.in pkg/u/depend.in"
-        
+
             open_files_usr
             open_files_compat_usr
 
@@ -169,7 +169,7 @@ package_pkg()
 
         
         mk_pkg_sub_do \
-            SUBPACKAGE="PBISopenz" \
+            SUBPACKAGE="PBISopen" \
             INFOFILES="pkg/pkginfo.in pkg/copyright.in pkg/postinstall.in pkg/preinstall.in pkg/preremove.in"
 
             open_files_prefix
