@@ -112,7 +112,7 @@
                 <pattern>[a-zA-Z0-9]</pattern>
             </reject>
             <apply command="@lwbindir@/lwsm refresh lsass" />
-            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -130,7 +130,7 @@
                 <pattern>[a-zA-Z0-9]</pattern>
             </reject>
             <apply command="@lwbindir@/lwsm refresh lsass" />
-            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -236,7 +236,7 @@
                 <value>false</value>
             </default>
             <apply command="@lwbindir@/lwsm refresh lsass" />
-            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -321,7 +321,7 @@
                 <value>@enable_nss_enum_default@</value>
             </default>
             <apply command="@lwbindir@/lwsm refresh lsass" />
-            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -334,7 +334,7 @@
                 <value>true</value>
             </default>
             <apply command="@lwbindir@/lwsm refresh lsass" />
-            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -347,7 +347,7 @@
                 <value>false</value>
             </default>
             <apply command="@lwbindir@/lwsm refresh lsass" />
-            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -472,7 +472,7 @@
                 <value>@default_homedir_prefix@</value>
             </default>
             <apply command="@lwbindir@/lwsm refresh lsass" />
-            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -486,7 +486,7 @@
                 <value>%H/local/%D/%U</value>
             </default>
             <apply command="@lwbindir@/lwsm refresh lsass" />
-            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -500,7 +500,7 @@
                 <value>022</value>
             </default>
             <apply command="@lwbindir@/lwsm refresh lsass" />
-            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -514,7 +514,7 @@
                 <value>/bin/sh</value>
             </default>
             <apply command="@lwbindir@/lwsm refresh lsass" />
-            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -542,7 +542,7 @@
                 <value></value>
             </default>
             <apply command="@lwbindir@/lwsm refresh lsass" />
-            <apply command="@lwbindir@/lw-ad-cache --delete-all" />
+            <apply command="@lwbindir@/ad-cache --delete-all" />
         </registry>
     </capability>
     <capability>
@@ -696,7 +696,7 @@
   <section section="System Initialization">
     <capability>
         <name>LsassAutostart</name>
-        <description>Start lsassd when lwsmd starts.</description>
+        <description>Start lsass when lwsmd starts.</description>
         <registry type="boolean"
             lp-path="HKEY_THIS_MACHINE\Services\lsass\Autostart" >
             <default>
@@ -706,7 +706,7 @@
     </capability>
     <capability>
         <name>EventlogAutostart</name>
-        <description>Start eventlogd when lwsmd starts.</description>
+        <description>Start eventlog when lwsmd starts.</description>
         <registry type="boolean"
             lp-path="HKEY_THIS_MACHINE\Services\eventlog\Autostart" >
             <default>
@@ -716,7 +716,7 @@
     </capability>
     <capability>
         <name>GpagentAutostart</name>
-        <description>Start gpagentd when lwsmd starts.</description>
+        <description>Start gpagent when lwsmd starts.</description>
         <registry type="boolean"
             lp-path="HKEY_THIS_MACHINE\Services\gpagent\Autostart" >
             <default>

@@ -47,7 +47,7 @@ void
 PrintUsage()
 {
     fputs(
-"Usage: lwconfig [OPTIONS] [COMMAND]\n"
+"Usage: config [OPTIONS] [COMMAND]\n"
 "Modify or view the configuration.\n"
 "\n"
 " Options:\n"
