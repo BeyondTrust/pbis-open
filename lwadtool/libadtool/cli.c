@@ -1310,7 +1310,7 @@ DWORD MakeFullArgsTable(IN AppContextTP appContext, IN struct poptOption *acts) 
                POPT_ARG_INCLUDE_TABLE,
                *openActionsTable,
                0,
-               "Likewise Open Edition:\n---------------------",
+               "PowerBroker Identity Services - Open Edition:\n---------------------",
                NULL);
     MakeOption(&((*actionsTable)[i++]),
                NULL,
@@ -1423,7 +1423,7 @@ PrintActionsList(IN struct poptOption *table, IN INT argc, IN PCSTR *argv) {
             fprintf(stdout, "  --------------------------------\n\n");
         }
         if(i == 1) {
-            fprintf(stdout, "\n  Likewise cell management actions:\n");
+            fprintf(stdout, "\n  PowerBroker Cell management actions:\n");
             fprintf(stdout, "  --------------------------------\n\n");
             fprintf(stdout, "  * Available only in Enterprise edition\n\n");
         }
@@ -1503,7 +1503,7 @@ VOID PrintExamples() {
             NL_STR2
             "adtool -a new-ou --dn OU=TestOu,DC=department,DC=company,DC=com"
             NL_STR
-            "Create Likewise cell in OU TestOU setting the default login shell property to /bin/ksh:"
+            "Create PowerBroker Cell in OU TestOU setting the default login shell property to /bin/ksh:"
             NL_STR2
             "adtool -a new-ou --dn OU=TestOu --default-login-shell=/bin/ksh"
             NL_STR
@@ -1555,11 +1555,11 @@ VOID PrintExamples() {
             NL_STR2
             "adtool -a move-object --from OU=OldName,DC=department,DC=company,DC=com --to OU=NewName,OU=TestOU,DC=department,DC=company,DC=com"
             NL_STR
-            "Add group TestGroup to Likewise cell in TestOU:"
+            "Add group TestGroup to PowerBroker Cell in TestOU:"
             NL_STR2
             "adtool -a add-to-cell --dn OU=TestOU,DC=department,DC=company,DC=com --group=TestGroup"
             NL_STR
-            "Remove user TestUser from Likewise cell in TestOU:"
+            "Remove user TestUser from PowerBroker Cell in TestOU:"
             NL_STR2
             "adtool -a remove-from-cell --dn OU=TestOU,DC=department,DC=company,DC=com --user=TestUser"
             NL_STR
@@ -1575,11 +1575,11 @@ VOID PrintExamples() {
             NL_STR2
             "adtool -a unlink-cell --source-dn OU=TestOU1,DC=department,DC=company,DC=com --target-dn DC=country,DC=company,DC=com"
             NL_STR
-            "Change the default login shell property of Likewise cell in TestOU:"
+            "Change the default login shell property of PowerBroker Cell in TestOU:"
             NL_STR2
             "adtool -a edit-cell --dn OU=TestOU --default-login-shell=/bin/csh"
             NL_STR
-            "Find cells linked to Likewise cell in OU=TestOU,DC=department,DC=company,DC=com:"
+            "Find cells linked to PowerBroker Cell in OU=TestOU,DC=department,DC=company,DC=com:"
             NL_STR2
             "adtool -a lookup-cell --dn OU=TestOU --linked-cells"
             NL_STR
@@ -1595,19 +1595,19 @@ VOID PrintExamples() {
             NL_STR2
             "adtool -a delete-object --dn OU=TestOU --force"
             NL_STR
-            "Search for Likewise cells in root naming context containing user TestUser:"
+            "Search for PowerBroker Cells in root naming context containing user TestUser:"
             NL_STR2
             "adtool -a search-cells --user TestUser"
             NL_STR
-            "Create a new Likewise cell in OU=department:"
+            "Create a new PowerBroker Cell in OU=department:"
             NL_STR2
             "adtool -a new-cell --dn OU=department,DC=country,DC=company,DC=com"
             NL_STR
-            "Create default Likewise cell (assuming root naming context is DC=country,DC=company,DC=com):"
+            "Create default PowerBroker Cell (assuming root naming context is DC=country,DC=company,DC=com):"
             NL_STR2
             "adtool -a new-cell --dn DC=country,DC=company,DC=com"
             NL_STR
-            "Delete the default Likewise cell (assuming root naming context is DC=country,DC=company,DC=com):"
+            "Delete the default PowerBroker Cell (assuming root naming context is DC=country,DC=company,DC=com):"
             NL_STR2
             "adtool -a delete-cell --dn DC=country,DC=company,DC=com --force"
             ;

@@ -556,7 +556,7 @@ AdtAddGroupToCellSDefaultCell(IN AdtActionTP action, PSTR groupDN) {
     }
     else {
         if(!appContext->gopts.isQuiet) {
-            PrintResult(appContext, LogLevelNone, "Group %s has been added to Likewise cell\n", groupDN);
+            PrintResult(appContext, LogLevelNone, "Group %s has been added to PowerBroker cell\n", groupDN);
         }
     }
 
@@ -645,7 +645,7 @@ DWORD AdtAddGroupToCellS(IN AdtActionTP action,
     }
     else {
         if(!appContext->gopts.isQuiet) {
-            PrintResult(appContext, LogLevelNone, "Group has been added to Likewise cell\n");
+            PrintResult(appContext, LogLevelNone, "Group has been added to PowerBroker cell\n");
         }
     }
 
@@ -718,7 +718,7 @@ DWORD AdtAddGroupToCellNS(IN AdtActionTP action,
     }
     else {
         if(!appContext->gopts.isQuiet) {
-            PrintResult(appContext, LogLevelNone, "Group has been added to Likewise cell\n");
+            PrintResult(appContext, LogLevelNone, "Group has been added to PowerBroker cell\n");
         }
     }
 
