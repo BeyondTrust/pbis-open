@@ -48,6 +48,11 @@ configure()
         HEADERDEPS="sys/types.h sys/socket.h unistd.h" \
         getpeereid
 
+    mk_check_functions \
+        HEADERDEPS="pthread-private.h" \
+        CPPFLAGS="-I${MK_SOURCE_DIR}${MK_SUBDIR}/include" \
+        _pthread_mutexattr_settype
+
     mk_multiarch_do
         mk_define "MOD_EXT" "${MK_DLO_EXT}"
         mk_check_endian

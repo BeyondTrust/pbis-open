@@ -40,6 +40,7 @@
 #include "session-private.h"
 #include "peer-private.h"
 #include "util-private.h"
+#include "pthread-private.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -801,6 +802,10 @@ lwmsg_peer_session_new(
     PeerSession* session = NULL;
     pthread_mutexattr_t attr;
     LWMsgBool attr_destroy = LWMSG_FALSE;
+    int pthread_result = 0;
+#ifdef HAVE__PTHREAD_MUTEXATTR_SETTYPE
+    int attr_kind = 0;
+#endif
 
     BAIL_ON_ERROR(status = LWMSG_ALLOC(&session));
 
@@ -823,8 +828,29 @@ lwmsg_peer_session_new(
         pthread_mutexattr_init(&attr)));
     attr_destroy = LWMSG_TRUE;
 
+    pthread_result = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+
+#ifdef HAVE__PTHREAD_MUTEXATTR_SETTYPE
+    if (pthread_result == EINVAL)
+    {
+        pthread_result = 0;
+    }
+    BAIL_ON_ERROR(status = lwmsg_status_map_errno(pthread_result));
+
     BAIL_ON_ERROR(status = lwmsg_status_map_errno(
-        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE)));
+        pthread_mutexattr_gettype(&attr, &attr_kind)));
+
+    if (attr_kind != PTHREAD_MUTEX_RECURSIVE)
+    {
+        // Work around a bug in FreeBSD 7.2 where the second parameter to
+        // pthread_mutexattr_settype is not passed through to libthr in the
+        // libc wrapper.  However _pthread_mutex_settype seems to call directly
+        // into libthr on this system.
+        pthread_result = _pthread_mutexattr_settype(&attr,
+                            PTHREAD_MUTEX_RECURSIVE);
+    }
+#endif
+    BAIL_ON_ERROR(status = lwmsg_status_map_errno(pthread_result));
 
     BAIL_ON_ERROR(status = lwmsg_status_map_errno(
         pthread_mutex_init(&session->lock, &attr)));
