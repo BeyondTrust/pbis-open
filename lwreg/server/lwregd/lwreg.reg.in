@@ -2,8 +2,8 @@
 
 [HKEY_THIS_MACHINE\Services\lwreg]
 "Description" = { 
-    value = "Likewise Registry Service" 
-    default = "Likewise Registry Service" 
+    value = "PBIS Registry Service" 
+    default = "PBIS Registry Service" 
     doc = "" 
 }
 "Path" = { 

@@ -2,8 +2,8 @@
 
 [HKEY_THIS_MACHINE\Services\lwio]
 "Description" = { 
-    value = "Likewise IO Manager" 
-    default = "Likewise IO Manager" 
+    value = "PBIS IO Manager" 
+    default = "PBIS IO Manager" 
     doc = "" 
 }
 "Path" = { 

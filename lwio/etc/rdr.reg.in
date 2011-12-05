@@ -1,6 +1,6 @@
 [HKEY_THIS_MACHINE\Services\rdr]
 "Description" = { 
-    default = "Likewise CIFS Redirector" 
+    default = "PBIS CIFS Redirector driver" 
     doc = "" 
 }
 "Path" = { 

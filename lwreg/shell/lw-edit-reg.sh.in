@@ -21,7 +21,7 @@ do
     case "$arg" in
 	--help|-h)
 	    cat <<EOF
-$PROGRAM -- Modify Likewise configuration in your preferred text editor
+$PROGRAM -- Modify PBIS configuration in your preferred text editor
 
 Usage:  $PROGRAM [ options ] [ path ]
 

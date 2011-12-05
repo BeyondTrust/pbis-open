@@ -2,8 +2,8 @@
 
 [HKEY_THIS_MACHINE\Services\eventlog]
 "Description" = {
-    value = "Likewise Event Log Service"
-    default = "Likewise Event Log Service"
+    value = "PBIS Event Log Service"
+    default = "PBIS Event Log Service"
     doc = ""
 }
 "Path" = {
