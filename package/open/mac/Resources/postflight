@@ -526,17 +526,38 @@ ConfigureDirectoryOwners
 # back to /var/lib/pbis.  On every boot we make sure the symlink is
 # still there before starting our daemons.
 #
-if [ -h /var/lib/pbis ]; then
-     run_or_fail cp -rp /var/lib/pbis /opt/pbis/var
-     run_or_fail rm -rf /var/lib/pbis
-else
-     mkdir /var/lib/likewise 2> /dev/null 
-     run_or_fail cp -rp /var/lib/likewise /opt/pbis/var
+
+if [ -d /opt/likewise/var ]; then
+   if [ ! -d /opt/pbis/var ]; then
+      mkdir -p /opt/pbis/var 2>/dev/null
+      run_or_fail cp -rp /opt/likewise/var/* /opt/pbis/var
+      run_or_fail rm -rf /opt/likewise/var
+   fi
 fi
 
-run_or_fail rm -rf /var/lib/likewise
-run_or_fail ln -s /opt/pbis/var /var/lib/pbis
-run_or_fail ln -s /opt/pbis/var /var/lib/likewise
+mkdir -p /opt/pbis/var 2>/dev/null
+
+if [ ! -h /var/lib/pbis ]; then
+   if [ -d /var/lib/pbis ]; then
+      run_or_fail cp -rp /var/lib/pbis/* /opt/pbis/var
+      run_or_fail rm -rf /var/lib/pbis
+   fi
+fi
+
+if [ ! -h /var/lib/likewise ]; then
+   if [ -d /var/lib/likewise ]; then
+      run_or_fail cp -rp /var/lib/likewise/* /opt/pbis/var
+      run_or_fail rm -rf /var/lib/likewise
+   fi
+fi
+
+if [ ! -h /var/lib/likewise ]; then
+   run_or_fail ln -s /opt/pbis/var /var/lib/likewise
+fi
+
+if [ ! -h /var/lib/pbis ]; then
+   run_or_fail ln -s /opt/pbis/var /var/lib/pbis
+fi
 
 determine_upgrade_type
 
