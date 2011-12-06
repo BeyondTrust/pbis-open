@@ -37,6 +37,8 @@
 #include "djauditing.h"
 #include "ctprocutils.h"
 #include "lwexc.h"
+#include <lw/rtllog.h>
+#include <lwstr.h>
 
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
@@ -835,6 +837,67 @@ cleanup:
     CT_SAFE_FREE_STRING(str);
 }
 
+static
+LW_VOID
+RtlLogCallback(
+    LW_IN LW_OPTIONAL LW_PVOID Context,
+    LW_IN LW_RTL_LOG_LEVEL Level,
+    LW_IN LW_OPTIONAL LW_PCSTR ComponentName,
+    LW_IN LW_PCSTR FunctionName,
+    LW_IN LW_PCSTR FileName,
+    LW_IN LW_ULONG LineNumber,
+    LW_IN LW_PCSTR Format,
+    LW_IN ...
+    )
+{
+    va_list args;
+    PSTR pCombined = NULL;
+    DWORD djLevel = 0;
+
+    va_start(args, Format);
+
+    switch(Level)
+    {
+        case LW_RTL_LOG_LEVEL_ALWAYS:
+            djLevel = LOG_LEVEL_ALWAYS;
+            break;
+        case LW_RTL_LOG_LEVEL_ERROR:
+            djLevel = LOG_LEVEL_ERROR;
+            break;
+        case LW_RTL_LOG_LEVEL_WARNING:
+            djLevel = LOG_LEVEL_WARNING;
+            break;
+        case LW_RTL_LOG_LEVEL_INFO:
+            djLevel = LOG_LEVEL_INFO;
+            break;
+        case LW_RTL_LOG_LEVEL_VERBOSE:
+        case LW_RTL_LOG_LEVEL_DEBUG:
+        case LW_RTL_LOG_LEVEL_TRACE:
+        case LW_RTL_LOG_LEVEL_UNDEFINED:
+        default:
+            djLevel = LOG_LEVEL_VERBOSE;
+            break;
+    }
+
+    if (!LwAllocateStringPrintfV(
+                &pCombined,
+                Format,
+                args))
+    {
+        dj_log_message(
+            djLevel,
+            "%s:%s():%s:%d: %s",
+            ComponentName,
+            FunctionName,
+            FileName,
+            LineNumber,
+            pCombined);
+    }
+    LW_SAFE_FREE_STRING(pCombined);
+
+    va_end(args);
+}
+
 int main(
     int argc,
     char* argv[]
@@ -903,13 +966,30 @@ int main(
     }
 
     if (!strcasecmp(logLevel, "error"))
+    {
         dwLogLevel = LOG_LEVEL_ERROR;
+        LwRtlLogSetLevel(LW_RTL_LOG_LEVEL_ERROR);
+    }
     else if (!strcasecmp(logLevel, "warning"))
+    {
         dwLogLevel = LOG_LEVEL_WARNING;
+        LwRtlLogSetLevel(LW_RTL_LOG_LEVEL_WARNING);
+    }
     else if (!strcasecmp(logLevel, "info"))
+    {
         dwLogLevel = LOG_LEVEL_INFO;
+        LwRtlLogSetLevel(LW_RTL_LOG_LEVEL_INFO);
+    }
     else if (!strcasecmp(logLevel, "verbose"))
+    {
         dwLogLevel = LOG_LEVEL_VERBOSE;
+        LwRtlLogSetLevel(LW_RTL_LOG_LEVEL_VERBOSE);
+    }
+    else if (!strcasecmp(logLevel, "debug"))
+    {
+        dwLogLevel = LOG_LEVEL_VERBOSE;
+        LwRtlLogSetLevel(LW_RTL_LOG_LEVEL_DEBUG);
+    }
     else {
         LW_CLEANUP_CTERR(&exc, LW_ERROR_INVALID_LOG_LEVEL);
     }
@@ -951,6 +1031,7 @@ int main(
         }
         LW_CLEANUP_CTERR(&exc, ceError);
     }
+    LwRtlLogSetCallback(RtlLogCallback, NULL);
 
     if (!strcmp(argPos[0], "join") || !strcmp(argPos[0], "leave"))
     {
