@@ -40,9 +40,14 @@ make()
         config \
         regshell"
 
-    LINKS="domainjoin-cli kdestroy kinit klist ktutil kvno lwio-copy lwma passwd samba-interop-install sqlite3"
-    
-    if [ "$DJ_GUI_INTERFACE" != "no" ]
+    LINKS="domainjoin-cli kdestroy kinit klist ktutil kvno lwio-copy lwma samba-interop-install sqlite3"
+
+    if [ "$MK_HOST_OS" != "darwin" ]
+    then
+        LINKS="$LINKS passwd"
+    fi
+
+    if [ "$DJ_GUI_INTERFACE" = "gtk" ]
     then
          LINKS="$LINKS domainjoin-gui"
     fi
