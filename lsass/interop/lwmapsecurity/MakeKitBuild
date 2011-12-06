@@ -1,10 +1,10 @@
 make()
 {
     mk_dlo \
-	DLO=lsass \
+        DLO=lsass \
         INSTALLDIR="${MK_LIBDIR}/lw-map-sec" \
-	SOURCES="lwmapsecurity-lsass.c" \
-	INCLUDEDIRS="../../include" \
-	HEADERDEPS="lw/base.h lw/mapsecurity.h lwadvapi.h lwio/lwio.h" \
-	LIBDEPS="lsarpc lsaclientthr lwbase"
+        SOURCES="lwmapsecurity-lsass.c" \
+        INCLUDEDIRS="../../include" \
+        HEADERDEPS="gssapi.h lw/base.h lw/mapsecurity.h lwadvapi.h lwio/lwio.h" \
+        LIBDEPS="lsarpc lsaclient lsaclientthr lsacommon lwadvapi_nothr lwadvapi lwbase lwbase_nothr gssapi_krb5"
 }
