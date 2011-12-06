@@ -483,10 +483,6 @@ _mk_library_process_version()
                         _rest="${_rest#*.}"
                         MICRO="${_rest%.}"
                         case "$MK_OS" in
-                            darwin)
-                                MINOR=""
-                                MICRO=""
-                                ;;
                             hpux)
                                 MICRO=""
                                 ;;
