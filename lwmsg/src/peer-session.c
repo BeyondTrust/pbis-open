@@ -837,8 +837,16 @@ lwmsg_peer_session_new(
     }
     BAIL_ON_ERROR(status = lwmsg_status_map_errno(pthread_result));
 
-    BAIL_ON_ERROR(status = lwmsg_status_map_errno(
-        pthread_mutexattr_gettype(&attr, &attr_kind)));
+    status = pthread_mutexattr_gettype(&attr, &attr_kind);
+    if (status == EINVAL)
+    {
+        // The previous call to pthread_mutexattr_settype probably set the type
+        // to a negative number due to FreeBSD's bug. Now FreeBSD will see the
+        // mutexattr as invalid.
+        attr_kind = -1;
+        status = 0;
+    }
+    BAIL_ON_ERROR(status = lwmsg_status_map_errno(pthread_result));
 
     if (attr_kind != PTHREAD_MUTEX_RECURSIVE)
     {
