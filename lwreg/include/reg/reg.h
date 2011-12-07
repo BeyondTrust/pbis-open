@@ -193,6 +193,26 @@ typedef struct _LWREG_CURRENT_VALUEINFO{
     DWORD cbData;
 }LWREG_CURRENT_VALUEINFO, *PLWREG_CURRENT_VALUEINFO;
 
+typedef enum
+{
+    LwRegTypeString,
+    LwRegTypeMultiString,
+    LwRegTypeDword,
+    LwRegTypeBoolean,
+    LwRegTypeChar,
+    LwRegTypeEnum
+} LWREG_CONFIG_TYPE;
+
+typedef struct __LWREG_CONFIG_ITEM
+{
+    PCSTR   pszName;
+    BOOLEAN bUsePolicy;
+    LWREG_CONFIG_TYPE Type;
+    DWORD dwMin;
+    DWORD dwMax;
+    const PCSTR *ppszEnumNames;
+    PVOID pValue;
+} LWREG_CONFIG_ITEM, *PLWREG_CONFIG_ITEM;
 
 void
 RegFreeMultiStrsA(

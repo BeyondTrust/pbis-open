@@ -477,6 +477,13 @@ LwNtRegDeleteValueAttributesW(
     IN PCWSTR pwszValueName
     );
 
+NTSTATUS
+LwNtRegProcessConfig(
+    IN PCSTR pszConfigKey,
+    IN PCSTR pszPolicyKey,
+    IN OUT PLWREG_CONFIG_ITEM pConfig,
+    IN DWORD dwConfigEntries
+    );
 
 #ifndef LW_STRICT_NAMESPACE
 #define NtRegOpenServer LwNtRegOpenServer
@@ -540,6 +547,8 @@ LwNtRegDeleteValueAttributesW(
 #define NtRegGetValueAttributesW LwNtRegGetValueAttributesW
 #define NtRegDeleteValueAttributesA LwNtRegDeleteValueAttributesA
 #define NtRegDeleteValueAttributesW LwNtRegDeleteValueAttributesW
+
+#define NtRegProcessConfig LwNtRegProcessConfig
 
 #endif /* ! LW_STRICT_NAMESPACE */
 

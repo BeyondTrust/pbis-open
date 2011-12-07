@@ -592,7 +592,6 @@ IopRootReadConfigDriver(
     int EE = 0;
     PSTR pszDriverPath = NULL;
     PSTR pszDriverKey = NULL;
-    PLWIO_CONFIG_REG pReg = NULL;
 
     status = LwRtlCStringAllocatePrintf(
                     &pszDriverKey,
@@ -600,13 +599,24 @@ IopRootReadConfigDriver(
                     pszDriverName);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    status = LwIoOpenConfig(
-                    pszDriverKey,
-                    NULL,
-                    &pReg);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    LWREG_CONFIG_ITEM configItems[] =
+    {
+        {
+            "Path",
+            FALSE,
+            LwRegTypeString,
+            0,
+            MAXDWORD,
+            NULL,
+            &pszDriverPath
+        },
+    };
 
-    status = LwIoReadConfigString(pReg, "Path", FALSE, &pszDriverPath);
+    status = NtRegProcessConfig(
+                pszDriverKey,
+                NULL,
+                configItems,
+                sizeof(configItems)/sizeof(configItems[0]));
     if (status)
     {
         LWIO_LOG_ERROR("Status 0x%08x (%s) reading path config for "
@@ -630,7 +640,6 @@ cleanup:
     }
 
     RTL_FREE(&pszDriverKey);
-    LwIoCloseConfig(pReg);
 
     *ppszDriverPath = pszDriverPath;
 

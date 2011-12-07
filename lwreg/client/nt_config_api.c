@@ -6,23 +6,23 @@
  * Copyright Likewise Software    2004-2008
  * All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or (at
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1 of the license, or (at
  * your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see
- * <http://www.gnu.org/licenses/>.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
+ * General Public License for more details.  You should have received a copy
+ * of the GNU Lesser General Public License along with this program.  If
+ * not, see <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
  * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
  * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
  * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
- * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
+ * LESSER GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
  * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
  * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
  * license@likewisesoftware.com
@@ -33,21 +33,91 @@
  *
  * Module Name:
  *
+ *        nt_config_api.c
+ *
  * Abstract:
  *
- * Authors: Scott Salley <ssalley@likewise.com>
+ *        Registry
  *
+ *        NT Client wrapper API for configuration processing
+ *
+ * Authors: Scott Salley <ssalley@likewise.com>
  */
+#include "client.h"
 
-#include "includes.h"
+typedef struct __LWREG_CONFIG_REG LWREG_CONFIG_REG, *PLWREG_CONFIG_REG;
 
-struct __LWIO_CONFIG_REG
+struct __LWREG_CONFIG_REG
 {
     HANDLE hConnection;
     HKEY hKey;
     PSTR pszConfigKey;
     PSTR pszPolicyKey;
 };
+
+static
+NTSTATUS
+NtRegOpenConfig(
+    PCSTR pszConfigKey,
+    PCSTR pszPolicyKey,
+    PLWREG_CONFIG_REG *ppReg
+    );
+
+static
+VOID
+NtRegCloseConfig(
+    PLWREG_CONFIG_REG pReg
+    );
+
+static
+NTSTATUS
+NtRegReadConfigString(
+    PLWREG_CONFIG_REG pReg,
+    PCSTR   pszName,
+    BOOLEAN bUsePolicy,
+    PSTR    *ppszValue
+    );
+
+static
+NTSTATUS
+NtRegReadConfigMultiString(
+    PLWREG_CONFIG_REG pReg,
+    PCSTR   pszName,
+    BOOLEAN bUsePolicy,
+    PSTR    **pppszValue
+    );
+
+static
+NTSTATUS
+NtRegReadConfigDword(
+    PLWREG_CONFIG_REG pReg,
+    PCSTR pszName,
+    BOOLEAN bUsePolicy,
+    DWORD dwMin,
+    DWORD dwMax,
+    PDWORD pdwValue
+    );
+
+static
+NTSTATUS
+NtRegReadConfigBoolean(
+    PLWREG_CONFIG_REG pReg,
+    PCSTR pszName,
+    BOOLEAN bUsePolicy,
+    PBOOLEAN pbValue
+    );
+
+static
+NTSTATUS
+NtRegReadConfigEnum(
+    PLWREG_CONFIG_REG pReg,
+    PCSTR   pszName,
+    BOOLEAN bUsePolicy,
+    DWORD   dwMin,
+    DWORD   dwMax,
+    const PCSTR   *ppszEnumNames,
+    PDWORD  pdwValue
+    );
 
 /**
  * Read configuration values from the registry
@@ -60,27 +130,24 @@ struct __LWIO_CONFIG_REG
  * @param[in] pszPolicyKey Registry policy key path
  * @param[in] pConfig Configuration table specifying parameter names
  * @param[in] dwConfigEntries Number of table entries
- * @param[in] bIgnoreNotFound Don't error if a parameter is not found in the
- *                            registry.
  *
  * @return STATUS_SUCCESS, or appropriate error.
  */
 NTSTATUS
-LwIoProcessConfig(
+NtRegProcessConfig(
     PCSTR pszConfigKey,
     PCSTR pszPolicyKey,
-    PLWIO_CONFIG_TABLE pConfig,
-    DWORD dwConfigEntries,
-    BOOLEAN bIgnoreNotFound
+    PLWREG_CONFIG_ITEM pConfig,
+    DWORD dwConfigEntries
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwEntry = 0;
-    PLWIO_CONFIG_REG pReg = NULL;
+    PLWREG_CONFIG_REG pReg = NULL;
     PSTR pszTmp = NULL;
     PSTR *ppszTmp = NULL;
 
-    ntStatus = LwIoOpenConfig(pszConfigKey, pszPolicyKey, &pReg);
+    ntStatus = NtRegOpenConfig(pszConfigKey, pszPolicyKey, &pReg);
     BAIL_ON_NT_STATUS(ntStatus);
 
     if (pReg == NULL)
@@ -93,8 +160,8 @@ LwIoProcessConfig(
         ntStatus = STATUS_SUCCESS;
         switch (pConfig[dwEntry].Type)
         {
-            case LwIoTypeString:
-                ntStatus = LwIoReadConfigString(
+            case LwRegTypeString:
+                ntStatus = NtRegReadConfigString(
                             pReg,
                             pConfig[dwEntry].pszName,
                             pConfig[dwEntry].bUsePolicy,
@@ -107,21 +174,21 @@ LwIoProcessConfig(
                 }
                 break;
 
-            case LwIoTypeMultiString:
-                ntStatus = LwIoReadConfigMultiString(
+            case LwRegTypeMultiString:
+                ntStatus = NtRegReadConfigMultiString(
                             pReg,
                             pConfig[dwEntry].pszName,
                             pConfig[dwEntry].bUsePolicy,
                             &ppszTmp);
                 if (ntStatus == STATUS_SUCCESS)
                 {
-                    LwIoMultiStringFree(((PSTR **)pConfig[dwEntry].pValue));
+                    RegFreeMultiStrsA(*(PSTR **)pConfig[dwEntry].pValue);
                     *((PSTR **)pConfig[dwEntry].pValue) = ppszTmp;
                 }
                 break;
 
-            case LwIoTypeDword:
-                ntStatus = LwIoReadConfigDword(
+            case LwRegTypeDword:
+                ntStatus = NtRegReadConfigDword(
                             pReg,
                             pConfig[dwEntry].pszName,
                             pConfig[dwEntry].bUsePolicy,
@@ -130,16 +197,16 @@ LwIoProcessConfig(
                             pConfig[dwEntry].pValue);
                 break;
 
-            case LwIoTypeBoolean:
-                ntStatus = LwIoReadConfigBoolean(
+            case LwRegTypeBoolean:
+                ntStatus = NtRegReadConfigBoolean(
                             pReg,
                             pConfig[dwEntry].pszName,
                             pConfig[dwEntry].bUsePolicy,
                             pConfig[dwEntry].pValue);
                 break;
 
-            case LwIoTypeEnum:
-                ntStatus = LwIoReadConfigEnum(
+            case LwRegTypeEnum:
+                ntStatus = NtRegReadConfigEnum(
                             pReg,
                             pConfig[dwEntry].pszName,
                             pConfig[dwEntry].bUsePolicy,
@@ -152,7 +219,7 @@ LwIoProcessConfig(
             default:
                 break;
         }
-        if (bIgnoreNotFound && ntStatus == STATUS_OBJECT_NAME_NOT_FOUND)
+        if (ntStatus == STATUS_OBJECT_NAME_NOT_FOUND)
         {
             ntStatus = STATUS_SUCCESS;
         }
@@ -160,7 +227,7 @@ LwIoProcessConfig(
     }
 
 cleanup:
-    LwIoCloseConfig(pReg);
+    NtRegCloseConfig(pReg);
     pReg = NULL;
 
     return ntStatus;
@@ -170,19 +237,19 @@ error:
 }
 
 NTSTATUS
-LwIoOpenConfig(
+NtRegOpenConfig(
     PCSTR pszConfigKey,
     PCSTR pszPolicyKey,
-    PLWIO_CONFIG_REG *ppReg
+    PLWREG_CONFIG_REG *ppReg
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    PLWIO_CONFIG_REG pReg = NULL;
+    PLWREG_CONFIG_REG pReg = NULL;
 
     ntStatus = LW_RTL_ALLOCATE(
                    (PVOID*)&pReg, 
-                   LWIO_CONFIG_REG, 
-                   sizeof(LWIO_CONFIG_REG));
+                   LWREG_CONFIG_REG, 
+                   sizeof(LWREG_CONFIG_REG));
     BAIL_ON_NT_STATUS(ntStatus);
 
     ntStatus = LwRtlCStringDuplicate(&pReg->pszConfigKey, pszConfigKey);
@@ -214,15 +281,15 @@ cleanup:
 
 error:
 
-    LwIoCloseConfig(pReg);
+    NtRegCloseConfig(pReg);
     pReg = NULL;
 
     goto cleanup;
 }
 
 VOID
-LwIoCloseConfig(
-    PLWIO_CONFIG_REG pReg
+NtRegCloseConfig(
+    PLWREG_CONFIG_REG pReg
     )
 {
     if (pReg)
@@ -247,8 +314,8 @@ LwIoCloseConfig(
 }
 
 NTSTATUS
-LwIoReadConfigString(
-    PLWIO_CONFIG_REG pReg,
+NtRegReadConfigString(
+    PLWREG_CONFIG_REG pReg,
     PCSTR   pszName,
     BOOLEAN bUsePolicy,
     PSTR    *ppszValue
@@ -318,8 +385,8 @@ error:
 }
 
 NTSTATUS
-LwIoReadConfigMultiString(
-    PLWIO_CONFIG_REG pReg,
+NtRegReadConfigMultiString(
+    PLWREG_CONFIG_REG pReg,
     PCSTR   pszName,
     BOOLEAN bUsePolicy,
     PSTR    **pppszValue
@@ -391,8 +458,8 @@ error:
 }
 
 NTSTATUS
-LwIoReadConfigDword(
-    PLWIO_CONFIG_REG pReg,
+NtRegReadConfigDword(
+    PLWREG_CONFIG_REG pReg,
     PCSTR pszName,
     BOOLEAN bUsePolicy,
     DWORD dwMin,
@@ -468,8 +535,8 @@ error:
 }
 
 NTSTATUS
-LwIoReadConfigBoolean(
-    PLWIO_CONFIG_REG pReg,
+NtRegReadConfigBoolean(
+    PLWREG_CONFIG_REG pReg,
     PCSTR pszName,
     BOOLEAN bUsePolicy,
     PBOOLEAN pbValue
@@ -479,7 +546,7 @@ LwIoReadConfigBoolean(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwValue = *pbValue == TRUE ? 0x00000001 : 0x00000000;
 
-    ntStatus = LwIoReadConfigDword(
+    ntStatus = NtRegReadConfigDword(
                 pReg,
                 pszName,
                 bUsePolicy,
@@ -499,8 +566,8 @@ error:
 }
 
 NTSTATUS
-LwIoReadConfigEnum(
-    PLWIO_CONFIG_REG pReg,
+NtRegReadConfigEnum(
+    PLWREG_CONFIG_REG pReg,
     PCSTR   pszName,
     BOOLEAN bUsePolicy,
     DWORD   dwMin,
@@ -513,7 +580,7 @@ LwIoReadConfigEnum(
     PSTR pszValue = NULL;
     DWORD dwEnumIndex = 0;
 
-    ntStatus = LwIoReadConfigString(
+    ntStatus = NtRegReadConfigString(
                 pReg,
                 pszName,
                 bUsePolicy,

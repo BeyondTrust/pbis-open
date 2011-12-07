@@ -726,14 +726,103 @@ RdrReadConfig(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    PLWIO_CONFIG_REG pReg = NULL;
-    BOOLEAN bUsePolicy = TRUE;
-    DWORD dwValue = 0;
+    DWORD dwIdleTimeout = pConfig->usIdleTimeout;
+    DWORD dwResponseTimeout = pConfig->usResponseTimeout;
+    DWORD dwEchoTimeout = pConfig->usEchoTimeout;
+    DWORD dwEchoInterval = pConfig->usEchoInterval;
+    DWORD dwConnectTimeout = pConfig->usConnectTimeout;
+    DWORD dwMinCreditReserve = pConfig->usMinCreditReserve;
 
-    status = LwIoOpenConfig(
-        "Services\\lwio\\Parameters\\Drivers\\rdr",
-        "Policy\\Services\\lwio\\Parameters\\Drivers\\rdr",
-        &pReg);
+    LWREG_CONFIG_ITEM configItems[] =
+    {
+        {
+            "Smb2Enabled",
+            TRUE,
+            LwRegTypeBoolean,
+            0,
+            MAXDWORD,
+            NULL,
+            &pConfig->bSmb2Enabled
+        },
+        {
+            "SigningEnabled",
+            TRUE,
+            LwRegTypeBoolean,
+            0,
+            MAXDWORD,
+            NULL,
+            &pConfig->bSmb2Enabled
+        },
+        {
+            "SigningRequired",
+            TRUE,
+            LwRegTypeBoolean,
+            0,
+            MAXDWORD,
+            NULL,
+            &pConfig->bSmb2Enabled
+        },
+        {
+            "IdleTimeout",
+            TRUE,
+            LwRegTypeDword,
+            1,
+            300,
+            NULL,
+            &dwIdleTimeout
+        },
+        {
+            "ResponseTimeout",
+            TRUE,
+            LwRegTypeDword,
+            10,
+            900,
+            NULL,
+            &dwResponseTimeout
+        },
+        {
+            "EchoTimeout",
+            TRUE,
+            LwRegTypeDword,
+            5,
+            900,
+            NULL,
+            &dwEchoTimeout
+        },
+        {
+            "EchoInterval",
+            TRUE,
+            LwRegTypeDword,
+            30,
+            1800,
+            NULL,
+            &dwEchoInterval
+        },
+        {
+            "ConnectTimeout",
+            TRUE,
+            LwRegTypeDword,
+            5,
+            900,
+            NULL,
+            &dwConnectTimeout
+        },
+        {
+            "MinCreditReserve",
+            TRUE,
+            LwRegTypeDword,
+            1,
+            100,
+            NULL,
+            &dwMinCreditReserve
+        },
+    };
+
+    status = NtRegProcessConfig(
+                "Services\\lwio\\Parameters\\Drivers\\rdr",
+                "Policy\\Services\\lwio\\Parameters\\Drivers\\rdr",
+                configItems,
+                sizeof(configItems)/sizeof(configItems[0]));
     if (status)
     {
         LWIO_LOG_ERROR("Failed to access device configuration [error code: %u]",
@@ -743,101 +832,17 @@ RdrReadConfig(
     }
     BAIL_ON_NT_STATUS(status);
 
-    LwIoReadConfigBoolean(
-        pReg,
-        "Smb2Enabled",
-        bUsePolicy,
-        &pConfig->bSmb2Enabled);
-
-    LwIoReadConfigBoolean(
-        pReg,
-        "SigningEnabled",
-        bUsePolicy,
-        &pConfig->bSigningEnabled);
-
-    LwIoReadConfigBoolean(
-        pReg,
-        "SigningRequired",
-        bUsePolicy,
-        &pConfig->bSigningRequired);
-
-    if (LwIoReadConfigDword(
-        pReg,
-        "IdleTimeout",
-        bUsePolicy,
-        1,
-        300,
-        &dwValue) == STATUS_SUCCESS)
-    {
-        pConfig->usIdleTimeout = (USHORT) dwValue;
-    }
-
-    if (LwIoReadConfigDword(
-        pReg,
-        "ResponseTimeout",
-        bUsePolicy,
-        10,
-        900,
-        &dwValue) == STATUS_SUCCESS)
-    {
-        pConfig->usResponseTimeout = (USHORT) dwValue;
-    }
-
-    if (LwIoReadConfigDword(
-        pReg,
-        "EchoTimeout",
-        bUsePolicy,
-        5,
-        900,
-        &dwValue) == STATUS_SUCCESS)
-    {
-        pConfig->usEchoTimeout = (USHORT) dwValue;
-    }
-
-    if (LwIoReadConfigDword(
-        pReg,
-        "EchoInterval",
-        bUsePolicy,
-        30,
-        1800,
-        &dwValue) == STATUS_SUCCESS)
-    {
-        pConfig->usEchoInterval = (USHORT) dwValue;
-    }
-
-    if (LwIoReadConfigDword(
-        pReg,
-        "ConnectTimeout",
-        bUsePolicy,
-        5,
-        900,
-        &dwValue) == STATUS_SUCCESS)
-    {
-        pConfig->usConnectTimeout = (USHORT) dwValue;
-    }
-
-    if (LwIoReadConfigDword(
-        pReg,
-        "MinCreditReserve",
-        bUsePolicy,
-        1,
-        100,
-        &dwValue) == STATUS_SUCCESS)
-    {
-        pConfig->usMinCreditReserve = (USHORT) dwValue;
-    }
+    pConfig->usIdleTimeout = (USHORT)dwIdleTimeout;
+    pConfig->usResponseTimeout = (USHORT)dwResponseTimeout;
+    pConfig->usEchoTimeout = (USHORT)dwEchoTimeout;
+    pConfig->usEchoInterval = (USHORT)dwEchoInterval;
+    pConfig->usConnectTimeout = (USHORT)dwConnectTimeout;
+    pConfig->usMinCreditReserve = (USHORT)dwMinCreditReserve;
 
 cleanup:
-
-    if (pReg)
-    {
-        LwIoCloseConfig(pReg);
-    }
-
     return status;
 
 error:
-
     goto cleanup;
 }
 

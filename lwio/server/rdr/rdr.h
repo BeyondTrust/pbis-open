@@ -76,6 +76,8 @@
 #include <lwio/iodriver.h>
 
 #include <lwnet.h>
+#include <reg/reg.h>
+#include <reg/lwntreg.h>
 
 #include "structs.h"
 #include "socket.h"

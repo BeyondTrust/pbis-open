@@ -3,7 +3,9 @@ make()
     CLIENT_SOURCES="\
         clientipc.c \
         regclient.c \
-        regntclient.c"
+        regntclient.c\
+        nt_config_api.c \
+	"
 
     mk_library \
         LIB=regclient \

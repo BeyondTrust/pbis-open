@@ -19,7 +19,6 @@ make()
         strings.c     \
         sysfuncs.c    \
         unistr.c      \
-        regcfg.c      \
         lru.c"
 
     mk_group \

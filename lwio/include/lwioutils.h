@@ -69,66 +69,6 @@
  * Registry
  */
 
-typedef struct __LWIO_CONFIG_REG LWIO_CONFIG_REG, *PLWIO_CONFIG_REG;
-
-typedef enum
-{
-    LwIoTypeString,
-    LwIoTypeMultiString,
-    LwIoTypeDword,
-    LwIoTypeBoolean,
-    LwIoTypeChar,
-    LwIoTypeEnum
-} LWIO_CONFIG_TYPE;
-
-typedef struct __LWIO_CONFIG_TABLE
-{
-    PCSTR   pszName;
-    BOOLEAN bUsePolicy;
-    LWIO_CONFIG_TYPE Type;
-    DWORD dwMin;
-    DWORD dwMax;
-    const PCSTR *ppszEnumNames;
-    PVOID pValue;
-} LWIO_CONFIG_TABLE, *PLWIO_CONFIG_TABLE;
-
-NTSTATUS
-LwIoProcessConfig(
-    PCSTR pszConfigKey,
-    PCSTR pszPolicyKey,
-    PLWIO_CONFIG_TABLE pConfig,
-    DWORD dwConfigEntries,
-    BOOLEAN bIgnoreNotFound
-    );
-
-NTSTATUS
-LwIoOpenConfig(
-    PCSTR pszConfigKey,
-    PCSTR pszPolicyKey,
-    PLWIO_CONFIG_REG *ppReg
-    );
-
-VOID
-LwIoCloseConfig(
-    PLWIO_CONFIG_REG pReg
-    );
-
-NTSTATUS
-LwIoReadConfigString(
-    PLWIO_CONFIG_REG pReg,
-    PCSTR   pszName,
-    BOOLEAN bUsePolicy,
-    PSTR    *ppszValue
-    );
-
-NTSTATUS
-LwIoReadConfigMultiString(
-    PLWIO_CONFIG_REG pReg,
-    PCSTR   pszName,
-    BOOLEAN bUsePolicy,
-    PSTR    **pppszValue
-    );
-
 NTSTATUS
 LwIoMultiStringCopy(
     PSTR **pppszNewStrings,
@@ -139,36 +79,6 @@ VOID
 LwIoMultiStringFree(
     PSTR **pppszValue
     );
-
-NTSTATUS
-LwIoReadConfigDword(
-    PLWIO_CONFIG_REG pReg,
-    PCSTR pszName,
-    BOOLEAN bUsePolicy,
-    DWORD   dwMin,
-    DWORD   dwMax,
-    PDWORD pdwValue
-    );
-
-NTSTATUS
-LwIoReadConfigBoolean(
-    PLWIO_CONFIG_REG pReg,
-    PCSTR pszName,
-    BOOLEAN bUsePolicy,
-    PBOOLEAN pbValue
-    );
-
-NTSTATUS
-LwIoReadConfigEnum(
-    PLWIO_CONFIG_REG pReg,
-    PCSTR pszName,
-    BOOLEAN bUsePolicy,
-    DWORD dwMin,
-    DWORD dwMax,
-    const PCSTR *ppszEnumNames,
-    PDWORD pdwValue
-    );
-
 
 #ifndef _SMB_ENDIAN_SWAP16
 

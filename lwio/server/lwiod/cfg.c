@@ -108,35 +108,7 @@ LwioSrvReadRegistry(
     IN OUT PLWIO_CONFIG pConfig
     )
 {
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-    PLWIO_CONFIG_REG pReg = NULL;
-
-    ntStatus = LwIoOpenConfig(
-                   LWIO_CONF_REGISTRY_LOCAL,
-                   LWIO_CONF_REGISTRY_POLICY,
-                   &pReg);
-    if (ntStatus)
-    {
-        LWIO_LOG_ERROR(
-            "Failed to access device configuration [error code: %l]",
-            ntStatus);
-
-        ntStatus = STATUS_DEVICE_CONFIGURATION_ERROR;
-    }
-    BAIL_ON_NT_STATUS(ntStatus);
-
-cleanup:
-
-    if (pReg)
-    {
-        LwIoCloseConfig(pReg);
-    }
-
-    return ntStatus;
-
-error:
-
-    goto cleanup;
+    return STATUS_SUCCESS;
 }
 
 
