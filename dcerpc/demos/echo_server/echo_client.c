@@ -317,7 +317,7 @@ main(
             &status);
         if (status)
         {
-            printf ("Unable to inquire SPN %x. exiting.\n", status);
+            printf ("Unable to inquire SPN %x. exiting.\n", (unsigned int)status);
             exit(1);
         }
         printf("Found SPN %s\n", inquired_spn);
@@ -334,7 +334,7 @@ main(
             rpc_c_authz_name, &status);
         if (status)
         {
-            printf ("Couldn't set auth info %u. exiting.\n", status);
+            printf ("Couldn't set auth info %u. exiting.\n", (unsigned int)status);
             exit(1);
         }
     }

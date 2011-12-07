@@ -72,13 +72,13 @@ bind_server(
         else
         {
             function = "rpc_server_use_protseq()";
-            rpc_server_use_protseq(protocol, rpc_c_protseq_max_calls_default, &status);
+            rpc_server_use_protseq((unsigned_char_p_t) protocol, rpc_c_protseq_max_calls_default, &status);
         }
     }
     else
     {
         function = "rpc_server_use_protseq_ep()";
-        rpc_server_use_protseq_ep(protocol, rpc_c_protseq_max_calls_default, endpoint, &status);
+        rpc_server_use_protseq_ep((unsigned_char_p_t) protocol, rpc_c_protseq_max_calls_default, endpoint, &status);
     }
 #endif
 
