@@ -120,12 +120,6 @@ RSysParseConfigFile(
     );
 
 DWORD
-RSysDLinkedList(
-    PDLINKEDLIST* ppList,
-    PVOID        pItem
-    );
-
-DWORD
 RSysDLinkedListAppend(
     PDLINKEDLIST* ppList,
     PVOID        pItem
