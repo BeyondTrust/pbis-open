@@ -613,6 +613,21 @@ error:
 }
 
 
+DWORD
+RegProcessConfig(
+    IN PCSTR pszConfigKey,
+    IN PCSTR pszPolicyKey,
+    IN OUT PLWREG_CONFIG_ITEM pConfig,
+    IN DWORD dwConfigEntries
+    )
+{
+    return RegNtStatusToWin32Error(
+            NtRegProcessConfig(
+                pszConfigKey,
+                pszPolicyKey,
+                pConfig,
+                dwConfigEntries));
+}
 
 /*
 local variables:

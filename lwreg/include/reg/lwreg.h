@@ -493,6 +493,13 @@ LwRegDeleteValueAttributesW(
     IN PCWSTR pwszValueName
     );
 
+DWORD
+LwRegProcessConfig(
+    IN PCSTR pszConfigKey,
+    IN PCSTR pszPolicyKey,
+    IN OUT PLWREG_CONFIG_ITEM pConfig,
+    IN DWORD dwConfigEntries
+    );
 
 #ifndef LW_STRICT_NAMESPACE
 #define RegOpenServer LwRegOpenServer
@@ -557,6 +564,8 @@ LwRegDeleteValueAttributesW(
 #define RegGetValueAttributesW LwRegGetValueAttributesW
 #define RegDeleteValueAttributesA LwRegDeleteValueAttributesA
 #define RegDeleteValueAttributesW LwRegDeleteValueAttributesW
+
+#define RegProcessConfig LwRegProcessConfig
 
 #endif /* ! LW_STRICT_NAMESPACE */
 

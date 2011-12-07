@@ -4,7 +4,7 @@ make()
         clientipc.c \
         regclient.c \
         regntclient.c\
-        nt_config_api.c \
+        config_api.c \
 	"
 
     mk_library \
