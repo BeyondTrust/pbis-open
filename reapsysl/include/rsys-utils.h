@@ -47,18 +47,6 @@
 #ifndef __RSYS_UTILS_H__
 #define __RSYS_UTILS_H__
 
-typedef struct __DLINKEDLIST
-{
-    PVOID pItem;
-    
-    struct __DLINKEDLIST * pNext;
-    
-    struct __DLINKEDLIST * pPrev;
-    
-} DLINKEDLIST, *PDLINKEDLIST;
-
-typedef VOID (*PFN_DLINKEDLIST_FUNC)(PVOID pData, PVOID pUserData);
-
 //defined flags in dwOptions
 #define RSYS_CFG_OPTION_STRIP_SECTION          0x00000001
 #define RSYS_CFG_OPTION_STRIP_NAME_VALUE_PAIR  0x00000002
@@ -77,29 +65,5 @@ typedef int64_t RSYS_UNIX_NS_TIME_T, *PRSYS_UNIX_NS_TIME_T;
 
 // This is in 100ns units from Jan 1, 1601:
 typedef int64_t RSYS_WINDOWS_TIME_T, *PRSYS_WINDOWS_TIME_T;
-
-DWORD
-RSysDLinkedListAppend(
-    PDLINKEDLIST* ppList,
-    PVOID        pItem
-    );
-
-BOOLEAN
-RSysDLinkedListDelete(
-    PDLINKEDLIST* ppList,
-    PVOID        pItem
-    );
-
-VOID
-RSysDLinkedListForEach(
-    PDLINKEDLIST          pList,
-    PFN_DLINKEDLIST_FUNC pFunc,
-    PVOID                pUserData
-    );
-
-VOID
-RSysDLinkedListFree(
-    PDLINKEDLIST pList
-    );
 
 #endif /* __RSYS_UTILS_H__ */

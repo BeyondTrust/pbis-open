@@ -1,7 +1,6 @@
 make()
 {
     UTIL_SOURCES="\
-	rsys-dlinkedlist.c \
 	rsys-sysfuncs.c"
 
     mk_group \

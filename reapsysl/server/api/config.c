@@ -198,7 +198,7 @@ RSysSrvApiFreeConfig(
     {
         while (pConfig->pPatternHead)
         {
-            PDLINKEDLIST pToDelete = pConfig->pPatternHead;
+            PLW_DLINKED_LIST pToDelete = pConfig->pPatternHead;
             RSYS_MESSAGE_PATTERN* pPattern = pToDelete->pItem;
 
             pConfig->pPatternHead = pConfig->pPatternHead->pNext;
@@ -289,7 +289,7 @@ error:
 DWORD
 RSysSrvLockPatternList(
     HANDLE hServer,
-    PDLINKEDLIST* ppPatternList
+    PLW_DLINKED_LIST* ppPatternList
     )
 {
     DWORD dwError = 0;
@@ -321,7 +321,7 @@ error:
 DWORD
 RSysSrvUnlockPatternList(
     HANDLE hServer,
-    PDLINKEDLIST pPatternList
+    PLW_DLINKED_LIST pPatternList
     )
 {
     DWORD dwError = 0;
@@ -444,7 +444,7 @@ GetPatternListFromRegistry(
         dwError = GetValuesFromRegistry(pszFullKeyName,&pPattern);
         BAIL_ON_RSYS_ERROR(dwError);
 
-        dwError = RSysDLinkedListAppend(&pConfig->pPatternTail, pPattern);
+        dwError = LwDLinkedListAppend(&pConfig->pPatternTail, pPattern);
         BAIL_ON_RSYS_ERROR(dwError);
 
         if (!pConfig->pPatternHead)

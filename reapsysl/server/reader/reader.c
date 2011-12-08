@@ -212,8 +212,8 @@ RSysSrvParseLine(
     BOOLEAN bIsMatch = FALSE;
     BOOLEAN bPatternListLocked = FALSE;
     // Do not free
-    PDLINKEDLIST pPatternList = NULL;
-    PDLINKEDLIST pListPos = NULL;
+    PLW_DLINKED_LIST pPatternList = NULL;
+    PLW_DLINKED_LIST pListPos = NULL;
     RSYS_MESSAGE_PATTERN* pPattern = NULL;
     BOOLEAN bLogUnmatchedError = FALSE;
     BOOLEAN bLogUnmatchedWarning = FALSE;

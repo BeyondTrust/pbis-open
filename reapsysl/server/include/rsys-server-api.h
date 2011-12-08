@@ -47,6 +47,8 @@
 #ifndef __RSYS_SRVAPI_H__
 #define __RSYS_SRVAPI_H__
 
+#include <lwdlinked-list.h>
+
 typedef enum _RSYS_USER_TYPE_FILTER
 {
     RSYS_ANY_USER,
@@ -93,13 +95,13 @@ RSysSrvGetLogUnmatchedEvents(
 DWORD
 RSysSrvLockPatternList(
     HANDLE hServer,
-    PDLINKEDLIST* ppPatternList
+    PLW_DLINKED_LIST* ppPatternList
     );
 
 DWORD
 RSysSrvUnlockPatternList(
     HANDLE hServer,
-    PDLINKEDLIST pPatternList
+    PLW_DLINKED_LIST pPatternList
     );
 
 DWORD
