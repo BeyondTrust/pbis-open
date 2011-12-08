@@ -51,6 +51,8 @@
 #ifndef __LWNETDNS_P_H__
 #define __LWNETDNS_P_H__
 
+#include <lwdlinked-list.h>
+
 #ifndef INADDR_NONE
 #define INADDR_NONE ((in_addr_t) -1)
 #endif
@@ -165,9 +167,9 @@ LWNetDnsIsTruncatedResponse(
 DWORD
 LWNetDnsParseQueryResponse(
     IN PDNS_RESPONSE_HEADER pHeader,
-    OUT OPTIONAL PDLINKEDLIST* ppAnswersList,
-    OUT OPTIONAL PDLINKEDLIST* ppAuthsList,
-    OUT OPTIONAL PDLINKEDLIST* ppAdditionalsList
+    OUT OPTIONAL PLW_DLINKED_LIST* ppAnswersList,
+    OUT OPTIONAL PLW_DLINKED_LIST* ppAuthsList,
+    OUT OPTIONAL PLW_DLINKED_LIST* ppAdditionalsList
     );
 
 DWORD
@@ -192,7 +194,7 @@ LWNetDnsParseRecords(
     IN PDNS_RESPONSE_HEADER pHeader,
     IN WORD wNRecords,
     IN PBYTE pData,
-    OUT PDLINKEDLIST* ppRecordList,
+    OUT PLW_DLINKED_LIST* ppRecordList,
     OUT PDWORD pdwBytesToAdvance
     );
 
@@ -221,7 +223,7 @@ LWNetDnsReadDWORD(
 
 DWORD
 LWNetDnsBuildServerArray(
-    IN PDLINKEDLIST pSrvRecordList,
+    IN PLW_DLINKED_LIST pSrvRecordList,
     OUT PDNS_SERVER_INFO* ppServerArray,
     OUT PDWORD pdwServerCount
     );
@@ -248,22 +250,22 @@ LWNetDnsGetSrvRecordQuestion(
 DWORD
 LWNetDnsBuildSRVRecordList(
     IN PDNS_RESPONSE_HEADER pHeader,
-    IN PDLINKEDLIST pAnswersList,
-    IN PDLINKEDLIST pAdditionalsList,
-    OUT PDLINKEDLIST* ppSRVRecordList
+    IN PLW_DLINKED_LIST pAnswersList,
+    IN PLW_DLINKED_LIST pAdditionalsList,
+    OUT PLW_DLINKED_LIST* ppSRVRecordList
     );
 
 DWORD
 LWNetDnsBuildSRVRecord(
     IN PDNS_RESPONSE_HEADER pHeader,
     IN PDNS_RECORD pAnswerRecord,
-    IN PDLINKEDLIST pAdditionalsList,
+    IN PLW_DLINKED_LIST pAdditionalsList,
     OUT PDNS_SRV_INFO_RECORD* ppSRVInfoRecord
     );
 
 DWORD
 LWNetDnsGetAddressForServer(
-    IN PDLINKEDLIST pAdditionalsList,
+    IN PLW_DLINKED_LIST pAdditionalsList,
     IN PCSTR pszHostname,
     OUT PSTR* ppszAddress
     );
@@ -281,12 +283,12 @@ LWNetDnsFreeSRVInfoRecord(
 
 VOID
 LWNetDnsFreeDnsRecordLinkedList(
-    IN OUT PDLINKEDLIST DnsRecordList
+    IN OUT PLW_DLINKED_LIST DnsRecordList
     );
 
 VOID
 LWNetDnsFreeSrvInfoLinkedList(
-    IN OUT PDLINKEDLIST SrvInfoList
+    IN OUT PLW_DLINKED_LIST SrvInfoList
     );
 
 #define LWNET_SAFE_FREE_DNS_RECORD_LINKED_LIST(DnsRecordList) \

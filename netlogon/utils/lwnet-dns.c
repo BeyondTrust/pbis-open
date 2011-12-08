@@ -242,7 +242,7 @@ LWNetDnsGetNameServerList(
     const   DWORD dwMaxLineLen = 1024;
     CHAR    szBuf[dwMaxLineLen + 1];
     regex_t rx;
-    PDLINKEDLIST pNameServerList = NULL;
+    PLW_DLINKED_LIST pNameServerList = NULL;
     PSTR    pszNameServer = NULL;
     
     memset(&rx, 0, sizeof(rx));
@@ -296,7 +296,7 @@ LWNetDnsGetNameServerList(
                    BAIL_ON_LWNET_ERROR(dwError);
                 }
                 
-                dwError = LWNetDLinkedListAppend(
+                dwError = LwDLinkedListAppend(
                                     &pNameServerList,
                                     pszNameServer);
                 BAIL_ON_LWNET_ERROR(dwError);
@@ -310,7 +310,7 @@ LWNetDnsGetNameServerList(
     
     if (dwNumServers)
     {
-        PDLINKEDLIST pListMember = NULL;
+        PLW_DLINKED_LIST pListMember = NULL;
         DWORD iMember = 0;
 
         dwError = LWNetAllocateMemory(dwNumServers * sizeof(PSTR), (PVOID*)&ppszNameServerList);
@@ -332,7 +332,7 @@ cleanup:
 
     regfree(&rx);
     
-    LWNetDLinkedListFree(pNameServerList);
+    LwDLinkedListFree(pNameServerList);
     
     LWNET_SAFE_FREE_STRING(pszNameServer);
     
@@ -406,16 +406,16 @@ LWNetDnsIsTruncatedResponse(
 DWORD
 LWNetDnsParseQueryResponse(
     IN PDNS_RESPONSE_HEADER pHeader,
-    OUT OPTIONAL PDLINKEDLIST* ppAnswersList,
-    OUT OPTIONAL PDLINKEDLIST* ppAuthsList,
-    OUT OPTIONAL PDLINKEDLIST* ppAdditionalsList
+    OUT OPTIONAL PLW_DLINKED_LIST* ppAnswersList,
+    OUT OPTIONAL PLW_DLINKED_LIST* ppAuthsList,
+    OUT OPTIONAL PLW_DLINKED_LIST* ppAdditionalsList
     )
 {
     DWORD dwError = 0;
     PBYTE pData = &pHeader->data[0];
-    PDLINKEDLIST pAnswersList = NULL;
-    PDLINKEDLIST pAuthsList = NULL;
-    PDLINKEDLIST pAdditionalsList = NULL;
+    PLW_DLINKED_LIST pAnswersList = NULL;
+    PLW_DLINKED_LIST pAuthsList = NULL;
+    PLW_DLINKED_LIST pAdditionalsList = NULL;
     WORD iQuestion = 0;
 
     if (!pData)
@@ -652,13 +652,13 @@ LWNetDnsParseRecords(
     IN PDNS_RESPONSE_HEADER pHeader,
     IN WORD wNRecords,
     IN PBYTE pData,
-    OUT PDLINKEDLIST* ppRecordList,
+    OUT PLW_DLINKED_LIST* ppRecordList,
     OUT PDWORD pdwBytesToAdvance
     )
 {
     DWORD dwError = 0;
     PBYTE pCurrent = pData;
-    PDLINKEDLIST pRecordList = NULL;
+    PLW_DLINKED_LIST pRecordList = NULL;
     PDNS_RECORD pRecord = NULL;
     DWORD dwBytesToAdvance = 0;
     WORD iRecord = 0;
@@ -670,7 +670,7 @@ LWNetDnsParseRecords(
         dwError = LWNetDnsParseRecord(pHeader, pCurrent, &pRecord, &dwLen);
         BAIL_ON_LWNET_ERROR(dwError);
 
-        dwError = LWNetDLinkedListAppend(&pRecordList, pRecord);
+        dwError = LwDLinkedListAppend(&pRecordList, pRecord);
         BAIL_ON_LWNET_ERROR(dwError);
 
         pRecord = NULL;
@@ -837,15 +837,15 @@ LWNetDnsFreeRecord(
 DWORD
 LWNetDnsBuildSRVRecordList(
     IN PDNS_RESPONSE_HEADER pHeader,
-    IN PDLINKEDLIST pAnswersList,
-    IN PDLINKEDLIST pAdditionalsList,
-    OUT PDLINKEDLIST* ppSRVRecordList
+    IN PLW_DLINKED_LIST pAnswersList,
+    IN PLW_DLINKED_LIST pAdditionalsList,
+    OUT PLW_DLINKED_LIST* ppSRVRecordList
     )
 {
     DWORD dwError = 0;
     PDNS_SRV_INFO_RECORD pSRVRecord = NULL;
-    PDLINKEDLIST pListMember = NULL;
-    PDLINKEDLIST pSRVRecordList = NULL;
+    PLW_DLINKED_LIST pListMember = NULL;
+    PLW_DLINKED_LIST pSRVRecordList = NULL;
     
     pListMember = pAnswersList;
     while (pListMember)
@@ -866,7 +866,7 @@ LWNetDnsBuildSRVRecordList(
         }
         else
         {
-            dwError = LWNetDLinkedListAppend(&pSRVRecordList, pSRVRecord);
+            dwError = LwDLinkedListAppend(&pSRVRecordList, pSRVRecord);
             BAIL_ON_LWNET_ERROR(dwError);
 
             pSRVRecord = NULL;
@@ -894,7 +894,7 @@ DWORD
 LWNetDnsBuildSRVRecord(
     IN PDNS_RESPONSE_HEADER pHeader,
     IN PDNS_RECORD pAnswerRecord,
-    IN PDLINKEDLIST pAdditionalsList,
+    IN PLW_DLINKED_LIST pAdditionalsList,
     OUT PDNS_SRV_INFO_RECORD* ppSRVInfoRecord
     )
 {
@@ -951,14 +951,14 @@ error:
 
 DWORD
 LWNetDnsGetAddressForServer(
-    IN PDLINKEDLIST pAdditionalsList,
+    IN PLW_DLINKED_LIST pAdditionalsList,
     IN PCSTR pszHostname,
     OUT PSTR* ppszAddress
     )
 {
     DWORD dwError = 0;
     PSTR  pszAddress = NULL;
-    PDLINKEDLIST pListMember = NULL;
+    PLW_DLINKED_LIST pListMember = NULL;
     
     pListMember = pAdditionalsList;
     while (pListMember)
@@ -1016,7 +1016,7 @@ error:
 
 DWORD
 LWNetDnsBuildServerArray(
-    IN PDLINKEDLIST pSrvRecordList,
+    IN PLW_DLINKED_LIST pSrvRecordList,
     OUT PDNS_SERVER_INFO* ppServerArray,
     OUT PDWORD pdwServerCount
     )
@@ -1024,7 +1024,7 @@ LWNetDnsBuildServerArray(
     DWORD dwError = 0;
     DWORD dwServerCount = 0;
     PDNS_SERVER_INFO pServerArray = NULL;
-    PDLINKEDLIST pListMember = NULL;
+    PLW_DLINKED_LIST pListMember = NULL;
     PDNS_SRV_INFO_RECORD pSrvRecord = NULL;
     DWORD dwServerIndex = 0;
     DWORD dwStringSize = 0;
@@ -1127,20 +1127,20 @@ LWNetDnsFreeSRVInfoRecord(
 
 VOID
 LWNetDnsFreeDnsRecordLinkedList(
-    IN OUT PDLINKEDLIST DnsRecordList
+    IN OUT PLW_DLINKED_LIST DnsRecordList
     )
 {
-    LWNetDLinkedListForEach(DnsRecordList, LWNetDnsFreeRecordInList, NULL);
-    LWNetDLinkedListFree(DnsRecordList);
+    LwDLinkedListForEach(DnsRecordList, LWNetDnsFreeRecordInList, NULL);
+    LwDLinkedListFree(DnsRecordList);
 }
 
 VOID
 LWNetDnsFreeSrvInfoLinkedList(
-    IN OUT PDLINKEDLIST SrvInfoList
+    IN OUT PLW_DLINKED_LIST SrvInfoList
     )
 {
-    LWNetDLinkedListForEach(SrvInfoList, LWNetDnsFreeSRVInfoRecordInList, NULL);
-    LWNetDLinkedListFree(SrvInfoList);
+    LwDLinkedListForEach(SrvInfoList, LWNetDnsFreeSRVInfoRecordInList, NULL);
+    LwDLinkedListFree(SrvInfoList);
 }
 
 DWORD
@@ -1334,9 +1334,9 @@ LWNetDnsSrvQuery(
     PVOID pBuffer = NULL;
     PDNS_RESPONSE_HEADER pResponse = NULL;
     DWORD dwResponseSize = 0;
-    PDLINKEDLIST pAnswersList = NULL;
-    PDLINKEDLIST pAdditionalsList = NULL;
-    PDLINKEDLIST pSRVRecordList = NULL;
+    PLW_DLINKED_LIST pAnswersList = NULL;
+    PLW_DLINKED_LIST pAdditionalsList = NULL;
+    PLW_DLINKED_LIST pSRVRecordList = NULL;
     PDNS_SERVER_INFO pServerArray = NULL;
     DWORD dwServerCount = 0;
 

@@ -50,18 +50,6 @@
 #include <reg/lwreg.h>
 #include <lw/rtllog.h>
 
-typedef struct __DLINKEDLIST
-{
-    PVOID pItem;
-    
-    struct __DLINKEDLIST * pNext;
-    
-    struct __DLINKEDLIST * pPrev;
-    
-} DLINKEDLIST, *PDLINKEDLIST;
-
-typedef VOID (*PFN_DLINKEDLIST_FUNC)(PVOID pData, PVOID pUserData);
-
 typedef DWORD (*PFN_LWNET_FOREACH_STACK_ITEM)(PVOID pItem, PVOID pUserData);
 
 typedef struct __LWNET_STACK
@@ -170,36 +158,6 @@ LWNetFreeStringArray(
 void
 LWNetFreeNullTerminatedStringArray(
     PSTR * ppStringArray
-    );
-
-DWORD
-LWNetDLinkedList(
-    PDLINKEDLIST* ppList,
-    PVOID        pItem
-    );
-
-DWORD
-LWNetDLinkedListAppend(
-    PDLINKEDLIST* ppList,
-    PVOID        pItem
-    );
-
-BOOLEAN
-LWNetDLinkedListDelete(
-    PDLINKEDLIST* ppList,
-    PVOID        pItem
-    );
-
-VOID
-LWNetDLinkedListForEach(
-    PDLINKEDLIST          pList,
-    PFN_DLINKEDLIST_FUNC pFunc,
-    PVOID                pUserData
-    );
-
-VOID
-LWNetDLinkedListFree(
-    PDLINKEDLIST pList
     );
 
 DWORD

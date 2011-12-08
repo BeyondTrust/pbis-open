@@ -44,6 +44,7 @@
  *
  */
 #include "includes.h"
+#include <lwdlinked-list.h>
 
 #define ENABLE_CACHEDB_DEBUG 0
 
@@ -51,7 +52,7 @@
 #define FILEDB_FORMAT_VERSION 2
 
 struct _LWNET_CACHE_DB_HANDLE_DATA {
-    PDLINKEDLIST pCacheList;
+    PLW_DLINKED_LIST pCacheList;
     // This RW lock helps us to ensure that we don't stomp
     // ourselves while giving up good parallel access.
     // Note, however, that SQLite might still return busy errors
@@ -134,7 +135,7 @@ LWNetCacheDbReadFromRegistry(
 static
 DWORD
 LWNetCacheDbWriteToRegistry(
-    PDLINKEDLIST pCacheList
+    PLW_DLINKED_LIST pCacheList
     );
 
 static
@@ -291,11 +292,11 @@ LWNetCacheDbClose(
         if (dbHandle->pCacheList)
         {
             LWNetCacheDbWriteToRegistry(dbHandle->pCacheList);
-            LWNetDLinkedListForEach(
+            LwDLinkedListForEach(
                 dbHandle->pCacheList,
                 LWNetCacheDbForEachEntryDestroy,
                 NULL);
-            LWNetDLinkedListFree(dbHandle->pCacheList);
+            LwDLinkedListFree(dbHandle->pCacheList);
         }
         if (dbHandle->pLock)
         {
@@ -878,7 +879,7 @@ error:
 static
 DWORD
 LWNetCacheDbWriteToRegistry(
-    PDLINKEDLIST pCacheList
+    PLW_DLINKED_LIST pCacheList
     )
 {
     HANDLE hReg = NULL;
@@ -1005,7 +1006,7 @@ LWNetCacheDbQuery(
     PSTR pszDnsDomainNameLower = NULL;
     PSTR pszSiteNameLower = NULL;
     PLWNET_CACHE_DB_ENTRY pEntry = NULL;
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
 
     if (pszDnsDomainName)
     {
@@ -1181,7 +1182,7 @@ LWNetCacheDbUpdate(
     DWORD dwError = 0;
     PLWNET_CACHE_DB_ENTRY pNewEntry = NULL;
     PLWNET_CACHE_DB_ENTRY pOldEntry = NULL;
-    PDLINKEDLIST pOldListEntry = NULL;
+    PLW_DLINKED_LIST pOldListEntry = NULL;
     BOOLEAN isAcquired = FALSE;
 
     dwError = LWNetAllocateMemory(sizeof(*pNewEntry), (PVOID *)&pNewEntry);
@@ -1292,14 +1293,14 @@ LWNetCacheDbUpdate(
 
     if (pOldListEntry)
     {
-        LWNetDLinkedListDelete(
+        LwDLinkedListDelete(
             &DbHandle->pCacheList,
             pOldEntry);
 
         LWNetCacheDbEntryFree(pOldEntry);
     }
 
-    dwError = LWNetDLinkedListAppend(
+    dwError = LwDLinkedListAppend(
                   &DbHandle->pCacheList,
                   pNewEntry);
     BAIL_ON_LWNET_ERROR(dwError);
@@ -1330,8 +1331,8 @@ LWNetCacheDbScavenge(
     LWNET_UNIX_TIME_T now = 0;
     LWNET_UNIX_TIME_T positiveTimeLimit = 0;
     PLWNET_CACHE_DB_ENTRY pEntry = NULL;
-    PDLINKEDLIST pListEntry = NULL;
-    PDLINKEDLIST pNextListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
+    PLW_DLINKED_LIST pNextListEntry = NULL;
     BOOLEAN isAcquired = FALSE;
 
     dwError = LWNetGetSystemTime(&now);
@@ -1348,7 +1349,7 @@ LWNetCacheDbScavenge(
 
         if (pEntry->LastPinged < positiveTimeLimit)
         {
-            LWNetDLinkedListDelete(
+            LwDLinkedListDelete(
                 &DbHandle->pCacheList,
                 pEntry);
 
@@ -1379,7 +1380,7 @@ LWNetCacheDbExport(
     DWORD dwError = 0;
     PLWNET_CACHE_DB_ENTRY pEntries = NULL;
     DWORD dwCount = 0;
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
     DWORD i = 0;
 
     RW_LOCK_ACQUIRE_READ(DbHandle->pLock);
