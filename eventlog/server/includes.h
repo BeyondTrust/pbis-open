@@ -59,6 +59,7 @@
 #include <lwfile.h>
 #include <lw/mapsecurity.h>
 #include <lwdef.h>
+#include <reg/lwreg.h>
 #include <assert.h>
 
 #include "eventlog_h.h"

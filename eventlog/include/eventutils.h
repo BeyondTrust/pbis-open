@@ -76,29 +76,6 @@ typedef struct __EVT_STACK
 
 } EVT_STACK, *PEVT_STACK;
 
-
-typedef struct __EVT_CONFIG_REG EVT_CONFIG_REG, *PEVT_CONFIG_REG;
-
-typedef enum
-{
-    EVTTypeString,
-    EVTTypeDword,
-    EVTTypeBoolean,
-    EVTTypeChar,
-    EVTTypeEnum
-} EVT_CONFIG_TYPE;
-
-typedef struct __EVT_CONFIG_TABLE
-{
-    PCSTR   pszName;
-    BOOLEAN bUsePolicy;
-    EVT_CONFIG_TYPE Type;
-    DWORD dwMin;
-    DWORD dwMax;
-    const PCSTR *ppszEnumNames;
-    PVOID pValue;
-} EVT_CONFIG_TABLE, *PEVT_CONFIG_TABLE;
-
 DWORD
 RPCAllocateMemory(
     DWORD dwSize,
@@ -120,63 +97,6 @@ RPCAllocateString(
 VOID
 RPCFreeString(
     PSTR pszString
-    );
-
-DWORD
-EVTProcessConfig(
-    PCSTR pszConfigKey,
-    PCSTR pszPolicyKey,
-    PEVT_CONFIG_TABLE pConfig,
-    DWORD dwConfigEntries
-    );
-
-DWORD
-EVTOpenConfig(
-    PCSTR pszConfigKey,
-    PCSTR pszPolicyKey,
-    PEVT_CONFIG_REG *ppReg
-    );
-
-VOID
-EVTCloseConfig(
-    PEVT_CONFIG_REG pReg
-    );
-
-DWORD
-EVTReadConfigString(
-    PEVT_CONFIG_REG pReg,
-    PCSTR   pszName,
-    BOOLEAN bUsePolicy,
-    PSTR    *ppszValue
-    );
-
-DWORD
-EVTReadConfigDword(
-    PEVT_CONFIG_REG pReg,
-    PCSTR pszName,
-    BOOLEAN bUsePolicy,
-    DWORD   dwMin,
-    DWORD   dwMax,
-    PDWORD pdwValue
-    );
-
-DWORD
-EVTReadConfigBoolean(
-    PEVT_CONFIG_REG pReg,
-    PCSTR pszName,
-    BOOLEAN bUsePolicy,
-    PBOOLEAN pbValue
-    );
-
-DWORD
-EVTReadConfigEnum(
-    PEVT_CONFIG_REG pReg,
-    PCSTR pszName,
-    BOOLEAN bUsePolicy,
-    DWORD dwMin,
-    DWORD dwMax,
-    const PCSTR *ppszEnumNames,
-    PDWORD pdwValue
     );
 
 DWORD

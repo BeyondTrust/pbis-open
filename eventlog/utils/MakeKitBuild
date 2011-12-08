@@ -1,7 +1,6 @@
 make()
 {
     UTILS_SOURCES="\
-        evtcfg.c    \
 	evtfutils.c \
 	evtrpcmem.c \
 	globals.c   \

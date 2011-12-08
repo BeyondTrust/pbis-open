@@ -375,48 +375,52 @@ EVTSetServerDefaults()
 static PSTR gpszAllowReadTo;
 static PSTR gpszAllowWriteTo;
 static PSTR gpszAllowDeleteTo;
-static EVT_CONFIG_TABLE gConfigDescription[] =
+static LWREG_CONFIG_ITEM gConfigDescription[] =
 {
     {
         "MaxDiskUsage",
         TRUE,
-        EVTTypeDword,
+        LwRegTypeDword,
         0,
         -1,
         NULL,
-        &(gServerInfo.dwMaxLogSize)
+        &(gServerInfo.dwMaxLogSize),
+        NULL
     },
     {
         "MaxNumEvents",
         TRUE,
-        EVTTypeDword,
+        LwRegTypeDword,
         0,
         -1,
         NULL,
-        &(gServerInfo.dwMaxRecords)
+        &(gServerInfo.dwMaxRecords),
+        NULL
     },
     {
         "MaxEventLifespan",
         TRUE,
-        EVTTypeDword,
+        LwRegTypeDword,
         0,
         -1,
         NULL,
-        &(gServerInfo.dwMaxAge)
+        &(gServerInfo.dwMaxAge),
+        NULL
     },
     {
         "EventDbPurgeInterval",
         TRUE,
-        EVTTypeDword,
+        LwRegTypeDword,
         0,
         -1,
         NULL,
-        &(gServerInfo.dwPurgeInterval)
+        &(gServerInfo.dwPurgeInterval),
+        NULL
     },
     {
         "RemoveEventsAsNeeded",
         TRUE,
-        EVTTypeBoolean,
+        LwRegTypeBoolean,
         0,
         -1,
         NULL,
@@ -425,38 +429,42 @@ static EVT_CONFIG_TABLE gConfigDescription[] =
     {
         "RegisterTcpIp",
         TRUE,
-        EVTTypeBoolean,
+        LwRegTypeBoolean,
         0,
         -1,
         NULL,
-        &(gServerInfo.bRegisterTcpIp)
+        &(gServerInfo.bRegisterTcpIp),
+        NULL
     },
     {
         "AllowReadTo",
         TRUE,
-        EVTTypeString,
+        LwRegTypeString,
         0,
         -1,
         NULL,
-        &gpszAllowReadTo
+        &gpszAllowReadTo,
+        NULL
     },
     {
         "AllowWriteTo",
         TRUE,
-        EVTTypeString,
+        LwRegTypeString,
         0,
         -1,
         NULL,
-        &gpszAllowWriteTo
+        &gpszAllowWriteTo,
+        NULL
     },
     {
         "AllowDeleteTo",
         TRUE,
-        EVTTypeString,
+        LwRegTypeString,
         0,
         -1,
         NULL,
-        &gpszAllowDeleteTo
+        &gpszAllowDeleteTo,
+        NULL
     }
 };
 
@@ -1001,7 +1009,7 @@ EVTReadEventLogConfigSettings()
     EVT_LOCK_SERVERINFO;
     bLocked = TRUE;
 
-    dwError = EVTProcessConfig(
+    dwError = RegProcessConfig(
                 "Services\\eventlog\\Parameters",
                 "Policy\\Services\\eventlog\\Parameters",
                 gConfigDescription,
