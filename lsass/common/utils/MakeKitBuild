@@ -2,7 +2,6 @@ make()
 {
     LSAUTILS_SOURCES="\
        dcinfo.c                \
-       dlinkedlist.c           \
        domaininfo.c            \
        fileutils.c             \
        globals.c               \

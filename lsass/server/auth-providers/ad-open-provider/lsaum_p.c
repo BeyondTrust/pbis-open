@@ -132,7 +132,7 @@ typedef struct _LSA_UM_STATE {
     PLSA_UM_USER_REFRESH_LIST UserList;
 
     /// Linked list of requests;
-    PDLINKEDLIST RequestList;
+    PLW_DLINKED_LIST RequestList;
 
     PLSA_UM_KSCHEDULES kSchedules;
 
@@ -176,7 +176,7 @@ LsaUmpFreeUserList(
 static
 VOID
 LsaUmpFreeRequestList(
-    PDLINKEDLIST pRequestList
+    PLW_DLINKED_LIST pRequestList
     );
 
 static
@@ -652,7 +652,7 @@ LsaUmpCheckUsers(
     BOOLEAN                   bDomainIsOffline = FALSE;
     BOOLEAN                   bShouldRefreshCreds = FALSE;
     BOOLEAN                   bUserIsActive = TRUE;
-    PDLINKEDLIST              pRequestList = NULL;
+    PLW_DLINKED_LIST              pRequestList = NULL;
     PLSA_UM_USER_REFRESH_LIST pUserList = NULL;
     PLSA_UM_USER_REFRESH_ITEM pItem = NULL;
     PLSA_UM_USER_REFRESH_ITEM pNextItem = NULL;
@@ -669,7 +669,7 @@ LsaUmpCheckUsers(
 
     if ( pRequestList )
     {
-        PDLINKEDLIST         pList = pRequestList;
+        PLW_DLINKED_LIST         pList = pRequestList;
         PLSA_UM_REQUEST_ITEM pRequest = NULL;
 
         // Find the last item so we can process the
@@ -1091,17 +1091,17 @@ LsaUmpForEachRequestDestroy(
 static
 VOID
 LsaUmpFreeRequestList(
-    PDLINKEDLIST pRequestList
+    PLW_DLINKED_LIST pRequestList
     )
 {
     if ( pRequestList )
     {
-        LsaDLinkedListForEach(
+        LwDLinkedListForEach(
             pRequestList,
             LsaUmpForEachRequestDestroy,
             NULL);
 
-        LsaDLinkedListFree(pRequestList);
+        LwDLinkedListFree(pRequestList);
     }
 
     return;
@@ -1119,7 +1119,7 @@ LsaUmpAddRequest(
 
     LSA_UM_STATE_LOCK(bInLock);
 
-    dwError = LsaDLinkedListPrepend(
+    dwError = LwDLinkedListPrepend(
                   &Handle->RequestList,
                   pRequest);
 

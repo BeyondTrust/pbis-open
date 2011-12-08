@@ -310,7 +310,7 @@ AD_GetLinkedCellInfo(
     IN PLSA_DM_LDAP_CONNECTION pConn,
     IN PCSTR pszCellDN,
     IN PCSTR pszDomain,
-    OUT PDLINKEDLIST* ppCellList
+    OUT PLW_DLINKED_LIST* ppCellList
     );
 
 DWORD

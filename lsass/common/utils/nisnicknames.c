@@ -62,7 +62,7 @@ LsaNISFreeNickname(
 DWORD
 LsaNISGetNicknames(
     PCSTR         pszNicknameFilePath,
-    PDLINKEDLIST* ppNicknameList
+    PLW_DLINKED_LIST* ppNicknameList
     )
 {
     typedef enum
@@ -71,7 +71,7 @@ LsaNISGetNicknames(
         NIS_NICKNAME_NAME
     } NISNicknameTokenType;
     DWORD dwError = 0;
-    PDLINKEDLIST pNicknameList = NULL;
+    PLW_DLINKED_LIST pNicknameList = NULL;
     BOOLEAN bFileExists = FALSE;
     PLSA_NIS_NICKNAME pNickname = NULL;
     FILE* fp = NULL;
@@ -183,7 +183,7 @@ LsaNISGetNicknames(
                             &pNickname->pszMapName);
             BAIL_ON_LSA_ERROR(dwError);
 
-            dwError = LsaDLinkedListAppend(
+            dwError = LwDLinkedListAppend(
                             &pNicknameList,
                             pNickname);
             BAIL_ON_LSA_ERROR(dwError);
@@ -224,12 +224,12 @@ error:
 
 PCSTR
 LsaNISLookupAlias(
-    PDLINKEDLIST pNicknameList,
+    PLW_DLINKED_LIST pNicknameList,
     PCSTR pszAlias
     )
 {
     PCSTR pszName = NULL;
-    PDLINKEDLIST pIter = pNicknameList;
+    PLW_DLINKED_LIST pIter = pNicknameList;
 
     for (; !pszName && pIter; pIter = pIter->pNext)
     {
@@ -246,14 +246,14 @@ LsaNISLookupAlias(
 
 VOID
 LsaNISFreeNicknameList(
-    PDLINKEDLIST pNicknameList
+    PLW_DLINKED_LIST pNicknameList
     )
 {
-    LsaDLinkedListForEach(
+    LwDLinkedListForEach(
                 pNicknameList,
                 &LsaNISFreeNicknameInList,
                 NULL);
-    LsaDLinkedListFree(pNicknameList);
+    LwDLinkedListFree(pNicknameList);
 }
 
 static

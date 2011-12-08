@@ -73,15 +73,15 @@ ADProviderFreeCellInfoNode(
 
 VOID
 ADProviderFreeCellList(
-    IN OUT PDLINKEDLIST pList
+    IN OUT PLW_DLINKED_LIST pList
     )
 {
-    LsaDLinkedListForEach(
+    LwDLinkedListForEach(
         pList,
         ADProviderFreeCellInfoNode,
         NULL);
 
-    LsaDLinkedListFree(pList);
+    LwDLinkedListFree(pList);
 }
 
 VOID

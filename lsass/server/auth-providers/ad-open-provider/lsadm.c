@@ -178,7 +178,7 @@ typedef struct _LSA_DM_STATE {
 
     /// List of domains (LSA_DM_DOMAIN_STATE).  It will contain the primary
     /// domain at the head.
-    PDLINKEDLIST DomainList;
+    PLW_DLINKED_LIST DomainList;
 
     /// Lock for general state (DomainList, etc).
     pthread_mutex_t* pMutex;
@@ -588,8 +588,8 @@ LsaDmpResetTrusts(
 {
     if (Handle->DomainList)
     {
-        LsaDLinkedListForEach(Handle->DomainList, LsaDmpForEachDomainDestroy, NULL);
-        LsaDLinkedListFree(Handle->DomainList);
+        LwDLinkedListForEach(Handle->DomainList, LsaDmpForEachDomainDestroy, NULL);
+        LwDLinkedListFree(Handle->DomainList);
         Handle->DomainList = NULL;
         Handle->pPrimaryDomain = NULL;
     }
@@ -1355,7 +1355,7 @@ LsaDmpFindDomain2(
     IN OPTIONAL PCSTR pszNetbiosDomainName
     )
 {
-    PDLINKEDLIST listEntry = NULL;
+    PLW_DLINKED_LIST listEntry = NULL;
     PLSA_DM_DOMAIN_STATE pFoundDomain = NULL;
 
     for (listEntry = Handle->DomainList;
@@ -1390,7 +1390,7 @@ LsaDmpFindDomain(
 /// @note The state must already be locked.
 ///
 {
-    PDLINKEDLIST listEntry = NULL;
+    PLW_DLINKED_LIST listEntry = NULL;
     PLSA_DM_DOMAIN_STATE pFoundDomain = NULL;
 
     for (listEntry = Handle->DomainList;
@@ -1471,7 +1471,7 @@ LsaDmpFindDomainBySid(
 /// @note The state must already be locked.
 ///
 {
-    PDLINKEDLIST listEntry = NULL;
+    PLW_DLINKED_LIST listEntry = NULL;
     PLSA_DM_DOMAIN_STATE pFoundDomain = NULL;
 
     for (listEntry = Handle->DomainList;
@@ -1638,12 +1638,12 @@ LsaDmAddTrustedDomain(
 
     if (IsSetFlag(dwTrustFlags, NETR_TRUST_FLAG_PRIMARY))
     {
-        dwError = LsaDLinkedListPrepend(&Handle->DomainList, pDomain);
+        dwError = LwDLinkedListPrepend(&Handle->DomainList, pDomain);
         BAIL_ON_LSA_ERROR(dwError);
     }
     else
     {
-        dwError = LsaDLinkedListAppend(&Handle->DomainList, pDomain);
+        dwError = LwDLinkedListAppend(&Handle->DomainList, pDomain);
         BAIL_ON_LSA_ERROR(dwError);
     }
     if (!pszTrusteeDnsDomainName)
@@ -1705,7 +1705,7 @@ LsaDmEnumDomains(
     IN OPTIONAL PVOID pContext
     )
 {
-    PDLINKEDLIST listEntry = NULL;
+    PLW_DLINKED_LIST listEntry = NULL;
 
     LsaDmpAcquireMutex(Handle->pMutex);
 

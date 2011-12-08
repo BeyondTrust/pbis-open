@@ -2482,7 +2482,7 @@ LsaAdBatchResolvePseudoObjectsWithLinkedCells(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_AD_PROVIDER_STATE pState = pContext->pState;
-    PDLINKEDLIST pCellNode = NULL;
+    PLW_DLINKED_LIST pCellNode = NULL;
     DWORD dwTotalFoundCount = 0;
     DWORD dwFoundInCellCount = 0;
     BOOLEAN bIsDefaultCell = FALSE;

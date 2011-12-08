@@ -53,6 +53,7 @@
 #include <lw/ntstatus.h>
 #include <lw/winerror.h>
 #include <lw/security-types.h>
+#include <lwdlinked-list.h>
 #include <pthread.h>
 
 #ifndef LW_ENDIAN_SWAP16
@@ -265,18 +266,6 @@ typedef struct __LSA_BIT_VECTOR
     PDWORD pVector;
 } LSA_BIT_VECTOR, *PLSA_BIT_VECTOR;
 
-typedef struct __DLINKEDLIST
-{
-    PVOID pItem;
-
-    struct __DLINKEDLIST * pNext;
-
-    struct __DLINKEDLIST * pPrev;
-
-} DLINKEDLIST, *PDLINKEDLIST;
-
-typedef VOID (*PFN_DLINKEDLIST_FUNC)(PVOID pData, PVOID pUserData);
-
 typedef DWORD (*PFN_LSA_FOREACH_STACK_ITEM)(PVOID pItem, PVOID pUserData);
 
 typedef struct __LSA_STACK
@@ -461,41 +450,6 @@ LsaBitVectorUnsetBit(
 VOID
 LsaBitVectorReset(
     PLSA_BIT_VECTOR pBitVector
-    );
-
-DWORD
-LsaDLinkedListPrepend(
-    PDLINKEDLIST* ppList,
-    PVOID        pItem
-    );
-
-DWORD
-LsaDLinkedListAppend(
-    PDLINKEDLIST* ppList,
-    PVOID        pItem
-    );
-
-BOOLEAN
-LsaDLinkedListDelete(
-    PDLINKEDLIST* ppList,
-    PVOID        pItem
-    );
-
-VOID
-LsaDLinkedListForEach(
-    PDLINKEDLIST          pList,
-    PFN_DLINKEDLIST_FUNC pFunc,
-    PVOID                pUserData
-    );
-
-DWORD
-LsaDLinkedListLength(
-    PDLINKEDLIST pList
-    );
-
-VOID
-LsaDLinkedListFree(
-    PDLINKEDLIST pList
     );
 
 DWORD
@@ -1012,18 +966,18 @@ LsaFreeDomainInfoContents(
 DWORD
 LsaNISGetNicknames(
     PCSTR         pszNicknameFilePath,
-    PDLINKEDLIST* ppNicknameList
+    PLW_DLINKED_LIST* ppNicknameList
     );
 
 PCSTR
 LsaNISLookupAlias(
-    PDLINKEDLIST pNicknameList,
+    PLW_DLINKED_LIST pNicknameList,
     PCSTR pszAlias
     );
 
 VOID
 LsaNISFreeNicknameList(
-    PDLINKEDLIST pNicknameList
+    PLW_DLINKED_LIST pNicknameList
     );
 
 DWORD

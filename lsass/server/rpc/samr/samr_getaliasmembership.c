@@ -82,7 +82,7 @@ SamrSrvGetAliasMembership(
     PSID pSid = NULL;
     DWORD i = 0;
     DWORD iGroup = 0;
-    PDLINKEDLIST pSidList = NULL;
+    PLW_DLINKED_LIST pSidList = NULL;
     HANDLE hDirectory = NULL;
     DWORD dwScope = 0;
     PWSTR pwszBase = NULL;
@@ -282,7 +282,7 @@ SamrSrvGetAliasMembership(
 
             if (RtlIsPrefixSid(pDomCtx->pDomainSid, pSid))
             {
-                dwError = LsaDLinkedListAppend(&pSidList, pSid);
+                dwError = LwDLinkedListAppend(&pSidList, pSid);
                 BAIL_ON_LSA_ERROR(dwError);
             }
             else
@@ -301,13 +301,13 @@ SamrSrvGetAliasMembership(
         }
     }
 
-    dwSidCount = LsaDLinkedListLength(pSidList);
+    dwSidCount = LwDLinkedListLength(pSidList);
 
     ntStatus = SamrSrvAllocateMemory(OUT_PPVOID(&Rids.pIds),
                                    sizeof(Rids.pIds[0]) * dwSidCount);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    LsaDLinkedListForEach(pSidList, SetRidsArray, (PVOID)&Rids);
+    LwDLinkedListForEach(pSidList, SetRidsArray, (PVOID)&Rids);
 
     pRids->dwCount = Rids.dwCount;
     pRids->pIds    = Rids.pIds;
@@ -332,8 +332,8 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszFilter);
     RTL_FREE(&pwszSid);
 
-    LsaDLinkedListForEach(pSidList, FreeSid, NULL);
-    LsaDLinkedListFree(pSidList);
+    LwDLinkedListForEach(pSidList, FreeSid, NULL);
+    LwDLinkedListFree(pSidList);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)

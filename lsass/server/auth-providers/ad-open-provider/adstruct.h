@@ -67,7 +67,7 @@ typedef struct _AD_PROVIDER_DATA
         CHAR szCellDN[256];
     } cell;
     // Contains type PAD_LINKED_CELL_INFO
-    PDLINKEDLIST pCellList;
+    PLW_DLINKED_LIST pCellList;
 } AD_PROVIDER_DATA, *PAD_PROVIDER_DATA;
 
 typedef struct _LSA_AD_CONFIG {
@@ -89,7 +89,7 @@ typedef struct _LSA_AD_CONFIG {
     PSTR                pszHomedirTemplate;
     DWORD               dwUmask;
     PSTR                pszSkelDirs;
-    PDLINKEDLIST        pUnresolvedMemberList;
+    PLW_DLINKED_LIST        pUnresolvedMemberList;
     PSTR                pszaIgnoreUserNameList;
     PSTR                pszaIgnoreGroupNameList;
     AD_CELL_SUPPORT     CellSupport;

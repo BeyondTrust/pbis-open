@@ -237,8 +237,8 @@ AD_OfflineInitializeOperatingMode(
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_AD_PROVIDER_STATE pState = pContext->pState;
     PAD_PROVIDER_DATA pProviderData = NULL;
-    PDLINKEDLIST pDomains = NULL;
-    const DLINKEDLIST* pPos = NULL;
+    PLW_DLINKED_LIST pDomains = NULL;
+    const LW_DLINKED_LIST* pPos = NULL;
     const LSA_DM_ENUM_DOMAIN_INFO* pDomain = NULL;
 
     dwError = ADState_GetDomainTrustList(

@@ -79,7 +79,7 @@ DWORD
 ADState_ReadFromRegistry(
     IN PCSTR pszDomainName,
     OUT OPTIONAL PAD_PROVIDER_DATA* ppProviderData,
-    OUT OPTIONAL PDLINKEDLIST* ppDomainList
+    OUT OPTIONAL PLW_DLINKED_LIST* ppDomainList
     );
 
 static
@@ -93,14 +93,14 @@ static
 DWORD
 ADState_ReadRegCellEntry(
     IN PCSTR pszRegistryPath,
-    IN OUT PDLINKEDLIST *ppCellList
+    IN OUT PLW_DLINKED_LIST *ppCellList
     );
 
 static
 DWORD
 ADState_ReadRegDomainEntry(
     IN PCSTR pszRegistryPath,
-    PDLINKEDLIST *ppDomainList
+    PLW_DLINKED_LIST *ppDomainList
     );
 
 static
@@ -212,7 +212,7 @@ DWORD
 ADState_GetDomainTrustList(
     IN PCSTR pszDomainName,
     // Contains type PLSA_DM_ENUM_DOMAIN_INFO
-    OUT PDLINKEDLIST* ppList
+    OUT PLW_DLINKED_LIST* ppList
     )
 {
     return ADState_ReadFromRegistry(
@@ -267,15 +267,15 @@ ADState_StoreDomainTrustList(
 VOID
 ADState_FreeEnumDomainInfoList(
     // Contains type PLSA_DM_ENUM_DOMAIN_INFO
-    IN OUT PDLINKEDLIST pList
+    IN OUT PLW_DLINKED_LIST pList
     )
 {
-    LsaDLinkedListForEach(
+    LwDLinkedListForEach(
         pList,
         ADState_FreeEnumDomainInfoCallback,
         NULL);
 
-    LsaDLinkedListFree(pList);
+    LwDLinkedListFree(pList);
 }
 
 static
@@ -283,12 +283,12 @@ DWORD
 ADState_ReadFromRegistry(
     IN PCSTR pszDomainName,
     OUT OPTIONAL PAD_PROVIDER_DATA* ppProviderData,
-    OUT OPTIONAL PDLINKEDLIST* ppDomainList
+    OUT OPTIONAL PLW_DLINKED_LIST* ppDomainList
     )
 {
     DWORD dwError = 0;
-    PDLINKEDLIST pRegCellList = NULL;
-    PDLINKEDLIST pRegDomainList = NULL;
+    PLW_DLINKED_LIST pRegCellList = NULL;
+    PLW_DLINKED_LIST pRegDomainList = NULL;
     PAD_PROVIDER_DATA pRegProviderData = NULL;
     PSTR pszRegistryPath = NULL;
 
@@ -396,7 +396,7 @@ ADState_WriteToRegistry(
     DWORD dwValuesCount = 0;
     DWORD i = 0;
     REG_DATA_TYPE domainTrustOrderType = 0;
-    PDLINKEDLIST pCellList = NULL;
+    PLW_DLINKED_LIST pCellList = NULL;
     HANDLE hReg = NULL;
     PSTR *ppszDomainTrustOrder = NULL;
     PSTR *ppszDomainTrustOrderAppend = NULL;
@@ -848,7 +848,7 @@ static
 DWORD
 ADState_ReadRegCellEntry(
     IN PCSTR pszRegistryPath,
-    IN OUT PDLINKEDLIST *ppCellList)
+    IN OUT PLW_DLINKED_LIST *ppCellList)
 {
     PAD_LINKED_CELL_INFO pListEntry = NULL;
     DWORD dwError = 0;
@@ -930,7 +930,7 @@ ADState_ReadRegCellEntry(
         BAIL_ON_LSA_ERROR(dwError);
         pListEntry->bIsForestCell = dwIsForestCell ? 1 : 0;
 
-        dwError = LsaDLinkedListAppend(
+        dwError = LwDLinkedListAppend(
                       ppCellList,
                       pListEntry);
         BAIL_ON_LSA_ERROR(dwError);
@@ -963,7 +963,7 @@ static
 DWORD
 ADState_ReadRegDomainEntry(
     IN PCSTR pszRegistryPath,
-    OUT PDLINKEDLIST *ppDomainList)
+    OUT PLW_DLINKED_LIST *ppDomainList)
 {
     HANDLE hReg = NULL;
     PAD_REGDB_DOMAIN_INFO pDomainInfo = NULL;
@@ -1245,7 +1245,7 @@ ADState_ReadRegDomainEntry(
                       &dwValueLen);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaDLinkedListAppend(
+        dwError = LwDLinkedListAppend(
                       ppDomainList,
                       pListEntry);
         BAIL_ON_LSA_ERROR(dwError);

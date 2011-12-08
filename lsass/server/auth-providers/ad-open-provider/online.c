@@ -161,10 +161,10 @@ AD_OnlineFinishInitializeDomainTrustsInfo(
     )
 {
     DWORD dwError = 0;
-    PDLINKEDLIST pDomains = NULL;
+    PLW_DLINKED_LIST pDomains = NULL;
     // Do not free pDomain
     PLSA_DM_ENUM_DOMAIN_INFO pDomain = NULL;
-    const DLINKEDLIST* pPos = NULL;
+    const LW_DLINKED_LIST* pPos = NULL;
     PLSA_DM_ENUM_DOMAIN_INFO* ppDomainInfo = NULL;
     DWORD dwDomainInfoCount = 0;
     PSTR pszDomainSid = NULL;
@@ -508,7 +508,7 @@ AD_GetLinkedCellInfo(
     IN PLSA_DM_LDAP_CONNECTION pConn,
     IN PCSTR pszCellDN,
     IN PCSTR pszDomain,
-    OUT PDLINKEDLIST* ppCellList
+    OUT PLW_DLINKED_LIST* ppCellList
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
@@ -537,7 +537,7 @@ AD_GetLinkedCellInfo(
     HANDLE hGCDirectory = (HANDLE)NULL;
     PLSA_DM_LDAP_CONNECTION pGcConn = NULL;
     LDAP* pGCLd = NULL;
-    PDLINKEDLIST pCellList = NULL;
+    PLW_DLINKED_LIST pCellList = NULL;
     HANDLE hDirectory = NULL;
     PSTR  pszCellDirectoryRoot = NULL;
     PSTR  pszLinkedCellDN = NULL;
@@ -684,7 +684,7 @@ AD_GetLinkedCellInfo(
                 pLinkedCellInfo->bIsForestCell = FALSE;
             }
 
-            dwError = LsaDLinkedListAppend(&pCellList, pLinkedCellInfo);
+            dwError = LwDLinkedListAppend(&pCellList, pLinkedCellInfo);
             BAIL_ON_LSA_ERROR(dwError);
             pLinkedCellInfo = NULL;
 

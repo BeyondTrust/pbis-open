@@ -1366,8 +1366,8 @@ ADLdap_GetAttributeValuesList(
     LDAPMessage* pMessage = NULL;
     DWORD dwCount = 0;
     DWORD dwTotalCount = 0;
-    PDLINKEDLIST pList = NULL;
-    PDLINKEDLIST pNode = NULL;
+    PLW_DLINKED_LIST pList = NULL;
+    PLW_DLINKED_LIST pNode = NULL;
     PLSA_AD_QUERY_LISTS_ENTRY pEntry = NULL;
     PSTR pszRangeAttr = NULL;
     LDAP* pLd = NULL;
@@ -1518,7 +1518,7 @@ ADLdap_GetAttributeValuesList(
         ppszValues = NULL;
         dwCount = 0;
 
-        dwError = LsaDLinkedListPrepend(&pList, pEntry);
+        dwError = LwDLinkedListPrepend(&pList, pEntry);
         BAIL_ON_LSA_ERROR(dwError);
         pEntry = NULL;
 
@@ -1588,7 +1588,7 @@ cleanup:
         PLSA_AD_QUERY_LISTS_ENTRY pEntry = (PLSA_AD_QUERY_LISTS_ENTRY)pNode->pItem;
         DestroyQueryListEntry(&pEntry);
     }
-    LsaDLinkedListFree(pList);
+    LwDLinkedListFree(pList);
 
     return dwError;
 

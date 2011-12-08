@@ -62,7 +62,7 @@ ParseArgs(
     int argc,
     char* argv[],
     PSTR* ppszLoginId,
-    PDLINKEDLIST* ppTaskList
+    PLW_DLINKED_LIST* ppTaskList
     );
 
 static
@@ -103,7 +103,7 @@ static
 DWORD
 ProcessAccountRights(
     PCSTR pszId,
-    PDLINKEDLIST pTaskList
+    PLW_DLINKED_LIST pTaskList
     );
 
 int
@@ -129,7 +129,7 @@ LsaAccountRightsMain(
     )
 {
     DWORD dwError = 0;
-    PDLINKEDLIST pTaskList = NULL;
+    PLW_DLINKED_LIST pTaskList = NULL;
     PSTR pszId = NULL;
     size_t dwErrorBufferSize = 0;
     BOOLEAN bPrintOrigError = TRUE;
@@ -145,8 +145,8 @@ LsaAccountRightsMain(
 cleanup:
     if (pTaskList)
     {
-        LsaDLinkedListForEach(pTaskList, &FreeTasksInList, NULL);
-        LsaDLinkedListFree(pTaskList);
+        LwDLinkedListForEach(pTaskList, &FreeTasksInList, NULL);
+        LwDLinkedListFree(pTaskList);
     }
 
     LW_SAFE_FREE_STRING(pszId);
@@ -201,7 +201,7 @@ ParseArgs(
     int   argc,
     char* argv[],
     PSTR* ppszId,
-    PDLINKEDLIST* ppTaskList
+    PLW_DLINKED_LIST* ppTaskList
     )
 {
     typedef enum {
@@ -216,7 +216,7 @@ ParseArgs(
     ParseMode parseMode = PARSE_MODE_OPEN;
     int iArg = 1;
     PSTR pArg = NULL;
-    PDLINKEDLIST pTaskList = NULL;
+    PLW_DLINKED_LIST pTaskList = NULL;
     PACCOUNT_RIGHTS_TASK pTask = NULL;
     PSTR pszId = NULL;
     PACCOUNT_RIGHTS_DATA pData = NULL;
@@ -301,7 +301,7 @@ ParseArgs(
                 pTask->taskType = AccountRightsTask_Add;
                 pTask->pData    = pData;
 
-                dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                dwError = LwDLinkedListAppend(&pTaskList, pTask);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 Enumerate = FALSE;
@@ -330,7 +330,7 @@ ParseArgs(
                     pTask->taskType = AccountRightsTask_Remove;
                     pTask->pData    = pData;
 
-                    dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                    dwError = LwDLinkedListAppend(&pTaskList, pTask);
                     BAIL_ON_LSA_ERROR(dwError);
 
                     dwError = LwAllocateString(pArg, &pszId);
@@ -362,7 +362,7 @@ ParseArgs(
                 pTask->taskType = AccountRightsTask_Remove;
                 pTask->pData    = pData;
 
-                dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                dwError = LwDLinkedListAppend(&pTaskList, pTask);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 Enumerate = FALSE;
@@ -382,7 +382,7 @@ ParseArgs(
                 pTask->taskType = AccountRightsTask_Enumerate;
                 pTask->pData    = NULL;
 
-                dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                dwError = LwDLinkedListAppend(&pTaskList, pTask);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 dwError = LwAllocateString(pArg, &pszId);
@@ -421,7 +421,7 @@ ParseArgs(
         pTask->taskType = AccountRightsTask_Enumerate;
         pTask->pData    = NULL;
 
-        dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+        dwError = LwDLinkedListAppend(&pTaskList, pTask);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -436,8 +436,8 @@ error:
 
     if (pTaskList)
     {
-        LsaDLinkedListForEach(pTaskList, FreeTasksInList, NULL);
-        LsaDLinkedListFree(pTaskList);
+        LwDLinkedListForEach(pTaskList, FreeTasksInList, NULL);
+        LwDLinkedListFree(pTaskList);
     }
 
     if (pTask)
@@ -601,7 +601,7 @@ static
 DWORD
 ProcessAccountRights(
     PCSTR pszId,
-    PDLINKEDLIST pTaskList
+    PLW_DLINKED_LIST pTaskList
     )
 {
     DWORD dwError = ERROR_SUCCESS;
@@ -613,7 +613,7 @@ ProcessAccountRights(
     LSA_QUERY_LIST Query = {0};
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     PSTR pszAccountSid = NULL;
-    PDLINKEDLIST pListNode = NULL;
+    PLW_DLINKED_LIST pListNode = NULL;
     DWORD i = 0;
     PWSTR *ppwszAccountRights = NULL;
     DWORD numAccountRights = 0;

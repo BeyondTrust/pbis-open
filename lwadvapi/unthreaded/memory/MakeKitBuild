@@ -9,7 +9,9 @@ make()
                 lwstr.c    \
                 lwsid.c    \
                 lwhash.c   \
-                lwbuffer.c" \
+                lwbuffer.c \
+                lwdlinked-list.c \
+		" \
             INCLUDEDIRS=". ../../include ../../include/public"
     mk_multiarch_done
 }

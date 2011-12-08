@@ -50,23 +50,23 @@
 
 static
 VOID
-LsaDLinkedListNodeCounter(
+LwDLinkedListNodeCounter(
     PVOID pData,
     PVOID pUserData
     );
 
 
 DWORD
-LsaDLinkedListPrepend(
-    PDLINKEDLIST* ppList,
+LwDLinkedListPrepend(
+    PLW_DLINKED_LIST* ppList,
     PVOID        pItem
     )
 {
     DWORD dwError = 0;
-    PDLINKEDLIST pList = NULL;
+    PLW_DLINKED_LIST pList = NULL;
     
-    dwError = LwAllocateMemory(sizeof(DLINKEDLIST), (PVOID*)&pList);
-    BAIL_ON_LSA_ERROR(dwError);
+    dwError = LwAllocateMemory(sizeof(LW_DLINKED_LIST), (PVOID*)&pList);
+    BAIL_ON_LW_ERROR(dwError);
     
     pList->pItem = pItem;
     
@@ -92,22 +92,22 @@ error:
 }
 
 DWORD
-LsaDLinkedListAppend(
-    PDLINKEDLIST* ppList,
+LwDLinkedListAppend(
+    PLW_DLINKED_LIST* ppList,
     PVOID        pItem
     )
 {
     DWORD dwError = 0;
-    PDLINKEDLIST pList = NULL;
+    PLW_DLINKED_LIST pList = NULL;
     
-    dwError = LwAllocateMemory(sizeof(DLINKEDLIST), (PVOID*)&pList);
-    BAIL_ON_LSA_ERROR(dwError);
+    dwError = LwAllocateMemory(sizeof(LW_DLINKED_LIST), (PVOID*)&pList);
+    BAIL_ON_LW_ERROR(dwError);
     
     pList->pItem = pItem;
     
     if (*ppList) {
-       PDLINKEDLIST pLast = NULL;
-       PDLINKEDLIST pCur = *ppList;
+       PLW_DLINKED_LIST pLast = NULL;
+       PLW_DLINKED_LIST pCur = *ppList;
        while (pCur) {
              pLast = pCur;
              pCur = pCur->pNext;
@@ -132,14 +132,14 @@ error:
 }
 
 BOOLEAN
-LsaDLinkedListDelete(
-    PDLINKEDLIST* ppList,
+LwDLinkedListDelete(
+    PLW_DLINKED_LIST* ppList,
     PVOID        pItem
     )
 {
     BOOLEAN bFound = FALSE;
-    PDLINKEDLIST pList = (ppList ? *ppList : NULL);
-    PDLINKEDLIST pCandidate = NULL;
+    PLW_DLINKED_LIST pList = (ppList ? *ppList : NULL);
+    PLW_DLINKED_LIST pCandidate = NULL;
     
     while (pList)
     {
@@ -172,9 +172,9 @@ LsaDLinkedListDelete(
 }
 
 VOID
-LsaDLinkedListForEach(
-    PDLINKEDLIST          pList,
-    PFN_DLINKEDLIST_FUNC pFunc,
+LwDLinkedListForEach(
+    PLW_DLINKED_LIST          pList,
+    PFN_LW_DLINKED_LIST_FUNC pFunc,
     PVOID                pUserData
     )
 {
@@ -185,13 +185,13 @@ LsaDLinkedListForEach(
 }
 
 DWORD
-LsaDLinkedListLength(
-    PDLINKEDLIST pList
+LwDLinkedListLength(
+    PLW_DLINKED_LIST pList
     )
 {
     DWORD dwCount = 0;
-    LsaDLinkedListForEach(pList,
-                          LsaDLinkedListNodeCounter,
+    LwDLinkedListForEach(pList,
+                          LwDLinkedListNodeCounter,
                           &dwCount);
 
     return dwCount;
@@ -199,13 +199,13 @@ LsaDLinkedListLength(
 
 
 VOID
-LsaDLinkedListFree(
-    PDLINKEDLIST pList
+LwDLinkedListFree(
+    PLW_DLINKED_LIST pList
     )
 {
     while (pList)
     {
-        PDLINKEDLIST pTmp = pList;
+        PLW_DLINKED_LIST pTmp = pList;
         pList = pList->pNext;
         LwFreeMemory(pTmp);
     }
@@ -214,7 +214,7 @@ LsaDLinkedListFree(
 
 static
 VOID
-LsaDLinkedListNodeCounter(
+LwDLinkedListNodeCounter(
     PVOID pData,
     PVOID pUserData
     )

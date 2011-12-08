@@ -595,7 +595,7 @@ MemCacheStoreFile(
     // do not free
     PLSA_LIST_LINKS pMemPos = NULL;
     // do not free
-    PDLINKEDLIST pPos = NULL;
+    PLW_DLINKED_LIST pPos = NULL;
     PSTR pszTempFile = NULL;
 
     ENTER_READER_RW_LOCK(&pConn->lock, bInLock);
@@ -856,7 +856,7 @@ MemCacheFindUserByName(
     PSTR pszDnsDomain = NULL;
     PSTR pszShortDomain = NULL;
     // Do not free
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
 
     ENTER_READER_RW_LOCK(&pConn->lock, bInLock);
 
@@ -979,7 +979,7 @@ MemCacheFindUserById(
     // Do not free
     PLW_HASH_TABLE pIndex = NULL;
     // Do not free
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
 
     ENTER_READER_RW_LOCK(&pConn->lock, bInLock);
 
@@ -1035,7 +1035,7 @@ MemCacheFindGroupByName(
     PLW_HASH_TABLE pIndex = NULL;
     PSTR pszKey = NULL;
     // Do not free
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
 
     ENTER_READER_RW_LOCK(&pConn->lock, bInLock);
 
@@ -1120,7 +1120,7 @@ MemCacheFindGroupById(
     // Do not free
     PLW_HASH_TABLE pIndex = NULL;
     // Do not free
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
 
     ENTER_READER_RW_LOCK(&pConn->lock, bInLock);
 
@@ -1332,11 +1332,11 @@ MemCacheEmptyCache(
     LSA_ASSERT(pConn->pParentSIDToMembershipList->sCount == 0);
     LSA_ASSERT(pConn->pChildSIDToMembershipList->sCount == 0);
 
-    LsaDLinkedListForEach(
+    LwDLinkedListForEach(
         pConn->pObjects,
         MemCacheFreeObjects,
         NULL);
-    LsaDLinkedListFree(pConn->pObjects);
+    LwDLinkedListFree(pConn->pObjects);
     pConn->pObjects = NULL;
 
     pConn->sCacheSize = 0;
@@ -1370,7 +1370,7 @@ MemCacheCheckSizeInLock(
     // Do not free
     PLW_HASH_TABLE pIndex = NULL;
     // Do not free
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
     // DWORD dwOut = 0;
     LW_HASH_ITERATOR iterator = {0};
     // Do not free
@@ -1442,7 +1442,7 @@ MemCacheRemoveObjectByHashKey(
     )
 {
     DWORD dwError = 0;
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
     PLSA_SECURITY_OBJECT pObject = NULL;
     PSTR pszKey = NULL;
 
@@ -1567,7 +1567,7 @@ MemCacheClearExistingObjectKeys(
 {
     DWORD dwError = 0;
     PSTR pszKey = NULL;
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pObject->pszDN))
     {
@@ -1944,15 +1944,15 @@ MemCacheResetWeight(
 
 VOID
 MemCacheMergeLists(
-    IN OUT PDLINKEDLIST pList1,
-    IN OUT PDLINKEDLIST pList2,
-    IN OUT PDLINKEDLIST pList2End
+    IN OUT PLW_DLINKED_LIST pList1,
+    IN OUT PLW_DLINKED_LIST pList2,
+    IN OUT PLW_DLINKED_LIST pList2End
     )
 {
     PLSA_SECURITY_OBJECT pObject1 = NULL;
     PLSA_SECURITY_OBJECT pObject2 = NULL;
-    PDLINKEDLIST pInsertAfter = pList1->pPrev;
-    PDLINKEDLIST pList1End = pList2;
+    PLW_DLINKED_LIST pInsertAfter = pList1->pPrev;
+    PLW_DLINKED_LIST pList1End = pList2;
 
     while (pList1 != pList1End && pList2 != pList2End)
     {
@@ -2001,9 +2001,9 @@ MemCacheMergeLists(
 
 // Returns the first item in the object list that is out of order, or NULL if
 // the entire list is ordered.
-PDLINKEDLIST
+PLW_DLINKED_LIST
 MemCacheFindOutOfOrderNode(
-    IN PDLINKEDLIST pList
+    IN PLW_DLINKED_LIST pList
     )
 {
     PLSA_SECURITY_OBJECT pCurObject = NULL;
@@ -2027,14 +2027,14 @@ MemCacheFindOutOfOrderNode(
 
 VOID
 MemCacheSortObjectList(
-    IN OUT PDLINKEDLIST* ppObjects
+    IN OUT PLW_DLINKED_LIST* ppObjects
     )
 {
-    DLINKEDLIST guardian = { 0 };
-    PDLINKEDLIST pObjects = *ppObjects;
-    PDLINKEDLIST pList1 = NULL;
-    PDLINKEDLIST pList2 = NULL;
-    PDLINKEDLIST pList2End = NULL;
+    LW_DLINKED_LIST guardian = { 0 };
+    PLW_DLINKED_LIST pObjects = *ppObjects;
+    PLW_DLINKED_LIST pList1 = NULL;
+    PLW_DLINKED_LIST pList2 = NULL;
+    PLW_DLINKED_LIST pList2End = NULL;
 
     if (pObjects)
     {
@@ -2098,7 +2098,7 @@ MemCacheRemoveOrphanedMemberships(
     LW_HASH_ENTRY *pEntry = NULL;
     PMEM_GROUP_MEMBERSHIP pMembership = NULL;
     BOOLEAN bOrphaned = FALSE;
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
     PMEM_GROUP_MEMBERSHIP pCompleteness = NULL;
 
     // Only one table needs to be enumerated to see all memberships
@@ -2259,7 +2259,7 @@ MemCacheSetPinnedObjectWeights(
     // Do not free
     PMEM_GROUP_MEMBERSHIP pMembership = NULL;
     // Do not free
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
 
     for (ssIndex = 0; ssIndex < PINNED_USER_COUNT; ssIndex++)
     {
@@ -2337,7 +2337,7 @@ MemCacheMaintainSizeCap(
     // Do not free
     PMEM_GROUP_MEMBERSHIP pMembership = NULL;
     // Do not free
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
     // Do not free
     LW_HASH_ENTRY *pEntry = NULL;
     LW_HASH_ITERATOR iterator = {0};
@@ -2375,7 +2375,7 @@ MemCacheMaintainSizeCap(
     dwError = MemCacheRemoveOrphanedMemberships(pConn);
     BAIL_ON_LSA_ERROR(dwError);
 
-    LsaDLinkedListForEach(
+    LwDLinkedListForEach(
         pConn->pObjects,
         MemCacheResetWeight,
         &now);
@@ -2595,7 +2595,7 @@ MemCacheStoreObjectEntryInLock(
 
     // Afterwards pConn->pObjects points to the new node with pObject
     // inside. This node pointer will stored in the hash tables.
-    dwError = LsaDLinkedListPrepend(
+    dwError = LwDLinkedListPrepend(
                     &pConn->pObjects,
                     pObject);
     BAIL_ON_LSA_ERROR(dwError);
@@ -3505,7 +3505,7 @@ MemCacheEnumUsersCache(
     // Do not free
     PLW_HASH_TABLE pIndex = NULL;
     // Do not free
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
     DWORD dwOut = 0;
 
     ENTER_READER_RW_LOCK(&pConn->lock, bInLock);
@@ -3595,7 +3595,7 @@ MemCacheEnumGroupsCache(
     // Do not free
     PLW_HASH_TABLE pIndex = NULL;
     // Do not free
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
     DWORD dwOut = 0;
 
     ENTER_READER_RW_LOCK(&pConn->lock, bInLock);
@@ -3682,7 +3682,7 @@ MemCacheFindObjectByDN(
     // Do not free
     PLW_HASH_TABLE pIndex = NULL;
     // Do not free
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
 
     ENTER_READER_RW_LOCK(&pConn->lock, bInLock);
 
@@ -3773,7 +3773,7 @@ MemCacheFindObjectBySid(
     // Do not free
     PLW_HASH_TABLE pIndex = NULL;
     // Do not free
-    PDLINKEDLIST pListEntry = NULL;
+    PLW_DLINKED_LIST pListEntry = NULL;
 
     ENTER_READER_RW_LOCK(&pConn->lock, bInLock);
 

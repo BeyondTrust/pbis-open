@@ -200,11 +200,11 @@ AD_FreeConfigContents(
 
     if (pConfig->pUnresolvedMemberList)
     {
-        LsaDLinkedListForEach(
+        LwDLinkedListForEach(
                         pConfig->pUnresolvedMemberList,
                         &AD_FreeConfigMemberInList,
                         NULL);
-        LsaDLinkedListFree(pConfig->pUnresolvedMemberList);
+        LwDLinkedListFree(pConfig->pUnresolvedMemberList);
         pConfig->pUnresolvedMemberList = NULL;
     }
 
@@ -833,7 +833,7 @@ AD_SetConfig_RequireMembershipOf(
 
         *pszEnd = '\0';
 
-        dwError = LsaDLinkedListAppend(
+        dwError = LwDLinkedListAppend(
                         &pConfig->pUnresolvedMemberList,
                         pszMember);
         BAIL_ON_LSA_ERROR(dwError);
@@ -1183,7 +1183,7 @@ AD_IsInMembersList_InLock(
     PCSTR pszMember
     )
 {
-    PDLINKEDLIST pIter = NULL;
+    PLW_DLINKED_LIST pIter = NULL;
     BOOLEAN      bInList = FALSE;
 
     for (pIter = pState->config.pUnresolvedMemberList;
@@ -1207,7 +1207,7 @@ AD_DeleteFromMembersList_InLock(
     PCSTR pszMember
     )
 {
-    PDLINKEDLIST pIter = NULL;
+    PLW_DLINKED_LIST pIter = NULL;
     PVOID        pItem = NULL;
 
     for (pIter = pState->config.pUnresolvedMemberList;
@@ -1223,7 +1223,7 @@ AD_DeleteFromMembersList_InLock(
 
     if (pItem)
     {
-        LsaDLinkedListDelete(&pState->config.pUnresolvedMemberList,
+        LwDLinkedListDelete(&pState->config.pUnresolvedMemberList,
                              pItem);
 
         LwFreeMemory(pItem);
@@ -1509,7 +1509,7 @@ AD_GetMemberLists(
     DWORD dwError = 0;
     BOOLEAN bInLock = FALSE;
     DWORD dwNumMembers = 0;
-    PDLINKEDLIST pIter = NULL;
+    PLW_DLINKED_LIST pIter = NULL;
     PSTR* ppszMembers = NULL;
     PLW_HASH_TABLE pAllowedMemberList = NULL;
 

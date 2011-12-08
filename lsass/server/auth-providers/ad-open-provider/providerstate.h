@@ -57,7 +57,7 @@ ADProviderFreeCellInfo(
 
 VOID
 ADProviderFreeCellList(
-    IN OUT PDLINKEDLIST pList
+    IN OUT PLW_DLINKED_LIST pList
     );
 
 VOID

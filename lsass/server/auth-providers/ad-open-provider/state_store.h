@@ -69,7 +69,7 @@ DWORD
 ADState_GetDomainTrustList(
     IN PCSTR pszDomainName,
     // Contains type PLSA_DM_ENUM_DOMAIN_INFO
-    OUT PDLINKEDLIST* ppList
+    OUT PLW_DLINKED_LIST* ppList
     );
 
 DWORD
@@ -88,7 +88,7 @@ ADState_AddDomainTrust(
 VOID
 ADState_FreeEnumDomainInfoList(
     // Contains type PLSA_DM_ENUM_DOMAIN_INFO
-    IN OUT PDLINKEDLIST pList
+    IN OUT PLW_DLINKED_LIST pList
     );
 
 #endif /* __STATE_STORE_H__ */

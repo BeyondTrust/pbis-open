@@ -5399,7 +5399,7 @@ LsaAdProviderLogConfigReloadEvent(
     DWORD dwError = 0;
     PSTR pszDescription = NULL;
     PSTR pszMemberList = NULL;
-    PDLINKEDLIST pIter = NULL;
+    PLW_DLINKED_LIST pIter = NULL;
 
     for (pIter = pState->config.pUnresolvedMemberList;
          pIter;

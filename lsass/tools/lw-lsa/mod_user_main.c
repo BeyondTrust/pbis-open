@@ -62,7 +62,7 @@ DWORD
 ModifyUser(
     PCSTR pszUid,
     PCSTR pszLoginId,
-    PDLINKEDLIST pTaskList
+    PLW_DLINKED_LIST pTaskList
     );
 
 static
@@ -72,7 +72,7 @@ ParseArgs(
     char* argv[],
     PSTR* ppszUid,
     PSTR* ppszLoginId,
-    PDLINKEDLIST* ppTaskList
+    PLW_DLINKED_LIST* ppTaskList
     );
 
 static
@@ -105,14 +105,14 @@ BOOLEAN
 ValidateArgs(
     PCSTR pszUid,
     PCSTR pszLoginId,
-    PDLINKEDLIST pTaskList
+    PLW_DLINKED_LIST pTaskList
     );
 
 static
 DWORD
 BuildUserModInfo(
     uid_t        uid,
-    PDLINKEDLIST pTaskList,
+    PLW_DLINKED_LIST pTaskList,
     PLSA_USER_MOD_INFO* ppUserModInfo
     );
 
@@ -124,7 +124,7 @@ LsaModUserMain(
     )
 {
     DWORD dwError = 0;
-    PDLINKEDLIST pTaskList = NULL;
+    PLW_DLINKED_LIST pTaskList = NULL;
     PSTR pszUid = NULL;
     PSTR pszLoginId = NULL;
     size_t dwErrorBufferSize = 0;
@@ -153,8 +153,8 @@ LsaModUserMain(
  cleanup:
 
      if (pTaskList) {
-         LsaDLinkedListForEach(pTaskList, &FreeTasksInList, NULL);
-         LsaDLinkedListFree(pTaskList);
+         LwDLinkedListForEach(pTaskList, &FreeTasksInList, NULL);
+         LwDLinkedListFree(pTaskList);
      }
 
      LW_SAFE_FREE_STRING(pszUid);
@@ -213,7 +213,7 @@ ParseArgs(
     char* argv[],
     PSTR* ppszUid,
     PSTR* ppszLoginId,
-    PDLINKEDLIST* ppTaskList
+    PLW_DLINKED_LIST* ppTaskList
     )
 {
     typedef enum {
@@ -236,7 +236,7 @@ ParseArgs(
     ParseMode parseMode = PARSE_MODE_OPEN;
     int iArg = 1;
     PSTR pArg = NULL;
-    PDLINKEDLIST pTaskList = NULL;
+    PLW_DLINKED_LIST pTaskList = NULL;
     PUSER_MOD_TASK pTask = NULL;
     PSTR    pszUid = NULL;
     PSTR    pszLoginId = NULL;
@@ -257,7 +257,7 @@ ParseArgs(
                    BAIL_ON_LSA_ERROR(dwError);
                    pTask->taskType = UserModTask_EnableUser;
 
-                   dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                   dwError = LwDLinkedListAppend(&pTaskList, pTask);
                    BAIL_ON_LSA_ERROR(dwError);
 
                    pTask = NULL;
@@ -269,7 +269,7 @@ ParseArgs(
                     BAIL_ON_LSA_ERROR(dwError);
                     pTask->taskType = UserModTask_DisableUser;
 
-                    dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                    dwError = LwDLinkedListAppend(&pTaskList, pTask);
                     BAIL_ON_LSA_ERROR(dwError);
 
                     pTask = NULL;
@@ -287,7 +287,7 @@ ParseArgs(
                     BAIL_ON_LSA_ERROR(dwError);
                     pTask->taskType = UserModTask_ChangePasswordAtNextLogon;
 
-                    dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                    dwError = LwDLinkedListAppend(&pTaskList, pTask);
                     BAIL_ON_LSA_ERROR(dwError);
 
                     pTask = NULL;
@@ -298,7 +298,7 @@ ParseArgs(
                     BAIL_ON_LSA_ERROR(dwError);
                     pTask->taskType = UserModTask_UnlockUser;
 
-                    dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                    dwError = LwDLinkedListAppend(&pTaskList, pTask);
                     BAIL_ON_LSA_ERROR(dwError);
 
                     pTask = NULL;
@@ -310,7 +310,7 @@ ParseArgs(
                     BAIL_ON_LSA_ERROR(dwError);
                     pTask->taskType = UserModTask_SetPasswordNeverExpires;
 
-                    dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                    dwError = LwDLinkedListAppend(&pTaskList, pTask);
                     BAIL_ON_LSA_ERROR(dwError);
 
                     pTask = NULL;
@@ -322,7 +322,7 @@ ParseArgs(
                     BAIL_ON_LSA_ERROR(dwError);
                     pTask->taskType = UserModTask_SetPasswordMustExpire;
 
-                    dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                    dwError = LwDLinkedListAppend(&pTaskList, pTask);
                     BAIL_ON_LSA_ERROR(dwError);
 
                     pTask = NULL;
@@ -389,7 +389,7 @@ ParseArgs(
                  dwError = LwAllocateString(pArg, &pTask->pszData);
                  BAIL_ON_LSA_ERROR(dwError);
 
-                 dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                 dwError = LwDLinkedListAppend(&pTaskList, pTask);
                  BAIL_ON_LSA_ERROR(dwError);
 
                  parseMode = PARSE_MODE_OPEN;
@@ -407,7 +407,7 @@ ParseArgs(
                 dwError = LwAllocateString(pArg, &pTask->pszData);
                 BAIL_ON_LSA_ERROR(dwError);
 
-                dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                dwError = LwDLinkedListAppend(&pTaskList, pTask);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 parseMode = PARSE_MODE_OPEN;
@@ -425,7 +425,7 @@ ParseArgs(
                 dwError = LwAllocateString(pArg, &pTask->pszData);
                 BAIL_ON_LSA_ERROR(dwError);
 
-                dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                dwError = LwDLinkedListAppend(&pTaskList, pTask);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 parseMode = PARSE_MODE_OPEN;
@@ -443,7 +443,7 @@ ParseArgs(
                 dwError = LwAllocateString(pArg, &pTask->pszData);
                 BAIL_ON_LSA_ERROR(dwError);
 
-                dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                dwError = LwDLinkedListAppend(&pTaskList, pTask);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 parseMode = PARSE_MODE_OPEN;
@@ -461,7 +461,7 @@ ParseArgs(
                 dwError = LwAllocateString(pArg, &pTask->pszData);
                 BAIL_ON_LSA_ERROR(dwError);
 
-                dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                dwError = LwDLinkedListAppend(&pTaskList, pTask);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 parseMode = PARSE_MODE_OPEN;
@@ -479,7 +479,7 @@ ParseArgs(
                 dwError = LwAllocateString(pArg, &pTask->pszData);
                 BAIL_ON_LSA_ERROR(dwError);
 
-                dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                dwError = LwDLinkedListAppend(&pTaskList, pTask);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 parseMode = PARSE_MODE_OPEN;
@@ -497,7 +497,7 @@ ParseArgs(
                 dwError = LwAllocateString(pArg, &pTask->pszData);
                 BAIL_ON_LSA_ERROR(dwError);
 
-                dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                dwError = LwDLinkedListAppend(&pTaskList, pTask);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 parseMode = PARSE_MODE_OPEN;
@@ -515,7 +515,7 @@ ParseArgs(
                 dwError = LwAllocateString(pArg, &pTask->pszData);
                 BAIL_ON_LSA_ERROR(dwError);
 
-                dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                dwError = LwDLinkedListAppend(&pTaskList, pTask);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 parseMode = PARSE_MODE_OPEN;
@@ -533,7 +533,7 @@ ParseArgs(
                 dwError = LwAllocateString(pArg, &pTask->pszData);
                 BAIL_ON_LSA_ERROR(dwError);
 
-                dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                dwError = LwDLinkedListAppend(&pTaskList, pTask);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 parseMode = PARSE_MODE_OPEN;
@@ -551,7 +551,7 @@ ParseArgs(
                 dwError = LwAllocateString(pArg, &pTask->pszData);
                 BAIL_ON_LSA_ERROR(dwError);
 
-                dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                dwError = LwDLinkedListAppend(&pTaskList, pTask);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 parseMode = PARSE_MODE_OPEN;
@@ -612,8 +612,8 @@ error:
     *ppTaskList = NULL;
 
     if (pTaskList) {
-        LsaDLinkedListForEach(pTaskList, FreeTasksInList, NULL);
-        LsaDLinkedListFree(pTaskList);
+        LwDLinkedListForEach(pTaskList, FreeTasksInList, NULL);
+        LwDLinkedListFree(pTaskList);
     }
 
     if (pTask) {
@@ -631,12 +631,12 @@ BOOLEAN
 ValidateArgs(
     PCSTR pszUid,
     PCSTR pszLoginId,
-    PDLINKEDLIST pTaskList
+    PLW_DLINKED_LIST pTaskList
     )
 {
     BOOLEAN bValid = FALSE;
 
-    PDLINKEDLIST pListMember = NULL;
+    PLW_DLINKED_LIST pListMember = NULL;
     BOOLEAN bEnableUser = FALSE;
     BOOLEAN bDisableUser = FALSE;
     BOOLEAN bSetChangePasswordAtNextLogon = FALSE;
@@ -833,7 +833,7 @@ DWORD
 ModifyUser(
     PCSTR pszUid,
     PCSTR pszLoginId,
-    PDLINKEDLIST pTaskList
+    PLW_DLINKED_LIST pTaskList
     )
 {
     DWORD dwError = 0;
@@ -928,12 +928,12 @@ static
 DWORD
 BuildUserModInfo(
     uid_t        uid,
-    PDLINKEDLIST pTaskList,
+    PLW_DLINKED_LIST pTaskList,
     PLSA_USER_MOD_INFO* ppUserModInfo
     )
 {
     DWORD dwError = 0;
-    PDLINKEDLIST pListMember = pTaskList;
+    PLW_DLINKED_LIST pListMember = pTaskList;
     PLSA_USER_MOD_INFO pUserModInfo = NULL;
 
     dwError = LsaBuildUserModInfo(uid, &pUserModInfo);

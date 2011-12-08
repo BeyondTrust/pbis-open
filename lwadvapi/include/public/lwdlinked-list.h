@@ -27,27 +27,75 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __INCLUDES_H__
-#define __INCLUDES_H__
+/*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        lwdlinkedlist.h
+ *
+ * Abstract:
+ *
+ *        Likewise Advanced API (lwadvapi) Doubly Linked List Functions
+ *
+ * Authors: Kyle Stemen <kstemen@likewise.com>
+ *          
+ */
+#ifndef __LWDLINKED_LIST_H__
+#define __LWDLINKED_LIST_H__
 
-#include "config.h"
-#include <lw/rtlmemory.h>
-#include <lw/security-types.h>
-#include <lw/security-api.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <assert.h>
+#include <lw/types.h>
+#include <lw/attrs.h>
 
-#include "lwerror.h"
-#include "bail.h"
-#include "lwmem.h"
-#include "lwstr.h"
-#include "lwdef.h"
-#include "lwhash.h"
-#include "lwdlinked-list.h"
-#include "sysfuncs_p.h"
+LW_BEGIN_EXTERN_C
 
-#endif /* __INCLUDES_H__ */
+typedef struct __LW_DLINKED_LIST
+{
+    PVOID pItem;
+
+    struct __LW_DLINKED_LIST * pNext;
+
+    struct __LW_DLINKED_LIST * pPrev;
+
+} LW_DLINKED_LIST, *PLW_DLINKED_LIST;
+
+typedef VOID (*PFN_LW_DLINKED_LIST_FUNC)(PVOID pData, PVOID pUserData);
+
+DWORD
+LwDLinkedListPrepend(
+    PLW_DLINKED_LIST* ppList,
+    PVOID        pItem
+    );
+
+DWORD
+LwDLinkedListAppend(
+    PLW_DLINKED_LIST* ppList,
+    PVOID        pItem
+    );
+
+BOOLEAN
+LwDLinkedListDelete(
+    PLW_DLINKED_LIST* ppList,
+    PVOID        pItem
+    );
+
+VOID
+LwDLinkedListForEach(
+    PLW_DLINKED_LIST          pList,
+    PFN_LW_DLINKED_LIST_FUNC pFunc,
+    PVOID                pUserData
+    );
+
+DWORD
+LwDLinkedListLength(
+    PLW_DLINKED_LIST pList
+    );
+
+VOID
+LwDLinkedListFree(
+    PLW_DLINKED_LIST pList
+    );
+
+LW_END_EXTERN_C
+
+#endif /* __LWDLINKED_LIST_H__ */

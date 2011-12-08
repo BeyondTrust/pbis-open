@@ -16,6 +16,8 @@ make()
             lwldap-error.h \
             lwdscache.h \
             lwhash.h \
-            lwbuffer.h" \
+            lwbuffer.h \
+            lwdlinked-list.h \
+	    " \
         HEADERDEPS="krb5.h gssapi.h ldap.h lwmsg/status.h"
 }

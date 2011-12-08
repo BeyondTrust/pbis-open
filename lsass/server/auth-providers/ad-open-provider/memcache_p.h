@@ -139,7 +139,7 @@ typedef struct _MEM_DB_CONNECTION
 
     //linked lists
     // pItem is of type PLSA_SECURITY_OBJECT
-    PDLINKEDLIST pObjects;
+    PLW_DLINKED_LIST pObjects;
 
     //indexes
     PLW_HASH_TABLE pDNToSecurityObject;
@@ -305,19 +305,19 @@ MemCacheResetWeight(
 
 VOID
 MemCacheMergeLists(
-    IN OUT PDLINKEDLIST pList1,
-    IN OUT PDLINKEDLIST pList2,
-    IN OUT PDLINKEDLIST pList2End
+    IN OUT PLW_DLINKED_LIST pList1,
+    IN OUT PLW_DLINKED_LIST pList2,
+    IN OUT PLW_DLINKED_LIST pList2End
     );
 
-PDLINKEDLIST
+PLW_DLINKED_LIST
 MemCacheFindOutOfOrderNode(
-    IN PDLINKEDLIST pList
+    IN PLW_DLINKED_LIST pList
     );
 
 VOID
 MemCacheSortObjectList(
-    IN OUT PDLINKEDLIST* ppObjects
+    IN OUT PLW_DLINKED_LIST* ppObjects
     );
 
 DWORD

@@ -124,7 +124,7 @@ PrintMapInfo_0(
 static
 VOID
 PrintNicknameTable(
-    PDLINKEDLIST pNicknameList
+    PLW_DLINKED_LIST pNicknameList
     );
 
 static
@@ -149,7 +149,7 @@ lw_ypmatch_main(
     BOOLEAN bPrintKeys = FALSE;
     BOOLEAN bPrintNicknameTable = FALSE;
     BOOLEAN bUseNicknameTable = TRUE;
-    PDLINKEDLIST pNISNicknameList = NULL;
+    PLW_DLINKED_LIST pNISNicknameList = NULL;
     PCSTR   pszNicknameFilePath = "/var/yp/nicknames";
     BOOLEAN bNoNicknameFile = FALSE;
 
@@ -655,10 +655,10 @@ PrintMapInfo_0(
 static
 VOID
 PrintNicknameTable(
-    PDLINKEDLIST pNicknameList
+    PLW_DLINKED_LIST pNicknameList
     )
 {
-    PDLINKEDLIST pIter = pNicknameList;
+    PLW_DLINKED_LIST pIter = pNicknameList;
 
     for (; pIter; pIter = pIter->pNext)
     {

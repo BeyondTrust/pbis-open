@@ -54,7 +54,7 @@ typedef struct __AD_CELL_COOKIE_DATA
 {
     // Initially, this is set to NULL to indicate that the primary cell
     // should be searched.
-    const DLINKEDLIST* pCurrentCell;
+    const LW_DLINKED_LIST* pCurrentCell;
     PLSA_DM_LDAP_CONNECTION pLdapConn;
     LW_SEARCH_COOKIE LdapCookie;
 

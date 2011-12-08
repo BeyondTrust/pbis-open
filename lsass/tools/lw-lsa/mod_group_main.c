@@ -65,7 +65,7 @@ ParseArgs(
     char* argv[],
     PSTR* ppszGid,
     PSTR* ppszGroupName,
-    PDLINKEDLIST* ppTaskList
+    PLW_DLINKED_LIST* ppTaskList
     );
 
 static
@@ -73,7 +73,7 @@ BOOLEAN
 ValidateArgs(
     PCSTR        pszGid,
     PCSTR        pszGroupName,
-    PDLINKEDLIST pTaskList
+    PLW_DLINKED_LIST pTaskList
     );
 
 static
@@ -106,21 +106,21 @@ DWORD
 ModifyGroup(
     PCSTR pszGid,
     PCSTR pszGroupName,
-    PDLINKEDLIST pTaskList
+    PLW_DLINKED_LIST pTaskList
     );
 
 static
 DWORD
 ResolveNames(
     HANDLE hLsaConnection,
-    PDLINKEDLIST pTaskList
+    PLW_DLINKED_LIST pTaskList
     );
 
 static
 DWORD
 BuildGroupModInfo(
     gid_t        gid,
-    PDLINKEDLIST pTaskList,
+    PLW_DLINKED_LIST pTaskList,
     PLSA_GROUP_MOD_INFO* ppGroupModInfo
     );
 
@@ -147,7 +147,7 @@ LsaModGroupMain(
     )
 {
     DWORD dwError = 0;
-    PDLINKEDLIST pTaskList = NULL;
+    PLW_DLINKED_LIST pTaskList = NULL;
     PSTR pszGid = NULL;
     PSTR pszGroupName = NULL;
     size_t dwErrorBufferSize = 0;
@@ -176,8 +176,8 @@ LsaModGroupMain(
  cleanup:
 
      if (pTaskList) {
-         LsaDLinkedListForEach(pTaskList, &FreeTasksInList, NULL);
-         LsaDLinkedListFree(pTaskList);
+         LwDLinkedListForEach(pTaskList, &FreeTasksInList, NULL);
+         LwDLinkedListFree(pTaskList);
      }
 
      LW_SAFE_FREE_STRING(pszGid);
@@ -236,7 +236,7 @@ ParseArgs(
     char* argv[],
     PSTR* ppszGid,
     PSTR* ppszGroupName,
-    PDLINKEDLIST* ppTaskList
+    PLW_DLINKED_LIST* ppTaskList
     )
 {
     typedef enum {
@@ -251,7 +251,7 @@ ParseArgs(
     ParseMode parseMode = PARSE_MODE_OPEN;
     int iArg = 1;
     PSTR pArg = NULL;
-    PDLINKEDLIST pTaskList = NULL;
+    PLW_DLINKED_LIST pTaskList = NULL;
     PGROUP_MOD_TASK pTask = NULL;
     PSTR pszGid = NULL;
     PSTR pszGroupName = NULL;
@@ -306,7 +306,7 @@ ParseArgs(
 
                  pTask->pData = pszRemoveMembers;
 
-                 dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                 dwError = LwDLinkedListAppend(&pTaskList, pTask);
                  BAIL_ON_LSA_ERROR(dwError);
 
                  parseMode = PARSE_MODE_OPEN;
@@ -326,7 +326,7 @@ ParseArgs(
 
                   pTask->pData = pszAddMembers;
 
-                  dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                  dwError = LwDLinkedListAppend(&pTaskList, pTask);
                   BAIL_ON_LSA_ERROR(dwError);
 
                   parseMode = PARSE_MODE_OPEN;
@@ -385,8 +385,8 @@ error:
     *ppTaskList = NULL;
 
     if (pTaskList) {
-        LsaDLinkedListForEach(pTaskList, FreeTasksInList, NULL);
-        LsaDLinkedListFree(pTaskList);
+        LwDLinkedListForEach(pTaskList, FreeTasksInList, NULL);
+        LwDLinkedListFree(pTaskList);
     }
 
     if (pTask) {
@@ -404,12 +404,12 @@ BOOLEAN
 ValidateArgs(
     PCSTR        pszGid,
     PCSTR        pszGroupName,
-    PDLINKEDLIST pTaskList
+    PLW_DLINKED_LIST pTaskList
     )
 {
     BOOLEAN bValid = FALSE;
 
-    PDLINKEDLIST pListMember = NULL;
+    PLW_DLINKED_LIST pListMember = NULL;
 
     for (pListMember = pTaskList; pListMember; pListMember = pListMember->pNext)
     {
@@ -504,7 +504,7 @@ DWORD
 ModifyGroup(
     PCSTR pszGid,
     PCSTR pszGroupName,
-    PDLINKEDLIST pTaskList
+    PLW_DLINKED_LIST pTaskList
     )
 {
     DWORD dwError = 0;
@@ -604,12 +604,12 @@ static
 DWORD
 ResolveNames(
     HANDLE hLsaConnection,
-    PDLINKEDLIST pTaskList
+    PLW_DLINKED_LIST pTaskList
     )
 {
     DWORD dwError = 0;
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    PDLINKEDLIST pListMember = pTaskList;
+    PLW_DLINKED_LIST pListMember = pTaskList;
     LSA_QUERY_LIST Query = {0};
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     PGROUP_MOD_TASK pTask = NULL;
@@ -719,12 +719,12 @@ static
 DWORD
 BuildGroupModInfo(
     gid_t        gid,
-    PDLINKEDLIST pTaskList,
+    PLW_DLINKED_LIST pTaskList,
     PLSA_GROUP_MOD_INFO* ppGroupModInfo
     )
 {
     DWORD dwError = 0;
-    PDLINKEDLIST pListMember = pTaskList;
+    PLW_DLINKED_LIST pListMember = pTaskList;
     PLSA_GROUP_MOD_INFO pGroupModInfo = NULL;
 
     dwError = LsaBuildGroupModInfo(gid, &pGroupModInfo);
