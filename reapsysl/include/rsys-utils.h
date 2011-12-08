@@ -78,47 +78,6 @@ typedef int64_t RSYS_UNIX_NS_TIME_T, *PRSYS_UNIX_NS_TIME_T;
 // This is in 100ns units from Jan 1, 1601:
 typedef int64_t RSYS_WINDOWS_TIME_T, *PRSYS_WINDOWS_TIME_T;
 
-
-typedef struct _RSYS_CONFIG_SETTINGS RSYS_CONFIG_SETTINGS, *PRSYS_CONFIG_SETTINGS;
-
-typedef enum
-{
-    Dword,
-    String,
-    Enum,
-    Boolean
-} RSysCfgType;
-
-typedef struct _RSYS_CONFIG_SETTING
-{
-    PCSTR pszSectionName;
-    PCSTR pszName;
-    BOOLEAN bUsePolicy;
-    RSysCfgType type;
-    DWORD dwMin;
-    DWORD dwMax;
-    const PCSTR* ppszEnumNames;
-    PVOID pvDest;
-    BOOLEAN bParsed;
-} RSYS_CONFIG_SETTING, *PRSYS_CONFIG_SETTING;
-
-struct _RSYS_CONFIG_SETTINGS
-{
-    DWORD dwCount;
-    PRSYS_CONFIG_SETTING pSettings;
-    PVOID pvUserData;
-};
-
-DWORD
-RSysParseConfigFileEx(
-    PVOID                            pData
-    );
-
-DWORD
-RSysParseConfigFile(
-    PRSYS_CONFIG_SETTINGS pSettings
-    );
-
 DWORD
 RSysDLinkedListAppend(
     PDLINKEDLIST* ppList,
@@ -141,14 +100,6 @@ RSysDLinkedListForEach(
 VOID
 RSysDLinkedListFree(
     PDLINKEDLIST pList
-    );
-
-DWORD
-RSysProcessConfig(
-    PCSTR pszConfigKey,
-    PCSTR pszPolicyKey,
-    PRSYS_CONFIG_SETTING pConfig,
-    DWORD dwConfigEntries
     );
 
 #endif /* __RSYS_UTILS_H__ */

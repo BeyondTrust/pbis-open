@@ -52,11 +52,6 @@ RSysSrvRefreshConfiguration(
     );
 
 DWORD
-RSysSrvApiGetConfigFilePath(
-    PSTR* ppszConfigFilePath
-    );
-
-DWORD
 RSysSrvApiInitConfig(
     PRSYS_SRV_API_CONFIG* ppConfig
     );
@@ -72,22 +67,9 @@ RSysSrvApiFreeConfig(
     );
 
 DWORD
-RSysSrvApiNewPattern(
-    PRSYS_CONFIG_SETTINGS pSettings,
-    PCSTR pszSectionName
-    );
-
-DWORD
-RSysSrvApiPatternValue(
-    PRSYS_CONFIG_SETTINGS pSettings,
-    PCSTR pszName,
-    PCSTR pszValue
-    );
-
-DWORD
 GetPatternListFromRegistry(
     PSTR pszKeyPath,
-    RSYS_CONFIG_SETTINGS* pConifgSettings
+    PRSYS_SRV_API_CONFIG pConfig
     );
 
 DWORD

@@ -123,42 +123,39 @@ RSysSrvApiReadConfig(
     BAIL_ON_RSYS_ERROR(dwError);
 
     {
-        RSYS_CONFIG_SETTING settingsArray[] = {
+        LWREG_CONFIG_ITEM settingsArray[] =
+        {
             {
-                "global",
                 "EscrowMicroseconds",
                 TRUE,
-                Dword,
+                LwRegTypeDword,
                 0,
                 -1,
                 NULL,
                 &pConfig->dwEscrowTime,
             },
             {
-                "global",
                 "LogUnmatchedErrorEvents",
                 TRUE,
-                Boolean,
+                LwRegTypeBoolean,
                 0,
                 1,
                 NULL,
                 &pConfig->bLogUnmatchedErrorEvents,
             },
             {
-                "global",
                 "LogUnmatchedWarningEvents",
                 TRUE,
-                Boolean,
+                LwRegTypeBoolean,
                 0,
                 1,
                 NULL,
                 &pConfig->bLogUnmatchedWarningEvents,
             },
             {
-                "global",
                 "LogUnmatchedInfoEvents",
                 TRUE,
-                Boolean,
+                LwRegTypeBoolean,
                 0,
                 1,
                 NULL,
@@ -166,22 +163,16 @@ RSysSrvApiReadConfig(
             },
         };
 
-        dwError = RSysProcessConfig(
+        dwError = RegProcessConfig(
                     "Services\\reapsysl\\Parameters",
                     "Policy\\Services\\reapsysl\\Parameters",
                     settingsArray,
                     sizeof(settingsArray)/sizeof(settingsArray[0]));
         BAIL_ON_RSYS_ERROR(dwError);
 
-        RSYS_CONFIG_SETTINGS settings = {
-            sizeof(settingsArray)/sizeof(settingsArray[0]),
-            settingsArray,
-            pConfig,
-        };
-
         dwError = GetPatternListFromRegistry(
                     "Services\\reapsysl\\Parameters\\Pattern",
-                    &settings);
+                    pConfig);
         BAIL_ON_RSYS_ERROR(dwError);
     }
 
@@ -352,7 +343,7 @@ error:
 DWORD
 GetPatternListFromRegistry(
     PSTR pszKeyPath,
-    RSYS_CONFIG_SETTINGS* pConfigSettings
+    PRSYS_SRV_API_CONFIG pConfig
     )
 {
     DWORD dwError = 0;
@@ -366,7 +357,6 @@ GetPatternListFromRegistry(
     PSTR pszKeyName = NULL;
     PSTR pszFullKeyName = NULL;
     int i =0;
-    PRSYS_SRV_API_CONFIG pConfig = (PRSYS_SRV_API_CONFIG)pConfigSettings->pvUserData;
     RSYS_MESSAGE_PATTERN* pPattern = NULL;
     PSTR pszParentKeyPath = NULL;
 
@@ -515,53 +505,48 @@ GetValuesFromRegistry(
     BAIL_ON_RSYS_ERROR(dwError);
 
     //Now read all the parameters and store it accordingly
-    RSYS_CONFIG_SETTING ConfigDescription[] =
+    LWREG_CONFIG_ITEM ConfigDescription[] =
     {
         {
-            "Pattern",
             "Type",
             FALSE,
-            String,
+            LwRegTypeString,
             0,
             -1,
             NULL,
             &(pPattern->pszEventType)
         },
         {
-            "Pattern",
             "Regex",
             FALSE,
-            String,
+            LwRegTypeString,
             0,
             -1,
             NULL,
             &(pPattern->pszRawMessageRegEx)
         },
         {
-            "Pattern",
             "UserNameIndex",
             FALSE,
-            Dword,
+            LwRegTypeDword,
             0,
             -1,
             NULL,
             &(pPattern->ulUserMatchIndex)
         },
         {
-            "Pattern",
             "UserType",
             FALSE,
-            Dword,
+            LwRegTypeDword,
             0,
             -1,
             NULL,
             &(pPattern->filter)
         },
         {
-            "Pattern",
             "Event",
             FALSE,
-            Dword,
+            LwRegTypeDword,
             0,
             -1,
             NULL,
@@ -575,7 +560,7 @@ GetValuesFromRegistry(
 
     pszToken = (char*)strtok_r(pszAbsoluteKey,"\\",&pszPath);
 
-    dwError = RSysProcessConfig(
+    dwError = RegProcessConfig(
                 pszPath,
                 pszPath,
                 ConfigDescription,
