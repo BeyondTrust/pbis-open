@@ -2,7 +2,6 @@ make()
 {
     UTIL_SOURCES="\
         globals.c           \
-        lwnet-cfg.c         \
         lwnet-dlinkedlist.c \
         lwnet-dns.c         \
         lwnet-futils.c      \

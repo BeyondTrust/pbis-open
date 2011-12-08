@@ -86,75 +86,82 @@ LWNET_SERVER_CONFIG gLWNetServerConfig = {
 };
 
 static
-LWNET_CONFIG gConfig[] =
+LWREG_CONFIG_ITEM gConfig[] =
 {
     {
         "PluginPath",
         FALSE, /* Don't look at policy. */
-        LWNetTypeString,
+        LwRegTypeString,
         0,
         -1,
         NULL,
-        &gLWNetServerConfig.pszPluginPath
+        &gLWNetServerConfig.pszPluginPath,
+        NULL
     },
     {
         "PingAgainTimeout",
         TRUE, /* Try policy. */
-        LWNetTypeDword,
+        LwRegTypeDword,
         0,
         -1,
         NULL,
-        &gLWNetServerConfig.dwPingAgainTimeoutSeconds
+        &gLWNetServerConfig.dwPingAgainTimeoutSeconds,
+        NULL
     },
     {
         "NegativeCacheTimeout",
         TRUE,
-        LWNetTypeDword,
+        LwRegTypeDword,
         0,
         -1,
         NULL,
-        &gLWNetServerConfig.dwNegativeCacheTimeoutSeconds
+        &gLWNetServerConfig.dwNegativeCacheTimeoutSeconds,
+        NULL
     },
     {
         "WritableRediscoveryTimeout",
         TRUE,
-        LWNetTypeDword,
+        LwRegTypeDword,
         0,
         -1,
         NULL,
-        &gLWNetServerConfig.dwWritableRediscoveryTimeoutSeconds
+        &gLWNetServerConfig.dwWritableRediscoveryTimeoutSeconds,
+        NULL
     },
     {
         "WritableTimestampMinimumChange",
         TRUE,
-        LWNetTypeDword,
+        LwRegTypeDword,
         0,
         -1,
         NULL,
-        &gLWNetServerConfig.dwWritableTimestampMinimumChangeSeconds
+        &gLWNetServerConfig.dwWritableTimestampMinimumChangeSeconds,
+        NULL
     },
     {
         "CLdapMaximumConnections",
         TRUE,
-        LWNetTypeDword,
+        LwRegTypeDword,
         0,
         -1,
         NULL,
-        &gLWNetServerConfig.dwCLdapMaximumConnections
+        &gLWNetServerConfig.dwCLdapMaximumConnections,
+        NULL
     },
     {
         "CLdapSearchTimeout",
         TRUE,
-        LWNetTypeDword,
+        LwRegTypeDword,
         0,
         -1,
         NULL,
-        &gLWNetServerConfig.dwCLdapSearchTimeoutSeconds
+        &gLWNetServerConfig.dwCLdapSearchTimeoutSeconds,
+        NULL
     },
     {
         "CLdapSingleConnectionTimeout",
         TRUE,
-        LWNetTypeDword,
+        LwRegTypeDword,
         0,
         -1,
         NULL,
@@ -163,11 +170,12 @@ LWNET_CONFIG gConfig[] =
     {
         "NetBiosUdpTimeout",
         TRUE,
-        LWNetTypeDword,
+        LwRegTypeDword,
         0,
         60,
         NULL,
-        &gLWNetServerConfig.dwNetBiosUdpTimeout
+        &gLWNetServerConfig.dwNetBiosUdpTimeout,
+        NULL
     },
     {
         "NetBiosWinsPrimary",
@@ -185,16 +193,18 @@ LWNET_CONFIG gConfig[] =
         -1,
         60,
         NULL,
-        &gLWNetServerConfig.pszWinsSecondaryServer
+        &gLWNetServerConfig.pszWinsSecondaryServer,
+        NULL
     },
     {
         "ResolveNameOrder",
         FALSE, /* Don't look at policy. */
-        LWNetTypeString,
+        LwRegTypeString,
         0,
         -1,
         NULL,
-        &gLWNetServerConfig.pszResolveNameOrder
+        &gLWNetServerConfig.pszResolveNameOrder,
+        NULL
     },
 };
 
@@ -207,7 +217,7 @@ LWNetSrvReadRegistry(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
 
-    dwError = LWNetProcessConfig(
+    dwError = RegProcessConfig(
                 "Services\\netlogon\\Parameters",
                 "Policy\\Services\\netlogon\\Parameters",
                 gConfig,

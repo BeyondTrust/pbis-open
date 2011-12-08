@@ -102,35 +102,6 @@ typedef int64_t LWNET_WINDOWS_TIME_T, *PLWNET_WINDOWS_TIME_T;
         BAIL_ON_LWNET_ERROR(dwError); \
     }
 
-typedef struct __LWNET_CONFIG_REG
-{
-    HANDLE hConnection;
-    HKEY hKey;
-    PSTR pszConfigKey;
-    PSTR pszPolicyKey;
-} LWNET_CONFIG_REG, *PLWNET_CONFIG_REG;
-
-typedef enum
-{
-    LWNetTypeString,
-    LWNetTypeDword,
-    LWNetTypeBoolean,
-    LWNetTypeEnum
-} LWNET_CONFIG_TYPE;
-
-typedef struct __LWNET_CONFIG
-{
-    PCSTR pszName;
-    BOOLEAN bUsePolicy;
-    LWNET_CONFIG_TYPE Type;
-    DWORD dwMin;
-    DWORD dwMax;
-    const PCSTR *ppszEnumNames;
-    PVOID pValue;
-} LWNET_CONFIG, *PLWNET_CONFIG;
-
-
-
 typedef struct _DNS_SERVER_INFO
 {
     PSTR pszName;
@@ -199,63 +170,6 @@ LWNetFreeStringArray(
 void
 LWNetFreeNullTerminatedStringArray(
     PSTR * ppStringArray
-    );
-
-DWORD
-LWNetProcessConfig(
-    PCSTR pszConfigKey,
-    PCSTR pszPolicyKey,
-    PLWNET_CONFIG pConfig,
-    DWORD dwConfigEntries
-    );
-
-DWORD
-LWNetOpenConfig(
-    PCSTR pszConfigKey,
-    PCSTR pszPolicyKey,
-    PLWNET_CONFIG_REG *ppReg
-    );
-
-DWORD
-LWNetReadConfigString(
-    PLWNET_CONFIG_REG pReg,
-    PCSTR   pszName,
-    BOOLEAN bUsePolicy,
-    PSTR    *ppszValue
-    );
-
-DWORD
-LWNetReadConfigDword(
-    PLWNET_CONFIG_REG pReg,
-    PCSTR   pszName,
-    BOOLEAN bUsePolicy,
-    DWORD dwMax,
-    DWORD dwMin,
-    PDWORD  pdwValue
-    );
-
-DWORD
-LWNetReadConfigBoolean(
-    PLWNET_CONFIG_REG pReg,
-    PCSTR pszName,
-    BOOLEAN bUsePolicy,
-    PBOOLEAN pbValue
-    );
-
-DWORD
-LWNetReadConfigEnum(
-    PLWNET_CONFIG_REG pReg,
-    PCSTR pszName,
-    BOOLEAN bUsePolicy,
-    DWORD dwMin,
-    DWORD dwMax,
-    const PCSTR *ppszEnumNames,
-    PDWORD pdwValue
-    );
-
-VOID
-LWNetCloseConfig(
-    PLWNET_CONFIG_REG pReg
     );
 
 DWORD
