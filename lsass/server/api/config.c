@@ -161,7 +161,7 @@ LsaSrvApiReadRegistry(
     LSA_SRV_API_CONFIG StagingConfig;
     PSTR pszDomainSeparator = NULL;
     PSTR pszSpaceReplacement = NULL;
-    LSA_CONFIG Config[] =
+    LWREG_CONFIG_ITEM Config[] =
     {
         {
            "EnableEventlog",
@@ -197,7 +197,7 @@ LsaSrvApiReadRegistry(
     dwError = LsaSrvApiInitConfig(&StagingConfig);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = LsaProcessConfig(
+    dwError = RegProcessConfig(
                 "Services\\lsass\\Parameters",
                 "Policy\\Services\\lsass\\Parameters",
                 Config,

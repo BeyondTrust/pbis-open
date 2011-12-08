@@ -742,7 +742,8 @@ RdrReadConfig(
             0,
             MAXDWORD,
             NULL,
-            &pConfig->bSmb2Enabled
+            &pConfig->bSmb2Enabled,
+            NULL
         },
         {
             "SigningEnabled",
@@ -751,7 +752,8 @@ RdrReadConfig(
             0,
             MAXDWORD,
             NULL,
-            &pConfig->bSmb2Enabled
+            &pConfig->bSmb2Enabled,
+            NULL
         },
         {
             "SigningRequired",
@@ -760,7 +762,8 @@ RdrReadConfig(
             0,
             MAXDWORD,
             NULL,
-            &pConfig->bSmb2Enabled
+            &pConfig->bSmb2Enabled,
+            NULL
         },
         {
             "IdleTimeout",
@@ -769,7 +772,8 @@ RdrReadConfig(
             1,
             300,
             NULL,
-            &dwIdleTimeout
+            &dwIdleTimeout,
+            NULL
         },
         {
             "ResponseTimeout",
@@ -778,7 +782,8 @@ RdrReadConfig(
             10,
             900,
             NULL,
-            &dwResponseTimeout
+            &dwResponseTimeout,
+            NULL
         },
         {
             "EchoTimeout",
@@ -787,7 +792,8 @@ RdrReadConfig(
             5,
             900,
             NULL,
-            &dwEchoTimeout
+            &dwEchoTimeout,
+            NULL
         },
         {
             "EchoInterval",
@@ -796,7 +802,8 @@ RdrReadConfig(
             30,
             1800,
             NULL,
-            &dwEchoInterval
+            &dwEchoInterval,
+            NULL
         },
         {
             "ConnectTimeout",
@@ -805,7 +812,8 @@ RdrReadConfig(
             5,
             900,
             NULL,
-            &dwConnectTimeout
+            &dwConnectTimeout,
+            NULL
         },
         {
             "MinCreditReserve",
@@ -814,7 +822,8 @@ RdrReadConfig(
             1,
             100,
             NULL,
-            &dwMinCreditReserve
+            &dwMinCreditReserve,
+            NULL
         },
     };
 

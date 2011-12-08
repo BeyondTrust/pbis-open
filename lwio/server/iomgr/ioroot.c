@@ -608,7 +608,8 @@ IopRootReadConfigDriver(
             0,
             MAXDWORD,
             NULL,
-            &pszDriverPath
+            &pszDriverPath,
+            NULL
         },
     };
 

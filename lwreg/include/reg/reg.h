@@ -212,6 +212,7 @@ typedef struct __LWREG_CONFIG_ITEM
     DWORD dwMax;
     const PCSTR *ppszEnumNames;
     PVOID pValue;
+    PDWORD pdwSize;
 } LWREG_CONFIG_ITEM, *PLWREG_CONFIG_ITEM;
 
 void

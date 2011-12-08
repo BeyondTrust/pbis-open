@@ -75,7 +75,8 @@ NtRegReadConfigString(
     PLWREG_CONFIG_REG pReg,
     PCSTR   pszName,
     BOOLEAN bUsePolicy,
-    PSTR    *ppszValue
+    PSTR    *ppszValue,
+    PDWORD  pdwSize
     );
 
 static
@@ -84,7 +85,8 @@ NtRegReadConfigMultiString(
     PLWREG_CONFIG_REG pReg,
     PCSTR   pszName,
     BOOLEAN bUsePolicy,
-    PSTR    **pppszValue
+    PSTR    *ppszValue,
+    PDWORD  pdwSize
     );
 
 static
@@ -144,8 +146,6 @@ NtRegProcessConfig(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwEntry = 0;
     PLWREG_CONFIG_REG pReg = NULL;
-    PSTR pszTmp = NULL;
-    PSTR *ppszTmp = NULL;
 
     ntStatus = NtRegOpenConfig(pszConfigKey, pszPolicyKey, &pReg);
     BAIL_ON_NT_STATUS(ntStatus);
@@ -165,13 +165,8 @@ NtRegProcessConfig(
                             pReg,
                             pConfig[dwEntry].pszName,
                             pConfig[dwEntry].bUsePolicy,
-                            &pszTmp);
-                if (ntStatus == STATUS_SUCCESS)
-                {
-                    /* Free the old string, if it existed. */
-                    LwRtlCStringFree((PSTR *)pConfig[dwEntry].pValue);
-                    *((PSTR *)pConfig[dwEntry].pValue) = pszTmp;
-                }
+                            pConfig[dwEntry].pValue,
+                            pConfig[dwEntry].pdwSize);
                 break;
 
             case LwRegTypeMultiString:
@@ -179,12 +174,8 @@ NtRegProcessConfig(
                             pReg,
                             pConfig[dwEntry].pszName,
                             pConfig[dwEntry].bUsePolicy,
-                            &ppszTmp);
-                if (ntStatus == STATUS_SUCCESS)
-                {
-                    RegFreeMultiStrsA(*(PSTR **)pConfig[dwEntry].pValue);
-                    *((PSTR **)pConfig[dwEntry].pValue) = ppszTmp;
-                }
+                            pConfig[dwEntry].pValue,
+                            pConfig[dwEntry].pdwSize);
                 break;
 
             case LwRegTypeDword:
@@ -318,11 +309,98 @@ NtRegReadConfigString(
     PLWREG_CONFIG_REG pReg,
     PCSTR   pszName,
     BOOLEAN bUsePolicy,
-    PSTR    *ppszValue
+    PSTR    *ppszValue,
+    PDWORD  pdwSize
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     BOOLEAN bGotValue = FALSE;
+    PSTR pszValue = NULL;
+    char szValue[MAX_VALUE_LENGTH];
+    DWORD dwType;
+    DWORD dwSize;
+
+    if ( bUsePolicy )
+    {
+        if (!pReg->pszPolicyKey)
+        {
+            ntStatus = STATUS_INVALID_PARAMETER;
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+
+        dwSize = sizeof(szValue);
+        memset(szValue, 0, dwSize);
+        ntStatus = NtRegGetValueA(
+                    pReg->hConnection,
+                    pReg->hKey,
+                    pReg->pszPolicyKey,
+                    pszName,
+                    RRF_RT_REG_SZ,
+                    &dwType,
+                    szValue,
+                    &dwSize);
+        if (!ntStatus)
+        {
+            bGotValue = TRUE;
+        }
+    }
+
+    if (!bGotValue )
+    {
+        dwSize = sizeof(szValue);
+        memset(szValue, 0, dwSize);
+        ntStatus = NtRegGetValueA(
+                    pReg->hConnection,
+                    pReg->hKey,
+                    pReg->pszConfigKey,
+                    pszName,
+                    RRF_RT_REG_SZ,
+                    &dwType,
+                    szValue,
+                    &dwSize);
+        if (!ntStatus)
+        {
+            bGotValue = TRUE;
+        }
+    }
+
+    if (bGotValue)
+    {
+        ntStatus = LwRtlCStringDuplicate(&pszValue, szValue);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        LwRtlCStringFree(ppszValue);
+        *ppszValue = pszValue;
+        pszValue = NULL;
+
+        if (pdwSize)
+        {
+            *pdwSize = dwSize;
+        }
+    }
+
+    ntStatus = 0;
+
+cleanup:
+    LwRtlCStringFree(&pszValue);
+    return ntStatus;
+
+error:
+    goto cleanup;
+}
+
+NTSTATUS
+NtRegReadConfigMultiString(
+    PLWREG_CONFIG_REG pReg,
+    PCSTR   pszName,
+    BOOLEAN bUsePolicy,
+    PSTR    *ppszValue,
+    PDWORD  pdwSize
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    BOOLEAN bGotValue = FALSE;
+    PSTR pszValue = NULL;
     char szValue[MAX_VALUE_LENGTH];
     DWORD dwType = 0;
     DWORD dwSize = 0;
@@ -342,78 +420,6 @@ NtRegReadConfigString(
                     pReg->hKey,
                     pReg->pszPolicyKey,
                     pszName,
-                    RRF_RT_REG_SZ,
-                    &dwType,
-                    szValue,
-                    &dwSize);
-        if (!ntStatus)
-        {
-            bGotValue = TRUE;
-        }
-    }
-
-    if (!bGotValue)
-    {
-        dwSize = sizeof(szValue);
-        memset(szValue, 0, dwSize);
-        ntStatus = NtRegGetValueA(
-                    pReg->hConnection,
-                    pReg->hKey,
-                    pReg->pszConfigKey,
-                    pszName,
-                    RRF_RT_REG_SZ,
-                    &dwType,
-                    szValue,
-                    &dwSize);
-        if (!ntStatus)
-        {
-            bGotValue = TRUE;
-        }
-    }
-
-    if (bGotValue)
-    {
-        ntStatus = LwRtlCStringDuplicate(ppszValue, szValue);
-        BAIL_ON_NT_STATUS(ntStatus);
-    }
-
-cleanup:
-    return ntStatus;
-
-error:
-    goto cleanup;
-}
-
-NTSTATUS
-NtRegReadConfigMultiString(
-    PLWREG_CONFIG_REG pReg,
-    PCSTR   pszName,
-    BOOLEAN bUsePolicy,
-    PSTR    **pppszValue
-    )
-{
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-    BOOLEAN bGotValue = FALSE;
-    BYTE szValue[MAX_VALUE_LENGTH];
-    PSTR *ppszValue = NULL;
-    DWORD dwType = 0;
-    DWORD dwSize = 0;
-
-    if (bUsePolicy)
-    {
-        if (!pReg->pszPolicyKey)
-        {
-            ntStatus = STATUS_INVALID_PARAMETER;
-            BAIL_ON_NT_STATUS(ntStatus);
-        }
-
-        dwSize = sizeof(szValue);
-        memset(szValue, 0, dwSize);
-        ntStatus = NtRegGetValueA(
-                    pReg->hConnection,
-                    pReg->hKey,
-                    pReg->pszPolicyKey,
-                    pszName,
                     RRF_RT_REG_MULTI_SZ,
                     &dwType,
                     szValue,
@@ -424,7 +430,7 @@ NtRegReadConfigMultiString(
         }
     }
 
-    if (!bGotValue)
+    if (!bGotValue )
     {
         dwSize = sizeof(szValue);
         memset(szValue, 0, dwSize);
@@ -445,12 +451,28 @@ NtRegReadConfigMultiString(
 
     if (bGotValue)
     {
-        ntStatus = NtRegByteArrayToMultiStrsA(szValue, dwSize, &ppszValue);
+        ntStatus = LW_RTL_ALLOCATE(&pszValue, char,
+                                        dwSize);
         BAIL_ON_NT_STATUS(ntStatus);
-        *pppszValue = ppszValue;
+
+        memcpy(pszValue, szValue, dwSize);
+
+        LwRtlCStringFree(ppszValue);
+        *ppszValue = pszValue;
+        pszValue = NULL;
+
+        if (pdwSize)
+        {
+            *pdwSize = dwSize;
+        }
     }
 
+    ntStatus = 0;
+
 cleanup:
+
+    LwRtlCStringFree(&pszValue);
+
     return ntStatus;
 
 error:
@@ -584,7 +606,8 @@ NtRegReadConfigEnum(
                 pReg,
                 pszName,
                 bUsePolicy,
-                &pszValue);
+                &pszValue,
+                NULL);
     BAIL_ON_NT_STATUS(ntStatus);
 
     if (pszValue != NULL )
