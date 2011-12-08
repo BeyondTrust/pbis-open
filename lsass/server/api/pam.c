@@ -51,12 +51,12 @@ LsaSrvGetPamConfig(
         "debug"
     };
 
-    LSA_CONFIG ConfigDescription[] =
+    LWREG_CONFIG_ITEM ConfigDescription[] =
     {
         {
             "LogLevel",
             TRUE,
-            LsaTypeEnum,
+            LwRegTypeEnum,
             LSA_PAM_LOG_LEVEL_DISABLED,
             LSA_PAM_LOG_LEVEL_DEBUG,
             LogLevels,
@@ -66,7 +66,7 @@ LsaSrvGetPamConfig(
         {
             "DisplayMOTD",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             0,
             NULL,
@@ -76,7 +76,7 @@ LsaSrvGetPamConfig(
         {
             "UserNotAllowedError",
             TRUE,
-            LsaTypeString,
+            LwRegTypeString,
             0,
             0,
             NULL,
@@ -86,7 +86,7 @@ LsaSrvGetPamConfig(
         {
             "SmartCardServices",
             TRUE,
-            LsaTypeMultiString,
+            LwRegTypeMultiString,
             0,
             0,
             NULL,
@@ -96,7 +96,7 @@ LsaSrvGetPamConfig(
         {
             "SmartCardPromptGecos",
             TRUE,
-            LsaTypeMultiString,
+            LwRegTypeMultiString,
             0,
             0,
             NULL,
@@ -113,7 +113,7 @@ LsaSrvGetPamConfig(
     dwError = LsaUtilInitializePamConfig(&PamConfig);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaProcessConfig(
+    dwError = RegProcessConfig(
                 "Services\\lsass\\Parameters\\PAM",
                 "Policy\\Services\\lsass\\Parameters\\PAM",
                 ConfigDescription,

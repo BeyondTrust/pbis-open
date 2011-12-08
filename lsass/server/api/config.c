@@ -166,7 +166,7 @@ LsaSrvApiReadRegistry(
         {
            "EnableEventlog",
            TRUE,
-           LsaTypeBoolean,
+           LwRegTypeBoolean,
            0,
            MAXDWORD,
            NULL,
@@ -176,7 +176,7 @@ LsaSrvApiReadRegistry(
         {
            "DomainSeparator",
            TRUE,
-           LsaTypeString,
+           LwRegTypeString,
            0,
            MAXDWORD,
            NULL,
@@ -185,7 +185,7 @@ LsaSrvApiReadRegistry(
         {
            "SpaceReplacement",
            TRUE,
-           LsaTypeString,
+           LwRegTypeString,
            0,
            MAXDWORD,
            NULL,

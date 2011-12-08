@@ -338,33 +338,30 @@ LsaRpcReadServer(
     )
 {
     DWORD dwError = 0;
-
-    PLSA_CONFIG_REG pReg = NULL;
-
     PLSA_RPC_SERVER pRpcSrv = NULL;
-
     PSTR pszPath = NULL;
-
-    dwError = LsaOpenConfig(
-                pszServerKey,
-                pszServerKey,
-                &pReg);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (pReg == NULL)
+    LWREG_CONFIG_ITEM Config[] =
     {
-        goto error;
-    }
+        {
+           "Path",
+           FALSE,
+           LwRegTypeString,
+           0,
+           MAXDWORD,
+           NULL,
+           &pszPath,
+           NULL
+        },
+    };
 
-    dwError = LsaReadConfigString(
-                pReg,
-                "Path",
-                FALSE,
-                &pszPath,
-                NULL);
+    dwError = RegProcessConfig(
+                pszServerKey,
+                pszServerKey,
+                Config,
+                sizeof(Config)/sizeof(Config[0]));
     BAIL_ON_LSA_ERROR(dwError);
 
-    if(!LW_IS_NULL_OR_EMPTY_STR(pszPath))
+    if (!LW_IS_NULL_OR_EMPTY_STR(pszPath))
     {
         dwError = LwAllocateMemory(
                     sizeof(LSA_RPC_SERVER),
@@ -382,10 +379,6 @@ LsaRpcReadServer(
     }
 
 cleanup:
-
-    LsaCloseConfig(pReg);
-    pReg = NULL;
-
     return dwError;
 
 error:
@@ -406,35 +399,31 @@ LsaRpcReadRegistry(
 {
     DWORD dwError = 0;
 
-    PLSA_CONFIG_REG pReg = NULL;
     PSTR pszServers = NULL;
     PSTR pszServerKey = NULL;
-
     PSTR pszServer = NULL;
+    LWREG_CONFIG_ITEM Config[] =
+    {
+        {
+           "LoadOrder",
+           FALSE,
+           LwRegTypeMultiString,
+           0,
+           MAXDWORD,
+           NULL,
+           &pszServers,
+           NULL
+        },
+    };
 
     BAIL_ON_INVALID_POINTER(ppRpcSrvList);
 
-    dwError = LsaOpenConfig(
+    dwError = RegProcessConfig(
                 "Services\\lsass\\Parameters\\RPCServers",
                 "Policy\\Services\\lsass\\Parameters\\RPCServers",
-                &pReg);
+                Config,
+                sizeof(Config)/sizeof(Config[0]));
     BAIL_ON_LSA_ERROR(dwError);
-
-    if (pReg == NULL)
-    {
-        goto error;
-    }
-
-    dwError = LsaReadConfigMultiString(
-                pReg,
-                "LoadOrder",
-                FALSE,
-                &pszServers,
-                NULL);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LsaCloseConfig(pReg);
-    pReg = NULL;
 
     if (LW_IS_NULL_OR_EMPTY_STR(pszServers) )
     {
@@ -463,10 +452,6 @@ LsaRpcReadRegistry(
 cleanup:
     LW_SAFE_FREE_STRING(pszServers);
     LW_SAFE_FREE_STRING(pszServerKey);
-
-    LsaCloseConfig(pReg);
-    pReg = NULL;
-
     return dwError;
 
 error:

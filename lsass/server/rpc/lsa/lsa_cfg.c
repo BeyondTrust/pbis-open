@@ -96,67 +96,61 @@ LsaSrvReadRegistry(
     )
 {
     DWORD dwError = 0;
+    LWREG_CONFIG_ITEM LsaConfig[] =
+    {
+        {
+           "LpcSocketPath",
+           FALSE,
+           LwRegTypeString,
+           0,
+           MAXDWORD,
+           NULL,
+           &pConfig->pszLpcSocketPath,
+           NULL
+        },
+        {
+           "RegisterTcpIp",
+           TRUE,
+           LwRegTypeBoolean,
+           0,
+           MAXDWORD,
+           NULL,
+           &pConfig->bRegisterTcpIp,
+           NULL
+        },
+    };
+    LWREG_CONFIG_ITEM SamrConfig[] =
+    {
+        {
+           "LpcSocketPath",
+           FALSE,
+           LwRegTypeString,
+           0,
+           MAXDWORD,
+           NULL,
+           &pConfig->pszSamrLpcSocketPath,
+           NULL
+        },
+    };
 
-    PLSA_CONFIG_REG pReg = NULL;
-
-    dwError = LsaOpenConfig(
+    dwError = RegProcessConfig(
                 "Services\\lsass\\Parameters\\RPCServers\\lsarpc",
                 "Policy\\Services\\lsass\\Parameters\\RPCServers\\lsarpc",
-                &pReg);
+                LsaConfig,
+                sizeof(LsaConfig)/sizeof(LsaConfig[0]));
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (!pReg)
-    {
-        goto error;
-    }
-
-    dwError = LsaReadConfigString(
-                pReg,
-                "LpcSocketPath",
-                FALSE,
-                &pConfig->pszLpcSocketPath,
-                NULL);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaReadConfigBoolean(
-                pReg,
-                "RegisterTcpIp",
-                TRUE,
-                &pConfig->bRegisterTcpIp);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LsaCloseConfig(pReg);
-    pReg = NULL;
-
-    dwError = LsaOpenConfig(
+    dwError = RegProcessConfig(
                 "Services\\lsass\\Parameters\\RPCServers\\samr",
                 "Policy\\Services\\lsass\\Parameters\\RPCServers\\samr",
-                &pReg);
+                SamrConfig,
+                sizeof(SamrConfig)/sizeof(SamrConfig[0]));
     BAIL_ON_LSA_ERROR(dwError);
-
-    if (!pReg)
-    {
-        goto error;
-    }
-
-    dwError = LsaReadConfigString(
-                pReg,
-                "LpcSocketPath",
-                FALSE,
-                &pConfig->pszSamrLpcSocketPath,
-                NULL);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LsaCloseConfig(pReg);
-    pReg = NULL;
 
 cleanup:
     return dwError;
 
 error:
-    LsaCloseConfig(pReg);
-    pReg = NULL;
-
     goto cleanup;
 }
 

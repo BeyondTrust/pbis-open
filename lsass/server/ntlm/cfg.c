@@ -60,12 +60,12 @@ NtlmReadRegistry(
     pConfig->bSupport56bit = TRUE;
     pConfig->bSupport128bit = TRUE;
 
-    LSA_CONFIG configItems[] =
+    LWREG_CONFIG_ITEM configItems[] =
     {
         {
             "SendNTLMv2",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -75,7 +75,7 @@ NtlmReadRegistry(
         {
             "SupportUnicode",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -85,7 +85,7 @@ NtlmReadRegistry(
         {
             "SupportNTLM2SessionSecurity",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -95,7 +95,7 @@ NtlmReadRegistry(
         {
             "SupportKeyExchange",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -105,7 +105,7 @@ NtlmReadRegistry(
         {
             "Support56bit",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -115,7 +115,7 @@ NtlmReadRegistry(
         {
             "Support128bit",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -124,7 +124,7 @@ NtlmReadRegistry(
         },
     };
 
-    dwError = LsaProcessConfig(
+    dwError = RegProcessConfig(
                 "Services\\lsass\\Parameters\\NTLM",
                 "Policy\\Services\\lsass\\Parameters\\NTLM",
                 configItems,

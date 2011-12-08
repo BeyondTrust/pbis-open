@@ -126,11 +126,11 @@ LocalSyncDomainInfo(
     LONG64 llNewLockoutWindow = 0;
     DWORD iMod = 0;
 
-    LSA_CONFIG SamConfig[] = {
+    LWREG_CONFIG_ITEM SamConfig[] = {
         {
             "MinPasswordAge",
             TRUE,
-            LsaTypeDword,
+            LwRegTypeDword,
             0,
             MAXDWORD,
             NULL,
@@ -140,7 +140,7 @@ LocalSyncDomainInfo(
         {
             "MaxPasswordAge",
             TRUE,
-            LsaTypeDword,
+            LwRegTypeDword,
             0,
             MAXDWORD,
             NULL,
@@ -150,7 +150,7 @@ LocalSyncDomainInfo(
         {
             "MinPasswordLength",
             TRUE,
-            LsaTypeDword,
+            LwRegTypeDword,
             0,
             MAXDWORD,
             NULL,
@@ -160,7 +160,7 @@ LocalSyncDomainInfo(
         {
             "PasswordPromptTime",
             TRUE,
-            LsaTypeDword,
+            LwRegTypeDword,
             0,
             MAXDWORD,
             NULL,
@@ -170,7 +170,7 @@ LocalSyncDomainInfo(
         {
             "LockoutThreshold",
             TRUE,
-            LsaTypeDword,
+            LwRegTypeDword,
             0,
             MAXDWORD,
             NULL,
@@ -180,7 +180,7 @@ LocalSyncDomainInfo(
         {
             "LockoutDuration",
             TRUE,
-            LsaTypeDword,
+            LwRegTypeDword,
             0,
             MAXDWORD,
             NULL,
@@ -190,7 +190,7 @@ LocalSyncDomainInfo(
         {
             "LockoutWindow",
             TRUE,
-            LsaTypeDword,
+            LwRegTypeDword,
             0,
             MAXDWORD,
             NULL,
@@ -321,7 +321,7 @@ LocalSyncDomainInfo(
     DIRECTORY_MOD Mods[ATTR_VAL_IDX_SENTINEL + 1];
     memset(Mods, 0, sizeof(Mods));
 
-    dwError = LsaProcessConfig(
+    dwError = RegProcessConfig(
                 "Services\\lsass\\Parameters\\SAM",
                 "Policy\\Services\\lsass\\Parameters\\SAM",
                 SamConfig,

@@ -483,12 +483,12 @@ LocalCfgReadRegistry(
     PSTR pszUmask = NULL;
     LOCAL_CONFIG StagingConfig;
 
-    LSA_CONFIG LpConfigDescription[] =
+    LWREG_CONFIG_ITEM LpConfigDescription[] =
     {
         {
             "LoginShellTemplate",
             TRUE,
-            LsaTypeString,
+            LwRegTypeString,
             0,
             MAXDWORD,
             NULL,
@@ -498,7 +498,7 @@ LocalCfgReadRegistry(
         {
             "HomeDirPrefix",
             TRUE,
-            LsaTypeString,
+            LwRegTypeString,
             0,
             MAXDWORD,
             NULL,
@@ -508,7 +508,7 @@ LocalCfgReadRegistry(
         {
             "HomeDirUmask",
             TRUE,
-            LsaTypeString,
+            LwRegTypeString,
             0,
             MAXDWORD,
             NULL,
@@ -518,7 +518,7 @@ LocalCfgReadRegistry(
         {
             "HomeDirTemplate",
             TRUE,
-            LsaTypeString,
+            LwRegTypeString,
             0,
             MAXDWORD,
             NULL,
@@ -528,7 +528,7 @@ LocalCfgReadRegistry(
         {
             "CreateHomeDir",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -538,7 +538,7 @@ LocalCfgReadRegistry(
         {
             "SkeletonDirs",
             TRUE,
-            LsaTypeString,
+            LwRegTypeString,
             0,
             MAXDWORD,
             NULL,
@@ -548,7 +548,7 @@ LocalCfgReadRegistry(
         {
             "AcceptNTLMv1",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -558,7 +558,7 @@ LocalCfgReadRegistry(
         {
             "EnableUnixIds",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -567,12 +567,12 @@ LocalCfgReadRegistry(
         },
     };
 
-    LSA_CONFIG LsaConfigDescription[] =
+    LWREG_CONFIG_ITEM LsaConfigDescription[] =
     {
         {
             "EnableEventlog",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -585,14 +585,14 @@ LocalCfgReadRegistry(
     dwError = LocalCfgInitialize(&StagingConfig);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaProcessConfig(
+    dwError = RegProcessConfig(
                 "Services\\lsass\\Parameters\\Providers\\Local",
                 "Policy\\Services\\lsass\\Parameters\\Providers\\Local",
                 LpConfigDescription,
                 sizeof(LpConfigDescription)/sizeof(LpConfigDescription[0]));
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaProcessConfig(
+    dwError = RegProcessConfig(
                 "Services\\lsass\\Parameters",
                 "Policy\\Services\\lsass\\Parameters",
                 LsaConfigDescription,

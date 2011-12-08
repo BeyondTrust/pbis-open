@@ -282,43 +282,44 @@ LsaSrvAuthLoadProvider(
     )
 {
     DWORD dwError = 0;
-    PLSA_CONFIG_REG pReg = NULL;
     PSTR pszId = NULL;
     PSTR pszPath = NULL;
     PLSA_AUTH_PROVIDER pProvider = NULL;
 
-    dwError = LsaOpenConfig(
-                pszProviderKey,
-                pszProviderKey,
-                &pReg);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (pReg == NULL)
+    LWREG_CONFIG_ITEM Config[] =
     {
-        goto error;
-    }
-
-    dwError = LsaReadConfigString(
-                pReg,
-                "Id",
-                FALSE,
-                &pszId,
-                NULL);
+        {
+           "Id",
+           FALSE,
+           LwRegTypeString,
+           0,
+           MAXDWORD,
+           NULL,
+           &pszId,
+           NULL
+        },
+        {
+           "Path",
+           FALSE,
+           LwRegTypeString,
+           0,
+           MAXDWORD,
+           NULL,
+           &pszPath,
+           NULL
+        },
+    };
+    dwError = RegProcessConfig(
+                pszProviderKey,
+                pszProviderKey,
+                Config,
+                sizeof(Config)/sizeof(Config[0]));
     BAIL_ON_LSA_ERROR(dwError);
 
     if (LW_IS_NULL_OR_EMPTY_STR(pszId))
     {
         goto error;
     }
-
-    dwError = LsaReadConfigString(
-                pReg,
-                "Path",
-                FALSE,
-                &pszPath,
-                NULL);
-    BAIL_ON_LSA_ERROR(dwError);
-
     if (LW_IS_NULL_OR_EMPTY_STR(pszPath))
     {
         goto error;
@@ -333,9 +334,6 @@ cleanup:
 
     LW_SAFE_FREE_STRING(pszId);
     LW_SAFE_FREE_STRING(pszPath);
-
-    LsaCloseConfig(pReg);
-    pReg = NULL;
 
     return dwError;
 
@@ -450,35 +448,31 @@ LsaSrvAuthProviderRegGetLoadOrder(
     )
 {
     DWORD dwError = 0;
-
-    PLSA_CONFIG_REG pReg = NULL;
     PSTR pszLoadOrder = NULL;
+    LWREG_CONFIG_ITEM Config[] =
+    {
+        {
+           "LoadOrder",
+           FALSE,
+           LwRegTypeMultiString,
+           0,
+           MAXDWORD,
+           NULL,
+           &pszLoadOrder,
+           NULL
+        },
+    };
 
-    dwError = LsaOpenConfig(
+    dwError = RegProcessConfig(
                 "Services\\lsass\\Parameters\\Providers",
                 "Policy\\Services\\lsass\\Parameters\\Providers",
-                &pReg);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (pReg == NULL)
-    {
-        goto error;
-    }
-
-    dwError = LsaReadConfigMultiString(
-                pReg,
-                "LoadOrder",
-                FALSE,
-                &pszLoadOrder,
-                NULL);
+                Config,
+                sizeof(Config)/sizeof(Config[0]));
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
 
     *ppszLoadOrder = pszLoadOrder;
-
-    LsaCloseConfig(pReg);
-    pReg = NULL;
 
     return dwError;
 

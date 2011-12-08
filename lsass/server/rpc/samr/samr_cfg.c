@@ -107,63 +107,68 @@ SamrSrvReadRegistry(
     )
 {
     DWORD dwError = 0;
-
-    PLSA_CONFIG_REG pReg = NULL;
-
-    dwError = LsaOpenConfig(
-            "Services\\lsass\\Parameters\\RPCServers\\samr",
-            "Policy\\Services\\lsass\\Parameters\\RPCServers\\samr",
-            &pReg);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (!pReg)
+    LWREG_CONFIG_ITEM Config[] =
     {
-        goto error;
-    }
+        {
+           "LpcSocketPath",
+           FALSE,
+           LwRegTypeString,
+           0,
+           MAXDWORD,
+           NULL,
+           &pConfig->pszLpcSocketPath,
+           NULL
+        },
+        {
+           "LoginShellTemplate",
+           TRUE,
+           LwRegTypeString,
+           0,
+           MAXDWORD,
+           NULL,
+           &pConfig->pszDefaultLoginShell,
+           NULL
+        },
+        {
+           "HomeDirPrefix",
+           TRUE,
+           LwRegTypeString,
+           0,
+           MAXDWORD,
+           NULL,
+           &pConfig->pszHomedirPrefix,
+           NULL
+        },
+        {
+           "HomeDirTemplate",
+           TRUE,
+           LwRegTypeString,
+           0,
+           MAXDWORD,
+           NULL,
+           &pConfig->pszHomedirTemplate,
+           NULL
+        },
+        {
+           "RegisterTcpIp",
+           TRUE,
+           LwRegTypeBoolean,
+           0,
+           MAXDWORD,
+           NULL,
+           &pConfig->bRegisterTcpIp,
+           NULL
+        },
+    };
 
-    dwError = LsaReadConfigString(
-                pReg,
-                "LpcSocketPath",
-                FALSE,
-                &pConfig->pszLpcSocketPath,
-                NULL);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaReadConfigString(
-                pReg,
-                "LoginShellTemplate",
-                TRUE,
-                &pConfig->pszDefaultLoginShell,
-                NULL);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaReadConfigString(
-                pReg,
-                "HomeDirPrefix",
-                TRUE,
-                &pConfig->pszHomedirPrefix,
-                NULL);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaReadConfigString(
-                pReg,
-                "HomeDirTemplate",
-                TRUE,
-                &pConfig->pszHomedirTemplate,
-                NULL);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaReadConfigBoolean(
-                pReg,
-                "RegisterTcpIp",
-                TRUE,
-                &pConfig->bRegisterTcpIp);
+    dwError = RegProcessConfig(
+                "Services\\lsass\\Parameters\\RPCServers\\samr",
+                "Policy\\Services\\lsass\\Parameters\\RPCServers\\samr",
+                Config,
+                sizeof(Config)/sizeof(Config[0]));
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
-    LsaCloseConfig(pReg);
-    pReg = NULL;
-
     return dwError;
 
 error:    

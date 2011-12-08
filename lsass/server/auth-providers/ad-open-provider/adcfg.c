@@ -250,12 +250,12 @@ AD_ReadRegistry(
         "memory"
     };
 
-    LSA_CONFIG ADConfigDescription[] =
+    LWREG_CONFIG_ITEM ADConfigDescription[] =
     {
         {
             "HomeDirUmask",
             TRUE,
-            LsaTypeString,
+            LwRegTypeString,
             0,
             MAXDWORD,
             NULL,
@@ -265,7 +265,7 @@ AD_ReadRegistry(
         {
             "RequireMembershipOf",
             TRUE,
-            LsaTypeMultiString,
+            LwRegTypeMultiString,
             0,
             MAXDWORD,
             NULL,
@@ -275,7 +275,7 @@ AD_ReadRegistry(
         {
             "LoginShellTemplate",
             TRUE,
-            LsaTypeString,
+            LwRegTypeString,
             0,
             MAXDWORD,
             NULL,
@@ -285,7 +285,7 @@ AD_ReadRegistry(
         {
             "HomeDirTemplate",
             TRUE,
-            LsaTypeString,
+            LwRegTypeString,
             0,
             MAXDWORD,
             NULL,
@@ -295,7 +295,7 @@ AD_ReadRegistry(
         {
             "UserDomainPrefix",
             TRUE,
-            LsaTypeString,
+            LwRegTypeString,
             0,
             MAXDWORD,
             NULL,
@@ -304,7 +304,7 @@ AD_ReadRegistry(
         {
             "MachinePasswordLifespan",
             TRUE,
-            LsaTypeDword,
+            LwRegTypeDword,
             0,  /* Valid range is 0 or [AD_MACHINE_PASSWORD_SYNC_MINIMUM_SECS,*/
             MAXDWORD, /* AD_MACHINE_PASSWORD_SYNC_MAXIMUM_SECS] */
             NULL,
@@ -314,7 +314,7 @@ AD_ReadRegistry(
         {
             "CacheEntryExpiry",
             TRUE,
-            LsaTypeDword,
+            LwRegTypeDword,
             AD_CACHE_ENTRY_EXPIRY_MINIMUM_SECS,
             AD_CACHE_ENTRY_EXPIRY_MAXIMUM_SECS,
             NULL,
@@ -324,7 +324,7 @@ AD_ReadRegistry(
         {
             "MemoryCacheSizeCap",
             TRUE,
-            LsaTypeDword,
+            LwRegTypeDword,
             0,
             MAXDWORD,
             NULL,
@@ -334,7 +334,7 @@ AD_ReadRegistry(
         {
             "LdapSignAndSeal",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -344,7 +344,7 @@ AD_ReadRegistry(
         {
             "AssumeDefaultDomain",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -354,7 +354,7 @@ AD_ReadRegistry(
         {
             "SyncSystemTime",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -364,7 +364,7 @@ AD_ReadRegistry(
         {
             "LogNetworkConnectionEvents",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -374,7 +374,7 @@ AD_ReadRegistry(
         {
             "CreateK5Login",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -384,7 +384,7 @@ AD_ReadRegistry(
         {
             "CreateHomeDir",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             -1,
             NULL,
@@ -394,7 +394,7 @@ AD_ReadRegistry(
         {
             "SkeletonDirs",
             TRUE,
-            LsaTypeString,
+            LwRegTypeString,
             0,
             MAXDWORD,
             NULL,
@@ -404,7 +404,7 @@ AD_ReadRegistry(
         {
             "HomeDirPrefix",
             TRUE,
-            LsaTypeString,
+            LwRegTypeString,
             0,
             MAXDWORD,
             NULL,
@@ -414,7 +414,7 @@ AD_ReadRegistry(
         {
             "RefreshUserCredentials",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -424,7 +424,7 @@ AD_ReadRegistry(
         {
             "TrimUserMembership",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -434,7 +434,7 @@ AD_ReadRegistry(
         {
             "CellSupport",
             TRUE,
-            LsaTypeEnum,
+            LwRegTypeEnum,
             AD_CELL_SUPPORT_UNPROVISIONED,
             AD_CELL_SUPPORT_UNPROVISIONED,
             CellSupport,
@@ -444,7 +444,7 @@ AD_ReadRegistry(
         {
             "CacheType",
             TRUE,
-            LsaTypeEnum,
+            LwRegTypeEnum,
             AD_CACHE_SQLITE,
             AD_CACHE_IN_MEMORY,
             CacheBackend,
@@ -454,7 +454,7 @@ AD_ReadRegistry(
         {
             "NssGroupMembersQueryCacheOnly",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -464,7 +464,7 @@ AD_ReadRegistry(
         {
             "NssUserMembershipQueryCacheOnly",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -474,7 +474,7 @@ AD_ReadRegistry(
         {
             "NssEnumerationEnabled",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -484,7 +484,7 @@ AD_ReadRegistry(
         {
             "DomainManagerCheckDomainOnlineInterval",
             TRUE,
-            LsaTypeDword,
+            LwRegTypeDword,
             0,
             MAXDWORD,
             NULL,
@@ -494,7 +494,7 @@ AD_ReadRegistry(
         {
             "DomainManagerUnknownDomainCacheTimeout",
             TRUE,
-            LsaTypeDword,
+            LwRegTypeDword,
             0,
             MAXDWORD,
             NULL,
@@ -504,7 +504,7 @@ AD_ReadRegistry(
         {
             "DomainManagerIgnoreAllTrusts",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -514,7 +514,7 @@ AD_ReadRegistry(
         {
             "DomainManagerExcludeTrustsList",
             TRUE,
-            LsaTypeMultiString,
+            LwRegTypeMultiString,
             0,
             MAXDWORD,
             NULL,
@@ -524,7 +524,7 @@ AD_ReadRegistry(
         {
             "DomainManagerIncludeTrustsList",
             TRUE,
-            LsaTypeMultiString,
+            LwRegTypeMultiString,
             0,
             MAXDWORD,
             NULL,
@@ -534,7 +534,7 @@ AD_ReadRegistry(
         {
             "IgnoreUserNameList",
             TRUE,
-            LsaTypeMultiString,
+            LwRegTypeMultiString,
             0,
             MAXDWORD,
             NULL,
@@ -544,7 +544,7 @@ AD_ReadRegistry(
         {
             "IgnoreGroupNameList",
             TRUE,
-            LsaTypeMultiString,
+            LwRegTypeMultiString,
             0,
             MAXDWORD,
             NULL,
@@ -554,7 +554,7 @@ AD_ReadRegistry(
         {
             "MultiTenancyEnabled",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -564,7 +564,7 @@ AD_ReadRegistry(
         {
             "AddDomainToLocalGroupsEnabled",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -573,12 +573,12 @@ AD_ReadRegistry(
         }
     };
 
-    LSA_CONFIG LsaConfigDescription[] =
+    LWREG_CONFIG_ITEM LsaConfigDescription[] =
     {
         {
             "EnableEventlog",
             TRUE,
-            LsaTypeBoolean,
+            LwRegTypeBoolean,
             0,
             MAXDWORD,
             NULL,
@@ -592,7 +592,7 @@ AD_ReadRegistry(
 
     dwMachinePasswordSyncLifetime = AD_MACHINE_PASSWORD_SYNC_DEFAULT_SECS;
 
-    dwError = LsaProcessConfig(
+    dwError = RegProcessConfig(
                 AD_PROVIDER_REGKEY,
                 AD_PROVIDER_POLICY_REGKEY,
                 ADConfigDescription,
@@ -615,7 +615,7 @@ AD_ReadRegistry(
                      pszDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaProcessConfig(
+        dwError = RegProcessConfig(
                       pszDomainKey,
                       pszDomainPolicyKey,
                       ADConfigDescription,
@@ -623,7 +623,7 @@ AD_ReadRegistry(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaProcessConfig(
+    dwError = RegProcessConfig(
                 "Services\\lsass\\Parameters",
                 "Policy\\Services\\lsass\\Parameters",
                 LsaConfigDescription,
