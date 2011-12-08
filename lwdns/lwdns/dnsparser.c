@@ -65,9 +65,9 @@ static
 DWORD
 DNSParseQueryResponse(
     PDNS_RESPONSE_HEADER pHeader,
-    PDNSDLINKEDLIST* ppAnswersList,
-    PDNSDLINKEDLIST* ppAuthsList,
-    PDNSDLINKEDLIST* ppAdditionalsList
+    PLW_DLINKED_LIST* ppAnswersList,
+    PLW_DLINKED_LIST* ppAuthsList,
+    PLW_DLINKED_LIST* ppAdditionalsList
     );
 
 static
@@ -95,7 +95,7 @@ DNSParseRecords(
     PDNS_RESPONSE_HEADER pHeader,
     WORD  wNRecords,
     PBYTE pData,
-    PDNSDLINKEDLIST* ppRecordList,
+    PLW_DLINKED_LIST* ppRecordList,
     PDWORD pdwBytesToAdvance
     );
 
@@ -129,7 +129,7 @@ DNSReadDWORD(
 static
 VOID
 DNSFreeRecordLinkedList(
-    PDNSDLINKEDLIST pRecordList
+    PLW_DLINKED_LIST pRecordList
     );
 
 static
@@ -150,16 +150,16 @@ DWORD
 DNSBuildNameServerList(
     PCSTR                pszDomain,
     PDNS_RESPONSE_HEADER pHeader,
-    PDNSDLINKEDLIST      pAnswers,
-    PDNSDLINKEDLIST      pAuths,
-    PDNSDLINKEDLIST      pAdditionals,
-    PDNSDLINKEDLIST*     ppNameServers
+    PLW_DLINKED_LIST      pAnswers,
+    PLW_DLINKED_LIST      pAuths,
+    PLW_DLINKED_LIST      pAdditionals,
+    PLW_DLINKED_LIST*     ppNameServers
     );
 
 static
 DWORD
 DNSFindAddressForServer(
-    PDNSDLINKEDLIST pAdditionalsList,
+    PLW_DLINKED_LIST pAdditionalsList,
     PCSTR  pszHostname,
     PDWORD pdwIP
     );
@@ -167,14 +167,14 @@ DNSFindAddressForServer(
 static
 DWORD
 DNSBuildNameServerArray(
-    PDNSDLINKEDLIST pNameServerList,
+    PLW_DLINKED_LIST pNameServerList,
     PLW_NS_INFO*    ppNSInfoArray,
     PDWORD          pdwNumInfos);
 
 static
 VOID
 DNSFreeNameServerList(
-    PDNSDLINKEDLIST pNameServerList
+    PLW_DLINKED_LIST pNameServerList
     );
 
 static
@@ -197,10 +197,10 @@ DNSGetNameServers(
     PBYTE pBuffer = NULL;
     int   responseLen = -1;
     PDNS_RESPONSE_HEADER pHeader = NULL;
-    PDNSDLINKEDLIST pAnswersList = NULL;
-    PDNSDLINKEDLIST pAuthsList = NULL;
-    PDNSDLINKEDLIST pAdditionalsList = NULL;
-    PDNSDLINKEDLIST pNameServerList = NULL;
+    PLW_DLINKED_LIST pAnswersList = NULL;
+    PLW_DLINKED_LIST pAuthsList = NULL;
+    PLW_DLINKED_LIST pAdditionalsList = NULL;
+    PLW_DLINKED_LIST pNameServerList = NULL;
     PLW_NS_INFO     pNSInfoArray = NULL;
     DWORD           dwNumInfos = 0;
     PCSTR pszZone = NULL;
@@ -398,16 +398,16 @@ static
 DWORD
 DNSParseQueryResponse(
     PDNS_RESPONSE_HEADER pHeader,
-    PDNSDLINKEDLIST* ppAnswersList,
-    PDNSDLINKEDLIST* ppAuthsList,
-    PDNSDLINKEDLIST* ppAdditionalsList
+    PLW_DLINKED_LIST* ppAnswersList,
+    PLW_DLINKED_LIST* ppAuthsList,
+    PLW_DLINKED_LIST* ppAdditionalsList
     )
 {
     DWORD dwError = 0;
     PBYTE pData = &pHeader->data[0];
-    PDNSDLINKEDLIST pAnswersList = NULL;
-    PDNSDLINKEDLIST pAuthsList = NULL;
-    PDNSDLINKEDLIST pAdditionalsList = NULL;
+    PLW_DLINKED_LIST pAnswersList = NULL;
+    PLW_DLINKED_LIST pAuthsList = NULL;
+    PLW_DLINKED_LIST pAdditionalsList = NULL;
     WORD iQuestion = 0;
 
     if (!pData)
@@ -669,13 +669,13 @@ DNSParseRecords(
     PDNS_RESPONSE_HEADER pHeader,
     WORD  wNRecords,
     PBYTE pData,
-    PDNSDLINKEDLIST* ppRecordList,
+    PLW_DLINKED_LIST* ppRecordList,
     PDWORD pdwBytesToAdvance
     )
 {
     DWORD dwError = 0;
     PBYTE pCurrent = pData;
-    PDNSDLINKEDLIST pRecordList = NULL;
+    PLW_DLINKED_LIST pRecordList = NULL;
     PDNS_RECORD pRecord = NULL;
     DWORD dwBytesToAdvance = 0;
     WORD iRecord = 0;
@@ -687,7 +687,7 @@ DNSParseRecords(
         dwError = DNSParseRecord(pHeader, pCurrent, &pRecord, &dwLen);
         BAIL_ON_LWDNS_ERROR(dwError);
 
-        dwError = DNSDLinkedListAppend(&pRecordList, pRecord);
+        dwError = LwDLinkedListAppend(&pRecordList, pRecord);
         BAIL_ON_LWDNS_ERROR(dwError);
 
         pRecord = NULL;
@@ -852,11 +852,11 @@ DNSReadDWORD(
 static
 VOID
 DNSFreeRecordLinkedList(
-    PDNSDLINKEDLIST pRecordList
+    PLW_DLINKED_LIST pRecordList
     )
 {
-    DNSDLinkedListForEach(pRecordList, &DNSFreeRecordInList, NULL);
-    DNSDLinkedListFree(pRecordList);
+    LwDLinkedListForEach(pRecordList, &DNSFreeRecordInList, NULL);
+    LwDLinkedListFree(pRecordList);
 }
 
 static
@@ -888,15 +888,15 @@ DWORD
 DNSBuildNameServerList(
     PCSTR                pszDomain,
     PDNS_RESPONSE_HEADER pHeader,
-    PDNSDLINKEDLIST      pAnswers,
-    PDNSDLINKEDLIST      pAuths,
-    PDNSDLINKEDLIST      pAdditionals,
-    PDNSDLINKEDLIST*     ppNameServers
+    PLW_DLINKED_LIST      pAnswers,
+    PLW_DLINKED_LIST      pAuths,
+    PLW_DLINKED_LIST      pAdditionals,
+    PLW_DLINKED_LIST*     ppNameServers
     )
 {
     DWORD dwError = 0;
-    PDNSDLINKEDLIST pNameServers = NULL;
-    PDNSDLINKEDLIST pIter = NULL;
+    PLW_DLINKED_LIST pNameServers = NULL;
+    PLW_DLINKED_LIST pIter = NULL;
     PLW_NS_INFO pNSInfo = NULL;
     
     for (pIter = pAnswers; pIter; pIter = pIter->pNext)
@@ -926,7 +926,7 @@ DNSBuildNameServerList(
             LWDNS_LOG_DEBUG("Adding Name Server [%s]", 
                             IsNullOrEmptyString(pNSInfo->pszNSHostName) ? "" : pNSInfo->pszNSHostName);
             
-            dwError = DNSDLinkedListAppend(
+            dwError = LwDLinkedListAppend(
                         &pNameServers,
                         pNSInfo);
             BAIL_ON_LWDNS_ERROR(dwError);
@@ -974,13 +974,13 @@ error:
 static
 DWORD
 DNSFindAddressForServer(
-    PDNSDLINKEDLIST pAdditionalsList,
+    PLW_DLINKED_LIST pAdditionalsList,
     PCSTR  pszHostname,
     PDWORD pdwIP
     )
 {
     DWORD dwError = 0;
-    PDNSDLINKEDLIST pListMember = NULL;
+    PLW_DLINKED_LIST pListMember = NULL;
     DWORD dwIP = 0;
     
     pListMember = pAdditionalsList;
@@ -1021,13 +1021,13 @@ error:
 static
 DWORD
 DNSBuildNameServerArray(
-    PDNSDLINKEDLIST pNameServerList,
+    PLW_DLINKED_LIST pNameServerList,
     PLW_NS_INFO*    ppNSInfoArray,
     PDWORD          pdwNumInfos)
 {
     DWORD dwError = 0;
     DWORD dwNumInfos = 0;
-    PDNSDLINKEDLIST pIter = NULL;
+    PLW_DLINKED_LIST pIter = NULL;
     PLW_NS_INFO pNSInfoArray = NULL;
     DWORD iNS = 0;
     
@@ -1080,14 +1080,14 @@ error:
 static
 VOID
 DNSFreeNameServerList(
-    PDNSDLINKEDLIST pNameServerList
+    PLW_DLINKED_LIST pNameServerList
     )
 {
-    DNSDLinkedListForEach(
+    LwDLinkedListForEach(
             pNameServerList,
             &DNSFreeNameServerInfoInList,
             NULL);
-    DNSDLinkedListFree(pNameServerList);
+    LwDLinkedListFree(pNameServerList);
 }
 
 static

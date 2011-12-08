@@ -33,7 +33,7 @@
 static
 DWORD
 DNSGatherInterfaceInfo(
-    PDNSDLINKEDLIST* ppInterfaceList
+    PLW_DLINKED_LIST* ppInterfaceList
     );
 
 #ifdef HAVE_GETIFADDRS
@@ -41,7 +41,7 @@ DNSGatherInterfaceInfo(
 static
 DWORD
 DNSGetInfoUsingGetIfAddrs(
-    PDNSDLINKEDLIST* ppInterfaceList
+    PLW_DLINKED_LIST* ppInterfaceList
     );
 
 #else
@@ -49,7 +49,7 @@ DNSGetInfoUsingGetIfAddrs(
 static
 DWORD
 DNSGetInfoUsingIoctl(
-    PDNSDLINKEDLIST* ppInterfaceList
+    PLW_DLINKED_LIST* ppInterfaceList
     );
 
 #endif
@@ -59,14 +59,14 @@ static
 BOOLEAN
 DNSInterfaceIsInList(
     PCSTR pszName,
-    PDNSDLINKEDLIST pInterfaceList
+    PLW_DLINKED_LIST pInterfaceList
     );
 #endif
 
 static
 DWORD
 DNSBuildInterfaceArray(
-    PDNSDLINKEDLIST     pInterfaceList,
+    PLW_DLINKED_LIST     pInterfaceList,
     PLW_INTERFACE_INFO* ppInterfaceInfoArray,
     PDWORD              pdwNumInterfaces
     );
@@ -74,7 +74,7 @@ DNSBuildInterfaceArray(
 static
 VOID
 DNSFreeInterfaceLinkedList(
-    PDNSDLINKEDLIST pInterfaceList
+    PLW_DLINKED_LIST pInterfaceList
     );
 
 static
@@ -93,7 +93,7 @@ DNSGetNetworkInterfaces(
     DWORD dwError = 0;
     PLW_INTERFACE_INFO pInterfaceInfoArray = NULL;
     DWORD dwNumInterfaces = 0;
-    PDNSDLINKEDLIST pInterfaceList = NULL;
+    PLW_DLINKED_LIST pInterfaceList = NULL;
     
     dwError = DNSGatherInterfaceInfo(
                     &pInterfaceList);
@@ -135,7 +135,7 @@ error:
 static
 DWORD
 DNSGatherInterfaceInfo(
-    PDNSDLINKEDLIST* ppInterfaceList
+    PLW_DLINKED_LIST* ppInterfaceList
     )
 {
 
@@ -157,11 +157,11 @@ DNSGatherInterfaceInfo(
 static
 DWORD
 DNSGetInfoUsingGetIfAddrs(
-    PDNSDLINKEDLIST* ppInterfaceList
+    PLW_DLINKED_LIST* ppInterfaceList
     )
 {
     DWORD dwError = 0;
-    PDNSDLINKEDLIST pInterfaceList = NULL;
+    PLW_DLINKED_LIST pInterfaceList = NULL;
     struct ifaddrs* pInterfaces = NULL;
     struct ifaddrs* pIter = NULL;
     PLW_INTERFACE_INFO pInterfaceInfo = NULL;
@@ -231,7 +231,7 @@ DNSGetInfoUsingGetIfAddrs(
         
         pInterfaceInfo->dwFlags = pIter->ifa_flags;
         
-        dwError = DNSDLinkedListAppend(
+        dwError = LwDLinkedListAppend(
                     &pInterfaceList,
                     pInterfaceInfo);
         BAIL_ON_LWDNS_ERROR(dwError);
@@ -275,7 +275,7 @@ error:
 static
 DWORD
 DNSGetInfoUsingIoctl(
-    PDNSDLINKEDLIST* ppInterfaceList
+    PLW_DLINKED_LIST* ppInterfaceList
     )
 {
     DWORD   dwError = 0;
@@ -285,7 +285,7 @@ DNSGetInfoUsingIoctl(
     PBYTE   pBuffer = NULL;
     PBYTE   pIter = NULL;
     struct ifconf ifc = {0};
-    PDNSDLINKEDLIST pInterfaceList = NULL;
+    PLW_DLINKED_LIST pInterfaceList = NULL;
     PLW_INTERFACE_INFO pInterfaceInfo = NULL;
     
     fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -484,7 +484,7 @@ DNSGetInfoUsingIoctl(
                &pInterfaceRecord->ifr_addr,
                sizeof(struct sockaddr_in));
 
-        dwError = DNSDLinkedListAppend(
+        dwError = LwDLinkedListAppend(
                         &pInterfaceList,
                         pInterfaceInfo);
         BAIL_ON_LWDNS_ERROR(dwError);
@@ -536,11 +536,11 @@ static
 BOOLEAN
 DNSInterfaceIsInList(
     PCSTR pszName,
-    PDNSDLINKEDLIST pInterfaceList
+    PLW_DLINKED_LIST pInterfaceList
     )
 {
     BOOLEAN bResult = FALSE;
-    PDNSDLINKEDLIST pIter = NULL;
+    PLW_DLINKED_LIST pIter = NULL;
     
     for (pIter = pInterfaceList; pIter; pIter = pIter->pNext)
     {
@@ -562,7 +562,7 @@ DNSInterfaceIsInList(
 static
 DWORD
 DNSBuildInterfaceArray(
-    PDNSDLINKEDLIST     pInterfaceList,
+    PLW_DLINKED_LIST     pInterfaceList,
     PLW_INTERFACE_INFO* ppInterfaceInfoArray,
     PDWORD              pdwNumInterfaces
     )
@@ -570,7 +570,7 @@ DNSBuildInterfaceArray(
     DWORD dwError = 0;
     DWORD dwNumInterfaces = 0;
     PLW_INTERFACE_INFO pInterfaceInfoArray = NULL;
-    PDNSDLINKEDLIST pIter = NULL;
+    PLW_DLINKED_LIST pIter = NULL;
     DWORD i = 0;
     
     for (pIter = pInterfaceList; pIter; pIter = pIter->pNext)
@@ -627,14 +627,14 @@ error:
 static
 VOID
 DNSFreeInterfaceLinkedList(
-    PDNSDLINKEDLIST pInterfaceList
+    PLW_DLINKED_LIST pInterfaceList
     )
 {
-    DNSDLinkedListForEach(
+    LwDLinkedListForEach(
             pInterfaceList,
             &DNSFreeInterfaceInList,
             NULL);
-    DNSDLinkedListFree(pInterfaceList);
+    LwDLinkedListFree(pInterfaceList);
 }
 
 static

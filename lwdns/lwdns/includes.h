@@ -57,12 +57,12 @@
 #include "dnssystem.h"
 #include "lwdns.h"
 #include "dnsdefines.h"
+#include <lwdlinked-list.h>
 
 #include "dnsstruct.h"
 #include "dnsstrerror.h"
 #include "dnserror.h"
 #include "dnsutils.h"
-#include "dnsdlinkedlist.h"
 #include "dnsrecord.h"
 #include "dnsresponse.h"
 #include "dnsrequest.h"
