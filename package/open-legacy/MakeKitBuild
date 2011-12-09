@@ -187,4 +187,6 @@ open_legacy_files()
 open_legacy_files_prefix()
 {
     mk_package_patterns SUBDIRS="$OPEN_SUBDIRS" "/opt/likewise/bin/*"
+
+    mk_package_dirs "/opt/likewise" "/opt/likewise/bin"
 }
