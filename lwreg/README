@@ -64,7 +64,7 @@ Function:
 
 Folder:       <root>/shell
 Output type:  executable program
-Output name:  lwregshell
+Output name:  regshell
 Dependencies:
 Function:
 

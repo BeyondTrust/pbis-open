@@ -379,7 +379,7 @@ cleanup:
 
 error:
     RegParseGetLineNumber(parseH, &lineNum);
-    sprintf(cErrorBuf, "lwregshell: import failed (line=%d)", lineNum);
+    sprintf(cErrorBuf, "regshell: import failed (line=%d)", lineNum);
     RegPrintError(cErrorBuf, dwError);
     if (pParseState->eShellMode == REGSHELL_CMD_MODE_INTERACTIVE)
     {
@@ -2270,7 +2270,7 @@ RegShellExecuteCmdLine(
     }
     if (dwError)
     {
-        RegPrintError("lwregshell", dwError);
+        RegPrintError("regshell", dwError);
         dwError = 0;
     }
     RegShellCmdlineParseFree(dwNewArgc, pszNewArgv);
@@ -2478,7 +2478,7 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
                 rv = history(hist, &ev, H_NEXT_EVENT, dwEventNum);
                 if (rv == -1)
                 {
-                    printf("lwregshell: %d: event not found\n", dwEventNum);
+                    printf("regshell: %d: event not found\n", dwEventNum);
                 }
             }
             else
@@ -2492,7 +2492,7 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
                     rv = history(hist, &ev, H_FIRST);
                     if (rv == -1)
                     {
-                        printf("lwregshell: !!: event not found\n");
+                        printf("regshell: !!: event not found\n");
                     }
                     else
                     {
@@ -2510,7 +2510,7 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
                     rv = history(hist, &ev, H_PREV_STR, hist_str);
                     if (rv == -1)
                     {
-                        printf("lwregshell: %s: event not found\n", hist_str);
+                        printf("regshell: %s: event not found\n", hist_str);
                     }
                 }
             }
@@ -2678,7 +2678,7 @@ cleanup:
 error:
     if (dwError)
     {
-        RegPrintError("lwregshell", dwError);
+        RegPrintError("regshell", dwError);
     }
     goto cleanup;
 }
@@ -2787,7 +2787,7 @@ cleanup:
 error:
     if (dwError)
     {
-        RegPrintError("lwregshell", dwError);
+        RegPrintError("regshell", dwError);
     }
     goto cleanup;
 }

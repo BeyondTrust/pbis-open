@@ -2,7 +2,7 @@
 #
 # Test of regshell use from command line
 #
-regshell=/opt/likewise/bin/lwregshell
+regshell=/opt/pbis/bin/regshell
 
 # Add values at root key level
 #
