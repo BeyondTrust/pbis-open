@@ -31,12 +31,12 @@ make()
         account-rights \
         update-dns \
         adtool \
-        eventlog-cli"
-
-    LWLINKS=" \
+        eventlog-cli \
         get-dc-time \
         get-dc-list \
-        get-dc-name \
+        get-dc-name"
+
+    LWLINKS=" \
         config \
         regshell"
 
