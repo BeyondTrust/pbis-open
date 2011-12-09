@@ -4,6 +4,6 @@ make()
         LIB=lwdns \
         SOURCES="*.c" \
         INCLUDEDIRS=". ../include" \
-        HEADERDEPS="lwnet.h krb5.h lw/base.h" \
+        HEADERDEPS="lwnet.h krb5.h lw/base.h lwdlinked-list.h" \
         LIBDEPS="krb5 uuid lwbase gssapi_krb5 $LIB_RESOLV $LIB_NSL $LIB_SOCKET $LIB_DL $LIB_PTHREAD"
 }
