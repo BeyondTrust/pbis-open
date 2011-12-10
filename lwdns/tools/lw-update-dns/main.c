@@ -126,6 +126,7 @@ main(
     HANDLE hDNSServer = NULL;
     DWORD iNS = 0;
     BOOLEAN bDNSUpdated = FALSE;
+    BOOLEAN bReachedNameServer = FALSE;
     DWORD iAddr = 0;
 
     dwError = ParseArgs(
@@ -249,6 +250,8 @@ main(
             continue;
         }
 
+        bReachedNameServer = TRUE;
+
         dwError = DNSUpdateSecure(
                         hDNSServer,
                         pszNameServer,
@@ -270,6 +273,11 @@ main(
         bDNSUpdated = TRUE;
     }
 
+    if (!bReachedNameServer)
+    {
+        dwError = ERROR_CONNECTION_REFUSED;
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
     if (!bDNSUpdated)
     {
         dwError = LW_ERROR_DNS_UPDATE_FAILED;
@@ -923,9 +931,19 @@ PrintError(
     IN DWORD dwError
     )
 {
-    PCSTR pErrorString = LwWin32ExtErrorToDescription(dwError);
+    PCSTR pErrorString = NULL;
+    
+    switch (dwError)
+    {
+        case ERROR_CONNECTION_REFUSED:
+            pErrorString = "No name servers could be reached";
+            break;
+        default:
+            pErrorString = LwWin32ExtErrorToDescription(dwError);
+            break;
+    }
 
-    if (pErrorString)
+    if (pErrorString && pErrorString[0])
     {
         fprintf(stderr, "Failed to update DNS.  %s\n", pErrorString);
     }
