@@ -449,7 +449,7 @@ DNSVerifyResponseMessage_GSSSuccess(
     BAIL_ON_LWDNS_ERROR(dwError);
 
     if (wRCode != 0) {
-        dwError = LWDNS_ERROR_BAD_RESPONSE;
+        dwError = ERROR_BAD_NET_RESP;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
@@ -521,7 +521,7 @@ DNSVerifyResponseMessage_GSSContinue(
     
     if (wRCode != 0)
     {
-        dwError = LWDNS_ERROR_BAD_RESPONSE;
+        dwError = ERROR_BAD_NET_RESP;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
@@ -614,7 +614,7 @@ DNSResponseGetTKeyRecord(
         }
     }
     
-    dwError = LWDNS_ERROR_RECORD_NOT_FOUND;
+    dwError = DNS_ERROR_RECORD_DOES_NOT_EXIST;
     BAIL_ON_LWDNS_ERROR(dwError);
     
 cleanup:
@@ -656,7 +656,7 @@ DNSResponseGetTSIGRecord(
         }
     }
     
-    dwError = LWDNS_ERROR_RECORD_NOT_FOUND;
+    dwError = DNS_ERROR_RECORD_DOES_NOT_EXIST;
     BAIL_ON_LWDNS_ERROR(dwError);
     
 cleanup:

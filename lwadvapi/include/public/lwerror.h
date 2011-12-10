@@ -749,6 +749,9 @@
 #define LW_ERROR_AUTOENROLL_HTTP_REQUEST_FAILED            42601
 #define LW_ERROR_AUTOENROLL_SUBJECT_NAME_REQUIRED          42602
 
+#define LW_ERROR_DNS_UPDATE_FAILED                         42700
+
+
 //
 // 49900-49999 reserved for internal PAM error code mapping
 //

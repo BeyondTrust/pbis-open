@@ -28,8 +28,8 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __LWKRB5_H__
-#define __LWKRB5_H__
+#ifndef __LWKRB5_P_H__
+#define __LWKRB5_P_H__
 
 DWORD
 DNSKrb5Init(

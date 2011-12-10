@@ -215,7 +215,7 @@ main(
 
     if (!dwNameServerInfoCount)
     {
-        dwError = LWDNS_ERROR_NO_NAMESERVER;
+        dwError = DNS_ERROR_ZONE_HAS_NO_NS_RECORDS;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
@@ -272,7 +272,7 @@ main(
 
     if (!bDNSUpdated)
     {
-        dwError = LWDNS_ERROR_UPDATE_FAILED;
+        dwError = LW_ERROR_DNS_UPDATE_FAILED;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
@@ -617,7 +617,7 @@ GetDnsSuffixByHostname(
     pHost = gethostbyname(pszHostname);
     if (!pHost)
     {
-        dwError = LWDNS_ERROR_NO_SUCH_ADDRESS;
+        dwError = DNSMapHerrno(h_errno);
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
@@ -649,7 +649,7 @@ GetDnsSuffixByHostname(
 
     if (!pszFoundDomain)
     {
-        dwError = LWDNS_ERROR_NO_SUCH_ADDRESS;
+        dwError = DNS_ERROR_RECORD_DOES_NOT_EXIST;
         BAIL_ON_LWDNS_ERROR(dwError)
     }
 
@@ -688,7 +688,7 @@ GetAllInterfaceAddresses(
 
     if (!dwInterfaceCount)
     {
-        dwError = LWDNS_ERROR_NO_INTERFACES;
+        dwError = ERROR_NOINTERFACE;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
@@ -763,7 +763,7 @@ SetupCredentials(
 
     if (!*pszHostDnsSuffix)
     {
-        dwError = LWDNS_ERROR_UNEXPECTED;
+        dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
@@ -923,35 +923,13 @@ PrintError(
     IN DWORD dwError
     )
 {
-    DWORD dwErrorBufferSize = 0;
-    BOOLEAN bPrintOrigError = TRUE;
+    PCSTR pErrorString = LwWin32ExtErrorToDescription(dwError);
 
-    dwErrorBufferSize = DNSGetErrorString(dwError, NULL, 0);
-
-    if (dwErrorBufferSize > 0)
+    if (pErrorString)
     {
-        DWORD dwError2 = 0;
-        PSTR pszErrorBuffer = NULL;
-
-        dwError2 = DNSAllocateMemory(
-                    dwErrorBufferSize,
-                    (PVOID*)&pszErrorBuffer);
-
-        if (!dwError2)
-        {
-            DWORD dwLen = DNSGetErrorString(dwError, pszErrorBuffer, dwErrorBufferSize);
-
-            if ((dwLen == dwErrorBufferSize) && !IsNullOrEmptyString(pszErrorBuffer))
-            {
-                fprintf(stderr, "Failed to update DNS.  %s\n", pszErrorBuffer);
-                bPrintOrigError = FALSE;
-            }
-        }
-
-        LWDNS_SAFE_FREE_STRING(pszErrorBuffer);
+        fprintf(stderr, "Failed to update DNS.  %s\n", pErrorString);
     }
-
-    if (bPrintOrigError)
+    else
     {
         fprintf(stderr, "Failed to update DNS. Error code [%d]\n", dwError);
     }

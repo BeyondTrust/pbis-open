@@ -190,17 +190,7 @@ extern PFN_LWDNS_LOG_MESSAGE gpfnLWDNSLogger;
                     __LINE__,                                           \
                     ret);                                               \
         }                                                               \
-        if (ret == KRB5KDC_ERR_KEY_EXP) {                               \
-            dwError = LWDNS_ERROR_PASSWORD_EXPIRED;                     \
-        } else if (ret == KRB5_LIBOS_BADPWDMATCH) {                     \
-            dwError = LWDNS_ERROR_PASSWORD_MISMATCH;                    \
-        } else if (ret == KRB5KRB_AP_ERR_SKEW) {                        \
-            dwError = LWDNS_ERROR_CLOCK_SKEW;                           \
-        } else if (ret == ENOENT) {                                     \
-            dwError = LWDNS_ERROR_KRB5_NO_KEYS_FOUND;                   \
-        } else {                                                        \
-            dwError = LWDNS_ERROR_KRB5_CALL_FAILED;                     \
-        }                                                               \
+        dwError = LwMapKrb5ErrorToLwError(ret); \
         goto error;                                                     \
     }
 

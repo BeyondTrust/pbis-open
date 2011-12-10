@@ -57,7 +57,7 @@ DNSOpen(
 
     if (IsNullOrEmptyString(pszNameServer))
     {
-        dwError = LWDNS_ERROR_INVALID_PARAMETER;
+        dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
@@ -83,7 +83,7 @@ DNSOpen(
 
         default:
 
-            dwError = LWDNS_ERROR_INVALID_PARAMETER;
+            dwError = ERROR_INVALID_PARAMETER;
     }
     BAIL_ON_LWDNS_ERROR(dwError);
 

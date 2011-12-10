@@ -356,7 +356,7 @@ DNSGetPtrNameForAddr(
 
     if (pAddr->sin_family != AF_INET)
     {
-        dwError = LWDNS_ERROR_INVALID_IP_ADDRESS;
+        dwError = DNS_ERROR_INVALID_IP_ADDRESS;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
@@ -398,7 +398,7 @@ DNSGetPtrZoneForAddr(
 
     if (pAddr->sin_family != AF_INET)
     {
-        dwError = LWDNS_ERROR_INVALID_IP_ADDRESS;
+        dwError = DNS_ERROR_INVALID_IP_ADDRESS;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
@@ -510,7 +510,7 @@ DNSUpdatePtrSecure(
 
     if (!bDNSUpdated)
     {
-        dwError = LWDNS_ERROR_UPDATE_FAILED;
+        dwError = LW_ERROR_DNS_UPDATE_FAILED;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 

@@ -213,7 +213,7 @@ DNSGetNameServers(
     
     if (res_init() < 0)
     {
-        dwError = LWDNS_ERROR_INIT_FAILED;
+        dwError = ERROR_DLL_INIT_FAILED;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
     
@@ -253,7 +253,7 @@ DNSGetNameServers(
                 if (pszZone == NULL || pszZone[1] == 0)
                 {
                     LWDNS_LOG_ERROR("No more zones to check");
-                    dwError = LWDNS_ERROR_BAD_RESPONSE;
+                    dwError = DNS_ERROR_ZONE_HAS_NO_SOA_RECORD;
                     BAIL_ON_LWDNS_ERROR(dwError);
                 }
                 // Skip the .
@@ -265,20 +265,20 @@ DNSGetNameServers(
                     errno,
                     h_errno);
             
-            dwError = LWDNS_ERROR_BAD_RESPONSE;
+            dwError = DNSMapHerrno(h_errno);
             BAIL_ON_LWDNS_ERROR(dwError);
         }
     }
     
     if (responseLen > dwBufferSize)
     {
-        dwError = LWDNS_ERROR_BAD_RESPONSE;
+        dwError = ERROR_BAD_NET_RESP;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
     if (responseLen < CT_FIELD_OFFSET(DNS_RESPONSE_HEADER, data))
     {
-       dwError = LWDNS_ERROR_BAD_RESPONSE;
+       dwError = ERROR_BAD_NET_RESP;
        BAIL_ON_LWDNS_ERROR(dwError);
     }
     
@@ -288,7 +288,7 @@ DNSGetNameServers(
 
     if (!DNSIsValidResponse(pHeader))
     {
-        dwError = LWDNS_ERROR_BAD_RESPONSE;
+        dwError = ERROR_BAD_NET_RESP;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
     
@@ -1001,7 +1001,7 @@ DNSFindAddressForServer(
     
     if (dwIP == 0)
     {
-        dwError = LWDNS_ERROR_NO_SUCH_ADDRESS;
+        dwError = DNS_ERROR_RECORD_DOES_NOT_EXIST;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
     

@@ -816,7 +816,7 @@ DNSUnmarshallDomainName(
 
             default:   /* unexpected */
 
-                dwError = LWDNS_ERROR_BAD_RESPONSE;
+                dwError = ERROR_BAD_NET_RESP;
                 BAIL_ON_LWDNS_ERROR(dwError);
 
                 break;
@@ -891,7 +891,7 @@ DNSUnmarshallDomainNameAtOffset(
 
         default:
 
-            dwError = LWDNS_ERROR_BAD_RESPONSE;
+            dwError = ERROR_BAD_NET_RESP;
             BAIL_ON_LWDNS_ERROR(dwError);
 
             break;

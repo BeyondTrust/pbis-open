@@ -58,6 +58,9 @@
 #include "lwdns.h"
 #include "dnsdefines.h"
 #include <lwdlinked-list.h>
+#include <lwkrb5.h>
+#include <lw/winerror.h>
+#include <lwerror.h>
 
 #include "dnsstruct.h"
 #include "dnsstrerror.h"

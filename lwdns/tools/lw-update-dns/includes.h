@@ -35,7 +35,9 @@
 #include "dnsdefines.h"
 
 #include <lwnet.h>
+#include <lwkrb5.h>
+#include <lwerror.h>
 
-#include "lwkrb5.h"
+#include "lwkrb5_p.h"
 #include "externs.h"
 
