@@ -208,7 +208,7 @@ main(
     }
 
     dwError = DNSGetNameServers(
-                    pszUseDnsSuffix,
+                    pszHostFQDN,
                     &pszZone,
                     &pNameServerInfos,
                     &dwNameServerInfoCount);
@@ -261,6 +261,11 @@ main(
                         args.pAddressArray);
         if (dwError)
         {
+            if (dwError == DNS_ERROR_RCODE_REFUSED)
+            {
+                // Bail on permission denied
+                BAIL_ON_LWDNS_ERROR(dwError);
+            }
             LWDNS_LOG_ERROR(
                     "Failed to update Name Server [%s]. [Error code:%d]",
                     pszNameServer,
