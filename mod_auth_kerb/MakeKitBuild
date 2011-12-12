@@ -65,13 +65,18 @@ make()
                 ;;
         esac
 
+        if [ "${MK_BUILD_ARCH}" = "x86" -a "${MK_BUILD_OS}" = "linux" ]
+        then
+            CPPFLAGS_LARGEFILE64="-D_LARGEFILE64_SOURCE"
+        fi
+
         if [ -n "$AP_PREFIX" ]
         then
             mk_group \
                 GROUP="mod${AP_VER}" \
                 SOURCES="$MOD_SOURCES" \
                 INCLUDEDIRS=". spnegokrb5" \
-                CPPFLAGS="-I${AP_PREFIX}/include" \
+                CPPFLAGS="$CPPFLAGS_LARGEFILE64 -I${AP_PREFIX}/include" \
                 HEADERDEPS="krb5.h gssapi.h" \
                 LIBDEPS="gssapi_krb5 $LIB_DL $LIB_RESOLV" \
                 LDFLAGS="-L${AP_PREFIX}/lib -lapr-${AP_ABI} -laprutil-${AP_ABI}"
