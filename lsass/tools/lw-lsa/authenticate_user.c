@@ -228,12 +228,12 @@ PrintAuthUserInfo(
     PrintDataBlob(pInfo->pLmSessionKey);
     printf("\tLogonCount: %d\n", pInfo->LogonCount);
     printf("\tBadPasswordCount: %d\n", pInfo->BadPasswordCount);
-    printf("\tLogonTime: %lld\n", pInfo->LogonTime);
-    printf("\tLogoffTime: %lld\n", pInfo->LogoffTime);
-    printf("\tKickoffTime: %lld\n", pInfo->KickoffTime);
-    printf("\tLastPasswordChange: %lld\n", pInfo->LastPasswordChange);
-    printf("\tCanChangePassword: %lld\n", pInfo->CanChangePassword);
-    printf("\tMustChangePassword: %lld\n", pInfo->MustChangePassword);
+    printf("\tLogonTime: %lld\n", (long long int) pInfo->LogonTime);
+    printf("\tLogoffTime: %lld\n", (long long int) pInfo->LogoffTime);
+    printf("\tKickoffTime: %lld\n", (long long int) pInfo->KickoffTime);
+    printf("\tLastPasswordChange: %lld\n", (long long int) pInfo->LastPasswordChange);
+    printf("\tCanChangePassword: %lld\n", (long long int) pInfo->CanChangePassword);
+    printf("\tMustChangePassword: %lld\n", (long long int) pInfo->MustChangePassword);
     printf("\tLogonServer: %s\n", LW_RTL_LOG_SAFE_STRING(pInfo->pszLogonServer));
     printf("\tLogonScript: %s\n", LW_RTL_LOG_SAFE_STRING(pInfo->pszLogonScript));
     printf("\tProfilePath: %s\n", LW_RTL_LOG_SAFE_STRING(pInfo->pszProfilePath));
