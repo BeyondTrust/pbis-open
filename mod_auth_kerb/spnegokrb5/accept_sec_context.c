@@ -85,23 +85,26 @@ send_reject (OM_uint32 *minor_status,
 {
     NegTokenTarg targ;
     OM_uint32 ret;
+    unsigned char *value = NULL;
+    size_t length = 0;
 
     targ.negResult = malloc(sizeof(*targ.negResult));
     if (targ.negResult == NULL) {
-	*minor_status = ENOMEM;
-	return GSS_S_FAILURE;
+        *minor_status = ENOMEM;
+        return GSS_S_FAILURE;
     }
     *(targ.negResult) = reject;
 
     targ.supportedMech = NULL;
     targ.responseToken = NULL;
     targ.mechListMIC   = NULL;
-    
-    ret = code_NegTokenArg (minor_status, &targ, 
-	                    (unsigned char**) &output_token->value, &output_token->length);
+ 
+    ret = code_NegTokenArg (minor_status, &targ, &value, &length);
+    output_token->value = value;
+    output_token->length = length;
     free_NegTokenTarg(&targ);
     if (ret)
-	return ret;
+        return ret;
 
     return GSS_S_BAD_MECH;
 }
@@ -113,6 +116,8 @@ send_accept (OM_uint32 *minor_status,
 {
     NegTokenTarg targ;
     OM_uint32 ret;
+    unsigned char *value = NULL;
+    size_t length = 0;
 
     memset(&targ, 0, sizeof(targ));
     targ.negResult = malloc(sizeof(*targ.negResult));
@@ -140,25 +145,26 @@ send_accept (OM_uint32 *minor_status,
     }
 
     if (mech_token != NULL && mech_token->length != 0) {
-	targ.responseToken = malloc(sizeof(*targ.responseToken));
-	if (targ.responseToken == NULL) {
-	    free_NegTokenTarg(&targ);
-	    *minor_status = ENOMEM;
-	    return GSS_S_FAILURE;
-	}
-	targ.responseToken->length = mech_token->length;
-	targ.responseToken->data   = mech_token->value;
-	mech_token->length = 0;
-	mech_token->value  = NULL;
+        targ.responseToken = malloc(sizeof(*targ.responseToken));
+        if (targ.responseToken == NULL) {
+            free_NegTokenTarg(&targ);
+            *minor_status = ENOMEM;
+            return GSS_S_FAILURE;
+        }
+        targ.responseToken->length = mech_token->length;
+        targ.responseToken->data   = mech_token->value;
+        mech_token->length = 0;
+        mech_token->value  = NULL;
     } else {
-	targ.responseToken = NULL;
+        targ.responseToken = NULL;
     }
 
-    ret = code_NegTokenArg (minor_status, &targ, 
-	                    (unsigned char **) &output_token->value, &output_token->length);
+    ret = code_NegTokenArg (minor_status, &targ, &value, &length);
+    output_token->value = value;
+    output_token->length = length;
     free_NegTokenTarg(&targ);
     if (ret)
-	return ret;
+        return ret;
 
     return GSS_S_COMPLETE;
 }
