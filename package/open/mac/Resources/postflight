@@ -250,15 +250,15 @@ configure_agent()
 
 import_5_0123_file()
 {
-    CONVERT="@MK_LIBEXECDIR@/conf2reg"
-    REGIMPORT="@MK_BINDIR@/regshell"
+    CONVERT='@MK_LIBEXECDIR@/conf2reg'
+    REGSHELL='@MK_BINDIR@/regshell'
 
     COMMAND=$1
     SOURCE=$2
     # DEST is not necessary for some commands.
     DEST=$3
 
-    if [ -f $SOURCE ]; then
+    if [ -f "$SOURCE" ]; then
         run_quiet "$CONVERT" "$COMMAND" "$SOURCE" $DEST
         if [ $? -ne 0 ]; then
             log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE."
@@ -278,8 +278,6 @@ import_5_0123_file()
 
 restore_5_0123_configuration()
 {
-    CONVERT="@MK_LIBEXECDIR@/conf2reg"
-
     if [ -z "$UPGRADING_FROM_5_0123" ]; then
         return 0
     fi
@@ -302,49 +300,33 @@ restore_6_0_configuration()
         return 0
     fi
 
-    if [ -f "${UPGRADEDIR}/registry.db" ]; then
-        run_or_fail mkdir -p /var/lib/pbis/db
-        run_or_fail chmod 700 /var/lib/pbis/db
-        run_or_fail chown 0:80 /var/lib/pbis/db
+    run_or_fail mkdir -p '@LW_CACHEDIR@/db'
+    run_or_fail chmod 700 '@LW_CACHEDIR@/db'
+    run_or_fail chown 0:80 '@LW_CACHEDIR@/db'
 
-        run_or_fail cp "${UPGRADEDIR}/registry.db" /var/lib/pbis/db/registry.db
-        run_or_fail chmod 700 /var/lib/pbis/db/registry.db
+    if [ -f "${UPGRADEDIR}/registry.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/registry.db" '@LW_CACHEDIR@/db/registry.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/registry.db'
     fi
 
     if [ -f "${UPGRADEDIR}/sam.db" ]; then
-        run_or_fail mkdir -p /var/lib/pbis/db
-        run_or_fail chmod 700 /var/lib/pbis/db
-        run_or_fail chown 0:80 /var/lib/pbis/db
-
-        run_or_fail cp "${UPGRADEDIR}/sam.db" /var/lib/pbis/db/sam.db
-        run_or_fail chmod 700 /var/lib/pbis/db/sam.db
+        run_or_fail cp "${UPGRADEDIR}/sam.db" '@LW_CACHEDIR@/db/sam.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/sam.db'
     fi
 
     if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
-        run_or_fail mkdir -p /var/lib/pbis/db
-        run_or_fail chmod 700 /var/lib/pbis/db
-        run_or_fail chown 0:80 /var/lib/pbis/db
-
-        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" /var/lib/pbis/db/lwi_events.db
-        run_or_fail chmod 700 /var/lib/pbis/db/lwi_events.db
+        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" '@LW_CACHEDIR@/db/lwi_events.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lwi_events.db'
     fi
 
     if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
-        run_or_fail mkdir -p /var/lib/pbis/db
-        run_or_fail chmod 700 /var/lib/pbis/db
-        run_or_fail chown 0:80 /var/lib/pbis/db
-
-        run_or_fail cp ${UPGRADEDIR}/lsass-adcache.db /var/lib/pbis/db/lsass-adcache.db
-        run_or_fail chmod 700 /var/lib/pbis/db/lsass-adcache.db
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.db" '@LW_CACHEDIR@/db/lsass-adcache.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.db'
     fi
 
     if [ -f "${UPGRADEDIR}/lsass-adcache.filedb" ]; then
-        run_or_fail mkdir -p /var/lib/pbis/db
-        run_or_fail chmod 700 /var/lib/pbis/db
-        run_or_fail chown 0:80 /var/lib/pbis/db
-
-        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.filedb" /var/lib/pbis/db/lsass-adcache.filedb
-        run_or_fail chmod 700 /var/lib/pbis/db/lsass-adcache.filedb
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.filedb" '@LW_CACHEDIR@/db/lsass-adcache.filedb'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.filedb'
     fi
 
     run_quiet rm -r "${UPGRADEDIR}"
@@ -356,49 +338,33 @@ restore_6_1_configuration()
         return 0
     fi
 
-    if [ -f "${UPGRADEDIR}/registry.db" ]; then
-        run_or_fail mkdir -p /var/lib/pbis/db
-        run_or_fail chmod 700 /var/lib/pbis/db
-        run_or_fail chown 0:80 /var/lib/pbis/db
+    run_or_fail mkdir -p '@LW_CACHEDIR@/db'
+    run_or_fail chmod 700 '@LW_CACHEDIR@/db'
+    run_or_fail chown 0:80 '@LW_CACHEDIR@/db'
 
-        run_or_fail cp "${UPGRADEDIR}/registry.db" /var/lib/pbis/db/registry.db
-        run_or_fail chmod 700 /var/lib/pbis/db/registry.db
+    if [ -f "${UPGRADEDIR}/registry.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/registry.db" '@LW_CACHEDIR@/db/registry.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/registry.db'
     fi
 
     if [ -f "${UPGRADEDIR}/sam.db" ]; then
-        run_or_fail mkdir -p /var/lib/pbis/db
-        run_or_fail chmod 700 /var/lib/pbis/db
-        run_or_fail chown 0:80 /var/lib/pbis/db
-
-        run_or_fail cp "${UPGRADEDIR}/sam.db" /var/lib/pbis/db/sam.db
-        run_or_fail chmod 700 /var/lib/pbis/db/sam.db
+        run_or_fail cp "${UPGRADEDIR}/sam.db" '@LW_CACHEDIR@/db/sam.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/sam.db'
     fi
 
     if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
-        run_or_fail mkdir -p /var/lib/pbis/db
-        run_or_fail chmod 700 /var/lib/pbis/db
-        run_or_fail chown 0:80 /var/lib/pbis/db
-
-        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" /var/lib/pbis/db/lwi_events.db
-        run_or_fail chmod 700 /var/lib/pbis/db/lwi_events.db
+        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" '@LW_CACHEDIR@/db/lwi_events.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lwi_events.db'
     fi
 
     if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
-        run_or_fail mkdir -p /var/lib/pbis/db
-        run_or_fail chmod 700 /var/lib/pbis/db
-        run_or_fail chown 0:80 /var/lib/pbis/db
-
-        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.db" /var/lib/pbis/db/lsass-adcache.db
-        run_or_fail chmod 700 /var/lib/pbis/db/lsass-adcache.db
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.db" '@LW_CACHEDIR@/db/lsass-adcache.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.db'
     fi
 
     if [ -f "${UPGRADEDIR}/lsass-adcache.filedb" ]; then
-        run_or_fail mkdir -p /var/lib/pbis/db
-        run_or_fail chmod 700 /var/lib/pbis/db
-        run_or_fail chown 0:80 /var/lib/pbis/db
-
-        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.filedb" /var/lib/pbis/db/lsass-adcache.filedb
-        run_or_fail chmod 700 /var/lib/pbis/db/lsass-adcache.filedb
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.filedb" '@LW_CACHEDIR@/db/lsass-adcache.filedb'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.filedb'
     fi
 
     run_quiet rm -r "${UPGRADEDIR}"
@@ -406,7 +372,7 @@ restore_6_1_configuration()
 
 import_registry_configurations()
 {
-    REGSHELL='@MK_BINDIR@/lwregshell'
+    REGSHELL='@MK_BINDIR@/regshell'
 
     log "Importing registry..."
     run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/dcerpcd.reg"
@@ -452,42 +418,42 @@ determine_upgrade_type()
 
 relocate_domain_separator()
 {
-    DomainSeparator=`@MK_BINDIR@/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+    DomainSeparator=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
 
     if [ -n "${DomainSeparator}" ]; then
         if [ "$DomainSeparator" = "\\\\" ]; then
             DomainSeparator="\\"
         fi
 
-        run_quiet @MK_BINDIR@/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
+        run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
     fi
 }
 
 relocate_space_replacement()
 {
-    SpaceReplacement=`@MK_BINDIR@/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+    SpaceReplacement=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
 
     if [ -n "${SpaceReplacement}" ]; then
-        run_quiet @MK_BINDIR@/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
+        run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
     fi
 }
 
-set_lsass_dependencies()
+remove_npfs_dependencies()
 {
-    # Need to get rid of npfs dependency from earlier versions
-    run_quiet '@MK_BINDIR@/lwregshell' set_value '[HKEY_THIS_MACHINE\Services\lsass]' 'Dependencies' 'netlogon lwio lwreg rdr'
+    run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers]' 'Load' 'rdr'
+    run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lsass]' 'Dependencies' 'netlogon lwio lwreg rdr'
 }
 
 fix_60_registry()
 {
-    REGSHELL='@MK_BINDIR@/lwregshell'
+    REGSHELL='@MK_BINDIR@/regshell'
 
     if [ -z "$UPGRADING_FROM_6_0" ]; then
         return 0
     fi
 
     # Migrate pstore entries from default to joined domain
-    run "@MK_LIBEXECDIR@/regupgr61.sh" --install
+    run '@MK_LIBEXECDIR@/regupgr61.sh' --install
 
     # Migrate some other entries
     relocate_domain_separator
@@ -509,7 +475,7 @@ switch_to_open_provider()
     _value='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
     _path='@PRIMARY_LIBDIR@/liblsass_auth_provider_ad_open.so'
 
-    run_quiet "@MK_BINDIR@/lwregshell" set_value "$_value" Path "$_path"
+    run_quiet "@MK_BINDIR@/regshell" set_value "$_value" Path "$_path"
 }
 
 ##
@@ -565,7 +531,7 @@ restore_6_0_configuration
 
 restore_6_1_configuration
 
-run_or_fail "@MK_SBINDIR@/lwsmd" --start-as-daemon --loglevel debug
+run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --loglevel debug
 
 restore_5_0123_configuration
 
@@ -575,11 +541,11 @@ fix_60_registry
 
 cleanup_registry
 
-set_lsass_dependencies
+remove_npfs_dependencies
 
 switch_to_open_provider
 
-run_or_fail "@MK_BINDIR@/lwsm" shutdown
+run_or_fail '@MK_BINDIR@/lwsm' shutdown
 
 configure_and_start_lwsmd
 
