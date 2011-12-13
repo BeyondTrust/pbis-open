@@ -782,7 +782,7 @@
 #define LW_ERROR_GP_NOT_EXACTLY_ONE                        50019
 #define LW_ERROR_GP_INVALID_GPLINK                         50020
 #define LW_ERROR_GP_LICENSE_RESTRICTION                    50021
-#define LW_ERROR_GP_FILE_PARSE_ERROR                       50022
+#define LW_ERROR_GP_PARSE_ERROR                            50022
 #define LW_ERROR_GP_UNEXPECTED_ACTION_TYPE                 50023
 #define LW_ERROR_GP_XML_FAILED_TO_WRITE_DOC                50024
 #define LW_ERROR_GP_SETLOGLEVEL_FAILED                     50025
@@ -790,6 +790,7 @@
 #define LW_ERROR_GP_DOMAIN_LEAVE_FAILED                    50027
 #define LW_ERROR_GP_LOAD_EXTENSIONS_FAILED                 50028
 #define LW_ERROR_GP_REFRESH_CONFIGURATION_FAILED           50029
+#define LW_ERROR_GP_XML_PROPERTY_NOT_FOUND                 50030
 
 LW_BEGIN_EXTERN_C
 
