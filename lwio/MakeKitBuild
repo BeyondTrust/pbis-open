@@ -1,5 +1,5 @@
 SUBDIRS="include utils ipc common libshareinfo client server drivers tools fuse etc tests"
-
+ 
 _in_list()
 {
     _needle="$1"
