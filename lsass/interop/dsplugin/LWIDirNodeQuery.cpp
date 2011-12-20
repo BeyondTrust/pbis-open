@@ -316,20 +316,6 @@ CheckAccountPolicy(
         LOG("Logon restriction:          %s", bLogonRestriction ? "YES" : "NO");
     }
 
-    length = snprintf(
-                policyBuffer->fBufferData + sizeof(UInt32),
-                (int) policyBuffer->fBufferSize - sizeof(UInt32),
-                "newPasswordRequired=%d",
-                bPasswordExpired);
-    if (length > policyBuffer->fBufferSize)
-    {
-        macError = eDSBufferTooSmall;
-        goto exit;
-    }
-
-    *((UInt32 *) policyBuffer->fBufferData) = length;
-    policyBuffer->fBufferLength = length + sizeof(UInt32);
-
     if (bLocked)
     {
         LOG("Account policy fails due to account locked for user %s",
@@ -367,6 +353,26 @@ CheckAccountPolicy(
             username ? username : "<null>");
         macError = 0; // Safer to not react, as the password change is shown at first warning.
         goto exit;
+    }
+
+    if (policyBuffer)
+    {
+        length = strlen("newPasswordRequired=") + sizeof(UInt32) + 2;
+
+        if (length > policyBuffer->fBufferSize)
+        {
+            LOG("Could not write newPasswordRequired to policy buffer, buffer too small.");
+            macError = eDSBufferTooSmall;
+            goto exit;
+        }
+
+        length = snprintf(policyBuffer->fBufferData + sizeof(UInt32),
+                          (int) policyBuffer->fBufferSize - sizeof(UInt32),
+                          "newPasswordRequired=%d",
+                          bPasswordExpired);
+
+        *((UInt32 *) policyBuffer->fBufferData) = length;
+        policyBuffer->fBufferLength = length + sizeof(UInt32);
     }
 
     if (bPasswordExpired)
@@ -749,13 +755,22 @@ LWIDirNodeQuery::DoDirNodeAuth(
             GOTO_CLEANUP_EE(EE);
         }
 
-        macError = CheckAccountPolicy(
+        if (Flags & LWE_DS_FLAG_IS_SNOW_LEOPARD)
+        {
+            macError = CheckAccountPolicy(
                         TRUE,
                         username,
                         pDoDirNodeAuth->fOutAuthStepDataResponse);
-        if (macError == eDSAuthPasswordExpired)
+            if (macError == eDSAuthPasswordExpired)
+            {
+                macError = eDSNoErr;
+            }
+        else
         {
-            macError = eDSNoErr;
+            macError = CheckAccountPolicy(
+                        TRUE,
+                        username,
+                        NULL);
         }
         GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
     }
