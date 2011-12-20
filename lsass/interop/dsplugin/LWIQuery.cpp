@@ -248,6 +248,7 @@ LWIQuery::ShouldQueryComputerListInformation()
     /* We support computer list queries for all our DS nodes */
     return (_recTypeSet &&
             (_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == false &&
+            (_dwFlags & LWE_DS_FLAG_IS_SNOW_LEOPARD) == false &&
             LWI_BITVECTOR_ISSET(_recTypeSet, LWIRecTypeLookup::idx_kDSStdRecordTypeComputerLists));
 #else
     return false;
@@ -259,7 +260,7 @@ LWIQuery::ShouldQueryComputerGroupInformation()
 {
     /* We support computer group queries for all our DS nodes */
     return (_recTypeSet &&
-            (_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == true &&
+            ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) || _dwFlags & LWE_DS_FLAG_IS_SNOW_LEOPARD)) == true &&
             LWI_BITVECTOR_ISSET(_recTypeSet, LWIRecTypeLookup::idx_kDSStdRecordTypeComputerGroups));
 }
 
@@ -1280,7 +1281,8 @@ LWIQuery::GetGPOComputerList(
     macError = GetDnsHostName(&pszHostname);
     GOTO_CLEANUP_ON_MACERROR(macError);
     
-    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == true)
+    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == true ||
+         _dwFlags & LWE_DS_FLAG_IS_SNOW_LEOPARD) == true)
     {
        /* Computer Lists are only used on Tiger OS X, so we can return here */
         goto cleanup;
@@ -1378,7 +1380,8 @@ LWIQuery::QueryAllComputerListInformation(const char* pszName)
     PMCXVALUE pMCXValueList = NULL;
     PGROUP_POLICY_OBJECT pGPO = NULL;
 
-    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == true)
+    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == true ||
+         _dwFlags & LWE_DS_FLAG_IS_SNOW_LEOPARD) == true)
     {
        /* Computer Lists are only used on Tiger OS X, so we can return here */
         goto cleanup;
@@ -1471,7 +1474,8 @@ LWIQuery::GetGPOComputerGroups(
     macError = GetDnsHostName(&pszHostname);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == false)
+    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == false &&
+         _dwFlags & LWE_DS_FLAG_IS_SNOW_LEOPARD) == false)
     {
        /* Computer Groups are only used on Leopard OS X, so we can return here */
         goto cleanup;
@@ -1563,7 +1567,8 @@ LWIQuery::QueryAllComputerGroupInformation(const char* pszName)
     PMCXVALUE pMCXValueList = NULL;
     PGROUP_POLICY_OBJECT pGPO = NULL;
 
-    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == false)
+    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == false &&
+         _dwFlags & LWE_DS_FLAG_IS_SNOW_LEOPARD) == false)
     {
        /* Computer Groups are only used on Leopard OS X, so we can return here */
         goto cleanup;
@@ -1920,7 +1925,8 @@ LWIQuery::QueryComputerListInformationByName(const char* pszName)
     long macError = eDSNoErr;
     PLWICOMPUTERLIST pComputerList = NULL;
 
-    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == true)
+    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == true ||
+         _dwFlags & LWE_DS_FLAG_IS_SNOW_LEOPARD) == true)
     {
        /* Computer Lists are only used on Tiger OS X, so we can return here */
         goto cleanup;
@@ -1953,7 +1959,8 @@ LWIQuery::QueryComputerGroupInformationByName(const char* pszName)
     long macError = eDSNoErr;
     PLWICOMPUTERGROUP pComputerGroup = NULL;
 
-    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == false)
+    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == false &&
+         _dwFlags & LWE_DS_FLAG_IS_SNOW_LEOPARD) == false)
     {
        /* Computer Groups are only used on Leopard OS X, so we can return here */
         goto cleanup;
@@ -3132,7 +3139,8 @@ LWIQuery::GetComputerListByName(
     macError = GetDnsHostName(&pszHostname);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == true)
+    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == true ||
+         _dwFlags & LWE_DS_FLAG_IS_SNOW_LEOPARD) == true)
     {
        /* Computer Lists are only used on Tiger OS X, so we can return here */
         goto cleanup;
@@ -3261,7 +3269,8 @@ LWIQuery::GetComputerGroupByName(
     macError = GetDnsHostName(&pszHostname);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == false)
+    if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == false &&
+         _dwFlags & LWE_DS_FLAG_IS_SNOW_LEOPARD) == false)
     {
        /* Computer Groups are only used on Leopard OS X, so we can return here */
         goto cleanup;
