@@ -1928,7 +1928,7 @@ AD_NetlogonAuthenticationUserEx(
     default:
         bResetSchannel = TRUE;
         dwError = LW_ERROR_RPC_NETLOGON_FAILED;
-        LSA_LOG_ERROR("Resetting schannel due to status 0x%08x while "
+        LSA_LOG_INFO("Resetting schannel due to status 0x%08x while "
                       "authenticating user '%s\\%s'",
                       nt_status,
                       pUserParams->pszDomain, pUserParams->pszAccountName);
