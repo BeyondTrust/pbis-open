@@ -365,8 +365,8 @@ DWORD DJGetDistroInfo(const char *testPrefix, LwDistroInfo *info)
                 # The format of the line is something like:
                 #   CentOS release 4.x (Final)
                 */
-                "^[[:space:]]*CentOS release ([[:digit:]]+(\\.[[:digit:]]+)?)",
-                1,
+                "^[[:space:]]*(CentOS|CentOS Linux) release ([[:digit:]]+(\\.[[:digit:]]+)?)",
+                2,
                 -1,
                 1
             },
