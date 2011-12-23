@@ -781,6 +781,14 @@ LWIDirNodeQuery::DoDirNodeAuth(
 
         macError = ChangePassword(username, oldPassword, password);
         GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
+
+        LOG("Change password complete, now reauthenticate user to cache new password for next offline logon: %s", username);
+        macError = AuthenticateUser(username, password, true, &isOnlineLogon, &pszMessage);
+        GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
+
+        LOG("%sline logon successful for user: %s. Message: %s",
+            (isOnlineLogon) ? "On" : "Off", username,
+            pszMessage ? pszMessage : "<none>");   
     }
     else
     {
