@@ -765,6 +765,7 @@ LWIDirNodeQuery::DoDirNodeAuth(
             {
                 macError = eDSNoErr;
             }
+        }
         else
         {
             macError = CheckAccountPolicy(
