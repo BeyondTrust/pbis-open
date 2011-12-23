@@ -3,7 +3,7 @@
 Help()
 {
     echo "usage:"
-    echo "$0 <Local user account> <AD user account> [--move] [--delete] [--log <log file path>]"
+    echo "$0 <Local user account> <AD user account> [--move] [--delete] [--keep-admin] [--use-spotlight] [--log <log file path>]"
     echo ""
     echo "Notes:"
     echo "    * Source and AD user account homedir paths are for local system file paths."
@@ -15,6 +15,10 @@ Help()
     echo "      this prevents continued use of the local account now replaced by an AD account."
     echo "    * --keep-admin option will add the AD account to the local admin group"
     echo "      if the local account was a member."
+    echo "    * --use-spotlight option will change the ownership of former account files based "
+    echo "      on what Spotlight indicates were owned by the former user's id. Not passing"
+    echo "      this option will make the migration tool simply chown all files found under the"
+    echo "      home directory path of the user's profile."
 }
 
 DisplayStatus()
@@ -436,9 +440,11 @@ ChownProfile()
     #
     # Now call ChangeOwner function to chown the profile contents to the AD account UID:GID
     #
-    ChangeOwner
-    # -option- Comment out above and uncomment below to only change ownership of files that belonged to the old user
-    # ChangeOwnerViaSpotlight
+    if [ $UseSpotlightOption -eq 1 ]; then
+        ChangeOwnerViaSpotlight
+    else
+        ChangeOwner
+    fi
     if [ $rc -ne 0 ]; then
         return $rc
     fi
@@ -453,6 +459,7 @@ ChownProfile()
 MoveOption=0
 DeleteOption=0
 KeepAdminOption=0
+UseSpotlightOption=0
 DestHomeDirectory=""
 NewOwnerUID=""
 NewOwnerGID=""
@@ -486,6 +493,10 @@ do
 
         --keep-admin-rights|--keep-admin)
             KeepAdminOption=1
+            ;;
+
+        --use-spotlight|--spotlight)
+            UseSpotlightOption=1
             ;;
 
         --log)
