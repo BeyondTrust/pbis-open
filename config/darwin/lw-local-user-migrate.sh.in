@@ -62,6 +62,9 @@ DisplayStatus()
         10)
             echo "Unable to determine source local user account homedir."
             ;;
+        11)
+            echo "Unable to determine source local user account UID."
+            ;;
 
         # ChangeOwner errors
         20)
@@ -235,18 +238,11 @@ ChangeOwnerViaSpotlight()
             return $rc
         fi
 
-        echo "Determining Old UID"
-        OldOwnerUIDName=`echo "$SourceHomeDirectory" | awk -F"/" '/Users/{ print $3 }'`
-        OldOwnerUID=`dscl . read "/Users/$OldOwnerUIDName" | awk '/UniqueID:/{ print $2 }'`
-
-        if [ -z "$OldOwnerUID" ]; then
-            rc="22"
-            return $rc
-        fi
-
         IFS=$'\n'
         # Need to put semicolons after every line as we're setting IFS now...
-        for item in $(mdfind -onlyin /Users/${OldOwnerUIDName} "kMDItemFSOwnerUserID == ${OldOwnerUID}" | sed 's/\ /\\\ /g');
+
+        echo "Looking for all other files owned by former user UID, outside of the user's home directory, and chowning to new UID and GID values"
+        for item in $(mdfind "kMDItemFSOwnerUserID == ${OldOwnerUID}" | grep -v ^"${SourceHomeDirectory}" | sed 's/\ /\\\ /g');
             do chown -v "${NewOwnerUID}":"${NewOwnerGID}" "$item";
         done;
 
@@ -262,8 +258,7 @@ ChangeOwnerViaSpotlight()
         echo "";
         return 0;
     else
-        echo "$osType not supported, only Darwin is supported. Running traditional chown"
-        ChangeOwner
+        echo "$osType not supported, only Darwin is supported."
     fi
 }
 
@@ -406,6 +401,13 @@ MigrateProfile()
         return $rc
     fi
 
+    if [ $UseSpotlightOption -eq 1 ]; then
+        ChangeOwnerViaSpotlight
+        if [ $rc -ne 0 ]; then
+            return $rc
+        fi
+    fi
+
     return 0
 }
 
@@ -440,13 +442,16 @@ ChownProfile()
     #
     # Now call ChangeOwner function to chown the profile contents to the AD account UID:GID
     #
-    if [ $UseSpotlightOption -eq 1 ]; then
-        ChangeOwnerViaSpotlight
-    else
-        ChangeOwner
-    fi
+    ChangeOwner
     if [ $rc -ne 0 ]; then
         return $rc
+    fi
+
+    if [ $UseSpotlightOption -eq 1 ]; then
+        ChangeOwnerViaSpotlight
+        if [ $rc -ne 0 ]; then
+            return $rc
+        fi
     fi
 
     return 0
@@ -461,6 +466,7 @@ DeleteOption=0
 KeepAdminOption=0
 UseSpotlightOption=0
 DestHomeDirectory=""
+OldOwnerUID=""
 NewOwnerUID=""
 NewOwnerGID=""
 SourceHomeDirectory=""
@@ -557,11 +563,21 @@ if id "$LocalUserAccount" | egrep -q '[=,]80\(admin\)'; then
 fi
 
 #
-# Get the details about the source Local user.
+# Get the homedir details for the source Local user.
 #
 SourceHomeDirectory=`dscl . read /Users/"$LocalUserAccount" NFSHomeDirectory | awk '{print $2}'`
 if [ -z "$SourceHomeDirectory" ]; then
     rc="10"
+    DisplayStatus
+    exit $rc
+fi
+
+#
+# Get the UID details for the source Local user.
+#
+OldOwnerUID=`dscl . read "/Users/$LocalUserAccount" | awk '/UniqueID:/{ print $2 }'`
+if [ -z "$OldOwnerUID" ]; then
+    rc="11"
     DisplayStatus
     exit $rc
 fi
