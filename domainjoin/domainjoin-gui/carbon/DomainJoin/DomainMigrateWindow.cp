@@ -526,7 +526,7 @@ DomainMigrateWindow::ConfirmMigration(
                                              bDeleteAccount ? "be deleted" : "remain available",
                                              bKeepAdmin ? "" : "not ",
                                              localUserHomeDir.c_str(),
-                                             bUseSpotlight ? "all files belonging to user" : "the user's home directory files";
+                                             bUseSpotlight ? "all files belonging to user" : "the user's home directory files",
                                              adUserUID.c_str(),
                                              adUserGID.c_str());
     }
@@ -542,7 +542,7 @@ DomainMigrateWindow::ConfirmMigration(
                                              localUserHomeDir.c_str(),
                                              bMoveProfile ? "moved" : "copied",
                                              adUserHomeDir.c_str(),
-                                             bUseSpotlight ? "all files belonging to user" : "the user's home directory files";
+                                             bUseSpotlight ? "all files belonging to user" : "the user's home directory files",
                                              adUserUID.c_str(),
                                              adUserGID.c_str());
     }
