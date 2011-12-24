@@ -1381,7 +1381,7 @@ LWIQuery::QueryAllComputerListInformation(const char* pszName)
     PGROUP_POLICY_OBJECT pGPO = NULL;
 
     if ((_dwFlags & LWE_DS_FLAG_IS_LEOPARD) == true ||
-         _dwFlags & LWE_DS_FLAG_IS_SNOW_LEOPARD) == true)
+        (_dwFlags & LWE_DS_FLAG_IS_SNOW_LEOPARD) == true)
     {
        /* Computer Lists are only used on Tiger OS X, so we can return here */
         goto cleanup;
