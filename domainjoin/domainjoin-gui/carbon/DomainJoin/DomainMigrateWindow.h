@@ -169,6 +169,7 @@ class DomainMigrateWindow : public TWindow
         static const int MOVE_RADIO_ID;
         static const int DELETE_ACCOUNT_ID;
         static const int KEEP_ADMIN_ID;
+        static const int USE_SPOTLIGHT_ID;
         static const int VALIDATE_ID;
         static const int CANCEL_ID;
         static const int MIGRATE_ID;
