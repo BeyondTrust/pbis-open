@@ -24,6 +24,7 @@ const int DomainMigrateWindow::COPY_RADIO_ID       = 506;
 const int DomainMigrateWindow::MOVE_RADIO_ID       = 507;
 const int DomainMigrateWindow::DELETE_ACCOUNT_ID   = 508;
 const int DomainMigrateWindow::KEEP_ADMIN_ID       = 509;
+const int DomainMigrateWindow::USE_SPOTLIGHT_ID    = 510;
 const int DomainMigrateWindow::CANCEL_ID           = 511;
 const int DomainMigrateWindow::MIGRATE_ID          = 512;
 const int DomainMigrateWindow::VALIDATE_ID         = 513;
@@ -162,6 +163,12 @@ bool
 DomainMigrateWindow::IsKeepAdminOptionSelected()
 {
     return IsRadioButtonSet(KEEP_ADMIN_ID);
+}
+
+bool
+DomainMigrateWindow::IsUseSpotlightOptionSelected()
+{
+    return IsRadioButtonSet(USE_SPOTLIGHT_ID);
 }
 
 void
@@ -490,7 +497,8 @@ DomainMigrateWindow::ConfirmMigration(
     const std::string& adUserGID,
     bool bMoveProfile,
     bool bDeleteAccount,
-    bool bKeepAdmin
+    bool bKeepAdmin,
+    bool bUseSpotlight
     )
 {
     AlertStdCFStringAlertParamRec params;
@@ -517,7 +525,7 @@ DomainMigrateWindow::ConfirmMigration(
                                              adUserName.c_str(),
                                              bDeleteAccount ? "be deleted" : "remain available",
                                              bKeepAdmin ? "" : "not ",
-                                             localUserHomeDir.c_str(),
+                                             bUseSpotlight ? "<profile indexed files>" : localUserHomeDir.c_str(),
                                              adUserUID.c_str(),
                                              adUserGID.c_str());
     }
@@ -571,6 +579,7 @@ DomainMigrateWindow::CallMigrateCommand(
     bool bMoveProfile,
     bool bDeleteAccount,
     bool bKeepAdmin,
+    bool bUseSpotlight,
     char ** ppszOutput
     )
 {
@@ -583,6 +592,7 @@ DomainMigrateWindow::CallMigrateCommand(
         bMoveProfile ? "--move" : " ",
         bDeleteAccount ? "--delete" : " ",
         bKeepAdmin ? "--keep-admin" : " ",
+        bUseSpotlight ? "--use-spotlight" : " ",
         "--log",
         logFileName.c_str(),
         (char *) NULL };
@@ -659,10 +669,11 @@ DomainMigrateWindow::HandleMigration()
         bool bMoveProfile = IsMoveOptionSelected();
         bool bDeleteAccount = IsDeleteOptionSelected();
         bool bKeepAdmin = IsKeepAdminOptionSelected();
+        bool bUseSpotlight = IsUseSpotlightOptionSelected();
         
         ShowMigrateProgressBar();
         
-        if (ConfirmMigration(localUserName, localUserHomeDir, adUserName, adUserHomeDir, adUserUID, adUserGID, bMoveProfile, bDeleteAccount, bKeepAdmin))
+        if (ConfirmMigration(localUserName, localUserHomeDir, adUserName, adUserHomeDir, adUserUID, adUserGID, bMoveProfile, bDeleteAccount, bKeepAdmin, bUseSpotlight))
         {
             int ret = 0;
             char szLogFileName[256] = { 0 };
@@ -671,7 +682,7 @@ DomainMigrateWindow::HandleMigration()
             sprintf(szLogFileName, "/tmp/lw-migrate.%s.log", localUserName.c_str());
             
             // Migrate user with the parameters we have determined...
-            ret = CallMigrateCommand(localUserName, adUserName, szLogFileName, bMoveProfile, bDeleteAccount, bKeepAdmin, &pszErrorMessage);
+            ret = CallMigrateCommand(localUserName, adUserName, szLogFileName, bMoveProfile, bDeleteAccount, bKeepAdmin, bUseSpotlight, &pszErrorMessage);
             
             HideMigrateProgressBar();
             

@@ -6,15 +6,15 @@
   </object>
   <array count="17" name="allObjects">
     <object class="IBCarbonWindow" id="166">
-      <string name="windowRect">528 96 906 473 </string>
+      <string name="windowRect">249 214 627 591 </string>
       <string name="title">Domain Join</string>
       <object name="rootControl" class="IBCarbonRootControl" id="167">
         <string name="bounds">0 0 378 377 </string>
         <string name="viewFrame">0 0 377 378 </string>
         <array count="11" name="subviews">
           <object class="IBCarbonStaticText" id="181">
-            <string name="bounds">26 88 62 357 </string>
-            <string name="viewFrame">88 26 269 36 </string>
+            <string name="bounds">26 88 70 357 </string>
+            <string name="viewFrame">88 26 269 44 </string>
             <ostype name="controlSignature">CnTs</ostype>
             <int name="controlID">302</int>
             <boolean name="small">TRUE</boolean>

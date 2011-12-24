@@ -127,6 +127,7 @@ class DomainMigrateWindow : public TWindow
         bool IsMoveOptionSelected();
         bool IsDeleteOptionSelected();
         bool IsKeepAdminOptionSelected();
+        bool IsUseSpotlightOptionSelected();
         void HandleMigration();
         bool HandleValidateUser();
         bool ConfirmMigration(const std::string& localUserName,
@@ -137,13 +138,15 @@ class DomainMigrateWindow : public TWindow
                               const std::string& adUserGID,
                               bool  bMoveProfile,
                               bool  bDeleteAccount,
-                              bool  bKeepAdmin);
+                              bool  bKeepAdmin,
+                              bool  bUseSpotlight);
         int CallMigrateCommand(const std::string& localUserName,
                                const std::string& adUserName,
                                const std::string& logFileName,
                                bool bMoveProfile,
                                bool bDeleteAccount,
                                bool bKeepAdmin,
+                               bool bUseSpotlight,
                                char ** ppszOutput);
         void ShowMigrateCompleteDialog(const std::string& value);
         void ShowMigrateCompleteErrorDialog(const std::string& value, int code, const std::string& resultMessage);
