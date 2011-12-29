@@ -103,8 +103,8 @@ package_freebsd()
     mk_freebsd_do \
         PACKAGE="$PKG_FREEBSD_NAME" \
         VERSION="$PKG_FREEBSD_VERSION" \
-        SHORT="-PowerBroker Identity Services Open Upgrade Helper" \
-        LONG="-Aids in upgrading between versions of PowerBroker Identity Services Open"
+        SHORT="-PowerBroker Identity Services Open Legacy" \
+        LONG="-Supports scripts depending on old binary locations and names"
 
         open_legacy_files
 
