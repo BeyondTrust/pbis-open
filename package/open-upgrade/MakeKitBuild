@@ -68,7 +68,7 @@ package_rpm()
         PACKAGE="$PKG_RPM_NAME" \
         VERSION="$PKG_RPM_VERSION" \
         SPECFILE="rpm/open-upgrade.spec.in"
-        
+
     mk_rpm_done
 }
 
