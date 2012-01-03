@@ -1,0 +1,10 @@
+make()
+{
+    mk_autotools \
+        HEADERS="popt.h" \
+        LIBS="popt" \
+        HEADERDEPS="iconv.h" \
+        LIBDEPS="iconv" \
+        -- \
+        --disable-nls
+}
