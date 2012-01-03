@@ -549,8 +549,6 @@ run_or_fail '@MK_BINDIR@/lwsm' shutdown
 
 configure_and_start_lwsmd
 
-run "@MK_BINDIR@/domainjoin-cli" configure --enable pam
-
 # Configure PBIS DS plugin
 enable_plugin
 
