@@ -1610,8 +1610,8 @@ INTERNAL void rpc__gssauth_cn_wrap_packet
 		      RPC_C_MEM_WAITOK);
 
 	wrap_idx = 0;
-	hdr = (rpc_cn_common_hdr_p_t)&wrap_base[wrap_idx];
 
+	/* Copy the DCE/RPC header and the PDU */
 	for (i = 0; i < pdu_iov_num; i++)
 	{
 		memcpy(&wrap_base[wrap_idx],
@@ -1619,6 +1619,7 @@ INTERNAL void rpc__gssauth_cn_wrap_packet
 		       iov[i].iov_len);
 		wrap_idx += iov[i].iov_len;
 	}
+	hdr = (rpc_cn_common_hdr_p_t)wrap_base;
 
 	memset(&wrap_base[wrap_idx], 0, pad_len);
 	wrap_idx += pad_len;
@@ -1632,7 +1633,8 @@ INTERNAL void rpc__gssauth_cn_wrap_packet
 	output_iov[1].buffer.value  = &wrap_base[header_size];
 	output_iov[1].buffer.length = payload_len + pad_len;
 
-	maj_stat = gss_wrap_iov(&min_stat,
+	// First determine how long the gss header will be
+	maj_stat = gss_wrap_iov_length(&min_stat,
 				gssauth_cn_info->gss_ctx,
 				conf_req,
 				GSS_C_QOP_DEFAULT,
@@ -1661,6 +1663,51 @@ INTERNAL void rpc__gssauth_cn_wrap_packet
 	pdu_buffer  = output_iov[1].buffer;
 	auth_buffer = output_iov[0].buffer;
 	auth_len    = auth_buffer.length;
+
+	// Fill in the correct fragment size and auth size values before doing
+	// the real encryption.
+	hdr->auth_len = auth_len;
+	hdr->frag_len = header_size +
+                        pdu_len + auth_pad_len +
+                        RPC_CN_PKT_SIZEOF_COM_AUTH_TLR +
+                        hdr->auth_len;
+
+
+	maj_stat = gss_wrap_iov(&min_stat,
+				gssauth_cn_info->gss_ctx,
+				conf_req,
+				GSS_C_QOP_DEFAULT,
+				&conf_state,
+				output_iov,
+				sizeof(output_iov)/sizeof(output_iov[0]));
+	if (maj_stat != GSS_S_COMPLETE) {
+		char msg[256];
+		rpc__gssauth_error_map(maj_stat, min_stat,
+				       (gss_OID)&rpc__gssauth_krb5_oid,
+				       msg, sizeof(msg), st);
+		RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
+			("(rpc__gssauth_cn_wrap_packet): %s: %s\n", comment, msg));
+		/* *st is already filled */
+		goto cleanup;
+	}
+
+	if (conf_req != conf_state) {
+		RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
+			("(rpc__gssauth_cn_wrap_packet): %s: conf_req[%u] != conf_state[%u]\n",
+			comment, (unsigned int)conf_req, (unsigned int)conf_state));
+		*st = rpc_s_auth_method;
+		goto cleanup;
+	}
+
+	gssauth_buffer = output_iov[0].buffer;
+	if (gssauth_buffer.length != auth_len)
+	{
+		RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
+			("(rpc__gssauth_cn_wrap_packet): %s: GSS auth header size was %u from gss_wrap_iov_length and is now %u from gss_wrap_iov\n",
+			comment, (unsigned int)auth_len, (unsigned int)gssauth_buffer.length));
+		*st = rpc_s_auth_method;
+		goto cleanup;
+	}
 
 	if (auth_len > RPC__GSSAUTH_CN_AUTH_MAX_LEN) {
 		RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
