@@ -470,14 +470,6 @@ cleanup_registry()
     run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/netlogond.reg"
 }
 
-switch_to_open_provider()
-{
-    _value='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
-    _path='@PRIMARY_LIBDIR@/liblsass_auth_provider_ad_open.so'
-
-    run_quiet "@MK_BINDIR@/regshell" set_value "$_value" Path "$_path"
-}
-
 ##
 ## Main
 ##
@@ -542,8 +534,6 @@ fix_60_registry
 cleanup_registry
 
 remove_npfs_dependencies
-
-switch_to_open_provider
 
 run_or_fail '@MK_BINDIR@/lwsm' shutdown
 
