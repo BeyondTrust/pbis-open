@@ -315,6 +315,10 @@ static AdtErrorMapT AdtErrorMap[] = {
         "User with the specified UID or login name already exists in the cell"
     },
     {
+        ADT_ERR_FAILED_STDIN,
+        "Failed to read data from stdin"
+    },
+    {
         0,
         NULL
     }

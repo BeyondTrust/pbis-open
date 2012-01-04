@@ -939,9 +939,14 @@ DWORD ProcessDash(IN PSTR * str) {
         ADT_BAIL_ON_ALLOC_FAILURE_NP(!dwError);
 
         *str = fgets(buf, len - 1, stdin);
+
+        if(*str == NULL) {
+            dwError = ADT_ERR_FAILED_STDIN;
+            goto error;
+        }
         
         nLen = strlen(*str);
-        
+
         if((nLen > 1) && ((*str)[nLen - 1] == '\n')) {
             (*str)[nLen - 1] = (char) 0;
         }
