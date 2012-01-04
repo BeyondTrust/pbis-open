@@ -828,6 +828,10 @@ static struct gss_config_ext iakerb_mechanism_ext = {
 
 #ifdef _GSS_STATIC_LINK
 #include "mglueP.h"
+#if 0
+// When using spnego to an IP address, the client side attempts to use this
+// mechanism with host/IPaddress@REALM. The server responds with a principal
+// unknown error instead of falling back to a working mechanism.
 static int gss_iakerbmechglue_init(void)
 {
     struct gss_mech_config mech_iakerb;
@@ -849,6 +853,7 @@ static int gss_iakerbmechglue_init(void)
 
     return 0;
 }
+#endif
 
 static int gss_krb5mechglue_init(void)
 {
@@ -920,9 +925,11 @@ int gss_krb5int_lib_init(void)
     err = gss_krb5mechglue_init();
     if (err)
         return err;
+#if 0
     err = gss_iakerbmechglue_init();
     if (err)
         return err;
+#endif
 #endif
 
     return 0;
