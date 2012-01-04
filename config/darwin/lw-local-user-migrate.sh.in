@@ -382,8 +382,8 @@ MigrateProfile()
             mkdir -p $DestHomeDirectory
         fi
 
-        echo "cp -Rfv $SourceHomeDirectory/* $DestHomeDirectory/"
-        cp -Rfv "$SourceHomeDirectory"/* "$DestHomeDirectory"/
+        echo "cp -Rfvp $SourceHomeDirectory/* $DestHomeDirectory/"
+        cp -Rfvp "$SourceHomeDirectory"/* "$DestHomeDirectory"/
         if [ $? -ne 0 ]; then
             rc="35"
             return $rc
