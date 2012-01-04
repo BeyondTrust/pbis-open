@@ -1706,6 +1706,7 @@ ntlm_gss_wrap_iov_length(
     SecPkgContext_Sizes Sizes = {0};
     DWORD dwIndex = 0;
     BOOLEAN bFoundHeader = FALSE;
+    INT nEncrypted = 0;
 
     if (cBuffers < 2)
     {
@@ -1749,8 +1750,17 @@ ntlm_gss_wrap_iov_length(
         BAIL_ON_LSA_ERROR(MinorStatus);
     }
 
+    if (nEncrypt)
+    {
+        nEncrypted = 1;
+    }
+
 cleanup:
 
+    if (pEncrypted)
+    {
+        *pEncrypted = nEncrypted;
+    }
     *pMinorStatus = MinorStatus;
     return MajorStatus;
 
@@ -1948,6 +1958,9 @@ ntlm_gss_unwrap_iov(
                 break;
             case GSS_IOV_BUFFER_TYPE_PADDING:
                 NtlmBuffer[dwIndex].BufferType = SECBUFFER_PADDING;
+                break;
+            case GSS_IOV_BUFFER_TYPE_EMPTY:
+                NtlmBuffer[dwIndex].BufferType = SECBUFFER_EMPTY;
                 break;
             default:
                 MinorStatus = LW_ERROR_INVALID_PARAMETER;
