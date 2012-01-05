@@ -1385,6 +1385,13 @@ RdrSocketDispatchPacket2(
     /* Response? */
     if (pPacket->pSMB2Header->ulFlags & SMB2_FLAGS_SERVER_TO_REDIR)
     {
+        if ((pPacket->pSMB2Header->ulFlags & SMB2_FLAGS_ASYNC_COMMAND) &&
+            pPacket->pSMB2Header->error == STATUS_PENDING)
+        {
+            LWIO_LOG_DEBUG("Discarding interim response: %u", (unsigned int) pPacket->pSMB2Header->command);
+            goto cleanup;
+        }
+
         /*
          * Grab sequence number so we can look up associated request.
          * Note that we only need the lower 16 bits to distinguish between
