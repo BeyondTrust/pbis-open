@@ -55,7 +55,7 @@
                         <integer>1</integer>
                         <key>DSNodeToRegisterPath</key>
                         <array>
-                                        <string>/Likewise - Active Directory</string>
+                                        <string>Likewise - Active Directory</string>
                         </array>
                 </dict>
         </array>
