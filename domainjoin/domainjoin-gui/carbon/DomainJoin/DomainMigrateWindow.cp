@@ -451,7 +451,7 @@ DomainMigrateWindow::ShowMigrateCompleteDialog(const std::string& value)
     SInt16 outItemHit;
     char msgStr[256];
     sprintf(msgStr,
-            "Account migration complete!\n\nMigration processing logs can be found at:\n\t/tmp/lw-migrate.%s.log",
+            "Account migration complete!\n\nMigration processing logs can be found at:\n\t/var/log/lw-migrate.%s.log",
             value.c_str());
     CFStringRef msgStrRef = CFStringCreateWithCString(NULL, msgStr, kCFStringEncodingASCII);
     CFStringGetPascalString(msgStrRef, (StringPtr)msgStr, 255, kCFStringEncodingASCII);
@@ -473,7 +473,7 @@ DomainMigrateWindow::ShowMigrateCompleteErrorDialog(
     SInt16 outItemHit;
     char msgStr[512] = { 0 };
     sprintf(msgStr,
-            "Account migration script finished with exitcode: %d\n%sMigration processing logs can be found at:\n\t/tmp/lw-migrate.%s.log",
+            "Account migration script finished with exitcode: %d\n%sMigration processing logs can be found at:\n\t/var/log/lw-migrate.%s.log",
             code,
             resultMessage.c_str() ? resultMessage.c_str() : "",
             value.c_str());
@@ -588,7 +588,7 @@ DomainMigrateWindow::CallMigrateCommand(
     long macError = eDSNoErr;
     char * pszOutput = NULL;
     int exitCode = 0;
-    const char* args[] = { "/opt/pbis/bin/lw-local-user-migrate.sh",
+    const char* args[] = { "/opt/likewise/bin/lw-local-user-migrate.sh",
         localUserName.c_str(),
         adUserName.c_str(),
         bMoveProfile ? "--move" : " ",
@@ -681,7 +681,7 @@ DomainMigrateWindow::HandleMigration()
             char szLogFileName[256] = { 0 };
             char * pszErrorMessage = NULL;
             
-            sprintf(szLogFileName, "/tmp/lw-migrate.%s.log", localUserName.c_str());
+            sprintf(szLogFileName, "/var/log/lw-migrate.%s.log", localUserName.c_str());
             
             // Migrate user with the parameters we have determined...
             ret = CallMigrateCommand(localUserName, adUserName, szLogFileName, bMoveProfile, bDeleteAccount, bKeepAdmin, bUseSpotlight, &pszErrorMessage);
