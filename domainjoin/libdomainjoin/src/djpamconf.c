@@ -4254,14 +4254,17 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
     ceError = DJGetDistroInfo("", &distro);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    /* Special case Mac OS X - 10.6 (Snow Leopard)
+    /* Special case Mac OS X - 10.6 (Snow Leopard) and 10.7 (Lion)
        This operating system provides a wrapper PAM module that redirects PAM calls to
        all of the registered DirectoryService plugins. pam_opendirectory.so is already
        configured in 10.6, and we can therefore skip registration of pam_lsass.so. We
        only need to install our daemons and either LWEDSPlugIn.dsplug or LWIDSPlugIn.dsplug. */
-    if (distro.os == OS_DARWIN && !strncmp(distro.version, "10.6", strlen("10.6")))
+    if (distro.os == OS_DARWIN && (
+            !strncmp(distro.version, "10.6", strlen("10.6")) ||
+            !strncmp(distro.version, "10.7", strlen("10.7")))
+       )
     {
-        DJ_LOG_INFO("No action is needed for PAM join module on Mac OS X 10.6. Returning module result of FullyConfigured.");
+        DJ_LOG_INFO("No action is needed for PAM join module on Mac OS X 10.6 or higher. Returning module result of FullyConfigured.");
         result = FullyConfigured;
         goto cleanup;
     }
