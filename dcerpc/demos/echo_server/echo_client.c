@@ -29,6 +29,8 @@
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
+#define SECURITY_WIN32
+#include <security.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../include;.;client"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;HAVE_GETOPT_H;_WIN32_WINNT=0x500 "
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_WIN32_WINNT=0x500 "
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -211,7 +211,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\getopt.c"
+				RelativePath=".\getopt_internal.c"
 				>
 			</File>
 			<File
