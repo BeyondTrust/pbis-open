@@ -3977,12 +3977,15 @@ void DJNewConfigurePamForADLogin(
     ceError = DJGetDistroInfo("", &distro);
     LW_CLEANUP_CTERR(exc, ceError);
 
-    /* Special case Mac OS X - 10.6 (Snow Leopard)
+    /* Special case Mac OS X - 10.6 (Snow Leopard) and 10.7 (Lion)
        This operating system provides a wrapper PAM module that redirects PAM calls to
        all of the registered DirectoryService plugins. pam_opendirectory.so is already
        configured in 10.6, and we can therefore skip registration of pam_lsass.so. We
        only need to install our daemons and either LWEDSPlugIn.dsplug or LWIDSPlugIn.dsplug. */
-    if (distro.os == OS_DARWIN && !strncmp(distro.version, "10.6", strlen("10.6")))
+    if (distro.os == OS_DARWIN && (
+            !strncmp(distro.version, "10.6", strlen("10.6")) ||
+            !strncmp(distro.version, "10.7", strlen("10.7")))
+       )
     {
         DJ_LOG_INFO("Ignoring pam configuration phase of domainjoin utility for this OS. Mac OS X 10.6 uses a common PAM module for all authentication plugins registered with DirectoryService (pam_opendirectory.so). Therefore no action is needed for this join module.");
         goto cleanup;
