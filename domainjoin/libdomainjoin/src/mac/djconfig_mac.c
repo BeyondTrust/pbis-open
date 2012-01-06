@@ -347,9 +347,43 @@ DWORD
 DJIsAppleADPluginInUse(BOOLEAN* pExists)
 {
     DWORD ceError = ERROR_SUCCESS;
+    PSTR value = NULL;
+    PSTR valueStart = NULL;
+    BOOLEAN bInUse = FALSE;
+
+    DJ_LOG_INFO("Testing to see if Apple AD plugin is already in use");
+
+    ceError = CTCaptureOutput("/usr/bin/dscl localhost -list / | grep \"^Active Directory\"", &value);
+    if (ceError)
+    {
+        ceError = ERROR_SUCCESS;
+        goto error;
+    }
+
+    CTStripWhitespace(value);
+    valueStart = strstr(value, "Active Directory");
+    if (valueStart != NULL)
+    {
+        bInUse = TRUE;
+    }
+
+error:
+
+    CT_SAFE_FREE_STRING(value);
+
+    *pExists = bInUse;
+
+    return ceError;
+}
+
+#if 0
+DWORD
+DJIsAppleADPluginInUse(BOOLEAN* pExists)
+{
+    DWORD ceError = ERROR_SUCCESS;
     PPROCINFO pProcInfo = NULL;
     PSTR* ppszArgs = NULL;
-    DWORD nArgs = 7;
+    DWORD nArgs = 8;
     LONG status = 0;
     BOOLEAN bInUse = FALSE;
 
@@ -367,13 +401,16 @@ DJIsAppleADPluginInUse(BOOLEAN* pExists)
     ceError = CTAllocateString("-list", ppszArgs+2);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    ceError = CTAllocateString("|", ppszArgs+3);
+    ceError = CTAllocateString("/", ppszArgs+3);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    ceError = CTAllocateString("grep", ppszArgs+4);
+    ceError = CTAllocateString("|", ppszArgs+4);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    ceError = CTAllocateString(APPLEADDSPLUGIN_NAME, ppszArgs+5);
+    ceError = CTAllocateString("grep", ppszArgs+5);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    ceError = CTAllocateString(APPLEADDSPLUGIN_NAME, ppszArgs+6);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     ceError = DJSpawnProcess(ppszArgs[0], ppszArgs, &pProcInfo);
@@ -403,6 +440,7 @@ error:
 
     return ceError;
 }
+#endif
 
 static QueryResult QueryDSPlugin(const JoinProcessOptions *options, LWException **exc)
 {
