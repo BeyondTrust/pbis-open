@@ -120,7 +120,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="../../include;.;server"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;HAVE_GETOPT_H;_WIN32_WINNT=0x500 "
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;_WIN32_WINNT=0x500 "
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
