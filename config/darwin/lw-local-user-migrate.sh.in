@@ -226,46 +226,38 @@ ChangeOwner()
 # Unsupported feature and should only be used when SourceHomeDir and DestHomeDir are the same.
 ChangeOwnerViaSpotlight()
 {
-    osType=`GetOsType`
-
-    if [ $osType = Darwin ]; then
-        echo "Detecting if Spotlight is running"
-        mdutil -s / | grep "Indexing enabled" > /dev/null
-        if [ $? -eq 0 ]; then
-            echo "Spotlight index reported enabled"
-        else
-            rc="21"
-            return $rc
-        fi
-
-        IFS=$'\n'
-        # Need to put semicolons after every line as we're setting IFS now...
-
-        echo "Looking for all other files owned by former user UID, outside of the user's home directory, and chowning to new UID and GID values"
-        for item in $(mdfind "kMDItemFSOwnerUserID == ${OldOwnerUID}" | grep -v ^"${SourceHomeDirectory}" | sed 's/\ /\\\ /g');
-            do chown -v "${NewOwnerUID}":"${NewOwnerGID}" "$item";
-        done;
-
-        if [ $? -ne 0 ]; then
-            rc="20";
-            return $rc;
-            unset IFS;
-        else
-            rc="0";
-            unset IFS;
-        fi;
-
-        echo "";
-        return 0;
+    echo "Detecting if Spotlight is running"
+    mdutil -s / | grep "Indexing enabled" > /dev/null
+    if [ $? -eq 0 ]; then
+        echo "Spotlight index reported enabled"
     else
-        echo "$osType not supported, only Darwin is supported."
+        rc="21"
+        return $rc
     fi
+
+    IFS=$'\n'
+    # Need to put semicolons after every line as we're setting IFS now...
+
+    echo "Looking for all other files owned by former user UID, outside of the user's home directory, and chowning to new UID and GID values"
+    for item in $(mdfind "kMDItemFSOwnerUserID == ${OldOwnerUID}" | grep -v ^"${SourceHomeDirectory}" );
+        do chown -v "${NewOwnerUID}":"${NewOwnerGID}" "$item";
+    done;
+
+    if [ $? -ne 0 ]; then
+        rc="20";
+        return $rc;
+        unset IFS;
+    else
+        rc="0";
+        unset IFS;
+    fi;
+
+    echo "";
+    return 0;
 }
 
 MigrateProfile()
 {
-    osType=`GetOsType`
-
     echo "Migrating user profile contents and updating ownership..."
     echo "    Src:     $SourceHomeDirectory"
     if [ $MoveOption -eq 1 ]; then
@@ -382,8 +374,9 @@ MigrateProfile()
             mkdir -p $DestHomeDirectory
         fi
 
-        echo "cp -Rfvp $SourceHomeDirectory/* $DestHomeDirectory/"
-        cp -Rfvp "$SourceHomeDirectory"/* "$DestHomeDirectory"/
+        echo "cp -Rfv $SourceHomeDirectory/* $DestHomeDirectory/"
+        cd $SourceHomeDirectory
+        find . -print | cpio -pdmv $DestHomeDirectory
         if [ $? -ne 0 ]; then
             rc="35"
             return $rc
@@ -471,6 +464,12 @@ NewOwnerUID=""
 NewOwnerGID=""
 SourceHomeDirectory=""
 LocalIsAdmin=0
+
+if [ -f /var/log/pbis-migrate.start ]; then
+    rm /var/log/pbis-migrate.start
+fi
+
+echo "$1 $2 $3 $4 $5 $6 $7 $8" >> /var/log/pbis-migrate.start
 
 # Verify that we have at least the 2 required arguments
 if [ $# -lt 2 ]; then
