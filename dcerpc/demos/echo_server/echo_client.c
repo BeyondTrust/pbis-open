@@ -24,8 +24,6 @@
 #include <rpcdbg.h>
 #include <dce/ntlmssp_types.h>
 #include <termios.h>
-#define SECURITY_WIN32
-#include <security.h>
 #endif
 
 #ifdef HAVE_GETOPT_H
@@ -38,6 +36,8 @@
 
 #ifdef _WIN32
 #include "getopt_internal.h"
+#define SECURITY_WIN32
+#include <security.h>
 #endif
 
 #define MAX_USER_INPUT 128
