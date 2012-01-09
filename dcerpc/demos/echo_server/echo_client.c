@@ -24,13 +24,13 @@
 #include <rpcdbg.h>
 #include <dce/ntlmssp_types.h>
 #include <termios.h>
+#define SECURITY_WIN32
+#include <security.h>
 #endif
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
-#define SECURITY_WIN32
-#include <security.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
