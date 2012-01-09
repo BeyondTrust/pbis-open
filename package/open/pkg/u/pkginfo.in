@@ -1,4 +1,5 @@
 PKG=PBISopenu
+SUNW_PKGTYPE=usr
 NAME=PowerBroker Identity Services Open (usr files)
 ARCH=@PKG_PKG_ARCH@
 VERSION=@PKG_PKG_VERSION@
