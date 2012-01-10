@@ -20,6 +20,7 @@ CP367, ei_ascii
 IBM367, ei_ascii
 US, ei_ascii
 CSASCII, ei_ascii
+646, ei_ascii
 UTF-8, ei_utf8
 UCS-2, ei_ucs2
 ISO-10646-UCS-2, ei_ucs2
