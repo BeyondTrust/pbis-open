@@ -275,7 +275,7 @@ configure_openssl()
             host_string="solaris-sparcv9-gcc"
             ;;
         solaris-x86_32)
-            host_string="solaris-x86-gcc"
+            host_string="386 -m32 solaris-x86-gcc"
             ;;
         aix-ppc32)
             host_string="aix-gcc"
@@ -305,7 +305,7 @@ configure_openssl()
         mk_run_quiet_or_fail \
             ./Configure \
             --prefix="${MK_PREFIX}" \
-            shared "$host_string"
+            shared $host_string
     else
         mk_run_quiet_or_fail \
             ./config \
