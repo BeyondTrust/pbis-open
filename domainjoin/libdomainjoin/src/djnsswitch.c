@@ -953,12 +953,7 @@ IsApparmorConfigured(BOOLEAN *configured)
     if(hasApparmor)
     {
         GCE(ceError = CTCheckFileHoldsPattern(APPARMOR_NSSWITCH,
-                    "centeris", configured));
-        if(!*configured)
-        {
-            GCE(ceError = CTCheckFileHoldsPattern(APPARMOR_NSSWITCH,
-                        "likewise", configured));
-        }
+                    "pbis", configured));
     }
     else
     {
@@ -976,6 +971,7 @@ static void ConfigureApparmor(BOOLEAN enable, LWException **exc)
     BOOLEAN hasApparmor;
     BOOLEAN configured;
     BOOLEAN usingMr;
+    BOOLEAN removeLikewise = FALSE;
     FILE *file = NULL;
     PCSTR addString;
     PSTR restartPath = NULL;
@@ -1004,23 +1000,19 @@ static void ConfigureApparmor(BOOLEAN enable, LWException **exc)
         addString = 
 PREFIXDIR "/lib/*.so*            mr,\n"
 PREFIXDIR "/lib64/*.so*          mr,\n"
-"/tmp/.lwidentity/pipe              rw,\n"
-LOCALSTATEDIR "/lib/likewise/.lsassd  rw,\n"
-LOCALSTATEDIR "/tmp/.lsaclient_*              rw,\n";
+LOCALSTATEDIR "/lib/pbis/.lsassd  rw,\n";
     else
         addString =
 PREFIXDIR "/lib/*.so*            r,\n"
 PREFIXDIR "/lib64/*.so*          r,\n"
-"/tmp/.lwidentity/pipe              rw,\n"
-LOCALSTATEDIR "/lib/likewise/.lsassd  rw,\n"
-LOCALSTATEDIR "/tmp/.lsaclient_*              rw,\n";
+LOCALSTATEDIR "/lib/pbis/.lsassd  rw,\n";
 
 
     if(enable)
     {
         LW_CLEANUP_CTERR(exc, CTCopyFileWithOriginalPerms(finalName, tempName));
         LW_CLEANUP_CTERR(exc, CTOpenFile(tempName, "a", &file));
-        LW_CLEANUP_CTERR(exc, CTFilePrintf(file, "# likewise\n%s# end likewise\n",
+        LW_CLEANUP_CTERR(exc, CTFilePrintf(file, "\n# pbis\n%s# end pbis\n",
                     addString));
 
         CTSafeCloseFile(&file);
@@ -1029,7 +1021,13 @@ LOCALSTATEDIR "/tmp/.lsaclient_*              rw,\n";
     }
     else
     {
-        LW_CLEANUP_CTERR(exc, CTRunSedOnFile(finalName, finalName, FALSE, "/^[ \t]*#[ \t]*likewise[ \t]*$/,/^[ \t]*#[ \t]*end likewise[ \t]*$/d"));
+        LW_CLEANUP_CTERR(exc, CTRunSedOnFile(finalName, finalName, FALSE, "/^[ \t]*#[ \t]*pbis[ \t]*$/,/^[ \t]*#[ \t]*end pbis[ \t]*$/d"));
+        LW_CLEANUP_CTERR(exc, CTCheckFileHoldsPattern(finalName,
+                    "end likewise", &removeLikewise));
+        if (removeLikewise)
+        {
+            LW_CLEANUP_CTERR(exc, CTRunSedOnFile(finalName, finalName, FALSE, "/^[ \t]*#[ \t]*likewise[ \t]*$/,/^[ \t]*#[ \t]*end likewise[ \t]*$/d"));
+        }
         LW_CLEANUP_CTERR(exc, CTRunSedOnFile(finalName, finalName, FALSE, "/^[ \t]*#[ \t]*centeris[ \t]*$/,/^[ \t]*#[ \t]*end centeris[ \t]*$/d"));
     }
 
@@ -1463,7 +1461,7 @@ static PSTR GetNsswitchDescription(const JoinProcessOptions *options, LWExceptio
 "\t* Remove lwidentity module from /usr/lib/security/methods.cfg (AIX only)\n"
 "\t* Remove lwidentity from passwd and group/groups line /etc/nsswitch.conf or /etc/netsvc.conf\n"
 "The following step is optional:\n"
-"\t* Remove apparmor exception for likewise nsswitch libraries\n";
+"\t* Remove apparmor exception for pbis nsswitch libraries\n";
     else
         configureSteps = "";
 
