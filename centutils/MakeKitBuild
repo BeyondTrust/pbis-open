@@ -46,9 +46,8 @@ configure()
         HEADERDEPS="procfs.h sys/procfs.h" \
         "struct psinfo.pr_zoneid"
 
-    # Libraries
     mk_check_libraries \
-        proc kvm rt
+        kvm rt
 
     mk_check_functions \
         HEADERDEPS="signal.h stdlib.h kvm.h unistd.h string.h syslog.h" \
