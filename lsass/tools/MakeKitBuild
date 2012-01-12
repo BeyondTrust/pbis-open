@@ -2,6 +2,9 @@ SUBDIRS="lw-lsa lw-privilege ticketcopy passwd"
 
 configure()
 {
+    # Skip building until there is a customer need
+    mk_skip_subdir lw-privilege
+
     [ "$MK_HOST_OS" != "darwin" ] && mk_skip_subdir ticketcopy
     [ "$MK_HOST_OS" = "darwin" ] && mk_skip_subdir passwd
 }
