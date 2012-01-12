@@ -20,14 +20,10 @@ make()
 	ypmatch \
 	mod-group \
 	mod-user \
-	set-default-domain \
-	set-machine-sid \
-	set-machine-name \
 	find-objects \
 	enum-objects \
 	enum-members \
-	query-member-of \
-	account-rights"
+	query-member-of"
 
     LSA_SOURCES="\
 	ad_cache_main.c \
