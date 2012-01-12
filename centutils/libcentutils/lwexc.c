@@ -145,7 +145,7 @@ LWRaise(
 
     if (!help)
     {
-        longMsg = "An undocumented exception has occurred. Please contact Likewise technical support and use the error code to identify this exception.";
+        longMsg = "An undocumented exception has occurred. Please contact BeyondTrust technical support and use the error code to identify this exception.";
     }
     if ((ceError = CTAllocateString(help, &longMsg)))
     {
@@ -191,7 +191,7 @@ LWRaiseEx(
 	}
         if (!fmt)
         {
-            fmt = "An undocumented exception has occurred. Please contact Likewise technical support and use the error code to identify this exception.";
+            fmt = "An undocumented exception has occurred. Please contact BeyondTrust technical support and use the error code to identify this exception.";
         }
 
 	if (_shortMsg)
