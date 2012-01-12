@@ -62,8 +62,9 @@ make()
             SYMFILE="liblwmsg.sym"
 
     mk_multiarch_done
-        
+
     mk_program \
+        INSTALLDIR="${MK_LIBEXECDIR}" \
         PROGRAM=lwma \
         SOURCES="lwma-main.c" \
         INCLUDEDIRS="../include" \
