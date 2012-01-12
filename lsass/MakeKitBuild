@@ -326,7 +326,7 @@ return (int) (size_t) conversation.conv;
         "struct pam_repository"
 
     mk_check_libraries \
-        proc kvm sec pthread
+        kvm sec pthread
 
     # FreeBSD uses this for examing which users/processes are running
     mk_check_functions \
