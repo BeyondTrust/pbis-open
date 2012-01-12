@@ -21,14 +21,10 @@ make()
         ypmatch \
         mod-group \
         mod-user \
-        set-default-domain \
-        set-machine-sid \
-        set-machine-name \
         find-objects \
         enum-objects \
         enum-members \
         query-member-of \
-        account-rights \
         update-dns \
         adtool \
         eventlog-cli \
@@ -40,7 +36,7 @@ make()
         config \
         regshell"
 
-    LINKS="domainjoin-cli kdestroy kinit klist ktutil kvno lwio-copy lwma samba-interop-install sqlite3"
+    LINKS="domainjoin-cli kdestroy kinit klist ktutil kvno lwio-copy samba-interop-install sqlite3"
 
     if [ "$MK_HOST_OS" != "darwin" ]
     then
