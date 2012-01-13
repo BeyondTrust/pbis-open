@@ -485,36 +485,40 @@ ConfigureDirectoryOwners
 # still there before starting our daemons.
 #
 
-if [ -d /opt/likewise/var ]; then
-   if [ ! -d /opt/pbis/var ]; then
-      mkdir -p /opt/pbis/var 2>/dev/null
-      run_or_fail cp -rp /opt/likewise/var/* /opt/pbis/var
-      run_or_fail rm -rf /opt/likewise/var
-   fi
-fi
-
 mkdir -p /opt/pbis/var 2>/dev/null
 
+# The 6.1 postflight script created this location as a directory. Pull in the
+# state files and create a symlink for the old location incase some old
+# libraries are still running in memory (but deleted from the hard disk).
+if [ -d /opt/likewise/var -a ! -h /opt/likewise/var ]; then
+    run_or_fail mv -f /opt/likewise/var/* /opt/pbis/var/
+    run_or_fail rm -rf /opt/likewise/var
+fi
+run_or_fail rm -f /opt/likewise/var
+run_or_fail ln -s /opt/pbis/var /opt/likewise/var
+
+# The 6.1 and older packages created this location. First pull in the state
+# files. If the old location exists as a symlink delete it, since it could
+# point to the wrong location. Then create a symlink for the old location
+# incase some old libraries are still running in memory (but deleted from the
+# hard disk).
+if [ -d /var/lib/likewise -a ! -h /var/lib/likewise ]; then
+    run_or_fail mv -f /var/lib/likewise/* /opt/pbis/var/
+    run_or_fail rm -rf /var/lib/likewise
+fi
+run_or_fail rm -f /var/lib/likewise
+run_or_fail ln -s /opt/pbis/var /var/lib/likewise
+
+# The 6.5 and newer installer puts files in /var/lib/pbis. Move them to
+# /opt/pbis/var and put a symlink in place so the currently installed binaries
+# can still find them through /var/lib/pbis. If it already exists as a symlink,
+# assume it points to the correct location.
 if [ ! -h /var/lib/pbis ]; then
-   if [ -d /var/lib/pbis ]; then
-      run_or_fail cp -rp /var/lib/pbis/* /opt/pbis/var
-      run_or_fail rm -rf /var/lib/pbis
-   fi
-fi
-
-if [ ! -h /var/lib/likewise ]; then
-   if [ -d /var/lib/likewise ]; then
-      run_or_fail cp -rp /var/lib/likewise/* /opt/pbis/var
-      run_or_fail rm -rf /var/lib/likewise
-   fi
-fi
-
-if [ ! -h /var/lib/likewise ]; then
-   run_or_fail ln -s /opt/pbis/var /var/lib/likewise
-fi
-
-if [ ! -h /var/lib/pbis ]; then
-   run_or_fail ln -s /opt/pbis/var /var/lib/pbis
+    if [ -d /var/lib/pbis ]; then
+        run_or_fail mv /var/lib/pbis/* /opt/pbis/var/
+        run_or_fail rm -rf /var/lib/pbis
+    fi
+    run_or_fail ln -s /opt/pbis/var /var/lib/pbis
 fi
 
 determine_upgrade_type
