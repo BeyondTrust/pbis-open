@@ -209,7 +209,7 @@ enable_plugin()
 
 enable_auth_plugin()
 {
-    PLUGIN_DIR=com.beyondtrust.pbis.bundle
+    PLUGIN_DIR=com.likewise.bundle
     SRC_DIR="@PRIMARY_LIBDIR@/SecurityAgentPlugins"
     LIBRARY_PLUGIN_DIR="/Library/Security/SecurityAgentPlugins"
 
