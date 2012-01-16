@@ -209,7 +209,7 @@ enable_plugin()
 
 enable_auth_plugin()
 {
-    PLUGIN_DIR=com.likewise.bundle
+    PLUGIN_DIR=com.beyondtrust.pbis.bundle
     SRC_DIR="@PRIMARY_LIBDIR@/SecurityAgentPlugins"
     LIBRARY_PLUGIN_DIR="/Library/Security/SecurityAgentPlugins"
 
@@ -495,6 +495,7 @@ if [ -d /opt/likewise/var -a ! -h /opt/likewise/var ]; then
     run_or_fail rm -rf /opt/likewise/var
 fi
 run_or_fail rm -f /opt/likewise/var
+mkdir -p /opt/likewise
 run_or_fail ln -s /opt/pbis/var /opt/likewise/var
 
 # The 6.1 and older packages created this location. First pull in the state
