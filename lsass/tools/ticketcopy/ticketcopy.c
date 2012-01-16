@@ -337,7 +337,7 @@ main(int argc, const char **argv)
     {
         /*
          * Running as a non-AD user; exit 0 so launchd doesn't restart
-         * the ticketcopy program (see com.likewise.ticketcopy.plist).
+         * the ticketcopy program (see com.beyondtrust.pbis.ticketcopy.plist).
          */
         LSA_LOG_DEBUG(
             "uid %lu is not an AD user; exiting",

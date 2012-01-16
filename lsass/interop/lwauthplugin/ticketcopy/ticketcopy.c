@@ -12,7 +12,7 @@
 #include <lsautils.h>
 
 #define HOMEDIR_MECHANISM_PREFIX        "HomeDirMechanism:"
-#define TICKETCOPY_MECHANISM            "com.likewise:ticketcopy,privileged"
+#define TICKETCOPY_MECHANISM            "com.beyondtrust.pbis:ticketcopy,privileged"
 
 #define BAIL_ON_KRB5_ERROR(_ctx, _krb5_err)                     \
     do {                                                        \
