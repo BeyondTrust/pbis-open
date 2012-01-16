@@ -105,7 +105,7 @@ joinerror_new(GtkWindow* parent, LWException* exc)
     {
         gtk_label_set_text(dialog->error_long,
                            "An unexpected or internal error was encountered "
-                           "during the domain join.  Please contact Likewise technical "
+                           "during the domain join.  Please contact BeyondTrust technical "
                            "support for assistance.");
     }
 
