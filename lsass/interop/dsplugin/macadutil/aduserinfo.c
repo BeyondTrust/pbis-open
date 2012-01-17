@@ -532,10 +532,10 @@ CacheUserAttributes(
         (long)uid,
         pUserADAttrs->pszDisplayName ? pUserADAttrs->pszDisplayName : "<null>");
 
-    dwError = LwAllocateStringPrintf(&pszFileDir, "/var/lib/likewise/lwedsplugin/user-cache/%ld", (long) uid);
+    dwError = LwAllocateStringPrintf(&pszFileDir, "/var/lib/pbis/lwedsplugin/user-cache/%ld", (long) uid);
     BAIL_ON_MAC_ERROR(dwError);
 
-    dwError = LwAllocateStringPrintf(&pszFilePath, "/var/lib/likewise/lwedsplugin/user-cache/%ld/ad-user-attrs", (long) uid);
+    dwError = LwAllocateStringPrintf(&pszFilePath, "/var/lib/pbis/lwedsplugin/user-cache/%ld/ad-user-attrs", (long) uid);
     BAIL_ON_MAC_ERROR(dwError);
 
     dwError = LwCheckFileTypeExists(pszFileDir, LWFILE_DIRECTORY, &bDirExists);

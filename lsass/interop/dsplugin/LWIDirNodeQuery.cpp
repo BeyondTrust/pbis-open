@@ -39,7 +39,6 @@
 // Ideally, Apple would have definitions for these:
 #define DNI_TYPE "dsAttrTypeStandard:DirectoryNodeInfo"
 #define DNI_NAME "DirectoryNodeInfo"
-#define LWDSPLUGIN_CONF "/opt/likewise/etc/lwdsplugin.conf"
 
 #define GET_NODE_STR(node) \
                     SAFE_LOG_STR((node) ? (node)->fBufferData : 0)

@@ -1214,7 +1214,7 @@ LookupComputerGroupGPO(
         BAIL_ON_MAC_ERROR(dwError);
     }
 
-    fp = fopen("/var/lib/likewise/grouppolicy/mcx/computer/.lwe-computer-mcx", "r");
+    fp = fopen("/var/lib/pbis/grouppolicy/mcx/computer/.lwe-computer-mcx", "r");
     if (!fp)
     {
         LOG_ERROR("LookupComputerGroupsGPO(%s) failed to find file with list of computer GPOs",
@@ -1725,7 +1725,7 @@ GetHomeDirectoryDockMCXValue(
         BAIL_ON_MAC_ERROR(dwError);
     }
 
-    sprintf(szMCXValueFile, "/etc/likewise/user-home-directory-in-dock.plist");
+    sprintf(szMCXValueFile, "/etc/pbis/user-home-directory-in-dock.plist");
 
     dwError = ReadMCXValueFromFile(szMCXValueFile, &pMCXValues);
     BAIL_ON_MAC_ERROR(dwError);
@@ -1812,7 +1812,7 @@ GetADUserInfo(
     dwError = LwAllocateMemory(sizeof(AD_USER_ATTRIBUTES), (PVOID *) &padUserInfo);
     BAIL_ON_MAC_ERROR(dwError);
 
-    sprintf(szUserAttrCacheFile, "/var/lib/likewise/lwedsplugin/user-cache/%ld/ad-user-attrs", (long) uid);
+    sprintf(szUserAttrCacheFile, "/var/lib/pbis/lwedsplugin/user-cache/%ld/ad-user-attrs", (long) uid);
 
     /* Get user attributes that apply to user by parsing ad-user-attrs for specific user*/
     dwError = LWParseConfigFile(szUserAttrCacheFile,

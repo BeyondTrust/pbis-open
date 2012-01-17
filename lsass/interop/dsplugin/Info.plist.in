@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
         <key>CFBundleConfigAvail</key>
-        <string>/opt/likewise/bin/Likewise Domain Join.app</string>
+        <string>/opt/pbis/bin/Domain Join.app</string>
         <key>CFBundleConfigFile</key>
         <string>Not Available</string>
         <key>CFBundleDevelopmentRegion</key>

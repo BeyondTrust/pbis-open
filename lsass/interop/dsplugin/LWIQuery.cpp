@@ -1289,7 +1289,7 @@ LWIQuery::GetGPOComputerList(
     }
     
     /* Get list of GPOs that apply to computer by parsing .lwe-computer-mcx */
-    fp = fopen("/var/lib/likewise/grouppolicy/mcx/computer/.lwe-computer-mcx", "r");
+    fp = fopen("/var/lib/pbis/grouppolicy/mcx/computer/.lwe-computer-mcx", "r");
     
     if (!fp)
     {
@@ -1482,7 +1482,7 @@ LWIQuery::GetGPOComputerGroups(
     }
     
     /* Get list of GPOs that apply to computer by parsing .lwe-computer-mcx */
-    fp = fopen("/var/lib/likewise/grouppolicy/mcx/computer/.lwe-computer-mcx", "r");
+    fp = fopen("/var/lib/pbis/grouppolicy/mcx/computer/.lwe-computer-mcx", "r");
     
     if (!fp)
     {
@@ -2408,7 +2408,7 @@ GetGPOGroupMCXSettingsForUser_HighPriorityOnly(
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
 
-    sprintf(szUserGPOFile, "/var/lib/likewise/grouppolicy/mcx/users/%ld/.lwe-user-mcx", (long) uid);
+    sprintf(szUserGPOFile, "/var/lib/pbis/grouppolicy/mcx/users/%ld/.lwe-user-mcx", (long) uid);
 
     /* Get list of GPOs that apply to user by parsing .lwe-user-mcx for specific user*/
     fp = fopen(szUserGPOFile, "r");
@@ -2448,7 +2448,7 @@ GetGPOGroupMCXSettingsForUser_HighPriorityOnly(
         
         LOG("Adding user group MCX settings to user (%s) from GPO (Name: %s GUID: %s)", pszName, szGPOName, szGPOGUID);
          
-        sprintf(szPolicyPath, "/var/lib/likewise/grouppolicy/user-cache/%ld/%s/%s", (long)uid, szGPOGUID, LWDS_USER_MCX_CSE_GUID);
+        sprintf(szPolicyPath, "/var/lib/pbis/grouppolicy/user-cache/%ld/%s/%s", (long)uid, szGPOGUID, LWDS_USER_MCX_CSE_GUID);
 
         macError = ConvertMCXSettingsToMCXValues(szPolicyPath, USER_GROUP_POLICY, &pMCXValueList);
         GOTO_CLEANUP_ON_MACERROR(macError);
@@ -2516,7 +2516,7 @@ GetGPOGroupMCXSettingsForUser_Combined(
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
 
-    sprintf(szUserGPOFile, "/var/lib/likewise/grouppolicy/mcx/users/%ld/.lwe-user-mcx", (long) uid);
+    sprintf(szUserGPOFile, "/var/lib/pbis/grouppolicy/mcx/users/%ld/.lwe-user-mcx", (long) uid);
 
     /* Get list of GPOs that apply to user by parsing .lwe-user-mcx for specific user*/
     fp = fopen(szUserGPOFile, "r");
@@ -2550,7 +2550,7 @@ GetGPOGroupMCXSettingsForUser_Combined(
         }
         LwStripWhitespace(szGPOGUID, TRUE, TRUE);
         
-        sprintf(szPolicyPath, "/var/lib/likewise/grouppolicy/user-cache/%ld/%s/%s", (long) uid, szGPOGUID, LWDS_USER_MCX_CSE_GUID);
+        sprintf(szPolicyPath, "/var/lib/pbis/grouppolicy/user-cache/%ld/%s/%s", (long) uid, szGPOGUID, LWDS_USER_MCX_CSE_GUID);
 
         macError = ConvertMCXSettingsToMCXValues(szPolicyPath, USER_GROUP_POLICY, &pNewList);
         GOTO_CLEANUP_ON_MACERROR(macError);

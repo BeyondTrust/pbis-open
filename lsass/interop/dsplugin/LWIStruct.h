@@ -33,7 +33,7 @@
 
 #include "includes.h"
 
-#define LWDS_GPO_CACHE_DIR         "/var/lib/likewise/grouppolicy"
+#define LWDS_GPO_CACHE_DIR         "/var/lib/pbis/grouppolicy"
 #define LWDS_USER_MCX_CSE_GUID     "{07E500C4-20FD-4829-8F38-B5FF63FA0493}"
 #define LWDS_COMPUTER_MCX_CSE_GUID "{B9BF896E-F9EB-49b5-8E67-11E2EDAED06C}"
 

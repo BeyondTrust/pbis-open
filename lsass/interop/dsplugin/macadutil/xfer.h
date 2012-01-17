@@ -31,9 +31,9 @@
 #ifndef __GPAXFER_H__
 #define __GPAXFER_H__
 
-#define LWDS_ADMIN_CACHE_DIR "/var/lib/likewise/lwedsplugin"
-#define LWDS_GPO_CACHE_DIR   "/var/lib/likewise/grouppolicy"
-#define LWDSKRB5CC           "/var/lib/likewise/lwedsplugin/krb5cc_lwedsplugin"
+#define LWDS_ADMIN_CACHE_DIR "/var/lib/pbis/lwedsplugin"
+#define LWDS_GPO_CACHE_DIR   "/var/lib/pbis/grouppolicy"
+#define LWDSKRB5CC           "/var/lib/pbis/lwedsplugin/krb5cc_lwedsplugin"
 
 
 DWORD
