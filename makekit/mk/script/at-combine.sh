@@ -15,7 +15,11 @@ _mk_autotools_combine_darwin()
     set +e
     IFS="$_IFS"
 
-    
+    # All of the files this function installs (staged files) are marked as
+    # depending on the stamp file inside of the Makefile. So the stamp file
+    # must be older than the staged files. Creating the file beforehand and
+    # moving it into place afterwards insures the correct time.
+    mk_run_or_fail touch "$stamp.running"
 
     for file
     do
@@ -40,11 +44,14 @@ _mk_autotools_combine_darwin()
             *)
                 mk_msg "${file#.}"
                 mk_run_or_fail cp -RpPf -- "$primary/$file" "${MK_STAGE_DIR}/${file}"
+                # Update the timestamp of the staged file so the stamp file is
+                # older
+                mk_run_or_fail touch -- "${MK_STAGE_DIR}/${file}"
                 ;;
         esac
     done
 
-    mk_run_or_fail touch "$stamp"
+    mk_run_or_fail mv -f "$stamp.running" "$stamp"
 }
 
 mk_msg_domain combine
