@@ -48,7 +48,7 @@
 #include "djlogincfg.h"
 #include "djsecuser.h"
 
-#ifdef __LWI_MACOSX__
+#ifdef __LWI_DARWIN__
 #include "djconfig_mac.h"
 #endif
 

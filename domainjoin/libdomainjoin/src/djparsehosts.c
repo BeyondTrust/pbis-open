@@ -31,7 +31,7 @@
 #include "domainjoin.h"
 #include "djparsehosts.h"
 
-#if defined(__LWI_MACOSX__)
+#if defined(__LWI_DARWIN__)
 static
 DWORD
 RunSilentWithStatus(
@@ -587,7 +587,7 @@ DJWriteHostsFileIfModified(
         ceError = CTSafeReplaceFile(finalName, tempName);
         BAIL_ON_CENTERIS_ERROR(ceError);
 
-#if defined(__LWI_MACOSX__)
+#if defined(__LWI_DARWIN__)
         // Work around Mac bug where lookupd sometimes fails to pick up
         // changes in /etc/hosts, even with -flushcache.
         KickLookupd();

@@ -49,6 +49,6 @@
 #include <sys/utsname.h>
 #include <locale.h>
 
-#if defined(__LWI_MACOSX__)
+#if defined(__LWI_DARWIN__)
 #include <crt_externs.h>
 #endif

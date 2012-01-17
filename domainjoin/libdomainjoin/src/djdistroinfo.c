@@ -48,7 +48,7 @@
 
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
-#ifdef __LWI_MACOSX__
+#ifdef __LWI_DARWIN__
 
 static
 DWORD

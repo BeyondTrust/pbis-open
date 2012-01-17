@@ -1241,7 +1241,7 @@ static void DoSetHostname(JoinProcessOptions *options, LWException **exc)
     if(ceError == ERROR_FILE_NOT_FOUND)
     {
         ceError = ERROR_SUCCESS;
-#if !defined(__LWI_MACOSX__)
+#if !defined(__LWI_DARWIN__)
         DJ_LOG_WARNING("Warning: Could not find nsswitch file");
 #endif
     }

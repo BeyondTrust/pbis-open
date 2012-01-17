@@ -65,7 +65,7 @@
 
 #define NO_TIME_SYNC_FILE "/etc/likewise-notimesync"
 
-#if !defined(__LWI_MACOSX__)
+#if !defined(__LWI_DARWIN__)
 extern char** environ;
 #endif
 
