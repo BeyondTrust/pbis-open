@@ -1,8 +1,8 @@
 configure()
 {
     if [ "$LW_THREADPOOL_STACK_SIZE" -gt 0 ]; then
-        mk_define _LW_TASK_THREAD_STACK_SIZE "\"${LW_THREADPOOL_STACK_SIZE}\""
-        mk_define _LW_WORK_THREAD_STACK_SIZE "\"${LW_THREADPOOL_STACK_SIZE}\""
+        mk_define _LW_TASK_THREAD_STACK_SIZE "${LW_THREADPOOL_STACK_SIZE}"
+        mk_define _LW_WORK_THREAD_STACK_SIZE "${LW_THREADPOOL_STACK_SIZE}"
     fi
 }
 
