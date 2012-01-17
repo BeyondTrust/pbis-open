@@ -495,8 +495,6 @@ if [ -d /opt/likewise/var -a ! -h /opt/likewise/var ]; then
     run_or_fail rm -rf /opt/likewise/var
 fi
 run_or_fail rm -f /opt/likewise/var
-mkdir -p /opt/likewise
-run_or_fail ln -s /opt/pbis/var /opt/likewise/var
 
 # The 6.1 and older packages created this location. First pull in the state
 # files. If the old location exists as a symlink delete it, since it could
@@ -508,7 +506,6 @@ if [ -d /var/lib/likewise -a ! -h /var/lib/likewise ]; then
     run_or_fail rm -rf /var/lib/likewise
 fi
 run_or_fail rm -f /var/lib/likewise
-run_or_fail ln -s /opt/pbis/var /var/lib/likewise
 
 # The 6.5 and newer installer puts files in /var/lib/pbis. Move them to
 # /opt/pbis/var and put a symlink in place so the currently installed binaries
