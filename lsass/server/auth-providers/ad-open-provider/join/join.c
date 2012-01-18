@@ -2414,7 +2414,7 @@ LsaDirectoryConnect(
     BAIL_ON_INVALID_POINTER(ppDefaultContext);
     BAIL_ON_INVALID_POINTER(ppSchemaContext);
 
-    dwError = LdapInitConnection(&pLdConn, domain, FALSE);
+    dwError = LdapInitConnection(&pLdConn, pDomain, FALSE);
     BAIL_ON_LSA_ERROR(dwError);
 
     lderr = LdapGetDirectoryInfo(&pInfo, &pRes, pLdConn);

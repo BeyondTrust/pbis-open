@@ -269,13 +269,13 @@ DWORD
 LWNetDnsParseOrGetAddressesForServer(
     IN PLW_DLINKED_LIST pAdditionalsList,
     IN PCSTR pszHostname,
-    OUT PDLINKEDLIST* ppAddressList
+    OUT PLW_DLINKED_LIST* ppAddressList
     );
 
 DWORD
 LWNetDnsGetAddressesForServer(
     IN PCSTR pszHostname,
-    OUT PDLINKEDLIST* ppAddressList
+    OUT PLW_DLINKED_LIST* ppAddressList
     );
 
 VOID
@@ -301,7 +301,7 @@ LWNetDnsFreeSrvInfoLinkedList(
 
 VOID
 LWNetDnsFreePstrLinkedList(
-    IN OUT PDLINKEDLIST PstrList
+    IN OUT PLW_DLINKED_LIST PstrList
     );
 
 #define LWNET_SAFE_FREE_DNS_RECORD_LINKED_LIST(DnsRecordList) \

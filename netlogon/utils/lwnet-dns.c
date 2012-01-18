@@ -49,8 +49,8 @@
  *          Ki Anderson (kanderson@likewise.com)
  */
 #include "includes.h"
-#include <lw/assert.h>
-
+#include <assert.h>
+#include <lwdef.h>
 
 #define LWNET_LOCK_RESOLVER_API(bInLock) \
     do { \
@@ -852,8 +852,8 @@ LWNetDnsBuildSRVRecordList(
     PDNS_SRV_INFO_RECORD pSrvInfoRecord = NULL;
     PLW_DLINKED_LIST pListMember = NULL;
     PLW_DLINKED_LIST pSRVRecordList = NULL;
-    PDLINKEDLIST pAddressList = NULL;
-    PDLINKEDLIST pAddressListMember = NULL;
+    PLW_DLINKED_LIST pAddressList = NULL;
+    PLW_DLINKED_LIST pAddressListMember = NULL;
 
     for (pListMember = pAnswersList;
          pListMember;
@@ -885,7 +885,7 @@ LWNetDnsBuildSRVRecordList(
             continue;
         }
 
-        LW_RTL_ASSERT(pAddressList);
+        LW_ASSERT(pAddressList);
 
         for (pAddressListMember = pAddressList;
              pAddressListMember;
@@ -907,7 +907,7 @@ LWNetDnsBuildSRVRecordList(
             dwError = LwAllocateString(pszAddress, &pSrvInfoRecord->pszAddress);
             BAIL_ON_LWNET_ERROR(dwError);
 
-            dwError = LWNetDLinkedListAppend(&pSRVRecordList, pSrvInfoRecord);
+            dwError = LwDLinkedListAppend(&pSRVRecordList, pSrvInfoRecord);
             BAIL_ON_LWNET_ERROR(dwError);
             pSrvInfoRecord = NULL;
         }
@@ -993,13 +993,13 @@ DWORD
 LWNetDnsParseOrGetAddressesForServer(
     IN PLW_DLINKED_LIST pAdditionalsList,
     IN PCSTR pszHostname,
-    OUT PDLINKEDLIST* ppAddressList
+    OUT PLW_DLINKED_LIST* ppAddressList
     )
 {
     DWORD dwError = 0;
     PSTR  pszAddress = NULL;
     PLW_DLINKED_LIST pListMember = NULL;
-    PDLINKEDLIST pAddressList = NULL;
+    PLW_DLINKED_LIST pAddressList = NULL;
     
     pListMember = pAdditionalsList;
     while (pListMember)
@@ -1016,7 +1016,7 @@ LWNetDnsParseOrGetAddressesForServer(
                                                 pRecord->pData[3]);
             BAIL_ON_LWNET_ERROR(dwError);
 
-            dwError = LWNetDLinkedListAppend(&pAddressList, pszAddress);
+            dwError = LwDLinkedListAppend(&pAddressList, pszAddress);
             BAIL_ON_LWNET_ERROR(dwError);
 
             pszAddress = NULL;
@@ -1037,7 +1037,7 @@ LWNetDnsParseOrGetAddressesForServer(
                         LW_BTOH16(((UINT16 *)pRecord->pData)[7]));
             BAIL_ON_LWNET_ERROR(dwError);
 
-            dwError = LWNetDLinkedListAppend(&pAddressList, pszAddress);
+            dwError = LwDLinkedListAppend(&pAddressList, pszAddress);
             BAIL_ON_LWNET_ERROR(dwError);
 
             pszAddress = NULL;
@@ -1070,7 +1070,7 @@ error:
 DWORD
 LWNetDnsGetAddressesForServer(
     IN PCSTR pszHostname,
-    OUT PDLINKEDLIST* ppAddressList
+    OUT PLW_DLINKED_LIST* ppAddressList
     )
 {
     DWORD dwError = 0;
@@ -1081,7 +1081,7 @@ LWNetDnsGetAddressesForServer(
     // Large enough size to accomodate NULL-terminated IPv4 or IPv6 address.
     char hostname[128] = { 0 };
     PSTR pszAddress = NULL;
-    PDLINKEDLIST pAddressList = NULL;
+    PLW_DLINKED_LIST pAddressList = NULL;
 
     LWNET_LOG_VERBOSE("Getting addresses for '%s'", pszHostname);
 
@@ -1151,7 +1151,7 @@ LWNetDnsGetAddressesForServer(
         dwError = LWNetAllocateString(hostname, &pszAddress);
         BAIL_ON_LWNET_ERROR(dwError);
 
-        dwError = LWNetDLinkedListAppend(&pAddressList, pszAddress);
+        dwError = LwDLinkedListAppend(&pAddressList, pszAddress);
         BAIL_ON_LWNET_ERROR(dwError);
 
         pszAddress = NULL;
@@ -1326,11 +1326,11 @@ LWNetDnsFreePstrInList(
 
 VOID
 LWNetDnsFreePstrLinkedList(
-    IN OUT PDLINKEDLIST PstrList
+    IN OUT PLW_DLINKED_LIST PstrList
     )
 {
-    LWNetDLinkedListForEach(PstrList, LWNetDnsFreePstrInList, NULL);
-    LWNetDLinkedListFree(PstrList);
+    LwDLinkedListForEach(PstrList, LWNetDnsFreePstrInList, NULL);
+    LwDLinkedListFree(PstrList);
 }
 
 DWORD
