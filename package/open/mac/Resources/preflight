@@ -312,6 +312,9 @@ preserve_6_0_configuration
 preserve_6_1_configuration
 
 # Remove previous installation with macuninstall.sh
+if [ -x /opt/likewise/bin/macuninstall.sh ]; then
+    /opt/likewise/bin/macuninstall.sh
+fi
 if [ -x @MK_BINDIR@/macuninstall.sh ]; then
     @MK_BINDIR@/macuninstall.sh
 fi
