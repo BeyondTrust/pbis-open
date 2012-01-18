@@ -8,5 +8,5 @@ make()
 	SOURCES="$LOCATOR_SOURCES" \
 	INCLUDEDIRS="../include" \
 	HEADERDEPS="krb5.h krb5/locate_plugin.h lwerror.h reg/lwreg.h" \
-	LIBDEPS="krb5 k5crypto lwadvapi"
+	LIBDEPS="krb5 k5crypto lwadvapi lwnetclientapi"
 }
