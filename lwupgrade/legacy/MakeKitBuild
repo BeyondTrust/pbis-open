@@ -52,21 +52,21 @@ make()
     for link in ${LW_LINKS}
     do
         mk_symlink \
-            LINK="/opt/likewise/bin/lw-$link" \
+            LINK="../../likewise/bin/lw-$link" \
             TARGET="${MK_BINDIR}/$link"
     done
 
     for link in ${LWLINKS}
     do
         mk_symlink \
-            LINK="/opt/likewise/bin/lw$link" \
+            LINK="../../likewise/bin/lw$link" \
             TARGET="${MK_BINDIR}/$link"
     done
 
     for link in ${LINKS}
     do
         mk_symlink \
-            LINK="/opt/likewise/bin/$link" \
+            LINK="../../likewise/bin/$link" \
             TARGET="${MK_BINDIR}/$link"
     done
 }
