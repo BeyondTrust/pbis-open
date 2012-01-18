@@ -13,5 +13,5 @@ Provides: pbis-open-upgrade
 Conflicts: pbis-open-upgrade
 Replaces: pbis-open-upgrade
 Description: Helper package for upgrading systems with versions preceding
- PowerBroker Identity Services Open 6.5.
+ PowerBroker Identity Services Open 7.0.
 
