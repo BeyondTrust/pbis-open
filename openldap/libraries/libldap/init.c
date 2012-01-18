@@ -521,6 +521,7 @@ void ldap_int_initialize_global_options( struct ldapoptions *gopts, int *dbglvl 
 
 #ifdef LDAP_CONNECTIONLESS
 	gopts->ldo_peer = NULL;
+	gopts->ldo_peer_len = 0;
 	gopts->ldo_cldapdn = NULL;
 	gopts->ldo_is_udp = 0;
 #endif

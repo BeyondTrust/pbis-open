@@ -264,7 +264,7 @@ ldap_send_server_request(
 		BerElement tmpber = *ber;
 		ber_rewind( &tmpber );
 		rc = ber_write( &tmpber, ld->ld_options.ldo_peer,
-			sizeof( struct sockaddr ), 0 );
+			ld->ld_options.ldo_peer_len, 0 );
 		if ( rc == -1 ) {
 			ld->ld_errno = LDAP_ENCODING_ERROR;
 			return rc;

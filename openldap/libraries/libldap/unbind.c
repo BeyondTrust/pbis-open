@@ -153,6 +153,7 @@ ldap_ld_free(
 	if ( ld->ld_options.ldo_peer != NULL ) {
 		LDAP_FREE( ld->ld_options.ldo_peer );
 		ld->ld_options.ldo_peer = NULL;
+		ld->ld_options.ldo_peer_len = 0;
 	}
 
 	if ( ld->ld_options.ldo_cldapdn != NULL ) {

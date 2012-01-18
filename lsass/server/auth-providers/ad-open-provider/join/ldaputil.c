@@ -173,11 +173,13 @@ int LdapMessageFree(LDAPMessage *msg)
 }
 
 
-int LdapInitConnection(LDAP **ldconn, const wchar16_t *host,
-                       BOOLEAN bSeal)
+DWORD
+LdapInitConnection(
+    OUT LDAP** ldconn,
+    IN PCWSTR host,
+    IN BOOLEAN bSeal
+    )
 {
-    const char *url_prefix = "ldap://";
-
     DWORD dwError = ERROR_SUCCESS;
     int lderr = LDAP_SUCCESS;
     LDAP *ld = NULL;
@@ -191,24 +193,29 @@ int LdapInitConnection(LDAP **ldconn, const wchar16_t *host,
     dwError = LwWc16sToMbs(host, &ldap_srv);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwAllocateMemory(strlen(ldap_srv) + strlen(url_prefix) + 1,
-                               OUT_PPVOID(&ldap_url));
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (sprintf(ldap_url, "%s%s", url_prefix, ldap_srv) < 0) {
-        lderr = LDAP_LOCAL_ERROR;
-        goto error;
+    if (strchr(ldap_srv, ':'))
+    {
+        dwError = LwAllocateStringPrintf(&ldap_url, "ldap://[%s]", ldap_srv);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LwAllocateStringPrintf(&ldap_url, "ldap://%s", ldap_srv);
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
     lderr = ldap_initialize(&ld, ldap_url);
-    BAIL_ON_LDAP_ERROR(lderr);
+    dwError = LwMapLdapErrorToLwError(lderr);
+    BAIL_ON_LSA_ERROR(dwError);
 
     version = LDAP_VERSION3;
     lderr = ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &version);
-    BAIL_ON_LDAP_ERROR(lderr);
+    dwError = LwMapLdapErrorToLwError(lderr);
+    BAIL_ON_LSA_ERROR(dwError);
 
     lderr = ldap_set_option(ld, LDAP_OPT_REFERRALS, LDAP_OPT_OFF);
-    BAIL_ON_LDAP_ERROR(lderr);
+    dwError = LwMapLdapErrorToLwError(lderr);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwLdapBindDirectorySasl(
                   ld,
@@ -222,7 +229,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(ldap_url);
     LW_SAFE_FREE_MEMORY(ldap_srv);
 
-    return lderr;
+    return dwError;
 
 error:
     if (ld) {

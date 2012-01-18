@@ -48,6 +48,7 @@
  */
 #include "includes.h"
 #include <gssapi/gssapi_krb5.h>
+#include <netdb.h>
 
 /* used by inet_addr, not defined on Solaris anywhere!? */
 #ifndef INADDR_NONE
@@ -71,10 +72,19 @@ LwCLdapOpenDirectory(
     PSTR pszURL = NULL;
 
     LW_BAIL_ON_INVALID_STRING(pszServerName);
-    
-    dwError = LwAllocateStringPrintf(&pszURL, "cldap://%s",
-                                        pszServerName);
-    BAIL_ON_LW_ERROR(dwError);
+
+    if (strchr(pszServerName, ':'))
+    {
+        dwError = LwAllocateStringPrintf(&pszURL, "cldap://[%s]",
+                                            pszServerName);
+        BAIL_ON_LW_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LwAllocateStringPrintf(&pszURL, "cldap://%s",
+                                            pszServerName);
+        BAIL_ON_LW_ERROR(dwError);
+    }
 
     dwError = ldap_initialize(&ld, pszURL);
     BAIL_ON_LDAP_ERROR(dwError);
@@ -114,10 +124,11 @@ LwLdapPingTcp(
     )
 {
     DWORD dwError = 0;
+    int eaiError = 0;
+    struct addrinfo hints = { 0 };
+    struct addrinfo* info = NULL;
     int sysRet = 0;
     int fd = -1;
-    struct in_addr addr;
-    struct sockaddr_in socketAddress;
     struct timeval timeout;
     fd_set fds;
     int socketError;
@@ -127,19 +138,23 @@ LwLdapPingTcp(
     int socketErrorLength = 0;
 #endif
 
-    addr.s_addr = inet_addr(pszHostAddress);
-    if (addr.s_addr == INADDR_NONE)
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_flags = AI_NUMERICHOST;
+#ifdef AI_NUMERICSERV
+    hints.ai_flags |= AI_NUMERICSERV;
+#endif
+    hints.ai_socktype = SOCK_STREAM;
+
+    // The service can be any port number in this case
+    eaiError = getaddrinfo(pszHostAddress, "389", &hints, &info);
+    if (eaiError)
     {
-        LW_RTL_LOG_ERROR("Could not convert address'%s' to in_addr", pszHostAddress);
+        LW_RTL_LOG_ERROR("Could not convert address from string '%s' (EAI = %d)", pszHostAddress, eaiError);
         dwError = LW_ERROR_DNS_RESOLUTION_FAILED;
         BAIL_ON_LW_ERROR(dwError);
     }
 
-    socketAddress.sin_family = AF_INET;
-    socketAddress.sin_port = htons(389);
-    socketAddress.sin_addr = addr;
-
-    fd = socket(PF_INET, SOCK_STREAM, 0);
+    fd = socket(info->ai_family, info->ai_socktype, 0);
     if (fd < 0)
     {
         dwError = LwMapErrnoToLwError(errno);
@@ -153,7 +168,7 @@ LwLdapPingTcp(
         BAIL_ON_LW_ERROR(dwError);
     }
 
-    sysRet = connect(fd, (struct sockaddr *)&socketAddress, sizeof(socketAddress));
+    sysRet = connect(fd, info->ai_addr, info->ai_addrlen);
     {
         dwError = LwMapErrnoToLwError(errno);
         // We typically expect EINPROGRESS
@@ -227,6 +242,10 @@ error:
     if (fd != -1)
     {
         close(fd);
+    }
+    if (info)
+    {
+        freeaddrinfo(info);
     }
 
     return dwError;

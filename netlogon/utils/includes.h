@@ -57,6 +57,7 @@
 #include <lwstr.h>
 #include <lwerror.h>
 #include <lwfile.h>
+#include <lw/swab.h>
 
 #include "lwnet-dns_p.h"
 #include "lwnet-sysfuncs_p.h"

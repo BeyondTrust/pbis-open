@@ -59,10 +59,16 @@ KtLdapBind(
     PSTR pszUrl = NULL;
     LDAP *pLd = NULL;
 
-    dwError = LwAllocateStringPrintf(&pszUrl,
-                                     "ldap://%s",
-                                     pszDc);
-    BAIL_ON_LSA_ERROR(dwError);
+    if (strchr(pszDc, ':'))
+    {
+        dwError = LwAllocateStringPrintf(&pszUrl, "ldap://[%s]", pszDc);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LwAllocateStringPrintf(&pszUrl, "ldap://%s", pszDc);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     lderr = ldap_initialize(&pLd,
                             pszUrl);

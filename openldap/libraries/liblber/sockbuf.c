@@ -926,17 +926,30 @@ sb_dgram_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
 {
 	ber_slen_t rc;
 	struct sockaddr *dst;
+	int sockaddrlen;
    
 	assert( sbiod != NULL );
 	assert( SOCKBUF_VALID( sbiod->sbiod_sb ) );
 	assert( buf != NULL );
 
 	dst = buf;
-	buf = (char *) buf + sizeof( struct sockaddr );
-	len -= sizeof( struct sockaddr );
+	switch ( dst->sa_family ) {
+	case AF_INET6:
+		sockaddrlen = sizeof( struct sockaddr_in6 );
+		break;
+
+	case AF_INET:
+		sockaddrlen = sizeof( struct sockaddr_in );
+		break;
+
+	default:
+		assert( 0 );
+	}
+
+	buf = (char *) buf + sockaddrlen;
+	len -= sockaddrlen;
    
-	rc = sendto( sbiod->sbiod_sb->sb_fd, buf, len, 0, dst,
-		sizeof( struct sockaddr ) );
+	rc = sendto( sbiod->sbiod_sb->sb_fd, buf, len, 0, dst, sockaddrlen );
 
 	if ( rc < 0 ) return -1;
    
@@ -947,7 +960,7 @@ sb_dgram_write( Sockbuf_IO_Desc *sbiod, void *buf, ber_len_t len )
 # endif
 		return -1;
 	}
-	rc = len + sizeof(struct sockaddr);
+	rc = len + sockaddrlen;
 	return rc;
 }
 

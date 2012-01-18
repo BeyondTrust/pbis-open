@@ -224,9 +224,15 @@ start_again:;
 			i = ++(ld)->ld_msgid;
 #ifdef LDAP_CONNECTIONLESS
 			if ( LDAP_IS_UDP(ld) ) {
-				struct sockaddr sa = {0};
-				/* dummy, filled with ldo_peer in request.c */
-				err = ber_write( ber, &sa, sizeof(sa), 0 );
+				/*
+				* Filled with ldo_peer in request.c.  However, we
+				* need to make sure to use the correct size.  So
+				* actually use ldo_peer and ldo_peer_len to get
+				* correct size.
+				*/
+				assert( ld->ld_options.ldo_peer_len > 0 );
+				err = ber_write( ber, ld->ld_options.ldo_peer,
+					ld->ld_options.ldo_peer_len, 0 );
 			}
 			if ( LDAP_IS_UDP(ld) && ld->ld_options.ldo_version ==
 				LDAP_VERSION2 )

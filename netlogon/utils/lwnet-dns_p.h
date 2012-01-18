@@ -256,18 +256,26 @@ LWNetDnsBuildSRVRecordList(
     );
 
 DWORD
-LWNetDnsBuildSRVRecord(
+LWNetDnsParseSrvRecord(
     IN PDNS_RESPONSE_HEADER pHeader,
     IN PDNS_RECORD pAnswerRecord,
-    IN PLW_DLINKED_LIST pAdditionalsList,
-    OUT PDNS_SRV_INFO_RECORD* ppSRVInfoRecord
+    OUT PWORD Priority,
+    OUT PWORD Weight,
+    OUT PWORD Port,
+    OUT PSTR* Target
     );
 
 DWORD
-LWNetDnsGetAddressForServer(
+LWNetDnsParseOrGetAddressesForServer(
     IN PLW_DLINKED_LIST pAdditionalsList,
     IN PCSTR pszHostname,
-    OUT PSTR* ppszAddress
+    OUT PDLINKEDLIST* ppAddressList
+    );
+
+DWORD
+LWNetDnsGetAddressesForServer(
+    IN PCSTR pszHostname,
+    OUT PDLINKEDLIST* ppAddressList
     );
 
 VOID
@@ -291,10 +299,18 @@ LWNetDnsFreeSrvInfoLinkedList(
     IN OUT PLW_DLINKED_LIST SrvInfoList
     );
 
+VOID
+LWNetDnsFreePstrLinkedList(
+    IN OUT PDLINKEDLIST PstrList
+    );
+
 #define LWNET_SAFE_FREE_DNS_RECORD_LINKED_LIST(DnsRecordList) \
     _LWNET_MAKE_SAFE_FREE(DnsRecordList, LWNetDnsFreeDnsRecordLinkedList)
 
 #define LWNET_SAFE_FREE_SRV_INFO_LINKED_LIST(SrvInfoList) \
     _LWNET_MAKE_SAFE_FREE(SrvInfoList, LWNetDnsFreeSrvInfoLinkedList)
+
+#define LWNET_SAFE_FREE_PSTR_LINKED_LIST(PstrList) \
+    _LWNET_MAKE_SAFE_FREE(PstrList, LWNetDnsFreePstrLinkedList)
 
 #endif /* __LWNETDNS_P_H__ */

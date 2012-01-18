@@ -44,11 +44,11 @@ LdapMessageFree(
     LDAPMessage *msg
     );
 
-int
+DWORD
 LdapInitConnection(
-    LDAP **ldconn,
-    const wchar16_t *host,
-    BOOLEAN bSeal
+    OUT LDAP** ldconn,
+    IN PCWSTR host,
+    IN BOOLEAN bSeal
     );
 
 int

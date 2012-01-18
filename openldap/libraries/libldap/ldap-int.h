@@ -180,6 +180,7 @@ struct ldapoptions {
 #ifdef LDAP_CONNECTIONLESS
 #define	LDAP_IS_UDP(ld)		((ld)->ld_options.ldo_is_udp)
 	void*			ldo_peer;	/* struct sockaddr* */
+	size_t			ldo_peer_len;
 	char*			ldo_cldapdn;
 	int			ldo_is_udp;
 #endif
