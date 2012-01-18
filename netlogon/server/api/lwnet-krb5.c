@@ -209,7 +209,20 @@ LWNetKrb5WriteAffinityFile(
 
             if (pszServerAddress)
             {
-                dwError = LWNetKrb5PrintfFile(newFile, "        kdc = %s\n", pszServerAddress);
+                if (strchr(pszServerAddress, ':'))
+                {
+                    dwError = LWNetKrb5PrintfFile(
+                                  newFile,
+                                  "        kdc = [%s]\n",
+                                  pszServerAddress);
+                }
+                else
+                {
+                    dwError = LWNetKrb5PrintfFile(
+                                  newFile,
+                                  "        kdc = %s\n",
+                                  pszServerAddress);
+                }
                 BAIL_ON_LWNET_ERROR(dwError);
             }
         }
