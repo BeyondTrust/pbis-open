@@ -826,6 +826,7 @@ AC_CHECK_HEADERS(	\
 	locale.h		\
 	malloc.h		\
 	memory.h		\
+	netinet/in6.h		\
 	psap.h			\
 	pwd.h			\
 	process.h		\
