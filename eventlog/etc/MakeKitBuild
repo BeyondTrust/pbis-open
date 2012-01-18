@@ -1,0 +1,10 @@
+make()
+{
+    mk_stage \
+        DESTDIR="${LW_CONFIGDIR}" \
+        eventlogd.reg likewise-platform-snmp.reg
+
+    mk_stage \
+        DESTDIR="${LW_CACHEDIR}" \
+        lwreport.xml
+}

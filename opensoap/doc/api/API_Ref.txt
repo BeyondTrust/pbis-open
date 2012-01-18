@@ -1,0 +1,466 @@
+
+  OpenSOAP API Function Reference List
+  ====================================
+
+ At present only a simple listing of the API functions is available. A
+more documented list is currently being prepared, and as soon as it is
+available it will replace this document.
+
+With regard to the functions listed in this document, the terms MB/WC when
+used in the function name have the following meanings:
+  MB : Multi Byte
+  WC : Wide Character
+
+------------------------------
+Table of Contents
+ - Module Listing
+ - Function List
+ - Appendix: Error Code List
+------------------------------
+
+Module Listing
+--------------
+  OpenSOAP Block
+  OpenSOAP ByteArray
+  OpenSOAP CStdio
+  OpenSOAP ClientSocket
+  OpenSOAP Envelope
+  OpenSOAP Locale
+  OpenSOAP Init/Term
+  OpenSOAP Security
+  OpenSOAP Serializer
+  OpenSOAP Service
+  OpenSOAP Stream
+  OpenSOAP String
+  OpenSOAP StringHash
+  OpenSOAP Transport
+  OpenSOAP XMLAttr
+  OpenSOAP XMLElm
+  OpenSOAP XMLNamespace
+
+
+------------------------------
+Function List
+------------------------------
+
+Module Name : Block
+-------------------
+
+OpenSOAPBlockGetValueMB()
+OpenSOAPBlockGetValueWC()
+OpenSOAPBlockSetValueMB()
+OpenSOAPBlockSetValueWC()
+OpenSOAPBlockSetNamespaceMB()
+OpenSOAPBlockSetNamespaceWC()
+OpenSOAPBlockGetNamespace()
+OpenSOAPBlockIsSameNamespaceMB()
+OpenSOAPBlockIsSameNamespaceWC()
+OpenSOAPBlockAddAttributeMB()
+OpenSOAPBlockAddAttributeWC()
+OpenSOAPBlockGetAttributeMB()
+OpenSOAPBlockGetAttributeWC()
+OpenSOAPBlockGetChildValueMB()
+OpenSOAPBlockGetChildValueWC()
+OpenSOAPBlockSetChildValueMB()
+OpenSOAPBlockSetChildValueWC()
+OpenSOAPBlockGetNextChild()
+OpenSOAPBlockAddChildMB()
+OpenSOAPBlockAddChildWC()
+OpenSOAPBlockGetChildMB()
+OpenSOAPBlockGetChildWC()
+OpenSOAPBlockGetMustunderstandAttr()
+OpenSOAPBlockSetMustunderstandAttr()
+OpenSOAPBlockClearMustunderstandAttr()
+OpenSOAPBlockGetActorAttr()
+OpenSOAPBlockSetActorAttrMB()
+OpenSOAPBlockSetActorAttrWC()
+OpenSOAPBlockClearActorAttr()
+OpenSOAPBlockSetActorAttrNext()
+OpenSOAPBlockIsActorAttrNext()
+OpenSOAPBlockGetName()
+OpenSOAPBlockGetCharEncodingString()
+
+
+
+Module Name : ByteArray
+-----------------------
+
+OpenSOAPByteArrayCreate()
+OpenSOAPByteArrayCreateWithData()
+OpenSOAPByteArrayAppendRef()
+OpenSOAPByteArrayRelease()
+OpenSOAPByteArrayGetSize()
+OpenSOAPByteArrayBeginConst()
+OpenSOAPByteArrayEndConst()
+OpenSOAPByteArrayGetBeginSizeConst()
+OpenSOAPByteArrayGetBeginEndConst()
+OpenSOAPByteArrayBegin()
+OpenSOAPByteArrayEnd()
+OpenSOAPByteArrayGetBeginSize()
+OpenSOAPByteArrayGetBeginEnd()
+OpenSOAPByteArrayClear()
+OpenSOAPByteArraySetData()
+OpenSOAPByteArrayAppend()
+OpenSOAPByteArrayResize()
+OpenSOAPByteArrayDuplicate()
+
+
+
+Module Name : CStdio
+--------------------
+
+OpenSOAPCStdioCreate()
+OpenSOAPCStdioCreateWithFILEPtr()
+OpenSOAPCStdioCreateForStdio()
+OpenSOAPCStdioClose()
+OpenSOAPCStdioRelease()
+OpenSOAPCStdioSetBinaryMode()
+OpenSOAPCStdioSetTextMode()
+OpenSOAPCStdioRead()
+OpenSOAPCStdioWrite()
+OpenSOAPCStdioReadToDelm()
+
+
+
+Module Name : ClientSocket
+--------------------------
+
+OpenSOAPClientSocketCreate()
+OpenSOAPClientSocketRelease()
+OpenSOAPClientSocketOpen()
+OpenSOAPClientSocketClose()
+OpenSOAPClientSocketRead()
+OpenSOAPClientSocketWrite()
+OpenSOAPClientSocketReadToDelm()
+OpenSOAPClientSocketReadWithSize()
+
+
+
+Module Name : Envelope
+----------------------
+
+OpenSOAPEnvelopeCreate()
+OpenSOAPEnvelopeCreateMB()
+OpenSOAPEnvelopeCreateWC()
+OpenSOAPEnvelopeCreateString()
+OpenSOAPEnvelopeCreateFaultMB()
+OpenSOAPEnvelopeCreateFaultWC()
+OpenSOAPEnvelopeCreateCharEncoding()
+OpenSOAPEnvelopeRetain()
+OpenSOAPEnvelopeRelease()
+OpenSOAPEnvelopeAddHeaderBlockMB()
+OpenSOAPEnvelopeAddHeaderBlockWC()
+OpenSOAPEnvelopeGetNextHeaderBlock()
+OpenSOAPEnvelopeGetHeaderBlockMB()
+OpenSOAPEnvelopeGetHeaderBlockWC()
+OpenSOAPEnvelopeAddBodyBlockMB()
+OpenSOAPEnvelopeAddBodyBlockWC()
+OpenSOAPEnvelopeGetNextBodyBlock()
+OpenSOAPEnvelopeGetBodyBlockMB()
+OpenSOAPEnvelopeGetBodyBlockWC()
+OpenSOAPEnvelopeGetCharEncodingString()
+OpenSOAPEnvelopeGetHeaderCharEncodingString()
+OpenSOAPEnvelopeGetBodyCharEncodingString()
+OpenSOAPEnvelopeAddFaultString()
+
+
+
+Module Name : Locale
+--------------------
+
+OpenSOAPLocaleGetCurrentCodeset()
+OpenSOAPLocaleIsCurrentCodeset()
+
+
+
+Module Name : OpenSOAP
+----------------------
+
+OpenSOAPInitialize()
+OpenSOAPUltimate()
+
+
+
+Module Name : Security
+----------------------
+
+OpenSOAPSecGenerateRSAKeys()
+OpenSOAPSecGenerateRSAKeysToFile()
+OpenSOAPSecEncWithStream()
+OpenSOAPSecEncWithFile()
+OpenSOAPSecDecWithStream()
+OpenSOAPSecDecWithFile()
+OpenSOAPSecAddSignWithStream()
+OpenSOAPSecAddSignWithFile()
+OpenSOAPSecCntSign()
+OpenSOAPSecGetSignedByList()
+OpenSOAPSecVerifySignWithStream()
+OpenSOAPSecVerifySignWithFile()
+OpenSOAPSecCertCreateWithStream()
+OpenSOAPSecCertCreateWithFile()
+OpenSOAPSecCertLoadFromMem()
+OpenSOAPSecCertLoad()
+OpenSOAPSecCertFree()
+OpenSOAPSecCertVerifyWithStream()
+OpenSOAPSecCertVerifyWithFile()
+OpenSOAPSecCertGetPublisherName()
+OpenSOAPSecCertGetSerialNo()
+OpenSOAPSecCertGetOwnerName()
+OpenSOAPSecCertGetEndDate()
+OpenSOAPSecCertGetPubKey()
+OpenSOAPSecDecodeKeyFile()
+OpenSOAPSecCABrowseRec()
+OpenSOAPSecCABrowse()
+OpenSOAPSecCARegist()
+OpenSOAPSecCAInvalidate()
+OpenSOAPSecCASearchRecords()
+OpenSOAPSecCASearchOneRecord()
+OpenSOAPSecCAGetRecord()
+OpenSOAPSecCAFreeRecord()
+OpenSOAPSecCARemoveRecord()
+
+
+
+Module Name : Serializer
+------------------------
+
+OpenSOAPSerializerRegisterMB()
+OpenSOAPSerializerRegisterWC()
+OpenSOAPGetSerializer()
+OpenSOAPGetSerializerMB()
+OpenSOAPGetSerializerWC()
+OpenSOAPGetDeserializer()
+OpenSOAPGetDeserializerMB()
+OpenSOAPGetDeserializerWC()
+OpenSOAPSerializerRegistDefaults()
+
+
+
+Module Name : Service
+---------------------
+
+OpenSOAPServiceCreateMB()
+OpenSOAPServiceCreateWC()
+OpenSOAPServiceRelease()
+OpenSOAPServiceRegisterMB()
+OpenSOAPServiceRegisterWC()
+OpenSOAPServiceRun()
+
+
+
+Module Name : Stream
+--------------------
+
+OpenSOAPStreamRelease()
+OpenSOAPStreamRead()
+OpenSOAPStreamWrite()
+OpenSOAPStreamReadToDelm()
+OpenSOAPStreamReadWithSize()
+OpenSOAPStreamWriteByteArray()
+
+
+
+Module Name : String
+--------------------
+
+OpenSOAPStringCreate()
+OpenSOAPStringCreateWithMB()
+OpenSOAPStringCreateWithWC()
+OpenSOAPStringCreateWithCharEncodingString()
+OpenSOAPStringCreateWithUTF8()
+OpenSOAPStringRetain()
+OpenSOAPStringRelease()
+OpenSOAPStringGetLengthMB()
+OpenSOAPStringGetLengthWC()
+OpenSOAPStringGetStringMBWithAllocator()
+OpenSOAPStringGetStringWCWithAllocator()
+OpenSOAPStringGetStringUTF8WithAllocator()
+OpenSOAPStringGetStringMB()
+OpenSOAPStringGetStringWC()
+OpenSOAPStringGetCharEncodingString()
+OpenSOAPStringSetStringMB()
+OpenSOAPStringSetStringWC()
+OpenSOAPStringSetCharEncodingString()
+OpenSOAPStringSetStringUTF8()
+OpenSOAPStringFormatMB()
+OpenSOAPStringFormatWC()
+OpenSOAPStringCompareMB()]
+OpenSOAPStringCompareWC()
+OpenSOAPStringCompare()
+OpenSOAPStringFindStringMB()
+OpenSOAPStringFindStringWC()
+OpenSOAPStringFindString()
+OpenSOAPStringFindIfStringIndex()
+OpenSOAPStringReplaceStringMB()
+OpenSOAPStringReplaceStringWC()
+OpenSOAPStringReplaceString()
+OpenSOAPStringClear()
+OpenSOAPStringAppendMB()
+OpenSOAPStringAppendWC()
+OpenSOAPStringDuplicate()
+OpenSOAPStringGetSubstring()
+OpenSOAPStringConvertCharEncoding()
+OpenSOAPStringConvertXMLCharRefToUTF8()
+OpenSOAPStringGetStringUSASCII()
+OpenSOAPStringIterateProc()
+
+
+
+Module Name : StringHash
+------------------------
+
+OpenSOAPStringHashCreate()
+OpenSOAPStringHashRelease()
+OpenSOAPStringHashClear()
+OpenSOAPStringHashRemoveKey()
+OpenSOAPStringHashSetValue()
+OpenSOAPStringHashSetValueMB()
+OpenSOAPStringHashSetValueWC()
+OpenSOAPStringHashGetValue()
+OpenSOAPStringHashGetValueMB()
+OpenSOAPStringHashGetValueWC()
+OpenSOAPStringHashGetSize()
+OpenSOAPStringHashGetKeys()
+OpenSOAPStringHashGetValues()
+OpenSOAPStringHashApplyToValues()
+
+
+Module Name : Transport
+-----------------------
+
+OpenSOAPTransportCreate()
+OpenSOAPTransportRelease()
+OpenSOAPTransportSend()
+OpenSOAPTransportReceive()
+OpenSOAPTransportConnect()
+OpenSOAPTransportDisconnect()
+OpenSOAPTransportInvokeByteArray()
+OpenSOAPTransportInvoke()
+OpenSOAPTransportSetSOAPAction()
+OpenSOAPTransportSetURL()
+OpenSOAPTransportSetHeader()
+OpenSOAPTransportSetCharset()
+OpenSOAPTransportSMTPSetHostname()
+OpenSOAPTransportSMTPSetFrom()
+OpenSOAPTransportSMTPSetTo()
+
+
+
+Module Name : XMLAttr
+---------------------
+
+OpenSOAPXMLAttrCreateMB()
+OpenSOAPXMLAttrCreateWC()
+OpenSOAPXMLAttrSetNamespaceMB()
+OpenSOAPXMLAttrSetNamespaceWC()
+OpenSOAPXMLAttrGetNamespace()
+OpenSOAPXMLAttrGetValueMB()
+OpenSOAPXMLAttrGetValueWC()
+OpenSOAPXMLAttrSetValueMB()
+OpenSOAPXMLAttrSetValueWC()
+OpenSOAPXMLAttrGetName()
+
+
+
+Module Name : XMLElm
+--------------------
+
+OpenSOAPXMLElmCreate()
+OpenSOAPXMLElmSetNamespaceMB()
+OpenSOAPXMLElmSetNamespaceWC()
+OpenSOAPXMLElmSearchNamespaceMB()
+OpenSOAPXMLElmSearchNamespaceWC()
+OpenSOAPXMLElmGetNamespace()
+OpenSOAPXMLElmDefineNamespaceMB()
+OpenSOAPXMLElmDefineNamespaceWC()
+OpenSOAPXMLElmAddAttributeMB()
+OpenSOAPXMLElmAddAttributeWC()
+OpenSOAPXMLElmGetAttributeMB()
+OpenSOAPXMLElmGetAttributeWC()
+OpenSOAPXMLElmGetNextChild()
+OpenSOAPXMLElmAddChildString()
+OpenSOAPXMLElmAddChildMB()
+OpenSOAPXMLElmAddChildWC()
+OpenSOAPXMLElmGetChildString()
+OpenSOAPXMLElmGetChildMB()
+OpenSOAPXMLElmGetChildWC()
+OpenSOAPXMLElmGetValueMB()
+OpenSOAPXMLElmGetValueWC()
+OpenSOAPXMLElmSetValueMB()
+OpenSOAPXMLElmSetValueWC()
+OpenSOAPXMLElmGetCharEncodingString()
+OpenSOAPXMLElmGetNameString()
+OpenSOAPXMLElmGetNextAttr()
+OpenSOAPXMLElmGetChildValueMB()
+OpenSOAPXMLElmGetChildValueWC()
+OpenSOAPXMLElmSetChildValueMB()
+OpenSOAPXMLElmSetChildValueWC()
+OpenSOAPXMLElmSetValueAsString()
+OpenSOAPXMLElmSetValueAsStringMB()
+OpenSOAPXMLElmSetValueAsStringWC()
+OpenSOAPXMLElmSetChildValueAsStringMB()
+OpenSOAPXMLElmSetChildValueAsStringWC()
+OpenSOAPXMLElmSetChildValueAsString()
+OpenSOAPXMLElmRemoveChildString()
+
+
+
+Module Name : XMLNamespace
+--------------------------
+
+OpenSOAPXMLNamespaceCreateMB()
+OpenSOAPXMLNamespaceCreateWC()
+OpenSOAPXMLNamespaceRelease()
+OpenSOAPXMLNamespaceGetURI()
+OpenSOAPXMLNamespaceGetPrefix()
+
+
+
+------------------------------
+Appendix
+------------------------------
+OpenSOAP Error Code
+definition file: /include/ErrorCode.h
+
+  Constant Name                   Value          Note
+  ----------------------------------------------------------------------------
+  OPENSOAP_NO_ERROR               (0)            no error
+  OPENSOAP_NOT_CATEGORIZE_ERROR   (0xffffffffL)  not categorize error
+  OPENSOAP_IMPLEMENTATION_ERROR   (0x40000000L)  implementation error
+  OPENSOAP_YET_IMPLEMENTATION     (0x40000001L)  implementation error
+  OPENSOAP_PARAMETER_BADVALUE     (0x20000001L)  parameter bad value
+  OPENSOAP_USERDEFINE_ERROR       (0x10000000L)  user defined error
+  OPENSOAP_MEM_ERROR              (0x00010000L)  memory error
+  OPENSOAP_MEM_BADALLOC           (0x00010001L)  memory alloc error
+  OPENSOAP_MEM_OUTOFRANGE         (0x00010002L)  memory out of range
+  OPENSOAP_CHAR_ERROR             (0x00020000L)  char convert error
+  OPENSOAP_ICONV_NOT_IMPL         (0x00020001L)  iconv not implement error
+  OPENSOAP_INVALID_MB_SEQUENCE    (0x00020002L)  multi byte sequence invalid
+  OPENSOAP_INCOMPLETE_MB_SEQUENCE (0x00020003L)  multi byte sequence incomplete
+  OPENSOAP_UNKNOWN_CHARENCODE     (0x00020004L)  unknown charencoding
+  OPENSOAP_SETLOCALEFAILURE       (0x00020005L)  setlocale failure
+  OPENSOAP_IO_ERROR               (0x00040000L)  io error
+  OPENSOAP_IO_READ_ERROR          (0x00040001L)  read error
+  OPENSOAP_IO_WRITE_ERROR         (0x00040002L)  write error
+  OPENSOAP_XML_ERROR              (0x00080000L)  xml manipulate error
+  OPENSOAP_XMLNODE_NOT_FOUND      (0x00080001L)  xml manipulate error
+  OPENSOAP_XML_BADNAMESPACE       (0x00080002L)  xml manipulate error
+  OPENSOAP_XML_NOHEADERBODY       (0x00080003L)  xml manipulate error
+  OPENSOAP_XML_BADDOCUMENTTYPE    (0x00080004L)  xml manipulate error
+  OPENSOAP_XML_BADMAKEDOCUMENT    (0x00080005L)  xml manipulate error
+  OPENSOAP_XML_EMPTYDOCUMENT      (0x00080006L)  xml manipulate error
+  OPENSOAP_XML_NOTXMLDOCUMENT     (0x00080007L)  xml manipulate error
+  OPENSOAP_SEC_ERROR              (0x00100000L)  security error
+  OPENSOAP_SEC_KEYGEN_ERROR       (0x00100001L)  key generate error
+  OPENSOAP_SEC_SIGNGEN_ERROR      (0x00100002L)  sign generate error
+  OPENSOAP_SEC_SIGNVERIFY_ERROR	  (0x00100003L)  sign verify error
+  OPENSOAP_SEC_ENCRYPT_ERROR      (0x00100004L)  encrypt error
+  OPENSOAP_SEC_DECRYPT_ERROR      (0x00100005L)  decrypt error
+
+OpenSOAP Error Code Judgement Macro
+definition file: /include/ErrorCode.h
+
+  Constant Name                   Value           Note
+  ----------------------------------------------------------------------------
+  OPENSOAP_SUCCEEDED(err)         (!(err))
+  OPENSOAP_FAILED(err)            (err)

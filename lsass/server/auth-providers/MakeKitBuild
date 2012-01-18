@@ -1,0 +1,18 @@
+SUBDIRS="local-provider ad-open-provider"
+
+configure()
+{
+    want_ad=false
+    want_local=false
+
+    for _prov in ${LSA_PROVIDERS}
+    do
+        case "$_prov" in
+            "ad") want_ad=true;;
+            "local") want_local=true;;
+        esac
+    done
+
+    $want_ad || mk_skip_subdir ad-open-provider
+    $want_local || mk_skip_subdir local-provider
+}

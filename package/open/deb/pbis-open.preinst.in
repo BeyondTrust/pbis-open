@@ -1,0 +1,173 @@
+#!/bin/sh
+
+UPGRADEDIR=/var/lib/pbis-upgrade
+
+LOG=/var/log/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
+
+PKG_ARCH="@MK_HOST_ARCH@"
+
+DAEMONS_TO_KILL="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd reapsysld"
+
+# Display to screen and log file with a blank line between entries.
+log()
+{
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Display to screen and log file with no blank line.
+_log()
+{
+    echo $@
+    echo $@ >> $LOG
+}
+
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
+run()
+{
+    "$@" > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err"
+        _log `cat $TLOG`
+        _log
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# Log only to file.
+run_quiet()
+{
+    "$@" > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+    else
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    cat $TLOG >> $LOG
+    echo >> $LOG
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+run_or_fail()
+{
+    "$@" > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log `cat $TLOG`
+        _log
+        rm -f $TLOG > /dev/null 2>&1
+        exit 1
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+check_deb_installed()
+{
+    _status="`dpkg -s "$1" 2>/dev/null | grep Status: 2>/dev/null`"
+    if [ $? -ne 0 ]
+    then
+        return 1
+    fi
+
+    if echo "$_status" | grep ' installed' >/dev/null 2>&1
+    then
+        return 0
+    fi
+
+    return 1
+}
+
+case "$1" in
+    abort-upgrade)
+        logfile "Package: PowerBroker Identity Services Open preinstall [abort-upgrade] begins (`date`)"
+        logfile "Package: PowerBroker Identity Services Open preinstall [abort-upgrade] finished"
+    ;;
+
+    upgrade)
+        logfile "Package: PowerBroker Identity Services Open preinstall [upgrade] begins (`date`)"
+
+        if dpkg-query --show --showformat='${Version}' likewise-open | grep "ubuntu" > /dev/null 2>&1 ; then
+            log 'The package likewise-open from Ubuntu has been detected.'
+            log 'Neither side-by-side installations nor upgrades are supported.'
+            log 'Please remove likewise-open before continuing.'
+            exit 1
+        fi
+
+        run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable pam
+        run_quiet '@MK_BINDIR@/domainjoin-cli' configure --disable nsswitch
+
+        if [ -f /usr/sbin/service ]
+        then
+            run_quiet /usr/sbin/service pbis stop
+            run_quiet /usr/sbin/service lwsmd stop
+        else
+            run_quiet '@LW_INITDIR@/pbis' stop
+            run_quiet '@LW_INITDIR@/lwsmd' stop
+        fi
+
+        for daemon in $DAEMONS_TO_KILL
+        do
+            run_quiet pkill -KILL -x $daemon
+        done
+
+        logfile "Package: PowerBroker Identity Services Open preinstall [upgrade] finished"
+    ;;
+
+    install)
+        logfile "Package: PowerBroker Identity Services Open preinstall [install] begins (`date`)"
+
+        if check_deb_installed 'likewise-open5' ; then
+            log 'The package likewise-open5 from Ubuntu has been detected.'
+            log 'Neither side-by-side installations nor upgrades are supported.'
+            log 'Please remove likewise-open5 before continuing.'
+            exit 1
+        fi
+
+        if [ -f /usr/sbin/service ]
+        then
+            run_quiet /usr/sbin/service pbis stop
+            run_quiet /usr/sbin/service lwsmd stop
+        else
+            run_quiet '@LW_INITDIR@/pbis' stop
+            run_quiet '@LW_INITDIR@/lwsmd' stop
+        fi
+
+        for daemon in $DAEMONS_TO_KILL
+        do
+            run_quiet pkill -KILL -x $daemon
+        done
+
+        logfile "Package: PowerBroker Identity Services Open preinstall [install] finished"
+        exit 0
+    ;;
+esac

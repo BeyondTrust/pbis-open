@@ -1,0 +1,54 @@
+SUBDIRS="include lwdns tools"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    lw_define_feature_macros
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+
+    mk_define PREFIXDIR "\"${MK_PREFIXDIR}\""
+
+    mk_declare -o MOD_EXT="${MK_DLO_EXT}"
+
+    # Required headers
+    mk_check_headers FAIL=yes \
+        lwnet.h krb5.h lw/base.h uuid/uuid.h gssapi.h
+        
+    # Required libraries
+    mk_check_libraries FAIL=yes \
+        lwnetclientapi krb5 lsaclient lwbase uuid gssapi_krb5
+
+    # Optional headers
+    mk_check_headers \
+        HEADERDEPS="sys/types.h" \
+        netinet/in.h stdlib.h sys/varargs.h \
+        time.h sys/time.h strings.h pthread.h netdb.h \
+        arpa/inet.h sys/ioctl.h sys/sockio.h \
+        net/if_dl.h ifaddrs.h arpa/nameser.h \
+        wc16str.h netinet/in.h
+
+    mk_check_headers \
+        HEADERDEPS="sys/socket.h sys/types.h" \
+        net/if.h
+
+    mk_check_headers \
+        HEADERDEPS="netinet/in.h arpa/nameser.h" \
+        resolv.h
+
+    # Optional libraries
+    mk_check_libraries \
+        nsl socket dl pthread resolv
+
+    # Optional functions
+    mk_check_functions \
+        HEADERDEPS="sys/types.h ifaddrs.h" \
+        getifaddrs
+
+    mk_check_functions \
+        HEADERDEPS="resolv.h" \
+        res_init res_query
+    
+    lw_check_strerror_r
+}

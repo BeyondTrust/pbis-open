@@ -1,0 +1,8 @@
+#ifndef _WIN32
+[ explicit_handle ] 
+#else
+[ explicit_handle, enable_allocate ]
+#endif
+interface samrt {
+	samrt_Connect();
+}

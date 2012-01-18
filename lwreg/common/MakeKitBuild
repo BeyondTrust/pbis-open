@@ -1,0 +1,6 @@
+make()
+{
+    mk_library \
+        LIB=regcommon \
+        GROUPS="../ipc/regipc ../utils/regutils ../parse/regparse"
+}

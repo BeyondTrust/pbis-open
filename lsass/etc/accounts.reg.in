@@ -1,0 +1,17 @@
+[HKEY_THIS_MACHINE\Services\lsass\Accounts]
+
+[HKEY_THIS_MACHINE\Services\lsass\Accounts\S-1-5-32-544]
+"Privileges" = {
+    default = sza: "SeSecurityPrivilege" "SeBackupPrivilege" "SeRestorePrivilege" "SeSystemtimePrivilege" "SeShutdownPrivilege" "SeRemoteShutdownPrivilege" "SeTakeOwnershipPrivilege" "SeLoadDriverPrivilege" "SeChangeNotifyPrivilege" "SeManageVolumePrivilege"
+}
+"SystemAccessRights" = {
+    default = dword:00000403
+}
+
+[HKEY_THIS_MACHINE\Services\lsass\Accounts\S-1-5-32-545]
+"Privileges" = {
+    default = sza: "SeShutdownPrivilege" "SeChangeNotifyPrivilege" "SeManageVolumePrivilege"
+}
+"SystemAccessRights" = {
+    default = dword:00000003
+}

@@ -1,0 +1,376 @@
+SUBDIRS="include common pstore client interop server tools etc docs"
+
+option()
+{
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            _default_BUILTIN="yes"
+            _default_PROVIDERS="ad"
+            _default_RPC="no"
+            ;;
+        *)
+            _default_BUILTIN="no"
+            _default_PROVIDERS="ad local"
+            _default_RPC="yes"
+            ;;
+    esac
+
+    mk_option \
+        OPTION=lsa-builtin-providers \
+        VAR=LSA_BUILTIN_PROVIDERS \
+        PARAM="yes|no" \
+        DEFAULT="$_default_BUILTIN" \
+        HELP="Build providers directly into service"
+
+    mk_option \
+        OPTION=lsa-providers \
+        VAR=LSA_PROVIDERS \
+        PARAM="..." \
+        DEFAULT="$_default_PROVIDERS" \
+        HELP="Enabled providers (ad, local)"
+
+    mk_option \
+        OPTION=lsa-rpc-servers \
+        VAR=LSA_RPC_SERVERS \
+        PARAM="yes|no" \
+        DEFAULT="$_default_RPC" \
+        HELP="Enable RPC servers"
+}
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    lw_define_feature_macros
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+    MK_CXXFLAGS="$MK_CXXFLAGS -Wall -Werror"
+
+    # Declare which variable vary by system (ISA)
+    mk_declare -s -o MOD_EXT
+    mk_declare -s PAMDIR
+    mk_declare -s NSSDIR
+
+    # Default registry settings
+    mk_declare -o \
+        fdlimit=dword:00000400 \
+        default_homedir_prefix="/home" \
+        default_skeldirs="/etc/skel"
+
+    # Set system-dependent variables
+    mk_multiarch_do
+        case "$MK_OS:$MK_ISA" in
+            linux:*)
+                PAMDIR="/${MK_LIBDIR##*/}/security"
+                NSSDIR="/${MK_LIBDIR##*/}"
+                ;;
+            freebsd:*)
+                PAMDIR="/usr/local/${MK_LIBDIR##*/}"
+                NSSDIR="/usr/local/${MK_LIBDIR##*/}"
+                ;;
+            solaris:sparc_32|solaris:x86_32)
+                NSSDIR="/usr/lib"
+                PAMDIR="/usr/lib/security"
+		fdlimit=dword:00000100
+	        default_homedir_prefix="/export/home"
+                ;;
+            solaris:x86_64)
+                NSSDIR="/usr/lib/64"
+                PAMDIR="/usr/lib/security/64"
+		fdlimit=dword:00000100
+	        default_homedir_prefix="/export/home"
+                ;;
+            solaris:sparc_64)
+                NSSDIR="/usr/lib/sparcv9"
+                PAMDIR="/usr/lib/security/sparcv9"
+		fdlimit=dword:00000100
+	        default_homedir_prefix="/export/home"
+                ;;
+            aix:ppc32)
+                NSSDIR="/usr/lib/security"
+                PAMDIR="/usr/lib/security"
+                ;;
+            aix:ppc64)
+                NSSDIR="/usr/lib/security"
+                PAMDIR="/usr/lib/security/64"
+                ;;
+            hpux:hppa32)
+                NSSDIR="/usr/lib"
+                PAMDIR="/usr/lib/security"
+                ;;
+            hpux:hppa64)
+                NSSDIR="/usr/lib/pa20_64"
+                PAMDIR="/usr/lib/security/pa20_64"
+                ;;
+            hpux:ia64_32)
+                NSSDIR="/usr/lib/hpux32"
+                PAMDIR="/usr/lib/security/hpux32"
+                ;;
+            hpux:ia64_64)
+                NSSDIR="/usr/lib/hpux64"
+                PAMDIR="/usr/lib/security/hpux64"
+                ;;
+            darwin:*)
+                PAMDIR="/usr/lib/pam"
+                default_skeldirs="System/Library/User Template/Non_localized, /System/Library/User Template/English.lproj"
+                default_homedir_prefix="/Users"
+                ;;
+        esac
+
+        mk_define LIBDIR "\"$MK_LIBDIR\""
+        mk_define MOD_EXT "\"$MK_DLO_EXT\""
+        MOD_EXT="$MK_DLO_EXT"
+
+        mk_check_endian
+
+        case "$ENDIANNESS" in
+            big) mk_define LW_BIG_ENDIAN;;
+            little) mk_define LW_LITTLE_ENDIAN;;
+        esac
+
+    mk_multiarch_done
+
+    case "$MK_OS" in
+        darwin)
+            ENABLE_NSS_ENUM_DEFAULT_DWORD="00000001"
+            ;;
+        *)
+            ENABLE_NSS_ENUM_DEFAULT_DWORD="00000001"
+            ;;
+    esac
+
+    mk_declare -o \
+        providerdir="$MK_LIBDIR/lsa-provider" \
+        rpcserverdir="$MK_LIBDIR/lsa-rpc" \
+        LIBDIR="$MK_LIBDIR" \
+        SBINDIR="$MK_SBINDIR" \
+        CACHEDIR="$LW_CACHEDIR" \
+        ENABLE_NSS_ENUM_DEFAULT_DWORD
+    
+    mk_define PREFIXDIR "\"$MK_PREFIX\""
+    mk_define CACHEDIR "\"$LW_CACHEDIR\""
+    mk_define CONFIGDIR "\"$MK_SYSCONFDIR\""
+
+    if [ "$LSA_BUILTIN_PROVIDERS" = "yes" ]
+    then
+        mk_define ENABLE_STATIC_PROVIDERS
+        for _prov in ${LSA_PROVIDERS}
+        do
+            case "$_prov" in
+                "ad") mk_define ENABLE_AD;;
+                "local") mk_define ENABLE_LOCAL;;
+            esac
+        done
+    fi
+
+    if [ "$LSA_RPC_SERVERS" = "no" ]
+    then
+        mk_define DISABLE_RPC_SERVERS
+    fi
+
+    # FIXME
+    mk_define COMPONENT_VERSION "\"5.0.0.0\""
+    mk_define __LW_MOTD_FILE__ "\"/etc/motd\""
+    mk_define __LW_MOTD_MAX_SIZE__ 4096
+    mk_define AD_DEFAULT_HOMEDIR_PREFIX '"/home"'
+    mk_define AD_DEFAULT_SKELDIRS '"/etc/skel"'
+
+    # Build samdb directly into dsapi
+    mk_define DSAPI_INTERNAL_PROVIDER
+
+    mk_check_headers \
+	stdlib.h sys/varargs.h time.h strings.h stdbool.h \
+	unistd.h sys/systeminfo.h sys/utsname.h sys/socket.h \
+	wc16str.h wc16printf.h sys/pstat.h procfs.h sys/procfs.h \
+	kvm.h sys/param.h sys/sysctl.h sys/user.h libgen.h execinfo.h \
+	sys/regset.h sys/resource.h security/pam_appl.h pam/pam_appl.h \
+        nss_common.h nss_dbdefs.h nss.h
+
+    mk_check_headers \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h" \
+        security/pam_modules.h pam/pam_modules.h
+
+    mk_check_headers \
+	FAIL=yes \
+	gssapi.h ldap.h lw/base.h lwadvapi.h openssl/md4.h \
+        openssl/rc4.h openssl/rand.h openssl/md5.h krb5.h uuid/uuid.h \
+        sqlite3.h
+
+    mk_check_headers \
+        eventlog.h
+
+    mk_check_types \
+        HEADERDEPS="procfs.h sys/procfs.h" \
+        "struct psinfo"
+
+    mk_multiarch_do
+        mk_check_sizeofs \
+            HEADERDEPS="time.h" \
+            time_t
+    mk_multiarch_done
+
+    mk_check_libraries \
+	FAIL=yes \
+	lwbase_nothr lwbase lwadvapi_nothr lwadvapi \
+	lwmsg_nothr lwmsg pam sqlite3 crypto krb5 gssapi_krb5 \
+        uuid ldap_r
+
+    mk_check_libraries \
+        eventlog dl
+
+    mk_check_functions \
+	HEADERDEPS="ctype.h" \
+        isblank
+
+    mk_check_functions \
+	HEADERDEPS="stdlib.h" \
+	strtol strtoll __strtoll strtoul strtoull __strtoull
+
+    mk_check_functions \
+	HEADERDEPS="inttypes.h" \
+	__strtoll __strtoull
+
+    mk_check_functions \
+	HEADERDEPS="time.h" \
+        clock_settime
+
+    mk_check_functions \
+	HEADERDEPS="sys/time.h" \
+        settimeofday
+
+    mk_check_functions \
+	HEADERDEPS="grp.h pwd.h" \
+        fgetpwent_r fgetgrent_r
+
+    mk_msg_checking "fgetpwent_r prototype"
+    if mk_check_function \
+        HEADERDEPS="pwd.h stdlib.h" \
+        PROTOTYPE="int fgetpwent_r(FILE *fp, struct passwd *pwbuf, char *buf, size_t buflen, struct passwd **pwbufp)"
+    then
+        mk_msg_result "5 arguments with int return type"
+        mk_define FGETPWENT_R_TAKES_5_ARGS 1
+        mk_define FGETPWENT_R_RETURNS_INT 1
+    elif mk_check_function \
+        HEADERDEPS="pwd.h stdlib.h" \
+        PROTOTYPE="int fgetpwent_r(FILE *fp, struct passwd *pwbuf, char *buf, int)"
+    then
+        mk_msg_result "4 arguments with int return type"
+        mk_define FGETPWENT_R_RETURNS_INT 1
+    else
+        mk_msg_result "4 arguments with pointer return type"
+    fi
+
+    mk_msg_checking "pam_get_data data argument type"
+
+    if mk_check_function \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h security/pam_modules.h pam/pam_modules.h" \
+        LIBDEPS="$LIB_PAM" \
+        PROTOTYPE="int pam_get_data(const pam_handle_t* pamh,const char* module_data_name, const void** data)"
+    then
+        mk_msg_result "const void**"
+        mk_define PAM_GET_DATA_TAKES_CONST_DATA_ARG 1
+    else
+        mk_msg_result "void**"
+    fi
+
+    mk_msg_checking "pam_get_item data argument type"
+
+    if mk_check_function \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h security/pam_modules.h pam/pam_modules.h" \
+        LIBDEPS="$LIB_PAM" \
+        PROTOTYPE="int pam_get_item(const pam_handle_t* pamh,int item_type,const void** item)"
+    then
+        mk_msg_result "const void**"
+        mk_define PAM_GET_ITEM_TAKES_CONST_ITEM_ARG 1
+    else
+        mk_msg_result "void**"
+    fi
+
+    mk_msg_checking "pam_conv argument type"
+
+    if mk_try_compile \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h security/pam_modules.h pam/pam_modules.h stdlib.h" \
+        CODE='
+struct pam_conv conversation =
+{
+   (int (*)(int,const struct pam_message**,struct pam_response**,void*))NULL,
+   NULL
+};
+
+return (int) (size_t) conversation.conv;
+'
+    then
+        result="const struct pam_message"
+    else
+        result="struct pam_message"
+    fi
+
+    mk_msg_result "$result"
+    mk_define CONST_PAM_MESSAGE "$result"
+
+    mk_msg_checking "struct passwd has field pw_class"
+
+    if mk_check_type \
+        HEADERDEPS="sys/types.h pwd.h" \
+        "((struct passwd *)0)->pw_class"
+    then
+        mk_msg_result "yes"
+        mk_define HAVE_STRUCT_PASSWD_PW_CLASS 1
+    else
+        mk_msg_result "no"
+    fi
+
+
+    mk_check_types \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h security/pam_modules.h pam/pam_modules.h" \
+        "struct pam_repository"
+
+    mk_check_libraries \
+        kvm sec pthread
+
+    # FreeBSD uses this for examing which users/processes are running
+    mk_check_functions \
+        HEADERDEPS="kvm.h sys/param.h sys/sysctl.h sys/user.h" \
+        LIBDEPS="$LIB_KVM" \
+        kvm_getprocs
+
+    mk_check_functions \
+        HEADERDEPS="sys/pstat.h" \
+        pstat_getproc
+
+    mk_msg_checking "pthread_mutex_lock in libc"
+
+    if mk_check_function \
+        HEADERDEPS="pthread.h" \
+        FUNCTION="pthread_mutex_lock"
+    then
+        mk_msg_result "yes"
+        mk_define HAVE_NONLIBPTHREAD_MUTEX_LOCK
+    else
+        mk_msg_result "no"
+    fi
+
+    if [ "$HAVE_LIB_EVENTLOG" != "no" -a "$HAVE_EVENTLOG_H" != "no" ]
+    then
+        mk_define ENABLE_EVENTLOG
+    fi
+
+    lw_check_pthread_once_init
+    if [ "$result" = "yes" ]
+    then
+        mk_define PTHREAD_ONCE_INIT_BROKEN 1
+    else
+        mk_define PTHREAD_ONCE_INIT_BROKEN 0
+    fi
+
+    mk_check_doxygen
+
+    mk_output_file include/lsaregdef.h
+    mk_output_file server/auth-providers/local-provider/lpdefs.h
+    mk_output_file server/store/dsapi/dirdefs.h
+    mk_output_file interop/gssntlm/mech
+
+    mk_output_file etc/lsassd.reg
+    mk_output_file etc/privileges.reg
+    mk_output_file etc/accounts.reg
+}

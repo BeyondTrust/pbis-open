@@ -1,0 +1,16 @@
+make()
+{
+    if [ "$MK_BINDIR" = "/usr/bin" -o "$MK_BINDIR" = "/usr/local/bin" ]
+    then
+        PASSWD_NAME="lw-passwd"
+    else
+        PASSWD_NAME="passwd"
+    fi
+
+    mk_program \
+        PROGRAM="$PASSWD_NAME" \
+        SOURCES="main.c" \
+        INCLUDEDIRS="../../include" \
+        HEADERDEPS="lwerror.h" \
+        LIBDEPS="pam lsaclient lwadvapi lwadvapi_nothr"
+}

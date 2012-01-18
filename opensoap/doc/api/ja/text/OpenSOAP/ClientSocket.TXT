@@ -1,0 +1,120 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: ClientSocket.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/ClientSocket.h
+ * @brief OpenSOAP API Client Socket 処理
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+     * @typedef struct tagOpenSOAPClientSocket OpenSOAPClientSocket
+     * @brief OpenSOAPClientSocket 構造体型定義
+     */
+    /**
+     * @typedef OpenSOAPClientSocket    *OpenSOAPClientSocketPtr
+     * @brief OpenSOAPClientSocket ポインタ型定義
+     */
+    /**
+      * @fn int OpenSOAPClientSocketCreate(OpenSOAPClientSocketPtr * s)
+      * @brief OpenSOAP ClientSocket のインスタンスを生成します。
+      * @param
+      *    s OpenSOAPClientSocketPtr * [out] ((|s|)) OpenSOAP ClientSocketポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPClientSocketCreateSecure(OpenSOAPClientSocketPtr * s)
+      * @brief OpenSOAP SSLを使って ClientSocket のインスタンスを生成します。
+      * @param
+      *    s OpenSOAPClientSocketPtr * [out] ((|s|)) OpenSOAP ClientSocketポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPClientSocketRelease(OpenSOAPClientSocketPtr s)
+      * @brief OpenSOAP ClientSocket を開放します。
+      * @param
+      *    s OpenSOAPClientSocketPtr [in] ((|s|)) OpenSOAP ClientSocket
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPClientSocketOpen(OpenSOAPClientSocketPtr s, const char * node, const char * service)
+      * @brief OpenSOAP ClientSocket をオープンし、同時に接続も行います。
+      * @param
+      *    s OpenSOAPClientSocketPtr [in] ((|s|)) OpenSOAP ClientSocket
+      * @param
+      *    node const char * [in] ((|node|)) hostname, and so on node. (i.e. "www.isrc.co.jp", "192.168.0.1", ...)
+      * @param
+      *    service const char * [in] ((|service|)) service. (i.e. "http", "ftp", "smtp", "8080", ...)
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPClientSocketClose(OpenSOAPClientSocketPtr s)
+      * @brief OpenSOAP ClientSocket をクローズし、接続も切断します。
+      * @param
+      *    s OpenSOAPClientSocketPtr [in] ((|s|)) OpenSOAP ClientSocket
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPClientSocketRead(OpenSOAPClientSocketPtr s, unsigned char * buf, size_t * buf_sz)
+      * @brief OpenSOAP ClientSocket から読み込みます。
+      * @param
+      *    s OpenSOAPClientSocketPtr [in] ((|s|)) OpenSOAP ClientSocket
+      * @param
+      *    buf unsigned char * [out] ((|buf|)) 読み込みバッファの先頭ポインタ。
+      * @param
+      *    buf_sz size_t * [in, out] ((|buf_sz|)) 読み込みバッファのサイズ。呼出後は読み込んだサイズを返す。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPClientSocketWrite(OpenSOAPClientSocketPtr s, const unsigned char * buf, size_t * buf_sz)
+      * @brief OpenSOAP ClientSocket へ書き出します。
+      * @param
+      *    s OpenSOAPClientSocketPtr [in] ((|s|)) OpenSOAP ClientSocket
+      * @param
+      *    buf const unsigned char * [in] ((|buf|)) 読み込みバッファの先頭ポインタ。
+      * @param
+      *    buf_sz size_t * [in, out] ((|buf_sz|)) 書き込みデータのサイズ。呼出後は書き込んだサイズを返す。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPClientSocketReadToDelm(OpenSOAPClientSocketPtr s, const unsigned char * delm, size_t delm_sz, OpenSOAPByteArrayPtr buf)
+      * @brief OpenSOAP ClientSocket からデリミタまで読み込みます。
+      * @param
+      *    s OpenSOAPClientSocketPtr [in] ((|s|)) OpenSOAP ClientSocket
+      * @param
+      *    delm const unsigned char * [in] ((|delm|)) デリミタデータ列。
+      * @param
+      *    delm_sz size_t [in] ((|delm_sz|)) デリミタデータ列長さ。
+      * @param
+      *    buf OpenSOAPByteArrayPtr [out] ((|buf|)) 読み込みバッファ。
+      * @return
+      *    エラーコード
+      */
+#if 0
+    /**
+      * @fn int OpenSOAPClientSocketReadWithSize(OpenSOAPClientSocketPtr s, size_t sz, OpenSOAPByteArrayPtr buf)
+      * @brief OpenSOAP ClientSocket からサイズを指定して読み込みます。サイズに0を指定した場合は許容する範囲で読み込みます。
+      * @param
+      *    s OpenSOAPClientSocketPtr [in] ((|s|)) OpenSOAP ClientSocket
+      * @param
+      *    sz size_t [in] ((|sz|)) 読み込みデータサイズ
+      * @param
+      *    buf OpenSOAPByteArrayPtr [out] ((|buf|)) 読み込みバッファ。
+      * @return
+      *    エラーコード
+      */
+#endif

@@ -1,0 +1,119 @@
+MODULES="unpack"
+
+option()
+{
+    mk_option \
+        OPTION=unpack-archive \
+        VAR="LW_UNPACK_ARCHIVE" \
+        PARAM="scp_path" \
+        HELP="Extra staging tarball to grab with scp and unpack" \
+        DEFAULT=""
+}
+
+configure()
+{
+    if [ -n "$LW_UNPACK_ARCHIVE" ]
+    then
+        mk_msg "unpacking additional staging targets from $LW_UNPACK_ARCHIVE"
+    fi
+}
+
+make()
+{
+    if [ -n "$LW_UNPACK_ARCHIVE" ]
+    then
+        case "$MK_HOST_OS:$MK_HOST_ARCH" in
+            hpux:ia64)
+                LW_UNPACK_TARGETS="\
+                    $MK_PREFIX/lib/libuuid.sl.0.0 \
+                    $MK_PREFIX/lib/libuuid.sl.0 \
+                    $MK_PREFIX/lib/libiconv.sl.7.0 \
+                    $MK_PREFIX/lib/libiconv.sl.7 \
+                    $MK_PREFIX/lib/libiconv.sl \
+                    $MK_PREFIX/lib/libuuid.sl \
+                    $MK_PREFIX/lib/liblwmsg_nothr.sl.0.0 \
+                    $MK_PREFIX/lib/liblwmsg_nothr.sl.0 \
+                    $MK_PREFIX/lib/liblwmsg_nothr.sl \
+                    $MK_PREFIX/lib/liblwbase_nothr.sl.0.0 \
+                    $MK_PREFIX/lib/liblwbase_nothr.sl.0 \
+                    $MK_PREFIX/lib/liblwbase_nothr.sl \
+                    $MK_PREFIX/lib/liblwadvapi_nothr.sl.0.0 \
+                    $MK_PREFIX/lib/liblwadvapi_nothr.sl.0 \
+                    $MK_PREFIX/lib/liblwadvapi_nothr.sl \
+                    $MK_PREFIX/lib/liblsacommon.sl.0.0 \
+                    $MK_PREFIX/lib/liblsacommon.sl.0 \
+                    $MK_PREFIX/lib/liblsacommon.sl \
+                    $MK_PREFIX/lib/liblsaclient.sl.0.0 \
+                    $MK_PREFIX/lib/liblsaclient.sl.0 \
+                    $MK_PREFIX/lib/liblsaclient.sl \
+                    $MK_PREFIX/lib/liblsaauth.sl.0.0 \
+                    $MK_PREFIX/lib/liblsaauth.sl.0 \
+                    $MK_PREFIX/lib/liblsaauth.sl \
+                    $MK_PREFIX/lib/pa20_64/libuuid.sl.0.0 \
+                    $MK_PREFIX/lib/pa20_64/libuuid.sl.0 \
+                    $MK_PREFIX/lib/pa20_64/libiconv.sl.7.0 \
+                    $MK_PREFIX/lib/pa20_64/libiconv.sl.7 \
+                    $MK_PREFIX/lib/pa20_64/libiconv.sl \
+                    $MK_PREFIX/lib/pa20_64/libuuid.sl \
+                    $MK_PREFIX/lib/pa20_64/liblwmsg_nothr.sl.0.0 \
+                    $MK_PREFIX/lib/pa20_64/liblwmsg_nothr.sl.0 \
+                    $MK_PREFIX/lib/pa20_64/liblwmsg_nothr.sl \
+                    $MK_PREFIX/lib/pa20_64/liblwbase_nothr.sl.0.0 \
+                    $MK_PREFIX/lib/pa20_64/liblwbase_nothr.sl.0 \
+                    $MK_PREFIX/lib/pa20_64/liblwbase_nothr.sl \
+                    $MK_PREFIX/lib/pa20_64/liblwadvapi_nothr.sl.0.0 \
+                    $MK_PREFIX/lib/pa20_64/liblwadvapi_nothr.sl.0 \
+                    $MK_PREFIX/lib/pa20_64/liblwadvapi_nothr.sl \
+                    $MK_PREFIX/lib/pa20_64/liblsacommon.sl.0.0 \
+                    $MK_PREFIX/lib/pa20_64/liblsacommon.sl.0 \
+                    $MK_PREFIX/lib/pa20_64/liblsacommon.sl \
+                    $MK_PREFIX/lib/pa20_64/liblsaclient.sl.0.0 \
+                    $MK_PREFIX/lib/pa20_64/liblsaclient.sl.0 \
+                    $MK_PREFIX/lib/pa20_64/liblsaclient.sl \
+                    $MK_PREFIX/lib/pa20_64/liblsaauth.sl.0.0 \
+                    $MK_PREFIX/lib/pa20_64/liblsaauth.sl.0 \
+                    $MK_PREFIX/lib/pa20_64/liblsaauth.sl \
+                    /usr/lib/security/pam_lsass.sl \
+                    /usr/lib/security/pa20_64/pam_lsass.sl \
+                    /usr/lib/libnss_lsass.1 \
+                    /usr/lib/pa20_64/libnss_lsass.1"
+                    ;;
+            solaris:x86)
+                LW_UNPACK_TARGETS="\
+                    $MK_PREFIX/lib/64/liblsaclient.so.0 \
+                    $MK_PREFIX/lib/64/liblsaauth.so.0.0.0 \
+                    $MK_PREFIX/lib/64/libiconv.so.2.5.0 \
+                    $MK_PREFIX/lib/64/liblwbase_nothr.so.0 \
+                    $MK_PREFIX/lib/64/liblwadvapi_nothr.so \
+                    $MK_PREFIX/lib/64/liblwmsg_nothr.so.0 \
+                    $MK_PREFIX/lib/64/liblwbase_nothr.so.0.0.0 \
+                    $MK_PREFIX/lib/64/libiconv.so \
+                    $MK_PREFIX/lib/64/liblsacommon.so \
+                    $MK_PREFIX/lib/64/liblwmsg_nothr.so \
+                    $MK_PREFIX/lib/64/libuuid.so.0 \
+                    $MK_PREFIX/lib/64/liblwbase_nothr.so \
+                    $MK_PREFIX/lib/64/liblwadvapi_nothr.so.0.0.0 \
+                    $MK_PREFIX/lib/64/liblwadvapi_nothr.so.0 \
+                    $MK_PREFIX/lib/64/libiconv.so.2 \
+                    $MK_PREFIX/lib/64/liblsacommon.so.0.0.0 \
+                    $MK_PREFIX/lib/64/libuuid.so.0.0.0 \
+                    $MK_PREFIX/lib/64/libuuid.so \
+                    $MK_PREFIX/lib/64/liblsaauth.so.0 \
+                    $MK_PREFIX/lib/64/liblsaclient.so \
+                    $MK_PREFIX/lib/64/liblwmsg_nothr.so.0.0.0 \
+                    $MK_PREFIX/lib/64/liblsacommon.so.0 \
+                    $MK_PREFIX/lib/64/liblsaclient.so.0.0.0 \
+                    $MK_PREFIX/lib/64/liblsaauth.so \
+                    /usr/lib/64/nss_lsass.so.1 \
+                    /usr/lib/security/64/pam_lsass.so"
+                ;;
+            *)
+                LW_UNPACK_TARGETS=
+                ;;
+        esac
+
+        lw_unpack \
+            ARCHIVE="$LW_UNPACK_ARCHIVE" \
+            TARGETS="$LW_UNPACK_TARGETS"
+    fi
+}

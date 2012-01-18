@@ -1,0 +1,331 @@
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+          "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry id="domainjoin-cli">
+  <refmeta>
+    <refentrytitle>domainjoin-cli</refentrytitle>
+    <manvolnum>8</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>domainjoin-cli</refname>
+    <refpurpose>Join a host to an Active Directory domain</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>domainjoin-cli</command>
+      <arg choice="opt"><replaceable>options</replaceable></arg>
+      <arg choice="plain">join</arg>
+      <arg choice="opt">
+	<arg choice="plain"><option>--ou</option></arg>
+	<arg choice="plain"><replaceable>organizational_unit</replaceable></arg>
+      </arg>
+      <sbr/>
+      <arg choice="opt" rep="repeat">
+	<arg choice="plain"><option>--enable</option></arg>
+	<arg choice="plain"><replaceable>module</replaceable></arg>
+      </arg>
+      <arg choice="opt" rep="repeat">
+	<arg choice="plain"><option>--disable</option></arg>
+	<arg choice="plain"><replaceable>module</replaceable></arg>
+      </arg>
+      <sbr/>
+      <arg choice="opt"><option>--preview</option></arg>
+      <arg choice="opt"><option>--advanced</option></arg>
+      <arg choice="opt">
+	<arg choice="plain"><option>--details</option></arg>
+	<arg choice="plain"><replaceable>module</replaceable></arg>
+      </arg>
+      <sbr/>
+      <arg choice="plain"><replaceable>domain</replaceable></arg>
+      <arg choice="plain"><replaceable>username</replaceable></arg>
+      <arg choice="opt"><replaceable>password</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>domainjoin-cli</command>
+      <arg choice="opt"><replaceable>options</replaceable></arg>
+      <arg choice="plain">leave</arg>
+      <sbr/>
+      <arg choice="opt" rep="repeat">
+	<arg choice="plain"><option>--enable</option></arg>
+	<arg choice="plain"><replaceable>module</replaceable></arg>
+      </arg>
+      <arg choice="opt" rep="repeat">
+	<arg choice="plain"><option>--disable</option></arg>
+	<arg choice="plain"><replaceable>module</replaceable></arg>
+      </arg>
+      <sbr/>
+      <arg choice="opt"><option>--preview</option></arg>
+      <arg choice="opt"><option>--advanced</option></arg>
+      <arg choice="opt">
+	<arg choice="plain"><option>--details</option></arg>
+	<arg choice="plain"><replaceable>module</replaceable></arg>
+      </arg>
+      <sbr/>
+      <arg choice="opt">
+	<arg choice="plain"><replaceable>username</replaceable></arg>
+	<arg choice="opt"><replaceable>password</replaceable></arg>
+      </arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>domainjoin-cli</command>
+      <arg choice="opt"><replaceable>options</replaceable></arg>
+      <arg choice="plain">query</arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>domainjoin-cli</command>
+      <arg choice="opt"><replaceable>options</replaceable></arg>
+      <arg choice="plain">fixfqdn</arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>domainjoin-cli</command>
+      <arg choice="opt"><replaceable>options</replaceable></arg>
+      <arg choice="plain">setname</arg>
+      <arg choice="plain"><replaceable>name</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1>
+    <title>Description</title>
+    <para>
+      <command>domainjoin-cli</command> is the command-line version of the
+      <emphasis>Likewise</emphasis> AD domain join tool.  In a basic invocation,
+      <command>domainjoin-cli</command> will join the current machine into an
+      AD domain, enable authentication of AD users, and enable group policy
+      if it is available.
+    </para>
+    <para>
+      For systems with sensitive configurations, <command>domainjoin-cli</command> 
+      offers fine-grained control over modifications to system configuration files
+      that are typically required during a join, such as editing
+      <filename>/etc/nsswitch.conf</filename> or the system PAM setup.
+    </para>
+  </refsect1>
+  <refsect1>
+    <title>Usage</title>
+    <refsect2>
+      <title>Commands</title>
+      <para>
+	<command>domainjoin-cli</command> supports the following major modes
+	of operation:
+      </para>
+      <variablelist>
+	<varlistentry>
+	  <term>join</term>
+	  <listitem>
+	    <para>
+	      Joins the machine to the AD domain <replaceable>domain</replaceable> and
+	      configures AD authentication and group policy (where applicable).  This
+	      operation requires valid AD credentials for <replaceable>domain</replaceable>
+	      to be specified as <replaceable>username</replaceable> and
+	      <replaceable>password</replaceable>. If <replaceable>password</replaceable>
+	      is not specified on the command line, <command>domainjoin-cli</command> will
+	      prompt you for it.
+	    </para>
+	    <para>
+	      <command>domainjoin-cli</command> supports joining the machine to a specific
+	      OU (Organizational Unit) with <xref linkend="option-ou"/>.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>leave</term>
+	  <listitem>
+	    <para>
+	      Leaves the currently-joined AD domain and deconfigures AD authentication
+	      and group policy (where applicable).
+	    </para>
+	    <para>
+	      In order to actually disable the machine account in AD, either administrative
+	      credentials for <replaceable>domain</replaceable> or the same credentials originally
+	      used to join the machine must be specified as <replaceable>username</replaceable>
+	      and <replaceable>password</replaceable>.  If <replaceable>password</replaceable>
+	      is not specified on the command line, <command>domainjoin-cli</command> will
+	      prompt you for it.
+	    </para>
+	    <para>
+	      If no credentials are specified, the machine will no longer behave as a
+	      member of <replaceable>domain</replaceable> but its machine account will
+	      remain enabled in AD.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>query</term>
+	  <listitem>
+	    <para>Displays information about the currently-joined AD domain and OU.</para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>fixfqdn</term>
+	  <listitem>
+	    <para>
+	      Makes local configuration modifications necessary to ensure that
+	      the fully-qualified domain name of the machine is forward-
+	      and backward-resolvable.  This can work around domain join issues
+	      on networks with sub-optimal DNS setups.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term>setname</term>
+	  <listitem>
+	    <para>
+	      Changes the hostname of this machine to <replaceable>name</replaceable>.
+	      As it is necessary to have a unique, non-generic name before joining AD,
+	      this operation is provided as a convenient way to quickly rename this
+	      computer before performing a join.
+	    </para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+    </refsect2>
+    <refsect2>
+      <title>Common options</title>
+      <variablelist>
+	<varlistentry>
+	  <term><option>--log</option> <replaceable>filename</replaceable></term>
+	  <listitem>
+	    <para>
+	      Log details about the operation to <replaceable>file</replaceable>.
+	      If <replaceable>file</replaceable> is &quot;<literal>.</literal>&quot;, logging
+	      is directed to the console.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>--loglevel</option> &lt;error | warning | info | verbose &gt;</term>
+	  <listitem>
+	    <para>
+	      Specifies the level of logging information which should be written to the 
+              log file.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>--help</option></term>
+	  <listitem>
+	    <para>
+	      Displays brief usage and help information. No operation is performed.
+	    </para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+    </refsect2>
+    <refsect2>
+      <title>Join and leave options</title>
+      <variablelist>
+	<varlistentry id="option-ou">
+	  <term><option>--ou</option> <replaceable>organizational_unit</replaceable></term>
+	  <listitem>
+	    <para>
+	      Joins the machine to the OU <replaceable>organizational_unit</replaceable>
+	      instead of the default &quot;Computers&quot; OU.  The OU to which a machine
+	      is joined determines which users will be able to authenticate against the
+	      machine and which group policies will be applied.  This option has no
+	      effect when leaving a domain.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>--enable</option> <replaceable>module</replaceable></term>
+	  <listitem>
+	    <para>
+	      Explicitly enables the configuration module <replaceable>module</replaceable>
+	      during the join or leave operation.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>--disable</option> <replaceable>module</replaceable></term>
+	  <listitem>
+	    <para>
+	      Explicitly disables the configuration module <replaceable>module</replaceable>
+	      during the join or leave operation.
+	      </para>
+	    <para>
+	      Note that some modules are necessary for the proper operation of
+	      <emphasis>Likewise</emphasis> while joined to AD.  If you attempt to disable
+	      such a module, <command>domainjoin-cli</command> will refuse to proceed with
+	      a join operation.
+	    </para>
+	    <para>
+	      For some modules, it is possible to make the relevant configuration changes by hand; 
+	      <command>domainjoin-cli</command> will inform you of the necessary changes
+	      and will proceed with the module disabled if it detects that the changes have
+	      been made.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>--details</option> <replaceable>module</replaceable></term>
+	  <listitem>
+	    <para>
+	      Provide details about module <replaceable>module</replaceable> and what
+	      specific configuration changes it would perform during a join or leave
+	      operation.  No actual operation is performed.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry id="option-preview">
+	  <term><option>--preview</option></term>
+	  <listitem>
+	    <para>
+	      Provide a summary of what configuration modules would be run during
+	      a join or leave operation.  No actual operation is performed.
+	    </para>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><option>--advanced</option></term>
+	  <listitem>
+	    <para>
+	      Turns on debugging information during leave and join operations and provides
+	      more verbose output when using <xref linkend="option-preview"/>.  This
+	      is generally only helpful when diagnosing unusual system or network configuration
+	      issues.
+	    </para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+    </refsect2>
+  </refsect1>
+  <refsect1>
+    <title>Examples</title>
+    <para>Example invocations of <command>domainjoin-cli</command> and their effects follow:</para>
+    <programlisting>$ domainjoin-cli join sales.my-company.com Administrator@sales rosebud</programlisting>
+    <para>
+      Joins the AD domain <literal>sales.my-company.com</literal> using
+      <literal>Administrator</literal> as the username and <literal>rosebud</literal>
+      as the password.  This is the typical join scenario.
+    </para>
+    <programlisting>$ domainjoin-cli --log . leave</programlisting>
+    <para>
+      Leaves the current AD domain without attempting to disable the machine account
+      as no user credentials were specified.  Information about the process will be
+      logged to the console at the default logging level.
+    </para>
+    <programlisting>$ domainjoin-cli join --disable nsswitch sales.my-company.com Administrator@sales</programlisting>
+    <para>
+      Joins the AD domain <literal>sales.my-company.com</literal> using
+      <literal>Administrator</literal> as the username and prompting for
+      the password.  If possible, nsswitch configuration will not be modified.
+    </para>
+    <programlisting>$ domainjoin-cli join --preview sales.my-company.com Administrator@sales rosebud</programlisting>
+    <para>
+      Show what configuration modules would be run when joining the AD domain
+      <literal>sales.my-company.com</literal>.
+    </para>
+    <programlisting>$ domainjoin-cli join --details pam sales.my-company.com Administrator@sales rosebud</programlisting>
+    <para>
+      Show what changes would be made to the system by the <literal>pam</literal> module
+      when joining the AD domain <literal>sales.my-company.com</literal>.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Version</title>
+
+    <para>
+      This man page is correct for Likewise Open version 4.1.
+    </para>
+  </refsect1>
+
+</refentry>

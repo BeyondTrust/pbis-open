@@ -1,0 +1,968 @@
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps]
+"DisableAllTraps" = {
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"TargetAddressPort" = {
+    default = sza:"localhost:162"
+    doc = "Array of address:port numbers to send trap to"
+}
+"Community" = {
+    default = "public"
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass]
+"OID-Base" = {
+    default = "1.3.6.1.4.1.37364.1.1.1"
+    doc = ""
+}
+"EventSource" = {
+    default = "Likewise LSASS"
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\lsassServiceStarted]
+"Enabled" = {
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = {
+    default = dword:000003E8
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\lsassServiceStartFailure]
+"Enabled" = {
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = {
+    default = dword:000003E9
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\lsassServiceStopped]
+"Enabled" = {
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = {
+    default = dword:000003EA
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\lsassServiceFailed]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000003EB
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\lsassServiceConfigurationChanged]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000003EC
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulLogonAuthenticate]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004B0
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulLogonCreateSession]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004B1
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulLogonCheckUser]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004B3
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedLogonUnknownUserOrBadPassword]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004B5
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedLogonTimeRestrictionViolation]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004B6
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedLogonAccountDisabled]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004B7
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedLogonAccountExpired]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004B8
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedLogonMachineRestrictionViolation]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004B9
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedLogonTypeOfLogonNotGranted]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004BA
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedLogonPasswordExpired]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004BB
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedLogonNetlogonError]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004BC
+    doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedLogonUnexpectedError]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004BD
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedLogonAccountLocked]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004BE
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedLogonAccountRestricted]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004BF
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulLogoff]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004C4
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulAuthenticationSSH]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004CE
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulAuthenticationGraphical]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004CF
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulAuthenticationConsole]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004D0
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulAuthenticationFTP]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004D1
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulAuthenticationTelnet]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004D2
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulAuthenticationScreenSaver]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004D3
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulAuthenticationSudo]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004D4
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulAuthenticationPasswd]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004D5
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulAuthenticationSU]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004D6
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulAuthenticationOther]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004E1
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedAuthenticationSSH]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004E2
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedAuthenticationGraphical]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004E3
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedAuthenticationConsole]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004E4
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedAuthenticationFTP]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004E5
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedAuthenticationTelnet]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004E6
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedAuthenticationScreenSaver]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004E7
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedAuthenticationSudo]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004E8
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedAuthenticationPasswd]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004E9
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedAuthenticationSU]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004EA
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedAuthenticationOther]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004F5
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulAuthenticationSmartcard]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004F6
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedAuthenticationSmartcard]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000004F7
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulUserAccountPasswordChange]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000514
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedUserAccountPasswordChange]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000515
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulUserAccountKerbRefresh]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000516
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedUserAccountKerbRefresh]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000517
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulMachineAccountPasswordUpdate]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000528
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedMachineAccountPasswordUpdate]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000529
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulMachineAccountTGTRefresh]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:0000052A
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedMachineAccountTGTRefresh]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:0000052B
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\addUserAccount]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000578
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\deleteUserAccount]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000579
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\addGroup]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:0000057A
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\deleteGroup]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:0000057B
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\successfulProviderInitialization]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000005DC
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\failedProviderInitialization]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000005DD
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\requireMembershipOfUpdated]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000005DE
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\auditingConfigurationEnabled]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000005DF
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\auditingConfigurationDisabled]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000005E0
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\detectedIdConflict]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000641
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\detectedAliasConflict]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000642
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\networkDomainOnline]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000006A4
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\lsass\networkDomainOffline]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000006A5
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\netlogon]
+"OID-Base" = {
+    default = "1.3.6.1.4.1.37364.1.1.3"
+    doc = ""
+}
+"EventSource" = { 
+    default = "Likewise NETLOGON" 
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\netlogon\netlogonServiceStarted]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000003E8
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\netlogon\netlogonServiceStartFailure]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000003E9
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\netlogon\netlogonServiceStopped]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000003EA
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\netlogon\netlogonServiceFailed]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000003EB
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\netlogon\netlogonServiceConfigurationChanged]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000003EC
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\domainjoin]
+"OID-Base" = {
+    default = "1.3.6.1.4.1.37364.1.1.4"
+    doc = ""
+}
+"EventSource" = { 
+    default = "Likewise DomainJoin" 
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\domainjoin\successfulDomainJoin]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000003E8
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\domainjoin\failedDomainJoin]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000003E9
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\domainjoin\successfulDomainLeave]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000003EA
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\domainjoin\failedDomainLeave]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:000003EB
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\reapsysl]
+"OID-Base" = {
+    default = "1.3.6.1.4.1.37364.1.1.5"
+    doc = ""
+}
+"EventSource" = { 
+    default = "System Log" 
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\reapsysl\failedLocalUserTextConsoleLogon]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000001
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\reapsysl\successfulLocalUserTextConsoleLogon]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000002
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\reapsysl\failedLocalUserSSHLogon]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000003
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\reapsysl\successfulLocalUserSSHLogon]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000004
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\reapsysl\sudoBadPassword]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000005
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\reapsysl\sudoAccessDenied]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000006
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\reapsysl\sudoSuccess]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000007
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\reapsysl\failedADUserSSHLogon]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000008
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\reapsysl\successfulADUserSSHLogon]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:00000009
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\reapsysl\failedADUserTextConsoleLogon]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:0000000A
+    doc = "" 
+}
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters\SNMP-Traps\reapsysl\successfulADUserTextConsoleLogon]
+"Enabled" = { 
+    default = dword:00000001
+    doc = ""
+    range = boolean
+}
+"EventID" = { 
+    default = dword:0000000B
+    doc = "" 
+}
+

@@ -1,0 +1,187 @@
+PROJECT_NAME="likewise-open"
+MODULES="core compiler autotools moonunit pkg-config pbis dceidl fortune"
+LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv \
+                sqlite libuuid openssl curl libxml2"
+SUBDIRS="$LW_ALL_BUNDLED \
+         lwbase lwmsg libedit lwreg lwadvapi netlogon \
+         lwio libschannel dcerpc centutils lwsm eventlog lsass lwdns \
+         lwnetapi domainjoin lwconfig lwupgrade samba-interop config package"
+
+
+defaults()
+{
+    PREFIX="/opt/likewise"
+    SYSCONFDIR="/etc/likewise"
+    LOCALSTATEDIR="/var"
+    DATADIR="/opt/likewise/share"
+    DOCDIR="/usr/share/doc/likewise"
+    MANDIR="/usr/share/man"
+}
+
+option()
+{
+    case "${MK_HOST_OS}-${LW_FEATURE_LEVEL}" in
+        *-auth)
+            default_bundled="libedit libuuid krb5 cyrus-sasl openldap sqlite openssl"
+            ;;
+        linux-*)
+            default_bundled="libedit libuuid krb5 cyrus-sasl openldap sqlite openssl curl"
+            ;;
+        *)
+            default_bundled="libedit libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl libxml2"
+            ;;
+    esac
+
+    mk_option \
+        OPTION=samba-interop \
+        PARAM="yes|no" \
+        VAR="LW_SAMBA_INTEROP" \
+        DEFAULT="no" \
+        HELP="Build samba interop libraries"
+
+    mk_option \
+        OPTION=lw-bundled-libs \
+        PARAM='...' \
+        VAR=LW_BUNDLED \
+        DEFAULT="$default_bundled" \
+        HELP="Use bundled libraries"
+
+    _LW_BUNDLED="$LW_BUNDLED"
+
+    unset LW_BUNDLED
+    
+    for i in ${_LW_BUNDLED}
+    do
+        case "$i" in
+            +*)
+                [ -z "$LW_BUNDLED" ] && LW_BUNDLED="$default_bundled"
+                LW_BUNDLED="${LW_BUNDLED:+$LW_BUNDLED }${i#+}"
+                ;;
+            -*)
+                [ -z "$LW_BUNDLED" ] && LW_BUNDLED="$default_bundled"
+                lw_filter_bundled "${i#-}"
+                ;;
+            *)
+                LW_BUNDLED="${LW_BUNDLED:+$LW_BUNDLED }${i}"
+                ;;
+        esac
+    done
+}
+
+configure()
+{
+    LW_VERSION="6.2.0"
+    
+    mk_msg "configuring Likewise Open $LW_VERSION"
+    mk_msg "using bundled libraries: $LW_BUNDLED"
+
+    for comp in ${LW_ALL_BUNDLED}
+    do
+        lw_use_bundled "$comp" || mk_skip_subdir "$comp"
+    done
+
+    [ "$LW_SAMBA_INTEROP" = "yes" ] || mk_skip_subdir "samba-interop"
+
+    case "$LW_FEATURE_LEVEL" in
+        auth)
+            mk_skip_subdir libschannel
+            mk_skip_subdir lwnetapi
+            mk_skip_subdir lwtools
+            ;;
+    esac
+
+    case "$LW_DEVICE_PROFILE" in
+        embedded)
+            mk_skip_subdir eventlog
+            mk_skip_subdir domainjoin
+            mk_skip_subdir centutils
+            mk_skip_subdir lwconfig
+            mk_skip_subdir lwupgrade
+            ;;
+    esac
+}
+
+make()
+{
+    bundled_targets=""
+
+    for comp in ${LW_ALL_BUNDLED}
+    do
+        lw_use_bundled "$comp" && bundled_targets="$bundled_targets @$comp"
+    done
+            
+    mk_target \
+        TARGET="@bundled" \
+        DEPS="$bundled_targets @lwreg/libedit @dcerpc/flex-2.5.4"
+
+    mk_add_phony_target "$result"
+
+    lw_print_features
+}
+
+lw_filter_bundled()
+{
+    __needle="$1"
+    set -- ${LW_BUNDLED}
+    unset LW_BUNDLED
+    for i
+    do
+        if [ "$i" != "$__needle" ]
+        then
+            LW_BUNDLED="${LW_BUNDLED:+$LW_BUNDLED }${i}"
+        fi
+    done
+}
+
+
+lw_use_bundled()
+{
+    for _dep in ${LW_BUNDLED}
+    do
+        [ "$_dep" = "$1" ] && return 0
+    done
+
+    return 1
+}
+
+lw_print_feature()
+{
+    printf "%-30s%s\n" "$1:" "$2"
+}
+
+lw_print_features()
+{
+    printf -- "\n---\nConfiguration summary\n---\n\n"
+
+    set -- ${MK_HOST_ISAS}
+    
+    if [ "$#" -gt 1 -a "$MK_HOST_MULTIARCH" != "none" ]
+    then
+        lw_print_feature "Host system" "$MK_HOST_OS ($MK_HOST_MULTIARCH $MK_HOST_ISAS)"
+    else
+        lw_print_feature "Host system" "$MK_HOST_OS ($MK_HOST_ISAS)"
+    fi
+
+    lw_print_feature "Device profile" "$LW_DEVICE_PROFILE"
+    lw_print_feature "Feature level" "$LW_FEATURE_LEVEL"
+    lw_print_feature "Bundled libraries" "$LW_BUNDLED"
+    lw_print_feature "Threadpool backend" "$LWBASE_THREADPOOL_BACKEND"
+
+    if [ "$LW_FEATURE_LEVEL" != "auth" ]
+    then
+        lw_print_feature "FUSE support" "$LWIO_FUSE_ENABLED"
+        lw_print_feature "EA support" "$LWIO_EA_ENABLED"
+        lw_print_feature "Domain join GUI" "$DJ_GUI_INTERFACE"
+    fi
+
+    lw_print_feature "Samba interoperability" "$LW_SAMBA_INTEROP"
+
+    types=""
+
+    mk_rpm_enabled && types="$types rpm"
+    mk_deb_enabled && types="$types deb"
+
+    [ -z "$types" ] && types="none"
+
+    lw_print_feature "Package types" "${types# }"
+}

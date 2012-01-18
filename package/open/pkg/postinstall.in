@@ -1,0 +1,424 @@
+#!/bin/sh
+
+UPGRADEDIR=/var/lib/pbis-upgrade
+PKG_ARCH="@MK_HOST_ARCH@"
+REGLIST="dcerpcd.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg \
+         lwiod.reg lwreg.reg netlogond.reg rdr.reg reapsysl.reg"
+
+
+LOG=/var/log/pbis-open-install.log
+TLOG=/tmp/pbis-open-install.tmp
+
+# Display to screen and log file with a blank line between entries.
+log()
+{
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Display to screen and log file with no blank line.
+_log()
+{
+    echo $@
+    echo $@ >> $LOG
+}
+
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
+run()
+{
+    "$@" > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err"
+        _log `cat $TLOG`
+        _log
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# Log only to file.
+run_quiet()
+{
+    "$@" > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+    else
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    cat $TLOG >> $LOG
+    echo >> $LOG
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+run_or_fail()
+{
+    "$@" > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log `cat $TLOG`
+        _log
+        rm -f $TLOG > /dev/null 2>&1
+        exit 1
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+import_service_configuration()
+{
+    run_quiet svccfg delete "TEMP/network/$1"
+    run_quiet svcadm disable "$1"
+    run_quiet svccfg delete "$1"
+
+    run_or_fail svccfg import "/etc/pbis/solaris/$1.xml"
+}
+
+enable_service_configurations_or_init_d_symlinks()
+{
+    if [ -x /usr/sbin/svcadm ]; then
+        log 'Importing service configurations'
+        import_service_configuration lwsmd
+        import_service_configuration pbis
+
+        run /usr/sbin/svcadm enable lwsmd
+        run /usr/sbin/svcadm enable pbis
+    else
+        if [ -f "@LW_INITDIR@/lwsmd" ]; then
+            run rm -f '@LW_INITDIR@/lwsmd'
+        fi
+
+        if [ -f "@LW_INITDIR@/pbis" ]; then
+            run rm -f '@LW_INITDIR@/pbis'
+        fi
+
+        run ln -s '@MK_SYSCONFDIR@/solaris/lwsmd' '@LW_INITDIR@/lwsmd'
+        run ln -s '@MK_SYSCONFDIR@/solaris/pbis' '@LW_INITDIR@/pbis'
+
+
+    # On older Solaris systems, in order for a deamon to start in
+    # multi-user mode a start symlink must be put in /etc/rc2.d, and a stop
+    # symlink must be put in /etc/rc0.d, /etc/rc1.d, /etc/rcS.d
+        run_quiet ln -s '@LW_INITDIR@/lwsmd' /etc/rc0.d/K08lwsmd
+        run_quiet ln -s '@LW_INITDIR@/lwsmd' /etc/rc1.d/K08lwsmd
+        run_quiet ln -s '@LW_INITDIR@/lwsmd' /etc/rcS.d/K08lwsmd
+        run_quiet ln -s '@LW_INITDIR@/lwsmd' /etc/rc2.d/S17lwsmd
+
+        run_quiet ln -s '@LW_INITDIR@/pbis' /etc/rc0.d/K07pbis
+        run_quiet ln -s '@LW_INITDIR@/pbis' /etc/rc1.d/K07pbis
+        run_quiet ln -s '@LW_INITDIR@/pbis' /etc/rcS.d/K07pbis
+        run_quiet ln -s '@LW_INITDIR@/pbis' /etc/rc2.d/S18pbis
+
+        run '@LW_INITDIR@/lwsmd' start
+        run '@LW_INITDIR@/pbis' start
+    fi
+}
+
+import_registry_configurations()
+{
+    REGSHELL='@MK_BINDIR@/regshell'
+
+    log 'Importing registry...'
+    for i in ${REGLIST}
+    do
+        if [ -f "@LW_CONFIGDIR@/$i" ]
+        then
+            run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/$i"
+        fi
+    done
+}
+
+determine_upgrade_type()
+{
+    PRESERVEDVERSIONFILE="${UPGRADEDIR}/VERSION"
+
+    if [ -f "$PRESERVEDVERSIONFILE" ]; then
+        run_or_fail cat "$PRESERVEDVERSIONFILE"
+        if [ -n "`grep '^VERSION=5.0' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_5_0123=1
+            log 'Upgrading from Likewise Identity Services Open 5.0'
+        elif [ -n "`grep '^VERSION=5.1' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_5_0123=1
+            log 'Upgrading from Likewise Identity Services Open 5.1'
+        elif [ -n "`grep '^VERSION=5.2' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_5_0123=1
+            log 'Upgrading from Likewise Identity Services Open 5.2'
+        elif [ -n "`grep '^VERSION=5.3' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_5_0123=1
+            log 'Upgrading from Likewise Identity Services Open 5.3'
+        elif [ -n "`grep '^VERSION=6.0' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_6_0=1
+            log 'Upgrading from Likewise Open 6.0'
+        elif [ -n "`grep '^VERSION=6.1' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_6_1=1
+            log 'Upgrading from Likewise Open 6.1'
+        fi
+    fi
+}
+
+import_5_0123_file()
+{
+    CONVERT='@MK_LIBEXECDIR@/conf2reg'
+    REGSHELL='@MK_BINDIR@/regshell'
+
+    COMMAND=$1
+    SOURCE=$2
+    # DEST is not necessary for some commands.
+    DEST=$3
+
+    if [ -f "$SOURCE" ]; then
+        run_quiet "$CONVERT" "$COMMAND" "$SOURCE" $DEST
+        if [ $? -ne 0 ]; then
+            log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE."
+            return 1
+        fi
+
+        if [ -n "$DEST" -a -f "$DEST" ]; then
+            run_quiet "$REGSHELL" import "$DEST"
+            if [ $? -ne 0 ]; then
+                log "There was a problem converting $SOURCE. Please file a bug and attach $SOURCE and $DEST."
+                return 1
+            fi
+        fi
+    fi
+    return 0
+}
+
+restore_5_0123_configuration()
+{
+    if [ -z "$UPGRADING_FROM_5_0123" ]; then
+        return 0
+    fi
+
+    import_5_0123_file --lsass "${UPGRADEDIR}/lsassd.conf" \
+        "${UPGRADEDIR}/lsassd.conf.reg"
+
+    import_5_0123_file --netlogon "${UPGRADEDIR}/netlogon.conf" \
+        "${UPGRADEDIR}/netlogon.conf.reg"
+
+    import_5_0123_file --eventlog "${UPGRADEDIR}/eventlogd.conf" \
+        "${UPGRADEDIR}/eventlogd.conf.reg"
+
+    import_5_0123_file --pstore-sqlite "${UPGRADEDIR}/pstore.db"
+}
+
+restore_6_0_configuration()
+{
+    if [ -z "$UPGRADING_FROM_6_0" ]; then
+        return 0
+    fi
+
+    run_or_fail mkdir -p '@LW_CACHEDIR@/db'
+    run_or_fail chmod 700 '@LW_CACHEDIR@/db'
+    run_or_fail chown 0 '@LW_CACHEDIR@/db'
+
+    if [ -f "${UPGRADEDIR}/registry.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/registry.db" '@LW_CACHEDIR@/db/registry.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/registry.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/sam.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/sam.db" '@LW_CACHEDIR@/db/sam.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/sam.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" '@LW_CACHEDIR@/db/lwi_events.db'
+        run_or_fail chmod 644 '@LW_CACHEDIR@/db/lwi_events.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.db" '@LW_CACHEDIR@/db/lsass-adcache.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lsass-adcache.filedb" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.filedb" '@LW_CACHEDIR@/db/lsass-adcache.filedb'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.filedb'
+    fi
+
+    run_quiet rm -r "${UPGRADEDIR}"
+}
+
+restore_6_1_configuration()
+{
+    if [ -z "$UPGRADING_FROM_6_1" ]; then
+        return 0
+    fi
+
+    run_or_fail mkdir -p '@LW_CACHEDIR@/db'
+    run_or_fail chmod 700 '@LW_CACHEDIR@/db'
+    run_or_fail chown 0 '@LW_CACHEDIR@/db'
+
+    if [ -f "${UPGRADEDIR}/registry.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/registry.db" '@LW_CACHEDIR@/db/registry.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/registry.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/sam.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/sam.db" '@LW_CACHEDIR@/db/sam.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/sam.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" '@LW_CACHEDIR@/db/lwi_events.db'
+        run_or_fail chmod 644 '@LW_CACHEDIR@/db/lwi_events.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.db" '@LW_CACHEDIR@/db/lsass-adcache.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lsass-adcache.filedb" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.filedb" '@LW_CACHEDIR@/db/lsass-adcache.filedb'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.filedb'
+    fi
+
+    run_quiet rm -r "${UPGRADEDIR}"
+}
+
+relocate_domain_separator()
+{
+    DomainSeparator=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+
+    if [ -n "${DomainSeparator}" ]; then
+        if [ "$DomainSeparator" = "\\\\" ]; then
+            DomainSeparator="\\"
+        fi
+
+        run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
+    fi
+}
+
+relocate_space_replacement()
+{
+    SpaceReplacement=`@MK_BINDIR@/regshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+
+    if [ -n "${SpaceReplacement}" ]; then
+        run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
+    fi
+}
+
+remove_npfs_dependencies()
+{
+    run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers]' 'Load' 'rdr'
+    run_quiet '@MK_BINDIR@/regshell' set_value '[HKEY_THIS_MACHINE\Services\lsass]' 'Dependencies' 'netlogon lwio lwreg rdr'
+}
+
+fix_60_registry()
+{
+    REGSHELL='@MK_BINDIR@/regshell'
+
+    if [ -z "$UPGRADING_FROM_6_0" ]; then
+        return 0
+    fi
+
+    # Migrate pstore entries from default to joined domain
+    run '@MK_LIBEXECDIR@/regupgr61.sh' --install
+
+    # Migrate some other entries
+    relocate_domain_separator
+    relocate_space_replacement
+
+}
+
+cleanup_registry()
+{
+    for i in ${REGLIST}
+    do
+        if [ -f "@LW_CONFIGDIR@/$i" ]
+        then
+            run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/$i"
+        fi
+    done
+}
+
+switch_to_open_provider()
+{
+    _value='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
+    _path='@PRIMARY_LIBDIR@/lsa-provider/ad_open.so'
+
+    run_quiet '@MK_BINDIR@/regshell' set_value "$_value" Path "$_path"
+}
+
+execute_auxiliary_scripts()
+{
+    # The system administrator may have configured these during a previous
+    # install
+    if [ -d "@LW_CACHEDIR@/scripts/install" ]; then
+        for file in @LW_CACHEDIR@/scripts/install/*; do
+            run_quiet "$file" --install
+        done
+    fi
+}
+
+postinstall()
+{
+    log "Package: PowerBroker Identity Services Open postinstall begins (`date`)"
+    log "Logging all operations to $LOG"
+
+    determine_upgrade_type
+
+    restore_6_0_configuration
+
+    restore_6_1_configuration
+
+    run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --loglevel debug
+
+    restore_5_0123_configuration
+
+    import_registry_configurations
+
+    fix_60_registry
+
+    cleanup_registry
+
+    remove_npfs_dependencies
+
+    switch_to_open_provider
+
+    run_or_fail '@MK_BINDIR@/lwsm' shutdown
+
+    enable_service_configurations_or_init_d_symlinks
+
+    run '@MK_BINDIR@/domainjoin-cli' configure --enable pam
+    run '@MK_BINDIR@/domainjoin-cli' configure --enable nsswitch
+
+    run_quiet mv /var/lib/likewise /var/lib/likewise.old
+    run_quiet rm -rf "${UPGRADEDIR}"
+
+    execute_auxiliary_scripts
+
+    log "Package: PowerBroker Identity Services Open postinstall finished"
+    exit 0
+}
+
+postinstall
+

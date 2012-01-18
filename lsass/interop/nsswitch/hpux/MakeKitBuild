@@ -1,0 +1,24 @@
+make()
+{
+    NSS_SOURCES="\
+	nss-group.c \
+	nss-main.c \
+	nss-user.c \
+	nss-pruser.c"
+
+    mk_multiarch_do
+        case "$MK_ISA" in
+            hppa*) NSSEXT=.1 ;;
+            ia64*) NSSEXT=.so.1 ;;
+        esac
+        mk_dlo \
+            DLO=libnss_lsass \
+            EXT="$NSSEXT" \
+            INSTALLDIR="$NSSDIR" \
+            SOURCES="$NSS_SOURCES" \
+            GROUPS="../common/common" \
+            INCLUDEDIRS="../include ../../auth/include ../../../include" \
+            HEADERDEPS="lwadvapi.h" \
+            LIBDEPS="lsaclient sec"
+    mk_multiarch_done
+}

@@ -1,0 +1,81 @@
+make()
+{
+    SAMR_SOURCES="\
+        globals.c                    \
+	samr.c                       \
+	samr_cfg.c                   \
+	samr_srv.c                   \
+	samr_memory.c                \
+	samr_connect.c               \
+	samr_connect2.c              \
+	samr_connect3.c              \
+	samr_connect4.c              \
+	samr_connect5.c              \
+	samr_lookupdomain.c          \
+	samr_enumdomains.c           \
+	samr_opendomain.c            \
+	samr_close.c                 \
+	samr_setsecurity.c           \
+	samr_querysecurity.c         \
+	samr_lookupnames.c           \
+	samr_lookuprids.c            \
+	samr_openaccount.c           \
+	samr_openuser.c              \
+	samr_openalias.c             \
+	samr_enumdomainaccounts.c    \
+	samr_enumdomainusers.c       \
+	samr_enumdomainaliases.c     \
+	samr_queryuserinfo.c         \
+	samr_renameaccount.c         \
+	samr_setuserinfo.c           \
+	samr_setuserinfo2.c          \
+	samr_queryaliasinfo.c        \
+	samr_setaliasinfo.c          \
+	samr_createaccount.c         \
+	samr_createuser.c            \
+	samr_createuser2.c           \
+	samr_createdomalias.c        \
+	samr_deleteaccount.c         \
+	samr_deletedomalias.c        \
+	samr_deleteuser.c            \
+	samr_getuserpwinfo.c         \
+	samr_rmfromforeigndomain.c   \
+	samr_querydisplayinfo.c      \
+	samr_querydomaininfo.c       \
+	samr_addaliasmember.c        \
+	samr_deletealiasmember.c     \
+	samr_getmembersinalias.c     \
+	samr_getaliasmembership.c    \
+	samr_getusergroups.c         \
+	samr_changepassworduser2.c   \
+	samr_accesstoken.c           \
+	samr_security.c              \
+	samr_crypto.c                \
+	samr_contexthandle.c"
+
+    lw_dceidl \
+	IDL=../../../idl/samr.idl \
+	IDLFLAGS="-cstub_pref cli_ -sstub_pref srv_" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADER="samr_h.h" \
+	SSTUB="samr_sstub.c" \
+	HEADERDEPS="lw/base.h"
+
+    mk_group \
+	GROUP=samr_stub \
+	SOURCES="samr_sstub.c" \
+	CPPFLAGS="-DDCERPC_STUB_BUILD" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADERDEPS="dce/rpc.h" \
+	LIBDEPS="dcerpc"
+
+    mk_dlo \
+	DLO=samr \
+        INSTALLDIR="${rpcserverdir}" \
+	SOURCES="$SAMR_SOURCES" \
+	GROUPS="samr_stub" \
+	INCLUDEDIRS=". ../../include ../../api ../../../include" \
+	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwnet.h lwadvapi.h openssl/md4.h" \
+	LIBDEPS="dsapi lsaserverapi lwnetclientapi lwadvapi crypto" \
+	DEPS="samr_h.h"
+}

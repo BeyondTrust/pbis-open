@@ -1,0 +1,20 @@
+// ServerInfo.idl : ServerInfo.dll 用の IDL ソース ファイル
+//
+
+// このファイルはタイプ ライブラリ (ServerInfo.tlb) を作成するために
+// タイプ ライブラリ作成ツール MIDL によって処理されます。
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	uuid(3A576689-C05D-42E4-82CE-01E2AE20861A),
+	version(1.0),
+	helpstring("ServerInfo 1.0 ﾀｲﾌﾟ ﾗｲﾌﾞﾗﾘ")
+]
+library SERVERINFOLib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+};

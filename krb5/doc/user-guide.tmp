@@ -1,0 +1,14 @@
+@iftex
+@vskip 12pt
+@hrule
+@vskip 12pt
+@end iftex
+@ifinfo
+@center --------------------
+@sp 1
+@end ifinfo
+@ifhtml
+@html
+<hr>
+@end html
+@end ifhtml@endinput 

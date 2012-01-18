@@ -1,0 +1,1356 @@
+dnl configure.in for the SASL library
+dnl Rob Siemborski
+dnl Rob Earhart
+dnl $Id: configure.in,v 1.213.2.1 2009/04/27 17:58:25 murch Exp $
+dnl
+dnl Copyright (c) 2001 Carnegie Mellon University.  All rights reserved.
+dnl
+dnl Redistribution and use in source and binary forms, with or without
+dnl modification, are permitted provided that the following conditions
+dnl are met:
+dnl
+dnl 1. Redistributions of source code must retain the above copyright
+dnl    notice, this list of conditions and the following disclaimer. 
+dnl
+dnl 2. Redistributions in binary form must reproduce the above copyright
+dnl    notice, this list of conditions and the following disclaimer in
+dnl    the documentation and/or other materials provided with the
+dnl    distribution.
+dnl
+dnl 3. The name "Carnegie Mellon University" must not be used to
+dnl    endorse or promote products derived from this software without
+dnl    prior written permission. For permission or any other legal
+dnl    details, please contact  
+dnl      Office of Technology Transfer
+dnl      Carnegie Mellon University
+dnl      5000 Forbes Avenue
+dnl      Pittsburgh, PA  15213-3890
+dnl      (412) 268-4387, fax: (412) 268-7395
+dnl      tech-transfer@andrew.cmu.edu
+dnl
+dnl 4. Redistributions of any form whatsoever must retain the following
+dnl    acknowledgment:
+dnl    \"This product includes software developed by Computing Services
+dnl     at Carnegie Mellon University (http://www.cmu.edu/computing/).\"
+dnl
+dnl CARNEGIE MELLON UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO
+dnl THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+dnl AND FITNESS, IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY BE LIABLE
+dnl FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+dnl WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+dnl AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+dnl OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+dnl
+AC_INIT(lib/saslint.h)
+AC_PREREQ([2.54])
+AC_CONFIG_MACRO_DIR([config])
+
+dnl use ./config.cache as the default cache file.
+dnl we require a cache file to successfully configure our build.
+if test $cache_file = "/dev/null"; then
+cache_file="./config.cache"
+AC_CACHE_LOAD
+fi
+
+AC_CONFIG_AUX_DIR(config)
+AC_CANONICAL_HOST
+AC_CANONICAL_TARGET
+
+dnl
+dnl REMINDER: When changing the version number here, please also update
+dnl the values in win32/include/config.h and include/sasl.h as well.
+dnl
+AM_INIT_AUTOMAKE(cyrus-sasl, 2.1.23)
+CMU_INIT_AUTOMAKE
+
+# and include our config dir scripts
+ACLOCAL="$ACLOCAL -I \$(top_srcdir)/config"
+
+DIRS=""
+
+AC_ARG_ENABLE(cmulocal,
+              [AC_HELP_STRING([--enable-cmulocal],
+                              [enable local mods for CMU [[no]]])],
+              enable_cmulocal=$enable_val,
+              enable_cmulocal=no)
+
+AC_ARG_ENABLE(sample,
+              [AC_HELP_STRING([--enable-sample],
+                              [compile sample code [[yes]]])],
+              enable_sample=$enable_val,
+              enable_sample=yes)
+
+AC_ARG_VAR(BUILD_CC)
+AC_ARG_VAR(BUILD_CFLAGS)
+
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_AWK
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_INSTALL
+CMU_C___ATTRIBUTE__
+
+if test "x$host" != "x$build"; then
+   	AC_CHECK_PROGS(BUILD_CC, gcc cc)
+else
+	BUILD_CC="$CC"
+        BUILD_CFLAGS="$CFLAGS"
+fi
+
+AC_SUBST(BUILD_CC)
+AC_SUBST(BUILD_CFLAGS)
+
+dnl check for -R, etc. switch
+CMU_GUESS_RUNPATH_SWITCH
+
+dnl xxx compatibility
+AC_ARG_WITH(staticsasl)
+if test "$with_staticsasl" = yes; then
+	enable_shared=yes
+	enable_static=yes
+fi
+
+save_target=$target
+if test -z "$target"; then
+	target="NONE"
+fi
+
+# new libtool
+AM_DISABLE_STATIC
+AC_PROG_LIBTOOL
+
+target=$save_target
+
+if test "$enable_static" = yes; then
+	SASL_STATIC_LIBS=libsasl2.a
+else
+	SASL_STATIC_LIBS=
+fi
+
+AC_ARG_ENABLE(staticdlopen, [  --enable-staticdlopen   try dynamic plugins when we are a static libsasl [[no]] ],
+                enable_staticdlopen=$enableval,
+                enable_staticdlopen=no)
+
+if test "$enable_staticdlopen" = yes; then
+  AC_DEFINE(TRY_DLOPEN_WHEN_STATIC,[],[Should we try to dlopen() plugins while staticly compiled?])
+fi
+
+if test "$ac_cv_prog_gcc" = yes; then
+  CFLAGS="-Wall -W ${CFLAGS}"
+fi
+
+AC_ARG_WITH(purecov,[  --with-purecov          link with purecov])
+if test "$with_purecov" = yes; then
+  AC_CHECK_PROGS(PURECOV, purecov)
+fi
+AC_ARG_WITH(purify,[  --with-purify           link with purify])
+if test "$with_purify" = yes; then
+  AC_CHECK_PROGS(PURIFY, purify)
+fi
+
+AC_ARG_ENABLE(java, [  --enable-java           compile Java support [[no]]],
+	enable_java=$enableval, enable_java=no)
+if test "$enable_java" = yes; then
+  AC_PATH_PROG(JAVAC, javac, no)
+  AC_PATH_PROGS(JAVAH, javah kaffeh, no)
+  AC_CHECK_PROGS(JAVADOC, javadoc, :)	
+  if test "$JAVAC" = "no" -o "$JAVAH" = "no"; then
+    AC_WARN([Disabling Java support])
+    enable_java=no
+  fi
+else
+# Make distcheck work
+  JAVAC="true"
+  JAVAH="true"
+  JAVADOC="true"
+fi
+AM_CONDITIONAL(JAVA, test "$enable_java" = yes)
+
+if test "$enable_java" = yes; then
+  AC_MSG_CHECKING([JNI cpp flags])
+  AC_CACHE_VAL(sasl_cv_java_includes,[
+  if test `echo $JAVAH | sed 's,.*/,,'` = "kaffeh"; then
+    sasl_cv_java_includes=-I`echo $JAVAH | sed -e 's,/bin.*,/include/kaffe,'`
+  else
+    java_base=`echo $JAVAC | sed 's,/bin.*,'','`
+
+    AC_ARG_WITH(javabase, [  --with-javabase=PATH    set path to find jni.h in [/usr/java/include] ],
+        java_base=$withval,)
+	
+
+    sasl_cv_java_includes=''
+    for dir in `find ${java_base}/include -follow -type d -print | grep -v green_threads`; do
+      sasl_cv_java_includes="${sasl_cv_java_includes} -I$dir"
+    done
+  fi
+
+  sasl_cv_java_includes="${sasl_cv_java_includes} -I$javapath/include"])
+
+  JAVA_INCLUDES=$sasl_cv_java_includes
+  AC_SUBST(JAVA_INCLUDES)
+  AC_MSG_RESULT(ok)
+
+  JAVAROOT=".."
+  AC_SUBST(JAVAROOT)
+  JAVAC=`echo "$JAVAC" | sed 's,.*/,,'`
+  JAVAH=`echo "$JAVAH" | sed 's,.*/,,'`
+fi
+
+AM_CONDITIONAL(SAMPLE, test "$enable_sample" = yes)
+
+dnl call before we do the berkeley DB checks
+CMU_SOCKETS
+
+dnl we extracted this to config/sasldb.m4
+SASL_DB_PATH_CHECK()
+SASL_DB_CHECK()
+
+# Do we not install the SASL DB man pages?
+AM_CONDITIONAL(NO_SASL_DB_MANS, test "x$SASL_DB_MANS" = "x")
+
+AC_ARG_ENABLE(keep_db_open, [  --enable-keep-db-open   keep handle to Berkeley DB open for improved performance [[no]] ],
+                keep_db_open=$enableval,
+                keep_db_open=no)
+
+# Disable if Berkeley DB is not used
+if test "$dblib" != berkeley; then
+  keep_db_open=no
+fi
+
+if test "$keep_db_open" = yes; then
+  AC_DEFINE(KEEP_DB_OPEN,[],[Should we keep handle to Berkeley DB open in SASLDB plugin?])
+fi
+AC_MSG_CHECKING(if Berkeley DB handle is kept open in SASLDB)
+AC_MSG_RESULT($keep_db_open)
+
+AC_CHECK_LIB(dl, dlopen, SASL_DL_LIB="-ldl", SASL_DL_LIB="")
+AC_SUBST(SASL_DL_LIB)
+
+dnl /dev/random ?
+
+AC_ARG_WITH(devrandom, [  --with-devrandom=PATH   set the path to /dev/random [[/dev/random]] ],
+  devrandom=$withval,
+  devrandom=/dev/random)
+AC_MSG_CHECKING(/dev/random to use)
+AC_MSG_RESULT($devrandom)
+AC_DEFINE_UNQUOTED(SASL_DEV_RANDOM, "$devrandom", [File to use for source of randomness])
+
+dnl Do we need leading underscores on our symbols?
+
+AC_CHECK_PROGS(NM, nm)
+
+AC_MSG_CHECKING(for underscore before symbols)
+AC_CACHE_VAL(sasl_cv_uscore,[
+    echo "main(){int i=1;}
+    foo(){int i=6;}" > conftest.c
+    ${CC} -o a.out conftest.c > /dev/null
+    if (${NM} a.out | grep _foo) > /dev/null; then
+      sasl_cv_uscore=yes
+    else
+      sasl_cv_uscore=no
+    fi])
+AC_MSG_RESULT($sasl_cv_uscore)
+rm -f conftest.c a.out
+
+if test $sasl_cv_uscore = yes; then
+  if test $ac_cv_lib_dl_dlopen = yes ; then
+	AC_MSG_CHECKING(whether dlsym adds the underscore for us)
+	cmu_save_LIBS="$LIBS"
+	LIBS="$LIBS $SASL_DL_LIB"
+	AC_CACHE_VAL(sasl_cv_dlsym_adds_uscore,AC_TRY_RUN( [
+#include <dlfcn.h>
+#include <stdio.h>
+foo() { int i=0;}
+main() { void *self, *ptr1, *ptr2; self=dlopen(NULL,RTLD_LAZY);
+    if(self) { ptr1=dlsym(self,"foo"); ptr2=dlsym(self,"_foo");
+    if(ptr1 && !ptr2) exit(0); } exit(1); } 
+], [sasl_cv_dlsym_adds_uscore=yes], sasl_cv_dlsym_adds_uscore=no
+	AC_DEFINE(DLSYM_NEEDS_UNDERSCORE, [], [Do we need a leading _ for dlsym?]),
+	AC_MSG_WARN(cross-compiler, we'll do our best)))
+	LIBS="$cmu_save_LIBS"
+      AC_MSG_RESULT($sasl_cv_dlsym_adds_uscore)
+  fi
+fi
+
+dnl See if we can provide a default logging function...
+AC_CHECK_FUNCS(syslog)
+
+AC_ARG_WITH(pam, [  --with-pam=DIR          use PAM (rooted in DIR) [[yes]] ],
+	with_pam=$withval,
+	with_pam=yes)
+if test "$with_pam" != no; then
+  if test -d $with_pam; then
+    CPPFLAGS="$CPPFLAGS -I${with_pam}/include"
+    LDFLAGS="$LDFLAGS -L${with_pam}/lib"
+  fi
+  AC_CHECK_HEADERS(security/pam_appl.h pam/pam_appl.h)
+  cmu_save_LIBS="$LIBS"
+  AC_CHECK_FUNC(pam_start, :, 
+	LIBS="-lpam $LIBS" 
+	AC_TRY_LINK([[
+#include <sys/types.h>
+#ifdef HAVE_PAM_PAM_APPL_H
+#include <pam/pam_appl.h>
+#endif
+#ifdef HAVE_SECURITY_PAM_H
+#include <security/pam_appl.h>
+#endif]],[[
+const char *service="foo";
+const char *user="bar";
+pam_handle_t *pamh;
+struct pam_conv *conv;
+int baz;
+baz = pam_start(service, user, conv, &pamh);
+return 0;
+]], LIBPAM="-lpam")
+)
+  LIBS="$cmu_save_LIBS $LIBPAM"
+fi
+
+AC_ARG_WITH(saslauthd, [  --with-saslauthd=DIR    enable use of the saslauth daemon using state dir DIR ],
+		with_saslauthd=$withval,
+		with_saslauthd=yes)
+if test "$with_saslauthd" != no; then
+  if test "$with_saslauthd" = yes; then
+    with_saslauthd="/var/state/saslauthd"
+  fi
+  AC_DEFINE(HAVE_SASLAUTHD,[],[Include support for saslauthd?])
+  AC_DEFINE_UNQUOTED(PATH_SASLAUTHD_RUNDIR, "$with_saslauthd",
+		     [Where do we look for saslauthd's socket?])
+fi
+AM_CONDITIONAL(SASLAUTHD, test "$with_saslauthd" != no)
+AC_MSG_CHECKING(if I should include saslauthd)
+AC_MSG_RESULT($with_saslauthd)
+
+AC_ARG_WITH(authdaemond, [  --with-authdaemond=PATH enable use of authdaemon with default socket=PATH [[yes]] ],
+		with_authdaemon=$withval,
+		with_authdaemon=yes)
+if test "$with_authdaemon" != no; then
+  if test "$with_authdaemon" = yes; then
+    with_authdaemon="/dev/null"
+  fi
+  AC_DEFINE(HAVE_AUTHDAEMON,[],[Include support for Courier's authdaemond?])
+  AC_DEFINE_UNQUOTED(PATH_AUTHDAEMON_SOCKET, "$with_authdaemon",
+		     [Where do we look for Courier authdaemond's socket?])
+fi
+AC_MSG_CHECKING(to include Courier authdaemond support)
+AC_MSG_RESULT($with_authdaemon)
+
+AC_ARG_WITH(pwcheck,
+[  --with-pwcheck=DIR     enable deprecated pwcheck daemon using statedir DIR ],
+	with_pwcheck=$withval,
+	with_pwcheck=no)
+if test "$with_pwcheck" != no; then
+   if test "$with_pwcheck" = yes; then
+     with_pwcheck=/var/pwcheck
+   fi
+   AC_DEFINE(HAVE_PWCHECK,[],[Include Support for pwcheck daemon?])
+   AC_DEFINE_UNQUOTED(PWCHECKDIR, "$with_pwcheck", [Location of pwcheck socket])
+   AC_CHECK_FUNC(getspnam,PWCHECKMETH="getspnam",PWCHECKMETH="getpwnam")
+   AC_SUBST(PWCHECKMETH)
+fi
+AM_CONDITIONAL(PWCHECK, test "$with_pwcheck" != no)
+AC_MSG_CHECKING(if I should include pwcheck)
+AC_MSG_RESULT($with_pwcheck)
+
+AC_ARG_WITH(ipctype, [  --with-ipctype={unix,doors}    use ipctype [[unix]] ],
+       with_ipctype=$withval,
+       with_ipctype="unix")
+IPCTYPE=$with_ipctype
+AC_SUBST(IPCTYPE)
+LIB_DOOR=
+if test "$with_ipctype" = "doors"; then
+   LIB_DOOR="-ldoor"
+   AC_DEFINE(USE_DOORS,[],[use the doors IPC API for saslauthd?])
+fi
+AC_SUBST(LIB_DOOR)
+
+AC_ARG_ENABLE(alwaystrue, [  --enable-alwaystrue     enable the alwaystrue password verifier (discouraged)],
+		enable_alwaystrue=$enableval,
+		enable_alwaystrue=no)
+if test "$enable_alwaystrue" = yes; then
+  AC_DEFINE(HAVE_ALWAYSTRUE, [], [Enable 'alwaystrue' password verifier?])
+fi
+AC_MSG_CHECKING(if I should include the alwaystrue verifier)
+AC_MSG_RESULT($enable_alwaystrue)
+
+dnl sasl_checkapop support
+AC_ARG_ENABLE(checkapop, [  --enable-checkapop      enable use of sasl_checkapop [[yes]] ],
+  checkapop=$enableval,
+  checkapop=yes)
+
+AC_MSG_CHECKING(if we should enable sasl_checkapop)
+if test "$checkapop" != no; then
+  AC_MSG_RESULT(enabled)
+  AC_DEFINE(DO_SASL_CHECKAPOP, [], [should we support sasl_checkapop?])
+else
+  AC_MSG_RESULT(disabled)
+fi
+
+dnl CRAM-MD5
+AC_ARG_ENABLE(cram, [  --enable-cram           enable CRAM-MD5 authentication [[yes]] ],
+  cram=$enableval,
+  cram=yes)
+
+AC_MSG_CHECKING(CRAM-MD5)
+if test "$cram" != no; then
+  AC_MSG_RESULT(enabled)
+  SASL_MECHS="$SASL_MECHS libcrammd5.la"
+  if test "$enable_static" = yes; then
+    SASL_STATIC_OBJS="$SASL_STATIC_OBJS cram.o"
+    SASL_STATIC_SRCS="$SASL_STATIC_SRCS ../plugins/cram.c"
+    AC_DEFINE(STATIC_CRAMMD5, [], [Link CRAM-MD5 Staticly])
+  fi
+else
+  AC_MSG_RESULT(disabled)
+fi
+
+CMU_HAVE_OPENSSL
+AC_MSG_CHECKING(for OpenSSL)
+AC_MSG_RESULT($with_openssl)
+
+SASL_DES_CHK
+
+dnl DIGEST-MD5
+AC_ARG_ENABLE(digest, [  --enable-digest         enable DIGEST-MD5 authentication [[yes]] ],
+  digest=$enableval,
+  digest=yes)
+
+if test "$digest" != no; then
+  dnl In order to compile digest, we should look for need libdes.
+  if test -d $digest; then
+    CPPFLAGS="$CPPFLAGS -I$digest/include"
+    LDFLAGS="$LDFLAGS -L$digest/lib"
+  fi
+  if test "$with_des" = no; then
+    AC_WARN(No DES support for DIGEST-MD5)
+  fi
+fi
+
+AC_MSG_CHECKING(DIGEST-MD5)
+if test "$digest" != no; then
+  AC_MSG_RESULT(enabled)
+  SASL_MECHS="$SASL_MECHS libdigestmd5.la"
+  if test "$enable_static" = yes; then
+    SASL_STATIC_SRCS="$SASL_STATIC_SRCS ../plugins/digestmd5.c"
+    SASL_STATIC_OBJS="$SASL_STATIC_OBJS digestmd5.o"
+    AC_DEFINE(STATIC_DIGESTMD5, [], [Link DIGEST-MD5 Staticly])
+  fi
+else
+  AC_MSG_RESULT(disabled)
+fi
+
+dnl OTP
+AC_ARG_ENABLE(otp, [  --enable-otp            enable OTP authentication [[yes]] ],
+  otp=$enableval,
+  otp=yes)
+
+if test "$with_openssl" = no; then
+  AC_WARN([OpenSSL not found -- OTP will be disabled])
+  otp=no
+fi
+
+AC_MSG_CHECKING(OTP)
+if test "$otp" != no; then
+  AC_MSG_RESULT(enabled)
+  OTP_LIBS="-lcrypto $LIB_RSAREF"
+
+  SASL_MECHS="$SASL_MECHS libotp.la"
+  if test "$enable_static" = yes; then
+    SASL_STATIC_SRCS="$SASL_STATIC_SRCS ../plugins/otp.c"
+    SASL_STATIC_OBJS="$SASL_STATIC_OBJS otp.o"
+    AC_DEFINE(STATIC_OTP, [], [Link OTP Staticly])
+  fi
+
+  dnl Test for OPIE
+  AC_ARG_WITH(with-opie,[  --with-opie=PATH        use OPIE (One Time Passwords in Everything) from PATH],
+	with_opie="${withval}")
+
+  case "$with_opie" in
+	""|yes) 
+		AC_CHECK_LIB(opie, opiechallenge, [
+			AC_CHECK_HEADER(opie.h, with_opie="yes",
+					with_opie="no")],
+			with_opie="no")
+		;;
+	*)
+		if test -d $with_opie; then
+		  CPPFLAGS="${CPPFLAGS} -I${with_opie}/include"
+		  LDFLAGS="${LDFLAGS} -L${with_opie}/lib"
+		else
+		  with_opie="no"
+		fi
+		;;
+  esac
+
+  AC_MSG_CHECKING(for OPIE)
+  AC_MSG_RESULT($with_opie)
+
+  if test "$with_opie" != no; then
+    AC_DEFINE(HAVE_OPIE,[],[Use OPIE for server-side OTP?])
+    OTP_LIBS="$OTP_LIBS -lopie"
+  fi
+
+  AC_SUBST(OTP_LIBS)
+
+else
+  AC_MSG_RESULT(disabled)
+fi
+
+dnl SRP
+AC_ARG_ENABLE(srp, [  --enable-srp            enable SRP authentication [[no]] ],
+  srp=$enableval,
+  srp=no)
+
+if test "$with_openssl" = no; then
+  AC_WARN([OpenSSL not found -- SRP will be disabled])
+  srp=no
+fi
+
+AC_MSG_CHECKING(SRP)
+if test "$srp" != no; then
+  AC_MSG_RESULT(enabled)
+  SRP_LIBS="-lcrypto $LIB_RSAREF"
+
+  SASL_MECHS="$SASL_MECHS libsrp.la"
+  if test "$enable_static" = yes; then
+    SASL_STATIC_SRCS="$SASL_STATIC_SRCS ../plugins/srp.c"
+    SASL_STATIC_OBJS="$SASL_STATIC_OBJS srp.o"
+    AC_DEFINE(STATIC_SRP, [], [Link SRP Staticly])
+  fi
+
+dnl srp_setpass support
+  AC_ARG_ENABLE(srp_setpass, [  --enable-srp-setpass    enable setting SRP secrets with saslpasswd [[no]]],
+      srp_setpass=$enableval,
+      srp_setpass=no)
+
+  AC_MSG_CHECKING(if we should enable setting SRP secrets with saslpasswd)
+  if test "$srp_setpass" != no; then
+    AC_MSG_RESULT(enabled)
+    AC_DEFINE(DO_SRP_SETPASS, [], [should we support setpass() for SRP?])
+  else
+    AC_MSG_RESULT(disabled)
+  fi
+
+  AC_SUBST(SRP_LIBS)
+else
+  AC_MSG_RESULT(disabled)
+fi
+
+dnl Kerberos based Mechanisms
+SASL_KERBEROS_V4_CHK
+SASL_GSSAPI_CHK
+
+if test "$gssapi" != "no"; then
+  AC_DEFINE(STATIC_GSSAPIV2,[],[Link GSSAPI Staticly])
+  mutex_default="no"
+  if test "$gss_impl" = "mit"; then
+     mutex_default="yes"
+  fi
+  AC_MSG_CHECKING(to use mutexes aroung GSS calls)
+  AC_ARG_ENABLE(gss_mutexes, [  --enable-gss_mutexes     use mutexes around calls to the GSS library],
+                use_gss_mutexes=$enableval,
+                use_gss_mutexes=$mutex_default)
+  if test $use_gss_mutexes = "yes"; then
+     AC_DEFINE(GSS_USE_MUTEXES, [], [should we mutex-wrap calls into the GSS library?])
+  fi
+  AC_MSG_RESULT($use_gss_mutexes)
+fi
+
+dnl PLAIN
+SASL_PLAIN_CHK
+
+dnl ANONYMOUS
+AC_ARG_ENABLE(anon, [  --enable-anon           enable ANONYMOUS authentication [[yes]] ],
+  anon=$enableval,
+  anon=yes)
+
+AC_MSG_CHECKING(ANONYMOUS)
+if test "$anon" != no; then
+  AC_MSG_RESULT(enabled)
+  SASL_MECHS="$SASL_MECHS libanonymous.la"
+  if test "$enable_static" = yes; then
+    SASL_STATIC_OBJS="$SASL_STATIC_OBJS anonymous.o"
+    SASL_STATIC_SRCS="$SASL_STATIC_SRCS ../plugins/anonymous.c"
+    AC_DEFINE(STATIC_ANONYMOUS, [], [Link ANONYMOUS Staticly])
+  fi
+else
+  AC_MSG_RESULT(disabled)
+fi
+
+dnl LOGIN
+AC_ARG_ENABLE(login, [  --enable-login          enable unsupported LOGIN authentication [[no]] ],
+  login=$enableval,
+  login=no)
+
+AC_MSG_CHECKING(LOGIN)
+if test "$login" != no; then
+  AC_MSG_RESULT(enabled)
+  SASL_MECHS="$SASL_MECHS liblogin.la"
+  if test "$enable_static" = yes; then
+    SASL_STATIC_SRCS="$SASL_STATIC_SRCS ../plugins/login.c"
+    SASL_STATIC_OBJS="$SASL_STATIC_OBJS login.o"
+    AC_DEFINE(STATIC_LOGIN,[],[Link LOGIN Staticly])
+  fi
+else
+  AC_MSG_RESULT(disabled)
+fi
+
+dnl NTLM
+AC_ARG_ENABLE(ntlm, [  --enable-ntlm           enable unsupported NTLM authentication [[no]] ],
+  ntlm=$enableval,
+  ntlm=no)
+
+if test "$with_openssl" = no; then
+  AC_WARN([OpenSSL not found -- NTLM will be disabled])
+  ntlm=no
+fi
+
+AC_MSG_CHECKING(NTLM)
+if test "$ntlm" != no; then
+  AC_MSG_RESULT(enabled)
+  NTLM_LIBS="-lcrypto $LIB_RSAREF"
+  AC_SUBST(NTLM_LIBS)
+
+  SASL_MECHS="$SASL_MECHS libntlm.la"
+  if test "$enable_static" = yes; then
+    SASL_STATIC_SRCS="$SASL_STATIC_SRCS ../plugins/ntlm.c"
+    SASL_STATIC_OBJS="$SASL_STATIC_OBJS ntlm.o"
+    AC_DEFINE(STATIC_NTLM,[],[Link NTLM Staticly])
+  fi
+else
+  AC_MSG_RESULT(disabled)
+fi
+
+dnl PASSDSS
+AC_ARG_ENABLE(passdss, [  --enable-passdss        enable PASSDSS authentication (experimental) [[no]] ],
+  passdss=$enableval,
+  passdss=no)
+
+if test "$with_openssl" = no; then
+  AC_WARN([OpenSSL not found -- PASSDSS will be disabled])
+  passdss=no
+fi
+
+AC_MSG_CHECKING(PASSDSS)
+if test "$passdss" != no; then
+  AC_MSG_RESULT(enabled)
+  PASSDSS_LIBS="-lcrypto $LIB_RSAREF"
+  AC_SUBST(PASSDSS_LIBS)
+
+  SASL_MECHS="$SASL_MECHS libpassdss.la"
+  if test "$enable_static" = yes; then
+    SASL_STATIC_OBJS="$SASL_STATIC_OBJS passdss.o"
+    SASL_STATIC_SRCS="$SASL_STATIC_SRCS ../plugins/passdss.c"
+    AC_DEFINE(STATIC_PASSDSS,[],[Link PASSDSS Staticly])
+  fi
+else
+  AC_MSG_RESULT(disabled)
+fi
+
+
+# make the option show up so people don't whine that it is only in the
+# saslauthd configure script --help
+AC_ARG_WITH(ldap,   [  --with-ldap=DIR         use LDAP (in DIR) for saslauthd [no] ],,with_ldap=no)
+
+
+dnl SQL
+dnl This flag also changes the requirements of --with-mysql and --with-pgsql
+dnl
+dnl Desired behavior:
+dnl
+dnl doesn't require mysql or postgres if --disable-sql is chosen
+dnl requires at least one (but not both) if --enable-sql is chosen
+
+AC_ARG_ENABLE(sql, [  --enable-sql            enable SQL auxprop [[no]] ],
+  sql=$enableval,
+  sql=no)
+
+AC_MSG_CHECKING(SQL)
+if test "$sql" != no; then
+  AC_MSG_RESULT(enabled)
+  SASL_MECHS="$SASL_MECHS libsql.la"
+  if test "$enable_static" = yes; then
+    SASL_STATIC_SRCS="$SASL_STATIC_SRCS ../plugins/sql.c"
+    SASL_STATIC_OBJS="$SASL_STATIC_OBJS sql.o"
+    AC_DEFINE(STATIC_SQL,[],[Link SQL plugin staticly])
+  fi
+else
+  AC_MSG_RESULT(disabled)
+fi
+
+dnl MySQL
+AC_ARG_WITH(mysql,  [  --with-mysql=PATH       use MySQL from PATH ],
+  with_mysql=$withval,
+  with_mysql=$sql)
+
+# find location of library 
+# presuming if one given then correct
+if test "${with_mysql}" = "yes"; then
+  with_mysql=notfound
+  for mysqlloc in lib/mysql lib mysql/lib
+  do
+    if test -f ${prefix}/${mysqlloc}/libmysqlclient.a; then
+      with_mysql="${prefix}"
+      break
+    elif test -f /usr/local/${mysqlloc}/libmysqlclient.a; then
+      with_mysql="/usr/local"
+      break
+    elif test -f /usr/${mysqlloc}/libmysqlclient.a; then
+      with_mysql="/usr"
+      break
+    fi
+  done
+fi
+
+LIB_MYSQL=""
+
+case "$with_mysql" in
+    no) true;;
+    notfound) AC_WARN([MySQL Library not found]); true;;
+    *)
+     if test -d ${with_mysql}/lib/mysql; then
+	CMU_ADD_LIBPATH_TO(${with_mysql}/lib/mysql, LIB_MYSQL)
+     elif test -d ${with_mysql}/mysql/lib; then
+	CMU_ADD_LIBPATH_TO(${with_mysql}/mysql/lib, LIB_MYSQL)
+     elif test -d ${with_mysql}/lib; then
+	CMU_ADD_LIBPATH_TO(${with_mysql}/lib, LIB_MYSQL)
+     else
+	CMU_ADD_LIBPATH_TO(${with_mysql}, LIB_MYSQL)
+     fi
+
+     LIB_MYSQL_DIR=$LIB_MYSQL
+     LIB_MYSQL="$LIB_MYSQL -lmysqlclient"
+
+     if test -d ${with_mysql}/include/mysql; then
+         CPPFLAGS="${CPPFLAGS} -I${with_mysql}/include/mysql"
+     elif test -d ${with_mysql}/mysql/include; then
+         CPPFLAGS="${CPPFLAGS} -I${with_mysql}/mysql/include"
+     elif test -d ${with_mysql}/include; then
+         CPPFLAGS="${CPPFLAGS} -I${with_mysql}/include"
+     else
+         CPPFLAGS="${CPPFLAGS} -I${with_mysql}"
+     fi
+
+       save_LDFLAGS=$LDFLAGS
+       LDFLAGS="$LDFLAGS $LIB_MYSQL_DIR"
+       AC_CHECK_LIB(mysqlclient, mysql_select_db,
+	   AC_DEFINE(HAVE_MYSQL, [], [Do we have mysql support?]),
+           [AC_WARN([MySQL library mysqlclient does not work])
+	    with_mysql=no])
+       LDFLAGS=$save_LDFLAGS;;
+         
+esac
+AC_SUBST(LIB_MYSQL)
+
+dnl PgSQL
+AC_ARG_WITH(pgsql,  [  --with-pgsql=PATH       use PostgreSQL from PATH ],
+  with_pgsql=$withval,
+  with_pgsql=$sql)
+
+# find location of library 
+# presuing if one given then correct
+if test "${with_pgsql}" = "yes"; then
+  with_pgsql=notfound
+  for pgsqlloc in lib/pgsql lib pgsql/lib
+  do
+    if test -f ${prefix}/${pgsqlloc}/libpq.a; then
+      with_pgsql="${prefix}"
+      break
+    elif test -f /usr/local/${pgsqlloc}/libpq.a; then
+      with_pgsql="/usr/local"
+      break
+    elif test -f /usr/${pgsqlloc}/libpq.a; then
+      with_pgsql="/usr"
+      break
+    fi
+  done
+fi
+
+LIB_PGSQL=""
+
+case "$with_pgsql" in
+    no) true;;
+    notfound) AC_WARN([PostgreSQL Library not found]); true;;
+    *)
+     if test -d ${with_pgsql}/lib/pgsql; then
+	CMU_ADD_LIBPATH_TO(${with_pgsql}/lib/pgsql, LIB_PGSQL)
+     elif test -d ${with_pgsql}/pgsql/lib; then
+	CMU_ADD_LIBPATH_TO(${with_pgsql}/pgsql/lib, LIB_PGSQL)
+     elif test -d ${with_pgsql}/lib; then
+	CMU_ADD_LIBPATH_TO(${with_pgsql}/lib, LIB_PGSQL)
+     else
+	CMU_ADD_LIBPATH_TO(${with_pgsql}, LIB_PGSQL)
+     fi
+
+     LIB_PGSQL_DIR=$LIB_PGSQL
+     LIB_PGSQL="$LIB_PGSQL -lpq"
+
+     if test -d ${with_pgsql}/include/pgsql; then
+         CPPFLAGS="${CPPFLAGS} -I${with_pgsql}/include/pgsql"
+     elif test -d ${with_pgsql}/pgsql/include; then
+         CPPFLAGS="${CPPFLAGS} -I${with_pgsql}/pgsql/include"
+     elif test -d ${with_pgsql}/include; then
+         CPPFLAGS="${CPPFLAGS} -I${with_pgsql}/include"
+     else
+         CPPFLAGS="${CPPFLAGS} -I${with_pgsql}"
+     fi
+
+
+       save_LDFLAGS=$LDFLAGS
+       LDFLAGS="$LDFLAGS $LIB_PGSQL_DIR"
+       AC_CHECK_LIB(pq, PQsetdbLogin, AC_DEFINE(HAVE_PGSQL,[],
+	   [Do we have Postgres support?]),
+           [AC_WARN([PostgreSQL Library pq does not work])
+	    with_pgsql=no])
+       LDFLAGS=$save_LDFLAGS;;
+         
+esac
+AC_SUBST(LIB_PGSQL)
+
+dnl SQLite
+AC_ARG_WITH(sqlite,  [  --with-sqlite=PATH       use SQLite from PATH ],
+  with_sqlite=$withval,
+  with_sqlite=$sql)
+
+# find location of library 
+# presuing if one given then correct
+if test "${with_sqlite}" = "yes"; then
+  with_sqlite=notfound
+  for sqliteloc in lib
+  do
+    if test -f ${prefix}/${sqliteloc}/libsqlite.a; then
+      with_sqlite="${prefix}"
+      break
+    elif test -f /usr/local/${sqliteloc}/libsqlite.a; then
+      with_sqlite="/usr/local"
+      break
+    elif test -f /usr/${sqliteloc}/libsqlite.a; then
+      with_sqlite="/usr"
+      break
+    fi
+  done
+fi
+
+LIB_SQLITE=""
+
+case "$with_sqlite" in
+    no) true;;
+    notfound) AC_WARN([SQLite Library not found]); true;;
+    *)
+     if test -d ${with_sqlite}/lib; then
+         LIB_SQLITE="-L${with_sqlite}/lib -R${with_sqlite}/lib"
+     else
+         LIB_SQLITE="-L${with_sqlite} -R${with_sqlite}"
+     fi
+
+     LIB_SQLITE_DIR=$LIB_SQLITE
+     LIB_SQLITE="$LIB_SQLITE -lsqlite"
+
+     if test -d ${with_sqlite}/include; then
+         CPPFLAGS="${CPPFLAGS} -I${with_sqlite}/include"
+     else
+         CPPFLAGS="${CPPFLAGS} -I${with_sqlite}"
+     fi
+       AC_CHECK_LIB(sqlite, sqlite_open, AC_DEFINE(HAVE_SQLITE,[],
+	   [Do we have SQLite support?]),
+           [AC_WARN([SQLite Library sqlite does not work])
+	    with_sqlite=no], $LIB_SQLITE_DIR);;
+         
+esac
+AC_SUBST(LIB_SQLITE)
+
+if test "$sql" = yes -a "$with_pgsql" = no -a "$with_mysql" = no -a "$with_sqlite" = no; then
+    AC_ERROR([--enable-sql chosen but neither Postgres nor MySQL nor SQLite found])
+fi
+
+if test "$enable_shared" = yes; then
+	AC_DEFINE(DO_DLOPEN,[],[Should we build a shared plugin (via dlopen) library?])
+fi
+
+dnl LDAPDB
+AC_ARG_ENABLE(ldapdb, [  --enable-ldapdb         enable LDAPDB plugin [no] ],
+  ldapdb=$enableval,
+  ldapdb=no)
+AC_MSG_CHECKING(LDAPDB)
+if test "$ldapdb" != no; then
+    AC_MSG_RESULT(enabled)
+
+    if test "$with_ldap" = no; then
+        AC_MSG_ERROR([Cannot enable LDAPDB plugin: You need to specify --with-ldap])
+    fi
+
+    save_CPPFLAGS=$CPPFLAGS
+    save_LDFLAGS=$LDFLAGS
+
+    if test -d $with_ldap; then
+        CPPFLAGS="${CPPFLAGS} -I${with_ldap}/include"
+        CMU_ADD_LIBPATH(${with_ldap}/lib)
+    fi
+
+    AC_CHECK_HEADERS(ldap.h lber.h)
+
+    if test $ac_cv_header_ldap_h = yes -a $ac_cv_header_lber_h = yes; then
+        CMU_OPENLDAP_API
+
+        if test "$cmu_cv_openldap_api" = yes; then
+            AC_CHECK_LIB(ldap, ldap_initialize, [ cmu_link_openldap="-lldap -llber" ], [ cmu_link_openldap=no ],-llber)
+        fi
+    fi
+
+    if test "$cmu_cv_openldap_api" = no -o "$cmu_link_openldap" = no; then
+        AC_MSG_ERROR([Cannot enable LDAPDB plugin: Could not locate OpenLDAP])
+    else
+        CMU_OPENLDAP_COMPAT
+
+        if test "$cmu_cv_openldap_compat" = no; then
+            AC_MSG_ERROR([Cannot enable LDAPDB plugin: OpenLDAP library located but incompatible])
+        else
+            LIB_LDAP=$cmu_link_openldap
+            AC_SUBST(LIB_LDAP)
+
+            SASL_MECHS="$SASL_MECHS libldapdb.la"
+            if test "$enable_static" = yes; then
+                SASL_STATIC_SRCS="$SASL_STATIC_SRCS ../plugins/ldapdb.c"
+                SASL_STATIC_OBJS="$SASL_STATIC_OBJS ldapdb.o"
+                AC_DEFINE(STATIC_LDAPDB,[],[Link ldapdb plugin Staticly])
+            fi
+        fi
+    fi
+
+    if test "$cmu_cv_openldap_compat" != yes; then
+        CPPFLAGS=$save_CPPFLAGS
+        LDFLAGS=$save_LDFLAGS
+    fi
+else
+    AC_MSG_RESULT(disabled)
+fi
+
+AC_SUBST(SASL_MECHS)
+AC_SUBST(SASL_STATIC_SRCS)
+AC_SUBST(SASL_STATIC_OBJS)
+AC_SUBST(SASL_STATIC_LIBS)
+
+AC_ARG_WITH(plugindir, [  --with-plugindir=DIR    set the directory where plugins will
+                          be found [[/usr/lib/sasl2]] ],
+  plugindir=$withval,
+  plugindir=/usr/lib/sasl2)
+AC_DEFINE_UNQUOTED(PLUGINDIR, "$plugindir", [Runtime plugin location])
+AC_SUBST(plugindir)
+
+AC_ARG_WITH(configdir, [   --with-configdir=DIR    set the directory where config files will
+                          be found [/usr/lib/sasl2] ],
+  configdir=$withval,
+  configdir=$plugindir:/etc/sasl2)
+AC_DEFINE_UNQUOTED(CONFIGDIR, "$configdir", [Runtime config file location])
+AC_SUBST(configdir)
+
+dnl look for rc4 libraries. we accept the CMU one or one from openSSL
+AC_ARG_WITH(rc4, [  --with-rc4              use internal rc4 routines [[yes]] ],
+	with_rc4=$withval,
+	with_rc4=yes)
+
+if test "$with_rc4" != no; then
+    AC_DEFINE(WITH_RC4,[],[Use internal RC4 implementation?])
+fi
+
+case "$host_os:$host_cpu" in
+    hpux*:ia64*)
+        AC_DEFINE([__LWI_HP_UX_IA64__], [], [Define if OS is HP-UX-IA64])
+        ;;
+esac
+
+
+building_for_macosx=no
+case "$host_os" in
+        darwin*)
+AC_ARG_ENABLE(macos-framework, [  --disable-macos-framework       disable building and installing replacement SASL2 Framework for MacOS X-provided SASL Framework [[no]]],building_for_macosx=no,building_for_macosx=yes)
+        ;;
+esac
+AM_CONDITIONAL(MACOSX, test "$building_for_macosx" = yes)
+
+dnl dmalloc tests
+AC_MSG_CHECKING(for dmalloc library)
+AC_ARG_WITH(dmalloc, [  --with-dmalloc=DIR      with DMALLOC support (for test applications) [[no]] ],
+	with_dmalloc=$withval,
+	with_dmalloc=no)
+
+DMALLOC_LIBS=""
+
+if test "$with_dmalloc" != "no"; then
+   if test "$with_dmalloc" = "yes"; then
+	with_dmalloc="/usr/local"
+   fi
+
+   if test -r "$with_dmalloc/libdmalloc.a"; then
+	DMALLOC_LIBS="$with_dmalloc/libdmalloc.a"
+	AC_DEFINE(WITH_DMALLOC,[],[Linking against dmalloc?])
+	AC_MSG_RESULT(yes)
+   elif test -r "$with_dmalloc/lib/libdmalloc.a"; then
+	DMALLOC_LIBS="$with_dmalloc/lib/libdmalloc.a"
+	AC_DEFINE(WITH_DMALLOC,[],[Linking against dmalloc?])
+	AC_MSG_RESULT(yes)
+   else
+	AC_MSG_ERROR(cannot find dmalloc library, please check your installation.)
+   fi
+else
+   AC_MSG_RESULT(no)
+fi
+
+AC_SUBST(DMALLOC_LIBS)
+
+dnl sfio tests
+AC_MSG_CHECKING(for sfio library)
+AC_ARG_WITH(sfio, [  --with-sfio=DIR         with SFIO support (for smtptest/libsfsasl) [[no]] ],
+	with_sfio=$withval,
+	with_sfio=no)
+
+if test "$with_sfio" != "no"; then
+   if test "$with_sfio" = "yes"; then
+	with_sfio="/usr/local"
+   fi
+
+   AC_DEFUN([SFIO_INC_CHK],
+	[if test -r "$with_sfio$1/sfio.h"; then SFIO_DIR=$with_sfio;
+					      SFIO_INC_DIR=$with_sfio$1])
+
+   AC_DEFUN([SFIO_LIB_CHK],[
+		str="$SFIO_DIR/$1/libsfio.*"
+		for i in `echo $str`; do
+			if test -r $i; then
+				SFIO_LIBDIR=$SFIO_DIR/$1
+				break 2
+			fi
+		done
+		])
+
+   SFIO_INC_CHK()
+   el[]SFIO_INC_CHK(/include)
+   el[]SFIO_INC_CHK(/include/sfio)
+   fi
+
+   if test -z "$SFIO_DIR"; then
+	AC_MSG_ERROR(Cannot find sfio.h, Please check your SFIO installation.)
+   fi
+
+   SFIO_LIB_CHK(lib)
+   SFIO_LIB_CHK(lib/sfio)
+
+   if test -z "$SFIO_LIBDIR"; then
+	AC_MSG_ERROR(Cannot find sfio library, Please check your SFIO installation.)
+   fi
+
+   SFIO_INC_FLAGS="-I$SFIO_INC_DIR"
+   SFIO_LIB_FLAGS="-L$SFIO_LIBDIR -lsfio"
+   SMTPTEST_PROGRAM="smtptest"
+   SASL_UTIL_LIBS_EXTRA=libsfsasl2.la
+   SASL_UTIL_HEADERS_EXTRA=sfsasl.h
+
+   AC_MSG_RESULT(yes)
+else
+   AC_MSG_RESULT(no)
+   SFIO_INC_FLAGS=""
+   SFIO_LIB_FLAGS=""
+   SMTPTEST_PROGRAM=""
+   SASL_UTIL_LIBS_EXTRA=""
+   SASL_UTIL_HEADERS_EXTRA=""
+fi
+
+AC_SUBST(SFIO_INC_FLAGS)
+AC_SUBST(SFIO_LIB_FLAGS)
+AC_SUBST(SMTPTEST_PROGRAM)
+AC_SUBST(SASL_UTIL_LIBS_EXTRA)
+AC_SUBST(SASL_UTIL_HEADERS_EXTRA)
+
+dnl check for getsubopt
+sasl_cv_getsubopt=no
+AC_CHECK_FUNC(getsubopt, [AC_DEFINE(HAVE_GETSUBOPT,[],
+	[do we have getsubopt()?])], [sasl_cv_getsubopt=yes])
+if test $sasl_cv_getsubopt = yes; then
+	AC_LIBOBJ(getsubopt)
+	GETSUBOPT="getsubopt.lo"
+fi
+AC_SUBST(GETSUBOPT)
+
+dnl Check for snprintf
+sasl_cv_snprintf=no
+SNPRINTFOBJS=""
+AC_CHECK_FUNC(snprintf, [AC_DEFINE(HAVE_SNPRINTF,[],[Does the system have snprintf()?])], [sasl_cv_snprintf=yes])
+AC_CHECK_FUNC(vsnprintf, [AC_DEFINE(HAVE_VSNPRINTF,[],[Does the system have vsnprintf()?])], [sasl_cv_snprintf=yes])
+if test $sasl_cv_snprintf = yes; then
+	AC_LIBOBJ(snprintf)
+        SNPRINTFOBJS="snprintf.o"
+        LTSNPRINTFOBJS="snprintf.lo"
+fi
+AC_SUBST(SNPRINTFOBJS)
+AC_SUBST(LTSNPRINTFOBJS)
+
+dnl do we need to link in -lresolv?
+AC_CHECK_LIB(resolv, inet_aton)
+
+dnl Check for getaddrinfo
+GETADDRINFOOBJS=""
+sasl_cv_getaddrinfo=yes
+IPv6_CHECK_FUNC(getaddrinfo, [IPv6_CHECK_FUNC(gai_strerror,
+                [AC_DEFINE(HAVE_GETADDRINFO,[],[Do we have a getaddrinfo() function?])
+                sasl_cv_getaddrinfo=no])])
+if test $sasl_cv_getaddrinfo = yes; then
+    AC_LIBOBJ(getaddrinfo)
+    GETADDRINFOOBJS="getaddrinfo.o"
+    LTGETADDRINFOOBJS="getaddrinfo.lo"
+fi
+AC_SUBST(GETADDRINFOOBJS)
+AC_SUBST(LTGETADDRINFOOBJS)
+
+dnl Check for getnameinfo
+GETNAMEINFOOBJS=""
+sasl_cv_getnameinfo=no
+IPv6_CHECK_FUNC(getnameinfo,
+		[AC_DEFINE(HAVE_GETNAMEINFO,[],[Do we have a getnameinfo() function?])], [sasl_cv_getnameinfo=yes])
+if test $sasl_cv_getnameinfo = yes; then
+	AC_LIBOBJ(getnameinfo)
+        GETNAMEINFOOBJS="getnameinfo.o"
+        LTGETNAMEINFOOBJS="getnameinfo.lo"
+fi
+AC_SUBST(GETNAMEINFOOBJS)
+AC_SUBST(LTGETNAMEINFOOBJS)
+
+LTLIBOBJS=`echo "$LIB@&t@OBJS" | sed 's,\.[[^.]]* ,.lo ,g;s,\.[[^.]]*$,.lo,'`
+AC_SUBST(LTLIBOBJS)
+
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_MODE_T
+AC_TYPE_PID_T
+AC_TYPE_SIGNAL
+
+AC_HEADER_TIME
+AC_HEADER_STDC
+AC_HEADER_DIRENT
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS(des.h dlfcn.h fcntl.h limits.h malloc.h paths.h strings.h sys/file.h sys/time.h syslog.h unistd.h inttypes.h sys/uio.h sys/param.h sysexits.h stdarg.h varargs.h)
+
+IPv6_CHECK_SS_FAMILY()
+IPv6_CHECK_SA_LEN()
+IPv6_CHECK_SOCKLEN_T()
+
+#AC_FUNC_MEMCMP
+#AC_FUNC_VPRINTF
+AC_CHECK_FUNCS(gethostname getdomainname getpwnam getspnam gettimeofday inet_aton memcpy mkdir select socket strchr strdup strerror strspn strstr strtol jrand48)
+
+if test $enable_cmulocal = yes; then
+    AC_WARN([enabling CMU local kludges])
+    AC_DEFINE(KRB4_IGNORE_IP_ADDRESS,[],[Ignore IP Address in Kerberos 4 tickets?])
+    AC_DEFINE_UNQUOTED(PREFER_MECH, "KERBEROS_V4", [Force a preferred mechanism])
+fi
+
+AC_EGREP_HEADER(sockaddr_storage, sys/socket.h, [
+		AC_DEFINE(HAVE_STRUCT_SOCKADDR_STORAGE,[],[Do we have struct sockaddr_stroage?])])
+
+AC_SUBST(DIRS)
+
+AC_CONFIG_SUBDIRS(saslauthd)
+
+AH_TOP([
+/* acconfig.h - autoheader configuration input */
+/* 
+ * Copyright (c) 1998-2003 Carnegie Mellon University.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. The name "Carnegie Mellon University" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For permission or any other legal
+ *    details, please contact  
+ *      Office of Technology Transfer
+ *      Carnegie Mellon University
+ *      5000 Forbes Avenue
+ *      Pittsburgh, PA  15213-3890
+ *      (412) 268-4387, fax: (412) 268-7395
+ *      tech-transfer@andrew.cmu.edu
+ *
+ * 4. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by Computing Services
+ *     at Carnegie Mellon University (http://www.cmu.edu/computing/)."
+ *
+ * CARNEGIE MELLON UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO
+ * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS, IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY BE LIABLE
+ * FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+ * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+ * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#ifndef CONFIG_H
+#define CONFIG_H
+])
+
+AH_BOTTOM([
+
+
+/* Create a struct iovec if we need one */
+#if !defined(_WIN32) && !defined(HAVE_SYS_UIO_H)
+/* (win32 is handled in sasl.h) */
+struct iovec {
+    char *iov_base;
+    long iov_len;
+};
+#else
+#include <sys/types.h>
+#include <sys/uio.h>
+#endif
+
+/* location of the random number generator */
+#ifdef DEV_RANDOM
+#undef DEV_RANDOM
+#endif
+#define DEV_RANDOM SASL_DEV_RANDOM
+
+/* if we've got krb_get_err_txt, we might as well use it;
+   especially since krb_err_txt isn't in some newer distributions
+   (MIT Kerb for Mac 4 being a notable example). If we don't have
+   it, we fall back to the krb_err_txt array */
+#ifdef HAVE_KRB_GET_ERR_TEXT
+#define get_krb_err_txt krb_get_err_text
+#else
+#define get_krb_err_txt(X) (krb_err_txt[(X)])
+#endif
+
+/* Make Solaris happy... */
+#ifndef __EXTENSIONS__
+#define __EXTENSIONS__
+#endif
+
+/* Make Linux happy... */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
+#ifndef HAVE___ATTRIBUTE__
+/* Can't use attributes... */
+#define __attribute__(foo)
+#endif
+
+#define SASL_PATH_ENV_VAR "SASL_PATH"
+#define SASL_CONF_PATH_ENV_VAR "SASL_CONF_PATH"
+
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#ifndef WIN32
+# include <netdb.h>
+# ifdef HAVE_SYS_PARAM_H
+#  include <sys/param.h>
+# endif
+#else /* WIN32 */
+# include <winsock2.h>
+#endif /* WIN32 */
+#include <string.h>
+
+#include <netinet/in.h>
+
+#ifndef HAVE_SOCKLEN_T
+typedef unsigned int socklen_t;
+#endif /* HAVE_SOCKLEN_T */
+
+#ifndef HAVE_STRUCT_SOCKADDR_STORAGE
+#define	_SS_MAXSIZE	128	/* Implementation specific max size */
+#define	_SS_PADSIZE	(_SS_MAXSIZE - sizeof (struct sockaddr))
+
+struct sockaddr_storage {
+	struct	sockaddr ss_sa;
+	char		__ss_pad2[_SS_PADSIZE];
+};
+# define ss_family ss_sa.sa_family
+#endif /* !HAVE_STRUCT_SOCKADDR_STORAGE */
+
+#ifndef AF_INET6
+/* Define it to something that should never appear */
+#define	AF_INET6	AF_MAX
+#endif
+
+#ifndef HAVE_GETADDRINFO
+#define	getaddrinfo	sasl_getaddrinfo
+#define	freeaddrinfo	sasl_freeaddrinfo
+#define	gai_strerror	sasl_gai_strerror
+#endif
+
+#ifndef HAVE_GETNAMEINFO
+#define	getnameinfo	sasl_getnameinfo
+#endif
+
+#if !defined(HAVE_GETNAMEINFO) || !defined(HAVE_GETADDRINFO)
+#include "gai.h"
+#endif
+
+#ifndef AI_NUMERICHOST   /* support glibc 2.0.x */
+#define AI_NUMERICHOST  4
+#define NI_NUMERICHOST  2
+#define NI_NAMEREQD     4
+#define NI_NUMERICSERV  8
+#endif
+
+/* Defined in RFC 1035. max strlen is only 253 due to length bytes. */
+#ifndef MAXHOSTNAMELEN
+#define        MAXHOSTNAMELEN  255
+#endif
+
+#ifndef HAVE_SYSEXITS_H
+#include "exits.h"
+#else
+#include "sysexits.h"
+#endif
+
+/* Get the correct time.h */
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif
+
+#ifndef HIER_DELIMITER
+#define HIER_DELIMITER '/'
+#endif
+
+#endif /* CONFIG_H */
+])
+
+AC_CONFIG_HEADERS(config.h)
+
+AC_OUTPUT(Makefile
+include/Makefile
+sasldb/Makefile
+plugins/Makefile
+lib/Makefile
+utils/Makefile
+doc/Makefile
+sample/Makefile
+java/Makefile
+java/CyrusSasl/Makefile
+java/Test/Makefile
+java/javax/Makefile
+java/javax/security/Makefile
+java/javax/security/auth/Makefile
+java/javax/security/auth/callback/Makefile
+pwcheck/Makefile
+man/Makefile)
+
+echo Configuration Complete.  Type \'make\' to build.

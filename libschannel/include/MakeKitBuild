@@ -1,0 +1,6 @@
+make()
+{
+    mk_headers \
+        MASTER="schannel.h" \
+        HEADERS="schtypes.h"
+}

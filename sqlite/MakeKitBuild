@@ -1,0 +1,14 @@
+make()
+{
+    mk_autotools \
+        HEADERS='sqlite3.h sqlite3ext.h' \
+        LIBS='sqlite3:8:6:8' \
+        TARGETS="'${MK_BINDIR}/sqlite3' '${MK_LIBDIR}/pkgconfig/sqlite3.pc'" \
+        CPPFLAGS="-D_REENTRANT" \
+        CFLAGS="-fPIC -fno-strict-aliasing" \
+        --disable-readline \
+        --disable-tcl \
+        --disable-static \
+        --enable-shared \
+        --enable-threadsafe
+}

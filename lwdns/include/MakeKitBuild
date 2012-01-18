@@ -1,0 +1,5 @@
+make()
+{
+    mk_headers \
+        MASTER=lwdns.h
+}

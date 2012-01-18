@@ -1,0 +1,65 @@
+#!/bin/bash
+
+BLACKLIST="libiconv templatedriver mod_auth_kerb fuse sqlite lwtest lwtask lwautoentroll"
+EXTRA="krb5/src dcerpc/flex-2.5.4"
+
+fail()
+{
+    echo "$@"
+    exit 1
+}
+
+blacklisted()
+{
+    for bad in ${BLACKLIST}
+    do
+        [ "$bad" = "${1#$SRC_ROOT/}" ] && return 0
+    done
+}
+
+bootstrap()
+{
+    dir="$1"
+    if [ -f "$dir/configure.ac" -o -f "$dir/configure.in" ]
+    then
+        if blacklisted "$dir"
+        then
+            echo "Skipping ${dir#$SRC_ROOT/}"
+            continue
+        fi
+
+        cd "$dir"
+        
+        echo "Bootstrapping ${dir#$SRC_ROOT/}"
+        if [ -x autogen.sh ]
+        then
+            ./autogen.sh || fail "could not run autogen.sh in $dir"
+        elif [ -x bootstrap ]
+        then
+            ./bootstrap || fail "could not run bootstrap in $dir"
+        else
+            autoreconf -fi || fail "could not run autoreconf in $dir"
+        fi
+    fi
+}
+
+if [ -n "$BUILD_ROOT" ]
+then
+    SRC_ROOT="$BUILD_ROOT/src/linux"
+else
+    SRC_ROOT="`pwd`"
+fi
+
+[ -x "$SRC_ROOT/build/mk-bootstrap" ] || fail "Please run from $SRC_ROOT"
+
+for dir in "$SRC_ROOT"/*
+do
+    bootstrap "$dir"
+done
+
+for extra in ${EXTRA}
+do
+    bootstrap "$SRC_ROOT/$extra"
+done
+
+        

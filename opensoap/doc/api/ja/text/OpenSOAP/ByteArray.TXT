@@ -1,0 +1,220 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: ByteArray.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/ByteArray.h
+ * @brief OpenSOAP API ByteArray 処理
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+     * @typedef struct tagOpenSOAPByteArray OpenSOAPByteArray
+     * @brief OpenSOAPByteArray 構造体型定義
+     */
+    /**
+     * @typedef OpenSOAPByteArray    *OpenSOAPByteArrayPtr
+     * @brief OpenSOAPByteArray ポインタ型定義
+     */
+    /**
+      * @fn int OpenSOAPByteArrayCreate(OpenSOAPByteArrayPtr * b_ary)
+      * @brief Byte (unsigned char)可変サイズ配列を作成します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [out] ((|b_ary|)) ByteArrayポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayCreateWithData(const unsigned char * data, size_t sz, OpenSOAPByteArrayPtr * b_ary)
+      * @brief 初期化データを指定して、Byte (unsigned char)可変サイズ配列を作成します。
+      * @param
+      *    data const unsigned char * [in] ((|data|)) 初期化データ。この値が NULL の場合、 ((|sz|)) 分データを確保して、0 fill する。
+
+      * @param
+      *    sz size_t [in] ((|sz|)) 初期化データサイズ
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [out] ((|b_ary|)) ByteArrayポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+     * @def OpenSOAPByteArrayCreateWithSize(sz, b_ary) OpenSOAPByteArrayCreateWithData(0, (sz), (b_ary))
+     * @brief Byte (unsigned char)指定サイズ分0クリアします。
+     * @param
+     *    sz size_t [in] ((|sz|)) 初期化データサイズ
+     * @param
+     *    b_ary OpenSOAPByteArrayPtr * [out] ((|b_ary|)) ByteArrayポインタ
+     */
+    /**
+      * @fn int OpenSOAPByteArrayAppendRef(OpenSOAPByteArrayPtr b_ary)
+      * @brief Byte (unsigned char)可変サイズ配列の利用を宣言します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArrayポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayRelease(OpenSOAPByteArrayPtr b_ary)
+      * @brief Byte (unsigned char)可変サイズ配列を開放します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArrayポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayGetSize(OpenSOAPByteArrayPtr b_ary, size_t * sz)
+      * @brief Byte (unsigned char)可変サイズ配列のサイズを取得します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArrayポインタ
+      * @param
+      *    sz size_t * [out] ((|sz|)) サイズ格納変数へのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayBeginConst(OpenSOAPByteArrayPtr b_ary, const unsigned char ** beg)
+      * @brief Byte (unsigned char)可変サイズ配列の先頭の const ポインタを取得します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray
+      * @param
+      *    beg const unsigned char ** [out] ((|beg|)) 先頭ポインタ格納変数へのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayEndConst(OpenSOAPByteArrayPtr b_ary, const unsigned char ** ed)
+      * @brief Byte (unsigned char)可変サイズ配列の終端の const ポインタを取得します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray
+      * @param
+      *    ed const unsigned char ** [out] ((|ed|)) 終端ポインタ格納変数へのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayGetBeginSizeConst(OpenSOAPByteArrayPtr b_ary, const unsigned char ** beg, size_t * sz)
+      * @brief Byte (unsigned char)可変サイズ配列の先頭の const ポインタとサイズを取得します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray
+      * @param
+      *    beg const unsigned char ** [out] ((|beg|)) 先頭ポインタ格納変数へのポインタ。
+      * @param
+      *    sz size_t * [out] ((|sz|)) サイズ格納変数へのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayGetBeginEndConst(OpenSOAPByteArrayPtr b_ary, const unsigned char ** beg, const unsigned char ** ed)
+      * @brief Byte (unsigned char)可変サイズ配列の先頭と終端の const ポインタを取得します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray
+      * @param
+      *    beg const unsigned char ** [out] ((|beg|)) 先頭ポインタ格納変数へのポインタ。
+      * @param
+      *    ed const unsigned char ** [out] ((|ed|)) 終端ポインタ格納変数へのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayBegin(OpenSOAPByteArrayPtr b_ary, unsigned char ** beg)
+      * @brief Byte (unsigned char)可変サイズ配列の先頭の 非const ポインタを取得します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray
+      * @param
+      *    beg unsigned char ** [out] ((|beg|)) 先頭ポインタ格納変数へのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayEnd(OpenSOAPByteArrayPtr b_ary, unsigned char ** ed)
+      * @brief Byte (unsigned char)可変サイズ配列の終端の 非const ポインタを取得します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray
+      * @param
+      *    ed unsigned char ** [out] ((|ed|)) 終端ポインタ格納変数へのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayGetBeginSize(OpenSOAPByteArrayPtr b_ary, unsigned char ** beg, size_t * sz)
+      * @brief Byte (unsigned char)可変サイズ配列の先頭の const ポインタとサイズを取得します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray
+      * @param
+      *    beg unsigned char ** [out] ((|beg|)) 先頭ポインタ格納変数へのポインタ。
+      * @param
+      *    sz size_t * [out] ((|sz|)) サイズ格納変数へのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayGetBeginEnd(OpenSOAPByteArrayPtr b_ary, unsigned char ** beg, unsigned char ** ed)
+      * @brief Byte (unsigned char)可変サイズ配列の先頭と終端の const ポインタを取得します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray
+      * @param
+      *    beg unsigned char ** [out] ((|beg|)) 先頭ポインタ格納変数へのポインタ。
+      * @param
+      *    ed unsigned char ** [out] ((|ed|)) 終端ポインタ格納変数へのポインタ。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayClear(OpenSOAPByteArrayPtr b_ary)
+      * @brief Byte (unsigned char)可変サイズ配列をクリアします。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArraySetData(OpenSOAPByteArrayPtr b_ary, const unsigned char * data, size_t sz)
+      * @brief Byte (unsigned char)可変サイズ配列へデータを設定します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray
+      * @param
+      *    data unsigned char * [in] ((|data|)) 格納するデータ 
+      * @param
+      *    sz size_t [in] ((|sz|)) データサイズ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayAppend(OpenSOAPByteArrayPtr b_ary, const unsigned char *dat, size_t dat_len)
+      * @brief Byte (unsigned char)可変サイズ配列へデータを追加します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray
+      * @param
+      *    dat const unsigned char * [in] ((|dat|)) 追加するデータへの先頭ポインタ。NULL の場合は、0 で埋める。
+      * @param
+      *    dat_len size_t [in] dat_sz 追加するデータのサイズ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayResize(OpenSOAPByteArrayPtr b_ary, size_t new_size)
+      * @brief Byte (unsigned char)可変サイズ配列のサイズを変更します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr [in, out] ((|b_ary|)) ByteArray
+      * @param
+      *    new_size size_t [in] ((|new_size|)) 新しいサイズ。現在のサイズより大きな値を指定した場合、大きくなった部分は 0 fill される。
+
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPByteArrayDuplicate(OpenSOAPByteArrayPtr b_ary, OpenSOAPByteArrayPtr * dup_b_ary)
+      * @brief ByteArray を複製します。
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr [in] ((|b_ary|)) ByteArray
+      * @param
+      *    dup_b_ary OpenSOAPByteArrayPtr * [out] ((|new_size|)) 複製先 ByteArray
+      * @return
+      *    エラーコード
+      */

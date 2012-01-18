@@ -1,0 +1,4 @@
+<buildtool.dirs>
+  <dir name="lwbase"/>
+  <dir name="eventcltr"/>
+</buildtool.dirs>

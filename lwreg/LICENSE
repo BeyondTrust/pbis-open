@@ -1,0 +1,7 @@
+Code residing in the server, shell, tests, and tools directories is licensed under
+the GNU General Public License version 2.  
+
+Code residing in the remaining directories is licensed under the LGPL.
+All directories have a COPYING file or an embedded header described the
+appropropriate license.
+

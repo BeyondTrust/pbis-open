@@ -1,0 +1,27 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+	SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<SOAP-ENV:Body>
+<tp:TransactionControl secuence="true" xmlns:tp="http://services.opensoap.jp/transaction/">
+  <endpoint transactionRequestID="1">http://localhost/cgi-bin/TransactionABankService.cgi</endpoint>
+  <endpoint transactionRequestID="2">http://localhost/cgi-bin/TransactionABankService.cgi</endpoint>
+</tp:TransactionControl>
+<tp:TransactionHeaderBlock transactionRequestID="2"
+	xmlns:tp="http://services.opensoap.jp/transaction/">
+  <e:encrypt api1="OpenSOAP" xmlns:e="http://security.opensoap.jp/1.0/" api2="ApacheSOAP">gerogero</e:encrypt>
+</tp:TransactionHeaderBlock>
+<tp:TransactionBodyBlock transactionRequestID="1" xmlns:tp="http://services.opensoap.jp/transaction/">
+  <p:PaymentRequest xmlns:p="http://services.opensoap.jp/a_bank_transfer/">
+  <account>okuno1234</account>
+  <amount>$5000</amount>
+  <to>b_bank:1252412</to>
+  </p:PaymentRequest>
+</tp:TransactionBodyBlock>
+<tp:TransactionBodyBlock transactionRequestID="2" xmlns:tp="http://services.opensoap.jp/transaction/">
+  <d:DepositRequest xmlns:d="http://namespaces.opensoap.jp/b_bank_transfer/">
+  <account>chaya4567</account>
+  <amount>$5000</amount>
+  <from>a_bank:1338675</from>
+  </d:DepositRequest>
+</tp:TransactionBodyBlock>
+</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

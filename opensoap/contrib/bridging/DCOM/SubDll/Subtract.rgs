@@ -1,0 +1,11 @@
+HKCR
+{
+	NoRemove AppID
+	{
+		{06FA7B44-33C5-438b-8E1F-B4DB40D93BC5} = s 'SubtractDll'
+		'SubtractDll.DLL'
+		{
+			val AppID = {06FA7B44-33C5-438b-8E1F-B4DB40D93BC5}
+		}
+	}
+}

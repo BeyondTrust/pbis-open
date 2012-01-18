@@ -1,0 +1,28 @@
+make()
+{
+    LOCAL_SOURCES="\
+        lpaccess.c    \
+	lpauthex.c    \
+	lpcfg.c       \
+	lpdomain.c    \
+	lpenumstate.c \
+	lpevent.c     \
+	lpglobals.c   \
+	lpgroup.c     \
+	lpmain.c      \
+	lpmarshal.c   \
+	lpmisc.c      \
+	lpobject.c    \
+	lpuser.c      \
+        lpsecurity.c"
+
+    mk_dlo \
+	DLO=local \
+        INSTALLDIR="${MK_LIBDIR}/lsa-provider" \
+	SOURCES="$LOCAL_SOURCES" \
+	CPPFLAGS="-DLW_ENABLE_THREADS=1" \
+	INCLUDEDIRS=". ../../include ../../../include" \
+	HEADERDEPS="lw/base.h lwadvapi.h openssl/md4.h lwio/lwio.h eventlog.h" \
+	LIBDEPS="lsacommon lsaserverapi dsapi" \
+        SYMFILE="lp.sym"
+}

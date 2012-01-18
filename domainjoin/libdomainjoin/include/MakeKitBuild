@@ -1,0 +1,6 @@
+make()
+{
+    mk_headers \
+        HEADERDEPS="lw/base.h" \
+        djdistroinfo.h
+}

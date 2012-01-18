@@ -1,0 +1,17 @@
+make()
+{
+    mk_multiarch_do
+        mk_group \
+            GROUP="memory" \
+            SOURCES="\
+                sysfuncs.c    \
+                lwmem.c    \
+                lwstr.c    \
+                lwsid.c    \
+                lwhash.c   \
+                lwbuffer.c \
+                lwdlinked-list.c \
+		" \
+            INCLUDEDIRS=". ../../include ../../include/public"
+    mk_multiarch_done
+}

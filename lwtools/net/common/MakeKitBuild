@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+	GROUP=common \
+	SOURCES="memory.c utils.c" \
+	INCLUDEDIRS="../include ../../include" \
+	HEADERDEPS="lw/base.h lwadvapi.h" \
+	LIBDEPS="$LIB_RESOLV $LIB_NSL lwbase lwbase_nothr lwadvapi lwadvapi_nothr lwmsg lwmsg_nothr"
+}

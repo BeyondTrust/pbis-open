@@ -1,0 +1,9 @@
+make()
+{
+    mk_multiarch_do
+        mk_group \
+            GROUP="file" \
+            SOURCES=lwfile.c \
+            INCLUDEDIRS=". ../../include ../../include/public"
+    mk_multiarch_done
+}

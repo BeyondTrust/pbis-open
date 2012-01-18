@@ -1,0 +1,19 @@
+make()
+{
+    TEST_SOURCES="\
+        test-main.c \
+        test-convert.c \
+        test-marshal.c \
+        test-assoc.c \
+        test-client-server.c \
+        test-async.c \
+        test-archive.c \
+        test-task.c"
+    
+    mk_have_moonunit && mk_moonunit \
+        DLO="lwmsg_mu" \
+        SOURCES="$TEST_SOURCES" \
+	HEADERDEPS="lw/base.h" \
+        LIBDEPS="lwmsg" \
+        INCLUDEDIRS="../include"
+}

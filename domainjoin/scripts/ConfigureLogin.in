@@ -1,0 +1,317 @@
+#!/bin/sh
+##
+## Copyright (C) Centeris Corporation 2004-2007
+## Copyright (C) Likewise Software    2007-2008
+## All rights reserved.
+## 
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http:##www.gnu.org/licenses/>.
+##
+
+LC_MESSAGES=C; export LC_MESSAGES
+
+#this gets overridden with sed when it should be /opt/likewise
+BINDIR=@expanded_bindir@
+LIBEXECDIR=@expanded_libexecdir@
+
+alias_replacement()
+{
+    # Simulates the alias builtin function. It does this by creating a function
+    # with the name of what should be aliased. So if it was run like this:
+    #   alias_replacement myecho='echo my'
+    # Then the alias would be emulated like this:
+    #   myecho()
+    #   {
+    #      echo my "$@"
+    #   }
+    if [ "$#" -ne 1 ]; then
+        echo "alias takes 1 argument"
+        return 1
+    fi
+    # This function is passed something like abc=xyz . The name variable gets
+    # set to abc, and value gets set to xyz .
+    name="`expr "$1" : '^\(.*\)='`"
+    value="`expr "$1" : '.*=\(.*\)$'`"
+    eval "$name() { $value \"\$@\"; }"
+}
+
+if type shopt >/dev/null 2>&1; then
+    shopt -s expand_aliases 1>/dev/null 2>/dev/null
+fi
+alias aliastest=echo
+type aliastest 1>/dev/null 2>/dev/null
+if [ $? -ne 0 ]; then
+    # This platform doesn't have a working alias. It needs to be replaced. This
+    # is primarily for Solaris.
+    alias()
+    {
+        alias_replacement "$@"
+    }
+fi
+
+type printf 1>/dev/null 2>/dev/null
+if [ $? -ne 0 ]; then
+    # Usually printf is a shell built in, but on HPUX it is a program located
+    # at /bin/printf. During system startup and shutdown the path is only
+    # /sbin, so we need to manually find printf
+    if [ -x /bin/printf ]; then
+        alias printf=/bin/printf
+    else
+        echo "WARNING: unable to find printf program"
+    fi
+fi
+
+# echo_replacement emulates echo for all platforms using printf. printf is a
+# shell builtin that exists on all platforms.
+echo_replacement()
+{
+    if [ "$1" = "-n" ]; then
+        shift;
+        printf %s "$*"
+    else
+        printf %s\\n "$*"
+    fi
+}
+
+# 'echo -n' works with bash, but not with sh on Solaris, HPUX, and AIX.
+if [ "`echo -n`" = "-n" ]; then
+    alias echo=echo_replacement
+fi
+
+not_replacement()
+{
+    "$@" && return 1
+    return 0
+}
+# This replaces the ! builtin. However Solaris provides no way of defining a
+# function by that name. So instead, we have to call the operator not.
+type ! 1>/dev/null 2>/dev/null
+if [ $? -ne 0 ]; then
+    alias not=not_replacement
+else
+    alias not=!
+fi
+
+seq_replacement()
+{
+    FIRST=1
+    INCREMENT=1
+    case "$#" in
+        0)
+            echo too few arguments
+            return 1
+            ;;
+        1)
+            LAST="$1"
+            ;;
+        2)
+            FIRST="$1"
+            LAST="$2"
+            ;;
+        3)
+            FIRST="$1"
+            INCREMENT="$2"
+            LAST="$3"
+            ;;
+        *)
+            echo too many arguments
+            return 1
+            ;;
+    esac
+    i="$FIRST"
+    while [ "$i" -le "$LAST" ]; do
+        echo "$i"
+        i="`expr "$i" + "$INCREMENT"`"
+    done
+    return 0;
+}
+
+# seq doesn't exist on HPUX
+type seq 2>/dev/null 1>/dev/null
+if [ $? -ne 0 ]; then
+    alias seq=seq_replacement
+fi
+
+ShowError()
+{
+    __output="`"$@" 2>&1`"
+    __rc="$?"
+
+    if [ "$__rc" -ne 0 ]
+    then
+        echo "$__output" >&2
+    fi
+
+    return "$__rc"
+}
+
+Help()
+{
+    echo "usage: $0 nsswitch_restart"
+}
+
+GetOsType()
+{
+    ${BINDIR}/domainjoin-cli get_os_type
+}
+
+GetDistroType()
+{
+    ${BINDIR}/domainjoin-cli get_distro
+}
+
+GetDistroVersion()
+{
+    ${BINDIR}/domainjoin-cli get_distro_version
+}
+
+GracefulSSHDRestart()
+{
+    if [ -x /etc/init.d/sshd ]; then
+        ShowError /etc/init.d/sshd restart
+    elif [ -x /etc/init.d/ssh ]; then
+        ShowError /etc/init.d/ssh restart
+    else
+        # Can't find an appropriate init script, try
+        # finding the pid and sending SIGHUP instead
+        result=0
+        files=`ls /var/run/sshd*.pid 2> /dev/null`
+        shouldBeRunning=0
+        stillRunning=0
+        if [ -n "$files" ]; then
+            for pidfile in "$files"; do
+                if [ -f "$pidfile" ]; then
+                    shouldBeRunning=1
+                    sshdpid=`cat $pidfile`
+                    kill -HUP $sshdpid || result=$?
+                    # We want this daemon to restart and change pids, so we'll
+                    # wait up to 15 seconds for that to happen
+                    for count in `seq 15`; do
+                        ps -p $sshdpid >/dev/null 2>&1 || break
+                    done
+                fi
+            done
+            if [ $shouldBeRunning -ne 0 ]; then
+                # sshd on SuSE 9.0 and 8.2 have a bug that causes it to die on a
+	        # SIGHUP. So try starting sshd in that case.
+                for pidfile in "$files"; do
+                    if [ -f "$pidfile" ] && ps -p `cat $pidfile` >/dev/null 2>&1
+                    then
+                        stillRunning=1
+                    fi
+                done
+                if [ $stillRunning -eq 0 ]; then
+                # It died
+                    /etc/init.d/sshd start > /dev/null 2>&1
+	        fi
+            fi
+        elif [ -x /usr/bin/lssrc ]; then
+            # This is an AIX system. We have to use lssrc to get SSHD's pid.
+            # lssrc returns the output in this form:
+            # Subsystem   Group   PID  Status
+            #  sshd       ssh     123  active
+            sshdpid=""
+            sshdstatus="`/usr/bin/lssrc -s sshd`"
+            if [ $? -eq 0 ]; then
+                sshdpid=`echo "$sshdstatus" | tail -1 | awk '{ print $3 }'`
+            fi
+            if [ -n "$sshdpid" ]; then
+                # Let's double check that the pid is valid. It could say
+                # "inoperative".
+                ps -p "$sshdpid" >/dev/null 2>&1
+                if [ $? -ne 0 ]; then
+                    # The pid isn't valid
+                    sshdpid=""
+                fi
+            fi
+            if [ -n "$sshdpid" ]; then
+                kill -HUP "$sshdpid" || result=$?
+            else
+                echo "sshd does not appear to be running"
+                fi
+        else
+            echo "sshd does not appear to be running"
+        fi
+        # Ignore kill errors because .pid files may have been orphaned.
+        return 0
+    fi
+}
+
+GracefulCronRestart()
+{
+    ShowError sh ${LIBEXECDIR}/gpcron restart
+}
+
+IsProcessRunning()
+{
+    if [ `uname -s` = 'Darwin' ]; then
+        _IsProcessRunning_ps_output=`ps -A -o command= | awk '{ print $1 }' | egrep '(^'$1'$)|(/'$1'$)' 2> /dev/null`
+    else
+        _IsProcessRunning_ps_output=`UNIX95=1 ps -e -o comm= | egrep '(^'$1'$)|(/'$1'$)' 2> /dev/null`
+    fi
+    for proc in $_IsProcessRunning_ps_output ; do
+        return 0
+    done
+    return 1
+}
+
+GracefulNscdRestart()
+{
+    _is_nscd_running=0
+    if [ -x /etc/init.d/nscd ]; then
+        /etc/init.d/nscd status >/dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            _is_nscd_running=1
+        elif IsProcessRunning nscd ; then
+            _is_nscd_running=1
+        fi
+        if [ $_is_nscd_running -ne 0 ]; then
+            ShowError /etc/init.d/nscd stop
+            ShowError /etc/init.d/nscd start
+        fi
+    fi
+    return 0
+}
+
+NsswitchRestart()
+{
+    nsswitch_rc=0
+
+    if not GracefulCronRestart; then
+        echo "Could not restart Cron" >&2
+        nsswitch_rc=1
+    fi
+    
+    if not GracefulNscdRestart; then
+        echo "Could not restart name service cache daemon (nscd)" >&2
+        nsswitch_rc=1
+    fi
+
+    if not GracefulSSHDRestart; then
+        echo "Could not restart sshd" >&2
+        nsswitch_rc=1
+    fi
+    return $nsswitch_rc
+}
+
+#
+# main
+#
+
+if [ "$1" = "nsswitch_restart" ]; then
+    NsswitchRestart
+    exit $?
+else
+    Help
+    exit 1
+fi

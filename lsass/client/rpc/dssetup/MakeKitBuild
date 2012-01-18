@@ -1,0 +1,33 @@
+make()
+{
+    DSSETUP_SOURCES="\
+        dsr_rolegetprimarydomaininfo.c \
+        dsr_memory.c                   \
+        dsr_stubmemory.c               \
+        dsr_binding.c"
+
+    lw_dceidl \
+	IDL="../../../idl/dssetup.idl" \
+	CSTUB="dssetup_cstub.c" \
+	HEADER="dssetup_h.h" \
+	INCLUDEDIRS=". ../../../include" \
+	IDLFLAGS="-cstub_pref cli_ -sstub_pref srv_" \
+	HEADERDEPS="lw/base.h"
+
+    mk_group \
+	GROUP=dssetup_cstub \
+	SOURCES="dssetup_cstub.c" \
+	CPPFLAGS="-DDCERPC_STUB_BUILD" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADERDEPS="dce/rpc.h" \
+	LIBDEPS="dcerpc"
+
+    mk_group \
+	GROUP=dssetup \
+	SOURCES="$DSSETUP_SOURCES" \
+	GROUPDEPS="dssetup_cstub" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h" \
+	LIBDEPS="lwbase dcerpc" \
+	DEPS="dssetup_h.h"
+}

@@ -1,0 +1,669 @@
+/*
+ * 
+ * (c) Copyright 1991 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1991 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1991 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      rpcpvt.idl
+**
+**  FACILITY:
+**
+**      Remote Procedure Call
+**
+**  ABSTRACT:
+**
+**  This file contains the PRIVATE interface to the Common Communications
+**  Service of the RPC facility.  
+**
+**  NOTE WELL: The existence, signature, and semantics of anything in
+**  this file is subject to change without notice and should thus not
+**  be depended on by application writers.
+**  
+**
+*/
+
+[local] interface rpcpvt
+{
+
+import "dce/lbase.idl";
+import "dce/rpcbase.idl";
+import "dce/iovector.idl";
+import "dce/rpcsts.idl";
+
+/*************************************************************************/
+/************************  Deprecated names  *****************************/
+/*************************************************************************/
+
+/*
+ * These are names that we used for a while, changed, but don't feel
+ * like fixing all the uses of right now.
+ */
+const long rpc_c_authn_dce_private          = rpc_c_authn_dce_secret;
+const long rpc_c_protseq_max_calls_default  = rpc_c_protseq_max_reqs_default;
+
+const long rpc_s_unknown_auth_protocol      = rpc_s_unknown_authn_service;
+const long rpc_s_cant_create_sock           = rpc_s_cant_create_socket;
+const long rpc_s_cant_bind_sock             = rpc_s_cant_bind_socket;
+const long rpc_s_cant_listen_sock           = rpc_s_cant_listen_socket;
+const long rpc_s_no_ns_privilege            = rpc_s_no_ns_permission;
+const long rpc_s_unsupported_authn_level    = rpc_s_unsupported_protect_level;
+const long rpc_s_authn_level_mismatch       = rpc_s_protect_level_mismatch;
+
+const long rpc_c_authn_level_default        = rpc_c_protect_level_default;
+const long rpc_c_authn_level_none           = rpc_c_protect_level_none;
+const long rpc_c_authn_level_connect        = rpc_c_protect_level_connect;
+const long rpc_c_authn_level_call           = rpc_c_protect_level_call;
+const long rpc_c_authn_level_pkt            = rpc_c_protect_level_pkt;
+const long rpc_c_authn_level_pkt_integrity  = rpc_c_protect_level_pkt_integ;
+const long rpc_c_authn_level_pkt_privacy    = rpc_c_protect_level_pkt_privacy;
+
+/***********************************************************************
+ *
+ *  NSI typedefs for compatibility with existing (pre-DCE V1.0) code.
+ *
+ ***********************************************************************/
+/*
+ * Inquiry handle.
+ */
+typedef rpc_ns_handle_t     rpc_ns_inq_handle_t, *rpc_ns_inq_handle_p_t;
+
+/*
+ * Lookup handle.
+ */
+typedef rpc_ns_handle_t     rpc_ns_lookup_handle_t, *rpc_ns_lookup_handle_p_t;
+
+/*
+ * Import handle.
+ */
+typedef rpc_ns_handle_t     rpc_ns_import_handle_t, *rpc_ns_import_handle_p_t;
+
+/*************************************************************************/
+/*******************  Comm Services Binding object  **********************/
+/*************************************************************************/
+
+/*
+ * R P C _ B I N D I N G _ H A N D L E _ C O P Y
+ *
+ * Duplicate a binding handle. Create a duplicate handle to an existing
+ * (now shared) binding object.  This is the ONLY legal way to create
+ * a duplicate handle to a shared binding object.  I.E. the following
+ * C code is ILLEGAL:
+ *      new_handle = existing_handle;
+ * A duplicate handle is freed by rpc_binding_free().  Duplicate handles
+ * are useful for properly managing a binding object that is concurrently
+ * shared among a number of threads.
+ */
+void rpc_binding_handle_copy
+(
+    [in]        rpc_binding_handle_t    source_binding,
+    [out]       rpc_binding_handle_t    *destination_binding,
+    [out]       unsigned32              *status
+);
+
+
+/*
+ * R P C _ B I N D I N G _ H A N D L E _ E Q U A L
+ *
+ * Compare two binding handles for equality. Returns true iff the two
+ * handles reference the same binding object.  (see
+ * rpc_binding_handle_copy(); rpc_binding_copy() do not reference the
+ * same binding object).
+ */
+boolean32 rpc_binding_handle_equal
+(
+    [in]        rpc_binding_handle_t    binding1,
+    [in]        rpc_binding_handle_t    binding2,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ B I N D I N G _ S E R V E R _ T O _ C L I E N T
+ *
+ * NOTE: This description uses old terminology.
+ *
+ * Convert a server binding handle to a client handle.  The new handle's
+ * endpoint is reset and it has no associated authentication information.
+ *
+ * Server binding handles are those created by the runtime and provided
+ * to the server manager as a result of a [handle_t] RPC parameter.
+ */
+void rpc_binding_server_to_client
+(
+    [in]        rpc_binding_handle_t    sbinding_handle,
+    [out]       rpc_binding_handle_t    *cbinding_handle,
+    [out]       unsigned32              *status
+);
+
+
+/*
+ * R P C _ B I N D I N G _ T O _ E P M A P
+ *
+ * Given a binding handle to a server, return a binding handle to the
+ * EP map on that host.  If input_binding is NULL, return a binding to
+ * the EP map on the local host.
+ */
+void rpc_binding_to_epmap
+(
+    [in]        rpc_binding_handle_t    input_binding,
+    [out]       rpc_binding_handle_t    *output_binding,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/********************  Comm Services Server object  **********************/
+/*************************************************************************/
+
+/*
+ * An opaque handle representing a server thread pool.
+ */
+typedef rpc_opaque_ptr_t    rpc_thread_pool_handle_t, *rpc_thread_pool_handle_p_t;
+
+/*
+ * R P C _ S E R V E R _ C R E A T E _ T H R E A D _ P O O L
+ *
+ * Create a pool of "num_threads" threads to execute incoming RPC
+ * requests.  Return a handle onto that pool.
+ * The pool exists until the pool is freed; the pool's threads are created
+ * when rpc_server_listen() is called and destroyed when
+ * rpc_server_listen() returns.
+ */
+void rpc_server_create_thread_pool
+(
+    [in]        unsigned32              num_threads,
+    [out]       rpc_thread_pool_handle_t *phandle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ F R E E _ T H R E A D _ P O O L
+ *
+ * Destroy a thread pool once all RPCs executing using that pool
+ * complete.  If wait_flag == true, block until the pool is destroyed.
+ */
+void rpc_server_free_thread_pool
+(
+    [in, out]   rpc_thread_pool_handle_t *phandle,
+    [in]        boolean32               wait_flag,
+    [out]       unsigned32              *status
+);
+
+/*
+ * Signature of an application-supplied function used to determine which
+ * thread pool to use for an incoming RPC request on object "obj_uuid",
+ * using the "opnum"th operation in interface "if_id".
+ *
+ * status (and phandle) return values:
+ *      0 - OK; phandle != NULL: execute the call with a phandle thread.
+ *                               If all phandle threads are busy, execute
+ *                               the call with the first available phandle
+ *                               thread or default pool thread (subject
+ *                               to runtime call rejection due to phandle
+ *                               max queue length limits).
+ *              phandle == NULL: execute the call with a default pool
+ *                               thread.  If all default pool threads
+ *                               are busy, execute the call with the
+ *                               first available default default pool
+ *                               thread (subject to runtime call rejection
+ *                               due to default pool max queue length
+ *                               limits).
+ *      non-0 - failure:    do not execute the call
+ */
+typedef void (*rpc_thread_pool_fn_t)
+(
+    [in]        dce_uuid_p_t                obj_uuid,
+    [in]        rpc_if_id_p_t           if_id,
+    [in]        unsigned32              opnum,
+    [out]       rpc_thread_pool_handle_t *phandle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ S E T _ T H R E A D _ P O O L _ F N
+ * 
+ * Supply the runtime with a function to be called to determine
+ * which pool an incoming RPC request should be run in.
+ * 
+ * !!! NOTE: Your application assumes certain responsibilities if it
+ * uses thread pools. The applications's pool_fn operation is called
+ * back to from the runtime internal listener thread hence it should
+ * operate as efficiently as possible and not block for an extended period.
+ * The pool_fn MUST NOT call back into the runtime in performing its
+ * processing (e.g. it can't call rpc_object_inq_type(), ...).
+ */
+void rpc_server_set_thread_pool_fn
+(
+    [in]        rpc_thread_pool_fn_t    pool_fn,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ S E R V E R _ S E T _ T H R E A D _ P O O L _ Q L E N
+ *
+ * Allow the application to adjust the size of a thread pool's call
+ * queue.  That is, this routine allows the application to specify
+ * the maximum number of calls that will be queued for execution by
+ * a particular thread pool, if all of the pool's call threads are 
+ * already in use.  (Note that this function will only allow the 
+ * queue size to be increased.  Attempts to decrease the queue size
+ * are ignored.)
+ */
+void rpc_server_set_thread_pool_qlen
+(
+    [in]        rpc_thread_pool_handle_t  phandle,
+    [in]        unsigned32                queue_size,
+    [out]       unsigned32                *status
+);
+
+/*************************************************************************/
+/*******************  Comm Services Tower object  ************************/
+/*************************************************************************/
+
+/*
+ * R P C _ T O W E R _ T O _ B I N D I N G
+ *
+ * Creates a binding handle from the canonical representation
+ * of a protocol tower.
+ */
+void rpc_tower_to_binding
+(
+    [in]        byte_p_t                prot_tower,
+    [out]       rpc_binding_handle_t    *binding,
+    [out]       unsigned32              *status
+);
+
+
+/*
+ * R P C _ T O W E R _ V E C T O R _ F R O M _ B I N D I N G
+ *
+ * Creates a tower vector (of twr_t's) from a binding handle.
+ */
+void rpc_tower_vector_from_binding
+(
+    [in]        rpc_if_handle_t         if_spec,
+    [in]        rpc_binding_handle_t    binding,
+    [out]       rpc_tower_vector_p_t    *twr_vector,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ T O W E R _ V E C T O R _ F R E E
+ *
+ * Free the memory allocated by the RPC runtime for the protocol towers
+ * contained in the vector and the vector itself. A NULL pointer will be
+ * returned.
+ */
+void rpc_tower_vector_free
+(
+    [in, out]   rpc_tower_vector_p_t    *twr_vector,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/**********************  Name Services Entry object  *********************/
+/*************************************************************************/
+
+/*
+ * R P C _ N S _ E N T R Y _ I N Q _ R E S O L U T I O N
+ *
+ * Inquire on the resolution of a name service entry
+ */
+void rpc_ns_entry_inq_resolution
+(
+    [in]        unsigned32              entry_name_syntax,
+    [in]        unsigned_char_p_t       entry_name,
+    [out]       unsigned_char_p_t       *resolved_name,
+    [out]       unsigned_char_p_t       *unresolved_name,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/*********************  Name Services Authentication  ********************/
+/*************************************************************************/
+/*
+ * R P C _ N S _ S E T _ A U T H N
+ *
+ * Set the Name Services Authentication
+ */
+void rpc_ns_set_authn
+(
+    [in]        boolean32               authn,
+    [out]       boolean32               *previous_authn,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/**************************  Management Services  ************************/
+/*************************************************************************/
+
+/*
+ * R P C _ M G M T _ I N Q _ D F L T _ A U T H N _ L E V E L
+ *
+ * Returns the default protection level for an authentication service.
+ */
+void rpc_mgmt_inq_dflt_authn_level
+(
+    [in]        unsigned32              authn_svc,
+    [out]       unsigned32              *authn_level,
+    [out]       unsigned32              *st
+);
+
+/*
+ * R P C _ M G M T _ S E T _ M A X _ C O N C U R R E N C Y
+ *
+ * Notify RPC runtime of how many concurrent RPC threads are required
+ * by the application.
+ */
+void rpc_mgmt_set_max_concurrency
+(
+    [in]        unsigned32              max_client_calls,
+    [in]        unsigned32              max_server_calls,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ G E T _ M A X _ C O N C U R R E N C Y
+ *
+ * Allows an application to determine how many concurrent RPC calls can
+ * be supported by the runtime.
+ */
+unsigned32 rpc_mgmt_get_max_concurrency
+(
+);
+
+/*
+ * R P C _ M G M T _ S E T _ S E R V E R _ C O M _ T I M E O U T
+ *
+ * Set the default comm timeout setting for all server calls.
+ */
+void rpc_mgmt_set_server_com_timeout
+(
+    [in]        unsigned32              timeout,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ M G M T _ I N Q _ S E R V E R _ C O M _ T I M E O U T
+ *
+ * Returns the default comm timeout setting in use for all server calls.
+ */
+unsigned32 rpc_mgmt_inq_server_com_timeout
+(
+);
+
+/*************************************************************************/
+/*******************  Stub Services Binding object  **********************/
+/*************************************************************************/
+
+/*
+ * R P C _ B I N D I N G _ I N Q _ C L I E N T
+ *
+ * Inquire what client address space a binding handle refers to.
+ */
+void rpc_binding_inq_client
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       rpc_client_handle_t     *client_handle,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/*******************  Stub Services Call object  *************************/
+/*************************************************************************/
+
+/*
+ * R P C _ C A L L _ B L O C K _ U N T I L _ F R E E
+ *
+ * This routine will block until all marshaled RPC output arguments have
+ * been transmitted and acknowledged. It is provided for use by the server
+ * stub when the marshaled arguments are contained in buffers which are on
+ * stack. The danger is that the server stub would return to the RPC
+ * runtime thereby invalidating its stack and the buffer contents.
+ */
+void rpc_call_block_until_free
+(
+    [in]        rpc_call_handle_t       call_handle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ C A L L _ C A N C E L
+ *
+ * Forward a local cancel to the remote RPC thread identified by the call
+ * handle provided.
+ */
+void rpc_call_cancel
+(
+    [in]        rpc_call_handle_t       call_handle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ C A L L _ D I D _ M G R _ E X E C U T E
+ *
+ * Return whether or not the manager routine for the call identified
+ * by the call handle has executed.
+ */
+boolean32 rpc_call_did_mgr_execute
+(
+    [in]        rpc_call_handle_t       call_handle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ C A L L _ E N D
+ *
+ * End a Remote Procedure Call. This is the last in the sequence of
+ * calls by the client stub.
+ */
+void rpc_call_end
+(
+    [in, out]   rpc_call_handle_t       *call_handle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ C A L L _ T R A N S M I T _ F A U L T
+ *
+ * Forward an exception to the remote RPC thread identified by the call
+ * handle.
+ */
+void rpc_call_transmit_fault
+(
+    [in]        rpc_call_handle_t       call_handle,
+    [in]        rpc_iovector_p_t        fault_info,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ C A L L _ R E C E I V E
+ *
+ * Return a buffer of marshaled arguments from the remote thread.
+ */
+void rpc_call_receive
+(
+    [in]        rpc_call_handle_t       call_handle,
+    [out]       rpc_iovector_elt_t      *call_args,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ C A L L _ R E C E I V E _ F A U L T
+ *
+ * Return a buffer of marshaled fault information from the remote thread.
+ */
+void rpc_call_receive_fault
+(
+    [in]        rpc_call_handle_t       call_handle,
+    [out]       rpc_iovector_elt_t      *fault_info,
+    [out]       ndr_format_t            *remote_ndr_fmt,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ C A L L _ S T A R T
+ *
+ * Begin a Remote Procedure Call. This is the first in a sequence of
+ * calls by the client stub. Return the information needed to marshal input
+ * arguments.
+ */
+void rpc_call_start
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [in]        unsigned32              call_options,
+    [in]        rpc_if_handle_t         if_spec,
+    [in]        unsigned32              operation_number,
+    [out]       rpc_call_handle_t       *call_handle,
+    [out]       rpc_transfer_syntax_t   *xfer_syntax,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ C A L L _ T R A N S C E I V E
+ *
+ *
+ * Transmit a vector of marshaled arguments to the remote thread. Use the
+ * call handle as the identifier of the RPC being performed. Block until
+ * the first buffer of marshaled output arguments has been received.
+ */
+void rpc_call_transceive
+(
+    [in]        rpc_call_handle_t       call_handle,
+    [in]        rpc_iovector_p_t        in_call_args,
+    [out]       rpc_iovector_elt_t      *out_call_args,
+    [out]       ndr_format_t            *remote_ndr_fmt,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ C A L L _ T R A N S M I T
+ *
+ * Transmit a vector of marshaled arguments to the remote thread. Use the
+ * call handle as the identifier of the RPC being performed.
+ */
+void rpc_call_transmit
+(
+    [in]        rpc_call_handle_t       call_handle,
+    [in]        rpc_iovector_p_t        call_args,
+    [out]       unsigned32              *status
+);
+
+
+/*************************************************************************/
+/******************  Stub Services Network object  ***********************/
+/*************************************************************************/
+
+/*
+ * R P C _ N E T W O R K _ M A I N T A I N _ L I V E N E S S
+ *
+ * This routine tells the RPC runtime to actively keep communications alive
+ * with the process identified in the binding.
+ */
+void rpc_network_maintain_liveness
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N E T W O R K _ M O N I T O R _ L I V E N E S S
+ *
+ * This routine tells the RPC runtime to call the routine provided if
+ * communications are lost to the process represented by the client
+ * handle provided.
+ */
+void rpc_network_monitor_liveness
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [in]        rpc_client_handle_t     client_handle,
+    [in]        rpc_network_rundown_fn_t rundown_fn,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N E T W O R K _ S T O P _ M A I N T A I N I N G
+ *
+ * This routine tells the RPC runtime to cancel rpc_network_maintain_liveness.
+ */
+void rpc_network_stop_maintaining
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N E T W O R K _ S T O P _ M O N I T O R I N G
+ *
+ * This routine tells the RPC runtime to cancel rpc_network_monitor_liveness.
+ */
+void rpc_network_stop_monitoring
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [in]        rpc_client_handle_t     client_handle,
+    [out]       unsigned32              *status
+);
+
+/*
+ * R P C _ N E T W O R K _ C L O S E
+ *
+ * This routine tells the RPC runtime to close the underlying
+ * association with a binding handle.
+ */
+void rpc_network_close
+(
+    [in]        rpc_binding_handle_t    binding_handle,
+    [out]       unsigned32              *status
+);
+
+/*************************************************************************/
+/******************  Stub Services Utility object  ***********************/
+/*************************************************************************/
+
+/*
+ * R P C _ U T I L _ S T R C V T
+ *
+ * Perform ASCII <-> EBCDIC conversion.
+ */
+void rpc_util_strcvt
+(
+    [in]        boolean32               to_ascii,
+    [in]        unsigned32              len,
+    [in]        byte_p_t                src,
+    [in]        byte_p_t                dst
+);
+
+/*************************************************************************/
+/*******************  Comm Services Utilities **********************/
+/*************************************************************************/
+
+/*
+ * R P C _ S T R A L L O C
+ * 
+ * Make a copy of the input string into allocated storage.
+ */
+unsigned_char_p_t rpc_stralloc
+(
+    [in]        unsigned_char_p_t       string
+);
+
+
+}

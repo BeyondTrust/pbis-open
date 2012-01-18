@@ -1,0 +1,271 @@
+##
+## Copyright (C) Centeris Corporation 2004-2007
+## Copyright (C) Likewise Software    2007-2008
+## All rights reserved.
+## 
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http:##www.gnu.org/licenses/>.
+##
+
+#!/bin/sh
+
+LC_MESSAGES=C; export LC_MESSAGES
+PREFIX=@prefix@
+BINDIR="$PREFIX/bin"
+
+Help()
+{
+    echo "usage: $0 <start> | <stop> | <reload> | <restart>"
+}
+
+GetOsType()
+{
+    ${BINDIR}/domainjoin-cli get_os_type
+}
+
+GetDistroType()
+{
+    ${BINDIR}/domainjoin-cli get_distro
+}
+
+GetDistroVersion()
+{
+    ${BINDIR}/domainjoin-cli get_distro_version
+}
+
+StartCron()
+{
+    osType=`GetOsType`
+    case "$osType" in
+	Linux)
+             if [ -x /etc/init.d/cron ]; then
+                /etc/init.d/cron start
+                rc=$?
+             elif [ -x /etc/init.d/crond ]; then
+                /etc/init.d/crond start
+                rc=$?
+             else
+                echo "Error: Missing Cron control file"
+                return 1
+             fi
+             ;;
+        SunOS)
+             if [ -x /etc/init.d/cron ]; then
+                /etc/init.d/cron start
+                rc=$?
+             else
+                svcadm start svc:/system/cron
+                rc=$?
+             fi
+             ;;
+        AIX)
+             runlevel=`grep cron /etc/inittab | cut -d : -f 2`
+             chitab cron:${runlevel}:respawn:/usr/sbin/cron
+             init q
+             rc=$?
+             ;;
+        Darwin)
+             launchctl start com.vix.cron
+             rc=$?
+             ;;
+        HP-UX)
+             if [ -x /sbin/init.d/cron ]; then
+                /sbin/init.d/cron start
+                rc=$?
+             else
+                echo "Error: Missing Cron control file"
+                return 1
+             fi
+             ;;
+        *)
+             echo "Error: Unsupported OS $OS_TYPE"
+             return 1
+             ;;
+    esac
+
+    return $rc
+}
+
+StopCron()
+{
+    osType=`GetOsType`
+    case "$osType" in
+	Linux)
+             if [ -x /etc/init.d/cron ]; then
+                /etc/init.d/cron stop
+                rc=$?
+             elif [ -x /etc/init.d/crond ]; then
+                /etc/init.d/crond stop
+                rc=$?
+             else
+                echo "Error: Missing Cron control file"
+                return 1
+             fi
+             ;;
+        SunOS)
+             if [ -x /etc/init.d/cron ]; then
+                /etc/init.d/cron stop
+                rc=$?
+             else
+                svcadm stop svc:/system/cron
+                rc=$?
+             fi
+             ;;
+        AIX)
+             runlevel=`grep cron /etc/inittab | cut -d : -f 2`
+             chitab cron:${runlevel}:off:/usr/sbin/cron
+             init q
+             rc=$?
+             ;;
+        Darwin)
+             launchctl stop com.vix.cron
+             rc=$?
+             ;;
+        HP-UX)
+             if [ -x /sbin/init.d/cron ]; then
+                /sbin/init.d/cron stop
+                rc=$?
+             else
+                echo "Error: Missing Cron control file"
+                return 1
+             fi
+             ;;
+        *)
+             echo "Error: Unsupported OS $OS_TYPE"
+             return 1
+             ;;
+    esac
+}
+
+RestartCron()
+{
+    osType=`GetOsType`
+    distroVersion=`GetDistroVersion`
+    case "$osType" in
+        SunOS)
+             if [ -x /etc/init.d/cron ]; then
+                StopCron
+                rc=$?
+
+                if [ $rc -eq 0 ]; then
+                   StartCron
+                   rc=$?
+                fi
+             else
+                svcadm restart svc:/system/cron
+                rc=$?
+             fi
+             ;;
+        *)
+             StopCron
+             rc=$?
+
+             if [ $rc -eq 0 ]; then
+                StartCron
+                rc=$?
+             fi
+             ;;
+    esac
+
+    return $rc
+}
+
+ReloadCron()
+{
+    osType=`GetOsType`
+    case "$osType" in
+	Linux)
+             if [ -x /etc/init.d/cron ]; then
+                /etc/init.d/cron reload || /etc/init.d/cron restart
+                rc=$?
+             elif [ -x /etc/init.d/crond ]; then
+                /etc/init.d/crond reload || /etc/init.d/crond restart
+                rc=$?
+             else
+                echo "Error: Missing Cron control file"
+                return 1
+             fi
+             ;;
+        SunOS)
+             if [ -x /etc/init.d/cron ]; then
+	        StopCron
+                rc=$?
+                if [ $rc -eq 0 ]; then
+                   StartCron
+                   rc=$?
+                fi
+             else
+                svcadm refresh svc:/system/cron
+                rc=$?
+             fi
+             ;;
+        AIX)
+             crontab /var/spool/cron/crontabs/${USER}
+             rc=$?
+             ;;
+        Darwin)
+	     StopCron
+             rc=$?
+             if [ $rc -eq 0 ]; then
+                StartCron
+             fi
+             ;;
+        HP-UX)
+             if [ -x /sbin/init.d/cron ]; then
+	        StopCron
+                rc=$?
+                if [ $rc -eq 0 ]; then
+                   StartCron
+                   rc=$?
+                fi
+             else
+                echo "Error: Missing Cron control file"
+                return 1
+             fi
+             ;;
+        *)
+             echo "Error: Unsupported OS $OS_TYPE"
+             return 1
+             ;;
+    esac
+
+    return $rc
+}
+
+#
+# main
+#
+
+if [ 0 -eq "$#" ]; then
+   # if the script has no args, show help
+   Help
+   exit 0
+elif [ 'start' = "$1" ]; then
+   StartCron
+elif [ 'stop'  = "$1" ]; then
+   StopCron
+elif [ 'reload' = "$1" ]; then
+   ReloadCron
+elif [ 'restart' = "$1" ]; then
+   RestartCron
+else
+   Help
+   exit 1
+fi
+
+rc=$?
+
+if [ 0 != "$rc" ]; then
+   echo "FAILED"
+fi
+ 

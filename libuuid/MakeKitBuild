@@ -1,0 +1,32 @@
+SUBDIRS='include src'
+
+configure()
+{
+    mk_config_header 'include/config.h'
+  
+    lw_define_feature_macros
+
+    mk_multiarch_do
+        MK_CPPFLAGS="$MK_CPPFLAGS -U_XOPEN_SOURCE_EXTENDED"
+        MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+        case "$MK_OS:$MK_ISA" in
+            hpux:hppa64)
+                # Work around broken system headers
+                MK_CPPFLAGS="$MK_CPPFLAGS -D_NET_IF6_INCLUDED"
+                ;;
+        esac
+    mk_multiarch_done
+
+    mk_check_headers \
+        HEADERDEPS="sys/types.h" \
+        inttypes.h unistd.h stdlib.h sys/ioctl.h \
+        sys/socket.h sys/un.h sys/sockio.h \
+        netinet/in.h net/if_dl.h sys/syscall.h
+
+    mk_check_headers \
+        HEADERDEPS="sys/socket.h sys/types.h" \
+	net/if.h
+
+    mk_check_libraries \
+        socket
+}

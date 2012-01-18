@@ -1,0 +1,22 @@
+make()
+{
+    CLIENT_SOURCES="\
+        access.c               \
+        connect.c              \
+        driver.c               \
+        globals.c              \
+        libmain.c              \
+        ntfileapictx.c         \
+        smbfileapictx.c        \
+        srvshareapi.c          \
+        srvtransportapi.c      \
+        thread.c               \
+        win32.c"
+
+    mk_library \
+        LIB=lwioclient \
+        SOURCES="$CLIENT_SOURCES" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="lwmsg/lwmsg.h lw/base.h krb5.h" \
+        LIBDEPS="lwiocommon lwioshareinfo krb5"
+}

@@ -1,0 +1,143 @@
+Mod_auth_kerb (http://modauthkerb.sourceforge.net/) is an Apache module
+designed to provide Kerberos authentication to the Apache web server. Using the
+Basic Auth mechanism, it retrieves a username/password pair from the browser
+and checks them against a Kerberos server as set up by your particular
+organization. The module also supports the Negotiate authentication method,
+which performs full Kerberos authentication based on ticket exchanges, and does
+not require users to insert their passwords to the browser. In order to use the
+Negotiate method you need a browser supporting it (currently standard IE6.0 or
+Mozilla with the negotiateauth extension (http://negotiateauth.mozdev.org/).
+
+The module supports both kerberos4 and kerberos5 protocols for password
+verification. The Negotiate mechanism can be only used with Kerberos v5. The
+module supports both 1.x and 2.x versions of Apache.
+
+If you are using the Basic Auth mechanism, the module does not do any special
+encryption of any sort. The passing of the username and password is done with
+the same Base64 encoding that Basic Auth uses. This can easily be converted to
+plain text. To counter this, I would suggest also using mod_ssl or Apache-SSL.
+The use of SSL encryption is also recommended if you are using the Negotiate
+method.
+
+When password based authentication for Kerberos is used, via the Basic Auth 
+mechanism, the incoming user name is mapped to a Kerberos principal name. 
+The user may provide the logon credentials in one of the following formats
+    <REALM>\<user> or <user>@<REALM> or just <user>.
+The mapping can be controlled by a regular expression in the Kerberos 
+configuration file (usually /etc/krb5.conf) under the appdefaults section 
+as shown below. The mappings parameter takes a space separated list of
+"<regular expression> <target>" pairs where the matching entries from the 
+<regular expression> are substituted in the <target> for the $1, $2, $3 ... 
+placeholders.
+Similar to the mappings parameter is the reverse_mappings parameter. It maps 
+the Kerberos principal name of the authenticated user back to the user in the
+HTTP request.
+
+[appdefaults]
+    httpd = {
+        mappings = SOMEDOMAIN\\(.*) $1@SOMEDOMAIN.SUFFIX.COM
+        reverse_mappings = (.*)@SOMEDOMAIN\.SUFFIX\.COM SOMEDOMAIN\$1
+    }
+
+
+Building and installing the module
+----------------------------------
+see INSTALL
+
+Summary of Supported Directives
+-------------------------------
+
+AuthType type
+   For Kerberos authentication to work, AuthType must be set to 'Kerberos'. For
+   the reasons of backwards compatibility the values KerberosV4 and KerberosV5
+   are also supported. Their use is not recommended though, for finer setting
+   use following three options.
+
+KrbMethodNegotiate on | off	(set to on by default)
+   To enable or disable the use of the Negotiate method. You need a special
+   support on the browser side to support this mechanism.
+
+KrbMethodK5Passwd on | off	(set to on by default)
+   To enable or disable the use of password based authentication for Kerberos
+   v5.
+
+KrbMethodK4Passwd on | off 	(set to on by default)
+   To enable or disable the use of password based authentication for Kerberos
+   v4.
+
+KrbAuthoritative on | off	(set to on by default)
+   If set to off this directive allow authentication controls to be pass on to
+   another modules. Use only if you really know what you are doing.
+
+KrbAuthRealms realm1 [realm2 ... realmN]
+   This option takes one or more arguments (separated by spaces), specifying
+   the Kerberos realm(s) to be used for authentication. This defaults to the
+   default realm taken from the local Kerberos configuration.
+
+KrbVerifyKDC on | off		(set to on by default)
+   This option can be used to disable the verification tickets against local
+   keytab to prevent KDC spoofing atacks. It should be used only for testing
+   purposes. You have been warned.
+
+KrbServiceName server_principal
+   Specifies a principal name to use by Apache when authenticating the clients.
+   By default value of the form
+   	HTTP/<FQDN_of_apache>@<realm>
+   is used. The FQDN part can contain any hostname and can be used to work
+   around problems with misconfigured DNS. A corresponding key of this name
+   must be stored in the keytab.
+
+Krb4Srvtab /path/to/srvtab
+   This option takes one argument, specifying the path to the Kerberos V4
+   srvtab. It will simply use the "default srvtab" from Kerberos V4's
+   configuration if this option is not specified. The srvtab must be readable
+   for the apache process, and should be different from srvtabs containing keys
+   for other services.
+
+Krb5Keytab /path/to/keytab
+   This option takes one argument, specifying the location of the Kerberos V5
+   keytab file. It will use the "default keytab" from Kerberos V5's config if
+   it is not specified here. The keytab file must be readable for the apache
+   process, and should be different from other keytabs in the system.
+
+KrbSaveCredentials on | off	(set to off by default)
+   This option enables credential saving functionality.
+
+KrbDelegateBasic on | off       (set to off by default)
+   If set to 'on' this options causes that Basic authentication is always
+   offered regardless setting the KrbMethodK[45]Pass directives. Then, if 
+   a Basic authentication header arrives authentication decision is passed
+   along to another modules. This option is a work-around for insufficient
+   authentication scheme in Apache (Apache 2.1 seems to provide better support
+   for multiple various authentication mechanisms).
+
+Note on server principals
+-------------------------
+Now you have to create an service key for the module, which is needed to
+perform client authentication. Verification of the kerberos password has two
+steps. In the first one the KDC is contacted using the password trying to
+receive a ticket for the client. After this ticket is sucessfuly acquired, the
+module must also verify that KDC hasn't been deliberately faked and the ticket
+just received can be trusted. If this check would haven't been done any
+attacker capable of spoofing the KDC could impersonate any principal registered
+with the KDC. In order to do this check the apache module must verify that the
+KDC knows its service key, which the apache shares with the KDC. This service
+key must be created during configuration the module. This service key is also
+needed when the Negotiate method is used. In this case the module acts as a
+standard kerberos service (similarly to e.g. kerberized ssh or ftp servers).
+Default name of the service key is HTTP/<fqdn_of_www_server>@REALM, another
+name of the first instance can be set using the KrbServiceName option. The key
+must be stored in a keytab on a local disk, the Krb5Keytab and Krb4Srvtab
+options are used to specify the filename with the keytab. This file should be
+only readable for the apache process and contain only the key used for www
+authentication.
+
+Ticket File/Credential Cache Saving
+-----------------------------------
+Sometimes there is need to keep the ticket file or credential cache around
+after a user authenticates, normally for cgi scripts. If you turn on
+KrbSaveCredentials, the tickets will be retrieved into a ticket file or
+credential cache that will be available for the request handler. The ticket
+file will be removed after request is handled.
+
+$Id: README,v 1.11 2005/08/05 15:16:29 kouril Exp $

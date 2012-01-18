@@ -1,0 +1,5 @@
+make()
+{
+    mk_headers \
+        MASTER=adtool/types.h    
+}

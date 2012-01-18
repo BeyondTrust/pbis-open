@@ -1,0 +1,5 @@
+interface krb5pac
+{
+	[encode] PAC_LOGON_INFO_Encode();
+	[decode] PAC_LOGON_INFO_Decode();
+}

@@ -1,0 +1,21 @@
+make()
+{
+    KRB5PAC_SOURCES="\
+        krb5pac.c \
+        krb5pac_cstub.c"
+
+    lw_dceidl \
+	IDL="../../../idl/krb5pac.idl" \
+	CSTUB="krb5pac_cstub.c" \
+	HEADER="krb5pac_h.h" \
+        HEADERDEPS="lw/base.h" \
+	INCLUDEDIRS=". ../../../include"
+
+    mk_group \
+	GROUP=krb5pac \
+	SOURCES="$KRB5PAC_SOURCES" \
+	INCLUDEDIRS=". ../../../include" \
+	HEADERDEPS="dce/rpc.h lw/base.h" \
+	LIBDEPS="lwbase dcerpc" \
+	DEPS="krb5pac_h.h"
+}

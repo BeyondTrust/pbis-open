@@ -1,0 +1,14 @@
+make()
+{
+    XML_SOURCES="\
+        domainjoin-cli.8.xml \
+        domainjoin-gui.8.xml \
+        likewise-open.7.xml"
+
+    for i in ${XML_SOURCES}
+    do
+        mk_docbook_man \
+            SOURCE="$i" \
+            MANPAGES="${i%.xml}"
+    done
+}

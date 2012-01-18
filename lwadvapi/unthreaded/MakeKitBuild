@@ -1,0 +1,16 @@
+SUBDIRS='error lwunistr memory file dscache time'
+
+make()
+{
+	mk_multiarch_do
+            mk_library \
+                LIB="lwadvapi_nothr" \
+                GROUPS="\
+                    error/error \
+                    file/file \
+                    dscache/dscache \
+                    memory/memory \
+                    lwunistr/lwunistr \
+                    time/time"
+	mk_multiarch_done
+}

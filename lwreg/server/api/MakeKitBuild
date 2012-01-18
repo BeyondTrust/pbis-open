@@ -1,0 +1,38 @@
+make()
+{
+    API_SOURCES="\
+        main.c                \
+        globals.c             \
+        ipc_registry.c        \
+        regserver.c           \
+        regsecurity.c"
+
+    case "$LW_DEVICE_PROFILE" in
+        "embedded")
+            mk_group \
+                GROUP="regserverapi-mem" \
+                CPPFLAGS="-DREG_USE_MEMORY" \
+                INCLUDEDIRS="../../include ../include" \
+                SOURCES="$API_SOURCES" \
+                LIBDEPS="regcommon uuid lwbase $LIB_PTHREAD" \
+                HEADERDEPS="lw/base.h lwmsg/lwmsg.h"
+                ;;
+        *)
+            mk_group \
+                GROUP="regserverapi-mem" \
+                CPPFLAGS="-DREG_USE_MEMORY" \
+                INCLUDEDIRS="../../include ../include" \
+                SOURCES="$API_SOURCES" \
+                LIBDEPS="regcommon uuid lwbase $LIB_PTHREAD" \
+                HEADERDEPS="lw/base.h lwmsg/lwmsg.h"
+
+            mk_group \
+                  GROUP="regserverapi-sql" \
+                  CPPFLAGS="-DREG_USE_SQLITE" \
+                  INCLUDEDIRS="../../include ../include" \
+                  SOURCES="$API_SOURCES" \
+                  LIBDEPS="regcommon uuid lwbase $LIB_PTHREAD" \
+                  HEADERDEPS="lw/base.h sqlite3.h lwmsg/lwmsg.h"
+                  ;;
+    esac
+}

@@ -1,0 +1,442 @@
+/*
+ * 
+ * (c) Copyright 1991 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1991 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1991 DIGITAL EQUIPMENT CORPORATION
+ * To anyone who acknowledges that this file is provided "AS IS"
+ * without any express or implied warranty:
+ *                 permission to use, copy, modify, and distribute this
+ * file for any purpose is hereby granted without fee, provided that
+ * the above copyright notices and this notice appears in all source
+ * code copies, and that none of the names of Open Software
+ * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
+ * Corporation be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior
+ * permission.  Neither Open Software Foundation, Inc., Hewlett-
+ * Packard Company, nor Digital Equipment Corporation makes any
+ * representations about the suitability of this software for any
+ * purpose.
+ * 
+ */
+/*
+ */
+/*
+**
+**  NAME:
+**
+**      dsm.idl
+**
+**  FACILITY:
+**
+**      Global Location Broker (GLB)
+**
+**  ABSTRACT:
+**
+**
+**
+**
+*/
+
+[local] interface dsm {
+
+/*  DSM (Data Store Manager) public interface definition
+
+    The Data Store Manager is a heap storage allocation package wherein
+    allocated records are strongly associated with storage in a backing
+    file, such that they can be stably stored upon modification.  The basic
+    paradigm is that the client ALLOCATEs a block of some requested size,
+    modifies it in memory, and WRITEs it; successful completion of the
+    WRITE implies that the record has been stably stored in the file.
+
+    DSM uses OS page alignment to define an atomic operation (a write of
+    or within a page is assumed to either succeed or fail, without any
+    intermediate state).  Records are laid out in the file such that the
+    DSM header, as well as some reasonable chunk of the start of
+    application data (e.g. the first 64 bytes total of each record) are
+    contiguous in a page, and so can be written atomically.  A write that
+    spans a page boundary occurs in two phases (assuming the record being
+    written was previously free and is so marked on disk): the data portion
+    is written and synched first, then the DSM header (specifically the
+    'inuse/free' mark) to commit the write.
+
+    Updates are not atomically supported.  Changing the contents of a
+    record requires conceptually adding a new version and deleting the
+    old one.  DSM provides an operation to 'detach' a record (mark it free
+    in the file, effectively deleting it if a crash occurs at this point),
+    after which it can be written normally.  This is adequate for
+    applications like DRM which can recover from crashes by replaying the
+    last operation on its propagation queue.  Another approach would be
+    to allocate a new record and make a copy, setting a 'new' flag in its
+    application header, then freeing the old copy, and finally clearing
+    the 'new' flag in the new copy.  Upon crash recovery the application
+    might see two versions of the same datum, one flagged 'new', and can
+    discard the other one (or it may see only the 'new' version).
+
+    The DSM does not currently itself provide mutual exclusion, although
+    it must be used in such a context (the caller is currently assumed
+    to do the mutex).
+    
+    Function summary:
+
+    dsm_create     - create a new, empty data store in a named file
+    dsm_open       - open an existing data store in a named file
+    dsm_close      - close an open data store
+
+    dsm_allocate   - allocate a block of some specified size
+    dsm_write      - write a block to the backing store, stable upon completion
+    dsm_free       - free a block
+
+    dsm_read       - successively step through the store, returning each 
+                      active record
+    dsm_marker_reset - reset the marker used by dsm_read to the beginning
+
+    dsm_get_info
+    dsm_set_info   - allow access to application-defined per-file info
+    
+    dsm_get_stats  - get statistics about file size, free space, etc.
+
+    dsm_reclaim    - reclaim free space in data store
+
+    dsm_detach     - mark a block free on the backing store (allow simple 
+                      update paradigm)
+    dsm_write_hdr  - write only the beginning of a record (a small header can 
+                      be updated atomically)
+
+(see below for details on calling sequences and use)
+
+*/
+
+const long dsm_mod                    = 0x1C0B0000;
+
+const long dsm_err_create_failed      = 0x1C0B0001;
+const long dsm_err_file_io_error      = 0x1C0B0002;
+const long dsm_err_open_failed        = 0x1C0B0003;
+const long dsm_err_version            = 0x1C0B0004;
+const long dsm_err_no_memory          = 0x1C0B0005;
+const long dsm_err_duplicate_write    = 0x1C0B0006;
+const long dsm_err_header_too_long    = 0x1C0B0007;
+const long dsm_err_no_more_entries    = 0x1C0B0008;
+const long dsm_err_invalid_handle     = 0x1C0B0009;
+const long dsm_err_invalid_pointer    = 0x1C0B000A;
+const long dsm_err_info_too_long      = 0x1C0B000B;
+const long dsm_err_file_busy          = 0x1C0B000C;
+const long dsm_err_invalid_marker     = 0x1C0B000D;
+ 
+typedef void          * dsm_handle_t;
+typedef unsigned long   dsm_marker_t;
+
+typedef struct dsm_stats_t {        /* returned from dsm_get_stats */
+    unsigned long   size;           /* size in bytes */
+    unsigned long   free_space;     /* how much of that is free */
+    unsigned long   largest_free;   /* size of largest free block */
+} dsm_stats_t;
+
+const long dsm_version       = 1;
+const long dsm_hdr_size      = 48;           /* amount you can write_hdr */
+const long dsm_magic_marker  = 0xF000000F;   /* value of reset marker */
+
+/** dsm_create(fname, &dsh, &st)
+
+    Create a new data store, to live in the (new) file named fname.  Returns
+    a data store handle to be used in subsequent dsm calls to refer to that
+    data store.
+*/
+
+void dsm_create(
+    [in, string]  char    * fname,  /* filename */
+    [out] dsm_handle_t    * dsh,    /* data store handle */
+    [out] error_status_t  * st      /* status */
+);
+
+/** dsm_open(fname, &dsh, &st)
+
+    Open the preexisting data store in the file named fname.  Returns
+    a data store handle to be used in subsequent dsm calls to refer to that
+    data store.
+*/
+
+void dsm_open(
+    [in, string]  char    * fname,  /* filename */
+    [out] dsm_handle_t    * dsh,    /* data store handle */
+    [out] error_status_t  * st      /* status */
+);    
+
+/** dsm_close(&dsh, &st)
+
+    Close the open data store identified by dsh.
+*/
+
+void dsm_close(
+    [in, out] dsm_handle_t  * dsh,  /* data store handle */
+    [out] error_status_t    * st    /* status */
+);
+
+/** dsm_allocate(dsh, len, &p, &st)
+
+    Allocate a block of storage len bytes long, in memory and in the
+    backing store identified by dsh; effect is similar to p = malloc(len).
+    The caller will fill in the desired contents of the block and then
+    use dsm_write to commit those contents stably -- until this is done
+    the block is strictly volatile.
+*/
+
+void dsm_allocate(
+    [in]  dsm_handle_t        dsh,  /* data store handle */
+    [in]  unsigned long       len,  /* size of block to allocate */
+    [out] void *            * p,    /* pointer to block */
+    [out] error_status_t    * st    /* status */
+);
+
+/** dsm_write(dsh, p, &st)
+
+    p is a pointer returned by dsm_allocate.  dsm_write writes the block's
+    contents to the backing store (in a stable manner); upon return with
+    a good status, the caller is assured that the block is backed up.
+*/
+void dsm_write(
+    [in] dsm_handle_t         dsh,  /* data store handle */
+    [in] void *               p,    /* pointer to block */
+    [out] error_status_t    * st    /* status */
+);
+
+/** dsm_write_hdr(dsh, p, len, &st)
+
+    Stably writing arbitrary-length blocks is inherently more expensive than
+    certain shorter writes.  DSM provides the feature that the first 48 bytes
+    of a record can be written more efficiently than the general case, in
+    support of the common case of maintaining more volatile information about
+    a record in a header.  dsm_write_hdr is equivalent to dsm_write, except
+    that only the first len bytes are written (len being <= 48).  (It is 
+    expected that len will generally be expressed as a sizeof expression).
+*/
+
+void dsm_write_hdr(
+    [in] dsm_handle_t       dsh,    /* data store handle */
+    [in] void *             p,      /* pointer to block */
+    [in] unsigned long      len,    /* length of header */
+    [out] error_status_t  * st      /* status */
+);
+
+/** dsm_free(dsh, p, &st)
+
+    p is a pointer to a block in the data store identified by dsh; dsm_free
+    returns it to the free pool (future references through p are undefined).
+*/
+void dsm_free(
+    [in] dsm_handle_t       dsh,    /* data store handle */
+    [in] void *             p,      /* pointer to block */
+    [out] error_status_t  * st      /* status */
+);
+
+/** dsm_detach(dsh, p, &st)
+
+    DSM does not support the concept of updating records, that is,
+    dsm_write may not be called with a pointer to a block that has been
+    written by dsm_write in the past.  Generally update operations must
+    be considered as a delete and an add, with the calling application
+    providing semantics for ensuring stability if only one succeeds.  For
+    instance, DAM uses a sequence of: allocating a new copy flagged "New"
+    in its header, writing that, then freeing the original, and finally
+    using dsm_write_hdr to clear the "New" mark from the replacement.
+    Its database initialization code deals appropriately with finding a
+    record marked "New".  However, some applications have inherent
+    mechanisms for recovering from partial success of delete/add pairs
+    (such as an activity log, or propagation list).  For these applications
+    the dsm_detach operation is provided.  It is similar to dsm_free,
+    except that the in-memory copy of the record is not freed, and becomes
+    a candidate for dsm_write.  Thus a sequence of dsm_detach/dsm_write
+    provides an update operation, with the proviso that a failure between
+    the detach and write could result in the record being lost if no
+    preventative action is taken.  dsm_detach of an already free/detached
+    record is a no-op.
+*/
+
+void dsm_detach(
+    [in] dsm_handle_t       dsh,    /* data store handle */
+    [in] void *             p,      /* pointer to block */
+    [out] error_status_t  * st      /* status */
+);
+
+/** dsm_get_info(dsh, &info, len, &st)
+    dsm_set_info(dsh, &info, len, &st)
+
+    DSM provides a mechanism for an application to maintain a small amount
+    (up to 256 bytes) of its own information pertaining to an entire data
+    store, such as version information.  dsm_set_info copies len bytes of
+    application information from info into the data store header.  
+    dsm_get_info retrieves len bytes from the data store into info.  len
+    is presumed to be constant, typically a sizeof expression, and is not
+    stored in the data store.
+*/
+
+void dsm_get_info(
+    [in] dsm_handle_t       dsh,    /* data store handle */
+    [in] void *             info,   /* information buffer */
+    [in] unsigned long      len,    /* length of header */
+    [out] error_status_t  * st      /* status */
+);
+
+void dsm_set_info(
+    [in] dsm_handle_t       dsh,    /* data store handle */
+    [in] void *             info,   /* information buffer */
+    [in] unsigned long      len,    /* length of header */
+    [out] error_status_t  * st      /* status */
+);
+
+/** dsm_read(dsh, &marker, &p, &st)
+    dsm_marker_reset(&marker)
+
+    dsm_read is used to successively examine every allocated record in
+    the data store identified by dsh.  marker is used by dsm to hold
+    information required to find successive records; it should be
+    initialized by calling dsm_marker_reset to get the first record.
+    dsm_read will return with status_ok for every valid stably-stored
+    record, and with dsm_err_no_more_entries when there are no more valid
+    entries.  Note that if the data store is changed between dsm_read
+    calls (e.g. by another task, or if a marker is stored over time) it
+    is not guaranteed that all records will be seen.  However, the 
+    behavior of dsm_read is well-defined in such circumstances and should
+    see as many records as possible consistent with a linear pass through
+    the data store, without abnormal behavior.
+
+*/
+
+void dsm_read(
+    [in] dsm_handle_t           dsh,    /* data store handle */
+    [in, out] dsm_marker_t    * marker, /* marker  */
+    [out] void *              * p,      /* record */
+    [out] error_status_t      * st      /* status */
+);
+
+void dsm_marker_reset(
+    [in, out] dsm_marker_t    * marker  /* marker  */
+);
+
+/** dsm_locate(dsh, marker, &p, &st)
+
+    Returns a pointer to a dsm block, given a marker identifying that block, as
+    returned by dsm_read (the marker returned by a dsm_read call corresponds 
+    to the record returned by that call), or by dsm_inq_marker.  A marker,
+    unlike a pointer, is valid across datastore closes.  An application could
+    store a marker in a file before closing a datastore, and later relocate
+    a pointer to the storage (after reopening the datastore) with dsm_locate.
+    Freeing a block clearly invalidates any markers to it.  A marker clearly
+    only applies to the datastore it originally pertained to.  It is not 
+    meaningful to locate a reset marker.
+*/
+
+void dsm_locate(
+    [in] dsm_handle_t           dsh,    /* data store handle */
+    [in] dsm_marker_t           marker, /* marker  */
+    [out] void *              * p,      /* record */
+    [out] error_status_t      * st      /* status */
+);
+
+/** dsm_inq_marker(dsh, p, &marker, &st)
+
+    Returns a marker to the given dsm block.
+*/
+void dsm_inq_marker(
+    [in] dsm_handle_t           dsh,    /* data store handle */
+    [in] void *                 p,      /* record */
+    [out] dsm_marker_t        * marker, /* marker  */
+    [out] error_status_t      * st      /* status */
+);
+/** dsm_inq_size(dsh, p, &size, &st)
+
+    Returns (in the "size" parameter) the size in bytes allocated to the 
+    given dsm block.  This may be larger than the amount requested when
+    the block was allocated.
+*/
+void dsm_inq_size(
+    [in] dsm_handle_t           dsh,    /* data store handle */
+    [in] void *                 p,      /* record */
+    [out] unsigned32          * size,   /* its size */
+    [out] error_status_t      * st      /* status */
+);
+
+/** dsm_get_stats(dsh, &stats, &st)
+
+    Fills in the given DSM statistics record (see definition above) with
+    information about the open data store (such as total size, free space,
+    largest free block).  Immediately after opening a data store the largest
+    free block represents the largest record that could be allocated without
+    growing the file.
+*/
+
+void dsm_get_stats(
+    [in] dsm_handle_t           dsh,    /* data store handle */
+    [out] dsm_stats_t         * stats,  /* statistics */
+    [out] error_status_t      * st      /* status */
+);
+
+/** dsm_reclaim(dsh, name, tempname, oldname, pct, &st): boolean
+
+    DSM datastores grow as required, without limit, but will not shrink;
+    that is, if you allocate (and write) a large amount of data, and 
+    subsequently free it, the space occupied on the disk and in memory
+    becomes eligible for reuse by new DSM records, but is not returned
+    to the operating system.  dsm_reclaim is used to reclaim this "high
+    water mark" free storage.  It makes a new copy of a datastore
+    without the excess storage (DSM stable memory requirements make it
+    impossible to reclaim space "in place"), if more than a specified
+    percentage of the file is free space.  
+
+    dsm_reclaim takes a handle to a DSM datastore.  If the handle contains
+    NULL, dsm_reclaim opens the data store, does the reclaim (if appropriate), 
+    and then closes the data store.  If the handle points to an open data 
+    store, DSM returns a handle to the original data store (if no reclaim 
+    was done) or to the reclaimed data store.  In some error cases, DSM 
+    returns a NULL handle even though the input handle pointed to an open 
+    data store.
+
+    dsm_reclaim also takes 3 filenames: the datastore name, the 'old' name, 
+    and the 'new' name; typical examples might be "mydb", "mydb.bak", and 
+    "mydb.new".  The following sequence is applied: 
+
+            if handle is NULL, open mydb
+            check mydb stats
+            if freespace doesn't exceed specified percent
+                if handle is NULL, close mydb 
+                return 
+
+            create "mydb.new"
+            for every record in mydb, make a copy in mydb.new
+            close both datastores
+            rename "mydb" to "mydb.bak"
+            rename "mydb.new" to "mydb"
+            if handle is non-NULL, open mydb
+
+    dsm_reclaim returns true if the file was reclaimed, false otherwise (in case 
+    of error or under free_pct).  If the input handle pointed to an open data 
+    store then the returned handle points to an open data store (except in certain
+    error cases when it contains NULL).
+
+    NB: Since data is moved around in the datastore during dsm_reclaim, 
+    markers and pointers into the DSM datastore are invalid after 
+    dsm_reclaim and their use will yield indeterminate results.  It
+    is best to invoke dsm_reclaim on a closed data store or immediately 
+    after opening the data store.
+
+    Observe that this is really at a higher level than DSM per se; dsm_reclaim
+    is provided as a common utility as most DSM applications will want this
+    sort of functionality.  Individual applications may choose to provide
+    variations on this basic algorithm.  This particular sequence is safe in
+    the face of crashes.  There should be two files in any case: if "mydb"
+    exists, it should be used; if it doesn't then "mydb.bak" contains the old
+    version and "mydb.new" the new (reclaimed) one.  (if "mydb.new" and "mydb" 
+    both exist, "mydb.new" probably contains an incompletely reclaimed copy, and 
+    should be discarded).  
+
+*/
+
+boolean dsm_reclaim(
+    [in, out] dsm_handle_t  * dsh,      /* data store handle */
+    [in, string]  char      * fname,    /* datastore filename */
+    [in, string]  char      * tempname, /* temp file to build new datastore in */
+    [in, string]  char      * oldname,  /* what to rename the pre-reclamation store */
+    [in]  unsigned32          free_pct, /* integer %age of free space to tolerate */
+    [out] error_status_t    * st        /* status */
+);
+
+}

@@ -1,0 +1,42 @@
+                          =================
+                            Likewise Open
+                          =================
+
+Likewise Open is provided under the terms of the GNU General Public 
+License (GPL version 2) and the GNU Library General Public License
+(LGPL version 2.1). The additional components listed below are
+covered under separate license agreements:
+
+    MIT Kerberos - MIT Kerberos 5 and other licenses
+    OpenLDAP - OpenLDAP Public License
+    Novell DCE-RPC - BSD
+    LibXML2 - BSD
+    libuuid from e2fsprogs - BSD
+    libiconv - LGPLv2
+    OpenSSL - BSD
+
+For more details and for the full text for each of these 
+licenses, read the LICENSES and COPYING files included with 
+this software.
+
+Please note that the following is a special exception to the GPL
+and LGPL license granted in the libgss and lsass components for
+the sole purpose of linking with the OpenSSL libraries.
+
+    In addition, as a special exception, Likewise Software give
+    permission to link the code of portions of this program with the
+    OpenSSL library under certain conditions as described in each
+    individual source file, and distribute linked combinations
+    including the two.
+
+    You must obey the GNU General Public License and Library Public
+    License in all respects for all of the code used other than
+    OpenSSL.  If you modify file(s) with this exception, you may extend
+    this exception to your version of the file(s), but you are not
+    obligated to do so.  If you do not wish to do so, delete this
+    exception statement from your version.  If you delete this exception
+    statement from all source files in the program, then also delete it
+    here.
+
+====
+

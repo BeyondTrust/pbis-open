@@ -1,0 +1,12 @@
+make()
+{
+    LOCATOR_SOURCES="service_locator.c"
+
+    mk_dlo \
+	DLO=liblwnet_service_locator \
+	INSTALLDIR="${MK_LIBDIR}/krb5/plugins/libkrb5" \
+	SOURCES="$LOCATOR_SOURCES" \
+	INCLUDEDIRS="../include" \
+	HEADERDEPS="krb5.h krb5/locate_plugin.h lwerror.h reg/lwreg.h" \
+	LIBDEPS="krb5 k5crypto lwadvapi"
+}

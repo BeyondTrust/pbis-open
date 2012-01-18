@@ -1,0 +1,14 @@
+SUBDIRS=lsass
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+
+    lw_define_feature_macros
+
+    mk_check_headers \
+        FAIL=yes \
+        stdlib.h
+}

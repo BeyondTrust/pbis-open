@@ -1,0 +1,22 @@
+make()
+{
+    COMMON_SOURCES="globals.c cfg.c ipc.c"
+    LWIO_SOURCES="$COMMON_SOURCES main-svcm.c"
+    DRIVER_GROUPS=""
+
+    if [ "$LWIO_BUILTIN_DRIVERS" = "yes" ]
+    then
+        for _driver in ${LWIO_DRIVERS}
+        do
+            DRIVER_GROUPS="$DRIVER_GROUPS ../$_driver/$_driver"
+        done
+    fi
+
+    lw_service \
+        SERVICE="lwio" \
+        SOURCES="$LWIO_SOURCES" \
+        GROUPS="$DRIVER_GROUPS" \
+        INCLUDEDIRS=". ../include ../../include" \
+        HEADERDEPS="reg/lwntreg.h lwadvapi.h lw/base.h" \
+        LIBDEPS="iomgr lwnetclientapi lwmsg lwmsg_nothr lwbase lwbase_nothr lwadvapi lwadvapi_nothr regclient lwiocommon $LIB_PTHREAD"
+}

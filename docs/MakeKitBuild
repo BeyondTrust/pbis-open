@@ -1,0 +1,13 @@
+SUBDIRS="xml"
+MODULES="docbook"
+
+configure()
+{
+    mk_check_docbook
+
+    if ! mk_have_docbook
+    then
+        mk_msg "docbook unavailable -- man pages will not be built"
+        mk_skip_subdir "xml"
+    fi
+}

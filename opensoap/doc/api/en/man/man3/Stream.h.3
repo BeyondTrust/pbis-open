@@ -1,0 +1,226 @@
+.TH "Stream.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Stream.h \- OpenSOAP API Stream Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/ByteArray.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef tagOpenSOAPStream \fBOpenSOAPStream\fP"
+.br
+.RI "\fIOPenSOAPStream Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPStream\fP * \fBOpenSOAPStreamPtr\fP"
+.br
+.RI "\fIOpenSOAPStream Pointer Type Definition. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPStreamRelease\fP (\fBOpenSOAPStreamPtr\fP s)"
+.br
+.RI "\fIRelease OpenSOAP Stream. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStreamRead\fP (\fBOpenSOAPStreamPtr\fP s, unsigned char *buf, size_t *buf_sz)"
+.br
+.RI "\fIRead From OpenSOAP Stream. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStreamWrite\fP (\fBOpenSOAPStreamPtr\fP s, const unsigned char *buf, size_t *buf_sz)"
+.br
+.RI "\fIWrite To OpenSOAP Stream. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStreamReadToDelm\fP (\fBOpenSOAPStreamPtr\fP s, const unsigned char *delm, size_t delm_sz, \fBOpenSOAPByteArrayPtr\fP buf)"
+.br
+.RI "\fIRead From OpenSOAP Stream Up To Delimiter. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStreamReadChunkedDataStream\fP (\fBOpenSOAPStreamPtr\fP s, \fBOpenSOAPStreamPtr\fP out)"
+.br
+.RI "\fIRead Chunked Data From OpenSOAP Stream and write out to Stream. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStreamReadChunkedData\fP (\fBOpenSOAPStreamPtr\fP s, \fBOpenSOAPByteArrayPtr\fP buf)"
+.br
+.RI "\fIRead Chunked Data From OpenSOAP Stream. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStreamReadWithSize\fP (\fBOpenSOAPStreamPtr\fP s, size_t sz, \fBOpenSOAPByteArrayPtr\fP buf)"
+.br
+.RI "\fIRead Specified Size From OpenSOAP Stream. If size is 0, read as much as possible. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStreamReadWithSizeStream\fP (\fBOpenSOAPStreamPtr\fP s, size_t sz, \fBOpenSOAPStreamPtr\fP out)"
+.br
+.RI "\fIRead Specified Size From OpenSOAP Stream. If size is 0, read as much as possible. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStreamWriteByteArray\fP (\fBOpenSOAPStreamPtr\fP s, \fBOpenSOAPByteArrayPtr\fP buf, size_t *write_sz)"
+.br
+.RI "\fIWrite To OpenSOAP Stream. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API Stream Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPStreamRead (\fBOpenSOAPStreamPtr\fP s, unsigned char * buf, size_t * buf_sz)"
+.PP
+Read From OpenSOAP Stream. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP Stream 
+.br
+\fIbuf\fP unsigned char * [out] ((|buf|)) Read Buffer 
+.br
+\fIbuf_sz\fP size_t * [in, out] ((|buf_sz|)) Read Buffer size. After calling this function, contains actual size read. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStreamReadChunkedData (\fBOpenSOAPStreamPtr\fP s, \fBOpenSOAPByteArrayPtr\fP buf)"
+.PP
+Read Chunked Data From OpenSOAP Stream. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP Stream 
+.br
+\fIbuf\fP OpenSOAPByteArrayPtr [out] ((|buf|)) Read Buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStreamReadChunkedDataStream (\fBOpenSOAPStreamPtr\fP s, \fBOpenSOAPStreamPtr\fP out)"
+.PP
+Read Chunked Data From OpenSOAP Stream and write out to Stream. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP Stream 
+.br
+\fIout\fP OpenSOAPStreamPtr [out] ((|buf|)) Output Stream 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStreamReadToDelm (\fBOpenSOAPStreamPtr\fP s, const unsigned char * delm, size_t delm_sz, \fBOpenSOAPByteArrayPtr\fP buf)"
+.PP
+Read From OpenSOAP Stream Up To Delimiter. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP Stream 
+.br
+\fIdelm\fP const unsigned char * [in] ((|delm|)) Delimiter String 
+.br
+\fIdelm_sz\fP size_t [in] ((|delm_sz|)) Delimiter Size 
+.br
+\fIbuf\fP OpenSOAPByteArrayPtr [out] ((|buf|)) Read Buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStreamReadWithSize (\fBOpenSOAPStreamPtr\fP s, size_t sz, \fBOpenSOAPByteArrayPtr\fP buf)"
+.PP
+Read Specified Size From OpenSOAP Stream. If size is 0, read as much as possible. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP Stream 
+.br
+\fIsz\fP size_t [in] ((|sz|)) Read size 
+.br
+\fIbuf\fP OpenSOAPByteArrayPtr [out] ((|buf|)) Read Buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStreamReadWithSizeStream (\fBOpenSOAPStreamPtr\fP s, size_t sz, \fBOpenSOAPStreamPtr\fP out)"
+.PP
+Read Specified Size From OpenSOAP Stream. If size is 0, read as much as possible. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP Stream 
+.br
+\fIsz\fP size_t [in] ((|sz|)) Read size 
+.br
+\fIout\fP OpenSOAPStreamPtr [out] ((|out|)) Output Stream 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStreamRelease (\fBOpenSOAPStreamPtr\fP s)"
+.PP
+Release OpenSOAP Stream. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP Stream 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStreamWrite (\fBOpenSOAPStreamPtr\fP s, const unsigned char * buf, size_t * buf_sz)"
+.PP
+Write To OpenSOAP Stream. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP Stream 
+.br
+\fIbuf\fP const unsigned char * [in] ((|buf|)) Write Buffer 
+.br
+\fIbuf_sz\fP size_t * [in, out] ((|buf_sz|)) Write Buffer size. After calling this function, contains actual size written. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStreamWriteByteArray (\fBOpenSOAPStreamPtr\fP s, \fBOpenSOAPByteArrayPtr\fP buf, size_t * write_sz)"
+.PP
+Write To OpenSOAP Stream. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPStreamPtr [in] ((|s|)) OpenSOAP Stream 
+.br
+\fIbuf\fP OpenSOAPByteArrayPtr [in] ((|buf|)) Write Buffer 
+.br
+\fIwrite_sz\fP size_t * [out] ((|write_sz|)) Write Size 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

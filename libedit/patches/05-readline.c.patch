@@ -1,0 +1,67 @@
+--- export/src/readline.c	2009-09-05 13:37:56.000000000 +0200
++++ ../src/readline.c	2009-09-05 13:47:56.000000000 +0200
+@@ -29,7 +29,8 @@
+  * POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
+-#include "config.h"
++#include <config.h>
++
+ #if !defined(lint) && !defined(SCCSID)
+ __RCSID("$NetBSD: readline.c,v 1.84 2009/07/22 15:57:40 christos Exp $");
+ #endif /* not lint && not SCCSID */
+@@ -47,17 +48,17 @@
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <setjmp.h>
+-#ifdef HAVE_VIS_H
+ #include <vis.h>
+-#else
+-#include "np/vis.h"
+-#endif
+-#include "readline/readline.h"
++#include "editline/readline.h"
+ #include "el.h"
+ #include "fcns.h"		/* for EL_NUM_FCNS */
+ #include "histedit.h"
+ #include "filecomplete.h"
+ 
++#if !defined(SIZE_T_MAX)
++# define SIZE_T_MAX (size_t)(-1) 
++#endif
++
+ void rl_prep_terminal(int);
+ void rl_deprep_terminal(void);
+ 
+@@ -192,7 +193,7 @@
+ 		return (HIST_ENTRY *) NULL;
+ 
+ 	rl_he.line = ev.str;
+-	rl_he.data = NULL;
++	rl_he.data = (histdata_t) &(ev.num);
+ 
+ 	return (&rl_he);
+ }
+@@ -1452,8 +1453,7 @@
+ char *
+ username_completion_function(const char *text, int state)
+ {
+-	struct passwd *pwd, pwres;
+-	char pwbuf[1024];
++	struct passwd *pwd;
+ 
+ 	if (text[0] == '\0')
+ 		return (NULL);
+@@ -1464,9 +1464,9 @@
+ 	if (state == 0)
+ 		setpwent();
+ 
+-	while (getpwent_r(&pwres, pwbuf, sizeof(pwbuf), &pwd) == 0
+-	    && pwd != NULL && text[0] == pwd->pw_name[0]
+-	    && strcmp(text, pwd->pw_name) == 0);
++   while ((pwd = getpwent())
++		&& pwd != NULL && text[0] == pwd->pw_name[0]
++		&& strcmp(text, pwd->pw_name) == 0);
+ 
+ 	if (pwd == NULL) {
+ 		endpwent();
