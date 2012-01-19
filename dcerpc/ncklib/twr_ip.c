@@ -122,6 +122,7 @@ PUBLIC void twr_ip_lower_flrs_from_sa
                 twr_t_length;
     byte_p_t    related_data_ptr[TWR_C_NUM_IP_LOWER_FLRS],
                 tmp_tower;
+    static unsigned8   zeroes[TWR_C_IP_ADDR_SIZE] = {0};
 
     CODING_ERROR (status);
     RPC_VERIFY_INIT ();
@@ -129,7 +130,7 @@ PUBLIC void twr_ip_lower_flrs_from_sa
     /*
      * all depends on the network family to which this socket belongs
      */
-    if (sa->family == RPC_C_NAF_ID_IP)
+    if (sa->family == RPC_C_NAF_ID_IP || sa->family == RPC_C_NAF_ID_IP6)
     {
         /* 
          * only two network protocols are supported for internet
@@ -172,15 +173,34 @@ PUBLIC void twr_ip_lower_flrs_from_sa
      * the architecture specifies, so no endian conversion 
      * is necessary.
      */
-    related_data_size[0] = TWR_C_IP_PORT_SIZE;
 
-    related_data_ptr[0] = 
-        (byte_p_t) (&((struct sockaddr_in *)sa)->sin_port);
-            
-    related_data_size[1] = TWR_C_IP_ADDR_SIZE;
-            
-    related_data_ptr[1] = 
-        (byte_p_t) (&((struct sockaddr_in *)sa)->sin_addr.s_addr);
+    switch (sa->family)
+    {
+    case RPC_C_NAF_ID_IP:
+        related_data_size[0] = TWR_C_IP_PORT_SIZE;
+
+        related_data_ptr[0] =
+            (byte_p_t) (&((struct sockaddr_in *)sa)->sin_port);
+
+        related_data_size[1] = TWR_C_IP_ADDR_SIZE;
+
+        related_data_ptr[1] =
+            (byte_p_t) (&((struct sockaddr_in *)sa)->sin_addr.s_addr);
+        break;
+    case RPC_C_NAF_ID_IP6:
+        related_data_size[0] = TWR_C_IP_PORT_SIZE;
+
+        related_data_ptr[0] =
+            (byte_p_t) (&((struct sockaddr_in6 *)sa)->sin6_port);
+
+        // Use zeroes for address
+        related_data_size[1] = TWR_C_IP_ADDR_SIZE;
+
+        related_data_ptr[1] = (byte_p_t) zeroes;
+        break;
+    default:
+        abort();
+    }
 
     /*  
      * Calculate the length of the tower floors.

@@ -76,7 +76,11 @@ typedef struct rpc_addr_ip_t
 {
     rpc_protseq_id_t        rpc_protseq_id;
     unsigned32              len;
-    struct sockaddr_in      sa;
+    union
+    {
+        struct sockaddr_in      sa;
+        struct sockaddr_in6     sa6;
+    };
 } rpc_ip_addr_t, *rpc_ip_addr_p_t;
 
 /***********************************************************************

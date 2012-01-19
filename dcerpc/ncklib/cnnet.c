@@ -1147,7 +1147,7 @@ PRIVATE void rpc__cn_network_req_connect
          * Allocate the temporarry rpc_addr to be passed to
          * rpc__socket_bind().
          */
-        naf_id = rpc_g_protseq_id[rpc_addr->rpc_protseq_id].naf_id;
+        naf_id = rpc_addr->sa.family;
         rpc__naf_addr_alloc (rpc_addr->rpc_protseq_id,
                              naf_id,
                              (unsigned_char_p_t) NULL,  /* endpoint */

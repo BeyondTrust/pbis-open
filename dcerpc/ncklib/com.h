@@ -237,6 +237,7 @@ typedef unsigned32       rpc_protocol_id_t, *rpc_protocol_id_p_t;
 
 #define RPC_C_NAF_ID_UXD     1
 #define RPC_C_NAF_ID_IP      2
+#define RPC_C_NAF_ID_IP6     10
 #define RPC_C_NAF_ID_DNET    12
 #define RPC_C_NAF_ID_DDS     13         /* ###Check this one ###*/
 #define RPC_C_NAF_ID_NP      14

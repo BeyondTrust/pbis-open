@@ -276,10 +276,16 @@ INTERNAL void inq_max_frag_size (
 #include <comp.h>
 PRIVATE void rpc__ip_naf_init_func(void)
 {
-    static rpc_naf_id_elt_t naf[1] = {
+    static rpc_naf_id_elt_t naf[2] = {
         {
             rpc__ip_init,
             RPC_C_NAF_ID_IP,
+            RPC_C_NETWORK_IF_ID_DGRAM,
+            NULL
+        },
+        {
+            rpc__ip_init,
+            RPC_C_NAF_ID_IP6,
             RPC_C_NETWORK_IF_ID_DGRAM,
             NULL
         }
@@ -333,7 +339,8 @@ PRIVATE void rpc__ip_naf_init_func(void)
     
     rpc__register_protseq(seq_ids, 2);
     rpc__register_tower_prot_id(prot_ids, 2);
-    rpc__register_naf_id(naf, 1);
+    rpc__register_naf_id(naf, 2);
+
 }
 
 PRIVATE void  rpc__ip_init 
@@ -490,7 +497,7 @@ INTERNAL void addr_alloc
      * insert id, length, family into rpc address
      */
     (*rpc_addr)->rpc_protseq_id = rpc_protseq_id;
-    (*rpc_addr)->len = sizeof (struct sockaddr_in);
+    (*rpc_addr)->len = sizeof (struct sockaddr_in6);
     (*rpc_addr)->sa.family = naf_id;
     
     /*
@@ -574,7 +581,8 @@ INTERNAL void addr_copy
     /*
      * if the source RPC address looks valid - IP family ok
      */
-    if (src_rpc_addr->sa.family == RPC_C_NAF_ID_IP)
+    if (src_rpc_addr->sa.family == RPC_C_NAF_ID_IP ||
+        src_rpc_addr->sa.family == RPC_C_NAF_ID_IP6)
     {
         /*
          * allocate memory for the new RPC address
@@ -737,7 +745,17 @@ INTERNAL void addr_set_endpoint
      */
     if (endpoint == NULL || strlen ((char *) endpoint) == 0)
     {
-        ip_addr->sa.sin_port = 0;
+        switch (ip_addr->sa.sin_family)
+        {
+        case AF_INET:
+            ip_addr->sa.sin_port = 0;
+            break;
+        case AF_INET6:
+            ip_addr->sa6.sin6_port = 0;
+            break;
+        default:
+            abort();
+        }
         *status = rpc_s_ok;
         return;
     }
@@ -761,7 +779,17 @@ INTERNAL void addr_set_endpoint
         return;
     }
 
-    ip_addr->sa.sin_port = htons (ep);
+    switch (ip_addr->sa.sin_family)
+    {
+    case AF_INET:
+        ip_addr->sa.sin_port = htons (ep);
+        break;
+    case AF_INET6:
+        ip_addr->sa6.sin6_port = htons (ep);
+        break;
+    default:
+        abort();
+    }
 
     *status = rpc_s_ok;
 }
@@ -834,7 +862,18 @@ INTERNAL void addr_inq_endpoint
     /*
      * convert endpoint to local platform byte order format
      */
-    ep = ntohs (ip_addr->sa.sin_port);
+    switch (ip_addr->sa.sin_family)
+    {
+    case AF_INET:
+        ep = ntohs (ip_addr->sa.sin_port);
+        break;
+    case AF_INET6:
+        ep = ntohs (ip_addr->sa6.sin6_port);
+        break;
+    default:
+        abort();
+    }
+
 
     /*
      * if no endpoint present, return null string. Otherwise,
@@ -916,26 +955,43 @@ INTERNAL void addr_set_netaddr
 )
 {
     rpc_ip_addr_p_t     ip_addr = (rpc_ip_addr_p_t) *rpc_addr;
-    boolean             numeric;
-#if (GETHOSTBYNAME_R_ARGS - 0) == 3
-#define he (&hbuf)
-    ATTRIBUTE_UNUSED struct hostent      hbuf;
-    ATTRIBUTE_UNUSED struct hostent_data hdbuf;
-#else
-    ATTRIBUTE_UNUSED struct hostent      *he;
-    ATTRIBUTE_UNUSED struct hostent      hbuf;
-    ATTRIBUTE_UNUSED char                buf[1024];
-    ATTRIBUTE_UNUSED int                 herr;
-#endif /* GETHOSTBYNAME_R_ARGS == 3 */
-
+    struct addrinfo     hints = {0};
+    struct addrinfo*    resolved = NULL;
+    struct addrinfo*    cursor = NULL;
+    uint16_t            port = 0;
+    int                 res = 0;
     CODING_ERROR (status);  
+
+    // Preserve port
+    switch (ip_addr->sa.sin_family)
+    {
+    case AF_INET:
+        port = ip_addr->sa.sin_port;
+        break;
+    case AF_INET6:
+        port = ip_addr->sa6.sin6_port;
+        break;
+    default:
+        abort();
+    }
 
     /*
      * check to see if this is a request to remove the netaddr
      */
     if (netaddr == NULL || strlen ((char *) netaddr) == 0)
     {
-        ip_addr->sa.sin_addr.s_addr = 0;
+        switch (ip_addr->sa.sin_family)
+        {
+        case AF_INET:
+            memset(&ip_addr->sa.sin_addr, 0, sizeof(ip_addr->sa.sin_addr));
+            break;
+        case AF_INET6:
+            memset(&ip_addr->sa6.sin6_addr, 0, sizeof(ip_addr->sa6.sin6_addr));
+            break;
+        default:
+            abort();
+        }
+
         *status = rpc_s_ok;
         return;
     }
@@ -944,53 +1000,47 @@ INTERNAL void addr_set_netaddr
      * See if there's a leading "#" -- means numeric address must follow.
      * Note we accept numeric addresses withOUT the "#" too.
      */
-    numeric = (netaddr[0] == '#');
-    if (numeric)
+    if (netaddr[0] == '#')
+    {
+        hints.ai_flags |= AI_NUMERICHOST;
         netaddr++;
-
-    /*
-     * convert Internet dot notation address to network address
-     * formatted unsigned32 - check for validity
-     */
-    ip_addr->sa.sin_addr.s_addr = inet_addr ((char*) netaddr);
-    if (ip_addr->sa.sin_addr.s_addr != (unsigned)-1)
-    {
-        *status = rpc_s_ok;
-        return;
     }
 
-    if (numeric)
+    res = getaddrinfo((char*) netaddr, NULL, &hints, &resolved);
+    switch (res)
     {
+    case 0:
+        break;
+    default:
         *status = rpc_s_inval_net_addr;
         return;
     }
 
-#if (GETHOSTBYNAME_R_ARGS - 0) == 6
-    if (gethostbyname_r((char *)netaddr, &hbuf,
-                        buf, sizeof(buf), &he, &herr) != 0)
-#elif (GETHOSTBYNAME_R_ARGS - 0) == 5
-    if ((he = gethostbyname_r((char *)netaddr, &hbuf, buf,
-                              sizeof(buf), &herr)) == NULL)
-#elif (GETHOSTBYNAME_R_ARGS - 0) == 3
-    if (gethostbyname_r((char *)netaddr, &hbuf, &hdbuf) != 0)
-#else
-    /* As a last resort, fall back on gethostbyname */
-    if((he = gethostbyname((char *)netaddr)) == NULL)
-#endif /* GETHOSTBYNAME_R_ARGS */
+    for (cursor = resolved; cursor; cursor = cursor->ai_next)
     {
-        *status = rpc_s_inval_net_addr;
-        return;
+        if (cursor->ai_family == AF_INET || cursor->ai_family == AF_INET6)
+        {
+            memcpy(&ip_addr->sa, cursor->ai_addr, cursor->ai_addrlen);
+            ip_addr->len = cursor->ai_addrlen;
+            switch (cursor->ai_family)
+            {
+            case AF_INET:
+                ip_addr->sa.sin_port = port;
+                break;
+            case AF_INET6:
+                ip_addr->sa6.sin6_port = port;
+                break;
+            default:
+                abort();
+            }
+            *status = rpc_s_ok;
+            freeaddrinfo(resolved);
+            return;
+        }
     }
 
-    if (he == NULL)
-    {
-        *status = rpc_s_inval_net_addr;
-        return;
-    }
-
-    ip_addr->sa.sin_addr.s_addr = * (unsigned32 *) he->h_addr;
-
-    *status = rpc_s_ok;
+    freeaddrinfo(resolved);
+    *status = rpc_s_inval_net_addr;
 }
 
 /*
@@ -1043,32 +1093,40 @@ INTERNAL void addr_inq_netaddr
     unsigned32              *status
 )
 {
-#define NA_SIZE 16      /* big enough for 255.255.255.255 */
+#define NA_SIZE 46      /* big enough for 0000:0000:0000:0000:0000:0000:0000:0000%eth0 */
 
     rpc_ip_addr_p_t     ip_addr = (rpc_ip_addr_p_t) rpc_addr;
-    unsigned8           *p;
-    
+    unsigned_char_p_t   str = NULL;
+    int res = 0;
     
     CODING_ERROR (status);
     
     RPC_MEM_ALLOC(
-        *netaddr,
+        str,
         unsigned_char_p_t,
         NA_SIZE,
         RPC_C_MEM_STRING,
         RPC_C_MEM_WAITOK);
 
-    /*
-     * get an unsigned8 pointer to IP address - network format
-     */
-    p = (unsigned8 *) &(ip_addr->sa.sin_addr.s_addr);
+    res = getnameinfo(
+        (struct sockaddr*) &ip_addr->sa,
+        ip_addr->len,
+        (char*) str,
+        NA_SIZE,
+        NULL,
+        0,
+        NI_NUMERICHOST);
 
-    /*
-     * convert IP address to IP dot notation string - (eg, 16.0.0.4)
-     * placed in buffer indicated by arg.netaddr.
-     */
-    RPC__IP_NETWORK_SPRINTF((char *) *netaddr, "%d.%d.%d.%d",
-        UC(p[0]), UC(p[1]), UC(p[2]), UC(p[3]));
+    switch (res)
+    {
+    case 0:
+        *netaddr = str;
+        break;
+    default:
+        RPC_MEM_FREE(str, RPC_C_MEM_STRING);
+        *status = rpc_s_inval_net_addr;
+        return;
+    }
 
     *status = rpc_s_ok;
 }
@@ -1300,12 +1358,24 @@ INTERNAL boolean addr_compare
     rpc_ip_addr_p_t     ip_addr1 = (rpc_ip_addr_p_t) addr1;
     rpc_ip_addr_p_t     ip_addr2 = (rpc_ip_addr_p_t) addr2;
 
-    if (ip_addr1->sa.sin_family == ip_addr2->sa.sin_family &&
-        ip_addr1->sa.sin_port == ip_addr2->sa.sin_port &&
-        ip_addr1->sa.sin_addr.s_addr == ip_addr2->sa.sin_addr.s_addr &&
-        ip_addr1->sa.sin_addr.s_addr == ip_addr2->sa.sin_addr.s_addr)
+    if (ip_addr1->sa.sin_family == ip_addr2->sa.sin_family)
     {
-        return true;
+        if (ip_addr1->sa.sin_family == AF_INET)
+        {
+            return ip_addr1->sa.sin_port == ip_addr2->sa.sin_port &&
+                ip_addr1->sa.sin_addr.s_addr == ip_addr2->sa.sin_addr.s_addr;
+        }
+        else if (ip_addr1->sa.sin_family == AF_INET6)
+        {
+            return ip_addr1->sa6.sin6_port == ip_addr2->sa6.sin6_port &&
+                !memcmp(&ip_addr1->sa6.sin6_addr.s6_addr,
+                    &ip_addr2->sa6.sin6_addr.s6_addr,
+                    sizeof(ip_addr1->sa6.sin6_addr.s6_addr));
+        }
+        else
+        {
+            abort();
+        }
     }
     else
     {
@@ -1958,7 +2028,7 @@ INTERNAL void desc_inq_peer_addr
      * insert individual parameters into RPC address
      */
     (*rpc_addr)->rpc_protseq_id = protseq_id;
-    (*rpc_addr)->len = sizeof (struct sockaddr_in);
+    (*rpc_addr)->len = sizeof(struct sockaddr_in6);
 
     /*
      * Get the peer address (name).

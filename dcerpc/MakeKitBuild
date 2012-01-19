@@ -219,7 +219,7 @@ configure()
         features.h sys/cdefs.h dlfcn.h sys/time.h \
         getopt.h sys/sockio.h sys/un.h nl_types.h \
         net/if.h net/if_dl.h execinfo.h sys/fd_set.h \
-        sys/select.h string.h
+        sys/select.h string.h ifaddrs.h
 
     mk_check_headers \
         HEADERDEPS="sys/types.h sys/socket.h sys/time.h net/if.h" \
@@ -271,26 +271,10 @@ configure()
 	HEADERDEPS="sys/time.h sys/socket.h dirent.h" \
 	gettimeofday socket getpeereid setgrp scandir
 
-    # Test for particular version of gethostbyname_r
-    if mk_check_function \
-        PROTOTYPE="int gethostbyname_r(const char*,struct hostent*,char*,size_t,struct hostent**,int*)" \
-        HEADERDEPS="netdb.h" \
-        LIBDEPS="$LIB_NSL"
-    then
-        mk_define GETHOSTBYNAME_R_ARGS 6
-    elif mk_check_function \
-        PROTOTYPE="struct hostent* gethostbyname_r(const char*,struct hostent*,char*,int,int*)" \
-        HEADERDEPS="netdb.h" \
-        LIBDEPS="$LIB_NSL"
-    then
-        mk_define GETHOSTBYNAME_R_ARGS 5
-    elif mk_check_function \
-        PROTOTYPE="int gethostbyname_r(const char*,struct hostent*,struct hostent_data*)" \
-        HEADERDEPS="netdb.h" \
-        LIBDEPS="$LIB_NSL"
-    then
-        mk_define GETHOSTBYNAME_R_ARGS 3
-    fi
+    # Test for getifaddrs
+    mk_check_functions \
+        HEADERDEPS="sys/types.h ifaddrs.h" \
+        getifaddrs
 
     lw_check_pthread_once_init
     if [ "$result" = "yes" ]
