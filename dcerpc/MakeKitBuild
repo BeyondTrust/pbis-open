@@ -219,7 +219,7 @@ configure()
         features.h sys/cdefs.h dlfcn.h sys/time.h \
         getopt.h sys/sockio.h sys/un.h nl_types.h \
         net/if.h net/if_dl.h execinfo.h sys/fd_set.h \
-        sys/select.h string.h ifaddrs.h
+        sys/select.h string.h ifaddrs.h netinet/in6.h
 
     mk_check_headers \
         HEADERDEPS="sys/types.h sys/socket.h sys/time.h net/if.h" \
@@ -232,6 +232,10 @@ configure()
     mk_check_types \
         HEADERDEPS="inttypes.h" \
         uint8 uint16 uint32 uint64 int8 int16 int32 int64
+
+    mk_check_types \
+        HEADERDEPS="netinet/in.h netinet/in6.h" \
+        sockaddr_in6
 
     # Required libraries
     mk_check_libraries \
