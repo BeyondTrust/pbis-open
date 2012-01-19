@@ -356,6 +356,8 @@ RdrProcessNegotiateResponse(
     pSocket->usMaxSlots = pHeader->maxMpxCount;
     pSocket->securityBlobLen = securityBlobLen;
 
+    if (pSocket->securityBlobLen > 0)
+    {
     status = LwIoAllocateMemory(
                     pSocket->securityBlobLen,
                     (PVOID *) &pSocket->pSecurityBlob);
@@ -364,6 +366,7 @@ RdrProcessNegotiateResponse(
     memcpy(pSocket->pSecurityBlob,
            pSecurityBlob,
            pSocket->securityBlobLen);
+    }
 
     status = RdrSocketSetProtocol(pSocket, SMB_PROTOCOL_VERSION_1);
     BAIL_ON_NT_STATUS(status);
