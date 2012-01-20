@@ -3,6 +3,7 @@ configure()
     mk_declare -o \
         MK_PREFIX \
         MK_LIBEXECDIR \
+        MK_BINDIR \
         MK_SBINDIR \
         LW_INITDIR \
         VERSION="$LW_VERSION" \
@@ -24,4 +25,6 @@ make()
             SOURCE="$i" \
             DEST="${MK_SYSCONFDIR}/solaris/$i"
     done
+
+    mk_stage DEST="${MK_BINDIR}/uninstall.sh" SOURCE="@${MK_SOURCE_DIR}/installer/mklocal/makeself/install.sh"
 }

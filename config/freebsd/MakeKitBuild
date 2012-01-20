@@ -3,6 +3,7 @@ configure()
     mk_declare -o \
         MK_PREFIX \
         MK_LIBEXECDIR \
+        MK_BINDIR \
         MK_SBINDIR \
         LW_INITDIR \
         VERSION="$LW_VERSION" \
@@ -17,4 +18,5 @@ make()
 {
     mk_stage DEST="${MK_SYSCONFDIR}/freebsd/lwsmd" MODE=0755 SOURCE="lwsmd"
     mk_stage DEST="${MK_SYSCONFDIR}/freebsd/pbis" MODE=0755 SOURCE="pbis"
+    mk_stage DEST="${MK_BINDIR}/uninstall.sh" SOURCE="@${MK_SOURCE_DIR}/installer/mklocal/makeself/install.sh"
 }

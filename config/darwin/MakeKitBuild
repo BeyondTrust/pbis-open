@@ -3,6 +3,7 @@ configure()
     mk_declare -o \
         MK_PREFIX \
         MK_LIBEXECDIR \
+        MK_BINDIR \
         MK_SBINDIR \
         LW_INITDIR \
         VERSION="$LW_VERSION" \
