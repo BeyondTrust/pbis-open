@@ -3,6 +3,7 @@ configure()
     mk_declare -o \
         MK_PREFIX \
         MK_LIBEXECDIR \
+        MK_BINDIR \
         MK_SBINDIR \
         LW_INITDIR \
         VERSION="$LW_VERSION" \
@@ -18,4 +19,5 @@ make()
     mk_stage DEST="${MK_SYSCONFDIR}/hpux/lwsmd" MODE=0755 SOURCE="lwsmd"
     mk_stage DEST="${MK_SYSCONFDIR}/hpux/pbis" MODE=0755 SOURCE="pbis"
     mk_stage DESTDIR="/etc" MODE="0644" SOURCE="nsswitch.lwi_defaults"
+    mk_stage DEST="${MK_BINDIR}/uninstall.sh" SOURCE="@${MK_SOURCE_DIR}/installer/mklocal/makeself/install.sh"
 }

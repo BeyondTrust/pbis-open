@@ -1,2 +1,20 @@
 DISTRO="debian redhat suse"
 SUBDIRS="$DISTRO"
+
+configure()
+{
+    mk_declare -o \
+        MK_PREFIX \
+        MK_LIBEXECDIR \
+        MK_BINDIR \
+        MK_SBINDIR \
+        LW_INITDIR \
+        VERSION="$LW_VERSION" \
+        BUILD="${LW_BUILD_ID:-0}" \
+        REVISION="${LW_BUILD_REVISION:-0}"
+}
+
+make()
+{
+    mk_stage DEST="${MK_BINDIR}/uninstall.sh" SOURCE="@${MK_SOURCE_DIR}/installer/mklocal/makeself/install.sh"
+}
