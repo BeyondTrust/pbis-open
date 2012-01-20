@@ -6,12 +6,16 @@ configure()
         MK_BINDIR \
         MK_SBINDIR \
         LW_INITDIR \
+        MK_HOST_ARCH \
+        MK_SYSCONFDIR \
+        LW_CONFIGDIR \
         VERSION="$LW_VERSION" \
         BUILD="${LW_BUILD_ID:-0}" \
         REVISION="${LW_BUILD_REVISION:-0}"
 
     mk_output_file lwsmd
     mk_output_file pbis
+    mk_output_file OUTPUT="postinstall.sh" INPUT="@${MK_SOURCE_DIR}/package/open/pkg/postinstall.in"
 }
 
 make()
@@ -26,5 +30,6 @@ make()
             DEST="${MK_SYSCONFDIR}/solaris/$i"
     done
 
-    mk_stage DEST="${MK_BINDIR}/uninstall.sh" SOURCE="@${MK_SOURCE_DIR}/installer/mklocal/makeself/install.sh"
+    mk_stage DEST="${MK_BINDIR}/uninstall.sh" MODE=0755 SOURCE="@${MK_SOURCE_DIR}/installer/mklocal/makeself/install.sh"
+    mk_stage DEST="${MK_BINDIR}/postinstall.sh" MODE=0755 SOURCE="postinstall.sh"
 }
