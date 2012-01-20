@@ -1,6 +1,9 @@
 #!/bin/bash
 
 UPGRADEDIR=/var/lib/pbis-upgrade
+PKG_ARCH="@MK_HOST_ARCH@"
+REGLIST="lwdsplugin.reg dcerpcd.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg \
+         lwiod.reg lwreg.reg netlogond.reg rdr.reg reapsysl.reg"
 
 LOG=/var/log/pbis-open-install.log
 TLOG=/tmp/pbis-open-install.tmp
@@ -91,8 +94,6 @@ run_or_fail()
 
 ConfigureDirectoryOwners()
 {
-    log "Prepare directories"
-
     CHOWN_0_80="/opt/ @MK_PREFIX@ /etc/ @MK_SYSCONFDIR@ /var/ /var/lib/ @LW_CACHEDIR@"
     CHOWN_0_0="/usr/ /usr/lib/"
 
@@ -137,20 +138,6 @@ wait_for_lwsm_running_status()
     done
 
     log "Service lwsmd running"
-}
-
-wait_for_service_running_status()
-{
-    SERVICE=$1
-    status=1
-
-    while [ $status -ne 0 ]; do
-        @MK_BINDIR@/lwsm status $SERVICE > /dev/null 2>&1
-        status=$?
-        sleep 1
-    done
-
-    log "Service $SERVICE running"
 }
 
 configure_and_start_lwsmd()
@@ -370,22 +357,56 @@ restore_6_1_configuration()
     run_quiet rm -r "${UPGRADEDIR}"
 }
 
+restore_6_5_configuration()
+{
+    if [ -z "$UPGRADING_FROM_6_5" ]; then
+        return 0
+    fi
+
+    run_or_fail mkdir -p '@LW_CACHEDIR@/db'
+    run_or_fail chmod 700 '@LW_CACHEDIR@/db'
+    run_or_fail chown 0:80 '@LW_CACHEDIR@/db'
+
+    if [ -f "${UPGRADEDIR}/registry.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/registry.db" '@LW_CACHEDIR@/db/registry.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/registry.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/sam.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/sam.db" '@LW_CACHEDIR@/db/sam.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/sam.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lwi_events.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lwi_events.db" '@LW_CACHEDIR@/db/lwi_events.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lwi_events.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lsass-adcache.db" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.db" '@LW_CACHEDIR@/db/lsass-adcache.db'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.db'
+    fi
+
+    if [ -f "${UPGRADEDIR}/lsass-adcache.filedb" ]; then
+        run_or_fail cp "${UPGRADEDIR}/lsass-adcache.filedb" '@LW_CACHEDIR@/db/lsass-adcache.filedb'
+        run_or_fail chmod 700 '@LW_CACHEDIR@/db/lsass-adcache.filedb'
+    fi
+
+    run_quiet rm -r "${UPGRADEDIR}"
+}
+
 import_registry_configurations()
 {
     REGSHELL='@MK_BINDIR@/regshell'
 
-    log "Importing registry..."
-    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/dcerpcd.reg"
-    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/eventlogd.reg"
-    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/lsassd.reg"
-    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/privileges.reg"
-    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/accounts.reg"
-    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/lwiod.reg"
-    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/lwreg.reg"
-    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/netlogond.reg"
-    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/rdr.reg"
-    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/reapsysl.reg"
-    run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/lwdsplugin.reg"
+    log 'Importing registry...'
+    for i in ${REGLIST}
+    do
+        if [ -f "@LW_CONFIGDIR@/$i" ]
+        then
+            run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/$i"
+        fi
+    done
 }
 
 determine_upgrade_type()
@@ -396,22 +417,25 @@ determine_upgrade_type()
         run_or_fail cat "$PRESERVEDVERSIONFILE"
         if [ -n "`grep '^VERSION=5.0' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Upgrading from Likewise Identity Services Open 5.0"
+            log 'Upgrading from Likewise Identity Services Open 5.0'
         elif [ -n "`grep '^VERSION=5.1' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Upgrading from Likewise Identity Services Open 5.1."
+            log 'Upgrading from Likewise Identity Services Open 5.1'
         elif [ -n "`grep '^VERSION=5.2' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Upgrading from Likewise Identity Services Open 5.2."
+            log 'Upgrading from Likewise Identity Services Open 5.2'
         elif [ -n "`grep '^VERSION=5.3' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            log "Upgrading from Likewise Identity Services Open 5.3."
+            log 'Upgrading from Likewise Identity Services Open 5.3'
         elif [ -n "`grep '^VERSION=6.0' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_6_0=1
-            log "Upgrading from Likewise Open 6.0."
+            log 'Upgrading from Likewise Open 6.0'
         elif [ -n "`grep '^VERSION=6.1' $PRESERVEDVERSIONFILE`" ]; then
             UPGRADING_FROM_6_1=1
-            log "Upgrading from Likewise Open 6.1."
+            log 'Upgrading from Likewise Open 6.1'
+        elif [ -n "`grep '^VERSION=6.5' $PRESERVEDVERSIONFILE`" ]; then
+            UPGRADING_FROM_6_5=1
+            log 'Upgrading from PowerBroker Identity Services Open 6.5'
         fi
     fi
 }
@@ -462,19 +486,31 @@ fix_60_registry()
 
 cleanup_registry()
 {
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/dcerpcd.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/eventlogd.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/lsassd.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/lwiod.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/lwreg.reg"
-    run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/netlogond.reg"
+    for i in ${REGLIST}
+    do
+        if [ -f "@LW_CONFIGDIR@/$i" ]
+        then
+            run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/$i"
+        fi
+    done
+}
+
+execute_auxiliary_scripts()
+{
+    # The system administrator may have configured these during a previous
+    # install
+    if [ -d "@LW_CACHEDIR@/scripts/install" ]; then
+        for file in @LW_CACHEDIR@/scripts/install/*; do
+            run_quiet "$file" --install
+        done
+    fi
 }
 
 ##
 ## Main
 ##
 
-log "Finalizing PowerBroker Identity Services installation"
+log "Finalizing PowerBroker Identity Services Open installation"
 
 ConfigureDirectoryOwners
 
@@ -504,6 +540,8 @@ determine_upgrade_type
 restore_6_0_configuration
 
 restore_6_1_configuration
+
+restore_6_5_configuration
 
 run_or_fail '@MK_SBINDIR@/lwsmd' --start-as-daemon --loglevel debug
 
