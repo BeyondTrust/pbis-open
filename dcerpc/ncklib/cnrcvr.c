@@ -521,7 +521,6 @@ rpc_cn_assoc_p_t        assoc;
     unsigned32                  auth_st;
     rpc_cn_sec_context_t        *sec_context;
     boolean                     already_unpacked;
-    unsigned char *realloc_iov = NULL;
 
     //DO_NOT_CLOBBER(unpack_ints);
     //DO_NOT_CLOBBER(i);
@@ -701,32 +700,7 @@ rpc_cn_assoc_p_t        assoc;
                  (ptype == RPC_C_CN_PKT_AUTH3)))
             {
                 assoc->raw_packet_p = rpc__cn_fragbuf_alloc (true);
-
-                /*
-                 * Possibly received packet larger than default 
-                 * fragbuf size, so realloc raw_packet_p here.
-                 */
-                if (fragbuf_p->data_size > RPC_C_CN_LARGE_FRAG_SIZE || 
-                    fragbuf_p->data_size > 0)
-                {
-                    realloc_iov = (unsigned8 *)
-                        realloc(assoc->raw_packet_p,
-                                fragbuf_p->data_size +
-                                    sizeof(rpc_cn_fragbuf_t));
-                    if (realloc_iov)
-                    {
-                        assoc->raw_packet_p = (rpc_cn_fragbuf_t *) realloc_iov;
-                        assoc->raw_packet_p->data_p = (pointer_t) 
-                            RPC_CN_ALIGN_PTR(assoc->raw_packet_p, 8);
-                    }
-                    else
-                    {
-                        st = rpc_s_no_memory;
-                        break;
-                    }
-                }
                 assoc->raw_packet_p->data_size = fragbuf_p->data_size;
-                assoc->raw_packet_p->max_data_size = fragbuf_p->max_data_size;
                 memcpy (assoc->raw_packet_p->data_p,
                         fragbuf_p->data_p,
                         fragbuf_p->data_size);
@@ -1275,7 +1249,6 @@ unsigned32              *st;
     volatile rpc_socket_error_t  serr = 0;
     signed32            need_bytes;
     static rpc_addr_p_t addr = NULL;
-    unsigned char *realloc_iov = NULL;
 
     //DO_NOT_CLOBBER(fbp);
     //DO_NOT_CLOBBER(frag_length);
@@ -1375,27 +1348,10 @@ unsigned32              *st;
      */
     while (need_bytes > 0)
     {
+
         /*
          * Initialize our iovector.
          */
-        if (need_bytes > RPC_C_CN_LARGE_FRAG_SIZE || fbp->data_size > 0)
-        {
-            realloc_iov = (unsigned8 *)
-                realloc(fbp,
-                        need_bytes + fbp->data_size + sizeof(rpc_cn_fragbuf_t));
-            if (realloc_iov)
-            {
-                fbp = (rpc_cn_fragbuf_t *) realloc_iov;
-                fbp->max_data_size += need_bytes;
-                fbp->data_p = (pointer_t) RPC_CN_ALIGN_PTR(fbp->data_area, 8);
-            }
-            else
-            {
-                *st = rpc_s_no_memory;
-                return;
-            }
-        }
-
         iov.iov_base = (byte_p_t)((unsigned8 *)(fbp->data_p) + fbp->data_size);
         iov.iov_len = need_bytes;
 
