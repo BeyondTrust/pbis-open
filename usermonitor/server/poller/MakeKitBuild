@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+        GROUP="usermonitorserverpoller" \
+        INCLUDEDIRS=". ../../include ../../server/include" \
+        HEADERDEPS="lw/rtlstring.h lw/rtlmemory.h lw/attrs.h lsa/ad.h eventapi.h lw/types.h eventlog.h lwerror.h dce/rpcsts.h lwio/lwio.h wc16str.h krb5.h gssapi/gssapi.h gssapi/gssapi_krb5.h iconv.h" \
+        SOURCES="poller.c krb5.c globals.c" \
+        LIBDEPS="lsaclient gssapi_krb5 krb5 k5crypto eventlog eventcltr lwioclient lwbase_nothr"
+}

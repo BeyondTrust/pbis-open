@@ -1,0 +1,40 @@
+[HKEY_LIKEWISE\Services]
+
+[HKEY_THIS_MACHINE\Services\eventfwd]
+"Description" = {
+    value = "User Monitor"
+    default = "User Monitor"
+    doc = ""
+}
+"Path" = {
+    value = "@LIBDIR@/lw-svcm/usermonitor@MOD_EXT@"
+    default = "@LIBDIR@/lw-svcm/usermonitor@MOD_EXT@"
+    doc = ""
+}
+"Arguments" = {
+    value = ""
+    default = ""
+    doc = ""
+}
+"Environment" = {
+    default = ""
+    doc = ""
+}
+"Dependencies" = {
+    value = "eventlog lsass"
+    default = "eventlog lsass"
+    doc = ""
+}
+"Type" = {
+    value = dword:00000002
+    default = dword:00000002
+    doc = ""
+}
+"Autostart" = {
+   default = dword:00000000
+   doc = ""
+}
+
+[HKEY_THIS_MACHINE\Services\eventfwd\Parameters]
+"Collector"=""
+"CollectorPrincipal"=""
