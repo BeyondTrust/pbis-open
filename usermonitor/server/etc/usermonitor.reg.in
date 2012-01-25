@@ -1,6 +1,6 @@
 [HKEY_LIKEWISE\Services]
 
-[HKEY_THIS_MACHINE\Services\eventfwd]
+[HKEY_THIS_MACHINE\Services\usermonitor]
 "Description" = {
     value = "User Monitor"
     default = "User Monitor"
@@ -35,6 +35,8 @@
    doc = ""
 }
 
-[HKEY_THIS_MACHINE\Services\eventfwd\Parameters]
-"Collector"=""
-"CollectorPrincipal"=""
+[HKEY_THIS_MACHINE\Services\usermonitor\Parameters]
+"CheckInterval" = {
+    default = dword:0000003c
+    doc = "Frequency of checking for new users"
+}

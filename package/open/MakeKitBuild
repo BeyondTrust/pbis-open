@@ -339,7 +339,7 @@ make()
         @eventlog @lsass @reapsysl @lwdns @lwnetapi \
         @domainjoin/libdomainjoin @domainjoin/domainjoin-cli \
         @domainjoin/scripts @lwconfig @lwupgrade @samba-interop @config \
-        @reskit"
+        @reskit @usermonitor"
 
     mk_deb_enabled && package_deb
     mk_rpm_enabled && package_rpm

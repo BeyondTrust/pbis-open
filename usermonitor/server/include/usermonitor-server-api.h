@@ -61,15 +61,9 @@ UmnSrvApiShutdown(
     );
 
 DWORD
-UmnSrvGetCollectorAddress(
+UmnSrvGetCheckInterval(
     HANDLE hServer,
-    PSTR *ppszCollector
-    );
-
-DWORD
-UmnSrvGetCollectorServicePrincipal(
-    HANDLE hServer,
-    PSTR *ppszPrincipal
+    PDWORD pValue
     );
 
 #endif /* __UMN_SRVAPI_H__ */

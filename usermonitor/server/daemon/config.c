@@ -102,6 +102,8 @@ UmnSrvInitConfig(
                     sizeof(*pConfig));
     BAIL_ON_UMN_ERROR(dwError);
 
+    pConfig->CheckInterval = 60 * 30;
+
     *ppConfig = pConfig;
 
 cleanup:
@@ -124,11 +126,11 @@ UmnSrvReadConfig(
     dwError = UmnSrvInitConfig(&pConfig);
     BAIL_ON_UMN_ERROR(dwError);
 
-    dwError = UmnReadEventFwdConfigSettings(pConfig);
+    dwError = UmnSrvReadAllocatedConfig(pConfig);
     BAIL_ON_UMN_ERROR(dwError);
     
     UMN_LOG_VERBOSE("CheckInterval = %d seconds\n",
-            UMN_SAFE_LOG_STRING(pConfig->CheckInterval));
+            pConfig->CheckInterval);
 
     *ppConfig = pConfig;
 
@@ -150,38 +152,25 @@ UmnSrvFreeConfig(
 {
     if (pConfig)
     {
-        RtlCStringFree(&pConfig->pszCollector);
-        RtlCStringFree(&pConfig->pszServicePrincipal);
         LW_SAFE_FREE_MEMORY(pConfig);
     }
 }
 
 DWORD
-UmnSrvGetCollectorAddress(
+UmnSrvGetCheckInterval(
     HANDLE hServer,
-    PSTR *ppszCollector
+    PDWORD pValue
     )
 {
     DWORD dwError = 0;
-    PSTR pszCollector = NULL;
     BOOLEAN bUnlockConfigLock = FALSE;
 
-    BAIL_ON_INVALID_POINTER(ppszCollector);
+    BAIL_ON_INVALID_POINTER(pValue);
 
     pthread_rwlock_rdlock(&gUmnConfigLock);
     bUnlockConfigLock = TRUE;
 
-    if (!gpAPIConfig->pszCollector)
-    {
-        dwError = LW_STATUS_NOT_FOUND;
-        BAIL_ON_UMN_ERROR(dwError);
-    }
-    dwError = RtlCStringDuplicate(
-                    &pszCollector,
-                    gpAPIConfig->pszCollector);
-    BAIL_ON_UMN_ERROR(dwError);
-
-    *ppszCollector = pszCollector;
+    *pValue = gpAPIConfig->CheckInterval;
 
 cleanup:
     if (bUnlockConfigLock)
@@ -193,112 +182,41 @@ cleanup:
 
 error:
 
-    *ppszCollector = NULL;
-
-    RtlCStringFree(&pszCollector);
-
+    *pValue = 0;
     goto cleanup;
 }
 
 DWORD
-UmnSrvGetCollectorServicePrincipal(
-    HANDLE hServer,
-    PSTR *ppszPrincipal
+UmnSrvReadAllocatedConfig(
+    PUMN_SRV_API_CONFIG pConfig
     )
 {
     DWORD dwError = 0;
-    PSTR pszPrincipal = NULL;
-    BOOLEAN bUnlockConfigLock = FALSE;
-
-    BAIL_ON_INVALID_POINTER(ppszPrincipal);
-
-    pthread_rwlock_rdlock(&gUmnConfigLock);
-    bUnlockConfigLock = TRUE;
-
-    if (!gpAPIConfig->pszServicePrincipal)
-    {
-        dwError = LW_STATUS_NOT_FOUND;
-        BAIL_ON_UMN_ERROR(dwError);
-    }
-    dwError = RtlCStringDuplicate(
-                    &pszPrincipal,
-                    gpAPIConfig->pszServicePrincipal);
-    BAIL_ON_UMN_ERROR(dwError);
-
-    *ppszPrincipal = pszPrincipal;
-
-cleanup:
-    if (bUnlockConfigLock)
-    {
-        pthread_rwlock_unlock(&gUmnConfigLock);
-    }
-
-    return dwError;
-
-error:
-
-    *ppszPrincipal = NULL;
-
-    RtlCStringFree(&pszPrincipal);
-
-    goto cleanup;
-}
-DWORD
-UmnReadEventFwdConfigSettings(PUMN_SRV_API_CONFIG pConfig)
-{
-    DWORD dwError = 0;
-    PSTR pszCollector = NULL;
-    PSTR pszCollectorPrincipal = NULL;
 
     LWREG_CONFIG_ITEM ConfigDescription[] =
     {
         {
-            "Collector",
+            "CheckInterval",
             TRUE,
-            LwRegTypeString,
+            LwRegTypeDword,
             0,
             -1,
             NULL,
-            &pszCollector,
+            &pConfig->CheckInterval,
             NULL
         },
-        {
-            "CollectorPrincipal",
-            TRUE,
-            LwRegTypeString,
-            0,
-            -1,
-            NULL,
-            &pszCollectorPrincipal,
-            NULL
-        }
     };
 
-    UMN_LOG_INFO("Read Eventlog configuration settings");
+    UMN_LOG_INFO("Read user monitor configuration settings");
 
     dwError = LwRegProcessConfig(
-                "Services\\eventfwd\\Parameters",
-                "Policy\\Services\\eventfwd\\Parameters",
+                "Services\\usermonitor\\Parameters",
+                "Policy\\Services\\usermonitor\\Parameters",
                 ConfigDescription,
                 sizeof(ConfigDescription)/sizeof(ConfigDescription[0]));
-    
     BAIL_ON_UMN_ERROR(dwError);
-    
-    if (pszCollector && pszCollector[0])
-    {
-        dwError = LwAllocateString(pszCollector, &pConfig->pszCollector);
-        BAIL_ON_UMN_ERROR(dwError);
-    }
-    
-    if (pszCollectorPrincipal && pszCollectorPrincipal[0])
-    {
-        dwError = LwAllocateString(pszCollectorPrincipal, &pConfig->pszServicePrincipal);
-        BAIL_ON_UMN_ERROR(dwError);
-    }
 
 error:
-    LW_SAFE_FREE_STRING(pszCollector);
-    LW_SAFE_FREE_STRING(pszCollectorPrincipal);
     return dwError;
 }
 

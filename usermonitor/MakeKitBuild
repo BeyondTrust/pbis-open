@@ -30,10 +30,8 @@ configure()
     esac
 
     mk_check_headers FAIL=yes \
-        eventlog.h eventapi.h lwio/lwio.h lwerror.h lsa/ad.h \
-        lw/rtlmemory.h lw/rtlstring.h reg/lwreg.h \
-        krb5.h gssapi/gssapi.h gssapi/gssapi_krb5.h \
-        iconv.h
+        eventlog.h lwerror.h \
+        lw/rtlmemory.h lw/rtlstring.h reg/lwreg.h
 
     mk_check_headers \
         inttypes.h \
@@ -42,27 +40,12 @@ configure()
         stdbool.h \
         wc16str.h
 
-    mk_check_functions \
-        HEADERDEPS="stdlib.h inttypes.h" \
-        strtoll strtoull __strtoll __strtoull
-
-    mk_check_functions \
-        HEADERDEPS="ctype.h" \
-        isblank
-
-    mk_check_functions \
-        rpl_malloc
-
-    lw_check_strerror_r
-    lw_check_iconv
-
     mk_check_libraries FAIL=yes \
-        lwbase lwadvapi lwioclient lsaclient \
-        eventlog eventcltr regclient \
-        gssapi_krb5 krb5 k5crypto
+        lwbase lwadvapi lsaclient \
+        eventlog regclient
 
     mk_check_libraries \
-        socket nsl pthread rt
+        pthread rt
 
     mk_output_file server/etc/usermonitor.reg
 }

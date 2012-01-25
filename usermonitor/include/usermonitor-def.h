@@ -48,15 +48,11 @@
 #ifndef __UMN_DEF_H__
 #define __UMN_DEF_H__
 
-#ifndef WIN32
-
 #define BAIL_ON_UMN_ERROR(dwError) \
     if (dwError) {                    \
        UMN_LOG_DEBUG("Error in %s at %s:%d [code: %d]", __FUNCTION__, __FILE__, __LINE__, dwError); \
        goto error;                    \
     }
-
-#endif
 
 #define BAIL_ON_INVALID_STRING(pszParam)             \
         if (LW_IS_NULL_OR_EMPTY_STR(pszParam)) {         \

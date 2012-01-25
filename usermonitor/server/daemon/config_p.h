@@ -63,7 +63,7 @@ UmnSrvFreeConfig(
     );
 
 DWORD
-UmnReadEventFwdConfigSettings(
+UmnSrvReadAllocatedConfig(
     PUMN_SRV_API_CONFIG pConfig
     );
 

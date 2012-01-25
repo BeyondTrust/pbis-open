@@ -51,8 +51,8 @@
 
 #include "config.h"
 #include <dce/rpcsts.h>
-#include "evtfwd-system.h"
-#include "evtfwd-def.h"
+#include "usermonitor-system.h"
+#include "usermonitor-def.h"
 #include <krb5.h>
 #include <gssapi/gssapi.h>
 #include <gssapi/gssapi_krb5.h>
@@ -60,16 +60,14 @@
 #include <assert.h>
 #include <lwerror.h>
 
-#include "evtfwd-logging.h"
+#include "usermonitor-logging.h"
 
-#include "evtfwd-server-poller.h"
-#include "evtfwd-server-api.h"
+#include "usermonitor-server-poller.h"
+#include "usermonitor-server-api.h"
 #include <lw/rtlmemory.h>
 #include <lw/rtlstring.h>
 #include <eventlog.h>
-#include <eventapi.h>
-#include <lwio/lwio.h>
 
 #include "externs_p.h"
 #include "poller_p.h"
-#include "krb5_p.h"
+#include "users_p.h"

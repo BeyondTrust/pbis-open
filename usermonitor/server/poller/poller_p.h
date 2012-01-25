@@ -49,12 +49,6 @@
 #ifndef __POLLER_P_H__
 #define __POLLER_P_H__
 
-DWORD
-UmnSrvWc16sFromMbsWithRepl(
-    OUT PWSTR* ppwszDest,
-    IN PCSTR pszSrc
-    );
-
 VOID
 UmnSrvTimevalToTimespec(
     OUT struct timespec *pDest,
@@ -68,24 +62,9 @@ UmnSrvTimespecAdd(
     IN struct timespec *pB
     );
 
-DWORD
-UmnSrvPushEvents(
-    IN OUT PDWORD pdwNextRecordId,
-    IN FILE *pNextRecordFile,
-    IN double dRatioPeriodUsed,
-    OUT PDWORD pdwPeriodSecs
-    );
-
 PVOID
 UmnSrvPollerThreadRoutine(
     IN PVOID pUnused
-    );
-
-DWORD
-UmnConvertToCollectorRecords(
-    DWORD dwCount,
-    EVENT_LOG_RECORD *pEventRecords,
-    PLWCOLLECTOR_RECORD *ppCollectorRecords
     );
 
 #endif /* __POLLER_P_H__ */

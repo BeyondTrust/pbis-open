@@ -123,7 +123,7 @@ static LW_SVCM_MODULE gService =
     .Stop = SvcmStop
 };
 
-#define SVCM_ENTRY_POINT LW_RTL_SVCM_ENTRY_POINT_NAME(eventfwd)
+#define SVCM_ENTRY_POINT LW_RTL_SVCM_ENTRY_POINT_NAME(usermonitor)
 
 PLW_SVCM_MODULE
 SVCM_ENTRY_POINT(

@@ -47,91 +47,6 @@
 
 #define NANOSECS_PER_SECOND 1000000000
 
-#define UMN_ILLSEQ_FAIL    1
-#define UMN_ILLSEQ_SKIP    1
-#define UMN_ILLSEQ_QMARK    1
-
-/* UCS-2, little endian byte order
- * Note that UCS-2 without LE will
- * default to big endian on FreeBSD
- */
-#if defined(WORDS_BIGENDIAN)
-#define WINDOWS_ENCODING "UCS-2BE"
-#else
-#define WINDOWS_ENCODING "UCS-2LE"
-#endif
-
-DWORD
-UmnSrvWc16sFromMbsWithRepl(
-    OUT PWSTR* ppwszDest,
-    IN PCSTR pszSrc
-    )
-{
-    DWORD dwError = 0;
-    iconv_t hIconv = iconv_open(WINDOWS_ENCODING, "UTF-8");
-    size_t sSrcSize = pszSrc ? strlen(pszSrc) : 0;
-    size_t sDestSize = (sSrcSize + 1) * 2;
-    PWSTR pwszDest = NULL;
-    char *pSrcPos = (char *)pszSrc;
-    char *pDestPos = NULL;
-
-    if(hIconv == (iconv_t)-1)
-    {
-        dwError = errno;
-        BAIL_ON_UMN_ERROR(dwError);
-    }
-
-    dwError = LwNtStatusToWin32Error(
-	          LW_RTL_ALLOCATE(
-			  &pwszDest,
-			  WCHAR,
-			  sDestSize));
-    BAIL_ON_UMN_ERROR(dwError);
-
-    pDestPos = (char *)pwszDest;
-
-    while (sSrcSize > 0)
-    {
-        // Ignore the result of iconv since the error code would just tell us
-        // that iconv encountered an illegal sequence.
-        iconv(
-                hIconv,
-                (ICONV_IN_TYPE)&pSrcPos,
-                &sSrcSize,
-                &pDestPos,
-                &sDestSize);
-        assert(sDestSize > 0);
-        if (sSrcSize > 0)
-        {
-            // This the official unicode replacement character. It is drawn
-            // as a black diamond with a white question mark in the middle.
-            *(WCHAR*)pDestPos = 0xFFFD;
-            pDestPos += 2;
-            sDestSize--;
-            pSrcPos++;
-            sSrcSize--;
-        }
-    }
-    *(WCHAR*)pDestPos = 0;
-
-    *ppwszDest = pwszDest;
-
-cleanup:
-    if (hIconv != (iconv_t)-1)
-    {
-        iconv_close(hIconv);
-    }
-    return dwError;
-
-error:
-    LW_RTL_FREE(&pwszDest);
-    if (ppwszDest)
-    {
-        *ppwszDest = NULL;
-    }
-    goto cleanup;
-}
-
 VOID
 UmnSrvTimevalToTimespec(
     OUT struct timespec *pDest,
@@ -204,354 +119,6 @@ UmnSrvTimespecSubtract(
 }
 
 DWORD
-UmnConvertToCollectorRecords(
-    DWORD dwCount,
-    EVENT_LOG_RECORD *pEventRecords,
-    PLWCOLLECTOR_RECORD *ppCollectorRecords
-    )
-{
-    DWORD dwError = 0;
-    PLWCOLLECTOR_RECORD pCollectorRecords = NULL;
-    DWORD dwIndex = 0;
-
-    dwError = RTL_ALLOCATE(
-                    &pCollectorRecords,
-                    LWCOLLECTOR_RECORD,
-                    sizeof(*pCollectorRecords) * dwCount);
-    BAIL_ON_UMN_ERROR(dwError);
-
-    for (dwIndex = 0; dwIndex < dwCount; dwIndex++)
-    {
-        pCollectorRecords[dwIndex].dwColDateTime = time(NULL);
-        pCollectorRecords[dwIndex].event.qwEventRecordId = pEventRecords[dwIndex].dwEventRecordId;
-        dwError = RtlWC16StringAllocateFromCString(
-                        &pCollectorRecords[dwIndex].event.pwszLogname,
-                        pEventRecords[dwIndex].pszEventTableCategoryId);
-        BAIL_ON_UMN_ERROR(dwError);
-        dwError = RtlWC16StringAllocateFromCString(
-                        &pCollectorRecords[dwIndex].event.pwszEventType,
-                        pEventRecords[dwIndex].pszEventType);
-        BAIL_ON_UMN_ERROR(dwError);
-        pCollectorRecords[dwIndex].event.dwEventDateTime = pEventRecords[dwIndex].dwEventDateTime;
-        dwError = RtlWC16StringAllocateFromCString(
-                        &pCollectorRecords[dwIndex].event.pwszEventSource,
-                        pEventRecords[dwIndex].pszEventSource);
-        BAIL_ON_UMN_ERROR(dwError);
-        dwError = RtlWC16StringAllocateFromCString(
-                        &pCollectorRecords[dwIndex].event.pwszEventCategory,
-                        pEventRecords[dwIndex].pszEventCategory);
-        BAIL_ON_UMN_ERROR(dwError);
-        pCollectorRecords[dwIndex].event.dwEventSourceId = pEventRecords[dwIndex].dwEventSourceId;
-        dwError = UmnSrvWc16sFromMbsWithRepl(
-                        &pCollectorRecords[dwIndex].event.pwszUser,
-                        pEventRecords[dwIndex].pszUser);
-        BAIL_ON_UMN_ERROR(dwError);
-        dwError = RtlWC16StringAllocateFromCString(
-                        &pCollectorRecords[dwIndex].event.pwszComputer,
-                        pEventRecords[dwIndex].pszComputer);
-        BAIL_ON_UMN_ERROR(dwError);
-        dwError = UmnSrvWc16sFromMbsWithRepl(
-                        &pCollectorRecords[dwIndex].event.pwszDescription,
-                        pEventRecords[dwIndex].pszDescription);
-        BAIL_ON_UMN_ERROR(dwError);
-
-        if (pEventRecords[dwIndex].pszData)
-        {
-            dwError = RtlCStringDuplicate(
-                            (PSTR*)&pCollectorRecords[dwIndex].event.pvData,
-                            pEventRecords[dwIndex].pszData);
-            BAIL_ON_UMN_ERROR(dwError);
-
-            pCollectorRecords[dwIndex].event.dwDataLen = strlen(
-                    pEventRecords[dwIndex].pszData);
-        }
-    }
-
-    *ppCollectorRecords = pCollectorRecords;
-
-cleanup:
-    return dwError;
-
-error:
-    *ppCollectorRecords = NULL;
-    if (pCollectorRecords)
-    {
-        CltrFreeRecordList(dwCount, pCollectorRecords);
-    }
-
-    goto cleanup;
-}
-
-DWORD
-UmnSrvPushEvents(
-    IN OUT PDWORD pdwNextRecordId,
-    IN FILE *pNextRecordFile,
-    IN double dRatioPeriodUsed,
-    OUT PDWORD pdwPeriodSecs
-    )
-{
-    DWORD dwError = 0;
-    DWORD dwNextRecordId = *pdwNextRecordId;
-    DWORD dwBacklog = 0;
-    DWORD dwRecordsPerPeriod = 0;
-    DWORD dwRecordsPerBatch = 0;
-    DWORD dwPeriodSecs = *pdwPeriodSecs;
-    DWORD dwBatchCount = 0;
-    DWORD dwBatchIndex = 0;
-    DWORD dwPeriodCount = 0;
-    HANDLE hEventLog = NULL;
-    EVENT_LOG_RECORD *pEventRecords = NULL;
-    PLWCOLLECTOR_RECORD pCollectorRecords = NULL;
-    PSTR pszSPN = NULL;
-    PWSTR pwszSPN = NULL;
-    PSTR pszCollector = NULL;
-    PWSTR pwszCollector = NULL;
-    HANDLE hCollector = NULL;
-    PSTR pszSqlFilter = NULL;
-    PWSTR pwszSqlFilter = NULL;
-    LW_PIO_CREDS pAccessToken = NULL;
-
-    // Do push
-    UMN_LOG_INFO("Copying events");
-
-    dwError = RtlCStringAllocatePrintf(
-                    &pszSqlFilter,
-                    "EventRecordId >= %lu",
-                    dwNextRecordId);
-    BAIL_ON_UMN_ERROR(dwError);
-
-    dwError = LwRtlWC16StringAllocateFromCString(
-        &pwszSqlFilter,
-        pszSqlFilter);
-    BAIL_ON_UMN_ERROR(dwError);
-
-    dwError = LWIOpenEventLog(
-                    NULL,
-                    &hEventLog);
-    if (dwError == rpc_s_connect_rejected)
-    {
-        UMN_LOG_WARNING("Unable to connect to eventlog");
-    }
-    if (dwError == rpc_s_connection_closed)
-    {
-        UMN_LOG_WARNING("Eventlog closed connection");
-    }
-    BAIL_ON_UMN_ERROR(dwError);
-
-    dwError = LWICountEventLog(
-                    hEventLog,
-                    pwszSqlFilter,
-                    &dwBacklog);
-    BAIL_ON_UMN_ERROR(dwError);
-
-    UMN_LOG_INFO("%lu events are waiting for the collector",
-            dwBacklog);
-
-    if (dwBacklog > 0)
-    {
-        LwRtlCStringFree(&pszCollector);
-        dwError = UmnSrvGetCollectorAddress(NULL, &pszCollector);
-        if (dwError == LW_STATUS_NOT_FOUND)
-        {
-            UMN_LOG_WARNING("The collector address is not set in the config file.");
-            dwError = LW_STATUS_INVALID_ADDRESS;
-        }
-        BAIL_ON_UMN_ERROR(dwError);
-
-        LwRtlWC16StringFree(&pwszCollector);
-        dwError = RtlWC16StringAllocateFromCString(
-                        &pwszCollector,
-                        pszCollector);
-        BAIL_ON_UMN_ERROR(dwError);
-
-        LwRtlCStringFree(&pszSPN);
-        dwError = UmnSrvGetCollectorServicePrincipal(NULL, &pszSPN);
-        if (dwError == LW_STATUS_NOT_FOUND)
-        {
-            dwError = 0;
-        }
-        BAIL_ON_UMN_ERROR(dwError);
-
-        LwRtlWC16StringFree(&pwszSPN);
-        if (pszSPN != NULL)
-        {
-            dwError = RtlWC16StringAllocateFromCString(
-                            &pwszSPN,
-                            pszSPN);
-            BAIL_ON_UMN_ERROR(dwError);
-        }
-
-        if (pAccessToken != NULL)
-        {
-            LwIoDeleteCreds(pAccessToken);
-            pAccessToken = NULL;
-        }
-
-        dwError = UmnSrvSetupCredCache(&pAccessToken);
-        if (dwError == NERR_SetupNotJoined)
-        {
-            UMN_LOG_WARNING("Could not find machine password. The computer is possibly not joined.", pszCollector);
-        }
-        BAIL_ON_UMN_ERROR(dwError);
-
-        dwError = CltrOpenCollector(
-                        pwszCollector,
-                        pwszSPN,
-                        pAccessToken,
-                        &hCollector);
-        if (dwError == LW_STATUS_CONNECTION_REFUSED ||
-            dwError == ERROR_CANNOT_MAKE ||
-            dwError == RPC_S_NO_CONTEXT_AVAILABLE)
-        {
-            UMN_LOG_WARNING("The collector [%s] is currently unreachable.", pszCollector);
-        }
-        if (dwError == LW_STATUS_RESOURCE_NAME_NOT_FOUND)
-        {
-            UMN_LOG_WARNING("Unable to get service ticket for collector. Check the collector-principal setting.");
-        }
-        if (dwError == RPC_S_INVALID_NET_ADDR)
-        {
-            UMN_LOG_WARNING("The collector hostname is not resolvable in DNS");
-        }
-        BAIL_ON_UMN_ERROR(dwError);
-
-        dwError = CltrGetPushRate(
-                        hCollector,
-                        dwBacklog,
-                        dRatioPeriodUsed,
-                        &dwRecordsPerPeriod,
-                        &dwRecordsPerBatch,
-                        &dwPeriodSecs);
-        BAIL_ON_UMN_ERROR(dwError);
-
-        dwPeriodCount = LW_MIN(dwRecordsPerPeriod, dwBacklog);
-
-        UMN_LOG_INFO("Pushing %lu events to collector %s during this period",
-                dwPeriodCount,
-                pszCollector);
-
-        dwError = LWIReadEventLog(
-                        hEventLog,
-                        0,
-                        dwPeriodCount,
-                        pwszSqlFilter,
-                        &dwPeriodCount,
-                        &pEventRecords);
-        BAIL_ON_UMN_ERROR(dwError);
-
-        dwError = UmnConvertToCollectorRecords(
-                        dwPeriodCount,
-                        pEventRecords,
-                        &pCollectorRecords);
-        BAIL_ON_UMN_ERROR(dwError);
-
-        dwBatchIndex = 0;
-        while (dwBatchIndex < dwPeriodCount && !gbPollerThreadShouldExit)
-        {
-            dwBatchCount = LW_MIN(dwRecordsPerBatch,
-                            dwPeriodCount - dwBatchIndex);
-
-            UMN_LOG_INFO("Pushing %lu events to collector in this batch",
-                    dwBatchCount);
-
-            dwError = CltrWriteRecords(
-                            hCollector,
-                            dwBatchCount,
-                            pCollectorRecords + dwBatchIndex);
-            if (dwError == LW_STATUS_ACCESS_DENIED)
-            {
-                UMN_LOG_ERROR("Insufficient access to write events to the collector.");
-            }
-            else if (dwError == LW_STATUS_INSUFFICIENT_RESOURCES)
-            {
-                UMN_LOG_ERROR("Unable to post events to collector. The collector ran out of disk space or ram.");
-            }
-            BAIL_ON_UMN_ERROR(dwError);
-
-            dwNextRecordId = pEventRecords[dwBatchIndex + dwBatchCount - 1].
-                                dwEventRecordId + 1;
-
-            if (fseek(pNextRecordFile, 0L, SEEK_SET) < 0)
-            {
-                dwError = errno;
-                BAIL_ON_UMN_ERROR(dwError);
-            }
-            if (ftruncate(fileno(pNextRecordFile), 0) < 0)
-            {
-                dwError = errno;
-                BAIL_ON_UMN_ERROR(dwError);
-            }
-            if (fprintf(pNextRecordFile, "%d\n", dwNextRecordId) < 0)
-            {
-                dwError = errno;
-                BAIL_ON_UMN_ERROR(dwError);
-            }
-            if (fflush(pNextRecordFile) < 0)
-            {
-                dwError = errno;
-                BAIL_ON_UMN_ERROR(dwError);
-            }
-
-            dwBatchIndex += dwBatchCount;
-        }
-
-        dwError = CltrCloseCollector(hCollector);
-        hCollector = NULL;
-        if (dwError == ERROR_GRACEFUL_DISCONNECT)
-        {
-            UMN_LOG_WARNING("Connection to collector closed while trying to close handle");
-            dwError = 0;
-        }
-        BAIL_ON_UMN_ERROR(dwError);
-
-        LWIFreeEventRecordList(dwPeriodCount, pEventRecords);
-        pEventRecords = NULL;
-
-        CltrFreeRecordList(dwPeriodCount, pCollectorRecords);
-        pCollectorRecords = NULL;
-    }
-
-    dwError = LWICloseEventLog(hEventLog);
-    hEventLog = NULL;
-    BAIL_ON_UMN_ERROR(dwError);
-
-    *pdwNextRecordId = dwNextRecordId;
-    *pdwPeriodSecs = dwPeriodSecs;
-    
-cleanup:
-    LwRtlCStringFree(&pszSqlFilter);
-    LwRtlWC16StringFree(&pwszSqlFilter);
-    LwRtlCStringFree(&pszCollector);
-    LwRtlWC16StringFree(&pwszCollector);
-    LwRtlCStringFree(&pszSPN);
-    LwRtlWC16StringFree(&pwszSPN);
-    if (hEventLog != NULL)
-    {
-        LWICloseEventLog(hEventLog);
-    }
-    if (hCollector != NULL)
-    {
-        CltrCloseCollector(hCollector);
-    }
-    if (pEventRecords != NULL)
-    {
-        LWIFreeEventRecordList(dwPeriodCount, pEventRecords);
-    }
-    if (pCollectorRecords != NULL)
-    {
-        CltrFreeRecordList(dwPeriodCount, pCollectorRecords);
-    }
-    if (pAccessToken != NULL)
-    {
-        LwIoDeleteCreds(pAccessToken);
-    }
-    return dwError;
-
-error:
-    goto cleanup;
-}
-
-DWORD
 UmnSrvPollerRefresh(
     VOID
     )
@@ -587,69 +154,9 @@ UmnSrvPollerThreadRoutine(
     struct timeval now;
     struct timespec periodStart, periodUsed, nowSpec, nextWake, pushWait = {0};
     BOOLEAN bMutexLocked = FALSE;
-    DWORD dwNextRecordId = 0;
     DWORD dwPeriodSecs = 60;
-    double dRatioPeriodUsed = 0;
-    FILE *pNextRecordFile = NULL;
-    int iNextRecordFileFd = -1;
 
-    UMN_LOG_INFO("Event poller thread started");
-
-    iNextRecordFileFd = open(UMN_NEXT_RECORD_DB, O_RDWR, 0);
-    if (iNextRecordFileFd < 0)
-    {
-        if (errno == ENOENT)
-        {
-            // The file does not exist, so create it but don't read from it
-            iNextRecordFileFd = creat(UMN_NEXT_RECORD_DB, S_IRUSR | S_IWUSR);
-            if (iNextRecordFileFd < 0)
-            {
-                dwError = errno;
-                BAIL_ON_UMN_ERROR(dwError);
-            }
-            pNextRecordFile = fdopen(iNextRecordFileFd, "w");
-            if (!pNextRecordFile)
-            {
-                dwError = errno;
-                BAIL_ON_UMN_ERROR(dwError);
-            }
-            iNextRecordFileFd = -1;
-            if (fprintf(pNextRecordFile, "%d\n", dwNextRecordId) < 0)
-            {
-                dwError = errno;
-                BAIL_ON_UMN_ERROR(dwError);
-            }
-            if (fflush(pNextRecordFile) < 0)
-            {
-                dwError = errno;
-                BAIL_ON_UMN_ERROR(dwError);
-            }
-        }
-        else
-        {
-            dwError = errno;
-            BAIL_ON_UMN_ERROR(dwError);
-        }
-    }
-    else
-    {
-        // The file does exists, so read the current position from it.
-        pNextRecordFile = fdopen(iNextRecordFileFd, "r+");
-        if (!pNextRecordFile)
-        {
-            dwError = errno;
-            BAIL_ON_UMN_ERROR(dwError);
-        }
-        iNextRecordFileFd = -1;
-
-        if (fscanf(pNextRecordFile, "%u", &dwNextRecordId) < 1)
-        {
-            dwError = errno;
-            BAIL_ON_UMN_ERROR(dwError);
-        }
-    }
-
-    UMN_LOG_INFO("Reading records greater than or equal to %d", dwNextRecordId);
+    UMN_LOG_INFO("User poller thread started");
 
     dwError = pthread_mutex_lock(&gSignalPollerMutex);
     BAIL_ON_UMN_ERROR(dwError);
@@ -667,6 +174,9 @@ UmnSrvPollerThreadRoutine(
         dwError = gettimeofday(&now, NULL);
         BAIL_ON_UMN_ERROR(dwError);
 
+        dwError = UmnSrvUpdateAccountInfo(now.tv_sec);
+        BAIL_ON_UMN_ERROR(dwError);
+
         // periodUsed = now - periodStart
         UmnSrvTimevalToTimespec(
             &periodUsed,
@@ -677,54 +187,6 @@ UmnSrvPollerThreadRoutine(
             &periodUsed,
             &periodStart);
 
-        if (dwPeriodSecs)
-        {
-            dRatioPeriodUsed = (periodUsed.tv_sec +
-                    periodUsed.tv_nsec / (double)NANOSECS_PER_SECOND) /
-                    dwPeriodSecs;
-        }
-        else
-        {
-            dRatioPeriodUsed = 0;
-        }
-
-        dwError = UmnSrvPushEvents(
-            &dwNextRecordId,
-            pNextRecordFile,
-            dRatioPeriodUsed,
-            &dwPeriodSecs);
-        if (dwError == ERROR_CONTEXT_EXPIRED) //service ticket expired
-        {
-            UMN_LOG_WARNING("Service ticket expired. Retrying");
-            dwPeriodSecs = 0;
-            dwError = 0;
-        }
-        if (dwError == LW_STATUS_CONNECTION_REFUSED ||//can't contact collector
-            dwError == ERROR_CANNOT_MAKE || //can't contact eventlog
-            dwError == RPC_S_NO_CONTEXT_AVAILABLE || //can't contact eventlog
-            dwError == ERROR_GRACEFUL_DISCONNECT || //can't contact eventlog
-            dwError == rpc_s_connection_closed || //can't contact eventlog
-            dwError == rpc_s_connect_rejected || //can't contact eventlog
-            dwError == LW_STATUS_RESOURCE_NAME_NOT_FOUND || //bad SPN
-            dwError == RPC_S_INVALID_NET_ADDR || //bad dns hostname
-            dwError == NERR_SetupNotJoined || //not joined
-            dwError == LW_STATUS_INVALID_ADDRESS || //bad IP
-            dwError == LW_STATUS_ACCESS_DENIED || //no access to collector
-            dwError == LW_STATUS_INSUFFICIENT_RESOURCES) //collector out of disk space
-        {
-            // Try again later
-            if (dwPeriodSecs < 60)
-            {
-                dwPeriodSecs = 60;
-            }
-            dwError = 0;
-        }
-        if (dwError)
-        {
-            UMN_LOG_ERROR("Unknown error %d occurred while pushing events", dwError);
-            dwError = 0;
-        }
-
         pushWait.tv_sec = dwPeriodSecs;
 
         UmnSrvTimespecAdd(
@@ -732,7 +194,7 @@ UmnSrvPollerThreadRoutine(
             &periodStart,
             &pushWait);
 
-        UMN_LOG_INFO("Event poller sleeping for %f seconds",
+        UMN_LOG_INFO("User poller sleeping for %f seconds",
                 pushWait.tv_sec + pushWait.tv_nsec /
                 (double)NANOSECS_PER_SECOND);
 
@@ -777,7 +239,7 @@ UmnSrvPollerThreadRoutine(
         gbPollerRefresh = FALSE;
     }
 
-    UMN_LOG_INFO("Event poller thread stopped");
+    UMN_LOG_INFO("User poller thread stopped");
 
 cleanup:
     if (bMutexLocked)
@@ -791,14 +253,6 @@ cleanup:
                 "User monitor polling thread exiting with code %d",
                 dwError);
         kill(getpid(), SIGTERM);
-    }
-    if (pNextRecordFile)
-    {
-        fclose(pNextRecordFile);
-    }
-    if (iNextRecordFileFd >= 0)
-    {
-        close(iNextRecordFileFd);
     }
 
     return NULL;

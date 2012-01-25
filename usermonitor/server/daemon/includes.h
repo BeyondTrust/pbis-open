@@ -47,19 +47,19 @@
  */
 
 #include "config.h"
-#include "evtfwd-system.h"
-#include "evtfwd-def.h"
+#include "usermonitor-system.h"
+#include "usermonitor-def.h"
 #include "assert.h"
 
-#include "evtfwd-logging.h"
+#include "usermonitor-logging.h"
 #include <lw/base.h>
 #include <lw/rtlstring.h>
 #include <lwnet.h>
 #include <lwmem.h>
 #include <lwstr.h>
 
-#include "evtfwd-server-api.h"
-#include "evtfwd-server-poller.h"
+#include "usermonitor-server-api.h"
+#include "usermonitor-server-poller.h"
 
 #include "structs_p.h"
 #include "config_p.h"
