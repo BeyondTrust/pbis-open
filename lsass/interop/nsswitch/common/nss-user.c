@@ -262,6 +262,7 @@ LsaNssCommonPasswdGetpwent(
 {
     int  ret = NSS_STATUS_NOTFOUND;
     HANDLE hLsaConnection = pConnection->hLsaConnection;
+    PSTR pDisabled = getenv(DISABLE_NSS_ENUMERATION_ENV);
 
     if (hLsaConnection == (HANDLE)NULL)
     {
@@ -284,13 +285,16 @@ LsaNssCommonPasswdGetpwent(
                 pEnumUsersState->dwNumUsers = 0;
                 pEnumUsersState->idxUser = 0;
             }
-            ret = MAP_LSA_ERROR(pErrorNumber,
-                           LsaEnumUsers(
-                               hLsaConnection,
-                               pEnumUsersState->hResume,
-                               &pEnumUsersState->dwNumUsers,
-                               &pEnumUsersState->ppUserInfoList));
-            BAIL_ON_NSS_ERROR(ret);
+            if (LW_IS_NULL_OR_EMPTY_STR(pDisabled))
+            {
+                ret = MAP_LSA_ERROR(pErrorNumber,
+                               LsaEnumUsers(
+                                   hLsaConnection,
+                                   pEnumUsersState->hResume,
+                                   &pEnumUsersState->dwNumUsers,
+                                   &pEnumUsersState->ppUserInfoList));
+                BAIL_ON_NSS_ERROR(ret);
+            }
         }
     }
 

@@ -78,6 +78,8 @@ typedef enum nss_status NSS_STATUS;
 
 #endif
 
+#define DISABLE_NSS_ENUMERATION_ENV "_DISABLE_LSASS_NSS_ENUMERATION"
+
 #define BAIL_ON_NSS_ERROR(errCode)                      \
     do {                                                \
         if (NSS_STATUS_SUCCESS != (errCode))            \

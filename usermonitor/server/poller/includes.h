@@ -64,8 +64,7 @@
 
 #include "usermonitor-server-poller.h"
 #include "usermonitor-server-api.h"
-#include <lw/rtlmemory.h>
-#include <lw/rtlstring.h>
+#include <lwstr.h>
 #include <eventlog.h>
 
 #include "externs_p.h"

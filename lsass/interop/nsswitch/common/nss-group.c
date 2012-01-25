@@ -279,6 +279,7 @@ LsaNssCommonGroupGetgrent(
 {
     int                       ret = NSS_STATUS_NOTFOUND;
     HANDLE hLsaConnection = pConnection->hLsaConnection;
+    PSTR pDisabled = getenv(DISABLE_NSS_ENUMERATION_ENV);
 
     if (hLsaConnection == (HANDLE)NULL)
     {
@@ -302,13 +303,16 @@ LsaNssCommonGroupGetgrent(
                 pEnumGroupsState->idxGroup = 0;
             }
 
-            ret = MAP_LSA_ERROR(pErrorNumber,
-                           LsaEnumGroups(
-                               hLsaConnection,
-                               pEnumGroupsState->hResume,
-                               &pEnumGroupsState->dwNumGroups,
-                               &pEnumGroupsState->ppGroupInfoList));
-            BAIL_ON_NSS_ERROR(ret);
+            if (LW_IS_NULL_OR_EMPTY_STR(pDisabled))
+            {
+                ret = MAP_LSA_ERROR(pErrorNumber,
+                               LsaEnumGroups(
+                                   hLsaConnection,
+                                   pEnumGroupsState->hResume,
+                                   &pEnumGroupsState->dwNumGroups,
+                                   &pEnumGroupsState->ppGroupInfoList));
+                BAIL_ON_NSS_ERROR(ret);
+            }
         }
 
     }
