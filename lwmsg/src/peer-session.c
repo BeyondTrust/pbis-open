@@ -683,7 +683,7 @@ peer_get_handle_data(
 
     session_lock(my_session);
 
-    if (!handle->valid)
+    if (!handle || !handle->valid)
     {
         BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_HANDLE);
     }
