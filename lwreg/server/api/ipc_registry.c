@@ -123,7 +123,16 @@ RegSrvIpcGetHandleData(
     )
 {
     LWMsgSession* pSession = lwmsg_call_get_session(pCall);
-    return MAP_LWMSG_ERROR(lwmsg_session_get_handle_data(pSession, pHandle, OUT_PPVOID(phKey)));
+    LWMsgStatus status = lwmsg_session_get_handle_data(pSession, pHandle, OUT_PPVOID(phKey));
+
+    if (status == LWMSG_STATUS_INVALID_HANDLE)
+    {
+        return STATUS_INVALID_HANDLE;
+    }
+    else
+    {
+        return MAP_LWMSG_ERROR(status);
+    }
 }
 
 static
@@ -351,20 +360,23 @@ RegSrvIpcCreateKeyEx(
     HKEY hKey = NULL;
 
     status = RegSrvIpcGetHandleData(pCall, pReq->hKey, &hKey);
-    BAIL_ON_NT_STATUS(status);
+    if (status != STATUS_INVALID_HANDLE)
+    {
+        BAIL_ON_NT_STATUS(status);
 
-    status = RegSrvCreateKeyEx(
-        RegSrvIpcGetSessionData(pCall),
-        hKey,
-        pReq->pSubKey,
-        0,
-        pReq->pClass,
-        pReq->dwOptions,
-        pReq->AccessDesired,
-        pReq->pSecDescRel,
-        pReq->ulSecDescLen,
-        &hkResult,
-        &dwDisposition);
+        status = RegSrvCreateKeyEx(
+            RegSrvIpcGetSessionData(pCall),
+            hKey,
+            pReq->pSubKey,
+            0,
+            pReq->pClass,
+            pReq->dwOptions,
+            pReq->AccessDesired,
+            pReq->pSecDescRel,
+            pReq->ulSecDescLen,
+            &hkResult,
+            &dwDisposition);
+    }
 
     if (!status)
     {
