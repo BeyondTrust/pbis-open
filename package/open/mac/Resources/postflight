@@ -2,8 +2,6 @@
 
 UPGRADEDIR=/var/lib/pbis-upgrade
 PKG_ARCH="@MK_HOST_ARCH@"
-REGLIST="lwdsplugin.reg dcerpcd.reg eventlogd.reg lsassd.reg privileges.reg accounts.reg \
-         lwiod.reg lwreg.reg netlogond.reg rdr.reg reapsysl.reg"
 
 LOG=/var/log/pbis-open-install.log
 TLOG=/tmp/pbis-open-install.tmp
@@ -400,12 +398,9 @@ import_registry_configurations()
     REGSHELL='@MK_BINDIR@/regshell'
 
     log 'Importing registry...'
-    for i in ${REGLIST}
+    for i in "@LW_CONFIGDIR@/"*.reg
     do
-        if [ -f "@LW_CONFIGDIR@/$i" ]
-        then
-            run_or_fail "$REGSHELL" import "@LW_CONFIGDIR@/$i"
-        fi
+        run_or_fail "$REGSHELL" import "$i"
     done
 }
 
@@ -486,12 +481,9 @@ fix_60_registry()
 
 cleanup_registry()
 {
-    for i in ${REGLIST}
+    for i in "@LW_CONFIGDIR@/"*.reg
     do
-        if [ -f "@LW_CONFIGDIR@/$i" ]
-        then
-            run_or_fail "${REGSHELL}" cleanup "@LW_CONFIGDIR@/$i"
-        fi
+        run_or_fail "${REGSHELL}" cleanup "$i"
     done
 }
 
