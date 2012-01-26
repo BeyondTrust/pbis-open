@@ -210,8 +210,8 @@ UmnSrvReadAllocatedConfig(
     UMN_LOG_INFO("Read user monitor configuration settings");
 
     dwError = LwRegProcessConfig(
-                "Services\\usermonitor\\Parameters",
-                "Policy\\Services\\usermonitor\\Parameters",
+                "Services\\" SERVICE_NAME "\\Parameters",
+                "Policy\\Services\\" SERVICE_NAME "\\Parameters",
                 ConfigDescription,
                 sizeof(ConfigDescription)/sizeof(ConfigDescription[0]));
     BAIL_ON_UMN_ERROR(dwError);

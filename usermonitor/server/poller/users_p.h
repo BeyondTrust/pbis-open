@@ -33,42 +33,24 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        poller_p.h
  *
  * Abstract:
  *
  *        User monitor service for local users and groups
  * 
- *        Poller thread
+ *        Functions internal to this package for enumerating and tracking
+ *        users.
  *
- *        Private Header
- *
- * Authors: Kyle Stemen <kstemen@likewise.com>
- *          Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
+ * Authors: Kyle Stemen <kstemen@beyondtrust.com>
  * 
  */
+#ifndef __USERS_P_H__
+#define __USERS_P_H__
 
-#include "config.h"
-#include <dce/rpcsts.h>
-#include "usermonitor-system.h"
-#include "usermonitor-def.h"
-#include <krb5.h>
-#include <gssapi/gssapi.h>
-#include <gssapi/gssapi_krb5.h>
-#include <iconv.h>
-#include <assert.h>
-#include <lwerror.h>
-#include <reg/reg.h>
-#include <reg/lwreg.h>
-#include <lwstr.h>
-#include <eventlog.h>
+DWORD
+UmnSrvUpdateAccountInfo(
+    long long Now
+    );
 
-#include "usermonitor-logging.h"
-
-#include "usermonitor-server-poller.h"
-#include "usermonitor-server-api.h"
-
-#include "externs_p.h"
-#include "poller_p.h"
-#include "users_p.h"
+#endif /* __USERS_P_H__ */

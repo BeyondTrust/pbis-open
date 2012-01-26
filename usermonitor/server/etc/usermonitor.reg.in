@@ -40,3 +40,7 @@
     default = dword:0000003c
     doc = "Frequency of checking for new users"
 }
+
+[HKEY_THIS_MACHINE\Services\usermonitor\Parameters\Users]
+
+[HKEY_THIS_MACHINE\Services\usermonitor\Parameters\Groups]
