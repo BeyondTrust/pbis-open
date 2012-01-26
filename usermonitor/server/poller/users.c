@@ -48,6 +48,86 @@
 
 static
 DWORD
+UmnSrvWriteUserValues(
+    HANDLE hReg,
+    HKEY hUser,
+    struct passwd *pUser
+    )
+{
+    DWORD dwError = 0;
+    DWORD dword = 0;
+
+    dwError = LwRegSetValueExA(
+                    hReg,
+                    hUser,
+                    "Name",
+                    0,
+                    REG_SZ,
+                    pUser->pw_name,
+                    strlen(pUser->pw_name) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = LwRegSetValueExA(
+                    hReg,
+                    hUser,
+                    "Passwd",
+                    0,
+                    REG_SZ,
+                    pUser->pw_passwd,
+                    strlen(pUser->pw_passwd) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dword = pUser->pw_uid;
+    dwError = LwRegSetValueExA(
+                    hReg,
+                    hUser,
+                    "UserId",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dword = pUser->pw_gid;
+    dwError = LwRegSetValueExA(
+                    hReg,
+                    hUser,
+                    "PrimaryGroupId",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dword,
+                    sizeof(dword));
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = LwRegSetValueExA(
+                    hReg,
+                    hUser,
+                    "HomeDir",
+                    0,
+                    REG_SZ,
+                    pUser->pw_dir,
+                    strlen(pUser->pw_dir) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = LwRegSetValueExA(
+                    hReg,
+                    hUser,
+                    "Shell",
+                    0,
+                    REG_SZ,
+                    pUser->pw_shell,
+                    strlen(pUser->pw_shell) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+static
+DWORD
 UmnSrvUpdateUser(
     HANDLE hReg,
     HKEY hUsers,
@@ -57,39 +137,158 @@ UmnSrvUpdateUser(
 {
     DWORD dwError = 0;
     HKEY hKey = NULL;
+    PSTR pUserPath = NULL;
+    struct
+    {
+        PSTR pName;
+        PSTR pPasswd;
+        DWORD UserId;
+        DWORD PrimaryGroupId;
+        PSTR pHomeDir;
+        PSTR pShell;
+    } old = { 0 };
+    LWREG_CONFIG_ITEM userLayout[] =
+    {
+        {
+            "Name",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &old.pName,
+            NULL
+        },
+        {
+            "Passwd",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &old.pPasswd,
+            NULL
+        },
+        {
+            "UserId",
+            FALSE,
+            LwRegTypeDword,
+            0,
+            -1,
+            NULL,
+            &old.UserId,
+            NULL
+        },
+        {
+            "PrimaryGroupId",
+            FALSE,
+            LwRegTypeDword,
+            0,
+            -1,
+            NULL,
+            &old.PrimaryGroupId,
+            NULL
+        },
+        {
+            "HomeDir",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &old.pHomeDir,
+            NULL
+        },
+        {
+            "Shell",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &old.pShell,
+            NULL
+        },
+    };
+    DWORD dwNow = Now;
 
     dwError = RegOpenKeyExA(
-                hReg,
-                hUsers,
-                pUser->pw_name,
-                0,
-                KEY_ALL_ACCESS,
-                &hKey);
+                    hReg,
+                    hUsers,
+                    pUser->pw_name,
+                    0,
+                    KEY_ALL_ACCESS,
+                    &hKey);
     if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
         UMN_LOG_VERBOSE("Adding user '%s' (uid %d)",
                         pUser->pw_name, pUser->pw_uid);
 
         dwError = RegCreateKeyExA(
-            hReg,
-            hUsers,
-            pUser->pw_name,
-            0,
-            NULL,
-            0,
-            KEY_ALL_ACCESS,
-            NULL,
-            &hKey,
-            NULL);
+                        hReg,
+                        hUsers,
+                        pUser->pw_name,
+                        0,
+                        NULL,
+                        0,
+                        KEY_ALL_ACCESS,
+                        NULL,
+                        &hKey,
+                        NULL);
+        BAIL_ON_UMN_ERROR(dwError);
+
+        dwError = UmnSrvWriteUserValues(
+                        hReg,
+                        hKey,
+                        pUser);
         BAIL_ON_UMN_ERROR(dwError);
     }
     else
     {
         BAIL_ON_UMN_ERROR(dwError);
 
-        UMN_LOG_VERBOSE("Updating user '%s' (uid %d)",
+        UMN_LOG_VERBOSE("Reading previous values for user '%s' (uid %d)",
                         pUser->pw_name, pUser->pw_uid);
+
+        dwError = LwAllocateStringPrintf(
+                        &pUserPath,
+                        "Services\\" SERVICE_NAME "\\Parameters\\Users\\%s",
+                        pUser->pw_name);
+        BAIL_ON_UMN_ERROR(dwError);
+
+        dwError = LwRegProcessConfig(
+                    pUserPath,
+                    NULL,
+                    userLayout,
+                    sizeof(userLayout)/sizeof(userLayout[0]));
+        BAIL_ON_UMN_ERROR(dwError);
+
+        if (strcmp(pUser->pw_name, old.pName) ||
+                strcmp(pUser->pw_passwd, old.pPasswd) ||
+                pUser->pw_uid != old.UserId ||
+                pUser->pw_gid != old.PrimaryGroupId ||
+                strcmp(pUser->pw_dir, old.pHomeDir) ||
+                strcmp(pUser->pw_shell, old.pShell))
+        {
+            UMN_LOG_INFO("User '%s' (uid %d) changed",
+                            pUser->pw_name, pUser->pw_uid);
+            dwError = UmnSrvWriteUserValues(
+                            hReg,
+                            hKey,
+                            pUser);
+            BAIL_ON_UMN_ERROR(dwError);
+        }
     }
+
+    dwError = LwRegSetValueExA(
+                    hReg,
+                    hKey,
+                    "LastUpdated",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dwNow,
+                    sizeof(dwNow));
+    BAIL_ON_UMN_ERROR(dwError);
 
 cleanup:
     if (hKey)
@@ -98,6 +297,7 @@ cleanup:
                 hReg,
                 hKey);
     }
+    LW_SAFE_FREE_STRING(pUserPath);
     return dwError;
     
 error:
@@ -248,6 +448,9 @@ UmnSrvUpdateAccountInfo(
         LsaFreeSecurityObjectList(1, ppObjects);
         ppObjects = NULL;
     }
+
+    endpwent();
+    endgrent();
     
 cleanup:
     if (hLsass)
