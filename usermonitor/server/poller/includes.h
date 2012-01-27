@@ -62,12 +62,15 @@
 #include <reg/reg.h>
 #include <reg/lwreg.h>
 #include <lwstr.h>
+#include <lwmem.h>
 #include <eventlog.h>
+#include <lsa/lsa.h>
 
 #include "usermonitor-logging.h"
 
 #include "usermonitor-server-poller.h"
 #include "usermonitor-server-api.h"
+#include "usermonitor-encoding.h"
 
 #include "externs_p.h"
 #include "poller_p.h"

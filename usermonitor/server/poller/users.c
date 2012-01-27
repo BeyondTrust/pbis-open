@@ -43,8 +43,17 @@
  *
  * Authors: Kyle Stemen <kstemen@likewise.com>
  */
-#include <lsa/lsa.h>
 #include "includes.h"
+
+typedef struct _UMN_OLD_USER
+{
+    PSTR pName;
+    PSTR pPasswd;
+    DWORD UserId;
+    DWORD PrimaryGroupId;
+    PSTR pHomeDir;
+    PSTR pShell;
+} UMN_OLD_USER, *PUMN_OLD_USER;
 
 static
 DWORD
@@ -57,7 +66,7 @@ UmnSrvWriteUserValues(
     DWORD dwError = 0;
     DWORD dword = 0;
 
-    dwError = LwRegSetValueExA(
+    dwError = RegSetValueExA(
                     hReg,
                     hUser,
                     "Name",
@@ -67,7 +76,7 @@ UmnSrvWriteUserValues(
                     strlen(pUser->pw_name) + 1);
     BAIL_ON_UMN_ERROR(dwError);
 
-    dwError = LwRegSetValueExA(
+    dwError = RegSetValueExA(
                     hReg,
                     hUser,
                     "Passwd",
@@ -78,7 +87,7 @@ UmnSrvWriteUserValues(
     BAIL_ON_UMN_ERROR(dwError);
 
     dword = pUser->pw_uid;
-    dwError = LwRegSetValueExA(
+    dwError = RegSetValueExA(
                     hReg,
                     hUser,
                     "UserId",
@@ -89,7 +98,7 @@ UmnSrvWriteUserValues(
     BAIL_ON_UMN_ERROR(dwError);
 
     dword = pUser->pw_gid;
-    dwError = LwRegSetValueExA(
+    dwError = RegSetValueExA(
                     hReg,
                     hUser,
                     "PrimaryGroupId",
@@ -99,7 +108,7 @@ UmnSrvWriteUserValues(
                     sizeof(dword));
     BAIL_ON_UMN_ERROR(dwError);
 
-    dwError = LwRegSetValueExA(
+    dwError = RegSetValueExA(
                     hReg,
                     hUser,
                     "HomeDir",
@@ -109,7 +118,7 @@ UmnSrvWriteUserValues(
                     strlen(pUser->pw_dir) + 1);
     BAIL_ON_UMN_ERROR(dwError);
 
-    dwError = LwRegSetValueExA(
+    dwError = RegSetValueExA(
                     hReg,
                     hUser,
                     "Shell",
@@ -129,8 +138,10 @@ error:
 static
 DWORD
 UmnSrvUpdateUser(
+    PLW_EVENTLOG_CONNECTION pConn,
     HANDLE hReg,
     HKEY hUsers,
+    BOOLEAN FirstRun,
     long long Now,
     struct passwd *pUser
     )
@@ -221,7 +232,7 @@ UmnSrvUpdateUser(
                     &hKey);
     if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
-        UMN_LOG_VERBOSE("Adding user '%s' (uid %d)",
+        UMN_LOG_INFO("Adding user '%s' (uid %d)",
                         pUser->pw_name, pUser->pw_uid);
 
         dwError = RegCreateKeyExA(
@@ -280,7 +291,7 @@ UmnSrvUpdateUser(
         }
     }
 
-    dwError = LwRegSetValueExA(
+    dwError = RegSetValueExA(
                     hReg,
                     hKey,
                     "LastUpdated",
@@ -306,9 +317,101 @@ error:
 
 static
 DWORD
+UmnSrvFindDeletedUsers(
+    PLW_EVENTLOG_CONNECTION pConn,
+    HANDLE hReg,
+    HKEY hUsers,
+    long long Now
+    )
+{
+    DWORD dwError = 0;
+    DWORD subKeyCount = 0;
+    DWORD maxSubKeyLen = 0;
+    DWORD subKeyLen = 0;
+    DWORD i = 0;
+    PSTR pKeyName = NULL;
+    DWORD lastUpdated = 0;
+    DWORD lastUpdatedLen = 0;
+
+    dwError = RegQueryInfoKeyA(
+                    hReg,
+                    hUsers,
+                    NULL,
+                    NULL,
+                    NULL,
+                    &subKeyCount,
+                    &maxSubKeyLen,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL,
+                    NULL);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = LwAllocateMemory(
+                    maxSubKeyLen + 1,
+                    (PVOID *)&pKeyName);
+
+    for (i = 0; i < maxSubKeyLen; i++)
+    {
+        subKeyLen = maxSubKeyLen + 1;
+
+        dwError = RegEnumKeyExA(
+                        hReg,
+                        hUsers,
+                        i,
+                        pKeyName,
+                        &subKeyLen,
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL);
+        BAIL_ON_UMN_ERROR(dwError);
+
+        lastUpdatedLen = 0;
+        dwError = RegGetValueA(
+                        hReg,
+                        hUsers,
+                        pKeyName,
+                        "LastUpdated",
+                        0,
+                        NULL,
+                        (PBYTE)&lastUpdated,
+                        &lastUpdatedLen);
+        BAIL_ON_UMN_ERROR(dwError);
+
+        if (lastUpdated < Now)
+        {
+            UMN_LOG_INFO("User '%s' deleted",
+                            pKeyName);
+
+            dwError = RegDeleteKeyA(
+                            hReg,
+                            hUsers,
+                            pKeyName);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            // Make sure we don't skip the next key since this one was deleted
+            i--;
+        }
+    }
+
+cleanup:
+    LW_SAFE_FREE_STRING(pKeyName);
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+static
+DWORD
 UmnSrvUpdateGroup(
+    PLW_EVENTLOG_CONNECTION pConn,
     HANDLE hReg,
     HKEY hGroups,
+    BOOLEAN FirstRun,
     long long Now,
     struct group *pGroup
     )
@@ -330,13 +433,22 @@ UmnSrvUpdateAccountInfo(
     HANDLE hReg = NULL;
     HKEY hUsers = NULL;
     HKEY hGroups = NULL;
+    HKEY hParameters = NULL;
     LSA_QUERY_LIST list = { 0 };
     DWORD uid = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     // Do not free
     PSTR pDisableLsassEnum = NULL;
+    DWORD firstRunCompleted = 0;
+    DWORD firstRunCompletedLen = sizeof(firstRunCompleted);
+    PLW_EVENTLOG_CONNECTION pConn = NULL;
 
     list.pdwIds = &uid;
+
+    dwError = LwEvtOpenEventlog(
+                    NULL,
+                    &pConn);
+    BAIL_ON_UMN_ERROR(dwError);
 
     dwError = LsaOpenServer(&hLsass);
     BAIL_ON_UMN_ERROR(dwError);
@@ -347,7 +459,16 @@ UmnSrvUpdateAccountInfo(
     dwError = RegOpenKeyExA(
                 hReg,
                 NULL,
-                HKEY_THIS_MACHINE "\\Services\\" SERVICE_NAME "\\Parameters\\Users",
+                HKEY_THIS_MACHINE "\\Services\\" SERVICE_NAME "\\Parameters",
+                0,
+                KEY_ALL_ACCESS,
+                &hParameters);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = RegOpenKeyExA(
+                hReg,
+                hParameters,
+                "Users",
                 0,
                 KEY_ALL_ACCESS,
                 &hUsers);
@@ -355,13 +476,29 @@ UmnSrvUpdateAccountInfo(
 
     dwError = RegOpenKeyExA(
                 hReg,
-                NULL,
-                HKEY_THIS_MACHINE "\\Services\\" SERVICE_NAME "\\Parameters\\Groups",
+                hParameters,
+                "Groups",
                 0,
                 KEY_ALL_ACCESS,
                 &hGroups);
     BAIL_ON_UMN_ERROR(dwError);
 
+    dwError = RegGetValueA(
+                    hReg,
+                    hParameters,
+                    NULL,
+                    "FirstRunCompleted",
+                    0,
+                    NULL,
+                    (PBYTE)&firstRunCompleted,
+                    &firstRunCompletedLen);
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        firstRunCompleted = 0;
+        dwError = 0;
+    }
+    BAIL_ON_UMN_ERROR(dwError);
+    
     pDisableLsassEnum = getenv("_DISABLE_LSASS_NSS_ENUMERATION");
     if (!pDisableLsassEnum || strcmp(pDisableLsassEnum, "1"))
     {
@@ -409,13 +546,26 @@ UmnSrvUpdateAccountInfo(
         }
         else
         {
-            dwError = UmnSrvUpdateUser(hReg, hUsers, Now, pUser);
+            dwError = UmnSrvUpdateUser(
+                            pConn,
+                            hReg,
+                            hUsers,
+                            !firstRunCompleted,
+                            Now,
+                            pUser);
             BAIL_ON_UMN_ERROR(dwError);
         }
 
         LsaFreeSecurityObjectList(1, ppObjects);
         ppObjects = NULL;
     }
+
+    dwError = UmnSrvFindDeletedUsers(
+                    pConn,
+                    hReg,
+                    hUsers,
+                    Now);
+    BAIL_ON_UMN_ERROR(dwError);
 
     while((pGroup = getgrent()) != NULL)
     {
@@ -441,7 +591,13 @@ UmnSrvUpdateAccountInfo(
         }
         else
         {
-            dwError = UmnSrvUpdateGroup(hReg, hGroups, Now, pGroup);
+            dwError = UmnSrvUpdateGroup(
+                            pConn,
+                            hReg,
+                            hGroups,
+                            !firstRunCompleted,
+                            Now,
+                            pGroup);
             BAIL_ON_UMN_ERROR(dwError);
         }
 
@@ -451,6 +607,20 @@ UmnSrvUpdateAccountInfo(
 
     endpwent();
     endgrent();
+
+    if (!firstRunCompleted)
+    {
+        firstRunCompleted = 1;
+        dwError = RegSetValueExA(
+                        hReg,
+                        hParameters,
+                        "FirstRunCompleted",
+                        0,
+                        REG_DWORD,
+                        (PBYTE)&firstRunCompleted,
+                        sizeof(firstRunCompleted));
+        BAIL_ON_UMN_ERROR(dwError);
+    }
     
 cleanup:
     if (hLsass)
@@ -472,6 +642,10 @@ cleanup:
     if (ppObjects)
     {
         LsaFreeSecurityObjectList(1, ppObjects);
+    }
+    if (pConn)
+    {
+        LwEvtCloseEventlog(pConn);
     }
     return dwError;
 
