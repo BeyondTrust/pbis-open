@@ -1,0 +1,8 @@
+interface usermonitor_encoding
+{
+    [encode] USER_CHANGE_Encode();
+    [decode] USER_CHANGE_Decode();
+
+    [encode] GROUP_CHANGE_Encode();
+    [decode] GROUP_CHANGE_Decode();
+}

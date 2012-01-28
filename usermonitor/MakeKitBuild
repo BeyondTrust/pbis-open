@@ -1,4 +1,4 @@
-SUBDIRS="server"
+SUBDIRS="encoding server"
 
 configure()
 {

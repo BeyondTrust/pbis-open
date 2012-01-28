@@ -40,6 +40,10 @@
     default = dword:0000003c
     doc = "Frequency of checking for new users"
 }
+"FirstRunCompleted" = {
+    default = dword:00000000
+    doc = "Indicates whether an initial inventory of the local users and groups has been generated yet"
+}
 
 [HKEY_THIS_MACHINE\Services\usermonitor\Parameters\Users]
 

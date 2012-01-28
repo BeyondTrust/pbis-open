@@ -1,0 +1,26 @@
+[uuid(b5903438-6b50-4d45-81be-62d05b2b6ef4),
+  version(0.0),
+  pointer_default(unique)
+]
+interface usermonitor_encoding
+{
+
+#include <lw/types.h>
+#include <usermonitor-encoding.h>
+
+    void USER_CHANGE_Encode(
+            [in] handle_t h,
+            [in, unique] USER_CHANGE * value);
+
+    void USER_CHANGE_Decode(
+            [in] handle_t h,
+            [out] USER_CHANGE **value);
+
+    void GROUP_CHANGE_Encode(
+            [in] handle_t h,
+            [in, unique] GROUP_CHANGE * value);
+
+    void GROUP_CHANGE_Decode(
+            [in] handle_t h,
+            [out] GROUP_CHANGE **value);
+}
