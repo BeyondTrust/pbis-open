@@ -272,7 +272,7 @@ UmnSrvWriteUserValues(
                     "pw_name",
                     0,
                     REG_SZ,
-                    pUser->pw_name,
+                    (PBYTE) pUser->pw_name,
                     strlen(pUser->pw_name) + 1);
     BAIL_ON_UMN_ERROR(dwError);
 
@@ -282,7 +282,7 @@ UmnSrvWriteUserValues(
                     "pw_passwd",
                     0,
                     REG_SZ,
-                    pUser->pw_passwd,
+                    (PBYTE) pUser->pw_passwd,
                     strlen(pUser->pw_passwd) + 1);
     BAIL_ON_UMN_ERROR(dwError);
 
@@ -314,7 +314,7 @@ UmnSrvWriteUserValues(
                     "pw_gecos",
                     0,
                     REG_SZ,
-                    pUser->pw_gecos,
+                    (PBYTE) pUser->pw_gecos,
                     strlen(pUser->pw_gecos) + 1);
     BAIL_ON_UMN_ERROR(dwError);
 
@@ -324,7 +324,7 @@ UmnSrvWriteUserValues(
                     "pw_dir",
                     0,
                     REG_SZ,
-                    pUser->pw_dir,
+                    (PBYTE) pUser->pw_dir,
                     strlen(pUser->pw_dir) + 1);
     BAIL_ON_UMN_ERROR(dwError);
 
@@ -334,7 +334,7 @@ UmnSrvWriteUserValues(
                     "pw_shell",
                     0,
                     REG_SZ,
-                    pUser->pw_shell,
+                    (PBYTE) pUser->pw_shell,
                     strlen(pUser->pw_shell) + 1);
     BAIL_ON_UMN_ERROR(dwError);
 
