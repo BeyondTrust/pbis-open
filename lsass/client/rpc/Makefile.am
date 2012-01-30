@@ -14,7 +14,7 @@ lib_LTLIBRARIES = liblsarpc.la
 liblsarpc_la_SOURCES =
 
 liblsarpc_la_LIBADD =                              \
-    $(top_builddir)/common/utils/liblsautils.la    \
+    $(top_builddir)/common/liblsacommon.la    \
     $(rpccli_builddir)/common/libcommon.la         \
     $(rpccli_builddir)/lsa/liblsa.la               \
     $(rpccli_builddir)/samr/libsamr.la             \
