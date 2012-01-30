@@ -687,7 +687,6 @@ error:
     goto cleanup;
 }
 
-static
 DWORD
 UmnSrvUpdateGroup(
     PLW_EVENTLOG_CONNECTION pConn,
@@ -704,48 +703,23 @@ UmnSrvUpdateGroup(
 }
 
 DWORD
-UmnSrvUpdateAccountInfo(
+UmnSrvUpdateUsers(
+    HANDLE hLsass,
+    PLW_EVENTLOG_CONNECTION pEventlog,
+    HANDLE hReg,
+    HKEY hParameters,
+    BOOLEAN FirstRun,
     long long Now
     )
 {
+    DWORD uid = 0;
     DWORD dwError = 0;
     struct passwd *pUser = NULL;
-    struct group *pGroup = NULL;
-    HANDLE hLsass = NULL;
-    HANDLE hReg = NULL;
-    HKEY hUsers = NULL;
-    HKEY hGroups = NULL;
-    HKEY hParameters = NULL;
     LSA_QUERY_LIST list = { 0 };
-    DWORD uid = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
-    // Do not free
-    PSTR pDisableLsassEnum = NULL;
-    DWORD firstRunCompleted = 0;
-    DWORD firstRunCompletedLen = sizeof(firstRunCompleted);
-    PLW_EVENTLOG_CONNECTION pConn = NULL;
+    HKEY hUsers = NULL;
 
     list.pdwIds = &uid;
-
-    dwError = LwEvtOpenEventlog(
-                    NULL,
-                    &pConn);
-    BAIL_ON_UMN_ERROR(dwError);
-
-    dwError = LsaOpenServer(&hLsass);
-    BAIL_ON_UMN_ERROR(dwError);
-
-    dwError = RegOpenServer(&hReg);
-    BAIL_ON_UMN_ERROR(dwError);
-
-    dwError = RegOpenKeyExA(
-                hReg,
-                NULL,
-                HKEY_THIS_MACHINE "\\Services\\" SERVICE_NAME "\\Parameters",
-                0,
-                KEY_ALL_ACCESS,
-                &hParameters);
-    BAIL_ON_UMN_ERROR(dwError);
 
     dwError = RegOpenKeyExA(
                 hReg,
@@ -755,54 +729,6 @@ UmnSrvUpdateAccountInfo(
                 KEY_ALL_ACCESS,
                 &hUsers);
     BAIL_ON_UMN_ERROR(dwError);
-
-    dwError = RegOpenKeyExA(
-                hReg,
-                hParameters,
-                "Groups",
-                0,
-                KEY_ALL_ACCESS,
-                &hGroups);
-    BAIL_ON_UMN_ERROR(dwError);
-
-    dwError = RegGetValueA(
-                    hReg,
-                    hParameters,
-                    NULL,
-                    "FirstRunCompleted",
-                    0,
-                    NULL,
-                    (PBYTE)&firstRunCompleted,
-                    &firstRunCompletedLen);
-    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
-    {
-        firstRunCompleted = 0;
-        dwError = 0;
-    }
-    BAIL_ON_UMN_ERROR(dwError);
-    
-    pDisableLsassEnum = getenv("_DISABLE_LSASS_NSS_ENUMERATION");
-    if (!pDisableLsassEnum || strcmp(pDisableLsassEnum, "1"))
-    {
-        /* Note, this code must leak memory.
-         *
-         * Putenv uses the memory passed to it, that it is it does not copy the
-         * string. There is no Unix standard to unset an environment variable,
-         * and the string passed to putenv must be accessible as long as the
-         * program is running. A static string cannot be used because the
-         * container could out live this service. There is no opportunity to
-         * free the string before the program ends, because the variable must
-         * be accessible for the duration of the program.
-         */
-        dwError = LwAllocateString(
-                    "_DISABLE_LSASS_NSS_ENUMERATION=1",
-                    &pDisableLsassEnum);
-        BAIL_ON_UMN_ERROR(dwError);
-        putenv(pDisableLsassEnum);
-    }
-
-    setpwent();
-    setgrent();
 
     while((pUser = getpwent()) != NULL)
     {
@@ -829,10 +755,10 @@ UmnSrvUpdateAccountInfo(
         else
         {
             dwError = UmnSrvUpdateUser(
-                            pConn,
+                            pEventlog,
                             hReg,
                             hUsers,
-                            !firstRunCompleted,
+                            FirstRun,
                             Now,
                             pUser);
             BAIL_ON_UMN_ERROR(dwError);
@@ -843,94 +769,23 @@ UmnSrvUpdateAccountInfo(
     }
 
     dwError = UmnSrvFindDeletedUsers(
-                    pConn,
+                    pEventlog,
                     hReg,
                     hUsers,
                     Now);
     BAIL_ON_UMN_ERROR(dwError);
 
-    while((pGroup = getgrent()) != NULL)
-    {
-        uid = pGroup->gr_gid;
-
-        dwError = LsaFindObjects(
-                    hLsass,
-                    NULL,
-                    0,
-                    LSA_OBJECT_TYPE_GROUP,
-                    LSA_QUERY_TYPE_BY_UNIX_ID,
-                    1,
-                    list,
-                    &ppObjects);
-        BAIL_ON_UMN_ERROR(dwError);
-
-        if (ppObjects[0] &&
-                ppObjects[0]->enabled &&
-                !strcmp(ppObjects[0]->groupInfo.pszUnixName, pGroup->gr_name))
-        {
-            UMN_LOG_VERBOSE("Skipping enumerated group '%s' (gid %d) because they came from lsass",
-                    pGroup->gr_name, uid);
-        }
-        else
-        {
-            dwError = UmnSrvUpdateGroup(
-                            pConn,
-                            hReg,
-                            hGroups,
-                            !firstRunCompleted,
-                            Now,
-                            pGroup);
-            BAIL_ON_UMN_ERROR(dwError);
-        }
-
-        LsaFreeSecurityObjectList(1, ppObjects);
-        ppObjects = NULL;
-    }
-
-    endpwent();
-    endgrent();
-
-    if (!firstRunCompleted)
-    {
-        firstRunCompleted = 1;
-        dwError = RegSetValueExA(
-                        hReg,
-                        hParameters,
-                        "FirstRunCompleted",
-                        0,
-                        REG_DWORD,
-                        (PBYTE)&firstRunCompleted,
-                        sizeof(firstRunCompleted));
-        BAIL_ON_UMN_ERROR(dwError);
-    }
-    
 cleanup:
-    if (hLsass)
-    {
-        LsaCloseServer(hLsass);
-    }
-    if (hReg)
-    {
-        if (hUsers)
-        {
-            RegCloseKey(hReg, hUsers);
-        }
-        if (hGroups)
-        {
-            RegCloseKey(hReg, hGroups);
-        }
-        RegCloseServer(hReg);
-    }
     if (ppObjects)
     {
         LsaFreeSecurityObjectList(1, ppObjects);
     }
-    if (pConn)
+    if (hUsers)
     {
-        LwEvtCloseEventlog(pConn);
+        RegCloseKey(hReg, hUsers);
     }
     return dwError;
-
+    
 error:
     goto cleanup;
 }
