@@ -245,7 +245,7 @@ UmnSrvWriteGroupValues(
                     "gr_name",
                     0,
                     REG_SZ,
-                    pGroup->gr_name,
+                    (PBYTE)pGroup->gr_name,
                     strlen(pGroup->gr_name) + 1);
     BAIL_ON_UMN_ERROR(dwError);
 
@@ -255,7 +255,7 @@ UmnSrvWriteGroupValues(
                     "gr_passwd",
                     0,
                     REG_SZ,
-                    pGroup->gr_passwd,
+                    (PBYTE)pGroup->gr_passwd,
                     strlen(pGroup->gr_passwd) + 1);
     BAIL_ON_UMN_ERROR(dwError);
 
