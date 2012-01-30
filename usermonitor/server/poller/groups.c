@@ -15,7 +15,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
+ * Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -33,20 +33,17 @@
  *
  * Module Name:
  *
- *        users_p.h
+ *        groups.c
  *
  * Abstract:
  *
  *        User monitor service for local users and groups
- * 
- *        Functions internal to this package for enumerating and tracking
- *        users.
  *
- * Authors: Kyle Stemen <kstemen@beyondtrust.com>
- * 
+ *        Functions for enumerating and tracking groups.
+ *
+ * Authors: Kyle Stemen <kstemen@likewise.com>
  */
-#ifndef __USERS_P_H__
-#define __USERS_P_H__
+#include "includes.h"
 
 DWORD
 UmnSrvUpdateGroup(
@@ -56,16 +53,9 @@ UmnSrvUpdateGroup(
     BOOLEAN FirstRun,
     long long Now,
     struct group *pGroup
-    );
-
-DWORD
-UmnSrvUpdateUsers(
-    HANDLE hLsass,
-    PLW_EVENTLOG_CONNECTION pEventlog,
-    HANDLE hReg,
-    HKEY hParameters,
-    BOOLEAN FirstRun,
-    long long Now
-    );
-
-#endif /* __USERS_P_H__ */
+    )
+{
+    UMN_LOG_VERBOSE("Updating group '%s' (gid %d)",
+                    pGroup->gr_name, pGroup->gr_gid);
+    return 0;
+}

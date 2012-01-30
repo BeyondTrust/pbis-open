@@ -33,7 +33,7 @@
  *
  * Module Name:
  *
- *        users_p.h
+ *        groups_p.h
  *
  * Abstract:
  *
@@ -45,8 +45,8 @@
  * Authors: Kyle Stemen <kstemen@beyondtrust.com>
  * 
  */
-#ifndef __USERS_P_H__
-#define __USERS_P_H__
+#ifndef __GROUPS_P_H__
+#define __GROUPS_P_H__
 
 DWORD
 UmnSrvUpdateGroup(
@@ -58,14 +58,4 @@ UmnSrvUpdateGroup(
     struct group *pGroup
     );
 
-DWORD
-UmnSrvUpdateUsers(
-    HANDLE hLsass,
-    PLW_EVENTLOG_CONNECTION pEventlog,
-    HANDLE hReg,
-    HKEY hParameters,
-    BOOLEAN FirstRun,
-    long long Now
-    );
-
-#endif /* __USERS_P_H__ */
+#endif /* __GROUPS_P_H__ */

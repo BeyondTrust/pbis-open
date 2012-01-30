@@ -688,21 +688,6 @@ error:
 }
 
 DWORD
-UmnSrvUpdateGroup(
-    PLW_EVENTLOG_CONNECTION pConn,
-    HANDLE hReg,
-    HKEY hGroups,
-    BOOLEAN FirstRun,
-    long long Now,
-    struct group *pGroup
-    )
-{
-    UMN_LOG_VERBOSE("Updating group '%s' (gid %d)",
-                    pGroup->gr_name, pGroup->gr_gid);
-    return 0;
-}
-
-DWORD
 UmnSrvUpdateUsers(
     HANDLE hLsass,
     PLW_EVENTLOG_CONNECTION pEventlog,

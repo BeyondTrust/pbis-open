@@ -4,6 +4,6 @@ make()
         GROUP="usermonitorserverpoller" \
         INCLUDEDIRS=". ../../include ../../include/public ../../server/include" \
         HEADERDEPS="lw/rtlstring.h lw/rtlmemory.h lw/attrs.h lw/types.h eventlog.h lwerror.h wc16str.h lsa/lsa.h reg/reg.h reg/lwreg.h" \
-        SOURCES="poller.c globals.c users.c" \
+        SOURCES="poller.c globals.c users.c groups.c" \
         LIBDEPS="lsaclient eventlog lwbase_nothr usermonitor_encoding"
 }
