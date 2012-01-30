@@ -530,6 +530,7 @@ UmnSrvUpdateUser(
                 strcmp(pUser->pw_passwd, old.pw_passwd) ||
                 pUser->pw_uid != old.pw_uid ||
                 pUser->pw_gid != old.pw_gid ||
+                strcmp(pUser->pw_gecos, old.pw_gecos) ||
                 strcmp(pUser->pw_dir, old.pw_dir) ||
                 strcmp(pUser->pw_shell, old.pw_shell))
         {

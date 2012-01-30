@@ -49,16 +49,6 @@
 #define __USERS_P_H__
 
 DWORD
-UmnSrvUpdateGroup(
-    PLW_EVENTLOG_CONNECTION pConn,
-    HANDLE hReg,
-    HKEY hGroups,
-    BOOLEAN FirstRun,
-    long long Now,
-    struct group *pGroup
-    );
-
-DWORD
 UmnSrvUpdateUsers(
     HANDLE hLsass,
     PLW_EVENTLOG_CONNECTION pEventlog,

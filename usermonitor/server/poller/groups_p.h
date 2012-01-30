@@ -49,13 +49,13 @@
 #define __GROUPS_P_H__
 
 DWORD
-UmnSrvUpdateGroup(
-    PLW_EVENTLOG_CONNECTION pConn,
+UmnSrvUpdateGroups(
+    HANDLE hLsass,
+    PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
-    HKEY hGroups,
+    HKEY hParameters,
     BOOLEAN FirstRun,
-    long long Now,
-    struct group *pGroup
+    long long Now
     );
 
 #endif /* __GROUPS_P_H__ */

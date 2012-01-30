@@ -68,7 +68,8 @@ typedef struct USER_MONITOR_GROUP
 {
     PSTR gr_name;
     PSTR gr_passwd;
-    DWORD pw_gid;
+    DWORD gr_gid;
+    DWORD LastUpdated;
 } USER_MONITOR_GROUP, *PUSER_MONITOR_GROUP;
 
 typedef struct _USER_CHANGE

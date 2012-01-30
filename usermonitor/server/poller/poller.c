@@ -152,21 +152,14 @@ UmnSrvUpdateAccountInfo(
     )
 {
     DWORD dwError = 0;
-    struct group *pGroup = NULL;
     HANDLE hLsass = NULL;
     HANDLE hReg = NULL;
-    HKEY hGroups = NULL;
     HKEY hParameters = NULL;
-    PLSA_SECURITY_OBJECT* ppObjects = NULL;
     // Do not free
     PSTR pDisableLsassEnum = NULL;
     DWORD firstRunCompleted = 0;
     DWORD firstRunCompletedLen = sizeof(firstRunCompleted);
     PLW_EVENTLOG_CONNECTION pConn = NULL;
-    DWORD gid = 0;
-    LSA_QUERY_LIST list = { 0 };
-
-    list.pdwIds = &gid;
 
     dwError = LwEvtOpenEventlog(
                     NULL,
@@ -186,15 +179,6 @@ UmnSrvUpdateAccountInfo(
                 0,
                 KEY_ALL_ACCESS,
                 &hParameters);
-    BAIL_ON_UMN_ERROR(dwError);
-
-    dwError = RegOpenKeyExA(
-                hReg,
-                hParameters,
-                "Groups",
-                0,
-                KEY_ALL_ACCESS,
-                &hGroups);
     BAIL_ON_UMN_ERROR(dwError);
 
     dwError = RegGetValueA(
@@ -245,43 +229,14 @@ UmnSrvUpdateAccountInfo(
                     Now);
     BAIL_ON_UMN_ERROR(dwError);
 
-    while((pGroup = getgrent()) != NULL)
-    {
-        gid = pGroup->gr_gid;
-
-        dwError = LsaFindObjects(
+    dwError = UmnSrvUpdateGroups(
                     hLsass,
-                    NULL,
-                    0,
-                    LSA_OBJECT_TYPE_GROUP,
-                    LSA_QUERY_TYPE_BY_UNIX_ID,
-                    1,
-                    list,
-                    &ppObjects);
-        BAIL_ON_UMN_ERROR(dwError);
-
-        if (ppObjects[0] &&
-                ppObjects[0]->enabled &&
-                !strcmp(ppObjects[0]->groupInfo.pszUnixName, pGroup->gr_name))
-        {
-            UMN_LOG_VERBOSE("Skipping enumerated group '%s' (gid %d) because they came from lsass",
-                    pGroup->gr_name, gid);
-        }
-        else
-        {
-            dwError = UmnSrvUpdateGroup(
-                            pConn,
-                            hReg,
-                            hGroups,
-                            !firstRunCompleted,
-                            Now,
-                            pGroup);
-            BAIL_ON_UMN_ERROR(dwError);
-        }
-
-        LsaFreeSecurityObjectList(1, ppObjects);
-        ppObjects = NULL;
-    }
+                    pConn,
+                    hReg,
+                    hParameters,
+                    !firstRunCompleted,
+                    Now);
+    BAIL_ON_UMN_ERROR(dwError);
 
     endpwent();
     endgrent();
@@ -307,15 +262,7 @@ cleanup:
     }
     if (hReg)
     {
-        if (hGroups)
-        {
-            RegCloseKey(hReg, hGroups);
-        }
         RegCloseServer(hReg);
-    }
-    if (ppObjects)
-    {
-        LsaFreeSecurityObjectList(1, ppObjects);
     }
     if (pConn)
     {
