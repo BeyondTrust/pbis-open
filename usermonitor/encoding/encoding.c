@@ -96,6 +96,21 @@ FreeGroupChange(
     rpc_ss_client_free(pValue);
 }
 
+VOID
+FreeGroupMembershipChange(
+    PGROUP_MEMBERSHIP_CHANGE pValue
+    )
+{
+    if (pValue == NULL)
+    {
+        return;
+    }
+
+    rpc_ss_client_free(pValue->pUserName);
+    rpc_ss_client_free(pValue->pGroupName);
+    rpc_ss_client_free(pValue);
+}
+
 #define BAIL_ON_ERR_STATUS(err)                 \
     dwError = LwNtStatusToWin32Error(LwRpcStatusToNtStatus(err)); \
     BAIL_ON_UMN_ERROR(dwError);
@@ -119,7 +134,6 @@ DecodeUserChange(
             &encodingHandle,
             &status);
     BAIL_ON_ERR_STATUS(status);
-
 
     idl_es_set_attrs(encodingHandle, IDL_ES_MIDL_COMPAT, &status);
     BAIL_ON_ERR_STATUS(status);
@@ -148,7 +162,6 @@ error:
     }
     goto cleanup;
 }
-
 
 DWORD
 EncodeUserChange(
@@ -213,7 +226,6 @@ DecodeGroupChange(
             &status);
     BAIL_ON_ERR_STATUS(status);
 
-
     idl_es_set_attrs(encodingHandle, IDL_ES_MIDL_COMPAT, &status);
     BAIL_ON_ERR_STATUS(status);
 
@@ -242,7 +254,6 @@ error:
     goto cleanup;
 }
 
-
 DWORD
 EncodeGroupChange(
     IN PGROUP_CHANGE pValue,
@@ -266,6 +277,97 @@ EncodeGroupChange(
     BAIL_ON_ERR_STATUS(status);
 
     GROUP_CHANGE_Encode(encodingHandle, pValue);
+    BAIL_ON_ERR_STATUS(status);
+
+    idl_es_handle_free(&encodingHandle, &status);
+    encodingHandle = NULL;
+    BAIL_ON_ERR_STATUS(status);
+
+cleanup:
+    return dwError;
+
+error:
+
+    if (encodingHandle != NULL)
+    {
+        // Do not return status2
+        idl_es_handle_free(&encodingHandle, &status2);
+    }
+
+    goto cleanup;
+}
+
+DWORD
+DecodeGroupMembershipChange(
+    IN PVOID pBuffer,
+    IN size_t sBufferLen,
+    OUT PGROUP_MEMBERSHIP_CHANGE* ppValue
+    )
+{
+    DWORD dwError = 0;
+    idl_es_handle_t encodingHandle = NULL;
+    error_status_t status = 0;
+    error_status_t status2;
+    PGROUP_MEMBERSHIP_CHANGE pValue = NULL;
+
+    idl_es_decode_buffer(
+            (unsigned char *)pBuffer,
+            sBufferLen,
+            &encodingHandle,
+            &status);
+    BAIL_ON_ERR_STATUS(status);
+
+    idl_es_set_attrs(encodingHandle, IDL_ES_MIDL_COMPAT, &status);
+    BAIL_ON_ERR_STATUS(status);
+
+    GROUP_MEMBERSHIP_CHANGE_Decode(encodingHandle, &pValue);
+    BAIL_ON_ERR_STATUS(status);
+
+    idl_es_handle_free(&encodingHandle, &status);
+    encodingHandle = NULL;
+    BAIL_ON_ERR_STATUS(status);
+
+    *ppValue = pValue;
+
+cleanup:
+    return dwError;
+
+error:
+    if (pValue != NULL)
+    {
+        FreeGroupMembershipChange(pValue);
+    }
+    if (encodingHandle != NULL)
+    {
+        // Do not return status2
+        idl_es_handle_free(&encodingHandle, &status2);
+    }
+    goto cleanup;
+}
+
+DWORD
+EncodeGroupMembershipChange(
+    IN PGROUP_MEMBERSHIP_CHANGE pValue,
+    OUT PDWORD pdwEncodedSize,
+    OUT PVOID* ppEncodedBuffer
+    )
+{
+    DWORD dwError = 0;
+    idl_es_handle_t encodingHandle = NULL;
+    error_status_t status = 0;
+    error_status_t status2;
+
+    idl_es_encode_dyn_buffer(
+        (idl_byte**) (void*) ppEncodedBuffer,
+        (idl_ulong_int*) pdwEncodedSize,
+        &encodingHandle,
+        &status);
+    BAIL_ON_ERR_STATUS(status);
+
+    idl_es_set_attrs(encodingHandle, IDL_ES_MIDL_COMPAT, &status);
+    BAIL_ON_ERR_STATUS(status);
+
+    GROUP_MEMBERSHIP_CHANGE_Encode(encodingHandle, pValue);
     BAIL_ON_ERR_STATUS(status);
 
     idl_es_handle_free(&encodingHandle, &status);

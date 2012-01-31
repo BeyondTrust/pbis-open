@@ -5,4 +5,7 @@ interface usermonitor_encoding
 
     [encode] GROUP_CHANGE_Encode();
     [decode] GROUP_CHANGE_Decode();
+
+    [encode] GROUP_MEMBERSHIP_CHANGE_Encode();
+    [decode] GROUP_MEMBERSHIP_CHANGE_Decode();
 }

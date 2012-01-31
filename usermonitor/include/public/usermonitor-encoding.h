@@ -84,6 +84,15 @@ typedef struct _GROUP_CHANGE
     USER_MONITOR_GROUP NewValue;
 } GROUP_CHANGE, *PGROUP_CHANGE;
 
+typedef struct _GROUP_MEMBERSHIP_CHANGE
+{
+    BOOL Added;
+    BOOL OnlyGidChange;
+    PSTR pUserName;
+    DWORD Gid;
+    PSTR pGroupName;
+} GROUP_MEMBERSHIP_CHANGE, *PGROUP_MEMBERSHIP_CHANGE;
+
 #ifndef _DCE_IDL_
 DWORD
 DecodeUserChange(
@@ -121,6 +130,25 @@ EncodeGroupChange(
 VOID
 FreeGroupChange(
     PGROUP_CHANGE pValue
+    );
+
+DWORD
+DecodeGroupMembershipChange(
+    IN PVOID pBuffer,
+    IN size_t sBufferLen,
+    OUT PGROUP_MEMBERSHIP_CHANGE* ppValue
+    );
+
+DWORD
+EncodeGroupMembershipChange(
+    IN PGROUP_MEMBERSHIP_CHANGE pValue,
+    OUT PDWORD pdwEncodedSize,
+    OUT PVOID* ppEncodedBuffer
+    );
+
+VOID
+FreeGroupMembershipChange(
+    PGROUP_MEMBERSHIP_CHANGE pValue
     );
 #endif
 
