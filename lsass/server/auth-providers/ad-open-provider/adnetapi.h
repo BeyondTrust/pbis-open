@@ -76,6 +76,17 @@ AD_NetCreateSchannelState(
     );
 
 VOID
+AD_NetTransferSchannelState(
+    IN PLSA_SCHANNEL_STATE pSchannelState,
+    IN PLSA_SCHANNEL_STATE pUpdaterSchannelState
+    );
+
+VOID
+AD_NetClearSchannelStateInLock(
+    IN PLSA_SCHANNEL_STATE pSchannelState
+    );
+
+VOID
 AD_NetDestroySchannelState(
     IN PLSA_SCHANNEL_STATE pSchannelState
     );

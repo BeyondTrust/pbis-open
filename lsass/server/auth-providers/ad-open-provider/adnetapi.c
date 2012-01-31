@@ -84,12 +84,6 @@ AD_WinErrorIsConnectionError(
     );
 
 static
-VOID
-AD_ClearSchannelStateInLock(
-    IN PLSA_SCHANNEL_STATE pSchannelState
-    );
-
-static
 DWORD
 AD_GetSystemCreds(
     IN PLSA_AD_PROVIDER_STATE pState,
@@ -223,11 +217,32 @@ error:
 }
 
 VOID
+AD_NetTransferSchannelState(
+    IN PLSA_SCHANNEL_STATE pSchannelState,
+    IN PLSA_SCHANNEL_STATE pUpdaterSchannelState
+    )
+{
+    AD_NetClearSchannelStateInLock(pSchannelState);
+    pSchannelState->SchannelCreds = pUpdaterSchannelState->SchannelCreds;
+    pSchannelState->pSchannelCreds = &pSchannelState->SchannelCreds;
+    pSchannelState->hSchannelBinding = pUpdaterSchannelState->hSchannelBinding;
+    pSchannelState->pszSchannelServer = pUpdaterSchannelState->pszSchannelServer;
+
+    if (pUpdaterSchannelState->pSchannelLock)
+    {
+        pthread_mutex_destroy(pUpdaterSchannelState->pSchannelLock);
+        pUpdaterSchannelState->pSchannelLock = NULL;
+    }
+
+    LwFreeMemory(pUpdaterSchannelState);
+}
+
+VOID
 AD_NetDestroySchannelState(
     IN PLSA_SCHANNEL_STATE pSchannelState
     )
 {
-    AD_ClearSchannelStateInLock(pSchannelState);
+    AD_NetClearSchannelStateInLock(pSchannelState);
 
     if (pSchannelState->pSchannelLock)
     {
@@ -1737,7 +1752,7 @@ AD_NetlogonAuthenticationUserEx(
     {
         LSA_LOG_VERBOSE("Resetting schannel due to switching DC from '%s' to '%s'",
                         pSchannelState->pszSchannelServer, pszDomainController);
-        AD_ClearSchannelStateInLock(pSchannelState);
+        AD_NetClearSchannelStateInLock(pSchannelState);
     }
 
     if (!pSchannelState->hSchannelBinding)
@@ -2003,15 +2018,14 @@ error:
 
     if (bResetSchannel)
     {
-        AD_ClearSchannelStateInLock(pSchannelState);
+        AD_NetClearSchannelStateInLock(pSchannelState);
     }
 
     goto cleanup;
 }
 
-static
 VOID
-AD_ClearSchannelStateInLock(
+AD_NetClearSchannelStateInLock(
     IN PLSA_SCHANNEL_STATE pSchannelState
     )
 {
