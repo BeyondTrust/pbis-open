@@ -61,7 +61,7 @@ UmnSrvFreeUserContents(
 static
 DWORD
 UmnSrvWriteUserEvent(
-    PLW_EVENTLOG_CONNECTION pConn,
+    PLW_EVENTLOG_CONNECTION pEventlog,
     BOOLEAN FirstRun,
     PUSER_MONITOR_PASSWD pOld,
     long long Now,
@@ -236,7 +236,7 @@ UmnSrvWriteUserEvent(
     BAIL_ON_UMN_ERROR(dwError);
 
     dwError = LwEvtWriteRecords(
-                    pConn,
+                    pEventlog,
                     1,
                     &record);
     BAIL_ON_UMN_ERROR(dwError);
@@ -465,7 +465,7 @@ error:
 static
 DWORD
 UmnSrvUpdateUser(
-    PLW_EVENTLOG_CONNECTION pConn,
+    PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
     HKEY hUsers,
     BOOLEAN FirstRun,
@@ -510,7 +510,7 @@ UmnSrvUpdateUser(
         BAIL_ON_UMN_ERROR(dwError);
 
         dwError = UmnSrvWriteUserEvent(
-                        pConn,
+                        pEventlog,
                         FirstRun,
                         NULL,
                         Now,
@@ -543,7 +543,7 @@ UmnSrvUpdateUser(
             BAIL_ON_UMN_ERROR(dwError);
 
             dwError = UmnSrvWriteUserEvent(
-                            pConn,
+                            pEventlog,
                             FirstRun,
                             &old,
                             Now,
@@ -579,7 +579,7 @@ error:
 static
 DWORD
 UmnSrvFindDeletedUsers(
-    PLW_EVENTLOG_CONNECTION pConn,
+    PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
     HKEY hUsers,
     long long Now
@@ -665,7 +665,7 @@ UmnSrvFindDeletedUsers(
             // Users cannot be detected as deleted if there is no previous data
             // to compare, so pass FALSE for FirstRun
             dwError = UmnSrvWriteUserEvent(
-                            pConn,
+                            pEventlog,
                             FALSE,
                             &old,
                             Now,
