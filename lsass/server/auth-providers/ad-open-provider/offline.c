@@ -637,7 +637,9 @@ AD_OfflineQueryMemberOfForSid(
 
     if (!ppUserObject[0])
     {
-        dwError = LW_ERROR_NO_SUCH_USER;
+        /* Skip over unknown SIDs without failing */
+        dwError = LW_ERROR_SUCCESS;
+        goto cleanup;
     }
     BAIL_ON_LSA_ERROR(dwError);
 
