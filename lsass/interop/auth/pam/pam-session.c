@@ -294,6 +294,13 @@ pam_sm_close_session(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    if (LsaShouldIgnoreUser(pszLoginId))
+    {
+        LSA_LOG_PAM_DEBUG("By passing lsassd for local account");
+        dwError = LW_ERROR_NOT_HANDLED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
 
