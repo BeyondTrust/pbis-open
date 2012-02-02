@@ -110,7 +110,7 @@ LsaSrvInitRpcServer(
     pszSrvLibPath = pRpc->pszSrvLibPath;
 
     dlerror();
-    pRpc->phLib = dlopen(pszSrvLibPath, RTLD_NOW | RTLD_GLOBAL);
+    pRpc->phLib = dlopen(pszSrvLibPath, RTLD_NOW | RTLD_LOCAL);
     if (pRpc->phLib == NULL) {
         LSA_LOG_ERROR("Failed to open rpc server at path [%s]", pszSrvLibPath);
 

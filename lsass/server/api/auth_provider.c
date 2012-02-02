@@ -154,7 +154,7 @@ LsaSrvInitAuthProvider(
         pszProviderLibpath = pProvider->pszProviderLibpath;
 
         dlerror();
-        pProvider->pLibHandle = dlopen(pszProviderLibpath, RTLD_NOW | RTLD_GLOBAL);
+        pProvider->pLibHandle = dlopen(pszProviderLibpath, RTLD_NOW | RTLD_LOCAL);
         if (!pProvider->pLibHandle)
         {
             LSA_LOG_ERROR("Failed to open auth provider at path '%s'", pszProviderLibpath);

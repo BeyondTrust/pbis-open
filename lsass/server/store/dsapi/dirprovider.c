@@ -161,7 +161,7 @@ DirectoryLoadProvider(
     pProvider->pfnShutdown = DirectoryShutdownProvider;
 #else
     pProvider->pLibHandle = dlopen(pProviderInfo->pszProviderPath,
-        RTLD_NOW | RTLD_GLOBAL);
+        RTLD_NOW | RTLD_LOCAL);
     if (pProvider->pLibHandle == NULL)
     {
         PCSTR pszError = NULL;
