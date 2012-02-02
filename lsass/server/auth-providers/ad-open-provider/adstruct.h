@@ -197,6 +197,8 @@ typedef struct _LSA_AD_PROVIDER_STATE {
     LSA_MACHINEPWD_STATE_HANDLE hMachinePwdState;
 
     LSA_SCHANNEL_STATE_HANDLE hSchannelState;
+
+    pthread_t startThread;
 } LSA_AD_PROVIDER_STATE, *PLSA_AD_PROVIDER_STATE;
 
 typedef struct __AD_PROVIDER_CONTEXT
