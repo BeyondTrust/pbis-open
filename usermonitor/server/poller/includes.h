@@ -63,6 +63,8 @@
 #include <reg/lwreg.h>
 #include <lwstr.h>
 #include <lwmem.h>
+#include <lwhash.h>
+#include <lwdef.h>
 #include <eventlog.h>
 #include <lsa/lsa.h>
 

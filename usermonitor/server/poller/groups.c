@@ -929,12 +929,6 @@ UmnSrvFindDeletedGroups(
                             pKeyName);
 
             UmnSrvFreeGroupContents(&old);
-            if (hMembers)
-            {
-                RegCloseKey(
-                        hReg,
-                        hMembers);
-            }
             LW_SAFE_FREE_STRING(pMembersName);
 
             dwError = UmnSrvReadGroup(
@@ -965,6 +959,11 @@ UmnSrvFindDeletedGroups(
                             old.gr_gid,
                             pKeyName);
             BAIL_ON_UMN_ERROR(dwError);
+
+            // Must close hMembers before trying to delete it
+            RegCloseKey(
+                    hReg,
+                    hMembers);
 
             // RegDeleteKeyA is not recursive, so the Members key must be
             // deleted before the group key

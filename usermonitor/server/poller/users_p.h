@@ -58,4 +58,9 @@ UmnSrvUpdateUsers(
     long long Now
     );
 
+DWORD
+UmnSrvUpdateADAccounts(
+    HANDLE hLsass
+    );
+
 #endif /* __USERS_P_H__ */
