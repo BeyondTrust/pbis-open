@@ -61,6 +61,15 @@ UmnSrvReadUser(
     );
 
 DWORD
+UmnSrvFindDeletedUsers(
+    PLW_EVENTLOG_CONNECTION pEventlog,
+    HANDLE hReg,
+    PCSTR pUserKeyName,
+    HKEY hUsers,
+    long long Now
+    );
+
+DWORD
 UmnSrvUpdateUsers(
     HANDLE hLsass,
     PLW_EVENTLOG_CONNECTION pEventlog,

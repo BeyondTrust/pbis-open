@@ -577,11 +577,11 @@ error:
     goto cleanup;
 }
 
-static
 DWORD
 UmnSrvFindDeletedUsers(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
+    PCSTR pUserKeyName,
     HKEY hUsers,
     long long Now
     )
@@ -648,15 +648,15 @@ UmnSrvFindDeletedUsers(
 
         if (lastUpdated < Now)
         {
-            UMN_LOG_INFO("User '%s' deleted",
-                            pKeyName);
-
             UmnSrvFreeUserContents(&old);
             dwError = UmnSrvReadUser(
-                            "Users",
+                            pUserKeyName,
                             pKeyName,
                             &old);
             BAIL_ON_UMN_ERROR(dwError);
+
+            UMN_LOG_INFO("User '%s' deleted",
+                            old.pw_name);
 
             dwError = RegDeleteKeyA(
                             hReg,
@@ -666,13 +666,26 @@ UmnSrvFindDeletedUsers(
 
             // Users cannot be detected as deleted if there is no previous data
             // to compare, so pass FALSE for FirstRun
-            dwError = UmnSrvWriteUserEvent(
-                            pEventlog,
-                            FALSE,
-                            &old,
-                            Now,
-                            NULL);
-            BAIL_ON_UMN_ERROR(dwError);
+            if (!strcmp(pUserKeyName, "Users"))
+            {
+                dwError = UmnSrvWriteUserEvent(
+                                pEventlog,
+                                FALSE,
+                                &old,
+                                Now,
+                                NULL);
+                BAIL_ON_UMN_ERROR(dwError);
+            }
+            else
+            {
+                dwError = UmnSrvWriteADUserEvent(
+                                pEventlog,
+                                FALSE,
+                                &old,
+                                Now,
+                                NULL);
+                BAIL_ON_UMN_ERROR(dwError);
+            }
 
             // Make sure we don't skip the next key since this one was deleted
             i--;
@@ -759,6 +772,7 @@ UmnSrvUpdateUsers(
     dwError = UmnSrvFindDeletedUsers(
                     pEventlog,
                     hReg,
+                    "Users",
                     hUsers,
                     Now);
     BAIL_ON_UMN_ERROR(dwError);
