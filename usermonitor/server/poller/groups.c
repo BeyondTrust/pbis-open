@@ -995,6 +995,14 @@ UmnSrvFindDeletedGroups(
             }
             else
             {
+                dwError = RegDeleteKeyA(
+                                hReg,
+                                hGroups,
+                                pKeyName);
+                BAIL_ON_UMN_ERROR(dwError);
+
+                // Groups cannot be detected as deleted if there is no previous
+                // data to compare, so pass FALSE for FirstRun
                 dwError = UmnSrvWriteADGroupEvent(
                                 pEventlog,
                                 FALSE,
