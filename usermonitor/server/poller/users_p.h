@@ -48,6 +48,18 @@
 #ifndef __USERS_P_H__
 #define __USERS_P_H__
 
+VOID
+UmnSrvFreeUserContents(
+    PUSER_MONITOR_PASSWD pUser
+    );
+
+DWORD
+UmnSrvReadUser(
+    PCSTR pParentKey,
+    PCSTR pName,
+    PUSER_MONITOR_PASSWD pResult
+    );
+
 DWORD
 UmnSrvUpdateUsers(
     HANDLE hLsass,

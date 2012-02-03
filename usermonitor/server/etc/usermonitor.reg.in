@@ -47,4 +47,6 @@
 
 [HKEY_THIS_MACHINE\Services\usermonitor\Parameters\Users]
 
+[HKEY_THIS_MACHINE\Services\usermonitor\Parameters\AD Users]
+
 [HKEY_THIS_MACHINE\Services\usermonitor\Parameters\Groups]

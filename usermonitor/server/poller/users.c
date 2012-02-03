@@ -45,7 +45,6 @@
  */
 #include "includes.h"
 
-static
 VOID
 UmnSrvFreeUserContents(
     PUSER_MONITOR_PASSWD pUser
@@ -345,10 +344,10 @@ error:
     goto cleanup;
 }
 
-static
 DWORD
 UmnSrvReadUser(
-    PSTR pName,
+    PCSTR pParentKey,
+    PCSTR pName,
     PUSER_MONITOR_PASSWD pResult
     )
 {
@@ -443,7 +442,8 @@ UmnSrvReadUser(
 
     dwError = LwAllocateStringPrintf(
                     &pUserPath,
-                    "Services\\" SERVICE_NAME "\\Parameters\\Users\\%s",
+                    "Services\\" SERVICE_NAME "\\Parameters\\%s\\%s",
+                    pParentKey,
                     pName);
     BAIL_ON_UMN_ERROR(dwError);
 
@@ -522,6 +522,7 @@ UmnSrvUpdateUser(
         BAIL_ON_UMN_ERROR(dwError);
 
         dwError = UmnSrvReadUser(
+                        "Users",
                         pUser->pw_name,
                         &old);
         BAIL_ON_UMN_ERROR(dwError);
@@ -652,6 +653,7 @@ UmnSrvFindDeletedUsers(
 
             UmnSrvFreeUserContents(&old);
             dwError = UmnSrvReadUser(
+                            "Users",
                             pKeyName,
                             &old);
             BAIL_ON_UMN_ERROR(dwError);
