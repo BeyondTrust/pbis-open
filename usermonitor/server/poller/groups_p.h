@@ -61,6 +61,15 @@ UmnSrvReadGroup(
     );
 
 DWORD
+UmnSrvFindDeletedGroups(
+    PLW_EVENTLOG_CONNECTION pEventlog,
+    HANDLE hReg,
+    PCSTR pGroupKeyName,
+    HKEY hGroups,
+    long long Now
+    );
+
+DWORD
 UmnSrvUpdateGroups(
     HANDLE hLsass,
     PLW_EVENTLOG_CONNECTION pEventlog,

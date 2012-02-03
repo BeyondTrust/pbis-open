@@ -49,6 +49,15 @@
 #define __AD_GROUPS_P_H__
 
 DWORD
+UmnSrvWriteADGroupEvent(
+    PLW_EVENTLOG_CONNECTION pEventlog,
+    BOOLEAN FirstRun,
+    PUSER_MONITOR_GROUP pOld,
+    long long Now,
+    PLSA_SECURITY_OBJECT pNew
+    );
+
+DWORD
 UmnSrvUpdateADGroup(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,

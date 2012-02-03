@@ -45,7 +45,6 @@
  */
 #include "includes.h"
 
-static
 DWORD
 UmnSrvWriteADGroupEvent(
     PLW_EVENTLOG_CONNECTION pEventlog,

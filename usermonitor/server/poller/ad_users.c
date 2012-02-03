@@ -773,6 +773,14 @@ UmnSrvUpdateADAccountsByHash(
                     Now);
     BAIL_ON_UMN_ERROR(dwError);
 
+    dwError = UmnSrvFindDeletedGroups(
+                    pEventlog,
+                    hReg,
+                    "AD Groups",
+                    hGroups,
+                    Now);
+    BAIL_ON_UMN_ERROR(dwError);
+
 cleanup:
     LW_SAFE_FREE_MEMORY(ppLookupGroupSids);
     if (ppGroupSids)
