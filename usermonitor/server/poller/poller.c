@@ -241,7 +241,13 @@ UmnSrvUpdateAccountInfo(
     endpwent();
     endgrent();
 
-    dwError = UmnSrvUpdateADAccounts(hLsass);
+    dwError = UmnSrvUpdateADAccounts(
+                    hLsass,
+                    pConn,
+                    hReg,
+                    hParameters,
+                    !firstRunCompleted,
+                    Now);
     BAIL_ON_UMN_ERROR(dwError);
 
     if (!firstRunCompleted)

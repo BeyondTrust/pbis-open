@@ -77,4 +77,5 @@
 #include "externs_p.h"
 #include "poller_p.h"
 #include "users_p.h"
+#include "ad_users_p.h"
 #include "groups_p.h"
