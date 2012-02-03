@@ -605,6 +605,7 @@ UmnSrvUpdateADAccountsByHash(
 {
     DWORD dwError = 0;
     HKEY hUsers = NULL;
+    HKEY hGroups = NULL;
     LW_HASH_ITERATOR usersIterator = { 0 };
     LW_HASH_ENTRY* pEntry = NULL;
     DWORD groupSidCount = 0;
@@ -637,6 +638,15 @@ UmnSrvUpdateADAccountsByHash(
                 0,
                 KEY_ALL_ACCESS,
                 &hUsers);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = RegOpenKeyExA(
+                hReg,
+                hParameters,
+                "AD Groups",
+                0,
+                KEY_ALL_ACCESS,
+                &hGroups);
     BAIL_ON_UMN_ERROR(dwError);
 
     dwError = LwHashGetIterator(
@@ -730,6 +740,15 @@ UmnSrvUpdateADAccountsByHash(
                         pUser->userInfo.pszUnixName,
                         pGroup->groupInfo.pszUnixName);
 
+                dwError = UmnSrvUpdateADGroup(
+                                pEventlog,
+                                hReg,
+                                hGroups,
+                                FirstRun,
+                                Now,
+                                pGroup);
+                BAIL_ON_UMN_ERROR(dwError);
+
                 dwError = LwHashSetValue(
                                 pGroups,
                                 pGroup->pszObjectSid,
@@ -771,6 +790,10 @@ cleanup:
     if (hUsers)
     {
         RegCloseKey(hReg, hUsers);
+    }
+    if (hGroups)
+    {
+        RegCloseKey(hReg, hGroups);
     }
     LwHashSafeFree(&pGroups);
     return dwError;

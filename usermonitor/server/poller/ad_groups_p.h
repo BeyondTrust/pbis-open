@@ -33,41 +33,29 @@
  *
  * Module Name:
  *
- *        groups_p.h
+ *        ad_groups_p.h
  *
  * Abstract:
  *
- *        User monitor service for local users and groups
+ *        User monitor service for users and groups
  * 
  *        Functions internal to this package for enumerating and tracking
- *        users.
+ *        AD groups.
  *
  * Authors: Kyle Stemen <kstemen@beyondtrust.com>
  * 
  */
-#ifndef __GROUPS_P_H__
-#define __GROUPS_P_H__
-
-VOID
-UmnSrvFreeGroupContents(
-    PUSER_MONITOR_GROUP pGroup
-    );
+#ifndef __AD_GROUPS_P_H__
+#define __AD_GROUPS_P_H__
 
 DWORD
-UmnSrvReadGroup(
-    PCSTR pParentKey,
-    PSTR pName,
-    PUSER_MONITOR_GROUP pResult
-    );
-
-DWORD
-UmnSrvUpdateGroups(
-    HANDLE hLsass,
+UmnSrvUpdateADGroup(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
-    HKEY hParameters,
+    HKEY hGroups,
     BOOLEAN FirstRun,
-    long long Now
+    long long Now,
+    PLSA_SECURITY_OBJECT pGroup
     );
 
-#endif /* __GROUPS_P_H__ */
+#endif /* __AD_GROUPS_P_H__ */

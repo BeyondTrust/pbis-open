@@ -79,3 +79,4 @@
 #include "users_p.h"
 #include "ad_users_p.h"
 #include "groups_p.h"
+#include "ad_groups_p.h"

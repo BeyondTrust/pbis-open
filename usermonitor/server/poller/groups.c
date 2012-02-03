@@ -45,7 +45,6 @@
  */
 #include "includes.h"
 
-static
 VOID
 UmnSrvFreeGroupContents(
     PUSER_MONITOR_GROUP pGroup
@@ -371,9 +370,9 @@ error:
     goto cleanup;
 }
 
-static
 DWORD
 UmnSrvReadGroup(
+    PCSTR pParentKey,
     PSTR pName,
     PUSER_MONITOR_GROUP pResult
     )
@@ -429,7 +428,8 @@ UmnSrvReadGroup(
 
     dwError = LwAllocateStringPrintf(
                     &pGroupPath,
-                    "Services\\" SERVICE_NAME "\\Parameters\\Groups\\%s",
+                    "Services\\" SERVICE_NAME "\\Parameters\\%s\\%s",
+                    pParentKey,
                     pName);
     BAIL_ON_UMN_ERROR(dwError);
 
@@ -792,6 +792,7 @@ UmnSrvUpdateGroup(
         BAIL_ON_UMN_ERROR(dwError);
 
         dwError = UmnSrvReadGroup(
+                        "Groups",
                         pGroup->gr_name,
                         &old);
         BAIL_ON_UMN_ERROR(dwError);
@@ -932,6 +933,7 @@ UmnSrvFindDeletedGroups(
             LW_SAFE_FREE_STRING(pMembersName);
 
             dwError = UmnSrvReadGroup(
+                            "Groups",
                             pKeyName,
                             &old);
             BAIL_ON_UMN_ERROR(dwError);

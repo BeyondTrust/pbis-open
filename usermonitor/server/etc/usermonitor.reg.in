@@ -50,3 +50,5 @@
 [HKEY_THIS_MACHINE\Services\usermonitor\Parameters\AD Users]
 
 [HKEY_THIS_MACHINE\Services\usermonitor\Parameters\Groups]
+
+[HKEY_THIS_MACHINE\Services\usermonitor\Parameters\AD Groups]
