@@ -32,6 +32,7 @@
 #include "ctarray.h"
 #include "ctstrutils.h"
 #include "ctfileutils.h"
+#include "lwstr.h"
 #include "djstr.h"
 #include "djdistroinfo.h"
 
@@ -63,7 +64,7 @@ static const NsswitchEntry * GetEntry(const NsswitchConf *conf, size_t index)
     return ((NsswitchEntry *)conf->lines.data) + index;
 }
 
-static CTParseToken * GetEntryModule(NsswitchEntry *entry, size_t index)
+static CTParseToken * GetEntryModule(const NsswitchEntry *entry, size_t index)
 {
     if(index >= entry->modules.size)
         return NULL;
@@ -359,6 +360,29 @@ const char * GetModuleSeparator(NsswitchConf *conf, const LwDistroInfo *distro)
         return ", ";
     }
     return " ";
+}
+
+static
+const char*
+GetModule(
+    const NsswitchConf *conf,
+    size_t line,
+    size_t index
+    )
+{
+    const NsswitchEntry *entry = NULL;
+    const CTParseToken *token = NULL;
+
+    entry = GetEntry(conf, line);
+    if(entry)
+    {
+        token = GetEntryModule(entry, index);
+        if (token)
+        {
+            return token->value;
+        }
+    }
+    return NULL;
 }
 
 static int FindModuleOnLine(const NsswitchConf *conf, int line, const char *name)
@@ -729,6 +753,7 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
     int lwiIndex;
     static const char* moduleName = "lsass";
     static const char* oldModule = "lwidentity";
+    const char* pszModule = NULL;
 
     GCE(ceError = DJGetDistroInfo(NULL, &distro));
 
@@ -799,6 +824,46 @@ UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
     // If lwidentity was the only entry
     // and we removed that now, don't write
     // an empty entry into the file
+    if(!enable && line != -1 && GetEntry(conf, line)->modules.size == 0)
+    {
+        GCE(ceError = InsertModule(conf, &distro, line, -1, "files"));
+    }
+
+    // If initgroups is present, it overrides the groups line 
+    // and has different semantics.
+    // As soon as a module reports success, processing stops. We don't want
+    // that so we need to add '[SUCCESS=continue]'
+    // We are not adding initgroups if it is not present.
+    line = FindEntry(conf, 0, "initgroups");
+    lwiIndex = FindModuleOnLine(conf, line, moduleName);
+    if(enable && line != -1 && lwiIndex == -1)
+    {
+        GCE(ceError = InsertModule(conf, &distro, line, -1, moduleName));
+        lwiIndex = FindModuleOnLine(conf, line, moduleName);
+        if (lwiIndex > 0)
+        {
+            ceError = InsertModule(conf, &distro, line, lwiIndex, "[SUCCESS=continue]");
+            if (ceError)
+            {
+                RemoveModule(conf, line, lwiIndex - 1);
+                GCE(ceError);
+            }
+        }
+    }
+    if (!enable && line != -1 && lwiIndex != -1)
+    {
+        if (lwiIndex > 0)
+        {
+            pszModule = GetModule(conf, line, lwiIndex - 1);
+            if (pszModule && *pszModule == '[')
+            {
+                GCE(ceError = RemoveModule(conf, line, lwiIndex - 1));
+                lwiIndex = lwiIndex - 1;
+            }
+        }
+        GCE(ceError = RemoveModule(conf, line, lwiIndex));
+    }
+
     if(!enable && line != -1 && GetEntry(conf, line)->modules.size == 0)
     {
         GCE(ceError = InsertModule(conf, &distro, line, -1, "files"));
