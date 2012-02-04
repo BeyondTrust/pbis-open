@@ -376,6 +376,18 @@ LwFreeUnicodeString(
     PUNICODE_STRING pString
     );
 
+DWORD
+LwURLEncodeString(
+    PCSTR pIn,
+    PSTR *ppOut
+    );
+
+DWORD
+LwURLDecodeString(
+    PCSTR pIn,
+    PSTR *ppOut
+    );
+
 LW_END_EXTERN_C
 
 

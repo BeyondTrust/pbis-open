@@ -714,6 +714,16 @@ UmnSrvUpdateADAccountsByHash(
                 UMN_LOG_VERBOSE("Found AD user %s is a member of processed group %s",
                         pUser->userInfo.pszUnixName,
                         pGroup->groupInfo.pszUnixName);
+
+                dwError = UmnSrvUpdateADGroupMember(
+                                pEventlog,
+                                hReg,
+                                hGroups,
+                                FirstRun,
+                                Now,
+                                pGroup,
+                                pUser->userInfo.pszUnixName);
+                BAIL_ON_UMN_ERROR(dwError);
             }
         }
         
@@ -756,6 +766,16 @@ UmnSrvUpdateADAccountsByHash(
                 BAIL_ON_UMN_ERROR(dwError);
 
                 ppLookedupGroups[i] = NULL;
+
+                dwError = UmnSrvUpdateADGroupMember(
+                                pEventlog,
+                                hReg,
+                                hGroups,
+                                FirstRun,
+                                Now,
+                                pGroup,
+                                pUser->userInfo.pszUnixName);
+                BAIL_ON_UMN_ERROR(dwError);
             }
 
             LsaFreeSecurityObjectList(

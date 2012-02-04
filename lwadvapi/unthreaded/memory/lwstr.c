@@ -844,3 +844,129 @@ LwCaselessStringSearch(
     return NULL;
 #endif
 }
+
+DWORD
+LwURLEncodeString(
+    PCSTR pIn,
+    PSTR *ppOut
+    )
+{
+    DWORD dwError = 0;
+    const char *pRequireEscape = "$&+,/:;=?@ \"'<>#%{}|\\^~[]`";
+    size_t outputPos = 0;
+    size_t i = 0;
+    PSTR pOut = NULL;
+
+    for (i = 0; pIn[i]; i++)
+    {
+        if (pIn[i] < 0x20 || pIn[i] >= 0x7F ||
+                strchr(pRequireEscape, pIn[i]) != NULL)
+        {
+            outputPos+=3;
+        }
+        else
+        {
+            outputPos++;
+        }
+    }
+
+    // Space for the NULL
+    outputPos++;
+
+    dwError = LwAllocateMemory(
+                    outputPos,
+                    OUT_PPVOID(&pOut));
+    BAIL_ON_LW_ERROR(dwError);
+
+    for (outputPos = 0, i = 0; pIn[i]; i++)
+    {
+        if (pIn[i] < 0x20 || pIn[i] >= 0x7F ||
+                strchr(pRequireEscape, pIn[i]) != NULL)
+        {
+            sprintf(pOut + outputPos, "%%%.2X", (BYTE)pIn[i]);
+            outputPos+=3;
+        }
+        else
+        {
+            pOut[outputPos] = pIn[i];
+            outputPos++;
+        }
+    }
+
+    *ppOut = pOut;
+
+cleanup:
+    return dwError;
+
+error:
+    *ppOut = NULL;
+    LW_SAFE_FREE_STRING(pOut);
+    goto cleanup;
+}
+
+DWORD
+LwURLDecodeString(
+    PCSTR pIn,
+    PSTR *ppOut
+    )
+{
+    DWORD dwError = 0;
+    size_t outputPos = 0;
+    size_t i = 0;
+    PSTR pOut = NULL;
+    BYTE digit1 = 0;
+    BYTE digit2 = 0;
+
+    for (i = 0; pIn[i]; i++)
+    {
+        if (pIn[i] == '%')
+        {
+            if (!isxdigit(pIn[i+1]) || !isxdigit(pIn[i+2]))
+            {
+                dwError = ERROR_INVALID_PARAMETER;
+                BAIL_ON_LW_ERROR(dwError);
+            }
+            i += 2;
+        }
+        outputPos++;
+    }
+
+    // Space for the NULL
+    outputPos++;
+
+    dwError = LwAllocateMemory(
+                    outputPos,
+                    OUT_PPVOID(&pOut));
+    BAIL_ON_LW_ERROR(dwError);
+
+    for (outputPos = 0, i = 0; pIn[i]; i++, outputPos++)
+    {
+        if (pIn[i] == '%')
+        {
+            i++;
+            dwError = LwHexCharToByte(
+                            pIn[i],
+                            &digit1);
+            BAIL_ON_LW_ERROR(dwError);
+
+            i++;
+            dwError = LwHexCharToByte(
+                            pIn[i],
+                            &digit2);
+            BAIL_ON_LW_ERROR(dwError);
+
+            pOut[outputPos] = (digit1 << 4) | digit2;
+        }
+        pOut[outputPos] = pIn[i];
+    }
+
+    *ppOut = pOut;
+
+cleanup:
+    return dwError;
+
+error:
+    *ppOut = NULL;
+    LW_SAFE_FREE_STRING(pOut);
+    goto cleanup;
+}

@@ -79,4 +79,17 @@ UmnSrvUpdateGroups(
     long long Now
     );
 
+DWORD
+UmnSrvWriteGroupMemberEvent(
+    PLW_EVENTLOG_CONNECTION pEventlog,
+    long long Now,
+    PCSTR pGroupKeyName,
+    BOOLEAN FirstRun,
+    BOOLEAN AddMember,
+    BOOLEAN OnlyGidChange,
+    PCSTR pUserName,
+    DWORD Gid,
+    PCSTR pGroupName
+    );
+
 #endif /* __GROUPS_P_H__ */

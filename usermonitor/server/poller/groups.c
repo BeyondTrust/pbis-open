@@ -227,11 +227,11 @@ error:
     goto cleanup;
 }
 
-static
 DWORD
 UmnSrvWriteGroupMemberEvent(
     PLW_EVENTLOG_CONNECTION pEventlog,
     long long Now,
+    PCSTR pGroupKeyName,
     BOOLEAN FirstRun,
     BOOLEAN AddMember,
     BOOLEAN OnlyGidChange,
@@ -244,7 +244,12 @@ UmnSrvWriteGroupMemberEvent(
     // Do not free. The field values are borrowed from other structures.
     GROUP_MEMBERSHIP_CHANGE change = { 0 };
     LW_EVENTLOG_RECORD record = { 0 };
-    PCSTR pOperation = NULL;
+    PCSTR pGroupType = "";
+
+    if (!strcmp(pGroupKeyName, "AD Groups"))
+    {
+        pGroupType = "AD ";
+    }
 
     change.Added = AddMember;
     change.OnlyGidChange = OnlyGidChange;
@@ -280,17 +285,19 @@ UmnSrvWriteGroupMemberEvent(
 
     dwError = LwAllocateWc16sPrintfW(
                     &record.pEventCategory,
-                    AddMember ? L"Group membership added" : L"Group membership deleted",
-                    pOperation);
+                    L"%hhsGroup membership %hhs",
+                    pGroupType,
+                    AddMember ? "added" : "deleted");
     BAIL_ON_UMN_ERROR(dwError);
 
     // Leave computer NULL so it is filled in by the eventlog
 
     dwError = LwAllocateWc16sPrintfW(
                     &record.pDescription,
-                    L"User %s was %s group %s (gid %d)",
+                    L"User %hhs was %hhs %hhsgroup %hhs (gid %d)",
                     pUserName,
                     AddMember ? "added to" : "deleted from",
+                    pGroupType,
                     pGroupName,
                     Gid);
     BAIL_ON_UMN_ERROR(dwError);
@@ -493,6 +500,7 @@ UmnSrvUpdateGroupMember(
         dwError = UmnSrvWriteGroupMemberEvent(
                         pEventlog,
                         Now,
+                        "Groups",
                         FirstRun,
                         TRUE, //Add member
                         FALSE, //Not gid change
@@ -506,6 +514,7 @@ UmnSrvUpdateGroupMember(
         dwError = UmnSrvWriteGroupMemberEvent(
                         pEventlog,
                         Now,
+                        "Groups",
                         FirstRun,
                         FALSE, //Remove member
                         TRUE, //Gid change
@@ -517,6 +526,7 @@ UmnSrvUpdateGroupMember(
         dwError = UmnSrvWriteGroupMemberEvent(
                         pEventlog,
                         Now,
+                        "Groups",
                         FirstRun,
                         TRUE, //Add member
                         TRUE, //Gid change
@@ -554,6 +564,7 @@ DWORD
 UmnSrvFindDeletedGroupMembers(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
+    PCSTR pGroupKeyName,
     HKEY hMembers,
     long long Now,
     DWORD Gid,
@@ -568,6 +579,7 @@ UmnSrvFindDeletedGroupMembers(
     PSTR pKeyName = NULL;
     DWORD lastUpdated = 0;
     DWORD lastUpdatedLen = 0;
+    PSTR pUserName = NULL;
 
     dwError = RegQueryInfoKeyA(
                     hReg,
@@ -627,13 +639,20 @@ UmnSrvFindDeletedGroupMembers(
                             pKeyName);
             BAIL_ON_UMN_ERROR(dwError);
 
+            LW_SAFE_FREE_STRING(pUserName);
+            dwError = LwURLDecodeString(
+                            pKeyName,
+                            &pUserName);
+            BAIL_ON_UMN_ERROR(dwError);
+
             dwError = UmnSrvWriteGroupMemberEvent(
                             pEventlog,
                             Now,
+                            pGroupKeyName,
                             FALSE,
                             FALSE, //Remove member
                             FALSE, //Not Gid change
-                            pKeyName,
+                            pUserName,
                             Gid,
                             pGroupName);
             BAIL_ON_UMN_ERROR(dwError);
@@ -645,7 +664,7 @@ UmnSrvFindDeletedGroupMembers(
     }
 
 cleanup:
-
+    LW_SAFE_FREE_STRING(pUserName);
     LW_SAFE_FREE_STRING(pKeyName);
     return dwError;
 
@@ -710,15 +729,6 @@ UmnSrvUpdateGroupMembers(
                         pGroup->gr_mem[iMember]);
         BAIL_ON_UMN_ERROR(dwError);
     }
-
-    dwError = UmnSrvFindDeletedGroupMembers(
-                    pEventlog,
-                    hReg,
-                    hMembers,
-                    Now,
-                    pGroup->gr_gid,
-                    pGroup->gr_name);
-    BAIL_ON_UMN_ERROR(dwError);
 
 cleanup:
     if (hMembers)
@@ -912,6 +922,39 @@ UmnSrvFindDeletedGroups(
 
         pKeyName[subKeyLen] = 0;
 
+        LW_SAFE_FREE_STRING(pMembersName);
+
+        dwError = LwAllocateStringPrintf(
+                        &pMembersName,
+                        "%s\\Members",
+                        pKeyName);
+        BAIL_ON_UMN_ERROR(dwError);
+
+        dwError = RegOpenKeyExA(
+                        hReg,
+                        hGroups,
+                        pMembersName,
+                        0,
+                        KEY_ALL_ACCESS,
+                        &hMembers);
+        BAIL_ON_UMN_ERROR(dwError);
+
+        dwError = UmnSrvFindDeletedGroupMembers(
+                        pEventlog,
+                        hReg,
+                        pGroupKeyName,
+                        hMembers,
+                        Now,
+                        old.gr_gid,
+                        pKeyName);
+        BAIL_ON_UMN_ERROR(dwError);
+
+        // Must close hMembers before trying to delete it
+        RegCloseKey(
+                hReg,
+                hMembers);
+        hMembers = NULL;
+
         lastUpdatedLen = sizeof(lastUpdated);
         dwError = RegGetValueA(
                         hReg,
@@ -936,53 +979,22 @@ UmnSrvFindDeletedGroups(
             UMN_LOG_INFO("Group '%s' deleted",
                             old.gr_name);
 
+            // RegDeleteKeyA is not recursive, so the Members key must be
+            // deleted before the group key
+            dwError = RegDeleteKeyA(
+                            hReg,
+                            hGroups,
+                            pMembersName);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            dwError = RegDeleteKeyA(
+                            hReg,
+                            hGroups,
+                            pKeyName);
+            BAIL_ON_UMN_ERROR(dwError);
+
             if (!strcmp(pGroupKeyName, "Groups"))
             {
-                LW_SAFE_FREE_STRING(pMembersName);
-
-                dwError = LwAllocateStringPrintf(
-                                &pMembersName,
-                                "%s\\Members",
-                                pKeyName);
-                BAIL_ON_UMN_ERROR(dwError);
-
-                dwError = RegOpenKeyExA(
-                                hReg,
-                                hGroups,
-                                pMembersName,
-                                0,
-                                KEY_ALL_ACCESS,
-                                &hMembers);
-                BAIL_ON_UMN_ERROR(dwError);
-
-                dwError = UmnSrvFindDeletedGroupMembers(
-                                pEventlog,
-                                hReg,
-                                hMembers,
-                                Now,
-                                old.gr_gid,
-                                pKeyName);
-                BAIL_ON_UMN_ERROR(dwError);
-
-                // Must close hMembers before trying to delete it
-                RegCloseKey(
-                        hReg,
-                        hMembers);
-
-                // RegDeleteKeyA is not recursive, so the Members key must be
-                // deleted before the group key
-                dwError = RegDeleteKeyA(
-                                hReg,
-                                hGroups,
-                                pMembersName);
-                BAIL_ON_UMN_ERROR(dwError);
-
-                dwError = RegDeleteKeyA(
-                                hReg,
-                                hGroups,
-                                pKeyName);
-                BAIL_ON_UMN_ERROR(dwError);
-
                 // Groups cannot be detected as deleted if there is no previous
                 // data to compare, so pass FALSE for FirstRun
                 dwError = UmnSrvWriteGroupEvent(
@@ -995,12 +1007,6 @@ UmnSrvFindDeletedGroups(
             }
             else
             {
-                dwError = RegDeleteKeyA(
-                                hReg,
-                                hGroups,
-                                pKeyName);
-                BAIL_ON_UMN_ERROR(dwError);
-
                 // Groups cannot be detected as deleted if there is no previous
                 // data to compare, so pass FALSE for FirstRun
                 dwError = UmnSrvWriteADGroupEvent(

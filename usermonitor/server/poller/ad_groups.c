@@ -286,6 +286,7 @@ UmnSrvUpdateADGroup(
 {
     DWORD dwError = 0;
     HKEY hKey = NULL;
+    HKEY hMembers = NULL;
     USER_MONITOR_GROUP old = { 0 };
     DWORD dwNow = Now;
     old.gr_gid = -1;
@@ -312,6 +313,19 @@ UmnSrvUpdateADGroup(
                         KEY_ALL_ACCESS,
                         NULL,
                         &hKey,
+                        NULL);
+        BAIL_ON_UMN_ERROR(dwError);
+
+        dwError = RegCreateKeyExA(
+                        hReg,
+                        hKey,
+                        "Members",
+                        0,
+                        NULL,
+                        0,
+                        KEY_ALL_ACCESS,
+                        NULL,
+                        &hMembers,
                         NULL);
         BAIL_ON_UMN_ERROR(dwError);
 
@@ -401,6 +415,128 @@ cleanup:
         RegCloseKey(
                 hReg,
                 hKey);
+    }
+    if (hMembers)
+    {
+        RegCloseKey(
+                hReg,
+                hMembers);
+    }
+    return dwError;
+    
+error:
+    goto cleanup;
+}
+
+DWORD
+UmnSrvUpdateADGroupMember(
+    PLW_EVENTLOG_CONNECTION pEventlog,
+    HANDLE hReg,
+    HKEY hGroups,
+    BOOLEAN FirstRun,
+    long long Now,
+    PLSA_SECURITY_OBJECT pGroup,
+    PCSTR pMember
+    )
+{
+    DWORD dwError = 0;
+    HKEY hKey = NULL;
+    HKEY hMembers = NULL;
+    DWORD dwNow = Now;
+    PSTR pEncodedMember = NULL;
+    PSTR pKeyName = NULL;
+    PSTR pMembersKeyName = NULL;
+
+    dwError = LwURLEncodeString(
+                    pMember,
+                    &pEncodedMember);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = LwAllocateStringPrintf(
+                    &pKeyName,
+                    "%s\\Members\\%s",
+                    pGroup->pszObjectSid,
+                    pEncodedMember);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = RegOpenKeyExA(
+                    hReg,
+                    hGroups,
+                    pKeyName,
+                    0,
+                    KEY_ALL_ACCESS,
+                    &hKey);
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        UMN_LOG_INFO("Adding user member '%s' to group '%s' (gid %d)",
+                        pMember, pGroup->groupInfo.pszUnixName, pGroup->groupInfo.gid);
+
+        dwError = LwAllocateStringPrintf(
+                        &pMembersKeyName,
+                        "%s\\Members",
+                        pGroup->pszObjectSid);
+        BAIL_ON_UMN_ERROR(dwError);
+
+        dwError = RegOpenKeyExA(
+                        hReg,
+                        hGroups,
+                        pMembersKeyName,
+                        0,
+                        KEY_ALL_ACCESS,
+                        &hMembers);
+        BAIL_ON_UMN_ERROR(dwError);
+
+        dwError = RegCreateKeyExA(
+                        hReg,
+                        hMembers,
+                        pEncodedMember,
+                        0,
+                        NULL,
+                        0,
+                        KEY_ALL_ACCESS,
+                        NULL,
+                        &hKey,
+                        NULL);
+        BAIL_ON_UMN_ERROR(dwError);
+
+        dwError = UmnSrvWriteGroupMemberEvent(
+                        pEventlog,
+                        Now,
+                        "AD Group",
+                        FirstRun,
+                        TRUE, //Add member
+                        FALSE, //Not gid change
+                        pMember,
+                        pGroup->groupInfo.gid,
+                        pGroup->groupInfo.pszUnixName);
+        BAIL_ON_UMN_ERROR(dwError);
+    }
+
+    dwError = RegSetValueExA(
+                    hReg,
+                    hKey,
+                    "LastUpdated",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&dwNow,
+                    sizeof(dwNow));
+    BAIL_ON_UMN_ERROR(dwError);
+
+cleanup:
+    LW_SAFE_FREE_STRING(pKeyName);
+    LW_SAFE_FREE_STRING(pMembersKeyName);
+    LW_SAFE_FREE_STRING(pEncodedMember);
+    if (hKey)
+    {
+        RegCloseKey(
+                hReg,
+                hKey);
+    }
+    if (hMembers)
+    {
+        RegCloseKey(
+                hReg,
+                hMembers);
     }
     return dwError;
     

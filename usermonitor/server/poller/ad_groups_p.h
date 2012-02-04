@@ -67,4 +67,15 @@ UmnSrvUpdateADGroup(
     PLSA_SECURITY_OBJECT pGroup
     );
 
+DWORD
+UmnSrvUpdateADGroupMember(
+    PLW_EVENTLOG_CONNECTION pEventlog,
+    HANDLE hReg,
+    HKEY hGroups,
+    BOOLEAN FirstRun,
+    long long Now,
+    PLSA_SECURITY_OBJECT pGroup,
+    PCSTR pMember
+    );
+
 #endif /* __AD_GROUPS_P_H__ */
