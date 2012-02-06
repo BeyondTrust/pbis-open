@@ -164,6 +164,7 @@ launchctl_delete_agents()
     for _plist in \
         /System/Library/LaunchAgents/com.beyondtrust.pbis.*.plist \
         /Library/LaunchAgents/com.beyondtrust.pbis.*.plist \
+        /Library/LaunchAgents/com.likewise.*.plist \
         ; do
         $RUN rm -f "${_plist}"
     done
