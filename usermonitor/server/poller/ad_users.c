@@ -106,8 +106,8 @@ UmnSrvAddUsersFromMembership(
             if (ppMembers[i]->enabled &&
                     !LwHashExists(pUsers, ppMembers[i]->pszObjectSid))
             {
-                UMN_LOG_VERBOSE("Found AD user %s that can login",
-                        ppMembers[i]->userInfo.pszUnixName);
+                UMN_LOG_VERBOSE("Found AD user %s that can login because of group %s",
+                        ppMembers[i]->userInfo.pszUnixName, pLookup);
 
                 dwError = LwHashSetValue(
                                 pUsers,
