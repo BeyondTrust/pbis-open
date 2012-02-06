@@ -566,6 +566,7 @@ UmnSrvFindDeletedGroupMembers(
     PCSTR pGroupKeyName,
     HKEY hMembers,
     long long Now,
+    BOOLEAN GidOnlyChange,
     DWORD Gid,
     PCSTR pGroupName
     )
@@ -650,7 +651,7 @@ UmnSrvFindDeletedGroupMembers(
                             pGroupKeyName,
                             FALSE,
                             FALSE, //Remove member
-                            FALSE, //Not Gid change
+                            GidOnlyChange, //Not Gid change
                             pUserName,
                             Gid,
                             pGroupName);
@@ -877,8 +878,6 @@ UmnSrvFindDeletedGroups(
     DWORD subKeyLen = 0;
     DWORD i = 0;
     PSTR pKeyName = NULL;
-    DWORD lastUpdated = 0;
-    DWORD lastUpdatedLen = 0;
     USER_MONITOR_GROUP old = { 0 };
     HKEY hMembers = NULL;
     PSTR pMembersName = NULL;
@@ -921,6 +920,13 @@ UmnSrvFindDeletedGroups(
 
         pKeyName[subKeyLen] = 0;
 
+        UmnSrvFreeGroupContents(&old);
+        dwError = UmnSrvReadGroup(
+                        pGroupKeyName,
+                        pKeyName,
+                        &old);
+        BAIL_ON_UMN_ERROR(dwError);
+
         LW_SAFE_FREE_STRING(pMembersName);
 
         dwError = LwAllocateStringPrintf(
@@ -944,8 +950,9 @@ UmnSrvFindDeletedGroups(
                         pGroupKeyName,
                         hMembers,
                         Now,
+                        FALSE,
                         old.gr_gid,
-                        pKeyName);
+                        old.gr_name);
         BAIL_ON_UMN_ERROR(dwError);
 
         // Must close hMembers before trying to delete it
@@ -954,27 +961,8 @@ UmnSrvFindDeletedGroups(
                 hMembers);
         hMembers = NULL;
 
-        lastUpdatedLen = sizeof(lastUpdated);
-        dwError = RegGetValueA(
-                        hReg,
-                        hGroups,
-                        pKeyName,
-                        "LastUpdated",
-                        0,
-                        NULL,
-                        (PBYTE)&lastUpdated,
-                        &lastUpdatedLen);
-        BAIL_ON_UMN_ERROR(dwError);
-
-        if (lastUpdated < Now)
+        if (old.LastUpdated < Now)
         {
-            UmnSrvFreeGroupContents(&old);
-            dwError = UmnSrvReadGroup(
-                            pGroupKeyName,
-                            pKeyName,
-                            &old);
-            BAIL_ON_UMN_ERROR(dwError);
-
             UMN_LOG_INFO("Group '%s' deleted",
                             old.gr_name);
 

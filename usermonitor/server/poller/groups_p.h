@@ -99,6 +99,7 @@ UmnSrvFindDeletedGroupMembers(
     PCSTR pGroupKeyName,
     HKEY hMembers,
     long long Now,
+    BOOLEAN GidOnlyChange,
     DWORD Gid,
     PCSTR pGroupName
     );

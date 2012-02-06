@@ -957,7 +957,10 @@ LwURLDecodeString(
 
             pOut[outputPos] = (digit1 << 4) | digit2;
         }
-        pOut[outputPos] = pIn[i];
+        else
+        {
+            pOut[outputPos] = pIn[i];
+        }
     }
 
     *ppOut = pOut;

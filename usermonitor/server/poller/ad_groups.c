@@ -415,6 +415,7 @@ UmnSrvUpdateADGroup(
                                 "AD Groups",
                                 hMembers,
                                 Now,
+                                TRUE,
                                 old.gr_gid,
                                 old.gr_name);
                 BAIL_ON_UMN_ERROR(dwError);
