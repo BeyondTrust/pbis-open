@@ -395,6 +395,30 @@ UmnSrvUpdateADGroup(
                             Now,
                             pGroup);
             BAIL_ON_UMN_ERROR(dwError);
+
+            if (pGroup->groupInfo.gid != old.gr_gid)
+            {
+                // Send out membership deletion events for all members. They
+                // will get readded through normal processing with the new gid
+                dwError = RegOpenKeyExA(
+                                hReg,
+                                hKey,
+                                "Members",
+                                0,
+                                KEY_ALL_ACCESS,
+                                &hMembers);
+                BAIL_ON_UMN_ERROR(dwError);
+
+                dwError = UmnSrvFindDeletedGroupMembers(
+                                pEventlog,
+                                hReg,
+                                "AD Groups",
+                                hMembers,
+                                Now,
+                                old.gr_gid,
+                                old.gr_name);
+                BAIL_ON_UMN_ERROR(dwError);
+            }
         }
     }
 

@@ -559,7 +559,6 @@ error:
     goto cleanup;
 }
 
-static
 DWORD
 UmnSrvFindDeletedGroupMembers(
     PLW_EVENTLOG_CONNECTION pEventlog,

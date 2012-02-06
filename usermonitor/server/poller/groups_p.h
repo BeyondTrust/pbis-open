@@ -92,4 +92,15 @@ UmnSrvWriteGroupMemberEvent(
     PCSTR pGroupName
     );
 
+DWORD
+UmnSrvFindDeletedGroupMembers(
+    PLW_EVENTLOG_CONNECTION pEventlog,
+    HANDLE hReg,
+    PCSTR pGroupKeyName,
+    HKEY hMembers,
+    long long Now,
+    DWORD Gid,
+    PCSTR pGroupName
+    );
+
 #endif /* __GROUPS_P_H__ */
