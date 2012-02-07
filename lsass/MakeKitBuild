@@ -50,6 +50,9 @@ configure()
     mk_declare -s -o MOD_EXT
     mk_declare -s PAMDIR
     mk_declare -s NSSDIR
+    mk_declare -o \
+        VERSION="$LW_VERSION" \
+        REVISION="${LW_BUILD_REVISION:-0}"
 
     # Default registry settings
     mk_declare -o \
@@ -169,7 +172,7 @@ configure()
     fi
 
     # FIXME
-    mk_define COMPONENT_VERSION "\"5.0.0.0\""
+    mk_define COMPONENT_VERSION "\"${VERSION}.${REVISION}\""
     mk_define __LW_MOTD_FILE__ "\"/etc/motd\""
     mk_define __LW_MOTD_MAX_SIZE__ 4096
     mk_define AD_DEFAULT_HOMEDIR_PREFIX '"/home"'
