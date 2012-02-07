@@ -921,7 +921,7 @@ LwURLDecodeString(
     {
         if (pIn[i] == '%')
         {
-            if (!isxdigit(pIn[i+1]) || !isxdigit(pIn[i+2]))
+            if (!isxdigit((int)(pIn[i+1])) || !isxdigit((int)(pIn[i+2])))
             {
                 dwError = ERROR_INVALID_PARAMETER;
                 BAIL_ON_LW_ERROR(dwError);
