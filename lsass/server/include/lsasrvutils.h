@@ -96,6 +96,10 @@
 // Logoff events
 #define LSASS_EVENT_SUCCESSFUL_LOGOFF                                1220
 
+//Activity events
+#define LSASS_EVENT_INFO_ACTIVITY_INITIATED                          1224
+#define LSASS_EVENT_INFO_ACTIVITY_TERMINATED                         1225
+
 // Logon success events
 #define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SSH                      1230
 #define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_GRAPHICAL                1231
