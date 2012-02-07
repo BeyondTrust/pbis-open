@@ -1,0 +1,6 @@
+PowerBroker Identity Services - Open Legacy
+
+Interoperability software to allow non-Windows systems to use Microsoft Active Directory.
+
+This program installs the PowerBroker Identity Services - Open Edition (PBISO)
+Legacy package to allow scripts written for prior versions to function.
