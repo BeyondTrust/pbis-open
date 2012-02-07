@@ -180,6 +180,21 @@ LsaUmpFreeRequestList(
     );
 
 static
+BOOLEAN
+LsaUmpIsNewUser(
+    LSA_UM_STATE_HANDLE  Handle,
+    uid_t                uid
+    );
+
+static
+VOID
+LsaUmpFindUserPtr(
+    PLSA_UM_USER_REFRESH_LIST    pUserList,
+    uid_t                        uUid,
+    PLSA_UM_USER_REFRESH_ITEM ** pUserItemPtr
+    );
+
+static
 DWORD
 LsaUmpAddUserInternal(
     LSA_UM_STATE_HANDLE  Handle,
