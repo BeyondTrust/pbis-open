@@ -1142,6 +1142,37 @@ LsaUmpAddRequest(
     return dwError;
 }
 
+static
+BOOLEAN
+LsaUmpIsNewUser(
+    LSA_UM_STATE_HANDLE  Handle,
+    uid_t                uid
+    )
+{
+    BOOLEAN bIsNew = TRUE;
+    BOOLEAN bInLock = FALSE;
+    PLSA_UM_USER_REFRESH_LIST   pUserList = NULL;
+    PLSA_UM_USER_REFRESH_ITEM * pUserItemPtr = NULL;
+    PLSA_UM_USER_REFRESH_ITEM   pUserItem = NULL;
+
+    LSA_UM_STATE_LOCK(bInLock);
+    pUserList = Handle->UserList;
+    LSA_UM_STATE_UNLOCK(bInLock);
+
+    LsaUmpFindUserPtr(
+        pUserList,
+        uid,
+        &pUserItemPtr);
+
+    pUserItem = *pUserItemPtr;
+    if ( pUserItem && pUserItem->uUid == uid )
+    {
+        bIsNew = FALSE;
+    }
+
+    return bIsNew;
+}
+
 DWORD
 LsaUmpAddUser(
     LSA_UM_STATE_HANDLE Handle,
@@ -1153,6 +1184,7 @@ LsaUmpAddUser(
 {
     DWORD                dwError = 0;
     PLSA_UM_REQUEST_ITEM pRequest = NULL;
+    PAD_PROVIDER_CONTEXT pProviderContext = NULL;
 
     LSA_LOG_DEBUG("LSA User Manager - requesting user addition %u", uUid);
 
@@ -1183,6 +1215,24 @@ LsaUmpAddUser(
         &pRequest->CredHandle);
     BAIL_ON_LSA_ERROR(dwError);
 
+    if (LsaUmpIsNewUser(Handle, uUid))
+    {
+        // Log an event that a new activity session is initiated for given user
+        dwError = AD_CreateProviderContext(
+                      Handle->pProviderState->pszDomainName,
+                      Handle->pProviderState,
+                      &pProviderContext);
+
+        if (dwError == 0)
+        {
+            LsaUmpLogUserActivityInitiated(pProviderContext, pRequest->uUid);
+        }
+        else
+        {
+            dwError = 0;
+        }
+    }
+
     dwError = LsaUmpAddRequest(
                   Handle,
                   pRequest);
@@ -1193,6 +1243,8 @@ cleanup:
     return dwError;
 
 error:
+
+    AD_DereferenceProviderContext(pProviderContext);
 
     if ( pRequest )
     {
@@ -1364,7 +1416,6 @@ LsaUmpAddUserInternal(
     PLSA_UM_USER_REFRESH_ITEM   pNewUserItem = NULL;
     PLSA_UM_USER_REFRESH_ITEM * pUserItemPtr = NULL;
     PLSA_UM_USER_REFRESH_ITEM   pUserItem = NULL;
-    PAD_PROVIDER_CONTEXT        pProviderContext = NULL;
 
     LSA_LOG_DEBUG("LSA User Manager - adding user %u", pRequest->uUid);
 
@@ -1408,21 +1459,6 @@ LsaUmpAddUserInternal(
 
         *pUserItemPtr = pNewUserItem;
         pNewUserItem = NULL;
-
-        // Log an event that a new activity session is initiated for given user
-        dwError = AD_CreateProviderContext(
-                      Handle->pProviderState->pszDomainName,
-                      Handle->pProviderState,
-                      &pProviderContext);
-
-        if (dwError == 0)
-        {
-            LsaUmpLogUserActivityInitiated(pProviderContext, pRequest->uUid);
-        }
-        else
-        {
-            dwError = 0;
-        }
     }
 
 cleanup:
@@ -1430,8 +1466,6 @@ cleanup:
     return dwError;
 
 error:
-
-    AD_DereferenceProviderContext(pProviderContext);
 
     if (pNewUserItem)
     {
