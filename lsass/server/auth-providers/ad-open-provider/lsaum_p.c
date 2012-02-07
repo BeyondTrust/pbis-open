@@ -53,11 +53,11 @@
 #include "lsaum_p.h"
 
 /// Minimum time interval to wait between runs.
-#define LSA_UM_THREAD_MIN_PERIOD (5 * LSA_SECONDS_IN_MINUTE)
+#define LSA_UM_THREAD_MIN_PERIOD (60)
 
 /// Minimum time interval to wait between checking user's
 /// login status.
-#define LSA_UM_USER_MIN_PERIOD (2 * LSA_SECONDS_IN_MINUTE)
+#define LSA_UM_USER_MIN_PERIOD (30)
 
 #define LSA_UM_STATE_LOCK(bInLock)                   \
         do {                                         \
@@ -180,6 +180,21 @@ LsaUmpFreeRequestList(
     );
 
 static
+BOOLEAN
+LsaUmpIsNewUser(
+    LSA_UM_STATE_HANDLE  Handle,
+    uid_t                uid
+    );
+
+static
+VOID
+LsaUmpFindUserPtr(
+    PLSA_UM_USER_REFRESH_LIST    pUserList,
+    uid_t                        uUid,
+    PLSA_UM_USER_REFRESH_ITEM ** pUserItemPtr
+    );
+
+static
 DWORD
 LsaUmpAddUserInternal(
     LSA_UM_STATE_HANDLE  Handle,
@@ -203,6 +218,7 @@ LsaUmpRemoveUserInternal(
 static
 DWORD
 LsaUmpRemoveUserFromList(
+    PAD_PROVIDER_CONTEXT      pContext,
     PLSA_UM_USER_REFRESH_LIST pUserList,
     uid_t                     uUid
     );
@@ -235,6 +251,18 @@ LsaUmpLogUserTGTRefreshFailureEvent(
     PSTR  pszDomainName,
     DWORD dwFailureNumber,
     DWORD dwErrCode
+    );
+
+VOID
+LsaUmpLogUserActivityInitiated(
+    PAD_PROVIDER_CONTEXT pProviderContext,
+    uid_t                uid
+    );
+
+VOID
+LsaUmpLogUserActivityTerminated(
+    PAD_PROVIDER_CONTEXT pProviderContext,
+    uid_t                uid
     );
 
 static
@@ -756,6 +784,7 @@ LsaUmpCheckUsers(
                 else
                 {
                     LsaUmpRemoveUserFromList(
+                        pProviderContext,
                         pUserList,
                         pItem->uUid);
                     continue;
@@ -1128,6 +1157,37 @@ LsaUmpAddRequest(
     return dwError;
 }
 
+static
+BOOLEAN
+LsaUmpIsNewUser(
+    LSA_UM_STATE_HANDLE  Handle,
+    uid_t                uid
+    )
+{
+    BOOLEAN bIsNew = TRUE;
+    BOOLEAN bInLock = FALSE;
+    PLSA_UM_USER_REFRESH_LIST   pUserList = NULL;
+    PLSA_UM_USER_REFRESH_ITEM * pUserItemPtr = NULL;
+    PLSA_UM_USER_REFRESH_ITEM   pUserItem = NULL;
+
+    LSA_UM_STATE_LOCK(bInLock);
+    pUserList = Handle->UserList;
+    LSA_UM_STATE_UNLOCK(bInLock);
+
+    LsaUmpFindUserPtr(
+        pUserList,
+        uid,
+        &pUserItemPtr);
+
+    pUserItem = *pUserItemPtr;
+    if ( pUserItem && pUserItem->uUid == uid )
+    {
+        bIsNew = FALSE;
+    }
+
+    return bIsNew;
+}
+
 DWORD
 LsaUmpAddUser(
     LSA_UM_STATE_HANDLE Handle,
@@ -1139,6 +1199,7 @@ LsaUmpAddUser(
 {
     DWORD                dwError = 0;
     PLSA_UM_REQUEST_ITEM pRequest = NULL;
+    PAD_PROVIDER_CONTEXT pProviderContext = NULL;
 
     LSA_LOG_DEBUG("LSA User Manager - requesting user addition %u", uUid);
 
@@ -1148,8 +1209,6 @@ LsaUmpAddUser(
     BAIL_ON_LSA_ERROR(dwError);
 
     pRequest->dwType = LSA_UM_REQUEST_TYPE_ADD;
-    pRequest->uUid = uUid;
-
     pRequest->uUid = uUid;
 
 #if 0
@@ -1171,6 +1230,24 @@ LsaUmpAddUser(
         &pRequest->CredHandle);
     BAIL_ON_LSA_ERROR(dwError);
 
+    if (LsaUmpIsNewUser(Handle, uUid))
+    {
+        // Log an event that a new activity session is initiated for given user
+        dwError = AD_CreateProviderContext(
+                      Handle->pProviderState->pszDomainName,
+                      Handle->pProviderState,
+                      &pProviderContext);
+
+        if (dwError == 0)
+        {
+            LsaUmpLogUserActivityInitiated(pProviderContext, pRequest->uUid);
+        }
+        else
+        {
+            dwError = 0;
+        }
+    }
+
     dwError = LsaUmpAddRequest(
                   Handle,
                   pRequest);
@@ -1181,6 +1258,8 @@ cleanup:
     return dwError;
 
 error:
+
+    AD_DereferenceProviderContext(pProviderContext);
 
     if ( pRequest )
     {
@@ -1402,6 +1481,7 @@ cleanup:
     return dwError;
 
 error:
+
     if (pNewUserItem)
     {
         LsaUmpFreeUserItem(pNewUserItem);
@@ -1492,6 +1572,7 @@ LsaUmpRemoveUserInternal(
 static
 DWORD
 LsaUmpRemoveUserFromList(
+    PAD_PROVIDER_CONTEXT      pProviderContext,
     PLSA_UM_USER_REFRESH_LIST pUserList,
     uid_t                     uUid
     )
@@ -1513,6 +1594,12 @@ LsaUmpRemoveUserFromList(
         *pUserItemPtr = pUserItem->pNext;
 
         LsaUmpFreeUserItem(pUserItem);
+
+        // Post an activity terminated event for given user account.
+        if (pProviderContext)
+        {
+            LsaUmpLogUserActivityTerminated(pProviderContext, uUid);
+        }
     }
 
     return dwError;
@@ -1712,6 +1799,102 @@ cleanup:
 
     LW_SAFE_FREE_STRING(pszDescription);
     LW_SAFE_FREE_STRING(pszData);
+
+    return;
+
+error:
+
+    goto cleanup;
+}
+
+VOID
+LsaUmpLogUserActivityInitiated(
+    PAD_PROVIDER_CONTEXT pProviderContext,
+    uid_t                uid
+    )
+{
+    DWORD dwError = 0;
+    PSTR pszDescription = NULL;
+    PLSA_SECURITY_OBJECT pUserInfo = NULL;
+
+    dwError = AD_FindUserObjectById(
+                  pProviderContext,
+                  uid,
+                  &pUserInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateStringPrintf(
+                  &pszDescription,
+                  "An Active Directory user account has initiated an active session.\r\n\r\n" \
+                  "     Authentication provider:   %s\r\n\r\n" \
+                  "     User name:                 %s\r\n" \
+                  "     UID:                       %u\r\n" \
+                  "     Domain name:               %s\r\n",
+                  LSA_SAFE_LOG_STRING(gpszADProviderName),
+                  LSA_SAFE_LOG_STRING(pUserInfo->userInfo.pszUnixName),
+                  uid,
+                  LSA_SAFE_LOG_STRING(pUserInfo->pszNetbiosDomainName));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaSrvLogInformationEvent(
+        LSASS_EVENT_INFO_ACTIVITY_INITIATED,
+        pUserInfo->userInfo.pszUnixName,
+        LOGIN_LOGOFF_EVENT_CATEGORY,
+        pszDescription,
+        NULL);
+
+cleanup:
+
+    LW_SAFE_FREE_STRING(pszDescription);
+    ADCacheSafeFreeObject(&pUserInfo);
+
+    return;
+
+error:
+
+    goto cleanup;
+}
+
+VOID
+LsaUmpLogUserActivityTerminated(
+    PAD_PROVIDER_CONTEXT pProviderContext,
+    uid_t                uid
+    )
+{
+    DWORD dwError = 0;
+    PSTR pszDescription = NULL;
+    PLSA_SECURITY_OBJECT pUserInfo = NULL;
+
+    dwError = AD_FindUserObjectById(
+                  pProviderContext,
+                  uid,
+                  &pUserInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateStringPrintf(
+                  &pszDescription,
+                  "An Active Directory user account has terminated their active session.\r\n\r\n" \
+                  "     Authentication provider:   %s\r\n\r\n" \
+                  "     User name:                 %s\r\n" \
+                  "     UID:                       %u\r\n" \
+                  "     Domain name:               %s\r\n",
+                  LSA_SAFE_LOG_STRING(gpszADProviderName),
+                  LSA_SAFE_LOG_STRING(pUserInfo->userInfo.pszUnixName),
+                  uid,
+                  LSA_SAFE_LOG_STRING(pUserInfo->pszNetbiosDomainName));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaSrvLogInformationEvent(
+        LSASS_EVENT_INFO_ACTIVITY_TERMINATED,
+        pUserInfo->userInfo.pszUnixName,
+        LOGIN_LOGOFF_EVENT_CATEGORY,
+        pszDescription,
+        NULL);
+
+cleanup:
+
+    LW_SAFE_FREE_STRING(pszDescription);
+    ADCacheSafeFreeObject(&pUserInfo);
 
     return;
 
