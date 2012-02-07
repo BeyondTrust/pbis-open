@@ -290,6 +290,13 @@ UmnSrvWriteGroupMemberEvent(
                     AddMember ? "added" : "deleted");
     BAIL_ON_UMN_ERROR(dwError);
 
+    record.EventSourceId = Gid;
+
+    dwError = LwMbsToWc16s(
+                    pUserName,
+                    &record.pUser);
+    BAIL_ON_UMN_ERROR(dwError);
+
     // Leave computer NULL so it is filled in by the eventlog
 
     dwError = LwAllocateWc16sPrintfW(

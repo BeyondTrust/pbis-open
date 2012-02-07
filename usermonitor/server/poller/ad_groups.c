@@ -527,7 +527,7 @@ UmnSrvUpdateADGroupMember(
         dwError = UmnSrvWriteGroupMemberEvent(
                         pEventlog,
                         Now,
-                        "AD Group",
+                        "AD Groups",
                         FirstRun,
                         TRUE, //Add member
                         FALSE, //Not gid change

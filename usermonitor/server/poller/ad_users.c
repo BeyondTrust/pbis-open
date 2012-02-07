@@ -715,15 +715,23 @@ UmnSrvUpdateADAccountsByHash(
                         pUser->userInfo.pszUnixName,
                         pGroup->groupInfo.pszUnixName);
 
-                dwError = UmnSrvUpdateADGroupMember(
-                                pEventlog,
-                                hReg,
-                                hGroups,
-                                FirstRun,
-                                Now,
-                                pGroup,
-                                pUser->userInfo.pszUnixName);
-                BAIL_ON_UMN_ERROR(dwError);
+                if (!pGroup->enabled)
+                {
+                    UMN_LOG_VERBOSE("Skipping unenabled group %s",
+                        pGroup->groupInfo.pszUnixName);
+                }
+                else
+                {
+                    dwError = UmnSrvUpdateADGroupMember(
+                                    pEventlog,
+                                    hReg,
+                                    hGroups,
+                                    FirstRun,
+                                    Now,
+                                    pGroup,
+                                    pUser->userInfo.pszUnixName);
+                    BAIL_ON_UMN_ERROR(dwError);
+                }
             }
         }
         
@@ -750,15 +758,32 @@ UmnSrvUpdateADAccountsByHash(
                         pUser->userInfo.pszUnixName,
                         pGroup->groupInfo.pszUnixName);
 
-                dwError = UmnSrvUpdateADGroup(
-                                pEventlog,
-                                hReg,
-                                hGroups,
-                                FirstRun,
-                                Now,
-                                pGroup);
-                BAIL_ON_UMN_ERROR(dwError);
+                if (!pGroup->enabled)
+                {
+                    UMN_LOG_VERBOSE("Skipping unenabled group %s",
+                        pGroup->groupInfo.pszUnixName);
+                }
+                else
+                {
+                    dwError = UmnSrvUpdateADGroup(
+                                    pEventlog,
+                                    hReg,
+                                    hGroups,
+                                    FirstRun,
+                                    Now,
+                                    pGroup);
+                    BAIL_ON_UMN_ERROR(dwError);
 
+                    dwError = UmnSrvUpdateADGroupMember(
+                                    pEventlog,
+                                    hReg,
+                                    hGroups,
+                                    FirstRun,
+                                    Now,
+                                    pGroup,
+                                    pUser->userInfo.pszUnixName);
+                    BAIL_ON_UMN_ERROR(dwError);
+                }
                 dwError = LwHashSetValue(
                                 pGroups,
                                 pGroup->pszObjectSid,
@@ -766,16 +791,6 @@ UmnSrvUpdateADAccountsByHash(
                 BAIL_ON_UMN_ERROR(dwError);
 
                 ppLookedupGroups[i] = NULL;
-
-                dwError = UmnSrvUpdateADGroupMember(
-                                pEventlog,
-                                hReg,
-                                hGroups,
-                                FirstRun,
-                                Now,
-                                pGroup,
-                                pUser->userInfo.pszUnixName);
-                BAIL_ON_UMN_ERROR(dwError);
             }
 
             LsaFreeSecurityObjectList(
