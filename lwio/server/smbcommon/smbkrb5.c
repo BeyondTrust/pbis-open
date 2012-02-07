@@ -232,6 +232,35 @@ SMBGSSContextBuild(
             smb_display_status("gss_import_name", dwMajorStatus, dwMinorStatus);
 
             BAIL_ON_SEC_ERROR(dwMajorStatus);
+
+            dwError = LwRtlCStringAllocateFromWC16String(
+                &pszUsername,
+                pCreds->payload.krb5Tgt.pwszClientPrincipal);
+            BAIL_ON_NT_STATUS(dwError);
+                
+            usernameBuffer.value = pszUsername;
+            usernameBuffer.length = strlen(pszUsername) + 1;
+                
+            dwMajorStatus = gss_import_name(
+                (OM_uint32 *)&dwMinorStatus,
+                &usernameBuffer,
+                GSS_C_NT_USER_NAME,
+                &pUsername);
+            BAIL_ON_SEC_ERROR(dwMajorStatus);
+
+            desiredMechs.count = 1;
+            desiredMechs.elements = (gss_OID) gss_mech_krb5;
+            
+            dwMajorStatus = gss_acquire_cred(
+                (OM_uint32 *)&dwMinorStatus,
+                pUsername,
+                0,
+                &desiredMechs,
+                GSS_C_INITIATE,
+                &pContext->credHandle,
+                &actualMechs,
+                &timeRec);
+            BAIL_ON_SEC_ERROR(dwMajorStatus);
             break;
 
         case IO_CREDS_TYPE_PLAIN:
@@ -742,7 +771,7 @@ smb_display_status_1(
     int       type
     )
 {
-    OM_uint32 maj_stat, min_stat;
+    OM_uint32 min_stat;
     gss_buffer_desc msg;
     OM_uint32 msg_ctx;
 
@@ -754,7 +783,7 @@ smb_display_status_1(
     msg_ctx = 0;
     while (1)
     {
-        maj_stat = gss_display_status(&min_stat, code,
+        (void) gss_display_status(&min_stat, code,
                                       type, GSS_C_NULL_OID,
                                       &msg_ctx, &msg);
 
