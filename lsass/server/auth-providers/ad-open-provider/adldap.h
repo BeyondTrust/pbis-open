@@ -73,15 +73,6 @@ ADGetLDAPUPNString(
     );
 
 DWORD
-ADGetUserPrimaryGroupSid(
-    IN PLSA_DM_LDAP_CONNECTION pConn,
-    IN PCSTR pszDomainDnsName,
-    IN PCSTR pszUserDN,
-    IN PCSTR pszUserObjectsid,
-    OUT PSTR* ppszPrimaryGroupSID
-    );
-
-DWORD
 ADFindComputerDN(
     IN PLSA_DM_LDAP_CONNECTION pConn,
     PCSTR pszSamAccountName,
@@ -121,39 +112,6 @@ ADGuidStrToHex(
     );
 
 DWORD
-ADGetUserOrGroupRealAttributeList(
-    DWORD dwDirectoryMode,
-    ADConfigurationMode adConfMode,
-    PSTR** pppRealAttributeList
-    );
-
-DWORD
-ADGetUserRealAttributeList(
-    DWORD dwDirectoryMode,
-    ADConfigurationMode adConfMode,
-    PSTR** pppRealAttributeList
-    );
-
-DWORD
-ADGetUserPseudoAttributeList(
-    ADConfigurationMode adConfMode,
-    PSTR** pppPseudoAttributeList
-    );
-
-DWORD
-ADGetGroupRealAttributeList(
-    DWORD dwDirectoryMode,
-    ADConfigurationMode adConfMode,
-    PSTR** pppRealAttributeList
-    );
-
-DWORD
-ADGetGroupPseudoAttributeList(
-    ADConfigurationMode adConfMode,
-    PSTR** pppPseudoAttributeList
-    );
-
-DWORD
 ADLdap_GetGroupMembers(
     IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszDomainName,
@@ -183,13 +141,6 @@ ADLdap_GetObjectSid(
     HANDLE hDirectory,
     LDAPMessage* pMessage,
     PSTR* ppszSid
-    );
-
-DWORD
-ADLdap_GetAccountType(
-    IN HANDLE hDirectory,
-    IN LDAPMessage* pMessage,
-    OUT LSA_OBJECT_TYPE* pAccountType
     );
 
 #endif

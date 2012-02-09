@@ -54,11 +54,6 @@ typedef struct _LSA_AD_QUERY_LISTS_ENTRY {
 } LSA_AD_QUERY_LISTS_ENTRY, *PLSA_AD_QUERY_LISTS_ENTRY;
 
 DWORD
-ADCopyAttributeList(
-    PSTR   szAttributeList[],
-    PSTR** pppOutputAttributeList);
-
-DWORD
 UnprovisionedModeMakeLocalSID(
     PCSTR pszDomainSID,
     DWORD dwID,
