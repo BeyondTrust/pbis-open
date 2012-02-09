@@ -666,6 +666,11 @@ ADCacheDuplicateObject(
                         &pDest->userInfo.pszHomedir);
         BAIL_ON_LSA_ERROR(dwError);
 
+        dwError = LwStrDupOrNull(
+                        pSrc->userInfo.pszDisplayName,
+                        &pDest->userInfo.pszDisplayName);
+        BAIL_ON_LSA_ERROR(dwError);
+
         pDest->userInfo.qwPwdLastSet = pSrc->userInfo.qwPwdLastSet;
         pDest->userInfo.qwPwdExpires = pSrc->userInfo.qwPwdExpires;
         pDest->userInfo.qwAccountExpires = pSrc->userInfo.qwAccountExpires;

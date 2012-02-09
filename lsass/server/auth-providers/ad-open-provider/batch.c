@@ -626,6 +626,7 @@ LsaAdBatchDestroyBatchItemContents(
             LW_SAFE_FREE_STRING(pItem->UserInfo.pszHomeDirectory);
             LW_SAFE_FREE_STRING(pItem->UserInfo.pszShell);
             LW_SAFE_FREE_STRING(pItem->UserInfo.pszUserPrincipalName);
+            LW_SAFE_FREE_STRING(pItem->UserInfo.pszDisplayName);
             break;
         case LSA_AD_BATCH_OBJECT_TYPE_GROUP:
             LW_SAFE_FREE_STRING(pItem->GroupInfo.pszAlias);
@@ -1903,6 +1904,7 @@ LsaAdBatchResolveRealObjects(
         AD_LDAP_USER_CTRL_TAG,
         AD_LDAP_ACCOUT_EXP_TAG,
         AD_LDAP_PWD_LASTSET_TAG,
+        AD_LDAP_DISPLAY_NAME_TAG,
         // schema mode:
         // - (group alias) or (user gecos in unprovisioned mode):
         AD_LDAP_DISPLAY_NAME_TAG,

@@ -391,6 +391,7 @@ LsaAdBatchMarshalUserInfo(
     LSA_XFER_STRING(pUserInfo->pszShell, pObjectUserInfo->pszShell);
     LSA_XFER_STRING(pUserInfo->pszHomeDirectory, pObjectUserInfo->pszHomedir);
     LSA_XFER_STRING(pUserInfo->pszUserPrincipalName, pObjectUserInfo->pszUPN);
+    LSA_XFER_STRING(pUserInfo->pszDisplayName, pObjectUserInfo->pszDisplayName);
 
     pObjectUserInfo->qwPwdLastSet = pUserInfo->PasswordLastSet;
     pObjectUserInfo->qwPwdExpires = pUserInfo->PasswordExpires;

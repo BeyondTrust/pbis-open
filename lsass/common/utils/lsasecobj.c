@@ -54,6 +54,7 @@ LsaUtilFreeSecurityObject(
             LW_SAFE_FREE_STRING(pObject->userInfo.pszGecos);
             LW_SAFE_FREE_STRING(pObject->userInfo.pszShell);
             LW_SAFE_FREE_STRING(pObject->userInfo.pszHomedir);
+            LW_SAFE_FREE_STRING(pObject->userInfo.pszDisplayName);
             LW_SECURE_FREE_MEMORY(pObject->userInfo.pLmHash, pObject->userInfo.dwLmHashLen);
             LW_SECURE_FREE_MEMORY(pObject->userInfo.pNtHash, pObject->userInfo.dwNtHashLen);
             break;

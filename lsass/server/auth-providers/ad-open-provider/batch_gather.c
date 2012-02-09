@@ -680,6 +680,15 @@ LsaAdBatchGatherRealUser(
     }
     BAIL_ON_LSA_ERROR(dwError);
 
+    LSA_ASSERT(!pItem->UserInfo.pszDisplayName);
+
+    dwError = LwLdapGetString(
+                    hDirectory,
+                    pMessage,
+                    AD_LDAP_DISPLAY_NAME_TAG,
+                    &pItem->UserInfo.pszDisplayName);
+    BAIL_ON_LSA_ERROR(dwError);
+
     SetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_ACCOUNT_INFO_KNOWN);
 
 cleanup:

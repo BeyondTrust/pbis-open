@@ -137,6 +137,7 @@ typedef struct _LSA_AD_BATCH_ITEM_USER_INFO {
     PSTR pszShell;
     // AD-specific fields:
     PSTR pszUserPrincipalName;
+    PSTR pszDisplayName;
     DWORD dwPrimaryGroupRid;
     UINT32 UserAccountControl;
     UINT64 AccountExpires;

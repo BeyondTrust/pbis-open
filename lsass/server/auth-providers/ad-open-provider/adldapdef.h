@@ -78,6 +78,7 @@
 #define AD_LDAP_CONFNAM_CTXT_TAG "configurationNamingContext"
 #define AD_LDAP_NETBIOS_TAG      "netBIOSName"
 #define AD_LDAP_DN_TAG           "distinguishedName"
+#define AD_LDAP_DISPLAY_NAME_TAG "displayName"
 
 // Pseudo-only Attributes
 #define AD_LDAP_BACKLINK_PSEUDO_TAG   "backLink"

@@ -1520,6 +1520,12 @@ typedef struct _LSA_SECURITY_OBJECT_USER_INFO
      * @brief UNIX home directory
      */
     LW_PSTR pszHomedir;
+
+    /**
+     * @brief Windows Display name. This is initialized whenever the data is
+     * available, even for unenabled users.
+     */
+    LW_PSTR pszDisplayName;
 } LSA_SECURITY_OBJECT_USER_INFO;
 
 typedef LSA_SECURITY_OBJECT_USER_INFO *PLSA_SECURITY_OBJECT_USER_INFO;

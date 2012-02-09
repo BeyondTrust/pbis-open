@@ -581,6 +581,7 @@ LsaAdBatchEnumObjectsInCell(
         AD_LDAP_USER_CTRL_TAG,
         AD_LDAP_ACCOUT_EXP_TAG,
         AD_LDAP_PWD_LASTSET_TAG,
+        AD_LDAP_DISPLAY_NAME_TAG,
         // schema mode:
         // - (group alias) or (user gecos in unprovisioned mode):
         AD_LDAP_DISPLAY_NAME_TAG,

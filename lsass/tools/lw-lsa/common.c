@@ -99,6 +99,7 @@ PrintSecurityObject(
         {
             printf("UPN: %s\n", SAFE_STRING(pObject->userInfo.pszUPN));
         }
+        printf("Display Name: %s\n", SAFE_STRING(pObject->userInfo.pszDisplayName));
         printf("Alias: %s\n", SAFE_STRING(pObject->userInfo.pszAliasName));
         printf("UNIX name: %s\n", SAFE_STRING(pObject->userInfo.pszUnixName));
         printf("GECOS: %s\n", SAFE_STRING(pObject->userInfo.pszGecos));        
