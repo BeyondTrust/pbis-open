@@ -55,6 +55,7 @@ UmnSrvFreeUserContents(
     LW_SAFE_FREE_MEMORY(pUser->pw_gecos);
     LW_SAFE_FREE_MEMORY(pUser->pw_dir);
     LW_SAFE_FREE_MEMORY(pUser->pw_shell);
+    LW_SAFE_FREE_MEMORY(pUser->pDisplayName);
 }
 
 static
@@ -423,6 +424,16 @@ UmnSrvReadUser(
             -1,
             NULL,
             &pResult->pw_shell,
+            NULL
+        },
+        {
+            "pDisplayName",
+            FALSE,
+            LwRegTypeString,
+            0,
+            -1,
+            NULL,
+            &pResult->pDisplayName,
             NULL
         },
         {

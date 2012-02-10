@@ -211,6 +211,7 @@ UmnSrvWriteADUserEvent(
                                         pNew->userInfo.pszGecos : "";
         change.NewValue.pw_dir = pNew->userInfo.pszHomedir;
         change.NewValue.pw_shell = pNew->userInfo.pszShell;
+        change.NewValue.pDisplayName = pNew->userInfo.pszDisplayName;
         change.NewValue.LastUpdated = Now;
     }
 
@@ -305,6 +306,9 @@ UmnSrvWriteADUserEvent(
                     L"\tNew: %hhs\n"
                     L"Shell\n"
                     L"\tOld: %hhs\n"
+                    L"\tNew: %hhs\n"
+                    L"Display Name\n"
+                    L"\tOld: %hhs\n"
                     L"\tNew: %hhs",
                     oldTimeBuf,
                     newTimeBuf,
@@ -323,7 +327,9 @@ UmnSrvWriteADUserEvent(
                     pOld ? pOld->pw_dir : "",
                     pNew ? pNew->userInfo.pszHomedir : "",
                     pOld ? pOld->pw_shell : "",
-                    pNew ? pNew->userInfo.pszShell : "");
+                    pNew ? pNew->userInfo.pszShell : "",
+                    pOld ? pOld->pDisplayName : "",
+                    pNew ? pNew->userInfo.pszDisplayName : "");
     BAIL_ON_UMN_ERROR(dwError);
 
     dwError = EncodeUserChange(
@@ -446,6 +452,16 @@ UmnSrvWriteADUserValues(
                     strlen(pUser->userInfo.pszShell) + 1);
     BAIL_ON_UMN_ERROR(dwError);
 
+    dwError = RegSetValueExA(
+                    hReg,
+                    hUser,
+                    "pDisplayName",
+                    0,
+                    REG_SZ,
+                    (PBYTE) pUser->userInfo.pszDisplayName,
+                    strlen(pUser->userInfo.pszDisplayName) + 1);
+    BAIL_ON_UMN_ERROR(dwError);
+
 cleanup:
     return dwError;
 
@@ -547,7 +563,8 @@ UmnSrvUpdateADUser(
                                 pUser->userInfo.pszGecos : ""),
                             old.pw_gecos) ||
                 strcmp(pUser->userInfo.pszHomedir, old.pw_dir) ||
-                strcmp(pUser->userInfo.pszShell, old.pw_shell))
+                strcmp(pUser->userInfo.pszShell, old.pw_shell) ||
+                strcmp(pUser->userInfo.pszDisplayName, old.pDisplayName))
         {
             UMN_LOG_INFO("User '%s' (uid %d) changed",
                             pUser->userInfo.pszUnixName, pUser->userInfo.uid);

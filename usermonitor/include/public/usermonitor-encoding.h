@@ -61,6 +61,7 @@ typedef struct _USER_MONITOR_PASSWD
     PSTR pw_gecos;
     PSTR pw_dir;
     PSTR pw_shell;
+    PSTR pDisplayName;
     DWORD LastUpdated;
 } USER_MONITOR_PASSWD, *PUSER_MONITOR_PASSWD;
 

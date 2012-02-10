@@ -55,6 +55,7 @@ FreeUserMonitorPasswdContents(
     rpc_ss_client_free(pValue->pw_gecos);
     rpc_ss_client_free(pValue->pw_dir);
     rpc_ss_client_free(pValue->pw_shell);
+    rpc_ss_client_free(pValue->pDisplayName);
 }
 
 VOID
