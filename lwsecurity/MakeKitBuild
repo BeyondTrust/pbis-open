@@ -1,0 +1,55 @@
+configure()
+{
+    mk_declare -o \
+        MK_PREFIX \
+        MK_LIBEXECDIR \
+        MK_BINDIR \
+        MK_LIBDIR \
+        MK_DOCDIR \
+        MK_OBJECT_DIR \
+        LW_CONFIGDIR \
+        MK_SOURCE_DIR \
+        MK_HOST_OS \
+        MK_HOST_ARCH \
+
+    ANT_STAGING_ROOT=${MK_ROOT_DIR}/stage${MK_PREFIX}
+    ANT_STAGING_LIB=${MK_ROOT_DIR}/stage${MK_LIBDIR}
+    ANT_STAGING_DOCS=${MK_ROOT_DIR}/stage${MK_DOCDIR}
+    ANT_STAGING_CONF=${MK_ROOT_DIR}/stage${LW_CONFIGDIR}
+    ANT_BUILD_DIR=${MK_ROOT_DIR}/object/lwsecurity
+
+    PBIS_SOURCE=`cd "${MK_SOURCE_DIR}" && pwd`
+
+    mk_declare -o \
+        ANT_STAGING_ROOT \
+        ANT_STAGING_LIB \
+        ANT_STAGING_DOCS \
+        ANT_STAGING_CONF \
+        ANT_BUILD_DIR \
+        PBIS_SOURCE
+
+}
+
+make()
+{
+    mk_declare -e  BUILDXML=$MK_SOURCE_DIR/lwsecurity/build.xml
+
+    mk_output_file INPUT="@${MK_SOURCE_DIR}/lwsecurity/properties.in" OUTPUT=".properties"
+    PROPERTIES=$result
+
+    mk_target \
+        TARGET=".build" \
+        DEPS="$PROPERTIES" \
+        ant -propertyfile $PROPERTIES -buildfile "$BUILDXML" build
+
+    mk_target \
+        TARGET=".stage" \
+        DEPS="$result $PROPERTIES" \
+        ant -propertyfile $PROPERTIES -buildfile "$BUILDXML" stage
+
+    mk_target \
+        TARGET="@lwsecurity" \
+        DEPS="$result"
+
+    mk_add_phony_target "$result"
+}
