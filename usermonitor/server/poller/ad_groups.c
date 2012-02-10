@@ -48,7 +48,7 @@
 DWORD
 UmnSrvWriteADGroupEvent(
     PLW_EVENTLOG_CONNECTION pEventlog,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     PUSER_MONITOR_GROUP pOld,
     long long Now,
     PLSA_SECURITY_OBJECT pNew
@@ -65,9 +65,9 @@ UmnSrvWriteADGroupEvent(
     time_t temp = 0;
     PCSTR pOperation = NULL;
 
-    if (pOld)
+    if (PreviousRun)
     {
-        temp = pOld->LastUpdated;
+        temp = PreviousRun;
         localtime_r(&temp, &oldTmBuf);
         strftime(
                 oldTimeBuf,
@@ -107,7 +107,7 @@ UmnSrvWriteADGroupEvent(
                     &record.pLogname);
     BAIL_ON_UMN_ERROR(dwError);
 
-    if (FirstRun)
+    if (!PreviousRun)
     {
         dwError = LwMbsToWc16s(
                         "Success Audit",
@@ -279,7 +279,7 @@ UmnSrvUpdateADGroup(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
     HKEY hGroups,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     long long Now,
     PLSA_SECURITY_OBJECT pGroup
     )
@@ -337,7 +337,7 @@ UmnSrvUpdateADGroup(
 
         dwError = UmnSrvWriteADGroupEvent(
                         pEventlog,
-                        FirstRun,
+                        PreviousRun,
                         NULL,
                         Now,
                         pGroup);
@@ -359,7 +359,7 @@ UmnSrvUpdateADGroup(
             // change event. File a deletion and addition event.
             dwError = UmnSrvWriteADGroupEvent(
                             pEventlog,
-                            FirstRun,
+                            PreviousRun,
                             &old,
                             Now,
                             NULL);
@@ -367,7 +367,7 @@ UmnSrvUpdateADGroup(
 
             dwError = UmnSrvWriteADGroupEvent(
                             pEventlog,
-                            FirstRun,
+                            PreviousRun,
                             NULL,
                             Now,
                             pGroup);
@@ -390,7 +390,7 @@ UmnSrvUpdateADGroup(
 
             dwError = UmnSrvWriteADGroupEvent(
                             pEventlog,
-                            FirstRun,
+                            PreviousRun,
                             &old,
                             Now,
                             pGroup);
@@ -458,7 +458,7 @@ UmnSrvUpdateADGroupMember(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
     HKEY hGroups,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     long long Now,
     PLSA_SECURITY_OBJECT pGroup,
     PCSTR pMember
@@ -528,7 +528,7 @@ UmnSrvUpdateADGroupMember(
                         pEventlog,
                         Now,
                         "AD Groups",
-                        FirstRun,
+                        PreviousRun,
                         TRUE, //Add member
                         FALSE, //Not gid change
                         pMember,

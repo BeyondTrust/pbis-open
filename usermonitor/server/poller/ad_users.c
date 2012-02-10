@@ -155,7 +155,7 @@ UmnSrvHashFreeObjectValue(
 DWORD
 UmnSrvWriteADUserEvent(
     PLW_EVENTLOG_CONNECTION pEventlog,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     PUSER_MONITOR_PASSWD pOld,
     long long Now,
     PLSA_SECURITY_OBJECT pNew
@@ -172,9 +172,9 @@ UmnSrvWriteADUserEvent(
     time_t temp = 0;
     PCSTR pOperation = NULL;
 
-    if (pOld)
+    if (PreviousRun)
     {
-        temp = pOld->LastUpdated;
+        temp = PreviousRun;
         localtime_r(&temp, &oldTmBuf);
         strftime(
                 oldTimeBuf,
@@ -220,7 +220,7 @@ UmnSrvWriteADUserEvent(
                     &record.pLogname);
     BAIL_ON_UMN_ERROR(dwError);
 
-    if (FirstRun)
+    if (!PreviousRun)
     {
         dwError = LwMbsToWc16s(
                         "Success Audit",
@@ -475,7 +475,7 @@ UmnSrvUpdateADUser(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
     HKEY hUsers,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     long long Now,
     PLSA_SECURITY_OBJECT pUser
     )
@@ -518,7 +518,7 @@ UmnSrvUpdateADUser(
 
         dwError = UmnSrvWriteADUserEvent(
                         pEventlog,
-                        FirstRun,
+                        PreviousRun,
                         NULL,
                         Now,
                         pUser);
@@ -540,7 +540,7 @@ UmnSrvUpdateADUser(
             // change event. File a deletion and addition event.
             dwError = UmnSrvWriteADUserEvent(
                             pEventlog,
-                            FirstRun,
+                            PreviousRun,
                             &old,
                             Now,
                             NULL);
@@ -548,7 +548,7 @@ UmnSrvUpdateADUser(
 
             dwError = UmnSrvWriteADUserEvent(
                             pEventlog,
-                            FirstRun,
+                            PreviousRun,
                             NULL,
                             Now,
                             pUser);
@@ -576,7 +576,7 @@ UmnSrvUpdateADUser(
 
             dwError = UmnSrvWriteADUserEvent(
                             pEventlog,
-                            FirstRun,
+                            PreviousRun,
                             &old,
                             Now,
                             pUser);
@@ -616,7 +616,7 @@ UmnSrvUpdateADAccountsByHash(
     HANDLE hReg,
     HKEY hParameters,
     PLW_HASH_TABLE pUsers,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     long long Now
     )
 {
@@ -679,7 +679,7 @@ UmnSrvUpdateADAccountsByHash(
                         pEventlog,
                         hReg,
                         hUsers,
-                        FirstRun,
+                        PreviousRun,
                         Now,
                         pUser);
         BAIL_ON_UMN_ERROR(dwError);
@@ -743,7 +743,7 @@ UmnSrvUpdateADAccountsByHash(
                                     pEventlog,
                                     hReg,
                                     hGroups,
-                                    FirstRun,
+                                    PreviousRun,
                                     Now,
                                     pGroup,
                                     pUser->userInfo.pszUnixName);
@@ -786,7 +786,7 @@ UmnSrvUpdateADAccountsByHash(
                                     pEventlog,
                                     hReg,
                                     hGroups,
-                                    FirstRun,
+                                    PreviousRun,
                                     Now,
                                     pGroup);
                     BAIL_ON_UMN_ERROR(dwError);
@@ -795,7 +795,7 @@ UmnSrvUpdateADAccountsByHash(
                                     pEventlog,
                                     hReg,
                                     hGroups,
-                                    FirstRun,
+                                    PreviousRun,
                                     Now,
                                     pGroup,
                                     pUser->userInfo.pszUnixName);
@@ -868,7 +868,7 @@ UmnSrvUpdateADAccounts(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
     HKEY hParameters,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     long long Now
     )
 {
@@ -938,7 +938,7 @@ UmnSrvUpdateADAccounts(
                     hReg,
                     hParameters,
                     pUsers,
-                    FirstRun,
+                    PreviousRun,
                     Now);
     BAIL_ON_UMN_ERROR(dwError);
 

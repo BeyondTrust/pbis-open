@@ -225,7 +225,7 @@ UmnSrvUpdateAccountInfo(
                     pConn,
                     hReg,
                     hParameters,
-                    !lastUpdated,
+                    lastUpdated,
                     Now);
     BAIL_ON_UMN_ERROR(dwError);
 
@@ -234,7 +234,7 @@ UmnSrvUpdateAccountInfo(
                     pConn,
                     hReg,
                     hParameters,
-                    !lastUpdated,
+                    lastUpdated,
                     Now);
     BAIL_ON_UMN_ERROR(dwError);
 
@@ -246,7 +246,7 @@ UmnSrvUpdateAccountInfo(
                     pConn,
                     hReg,
                     hParameters,
-                    !lastUpdated,
+                    lastUpdated,
                     Now);
     BAIL_ON_UMN_ERROR(dwError);
 

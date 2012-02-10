@@ -58,7 +58,7 @@ static
 DWORD
 UmnSrvWriteGroupEvent(
     PLW_EVENTLOG_CONNECTION pEventlog,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     PUSER_MONITOR_GROUP pOld,
     long long Now,
     struct group *pNew
@@ -75,9 +75,9 @@ UmnSrvWriteGroupEvent(
     time_t temp = 0;
     PCSTR pOperation = NULL;
 
-    if (pOld)
+    if (PreviousRun)
     {
-        temp = pOld->LastUpdated;
+        temp = PreviousRun;
         localtime_r(&temp, &oldTmBuf);
         strftime(
                 oldTimeBuf,
@@ -116,7 +116,7 @@ UmnSrvWriteGroupEvent(
                     &record.pLogname);
     BAIL_ON_UMN_ERROR(dwError);
 
-    if (FirstRun)
+    if (!PreviousRun)
     {
         dwError = LwMbsToWc16s(
                         "Success Audit",
@@ -232,7 +232,7 @@ UmnSrvWriteGroupMemberEvent(
     PLW_EVENTLOG_CONNECTION pEventlog,
     long long Now,
     PCSTR pGroupKeyName,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     BOOLEAN AddMember,
     BOOLEAN OnlyGidChange,
     PCSTR pUserName,
@@ -262,7 +262,7 @@ UmnSrvWriteGroupMemberEvent(
                     &record.pLogname);
     BAIL_ON_UMN_ERROR(dwError);
 
-    if (FirstRun)
+    if (!PreviousRun)
     {
         dwError = LwMbsToWc16s(
                         "Success Audit",
@@ -468,7 +468,7 @@ UmnSrvUpdateGroupMember(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
     HKEY hMembers,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     long long Now,
     DWORD OldGid,
     struct group *pGroup,
@@ -508,7 +508,7 @@ UmnSrvUpdateGroupMember(
                         pEventlog,
                         Now,
                         "Groups",
-                        FirstRun,
+                        PreviousRun,
                         TRUE, //Add member
                         FALSE, //Not gid change
                         pMember,
@@ -522,7 +522,7 @@ UmnSrvUpdateGroupMember(
                         pEventlog,
                         Now,
                         "Groups",
-                        FirstRun,
+                        PreviousRun,
                         FALSE, //Remove member
                         TRUE, //Gid change
                         pMember,
@@ -534,7 +534,7 @@ UmnSrvUpdateGroupMember(
                         pEventlog,
                         Now,
                         "Groups",
-                        FirstRun,
+                        PreviousRun,
                         TRUE, //Add member
                         TRUE, //Gid change
                         pMember,
@@ -686,7 +686,7 @@ UmnSrvUpdateGroupMembers(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
     HKEY hGroup,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     long long Now,
     DWORD OldGid,
     struct group *pGroup
@@ -729,7 +729,7 @@ UmnSrvUpdateGroupMembers(
                         pEventlog,
                         hReg,
                         hMembers,
-                        FirstRun,
+                        PreviousRun,
                         Now,
                         OldGid,
                         pGroup,
@@ -754,7 +754,7 @@ UmnSrvUpdateGroup(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
     HKEY hGroups,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     long long Now,
     struct group *pGroup
     )
@@ -798,7 +798,7 @@ UmnSrvUpdateGroup(
 
         dwError = UmnSrvWriteGroupEvent(
                         pEventlog,
-                        FirstRun,
+                        PreviousRun,
                         NULL,
                         Now,
                         pGroup);
@@ -828,7 +828,7 @@ UmnSrvUpdateGroup(
 
             dwError = UmnSrvWriteGroupEvent(
                             pEventlog,
-                            FirstRun,
+                            PreviousRun,
                             &old,
                             Now,
                             pGroup);
@@ -850,7 +850,7 @@ UmnSrvUpdateGroup(
                     pEventlog,
                     hReg,
                     hKey,
-                    FirstRun,
+                    PreviousRun,
                     Now,
                     old.gr_gid,
                     pGroup);
@@ -989,11 +989,9 @@ UmnSrvFindDeletedGroups(
 
             if (!strcmp(pGroupKeyName, "Groups"))
             {
-                // Groups cannot be detected as deleted if there is no previous
-                // data to compare, so pass FALSE for FirstRun
                 dwError = UmnSrvWriteGroupEvent(
                                 pEventlog,
-                                FALSE,
+                                old.LastUpdated,
                                 &old,
                                 Now,
                                 NULL);
@@ -1001,11 +999,9 @@ UmnSrvFindDeletedGroups(
             }
             else
             {
-                // Groups cannot be detected as deleted if there is no previous
-                // data to compare, so pass FALSE for FirstRun
                 dwError = UmnSrvWriteADGroupEvent(
                                 pEventlog,
-                                FALSE,
+                                old.LastUpdated,
                                 &old,
                                 Now,
                                 NULL);
@@ -1041,7 +1037,7 @@ UmnSrvUpdateGroups(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
     HKEY hParameters,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     long long Now
     )
 {
@@ -1091,7 +1087,7 @@ UmnSrvUpdateGroups(
                             pEventlog,
                             hReg,
                             hGroups,
-                            FirstRun,
+                            PreviousRun,
                             Now,
                             pGroup);
             BAIL_ON_UMN_ERROR(dwError);

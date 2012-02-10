@@ -51,7 +51,7 @@
 DWORD
 UmnSrvWriteADGroupEvent(
     PLW_EVENTLOG_CONNECTION pEventlog,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     PUSER_MONITOR_GROUP pOld,
     long long Now,
     PLSA_SECURITY_OBJECT pNew
@@ -62,7 +62,7 @@ UmnSrvUpdateADGroup(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
     HKEY hGroups,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     long long Now,
     PLSA_SECURITY_OBJECT pGroup
     );
@@ -72,7 +72,7 @@ UmnSrvUpdateADGroupMember(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
     HKEY hGroups,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     long long Now,
     PLSA_SECURITY_OBJECT pGroup,
     PCSTR pMember

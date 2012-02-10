@@ -75,7 +75,7 @@ UmnSrvUpdateUsers(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
     HKEY hParameters,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     long long Now
     );
 

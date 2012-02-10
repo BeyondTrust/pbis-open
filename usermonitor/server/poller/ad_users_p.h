@@ -54,14 +54,14 @@ UmnSrvUpdateADAccounts(
     PLW_EVENTLOG_CONNECTION pEventlog,
     HANDLE hReg,
     HKEY hParameters,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     long long Now
     );
 
 DWORD
 UmnSrvWriteADUserEvent(
     PLW_EVENTLOG_CONNECTION pEventlog,
-    BOOLEAN FirstRun,
+    long long PreviousRun,
     PUSER_MONITOR_PASSWD pOld,
     long long Now,
     PLSA_SECURITY_OBJECT pNew
