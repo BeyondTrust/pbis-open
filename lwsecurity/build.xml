@@ -1,0 +1,112 @@
+<project default="build">
+
+    <property environment="env"/>
+
+    <property name="pbis.staging.root" value="${env.STAGING_PREFIX_DIR}"/>
+    <property name="pbis.staging.lib" value="${env.STAGING_LIB_DIR}"/>
+    <property name="pbis.staging.docs" value="${env.STAGING_DOC_DIR}"/>
+    <property name="pbis.staging.conf" value="${env.STAGING_CONF_DIR}"/>
+
+    <property name="pbis.objectdir"
+              value="${env.BUILD_META_ROOT}/java/lwsecurity"/>
+
+    <condition property="build.is.os.linux.i386">
+        <and>
+            <equals arg1="${mk.build.os}" arg2="linux"/>
+            <equals arg1="${mk.build.arch}" arg2="i386"/>
+        </and>
+    </condition>
+    <condition property="build.is.os.linux.x86_64">
+        <and>
+            <equals arg1="${mk.build.os}" arg2="linux"/>
+            <equals arg1="${mk.build.arch}" arg2="x86_64"/>
+        </and>
+    </condition>
+
+    <filelist id="subdirs" dir=".">
+            <file name="lwjplatform"/>
+            <file name="servlets"/>
+            <file name="tomcat"/>
+    </filelist>
+
+    <target name="build">
+        <subant target="build">
+            <filelist refid="subdirs"/>
+        </subant>
+        <subant target="doc">
+            <filelist refid="subdirs"/>
+        </subant>
+    </target>
+
+    <target name="test" depends="build">
+        <subant target="test">
+            <filelist id="subdirs" dir=".">
+                <file name="lwjplatform"/>
+                <file name="servlets"/>
+                <file name="tomcat"/>
+            </filelist>
+        </subant>
+    </target>
+
+    <target name="stage" depends="build">
+
+        <subant target="stage">
+            <filelist id="subdirs" dir=".">
+                <file name="lwjplatform"/>
+                <file name="servlets"/>
+                <file name="tomcat"/>
+            </filelist>
+        </subant>
+
+        <copy todir="${pbis.staging.lib}">
+            <fileset dir="${pbis.source}/vendor/apache/misc/lib">
+                <include name="commons-codec-1.4.jar"/>
+                <include name="commons-net-2.2.jar"/>
+            </fileset>
+        </copy>
+
+        <copy todir="${pbis.staging.lib}">
+            <fileset dir="${pbis.source}/vendor/apache/misc/lib">
+                <include name="log4j-1.2.16.jar"/>
+            </fileset>
+        </copy>
+
+        <copy todir="${pbis.staging.lib}">
+            <fileset dir="${pbis.source}/vendor/commons-logging-1.1.1">
+                <include name="commons-logging-1.1.1.jar"/>
+            </fileset>
+        </copy>
+
+        <copy todir="${pbis.staging.lib}">
+            <fileset dir="${pbis.source}/vendor/jna/lib/linux/i386">
+                <include name="*.jar"
+                         if="${build.is.os.linux.i386}">
+                </include>
+            </fileset>
+        </copy>
+
+        <copy todir="${pbis.staging.lib}">
+            <fileset dir="${pbis.source}/vendor/jna/lib/linux/x86_64">
+                <include name="*.jar"
+                         if="${build.is.os.linux.x86_64}">
+                </include>
+            </fileset>
+        </copy>
+
+        <mkdir dir="${pbis.staging.docs}"/>
+        <copy todir="${pbis.staging.docs}">
+            <fileset dir="${pbis.source}/lwsecurity/docs">
+                <include name="*.pdf"/>
+            </fileset>
+        </copy>
+
+        <copy todir="${pbis.staging.conf}">
+            <fileset dir="${pbis.source}/lwsecurity/share/config">
+                <include name="*.conf"/>
+                <include name="*.policy"/>
+            </fileset>
+        </copy>
+
+    </target>
+
+</project>
