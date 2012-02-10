@@ -157,8 +157,8 @@ UmnSrvUpdateAccountInfo(
     HKEY hParameters = NULL;
     // Do not free
     PSTR pDisableLsassEnum = NULL;
-    DWORD firstRunCompleted = 0;
-    DWORD firstRunCompletedLen = sizeof(firstRunCompleted);
+    DWORD lastUpdated = 0;
+    DWORD lastUpdatedLen = sizeof(lastUpdated);
     PLW_EVENTLOG_CONNECTION pConn = NULL;
 
     dwError = LwEvtOpenEventlog(
@@ -185,14 +185,14 @@ UmnSrvUpdateAccountInfo(
                     hReg,
                     hParameters,
                     NULL,
-                    "FirstRunCompleted",
+                    "LastUpdated",
                     0,
                     NULL,
-                    (PBYTE)&firstRunCompleted,
-                    &firstRunCompletedLen);
+                    (PBYTE)&lastUpdated,
+                    &lastUpdatedLen);
     if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
     {
-        firstRunCompleted = 0;
+        lastUpdated = 0;
         dwError = 0;
     }
     BAIL_ON_UMN_ERROR(dwError);
@@ -225,7 +225,7 @@ UmnSrvUpdateAccountInfo(
                     pConn,
                     hReg,
                     hParameters,
-                    !firstRunCompleted,
+                    !lastUpdated,
                     Now);
     BAIL_ON_UMN_ERROR(dwError);
 
@@ -234,7 +234,7 @@ UmnSrvUpdateAccountInfo(
                     pConn,
                     hReg,
                     hParameters,
-                    !firstRunCompleted,
+                    !lastUpdated,
                     Now);
     BAIL_ON_UMN_ERROR(dwError);
 
@@ -246,23 +246,20 @@ UmnSrvUpdateAccountInfo(
                     pConn,
                     hReg,
                     hParameters,
-                    !firstRunCompleted,
+                    !lastUpdated,
                     Now);
     BAIL_ON_UMN_ERROR(dwError);
 
-    if (!firstRunCompleted)
-    {
-        firstRunCompleted = 1;
-        dwError = RegSetValueExA(
-                        hReg,
-                        hParameters,
-                        "FirstRunCompleted",
-                        0,
-                        REG_DWORD,
-                        (PBYTE)&firstRunCompleted,
-                        sizeof(firstRunCompleted));
-        BAIL_ON_UMN_ERROR(dwError);
-    }
+    lastUpdated = Now;
+    dwError = RegSetValueExA(
+                    hReg,
+                    hParameters,
+                    "LastUpdated",
+                    0,
+                    REG_DWORD,
+                    (PBYTE)&lastUpdated,
+                    sizeof(lastUpdated));
+    BAIL_ON_UMN_ERROR(dwError);
     
 cleanup:
     if (hLsass)

@@ -40,9 +40,9 @@
     default = dword:0000003c
     doc = "Frequency of checking for new users"
 }
-"FirstRunCompleted" = {
+"LastUpdated" = {
     default = dword:00000000
-    doc = "Indicates whether an initial inventory of the local users and groups has been generated yet"
+    doc = "Indicates when the last inventory of the local users and groups was generated, or 0 if it has not been generated yet"
 }
 
 [HKEY_THIS_MACHINE\Services\usermonitor\Parameters\Users]
