@@ -60,11 +60,11 @@ configure()
         LIBDEPS="$LIB_RT" \
         strtoll __strtoll strtoull __strtoull clock_settime settimeofday gettimeofday
 
-    if [ "$HAVE_CLOCK_SETTIME" = "yes"]
+    if [ "$HAVE_CLOCK_SETTIME" = "yes" ]
     then
         pbis_compile_and_run \
             CHECKNAME="clock_settime crashes" \
-            HEADERDEPS="stdio.h time.h errno.h" \
+            HEADERDEPS="stdio.h stdlib.h time.h errno.h" \
             LIBDEPS="$LIB_RT" \
             CODE='
 struct timespec timevar;
