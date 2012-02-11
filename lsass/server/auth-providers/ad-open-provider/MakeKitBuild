@@ -73,8 +73,4 @@ make()
 	    GROUPS="join/lsajoin" \
             LDFLAGS="$FRAMEWORK_FLAGS"
     fi
-
-    mk_stage \
-        DESTDIR="${MK_LIBEXECDIR}" \
-        SOURCE="mount.sh"
 }
