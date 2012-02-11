@@ -890,6 +890,13 @@ UmnSrvUpdateADAccounts(
             NULL
         },
     };
+    PLSASTATUS pLsaStatus = NULL;
+    // Do not free
+    PSTR pDomain = NULL;
+    // Do not free
+    PSTR pCell = NULL;
+    PLSA_SECURITY_OBJECT pAllUsers = NULL;
+    DWORD i = 0;
 
     dwError = LwHashCreate(
                     100,
@@ -907,7 +914,7 @@ UmnSrvUpdateADAccounts(
                 sizeof(ADConfigDescription)/sizeof(ADConfigDescription[0]));
     BAIL_ON_UMN_ERROR(dwError);
 
-    if (pMemberList)
+    if (pMemberList && pMemberList[0])
     {
         pIter = pMemberList;
         while (*pIter != 0)
@@ -931,6 +938,104 @@ UmnSrvUpdateADAccounts(
             pIter += strlen(pIter) + 1;
         }
     }
+    else
+    {
+        dwError = LsaGetStatus2(
+                        hLsass,
+                        NULL,
+                        &pLsaStatus);
+        BAIL_ON_UMN_ERROR(dwError);
+
+        for (i = 0; i < pLsaStatus->dwCount; i++)
+        {
+            if (pLsaStatus->pAuthProviderStatusList[i].pszDomain)
+            {
+                pDomain = pLsaStatus->pAuthProviderStatusList[i].pszDomain;
+            }
+            if (pLsaStatus->pAuthProviderStatusList[i].pszCell)
+            {
+                pCell = pLsaStatus->pAuthProviderStatusList[i].pszCell;
+            }
+        }
+
+        if (pDomain || pCell)
+        {
+            dwError = LwAllocateMemory(
+                            sizeof(*pAllUsers),
+                            (PVOID*)&pAllUsers);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            dwError = LwAllocateString(
+                            "S-INVALID",
+                            &pAllUsers->pszObjectSid);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            pAllUsers->enabled = TRUE;
+            pAllUsers->bIsLocal = FALSE;
+
+            dwError = LwAllocateString(
+                            "AllDomains",
+                            &pAllUsers->pszNetbiosDomainName);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            dwError = LwAllocateString(
+                            "AllUsers",
+                            &pAllUsers->pszSamAccountName);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            pAllUsers->type = LSA_OBJECT_TYPE_USER;
+
+            dwError = LwAllocateString(
+                            "S-INVALID",
+                            &pAllUsers->userInfo.pszPrimaryGroupSid);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            dwError = LwAllocateString(
+                            "All Users",
+                            &pAllUsers->userInfo.pszUnixName);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            dwError = LwAllocateString(
+                            "All Users",
+                            &pAllUsers->userInfo.pszGecos);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            dwError = LwAllocateString(
+                            "",
+                            &pAllUsers->userInfo.pszShell);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            dwError = LwAllocateString(
+                            "",
+                            &pAllUsers->userInfo.pszHomedir);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            if (pCell)
+            {
+                dwError = LwAllocateStringPrintf(
+                                &pAllUsers->userInfo.pszDisplayName,
+                                "All Users in cell %s",
+                                pCell);
+                BAIL_ON_UMN_ERROR(dwError);
+            }
+            else
+            {
+                dwError = LwAllocateStringPrintf(
+                                &pAllUsers->userInfo.pszDisplayName,
+                                "All Users accessible from domain %s",
+                                pDomain);
+                BAIL_ON_UMN_ERROR(dwError);
+            }
+
+            dwError = LwHashSetValue(
+                            pUsers,
+                            pAllUsers->pszObjectSid,
+                            pAllUsers);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            pAllUsers = NULL;
+        }
+    }
 
     dwError = UmnSrvUpdateADAccountsByHash(
                     hLsass,
@@ -943,9 +1048,17 @@ UmnSrvUpdateADAccounts(
     BAIL_ON_UMN_ERROR(dwError);
 
 cleanup:
+    if (pLsaStatus)
+    {
+        LsaFreeStatus(pLsaStatus);
+    }
     LW_SAFE_FREE_STRING(pMemberList);
     LW_SAFE_FREE_STRING(pMember);
     LwHashSafeFree(&pUsers);
+    if (pAllUsers)
+    {
+        LsaFreeSecurityObject(pAllUsers);
+    }
     return dwError;
 
 error:
