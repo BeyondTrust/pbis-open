@@ -109,7 +109,7 @@ SvcmStop(
     UmnSrvFreeConfig(gpAPIConfig);
     LW_ASSERT(pthread_rwlock_destroy(&gUmnConfigLock) == 0);
 
-    UMN_LOG_INFO("Eventfwd Service exiting...");
+    UMN_LOG_INFO("Usermonitor Service exiting...");
 
     return 0;
 }
