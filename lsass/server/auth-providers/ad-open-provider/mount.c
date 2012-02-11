@@ -597,6 +597,9 @@ AD_UnmountRemoteWindowsDirectory(
     )
 {
     DWORD dwError = 0;
+#ifndef __LWI_LINUX
+    goto error;
+#endif
 
 #ifdef __LWI_LINUX__
     if (umount(pszMountPoint) < 0)
