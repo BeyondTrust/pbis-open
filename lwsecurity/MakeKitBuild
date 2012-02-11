@@ -12,10 +12,10 @@ configure()
         MK_HOST_OS \
         MK_HOST_ARCH \
 
-    ANT_STAGING_ROOT=${MK_ROOT_DIR}/stage${MK_PREFIX}
-    ANT_STAGING_LIB=${MK_ROOT_DIR}/stage${MK_LIBDIR}
-    ANT_STAGING_DOCS=${MK_ROOT_DIR}/stage${MK_DOCDIR}
-    ANT_STAGING_CONF=${MK_ROOT_DIR}/stage${LW_CONFIGDIR}
+    ANT_STAGING_ROOT=${MK_ROOT_DIR}/lwsecurity-stage${MK_PREFIX}
+    ANT_STAGING_LIB=${MK_ROOT_DIR}/lwsecurity-stage${MK_LIBDIR}
+    ANT_STAGING_DOCS=${MK_ROOT_DIR}/lwsecurity-stage${MK_DOCDIR}
+    ANT_STAGING_CONF=${MK_ROOT_DIR}/lwsecurity-stage${LW_CONFIGDIR}
     ANT_BUILD_DIR=${MK_ROOT_DIR}/object/lwsecurity
 
     PBIS_SOURCE=`cd "${MK_SOURCE_DIR}" && pwd`
