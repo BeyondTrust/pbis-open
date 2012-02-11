@@ -61,8 +61,7 @@ configure()
         strtoll __strtoll strtoull __strtoull clock_settime settimeofday gettimeofday
 
     # clock_settime crashes on some versions of AIX
-    if [ "$HAVE_CLOCK_SETTIME" = "yes" -a
-         "$MK_HOST_OS" = "aix" ]
+    if [ "$HAVE_CLOCK_SETTIME" = "yes" -a "$MK_HOST_OS" = "aix" ]
     then
         pbis_compile_and_run \
             CHECKNAME="clock_settime crashes" \
