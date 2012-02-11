@@ -1526,6 +1526,16 @@ typedef struct _LSA_SECURITY_OBJECT_USER_INFO
      * available, even for unenabled users.
      */
     LW_PSTR pszDisplayName;
+
+    /**
+     * @brief Windows Home Folder
+     */
+    LW_PSTR pszWindowsHomeFolder;
+
+    /**
+     * @brief Windows Home Folder mount point
+     */
+    LW_PSTR pszLocalWindowsHomeFolder;
 } LSA_SECURITY_OBJECT_USER_INFO;
 
 typedef LSA_SECURITY_OBJECT_USER_INFO *PLSA_SECURITY_OBJECT_USER_INFO;

@@ -105,6 +105,65 @@ error:
 
 static
 DWORD
+LsaAdBatchMarshalUserInfoFixLocalWindowsHomeFolder(
+    IN PLSA_AD_PROVIDER_STATE pState,
+    IN OUT PSTR* ppszLocalWindowsHomeFolder,
+    IN PCSTR pszNetbiosDomainName,
+    IN PCSTR pszSamAccountName
+    )
+{
+    DWORD dwError = 0;
+    PSTR pszLocalWindowsHomeFolder = *ppszLocalWindowsHomeFolder;
+    PSTR pszNewLocalWindowsHomeFolder = NULL;
+
+    if (LW_IS_NULL_OR_EMPTY_STR(pszLocalWindowsHomeFolder))
+    {
+        dwError = AD_GetUnprovisionedModeRemoteHomeDirTemplate(
+                      pState,
+                      &pszLocalWindowsHomeFolder);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    if (pszLocalWindowsHomeFolder == NULL)
+    {
+        dwError = LwAllocateString("", &pszLocalWindowsHomeFolder);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else if (strstr(pszLocalWindowsHomeFolder, "%"))
+    {
+        dwError = AD_BuildHomeDirFromTemplate(
+                      pState,
+                      pszLocalWindowsHomeFolder,
+                      pszNetbiosDomainName,
+                      pszSamAccountName,
+                      &pszNewLocalWindowsHomeFolder);
+        if (dwError)
+        {
+            // If we encounter a problem with fixing up the shell, leave the user object with the actual
+            // value stored in AD and log the problem.
+            LSA_LOG_INFO("While processing information for user (%s), an invalid remote homedir value was detected (homedir: '%s')",
+                         LSA_SAFE_LOG_STRING(pszSamAccountName),
+                         LSA_SAFE_LOG_STRING(pszLocalWindowsHomeFolder));
+            dwError = 0;
+            goto cleanup;
+        }
+
+        LW_SAFE_FREE_STRING(pszLocalWindowsHomeFolder);
+        LSA_XFER_STRING(pszNewLocalWindowsHomeFolder, pszLocalWindowsHomeFolder);
+    }
+
+    LwStrCharReplace(pszLocalWindowsHomeFolder, ' ', '_');
+
+cleanup:
+    *ppszLocalWindowsHomeFolder = pszLocalWindowsHomeFolder;
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+static
+DWORD
 LsaAdBatchMarshalUserInfoFixShell(
     IN PLSA_AD_PROVIDER_STATE pState,
     IN OUT PSTR* ppszShell
@@ -392,6 +451,8 @@ LsaAdBatchMarshalUserInfo(
     LSA_XFER_STRING(pUserInfo->pszHomeDirectory, pObjectUserInfo->pszHomedir);
     LSA_XFER_STRING(pUserInfo->pszUserPrincipalName, pObjectUserInfo->pszUPN);
     LSA_XFER_STRING(pUserInfo->pszDisplayName, pObjectUserInfo->pszDisplayName);
+    LSA_XFER_STRING(pUserInfo->pszWindowsHomeFolder, pObjectUserInfo->pszWindowsHomeFolder);
+    LSA_XFER_STRING(pUserInfo->pszLocalWindowsHomeFolder, pObjectUserInfo->pszLocalWindowsHomeFolder);
 
     pObjectUserInfo->qwPwdLastSet = pUserInfo->PasswordLastSet;
     pObjectUserInfo->qwPwdExpires = pUserInfo->PasswordExpires;
@@ -409,6 +470,15 @@ LsaAdBatchMarshalUserInfo(
     dwError = LsaAdBatchMarshalUserInfoFixHomeDirectory(
                     pState,
                     &pObjectUserInfo->pszHomedir,
+                    pszNetbiosDomainName,
+                    pszSamAccountName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    // Handle local windows home folder
+    LwStripWhitespace(pObjectUserInfo->pszLocalWindowsHomeFolder, TRUE, TRUE);
+    dwError = LsaAdBatchMarshalUserInfoFixLocalWindowsHomeFolder(
+                    pState,
+                    &pObjectUserInfo->pszLocalWindowsHomeFolder,
                     pszNetbiosDomainName,
                     pszSamAccountName);
     BAIL_ON_LSA_ERROR(dwError);

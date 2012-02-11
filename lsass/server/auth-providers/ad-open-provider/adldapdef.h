@@ -79,6 +79,8 @@
 #define AD_LDAP_NETBIOS_TAG      "netBIOSName"
 #define AD_LDAP_DN_TAG           "distinguishedName"
 #define AD_LDAP_DISPLAY_NAME_TAG "displayName"
+#define AD_LDAP_WINDOWSHOMEFOLDER_TAG   "homeDirectory"
+#define AD_LDAP_LOCALWINDOWSHOMEFOLDER_TAG   "unixWindowsHomeDirectory"
 
 // Pseudo-only Attributes
 #define AD_LDAP_BACKLINK_PSEUDO_TAG   "backLink"

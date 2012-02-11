@@ -134,6 +134,12 @@ AD_GetUnprovisionedModeHomedirTemplate(
     );
 
 DWORD
+AD_GetUnprovisionedModeRemoteHomeDirTemplate(
+    PLSA_AD_PROVIDER_STATE pState,
+    PSTR* ppszUnprovisionedModeHomedirTemplate
+    );
+
+DWORD
 AD_GetMachinePasswordSyncPwdLifetime(
     IN PLSA_AD_PROVIDER_STATE pState
     );

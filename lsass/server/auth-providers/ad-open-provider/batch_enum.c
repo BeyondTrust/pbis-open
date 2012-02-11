@@ -582,6 +582,7 @@ LsaAdBatchEnumObjectsInCell(
         AD_LDAP_ACCOUT_EXP_TAG,
         AD_LDAP_PWD_LASTSET_TAG,
         AD_LDAP_DISPLAY_NAME_TAG,
+        AD_LDAP_WINDOWSHOMEFOLDER_TAG,
         // schema mode:
         // - (group alias) or (user gecos in unprovisioned mode):
         AD_LDAP_DISPLAY_NAME_TAG,
@@ -593,6 +594,7 @@ LsaAdBatchEnumObjectsInCell(
         AD_LDAP_GECOS_TAG,
         AD_LDAP_HOMEDIR_TAG,
         AD_LDAP_SHELL_TAG,
+        AD_LDAP_LOCALWINDOWSHOMEFOLDER_TAG,
         NULL
     };
     PSTR* pszAttributeList = NULL;

@@ -105,6 +105,8 @@ PrintSecurityObject(
         printf("GECOS: %s\n", SAFE_STRING(pObject->userInfo.pszGecos));        
         printf("Shell: %s\n", SAFE_STRING(pObject->userInfo.pszShell));
         printf("Home directory: %s\n", SAFE_STRING(pObject->userInfo.pszHomedir));
+        printf("Windows home directory: %s\n", SAFE_STRING(pObject->userInfo.pszWindowsHomeFolder));
+        printf("Local windows home directory: %s\n", SAFE_STRING(pObject->userInfo.pszLocalWindowsHomeFolder));
         printf("UID: %lu\n", (unsigned long) pObject->userInfo.uid);
         printf("Primary group SID: %s\n", SAFE_STRING(pObject->userInfo.pszPrimaryGroupSid));
         printf("Primary GID: %lu\n", (unsigned long) pObject->userInfo.gid);

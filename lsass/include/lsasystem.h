@@ -134,6 +134,10 @@
 #include <sys/socket.h>
 #endif
 
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+
 #if HAVE_WC16STR_H
 #include <wc16str.h>
 #endif

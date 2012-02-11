@@ -2424,7 +2424,7 @@ AD_OnlineChangePassword(
     // Ignore errors because password change succeeded
     if (pContext->pState->bIsDefault)
     {
-        LsaUmModifyUser(
+        LsaUmModifyUserPassword(
             pCachedUser->userInfo.uid,
             pszPassword);
     }

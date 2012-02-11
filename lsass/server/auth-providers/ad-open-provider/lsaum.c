@@ -110,12 +110,21 @@ LsaUmAddUser(
 }
 
 DWORD
-LsaUmModifyUser(
+LsaUmModifyUserPassword(
     IN uid_t Uid,
     IN PCSTR pszPassword
     )
 {
-    return LsaUmpModifyUser(gLsaUmState, Uid, pszPassword);
+    return LsaUmpModifyUserPassword(gLsaUmState, Uid, pszPassword);
+}
+
+DWORD
+LsaUmModifyUserMountedDirectory(
+    IN uid_t Uid,
+    IN PCSTR pszMountedDirectory
+    )
+{
+    return LsaUmpModifyUserMountedDirectory(gLsaUmState, Uid, pszMountedDirectory);
 }
 
 DWORD

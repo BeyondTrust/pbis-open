@@ -627,6 +627,8 @@ LsaAdBatchDestroyBatchItemContents(
             LW_SAFE_FREE_STRING(pItem->UserInfo.pszShell);
             LW_SAFE_FREE_STRING(pItem->UserInfo.pszUserPrincipalName);
             LW_SAFE_FREE_STRING(pItem->UserInfo.pszDisplayName);
+            LW_SAFE_FREE_STRING(pItem->UserInfo.pszWindowsHomeFolder);
+            LW_SAFE_FREE_STRING(pItem->UserInfo.pszLocalWindowsHomeFolder);
             break;
         case LSA_AD_BATCH_OBJECT_TYPE_GROUP:
             LW_SAFE_FREE_STRING(pItem->GroupInfo.pszAlias);
@@ -1905,6 +1907,7 @@ LsaAdBatchResolveRealObjects(
         AD_LDAP_ACCOUT_EXP_TAG,
         AD_LDAP_PWD_LASTSET_TAG,
         AD_LDAP_DISPLAY_NAME_TAG,
+        AD_LDAP_WINDOWSHOMEFOLDER_TAG,
         // schema mode:
         // - (group alias) or (user gecos in unprovisioned mode):
         AD_LDAP_DISPLAY_NAME_TAG,
@@ -1916,6 +1919,7 @@ LsaAdBatchResolveRealObjects(
         AD_LDAP_GECOS_TAG,
         AD_LDAP_HOMEDIR_TAG,
         AD_LDAP_SHELL_TAG,
+        AD_LDAP_LOCALWINDOWSHOMEFOLDER_TAG,
         NULL
     };
     LDAPMessage* pMessage = NULL;
@@ -2595,6 +2599,7 @@ LsaAdBatchResolvePseudoObjectsInternalDefaultSchema(
         AD_LDAP_ACCOUT_EXP_TAG,
         AD_LDAP_PWD_LASTSET_TAG,
         AD_LDAP_DISPLAY_NAME_TAG,
+        AD_LDAP_WINDOWSHOMEFOLDER_TAG,
         AD_LDAP_ALIAS_TAG,
         AD_LDAP_UID_TAG,
         AD_LDAP_GID_TAG,
@@ -2602,6 +2607,7 @@ LsaAdBatchResolvePseudoObjectsInternalDefaultSchema(
         AD_LDAP_GECOS_TAG,
         AD_LDAP_HOMEDIR_TAG,
         AD_LDAP_SHELL_TAG,
+        AD_LDAP_LOCALWINDOWSHOMEFOLDER_TAG,
         NULL
     };
     LDAPMessage* pMessage = NULL;
@@ -2773,6 +2779,7 @@ LsaAdBatchResolvePseudoObjectsInternalDefaultOrCell(
         // Not indexed and not in GC:
         AD_LDAP_ACCOUT_EXP_TAG,
         AD_LDAP_PWD_LASTSET_TAG,
+        AD_LDAP_WINDOWSHOMEFOLDER_TAG,
 #endif
         // non-schema mode:
         AD_LDAP_KEYWORDS_TAG,
@@ -2788,6 +2795,7 @@ LsaAdBatchResolvePseudoObjectsInternalDefaultOrCell(
         AD_LDAP_GECOS_TAG,
         AD_LDAP_HOMEDIR_TAG,
         AD_LDAP_SHELL_TAG,
+        AD_LDAP_LOCALWINDOWSHOMEFOLDER_TAG,
         NULL
     };
     LDAPMessage* pMessage = NULL;

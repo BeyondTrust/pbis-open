@@ -182,12 +182,13 @@ configure()
     mk_define DSAPI_INTERNAL_PROVIDER
 
     mk_check_headers \
-	stdlib.h sys/varargs.h time.h strings.h stdbool.h \
-	unistd.h sys/systeminfo.h sys/utsname.h sys/socket.h \
-	wc16str.h wc16printf.h sys/pstat.h procfs.h sys/procfs.h \
-	kvm.h sys/param.h sys/sysctl.h sys/user.h libgen.h execinfo.h \
-	sys/regset.h sys/resource.h security/pam_appl.h pam/pam_appl.h \
-        nss_common.h nss_dbdefs.h nss.h
+        stdlib.h sys/varargs.h time.h strings.h stdbool.h \
+        unistd.h sys/systeminfo.h sys/utsname.h sys/socket.h \
+        wc16str.h wc16printf.h sys/pstat.h procfs.h sys/procfs.h \
+        kvm.h sys/param.h sys/sysctl.h sys/user.h libgen.h execinfo.h \
+        sys/regset.h sys/resource.h security/pam_appl.h pam/pam_appl.h \
+        nss_common.h nss_dbdefs.h nss.h \
+        sys/mount.h
 
     mk_check_headers \
         HEADERDEPS="security/pam_appl.h pam/pam_appl.h" \

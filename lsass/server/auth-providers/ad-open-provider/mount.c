@@ -278,7 +278,7 @@ CreateLwIoCredsFromLsaCredentials(
     hCred = LsaGetCredential(uid);
     if (!hCred)
     {
-        dwError = LW_ERROR_INTERNAL; /* fixme */
+        dwError = ERROR_NOT_FOUND;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -489,7 +489,7 @@ AD_MountRemoteWindowsDirectory(
         LSA_LOG_ERROR(
                 "Failed to resolve IP address of %s; cannot mount cifs",
                 pszServerName);
-        dwError = LW_ERROR_INTERNAL;
+        dwError = ERROR_NOT_FOUND;
         BAIL_ON_LSA_ERROR(dwError);
     }
 

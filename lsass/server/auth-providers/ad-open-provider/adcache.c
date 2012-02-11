@@ -665,6 +665,14 @@ ADCacheDuplicateObject(
                         pSrc->userInfo.pszHomedir,
                         &pDest->userInfo.pszHomedir);
         BAIL_ON_LSA_ERROR(dwError);
+        dwError = LwStrDupOrNull(
+                        pSrc->userInfo.pszWindowsHomeFolder,
+                        &pDest->userInfo.pszWindowsHomeFolder);
+        BAIL_ON_LSA_ERROR(dwError);
+        dwError = LwStrDupOrNull(
+                        pSrc->userInfo.pszLocalWindowsHomeFolder,
+                        &pDest->userInfo.pszLocalWindowsHomeFolder);
+        BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LwStrDupOrNull(
                         pSrc->userInfo.pszDisplayName,

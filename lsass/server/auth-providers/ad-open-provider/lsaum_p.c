@@ -86,7 +86,9 @@ typedef struct _LSA_UM_USER_REFRESH_ITEM {
     // dropped from the list.  TGT refresh can fail
     // permanently if the user's password is changed
     // via another host.
-    DWORD                              dwFailedCount;
+    DWORD dwFailedCount;
+
+    PSTR pszMountedDirectory;
     struct _LSA_UM_USER_REFRESH_ITEM * pNext;
 } LSA_UM_USER_REFRESH_ITEM, *PLSA_UM_USER_REFRESH_ITEM;
 
@@ -103,9 +105,14 @@ typedef DWORD LSA_UM_REQUEST_TYPE;
 typedef struct _LSA_UM_REQUEST_ITEM {
     LSA_UM_REQUEST_TYPE dwType;
     uid_t uUid;
+
+    BOOLEAN bUpdatingCredential;
     DWORD dwTgtEndTime;
     DWORD dwLastActivity;
     LSA_CRED_HANDLE CredHandle;
+
+    BOOLEAN bUpdatingMountedDirectory;
+    PSTR pszMountedDirectory;
 } LSA_UM_REQUEST_ITEM, *PLSA_UM_REQUEST_ITEM;
 
 typedef struct _LSA_UM_THREAD_INFO {
@@ -562,7 +569,7 @@ LsaUmpThreadRoutine(
     PLSA_UM_THREAD_INFO pThreadInfo = &pState->CheckUsersThread;
     time_t              lastCheckTime = 0;
 
-    LSA_LOG_VERBOSE("Started user manager credentials refresh thread");
+    LSA_LOG_VERBOSE("Started user manager thread");
 
     dwError = LwKrb5SetThreadDefaultCachePath(
                   pState->pProviderState->MachineCreds.pszCachePath,
@@ -660,11 +667,11 @@ retry_wait:
     }
 
 cleanup:
-    LSA_LOG_VERBOSE("Stopped user manager credentials refresh thread");
+    LSA_LOG_VERBOSE("Stopped user manager thread");
     return NULL;
 
 error:
-    LSA_LOG_ERROR("Unexpected error in user manager credentials refresh thread (%u)", dwError);
+    LSA_LOG_ERROR("Unexpected error in user manager thread (%u)", dwError);
     goto cleanup;
 }
 
@@ -783,10 +790,19 @@ LsaUmpCheckUsers(
                 }
                 else
                 {
-                    LsaUmpRemoveUserFromList(
-                        pProviderContext,
-                        pUserList,
-                        pItem->uUid);
+                    dwError = 0;
+                    if (pItem->pszMountedDirectory)
+                    {
+                        dwError = AD_UnmountRemoteWindowsDirectory(
+                                    pItem->pszMountedDirectory);
+                    }
+                    if (!dwError)
+                    {
+                        LsaUmpRemoveUserFromList(
+                                pProviderContext,
+                                pUserList,
+                                pItem->uUid);
+                    }
                     continue;
                 }
             }
@@ -1270,7 +1286,7 @@ error:
 }
 
 DWORD
-LsaUmpModifyUser(
+LsaUmpModifyUserPassword(
     LSA_UM_STATE_HANDLE Handle,
     uid_t               uUid,
     PCSTR               pszPassword
@@ -1307,6 +1323,7 @@ LsaUmpModifyUser(
                       (PVOID*)&pRequest);
         BAIL_ON_LSA_ERROR(dwError);
 
+        pRequest->bUpdatingCredential = TRUE;
         pRequest->CredHandle = NewCredHandle;
         NewCredHandle = NULL;
 
@@ -1332,6 +1349,54 @@ cleanup:
     LsaReleaseCredential(&OldCredHandle);
 
     LsaReleaseCredential(&NewCredHandle);
+
+    if ( pRequest )
+    {
+        LsaUmpFreeRequest(pRequest);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+DWORD
+LsaUmpModifyUserMountedDirectory(
+    LSA_UM_STATE_HANDLE Handle,
+    uid_t uUid,
+    PCSTR pszMountedDirectory
+    )
+{
+    DWORD                dwError = 0;
+    PLSA_UM_REQUEST_ITEM pRequest = NULL;
+
+    LSA_LOG_DEBUG("LSA User Manager - requesting user modify %u", uUid);
+
+    dwError = LwAllocateMemory(
+                  sizeof(*pRequest),
+                  (PVOID*)&pRequest);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (pszMountedDirectory)
+    {
+        dwError = LwAllocateString(
+                    pszMountedDirectory,
+                    &pRequest->pszMountedDirectory);
+    }
+
+    pRequest->dwType = LSA_UM_REQUEST_TYPE_MODIFY;
+    pRequest->bUpdatingMountedDirectory = TRUE;
+    pRequest->uUid = uUid;
+
+    dwError = LsaUmpAddRequest(
+                Handle,
+                pRequest);
+    BAIL_ON_LSA_ERROR(dwError);
+    pRequest = NULL;
+
+cleanup:
 
     if ( pRequest )
     {
@@ -1454,6 +1519,13 @@ LsaUmpAddUserInternal(
 
         pUserItem->CredHandle= pRequest->CredHandle;
         pRequest->CredHandle = NULL;
+
+        if (pRequest->pszMountedDirectory)
+        {
+            LW_SAFE_FREE_STRING(pNewUserItem->pszMountedDirectory);
+            pNewUserItem->pszMountedDirectory = pRequest->pszMountedDirectory;
+            pRequest->pszMountedDirectory = NULL;
+        }
     }
     else
     {
@@ -1469,6 +1541,9 @@ LsaUmpAddUserInternal(
 
         pNewUserItem->CredHandle = pRequest->CredHandle;
         pRequest->CredHandle = NULL;
+
+        pNewUserItem->pszMountedDirectory = pRequest->pszMountedDirectory;
+        pRequest->pszMountedDirectory = NULL;
 
         pNewUserItem->pNext = *pUserItemPtr;
 
@@ -1522,9 +1597,29 @@ LsaUmpModifyUserInternal(
             pUserItem->dwLastActivity = pRequest->dwLastActivity;
         }
 
-        LsaReleaseCredential(&pUserItem->CredHandle);
-        pUserItem->CredHandle = pRequest->CredHandle;
-        pRequest->CredHandle = NULL;
+        if (pRequest->bUpdatingCredential)
+        {
+            LsaReleaseCredential(&pUserItem->CredHandle);
+            pUserItem->CredHandle = pRequest->CredHandle;
+            pRequest->CredHandle = NULL;
+
+            pUserItem->dwFailedCount = 0;
+        }
+
+        if (pRequest->bUpdatingMountedDirectory)
+        {
+            if (pUserItem->pszMountedDirectory &&
+                (!pRequest->pszMountedDirectory ||
+                 strcmp(pRequest->pszMountedDirectory,
+                        pUserItem->pszMountedDirectory) != 0))
+            {
+                AD_UnmountRemoteWindowsDirectory(pUserItem->pszMountedDirectory);
+                LW_SAFE_FREE_STRING(pUserItem->pszMountedDirectory);
+            }
+
+            pUserItem->pszMountedDirectory = pRequest->pszMountedDirectory;
+            pRequest->pszMountedDirectory = NULL;
+        }
 
         pUserItem->dwFailedCount = 0;
     }
@@ -1710,6 +1805,7 @@ LsaUmpFreeUserItem(
     PLSA_UM_USER_REFRESH_ITEM pUserItem
     )
 {
+    LW_SAFE_FREE_STRING(pUserItem->pszMountedDirectory);
     LsaReleaseCredential(&pUserItem->CredHandle);
     LwFreeMemory(pUserItem);
 }

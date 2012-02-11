@@ -214,6 +214,15 @@ LsaAdBatchGatherSchemaModeUser(
                     &pItem->UserInfo.pszShell);
     BAIL_ON_LSA_ERROR(dwError);
 
+#if 0
+    dwError = LwLdapGetString(
+                    hDirectory,
+                    pMessage,
+                    AD_LDAP_LOCALWINDOWSHOMEFOLDER_TAG,
+                    &pItem->UserInfo.pszLocalWindowsHomeFolder);
+    BAIL_ON_LSA_ERROR(dwError);
+#endif
+
 cleanup:
     return dwError;
 
@@ -407,6 +416,13 @@ LsaAdBatchGatherNonSchemaModeUser(
                     dwKeywordValuesCount,
                     AD_LDAP_SHELL_TAG,
                     &pItem->UserInfo.pszShell);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = ADNonSchemaKeywordGetString(
+                    ppszKeywordValues,
+                    dwKeywordValuesCount,
+                    AD_LDAP_LOCALWINDOWSHOMEFOLDER_TAG,
+                    &pItem->UserInfo.pszLocalWindowsHomeFolder);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -687,6 +703,13 @@ LsaAdBatchGatherRealUser(
                     pMessage,
                     AD_LDAP_DISPLAY_NAME_TAG,
                     &pItem->UserInfo.pszDisplayName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwLdapGetString(
+                    hDirectory,
+                    pMessage,
+                    AD_LDAP_WINDOWSHOMEFOLDER_TAG,
+                    &pItem->UserInfo.pszWindowsHomeFolder);
     BAIL_ON_LSA_ERROR(dwError);
 
     SetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_ACCOUNT_INFO_KNOWN);

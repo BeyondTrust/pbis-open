@@ -70,9 +70,15 @@ LsaUmAddUser(
     );
 
 DWORD
-LsaUmModifyUser(
+LsaUmModifyUserPassword(
     IN uid_t Uid,
     IN PCSTR pszPassword
+    );
+
+DWORD
+LsaUmModifyUserMountedDirectory(
+    IN uid_t Uid,
+    IN PCSTR pszMountedDirectory
     );
 
 DWORD

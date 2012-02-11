@@ -80,10 +80,17 @@ LsaUmpAddUser(
     );
 
 DWORD
-LsaUmpModifyUser(
+LsaUmpModifyUserPassword(
     IN LSA_UM_STATE_HANDLE Handle,
     IN uid_t               uUid,
     IN PCSTR               pszPassword
+    );
+
+DWORD
+LsaUmpModifyUserMountedDirectory(
+    IN LSA_UM_STATE_HANDLE Handle,
+    IN uid_t               uUid,
+    IN PCSTR               pszMountedDirectory
     );
 
 DWORD

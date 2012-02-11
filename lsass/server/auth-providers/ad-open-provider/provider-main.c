@@ -3263,7 +3263,7 @@ AD_OpenSession(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -3317,6 +3317,13 @@ AD_OpenSession(
         dwError = AD_CreateK5Login(pContext->pState, ppObjects[0]);
         BAIL_ON_LSA_ERROR(dwError);
     }
+
+    dwError = AD_MountRemoteWindowsDirectory(pContext->pState, ppObjects[0]);
+    if (dwError == ERROR_NOT_SUPPORTED)
+    {
+        dwError = 0;
+    }
+    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
 

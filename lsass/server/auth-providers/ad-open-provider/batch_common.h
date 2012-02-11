@@ -135,9 +135,11 @@ typedef struct _LSA_AD_BATCH_ITEM_USER_INFO {
     PSTR pszGecos;
     PSTR pszHomeDirectory;
     PSTR pszShell;
+    PSTR pszLocalWindowsHomeFolder;
     // AD-specific fields:
     PSTR pszUserPrincipalName;
     PSTR pszDisplayName;
+    PSTR pszWindowsHomeFolder;
     DWORD dwPrimaryGroupRid;
     UINT32 UserAccountControl;
     UINT64 AccountExpires;

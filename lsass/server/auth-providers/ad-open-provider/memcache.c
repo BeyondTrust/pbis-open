@@ -109,6 +109,8 @@ static LWMsgTypeSpec gLsaCacheSecurityObjectUserInfoSpec[] =
     LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT_USER_INFO, pszShell),
     LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT_USER_INFO, pszHomedir),
     LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT_USER_INFO, pszDisplayName),
+    LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT_USER_INFO, pszWindowsHomeFolder),
+    LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT_USER_INFO, pszLocalWindowsHomeFolder),
     LWMSG_MEMBER_UINT64(LSA_SECURITY_OBJECT_USER_INFO, qwPwdLastSet),
     LWMSG_MEMBER_UINT64(LSA_SECURITY_OBJECT_USER_INFO, qwPwdExpires),
     LWMSG_MEMBER_UINT64(LSA_SECURITY_OBJECT_USER_INFO, qwAccountExpires),
@@ -2706,6 +2708,10 @@ MemCacheStoreObjectEntryInLock(
                         pObject->userInfo.pszShell);
                 sObjectSize += MemCacheGetStringSpace(
                         pObject->userInfo.pszHomedir);
+                sObjectSize += MemCacheGetStringSpace(
+                        pObject->userInfo.pszWindowsHomeFolder);
+                sObjectSize += MemCacheGetStringSpace(
+                        pObject->userInfo.pszLocalWindowsHomeFolder);
             }
 
             if (!LW_IS_NULL_OR_EMPTY_STR(pObject->userInfo.pszUPN))

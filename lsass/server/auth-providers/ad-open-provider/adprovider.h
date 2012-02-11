@@ -121,6 +121,7 @@
 #include "lsasqlite_p.h"
 #include "pwdcache_p.h"
 #include "ioctl.h"
+#include "mount.h"
 
 #include "externs.h"
 
