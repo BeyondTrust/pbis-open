@@ -87,6 +87,7 @@ typedef struct _LSA_AD_CONFIG {
     PSTR                pszShell;
     PSTR                pszHomedirPrefix;
     PSTR                pszHomedirTemplate;
+    PSTR                pszRemoteHomeDirTemplate;
     DWORD               dwUmask;
     PSTR                pszSkelDirs;
     PLW_DLINKED_LIST        pUnresolvedMemberList;

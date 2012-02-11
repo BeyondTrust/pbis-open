@@ -161,6 +161,11 @@ AD_InitializeConfig(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateString(
+                    "",
+                    &pConfig->pszRemoteHomeDirTemplate);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateString(
                     AD_DEFAULT_SKELDIRS,
                     &pConfig->pszSkelDirs);
     BAIL_ON_LSA_ERROR(dwError);
@@ -192,6 +197,7 @@ AD_FreeConfigContents(
 {
     LW_SAFE_FREE_STRING(pConfig->pszHomedirPrefix);
     LW_SAFE_FREE_STRING(pConfig->pszHomedirTemplate);
+    LW_SAFE_FREE_STRING(pConfig->pszRemoteHomeDirTemplate);
     LW_SAFE_FREE_STRING(pConfig->pszShell);
     LW_SAFE_FREE_STRING(pConfig->pszSkelDirs);
     LW_SAFE_FREE_MEMORY(pConfig->pszaIgnoreUserNameList);
@@ -290,6 +296,16 @@ AD_ReadRegistry(
             MAXDWORD,
             NULL,
             &StagingConfig.pszHomedirTemplate,
+            NULL
+        },
+        {
+            "RemoteHomeDirTemplate",
+            TRUE,
+            LwRegTypeString,
+            0,
+            MAXDWORD,
+            NULL,
+            &StagingConfig.pszRemoteHomeDirTemplate,
             NULL
         },
         {
@@ -1058,6 +1074,42 @@ cleanup:
 error:
 
     *ppszUnprovisionedModeHomedirTemplate = NULL;
+
+    goto cleanup;
+}
+
+DWORD
+AD_GetUnprovisionedModeRemoteHomeDirTemplate(
+    PLSA_AD_PROVIDER_STATE pState,
+    PSTR* ppszUnprovisionedModeHomeDirTemplate
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PSTR pszUnprovisionedModeHomeDirTemplate = NULL;
+
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+
+    if (!LW_IS_NULL_OR_EMPTY_STR(pState->config.pszRemoteHomeDirTemplate))
+    {
+        dwError = LwAllocateString(
+                        pState->config.pszRemoteHomeDirTemplate,
+                        &pszUnprovisionedModeHomeDirTemplate
+                        );
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    *ppszUnprovisionedModeHomeDirTemplate = pszUnprovisionedModeHomeDirTemplate;
+
+cleanup:
+
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+
+    return dwError;
+
+error:
+
+    *ppszUnprovisionedModeHomeDirTemplate = NULL;
 
     goto cleanup;
 }

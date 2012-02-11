@@ -144,6 +144,10 @@
     default = "%H/local/%D/%U"
     doc = ""
 }
+"RemoteHomeDirTemplate" = {
+    default = ""
+    doc = ""
+}
 "LdapSignAndSeal" = {
     default = dword:00000000
     doc = "Whether all LDAP traffic should be sent both signed and sealed"
