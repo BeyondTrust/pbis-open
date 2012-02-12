@@ -754,23 +754,13 @@ LWIDirNodeQuery::DoDirNodeAuth(
             GOTO_CLEANUP_EE(EE);
         }
 
-        if (Flags & LWE_DS_FLAG_IS_SNOW_LEOPARD)
+        macError = CheckAccountPolicy(
+                    TRUE,
+                    username,
+                    pDoDirNodeAuth->fOutAuthStepDataResponse);
+        if (macError == eDSAuthPasswordExpired)
         {
-            macError = CheckAccountPolicy(
-                        TRUE,
-                        username,
-                        pDoDirNodeAuth->fOutAuthStepDataResponse);
-            if (macError == eDSAuthPasswordExpired)
-            {
-                macError = eDSNoErr;
-            }
-        }
-        else
-        {
-            macError = CheckAccountPolicy(
-                        TRUE,
-                        username,
-                        NULL);
+            macError = eDSNoErr;
         }
         GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
     }
