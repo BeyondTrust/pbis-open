@@ -394,7 +394,7 @@ AD_MountRemoteWindowsDirectory(
     PSTR pszIpAddress = NULL;
     PSTR pszRemotePathWithoutPrefix = NULL;
     PSTR pszPrefixPath = NULL;
-    int error;
+    int error = 0;
 
     if (LW_IS_NULL_OR_EMPTY_STR(pObject->userInfo.pszLocalWindowsHomeFolder) ||
         LW_IS_NULL_OR_EMPTY_STR(pObject->userInfo.pszWindowsHomeFolder))
@@ -530,7 +530,6 @@ AD_MountRemoteWindowsDirectory(
                 "cifs",
                 MS_NODEV  | MS_NOSUID,
                 pszMountCommand);
-#endif
 
     LSA_LOG_VERBOSE("mount(\"%s\", \"%s\", \"%s\", %s, \"%s\") = %d",
             pszRemotePath,
@@ -539,6 +538,7 @@ AD_MountRemoteWindowsDirectory(
             "MS_NODEV | MS_NSUID",
             pszMountCommand,
             error);
+#endif
     if (error < 0)
     {
         dwError = LwMapErrnoToLwError(errno);
