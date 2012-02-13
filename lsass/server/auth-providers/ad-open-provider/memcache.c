@@ -47,9 +47,10 @@
 
 typedef enum __MemCachePersistTag
 {
-    MEM_CACHE_OBJECT,
+    MEM_CACHE_OBJECT_V1,
     MEM_CACHE_MEMBERSHIP,
-    MEM_CACHE_PASSWORD
+    MEM_CACHE_PASSWORD,
+    MEM_CACHE_OBJECT
 } MemCachePersistTag;
 
 static LWMsgTypeSpec gLsaObjectTypeSpec[] =
@@ -96,6 +97,35 @@ static LWMsgTypeSpec gLsaPasswordVerifierSpec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec gLsaCacheSecurityObjectV1UserInfoSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(LSA_SECURITY_OBJECT_USER_INFO),
+    LWMSG_MEMBER_UINT32(LSA_SECURITY_OBJECT_USER_INFO, uid),
+    LWMSG_MEMBER_UINT32(LSA_SECURITY_OBJECT_USER_INFO, gid),
+    LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT_USER_INFO, pszPrimaryGroupSid),
+    LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT_USER_INFO, pszUPN),
+    LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT_USER_INFO, pszAliasName),
+    LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT_USER_INFO, pszPasswd),
+    LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT_USER_INFO, pszGecos),
+    LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT_USER_INFO, pszShell),
+    LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT_USER_INFO, pszHomedir),
+    LWMSG_MEMBER_UINT64(LSA_SECURITY_OBJECT_USER_INFO, qwPwdLastSet),
+    LWMSG_MEMBER_UINT64(LSA_SECURITY_OBJECT_USER_INFO, qwPwdExpires),
+    LWMSG_MEMBER_UINT64(LSA_SECURITY_OBJECT_USER_INFO, qwAccountExpires),
+
+    LWMSG_MEMBER_UINT8(LSA_SECURITY_OBJECT_USER_INFO, bIsGeneratedUPN),
+    LWMSG_MEMBER_UINT8(LSA_SECURITY_OBJECT_USER_INFO, bIsAccountInfoKnown),
+    LWMSG_MEMBER_UINT8(LSA_SECURITY_OBJECT_USER_INFO, bPasswordExpired),
+    LWMSG_MEMBER_UINT8(LSA_SECURITY_OBJECT_USER_INFO, bPasswordNeverExpires),
+    LWMSG_MEMBER_UINT8(LSA_SECURITY_OBJECT_USER_INFO, bPromptPasswordChange),
+    LWMSG_MEMBER_UINT8(LSA_SECURITY_OBJECT_USER_INFO, bUserCanChangePassword),
+    LWMSG_MEMBER_UINT8(LSA_SECURITY_OBJECT_USER_INFO, bAccountDisabled),
+    LWMSG_MEMBER_UINT8(LSA_SECURITY_OBJECT_USER_INFO, bAccountExpired),
+    LWMSG_MEMBER_UINT8(LSA_SECURITY_OBJECT_USER_INFO, bAccountLocked),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
 static LWMsgTypeSpec gLsaCacheSecurityObjectUserInfoSpec[] =
 {
     LWMSG_STRUCT_BEGIN(LSA_SECURITY_OBJECT_USER_INFO),
@@ -138,6 +168,30 @@ static LWMsgTypeSpec gLsaCacheSecurityObjectGroupInfoSpec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec gLsaCacheSecurityObjectV1Spec[] =
+{
+    LWMSG_STRUCT_BEGIN(LSA_SECURITY_OBJECT),
+
+    LWMSG_MEMBER_TYPESPEC(LSA_SECURITY_OBJECT, version, gLsaCacheSecurityObjectVersionSpec),
+    LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT, pszDN),
+    LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT, pszObjectSid),
+    LWMSG_MEMBER_UINT8(LSA_SECURITY_OBJECT, enabled),
+    LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT, pszNetbiosDomainName),
+    LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT, pszSamAccountName),
+
+    LWMSG_MEMBER_TYPESPEC(LSA_SECURITY_OBJECT, type, gLsaObjectTypeSpec),
+    LWMSG_MEMBER_UNION_BEGIN(LSA_SECURITY_OBJECT, typeInfo),
+    LWMSG_MEMBER_TYPESPEC(LSA_SECURITY_OBJECT, userInfo, gLsaCacheSecurityObjectV1UserInfoSpec),
+    LWMSG_ATTR_TAG(LSA_OBJECT_TYPE_USER),
+    LWMSG_MEMBER_TYPESPEC(LSA_SECURITY_OBJECT, groupInfo, gLsaCacheSecurityObjectGroupInfoSpec),
+    LWMSG_ATTR_TAG(LSA_OBJECT_TYPE_GROUP),
+    LWMSG_UNION_END,
+    LWMSG_ATTR_DISCRIM(LSA_SECURITY_OBJECT, type),
+
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
 static LWMsgTypeSpec gLsaCacheSecurityObjectSpec[] =
 {
     LWMSG_STRUCT_BEGIN(LSA_SECURITY_OBJECT),
@@ -164,9 +218,10 @@ static LWMsgTypeSpec gLsaCacheSecurityObjectSpec[] =
 
 static LWMsgProtocolSpec gMemCachePersistence[] = 
 {
-    LWMSG_MESSAGE(MEM_CACHE_OBJECT, gLsaCacheSecurityObjectSpec),
+    LWMSG_MESSAGE(MEM_CACHE_OBJECT_V1, gLsaCacheSecurityObjectV1Spec),
     LWMSG_MESSAGE(MEM_CACHE_MEMBERSHIP, gLsaGroupMembershipSpec),
     LWMSG_MESSAGE(MEM_CACHE_PASSWORD, gLsaPasswordVerifierSpec),
+    LWMSG_MESSAGE(MEM_CACHE_OBJECT, gLsaCacheSecurityObjectSpec),
     LWMSG_PROTOCOL_END
 };
 
@@ -496,6 +551,7 @@ MemCacheLoadFile(
 
         switch(message.tag)
         {
+            case MEM_CACHE_OBJECT_V1:
             case MEM_CACHE_OBJECT:
                 dwError = MemCacheStoreObjectEntryInLock(
                                 pConn,
