@@ -400,15 +400,6 @@ CheckAccountPolicy(
         goto exit;
     }
 
-    if (bPasswordExpired)
-    {
-        LOG("Account policy fails due to password expired for user %s",
-            username ? username : "<null>");
-        //dwError = LW_ERROR_PASSWORD_EXPIRED;
-        macError = eDSAuthPasswordExpired;
-        goto exit;
-    }
-
     if (bLogonRestriction)
     {
         LOG("Account policy fails due to logon restriction for user %s",
