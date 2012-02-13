@@ -290,7 +290,7 @@ IndicateNewPasswordRequired(
         length = snprintf(policyBuffer->fBufferData + sizeof(UInt32),
                           (int) policyBuffer->fBufferSize - sizeof(UInt32),
                           "newPasswordRequired=%d",
-                          bNewPasswordNeeded);
+                          bNewPasswordRequired);
 
         *((UInt32 *) policyBuffer->fBufferData) = length;
         policyBuffer->fBufferLength = length + sizeof(UInt32);
@@ -812,12 +812,9 @@ LWIDirNodeQuery::DoDirNodeAuth(
         macError = AuthenticateUser(username, password, isAuthOnly, &isOnlineLogon, &pszMessage);
         if (macError == eDSAuthPasswordExpired)
         {
+            // Clear error, and indicate need for new password
             macError = eDSNoErr;
             macError = IndicateNewPasswordRequired(TRUE, username, pDoDirNodeAuth->fOutAuthStepDataResponse);
-            if (macError)
-            {
-                goto exit;
-            }
         }
         GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
 
