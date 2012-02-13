@@ -12,10 +12,11 @@ configure()
         MK_HOST_OS \
         MK_HOST_ARCH \
 
-    ANT_STAGING_ROOT=${MK_ROOT_DIR}/lwsecurity-stage${MK_PREFIX}
-    ANT_STAGING_LIB=${MK_ROOT_DIR}/lwsecurity-stage${MK_LIBDIR}
-    ANT_STAGING_DOCS=${MK_ROOT_DIR}/lwsecurity-stage${MK_DOCDIR}
-    ANT_STAGING_CONF=${MK_ROOT_DIR}/lwsecurity-stage${LW_CONFIGDIR}
+    STAGE_PREFIX=""
+    ANT_STAGING_ROOT=${MK_ROOT_DIR}/${STAGE-PREFIX}stage${MK_PREFIX}
+    ANT_STAGING_LIB=${MK_ROOT_DIR}/${STAGE_PREIFX}stage${MK_LIBDIR}
+    ANT_STAGING_DOCS=${MK_ROOT_DIR}/${STAGE_PREFIX}stage${MK_DOCDIR}
+    ANT_STAGING_CONF=${MK_ROOT_DIR}/${STAGE_PREFIX}stage${LW_CONFIGDIR}
     ANT_BUILD_DIR=${MK_ROOT_DIR}/object/lwsecurity
 
     PBIS_SOURCE=`cd "${MK_SOURCE_DIR}" && pwd`
@@ -47,9 +48,31 @@ make()
         DEPS="$result $PROPERTIES" \
         ant -propertyfile $PROPERTIES -buildfile "$BUILDXML" stage
 
+    stage_result=$result
+    for f in ${MK_LIBDIR}/commons-codec-1.4.jar \
+              ${MK_LIBDIR}/commons-logging-1.1.1.jar \
+              ${MK_LIBDIR}/commons-net-2.2.jar \
+              ${MK_LIBDIR}/jna.jar \
+              ${MK_LIBDIR}/log4j-1.2.16.jar \
+              ${MK_LIBDIR}/lwjplatform.jar \
+              ${MK_LIBDIR}/lwservlets.jar \
+              ${MK_LIBDIR}/lwtomcat.jar \
+              ${MK_DOCDIR}/Likewise-Apache-SSO-Guide.pdf \
+              ${MK_DOCDIR}/lwjplatform-javadoc.jar \
+              ${MK_DOCDIR}/lwservlets-javadoc.jar \
+              ${MK_DOCDIR}/lwtomcat-javadoc.jar \
+              ${LW_CONFIGDIR}/jaas.policy \
+              ${LW_CONFIGDIR}/login.conf;
+    do
+        mk_target \
+            TARGET="$f" \
+            DEPS="$stage_result"
+        lwsecurity_deps="$lwsecurity_deps $result"
+    done
+
     mk_target \
         TARGET="@lwsecurity" \
-        DEPS="$result"
+        DEPS="$lwsecurity_deps"
 
     mk_add_phony_target "$result"
 }
