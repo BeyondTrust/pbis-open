@@ -771,13 +771,23 @@ LWIDirNodeQuery::DoDirNodeAuth(
             GOTO_CLEANUP_EE(EE);
         }
 
-        macError = CheckAccountPolicy(
-                    TRUE,
-                    username,
-                    pDoDirNodeAuth->fOutAuthStepDataResponse);
-        if (macError == eDSAuthPasswordExpired)
+        if (Flags & LWE_DS_FLAG_IS_SNOW_LEOPARD)
         {
-            macError = eDSNoErr;
+            macError = CheckAccountPolicy(
+                        TRUE,
+                        username,
+                        pDoDirNodeAuth->fOutAuthStepDataResponse);
+            if (macError == eDSAuthPasswordExpired)
+            {
+                macError = eDSNoErr;
+            }
+        }
+        else
+        {
+            macError = CheckAccountPolicy(
+                        TRUE,
+                        username,
+                        NULL);
         }
         GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
     }
@@ -801,7 +811,8 @@ LWIDirNodeQuery::DoDirNodeAuth(
     {
         LOG("Authenticating user for %s: %s AuthOnly: %s", pDirNode->fPlugInRootConnection ? "logon" : "admin", username, isAuthOnly ? "true" : "false");   
         macError = AuthenticateUser(username, password, isAuthOnly, &isOnlineLogon, &pszMessage);
-        if (macError == eDSAuthPasswordExpired)
+        if (Flags & LWE_DS_FLAG_IS_SNOW_LEOPARD &&
+            macError == eDSAuthPasswordExpired)
         {
             // Clear error, and indicate need for new password
             macError = eDSNoErr;
