@@ -2709,8 +2709,6 @@ MemCacheStoreObjectEntryInLock(
                 sObjectSize += MemCacheGetStringSpace(
                         pObject->userInfo.pszHomedir);
                 sObjectSize += MemCacheGetStringSpace(
-                        pObject->userInfo.pszWindowsHomeFolder);
-                sObjectSize += MemCacheGetStringSpace(
                         pObject->userInfo.pszLocalWindowsHomeFolder);
             }
 
@@ -2727,6 +2725,10 @@ MemCacheStoreObjectEntryInLock(
             if (!LW_IS_NULL_OR_EMPTY_STR(pObject->userInfo.pszDisplayName))
             {
                 sObjectSize += MemCacheGetStringSpace(pObject->userInfo.pszDisplayName);
+            }
+            if (!LW_IS_NULL_OR_EMPTY_STR(pObject->userInfo.pszWindowsHomeFolder))
+            {
+                sObjectSize += MemCacheGetStringSpace(pObject->userInfo.pszWindowsHomeFolder);
             }
             break;
     }
