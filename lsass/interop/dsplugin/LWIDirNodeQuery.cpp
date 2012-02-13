@@ -260,6 +260,47 @@ cleanup:
     return macError;
 }
 
+
+static
+long
+IndicateNewPasswordRequired(
+    BOOLEAN bNewPasswordRequired,
+    PCSTR username,
+    tDataBufferPtr policyBuffer
+    )
+{
+    long macError = eDSNoErr;
+    UInt32 length;
+
+    if (policyBuffer)
+    {
+        LOG("Going to indicate that a new password is %srequire for user: %s",
+            bNewPasswordRequired ? "" : "not ",
+            username ? username : "<null>");
+
+        length = strlen("newPasswordRequired=") + sizeof(UInt32) + 2;
+
+        if (length > policyBuffer->fBufferSize)
+        {
+            LOG("Could not write newPasswordRequired to policy buffer, buffer too small.");
+            macError = eDSBufferTooSmall;
+            goto exit;
+        }
+
+        length = snprintf(policyBuffer->fBufferData + sizeof(UInt32),
+                          (int) policyBuffer->fBufferSize - sizeof(UInt32),
+                          "newPasswordRequired=%d",
+                          bNewPasswordNeeded);
+
+        *((UInt32 *) policyBuffer->fBufferData) = length;
+        policyBuffer->fBufferLength = length + sizeof(UInt32);
+    }
+
+exit:
+
+    return macError;
+}
+
 static
 long
 CheckAccountPolicy(
@@ -278,7 +319,6 @@ CheckAccountPolicy(
     BOOLEAN bPromptForPasswordChange = FALSE;
     BOOLEAN bUserCanChangePassword = FALSE;
     BOOLEAN bLogonRestriction = FALSE;
-    UInt32 length;
 
     LOG("Going to check account policy for user %s",
         username ? username : "<null>");
@@ -354,24 +394,10 @@ CheckAccountPolicy(
         goto exit;
     }
 
-    if (policyBuffer)
+    macError = IndicateNewPasswordRequired(bPasswordExpired, username, policyBuffer);
+    if (macError)
     {
-        length = strlen("newPasswordRequired=") + sizeof(UInt32) + 2;
-
-        if (length > policyBuffer->fBufferSize)
-        {
-            LOG("Could not write newPasswordRequired to policy buffer, buffer too small.");
-            macError = eDSBufferTooSmall;
-            goto exit;
-        }
-
-        length = snprintf(policyBuffer->fBufferData + sizeof(UInt32),
-                          (int) policyBuffer->fBufferSize - sizeof(UInt32),
-                          "newPasswordRequired=%d",
-                          bPasswordExpired);
-
-        *((UInt32 *) policyBuffer->fBufferData) = length;
-        policyBuffer->fBufferLength = length + sizeof(UInt32);
+        goto exit;
     }
 
     if (bPasswordExpired)
@@ -784,6 +810,15 @@ LWIDirNodeQuery::DoDirNodeAuth(
     {
         LOG("Authenticating user for %s: %s AuthOnly: %s", pDirNode->fPlugInRootConnection ? "logon" : "admin", username, isAuthOnly ? "true" : "false");   
         macError = AuthenticateUser(username, password, isAuthOnly, &isOnlineLogon, &pszMessage);
+        if (macError == eDSAuthPasswordExpired)
+        {
+            macError = eDSNoErr;
+            macError = IndicateNewPasswordRequired(TRUE, username, pDoDirNodeAuth->fOutAuthStepDataResponse);
+            if (macError)
+            {
+                goto exit;
+            }
+        }
         GOTO_CLEANUP_ON_MACERROR_EE(macError, EE);
 
         if (pDirNode->fPlugInRootConnection)
