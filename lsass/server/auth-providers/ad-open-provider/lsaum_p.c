@@ -1689,12 +1689,12 @@ LsaUmpRemoveUserFromList(
         *pUserItemPtr = pUserItem->pNext;
 
         LsaUmpFreeUserItem(pUserItem);
+    }
 
-        // Post an activity terminated event for given user account.
-        if (pProviderContext)
-        {
-            LsaUmpLogUserActivityTerminated(pProviderContext, uUid);
-        }
+    // Post an activity terminated event for given user account.
+    if (pProviderContext)
+    {
+        LsaUmpLogUserActivityTerminated(pProviderContext, uUid);
     }
 
     return dwError;
