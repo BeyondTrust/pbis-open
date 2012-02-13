@@ -1,4 +1,4 @@
-SUBDIRS="unpack open open-gui open-upgrade open-legacy"
+SUBDIRS="unpack open open-gui open-upgrade open-legacy application-integration"
 
 configure()
 {

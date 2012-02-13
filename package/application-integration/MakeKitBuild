@@ -1,0 +1,77 @@
+MODULES="package-deb package-rpm"
+
+configure()
+{
+    mk_declare -o \
+        MK_BINDIR \
+        MK_SBINDIR \
+        MK_PREFIX \
+        MK_DATADIR \
+        MK_LIBEXECDIR \
+        MK_DEBUG \
+        MK_ROOT_DIR \
+        MK_STAGE_DIR \
+        MK_HOST_ARCH \
+        MK_SYSCONFDIR \
+        MK_DOCDIR \
+        LW_CACHEDIR \
+        LW_CONFIGDIR \
+        LW_INITDIR \
+        PRIMARY_LIBDIR="$MK_LIBDIR"
+
+    if mk_deb_enabled
+    then
+        mk_declare -o PKG_DEB_NAME="${LW_VENDOR}-application-integration"
+        mk_declare -o PKG_DEB_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+        mk_declare -o PKG_DEB_DATE="`date -R`"
+    fi
+
+    if mk_rpm_enabled
+    then
+        mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-application-integration"
+        mk_declare -o PKG_RPM_VERSION="${LW_VERSION}"
+        mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_REVISION:-0}"
+    fi
+}
+
+package_deb()
+{
+    mk_deb_do \
+        PACKAGE="$PKG_DEB_NAME" \
+        VERSION="$PKG_DEB_VERSION" \
+        DEBIANFILES="deb/changelog.in deb/control.in \
+                     deb/compat.in \
+                     deb/rules.in"
+
+        integration_files
+
+    mk_deb_done
+}
+
+package_rpm()
+{
+    mk_rpm_do \
+        PACKAGE="$PKG_RPM_NAME" \
+        VERSION="$PKG_RPM_VERSION" \
+        SPECFILE="rpm/application-integration.spec.in"
+
+        integration_files
+
+    mk_rpm_done
+}
+
+make()
+{
+    mk_deb_enabled && package_deb
+    mk_rpm_enabled && package_rpm
+}
+
+integration_files()
+{
+    mk_package_patterns SUBDIRS="@lwsecurity" \
+        "${MK_LIBDIR}/*.jar" \
+        "${MK_DOCDIR}/*.jar" \
+        "${MK_DOCDIR}/Likewise-Apache-SSO-Guide.pdf" \
+        "${LW_CONFIGDIR}/jass.policy" \
+        "${LW_CONFIGDIR}/login.conf"
+}

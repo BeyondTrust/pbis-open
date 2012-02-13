@@ -1,0 +1,6 @@
+@PKG_DEB_NAME@ (@PKG_DEB_VERSION@) gutsy; urgency=low
+
+  * PowerBroker Identity Services Security Application Integration
+
+ -- PBIS Support <pbis-support@beyondtrust.com>  @PKG_DEB_DATE@
+
