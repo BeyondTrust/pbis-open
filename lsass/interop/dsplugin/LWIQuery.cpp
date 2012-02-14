@@ -2610,6 +2610,7 @@ LWIQuery::GetGPOGroupMCXSettingsForUser(
 
 long
 LWIQuery::GetHomeDirectoryProtocolXmlAndMountPath(
+    uid_t uid,
     PSTR pszHomeDirectory,
     LWE_DS_FLAGS Flags,
     PSTR * ppszHomeDirectoryXML,
@@ -2617,66 +2618,18 @@ LWIQuery::GetHomeDirectoryProtocolXmlAndMountPath(
     )
 {
     MACERROR macError = eDSNoErr;
-    char szPath[PATH_MAX] = { 0 };
-    char szNewPath[PATH_MAX] = { 0 };
     PSTR pszHomeDirectoryXML = NULL;
     PSTR pszHomeDirectoryMount = NULL;
     PSTR pszServer = NULL;
     PSTR pszShare = NULL;
     PSTR pszPath = NULL;
-    PSTR pszToken = NULL;
 
     if (pszHomeDirectory &&
-        strlen(pszHomeDirectory) < sizeof(szPath) &&
         pszHomeDirectory[0] == '\\' &&
         pszHomeDirectory[1] == '\\' &&
         pszHomeDirectory[2] != '\0')
     {
-        strcpy(szPath, &pszHomeDirectory[2]);
-
-        /* Get Server name from path */
-        pszToken = strtok(szPath, "\\");
-        if (pszToken)
-        {
-            macError = LwAllocateString(pszToken, &pszServer);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-        else
-        {
-            macError = eDSInvalidBuffFormat;
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-
-        /* Get Share name from path */
-        pszToken = strtok(NULL, "\\");
-        if (pszToken)
-        {
-            macError = LwAllocateString(pszToken, &pszShare);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-        else
-        {
-            macError = eDSInvalidBuffFormat;
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-
-        /* Get Path portion from any remaining path */
-        pszToken = strtok(NULL, "\\");
-        while (pszToken)
-        {
-            strcat(szNewPath, pszToken);
-            pszToken = strtok(NULL, "\\");
-            if (pszToken)
-            {
-                strcat(szNewPath, "/");
-            }
-        }
-
-        if (strlen(szNewPath) > 0)
-        {
-            macError = LwAllocateString(szNewPath, &pszPath);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
+        ConvertPath(uid, pszHomeDirectory, &pszServer, &pszShare, &pszPath);
     }
     else
     {
@@ -2737,17 +2690,17 @@ cleanup:
         macError = eDSNoErr;
     }
 
+    FreePaths(pszServer, pszShare, pszPath);
     LW_SAFE_FREE_STRING(pszHomeDirectoryMount);
     LW_SAFE_FREE_STRING(pszHomeDirectoryXML);
-    LW_SAFE_FREE_STRING(pszServer);
-    LW_SAFE_FREE_STRING(pszShare);
-    LW_SAFE_FREE_STRING(pszPath);
+
 
     return macError;
 }
 
 long
 LWIQuery::GetUserHomeFolderSettings(
+    uid_t uid,
     PSTR pszHomeDirectory,
     LWE_DS_FLAGS Flags,
     PSTR * ppszNFSHomeDirectory,
@@ -2770,7 +2723,7 @@ LWIQuery::GetUserHomeFolderSettings(
         (Flags & LWE_DS_FLAG_USE_AD_UNC_FOR_HOME_LOCATION_SMB ||
          Flags & LWE_DS_FLAG_USE_AD_UNC_FOR_HOME_LOCATION_AFP))
     {
-        macError = GetHomeDirectoryProtocolXmlAndMountPath(pszHomeDirectory, Flags, &pszHomeDirectoryXML, &pszHomeDirectoryMount);
+        macError = GetHomeDirectoryProtocolXmlAndMountPath(uid, pszHomeDirectory, Flags, &pszHomeDirectoryXML, &pszHomeDirectoryMount);
         GOTO_CLEANUP_ON_MACERROR(macError);
         
         if (Flags & LWE_DS_FLAG_FORCE_LOCAL_HOME_DIRECTORY_ON_STARTUP_DISK)
@@ -6114,7 +6067,8 @@ LWIQuery::AddUserRecordHelper(
 
     if (padUserInfo)
     {
-        macError = GetUserHomeFolderSettings(padUserInfo->pszHomeDirectory,
+        macError = GetUserHomeFolderSettings(pUserObject->userInfo.uid,
+                                             padUserInfo->pszHomeDirectory,
                                              Flags,
                                              &pszNFSHomeDirectory,
                                              &pszHomeDirectory,

@@ -70,9 +70,8 @@
 
 #include <lwnet.h>
 #include <reg/lwreg.h>
-#include "lwio/lwio.h"
-#include "lwio/ntfileapi.h"
 #include <lw/winerror.h>
+#include <lwio/lwio.h>
 #include <lsa/lsa.h>
 #include <lwldap.h>
 #include <lwmem.h>
@@ -83,7 +82,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 #include "macadutil/defs.h"
 #include "macadutil/structs.h"
 #include "macadutil/api.h"
@@ -102,6 +100,7 @@ extern "C" {
 #include "macadutil/notify.h"
 #include "macadutil/netinfo.h"
 #include "macadutil/policyutils.h"
+#include "macadutil/resolve.h"
 #include "macadutil/xfer.h"
 
 #include "libgpldap/gpodefines.h"

@@ -41,6 +41,7 @@ make()
         macadutil/notify.c \
         macadutil/netinfo.c \
         macadutil/policyutils.c \
+        macadutil/resolve.c \
         macadutil/xfer.c"
 
     LWDS_CFLAGS="-Wno-unknown-pragmas -fpascal-strings -Wno-four-char-constants"

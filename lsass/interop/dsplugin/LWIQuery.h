@@ -113,8 +113,8 @@ protected:
     long GetGPOGroupsForUser(PLWIUSER UserInfo);
 #endif
     long GetGPOGroupMCXSettingsForUser(const char* pszName, uid_t uid, PMCXVALUE * ppMCXValueList, LWE_DS_FLAGS Flags);
-    long GetHomeDirectoryProtocolXmlAndMountPath(PSTR pszHomeDirectory, LWE_DS_FLAGS Flags, PSTR * ppszHomeDirectoryXML, PSTR * ppszHomeDirectoryMount);
-    long GetUserHomeFolderSettings(PSTR pszHomeDirectory, LWE_DS_FLAGS Flags, PSTR * ppszNFSHomeDirectory, PSTR * ppszHomeDirectory, PSTR * ppszOriginalNFSHomeDirectory, PSTR * ppszOriginalHomeDirectory);
+    long GetHomeDirectoryProtocolXmlAndMountPath(uid_t uid, PSTR pszHomeDirectory, LWE_DS_FLAGS Flags, PSTR * ppszHomeDirectoryXML, PSTR * ppszHomeDirectoryMount);
+    long GetUserHomeFolderSettings(uid_t uid, PSTR pszHomeDirectory, LWE_DS_FLAGS Flags, PSTR * ppszNFSHomeDirectory, PSTR * ppszHomeDirectory, PSTR * ppszOriginalNFSHomeDirectory, PSTR * ppszOriginalHomeDirectory);
     long QueryGroupsForUser(gid_t gid, PCSTR pszUserSid);
     long QueryGroupsForUserByName(const char* pszName);
     long QueryGroupsForUserById(uid_t uid);
