@@ -36,6 +36,7 @@
         <subant target="doc">
             <filelist refid="subdirs"/>
         </subant>
+        <touch file=".build"/>
     </target>
 
     <target name="test" depends="build">
@@ -106,7 +107,7 @@
                 <include name="*.policy"/>
             </fileset>
         </copy>
-
+        <touch file=".stage"/>
     </target>
 
 </project>

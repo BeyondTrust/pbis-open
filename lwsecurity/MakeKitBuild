@@ -10,7 +10,7 @@ configure()
         LW_CONFIGDIR \
         MK_SOURCE_DIR \
         MK_HOST_OS \
-        MK_HOST_ARCH \
+        MK_HOST_ARCH
 
     STAGE_PREFIX=""
     ANT_STAGING_ROOT=${MK_ROOT_DIR}/${STAGE-PREFIX}stage${MK_PREFIX}
@@ -73,6 +73,4 @@ make()
     mk_target \
         TARGET="@lwsecurity" \
         DEPS="$lwsecurity_deps"
-
-    mk_add_phony_target "$result"
 }
