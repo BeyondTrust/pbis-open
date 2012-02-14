@@ -1,1 +1,1 @@
-SUBDIRS="lwio-driver lwio-cli lwio-copy lwio-tool"
+SUBDIRS="lwio-driver lwio-copy"
