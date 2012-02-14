@@ -196,6 +196,9 @@ determine_upgrade_type()
         if [ -n "`grep '^VERSION=6.5' $VERSIONFILE`" ]; then
             UPGRADING_FROM_6_5=1
             log "Preserving PowerBroker Identity Services Open 6.5 configuration in ${UPGRADEDIR}."
+        elif [ -n "`grep '^VERSION=7.0' $VERSIONFILE`" ]; then
+            UPGRADING_FROM_7_0=1
+            log "Preserving PowerBroker Identity Services Open 7.0 configuration in ${UPGRADEDIR}."
         fi
     fi
 }
@@ -218,7 +221,7 @@ determine_join_status()
         else
             logfile "System does not appear to be joined according to lw-lsa ad-get-machine account"
         fi
-    elif [ -n "$UPGRADING_FROM_6_5" ]; then
+    elif [ -n "$UPGRADING_FROM_6_5" -o -n "$UPGRADING_FROM_7_0" ]; then
         domain=`/opt/pbis/bin/lsa ad-get-machine account 2>/dev/null | grep '  DNS Domain Name: ' | sed -e 's/  DNS Domain Name: //'`
         if [ -n "$domain" ]; then
             logfile "System is joined to $domain according to lsa ad-get-machine account"
@@ -346,6 +349,32 @@ preserve_6_5_configuration()
     fi
 }
 
+preserve_7_0_configuration()
+{
+    if [ -n "${UPGRADING_FROM_7_0}" ]; then
+        if [ -f "/var/lib/pbis/db/registry.db" ]; then
+            run_or_fail cp /var/lib/pbis/db/registry.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/registry.db"
+        fi
+
+        if [ -f "/var/lib/pbis/db/sam.db" ]; then
+            run_or_fail cp /var/lib/pbis/db/sam.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/sam.db"
+        fi
+
+        if [ -f "/var/lib/pbis/db/lwi_events.db" ]; then
+            run_or_fail cp /var/lib/pbis/db/lwi_events.db "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/lwi_events.db"
+        fi
+
+        for cache in /var/lib/pbis/db/lsass-adcache.filedb.* ; do
+            cachefile=`basename $cache`
+            run_or_fail cp "${cache}" "${UPGRADEDIR}"
+            run_or_fail chmod 700 "${UPGRADEDIR}/${cachefile}"
+        done
+    fi
+}
+
 ##
 ## Main
 ##
@@ -384,6 +413,8 @@ preserve_6_0_configuration
 preserve_6_1_configuration
 
 preserve_6_5_configuration
+
+preserve_7_0_configuration
 
 preserve_join_status
 
