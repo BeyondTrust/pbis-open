@@ -1,4 +1,4 @@
-MODULES="package-deb package-rpm package-freebsd package-pkg package-lpp package-depot"
+MODULES="package-deb package-rpm package-freebsd package-pkg package-lpp package-depot package-mac"
 
 configure()
 {
@@ -166,6 +166,24 @@ package_depot()
     mk_depot_done
 }
 
+package_mac()
+{
+    mk_macpkg_do \
+        PACKAGE="${PKG_MACPKG_NAME}" \
+        VERSION="${PKG_MACPKG_VERSION}" \
+        PMDOC="mac/pmdoc" \
+        RESOURCES="mac/Resources/postflight \
+                   mac/Resources/preflight \
+                   mac/Resources/English.lproj/Welcome.txt" \
+        BINRESOURCES="mac/Resources/English.lproj/background.gif"
+
+        mk_macpkg_sub_do SUBPACKAGE=image
+            open_legacy_files
+        mk_macpkg_sub_done
+
+    mk_macpkg_done
+}
+
 
 make()
 {
@@ -177,6 +195,7 @@ make()
     mk_pkg_enabled && package_pkg
     mk_lpp_enabled && package_lpp
     mk_depot_enabled && package_depot
+    mk_macpkg_enabled && package_mac
 }
 
 open_legacy_files()

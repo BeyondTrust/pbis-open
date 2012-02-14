@@ -26,7 +26,7 @@ make()
                 DMG="pbis-open-${LW_VERSION}" \
                 VOLNAME="pbis-open" \
                 TEMPLATE="dmg-template.tar.bz2" \
-                PACKAGES="pbis-open"
+                PACKAGES="pbis-open pbis-open-legacy"
             ;;
     esac
 }
