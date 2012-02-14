@@ -87,6 +87,13 @@ option()
     done
 
     mk_option \
+        OPTION="application-integration" \
+        PARAM="yes|no" \
+        VAR="LW_APPLICATION_INTEGRATION" \
+        DEFAULT="no" \
+        HELP="Build application integration? Requires Java/ant."
+
+    mk_option \
         OPTION="build-revision" \
         PARAM="rev" \
         VAR="LW_BUILD_REVISION" \
@@ -116,6 +123,7 @@ configure()
     done
 
     [ "$LW_SAMBA_INTEROP" = "yes" ] || mk_skip_subdir "samba-interop"
+    [ "$LW_APPLICATION_INTEGRATION" = "yes" ] || mk_skip_subdir "lwsecurity"
 
     case "$LW_FEATURE_LEVEL" in
         auth)
