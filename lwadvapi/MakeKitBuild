@@ -60,6 +60,32 @@ configure()
         LIBDEPS="$LIB_RT" \
         strtoll __strtoll strtoull __strtoull clock_settime settimeofday gettimeofday
 
+    # clock_settime crashes on some versions of AIX
+    if [ "$HAVE_CLOCK_SETTIME" = "yes" -a "$MK_HOST_OS" = "aix" ]
+    then
+        pbis_compile_and_run \
+            CHECKNAME="clock_settime crashes" \
+            HEADERDEPS="stdio.h stdlib.h time.h errno.h" \
+            LIBDEPS="$LIB_RT" \
+            CODE='
+struct timespec timevar;
+if (clock_gettime(CLOCK_REALTIME, &timevar) < 0)
+{
+    printf("clock_gettime failed with errno %d\n", errno);
+    return 1;
+}
+if (clock_settime(CLOCK_PROCESS_CPUTIME_ID, &timevar) < 0)
+{
+    printf("clock_settime failed with errno %d\n", errno);
+    return 0;
+}
+'
+        if [ $result != 0 ]
+        then
+            mk_define CLOCK_SETTIME_CRASHES 1
+        fi
+    fi
+
     if mk_check_function \
         FUNCTION='isblank' \
         HEADERDEPS='ctype.h'

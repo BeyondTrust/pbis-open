@@ -136,6 +136,42 @@ lw_define_feature_macros()
     esac
 }
 
+#<
+# @brief Execute code and check output
+# @usage
+#
+# This function will work in cross-compiling configurations.
+#>
+pbis_compile_and_run()
+{
+    mk_push_vars CHECKNAME CPPFLAGS LDFLAGS CFLAGS HEADERDEPS LIBDEPS CODE
+    mk_parse_params
+
+    CFLAGS="$CFLAGS -Wall -Werror"
+    HEADERDEPS="$HEADERDEPS stdio.h"
+
+    mk_msg_checking $CHECKNAME
+
+
+    {
+        cat <<EOF
+        $(for _header in $HEADERDEPS; do echo "#include <$_header>"; done)
+
+int main(int argc, char** argv)
+{
+    $CODE
+    return 0;
+}
+EOF
+    } > .check.c
+    _mk_build_test 'run-program' .check.c
+    result="$?"
+
+    mk_msg_result "$CHECKNAME: $result"
+
+    mk_pop_vars
+}
+
 lw_check_iconv()
 {
     mk_check_headers FAIL=yes iconv.h
