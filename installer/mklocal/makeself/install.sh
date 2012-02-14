@@ -792,7 +792,7 @@ do_postinstall_messages()
     if [ -z "$domain" ]; then
         log_info "As root, run ${guimsg}domainjoin-cli to join a domain so you can log on"
         log_info "with Active Directory credentials. Example:"
-        log_info "domainjoin-cli join DOMAIN.com ADadminAccount"
+        log_info "domainjoin-cli join MYDOMAIN.COM MyJoinAccount"
         log_info ""
 
         if [ -n "$RUN_JOIN_GUI" ]; then
