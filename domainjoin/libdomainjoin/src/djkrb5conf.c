@@ -996,7 +996,7 @@ CreateMacKeberosFile(
             GCE(ceError);
         }
 
-        GCE(ceError = CTFilePrintf(file, "# WARNING This file is created during Likewise domain join.\n"));
+        GCE(ceError = CTFilePrintf(file, "# WARNING This file is created during PowerBroker Identity Services domain join.\n"));
         GCE(ceError = CTFilePrintf(file, "# Any previous version of edu.mit.Kerberos is backed up to\n"));
         GCE(ceError = CTFilePrintf(file, "# /Likewise/Preferences/edu.mit.Kerberos.orig\n"));
         GCE(ceError = CTFilePrintf(file, "# Leaving the current domain will restore the file above.\n"));
@@ -1599,7 +1599,7 @@ static QueryResult QueryKrb5(const JoinProcessOptions *options, LWException **ex
     ceError = ReadKrb5Configuration(tempDir, &conf, &modified);
     if(ceError == ERROR_BAD_FORMAT)
     {
-        LW_RAISE_EX(exc, ceError, "Unable to parse krb5.conf", "The krb5.conf file on your system (located in either /etc/krb5.conf or /etc/krb5/krb5.conf) could not be parsed. Please send the file to Likewise technical support.");
+        LW_RAISE_EX(exc, ceError, "Unable to parse krb5.conf", "The krb5.conf file on your system (located in either /etc/krb5.conf or /etc/krb5/krb5.conf) could not be parsed. Please send the file to PowerBroker Identity Services technical support.");
         goto cleanup;
     }
     else
@@ -1796,7 +1796,7 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
     ceError = ReadKrb5Configuration(tempDir, &conf, NULL);
     if(ceError == ERROR_BAD_FORMAT)
     {
-        LW_RAISE_EX(exc, ceError, "Unable to parse krb5.conf", "The krb5.conf file on your system (located in either /etc/krb5.conf or /etc/krb5/krb5.conf) could not be parsed. Please send the file to Likewise technical support.");
+        LW_RAISE_EX(exc, ceError, "Unable to parse krb5.conf", "The krb5.conf file on your system (located in either /etc/krb5.conf or /etc/krb5/krb5.conf) could not be parsed. Please send the file to PowerBroker Identity Services technical support.");
         goto cleanup;
     }
     else

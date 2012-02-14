@@ -501,13 +501,13 @@ static PSTR GetDSPluginDescription(const JoinProcessOptions *options, LWExceptio
     if(options->joiningDomain)
     {
         LW_CLEANUP_CTERR(exc, CTStrdup(
-                    "The Likewise Directory Services plugin will be enabled by adding it to the custom search path and switching the search policy to custom.",
+                    "The PowerBroker Identity Services Directory Services plugin will be enabled by adding it to the custom search path and switching the search policy to custom.",
                     &ret));
     }
     else
     {
         LW_CLEANUP_CTERR(exc, CTStrdup(
-                    "The Likewise Directory Services plugin will removed from the custom search path and and the search policy will be switched back to standard.",
+                    "The PowerBroker Identity Services Directory Services plugin will removed from the custom search path and and the search policy will be switched back to standard.",
                     &ret));
     }
 
@@ -515,4 +515,4 @@ cleanup:
     return ret;
 }
 
-const JoinModule DJDSPlugin = { TRUE, "dsplugin", "enable likewise directory services plugin", QueryDSPlugin, DoDSPlugin, GetDSPluginDescription};
+const JoinModule DJDSPlugin = { TRUE, "dsplugin", "enable PBIS directory services plugin", QueryDSPlugin, DoDSPlugin, GetDSPluginDescription};

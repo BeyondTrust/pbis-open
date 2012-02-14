@@ -831,11 +831,11 @@ static void DoJoin(JoinProcessOptions *options, LWException **exc)
                                   "\n"
                                  "If this operation fails you should stop all likewise daemons, clear the environmental variable, then retry the join operation.\n"
                                  "\n"
-                                 "For more information, see the Likewise guide online at:\n"
-                                 "http://www.likewise.com/resources/documentation_library/manuals/open/likewise-open-guide.html#AgentRequirements\n"
+                                 "For more information, see the PowerBroker Identity Services guide online at:\n"
+                                 "http://www.beyondtrust.com/Technical-Support/Downloads/files/pbiso/Manuals/likewise-open-guide.html#AgentRequirements\n"
                                  "\n"
                                  "Or a local PDF file is available in:\n"
-                                 "/opt/likewise/docs/likewise-open-guide.pdf (See section 4.2 Requirements for the Agent");
+                                 "/opt/pbis/docs/likewise-open-guide.pdf (See section 4.2 Requirements for the Agent");
         }
     }
 
@@ -1232,7 +1232,7 @@ void DJCreateComputerAccount(
                     !strcasecmp(dnsDomain + strlen(dnsDomain) -
                         sizeof(".local") + 1, ".local"))
                 {
-                    LW_RAISE_EX(exc, dwError, "Lsass Error", "%s. Failure to lookup a domain name ending in \".local\" may be the result of configuring the local system's hostname resolution (or equivalent) to use Multi-cast DNS. Please refer to the Likewise manual at http://www.likewise.com/resources/documentation_library/manuals/open/likewise-open-guide.html#ConfigNsswitch for more information.", LwWin32ExtErrorToDescription(dwError));
+                    LW_RAISE_EX(exc, dwError, "Lsass Error", "%s. Failure to lookup a domain name ending in \".local\" may be the result of configuring the local system's hostname resolution (or equivalent) to use Multi-cast DNS. Please refer to the manual at http://www.beyondtrust.com/Technical-Support/Downloads/files/pbiso/Manuals/likewise-open-guide.html#ConfigNsswitch for more information.", LwWin32ExtErrorToDescription(dwError));
                 }
                 else
                 {

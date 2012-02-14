@@ -1486,4 +1486,4 @@ cleanup:
     return ret;
 }
 
-const JoinModule DJNsswitchModule = { TRUE, "nsswitch", "enable/disable Likewise nsswitch module", QueryNsswitch, DoNsswitch, GetNsswitchDescription };
+const JoinModule DJNsswitchModule = { TRUE, "nsswitch", "enable/disable PowerBroker Identity Services nsswitch module", QueryNsswitch, DoNsswitch, GetNsswitchDescription };

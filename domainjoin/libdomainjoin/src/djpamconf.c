@@ -3063,13 +3063,13 @@ static void PamLwidentityEnable(const char *testPrefix, const LwDistroInfo *dist
             DJ_LOG_ERROR("Nothing seems to be protecting logins for service %s", service);
             if(!strcmp(control, "sufficient"))
             {
-                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown pam module", "The PBIS PAM module cannot be configured for the %s service. This service uses the '%s' module, which is not in this program's list of known modules. Please email Likewise technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service, module);
+                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown PAM module", "The PowerBroker Identity Services PAM module cannot be configured for the %s service. This service uses the '%s' module, which is not in this program's list of known modules. Please email PowerBroker Identity Services technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service, module);
             }
             //It is somewhat normal to not require a password in an included
             //pam file. It is up to the top-most parent to require the password.
             else if(state->includeLevel == 0)
             {
-                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown pam configuration", "The PBIS PAM module cannot be configured for the %s service. Either this service is unprotected (does not require a valid password for access), or it is using a pam module that this program is unfamiliar with. Please email Likewise technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service);
+                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown PAM configuration", "The PowerBroker Identity Services PAM module cannot be configured for the %s service.  Either this service is unprotected (does not require a valid password for access), or it is using a PAM module that this program is unfamiliar with.  Please email PowerBroker Identity Services technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service);
             }
             goto cleanup;
         }
@@ -4425,7 +4425,7 @@ static PSTR GetPamDescription(const JoinProcessOptions *options, LWException **e
         else
         {
             LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf( &ret,
-"All references to Likewise pam modules must be removed from pam.conf/pam.d. Otherwise, logins will break if these file are later removed from the system. Here is a list of changes that will be performed:\n%s", diff));
+"All references to PowerBroker Identity Services PAM modules must be removed from pam.conf/pam.d. Otherwise, logins will break if these file are later removed from the system. Here is a list of changes that will be performed:\n%s", diff));
         }
     }
 

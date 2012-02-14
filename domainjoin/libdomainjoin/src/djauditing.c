@@ -46,7 +46,7 @@ DJConfigureEventFwd(
 
     if(enable)
     {
-        DJ_LOG_INFO("Configuring Likewise Enterprise to run eventfwdd daemon");
+        DJ_LOG_INFO("Configuring PowerBroker Identity Services Enterprise to run eventfwdd daemon");
         dwError = SetBooleanRegistryValue("Services\\eventfwd", "Autostart", TRUE);
         BAIL_ON_ERROR(dwError);
 
@@ -55,7 +55,7 @@ DJConfigureEventFwd(
     }
     else
     {
-        DJ_LOG_INFO("Deconfiguring Likewise Enterprise from running eventfwdd daemon");
+        DJ_LOG_INFO("Deconfiguring PowerBroker Identity Services Enterprise from running eventfwdd daemon");
         dwError = SetBooleanRegistryValue("Services\\eventfwd", "Autostart", FALSE);
         BAIL_ON_ERROR(dwError);
 
@@ -77,7 +77,7 @@ DJConfigureReapSyslog(
 
     if(enable)
     {
-        DJ_LOG_INFO("Configuring Likewise Enterprise to run reapsysld daemon");
+        DJ_LOG_INFO("Configuring PowerBroker Identity Services Enterprise to run reapsysld daemon");
         dwError = SetBooleanRegistryValue("Services\\reapsysl", "Autostart", TRUE);
         BAIL_ON_ERROR(dwError);
 
@@ -86,7 +86,7 @@ DJConfigureReapSyslog(
     }
     else
     {
-        DJ_LOG_INFO("Deconfiguring Likewise Enterprise from running reapsysld daemon");
+        DJ_LOG_INFO("Deconfiguring PowerBroker Identity Services Enterprise from running reapsysld daemon");
         dwError = SetBooleanRegistryValue("Services\\reapsysl", "Autostart", FALSE);
         BAIL_ON_ERROR(dwError);
 

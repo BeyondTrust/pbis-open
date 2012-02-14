@@ -65,7 +65,7 @@ ShowUsage()
     fprintf(stdout, "    leave --details <module>\n\n");
 
     fprintf(stdout, "  Example:\n\n");
-    fprintf(stdout, "    domainjoin-cli join likewisedemo.com Administrator\n\n");
+    fprintf(stdout, "    domainjoin-cli join MYDOMAIN.COM MyJoinAccount\n\n");
 }
 
 static
@@ -913,11 +913,11 @@ int main(
                 CTCheckDirectoryExists("/var/log", &directoryExists));
         if (directoryExists)
         {
-            pszLogFilePath = "/var/log/likewise-join.log";
+            pszLogFilePath = "/var/log/domainjoin-cli.log";
         }
         else
         {
-            pszLogFilePath = "/var/adm/likewise-join.log";
+            pszLogFilePath = "/var/adm/domainjoin-cli.log";
         }
     }
 
