@@ -420,7 +420,7 @@ LsaSrvLogProcessStartedEvent(
 
     dwError = LwAllocateStringPrintf(
                  &pszDescription,
-                 "The Likewise authentication service was started.");
+                 "The authentication service was started.");
     BAIL_ON_LSA_ERROR(dwError);
 
     LsaSrvLogServiceSuccessEvent(
@@ -451,7 +451,7 @@ LsaSrvLogProcessStoppedEvent(
 
     dwError = LwAllocateStringPrintf(
                  &pszDescription,
-                 "The Likewise authentication service was stopped");
+                 "The authentication service was stopped");
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaGetErrorMessageForLoggingEvent(
@@ -499,7 +499,7 @@ LsaSrvLogProcessFailureEvent(
 
     dwError = LwAllocateStringPrintf(
                  &pszDescription,
-                 "The Likewise authentication service stopped running due to an error");
+                 "The authentication service stopped running due to an error");
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaGetErrorMessageForLoggingEvent(
