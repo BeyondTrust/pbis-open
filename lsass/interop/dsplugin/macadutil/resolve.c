@@ -431,7 +431,7 @@ ConvertPath(
 }
 
 VOID
-FreePath(
+FreePaths(
     PSTR pszServer,
     PSTR pszShare,
     PSTR pszPath
