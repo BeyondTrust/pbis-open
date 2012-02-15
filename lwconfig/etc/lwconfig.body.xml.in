@@ -490,6 +490,20 @@
         </registry>
     </capability>
     <capability>
+        <name>RemoteHomeDirTemplate</name>
+        <description>Format string for the mount path of the remote Windows Folder. This value can contain substitution string markers for HomeDirPrefix (%H), Domain (%D), and User (%U).</description>
+        <registry type="string"
+            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\RemoteHomeDirTemplate"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\RemoteHomeDirTemplate" >
+            <description>Absolute path to the remote Windows Folder mount point.</description>
+            <default>
+                <value></value>
+            </default>
+            <apply command="@lwbindir@/lwsm refresh lsass" />
+            <apply command="@lwbindir@/ad-cache --delete-all" />
+        </registry>
+    </capability>
+    <capability>
         <name>HomeDirUmask</name>
         <description>Umask for home directories</description>
         <registry type="string"
