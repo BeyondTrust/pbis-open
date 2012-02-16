@@ -380,6 +380,7 @@ PrintGroupInfo_1(
     fprintf(stdout, "Name: %s\n", LW_PRINTF_STRING(pGroupInfo->pszName));
     fprintf(stdout, "Gid:  %u\n", (unsigned int)pGroupInfo->gid);
     fprintf(stdout, "SID:  %s\n", LW_PRINTF_STRING(pGroupInfo->pszSid));
+    fprintf(stdout, "DN:   %s\n", LW_PRINTF_STRING(pGroupInfo->pszDN));
     fprintf(stdout, "Members:\n");
 
     ppszMembers = pGroupInfo->ppszMembers;
