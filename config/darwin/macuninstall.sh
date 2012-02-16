@@ -56,18 +56,12 @@ gather_version_info()
 
 pkg_list_pbis()
 {
-    ls -1d /Library/Receipts/pbis-*.pkg | tr '\n' '\0' | xargs -0 basename
-}
-
-pkg_verify_installed()
-{
-    if [ -z "$1" ]; then
-        echo "Missing package name."
-        exit 1
+    if [ -d /Library/Receipts ]; then
+        ls -1d /Library/Receipts/pbis-*.pkg 2>/dev/null | tr '\n' '\0' | xargs -0 basename
     fi
-    if [ ! -d "/Library/Receipts/$1" ]; then
-        echo "Package '$1' is not installed"
-        exit 1
+
+    if [ -d /var/db/receipts ]; then
+        ls -1d /var/db/receipts/com.beyondtrust.pbis.*.bom 2>/dev/null | sed -e 's/com.beyondtrust.//g' | sed -e 's/.pkg.bom/.pkg/g' | tr '\n' '\0' | xargs -0 basename
     fi
 }
 
@@ -89,14 +83,20 @@ pkg_uninstall_rm()
 
 pkg_uninstall()
 {
-    pkg_verify_installed "$1"
-
     # Mac xargs does not work properly in some cases with sh -c '...$1...' ARG
     # or with -IX to do direct replacement.  So, instead, we just want to
     # invoke a command directly.
 
-    lsbom -pf "/Library/Receipts/$1/Contents/Archive.bom" | sed -e 's/^\.//' | sort -r | tr '\n' '\0' | xargs -0 -n1 $0 pkg_uninstall_rm "${RUN}"
-    $RUN rm -rfv "/Library/Receipts/$1"
+    if [ -d "/Library/Receipts/$1" ]; then
+        lsbom -pf "/Library/Receipts/$1/Contents/Archive.bom" | sed -e 's/^\.//' | sort -r | tr '\n' '\0' | xargs -0 -n1 $0 pkg_uninstall_rm "${RUN}"
+        $RUN rm -rfv "/Library/Receipts/$1"
+    elif [ -f "/var/db/receipts/com.beyondtrust.$1.bom" ]; then
+        lsbom -pf "/var/db/receipts/com.beyondtrust.$1.bom" | sed -e 's/^\.//' | sort -r | tr '\n' '\0' | xargs -0 -n1 $0 pkg_uninstall_rm "${RUN}"
+        $RUN rm -rfv "/var/db/receipts/com.beyondtrust.$1.bom"
+        $RUN rm -rfv "/var/db/receipts/com.beyondtrust.$1.plist"
+    else
+        echo "Package '$1' is not installed"
+    fi
 }
 
 launchctl_get_all_daemons()
