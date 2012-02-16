@@ -368,7 +368,7 @@ PrintGroupInfo_1(
            "====================\n"
            "Name: %s\n"
            "Gid:  %u\n"
-           "SID:  %s\n",
+           "SID:  %s\n"
            "DN:   %s\n",
            LSA_SAFE_LOG_STRING(pGroupInfo->pszName),
            (unsigned int)pGroupInfo->gid,
