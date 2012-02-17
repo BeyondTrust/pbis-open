@@ -1646,6 +1646,11 @@ MemCacheClearExistingObjectKeys(
                             newTimeBuf,
                             LSA_SAFE_LOG_STRING(pObject->pszNetbiosDomainName),
                             LSA_SAFE_LOG_STRING(pObject->pszSamAccountName));
+                LsaSrvLogUserIDConflictEvent(
+                    (int)pObject->userInfo.uid,
+                    gpszADProviderName,
+                    LSASS_EVENT_WARNING_CONFIGURATION_ID_CONFLICT);
+
             }
 
             dwError = MemCacheRemoveObjectByHashKey(
@@ -1712,6 +1717,10 @@ MemCacheClearExistingObjectKeys(
                         newTimeBuf,
                         LSA_SAFE_LOG_STRING(pObject->pszNetbiosDomainName),
                         LSA_SAFE_LOG_STRING(pObject->pszSamAccountName));
+            LsaSrvLogUserGIDConflictEvent(
+                (int)pObject->userInfo.gid,
+                gpszADProviderName,
+                LSASS_EVENT_WARNING_CONFIGURATION_ID_CONFLICT);
         }
         dwError = MemCacheRemoveObjectByHashKey(
                         pConn,

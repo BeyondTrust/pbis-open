@@ -314,11 +314,55 @@ LsaSrvLogUserIDConflictEvent(
             LSASS_EVENT_WARNING_CONFIGURATION_ID_CONFLICT,
             SERVICE_EVENT_CATEGORY,
             pszUserIDConflictDescription,
-            pszData);
+            pszData ? pszData : " ");
 
 cleanup:
 
     LW_SAFE_FREE_STRING(pszUserIDConflictDescription);
+    LW_SAFE_FREE_STRING(pszData);
+
+    return;
+
+error:
+
+    goto cleanup;
+
+}
+
+VOID
+LsaSrvLogUserGIDConflictEvent(
+    gid_t gid,
+    PCSTR pszProviderName,
+    DWORD dwErrCode
+    )
+{
+    DWORD dwError = 0;
+    PSTR pszUserGIDConflictDescription = NULL;
+    PSTR pszData = NULL;
+
+    dwError = LwAllocateStringPrintf(
+                 &pszUserGIDConflictDescription,
+                 "Likewise account provisioning conflict.\r\n\r\n" \
+                 "     Authentication provider: %s\r\n\r\n" \
+                 "     Reason:                  Found duplicate entries for GIDs:\r\n" \
+                 "     GID:                     %u",
+                 pszProviderName,
+                 gid);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaGetErrorMessageForLoggingEvent(
+                         dwErrCode,
+                         &pszData);
+
+    LsaSrvLogServiceWarningEvent(
+            LSASS_EVENT_WARNING_CONFIGURATION_ID_CONFLICT,
+            SERVICE_EVENT_CATEGORY,
+            pszUserGIDConflictDescription,
+            pszData ? pszData : " ");
+
+cleanup:
+
+    LW_SAFE_FREE_STRING(pszUserGIDConflictDescription);
     LW_SAFE_FREE_STRING(pszData);
 
     return;
@@ -358,7 +402,7 @@ LsaSrvLogUserAliasConflictEvent(
             LSASS_EVENT_WARNING_CONFIGURATION_ALIAS_CONFLICT,
             SERVICE_EVENT_CATEGORY,
             pszUserAliasConflictDescription,
-            pszData);
+            pszData ? pszData : " ");
 
 cleanup:
 
@@ -405,7 +449,7 @@ LsaSrvLogDuplicateObjectFoundEvent(
             1020, // Lsass assigned object conflict event id
             SERVICE_EVENT_CATEGORY,
             pszObjectDuplicateDescription,
-            pszData);
+            pszData ? pszData : " ");
 
 cleanup:
 

@@ -226,6 +226,13 @@ LsaSrvLogUserIDConflictEvent(
     );
 
 VOID
+LsaSrvLogUserGIDConflictEvent(
+    gid_t gid,
+    PCSTR pszProviderName,
+    DWORD dwErrCode
+    );
+
+VOID
 LsaSrvLogUserAliasConflictEvent(
     PCSTR pszAlias,
     PCSTR pszProviderName,
