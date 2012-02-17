@@ -136,9 +136,6 @@ DecodeUserChange(
             &status);
     BAIL_ON_ERR_STATUS(status);
 
-    idl_es_set_attrs(encodingHandle, IDL_ES_MIDL_COMPAT, &status);
-    BAIL_ON_ERR_STATUS(status);
-
     USER_CHANGE_Decode(encodingHandle, &pValue);
     BAIL_ON_ERR_STATUS(status);
 
@@ -183,9 +180,6 @@ EncodeUserChange(
         &status);
     BAIL_ON_ERR_STATUS(status);
 
-    idl_es_set_attrs(encodingHandle, IDL_ES_MIDL_COMPAT, &status);
-    BAIL_ON_ERR_STATUS(status);
-
     USER_CHANGE_Encode(encodingHandle, pValue);
     BAIL_ON_ERR_STATUS(status);
 
@@ -225,9 +219,6 @@ DecodeGroupChange(
             sBufferLen,
             &encodingHandle,
             &status);
-    BAIL_ON_ERR_STATUS(status);
-
-    idl_es_set_attrs(encodingHandle, IDL_ES_MIDL_COMPAT, &status);
     BAIL_ON_ERR_STATUS(status);
 
     GROUP_CHANGE_Decode(encodingHandle, &pValue);
@@ -274,9 +265,6 @@ EncodeGroupChange(
         &status);
     BAIL_ON_ERR_STATUS(status);
 
-    idl_es_set_attrs(encodingHandle, IDL_ES_MIDL_COMPAT, &status);
-    BAIL_ON_ERR_STATUS(status);
-
     GROUP_CHANGE_Encode(encodingHandle, pValue);
     BAIL_ON_ERR_STATUS(status);
 
@@ -316,9 +304,6 @@ DecodeGroupMembershipChange(
             sBufferLen,
             &encodingHandle,
             &status);
-    BAIL_ON_ERR_STATUS(status);
-
-    idl_es_set_attrs(encodingHandle, IDL_ES_MIDL_COMPAT, &status);
     BAIL_ON_ERR_STATUS(status);
 
     GROUP_MEMBERSHIP_CHANGE_Decode(encodingHandle, &pValue);
@@ -363,9 +348,6 @@ EncodeGroupMembershipChange(
         (idl_ulong_int*) pdwEncodedSize,
         &encodingHandle,
         &status);
-    BAIL_ON_ERR_STATUS(status);
-
-    idl_es_set_attrs(encodingHandle, IDL_ES_MIDL_COMPAT, &status);
     BAIL_ON_ERR_STATUS(status);
 
     GROUP_MEMBERSHIP_CHANGE_Encode(encodingHandle, pValue);
