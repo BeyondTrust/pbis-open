@@ -146,7 +146,7 @@ optional_encrypted_data (const void *vptr)
 
 static const struct field_info encrypted_data_fields[] = {
     FIELDOF_NORM(krb5_enc_data, int32, enctype, 0),
-    FIELDOF_OPT(krb5_enc_data, uint, kvno, 1, 1),
+    FIELDOF_OPT(krb5_enc_data, int32, kvno, 1, 1),
     FIELDOF_NORM(krb5_enc_data, ostring_data, ciphertext, 2),
 };
 DEFSEQTYPE(encrypted_data, krb5_enc_data, encrypted_data_fields,
