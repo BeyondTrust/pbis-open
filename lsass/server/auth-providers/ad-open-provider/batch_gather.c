@@ -1045,7 +1045,6 @@ LsaAdBatchGatherPseudoObjectSidFromGc(
     LSA_ASSERT(LSA_IS_XOR(LsaAdBatchIsDefaultSchemaMode(pProviderData), ppszKeywordValues));
 
     LSA_ASSERT(!IsSetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_HAVE_PSEUDO));
-    LSA_ASSERT(!pItem->pszSid);
 
     dwError = LsaAdBatchGatherObjectType(pItem, ObjectType);
     BAIL_ON_LSA_ERROR(dwError);

@@ -1352,6 +1352,9 @@ LsaAdBatchFindSingleObject(
     DWORD dwCount = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     PLSA_SECURITY_OBJECT pObject = NULL;
+    DWORD dwQueryUid = 0;
+    DWORD dwQueryUidCount = 0;
+    PLSA_SECURITY_OBJECT* ppQueryUidObjects = NULL;
 
     if (!LSA_IS_XOR(!LW_IS_NULL_OR_EMPTY_STR(pszQueryTerm), pdwId))
     {
@@ -1371,6 +1374,18 @@ LsaAdBatchFindSingleObject(
                         &dwCount,
                         &ppObjects);
         BAIL_ON_LSA_ERROR(dwError);
+        if (dwCount > 0)
+        {
+            dwQueryUid = ppObjects[0]->userInfo.uid;/* query term uid */
+            dwError = LsaAdBatchFindObjects(
+                          pContext,
+                          LSA_AD_BATCH_QUERY_TYPE_BY_UID,
+                          1,
+                          NULL, /* query term string */
+                          &dwQueryUid,
+                          &dwQueryUidCount,
+                          &ppQueryUidObjects);
+        }
     }
     else if (pdwId)
     {
@@ -1390,10 +1405,41 @@ LsaAdBatchFindSingleObject(
         dwError = LW_ERROR_NO_SUCH_OBJECT;
         BAIL_ON_LSA_ERROR(dwError);
     }
-    else if (dwCount > 1)
+    else if (dwCount > 1 || dwError == LW_ERROR_DUPLICATE_USER_OR_GROUP)
     {
-        LSA_ASSERT(FALSE);
-        dwError = LW_ERROR_INTERNAL;
+        if (QueryType == LSA_AD_BATCH_QUERY_TYPE_BY_UID)
+        {
+            LsaSrvLogUserIDConflictEvent(
+                (int)*pdwId,
+                gpszADProviderName,
+                LSASS_EVENT_WARNING_CONFIGURATION_ID_CONFLICT);
+
+        }
+        else if (QueryType == LSA_AD_BATCH_QUERY_TYPE_BY_GID)
+        {
+            LsaSrvLogUserGIDConflictEvent(
+                (int)*pdwId,
+                gpszADProviderName,
+                LSASS_EVENT_WARNING_CONFIGURATION_ID_CONFLICT);
+
+        }
+        else 
+        {
+            char IdStr[12]; // Big enough to hold 32-bit string
+            snprintf(IdStr, sizeof(IdStr), "%d", *pdwId);
+            LsaSrvLogDuplicateObjectFoundEvent(
+                IdStr,
+                IdStr,
+                gpszADProviderName,
+                LSASS_EVENT_WARNING_CONFIGURATION_ID_CONFLICT);
+        }
+
+        /* 
+         * Treat duplicates as if we didn't find the object at all.
+         * This will prevent aliased UIDs from being able to access
+         * each other's accounts
+         */
+        dwError = LW_ERROR_NO_SUCH_OBJECT;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -1402,6 +1448,7 @@ LsaAdBatchFindSingleObject(
 
 cleanup:
     ADCacheSafeFreeObjectList(dwCount, &ppObjects);
+    ADCacheSafeFreeObjectList(dwQueryUidCount, &ppQueryUidObjects);
 
     *ppObject = pObject;
 
