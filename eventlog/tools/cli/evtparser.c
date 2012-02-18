@@ -67,7 +67,7 @@ ExportEventRecord (
      */
     eventTimeStruct = (time_t) pRecord->EventDateTime;
 
-    strftime(eventDate, 255, "Y-%m-%d", localtime(&eventTimeStruct));
+    strftime(eventDate, 255, "%Y-%m-%d", localtime(&eventTimeStruct));
     strftime(eventTime, 255, "%r", localtime(&eventTimeStruct));
 
     fw16printfw(
@@ -123,7 +123,7 @@ PrintEventRecordTableRow (
 
     eventTimeStruct = (time_t) pRecord->EventDateTime;
 
-    strftime(eventDate, 255, "Y-%m-%d", localtime(&eventTimeStruct));
+    strftime(eventDate, 255, "%Y-%m-%d", localtime(&eventTimeStruct));
     strftime(eventTime, 255, "%r", localtime(&eventTimeStruct));
 
     fw16printfw(
@@ -170,7 +170,7 @@ PrintEventRecords(
         PLW_EVENTLOG_RECORD pRecord = &(eventRecords[iRecord]);
         time_t eventTimeStruct = (time_t) pRecord->EventDateTime;
 
-        strftime(eventDate, 255, "Y-%m-%d", localtime(&eventTimeStruct));
+        strftime(eventDate, 255, "%Y-%m-%d", localtime(&eventTimeStruct));
         strftime(eventTime, 255, "%r", localtime(&eventTimeStruct));
 
         printf("Event Record: (%d/%d) (%d total)\n",
