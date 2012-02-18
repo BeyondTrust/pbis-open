@@ -1,3 +1,7 @@
+#ifdef _WIN32
+import "wtypes.idl";
+#endif
+
 [uuid(b5903438-6b50-4d45-81be-62d05b2b6ef4),
   version(0.0),
   pointer_default(unique)
@@ -5,7 +9,26 @@
 interface usermonitor_encoding
 {
 
+#ifdef _DCE_IDL_
 #include <lw/types.h>
+#else
+    cpp_quote("#ifdef _WIN32")
+
+    cpp_quote("#ifndef TARGET_IS_NT50_OR_LATER")
+    cpp_quote("#define TARGET_IS_NT50_OR_LATER TRUE")
+    cpp_quote("#else")
+    cpp_quote("#if !(TARGET_IS_NT50_OR_LATER)")
+    cpp_quote("#undef TARGET_IS_NT50_OR_LATER")
+    cpp_quote("#define TARGET_IS_NT50_OR_LATER TRUE")
+    cpp_quote("#endif // false TARGET_IS_NT50_OR_LATER")
+    cpp_quote("#endif // undefined TARGET_IS_NT50_OR_LATER")
+
+    cpp_quote("#endif //_WIN32, !_WIN32")
+
+    cpp_quote("#if 0")
+    typedef [string] char *PSTR;
+    cpp_quote("#endif //_0")
+#endif
 #include <usermonitor-encoding.h>
 
     void USER_CHANGE_Encode(

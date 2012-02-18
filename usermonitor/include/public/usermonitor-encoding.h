@@ -47,12 +47,18 @@
 #ifndef __USERMONITOR_H__
 #define __USERMONITOR_H__
 
-#ifdef _DCE_IDL_
+#if defined(_DCE_IDL_) || defined(__midl)
 cpp_quote("#include <usermonitor-encoding.h>")
 cpp_quote("#if 0")
 #endif
 
-typedef struct _USER_MONITOR_PASSWD
+#ifdef __cplusplus_cli
+#define STRUCT value struct
+#else
+#define STRUCT struct
+#endif
+
+typedef STRUCT _USER_MONITOR_PASSWD
 {
     PSTR pw_name;
     PSTR pw_passwd;
@@ -65,7 +71,7 @@ typedef struct _USER_MONITOR_PASSWD
     DWORD LastUpdated;
 } USER_MONITOR_PASSWD, *PUSER_MONITOR_PASSWD;
 
-typedef struct USER_MONITOR_GROUP
+typedef STRUCT USER_MONITOR_GROUP
 {
     PSTR gr_name;
     PSTR gr_passwd;
@@ -73,19 +79,19 @@ typedef struct USER_MONITOR_GROUP
     DWORD LastUpdated;
 } USER_MONITOR_GROUP, *PUSER_MONITOR_GROUP;
 
-typedef struct _USER_CHANGE
+typedef STRUCT _USER_CHANGE
 {
     USER_MONITOR_PASSWD OldValue;
     USER_MONITOR_PASSWD NewValue;
 } USER_CHANGE, *PUSER_CHANGE;
 
-typedef struct _GROUP_CHANGE
+typedef STRUCT _GROUP_CHANGE
 {
     USER_MONITOR_GROUP OldValue;
     USER_MONITOR_GROUP NewValue;
 } GROUP_CHANGE, *PGROUP_CHANGE;
 
-typedef struct _GROUP_MEMBERSHIP_CHANGE
+typedef STRUCT _GROUP_MEMBERSHIP_CHANGE
 {
     BOOL Added;
     BOOL OnlyGidChange;
@@ -94,8 +100,22 @@ typedef struct _GROUP_MEMBERSHIP_CHANGE
     PSTR pGroupName;
 } GROUP_MEMBERSHIP_CHANGE, *PGROUP_MEMBERSHIP_CHANGE;
 
-#ifndef _DCE_IDL_
+#if !defined(_DCE_IDL_) && !defined(__midl)
+
+#ifdef _WIN32
+#ifndef LW_USERMONITORLIB_API
+#define LW_USERMONITORLIB_API __declspec(dllimport) __stdcall
+#endif
+#else
+#define LW_USERMONITORLIB_API
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 DWORD
+LW_USERMONITORLIB_API
 DecodeUserChange(
     IN PVOID pBuffer,
     IN size_t sBufferLen,
@@ -103,6 +123,7 @@ DecodeUserChange(
     );
 
 DWORD
+LW_USERMONITORLIB_API
 EncodeUserChange(
     IN PUSER_CHANGE pValue,
     OUT PDWORD pdwEncodedSize,
@@ -110,11 +131,13 @@ EncodeUserChange(
     );
 
 VOID
+LW_USERMONITORLIB_API
 FreeUserChange(
     PUSER_CHANGE pValue
     );
 
 DWORD
+LW_USERMONITORLIB_API
 DecodeGroupChange(
     IN PVOID pBuffer,
     IN size_t sBufferLen,
@@ -122,6 +145,7 @@ DecodeGroupChange(
     );
 
 DWORD
+LW_USERMONITORLIB_API
 EncodeGroupChange(
     IN PGROUP_CHANGE pValue,
     OUT PDWORD pdwEncodedSize,
@@ -129,11 +153,13 @@ EncodeGroupChange(
     );
 
 VOID
+LW_USERMONITORLIB_API
 FreeGroupChange(
     PGROUP_CHANGE pValue
     );
 
 DWORD
+LW_USERMONITORLIB_API
 DecodeGroupMembershipChange(
     IN PVOID pBuffer,
     IN size_t sBufferLen,
@@ -141,6 +167,7 @@ DecodeGroupMembershipChange(
     );
 
 DWORD
+LW_USERMONITORLIB_API
 EncodeGroupMembershipChange(
     IN PGROUP_MEMBERSHIP_CHANGE pValue,
     OUT PDWORD pdwEncodedSize,
@@ -148,12 +175,18 @@ EncodeGroupMembershipChange(
     );
 
 VOID
+LW_USERMONITORLIB_API
 FreeGroupMembershipChange(
     PGROUP_MEMBERSHIP_CHANGE pValue
     );
+
+#ifdef __cplusplus
+}
 #endif
 
-#ifdef _DCE_IDL_
+#endif
+
+#if defined(_DCE_IDL_) || defined(__midl)
 cpp_quote("#endif")
 #endif
 

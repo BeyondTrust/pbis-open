@@ -47,6 +47,10 @@
  * 
  */
 
+#ifdef _WIN32
+#include "compat/dcerpc.h"
+#include <midles.h>
+#else
 #include "config.h"
 #include <dce/rpc.h>
 #include <dce/idlddefs.h>
@@ -58,4 +62,5 @@
 
 #include "usermonitor-logging.h"
 
+#endif
 #include "usermonitor-encoding.h"

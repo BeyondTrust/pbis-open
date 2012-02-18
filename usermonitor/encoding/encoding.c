@@ -42,8 +42,13 @@
  * Authors: Kyle Stemen <kstemen@beyondtrust.com>
  */
 
+#ifdef _WIN32
+#define LW_USERMONITORLIB_API __declspec(dllexport) __stdcall
+#endif
+
 #include "includes.h"
 #include "encoding_h.h"
+
 
 VOID
 FreeUserMonitorPasswdContents(
@@ -59,6 +64,7 @@ FreeUserMonitorPasswdContents(
 }
 
 VOID
+LW_USERMONITORLIB_API
 FreeUserChange(
     PUSER_CHANGE pValue
     )
@@ -83,6 +89,7 @@ FreeUserMonitorGroupContents(
 }
 
 VOID
+LW_USERMONITORLIB_API
 FreeGroupChange(
     PGROUP_CHANGE pValue
     )
@@ -98,6 +105,7 @@ FreeGroupChange(
 }
 
 VOID
+LW_USERMONITORLIB_API
 FreeGroupMembershipChange(
     PGROUP_MEMBERSHIP_CHANGE pValue
     )
@@ -112,11 +120,21 @@ FreeGroupMembershipChange(
     rpc_ss_client_free(pValue);
 }
 
+#ifdef _WIN32
+#define BAIL_ON_ERR_STATUS(err)                 \
+    dwError = err; \
+    if (dwError != 0) \
+    { \
+        goto error; \
+    }
+#else
 #define BAIL_ON_ERR_STATUS(err)                 \
     dwError = LwNtStatusToWin32Error(LwRpcStatusToNtStatus(err)); \
     BAIL_ON_UMN_ERROR(dwError);
+#endif
 
 DWORD
+LW_USERMONITORLIB_API
 DecodeUserChange(
     IN PVOID pBuffer,
     IN size_t sBufferLen,
@@ -130,13 +148,16 @@ DecodeUserChange(
     PUSER_CHANGE pValue = NULL;
 
     idl_es_decode_buffer(
-            (unsigned char *)pBuffer,
+            (idl_byte *)pBuffer,
             sBufferLen,
             &encodingHandle,
             &status);
     BAIL_ON_ERR_STATUS(status);
 
+    DCETHREAD_TRY
     USER_CHANGE_Decode(encodingHandle, &pValue);
+    DCETHREAD_CATCH_ALL(status);
+    DCETHREAD_ENDTRY
     BAIL_ON_ERR_STATUS(status);
 
     idl_es_handle_free(&encodingHandle, &status);
@@ -162,6 +183,7 @@ error:
 }
 
 DWORD
+LW_USERMONITORLIB_API
 EncodeUserChange(
     IN PUSER_CHANGE pValue,
     OUT PDWORD pdwEncodedSize,
@@ -180,7 +202,10 @@ EncodeUserChange(
         &status);
     BAIL_ON_ERR_STATUS(status);
 
+    DCETHREAD_TRY
     USER_CHANGE_Encode(encodingHandle, pValue);
+    DCETHREAD_CATCH_ALL(status);
+    DCETHREAD_ENDTRY
     BAIL_ON_ERR_STATUS(status);
 
     idl_es_handle_free(&encodingHandle, &status);
@@ -202,6 +227,7 @@ error:
 }
 
 DWORD
+LW_USERMONITORLIB_API
 DecodeGroupChange(
     IN PVOID pBuffer,
     IN size_t sBufferLen,
@@ -215,7 +241,7 @@ DecodeGroupChange(
     PGROUP_CHANGE pValue = NULL;
 
     idl_es_decode_buffer(
-            (unsigned char *)pBuffer,
+            (idl_byte *)pBuffer,
             sBufferLen,
             &encodingHandle,
             &status);
@@ -247,6 +273,7 @@ error:
 }
 
 DWORD
+LW_USERMONITORLIB_API
 EncodeGroupChange(
     IN PGROUP_CHANGE pValue,
     OUT PDWORD pdwEncodedSize,
@@ -287,6 +314,7 @@ error:
 }
 
 DWORD
+LW_USERMONITORLIB_API
 DecodeGroupMembershipChange(
     IN PVOID pBuffer,
     IN size_t sBufferLen,
@@ -300,7 +328,7 @@ DecodeGroupMembershipChange(
     PGROUP_MEMBERSHIP_CHANGE pValue = NULL;
 
     idl_es_decode_buffer(
-            (unsigned char *)pBuffer,
+            (idl_byte *)pBuffer,
             sBufferLen,
             &encodingHandle,
             &status);
@@ -332,6 +360,7 @@ error:
 }
 
 DWORD
+LW_USERMONITORLIB_API
 EncodeGroupMembershipChange(
     IN PGROUP_MEMBERSHIP_CHANGE pValue,
     OUT PDWORD pdwEncodedSize,
@@ -370,3 +399,23 @@ error:
 
     goto cleanup;
 }
+
+#ifdef _WIN32
+void
+__RPC_USER
+midl_user_free(
+    void* p
+    )
+{
+    free(p);
+}
+
+void*
+__RPC_USER
+midl_user_allocate(
+    size_t size
+    )
+{
+    return malloc(size);
+}
+#endif
