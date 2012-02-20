@@ -544,11 +544,12 @@ AD_MountRemoteWindowsDirectory(
         dwError = LwMapErrnoToLwError(errno);
 
         LSA_LOG_ERROR(
-            "Failed mount of %s on %s with data %s, error %u",
+            "Failed mount of %s on %s with data %s, error %u (errno %u)",
             pszRemotePath,
             pObject->userInfo.pszLocalWindowsHomeFolder,
             pszMountCommand,
-            dwError);
+            dwError,
+            errno);
 
         BAIL_ON_LSA_ERROR(dwError);
     }
