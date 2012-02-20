@@ -9,7 +9,8 @@ configure()
         MK_BINDIR \
         MK_SBINDIR \
         LW_INITDIR \
-        VERSION="$LW_VERSION" \
+        VERSION="${LW_PRODUCT_VERSION}.${LW_BUILD_ID:-0}" \
+        QFE="${LW_PRODUCT_QFE}" \
         BUILD="${LW_BUILD_ID:-0}" \
         REVISION="${LW_BUILD_REVISION:-0}"
 

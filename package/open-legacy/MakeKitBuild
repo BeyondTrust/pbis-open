@@ -26,7 +26,7 @@ configure()
         else
             mk_declare -o PKG_DEB_NAME="${LW_VENDOR}-open-legacy"
         fi
-        mk_declare -o PKG_DEB_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+        mk_declare -o PKG_DEB_VERSION="${LW_VERSION}"
         mk_declare -o PKG_DEB_DATE="`date -R`"
     fi
 
@@ -37,20 +37,20 @@ configure()
         else
             mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-open-legacy"
         fi
-        mk_declare -o PKG_RPM_VERSION="${LW_VERSION}"
-        mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_REVISION:-0}"
+        mk_declare -o PKG_RPM_VERSION="${LW_PRODUCT_VERSION}.${LW_PRODUCT_QFE}"
+        mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_ID:-0}"
     fi
 
     if mk_freebsd_enabled
     then
         mk_declare -o PKG_FREEBSD_NAME="${LW_VENDOR}-open-legacy"
-        mk_declare -o PKG_FREEBSD_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+        mk_declare -o PKG_FREEBSD_VERSION="${LW_VERSION}"
     fi
 
     if mk_pkg_enabled
     then
         mk_declare -o PKG_PKG_NAME="PBISopenl"
-        mk_declare -o PKG_PKG_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+        mk_declare -o PKG_PKG_VERSION="${LW_VERSION}"
         case "$MK_HOST_ARCH" in
             x86)
                 PKG_PKG_ARCH="i386"
@@ -65,13 +65,13 @@ configure()
     if mk_depot_enabled
     then
         mk_declare -o PKG_DEPOT_NAME="${LW_VENDOR}-open-legacy"
-        mk_declare -o PKG_DEPOT_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+        mk_declare -o PKG_DEPOT_VERSION="${LW_VERSION}"
     fi
 
     if mk_macpkg_enabled
     then
         mk_declare -o PKG_MACPKG_NAME="${LW_VENDOR}-open-legacy"
-        mk_declare -o PKG_MACPKG_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+        mk_declare -o PKG_MACPKG_VERSION="${LW_VERSION}"
     fi
 }
 

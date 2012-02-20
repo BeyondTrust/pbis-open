@@ -14,7 +14,7 @@ configure()
         else
             mk_declare -o PKG_DEB_NAME="${LW_VENDOR}-open-gui"
         fi
-        mk_declare -o PKG_DEB_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+        mk_declare -o PKG_DEB_VERSION="${LW_VERSION}"
         mk_declare -o PKG_DEB_DATE="`date -R`"
     fi
 
@@ -25,8 +25,8 @@ configure()
         else
             mk_declare -o PKG_RPM_NAME="${LW_VENDOR}-open-gui"
         fi
-        mk_declare -o PKG_RPM_VERSION="${LW_VERSION}"
-        mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_REVISION:-0}"
+        mk_declare -o PKG_RPM_VERSION="${LW_PRODUCT_VERSION}.${LW_PRODUCT_PATCH}"
+        mk_declare -o PKG_RPM_RELEASE="${LW_BUILD_ID:-0}"
 
         PKG_RPM_COMPAT="0"
 
@@ -40,7 +40,7 @@ configure()
     if mk_freebsd_enabled
     then
         mk_declare -o PKG_FREEBSD_NAME="${LW_VENDOR}-open-gui"
-        mk_declare -o PKG_FREEBSD_VERSION="${LW_VERSION}-${LW_BUILD_REVISION:-0}"
+        mk_declare -o PKG_FREEBSD_VERSION="${LW_VERSION}"
     fi
 }
 
