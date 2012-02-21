@@ -355,9 +355,11 @@ restore_6_1_configuration()
     fi
 
     for cache in "${UPGRADEDIR}"/lsass-adcache.filedb.* ; do
-        cachefile=`basename $cache`
-        run_or_fail cp "${cache}" "@LW_CACHEDIR@/db/${cachefile}"
-        run_or_fail chmod 700 "@LW_CACHEDIR@/db/${cachefile}"
+        if [ -f "$cache" ]; then
+            cachefile=`basename $cache`
+            run_or_fail cp "${cache}" "@LW_CACHEDIR@/db/${cachefile}"
+            run_or_fail chmod 700 "@LW_CACHEDIR@/db/${cachefile}"
+        fi
     done
 
     run_quiet rm -r "${UPGRADEDIR}"
@@ -394,9 +396,11 @@ restore_6_5_configuration()
     fi
 
     for cache in "${UPGRADEDIR}"/lsass-adcache.filedb.* ; do
-        cachefile=`basename $cache`
-        run_or_fail cp "${cache}" "@LW_CACHEDIR@/db/${cachefile}"
-        run_or_fail chmod 700 "@LW_CACHEDIR@/db/${cachefile}"
+        if [ -f "$cache" ]; then
+            cachefile=`basename $cache`
+            run_or_fail cp "${cache}" "@LW_CACHEDIR@/db/${cachefile}"
+            run_or_fail chmod 700 "@LW_CACHEDIR@/db/${cachefile}"
+        fi
     done
 
     run_quiet rm -r "${UPGRADEDIR}"
@@ -433,9 +437,11 @@ restore_7_0_configuration()
     fi
 
     for cache in "${UPGRADEDIR}"/lsass-adcache.filedb.* ; do
-        cachefile=`basename $cache`
-        run_or_fail cp "${cache}" "@LW_CACHEDIR@/db/${cachefile}"
-        run_or_fail chmod 700 "@LW_CACHEDIR@/db/${cachefile}"
+        if [ -f "$cache" ]; then
+            cachefile=`basename $cache`
+            run_or_fail cp "${cache}" "@LW_CACHEDIR@/db/${cachefile}"
+            run_or_fail chmod 700 "@LW_CACHEDIR@/db/${cachefile}"
+        fi
     done
 
     run_quiet rm -r "${UPGRADEDIR}"
