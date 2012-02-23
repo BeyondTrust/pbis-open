@@ -371,17 +371,15 @@ error:
     goto cleanup;
 }
 
+
+static
 DWORD
-AD_MountRemoteWindowsDirectory(
+MountUsingCifs(
     PLSA_AD_PROVIDER_STATE pState,
     PLSA_SECURITY_OBJECT pObject
-)
+    )
 {
     DWORD dwError = 0;
-    BOOLEAN bExists = FALSE;
-    mode_t  umask = 0;
-    mode_t  perms = (S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
-    BOOLEAN bRemoveDir = FALSE;
     PSTR pszUnresolvedRemotePath = NULL;
     LW_PIO_CREDS pOldCreds = NULL;
     LW_PIO_CREDS pUserCreds = NULL;
@@ -395,55 +393,9 @@ AD_MountRemoteWindowsDirectory(
     PSTR pszRemotePathWithoutPrefix = NULL;
     PSTR pszPrefixPath = NULL;
     int error = 0;
+    const char *pszSecurityMode[] = {"krb5", "krb5i", NULL};
+    size_t iSecurityMode;
 
-    if (LW_IS_NULL_OR_EMPTY_STR(pObject->userInfo.pszLocalWindowsHomeFolder) ||
-        LW_IS_NULL_OR_EMPTY_STR(pObject->userInfo.pszWindowsHomeFolder))
-    {
-        /* Nothing to do, not an error */
-        goto cleanup;
-    }
-
-#ifndef __LWI_LINUX__
-    LSA_LOG_INFO("Mouting remote Windows shares not supported on this platform.");
-    dwError = ERROR_NOT_SUPPORTED;
-    BAIL_ON_LSA_ERROR(dwError);
-#endif
-
-    /* If we are not mounting the remote share as the home directory,
-       test to see if it exists and create it if it doesn't.
-    */
-    if (strcasecmp(
-           pObject->userInfo.pszLocalWindowsHomeFolder,
-           pObject->userInfo.pszHomedir) != 0)
-    {
-        dwError = LsaCheckDirectoryExists(
-                        pObject->userInfo.pszLocalWindowsHomeFolder,
-                        &bExists);
-        if (!bExists)
-        {
-            umask = AD_GetUmask(pState);
-
-            dwError = LsaCreateDirectory(
-                        pObject->userInfo.pszLocalWindowsHomeFolder,
-                        perms);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            dwError = LsaChangePermissions(
-                        pObject->userInfo.pszLocalWindowsHomeFolder,
-                        perms & (~umask));
-            BAIL_ON_LSA_ERROR(dwError);
-
-            bRemoveDir = TRUE;
-
-            dwError = LsaChangeOwner(
-                        pObject->userInfo.pszLocalWindowsHomeFolder,
-                        pObject->userInfo.uid,
-                        pObject->userInfo.gid);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            bRemoveDir = FALSE;
-        }
-    }
 
     dwError = ConvertSlashes(
                 pObject->userInfo.pszWindowsHomeFolder,
@@ -512,59 +464,64 @@ AD_MountRemoteWindowsDirectory(
         pszRemotePath = pszRemotePathWithoutPrefix;
     }
 
-    dwError = LwAllocateStringPrintf(
-                &pszMountCommand,
-                "%ssec=krb5,user=%s,uid=%u,gid=%u,cruid=%u,ip=%s",
-                pszPrefixPath ? pszPrefixPath: "",
-                pObject->userInfo.pszUPN,
-                pObject->userInfo.uid,
-                pObject->userInfo.gid,
-                pObject->userInfo.uid,
-                pszIpAddress);
-    BAIL_ON_LSA_ERROR(dwError);
+    for (iSecurityMode = 0; pszSecurityMode[iSecurityMode]; iSecurityMode++)
+    {
+        LW_SAFE_FREE_STRING(pszMountCommand);
+
+        dwError = LwAllocateStringPrintf(
+                    &pszMountCommand,
+                    "%ssec=%s,user=%s,uid=%u,gid=%u,cruid=%u,ip=%s",
+                    pszPrefixPath ? pszPrefixPath: "",
+                    pszSecurityMode[iSecurityMode],
+                    pObject->userInfo.pszUPN,
+                    pObject->userInfo.uid,
+                    pObject->userInfo.gid,
+                    pObject->userInfo.uid,
+                    pszIpAddress);
+        BAIL_ON_LSA_ERROR(dwError);
 
 #ifdef __LWI_LINUX__
-    error = mount(
+        error = mount(
+                    pszRemotePath,
+                    pObject->userInfo.pszLocalWindowsHomeFolder,
+                    "cifs",
+                    MS_NODEV  | MS_NOSUID,
+                    pszMountCommand);
+
+        LSA_LOG_VERBOSE("mount(\"%s\", \"%s\", \"%s\", %s, \"%s\") = %d",
                 pszRemotePath,
                 pObject->userInfo.pszLocalWindowsHomeFolder,
                 "cifs",
-                MS_NODEV  | MS_NOSUID,
-                pszMountCommand);
-
-    LSA_LOG_VERBOSE("mount(\"%s\", \"%s\", \"%s\", %s, \"%s\") = %d",
-            pszRemotePath,
-            pObject->userInfo.pszLocalWindowsHomeFolder,
-            "cifs",
-            "MS_NODEV | MS_NSUID",
-            pszMountCommand,
-            error);
+                "MS_NODEV | MS_NOSUID",
+                pszMountCommand,
+                error);
 #endif
-    if (error < 0)
-    {
-        dwError = LwMapErrnoToLwError(errno);
+        if (error < 0)
+        {
+            dwError = LwMapErrnoToLwError(errno);
 
-        LSA_LOG_ERROR(
-            "Failed mount of %s on %s with data %s, error %u (errno %u)",
-            pszRemotePath,
+            LSA_LOG_WARNING(
+                "Failed mount of %s on %s with data %s, error %u (errno %u)",
+                pszRemotePath,
             pObject->userInfo.pszLocalWindowsHomeFolder,
             pszMountCommand,
             dwError,
             errno);
-
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-    else
-    {
-        dwError = LsaUmModifyUserMountedDirectory(
-                    pObject->userInfo.uid,
-                    pObject->userInfo.pszLocalWindowsHomeFolder);
-        if (dwError)
-        {
-            LSA_LOG_WARNING(
-                "Failed adding mount %s to user monitor thread",
-                pObject->userInfo.pszLocalWindowsHomeFolder);
-            dwError = 0;
         }
+        else
+        {
+            break;
+        }
+    }
+    if (dwError)
+    {
+            LSA_LOG_ERROR(
+                "Failed mount of %s on %s, error %u (errno %u)",
+                pszRemotePath,
+            pObject->userInfo.pszLocalWindowsHomeFolder,
+            pszMountCommand,
+            dwError,
+            errno);
     }
 
 cleanup:
@@ -577,6 +534,88 @@ cleanup:
     LW_SAFE_FREE_STRING(pszServerName);
     LW_SAFE_FREE_STRING(pszResolvedRemotePath);
     LW_SAFE_FREE_STRING(pszUnresolvedRemotePath);
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+DWORD
+AD_MountRemoteWindowsDirectory(
+    PLSA_AD_PROVIDER_STATE pState,
+    PLSA_SECURITY_OBJECT pObject
+)
+{
+    DWORD dwError = 0;
+    BOOLEAN bExists = FALSE;
+    mode_t  umask = 0;
+    mode_t  perms = (S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
+    BOOLEAN bRemoveDir = FALSE;
+
+    if (LW_IS_NULL_OR_EMPTY_STR(pObject->userInfo.pszLocalWindowsHomeFolder) ||
+        LW_IS_NULL_OR_EMPTY_STR(pObject->userInfo.pszWindowsHomeFolder))
+    {
+        /* Nothing to do, not an error */
+        goto cleanup;
+    }
+
+#ifndef __LWI_LINUX__
+    LSA_LOG_INFO("Mouting remote Windows shares not supported on this platform.");
+    dwError = ERROR_NOT_SUPPORTED;
+    BAIL_ON_LSA_ERROR(dwError);
+#endif
+
+    /* If we are not mounting the remote share as the home directory,
+       test to see if it exists and create it if it doesn't.
+    */
+    if (strcasecmp(
+           pObject->userInfo.pszLocalWindowsHomeFolder,
+           pObject->userInfo.pszHomedir) != 0)
+    {
+        dwError = LsaCheckDirectoryExists(
+                        pObject->userInfo.pszLocalWindowsHomeFolder,
+                        &bExists);
+        if (!bExists)
+        {
+            umask = AD_GetUmask(pState);
+
+            dwError = LsaCreateDirectory(
+                        pObject->userInfo.pszLocalWindowsHomeFolder,
+                        perms);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            dwError = LsaChangePermissions(
+                        pObject->userInfo.pszLocalWindowsHomeFolder,
+                        perms & (~umask));
+            BAIL_ON_LSA_ERROR(dwError);
+
+            bRemoveDir = TRUE;
+
+            dwError = LsaChangeOwner(
+                        pObject->userInfo.pszLocalWindowsHomeFolder,
+                        pObject->userInfo.uid,
+                        pObject->userInfo.gid);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            bRemoveDir = FALSE;
+        }
+    }
+
+    dwError = MountUsingCifs(pState, pObject);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaUmModifyUserMountedDirectory(
+                pObject->userInfo.uid,
+                pObject->userInfo.pszLocalWindowsHomeFolder);
+    if (dwError)
+    {
+        LSA_LOG_WARNING(
+            "Failed adding mount %s to user monitor thread",
+            pObject->userInfo.pszLocalWindowsHomeFolder);
+        dwError = 0;
+    }
+
+cleanup:
 
     return dwError;
 
