@@ -338,10 +338,10 @@ join_worker(
     if(join_state.noModifyHosts)
     {
         if(hostnameState != NULL)
-            hostnameState->runModule = FALSE;
+            hostnameState->disposition = DisableModule;
     }
     else if(hostnameState->lastResult < FullyConfigured)
-        hostnameState->runModule = TRUE;
+        hostnameState->disposition = EnableModule;
     options->userData = dialog;
     options->warningCallback = PrintWarning;
     LW_TRY(&exc, DJRunJoinProcess(options, &LW_EXC));

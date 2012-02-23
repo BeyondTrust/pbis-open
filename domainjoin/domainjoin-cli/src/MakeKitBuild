@@ -1,9 +1,13 @@
 make()
 {
     mk_program \
-	PROGRAM=domainjoin-cli \
-	SOURCES="djcli.c main.c" \
-	INCLUDEDIRS="../include ../../include ../../libdomainjoin/include" \
-	HEADERDEPS="ctbase.h" \
-	LIBDEPS="lsaclient centutils domainjoin lwadvapi lwadvapi_nothr lwsm"
+        PROGRAM=domainjoin-cli \
+        SOURCES="djcli.c main.c" \
+        INCLUDEDIRS="../include ../../include ../../libdomainjoin/include" \
+        HEADERDEPS="ctbase.h" \
+        LIBDEPS="lsaclient centutils domainjoin lwadvapi lwadvapi_nothr lwsm"
+
+    mk_symlink \
+        LINK="/usr/bin/domainjoin-cli" \
+        TARGET="${MK_BINDIR}/domainjoin-cli"
 }
