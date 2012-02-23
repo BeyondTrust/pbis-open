@@ -73,6 +73,12 @@ configure()
         mk_declare -o PKG_MACPKG_NAME="${LW_VENDOR}-open-legacy"
         mk_declare -o PKG_MACPKG_VERSION="${LW_VERSION}"
     fi
+
+    if mk_lpp_enabled
+    then
+        mk_declare -o PKG_LPP_NAME="${LW_VENDOR}-open-legacy"
+        mk_declare -o PKG_LPP_VERSION="${LW_VERSION}"
+    fi
 }
 
 package_deb()
@@ -134,8 +140,8 @@ package_pkg()
 package_lpp()
 {
     mk_lpp_do \
-        PACKAGE="${LW_VENDOR}-open-legacy" \
-        VERSION="${LW_VERSION}.0"
+        PACKAGE="${PKG_LPP_NAME}" \
+        VERSION="${PKG_LPP_VERSION}"
 
         mk_lpp_sub_do \
             SUBPACKAGE="-" \

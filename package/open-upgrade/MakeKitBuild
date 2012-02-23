@@ -60,6 +60,12 @@ configure()
         mk_declare -o PKG_DEPOT_NAME="${LW_VENDOR}-open-upgrade"
         mk_declare -o PKG_DEPOT_VERSION="${LW_VERSION}"
     fi
+
+    if mk_lpp_enabled
+    then
+        mk_declare -o PKG_LPP_NAME="${LW_VENDOR}-open-upgrade"
+        mk_declare -o PKG_LPP_VERSION="${LW_VERSION}"
+    fi
 }
 
 package_rpm()
@@ -112,14 +118,14 @@ package_pkg()
 package_lpp()
 {
     mk_lpp_do \
-        PACKAGE="${LW_VENDOR}-open-upgrade" \
-        VERSION="${LW_VERSION}.0"
-    
+        PACKAGE="${PKG_LPP_NAME}" \
+        VERSION="${PKG_LPP_VERSION}"
+
         mk_lpp_sub_do \
             SUBPACKAGE="-" \
             PREIN="lpp/root.pre_i.in" \
             REQUISITES="lpp/requisites.in"
-        
+
         mk_lpp_sub_done
 
     mk_lpp_done
