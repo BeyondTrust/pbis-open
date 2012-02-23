@@ -259,9 +259,11 @@ preserve_6_1_configuration()
         fi
 
         for cache in /var/lib/likewise/db/lsass-adcache.filedb.* ; do
-            cachefile=`basename $cache`
-            run_or_fail cp "${cache}" "${UPGRADEDIR}"
-            run_or_fail chmod 700 "${UPGRADEDIR}/${cachefile}"
+            if [ -f "$cache" ]; then
+                cachefile=`basename $cache`
+                run_or_fail cp "${cache}" "${UPGRADEDIR}"
+                run_or_fail chmod 700 "${UPGRADEDIR}/${cachefile}"
+            fi
         done
     fi
 }
