@@ -388,6 +388,10 @@ open_files_usr()
 {
     open_files_interop
 
+     mk_package_patterns \
+        SUBDIRS="$OPEN_SUBDIRS" \
+        "@${MK_STAGE_DIR}/usr/bin/domainjoin-cli"
+
     mk_package_patterns SUBDIRS="@docs" "*"
 }
 
