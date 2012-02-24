@@ -637,18 +637,23 @@ AD_UnmountRemoteWindowsDirectory(
     )
 {
     DWORD dwError = 0;
-#ifndef __LWI_LINUX
+#ifndef __LWI_LINUX__
     goto error;
 #endif
 
 #ifdef __LWI_LINUX__
     if (umount(pszMountPoint) < 0)
     {
-       if (!errno == EINVAL && !errno == ENOENT)
-       {
-           dwError = LwMapErrnoToLwError(errno);
-           BAIL_ON_LSA_ERROR(dwError);
-       }
+        LSA_LOG_WARNING("Failed unmount: umount(%s) returned errno %u", pszMountPoint, errno);
+        if (!errno == EINVAL && !errno == ENOENT)
+        {
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
+    else
+    {
+        LSA_LOG_INFO("Unmounted %s", pszMountPoint);
     }
 #endif
 
