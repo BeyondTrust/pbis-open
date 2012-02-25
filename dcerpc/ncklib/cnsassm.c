@@ -4331,6 +4331,12 @@ rpc_cn_packet_p_t	header;
     /*
      * Update our per-association data
      */
+    if (assoc->security.auth_buffer_info.auth_buffer)
+    {
+        RPC_MEM_FREE(assoc->security.auth_buffer_info.auth_buffer,
+                     RPC_C_MEM_CN_PAC_BUF);
+        assoc->security.auth_buffer_info.auth_buffer = NULL;
+    }
     assoc->security.auth_buffer_info.auth_buffer = auth_buffer;
     assoc->security.auth_buffer_info.auth_buffer_len = auth_buffer_len;
     assoc->security.auth_buffer_info.auth_buffer_max = auth_buffer_max;
