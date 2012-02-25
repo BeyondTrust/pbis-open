@@ -11,6 +11,7 @@ stat aclocal.m4 || true
 stat config.h.in || true
 fi
 autoheader -f || exit $?
+touch config.h.in
 echo "cyrus after autoheader"
 if type stat >/dev/null 2>&1; then
 stat aclocal.m4 || true
