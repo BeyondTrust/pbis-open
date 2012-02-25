@@ -1,24 +1,77 @@
 /*
- * 
- * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
- * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
- * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * Copyright (c) 2010 Apple Inc. All rights reserved.
+ *
+ * @APPLE_LICENSE_HEADER_START@
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1.  Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ * 2.  Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 3.  Neither the name of Apple Inc. ("Apple") nor the names of its
+ *     contributors may be used to endorse or promote products derived from
+ *     this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL APPLE OR ITS CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Portions of this software have been released under the following terms:
+ *
+ * (c) Copyright 1989-1993 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989-1993 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989-1993 DIGITAL EQUIPMENT CORPORATION
+ *
  * To anyone who acknowledges that this file is provided "AS IS"
  * without any express or implied warranty:
- *                 permission to use, copy, modify, and distribute this
- * file for any purpose is hereby granted without fee, provided that
- * the above copyright notices and this notice appears in all source
- * code copies, and that none of the names of Open Software
- * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
- * Corporation be used in advertising or publicity pertaining to
- * distribution of the software without specific, written prior
- * permission.  Neither Open Software Foundation, Inc., Hewlett-
- * Packard Company, nor Digital Equipment Corporation makes any
- * representations about the suitability of this software for any
- * purpose.
- * 
- */
-/*
+ * permission to use, copy, modify, and distribute this file for any
+ * purpose is hereby granted without fee, provided that the above
+ * copyright notices and this notice appears in all source code copies,
+ * and that none of the names of Open Software Foundation, Inc., Hewlett-
+ * Packard Company or Digital Equipment Corporation be used
+ * in advertising or publicity pertaining to distribution of the software
+ * without specific, written prior permission.  Neither Open Software
+ * Foundation, Inc., Hewlett-Packard Company nor Digital
+ * Equipment Corporation makes any representations about the suitability
+ * of this software for any purpose.
+ *
+ * Copyright (c) 2007, Novell, Inc. All rights reserved.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1.  Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ * 2.  Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 3.  Neither the name of Novell Inc. nor the names of its contributors
+ *     may be used to endorse or promote products derived from this
+ *     this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @APPLE_LICENSE_HEADER_END@
  */
 /*
 **
@@ -71,24 +124,62 @@ GLOBAL rpc_cn_common_hdr_t rpc_g_cn_common_hdr =
 
 
 INTERNAL rpc_cn_pres_result_list_p_t unpack_port_any (
-        rpc_cn_port_any_t       * /*port_any_p*/,
-        unsigned8               * /*drepp*/
+        rpc_cn_port_any_t       *port_any_p,
+        unsigned8               *drepp,
+        unsigned8               *end_of_pkt,
+        unsigned32              *st
         );
 
 INTERNAL rpc_cn_auth_tlr_p_t unpack_pres_context_list (
-        rpc_cn_pres_cont_list_p_t /*pcontp*/,
-        boolean32               /*swap*/
+        rpc_cn_pres_cont_list_p_t   pcontp,
+        boolean32                   swap,
+        unsigned8                   *end_of_pkt,
+        unsigned32                  *st
         );
 
 INTERNAL rpc_cn_auth_tlr_p_t unpack_pres_result_list (
-        rpc_cn_pres_result_list_p_t /*presp*/,
-        boolean32               /*swap*/
+        rpc_cn_pres_result_list_p_t presp,
+        boolean32                   swap,
+        unsigned8                   *end_of_pkt,
+        unsigned32                  *st
         );
 
 INTERNAL rpc_cn_auth_tlr_p_t unpack_versions_supported (
         rpc_cn_versions_supported_p_t /*versp*/
         );
 
+void SWAP_INPLACE_UUID
+(
+    dce_uuid_t   *uuid_p,
+    unsigned8    *end_of_pkt,
+    unsigned32   *st
+)
+{
+    SWAP_INPLACE_32(&uuid_p->time_low, end_of_pkt, st);
+    if (*st == rpc_s_ok)
+    {
+        SWAP_INPLACE_16(&uuid_p->time_mid, end_of_pkt, st);
+    }
+    if (*st == rpc_s_ok)
+    {
+        SWAP_INPLACE_16(&uuid_p->time_hi_and_version, end_of_pkt, st);
+    }
+}
+
+void SWAP_INPLACE_SYNTAX
+(
+    rpc_cn_pres_syntax_id_p_t   syntax_p,
+    unsigned8                   *end_of_pkt,
+    unsigned32                  *st
+)
+{
+    SWAP_INPLACE_UUID(&syntax_p->id, end_of_pkt, st);
+    if (*st == rpc_s_ok)
+    {
+        SWAP_INPLACE_32(&syntax_p->version, end_of_pkt, st);
+    }
+}
+
 /*
 **++
 **
@@ -127,15 +218,20 @@ INTERNAL rpc_cn_auth_tlr_p_t unpack_versions_supported (
 INTERNAL rpc_cn_pres_result_list_p_t unpack_port_any 
 (
   rpc_cn_port_any_t       *port_any_p,
-  unsigned8               *drepp
+    unsigned8               *drepp,
+    unsigned8               *end_of_pkt,
+    unsigned32              *st
 )
 {
+    unsigned8 * string_end;
     union
     {                                  /* a "proper" union to shut up lint */
         unsigned8 *string;             /* a string pointer */
         rpc_cn_pres_result_list_p_t rtn;        /* a return value */
     }   ptr;
     
+    *st = rpc_s_ok;
+
     ptr.string = port_any_p->s;        /* init our string pointer */
 
     /*
@@ -143,7 +239,11 @@ INTERNAL rpc_cn_pres_result_list_p_t unpack_port_any
      */
     if (NDR_LOCAL_INT_REP != NDR_DREP_INT_REP (drepp))
     {
-        SWAB_INPLACE_16 (port_any_p->length);
+        SWAP_INPLACE_16 (&port_any_p->length, end_of_pkt, st);
+        if (*st != rpc_s_ok)
+        {
+            return (NULL);
+        }
     }
 
     /*
@@ -151,6 +251,13 @@ INTERNAL rpc_cn_pres_result_list_p_t unpack_port_any
      */
     if (NDR_LOCAL_CHAR_REP != NDR_DREP_CHAR_REP (drepp))
     {
+        string_end = ptr.string + port_any_p->length;
+        if ( (string_end < ptr.string) || (end_of_pkt < string_end) )
+        {
+            *st = rpc_s_bad_pkt;
+            return (NULL);
+        }
+
 	rpc_util_strcvt ( NDR_LOCAL_CHAR_REP == ndr_c_char_ascii,
 			  port_any_p->length,
 			  ptr.string,
@@ -204,7 +311,9 @@ INTERNAL rpc_cn_pres_result_list_p_t unpack_port_any
 INTERNAL rpc_cn_auth_tlr_p_t unpack_pres_context_list 
 (
   rpc_cn_pres_cont_list_p_t       pcontp,
-  boolean32                       swap
+    boolean32                     swap,
+    unsigned8                     *end_of_pkt,
+    unsigned32                    *st
 )
 {
     unsigned8 n;                       /* presentation context list element
@@ -218,6 +327,8 @@ INTERNAL rpc_cn_auth_tlr_p_t unpack_pres_context_list
         rpc_cn_pres_syntax_id_p_t sp;  /* ptr to a transfer syntax id */
         rpc_cn_auth_tlr_p_t rtn;       /* return value */
     } ptrs;
+
+    *st = rpc_s_ok;
 
     /*
      * Get a pointer to the first element.
@@ -244,19 +355,31 @@ INTERNAL rpc_cn_auth_tlr_p_t unpack_pres_context_list
 	    /*
 	     * Convert the presentation context id.
 	     */
-	    SWAB_INPLACE_16 ((ptrs.ep)->pres_context_id);
+            SWAP_INPLACE_16 (&(ptrs.ep)->pres_context_id, end_of_pkt, st);
+            if (*st != rpc_s_ok)
+            {
+                return (NULL);
+            }
 	    
             /*
              * Convert the abstract syntax.
              */
-            SWAB_INPLACE_SYNTAX ((ptrs.ep)->abstract_syntax);
+            SWAP_INPLACE_SYNTAX (&(ptrs.ep)->abstract_syntax, end_of_pkt, st);
+            if (*st != rpc_s_ok)
+            {
+                return (NULL);
+            }
 
             /*
              * Process each transfer syntax id of this element.
              */
             for (id = 0; id < tsn; id++)
             {
-                SWAB_INPLACE_SYNTAX ((ptrs.ep)->transfer_syntaxes[id]);
+                SWAP_INPLACE_SYNTAX (&(ptrs.ep)->transfer_syntaxes[id], end_of_pkt, st);
+                if (*st != rpc_s_ok)
+                {
+                    return (NULL);
+                }
             }
         }
 
@@ -311,12 +434,16 @@ INTERNAL rpc_cn_auth_tlr_p_t unpack_pres_context_list
 INTERNAL rpc_cn_auth_tlr_p_t unpack_pres_result_list 
 (
   rpc_cn_pres_result_list_p_t     presp,
-  boolean32                       swap
+    boolean32                   swap,
+    unsigned8                   *end_of_pkt,
+    unsigned32                  *st
 )
 {
     unsigned8 n;		/* presentation result list element loop
                                         * count */
     unsigned8 prn;		/* number of presentation results */
+
+    *st = rpc_s_ok;
 
     /*
      * Process each element of the presentation result list.
@@ -324,9 +451,23 @@ INTERNAL rpc_cn_auth_tlr_p_t unpack_pres_result_list
     prn = presp->n_results;
     for (n = 0; (n < prn) && swap; n++)
     {
-        SWAB_INPLACE_16 (presp->pres_results[n].result);
-        SWAB_INPLACE_16 (presp->pres_results[n].reason);
-        SWAB_INPLACE_SYNTAX (presp->pres_results[n].transfer_syntax);
+        SWAP_INPLACE_16 (&presp->pres_results[n].result, end_of_pkt, st);
+        if (*st != rpc_s_ok)
+        {
+            return (NULL);
+        }
+
+        SWAP_INPLACE_16 (&presp->pres_results[n].reason, end_of_pkt, st);
+        if (*st != rpc_s_ok)
+        {
+            return (NULL);
+        }
+
+        SWAP_INPLACE_SYNTAX (&presp->pres_results[n].transfer_syntax, end_of_pkt, st);
+        if (*st != rpc_s_ok)
+        {
+            return (NULL);
+        }
     }
 
     /*
@@ -583,9 +724,10 @@ INTERNAL rpc_cn_auth_tlr_p_t end_of_stub_data
 **--
 **/
 
-PRIVATE void rpc__cn_unpack_hdr 
+PRIVATE unsigned32 rpc__cn_unpack_hdr
 (
-  rpc_cn_packet_p_t pkt_p
+    rpc_cn_packet_p_t pkt_p,
+    unsigned32 data_size
 )
 {
     rpc_cn_auth_tlr_p_t authp;           /* ptr to pkt authentication data */
@@ -598,6 +740,10 @@ PRIVATE void rpc__cn_unpack_hdr
     boolean authenticate;                /* boolean says authentication data is valid */
     boolean has_uuid;		         /* boolean says an OBJECT uuid is present */
     unsigned32 st;                       /* status variable */
+    unsigned8 *end_of_pkt;               /* ptr to 1 byte past end of packet */
+
+    end_of_pkt = (unsigned8 *) pkt_p;
+    end_of_pkt += data_size;
 
     /*
      * Get the DREP and see if we need to do byte/word swapping.
@@ -612,9 +758,23 @@ PRIVATE void rpc__cn_unpack_hdr
      */
     if (swap)
     {
-        SWAB_INPLACE_16 (RPC_CN_PKT_FRAG_LEN (pkt_p));
-        SWAB_INPLACE_16 (RPC_CN_PKT_AUTH_LEN (pkt_p));
-        SWAB_INPLACE_32 (RPC_CN_PKT_CALL_ID (pkt_p));
+        SWAP_INPLACE_16 (&RPC_CN_PKT_FRAG_LEN (pkt_p), end_of_pkt, &st);
+        if (st != rpc_s_ok)
+        {
+            return (st);
+        }
+
+        SWAP_INPLACE_16 (&RPC_CN_PKT_AUTH_LEN (pkt_p), end_of_pkt, &st);
+        if (st != rpc_s_ok)
+        {
+            return (st);
+        }
+
+        SWAP_INPLACE_32 (&RPC_CN_PKT_CALL_ID (pkt_p), end_of_pkt, &st);
+        if (st != rpc_s_ok)
+        {
+            return (st);
+        }
     }
 
     /*
@@ -641,12 +801,30 @@ PRIVATE void rpc__cn_unpack_hdr
         case RPC_C_CN_PKT_ALTER_CONTEXT:
             if (swap)
             {
-                SWAB_INPLACE_16 (RPC_CN_PKT_MAX_XMIT_FRAG (pkt_p));
-                SWAB_INPLACE_16 (RPC_CN_PKT_MAX_RECV_FRAG (pkt_p));
-                SWAB_INPLACE_32 (RPC_CN_PKT_ASSOC_GROUP_ID (pkt_p));
+                SWAP_INPLACE_16 (&RPC_CN_PKT_MAX_XMIT_FRAG (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
+
+                SWAP_INPLACE_16 (&RPC_CN_PKT_MAX_RECV_FRAG (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
+
+                SWAP_INPLACE_32 (&RPC_CN_PKT_ASSOC_GROUP_ID (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
             }
             pconp = (rpc_cn_pres_cont_list_p_t)((unsigned8 *)(&RPC_CN_PKT_ASSOC_GROUP_ID (pkt_p)) + 4);
-            authp = unpack_pres_context_list (pconp, swap);
+            authp = unpack_pres_context_list (pconp, swap, end_of_pkt, &st);
+            if (st != rpc_s_ok)
+            {
+                return (st);
+            }
             break;
 
             /*
@@ -656,15 +834,38 @@ PRIVATE void rpc__cn_unpack_hdr
         case RPC_C_CN_PKT_ALTER_CONTEXT_RESP:
             if (swap)
             {
-                SWAB_INPLACE_16 (RPC_CN_PKT_MAX_XMIT_FRAG (pkt_p));
-                SWAB_INPLACE_16 (RPC_CN_PKT_MAX_RECV_FRAG (pkt_p));
-                SWAB_INPLACE_32 (RPC_CN_PKT_ASSOC_GROUP_ID (pkt_p));
+                SWAP_INPLACE_16 (&RPC_CN_PKT_MAX_XMIT_FRAG (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
+
+                SWAP_INPLACE_16 (&RPC_CN_PKT_MAX_RECV_FRAG (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
+
+                SWAP_INPLACE_32 (&RPC_CN_PKT_ASSOC_GROUP_ID (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
             }
             secadrp = (rpc_cn_port_any_t *)
                 ((unsigned8 *)(pkt_p) + RPC_CN_PKT_SIZEOF_BIND_ACK_HDR);
-            presp = unpack_port_any (secadrp, drepp);
+            presp = unpack_port_any (secadrp, drepp, end_of_pkt, &st);
+            if (st != rpc_s_ok)
+            {
+                return (st);
+            }
+
             force_alignment (4, (unsigned8 **)&presp);
-            authp = unpack_pres_result_list (presp, swap);
+            authp = unpack_pres_result_list (presp, swap, end_of_pkt, &st);
+            if (st != rpc_s_ok)
+            {
+                return (st);
+            }
             break;
 
             /*
@@ -673,7 +874,11 @@ PRIVATE void rpc__cn_unpack_hdr
         case RPC_C_CN_PKT_BIND_NAK:
             if (swap)
             {
-                SWAB_INPLACE_16 (RPC_CN_PKT_PROV_REJ_REASON (pkt_p));
+                SWAP_INPLACE_16 (&RPC_CN_PKT_PROV_REJ_REASON (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
             }
 	    versp = &RPC_CN_PKT_VERSIONS (pkt_p);
             authp = unpack_versions_supported (versp);
@@ -685,12 +890,31 @@ PRIVATE void rpc__cn_unpack_hdr
         case RPC_C_CN_PKT_REQUEST:
             if (swap)
             {
-                SWAB_INPLACE_32 (RPC_CN_PKT_ALLOC_HINT (pkt_p));
-                SWAB_INPLACE_16 (RPC_CN_PKT_PRES_CONT_ID (pkt_p));
-                SWAB_INPLACE_16 (RPC_CN_PKT_OPNUM (pkt_p));
+                SWAP_INPLACE_32 (&RPC_CN_PKT_ALLOC_HINT (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
+
+                SWAP_INPLACE_16 (&RPC_CN_PKT_PRES_CONT_ID (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
+
+                SWAP_INPLACE_16 (&RPC_CN_PKT_OPNUM (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
+
 		if (has_uuid)
 		{
-                    SWAB_INPLACE_UUID (RPC_CN_PKT_OBJECT (pkt_p));
+                    SWAP_INPLACE_UUID (&RPC_CN_PKT_OBJECT (pkt_p), end_of_pkt, &st);
+                    if (st != rpc_s_ok)
+                    {
+                        return (st);
+                    }
                 }
             }
             authp = end_of_stub_data (pkt_p);
@@ -702,8 +926,17 @@ PRIVATE void rpc__cn_unpack_hdr
         case RPC_C_CN_PKT_RESPONSE:
             if (swap)
             {
-                SWAB_INPLACE_32 (RPC_CN_PKT_ALLOC_HINT (pkt_p));
-                SWAB_INPLACE_16 (RPC_CN_PKT_PRES_CONT_ID (pkt_p));
+                SWAP_INPLACE_32 (&RPC_CN_PKT_ALLOC_HINT (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
+
+                SWAP_INPLACE_16 (&RPC_CN_PKT_PRES_CONT_ID (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
             }
             authp = end_of_stub_data (pkt_p);
             break;
@@ -714,9 +947,23 @@ PRIVATE void rpc__cn_unpack_hdr
         case RPC_C_CN_PKT_FAULT:
             if (swap)
             {
-            	SWAB_INPLACE_32 (RPC_CN_PKT_ALLOC_HINT (pkt_p));
-                SWAB_INPLACE_16 (RPC_CN_PKT_PRES_CONT_ID (pkt_p));
-            	SWAB_INPLACE_32 (RPC_CN_PKT_STATUS (pkt_p));
+                SWAP_INPLACE_32 (&RPC_CN_PKT_ALLOC_HINT (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
+
+                SWAP_INPLACE_16 (&RPC_CN_PKT_PRES_CONT_ID (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
+
+                SWAP_INPLACE_32 (&RPC_CN_PKT_STATUS (pkt_p), end_of_pkt, &st);
+                if (st != rpc_s_ok)
+                {
+                    return (st);
+                }
             }
             authp = end_of_stub_data (pkt_p);
             break;
@@ -739,7 +986,7 @@ PRIVATE void rpc__cn_unpack_hdr
 	        rpc_m_bad_pkt_type,
 	        "rpc__cn_unpack_hdr",
 	        RPC_CN_PKT_PTYPE(pkt_p) ));
-            return;
+            return (rpc_s_bad_pkt);
     }
 
     /*
@@ -765,7 +1012,8 @@ PRIVATE void rpc__cn_unpack_hdr
 #ifdef DEBUG
 		p = (char *)authp;
 		force_alignment(4, (unsigned8 **)&authp);
-		if (p != (char *)authp) {
+                if (p != (char *)authp)
+                {
 		    /*
 		     * rpc_m_unalign_authtrl
 		     * "(%s) Unaligned RPC_CN_PKT_AUTH_TRL"
@@ -778,9 +1026,6 @@ PRIVATE void rpc__cn_unpack_hdr
 			"rpc__cn_unpack_hdr" ));
                 }
 #endif
-
-                SWAB_INPLACE_32(authp->key_id);
-
                 authn_protocol = RPC_CN_AUTH_CVT_ID_WIRE_TO_API (authp->auth_type, &st);
                 if (st == rpc_s_ok)
                 {
@@ -799,6 +1044,8 @@ PRIVATE void rpc__cn_unpack_hdr
             break;
         }
     }
+
+    return (rpc_s_ok);
 }
 
 
@@ -971,7 +1218,7 @@ PRIVATE void rpc__cn_stats_print (void)
 **--
 **/
 
-PRIVATE char *rpc__cn_pkt_name
+PRIVATE const char *rpc__cn_pkt_name
 (
   unsigned32      ptype ATTRIBUTE_UNUSED
 )
@@ -982,7 +1229,7 @@ PRIVATE char *rpc__cn_pkt_name
 
 #else
 
-    static char *names[RPC_C_CN_PKT_MAX_TYPE + 1] = 
+    static const char *names[RPC_C_CN_PKT_MAX_TYPE + 1] =
     {
         "REQUEST      ",
         "PING         ",
