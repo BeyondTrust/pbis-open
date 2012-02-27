@@ -1846,7 +1846,12 @@ LogTapper(
     char buffer[2048] = {0};
     ssize_t count = 0;
 
-    if (WakeMask & LW_TASK_EVENT_INIT)
+    if (WakeMask & LW_TASK_EVENT_CANCEL)
+    {
+        status = STATUS_CANCELLED;
+        BAIL_ON_ERROR(status);
+    }
+    else if (WakeMask & LW_TASK_EVENT_INIT)
     {
         status = LwRtlSetTaskUnixSignal(pTask, SIGINT, TRUE);
         BAIL_ON_ERROR(status);
@@ -1857,14 +1862,7 @@ LogTapper(
         status = LwRtlSetTaskFd(pTask, FifoFd, LW_TASK_EVENT_FD_READABLE);
         BAIL_ON_ERROR(status);
     }
-
-    if (WakeMask & LW_TASK_EVENT_CANCEL)
-    {
-        status = STATUS_CANCELLED;
-        BAIL_ON_ERROR(status);
-    }
-
-    if (WakeMask & LW_TASK_EVENT_UNIX_SIGNAL)
+    else if (WakeMask & LW_TASK_EVENT_UNIX_SIGNAL)
     {
         while (LwRtlNextTaskUnixSignal(pTask, &info))
         {
@@ -1875,9 +1873,7 @@ LogTapper(
             }
         }
     }
-
-    if (WakeMask & LW_TASK_EVENT_FD_READABLE ||
-        WakeMask & LW_TASK_EVENT_INIT)
+    else if (WakeMask & LW_TASK_EVENT_FD_READABLE)
     {
         do
         {
@@ -1945,8 +1941,6 @@ LwSmCmdTapLog(
     PSTR pFifo = NULL;
     int FifoFd = -1;
 
-    LwRtlBlockSignals();
-
     if (argc < 4)
     {
         error = LW_ERROR_INVALID_PARAMETER;
@@ -1972,11 +1966,11 @@ LwSmCmdTapLog(
 
     error = LwSmGetServiceLogState(hHandle, pFacility, &oldLogger, &pOldTarget, &oldLevel);
     BAIL_ON_ERROR(error);
-    bResetLogger = TRUE;
 
     error = LwAllocateStringPrintf(&pFifo, "/tmp/.lwsm-log-tap-%lu", (unsigned long) getpid());
     BAIL_ON_ERROR(error);
 
+    LwRtlBlockSignals();
     if (mknod(pFifo, S_IRUSR | S_IWUSR | S_IFIFO, 0) < 0)
     {
         error = LwErrnoToWin32Error(errno);
@@ -1998,6 +1992,7 @@ LwSmCmdTapLog(
 
     error = LwSmSetServiceLogTarget(hHandle, pFacility, LW_SM_LOGGER_FILE, pFifo);
     BAIL_ON_ERROR(error);
+    bResetLogger = TRUE;
 
     error = LwSmSetServiceLogLevel(hHandle, pFacility, newLevel);
     BAIL_ON_ERROR(error);
