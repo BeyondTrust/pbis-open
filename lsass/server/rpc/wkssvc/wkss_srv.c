@@ -110,8 +110,6 @@ WkssRpcStartServer(
     PCSTR pszDescription = "Workstation Service";
     
     ENDPOINT EndPoints[] = {
-        { "ncacn_np",      "\\\\pipe\\\\wkssvc" },
-        { "ncacn_np",      "\\\\pipe\\\\lsass" },
         { "ncalrpc",       NULL },  /* endpoint is fetched from config parameter */
         { NULL,  NULL },
         { NULL,            NULL }

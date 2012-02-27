@@ -110,9 +110,6 @@ LsaRpcStartServer(
     PCSTR pszDescription = "Local Security Authority";
     
     ENDPOINT EndPoints[] = {
-        { "ncacn_np",      "\\\\pipe\\\\lsarpc" },
-        { "ncacn_np",      "\\\\pipe\\\\netlogon" },
-        { "ncacn_np",      "\\\\pipe\\\\lsass" },
         { "ncalrpc",       NULL },  /* endpoint is fetched from config parameter */
         { NULL,  NULL },
         { NULL,            NULL }
