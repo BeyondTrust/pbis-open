@@ -435,4 +435,9 @@ FreePaths(
     PSTR pszServer,
     PSTR pszShare,
     PSTR pszPath
-    );
+    )
+{
+    LW_SAFE_FREE_STRING(pszServer);
+    LW_SAFE_FREE_STRING(pszShare);
+    LW_SAFE_FREE_STRING(pszPath);
+}
