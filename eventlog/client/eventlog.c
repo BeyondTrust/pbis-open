@@ -496,7 +496,7 @@ cleanup:
     {
         if (pRecords[index].pComputer == pwszHostname)
         {
-            pwszHostname = NULL;
+            pRecords[index].pComputer = NULL;
         }
     }
     LW_SAFE_FREE_MEMORY(pwszHostname);
