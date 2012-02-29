@@ -588,7 +588,7 @@ main(
             PrintEventRecords(stdout, pEventRecords, nRecords, &currentRecord);
             if (nRecords > 0)
             {
-                startRecordId = pEventRecords[nRecords - 1].EventRecordId;
+                startRecordId = pEventRecords[nRecords - 1].EventRecordId + 1;
             }
         } while (nRecords == nRecordsPerPage && nRecords > 0);
     }
@@ -633,7 +633,7 @@ main(
             PrintEventRecordsTable(stdout, pEventRecords, nRecords, &currentRecord);
             if (nRecords > 0)
             {
-                startRecordId = pEventRecords[nRecords - 1].EventRecordId;
+                startRecordId = pEventRecords[nRecords - 1].EventRecordId + 1;
             }
         } while (nRecords == nRecordsPerPage && nRecords > 0);
     }
