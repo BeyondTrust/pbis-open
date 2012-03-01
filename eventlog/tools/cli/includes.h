@@ -1,5 +1,6 @@
 #include "config.h"
 #include "eventsys.h"
+#include <locale.h>
 #include "eventlog.h"
 #include "eventdefs.h"
 #include "eventutils.h"

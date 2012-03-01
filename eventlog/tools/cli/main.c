@@ -391,6 +391,9 @@ main(
 
     poptContext optCon = { 0 };
 
+    /* Initialize i18n */
+    setlocale(LC_ALL, "");
+
     optCon = poptGetContext(NULL, argc, argv, optionsTable, 0);
     if (!optCon)
     {
