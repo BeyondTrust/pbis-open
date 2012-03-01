@@ -99,6 +99,25 @@ pkg_uninstall()
     fi
 }
 
+pkg_likewise_cleanup()
+{
+    $RUN rm -rfv "/Library/Receipts/likewise.open*.pkg"
+    $RUN rm -rfv "/var/db/receipts/com.likewise.open.pkg.bom"
+    $RUN rm -rfv "/var/db/receipts/com.likewise.open.pkg.plist"
+
+    $RUN rm -rfv "/Library/Receipts/likewisesoftware.open*.pkg"
+    $RUN rm -rfv "/var/db/receipts/com.likewisesoftware.open.bom"
+    $RUN rm -rfv "/var/db/receipts/com.likewisesoftware.open.plist"
+
+    $RUN rm -rfv "/Library/Receipts/likewise.enterprise*.pkg"
+    $RUN rm -rfv "/var/db/receipts/com.likewise.enterprise.pkg.bom"
+    $RUN rm -rfv "/var/db/receipts/com.likewise.enterprise.pkg.plist"
+
+    $RUN rm -rfv "/Library/Receipts/likewisesoftware.enterprise*.pkg"
+    $RUN rm -rfv "/var/db/receipts/com.likewisesoftware.enterprise.bom"
+    $RUN rm -rfv "/var/db/receipts/com.likewisesoftware.enterprise.plist"
+}
+
 launchctl_get_all_daemons()
 {
     if [ -n "${HAVE_LAUNCHCTL_V2}" ]; then
@@ -294,6 +313,8 @@ main()
     for pkgName in `pkg_list_pbis` ; do
         pkg_uninstall "${pkgName}"
     done
+
+    pkg_likewise_cleanup
 
     $RUN rm -rfv /opt/pbis /etc/pbis /var/log/pbis /var/lib/pbis /var/cache/pbis "/Applications/Likewise Utilities" "/Applications/PBIS Utilities" "/Library/Security/SecurityAgentPlugins/com.likewise.bundle"
 
