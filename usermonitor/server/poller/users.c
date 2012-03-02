@@ -740,8 +740,18 @@ UmnSrvUpdateUsers(
                 &hUsers);
     BAIL_ON_UMN_ERROR(dwError);
 
-    while((pUser = getpwent()) != NULL)
+    while ((pUser = getpwent()) != NULL)
     {
+        if (!strcmp(pUser->pw_shell, "/sbin/nologin") ||
+            !strcmp(pUser->pw_shell, "/bin/nologin") ||
+            !strcmp(pUser->pw_shell, "/usr/sbin/nologin") ||
+            !strcmp(pUser->pw_shell, "/usr/bin/false") ||
+            !strcmp(pUser->pw_shell, "/bin/false"))
+        {
+            UMN_LOG_VERBOSE("Skipping enumerated user '%s' (uid %d) because their shell prevents them from logging in.",
+                    pUser->pw_name, uid);
+            continue;
+        }
         uid = pUser->pw_uid;
 
         dwError = LsaFindObjects(
