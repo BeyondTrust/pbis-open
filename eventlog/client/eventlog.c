@@ -166,7 +166,9 @@ LwEvtOpenEventlog(
 {
     volatile DWORD dwError = 0;
     PLW_EVENTLOG_CONNECTION pConn = NULL;
+#ifndef _EVENTLOG_NO_DCERPC_SUPPORT_
     handle_t eventBindingLocal = 0;
+#endif
 
     EVT_LOG_VERBOSE("client::eventlog.c OpenEventlog server=%s)\n",
             LW_SAFE_LOG_STRING(pServerName));
@@ -180,6 +182,7 @@ LwEvtOpenEventlog(
         dwError = LwmEvtOpenServer(&pConn->Local);
         BAIL_ON_EVT_ERROR(dwError);
     }
+#ifndef _EVENTLOG_NO_DCERPC_SUPPORT_
     else
     {
         TRY
@@ -212,6 +215,7 @@ LwEvtOpenEventlog(
 
         BAIL_ON_EVT_ERROR(dwError);
     }
+#endif
 
     *ppConn = pConn;
 
@@ -224,10 +228,12 @@ error:
         LwEvtCloseEventlog(pConn);
     }
 
+#ifndef _EVENTLOG_NO_DCERPC_SUPPORT_
     if (eventBindingLocal)
     {
         LwEvtFreeEventlogRpcBinding(eventBindingLocal);
     }
+#endif
 
     *ppConn = NULL;
     goto cleanup;
@@ -251,6 +257,7 @@ LwEvtCloseEventlog(
         dwError = LwmEvtCloseServer(pConn->Local);
         BAIL_ON_EVT_ERROR(dwError);
     }
+#ifndef _EVENTLOG_NO_DCERPC_SUPPORT_
     if (pConn->Remote)
     {
         TRY
@@ -265,14 +272,17 @@ LwEvtCloseEventlog(
 
         BAIL_ON_EVT_ERROR(dwError);
     }
+#endif
 
 cleanup:
     if (pConn)
     {
+#ifndef _EVENTLOG_NO_DCERPC_SUPPORT_
         if (pConn->Remote != NULL)
         {
             RpcSsDestroyClientContext(&pConn->Remote);
         }
+#endif
         LW_SAFE_FREE_MEMORY(pConn);
     }
 
@@ -284,6 +294,7 @@ error:
     goto cleanup;
 }
 
+#ifndef _EVENTLOG_NO_DCERPC_SUPPORT_
 static
 idl_void_p_t
 LwEvtRpcAllocateMemory(
@@ -314,6 +325,7 @@ LwEvtRpcFreeMemory(
 {
     LwFreeMemory(pMem);
 }
+#endif
 
 DWORD
 LwEvtReadRecords(
@@ -327,8 +339,6 @@ LwEvtReadRecords(
     volatile DWORD dwError = 0;
     LW_EVENTLOG_RECORD_LIST records = { 0 };
     // These are function pointers initialized to NULL
-    idl_void_p_t (*pOldMalloc)(idl_size_t) = NULL;
-    void (*pOldFree)(idl_void_p_t) = NULL;
 
     if (pConn->Local)
     {
@@ -340,8 +350,11 @@ LwEvtReadRecords(
                         &records.pRecords);
         BAIL_ON_EVT_ERROR(dwError);
     }
+#ifndef _EVENTLOG_NO_DCERPC_SUPPORT_
     else
     {
+        idl_void_p_t (*pOldMalloc)(idl_size_t) = NULL;
+        void (*pOldFree)(idl_void_p_t) = NULL;
         TRY
         {
             rpc_ss_swap_client_alloc_free(
@@ -370,6 +383,7 @@ LwEvtReadRecords(
 
         BAIL_ON_EVT_ERROR(dwError);
     }
+#endif
 
     *pCount = records.Count;
     *ppRecords = records.pRecords;
@@ -405,6 +419,7 @@ LwEvtGetRecordCount(
                         &numMatched);
         BAIL_ON_EVT_ERROR(dwError);
     }
+#ifndef _EVENTLOG_NO_DCERPC_SUPPORT_
     else
     {
         TRY
@@ -422,6 +437,7 @@ LwEvtGetRecordCount(
 
         BAIL_ON_EVT_ERROR(dwError);
     }
+#endif
 
     *pNumMatched = numMatched;
 
@@ -473,6 +489,7 @@ LwEvtWriteRecords(
                         pRecords);
         BAIL_ON_EVT_ERROR(dwError);
     }
+#ifndef _EVENTLOG_NO_DCERPC_SUPPORT_
     else
     {
         TRY
@@ -490,6 +507,7 @@ LwEvtWriteRecords(
 
         BAIL_ON_EVT_ERROR(dwError);
     }
+#endif
 
 cleanup:
     for (index = 0; index < Count; index++)
@@ -523,6 +541,7 @@ LwEvtDeleteRecords(
                         pSqlFilter);
         BAIL_ON_EVT_ERROR(dwError);
     }
+#ifndef _EVENTLOG_NO_DCERPC_SUPPORT_
     else
     {
         TRY
@@ -539,6 +558,7 @@ LwEvtDeleteRecords(
 
         BAIL_ON_EVT_ERROR(dwError);
     }
+#endif
 
 cleanup:
     return dwError;
@@ -549,6 +569,7 @@ error:
     goto cleanup;
 }
 
+#ifndef _EVENTLOG_NO_DCERPC_SUPPORT_
 DWORD
 EVTGetRpcError(
     dcethread_exc* exCatch
@@ -558,4 +579,4 @@ EVTGetRpcError(
     dwError = dcethread_exc_getstatus (exCatch);
     return LwNtStatusToWin32Error(LwRpcStatusToNtStatus(dwError));
 }
-
+#endif

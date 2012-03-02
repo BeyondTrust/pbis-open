@@ -103,6 +103,7 @@ void __RPC_USER midl_user_free(void __RPC_FAR * p);
         goto error;                \
     }
 
+#ifndef _EVENTLOG_NO_DCERPC_SUPPORT_
 #define BAIL_ON_DCE_ERROR(dwError, rpcstatus)                           \
     if ((rpcstatus) != RPC_S_OK)                                        \
     {                                                                   \
@@ -125,5 +126,5 @@ void __RPC_USER midl_user_free(void __RPC_FAR * p);
                                                                         \
         goto error;                                                     \
     }
-
+#endif
 #endif /* __EVENTDEFS_H__ */

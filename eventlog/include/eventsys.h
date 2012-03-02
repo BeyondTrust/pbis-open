@@ -54,8 +54,10 @@
   #include <lwrpcrt/lwrpcrt.h>
   #include <lw/winerror.h>
   #include <dlfcn.h>
+#ifndef _EVENTLOG_NO_DCERPC_SUPPORT_
   #include <dce/rpcexc.h>
   #include <dce/lrpc.h>
+#endif
 
 #if HAVE_WC16STR_H
   #include <wc16str.h>
