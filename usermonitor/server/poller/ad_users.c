@@ -675,6 +675,12 @@ UmnSrvUpdateADAccountsByHash(
     {
         PLSA_SECURITY_OBJECT pUser = (PLSA_SECURITY_OBJECT)pEntry->pValue;
 
+        if (gbPollerThreadShouldExit)
+        {
+            dwError = ERROR_CANCELLED;
+            BAIL_ON_UMN_ERROR(dwError);
+        }
+
         dwError = UmnSrvUpdateADUser(
                         pEventlog,
                         hReg,
@@ -769,6 +775,11 @@ UmnSrvUpdateADAccountsByHash(
 
             for (i = 0; i < lookupGroupSidCount; i++)
             {
+                if (gbPollerThreadShouldExit)
+                {
+                    dwError = ERROR_CANCELLED;
+                    BAIL_ON_UMN_ERROR(dwError);
+                }
                 pGroup = ppLookedupGroups[i];
 
                 UMN_LOG_VERBOSE("Found AD user %s is a member of unprocessed group %s",

@@ -310,6 +310,12 @@ UmnSrvPollerThreadRoutine(
         BAIL_ON_UMN_ERROR(dwError);
 
         dwError = UmnSrvUpdateAccountInfo(now.tv_sec);
+        if (dwError == ERROR_CANCELLED)
+        {
+            UMN_LOG_INFO("User poller cancelled iteration");
+            dwError = 0;
+            break;
+        }
         BAIL_ON_UMN_ERROR(dwError);
 
         // periodUsed = now - periodStart

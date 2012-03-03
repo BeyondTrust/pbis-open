@@ -911,6 +911,11 @@ UmnSrvFindDeletedGroups(
 
     for (i = 0; i < subKeyCount; i++)
     {
+        if (gbPollerThreadShouldExit)
+        {
+            dwError = ERROR_CANCELLED;
+            BAIL_ON_UMN_ERROR(dwError);
+        }
         subKeyLen = maxSubKeyLen;
 
         dwError = RegEnumKeyExA(
