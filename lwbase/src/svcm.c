@@ -553,6 +553,14 @@ ValidateModuleTable(
     return status;
 }
 
+VOID
+LwRtlSvcmFreePool(
+    VOID
+    )
+{
+    LwRtlFreeThreadPool((PLW_THREAD_POOL*) &gSvcmState.pPool);
+}
+
 static
 __attribute__((destructor))
 VOID
@@ -560,5 +568,5 @@ SvcmDestructor(
     VOID
     )
 {
-    LwRtlFreeThreadPool((PLW_THREAD_POOL*) &gSvcmState.pPool);
+    LwRtlSvcmFreePool();
 }

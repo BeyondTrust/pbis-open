@@ -200,14 +200,18 @@ error:
     /* Shut down containers */
     LwSmContainerShutdown();
 
-    /* Shut down logging */
-    LwSmLoggingShutdown();
-
     /* Remove DS cache exception */
     LwDsCacheRemovePidException(getpid());
 
     /* Free thread pool */
     LwRtlFreeThreadPool(&gpPool);
+
+    /* Free the service thread pool to ensure the service finished shutting
+     * down.*/
+    LwRtlSvcmFreePool();
+
+    /* Shut down logging */
+    LwSmLoggingShutdown();
 
     /* Close control file if it is open */
     if (gState.ControlLock >= 0)

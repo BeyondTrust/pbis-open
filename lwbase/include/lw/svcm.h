@@ -361,6 +361,11 @@ LwRtlSvcmUnload(
     LW_IN LW_OUT PLW_SVCM_INSTANCE pInstance
     );
 
+VOID
+LwRtlSvcmFreePool(
+    VOID
+    );
+
 /*@}*/
 
 LW_END_EXTERN_C
