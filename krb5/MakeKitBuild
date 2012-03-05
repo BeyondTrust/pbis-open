@@ -29,6 +29,9 @@ make()
         k5crypto:3.1 \
         gssapi_krb5:2.2 \
         krb5:3.3 \
+        kadm5srv_mit:8.0 \
+        kdb5:5.0 \
+        gssrpc:4.1 \
         krb5support:${SUPPORT_MAJOR}.1"
 
     KRB5_EXTRA_TARGETS="\
