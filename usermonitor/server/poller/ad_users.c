@@ -484,11 +484,17 @@ UmnSrvUpdateADUser(
     HKEY hKey = NULL;
     USER_MONITOR_PASSWD old = { 0 };
     DWORD dwNow = Now;
+    PSTR pEncodedUser = NULL;
+
+    dwError = LwURLEncodeString(
+                    pUser->userInfo.pszUnixName,
+                    &pEncodedUser);
+    BAIL_ON_UMN_ERROR(dwError);
 
     dwError = RegOpenKeyExA(
                     hReg,
                     hUsers,
-                    pUser->pszObjectSid,
+                    pEncodedUser,
                     0,
                     KEY_ALL_ACCESS,
                     &hKey);
@@ -500,7 +506,7 @@ UmnSrvUpdateADUser(
         dwError = RegCreateKeyExA(
                         hReg,
                         hUsers,
-                        pUser->pszObjectSid,
+                        pEncodedUser,
                         0,
                         NULL,
                         0,
@@ -530,31 +536,11 @@ UmnSrvUpdateADUser(
 
         dwError = UmnSrvReadUser(
                         "AD Users",
-                        pUser->pszObjectSid,
+                        pEncodedUser,
                         &old);
         BAIL_ON_UMN_ERROR(dwError);
 
-        if (strcmp(pUser->userInfo.pszUnixName, old.pw_name))
-        {
-            // The user's name changed. This is too drastic of a change for a
-            // change event. File a deletion and addition event.
-            dwError = UmnSrvWriteADUserEvent(
-                            pEventlog,
-                            PreviousRun,
-                            &old,
-                            Now,
-                            NULL);
-            BAIL_ON_UMN_ERROR(dwError);
-
-            dwError = UmnSrvWriteADUserEvent(
-                            pEventlog,
-                            PreviousRun,
-                            NULL,
-                            Now,
-                            pUser);
-            BAIL_ON_UMN_ERROR(dwError);
-        }
-        else if (strcmp((pUser->userInfo.pszPasswd ?
+        if (strcmp((pUser->userInfo.pszPasswd ?
                         pUser->userInfo.pszPasswd : "x"),
                     old.pw_passwd) ||
                 pUser->userInfo.uid != old.pw_uid ||
@@ -595,6 +581,7 @@ UmnSrvUpdateADUser(
     BAIL_ON_UMN_ERROR(dwError);
 
 cleanup:
+    LW_SAFE_FREE_STRING(pEncodedUser);
     UmnSrvFreeUserContents(&old);
     if (hKey)
     {
@@ -635,9 +622,14 @@ UmnSrvUpdateADAccountsByHash(
     LSA_QUERY_LIST list = { 0 };
     PLSA_SECURITY_OBJECT *ppLookedupGroups = NULL;
     PLW_HASH_TABLE pGroups = NULL;
+    PLW_HASH_TABLE pNameToUser = NULL;
+    PLW_HASH_TABLE pNameToGroup = NULL;
     DWORD i = 0;
     // Do not free
     PLSA_SECURITY_OBJECT pGroup = NULL;
+    // Do not free
+    PLSA_SECURITY_OBJECT pExisting = NULL;
+    PSTR pNewName = NULL;
 
     dwError = LwHashCreate(
                     100,
@@ -646,6 +638,24 @@ UmnSrvUpdateADAccountsByHash(
                     UmnSrvHashFreeObjectValue,
                     NULL,
                     &pGroups);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = LwHashCreate(
+                    100,
+                    LwHashStringCompare,
+                    LwHashStringHash,
+                    NULL,
+                    NULL,
+                    &pNameToGroup);
+    BAIL_ON_UMN_ERROR(dwError);
+
+    dwError = LwHashCreate(
+                    pUsers->sCount * 2,
+                    LwHashStringCompare,
+                    LwHashStringHash,
+                    NULL,
+                    NULL,
+                    &pNameToUser);
     BAIL_ON_UMN_ERROR(dwError);
 
     dwError = RegOpenKeyExA(
@@ -680,6 +690,39 @@ UmnSrvUpdateADAccountsByHash(
             dwError = ERROR_CANCELLED;
             BAIL_ON_UMN_ERROR(dwError);
         }
+
+        dwError = LwHashGetValue(
+                        pNameToUser,
+                        pUser->userInfo.pszUnixName,
+                        (PVOID*)&pExisting);
+        if (dwError != ERROR_NOT_FOUND)
+        {
+            BAIL_ON_UMN_ERROR(dwError);
+
+            dwError = LwAllocateStringPrintf(
+                            &pNewName,
+                            "%s\\%s",
+                            pUser->pszNetbiosDomainName,
+                            pUser->pszSamAccountName);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            UMN_LOG_ERROR("Found conflict on user name '%hhs'. Sid %hhs will now be reported as name '%s' instead because its alias conflicts with sid %hhs.",
+                                    pUser->userInfo.pszUnixName,
+                                    pUser->pszObjectSid,
+                                    pNewName,
+                                    pExisting->pszObjectSid);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            LW_SAFE_FREE_STRING(pUser->userInfo.pszUnixName);
+            pUser->userInfo.pszUnixName = pNewName;
+            pNewName = NULL;
+        }
+
+        dwError = LwHashSetValue(
+                        pNameToUser,
+                        pUser->userInfo.pszUnixName,
+                        pUser);
+        BAIL_ON_UMN_ERROR(dwError);
 
         dwError = UmnSrvUpdateADUser(
                         pEventlog,
@@ -786,6 +829,39 @@ UmnSrvUpdateADAccountsByHash(
                         pUser->userInfo.pszUnixName,
                         pGroup->groupInfo.pszUnixName);
 
+                dwError = LwHashGetValue(
+                                pNameToGroup,
+                                pGroup->groupInfo.pszUnixName,
+                                (PVOID*)&pExisting);
+                if (dwError != ERROR_NOT_FOUND)
+                {
+                    BAIL_ON_UMN_ERROR(dwError);
+
+                    dwError = LwAllocateStringPrintf(
+                                    &pNewName,
+                                    "%s\\%s",
+                                    pGroup->pszNetbiosDomainName,
+                                    pGroup->pszSamAccountName);
+                    BAIL_ON_UMN_ERROR(dwError);
+
+                    UMN_LOG_ERROR("Found conflict on group name '%hhs'. Sid %hhs will now be reported as name '%s' instead because its alias conflicts with sid %hhs.",
+                                            pGroup->groupInfo.pszUnixName,
+                                            pGroup->pszObjectSid,
+                                            pNewName,
+                                            pExisting->pszObjectSid);
+                    BAIL_ON_UMN_ERROR(dwError);
+
+                    LW_SAFE_FREE_STRING(pGroup->groupInfo.pszUnixName);
+                    pGroup->groupInfo.pszUnixName = pNewName;
+                    pNewName = NULL;
+                }
+
+                dwError = LwHashSetValue(
+                                pNameToGroup,
+                                pGroup->groupInfo.pszUnixName,
+                                pGroup);
+                BAIL_ON_UMN_ERROR(dwError);
+
                 if (!pGroup->enabled)
                 {
                     UMN_LOG_VERBOSE("Skipping unenabled group %s",
@@ -845,6 +921,7 @@ UmnSrvUpdateADAccountsByHash(
     BAIL_ON_UMN_ERROR(dwError);
 
 cleanup:
+    LW_SAFE_FREE_STRING(pNewName);
     LW_SAFE_FREE_MEMORY(ppLookupGroupSids);
     if (ppGroupSids)
     {
@@ -867,6 +944,8 @@ cleanup:
         RegCloseKey(hReg, hGroups);
     }
     LwHashSafeFree(&pGroups);
+    LwHashSafeFree(&pNameToUser);
+    LwHashSafeFree(&pNameToGroup);
     return dwError;
     
 error:

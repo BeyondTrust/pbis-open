@@ -290,11 +290,17 @@ UmnSrvUpdateADGroup(
     USER_MONITOR_GROUP old = { 0 };
     DWORD dwNow = Now;
     old.gr_gid = -1;
+    PSTR pEncodedGroup = NULL;
+
+    dwError = LwURLEncodeString(
+                    pGroup->groupInfo.pszUnixName,
+                    &pEncodedGroup);
+    BAIL_ON_UMN_ERROR(dwError);
 
     dwError = RegOpenKeyExA(
                     hReg,
                     hGroups,
-                    pGroup->pszObjectSid,
+                    pEncodedGroup,
                     0,
                     KEY_ALL_ACCESS,
                     &hKey);
@@ -306,7 +312,7 @@ UmnSrvUpdateADGroup(
         dwError = RegCreateKeyExA(
                         hReg,
                         hGroups,
-                        pGroup->pszObjectSid,
+                        pEncodedGroup,
                         0,
                         NULL,
                         0,
@@ -349,7 +355,7 @@ UmnSrvUpdateADGroup(
 
         dwError = UmnSrvReadGroup(
                         "AD Groups",
-                        pGroup->pszObjectSid,
+                        pEncodedGroup,
                         &old);
         BAIL_ON_UMN_ERROR(dwError);
 
@@ -434,6 +440,7 @@ UmnSrvUpdateADGroup(
     BAIL_ON_UMN_ERROR(dwError);
 
 cleanup:
+    LW_SAFE_FREE_STRING(pEncodedGroup);
     UmnSrvFreeGroupContents(&old);
     if (hKey)
     {
@@ -470,6 +477,7 @@ UmnSrvUpdateADGroupMember(
     DWORD dwNow = Now;
     PSTR pEncodedMember = NULL;
     PSTR pKeyName = NULL;
+    PSTR pEncodedGroup = NULL;
     PSTR pMembersKeyName = NULL;
 
     dwError = LwURLEncodeString(
@@ -477,10 +485,15 @@ UmnSrvUpdateADGroupMember(
                     &pEncodedMember);
     BAIL_ON_UMN_ERROR(dwError);
 
+    dwError = LwURLEncodeString(
+                    pGroup->groupInfo.pszUnixName,
+                    &pEncodedGroup);
+    BAIL_ON_UMN_ERROR(dwError);
+
     dwError = LwAllocateStringPrintf(
                     &pKeyName,
                     "%s\\Members\\%s",
-                    pGroup->pszObjectSid,
+                    pEncodedGroup,
                     pEncodedMember);
     BAIL_ON_UMN_ERROR(dwError);
 
@@ -499,7 +512,7 @@ UmnSrvUpdateADGroupMember(
         dwError = LwAllocateStringPrintf(
                         &pMembersKeyName,
                         "%s\\Members",
-                        pGroup->pszObjectSid);
+                        pEncodedGroup);
         BAIL_ON_UMN_ERROR(dwError);
 
         dwError = RegOpenKeyExA(
@@ -548,6 +561,7 @@ UmnSrvUpdateADGroupMember(
     BAIL_ON_UMN_ERROR(dwError);
 
 cleanup:
+    LW_SAFE_FREE_STRING(pEncodedGroup);
     LW_SAFE_FREE_STRING(pKeyName);
     LW_SAFE_FREE_STRING(pMembersKeyName);
     LW_SAFE_FREE_STRING(pEncodedMember);
