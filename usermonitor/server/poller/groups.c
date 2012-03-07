@@ -478,11 +478,17 @@ UmnSrvUpdateGroupMember(
     DWORD dwError = 0;
     HKEY hKey = NULL;
     DWORD dwNow = Now;
+    PSTR pEncodedMember = NULL;
+
+    dwError = LwURLEncodeString(
+                    pMember,
+                    &pEncodedMember);
+    BAIL_ON_UMN_ERROR(dwError);
 
     dwError = RegOpenKeyExA(
                     hReg,
                     hMembers,
-                    pMember,
+                    pEncodedMember,
                     0,
                     KEY_ALL_ACCESS,
                     &hKey);
@@ -494,7 +500,7 @@ UmnSrvUpdateGroupMember(
         dwError = RegCreateKeyExA(
                         hReg,
                         hMembers,
-                        pMember,
+                        pEncodedMember,
                         0,
                         NULL,
                         0,
@@ -554,6 +560,7 @@ UmnSrvUpdateGroupMember(
     BAIL_ON_UMN_ERROR(dwError);
 
 cleanup:
+    LW_SAFE_FREE_STRING(pEncodedMember);
     if (hKey)
     {
         RegCloseKey(
