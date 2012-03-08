@@ -328,7 +328,7 @@ UmnSrvPollerThreadRoutine(
             &periodUsed,
             &periodStart);
 
-        dwError = UmnSrvGetCheckInterval(NULL, &dwPeridoSecs);
+        dwError = UmnSrvGetCheckInterval(NULL, &dwPeriodSecs);
         BAIL_ON_UMN_ERROR(dwError);
         pushWait.tv_sec = dwPeriodSecs;
 
