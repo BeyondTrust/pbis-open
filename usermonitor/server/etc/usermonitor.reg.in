@@ -37,7 +37,7 @@
 
 [HKEY_THIS_MACHINE\Services\usermonitor\Parameters]
 "CheckInterval" = {
-    default = dword:0000003c
+    default = dword:00000708
     doc = "Frequency of checking for new users"
 }
 "LastUpdated" = {

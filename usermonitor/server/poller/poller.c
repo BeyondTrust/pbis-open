@@ -289,7 +289,7 @@ UmnSrvPollerThreadRoutine(
     struct timeval now;
     struct timespec periodStart, periodUsed, nowSpec, nextWake, pushWait = {0};
     BOOLEAN bMutexLocked = FALSE;
-    DWORD dwPeriodSecs = 60;
+    DWORD dwPeriodSecs = 0;
 
     UMN_LOG_INFO("User poller thread started");
 
@@ -328,6 +328,8 @@ UmnSrvPollerThreadRoutine(
             &periodUsed,
             &periodStart);
 
+        dwError = UmnSrvGetCheckInterval(NULL, &dwPeridoSecs);
+        BAIL_ON_UMN_ERROR(dwError);
         pushWait.tv_sec = dwPeriodSecs;
 
         UmnSrvTimespecAdd(
