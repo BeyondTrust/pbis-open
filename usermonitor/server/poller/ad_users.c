@@ -452,14 +452,19 @@ UmnSrvWriteADUserValues(
                     strlen(pUser->userInfo.pszShell) + 1);
     BAIL_ON_UMN_ERROR(dwError);
 
+    pString = pUser->userInfo.pszDisplayName;
+    if (!pString)
+    {
+        pString = "";
+    }
     dwError = RegSetValueExA(
                     hReg,
                     hUser,
                     "pDisplayName",
                     0,
                     REG_SZ,
-                    (PBYTE) pUser->userInfo.pszDisplayName,
-                    strlen(pUser->userInfo.pszDisplayName) + 1);
+                    (PBYTE) pString,
+                    strlen(pString) + 1);
     BAIL_ON_UMN_ERROR(dwError);
 
 cleanup:
@@ -467,6 +472,24 @@ cleanup:
 
 error:
     goto cleanup;
+}
+
+static
+BOOLEAN
+UmnSrvStringsEqual(
+    PCSTR pStr1,
+    PCSTR pStr2
+    )
+{
+    if (pStr1 == NULL)
+    {
+        pStr1 = "";
+    }
+    if (pStr2 == NULL)
+    {
+        pStr2 = "";
+    }
+    return !strcmp(pStr1, pStr2);
 }
 
 static
@@ -545,12 +568,11 @@ UmnSrvUpdateADUser(
                     old.pw_passwd) ||
                 pUser->userInfo.uid != old.pw_uid ||
                 pUser->userInfo.gid != old.pw_gid ||
-                strcmp((pUser->userInfo.pszGecos ?
-                                pUser->userInfo.pszGecos : ""),
-                            old.pw_gecos) ||
-                strcmp(pUser->userInfo.pszHomedir, old.pw_dir) ||
-                strcmp(pUser->userInfo.pszShell, old.pw_shell) ||
-                strcmp(pUser->userInfo.pszDisplayName, old.pDisplayName))
+                !UmnSrvStringsEqual(pUser->userInfo.pszGecos, old.pw_gecos) ||
+                !UmnSrvStringsEqual(pUser->userInfo.pszHomedir, old.pw_dir) ||
+                !UmnSrvStringsEqual(pUser->userInfo.pszShell, old.pw_shell) ||
+                !UmnSrvStringsEqual(pUser->userInfo.pszDisplayName,
+                    old.pDisplayName))
         {
             UMN_LOG_INFO("User '%s' (uid %d) changed",
                             pUser->userInfo.pszUnixName, pUser->userInfo.uid);
