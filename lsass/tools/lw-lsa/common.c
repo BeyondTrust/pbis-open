@@ -54,71 +54,100 @@ VOID
 PrintSecurityObject(
     PLSA_SECURITY_OBJECT pObject,
     DWORD dwObjectNumber,
-    DWORD dwObjectTotal
+    DWORD dwObjectTotal,
+    BOOLEAN bPBOutputMode
     )
 {
     switch (pObject->type)
     {
     case LSA_OBJECT_TYPE_GROUP:
-        if (dwObjectTotal)
+        if (!bPBOutputMode)
         {
-            printf("Group object [%u of %u] (%s)\n", dwObjectNumber+1, dwObjectTotal, SAFE_STRING(pObject->pszObjectSid));
+            if (dwObjectTotal)
+            {
+                printf("Group object [%u of %u] (%s)\n", dwObjectNumber+1, dwObjectTotal, SAFE_STRING(pObject->pszObjectSid));
+            }
+            else
+            {
+                printf("Group object [%u] (%s)\n", dwObjectNumber+1, SAFE_STRING(pObject->pszObjectSid));   
+            }
+            printf("============\n");
+            printf("Enabled: %s\n", pObject->enabled ? "yes" : "no");
+            printf("Distinguished name: %s\n", SAFE_STRING(pObject->pszDN));
+            printf("SAM account name: %s\n", SAFE_STRING(pObject->pszSamAccountName));
+            printf("NetBIOS domain name: %s\n", SAFE_STRING(pObject->pszNetbiosDomainName));
+            printf("Alias: %s\n", SAFE_STRING(pObject->groupInfo.pszAliasName));
+            printf("UNIX name: %s\n", SAFE_STRING(pObject->groupInfo.pszUnixName));
+            printf("GID: %lu\n", (unsigned long) pObject->groupInfo.gid);
         }
         else
         {
-            printf("Group object [%u] (%s)\n", dwObjectNumber+1, SAFE_STRING(pObject->pszObjectSid));   
+            if (dwObjectTotal && dwObjectNumber+1 < dwObjectTotal)
+            {
+                printf("%s\%s, ", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
+            }
+            else
+            {
+                printf("%s\%s", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
+            }
         }
-        printf("============\n");
-        printf("Enabled: %s\n", pObject->enabled ? "yes" : "no");
-        printf("Distinguished name: %s\n", SAFE_STRING(pObject->pszDN));
-        printf("SAM account name: %s\n", SAFE_STRING(pObject->pszSamAccountName));
-        printf("NetBIOS domain name: %s\n", SAFE_STRING(pObject->pszNetbiosDomainName));
-        printf("Alias: %s\n", SAFE_STRING(pObject->groupInfo.pszAliasName));
-        printf("UNIX name: %s\n", SAFE_STRING(pObject->groupInfo.pszUnixName));
-        printf("GID: %lu\n", (unsigned long) pObject->groupInfo.gid);
         break;
     case LSA_OBJECT_TYPE_USER:
-        if (dwObjectTotal)
+        if (!bPBOutputMode)
         {
-            printf("User object [%u of %u] (%s)\n", dwObjectNumber+1, dwObjectTotal, SAFE_STRING(pObject->pszObjectSid));
+            if (dwObjectTotal)
+            {
+                printf("User object [%u of %u] (%s)\n", dwObjectNumber+1, dwObjectTotal, SAFE_STRING(pObject->pszObjectSid));
+            }
+            else
+            {
+                printf("User object [%u] (%s)\n", dwObjectNumber+1, SAFE_STRING(pObject->pszObjectSid));
+            }
+            printf("============\n");
+            printf("Enabled: %s\n", pObject->enabled ? "yes" : "no");
+            printf("Distinguished name: %s\n", SAFE_STRING(pObject->pszDN));
+            printf("SAM account name: %s\n", SAFE_STRING(pObject->pszSamAccountName));
+            printf("NetBIOS domain name: %s\n", SAFE_STRING(pObject->pszNetbiosDomainName));
+            if (pObject->userInfo.bIsGeneratedUPN)
+            {
+                printf("UPN (generated): %s\n", SAFE_STRING(pObject->userInfo.pszUPN));
+            }
+            else
+            {
+                printf("UPN: %s\n", SAFE_STRING(pObject->userInfo.pszUPN));
+            }
+            printf("Display Name: %s\n", SAFE_STRING(pObject->userInfo.pszDisplayName));
+            printf("Alias: %s\n", SAFE_STRING(pObject->userInfo.pszAliasName));
+            printf("UNIX name: %s\n", SAFE_STRING(pObject->userInfo.pszUnixName));
+            printf("GECOS: %s\n", SAFE_STRING(pObject->userInfo.pszGecos));        
+            printf("Shell: %s\n", SAFE_STRING(pObject->userInfo.pszShell));
+            printf("Home directory: %s\n", SAFE_STRING(pObject->userInfo.pszHomedir));
+            printf("Windows home directory: %s\n", SAFE_STRING(pObject->userInfo.pszWindowsHomeFolder));
+            printf("Local windows home directory: %s\n", SAFE_STRING(pObject->userInfo.pszLocalWindowsHomeFolder));
+            printf("UID: %lu\n", (unsigned long) pObject->userInfo.uid);
+            printf("Primary group SID: %s\n", SAFE_STRING(pObject->userInfo.pszPrimaryGroupSid));
+            printf("Primary GID: %lu\n", (unsigned long) pObject->userInfo.gid);
+            if (pObject->userInfo.bIsAccountInfoKnown)
+            {
+                printf("Password expired: %s\n", pObject->userInfo.bPasswordExpired ? "yes" : "no");
+                printf("Password never expires: %s\n", pObject->userInfo.bPasswordNeverExpires ? "yes" : "no");
+                printf("Change password on next logon: %s\n", pObject->userInfo.bPromptPasswordChange ? "yes" : "no");
+                printf("User can change password: %s\n", pObject->userInfo.bUserCanChangePassword ? "yes" : "no");
+                printf("Account disabled: %s\n", pObject->userInfo.bAccountDisabled ? "yes" : "no");
+                printf("Account expired: %s\n", pObject->userInfo.bAccountExpired ? "yes" : "no");
+                printf("Account locked: %s\n", pObject->userInfo.bAccountLocked ? "yes" : "no");
+            }
         }
         else
         {
-            printf("User object [%u] (%s)\n", dwObjectNumber+1, SAFE_STRING(pObject->pszObjectSid));
-        }
-        printf("============\n");
-        printf("Enabled: %s\n", pObject->enabled ? "yes" : "no");
-        printf("Distinguished name: %s\n", SAFE_STRING(pObject->pszDN));
-        printf("SAM account name: %s\n", SAFE_STRING(pObject->pszSamAccountName));
-        printf("NetBIOS domain name: %s\n", SAFE_STRING(pObject->pszNetbiosDomainName));
-        if (pObject->userInfo.bIsGeneratedUPN)
-        {
-            printf("UPN (generated): %s\n", SAFE_STRING(pObject->userInfo.pszUPN));
-        }
-        else
-        {
-            printf("UPN: %s\n", SAFE_STRING(pObject->userInfo.pszUPN));
-        }
-        printf("Display Name: %s\n", SAFE_STRING(pObject->userInfo.pszDisplayName));
-        printf("Alias: %s\n", SAFE_STRING(pObject->userInfo.pszAliasName));
-        printf("UNIX name: %s\n", SAFE_STRING(pObject->userInfo.pszUnixName));
-        printf("GECOS: %s\n", SAFE_STRING(pObject->userInfo.pszGecos));        
-        printf("Shell: %s\n", SAFE_STRING(pObject->userInfo.pszShell));
-        printf("Home directory: %s\n", SAFE_STRING(pObject->userInfo.pszHomedir));
-        printf("Windows home directory: %s\n", SAFE_STRING(pObject->userInfo.pszWindowsHomeFolder));
-        printf("Local windows home directory: %s\n", SAFE_STRING(pObject->userInfo.pszLocalWindowsHomeFolder));
-        printf("UID: %lu\n", (unsigned long) pObject->userInfo.uid);
-        printf("Primary group SID: %s\n", SAFE_STRING(pObject->userInfo.pszPrimaryGroupSid));
-        printf("Primary GID: %lu\n", (unsigned long) pObject->userInfo.gid);
-        if (pObject->userInfo.bIsAccountInfoKnown)
-        {
-            printf("Password expired: %s\n", pObject->userInfo.bPasswordExpired ? "yes" : "no");
-            printf("Password never expires: %s\n", pObject->userInfo.bPasswordNeverExpires ? "yes" : "no");
-            printf("Change password on next logon: %s\n", pObject->userInfo.bPromptPasswordChange ? "yes" : "no");
-            printf("User can change password: %s\n", pObject->userInfo.bUserCanChangePassword ? "yes" : "no");
-            printf("Account disabled: %s\n", pObject->userInfo.bAccountDisabled ? "yes" : "no");
-            printf("Account expired: %s\n", pObject->userInfo.bAccountExpired ? "yes" : "no");
-            printf("Account locked: %s\n", pObject->userInfo.bAccountLocked ? "yes" : "no");
+            if (dwObjectTotal && dwObjectNumber+1 < dwObjectTotal)
+            {
+                printf("%s\%s, ", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
+            }
+            else
+            {
+                printf("%s\%s", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
+            }
         }
         break;
     default:

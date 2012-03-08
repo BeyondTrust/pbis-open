@@ -204,7 +204,7 @@ EnumObjects(
         {
             if (ppObjects[dwIndex])
             {
-                PrintSecurityObject(ppObjects[dwIndex], dwTotalIndex, 0);
+                PrintSecurityObject(ppObjects[dwIndex], dwTotalIndex, 0, FALSE);
                 printf("\n");
             }
         }

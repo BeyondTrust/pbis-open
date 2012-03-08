@@ -50,7 +50,8 @@ VOID
 PrintSecurityObject(
     PLSA_SECURITY_OBJECT pObject,
     DWORD dwObjectNumber,
-    DWORD dwObjectTotal
+    DWORD dwObjectTotal,
+    BOOLEAN bPBOutputMode
     );
 
 PCSTR

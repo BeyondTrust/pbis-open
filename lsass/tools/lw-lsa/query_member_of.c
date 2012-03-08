@@ -57,6 +57,7 @@ static struct
     DWORD dwCount;
     LSA_QUERY_LIST QueryList;
     BOOLEAN bShowUsage;
+    BOOLEAN bPBOutputMode;
 } gState = 
 {
     .pszTargetProvider = NULL,
@@ -64,7 +65,8 @@ static struct
     .ObjectType = LSA_OBJECT_TYPE_UNDEFINED,
     .QueryType = LSA_QUERY_TYPE_UNDEFINED,
     .dwCount = 0,
-    .bShowUsage = FALSE
+    .bShowUsage = FALSE,
+    .bPBOutputMode = FALSE
 };
 
 static
@@ -160,6 +162,7 @@ ShowUsage(
             "\n"
             "Query flags:\n"
             "     --nss                  Omit data not necessary for NSS layer\n"
+            "     --pb-out               Format query output data to show NT4 style name(s) only\n"
             "\n"
             "Other options:\n"
             "     --provider name        Direct request to provider with the specified name\n"
@@ -225,6 +228,10 @@ ParseArguments(
         else if (!strcmp(ppszArgv[i], "--nss"))
         {
             gState.FindFlags |= LSA_FIND_FLAGS_NSS;
+        }
+        else if (!strcmp(ppszArgv[i], "--pb-out"))
+        {
+            gState.bPBOutputMode = TRUE;
         }
         else if (!strcmp(ppszArgv[i], "--provider"))
         {
@@ -413,7 +420,7 @@ QueryMemberOf(
     {
         if (ppObjects[dwIndex])
         {
-            PrintSecurityObject(ppObjects[dwIndex], dwIndex, dwGroupSidCount);
+            PrintSecurityObject(ppObjects[dwIndex], dwIndex, dwGroupSidCount, gState.bPBOutputMode);
             printf("\n");
         }
         else

@@ -423,7 +423,7 @@ EnumMembers(
                     {
                         if (ppObjects[dwIndex]->type == gState.ObjectType || gState.ObjectType == LSA_OBJECT_TYPE_UNDEFINED)
                         {
-                            PrintSecurityObject(ppObjects[dwIndex], dwTotalIndex, 0);
+                            PrintSecurityObject(ppObjects[dwIndex], dwTotalIndex, 0, FALSE);
                             printf("\n");
                         }
                     }
