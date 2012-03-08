@@ -706,7 +706,28 @@
     <xi:include href="file://@lwconfigdir@/lwconfig_lsass_local.xml">
        <xi:fallback></xi:fallback>
     </xi:include>
-  </section>
+</section>
+<section section="User Monitor">
+    <capability>
+        <name>UserMonitorCheckInterval</name>
+        <description>Frequency in seconds that the user monitor service queries the system to see who can log in.</description>
+        <registry type="dword"
+            lp-path="HKEY_THIS_MACHINE\Services\usermonitor\Parameters\CheckInterval"
+            gp-path="HKEY_THIS_MACHINE\Policy\Services\usermonitor\Parameters\CheckInterval" >
+            <default>
+                <value>1800</value>
+            </default>
+            <unit suffix="s" multiplier="1" />
+            <unit suffix="m" multiplier="60" />
+            <unit suffix="h" multiplier="3600" />
+            <unit suffix="d" multiplier="86400" />
+            <apply command="@lwbindir@/lwsm refresh usermonitor" />
+        </registry>
+    </capability>
+    <xi:include href="file://@lwconfigdir@/lwconfig_usermonitor_local.xml">
+       <xi:fallback></xi:fallback>
+    </xi:include>
+</section>
   <section section="System Initialization">
     <capability>
         <name>LsassAutostart</name>
