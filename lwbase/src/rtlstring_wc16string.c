@@ -72,7 +72,14 @@ LwRtlWC16StringAllocateFromCString(
         pszNewString = ambstowc16s(pszOriginalString);
         if (!pszNewString)
         {
-            status = STATUS_INSUFFICIENT_RESOURCES;
+            if (errno == EILSEQ)
+            {
+                status = LW_STATUS_UNMAPPABLE_CHARACTER;
+            }
+            else
+            {
+                status = STATUS_INSUFFICIENT_RESOURCES;
+            }
             GOTO_CLEANUP();
         }
     }

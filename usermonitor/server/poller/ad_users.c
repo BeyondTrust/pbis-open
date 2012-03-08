@@ -543,6 +543,27 @@ UmnSrvUpdateADUser(
                         hReg,
                         hKey,
                         pUser);
+        if (dwError == ERROR_NO_UNICODE_TRANSLATION)
+        {
+            UMN_LOG_ERROR("Ignoring user with URL encoding %s because one their fields has no UCS-2 representation", pEncodedUser);
+
+            // Delete the key so it does not show up with blank values next
+            // time.
+            dwError = RegCloseKey(
+                    hReg,
+                    hKey);
+            BAIL_ON_UMN_ERROR(dwError);
+            hKey = NULL;
+
+            dwError = RegDeleteKeyA(
+                            hReg,
+                            hUsers,
+                            pEncodedUser);
+            BAIL_ON_UMN_ERROR(dwError);
+
+            dwError = ERROR_NO_UNICODE_TRANSLATION;
+            BAIL_ON_UMN_ERROR(dwError);
+        }
         BAIL_ON_UMN_ERROR(dwError);
 
         dwError = UmnSrvWriteADUserEvent(
@@ -753,6 +774,12 @@ UmnSrvUpdateADAccountsByHash(
                         PreviousRun,
                         Now,
                         pUser);
+        if (dwError == ERROR_NO_UNICODE_TRANSLATION)
+        {
+            // Error message already logged
+            dwError = 0;
+            continue;
+        }
         BAIL_ON_UMN_ERROR(dwError);
 
         if (ppGroupSids)
