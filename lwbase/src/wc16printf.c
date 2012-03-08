@@ -1154,6 +1154,12 @@ FilePrintfWriteWc16s(
     // string had unlimited space.
     pBuffer->parent.sWrittenCount += cchWrite;
 
+    // Even though we ask to only print cchWrite characters, Solaris will
+    // return an error if it does not like some characters that come later.
+    if (cchWrite <= cch16Write)
+    {
+        pwszWrite[cchWrite] = 0;
+    }
     if (fprintf(pBuffer->pFile, "%.*ls", (int)cchWrite, pwszWrite) < 0)
     {
         pBuffer->dwError = errno;
