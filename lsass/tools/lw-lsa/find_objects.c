@@ -302,15 +302,28 @@ FindObjects(
                 printf("Not found [%u of %u]: %lu\n",
                        dwIndex + 1, gState.dwCount,
                        (unsigned long) gState.QueryList.pdwIds[dwIndex]);
+                if (gState.dwCount == 1)
+                {
+                    dwError = LW_ERROR_NO_SUCH_OBJECT;
+                    BAIL_ON_LSA_ERROR(dwError);
+                }
                 break;
             default:
                 printf("Not found [%u of %u]: %s\n", 
                        dwIndex + 1, gState.dwCount,
                        gState.QueryList.ppszStrings[dwIndex]);
+                if (gState.dwCount == 1)
+                {
+                    dwError = LW_ERROR_NO_SUCH_OBJECT;
+                    BAIL_ON_LSA_ERROR(dwError);
+                }
                 break;
             }
         }
-        printf("\n");
+        if (!gState.bPBOutputMode)
+        {
+            printf("\n");
+        }
     }
 
 error:

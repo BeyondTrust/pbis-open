@@ -390,9 +390,19 @@ QueryMemberOf(
             {
             case LSA_QUERY_TYPE_BY_UNIX_ID:
                 printf("Not found: %lu\n\n", (unsigned long) gState.QueryList.pdwIds[dwIndex]);
+                if (gState.dwCount == 1)
+                {
+                    dwError = LW_ERROR_NO_SUCH_OBJECT;
+                    BAIL_ON_LSA_ERROR(dwError);
+                }
                 break;
             default:
                 printf("Not found: %s\n\n", gState.QueryList.ppszStrings[dwIndex]);
+                if (gState.dwCount == 1)
+                {
+                    dwError = LW_ERROR_NO_SUCH_OBJECT;
+                    BAIL_ON_LSA_ERROR(dwError);
+                }
                 break;
             }
         }
@@ -421,7 +431,10 @@ QueryMemberOf(
         if (ppObjects[dwIndex])
         {
             PrintSecurityObject(ppObjects[dwIndex], dwIndex, dwGroupSidCount, gState.bPBOutputMode);
-            printf("\n");
+            if (!gState.bPBOutputMode)
+            {
+                printf("\n");
+            }
         }
         else
         {
