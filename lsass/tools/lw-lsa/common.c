@@ -88,7 +88,7 @@ PrintSecurityObject(
             }
             else
             {
-                printf("%s\\%s", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
+                printf("%s\\%s\n\n", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
             }
         }
         break;
@@ -146,7 +146,7 @@ PrintSecurityObject(
             }
             else
             {
-                printf("%s\\%s", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
+                printf("%s\\%s\n\n", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
             }
         }
         break;
