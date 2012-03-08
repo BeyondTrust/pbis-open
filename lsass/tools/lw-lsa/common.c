@@ -84,11 +84,11 @@ PrintSecurityObject(
         {
             if (dwObjectTotal && dwObjectNumber+1 < dwObjectTotal)
             {
-                printf("%s\%s, ", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
+                printf("%s\\%s, ", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
             }
             else
             {
-                printf("%s\%s", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
+                printf("%s\\%s", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
             }
         }
         break;
@@ -142,11 +142,11 @@ PrintSecurityObject(
         {
             if (dwObjectTotal && dwObjectNumber+1 < dwObjectTotal)
             {
-                printf("%s\%s, ", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
+                printf("%s\\%s, ", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
             }
             else
             {
-                printf("%s\%s", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
+                printf("%s\\%s", SAFE_STRING(pObject->pszNetbiosDomainName), SAFE_STRING(pObject->pszSamAccountName));
             }
         }
         break;

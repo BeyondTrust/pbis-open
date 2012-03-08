@@ -586,7 +586,7 @@ EnumerateUsers(
 
         for (iUser = 0; iUser < dwNumUsersFound; iUser++)
         {
-            PrintSecurityObject(ppObjects[iUser], iUser + dwTotalUsersFound, 0);
+            PrintSecurityObject(ppObjects[iUser], iUser + dwTotalUsersFound, 0, FALSE);
             fprintf(stdout, "\n");
         }
 
@@ -646,7 +646,7 @@ EnumerateGroups(
 
         for (iGroup = 0; iGroup < dwNumGroupsFound; iGroup++)
         {
-            PrintSecurityObject(ppObjects[iGroup], iGroup + dwTotalGroupsFound, 0);
+            PrintSecurityObject(ppObjects[iGroup], iGroup + dwTotalGroupsFound, 0, FALSE);
         }
 
         dwTotalGroupsFound += dwNumGroupsFound;
