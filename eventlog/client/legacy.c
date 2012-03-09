@@ -236,6 +236,10 @@ LWIWriteEventLogRecords(
         BAIL_ON_EVT_ERROR(dwError);
 
         pNewRecords[index].EventDateTime = pEventRecords[index].dwEventDateTime;
+        if (pNewRecords[index].EventDateTime == 0)
+        {
+            pNewRecords[index].EventDateTime = (DWORD) time(NULL);
+        }
 
         dwError = LwMbsToWc16s(
                         pEventRecords[index].pszEventSource,
