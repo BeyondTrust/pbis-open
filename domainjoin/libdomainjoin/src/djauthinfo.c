@@ -1142,14 +1142,14 @@ void DJCreateComputerAccount(
 
 #ifdef MINIMAL_JOIN
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&likewiseOSServicePack,
-                "Likewise Open %s",
+                "PBIS Open %s",
                 BUILD_VERSION));
 #else
     LW_CLEANUP_CTERR(exc, DJGetLikewiseVersion(&likewiseProduct,
                 &likewiseVersion, &likewiseBuild, &likewiseRevision));
 
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&likewiseOSServicePack,
-                "Likewise %s %s.%s.%s",
+                "PBIS %s %s.%s.%s",
                 likewiseProduct, likewiseVersion, likewiseBuild, likewiseRevision));
 #endif
 
