@@ -90,7 +90,7 @@ ExportEventRecord (
                         pNullName : pRecord->pComputer,
                     LW_IS_NULL_OR_EMPTY_STR(pRecord->pDescription) ?
                         pNullName : pRecord->pDescription,
-                    LW_IS_NULL_OR_EMPTY_STR(pRecord->pData) ?
+                    !pRecord->DataLen || LW_IS_NULL_OR_EMPTY_STR(pRecord->pData) ?
                         "<null>" : (PSTR)pRecord->pData);
     BAIL_ON_EVT_ERROR(dwError);
 
@@ -217,7 +217,7 @@ PrintEventRecords(
                 LW_IS_NULL_OR_EMPTY_STR(pRecord->pDescription) ?
                     pNullName : pRecord->pDescription);
         printf("Event Data.............. %s\n",
-                LW_IS_NULL_OR_EMPTY_STR(pRecord->pData) ?
+                !pRecord->DataLen || LW_IS_NULL_OR_EMPTY_STR(pRecord->pData) ?
                     "<null>" : (char*) (pRecord->pData));
         printf("========================================\n");
 
