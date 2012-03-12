@@ -545,7 +545,7 @@ UmnSrvUpdateADUser(
                         pUser);
         if (dwError == ERROR_NO_UNICODE_TRANSLATION)
         {
-            UMN_LOG_ERROR("Ignoring user with URL encoding %s because one their fields has no UCS-2 representation", pEncodedUser);
+            UMN_LOG_ERROR("Ignoring user with URL encoding %s because one of their fields has no UCS-2 representation", pEncodedUser);
 
             // Delete the key so it does not show up with blank values next
             // time.
