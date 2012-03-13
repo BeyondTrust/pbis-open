@@ -1154,6 +1154,7 @@ FilePrintfWriteWc16s(
     // string had unlimited space.
     pBuffer->parent.sWrittenCount += cchWrite;
 
+    cchWrite *= sizeof(*pw16szWrite);
     if (fprintf(pBuffer->pFile, "%.*ls", (int)cchWrite, pwszWrite) < 0)
     {
         pBuffer->dwError = errno;
