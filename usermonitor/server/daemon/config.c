@@ -103,6 +103,7 @@ UmnSrvInitConfig(
     BAIL_ON_UMN_ERROR(dwError);
 
     pConfig->CheckInterval = 60 * 30;
+    pConfig->SkipNoLogin = FALSE;
 
     *ppConfig = pConfig;
 
@@ -131,6 +132,8 @@ UmnSrvReadConfig(
     
     UMN_LOG_VERBOSE("CheckInterval = %d seconds\n",
             pConfig->CheckInterval);
+    UMN_LOG_VERBOSE("SkipNoLogin = %d\n",
+            pConfig->SkipNoLogin);
 
     *ppConfig = pConfig;
 
@@ -158,7 +161,6 @@ UmnSrvFreeConfig(
 
 DWORD
 UmnSrvGetCheckInterval(
-    HANDLE hServer,
     PDWORD pValue
     )
 {
@@ -171,6 +173,35 @@ UmnSrvGetCheckInterval(
     bUnlockConfigLock = TRUE;
 
     *pValue = gpAPIConfig->CheckInterval;
+
+cleanup:
+    if (bUnlockConfigLock)
+    {
+        pthread_rwlock_unlock(&gUmnConfigLock);
+    }
+
+    return dwError;
+
+error:
+
+    *pValue = 0;
+    goto cleanup;
+}
+
+DWORD
+UmnSrvGetSkipNoLogin(
+    PBOOLEAN pValue
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bUnlockConfigLock = FALSE;
+
+    BAIL_ON_INVALID_POINTER(pValue);
+
+    pthread_rwlock_rdlock(&gUmnConfigLock);
+    bUnlockConfigLock = TRUE;
+
+    *pValue = gpAPIConfig->SkipNoLogin;
 
 cleanup:
     if (bUnlockConfigLock)
@@ -203,6 +234,16 @@ UmnSrvReadAllocatedConfig(
             -1,
             NULL,
             &pConfig->CheckInterval,
+            NULL
+        },
+        {
+            "SkipNoLogin",
+            TRUE,
+            LwRegTypeDword,
+            0,
+            -1,
+            NULL,
+            &pConfig->SkipNoLogin,
             NULL
         },
     };

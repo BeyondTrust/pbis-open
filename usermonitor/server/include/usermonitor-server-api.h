@@ -62,8 +62,12 @@ UmnSrvApiShutdown(
 
 DWORD
 UmnSrvGetCheckInterval(
-    HANDLE hServer,
     PDWORD pValue
+    );
+
+DWORD
+UmnSrvGetSkipNoLogin(
+    PBOOLEAN pValue
     );
 
 #endif /* __UMN_SRVAPI_H__ */

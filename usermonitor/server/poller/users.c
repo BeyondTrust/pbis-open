@@ -733,6 +733,11 @@ UmnSrvUpdateUsers(
     LSA_QUERY_LIST list = { 0 };
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     HKEY hUsers = NULL;
+    BOOLEAN skipNoLogin = FALSE;
+
+    dwError = UmnSrvGetSkipNoLogin(
+                &skipNoLogin);
+    BAIL_ON_UMN_ERROR(dwError);
 
     list.pdwIds = &uid;
 
@@ -747,11 +752,11 @@ UmnSrvUpdateUsers(
 
     while ((pUser = getpwent()) != NULL)
     {
-        if (!strcmp(pUser->pw_shell, "/sbin/nologin") ||
+        if (skipNoLogin && (!strcmp(pUser->pw_shell, "/sbin/nologin") ||
             !strcmp(pUser->pw_shell, "/bin/nologin") ||
             !strcmp(pUser->pw_shell, "/usr/sbin/nologin") ||
             !strcmp(pUser->pw_shell, "/usr/bin/false") ||
-            !strcmp(pUser->pw_shell, "/bin/false"))
+            !strcmp(pUser->pw_shell, "/bin/false")))
         {
             UMN_LOG_VERBOSE("Skipping enumerated user '%s' (uid %d) because their shell prevents them from logging in.",
                     pUser->pw_name, uid);

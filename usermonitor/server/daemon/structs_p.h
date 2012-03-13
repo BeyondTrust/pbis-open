@@ -53,6 +53,7 @@
 typedef struct __UMN_SRV_API_CONFIG
 {
     DWORD CheckInterval;
+    DWORD SkipNoLogin;
 } UMN_SRV_API_CONFIG, *PUMN_SRV_API_CONFIG;
 
 #endif /* __STRUCTS_P_H__ */

@@ -40,6 +40,10 @@
     default = dword:00000708
     doc = "Frequency of checking for new users"
 }
+"SkipNoLogin" = {
+    default = dword:00000000
+    doc = "Skip local users that have a /bin/false, /sbin/nologin, or similar shell"
+}
 "LastUpdated" = {
     default = dword:00000000
     doc = "Indicates when the last inventory of the local users and groups was generated, or 0 if it has not been generated yet"
