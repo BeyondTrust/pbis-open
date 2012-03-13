@@ -21,8 +21,8 @@
 LC_MESSAGES=C; export LC_MESSAGES
 
 #this gets overridden with sed when it should be /opt/likewise
-BINDIR=@expanded_bindir@
-LIBEXECDIR=@expanded_libexecdir@
+BINDIR=@MK_BINDIR@
+LIBEXECDIR=@MK_LIBEXECDIR@
 
 alias_replacement()
 {

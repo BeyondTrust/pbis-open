@@ -1,8 +1,8 @@
 configure()
 {
     mk_declare -o \
-        expanded_bindir="$MK_BINDIR" \
-        expanded_libexecdir="$MK_LIBEXECDIR"
+        MK_BINDIR \
+        MK_LIBEXECDIR
 
     mk_output_file ConfigureLogin
 
