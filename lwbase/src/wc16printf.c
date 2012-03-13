@@ -1160,6 +1160,7 @@ FilePrintfWriteWc16s(
     {
         pwszWrite[cchWrite] = 0;
     }
+    cchWrite *= sizeof(*pw16szWrite);
     if (fprintf(pBuffer->pFile, "%.*ls", (int)cchWrite, pwszWrite) < 0)
     {
         pBuffer->dwError = errno;
