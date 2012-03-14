@@ -21,6 +21,7 @@
 #ifndef _WIN32
 #define PUBLIC
 #define PRIVATE
+#define EXTERNAL extern
 #include <rpcdbg.h>
 #include <dce/ntlmssp_types.h>
 #include <termios.h>
@@ -230,7 +231,9 @@ main(
 #else
             rpc__dbg_set_switches("0-19.10", &status);
             //Skip 20, which is memory allocs and frees
-            rpc__dbg_set_switches("21-43.10", &status);
+            rpc__dbg_set_switches("21-24.10", &status);
+            //Skip 25, which is fault injection for connection errors
+            rpc__dbg_set_switches("26-43.10", &status);
 #endif
             break;
         case 'c':

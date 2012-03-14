@@ -1580,7 +1580,7 @@ INTERNAL void rpc__gssauth_cn_get_packet_mic
 	if (signature.length > RPC__GSSAUTH_CN_AUTH_MAX_LEN) {
 		RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_GENERAL,
 			("(rpc__gssauth_cn_get_packet_mic): %s: auth_len[%u] > auth_max_len[%u]\n",
-			comment, (unsigned int)auth_len, (unsigned int)RPC__GSSAUTH_CN_AUTH_MAX_LEN));
+			comment, (unsigned int)signature.length, (unsigned int)RPC__GSSAUTH_CN_AUTH_MAX_LEN));
 		*st = rpc_s_auth_method;
 		goto cleanup;
 	}

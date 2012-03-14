@@ -61,6 +61,12 @@ option()
         VAR=ENABLE_NTLMSSP \
         DEFAULT="$_default_FULL" \
         HELP="Enable NTLMSSP RPC authentication support"
+
+    mk_option \
+        OPTION=rpc-debug \
+        VAR=ENABLE_RPC_DEBUG \
+        DEFAULT="no" \
+        HELP="Enable RPC debug messages"
 }
 
 rpc_feature_flags()
@@ -201,6 +207,7 @@ configure()
     [ "$ENABLE_GSS" = "yes" ] && mk_define ENABLE_AUTH_GSS_NEGOTIATE 1
     [ "$ENABLE_SCHANNEL" = "yes" ] && mk_define ENABLE_AUTH_SCHANNEL 1
     [ "$ENABLE_NTLMSSP" = "yes" ] && mk_define ENABLE_AUTH_NTLMSSP 1
+    [ "$ENABLE_RPC_DEBUG" = "yes" ] && mk_define DEBUG 1
 
     # Check for CPU architecture characteristics
     mk_multiarch_do
