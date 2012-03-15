@@ -133,6 +133,7 @@ configure()
         auth)
             mk_skip_subdir libschannel
             mk_skip_subdir lwnetapi
+            mk_skip_subdir lwadtool
             ;;
     esac
 
@@ -144,6 +145,7 @@ configure()
             mk_skip_subdir centutils
             mk_skip_subdir lwconfig
             mk_skip_subdir lwupgrade
+            mk_skip_subdir usermonitor
             ;;
     esac
 }
