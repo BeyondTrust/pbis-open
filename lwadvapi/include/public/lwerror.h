@@ -107,13 +107,13 @@
 #define LW_ERROR_DUPLICATE_GROUPNAME                       40065
 #define LW_ERROR_DUPLICATE_CELLNAME                        40066
 #define LW_ERROR_STRING_CONV_FAILED                        40067
-// Obsolete LW_ERROR_INVALID_ACCOUNT                       40068
+#define LW_ERROR_INVALID_ACCOUNT                           40068
 #define LW_ERROR_INVALID_PASSWORD                          40069
 #define LW_ERROR_QUERY_CREATION_FAILED                     40070
 #define LW_ERROR_NO_SUCH_OBJECT                            40071
 #define LW_ERROR_DUPLICATE_USER_OR_GROUP                   40072
 #define LW_ERROR_INVALID_KRB5_CACHE_TYPE                   40073
-// Obsolete LW_ERROR_NOT_JOINED_TO_AD                      40074
+#define LW_ERROR_NOT_JOINED_TO_AD                          40074
 #define LW_ERROR_FAILED_TO_SET_TIME                        40075
 #define LW_ERROR_NO_NETBIOS_NAME                           40076
 #define LW_ERROR_INVALID_NETLOGON_RESPONSE                 40077
