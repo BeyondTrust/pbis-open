@@ -7,6 +7,7 @@
 #include "wc16printf.h"
 #include <lwstr.h>
 #include <lwmem.h>
+#include <lwerror.h>
 
 #include <libxml/tree.h>
 #include <libxml/parser.h>

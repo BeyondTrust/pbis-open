@@ -6,6 +6,7 @@
 
 #include <lwmem.h>
 #include <lwstr.h>
+#include <lwerror.h>
 
 #include <eventdefs.h>
 #include <eventlog.h>
