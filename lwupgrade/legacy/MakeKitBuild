@@ -36,7 +36,7 @@ make()
         config \
         regshell"
 
-    LINKS="domainjoin-cli kdestroy kinit klist ktutil kvno lwio-copy samba-interop-install sqlite3"
+    LINKS="domainjoin-cli kdestroy kinit klist ktutil kvno lwio-copy samba-interop-install sqlite3 lwsm"
 
     if [ "$MK_HOST_OS" != "darwin" ]
     then
