@@ -133,10 +133,11 @@ ParseFilter(
 
     if (dwSecondsForFilter != 0)
     {
+        unsigned long datetime = time(NULL) - dwSecondsForFilter;
         dwError = LwAllocateStringPrintf(
                     &pszDateFilter,
                     " EventDateTime >= %lu ",
-                    time(NULL) - dwSecondsForFilter);
+                    datetime);
         BAIL_ON_EVT_ERROR(dwError);
 
         ppszFilters[dwFilters++] = pszDateFilter;
