@@ -167,6 +167,10 @@ LsaSetSMBCreds(
                 pszPassword,
                 pszNewCachePath,
                 NULL);
+    if (dwError == LW_ERROR_KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN)
+    {
+        dwError = LW_ERROR_INVALID_ACCOUNT;
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
     if (bSetDefaultCachePath)
