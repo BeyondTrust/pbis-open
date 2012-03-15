@@ -152,8 +152,8 @@ package_pkg()
             if [ "$MK_HOST_ARCH" = "x86" ]
             then
                 mk_package_patterns SUBDIRS="@package/unpack" \
-                    "/usr/lib/64/*" \
-                    "/usr/lib/security/64/*"
+                    "/usr/lib/amd64/*" \
+                    "/usr/lib/security/amd64/*"
             fi
         mk_pkg_sub_done
 
@@ -212,10 +212,10 @@ package_pkg()
             if [ "$MK_HOST_ARCH" = "x86" ]
             then
                 mk_package_patterns SUBDIRS="@package/unpack" \
-                    "$MK_PREFIX/lib/64/*"
+                    "$MK_PREFIX/lib/amd64/*"
 
                 mk_package_dirs \
-                    "$MK_PREFIX/lib/64"
+                    "$MK_PREFIX/lib/amd64"
             fi
 
         mk_pkg_sub_done

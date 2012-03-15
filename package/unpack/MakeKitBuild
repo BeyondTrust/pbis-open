@@ -80,32 +80,32 @@ make()
                     ;;
             solaris:x86)
                 LW_UNPACK_TARGETS="\
-                    $MK_PREFIX/lib/64/liblsaclient.so.0 \
-                    $MK_PREFIX/lib/64/liblsaauth.so.0.0.0 \
-                    $MK_PREFIX/lib/64/libiconv.so.2.5.0 \
-                    $MK_PREFIX/lib/64/liblwbase_nothr.so.0 \
-                    $MK_PREFIX/lib/64/liblwadvapi_nothr.so \
-                    $MK_PREFIX/lib/64/liblwmsg_nothr.so.0 \
-                    $MK_PREFIX/lib/64/liblwbase_nothr.so.0.0.0 \
-                    $MK_PREFIX/lib/64/libiconv.so \
-                    $MK_PREFIX/lib/64/liblsacommon.so \
-                    $MK_PREFIX/lib/64/liblwmsg_nothr.so \
-                    $MK_PREFIX/lib/64/libuuid.so.0 \
-                    $MK_PREFIX/lib/64/liblwbase_nothr.so \
-                    $MK_PREFIX/lib/64/liblwadvapi_nothr.so.0.0.0 \
-                    $MK_PREFIX/lib/64/liblwadvapi_nothr.so.0 \
-                    $MK_PREFIX/lib/64/libiconv.so.2 \
-                    $MK_PREFIX/lib/64/liblsacommon.so.0.0.0 \
-                    $MK_PREFIX/lib/64/libuuid.so.0.0.0 \
-                    $MK_PREFIX/lib/64/libuuid.so \
-                    $MK_PREFIX/lib/64/liblsaauth.so.0 \
-                    $MK_PREFIX/lib/64/liblsaclient.so \
-                    $MK_PREFIX/lib/64/liblwmsg_nothr.so.0.0.0 \
-                    $MK_PREFIX/lib/64/liblsacommon.so.0 \
-                    $MK_PREFIX/lib/64/liblsaclient.so.0.0.0 \
-                    $MK_PREFIX/lib/64/liblsaauth.so \
-                    /usr/lib/64/nss_lsass.so.1 \
-                    /usr/lib/security/64/pam_lsass.so"
+                    $MK_PREFIX/lib/amd64/liblsaclient.so.0 \
+                    $MK_PREFIX/lib/amd64/liblsaauth.so.0.0.0 \
+                    $MK_PREFIX/lib/amd64/libiconv.so.2.5.0 \
+                    $MK_PREFIX/lib/amd64/liblwbase_nothr.so.0 \
+                    $MK_PREFIX/lib/amd64/liblwadvapi_nothr.so \
+                    $MK_PREFIX/lib/amd64/liblwmsg_nothr.so.0 \
+                    $MK_PREFIX/lib/amd64/liblwbase_nothr.so.0.0.0 \
+                    $MK_PREFIX/lib/amd64/libiconv.so \
+                    $MK_PREFIX/lib/amd64/liblsacommon.so \
+                    $MK_PREFIX/lib/amd64/liblwmsg_nothr.so \
+                    $MK_PREFIX/lib/amd64/libuuid.so.0 \
+                    $MK_PREFIX/lib/amd64/liblwbase_nothr.so \
+                    $MK_PREFIX/lib/amd64/liblwadvapi_nothr.so.0.0.0 \
+                    $MK_PREFIX/lib/amd64/liblwadvapi_nothr.so.0 \
+                    $MK_PREFIX/lib/amd64/libiconv.so.2 \
+                    $MK_PREFIX/lib/amd64/liblsacommon.so.0.0.0 \
+                    $MK_PREFIX/lib/amd64/libuuid.so.0.0.0 \
+                    $MK_PREFIX/lib/amd64/libuuid.so \
+                    $MK_PREFIX/lib/amd64/liblsaauth.so.0 \
+                    $MK_PREFIX/lib/amd64/liblsaclient.so \
+                    $MK_PREFIX/lib/amd64/liblwmsg_nothr.so.0.0.0 \
+                    $MK_PREFIX/lib/amd64/liblsacommon.so.0 \
+                    $MK_PREFIX/lib/amd64/liblsaclient.so.0.0.0 \
+                    $MK_PREFIX/lib/amd64/liblsaauth.so \
+                    /usr/lib/amd64/nss_lsass.so.1 \
+                    /usr/lib/security/amd64/pam_lsass.so"
                 ;;
             *)
                 LW_UNPACK_TARGETS=

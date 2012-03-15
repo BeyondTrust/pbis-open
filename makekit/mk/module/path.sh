@@ -286,7 +286,7 @@ option()
                     _default_libdir="${BASELIBDIR}/sparcv9"
                     ;;
                 solaris-*-x86_64-x86_64)
-                    _default_libdir="${BASELIBDIR}/64"
+                    _default_libdir="${BASELIBDIR}/amd64"
                     ;;
                 hpux-*-hppa2.0-hppa64)
                     _default_libdir="${BASELIBDIR}/pa20_64"

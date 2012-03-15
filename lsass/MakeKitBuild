@@ -74,20 +74,20 @@ configure()
             solaris:sparc_32|solaris:x86_32)
                 NSSDIR="/usr/lib"
                 PAMDIR="/usr/lib/security"
-		fdlimit=dword:00000100
-	        default_homedir_prefix="/export/home"
+                fdlimit=dword:00000100
+                default_homedir_prefix="/export/home"
                 ;;
             solaris:x86_64)
-                NSSDIR="/usr/lib/64"
-                PAMDIR="/usr/lib/security/64"
-		fdlimit=dword:00000100
-	        default_homedir_prefix="/export/home"
+                NSSDIR="/usr/lib/amd64"
+                PAMDIR="/usr/lib/security/amd64"
+                fdlimit=dword:00000100
+                default_homedir_prefix="/export/home"
                 ;;
             solaris:sparc_64)
                 NSSDIR="/usr/lib/sparcv9"
                 PAMDIR="/usr/lib/security/sparcv9"
-		fdlimit=dword:00000100
-	        default_homedir_prefix="/export/home"
+                fdlimit=dword:00000100
+                default_homedir_prefix="/export/home"
                 ;;
             aix:ppc32)
                 NSSDIR="/usr/lib/security"

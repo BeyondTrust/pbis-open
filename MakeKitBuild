@@ -188,7 +188,7 @@ make()
             # Add target to build only compat bits
             mk_target \
                 TARGET="@compat" \
-                DEPS="/usr/lib/64/nss_lsass.la /usr/lib/security/64/pam_lsass.la"
+                DEPS="/usr/lib/amd64/nss_lsass.la /usr/lib/security/amd64/pam_lsass.la"
 
             mk_add_phony_target "$result"
             ;;
