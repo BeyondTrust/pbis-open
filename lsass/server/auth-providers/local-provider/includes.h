@@ -61,7 +61,9 @@
 #include <openssl/md4.h>
 #include <openssl/hmac.h>
 
+#ifdef HAVE_EVENTLOG_H
 #include <eventlog.h>
+#endif
 
 #include "lwmem.h"
 #include "lwstr.h"
