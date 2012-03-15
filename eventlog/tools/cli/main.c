@@ -657,7 +657,7 @@ main(
  error:
     if (dwError != 0)
     {
-        fprintf(stderr, "The operation failed with error code [%d]\n", dwError);
+        fprintf(stderr, "The operation failed with error code (%u): %s\n", dwError, LwWin32ExtErrorToName(dwError));
     }
     LW_SAFE_FREE_MEMORY(pwszSqlFilter);
     LW_SAFE_FREE_MEMORY(pFilter);

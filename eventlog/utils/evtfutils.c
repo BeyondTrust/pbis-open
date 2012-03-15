@@ -61,7 +61,7 @@ EVTGetFileSize(
              *pdwFileSize = 0;
              break;
             }
-            dwError = errno;
+            dwError = LwMapErrnoToLwError(errno);
             BAIL_ON_EVT_ERROR(dwError);
         } else {
             *pdwFileSize = statbuf.st_size;
