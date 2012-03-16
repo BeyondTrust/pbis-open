@@ -135,7 +135,7 @@ DJItfJoinDomain(
 						module);
             goto cleanup;
         }
-        LW_TRY(&pException, DJEnableModule(&options, module, TRUE, &LW_EXC));
+        LW_TRY(&pException, DJSetModuleDisposition(&options, module, EnableModule, &LW_EXC));
     }
 
     for(i = 0; i < disableModules.size; i++)
@@ -151,7 +151,7 @@ DJItfJoinDomain(
 						module);
             goto cleanup;
         }
-        LW_TRY(&pException, DJEnableModule(&options, module, FALSE, &LW_EXC));
+        LW_TRY(&pException, DJSetModuleDisposition(&options, module, DisableModule, &LW_EXC));
     }
 
     LW_TRY(&pException, DJCheckRequiredEnabled(&options, &LW_EXC));
@@ -232,7 +232,7 @@ DJItfLeaveDomain(
 						module);
             goto cleanup;
         }
-        LW_TRY(&pException, DJEnableModule(&options, module, TRUE, &LW_EXC));
+        LW_TRY(&pException, DJSetModuleDisposition(&options, module, EnableModule, &LW_EXC));
     }
     
     LW_TRY(&pException, DJCheckRequiredEnabled(&options, &LW_EXC));
