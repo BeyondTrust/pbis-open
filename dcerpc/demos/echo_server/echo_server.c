@@ -420,7 +420,7 @@ ReverseWrapped(
 
     if (in == NULL) return 0;
 
-    printf("\n\nFunction ReverseWrapper() -- input buffer (size %d)\n", in->size);
+    printf("\n\nFunction ReverseWrapper() -- input buffer (size %u)\n", (unsigned int)in->size);
 
     for (j = 0; j < in->size; j++)
     {
@@ -447,7 +447,7 @@ ReverseWrapped(
             status);
     if (*status != 0)
     {
-        printf("\n\nFunction ReverseWrapped() -- creating decode handle failed with error %d\n", *status);
+        printf("\n\nFunction ReverseWrapped() -- creating decode handle failed with error %u\n", (unsigned int)*status);
         goto error;
     }
 
@@ -478,7 +478,7 @@ ReverseWrapped(
         goto error;
     }
 
-    l = strlen(decoded);
+    l = strlen((char *)decoded);
     for (j=0; j<l/2; j++)
     {
         decoded[j] = decoded[l-j-1];
@@ -510,7 +510,7 @@ ReverseWrapped(
     }
     idl_es_handle_free(&encoding_handle, &e);
 
-    out->bytes = encoded;
+    out->bytes = (idl_small_int *)encoded;
     encoded = NULL;
     out->size = encoded_size;
 
