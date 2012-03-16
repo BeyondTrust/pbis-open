@@ -6,4 +6,6 @@
 interface echo {
 
 	ReverseIt([comm_status, fault_status] status);
+
+	ReverseWrapped([comm_status, fault_status] status);
 }

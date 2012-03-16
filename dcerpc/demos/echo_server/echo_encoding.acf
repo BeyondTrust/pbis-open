@@ -1,0 +1,10 @@
+#ifndef _WIN32
+[ explicit_handle ] 
+#else
+[ explicit_handle, enable_allocate ]
+#endif
+interface echo_encoding {
+	[encode] string_encode();
+
+	[decode] string_decode();
+}

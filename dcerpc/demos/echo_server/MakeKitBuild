@@ -8,10 +8,17 @@ make()
         SSTUB="echo_s.c" \
         CSTUB="echo_c.c"
 
+    lw_dceidl \
+        IDL="echo_encoding.idl" \
+        HEADER="echo_encoding.h" \
+        HEADERDEPS="compat/dcerpc.idl.include" \
+        SSTUB="echo_encoding_s.c" \
+        CSTUB="echo_encoding_c.c"
+
     mk_program \
         PROGRAM="echo_server" \
         INSTALLDIR="$LW_TOOL_DIR" \
-        SOURCES="echo_server.c echo_s.c misc.c" \
+        SOURCES="echo_server.c echo_s.c echo_encoding_c.c misc.c" \
         INCLUDEDIRS=". ../../include" \
         CFLAGS="-Wall -Werror" \
         LIBDEPS="dcerpc $LIB_PTHREAD" \
@@ -24,7 +31,7 @@ make()
     mk_program \
         PROGRAM="echo_client" \
         INSTALLDIR="$LW_TOOL_DIR" \
-        SOURCES="echo_client.c echo_c.c misc.c" \
+        SOURCES="echo_client.c echo_c.c echo_encoding_c.c misc.c" \
         INCLUDEDIRS=". ../../include ../../ncklib" \
         CFLAGS="-Wall -Werror" \
         LIBDEPS="dcerpc $LIB_PTHREAD" \

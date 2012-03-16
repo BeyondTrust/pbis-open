@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <compat/dcerpc.h>
 #include "echo.h"
+#include "echo_encoding.h"
 #include <misc.h>
 
 #ifndef _WIN32
@@ -71,7 +72,7 @@ get_client_rpc_binding(
 
 static void usage()
 {
-    printf("usage: echo_client [-S service] [-h hostname] [{-a name | -i} [-s] [-p level]] [-e endpoint] [-n] [-u] [-t] [-g count] [-c count] [-U user] [-D domain] [-P password | -] \n");
+    printf("usage: echo_client [-S service] [-h hostname] [{-a name | -i} [-s] [-p level]] [-e endpoint] [-n] [-u] [-t] [-g count] [-c count] [-U user] [-D domain] [-P password | -] [-w]\n");
     printf("         -h:  specify host of RPC server (default is localhost)\n");
     printf("         -a:  specify authentication identity\n");
     printf("         -i:  inquire authentication identity from host\n");
@@ -82,14 +83,128 @@ static void usage()
     printf("         -u:  use UDP protocol\n");
     printf("         -t:  use TCP protocol (default)\n");
     printf("         -g:  instead of prompting, generate a data string of the specified length\n");
-    printf("         -c:  call the funnction the specified number of times (default 1)\n");
+    printf("         -c:  call the function the specified number of times (default 1)\n");
     printf("         -d:  turn on debugging\n");
     printf("         -U:  Specify username for NTLM authentication\n");
     printf("         -P:  Specify password for NTLM authentication or - to prompt\n");
     printf("         -D:  Specify domain for NTLM authentication\n");
     printf("         -S:  Specify authentication service (krb5, negotiate, winnt)\n");
+    printf("         -w:  Wrap the string in a DCE encoded packet before sending over in an RPC call\n");
     printf("\n");
     exit(1);
+}
+
+idl_boolean
+ReverseWrappedWrapper(	
+    rpc_binding_handle_t echo_server,
+    args *inargs,
+    args **outargs,
+    unsigned32 *status
+    )
+{
+    idl_es_handle_t encoding_handle = NULL;
+    buffer in;
+    buffer out;
+    idl_boolean ok = 0;
+    encoded_string_t decoded = NULL;
+    error_status_t e;
+
+    *outargs = NULL;
+    *status = 0;
+
+    idl_es_encode_dyn_buffer(
+        (idl_byte **)&in.bytes,
+        &in.size,
+        &encoding_handle,
+        status);
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    DCETHREAD_TRY
+    {
+        if (inargs->argc >= 1)
+        {
+            string_encode(encoding_handle, inargs->argv[0]);
+        }
+        else
+        {
+            string_encode(encoding_handle, "");
+        }
+    }
+    DCETHREAD_CATCH_ALL(THIS_CATCH)
+    {
+        printf("error encoding buffer\n");
+        *status = dcethread_exc_getstatus(THIS_CATCH);
+    }
+    DCETHREAD_ENDTRY;
+    if (*status != 0)
+    {
+        goto error;
+    }
+    idl_es_handle_free(&encoding_handle, status);
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    ok = ReverseWrapped(	
+        echo_server,
+        &in,
+        &out,
+        status);
+    if (!ok || *status != 0)
+    {
+        printf("ReverseWrapped failed %x\n", *status);
+        goto error;
+    }
+
+    idl_es_decode_buffer(
+            (idl_byte *)out.bytes,
+            out.size,
+            &encoding_handle,
+            status);
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    DCETHREAD_TRY
+    {
+        string_decode(encoding_handle, &decoded);
+    }
+    DCETHREAD_CATCH_ALL(THIS_CATCH)
+    {
+        printf("\n\nFunction ReverseWrappedWrapper() -- error decoding size %d buffer\n", out.size);
+        *status = dcethread_exc_getstatus(THIS_CATCH);
+    }
+    DCETHREAD_ENDTRY;
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    *outargs = (args *)malloc(sizeof(args));
+
+    if (outargs == NULL)
+    {
+        exit(1);
+    }
+
+    (*outargs)->argc = 1;
+    (*outargs)->argv[0] = decoded;
+    decoded = NULL;
+
+error:
+    if (encoding_handle != NULL)
+    {
+        idl_es_handle_free(&encoding_handle, &e);
+    }
+    rpc_ss_client_free(decoded);
+    rpc_ss_client_free(in.bytes);
+    rpc_ss_client_free(out.bytes);
+    return (*status == 0);
 }
 
 int
@@ -132,6 +247,7 @@ main(
     int generate_length = -1;
     int call_count = 1;
     int call = 0;
+    int wrap = 0;
     unsigned32 authn_svc = rpc_c_authn_gss_negotiate;
 
     char * nl;
@@ -142,7 +258,7 @@ main(
      * Process the cmd line args
      */
 
-    while ((c = getopt(argc, argv, "S:sc:h:a:ip:e:nutdg:U:D:P:")) != EOF)
+    while ((c = getopt(argc, argv, "S:sc:h:a:ip:e:nutdg:U:D:P:w")) != EOF)
     {
         switch (c)
         {
@@ -238,6 +354,9 @@ main(
             break;
         case 'c':
             call_count = strtol(optarg, NULL, 10);
+            break;
+        case 'w':
+            wrap = 1;
             break;
         case 'g':
             generate_length = strtol(optarg, NULL, 10);
@@ -412,7 +531,14 @@ main(
     for (call = 0; call < call_count; call++)
     {
         printf ("calling server\n");
-        ok = ReverseIt(echo_server, inargs, &outargs, &status);
+        if (wrap)
+        {
+            ok = ReverseWrappedWrapper(echo_server, inargs, &outargs, &status);
+        }
+        else
+        {
+            ok = ReverseIt(echo_server, inargs, &outargs, &status);
+        }
 
         /*
          * Print the results

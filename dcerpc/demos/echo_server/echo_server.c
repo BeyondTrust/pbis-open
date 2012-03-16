@@ -19,7 +19,10 @@
 #include <signal.h>
 #include <compat/dcerpc.h>
 #include "echo.h"
+#include "echo_encoding.h"
 #include "misc.h"
+#include <dce/rpc.h>
+#include <dce/idlddefs.h>
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
@@ -384,6 +387,133 @@ ReverseIt(
     *status = error_status_ok;
 
     return 1;
+}
+
+idl_boolean
+ReverseWrapped(
+    /* [in] */ handle_t h,
+    /* [in] */ buffer *in,
+    /* [out] */ buffer *out,
+    /* [out] */ error_status_t *status
+    )
+{
+
+    unsigned_char_p_t binding_info;
+    error_status_t e;
+    unsigned32 j,l;
+    encoded_string_t decoded = NULL;
+    idl_es_handle_t encoding_handle = NULL;
+    idl_byte *encoded = NULL;
+    idl_ulong_int encoded_size = 0;
+
+    *status = error_status_ok;
+
+    /*
+     * Get some info about the client binding
+     */
+
+    rpc_binding_to_string_binding(h, &binding_info, &e);
+    if (e == rpc_s_ok)
+    {
+        printf ("ReverseWrapped() called by client: %s\n", binding_info);
+	rpc_string_free(&binding_info, &e);
+    }
+
+    if (in == NULL) return 0;
+
+    printf("\n\nFunction ReverseWrapper() -- input buffer (size %d)\n", in->size);
+
+    for (j = 0; j < in->size; j++)
+    {
+        if (j % 16 == 0 && j != 0)
+        {
+            printf("\n");
+        }
+        printf("%3X", in->bytes[j] & 0xFF);
+    }
+    printf("\n");
+
+    idl_es_decode_buffer(
+            (idl_byte *)in->bytes,
+            in->size,
+            &encoding_handle,
+            status);
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    DCETHREAD_TRY
+    {
+        string_decode(encoding_handle, &decoded);
+    }
+    DCETHREAD_CATCH_ALL(THIS_CATCH)
+    {
+        printf("\n\nFunction ReverseWrapped() -- error decoding buffer\n");
+        *status = dcethread_exc_getstatus(THIS_CATCH);
+    }
+    DCETHREAD_ENDTRY;
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    /*
+     *  Print the in_text
+     */
+
+    printf("\n\nFunction ReverseWrap() -- input string '%s'\n", decoded);
+
+    idl_es_handle_free(&encoding_handle, status);
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    l = strlen(decoded);
+    for (j=0; j<l/2; j++)
+    {
+        decoded[j] = decoded[l-j-1];
+    }
+
+    idl_es_encode_dyn_buffer(
+        &encoded,
+        &encoded_size,
+        &encoding_handle,
+        status);
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    DCETHREAD_TRY
+    {
+        string_encode(encoding_handle, decoded);
+    }
+    DCETHREAD_CATCH_ALL(THIS_CATCH)
+    {
+        printf("\n\nFunction ReverseWrapped() -- error encoding buffer\n");
+        *status = dcethread_exc_getstatus(THIS_CATCH);
+    }
+    DCETHREAD_ENDTRY;
+    if (*status != 0)
+    {
+        goto error;
+    }
+    idl_es_handle_free(&encoding_handle, &e);
+
+    out->bytes = encoded;
+    encoded = NULL;
+    out->size = encoded_size;
+
+error:
+    if (encoding_handle != NULL)
+    {
+        idl_es_handle_free(&encoding_handle, &e);
+    }
+    rpc_ss_client_free(decoded);
+    rpc_ss_client_free(encoded);
+    return (*status == 0);
 }
 
 
