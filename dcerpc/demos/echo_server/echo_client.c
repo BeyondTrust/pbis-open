@@ -221,6 +221,7 @@ AddOneWrapper(
     idl_boolean ok = 0;
     error_status_t e;
     idl_long_int num = 0;
+    int j = 0;
 
     *outargs = NULL;
     *status = 0;
@@ -264,6 +265,18 @@ AddOneWrapper(
         goto error;
     }
 
+    printf("Sending buffer\n");
+
+    for (j = 0; j < in.size; j++)
+    {
+        if (j % 16 == 0 && j != 0)
+        {
+            printf("\n");
+        }
+        printf("%3X", in.bytes[j] & 0xFF);
+    }
+    printf("\n");
+
     ok = AddOne(
         echo_server,
         &in,
@@ -274,6 +287,18 @@ AddOneWrapper(
         printf("AddOne failed %x\n", (unsigned int)*status);
         goto error;
     }
+
+    printf("Received buffer\n");
+
+    for (j = 0; j < out.size; j++)
+    {
+        if (j % 16 == 0 && j != 0)
+        {
+            printf("\n");
+        }
+        printf("%3X", out.bytes[j] & 0xFF);
+    }
+    printf("\n");
 
     idl_es_decode_buffer(
             (idl_byte *)out.bytes,
