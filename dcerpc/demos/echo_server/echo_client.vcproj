@@ -211,6 +211,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\echo_encoding.idl"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCMIDLTool"
+						OutputDirectory="client"
+						HeaderFileName="$(InputName).h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\client\echo_encoding_c.c"
+				>
+			</File>
+			<File
 				RelativePath=".\getopt_internal.c"
 				>
 			</File>

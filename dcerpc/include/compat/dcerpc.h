@@ -91,6 +91,19 @@
 
 #define rpc_ss_allocate RpcSsAllocate
 
+#define idl_es_decode_buffer(buffer, size, handle, status) \
+    (*(status) = MesDecodeBufferHandleCreate(buffer, (unsigned long)size, handle))
+
+#define idl_es_set_attrs(handle, flags, status) \
+    (*(status) = 0)
+
+#define idl_es_handle_free(handle, status) \
+	((*(status) = MesHandleFree(*(handle))) || (*(handle) = NULL))
+
+#define idl_es_encode_dyn_buffer(buffer, size, handle, status) \
+    (*(status) = MesEncodeDynBufferHandleCreate(buffer, size, handle))
+
+#define rpc_ss_client_free NdrRpcSmClientFree
 
 typedef RPC_BINDING_VECTOR* rpc_binding_vector_p_t;
 typedef RPC_BINDING_HANDLE rpc_binding_handle_t;
@@ -99,17 +112,21 @@ typedef RPC_IF_ID rpc_if_id_t;
 typedef RPC_AUTH_IDENTITY_HANDLE rpc_auth_identity_handle_t;
 typedef unsigned char * unsigned_char_p_t;
 typedef SEC_WINNT_AUTH_IDENTITY_A rpc_ntlmssp_auth_ident_t;
+typedef handle_t idl_es_handle_t;
 
 #define ATTRIBUTE_UNUSED
 
 #define DCETHREAD_TRY RpcTryExcept {
 #define DCETHREAD_CATCH_ALL(_exc) } RpcExcept(1) { DWORD _exc = RpcExceptionCode();
 #define DCETHREAD_ENDTRY } RpcEndExcept
+#define dcethread_exc_getstatus(x) (x)
 
 #define rpc_c_protseq_max_calls_default RPC_C_PROTSEQ_MAX_REQS_DEFAULT
 #define rpc_c_listen_max_calls_default RPC_C_LISTEN_MAX_CALLS_DEFAULT
 
 typedef boolean idl_boolean;
+typedef char idl_byte;
+typedef unsigned long idl_ulong_int;
 
 #define rpc_s_ok RPC_S_OK
 

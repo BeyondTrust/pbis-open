@@ -21,8 +21,6 @@
 #include "echo.h"
 #include "echo_encoding.h"
 #include "misc.h"
-#include <dce/rpc.h>
-#include <dce/idlddefs.h>
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
@@ -405,6 +403,7 @@ ReverseWrapped(
     idl_es_handle_t encoding_handle = NULL;
     idl_byte *encoded = NULL;
     idl_ulong_int encoded_size = 0;
+    idl_byte *in_copy = NULL;
 
     *status = error_status_ok;
 
@@ -416,7 +415,7 @@ ReverseWrapped(
     if (e == rpc_s_ok)
     {
         printf ("ReverseWrapped() called by client: %s\n", binding_info);
-	rpc_string_free(&binding_info, &e);
+	    rpc_string_free(&binding_info, &e);
     }
 
     if (in == NULL) return 0;
@@ -433,13 +432,22 @@ ReverseWrapped(
     }
     printf("\n");
 
+    // Make a copy of the incoming buffer so that it is aligned.
+    in_copy = malloc(in->size);
+    if (in_copy == NULL)
+    {
+        goto error;
+    }
+    memcpy(in_copy, in->bytes, in->size);
+
     idl_es_decode_buffer(
-            (idl_byte *)in->bytes,
+            in_copy,
             in->size,
             &encoding_handle,
             status);
     if (*status != 0)
     {
+        printf("\n\nFunction ReverseWrapped() -- creating decode handle failed with error %d\n", *status);
         goto error;
     }
 
@@ -510,6 +518,10 @@ error:
     if (encoding_handle != NULL)
     {
         idl_es_handle_free(&encoding_handle, &e);
+    }
+    if (in_copy != NULL)
+    {
+        free(in_copy);
     }
     rpc_ss_client_free(decoded);
     rpc_ss_client_free(encoded);
