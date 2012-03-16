@@ -207,6 +207,15 @@
 				RelativePath=".\echo_encoding.idl"
 				>
 				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCMIDLTool"
+						OutputDirectory="server"
+						HeaderFileName="$(InputName).h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool

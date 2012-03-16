@@ -111,6 +111,9 @@ typedef RPC_IF_HANDLE rpc_if_handle_t;
 typedef RPC_IF_ID rpc_if_id_t;
 typedef RPC_AUTH_IDENTITY_HANDLE rpc_auth_identity_handle_t;
 typedef unsigned char * unsigned_char_p_t;
+typedef char idl_char;
+typedef int idl_long_int;
+typedef signed char idl_small_int;
 typedef SEC_WINNT_AUTH_IDENTITY_A rpc_ntlmssp_auth_ident_t;
 typedef handle_t idl_es_handle_t;
 
