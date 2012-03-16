@@ -353,7 +353,7 @@ main(
         {
             "days",
             '\0',
-            POPT_ARG_LONG,
+            POPT_ARG_INT,
             &dwDaysForFilter,
             ACTION_NONE,
             "Filter results to those items in the past n days.",
@@ -362,7 +362,7 @@ main(
         {
             "hours",
             '\0',
-            POPT_ARG_LONG,
+            POPT_ARG_INT,
             &dwHoursForFilter,
             ACTION_NONE,
             "Filter results to those items in the past n hours.",
@@ -371,7 +371,7 @@ main(
         {
             "mins",
             '\0',
-            POPT_ARG_LONG,
+            POPT_ARG_INT,
             &dwMinutesForFilter,
             ACTION_NONE,
             "Filter results to those items in the past n minutes.",
