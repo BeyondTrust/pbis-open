@@ -7,4 +7,8 @@ interface echo_encoding {
 	[encode] string_encode();
 
 	[decode] string_decode();
+
+	[encode] int_encode();
+
+	[decode] int_decode();
 }

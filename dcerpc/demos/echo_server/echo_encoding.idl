@@ -16,6 +16,14 @@ interface echo_encoding {
   void string_decode(
 	[in] handle_t h,
 	[out] encoded_string_t* str);
+
+  void int_encode(
+	[in] handle_t h,
+	[in] int a);
+
+  void int_decode(
+	[in] handle_t h,
+	[out] int* a);
 }
 
 

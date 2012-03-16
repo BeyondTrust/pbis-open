@@ -207,6 +207,120 @@ error:
     return (*status == 0);
 }
 
+idl_boolean
+AddOneWrapper(	
+    rpc_binding_handle_t echo_server,
+    args *inargs,
+    args **outargs,
+    unsigned32 *status
+    )
+{
+    idl_es_handle_t encoding_handle = NULL;
+    buffer in = { 0 };
+    buffer out = { 0 };
+    idl_boolean ok = 0;
+    error_status_t e;
+    idl_long_int num = 0;
+
+    *outargs = NULL;
+    *status = 0;
+
+    idl_es_encode_dyn_buffer(
+        (idl_byte **)(void *)&in.bytes,
+        &in.size,
+        &encoding_handle,
+        status);
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    if (inargs->argc >= 1)
+    {
+        num = strtol((char *)inargs->argv[0], NULL, 10);
+    }
+    else
+    {
+        num = 0;
+    }
+
+    DCETHREAD_TRY
+    {
+        int_encode(encoding_handle, num);
+    }
+    DCETHREAD_CATCH_ALL(THIS_CATCH)
+    {
+        printf("error encoding buffer\n");
+        *status = dcethread_exc_getstatus(THIS_CATCH);
+    }
+    DCETHREAD_ENDTRY;
+    if (*status != 0)
+    {
+        goto error;
+    }
+    idl_es_handle_free(&encoding_handle, status);
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    ok = AddOne(
+        echo_server,
+        &in,
+        &out,
+        status);
+    if (!ok || *status != 0)
+    {
+        printf("AddOne failed %x\n", (unsigned int)*status);
+        goto error;
+    }
+
+    idl_es_decode_buffer(
+            (idl_byte *)out.bytes,
+            out.size,
+            &encoding_handle,
+            status);
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    DCETHREAD_TRY
+    {
+        int_decode(encoding_handle, &num);
+    }
+    DCETHREAD_CATCH_ALL(THIS_CATCH)
+    {
+        printf("\n\nFunction AddOneWrapped() -- error decoding size %d buffer\n", (unsigned int)out.size);
+        *status = dcethread_exc_getstatus(THIS_CATCH);
+    }
+    DCETHREAD_ENDTRY;
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    *outargs = (args *)malloc(sizeof(args));
+
+    if (outargs == NULL)
+    {
+        exit(1);
+    }
+
+    (*outargs)->argc = 1;
+    (*outargs)->argv[0] = malloc(100);
+    sprintf((char *)(*outargs)->argv[0], "%d", (int)num);
+
+error:
+    if (encoding_handle != NULL)
+    {
+        idl_es_handle_free(&encoding_handle, &e);
+    }
+    rpc_ss_client_free(in.bytes);
+    rpc_ss_client_free(out.bytes);
+    return (*status == 0);
+}
+
 int
 main(
     int argc,
@@ -248,6 +362,7 @@ main(
     int call_count = 1;
     int call = 0;
     int wrap = 0;
+    int inc_number = 0;
     unsigned32 authn_svc = rpc_c_authn_gss_negotiate;
 
     char * nl;
@@ -258,7 +373,7 @@ main(
      * Process the cmd line args
      */
 
-    while ((c = getopt(argc, argv, "S:sc:h:a:ip:e:nutdg:U:D:P:w")) != EOF)
+    while ((c = getopt(argc, argv, "S:sc:h:a:ip:e:nutdg:U:D:P:wI")) != EOF)
     {
         switch (c)
         {
@@ -357,6 +472,9 @@ main(
             break;
         case 'w':
             wrap = 1;
+            break;
+        case 'I':
+            inc_number = 1;
             break;
         case 'g':
             generate_length = strtol(optarg, NULL, 10);
@@ -531,7 +649,11 @@ main(
     for (call = 0; call < call_count; call++)
     {
         printf ("calling server\n");
-        if (wrap)
+        if (inc_number)
+        {
+            ok = AddOneWrapper(echo_server, inargs, &outargs, &status);
+        }
+        else if (wrap)
         {
             ok = ReverseWrappedWrapper(echo_server, inargs, &outargs, &status);
         }

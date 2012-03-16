@@ -528,6 +528,142 @@ error:
     return (*status == 0);
 }
 
+idl_boolean
+AddOne(
+    /* [in] */ handle_t h,
+    /* [in] */ buffer *in,
+    /* [out] */ buffer *out,
+    /* [out] */ error_status_t *status
+    )
+{
+
+    unsigned_char_p_t binding_info;
+    error_status_t e;
+    unsigned32 j;
+    idl_long_int num = 0;
+    idl_es_handle_t encoding_handle = NULL;
+    idl_byte *encoded = NULL;
+    idl_ulong_int encoded_size = 0;
+    idl_byte *in_copy = NULL;
+
+    *status = error_status_ok;
+
+    /*
+     * Get some info about the client binding
+     */
+
+    rpc_binding_to_string_binding(h, &binding_info, &e);
+    if (e == rpc_s_ok)
+    {
+        printf ("ReverseWrapped() called by client: %s\n", binding_info);
+	    rpc_string_free(&binding_info, &e);
+    }
+
+    if (in == NULL) return 0;
+
+    printf("\n\nFunction ReverseWrapper() -- input buffer (size %u)\n", (unsigned int)in->size);
+
+    for (j = 0; j < in->size; j++)
+    {
+        if (j % 16 == 0 && j != 0)
+        {
+            printf("\n");
+        }
+        printf("%3X", in->bytes[j] & 0xFF);
+    }
+    printf("\n");
+
+    // Make a copy of the incoming buffer so that it is aligned.
+    in_copy = malloc(in->size);
+    if (in_copy == NULL)
+    {
+        goto error;
+    }
+    memcpy(in_copy, in->bytes, in->size);
+
+    idl_es_decode_buffer(
+            in_copy,
+            in->size,
+            &encoding_handle,
+            status);
+    if (*status != 0)
+    {
+        printf("\n\nFunction ReverseWrapped() -- creating decode handle failed with error %u\n", (unsigned int)*status);
+        goto error;
+    }
+
+    DCETHREAD_TRY
+    {
+        int_decode(encoding_handle, &num);
+    }
+    DCETHREAD_CATCH_ALL(THIS_CATCH)
+    {
+        printf("\n\nFunction ReverseWrapped() -- error decoding buffer\n");
+        *status = dcethread_exc_getstatus(THIS_CATCH);
+    }
+    DCETHREAD_ENDTRY;
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    /*
+     *  Print the in_text
+     */
+
+    printf("\n\nFunction ReverseWrap() -- input number %d\n", (int)num);
+
+    idl_es_handle_free(&encoding_handle, status);
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    num++;
+
+    idl_es_encode_dyn_buffer(
+        &encoded,
+        &encoded_size,
+        &encoding_handle,
+        status);
+    if (*status != 0)
+    {
+        goto error;
+    }
+
+    DCETHREAD_TRY
+    {
+        int_encode(encoding_handle, num);
+    }
+    DCETHREAD_CATCH_ALL(THIS_CATCH)
+    {
+        printf("\n\nFunction AddOne() -- error encoding buffer\n");
+        *status = dcethread_exc_getstatus(THIS_CATCH);
+    }
+    DCETHREAD_ENDTRY;
+    if (*status != 0)
+    {
+        goto error;
+    }
+    idl_es_handle_free(&encoding_handle, &e);
+
+    out->bytes = (idl_small_int *)encoded;
+    encoded = NULL;
+    out->size = encoded_size;
+
+error:
+    if (encoding_handle != NULL)
+    {
+        idl_es_handle_free(&encoding_handle, &e);
+    }
+    if (in_copy != NULL)
+    {
+        free(in_copy);
+    }
+    rpc_ss_client_free(encoded);
+    return (*status == 0);
+}
+
 
 #ifndef _WIN32
 /*=========================================================================

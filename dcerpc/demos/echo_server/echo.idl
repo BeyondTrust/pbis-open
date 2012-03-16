@@ -60,6 +60,13 @@ interface echo {
 	[out, ref] error_status_t *	status
 	);
 
+  boolean AddOne(	
+	[in] handle_t            	h,
+	[in] buffer *in,
+	[out] buffer *out,
+	[out, ref] error_status_t *	status
+	);
+
 }
 
 
