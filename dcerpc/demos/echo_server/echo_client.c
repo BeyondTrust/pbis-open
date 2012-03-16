@@ -103,8 +103,8 @@ ReverseWrappedWrapper(
     )
 {
     idl_es_handle_t encoding_handle = NULL;
-    buffer in;
-    buffer out;
+    buffer in = { 0 };
+    buffer out = { 0 };
     idl_boolean ok = 0;
     encoded_string_t decoded = NULL;
     error_status_t e;
@@ -113,7 +113,7 @@ ReverseWrappedWrapper(
     *status = 0;
 
     idl_es_encode_dyn_buffer(
-        (idl_byte **)&in.bytes,
+        (idl_byte **)(void *)&in.bytes,
         &in.size,
         &encoding_handle,
         status);
@@ -130,7 +130,7 @@ ReverseWrappedWrapper(
         }
         else
         {
-            string_encode(encoding_handle, "");
+            string_encode(encoding_handle, (idl_char *)"");
         }
     }
     DCETHREAD_CATCH_ALL(THIS_CATCH)
@@ -156,7 +156,7 @@ ReverseWrappedWrapper(
         status);
     if (!ok || *status != 0)
     {
-        printf("ReverseWrapped failed %x\n", *status);
+        printf("ReverseWrapped failed %x\n", (unsigned int)*status);
         goto error;
     }
 
@@ -176,7 +176,7 @@ ReverseWrappedWrapper(
     }
     DCETHREAD_CATCH_ALL(THIS_CATCH)
     {
-        printf("\n\nFunction ReverseWrappedWrapper() -- error decoding size %d buffer\n", out.size);
+        printf("\n\nFunction ReverseWrappedWrapper() -- error decoding size %d buffer\n", (unsigned int)out.size);
         *status = dcethread_exc_getstatus(THIS_CATCH);
     }
     DCETHREAD_ENDTRY;
@@ -653,3 +653,4 @@ get_client_rpc_binding(
 
     return 1;
 }
+
