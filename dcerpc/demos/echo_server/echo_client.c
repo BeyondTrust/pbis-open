@@ -97,6 +97,7 @@ static void usage()
 idl_boolean
 ReverseWrappedWrapper(	
     rpc_binding_handle_t echo_server,
+    int midl_compat,
     args *inargs,
     args **outargs,
     unsigned32 *status
@@ -120,6 +121,18 @@ ReverseWrappedWrapper(
     if (*status != 0)
     {
         goto error;
+    }
+
+    if (midl_compat)
+    {
+        idl_es_set_attrs(
+                encoding_handle,
+                IDL_ES_MIDL_COMPAT,
+                status);
+        if (*status != 0)
+        {
+            goto error;
+        }
     }
 
     DCETHREAD_TRY
@@ -170,6 +183,18 @@ ReverseWrappedWrapper(
         goto error;
     }
 
+    if (midl_compat)
+    {
+        idl_es_set_attrs(
+                encoding_handle,
+                IDL_ES_MIDL_COMPAT,
+                status);
+        if (*status != 0)
+        {
+            goto error;
+        }
+    }
+
     DCETHREAD_TRY
     {
         string_decode(encoding_handle, &decoded);
@@ -210,6 +235,7 @@ error:
 idl_boolean
 AddOneWrapper(	
     rpc_binding_handle_t echo_server,
+    int midl_compat,
     args *inargs,
     args **outargs,
     unsigned32 *status
@@ -234,6 +260,18 @@ AddOneWrapper(
     if (*status != 0)
     {
         goto error;
+    }
+
+    if (midl_compat)
+    {
+        idl_es_set_attrs(
+                encoding_handle,
+                IDL_ES_MIDL_COMPAT,
+                status);
+        if (*status != 0)
+        {
+            goto error;
+        }
     }
 
     if (inargs->argc >= 1)
@@ -308,6 +346,18 @@ AddOneWrapper(
     if (*status != 0)
     {
         goto error;
+    }
+
+    if (midl_compat)
+    {
+        idl_es_set_attrs(
+                encoding_handle,
+                IDL_ES_MIDL_COMPAT,
+                status);
+        if (*status != 0)
+        {
+            goto error;
+        }
     }
 
     DCETHREAD_TRY
@@ -387,6 +437,7 @@ main(
     int call_count = 1;
     int call = 0;
     int wrap = 0;
+    int midl = 0;
     int inc_number = 0;
     unsigned32 authn_svc = rpc_c_authn_gss_negotiate;
 
@@ -398,7 +449,7 @@ main(
      * Process the cmd line args
      */
 
-    while ((c = getopt(argc, argv, "S:sc:h:a:ip:e:nutdg:U:D:P:wI")) != EOF)
+    while ((c = getopt(argc, argv, "S:sc:h:a:ip:e:nutdg:U:D:P:wmI")) != EOF)
     {
         switch (c)
         {
@@ -497,6 +548,9 @@ main(
             break;
         case 'w':
             wrap = 1;
+            break;
+        case 'm':
+            midl = 1;
             break;
         case 'I':
             inc_number = 1;
@@ -676,11 +730,11 @@ main(
         printf ("calling server\n");
         if (inc_number)
         {
-            ok = AddOneWrapper(echo_server, inargs, &outargs, &status);
+            ok = AddOneWrapper(echo_server, midl, inargs, &outargs, &status);
         }
         else if (wrap)
         {
-            ok = ReverseWrappedWrapper(echo_server, inargs, &outargs, &status);
+            ok = ReverseWrappedWrapper(echo_server, midl, inargs, &outargs, &status);
         }
         else
         {

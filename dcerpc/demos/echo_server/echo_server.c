@@ -604,6 +604,7 @@ AddOne(
     }
     DCETHREAD_ENDTRY;
 
+#ifdef RPC_X_BAD_STUB_DATA
     if (*status == RPC_X_BAD_STUB_DATA)
     {
         printf("\n\nFunction AddOne() -- trying midl compat");
@@ -632,6 +633,7 @@ AddOne(
         DCETHREAD_ENDTRY;
         use_direct_type = 1;
     }
+#endif
 
     if (*status != 0)
     {
@@ -666,7 +668,19 @@ AddOne(
     {
         if (use_direct_type)
         {
+#ifdef _WIN32
             int_struct_Encode(encoding_handle, &num);
+#else
+            idl_es_set_attrs(
+                    encoding_handle,
+                    IDL_ES_MIDL_COMPAT,
+                    status);
+            if (*status != 0)
+            {
+                goto error;
+            }
+            int_encode(encoding_handle, num);
+#endif
         }
         else
         {

@@ -11,7 +11,7 @@ interface echo_encoding {
 
   typedef struct
   {
-      int long i;
+      long int i;
   } int_struct;
 
   void string_encode(

@@ -8,11 +8,11 @@ interface echo_encoding {
     typedef [encode, decode] int_struct;
 #endif
     
-	[encode] string_encode();
+    [encode] string_encode();
 
-	[decode] string_decode();
+    [decode] string_decode();
 
-	[encode] int_encode();
+    [encode] int_encode();
 
-	[decode] int_decode();
+    [decode] int_decode();
 }
