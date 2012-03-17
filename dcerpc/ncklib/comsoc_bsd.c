@@ -827,16 +827,16 @@ connect_again:
         goto error;
     }
 
-#if !defined(SO_PEERCRED) && !(defined(HAVE_GETPEEREID) && HAVE_DECL_GETPEEREID)
-    serr = rpc__bsd_socket_sendpeereid(sock, addr);
-    if (serr)
-    {
-        goto error;
-    }
-#endif
-
     if (sock->pseq_id == rpc_c_protseq_id_ncalrpc)
     {
+#if !defined(SO_PEERCRED) && !(defined(HAVE_GETPEEREID) && HAVE_DECL_GETPEEREID)
+        serr = rpc__bsd_socket_sendpeereid(sock, addr);
+        if (serr)
+        {
+            goto error;
+        }
+#endif
+
         serr = rpc__bsd_socket_recvsession_key(sock,
                                                &session_key,
                                                &session_key_len);

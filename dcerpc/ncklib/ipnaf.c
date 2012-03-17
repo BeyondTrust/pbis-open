@@ -497,7 +497,16 @@ INTERNAL void addr_alloc
      * insert id, length, family into rpc address
      */
     (*rpc_addr)->rpc_protseq_id = rpc_protseq_id;
-    (*rpc_addr)->len = sizeof (struct sockaddr_in6);
+    if (naf_id == AF_INET)
+    {
+        // Even though there is space for an IPv6 address, report the smaller
+        // size so the system calls do not complain.
+        (*rpc_addr)->len = sizeof (struct sockaddr_in);
+    }
+    else
+    {
+        (*rpc_addr)->len = sizeof (struct sockaddr_in6);
+    }
     (*rpc_addr)->sa.family = naf_id;
     
     /*
