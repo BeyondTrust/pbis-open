@@ -457,8 +457,8 @@ ReverseWrapped(
     }
     DCETHREAD_CATCH_ALL(THIS_CATCH)
     {
-        printf("\n\nFunction ReverseWrapped() -- error decoding buffer\n");
         *status = dcethread_exc_getstatus(THIS_CATCH);
+        printf("\n\nFunction ReverseWrapped() -- error %d decoding buffer\n", *status);
     }
     DCETHREAD_ENDTRY;
     if (*status != 0)
@@ -500,8 +500,8 @@ ReverseWrapped(
     }
     DCETHREAD_CATCH_ALL(THIS_CATCH)
     {
-        printf("\n\nFunction ReverseWrapped() -- error encoding buffer\n");
         *status = dcethread_exc_getstatus(THIS_CATCH);
+        printf("\n\nFunction ReverseWrapped() -- error %d encoding buffer\n", *status);
     }
     DCETHREAD_ENDTRY;
     if (*status != 0)
@@ -540,11 +540,12 @@ AddOne(
     unsigned_char_p_t binding_info;
     error_status_t e;
     unsigned32 j;
-    idl_long_int num = 0;
+    int_struct num = { 0 };
     idl_es_handle_t encoding_handle = NULL;
     idl_byte *encoded = NULL;
     idl_ulong_int encoded_size = 0;
     idl_byte *in_copy = NULL;
+    int use_direct_type = 0;
 
     *status = error_status_ok;
 
@@ -555,13 +556,13 @@ AddOne(
     rpc_binding_to_string_binding(h, &binding_info, &e);
     if (e == rpc_s_ok)
     {
-        printf ("ReverseWrapped() called by client: %s\n", binding_info);
+        printf ("AddOne() called by client: %s\n", binding_info);
 	    rpc_string_free(&binding_info, &e);
     }
 
     if (in == NULL) return 0;
 
-    printf("\n\nFunction ReverseWrapper() -- input buffer (size %u)\n", (unsigned int)in->size);
+    printf("\n\nFunction AddOne() -- input buffer (size %u)\n", (unsigned int)in->size);
 
     for (j = 0; j < in->size; j++)
     {
@@ -588,7 +589,7 @@ AddOne(
             status);
     if (*status != 0)
     {
-        printf("\n\nFunction ReverseWrapped() -- creating decode handle failed with error %u\n", (unsigned int)*status);
+        printf("\n\nFunction AddOne() -- creating decode handle failed with error %u\n", (unsigned int)*status);
         goto error;
     }
 
@@ -598,10 +599,40 @@ AddOne(
     }
     DCETHREAD_CATCH_ALL(THIS_CATCH)
     {
-        printf("\n\nFunction ReverseWrapped() -- error decoding buffer\n");
         *status = dcethread_exc_getstatus(THIS_CATCH);
+        printf("\n\nFunction AddOne() -- error %d decoding buffer\n", *status);
     }
     DCETHREAD_ENDTRY;
+
+    if (*status == RPC_X_BAD_STUB_DATA)
+    {
+        printf("\n\nFunction AddOne() -- trying midl compat");
+
+        idl_es_handle_free(&encoding_handle, status);
+        idl_es_decode_buffer(
+            in_copy,
+            in->size,
+            &encoding_handle,
+            status);
+        if (*status != 0)
+        {
+            printf("\n\nFunction AddOne() -- creating decode handle failed with error %u\n", (unsigned int)*status);
+            goto error;
+        }
+
+        DCETHREAD_TRY
+        {
+            int_struct_Decode(encoding_handle, &num);
+        }
+        DCETHREAD_CATCH_ALL(THIS_CATCH)
+        {
+            *status = dcethread_exc_getstatus(THIS_CATCH);
+            printf("\n\nFunction AddOne() -- error %d decoding buffer\n", *status);
+        }
+        DCETHREAD_ENDTRY;
+        use_direct_type = 1;
+    }
+
     if (*status != 0)
     {
         goto error;
@@ -611,7 +642,7 @@ AddOne(
      *  Print the in_text
      */
 
-    printf("\n\nFunction ReverseWrap() -- input number %d\n", (int)num);
+    printf("\n\nFunction AddOne() -- input number %d\n", (int)num.i);
 
     idl_es_handle_free(&encoding_handle, status);
     if (*status != 0)
@@ -619,7 +650,7 @@ AddOne(
         goto error;
     }
 
-    num++;
+    num.i++;
 
     idl_es_encode_dyn_buffer(
         &encoded,
@@ -633,7 +664,14 @@ AddOne(
 
     DCETHREAD_TRY
     {
-        int_encode(encoding_handle, num);
+        if (use_direct_type)
+        {
+            int_struct_Encode(encoding_handle, &num);
+        }
+        else
+        {
+            int_encode(encoding_handle, num);
+        }
     }
     DCETHREAD_CATCH_ALL(THIS_CATCH)
     {

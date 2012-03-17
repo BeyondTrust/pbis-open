@@ -4,6 +4,10 @@
 [ explicit_handle, enable_allocate ]
 #endif
 interface echo_encoding {
+#ifdef _WIN32
+    typedef [encode, decode] int_struct;
+#endif
+    
 	[encode] string_encode();
 
 	[decode] string_decode();

@@ -9,6 +9,11 @@ interface echo_encoding {
 
   typedef [ptr, string] char * encoded_string_t;
 
+  typedef struct
+  {
+      int long i;
+  } int_struct;
+
   void string_encode(
 	[in] handle_t h,
 	[in] encoded_string_t str);
@@ -19,11 +24,11 @@ interface echo_encoding {
 
   void int_encode(
 	[in] handle_t h,
-	[in] int a);
+	[in] int_struct a);
 
   void int_decode(
 	[in] handle_t h,
-	[out] int* a);
+	[out] int_struct* a);
 }
 
 

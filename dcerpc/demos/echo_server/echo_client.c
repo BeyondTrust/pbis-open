@@ -220,7 +220,7 @@ AddOneWrapper(
     buffer out = { 0 };
     idl_boolean ok = 0;
     error_status_t e;
-    idl_long_int num = 0;
+    int_struct num = { 0 };
     int j = 0;
 
     *outargs = NULL;
@@ -238,11 +238,11 @@ AddOneWrapper(
 
     if (inargs->argc >= 1)
     {
-        num = strtol((char *)inargs->argv[0], NULL, 10);
+        num.i = strtol((char *)inargs->argv[0], NULL, 10);
     }
     else
     {
-        num = 0;
+        num.i = 0;
     }
 
     DCETHREAD_TRY
@@ -334,7 +334,7 @@ AddOneWrapper(
 
     (*outargs)->argc = 1;
     (*outargs)->argv[0] = malloc(100);
-    sprintf((char *)(*outargs)->argv[0], "%d", (int)num);
+    sprintf((char *)(*outargs)->argv[0], "%d", (int)num.i);
 
 error:
     if (encoding_handle != NULL)
