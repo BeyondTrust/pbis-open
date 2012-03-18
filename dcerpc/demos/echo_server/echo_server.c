@@ -458,7 +458,7 @@ ReverseWrapped(
     DCETHREAD_CATCH_ALL(THIS_CATCH)
     {
         *status = dcethread_exc_getstatus(THIS_CATCH);
-        printf("\n\nFunction ReverseWrapped() -- error %d decoding buffer\n", *status);
+        printf("\n\nFunction ReverseWrapped() -- error %d decoding buffer\n", (int)*status);
     }
     DCETHREAD_ENDTRY;
     if (*status != 0)
@@ -501,7 +501,7 @@ ReverseWrapped(
     DCETHREAD_CATCH_ALL(THIS_CATCH)
     {
         *status = dcethread_exc_getstatus(THIS_CATCH);
-        printf("\n\nFunction ReverseWrapped() -- error %d encoding buffer\n", *status);
+        printf("\n\nFunction ReverseWrapped() -- error %d encoding buffer\n", (int)*status);
     }
     DCETHREAD_ENDTRY;
     if (*status != 0)
@@ -600,7 +600,7 @@ AddOne(
     DCETHREAD_CATCH_ALL(THIS_CATCH)
     {
         *status = dcethread_exc_getstatus(THIS_CATCH);
-        printf("\n\nFunction AddOne() -- error %d decoding buffer\n", *status);
+        printf("\n\nFunction AddOne() -- error %d decoding buffer\n", (int)*status);
     }
     DCETHREAD_ENDTRY;
 
