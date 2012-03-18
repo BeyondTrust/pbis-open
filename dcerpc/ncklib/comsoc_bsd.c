@@ -945,14 +945,14 @@ accept_again:
 
     if (!serr)
     {
-        serr = rpc__bsd_socket_getpeereid((*newsock), &euid, &egid);
-	if (serr)
-        {
-            goto cleanup;
-        }
-
         if (sock->pseq_id == rpc_c_protseq_id_ncalrpc)
         {
+            serr = rpc__bsd_socket_getpeereid((*newsock), &euid, &egid);
+            if (serr)
+            {
+                goto cleanup;
+            }
+
             serr = rpc__bsd_socket_createsessionkey(&session_key,
                                                     &session_key_len);
             if (serr)

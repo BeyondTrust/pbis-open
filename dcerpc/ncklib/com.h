@@ -237,14 +237,18 @@ typedef unsigned32       rpc_protocol_id_t, *rpc_protocol_id_p_t;
 
 #define RPC_C_NAF_ID_UXD     1
 #define RPC_C_NAF_ID_IP      2
+#ifdef _AIX
+#define RPC_C_NAF_ID_IP6     24
+#else
 #define RPC_C_NAF_ID_IP6     10
+#endif
 #define RPC_C_NAF_ID_DNET    12
 #define RPC_C_NAF_ID_DDS     13         /* ###Check this one ###*/
 #define RPC_C_NAF_ID_NP      14
 #define RPC_C_NAF_ID_OSI     19
-#define RPC_C_NAF_ID_HTTP    20
-#define RPC_C_NAF_ID_MAX     21
-#define RPC_C_NAF_ID_VIRTUAL 20
+#define RPC_C_NAF_ID_HTTP    25
+#define RPC_C_NAF_ID_MAX     26
+#define RPC_C_NAF_ID_VIRTUAL 25
 
 typedef unsigned32       rpc_naf_id_t, *rpc_naf_id_p_t;
 
