@@ -684,6 +684,7 @@ static void idl_es_put_encoding_header
     rpc_if_rep_t *p_if_spec;
     int i;
     idl_ushort_int vers_field;
+    idl_ulong_int syntax_id_version;
 
     p_es_state = (IDL_es_state_t *)(IDL_msp->IDL_pickling_handle);
     p_if_spec = (rpc_if_rep_t *)ifp;
@@ -694,11 +695,18 @@ static void idl_es_put_encoding_header
     IDL_MARSH_USMALL(&fill);
     idl_es_put_encoding_uuid(&p_es_state->IDL_pickle_header.IDL_syntax_id.id,
                                                                      IDL_msp);
-    IDL_MARSH_ULONG(&p_es_state->IDL_pickle_header.IDL_syntax_id.version);
-    idl_es_put_encoding_uuid(&p_if_spec->id, IDL_msp);
-    vers_field = p_if_spec->vers / 65536;   /* Major version */
+    syntax_id_version = p_es_state->IDL_pickle_header.IDL_syntax_id.version;
+    // Split the version into two ushorts to match MS expectations of big
+    // endian systems
+    vers_field = syntax_id_version & 0xFFFF;   /* Low 16 bits */
     IDL_MARSH_USHORT(&vers_field);
-    vers_field = p_if_spec->vers % 65536;   /* Minor version */
+    vers_field = syntax_id_version >> 16;   /* High 16 bits */
+    IDL_MARSH_USHORT(&vers_field);
+
+    idl_es_put_encoding_uuid(&p_if_spec->id, IDL_msp);
+    vers_field = p_if_spec->vers % 65536;   /* Major version */
+    IDL_MARSH_USHORT(&vers_field);
+    vers_field = p_if_spec->vers / 65536;   /* Minor version */
     IDL_MARSH_USHORT(&vers_field);
     IDL_MARSH_ULONG(&op_num);
     if (es_transfer_syntax == idl_es_transfer_syntax_ndr)
@@ -717,9 +725,9 @@ static void idl_es_put_encoding_header
     /* Store interface ID and operation number in state block */
     p_es_state->IDL_pickle_header.IDL_if_id.uuid = p_if_spec->id;
     p_es_state->IDL_pickle_header.IDL_if_id.vers_major
-                                                     = p_if_spec->vers / 65536;
-    p_es_state->IDL_pickle_header.IDL_if_id.vers_minor
                                                      = p_if_spec->vers % 65536;
+    p_es_state->IDL_pickle_header.IDL_if_id.vers_minor
+                                                     = p_if_spec->vers / 65536;
     p_es_state->IDL_pickle_header.IDL_op_num = op_num;
 }
 
@@ -762,6 +770,7 @@ static void idl_es_get_encoding_header
 )
 {
     IDL_es_state_t *p_es_state;
+    idl_ushort_int vers_low, vers_high;
 
     p_es_state = (IDL_es_state_t *)(IDL_msp->IDL_pickling_handle);
 
@@ -776,7 +785,10 @@ static void idl_es_get_encoding_header
     IDL_msp->IDL_drep.int_rep = p_pickle_header->IDL_int_drep;
     /* Called rtn will do an alignment operation, discarding the filler bytes */
     idl_es_get_encoding_uuid(&p_pickle_header->IDL_syntax_id.id, IDL_msp);
-    IDL_UNMAR_ULONG(&p_pickle_header->IDL_syntax_id.version);
+    // Match MS expectations for big endian systems
+    IDL_UNMAR_USHORT(&vers_low);
+    IDL_UNMAR_USHORT(&vers_high);
+    p_pickle_header->IDL_syntax_id.version = (vers_high << 16) | vers_low;
     idl_es_get_encoding_uuid(&p_pickle_header->IDL_if_id.uuid, IDL_msp);
     IDL_UNMAR_USHORT(&p_pickle_header->IDL_if_id.vers_major);
     IDL_UNMAR_USHORT(&p_pickle_header->IDL_if_id.vers_minor);
@@ -1020,8 +1032,8 @@ void idl_es_before_interp_call
                     DCETHREAD_RAISE(rpc_x_ss_pipe_comm_error);
                 }
                 if (p_if_spec->vers != (unsigned32)
-							 (p_es_state->IDL_pickle_header.IDL_if_id.vers_major * 65536
-                        + p_es_state->IDL_pickle_header.IDL_if_id.vers_minor))
+							 (p_es_state->IDL_pickle_header.IDL_if_id.vers_minor * 65536
+                        + p_es_state->IDL_pickle_header.IDL_if_id.vers_major))
                 {
                     /* Wrong version */
                     IDL_msp->IDL_status = rpc_s_unknown_if;
