@@ -44,6 +44,18 @@
 #include <signal.h>
 #include <stdlib.h>
 
+#ifndef LWBASE_THREADPOOL_THREADS_MAX_LIMIT
+#define LWBASE_THREADPOOL_THREADS_MAX_LIMIT 16
+#endif
+
+#ifndef LWBASE_THREADPOOL_TASKTHREAD_MULTIPLIER
+#define LWBASE_THREADPOOL_TASKTHREAD_MULTIPLIER 1
+#endif
+
+#ifndef LWBASE_THREADPOOL_WORKTHREAD_MULTIPLIER
+#define LWBASE_THREADPOOL_WORKTHREAD_MULTIPLIER 4
+#endif
+
 /*
  * Circular linked list structure
  * TODO: merge or replace with LW_LIST_LINKS from lwio
@@ -408,9 +420,19 @@ GetTaskThreadsAttr(
     int numCpus
     )
 {
-    LONG lCount = pAttrs ? pAttrs->lTaskThreads : -1;
+    LONG lCount = pAttrs ? pAttrs->lTaskThreads : 0;
 
-    return lCount < 0 ? -lCount * numCpus : lCount;
+    if (lCount == 0)
+    {
+        // Using default task threads value. 
+        // Compute default task numCpu, then cap at the default limit
+        // to prevent to many threads from being created on systems with
+        // a huge number of CPUs/cores.
+        numCpus *= LWBASE_THREADPOOL_TASKTHREAD_MULTIPLIER;
+        return (numCpus > LWBASE_THREADPOOL_THREADS_MAX_LIMIT) ?
+            LWBASE_THREADPOOL_THREADS_MAX_LIMIT : numCpus;
+    }
+    return (lCount < 0) ? (-lCount * numCpus) : lCount;
 }
 
 static
@@ -421,9 +443,19 @@ GetWorkThreadsAttr(
     int numCpus
     )
 {
-    LONG lCount = pAttrs ? pAttrs->lWorkThreads : -4;
+    LONG lCount = pAttrs ? pAttrs->lWorkThreads : 0;
 
-    return lCount < 0 ? -lCount * numCpus : lCount;
+    if (lCount == 0)
+    {
+        // Using default work threads value. 
+        // Compute default work numCpu, then cap at the default limit
+        // to prevent to many threads from being created on systems with
+        // a huge number of CPUs/cores.
+        numCpus *= LWBASE_THREADPOOL_WORKTHREAD_MULTIPLIER;
+        return (numCpus > LWBASE_THREADPOOL_THREADS_MAX_LIMIT) ?
+            LWBASE_THREADPOOL_THREADS_MAX_LIMIT : numCpus;
+    }
+    return (lCount < 0) ? (-lCount * numCpus) : lCount;
 }
 
 static
