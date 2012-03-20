@@ -74,7 +74,16 @@ UmnSrvAddUsersFromMembership(
                     1,
                     list,
                     &ppObjects);
-    BAIL_ON_UMN_ERROR(dwError);
+    switch(dwError)
+    {
+        // The string was not a valid NT4 name
+        case LW_ERROR_INVALID_PARAMETER:
+        // The user/group does not exist
+        case LW_ERROR_NO_SUCH_OBJECT:
+            goto cleanup;
+        default:
+            BAIL_ON_UMN_ERROR(dwError);
+    }
 
     if (ppObjects[0] && ppObjects[0]->type == LSA_OBJECT_TYPE_USER)
     {
