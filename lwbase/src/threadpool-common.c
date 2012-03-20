@@ -104,7 +104,7 @@ AcquireDelegatePool(
     LW_THREAD_POOL_ATTRIBUTES attrs =
     {
         .bDelegateTasks = FALSE,
-        .lTaskThreads = -1,
+        .lTaskThreads = 0,
         .lWorkThreads = 0,
         .ulTaskThreadStackSize = (ULONG) _LW_TASK_THREAD_STACK_SIZE,
         .ulWorkThreadStackSize = (ULONG) _LW_WORK_THREAD_STACK_SIZE
@@ -182,8 +182,8 @@ LwRtlCreateThreadPoolAttributes(
     GOTO_ERROR_ON_STATUS(status);
     
     pAttrs->bDelegateTasks = TRUE;
-    pAttrs->lTaskThreads = -1;
-    pAttrs->lWorkThreads = -4;
+    pAttrs->lTaskThreads = 0;
+    pAttrs->lWorkThreads = 0;
     pAttrs->ulTaskThreadStackSize = (ULONG) _LW_TASK_THREAD_STACK_SIZE;
     pAttrs->ulWorkThreadStackSize = (ULONG) _LW_WORK_THREAD_STACK_SIZE;
     pAttrs->ulWorkThreadTimeout = DEFAULT_WORK_THREAD_TIMEOUT;
