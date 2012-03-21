@@ -18,4 +18,15 @@ make()
     mk_stage DESTDIR="${MK_SYSCONFDIR}" user-home-directory-in-dock.plist
     mk_stage DESTDIR="${MK_SYSCONFDIR}/LaunchDaemons" com.beyondtrust.pbis.lwsmd.plist
     mk_stage DEST="${MK_PREFIX}/libexec/startup" SOURCE="startup.sh"
+
+    mk_target \
+        TARGET="${MK_BINDIR}/PBIS Logon Message.app" \
+        DEPS="'PBIS Logon Message.app'" \
+            _rsync_files '$<' '$@'
+    mk_add_all_target "$result"
+}
+
+_rsync_files()
+{
+    rsync -a --exclude=.svn "$1" "$2"
 }
