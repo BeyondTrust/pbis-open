@@ -48,6 +48,10 @@ extern "C" {
 #define FALSE 0
 #define TRUE 1
 
+#ifndef _DARWIN
+#define _DARWIN 1
+#endif
+
 /* 
  * For those components wishing to support platforms where void 
  * pointers are not available, they can use the following typedef for 
