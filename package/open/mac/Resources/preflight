@@ -5,7 +5,7 @@ UPGRADEDIR=/var/lib/pbis-upgrade
 LOG=/var/log/pbis-open-install.log
 TLOG=/tmp/pbis-open-install.tmp
 
-DAEMONS_TO_HALT="reapsysld lsassd lwiod netlogond dcerpcd eventlogd lwregd lwsmd"
+DAEMONS_TO_KILL="reapsysld lsassd lwiod netlogond dcerpcd eventlogd lwregd lwsmd"
 
 # Display to screen and log file with a blank line between entries.
 log()
@@ -110,9 +110,6 @@ stop_and_disable_daemon()
 
         run_quiet launchctl unload "$SERVICE_DAEMON"
         run_quiet rm "$SERVICE_DAEMON"
-        if [ -f "$SERVICE_PATH" ]; then
-            run_quiet rm "$SERVICE_PATH"
-        fi
     fi
 }
 
