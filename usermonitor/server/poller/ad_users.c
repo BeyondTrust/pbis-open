@@ -883,6 +883,14 @@ UmnSrvUpdateADAccountsByHash(
                 }
                 pGroup = ppLookedupGroups[i];
 
+                if (!pGroup)
+                {
+                    UMN_LOG_ERROR("Unable to find group sid %s that user %s is a member of",
+                            ppLookupGroupSids[i],
+                            pUser->userInfo.pszUnixName);
+                    continue;
+                }
+
                 UMN_LOG_VERBOSE("Found AD user %s is a member of unprocessed group %s",
                         pUser->userInfo.pszUnixName,
                         pGroup->groupInfo.pszUnixName);
