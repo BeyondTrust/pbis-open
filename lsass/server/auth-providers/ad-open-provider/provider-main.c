@@ -1743,6 +1743,10 @@ error:
             // normal for non-joined machines
             break;
 
+        case LW_ERROR_NO_SUCH_USER:
+            // normal when called with a local username
+            break;
+
         case LW_ERROR_ACCESS_DENIED:
             LSA_LOG_INFO("Error: User [%s] not in restricted login list", pszUserName);
             break;
