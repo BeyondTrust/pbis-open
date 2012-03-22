@@ -750,6 +750,10 @@ INTERNAL void receive_dispatch
                  (ptype == RPC_C_CN_PKT_BIND_NAK) ||
                  (ptype == RPC_C_CN_PKT_AUTH3)))
             {
+                if (assoc->raw_packet_p)
+                {
+                    rpc__cn_fragbuf_free(assoc->raw_packet_p);
+                }
                 assoc->raw_packet_p = rpc__cn_fragbuf_alloc (true);
                 assoc->raw_packet_p->data_size = fragbuf_p->data_size;
                 memcpy (assoc->raw_packet_p->data_p,
@@ -1303,6 +1307,12 @@ INTERNAL void receive_dispatch
     {
         (*ovf_fragbuf_p->fragbuf_dealloc)(ovf_fragbuf_p);
     }
+    if (assoc->security.auth_buffer_info.auth_buffer)
+    {
+        RPC_MEM_FREE(assoc->security.auth_buffer_info.auth_buffer,
+                     RPC_C_MEM_CN_PAC_BUF);
+        assoc->security.auth_buffer_info.auth_buffer = NULL;
+    }
 }
 
 
@@ -1363,6 +1373,16 @@ INTERNAL void receive_packet
     volatile rpc_socket_error_t  serr = 0;
     signed32            need_bytes;
     static rpc_addr_p_t addr = NULL;
+
+#if 0
+    /* Quit for valgrind report output */
+    static int count = 0;
+
+    if (count++ > 10000)
+    {
+        _exit(0);
+    }
+#endif
 
     //DO_NOT_CLOBBER(fbp);
     //DO_NOT_CLOBBER(frag_length);
