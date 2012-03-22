@@ -110,7 +110,6 @@ DsrRpcStartServer(
     PCSTR pszDescription = "Directory Services Setup";
     
     ENDPOINT EndPoints[] = {
-        { "ncacn_np",      "\\\\pipe\\\\lsass" },
         { NULL,            NULL },
         { NULL,            NULL },
     };
@@ -121,7 +120,7 @@ DsrRpcStartServer(
     BAIL_ON_LSA_ERROR(dwError);
     if (bRegisterTcpIp)
     {
-        EndPoints[1].pszProtocol = "ncacn_ip_tcp";
+        EndPoints[0].pszProtocol = "ncacn_ip_tcp";
     }
 
     dwError = RpcSvcBindRpcInterface(&gpDsrSrvBinding,

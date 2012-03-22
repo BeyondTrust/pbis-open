@@ -113,7 +113,6 @@ SamrRpcStartServer(
 {
     PCSTR pszDescription = "Security Accounts Manager";
     ENDPOINT EndPoints[] = {
-        { "ncacn_np",      "\\\\pipe\\\\samr" },
         { "ncalrpc",       NULL },  /* endpoint is fetched from config parameter */
         { NULL,            NULL },
         { NULL,            NULL }
