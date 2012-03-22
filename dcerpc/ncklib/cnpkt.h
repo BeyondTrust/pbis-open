@@ -1,24 +1,77 @@
 /*
- * 
- * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
- * (c) Copyright 1989 HEWLETT-PACKARD COMPANY
- * (c) Copyright 1989 DIGITAL EQUIPMENT CORPORATION
+ * Copyright (c) 2010 Apple Inc. All rights reserved.
+ *
+ * @APPLE_LICENSE_HEADER_START@
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1.  Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ * 2.  Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 3.  Neither the name of Apple Inc. ("Apple") nor the names of its
+ *     contributors may be used to endorse or promote products derived from
+ *     this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL APPLE OR ITS CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Portions of this software have been released under the following terms:
+ *
+ * (c) Copyright 1989-1993 OPEN SOFTWARE FOUNDATION, INC.
+ * (c) Copyright 1989-1993 HEWLETT-PACKARD COMPANY
+ * (c) Copyright 1989-1993 DIGITAL EQUIPMENT CORPORATION
+ *
  * To anyone who acknowledges that this file is provided "AS IS"
  * without any express or implied warranty:
- *                 permission to use, copy, modify, and distribute this
- * file for any purpose is hereby granted without fee, provided that
- * the above copyright notices and this notice appears in all source
- * code copies, and that none of the names of Open Software
- * Foundation, Inc., Hewlett-Packard Company, or Digital Equipment
- * Corporation be used in advertising or publicity pertaining to
- * distribution of the software without specific, written prior
- * permission.  Neither Open Software Foundation, Inc., Hewlett-
- * Packard Company, nor Digital Equipment Corporation makes any
- * representations about the suitability of this software for any
- * purpose.
- * 
- */
-/*
+ * permission to use, copy, modify, and distribute this file for any
+ * purpose is hereby granted without fee, provided that the above
+ * copyright notices and this notice appears in all source code copies,
+ * and that none of the names of Open Software Foundation, Inc., Hewlett-
+ * Packard Company or Digital Equipment Corporation be used
+ * in advertising or publicity pertaining to distribution of the software
+ * without specific, written prior permission.  Neither Open Software
+ * Foundation, Inc., Hewlett-Packard Company nor Digital
+ * Equipment Corporation makes any representations about the suitability
+ * of this software for any purpose.
+ *
+ * Copyright (c) 2007, Novell, Inc. All rights reserved.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1.  Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ * 2.  Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 3.  Neither the name of Novell Inc. nor the names of its contributors
+ *     may be used to endorse or promote products derived from this
+ *     this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @APPLE_LICENSE_HEADER_END@
  */
 #ifndef _CNPKT_H
 #define _CNPKT_H
@@ -372,6 +425,16 @@ typedef unsigned16 rpc_cn_pres_reject_reason_t;
 #define RPC_C_CN_PREJ_DEFAULT_CONTEXT_NOT_SUPPORTED   5 /* not used */
 #define RPC_C_CN_PREJ_USER_DATA_NOT_READABLE          6 /* not used */
 #define RPC_C_CN_PREJ_NO_PSAP_AVAILABLE               7 /* not used */
+
+/* MS-RPCE bind rejection extensions */
+
+/* Authentication type requested by client is not recognized by server. */
+#define RPC_C_CN_PREJ_AUTH_TYPE_NOT_RECOGNIZED        8
+
+/* This rejection code is used when an unrecoverable error is detected by
+ * the underlying security package.
+ */
+#define RPC_C_CN_PREJ_INVALID_CHECKSUM                9
 
 /*
  *****************************************************************************
@@ -1040,7 +1103,7 @@ EXTERNAL rpc_cn_common_hdr_t rpc_g_cn_common_hdr;
  * R P C _ C N _ U N P A C K _ H D R 
  */
 
-PRIVATE void rpc__cn_unpack_hdr (rpc_cn_packet_p_t);
+PRIVATE unsigned32 rpc__cn_unpack_hdr (rpc_cn_packet_p_t, unsigned32 data_size);
 
 /*
  * R P C _ C N _ P K T _ F O R M A T _ C O M M O N
@@ -1065,8 +1128,7 @@ PRIVATE void rpc__cn_stats_print (void );
 /*
  * R P C _ C N _ P K T _ N A M E
  */
-PRIVATE char *rpc__cn_pkt_name ( unsigned32);
-
+PRIVATE const char *rpc__cn_pkt_name ( unsigned32);
 
 /*
  * R P C _ C N _ P K T _ C R C _ C O M P U T E
@@ -1075,5 +1137,17 @@ PRIVATE unsigned32 rpc__cn_pkt_crc_compute (
         unsigned8       * /* block */,
         unsigned32      /* block_len */
     );
+
+void SWAP_INPLACE_UUID (
+        dce_uuid_t   *uuid_p,
+        unsigned8    *end_of_pkt,
+        unsigned32   *st
+        );
+
+void SWAP_INPLACE_SYNTAX (
+        rpc_cn_pres_syntax_id_p_t   syntax_p,
+        unsigned8                   *end_of_pkt,
+        unsigned32                  *st
+        );
 
 #endif /* _CNPKT_H */
